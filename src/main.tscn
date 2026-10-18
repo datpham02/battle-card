@@ -1,0 +1,27 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
+[ext_resource type="Script" path="res://src/conveyor/conveyor_view.gd" id="2_view"]
+[ext_resource type="Script" path="res://src/hold/hold_slots_view.gd" id="3_slots"]
+[ext_resource type="Script" path="res://src/drag/card_drag_controller.gd" id="4_drag"]
+[ext_resource type="Script" path="res://src/dev/demo_args.gd" id="5_demo"]
+
+[ext_resource type="Script" path="res://src/combat/combat_view.gd" id="6_combat"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="CombatView" type="Node2D" parent="."]
+script = ExtResource("6_combat")
+
+[node name="ConveyorView" type="Node2D" parent="."]
+script = ExtResource("2_view")
+
+[node name="HoldSlotsView" type="Node2D" parent="."]
+script = ExtResource("3_slots")
+
+[node name="CardDragController" type="Node2D" parent="."]
+script = ExtResource("4_drag")
+
+[node name="DemoArgs" type="Node" parent="."]
+script = ExtResource("5_demo")
