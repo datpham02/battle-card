@@ -1,0 +1,7 @@
+{
+	"base_damage_per_cell": 6,
+	"swing_base_sec": 0.2,
+	"swing_per_cell_sec": 0.25,
+	"single_point_opens_menu": false,
+	"hand_max_points": 4
+}

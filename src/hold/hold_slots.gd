@@ -14,7 +14,7 @@ signal slot_filled(index: int, point: FieldPoint)
 signal slot_cleared(index: int, point: FieldPoint)
 
 var _slots: Array[FieldPoint] = []
-var _selected: Dictionary = {} # slot index -> true
+var _selected: Array[int] = [] # slot indices in selection order
 
 
 ## [param slot_count] is clamped to [constant MIN_SLOTS]..[constant MAX_SLOTS].
@@ -111,7 +111,7 @@ func toggle_selected(index: int) -> bool:
 	if _selected.has(index):
 		_selected.erase(index)
 		return false
-	_selected[index] = true
+	_selected.append(index)
 	return true
 
 
@@ -120,10 +120,31 @@ func is_selected(index: int) -> bool:
 	return _selected.has(index)
 
 
-## Selected slot indices in ascending order.
+## Selected slot indices in the order they were selected (polygon order matters).
 func get_selected_indices() -> Array[int]:
-	var result: Array[int] = []
-	for i: int in _slots.size():
-		if _selected.has(i):
-			result.append(i)
-	return result
+	return _selected.duplicate()
+
+
+## Perimeter labels of the selected points, in selection order.
+func get_selected_labels() -> Array[String]:
+	var labels: Array[String] = []
+	for index: int in _selected:
+		labels.append(_slots[index].label)
+	return labels
+
+
+## Deselects everything (points stay in their slots).
+func clear_selection() -> void:
+	_selected.clear()
+
+
+## Removes the selected points from their slots, in selection order, and returns them.
+## The selection ends up empty.
+func remove_selected() -> Array[FieldPoint]:
+	var removed: Array[FieldPoint] = []
+	for index: int in _selected.duplicate():
+		var point: FieldPoint = remove(index)
+		if point != null:
+			removed.append(point)
+	_selected.clear()
+	return removed

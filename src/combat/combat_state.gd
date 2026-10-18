@@ -104,6 +104,19 @@ func set_enemy_cell(cell: Vector2i) -> bool:
 	return true
 
 
+## Damages the unit of [param side] (a [enum Side] value); see damage_player / damage_enemy.
+func damage(side: int, amount: float) -> void:
+	if side == Side.PLAYER:
+		damage_player(amount)
+	else:
+		damage_enemy(amount)
+
+
+## Board cell of the unit of [param side] (a [enum Side] value).
+func cell_of(side: int) -> Vector2i:
+	return player_cell if side == Side.PLAYER else enemy_cell
+
+
 ## Hits the player: reduces HP (floored at 0, no overkill). Ignored once dead.
 func damage_player(amount: float) -> void:
 	if is_player_dead() or amount <= 0.0:

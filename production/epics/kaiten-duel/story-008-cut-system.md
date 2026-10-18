@@ -1,7 +1,7 @@
 # Story 008: Hệ cắt của người chơi — 1 điểm chém ngay, 2–4 điểm vẽ hình, menu kỹ năng
 
 > **Epic**: Kaiten Duel (v3)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: —
@@ -28,8 +28,8 @@
 
 *From `design/game-brief.md` v3 (Core loop: Cắt, Menu kỹ năng; MVP feature 3), scoped to this story:*
 
-- [ ] **Nhãn → điểm chu vi → tập ô** là hàm thuần (`CutResolver`): với 1 nhãn trả về 3 ô của cột (A/C) hoặc hàng (B/D) tương ứng; với 2 nhãn trả về các ô mà đoạn thẳng đi qua; với 3–4 nhãn trả về ô mà cạnh đi qua **cộng** ô trong lòng đa giác. Test xác định: A1 → cột 1 (3 ô); D2 → hàng 2; A1+C3 → 3 ô chéo; A1+A3+C3+C1 → 9 ô; A1+A3 → 3 ô hàng 1 (cạnh trên).
-- [ ] **1 điểm**: chạm ô tay là **chém ngay** (không menu, cờ `single_point_opens_menu` = false); điểm rời tay.
+- [ ] **Nhãn → điểm chu vi → tập ô** là hàm thuần (`CutResolver`): với 1 nhãn trả về 3 ô của cột (A/C) hoặc hàng (B/D) tương ứng; với 2 nhãn trả về các ô mà đoạn thẳng đi qua; với 3–4 nhãn trả về ô mà cạnh đi qua **cộng** ô trong lòng đa giác. Test xác định: A1 → cột 1 (3 ô); D2 → hàng 2 (3 ô); A1+A3 → hàng 1 (3 ô, đoạn chạy dọc cạnh trên thì lấy ô sát cạnh bên trong); A1+C3 → 5 ô {(0,0),(1,0),(1,1),(1,2),(2,2)} (đoạn từ (0,5;0) tới (2,5;3), không phải đường chéo thuần vì điểm chu vi nằm giữa cạnh ô); A1+A3+C3+C1 → 9 ô. **Quy ước nhãn**: số điểm tính theo vị trí trên màn hình của bàn bị cắt (A và C từ trái sang phải, B và D từ trên xuống dưới), cùng quy ước cho cả hai bàn.
+- [ ] **1 điểm**: chọn đúng 1 điểm rồi bấm **Chốt** là **chém ngay, không menu** (cờ `single_point_opens_menu` = false); điểm rời tay. (Đã chọn: chạm ô tay luôn chỉ chọn, vì nếu chạm là chém thì không thể chọn 2–4 điểm; đòn nhanh tốn hai chạm. Phương án chạm đúp để chém ngay là chỉnh sau chơi thử.)
 - [ ] **2–4 điểm**: chạm lần lượt để chọn (chạm lại để bỏ chọn); bản xem trước trên bàn boss sáng **tập ô đang phủ** và hiện **số ô**; nút **Chốt** xuất hiện khi ≥ 2 điểm được chọn. Chốt là tốn điểm, không hủy.
 - [ ] **Khoảng vung** = cơ bản + mỗi ô × số ô (khởi điểm 0,2 + 0,25 s); trong khoảng vung tập ô hiện **đỏ trên bàn boss** với đếm ngược; hết vung thì chém. Người chơi **vẫn di chuyển được** khi đang vung. Chỉ một đòn của người chơi vung tại một thời điểm; đang vung thì không chốt đòn khác (tay vẫn chọn được).
 - [ ] **Sát thương = cơ bản × số ô** (khởi điểm 6 × ô, HP 100), trúng nếu ô boss nằm trong tập **lúc chém** (không đọc vị trí lúc chốt). HIT/MISS hiện tại ô liên quan; số sát thương hiện rõ.
@@ -80,3 +80,14 @@
 
 - Depends on: Story 007
 - Unlocks: Story 009
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-18
+**Criteria**: 9/9 passing, with three small deviations: the Confirm button appears from 1 selected point (not 2) because a single point also needs Confirm; the skill menu sits in the strip between the d-pad and the hand row; skill cooldowns tick on slowed simulation time, not real time. The "button on cooldown" look was verified by logic (push cooldown 5.98 s after use) but not captured in a screenshot.
+**Deviations**: ADVISORY: HIT/MISS display time is a view constant (0.8 s), not read from `combat.json`. ADVISORY: Push moves the target one cell away from the divider (a straight cut has no single direction). ADVISORY: story spec corrected during the work: A1+C3 covers 5 cells (not 3), and tapping a hand point only selects (Confirm fires the cut).
+**Test Evidence**: Logic story, but tests waived at `qa.level: minimal`. Retained screenshots: `production/qa/evidence/cut-system/01-06*.png` (all opened and checked). Scratch scripts (not retained) verified `CutResolver` hand-computed cases, damage/swing numbers, skill availability, hold-slot selection order, and a 20-check real-mouse flow test (select, confirm, slow-motion menu, locked skill, Push damage and push, single-point slash, menu timeout, confirm ignored during a swing). No unit test for `CutResolver`: recommended before the geometry is changed.
+**Code Review**: Skipped (solo mode).
+**Not verified**: touch on a real device; feel of the swing time and the 0.2x menu (playtest gate 3).
+**Carries to Story 009**: reuse `CutActor`, `CutEffects.apply` (already supports the boss as attacker), `SkillCooldowns`; build interrupt (`CutActor.cancel`) and boss brain.

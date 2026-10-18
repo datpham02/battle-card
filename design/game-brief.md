@@ -22,8 +22,8 @@
 - Không hiện trước nhãn sắp rơi; không rơi theo kịch bản cố định.
 
 ### Cắt
-- **1 điểm**: chạm là **chém ngay, không menu**: đường thẳng từ điểm đó sang điểm đối diện (A1→C1, D2→B2), phủ 3 ô. Đây là đòn nhanh của game.
-- **2–4 điểm**: chạm lần lượt các điểm trong tay rồi **chốt**; 2 điểm là đoạn thẳng, 3–4 điểm là đa giác, vẽ **trực tiếp trên bàn đối thủ**. **Tập ô phủ** = ô mà cạnh đi qua + ô nằm trong lòng đa giác. Bản xem trước hiện tập ô sáng lên và **số ô đang phủ** theo thời gian thực, trước khi chốt. Chốt là tốn điểm, không hủy.
+- **1 điểm**: chọn 1 điểm rồi bấm **Chốt** là **chém ngay, không menu**: đường thẳng từ điểm đó sang điểm đối diện (A1→C1, D2→B2), phủ 3 ô. Đây là đòn nhanh của game.
+- **2–4 điểm**: chạm lần lượt các điểm trong tay (thứ tự chạm là thứ tự nối) rồi bấm **Chốt**; 2 điểm là đoạn thẳng, 3–4 điểm là đa giác, vẽ **trực tiếp trên bàn đối thủ**. **Tập ô phủ** = ô mà cạnh đi qua + ô nằm trong lòng đa giác. Bản xem trước hiện tập ô sáng lên và **số ô đang phủ** theo thời gian thực, trước khi chốt. Chốt là tốn điểm, không hủy.
 - **Sát thương = sát thương cơ bản × số ô phủ**, trúng nếu ô đối thủ nằm trong tập lúc chém. Đường cắt nằm trên bàn đối thủ, **không phụ thuộc mình đứng đâu**.
 - **Khoảng vung = 0,2 s + 0,25 s × số ô** (3 ô ≈ 0,95 s, 9 ô ≈ 2,45 s). Trong khoảng vung tập ô sáng **đỏ trên bàn đối thủ**, đếm ngược rồi mới chém. **Đang vung vẫn di chuyển được.** Mỗi bên chỉ một đòn đang vung tại một thời điểm.
 - Không có Guard, không có giáp, không có Parry. **Phòng thủ = bước ra khỏi tập ô, hoặc đua đồng hồ** (xem Ngắt đòn).

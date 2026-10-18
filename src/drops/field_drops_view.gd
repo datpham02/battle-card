@@ -86,7 +86,7 @@ func _draw() -> void:
 		draw_rect(Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), color)
 		if hand_full and point.cell == stand:
 			var full_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * FULL_TAG_HEIGHT_RATIO)
-			var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.get_center().y - full_size.y * 0.5), full_size)
+			var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO - full_size.y - 2.0), full_size) # top edge, above the label tag, clear of the marker
 			var full_font: int = int(cell.y * FULL_FONT_RATIO)
 			draw_rect(full_tag, FULL_BACK)
 			draw_rect(full_tag, TEXT_COLOR, false, OUTLINE_WIDTH)

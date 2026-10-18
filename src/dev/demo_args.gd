@@ -8,6 +8,13 @@ extends Node
 ##   godot --path . -- --demo=full      hand holds 4 points, a 5th lies under the player showing FULL
 ##   godot --path . -- --demo=cooldown  player just stepped: cooldown ring visible, d-pad dimmed
 ##   godot --path . -- --demo=selected  hand holds 3 points, slots 0 and 2 selected
+##   godot --path . -- --demo=preview2  hand A1,C<n>,B2; A1 then C<n> selected: 5-cell segment preview, "5 ô", CONFIRM
+##   godot --path . -- --demo=preview4  hand A1,A<n>,C<n>,C1 all selected in that order: polygon, all cells covered
+##   godot --path . -- --demo=menu      hand A1,A<n> selected and confirmed: skill menu open (slow-mo frozen)
+##   godot --path . -- --demo=swing     hand A1 (+2 others) confirmed on 1 point: red column 1 of the boss half,
+##                                      swing frozen 0.3 s in; the boss stays on its start cell (not forced)
+##   godot --path . -- --demo=hit       as swing, boss moved INTO column 1, swing just resolved: HIT and "-N"
+##   godot --path . -- --demo=miss      as swing, boss moved to the LAST column, swing just resolved: MISS
 ##   godot --path . -- --grid=<cols>x<rows>[:c,r;c,r...]   DEV-ONLY board override
 ##       <cols>x<rows> = columns x rows of ONE half; the optional list is missing cells in
 ##       side coordinates (col 0 = farthest from the divider; mirrored to the boss half),
@@ -28,6 +35,8 @@ const FULL_POINT_FRESHNESS: float = 5.0
 ## Points put in the hand by the "selected" demo and which of them are selected.
 const SELECTED_SLOTS: Array[int] = [0, 2]
 const SELECTED_HAND_COUNT: int = 3
+## Seconds the "swing" demo fast-forwards the running swing (so the countdown is mid-way).
+const SWING_ELAPSED_SEC: float = 0.3
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -75,6 +84,29 @@ func _ready() -> void:
 			_fill_hand(SELECTED_HAND_COUNT)
 			for index: int in SELECTED_SLOTS:
 				_hold().toggle_selected(index)
+		"preview2":
+			var n: int = grid.side_cols
+			_cut_hand([_lbl("A", 1), _lbl("C", n), _lbl("B", 2)], [0, 1])
+		"preview4":
+			var n: int = grid.side_cols
+			_cut_hand([_lbl("A", 1), _lbl("A", n), _lbl("C", n), _lbl("C", 1)], [0, 1, 2, 3])
+		"menu":
+			var n: int = grid.side_cols
+			_cut_hand([_lbl("A", 1), _lbl("A", n)], [0, 1])
+			_confirm_or_warn(combat)
+		"swing":
+			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
+			_confirm_or_warn(combat)
+			combat.get_cut_actor().tick(SWING_ELAPSED_SEC)
+		"hit", "miss":
+			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
+			var column: int = grid.side_cols if _mode == "hit" else grid.side_cols * 2 - 1
+			var target := Vector2i(column, combat.get_state().enemy_cell.y)
+			if not combat.get_state().set_enemy_cell(target):
+				push_warning("DemoArgs: could not move the boss to %s" % str(target))
+			_confirm_or_warn(combat)
+			var actor: CutActor = combat.get_cut_actor()
+			actor.tick(actor.get_time_left() + 0.001)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 
@@ -138,6 +170,28 @@ func _spread_labels(grid: BoardGrid, count: int, offset: int) -> Array[String]:
 	for i: int in count:
 		out.append(all[(offset + roundi(float(all.size()) * i / float(count))) % all.size()])
 	return out
+
+
+func _lbl(edge: String, index: int) -> String:
+	return "%s%d" % [edge, index]
+
+
+# Puts synthetic points with [param labels] into the first slots (as many as fit), then
+# selects the slots [param selected] in that order.
+func _cut_hand(labels: Array[String], selected: Array[int]) -> void:
+	for i: int in mini(labels.size(), _hold().get_slot_count()):
+		var point := FieldPoint.new()
+		point.uid = -1 - i
+		point.label = labels[i]
+		point.freshness_left = 0.0
+		_hold().place(point, i)
+	for index: int in selected:
+		_hold().toggle_selected(index)
+
+
+func _confirm_or_warn(combat: CombatView) -> void:
+	if not combat.confirm_selection():
+		push_warning("DemoArgs: confirm_selection failed for demo '%s'" % _mode)
 
 
 # Puts [param count] synthetic points straight into the first hand slots.

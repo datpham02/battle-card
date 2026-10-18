@@ -61,6 +61,14 @@ var _state: CombatState
 var _mover: UnitMover
 var _drops: FieldDrops
 var _drops_config: FieldDropsConfig
+var _cut_config: CutConfig
+var _skill_config: SkillConfig
+var _cooldowns: SkillCooldowns
+var _cut_actor: CutActor
+var _cut_flow: CutFlow
+## Last resolved player cut for the HIT/MISS marker: {cells, hit, damage, cell, time_left}; empty = none.
+var _feedback: Dictionary = {}
+var _hold_hooked: bool = false
 
 
 func _ready() -> void:
@@ -78,17 +86,168 @@ func _ready() -> void:
 	_drops_config = FieldDropsConfig.load_from_file(drops_config_path)
 	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), _grid.perimeter_labels(), drops_seed)
 	_state.cell_changed.connect(_on_cell_changed)
+	_cut_config = CutConfig.load_from_file()
+	_skill_config = SkillConfig.load_from_file()
+	_cooldowns = SkillCooldowns.new()
+	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
+	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
+	_cut_flow.skill_chosen.connect(_on_skill_chosen)
+	_cut_actor.swing_resolved.connect(_on_swing_resolved)
 
 
 func _process(delta: float) -> void:
+	_hook_hold()
 	if not freeze_time:
 		# Cap the step so a frame hitch cannot skip a whole timing window.
-		var step: float = minf(delta, _config.max_tick_sec)
+		var real_step: float = minf(delta, _config.max_tick_sec)
+		# The menu countdown runs on REAL time; it may close the menu this frame.
+		_cut_flow.tick_real(real_step)
+		# Simulation time is scaled down while the skill menu is open (slow motion).
+		var step: float = real_step * (_skill_config.menu_time_scale if _cut_flow.is_menu_open() else 1.0)
 		_mover.tick(step)
 		var hold: HoldSlots = _get_hold()
 		var held: int = 0 if hold == null else hold.get_occupied_count()
 		_drops.tick(step, _state.player_cell, held)
+		_cut_actor.tick(step)
+		_cooldowns.tick(step)
+		if not _feedback.is_empty():
+			_feedback["time_left"] = float(_feedback["time_left"]) - step
+			if float(_feedback["time_left"]) <= 0.0:
+				_feedback = {}
 	queue_redraw()
+
+
+## How long the HIT/MISS marker stays on screen (UI timing, real-ish seconds of sim time).
+const FEEDBACK_SEC: float = 0.8
+
+
+## The player's cut swing (one at a time).
+func get_cut_actor() -> CutActor:
+	return _cut_actor
+
+
+## The skill-menu flow (IDLE / MENU).
+func get_cut_flow() -> CutFlow:
+	return _cut_flow
+
+
+## Skill definitions and menu timing.
+func get_skill_config() -> SkillConfig:
+	return _skill_config
+
+
+## Cut numbers (damage per cell, swing timing).
+func get_cut_config() -> CutConfig:
+	return _cut_config
+
+
+## The player's skill cooldowns.
+func get_skill_cooldowns() -> SkillCooldowns:
+	return _cooldowns
+
+
+## The hand (null until the hold view is ready).
+func get_hold() -> HoldSlots:
+	return _get_hold()
+
+
+## Last resolved player cut for the HIT/MISS marker ({cells, hit, damage, cell, time_left});
+## empty when nothing is showing.
+func get_cut_feedback() -> Dictionary:
+	return _feedback
+
+
+## Labels of the current selection that a cut would use: the first hand_max_points in
+## selection order (extra selected points are left selected).
+func get_cut_selection_labels() -> Array[String]:
+	var labels: Array[String] = []
+	var hold: HoldSlots = _get_hold()
+	if hold == null:
+		return labels
+	for index: int in hold.get_selected_indices():
+		if labels.size() >= _cut_config.hand_max_points:
+			break
+		labels.append(hold.get_point(index).label)
+	return labels
+
+
+## True when the CONFIRM button should be on screen: >= 1 point selected, no menu open and
+## nobody dead. (While a swing runs it is shown dimmed and pressing it does nothing.)
+func is_confirm_visible() -> bool:
+	var hold: HoldSlots = _get_hold()
+	if hold == null or _state == null or _cut_flow.is_menu_open():
+		return false
+	if _state.is_player_dead() or _state.is_enemy_dead():
+		return false
+	return not hold.get_selected_indices().is_empty()
+
+
+## Confirms the current selection as a cut. Returns false (nothing changes) when blocked
+## (menu open, own swing running, dead, nothing selected) or when every covered cell is
+## missing. Otherwise the used points leave the hand NOW (more than hand_max_points selected:
+## the first hand_max_points in selection order are used, the rest stay selected); one
+## point with single_point_opens_menu == false swings slash at once, else the skill menu opens.
+func confirm_selection() -> bool:
+	var hold: HoldSlots = _get_hold()
+	if hold == null or not is_confirm_visible() or _cut_actor.is_swinging():
+		return false
+	var labels: Array[String] = get_cut_selection_labels()
+	var cells: Array[Vector2i] = CutResolver.resolve_on_board(_grid, true, labels)
+	if cells.is_empty():
+		return false
+	var used: Array[int] = []
+	for index: int in hold.get_selected_indices():
+		if used.size() >= labels.size():
+			break
+		used.append(index)
+	for index: int in used:
+		hold.remove(index)
+	if labels.size() == 1 and not _cut_config.single_point_opens_menu:
+		_begin_cut(SkillConfig.FALLBACK_SKILL, cells)
+	else:
+		_cut_flow.open_menu(labels, cells)
+	return true
+
+
+# Hand slot cleared while the player stands on a field point: pick it up right away.
+func _hook_hold() -> void:
+	if _hold_hooked:
+		return
+	var hold: HoldSlots = _get_hold()
+	if hold == null:
+		return
+	_hold_hooked = true
+	hold.slot_cleared.connect(_on_slot_cleared)
+
+
+func _on_slot_cleared(_index: int, _point: FieldPoint) -> void:
+	var hold: HoldSlots = _get_hold()
+	if hold == null or _state.is_player_dead():
+		return
+	var point: FieldPoint = _drops.pick_up_at(_state.player_cell, true)
+	if point != null:
+		hold.place_in_first_free(point)
+
+
+func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vector2i]) -> void:
+	_begin_cut(skill_id, cells)
+
+
+func _begin_cut(skill_id: String, cells: Array[Vector2i]) -> void:
+	if _cut_actor.begin_swing(cells, skill_id, true):
+		_cooldowns.start(skill_id, float(_skill_config.get_skill(skill_id).get("cooldown_sec", 0.0)))
+
+
+func _on_swing_resolved(cells: Array[Vector2i], skill_id: String) -> void:
+	if _state.is_player_dead() or _state.is_enemy_dead():
+		return
+	var result: Dictionary = CutEffects.apply(
+		_state, _grid, CombatState.Side.PLAYER, cells, skill_id, _cut_config, _skill_config
+	)
+	_feedback = {
+		"cells": cells, "hit": bool(result["hit"]), "damage": float(result["damage"]),
+		"cell": _state.enemy_cell, "time_left": FEEDBACK_SEC,
+	}
 
 
 ## The board (size, shape, halves) every view of the arena shares.

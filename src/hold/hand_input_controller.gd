@@ -9,7 +9,11 @@ extends Node2D
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 
+## Selection is ignored while the skill menu is open (Story 008).
+@export var combat_view_path: NodePath = NodePath("../CombatView")
+
 var _slots_view: HoldSlotsView
+var _combat: CombatView
 var _press_slot: int = -1
 var _press_pos: Vector2 = Vector2.ZERO
 
@@ -17,10 +21,14 @@ var _press_pos: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	_slots_view = get_node(hold_slots_view_path) as HoldSlotsView
 	assert(_slots_view != null, "HandInputController: hold slots view path not set")
+	_combat = get_node_or_null(combat_view_path) as CombatView
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventMouseButton:
+		return
+	if _combat != null and _combat.get_cut_flow() != null and _combat.get_cut_flow().is_menu_open():
+		_press_slot = -1
 		return
 	var button := event as InputEventMouseButton
 	if button.button_index != MOUSE_BUTTON_LEFT:

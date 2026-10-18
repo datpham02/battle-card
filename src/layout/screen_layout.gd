@@ -34,6 +34,17 @@ const BOARD_PAD_RATIO: float = 0.04
 const CELL_ASPECT: float = 1.4
 ## Returned by cell_at() when the point is outside the board's bounding rectangle.
 const NO_CELL: Vector2i = BoardGrid.NO_CELL
+## Cut UI (Story 008). The confirm button fills the gap between the d-pad and the hand row,
+## minus a strip at the row's left reserved for the "FULL" label (share of width).
+const CONFIRM_FULL_RESERVE_RATIO: float = 0.09
+## Left edge of the strip between the arena and the hand row (share of width); clear of the d-pad.
+const STRIP_LEFT_RATIO: float = 0.28
+## Vertical gap around the strip, and inner padding of the skill panel (shares of height).
+const STRIP_GAP_RATIO: float = 0.012
+const MENU_PAD_RATIO: float = 0.012
+## Countdown bar height (share of height) and gap between skill buttons (share of width).
+const MENU_BAR_HEIGHT_RATIO: float = 0.02
+const MENU_BUTTON_GAP_RATIO: float = 0.008
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -163,3 +174,64 @@ static func slot_side_left_rect(viewport_size: Vector2, count: int) -> Rect2:
 	var left: float = dpad_bounds(viewport_size).end.x + gap
 	var first: Rect2 = rects[0]
 	return Rect2(left, first.position.y, maxf(first.position.x - gap - left, 0.0), first.size.y)
+
+
+## CONFIRM ("Chốt") button: the free area between the d-pad and the hand row, same vertical
+## extent as the slots, leaving room for the "FULL" label. Laid out for the widest hand so it
+## never overlaps a slot whatever the slot count.
+static func confirm_button_rect(viewport_size: Vector2) -> Rect2:
+	var side: Rect2 = slot_side_left_rect(viewport_size, HoldSlots.MAX_SLOTS)
+	var reserve: float = viewport_size.x * CONFIRM_FULL_RESERVE_RATIO
+	return Rect2(side.position, Vector2(maxf(side.size.x - reserve, 0.0), side.size.y))
+
+
+## Strip between the arena bottom and the hand row, right of the d-pad column. Hosts the
+## skill panel, and (split in halves) the preview and swing text.
+static func cut_strip_rect(viewport_size: Vector2) -> Rect2:
+	var gap: float = viewport_size.y * STRIP_GAP_RATIO
+	var top: float = arena_rect(viewport_size).end.y + gap
+	var hand_top: float = viewport_size.y * (1.0 - BOTTOM_MARGIN_RATIO) - slot_size(viewport_size).y
+	var left: float = viewport_size.x * STRIP_LEFT_RATIO
+	var right: float = viewport_size.x * (1.0 - MARGIN_RATIO)
+	return Rect2(left, top, right - left, maxf(hand_top - gap - top, 0.0))
+
+
+## Skill menu panel (the whole strip).
+static func skill_menu_panel_rect(viewport_size: Vector2) -> Rect2:
+	return cut_strip_rect(viewport_size)
+
+
+## Countdown bar across the top of the skill panel.
+static func skill_menu_bar_rect(viewport_size: Vector2) -> Rect2:
+	var panel: Rect2 = skill_menu_panel_rect(viewport_size)
+	var pad: float = viewport_size.y * MENU_PAD_RATIO
+	return Rect2(panel.position + Vector2(pad, pad), Vector2(maxf(panel.size.x - pad * 2.0, 0.0), viewport_size.y * MENU_BAR_HEIGHT_RATIO))
+
+
+## One button rectangle per skill, left to right, under the countdown bar inside the panel.
+static func skill_menu_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var panel: Rect2 = skill_menu_panel_rect(viewport_size)
+	var bar: Rect2 = skill_menu_bar_rect(viewport_size)
+	var pad: float = viewport_size.y * MENU_PAD_RATIO
+	var gap: float = viewport_size.x * MENU_BUTTON_GAP_RATIO
+	var top: float = bar.end.y + pad
+	var height: float = maxf(panel.end.y - pad - top, 0.0)
+	var width: float = maxf((panel.size.x - pad * 2.0 - gap * (count - 1)) / count, 0.0)
+	for i: int in count:
+		rects.append(Rect2(panel.position.x + pad + (width + gap) * i, top, width, height))
+	return rects
+
+
+## Left half of the strip: cell count and expected damage of the current selection.
+static func cut_preview_info_rect(viewport_size: Vector2) -> Rect2:
+	var strip: Rect2 = cut_strip_rect(viewport_size)
+	return Rect2(strip.position, Vector2(strip.size.x * 0.5, strip.size.y))
+
+
+## Right half of the strip: skill name and countdown of the running swing.
+static func cut_swing_info_rect(viewport_size: Vector2) -> Rect2:
+	var strip: Rect2 = cut_strip_rect(viewport_size)
+	return Rect2(strip.position + Vector2(strip.size.x * 0.5, 0.0), Vector2(strip.size.x * 0.5, strip.size.y))
