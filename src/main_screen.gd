@@ -1,6 +1,6 @@
 class_name MainScreen
 extends Node2D
-## Root of the portrait battle screen: draws the background and the (empty) arena
+## Root of the landscape battle screen: draws the background and the (empty) arena
 ## placeholder behind the child views. Story 003 will fill the arena area.
 
 const BG_COLOR: Color = Color(0.96, 0.9, 0.78)

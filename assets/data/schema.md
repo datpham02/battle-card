@@ -1,6 +1,6 @@
 # Data file schemas
 
-Keys are `snake_case`. Pixel units are reference viewport pixels (720x1280 portrait,
+Keys are `snake_case`. Pixel units are reference viewport pixels (1280x720 landscape,
 scaled by the `canvas_items` stretch mode). All keys are read by code in `src/`.
 
 ## conveyor_belt.json  (read by `src/conveyor/conveyor_config.gd`)
@@ -48,3 +48,24 @@ Placeholder card effects and combat start values (Story 003; the full card set i
 | `effect` | string | - | `attack` (subtracts enemy HP) or `shield` (adds player armor). Any other value: entry ignored |
 | `amount` | number >= 0 | HP / armor points | Damage dealt or armor gained |
 | `recovery_sec` | number >= 0 | seconds | Time the player cannot play another card after this one. Belt flow and belt-to-slot picking are unaffected |
+| `lane_shift` | boolean, optional (default false) | - | If true, playing the card also moves the player to an adjacent lane. The destination is the lane column the card is dropped on; it must be adjacent to the player's current lane (Story 005; only `sidestep` uses it) |
+
+## enemy_patterns.json  (read by `src/combat/enemy_pattern_config.gd`)
+
+Fixed, cyclic enemy attack pattern (Story 005). No randomness: attacks run in list order and repeat. Exactly one attack is telegraphed at a time. Lanes are numbered 0..2 left to right.
+
+| Key | Type | Unit | Meaning | Default if missing |
+|---|---|---|---|---|
+| `initial_pause_sec` | number >= 0 | seconds | Idle time before the first attack is telegraphed | 1.0 |
+| `feedback_sec` | number >= 0 | seconds | How long the HIT / MISS feedback stays on screen | 1.0 |
+| `max_tick_sec` | number > 0 | seconds | Cap on one frame's time step for enemy, recovery and feedback timers, so a frame hitch cannot telegraph and resolve an attack in the same tick | 0.1 |
+| `attacks` | array, non-empty | - | Attack list, repeated in order. If empty the enemy stays idle | - |
+
+`attacks[]` entries:
+
+| Key | Type | Unit | Meaning |
+|---|---|---|---|
+| `target_lane` | integer 0..2 | lane index | Lane the attack hits (clamped) |
+| `damage` | number >= 0 | HP | Damage on hit; armor absorbs first, remainder hits HP |
+| `telegraph_sec` | number >= 0.1 | seconds | Warning countdown before the attack resolves |
+| `pause_after_sec` | number >= 0 | seconds | Idle time after resolution before the next telegraph |

@@ -1,0 +1,11 @@
+{
+	"initial_pause_sec": 1.0,
+	"feedback_sec": 1.0,
+	"max_tick_sec": 0.1,
+	"attacks": [
+		{"target_lane": 1, "damage": 15, "telegraph_sec": 3.0, "pause_after_sec": 1.5},
+		{"target_lane": 0, "damage": 15, "telegraph_sec": 3.0, "pause_after_sec": 1.5},
+		{"target_lane": 2, "damage": 15, "telegraph_sec": 3.0, "pause_after_sec": 1.5},
+		{"target_lane": 1, "damage": 15, "telegraph_sec": 3.0, "pause_after_sec": 1.5}
+	]
+}

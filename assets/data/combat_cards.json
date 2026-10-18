@@ -6,6 +6,6 @@
 		"knockback": {"effect": "attack", "amount": 20, "recovery_sec": 0.8},
 		"dash_strike": {"effect": "attack", "amount": 40, "recovery_sec": 1.5},
 		"guard": {"effect": "shield", "amount": 20, "recovery_sec": 0.3},
-		"sidestep": {"effect": "shield", "amount": 10, "recovery_sec": 0.3}
+		"sidestep": {"effect": "shield", "amount": 10, "recovery_sec": 0.3, "lane_shift": true}
 	}
 }

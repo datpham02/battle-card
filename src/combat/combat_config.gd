@@ -17,6 +17,8 @@ class CardEffect:
 	var amount: float = 0.0
 	## Play lock in seconds.
 	var recovery_sec: float = 0.0
+	## True if the card also moves the player to an adjacent lane (the drop lane chooses it).
+	var lane_shift: bool = false
 
 
 var player_max_hp: float = 100.0
@@ -62,6 +64,7 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 		effect.effect = kind
 		effect.amount = maxf(float(entry.get("amount", 0.0)), 0.0)
 		effect.recovery_sec = maxf(float(entry.get("recovery_sec", 0.0)), 0.0)
+		effect.lane_shift = bool(entry.get("lane_shift", false))
 		config._effects[str(id)] = effect
 	return config
 

@@ -1,7 +1,7 @@
 class_name ConveyorView
 extends Node2D
 ## Thin renderer for a ConveyorBelt: placeholder card nodes (ColorRect + Label)
-## moved along a horizontal belt strip at the bottom of the portrait screen.
+## moved along a horizontal belt strip at the bottom of the landscape screen.
 ## Also the drag facade: lets the drag controller pick, hold, return and take cards
 ## without touching the belt directly. All public positions are global (canvas) pixels.
 

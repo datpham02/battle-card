@@ -1,6 +1,6 @@
 class_name HoldSlotsView
 extends Node2D
-## Renders the hold-slot row (portrait layout, middle of the screen) and owns the
+## Renders the hold-slot row (landscape layout, middle of the screen) and owns the
 ## [HoldSlots] logic instance. States are shown by shape as well as colour:
 ## empty = dim fill + "+" mark, occupied = bright outline + the card,
 ## full = every outline thick gold plus a bar under the row.
@@ -15,13 +15,13 @@ const OUTLINE_FULL: Color = Color(0.95, 0.7, 0.1)
 const OUTLINE_DROP: Color = Color(0.2, 0.8, 0.4)
 const OUTLINE_WIDTH: float = 3.0
 const OUTLINE_WIDTH_STRONG: float = 6.0
-const FULL_BAR_HEIGHT: float = 8.0
-const FULL_BAR_GAP: float = 10.0
 const LOCKED_TINT: Color = Color(0.45, 0.45, 0.5, 1.0)
 const RECOVERY_BAR_COLOR: Color = Color(0.9, 0.35, 0.25)
-const RECOVERY_BAR_GAP: float = 26.0
 const RECOVERY_BAR_HEIGHT: float = 14.0
 const RECOVERY_FONT_SIZE: int = 22
+## Gap between the "RECOVERING" label baseline and the bar top.
+const RECOVERY_LABEL_GAP: float = 6.0
+const FULL_FONT_SIZE: int = 22
 
 ## Path to the hold-slot JSON config.
 @export_file("*.json") var config_path: String = HoldSlotsConfig.DEFAULT_PATH
@@ -63,21 +63,29 @@ func _draw() -> void:
 		draw_rect(rect, color, false, width)
 		if not occupied:
 			_draw_plus(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.18, color)
-	if full and not rects.is_empty():
-		var left: float = rects[0].position.x
-		var right: float = rects[rects.size() - 1].end.x
-		draw_rect(
-			Rect2(left, rects[0].end.y + FULL_BAR_GAP, right - left, FULL_BAR_HEIGHT), OUTLINE_FULL
-		)
-	if _recovery_ratio > 0.0 and not rects.is_empty():
-		var rleft: float = rects[0].position.x
-		var rwidth: float = rects[rects.size() - 1].end.x - rleft
-		var top: float = rects[0].end.y + RECOVERY_BAR_GAP
-		draw_rect(Rect2(rleft, top, rwidth, RECOVERY_BAR_HEIGHT), SLOT_FILL_OCCUPIED)
-		draw_rect(Rect2(rleft, top, rwidth * _recovery_ratio, RECOVERY_BAR_HEIGHT), RECOVERY_BAR_COLOR)
+	if rects.is_empty():
+		return
+	var vp: Vector2 = get_viewport_rect().size
+	var count: int = _slots.get_slot_count()
+	# "FULL" label in the free area left of the row, vertically centred on the slots.
+	if full:
+		var side: Rect2 = ScreenLayout.slot_side_left_rect(vp, count)
 		draw_string(
 			ThemeDB.fallback_font,
-			Vector2(rleft, top + RECOVERY_BAR_HEIGHT + RECOVERY_FONT_SIZE + 2.0),
+			Vector2(side.position.x, side.get_center().y + FULL_FONT_SIZE * 0.35),
+			"FULL", HORIZONTAL_ALIGNMENT_CENTER, side.size.x, FULL_FONT_SIZE, OUTLINE_FULL
+		)
+	# Recovery bar + label in the free area right of the row, vertically centred on the slots.
+	if _recovery_ratio > 0.0:
+		var side: Rect2 = ScreenLayout.slot_side_right_rect(vp, count)
+		var rwidth: float = minf(vp.x * ScreenLayout.RECOVERY_BAR_WIDTH_RATIO, side.size.x)
+		var top: float = side.get_center().y - RECOVERY_BAR_HEIGHT * 0.5
+		var bar := Rect2(side.position.x, top, rwidth, RECOVERY_BAR_HEIGHT)
+		draw_rect(bar, SLOT_FILL_OCCUPIED)
+		draw_rect(Rect2(bar.position, Vector2(rwidth * _recovery_ratio, RECOVERY_BAR_HEIGHT)), RECOVERY_BAR_COLOR)
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(bar.position.x, top - RECOVERY_LABEL_GAP),
 			"RECOVERING %.1fs" % _recovery_left,
 			HORIZONTAL_ALIGNMENT_CENTER, rwidth, RECOVERY_FONT_SIZE, RECOVERY_BAR_COLOR
 		)

@@ -1,12 +1,12 @@
 # Story 005: Địch báo trước đòn trên 3 làn
 
 > **Epic**: Kaiten Duel
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-10-18
 
 ## Context
 
@@ -42,6 +42,8 @@
 ## Implementation Notes
 
 - Mẫu đòn của địch là dữ liệu (danh sách đòn + thời gian), không logic ngẫu nhiên; tách khỏi hiển thị để test xác định.
+- **Lộ API "thời gian còn lại tới đòn" (ví dụ `get_time_to_impact()` và `has_incoming_attack()`) trên logic địch.** Story 006 cần nó cho các thẻ "đúng lúc" (Counter/Parry, backlog #2). Không làm thẻ đó ở đây, chỉ để sẵn số liệu.
+- Story 003 để lại: thêm `CombatState.damage_player` (giáp hấp thụ trước), tín hiệu `player_died`, và `CardPlayer.can_play` phải chặn khi người chơi đã chết.
 - Thời gian báo đòn, sát thương, làn nằm trong file dữ liệu ngoài.
 - Cần ít nhất một thẻ đổi làn tạm để kiểm tra "đòn hụt"; thẻ đầy đủ ở story 006.
 
@@ -78,3 +80,13 @@
 
 - Depends on: Story 003
 - Unlocks: Story 006, Story 007
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-18
+**Criteria**: 8/8 passing. Not assessed: how the 3 s telegraph *feels* (reaction room, difficulty) — reserved for play-test gate 2 in EPIC.md.
+**Deviations**: ADVISORY — (1) fallback defaults duplicated in `enemy_pattern_config.gd` (telegraph 3.0, initial pause 1.0, feedback 1.0); a missing key warns but runs with the old number; (2) `CombatView` calls `queue_redraw()` every frame; (3) left for Story 006 (from specialist review): `EnemyLogic` needs `cancel_attack()`/`delay_attack()` for Parry/Knockback, a result enum (HIT/MISS/PARRIED/COUNTERED) instead of a bool, a mutable enemy lane for Dash Strike, and `CardPlayer` needs a reference to the enemy for timing windows. Story 007 must build a fresh `EnemyLogic` on restart.
+**Scope additions requested by the user during the story**: layout changed to horizontal rows facing each other (player left, enemy right, HUD band on top) and the project orientation changed portrait -> LANDSCAPE 1280x720 (`project.godot` orientation=0, `project.yaml` commands.run). Story 002's portrait evidence screenshots are stale history. `max_tick_sec` (0.1) added so a frame hitch cannot telegraph and resolve an attack in one tick (time slows instead of skipping).
+**Test Evidence**: waived at `qa.level: minimal`. Run result: OBSERVED — `production/qa/evidence/telegraphed-enemy-lanes/01–07*.png`. Own-row drop rejected, adjacent-row Sidestep moves + armor + lock, lane-1 attack MISS while in row 0, lane-0 attack HIT with armor 10 -> 0 and HP 100 -> 95: verified by a scratch windowed pointer-event test (not retained in repo).
+**Code Review**: Skipped (Solo mode); specialist GDScript review found no bugs.

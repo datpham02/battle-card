@@ -11,6 +11,16 @@ extends Node
 ##   godot --path . -- --demo=shielded   slots 1-3 filled, slot 0's Guard just played: player armor
 ##                                       shown, recovery lock active (frozen)
 ##   godot --path . -- --demo=enemy_dead enemy at 0 HP shown dead, all slots filled, no lock
+##   godot --path . -- --demo=telegraph  enemy mid-countdown (2.0 s left, frozen): warning icon, red
+##                                       stripe and countdown ring over lane row 1 (middle); player in row 0 (top)
+##   godot --path . -- --demo=hit        armored player (10) in the target lane was just hit for 15:
+##                                       armor 0, HP 95, HIT feedback (frozen)
+##   godot --path . -- --demo=miss       player sidestepped to lane 0 (Sidestep played, recovery shown),
+##                                       the attack on lane 1 just missed: MISS feedback (frozen)
+##   godot --path . -- --demo=defeat     player at 0 HP, DEFEAT shown
+##   godot --path . -- --demo=victory    enemy at 0 HP, VICTORY shown
+## Telegraph/hit/miss/defeat/victory run the real enemy logic with injected ticks and set
+## freeze_recovery (time stops: recovery, enemy and feedback).
 ## No argument = normal game, this node does nothing. Belt RNG is seeded when a demo is
 ## active so the card sequence is repeatable. State is set in _ready, before the first frame.
 
@@ -53,6 +63,29 @@ func _ready() -> void:
 			_fill_slots(_slots_view().get_slots().get_slot_count())
 			var state: CombatState = _combat().get_player().get_state()
 			state.damage_enemy(state.enemy_max_hp)
+		"telegraph":
+			_start_frozen_enemy_demo(0)
+			_combat().get_enemy().tick(_pattern().initial_pause_sec + 1.0)
+		"hit":
+			_start_frozen_enemy_demo(1)
+			_combat().get_player().get_state().add_armor(10.0)
+			_tick_to_resolution()
+		"miss":
+			_start_frozen_enemy_demo(1)
+			_fill_slots(_slots_view().get_slots().get_slot_count())
+			_slots_view().get_slots().get_card(0).type_id = "sidestep"
+			var controller: CardDragController = get_node(drag_controller_path) as CardDragController
+			if not controller.play_slot_card(0, 0):
+				push_warning("DemoArgs: demo sidestep failed")
+			_tick_to_resolution()
+		"defeat":
+			_start_frozen_enemy_demo(1)
+			var state: CombatState = _combat().get_player().get_state()
+			state.damage_player(state.player_max_hp)
+		"victory":
+			_start_frozen_enemy_demo(1)
+			var state: CombatState = _combat().get_player().get_state()
+			state.damage_enemy(state.enemy_max_hp)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 
@@ -70,6 +103,25 @@ func _slots_view() -> HoldSlotsView:
 
 func _combat() -> CombatView:
 	return get_node(combat_view_path) as CombatView
+
+
+func _pattern() -> EnemyPatternConfig:
+	return _combat().get_enemy().get_config()
+
+
+# Freezes time and puts the player in [param lane]; slots are filled for context.
+func _start_frozen_enemy_demo(lane: int) -> void:
+	_combat().freeze_recovery = true
+	_combat().get_player().get_state().set_player_lane(lane)
+	if _mode != "miss":
+		_fill_slots(_slots_view().get_slots().get_slot_count())
+
+
+# Ticks through the first telegraph and its resolution (no extra time left over).
+func _tick_to_resolution() -> void:
+	var enemy: EnemyLogic = _combat().get_enemy()
+	enemy.tick(_pattern().initial_pause_sec)
+	enemy.tick(_pattern().attacks[0].telegraph_sec)
 
 
 # Fills every slot, then plays slot 0 (forced to [param type_id]) through the real play path.

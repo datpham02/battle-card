@@ -1,7 +1,7 @@
 class_name HoldSlotsConfig
 extends RefCounted
 ## Tunable hold-slot and drag data, loaded from assets/data/hold_slots.json.
-## Pixel values are in reference viewport pixels (720x1280, scaled by canvas_items stretch).
+## Pixel values are in reference viewport pixels (1280x720, scaled by canvas_items stretch).
 ## Schema: assets/data/schema.md. Implements: Story 002.
 
 const DEFAULT_PATH: String = "res://assets/data/hold_slots.json"

@@ -9,6 +9,8 @@ extends Node2D
 ## slot is full) it is handed back and resumes from its true belt position.
 ## Slot card: released over the arena while CardPlayer.can_play it is played (effect now,
 ## slot emptied, recovery starts); anywhere else, or during recovery, it snaps back to its slot.
+## A lane-shift card (Sidestep) must instead be dropped on a lane column ADJACENT to the
+## player's row; that row becomes the destination and is highlighted while hovered.
 ##
 ## Input: mouse events only. With the project default
 ## input_devices/pointing/emulate_mouse_from_touch = true (verified in the 4.6.3 class
@@ -123,9 +125,10 @@ func start_slot_drag(slot_index: int, pointer: Vector2) -> bool:
 ## Plays the card in slot [param slot_index] if the rules allow (no recovery, enemy alive):
 ## applies its effect, empties the slot. Returns false and changes nothing otherwise.
 ## Used by the arena drop and by dev capture code.
-func play_slot_card(slot_index: int) -> bool:
+## [param target_lane] is the destination for lane-shift cards (ignored by others).
+func play_slot_card(slot_index: int, target_lane: int = -1) -> bool:
 	var card: ConveyorCard = _slots_view.get_slots().get_card(slot_index)
-	if card == null or not _combat.get_player().play(card.type_id):
+	if card == null or not _combat.get_player().play(card.type_id, target_lane):
 		return false
 	_slots_view.remove_card(slot_index)
 	card_played.emit(card.type_id, slot_index)
@@ -139,7 +142,7 @@ func update_drag(pointer: Vector2) -> void:
 	var lift := Vector2(0.0, _slots_view.get_config().drag_lift_px)
 	_drag_node.global_position = pointer - _grab_offset - lift
 	if _drag_slot != -1:
-		_combat.set_drop_highlight(_can_play_here())
+		_update_play_highlight()
 		return
 	var index: int = _target_slot()
 	_slots_view.set_drop_highlight(index if _can_drop_on(index) else -1)
@@ -195,20 +198,38 @@ func _target_slot() -> int:
 	return _slots_view.slot_index_at(centre, _slots_view.get_config().drop_hit_padding_px)
 
 
-# True if the dragged slot card is over the arena and may be played now.
+# Lane row under the dragged card's centre, or -1 outside the lane area.
+func _drag_lane() -> int:
+	return _combat.get_lane_at(_drag_node.global_position + _drag_node.size * 0.5)
+
+
+# True if the dragged slot card is over a valid drop and may be played now.
 func _can_play_here() -> bool:
 	var card: ConveyorCard = _slots_view.get_slots().get_card(_drag_slot)
 	if card == null:
 		return false
 	var centre: Vector2 = _drag_node.global_position + _drag_node.size * 0.5
+	var lane: int = _drag_lane()
+	if _combat.get_player().is_lane_shift(card.type_id):
+		return lane != -1 and _combat.get_player().can_play(card.type_id, lane)
 	return _combat.get_arena_rect().has_point(centre) and _combat.get_player().can_play(card.type_id)
+
+
+# Arena highlight for ordinary cards, hovered-lane highlight for lane-shift cards.
+func _update_play_highlight() -> void:
+	var card: ConveyorCard = _slots_view.get_slots().get_card(_drag_slot)
+	var ok: bool = _can_play_here()
+	var shifts: bool = card != null and _combat.get_player().is_lane_shift(card.type_id)
+	_combat.set_drop_highlight(ok and not shifts)
+	_combat.set_lane_highlight(_drag_lane() if ok and shifts else -1)
 
 
 func _finish_slot_drag() -> void:
 	var index: int = _drag_slot
 	var play: bool = _can_play_here()
+	var lane: int = _drag_lane()
 	_clear_drag()
-	if play and play_slot_card(index):
+	if play and play_slot_card(index, lane):
 		return
 	_slots_view.relayout()
 	slot_card_returned.emit(index)
@@ -228,4 +249,5 @@ func _clear_drag() -> void:
 	_drag_slot = -1
 	_drag_node = null
 	_combat.set_drop_highlight(false)
+	_combat.set_lane_highlight(-1)
 	_slots_view.set_drop_highlight(-1)
