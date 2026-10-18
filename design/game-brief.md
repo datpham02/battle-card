@@ -7,7 +7,7 @@
 ## Core loop
 
 ### Sân và di chuyển
-- Hai lưới 3×3 đối mặt (bàn 6×3). Mỗi bên chỉ đi trong nửa sân của mình.
+- Hai lưới 3×3 đối mặt (bàn 6×3). Mỗi bên chỉ đi trong nửa sân của mình. **Kích thước và hình lưới là dữ liệu** (`side_cols`, `side_rows`, `missing_cells`): chữ nhật hoặc hình ghép từ ô vuông có ô khuyết (chữ thập, kim cương, có lỗ); hai bên luôn cùng hình, đối xứng qua vạch giữa; lục giác/tròn không làm. Nhãn chu vi sinh theo lưới (A/C có `side_cols` điểm, B/D có `side_rows` điểm). Mọi số cân bằng dưới đây là cho 3×3; lưới khác phải chỉnh lại.
 - **Nút di chuyển 4 hướng** ở góc dưới trái, mỗi lần bấm đi **một ô**, cooldown bước **0,45 s**. Bấm trong lúc cooldown thì **mất, không nhớ lệnh**. Thanh cooldown hiện dưới chân nhân vật.
 - Bước lên ô có điểm là nhặt, nên mỗi lần đi nhặt là tự khóa mình 0,45 s ở ô đó. Đây là rủi ro có chủ ý.
 
@@ -69,7 +69,7 @@
 | Cooldown bước người chơi / boss trận đầu | 0,45 s / 0,55 s | `combat.json`, `boss_brain.json` |
 | Nhịp rơi nền, tối đa trên sân, độ tươi | 1,8 s, 4, 7 s | `field_drops.json` |
 | Ngưỡng đói, hệ số bù | 4 s, ×0,6 | `field_drops.json` |
-| Tay tối đa | 4 | `field_drops.json` |
+| Tay tối đa (số ô tay) | 4 | `hold_slots.json` |
 | Vung cơ bản, vung mỗi ô | 0,2 s, 0,25 s | `cuts.json` |
 | Sát thương cơ bản mỗi ô | 6 (HP 100) | `cuts.json` |
 | Time scale menu, thời gian chọn | 0,2, 3 s | `skills.json` |

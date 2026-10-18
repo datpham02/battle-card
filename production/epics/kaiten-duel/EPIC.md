@@ -51,7 +51,7 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 003 | Dùng thẻ ra sân + recovery, đánh địch giả (v1) | Logic | Complete | N/A (minimal) |
 | 005 | Địch báo trước đòn trên 3 làn (v1) | Integration | Complete | N/A (minimal) |
 | 006 | Hai lưới 3×3, Step, đánh theo hình dạng tầm (refit; nền cho v3) | Logic | Complete | N/A (minimal) |
-| 007 | Nút di chuyển 4 hướng + điểm cắt rơi (gỡ băng chuyền, thẻ cũ) | UI | Ready | N/A (minimal) |
+| 007 | Nút di chuyển 4 hướng + điểm cắt rơi (gỡ băng chuyền, thẻ cũ) | UI | Complete | N/A (minimal) |
 | 008 | Hệ cắt của người chơi: 1 điểm, 2–4 điểm, menu kỹ năng | Logic | Ready | N/A (minimal) |
 | 009 | Boss đi nhặt và cắt, brain trọng số, ngắt đòn hai chiều | Integration | Ready | N/A (minimal) |
 | 010 | Bảng cân bằng cắt + Đốt, Ghim + boss học bằng bộ đếm | Logic | Ready | N/A (minimal) |

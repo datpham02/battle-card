@@ -1,0 +1,9 @@
+{
+	"spawn_interval_sec": 1.8,
+	"initial_delay_sec": 0.5,
+	"max_on_field": 4,
+	"freshness_sec": 7.0,
+	"hungry_after_sec": 4.0,
+	"hungry_interval_mult": 0.6,
+	"allow_drop_in_danger": true
+}

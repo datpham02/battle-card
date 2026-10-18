@@ -1,7 +1,7 @@
 # Story 007: Nút di chuyển 4 hướng + điểm cắt rơi trên ô (gỡ băng chuyền và thẻ cũ)
 
 > **Epic**: Kaiten Duel (v3)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: UI
 > **Estimate**: —
@@ -37,6 +37,7 @@
 - [ ] Hàng ô tay ở **góc dưới phải** hiển thị nhãn điểm (A1…), không còn tên thẻ; bàn cờ dùng phần chiều cao được giải phóng; không có gì chồng lên nhau ở 1280×720.
 - [ ] **Gỡ**: `ConveyorView`/`ConveyorBelt` khỏi cảnh chính và dữ liệu; thẻ Step, Guard, Strike, Cannon, Wide Slash và kéo-để-bước khỏi `CardDragController`; giáp khỏi HUD. Chạm vào ô tay ở story này chỉ **chọn/bỏ chọn** điểm (sáng viền), chưa cắt (Story 008).
 - [ ] Hệ điểm rơi có API cho một "người nhặt" thứ hai (boss, Story 009) với túi, nhịp và nửa sân riêng; chưa dùng ở story này (boss đứng yên).
+- [ ] **Kích thước và hình lưới đọc từ dữ liệu** (`combat.json`: `side_cols`, `side_rows`, `missing_cells`): một lớp `BoardGrid` trả lời mọi câu hỏi hình học (ô có thật không, thuộc bên nào, ô mỗi bên, ô xuất phát mặc định ở giữa, nhãn chu vi A/C theo cột và B/D theo hàng); không còn hằng số 3/6 nào trong code; ô khuyết là tường, không rơi điểm, lật gương sang bên boss. Nhãn trong `field_drops.json` bỏ, sinh từ lưới. Chứng minh bằng một lần chạy với lưới khác 3×3 (ví dụ 4×3 khuyết hai góc): bố cục tự co, demo vẫn đúng, ảnh giữ lại.
 - [ ] Ảnh chụp màn hình: bố cục mới với nút di chuyển và tay bên phải; vài điểm rơi với nhãn và độ tươi khác nhau; một điểm sắp ôi; tay đầy với điểm nằm lại; thanh cooldown bước đang chạy — giữ lại trong `production/qa/evidence/field-drops-dpad/`.
 
 ---
@@ -45,7 +46,7 @@
 
 - Logic điểm rơi là RefCounted (`FieldDrops`: túi xáo, nhịp, bù đói, độ tươi, nhặt), tiêm delta và RNG; một thể hiện cho mỗi phe với tham số riêng. View mỏng vẽ lên ô. Tái dùng RNG có seed từ `ConveyorBelt` rồi gỡ nó.
 - Di chuyển là lệnh vào `CombatState.set_player_cell` qua bộ cooldown riêng (RefCounted `MoveCooldown`); boss dùng cùng bộ với tham số riêng (Story 009). Nhặt là hệ quả của việc đổi ô (nghe tín hiệu `cell_changed`).
-- Dữ liệu: `assets/data/field_drops.json` (nhịp, tối đa trên sân, độ tươi, ngưỡng đói, hệ số bù, tay tối đa, cờ rơi dưới đường dao, danh sách nhãn); `combat_cards.json` đổi tên thành `combat.json` chỉ còn HP, cooldown bước, `max_tick_sec`, `feedback_sec`, ô xuất phát. Ghi `schema.md`. `hold_slots.json` giữ phần kích thước/padding.
+- Dữ liệu: `assets/data/field_drops.json` (nhịp, tối đa trên sân, độ tươi, ngưỡng đói, hệ số bù, cờ rơi dưới đường dao, danh sách nhãn; số ô tay vẫn ở `hold_slots.json`); `combat_cards.json` đổi tên thành `combat.json` chỉ còn HP, cooldown bước, `max_tick_sec`, `feedback_sec`, ô xuất phát. Ghi `schema.md`. `hold_slots.json` giữ phần kích thước/padding.
 - Thứ tự xử lý input (từ review Story 006): nút di chuyển là Control riêng, xử lý trước; chạm ô tay là chọn; giữ `tap_threshold_px`; không để hai node cùng xử lý một lần chạm.
 - Cập nhật hook `--demo=`; các demo dựa trên băng chuyền/Step/thẻ đánh sửa hoặc bỏ.
 - Story 006 còn `AttackShape`, `CardPlayer`, shapes trong dữ liệu: gỡ dữ liệu thẻ ở đây, để code `CardPlayer`/`AttackShape` lại cho Story 008 thay bằng `CutResolver`.
@@ -83,3 +84,14 @@
 
 - Depends on: Story 006
 - Unlocks: Story 008
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-18
+**Criteria**: 11/11 passing. The cooldown indicator is a ring around the unit (not a small bar under its feet) and the d-pad dims while on cooldown.
+**Deviations**: ADVISORY: arrow keys and WASD also step (desktop dev convenience, not in the story). ADVISORY: `AttackShape.resolve/hits` now take a `BoardGrid` first parameter; still unused until Story 008. Scope grew by the data-driven `BoardGrid` (`side_cols`, `side_rows`, `missing_cells`) requested mid-story.
+**Test Evidence**: UI: `production/qa/evidence/field-drops-dpad/01-08*.png` (all opened and checked; 07 = 4x3 grid with two missing corners, 08 = 6x6). Pointer/key behaviour (16 checks), shuffle-bag/drop-rate logic (20 checks) and BoardGrid (21 checks) were verified by scratch scripts that are not retained; no unit tests (waived at `qa.level: minimal`).
+**Code Review**: Skipped (solo mode).
+**Not verified**: touch input on a real device; the feel of the 0.45 s step cooldown (for playtest gate 3).
+**Open for Story 008**: a point refused because the hand was full is not auto-picked when the hand frees up (the player must step off and on); the FULL tag hides the player marker; label font on large grids is small.

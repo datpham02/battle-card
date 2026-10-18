@@ -1,19 +1,20 @@
 class_name HoldSlots
 extends RefCounted
-## Pure-logic hold slots: a fixed number of slots, each empty or holding one card.
-## No scene/node dependency. Does not know about the belt or dragging.
-## Implements: design/game-brief.md MVP feature 2 (Story 002).
+## Pure-logic hold slots: a fixed number of slots, each empty or holding one FieldPoint,
+## plus a selection set (Story 007; cutting comes in Story 008).
+## No scene/node dependency. Implements: design/game-brief.md MVP feature 2.
 
 ## Allowed slot count range (story AC: 3-4 slots).
 const MIN_SLOTS: int = 3
 const MAX_SLOTS: int = 4
 
-## Emitted after a card is placed into slot [param index].
-signal slot_filled(index: int, card: ConveyorCard)
-## Emitted after slot [param index] is emptied; [param card] is the card that left.
-signal slot_cleared(index: int, card: ConveyorCard)
+## Emitted after a point is placed into slot [param index].
+signal slot_filled(index: int, point: FieldPoint)
+## Emitted after slot [param index] is emptied; [param point] is the point that left.
+signal slot_cleared(index: int, point: FieldPoint)
 
-var _slots: Array[ConveyorCard] = []
+var _slots: Array[FieldPoint] = []
+var _selected: Dictionary = {} # slot index -> true
 
 
 ## [param slot_count] is clamped to [constant MIN_SLOTS]..[constant MAX_SLOTS].
@@ -26,32 +27,32 @@ func get_slot_count() -> int:
 	return _slots.size()
 
 
-## Number of slots currently holding a card.
+## Number of slots currently holding a point.
 func get_occupied_count() -> int:
 	var count: int = 0
-	for card: ConveyorCard in _slots:
-		if card != null:
+	for point: FieldPoint in _slots:
+		if point != null:
 			count += 1
 	return count
 
 
-## True when every slot holds a card.
+## True when every slot holds a point.
 func is_full() -> bool:
 	return get_occupied_count() == _slots.size()
 
 
-## True when no slot holds a card.
+## True when no slot holds a point.
 func is_empty() -> bool:
 	return get_occupied_count() == 0
 
 
-## True if [param index] is a valid slot with no card in it.
+## True if [param index] is a valid slot with no point in it.
 func is_slot_free(index: int) -> bool:
 	return index >= 0 and index < _slots.size() and _slots[index] == null
 
 
-## Card in slot [param index], or null if empty or out of range.
-func get_card(index: int) -> ConveyorCard:
+## Point in slot [param index], or null if empty or out of range.
+func get_point(index: int) -> FieldPoint:
 	if index < 0 or index >= _slots.size():
 		return null
 	return _slots[index]
@@ -65,7 +66,7 @@ func find_free_slot() -> int:
 	return -1
 
 
-## True if a card could be placed: into [param slot_index], or into any free slot
+## True if a point could be placed: into [param slot_index], or into any free slot
 ## when [param slot_index] is -1.
 func can_place(slot_index: int = -1) -> bool:
 	if slot_index == -1:
@@ -73,24 +74,56 @@ func can_place(slot_index: int = -1) -> bool:
 	return is_slot_free(slot_index)
 
 
-## Places [param card] into [param slot_index] (or the first free slot when -1).
-## Returns the slot index used, or -1 if the card is null or the slot is not free.
-func place(card: ConveyorCard, slot_index: int = -1) -> int:
-	if card == null:
+## Places [param point] into [param slot_index] (or the first free slot when -1).
+## Returns the slot index used, or -1 if the point is null or the slot is not free.
+func place(point: FieldPoint, slot_index: int = -1) -> int:
+	if point == null:
 		return -1
 	var index: int = find_free_slot() if slot_index == -1 else slot_index
 	if not is_slot_free(index):
 		return -1
-	_slots[index] = card
-	slot_filled.emit(index, card)
+	_slots[index] = point
+	slot_filled.emit(index, point)
 	return index
 
 
-## Empties slot [param index] and returns its card (null if it was empty or invalid).
-func remove(index: int) -> ConveyorCard:
-	var card: ConveyorCard = get_card(index)
-	if card == null:
+## Places [param point] into the first free slot. Returns its index, or -1 when full.
+func place_in_first_free(point: FieldPoint) -> int:
+	return place(point, -1)
+
+
+## Empties slot [param index] (clearing its selection) and returns its point
+## (null if it was empty or invalid).
+func remove(index: int) -> FieldPoint:
+	var point: FieldPoint = get_point(index)
+	if point == null:
 		return null
 	_slots[index] = null
-	slot_cleared.emit(index, card)
-	return card
+	_selected.erase(index)
+	slot_cleared.emit(index, point)
+	return point
+
+
+## Toggles selection of an occupied slot. Returns the new state (false for empty slots).
+func toggle_selected(index: int) -> bool:
+	if get_point(index) == null:
+		return false
+	if _selected.has(index):
+		_selected.erase(index)
+		return false
+	_selected[index] = true
+	return true
+
+
+## True when slot [param index] is selected.
+func is_selected(index: int) -> bool:
+	return _selected.has(index)
+
+
+## Selected slot indices in ascending order.
+func get_selected_indices() -> Array[int]:
+	var result: Array[int] = []
+	for i: int in _slots.size():
+		if _selected.has(i):
+			result.append(i)
+	return result

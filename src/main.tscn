@@ -1,27 +1,30 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
-[ext_resource type="Script" path="res://src/conveyor/conveyor_view.gd" id="2_view"]
-[ext_resource type="Script" path="res://src/hold/hold_slots_view.gd" id="3_slots"]
-[ext_resource type="Script" path="res://src/drag/card_drag_controller.gd" id="4_drag"]
-[ext_resource type="Script" path="res://src/dev/demo_args.gd" id="5_demo"]
-
-[ext_resource type="Script" path="res://src/combat/combat_view.gd" id="6_combat"]
+[ext_resource type="Script" path="res://src/combat/combat_view.gd" id="2_combat"]
+[ext_resource type="Script" path="res://src/drops/field_drops_view.gd" id="3_drops"]
+[ext_resource type="Script" path="res://src/hold/hold_slots_view.gd" id="4_slots"]
+[ext_resource type="Script" path="res://src/combat/dpad_view.gd" id="5_dpad"]
+[ext_resource type="Script" path="res://src/hold/hand_input_controller.gd" id="6_hand"]
+[ext_resource type="Script" path="res://src/dev/demo_args.gd" id="7_demo"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
 
 [node name="CombatView" type="Node2D" parent="."]
-script = ExtResource("6_combat")
+script = ExtResource("2_combat")
 
-[node name="ConveyorView" type="Node2D" parent="."]
-script = ExtResource("2_view")
+[node name="FieldDropsView" type="Node2D" parent="."]
+script = ExtResource("3_drops")
 
 [node name="HoldSlotsView" type="Node2D" parent="."]
-script = ExtResource("3_slots")
+script = ExtResource("4_slots")
 
-[node name="CardDragController" type="Node2D" parent="."]
-script = ExtResource("4_drag")
+[node name="DPadView" type="Node2D" parent="."]
+script = ExtResource("5_dpad")
+
+[node name="HandInputController" type="Node2D" parent="."]
+script = ExtResource("6_hand")
 
 [node name="DemoArgs" type="Node" parent="."]
-script = ExtResource("5_demo")
+script = ExtResource("7_demo")

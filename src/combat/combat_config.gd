@@ -1,40 +1,31 @@
 class_name CombatConfig
 extends RefCounted
-## Card effects and combat start values, loaded from assets/data/combat_cards.json.
-## Schema: assets/data/schema.md. Implements: Story 003.
+## Combat start values, timing and the board shape, loaded from assets/data/combat.json.
+## Schema: assets/data/schema.md. Implements: Story 003, Story 007.
 
-const DEFAULT_PATH: String = "res://assets/data/combat_cards.json"
-const EFFECT_ATTACK: String = "attack"
-const EFFECT_SHIELD: String = "shield"
-const EFFECT_MOVE: String = "move"
-
-
-## One card's placeholder effect.
-class CardEffect:
-	extends RefCounted
-	## EFFECT_ATTACK, EFFECT_SHIELD or EFFECT_MOVE (step to an adjacent own-half cell).
-	var effect: String = ""
-	## Damage or armor points.
-	var amount: float = 0.0
-	## Play lock in seconds.
-	var recovery_sec: float = 0.0
-	## Name of the shape preset (empty for move cards).
-	var shape_name: String = ""
-	## Resolved shape offsets relative to the attacker (+dx = toward the opponent).
-	var shape: Array[Vector2i] = []
-
+const DEFAULT_PATH: String = "res://assets/data/combat.json"
+## Built-in fallback board (columns / rows of ONE half), used only when the JSON omits them.
+const FALLBACK_SIDE_COLS: int = 3
+const FALLBACK_SIDE_ROWS: int = 3
 
 var player_max_hp: float = 100.0
 var enemy_max_hp: float = 100.0
-## Board cell each unit starts on (validated against its half by CombatState).
-var player_start_cell: Vector2i = Vector2i(1, 1)
-var enemy_start_cell: Vector2i = Vector2i(4, 1)
+## Columns / rows of one half of the board.
+var side_cols: int = FALLBACK_SIDE_COLS
+var side_rows: int = FALLBACK_SIDE_ROWS
+## Holes in side coordinates (mirrored to the other half by BoardGrid).
+var missing_cells: Array[Vector2i] = []
+## The board built from the three values above (never null after construction).
+var grid: BoardGrid = BoardGrid.new(FALLBACK_SIDE_COLS, FALLBACK_SIDE_ROWS)
+## Optional start-cell overrides (board cells). BoardGrid.NO_CELL = use the grid's default.
+var player_start_cell: Vector2i = BoardGrid.NO_CELL
+var enemy_start_cell: Vector2i = BoardGrid.NO_CELL
 ## Cap (s) on one frame's time step so a frame hitch cannot skip logic windows.
 var max_tick_sec: float = 0.1
 ## Seconds the HIT / MISS feedback stays on screen.
 var feedback_sec: float = 1.0
-var _shapes: Dictionary = {} # name -> Array[Vector2i]
-var _effects: Dictionary = {} # type_id -> CardEffect
+## Seconds the player must wait between steps.
+var player_step_cooldown_sec: float = 0.45
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -54,55 +45,45 @@ static func from_json_text(text: String) -> CombatConfig:
 	return from_dictionary(parsed as Dictionary)
 
 
-## Builds a config from a dictionary; missing keys keep defaults.
+## Builds a config from a dictionary; missing keys keep defaults. Start cells that are not
+## real cells of the unit's half are dropped (warning) so the grid default is used.
 static func from_dictionary(data: Dictionary) -> CombatConfig:
 	var config := CombatConfig.new()
 	config.player_max_hp = maxf(float(data.get("player_max_hp", config.player_max_hp)), 1.0)
 	config.enemy_max_hp = maxf(float(data.get("enemy_max_hp", config.enemy_max_hp)), 1.0)
-	config.player_start_cell = _parse_cell(data.get("player_start_cell"), config.player_start_cell)
-	config.enemy_start_cell = _parse_cell(data.get("enemy_start_cell"), config.enemy_start_cell)
+	config.side_cols = int(data.get("side_cols", config.side_cols))
+	config.side_rows = int(data.get("side_rows", config.side_rows))
+	config.missing_cells = _parse_cells(data.get("missing_cells"))
+	config.grid = BoardGrid.new(config.side_cols, config.side_rows, config.missing_cells)
+	config.player_start_cell = _parse_cell(data.get("player_start_cell"), BoardGrid.NO_CELL)
+	config.enemy_start_cell = _parse_cell(data.get("enemy_start_cell"), BoardGrid.NO_CELL)
+	config._validate_start_cells()
 	config.max_tick_sec = maxf(float(data.get("max_tick_sec", config.max_tick_sec)), 0.001)
 	config.feedback_sec = maxf(float(data.get("feedback_sec", config.feedback_sec)), 0.0)
-	var shapes: Variant = data.get("shapes", {})
-	if typeof(shapes) == TYPE_DICTIONARY:
-		for shape_id: Variant in shapes:
-			config._shapes[str(shape_id)] = _parse_offsets(shapes[shape_id])
-	var cards: Variant = data.get("cards", {})
-	if typeof(cards) != TYPE_DICTIONARY:
-		return config
-	var table: Dictionary = cards as Dictionary
-	for id: Variant in table:
-		if typeof(table[id]) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = table[id] as Dictionary
-		var kind: String = str(entry.get("effect", ""))
-		if kind != EFFECT_ATTACK and kind != EFFECT_SHIELD and kind != EFFECT_MOVE:
-			push_warning("CombatConfig: card '%s' has unknown effect '%s'" % [id, kind])
-			continue
-		var effect := CardEffect.new()
-		effect.effect = kind
-		effect.amount = maxf(float(entry.get("amount", 0.0)), 0.0)
-		effect.recovery_sec = maxf(float(entry.get("recovery_sec", 0.0)), 0.0)
-		if kind != EFFECT_MOVE:
-			effect.shape_name = str(entry.get("shape", "self"))
-			if not config._shapes.has(effect.shape_name):
-				push_warning("CombatConfig: card '%s' has unknown shape '%s'" % [id, effect.shape_name])
-				continue
-			effect.shape = config._shapes[effect.shape_name]
-		config._effects[str(id)] = effect
+	config.player_step_cooldown_sec = maxf(
+		float(data.get("player_step_cooldown_sec", config.player_step_cooldown_sec)), 0.0
+	)
 	return config
 
 
-## Effect for card type [param type_id], or null if the card has none.
-func get_effect(type_id: String) -> CardEffect:
-	return _effects.get(type_id, null) as CardEffect
+## Replaces the board (dev / capture override). Start-cell overrides were authored for the
+## data board, so they are cleared and the new grid's default cells are used.
+func use_grid(new_grid: BoardGrid) -> void:
+	grid = new_grid
+	side_cols = new_grid.side_cols
+	side_rows = new_grid.side_rows
+	missing_cells = new_grid.missing_side_cells()
+	player_start_cell = BoardGrid.NO_CELL
+	enemy_start_cell = BoardGrid.NO_CELL
 
 
-## Shape preset [param shape_name] as offsets, or an empty array if unknown.
-func get_shape(shape_name: String) -> Array[Vector2i]:
-	var shape: Array[Vector2i] = []
-	shape.assign(_shapes.get(shape_name, []))
-	return shape
+func _validate_start_cells() -> void:
+	if player_start_cell != BoardGrid.NO_CELL and not grid.is_player_cell(player_start_cell):
+		push_warning("CombatConfig: player_start_cell %s is not a cell of the player's half, using the default" % player_start_cell)
+		player_start_cell = BoardGrid.NO_CELL
+	if enemy_start_cell != BoardGrid.NO_CELL and not grid.is_enemy_cell(enemy_start_cell):
+		push_warning("CombatConfig: enemy_start_cell %s is not a cell of the boss's half, using the default" % enemy_start_cell)
+		enemy_start_cell = BoardGrid.NO_CELL
 
 
 static func _parse_cell(raw: Variant, fallback: Vector2i) -> Vector2i:
@@ -111,11 +92,14 @@ static func _parse_cell(raw: Variant, fallback: Vector2i) -> Vector2i:
 	return fallback
 
 
-static func _parse_offsets(raw: Variant) -> Array[Vector2i]:
-	var offsets: Array[Vector2i] = []
+static func _parse_cells(raw: Variant) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
 	if typeof(raw) != TYPE_ARRAY:
-		return offsets
-	for pair: Variant in raw as Array:
-		if typeof(pair) == TYPE_ARRAY and (pair as Array).size() == 2:
-			offsets.append(Vector2i(int((pair as Array)[0]), int((pair as Array)[1])))
-	return offsets
+		return cells
+	for item: Variant in raw as Array:
+		var cell: Vector2i = _parse_cell(item, BoardGrid.NO_CELL)
+		if cell == BoardGrid.NO_CELL:
+			push_warning("CombatConfig: bad missing_cells entry %s, ignored" % str(item))
+		else:
+			cells.append(cell)
+	return cells
