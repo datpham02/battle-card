@@ -4,10 +4,10 @@
 	"belt_length": 1000.0,
 	"prewarm_sec": 6.0,
 	"cards": [
+		{"id": "step", "name": "Step", "color": "4ec27a", "weight": 3},
+		{"id": "guard", "name": "Guard", "color": "4e8be8", "weight": 2},
 		{"id": "strike", "name": "Strike", "color": "e8554e", "weight": 3},
-		{"id": "guard", "name": "Guard", "color": "4e8be8", "weight": 3},
-		{"id": "dash_strike", "name": "Dash Strike", "color": "f0a030", "weight": 2},
-		{"id": "sidestep", "name": "Sidestep", "color": "4ec27a", "weight": 2},
-		{"id": "knockback", "name": "Knockback", "color": "a65ee0", "weight": 1}
+		{"id": "cannon", "name": "Cannon", "color": "f0a030", "weight": 2},
+		{"id": "wide_slash", "name": "Wide Slash", "color": "a65ee0", "weight": 2}
 	]
 }

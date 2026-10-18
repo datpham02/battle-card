@@ -1,16 +1,24 @@
 class_name CardDragController
 extends Node2D
-## Press-and-drag of belt cards into hold slots (Story 002) and of slotted cards onto
-## the arena to play them (Story 003). Input only; rules live elsewhere (ConveyorBelt owns
+## Press-and-drag of belt cards into hold slots (Story 002) and use of slotted cards on
+## the board (Stories 003, 006). Input only; rules live elsewhere (ConveyorBelt owns
 ## card positions, HoldSlots owns slot occupancy, CardPlayer owns play/recovery rules).
 ##
 ## State machine: IDLE --press on a belt card or a slotted card--> DRAGGING --release--> IDLE.
 ## Belt card: released over a free slot it moves belt -> slot; anywhere else (or when every
 ## slot is full) it is handed back and resumes from its true belt position.
-## Slot card: released over the arena while CardPlayer.can_play it is played (effect now,
-## slot emptied, recovery starts); anywhere else, or during recovery, it snaps back to its slot.
-## A lane-shift card (Sidestep) must instead be dropped on a lane column ADJACENT to the
-## player's row; that row becomes the destination and is highlighted while hovered.
+## Slot card, MOVE type (Step): the card is dragged; released over a board cell ADJACENT to
+## the player (own half) while CardPlayer.can_play it steps there; valid cells are
+## highlighted while dragging; anywhere else it snaps back to its slot.
+## Slot card, other types (attack / shield): TAP-TO-USE. Press and release without moving
+## beyond hold_slots.json tap_threshold_px uses it. While pressed, an attack card previews
+## its shape on the board, but only while CardPlayer.can_play is true (no preview during
+## recovery or once a unit is dead). If the pointer moves beyond the threshold the card
+## follows it; releasing back over its own slot uses it, releasing anywhere else cancels
+## (the card stays in its slot) and the preview is hidden as soon as the pointer leaves
+## the slot rect, so the cancel is visible before release.
+## A drag whose node was freed, or whose slot card changed underneath it, is aborted
+## cleanly (state cleared, highlights/preview removed) on the next input or update.
 ##
 ## Input: mouse events only. With the project default
 ## input_devices/pointing/emulate_mouse_from_touch = true (verified in the 4.6.3 class
@@ -25,9 +33,9 @@ signal card_drag_started(uid: int)
 signal card_placed(uid: int, slot_index: int)
 ## Emitted when card [param uid] went back to the belt (invalid drop, full, or cancelled).
 signal card_returned(uid: int)
-## Emitted when the card in slot [param slot_index] was played onto the arena.
+## Emitted when the card in slot [param slot_index] was played.
 signal card_played(type_id: String, slot_index: int)
-## Emitted when a slot card was dropped without being played (it snapped back to its slot).
+## Emitted when a slot card was released without being played (it stays in its slot).
 signal slot_card_returned(slot_index: int)
 
 @export var conveyor_view_path: NodePath = NodePath("../ConveyorView")
@@ -37,10 +45,14 @@ signal slot_card_returned(slot_index: int)
 var _conveyor: ConveyorView
 var _slots_view: HoldSlotsView
 var _combat: CombatView
-var _drag_slot: int = -1 # >= 0 while a slotted card is dragged
+var _drag_slot: int = -1 # >= 0 while a slotted card is pressed/dragged
 var _drag_uid: int = -1
 var _drag_node: Control = null
 var _grab_offset: Vector2 = Vector2.ZERO
+var _press_pos: Vector2 = Vector2.ZERO
+var _pointer: Vector2 = Vector2.ZERO
+var _moved: bool = false # slot card: pointer travelled beyond the tap threshold
+var _drag_card_uid: int = 0 # slot card: uid of the card held when the press began
 
 
 func _ready() -> void:
@@ -54,6 +66,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	_abort_if_stale()
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 		if button.button_index != MOUSE_BUTTON_LEFT:
@@ -70,6 +83,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					if slot != -1 and start_slot_drag(slot, button.position):
 						get_viewport().set_input_as_handled()
 		elif is_dragging():
+			update_drag(button.position)
 			finish_drag()
 			get_viewport().set_input_as_handled()
 	elif event is InputEventMouseMotion and is_dragging():
@@ -83,9 +97,9 @@ func _notification(what: int) -> void:
 		cancel_drag()
 
 
-## True while a card is being dragged.
+## True while a card is being dragged or a slot card is pressed (and its node still exists).
 func is_dragging() -> bool:
-	return _drag_node != null
+	return _drag_node != null and is_instance_valid(_drag_node)
 
 
 ## Begins dragging card [param uid] with the pointer at [param pointer]. The card keeps
@@ -105,52 +119,66 @@ func start_drag(uid: int, pointer: Vector2) -> bool:
 	return true
 
 
-## Begins dragging the card held in slot [param slot_index] (to play it). Returns false
-## if the slot is empty or a drag is active. The card stays registered in the slot until
-## it is actually played.
+## Presses the card held in slot [param slot_index]. A move card follows the pointer at
+## once; any other card stays put until the pointer passes the tap threshold, and an
+## attack card shows its shape preview. Returns false if the slot is empty or a drag is
+## active. The card stays registered in the slot until it is actually played.
 func start_slot_drag(slot_index: int, pointer: Vector2) -> bool:
 	if is_dragging():
 		return false
 	var node: Control = _slots_view.get_slot_node(slot_index)
 	if node == null:
 		return false
+	var card: ConveyorCard = _slots_view.get_slots().get_card(slot_index)
 	_drag_slot = slot_index
+	_drag_card_uid = card.uid if card != null else 0
 	_drag_node = node
-	_drag_node.z_index = 10
 	_grab_offset = pointer - node.global_position
+	_press_pos = pointer
+	_pointer = pointer
+	_moved = false
 	update_drag(pointer)
 	return true
 
 
-## Plays the card in slot [param slot_index] if the rules allow (no recovery, enemy alive):
-## applies its effect, empties the slot. Returns false and changes nothing otherwise.
-## Used by the arena drop and by dev capture code.
-## [param target_lane] is the destination for lane-shift cards (ignored by others).
-func play_slot_card(slot_index: int, target_lane: int = -1) -> bool:
+## Plays the card in slot [param slot_index] if the rules allow (no recovery, enemy alive,
+## valid step cell): applies its effect, empties the slot. Returns false and changes
+## nothing otherwise. Used by tap/drop and by dev capture code.
+## [param target_cell] is the destination for move cards (ignored by others).
+func play_slot_card(slot_index: int, target_cell: Vector2i = CardPlayer.NO_CELL) -> bool:
 	var card: ConveyorCard = _slots_view.get_slots().get_card(slot_index)
-	if card == null or not _combat.get_player().play(card.type_id, target_lane):
+	if card == null or not _combat.get_player().play(card.type_id, target_cell):
 		return false
 	_slots_view.remove_card(slot_index)
 	card_played.emit(card.type_id, slot_index)
 	return true
 
 
-## Moves the dragged card to follow [param pointer] and updates the drop highlight.
+## Moves the dragged card to follow [param pointer] and updates highlights/preview.
 func update_drag(pointer: Vector2) -> void:
+	_abort_if_stale()
 	if not is_dragging():
 		return
-	var lift := Vector2(0.0, _slots_view.get_config().drag_lift_px)
-	_drag_node.global_position = pointer - _grab_offset - lift
+	_pointer = pointer
+	var cfg: HoldSlotsConfig = _slots_view.get_config()
 	if _drag_slot != -1:
-		_update_play_highlight()
+		if pointer.distance_to(_press_pos) > cfg.tap_threshold_px:
+			_moved = true
+		if _moved or _is_move_card():
+			_drag_node.z_index = 10
+			_drag_node.global_position = pointer - _grab_offset - Vector2(0.0, cfg.drag_lift_px)
+		_update_slot_feedback()
 		return
+	_drag_node.global_position = pointer - _grab_offset - Vector2(0.0, cfg.drag_lift_px)
 	var index: int = _target_slot()
 	_slots_view.set_drop_highlight(index if _can_drop_on(index) else -1)
 
 
-## Ends the drag at the card's current position: place it in a free slot under it,
-## otherwise return it to the belt. Returns the slot index used, or -1 if returned.
+## Ends the drag at the current position: a belt card is placed in a free slot under it
+## (else returned to the belt); a slot card is used or cancelled per the rules above.
+## Returns the slot index used for a belt card, or -1.
 func finish_drag() -> int:
+	_abort_if_stale()
 	if not is_dragging():
 		return -1
 	if _drag_slot != -1:
@@ -173,7 +201,7 @@ func finish_drag() -> int:
 	return placed
 
 
-## Aborts the drag and returns the card to the belt.
+## Aborts the drag and returns the card to the belt / its slot.
 func cancel_drag() -> void:
 	if not is_dragging():
 		return
@@ -198,41 +226,96 @@ func _target_slot() -> int:
 	return _slots_view.slot_index_at(centre, _slots_view.get_config().drop_hit_padding_px)
 
 
-# Lane row under the dragged card's centre, or -1 outside the lane area.
-func _drag_lane() -> int:
-	return _combat.get_lane_at(_drag_node.global_position + _drag_node.size * 0.5)
-
-
-# True if the dragged slot card is over a valid drop and may be played now.
-func _can_play_here() -> bool:
+func _slot_type() -> String:
 	var card: ConveyorCard = _slots_view.get_slots().get_card(_drag_slot)
-	if card == null:
-		return false
-	var centre: Vector2 = _drag_node.global_position + _drag_node.size * 0.5
-	var lane: int = _drag_lane()
-	if _combat.get_player().is_lane_shift(card.type_id):
-		return lane != -1 and _combat.get_player().can_play(card.type_id, lane)
-	return _combat.get_arena_rect().has_point(centre) and _combat.get_player().can_play(card.type_id)
+	return "" if card == null else card.type_id
 
 
-# Arena highlight for ordinary cards, hovered-lane highlight for lane-shift cards.
-func _update_play_highlight() -> void:
-	var card: ConveyorCard = _slots_view.get_slots().get_card(_drag_slot)
-	var ok: bool = _can_play_here()
-	var shifts: bool = card != null and _combat.get_player().is_lane_shift(card.type_id)
-	_combat.set_drop_highlight(ok and not shifts)
-	_combat.set_lane_highlight(_drag_lane() if ok and shifts else -1)
+func _is_move_card() -> bool:
+	return _combat.get_player().is_move(_slot_type())
 
 
+# Board cell under the dragged card's centre (Vector2i(-1,-1) off the board).
+func _drag_cell() -> Vector2i:
+	return _combat.get_cell_at(_drag_node.global_position + _drag_node.size * 0.5)
+
+
+# Valid step destinations: the 4 neighbours of the player inside its own half.
+func _step_cells() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var player: CardPlayer = _combat.get_player()
+	var origin: Vector2i = player.get_state().player_cell
+	for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if player.is_valid_step(origin + d):
+			cells.append(origin + d)
+	return cells
+
+
+# True while the pressed slot card still counts as "over its own slot": not moved beyond
+# the tap threshold, or the pointer is inside the slot rect grown by the drop padding.
+func _over_own_slot() -> bool:
+	if not _moved:
+		return true
+	var padding: float = _slots_view.get_config().drop_hit_padding_px
+	return _slots_view.get_slot_rect(_drag_slot).grow(padding).has_point(_pointer)
+
+
+# Step cards highlight valid cells (and the hovered one). Attack cards preview the shape
+# only while playable (no lock, units alive) and still over their slot; otherwise no preview.
+func _update_slot_feedback() -> void:
+	var player: CardPlayer = _combat.get_player()
+	var type_id: String = _slot_type()
+	if player.is_move(type_id):
+		var cell: Vector2i = _drag_cell()
+		var hover: Vector2i = cell if player.can_play(type_id, cell) else CardPlayer.NO_CELL
+		_combat.set_step_targets(_step_cells(), hover)
+	elif player.is_attack(type_id) and player.can_play(type_id) and _over_own_slot():
+		_combat.set_preview(player.shape_cells(type_id))
+	else:
+		_combat.clear_preview()
+
+
+# Tap or release back over the own slot uses a non-move card; a move card needs a valid cell.
 func _finish_slot_drag() -> void:
 	var index: int = _drag_slot
-	var play: bool = _can_play_here()
-	var lane: int = _drag_lane()
+	var type_id: String = _slot_type()
+	var use: bool = false
+	var cell: Vector2i = CardPlayer.NO_CELL
+	if _is_move_card():
+		cell = _drag_cell()
+		use = _combat.get_player().can_play(type_id, cell)
+	else:
+		use = _over_own_slot()
 	_clear_drag()
-	if play and play_slot_card(index, lane):
+	if use and play_slot_card(index, cell):
 		return
 	_slots_view.relayout()
 	slot_card_returned.emit(index)
+
+
+# A press/drag is stale if its node was freed, or (slot card) the slot now holds a
+# different card or none. Aborts it: state cleared, highlights/preview removed, the
+# matching "returned" signal emitted. Belt side goes through end_card_drag (safe for a
+# uid that no longer exists).
+func _abort_if_stale() -> void:
+	if _drag_node == null:
+		return
+	var stale: bool = not is_instance_valid(_drag_node)
+	if not stale and _drag_slot != -1:
+		var card: ConveyorCard = _slots_view.get_slots().get_card(_drag_slot)
+		stale = card == null or card.uid != _drag_card_uid
+	if not stale:
+		return
+	var slot: int = _drag_slot
+	var uid: int = _drag_uid
+	_drag_node = null # never touch a freed node
+	_clear_drag()
+	if slot != -1:
+		_slots_view.relayout()
+		slot_card_returned.emit(slot)
+	else:
+		_conveyor.end_card_drag(uid)
+		card_returned.emit(uid)
 
 
 func _return_slot_card() -> void:
@@ -243,11 +326,13 @@ func _return_slot_card() -> void:
 
 
 func _clear_drag() -> void:
-	if _drag_node != null and _drag_slot != -1:
+	if _drag_slot != -1 and _drag_node != null and is_instance_valid(_drag_node):
 		_drag_node.z_index = 0
 	_drag_uid = -1
 	_drag_slot = -1
+	_drag_card_uid = 0
 	_drag_node = null
-	_combat.set_drop_highlight(false)
-	_combat.set_lane_highlight(-1)
+	_moved = false
+	_combat.set_step_targets([] as Array[Vector2i])
+	_combat.clear_preview()
 	_slots_view.set_drop_highlight(-1)

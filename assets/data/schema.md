@@ -30,42 +30,30 @@ scaled by the `canvas_items` stretch mode). All keys are read by code in `src/`.
 | `drag_pick_padding_px` | number >= 0 | px | Extra margin around a belt card in which a press still picks it up (thumb tolerance) | 12.0 |
 | `drop_hit_padding_px` | number >= 0 | px | Extra margin around a slot in which a drop counts as on that slot | 16.0 |
 | `drag_lift_px` | number >= 0 | px | How far above the pointer the dragged card is held, so the thumb does not hide it | 56.0 |
+| `tap_threshold_px` | number >= 0 | px | Pointer travel on a slot card below which press + release counts as a tap (uses a non-Step card); beyond it the card follows the pointer and releasing outside its slot cancels (Story 006) | 12.0 |
 
 ## combat_cards.json  (read by `src/combat/combat_config.gd`)
 
-Placeholder card effects and combat start values (Story 003; the full card set is Story 006).
+Card effects, attack shapes, combat start values and timing caps (Stories 003, 006). The board is 6 columns x 3 rows, cell = `[col, row]`; columns 0-2 are the player's half, 3-5 the boss's; start cells come from `player_start_cell` / `enemy_start_cell`.
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
 | `player_max_hp` | number >= 1 | HP | Player starting and maximum HP | 100 |
 | `enemy_max_hp` | number >= 1 | HP | Dummy enemy starting and maximum HP | 100 |
+| `player_start_cell` | `[col, row]` | cell | Cell the player starts on; must be in the player's half (cols 0-2) or the default is used with a warning | `[1, 1]` |
+| `enemy_start_cell` | `[col, row]` | cell | Cell the boss starts on; must be in the boss's half (cols 3-5) or the default is used with a warning. Story 006 uses `[3, 1]` (front column) so melee shapes can reach the stationary boss; Story 008 moves it | `[4, 1]` |
+| `max_tick_sec` | number > 0 | seconds | Cap on one frame's time step for recovery and feedback timers, so a frame hitch cannot skip a timing window | 0.1 |
+| `feedback_sec` | number >= 0 | seconds | How long the HIT / MISS feedback stays on screen | 1.0 |
+| `shapes` | object | - | Named attack shape presets: name -> list of `[dx, dy]` offsets relative to the ATTACKER. `+dx` = toward the opponent (the resolver flips it for a unit facing -col), `+dy` = down a row. Cells off the board are ignored. An empty list (`self`) covers no cell | none |
 | `cards` | object | - | Map of card type id (same ids as `conveyor_belt.json`) to an effect entry. A card with no entry cannot be played | none |
 
 `cards.<id>` entries:
 
 | Key | Type | Unit | Meaning |
 |---|---|---|---|
-| `effect` | string | - | `attack` (subtracts enemy HP) or `shield` (adds player armor). Any other value: entry ignored |
-| `amount` | number >= 0 | HP / armor points | Damage dealt or armor gained |
+| `effect` | string | - | `attack` (damages the boss if its cell is in the shape), `shield` (adds player armor) or `move` (Step: drag onto an adjacent own-half cell). Any other value: entry ignored |
+| `shape` | string | - | Name from `shapes`. Used by `attack` and `shield`; default `self`; an unknown name ignores the entry. Not used by `move` |
+| `amount` | number >= 0 | HP / armor points | Damage dealt or armor gained (ignored by `move`) |
 | `recovery_sec` | number >= 0 | seconds | Time the player cannot play another card after this one. Belt flow and belt-to-slot picking are unaffected |
-| `lane_shift` | boolean, optional (default false) | - | If true, playing the card also moves the player to an adjacent lane. The destination is the lane column the card is dropped on; it must be adjacent to the player's current lane (Story 005; only `sidestep` uses it) |
 
-## enemy_patterns.json  (read by `src/combat/enemy_pattern_config.gd`)
-
-Fixed, cyclic enemy attack pattern (Story 005). No randomness: attacks run in list order and repeat. Exactly one attack is telegraphed at a time. Lanes are numbered 0..2 left to right.
-
-| Key | Type | Unit | Meaning | Default if missing |
-|---|---|---|---|---|
-| `initial_pause_sec` | number >= 0 | seconds | Idle time before the first attack is telegraphed | 1.0 |
-| `feedback_sec` | number >= 0 | seconds | How long the HIT / MISS feedback stays on screen | 1.0 |
-| `max_tick_sec` | number > 0 | seconds | Cap on one frame's time step for enemy, recovery and feedback timers, so a frame hitch cannot telegraph and resolve an attack in the same tick | 0.1 |
-| `attacks` | array, non-empty | - | Attack list, repeated in order. If empty the enemy stays idle | - |
-
-`attacks[]` entries:
-
-| Key | Type | Unit | Meaning |
-|---|---|---|---|
-| `target_lane` | integer 0..2 | lane index | Lane the attack hits (clamped) |
-| `damage` | number >= 0 | HP | Damage on hit; armor absorbs first, remainder hits HP |
-| `telegraph_sec` | number >= 0.1 | seconds | Warning countdown before the attack resolves |
-| `pause_after_sec` | number >= 0 | seconds | Idle time after resolution before the next telegraph |
+Preset shapes: `self` = `[]`; `front1` = the cell directly ahead; `row` = every cell ahead in the row; `wide` = the column directly ahead, all 3 rows.

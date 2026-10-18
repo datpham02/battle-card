@@ -1,12 +1,12 @@
 # Story 006: Hai lưới 3×3, thẻ Step, đánh theo hình dạng tầm (refit)
 
 > **Epic**: Kaiten Duel (v2)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-10-18
 
 ## Context
 
@@ -80,3 +80,13 @@
 
 - Depends on: Story 003, Story 005 (code nền; cả hai Complete)
 - Unlocks: Story 007, Story 008
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-18
+**Criteria**: 7/7 passing. Step rejection paths (drop on non-adjacent cell, own cell, boss grid, outside grid) and the `self` shape of Guard were checked by scratch pointer-event tests and are not covered by a retained screenshot.
+**Deviations**: ADVISORY: boss starts at cell (3,1), the front column of its grid, not the centre, so melee shapes can reach it (documented in `schema.md`). ADVISORY: `DEFAULT_ENEMY_CELL = (4,1)` remains a code fallback for invalid data.
+**Test Evidence**: UI/visual: `production/qa/evidence/grid-step-shaped-attacks/01–06*.png` (opened and checked). No unit test (waived at `qa.level: minimal`).
+**Code Review**: Skipped (solo mode). A read-only specialist review was done during implementation.
+**Superseded in part by design v3**: Step, Guard, range-shape cards and drag-to-step are removed in Stories 007–008. The grid, recovery lock, landscape layout and `CombatState` stay; `AttackShape` is the ancestor of `CutResolver`.

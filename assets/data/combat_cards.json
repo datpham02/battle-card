@@ -1,11 +1,21 @@
 {
 	"player_max_hp": 100,
 	"enemy_max_hp": 100,
+	"player_start_cell": [1, 1],
+	"enemy_start_cell": [3, 1],
+	"max_tick_sec": 0.1,
+	"feedback_sec": 1.0,
+	"shapes": {
+		"self": [],
+		"front1": [[1, 0]],
+		"row": [[1, 0], [2, 0], [3, 0], [4, 0], [5, 0]],
+		"wide": [[1, -1], [1, 0], [1, 1]]
+	},
 	"cards": {
-		"strike": {"effect": "attack", "amount": 10, "recovery_sec": 0.4},
-		"knockback": {"effect": "attack", "amount": 20, "recovery_sec": 0.8},
-		"dash_strike": {"effect": "attack", "amount": 40, "recovery_sec": 1.5},
-		"guard": {"effect": "shield", "amount": 20, "recovery_sec": 0.3},
-		"sidestep": {"effect": "shield", "amount": 10, "recovery_sec": 0.3, "lane_shift": true}
+		"step": {"effect": "move", "recovery_sec": 0.3},
+		"guard": {"effect": "shield", "shape": "self", "amount": 20, "recovery_sec": 0.3},
+		"strike": {"effect": "attack", "shape": "front1", "amount": 10, "recovery_sec": 0.4},
+		"cannon": {"effect": "attack", "shape": "row", "amount": 10, "recovery_sec": 1.0},
+		"wide_slash": {"effect": "attack", "shape": "wide", "amount": 20, "recovery_sec": 0.9}
 	}
 }

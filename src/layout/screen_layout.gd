@@ -1,7 +1,7 @@
 class_name ScreenLayout
 extends RefCounted
 ## Landscape screen layout (phone held sideways), top to bottom: arena area (HUD band +
-## 3 lane rows), hold-slot row, conveyor belt. Pure geometry (no nodes): every function
+## 6x3 board), hold-slot row, conveyor belt. Pure geometry (no nodes): every function
 ## takes the viewport size and returns rectangles in viewport (canvas) pixels. Ratios are
 ## layout constants, not tuning. Reference viewport is 1280x720 (see project.godot);
 ## everything scales from it. Vertical partition (shares of height): arena 0.03-0.51,
@@ -29,17 +29,20 @@ const SLOT_GAP_RATIO: float = 0.02
 const SLOT_SIDE_GAP_RATIO: float = 0.02
 ## Width of the recovery bar in the right side area, as a share of viewport width.
 const RECOVERY_BAR_WIDTH_RATIO: float = 0.17
-## Number of fixed combat lanes: horizontal rows stacked inside the arena (0 = top row).
-const LANE_COUNT: int = 3
-## HUD band at the top of the arena (HP bars) as a share of arena height; lanes fill the rest.
+## Board: BOARD_COLS columns x BOARD_ROWS rows, one Vector2i(col,row) per cell (row 0 = top).
+## Columns 0..PLAYER_COLS-1 are the player's half, the rest are the boss's half.
+const BOARD_COLS: int = 6
+const BOARD_ROWS: int = 3
+const PLAYER_COLS: int = 3
+## HUD band at the top of the arena (HP bars) as a share of arena height; the board fills the rest.
 const HUD_HEIGHT_RATIO: float = 0.22
-## Player marker horizontal centre as a share of arena width (left edge of its row).
-const PLAYER_X_RATIO: float = 0.16
-## Enemy body horizontal centre as a share of arena width (right edge of its row).
-const ENEMY_X_RATIO: float = 0.84
+## Vertical padding above and below the board inside the board area, as a share of its height.
+const BOARD_PAD_RATIO: float = 0.04
+## Preferred cell width divided by cell height (shrinks if the board would not fit the width).
+const CELL_ASPECT: float = 1.4
 
 
-## Rectangle of the arena area (HUD band + lane rows).
+## Rectangle of the arena area (HUD band + board).
 static func arena_rect(viewport_size: Vector2) -> Rect2:
 	var margin: float = viewport_size.x * MARGIN_RATIO
 	var top: float = viewport_size.y * ARENA_TOP_RATIO
@@ -89,39 +92,71 @@ static func hud_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(arena.position, Vector2(arena.size.x, arena.size.y * HUD_HEIGHT_RATIO))
 
 
-## Area below the HUD band that the lane rows share.
-static func lanes_rect(viewport_size: Vector2) -> Rect2:
+## Area below the HUD band that the board shares.
+static func board_area_rect(viewport_size: Vector2) -> Rect2:
 	var arena: Rect2 = arena_rect(viewport_size)
 	var hud_h: float = arena.size.y * HUD_HEIGHT_RATIO
 	return Rect2(arena.position.x, arena.position.y + hud_h, arena.size.x, arena.size.y - hud_h)
 
 
-## Row of lane [param lane] (0..LANE_COUNT-1, top to bottom) spanning the arena width.
-static func lane_rect(viewport_size: Vector2, lane: int) -> Rect2:
-	var lanes: Rect2 = lanes_rect(viewport_size)
-	var height: float = lanes.size.y / LANE_COUNT
-	return Rect2(lanes.position.x, lanes.position.y + height * lane, lanes.size.x, height)
+## Size of one board cell (CELL_ASPECT wide per tall, shrunk to fit the arena width).
+static func cell_size(viewport_size: Vector2) -> Vector2:
+	var area: Rect2 = board_area_rect(viewport_size)
+	var h: float = area.size.y * (1.0 - BOARD_PAD_RATIO * 2.0) / BOARD_ROWS
+	var w: float = minf(h * CELL_ASPECT, area.size.x / BOARD_COLS)
+	return Vector2(w, h)
 
 
-## Lane row under [param point], or -1 if the point is outside the lane area (HUD included).
-static func lane_at(viewport_size: Vector2, point: Vector2) -> int:
-	var lanes: Rect2 = lanes_rect(viewport_size)
-	if not lanes.has_point(point):
-		return -1
-	var height: float = lanes.size.y / LANE_COUNT
-	return clampi(int((point.y - lanes.position.y) / height), 0, LANE_COUNT - 1)
+## Rectangle of the whole board, centred in the board area.
+static func board_rect(viewport_size: Vector2) -> Rect2:
+	var area: Rect2 = board_area_rect(viewport_size)
+	var size: Vector2 = cell_size(viewport_size) * Vector2(BOARD_COLS, BOARD_ROWS)
+	return Rect2(area.get_center() - size * 0.5, size)
 
 
-## Centre of the player marker when standing in [param lane] (left side of the row).
-static func player_marker_center(viewport_size: Vector2, lane: int) -> Vector2:
-	var rect: Rect2 = lane_rect(viewport_size, lane)
-	return Vector2(rect.position.x + rect.size.x * PLAYER_X_RATIO, rect.get_center().y)
+## True if [param cell] lies on the board.
+static func is_in_board(cell: Vector2i) -> bool:
+	return cell.x >= 0 and cell.x < BOARD_COLS and cell.y >= 0 and cell.y < BOARD_ROWS
 
 
-## Centre of the enemy body when standing in [param lane] (right side of the row).
-static func enemy_center(viewport_size: Vector2, lane: int) -> Vector2:
-	var rect: Rect2 = lane_rect(viewport_size, lane)
-	return Vector2(rect.position.x + rect.size.x * ENEMY_X_RATIO, rect.get_center().y)
+## True if [param cell] is in the player's half (left columns).
+static func is_player_cell(cell: Vector2i) -> bool:
+	return is_in_board(cell) and cell.x < PLAYER_COLS
+
+
+## True if [param cell] is in the boss's half (right columns).
+static func is_enemy_cell(cell: Vector2i) -> bool:
+	return is_in_board(cell) and cell.x >= PLAYER_COLS
+
+
+## Rectangle of board cell [param cell] (must be on the board).
+static func cell_rect(viewport_size: Vector2, cell: Vector2i) -> Rect2:
+	var size: Vector2 = cell_size(viewport_size)
+	var origin: Vector2 = board_rect(viewport_size).position
+	return Rect2(origin + size * Vector2(cell), size)
+
+
+## Centre of board cell [param cell].
+static func cell_center(viewport_size: Vector2, cell: Vector2i) -> Vector2:
+	return cell_rect(viewport_size, cell).get_center()
+
+
+## Board cell under [param point], or Vector2i(-1, -1) if the point is off the board.
+static func cell_at(viewport_size: Vector2, point: Vector2) -> Vector2i:
+	var board: Rect2 = board_rect(viewport_size)
+	if not board.has_point(point):
+		return Vector2i(-1, -1)
+	var size: Vector2 = cell_size(viewport_size)
+	var local: Vector2 = point - board.position
+	return Vector2i(
+		clampi(int(local.x / size.x), 0, BOARD_COLS - 1),
+		clampi(int(local.y / size.y), 0, BOARD_ROWS - 1)
+	)
+
+
+## X of the vertical divider between the player's half and the boss's half.
+static func divider_x(viewport_size: Vector2) -> float:
+	return board_rect(viewport_size).position.x + cell_size(viewport_size).x * PLAYER_COLS
 
 
 ## Free area left of the slot row (same vertical extent as the slots), from the screen

@@ -1,12 +1,13 @@
 class_name CombatView
 extends Node2D
-## Draws the arena and owns the combat logic objects, ticking recovery and the enemy from
-## _process with one shared delta. Layout (landscape): a thin HUD band at the top of the
-## arena (player HP/armor left, enemy HP right), then 3 lane rows stacked below it. The
-## player marker stands at the left edge of its row, the enemy body at the right edge of
-## the middle row. Telegraph (stripe, icon, countdown ring), hit/miss feedback and the
-## VICTORY/DEFEAT band are drawn inside the rows, never over the HUD. Placeholder art.
-## Implements: Story 003, Story 005.
+## Draws the arena and owns the combat logic objects, ticking recovery and feedback from
+## _process with one shared (capped) delta. Layout (landscape): a thin HUD band at the top
+## of the arena (player HP/armor left, enemy HP right), then a 6x3 board below it: the
+## player's half (cols 0-2) left of a divider, the boss's half (cols 3-5) right. Units are
+## drawn centred in their cell, scaled from the cell size. The boss stands still (it does
+## not attack yet). Step-target highlights, attack-shape preview, HIT/MISS feedback and the
+## VICTORY/DEFEAT band are drawn over the board. Placeholder art.
+## Implements: Story 003, Story 005, Story 006.
 
 const ENEMY_COLOR: Color = Color(0.7, 0.3, 0.3)
 const ENEMY_DEAD_COLOR: Color = Color(0.45, 0.45, 0.45)
@@ -16,11 +17,12 @@ const PLAYER_HP_COLOR: Color = Color(0.3, 0.75, 0.35)
 const ARMOR_COLOR: Color = Color(0.3, 0.55, 0.95)
 const TEXT_COLOR: Color = Color(0.15, 0.12, 0.1)
 const DROP_COLOR: Color = Color(0.2, 0.8, 0.4)
-const LANE_LINE_COLOR: Color = Color(0.15, 0.12, 0.1, 0.35)
-const LANE_TINT: Color = Color(1.0, 1.0, 1.0, 0.08)
-const STRIPE_COLOR: Color = Color(0.9, 0.1, 0.1, 0.32)
-const WARN_COLOR: Color = Color(0.9, 0.1, 0.1)
-const ICON_FILL: Color = Color(1.0, 0.85, 0.1)
+const GRID_LINE_COLOR: Color = Color(0.15, 0.12, 0.1, 0.35)
+const PLAYER_HALF_TINT: Color = Color(0.3, 0.55, 0.95, 0.12)
+const ENEMY_HALF_TINT: Color = Color(0.85, 0.25, 0.25, 0.12)
+const DIVIDER_COLOR: Color = Color(0.15, 0.12, 0.1, 0.9)
+const PREVIEW_COLOR: Color = Color(0.95, 0.75, 0.1, 0.4)
+const PREVIEW_HIT_COLOR: Color = Color(0.9, 0.1, 0.1, 0.5)
 const PLAYER_COLOR: Color = Color(0.25, 0.6, 0.9)
 const HIT_COLOR: Color = Color(0.9, 0.1, 0.1)
 const MISS_COLOR: Color = Color(0.1, 0.5, 0.2)
@@ -28,38 +30,30 @@ const PAD: float = 10.0
 const BAR_HEIGHT: float = 22.0
 const FONT_SIZE: int = 24
 const BIG_FONT_SIZE: int = 72
-const RING_WIDTH: float = 8.0
-## In-row elements scale from the row height so they always fit one lane row:
-## player marker radius, countdown ring radius, warning icon half-size, feedback font.
+## In-cell elements scale from the cell size: player marker radius (of cell height),
+## enemy body width / height (of cell width / height), feedback font (of cell height).
 const MARKER_RADIUS_RATIO: float = 0.33
-const RING_RADIUS_RATIO: float = 0.40
-const ICON_SIZE_RATIO: float = 0.36
-const FEEDBACK_FONT_RATIO: float = 0.55
-## Enemy body width and height as a share of row height (fits inside one row with padding).
-const ENEMY_BODY_WIDTH_RATIO: float = 0.9
-const ENEMY_BODY_HEIGHT_RATIO: float = 0.7
-## Countdown ring and warning icon horizontal centres as a share of row width
-## (between the player at ScreenLayout.PLAYER_X_RATIO and the enemy at ENEMY_X_RATIO).
-const RING_X_RATIO: float = 0.55
-const ICON_X_RATIO: float = 0.69
+const ENEMY_BODY_WIDTH_RATIO: float = 0.6
+const ENEMY_BODY_HEIGHT_RATIO: float = 0.8
+const FEEDBACK_FONT_RATIO: float = 0.4
 ## Gap between the HUD's left and right halves as a share of arena width.
 const HUD_GAP_RATIO: float = 0.04
 
 @export_file("*.json") var config_path: String = CombatConfig.DEFAULT_PATH
-@export_file("*.json") var pattern_path: String = EnemyPatternConfig.DEFAULT_PATH
 ## Slot row that shows the recovery lock (dimmed slots + bar).
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
-## Dev/capture only: when true time does not advance (recovery, enemy, feedback), so
+## Dev/capture only: when true time does not advance (recovery, feedback), so
 ## screenshots are deterministic.
 var freeze_recovery: bool = false
 
 var _player: CardPlayer
-var _enemy: EnemyLogic
-var _drop_highlight: bool = false
-var _lane_highlight: int = -1
+var _step_targets: Array[Vector2i] = []
+var _step_hover: Vector2i = CardPlayer.NO_CELL
+var _preview_cells: Array[Vector2i] = []
+var _preview_active: bool = false
 var _feedback_left: float = 0.0
 var _feedback_hit: bool = false
-var _feedback_lane: int = 1
+var _feedback_cells: Array[Vector2i] = []
 
 
 func _ready() -> void:
@@ -67,22 +61,18 @@ func _ready() -> void:
 	if config == null:
 		push_warning("CombatView: using built-in default config (no card effects)")
 		config = CombatConfig.new()
-	var state := CombatState.new(config.player_max_hp, config.enemy_max_hp)
+	var state := CombatState.new(
+		config.player_max_hp, config.enemy_max_hp, config.player_start_cell, config.enemy_start_cell
+	)
 	_player = CardPlayer.new(config, state, RecoveryLock.new())
-	var pattern: EnemyPatternConfig = EnemyPatternConfig.load_from_file(pattern_path)
-	if pattern == null:
-		push_warning("CombatView: no enemy pattern, enemy stays idle")
-		pattern = EnemyPatternConfig.new()
-	_enemy = EnemyLogic.new(pattern, state)
-	_enemy.attack_resolved.connect(_on_attack_resolved)
+	_player.attack_resolved.connect(_on_attack_resolved)
 
 
 func _process(delta: float) -> void:
 	if not freeze_recovery:
-		# Cap the step so a frame hitch cannot telegraph and resolve an attack in one tick.
-		var step: float = minf(delta, _enemy.get_config().max_tick_sec)
+		# Cap the step so a frame hitch cannot skip a whole timing window.
+		var step: float = minf(delta, _player.get_config().max_tick_sec)
 		_player.get_lock().tick(step)
-		_enemy.tick(step)
 		_feedback_left = maxf(_feedback_left - step, 0.0)
 	var lock: RecoveryLock = _player.get_lock()
 	var slots_view := get_node_or_null(hold_slots_view_path) as HoldSlotsView
@@ -91,10 +81,10 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func _on_attack_resolved(target_lane: int, _damage: float, hit: bool) -> void:
-	_feedback_left = _enemy.get_config().feedback_sec
+func _on_attack_resolved(cells: Array[Vector2i], hit: bool) -> void:
+	_feedback_left = _player.get_config().feedback_sec
 	_feedback_hit = hit
-	_feedback_lane = target_lane
+	_feedback_cells = cells
 
 
 func _draw() -> void:
@@ -103,19 +93,23 @@ func _draw() -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	var arena: Rect2 = ScreenLayout.arena_rect(vp)
 	var state: CombatState = _player.get_state()
-	_draw_lanes(vp, arena)
+	_draw_board(vp)
 	_draw_hud(vp, state)
-	_draw_telegraph(vp)
+	_draw_cell_set(vp, _step_targets, Color(DROP_COLOR, 0.25), DROP_COLOR)
+	if _step_hover != CardPlayer.NO_CELL:
+		var hover: Rect2 = ScreenLayout.cell_rect(vp, _step_hover)
+		draw_rect(hover, Color(DROP_COLOR, 0.35))
+		draw_rect(hover, DROP_COLOR, false, 6.0)
 	_draw_enemy(vp, state)
 	_draw_player_marker(vp, state)
+	if _preview_active:
+		var hits_boss: bool = _preview_cells.has(state.enemy_cell)
+		_draw_cell_set(vp, _preview_cells, PREVIEW_COLOR, Color(PREVIEW_COLOR, 1.0))
+		if hits_boss:
+			var boss: Rect2 = ScreenLayout.cell_rect(vp, state.enemy_cell)
+			draw_rect(boss, PREVIEW_HIT_COLOR)
+			draw_rect(boss, HIT_COLOR, false, 5.0)
 	_draw_feedback(vp, state)
-	if _lane_highlight != -1:
-		var lane_rect: Rect2 = ScreenLayout.lane_rect(vp, _lane_highlight)
-		draw_rect(lane_rect, Color(DROP_COLOR, 0.2))
-		draw_rect(lane_rect, DROP_COLOR, false, 8.0)
-	if _drop_highlight:
-		draw_rect(arena, Color(DROP_COLOR, 0.15))
-		draw_rect(arena, DROP_COLOR, false, 8.0)
 	_draw_banner(arena, state)
 
 
@@ -124,38 +118,52 @@ func get_player() -> CardPlayer:
 	return _player
 
 
-## The enemy logic (time-to-impact API: [method EnemyLogic.get_time_to_impact]).
-func get_enemy() -> EnemyLogic:
-	return _enemy
+## Board cell under the viewport point, or Vector2i(-1, -1) off the board.
+func get_cell_at(point: Vector2) -> Vector2i:
+	return ScreenLayout.cell_at(get_viewport_rect().size, point)
 
 
-## Screen rectangle of the arena (the card drop target).
-func get_arena_rect() -> Rect2:
-	return ScreenLayout.arena_rect(get_viewport_rect().size)
+## Highlights the valid step destination [param cells] and the hovered one
+## ([constant CardPlayer.NO_CELL] = none). Pass an empty array to clear.
+func set_step_targets(cells: Array[Vector2i], hovered: Vector2i = CardPlayer.NO_CELL) -> void:
+	_step_targets = cells
+	_step_hover = hovered
 
 
-## Lane row under the viewport point, or -1 outside the lane area.
-func get_lane_at(point: Vector2) -> int:
-	return ScreenLayout.lane_at(get_viewport_rect().size, point)
+## Shows the attack shape [param cells] tinted on the board (the boss cell tinted
+## differently if inside).
+func set_preview(cells: Array[Vector2i]) -> void:
+	_preview_cells = cells
+	_preview_active = true
 
 
-## Shows or hides the arena as the current drop target.
-func set_drop_highlight(on: bool) -> void:
-	_drop_highlight = on
+## Hides the attack-shape preview.
+func clear_preview() -> void:
+	_preview_cells = []
+	_preview_active = false
 
 
-## Highlights one lane row as the valid drop target (-1 = none).
-func set_lane_highlight(lane: int) -> void:
-	_lane_highlight = lane
+func _draw_cell_set(vp: Vector2, cells: Array[Vector2i], fill: Color, outline: Color) -> void:
+	for cell: Vector2i in cells:
+		var rect: Rect2 = ScreenLayout.cell_rect(vp, cell)
+		draw_rect(rect, fill)
+		draw_rect(rect.grow(-3.0), outline, false, 3.0)
 
 
-func _draw_lanes(vp: Vector2, arena: Rect2) -> void:
-	for lane: int in ScreenLayout.LANE_COUNT:
-		var rect: Rect2 = ScreenLayout.lane_rect(vp, lane)
-		if lane % 2 == 0:
-			draw_rect(rect, LANE_TINT)
-		draw_line(rect.position, Vector2(rect.end.x, rect.position.y), LANE_LINE_COLOR, 3.0)
-	draw_rect(arena, LANE_LINE_COLOR, false, 3.0)
+func _draw_board(vp: Vector2) -> void:
+	var board: Rect2 = ScreenLayout.board_rect(vp)
+	var cell: Vector2 = ScreenLayout.cell_size(vp)
+	var half_w: float = cell.x * ScreenLayout.PLAYER_COLS
+	draw_rect(Rect2(board.position, Vector2(half_w, board.size.y)), PLAYER_HALF_TINT)
+	draw_rect(Rect2(board.position + Vector2(half_w, 0.0), Vector2(board.size.x - half_w, board.size.y)), ENEMY_HALF_TINT)
+	for col: int in ScreenLayout.BOARD_COLS + 1:
+		var x: float = board.position.x + cell.x * col
+		draw_line(Vector2(x, board.position.y), Vector2(x, board.end.y), GRID_LINE_COLOR, 2.0)
+	for row: int in ScreenLayout.BOARD_ROWS + 1:
+		var y: float = board.position.y + cell.y * row
+		draw_line(Vector2(board.position.x, y), Vector2(board.end.x, y), GRID_LINE_COLOR, 2.0)
+	var dx: float = ScreenLayout.divider_x(vp)
+	draw_line(Vector2(dx, board.position.y - 6.0), Vector2(dx, board.end.y + 6.0), DIVIDER_COLOR, 6.0)
 
 
 # Top band: player HP bar + armor on the left half, enemy HP bar on the right half.
@@ -187,9 +195,9 @@ func _draw_hud(vp: Vector2, state: CombatState) -> void:
 
 func _draw_enemy(vp: Vector2, state: CombatState) -> void:
 	var dead: bool = state.is_enemy_dead()
-	var row: Rect2 = ScreenLayout.lane_rect(vp, CombatState.ENEMY_LANE)
-	var body_size := Vector2(row.size.y * ENEMY_BODY_WIDTH_RATIO, row.size.y * ENEMY_BODY_HEIGHT_RATIO)
-	var body := Rect2(ScreenLayout.enemy_center(vp, CombatState.ENEMY_LANE) - body_size * 0.5, body_size)
+	var cell: Vector2 = ScreenLayout.cell_size(vp)
+	var body_size := Vector2(cell.x * ENEMY_BODY_WIDTH_RATIO, cell.y * ENEMY_BODY_HEIGHT_RATIO)
+	var body := Rect2(ScreenLayout.cell_center(vp, state.enemy_cell) - body_size * 0.5, body_size)
 	draw_rect(body, ENEMY_DEAD_COLOR if dead else ENEMY_COLOR)
 	draw_rect(body, TEXT_COLOR, false, 3.0)
 	if dead:
@@ -197,61 +205,31 @@ func _draw_enemy(vp: Vector2, state: CombatState) -> void:
 		draw_line(Vector2(body.end.x, body.position.y), Vector2(body.position.x, body.end.y), TEXT_COLOR, 6.0)
 
 
-# Red stripe over the target row, warning icon at the enemy side of the row, countdown
-# ring + seconds between player and enemy.
-func _draw_telegraph(vp: Vector2) -> void:
-	if not _enemy.has_incoming_attack():
-		return
-	var row: Rect2 = ScreenLayout.lane_rect(vp, _enemy.get_target_lane())
-	draw_rect(row, STRIPE_COLOR)
-	draw_rect(row, WARN_COLOR, false, 4.0)
-	var icon: float = row.size.y * ICON_SIZE_RATIO
-	var icon_c := Vector2(row.position.x + row.size.x * ICON_X_RATIO, row.get_center().y)
-	var tri := PackedVector2Array([
-		icon_c + Vector2(0.0, -icon), icon_c + Vector2(icon, icon * 0.8), icon_c + Vector2(-icon, icon * 0.8)
-	])
-	draw_colored_polygon(tri, ICON_FILL)
-	draw_polyline(PackedVector2Array([tri[0], tri[1], tri[2], tri[0]]), WARN_COLOR, 5.0)
-	draw_string(ThemeDB.fallback_font, icon_c + Vector2(-icon, icon * 0.6), "!", HORIZONTAL_ALIGNMENT_CENTER, icon * 2.0, int(icon * 1.2), WARN_COLOR)
-	var ring: float = row.size.y * RING_RADIUS_RATIO
-	var ring_c := Vector2(row.position.x + row.size.x * RING_X_RATIO, row.get_center().y)
-	draw_circle(ring_c, ring, Color(1.0, 1.0, 1.0, 0.8))
-	draw_arc(ring_c, ring, 0.0, TAU, 48, BAR_BACK, RING_WIDTH)
-	var ratio: float = _enemy.get_telegraph_ratio()
-	draw_arc(ring_c, ring, -PI * 0.5, -PI * 0.5 + TAU * ratio, 48, WARN_COLOR, RING_WIDTH)
-	var secs: String = "%.1f" % _enemy.get_time_to_impact()
-	draw_string(ThemeDB.fallback_font, ring_c + Vector2(-ring, 9.0), secs, HORIZONTAL_ALIGNMENT_CENTER, ring * 2.0, FONT_SIZE, TEXT_COLOR)
-
-
 func _draw_player_marker(vp: Vector2, state: CombatState) -> void:
-	var c: Vector2 = ScreenLayout.player_marker_center(vp, state.player_lane)
+	var c: Vector2 = ScreenLayout.cell_center(vp, state.player_cell)
 	var radius: float = _marker_radius(vp)
-	var color: Color = PLAYER_COLOR
-	if state.is_player_dead():
-		color = ENEMY_DEAD_COLOR
-	elif _feedback_left > 0.0 and _feedback_hit:
-		color = HIT_COLOR
+	var color: Color = ENEMY_DEAD_COLOR if state.is_player_dead() else PLAYER_COLOR
 	draw_circle(c, radius, color)
 	draw_arc(c, radius, 0.0, TAU, 32, TEXT_COLOR, 3.0)
 	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, 8.0), "YOU", HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, FONT_SIZE - 6, Color.WHITE)
 
 
-# HIT!/MISS text in the player's row just right of the marker; the target row is tinted
-# (hit) or outlined (miss).
+# Brief feedback after an attack: HIT tints the boss cell red with "HIT!"; MISS outlines
+# the attacked cells green and writes "MISS" over the boss cell.
 func _draw_feedback(vp: Vector2, state: CombatState) -> void:
 	if _feedback_left <= 0.0:
 		return
-	var target_row: Rect2 = ScreenLayout.lane_rect(vp, _feedback_lane)
+	var boss: Rect2 = ScreenLayout.cell_rect(vp, state.enemy_cell)
 	if _feedback_hit:
-		draw_rect(target_row, Color(HIT_COLOR, 0.25))
+		draw_rect(boss, Color(HIT_COLOR, 0.4))
+		draw_rect(boss.grow(-2.0), HIT_COLOR, false, 6.0)
 	else:
-		draw_rect(target_row, MISS_COLOR, false, 6.0)
-	var marker: Vector2 = ScreenLayout.player_marker_center(vp, state.player_lane)
+		for cell: Vector2i in _feedback_cells:
+			draw_rect(ScreenLayout.cell_rect(vp, cell).grow(-3.0), MISS_COLOR, false, 4.0)
 	var text: String = "HIT!" if _feedback_hit else "MISS"
 	var color: Color = HIT_COLOR if _feedback_hit else MISS_COLOR
-	var font_size: int = int(ScreenLayout.lane_rect(vp, 0).size.y * FEEDBACK_FONT_RATIO)
-	var pos := Vector2(marker.x + _marker_radius(vp) + PAD, marker.y + font_size * 0.35)
-	draw_string(ThemeDB.fallback_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	var font_size: int = int(ScreenLayout.cell_size(vp).y * FEEDBACK_FONT_RATIO)
+	draw_string(ThemeDB.fallback_font, boss.position + Vector2(0.0, boss.size.y * 0.5 + font_size * 0.35), text, HORIZONTAL_ALIGNMENT_CENTER, boss.size.x, font_size, color)
 
 
 func _draw_banner(arena: Rect2, state: CombatState) -> void:
@@ -271,7 +249,7 @@ func _draw_banner(arena: Rect2, state: CombatState) -> void:
 
 
 func _marker_radius(vp: Vector2) -> float:
-	return ScreenLayout.lane_rect(vp, 0).size.y * MARKER_RADIUS_RATIO
+	return ScreenLayout.cell_size(vp).y * MARKER_RADIUS_RATIO
 
 
 func _draw_bar(rect: Rect2, ratio: float, color: Color) -> void:

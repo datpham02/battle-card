@@ -2,25 +2,29 @@ class_name DemoArgs
 extends Node
 ## DEV-ONLY capture hook: puts the screen into a deterministic state for screenshots.
 ## Godot user args go after "--":
-##   godot --path . -- --demo=empty      belt flowing, all slots empty
-##   godot --path . -- --demo=holding    two slots filled
-##   godot --path . -- --demo=full       every slot filled
-##   godot --path . -- --demo=dragging   slot 0 filled, a belt card mid-drag over slot 1
-##   godot --path . -- --demo=playing    slots 1-3 filled, slot 0's Dash Strike just played:
-##                                       enemy HP reduced, recovery lock active (frozen at 100%)
-##   godot --path . -- --demo=shielded   slots 1-3 filled, slot 0's Guard just played: player armor
-##                                       shown, recovery lock active (frozen)
-##   godot --path . -- --demo=enemy_dead enemy at 0 HP shown dead, all slots filled, no lock
-##   godot --path . -- --demo=telegraph  enemy mid-countdown (2.0 s left, frozen): warning icon, red
-##                                       stripe and countdown ring over lane row 1 (middle); player in row 0 (top)
-##   godot --path . -- --demo=hit        armored player (10) in the target lane was just hit for 15:
-##                                       armor 0, HP 95, HIT feedback (frozen)
-##   godot --path . -- --demo=miss       player sidestepped to lane 0 (Sidestep played, recovery shown),
-##                                       the attack on lane 1 just missed: MISS feedback (frozen)
-##   godot --path . -- --demo=defeat     player at 0 HP, DEFEAT shown
-##   godot --path . -- --demo=victory    enemy at 0 HP, VICTORY shown
-## Telegraph/hit/miss/defeat/victory run the real enemy logic with injected ticks and set
-## freeze_recovery (time stops: recovery, enemy and feedback).
+##   godot --path . -- --demo=empty        belt flowing, all slots empty
+##   godot --path . -- --demo=holding      two slots filled
+##   godot --path . -- --demo=full         every slot filled
+##   godot --path . -- --demo=dragging     slot 0 filled, a belt card mid-drag over slot 1
+##   godot --path . -- --demo=board        empty board, player and boss on their start cells from
+##                                         combat_cards.json ((1,1) and (3,1) in this story), no cards
+##   godot --path . -- --demo=step         player just stepped (1,1) -> (1,0): recovery lock visible
+##   godot --path . -- --demo=shape_front  Strike held (pressed) in slot 0, player at (2,1): boss cell
+##                                         (3,1) tinted red (would hit)
+##   godot --path . -- --demo=shape_row    Cannon held: whole row ahead tinted, boss cell tinted red
+##   godot --path . -- --demo=shape_wide   Wide Slash held, player at (2,1): column 3, all rows tinted,
+##                                         boss cell red
+##   godot --path . -- --demo=hit          Cannon just played: boss cell HIT feedback, boss HP 90,
+##                                         recovery lock visible
+##   godot --path . -- --demo=playing      slot 0's Cannon just played via the real play path
+##   godot --path . -- --demo=shielded     slot 0's Guard just played: armor shown, lock visible
+##   godot --path . -- --demo=enemy_dead   boss at 0 HP shown dead, all slots filled, no lock
+##   godot --path . -- --demo=defeat       player at 0 HP, DEFEAT shown
+##   godot --path . -- --demo=victory      boss at 0 HP, VICTORY shown
+## Board/step/shape/hit/defeat/victory set freeze_recovery (time stops: recovery and feedback).
+## Shape demos press slot 0 through the real controller path (no release) and then switch
+## the controller's input off, so the real OS cursor cannot turn the frozen press into a drag.
+## Forced card types are set before the card node is built, so label and colour match.
 ## No argument = normal game, this node does nothing. Belt RNG is seeded when a demo is
 ## active so the card sequence is repeatable. State is set in _ready, before the first frame.
 
@@ -55,35 +59,40 @@ func _ready() -> void:
 		"dragging":
 			_fill_slots(1)
 			_start_demo_drag()
+		"board":
+			_combat().freeze_recovery = true
+		"step":
+			_combat().freeze_recovery = true
+			_fill_slots(_slots_view().get_slots().get_slot_count(), {0: "step"})
+			if not _controller().play_slot_card(0, Vector2i(1, 0)):
+				push_warning("DemoArgs: demo step failed")
+		"shape_front":
+			_shape_demo("strike", Vector2i(2, 1))
+		"shape_row":
+			_shape_demo("cannon", Vector2i(1, 1))
+		"shape_wide":
+			_shape_demo("wide_slash", Vector2i(2, 1))
+		"hit":
+			_combat().freeze_recovery = true
+			_fill_slots(_slots_view().get_slots().get_slot_count(), {0: "cannon"})
+			if not _controller().play_slot_card(0):
+				push_warning("DemoArgs: demo hit failed")
 		"playing":
-			_play_demo("dash_strike")
+			_play_demo("cannon")
 		"shielded":
 			_play_demo("guard")
 		"enemy_dead":
 			_fill_slots(_slots_view().get_slots().get_slot_count())
 			var state: CombatState = _combat().get_player().get_state()
 			state.damage_enemy(state.enemy_max_hp)
-		"telegraph":
-			_start_frozen_enemy_demo(0)
-			_combat().get_enemy().tick(_pattern().initial_pause_sec + 1.0)
-		"hit":
-			_start_frozen_enemy_demo(1)
-			_combat().get_player().get_state().add_armor(10.0)
-			_tick_to_resolution()
-		"miss":
-			_start_frozen_enemy_demo(1)
-			_fill_slots(_slots_view().get_slots().get_slot_count())
-			_slots_view().get_slots().get_card(0).type_id = "sidestep"
-			var controller: CardDragController = get_node(drag_controller_path) as CardDragController
-			if not controller.play_slot_card(0, 0):
-				push_warning("DemoArgs: demo sidestep failed")
-			_tick_to_resolution()
 		"defeat":
-			_start_frozen_enemy_demo(1)
+			_combat().freeze_recovery = true
+			_fill_slots(_slots_view().get_slots().get_slot_count())
 			var state: CombatState = _combat().get_player().get_state()
 			state.damage_player(state.player_max_hp)
 		"victory":
-			_start_frozen_enemy_demo(1)
+			_combat().freeze_recovery = true
+			_fill_slots(_slots_view().get_slots().get_slot_count())
 			var state: CombatState = _combat().get_player().get_state()
 			state.damage_enemy(state.enemy_max_hp)
 		_:
@@ -105,44 +114,42 @@ func _combat() -> CombatView:
 	return get_node(combat_view_path) as CombatView
 
 
-func _pattern() -> EnemyPatternConfig:
-	return _combat().get_enemy().get_config()
+func _controller() -> CardDragController:
+	return get_node(drag_controller_path) as CardDragController
 
 
-# Freezes time and puts the player in [param lane]; slots are filled for context.
-func _start_frozen_enemy_demo(lane: int) -> void:
+# Player on [param cell], all slots filled, slot 0 built as [param type_id] and pressed at
+# its slot centre (not released, no motion) so the card stays on its slot and the shape
+# preview shows. Time frozen; controller input disabled so the OS cursor cannot move it.
+func _shape_demo(type_id: String, cell: Vector2i) -> void:
 	_combat().freeze_recovery = true
-	_combat().get_player().get_state().set_player_lane(lane)
-	if _mode != "miss":
-		_fill_slots(_slots_view().get_slots().get_slot_count())
+	_combat().get_player().get_state().set_player_cell(cell)
+	_fill_slots(_slots_view().get_slots().get_slot_count(), {0: type_id})
+	var pointer: Vector2 = _slots_view().get_slot_rect(0).get_center()
+	if not _controller().start_slot_drag(0, pointer):
+		push_warning("DemoArgs: demo press failed")
+	_controller().set_process_unhandled_input(false)
 
 
-# Ticks through the first telegraph and its resolution (no extra time left over).
-func _tick_to_resolution() -> void:
-	var enemy: EnemyLogic = _combat().get_enemy()
-	enemy.tick(_pattern().initial_pause_sec)
-	enemy.tick(_pattern().attacks[0].telegraph_sec)
-
-
-# Fills every slot, then plays slot 0 (forced to [param type_id]) through the real play path.
+# Fills every slot (slot 0 as [param type_id]), then plays slot 0 through the real play path.
 # Recovery is frozen so the lock stays visible however late the screenshot is taken.
 func _play_demo(type_id: String) -> void:
-	_fill_slots(_slots_view().get_slots().get_slot_count())
-	_slots_view().get_slots().get_card(0).type_id = type_id
+	_fill_slots(_slots_view().get_slots().get_slot_count(), {0: type_id})
 	_combat().freeze_recovery = true
-	var controller: CardDragController = get_node(drag_controller_path) as CardDragController
-	if not controller.play_slot_card(0):
+	if not _controller().play_slot_card(0):
 		push_warning("DemoArgs: demo play failed")
 
 
-# Fills the first [param count] slots with synthetic cards (negative uids never clash with the belt).
-func _fill_slots(count: int) -> void:
+# Fills the first [param count] slots with synthetic cards (negative uids never clash with
+# the belt). [param overrides] maps slot index -> type id, applied before the node is built
+# so label and colour match the type.
+func _fill_slots(count: int, overrides: Dictionary = {}) -> void:
 	var conveyor: ConveyorView = get_node(conveyor_view_path) as ConveyorView
 	var type_ids: PackedStringArray = conveyor.get_card_type_ids()
 	for i: int in count:
 		var card := ConveyorCard.new()
 		card.uid = -1 - i
-		card.type_id = type_ids[i % type_ids.size()]
+		card.type_id = str(overrides.get(i, type_ids[i % type_ids.size()]))
 		_slots_view().put_card(card, conveyor.make_card_node(card), i)
 
 
@@ -159,8 +166,7 @@ func _start_demo_drag() -> void:
 	var lift: float = _slots_view().get_config().drag_lift_px
 	# Pointer at the card centre; the card centre ends up over slot 1 after the lift.
 	var pointer: Vector2 = target + Vector2(0.0, lift)
-	var controller: CardDragController = get_node(drag_controller_path) as CardDragController
 	# start_drag keeps the grab offset relative to the card, so grab its centre.
 	var grab_point: Vector2 = node.global_position + node.size * 0.5
-	if controller.start_drag(uid, grab_point):
-		controller.update_drag(pointer)
+	if _controller().start_drag(uid, grab_point):
+		_controller().update_drag(pointer)

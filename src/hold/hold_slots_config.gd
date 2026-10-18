@@ -14,6 +14,8 @@ var drag_pick_padding_px: float = 12.0
 var drop_hit_padding_px: float = 16.0
 ## Pixels the dragged card is lifted above the pointer so the thumb does not cover it.
 var drag_lift_px: float = 56.0
+## Pointer travel (px) below which pressing and releasing a slot card counts as a tap.
+var tap_threshold_px: float = 12.0
 
 
 ## Loads a config from a JSON file. Returns null (and pushes an error) on failure.
@@ -46,4 +48,7 @@ static func from_dictionary(data: Dictionary) -> HoldSlotsConfig:
 		float(data.get("drop_hit_padding_px", config.drop_hit_padding_px)), 0.0
 	)
 	config.drag_lift_px = maxf(float(data.get("drag_lift_px", config.drag_lift_px)), 0.0)
+	config.tap_threshold_px = maxf(
+		float(data.get("tap_threshold_px", config.tap_threshold_px)), 0.0
+	)
 	return config
