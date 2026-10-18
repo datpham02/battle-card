@@ -1,0 +1,11 @@
+{
+	"player_max_hp": 100,
+	"enemy_max_hp": 100,
+	"cards": {
+		"strike": {"effect": "attack", "amount": 10, "recovery_sec": 0.4},
+		"knockback": {"effect": "attack", "amount": 20, "recovery_sec": 0.8},
+		"dash_strike": {"effect": "attack", "amount": 40, "recovery_sec": 1.5},
+		"guard": {"effect": "shield", "amount": 20, "recovery_sec": 0.3},
+		"sidestep": {"effect": "shield", "amount": 10, "recovery_sec": 0.3}
+	}
+}
