@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Engine Version** | Godot 4.6 |
-| **Installed at pin time** | NOT DETERMINED — `/setup-engine` §3 probes the installed editor and records the result here. |
+| **Installed at pin time** | 4.6.3 (stable, official) — installed 2026-10-18 via winget, after the pin; matches the pinned 4.6. |
 | **Release Date** | January 2026 |
 | **Project Pinned** | 2026-02-12 |
 | **Last Docs Verified** | 2026-02-12 |
