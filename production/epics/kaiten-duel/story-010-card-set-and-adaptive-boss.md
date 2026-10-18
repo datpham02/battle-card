@@ -1,17 +1,17 @@
-# Story 010: Bộ 10–12 thẻ có hình dạng tầm + boss học bằng bộ đếm
+# Story 010: Bảng cân bằng cắt + Đốt, Ghim + boss học bằng bộ đếm
 
-> **Epic**: Kaiten Duel (v2)
+> **Epic**: Kaiten Duel (v3)
 > **Status**: Ready
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-10-18
 
 ## Context
 
-**GDD**: `design/game-brief.md` (v2)
-**Requirement**: Brief MVP features 5 và 6 — bộ 10–12 thẻ có hình dạng tầm; boss "học" bằng bộ đếm trong trận
+**GDD**: `design/game-brief.md` (v3)
+**Requirement**: Brief MVP feature 5 — bảng cân bằng cắt; hai kỹ năng còn lại (Đốt, Ghim); boss "học" bằng bộ đếm trong trận
 
 **ADR Governing Implementation**: N/A (minimal — no ADRs)
 **ADR Decision Summary**: N/A (minimal — no ADRs)
@@ -26,28 +26,28 @@
 
 ## Acceptance Criteria
 
-*From `design/game-brief.md` v2 (MVP features 5–6), scoped to this story:*
+*From `design/game-brief.md` v3 (Menu kỹ năng; MVP feature 5), scoped to this story:*
 
-- [ ] 10–12 loại thẻ định nghĩa hoàn toàn trong dữ liệu (hiệu ứng, hình dạng tầm, sát thương/giáp, recovery, khoảng vung khi boss dùng), đủ nhóm: di chuyển (Step, Dash), đánh (Strike ô trước mặt, Cannon cả hàng, Wide Slash quét cột, đòn nặng), đỡ (Guard), đúng lúc (Parry, Counter), và ít nhất một thẻ tiện ích (ví dụ *Chef's Knife* biến một đĩa sắp ôi thành thẻ tốt).
-- [ ] *Dash*: lao tới cột gần boss nhất trong lưới mình và đánh; *Knockback*: đẩy boss lùi một ô nếu có chỗ. Mọi thay đổi vị trí đều là hiệu ứng thẻ; không có thẻ di chuyển "tự do".
-- [ ] Boss dùng được mọi thẻ trong bộ với cùng dữ liệu.
-- [ ] Boss "học" bằng bộ đếm cấu hình được: người chơi bước né sớm N lần liên tiếp → tỉ lệ **feint** (giơ thẻ rồi hủy) tăng; người chơi spam đánh → boss ưu tiên Guard; người chơi parry thành công nhiều → boss đổi sang thẻ khoảng vung ngắn hơn. Tất cả là số trong `boss_brain.json`.
+- [ ] **Đốt** (≥ 5 ô, cooldown 8 s): tập ô cháy trong thời gian cấu hình (3 s), đứng trong ăn sát thương dần theo tick cấu hình; ô cháy hiện rõ và chặn đường nhặt. **Ghim** (≥ 7 ô, cooldown 10 s): trúng thì đối thủ không bước được trong thời gian cấu hình (1,2 s), hiện rõ trạng thái. Cả hai dùng chung khung `skills.json` của Story 008, không mã riêng từng kỹ năng ngoài tập hành động dựng sẵn (sát thương, đẩy, đặt trạng thái ô, đặt trạng thái đơn vị).
+- [ ] Boss dùng được cả bốn kỹ năng với cùng dữ liệu; brain có trọng số cho từng kỹ năng.
+- [ ] **Bảng cân bằng cắt** sau cổng chơi thử 3, ghi trong `cuts.json`/`skills.json` với chú thích: sát thương cơ bản, vung cơ bản/mỗi ô, hệ số theo số điểm nếu cần (ví dụ đa giác 4 điểm nhân thêm), ngưỡng ô của kỹ năng. Mỗi thay đổi so với khởi điểm trong brief có một dòng lý do trong `schema.md`.
+- [ ] Boss **học bằng bộ đếm** cấu hình được: người chơi bước né sớm N lần liên tiếp → tỉ lệ **feint** (vung rồi hủy, mất điểm rẻ) tăng; người chơi để tay đầy chờ đòn to → boss ưu tiên đòn nhanh để ngắt; người chơi ngắt đòn thành công nhiều → boss chuyển sang 1 điểm. Tất cả là số trong `boss_brain.json`.
 - [ ] Feint hiển thị khác với đòn thật sau khi hủy (người chơi hiểu mình vừa bị lừa).
-- [ ] Ảnh chụp màn hình từng thẻ mới đang được dùng và một lần feint, được giữ lại trong `production/qa/evidence/`.
+- [ ] Ảnh chụp màn hình: Đốt đang cháy, Ghim trúng, một lần feint — giữ lại trong `production/qa/evidence/card-set-adaptive-boss/`.
 
 ---
 
 ## Implementation Notes
 
-- Hiệu ứng là dữ liệu + tập hành động dựng sẵn (sát thương theo hình, giáp, di chuyển bản thân, đẩy đối thủ, biến đổi đĩa trên quầy), không mã riêng từng thẻ.
-- Giá trị cân bằng là khởi điểm; chỉnh bằng chơi thử.
+- Hiệu ứng là dữ liệu + tập hành động dựng sẵn; trạng thái ô (cháy) và trạng thái đơn vị (ghim) là hai bảng nhỏ trong `CombatState`, tiêm delta.
+- Giá trị cân bằng là khởi điểm; chỉnh bằng chơi thử, ghi lý do.
 - Giữ `boss_brain.json` đọc được bằng mắt: mỗi quy tắc có tên và chú thích trong `schema.md`.
 
 ---
 
 ## Out of Scope
 
-- Ghép thẻ (sau MVP). Meta progression. Nhiều boss khác nhau (Story 011 dùng bộ trọng số khác nhau cho từng trận, nhưng thẻ là chung).
+- Ghép thẻ (sau MVP). Meta progression. Nhiều boss khác nhau (Story 011 dùng bộ trọng số khác nhau cho từng trận, kỹ năng là chung). Thủ đoạn rơi của boss (backlog).
 
 ---
 
@@ -64,7 +64,7 @@
 **Story Type**: Logic
 **Required evidence**:
 - Retained screenshot trong `production/qa/evidence/card-set-adaptive-boss/`.
-- Logic: `tests/unit/cards/card_effects_test.gd` — khuyến nghị, không bắt buộc ở `minimal`.
+- Logic: `tests/unit/combat/skill_effects_test.gd` — khuyến nghị, không bắt buộc ở `minimal`.
 
 **Status**: [ ] Not yet created
 

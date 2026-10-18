@@ -1,17 +1,17 @@
-# Story 009: Parry/Counter, Posture và hậu quả hai chiều
+# Story 009: Boss đi nhặt và cắt — brain trọng số, vung đỏ trên bàn bạn, ngắt đòn hai chiều
 
-> **Epic**: Kaiten Duel (v2)
+> **Epic**: Kaiten Duel (v3)
 > **Status**: Ready
 > **Layer**: Core
-> **Type**: Logic
+> **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: —
+> **Last Updated**: 2026-10-18
 
 ## Context
 
-**GDD**: `design/game-brief.md` (v2)
-**Requirement**: Brief MVP feature 4 — Parry/Counter trong cửa sổ cuối khoảng vung; boss rơi thẻ + choáng; thanh Posture → loạng choạng; người chơi xóa recovery
+**GDD**: `design/game-brief.md` (v3)
+**Requirement**: Brief MVP feature 4 — boss đi nhặt điểm bên nó và cắt bằng cùng hệ với brain trọng số JSON; vung đỏ trên bàn người chơi; ngắt đòn hai chiều; không có đòn nào theo đồng hồ cố định
 
 **ADR Governing Implementation**: N/A (minimal — no ADRs)
 **ADR Decision Summary**: N/A (minimal — no ADRs)
@@ -26,31 +26,33 @@
 
 ## Acceptance Criteria
 
-*From `design/game-brief.md` v2 (Core loop + MVP feature 4), scoped to this story:*
+*From `design/game-brief.md` v3 (Core loop: Ngắt đòn, Boss; MVP feature 4), scoped to this story:*
 
-- [ ] Thẻ *Parry*: dùng khi boss đang vung và còn ≤ cửa sổ cấu hình được (khởi điểm 0,5 s) tới lúc phát động → đòn boss **bị hủy** (thẻ boss rơi, không phát động). Dùng ngoài cửa sổ → chỉ là thẻ đỡ yếu (giáp nhỏ).
-- [ ] Thẻ *Counter*: như Parry nhưng thay choáng bằng **phản đòn** lên boss (sát thương cấu hình được) nếu boss trong tầm.
-- [ ] Parry thành công → boss bị **Choáng** (cấu hình, khởi điểm 2 s): không chơi thẻ, không lấy đĩa, không bước.
-- [ ] Thanh **Posture** của boss hiện trên HUD; mỗi parry/counter cộng một lượng cấu hình; đầy thì boss **Loạng choạng** (khởi điểm 3,5 s): đòn người chơi nhân hệ số cấu hình (khởi điểm ×2), boss không bước; hết thì Posture về 0.
-- [ ] Người chơi parry thành công → **recovery xóa ngay** (có thể chơi thẻ tiếp tức thì). (Buff thay thế "Focus" ghi trong backlog, chưa làm.)
-- [ ] Hậu quả theo loại thẻ bị parry, từ dữ liệu: parry đòn nặng → boss *Mất thăng bằng* (nhận thêm sát thương lần tới); parry thẻ Step → boss bị đẩy lùi một ô nếu có chỗ.
-- [ ] Kết quả đòn là enum (HIT / MISS / PARRIED / COUNTERED), hiển thị rõ bằng chữ và màu; người chơi thấy rõ khi "dùng đúng lúc".
-- [ ] Ảnh chụp màn hình: khoảnh khắc Parry thành công, boss choáng, Posture đầy và loạng choạng, được giữ lại trong `production/qa/evidence/`.
+- [ ] Boss có **túi, nhịp rơi và tay riêng** (cùng luật Story 007, tham số riêng trong `boss_brain.json`) và **tự đi nhặt**: một ô mỗi bước với cooldown riêng (khởi điểm 0,55 s), hướng do brain quyết; người chơi thấy rõ boss đang đi về ô nào. `enemy_cell` đổi qua setter có kiểm tra.
+- [ ] Boss **cắt bằng cùng `CutActor`/`CutResolver`** trên bàn người chơi: 1 điểm chém ngay; 2–4 điểm vào menu (boss chọn trong cùng khoảng chậm, không lâu hơn thời gian chọn của người chơi); cùng công thức vung và sát thương; cùng bộ kỹ năng và cooldown.
+- [ ] Khi boss vung: tập ô sáng **đỏ trên bàn người chơi** với đếm ngược và nhãn điểm nó dùng; hết vung thì chém; người chơi đã bước ra thì MISS, còn trong thì HIT. Boss vẫn di chuyển được khi đang vung.
+- [ ] **Ngắt đòn hai chiều**: đòn nào **chạm ô đối thủ trước** thì hủy đòn đối thủ đang vung; điểm đã dùng của bên bị hủy mất; hiển thị rõ "NGẮT" ở cả hai chiều. Một bên chết thì mọi đòn đang đếm bị hủy. Test xác định hai ca: bạn chém trước 0,1 s → đòn boss hủy; boss chém trước → đòn bạn hủy.
+- [ ] **Brain là bảng trọng số JSON** (`assets/data/boss_brain.json`), ít nhất các yếu tố: ô người chơi có nằm trong tập ô của tổ hợp đang xét; số ô (sát thương) so với khoảng vung; đồng hồ đang đếm của người chơi (đua được hay không); có nên đi nhặt điểm đang nằm dưới đường dao của người chơi; kỹ năng nào đang sẵn; HP boss thấp → ưu tiên đòn nhanh. Hai bộ trọng số khác nhau phải cho hành vi khác nhau nhìn thấy được.
+- [ ] **Không còn đòn nào theo đồng hồ cố định**; boss không hành động khi chết hoặc khi người chơi đã chết.
+- [ ] Ảnh chụp màn hình: boss đi nhặt; boss vung đỏ trên bàn bạn với nhãn; một lần trúng; một lần hụt do bước ra; một lần ngắt đòn mỗi chiều — giữ lại trong `production/qa/evidence/boss-cuts-interrupt/`.
 
 ---
 
 ## Implementation Notes
 
-- Cần trên boss logic: `cancel_incoming_card()`, trạng thái Choáng/Loạng choạng có thời hạn, Posture là số trong `CombatState` của phe boss.
-- Mọi cửa sổ, thời hạn, hệ số trong `assets/data/parry.json` (hoặc gộp vào `combat_cards.json`/`boss_brain.json`), ghi `schema.md`.
-- Phản hồi hình/âm cho parry đúng lúc là thứ quyết định cảm giác; placeholder vẫn phải làm rõ (chớp, chữ to, dừng hình 0,1 s cấu hình được).
+- Brain là RefCounted thuần: nhận trạng thái (ô hai bên, HP, tay hai bên, điểm trên sân, đòn đang vung của người chơi) → quyết định (bước đâu / chốt tổ hợp nào / kỹ năng nào); tiêm delta và RNG có seed. Liệt kê tổ hợp 1–4 điểm trong tay boss (tối đa 15), chấm điểm bằng trọng số, chọn theo softmax hoặc max có nhiễu (số trong JSON).
+- Boss và người chơi dùng chung `CutActor`, `MoveCooldown`, `FieldDrops`, chỉ khác phe và tham số: không hai bản sao logic. Ngắt đòn nằm trong một nơi (`CombatState` hoặc bộ điều phối trận) nghe `swing_resolved` của cả hai phe.
+- Feedback đòn lưu **ô bị trúng** lúc chém, không đọc ô hiện tại khi vẽ.
+- Giữ `max_tick_sec` cho công bằng khi khựng frame; một tick lớn không được cho hai đòn chém "cùng lúc" theo thứ tự sai: so sánh thời điểm chém còn lại, không so sánh thứ tự xử lý.
+- **Sau story này là cổng chơi thử 3**: chơi và ghi lại cooldown bước, vung, nhịp rơi có đúng cảm giác không trước khi làm 010. Cập nhật hook `--demo=`.
 
 ---
 
 ## Out of Scope
 
-- Story 010: Parry/Counter là một phần của bộ thẻ đầy đủ; ở đây chỉ hai thẻ này.
-- Buff thay thế cho người chơi (Focus) — backlog.
+- Story 010: Đốt, Ghim, bảng cân bằng, boss học bằng bộ đếm, feint.
+- Story 011: nhiều trận, boss khác nhau, chơi lại.
+- Thủ đoạn rơi của boss (backlog).
 
 ---
 
@@ -64,10 +66,10 @@
 
 *Governed by `qa.level: minimal`: tests are waived (advisory), but the retained screenshot is not.*
 
-**Story Type**: Logic
+**Story Type**: Integration
 **Required evidence**:
-- Retained screenshot trong `production/qa/evidence/parry-counter-posture/`.
-- Logic: `tests/unit/combat/parry_window_test.gd` — khuyến nghị, không bắt buộc ở `minimal`.
+- Retained screenshot trong `production/qa/evidence/boss-cuts-interrupt/`.
+- Integration: `tests/integration/combat/interrupt_test.gd` hoặc tài liệu playtest — khuyến nghị, không bắt buộc ở `minimal`.
 
 **Status**: [ ] Not yet created
 
@@ -75,5 +77,5 @@
 
 ## Dependencies
 
-- Depends on: Story 008
+- Depends on: Story 007, Story 008
 - Unlocks: Story 010
