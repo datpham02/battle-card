@@ -52,6 +52,20 @@ const BUTTON_FONT_SIZE: int = 30
 ## Hit/miss text size as a share of cell height.
 const FEEDBACK_FONT_RATIO: float = 0.4
 
+## Interrupt flash (NGẮT) and the boss-swing label box.
+const INTERRUPT_COLOR: Color = Color(1.0, 0.5, 0.0)
+const INTERRUPT_TINT: Color = Color(1.0, 0.5, 0.0, 0.55)
+const INTERRUPT_X_WIDTH: float = 8.0
+const INTERRUPT_X_INSET_RATIO: float = 0.1
+const LABEL_BIG_RATIO: float = 0.34
+const LABEL_SMALL_RATIO: float = 0.2
+const LABEL_PAD: float = 6.0
+const LABEL_LINE_SPACING: float = 1.15
+
+const TEXT_BOSS_SWING: String = "BOSS %s %s"
+const TEXT_INTERRUPT: String = "NGẮT!"
+const TEXT_INTERRUPT_BOSS: String = "boss bị hủy đòn"
+const TEXT_INTERRUPT_PLAYER: String = "đòn của bạn bị hủy"
 const TEXT_CONFIRM: String = "Chốt"
 const TEXT_CELLS: String = "%d ô"
 const TEXT_DAMAGE: String = "Sát thương %d"
@@ -132,7 +146,10 @@ func _draw() -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	_draw_preview(vp)
 	_draw_swing(vp)
+	_draw_boss_swing(vp)
 	_draw_feedback(vp)
+	_draw_boss_feedback(vp)
+	_draw_interrupt(vp)
 	_draw_confirm(vp)
 	_draw_menu(vp)
 
@@ -211,8 +228,77 @@ func _draw_swing(vp: Vector2) -> void:
 	_draw_centered(info, text, BIG_FONT_SIZE, SWING_OUTLINE)
 
 
+# Boss swing on the PLAYER's half: red cells, countdown + labels/skill centred on their bounding box.
+func _draw_boss_swing(vp: Vector2) -> void:
+	var boss: BossController = _combat.get_boss()
+	var actor: CutActor = boss.get_actor()
+	if not actor.is_swinging():
+		return
+	var cells: Array[Vector2i] = actor.get_cells()
+	_draw_cells(vp, cells, SWING_TINT, SWING_OUTLINE)
+	var last: Dictionary = boss.get_last_cut()
+	var labels: Array = last.get("labels", [])
+	var joined: String = "+".join(PackedStringArray(labels))
+	var line2: String = TEXT_BOSS_SWING % [joined, _skill_name(actor.get_skill_id())]
+	_draw_cells_label(vp, cells, ("%.1f s" % actor.get_time_left()), line2, SWING_OUTLINE)
+
+
+# Boss HIT / MISS on the player's half (same look as the player's feedback).
+func _draw_boss_feedback(vp: Vector2) -> void:
+	_draw_feedback_for(vp, _combat.get_boss_feedback())
+
+
+# NGẮT flash over the victim's cancelled swing cells: orange tint, a big X per cell, text fading out.
+func _draw_interrupt(vp: Vector2) -> void:
+	var flash: Dictionary = _combat.get_interrupt_flash()
+	if flash.is_empty():
+		return
+	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
+	var cells: Array[Vector2i] = flash["cells"]
+	var grid: BoardGrid = _combat.get_grid()
+	_draw_cells(vp, cells, Color(INTERRUPT_TINT, INTERRUPT_TINT.a * fade), Color(INTERRUPT_COLOR, fade))
+	for cell: Vector2i in cells:
+		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell).grow(-rect_inset(vp))
+		draw_line(rect.position, rect.end, Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
+		draw_line(Vector2(rect.end.x, rect.position.y), Vector2(rect.position.x, rect.end.y), Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
+	var boss_victim: bool = int(flash["side"]) == CombatState.Side.ENEMY
+	_draw_cells_label(vp, cells, TEXT_INTERRUPT, TEXT_INTERRUPT_BOSS if boss_victim else TEXT_INTERRUPT_PLAYER, INTERRUPT_COLOR, fade)
+
+
+func rect_inset(vp: Vector2) -> float:
+	return ScreenLayout.cell_size(_combat.get_grid(), vp).y * INTERRUPT_X_INSET_RATIO
+
+
+# Two lines (big, small) on a white backing, centred on the bounding box of [param cells] and
+# clamped inside the board, so it never reaches the strip under the arena.
+func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2: String, color: Color, alpha: float = 1.0) -> void:
+	if cells.is_empty():
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
+	for cell: Vector2i in cells:
+		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
+	var font: Font = ThemeDB.fallback_font
+	var big: int = int(ScreenLayout.cell_size(grid, vp).y * LABEL_BIG_RATIO)
+	var small: int = int(ScreenLayout.cell_size(grid, vp).y * LABEL_SMALL_RATIO)
+	var width: float = maxf(font.get_string_size(line1, HORIZONTAL_ALIGNMENT_LEFT, -1, big).x, font.get_string_size(line2, HORIZONTAL_ALIGNMENT_LEFT, -1, small).x) + LABEL_PAD * 2.0
+	var height: float = (big + small) * LABEL_LINE_SPACING + LABEL_PAD * 2.0
+	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
+	var pos: Vector2 = box.get_center() - Vector2(width, height) * 0.5
+	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
+	pos.y = clampf(pos.y, board.position.y, maxf(board.end.y - height, board.position.y))
+	var back := Rect2(pos, Vector2(width, height))
+	draw_rect(back, Color(TEXT_OUTLINE_LIGHT, TEXT_OUTLINE_LIGHT.a * alpha))
+	draw_rect(back, Color(color, alpha), false, CELL_OUTLINE_WIDTH)
+	draw_string(font, pos + Vector2(0.0, LABEL_PAD + big * 0.85), line1, HORIZONTAL_ALIGNMENT_CENTER, width, big, Color(color, alpha))
+	draw_string(font, pos + Vector2(0.0, LABEL_PAD + big * LABEL_LINE_SPACING + small * 0.85), line2, HORIZONTAL_ALIGNMENT_CENTER, width, small, Color(TEXT_DARK, alpha))
+
+
 func _draw_feedback(vp: Vector2) -> void:
-	var fb: Dictionary = _combat.get_cut_feedback()
+	_draw_feedback_for(vp, _combat.get_cut_feedback())
+
+
+func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	if fb.is_empty():
 		return
 	var hit: bool = bool(fb["hit"])

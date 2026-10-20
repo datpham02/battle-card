@@ -1,12 +1,12 @@
 # Story 009: Boss đi nhặt và cắt — brain trọng số, vung đỏ trên bàn bạn, ngắt đòn hai chiều
 
 > **Epic**: Kaiten Duel (v3)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-18
+> **Last Updated**: 2026-10-20
 
 ## Context
 
@@ -79,3 +79,13 @@
 
 - Depends on: Story 007, Story 008
 - Unlocks: Story 010
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-20
+**Criteria**: 7/7 passing, with two deviations from the story text: the boss picks its skill instantly (no slow-motion menu, so the boss never slows the match), and the "low boss HP" brain factor is implemented as retreating (`retreat_*` weights) rather than preferring quick cuts.
+**Deviations**: ADVISORY: weight set "balanced" is nearly identical to "aggressive" in the simulation (143 cuts each, 4.59 vs 4.57 mean cells); aggressive vs cautious differ clearly (143 vs 115 cuts, 4.6 vs 6.3 cells). ADVISORY: boss demos start the boss's cut through the private `BossController._do_cut`. ADVISORY: `reaction_sec` is global, not per weight set. ADVISORY: no indicator of the cell the boss is walking toward. The boss now starts on the grid's default cell (the `enemy_start_cell` override was removed from `combat.json`).
+**Test Evidence**: Integration: retained screenshots `production/qa/evidence/boss-cuts-interrupt/01-06*.png` (all opened and checked). `SwingArbiter` (11 deterministic cases incl. tie, miss, huge tick, death), `BossBrain` (determinism, rule violations, set comparison, interrupt preference) and a 15 s real-match smoke (17 moves, 8 pickups, 4 cuts) were verified by scratch scripts that are not retained; no unit/integration tests (waived at `qa.level: minimal`).
+**Code Review**: Skipped (solo mode).
+**Not verified**: feel of the match (step rhythm, windup lengths, boss threat level) and touch on a real device. This is playtest gate 3.

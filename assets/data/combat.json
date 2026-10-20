@@ -5,7 +5,6 @@
 	"side_rows": 3,
 	"missing_cells": [],
 	"player_start_cell": [1, 1],
-	"enemy_start_cell": [3, 1],
 	"max_tick_sec": 0.1,
 	"feedback_sec": 1.0,
 	"player_step_cooldown_sec": 0.45

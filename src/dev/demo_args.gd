@@ -15,6 +15,18 @@ extends Node
 ##                                      swing frozen 0.3 s in; the boss stays on its start cell (not forced)
 ##   godot --path . -- --demo=hit       as swing, boss moved INTO column 1, swing just resolved: HIT and "-N"
 ##   godot --path . -- --demo=miss      as swing, boss moved to the LAST column, swing just resolved: MISS
+##   godot --path . -- --demo=boss_pick       boss holds 2 points (tags in the HUD), 3 boss field points of
+##                                            different freshness on its half, one next to the boss
+##   godot --path . -- --demo=boss_swing      boss cut of 3 cells (A1) on the player's half, frozen 0.3 s in,
+##                                            player standing OUTSIDE the covered cells
+##   godot --path . -- --demo=boss_hit        boss swing just resolved, player inside: HIT, "-N", HP reduced
+##   godot --path . -- --demo=boss_miss       boss swing just resolved, player outside: MISS
+##   godot --path . -- --demo=interrupt_player  player's cut resolves first and cancels the boss's: NGẮT on the boss's cells
+##   godot --path . -- --demo=interrupt_boss  boss's cut resolves first and cancels the player's: NGẮT on the player's cells
+##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
+##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
+##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
+##       boss_brain.json); sets CombatView.boss_set_override before _ready. Works with or without --demo.
 ##   godot --path . -- --grid=<cols>x<rows>[:c,r;c,r...]   DEV-ONLY board override
 ##       <cols>x<rows> = columns x rows of ONE half; the optional list is missing cells in
 ##       side coordinates (col 0 = farthest from the divider; mirrored to the boss half),
@@ -27,7 +39,13 @@ extends Node
 
 const DEMO_PREFIX: String = "--demo="
 const GRID_PREFIX: String = "--grid="
+const BOSS_PREFIX: String = "--boss="
 const DEMO_SEED: int = 7
+## Freshness (s) of the boss's field points in "boss_pick"; uid base of its synthetic hand points.
+const BOSS_FIELD_FRESHNESS: Array[float] = [6.5, 3.5, 1.5]
+const BOSS_UID_BASE: int = -100
+## Head start (s) of the first cut in the interrupt demos.
+const INTERRUPT_LEAD_SEC: float = 0.1
 ## Demo points (spread over the player half) and freshness (s) left; one entry per point.
 const DROPS_FRESHNESS: Array[float] = [6.5, 4.0, 2.0, 0.8]
 const EXPIRING_FRESHNESS: float = 0.8
@@ -50,6 +68,7 @@ func _enter_tree() -> void:
 	if _mode != "":
 		_combat().drops_seed = DEMO_SEED
 	_combat().grid_override = _parse_grid()
+	_combat().boss_set_override = _parse_boss_set()
 
 
 func _ready() -> void:
@@ -57,6 +76,8 @@ func _ready() -> void:
 		return
 	var combat: CombatView = _combat()
 	combat.freeze_time = true
+	# The boss stays still in every demo (no decisions, no clocks).
+	combat.get_boss().set_active(false)
 	var grid: BoardGrid = combat.get_grid()
 	match _mode:
 		"board":
@@ -97,7 +118,7 @@ func _ready() -> void:
 		"swing":
 			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
 			_confirm_or_warn(combat)
-			combat.get_cut_actor().tick(SWING_ELAPSED_SEC)
+			combat.get_arbiter().tick(SWING_ELAPSED_SEC)
 		"hit", "miss":
 			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
 			var column: int = grid.side_cols if _mode == "hit" else grid.side_cols * 2 - 1
@@ -106,9 +127,116 @@ func _ready() -> void:
 				push_warning("DemoArgs: could not move the boss to %s" % str(target))
 			_confirm_or_warn(combat)
 			var actor: CutActor = combat.get_cut_actor()
-			actor.tick(actor.get_time_left() + 0.001)
+			combat.get_arbiter().tick(actor.get_time_left() + 0.001)
+		"boss_pick":
+			var boss: BossController = combat.get_boss()
+			_boss_hand([_lbl("A", 1), _lbl("C", grid.side_cols)])
+			var near: Vector2i = _enemy_neighbour(grid, combat.get_state().enemy_cell)
+			var cells: Array[Vector2i] = [near]
+			for cell: Vector2i in _spread_enemy_cells(grid, BOSS_FIELD_FRESHNESS.size() + 2):
+				if cells.size() < BOSS_FIELD_FRESHNESS.size() and cell != near and cell != combat.get_state().enemy_cell:
+					cells.append(cell)
+			var labels: Array[String] = _spread_labels(grid, cells.size(), 1)
+			for i: int in cells.size():
+				boss.get_drops().debug_place(labels[i], cells[i], BOSS_FIELD_FRESHNESS[i])
+		"boss_swing", "boss_hit", "boss_miss":
+			var covered: Array[Vector2i] = _boss_cut(combat, [_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], 1)
+			_place_player(combat, covered, _mode == "boss_hit")
+			if _mode == "boss_swing":
+				combat.get_arbiter().tick(SWING_ELAPSED_SEC)
+			else:
+				combat.get_arbiter().tick(combat.get_boss().get_actor().get_time_left() + 0.001)
+		"interrupt_player":
+			# The player's cut starts first, the boss's 0.1 s later: the player's resolves
+			# first, hits the boss and cancels the boss's running cut.
+			_boss_to_player_column(combat)
+			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
+			_confirm_or_warn(combat)
+			combat.get_arbiter().tick(INTERRUPT_LEAD_SEC)
+			_boss_cut(combat, [_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], 1)
+			combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
+		"interrupt_boss":
+			# Mirror: the boss's cut starts first and hits the player, cancelling the player's.
+			_boss_to_player_column(combat)
+			var covered2: Array[Vector2i] = _boss_cut(combat, [_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], 1)
+			_place_player(combat, covered2, true)
+			combat.get_arbiter().tick(INTERRUPT_LEAD_SEC)
+			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
+			_confirm_or_warn(combat)
+			combat.get_arbiter().tick(combat.get_boss().get_actor().get_time_left() + 0.001)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
+
+
+func _parse_boss_set() -> String:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(BOSS_PREFIX):
+			return arg.substr(BOSS_PREFIX.length())
+	return ""
+
+
+# Puts synthetic points with [param labels] into the boss's first hand slots.
+func _boss_hand(labels: Array[String]) -> void:
+	var hand: HoldSlots = _combat().get_boss().get_hand()
+	for i: int in mini(labels.size(), hand.get_slot_count()):
+		var point := FieldPoint.new()
+		point.uid = BOSS_UID_BASE - i
+		point.label = labels[i]
+		point.freshness_left = 0.0
+		hand.place(point, i)
+
+
+# Fills the boss's hand with [param labels] and commits a cut with the first [param use] of
+# them through BossController's real cut path (private _do_cut: dev-only). Returns the covered
+# cells on the player's half (empty + warning if the cut did not start).
+func _boss_cut(combat: CombatView, labels: Array[String], use: int) -> Array[Vector2i]:
+	var boss: BossController = combat.get_boss()
+	_boss_hand(labels)
+	var indices: Array[int] = []
+	for i: int in use:
+		indices.append(i)
+	boss.call("_do_cut", {"hand_indices": indices, "skill_id": SkillConfig.FALLBACK_SKILL})
+	if not boss.get_actor().is_swinging():
+		push_warning("DemoArgs: the boss cut did not start for demo '%s'" % _mode)
+	return boss.get_actor().get_cells()
+
+
+# Moves the player INTO (or, if not [param inside], OUT of) the covered cells.
+func _place_player(combat: CombatView, covered: Array[Vector2i], inside: bool) -> void:
+	for cell: Vector2i in combat.get_grid().player_cells():
+		if covered.has(cell) == inside:
+			if not combat.get_state().set_player_cell(cell):
+				push_warning("DemoArgs: could not move the player to %s" % str(cell))
+			return
+	push_warning("DemoArgs: no player cell %s the boss cut" % ("inside" if inside else "outside"))
+
+
+# Boss into the first column of its half (where the player's A1 cut lands) on its own row.
+func _boss_to_player_column(combat: CombatView) -> void:
+	var target := Vector2i(combat.get_grid().side_cols, combat.get_state().enemy_cell.y)
+	if not combat.get_state().set_enemy_cell(target):
+		push_warning("DemoArgs: could not move the boss to %s" % str(target))
+
+
+# A boss-half cell next to [param cell] (any direction), or [param cell] itself if none.
+func _enemy_neighbour(grid: BoardGrid, cell: Vector2i) -> Vector2i:
+	for direction: Vector2i in [Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN, Vector2i.RIGHT]:
+		if grid.is_enemy_cell(cell + direction):
+			return cell + direction
+	return cell
+
+
+# Like _spread_cells, over the boss's half.
+func _spread_enemy_cells(grid: BoardGrid, count: int) -> Array[Vector2i]:
+	var all: Array[Vector2i] = grid.enemy_cells()
+	var out: Array[Vector2i] = []
+	for i: int in count:
+		var index: int = 0
+		if count > 1:
+			index = roundi(float(all.size() - 1) * i / float(count - 1))
+		if not out.has(all[index]):
+			out.append(all[index])
+	return out
 
 
 func _parse_mode() -> String:

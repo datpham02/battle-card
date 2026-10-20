@@ -4,7 +4,7 @@ extends Node2D
 ## the player half's FieldDrops), ticking them from _process with one shared (capped) delta.
 ## Layout (landscape): a thin HUD band (player HP left, boss HP right), then the board (size
 ## and shape from CombatConfig.grid): player's half left of a divider, boss's half right.
-## The boss stands still.
+## The boss walks, picks up points and cuts (BossController); swings resolve via SwingArbiter.
 ## A cooldown ring under the player's feet shows the step cooldown. Placeholder art.
 ## Stepping onto a cell with a field point picks it up into the hand (HoldSlots).
 ## Implements: Story 003, Story 005, Story 006, Story 007.
@@ -41,6 +41,19 @@ const RING_WIDTH: float = 6.0
 const RING_POINTS: int = 48
 ## Gap between the HUD's left and right halves as a share of arena width.
 const HUD_GAP_RATIO: float = 0.04
+## Boss hand tags (HUD band): tag size, gap, top offset from the text row's top, label font,
+## width kept free for the right-aligned boss HP text.
+const HAND_TAG_WIDTH: float = 44.0
+const HAND_TAG_HEIGHT: float = 26.0
+const HAND_TAG_GAP: float = 6.0
+const HAND_TAG_TOP_OFFSET: float = 0.0
+const HAND_FONT_SIZE: int = 18
+const HAND_TEXT_RESERVE: float = 300.0
+const HAND_TAG_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
+const HAND_EMPTY_COLOR: Color = Color(0.15, 0.12, 0.1, 0.3)
+## Boss cooldown ring radius as a share of cell height (around its body), line width.
+const BOSS_RING_RADIUS_RATIO: float = 0.5
+const BOSS_RING_WIDTH: float = 5.0
 ## Seed for the field drops RNG; negative = random. Dev/capture only (DemoArgs sets it).
 const RANDOM_SEED: int = -1
 
@@ -69,6 +82,14 @@ var _cut_flow: CutFlow
 ## Last resolved player cut for the HIT/MISS marker: {cells, hit, damage, cell, time_left}; empty = none.
 var _feedback: Dictionary = {}
 var _hold_hooked: bool = false
+var _boss: BossController
+var _arbiter: SwingArbiter
+## Last resolved boss cut, drawn on the player's half: same shape as [member _feedback].
+var _boss_feedback: Dictionary = {}
+## Last interrupt flash {side (victim), cells, time_left}; empty = none.
+var _interrupt_flash: Dictionary = {}
+## Dev/capture only: weight set name for the boss brain (empty = from boss_brain.json).
+var boss_set_override: String = ""
 
 
 func _ready() -> void:
@@ -92,7 +113,19 @@ func _ready() -> void:
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
-	_cut_actor.swing_resolved.connect(_on_swing_resolved)
+	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
+	var hold_config: HoldSlotsConfig = HoldSlotsConfig.load_from_file()
+	if hold_config == null:
+		hold_config = HoldSlotsConfig.new()
+	_boss = BossController.new(
+		_state, _grid, _cut_config, _skill_config, brain_config, _drops_config, hold_config,
+		drops_seed + 1 if drops_seed >= 0 else -1
+	)
+	if not boss_set_override.is_empty() and not _boss.get_brain().use_set(boss_set_override):
+		push_warning("CombatView: unknown boss weight set '%s'" % boss_set_override)
+	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config)
+	_arbiter.swing_resolved.connect(_on_swing_resolved)
+	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
 
 
 func _process(delta: float) -> void:
@@ -102,19 +135,37 @@ func _process(delta: float) -> void:
 		var real_step: float = minf(delta, _config.max_tick_sec)
 		# The menu countdown runs on REAL time; it may close the menu this frame.
 		_cut_flow.tick_real(real_step)
-		# Simulation time is scaled down while the skill menu is open (slow motion).
+		# Simulation time is scaled down while the skill menu is open (slow motion); the boss
+		# lives in the same scaled time.
 		var step: float = real_step * (_skill_config.menu_time_scale if _cut_flow.is_menu_open() else 1.0)
 		_mover.tick(step)
 		var hold: HoldSlots = _get_hold()
 		var held: int = 0 if hold == null else hold.get_occupied_count()
+		# Each side's drops avoid the cells the opponent's swing is about to cut.
+		var boss_actor: CutActor = _boss.get_actor()
+		_drops.set_danger_cells(boss_actor.get_cells() if boss_actor.is_swinging() else _no_cells())
+		_boss.get_drops().set_danger_cells(_cut_actor.get_cells() if _cut_actor.is_swinging() else _no_cells())
 		_drops.tick(step, _state.player_cell, held)
-		_cut_actor.tick(step)
 		_cooldowns.tick(step)
-		if not _feedback.is_empty():
-			_feedback["time_left"] = float(_feedback["time_left"]) - step
-			if float(_feedback["time_left"]) <= 0.0:
-				_feedback = {}
+		_boss.tick(step, _cut_actor)
+		_arbiter.tick(step)
+		_age_flash(_feedback, step)
+		_age_flash(_boss_feedback, step)
+		_age_flash(_interrupt_flash, step)
 	queue_redraw()
+
+
+func _no_cells() -> Array[Vector2i]:
+	return []
+
+
+# Counts a feedback dictionary's time_left down; clears it in place when over.
+func _age_flash(flash: Dictionary, step: float) -> void:
+	if flash.is_empty():
+		return
+	flash["time_left"] = float(flash["time_left"]) - step
+	if float(flash["time_left"]) <= 0.0:
+		flash.clear()
 
 
 ## How long the HIT/MISS marker stays on screen (UI timing, real-ish seconds of sim time).
@@ -238,16 +289,42 @@ func _begin_cut(skill_id: String, cells: Array[Vector2i]) -> void:
 		_cooldowns.start(skill_id, float(_skill_config.get_skill(skill_id).get("cooldown_sec", 0.0)))
 
 
-func _on_swing_resolved(cells: Array[Vector2i], skill_id: String) -> void:
-	if _state.is_player_dead() or _state.is_enemy_dead():
-		return
-	var result: Dictionary = CutEffects.apply(
-		_state, _grid, CombatState.Side.PLAYER, cells, skill_id, _cut_config, _skill_config
-	)
-	_feedback = {
-		"cells": cells, "hit": bool(result["hit"]), "damage": float(result["damage"]),
-		"cell": _state.enemy_cell, "time_left": FEEDBACK_SEC,
+# Arbiter result of either side: stores the HIT/MISS marker for that side's cut.
+func _on_swing_resolved(side: int, result: Dictionary) -> void:
+	var feedback: Dictionary = {
+		"cells": result["cells"], "hit": bool(result["hit"]), "damage": float(result["damage"]),
+		"cell": result["cell"], "time_left": FEEDBACK_SEC,
 	}
+	if side == CombatState.Side.PLAYER:
+		_feedback = feedback
+	else:
+		_boss_feedback = feedback
+
+
+func _on_swing_interrupted(victim_side: int, cells: Array[Vector2i], _skill_id: String) -> void:
+	_interrupt_flash = {"side": victim_side, "cells": cells, "time_left": FEEDBACK_SEC}
+
+
+## The boss agent (hand, drops, mover, actor, brain).
+func get_boss() -> BossController:
+	return _boss
+
+
+## The swing arbiter (time order and interrupt).
+func get_arbiter() -> SwingArbiter:
+	return _arbiter
+
+
+## Last resolved boss cut, to show on the player's half ({cells, hit, damage, cell,
+## time_left}); empty when nothing is showing.
+func get_boss_feedback() -> Dictionary:
+	return _boss_feedback
+
+
+## Last interrupt ({side = victim side, cells = cancelled swing's cells, time_left}); empty
+## when nothing is showing. The view draws "NGẮT" from it.
+func get_interrupt_flash() -> Dictionary:
+	return _interrupt_flash
 
 
 ## The board (size, shape, halves) every view of the arena shares.
@@ -305,6 +382,7 @@ func _draw() -> void:
 	_draw_board(vp)
 	_draw_hud(vp)
 	_draw_enemy(vp)
+	_draw_boss_ring(vp)
 	_draw_cooldown_ring(vp)
 	_draw_player_marker(vp)
 	_draw_banner(ScreenLayout.arena_rect(vp))
@@ -343,6 +421,29 @@ func _draw_hud(vp: Vector2) -> void:
 		enemy_text = "DUMMY  HP %d/%d" % [ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
 	_draw_text(enemy_text, Vector2(right_x, text_y), half_w, HORIZONTAL_ALIGNMENT_RIGHT)
 	_draw_bar(Rect2(Vector2(right_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.enemy_hp / _state.enemy_max_hp, HP_COLOR)
+	_draw_boss_hand(Vector2(right_x, text_y), half_w)
+
+
+# The boss's held points as small tags in the HUD band, in the text row above its HP bar,
+# left-aligned at [param origin].x (its HP text is right-aligned, so they do not collide as
+# long as hand_size * (tag + gap) fits the left of the text). Empty slots are faint outlines.
+func _draw_boss_hand(origin: Vector2, width: float) -> void:
+	var hand: HoldSlots = _boss.get_hand()
+	var count: int = hand.get_slot_count()
+	var tag_w: float = HAND_TAG_WIDTH
+	var top: float = origin.y - FONT_SIZE + HAND_TAG_TOP_OFFSET
+	var room: float = width - HAND_TEXT_RESERVE
+	if count * (tag_w + HAND_TAG_GAP) > room:
+		tag_w = maxf(room / count - HAND_TAG_GAP, 12.0)
+	for i: int in count:
+		var rect := Rect2(Vector2(origin.x + i * (tag_w + HAND_TAG_GAP), top), Vector2(tag_w, HAND_TAG_HEIGHT))
+		var point: FieldPoint = hand.get_point(i)
+		if point == null:
+			draw_rect(rect, HAND_EMPTY_COLOR, false, 2.0)
+			continue
+		draw_rect(rect, HAND_TAG_BACK)
+		draw_rect(rect, HP_COLOR, false, 2.0)
+		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0.0, HAND_TAG_HEIGHT * 0.5 + HAND_FONT_SIZE * 0.35), point.label, HORIZONTAL_ALIGNMENT_CENTER, tag_w, HAND_FONT_SIZE, TEXT_COLOR)
 
 
 func _draw_enemy(vp: Vector2) -> void:
@@ -366,6 +467,17 @@ func _draw_cooldown_ring(vp: Vector2) -> void:
 	var radius: float = _marker_radius(vp) + ScreenLayout.cell_size(_grid, vp).y * RING_GAP_RATIO
 	draw_arc(c, radius, 0.0, TAU, RING_POINTS, RING_BACK_COLOR, RING_WIDTH)
 	draw_arc(c, radius, -PI * 0.5, -PI * 0.5 + TAU * fraction, RING_POINTS, RING_COLOR, RING_WIDTH)
+
+
+# Ring around the boss's body: full right after its step, shrinks to nothing; hidden when ready.
+func _draw_boss_ring(vp: Vector2) -> void:
+	var fraction: float = _boss.get_mover().get_cooldown_fraction()
+	if fraction <= 0.0 or _state.is_enemy_dead():
+		return
+	var c: Vector2 = ScreenLayout.cell_center(_grid, vp, _state.enemy_cell)
+	var radius: float = ScreenLayout.cell_size(_grid, vp).y * BOSS_RING_RADIUS_RATIO
+	draw_arc(c, radius, 0.0, TAU, RING_POINTS, RING_BACK_COLOR, BOSS_RING_WIDTH)
+	draw_arc(c, radius, -PI * 0.5, -PI * 0.5 + TAU * fraction, RING_POINTS, HP_COLOR, BOSS_RING_WIDTH)
 
 
 func _draw_player_marker(vp: Vector2) -> void:

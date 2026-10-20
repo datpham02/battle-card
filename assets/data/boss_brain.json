@@ -1,0 +1,63 @@
+{
+	"step_cooldown_sec": 0.55,
+	"think_interval_sec": 0.3,
+	"reaction_sec": 0.35,
+	"noise": 0.15,
+	"active_set": "balanced",
+	"sets": {
+		"balanced": {
+			"cut_hit_now": 3.0,
+			"cut_per_cell": 1.0,
+			"cut_duration_penalty": 0.8,
+			"cut_interrupt_bonus": 4.0,
+			"cut_point_cost": 0.4,
+			"cut_hand_wait": 1.5,
+			"hand_target": 3,
+			"min_cut_score": 3.0,
+			"skill_bonus_push": 1.0,
+			"dodge_danger": 2.0,
+			"pickup_value": 2.0,
+			"pickup_danger_penalty": 2.0,
+			"pickup_full_hand_zero": true,
+			"idle_bias": 0.2,
+			"retreat_hp_ratio": 0.3,
+			"retreat_bonus": 1.0
+		},
+		"aggressive": {
+			"cut_hit_now": 3.0,
+			"cut_per_cell": 1.0,
+			"cut_duration_penalty": 0.5,
+			"cut_interrupt_bonus": 5.0,
+			"cut_point_cost": 0.3,
+			"cut_hand_wait": 0.0,
+			"hand_target": 1,
+			"min_cut_score": 3.0,
+			"skill_bonus_push": 0.5,
+			"dodge_danger": 0.1,
+			"pickup_value": 2.5,
+			"pickup_danger_penalty": 0.5,
+			"pickup_full_hand_zero": true,
+			"idle_bias": 0.2,
+			"retreat_hp_ratio": 0.15,
+			"retreat_bonus": 0.0
+		},
+		"cautious": {
+			"cut_hit_now": 3.0,
+			"cut_per_cell": 1.0,
+			"cut_duration_penalty": 0.3,
+			"cut_interrupt_bonus": 3.0,
+			"cut_point_cost": 0.2,
+			"cut_hand_wait": 5.0,
+			"hand_target": 4,
+			"min_cut_score": 4.0,
+			"skill_bonus_push": 2.0,
+			"dodge_danger": 4.0,
+			"pickup_value": 2.0,
+			"pickup_danger_penalty": 4.0,
+			"pickup_full_hand_zero": true,
+			"idle_bias": 0.2,
+			"retreat_hp_ratio": 0.5,
+			"retreat_bonus": 2.0
+		}
+	}
+}

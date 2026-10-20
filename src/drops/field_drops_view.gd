@@ -34,8 +34,18 @@ const OUTLINE_WIDTH: float = 3.0
 
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
+## True = draw the BOSS half's field points (boss.get_drops()) instead of the player's; the
+## "FULL" tag is then never drawn (it belongs to the player's hand).
+@export var boss_side: bool = false
 var _combat: CombatView
 var _hold_view: HoldSlotsView
+
+
+# The FieldDrops this view draws (null before the combat view is ready).
+func _source() -> FieldDrops:
+	if boss_side:
+		return _combat.get_boss().get_drops() if _combat.get_boss() != null else null
+	return _combat.get_drops()
 
 
 func _ready() -> void:
@@ -57,14 +67,14 @@ static func freshness_color(ratio: float) -> Color:
 
 
 func _draw() -> void:
-	if _combat == null or _combat.get_drops() == null:
+	if _combat == null or _source() == null:
 		return
 	var vp: Vector2 = get_viewport_rect().size
 	var grid: BoardGrid = _combat.get_grid()
 	var cell: Vector2 = ScreenLayout.cell_size(grid, vp)
-	var hand_full: bool = _hold_view != null and _hold_view.get_slots() != null and _hold_view.get_slots().is_full()
+	var hand_full: bool = not boss_side and _hold_view != null and _hold_view.get_slots() != null and _hold_view.get_slots().is_full()
 	var stand: Vector2i = _combat.get_state().player_cell
-	for point: FieldPoint in _combat.get_drops().get_points():
+	for point: FieldPoint in _source().get_points():
 		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, point.cell)
 		var ratio: float = clampf(point.freshness_left / _combat.get_drops_config().freshness_sec, 0.0, 1.0)
 		var color: Color = freshness_color(ratio)

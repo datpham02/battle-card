@@ -18,6 +18,10 @@ script = ExtResource("2_combat")
 [node name="FieldDropsView" type="Node2D" parent="."]
 script = ExtResource("3_drops")
 
+[node name="BossDropsView" type="Node2D" parent="."]
+script = ExtResource("3_drops")
+boss_side = true
+
 [node name="HoldSlotsView" type="Node2D" parent="."]
 script = ExtResource("4_slots")
 

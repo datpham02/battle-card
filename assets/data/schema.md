@@ -45,7 +45,7 @@ Combat start values, timing caps and the board shape (Stories 003, 007). The boa
 | `side_rows` | integer >= 1 | cells | Rows of the board | 3 |
 | `missing_cells` | array of `[side_col, side_row]` | cell | Holes in the board, side coordinates, mirrored to the other half (see above) | `[]` |
 | `player_start_cell` | `[col, row]` (board cell) | cell | Optional override of where the player starts; must be a real cell of the player's half or the grid default (real cell nearest the centre of the half) is used with a warning | grid default |
-| `enemy_start_cell` | `[col, row]` (board cell) | cell | Optional override of where the boss starts; must be a real cell of the boss's half or the grid default is used with a warning. `[3, 1]` is the boss's front-centre cell on the default 3x3 sides; Story 009 moves it | grid default |
+| `enemy_start_cell` | `[col, row]` (board cell) | cell | Optional override of where the boss starts (absent in the shipped file: the boss starts on the grid default cell and then walks, Story 009); must be a real cell of the boss's half or the grid default is used with a warning | grid default |
 | `max_tick_sec` | number > 0 | seconds | Cap on one frame's time step for logic timers, so a frame hitch cannot skip a timing window | 0.1 |
 | `feedback_sec` | number >= 0 | seconds | How long the HIT / MISS feedback stays on screen | 1.0 |
 | `player_step_cooldown_sec` | number >= 0 | seconds | Wait after an accepted step before the next is allowed; presses during it are dropped, not queued | 0.45 |
@@ -86,3 +86,37 @@ Skill entry keys:
 | `damage_multiplier` | number >= 0 | factor | Multiplier on the slash damage (`base_damage_per_cell * cells`) | 1.0 |
 | `push_cells` | integer >= 0 | cells | Cells the target is pushed away from the divider along its row (stops at a missing cell/edge); push only | 0 |
 | `implemented` | boolean | - | False = shown locked ("not yet"); using it falls back to slash | false |
+
+## boss_brain.json  (read by `src/combat/boss_brain_config.gd`)
+
+Boss brain timing and named weight sets (Story 009). The brain scores every ordered selection of 1..4 held points (up to 64) as a cut, the 4 step directions as moves, and waiting; the best score wins. A missing or invalid file gives the built-in `balanced` set with a warning; weights are clamped to >= 0.
+
+| Key | Type | Unit | Meaning | Default if missing |
+|---|---|---|---|---|
+| `step_cooldown_sec` | number >= 0 | seconds | Boss wait after an accepted step (used by the controller to build the boss `UnitMover`) | 0.55 |
+| `think_interval_sec` | number >= 0 | seconds | Time between brain evaluations; `decide` returns wait in between | 0.3 |
+| `reaction_sec` | number >= 0 | seconds | How long the player's swing must have been visible before the brain reacts to it (dodge, interrupt, pickup danger) | 0.35 |
+| `noise` | number >= 0 | score | Amplitude of the uniform seeded noise added to every candidate score | 0.15 |
+| `active_set` | string | set name | Weight set in use; must exist in `sets` | `balanced` |
+| `sets` | object name -> weights | - | Named weight sets (below) | built-in `balanced` |
+
+Weight keys (inside each set; missing keys take the built-in balanced value):
+
+| Key | Type | Unit | Meaning | Default if missing |
+|---|---|---|---|---|
+| `cut_hit_now` | number >= 0 | score | Bonus when the player's current cell is in the candidate's covered cells | 3.0 |
+| `cut_per_cell` | number >= 0 | score/cell | Value per covered cell (= damage) | 1.0 |
+| `cut_duration_penalty` | number >= 0 | score/s | Penalty per second of windup | 0.8 |
+| `cut_interrupt_bonus` | number >= 0 | score | Bonus when the player is mid-swing (visible), the player's cell is covered and our windup ends before the player's remaining time | 4.0 |
+| `cut_point_cost` | number >= 0 | score/point | Penalty per point spent | 0.4 |
+| `cut_hand_wait` | number >= 0 | score | Penalty for cutting with fewer than `hand_target` points while the hand is not full | 1.5 |
+| `hand_target` | integer 1..4 | points | Hand size the brain prefers to wait for | 3 |
+| `min_cut_score` | number | score | A cut is committed only at or above this score | 3.0 |
+| `skill_bonus_<id>` | number >= 0 | score | Preference for skill `<id>` (e.g. `skill_bonus_push`) when available; slash is 0, so a skill with a bonus above 0 beats slash | `skill_bonus_push` 1.0 |
+| `dodge_danger` | number >= 0 | score | Penalty for standing in the player's visible incoming swing, times urgency = 1 / max(time_left, 0.1) | 2.0 |
+| `pickup_value` | number >= 0 | score | Value of the best reachable point, divided by 1 + Manhattan steps | 2.0 |
+| `pickup_danger_penalty` | number >= 0 | score | Subtracted from a point's value when it lies under the incoming swing | 2.0 |
+| `pickup_full_hand_zero` | boolean | - | When true pickups are worth 0 while the hand is full | true |
+| `idle_bias` | number >= 0 | score | Baseline score of waiting; a move or cut must beat it | 0.2 |
+| `retreat_hp_ratio` | number 0..1 | ratio | Below this boss HP ratio the brain prefers cells far from the divider | 0.3 |
+| `retreat_bonus` | number >= 0 | score | Bonus for the farthest column (scaled 0..1 by distance from the divider) while retreating | 1.0 |
