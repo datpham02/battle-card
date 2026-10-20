@@ -1,0 +1,99 @@
+class_name RunConfig
+extends RefCounted
+## Run structure from assets/data/run.json: ordered matches (the last one is the boss match),
+## HP carried between matches and the timings of the run flow.
+## Schema: assets/data/schema.md. Implements: Story 011.
+
+const DEFAULT_PATH: String = "res://assets/data/run.json"
+## Keys every match entry carries after validation.
+const MATCH_KEYS: Array[String] = [
+	"id", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_sec",
+	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult",
+]
+
+## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
+var heal_between_matches: float = 25.0
+## Seconds of real time the intro of each match lasts (battle frozen).
+var intro_sec: float = 1.5
+## Seconds of real time between the last hit and leaving the match.
+var end_delay_sec: float = 1.5
+## Seconds before the between-matches screen advances alone (0 = wait for the button).
+var between_sec: float = 3.0
+## Ordered matches (at least 1); the last is the boss match. Each: see [constant MATCH_KEYS].
+var matches: Array[Dictionary] = []
+
+
+func _init() -> void:
+	matches.append(_default_match(0))
+
+
+## Loads from a JSON file. Never null: a missing or bad file gives defaults (warning).
+static func load_from_file(path: String = DEFAULT_PATH) -> RunConfig:
+	if not FileAccess.file_exists(path):
+		push_warning("RunConfig: file not found, using defaults: %s" % path)
+		return RunConfig.new()
+	return from_json_text(FileAccess.get_file_as_string(path))
+
+
+## Builds a config from JSON text. Never null (defaults + warning if invalid).
+static func from_json_text(text: String) -> RunConfig:
+	var parsed: Variant = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("RunConfig: JSON root must be an object, using defaults")
+		return RunConfig.new()
+	return from_dictionary(parsed as Dictionary)
+
+
+## Builds a config from a dictionary; missing keys keep defaults, nonsense is clamped.
+static func from_dictionary(data: Dictionary) -> RunConfig:
+	var c := RunConfig.new()
+	c.heal_between_matches = maxf(float(data.get("heal_between_matches", c.heal_between_matches)), 0.0)
+	c.intro_sec = maxf(float(data.get("intro_sec", c.intro_sec)), 0.0)
+	c.end_delay_sec = maxf(float(data.get("end_delay_sec", c.end_delay_sec)), 0.0)
+	c.between_sec = maxf(float(data.get("between_sec", c.between_sec)), 0.0)
+	var raw: Variant = data.get("matches")
+	if typeof(raw) == TYPE_ARRAY:
+		var parsed: Array[Dictionary] = []
+		for entry: Variant in raw as Array:
+			if typeof(entry) != TYPE_DICTIONARY:
+				push_warning("RunConfig: a match entry is not an object, ignored")
+				continue
+			parsed.append(_clean_match(entry as Dictionary, parsed.size()))
+		if not parsed.is_empty():
+			c.matches = parsed
+			return c
+	push_warning("RunConfig: no valid matches, using one default match")
+	return c
+
+
+## Number of matches (>= 1).
+func match_count() -> int:
+	return matches.size()
+
+
+static func _default_match(index: int) -> Dictionary:
+	return {
+		"id": "match_%d" % (index + 1), "display_name": "Match %d" % (index + 1), "boss_max_hp": 100.0,
+		"brain_set": "balanced", "boss_step_cooldown_sec": 0.55, "boss_think_interval_sec": 0.3,
+		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0,
+	}
+
+
+static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
+	var m: Dictionary = _default_match(index)
+	m["id"] = str(raw.get("id", m["id"]))
+	m["display_name"] = str(raw.get("display_name", m["display_name"]))
+	m["brain_set"] = str(raw.get("brain_set", m["brain_set"]))
+	m["boss_max_hp"] = _positive(raw, "boss_max_hp", float(m["boss_max_hp"]))
+	m["boss_drop_interval_mult"] = _positive(raw, "boss_drop_interval_mult", float(m["boss_drop_interval_mult"]))
+	for key: String in ["boss_step_cooldown_sec", "boss_think_interval_sec", "boss_reaction_sec"]:
+		m[key] = maxf(float(raw.get(key, m[key])), 0.0)
+	return m
+
+
+static func _positive(data: Dictionary, key: String, fallback: float) -> float:
+	var value: float = float(data.get(key, fallback))
+	if value <= 0.0:
+		push_warning("RunConfig: %s must be > 0 (got %s), using %s" % [key, value, fallback])
+		return fallback
+	return value

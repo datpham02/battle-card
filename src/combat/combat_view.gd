@@ -94,6 +94,22 @@ var _status: StatusEffects
 var _learning: BossLearning
 ## Dev/capture only: weight set name for the boss brain (empty = from boss_brain.json).
 var boss_set_override: String = ""
+## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
+## Keys (all optional): player_hp (start HP, used when >= 0), boss_max_hp, brain_set,
+## boss_step_cooldown_sec, boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult
+## (applied to a copy of the drops config for the boss only), end_delay_sec (default 1.5),
+## display_name (boss name in the HUD), match_label.
+var match_params: Dictionary = {}
+
+## Emitted ONCE, end_delay_sec of real time after either unit died.
+signal match_ended(player_won: bool, player_hp: float)
+
+## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
+const DEFAULT_END_DELAY_SEC: float = 1.5
+const DEFAULT_BOSS_NAME: String = "DUMMY"
+
+var _end_timer: float = -1.0
+var _end_emitted: bool = false
 
 
 func _ready() -> void:
@@ -104,11 +120,17 @@ func _ready() -> void:
 	if grid_override != null:
 		_config.use_grid(grid_override)
 	_grid = _config.grid
+	var boss_max_hp: float = maxf(float(match_params.get("boss_max_hp", _config.enemy_max_hp)), 1.0)
 	_state = CombatState.new(
-		_grid, _config.player_max_hp, _config.enemy_max_hp, _config.player_start_cell, _config.enemy_start_cell
+		_grid, _config.player_max_hp, boss_max_hp, _config.player_start_cell, _config.enemy_start_cell
 	)
+	var start_hp: float = float(match_params.get("player_hp", -1.0))
+	if start_hp >= 0.0:
+		_state.set_player_hp(start_hp)
 	_mover = UnitMover.new(_state, CombatState.Side.PLAYER, _config.player_step_cooldown_sec)
 	_drops_config = FieldDropsConfig.load_from_file(drops_config_path)
+	var boss_drops_config: FieldDropsConfig = _drops_config.copy()
+	boss_drops_config.spawn_interval_sec *= maxf(float(match_params.get("boss_drop_interval_mult", 1.0)), 0.01)
 	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), _grid.perimeter_labels(), drops_seed)
 	_state.cell_changed.connect(_on_cell_changed)
 	_cut_config = CutConfig.load_from_file()
@@ -118,11 +140,12 @@ func _ready() -> void:
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
+	_apply_brain_params(brain_config)
 	var hold_config: HoldSlotsConfig = HoldSlotsConfig.load_from_file()
 	if hold_config == null:
 		hold_config = HoldSlotsConfig.new()
 	_boss = BossController.new(
-		_state, _grid, _cut_config, _skill_config, brain_config, _drops_config, hold_config,
+		_state, _grid, _cut_config, _skill_config, brain_config, boss_drops_config, hold_config,
 		drops_seed + 1 if drops_seed >= 0 else -1
 	)
 	if not boss_set_override.is_empty() and not _boss.get_brain().use_set(boss_set_override):
@@ -140,7 +163,51 @@ func _ready() -> void:
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
 
 
+# Run match settings onto the freshly loaded brain config (before the BossController exists).
+func _apply_brain_params(brain_config: BossBrainConfig) -> void:
+	brain_config.step_cooldown_sec = maxf(float(match_params.get("boss_step_cooldown_sec", brain_config.step_cooldown_sec)), 0.0)
+	brain_config.think_interval_sec = maxf(float(match_params.get("boss_think_interval_sec", brain_config.think_interval_sec)), 0.0)
+	brain_config.reaction_sec = maxf(float(match_params.get("boss_reaction_sec", brain_config.reaction_sec)), 0.0)
+	var wanted: String = str(match_params.get("brain_set", ""))
+	if wanted.is_empty():
+		return
+	if brain_config.has_set(wanted):
+		brain_config.active_set = wanted
+	else:
+		push_warning("CombatView: unknown brain_set '%s' in match params" % wanted)
+
+
+# Counts REAL time after a death, then emits match_ended once.
+func _tick_end(delta: float) -> void:
+	if _end_emitted or _state == null:
+		return
+	if _end_timer < 0.0:
+		if not (_state.is_player_dead() or _state.is_enemy_dead()):
+			return
+		_end_timer = maxf(float(match_params.get("end_delay_sec", DEFAULT_END_DELAY_SEC)), 0.0)
+	_end_timer -= delta
+	if _end_timer <= 0.0:
+		_end_emitted = true
+		match_ended.emit(not _state.is_player_dead(), _state.player_hp)
+
+
+## Player HP right now.
+func get_player_hp() -> float:
+	return _state.player_hp
+
+
+## Boss name for the HUD: match_params display_name, or "DUMMY".
+func get_boss_name() -> String:
+	return str(match_params.get("display_name", DEFAULT_BOSS_NAME))
+
+
+## Match label such as "Trận 2/4" from match_params (empty when none).
+func get_match_label() -> String:
+	return str(match_params.get("match_label", ""))
+
+
 func _process(delta: float) -> void:
+	_tick_end(delta)
 	_hook_hold()
 	if not freeze_time:
 		# Cap the step so a frame hitch cannot skip a whole timing window.
@@ -434,7 +501,6 @@ func _draw() -> void:
 	_draw_boss_ring(vp)
 	_draw_cooldown_ring(vp)
 	_draw_player_marker(vp)
-	_draw_banner(ScreenLayout.arena_rect(vp))
 
 
 func _draw_board(vp: Vector2) -> void:
@@ -465,9 +531,9 @@ func _draw_hud(vp: Vector2) -> void:
 	var hp_text: String = "YOU  HP %d/%d" % [ceili(_state.player_hp), ceili(_state.player_max_hp)]
 	_draw_text(hp_text, Vector2(left_x, text_y), half_w, HORIZONTAL_ALIGNMENT_LEFT)
 	_draw_bar(Rect2(Vector2(left_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.player_hp / _state.player_max_hp, PLAYER_HP_COLOR)
-	var enemy_text: String = "DUMMY  DEAD"
+	var enemy_text: String = "%s  DEAD" % get_boss_name()
 	if not _state.is_enemy_dead():
-		enemy_text = "DUMMY  HP %d/%d" % [ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
+		enemy_text = "%s  HP %d/%d" % [get_boss_name(), ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
 	_draw_text(enemy_text, Vector2(right_x, text_y), half_w, HORIZONTAL_ALIGNMENT_RIGHT)
 	_draw_bar(Rect2(Vector2(right_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.enemy_hp / _state.enemy_max_hp, HP_COLOR)
 	_draw_boss_hand(Vector2(right_x, text_y), half_w)
@@ -537,22 +603,6 @@ func _draw_player_marker(vp: Vector2) -> void:
 	draw_arc(c, radius, 0.0, TAU, 32, TEXT_COLOR, 3.0)
 	var font_size: int = maxi(int(radius * MARKER_FONT_RATIO), 8)
 	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, font_size * 0.4), "YOU", HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
-
-
-func _draw_banner(arena: Rect2) -> void:
-	var text: String = ""
-	var color: Color = TEXT_COLOR
-	if _state.is_player_dead():
-		text = "DEFEAT"
-		color = DEFEAT_COLOR
-	elif _state.is_enemy_dead():
-		text = "VICTORY"
-		color = VICTORY_COLOR
-	if text == "":
-		return
-	var band := Rect2(arena.position.x, arena.get_center().y - 60.0, arena.size.x, 110.0)
-	draw_rect(band, Color(1.0, 1.0, 1.0, 0.85))
-	draw_string(ThemeDB.fallback_font, Vector2(band.position.x, band.position.y + 80.0), text, HORIZONTAL_ALIGNMENT_CENTER, band.size.x, BIG_FONT_SIZE, color)
 
 
 func _marker_radius(vp: Vector2) -> float:

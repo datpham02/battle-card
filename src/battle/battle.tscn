@@ -1,0 +1,36 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/combat/combat_view.gd" id="2_combat"]
+[ext_resource type="Script" path="res://src/drops/field_drops_view.gd" id="3_drops"]
+[ext_resource type="Script" path="res://src/hold/hold_slots_view.gd" id="4_slots"]
+[ext_resource type="Script" path="res://src/combat/dpad_view.gd" id="5_dpad"]
+[ext_resource type="Script" path="res://src/hold/hand_input_controller.gd" id="6_hand"]
+[ext_resource type="Script" path="res://src/dev/demo_args.gd" id="7_demo"]
+[ext_resource type="Script" path="res://src/combat/cut_hud_view.gd" id="8_cuthud"]
+
+[node name="Battle" type="Node2D"]
+
+[node name="CombatView" type="Node2D" parent="."]
+script = ExtResource("2_combat")
+
+[node name="FieldDropsView" type="Node2D" parent="."]
+script = ExtResource("3_drops")
+
+[node name="BossDropsView" type="Node2D" parent="."]
+script = ExtResource("3_drops")
+boss_side = true
+
+[node name="HoldSlotsView" type="Node2D" parent="."]
+script = ExtResource("4_slots")
+
+[node name="CutHudView" type="Node2D" parent="."]
+script = ExtResource("8_cuthud")
+
+[node name="DPadView" type="Node2D" parent="."]
+script = ExtResource("5_dpad")
+
+[node name="HandInputController" type="Node2D" parent="."]
+script = ExtResource("6_hand")
+
+[node name="DemoArgs" type="Node" parent="."]
+script = ExtResource("7_demo")

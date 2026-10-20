@@ -117,6 +117,17 @@ func cell_of(side: int) -> Vector2i:
 	return player_cell if side == Side.PLAYER else enemy_cell
 
 
+## Sets the player's HP to [param hp] clamped to 0..player_max_hp (match start with carried
+## HP). Emits changed; ignored once dead.
+func set_player_hp(hp: float) -> void:
+	if is_player_dead():
+		return
+	player_hp = clampf(hp, 0.0, player_max_hp)
+	changed.emit()
+	if is_player_dead():
+		player_died.emit()
+
+
 ## Hits the player: reduces HP (floored at 0, no overkill). Ignored once dead.
 func damage_player(amount: float) -> void:
 	if is_player_dead() or amount <= 0.0:

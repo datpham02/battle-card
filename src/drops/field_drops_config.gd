@@ -21,6 +21,19 @@ var hungry_interval_mult: float = 0.6
 var allow_drop_in_danger: bool = true
 
 
+## Independent copy of this config (so one side's drops can be tuned without the other's).
+func copy() -> FieldDropsConfig:
+	var c := FieldDropsConfig.new()
+	c.spawn_interval_sec = spawn_interval_sec
+	c.initial_delay_sec = initial_delay_sec
+	c.max_on_field = max_on_field
+	c.freshness_sec = freshness_sec
+	c.hungry_after_sec = hungry_after_sec
+	c.hungry_interval_mult = hungry_interval_mult
+	c.allow_drop_in_danger = allow_drop_in_danger
+	return c
+
+
 ## Loads from a JSON file. Falls back to defaults (with a warning) when missing or bad.
 static func load_from_file(path: String = DEFAULT_PATH) -> FieldDropsConfig:
 	if not FileAccess.file_exists(path):

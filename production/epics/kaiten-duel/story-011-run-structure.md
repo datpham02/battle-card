@@ -1,12 +1,12 @@
 # Story 011: Một run: 3 trận + boss, thắng/thua, chơi lại
 
 > **Epic**: Kaiten Duel (v3)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-18
+> **Last Updated**: 2026-10-20
 
 ## Context
 
@@ -74,3 +74,14 @@
 
 - Depends on: Story 010
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-20
+**Criteria**: 5/6 passing. NOT MEASURED: "a full run lasts about 8-12 minutes" needs a real playthrough; the win/lose screens show the run's elapsed time so it can be measured and recorded (the "7:42" in the screenshots is a fixed value used for stable captures, not a measurement).
+**Deviations**: ADVISORY: match difficulty numbers in `run.json` (boss HP 80 to 150, boss step cooldown 0.80 to 0.50 s, sets cautious, cautious, balanced, aggressive) are placeholders for the balance pass. ADVISORY: the old VICTORY/DEFEAT band in `CombatView` was removed because it collided with the new run panels. ADVISORY: `RunController` is a `Node2D` so the run HUD draws above the battle (found by looking at a screenshot where units drew over the panels). ADVISORY: Enter/Space also trigger the run buttons on desktop. `FieldDropsConfig.copy()`, `RunState.dev_jump` and the `--match=N` / `--run=<phase>` dev args were added beyond the story.
+**Test Evidence**: Integration; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/run-structure/01-06*.png` (all opened and checked; 06 is live play in the boss match). A RunState test and a full-run flow test (4 matches, win, restart, loss, restart, each match a fresh battle node, hands empty, no burning cells, learning counters 0) were run as scratch scripts and are not retained. The old pick-up test is flaky because unseeded random drops can land on its target cell (pre-existing).
+**Code Review**: Skipped (solo mode).
+**Not verified**: real run length, difficulty ramp feel, touch on a device.
+**Epic status**: this was the last story of the MVP epic. Remaining before a release-quality build: the deferred balance pass, hide the boss-learning debug line, saved unit tests for the pure logic, art and audio, menu/settings screens.

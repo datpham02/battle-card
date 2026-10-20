@@ -144,3 +144,30 @@ Rules of `BossLearning` (`src/combat/boss_learning.gd`): the boss adapts to the 
 | `quick_cut_bias` | number >= 1 | multiplier | Multiplies `cut_duration_penalty` while the bias is on (the boss prefers fast cuts) | 2.0 |
 | `interrupt_count_threshold` | integer >= 1 | interrupts | Times the player interrupted the boss before it favours 1-point cuts | 2 |
 | `single_point_bonus` | number >= 0 | score | Flat bonus added to 1-point cut candidates once the interrupt threshold is reached | 2.0 |
+
+## `run.json` (Story 011)
+
+Run structure, read by `RunConfig` (`src/run/run_config.gd`). A bad or missing file gives one default match. The match numbers below are PLACEHOLDERS (a rough monotone difficulty ramp) for the later balance pass.
+
+| Key | Type | Unit | Meaning | Default |
+|---|---|---|---|---|
+| `heal_between_matches` | number >= 0 | HP | Flat HP the player recovers after winning a non-final match (result clamped to max HP) | 25 |
+| `intro_sec` | number >= 0 | seconds (real) | Length of each match intro (battle drawn but frozen) | 1.5 |
+| `end_delay_sec` | number >= 0 | seconds (real) | Pause after the last hit before leaving the match | 1.5 |
+| `between_sec` | number >= 0 | seconds (real) | Auto-advance of the between-matches screen; 0 = wait for the button only | 3.0 |
+| `matches` | array, >= 1 | - | Ordered matches; the LAST one is the boss match | one default match |
+
+Each `matches` entry:
+
+| Key | Type | Unit | Meaning | Default |
+|---|---|---|---|---|
+| `id` | string | - | Stable id | `match_<n>` |
+| `display_name` | string | - | Opponent name shown in the HUD | `Match <n>` |
+| `boss_max_hp` | number > 0 | HP | Opponent max HP | 100 |
+| `brain_set` | string | - | Weight set of `boss_brain.json` (balanced / aggressive / cautious); unknown = warning, file's `active_set` stays | balanced |
+| `boss_step_cooldown_sec` | number >= 0 | seconds | Overrides `step_cooldown_sec` of `boss_brain.json` for this match | 0.55 |
+| `boss_think_interval_sec` | number >= 0 | seconds | Overrides `think_interval_sec` | 0.3 |
+| `boss_reaction_sec` | number >= 0 | seconds | Overrides `reaction_sec` | 0.35 |
+| `boss_drop_interval_mult` | number > 0 | multiplier | Multiplies `spawn_interval_sec` of the BOSS half's drops only (< 1 = faster drops); the player's drops are unchanged | 1.0 |
+
+Ramp (placeholder): matches 1..4 = hp 80/100/120/150, sets cautious/cautious/balanced/aggressive, step 0.80/0.65/0.55/0.50, think 0.50/0.40/0.30/0.25, reaction 0.60/0.45/0.35/0.30, drop mult 1.3/1.15/1.0/0.9.

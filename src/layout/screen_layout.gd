@@ -45,6 +45,14 @@ const MENU_PAD_RATIO: float = 0.012
 ## Countdown bar height (share of height) and gap between skill buttons (share of width).
 const MENU_BAR_HEIGHT_RATIO: float = 0.02
 const MENU_BUTTON_GAP_RATIO: float = 0.008
+## Run UI (Story 011), shares of the viewport: intro band height; panel size; panel inner
+## inset; action button height (0.14 * 720 = 101 px >= 96 px) and its width as a share of the panel.
+const RUN_INTRO_HEIGHT_RATIO: float = 0.3
+const RUN_PANEL_WIDTH_RATIO: float = 0.5
+const RUN_PANEL_HEIGHT_RATIO: float = 0.7
+const RUN_PANEL_INSET_RATIO: float = 0.035
+const RUN_BUTTON_HEIGHT_RATIO: float = 0.14
+const RUN_BUTTON_WIDTH_RATIO: float = 0.7
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -235,3 +243,31 @@ static func cut_preview_info_rect(viewport_size: Vector2) -> Rect2:
 static func cut_swing_info_rect(viewport_size: Vector2) -> Rect2:
 	var strip: Rect2 = cut_strip_rect(viewport_size)
 	return Rect2(strip.position + Vector2(strip.size.x * 0.5, 0.0), Vector2(strip.size.x * 0.5, strip.size.y))
+
+
+## Run UI (Story 011). Match label: the thin margin above the arena (clear of the HP bars
+## and the boss hand tags, which live inside the HUD band), full width, for centred text.
+static func run_match_label_rect(viewport_size: Vector2) -> Rect2:
+	return Rect2(0.0, 0.0, viewport_size.x, viewport_size.y * ARENA_TOP_RATIO)
+
+
+## Run UI: intro band across the full width, centred on the arena (board stays visible around it).
+static func run_intro_band_rect(viewport_size: Vector2) -> Rect2:
+	var arena: Rect2 = arena_rect(viewport_size)
+	var height: float = viewport_size.y * RUN_INTRO_HEIGHT_RATIO
+	return Rect2(0.0, arena.get_center().y - height * 0.5, viewport_size.x, height)
+
+
+## Run UI: centred panel of the between / win / lose screens.
+static func run_panel_rect(viewport_size: Vector2) -> Rect2:
+	var size := Vector2(viewport_size.x * RUN_PANEL_WIDTH_RATIO, viewport_size.y * RUN_PANEL_HEIGHT_RATIO)
+	return Rect2((viewport_size - size) * 0.5, size)
+
+
+## Run UI: the big action button (Tiếp tục / Chơi lại), at the bottom of the panel.
+static func run_button_rect(viewport_size: Vector2) -> Rect2:
+	var panel: Rect2 = run_panel_rect(viewport_size)
+	var inset: float = viewport_size.y * RUN_PANEL_INSET_RATIO
+	var height: float = viewport_size.y * RUN_BUTTON_HEIGHT_RATIO
+	var width: float = panel.size.x * RUN_BUTTON_WIDTH_RATIO
+	return Rect2(panel.get_center().x - width * 0.5, panel.end.y - inset - height, width, height)
