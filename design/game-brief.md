@@ -49,6 +49,11 @@
 - Phản xạ đúng khi thấy boss vung: đã có đòn đang đếm và sắp xong thì đứng yên chịu đua; chưa có gì thì bước ra. Ngắt đòn là phần thưởng cho người ra đòn sớm, không phải nút phản xạ.
 - Một bên chết thì mọi đòn đang đếm bị hủy.
 
+### Hồ sơ boss theo trận và nhịp theo sân (Story 013)
+- Mỗi bộ não có **hồ sơ di chuyển** riêng: cam kết đích, nhiễu nước đi, thời gian phản ứng, kiểu đường (`row_first` / `shortest` / `mixed`), bước thừa sau khi né, có lang thang khi rảnh. Trận 1 máy móc và đoán được, boss cuối hay đổi ý. **Không** có dấu hiệu, đường đi hay nhãn ý định.
+- Boss chấm điểm đòn theo **đường thoát**: ưu tiên đòn để lại ít ô mà người chơi chạy tới kịp trong thời gian vung. Trận cao có **đòn nối**: hai đòn tuyên bố cùng lúc, đòn 2 phủ chỗ thoát của đòn 1; ngắt đòn 1 thì hủy cả hai. `swing_speed_mult` theo trận cho boss.
+- **Cooldown bước theo sân**: `cooldown = 0,45 × (2 / (max(cột, hàng) − 1)) ^ 0,75`, kẹp [0,18; 0,60] (3×3 → 0,45; 6×6 → 0,23; 10×10 → 0,18). Giữ "số bước thoát trong một lần vung" gần như nhau giữa các sân; boss nhân thêm hệ số theo trận.
+
 ### Boss
 - Boss **đi nhặt** điểm bên nửa sân nó (cooldown bước **0,55 s** trận đầu, giảm dần các trận sau) và **cắt bằng cùng hệ**: brain là bảng trọng số trong JSON (ô người chơi có nằm trong tập không, số ô so với khoảng vung và đồng hồ đang đếm của người chơi, có nên đi nhặt điểm đang nằm dưới đường dao, kỹ năng nào đang sẵn). Không học máy; mọi thứ đọc được bằng mắt.
 - Hạ boss → trận kế, lặp lại.
