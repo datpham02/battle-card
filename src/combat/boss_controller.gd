@@ -12,7 +12,24 @@ signal cut_started(labels: Array[String], cells: Array[Vector2i], skill_id: Stri
 signal moved(direction: Vector2i)
 ## The boss picked up a point into its hand.
 signal point_picked(point: FieldPoint)
+## A feint was cancelled mid-windup (it dealt nothing): the cells it was showing and its labels.
+signal feinted(cells: Array[Vector2i], labels: Array[String])
 
+## Offset added to the seed for the feint RNG so it never shares a stream with the brain noise.
+const _FEINT_SEED_OFFSET: int = 7919
+
+## DEV-ONLY (capture demos): when true the next one-point cut is a feint regardless of the
+## learning roll; cleared once used. Never set by gameplay code.
+var force_next_feint: bool = false
+
+var _brain_config: BossBrainConfig
+var _status: StatusEffects = null
+var _learning: BossLearning = null
+var _feint_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _feint_pending: bool = false
+var _feint_cells: Array[Vector2i] = []
+var _feint_labels: Array[String] = []
+var _feint_count: int = 0
 var _state: CombatState
 var _grid: BoardGrid
 var _cut_config: CutConfig
@@ -35,6 +52,11 @@ func _init(
 	seed_value: int = -1
 ) -> void:
 	_state = state
+	_brain_config = brain_config
+	if seed_value >= 0:
+		_feint_rng.seed = seed_value + _FEINT_SEED_OFFSET
+	else:
+		_feint_rng.randomize()
 	_grid = grid
 	_cut_config = cut_config
 	_skill_config = skill_config
@@ -59,9 +81,10 @@ func tick(delta: float, player_actor: CutActor) -> void:
 	_brain.tick(delta, player_actor.is_swinging())
 	if _state.is_enemy_dead() or _state.is_player_dead():
 		return
+	_tick_feint()
 	var ctx: Dictionary = {
 		"state": _state, "hand": _hand, "drops": _drops, "mover": _mover, "actor": _actor,
-		"cooldowns": _cooldowns, "player_actor": player_actor,
+		"cooldowns": _cooldowns, "player_actor": player_actor, "status": _status,
 	}
 	var action: Dictionary = _brain.decide(ctx)
 	match str(action["type"]):
@@ -71,6 +94,23 @@ func tick(delta: float, player_actor: CutActor) -> void:
 				moved.emit(direction)
 		"cut":
 			_do_cut(action)
+
+
+## Shares the match's status effects: the boss's mover obeys pins and the brain avoids fire.
+func set_status(status: StatusEffects) -> void:
+	_status = status
+	_mover.set_status(status)
+
+
+## Shares the learning counters with the brain and the feint roll (null = no learning).
+func set_learning(learning: BossLearning) -> void:
+	_learning = learning
+	_brain.set_learning(learning)
+
+
+## Number of feints cancelled so far.
+func get_feint_count() -> int:
+	return _feint_count
 
 
 ## Freezes (false) or resumes (true) the boss's decisions and clocks. Dev/capture only.
@@ -139,7 +179,44 @@ func _do_cut(action: Dictionary) -> void:
 		_cooldowns.start(skill_id, float(_skill_config.get_skill(skill_id).get("cooldown_sec", 0.0)))
 		_last_cut = {"labels": labels, "skill_id": skill_id}
 		cut_started.emit(labels, cells, skill_id)
+		_roll_feint(labels, cells)
 	_carry_over()
+
+
+# A one-point cut may be a feint when the learning says the player keeps dodging early.
+func _roll_feint(labels: Array[String], cells: Array[Vector2i]) -> void:
+	_feint_pending = false
+	if force_next_feint and labels.size() == 1:
+		force_next_feint = false
+		_feint_pending = true
+		_feint_cells = cells.duplicate()
+		_feint_labels = labels.duplicate()
+		return
+	if _learning == null or labels.size() != 1:
+		return
+	var chance: float = float(_learning.get_modifiers().get("feint_chance", 0.0))
+	if chance > 0.0 and _feint_rng.randf() < chance:
+		_feint_pending = true
+		_feint_cells = cells.duplicate()
+		_feint_labels = labels.duplicate()
+
+
+# Cancels the running feint at feint_cancel_fraction of its duration. A swing already gone
+# (interrupted or resolved) is left alone.
+func _tick_feint() -> void:
+	if not _feint_pending:
+		return
+	if not _actor.is_swinging():
+		_feint_pending = false
+		return
+	var cancel_fraction: float = float(_brain_config.learning["feint_cancel_fraction"])
+	var elapsed: float = _actor.get_duration() - _actor.get_time_left()
+	if elapsed < _actor.get_duration() * cancel_fraction:
+		return
+	_feint_pending = false
+	_actor.cancel()
+	_feint_count += 1
+	feinted.emit(_feint_cells, _feint_labels)
 
 
 func _on_cell_changed(side: int, _old_cell: Vector2i, new_cell: Vector2i) -> void:

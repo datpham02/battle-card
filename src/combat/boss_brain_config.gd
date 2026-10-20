@@ -26,6 +26,21 @@ const DEFAULT_WEIGHTS: Dictionary = {
 	"idle_bias": 0.2,
 	"retreat_hp_ratio": 0.3,
 	"retreat_bonus": 1.0,
+	"skill_bonus_burn": 1.0,
+	"skill_bonus_pin": 1.0,
+	"burn_avoid": 3.0,
+}
+## Learning rules (see BossLearning) with defaults; the `learning` section of the file overrides.
+const DEFAULT_LEARNING: Dictionary = {
+	"dodge_streak_threshold": 3,
+	"feint_chance_base": 0.15,
+	"feint_chance_per_dodge": 0.1,
+	"feint_chance_max": 0.5,
+	"feint_cancel_fraction": 0.5,
+	"full_hand_seconds": 4.0,
+	"quick_cut_bias": 2.0,
+	"interrupt_count_threshold": 2,
+	"single_point_bonus": 2.0,
 }
 
 ## Seconds between accepted boss steps.
@@ -40,6 +55,8 @@ var noise: float = 0.15
 var active_set: String = DEFAULT_SET
 ## set name -> {weight key -> float}.
 var sets: Dictionary = {}
+## Learning rules (keys of [constant DEFAULT_LEARNING]).
+var learning: Dictionary = DEFAULT_LEARNING.duplicate()
 
 
 func _init() -> void:
@@ -70,6 +87,11 @@ static func from_dictionary(data: Dictionary) -> BossBrainConfig:
 	config.think_interval_sec = maxf(float(data.get("think_interval_sec", config.think_interval_sec)), 0.0)
 	config.reaction_sec = maxf(float(data.get("reaction_sec", config.reaction_sec)), 0.0)
 	config.noise = maxf(float(data.get("noise", config.noise)), 0.0)
+	var raw_learning: Variant = data.get("learning")
+	if typeof(raw_learning) == TYPE_DICTIONARY:
+		for key: Variant in DEFAULT_LEARNING.keys():
+			if (raw_learning as Dictionary).has(key):
+				config.learning[key] = _clean_learning(str(key), float((raw_learning as Dictionary)[key]))
 	var raw_sets: Variant = data.get("sets")
 	if typeof(raw_sets) == TYPE_DICTIONARY and not (raw_sets as Dictionary).is_empty():
 		var parsed_sets: Dictionary = {}
@@ -112,6 +134,16 @@ func weights_for(set_name: String = "") -> Dictionary:
 	if sets.has(active_set):
 		return (sets[active_set] as Dictionary).duplicate()
 	return DEFAULT_WEIGHTS.duplicate()
+
+
+static func _clean_learning(key: String, value: float) -> Variant:
+	if key == "dodge_streak_threshold" or key == "interrupt_count_threshold":
+		return maxi(roundi(value), 1)
+	if key == "feint_chance_base" or key == "feint_chance_max" or key == "feint_cancel_fraction":
+		return clampf(value, 0.0, 1.0)
+	if key == "quick_cut_bias":
+		return maxf(value, 1.0)
+	return maxf(value, 0.0)
 
 
 static func _normalize_set(set_name: String, raw: Dictionary) -> Dictionary:

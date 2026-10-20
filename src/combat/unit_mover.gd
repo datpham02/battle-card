@@ -8,6 +8,7 @@ var _state: CombatState
 var _side: int
 var _cooldown_sec: float
 var _remaining: float = 0.0
+var _status: StatusEffects = null
 
 
 ## [param side] is a CombatState.Side value.
@@ -17,11 +18,19 @@ func _init(state: CombatState, side: int, cooldown_sec: float) -> void:
 	_cooldown_sec = maxf(cooldown_sec, 0.0)
 
 
+## Optional status effects; while this unit's side is pinned, try_step is refused (no
+## cooldown started). Null (default) = never pinned.
+func set_status(status: StatusEffects) -> void:
+	_status = status
+
+
 ## Tries to move one cell in [param direction] (a 4-way unit vector). Returns false and
 ## changes nothing when on cooldown, dead, off the owner's half or direction is invalid.
 ## Only an accepted move starts the cooldown.
 func try_step(direction: Vector2i) -> bool:
 	if _remaining > 0.0:
+		return false
+	if _status != null and _status.is_pinned(_side):
 		return false
 	if absi(direction.x) + absi(direction.y) != 1:
 		return false

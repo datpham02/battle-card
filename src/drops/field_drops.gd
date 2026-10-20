@@ -22,6 +22,7 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _bag: Array[String] = []
 var _points: Array[FieldPoint] = []
 var _danger_cells: Array[Vector2i] = []
+var _blocked_cells: Array[Vector2i] = []
 var _next_uid: int = 1
 var _spawn_timer: float = 0.0
 var _empty_hand_time: float = 0.0
@@ -78,6 +79,8 @@ func get_points() -> Array[FieldPoint]:
 ## [param hand_has_room]; emits pickup_blocked and returns null when the hand is full;
 ## returns null when the cell has no point.
 func pick_up_at(cell: Vector2i, hand_has_room: bool) -> FieldPoint:
+	if _blocked_cells.has(cell):
+		return null
 	for i: int in _points.size():
 		var p: FieldPoint = _points[i]
 		if p.cell != cell:
@@ -90,6 +93,13 @@ func pick_up_at(cell: Vector2i, hand_has_room: bool) -> FieldPoint:
 		point_picked.emit(p)
 		return p
 	return null
+
+
+## Sets the cells that refuse points (burning cells): nothing spawns there and
+## pick_up_at returns null for them (no pickup_blocked). Points already lying on a blocked
+## cell keep rotting normally. Pass an empty array to unblock everything.
+func set_blocked_cells(cells: Array[Vector2i]) -> void:
+	_blocked_cells = cells.duplicate()
 
 
 ## Sets the opponent's swing cells. Only used when allow_drop_in_danger is false.
@@ -138,6 +148,8 @@ func _pick_free_cell(stand_cell: Vector2i) -> Vector2i:
 	var free: Array[Vector2i] = []
 	for cell: Vector2i in _side_cells:
 		if cell == stand_cell or _is_occupied(cell):
+			continue
+		if _blocked_cells.has(cell):
 			continue
 		if not _config.allow_drop_in_danger and _danger_cells.has(cell):
 			continue

@@ -41,6 +41,7 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 
 **Cổng quyết định 1 (sau 003, v1):** "tạm ổn", thiếu áp lực → đi tiếp.
 **Cổng quyết định 2 (sau 005, v1):** băng chuyền khó thao tác, địch theo giờ nhàm, 3 làn basic → pivot v2.
+**Cổng quyết định 3 (sau 009, v3, 2026-10-20):** lõi chơi "khá thú vị"; quá khó (boss ép); vừa di chuyển vừa nối điểm làm hai ngón cái quá tải. Quyết định: **hoàn thiện trước, cân bằng sau** → làm 010–011 với số hiện tại, rồi một đợt cân bằng riêng (nhịp boss trận 1, ý tưởng "Tập trung" làm chậm 0,5× khi đang chọn điểm, xem backlog).
 
 ## Stories
 
@@ -54,5 +55,5 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 007 | Nút di chuyển 4 hướng + điểm cắt rơi (gỡ băng chuyền, thẻ cũ) | UI | Complete | N/A (minimal) |
 | 008 | Hệ cắt của người chơi: 1 điểm, 2–4 điểm, menu kỹ năng | Logic | Complete | N/A (minimal) |
 | 009 | Boss đi nhặt và cắt, brain trọng số, ngắt đòn hai chiều | Integration | Complete | N/A (minimal) |
-| 010 | Bảng cân bằng cắt + Đốt, Ghim + boss học bằng bộ đếm | Logic | Ready | N/A (minimal) |
+| 010 | Bảng cân bằng cắt + Đốt, Ghim + boss học bằng bộ đếm | Logic | Complete | N/A (minimal) |
 | 011 | Run 3 trận + boss, thắng/thua, chơi lại | Integration | Ready | N/A (minimal) |

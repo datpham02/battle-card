@@ -31,6 +31,8 @@ var _think_clock: float = 0.0
 var _player_seen_sec: float = 0.0
 var _cell_cache: Dictionary = {}
 var _debug: Dictionary = {}
+var _status: StatusEffects = null
+var _learning: BossLearning = null
 
 
 ## [param seed_value] below 0 gives a random seed; otherwise noise is deterministic.
@@ -61,6 +63,16 @@ func use_set(set_name: String) -> bool:
 	return true
 
 
+## Sets (or clears with null) the learning counters whose modifiers scale cut scores.
+func set_learning(learning: BossLearning) -> void:
+	_learning = learning
+
+
+## The learning counters in use (null = none).
+func get_learning() -> BossLearning:
+	return _learning
+
+
 ## Name of the weight set in use.
 func get_set_name() -> String:
 	return _set_name
@@ -78,7 +90,8 @@ func tick(delta: float, player_swing_active: bool) -> void:
 
 ## Chooses the next action. [param ctx] holds the live objects: state (CombatState),
 ## hand (HoldSlots, boss), drops (FieldDrops, boss), mover (UnitMover), actor (CutActor,
-## boss), cooldowns (SkillCooldowns, boss), player_actor (CutActor). Returns a wait until
+## boss), cooldowns (SkillCooldowns, boss), player_actor (CutActor), optional status
+## (StatusEffects: burning cells are avoided, points on them are worth nothing). Returns a wait until
 ## think_interval_sec has elapsed, and always while either side is dead.
 func decide(ctx: Dictionary) -> Dictionary:
 	var state: CombatState = ctx.get("state") as CombatState
@@ -88,6 +101,7 @@ func decide(ctx: Dictionary) -> Dictionary:
 	var actor: CutActor = ctx.get("actor") as CutActor
 	var cooldowns: SkillCooldowns = ctx.get("cooldowns") as SkillCooldowns
 	var player_actor: CutActor = ctx.get("player_actor") as CutActor
+	_status = ctx.get("status") as StatusEffects
 	if state == null or hand == null or drops == null or mover == null or actor == null \
 			or cooldowns == null or player_actor == null:
 		return _finish_wait("bad_context", 0.0)
@@ -166,6 +180,9 @@ func _best_cut(
 	_collect_selections(occupied, max_points, [] as Array[int], selections)
 	var hand_full: bool = hand.is_full()
 	var hand_target: int = int(_weights["hand_target"])
+	var mods: Dictionary = {} if _learning == null else _learning.get_modifiers()
+	var quick_bias: float = float(mods.get("quick_cut_bias", 1.0))
+	var single_bonus: float = float(mods.get("single_point_bonus", 0.0))
 	for selection_variant: Variant in selections:
 		var selection: Array[int] = []
 		selection.assign(selection_variant as Array)
@@ -180,7 +197,8 @@ func _best_cut(
 		var parts: Dictionary = {}
 		parts["cells"] = float(_weights["cut_per_cell"]) * float(count)
 		parts["hit_now"] = float(_weights["cut_hit_now"]) if cells.has(state.player_cell) else 0.0
-		parts["duration"] = -float(_weights["cut_duration_penalty"]) * duration
+		parts["duration"] = -float(_weights["cut_duration_penalty"]) * quick_bias * duration
+		parts["single_point"] = single_bonus if selection.size() == 1 else 0.0
 		parts["points"] = -float(_weights["cut_point_cost"]) * float(selection.size())
 		parts["hand_wait"] = 0.0
 		if selection.size() < hand_target and not hand_full:
@@ -278,10 +296,14 @@ func _cell_terms(
 	var danger: float = 0.0
 	if incoming.has(cell):
 		danger = -float(_weights["dodge_danger"]) * urgency
+	if _status != null and _status.is_burning(cell):
+		danger -= float(_weights["burn_avoid"])
 	var pickup: float = 0.0
 	if not (hand_full and float(_weights["pickup_full_hand_zero"]) >= 0.5):
 		for point: FieldPoint in points:
 			if not _grid.is_enemy_cell(point.cell):
+				continue
+			if _status != null and _status.is_burning(point.cell):
 				continue
 			var steps: int = absi(point.cell.x - cell.x) + absi(point.cell.y - cell.y)
 			var value: float = float(_weights["pickup_value"]) / (1.0 + float(steps))

@@ -13,6 +13,10 @@
 
 ## Sau MVP (đã đồng ý, chưa làm)
 
+### Đợt cân bằng sau Story 011 (từ cổng chơi thử 3)
+Kết quả cổng 3: lõi chơi hấp dẫn, boss ép quá, vừa di chuyển vừa nối điểm quá tải. Người dùng chọn hoàn thiện trước. Việc để dành: (1) nhịp boss trận 1 chậm hơn qua `boss_brain.json` (bước 0,70 s, nghĩ 0,50 s, phản ứng 0,60 s, rơi điểm chậm hơn, bộ cautious), tăng dần các trận sau; (2) **Tập trung**: chậm 0,5× tối đa 2 s khi đã chọn điểm đầu tiên, có thanh hiển thị, boss không có; (3) cân nhắc chạm đúp để chém ngay 1 điểm. Không tự động Chốt (mất quyền đổi ý).
+
+
 ### Thủ đoạn rơi của boss (lớp 3 của luật rơi)
 Mỗi boss tác động vào điểm rơi theo cách riêng: điểm ôi nhanh hơn khi boss nổi giận; boss ném *điểm hỏng* sang sân bạn (chiếm ô tay nếu lỡ nhặt); boss "hút" điểm về phía mình; rơi theo nhịp nhạc (từ NecroDancer, nhẹ). Đây là nơi mỗi boss khác nhau mà không cần đổi luật. Gắn với Story 011 nhưng làm sau.
 

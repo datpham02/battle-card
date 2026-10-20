@@ -23,6 +23,19 @@ extends Node
 ##   godot --path . -- --demo=boss_miss       boss swing just resolved, player outside: MISS
 ##   godot --path . -- --demo=interrupt_player  player's cut resolves first and cancels the boss's: NGẮT on the boss's cells
 ##   godot --path . -- --demo=interrupt_boss  boss's cut resolves first and cancels the player's: NGẮT on the player's cells
+##   godot --path . -- --demo=burn       player cut A1+C<n> (5 cells) confirmed, skill Burn chosen in the menu and resolved
+##                                      (real path: hold -> confirm_selection -> CutFlow.choose -> arbiter): 5 burning
+##                                      cells with time bars on the boss half, boss moved INTO one: HIT; 1.0 s of
+##                                      burning elapsed (bars 2/3, boss HP ticked down)
+##   godot --path . -- --demo=pin        as burn with A1+A<n>+C<n>+C1 (whole half) and skill Pin: chain ring + "GHIM" on the boss
+##   godot --path . -- --demo=boss_burn  boss cut A1+C<n> with skill burn on the player's half (boss real cut path), player
+##                                      standing INSIDE: 5 burning cells, HIT on the player, 1.0 s elapsed
+##   godot --path . -- --demo=boss_pin   boss cut A1+A<n>+C<n>+C1 with skill pin, player inside: chain ring + "GHIM" on the player
+##   godot --path . -- --demo=feint      boss 1-point cut (A1) forced to be a feint (BossController.force_next_feint, DEV-ONLY),
+##                                      arbiter stepped until the controller's own _tick_feint cancels it at
+##                                      feint_cancel_fraction: dashed grey "ĐÒN GIẢ!" flash on the player's half
+##   godot --path . -- --demo=learning   BossLearning fed directly (3 early dodges, 2 interrupts): the debug line under
+##                                      the boss HP bar reads "né: 3 | ngắt: 2 | giả: 15%" (with boss_brain.json numbers)
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -55,6 +68,16 @@ const SELECTED_SLOTS: Array[int] = [0, 2]
 const SELECTED_HAND_COUNT: int = 3
 ## Seconds the "swing" demo fast-forwards the running swing (so the countdown is mid-way).
 const SWING_ELAPSED_SEC: float = 0.3
+## Story 010 demos: seconds of status time elapsed after a burn / pin landed (bars and the
+## "GHIM" countdown are mid-way), the arbiter step used to walk a feint to its cancel point,
+## and the learning events fed by the "learning" demo.
+const BURN_ELAPSED_SEC: float = 1.0
+const PIN_ELAPSED_SEC: float = 0.4
+const FEINT_STEP_SEC: float = 0.01
+const LEARNING_DODGES: int = 3
+const LEARNING_INTERRUPTS: int = 2
+const SKILL_BURN: String = "burn"
+const SKILL_PIN: String = "pin"
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -164,8 +187,85 @@ func _ready() -> void:
 			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
 			_confirm_or_warn(combat)
 			combat.get_arbiter().tick(combat.get_boss().get_actor().get_time_left() + 0.001)
+		"burn":
+			var n: int = grid.side_cols
+			_player_skill_cut(combat, [_lbl("A", 1), _lbl("C", n)], SKILL_BURN)
+			combat.get_status().tick(BURN_ELAPSED_SEC, combat.get_state())
+		"pin":
+			var n: int = grid.side_cols
+			_player_skill_cut(combat, [_lbl("A", 1), _lbl("A", n), _lbl("C", n), _lbl("C", 1)], SKILL_PIN)
+			combat.get_status().tick(PIN_ELAPSED_SEC, combat.get_state())
+		"boss_burn":
+			var covered3: Array[Vector2i] = _boss_cut(combat, [_lbl("A", 1), _lbl("C", grid.side_cols)], 2, SKILL_BURN)
+			_place_player(combat, covered3, true)
+			combat.get_arbiter().tick(combat.get_boss().get_actor().get_time_left() + 0.001)
+			combat.get_status().tick(BURN_ELAPSED_SEC, combat.get_state())
+		"boss_pin":
+			var n: int = grid.side_cols
+			var covered4: Array[Vector2i] = _boss_cut(combat, [_lbl("A", 1), _lbl("A", n), _lbl("C", n), _lbl("C", 1)], 4, SKILL_PIN)
+			_place_player(combat, covered4, true)
+			combat.get_arbiter().tick(combat.get_boss().get_actor().get_time_left() + 0.001)
+			combat.get_status().tick(PIN_ELAPSED_SEC, combat.get_state())
+		"feint":
+			# The controller rolls feints from its RNG; the DEV-ONLY flag forces this one. The
+			# boss is inactive, so its _tick_feint is called directly (same cancel path).
+			var boss: BossController = combat.get_boss()
+			boss.force_next_feint = true
+			var covered5: Array[Vector2i] = _boss_cut(combat, [_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], 1)
+			_place_player(combat, covered5, false)
+			while boss.get_actor().is_swinging():
+				combat.get_arbiter().tick(FEINT_STEP_SEC)
+				boss.call("_tick_feint")
+			if combat.get_feint_flash().is_empty():
+				push_warning("DemoArgs: the boss swing resolved instead of feinting")
+		"learning":
+			var learning: BossLearning = combat.get_learning()
+			var here: Vector2i = combat.get_state().player_cell
+			var away: Vector2i = _other_player_cell(grid, here)
+			var swing_cells: Array[Vector2i] = [here]
+			for _i: int in LEARNING_DODGES:
+				learning.on_boss_swing_started(swing_cells, here)
+				learning.on_player_moved(away)
+				learning.on_boss_swing_resolved(false)
+			for _i: int in LEARNING_INTERRUPTS:
+				learning.on_player_interrupted_boss()
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
+
+
+# Real player path for a multi-point skill cut: [param labels] into the hand, all selected,
+# confirmed (menu opens), the boss moved INTO the covered cells, [param skill_id] chosen, the
+# swing fast-forwarded to its resolution. Warns at every step that fails.
+func _player_skill_cut(combat: CombatView, labels: Array[String], skill_id: String) -> void:
+	var selected: Array[int] = []
+	for i: int in labels.size():
+		selected.append(i)
+	_cut_hand(labels, selected)
+	_confirm_or_warn(combat)
+	var flow: CutFlow = combat.get_cut_flow()
+	_place_boss(combat, flow.get_cells(), true)
+	if not flow.choose(skill_id):
+		push_warning("DemoArgs: skill '%s' not available for demo '%s'" % [skill_id, _mode])
+		return
+	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
+
+
+# Moves the boss INTO (or, if not [param inside], OUT of) the covered cells on its half.
+func _place_boss(combat: CombatView, covered: Array[Vector2i], inside: bool) -> void:
+	for cell: Vector2i in combat.get_grid().enemy_cells():
+		if covered.has(cell) == inside:
+			if not combat.get_state().set_enemy_cell(cell):
+				push_warning("DemoArgs: could not move the boss to %s" % str(cell))
+			return
+	push_warning("DemoArgs: no boss cell %s the player cut" % ("inside" if inside else "outside"))
+
+
+# Any player cell other than [param cell] (or [param cell] itself on a one-cell half).
+func _other_player_cell(grid: BoardGrid, cell: Vector2i) -> Vector2i:
+	for other: Vector2i in grid.player_cells():
+		if other != cell:
+			return other
+	return cell
 
 
 func _parse_boss_set() -> String:
@@ -187,15 +287,15 @@ func _boss_hand(labels: Array[String]) -> void:
 
 
 # Fills the boss's hand with [param labels] and commits a cut with the first [param use] of
-# them through BossController's real cut path (private _do_cut: dev-only). Returns the covered
-# cells on the player's half (empty + warning if the cut did not start).
-func _boss_cut(combat: CombatView, labels: Array[String], use: int) -> Array[Vector2i]:
+# them and [param skill_id] through BossController's real cut path (private _do_cut: dev-only).
+# Returns the covered cells on the player's half (empty + warning if the cut did not start).
+func _boss_cut(combat: CombatView, labels: Array[String], use: int, skill_id: String = SkillConfig.FALLBACK_SKILL) -> Array[Vector2i]:
 	var boss: BossController = combat.get_boss()
 	_boss_hand(labels)
 	var indices: Array[int] = []
 	for i: int in use:
 		indices.append(i)
-	boss.call("_do_cut", {"hand_indices": indices, "skill_id": SkillConfig.FALLBACK_SKILL})
+	boss.call("_do_cut", {"hand_indices": indices, "skill_id": skill_id})
 	if not boss.get_actor().is_swinging():
 		push_warning("DemoArgs: the boss cut did not start for demo '%s'" % _mode)
 	return boss.get_actor().get_cells()

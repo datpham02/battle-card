@@ -4,6 +4,17 @@
 	"reaction_sec": 0.35,
 	"noise": 0.15,
 	"active_set": "balanced",
+	"learning": {
+		"dodge_streak_threshold": 3,
+		"feint_chance_base": 0.15,
+		"feint_chance_per_dodge": 0.1,
+		"feint_chance_max": 0.5,
+		"feint_cancel_fraction": 0.5,
+		"full_hand_seconds": 4.0,
+		"quick_cut_bias": 2.0,
+		"interrupt_count_threshold": 2,
+		"single_point_bonus": 2.0
+	},
 	"sets": {
 		"balanced": {
 			"cut_hit_now": 3.0,
@@ -21,7 +32,10 @@
 			"pickup_full_hand_zero": true,
 			"idle_bias": 0.2,
 			"retreat_hp_ratio": 0.3,
-			"retreat_bonus": 1.0
+			"retreat_bonus": 1.0,
+			"skill_bonus_burn": 1.0,
+			"skill_bonus_pin": 1.0,
+			"burn_avoid": 3.0
 		},
 		"aggressive": {
 			"cut_hit_now": 3.0,
@@ -39,7 +53,10 @@
 			"pickup_full_hand_zero": true,
 			"idle_bias": 0.2,
 			"retreat_hp_ratio": 0.15,
-			"retreat_bonus": 0.0
+			"retreat_bonus": 0.0,
+			"skill_bonus_burn": 1.5,
+			"skill_bonus_pin": 0.5,
+			"burn_avoid": 1.0
 		},
 		"cautious": {
 			"cut_hit_now": 3.0,
@@ -57,7 +74,10 @@
 			"pickup_full_hand_zero": true,
 			"idle_bias": 0.2,
 			"retreat_hp_ratio": 0.5,
-			"retreat_bonus": 2.0
+			"retreat_bonus": 2.0,
+			"skill_bonus_burn": 0.5,
+			"skill_bonus_pin": 2.0,
+			"burn_avoid": 5.0
 		}
 	}
 }

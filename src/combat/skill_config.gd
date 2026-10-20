@@ -21,6 +21,8 @@ var skills: Dictionary = {}
 
 func _init() -> void:
 	skills[FALLBACK_SKILL] = {
+		"effect": "damage", "burn_duration_sec": 0.0, "burn_tick_sec": 0.5,
+		"burn_damage_per_tick": 0.0, "pin_duration_sec": 0.0,
 		"display_name": "Slash", "min_cells": 1, "cooldown_sec": 0.0,
 		"damage_multiplier": 1.0, "push_cells": 0, "implemented": true,
 	}
@@ -90,7 +92,16 @@ func get_skill(id: String) -> Dictionary:
 
 
 static func _normalize(id: String, raw: Dictionary) -> Dictionary:
+	var tick: float = float(raw.get("burn_tick_sec", 0.5))
+	if tick <= 0.0:
+		push_warning("SkillConfig: skill %s burn_tick_sec must be > 0, using 0.5" % id)
+		tick = 0.5
 	return {
+		"effect": str(raw.get("effect", "damage")),
+		"burn_duration_sec": maxf(float(raw.get("burn_duration_sec", 0.0)), 0.0),
+		"burn_tick_sec": tick,
+		"burn_damage_per_tick": maxf(float(raw.get("burn_damage_per_tick", 0.0)), 0.0),
+		"pin_duration_sec": maxf(float(raw.get("pin_duration_sec", 0.0)), 0.0),
 		"display_name": str(raw.get("display_name", id)),
 		"min_cells": maxi(int(raw.get("min_cells", 1)), 1),
 		"cooldown_sec": maxf(float(raw.get("cooldown_sec", 0.0)), 0.0),

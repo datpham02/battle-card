@@ -25,12 +25,14 @@ var _actors: Dictionary = {}
 var _cut_config: CutConfig
 var _skill_config: SkillConfig
 var _pending: Array[Dictionary] = []
+var _status: StatusEffects = null
 
 
 func _init(
 	state: CombatState, grid: BoardGrid, player_actor: CutActor, boss_actor: CutActor,
-	cut_config: CutConfig, skill_config: SkillConfig
+	cut_config: CutConfig, skill_config: SkillConfig, status: StatusEffects = null
 ) -> void:
+	_status = status
 	_state = state
 	_grid = grid
 	_cut_config = cut_config
@@ -81,7 +83,7 @@ func _step(slice: float) -> void:
 
 
 func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool) -> void:
-	var result: Dictionary = CutEffects.apply(_state, _grid, side, cells, skill_id, _cut_config, _skill_config)
+	var result: Dictionary = CutEffects.apply(_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status)
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	swing_resolved.emit(side, result)

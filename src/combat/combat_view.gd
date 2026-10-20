@@ -88,6 +88,10 @@ var _arbiter: SwingArbiter
 var _boss_feedback: Dictionary = {}
 ## Last interrupt flash {side (victim), cells, time_left}; empty = none.
 var _interrupt_flash: Dictionary = {}
+## Last feint flash {cells, time_left}; empty = none.
+var _feint_flash: Dictionary = {}
+var _status: StatusEffects
+var _learning: BossLearning
 ## Dev/capture only: weight set name for the boss brain (empty = from boss_brain.json).
 var boss_set_override: String = ""
 
@@ -123,7 +127,15 @@ func _ready() -> void:
 	)
 	if not boss_set_override.is_empty() and not _boss.get_brain().use_set(boss_set_override):
 		push_warning("CombatView: unknown boss weight set '%s'" % boss_set_override)
-	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config)
+	_status = StatusEffects.new()
+	_mover.set_status(_status)
+	_boss.set_status(_status)
+	_learning = BossLearning.new(brain_config.learning)
+	_boss.set_learning(_learning)
+	_boss.feinted.connect(_on_boss_feinted)
+	_boss.get_actor().swing_started.connect(_on_boss_swing_started)
+	_boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
+	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config, _status)
 	_arbiter.swing_resolved.connect(_on_swing_resolved)
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
 
@@ -138,9 +150,14 @@ func _process(delta: float) -> void:
 		# Simulation time is scaled down while the skill menu is open (slow motion); the boss
 		# lives in the same scaled time.
 		var step: float = real_step * (_skill_config.menu_time_scale if _cut_flow.is_menu_open() else 1.0)
+		_status.tick(step, _state)
 		_mover.tick(step)
 		var hold: HoldSlots = _get_hold()
 		var held: int = 0 if hold == null else hold.get_occupied_count()
+		_learning.tick(step, hold != null and hold.is_full())
+		var burning: Array[Vector2i] = _status.burning_cells()
+		_drops.set_blocked_cells(burning)
+		_boss.get_drops().set_blocked_cells(burning)
 		# Each side's drops avoid the cells the opponent's swing is about to cut.
 		var boss_actor: CutActor = _boss.get_actor()
 		_drops.set_danger_cells(boss_actor.get_cells() if boss_actor.is_swinging() else _no_cells())
@@ -152,6 +169,7 @@ func _process(delta: float) -> void:
 		_age_flash(_feedback, step)
 		_age_flash(_boss_feedback, step)
 		_age_flash(_interrupt_flash, step)
+		_age_flash(_feint_flash, step)
 	queue_redraw()
 
 
@@ -299,10 +317,40 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		_feedback = feedback
 	else:
 		_boss_feedback = feedback
+		_learning.on_boss_swing_resolved(bool(result["hit"]))
 
 
 func _on_swing_interrupted(victim_side: int, cells: Array[Vector2i], _skill_id: String) -> void:
 	_interrupt_flash = {"side": victim_side, "cells": cells, "time_left": FEEDBACK_SEC}
+	if victim_side == CombatState.Side.ENEMY:
+		_learning.on_player_interrupted_boss()
+
+
+func _on_boss_swing_started(cells: Array[Vector2i], _skill_id: String, _duration: float) -> void:
+	_learning.on_boss_swing_started(cells, _state.player_cell)
+
+
+func _on_boss_swing_cancelled(_cells: Array[Vector2i], _skill_id: String) -> void:
+	_learning.on_boss_swing_cancelled()
+
+
+func _on_boss_feinted(cells: Array[Vector2i], _labels: Array[String]) -> void:
+	_feint_flash = {"cells": cells, "time_left": FEEDBACK_SEC}
+
+
+## The shared burning cells / pins.
+func get_status() -> StatusEffects:
+	return _status
+
+
+## What the boss has learned about the player.
+func get_learning() -> BossLearning:
+	return _learning
+
+
+## Last feint ({cells, time_left}); empty when nothing is showing.
+func get_feint_flash() -> Dictionary:
+	return _feint_flash
 
 
 ## The boss agent (hand, drops, mover, actor, brain).
@@ -367,6 +415,7 @@ func _get_hold() -> HoldSlots:
 func _on_cell_changed(side: int, _old_cell: Vector2i, new_cell: Vector2i) -> void:
 	if side != CombatState.Side.PLAYER:
 		return
+	_learning.on_player_moved(new_cell)
 	var hold: HoldSlots = _get_hold()
 	if hold == null:
 		return
