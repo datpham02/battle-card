@@ -54,13 +54,20 @@
 - Boss chấm điểm đòn theo **đường thoát**: ưu tiên đòn để lại ít ô mà người chơi chạy tới kịp trong thời gian vung. Trận cao có **đòn nối**: hai đòn tuyên bố cùng lúc, đòn 2 phủ chỗ thoát của đòn 1; ngắt đòn 1 thì hủy cả hai. `swing_speed_mult` theo trận cho boss.
 - **Cooldown bước theo sân**: `cooldown = 0,45 × (2 / (max(cột, hàng) − 1)) ^ 0,75`, kẹp [0,18; 0,60] (3×3 → 0,45; 6×6 → 0,23; 10×10 → 0,18). Giữ "số bước thoát trong một lần vung" gần như nhau giữa các sân; boss nhân thêm hệ số theo trận.
 
+### Chương và tầng (Story 015, sau cổng chơi thử 4, 2026-10-20)
+- Game là các **chương**, mỗi chương vài **tầng**, mỗi tầng = một run hiện nay (N trận rồi boss). Dữ liệu trong `chapters.json`; `run.json` không còn.
+- Sân theo tầng: tầng thấp **một hình cố định** cho cả tầng (học được); tầng cao **rút ngẫu nhiên từng trận từ nhóm hình** (`arena_pool`) kèm biến thể có kiểm (Story 014), seed mới mỗi lần vào tầng → mỗi lần vào là một sân khác.
+- Máu đầy khi vào tầng, hồi giữa các trận như cũ, **không mang qua tầng**. Thua thì **chơi lại đúng trận đã thua**, cùng sân, máu như lúc vào trận nhưng không dưới 50% (số trong JSON).
+- Thắng boss tầng N mở tầng N+1 (tầng cuối chương mở chương kế). **Save data** trong `user://progress.json`: danh sách tầng đã xong **và tầng đang dở** (trận thứ mấy, máu lúc vào trận, seed sân), ghi ở mỗi mốc trận; mở lại game thì tiếp tục đúng trận đang dở. Không lưu giữa một trận đang đánh. Không có meta progression khác.
+- Màn chọn tầng (khóa / mở / xong) là màn chính của game; Story 016 thêm title, tạm dừng, nút back.
+
 ### Boss
 - Boss **đi nhặt** điểm bên nửa sân nó (cooldown bước **0,55 s** trận đầu, giảm dần các trận sau) và **cắt bằng cùng hệ**: brain là bảng trọng số trong JSON (ô người chơi có nằm trong tập không, số ô so với khoảng vung và đồng hồ đang đếm của người chơi, có nên đi nhặt điểm đang nằm dưới đường dao, kỹ năng nào đang sẵn). Không học máy; mọi thứ đọc được bằng mắt.
 - Hạ boss → trận kế, lặp lại.
 
 ## Player goal & fail state — what "working" looks like
-- Vượt một run gồm 3 trận + 1 boss bằng cách nhặt đúng điểm đúng lúc, nối hình đủ lớn để mở kỹ năng, và thắng những cuộc đua đồng hồ.
-- Thua khi HP về 0. Một run cảm giác hoàn chỉnh trong khoảng 8–12 phút.
+- Vượt từng **tầng** (2–3 trận + boss) của một chương bằng cách nhặt đúng điểm đúng lúc, nối hình đủ lớn để mở kỹ năng, và thắng những cuộc đua đồng hồ; thắng boss tầng mở tầng kế.
+- Thua khi HP về 0 → chơi lại đúng trận đã thua. Một tầng cảm giác hoàn chỉnh trong khoảng 8–12 phút.
 
 ## MVP — what must exist to be the game
 1. Hai lưới 3×3 đối mặt với khung đòn/recovery đọc từ dữ liệu (Story 006, xong; Step, Guard và thẻ hình dạng tầm của nó bị gỡ ở 007–008).
@@ -97,6 +104,10 @@
 4. Boss đi nhặt và cắt, ngắt đòn (009) → **cổng chơi thử 3: trận đấu đầu tiên có thật**.
 5. Bảng cân bằng + Đốt/Ghim + boss học (010).
 6. Cấu trúc run (011).
+7. Tập trung (012), hồ sơ boss + cooldown theo sân (013), sân và trait theo trận (014) → **cổng chơi thử 4: "ổn và cân bằng hơn"**.
+8. Chương và tầng + lưu tiến độ (015).
+9. Vỏ game: title, tạm dừng, back, tắt debug (016).
+10. Nội dung chương (017) → lên máy thật Android (018) → hình và âm.
 
 ---
 **Who it's for / what they feel:** Người chơi mobile thích Mega Man Battle Network và game giải đố nối điểm, chơi ngang hai tay (trái di chuyển, phải chọn điểm), phiên 10 phút; cảm giác "mình gom đủ điểm, vẽ một nhát to và nó ra kịp".

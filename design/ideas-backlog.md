@@ -13,7 +13,7 @@
 
 ## Sau MVP (đã đồng ý, chưa làm)
 
-### Đợt cân bằng sau Story 011 (từ cổng chơi thử 3)
+### Đợt cân bằng sau Story 011 (từ cổng chơi thử 3) — **đóng ở cổng 4 (2026-10-20): sau 012–014 người dùng thấy "ổn và cân bằng hơn", không cần đợt riêng**
 Kết quả cổng 3: lõi chơi hấp dẫn, boss ép quá, vừa di chuyển vừa nối điểm quá tải. Người dùng chọn hoàn thiện trước. Việc để dành: (1) nhịp boss trận 1 chậm hơn qua `boss_brain.json` (bước 0,70 s, nghĩ 0,50 s, phản ứng 0,60 s, rơi điểm chậm hơn, bộ cautious), tăng dần các trận sau; (2) **Tập trung** đã chuyển thành Story 012 (dừng hẳn 4 s, cooldown 8 s theo yêu cầu người chơi); (3) cân nhắc chạm đúp để chém ngay 1 điểm. Không tự động Chốt (mất quyền đổi ý).
 
 
@@ -38,7 +38,9 @@ Mỗi đòn chốt làm điểm trên sân ôi nhanh hơn trong 3 s: spam đòn 
 ### Rơi theo kịch bản (phương án lùi)
 Nếu túi xáo vẫn cho những ván "không ra gì", thử kịch bản nửa cố định: 12 lần rơi đầu theo thứ tự thiết kế, sau đó mới túi xáo. Mất tính chơi lại, nên là phương án lùi.
 
-### Cấu trúc chương / tầng (Story 015, sau 014)
+### Cấu trúc chương / tầng → **Story 015 (viết 2026-10-20)**
+Đã chốt thêm ở cổng 4: thua giữa tầng → chơi lại **đúng trận đã thua** (cùng sân, máu ≥ 50%); pool rút **từng trận**; save data = tầng đã xong + tầng đang dở theo mốc trận (người dùng yêu cầu tiếp tục được sau khi tắt app). Phần còn lại giữ nguyên bên dưới làm truy vết.
+
 Người dùng muốn người chơi vượt chương/tầng: mỗi tầng N trận rồi boss. Một run hiện nay = một tầng, nên `run.json` sẽ thành `chapters: [{id, tên, matches, boss}]` và `RunState` nhận một chương; thêm màn chọn chương và màn qua tầng; thắng boss tầng N mở tầng N+1 (cần lưu ít nhất tầng cao nhất → kéo một phần meta progression vào). Quyết định tạm: tầng thấp dùng **một hình cố định cho cả tầng** để học được; tầng cao rút **ngẫu nhiên từ nhóm hình** (`arena_pool`) kèm biến thể có kiểm (Story 014) nên mỗi lần vào là một sân khác; **máu không mang qua tầng**, mỗi tầng bắt đầu đầy, trong tầng mang như hiện nay. Story 013/014 (sân, hồ sơ, trait theo trận) là nền cho tầng khác nhau.
 
 ### Meta progression bằng "thực đơn"

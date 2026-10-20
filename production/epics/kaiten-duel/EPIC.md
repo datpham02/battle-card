@@ -28,7 +28,7 @@ Story 007 viết lại; 008 (boss chơi thẻ) → **hệ cắt của người c
 
 ## Scope
 
-Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, meta progression, quảng cáo/IAP, nhiều nhân vật/map, online/PvP, accessibility, đa ngôn ngữ.
+Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, meta progression (ngoại lệ từ 015: lưu tầng đã mở), quảng cáo/IAP, nhiều nhân vật/map, online/PvP, accessibility, đa ngôn ngữ.
 
 ## Ordering (build order của brief v3)
 
@@ -38,10 +38,15 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 4. Boss đi nhặt và cắt, ngắt đòn (009) → **Cổng quyết định 3: trận đấu đầu tiên có thật — chơi thử trước khi làm 010–011**
 5. Bảng cân bằng + Đốt/Ghim + boss học (010)
 6. Cấu trúc run (011)
+7. Tập trung (012), hồ sơ boss + cooldown theo sân (013), khung boss: sân + trait (014) → **Cổng quyết định 4**
+8. Chương và tầng + lưu tiến độ (015)
+9. Vỏ game: title, tạm dừng, back, debug (016)
+10. Nội dung chương (017), lên máy thật (018) — story viết sau 016
 
 **Cổng quyết định 1 (sau 003, v1):** "tạm ổn", thiếu áp lực → đi tiếp.
 **Cổng quyết định 2 (sau 005, v1):** băng chuyền khó thao tác, địch theo giờ nhàm, 3 làn basic → pivot v2.
 **Cổng quyết định 3 (sau 009, v3, 2026-10-20):** lõi chơi "khá thú vị"; quá khó (boss ép); vừa di chuyển vừa nối điểm làm hai ngón cái quá tải. Quyết định: **hoàn thiện trước, cân bằng sau** → làm 010–011 với số hiện tại, rồi một đợt cân bằng riêng (nhịp boss trận 1, ý tưởng "Tập trung" làm chậm 0,5× khi đang chọn điểm, xem backlog).
+**Cổng quyết định 4 (sau 014, 2026-10-20):** sau Tập trung (012), hồ sơ boss + cooldown theo sân (013) và sân/trait theo trận (014), người dùng chơi thử: "ổn và cân bằng hơn rồi". Đợt cân bằng riêng **không cần nữa**; chuyển sang phase vỏ game: chương/tầng + lưu tiến độ (015), title/tạm dừng (016), rồi nội dung chương (017) và lên máy thật (018).
 
 ## Stories
 
@@ -59,4 +64,6 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 011 | Run 3 trận + boss, thắng/thua, chơi lại | Integration | Complete | N/A (minimal) |
 | 012 | Tập trung: dừng hẳn trận khi nối điểm (giới hạn + cooldown) | Integration | Complete | N/A (minimal) |
 | 013 | Hồ sơ boss theo trận (di chuyển, đường thoát, đòn nối, tốc vung) + cooldown bước theo sân | Integration | Complete | N/A (minimal) |
-| 014 | Khung boss: sân riêng theo trận + đặc điểm (trait) cắm được, 2 trait mẫu | Integration | Ready | N/A (minimal) |
+| 014 | Khung boss: sân riêng theo trận + đặc điểm (trait) cắm được, 2 trait mẫu | Integration | Complete | N/A (minimal) |
+| 015 | Chương và tầng: một run là một tầng, sân cố định/pool theo tầng, lưu tầng đã mở, màn chọn tầng và qua tầng | Integration | Ready | N/A (minimal) |
+| 016 | Vỏ game: màn title, tạm dừng, nút back, tắt dòng debug | UI | Ready | N/A (minimal) |
