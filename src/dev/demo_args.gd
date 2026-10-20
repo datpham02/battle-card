@@ -36,6 +36,14 @@ extends Node
 ##                                      feint_cancel_fraction: dashed grey "ĐÒN GIẢ!" flash on the player's half
 ##   godot --path . -- --demo=learning   BossLearning fed directly (3 early dodges, 2 interrupts): the debug line under
 ##                                      the boss HP bar reads "né: 3 | ngắt: 2 | giả: 15%" (with boss_brain.json numbers)
+##   godot --path . -- --demo=focus      Story 012: hand A1,C<n>,B2 with A1 then C<n> selected and Focus ACTIVE
+##                                      (FocusController.try_start + tick_real, as CombatView._update_focus would do
+##                                      on the first frame) with 2.5 s left: blue-grey board tint, viewport frame,
+##                                      "TẬP TRUNG 2.5 s" bar above Chốt, d-pad locked (dim), "DỪNG" tag, "5 ô" preview
+##   godot --path . -- --demo=focus_timeout  as focus with 0.3 s left: the bar is orange (last quarter)
+##   godot --path . -- --demo=focus_cooldown Focus just ended by Chốt (try_start, end("confirmed")) with 6 s of cooldown
+##                                      left; a point is still selected to show that selecting does NOT pause now:
+##                                      no tint, grey "Tập trung còn 6 s" bar filling up, d-pad normal, Chốt visible
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -78,6 +86,11 @@ const LEARNING_DODGES: int = 3
 const LEARNING_INTERRUPTS: int = 2
 const SKILL_BURN: String = "burn"
 const SKILL_PIN: String = "pin"
+## Story 012 demos: REAL seconds of Focus left in "focus" / "focus_timeout", and of cooldown
+## left in "focus_cooldown" (the totals come from skills.json through FocusController).
+const FOCUS_DEMO_LEFT_SEC: float = 2.5
+const FOCUS_TIMEOUT_DEMO_LEFT_SEC: float = 0.3
+const FOCUS_COOLDOWN_DEMO_LEFT_SEC: float = 6.0
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -229,6 +242,24 @@ func _ready() -> void:
 				learning.on_boss_swing_resolved(false)
 			for _i: int in LEARNING_INTERRUPTS:
 				learning.on_player_interrupted_boss()
+		"focus", "focus_timeout":
+			# Time is frozen, so CombatView._update_focus never runs: start Focus on the
+			# controller directly (same call) and position its real-time clock.
+			var n: int = grid.side_cols
+			_cut_hand([_lbl("A", 1), _lbl("C", n), _lbl("B", 2)], [0, 1])
+			var focus: FocusController = combat.get_focus()
+			if not focus.try_start():
+				push_warning("DemoArgs: Focus did not start for demo '%s'" % _mode)
+			var left: float = FOCUS_DEMO_LEFT_SEC if _mode == "focus" else FOCUS_TIMEOUT_DEMO_LEFT_SEC
+			focus.tick_real(maxf(focus.get_max_sec() - left, 0.0))
+		"focus_cooldown":
+			var n: int = grid.side_cols
+			_cut_hand([_lbl("A", 1), _lbl("C", n), _lbl("B", 2)], [0, 1])
+			var focus: FocusController = combat.get_focus()
+			if not focus.try_start():
+				push_warning("DemoArgs: Focus did not start for demo '%s'" % _mode)
+			focus.end(FocusController.REASON_CONFIRMED)
+			focus.tick_real(maxf(focus.get_cooldown_sec() - FOCUS_COOLDOWN_DEMO_LEFT_SEC, 0.0))
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 

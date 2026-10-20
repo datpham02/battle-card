@@ -28,6 +28,9 @@
 - **Khoảng vung = 0,2 s + 0,25 s × số ô** (3 ô ≈ 0,95 s, 9 ô ≈ 2,45 s). Trong khoảng vung tập ô sáng **đỏ trên bàn đối thủ**, đếm ngược rồi mới chém. **Đang vung vẫn di chuyển được.** Mỗi bên chỉ một đòn đang vung tại một thời điểm.
 - Không có Guard, không có giáp, không có Parry. **Phòng thủ = bước ra khỏi tập ô, hoặc đua đồng hồ** (xem Ngắt đòn).
 
+### Tập trung (dừng khi nối điểm, từ phản hồi chơi thử, 2026-10-20)
+- Khi Tập trung sẵn sàng, chọn điểm đầu tiên trong tay **dừng hẳn** trận (boss, đồng hồ vung, điểm rơi, mọi cooldown). Tối đa **4 s thật** (thanh đếm cạnh nút Chốt); hết giờ trận chạy lại và giữ nguyên điểm đã chọn; bấm Chốt hoặc bỏ chọn hết thì kết thúc sớm. Sau đó **cooldown 8 s**, trong lúc đó chọn điểm không dừng trận nên đòn 1 điểm vẫn nhanh. **Không di chuyển được khi đang dừng.** Boss không có Tập trung. Số trong `skills.json` (`focus_time_scale` 0 = dừng hẳn, > 0 = chậm).
+
 ### Menu kỹ năng
 - Sau khi chốt 2–4 điểm, menu kỹ năng hiện và game **chậm còn 0,2×** (`skill_menu_time_scale`; đặt 0 là dừng hẳn kiểu Mega Man Battle Network). Có **3 s thật** để chọn; hết giờ **tự chọn Chém**. Boss cũng chọn trong khoảng chậm đó, không được nghĩ lâu hơn bạn.
 - Kỹ năng là **biến thể trên cùng tập ô**; **điều kiện mở là số ô phủ**; kỹ năng chưa đủ ô vẫn hiện nhưng khóa và ghi "cần N ô". Sau khi chọn, khoảng vung vẫn chạy như thường.

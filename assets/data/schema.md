@@ -74,7 +74,17 @@ Skill menu timing and skill definitions (Story 008; burn and pin are data only u
 | `menu_choose_sec` | number >= 0 | REAL seconds | Time to choose before the default skill is auto-picked | 3.0 |
 | `default_skill` | string | skill id | Skill auto-picked on timeout; must exist in `skills` | `slash` |
 | `skill_order` | array of skill ids | - | Stable order of the menu entries; skills not listed are appended | order of `skills` |
+| `focus` | object | - | "Focus" (Tập trung) pause, keys below | all defaults below |
 | `skills` | object id -> skill | - | Skill definitions (below) | slash only |
+
+`focus` object keys (Story 012; bad values fall back to the default with a warning):
+
+| Key | Type | Unit | Meaning | Default if missing |
+|---|---|---|---|---|
+| `focus_time_scale` | number 0..1 | factor | Simulation speed while Focus is active; 0 = full stop, >0 = slow motion | 0.0 |
+| `focus_max_sec` | number > 0 | REAL seconds | Longest one Focus lasts; on timeout the match resumes and the selection is kept | 4.0 |
+| `focus_cooldown_sec` | number >= 0 | REAL seconds | Cooldown after ANY end (confirm, deselect, timeout, death); selecting points does not pause meanwhile | 8.0 |
+| `focus_locks_movement` | boolean | - | true = step input is ignored (nothing queued) while Focus is active | true |
 
 Skill entry keys:
 

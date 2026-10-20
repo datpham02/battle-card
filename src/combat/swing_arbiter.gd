@@ -50,6 +50,8 @@ func tick(delta: float) -> void:
 	if _state.is_player_dead() or _state.is_enemy_dead():
 		_cancel_all()
 		return
+	if delta <= 0.0:
+		return
 	var remaining: float = delta
 	while remaining > 0.0:
 		var slice: float = remaining

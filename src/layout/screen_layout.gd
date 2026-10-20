@@ -53,6 +53,9 @@ const RUN_PANEL_HEIGHT_RATIO: float = 0.7
 const RUN_PANEL_INSET_RATIO: float = 0.035
 const RUN_BUTTON_HEIGHT_RATIO: float = 0.14
 const RUN_BUTTON_WIDTH_RATIO: float = 0.7
+## Focus UI (Story 012): height of the "TẬP TRUNG" countdown / cooldown bar (share of height).
+## 0.032 * 720 = 23 px: fits under the strip's "Sát thương" line and above the CONFIRM button.
+const FOCUS_BAR_HEIGHT_RATIO: float = 0.032
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -243,6 +246,16 @@ static func cut_preview_info_rect(viewport_size: Vector2) -> Rect2:
 static func cut_swing_info_rect(viewport_size: Vector2) -> Rect2:
 	var strip: Rect2 = cut_strip_rect(viewport_size)
 	return Rect2(strip.position + Vector2(strip.size.x * 0.5, 0.0), Vector2(strip.size.x * 0.5, strip.size.y))
+
+
+## Focus UI (Story 012): the "TẬP TRUNG" countdown (or cooldown) bar. As wide as the CONFIRM
+## button and right above it, one strip gap up, inside the bottom band of the strip (the
+## preview's cell count and damage text sit in the upper 85% of the strip, so they stay clear).
+static func focus_bar_rect(viewport_size: Vector2) -> Rect2:
+	var confirm: Rect2 = confirm_button_rect(viewport_size)
+	var gap: float = viewport_size.y * STRIP_GAP_RATIO
+	var height: float = viewport_size.y * FOCUS_BAR_HEIGHT_RATIO
+	return Rect2(Vector2(confirm.position.x, confirm.position.y - gap - height), Vector2(confirm.size.x, height))
 
 
 ## Run UI (Story 011). Match label: the thin margin above the arena (clear of the HP bars

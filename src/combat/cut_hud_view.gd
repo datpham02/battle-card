@@ -105,6 +105,43 @@ const LEARNING_FONT_SIZE: int = 14
 const LEARNING_COLOR: Color = Color(0.3, 0.26, 0.22)
 const LEARNING_BASELINE_OFFSET: float = 4.0
 
+## Focus (Story 012). While the match is paused: a cool blue-grey tint over the board area (both
+## halves), a soft vignette of a few bands plus a thin frame around the viewport, and the
+## "TẬP TRUNG" countdown bar above the CONFIRM button. On cooldown the same place shows a greyed
+## bar that fills up as the cooldown recovers; when READY and nothing is selected, a faint dot.
+const FOCUS_BOARD_TINT: Color = Color(0.35, 0.45, 0.65, 0.35)
+const FOCUS_FRAME_COLOR: Color = Color(0.3, 0.45, 0.75, 0.9)
+const FOCUS_FRAME_WIDTH: float = 6.0
+## Vignette: band count, band width (px), alpha of the outermost band (fades toward the centre).
+const FOCUS_VIGNETTE_BANDS: int = 3
+const FOCUS_VIGNETTE_BAND_WIDTH: float = 10.0
+const FOCUS_VIGNETTE_ALPHA: float = 0.3
+const FOCUS_BAR_BACK: Color = Color(0.12, 0.16, 0.25, 0.9)
+const FOCUS_BAR_FILL: Color = Color(0.35, 0.6, 0.95)
+const FOCUS_BAR_LOW_FILL: Color = Color(0.95, 0.6, 0.1)
+const FOCUS_BAR_OUTLINE: Color = Color(0.85, 0.9, 1.0)
+const FOCUS_COOLDOWN_BACK: Color = Color(0.25, 0.25, 0.27, 0.8)
+const FOCUS_COOLDOWN_FILL: Color = Color(0.5, 0.5, 0.53, 0.9)
+const FOCUS_COOLDOWN_TEXT: Color = Color(0.9, 0.9, 0.92)
+const FOCUS_READY_DOT: Color = Color(0.35, 0.6, 0.95, 0.7)
+const FOCUS_READY_DOT_RADIUS: float = 6.0
+const FOCUS_FONT_SIZE: int = 18
+## The countdown fill turns orange when this share of the Focus time (or less) is left
+## (a quarter: the last 1 s of a 4 s Focus).
+const FOCUS_LOW_RATIO: float = 0.25
+## "DỪNG" tag on the hand row (in the FULL-label reserve zone, top-aligned so it never touches
+## the vertically centred FULL text): size, pause glyph bar size and gap, inner padding.
+const FOCUS_TAG_WIDTH: float = 78.0
+const FOCUS_TAG_HEIGHT: float = 26.0
+const FOCUS_TAG_GLYPH_WIDTH: float = 4.0
+const FOCUS_TAG_GLYPH_HEIGHT: float = 12.0
+const FOCUS_TAG_GLYPH_GAP: float = 3.0
+const FOCUS_TAG_PAD: float = 6.0
+
+const TEXT_FOCUS: String = "TẬP TRUNG  %.1f s"
+const TEXT_FOCUS_COOLDOWN: String = "Tập trung còn %d s"
+const TEXT_FOCUS_PAUSED_TAG: String = "DỪNG"
+
 const TEXT_PIN: String = "GHIM %.1f s"
 const TEXT_FEINT: String = "ĐÒN GIẢ!"
 const TEXT_FEINT_NOTE: String = "boss vung rồi tự hủy"
@@ -194,6 +231,8 @@ func _draw() -> void:
 	if _combat == null or _combat.get_cut_flow() == null or _combat.get_state() == null:
 		return
 	var vp: Vector2 = get_viewport_rect().size
+	# Focus overlay first: the preview, markers and buttons stay fully readable above it.
+	_draw_focus_overlay(vp)
 	_draw_preview(vp)
 	_draw_swing(vp)
 	_draw_boss_swing(vp)
@@ -204,8 +243,75 @@ func _draw() -> void:
 	_draw_feint(vp)
 	_draw_pins(vp)
 	_draw_confirm(vp)
+	_draw_focus_bar(vp)
+	_draw_focus_tag(vp)
 	_draw_menu(vp)
 	_draw_learning_debug(vp)
+
+
+# --- Story 012: Focus (pause while connecting points) ---------------------------
+
+
+# Board tint, vignette bands and frame while Focus pauses the match. Nothing otherwise.
+func _draw_focus_overlay(vp: Vector2) -> void:
+	var focus: FocusController = _combat.get_focus()
+	if focus == null or not focus.is_active():
+		return
+	draw_rect(ScreenLayout.board_area_rect(vp), FOCUS_BOARD_TINT)
+	var frame := Rect2(Vector2.ZERO, vp)
+	for i: int in FOCUS_VIGNETTE_BANDS:
+		var alpha: float = FOCUS_VIGNETTE_ALPHA * float(FOCUS_VIGNETTE_BANDS - i) / float(FOCUS_VIGNETTE_BANDS)
+		var inset: float = FOCUS_FRAME_WIDTH + FOCUS_VIGNETTE_BAND_WIDTH * (i + 0.5)
+		draw_rect(frame.grow(-inset), Color(FOCUS_FRAME_COLOR, alpha), false, FOCUS_VIGNETTE_BAND_WIDTH)
+	draw_rect(frame.grow(-FOCUS_FRAME_WIDTH * 0.5), FOCUS_FRAME_COLOR, false, FOCUS_FRAME_WIDTH)
+
+
+# Above the CONFIRM button: ACTIVE = "TẬP TRUNG x.x s" countdown (orange in the last quarter);
+# COOLDOWN = greyed bar filling up with "Tập trung còn N s"; READY with nothing selected = a
+# faint dot at the bar's left. Hidden while the skill menu covers the strip.
+func _draw_focus_bar(vp: Vector2) -> void:
+	var focus: FocusController = _combat.get_focus()
+	if focus == null or _combat.get_cut_flow().is_menu_open():
+		return
+	var bar: Rect2 = ScreenLayout.focus_bar_rect(vp)
+	if focus.is_active():
+		var max_sec: float = focus.get_max_sec()
+		var ratio: float = 0.0 if max_sec <= 0.0 else clampf(focus.get_time_left() / max_sec, 0.0, 1.0)
+		var fill: Color = FOCUS_BAR_LOW_FILL if ratio <= FOCUS_LOW_RATIO else FOCUS_BAR_FILL
+		draw_rect(bar, FOCUS_BAR_BACK)
+		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), fill)
+		draw_rect(bar, FOCUS_BAR_OUTLINE, false, 2.0)
+		_draw_centered(bar, TEXT_FOCUS % focus.get_time_left(), FOCUS_FONT_SIZE, TEXT_LIGHT)
+	elif focus.is_on_cooldown():
+		var total: float = focus.get_cooldown_sec()
+		var recovered: float = 1.0 if total <= 0.0 else clampf(1.0 - focus.get_cooldown_left() / total, 0.0, 1.0)
+		draw_rect(bar, FOCUS_COOLDOWN_BACK)
+		draw_rect(Rect2(bar.position, Vector2(bar.size.x * recovered, bar.size.y)), FOCUS_COOLDOWN_FILL)
+		_draw_centered(bar, TEXT_FOCUS_COOLDOWN % ceili(focus.get_cooldown_left()), FOCUS_FONT_SIZE, FOCUS_COOLDOWN_TEXT)
+	elif not _combat.is_confirm_visible():
+		var state: CombatState = _combat.get_state()
+		if state.is_player_dead() or state.is_enemy_dead():
+			return
+		draw_circle(Vector2(bar.position.x + FOCUS_READY_DOT_RADIUS, bar.get_center().y), FOCUS_READY_DOT_RADIUS, FOCUS_READY_DOT)
+
+
+# "DỪNG" tag with a pause glyph on the hand row while Focus is ACTIVE: top-right of the zone
+# reserved for the FULL label (left of the first slot), so the eye gets it near the thumb too.
+func _draw_focus_tag(vp: Vector2) -> void:
+	var focus: FocusController = _combat.get_focus()
+	if focus == null or not focus.is_active():
+		return
+	var side: Rect2 = ScreenLayout.slot_side_left_rect(vp, HoldSlots.MAX_SLOTS)
+	var tag := Rect2(Vector2(side.end.x - FOCUS_TAG_WIDTH, side.position.y), Vector2(FOCUS_TAG_WIDTH, FOCUS_TAG_HEIGHT))
+	draw_rect(tag, FOCUS_BAR_FILL)
+	draw_rect(tag, FOCUS_BAR_OUTLINE, false, 2.0)
+	var glyph_top: float = tag.get_center().y - FOCUS_TAG_GLYPH_HEIGHT * 0.5
+	var glyph_x: float = tag.position.x + FOCUS_TAG_PAD
+	draw_rect(Rect2(glyph_x, glyph_top, FOCUS_TAG_GLYPH_WIDTH, FOCUS_TAG_GLYPH_HEIGHT), TEXT_LIGHT)
+	draw_rect(Rect2(glyph_x + FOCUS_TAG_GLYPH_WIDTH + FOCUS_TAG_GLYPH_GAP, glyph_top, FOCUS_TAG_GLYPH_WIDTH, FOCUS_TAG_GLYPH_HEIGHT), TEXT_LIGHT)
+	var text_left: float = glyph_x + FOCUS_TAG_GLYPH_WIDTH * 2.0 + FOCUS_TAG_GLYPH_GAP + FOCUS_TAG_PAD
+	var text_rect := Rect2(text_left, tag.position.y, maxf(tag.end.x - text_left, 0.0), tag.size.y)
+	_draw_centered(text_rect, TEXT_FOCUS_PAUSED_TAG, FOCUS_FONT_SIZE, TEXT_LIGHT)
 
 
 func _draw_cells(vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:

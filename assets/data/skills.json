@@ -1,6 +1,7 @@
 {
 	"menu_time_scale": 0.2,
 	"menu_choose_sec": 3.0,
+	"focus": {"focus_time_scale": 0.0, "focus_max_sec": 4.0, "focus_cooldown_sec": 8.0, "focus_locks_movement": true},
 	"default_skill": "slash",
 	"skill_order": ["slash", "push", "burn", "pin"],
 	"skills": {

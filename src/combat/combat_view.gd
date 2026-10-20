@@ -77,6 +77,7 @@ var _drops_config: FieldDropsConfig
 var _cut_config: CutConfig
 var _skill_config: SkillConfig
 var _cooldowns: SkillCooldowns
+var _focus: FocusController
 var _cut_actor: CutActor
 var _cut_flow: CutFlow
 ## Last resolved player cut for the HIT/MISS marker: {cells, hit, damage, cell, time_left}; empty = none.
@@ -136,6 +137,7 @@ func _ready() -> void:
 	_cut_config = CutConfig.load_from_file()
 	_skill_config = SkillConfig.load_from_file()
 	_cooldowns = SkillCooldowns.new()
+	_focus = FocusController.new(_skill_config)
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
@@ -216,7 +218,13 @@ func _process(delta: float) -> void:
 		_cut_flow.tick_real(real_step)
 		# Simulation time is scaled down while the skill menu is open (slow motion); the boss
 		# lives in the same scaled time.
-		var step: float = real_step * (_skill_config.menu_time_scale if _cut_flow.is_menu_open() else 1.0)
+		_update_focus(real_step)
+		var step: float = real_step * _sim_scale()
+		if step <= 0.0:
+			# Full stop (Focus with scale 0): nothing in the simulation moves; real-time
+			# things (menu, Focus clocks, match end) already ran above.
+			queue_redraw()
+			return
 		_status.tick(step, _state)
 		_mover.tick(step)
 		var hold: HoldSlots = _get_hold()
@@ -238,6 +246,29 @@ func _process(delta: float) -> void:
 		_age_flash(_interrupt_flash, step)
 		_age_flash(_feint_flash, step)
 	queue_redraw()
+
+
+# Real-time Focus bookkeeping for this frame: clocks, auto start, deselect / death ends.
+func _update_focus(real_step: float) -> void:
+	_focus.tick_real(real_step)
+	var hold: HoldSlots = _get_hold()
+	if _state.is_player_dead() or _state.is_enemy_dead():
+		_focus.end(FocusController.REASON_DEATH)
+		return
+	var selected: bool = hold != null and not hold.get_selected_indices().is_empty()
+	if _focus.is_active() and not selected:
+		_focus.end(FocusController.REASON_DESELECTED)
+	elif selected and _focus.is_ready() and not _cut_flow.is_menu_open():
+		_focus.try_start()
+
+
+# Simulation speed factor this frame: skill menu, else Focus, else 1.
+func _sim_scale() -> float:
+	if _cut_flow.is_menu_open():
+		return _skill_config.menu_time_scale
+	if _focus.is_active():
+		return _focus.get_time_scale()
+	return 1.0
 
 
 func _no_cells() -> Array[Vector2i]:
@@ -275,6 +306,11 @@ func get_skill_config() -> SkillConfig:
 ## Cut numbers (damage per cell, swing timing).
 func get_cut_config() -> CutConfig:
 	return _cut_config
+
+
+## The player's Focus (pause while connecting points).
+func get_focus() -> FocusController:
+	return _focus
 
 
 ## The player's skill cooldowns.
@@ -331,6 +367,7 @@ func confirm_selection() -> bool:
 	var cells: Array[Vector2i] = CutResolver.resolve_on_board(_grid, true, labels)
 	if cells.is_empty():
 		return false
+	_focus.end(FocusController.REASON_CONFIRMED)
 	var used: Array[int] = []
 	for index: int in hold.get_selected_indices():
 		if used.size() >= labels.size():
@@ -468,8 +505,10 @@ func get_drops_config() -> FieldDropsConfig:
 
 
 ## Tries one step of the player in [param direction] (Vector2i.UP/DOWN/LEFT/RIGHT).
-## Returns false on cooldown, wall or when dead; nothing is queued.
+## Returns false on cooldown, wall, when dead, or while Focus locks movement; nothing is queued.
 func try_step_player(direction: Vector2i) -> bool:
+	if _focus.is_active() and _focus.locks_movement():
+		return false
 	return _mover.try_step(direction)
 
 

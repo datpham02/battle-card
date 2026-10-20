@@ -17,6 +17,10 @@ const BUTTON_OUTLINE: Color = Color(0.95, 0.9, 0.78)
 const ARROW_COLOR: Color = Color(0.95, 0.9, 0.78)
 ## Alpha multiplier of a button right after a step (cooldown fraction 1), 1 when ready.
 const DIM_ALPHA: float = 0.4
+## Locked while Focus pauses the match (Story 012): a stronger dim than the step cooldown plus
+## a cool blue-grey tint (same family as CutHudView.FOCUS_BOARD_TINT), so it reads as "paused".
+const LOCKED_ALPHA: float = 0.3
+const LOCKED_TINT: Color = Color(0.35, 0.45, 0.65, 0.5)
 const OUTLINE_WIDTH: float = 4.0
 ## Arrow half-size as a share of the button edge.
 const ARROW_RATIO: float = 0.25
@@ -45,7 +49,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and KEYS.has(key.physical_keycode):
-			_combat.try_step_player(KEYS[key.physical_keycode])
+			# A locked key is still consumed (nothing else reacts) but never steps.
+			if not _is_locked():
+				_combat.try_step_player(KEYS[key.physical_keycode])
 			get_viewport().set_input_as_handled()
 		return
 	var pos: Vector2
@@ -65,8 +71,17 @@ func _input(event: InputEvent) -> void:
 	if direction == Vector2i.ZERO:
 		return
 	get_viewport().set_input_as_handled()
-	if event.device != InputEvent.DEVICE_ID_EMULATION:
+	if event.device != InputEvent.DEVICE_ID_EMULATION and not _is_locked():
 		_combat.try_step_player(direction)
+
+
+# True while Focus pauses the match and locks movement (Story 012): the buttons dim and every
+# press or key on them is swallowed without a step.
+func _is_locked() -> bool:
+	if _combat == null:
+		return false
+	var focus: FocusController = _combat.get_focus()
+	return focus != null and focus.is_active() and focus.locks_movement()
 
 
 ## Direction of the button under viewport point [param point], or Vector2i.ZERO if none.
@@ -81,11 +96,14 @@ func direction_at(point: Vector2) -> Vector2i:
 func _draw() -> void:
 	if _combat == null or _combat.get_mover() == null:
 		return
-	var alpha: float = lerpf(1.0, DIM_ALPHA, _combat.get_mover().get_cooldown_fraction())
+	var locked: bool = _is_locked()
+	var alpha: float = LOCKED_ALPHA if locked else lerpf(1.0, DIM_ALPHA, _combat.get_mover().get_cooldown_fraction())
 	var rects: Dictionary = ScreenLayout.dpad_rects(get_viewport_rect().size)
 	for direction: Vector2i in rects:
 		var rect: Rect2 = rects[direction]
 		draw_rect(rect, Color(BUTTON_COLOR, BUTTON_COLOR.a * alpha))
+		if locked:
+			draw_rect(rect, LOCKED_TINT)
 		draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
 		var c: Vector2 = rect.get_center()
 		var r: float = rect.size.x * ARROW_RATIO

@@ -57,3 +57,4 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 009 | Boss đi nhặt và cắt, brain trọng số, ngắt đòn hai chiều | Integration | Complete | N/A (minimal) |
 | 010 | Bảng cân bằng cắt + Đốt, Ghim + boss học bằng bộ đếm | Logic | Complete | N/A (minimal) |
 | 011 | Run 3 trận + boss, thắng/thua, chơi lại | Integration | Complete | N/A (minimal) |
+| 012 | Tập trung: dừng hẳn trận khi nối điểm (giới hạn + cooldown) | Integration | Complete | N/A (minimal) |
