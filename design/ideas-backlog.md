@@ -38,6 +38,9 @@ Mỗi đòn chốt làm điểm trên sân ôi nhanh hơn trong 3 s: spam đòn 
 ### Rơi theo kịch bản (phương án lùi)
 Nếu túi xáo vẫn cho những ván "không ra gì", thử kịch bản nửa cố định: 12 lần rơi đầu theo thứ tự thiết kế, sau đó mới túi xáo. Mất tính chơi lại, nên là phương án lùi.
 
+### Cấu trúc chương / tầng (Story 015, sau 014)
+Người dùng muốn người chơi vượt chương/tầng: mỗi tầng N trận rồi boss. Một run hiện nay = một tầng, nên `run.json` sẽ thành `chapters: [{id, tên, matches, boss}]` và `RunState` nhận một chương; thêm màn chọn chương và màn qua tầng; thắng boss tầng N mở tầng N+1 (cần lưu ít nhất tầng cao nhất → kéo một phần meta progression vào). Quyết định tạm: tầng thấp dùng **một hình cố định cho cả tầng** để học được; tầng cao rút **ngẫu nhiên từ nhóm hình** (`arena_pool`) kèm biến thể có kiểm (Story 014) nên mỗi lần vào là một sân khác; **máu không mang qua tầng**, mỗi tầng bắt đầu đầy, trong tầng mang như hiện nay. Story 013/014 (sân, hồ sơ, trait theo trận) là nền cho tầng khác nhau.
+
 ### Meta progression bằng "thực đơn"
 Mở khóa kỹ năng mới và chọn bộ 4 kỹ năng mang vào run (deckbuilding nhẹ) thay cho nâng chỉ số. Cần Story 011 và nhiều hơn 4 kỹ năng.
 

@@ -5,10 +5,12 @@ extends RefCounted
 ## Schema: assets/data/schema.md. Implements: Story 011.
 
 const DEFAULT_PATH: String = "res://assets/data/run.json"
-## Keys every match entry carries after validation.
+## Keys every match entry carries after validation (a deprecated absolute
+## `boss_step_cooldown_sec` is carried too, but only when the data had it).
 const MATCH_KEYS: Array[String] = [
-	"id", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_sec",
-	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult",
+	"id", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
+	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
+	"swing_speed_mult", "combo_chance", "combo_gap_sec",
 ]
 
 ## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
@@ -74,8 +76,9 @@ func match_count() -> int:
 static func _default_match(index: int) -> Dictionary:
 	return {
 		"id": "match_%d" % (index + 1), "display_name": "Match %d" % (index + 1), "boss_max_hp": 100.0,
-		"brain_set": "balanced", "boss_step_cooldown_sec": 0.55, "boss_think_interval_sec": 0.3,
-		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0,
+		"brain_set": "balanced", "boss_step_cooldown_mult": 1.0, "boss_think_interval_sec": 0.3,
+		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0, "movement": {},
+		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0,
 	}
 
 
@@ -86,8 +89,25 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 	m["brain_set"] = str(raw.get("brain_set", m["brain_set"]))
 	m["boss_max_hp"] = _positive(raw, "boss_max_hp", float(m["boss_max_hp"]))
 	m["boss_drop_interval_mult"] = _positive(raw, "boss_drop_interval_mult", float(m["boss_drop_interval_mult"]))
-	for key: String in ["boss_step_cooldown_sec", "boss_think_interval_sec", "boss_reaction_sec"]:
+	m["boss_step_cooldown_mult"] = _positive(raw, "boss_step_cooldown_mult", float(m["boss_step_cooldown_mult"]))
+	m["swing_speed_mult"] = _positive(raw, "swing_speed_mult", float(m["swing_speed_mult"]))
+	# combo_chance / combo_gap_sec: negative (default) = keep the brain set's own value.
+	if raw.has("combo_chance"):
+		m["combo_chance"] = clampf(float(raw["combo_chance"]), 0.0, 1.0)
+	if raw.has("combo_gap_sec"):
+		m["combo_gap_sec"] = maxf(float(raw["combo_gap_sec"]), 0.0)
+	for key: String in ["boss_think_interval_sec", "boss_reaction_sec"]:
 		m[key] = maxf(float(raw.get(key, m[key])), 0.0)
+	var raw_movement: Variant = raw.get("movement", {})
+	if typeof(raw_movement) == TYPE_DICTIONARY:
+		# Passed through as-is; BossBrainConfig.override_movement validates the keys.
+		m["movement"] = (raw_movement as Dictionary).duplicate()
+	else:
+		push_warning("RunConfig: movement of match %s must be an object, ignored" % m["id"])
+	if raw.has("boss_step_cooldown_sec"):
+		# Deprecated absolute value: carried (and used by CombatView) only for old data.
+		push_warning("RunConfig: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")
+		m["boss_step_cooldown_sec"] = maxf(float(raw["boss_step_cooldown_sec"]), 0.0)
 	return m
 
 

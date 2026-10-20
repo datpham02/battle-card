@@ -7,5 +7,9 @@
 	"player_start_cell": [1, 1],
 	"max_tick_sec": 0.1,
 	"feedback_sec": 1.0,
-	"player_step_cooldown_sec": 0.45
+	"step_cooldown_ref_sec": 0.45,
+	"step_cooldown_ref_steps": 2,
+	"step_cooldown_exponent": 0.75,
+	"step_cooldown_min_sec": 0.18,
+	"step_cooldown_max_sec": 0.60
 }

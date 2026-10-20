@@ -1,7 +1,7 @@
 # Story 013: Hồ sơ boss theo trận và nhịp theo sân
 
 > **Epic**: Kaiten Duel (v3)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
@@ -107,3 +107,14 @@
 
 - Depends on: Story 009, Story 011, Story 012
 - Unlocks: đợt cân bằng
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-20
+**Criteria**: All five parts implemented (5 board-scaled step cooldown, 1 movement profiles, 2 escape scoring, 4 boss swing speed, 3 combo cuts). The in-story playtest gate was skipped by the user's decision ("do 3 and 4") on the strength of the escape-count data: on 3x3 every single 3-cell line leaves >= 5 escape cells, so single cuts cannot trap a player who watches.
+**Deviations**: ADVISORY: cautious set `reaction_sec` is 0.35 instead of 0.6 (0.6 made the boss unable to interrupt; match 1 still gets 0.6 via `run.json`). ADVISORY: the escape-scoring test asserts "no more escape cells than the best hit-now alternative" (5 vs 5 on 3x3) rather than strictly fewer; the term does separate shapes (corner nick 2 vs line 5; 3 points 2 vs 4 points 0). ADVISORY: only one countdown shows at a time; swing 2 is a hatched layer labelled "2: +0.5 s" until it starts running. ADVISORY: combos are always Slash and are rarer than `combo_chance` because the brain tends to spend the whole hand on cut 1. ADVISORY: `burn_avoid` is a legacy key (the boss never enters or targets fire). `swing_speed_mult` ramp (1.0 / 1.0 / 0.9 / 0.8) was completed in `run.json` by the orchestrator.
+**Test Evidence**: Integration; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/boss-profiles/01-07*.png` (all opened and checked). Scratch scripts (not retained): combo, profiles, pace/escape, arbiter, boss simulation, and the real-scene flow tests, all 0 failures. The old pick-up scratch test is occasionally flaky (unseeded random drops), pre-existing.
+**Code Review**: Skipped (solo mode).
+**Not verified**: real feel (is dodging now a calculation? are combos fair? is match 1 still too hard?), touch on a device.
+**Carries forward**: Story 014 (arena library, variants, validator, traits); balance pass (profile numbers, `combo_chance`, `run.json` ramp, cautious reaction).

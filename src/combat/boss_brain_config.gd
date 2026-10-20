@@ -1,7 +1,9 @@
 class_name BossBrainConfig
 extends RefCounted
 ## Boss brain numbers and named weight sets from assets/data/boss_brain.json.
-## Schema: assets/data/schema.md. Implements: Story 009.
+## Each set also carries a `movement` profile (Story 013): target commitment, movement noise,
+## per-set reaction time, path style, juke chance and idle wandering.
+## Schema: assets/data/schema.md. Implements: Story 009, Story 013.
 
 const DEFAULT_PATH: String = "res://assets/data/boss_brain.json"
 ## Set used when [member active_set] is unknown; always present in [member sets].
@@ -10,7 +12,7 @@ const DEFAULT_SET: String = "balanced"
 const SKILL_BONUS_PREFIX: String = "skill_bonus_"
 ## Every known weight with its default (flags are 0.0 / 1.0). Missing keys in a set use these.
 const DEFAULT_WEIGHTS: Dictionary = {
-	"cut_hit_now": 3.0,
+	"cut_hit_now": 1.5,
 	"cut_per_cell": 1.0,
 	"cut_duration_penalty": 0.8,
 	"cut_interrupt_bonus": 4.0,
@@ -29,6 +31,9 @@ const DEFAULT_WEIGHTS: Dictionary = {
 	"skill_bonus_burn": 1.0,
 	"skill_bonus_pin": 1.0,
 	"burn_avoid": 3.0,
+	"escape_penalty": 4.0,
+	"combo_chance": 0.25,
+	"combo_gap_sec": 0.5,
 }
 ## Learning rules (see BossLearning) with defaults; the `learning` section of the file overrides.
 const DEFAULT_LEARNING: Dictionary = {
@@ -42,6 +47,21 @@ const DEFAULT_LEARNING: Dictionary = {
 	"interrupt_count_threshold": 2,
 	"single_point_bonus": 2.0,
 }
+## Allowed `path_style` values of a movement profile.
+const PATH_STYLES: Array[String] = ["row_first", "shortest", "mixed"]
+## Movement profile keys with their defaults (the `movement` block of a set). `reaction_sec` is
+## deliberately absent: a set without it uses the file-level [member reaction_sec].
+const DEFAULT_MOVEMENT: Dictionary = {
+	"move_commitment": 0.7,
+	"move_noise": 0.15,
+	"path_style": "shortest",
+	"juke_chance": 0.2,
+	"wander_when_idle": true,
+}
+## Movement profile key holding the per-set reaction time (optional).
+const MOVEMENT_REACTION_KEY: String = "reaction_sec"
+## Key of a set that holds its movement profile (not a weight).
+const MOVEMENT_KEY: String = "movement"
 
 ## Seconds between accepted boss steps.
 var step_cooldown_sec: float = 0.55
@@ -55,12 +75,15 @@ var noise: float = 0.15
 var active_set: String = DEFAULT_SET
 ## set name -> {weight key -> float}.
 var sets: Dictionary = {}
+## set name -> movement profile ([constant DEFAULT_MOVEMENT] keys, plus `reaction_sec` when set).
+var movement: Dictionary = {}
 ## Learning rules (keys of [constant DEFAULT_LEARNING]).
 var learning: Dictionary = DEFAULT_LEARNING.duplicate()
 
 
 func _init() -> void:
 	sets[DEFAULT_SET] = DEFAULT_WEIGHTS.duplicate()
+	movement[DEFAULT_SET] = DEFAULT_MOVEMENT.duplicate()
 
 
 ## Loads from a JSON file. Never null: a missing or bad file gives defaults (warning).
@@ -95,14 +118,17 @@ static func from_dictionary(data: Dictionary) -> BossBrainConfig:
 	var raw_sets: Variant = data.get("sets")
 	if typeof(raw_sets) == TYPE_DICTIONARY and not (raw_sets as Dictionary).is_empty():
 		var parsed_sets: Dictionary = {}
+		var parsed_movement: Dictionary = {}
 		for set_name: Variant in (raw_sets as Dictionary).keys():
 			var raw: Variant = (raw_sets as Dictionary)[set_name]
 			if typeof(raw) != TYPE_DICTIONARY:
 				push_warning("BossBrainConfig: set %s is not an object, ignored" % str(set_name))
 				continue
 			parsed_sets[str(set_name)] = _normalize_set(str(set_name), raw as Dictionary)
+			parsed_movement[str(set_name)] = _normalize_movement(str(set_name), (raw as Dictionary).get(MOVEMENT_KEY))
 		if not parsed_sets.is_empty():
 			config.sets = parsed_sets
+			config.movement = parsed_movement
 	else:
 		push_warning("BossBrainConfig: no sets in data, using the built-in balanced set")
 	var wanted: String = str(data.get("active_set", DEFAULT_SET))
@@ -136,6 +162,91 @@ func weights_for(set_name: String = "") -> Dictionary:
 	return DEFAULT_WEIGHTS.duplicate()
 
 
+## Copy of the movement profile of [param set_name]; "" or an unknown name gives the active set.
+## Always has every [constant DEFAULT_MOVEMENT] key; `reaction_sec` only when the set has one.
+func movement_for(set_name: String = "") -> Dictionary:
+	if movement.has(set_name):
+		return (movement[set_name] as Dictionary).duplicate()
+	if movement.has(active_set):
+		return (movement[active_set] as Dictionary).duplicate()
+	return DEFAULT_MOVEMENT.duplicate()
+
+
+## Reaction time of [param set_name]: its movement profile's `reaction_sec` when present, else
+## the file-level [member reaction_sec].
+func reaction_sec_for(set_name: String = "") -> float:
+	var profile: Dictionary = movement_for(set_name)
+	if profile.has(MOVEMENT_REACTION_KEY):
+		return float(profile[MOVEMENT_REACTION_KEY])
+	return reaction_sec
+
+
+## Merges [param override] (movement keys, validated like the file) over the profile of
+## [param set_name]. Unknown set or keys: warning, those parts are ignored. Returns true when
+## the set exists.
+func override_movement(set_name: String, override: Dictionary) -> bool:
+	if not sets.has(set_name):
+		push_warning("BossBrainConfig: cannot override movement of unknown set %s" % set_name)
+		return false
+	var profile: Dictionary = movement_for(set_name)
+	var cleaned: Dictionary = _normalize_movement(set_name, override)
+	for key: Variant in override.keys():
+		if cleaned.has(key):
+			profile[key] = cleaned[key]
+	movement[set_name] = profile
+	return true
+
+
+## Overrides one weight of [param set_name] (validated like the file: `combo_chance` is clamped
+## to 0..1, `combo_gap_sec` to >= 0). Unknown set or weight key: warning, ignored. Returns true
+## when applied.
+func override_weight(set_name: String, key: String, value: float) -> bool:
+	if not sets.has(set_name) or not DEFAULT_WEIGHTS.has(key):
+		push_warning("BossBrainConfig: cannot override weight %s of set %s" % [key, set_name])
+		return false
+	var weights: Dictionary = sets[set_name] as Dictionary
+	if key == "combo_chance":
+		weights[key] = clampf(value, 0.0, 1.0)
+	else:
+		weights[key] = maxf(value, 0.0)
+	return true
+
+
+static func _normalize_movement(set_name: String, raw: Variant) -> Dictionary:
+	var profile: Dictionary = DEFAULT_MOVEMENT.duplicate()
+	if raw == null:
+		return profile
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("BossBrainConfig: movement of set %s is not an object, using defaults" % set_name)
+		return profile
+	for key: Variant in (raw as Dictionary).keys():
+		var key_text: String = str(key)
+		var value: Variant = (raw as Dictionary)[key]
+		if key_text == MOVEMENT_REACTION_KEY:
+			profile[key_text] = maxf(float(value), 0.0)
+		elif not DEFAULT_MOVEMENT.has(key_text):
+			push_warning("BossBrainConfig: set %s has unknown movement key %s, ignored" % [set_name, key_text])
+		else:
+			profile[key_text] = _clean_movement_value(set_name, key_text, value)
+	return profile
+
+
+static func _clean_movement_value(set_name: String, key: String, value: Variant) -> Variant:
+	if key == "path_style":
+		var style: String = str(value)
+		if PATH_STYLES.has(style):
+			return style
+		push_warning("BossBrainConfig: set %s has unknown path_style %s, using %s" % [set_name, style, DEFAULT_MOVEMENT[key]])
+		return DEFAULT_MOVEMENT[key]
+	if key == "wander_when_idle":
+		if typeof(value) == TYPE_BOOL:
+			return bool(value)
+		return float(value) >= 0.5
+	if key == "move_commitment" or key == "juke_chance":
+		return clampf(float(value), 0.0, 1.0)
+	return maxf(float(value), 0.0)
+
+
 static func _clean_learning(key: String, value: float) -> Variant:
 	if key == "dodge_streak_threshold" or key == "interrupt_count_threshold":
 		return maxi(roundi(value), 1)
@@ -150,6 +261,8 @@ static func _normalize_set(set_name: String, raw: Dictionary) -> Dictionary:
 	var weights: Dictionary = DEFAULT_WEIGHTS.duplicate()
 	for key: Variant in raw.keys():
 		var key_text: String = str(key)
+		if key_text == MOVEMENT_KEY:
+			continue
 		if not DEFAULT_WEIGHTS.has(key_text) and not key_text.begins_with(SKILL_BONUS_PREFIX):
 			push_warning("BossBrainConfig: set %s has unknown weight %s, ignored" % [set_name, key_text])
 			continue
@@ -160,5 +273,7 @@ static func _normalize_set(set_name: String, raw: Dictionary) -> Dictionary:
 			weights[key_text] = maxf(float(value), 0.0)
 	weights["hand_target"] = clampf(roundf(float(weights["hand_target"])), 1.0, 4.0)
 	weights["retreat_hp_ratio"] = clampf(float(weights["retreat_hp_ratio"]), 0.0, 1.0)
+	weights["combo_chance"] = clampf(float(weights["combo_chance"]), 0.0, 1.0)
+	weights["combo_gap_sec"] = maxf(float(weights["combo_gap_sec"]), 0.0)
 	weights["pickup_full_hand_zero"] = 1.0 if float(weights["pickup_full_hand_zero"]) >= 0.5 else 0.0
 	return weights

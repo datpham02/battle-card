@@ -72,6 +72,7 @@ var _config: CombatConfig
 var _grid: BoardGrid
 var _state: CombatState
 var _mover: UnitMover
+var _player_step_cooldown: float = 0.45
 var _drops: FieldDrops
 var _drops_config: FieldDropsConfig
 var _cut_config: CutConfig
@@ -97,8 +98,9 @@ var _learning: BossLearning
 var boss_set_override: String = ""
 ## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
 ## Keys (all optional): player_hp (start HP, used when >= 0), boss_max_hp, brain_set,
-## boss_step_cooldown_sec, boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult
-## (applied to a copy of the drops config for the boss only), end_delay_sec (default 1.5),
+## boss_step_cooldown_mult (x the player's computed step cooldown; deprecated absolute: boss_step_cooldown_sec), boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult
+## (applied to a copy of the drops config for the boss only), movement (object merged over the
+## match set's movement profile of boss_brain.json), end_delay_sec (default 1.5),
 ## display_name (boss name in the HUD), match_label.
 var match_params: Dictionary = {}
 
@@ -128,7 +130,8 @@ func _ready() -> void:
 	var start_hp: float = float(match_params.get("player_hp", -1.0))
 	if start_hp >= 0.0:
 		_state.set_player_hp(start_hp)
-	_mover = UnitMover.new(_state, CombatState.Side.PLAYER, _config.player_step_cooldown_sec)
+	_player_step_cooldown = _config.step_cooldown_for(_grid)
+	_mover = UnitMover.new(_state, CombatState.Side.PLAYER, _player_step_cooldown)
 	_drops_config = FieldDropsConfig.load_from_file(drops_config_path)
 	var boss_drops_config: FieldDropsConfig = _drops_config.copy()
 	boss_drops_config.spawn_interval_sec *= maxf(float(match_params.get("boss_drop_interval_mult", 1.0)), 0.01)
@@ -150,6 +153,8 @@ func _ready() -> void:
 		_state, _grid, _cut_config, _skill_config, brain_config, boss_drops_config, hold_config,
 		drops_seed + 1 if drops_seed >= 0 else -1
 	)
+	_boss.set_player_step_cooldown(_player_step_cooldown)
+	_boss.get_actor().duration_mult = maxf(float(match_params.get("swing_speed_mult", 1.0)), 0.01)
 	if not boss_set_override.is_empty() and not _boss.get_brain().use_set(boss_set_override):
 		push_warning("CombatView: unknown boss weight set '%s'" % boss_set_override)
 	_status = StatusEffects.new()
@@ -167,16 +172,29 @@ func _ready() -> void:
 
 # Run match settings onto the freshly loaded brain config (before the BossController exists).
 func _apply_brain_params(brain_config: BossBrainConfig) -> void:
-	brain_config.step_cooldown_sec = maxf(float(match_params.get("boss_step_cooldown_sec", brain_config.step_cooldown_sec)), 0.0)
+	if match_params.has("boss_step_cooldown_sec"):
+		push_warning("CombatView: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")
+		brain_config.step_cooldown_sec = maxf(float(match_params["boss_step_cooldown_sec"]), 0.0)
+	elif match_params.has("boss_step_cooldown_mult"):
+		brain_config.step_cooldown_sec = maxf(_player_step_cooldown * float(match_params["boss_step_cooldown_mult"]), 0.0)
 	brain_config.think_interval_sec = maxf(float(match_params.get("boss_think_interval_sec", brain_config.think_interval_sec)), 0.0)
 	brain_config.reaction_sec = maxf(float(match_params.get("boss_reaction_sec", brain_config.reaction_sec)), 0.0)
 	var wanted: String = str(match_params.get("brain_set", ""))
-	if wanted.is_empty():
-		return
-	if brain_config.has_set(wanted):
-		brain_config.active_set = wanted
-	else:
-		push_warning("CombatView: unknown brain_set '%s' in match params" % wanted)
+	if not wanted.is_empty():
+		if brain_config.has_set(wanted):
+			brain_config.active_set = wanted
+		else:
+			push_warning("CombatView: unknown brain_set '%s' in match params" % wanted)
+	if match_params.has("boss_reaction_sec"):
+		# The match value is more specific than the set's own movement.reaction_sec.
+		brain_config.override_movement(brain_config.active_set, {"reaction_sec": brain_config.reaction_sec})
+	if float(match_params.get("combo_chance", -1.0)) >= 0.0:
+		brain_config.override_weight(brain_config.active_set, "combo_chance", float(match_params["combo_chance"]))
+	if float(match_params.get("combo_gap_sec", -1.0)) >= 0.0:
+		brain_config.override_weight(brain_config.active_set, "combo_gap_sec", float(match_params["combo_gap_sec"]))
+	var movement_override: Variant = match_params.get("movement")
+	if typeof(movement_override) == TYPE_DICTIONARY and not (movement_override as Dictionary).is_empty():
+		brain_config.override_movement(brain_config.active_set, movement_override as Dictionary)
 
 
 # Counts REAL time after a death, then emits match_ended once.
@@ -191,6 +209,11 @@ func _tick_end(delta: float) -> void:
 	if _end_timer <= 0.0:
 		_end_emitted = true
 		match_ended.emit(not _state.is_player_dead(), _state.player_hp)
+
+
+## The player's (board-scaled) step cooldown in seconds.
+func get_player_step_cooldown() -> float:
+	return _player_step_cooldown
 
 
 ## Player HP right now.
@@ -460,6 +483,14 @@ func get_feint_flash() -> Dictionary:
 ## The boss agent (hand, drops, mover, actor, brain).
 func get_boss() -> BossController:
 	return _boss
+
+
+## The boss's queued second swing of a combo ({cells, duration}); empty when none is queued.
+func get_boss_queued_swing() -> Dictionary:
+	var actor: CutActor = _boss.get_actor()
+	if not actor.has_queued():
+		return {}
+	return {"cells": actor.get_queued_cells(), "duration": actor.get_queued_duration()}
 
 
 ## The swing arbiter (time order and interrupt).

@@ -44,6 +44,20 @@ extends Node
 ##   godot --path . -- --demo=focus_cooldown Focus just ended by Chốt (try_start, end("confirmed")) with 6 s of cooldown
 ##                                      left; a point is still selected to show that selecting does NOT pause now:
 ##                                      no tint, grey "Tập trung còn 6 s" bar filling up, d-pad normal, Chốt visible
+##   godot --path . -- --demo=combo      Story 013: boss hand A1,B1,C<n>; BossController._do_cut with a "combo" entry
+##                                      (slot 0 = A1 now, slot 1 = B1 queued on the actor; real path, both slash), the
+##                                      player moved to the corner (0,0) so swing 1 covers it; arbiter fast-forwarded
+##                                      0.3 s: solid red column 1 with its countdown box + hatched lighter-red row 1
+##                                      with "2: +g s" at its bottom-right (g = combo_gap_sec, 0.5 with boss_brain.json);
+##                                      the shared corner cell keeps swing 1's solid look
+##   godot --path . -- --demo=combo_second  as combo, fast-forwarded past swing 1's impact: HIT "-N" on the player
+##                                      (it stood in column 1) and swing 2 (row 1) is now the RUNNING swing with its
+##                                      own countdown, started with the full gap when swing 1 resolved and drawn by
+##                                      the normal boss-swing path (no queued layer any more)
+##   godot --path . -- --demo=cooldown --grid=6x6   "grid66_pace": the board-scaled step cooldown on a 6x6 half right
+##                                      after a step (0.45 * (2/5)^0.75 = ~0.23 s with combat.json numbers): the ring is
+##                                      visibly shorter than on 3x3 (0.45 s). Not a separate mode: the cooldown demo
+##                                      takes the --grid override like every demo (verified headless)
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -91,6 +105,11 @@ const SKILL_PIN: String = "pin"
 const FOCUS_DEMO_LEFT_SEC: float = 2.5
 const FOCUS_TIMEOUT_DEMO_LEFT_SEC: float = 0.3
 const FOCUS_COOLDOWN_DEMO_LEFT_SEC: float = 6.0
+## Story 013 combo demos: boss hand slots of swing 1 and of the queued swing 2, and the corner
+## cell the player is moved to (inside swing 1's column).
+const COMBO_SWING_INDICES: Array[int] = [0]
+const COMBO_QUEUED_INDICES: Array[int] = [1]
+const COMBO_PLAYER_CELL: Vector2i = Vector2i.ZERO
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -260,6 +279,24 @@ func _ready() -> void:
 				push_warning("DemoArgs: Focus did not start for demo '%s'" % _mode)
 			focus.end(FocusController.REASON_CONFIRMED)
 			focus.tick_real(maxf(focus.get_cooldown_sec() - FOCUS_COOLDOWN_DEMO_LEFT_SEC, 0.0))
+		"combo", "combo_second":
+			# Real boss cut path with a "combo" entry (as BossBrain builds it): swing 1 from slot 0
+			# (A1), swing 2 from slot 1 (B1) queued on the actor; the actor starts swing 2 with
+			# the full gap when swing 1 resolves inside the arbiter's slices.
+			var boss: BossController = combat.get_boss()
+			_boss_hand([_lbl("A", 1), _lbl("B", 1), _lbl("C", grid.side_cols)])
+			boss.call("_do_cut", {
+				"hand_indices": COMBO_SWING_INDICES, "skill_id": SkillConfig.FALLBACK_SKILL,
+				"combo": {"hand_indices": COMBO_QUEUED_INDICES, "skill_id": BossController.COMBO_SKILL},
+			})
+			if not boss.get_actor().has_queued():
+				push_warning("DemoArgs: the boss combo did not queue for demo '%s'" % _mode)
+			if not combat.get_state().set_player_cell(COMBO_PLAYER_CELL):
+				push_warning("DemoArgs: could not move the player to %s" % str(COMBO_PLAYER_CELL))
+			if _mode == "combo":
+				combat.get_arbiter().tick(SWING_ELAPSED_SEC)
+			else:
+				combat.get_arbiter().tick(boss.get_actor().get_time_left() + 0.001)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 

@@ -3,11 +3,15 @@ extends RefCounted
 ## The boss as a player-like agent: its own hand, field drops, step mover, skill cooldowns and
 ## cut actor, driven by a BossBrain. The controller applies the brain's decisions; it does NOT
 ## tick its [CutActor] (the SwingArbiter does, so swing order stays in one place).
-## Implements: Story 009.
+## Implements: Story 009, Story 013 (player step cooldown handed to the brain).
 
 ## The boss committed a cut: [param labels] in connection order, the covered [param cells]
 ## on the player's board, the chosen [param skill_id].
 signal cut_started(labels: Array[String], cells: Array[Vector2i], skill_id: String)
+## The boss queued the second swing of a combo (it starts when the first resolves): the
+## [param cells] it will cover on the player's board and its [param labels]. cut_started fires
+## once, for the first swing only.
+signal combo_queued(cells: Array[Vector2i], labels: Array[String])
 ## The boss moved one cell (new cell on the boss's half).
 signal moved(direction: Vector2i)
 ## The boss picked up a point into its hand.
@@ -17,6 +21,8 @@ signal feinted(cells: Array[Vector2i], labels: Array[String])
 
 ## Offset added to the seed for the feint RNG so it never shares a stream with the brain noise.
 const _FEINT_SEED_OFFSET: int = 7919
+## Skill of a combo's second swing (combos always slash).
+const COMBO_SKILL: String = "slash"
 
 ## DEV-ONLY (capture demos): when true the next one-point cut is a feint regardless of the
 ## learning roll; cleared once used. Never set by gameplay code.
@@ -41,6 +47,8 @@ var _actor: CutActor
 var _cooldowns: SkillCooldowns
 var _brain: BossBrain
 var _last_cut: Dictionary = {}
+var _combo_count: int = 0
+var _player_step_cooldown: float = 0.0
 var _active: bool = true
 var _removing: bool = false
 
@@ -86,6 +94,8 @@ func tick(delta: float, player_actor: CutActor) -> void:
 		"state": _state, "hand": _hand, "drops": _drops, "mover": _mover, "actor": _actor,
 		"cooldowns": _cooldowns, "player_actor": player_actor, "status": _status,
 	}
+	if _player_step_cooldown > 0.0:
+		ctx["player_step_cooldown"] = _player_step_cooldown
 	var action: Dictionary = _brain.decide(ctx)
 	match str(action["type"]):
 		"move":
@@ -102,10 +112,28 @@ func set_status(status: StatusEffects) -> void:
 	_mover.set_status(status)
 
 
+## The player's (board-scaled) step cooldown in seconds: the brain counts the player's escape
+## cells with it when scoring cuts. <= 0 (default) = the brain falls back to the boss's own
+## step cooldown.
+func set_player_step_cooldown(seconds: float) -> void:
+	_player_step_cooldown = maxf(seconds, 0.0)
+
+
 ## Shares the learning counters with the brain and the feint roll (null = no learning).
 func set_learning(learning: BossLearning) -> void:
 	_learning = learning
 	_brain.set_learning(learning)
+
+
+## Seconds between a combo's two impacts: the active set's combo_gap_sec, at least the base
+## swing time. The second swing starts when the first resolves and lasts exactly this long.
+func combo_gap_sec() -> float:
+	return maxf(_brain.get_combo_gap_sec(), _cut_config.swing_base_sec)
+
+
+## Number of combos queued so far.
+func get_combo_count() -> int:
+	return _combo_count
 
 
 ## Number of feints cancelled so far.
@@ -171,15 +199,39 @@ func _do_cut(action: Dictionary) -> void:
 	var cells: Array[Vector2i] = CutResolver.resolve_on_board(_grid, false, labels)
 	if cells.is_empty() or not _actor.can_begin():
 		return
+	# Optional combo: validated up front (any bad index or empty cells = no combo, cut goes on).
+	var combo_indices: Array[int] = []
+	var combo_labels: Array[String] = []
+	var combo_cells: Array[Vector2i] = []
+	var combo: Variant = action.get("combo")
+	if typeof(combo) == TYPE_DICTIONARY:
+		combo_indices.assign((combo as Dictionary).get("hand_indices", []) as Array)
+		for index: int in combo_indices:
+			var combo_point: FieldPoint = _hand.get_point(index)
+			if combo_point == null or indices.has(index):
+				combo_labels.clear()
+				break
+			combo_labels.append(combo_point.label)
+		if not combo_labels.is_empty():
+			combo_cells = CutResolver.resolve_on_board(_grid, false, combo_labels)
+	var has_combo: bool = not combo_cells.is_empty()
 	_removing = true
 	for index: int in indices:
 		_hand.remove(index)
+	if has_combo:
+		for index: int in combo_indices:
+			_hand.remove(index)
 	_removing = false
 	if _actor.begin_swing(cells, skill_id, false):
 		_cooldowns.start(skill_id, float(_skill_config.get_skill(skill_id).get("cooldown_sec", 0.0)))
 		_last_cut = {"labels": labels, "skill_id": skill_id}
 		cut_started.emit(labels, cells, skill_id)
-		_roll_feint(labels, cells)
+		if has_combo and _actor.queue_swing(combo_cells, COMBO_SKILL, false, combo_gap_sec()):
+			_last_cut["combo"] = {"labels": combo_labels, "skill_id": COMBO_SKILL}
+			_combo_count += 1
+			combo_queued.emit(combo_cells, combo_labels)
+		else:
+			_roll_feint(labels, cells)
 	_carry_over()
 
 

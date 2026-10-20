@@ -24,8 +24,16 @@ var enemy_start_cell: Vector2i = BoardGrid.NO_CELL
 var max_tick_sec: float = 0.1
 ## Seconds the HIT / MISS feedback stays on screen.
 var feedback_sec: float = 1.0
-## Seconds the player must wait between steps.
-var player_step_cooldown_sec: float = 0.45
+## Board-scaled step cooldown: [member step_cooldown_ref_sec] on a board that is
+## [member step_cooldown_ref_steps] steps across, scaled by (ref_steps / steps_across)^exponent
+## and clamped to [min, max]. See [method step_cooldown_for].
+var step_cooldown_ref_sec: float = 0.45
+var step_cooldown_ref_steps: int = 2
+var step_cooldown_exponent: float = 0.75
+var step_cooldown_min_sec: float = 0.18
+var step_cooldown_max_sec: float = 0.60
+## DEPRECATED absolute override of the computed player step cooldown; negative = not set.
+var player_step_cooldown_sec: float = -1.0
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -60,10 +68,18 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	config._validate_start_cells()
 	config.max_tick_sec = maxf(float(data.get("max_tick_sec", config.max_tick_sec)), 0.001)
 	config.feedback_sec = maxf(float(data.get("feedback_sec", config.feedback_sec)), 0.0)
-	config.player_step_cooldown_sec = maxf(
-		float(data.get("player_step_cooldown_sec", config.player_step_cooldown_sec)), 0.0
-	)
+	config._parse_step_cooldown(data)
 	return config
+
+
+## Seconds between steps on [param board]: the computed, board-scaled value (or the deprecated
+## `player_step_cooldown_sec` override when combat.json still carries it).
+func step_cooldown_for(board: BoardGrid) -> float:
+	if player_step_cooldown_sec >= 0.0:
+		return player_step_cooldown_sec
+	var steps_across: int = maxi(maxi(board.side_cols, board.side_rows) - 1, 1)
+	var raw: float = step_cooldown_ref_sec * pow(float(step_cooldown_ref_steps) / float(steps_across), step_cooldown_exponent)
+	return clampf(raw, step_cooldown_min_sec, step_cooldown_max_sec)
 
 
 ## Replaces the board (dev / capture override). Start-cell overrides were authored for the
@@ -75,6 +91,25 @@ func use_grid(new_grid: BoardGrid) -> void:
 	missing_cells = new_grid.missing_side_cells()
 	player_start_cell = BoardGrid.NO_CELL
 	enemy_start_cell = BoardGrid.NO_CELL
+
+
+func _parse_step_cooldown(data: Dictionary) -> void:
+	var ref_sec: float = float(data.get("step_cooldown_ref_sec", step_cooldown_ref_sec))
+	var ref_steps: int = int(data.get("step_cooldown_ref_steps", step_cooldown_ref_steps))
+	var exponent: float = float(data.get("step_cooldown_exponent", step_cooldown_exponent))
+	var min_sec: float = float(data.get("step_cooldown_min_sec", step_cooldown_min_sec))
+	var max_sec: float = float(data.get("step_cooldown_max_sec", step_cooldown_max_sec))
+	if ref_sec > 0.0 and ref_steps >= 1 and exponent >= 0.0 and min_sec <= max_sec:
+		step_cooldown_ref_sec = ref_sec
+		step_cooldown_ref_steps = ref_steps
+		step_cooldown_exponent = exponent
+		step_cooldown_min_sec = min_sec
+		step_cooldown_max_sec = max_sec
+	else:
+		push_warning("CombatConfig: invalid step_cooldown_* values, using defaults")
+	if data.has("player_step_cooldown_sec"):
+		push_warning("CombatConfig: player_step_cooldown_sec is deprecated (overrides the board-scaled step cooldown); remove it")
+		player_step_cooldown_sec = maxf(float(data["player_step_cooldown_sec"]), 0.0)
 
 
 func _validate_start_cells() -> void:

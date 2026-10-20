@@ -5,6 +5,8 @@ extends RefCounted
 ## through CutEffects, and cancels the opponent's running swing when a swing HITS. A swing that
 ## misses never cancels; two swings resolving within [constant TIE_EPSILON_SEC] of each other
 ## trade (both resolve, no cancel). When either unit dies both swings are cancelled.
+## A swing QUEUED on an actor (the boss's combo second swing, Story 013) is started by CutActor.tick
+## when its running swing resolves and is ticked from the NEXT slice, never in the one that resolved it.
 ## Implements: Story 009.
 
 ## Emitted after a swing's effects were applied. [param result] is CutEffects' dictionary

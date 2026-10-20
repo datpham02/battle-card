@@ -17,7 +17,7 @@
 	},
 	"sets": {
 		"balanced": {
-			"cut_hit_now": 3.0,
+			"cut_hit_now": 1.5,
 			"cut_per_cell": 1.0,
 			"cut_duration_penalty": 0.8,
 			"cut_interrupt_bonus": 4.0,
@@ -35,10 +35,21 @@
 			"retreat_bonus": 1.0,
 			"skill_bonus_burn": 1.0,
 			"skill_bonus_pin": 1.0,
-			"burn_avoid": 3.0
+			"burn_avoid": 3.0,
+			"escape_penalty": 4.0,
+			"combo_chance": 0.25,
+			"combo_gap_sec": 0.5,
+			"movement": {
+				"move_commitment": 0.7,
+				"move_noise": 0.15,
+				"reaction_sec": 0.35,
+				"path_style": "shortest",
+				"juke_chance": 0.2,
+				"wander_when_idle": true
+			}
 		},
 		"aggressive": {
-			"cut_hit_now": 3.0,
+			"cut_hit_now": 1.5,
 			"cut_per_cell": 1.0,
 			"cut_duration_penalty": 0.5,
 			"cut_interrupt_bonus": 5.0,
@@ -56,10 +67,21 @@
 			"retreat_bonus": 0.0,
 			"skill_bonus_burn": 1.5,
 			"skill_bonus_pin": 0.5,
-			"burn_avoid": 1.0
+			"burn_avoid": 1.0,
+			"escape_penalty": 5.0,
+			"combo_chance": 0.6,
+			"combo_gap_sec": 0.5,
+			"movement": {
+				"move_commitment": 0.5,
+				"move_noise": 0.3,
+				"reaction_sec": 0.25,
+				"path_style": "mixed",
+				"juke_chance": 0.4,
+				"wander_when_idle": true
+			}
 		},
 		"cautious": {
-			"cut_hit_now": 3.0,
+			"cut_hit_now": 1.5,
 			"cut_per_cell": 1.0,
 			"cut_duration_penalty": 0.3,
 			"cut_interrupt_bonus": 3.0,
@@ -77,7 +99,18 @@
 			"retreat_bonus": 2.0,
 			"skill_bonus_burn": 0.5,
 			"skill_bonus_pin": 2.0,
-			"burn_avoid": 5.0
+			"burn_avoid": 5.0,
+			"escape_penalty": 3.0,
+			"combo_chance": 0.0,
+			"combo_gap_sec": 0.5,
+			"movement": {
+				"move_commitment": 1.0,
+				"move_noise": 0.0,
+				"reaction_sec": 0.35,
+				"path_style": "row_first",
+				"juke_chance": 0.0,
+				"wander_when_idle": false
+			}
 		}
 	}
 }

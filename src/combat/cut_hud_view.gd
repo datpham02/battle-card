@@ -5,7 +5,8 @@ extends Node2D
 ## labels, lines in selection order (closed for 3-4 points), cell count and expected damage;
 ## (2) CONFIRM button ("Chốt"), dimmed with the swing countdown while a swing runs;
 ## (3) SKILL MENU panel: countdown bar + one button per skill with its lock reason;
-## (4) SWING overlay: covered cells red with the countdown; (5) HIT / MISS marker after a swing.
+## (4) SWING overlay: covered cells red with the countdown; (5) HIT / MISS marker after a swing;
+## (6) the boss's QUEUED combo swing (Story 013) as a hatched lighter-red layer under its running swing.
 ## It owns no game state: it reads CombatView and calls confirm_selection() / CutFlow.choose().
 ##
 ## Input is read in _input (like DPadView) and consumed, so HandInputController never sees a
@@ -149,6 +150,18 @@ const TEXT_LEARNING: String = "né: %d | ngắt: %d | giả: %d%%"
 ## Skill id whose config carries the burn duration (bar ratio).
 const BURN_SKILL_ID: String = "burn"
 
+## Boss combo (Story 013): the QUEUED second swing while the first runs, on the player's half.
+## Lighter red than the running swing with thin red hatching, so the two read as two layers;
+## a cell covered by both keeps the running swing's solid look (it is skipped here). One small
+## "2: +g s" box (g = the gap after swing 1's impact) sits at the bottom-right of the queued
+## cells' bounding box, away from swing 1's countdown box which is centred on its own cells.
+const COMBO_TINT: Color = Color(0.95, 0.12, 0.08, 0.18)
+const COMBO_OUTLINE: Color = Color(0.95, 0.35, 0.3, 0.9)
+const COMBO_HATCH: Color = Color(0.95, 0.12, 0.08, 0.55)
+const COMBO_HATCH_STEP_RATIO: float = 0.18
+const COMBO_HATCH_WIDTH: float = 2.0
+const TEXT_COMBO_QUEUED: String = "2: +%.1f s"
+
 const TEXT_BOSS_SWING: String = "BOSS %s %s"
 const TEXT_INTERRUPT: String = "NGẮT!"
 const TEXT_INTERRUPT_BOSS: String = "boss bị hủy đòn"
@@ -235,6 +248,7 @@ func _draw() -> void:
 	_draw_focus_overlay(vp)
 	_draw_preview(vp)
 	_draw_swing(vp)
+	_draw_boss_queued_swing(vp)
 	_draw_boss_swing(vp)
 	_draw_feedback(vp)
 	_draw_boss_feedback(vp)
@@ -403,6 +417,55 @@ func _draw_boss_swing(vp: Vector2) -> void:
 	_draw_cells_label(vp, cells, ("%.1f s" % actor.get_time_left()), line2, SWING_OUTLINE)
 
 
+# Boss's queued combo swing (Story 013), drawn BEFORE _draw_boss_swing so the running swing's
+# solid cells and countdown box stay on top: hatched lighter red on the queued cells the running
+# swing does not cover, plus a one-line "2: +g s" box (g = queued windup = the combo gap) at the
+# bottom-right of the queued cells' bounding box. No double-draw: when swing 1 resolves,
+# CutActor.tick clears the queue before starting swing 2, so has_queued() is false in the same
+# frame the running path (above) takes over.
+func _draw_boss_queued_swing(vp: Vector2) -> void:
+	var actor: CutActor = _combat.get_boss().get_actor()
+	if not actor.is_swinging():
+		return
+	var queued: Dictionary = _combat.get_boss_queued_swing()
+	if queued.is_empty():
+		return
+	var running: Array[Vector2i] = actor.get_cells()
+	var cells: Array[Vector2i] = queued["cells"]
+	var grid: BoardGrid = _combat.get_grid()
+	for cell: Vector2i in cells:
+		if running.has(cell):
+			continue
+		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+		draw_rect(rect, COMBO_TINT)
+		_draw_hatching(rect, rect.size.y * COMBO_HATCH_STEP_RATIO, COMBO_HATCH, COMBO_HATCH_WIDTH)
+		draw_rect(rect.grow(-2.0), COMBO_OUTLINE, false, CELL_OUTLINE_WIDTH)
+	_draw_corner_label(vp, cells, TEXT_COMBO_QUEUED % float(queued["duration"]), COMBO_OUTLINE)
+
+
+# One small line on a white backing, anchored to the bottom-right corner of the bounding box of
+# [param cells] and clamped inside the board.
+func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color: Color) -> void:
+	if cells.is_empty():
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
+	for cell: Vector2i in cells:
+		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
+	var font: Font = ThemeDB.fallback_font
+	var small: int = int(ScreenLayout.cell_size(grid, vp).y * LABEL_SMALL_RATIO)
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, small).x + LABEL_PAD * 2.0
+	var height: float = small * LABEL_LINE_SPACING + LABEL_PAD * 2.0
+	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
+	var pos: Vector2 = box.end - Vector2(width, height)
+	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
+	pos.y = clampf(pos.y, board.position.y, maxf(board.end.y - height, board.position.y))
+	var back := Rect2(pos, Vector2(width, height))
+	draw_rect(back, TEXT_OUTLINE_LIGHT)
+	draw_rect(back, color, false, CELL_OUTLINE_WIDTH)
+	draw_string(font, pos + Vector2(0.0, LABEL_PAD + small * 0.85), text, HORIZONTAL_ALIGNMENT_CENTER, width, small, color)
+
+
 # Boss HIT / MISS on the player's half (same look as the player's feedback).
 func _draw_boss_feedback(vp: Vector2) -> void:
 	_draw_feedback_for(vp, _combat.get_boss_feedback())
@@ -507,8 +570,9 @@ func _draw_burning(vp: Vector2) -> void:
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), BURN_BAR_FILL)
 
 
-# Diagonal hatch lines (x + y = t) clipped to [param rect], [param step] apart.
-func _draw_hatching(rect: Rect2, step: float) -> void:
+# Diagonal hatch lines (x + y = t) clipped to [param rect], [param step] apart, in [param color]
+# and [param width] (burn hatching by default; the combo layer passes its own).
+func _draw_hatching(rect: Rect2, step: float, color: Color = BURN_HATCH, width: float = BURN_HATCH_WIDTH) -> void:
 	if step <= 0.0:
 		return
 	var w: float = rect.size.x
@@ -517,7 +581,7 @@ func _draw_hatching(rect: Rect2, step: float) -> void:
 	while t < w + h:
 		var from := Vector2(rect.position.x + minf(t, w), rect.position.y + maxf(t - w, 0.0))
 		var to := Vector2(rect.position.x + maxf(t - h, 0.0), rect.position.y + minf(t, h))
-		draw_line(from, to, BURN_HATCH, BURN_HATCH_WIDTH)
+		draw_line(from, to, color, width)
 		t += step
 
 
