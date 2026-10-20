@@ -7,7 +7,10 @@ extends Node2D
 ## The boss walks, picks up points and cuts (BossController); swings resolve via SwingArbiter.
 ## A cooldown ring under the player's feet shows the step cooldown. Placeholder art.
 ## Stepping onto a cell with a field point picks it up into the hand (HoldSlots).
-## Implements: Story 003, Story 005, Story 006, Story 007.
+## Story 014: owns ONE TraitHost per battle (boss traits from match_params["traits"]), wired
+## to the arbiter / boss actor / both drops, ticked after the arbiter with the scaled step while
+## both units live, torn down when the battle leaves the tree; ticks the hand's rot.
+## Implements: Story 003, Story 005, Story 006, Story 007, Story 014.
 
 const ENEMY_COLOR: Color = Color(0.7, 0.3, 0.3)
 const ENEMY_DEAD_COLOR: Color = Color(0.45, 0.45, 0.45)
@@ -69,6 +72,8 @@ var drops_seed: int = RANDOM_SEED
 var grid_override: BoardGrid = null
 
 var _config: CombatConfig
+## Arena of this match for the HUD: {shape, variant, seed} (shape "" = the combat.json board).
+var _arena_info: Dictionary = {"shape": "", "variant": false, "seed": -1}
 var _grid: BoardGrid
 var _state: CombatState
 var _mover: UnitMover
@@ -94,6 +99,8 @@ var _interrupt_flash: Dictionary = {}
 var _feint_flash: Dictionary = {}
 var _status: StatusEffects
 var _learning: BossLearning
+## The boss traits of this match (Story 014); built in _ready, torn down in _exit_tree.
+var _trait_host: TraitHost
 ## Dev/capture only: weight set name for the boss brain (empty = from boss_brain.json).
 var boss_set_override: String = ""
 ## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
@@ -101,7 +108,9 @@ var boss_set_override: String = ""
 ## boss_step_cooldown_mult (x the player's computed step cooldown; deprecated absolute: boss_step_cooldown_sec), boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult
 ## (applied to a copy of the drops config for the boss only), movement (object merged over the
 ## match set's movement profile of boss_brain.json), end_delay_sec (default 1.5),
-## display_name (boss name in the HUD), match_label.
+## display_name (boss name in the HUD), match_label, arena (object: {shape[, variant]} or a direct
+## {side_cols, side_rows, missing_cells}; see ArenaLibrary.grid_for_spec), arena_seed (int, variants),
+## traits (array of {id, params}; see TraitRegistry.SCRIPTS and schema.md, Story 014).
 var match_params: Dictionary = {}
 
 ## Emitted ONCE, end_delay_sec of real time after either unit died.
@@ -120,8 +129,10 @@ func _ready() -> void:
 	if _config == null:
 		push_warning("CombatView: using built-in default config")
 		_config = CombatConfig.new()
+	_apply_arena()
 	if grid_override != null:
 		_config.use_grid(grid_override)
+		_arena_info = {"shape": "", "variant": false, "seed": -1}
 	_grid = _config.grid
 	var boss_max_hp: float = maxf(float(match_params.get("boss_max_hp", _config.enemy_max_hp)), 1.0)
 	_state = CombatState.new(
@@ -168,6 +179,69 @@ func _ready() -> void:
 	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config, _status)
 	_arbiter.swing_resolved.connect(_on_swing_resolved)
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
+	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
+	_boss.get_drops().point_spawned.connect(_on_point_spawned.bind(CombatState.Side.ENEMY))
+	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
+	_trait_host.on_match_start()
+
+
+func _exit_tree() -> void:
+	if _trait_host != null:
+		_trait_host.teardown_all()
+
+
+## Public-API context the traits work through (BossTrait documents the keys): the same
+## dictionary the match's TraitHost was built with. Logic-free; DemoArgs uses it to set up a
+## trait by hand for captures.
+func make_trait_ctx() -> Dictionary:
+	return {
+		"state": _state, "grid": _grid, "player_drops": _drops, "boss_drops": _boss.get_drops(),
+		"boss": _boss, "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"),
+		"skill_config": _skill_config, "cut_config": _cut_config,
+	}
+
+
+# match_params["traits"] as an array ([] when absent; a non-array warns and counts as none).
+func _trait_specs() -> Array:
+	var raw: Variant = match_params.get("traits", [])
+	if typeof(raw) != TYPE_ARRAY:
+		push_warning("CombatView: match_params traits must be an array, ignored")
+		return []
+	return raw as Array
+
+
+## The boss traits of this match (Story 014); empty host when the match has none.
+func get_trait_host() -> TraitHost:
+	return _trait_host
+
+
+# A point landed on a half (bound side appended by the connect): traits hear it.
+func _on_point_spawned(point: FieldPoint, side: int) -> void:
+	if _trait_host != null:
+		_trait_host.on_point_spawned(side, point)
+
+
+# Builds the match's board from match_params["arena"] (Story 014) and installs it into the
+# config; no-op without an arena or when it is unusable (the combat.json board stays).
+func _apply_arena() -> void:
+	var raw: Variant = match_params.get("arena")
+	if typeof(raw) != TYPE_DICTIONARY or (raw as Dictionary).is_empty():
+		return
+	var spec: Dictionary = raw as Dictionary
+	var arena_seed: int = int(match_params["arena_seed"]) if match_params.has("arena_seed") else randi()
+	var arena_grid: BoardGrid = ArenaLibrary.grid_for_spec(spec, ArenaLibrary.load_from_file(), arena_seed)
+	if arena_grid == null:
+		return
+	_config.use_grid(arena_grid)
+	_arena_info = {"shape": str(spec.get("shape", "direct")), "variant": bool(spec.get("variant", false)), "seed": arena_seed}
+
+
+## Arena of this match for the HUD: {shape (id, "direct" for an inline block, "" for the
+## combat.json board), variant (bool), seed (int, -1 when none), cells_per_side (int)}.
+func get_arena_info() -> Dictionary:
+	var info: Dictionary = _arena_info.duplicate()
+	info["cells_per_side"] = _grid.player_cells().size()
+	return info
 
 
 # Run match settings onto the freshly loaded brain config (before the BossController exists).
@@ -264,6 +338,11 @@ func _process(delta: float) -> void:
 		_cooldowns.tick(step)
 		_boss.tick(step, _cut_actor)
 		_arbiter.tick(step)
+		if hold != null:
+			hold.tick_rot(step)
+		# Traits run after the arbiter (they see this frame's resolutions) and only while both live.
+		if not (_state.is_player_dead() or _state.is_enemy_dead()):
+			_trait_host.on_tick(step)
 		_age_flash(_feedback, step)
 		_age_flash(_boss_feedback, step)
 		_age_flash(_interrupt_flash, step)
@@ -442,9 +521,12 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 	}
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback
+		_trait_host.on_player_swing_resolved(result)
+		_trait_host.on_boss_damaged(float(result["damage"]))
 	else:
 		_boss_feedback = feedback
 		_learning.on_boss_swing_resolved(bool(result["hit"]))
+		_trait_host.on_boss_swing_resolved(result)
 
 
 func _on_swing_interrupted(victim_side: int, cells: Array[Vector2i], _skill_id: String) -> void:
@@ -453,8 +535,10 @@ func _on_swing_interrupted(victim_side: int, cells: Array[Vector2i], _skill_id: 
 		_learning.on_player_interrupted_boss()
 
 
-func _on_boss_swing_started(cells: Array[Vector2i], _skill_id: String, _duration: float) -> void:
+func _on_boss_swing_started(cells: Array[Vector2i], skill_id: String, _duration: float) -> void:
 	_learning.on_boss_swing_started(cells, _state.player_cell)
+	if _trait_host != null:
+		_trait_host.on_boss_swing_started(cells, skill_id)
 
 
 func _on_boss_swing_cancelled(_cells: Array[Vector2i], _skill_id: String) -> void:

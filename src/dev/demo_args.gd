@@ -58,6 +58,15 @@ extends Node
 ##                                      after a step (0.45 * (2/5)^0.75 = ~0.23 s with combat.json numbers): the ring is
 ##                                      visibly shorter than on 3x3 (0.45 s). Not a separate mode: the cooldown demo
 ##                                      takes the --grid override like every demo (verified headless)
+##   godot --path . -- --demo=rotten     Story 014: a ROTTEN point on the player's half (FieldDrops.place_rotten, the
+##                                      real trait path: grey, dark X, grey tag and bar) and the hand with a rotten
+##                                      point in slot 1 (grey, X, "4.2" countdown) between two normal points
+##   godot --path . -- --demo=row_warn   Story 014: a RowBurnerTrait built by hand (TraitRegistry.create, setup with
+##                                      CombatView.make_trait_ctx(), TraitHost.debug_add_trait) and ticked until it
+##                                      announces the player's row with ~0.7 s of warning left: blinking amber
+##                                      outline, shrinking top bar, "SẮP CHÁY" tag; the player stands in that row
+##   godot --path . -- --demo=row_burning  as row_warn, ticked past the warning: the row is on fire through
+##                                      StatusEffects.ignite (existing burn look), 1.0 s of burning elapsed
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -110,6 +119,15 @@ const FOCUS_COOLDOWN_DEMO_LEFT_SEC: float = 6.0
 const COMBO_SWING_INDICES: Array[int] = [0]
 const COMBO_QUEUED_INDICES: Array[int] = [1]
 const COMBO_PLAYER_CELL: Vector2i = Vector2i.ZERO
+## Story 014 demos: the rotten field point's freshness (s) and the held one's rot countdown (s),
+## the hand slot it sits in, the warning left (s) when "row_warn" is captured, the step used to
+## walk the trait to its warning, and the walk's bound (steps) so a misconfigured trait cannot hang.
+const ROTTEN_FIELD_FRESHNESS: float = 5.0
+const ROTTEN_HAND_LEFT_SEC: float = 4.2
+const ROTTEN_HAND_SLOT: int = 1
+const ROW_WARN_LEFT_SEC: float = 0.7
+const TRAIT_STEP_SEC: float = 0.05
+const TRAIT_MAX_STEPS: int = 10000
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -297,8 +315,52 @@ func _ready() -> void:
 				combat.get_arbiter().tick(SWING_ELAPSED_SEC)
 			else:
 				combat.get_arbiter().tick(boss.get_actor().get_time_left() + 0.001)
+		"rotten":
+			# Field: the real trait path (place_rotten) on a cell away from the player. Hand: two
+			# normal points around a rotten one, so the grey / X / countdown contrast is visible.
+			var rotten_cell: Vector2i = _other_player_cell(grid, combat.get_state().player_cell)
+			if combat.get_drops().place_rotten(rotten_cell, RottenThrowerTrait.DEFAULT_LABEL, ROTTEN_FIELD_FRESHNESS, ROTTEN_HAND_LEFT_SEC) == null:
+				push_warning("DemoArgs: could not place the rotten point on %s" % str(rotten_cell))
+			_fill_hand(mini(ROTTEN_HAND_SLOT + 2, _hold().get_slot_count()))
+			_hold().remove(ROTTEN_HAND_SLOT)
+			var held := FieldPoint.new()
+			held.uid = BOSS_UID_BASE - 1
+			held.label = RottenThrowerTrait.DEFAULT_LABEL
+			held.rotten = true
+			held.rot_in_hand_sec = ROTTEN_HAND_LEFT_SEC
+			if _hold().place(held, ROTTEN_HAND_SLOT) < 0:
+				push_warning("DemoArgs: could not place the rotten point in hand slot %d" % ROTTEN_HAND_SLOT)
+		"row_warn", "row_burning":
+			var burner: RowBurnerTrait = _make_row_burner(combat)
+			if burner != null:
+				# Walk the trait (sim time) to its first warning; the player's row is the default pick.
+				var steps: int = 0
+				while burner.get_warning_cells().is_empty() and steps < TRAIT_MAX_STEPS:
+					burner.on_tick(TRAIT_STEP_SEC)
+					steps += 1
+				if burner.get_warning_cells().is_empty():
+					push_warning("DemoArgs: the row burner never warned for demo '%s'" % _mode)
+				elif _mode == "row_warn":
+					burner.on_tick(maxf(burner.get_warn_left() - ROW_WARN_LEFT_SEC, 0.0))
+				else:
+					burner.on_tick(burner.get_warn_left() + 0.001)
+					combat.get_status().tick(BURN_ELAPSED_SEC, combat.get_state())
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
+
+
+# A RowBurnerTrait with default params, set up with the battle's real trait context, started,
+# and registered on the match's TraitHost (DEV-ONLY debug_add_trait) so the HUD sees it.
+# Null + warning when the registry cannot create it.
+func _make_row_burner(combat: CombatView) -> RowBurnerTrait:
+	var burner: RowBurnerTrait = TraitRegistry.create(RowBurnerTrait.ID) as RowBurnerTrait
+	if burner == null:
+		push_warning("DemoArgs: TraitRegistry could not create '%s'" % RowBurnerTrait.ID)
+		return null
+	burner.setup(combat.make_trait_ctx(), {}, DEMO_SEED)
+	burner.on_match_start()
+	combat.get_trait_host().debug_add_trait(burner)
+	return burner
 
 
 # Real player path for a multi-point skill cut: [param labels] into the hand, all selected,

@@ -12,6 +12,8 @@ extends Node2D
 ##   --run=<intro|between|won|lost>   jump straight to that phase (won = last match, boss dead;
 ##                             lost = player dead; between = match N won; intro = match N frozen),
 ##                             with the clock set to [constant DEV_ELAPSED_SEC]
+##   --arena=<shape_id>[:variant]   overrides the arena of match 1 (an arenas.json shape id; the
+##                             ":variant" suffix asks for a seeded variant), for captures
 
 ## Emitted when the run phase changed; [param phase] is a [enum RunState.Phase] value.
 signal phase_changed(phase: int)
@@ -22,6 +24,8 @@ const BATTLE_SCENE_PATH: String = "res://src/battle/battle.tscn"
 const COMBAT_VIEW_NODE: String = "CombatView"
 const MATCH_ARG: String = "--match="
 const RUN_ARG: String = "--run="
+const ARENA_ARG: String = "--arena="
+const ARENA_VARIANT_SUFFIX: String = ":variant"
 ## DEV-ONLY: stable clock value (7:42) for run screen captures.
 const DEV_ELAPSED_SEC: float = 462.0
 
@@ -35,6 +39,8 @@ var _intro_left: float = 0.0
 var _between_left: float = 0.0
 var _last_player_hp: float = 0.0
 var _frozen: bool = false
+## DEV-ONLY arena override for match 1 (empty = none).
+var _dev_arena: Dictionary = {}
 
 
 func _ready() -> void:
@@ -48,6 +54,12 @@ func _ready() -> void:
 			dev_match = clampi(int(arg.trim_prefix(MATCH_ARG)), 1, _state.get_match_count()) - 1
 		elif arg.begins_with(RUN_ARG):
 			dev_run = arg.trim_prefix(RUN_ARG)
+		elif arg.begins_with(ARENA_ARG):
+			var arena_text: String = arg.trim_prefix(ARENA_ARG)
+			var wants_variant: bool = arena_text.ends_with(ARENA_VARIANT_SUFFIX)
+			_dev_arena = {"shape": arena_text.trim_suffix(ARENA_VARIANT_SUFFIX)}
+			if wants_variant:
+				_dev_arena["variant"] = true
 	if dev_run.is_empty():
 		if dev_match > 0:
 			_state.dev_jump(dev_match, RunState.Phase.INTRO, 0.0, -1.0)
@@ -140,6 +152,8 @@ func _spawn_battle() -> void:
 	var view := battle.get_node(COMBAT_VIEW_NODE) as CombatView
 	var params: Dictionary = _state.get_match_spec()
 	params["end_delay_sec"] = _config.end_delay_sec
+	if not _dev_arena.is_empty() and _state.get_match_index() == 0:
+		params["arena"] = _dev_arena.duplicate()
 	params["player_hp"] = _state.get_carried_hp()
 	params["match_label"] = "Trận %d/%d" % [_state.get_match_index() + 1, _state.get_match_count()]
 	view.match_params = params

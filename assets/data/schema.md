@@ -209,5 +209,80 @@ Each `matches` entry:
 | `combo_chance` | number -1 or 0..1 | probability | Story 013: overrides the match set's `combo_chance` (`boss_brain.json`) for this match only; -1 or absent = use the set's value | -1 |
 | `combo_gap_sec` | number -1 or >= 0 | seconds | Story 013: overrides the match set's `combo_gap_sec` for this match only (still floored at `swing_base_sec`); -1 or absent = use the set's value | -1 |
 | `movement` | object | - | Story 013: keys of the `movement` block of `boss_brain.json` (`move_commitment`, `move_noise`, `reaction_sec`, `path_style`, `juke_chance`, `wander_when_idle`), merged over the match set's profile for this match only; unknown keys warn and are ignored | `{}` (set's profile) |
+| `traits` | array of `{id, params}` | - | Story 014: boss traits switched on for this match (see **Boss traits** below). `id` is a `TraitRegistry` key; `params` (optional object) overrides that trait's defaults. Unknown id / non-object entry = warning, skipped, the match still runs; a non-array = warning, no traits. Shipped: match 3 `row_burner`, match 4 (boss) `rotten_thrower` with `interval_sec` 5.0, matches 1-2 none | `[]` |
+| `arena` | object | - | Story 014: the board of this match. `{"shape": "<id>"}` = a shape of `arenas.json`; `{"shape": "<id>", "variant": true}` = a seeded variant of it (1-3 holes toggled, maybe flipped vertically; falls back to the base shape); or a direct block `{side_cols, side_rows, missing_cells}` (validated like a library shape). Unknown id / invalid block = warning, the `combat.json` board is kept. Absent = `combat.json`. Shipped: square / rect / cross / ring+variant. Dev: `--arena=<id>[:variant]` overrides match 1 | `{}` (combat.json board) |
 
 Ramp (placeholder): matches 1..4 = hp 80/100/120/150, sets cautious/cautious/balanced/aggressive, step mult 1.78/1.44/1.22/1.11 (= 0.80/0.65/0.55/0.50 s on 3x3), think 0.50/0.40/0.30/0.25, reaction 0.60/0.45/0.35/0.30, drop mult 1.3/1.15/1.0/0.9. Match 2 overrides `movement` = {move_commitment 0.9, move_noise 0.05, reaction_sec 0.45} (Story 013).
+
+
+### Boss traits (`run.json` -> `matches[].traits`, Story 014)
+
+A trait is one self-contained boss mechanic: a `BossTrait` subclass (`src/traits/`) created fresh per match by `TraitHost` (owned by `CombatView`), fed the hooks `on_match_start`, `on_tick(step)` (SCALED simulation seconds, after the arbiter, only while both units live), `on_boss_swing_started`, `on_boss_swing_resolved`, `on_player_swing_resolved`, `on_point_spawned`, `on_boss_damaged` (player swings only; burn ticks are not reported) and `teardown` (when the battle leaves the tree). Traits touch the battle only through public APIs (`state`, `grid`, both `FieldDrops`, `BossController`, `StatusEffects`, `SwingArbiter`, the player's `HoldSlots`); none edits `BossBrain`. RNG: each trait has its own `RandomNumberGenerator` seeded from the match seed + index * 1009 + a per-class offset (negative seed = random), so seeded runs stay deterministic.
+
+`rotten_thrower` params (defaults in `RottenThrowerTrait`):
+
+| Key | Type | Unit | Meaning | Default |
+|---|---|---|---|---|
+| `interval_sec` | number >= 0 | seconds (sim) | Time between throws, counted from a throw | 6.0 |
+| `first_delay_sec` | number >= 0 | seconds (sim) | Time from match start to the first throw | 3.0 |
+| `field_freshness_sec` | number >= 0 | seconds | Life of a rotten point on the field before it rots away | 5.0 |
+| `rot_in_hand_sec` | number >= 0 | seconds (sim) | Time a picked-up rotten point blocks a hand slot before it leaves on its own (`HoldSlots.tick_rot`) | 6.0 |
+| `label` | string | - | Label shown on the rotten point | `X` |
+| `max_on_field` | integer >= 1 | points | Rotten points allowed on the player's half at once; at the cap the throw waits (no burst) | 1 |
+
+A rotten point (`FieldPoint.rotten`) lands on a random seeded free, non-burning player cell that is not the player's cell; it counts toward the half's `max_on_field` of `field_drops.json`, is picked up like any point (needs a free slot), occupies the slot, cannot be selected (`toggle_selected` is false) and never enters a cut.
+
+`row_burner` params (defaults in `RowBurnerTrait`):
+
+| Key | Type | Unit | Meaning | Default |
+|---|---|---|---|---|
+| `interval_sec` | number >= 0 | seconds (sim) | Time between warnings (warning to warning); a running warning finishes before the next starts | 8.0 |
+| `first_delay_sec` | number >= 0 | seconds (sim) | Time from match start to the first warning | 4.0 |
+| `warn_sec` | number >= 0 | seconds (sim) | Warning length before the row ignites (the HUD flashes the cells) | 1.2 |
+| `burn_sec` | number >= 0 | seconds (sim) | How long the row burns (`StatusEffects.ignite`, same rules as the Burn skill) | 2.5 |
+| `tick_sec` | number > 0 | seconds (sim) | Damage interval for a unit standing in the burning row | 0.5 |
+| `damage_per_tick` | number >= 0 | HP | Damage per tick | 2.0 |
+| `row_pick` | `player_row` / `random` | - | Which row: the one the player stands on when the warning starts, or a seeded random row of the half | `player_row` |
+
+Adding a new boss = one JSON block in `matches` (`arena`, `traits`, the brain/timing keys above). Adding a new mechanic = one trait class + one registry line:
+1. Create `src/traits/<id>.gd`: `class_name <Name>Trait extends BossTrait`, override `get_id()` (return the id) and `seed_offset()`.
+2. Read every number in `setup()` with `param_float` / `param_int` / `param_string` against a `DEFAULT_*` constant; keep the live state in private vars and reset it in `on_match_start()`.
+3. Act in the hooks through the context's public APIs only (`status.ignite`, `player_drops.place_rotten`, `state.damage`, ...); expose getters / signals for the HUD.
+4. Add `"<id>": preload("res://src/traits/<id>.gd")` to `TraitRegistry.SCRIPTS`.
+5. Switch it on from `run.json`: `"traits": [{"id": "<id>", "params": {...}}]`, document the params here.
+
+## `arenas.json` (Story 014)
+
+Named board shapes, read by `ArenaLibrary` (`src/arena/arena_library.gd`). Every shape is checked by `ArenaValidator` at load; a shape that fails is dropped with a warning naming the reasons. A bad or missing file gives a library with only the built-in 3x3 `square`.
+
+SIDE COORDINATES: `missing_cells` entries are `[col, row]` on ONE half. Col 0 is the column FARTHEST from the divider on both halves (so `[0, 0]` is the top-left cell of the player half and the top-right cell of the boss half), row 0 is the top. Holes are mirrored to the other half automatically, so shapes are symmetric by construction.
+
+`rules` block:
+
+| Key | Type | Unit | Meaning |
+|---|---|---|---|
+| `min_cells_per_side` | int | cells | Fewest real cells a half may have |
+| `variant_max_attempts` | int >= 1 | tries | Candidates `ArenaVariants` tries before returning the base shape (warning) |
+| `variant_change_min` / `variant_change_max` | int >= 1 | cells | Random side cells toggled (hole added or filled) per candidate; a vertical flip is also tried with probability 0.5 |
+
+Each `shapes` entry: `id` (unique string), `display_name`, `side_cols`, `side_rows` (cells of one half), `missing_cells` (`[[col,row],...]`), `difficulty` (1..5, for the later per-tier pools, Story 015).
+
+Validator checks: each half has >= `min_cells_per_side` cells; each half is 4-connected; both default cells exist; the halves mirror each other; from each half's default cell, EVERY single-point cut (A1..D<n>) leaves >= 1 uncovered cell reachable in 1 step.
+
+| id | side cols x rows | cells per side | difficulty |
+|---|---|---|---|
+| `square` | 3x3 | 9 | 1 |
+| `rect` | 4x3 | 12 | 2 |
+| `cross` | 4x4 | 12 | 3 |
+| `u_shape` | 4x3 | 11 | 3 |
+| `staircase` | 4x4 | 10 | 3 |
+| `ring` | 6x5 | 21 | 4 |
+| `islands_bridge` | 6x3 | 14 | 4 |
+| `diamond` | 5x5 | 13 | 4 |
+
+Adding a new arena = one JSON block:
+1. Append `{id, display_name, side_cols, side_rows, missing_cells, difficulty}` to `shapes` (holes in side coordinates; the far column is col 0).
+2. Keep each half connected (and give the walls next to a hole thickness >= 2 where the default cell sits: a 1-cell-wide wall is fully covered by one straight cut) and at least `min_cells_per_side` cells; do not make the half's default (centre-most) cell a dead end that one straight cut can cover entirely.
+3. Launch the game; a shape that fails the validator is dropped and the warning says why.
+4. Use it from `run.json` with `"arena": {"shape": "<id>"}` (add `"variant": true` for a per-run variant), or capture it with `--arena=<id>`.
+5. A cut line through a hole covers nothing there; that is intended, not fixed.

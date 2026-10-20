@@ -4,7 +4,10 @@ extends Node2D
 ## Each slot shows its point LABEL (A1...), tinted by the side letter. States are shown by
 ## shape as well as colour: empty = dim fill + "+" mark, occupied = outline + label,
 ## selected = thick bright outline, full = gold outlines and a "FULL" label left of the row.
-## Placeholder art. Implements: Story 002, Story 007.
+## Story 014: a ROTTEN point's slot is grey with a dark X, a grey label, never the selection
+## outline (HoldSlots refuses to select it) and a small "x.x" countdown at the slot's bottom:
+## the seconds (FieldPoint.rot_in_hand_sec) until it leaves the hand on its own.
+## Placeholder art. Implements: Story 002, Story 007, Story 014.
 
 const SLOT_FILL_EMPTY: Color = Color(0.2, 0.17, 0.15, 0.35)
 const SLOT_FILL_OCCUPIED: Color = Color(0.2, 0.17, 0.15, 0.7)
@@ -26,6 +29,17 @@ const SIDE_COLORS: Dictionary = {
 const DEFAULT_SIDE_COLOR: Color = Color(0.5, 0.5, 0.5)
 const LABEL_FONT_RATIO: float = 0.3
 const FULL_FONT_SIZE: int = 28
+## Rotten slot (Story 014): grey fill / outline / label, dark X, countdown text.
+const ROTTEN_FILL: Color = Color(0.5, 0.5, 0.5, 0.8)
+const ROTTEN_OUTLINE: Color = Color(0.4, 0.4, 0.42)
+const ROTTEN_LABEL_COLOR: Color = Color(0.7, 0.7, 0.7)
+const ROTTEN_X_COLOR: Color = Color(0.18, 0.18, 0.2, 0.95)
+const ROTTEN_X_WIDTH: float = 6.0
+## X inset from the slot's edges and countdown font size / bottom gap (shares of slot width).
+const ROTTEN_X_INSET_RATIO: float = 0.18
+const ROTTEN_TIMER_FONT_RATIO: float = 0.17
+const ROTTEN_TIMER_BOTTOM_RATIO: float = 0.06
+const TEXT_ROTTEN_TIMER: String = "%.1f"
 
 ## Path to the hold-slot JSON config.
 @export_file("*.json") var config_path: String = HoldSlotsConfig.DEFAULT_PATH
@@ -56,6 +70,9 @@ func _draw() -> void:
 			draw_rect(rect, SLOT_FILL_EMPTY)
 			draw_rect(rect, OUTLINE_FULL if full else OUTLINE_EMPTY, false, OUTLINE_WIDTH)
 			_draw_plus(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.18, OUTLINE_EMPTY)
+			continue
+		if point.rotten:
+			_draw_rotten_slot(rect, point)
 			continue
 		var tint: Color = SIDE_COLORS.get(point.label.substr(0, 1), DEFAULT_SIDE_COLOR)
 		draw_rect(rect, SLOT_FILL_OCCUPIED)
@@ -133,6 +150,27 @@ func occupied_slot_at(point: Vector2, padding: float = 0.0) -> int:
 func _slot_rects() -> Array[Rect2]:
 	# Local coordinates (what _draw needs); public API converts to global.
 	return ScreenLayout.slot_rects(get_viewport_rect().size, _slots.get_slot_count())
+
+
+# Grey slot with a dark X, grey label and the rot countdown; no selection look ever.
+func _draw_rotten_slot(rect: Rect2, point: FieldPoint) -> void:
+	draw_rect(rect, ROTTEN_FILL)
+	draw_rect(rect, ROTTEN_OUTLINE, false, OUTLINE_WIDTH)
+	var x_rect: Rect2 = rect.grow(-rect.size.x * ROTTEN_X_INSET_RATIO)
+	draw_line(x_rect.position, x_rect.end, ROTTEN_X_COLOR, ROTTEN_X_WIDTH)
+	draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), ROTTEN_X_COLOR, ROTTEN_X_WIDTH)
+	var font_size: int = int(rect.size.x * LABEL_FONT_RATIO)
+	draw_string(
+		ThemeDB.fallback_font,
+		rect.position + Vector2(0.0, rect.size.y * 0.5 + font_size * 0.35),
+		point.label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, ROTTEN_LABEL_COLOR
+	)
+	var timer_size: int = maxi(int(rect.size.x * ROTTEN_TIMER_FONT_RATIO), 8)
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(rect.position.x, rect.end.y - rect.size.x * ROTTEN_TIMER_BOTTOM_RATIO),
+		TEXT_ROTTEN_TIMER % point.rot_in_hand_sec, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, timer_size, ROTTEN_LABEL_COLOR
+	)
 
 
 func _draw_plus(center: Vector2, arm: float, color: Color) -> void:

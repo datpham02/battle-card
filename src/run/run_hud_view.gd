@@ -52,6 +52,21 @@ const PANEL_NOTE_BASELINE: float = 0.60
 
 const TEXT_MATCH_LABEL: String = "Trận %d/%d · %s"
 const TEXT_MATCH_LABEL_BOSS: String = "BOSS · %s"
+## Story 014: the match label ends with the arena's display name when the battle has a named
+## arena ("Trận 3/4 · Bếp trưởng · Chữ thập"), plus a variant marker for seeded variants.
+const TEXT_MATCH_LABEL_ARENA: String = "%s · %s"
+const TEXT_ARENA_VARIANT: String = " (biến thể)"
+## arenas.json shape id -> display name; an unknown id shows the id itself.
+const ARENA_NAMES: Dictionary = {
+	"square": "Vuông",
+	"rect": "Chữ nhật",
+	"cross": "Chữ thập",
+	"u_shape": "Chữ U",
+	"staircase": "Bậc thang",
+	"ring": "Vòng",
+	"islands_bridge": "Hai đảo",
+	"diamond": "Kim cương",
+}
 const TEXT_INTRO_TITLE: String = "TRẬN %d/%d"
 const TEXT_INTRO_TITLE_BOSS: String = "TRẬN BOSS"
 const TEXT_INTRO_HINT: String = "Nhặt điểm · nối hình · Chốt"
@@ -169,8 +184,30 @@ func _draw_match_label(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var opponent: String = _match_name(state.get_match_index())
 	var text: String = TEXT_MATCH_LABEL_BOSS % opponent if state.is_boss_match() else TEXT_MATCH_LABEL % [state.get_match_index() + 1, state.get_match_count(), opponent]
+	var arena: String = _arena_name()
+	if not arena.is_empty():
+		text = TEXT_MATCH_LABEL_ARENA % [text, arena]
 	var rect: Rect2 = ScreenLayout.run_match_label_rect(vp)
 	_text(rect, rect.get_center().y + LABEL_FONT_SIZE * 0.35, text, LABEL_FONT_SIZE, LABEL_COLOR)
+
+
+# Display name of the current battle's arena (+ variant marker); "" when the battle has none
+# (combat.json board) or is not spawned yet.
+func _arena_name() -> String:
+	var battle: Node = _controller.get_battle()
+	if battle == null:
+		return ""
+	var view := battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
+	if view == null or view.get_grid() == null:
+		return ""
+	var info: Dictionary = view.get_arena_info()
+	var shape: String = str(info.get("shape", ""))
+	if shape.is_empty():
+		return ""
+	var display: String = str(ARENA_NAMES.get(shape, shape))
+	if bool(info.get("variant", false)):
+		display += TEXT_ARENA_VARIANT
+	return display
 
 
 func _draw_intro(vp: Vector2) -> void:

@@ -1,0 +1,74 @@
+{
+	"rules": {
+		"min_cells_per_side": 6,
+		"variant_max_attempts": 20,
+		"variant_change_min": 1,
+		"variant_change_max": 3
+	},
+	"shapes": [
+		{
+			"id": "square",
+			"display_name": "Vuông 3x3",
+			"side_cols": 3,
+			"side_rows": 3,
+			"missing_cells": [],
+			"difficulty": 1
+		},
+		{
+			"id": "rect",
+			"display_name": "Chữ nhật 4x3",
+			"side_cols": 4,
+			"side_rows": 3,
+			"missing_cells": [],
+			"difficulty": 2
+		},
+		{
+			"id": "cross",
+			"display_name": "Chữ thập",
+			"side_cols": 4,
+			"side_rows": 4,
+			"missing_cells": [[0, 0], [0, 3], [3, 0], [3, 3]],
+			"difficulty": 3
+		},
+		{
+			"id": "u_shape",
+			"display_name": "Chữ U",
+			"side_cols": 4,
+			"side_rows": 3,
+			"missing_cells": [[0, 1]],
+			"difficulty": 3
+		},
+		{
+			"id": "ring",
+			"display_name": "Vòng",
+			"side_cols": 6,
+			"side_rows": 5,
+			"missing_cells": [[1, 1], [2, 1], [3, 1], [1, 2], [2, 2], [3, 2], [1, 3], [2, 3], [3, 3]],
+			"difficulty": 4
+		},
+		{
+			"id": "islands_bridge",
+			"display_name": "Hai đảo nối cầu",
+			"side_cols": 6,
+			"side_rows": 3,
+			"missing_cells": [[0, 2], [1, 2], [2, 0], [2, 2]],
+			"difficulty": 4
+		},
+		{
+			"id": "staircase",
+			"display_name": "Bậc thang",
+			"side_cols": 4,
+			"side_rows": 4,
+			"missing_cells": [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [0, 2]],
+			"difficulty": 3
+		},
+		{
+			"id": "diamond",
+			"display_name": "Kim cương",
+			"side_cols": 5,
+			"side_rows": 5,
+			"missing_cells": [[0, 0], [1, 0], [0, 1], [3, 0], [4, 0], [4, 1], [0, 3], [0, 4], [1, 4], [4, 3], [3, 4], [4, 4]],
+			"difficulty": 4
+		}
+	]
+}

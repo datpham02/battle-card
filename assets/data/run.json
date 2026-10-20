@@ -13,6 +13,7 @@
 			"swing_speed_mult": 1.0,
 			"boss_think_interval_sec": 0.5,
 			"boss_reaction_sec": 0.6,
+			"arena": {"shape": "square"},
 			"boss_drop_interval_mult": 1.3
 		},
 		{
@@ -23,6 +24,7 @@
 			"boss_step_cooldown_mult": 1.44,
 			"boss_think_interval_sec": 0.4,
 			"boss_reaction_sec": 0.45,
+			"arena": {"shape": "rect"},
 			"boss_drop_interval_mult": 1.15,
 			"swing_speed_mult": 1.0,
 			"movement": {
@@ -40,7 +42,9 @@
 			"swing_speed_mult": 0.9,
 			"boss_think_interval_sec": 0.3,
 			"boss_reaction_sec": 0.35,
-			"boss_drop_interval_mult": 1.0
+			"arena": {"shape": "cross"},
+			"boss_drop_interval_mult": 1.0,
+			"traits": [{"id": "row_burner", "params": {}}]
 		},
 		{
 			"id": "sushi_master",
@@ -51,7 +55,9 @@
 			"swing_speed_mult": 0.8,
 			"boss_think_interval_sec": 0.25,
 			"boss_reaction_sec": 0.3,
-			"boss_drop_interval_mult": 0.9
+			"arena": {"shape": "ring", "variant": true},
+			"boss_drop_interval_mult": 0.9,
+			"traits": [{"id": "rotten_thrower", "params": {"interval_sec": 5.0}}]
 		}
 	]
 }

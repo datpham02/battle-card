@@ -4,7 +4,10 @@ extends Node2D
 ## freshness bar that shrinks, green -> yellow -> red colour, a blink for the last seconds,
 ## and a "FULL" tag on the point the player stands on while the hand is full (the point
 ## stays on the field, so the reason is visible). Placeholder art.
-## Implements: Story 007.
+## Story 014: a ROTTEN point (FieldPoint.rotten, thrown by a boss trait) is drawn grey with a
+## dark X across its marker, a grey tag and a grey freshness bar (no green-yellow-red ramp), so
+## it never reads as something worth picking up.
+## Implements: Story 007, Story 014.
 
 const COLOR_FRESH: Color = Color(0.2, 0.75, 0.3)
 const COLOR_WARN: Color = Color(0.95, 0.8, 0.1)
@@ -12,6 +15,13 @@ const COLOR_ROTTEN: Color = Color(0.9, 0.2, 0.15)
 const TAG_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
 const TEXT_COLOR: Color = Color(0.15, 0.12, 0.1)
 const FULL_BACK: Color = Color(0.95, 0.7, 0.1)
+## Rotten point (Story 014): grey marker / tag / bar and the dark X across the marker.
+const ROTTEN_GREY: Color = Color(0.55, 0.55, 0.55)
+const ROTTEN_TAG_BACK: Color = Color(0.8, 0.8, 0.8, 0.92)
+const ROTTEN_X_COLOR: Color = Color(0.2, 0.2, 0.22, 0.9)
+const ROTTEN_X_WIDTH: float = 5.0
+## Inset of the X from the cell's edges (share of cell height).
+const ROTTEN_X_INSET_RATIO: float = 0.16
 ## Freshness share (left / total) at or above which a point is "fresh" (green), and at or
 ## above which it is "warning" (yellow); below that it is red.
 const FRESH_RATIO: float = 0.55
@@ -77,16 +87,20 @@ func _draw() -> void:
 	for point: FieldPoint in _source().get_points():
 		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, point.cell)
 		var ratio: float = clampf(point.freshness_left / _combat.get_drops_config().freshness_sec, 0.0, 1.0)
-		var color: Color = freshness_color(ratio)
+		var color: Color = ROTTEN_GREY if point.rotten else freshness_color(ratio)
 		var alpha: float = 1.0
 		if point.freshness_left <= BLINK_SEC and int(point.freshness_left * BLINK_HZ * 2.0) % 2 == 0:
 			alpha = BLINK_DIM_ALPHA
 		color.a = alpha
 		draw_rect(rect.grow(-3.0), Color(color, 0.18 * alpha))
 		draw_rect(rect.grow(-3.0), color, false, OUTLINE_WIDTH)
+		if point.rotten:
+			var x_rect: Rect2 = rect.grow(-cell.y * ROTTEN_X_INSET_RATIO)
+			draw_line(x_rect.position, x_rect.end, Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
+			draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
 		var tag_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * TAG_HEIGHT_RATIO)
 		var tag := Rect2(Vector2(rect.get_center().x - tag_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO), tag_size)
-		draw_rect(tag, Color(TAG_BACK, alpha))
+		draw_rect(tag, Color(ROTTEN_TAG_BACK if point.rotten else TAG_BACK, alpha))
 		draw_rect(tag, color, false, OUTLINE_WIDTH)
 		var font_size: int = int(cell.y * LABEL_FONT_RATIO)
 		draw_string(ThemeDB.fallback_font, tag.position + Vector2(0.0, tag.size.y * 0.5 + font_size * 0.35), point.label, HORIZONTAL_ALIGNMENT_CENTER, tag.size.x, font_size, Color(TEXT_COLOR, alpha))

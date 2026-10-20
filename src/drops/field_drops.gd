@@ -2,7 +2,9 @@ class_name FieldDrops
 extends RefCounted
 ## Cut-point drops for one side: shuffle bag, spawn pacing, hunger compensation,
 ## freshness and pickup. One instance per side. No scene dependency.
-## Implements: Story 007.
+## Story 014: [method place_rotten] lets a boss trait drop a ROTTEN point on this half; it lies,
+## rots and is picked up like any point (and counts toward max_on_field) but is flagged.
+## Implements: Story 007, Story 014.
 
 ## A point landed on the field.
 signal point_spawned(point: FieldPoint)
@@ -112,13 +114,31 @@ func debug_place(label: String, cell: Vector2i, freshness_left: float) -> FieldP
 	return _add_point(label, cell, freshness_left)
 
 
-func _add_point(label: String, cell: Vector2i, freshness: float) -> FieldPoint:
+## Story 014 trait API: puts a ROTTEN point labelled [param label] on [param cell] of this
+## half, bypassing the bag and the spawn timer (NOT the cell rules: the cell must be a real cell
+## of this half, free of points and not blocked/burning, else null and nothing changes). It rots
+## off the field after [param freshness_left] seconds; once held it leaves the hand after
+## [param rot_in_hand_sec]. Emits point_spawned like any landing point.
+func place_rotten(cell: Vector2i, label: String, freshness_left: float, rot_in_hand_sec: float) -> FieldPoint:
+	if not _side_cells.has(cell) or _is_occupied(cell) or _blocked_cells.has(cell):
+		return null
+	return _add_point(label, cell, freshness_left, true, maxf(rot_in_hand_sec, 0.0))
+
+
+## True when a real cell of this half has no point on it (missing cells are never free).
+func is_cell_free(cell: Vector2i) -> bool:
+	return _side_cells.has(cell) and not _is_occupied(cell)
+
+
+func _add_point(label: String, cell: Vector2i, freshness: float, rotten: bool = false, rot_in_hand_sec: float = 0.0) -> FieldPoint:
 	var p := FieldPoint.new()
 	p.uid = _next_uid
 	_next_uid += 1
 	p.label = label
 	p.cell = cell
 	p.freshness_left = freshness
+	p.rotten = rotten
+	p.rot_in_hand_sec = rot_in_hand_sec
 	_points.append(p)
 	point_spawned.emit(p)
 	return p

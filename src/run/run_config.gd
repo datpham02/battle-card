@@ -10,7 +10,7 @@ const DEFAULT_PATH: String = "res://assets/data/run.json"
 const MATCH_KEYS: Array[String] = [
 	"id", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
-	"swing_speed_mult", "combo_chance", "combo_gap_sec",
+	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "traits",
 ]
 
 ## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
@@ -78,7 +78,7 @@ static func _default_match(index: int) -> Dictionary:
 		"id": "match_%d" % (index + 1), "display_name": "Match %d" % (index + 1), "boss_max_hp": 100.0,
 		"brain_set": "balanced", "boss_step_cooldown_mult": 1.0, "boss_think_interval_sec": 0.3,
 		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0, "movement": {},
-		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0,
+		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "traits": [],
 	}
 
 
@@ -104,6 +104,18 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		m["movement"] = (raw_movement as Dictionary).duplicate()
 	else:
 		push_warning("RunConfig: movement of match %s must be an object, ignored" % m["id"])
+	var raw_arena: Variant = raw.get("arena", {})
+	if typeof(raw_arena) == TYPE_DICTIONARY:
+		# Passed through as-is; ArenaLibrary.grid_for_spec validates it (Story 014).
+		m["arena"] = (raw_arena as Dictionary).duplicate(true)
+	else:
+		push_warning("RunConfig: arena of match %s must be an object, ignored" % m["id"])
+	var raw_traits: Variant = raw.get("traits", [])
+	if typeof(raw_traits) == TYPE_ARRAY:
+		# Passed through as-is; TraitHost / TraitRegistry validate the entries (Story 014).
+		m["traits"] = (raw_traits as Array).duplicate(true)
+	else:
+		push_warning("RunConfig: traits of match %s must be an array, ignored" % m["id"])
 	if raw.has("boss_step_cooldown_sec"):
 		# Deprecated absolute value: carried (and used by CombatView) only for old data.
 		push_warning("RunConfig: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")

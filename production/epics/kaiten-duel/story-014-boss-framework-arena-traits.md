@@ -1,7 +1,7 @@
 # Story 014: Khung boss — sân riêng theo trận và đặc điểm (trait) cắm được
 
 > **Epic**: Kaiten Duel (v3)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: —
@@ -83,7 +83,7 @@
 - Retained screenshot trong `production/qa/evidence/boss-framework/`.
 - Integration: `tests/integration/boss/trait_registry_test.gd` — khuyến nghị, không bắt buộc ở `minimal`.
 
-**Status**: [ ] Not yet created
+**Status**: Screenshots retained; integration test not saved (advisory at minimal).
 
 ---
 
@@ -91,3 +91,14 @@
 
 - Depends on: Story 013 (cooldown theo sân, hồ sơ di chuyển)
 - Unlocks: nội dung boss, đợt cân bằng
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-20
+**Criteria**: 17/17 pass. DEFERRED (needs real play): difficulty of the two traits, feel of arenas with holes, touch on a device.
+**Deviations**: ADVISORY: `on_boss_damaged` reports player-swing damage only, not burn ticks. ADVISORY: rotten points count toward the field cap of 4. ADVISORY: traits stop ticking once a side is dead. ADVISORY: `RunController` does not set `arena_seed`, so the variant ring changes every run (Story 015 seeds per run). ADVISORY: DEV-ONLY `CombatView.make_trait_ctx()` (public) and `TraitHost.debug_add_trait()` exist for demos. ADVISORY: click-driven scratch tests (cut_flow, focus_flow, input_test) pass only with `--windowed --resolution 1280x720`; headless gives a 1280x1280 viewport (pre-existing).
+**Test Evidence**: Integration; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/boss-framework/01-07*.png` (all opened and checked). Scratch tests trait, arena, arena_flow, trait_flow, run_flow, cut_flow, focus_flow: 0 failures.
+**Code Review**: Skipped (solo mode).
+**Not verified**: real feel, touch on a device.
+**Carries forward**: Story 015 (chapters/floors, `arena_pool`, per-run `arena_seed`); balance pass (trait intervals, rotten cap, profile numbers); optional saved integration test.

@@ -2,6 +2,9 @@ class_name HoldSlots
 extends RefCounted
 ## Pure-logic hold slots: a fixed number of slots, each empty or holding one FieldPoint,
 ## plus a selection set (Story 007; cutting comes in Story 008).
+## Story 014: a ROTTEN point (FieldPoint.rotten) may be placed and occupies its slot, but it can
+## never be selected, never appears in the selected labels and leaves on its own after its
+## rot_in_hand_sec, counted down by [method tick_rot].
 ## No scene/node dependency. Implements: design/game-brief.md MVP feature 2.
 
 ## Allowed slot count range (story AC: 3-4 slots).
@@ -104,9 +107,14 @@ func remove(index: int) -> FieldPoint:
 	return point
 
 
-## Toggles selection of an occupied slot. Returns the new state (false for empty slots).
+## Toggles selection of an occupied slot. Returns the new state (false for empty slots and
+## always false for a rotten point, which cannot be selected).
 func toggle_selected(index: int) -> bool:
-	if get_point(index) == null:
+	var point: FieldPoint = get_point(index)
+	if point == null:
+		return false
+	if point.rotten:
+		_selected.erase(index)
 		return false
 	if _selected.has(index):
 		_selected.erase(index)
@@ -125,11 +133,13 @@ func get_selected_indices() -> Array[int]:
 	return _selected.duplicate()
 
 
-## Perimeter labels of the selected points, in selection order.
+## Perimeter labels of the selected points, in selection order (rotten points never count).
 func get_selected_labels() -> Array[String]:
 	var labels: Array[String] = []
 	for index: int in _selected:
-		labels.append(_slots[index].label)
+		var point: FieldPoint = _slots[index]
+		if point != null and not point.rotten:
+			labels.append(point.label)
 	return labels
 
 
@@ -139,12 +149,40 @@ func clear_selection() -> void:
 
 
 ## Removes the selected points from their slots, in selection order, and returns them.
-## The selection ends up empty.
+## The selection ends up empty. Rotten points are never removed by this (they stay).
 func remove_selected() -> Array[FieldPoint]:
 	var removed: Array[FieldPoint] = []
 	for index: int in _selected.duplicate():
+		var held: FieldPoint = get_point(index)
+		if held != null and held.rotten:
+			continue
 		var point: FieldPoint = remove(index)
 		if point != null:
 			removed.append(point)
 	_selected.clear()
 	return removed
+
+
+## Story 014: counts [param delta] seconds off every rotten point held; a point whose
+## rot_in_hand_sec reaches 0 leaves its slot (slot_cleared is emitted, the point is dropped).
+## Call with the SCALED simulation step so slow motion also slows the rot.
+func tick_rot(delta: float) -> void:
+	if delta <= 0.0:
+		return
+	for i: int in _slots.size():
+		var point: FieldPoint = _slots[i]
+		if point == null or not point.rotten:
+			continue
+		point.rot_in_hand_sec -= delta
+		if point.rot_in_hand_sec <= 0.0:
+			point.rot_in_hand_sec = 0.0
+			remove(i)
+
+
+## Number of rotten points held right now (Story 014).
+func get_rotten_count() -> int:
+	var count: int = 0
+	for point: FieldPoint in _slots:
+		if point != null and point.rotten:
+			count += 1
+	return count

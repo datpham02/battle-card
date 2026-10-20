@@ -162,6 +162,27 @@ const COMBO_HATCH_STEP_RATIO: float = 0.18
 const COMBO_HATCH_WIDTH: float = 2.0
 const TEXT_COMBO_QUEUED: String = "2: +%.1f s"
 
+## Row burner warning (Story 014): while RowBurnerTrait announces a row, its cells get a faint
+## amber tint, an amber outline that blinks between full and dim alpha (phase from a REAL-time
+## accumulator fed in _process, so it blinks even while the simulation is frozen or slowed), a
+## thin shrinking bar along the cell's TOP (the fire bar sits at the bottom) and a "SẮP CHÁY"
+## tag at the top-right of the cells' bounding box. Amber (yellow-orange) and the blink keep it
+## apart from the solid red boss swing and the hatched orange-red fire look that follows it.
+const WARN_TINT: Color = Color(1.0, 0.7, 0.15, 0.18)
+const WARN_OUTLINE: Color = Color(1.0, 0.68, 0.1, 0.95)
+const WARN_BAR_BACK: Color = Color(0.35, 0.22, 0.02, 0.7)
+const WARN_BAR_FILL: Color = Color(1.0, 0.75, 0.2)
+const WARN_OUTLINE_WIDTH: float = 5.0
+const WARN_BLINK_HZ: float = 4.0
+const WARN_BLINK_DIM_ALPHA: float = 0.3
+## Outline inset (px) and the top bar's height / side inset (shares of cell height).
+const WARN_OUTLINE_INSET: float = 4.0
+const WARN_BAR_HEIGHT_RATIO: float = 0.06
+const WARN_BAR_INSET_RATIO: float = 0.08
+const TEXT_ROW_WARNING: String = "SẮP CHÁY"
+## Trait param that holds the warning length (read from the trait, never a local number).
+const WARN_SEC_PARAM: String = "warn_sec"
+
 const TEXT_BOSS_SWING: String = "BOSS %s %s"
 const TEXT_INTERRUPT: String = "NGẮT!"
 const TEXT_INTERRUPT_BOSS: String = "boss bị hủy đòn"
@@ -181,13 +202,16 @@ const TEXT_DAMAGE_NUMBER: String = "-%d"
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
 var _combat: CombatView
+## Real seconds since this view started: phase source of the row-warning blink.
+var _blink_time: float = 0.0
 
 
 func _ready() -> void:
 	_combat = get_node(combat_view_path) as CombatView
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_blink_time += delta
 	queue_redraw()
 
 
@@ -252,6 +276,7 @@ func _draw() -> void:
 	_draw_boss_swing(vp)
 	_draw_feedback(vp)
 	_draw_boss_feedback(vp)
+	_draw_row_warning(vp)
 	_draw_burning(vp)
 	_draw_interrupt(vp)
 	_draw_feint(vp)
@@ -443,9 +468,10 @@ func _draw_boss_queued_swing(vp: Vector2) -> void:
 	_draw_corner_label(vp, cells, TEXT_COMBO_QUEUED % float(queued["duration"]), COMBO_OUTLINE)
 
 
-# One small line on a white backing, anchored to the bottom-right corner of the bounding box of
-# [param cells] and clamped inside the board.
-func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color: Color) -> void:
+# One small line on a white backing, anchored to the bottom-right corner (or, with
+# [param top_right], the top-right corner) of the bounding box of [param cells] and clamped
+# inside the board.
+func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color: Color, top_right: bool = false) -> void:
 	if cells.is_empty():
 		return
 	var grid: BoardGrid = _combat.get_grid()
@@ -458,6 +484,8 @@ func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color
 	var height: float = small * LABEL_LINE_SPACING + LABEL_PAD * 2.0
 	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
 	var pos: Vector2 = box.end - Vector2(width, height)
+	if top_right:
+		pos.y = box.position.y
 	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
 	pos.y = clampf(pos.y, board.position.y, maxf(board.end.y - height, board.position.y))
 	var back := Rect2(pos, Vector2(width, height))
@@ -540,6 +568,39 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	if show_damage:
 		var line2 := Rect2(back.position + Vector2(0.0, size * 0.9), Vector2(back.size.x, size * 1.2))
 		_draw_centered(line2, TEXT_DAMAGE_NUMBER % roundi(float(fb["damage"])), size, color)
+
+
+# --- Story 014: row burner warning ---------------------------------------------
+
+
+# The row RowBurnerTrait is announcing (nothing when the match has no row_burner or no warning
+# runs): faint amber tint, blinking amber outline, shrinking top bar, "SẮP CHÁY" tag. Once the
+# row ignites the trait clears its warning and _draw_burning takes over.
+func _draw_row_warning(vp: Vector2) -> void:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null:
+		return
+	var burner: RowBurnerTrait = host.get_trait(RowBurnerTrait.ID) as RowBurnerTrait
+	if burner == null:
+		return
+	var cells: Array[Vector2i] = burner.get_warning_cells()
+	if cells.is_empty():
+		return
+	var warn_sec: float = burner.param_float(WARN_SEC_PARAM, RowBurnerTrait.DEFAULT_WARN_SEC)
+	var ratio: float = 0.0 if warn_sec <= 0.0 else clampf(burner.get_warn_left() / warn_sec, 0.0, 1.0)
+	var bright: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
+	var outline := Color(WARN_OUTLINE, WARN_OUTLINE.a * (1.0 if bright else WARN_BLINK_DIM_ALPHA))
+	var grid: BoardGrid = _combat.get_grid()
+	for cell: Vector2i in cells:
+		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+		draw_rect(rect, WARN_TINT)
+		draw_rect(rect.grow(-WARN_OUTLINE_INSET), outline, false, WARN_OUTLINE_WIDTH)
+		var inset: float = rect.size.y * WARN_BAR_INSET_RATIO
+		var bar_h: float = rect.size.y * WARN_BAR_HEIGHT_RATIO
+		var bar := Rect2(Vector2(rect.position.x + inset, rect.position.y + inset), Vector2(rect.size.x - inset * 2.0, bar_h))
+		draw_rect(bar, WARN_BAR_BACK)
+		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), WARN_BAR_FILL)
+	_draw_corner_label(vp, cells, TEXT_ROW_WARNING, WARN_OUTLINE, true)
 
 
 # --- Story 010: burning cells, pins, feint, learning debug ----------------------
