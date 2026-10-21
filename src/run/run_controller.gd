@@ -1,11 +1,14 @@
 class_name RunController
 extends Node2D
-## Owns one run: a RunState, and the current battle (a fresh instance of battle.tscn per match,
-## so every match starts from clean grid/hand/bag/cooldown/status/brain/learning state).
-## Flow: INTRO (battle frozen, still drawn) -> PLAYING -> match_ended -> BETWEEN (next match
-## after between_sec or [method advance_requested]) or WON / LOST (waits for
-## [method restart_requested]). The controller draws nothing; the run screens read its getters.
-## Implements: Story 011.
+## Owns one run = ONE floor: a RunState, and the current battle (a fresh instance of battle.tscn
+## per match, so every match starts from clean grid/hand/bag/cooldown/status/brain/learning
+## state). Flow: INTRO (battle frozen, still drawn) -> PLAYING -> match_ended -> BETWEEN (next
+## match after between_sec or [method advance_requested]) or WON / LOST (waits for
+## [method retry_match] / [method restart_requested] or for GameFlow to free it). The controller
+## draws nothing; the run screens read its getters.
+## Story 015: GameFlow spawns one controller per floor and calls [method configure] BEFORE
+## add_child; without it the controller loads the flat file at [member run_config_path] (tests,
+## ad-hoc floors). Implements: Story 011, Story 015.
 ##
 ## DEV-ONLY user args (after "--"), for screenshots; timers are frozen, nothing auto-advances:
 ##   --match=N                 start at match N (1-based)
@@ -19,6 +22,9 @@ extends Node2D
 signal phase_changed(phase: int)
 ## Emitted right after a new battle was added (before its first frame).
 signal battle_spawned(battle: Node)
+## Emitted when a match enters PLAYING (Story 015): GameFlow records the floor in progress.
+## [param hp_at_match_start] negative = full HP.
+signal match_started(match_index: int, hp_at_match_start: float)
 
 const BATTLE_SCENE_PATH: String = "res://src/battle/battle.tscn"
 const COMBAT_VIEW_NODE: String = "CombatView"
@@ -28,9 +34,15 @@ const ARENA_ARG: String = "--arena="
 const ARENA_VARIANT_SUFFIX: String = ":variant"
 ## DEV-ONLY: stable clock value (7:42) for run screen captures.
 const DEV_ELAPSED_SEC: float = 462.0
+const TEXT_MATCH_LABEL: String = "Trận %d/%d"
+## Match label with the floor in front: "Tầng 2 · Trận 1/4".
+const TEXT_FLOOR_MATCH_LABEL: String = "%s · Trận %d/%d"
 
-## Run structure file; tests can point it at a faster config before the node enters the tree.
-@export_file("*.json") var run_config_path: String = RunConfig.DEFAULT_PATH
+## Flat run structure file, used only when [method configure] was not called (scratch tests can
+## point it at a faster config before the node enters the tree). Empty = built-in defaults.
+@export_file("*.json") var run_config_path: String = ""
+## Display name of the floor this run plays ("Tầng 2"); shown in the match label. Set by GameFlow.
+@export var floor_label: String = ""
 
 var _config: RunConfig
 var _state: RunState
@@ -43,9 +55,21 @@ var _frozen: bool = false
 var _dev_arena: Dictionary = {}
 
 
-func _ready() -> void:
-	_config = RunConfig.load_from_file(run_config_path)
+## Story 015: installs the floor's config BEFORE the node enters the tree. Starts at match
+## [param start_match_index] with the retry/resume HP rule when the index is > 0 or
+## [param hp_at_start] is >= 0 (see [method RunState.resume_at]); otherwise a fresh run at
+## match 0 with full HP.
+func configure(config: RunConfig, start_match_index: int, hp_at_start: float) -> void:
+	_config = config
 	_state = RunState.new(_config)
+	if start_match_index > 0 or hp_at_start >= 0.0:
+		_state.resume_at(start_match_index, hp_at_start, get_player_max_hp(), _config.retry_min_hp_ratio)
+
+
+func _ready() -> void:
+	if _state == null:
+		_config = RunConfig.load_from_file(run_config_path)
+		_state = RunState.new(_config)
 	_state.phase_changed.connect(_on_state_phase_changed)
 	var dev_match: int = -1
 	var dev_run: String = ""
@@ -85,7 +109,7 @@ func _process(delta: float) -> void:
 					advance_requested()
 
 
-## The run logic (phase, match index, clock, carried HP).
+## The run logic (phase, match index, clock, carried HP). Null before [method configure] / _ready.
 func get_state() -> RunState:
 	return _state
 
@@ -116,6 +140,15 @@ func get_config() -> RunConfig:
 	return _config
 
 
+## Player max HP: from the current battle when one exists, else from combat.json (Story 015;
+## needed by the resume rule before the first battle is spawned).
+func get_player_max_hp() -> float:
+	var view: CombatView = _get_view()
+	if view != null and view.get_state() != null:
+		return view.get_state().player_max_hp
+	return CombatConfig.load_from_file().player_max_hp
+
+
 ## UI hook (button on the between-matches screen): goes to the next match now. Ignored
 ## outside BETWEEN.
 func advance_requested() -> void:
@@ -125,11 +158,22 @@ func advance_requested() -> void:
 	_start_match()
 
 
-## UI hook (button on the win/lose screens): frees the battle and starts a new run at
+## UI hook (legacy win/lose button, scratch tests): frees the battle and starts a new run at
 ## match 1. No scene reload.
 func restart_requested() -> void:
 	_frozen = false
 	_state.restart()
+	_start_match()
+
+
+## Story 015 retry rule (lose screen "Chơi lại trận"): replays the SAME match with the same arena
+## seed, boss at full HP, player HP = max(HP at match start, retry_min_hp_ratio * max). Ignored
+## outside LOST.
+func retry_match() -> void:
+	if _state.get_phase() != RunState.Phase.LOST:
+		return
+	_frozen = false
+	_state.retry_match(get_player_max_hp(), _config.retry_min_hp_ratio)
 	_start_match()
 
 
@@ -144,24 +188,35 @@ func _begin_playing() -> void:
 	if _battle != null:
 		_battle.process_mode = Node.PROCESS_MODE_INHERIT
 	_state.begin_playing()
+	match_started.emit(_state.get_match_index(), _state.get_hp_at_match_start())
 
 
 func _spawn_battle() -> void:
 	_free_battle()
 	var battle: Node = (load(BATTLE_SCENE_PATH) as PackedScene).instantiate()
 	var view := battle.get_node(COMBAT_VIEW_NODE) as CombatView
+	# The match spec already carries "arena" and "arena_seed" (ChaptersConfig.resolved_floor).
 	var params: Dictionary = _state.get_match_spec()
 	params["end_delay_sec"] = _config.end_delay_sec
 	if not _dev_arena.is_empty() and _state.get_match_index() == 0:
 		params["arena"] = _dev_arena.duplicate()
 	params["player_hp"] = _state.get_carried_hp()
-	params["match_label"] = "Trận %d/%d" % [_state.get_match_index() + 1, _state.get_match_count()]
+	params["floor_label"] = floor_label
+	params["match_label"] = _match_label()
 	view.match_params = params
 	view.match_ended.connect(_on_match_ended)
 	battle.process_mode = Node.PROCESS_MODE_DISABLED
 	add_child(battle)
 	_battle = battle
 	battle_spawned.emit(battle)
+
+
+func _match_label() -> String:
+	var index: int = _state.get_match_index() + 1
+	var count: int = _state.get_match_count()
+	if floor_label.is_empty():
+		return TEXT_MATCH_LABEL % [index, count]
+	return TEXT_FLOOR_MATCH_LABEL % [floor_label, index, count]
 
 
 func _free_battle() -> void:
@@ -178,7 +233,7 @@ func _on_match_ended(player_won: bool, player_hp: float) -> void:
 	_last_player_hp = player_hp
 	_freeze_battle()
 	if player_won:
-		_state.on_match_won(player_hp, _get_view().get_state().player_max_hp)
+		_state.on_match_won(player_hp, get_player_max_hp())
 		_between_left = _config.between_sec
 	else:
 		_state.on_match_lost()
@@ -189,8 +244,11 @@ func _freeze_battle() -> void:
 		_battle.process_mode = Node.PROCESS_MODE_DISABLED
 
 
+# The current battle's CombatView, or null when no battle is spawned.
 func _get_view() -> CombatView:
-	return _battle.get_node(COMBAT_VIEW_NODE) as CombatView
+	if _battle == null:
+		return null
+	return _battle.get_node_or_null(COMBAT_VIEW_NODE) as CombatView
 
 
 func _on_state_phase_changed(phase: int) -> void:

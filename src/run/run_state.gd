@@ -15,6 +15,8 @@ var _index: int = 0
 var _phase: Phase = Phase.INTRO
 var _elapsed: float = 0.0
 var _carried_hp: float = -1.0
+## Player HP when the current match began (negative = full); the base of the retry rule.
+var _hp_at_match_start: float = -1.0
 
 
 func _init(config: RunConfig) -> void:
@@ -27,6 +29,7 @@ func start_run() -> void:
 	_index = 0
 	_elapsed = 0.0
 	_carried_hp = -1.0
+	_hp_at_match_start = -1.0
 	_set_phase(Phase.INTRO)
 
 
@@ -89,12 +92,39 @@ func advance() -> void:
 	if _phase != Phase.BETWEEN:
 		return
 	_index += 1
+	_hp_at_match_start = _carried_hp
 	_set_phase(Phase.INTRO)
 
 
 ## Player HP to start the current match with; negative = start at full HP.
 func get_carried_hp() -> float:
 	return _carried_hp
+
+
+## Player HP at the start of the current match (negative = full HP). Story 015.
+func get_hp_at_match_start() -> float:
+	return _hp_at_match_start
+
+
+## Retry rule (Story 015): only from LOST, goes back to INTRO on the SAME match. Carried HP =
+## -1 (full) when the HP at match start was negative, else max(hp_at_match_start,
+## [param min_ratio] * [param player_max_hp]) clamped to the max. The match-start HP and the
+## run clock are kept (elapsed is not reset). Emits phase_changed. Ignored in other phases.
+func retry_match(player_max_hp: float, min_ratio: float) -> void:
+	if _phase != Phase.LOST:
+		return
+	_carried_hp = _retry_hp(_hp_at_match_start, player_max_hp, min_ratio)
+	_set_phase(Phase.INTRO)
+
+
+## Resume from a save (Story 015): INTRO at [param match_index] (clamped), match-start HP
+## [param hp_at_start] and the same carried-HP rule as [method retry_match]; clock 0.
+func resume_at(match_index: int, hp_at_start: float, player_max_hp: float, min_ratio: float) -> void:
+	_index = clampi(match_index, 0, get_match_count() - 1)
+	_elapsed = 0.0
+	_hp_at_match_start = hp_at_start
+	_carried_hp = _retry_hp(hp_at_start, player_max_hp, min_ratio)
+	_set_phase(Phase.INTRO)
 
 
 ## Adds [param real_delta] to the run clock, only while PLAYING.
@@ -122,6 +152,12 @@ func dev_jump(match_index: int, phase: Phase, elapsed_sec: float, carried_hp: fl
 	_phase = phase
 	_elapsed = elapsed_sec
 	_carried_hp = carried_hp
+
+
+static func _retry_hp(hp_at_start: float, player_max_hp: float, min_ratio: float) -> float:
+	if hp_at_start < 0.0:
+		return -1.0
+	return minf(maxf(hp_at_start, min_ratio * player_max_hp), player_max_hp)
 
 
 func _set_phase(phase: Phase) -> void:

@@ -68,7 +68,7 @@ func shapes_with_difficulty(max_difficulty: int) -> Array[Dictionary]:
 	return result
 
 
-## Builds the board for a run.json `arena` block: {shape: id}, {shape: id, variant: true} or a
+## Builds the board for a chapters.json `arena` block (floor or match level): {shape: id}, {shape: id, variant: true} or a
 ## direct {side_cols, side_rows, missing_cells}. Returns null (with a warning) for an unknown id
 ## or an invalid direct block, so the caller keeps its own grid. [param seed_value] drives variants.
 static func grid_for_spec(spec: Dictionary, library: ArenaLibrary, seed_value: int) -> BoardGrid:

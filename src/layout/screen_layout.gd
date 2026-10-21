@@ -56,6 +56,22 @@ const RUN_BUTTON_WIDTH_RATIO: float = 0.7
 ## Focus UI (Story 012): height of the "TẬP TRUNG" countdown / cooldown bar (share of height).
 ## 0.032 * 720 = 23 px: fits under the strip's "Sát thương" line and above the CONFIRM button.
 const FOCUS_BAR_HEIGHT_RATIO: float = 0.032
+## Run UI (Story 015): gap between two side-by-side panel buttons (share of width).
+const RUN_BUTTON_GAP_RATIO: float = 0.015
+## Floor select (Story 015), shares of the viewport: title band (top .. bottom), the first
+## chapter block's top, one chapter block's height (chapter label on the left, tiles on the
+## right), the left column width reserved for the chapter name, tile size (0.17 * 1280 = 218 px
+## wide, 0.3 * 720 = 216 px tall >= 96 px), gaps between tiles, and tiles per row.
+const FLOOR_TITLE_TOP_RATIO: float = 0.03
+const FLOOR_TITLE_BOTTOM_RATIO: float = 0.13
+const FLOOR_BLOCKS_TOP_RATIO: float = 0.16
+const FLOOR_BLOCK_HEIGHT_RATIO: float = 0.4
+const FLOOR_LABEL_WIDTH_RATIO: float = 0.2
+const FLOOR_TILE_WIDTH_RATIO: float = 0.17
+const FLOOR_TILE_HEIGHT_RATIO: float = 0.3
+const FLOOR_TILE_GAP_X_RATIO: float = 0.015
+const FLOOR_TILE_GAP_Y_RATIO: float = 0.02
+const FLOOR_TILES_PER_ROW: int = 4
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -284,3 +300,63 @@ static func run_button_rect(viewport_size: Vector2) -> Rect2:
 	var height: float = viewport_size.y * RUN_BUTTON_HEIGHT_RATIO
 	var width: float = panel.size.x * RUN_BUTTON_WIDTH_RATIO
 	return Rect2(panel.get_center().x - width * 0.5, panel.end.y - inset - height, width, height)
+
+
+## Run UI (Story 015): [param count] action buttons at the bottom of the panel, left to right.
+## One button is [method run_button_rect]; two or more share the panel width (minus the inset
+## and the gaps) with the same height. Empty for count <= 0.
+static func run_button_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	if count == 1:
+		rects.append(run_button_rect(viewport_size))
+		return rects
+	var panel: Rect2 = run_panel_rect(viewport_size)
+	var inset: float = viewport_size.y * RUN_PANEL_INSET_RATIO
+	var height: float = viewport_size.y * RUN_BUTTON_HEIGHT_RATIO
+	var gap: float = viewport_size.x * RUN_BUTTON_GAP_RATIO
+	var width: float = maxf((panel.size.x - inset * 2.0 - gap * (count - 1)) / count, 0.0)
+	var top: float = panel.end.y - inset - height
+	for i: int in count:
+		rects.append(Rect2(panel.position.x + inset + (width + gap) * i, top, width, height))
+	return rects
+
+
+## Floor select (Story 015): the title band across the top.
+static func floor_title_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * FLOOR_TITLE_TOP_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * FLOOR_TITLE_BOTTOM_RATIO - top)
+
+
+## Floor select: the block of chapter [param chapter_index] (label column + tile grid).
+## Blocks are stacked top to bottom with a fixed height; two chapters fit at 1280x720.
+static func floor_chapter_block_rect(viewport_size: Vector2, chapter_index: int) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var height: float = viewport_size.y * FLOOR_BLOCK_HEIGHT_RATIO
+	var top: float = viewport_size.y * FLOOR_BLOCKS_TOP_RATIO + height * chapter_index
+	return Rect2(margin, top, viewport_size.x - margin * 2.0, height)
+
+
+## Floor select: the left column of a chapter block that shows the chapter name.
+static func floor_chapter_label_rect(viewport_size: Vector2, chapter_index: int) -> Rect2:
+	var block: Rect2 = floor_chapter_block_rect(viewport_size, chapter_index)
+	return Rect2(block.position, Vector2(viewport_size.x * FLOOR_LABEL_WIDTH_RATIO, block.size.y))
+
+
+## Floor select: one tile per floor of chapter [param chapter_index], left to right, at most
+## [constant FLOOR_TILES_PER_ROW] per row; further rows continue below (they overflow the
+## block when a chapter has more floors than one row holds — fine for the current data).
+static func floor_tile_rects(viewport_size: Vector2, chapter_index: int, floor_count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if floor_count <= 0:
+		return rects
+	var block: Rect2 = floor_chapter_block_rect(viewport_size, chapter_index)
+	var size := Vector2(viewport_size.x * FLOOR_TILE_WIDTH_RATIO, viewport_size.y * FLOOR_TILE_HEIGHT_RATIO)
+	var gap := Vector2(viewport_size.x * FLOOR_TILE_GAP_X_RATIO, viewport_size.y * FLOOR_TILE_GAP_Y_RATIO)
+	var origin := Vector2(block.position.x + viewport_size.x * FLOOR_LABEL_WIDTH_RATIO, block.position.y)
+	for i: int in floor_count:
+		var col: int = i % FLOOR_TILES_PER_ROW
+		var row: int = i / FLOOR_TILES_PER_ROW
+		rects.append(Rect2(origin + (size + gap) * Vector2(col, row), size))
+	return rects

@@ -1,0 +1,212 @@
+{
+	"defaults": {
+		"heal_between_matches": 25,
+		"intro_sec": 1.5,
+		"end_delay_sec": 1.5,
+		"between_sec": 3.0,
+		"retry_min_hp_ratio": 0.5
+	},
+	"chapters": [
+		{
+			"id": "ch1",
+			"display_name": "Quán vỉa hè",
+			"floors": [
+				{
+					"id": "f1",
+					"display_name": "Tầng 1",
+					"arena": {"shape": "square"},
+					"matches": [
+						{
+							"id": "intern",
+							"display_name": "Thực tập sinh",
+							"boss_max_hp": 80,
+							"brain_set": "cautious",
+							"boss_step_cooldown_mult": 1.78,
+							"swing_speed_mult": 1.0,
+							"boss_think_interval_sec": 0.5,
+							"boss_reaction_sec": 0.6,
+							"boss_drop_interval_mult": 1.3
+						},
+						{
+							"id": "sous_chef",
+							"display_name": "Đầu bếp phụ",
+							"boss_max_hp": 100,
+							"brain_set": "cautious",
+							"boss_step_cooldown_mult": 1.44,
+							"boss_think_interval_sec": 0.4,
+							"boss_reaction_sec": 0.45,
+							"boss_drop_interval_mult": 1.15,
+							"swing_speed_mult": 1.0,
+							"movement": {
+								"move_commitment": 0.9,
+								"move_noise": 0.05,
+								"reaction_sec": 0.45
+							}
+						},
+						{
+							"id": "head_chef",
+							"display_name": "Bếp trưởng",
+							"boss_max_hp": 120,
+							"brain_set": "balanced",
+							"boss_step_cooldown_mult": 1.22,
+							"swing_speed_mult": 0.9,
+							"boss_think_interval_sec": 0.3,
+							"boss_reaction_sec": 0.35,
+							"boss_drop_interval_mult": 1.0,
+							"traits": [{"id": "row_burner", "params": {}}]
+						}
+					]
+				},
+				{
+					"id": "f2",
+					"display_name": "Tầng 2",
+					"arena": {"shape": "rect"},
+					"matches": [
+						{
+							"id": "waiter",
+							"display_name": "Phục vụ bàn",
+							"boss_max_hp": 90,
+							"brain_set": "cautious",
+							"boss_step_cooldown_mult": 1.78,
+							"swing_speed_mult": 1.0,
+							"boss_think_interval_sec": 0.5,
+							"boss_reaction_sec": 0.6,
+							"boss_drop_interval_mult": 1.3
+						},
+						{
+							"id": "line_cook",
+							"display_name": "Đầu bếp chạy bàn",
+							"boss_max_hp": 110,
+							"brain_set": "cautious",
+							"boss_step_cooldown_mult": 1.44,
+							"boss_think_interval_sec": 0.4,
+							"boss_reaction_sec": 0.45,
+							"boss_drop_interval_mult": 1.15,
+							"swing_speed_mult": 1.0,
+							"movement": {
+								"move_commitment": 0.9,
+								"move_noise": 0.05,
+								"reaction_sec": 0.45
+							}
+						},
+						{
+							"id": "sous_chef_2",
+							"display_name": "Bếp phó",
+							"boss_max_hp": 130,
+							"brain_set": "balanced",
+							"boss_step_cooldown_mult": 1.3,
+							"swing_speed_mult": 0.95,
+							"boss_think_interval_sec": 0.35,
+							"boss_reaction_sec": 0.4,
+							"boss_drop_interval_mult": 1.05
+						},
+						{
+							"id": "head_chef_2",
+							"display_name": "Bếp trưởng khu phố",
+							"boss_max_hp": 140,
+							"brain_set": "balanced",
+							"boss_step_cooldown_mult": 1.22,
+							"swing_speed_mult": 0.9,
+							"boss_think_interval_sec": 0.3,
+							"boss_reaction_sec": 0.35,
+							"boss_drop_interval_mult": 1.0,
+							"traits": [{"id": "row_burner", "params": {}}]
+						}
+					]
+				},
+				{
+					"id": "f3",
+					"display_name": "Tầng 3",
+					"arena_pool": ["cross", "u_shape", "staircase"],
+					"arena_variant": true,
+					"matches": [
+						{
+							"id": "prep_cook",
+							"display_name": "Phụ bếp",
+							"boss_max_hp": 100,
+							"brain_set": "cautious",
+							"boss_step_cooldown_mult": 1.44,
+							"boss_think_interval_sec": 0.4,
+							"boss_reaction_sec": 0.45,
+							"boss_drop_interval_mult": 1.15,
+							"swing_speed_mult": 1.0
+						},
+						{
+							"id": "grill_cook",
+							"display_name": "Đầu bếp nướng",
+							"boss_max_hp": 120,
+							"brain_set": "balanced",
+							"boss_step_cooldown_mult": 1.3,
+							"swing_speed_mult": 0.95,
+							"boss_think_interval_sec": 0.35,
+							"boss_reaction_sec": 0.4,
+							"boss_drop_interval_mult": 1.05
+						},
+						{
+							"id": "head_chef_3",
+							"display_name": "Bếp trưởng cừ khôi",
+							"boss_max_hp": 135,
+							"brain_set": "balanced",
+							"boss_step_cooldown_mult": 1.22,
+							"swing_speed_mult": 0.9,
+							"boss_think_interval_sec": 0.3,
+							"boss_reaction_sec": 0.35,
+							"boss_drop_interval_mult": 1.0,
+							"traits": [{"id": "row_burner", "params": {}}]
+						},
+						{
+							"id": "sushi_master",
+							"display_name": "Sushi Master",
+							"boss_max_hp": 150,
+							"brain_set": "aggressive",
+							"boss_step_cooldown_mult": 1.11,
+							"swing_speed_mult": 0.8,
+							"boss_think_interval_sec": 0.25,
+							"boss_reaction_sec": 0.3,
+							"boss_drop_interval_mult": 0.9,
+							"traits": [{"id": "rotten_thrower", "params": {"interval_sec": 5.0}}]
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ch2",
+			"display_name": "Bếp khách sạn",
+			"floors": [
+				{
+					"id": "f1",
+					"display_name": "Tầng 1",
+					"arena_pool": ["ring"],
+					"arena_variant": true,
+					"matches": [
+						{
+							"id": "banquet_cook",
+							"display_name": "Đầu bếp tiệc",
+							"boss_max_hp": 130,
+							"brain_set": "balanced",
+							"boss_step_cooldown_mult": 1.22,
+							"swing_speed_mult": 0.9,
+							"boss_think_interval_sec": 0.3,
+							"boss_reaction_sec": 0.35,
+							"boss_drop_interval_mult": 1.0,
+							"traits": [{"id": "row_burner", "params": {}}]
+						},
+						{
+							"id": "executive_chef",
+							"display_name": "Tổng bếp trưởng",
+							"boss_max_hp": 160,
+							"brain_set": "aggressive",
+							"boss_step_cooldown_mult": 1.11,
+							"swing_speed_mult": 0.8,
+							"boss_think_interval_sec": 0.25,
+							"boss_reaction_sec": 0.3,
+							"boss_drop_interval_mult": 0.9,
+							"traits": [{"id": "rotten_thrower", "params": {"interval_sec": 5.0}}]
+						}
+					]
+				}
+			]
+		}
+	]
+}

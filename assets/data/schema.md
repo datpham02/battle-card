@@ -151,7 +151,7 @@ Weight keys (inside each set; missing keys take the built-in balanced value):
 
 ### `movement` block of each set (Story 013)
 
-Per-set movement profile, read by `BossBrainConfig.movement_for(set)` and used by `BossBrain`: the brain keeps ONE destination `{cell, purpose}` (purpose = `pickup` / `dodge` / `retreat` / `wander`) and walks one step per decision toward it. The destination is dropped at once when it stops making sense (point gone or picked, cell burning, unreachable, reached, a visible player swing on the current cell or on the NEXT cell of the path -> dodge to the nearest safe cell). A match of `run.json` may override any of these keys (see below). A set without the block uses the defaults.
+Per-set movement profile, read by `BossBrainConfig.movement_for(set)` and used by `BossBrain`: the brain keeps ONE destination `{cell, purpose}` (purpose = `pickup` / `dodge` / `retreat` / `wander`) and walks one step per decision toward it. The destination is dropped at once when it stops making sense (point gone or picked, cell burning, unreachable, reached, a visible player swing on the current cell or on the NEXT cell of the path -> dodge to the nearest safe cell). A match of `chapters.json` may override any of these keys (see below). A set without the block uses the defaults.
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
@@ -162,7 +162,7 @@ Per-set movement profile, read by `BossBrainConfig.movement_for(set)` and used b
 | `juke_chance` | number 0..1 | probability | Right after a dodge destination is reached, chance (seeded; 0 = no roll) of one extra step perpendicular to the dodge direction when that cell exists on the own half, is not burning and not inside the visible swing | 0.2 |
 | `wander_when_idle` | boolean | - | With no pickup target, no threat and no retreat: true = walk to a random (seeded) safe own cell, false = stand still | true |
 
-Profiles shipped (starting values, retune after playtest): cautious = 1.0 / 0.0 / 0.35 / `row_first` / 0.0 / false (the story's 0.6 broke the cautious dodge/interrupt baseline of the brain simulation, so the slow reaction of matches 1-2 comes from `run.json` `boss_reaction_sec` 0.60 / 0.45 instead); balanced = 0.7 / 0.15 / 0.35 / `shortest` / 0.2 / true; aggressive = 0.5 / 0.3 / 0.25 / `mixed` / 0.4 / true (commitment / noise / reaction / style / juke / wander).
+Profiles shipped (starting values, retune after playtest): cautious = 1.0 / 0.0 / 0.35 / `row_first` / 0.0 / false (the story's 0.6 broke the cautious dodge/interrupt baseline of the brain simulation, so the slow reaction of matches 1-2 comes from `chapters.json` `boss_reaction_sec` 0.60 / 0.45 instead); balanced = 0.7 / 0.15 / 0.35 / `shortest` / 0.2 / true; aggressive = 0.5 / 0.3 / 0.25 / `mixed` / 0.4 / true (commitment / noise / reaction / style / juke / wander).
 
 ### `learning` section of boss_brain.json (Story 010)
 
@@ -180,19 +180,33 @@ Rules of `BossLearning` (`src/combat/boss_learning.gd`): the boss adapts to the 
 | `interrupt_count_threshold` | integer >= 1 | interrupts | Times the player interrupted the boss before it favours 1-point cuts | 2 |
 | `single_point_bonus` | number >= 0 | score | Flat bonus added to 1-point cut candidates once the interrupt threshold is reached | 2.0 |
 
-## `run.json` (Story 011)
+## `chapters.json` (Stories 011, 015)
 
-Run structure, read by `RunConfig` (`src/run/run_config.gd`). A bad or missing file gives one default match. The match numbers below are PLACEHOLDERS (a rough monotone difficulty ramp) for the later balance pass.
+Chapters -> floors -> matches, read by `ChaptersConfig` (`src/run/chapters_config.gd`). A run is ONE floor: `ChaptersConfig.resolved_floor` fills `arena` and `arena_seed` of every match and `RunConfig.from_floor` builds the run. A bad or missing file gives one default chapter / floor / match (warning). A chapter or floor without matches is dropped (warning); ids must be unique per level (a duplicate is dropped with a warning). The match numbers below are PLACEHOLDERS for the later balance pass. `RunConfig.load_from_file` still reads the flat single-floor format (used by tests): the keys of `defaults` plus `matches` at the root.
+
+Top level: `{ "defaults": {...}, "chapters": [...] }`.
+
+`defaults` (all optional; also accepted as per-floor overrides on a floor):
 
 | Key | Type | Unit | Meaning | Default |
 |---|---|---|---|---|
-| `heal_between_matches` | number >= 0 | HP | Flat HP the player recovers after winning a non-final match (result clamped to max HP) | 25 |
+| `heal_between_matches` | number >= 0 | HP | Flat HP the player recovers after winning a non-final match (result clamped to max HP); HP does not carry across floors | 25 |
 | `intro_sec` | number >= 0 | seconds (real) | Length of each match intro (battle drawn but frozen) | 1.5 |
 | `end_delay_sec` | number >= 0 | seconds (real) | Pause after the last hit before leaving the match | 1.5 |
 | `between_sec` | number >= 0 | seconds (real) | Auto-advance of the between-matches screen; 0 = wait for the button only | 3.0 |
-| `matches` | array, >= 1 | - | Ordered matches; the LAST one is the boss match | one default match |
+| `retry_min_hp_ratio` | number 0..1 | ratio of max HP | Retrying or resuming a match starts the player with max(HP at the start of that match, this x max HP); HP at match start negative = full | 0.5 |
 
-Each `matches` entry:
+Each `chapters` entry: `id` (unique string), `display_name`, `floors` (>= 1). Each floor: `id` (unique within the chapter; the floor key is `"<chapter id>/<floor id>"`, e.g. `ch1/f2`), `display_name`, `matches` (>= 1, the LAST is the boss), and optionally:
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `arena` | object | Fixed board for every match of the floor: `{"shape": id}` / `{"shape": id, "variant": true}` / direct block (see the match `arena` key below) | none |
+| `arena_pool` | array of shape ids | Each match draws a shape from the pool with a seeded shuffle bag: the pool is shuffled once with `floor_seed`, then walked cyclically by match index (adjacent matches differ when the pool has >= 2 shapes). Ids unknown to `arenas.json` are dropped with a warning; an empty pool gives the `combat.json` board | none |
+| `arena_variant` | boolean | Applied to every shape drawn from `arena_pool` (a seeded variant, Story 014) | false |
+
+Arena rules per match: the match's own non-empty `arena` wins; else the floor's `arena`; else the pool draw; else `{}` (the `combat.json` board). A floor with BOTH `arena` and `arena_pool` is a data error (warning, `arena` is used). `arena_seed` of match i = `hash([floor_seed, i])` (non-negative) is filled by CODE for every match (also fixed arenas) so variants are reproducible; do not write it in the data. `floor_seed` is new on every entry to a floor and kept when a lost match is retried (`--seed=N` forces it).
+
+Each floor `matches` entry (optional per-match `arena` override as below; `arena_seed` is filled by code, default -1 = random):
 
 | Key | Type | Unit | Meaning | Default |
 |---|---|---|---|---|
@@ -210,12 +224,12 @@ Each `matches` entry:
 | `combo_gap_sec` | number -1 or >= 0 | seconds | Story 013: overrides the match set's `combo_gap_sec` for this match only (still floored at `swing_base_sec`); -1 or absent = use the set's value | -1 |
 | `movement` | object | - | Story 013: keys of the `movement` block of `boss_brain.json` (`move_commitment`, `move_noise`, `reaction_sec`, `path_style`, `juke_chance`, `wander_when_idle`), merged over the match set's profile for this match only; unknown keys warn and are ignored | `{}` (set's profile) |
 | `traits` | array of `{id, params}` | - | Story 014: boss traits switched on for this match (see **Boss traits** below). `id` is a `TraitRegistry` key; `params` (optional object) overrides that trait's defaults. Unknown id / non-object entry = warning, skipped, the match still runs; a non-array = warning, no traits. Shipped: match 3 `row_burner`, match 4 (boss) `rotten_thrower` with `interval_sec` 5.0, matches 1-2 none | `[]` |
-| `arena` | object | - | Story 014: the board of this match. `{"shape": "<id>"}` = a shape of `arenas.json`; `{"shape": "<id>", "variant": true}` = a seeded variant of it (1-3 holes toggled, maybe flipped vertically; falls back to the base shape); or a direct block `{side_cols, side_rows, missing_cells}` (validated like a library shape). Unknown id / invalid block = warning, the `combat.json` board is kept. Absent = `combat.json`. Shipped: square / rect / cross / ring+variant. Dev: `--arena=<id>[:variant]` overrides match 1 | `{}` (combat.json board) |
+| `arena` | object | - | Story 014: the board of this match. `{"shape": "<id>"}` = a shape of `arenas.json`; `{"shape": "<id>", "variant": true}` = a seeded variant of it (1-3 holes toggled, maybe flipped vertically; falls back to the base shape); or a direct block `{side_cols, side_rows, missing_cells}` (validated like a library shape). Unknown id / invalid block = warning, the `combat.json` board is kept. Absent = `combat.json`. Floors normally set the arena (see above); a match-level block overrides it. Dev: `--arena=<id>[:variant]` overrides match 1 | `{}` (combat.json board) |
 
 Ramp (placeholder): matches 1..4 = hp 80/100/120/150, sets cautious/cautious/balanced/aggressive, step mult 1.78/1.44/1.22/1.11 (= 0.80/0.65/0.55/0.50 s on 3x3), think 0.50/0.40/0.30/0.25, reaction 0.60/0.45/0.35/0.30, drop mult 1.3/1.15/1.0/0.9. Match 2 overrides `movement` = {move_commitment 0.9, move_noise 0.05, reaction_sec 0.45} (Story 013).
 
 
-### Boss traits (`run.json` -> `matches[].traits`, Story 014)
+### Boss traits (`chapters.json` -> floor `matches[].traits`, Story 014)
 
 A trait is one self-contained boss mechanic: a `BossTrait` subclass (`src/traits/`) created fresh per match by `TraitHost` (owned by `CombatView`), fed the hooks `on_match_start`, `on_tick(step)` (SCALED simulation seconds, after the arbiter, only while both units live), `on_boss_swing_started`, `on_boss_swing_resolved`, `on_player_swing_resolved`, `on_point_spawned`, `on_boss_damaged` (player swings only; burn ticks are not reported) and `teardown` (when the battle leaves the tree). Traits touch the battle only through public APIs (`state`, `grid`, both `FieldDrops`, `BossController`, `StatusEffects`, `SwingArbiter`, the player's `HoldSlots`); none edits `BossBrain`. RNG: each trait has its own `RandomNumberGenerator` seeded from the match seed + index * 1009 + a per-class offset (negative seed = random), so seeded runs stay deterministic.
 
@@ -244,12 +258,12 @@ A rotten point (`FieldPoint.rotten`) lands on a random seeded free, non-burning 
 | `damage_per_tick` | number >= 0 | HP | Damage per tick | 2.0 |
 | `row_pick` | `player_row` / `random` | - | Which row: the one the player stands on when the warning starts, or a seeded random row of the half | `player_row` |
 
-Adding a new boss = one JSON block in `matches` (`arena`, `traits`, the brain/timing keys above). Adding a new mechanic = one trait class + one registry line:
+Adding a new boss = one JSON block in a floor's `matches` (`arena`, `traits`, the brain/timing keys above). Adding a new mechanic = one trait class + one registry line:
 1. Create `src/traits/<id>.gd`: `class_name <Name>Trait extends BossTrait`, override `get_id()` (return the id) and `seed_offset()`.
 2. Read every number in `setup()` with `param_float` / `param_int` / `param_string` against a `DEFAULT_*` constant; keep the live state in private vars and reset it in `on_match_start()`.
 3. Act in the hooks through the context's public APIs only (`status.ignite`, `player_drops.place_rotten`, `state.damage`, ...); expose getters / signals for the HUD.
 4. Add `"<id>": preload("res://src/traits/<id>.gd")` to `TraitRegistry.SCRIPTS`.
-5. Switch it on from `run.json`: `"traits": [{"id": "<id>", "params": {...}}]`, document the params here.
+5. Switch it on from `chapters.json`: `"traits": [{"id": "<id>", "params": {...}}]`, document the params here.
 
 ## `arenas.json` (Story 014)
 
@@ -284,5 +298,15 @@ Adding a new arena = one JSON block:
 1. Append `{id, display_name, side_cols, side_rows, missing_cells, difficulty}` to `shapes` (holes in side coordinates; the far column is col 0).
 2. Keep each half connected (and give the walls next to a hole thickness >= 2 where the default cell sits: a 1-cell-wide wall is fully covered by one straight cut) and at least `min_cells_per_side` cells; do not make the half's default (centre-most) cell a dead end that one straight cut can cover entirely.
 3. Launch the game; a shape that fails the validator is dropped and the warning says why.
-4. Use it from `run.json` with `"arena": {"shape": "<id>"}` (add `"variant": true` for a per-run variant), or capture it with `--arena=<id>`.
+4. Use it from `chapters.json` with a floor `"arena": {"shape": "<id>"}` or an `arena_pool` (add `"variant": true` / `arena_variant` for a seeded variant), or capture it with `--arena=<id>`.
 5. A cut line through a hole covers nothing there; that is intended, not fixed.
+
+## `progress.json` (Story 015, `user://progress.json`)
+
+Player save written by `ProgressStore` (atomic: temp file renamed over the target) right at each milestone: start of a match, boss floor won, leaving a floor. Never written mid-match. Parsed by `ProgressState.from_json`: empty, corrupt, non-object or wrong-version text gives an empty state (warning); with a `ChaptersConfig`, unknown floor keys in `cleared` and an `in_progress` pointing at an unknown floor or out-of-range match are dropped (warning). Dev: `--progress=none|all` uses an in-memory store and never touches the file.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `version` | integer | Always 1 |
+| `cleared` | array of floor keys | Floors whose boss was beaten, e.g. `["ch1/f1"]`. A floor is unlocked when it is the very first floor or the previous floor in linear order (across chapters) is cleared |
+| `in_progress` | object or null | The one floor being played: `floor` (key), `match_index` (0-based), `hp_at_match_start` (HP when that match began, negative = full), `floor_seed`. Resuming applies the retry rule: HP = max(`hp_at_match_start`, `retry_min_hp_ratio` x max HP), same arena (same seed). Cleared when the floor's boss is beaten, on "restart floor" or when another floor is entered |

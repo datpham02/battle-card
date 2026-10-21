@@ -1,7 +1,7 @@
 class_name BossTrait
 extends RefCounted
 ## Base class of a pluggable boss trait (Story 014 Part B): one self-contained mechanic that a
-## match switches on from run.json (`traits: [{id, params}]`). A trait reads and writes the
+## match switches on from chapters.json (`traits: [{id, params}]`). A trait reads and writes the
 ## battle ONLY through the public APIs handed over in the context of [method setup]; it never
 ## touches private members and never edits BossBrain (the brain sees the consequences, burning
 ## cells or rotten points, through the APIs it already uses).
@@ -19,7 +19,7 @@ extends RefCounted
 ## - `hold_getter`: Callable returning the player's HoldSlots, or null until its view is ready
 ##   (use [method get_player_hold]).
 ## - `skill_config`: SkillConfig, `cut_config`: CutConfig.
-## Every tuning number comes from `params` (run.json) with the trait's own defaults; read them
+## Every tuning number comes from `params` (chapters.json) with the trait's own defaults; read them
 ## with [method param_float] / [method param_int] / [method param_string] / [method param_bool].
 ## Time reaches a trait only through [method on_tick] in SCALED simulation seconds, so Focus
 ## and skill-menu slow motion slow traits too; the host ticks traits after the SwingArbiter, so

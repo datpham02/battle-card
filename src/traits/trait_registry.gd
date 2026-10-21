@@ -1,6 +1,6 @@
 class_name TraitRegistry
 extends RefCounted
-## The one place that maps a trait id (run.json `traits[].id`) to its script. Adding a mechanic
+## The one place that maps a trait id (chapters.json `traits[].id`) to its script. Adding a mechanic
 ## = one BossTrait subclass + one line in [constant SCRIPTS]. Scripts are preloaded so no
 ## reflection or path lookup happens at match start.
 ## Implements: Story 014 (Part B).

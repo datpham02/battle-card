@@ -1,16 +1,22 @@
 class_name RunConfig
 extends RefCounted
-## Run structure from assets/data/run.json: ordered matches (the last one is the boss match),
-## HP carried between matches and the timings of the run flow.
-## Schema: assets/data/schema.md. Implements: Story 011.
+## One run = ONE floor: ordered matches (the last one is the boss match), HP carried between
+## matches and the timings of the run flow. Built from a resolved floor of chapters.json with
+## [method from_floor] (Story 015), or from the flat single-floor format with
+## [method from_dictionary] / [method load_from_file] (used by tests and ad-hoc floors).
+## Schema: assets/data/schema.md. Implements: Story 011, Story 015.
 
-const DEFAULT_PATH: String = "res://assets/data/run.json"
 ## Keys every match entry carries after validation (a deprecated absolute
 ## `boss_step_cooldown_sec` is carried too, but only when the data had it).
 const MATCH_KEYS: Array[String] = [
 	"id", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
-	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "traits",
+	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits",
+]
+
+## Keys of the flow numbers shared by chapters.json `defaults` and a floor's overrides.
+const TIMING_KEYS: Array[String] = [
+	"heal_between_matches", "intro_sec", "end_delay_sec", "between_sec", "retry_min_hp_ratio",
 ]
 
 ## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
@@ -21,6 +27,8 @@ var intro_sec: float = 1.5
 var end_delay_sec: float = 1.5
 ## Seconds before the between-matches screen advances alone (0 = wait for the button).
 var between_sec: float = 3.0
+## Share of the player's max HP a retried or resumed match starts with at least (0..1).
+var retry_min_hp_ratio: float = 0.5
 ## Ordered matches (at least 1); the last is the boss match. Each: see [constant MATCH_KEYS].
 var matches: Array[Dictionary] = []
 
@@ -29,8 +37,9 @@ func _init() -> void:
 	matches.append(_default_match(0))
 
 
-## Loads from a JSON file. Never null: a missing or bad file gives defaults (warning).
-static func load_from_file(path: String = DEFAULT_PATH) -> RunConfig:
+## Loads a flat single-floor JSON file (used by tests and ad-hoc floors). Never null: an empty
+## path, a missing or bad file gives defaults (warning).
+static func load_from_file(path: String = "") -> RunConfig:
 	if not FileAccess.file_exists(path):
 		push_warning("RunConfig: file not found, using defaults: %s" % path)
 		return RunConfig.new()
@@ -49,10 +58,7 @@ static func from_json_text(text: String) -> RunConfig:
 ## Builds a config from a dictionary; missing keys keep defaults, nonsense is clamped.
 static func from_dictionary(data: Dictionary) -> RunConfig:
 	var c := RunConfig.new()
-	c.heal_between_matches = maxf(float(data.get("heal_between_matches", c.heal_between_matches)), 0.0)
-	c.intro_sec = maxf(float(data.get("intro_sec", c.intro_sec)), 0.0)
-	c.end_delay_sec = maxf(float(data.get("end_delay_sec", c.end_delay_sec)), 0.0)
-	c.between_sec = maxf(float(data.get("between_sec", c.between_sec)), 0.0)
+	c._apply_timings(data)
 	var raw: Variant = data.get("matches")
 	if typeof(raw) == TYPE_ARRAY:
 		var parsed: Array[Dictionary] = []
@@ -68,9 +74,32 @@ static func from_dictionary(data: Dictionary) -> RunConfig:
 	return c
 
 
+## Builds the config of one floor from [method ChaptersConfig.resolved_floor] (arena and
+## arena_seed already filled per match). [param defaults] is [method ChaptersConfig.defaults];
+## the floor's own optional `overrides` (or top-level keys) of those numbers win over it.
+static func from_floor(resolved_floor: Dictionary, defaults: Dictionary) -> RunConfig:
+	var data: Dictionary = defaults.duplicate()
+	var overrides: Variant = resolved_floor.get("overrides", {})
+	if typeof(overrides) == TYPE_DICTIONARY:
+		data.merge(overrides as Dictionary, true)
+	for key: String in TIMING_KEYS:
+		if resolved_floor.has(key):
+			data[key] = resolved_floor[key]
+	data["matches"] = resolved_floor.get("matches", [])
+	return from_dictionary(data)
+
+
 ## Number of matches (>= 1).
 func match_count() -> int:
 	return matches.size()
+
+
+func _apply_timings(data: Dictionary) -> void:
+	heal_between_matches = maxf(float(data.get("heal_between_matches", heal_between_matches)), 0.0)
+	intro_sec = maxf(float(data.get("intro_sec", intro_sec)), 0.0)
+	end_delay_sec = maxf(float(data.get("end_delay_sec", end_delay_sec)), 0.0)
+	between_sec = maxf(float(data.get("between_sec", between_sec)), 0.0)
+	retry_min_hp_ratio = clampf(float(data.get("retry_min_hp_ratio", retry_min_hp_ratio)), 0.0, 1.0)
 
 
 static func _default_match(index: int) -> Dictionary:
@@ -78,7 +107,7 @@ static func _default_match(index: int) -> Dictionary:
 		"id": "match_%d" % (index + 1), "display_name": "Match %d" % (index + 1), "boss_max_hp": 100.0,
 		"brain_set": "balanced", "boss_step_cooldown_mult": 1.0, "boss_think_interval_sec": 0.3,
 		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0, "movement": {},
-		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "traits": [],
+		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "arena_seed": -1, "traits": [],
 	}
 
 
@@ -110,6 +139,8 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		m["arena"] = (raw_arena as Dictionary).duplicate(true)
 	else:
 		push_warning("RunConfig: arena of match %s must be an object, ignored" % m["id"])
+	# Filled by ChaptersConfig.resolved_floor; negative = no seed (random).
+	m["arena_seed"] = int(raw.get("arena_seed", m["arena_seed"]))
 	var raw_traits: Variant = raw.get("traits", [])
 	if typeof(raw_traits) == TYPE_ARRAY:
 		# Passed through as-is; TraitHost / TraitRegistry validate the entries (Story 014).

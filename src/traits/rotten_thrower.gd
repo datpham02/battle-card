@@ -7,7 +7,7 @@ extends BossTrait
 ## be selected or cut, and leaves the hand on its own after `rot_in_hand_sec` (HoldSlots.tick_rot).
 ## At most `max_on_field` rotten points lie on the field at once: when the cap is reached the
 ## throw waits (no catch-up burst) and happens as soon as a rotten point leaves the field.
-## Params (run.json `traits[].params`, defaults in the constants below): `interval_sec`,
+## Params (chapters.json `traits[].params`, defaults in the constants below): `interval_sec`,
 ## `field_freshness_sec`, `rot_in_hand_sec`, `label`, `max_on_field`, `first_delay_sec`.
 ## Implements: Story 014 (Part B).
 

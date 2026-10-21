@@ -7,7 +7,7 @@ extends BossTrait
 ## starts; moving out afterwards is the counterplay) or `random` (a seeded row of the half).
 ## While a warning runs the next one waits for it to end. The HUD reads the warning through
 ## [method get_warning_cells] / [method get_warn_left].
-## Params (run.json `traits[].params`, defaults in the constants below): `interval_sec`,
+## Params (chapters.json `traits[].params`, defaults in the constants below): `interval_sec`,
 ## `warn_sec`, `burn_sec`, `tick_sec`, `damage_per_tick`, `first_delay_sec`, `row_pick`.
 ## Implements: Story 014 (Part B).
 
