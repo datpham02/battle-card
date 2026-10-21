@@ -83,6 +83,8 @@ const TEXT_CLEARED: String = "Trận thắng %d/%d"
 const TEXT_RESTART: String = "Chơi lại"
 const TEXT_RETRY_MATCH: String = "Chơi lại trận"
 const TEXT_NEXT_FLOOR: String = "Tầng tiếp"
+## Chapter-clear screen: enters the first floor of the next chapter (user decision 2026-10-21).
+const TEXT_NEXT_CHAPTER: String = "Chương tiếp"
 const TEXT_CHOOSE_FLOOR: String = "Chọn tầng"
 
 ## Path to the GameFlow (a sibling under Main) that owns the controller.
@@ -160,8 +162,8 @@ func _button_labels() -> Array[String]:
 		RunState.Phase.WON:
 			if _flow == null:
 				return [TEXT_RESTART]
-			if _flow.get_next_floor() != GameFlow.NO_FLOOR and not _is_chapter_clear():
-				return [TEXT_NEXT_FLOOR, TEXT_CHOOSE_FLOOR]
+			if _flow.get_next_floor() != GameFlow.NO_FLOOR:
+				return [TEXT_NEXT_CHAPTER if _is_chapter_clear() else TEXT_NEXT_FLOOR, TEXT_CHOOSE_FLOOR]
 			return [TEXT_CHOOSE_FLOOR]
 		RunState.Phase.LOST:
 			if _flow == null:
@@ -182,13 +184,13 @@ func _activate(index: int) -> void:
 			_controller.restart_requested()
 		TEXT_RETRY_MATCH:
 			_flow.retry_requested()
-		TEXT_NEXT_FLOOR:
+		TEXT_NEXT_FLOOR, TEXT_NEXT_CHAPTER:
 			_flow.next_floor_requested()
 		TEXT_CHOOSE_FLOOR:
 			_flow.leave_floor()
 
 
-# True when the floor just won is the last of its chapter (the story shows only "Chọn tầng").
+# True when the floor just won is the last of its chapter ("CHƯƠNG XONG", button "Chương tiếp").
 func _is_chapter_clear() -> bool:
 	if _flow == null:
 		return false
