@@ -1,15 +1,19 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/run/game_flow.gd" id="2_flow"]
 [ext_resource type="Script" path="res://src/run/floor_select_view.gd" id="3_floors"]
 [ext_resource type="Script" path="res://src/run/run_hud_view.gd" id="4_hud"]
+[ext_resource type="Script" path="res://src/run/title_view.gd" id="5_title"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
 
 [node name="GameFlow" type="Node2D" parent="."]
 script = ExtResource("2_flow")
+
+[node name="TitleView" type="Node2D" parent="GameFlow"]
+script = ExtResource("5_title")
 
 [node name="FloorSelectView" type="Node2D" parent="GameFlow"]
 script = ExtResource("3_floors")

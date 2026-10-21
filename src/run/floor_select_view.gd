@@ -28,14 +28,7 @@ const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const PANEL_BACK: Color = Color(0.1, 0.09, 0.08, 0.96)
 const PANEL_OUTLINE: Color = Color(0.95, 0.9, 0.78)
 const PANEL_TEXT: Color = Color(0.95, 0.9, 0.78)
-const BUTTON_BACK: Color = Color(0.13, 0.45, 0.22)
-const BUTTON_ALT_BACK: Color = Color(0.4, 0.2, 0.15)
-## Neutral (grey) button: the safe choice next to a destructive one ("Thôi").
-const BUTTON_NEUTRAL_BACK: Color = Color(0.32, 0.3, 0.34)
-const BUTTON_PRESSED_BACK: Color = Color(0.06, 0.25, 0.12)
-const BUTTON_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const BUTTON_PRESSED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
-const TEXT_WHITE: Color = Color(1.0, 1.0, 1.0)
+## Tile, panel and (through UiButtons) prompt-button outline width.
 const OUTLINE_WIDTH: float = 3.0
 const STATE_OUTLINE_WIDTH: float = 6.0
 const MARK_WIDTH: float = 6.0
@@ -70,6 +63,8 @@ const TEXT_ABANDON: String = "Bỏ"
 const TEXT_CANCEL: String = "Thôi"
 const TEXT_RESUME: String = "Tiếp tục (Trận %d/%d)"
 const TEXT_RESTART_FLOOR: String = "Chơi lại từ đầu"
+## Story 016: the back-to-title button (ScreenLayout.back_button_rect).
+const TEXT_BACK: String = "Về"
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -117,6 +112,11 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if event.device != InputEvent.DEVICE_ID_EMULATION:
 			_tap_panel(vp, pos)
+		return
+	if ScreenLayout.back_button_rect(vp).has_point(pos):
+		get_viewport().set_input_as_handled()
+		if event.device != InputEvent.DEVICE_ID_EMULATION:
+			_flow.show_title()
 		return
 	var hit: Vector2i = _tile_at(vp, pos)
 	if hit == GameFlow.NO_FLOOR:
@@ -211,6 +211,8 @@ func _draw() -> void:
 	var config: ChaptersConfig = _flow.get_config()
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
 	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, TEXT_TITLE, TITLE_FONT_SIZE, TITLE_COLOR)
+	var back: Rect2 = ScreenLayout.back_button_rect(vp)
+	UiButtons.draw_button(self, back, TEXT_BACK, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
 	for ci: int in config.chapter_count():
 		var label: Rect2 = ScreenLayout.floor_chapter_label_rect(vp, ci)
 		draw_string(ThemeDB.fallback_font, Vector2(label.position.x, label.position.y + label.size.y * CHAPTER_BASELINE), config.chapter_name(ci), HORIZONTAL_ALIGNMENT_LEFT, label.size.x, CHAPTER_FONT_SIZE, CHAPTER_COLOR)
@@ -276,13 +278,13 @@ func _draw_panel(vp: Vector2) -> void:
 	var config: ChaptersConfig = _flow.get_config()
 	var labels: Array[String] = []
 	var message: String = ""
-	# Button colours by prompt: destructive choice in the warm colour, safe choice green/grey.
-	var backs: Array[Color] = [BUTTON_BACK, BUTTON_ALT_BACK]
+	# Button styles by prompt: destructive choice in the warm colour, safe choice green/grey.
+	var styles: Array[int] = [UiButtons.Style.PRIMARY, UiButtons.Style.DANGER]
 	match _panel:
 		Prompt.CONFIRM_ABANDON:
 			message = TEXT_CONFIRM_ABANDON
 			labels = [TEXT_ABANDON, TEXT_CANCEL]
-			backs = [BUTTON_ALT_BACK, BUTTON_NEUTRAL_BACK]
+			styles = [UiButtons.Style.DANGER, UiButtons.Style.NEUTRAL]
 		Prompt.RESUME_CHOICE:
 			var saved: Dictionary = _flow.get_progress().get_in_progress()
 			message = config.floor_name(_pending.x, _pending.y)
@@ -290,11 +292,7 @@ func _draw_panel(vp: Vector2) -> void:
 	_text(panel, panel.position.y + panel.size.y * PANEL_TEXT_BASELINE, message, PANEL_FONT_SIZE, PANEL_TEXT)
 	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, labels.size())
 	for i: int in rects.size():
-		var pressed: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and rects[i].has_point(get_viewport().get_mouse_position())
-		var back: Color = backs[i]
-		draw_rect(rects[i], BUTTON_PRESSED_BACK if pressed else back)
-		draw_rect(rects[i], BUTTON_PRESSED_OUTLINE if pressed else BUTTON_OUTLINE, false, OUTLINE_WIDTH)
-		_text(rects[i], rects[i].get_center().y + BUTTON_FONT_SIZE * 0.35, labels[i], BUTTON_FONT_SIZE, TEXT_WHITE)
+		UiButtons.draw_button(self, rects[i], labels[i], styles[i], UiButtons.is_pressed_at(self, rects[i]), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
 
 
 # Centred single-line text at baseline [param y] over the width of [param rect].

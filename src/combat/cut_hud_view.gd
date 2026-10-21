@@ -285,7 +285,8 @@ func _draw() -> void:
 	_draw_focus_bar(vp)
 	_draw_focus_tag(vp)
 	_draw_menu(vp)
-	_draw_learning_debug(vp)
+	if _combat.debug_overlay:
+		_draw_learning_debug(vp)
 
 
 # --- Story 012: Focus (pause while connecting points) ---------------------------

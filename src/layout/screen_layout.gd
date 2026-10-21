@@ -72,6 +72,26 @@ const FLOOR_TILE_HEIGHT_RATIO: float = 0.3
 const FLOOR_TILE_GAP_X_RATIO: float = 0.015
 const FLOOR_TILE_GAP_Y_RATIO: float = 0.02
 const FLOOR_TILES_PER_ROW: int = 4
+## Title screen (Story 016), shares of the viewport: the name band (top .. bottom: game name,
+## knife motif, tagline), the button column's top, one button's size (0.3 * 1280 = 384 px wide,
+## 0.11 * 720 = 79 px tall >= 72 px) and the gap between buttons (share of height). Three
+## buttons end at 0.47 + 3 * 0.11 + 2 * 0.025 = 0.85 of the height.
+const TITLE_TOP_RATIO: float = 0.08
+const TITLE_BOTTOM_RATIO: float = 0.42
+const TITLE_BUTTONS_TOP_RATIO: float = 0.47
+const TITLE_BUTTON_WIDTH_RATIO: float = 0.3
+const TITLE_BUTTON_HEIGHT_RATIO: float = 0.11
+const TITLE_BUTTON_GAP_RATIO: float = 0.025
+## Pause button (Story 016): a square of 0.09 * 720 = 65 px (>= 64 px touch target) centred in
+## the HUD band, in the free column between the two HP bars (68 px wide at 1280x720: the band's
+## HUD_GAP_RATIO plus CombatView's paddings). The top margin above holds the match label and is
+## too thin for a touch target; both band halves end in right/left-aligned HP text.
+const PAUSE_BUTTON_RATIO: float = 0.09
+## Back button of the floor select (Story 016): width (share of width) and height (0.09 * 720 =
+## 65 px >= 64 px, share of height); sits on the left screen margin, centred in the title band
+## (the "CHỌN TẦNG" text is centred and clear of it).
+const BACK_BUTTON_WIDTH_RATIO: float = 0.1
+const BACK_BUTTON_HEIGHT_RATIO: float = 0.09
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -360,3 +380,40 @@ static func floor_tile_rects(viewport_size: Vector2, chapter_index: int, floor_c
 		var row: int = i / FLOOR_TILES_PER_ROW
 		rects.append(Rect2(origin + (size + gap) * Vector2(col, row), size))
 	return rects
+
+
+## Title screen (Story 016): the band across the top that holds the game name, the knife motif
+## and the tagline.
+static func title_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * TITLE_TOP_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * TITLE_BOTTOM_RATIO - top)
+
+
+## Title screen: [param count] buttons in one centred column under the title band, top to
+## bottom (the first is the main action). Empty for count <= 0.
+static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var size := Vector2(viewport_size.x * TITLE_BUTTON_WIDTH_RATIO, viewport_size.y * TITLE_BUTTON_HEIGHT_RATIO)
+	var gap: float = viewport_size.y * TITLE_BUTTON_GAP_RATIO
+	var left: float = (viewport_size.x - size.x) * 0.5
+	var top: float = viewport_size.y * TITLE_BUTTONS_TOP_RATIO
+	for i: int in count:
+		rects.append(Rect2(left, top + (size.y + gap) * i, size.x, size.y))
+	return rects
+
+
+## Pause button (Story 016): a square centred in the HUD band, between the two HP bars.
+static func pause_button_rect(viewport_size: Vector2) -> Rect2:
+	var hud: Rect2 = hud_rect(viewport_size)
+	var side := Vector2.ONE * viewport_size.y * PAUSE_BUTTON_RATIO
+	return Rect2(hud.get_center() - side * 0.5, side)
+
+
+## Floor select (Story 016): the "Về" (back to title) button, on the left margin inside the
+## title band.
+static func back_button_rect(viewport_size: Vector2) -> Rect2:
+	var title: Rect2 = floor_title_rect(viewport_size)
+	var size := Vector2(viewport_size.x * BACK_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
+	return Rect2(Vector2(viewport_size.x * MARGIN_RATIO, title.get_center().y - size.y * 0.5), size)

@@ -48,6 +48,7 @@ Combat start values, timing caps and the board shape (Stories 003, 007). The boa
 | `enemy_start_cell` | `[col, row]` (board cell) | cell | Optional override of where the boss starts (absent in the shipped file: the boss starts on the grid default cell and then walks, Story 009); must be a real cell of the boss's half or the grid default is used with a warning | grid default |
 | `max_tick_sec` | number > 0 | seconds | Cap on one frame's time step for logic timers, so a frame hitch cannot skip a timing window | 0.1 |
 | `feedback_sec` | number >= 0 | seconds | How long the HIT / MISS feedback stays on screen | 1.0 |
+| `pause_lockout_sec` | number >= 0 | seconds | Story 016: the pause is refused during the last this-many seconds of a running swing (the player's or the boss's), and while the skill menu is open, so it cannot be used to preview a hit. 0 = only the menu blocks it | 0.5 |
 | `step_cooldown_ref_sec` | number > 0 | seconds | Player step cooldown on a board `step_cooldown_ref_steps` steps across. Cooldown = ref_sec * (ref_steps / steps_across)^exponent, clamped to [min, max]; steps_across = max(side_cols, side_rows) - 1 (>= 1). Presses during the cooldown are dropped, not queued. Invalid values (ref_sec <= 0, ref_steps < 1, exponent < 0, min > max) fall back to defaults with a warning | 0.45 |
 | `step_cooldown_ref_steps` | integer >= 1 | steps | Reference board width in steps | 2 |
 | `step_cooldown_exponent` | number >= 0 | - | How strongly bigger boards speed stepping up (0 = constant) | 0.75 |

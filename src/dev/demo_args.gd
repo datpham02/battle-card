@@ -67,6 +67,10 @@ extends Node
 ##                                      outline, shrinking top bar, "SẮP CHÁY" tag; the player stands in that row
 ##   godot --path . -- --demo=row_burning  as row_warn, ticked past the warning: the row is on fire through
 ##                                      StatusEffects.ignite (existing burn look), 1.0 s of burning elapsed
+##   godot --path . -- --demo=paused     Story 016: the "swing" setup, then the run is PAUSED for real
+##                                      (RunController.set_paused(true, force) after the intro is skipped):
+##                                      time is NOT frozen here, the pause is what holds the swing clock,
+##                                      so two captures >= 1 s apart show the same countdown under the overlay
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -76,6 +80,8 @@ extends Node
 ##       side coordinates (col 0 = farthest from the divider; mirrored to the boss half),
 ##       e.g. --grid=4x3:0,0;0,2. Combines with any --demo (or none). Replaces side_cols /
 ##       side_rows / missing_cells of combat.json and clears the start-cell overrides.
+##   godot --path . -- --debug         DEV overlay: sets CombatView.debug_overlay (Story 016), so the HUD draws its
+##       debug text (the boss learning line "né | ngắt | giả"); hidden by default. Works with or without --demo.
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
 ## seeds the drop RNG. No argument = normal game, this node does nothing. State is set in
 ## _ready, before the first frame (the seed and the grid in _enter_tree, before
@@ -84,6 +90,7 @@ extends Node
 const DEMO_PREFIX: String = "--demo="
 const GRID_PREFIX: String = "--grid="
 const BOSS_PREFIX: String = "--boss="
+const DEBUG_ARG: String = "--debug"
 const DEMO_SEED: int = 7
 ## Freshness (s) of the boss's field points in "boss_pick"; uid base of its synthetic hand points.
 const BOSS_FIELD_FRESHNESS: Array[float] = [6.5, 3.5, 1.5]
@@ -142,6 +149,7 @@ func _enter_tree() -> void:
 		_combat().drops_seed = DEMO_SEED
 	_combat().grid_override = _parse_grid()
 	_combat().boss_set_override = _parse_boss_set()
+	_combat().debug_overlay = OS.get_cmdline_user_args().has(DEBUG_ARG)
 
 
 func _ready() -> void:
@@ -192,6 +200,14 @@ func _ready() -> void:
 			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
 			_confirm_or_warn(combat)
 			combat.get_arbiter().tick(SWING_ELAPSED_SEC)
+		"paused":
+			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
+			_confirm_or_warn(combat)
+			combat.get_arbiter().tick(SWING_ELAPSED_SEC)
+			# The pause, not the demo freeze, must hold the swing: unfreeze and pause the run once
+			# the controller holds this battle (deferred: this _ready runs inside its add_child).
+			combat.freeze_time = false
+			_pause_run.call_deferred()
 		"hit", "miss":
 			_cut_hand([_lbl("A", 1), _lbl("B", 2), _lbl("C", grid.side_cols)], [0])
 			var column: int = grid.side_cols if _mode == "hit" else grid.side_cols * 2 - 1
@@ -347,6 +363,25 @@ func _ready() -> void:
 					combat.get_status().tick(BURN_ELAPSED_SEC, combat.get_state())
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
+
+
+# Story 016 "paused" demo: finds the RunController by walking up the parents (the battle is a
+# child of the controller, which is a child of GameFlow; no group or path is assumed), skips the
+# intro through its private _begin_playing (DEV-ONLY, like the boss's _do_cut above) and pauses
+# with force so the swing lockout cannot refuse. Warns (no pause) when no controller is above.
+func _pause_run() -> void:
+	var node: Node = get_parent()
+	while node != null and not node is RunController:
+		node = node.get_parent()
+	var controller: RunController = node as RunController
+	if controller == null:
+		push_warning("DemoArgs: no RunController above the battle, 'paused' demo not paused")
+		return
+	if controller.get_state().get_phase() == RunState.Phase.INTRO:
+		controller.call("_begin_playing")
+	controller.set_paused(true, true)
+	if not controller.is_paused():
+		push_warning("DemoArgs: the run did not pause for demo '%s'" % _mode)
 
 
 # A RowBurnerTrait with default params, set up with the battle's real trait context, started,

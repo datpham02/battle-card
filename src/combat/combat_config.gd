@@ -24,6 +24,9 @@ var enemy_start_cell: Vector2i = BoardGrid.NO_CELL
 var max_tick_sec: float = 0.1
 ## Seconds the HIT / MISS feedback stays on screen.
 var feedback_sec: float = 1.0
+## Story 016: the pause is refused during the last this-many seconds of a running swing
+## (no "preview the hit" pause). 0 = only the skill menu blocks the pause.
+var pause_lockout_sec: float = 0.5
 ## Board-scaled step cooldown: [member step_cooldown_ref_sec] on a board that is
 ## [member step_cooldown_ref_steps] steps across, scaled by (ref_steps / steps_across)^exponent
 ## and clamped to [min, max]. See [method step_cooldown_for].
@@ -68,6 +71,7 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	config._validate_start_cells()
 	config.max_tick_sec = maxf(float(data.get("max_tick_sec", config.max_tick_sec)), 0.001)
 	config.feedback_sec = maxf(float(data.get("feedback_sec", config.feedback_sec)), 0.0)
+	config.pause_lockout_sec = maxf(float(data.get("pause_lockout_sec", config.pause_lockout_sec)), 0.0)
 	config._parse_step_cooldown(data)
 	return config
 

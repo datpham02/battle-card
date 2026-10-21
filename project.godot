@@ -5,6 +5,7 @@ config_version=5
 config/name="Kaiten Duel"
 config/features=PackedStringArray("4.6", "Mobile")
 run/main_scene="res://src/main.tscn"
+config/quit_on_go_back=false
 
 [display]
 

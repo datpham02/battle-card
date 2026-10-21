@@ -10,7 +10,9 @@ extends Node2D
 ## Story 014: owns ONE TraitHost per battle (boss traits from match_params["traits"]), wired
 ## to the arbiter / boss actor / both drops, ticked after the arbiter with the scaled step while
 ## both units live, torn down when the battle leaves the tree; ticks the hand's rot.
-## Implements: Story 003, Story 005, Story 006, Story 007, Story 014.
+## Story 016: [method can_pause] tells the run whether the pause button / Esc may freeze the
+## battle now; [member debug_overlay] gates the HUD's debug text.
+## Implements: Story 003, Story 005, Story 006, Story 007, Story 014, Story 016.
 
 const ENEMY_COLOR: Color = Color(0.7, 0.3, 0.3)
 const ENEMY_DEAD_COLOR: Color = Color(0.45, 0.45, 0.45)
@@ -70,6 +72,9 @@ var freeze_time: bool = false
 var drops_seed: int = RANDOM_SEED
 ## Dev/capture only: replaces the board from combat.json (DemoArgs --grid). Set before _ready.
 var grid_override: BoardGrid = null
+## DEV overlay flag (Story 016): the HUD draws its debug text (boss learning line) only when true.
+## Set by DemoArgs from the --debug user arg.
+var debug_overlay: bool = false
 
 var _config: CombatConfig
 ## Arena of this match for the HUD: {shape, variant, seed} (shape "" = the combat.json board).
@@ -388,6 +393,21 @@ func _age_flash(flash: Dictionary, step: float) -> void:
 
 ## How long the HIT/MISS marker stays on screen (UI timing, real-ish seconds of sim time).
 const FEEDBACK_SEC: float = 0.8
+
+
+## Story 016: true when the run may be paused now: not while the skill menu is open and not
+## while the player's or the boss's swing has [member CombatConfig.pause_lockout_sec] or less
+## left. No state change.
+func can_pause() -> bool:
+	if _cut_flow == null or _boss == null:
+		return false
+	if _cut_flow.is_menu_open():
+		return false
+	var lockout: float = _config.pause_lockout_sec if _config != null else 0.0
+	for actor: CutActor in [_cut_actor, _boss.get_actor()]:
+		if actor.is_swinging() and actor.get_time_left() <= lockout:
+			return false
+	return true
 
 
 ## The player's cut swing (one at a time).

@@ -14,6 +14,10 @@ extends Node2D
 ## emulate_touch_from_mouse a click also arrives as a touch; both emulated copies carry
 ## device == InputEvent.DEVICE_ID_EMULATION, are consumed on the button but never act.
 ## DEV convenience: Enter / Keypad Enter / Space (pressed, not echo) trigger the FIRST button.
+## Story 016: in PLAYING a pause button sits in the HUD band (ScreenLayout.pause_button_rect),
+## dimmed while [method RunController.can_pause] is false; while the controller is paused a
+## full-screen overlay ("TẠM DỪNG", "Tiếp tục" / "Về chọn tầng" on the run panel) swallows every
+## pointer event, and Enter / Space resume. Buttons are painted by UiButtons (shared look).
 ## All UI strings are constants here (no localization system exists yet at this tier).
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
@@ -27,12 +31,12 @@ const TEXT_WIN: Color = Color(0.45, 0.9, 0.5)
 const TEXT_LOSE: Color = Color(1.0, 0.4, 0.35)
 const TEXT_BOSS: Color = Color(1.0, 0.75, 0.2)
 const LABEL_COLOR: Color = Color(0.15, 0.12, 0.1)
-const BUTTON_BACK: Color = Color(0.13, 0.45, 0.22)
-const BUTTON_ALT_BACK: Color = Color(0.3, 0.3, 0.32)
-const BUTTON_PRESSED_BACK: Color = Color(0.06, 0.25, 0.12)
-const BUTTON_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const BUTTON_PRESSED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
 const OUTLINE_WIDTH: float = 4.0
+## Pause glyph ("||"): bar width, bar height and the gap between the bars, as shares of the
+## button side; drawn in TEXT_WHITE (dimmed with the button when pausing is not allowed).
+const PAUSE_BAR_WIDTH_RATIO: float = 0.14
+const PAUSE_BAR_HEIGHT_RATIO: float = 0.46
+const PAUSE_BAR_GAP_RATIO: float = 0.14
 
 const LABEL_FONT_SIZE: int = 16
 const BAND_TITLE_FONT_SIZE: int = 64
@@ -86,6 +90,10 @@ const TEXT_NEXT_FLOOR: String = "Tầng tiếp"
 ## Chapter-clear screen: enters the first floor of the next chapter (user decision 2026-10-21).
 const TEXT_NEXT_CHAPTER: String = "Chương tiếp"
 const TEXT_CHOOSE_FLOOR: String = "Chọn tầng"
+## Story 016 pause overlay.
+const TEXT_PAUSE_TITLE: String = "TẠM DỪNG"
+const TEXT_RESUME: String = "Tiếp tục"
+const TEXT_LEAVE_FLOOR: String = "Về chọn tầng"
 
 ## Path to the GameFlow (a sibling under Main) that owns the controller.
 @export var flow_path: NodePath = NodePath("../GameFlow")
@@ -119,29 +127,31 @@ func _on_controller_changed(controller: RunController) -> void:
 func _input(event: InputEvent) -> void:
 	if not _has_controller():
 		return
-	var labels: Array[String] = _button_labels()
-	if labels.is_empty():
+	if _controller.is_paused():
+		_input_paused(event)
 		return
+	var labels: Array[String] = _button_labels()
 	if event is InputEventKey:
+		if labels.is_empty():
+			return
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and (key.keycode == KEY_ENTER or key.keycode == KEY_KP_ENTER or key.keycode == KEY_SPACE):
 			get_viewport().set_input_as_handled()
 			_activate(0)
 		return
-	var pos: Vector2
-	if event is InputEventMouseButton:
-		var button := event as InputEventMouseButton
-		if button.button_index != MOUSE_BUTTON_LEFT or not button.pressed:
-			return
-		pos = button.position
-	elif event is InputEventScreenTouch:
-		var touch := event as InputEventScreenTouch
-		if not touch.pressed:
-			return
-		pos = touch.position
-	else:
+	var pos: Vector2 = _press_position(event)
+	if pos == Vector2.INF:
 		return
-	var rects: Array[Rect2] = ScreenLayout.run_button_rects(get_viewport_rect().size, labels.size())
+	var vp: Vector2 = get_viewport_rect().size
+	if _controller.get_state().get_phase() == RunState.Phase.PLAYING:
+		# Story 016: the pause button; a tap on it is consumed even when pausing is not allowed
+		# (set_paused is a no-op then), so nothing under the band reacts.
+		if ScreenLayout.pause_button_rect(vp).has_point(pos):
+			get_viewport().set_input_as_handled()
+			if event.device != InputEvent.DEVICE_ID_EMULATION:
+				_controller.set_paused(true)
+		return
+	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, labels.size())
 	for i: int in rects.size():
 		if rects[i].has_point(pos):
 			get_viewport().set_input_as_handled()
@@ -150,12 +160,53 @@ func _input(event: InputEvent) -> void:
 			return
 
 
+# Story 016, while paused: Enter / Space resume; EVERY pointer event is swallowed (the battle
+# is process-disabled, this keeps the d-pad / hand / cut UI from seeing a release or drag too);
+# a press on an overlay button runs it. Esc is left to GameFlow (ui_cancel -> toggle_pause).
+func _input_paused(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and not key.echo and (key.keycode == KEY_ENTER or key.keycode == KEY_KP_ENTER or key.keycode == KEY_SPACE):
+			get_viewport().set_input_as_handled()
+			_activate(0)
+		return
+	if not (event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag):
+		return
+	get_viewport().set_input_as_handled()
+	var pos: Vector2 = _press_position(event)
+	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
+	var rects: Array[Rect2] = ScreenLayout.run_button_rects(get_viewport_rect().size, _button_labels().size())
+	for i: int in rects.size():
+		if rects[i].has_point(pos):
+			_activate(i)
+			return
+
+
+# Position of a left mouse press or a touch press; Vector2.INF for any other event.
+func _press_position(event: InputEvent) -> Vector2:
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		if button.button_index == MOUSE_BUTTON_LEFT and button.pressed:
+			return button.position
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			return touch.position
+	return Vector2.INF
+
+
 func _has_controller() -> bool:
 	return _controller != null and _controller.get_state() != null
 
 
 # Labels of the buttons of the current phase, left to right; empty when the phase has none.
+# Story 016: while paused, the overlay's buttons (only "Tiếp tục" without a GameFlow).
 func _button_labels() -> Array[String]:
+	if _controller.is_paused():
+		if _flow == null:
+			return [TEXT_RESUME]
+		return [TEXT_RESUME, TEXT_LEAVE_FLOOR]
 	match _controller.get_state().get_phase():
 		RunState.Phase.BETWEEN:
 			return [TEXT_CONTINUE]
@@ -176,6 +227,12 @@ func _button_labels() -> Array[String]:
 func _activate(index: int) -> void:
 	var labels: Array[String] = _button_labels()
 	if index < 0 or index >= labels.size():
+		return
+	if _controller.is_paused():
+		if index == 0:
+			_controller.set_paused(false)
+		else:
+			_flow.leave_floor()
 		return
 	match labels[index]:
 		TEXT_CONTINUE:
@@ -212,6 +269,9 @@ func _draw() -> void:
 			_draw_intro(vp)
 		RunState.Phase.PLAYING:
 			_draw_match_label(vp)
+			_draw_pause_button(vp)
+			if _controller.is_paused():
+				_draw_paused(vp)
 		RunState.Phase.BETWEEN:
 			_draw_match_label(vp)
 			_draw_between(vp)
@@ -324,6 +384,30 @@ func _draw_lost(vp: Vector2) -> void:
 	_draw_buttons(vp)
 
 
+# Story 016: the pause button in the HUD band — a neutral button with a "||" glyph, dimmed
+# while the controller cannot pause (skill menu open, swing lockout, already paused).
+func _draw_pause_button(vp: Vector2) -> void:
+	var rect: Rect2 = ScreenLayout.pause_button_rect(vp)
+	var enabled: bool = _controller.can_pause()
+	UiButtons.draw_button(self, rect, "", UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, rect), enabled)
+	var side: float = rect.size.y
+	var bar := Vector2(side * PAUSE_BAR_WIDTH_RATIO, side * PAUSE_BAR_HEIGHT_RATIO)
+	var gap: float = side * PAUSE_BAR_GAP_RATIO
+	var color: Color = TEXT_WHITE
+	if not enabled:
+		color.a *= UiButtons.DIM_ALPHA
+	var center: Vector2 = rect.get_center()
+	draw_rect(Rect2(center - Vector2(gap * 0.5 + bar.x, bar.y * 0.5), bar), color)
+	draw_rect(Rect2(center - Vector2(-gap * 0.5, bar.y * 0.5), bar), color)
+
+
+# Story 016: the pause overlay — dim, panel, "TẠM DỪNG" and the resume / leave buttons.
+func _draw_paused(vp: Vector2) -> void:
+	var panel: Rect2 = _draw_panel(vp)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, TEXT_PAUSE_TITLE, TITLE_FONT_SIZE, TEXT_LIGHT)
+	_draw_buttons(vp)
+
+
 # Dim overlay over the whole screen plus the centred panel; returns the panel rect.
 func _draw_panel(vp: Vector2) -> Rect2:
 	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
@@ -333,15 +417,13 @@ func _draw_panel(vp: Vector2) -> Rect2:
 	return panel
 
 
-# The buttons of the current phase, left to right (the first is the main action).
+# The buttons of the current phase, left to right (the first is the main action, PRIMARY; the
+# others SECONDARY — NEUTRAL on the pause overlay, where the second one leaves the floor).
 func _draw_buttons(vp: Vector2) -> void:
 	var labels: Array[String] = _button_labels()
 	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, labels.size())
 	var font_size: int = BUTTON_FONT_SIZE if labels.size() == 1 else BUTTON_PAIR_FONT_SIZE
+	var alt_style: int = UiButtons.Style.NEUTRAL if _controller.is_paused() else UiButtons.Style.SECONDARY
 	for i: int in rects.size():
-		var rect: Rect2 = rects[i]
-		var pressed: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and rect.has_point(get_viewport().get_mouse_position())
-		var back: Color = BUTTON_BACK if i == 0 else BUTTON_ALT_BACK
-		draw_rect(rect, BUTTON_PRESSED_BACK if pressed else back)
-		draw_rect(rect, BUTTON_PRESSED_OUTLINE if pressed else BUTTON_OUTLINE, false, OUTLINE_WIDTH)
-		_text(rect, rect.get_center().y + font_size * 0.35, labels[i], font_size, TEXT_WHITE)
+		var style: int = UiButtons.Style.PRIMARY if i == 0 else alt_style
+		UiButtons.draw_button(self, rects[i], labels[i], style, UiButtons.is_pressed_at(self, rects[i]), true, font_size)

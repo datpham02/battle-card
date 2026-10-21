@@ -1,9 +1,11 @@
 class_name GameFlow
 extends Node2D
-## The thin layer above one run (Story 015): chapters/floors data, the saved progress, the floor
+## The thin layer above one run (Story 015, Story 016): chapters/floors data, the saved progress, the floor
 ## being played, and ONE RunController child created when a floor is entered and freed when it
-## is left. Phases: FLOOR_SELECT (the FloorSelectView child draws and takes taps) and IN_FLOOR
-## (the RunController and RunHudView take over). Draws nothing itself. Direct child of Main in
+## is left. Phases: TITLE (Story 016, the first screen), FLOOR_SELECT (the FloorSelectView child
+## draws and takes taps) and IN_FLOOR (the RunController and RunHudView take over). [method go_back]
+## (Esc, Android back) acts per phase: IN_FLOOR toggles the pause, FLOOR_SELECT -> TITLE, TITLE ->
+## quit. App pause / focus loss while IN_FLOOR force-pauses the battle. Draws nothing itself. Direct child of Main in
 ## main.tscn, in place of the old RunController; RunHudView (a sibling) gets the controller
 ## through [signal controller_changed].
 ##
@@ -17,6 +19,8 @@ extends Node2D
 ##                              floor unlocked / ch1 floor 1 cleared + floor 2 in progress
 ##   --floor=ch1/f3[:resume]    skip the floor select and enter that floor from match 1 (or
 ##                              resume its in-progress match)
+##   --title                    show the title even with --progress=... (without it --progress alone starts
+##                              at the floor select; no dev arg at all starts at the title)
 ##   --seed=N                   force the floor seed (reproducible arenas)
 ##   --match=, --run=, --demo=, --arena=  (RunController / DemoArgs args) also switch to a memory
 ##                              store and, without --floor, enter chapter 1 floor 1
@@ -26,11 +30,16 @@ signal phase_changed(phase: int)
 ## Emitted when the RunController was created (after add_child) or is about to be freed (null).
 signal controller_changed(controller: RunController)
 
-enum Phase { FLOOR_SELECT, IN_FLOOR }
+enum Phase { TITLE, FLOOR_SELECT, IN_FLOOR }
 
 const PROGRESS_ARG: String = "--progress="
 const FLOOR_ARG: String = "--floor="
 const SEED_ARG: String = "--seed="
+const TITLE_ARG: String = "--title"
+## DEV-ONLY: disables the auto-pause on focus loss (windowed scratch tests run unfocused).
+const NO_AUTOPAUSE_ARG: String = "--no-autopause"
+## Platforms without a Quit button (Apple rules): [method can_show_quit] is false there.
+const NO_QUIT_OS_NAMES: Array[String] = ["iOS"]
 const RESUME_SUFFIX: String = ":resume"
 const PROGRESS_NONE: String = "none"
 const PROGRESS_ALL: String = "all"
@@ -49,11 +58,13 @@ const NO_FLOOR: Vector2i = Vector2i(-1, -1)
 var _config: ChaptersConfig
 var _store: ProgressStore = null
 var _progress: ProgressState
-var _phase: Phase = Phase.FLOOR_SELECT
+var _phase: Phase = Phase.TITLE
 var _controller: RunController = null
 var _current: Vector2i = NO_FLOOR
 var _floor_seed: int = 0
 var _dev_seed: int = -1
+## DEV-ONLY: true with --no-autopause (see [constant NO_AUTOPAUSE_ARG]).
+var _no_autopause: bool = false
 
 
 ## Test hook: installs the store BEFORE the node enters the tree (wins over --progress args).
@@ -63,10 +74,10 @@ func set_store_for_test(store: ProgressStore) -> void:
 
 ## Test hook (scratch flow tests): runs an ad-hoc single-floor RunConfig (the flat format read
 ## by RunConfig.load_from_file) as a floor outside the chapter list. No progress is written
-## (_current stays NO_FLOOR), the floor label is empty, the store is swapped to memory.
+## (_current stays NO_FLOOR, so the progress callbacks return early); the floor label is empty;
+## the store installed by [method set_store_for_test] (or the real one) is left untouched.
 func enter_test_floor(run_config: RunConfig) -> RunController:
 	_free_controller()
-	_store = ProgressStore.memory_store()
 	_current = NO_FLOOR
 	var controller := RunController.new()
 	controller.name = CONTROLLER_NODE
@@ -86,8 +97,13 @@ func _ready() -> void:
 	var progress_mode: String = ""
 	var floor_text: String = ""
 	var dev_run: bool = false
+	var force_title: bool = false
 	for arg: String in args:
-		if arg.begins_with(PROGRESS_ARG):
+		if arg == TITLE_ARG:
+			force_title = true
+		elif arg == NO_AUTOPAUSE_ARG:
+			_no_autopause = true
+		elif arg.begins_with(PROGRESS_ARG):
 			progress_mode = arg.trim_prefix(PROGRESS_ARG)
 		elif arg.begins_with(FLOOR_ARG):
 			floor_text = arg.trim_prefix(FLOOR_ARG)
@@ -100,6 +116,8 @@ func _ready() -> void:
 	if _store == null:
 		_store = _make_store(progress_mode, dev_run)
 	_progress = _load_progress(progress_mode)
+	# Start phase: TITLE without dev args (or with --title); --progress alone -> FLOOR_SELECT.
+	_phase = Phase.FLOOR_SELECT if (not progress_mode.is_empty() and not force_title) else Phase.TITLE
 	if not floor_text.is_empty():
 		var resume: bool = floor_text.ends_with(RESUME_SUFFIX)
 		var pos: Vector2i = _config.find_floor(floor_text.trim_suffix(RESUME_SUFFIX))
@@ -109,6 +127,21 @@ func _ready() -> void:
 			enter_floor(pos.x, pos.y, not resume)
 	elif dev_run:
 		enter_floor(0, 0, true)
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_WM_GO_BACK_REQUEST:
+			go_back()
+		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+			if _phase == Phase.IN_FLOOR and _controller != null and not _no_autopause:
+				_controller.set_paused(true, true)
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		go_back()
 
 
 ## Current [enum Phase].
@@ -174,6 +207,65 @@ func enter_floor(ci: int, fi: int, from_start: bool) -> void:
 	add_child(controller)
 	_set_phase(Phase.IN_FLOOR)
 	controller_changed.emit(controller)
+
+
+## Story 016: shows the title screen; frees the controller if a floor was running (the progress
+## is not changed).
+func show_title() -> void:
+	_free_controller()
+	_current = NO_FLOOR
+	_set_phase(Phase.TITLE)
+
+
+## Story 016: shows the floor select; frees the controller if a floor was running.
+func show_floor_select() -> void:
+	_free_controller()
+	_current = NO_FLOOR
+	_set_phase(Phase.FLOOR_SELECT)
+
+
+## Title "Chơi": TITLE -> FLOOR_SELECT. Ignored in other phases.
+func start_requested() -> void:
+	if _phase == Phase.TITLE:
+		show_floor_select()
+
+
+## True when the save has an in-progress record whose floor still exists in the chapters data.
+func has_continue() -> bool:
+	var saved: Dictionary = _progress.get_in_progress()
+	return not saved.is_empty() and _config.find_floor(str(saved["floor"])) != NO_FLOOR
+
+
+## Title "Tiếp tục": resumes the in-progress floor at its saved match. Ignored without a record.
+func continue_requested() -> void:
+	if not has_continue():
+		return
+	var pos: Vector2i = _config.find_floor(str(_progress.get_in_progress()["floor"]))
+	enter_floor(pos.x, pos.y, false)
+
+
+## Title "Thoát": quits the game.
+func quit_requested() -> void:
+	get_tree().quit()
+
+
+## False on platforms that must not show a Quit button (iOS).
+func can_show_quit() -> bool:
+	return not NO_QUIT_OS_NAMES.has(OS.get_name())
+
+
+## Back / Esc by phase: IN_FLOOR toggles the pause (nothing when not pausable), FLOOR_SELECT ->
+## TITLE, TITLE -> quit (not on iOS).
+func go_back() -> void:
+	match _phase:
+		Phase.IN_FLOOR:
+			if _controller != null:
+				_controller.toggle_pause()
+		Phase.FLOOR_SELECT:
+			show_title()
+		Phase.TITLE:
+			if can_show_quit():
+				quit_requested()
 
 
 ## Back to the floor select; frees the controller. The progress is not changed (a floor left

@@ -8,7 +8,10 @@ extends Node2D
 ## draws nothing; the run screens read its getters.
 ## Story 015: GameFlow spawns one controller per floor and calls [method configure] BEFORE
 ## add_child; without it the controller loads the flat file at [member run_config_path] (tests,
-## ad-hoc floors). Implements: Story 011, Story 015.
+## ad-hoc floors). Story 016: PAUSE = the battle node's process_mode is DISABLED (the same freeze
+## INTRO uses): all its _process/_input stop; the run clock and timers here stop too. Only PLAYING
+## can be paused; the flag is cleared when the match ends or a new battle spawns.
+## Implements: Story 011, Story 015, Story 016.
 ##
 ## DEV-ONLY user args (after "--"), for screenshots; timers are frozen, nothing auto-advances:
 ##   --match=N                 start at match N (1-based)
@@ -25,6 +28,8 @@ signal battle_spawned(battle: Node)
 ## Emitted when a match enters PLAYING (Story 015): GameFlow records the floor in progress.
 ## [param hp_at_match_start] negative = full HP.
 signal match_started(match_index: int, hp_at_match_start: float)
+## Emitted when the pause flag changed (Story 016).
+signal paused_changed(paused: bool)
 
 const BATTLE_SCENE_PATH: String = "res://src/battle/battle.tscn"
 const COMBAT_VIEW_NODE: String = "CombatView"
@@ -51,6 +56,7 @@ var _intro_left: float = 0.0
 var _between_left: float = 0.0
 var _last_player_hp: float = 0.0
 var _frozen: bool = false
+var _paused: bool = false
 ## DEV-ONLY arena override for match 1 (empty = none).
 var _dev_arena: Dictionary = {}
 
@@ -93,6 +99,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _paused:
+		if _state.get_phase() != RunState.Phase.PLAYING:
+			_clear_pause()
+		return
 	if _frozen:
 		return
 	match _state.get_phase():
@@ -107,6 +117,44 @@ func _process(delta: float) -> void:
 				_between_left -= delta
 				if _between_left <= 0.0:
 					advance_requested()
+
+
+## True while the battle is paused (Story 016).
+func is_paused() -> bool:
+	return _paused
+
+
+## Story 016: true when [method set_paused] would pause now: phase PLAYING, not paused, a battle
+## exists and its [method CombatView.can_pause] allows it.
+func can_pause() -> bool:
+	if _paused or _state.get_phase() != RunState.Phase.PLAYING:
+		return false
+	var view: CombatView = _get_view()
+	return view != null and view.can_pause()
+
+
+## Story 016: pauses / resumes the battle. Pausing needs phase PLAYING and ([param force] or
+## [method can_pause]); resuming is always allowed. Emits [signal paused_changed] on a change.
+func set_paused(paused: bool, force: bool = false) -> void:
+	if paused == _paused:
+		return
+	if paused:
+		if _state.get_phase() != RunState.Phase.PLAYING or _battle == null:
+			return
+		if not force and not can_pause():
+			return
+		_battle.process_mode = Node.PROCESS_MODE_DISABLED
+		_paused = true
+	else:
+		_paused = false
+		if _battle != null and _state.get_phase() == RunState.Phase.PLAYING:
+			_battle.process_mode = Node.PROCESS_MODE_INHERIT
+	paused_changed.emit(_paused)
+
+
+## Story 016: resumes when paused, else pauses when allowed.
+func toggle_pause() -> void:
+	set_paused(not _paused)
 
 
 ## The run logic (phase, match index, clock, carried HP). Null before [method configure] / _ready.
@@ -193,6 +241,7 @@ func _begin_playing() -> void:
 
 func _spawn_battle() -> void:
 	_free_battle()
+	_clear_pause()
 	var battle: Node = (load(BATTLE_SCENE_PATH) as PackedScene).instantiate()
 	var view := battle.get_node(COMBAT_VIEW_NODE) as CombatView
 	# The match spec already carries "arena" and "arena_seed" (ChaptersConfig.resolved_floor).
@@ -219,6 +268,13 @@ func _match_label() -> String:
 	return TEXT_FLOOR_MATCH_LABEL % [floor_label, index, count]
 
 
+# Drops the pause flag (emits when it was set); does not touch process_mode.
+func _clear_pause() -> void:
+	if _paused:
+		_paused = false
+		paused_changed.emit(false)
+
+
 func _free_battle() -> void:
 	if _battle == null:
 		return
@@ -231,6 +287,7 @@ func _on_match_ended(player_won: bool, player_hp: float) -> void:
 	if _state.get_phase() != RunState.Phase.PLAYING:
 		return
 	_last_player_hp = player_hp
+	_clear_pause()
 	_freeze_battle()
 	if player_won:
 		_state.on_match_won(player_hp, get_player_max_hp())
