@@ -39,12 +39,12 @@ Mỗi đòn chốt làm điểm trên sân ôi nhanh hơn trong 3 s: spam đòn 
 Nếu túi xáo vẫn cho những ván "không ra gì", thử kịch bản nửa cố định: 12 lần rơi đầu theo thứ tự thiết kế, sau đó mới túi xáo. Mất tính chơi lại, nên là phương án lùi.
 
 ### Cấu trúc chương / tầng → **Story 015 (viết 2026-10-20)**
-Đã chốt thêm ở cổng 4: thua giữa tầng → chơi lại **đúng trận đã thua** (cùng sân, máu ≥ 50%); pool rút **từng trận**; save data = tầng đã xong + tầng đang dở theo mốc trận (người dùng yêu cầu tiếp tục được sau khi tắt app). Phần còn lại giữ nguyên bên dưới làm truy vết.
+Đã chốt thêm ở cổng 4: thua giữa tầng → chơi lại **đúng trận đã thua** (cùng sân, máu ≥ 50%); pool rút **từng trận**; save data = tầng đã xong + tầng đang dở theo mốc trận. **v4 (2026-10-22) thay luật chơi lại bằng chết-là-hết-run (Story 019); màn chọn tầng thành chọn chương.** Phần còn lại giữ nguyên bên dưới làm truy vết.
 
 Người dùng muốn người chơi vượt chương/tầng: mỗi tầng N trận rồi boss. Một run hiện nay = một tầng, nên `run.json` sẽ thành `chapters: [{id, tên, matches, boss}]` và `RunState` nhận một chương; thêm màn chọn chương và màn qua tầng; thắng boss tầng N mở tầng N+1 (cần lưu ít nhất tầng cao nhất → kéo một phần meta progression vào). Quyết định tạm: tầng thấp dùng **một hình cố định cho cả tầng** để học được; tầng cao rút **ngẫu nhiên từ nhóm hình** (`arena_pool`) kèm biến thể có kiểm (Story 014) nên mỗi lần vào là một sân khác; **máu không mang qua tầng**, mỗi tầng bắt đầu đầy, trong tầng mang như hiện nay. Story 013/014 (sân, hồ sơ, trait theo trận) là nền cho tầng khác nhau.
 
-### Meta progression bằng "thực đơn"
-Mở khóa kỹ năng mới và chọn bộ 4 kỹ năng mang vào run (deckbuilding nhẹ) thay cho nâng chỉ số. Cần Story 011 và nhiều hơn 4 kỹ năng.
+### Meta progression bằng "thực đơn" → **Story 017–019 (v4, 2026-10-22)**
+Đã thành lớp roguelike: lá bài (017), nhân vật theo lớp (018), thưởng lá và run (019). Còn lại cho sau: bỏ/nâng lá giữa tầng, xem bộ bài trong run, cửa hàng và tiền, sự kiện giữa trận, **item hồi sinh** (người dùng: chết là hết trước, hồi sinh thêm sau), mở pool lá theo `seen_cards`, mở khóa nhân vật 4–5 (Thợ săn, Giáo sĩ).
 
 ### Daily Counter
 Túi xáo có seed theo ngày; mọi người gặp cùng chuỗi điểm, so điểm. Offline hoàn toàn; bảng xếp hạng online là tùy chọn sau. Cần điểm số và Story 011.

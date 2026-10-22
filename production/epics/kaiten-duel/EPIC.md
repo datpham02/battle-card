@@ -26,6 +26,10 @@ Thẻ đánh theo hình dạng tầm, Guard và Parry/Posture bị thay bằng *
 
 Story 007 viết lại; 008 (boss chơi thẻ) → **hệ cắt của người chơi**; 009 (Parry) → **boss cắt + ngắt đòn**; 010/011 sửa theo. Story 006 giữ In Progress: lưới và khung đòn là nền; Step/Guard/shapes của nó bị gỡ ở 007–008.
 
+## Pivot v4 — 2026-10-22 (sau Story 016, cả 16 story xong)
+
+Người dùng quyết định: **bỏ chủ đề bếp sushi, dựng thế giới fantasy** (ấn, trận pháp, phép; chương là vùng đất) và **thêm lớp roguelike**: 3–5 nhân vật theo lớp với bộ bài khởi đầu, menu phép rút 4 lá từ bộ, chọn 1 trong 3 lá sau mỗi trận, máu là tài nguyên cả run, **chết là hết run** (hồi sinh là item thêm sau). Luật "chơi lại trận đã thua" của Story 015 bị thay ở 019. Cơ chế lõi v3 không đổi. Brief v4 là bản ghi; tên làm việc "Ấn Kiếm", repo giữ tên.
+
 ## Scope
 
 Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, meta progression (ngoại lệ từ 015: lưu tầng đã mở), quảng cáo/IAP, nhiều nhân vật/map, online/PvP, accessibility, đa ngôn ngữ.
@@ -41,7 +45,10 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 7. Tập trung (012), hồ sơ boss + cooldown theo sân (013), khung boss: sân + trait (014) → **Cổng quyết định 4**
 8. Chương và tầng + lưu tiến độ (015)
 9. Vỏ game: title, tạm dừng, back, debug (016)
-10. Nội dung chương (017), lên máy thật (018) — story viết sau 016
+10. Lá bài và bộ bài + đổi vỏ fantasy (017)
+11. Nhân vật theo lớp (018)
+12. Run roguelike (019) → **Cổng quyết định 5: run đầu tiên có thật**
+13. Nội dung chương 2–3, lên Android, hình và âm — story viết sau cổng 5
 
 **Cổng quyết định 1 (sau 003, v1):** "tạm ổn", thiếu áp lực → đi tiếp.
 **Cổng quyết định 2 (sau 005, v1):** băng chuyền khó thao tác, địch theo giờ nhàm, 3 làn basic → pivot v2.
@@ -67,3 +74,6 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 014 | Khung boss: sân riêng theo trận + đặc điểm (trait) cắm được, 2 trait mẫu | Integration | Complete | N/A (minimal) |
 | 015 | Chương và tầng: một run là một tầng, sân cố định/pool theo tầng, lưu tầng đã mở, màn chọn tầng và qua tầng | Integration | Complete | N/A (minimal) |
 | 016 | Vỏ game: màn title, tạm dừng, nút back, tắt dòng debug | UI | Complete | N/A (minimal) |
+| 017 | Lá bài và bộ bài: cards.json, Deck, menu rút 4 lá; đổi vỏ fantasy (dữ liệu, chuỗi) | Integration | Ready | N/A (minimal) |
+| 018 | Nhân vật theo lớp: characters.json, nội tại cắm được, bộ khởi đầu, màn chọn nhân vật | Integration | Ready | N/A (minimal) |
+| 019 | Run roguelike: thưởng 1 trong 3 lá, máu cả run, chết là hết, chọn chương, save run | Integration | Ready | N/A (minimal) |

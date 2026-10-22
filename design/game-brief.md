@@ -1,117 +1,95 @@
-# Game Brief: Kaiten Duel
+# Game Brief: Ấn Kiếm (tên làm việc; repo vẫn là Kaiten Duel)
 
-> **v3 — 2026-10-18.** Pivot lần ba, trước khi làm Story 007. Thẻ đánh theo hình dạng tầm, Guard và Parry/Posture bị thay bằng **hệ cắt (Pattern Draw)**: thứ rơi xuống sân là **điểm cắt** mang tọa độ chu vi bàn đối thủ; nối điểm thành đường dao chém thẳng xuống bàn boss; càng phủ nhiều ô đòn càng nặng nhưng càng lâu ra. Lịch sử: v1 băng chuyền (`2f4e31b`), v2 lưới 3×3 + quầy chung (`be73d17`), v2.1 điểm rơi + nút di chuyển (chưa commit, gộp vào v3).
+> **v4 — 2026-10-22.** Sau cổng chơi thử 4 và khi cả 16 story đã xong, người dùng quyết định hai việc: (1) **bỏ chủ đề bếp sushi, dựng thế giới fantasy**; (2) **thêm lớp roguelike**: 3–5 nhân vật theo lớp, bộ bài khởi đầu theo lớp, đi tầng để nhặt lá và build bộ bài, **chết là hết run** (hồi sinh là item thêm sau). Cơ chế lõi của v3 giữ nguyên, chỉ đổi vỏ: điểm cắt → **ấn**, đường dao → **trận pháp**, kỹ năng → **phép** (lá bài). Lịch sử: v1 băng chuyền (`2f4e31b`), v2 lưới 3×3 + quầy chung (`be73d17`), v3 hệ cắt (`e9efe25`), v3 hoàn thiện đến Story 016 (`0974bd9`).
 
-**One-sentence pitch:** Đấu thời gian thực trên hai lưới 3×3 đối mặt, nơi bạn chạy nhặt những điểm cắt rơi xuống sân mình rồi nối chúng thành đường dao chém thẳng xuống bàn của boss; hình càng phủ nhiều ô đòn càng nặng nhưng càng lâu ra, và boss cũng làm y hệt với bạn.
+**One-sentence pitch:** Đấu phép thời gian thực trên hai trận địa đối mặt: bạn chạy nhặt những **ấn** rơi xuống đất mình, nối chúng thành **trận pháp** vẽ thẳng lên đất địch rồi thi triển một **lá phép**; trận pháp càng phủ nhiều ô phép càng mạnh nhưng niệm càng lâu, ai thi triển trước thì phá phép của người kia; mỗi run chọn một nhân vật, nhặt lá qua từng tầng, **chết là hết**.
 
-## Core loop
+## Thế giới (vỏ, không đổi cơ chế)
+- Hai lưới đối mặt là hai **trận địa**. Thứ rơi xuống là **ấn** (rune) mang tọa độ chu vi trận địa đối thủ. Nối ấn = vẽ **trận pháp**; bấm **Thi triển** = niệm; khoảng vung = thời gian niệm, hiện đỏ trên đất địch; **phá phép** = ngắt đòn hai chiều.
+- **Lá phép** (card) là biến thể trên cùng trận pháp: *Kiếm khí* (Chém), *Chấn phong* (Đẩy), *Hỏa trận* (Đốt), *Băng phong* (Ghim). Hiệu ứng y nguyên bảng v3.
+- **Đặc điểm boss** (trait, Story 014) đổi tên: hàng cháy → *Hỏa tức* (hơi thở lửa quét một hàng), điểm hỏng → *Ấn nguyền* (ấn bị nguyền, chiếm chỗ trong túi ấn, tự tan sau vài giây).
+- **Chương** = vùng đất. Chương 1 *Rừng Sương* (sân vuông, chữ nhật; goblin, sói), chương 2 *Hầm Ngục* (sân có lỗ, hai đảo; quỷ, xác sống), chương 3 *Tháp Pháp Sư* (vòng, kim cương, biến thể; pháp sư tà đạo, golem). Tên boss, trait và số của chương 2–3 là nội dung, làm dần.
+- Tên nhân vật, lá, chương, boss, vùng đất là **dữ liệu** (`characters.json`, `cards.json`, `chapters.json`), không có chuỗi chủ đề nào trong mã ngoài nhãn UI chung (nút, tiêu đề màn).
+
+## Core loop (cơ chế v3, giữ nguyên số)
 
 ### Sân và di chuyển
-- Hai lưới 3×3 đối mặt (bàn 6×3). Mỗi bên chỉ đi trong nửa sân của mình. **Kích thước và hình lưới là dữ liệu** (`side_cols`, `side_rows`, `missing_cells`): chữ nhật hoặc hình ghép từ ô vuông có ô khuyết (chữ thập, kim cương, có lỗ); hai bên luôn cùng hình, đối xứng qua vạch giữa; lục giác/tròn không làm. Nhãn chu vi sinh theo lưới (A/C có `side_cols` điểm, B/D có `side_rows` điểm). Mọi số cân bằng dưới đây là cho 3×3; lưới khác phải chỉnh lại.
-- **Nút di chuyển 4 hướng** ở góc dưới trái, mỗi lần bấm đi **một ô**, cooldown bước **0,45 s**. Bấm trong lúc cooldown thì **mất, không nhớ lệnh**. Thanh cooldown hiện dưới chân nhân vật.
-- Bước lên ô có điểm là nhặt, nên mỗi lần đi nhặt là tự khóa mình 0,45 s ở ô đó. Đây là rủi ro có chủ ý.
+- Hai lưới đối mặt; mỗi bên đi trong nửa của mình. **Kích thước và hình lưới là dữ liệu** (`side_cols`, `side_rows`, `missing_cells`; thư viện 8 hình trong `arenas.json`, biến thể seeded có kiểm). Nhãn chu vi sinh theo lưới (A/C theo cột, B/D theo hàng).
+- **Nút di chuyển 4 hướng**, một ô mỗi lần, không nhớ lệnh. **Cooldown bước theo sân**: `0,45 × (2 / (max(cột, hàng) − 1)) ^ 0,75`, kẹp [0,18; 0,60]. Bước lên ô có ấn là nhặt (tự khóa mình một cooldown).
 
-### Điểm cắt rơi
-- **Điểm** rơi xuống **ô trống ngẫu nhiên bên nửa sân mình**, không rơi vào ô đang đứng. Mỗi điểm mang một **nhãn tọa độ trên chu vi ô vuông 3×3 của đối thủ**: cạnh **A** trên, **B** phải, **C** dưới, **D** trái; số **1–3**. A và C đánh số theo cột (A1 trên cột 1, C1 dưới cột 1); B và D đánh số theo hàng (D2 trái hàng 2, B2 phải hàng 2). Vì thế A1→C1 là cả cột 1, D2→B2 là cả hàng 2.
-- Điểm trên sân có **độ tươi 7 s**, đổi màu khi sắp ôi, hết giờ thì biến mất. **Trong tay không ôi.** Tay tối đa **4 điểm**; tay đầy thì điểm nằm lại trên ô.
-- **Luật rơi** (ba lớp, lớp 1–2 là MVP):
-  1. **Túi xáo**: mỗi bên một túi đủ 12 nhãn; mỗi lần rơi rút một nhãn, hết túi xáo lại. Không nhãn nào vắng quá 12 lần rơi; người chơi học được "D2 chưa ra thì sắp ra".
-  2. **Nhịp gắn với trận**: nhịp nền **1,8 s** một điểm, tối đa **4 điểm** trên nửa sân; điểm **được phép rơi vào ô đang nằm trong đường dao** của đối thủ (nhặt hay không là quyết định liều); **bù khi đói**: tay trống quá **4 s** thì nhịp nhân **0,6** đến khi nhặt được.
-  3. **Thủ đoạn của boss** (sau MVP, xem backlog): ôi nhanh hơn khi nổi giận, ném điểm hỏng, hút điểm.
-- Boss dùng **đúng túi và đúng nhịp** như bạn, trên nửa sân của nó.
-- Không hiện trước nhãn sắp rơi; không rơi theo kịch bản cố định.
+### Ấn rơi
+- Rơi xuống ô trống ngẫu nhiên bên mình theo **túi xáo** đủ nhãn, **nhịp 1,8 s**, tối đa 4 trên sân, **độ tươi 7 s** (trong túi không ôi), bù khi đói (túi trống > 4 s → nhịp × 0,6). Túi ấn tối đa **4**. Boss dùng đúng túi và nhịp.
+- Không hiện trước nhãn sắp rơi; không rơi theo kịch bản.
 
-### Cắt
-- **1 điểm**: chọn 1 điểm rồi bấm **Chốt** là **chém ngay, không menu**: đường thẳng từ điểm đó sang điểm đối diện (A1→C1, D2→B2), phủ 3 ô. Đây là đòn nhanh của game.
-- **2–4 điểm**: chạm lần lượt các điểm trong tay (thứ tự chạm là thứ tự nối) rồi bấm **Chốt**; 2 điểm là đoạn thẳng, 3–4 điểm là đa giác, vẽ **trực tiếp trên bàn đối thủ**. **Tập ô phủ** = ô mà cạnh đi qua + ô nằm trong lòng đa giác. Bản xem trước hiện tập ô sáng lên và **số ô đang phủ** theo thời gian thực, trước khi chốt. Chốt là tốn điểm, không hủy.
-- **Sát thương = sát thương cơ bản × số ô phủ**, trúng nếu ô đối thủ nằm trong tập lúc chém. Đường cắt nằm trên bàn đối thủ, **không phụ thuộc mình đứng đâu**.
-- **Khoảng vung = 0,2 s + 0,25 s × số ô** (3 ô ≈ 0,95 s, 9 ô ≈ 2,45 s). Trong khoảng vung tập ô sáng **đỏ trên bàn đối thủ**, đếm ngược rồi mới chém. **Đang vung vẫn di chuyển được.** Mỗi bên chỉ một đòn đang vung tại một thời điểm.
-- Không có Guard, không có giáp, không có Parry. **Phòng thủ = bước ra khỏi tập ô, hoặc đua đồng hồ** (xem Ngắt đòn).
+### Trận pháp và phép
+- **1 ấn** + Thi triển = *Kiếm khí* ngay, đường thẳng sang điểm đối diện, không menu. **2–4 ấn**: chạm lần lượt (thứ tự chạm = thứ tự nối), xem trước tập ô và số ô, bấm Thi triển.
+- **Sát thương = 6 × số ô phủ**; **thời gian niệm = 0,2 s + 0,25 s × số ô**; đang niệm vẫn đi được; mỗi bên một phép đang niệm.
+- **Tập trung**: chọn ấn đầu tiên dừng hẳn trận tối đa 4 s, cooldown 8 s, không đi được khi dừng. Boss không có.
+- **Menu phép** sau khi Thi triển 2–4 ấn: chậm 0,2×, 3 s chọn, hết giờ tự *Kiếm khí*. Lá chưa đủ ô hiện khóa "cần N ô". **v4: menu rút 4 lá từ bộ bài** (xem Roguelike) thay vì 4 phép cố định.
+- **Phá phép**: ai chạm ô đối thủ trước thì hủy phép đối thủ đang niệm; ấn đã dùng của bên bị hủy mất luôn.
 
-### Tập trung (dừng khi nối điểm, từ phản hồi chơi thử, 2026-10-20)
-- Khi Tập trung sẵn sàng, chọn điểm đầu tiên trong tay **dừng hẳn** trận (boss, đồng hồ vung, điểm rơi, mọi cooldown). Tối đa **4 s thật** (thanh đếm cạnh nút Chốt); hết giờ trận chạy lại và giữ nguyên điểm đã chọn; bấm Chốt hoặc bỏ chọn hết thì kết thúc sớm. Sau đó **cooldown 8 s**, trong lúc đó chọn điểm không dừng trận nên đòn 1 điểm vẫn nhanh. **Không di chuyển được khi đang dừng.** Boss không có Tập trung. Số trong `skills.json` (`focus_time_scale` 0 = dừng hẳn, > 0 = chậm).
-
-### Menu kỹ năng
-- Sau khi chốt 2–4 điểm, menu kỹ năng hiện và game **chậm còn 0,2×** (`skill_menu_time_scale`; đặt 0 là dừng hẳn kiểu Mega Man Battle Network). Có **3 s thật** để chọn; hết giờ **tự chọn Chém**. Boss cũng chọn trong khoảng chậm đó, không được nghĩ lâu hơn bạn.
-- Kỹ năng là **biến thể trên cùng tập ô**; **điều kiện mở là số ô phủ**; kỹ năng chưa đủ ô vẫn hiện nhưng khóa và ghi "cần N ô". Sau khi chọn, khoảng vung vẫn chạy như thường.
-
-| Kỹ năng | Cần | Cooldown | Hiệu ứng |
+| Lá phép (cơ bản) | Cần | Cooldown | Hiệu ứng |
 |---|---|---|---|
-| Chém | bất kỳ | không | sát thương × số ô |
-| Đẩy | ≥ 3 ô | 6 s | trúng thì đẩy đối thủ lùi 1 ô theo hướng cắt (nếu có chỗ) + sát thương nhẹ |
-| Đốt | ≥ 5 ô | 8 s | tập ô cháy 3 s, đứng trong ăn sát thương dần; chặn đường |
-| Ghim | ≥ 7 ô | 10 s | trúng thì đối thủ đứng yên 1,2 s |
-
-- 1 điểm luôn là Chém ngay dù phủ 3 ô đủ điều kiện Đẩy; muốn Đẩy thì nối 2 điểm. Cờ `single_point_opens_menu` trong dữ liệu để đổi nếu chơi thử thấy thiếu.
-
-### Ngắt đòn (thay Parry)
-- Cả hai bên vung theo **cùng công thức**. **Đòn nào chạm ô đối thủ trước thì hủy đòn đối thủ đang vung**; điểm đã dùng của bên bị hủy mất luôn. Đòn to vung lâu nên dễ bị ngắt; đòn 1 điểm nhanh nhưng yếu. Người chơi chọn giữa "đánh to" và "đánh kịp".
-- Phản xạ đúng khi thấy boss vung: đã có đòn đang đếm và sắp xong thì đứng yên chịu đua; chưa có gì thì bước ra. Ngắt đòn là phần thưởng cho người ra đòn sớm, không phải nút phản xạ.
-- Một bên chết thì mọi đòn đang đếm bị hủy.
-
-### Hồ sơ boss theo trận và nhịp theo sân (Story 013)
-- Mỗi bộ não có **hồ sơ di chuyển** riêng: cam kết đích, nhiễu nước đi, thời gian phản ứng, kiểu đường (`row_first` / `shortest` / `mixed`), bước thừa sau khi né, có lang thang khi rảnh. Trận 1 máy móc và đoán được, boss cuối hay đổi ý. **Không** có dấu hiệu, đường đi hay nhãn ý định.
-- Boss chấm điểm đòn theo **đường thoát**: ưu tiên đòn để lại ít ô mà người chơi chạy tới kịp trong thời gian vung. Trận cao có **đòn nối**: hai đòn tuyên bố cùng lúc, đòn 2 phủ chỗ thoát của đòn 1; ngắt đòn 1 thì hủy cả hai. `swing_speed_mult` theo trận cho boss.
-- **Cooldown bước theo sân**: `cooldown = 0,45 × (2 / (max(cột, hàng) − 1)) ^ 0,75`, kẹp [0,18; 0,60] (3×3 → 0,45; 6×6 → 0,23; 10×10 → 0,18). Giữ "số bước thoát trong một lần vung" gần như nhau giữa các sân; boss nhân thêm hệ số theo trận.
-
-### Chương và tầng (Story 015, sau cổng chơi thử 4, 2026-10-20)
-- Game là các **chương**, mỗi chương vài **tầng**, mỗi tầng = một run hiện nay (N trận rồi boss). Dữ liệu trong `chapters.json`; `run.json` không còn.
-- Sân theo tầng: tầng thấp **một hình cố định** cho cả tầng (học được); tầng cao **rút ngẫu nhiên từng trận từ nhóm hình** (`arena_pool`) kèm biến thể có kiểm (Story 014), seed mới mỗi lần vào tầng → mỗi lần vào là một sân khác.
-- Máu đầy khi vào tầng, hồi giữa các trận như cũ, **không mang qua tầng**. Thua thì **chơi lại đúng trận đã thua**, cùng sân, máu như lúc vào trận nhưng không dưới 50% (số trong JSON).
-- Thắng boss tầng N mở tầng N+1 (tầng cuối chương mở chương kế). **Save data** trong `user://progress.json`: danh sách tầng đã xong **và tầng đang dở** (trận thứ mấy, máu lúc vào trận, seed sân), ghi ở mỗi mốc trận; mở lại game thì tiếp tục đúng trận đang dở. Không lưu giữa một trận đang đánh. Không có meta progression khác.
-- Màn chọn tầng (khóa / mở / xong) là màn chính của game; Story 016 thêm title, tạm dừng, nút back.
+| Kiếm khí | bất kỳ | không | sát thương × số ô |
+| Chấn phong | ≥ 3 ô | 6 s | đẩy lùi 1 ô theo hướng trận pháp + sát thương nhẹ |
+| Hỏa trận | ≥ 5 ô | 8 s | tập ô cháy 3 s, đứng trong mất máu dần; chặn đường |
+| Băng phong | ≥ 7 ô | 10 s | đóng băng 1,2 s |
 
 ### Boss
-- Boss **đi nhặt** điểm bên nửa sân nó (cooldown bước **0,55 s** trận đầu, giảm dần các trận sau) và **cắt bằng cùng hệ**: brain là bảng trọng số trong JSON (ô người chơi có nằm trong tập không, số ô so với khoảng vung và đồng hồ đang đếm của người chơi, có nên đi nhặt điểm đang nằm dưới đường dao, kỹ năng nào đang sẵn). Không học máy; mọi thứ đọc được bằng mắt.
-- Hạ boss → trận kế, lặp lại.
+- Đi nhặt và thi triển bằng **cùng hệ**, não trọng số trong JSON, hồ sơ di chuyển theo trận, chấm điểm theo đường thoát, đòn nối ở trận cao, trait cắm được. Không dấu hiệu ý định. Boss dùng **bộ phép cố định theo trận** (`boss_cards`, mặc định 4 lá cơ bản), không rút bài.
 
-## Player goal & fail state — what "working" looks like
-- Vượt từng **tầng** (2–3 trận + boss) của một chương bằng cách nhặt đúng điểm đúng lúc, nối hình đủ lớn để mở kỹ năng, và thắng những cuộc đua đồng hồ; thắng boss tầng mở tầng kế.
-- Thua khi HP về 0 → chơi lại đúng trận đã thua. Một tầng cảm giác hoàn chỉnh trong khoảng 8–12 phút.
+## Roguelike (v4, Story 017–019)
 
-## MVP — what must exist to be the game
-1. Hai lưới 3×3 đối mặt với khung đòn/recovery đọc từ dữ liệu (Story 006, xong; Step, Guard và thẻ hình dạng tầm của nó bị gỡ ở 007–008).
-2. **Nút di chuyển 4 hướng** (một ô, cooldown, không nhớ lệnh) và **điểm cắt rơi** theo túi xáo + nhịp + độ tươi; nhặt bằng bước lên; tay 4 điểm ở góc dưới phải (007).
-3. **Hệ cắt của người chơi**: 1 điểm chém ngay; 2–4 điểm vẽ đoạn/đa giác với xem trước và số ô; sát thương và khoảng vung theo số ô; menu kỹ năng chậm 0,2× với Chém và Đẩy (008).
-4. **Boss đi nhặt và cắt** bằng brain trọng số; vung đỏ trên bàn bạn; **ngắt đòn hai chiều** (009) → cổng chơi thử 3.
-5. **Bảng cân bằng cắt** + Đốt, Ghim + boss học bằng bộ đếm trong trận (010).
-6. Một run: 3 trận + boss, màn thắng/thua, chơi lại không cần thoát (011).
+### Lá bài và bộ bài (017)
+- `cards.json` thay `skills.json`: mỗi lá có id, tên, hiệu ứng, số ô cần, cooldown, tham số, **độ hiếm** (thường / hiếm / sử thi) và **thẻ lớp** (lớp nào hay gặp). Bốn lá cơ bản là bản đầu; lá mới = thêm JSON + (nếu hiệu ứng mới) một lớp hiệu ứng đăng ký như trait.
+- **Bộ bài** của người chơi: danh sách lá (6–12). Mỗi lần Thi triển 2–4 ấn, menu **rút 4 lá theo túi xáo** từ bộ (hết túi xáo lại; seeded). Lá rút rồi không trả lại cho đến khi hết túi. Lá trùng được phép (hai *Kiếm khí* trong bộ = ra thường hơn). Cooldown tính theo id lá như nay.
+- Hết giờ chọn → *Kiếm khí* cơ bản dù tay không có lá đó (luật, không phải lá).
 
-## Số khởi điểm (tất cả trong `assets/data/`, chỉnh sau cổng chơi thử 3)
+### Nhân vật theo lớp (018)
+- `characters.json`: id, tên, mô tả, máu, hệ số cooldown bước, thời gian Tập trung, **nội tại** (passive id + tham số), **bộ khởi đầu** (danh sách id lá), đã mở khóa hay chưa.
+- Ba lớp đầu: **Kiếm sĩ** (máu 100, bộ 2 Kiếm khí 2 Chấn phong 1 Hỏa trận 1 Băng phong, nội tại: hồi thêm máu sau mỗi trận), **Pháp sư** (máu 80, Tập trung 5 s, bộ nặng Hỏa trận và phép diện rộng, nội tại: trận pháp ≥ 5 ô niệm nhanh hơn 15 %), **Sát thủ** (máu 90, bước nhanh hơn 10 %, bộ nặng Băng phong và đòn 1–2 ấn, nội tại: phép ≤ 3 ô mạnh hơn 25 %). Thợ săn, Giáo sĩ là nhân vật 4–5, mở sau. Số là khởi điểm, chỉnh sau chơi thử.
+- Nội tại là lớp nhỏ đăng ký như trait (`PassiveRegistry`), đọc/ghi qua API công khai.
+
+### Run (019)
+- **Một run = chọn nhân vật → một chương** (3 tầng, mỗi tầng N trận rồi boss) → thắng boss tầng cuối là thắng run. Tầng trong chương đi tuần tự; màn chọn tầng thành **chọn chương** (chương mở khi chương trước đã thắng bằng bất kỳ nhân vật nào).
+- Sau mỗi trận thắng: **chọn 1 trong 3 lá** (rút từ pool theo độ hiếm và thẻ lớp, seeded), hoặc bỏ qua. Lá vào bộ ngay.
+- **Máu là tài nguyên của cả run**: hồi `heal_between_matches` sau mỗi trận, `heal_between_floors` sau boss tầng, không đầy lại khi sang tầng.
+- **Chết là hết run**: màn "RUN KẾT THÚC" (tầng, trận, số lá, thời gian), về title. Không chơi lại trận, không giữ bộ bài. Hồi sinh (item, mạng dự phòng) là cơ chế thêm sau; `revive_tokens` trong JSON để sẵn, mặc định 0.
+- **Save**: run đang dở (nhân vật, bộ bài, chương, tầng, trận, máu, seed) ghi ở mốc trận, nút *Tiếp tục* trên title. Vĩnh viễn: chương đã thắng, nhân vật đã mở, lá đã thấy (để mở pool dần, làm sau).
+- Để sau (backlog): bỏ lá / nâng lá giữa tầng, sự kiện giữa trận, tiền và cửa hàng, item hồi sinh, Daily seed.
+
+## Player goal & fail state
+- Thắng một run: đi hết chương với nhân vật đã chọn, bộ bài bạn tự nhặt, trong khoảng 15–25 phút.
+- Thua khi máu về 0: run kết thúc, chỉ giữ mở khóa vĩnh viễn.
+
+## Số khởi điểm (tất cả trong `assets/data/`)
 
 | Tham số | Khởi điểm | File |
 |---|---|---|
-| Cooldown bước người chơi / boss trận đầu | 0,45 s / 0,55 s | `combat.json`, `boss_brain.json` |
-| Nhịp rơi nền, tối đa trên sân, độ tươi | 1,8 s, 4, 7 s | `field_drops.json` |
-| Ngưỡng đói, hệ số bù | 4 s, ×0,6 | `field_drops.json` |
-| Tay tối đa (số ô tay) | 4 | `hold_slots.json` |
-| Vung cơ bản, vung mỗi ô | 0,2 s, 0,25 s | `cuts.json` |
-| Sát thương cơ bản mỗi ô | 6 (HP 100) | `cuts.json` |
-| Time scale menu, thời gian chọn | 0,2, 3 s | `skills.json` |
-| Ngưỡng ô và cooldown kỹ năng | bảng trên | `skills.json` |
+| Cooldown bước (3×3) người chơi / hệ số boss | 0,45 s / theo trận | `combat.json`, `chapters.json` |
+| Nhịp rơi, tối đa trên sân, độ tươi, đói | 1,8 s, 4, 7 s, 4 s × 0,6 | `field_drops.json` |
+| Túi ấn | 4 | `hold_slots.json` |
+| Niệm cơ bản, niệm mỗi ô, sát thương mỗi ô | 0,2 s, 0,25 s, 6 | `cuts.json` |
+| Menu: time scale, thời gian chọn, số lá rút | 0,2, 3 s, 4 | `cards.json` |
+| Tập trung | 4 s, cooldown 8 s | `cards.json` |
+| Bộ khởi đầu, máu, nội tại theo lớp | bảng trên | `characters.json` |
+| Thưởng: số lá đưa ra, trọng số độ hiếm | 3; thường 70 / hiếm 25 / sử thi 5 | `rewards.json` |
+| Hồi máu sau trận / sau tầng | 25 / 40 | `chapters.json` |
 
-## Out of scope — not building this
-- **Đã loại ở v3**: Parry/Counter/Posture/Focus (thay bằng ngắt đòn), Guard và giáp, thẻ đánh theo hình dạng tầm (Strike/Cannon/Wide Slash), thẻ Step/Dash (di chuyển là nút).
-- Băng chuyền, quầy chung, Custom Gauge dừng trận; di chuyển chéo hoặc nhiều ô một lần.
-- Hiện trước nhãn sắp rơi; rơi theo kịch bản cố định mỗi trận (giữ trong backlog làm phương án lùi).
-- Ghép thẻ; AI học máy; meta progression (hướng "thực đơn"), quảng cáo/IAP/gacha.
-- Nhiều nhân vật, nhiều map, cốt truyện; online/PvP/xếp hạng; đa ngôn ngữ, accessibility — để sau.
+## Out of scope
+- Đã loại: Parry/Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, Custom Gauge.
+- v4 chưa làm: bỏ/nâng lá, cửa hàng, tiền, sự kiện, item hồi sinh, Daily seed, PvP, online, cốt truyện dài, đa ngôn ngữ, accessibility.
 
 ## Build order
-1. Lưới + khung đòn (006, xong).
-2. Nút di chuyển + điểm rơi, gỡ băng chuyền/thẻ cũ (007).
-3. Hệ cắt của người chơi + menu kỹ năng (008).
-4. Boss đi nhặt và cắt, ngắt đòn (009) → **cổng chơi thử 3: trận đấu đầu tiên có thật**.
-5. Bảng cân bằng + Đốt/Ghim + boss học (010).
-6. Cấu trúc run (011).
-7. Tập trung (012), hồ sơ boss + cooldown theo sân (013), sân và trait theo trận (014) → **cổng chơi thử 4: "ổn và cân bằng hơn"**.
-8. Chương và tầng + lưu tiến độ (015).
-9. Vỏ game: title, tạm dừng, back, tắt debug (016).
-10. Nội dung chương (017) → lên máy thật Android (018) → hình và âm.
+1–9. v1→v3 (Story 001–016, xong 2026-10-21): lưới, di chuyển, ấn rơi, trận pháp, boss, phép, Tập trung, hồ sơ boss, sân và trait, chương/tầng + save, title/tạm dừng.
+10. **Lá bài và bộ bài + đổi vỏ fantasy** (017).
+11. **Nhân vật theo lớp + nội tại + màn chọn nhân vật** (018).
+12. **Run roguelike: thưởng lá, máu cả run, chết là hết, save run** (019) → **cổng chơi thử 5: run đầu tiên có thật**.
+13. Nội dung chương 2–3 (boss, trait, lá mới) → lên Android → hình và âm.
 
 ---
-**Who it's for / what they feel:** Người chơi mobile thích Mega Man Battle Network và game giải đố nối điểm, chơi ngang hai tay (trái di chuyển, phải chọn điểm), phiên 10 phút; cảm giác "mình gom đủ điểm, vẽ một nhát to và nó ra kịp".
+**Who it's for / what they feel:** Người chơi mobile thích Mega Man Battle Network và Slay the Spire, chơi ngang hai tay, phiên 15–25 phút một run; cảm giác "mình gom đủ ấn, vẽ một trận pháp to, rút đúng lá và nó ra kịp".
 
-**Art & audio direction:** 2D cartoon tươi sáng; hai thớt gỗ 3×3 đối mặt là đấu trường; điểm cắt là dấu khắc trên thớt; đường dao vẽ sáng rồi chém xuống. SFX dao giòn, nhạc jazz/lo-fi vui tai.
+**Art & audio direction:** 2D fantasy sáng, hơi cartoon; hai trận địa là nền đá khắc; ấn là ký tự phát sáng; trận pháp vẽ sáng rồi bùng. SFX phép giòn, nhạc orchestral nhẹ. Placeholder vẽ bằng code cho tới phase hình.
 
-**Reference game:** Mega Man Battle Network — giữ ~10%: hai lưới 3×3, di chuyển một ô, và màn chọn làm chậm thời gian; **không** giữ chip folder hay Custom Gauge theo chu kỳ. Nhãn tọa độ chu vi, nối điểm thành hình và sát thương theo số ô phủ là phần riêng của game này.
+**Reference game:** Mega Man Battle Network (hai lưới, một ô mỗi bước, màn chọn làm chậm thời gian) + Slay the Spire (chọn 1 trong 3 lá, chết là hết, nhân vật theo lớp). Nhãn chu vi, nối ấn thành hình, sát thương theo số ô là phần riêng.
