@@ -7,7 +7,7 @@ extends Node2D
 ## Tap an unlocked/cleared tile -> enter the floor from match 1 — unless another floor is in
 ## progress: a confirm panel ("Bỏ tầng đang dở?") first. Tap the in-progress tile -> a panel with
 ## "Tiếp tục" / "Chơi lại từ đầu". Input dedup as in RunHudView / DPadView (emulated copies are
-## consumed but never act). Placeholder art; all strings are TEXT_* constants.
+## consumed but never act). Placeholder art; all strings are TEXT_* keys drawn through tr() (Story 017).
 
 enum Prompt { NONE, CONFIRM_ABANDON, RESUME_CHOICE }
 enum TileState { LOCKED, UNLOCKED, CLEARED, IN_PROGRESS }
@@ -56,15 +56,15 @@ const ARC_POINTS: int = 12
 ## Check mark polyline as shares of the tile size.
 const CHECK_POINTS: Array[Vector2] = [Vector2(0.74, 0.78), Vector2(0.81, 0.86), Vector2(0.92, 0.68)]
 
-const TEXT_TITLE: String = "CHỌN TẦNG"
-const TEXT_IN_PROGRESS: String = "Trận %d/%d"
-const TEXT_CONFIRM_ABANDON: String = "Bỏ tầng đang dở?"
-const TEXT_ABANDON: String = "Bỏ"
-const TEXT_CANCEL: String = "Thôi"
-const TEXT_RESUME: String = "Tiếp tục (Trận %d/%d)"
-const TEXT_RESTART_FLOOR: String = "Chơi lại từ đầu"
+const TEXT_TITLE: String = "ui.floor_select.title"
+const TEXT_IN_PROGRESS: String = "ui.floor_select.in_progress"
+const TEXT_CONFIRM_ABANDON: String = "ui.floor_select.confirm_abandon"
+const TEXT_ABANDON: String = "ui.floor_select.abandon"
+const TEXT_CANCEL: String = "ui.floor_select.cancel"
+const TEXT_RESUME: String = "ui.floor_select.resume"
+const TEXT_RESTART_FLOOR: String = "ui.floor_select.restart_floor"
 ## Story 016: the back-to-title button (ScreenLayout.back_button_rect).
-const TEXT_BACK: String = "Về"
+const TEXT_BACK: String = "ui.floor_select.back"
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -189,14 +189,14 @@ func _tile_state(ci: int, fi: int) -> TileState:
 	return TileState.LOCKED
 
 
-# Arena line of a tile: the fixed shape's name, "Ngẫu nhiên" for a pool, "" for none.
+# Arena line of a tile: the fixed shape's name, ui.arena.random for a pool, "" for none.
 func _arena_text(ci: int, fi: int) -> String:
 	var summary: Dictionary = _flow.get_config().arena_summary(ci, fi)
 	match str(summary["kind"]):
 		"fixed":
 			return ArenaNames.name_for(str(summary["shape"]))
 		"pool":
-			return ArenaNames.TEXT_RANDOM
+			return tr(ArenaNames.TEXT_RANDOM)
 		_:
 			return ""
 
@@ -210,9 +210,9 @@ func _draw() -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	var config: ChaptersConfig = _flow.get_config()
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
-	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, TEXT_TITLE, TITLE_FONT_SIZE, TITLE_COLOR)
+	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
-	UiButtons.draw_button(self, back, TEXT_BACK, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
+	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
 	for ci: int in config.chapter_count():
 		var label: Rect2 = ScreenLayout.floor_chapter_label_rect(vp, ci)
 		draw_string(ThemeDB.fallback_font, Vector2(label.position.x, label.position.y + label.size.y * CHAPTER_BASELINE), config.chapter_name(ci), HORIZONTAL_ALIGNMENT_LEFT, label.size.x, CHAPTER_FONT_SIZE, CHAPTER_COLOR)
@@ -246,7 +246,7 @@ func _draw_tile(rect: Rect2, ci: int, fi: int) -> void:
 			_draw_check(rect)
 		TileState.IN_PROGRESS:
 			var saved: Dictionary = _flow.get_progress().get_in_progress()
-			var text: String = TEXT_IN_PROGRESS % [int(saved["match_index"]) + 1, config.match_count(ci, fi)]
+			var text: String = tr(TEXT_IN_PROGRESS) % [int(saved["match_index"]) + 1, config.match_count(ci, fi)]
 			_text(rect, rect.position.y + rect.size.y * TILE_STATE_BASELINE, text, TILE_STATE_FONT_SIZE, IN_PROGRESS_OUTLINE.darkened(0.2))
 
 
@@ -282,13 +282,13 @@ func _draw_panel(vp: Vector2) -> void:
 	var styles: Array[int] = [UiButtons.Style.PRIMARY, UiButtons.Style.DANGER]
 	match _panel:
 		Prompt.CONFIRM_ABANDON:
-			message = TEXT_CONFIRM_ABANDON
-			labels = [TEXT_ABANDON, TEXT_CANCEL]
+			message = tr(TEXT_CONFIRM_ABANDON)
+			labels = [tr(TEXT_ABANDON), tr(TEXT_CANCEL)]
 			styles = [UiButtons.Style.DANGER, UiButtons.Style.NEUTRAL]
 		Prompt.RESUME_CHOICE:
 			var saved: Dictionary = _flow.get_progress().get_in_progress()
 			message = config.floor_name(_pending.x, _pending.y)
-			labels = [TEXT_RESUME % [int(saved.get("match_index", 0)) + 1, config.match_count(_pending.x, _pending.y)], TEXT_RESTART_FLOOR]
+			labels = [tr(TEXT_RESUME) % [int(saved.get("match_index", 0)) + 1, config.match_count(_pending.x, _pending.y)], tr(TEXT_RESTART_FLOOR)]
 	_text(panel, panel.position.y + panel.size.y * PANEL_TEXT_BASELINE, message, PANEL_FONT_SIZE, PANEL_TEXT)
 	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, labels.size())
 	for i: int in rects.size():

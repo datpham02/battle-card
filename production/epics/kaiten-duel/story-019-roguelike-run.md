@@ -45,7 +45,7 @@
 - [ ] Bỏ `in_progress` theo tầng và nút "Chơi lại trận"; `--progress=demo` cập nhật cho dữ liệu mới; `--floor=` giữ cho chụp ảnh (vào thẳng tầng với nhân vật mặc định và bộ khởi đầu).
 - [ ] Test: run thắng 3 tầng với máu mang qua (số kiểm được), thưởng vào bộ và tay rút sau đó có lá mới, chết → `run_in_progress` null và `cleared_chapters` không đổi, thắng → chương vào `cleared_chapters` và chương 2 mở, save/nạp giữa trận 2 tầng 2 giữ đúng bộ 9 lá và máu 57, file v1 nạp không lỗi.
 - [ ] Ảnh trong `production/qa/evidence/roguelike-run/`: màn thưởng 3 lá; màn chọn chương (khóa/mở/thắng); RUN KẾT THÚC; RUN THẮNG; HUD với "Bộ: N lá"; title với Tiếp tục run.
-- [ ] Không hằng số gameplay trong mã; chuỗi `TEXT_*`.
+- [ ] Không hằng số gameplay trong mã; mọi chuỗi hiển thị là khóa `TEXT_*` qua `tr()` với dòng vi và en trong `assets/i18n/strings.csv`; JSON chỉ có `name_key`/`desc_key`.
 
 ---
 

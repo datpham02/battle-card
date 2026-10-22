@@ -9,7 +9,10 @@
 - **Lá phép** (card) là biến thể trên cùng trận pháp: *Kiếm khí* (Chém), *Chấn phong* (Đẩy), *Hỏa trận* (Đốt), *Băng phong* (Ghim). Hiệu ứng y nguyên bảng v3.
 - **Đặc điểm boss** (trait, Story 014) đổi tên: hàng cháy → *Hỏa tức* (hơi thở lửa quét một hàng), điểm hỏng → *Ấn nguyền* (ấn bị nguyền, chiếm chỗ trong túi ấn, tự tan sau vài giây).
 - **Chương** = vùng đất. Chương 1 *Rừng Sương* (sân vuông, chữ nhật; goblin, sói), chương 2 *Hầm Ngục* (sân có lỗ, hai đảo; quỷ, xác sống), chương 3 *Tháp Pháp Sư* (vòng, kim cương, biến thể; pháp sư tà đạo, golem). Tên boss, trait và số của chương 2–3 là nội dung, làm dần.
-- Tên nhân vật, lá, chương, boss, vùng đất là **dữ liệu** (`characters.json`, `cards.json`, `chapters.json`), không có chuỗi chủ đề nào trong mã ngoài nhãn UI chung (nút, tiêu đề màn).
+- Tên nhân vật, lá, chương, boss, vùng đất là **dữ liệu** (`characters.json`, `cards.json`, `chapters.json`) dưới dạng **khóa dịch** (`name_key`); chữ hiển thị nằm trong `assets/i18n/strings.csv`.
+
+## Đa ngôn ngữ (2026-10-22, từ Story 017)
+- Hệ dịch của Godot: `assets/i18n/strings.csv` (`keys,vi,en`), code gọi `tr(khóa)`; mọi `TEXT_*` trong mã là khóa, JSON chỉ giữ `name_key`. Hai ngôn ngữ ngay từ đầu: **vi** (mặc định, fallback) và **en**. Nút VI/EN ở title, lưu trong `progress.json`. Ngôn ngữ thứ ba = thêm một cột CSV. Thiếu khóa thì hiện khóa thô để lộ lỗi; một test quét khóa trong mã và JSON đối chiếu CSV.
 
 ## Core loop (cơ chế v3, giữ nguyên số)
 
@@ -78,11 +81,11 @@
 
 ## Out of scope
 - Đã loại: Parry/Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, Custom Gauge.
-- v4 chưa làm: bỏ/nâng lá, cửa hàng, tiền, sự kiện, item hồi sinh, Daily seed, PvP, online, cốt truyện dài, đa ngôn ngữ, accessibility.
+- v4 chưa làm: bỏ/nâng lá, cửa hàng, tiền, sự kiện, item hồi sinh, Daily seed, PvP, online, cốt truyện dài, accessibility, ngôn ngữ thứ ba trở đi (khung đa ngôn ngữ có từ 017).
 
 ## Build order
 1–9. v1→v3 (Story 001–016, xong 2026-10-21): lưới, di chuyển, ấn rơi, trận pháp, boss, phép, Tập trung, hồ sơ boss, sân và trait, chương/tầng + save, title/tạm dừng.
-10. **Lá bài và bộ bài + đổi vỏ fantasy** (017).
+10. **Lá bài và bộ bài + đa ngôn ngữ vi/en + đổi vỏ fantasy** (017).
 11. **Nhân vật theo lớp + nội tại + màn chọn nhân vật** (018).
 12. **Run roguelike: thưởng lá, máu cả run, chết là hết, save run** (019) → **cổng chơi thử 5: run đầu tiên có thật**.
 13. Nội dung chương 2–3 (boss, trait, lá mới) → lên Android → hình và âm.

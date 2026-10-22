@@ -139,16 +139,16 @@ const FOCUS_TAG_GLYPH_HEIGHT: float = 12.0
 const FOCUS_TAG_GLYPH_GAP: float = 3.0
 const FOCUS_TAG_PAD: float = 6.0
 
-const TEXT_FOCUS: String = "TẬP TRUNG  %.1f s"
-const TEXT_FOCUS_COOLDOWN: String = "Tập trung còn %d s"
-const TEXT_FOCUS_PAUSED_TAG: String = "DỪNG"
+const TEXT_FOCUS: String = "ui.hud.focus"
+const TEXT_FOCUS_COOLDOWN: String = "ui.hud.focus_cooldown"
+const TEXT_FOCUS_PAUSED_TAG: String = "ui.hud.focus_paused_tag"
 
-const TEXT_PIN: String = "GHIM %.1f s"
-const TEXT_FEINT: String = "ĐÒN GIẢ!"
-const TEXT_FEINT_NOTE: String = "boss vung rồi tự hủy"
-const TEXT_LEARNING: String = "né: %d | ngắt: %d | giả: %d%%"
+const TEXT_PIN: String = "ui.hud.pin"
+const TEXT_FEINT: String = "ui.hud.feint"
+const TEXT_FEINT_NOTE: String = "ui.hud.feint_note"
+const TEXT_LEARNING: String = "ui.hud.learning"
 ## Skill id whose config carries the burn duration (bar ratio).
-const BURN_SKILL_ID: String = "burn"
+const BURN_SKILL_ID: String = "hoa_tran"
 
 ## Boss combo (Story 013): the QUEUED second swing while the first runs, on the player's half.
 ## Lighter red than the running swing with thin red hatching, so the two read as two layers;
@@ -160,7 +160,7 @@ const COMBO_OUTLINE: Color = Color(0.95, 0.35, 0.3, 0.9)
 const COMBO_HATCH: Color = Color(0.95, 0.12, 0.08, 0.55)
 const COMBO_HATCH_STEP_RATIO: float = 0.18
 const COMBO_HATCH_WIDTH: float = 2.0
-const TEXT_COMBO_QUEUED: String = "2: +%.1f s"
+const TEXT_COMBO_QUEUED: String = "ui.hud.combo_queued"
 
 ## Row burner warning (Story 014): while RowBurnerTrait announces a row, its cells get a faint
 ## amber tint, an amber outline that blinks between full and dim alpha (phase from a REAL-time
@@ -179,25 +179,25 @@ const WARN_BLINK_DIM_ALPHA: float = 0.3
 const WARN_OUTLINE_INSET: float = 4.0
 const WARN_BAR_HEIGHT_RATIO: float = 0.06
 const WARN_BAR_INSET_RATIO: float = 0.08
-const TEXT_ROW_WARNING: String = "SẮP CHÁY"
+const TEXT_ROW_WARNING: String = "ui.hud.row_warning"
 ## Trait param that holds the warning length (read from the trait, never a local number).
 const WARN_SEC_PARAM: String = "warn_sec"
 
-const TEXT_BOSS_SWING: String = "BOSS %s %s"
-const TEXT_INTERRUPT: String = "NGẮT!"
-const TEXT_INTERRUPT_BOSS: String = "boss bị hủy đòn"
-const TEXT_INTERRUPT_PLAYER: String = "đòn của bạn bị hủy"
-const TEXT_CONFIRM: String = "Chốt"
-const TEXT_CELLS: String = "%d ô"
-const TEXT_DAMAGE: String = "Sát thương %d"
-const TEXT_NEED_CELLS: String = "cần %d ô"
-const TEXT_NOT_IMPLEMENTED: String = "chưa có"
-const TEXT_COOLDOWN: String = "%.1f s"
-const TEXT_READY: String = "sẵn sàng"
-const TEXT_SWING: String = "%s  %.1f s"
-const TEXT_HIT: String = "HIT"
-const TEXT_MISS: String = "MISS"
-const TEXT_DAMAGE_NUMBER: String = "-%d"
+const TEXT_BOSS_SWING: String = "ui.hud.boss_swing"
+const TEXT_INTERRUPT: String = "ui.hud.interrupt"
+const TEXT_INTERRUPT_BOSS: String = "ui.hud.interrupt_boss"
+const TEXT_INTERRUPT_PLAYER: String = "ui.hud.interrupt_player"
+const TEXT_CONFIRM: String = "ui.hud.cast"
+const TEXT_CELLS: String = "ui.hud.cells"
+const TEXT_DAMAGE: String = "ui.hud.damage"
+const TEXT_NEED_CELLS: String = "ui.hud.need_cells"
+const TEXT_NOT_IMPLEMENTED: String = "ui.hud.not_implemented"
+const TEXT_COOLDOWN: String = "ui.hud.cooldown"
+const TEXT_READY: String = "ui.hud.ready"
+const TEXT_SWING: String = "ui.hud.swing"
+const TEXT_HIT: String = "ui.hud.hit"
+const TEXT_MISS: String = "ui.hud.miss"
+const TEXT_DAMAGE_NUMBER: String = "ui.hud.damage_number"
 
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
@@ -247,7 +247,7 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 		if not ScreenLayout.skill_menu_panel_rect(vp).has_point(pos):
 			return false
 		if not emulated:
-			var order: Array[String] = _combat.get_skill_config().skill_order
+			var order: Array[String] = flow.get_hand()
 			var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
 			for i: int in rects.size():
 				if rects[i].has_point(pos):
@@ -321,13 +321,13 @@ func _draw_focus_bar(vp: Vector2) -> void:
 		draw_rect(bar, FOCUS_BAR_BACK)
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), fill)
 		draw_rect(bar, FOCUS_BAR_OUTLINE, false, 2.0)
-		_draw_centered(bar, TEXT_FOCUS % focus.get_time_left(), FOCUS_FONT_SIZE, TEXT_LIGHT)
+		_draw_centered(bar, tr(TEXT_FOCUS) % focus.get_time_left(), FOCUS_FONT_SIZE, TEXT_LIGHT)
 	elif focus.is_on_cooldown():
 		var total: float = focus.get_cooldown_sec()
 		var recovered: float = 1.0 if total <= 0.0 else clampf(1.0 - focus.get_cooldown_left() / total, 0.0, 1.0)
 		draw_rect(bar, FOCUS_COOLDOWN_BACK)
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * recovered, bar.size.y)), FOCUS_COOLDOWN_FILL)
-		_draw_centered(bar, TEXT_FOCUS_COOLDOWN % ceili(focus.get_cooldown_left()), FOCUS_FONT_SIZE, FOCUS_COOLDOWN_TEXT)
+		_draw_centered(bar, tr(TEXT_FOCUS_COOLDOWN) % ceili(focus.get_cooldown_left()), FOCUS_FONT_SIZE, FOCUS_COOLDOWN_TEXT)
 	elif not _combat.is_confirm_visible():
 		var state: CombatState = _combat.get_state()
 		if state.is_player_dead() or state.is_enemy_dead():
@@ -351,7 +351,7 @@ func _draw_focus_tag(vp: Vector2) -> void:
 	draw_rect(Rect2(glyph_x + FOCUS_TAG_GLYPH_WIDTH + FOCUS_TAG_GLYPH_GAP, glyph_top, FOCUS_TAG_GLYPH_WIDTH, FOCUS_TAG_GLYPH_HEIGHT), TEXT_LIGHT)
 	var text_left: float = glyph_x + FOCUS_TAG_GLYPH_WIDTH * 2.0 + FOCUS_TAG_GLYPH_GAP + FOCUS_TAG_PAD
 	var text_rect := Rect2(text_left, tag.position.y, maxf(tag.end.x - text_left, 0.0), tag.size.y)
-	_draw_centered(text_rect, TEXT_FOCUS_PAUSED_TAG, FOCUS_FONT_SIZE, TEXT_LIGHT)
+	_draw_centered(text_rect, tr(TEXT_FOCUS_PAUSED_TAG), FOCUS_FONT_SIZE, TEXT_LIGHT)
 
 
 func _draw_cells(vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:
@@ -414,8 +414,8 @@ func _draw_preview(vp: Vector2) -> void:
 	var info: Rect2 = ScreenLayout.cut_preview_info_rect(vp)
 	var top := Rect2(info.position, Vector2(info.size.x, info.size.y * 0.5))
 	var bottom := Rect2(info.position + Vector2(0.0, info.size.y * 0.5), Vector2(info.size.x, info.size.y * 0.35))
-	_draw_centered(top, TEXT_CELLS % cells.size(), BIG_FONT_SIZE, TEXT_DARK)
-	_draw_centered(bottom, TEXT_DAMAGE % roundi(_combat.get_cut_config().slash_damage(cells.size())), FONT_SIZE, TEXT_DARK)
+	_draw_centered(top, tr(TEXT_CELLS) % cells.size(), BIG_FONT_SIZE, TEXT_DARK)
+	_draw_centered(bottom, tr(TEXT_DAMAGE) % roundi(_combat.get_cut_config().slash_damage(cells.size())), FONT_SIZE, TEXT_DARK)
 
 
 func _draw_swing(vp: Vector2) -> void:
@@ -424,7 +424,7 @@ func _draw_swing(vp: Vector2) -> void:
 		return
 	_draw_cells(vp, actor.get_cells(), SWING_TINT, SWING_OUTLINE)
 	var info: Rect2 = ScreenLayout.cut_swing_info_rect(vp)
-	var text: String = TEXT_SWING % [_skill_name(actor.get_skill_id()), actor.get_time_left()]
+	var text: String = tr(TEXT_SWING) % [_skill_name(actor.get_skill_id()), actor.get_time_left()]
 	_draw_centered(info, text, BIG_FONT_SIZE, SWING_OUTLINE)
 
 
@@ -439,7 +439,7 @@ func _draw_boss_swing(vp: Vector2) -> void:
 	var last: Dictionary = boss.get_last_cut()
 	var labels: Array = last.get("labels", [])
 	var joined: String = "+".join(PackedStringArray(labels))
-	var line2: String = TEXT_BOSS_SWING % [joined, _skill_name(actor.get_skill_id())]
+	var line2: String = tr(TEXT_BOSS_SWING) % [joined, _skill_name(actor.get_skill_id())]
 	_draw_cells_label(vp, cells, ("%.1f s" % actor.get_time_left()), line2, SWING_OUTLINE)
 
 
@@ -466,7 +466,7 @@ func _draw_boss_queued_swing(vp: Vector2) -> void:
 		draw_rect(rect, COMBO_TINT)
 		_draw_hatching(rect, rect.size.y * COMBO_HATCH_STEP_RATIO, COMBO_HATCH, COMBO_HATCH_WIDTH)
 		draw_rect(rect.grow(-2.0), COMBO_OUTLINE, false, CELL_OUTLINE_WIDTH)
-	_draw_corner_label(vp, cells, TEXT_COMBO_QUEUED % float(queued["duration"]), COMBO_OUTLINE)
+	_draw_corner_label(vp, cells, tr(TEXT_COMBO_QUEUED) % float(queued["duration"]), COMBO_OUTLINE)
 
 
 # One small line on a white backing, anchored to the bottom-right corner (or, with
@@ -514,7 +514,7 @@ func _draw_interrupt(vp: Vector2) -> void:
 		draw_line(rect.position, rect.end, Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
 		draw_line(Vector2(rect.end.x, rect.position.y), Vector2(rect.position.x, rect.end.y), Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
 	var boss_victim: bool = int(flash["side"]) == CombatState.Side.ENEMY
-	_draw_cells_label(vp, cells, TEXT_INTERRUPT, TEXT_INTERRUPT_BOSS if boss_victim else TEXT_INTERRUPT_PLAYER, INTERRUPT_COLOR, fade)
+	_draw_cells_label(vp, cells, tr(TEXT_INTERRUPT), tr(TEXT_INTERRUPT_BOSS) if boss_victim else tr(TEXT_INTERRUPT_PLAYER), INTERRUPT_COLOR, fade)
 
 
 func rect_inset(vp: Vector2) -> float:
@@ -565,10 +565,10 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	var back := Rect2(cell_rect.position, Vector2(cell_rect.size.x, size * 2.0 if show_damage else size * 1.3))
 	draw_rect(back, TEXT_OUTLINE_LIGHT)
 	var line1 := Rect2(back.position, Vector2(back.size.x, size * 1.2))
-	_draw_centered(line1, TEXT_HIT if hit else TEXT_MISS, size, color)
+	_draw_centered(line1, tr(TEXT_HIT) if hit else tr(TEXT_MISS), size, color)
 	if show_damage:
 		var line2 := Rect2(back.position + Vector2(0.0, size * 0.9), Vector2(back.size.x, size * 1.2))
-		_draw_centered(line2, TEXT_DAMAGE_NUMBER % roundi(float(fb["damage"])), size, color)
+		_draw_centered(line2, tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), size, color)
 
 
 # --- Story 014: row burner warning ---------------------------------------------
@@ -601,7 +601,7 @@ func _draw_row_warning(vp: Vector2) -> void:
 		var bar := Rect2(Vector2(rect.position.x + inset, rect.position.y + inset), Vector2(rect.size.x - inset * 2.0, bar_h))
 		draw_rect(bar, WARN_BAR_BACK)
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), WARN_BAR_FILL)
-	_draw_corner_label(vp, cells, TEXT_ROW_WARNING, WARN_OUTLINE, true)
+	_draw_corner_label(vp, cells, tr(TEXT_ROW_WARNING), WARN_OUTLINE, true)
 
 
 # --- Story 010: burning cells, pins, feint, learning debug ----------------------
@@ -690,7 +690,7 @@ func _draw_pin_at(vp: Vector2, cell: Vector2i, left: float) -> void:
 	# Label above the ring, clamped inside the board.
 	var font: Font = ThemeDB.fallback_font
 	var size: int = maxi(int(cell_size.y * PIN_FONT_RATIO), 8)
-	var text: String = TEXT_PIN % left
+	var text: String = tr(TEXT_PIN) % left
 	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x + LABEL_PAD * 2.0
 	var height: float = size * LABEL_LINE_SPACING + LABEL_PAD
 	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
@@ -715,7 +715,7 @@ func _draw_feint(vp: Vector2) -> void:
 		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
 		draw_rect(rect, Color(FEINT_TINT, FEINT_TINT.a * fade))
 		_draw_dashed_rect(rect.grow(-FEINT_INSET), Color(FEINT_COLOR, fade))
-	_draw_cells_label(vp, cells, TEXT_FEINT, TEXT_FEINT_NOTE, FEINT_COLOR, fade)
+	_draw_cells_label(vp, cells, tr(TEXT_FEINT), tr(TEXT_FEINT_NOTE), FEINT_COLOR, fade)
 
 
 # Dashed rectangle outline (manual dashes: no engine API dependency).
@@ -741,7 +741,7 @@ func _draw_learning_debug(vp: Vector2) -> void:
 		return
 	var hud: Rect2 = ScreenLayout.hud_rect(vp)
 	var chance: float = float(learning.get_modifiers().get("feint_chance", 0.0))
-	var text: String = TEXT_LEARNING % [learning.get_dodge_streak(), learning.get_interrupt_count(), roundi(chance * 100.0)]
+	var text: String = tr(TEXT_LEARNING) % [learning.get_dodge_streak(), learning.get_interrupt_count(), roundi(chance * 100.0)]
 	var width: float = hud.size.x * 0.5
 	var pos := Vector2(hud.end.x - CombatView.PAD - width, hud.end.y + LEARNING_BASELINE_OFFSET + LEARNING_FONT_SIZE * 0.85)
 	draw_string(ThemeDB.fallback_font, pos, text, HORIZONTAL_ALIGNMENT_RIGHT, width, LEARNING_FONT_SIZE, LEARNING_COLOR)
@@ -756,9 +756,9 @@ func _draw_confirm(vp: Vector2) -> void:
 	var alpha: float = DIM_ALPHA if swinging else 1.0
 	draw_rect(rect, Color(BUTTON_READY_BACK, BUTTON_READY_BACK.a * alpha))
 	draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
-	var text: String = TEXT_CONFIRM
+	var text: String = tr(TEXT_CONFIRM)
 	if swinging:
-		text = TEXT_COOLDOWN % actor.get_time_left()
+		text = tr(TEXT_COOLDOWN) % actor.get_time_left()
 	_draw_centered(rect, text, BIG_FONT_SIZE, Color(TEXT_LIGHT, alpha))
 
 
@@ -774,7 +774,7 @@ func _draw_menu(vp: Vector2) -> void:
 	draw_rect(Rect2(bar.position, Vector2(bar.size.x * clampf(ratio, 0.0, 1.0), bar.size.y)), BAR_FILL)
 	draw_rect(bar, BUTTON_OUTLINE, false, 2.0)
 	var config: SkillConfig = _combat.get_skill_config()
-	var order: Array[String] = config.skill_order
+	var order: Array[String] = flow.get_hand()
 	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
 	var cell_count: int = flow.get_cells().size()
 	for i: int in rects.size():
@@ -797,15 +797,15 @@ func _skill_status(id: String, cell_count: int) -> Dictionary:
 	var config: SkillConfig = _combat.get_skill_config()
 	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count)
 	var min_cells: int = int(check["need_cells"])
-	var text: String = TEXT_READY
+	var text: String = tr(TEXT_READY)
 	if cell_count < min_cells:
-		text = TEXT_NEED_CELLS % min_cells
+		text = tr(TEXT_NEED_CELLS) % min_cells
 	elif str(check["reason"]) == "not_implemented":
-		text = TEXT_NOT_IMPLEMENTED
+		text = tr(TEXT_NOT_IMPLEMENTED)
 	elif str(check["reason"]) == "cooldown":
-		text = TEXT_COOLDOWN % float(check["cooldown_left"])
+		text = tr(TEXT_COOLDOWN) % float(check["cooldown_left"])
 	return {"available": bool(check["available"]), "text": text}
 
 
 func _skill_name(id: String) -> String:
-	return str(_combat.get_skill_config().get_skill(id).get("display_name", id))
+	return tr(str(_combat.get_skill_config().get_skill(id).get("name_key", id)))

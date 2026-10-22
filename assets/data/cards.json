@@ -1,0 +1,15 @@
+{
+	"menu_time_scale": 0.2,
+	"menu_choose_sec": 3.0,
+	"focus": {"focus_time_scale": 0.0, "focus_max_sec": 4.0, "focus_cooldown_sec": 8.0, "focus_locks_movement": true},
+	"hand_size": 4,
+	"default_card": "kiem_khi",
+	"default_deck": ["kiem_khi", "kiem_khi", "chan_phong", "chan_phong", "hoa_tran", "bang_phong"],
+	"card_order": ["kiem_khi", "chan_phong", "hoa_tran", "bang_phong"],
+	"cards": {
+		"kiem_khi": {"name_key": "card.kiem_khi.name", "desc_key": "card.kiem_khi.desc", "effect": "damage", "min_cells": 1, "cooldown_sec": 0.0, "damage_multiplier": 1.0, "rarity": "common", "class_tags": [], "implemented": true},
+		"chan_phong": {"name_key": "card.chan_phong.name", "desc_key": "card.chan_phong.desc", "effect": "push", "min_cells": 3, "cooldown_sec": 6.0, "damage_multiplier": 0.5, "push_cells": 1, "rarity": "common", "class_tags": [], "implemented": true},
+		"hoa_tran": {"name_key": "card.hoa_tran.name", "desc_key": "card.hoa_tran.desc", "effect": "burn", "min_cells": 5, "cooldown_sec": 8.0, "damage_multiplier": 0.0, "burn_duration_sec": 3.0, "burn_tick_sec": 0.5, "burn_damage_per_tick": 2.0, "rarity": "rare", "class_tags": [], "implemented": true},
+		"bang_phong": {"name_key": "card.bang_phong.name", "desc_key": "card.bang_phong.desc", "effect": "pin", "min_cells": 7, "cooldown_sec": 10.0, "damage_multiplier": 0.0, "pin_duration_sec": 1.2, "rarity": "rare", "class_tags": [], "implemented": true}
+	}
+}

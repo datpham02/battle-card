@@ -34,7 +34,7 @@
 - [ ] HUD trận hiện tên nhân vật thay "YOU" (chuỗi từ dữ liệu).
 - [ ] Test: config nạp 3 nhân vật, lá lạ bị bỏ; `wide_caster` giảm thời gian niệm đúng 15 % với 5 ô và không đổi với 4 ô; `quick_blade` +25 % với 3 ô, không với 4; `second_wind` cộng máu sau thắng, kẹp max; chọn `phap_su` → trận có 80 máu, Tập trung 5 s, bộ 6 lá đúng danh sách; không nhân vật → giá trị cũ.
 - [ ] Ảnh trong `production/qa/evidence/characters/`: màn chọn nhân vật; HUD với tên nhân vật và máu 80 của Pháp sư; menu phép rút từ bộ Pháp sư (nhiều Hỏa trận).
-- [ ] Không hằng số gameplay trong mã; chuỗi `TEXT_*`.
+- [ ] Không hằng số gameplay trong mã; mọi chuỗi hiển thị là khóa `TEXT_*` qua `tr()` với dòng vi và en trong `assets/i18n/strings.csv`; JSON chỉ có `name_key`/`desc_key`.
 
 ---
 

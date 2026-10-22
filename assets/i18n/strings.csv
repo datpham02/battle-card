@@ -1,0 +1,116 @@
+keys,vi,en
+ui.arena.random,Ngẫu nhiên,Random
+ui.chapter.default_name,Chương 1,Chapter 1
+ui.floor.default_name,Tầng 1,Floor 1
+ui.floor_select.title,CHỌN TẦNG,CHOOSE A FLOOR
+ui.floor_select.in_progress,Trận %d/%d,Match %d/%d
+ui.floor_select.confirm_abandon,Bỏ tầng đang dở?,Abandon the floor in progress?
+ui.floor_select.abandon,Bỏ,Abandon
+ui.floor_select.cancel,Thôi,Cancel
+ui.floor_select.resume,Tiếp tục (Trận %d/%d),Resume (Match %d/%d)
+ui.floor_select.restart_floor,Chơi lại từ đầu,Restart from the start
+ui.floor_select.back,Về,Back
+ui.hold.rotten_timer,%.1f,%.1f
+ui.hud.focus,TẬP TRUNG  %.1f s,FOCUS  %.1f s
+ui.hud.focus_cooldown,Tập trung còn %d s,Focus in %d s
+ui.hud.focus_paused_tag,DỪNG,HOLD
+ui.hud.pin,GHIM %.1f s,PINNED %.1f s
+ui.hud.feint,ĐÒN GIẢ!,FEINT!
+ui.hud.feint_note,boss vung rồi tự hủy,the boss cancelled its own cast
+ui.hud.learning,né: %d | ngắt: %d | giả: %d%%,dodge: %d | break: %d | feint: %d%%
+ui.hud.combo_queued,2: +%.1f s,2: +%.1f s
+ui.hud.row_warning,SẮP CHÁY,BURNING SOON
+ui.hud.boss_swing,BOSS %s %s,BOSS %s %s
+ui.hud.interrupt,NGẮT!,BROKEN!
+ui.hud.interrupt_boss,boss bị hủy đòn,the boss's cast was broken
+ui.hud.interrupt_player,đòn của bạn bị hủy,your cast was broken
+ui.hud.cast,Thi triển,Cast
+ui.hud.cells,%d ô,%d cells
+ui.hud.damage,Sát thương %d,Damage %d
+ui.hud.need_cells,cần %d ô,need %d cells
+ui.hud.not_implemented,chưa có,not yet
+ui.hud.cooldown,%.1f s,%.1f s
+ui.hud.ready,sẵn sàng,ready
+ui.hud.swing,%s  %.1f s,%s  %.1f s
+ui.hud.hit,TRÚNG,HIT
+ui.hud.miss,TRƯỢT,MISS
+ui.hud.damage_number,-%d,-%d
+ui.run.match_label,Trận %d/%d,Match %d/%d
+ui.run.floor_match_label,%s · Trận %d/%d,%s · Match %d/%d
+ui.run_hud.match_label,Trận %d/%d · %s,Match %d/%d · %s
+ui.run_hud.match_label_boss,BOSS · %s,BOSS · %s
+ui.run_hud.match_label_floor,%s · %s,%s · %s
+ui.run_hud.match_label_arena,%s · %s,%s · %s
+ui.run_hud.arena_variant, (biến thể), (variant)
+ui.run_hud.intro_title,TRẬN %d/%d,MATCH %d/%d
+ui.run_hud.intro_title_boss,TRẬN BOSS,BOSS MATCH
+ui.run_hud.intro_hint,Nhặt ấn · nối trận pháp · Thi triển,Pick runes · draw the sigil · Cast
+ui.run_hud.between_title,THẮNG TRẬN!,MATCH WON!
+ui.run_hud.heal,+%d HP,+%d HP
+ui.run_hud.hp,HP %d/%d,HP %d/%d
+ui.run_hud.next,Đối thủ kế: %s,Next foe: %s
+ui.run_hud.continue,Tiếp tục,Continue
+ui.run_hud.auto,tự động sau %d s,auto in %d s
+ui.run_hud.win_title,CHIẾN THẮNG!,VICTORY!
+ui.run_hud.win_line,Hạ gục %s,Defeated %s
+ui.run_hud.floor_clear_title,TẦNG XONG,FLOOR CLEARED
+ui.run_hud.chapter_clear_title,CHƯƠNG XONG,CHAPTER CLEARED
+ui.run_hud.lose_title,THUA!,DEFEAT!
+ui.run_hud.lose_line,Gục ngã ở trận %d/%d · %s,Fell at match %d/%d · %s
+ui.run_hud.time,Thời gian %s,Time %s
+ui.run_hud.cleared,Trận thắng %d/%d,Matches won %d/%d
+ui.run_hud.restart,Chơi lại,Play again
+ui.run_hud.retry_match,Chơi lại trận,Retry match
+ui.run_hud.next_floor,Tầng tiếp,Next floor
+ui.run_hud.next_chapter,Chương tiếp,Next chapter
+ui.run_hud.choose_floor,Chọn tầng,Choose floor
+ui.run_hud.pause_title,TẠM DỪNG,PAUSED
+ui.run_hud.resume,Tiếp tục,Resume
+ui.run_hud.leave_floor,Về chọn tầng,Back to floors
+title.name,ẤN KIẾM,RUNE DUEL
+title.tagline,Nhặt ấn · nối trận pháp · Thi triển một đòn,Pick runes · draw the sigil · Cast one strike
+ui.title.continue,Tiếp tục,Continue
+ui.title.play,Chơi,Play
+ui.title.quit,Thoát,Quit
+ui.title.lang.vi,VI,VI
+ui.title.lang.en,EN,EN
+ui.hud.you,BẠN,YOU
+ui.hud.unit_hp,%s  HP %d/%d,%s  HP %d/%d
+ui.hud.unit_dead,%s  GỤC,%s  DOWN
+card.kiem_khi.name,Kiếm khí,Sword Qi
+card.kiem_khi.desc,Sát thương theo số ô,Damage per cell
+card.chan_phong.name,Chấn phong,Gale Burst
+card.chan_phong.desc,"Đẩy lùi 1 ô, sát thương nhẹ","Pushes 1 cell, light damage"
+card.hoa_tran.name,Hỏa trận,Fire Sigil
+card.hoa_tran.desc,Đốt các ô trong 3 s,Burns the cells for 3 s
+card.bang_phong.name,Băng phong,Frost Seal
+card.bang_phong.desc,"Đóng băng 1,2 s",Freezes for 1.2 s
+chapter.ch1.name,Rừng Sương,Misty Forest
+chapter.ch2.name,Hầm Ngục,The Dungeon
+floor.ch1.f1.name,Bìa rừng,Forest Edge
+floor.ch1.f2.name,Lối mòn,The Trail
+floor.ch1.f3.name,Hang sói,Wolf Den
+floor.ch2.f1.name,Cổng ngục,Dungeon Gate
+boss.goblin_scout.name,Goblin trinh sát,Goblin Scout
+boss.wolf.name,Sói xám,Grey Wolf
+boss.goblin_chief.name,Thủ lĩnh Goblin,Goblin Chief
+boss.goblin_warrior.name,Goblin chiến binh,Goblin Warrior
+boss.dire_wolf.name,Sói dữ,Dire Wolf
+boss.goblin_shaman.name,Goblin pháp sư,Goblin Shaman
+boss.wolf_alpha.name,Sói đầu đàn,Alpha Wolf
+boss.goblin_archer.name,Goblin cung thủ,Goblin Archer
+boss.goblin_brute.name,Goblin lực sĩ,Goblin Brute
+boss.goblin_warlock.name,Goblin vu sư,Goblin Warlock
+boss.forest_witch.name,Phù thủy rừng,Forest Witch
+boss.zombie.name,Xác sống,Zombie
+boss.ogre.name,Quỷ Khổng Lồ,Ogre
+arena.square.name,Vuông,Square
+arena.rect.name,Chữ nhật,Rectangle
+arena.cross.name,Chữ thập,Cross
+arena.u_shape.name,Chữ U,U-Shape
+arena.ring.name,Vòng,Ring
+arena.islands_bridge.name,Hai đảo,Twin Isles
+arena.staircase.name,Bậc thang,Staircase
+arena.diamond.name,Kim cương,Diamond
+trait.row_burner.name,Hỏa tức,Fire Breath
+trait.rotten_thrower.name,Ấn nguyền,Cursed Rune

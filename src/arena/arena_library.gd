@@ -95,7 +95,7 @@ static func grid_for_spec(spec: Dictionary, library: ArenaLibrary, seed_value: i
 static func _fallback() -> ArenaLibrary:
 	var library := ArenaLibrary.new()
 	library._shapes.append({
-		"id": FALLBACK_ID, "display_name": FALLBACK_ID, "side_cols": FALLBACK_SIDE,
+		"id": FALLBACK_ID, "name_key": "arena.%s.name" % FALLBACK_ID, "side_cols": FALLBACK_SIDE,
 		"side_rows": FALLBACK_SIDE, "missing_cells": [], "difficulty": 1,
 	})
 	return library
@@ -111,7 +111,7 @@ func _add_checked(entry: Variant) -> void:
 		push_warning("ArenaLibrary: shape with empty or duplicate id '%s' dropped" % id)
 		return
 	var shape: Dictionary = {
-		"id": id, "display_name": str(raw.get("display_name", id)),
+		"id": id, "name_key": str(raw.get("name_key", "arena.%s.name" % id)),
 		"side_cols": int(raw.get("side_cols", 0)), "side_rows": int(raw.get("side_rows", 0)),
 		"missing_cells": (raw.get("missing_cells", []) as Array).duplicate(true) if typeof(raw.get("missing_cells", [])) == TYPE_ARRAY else [],
 		"difficulty": clampi(int(raw.get("difficulty", 1)), 1, 5),

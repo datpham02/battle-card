@@ -5,9 +5,12 @@ extends RefCounted
 ## dependency; [ProgressStore] moves the JSON. Schema: assets/data/schema.md. Implements: Story 015.
 
 const VERSION: int = 1
+## Locale saved when none is in the file (v1 saves have no `locale`).
+const DEFAULT_LOCALE: String = "vi"
 
 var _cleared: Array[String] = []
 var _in_progress: Dictionary = {}
+var _locale: String = DEFAULT_LOCALE
 
 
 ## True when floor [param key] ("ch1/f2") is cleared.
@@ -64,10 +67,20 @@ func get_in_progress() -> Dictionary:
 	return _in_progress.duplicate()
 
 
-## Serialises to {"version":1,"cleared":[...],"in_progress":{...}|null}.
+## Saved UI locale code ("vi" by default).
+func get_locale() -> String:
+	return _locale
+
+
+## Stores the UI locale code (empty text keeps the default). Validation is the caller's (GameFlow).
+func set_locale(code: String) -> void:
+	_locale = code if not code.is_empty() else DEFAULT_LOCALE
+
+
+## Serialises to {"version":1,"locale":"vi","cleared":[...],"in_progress":{...}|null}.
 func to_json() -> String:
 	return JSON.stringify({
-		"version": VERSION, "cleared": _cleared,
+		"version": VERSION, "locale": _locale, "cleared": _cleared,
 		"in_progress": null if _in_progress.is_empty() else _in_progress,
 	})
 
@@ -87,6 +100,7 @@ static func from_json(text: String, config: ChaptersConfig = null) -> ProgressSt
 	if typeof(data.get("version")) not in [TYPE_INT, TYPE_FLOAT] or int(data["version"]) != VERSION:
 		push_warning("ProgressState: unsupported save version, starting empty")
 		return state
+	state.set_locale(str(data.get("locale", DEFAULT_LOCALE)))
 	var raw_cleared: Variant = data.get("cleared", [])
 	if typeof(raw_cleared) == TYPE_ARRAY:
 		for entry: Variant in raw_cleared as Array:

@@ -59,41 +59,41 @@ const PANEL_LINE2_BASELINE: float = 0.40
 const PANEL_LINE3_BASELINE: float = 0.51
 const PANEL_NOTE_BASELINE: float = 0.60
 
-const TEXT_MATCH_LABEL: String = "Trận %d/%d · %s"
-const TEXT_MATCH_LABEL_BOSS: String = "BOSS · %s"
-## Story 015: the floor name leads the label ("Tầng 2 · Trận 1/4 · Bếp trưởng").
-const TEXT_MATCH_LABEL_FLOOR: String = "%s · %s"
+const TEXT_MATCH_LABEL: String = "ui.run_hud.match_label"
+const TEXT_MATCH_LABEL_BOSS: String = "ui.run_hud.match_label_boss"
+## Story 015: the floor name leads the label ("Lối mòn · Trận 1/4 · Sói đầu đàn").
+const TEXT_MATCH_LABEL_FLOOR: String = "ui.run_hud.match_label_floor"
 ## Story 014: the match label ends with the arena's display name when the battle has a named
-## arena ("Trận 3/4 · Bếp trưởng · Chữ thập"), plus a variant marker for seeded variants.
-const TEXT_MATCH_LABEL_ARENA: String = "%s · %s"
-const TEXT_ARENA_VARIANT: String = " (biến thể)"
-const TEXT_INTRO_TITLE: String = "TRẬN %d/%d"
-const TEXT_INTRO_TITLE_BOSS: String = "TRẬN BOSS"
-const TEXT_INTRO_HINT: String = "Nhặt điểm · nối hình · Chốt"
-const TEXT_BETWEEN_TITLE: String = "THẮNG TRẬN!"
-const TEXT_HEAL: String = "+%d HP"
-const TEXT_HP: String = "HP %d/%d"
-const TEXT_NEXT: String = "Đối thủ kế: %s"
-const TEXT_CONTINUE: String = "Tiếp tục"
-const TEXT_AUTO: String = "tự động sau %d s"
-const TEXT_WIN_TITLE: String = "CHIẾN THẮNG!"
-const TEXT_WIN_LINE: String = "Hạ gục %s"
-const TEXT_FLOOR_CLEAR_TITLE: String = "TẦNG XONG"
-const TEXT_CHAPTER_CLEAR_TITLE: String = "CHƯƠNG XONG"
-const TEXT_LOSE_TITLE: String = "THUA!"
-const TEXT_LOSE_LINE: String = "Gục ngã ở trận %d/%d · %s"
-const TEXT_TIME: String = "Thời gian %s"
-const TEXT_CLEARED: String = "Trận thắng %d/%d"
-const TEXT_RESTART: String = "Chơi lại"
-const TEXT_RETRY_MATCH: String = "Chơi lại trận"
-const TEXT_NEXT_FLOOR: String = "Tầng tiếp"
+## arena ("Trận 3/4 · Thủ lĩnh Goblin · Chữ thập"), plus a variant marker for seeded variants.
+const TEXT_MATCH_LABEL_ARENA: String = "ui.run_hud.match_label_arena"
+const TEXT_ARENA_VARIANT: String = "ui.run_hud.arena_variant"
+const TEXT_INTRO_TITLE: String = "ui.run_hud.intro_title"
+const TEXT_INTRO_TITLE_BOSS: String = "ui.run_hud.intro_title_boss"
+const TEXT_INTRO_HINT: String = "ui.run_hud.intro_hint"
+const TEXT_BETWEEN_TITLE: String = "ui.run_hud.between_title"
+const TEXT_HEAL: String = "ui.run_hud.heal"
+const TEXT_HP: String = "ui.run_hud.hp"
+const TEXT_NEXT: String = "ui.run_hud.next"
+const TEXT_CONTINUE: String = "ui.run_hud.continue"
+const TEXT_AUTO: String = "ui.run_hud.auto"
+const TEXT_WIN_TITLE: String = "ui.run_hud.win_title"
+const TEXT_WIN_LINE: String = "ui.run_hud.win_line"
+const TEXT_FLOOR_CLEAR_TITLE: String = "ui.run_hud.floor_clear_title"
+const TEXT_CHAPTER_CLEAR_TITLE: String = "ui.run_hud.chapter_clear_title"
+const TEXT_LOSE_TITLE: String = "ui.run_hud.lose_title"
+const TEXT_LOSE_LINE: String = "ui.run_hud.lose_line"
+const TEXT_TIME: String = "ui.run_hud.time"
+const TEXT_CLEARED: String = "ui.run_hud.cleared"
+const TEXT_RESTART: String = "ui.run_hud.restart"
+const TEXT_RETRY_MATCH: String = "ui.run_hud.retry_match"
+const TEXT_NEXT_FLOOR: String = "ui.run_hud.next_floor"
 ## Chapter-clear screen: enters the first floor of the next chapter (user decision 2026-10-21).
-const TEXT_NEXT_CHAPTER: String = "Chương tiếp"
-const TEXT_CHOOSE_FLOOR: String = "Chọn tầng"
+const TEXT_NEXT_CHAPTER: String = "ui.run_hud.next_chapter"
+const TEXT_CHOOSE_FLOOR: String = "ui.run_hud.choose_floor"
 ## Story 016 pause overlay.
-const TEXT_PAUSE_TITLE: String = "TẠM DỪNG"
-const TEXT_RESUME: String = "Tiếp tục"
-const TEXT_LEAVE_FLOOR: String = "Về chọn tầng"
+const TEXT_PAUSE_TITLE: String = "ui.run_hud.pause_title"
+const TEXT_RESUME: String = "ui.run_hud.resume"
+const TEXT_LEAVE_FLOOR: String = "ui.run_hud.leave_floor"
 
 ## Path to the GameFlow (a sibling under Main) that owns the controller.
 @export var flow_path: NodePath = NodePath("../GameFlow")
@@ -200,7 +200,7 @@ func _has_controller() -> bool:
 	return _controller != null and _controller.get_state() != null
 
 
-# Labels of the buttons of the current phase, left to right; empty when the phase has none.
+# Label KEYS of the buttons of the current phase, left to right (translated when drawn); empty when the phase has none.
 # Story 016: while paused, the overlay's buttons (only "Tiếp tục" without a GameFlow).
 func _button_labels() -> Array[String]:
 	if _controller.is_paused():
@@ -286,8 +286,9 @@ func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void
 	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
 
 
+# Translated opponent name of match [param index] (name_key, or a legacy literal display_name).
 func _match_name(index: int) -> String:
-	return str(_controller.get_config().matches[index].get("display_name", ""))
+	return RunConfig.match_name(_controller.get_config().matches[index])
 
 
 func _boss_index() -> int:
@@ -297,12 +298,12 @@ func _boss_index() -> int:
 func _draw_match_label(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var opponent: String = _match_name(state.get_match_index())
-	var text: String = TEXT_MATCH_LABEL_BOSS % opponent if state.is_boss_match() else TEXT_MATCH_LABEL % [state.get_match_index() + 1, state.get_match_count(), opponent]
+	var text: String = tr(TEXT_MATCH_LABEL_BOSS) % opponent if state.is_boss_match() else tr(TEXT_MATCH_LABEL) % [state.get_match_index() + 1, state.get_match_count(), opponent]
 	if not _controller.floor_label.is_empty():
-		text = TEXT_MATCH_LABEL_FLOOR % [_controller.floor_label, text]
+		text = tr(TEXT_MATCH_LABEL_FLOOR) % [_controller.floor_label, text]
 	var arena: String = _arena_name()
 	if not arena.is_empty():
-		text = TEXT_MATCH_LABEL_ARENA % [text, arena]
+		text = tr(TEXT_MATCH_LABEL_ARENA) % [text, arena]
 	var rect: Rect2 = ScreenLayout.run_match_label_rect(vp)
 	_text(rect, rect.get_center().y + LABEL_FONT_SIZE * 0.35, text, LABEL_FONT_SIZE, LABEL_COLOR)
 
@@ -322,7 +323,7 @@ func _arena_name() -> String:
 		return ""
 	var display: String = ArenaNames.name_for(shape)
 	if bool(info.get("variant", false)):
-		display += TEXT_ARENA_VARIANT
+		display += tr(TEXT_ARENA_VARIANT)
 	return display
 
 
@@ -330,24 +331,24 @@ func _draw_intro(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var band: Rect2 = ScreenLayout.run_intro_band_rect(vp)
 	draw_rect(band, BAND_COLOR)
-	var title: String = TEXT_INTRO_TITLE_BOSS if state.is_boss_match() else TEXT_INTRO_TITLE % [state.get_match_index() + 1, state.get_match_count()]
+	var title: String = tr(TEXT_INTRO_TITLE_BOSS) if state.is_boss_match() else tr(TEXT_INTRO_TITLE) % [state.get_match_index() + 1, state.get_match_count()]
 	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if state.is_boss_match() else TEXT_WHITE)
 	_text(band, band.position.y + band.size.y * BAND_NAME_BASELINE, _match_name(state.get_match_index()), BAND_NAME_FONT_SIZE, TEXT_LIGHT)
-	_text(band, band.position.y + band.size.y * BAND_HINT_BASELINE, TEXT_INTRO_HINT, BAND_HINT_FONT_SIZE, TEXT_DIM)
+	_text(band, band.position.y + band.size.y * BAND_HINT_BASELINE, tr(TEXT_INTRO_HINT), BAND_HINT_FONT_SIZE, TEXT_DIM)
 
 
 func _draw_between(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var config: RunConfig = _controller.get_config()
 	var panel: Rect2 = _draw_panel(vp)
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, TEXT_BETWEEN_TITLE, TITLE_FONT_SIZE, TEXT_WIN)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_BETWEEN_TITLE), TITLE_FONT_SIZE, TEXT_WIN)
 	var max_hp: float = _controller.get_player_max_hp()
-	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, TEXT_HEAL % roundi(config.heal_between_matches), LINE_FONT_SIZE, TEXT_LIGHT)
-	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, TEXT_HP % [ceili(state.get_carried_hp()), ceili(max_hp)], LINE_FONT_SIZE, TEXT_WHITE)
+	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, tr(TEXT_HEAL) % roundi(config.heal_between_matches), LINE_FONT_SIZE, TEXT_LIGHT)
+	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_HP) % [ceili(state.get_carried_hp()), ceili(max_hp)], LINE_FONT_SIZE, TEXT_WHITE)
 	var next_index: int = mini(state.get_match_index() + 1, _boss_index())
-	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, TEXT_NEXT % _match_name(next_index), LINE_FONT_SIZE, TEXT_LIGHT)
+	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, tr(TEXT_NEXT) % _match_name(next_index), LINE_FONT_SIZE, TEXT_LIGHT)
 	if config.between_sec > 0.0:
-		_text(panel, panel.position.y + panel.size.y * PANEL_NOTE_BASELINE, TEXT_AUTO % ceili(_controller.get_between_left()), SMALL_FONT_SIZE, TEXT_DIM)
+		_text(panel, panel.position.y + panel.size.y * PANEL_NOTE_BASELINE, tr(TEXT_AUTO) % ceili(_controller.get_between_left()), SMALL_FONT_SIZE, TEXT_DIM)
 	_draw_buttons(vp)
 
 
@@ -356,31 +357,31 @@ func _draw_between(vp: Vector2) -> void:
 func _draw_won(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var panel: Rect2 = _draw_panel(vp)
-	var title: String = TEXT_WIN_TITLE
-	var line: String = TEXT_WIN_LINE % _match_name(_boss_index())
+	var title: String = tr(TEXT_WIN_TITLE)
+	var line: String = tr(TEXT_WIN_LINE) % _match_name(_boss_index())
 	if _flow != null:
 		var pos: Vector2i = _flow.get_current_floor()
 		if _is_chapter_clear():
-			title = TEXT_CHAPTER_CLEAR_TITLE
+			title = tr(TEXT_CHAPTER_CLEAR_TITLE)
 			line = _flow.get_config().chapter_name(pos.x)
 		else:
-			title = TEXT_FLOOR_CLEAR_TITLE
+			title = tr(TEXT_FLOOR_CLEAR_TITLE)
 			line = _flow.get_config().floor_name(pos.x, pos.y)
 	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, title, TITLE_FONT_SIZE, TEXT_WIN)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, line, LINE_FONT_SIZE, TEXT_BOSS)
-	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, TEXT_TIME % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)
-	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, TEXT_CLEARED % [state.get_match_count(), state.get_match_count()], LINE_FONT_SIZE, TEXT_LIGHT)
+	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_TIME) % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)
+	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, tr(TEXT_CLEARED) % [state.get_match_count(), state.get_match_count()], LINE_FONT_SIZE, TEXT_LIGHT)
 	_draw_buttons(vp)
 
 
 func _draw_lost(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var panel: Rect2 = _draw_panel(vp)
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, TEXT_LOSE_TITLE, TITLE_FONT_SIZE, TEXT_LOSE)
-	var line: String = TEXT_LOSE_LINE % [state.get_match_index() + 1, state.get_match_count(), _match_name(state.get_match_index())]
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_LOSE_TITLE), TITLE_FONT_SIZE, TEXT_LOSE)
+	var line: String = tr(TEXT_LOSE_LINE) % [state.get_match_index() + 1, state.get_match_count(), _match_name(state.get_match_index())]
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, line, LINE_FONT_SIZE, TEXT_LIGHT)
-	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, TEXT_TIME % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)
-	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, TEXT_CLEARED % [state.get_match_index(), state.get_match_count()], LINE_FONT_SIZE, TEXT_LIGHT)
+	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_TIME) % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)
+	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, tr(TEXT_CLEARED) % [state.get_match_index(), state.get_match_count()], LINE_FONT_SIZE, TEXT_LIGHT)
 	_draw_buttons(vp)
 
 
@@ -404,7 +405,7 @@ func _draw_pause_button(vp: Vector2) -> void:
 # Story 016: the pause overlay — dim, panel, "TẠM DỪNG" and the resume / leave buttons.
 func _draw_paused(vp: Vector2) -> void:
 	var panel: Rect2 = _draw_panel(vp)
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, TEXT_PAUSE_TITLE, TITLE_FONT_SIZE, TEXT_LIGHT)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_PAUSE_TITLE), TITLE_FONT_SIZE, TEXT_LIGHT)
 	_draw_buttons(vp)
 
 
@@ -426,4 +427,4 @@ func _draw_buttons(vp: Vector2) -> void:
 	var alt_style: int = UiButtons.Style.NEUTRAL if _controller.is_paused() else UiButtons.Style.SECONDARY
 	for i: int in rects.size():
 		var style: int = UiButtons.Style.PRIMARY if i == 0 else alt_style
-		UiButtons.draw_button(self, rects[i], labels[i], style, UiButtons.is_pressed_at(self, rects[i]), true, font_size)
+		UiButtons.draw_button(self, rects[i], tr(labels[i]), style, UiButtons.is_pressed_at(self, rects[i]), true, font_size)

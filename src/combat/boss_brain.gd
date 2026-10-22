@@ -49,6 +49,8 @@ var _config: BossBrainConfig
 var _grid: BoardGrid
 var _cut_config: CutConfig
 var _skill_config: SkillConfig
+## Card ids the boss may use (match_params boss_cards; default = the basics in card_order).
+var cards: Array[String] = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _weights: Dictionary = {}
 var _movement: Dictionary = {}
@@ -75,6 +77,7 @@ func _init(
 	_grid = grid
 	_cut_config = cut_config
 	_skill_config = skill_config
+	cards = skill_config.card_order.duplicate()
 	if seed_value >= 0:
 		_rng.seed = seed_value
 		_combo_rng.seed = seed_value + _COMBO_SEED_OFFSET
@@ -283,7 +286,7 @@ func _choose_combo(
 			if not better:
 				continue
 		best = {
-			"hand_indices": selection, "skill_id": "slash", "labels": labels, "cells": cells2,
+			"hand_indices": selection, "skill_id": SkillConfig.FALLBACK_SKILL, "labels": labels, "cells": cells2,
 			"covered": covered, "escape_before": escape_before.size(), "escape_after": escape_before.size() - covered,
 		}
 	return best
@@ -405,7 +408,7 @@ func _cells_for(labels: Array[String]) -> Array[Vector2i]:
 func _choose_skill(cooldowns: SkillCooldowns, cell_count: int) -> String:
 	var best_id: String = ""
 	var best_bonus: float = -INF
-	for skill_id: String in _skill_config.skill_order:
+	for skill_id: String in cards:
 		var check: Dictionary = SkillAvailability.check(_skill_config, cooldowns, skill_id, cell_count)
 		if not bool(check["available"]):
 			continue

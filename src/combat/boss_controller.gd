@@ -22,7 +22,7 @@ signal feinted(cells: Array[Vector2i], labels: Array[String])
 ## Offset added to the seed for the feint RNG so it never shares a stream with the brain noise.
 const _FEINT_SEED_OFFSET: int = 7919
 ## Skill of a combo's second swing (combos always slash).
-const COMBO_SKILL: String = "slash"
+const COMBO_SKILL: String = "kiem_khi"
 
 ## DEV-ONLY (capture demos): when true the next one-point cut is a feint regardless of the
 ## learning roll; cleared once used. Never set by gameplay code.

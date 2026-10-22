@@ -1,17 +1,25 @@
 class_name SkillConfig
 extends RefCounted
-## Skill definitions and skill-menu timing from assets/data/skills.json.
-## Schema: assets/data/schema.md. Implements: Story 008 (skills data; burn/pin: Story 010).
+## Card definitions, deck defaults and card-menu timing from assets/data/cards.json.
+## (Class name kept from the v3 "skills" era; a skill is now a card.)
+## Schema: assets/data/schema.md. Implements: Story 008 (skills data; burn/pin: Story 010),
+## Story 017 part A (cards, hand_size, default deck).
 
-const DEFAULT_PATH: String = "res://assets/data/skills.json"
-## Skill id used when nothing else is chosen; always present in [member skills].
-const FALLBACK_SKILL: String = "slash"
+const DEFAULT_PATH: String = "res://assets/data/cards.json"
+## Card id used when nothing else is chosen; always present in [member cards].
+const FALLBACK_SKILL: String = "kiem_khi"
+const RARITIES: Array[String] = ["common", "rare", "epic"]
 
-## Simulation speed factor while the skill menu is open (0..1). Applied by the view.
+## Simulation speed factor while the card menu is open (0..1). Applied by the view.
 var menu_time_scale: float = 0.2
-## REAL seconds the player has to choose before the default skill is auto-picked.
+## REAL seconds the player has to choose before the default card is auto-picked.
 var menu_choose_sec: float = 3.0
-var default_skill: String = FALLBACK_SKILL
+## Cards drawn into the menu hand per cut (>= 1).
+var hand_size: int = 4
+## Basic card chosen on timeout (a rule, not a card in the hand); always in [member cards].
+var default_card: String = FALLBACK_SKILL
+## Starting deck: card ids (duplicates allowed), all known; never empty.
+var default_deck: Array[String] = [FALLBACK_SKILL]
 ## Focus: simulation speed factor while active (0 = full stop, 0..1).
 var focus_time_scale: float = 0.0
 ## Focus: max REAL seconds one Focus lasts (> 0).
@@ -20,19 +28,20 @@ var focus_max_sec: float = 4.0
 var focus_cooldown_sec: float = 8.0
 ## Focus: true = the player cannot step while Focus is active.
 var focus_locks_movement: bool = true
-## Stable menu order of skill ids.
-var skill_order: Array[String] = [FALLBACK_SKILL]
-## id -> {display_name: String, min_cells: int, cooldown_sec: float,
-## damage_multiplier: float, push_cells: int, implemented: bool}
-var skills: Dictionary = {}
+## Stable display order of the known card ids (also the boss's default card list).
+var card_order: Array[String] = [FALLBACK_SKILL]
+## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_multiplier, push_cells,
+## burn_*, pin_duration_sec, rarity, class_tags, implemented}
+var cards: Dictionary = {}
 
 
 func _init() -> void:
-	skills[FALLBACK_SKILL] = {
+	cards[FALLBACK_SKILL] = {
 		"effect": "damage", "burn_duration_sec": 0.0, "burn_tick_sec": 0.5,
 		"burn_damage_per_tick": 0.0, "pin_duration_sec": 0.0,
-		"display_name": "Slash", "min_cells": 1, "cooldown_sec": 0.0,
-		"damage_multiplier": 1.0, "push_cells": 0, "implemented": true,
+		"name_key": "card.kiem_khi.name", "desc_key": "card.kiem_khi.desc", "min_cells": 1, "cooldown_sec": 0.0,
+		"damage_multiplier": 1.0, "push_cells": 0, "rarity": "common", "class_tags": [],
+		"implemented": true,
 	}
 
 
@@ -58,46 +67,72 @@ static func from_dictionary(data: Dictionary) -> SkillConfig:
 	var config := SkillConfig.new()
 	config.menu_time_scale = clampf(float(data.get("menu_time_scale", config.menu_time_scale)), 0.0, 1.0)
 	config.menu_choose_sec = maxf(float(data.get("menu_choose_sec", config.menu_choose_sec)), 0.0)
+	config.hand_size = maxi(int(data.get("hand_size", config.hand_size)), 1)
 	config._read_focus(data.get("focus"))
-	var raw_skills: Variant = data.get("skills")
-	if typeof(raw_skills) == TYPE_DICTIONARY and not (raw_skills as Dictionary).is_empty():
-		config.skills.clear()
-		for id: Variant in (raw_skills as Dictionary).keys():
-			var raw: Variant = (raw_skills as Dictionary)[id]
+	var raw_cards: Variant = data.get("cards")
+	if typeof(raw_cards) == TYPE_DICTIONARY and not (raw_cards as Dictionary).is_empty():
+		config.cards.clear()
+		for id: Variant in (raw_cards as Dictionary).keys():
+			var raw: Variant = (raw_cards as Dictionary)[id]
 			if typeof(raw) != TYPE_DICTIONARY:
-				push_warning("SkillConfig: skill %s is not an object, ignored" % str(id))
+				push_warning("SkillConfig: card %s is not an object, ignored" % str(id))
 				continue
-			config.skills[str(id)] = _normalize(str(id), raw as Dictionary)
+			config.cards[str(id)] = _normalize(str(id), raw as Dictionary)
 	else:
-		push_warning("SkillConfig: no skills in data, using the built-in slash only")
-	config.skill_order = []
-	var raw_order: Variant = data.get("skill_order")
+		push_warning("SkillConfig: no cards in data, using the built-in kiem_khi only")
+	if config.cards.is_empty():
+		config.cards = SkillConfig.new().cards
+	config.card_order = []
+	var raw_order: Variant = data.get("card_order")
 	if typeof(raw_order) == TYPE_ARRAY:
 		for id: Variant in raw_order as Array:
-			if config.skills.has(str(id)) and not config.skill_order.has(str(id)):
-				config.skill_order.append(str(id))
-	for id: Variant in config.skills.keys():
-		if not config.skill_order.has(str(id)):
-			config.skill_order.append(str(id))
-	var wanted: String = str(data.get("default_skill", FALLBACK_SKILL))
-	if config.skills.has(wanted):
-		config.default_skill = wanted
+			if config.cards.has(str(id)) and not config.card_order.has(str(id)):
+				config.card_order.append(str(id))
+	for id: Variant in config.cards.keys():
+		if not config.card_order.has(str(id)):
+			config.card_order.append(str(id))
+	var wanted: String = str(data.get("default_card", FALLBACK_SKILL))
+	if config.cards.has(wanted):
+		config.default_card = wanted
 	else:
-		push_warning("SkillConfig: default_skill %s unknown, using the first skill" % wanted)
-		config.default_skill = config.skill_order[0] if not config.skill_order.is_empty() else FALLBACK_SKILL
+		push_warning("SkillConfig: default_card %s unknown, using the first card" % wanted)
+		config.default_card = config.card_order[0]
+	config.default_deck = []
+	var raw_deck: Variant = data.get("default_deck")
+	if typeof(raw_deck) == TYPE_ARRAY:
+		for id: Variant in raw_deck as Array:
+			if config.cards.has(str(id)):
+				config.default_deck.append(str(id))
+			else:
+				push_warning("SkillConfig: default_deck card %s unknown, dropped" % str(id))
+	if config.default_deck.is_empty():
+		config.default_deck = [config.default_card]
 	return config
 
 
-## True if [param id] is a defined skill.
+## True if [param id] is a defined card.
 func has_skill(id: String) -> bool:
-	return skills.has(id)
+	return cards.has(id)
 
 
-## The definition of [param id] (see [member skills]); empty dictionary if unknown.
+## The definition of [param id] (see [member cards]); empty dictionary if unknown.
 func get_skill(id: String) -> Dictionary:
-	if skills.has(id):
-		return skills[id] as Dictionary
+	if cards.has(id):
+		return cards[id] as Dictionary
 	return {}
+
+
+## Rarity of [param id] ("common" / "rare" / "epic"); "common" if unknown.
+func get_rarity(id: String) -> String:
+	return str(get_skill(id).get("rarity", "common"))
+
+
+## Class tags of [param id] (empty if none or unknown).
+func get_class_tags(id: String) -> Array[String]:
+	var tags: Array[String] = []
+	for tag: Variant in get_skill(id).get("class_tags", []) as Array:
+		tags.append(str(tag))
+	return tags
 
 
 # Parses the optional "focus" object; bad or missing values keep the defaults (warning if bad).
@@ -137,18 +172,32 @@ static func _number(d: Dictionary, key: String, fallback: float, low: float, hig
 static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 	var tick: float = float(raw.get("burn_tick_sec", 0.5))
 	if tick <= 0.0:
-		push_warning("SkillConfig: skill %s burn_tick_sec must be > 0, using 0.5" % id)
+		push_warning("SkillConfig: card %s burn_tick_sec must be > 0, using 0.5" % id)
 		tick = 0.5
+	var rarity: String = str(raw.get("rarity", "common"))
+	if not RARITIES.has(rarity):
+		push_warning("SkillConfig: card %s rarity '%s' unknown, using common" % [id, rarity])
+		rarity = "common"
+	var tags: Array = []
+	var raw_tags: Variant = raw.get("class_tags", [])
+	if typeof(raw_tags) == TYPE_ARRAY:
+		for tag: Variant in raw_tags as Array:
+			tags.append(str(tag))
+	else:
+		push_warning("SkillConfig: card %s class_tags must be an array, ignored" % id)
 	return {
 		"effect": str(raw.get("effect", "damage")),
 		"burn_duration_sec": maxf(float(raw.get("burn_duration_sec", 0.0)), 0.0),
 		"burn_tick_sec": tick,
 		"burn_damage_per_tick": maxf(float(raw.get("burn_damage_per_tick", 0.0)), 0.0),
 		"pin_duration_sec": maxf(float(raw.get("pin_duration_sec", 0.0)), 0.0),
-		"display_name": str(raw.get("display_name", id)),
+		"name_key": str(raw.get("name_key", "card.%s.name" % id)),
+		"desc_key": str(raw.get("desc_key", "card.%s.desc" % id)),
 		"min_cells": maxi(int(raw.get("min_cells", 1)), 1),
 		"cooldown_sec": maxf(float(raw.get("cooldown_sec", 0.0)), 0.0),
 		"damage_multiplier": maxf(float(raw.get("damage_multiplier", 1.0)), 0.0),
 		"push_cells": maxi(int(raw.get("push_cells", 0)), 0),
+		"rarity": rarity,
+		"class_tags": tags,
 		"implemented": bool(raw.get("implemented", false)),
 	}

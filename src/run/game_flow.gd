@@ -22,6 +22,7 @@ extends Node2D
 ##   --title                    show the title even with --progress=... (without it --progress alone starts
 ##                              at the floor select; no dev arg at all starts at the title)
 ##   --seed=N                   force the floor seed (reproducible arenas)
+##   --lang=vi|en               UI locale for this run only (not saved; captures)
 ##   --match=, --run=, --demo=, --arena=  (RunController / DemoArgs args) also switch to a memory
 ##                              store and, without --floor, enter chapter 1 floor 1
 
@@ -36,6 +37,10 @@ const PROGRESS_ARG: String = "--progress="
 const FLOOR_ARG: String = "--floor="
 const SEED_ARG: String = "--seed="
 const TITLE_ARG: String = "--title"
+## DEV-ONLY: locale override for captures (never saved).
+const LANG_ARG: String = "--lang="
+## Locales the CSV ships (Story 017); the title button cycles through them in this order.
+const SUPPORTED_LOCALES: Array[String] = ["vi", "en"]
 ## DEV-ONLY: disables the auto-pause on focus loss (windowed scratch tests run unfocused).
 const NO_AUTOPAUSE_ARG: String = "--no-autopause"
 ## Platforms without a Quit button (Apple rules): [method can_show_quit] is false there.
@@ -65,6 +70,10 @@ var _floor_seed: int = 0
 var _dev_seed: int = -1
 ## DEV-ONLY: true with --no-autopause (see [constant NO_AUTOPAUSE_ARG]).
 var _no_autopause: bool = false
+## Locale in use (always one of SUPPORTED_LOCALES).
+var _locale: String = ProgressState.DEFAULT_LOCALE
+## DEV-ONLY: --lang= value ("" = use the save).
+var _dev_locale: String = ""
 
 
 ## Test hook: installs the store BEFORE the node enters the tree (wins over --progress args).
@@ -109,6 +118,8 @@ func _ready() -> void:
 			floor_text = arg.trim_prefix(FLOOR_ARG)
 		elif arg.begins_with(SEED_ARG):
 			_dev_seed = int(arg.trim_prefix(SEED_ARG)) & ChaptersConfig.SEED_MASK
+		elif arg.begins_with(LANG_ARG):
+			_dev_locale = arg.trim_prefix(LANG_ARG)
 		else:
 			for prefix: String in DEV_RUN_ARGS:
 				if arg.begins_with(prefix):
@@ -116,6 +127,8 @@ func _ready() -> void:
 	if _store == null:
 		_store = _make_store(progress_mode, dev_run)
 	_progress = _load_progress(progress_mode)
+	# Locale before anything draws or caches a translated name (floor_label below).
+	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _progress.get_locale())
 	# Start phase: TITLE without dev args (or with --title); --progress alone -> FLOOR_SELECT.
 	_phase = Phase.FLOOR_SELECT if (not progress_mode.is_empty() and not force_title) else Phase.TITLE
 	if not floor_text.is_empty():
@@ -249,6 +262,34 @@ func quit_requested() -> void:
 	get_tree().quit()
 
 
+## Locale in use ("vi" / "en").
+func get_locale() -> String:
+	return _locale
+
+
+## The locale after the current one in [constant SUPPORTED_LOCALES] (cyclic).
+func next_locale() -> String:
+	var index: int = SUPPORTED_LOCALES.find(_locale)
+	return SUPPORTED_LOCALES[(index + 1) % SUPPORTED_LOCALES.size()]
+
+
+## Story 017: switches the UI locale (TranslationServer), stores it in the progress and saves through
+## the store. Unknown codes are ignored with a warning. Views draw every frame, so they follow at once;
+## RunController.floor_label is cached per floor entry (the title is the only place that switches).
+func set_locale(code: String) -> void:
+	if not SUPPORTED_LOCALES.has(code):
+		push_warning("GameFlow: unsupported locale '%s' (vi|en)" % code)
+		return
+	_apply_locale(code)
+	_progress.set_locale(code)
+	_store.save_state(_progress)
+
+
+## Title VI / EN button: moves to [method next_locale].
+func toggle_locale() -> void:
+	set_locale(next_locale())
+
+
 ## False on platforms that must not show a Quit button (iOS).
 func can_show_quit() -> bool:
 	return not NO_QUIT_OS_NAMES.has(OS.get_name())
@@ -325,6 +366,12 @@ func _on_run_phase_changed(phase: int) -> void:
 		return
 	_progress.mark_cleared(_config.floor_key(_current.x, _current.y))
 	_store.save_state(_progress)
+
+
+# Sets the TranslationServer locale; an unsupported code (old or edited save) falls back to the default.
+func _apply_locale(code: String) -> void:
+	_locale = code if SUPPORTED_LOCALES.has(code) else ProgressState.DEFAULT_LOCALE
+	TranslationServer.set_locale(_locale)
 
 
 func _make_store(progress_mode: String, dev_run: bool) -> ProgressStore:

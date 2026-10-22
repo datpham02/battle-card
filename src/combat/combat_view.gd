@@ -87,6 +87,7 @@ var _drops: FieldDrops
 var _drops_config: FieldDropsConfig
 var _cut_config: CutConfig
 var _skill_config: SkillConfig
+var _deck: Deck
 var _cooldowns: SkillCooldowns
 var _focus: FocusController
 var _cut_actor: CutActor
@@ -113,7 +114,7 @@ var boss_set_override: String = ""
 ## boss_step_cooldown_mult (x the player's computed step cooldown; deprecated absolute: boss_step_cooldown_sec), boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult
 ## (applied to a copy of the drops config for the boss only), movement (object merged over the
 ## match set's movement profile of boss_brain.json), end_delay_sec (default 1.5),
-## display_name (boss name in the HUD), match_label, arena (object: {shape[, variant]} or a direct
+## name_key (boss name in the HUD, translated; legacy display_name literal), match_label, arena (object: {shape[, variant]} or a direct
 ## {side_cols, side_rows, missing_cells}; see ArenaLibrary.grid_for_spec), arena_seed (int, variants),
 ## traits (array of {id, params}; see TraitRegistry.SCRIPTS and schema.md, Story 014).
 var match_params: Dictionary = {}
@@ -124,6 +125,10 @@ signal match_ended(player_won: bool, player_hp: float)
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
 const DEFAULT_BOSS_NAME: String = "DUMMY"
+## HUD keys (Story 017): the player marker / HP label, the HP line and the dead line of a unit.
+const TEXT_YOU: String = "ui.hud.you"
+const TEXT_UNIT_HP: String = "ui.hud.unit_hp"
+const TEXT_UNIT_DEAD: String = "ui.hud.unit_dead"
 
 var _end_timer: float = -1.0
 var _end_emitted: bool = false
@@ -156,6 +161,7 @@ func _ready() -> void:
 	_cut_config = CutConfig.load_from_file()
 	_skill_config = SkillConfig.load_from_file()
 	_cooldowns = SkillCooldowns.new()
+	_deck = Deck.new(_deck_ids(), drops_seed if drops_seed >= 0 else randi())
 	_focus = FocusController.new(_skill_config)
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
@@ -170,6 +176,7 @@ func _ready() -> void:
 		drops_seed + 1 if drops_seed >= 0 else -1
 	)
 	_boss.set_player_step_cooldown(_player_step_cooldown)
+	_boss.get_brain().cards = _boss_card_ids()
 	_boss.get_actor().duration_mult = maxf(float(match_params.get("swing_speed_mult", 1.0)), 0.01)
 	if not boss_set_override.is_empty() and not _boss.get_brain().use_set(boss_set_override):
 		push_warning("CombatView: unknown boss weight set '%s'" % boss_set_override)
@@ -300,9 +307,10 @@ func get_player_hp() -> float:
 	return _state.player_hp
 
 
-## Boss name for the HUD: match_params display_name, or "DUMMY".
+## Boss name for the HUD: match_params name_key (translated), a legacy literal display_name, or "DUMMY".
 func get_boss_name() -> String:
-	return str(match_params.get("display_name", DEFAULT_BOSS_NAME))
+	var boss_name: String = RunConfig.match_name(match_params)
+	return boss_name if not boss_name.is_empty() else DEFAULT_BOSS_NAME
 
 
 ## Match label such as "Trận 2/4" from match_params (empty when none).
@@ -435,6 +443,48 @@ func get_focus() -> FocusController:
 	return _focus
 
 
+## The player's deck (shuffle bag; match_params["deck"] or the default deck).
+func get_deck() -> Deck:
+	return _deck
+
+
+## The cards of the open card menu in order (empty when the menu is closed).
+func get_hand() -> Array[String]:
+	return _cut_flow.get_hand()
+
+
+# match_params["deck"] ids that exist in cards.json; absent, invalid or empty = default deck.
+func _deck_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var raw: Variant = match_params.get("deck", [])
+	if typeof(raw) == TYPE_ARRAY:
+		for id: Variant in raw as Array:
+			if _skill_config.has_skill(str(id)):
+				ids.append(str(id))
+			else:
+				push_warning("CombatView: deck card '%s' unknown, dropped" % str(id))
+	elif match_params.has("deck"):
+		push_warning("CombatView: match_params deck must be an array, using the default deck")
+	if ids.is_empty():
+		ids = _skill_config.default_deck.duplicate()
+	return ids
+
+
+# match_params["boss_cards"] ids that exist; absent, invalid or empty = the basics (card_order).
+func _boss_card_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var raw: Variant = match_params.get("boss_cards", [])
+	if typeof(raw) == TYPE_ARRAY:
+		for id: Variant in raw as Array:
+			if _skill_config.has_skill(str(id)) and not ids.has(str(id)):
+				ids.append(str(id))
+	elif match_params.has("boss_cards"):
+		push_warning("CombatView: match_params boss_cards must be an array, using the basics")
+	if ids.is_empty():
+		ids = _skill_config.card_order.duplicate()
+	return ids
+
+
 ## The player's skill cooldowns.
 func get_skill_cooldowns() -> SkillCooldowns:
 	return _cooldowns
@@ -500,7 +550,7 @@ func confirm_selection() -> bool:
 	if labels.size() == 1 and not _cut_config.single_point_opens_menu:
 		_begin_cut(SkillConfig.FALLBACK_SKILL, cells)
 	else:
-		_cut_flow.open_menu(labels, cells)
+		_cut_flow.open_menu(labels, cells, _deck.draw(_skill_config.hand_size))
 	return true
 
 
@@ -702,12 +752,12 @@ func _draw_hud(vp: Vector2) -> void:
 	var bar_y: float = text_y + 8.0
 	var left_x: float = hud.position.x + PAD
 	var right_x: float = hud.position.x + PAD + half_w + PAD * 2.0 + gap
-	var hp_text: String = "YOU  HP %d/%d" % [ceili(_state.player_hp), ceili(_state.player_max_hp)]
+	var hp_text: String = tr(TEXT_UNIT_HP) % [tr(TEXT_YOU), ceili(_state.player_hp), ceili(_state.player_max_hp)]
 	_draw_text(hp_text, Vector2(left_x, text_y), half_w, HORIZONTAL_ALIGNMENT_LEFT)
 	_draw_bar(Rect2(Vector2(left_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.player_hp / _state.player_max_hp, PLAYER_HP_COLOR)
-	var enemy_text: String = "%s  DEAD" % get_boss_name()
+	var enemy_text: String = tr(TEXT_UNIT_DEAD) % get_boss_name()
 	if not _state.is_enemy_dead():
-		enemy_text = "%s  HP %d/%d" % [get_boss_name(), ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
+		enemy_text = tr(TEXT_UNIT_HP) % [get_boss_name(), ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
 	_draw_text(enemy_text, Vector2(right_x, text_y), half_w, HORIZONTAL_ALIGNMENT_RIGHT)
 	_draw_bar(Rect2(Vector2(right_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.enemy_hp / _state.enemy_max_hp, HP_COLOR)
 	_draw_boss_hand(Vector2(right_x, text_y), half_w)
@@ -776,7 +826,7 @@ func _draw_player_marker(vp: Vector2) -> void:
 	draw_circle(c, radius, color)
 	draw_arc(c, radius, 0.0, TAU, 32, TEXT_COLOR, 3.0)
 	var font_size: int = maxi(int(radius * MARKER_FONT_RATIO), 8)
-	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, font_size * 0.4), "YOU", HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
+	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, font_size * 0.4), tr(TEXT_YOU), HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
 
 
 func _marker_radius(vp: Vector2) -> float:

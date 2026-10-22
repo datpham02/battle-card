@@ -82,6 +82,9 @@ const TITLE_BUTTONS_TOP_RATIO: float = 0.47
 const TITLE_BUTTON_WIDTH_RATIO: float = 0.3
 const TITLE_BUTTON_HEIGHT_RATIO: float = 0.11
 const TITLE_BUTTON_GAP_RATIO: float = 0.025
+## Title screen language button (Story 017): width / height as shares of the viewport.
+const TITLE_LANG_BUTTON_WIDTH_RATIO: float = 0.1
+const TITLE_LANG_BUTTON_HEIGHT_RATIO: float = 0.09
 ## Pause button (Story 016): a square of 0.09 * 720 = 65 px (>= 64 px touch target) centred in
 ## the HUD band, in the free column between the two HP bars (68 px wide at 1280x720: the band's
 ## HUD_GAP_RATIO plus CombatView's paddings). The top margin above holds the match label and is
@@ -402,6 +405,14 @@ static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect
 	for i: int in count:
 		rects.append(Rect2(left, top + (size.y + gap) * i, size.x, size.y))
 	return rects
+
+
+## Title screen (Story 017): the VI / EN language button in the bottom-right corner (>= 64 px tall
+## at 720p), clear of the button column.
+static func title_lang_button_rect(viewport_size: Vector2) -> Rect2:
+	var size := Vector2(viewport_size.x * TITLE_LANG_BUTTON_WIDTH_RATIO, viewport_size.y * TITLE_LANG_BUTTON_HEIGHT_RATIO)
+	var margin: float = viewport_size.y * MARGIN_RATIO
+	return Rect2(Vector2(viewport_size.x - margin - size.x, viewport_size.y - margin - size.y), size)
 
 
 ## Pause button (Story 016): a square centred in the HUD band, between the two HP bars.

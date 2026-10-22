@@ -39,7 +39,7 @@ const ROTTEN_X_WIDTH: float = 6.0
 const ROTTEN_X_INSET_RATIO: float = 0.18
 const ROTTEN_TIMER_FONT_RATIO: float = 0.17
 const ROTTEN_TIMER_BOTTOM_RATIO: float = 0.06
-const TEXT_ROTTEN_TIMER: String = "%.1f"
+const TEXT_ROTTEN_TIMER: String = "ui.hold.rotten_timer"
 
 ## Path to the hold-slot JSON config.
 @export_file("*.json") var config_path: String = HoldSlotsConfig.DEFAULT_PATH
@@ -169,7 +169,7 @@ func _draw_rotten_slot(rect: Rect2, point: FieldPoint) -> void:
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(rect.position.x, rect.end.y - rect.size.x * ROTTEN_TIMER_BOTTOM_RATIO),
-		TEXT_ROTTEN_TIMER % point.rot_in_hand_sec, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, timer_size, ROTTEN_LABEL_COLOR
+		tr(TEXT_ROTTEN_TIMER) % point.rot_in_hand_sec, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, timer_size, ROTTEN_LABEL_COLOR
 	)
 
 

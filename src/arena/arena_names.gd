@@ -1,23 +1,25 @@
 class_name ArenaNames
 extends RefCounted
-## Player-facing names of the arenas.json shapes (shared by the HUD and the floor-select screen).
-## Implements: Story 015.
+## Translation keys of the arenas.json shapes (shared by the HUD and the floor-select screen).
+## Implements: Story 015; keys through the i18n CSV since Story 017.
 
-## arenas.json shape id -> display name; an unknown id shows the id itself.
+## arenas.json shape id -> key `arena.<id>.name`; an unknown id shows the id itself.
 const NAMES: Dictionary = {
-	"square": "Vuông",
-	"rect": "Chữ nhật",
-	"cross": "Chữ thập",
-	"u_shape": "Chữ U",
-	"staircase": "Bậc thang",
-	"ring": "Vòng",
-	"islands_bridge": "Hai đảo",
-	"diamond": "Kim cương",
+	"square": "arena.square.name",
+	"rect": "arena.rect.name",
+	"cross": "arena.cross.name",
+	"u_shape": "arena.u_shape.name",
+	"staircase": "arena.staircase.name",
+	"ring": "arena.ring.name",
+	"islands_bridge": "arena.islands_bridge.name",
+	"diamond": "arena.diamond.name",
 }
-## Shown for a floor whose arena is drawn from a pool.
-const TEXT_RANDOM: String = "Ngẫu nhiên"
+## Key shown for a floor whose arena is drawn from a pool (translate with tr()).
+const TEXT_RANDOM: String = "ui.arena.random"
 
 
-## Display name of [param shape_id]; the id itself when unknown.
+## Translated display name of [param shape_id]; the id itself when unknown.
 static func name_for(shape_id: String) -> String:
-	return str(NAMES.get(shape_id, shape_id))
+	if not NAMES.has(shape_id):
+		return shape_id
+	return TranslationServer.translate(str(NAMES[shape_id]))

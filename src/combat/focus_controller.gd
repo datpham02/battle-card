@@ -4,7 +4,7 @@ extends RefCounted
 ## being connected. READY -> ACTIVE (up to focus_max_sec REAL seconds) -> COOLDOWN
 ## (focus_cooldown_sec REAL seconds) -> READY. The view decides WHEN to start/end it; this
 ## class only owns the state and the real-time clocks (the delta is injected, never scaled).
-## Numbers come from SkillConfig (assets/data/skills.json "focus"). Implements: Story 012.
+## Numbers come from SkillConfig (assets/data/cards.json "focus"). Implements: Story 012.
 
 ## Emitted when Focus becomes ACTIVE.
 signal started

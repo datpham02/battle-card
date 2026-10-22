@@ -8,7 +8,7 @@
 	"shapes": [
 		{
 			"id": "square",
-			"display_name": "Vuông 3x3",
+			"name_key": "arena.square.name",
 			"side_cols": 3,
 			"side_rows": 3,
 			"missing_cells": [],
@@ -16,7 +16,7 @@
 		},
 		{
 			"id": "rect",
-			"display_name": "Chữ nhật 4x3",
+			"name_key": "arena.rect.name",
 			"side_cols": 4,
 			"side_rows": 3,
 			"missing_cells": [],
@@ -24,7 +24,7 @@
 		},
 		{
 			"id": "cross",
-			"display_name": "Chữ thập",
+			"name_key": "arena.cross.name",
 			"side_cols": 4,
 			"side_rows": 4,
 			"missing_cells": [[0, 0], [0, 3], [3, 0], [3, 3]],
@@ -32,7 +32,7 @@
 		},
 		{
 			"id": "u_shape",
-			"display_name": "Chữ U",
+			"name_key": "arena.u_shape.name",
 			"side_cols": 4,
 			"side_rows": 3,
 			"missing_cells": [[0, 1]],
@@ -40,7 +40,7 @@
 		},
 		{
 			"id": "ring",
-			"display_name": "Vòng",
+			"name_key": "arena.ring.name",
 			"side_cols": 6,
 			"side_rows": 5,
 			"missing_cells": [[1, 1], [2, 1], [3, 1], [1, 2], [2, 2], [3, 2], [1, 3], [2, 3], [3, 3]],
@@ -48,7 +48,7 @@
 		},
 		{
 			"id": "islands_bridge",
-			"display_name": "Hai đảo nối cầu",
+			"name_key": "arena.islands_bridge.name",
 			"side_cols": 6,
 			"side_rows": 3,
 			"missing_cells": [[0, 2], [1, 2], [2, 0], [2, 2]],
@@ -56,7 +56,7 @@
 		},
 		{
 			"id": "staircase",
-			"display_name": "Bậc thang",
+			"name_key": "arena.staircase.name",
 			"side_cols": 4,
 			"side_rows": 4,
 			"missing_cells": [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [0, 2]],
@@ -64,7 +64,7 @@
 		},
 		{
 			"id": "diamond",
-			"display_name": "Kim cương",
+			"name_key": "arena.diamond.name",
 			"side_cols": 5,
 			"side_rows": 5,
 			"missing_cells": [[0, 0], [1, 0], [0, 1], [3, 0], [4, 0], [4, 1], [0, 3], [0, 4], [1, 4], [4, 3], [3, 4], [4, 4]],

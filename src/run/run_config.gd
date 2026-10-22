@@ -9,9 +9,9 @@ extends RefCounted
 ## Keys every match entry carries after validation (a deprecated absolute
 ## `boss_step_cooldown_sec` is carried too, but only when the data had it).
 const MATCH_KEYS: Array[String] = [
-	"id", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
+	"id", "name_key", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
-	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits",
+	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards",
 ]
 
 ## Keys of the flow numbers shared by chapters.json `defaults` and a floor's overrides.
@@ -94,6 +94,15 @@ func match_count() -> int:
 	return matches.size()
 
 
+## Player-facing name of a match record (or any match_params dictionary): the translated
+## `name_key` when present and non-empty, else the literal `display_name`, else "".
+static func match_name(m: Dictionary) -> String:
+	var key: String = str(m.get("name_key", ""))
+	if not key.is_empty():
+		return TranslationServer.translate(key)
+	return str(m.get("display_name", ""))
+
+
 func _apply_timings(data: Dictionary) -> void:
 	heal_between_matches = maxf(float(data.get("heal_between_matches", heal_between_matches)), 0.0)
 	intro_sec = maxf(float(data.get("intro_sec", intro_sec)), 0.0)
@@ -104,17 +113,22 @@ func _apply_timings(data: Dictionary) -> void:
 
 static func _default_match(index: int) -> Dictionary:
 	return {
-		"id": "match_%d" % (index + 1), "display_name": "Match %d" % (index + 1), "boss_max_hp": 100.0,
+		"id": "match_%d" % (index + 1), "name_key": "", "display_name": "Match %d" % (index + 1), "boss_max_hp": 100.0,
 		"brain_set": "balanced", "boss_step_cooldown_mult": 1.0, "boss_think_interval_sec": 0.3,
 		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0, "movement": {},
-		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "arena_seed": -1, "traits": [],
+		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "arena_seed": -1, "traits": [], "boss_cards": [],
 	}
 
 
 static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 	var m: Dictionary = _default_match(index)
 	m["id"] = str(raw.get("id", m["id"]))
-	m["display_name"] = str(raw.get("display_name", m["display_name"]))
+	m["name_key"] = str(raw.get("name_key", ""))
+	if raw.has("display_name"):
+		# Legacy literal name (flat test configs); shipped data carries name_key only.
+		if m["name_key"].is_empty():
+			push_warning("RunConfig: match %s uses the legacy display_name; use name_key (Story 017)" % m["id"])
+		m["display_name"] = str(raw["display_name"])
 	m["brain_set"] = str(raw.get("brain_set", m["brain_set"]))
 	m["boss_max_hp"] = _positive(raw, "boss_max_hp", float(m["boss_max_hp"]))
 	m["boss_drop_interval_mult"] = _positive(raw, "boss_drop_interval_mult", float(m["boss_drop_interval_mult"]))
@@ -147,6 +161,12 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		m["traits"] = (raw_traits as Array).duplicate(true)
 	else:
 		push_warning("RunConfig: traits of match %s must be an array, ignored" % m["id"])
+	var raw_cards: Variant = raw.get("boss_cards", [])
+	if typeof(raw_cards) == TYPE_ARRAY:
+		# Card ids the boss may use; [] = the basics. CombatView validates the ids.
+		m["boss_cards"] = (raw_cards as Array).duplicate()
+	else:
+		push_warning("RunConfig: boss_cards of match %s must be an array, ignored" % m["id"])
 	if raw.has("boss_step_cooldown_sec"):
 		# Deprecated absolute value: carried (and used by CombatView) only for old data.
 		push_warning("RunConfig: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")

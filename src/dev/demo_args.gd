@@ -80,6 +80,11 @@ extends Node
 ##       side coordinates (col 0 = farthest from the divider; mirrored to the boss half),
 ##       e.g. --grid=4x3:0,0;0,2. Combines with any --demo (or none). Replaces side_cols /
 ##       side_rows / missing_cells of combat.json and clears the start-cell overrides.
+##   godot --path . -- --deck=a,b,c    DEV-ONLY player deck (card ids of cards.json, repeats allowed) for the
+##       battle: written into CombatView.match_params["deck"] before _ready (Story 017), e.g.
+##       --demo=menu --deck=kiem_khi,chan_phong,hoa_tran shows a 3-card hand with one empty slot.
+##   godot --path . -- --drops-seed=N  DEV-ONLY seed of the drops RNG AND the deck shuffle bag (default 7 in
+##       every demo): --demo=menu --drops-seed=1 vs --drops-seed=2 give two different hands.
 ##   godot --path . -- --debug         DEV overlay: sets CombatView.debug_overlay (Story 016), so the HUD draws its
 ##       debug text (the boss learning line "né | ngắt | giả"); hidden by default. Works with or without --demo.
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
@@ -91,6 +96,8 @@ const DEMO_PREFIX: String = "--demo="
 const GRID_PREFIX: String = "--grid="
 const BOSS_PREFIX: String = "--boss="
 const DEBUG_ARG: String = "--debug"
+const DECK_PREFIX: String = "--deck="
+const DROPS_SEED_PREFIX: String = "--drops-seed="
 const DEMO_SEED: int = 7
 ## Freshness (s) of the boss's field points in "boss_pick"; uid base of its synthetic hand points.
 const BOSS_FIELD_FRESHNESS: Array[float] = [6.5, 3.5, 1.5]
@@ -114,10 +121,10 @@ const PIN_ELAPSED_SEC: float = 0.4
 const FEINT_STEP_SEC: float = 0.01
 const LEARNING_DODGES: int = 3
 const LEARNING_INTERRUPTS: int = 2
-const SKILL_BURN: String = "burn"
-const SKILL_PIN: String = "pin"
+const SKILL_BURN: String = "hoa_tran"
+const SKILL_PIN: String = "bang_phong"
 ## Story 012 demos: REAL seconds of Focus left in "focus" / "focus_timeout", and of cooldown
-## left in "focus_cooldown" (the totals come from skills.json through FocusController).
+## left in "focus_cooldown" (the totals come from cards.json through FocusController).
 const FOCUS_DEMO_LEFT_SEC: float = 2.5
 const FOCUS_TIMEOUT_DEMO_LEFT_SEC: float = 0.3
 const FOCUS_COOLDOWN_DEMO_LEFT_SEC: float = 6.0
@@ -150,6 +157,12 @@ func _enter_tree() -> void:
 	_combat().grid_override = _parse_grid()
 	_combat().boss_set_override = _parse_boss_set()
 	_combat().debug_overlay = OS.get_cmdline_user_args().has(DEBUG_ARG)
+	var deck: Array[String] = _parse_deck()
+	if not deck.is_empty():
+		_combat().match_params["deck"] = deck
+	var drops_seed: int = _parse_drops_seed()
+	if drops_seed >= 0:
+		_combat().drops_seed = drops_seed
 
 
 func _ready() -> void:
@@ -502,6 +515,24 @@ func _spread_enemy_cells(grid: BoardGrid, count: int) -> Array[Vector2i]:
 		if not out.has(all[index]):
 			out.append(all[index])
 	return out
+
+
+# Parses --deck=a,b,c into card ids (empty when absent; CombatView validates the ids).
+func _parse_deck() -> Array[String]:
+	var ids: Array[String] = []
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(DECK_PREFIX):
+			for id: String in arg.substr(DECK_PREFIX.length()).split(",", false):
+				ids.append(id.strip_edges())
+	return ids
+
+
+# Parses --drops-seed=N (negative when absent).
+func _parse_drops_seed() -> int:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(DROPS_SEED_PREFIX):
+			return maxi(int(arg.substr(DROPS_SEED_PREFIX.length())), 0)
+	return -1
 
 
 func _parse_mode() -> String:

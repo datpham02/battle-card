@@ -72,18 +72,20 @@ Cut numbers (Story 008). A missing or invalid file gives the defaults below with
 | `single_point_opens_menu` | boolean | - | When false a one-point cut goes straight to slash; the menu opens only for 2-4 points | false |
 | `hand_max_points` | integer 1..4 | points | Most points one cut may use; clamped into 1..4 | 4 |
 
-## skills.json  (read by `src/combat/skill_config.gd`)
+## cards.json  (read by `src/combat/skill_config.gd`, class SkillConfig)
 
-Skill menu timing and skill definitions (Story 008; burn and pin are data only until Story 010). A missing or invalid file gives a built-in slash-only config with a warning.
+Card menu timing, hand size, default deck and card definitions (Story 008/010/017). A card is what v3 called a skill. A missing or invalid file gives a built-in kiem_khi-only config with a warning.
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
 | `menu_time_scale` | number 0..1 | factor | Simulation speed while the skill menu is open (applied by the view) | 0.2 |
 | `menu_choose_sec` | number >= 0 | REAL seconds | Time to choose before the default skill is auto-picked | 3.0 |
-| `default_skill` | string | skill id | Skill auto-picked on timeout; must exist in `skills` | `slash` |
-| `skill_order` | array of skill ids | - | Stable order of the menu entries; skills not listed are appended | order of `skills` |
+| `hand_size` | integer >= 1 | cards | Cards drawn from the deck into the menu hand per cut | 4 |
+| `default_card` | string | card id | Basic card auto-picked on timeout even when the hand lacks it (a rule, not a hand card); must exist in `cards` | `kiem_khi` |
+| `default_deck` | array of card ids | - | Starting deck, duplicates allowed; unknown ids dropped with a warning; empty = `[default_card]` | `[default_card]` |
+| `card_order` | array of card ids | - | Stable display order of known cards (also the boss's default card list); cards not listed are appended | order of `cards` |
 | `focus` | object | - | "Focus" (Tập trung) pause, keys below | all defaults below |
-| `skills` | object id -> skill | - | Skill definitions (below) | slash only |
+| `cards` | object id -> card | - | Card definitions (below) | kiem_khi only |
 
 `focus` object keys (Story 012; bad values fall back to the default with a warning):
 
@@ -94,11 +96,12 @@ Skill menu timing and skill definitions (Story 008; burn and pin are data only u
 | `focus_cooldown_sec` | number >= 0 | REAL seconds | Cooldown after ANY end (confirm, deselect, timeout, death); selecting points does not pause meanwhile | 8.0 |
 | `focus_locks_movement` | boolean | - | true = step input is ignored (nothing queued) while Focus is active | true |
 
-Skill entry keys:
+Card entry keys (ids: `kiem_khi`, `chan_phong`, `hoa_tran`, `bang_phong`; `effect` names stay behaviours):
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
-| `display_name` | string | text | Player-facing name | the id |
+| `name_key` | string | i18n key | Player-facing name: `card.<id>.name`, looked up with `tr()` in `assets/i18n/strings.csv` | `card.<id>.name` |
+| `desc_key` | string | i18n key | One-line description: `card.<id>.desc` | `card.<id>.desc` |
 | `min_cells` | integer >= 1 | cells | Covered real cells needed to use the skill (menu shows "need N cells") | 1 |
 | `cooldown_sec` | number >= 0 | seconds | Cooldown started when the skill is used | 0 |
 | `damage_multiplier` | number >= 0 | factor | Multiplier on the slash damage (`base_damage_per_cell * cells`) | 1.0 |
@@ -108,6 +111,8 @@ Skill entry keys:
 | `burn_tick_sec` | number > 0 | seconds | Burn only: interval of damage to a unit standing on a burning cell (<= 0 uses 0.5 with a warning) | 0.5 |
 | `burn_damage_per_tick` | number >= 0 | HP | Burn only: damage per tick, per unit standing on the cell | 0 |
 | `pin_duration_sec` | number >= 0 | seconds | Pin only: how long the target cannot step; re-pinning refreshes it | 0 |
+| `rarity` | `common` / `rare` / `epic` | - | Card rarity (unknown -> common with a warning) | `common` |
+| `class_tags` | array of strings | - | Class tags for future class decks | `[]` |
 | `implemented` | boolean | - | False = shown locked ("not yet"); using it falls back to slash | false |
 
 ## boss_brain.json  (read by `src/combat/boss_brain_config.gd`)
@@ -135,7 +140,7 @@ Weight keys (inside each set; missing keys take the built-in balanced value):
 | `cut_hand_wait` | number >= 0 | score | Penalty for cutting with fewer than `hand_target` points while the hand is not full | 1.5 |
 | `hand_target` | integer 1..4 | points | Hand size the brain prefers to wait for | 3 |
 | `min_cut_score` | number | score | A cut is committed only at or above this score | 3.0 |
-| `skill_bonus_<id>` | number >= 0 | score | Preference for skill `<id>` (e.g. `skill_bonus_push`) when available; slash is 0, so a skill with a bonus above 0 beats slash | `skill_bonus_push` 1.0 |
+| `skill_bonus_<id>` | number >= 0 | score | Preference for skill `<id>` (e.g. `skill_bonus_chan_phong`) when available; slash is 0, so a skill with a bonus above 0 beats slash | `skill_bonus_push` 1.0 |
 | `dodge_danger` | number >= 0 | score | Penalty for standing in the player's visible incoming swing, times urgency = 1 / max(time_left, 0.1) | 2.0 |
 | `pickup_value` | number >= 0 | score | Value of the best reachable point, divided by 1 + Manhattan steps | 2.0 |
 | `pickup_danger_penalty` | number >= 0 | score | Subtracted from a point's value when it lies under the incoming swing | 2.0 |
@@ -197,7 +202,7 @@ Top level: `{ "defaults": {...}, "chapters": [...] }`.
 | `between_sec` | number >= 0 | seconds (real) | Auto-advance of the between-matches screen; 0 = wait for the button only | 3.0 |
 | `retry_min_hp_ratio` | number 0..1 | ratio of max HP | Retrying or resuming a match starts the player with max(HP at the start of that match, this x max HP); HP at match start negative = full | 0.5 |
 
-Each `chapters` entry: `id` (unique string), `display_name`, `floors` (>= 1). Each floor: `id` (unique within the chapter; the floor key is `"<chapter id>/<floor id>"`, e.g. `ch1/f2`), `display_name`, `matches` (>= 1, the LAST is the boss), and optionally:
+Each `chapters` entry: `id` (unique string), `name_key` (`chapter.<id>.name`), `floors` (>= 1). Each floor: `id` (unique within the chapter; the floor key is `"<chapter id>/<floor id>"`, e.g. `ch1/f2`), `name_key` (`floor.<chapter id>.<floor id>.name`), `matches` (>= 1, the LAST is the boss), and optionally:
 
 | Key | Type | Meaning | Default |
 |---|---|---|---|
@@ -212,7 +217,8 @@ Each floor `matches` entry (optional per-match `arena` override as below; `arena
 | Key | Type | Unit | Meaning | Default |
 |---|---|---|---|---|
 | `id` | string | - | Stable id | `match_<n>` |
-| `display_name` | string | - | Opponent name shown in the HUD | `Match <n>` |
+| `name_key` | string | - | i18n key of the opponent name shown in the HUD (`boss.<id>.name`, translated with `tr()`) | none |
+| `display_name` | string | - | LEGACY literal name (flat test configs only, warning); shipped data uses `name_key` | `Match <n>` |
 | `boss_max_hp` | number > 0 | HP | Opponent max HP | 100 |
 | `brain_set` | string | - | Weight set of `boss_brain.json` (balanced / aggressive / cautious); unknown = warning, file's `active_set` stays | balanced |
 | `boss_step_cooldown_mult` | number > 0 | multiplier | Boss step cooldown = the player's computed (board-scaled) step cooldown x this; wins over `step_cooldown_sec` of `boss_brain.json`, which is only the fallback for runs without match params | 1.0 |
@@ -280,7 +286,7 @@ SIDE COORDINATES: `missing_cells` entries are `[col, row]` on ONE half. Col 0 is
 | `variant_max_attempts` | int >= 1 | tries | Candidates `ArenaVariants` tries before returning the base shape (warning) |
 | `variant_change_min` / `variant_change_max` | int >= 1 | cells | Random side cells toggled (hole added or filled) per candidate; a vertical flip is also tried with probability 0.5 |
 
-Each `shapes` entry: `id` (unique string), `display_name`, `side_cols`, `side_rows` (cells of one half), `missing_cells` (`[[col,row],...]`), `difficulty` (1..5, for the later per-tier pools, Story 015).
+Each `shapes` entry: `id` (unique string), `name_key` (`arena.<id>.name`; `ArenaNames` holds the same keys for the HUD), `side_cols`, `side_rows` (cells of one half), `missing_cells` (`[[col,row],...]`), `difficulty` (1..5, for the later per-tier pools, Story 015).
 
 Validator checks: each half has >= `min_cells_per_side` cells; each half is 4-connected; both default cells exist; the halves mirror each other; from each half's default cell, EVERY single-point cut (A1..D<n>) leaves >= 1 uncovered cell reachable in 1 step.
 
@@ -296,7 +302,7 @@ Validator checks: each half has >= `min_cells_per_side` cells; each half is 4-co
 | `diamond` | 5x5 | 13 | 4 |
 
 Adding a new arena = one JSON block:
-1. Append `{id, display_name, side_cols, side_rows, missing_cells, difficulty}` to `shapes` (holes in side coordinates; the far column is col 0).
+1. Append `{id, name_key, side_cols, side_rows, missing_cells, difficulty}` to `shapes` (and the key's vi/en rows to `strings.csv`) (holes in side coordinates; the far column is col 0).
 2. Keep each half connected (and give the walls next to a hole thickness >= 2 where the default cell sits: a 1-cell-wide wall is fully covered by one straight cut) and at least `min_cells_per_side` cells; do not make the half's default (centre-most) cell a dead end that one straight cut can cover entirely.
 3. Launch the game; a shape that fails the validator is dropped and the warning says why.
 4. Use it from `chapters.json` with a floor `"arena": {"shape": "<id>"}` or an `arena_pool` (add `"variant": true` / `arena_variant` for a seeded variant), or capture it with `--arena=<id>`.
@@ -311,3 +317,20 @@ Player save written by `ProgressStore` (atomic: temp file renamed over the targe
 | `version` | integer | Always 1 |
 | `cleared` | array of floor keys | Floors whose boss was beaten, e.g. `["ch1/f1"]`. A floor is unlocked when it is the very first floor or the previous floor in linear order (across chapters) is cleared |
 | `in_progress` | object or null | The one floor being played: `floor` (key), `match_index` (0-based), `hp_at_match_start` (HP when that match began, negative = full), `floor_seed`. Resuming applies the retry rule: HP = max(`hp_at_match_start`, `retry_min_hp_ratio` x max HP), same arena (same seed). Cleared when the floor's boss is beaten, on "restart floor" or when another floor is entered |
+
+## Translation keys (Story 017, `assets/i18n/strings.csv`)
+
+Every player-facing string is a key. The CSV has the header `keys,vi,en` (UTF-8; a third language is one more column); Godot imports it into `assets/i18n/strings.<locale>.translation` (gitignored, regenerated by `godot --headless --path . --import`), registered in `project.godot` under `[internationalization]` with `locale/fallback="vi"`. Code never holds display text: `const TEXT_*` constants are keys drawn through `tr()` (`tr(key) % [...]` for printf templates; placeholders are identical in every column), and data files carry keys only:
+
+| Key group | Where | Example |
+|---|---|---|
+| `ui.<screen>.<label>` | `TEXT_*` in views | `ui.hud.cast`, `ui.title.play`, `ui.floor_select.title` |
+| `title.*` | title screen name / tagline | `title.name` |
+| `card.<id>.name` / `card.<id>.desc` | `cards.json` `name_key` / `desc_key` | `card.kiem_khi.name` |
+| `chapter.<id>.name` | `chapters.json` chapter `name_key` | `chapter.ch1.name` |
+| `floor.<chapter>.<floor>.name` | floor `name_key` | `floor.ch1.f2.name` |
+| `boss.<id>.name` | every match `name_key` (foe name) | `boss.goblin_chief.name` |
+| `arena.<id>.name` | `arenas.json` `name_key`, `ArenaNames.NAMES` | `arena.square.name` |
+| `trait.<id>.name` | trait names (reserved for a later HUD / codex) | `trait.row_burner.name` |
+
+A missing key shows the raw key (Godot's default), on purpose. The saved UI locale lives in `progress.json` as `locale` (`"vi"` when absent, v1 saves load unchanged).

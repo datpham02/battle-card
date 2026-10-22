@@ -9,16 +9,16 @@
 	"chapters": [
 		{
 			"id": "ch1",
-			"display_name": "Quán vỉa hè",
+			"name_key": "chapter.ch1.name",
 			"floors": [
 				{
 					"id": "f1",
-					"display_name": "Tầng 1",
+					"name_key": "floor.ch1.f1.name",
 					"arena": {"shape": "square"},
 					"matches": [
 						{
-							"id": "intern",
-							"display_name": "Thực tập sinh",
+							"id": "goblin_scout",
+							"name_key": "boss.goblin_scout.name",
 							"boss_max_hp": 80,
 							"brain_set": "cautious",
 							"boss_step_cooldown_mult": 1.78,
@@ -28,8 +28,8 @@
 							"boss_drop_interval_mult": 1.3
 						},
 						{
-							"id": "sous_chef",
-							"display_name": "Đầu bếp phụ",
+							"id": "wolf",
+							"name_key": "boss.wolf.name",
 							"boss_max_hp": 100,
 							"brain_set": "cautious",
 							"boss_step_cooldown_mult": 1.44,
@@ -44,8 +44,8 @@
 							}
 						},
 						{
-							"id": "head_chef",
-							"display_name": "Bếp trưởng",
+							"id": "goblin_chief",
+							"name_key": "boss.goblin_chief.name",
 							"boss_max_hp": 120,
 							"brain_set": "balanced",
 							"boss_step_cooldown_mult": 1.22,
@@ -59,12 +59,12 @@
 				},
 				{
 					"id": "f2",
-					"display_name": "Tầng 2",
+					"name_key": "floor.ch1.f2.name",
 					"arena": {"shape": "rect"},
 					"matches": [
 						{
-							"id": "waiter",
-							"display_name": "Phục vụ bàn",
+							"id": "goblin_warrior",
+							"name_key": "boss.goblin_warrior.name",
 							"boss_max_hp": 90,
 							"brain_set": "cautious",
 							"boss_step_cooldown_mult": 1.78,
@@ -74,8 +74,8 @@
 							"boss_drop_interval_mult": 1.3
 						},
 						{
-							"id": "line_cook",
-							"display_name": "Đầu bếp chạy bàn",
+							"id": "dire_wolf",
+							"name_key": "boss.dire_wolf.name",
 							"boss_max_hp": 110,
 							"brain_set": "cautious",
 							"boss_step_cooldown_mult": 1.44,
@@ -90,8 +90,8 @@
 							}
 						},
 						{
-							"id": "sous_chef_2",
-							"display_name": "Bếp phó",
+							"id": "goblin_shaman",
+							"name_key": "boss.goblin_shaman.name",
 							"boss_max_hp": 130,
 							"brain_set": "balanced",
 							"boss_step_cooldown_mult": 1.3,
@@ -101,8 +101,8 @@
 							"boss_drop_interval_mult": 1.05
 						},
 						{
-							"id": "head_chef_2",
-							"display_name": "Bếp trưởng khu phố",
+							"id": "wolf_alpha",
+							"name_key": "boss.wolf_alpha.name",
 							"boss_max_hp": 140,
 							"brain_set": "balanced",
 							"boss_step_cooldown_mult": 1.22,
@@ -116,13 +116,13 @@
 				},
 				{
 					"id": "f3",
-					"display_name": "Tầng 3",
+					"name_key": "floor.ch1.f3.name",
 					"arena_pool": ["cross", "u_shape", "staircase"],
 					"arena_variant": true,
 					"matches": [
 						{
-							"id": "prep_cook",
-							"display_name": "Phụ bếp",
+							"id": "goblin_archer",
+							"name_key": "boss.goblin_archer.name",
 							"boss_max_hp": 100,
 							"brain_set": "cautious",
 							"boss_step_cooldown_mult": 1.44,
@@ -132,8 +132,8 @@
 							"swing_speed_mult": 1.0
 						},
 						{
-							"id": "grill_cook",
-							"display_name": "Đầu bếp nướng",
+							"id": "goblin_brute",
+							"name_key": "boss.goblin_brute.name",
 							"boss_max_hp": 120,
 							"brain_set": "balanced",
 							"boss_step_cooldown_mult": 1.3,
@@ -143,8 +143,8 @@
 							"boss_drop_interval_mult": 1.05
 						},
 						{
-							"id": "head_chef_3",
-							"display_name": "Bếp trưởng cừ khôi",
+							"id": "goblin_warlock",
+							"name_key": "boss.goblin_warlock.name",
 							"boss_max_hp": 135,
 							"brain_set": "balanced",
 							"boss_step_cooldown_mult": 1.22,
@@ -155,8 +155,8 @@
 							"traits": [{"id": "row_burner", "params": {}}]
 						},
 						{
-							"id": "sushi_master",
-							"display_name": "Sushi Master",
+							"id": "forest_witch",
+							"name_key": "boss.forest_witch.name",
 							"boss_max_hp": 150,
 							"brain_set": "aggressive",
 							"boss_step_cooldown_mult": 1.11,
@@ -172,17 +172,17 @@
 		},
 		{
 			"id": "ch2",
-			"display_name": "Bếp khách sạn",
+			"name_key": "chapter.ch2.name",
 			"floors": [
 				{
 					"id": "f1",
-					"display_name": "Tầng 1",
+					"name_key": "floor.ch2.f1.name",
 					"arena_pool": ["ring"],
 					"arena_variant": true,
 					"matches": [
 						{
-							"id": "banquet_cook",
-							"display_name": "Đầu bếp tiệc",
+							"id": "zombie",
+							"name_key": "boss.zombie.name",
 							"boss_max_hp": 130,
 							"brain_set": "balanced",
 							"boss_step_cooldown_mult": 1.22,
@@ -193,8 +193,8 @@
 							"traits": [{"id": "row_burner", "params": {}}]
 						},
 						{
-							"id": "executive_chef",
-							"display_name": "Tổng bếp trưởng",
+							"id": "ogre",
+							"name_key": "boss.ogre.name",
 							"boss_max_hp": 160,
 							"brain_set": "aggressive",
 							"boss_step_cooldown_mult": 1.11,

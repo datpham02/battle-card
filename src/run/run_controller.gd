@@ -39,15 +39,17 @@ const ARENA_ARG: String = "--arena="
 const ARENA_VARIANT_SUFFIX: String = ":variant"
 ## DEV-ONLY: stable clock value (7:42) for run screen captures.
 const DEV_ELAPSED_SEC: float = 462.0
-const TEXT_MATCH_LABEL: String = "Trận %d/%d"
+const TEXT_MATCH_LABEL: String = "ui.run.match_label"
 ## Match label with the floor in front: "Tầng 2 · Trận 1/4".
-const TEXT_FLOOR_MATCH_LABEL: String = "%s · Trận %d/%d"
+const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 
 ## Flat run structure file, used only when [method configure] was not called (scratch tests can
 ## point it at a faster config before the node enters the tree). Empty = built-in defaults.
 @export_file("*.json") var run_config_path: String = ""
 ## Display name of the floor this run plays ("Tầng 2"); shown in the match label. Set by GameFlow.
 @export var floor_label: String = ""
+## Player deck card ids for the battles (Story 019 fills it); empty = the default deck.
+@export var deck: Array[String] = []
 
 var _config: RunConfig
 var _state: RunState
@@ -251,6 +253,8 @@ func _spawn_battle() -> void:
 		params["arena"] = _dev_arena.duplicate()
 	params["player_hp"] = _state.get_carried_hp()
 	params["floor_label"] = floor_label
+	if not deck.is_empty():
+		params["deck"] = deck.duplicate()
 	params["match_label"] = _match_label()
 	view.match_params = params
 	view.match_ended.connect(_on_match_ended)
@@ -264,8 +268,8 @@ func _match_label() -> String:
 	var index: int = _state.get_match_index() + 1
 	var count: int = _state.get_match_count()
 	if floor_label.is_empty():
-		return TEXT_MATCH_LABEL % [index, count]
-	return TEXT_FLOOR_MATCH_LABEL % [floor_label, index, count]
+		return tr(TEXT_MATCH_LABEL) % [index, count]
+	return tr(TEXT_FLOOR_MATCH_LABEL) % [floor_label, index, count]
 
 
 # Drops the pause flag (emits when it was set); does not touch process_mode.

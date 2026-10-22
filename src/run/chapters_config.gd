@@ -13,13 +13,13 @@ const DEFAULT_KEYS: Array[String] = [
 ]
 ## Keeps arena seeds non-negative (a negative seed means "random" to the arena code).
 const SEED_MASK: int = 0x7fffffff
-const TEXT_DEFAULT_CHAPTER_NAME: String = "Chương 1"
-const TEXT_DEFAULT_FLOOR_NAME: String = "Tầng 1"
+const TEXT_DEFAULT_CHAPTER_NAME: String = "ui.chapter.default_name"
+const TEXT_DEFAULT_FLOOR_NAME: String = "ui.floor.default_name"
 
 ## Optional library used to validate pool ids; loaded from arenas.json on first use.
 var arena_library: ArenaLibrary = null
 var _defaults: Dictionary = {}
-## Each chapter: {id, name, floors: Array[Dictionary]}. Each floor: {id, name, arena, arena_pool,
+## Each chapter: {id, name, name_is_key, floors: Array[Dictionary]}. Each floor: {id, name, name_is_key, arena, arena_pool,
 ## arena_variant, matches (raw dictionaries), overrides (defaults keys present on the floor)}.
 var _chapters: Array[Dictionary] = []
 
@@ -50,7 +50,7 @@ static func from_dictionary(data: Dictionary) -> ChaptersConfig:
 	if c._chapters.is_empty():
 		push_warning("ChaptersConfig: no valid chapters, using one default chapter")
 		c._chapters.append({
-			"id": "ch1", "name": TEXT_DEFAULT_CHAPTER_NAME,
+			"id": "ch1", "name": TEXT_DEFAULT_CHAPTER_NAME, "name_is_key": true,
 			"floors": [_make_floor("f1", TEXT_DEFAULT_FLOOR_NAME, [{}])],
 		})
 	return c
@@ -83,11 +83,12 @@ func chapter_id(ci: int) -> String:
 	return str(_chapters[ci]["id"])
 
 
-## Display name of chapter [param ci] ("" when out of range).
+## Translated display name of chapter [param ci] ("" when out of range): tr(name_key), or the legacy
+## display_name literal.
 func chapter_name(ci: int) -> String:
 	if ci < 0 or ci >= _chapters.size():
 		return ""
-	return str(_chapters[ci]["name"])
+	return _display(_chapters[ci])
 
 
 ## Id of floor [param fi] of chapter [param ci] ("" when out of range).
@@ -95,9 +96,10 @@ func floor_id(ci: int, fi: int) -> String:
 	return str(_floor(ci, fi).get("id", ""))
 
 
-## Display name of the floor ("" when out of range).
+## Translated display name of the floor ("" when out of range); see [method chapter_name].
 func floor_name(ci: int, fi: int) -> String:
-	return str(_floor(ci, fi).get("name", ""))
+	var fl: Dictionary = _floor(ci, fi)
+	return "" if fl.is_empty() else _display(fl)
 
 
 ## "<chapter id>/<floor id>" (e.g. "ch1/f2"); "" when out of range.
@@ -288,9 +290,26 @@ static func _clean_defaults(raw: Variant) -> Dictionary:
 	return result
 
 
-static func _make_floor(id: String, display: String, matches: Array) -> Dictionary:
+# Translated name of a chapter / floor record ({name, name_is_key}).
+func _display(record: Dictionary) -> String:
+	var raw_name: String = str(record.get("name", ""))
+	return tr(raw_name) if bool(record.get("name_is_key", false)) else raw_name
+
+
+# [name, is_key] of a chapter / floor entry: `name_key` (translated later), else the legacy literal
+# `display_name` (warning), else the id.
+static func _name_of(raw: Dictionary, id: String, what: String) -> Array:
+	if raw.has("name_key"):
+		return [str(raw["name_key"]), true]
+	if raw.has("display_name"):
+		push_warning("ChaptersConfig: %s '%s' uses the legacy display_name; use name_key (Story 017)" % [what, id])
+		return [str(raw["display_name"]), false]
+	return [id, false]
+
+
+static func _make_floor(id: String, display: String, matches: Array, name_is_key: bool = true) -> Dictionary:
 	return {
-		"id": id, "name": display, "arena": {}, "arena_pool": [], "arena_variant": false,
+		"id": id, "name": display, "name_is_key": name_is_key, "arena": {}, "arena_pool": [], "arena_variant": false,
 		"matches": matches, "overrides": {},
 	}
 
@@ -316,7 +335,8 @@ func _clean_chapter(entry: Variant, index: int, seen: Dictionary) -> Dictionary:
 		push_warning("ChaptersConfig: chapter '%s' has no valid floors, dropped" % id)
 		return {}
 	seen[id] = true
-	return {"id": id, "name": str(raw.get("display_name", id)), "floors": floors}
+	var named: Array = _name_of(raw, id, "chapter")
+	return {"id": id, "name": named[0], "name_is_key": named[1], "floors": floors}
 
 
 func _clean_floor(entry: Variant, index: int, chapter_id_text: String, seen: Dictionary) -> Dictionary:
@@ -339,7 +359,8 @@ func _clean_floor(entry: Variant, index: int, chapter_id_text: String, seen: Dic
 	if matches.is_empty():
 		push_warning("ChaptersConfig: floor '%s/%s' has no matches, dropped" % [chapter_id_text, id])
 		return {}
-	var floor_dict: Dictionary = _make_floor(id, str(raw.get("display_name", id)), matches)
+	var named: Array = _name_of(raw, id, "floor")
+	var floor_dict: Dictionary = _make_floor(id, named[0], matches, named[1])
 	var arena: Variant = raw.get("arena", {})
 	if typeof(arena) == TYPE_DICTIONARY:
 		floor_dict["arena"] = (arena as Dictionary).duplicate(true)

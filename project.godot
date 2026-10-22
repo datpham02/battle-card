@@ -2,10 +2,15 @@ config_version=5
 
 [application]
 
-config/name="Kaiten Duel"
+config/name="Ấn Kiếm"
 config/features=PackedStringArray("4.6", "Mobile")
 run/main_scene="res://src/main.tscn"
 config/quit_on_go_back=false
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://assets/i18n/strings.en.translation", "res://assets/i18n/strings.vi.translation")
+locale/fallback="vi"
 
 [display]
 

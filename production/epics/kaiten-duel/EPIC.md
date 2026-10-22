@@ -74,6 +74,6 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 014 | Khung boss: sân riêng theo trận + đặc điểm (trait) cắm được, 2 trait mẫu | Integration | Complete | N/A (minimal) |
 | 015 | Chương và tầng: một run là một tầng, sân cố định/pool theo tầng, lưu tầng đã mở, màn chọn tầng và qua tầng | Integration | Complete | N/A (minimal) |
 | 016 | Vỏ game: màn title, tạm dừng, nút back, tắt dòng debug | UI | Complete | N/A (minimal) |
-| 017 | Lá bài và bộ bài: cards.json, Deck, menu rút 4 lá; đổi vỏ fantasy (dữ liệu, chuỗi) | Integration | Ready | N/A (minimal) |
+| 017 | Lá bài và bộ bài: cards.json, Deck, menu rút 4 lá; đổi vỏ fantasy (dữ liệu, chuỗi) | Integration | Complete | N/A (minimal) |
 | 018 | Nhân vật theo lớp: characters.json, nội tại cắm được, bộ khởi đầu, màn chọn nhân vật | Integration | Ready | N/A (minimal) |
 | 019 | Run roguelike: thưởng 1 trong 3 lá, máu cả run, chết là hết, chọn chương, save run | Integration | Ready | N/A (minimal) |
