@@ -1,6 +1,6 @@
 # Game Brief: Ấn Kiếm (tên làm việc; repo vẫn là Kaiten Duel)
 
-> **v4 — 2026-10-22.** Sau cổng chơi thử 4 và khi cả 16 story đã xong, người dùng quyết định hai việc: (1) **bỏ chủ đề bếp sushi, dựng thế giới fantasy**; (2) **thêm lớp roguelike**: 3–5 nhân vật theo lớp, bộ bài khởi đầu theo lớp, đi tầng để nhặt lá và build bộ bài, **chết là hết run** (hồi sinh là item thêm sau). Cơ chế lõi của v3 giữ nguyên, chỉ đổi vỏ: điểm cắt → **ấn**, đường dao → **trận pháp**, kỹ năng → **phép** (lá bài). Lịch sử: v1 băng chuyền (`2f4e31b`), v2 lưới 3×3 + quầy chung (`be73d17`), v3 hệ cắt (`e9efe25`), v3 hoàn thiện đến Story 016 (`0974bd9`).
+> **v4 — 2026-10-22.** Sau cổng chơi thử 4 và khi cả 16 story đã xong, người dùng quyết định hai việc: (1) **bỏ chủ đề bếp sushi, dựng thế giới fantasy**; (2) **thêm lớp roguelike**: 3–5 nhân vật với bộ bài khởi đầu, nội tại và tuyệt kỹ riêng (không có "lớp"), đi tầng để nhặt lá và build bộ bài, **chết là hết run** (hồi sinh là item thêm sau). Cơ chế lõi của v3 giữ nguyên, chỉ đổi vỏ: điểm cắt → **ấn**, đường dao → **trận pháp**, kỹ năng → **phép** (lá bài). Lịch sử: v1 băng chuyền (`2f4e31b`), v2 lưới 3×3 + quầy chung (`be73d17`), v3 hệ cắt (`e9efe25`), v3 hoàn thiện đến Story 016 (`0974bd9`).
 
 **One-sentence pitch:** Đấu phép thời gian thực trên hai trận địa đối mặt: bạn chạy nhặt những **ấn** rơi xuống đất mình, nối chúng thành **trận pháp** vẽ thẳng lên đất địch rồi thi triển một **lá phép**; trận pháp càng phủ nhiều ô phép càng mạnh nhưng niệm càng lâu, ai thi triển trước thì phá phép của người kia; mỗi run chọn một nhân vật, nhặt lá qua từng tầng, **chết là hết**.
 
@@ -44,22 +44,23 @@
 ## Roguelike (v4, Story 017–019)
 
 ### Lá bài và bộ bài (017)
-- `cards.json` thay `skills.json`: mỗi lá có id, tên, hiệu ứng, số ô cần, cooldown, tham số, **độ hiếm** (thường / hiếm / sử thi) và **thẻ lớp** (lớp nào hay gặp). Bốn lá cơ bản là bản đầu; lá mới = thêm JSON + (nếu hiệu ứng mới) một lớp hiệu ứng đăng ký như trait.
+- `cards.json` thay `skills.json`: mỗi lá có id, tên, hiệu ứng, số ô cần, cooldown, tham số, **độ hiếm** (thường / hiếm / sử thi) và (từ 020) **sát thương mỗi ô riêng** cùng bảng **nâng cấp** 3 cấp. Không có thẻ lớp. Bốn lá cơ bản là bản đầu; lá mới = thêm JSON + (nếu hiệu ứng mới) một lớp hiệu ứng đăng ký như trait.
 - **Bộ bài** của người chơi: danh sách lá (6–12). Mỗi lần Thi triển 2–4 ấn, menu **rút 4 lá theo túi xáo** từ bộ (hết túi xáo lại; seeded). Lá rút rồi không trả lại cho đến khi hết túi. Lá trùng được phép (hai *Kiếm khí* trong bộ = ra thường hơn). Cooldown tính theo id lá như nay.
 - Hết giờ chọn → *Kiếm khí* cơ bản dù tay không có lá đó (luật, không phải lá).
 
-### Nhân vật theo lớp (018)
+### Nhân vật (018, 021) — không có "lớp"
 - `characters.json`: id, tên, mô tả, máu, hệ số cooldown bước, thời gian Tập trung, **nội tại** (passive id + tham số), **bộ khởi đầu** (danh sách id lá), đã mở khóa hay chưa.
-- Ba lớp đầu: **Kiếm sĩ** (máu 100, bộ 2 Kiếm khí 2 Chấn phong 1 Hỏa trận 1 Băng phong, nội tại: hồi thêm máu sau mỗi trận), **Pháp sư** (máu 80, Tập trung 5 s, bộ nặng Hỏa trận và phép diện rộng, nội tại: trận pháp ≥ 5 ô niệm nhanh hơn 15 %), **Sát thủ** (máu 90, bước nhanh hơn 10 %, bộ nặng Băng phong và đòn 1–2 ấn, nội tại: phép ≤ 3 ô mạnh hơn 25 %). Thợ săn, Giáo sĩ là nhân vật 4–5, mở sau. Số là khởi điểm, chỉnh sau chơi thử.
+- Ba nhân vật đầu: **Kiếm sĩ** (máu 100, bộ 2 Kiếm khí 2 Chấn phong 1 Hỏa trận 1 Băng phong, nội tại: hồi thêm máu sau mỗi trận), **Pháp sư** (máu 80, Tập trung 5 s, bộ nặng Hỏa trận và phép diện rộng, nội tại: trận pháp ≥ 5 ô niệm nhanh hơn 15 %), **Sát thủ** (máu 90, bước nhanh hơn 10 %, bộ nặng Băng phong và đòn 1–2 ấn, nội tại: phép ≤ 3 ô mạnh hơn 25 %). Thợ săn, Giáo sĩ là nhân vật 4–5, mở sau. Số là khởi điểm, chỉnh sau chơi thử.
 - Nội tại là lớp nhỏ đăng ký như trait (`PassiveRegistry`), đọc/ghi qua API công khai.
+- **Không có "lớp" (quyết định 2026-10-22):** không lá nào gắn nhân vật, thưởng không nghiêng theo nhân vật. Nhân vật nào cũng chơi được mọi bộ; thứ lái người chơi là **tuyệt kỹ** (021): một kỹ năng chủ động nạp theo số ô đã Thi triển, **mạnh lên theo bộ bài** chứ không tự mạnh. **Kiếm sĩ — Trảm** (3 s, ô ×2, hút máu 20 %: khuếch đại lá sát thương cao); **Pháp sư — Thiên Hỏa** (kích nổ cháy ×2, đặt lại cooldown lá đốt: khuếch đại lửa chồng); **Sát thủ — Ảnh Bộ** (2 s bước không cooldown, địch bị ghim ăn ×2 từ lá ≤ 3 ô: khuếch đại ghim + lá nhỏ). Đa dạng đến từ pool lá (cần 16–20 lá tới cuối chương 2) và hai từ khóa dùng chung **Ghim** (địch bị ghim ăn ×1,5 từ đòn kiếm) và **Đốt** (cháy chồng tối đa 3 tầng).
 
 ### Run (019)
 - **Một run = chọn nhân vật → một chương** (3 tầng, mỗi tầng N trận rồi boss) → thắng boss tầng cuối là thắng run. Tầng trong chương đi tuần tự; màn chọn tầng thành **chọn chương** (chương mở khi chương trước đã thắng bằng bất kỳ nhân vật nào).
-- Sau mỗi trận thắng: **chọn 1 trong 3 lá** (rút từ pool theo độ hiếm và thẻ lớp, seeded), hoặc bỏ qua. Lá vào bộ ngay.
+- Sau mỗi trận thắng: **chọn 1 trong 3 lá** (rút từ pool theo độ hiếm, seeded; không nghiêng theo nhân vật), hoặc bỏ qua, hoặc (từ 020) **bỏ 1 lá**. Lá vào bộ ngay; nhặt lá đã có = **nâng cấp** (tối đa +2).
 - **Máu là tài nguyên của cả run**: hồi `heal_between_matches` sau mỗi trận, `heal_between_floors` sau boss tầng, không đầy lại khi sang tầng.
 - **Chết là hết run**: màn "RUN KẾT THÚC" (tầng, trận, số lá, thời gian), về title. Không chơi lại trận, không giữ bộ bài. Hồi sinh (item, mạng dự phòng) là cơ chế thêm sau; `revive_tokens` trong JSON để sẵn, mặc định 0.
 - **Save**: run đang dở (nhân vật, bộ bài, chương, tầng, trận, máu, seed) ghi ở mốc trận, nút *Tiếp tục* trên title. Vĩnh viễn: chương đã thắng, nhân vật đã mở, lá đã thấy (để mở pool dần, làm sau).
-- Để sau (backlog): bỏ lá / nâng lá giữa tầng, sự kiện giữa trận, tiền và cửa hàng, item hồi sinh, Daily seed.
+- Để sau (backlog): sự kiện giữa trận, tiền và cửa hàng, item hồi sinh, Daily seed.
 
 ## Player goal & fail state
 - Thắng một run: đi hết chương với nhân vật đã chọn, bộ bài bạn tự nhặt, trong khoảng 15–25 phút.
@@ -75,7 +76,7 @@
 | Niệm cơ bản, niệm mỗi ô, sát thương mỗi ô | 0,2 s, 0,25 s, 6 | `cuts.json` |
 | Menu: time scale, thời gian chọn, số lá rút | 0,2, 3 s, 4 | `cards.json` |
 | Tập trung | 4 s, cooldown 8 s | `cards.json` |
-| Bộ khởi đầu, máu, nội tại theo lớp | bảng trên | `characters.json` |
+| Bộ khởi đầu, máu, nội tại, tuyệt kỹ theo nhân vật | bảng trên | `characters.json` |
 | Thưởng: số lá đưa ra, trọng số độ hiếm | 3; thường 70 / hiếm 25 / sử thi 5 | `rewards.json` |
 | Hồi máu sau trận / sau tầng | 25 / 40 | `chapters.json` |
 
@@ -86,13 +87,15 @@
 ## Build order
 1–9. v1→v3 (Story 001–016, xong 2026-10-21): lưới, di chuyển, ấn rơi, trận pháp, boss, phép, Tập trung, hồ sơ boss, sân và trait, chương/tầng + save, title/tạm dừng.
 10. **Lá bài và bộ bài + đa ngôn ngữ vi/en + đổi vỏ fantasy** (017).
-11. **Nhân vật theo lớp + nội tại + màn chọn nhân vật** (018).
+11. **Nhân vật + nội tại + màn chọn nhân vật** (018).
 12. **Run roguelike: thưởng lá, máu cả run, chết là hết, save run** (019) → **cổng chơi thử 5: run đầu tiên có thật**.
-13. Nội dung chương 2–3 (boss, trait, lá mới) → lên Android → hình và âm.
+13. **Bộ bài có sức nặng** (020): sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá, từ khóa Ghim/Đốt, bỏ khái niệm lớp.
+14. **Tuyệt kỹ nhân vật** (021): thanh nạp, Trảm / Thiên Hỏa / Ảnh Bộ, khuếch đại bộ bài → **cổng chơi thử 6**.
+15. Nội dung chương 2–3 (boss, trait, lá mới) → lên Android → hình và âm.
 
 ---
 **Who it's for / what they feel:** Người chơi mobile thích Mega Man Battle Network và Slay the Spire, chơi ngang hai tay, phiên 15–25 phút một run; cảm giác "mình gom đủ ấn, vẽ một trận pháp to, rút đúng lá và nó ra kịp".
 
 **Art & audio direction:** 2D fantasy sáng, hơi cartoon; hai trận địa là nền đá khắc; ấn là ký tự phát sáng; trận pháp vẽ sáng rồi bùng. SFX phép giòn, nhạc orchestral nhẹ. Placeholder vẽ bằng code cho tới phase hình.
 
-**Reference game:** Mega Man Battle Network (hai lưới, một ô mỗi bước, màn chọn làm chậm thời gian) + Slay the Spire (chọn 1 trong 3 lá, chết là hết, nhân vật theo lớp). Nhãn chu vi, nối ấn thành hình, sát thương theo số ô là phần riêng.
+**Reference game:** Mega Man Battle Network (hai lưới, một ô mỗi bước, màn chọn làm chậm thời gian) + Slay the Spire (chọn 1 trong 3 lá, chết là hết, nhặt trùng = nâng cấp) + Hades (nhân vật là cá nhân với tuyệt kỹ riêng, mọi vật phẩm dùng chung). Nhãn chu vi, nối ấn thành hình, sát thương theo số ô là phần riêng.
