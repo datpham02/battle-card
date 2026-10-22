@@ -1,9 +1,10 @@
 class_name RunHudView
 extends Node2D
-## Run UI (Story 011, Story 015): match label, intro banner, between-matches screen, floor-clear
-## screen and lose screen. Reads the RunController and redraws every frame; owns no run state.
-## It is a child of Main added AFTER the GameFlow, so it draws above the battle (the battle is a
-## child of the controller under GameFlow, and canvas items draw in tree order). Placeholder art.
+## Run UI (Story 011, 015, 016, 019): match label + deck label, intro banner, pause button and
+## pause overlay, and the run result screens. Reads the RunController / GameFlow and redraws every
+## frame; owns no run state. It is a child of Main added AFTER the GameFlow, so it draws above the
+## battle (the battle is a child of the controller under GameFlow, and canvas items draw in tree
+## order); RewardView comes after it and covers it while an offer is open. Placeholder art.
 ##
 ## Story 015: the controller comes from the GameFlow at [member flow_path] (signal
 ## controller_changed; nothing is drawn while it is null). Without a GameFlow (scratch tests) it
@@ -16,9 +17,18 @@ extends Node2D
 ## DEV convenience: Enter / Keypad Enter / Space (pressed, not echo) trigger the FIRST button.
 ## Story 016: in PLAYING a pause button sits in the HUD band (ScreenLayout.pause_button_rect),
 ## dimmed while [method RunController.can_pause] is false; while the controller is paused a
-## full-screen overlay ("TẠM DỪNG", "Tiếp tục" / "Về chọn tầng" on the run panel) swallows every
-## pointer event, and Enter / Space resume. Buttons are painted by UiButtons (shared look).
-## All UI strings are constants here (no localization system exists yet at this tier).
+## full-screen overlay ("TẠM DỪNG", "Tiếp tục" / "Thoát run (đã lưu)") swallows every pointer
+## event, and Enter / Space resume. Buttons are painted by UiButtons (shared look).
+##
+## Story 019 (roguelike run): while the flow has an open card offer ([method GameFlow.get_pending_reward]
+## non-empty or [method GameFlow.is_reward_blocking]) this view draws only the labels and takes no
+## button taps — RewardView owns the screen. When the run ended ([method GameFlow.get_run_result]
+## WON / LOST) the controller's WON / LOST panels are replaced by RUN THẮNG / RUN KẾT THÚC (character,
+## chapter, floor · match, deck size, run time) with the one button "Về title" ->
+## [method GameFlow.leave_run]. The BETWEEN panel and the floor WON / LOST panels remain only for
+## floors outside a run (test floors, no GameFlow): a run floor never shows them, the flow advances
+## itself after the offer. A small "Bộ: N lá" label (ScreenLayout.run_deck_label_rect) sits in the
+## top margin right of the match label while a run is live. All strings are TEXT_* keys through tr().
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const BAND_COLOR: Color = Color(0.08, 0.07, 0.06, 0.78)
@@ -58,6 +68,8 @@ const PANEL_LINE1_BASELINE: float = 0.29
 const PANEL_LINE2_BASELINE: float = 0.40
 const PANEL_LINE3_BASELINE: float = 0.51
 const PANEL_NOTE_BASELINE: float = 0.60
+## Story 019 result panels: up to five lines under the title, above the button (0.75).
+const RESULT_LINE_BASELINES: Array[float] = [0.28, 0.37, 0.46, 0.55, 0.64]
 
 const TEXT_MATCH_LABEL: String = "ui.run_hud.match_label"
 const TEXT_MATCH_LABEL_BOSS: String = "ui.run_hud.match_label_boss"
@@ -85,15 +97,20 @@ const TEXT_LOSE_LINE: String = "ui.run_hud.lose_line"
 const TEXT_TIME: String = "ui.run_hud.time"
 const TEXT_CLEARED: String = "ui.run_hud.cleared"
 const TEXT_RESTART: String = "ui.run_hud.restart"
-const TEXT_RETRY_MATCH: String = "ui.run_hud.retry_match"
-const TEXT_NEXT_FLOOR: String = "ui.run_hud.next_floor"
-## Chapter-clear screen: enters the first floor of the next chapter (user decision 2026-10-21).
-const TEXT_NEXT_CHAPTER: String = "ui.run_hud.next_chapter"
-const TEXT_CHOOSE_FLOOR: String = "ui.run_hud.choose_floor"
-## Story 016 pause overlay.
+## Story 016 pause overlay; Story 019: the second button leaves the run (it stays saved).
 const TEXT_PAUSE_TITLE: String = "ui.run_hud.pause_title"
 const TEXT_RESUME: String = "ui.run_hud.resume"
-const TEXT_LEAVE_FLOOR: String = "ui.run_hud.leave_floor"
+const TEXT_LEAVE_RUN: String = "ui.run_hud.leave_run"
+## Story 019: "Bộ: %d lá" in the top margin while a run is live.
+const TEXT_DECK_LABEL: String = "ui.run_hud.deck_label"
+## Story 019 result screens.
+const TEXT_RUN_OVER_TITLE: String = "ui.run_hud.run_over_title"
+const TEXT_RUN_WON_TITLE: String = "ui.run_hud.run_won_title"
+## "Tầng %d · Trận %d" (1-based) where the run ended.
+const TEXT_RUN_POSITION: String = "ui.run_hud.run_position"
+## "Bộ: %d lá" on the result panel.
+const TEXT_RUN_DECK: String = "ui.run_hud.run_deck"
+const TEXT_BACK_TO_TITLE: String = "ui.run_hud.back_to_title"
 
 ## Path to the GameFlow (a sibling under Main) that owns the controller.
 @export var flow_path: NodePath = NodePath("../GameFlow")
@@ -125,7 +142,7 @@ func _on_controller_changed(controller: RunController) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not _has_controller():
+	if not _has_controller() or _reward_open():
 		return
 	if _controller.is_paused():
 		_input_paused(event)
@@ -143,7 +160,7 @@ func _input(event: InputEvent) -> void:
 	if pos == Vector2.INF:
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	if _controller.get_state().get_phase() == RunState.Phase.PLAYING:
+	if _controller.get_state().get_phase() == RunState.Phase.PLAYING and not _run_ended():
 		# Story 016: the pause button; a tap on it is consumed even when pausing is not allowed
 		# (set_paused is a no-op then), so nothing under the band reacts.
 		if ScreenLayout.pause_button_rect(vp).has_point(pos):
@@ -200,26 +217,31 @@ func _has_controller() -> bool:
 	return _controller != null and _controller.get_state() != null
 
 
-# Label KEYS of the buttons of the current phase, left to right (translated when drawn); empty when the phase has none.
-# Story 016: while paused, the overlay's buttons (only "Tiếp tục" without a GameFlow).
+# Story 019: true while RewardView owns the screen (an offer is open or a resumed one is held).
+func _reward_open() -> bool:
+	return _flow != null and (_flow.is_reward_blocking() or not _flow.get_pending_reward().is_empty())
+
+
+# Story 019: true once the live run ended (WON / LOST); the result panel replaces the floor panels.
+func _run_ended() -> bool:
+	return _flow != null and _flow.get_run_result() != GameFlow.RunResult.NONE
+
+
+# Label KEYS of the buttons of the current phase, left to right (translated when drawn); empty when
+# the phase has none. Story 016: while paused, the overlay's buttons (only "Tiếp tục" without a
+# GameFlow). Story 019: a finished run has the one "Về title" button whatever the controller phase.
 func _button_labels() -> Array[String]:
 	if _controller.is_paused():
 		if _flow == null:
 			return [TEXT_RESUME]
-		return [TEXT_RESUME, TEXT_LEAVE_FLOOR]
+		return [TEXT_RESUME, TEXT_LEAVE_RUN]
+	if _run_ended():
+		return [TEXT_BACK_TO_TITLE]
 	match _controller.get_state().get_phase():
 		RunState.Phase.BETWEEN:
 			return [TEXT_CONTINUE]
-		RunState.Phase.WON:
-			if _flow == null:
-				return [TEXT_RESTART]
-			if _flow.get_next_floor() != GameFlow.NO_FLOOR:
-				return [TEXT_NEXT_CHAPTER if _is_chapter_clear() else TEXT_NEXT_FLOOR, TEXT_CHOOSE_FLOOR]
-			return [TEXT_CHOOSE_FLOOR]
-		RunState.Phase.LOST:
-			if _flow == null:
-				return [TEXT_RESTART]
-			return [TEXT_RETRY_MATCH, TEXT_CHOOSE_FLOOR]
+		RunState.Phase.WON, RunState.Phase.LOST:
+			return [TEXT_RESTART]
 	return []
 
 
@@ -239,15 +261,11 @@ func _activate(index: int) -> void:
 			_controller.advance_requested()
 		TEXT_RESTART:
 			_controller.restart_requested()
-		TEXT_RETRY_MATCH:
-			_flow.retry_requested()
-		TEXT_NEXT_FLOOR, TEXT_NEXT_CHAPTER:
-			_flow.next_floor_requested()
-		TEXT_CHOOSE_FLOOR:
-			_flow.leave_floor()
+		TEXT_BACK_TO_TITLE:
+			_flow.leave_run()
 
 
-# True when the floor just won is the last of its chapter ("CHƯƠNG XONG", button "Chương tiếp").
+# True when the floor just won is the last of its chapter ("CHƯƠNG XONG" on a test floor's panel).
 func _is_chapter_clear() -> bool:
 	if _flow == null:
 		return false
@@ -262,18 +280,28 @@ func _draw() -> void:
 	if not _has_controller():
 		return
 	var vp: Vector2 = get_viewport_rect().size
+	if _run_ended():
+		_draw_run_result(vp)
+		return
 	var state: RunState = _controller.get_state()
+	if _reward_open():
+		_draw_match_label(vp)
+		_draw_deck_label(vp)
+		return
 	match state.get_phase():
 		RunState.Phase.INTRO:
 			_draw_match_label(vp)
+			_draw_deck_label(vp)
 			_draw_intro(vp)
 		RunState.Phase.PLAYING:
 			_draw_match_label(vp)
+			_draw_deck_label(vp)
 			_draw_pause_button(vp)
 			if _controller.is_paused():
 				_draw_paused(vp)
 		RunState.Phase.BETWEEN:
 			_draw_match_label(vp)
+			_draw_deck_label(vp)
 			_draw_between(vp)
 		RunState.Phase.WON:
 			_draw_won(vp)
@@ -308,6 +336,15 @@ func _draw_match_label(vp: Vector2) -> void:
 	_text(rect, rect.get_center().y + LABEL_FONT_SIZE * 0.35, text, LABEL_FONT_SIZE, LABEL_COLOR)
 
 
+# Story 019: "Bộ: N lá", right-aligned in the top margin; nothing outside a run.
+func _draw_deck_label(vp: Vector2) -> void:
+	if _flow == null or _flow.get_run() == null:
+		return
+	var rect: Rect2 = ScreenLayout.run_deck_label_rect(vp)
+	var text: String = tr(TEXT_DECK_LABEL) % _flow.get_run().deck_ids.size()
+	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + LABEL_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x, LABEL_FONT_SIZE, LABEL_COLOR)
+
+
 # Display name of the current battle's arena (+ variant marker); "" when the battle has none
 # (combat.json board) or is not spawned yet.
 func _arena_name() -> String:
@@ -337,6 +374,7 @@ func _draw_intro(vp: Vector2) -> void:
 	_text(band, band.position.y + band.size.y * BAND_HINT_BASELINE, tr(TEXT_INTRO_HINT), BAND_HINT_FONT_SIZE, TEXT_DIM)
 
 
+# Between-matches panel of a floor outside a run (a run floor shows the reward screen instead).
 func _draw_between(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var config: RunConfig = _controller.get_config()
@@ -352,14 +390,14 @@ func _draw_between(vp: Vector2) -> void:
 	_draw_buttons(vp)
 
 
-# Floor-clear screen (Story 015): "TẦNG XONG" + floor name, or "CHƯƠNG XONG" + chapter name on
-# the chapter's last floor. Without a GameFlow: the Story 011 win screen.
+# Floor-clear screen of a floor outside a run (Story 015 look): "TẦNG XONG" + floor name, or
+# "CHƯƠNG XONG" + chapter name on the chapter's last floor. Without a GameFlow: the Story 011 win screen.
 func _draw_won(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var panel: Rect2 = _draw_panel(vp)
 	var title: String = tr(TEXT_WIN_TITLE)
 	var line: String = tr(TEXT_WIN_LINE) % _match_name(_boss_index())
-	if _flow != null:
+	if _flow != null and _flow.get_current_floor() != GameFlow.NO_FLOOR:
 		var pos: Vector2i = _flow.get_current_floor()
 		if _is_chapter_clear():
 			title = tr(TEXT_CHAPTER_CLEAR_TITLE)
@@ -374,6 +412,7 @@ func _draw_won(vp: Vector2) -> void:
 	_draw_buttons(vp)
 
 
+# Lose screen of a floor outside a run (a run shows RUN KẾT THÚC instead).
 func _draw_lost(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var panel: Rect2 = _draw_panel(vp)
@@ -383,6 +422,40 @@ func _draw_lost(vp: Vector2) -> void:
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_TIME) % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, tr(TEXT_CLEARED) % [state.get_match_index(), state.get_match_count()], LINE_FONT_SIZE, TEXT_LIGHT)
 	_draw_buttons(vp)
+
+
+# Story 019: RUN KẾT THÚC (character, chapter, floor · match, deck size, time) or RUN THẮNG
+# (chapter, deck size, time), with the one "Về title" button.
+func _draw_run_result(vp: Vector2) -> void:
+	var run: RunSession = _flow.get_run()
+	var panel: Rect2 = _draw_panel(vp)
+	var won: bool = _flow.get_run_result() == GameFlow.RunResult.WON
+	var lines: Array[String] = []
+	var colors: Array[Color] = []
+	if run != null:
+		var chapter: String = _flow.get_config().chapter_name(run.chapter_index)
+		if won:
+			lines = [chapter, tr(TEXT_RUN_DECK) % run.deck_ids.size(), tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
+			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_WHITE]
+		else:
+			var character: Dictionary = _flow.get_characters().get_character(run.character_id)
+			lines = [
+				tr(str(character.get("name_key", run.character_id))), chapter,
+				tr(TEXT_RUN_POSITION) % [run.floor_index + 1, run.match_index + 1],
+				tr(TEXT_RUN_DECK) % run.deck_ids.size(), tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec),
+			]
+			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_LIGHT, TEXT_WHITE]
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_RUN_WON_TITLE if won else TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_WIN if won else TEXT_LOSE)
+	for i: int in mini(lines.size(), RESULT_LINE_BASELINES.size()):
+		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], LINE_FONT_SIZE, colors[i])
+	_draw_buttons(vp)
+
+
+# Run clock as m:ss (seconds floored), like RunState.get_elapsed_text.
+func _elapsed_text(seconds: float) -> String:
+	var total: int = floori(maxf(seconds, 0.0))
+	var minutes: int = floori(total / 60.0)
+	return "%d:%02d" % [minutes, total - minutes * 60]
 
 
 # Story 016: the pause button in the HUD band — a neutral button with a "||" glyph, dimmed
@@ -419,7 +492,7 @@ func _draw_panel(vp: Vector2) -> Rect2:
 
 
 # The buttons of the current phase, left to right (the first is the main action, PRIMARY; the
-# others SECONDARY — NEUTRAL on the pause overlay, where the second one leaves the floor).
+# others SECONDARY — NEUTRAL on the pause overlay, where the second one leaves the run).
 func _draw_buttons(vp: Vector2) -> void:
 	var labels: Array[String] = _button_labels()
 	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, labels.size())

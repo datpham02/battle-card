@@ -16,7 +16,8 @@ const MATCH_KEYS: Array[String] = [
 
 ## Keys of the flow numbers shared by chapters.json `defaults` and a floor's overrides.
 const TIMING_KEYS: Array[String] = [
-	"heal_between_matches", "intro_sec", "end_delay_sec", "between_sec", "retry_min_hp_ratio",
+	"heal_between_matches", "intro_sec", "end_delay_sec", "between_sec", "heal_between_floors",
+	"retry_min_hp_ratio",
 ]
 
 ## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
@@ -27,8 +28,13 @@ var intro_sec: float = 1.5
 var end_delay_sec: float = 1.5
 ## Seconds before the between-matches screen advances alone (0 = wait for the button).
 var between_sec: float = 3.0
-## Share of the player's max HP a retried or resumed match starts with at least (0..1).
-var retry_min_hp_ratio: float = 0.5
+## HP the player recovers after a floor's boss (Story 019; used by RunSession, clamped to max HP).
+var heal_between_floors: float = 40.0
+## Revive tokens a run starts with (Story 019; reserved for the future revive item, unused).
+var revive_tokens: int = 0
+## Share of the player's max HP a retried or resumed match starts with at least (0..1). Optional
+## key; default 0 = no minimum. The Story 019 run flow always passes 0 (kept for the revive item).
+var retry_min_hp_ratio: float = 0.0
 ## Ordered matches (at least 1); the last is the boss match. Each: see [constant MATCH_KEYS].
 var matches: Array[Dictionary] = []
 
@@ -108,6 +114,8 @@ func _apply_timings(data: Dictionary) -> void:
 	intro_sec = maxf(float(data.get("intro_sec", intro_sec)), 0.0)
 	end_delay_sec = maxf(float(data.get("end_delay_sec", end_delay_sec)), 0.0)
 	between_sec = maxf(float(data.get("between_sec", between_sec)), 0.0)
+	heal_between_floors = maxf(float(data.get("heal_between_floors", heal_between_floors)), 0.0)
+	revive_tokens = maxi(int(data.get("revive_tokens", revive_tokens)), 0)
 	retry_min_hp_ratio = clampf(float(data.get("retry_min_hp_ratio", retry_min_hp_ratio)), 0.0, 1.0)
 
 

@@ -2,15 +2,17 @@ keys,vi,en
 ui.arena.random,Ngẫu nhiên,Random
 ui.chapter.default_name,Chương 1,Chapter 1
 ui.floor.default_name,Tầng 1,Floor 1
-ui.floor_select.title,CHỌN TẦNG,CHOOSE A FLOOR
-ui.floor_select.in_progress,Trận %d/%d,Match %d/%d
-ui.floor_select.confirm_abandon,Bỏ tầng đang dở?,Abandon the floor in progress?
-ui.floor_select.abandon,Bỏ,Abandon
-ui.floor_select.cancel,Thôi,Cancel
-ui.floor_select.resume,Tiếp tục (Trận %d/%d),Resume (Match %d/%d)
-ui.floor_select.restart_floor,Chơi lại từ đầu,Restart from the start
-ui.floor_select.back,Về,Back
-ui.floor_select.hero,Nhân vật: %s,Hero: %s
+ui.chapter_select.title,CHỌN CHƯƠNG,CHOOSE A CHAPTER
+ui.chapter_select.floors,%d tầng,%d floors
+ui.chapter_select.in_run,Đang dở,In progress
+ui.chapter_select.saved_position,Tầng %d · Trận %d,Floor %d · Match %d
+ui.chapter_select.confirm_abandon,Bỏ run đang dở?,Abandon the saved run?
+ui.chapter_select.abandon,Bỏ,Abandon
+ui.chapter_select.cancel,Thôi,Cancel
+ui.chapter_select.resume,Tiếp tục,Continue
+ui.chapter_select.restart,Chơi lại từ đầu,Restart
+ui.chapter_select.back,Về,Back
+ui.chapter_select.hero,Nhân vật: %s,Hero: %s
 ui.character_select.title,CHỌN NHÂN VẬT,CHOOSE YOUR HERO
 ui.character_select.hp,Máu %d,HP %d
 ui.character_select.deck,Bộ khởi đầu,Starter deck
@@ -66,20 +68,32 @@ ui.run_hud.lose_line,Gục ngã ở trận %d/%d · %s,Fell at match %d/%d · %s
 ui.run_hud.time,Thời gian %s,Time %s
 ui.run_hud.cleared,Trận thắng %d/%d,Matches won %d/%d
 ui.run_hud.restart,Chơi lại,Play again
-ui.run_hud.retry_match,Chơi lại trận,Retry match
-ui.run_hud.next_floor,Tầng tiếp,Next floor
-ui.run_hud.next_chapter,Chương tiếp,Next chapter
-ui.run_hud.choose_floor,Chọn tầng,Choose floor
 ui.run_hud.pause_title,TẠM DỪNG,PAUSED
 ui.run_hud.resume,Tiếp tục,Resume
-ui.run_hud.leave_floor,Về chọn tầng,Back to floors
+ui.run_hud.leave_run,Thoát run (đã lưu),Leave run (saved)
+ui.run_hud.deck_label,Bộ: %d lá,Deck: %d
+ui.run_hud.run_over_title,RUN KẾT THÚC,RUN OVER
+ui.run_hud.run_won_title,RUN THẮNG,RUN WON
+ui.run_hud.run_position,Tầng %d · Trận %d,Floor %d · Match %d
+ui.run_hud.run_deck,Bộ: %d lá,Deck: %d cards
+ui.run_hud.back_to_title,Về title,Back to title
 title.name,ẤN KIẾM,RUNE DUEL
 title.tagline,Nhặt ấn · nối trận pháp · Thi triển một đòn,Pick runes · draw the sigil · Cast one strike
-ui.title.continue,Tiếp tục,Continue
+ui.title.continue,Tiếp tục run,Continue run
+ui.title.run_summary,%s · %s · Tầng %d,%s · %s · Floor %d
 ui.title.play,Chơi,Play
 ui.title.quit,Thoát,Quit
 ui.title.lang.vi,VI,VI
 ui.title.lang.en,EN,EN
+ui.reward.title,CHỌN MỘT LÁ,CHOOSE A CARD
+ui.reward.cells,cần %d ô,needs %d cells
+ui.reward.cells_any,bất kỳ ô nào,any cells
+ui.reward.cooldown,hồi %d s,cooldown %d s
+ui.reward.cooldown_none,hồi: không,cooldown: none
+ui.reward.skip,Bỏ qua,Skip
+ui.rarity.common,Thường,Common
+ui.rarity.rare,Hiếm,Rare
+ui.rarity.epic,Sử thi,Epic
 ui.hud.you,BẠN,YOU
 ui.hud.unit_hp,%s  HP %d/%d,%s  HP %d/%d
 ui.hud.unit_dead,%s  GỤC,%s  DOWN
@@ -132,3 +146,11 @@ passive.wide_caster.name,Pháp trận rộng,Wide Caster
 passive.wide_caster.desc,Phép từ 5 ô trở lên niệm nhanh hơn 15%.,Spells covering 5 or more cells cast 15% faster.
 passive.quick_blade.name,Lưỡi kiếm nhanh,Quick Blade
 passive.quick_blade.desc,Phép tối đa 3 ô gây thêm 25% sát thương.,Spells covering 3 cells or fewer deal 25% more damage.
+card.cuong_phong.name,Cuồng phong,Gale Storm
+card.cuong_phong.desc,"Đẩy lùi 1 ô, sát thương vừa","Pushes 1 cell, moderate damage"
+card.liet_hoa.name,Liệt hỏa,Blaze
+card.liet_hoa.desc,Đốt các ô trong 4 s,Burns the cells for 4 s
+card.kiem_vu.name,Kiếm vũ,Blade Dance
+card.kiem_vu.desc,Sát thương mạnh theo số ô,Heavy damage per cell
+card.han_bang.name,Hàn băng,Deep Frost
+card.han_bang.desc,"Đóng băng 1,8 s",Freezes for 1.8 s

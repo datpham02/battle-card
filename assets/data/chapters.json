@@ -4,7 +4,8 @@
 		"intro_sec": 1.5,
 		"end_delay_sec": 1.5,
 		"between_sec": 3.0,
-		"retry_min_hp_ratio": 0.5
+		"heal_between_floors": 40,
+		"revive_tokens": 0
 	},
 	"chapters": [
 		{

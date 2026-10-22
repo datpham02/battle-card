@@ -9,7 +9,8 @@ extends RefCounted
 const DEFAULT_PATH: String = "res://assets/data/chapters.json"
 ## Keys of the `defaults` block (and of an optional per-floor override of them).
 const DEFAULT_KEYS: Array[String] = [
-	"heal_between_matches", "intro_sec", "end_delay_sec", "between_sec", "retry_min_hp_ratio",
+	"heal_between_matches", "intro_sec", "end_delay_sec", "between_sec", "heal_between_floors",
+	"retry_min_hp_ratio",
 ]
 ## Keeps arena seeds non-negative (a negative seed means "random" to the arena code).
 const SEED_MASK: int = 0x7fffffff
@@ -281,11 +282,13 @@ static func _clean_defaults(raw: Variant) -> Dictionary:
 	var result: Dictionary = {
 		"heal_between_matches": base.heal_between_matches, "intro_sec": base.intro_sec,
 		"end_delay_sec": base.end_delay_sec, "between_sec": base.between_sec,
+		"heal_between_floors": base.heal_between_floors, "revive_tokens": base.revive_tokens,
 		"retry_min_hp_ratio": base.retry_min_hp_ratio,
 	}
 	for key: String in DEFAULT_KEYS:
 		if source.has(key):
 			result[key] = maxf(float(source[key]), 0.0)
+	result["revive_tokens"] = maxi(int(source.get("revive_tokens", result["revive_tokens"])), 0)
 	result["retry_min_hp_ratio"] = clampf(float(result["retry_min_hp_ratio"]), 0.0, 1.0)
 	return result
 

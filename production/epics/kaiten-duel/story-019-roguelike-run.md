@@ -1,7 +1,7 @@
 # Story 019: Run roguelike — thưởng lá sau mỗi trận, máu cả run, chết là hết, save run
 
 > **Epic**: Kaiten Duel (v4)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
@@ -78,7 +78,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/roguelike-run/`.
 
-**Status**: [ ] Not yet created
+**Status**: Screenshots retained (roguelike-run/01-11).
 
 ---
 
@@ -86,3 +86,14 @@
 
 - Depends on: Story 017 (Deck, cards.json), Story 018 (nhân vật), Story 015 (chapters, progress)
 - Unlocks: cổng chơi thử 5, nội dung chương 2–3, item hồi sinh
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-22
+**Criteria**: 12/12 pass. DEFERRED (needs real play): feel of the card rewards, rarity weights, heal pace (25 per match, 40 per floor boss) across a whole chapter, touch on a device.
+**Deviations**: ADVISORY: `RewardView` lives under `Main` after `RunHudView`, not under `GameFlow`, because the GameFlow subtree draws before the HUD and could not cover it. ADVISORY: `FloorSelectView` replaced by `ChapterSelectView`; `floor_flow_test` retired. ADVISORY: deprecated GameFlow no-ops `retry_requested`, `next_floor_requested`, `get_next_floor`, `enter_floor` remain but no view calls them. ADVISORY: `retry_min_hp_ratio` is 0 and the retry rule is gone; `RunSession`/`retry_match` kept for the later revive item. ADVISORY: `leave_floor` keeps the save, only death or win clears it; resuming with a pending offer respawns the match and holds it at the intro (`RunController.hold_intro`) until a card is chosen. ADVISORY: `seen_cards` records offered ids (write-only). `get_chapter_states` returns the translated `name`. `--floor=` is a throwaway run with the default character. ADVISORY: only 2 chapters exist, so the locked state is captured with `--progress=none`.
+**Test Evidence**: Integration; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/roguelike-run/01-11*.png` (all opened and checked). Scratch tests all 0 fails: i18n, run_flow2 (85), pause_flow (70), character, chapters (67), reward_run (45), deck, run/trait/arena flow, arbiter, status (headless); cut_flow and focus_flow (windowed, `--no-autopause`). Parse-check 67/67.
+**Code Review**: Skipped (solo mode).
+**Not verified**: real feel, balance of the reward pool and the mage starter deck (often three locked cards in hand), touch on a device.
+**Carries forward**: gate 5 playtest; Story 020+ (chapter 2–3 content, Android build); revive item; card removal/upgrade, shop.

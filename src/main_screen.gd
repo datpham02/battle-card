@@ -2,7 +2,7 @@ class_name MainScreen
 extends Node2D
 ## Root of the landscape screen: draws the background and, while a floor is being played, the
 ## arena placeholder behind the child views. Outside a floor (GameFlow TITLE and
-## FLOOR_SELECT, Stories 015/016) only the background is drawn.
+## CHAPTER_SELECT, Stories 015/016/019) only the background is drawn.
 
 const BG_COLOR: Color = Color(0.96, 0.9, 0.78)
 const ARENA_COLOR: Color = Color(0.85, 0.78, 0.64)

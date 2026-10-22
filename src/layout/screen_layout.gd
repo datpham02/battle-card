@@ -58,20 +58,29 @@ const RUN_BUTTON_WIDTH_RATIO: float = 0.7
 const FOCUS_BAR_HEIGHT_RATIO: float = 0.032
 ## Run UI (Story 015): gap between two side-by-side panel buttons (share of width).
 const RUN_BUTTON_GAP_RATIO: float = 0.015
-## Floor select (Story 015), shares of the viewport: title band (top .. bottom), the first
-## chapter block's top, one chapter block's height (chapter label on the left, tiles on the
-## right), the left column width reserved for the chapter name, tile size (0.17 * 1280 = 218 px
-## wide, 0.3 * 720 = 216 px tall >= 96 px), gaps between tiles, and tiles per row.
+## Menu screens (Story 015): the title band (top .. bottom) shared by the chapter select, the
+## character select and the reward screen.
 const FLOOR_TITLE_TOP_RATIO: float = 0.03
 const FLOOR_TITLE_BOTTOM_RATIO: float = 0.13
-const FLOOR_BLOCKS_TOP_RATIO: float = 0.16
-const FLOOR_BLOCK_HEIGHT_RATIO: float = 0.4
-const FLOOR_LABEL_WIDTH_RATIO: float = 0.2
-const FLOOR_TILE_WIDTH_RATIO: float = 0.17
-const FLOOR_TILE_HEIGHT_RATIO: float = 0.3
-const FLOOR_TILE_GAP_X_RATIO: float = 0.015
-const FLOOR_TILE_GAP_Y_RATIO: float = 0.02
-const FLOOR_TILES_PER_ROW: int = 4
+## Chapter select (Story 019), shares of the viewport: the tile row's top, one tile's size
+## (0.22 * 1280 = 282 px wide, 0.4 * 720 = 288 px tall >= 96 px) and the gap between tiles; the
+## row is centred. Four tiles (4 * 282 + 3 * 26 = 1206 px) still fit between the margins.
+const CHAPTER_TILES_TOP_RATIO: float = 0.22
+const CHAPTER_TILE_WIDTH_RATIO: float = 0.22
+const CHAPTER_TILE_HEIGHT_RATIO: float = 0.4
+const CHAPTER_TILE_GAP_RATIO: float = 0.02
+## Reward screen (Story 019), shares of the viewport: the card row's top and bottom (0.17 .. 0.82
+## = 468 px tall at 720p), the gap between cards, the widest a card may get (0.27 * 1280 = 346 px;
+## three cards share min(384, 346) = 346 px >= 300 px) and the skip button's top (its height is
+## BACK_BUTTON_HEIGHT_RATIO: 0.86 + 0.09 = 0.95 of the height).
+const REWARD_CARDS_TOP_RATIO: float = 0.17
+const REWARD_CARDS_BOTTOM_RATIO: float = 0.82
+const REWARD_CARD_GAP_RATIO: float = 0.02
+const REWARD_CARD_MAX_WIDTH_RATIO: float = 0.27
+const REWARD_SKIP_TOP_RATIO: float = 0.86
+## Run HUD (Story 019): left edge (share of width) of the deck label strip in the top margin;
+## the centred match label (~450 px at 16 px) ends well before 0.72 * 1280 = 922 px.
+const RUN_DECK_LABEL_LEFT_RATIO: float = 0.72
 ## Title screen (Story 016), shares of the viewport: the name band (top .. bottom: game name,
 ## knife motif, tagline), the button column's top, one button's size (0.3 * 1280 = 384 px wide,
 ## 0.11 * 720 = 79 px tall >= 72 px) and the gap between buttons (share of height). Three
@@ -358,43 +367,61 @@ static func run_button_rects(viewport_size: Vector2, count: int) -> Array[Rect2]
 	return rects
 
 
-## Floor select (Story 015): the title band across the top.
+## Menu screens (Story 015): the title band across the top (chapter select, character select,
+## reward screen).
 static func floor_title_rect(viewport_size: Vector2) -> Rect2:
 	var top: float = viewport_size.y * FLOOR_TITLE_TOP_RATIO
 	return Rect2(0.0, top, viewport_size.x, viewport_size.y * FLOOR_TITLE_BOTTOM_RATIO - top)
 
 
-## Floor select: the block of chapter [param chapter_index] (label column + tile grid).
-## Blocks are stacked top to bottom with a fixed height; two chapters fit at 1280x720.
-static func floor_chapter_block_rect(viewport_size: Vector2, chapter_index: int) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
-	var height: float = viewport_size.y * FLOOR_BLOCK_HEIGHT_RATIO
-	var top: float = viewport_size.y * FLOOR_BLOCKS_TOP_RATIO + height * chapter_index
-	return Rect2(margin, top, viewport_size.x - margin * 2.0, height)
-
-
-## Floor select: the left column of a chapter block that shows the chapter name.
-static func floor_chapter_label_rect(viewport_size: Vector2, chapter_index: int) -> Rect2:
-	var block: Rect2 = floor_chapter_block_rect(viewport_size, chapter_index)
-	return Rect2(block.position, Vector2(viewport_size.x * FLOOR_LABEL_WIDTH_RATIO, block.size.y))
-
-
-## Floor select: one tile per floor of chapter [param chapter_index], left to right, at most
-## [constant FLOOR_TILES_PER_ROW] per row; further rows continue below (they overflow the
-## block when a chapter has more floors than one row holds — fine for the current data).
-static func floor_tile_rects(viewport_size: Vector2, chapter_index: int, floor_count: int) -> Array[Rect2]:
+## Chapter select (Story 019): one tile per chapter, left to right in ChaptersConfig order, in a
+## centred row under the title band. Empty for count <= 0.
+static func chapter_tile_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
-	if floor_count <= 0:
+	if count <= 0:
 		return rects
-	var block: Rect2 = floor_chapter_block_rect(viewport_size, chapter_index)
-	var size := Vector2(viewport_size.x * FLOOR_TILE_WIDTH_RATIO, viewport_size.y * FLOOR_TILE_HEIGHT_RATIO)
-	var gap := Vector2(viewport_size.x * FLOOR_TILE_GAP_X_RATIO, viewport_size.y * FLOOR_TILE_GAP_Y_RATIO)
-	var origin := Vector2(block.position.x + viewport_size.x * FLOOR_LABEL_WIDTH_RATIO, block.position.y)
-	for i: int in floor_count:
-		var col: int = i % FLOOR_TILES_PER_ROW
-		var row: int = i / FLOOR_TILES_PER_ROW
-		rects.append(Rect2(origin + (size + gap) * Vector2(col, row), size))
+	var size := Vector2(viewport_size.x * CHAPTER_TILE_WIDTH_RATIO, viewport_size.y * CHAPTER_TILE_HEIGHT_RATIO)
+	var gap: float = viewport_size.x * CHAPTER_TILE_GAP_RATIO
+	var left: float = (viewport_size.x - (size.x * count + gap * (count - 1))) * 0.5
+	var top: float = viewport_size.y * CHAPTER_TILES_TOP_RATIO
+	for i: int in count:
+		rects.append(Rect2(left + (size.x + gap) * i, top, size.x, size.y))
 	return rects
+
+
+## Reward screen (Story 019): [param count] offer cards side by side under the title band, centred,
+## left to right in offer order; width = the smaller of the shared width and
+## [constant REWARD_CARD_MAX_WIDTH_RATIO]. Empty for count <= 0.
+static func reward_card_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
+	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1)) / count
+	var width: float = maxf(minf(shared, viewport_size.x * REWARD_CARD_MAX_WIDTH_RATIO), 0.0)
+	var top: float = viewport_size.y * REWARD_CARDS_TOP_RATIO
+	var height: float = viewport_size.y * REWARD_CARDS_BOTTOM_RATIO - top
+	var left: float = (viewport_size.x - (width * count + gap * (count - 1))) * 0.5
+	for i: int in count:
+		rects.append(Rect2(left + (width + gap) * i, top, width, height))
+	return rects
+
+
+## Reward screen (Story 019): the centred "Bỏ qua" button under the card row (title-button width,
+## back-button height: 65 px >= 64 px at 720p).
+static func reward_skip_button_rect(viewport_size: Vector2) -> Rect2:
+	var size := Vector2(viewport_size.x * TITLE_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
+	return Rect2(Vector2((viewport_size.x - size.x) * 0.5, viewport_size.y * REWARD_SKIP_TOP_RATIO), size)
+
+
+## Run HUD (Story 019): the deck label strip — the right part of the top margin (same height as
+## [method run_match_label_rect], from [constant RUN_DECK_LABEL_LEFT_RATIO] to the right screen
+## margin), for right-aligned text; above the HUD band, so clear of the pause button.
+static func run_deck_label_rect(viewport_size: Vector2) -> Rect2:
+	var left: float = viewport_size.x * RUN_DECK_LABEL_LEFT_RATIO
+	var right: float = viewport_size.x * (1.0 - MARGIN_RATIO)
+	return Rect2(left, 0.0, right - left, viewport_size.y * ARENA_TOP_RATIO)
 
 
 ## Title screen (Story 016): the band across the top that holds the game name, the knife motif
@@ -417,6 +444,13 @@ static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect
 	for i: int in count:
 		rects.append(Rect2(left, top + (size.y + gap) * i, size.x, size.y))
 	return rects
+
+
+## Title screen (Story 019): the strip right under the first button of [method title_button_rects]
+## (the "Tiếp tục run" button; the gap before the next button), for the saved run's one-line summary.
+static func title_continue_summary_rect(viewport_size: Vector2) -> Rect2:
+	var first: Rect2 = title_button_rects(viewport_size, 1)[0]
+	return Rect2(Vector2(first.position.x, first.end.y), Vector2(first.size.x, viewport_size.y * TITLE_BUTTON_GAP_RATIO))
 
 
 ## Title screen (Story 017): the VI / EN language button in the bottom-right corner (>= 64 px tall

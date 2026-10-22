@@ -10,8 +10,10 @@ extends Node2D
 ## add_child; without it the controller loads the flat file at [member run_config_path] (tests,
 ## ad-hoc floors). Story 016: PAUSE = the battle node's process_mode is DISABLED (the same freeze
 ## INTRO uses): all its _process/_input stop; the run clock and timers here stop too. Only PLAYING
-## can be paused; the flag is cleared when the match ends or a new battle spawns.
-## Implements: Story 011, Story 015, Story 016.
+## can be paused; the flag is cleared when the match ends or a new battle spawns. Story 019:
+## [member hold_intro] keeps the INTRO timer from ticking (GameFlow holds a resumed match while
+## its saved card offer is open); the run flow itself (deck growth, floors, death) lives in GameFlow.
+## Implements: Story 011, Story 015, Story 016, Story 019.
 ##
 ## DEV-ONLY user args (after "--"), for screenshots; timers are frozen, nothing auto-advances:
 ##   --match=N                 start at match N (1-based)
@@ -37,6 +39,10 @@ const MATCH_ARG: String = "--match="
 const RUN_ARG: String = "--run="
 const ARENA_ARG: String = "--arena="
 const ARENA_VARIANT_SUFFIX: String = ":variant"
+## DEV-ONLY: --run= kinds this node handles.
+const RUN_KINDS: Array[String] = ["intro", "between", "won", "lost"]
+## DEV-ONLY (Story 019): --run= kinds GameFlow handles (reward|runover|runwon); ignored here.
+const FLOW_RUN_KINDS: Array[String] = ["reward", "runover", "runwon"]
 ## DEV-ONLY: stable clock value (7:42) for run screen captures.
 const DEV_ELAPSED_SEC: float = 462.0
 const TEXT_MATCH_LABEL: String = "ui.run.match_label"
@@ -54,6 +60,10 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 ## combat.json player (old behaviour). Becomes match_params["character"]; its starter_deck is the
 ## deck when [member deck] is empty. Set by GameFlow BEFORE add_child.
 @export var character: Dictionary = {}
+## Story 019: while true the INTRO timer does not tick (the battle stays frozen and drawn).
+## GameFlow sets it before add_child on a resumed run whose saved card offer is still open and
+## clears it when the offer is resolved. No effect outside INTRO.
+@export var hold_intro: bool = false
 
 var _config: RunConfig
 var _state: RunState
@@ -90,6 +100,8 @@ func _ready() -> void:
 			dev_match = clampi(int(arg.trim_prefix(MATCH_ARG)), 1, _state.get_match_count()) - 1
 		elif arg.begins_with(RUN_ARG):
 			dev_run = arg.trim_prefix(RUN_ARG)
+			if FLOW_RUN_KINDS.has(dev_run):
+				dev_run = ""
 		elif arg.begins_with(ARENA_ARG):
 			var arena_text: String = arg.trim_prefix(ARENA_ARG)
 			var wants_variant: bool = arena_text.ends_with(ARENA_VARIANT_SUFFIX)
@@ -113,6 +125,8 @@ func _process(delta: float) -> void:
 		return
 	match _state.get_phase():
 		RunState.Phase.INTRO:
+			if hold_intro:
+				return
 			_intro_left -= delta
 			if _intro_left <= 0.0:
 				_begin_playing()

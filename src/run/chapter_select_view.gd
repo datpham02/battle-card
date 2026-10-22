@@ -1,21 +1,23 @@
-class_name FloorSelectView
+class_name ChapterSelectView
 extends Node2D
-## Floor select screen (Story 015): one row per chapter, one tile per floor in four states —
-## LOCKED (grey, code-drawn padlock), UNLOCKED (bright), CLEARED (green outline + check mark),
-## IN_PROGRESS (gold outline + "Trận 3/4"). Child of GameFlow (reads it through [member flow_path]);
-## draws and takes taps only in [constant GameFlow.Phase.FLOOR_SELECT], owns no progress.
-## Tap an unlocked/cleared tile -> enter the floor from match 1 — unless another floor is in
-## progress: a confirm panel ("Bỏ tầng đang dở?") first. Tap the in-progress tile -> a panel with
-## "Tiếp tục" / "Chơi lại từ đầu". Input dedup as in RunHudView / DPadView (emulated copies are
-## consumed but never act). Placeholder art; all strings are TEXT_* keys drawn through tr() (Story 017).
-## Story 018: "Về" goes back to the character select, and the chosen character's name is shown
-## top-right (ScreenLayout.floor_hero_label_rect) when one is selected.
+## Chapter select screen (Story 019, Part C; replaces the Story 015 floor select): one tile per
+## chapter of [method GameFlow.get_chapter_states] in a centred row (ScreenLayout.chapter_tile_rects)
+## in four looks — LOCKED (grey, code-drawn padlock), UNLOCKED (bright), CLEARED (green outline +
+## check mark) and IN_RUN (gold outline + "Đang dở": the saved run is in this chapter; a cleared
+## chapter keeps its check). A tile shows the chapter name and its floor count. Child of GameFlow
+## (reads it through [member flow_path]); draws and takes taps only in
+## [constant GameFlow.Phase.CHAPTER_SELECT], owns no progress.
+## Tap an unlocked / cleared tile -> [method GameFlow.start_run] — unless a run is saved (in this
+## or another chapter): a confirm panel ("Bỏ run đang dở?", DANGER "Bỏ" / NEUTRAL "Thôi") first;
+## start_run then overwrites the save. Tap the in-run tile -> a panel with PRIMARY "Tiếp tục"
+## ([method GameFlow.continue_requested]) / DANGER "Chơi lại từ đầu" (start_run). "Về" goes back
+## to the character select and the chosen character's name sits top-right
+## (ScreenLayout.floor_hero_label_rect). Input dedup as in RunHudView / DPadView (emulated copies
+## are consumed but never act). Placeholder art; all strings are TEXT_* keys drawn through tr().
 
 enum Prompt { NONE, CONFIRM_ABANDON, RESUME_CHOICE }
-enum TileState { LOCKED, UNLOCKED, CLEARED, IN_PROGRESS }
 
 const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const CHAPTER_COLOR: Color = Color(0.25, 0.2, 0.15)
 const TILE_LOCKED_BACK: Color = Color(0.72, 0.7, 0.66)
 const TILE_LOCKED_OUTLINE: Color = Color(0.5, 0.48, 0.44)
 const TILE_LOCKED_TEXT: Color = Color(0.4, 0.38, 0.35)
@@ -24,34 +26,35 @@ const TILE_OPEN_OUTLINE: Color = Color(0.6, 0.52, 0.4)
 const TILE_TEXT: Color = Color(0.15, 0.12, 0.1)
 const TILE_SUB_TEXT: Color = Color(0.4, 0.35, 0.3)
 const CLEARED_OUTLINE: Color = Color(0.2, 0.65, 0.3)
-const IN_PROGRESS_OUTLINE: Color = Color(0.95, 0.72, 0.15)
+const IN_RUN_OUTLINE: Color = Color(0.95, 0.72, 0.15)
 const PADLOCK_COLOR: Color = Color(0.45, 0.43, 0.4)
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const PANEL_BACK: Color = Color(0.1, 0.09, 0.08, 0.96)
 const PANEL_OUTLINE: Color = Color(0.95, 0.9, 0.78)
 const PANEL_TEXT: Color = Color(0.95, 0.9, 0.78)
+const PANEL_SUB_TEXT: Color = Color(0.75, 0.72, 0.65)
 ## Tile, panel and (through UiButtons) prompt-button outline width.
 const OUTLINE_WIDTH: float = 3.0
 const STATE_OUTLINE_WIDTH: float = 6.0
 const MARK_WIDTH: float = 6.0
 
 const TITLE_FONT_SIZE: int = 48
-const CHAPTER_FONT_SIZE: int = 30
-const TILE_NAME_FONT_SIZE: int = 32
-const TILE_SUB_FONT_SIZE: int = 22
-const TILE_STATE_FONT_SIZE: int = 24
+const TILE_NAME_FONT_SIZE: int = 36
+const TILE_SUB_FONT_SIZE: int = 24
+const TILE_STATE_FONT_SIZE: int = 26
 const PANEL_FONT_SIZE: int = 36
+const PANEL_SUB_FONT_SIZE: int = 26
 const BUTTON_FONT_SIZE: int = 28
 ## Story 018: the "Nhân vật: …" label in the title band's right corner.
 const HERO_FONT_SIZE: int = 26
 const HERO_COLOR: Color = Color(0.4, 0.35, 0.3)
 
-## Text baselines inside a tile / the chapter label / a panel, as shares of their height.
+## Text baselines inside a tile / a panel, as shares of their height.
 const TILE_NAME_BASELINE: float = 0.3
-const TILE_SUB_BASELINE: float = 0.5
+const TILE_SUB_BASELINE: float = 0.45
 const TILE_STATE_BASELINE: float = 0.82
-const CHAPTER_BASELINE: float = 0.3
 const PANEL_TEXT_BASELINE: float = 0.3
+const PANEL_SUB_BASELINE: float = 0.42
 ## Padlock geometry as shares of the tile size: body size, body centre y, shackle radius.
 const LOCK_BODY_W: float = 0.14
 const LOCK_BODY_H: float = 0.12
@@ -60,26 +63,32 @@ const LOCK_SHACKLE_R: float = 0.05
 const ARC_POINTS: int = 12
 ## Check mark polyline as shares of the tile size.
 const CHECK_POINTS: Array[Vector2] = [Vector2(0.74, 0.78), Vector2(0.81, 0.86), Vector2(0.92, 0.68)]
+## Key separator of ChaptersConfig.find_floor ("ch1/f2").
+const FLOOR_KEY_SEPARATOR: String = "/"
 
-const TEXT_TITLE: String = "ui.floor_select.title"
-const TEXT_IN_PROGRESS: String = "ui.floor_select.in_progress"
-const TEXT_CONFIRM_ABANDON: String = "ui.floor_select.confirm_abandon"
-const TEXT_ABANDON: String = "ui.floor_select.abandon"
-const TEXT_CANCEL: String = "ui.floor_select.cancel"
-const TEXT_RESUME: String = "ui.floor_select.resume"
-const TEXT_RESTART_FLOOR: String = "ui.floor_select.restart_floor"
-## Story 016: the back button (ScreenLayout.back_button_rect); Story 018: it leads to the character select.
-const TEXT_BACK: String = "ui.floor_select.back"
-## Story 018: "Nhân vật: %s" with the selected character's translated name.
-const TEXT_HERO: String = "ui.floor_select.hero"
+const TEXT_TITLE: String = "ui.chapter_select.title"
+## "%d tầng" with the chapter's floor count.
+const TEXT_FLOORS: String = "ui.chapter_select.floors"
+const TEXT_IN_RUN: String = "ui.chapter_select.in_run"
+## "Tầng %d · Trận %d" (1-based) of the saved run, on the resume prompt.
+const TEXT_SAVED_POSITION: String = "ui.chapter_select.saved_position"
+const TEXT_CONFIRM_ABANDON: String = "ui.chapter_select.confirm_abandon"
+const TEXT_ABANDON: String = "ui.chapter_select.abandon"
+const TEXT_CANCEL: String = "ui.chapter_select.cancel"
+const TEXT_RESUME: String = "ui.chapter_select.resume"
+const TEXT_RESTART: String = "ui.chapter_select.restart"
+## The back button (ScreenLayout.back_button_rect): to the character select.
+const TEXT_BACK: String = "ui.chapter_select.back"
+## "Nhân vật: %s" with the selected character's translated name.
+const TEXT_HERO: String = "ui.chapter_select.hero"
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
 
 var _flow: GameFlow
 var _panel: Prompt = Prompt.NONE
-## Floor the open panel is about.
-var _pending: Vector2i = GameFlow.NO_FLOOR
+## Chapter index the open panel is about (-1 = none).
+var _pending: int = -1
 
 
 func _ready() -> void:
@@ -87,12 +96,11 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _is_active():
-		queue_redraw()
+	queue_redraw()
 
 
 func _is_active() -> bool:
-	return _flow != null and _flow.get_phase() == GameFlow.Phase.FLOOR_SELECT and _flow.get_config() != null
+	return _flow != null and _flow.get_phase() == GameFlow.Phase.CHAPTER_SELECT and _flow.get_config() != null
 
 
 # --- Input --------------------------------------------------------------------
@@ -125,37 +133,28 @@ func _input(event: InputEvent) -> void:
 		if event.device != InputEvent.DEVICE_ID_EMULATION:
 			_flow.back_to_character_select()
 		return
-	var hit: Vector2i = _tile_at(vp, pos)
-	if hit == GameFlow.NO_FLOOR:
-		return
-	get_viewport().set_input_as_handled()
-	if event.device != InputEvent.DEVICE_ID_EMULATION:
-		_tap_tile(hit)
-
-
-func _tile_at(vp: Vector2, pos: Vector2) -> Vector2i:
-	var config: ChaptersConfig = _flow.get_config()
-	for ci: int in config.chapter_count():
-		var rects: Array[Rect2] = ScreenLayout.floor_tile_rects(vp, ci, config.floor_count(ci))
-		for fi: int in rects.size():
-			if rects[fi].has_point(pos):
-				return Vector2i(ci, fi)
-	return GameFlow.NO_FLOOR
-
-
-func _tap_tile(pos: Vector2i) -> void:
-	match _tile_state(pos.x, pos.y):
-		TileState.LOCKED:
+	var states: Array[Dictionary] = _flow.get_chapter_states()
+	var rects: Array[Rect2] = ScreenLayout.chapter_tile_rects(vp, states.size())
+	for i: int in rects.size():
+		if rects[i].has_point(pos):
+			get_viewport().set_input_as_handled()
+			if event.device != InputEvent.DEVICE_ID_EMULATION:
+				_tap_tile(states[i])
 			return
-		TileState.IN_PROGRESS:
-			_pending = pos
-			_panel = Prompt.RESUME_CHOICE
-		_:
-			if _flow.get_progress().has_in_progress():
-				_pending = pos
-				_panel = Prompt.CONFIRM_ABANDON
-			else:
-				_flow.enter_floor(pos.x, pos.y, true)
+
+
+func _tap_tile(state: Dictionary) -> void:
+	if not bool(state.get("unlocked", false)):
+		return
+	var ci: int = int(state.get("index", -1))
+	if bool(state.get("in_run", false)):
+		_pending = ci
+		_panel = Prompt.RESUME_CHOICE
+	elif _flow.has_continue():
+		_pending = ci
+		_panel = Prompt.CONFIRM_ABANDON
+	else:
+		_flow.start_run(ci)
 
 
 # Prompt buttons: index 0 = the main action, 1 = the alternative; a tap elsewhere closes it.
@@ -166,46 +165,31 @@ func _tap_panel(vp: Vector2, pos: Vector2) -> void:
 		if rects[i].has_point(pos):
 			index = i
 	var panel: Prompt = _panel
-	var target: Vector2i = _pending
+	var target: int = _pending
 	_panel = Prompt.NONE
-	_pending = GameFlow.NO_FLOOR
+	_pending = -1
 	if index < 0:
 		return
 	match panel:
 		Prompt.CONFIRM_ABANDON:
 			if index == 0:
-				_flow.enter_floor(target.x, target.y, true)
+				_flow.start_run(target)
 		Prompt.RESUME_CHOICE:
-			_flow.enter_floor(target.x, target.y, index != 0)
+			if index == 0:
+				_flow.continue_requested()
+			else:
+				_flow.start_run(target)
 
 
 # --- State --------------------------------------------------------------------
 
 
-func _tile_state(ci: int, fi: int) -> TileState:
-	var config: ChaptersConfig = _flow.get_config()
-	var progress: ProgressState = _flow.get_progress()
-	var key: String = config.floor_key(ci, fi)
-	var saved: Dictionary = progress.get_in_progress()
-	if not saved.is_empty() and str(saved["floor"]) == key:
-		return TileState.IN_PROGRESS
-	if progress.is_cleared(key):
-		return TileState.CLEARED
-	if progress.is_unlocked(config, ci, fi):
-		return TileState.UNLOCKED
-	return TileState.LOCKED
-
-
-# Arena line of a tile: the fixed shape's name, ui.arena.random for a pool, "" for none.
-func _arena_text(ci: int, fi: int) -> String:
-	var summary: Dictionary = _flow.get_config().arena_summary(ci, fi)
-	match str(summary["kind"]):
-		"fixed":
-			return ArenaNames.name_for(str(summary["shape"]))
-		"pool":
-			return tr(ArenaNames.TEXT_RANDOM)
-		_:
-			return ""
+# (floor, match) of the saved run, 1-based, from the progress dictionary; (1, 1) when unreadable.
+func _saved_position() -> Vector2i:
+	var saved: Dictionary = _flow.get_progress().get_run_dict()
+	var key: String = str(saved.get("chapter", "")) + FLOOR_KEY_SEPARATOR + str(saved.get("floor", ""))
+	var pos: Vector2i = _flow.get_config().find_floor(key)
+	return Vector2i(maxi(pos.y, 0) + 1, int(saved.get("match_index", 0)) + 1)
 
 
 # --- Drawing ------------------------------------------------------------------
@@ -215,47 +199,41 @@ func _draw() -> void:
 	if not _is_active():
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	var config: ChaptersConfig = _flow.get_config()
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
 	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
 	_draw_hero_label(vp)
-	for ci: int in config.chapter_count():
-		var label: Rect2 = ScreenLayout.floor_chapter_label_rect(vp, ci)
-		draw_string(ThemeDB.fallback_font, Vector2(label.position.x, label.position.y + label.size.y * CHAPTER_BASELINE), config.chapter_name(ci), HORIZONTAL_ALIGNMENT_LEFT, label.size.x, CHAPTER_FONT_SIZE, CHAPTER_COLOR)
-		var rects: Array[Rect2] = ScreenLayout.floor_tile_rects(vp, ci, config.floor_count(ci))
-		for fi: int in rects.size():
-			_draw_tile(rects[fi], ci, fi)
+	var states: Array[Dictionary] = _flow.get_chapter_states()
+	var rects: Array[Rect2] = ScreenLayout.chapter_tile_rects(vp, states.size())
+	for i: int in rects.size():
+		_draw_tile(rects[i], states[i])
 	if _panel != Prompt.NONE:
 		_draw_panel(vp)
 
 
-func _draw_tile(rect: Rect2, ci: int, fi: int) -> void:
-	var config: ChaptersConfig = _flow.get_config()
-	var state: TileState = _tile_state(ci, fi)
-	var locked: bool = state == TileState.LOCKED
+func _draw_tile(rect: Rect2, state: Dictionary) -> void:
+	var locked: bool = not bool(state.get("unlocked", false))
+	var cleared: bool = bool(state.get("cleared", false))
+	var in_run: bool = bool(state.get("in_run", false))
 	draw_rect(rect, TILE_LOCKED_BACK if locked else TILE_OPEN_BACK)
-	match state:
-		TileState.CLEARED:
-			draw_rect(rect, CLEARED_OUTLINE, false, STATE_OUTLINE_WIDTH)
-		TileState.IN_PROGRESS:
-			draw_rect(rect, IN_PROGRESS_OUTLINE, false, STATE_OUTLINE_WIDTH)
-		_:
-			draw_rect(rect, TILE_LOCKED_OUTLINE if locked else TILE_OPEN_OUTLINE, false, OUTLINE_WIDTH)
+	if in_run:
+		draw_rect(rect, IN_RUN_OUTLINE, false, STATE_OUTLINE_WIDTH)
+	elif cleared:
+		draw_rect(rect, CLEARED_OUTLINE, false, STATE_OUTLINE_WIDTH)
+	else:
+		draw_rect(rect, TILE_LOCKED_OUTLINE if locked else TILE_OPEN_OUTLINE, false, OUTLINE_WIDTH)
 	var text_color: Color = TILE_LOCKED_TEXT if locked else TILE_TEXT
 	var sub_color: Color = TILE_LOCKED_TEXT if locked else TILE_SUB_TEXT
-	_text(rect, rect.position.y + rect.size.y * TILE_NAME_BASELINE, config.floor_name(ci, fi), TILE_NAME_FONT_SIZE, text_color)
-	_text(rect, rect.position.y + rect.size.y * TILE_SUB_BASELINE, _arena_text(ci, fi), TILE_SUB_FONT_SIZE, sub_color)
-	match state:
-		TileState.LOCKED:
-			_draw_padlock(rect)
-		TileState.CLEARED:
-			_draw_check(rect)
-		TileState.IN_PROGRESS:
-			var saved: Dictionary = _flow.get_progress().get_in_progress()
-			var text: String = tr(TEXT_IN_PROGRESS) % [int(saved["match_index"]) + 1, config.match_count(ci, fi)]
-			_text(rect, rect.position.y + rect.size.y * TILE_STATE_BASELINE, text, TILE_STATE_FONT_SIZE, IN_PROGRESS_OUTLINE.darkened(0.2))
+	_text(rect, rect.position.y + rect.size.y * TILE_NAME_BASELINE, str(state.get("name", "")), TILE_NAME_FONT_SIZE, text_color)
+	_text(rect, rect.position.y + rect.size.y * TILE_SUB_BASELINE, tr(TEXT_FLOORS) % _flow.get_config().floor_count(int(state.get("index", 0))), TILE_SUB_FONT_SIZE, sub_color)
+	if locked:
+		_draw_padlock(rect)
+		return
+	if cleared:
+		_draw_check(rect)
+	if in_run:
+		_text(rect, rect.position.y + rect.size.y * TILE_STATE_BASELINE, tr(TEXT_IN_RUN), TILE_STATE_FONT_SIZE, IN_RUN_OUTLINE.darkened(0.2))
 
 
 # Padlock: a filled body with a half-circle shackle above it.
@@ -283,21 +261,24 @@ func _draw_panel(vp: Vector2) -> void:
 	var panel: Rect2 = ScreenLayout.run_panel_rect(vp)
 	draw_rect(panel, PANEL_BACK)
 	draw_rect(panel, PANEL_OUTLINE, false, OUTLINE_WIDTH)
-	var config: ChaptersConfig = _flow.get_config()
 	var labels: Array[String] = []
 	var message: String = ""
-	# Button styles by prompt: destructive choice in the warm colour, safe choice green/grey.
-	var styles: Array[int] = [UiButtons.Style.PRIMARY, UiButtons.Style.DANGER]
+	var sub: String = ""
+	# Button styles by prompt: the destructive choice in the warm colour, the safe one green/grey.
+	var styles: Array[int] = [UiButtons.Style.DANGER, UiButtons.Style.NEUTRAL]
 	match _panel:
 		Prompt.CONFIRM_ABANDON:
 			message = tr(TEXT_CONFIRM_ABANDON)
 			labels = [tr(TEXT_ABANDON), tr(TEXT_CANCEL)]
-			styles = [UiButtons.Style.DANGER, UiButtons.Style.NEUTRAL]
 		Prompt.RESUME_CHOICE:
-			var saved: Dictionary = _flow.get_progress().get_in_progress()
-			message = config.floor_name(_pending.x, _pending.y)
-			labels = [tr(TEXT_RESUME) % [int(saved.get("match_index", 0)) + 1, config.match_count(_pending.x, _pending.y)], tr(TEXT_RESTART_FLOOR)]
+			var saved: Vector2i = _saved_position()
+			message = _flow.get_config().chapter_name(_pending)
+			sub = tr(TEXT_SAVED_POSITION) % [saved.x, saved.y]
+			labels = [tr(TEXT_RESUME), tr(TEXT_RESTART)]
+			styles = [UiButtons.Style.PRIMARY, UiButtons.Style.DANGER]
 	_text(panel, panel.position.y + panel.size.y * PANEL_TEXT_BASELINE, message, PANEL_FONT_SIZE, PANEL_TEXT)
+	if not sub.is_empty():
+		_text(panel, panel.position.y + panel.size.y * PANEL_SUB_BASELINE, sub, PANEL_SUB_FONT_SIZE, PANEL_SUB_TEXT)
 	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, labels.size())
 	for i: int in rects.size():
 		UiButtons.draw_button(self, rects[i], labels[i], styles[i], UiButtons.is_pressed_at(self, rects[i]), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)

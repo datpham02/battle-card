@@ -200,7 +200,9 @@ Top level: `{ "defaults": {...}, "chapters": [...] }`.
 | `intro_sec` | number >= 0 | seconds (real) | Length of each match intro (battle drawn but frozen) | 1.5 |
 | `end_delay_sec` | number >= 0 | seconds (real) | Pause after the last hit before leaving the match | 1.5 |
 | `between_sec` | number >= 0 | seconds (real) | Auto-advance of the between-matches screen; 0 = wait for the button only | 3.0 |
-| `retry_min_hp_ratio` | number 0..1 | ratio of max HP | Retrying or resuming a match starts the player with max(HP at the start of that match, this x max HP); HP at match start negative = full | 0.5 |
+| `heal_between_floors` | number >= 0 | HP | Story 019: HP recovered after a floor's boss (clamped to max HP; HP is never refilled on a new floor) | 40 |
+| `revive_tokens` | integer >= 0 | count | Story 019: revives a run starts with (reserved for the future revive item, unused) | 0 |
+| `retry_min_hp_ratio` | number 0..1 | ratio of max HP | OPTIONAL, legacy (Story 015): `RunState.retry_match` / `resume_at` start with max(HP at match start, this x max HP). Not shipped; the Story 019 run flow passes 0 (no minimum) | 0 |
 
 Each `chapters` entry: `id` (unique string), `name_key` (`chapter.<id>.name`), `floors` (>= 1). Each floor: `id` (unique within the chapter; the floor key is `"<chapter id>/<floor id>"`, e.g. `ch1/f2`), `name_key` (`floor.<chapter id>.<floor id>.name`), `matches` (>= 1, the LAST is the boss), and optionally:
 
@@ -308,15 +310,31 @@ Adding a new arena = one JSON block:
 4. Use it from `chapters.json` with a floor `"arena": {"shape": "<id>"}` or an `arena_pool` (add `"variant": true` / `arena_variant` for a seeded variant), or capture it with `--arena=<id>`.
 5. A cut line through a hole covers nothing there; that is intended, not fixed.
 
-## `progress.json` (Story 015, `user://progress.json`)
+## `progress.json` (Story 015, v2 in Story 019, `user://progress.json`)
 
-Player save written by `ProgressStore` (atomic: temp file renamed over the target) right at each milestone: start of a match, boss floor won, leaving a floor. Never written mid-match. Parsed by `ProgressState.from_json`: empty, corrupt, non-object or wrong-version text gives an empty state (warning); with a `ChaptersConfig`, unknown floor keys in `cleared` and an `in_progress` pointing at an unknown floor or out-of-range match are dropped (warning). Dev: `--progress=none|all` uses an in-memory store and never touches the file.
+Player save written by `ProgressStore` (atomic: temp file renamed over the target) at milestones: start of every match, after a reward pick, run end. Never written mid-match. Parsed by `ProgressState.from_json`: empty, corrupt, non-object or unknown-version text gives an empty state (warning). A version-1 file loads without warning: only `locale` is read, the rest is ignored. With a `ChaptersConfig`, unknown chapter ids in `cleared_chapters` are dropped and an invalid `run_in_progress` is dropped (warning). Dev: `--progress=none|all` uses an in-memory store.
 
 | Key | Type | Meaning |
 |---|---|---|
-| `version` | integer | Always 1 |
-| `cleared` | array of floor keys | Floors whose boss was beaten, e.g. `["ch1/f1"]`. A floor is unlocked when it is the very first floor or the previous floor in linear order (across chapters) is cleared |
-| `in_progress` | object or null | The one floor being played: `floor` (key), `match_index` (0-based), `hp_at_match_start` (HP when that match began, negative = full), `floor_seed`. Resuming applies the retry rule: HP = max(`hp_at_match_start`, `retry_min_hp_ratio` x max HP), same arena (same seed). Cleared when the floor's boss is beaten, on "restart floor" or when another floor is entered |
+| `version` | integer | Always 2 |
+| `locale` | string | UI language code (`vi` / `en`) |
+| `cleared_chapters` | array of chapter ids | Chapters whose last floor boss was beaten, e.g. `["ch1"]`. Chapter 0 is always unlocked; chapter N+1 unlocks when chapter N is cleared (any character) |
+| `seen_cards` | array of card ids | Cards ever offered or owned (write-only for now) |
+| `run_in_progress` | object or null | The run being played (`RunSession.to_dict`): `character` (id), `chapter` (chapter id), `floor` (floor id), `match_index` (0-based), `hp` (HP at the start of that match, negative = full), `deck` (card ids, duplicates allowed), `run_seed`, `elapsed` (seconds), `pending_reward` (card ids offered but not yet picked/skipped, `[]` when none; kept so quitting on the reward screen cannot re-roll), `revives`. The floor seed is derived: `RunSession.floor_seed()` |
+
+## `rewards.json` (Story 019, read by `src/run/reward_roller.gd`, class RewardRoller)
+
+Card reward after every won match that does not end the run. Bad or missing file: defaults below (warning).
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `offer_count` | integer >= 1 | Distinct cards offered | 3 |
+| `rarity_weights` | object rarity -> number >= 0 | Draw weight per rarity (`common`, `rare`, `epic`); a missing rarity = 0 weight | 70 / 25 / 5 |
+| `class_tag_bonus` | number >= 1 | Weight multiplier for a card whose `class_tags` contain the character's id | 2.0 |
+| `allow_skip` | boolean | The reward screen offers a Skip button | true |
+| `pool_excludes_defaults` | boolean | Cards in `cards.json` `default_deck` are not offered | false |
+
+The pool is every `implemented` card; the roll is a seeded weighted draw without replacement.
 
 ## `characters.json` (Story 018, read by `src/run/character_config.gd`, class CharacterConfig)
 

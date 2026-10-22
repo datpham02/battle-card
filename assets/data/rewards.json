@@ -1,0 +1,7 @@
+{
+	"offer_count": 3,
+	"rarity_weights": {"common": 70, "rare": 25, "epic": 5},
+	"class_tag_bonus": 2.0,
+	"allow_skip": true,
+	"pool_excludes_defaults": false
+}

@@ -1,11 +1,12 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/run/game_flow.gd" id="2_flow"]
-[ext_resource type="Script" path="res://src/run/floor_select_view.gd" id="3_floors"]
+[ext_resource type="Script" path="res://src/run/chapter_select_view.gd" id="3_chapters"]
 [ext_resource type="Script" path="res://src/run/run_hud_view.gd" id="4_hud"]
 [ext_resource type="Script" path="res://src/run/title_view.gd" id="5_title"]
 [ext_resource type="Script" path="res://src/run/character_select_view.gd" id="6_characters"]
+[ext_resource type="Script" path="res://src/run/reward_view.gd" id="7_reward"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -19,8 +20,11 @@ script = ExtResource("5_title")
 [node name="CharacterSelectView" type="Node2D" parent="GameFlow"]
 script = ExtResource("6_characters")
 
-[node name="FloorSelectView" type="Node2D" parent="GameFlow"]
-script = ExtResource("3_floors")
+[node name="ChapterSelectView" type="Node2D" parent="GameFlow"]
+script = ExtResource("3_chapters")
 
 [node name="RunHudView" type="Node2D" parent="."]
 script = ExtResource("4_hud")
+
+[node name="RewardView" type="Node2D" parent="."]
+script = ExtResource("7_reward")
