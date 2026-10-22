@@ -15,7 +15,9 @@ static var _warned_no_status: bool = false
 ## cell at resolve time, plus booleans burning / pinned (false by default). Dispatches on the
 ## skill's "effect": damage/push as above; burn ignites EVERY covered cell via [param status]
 ## (hit = target standing inside, no direct damage); pin pins the target when inside. With a
-## null [param status] burn/pin do nothing (warning once).
+## null [param status] burn/pin do nothing (warning once). Story 018: an optional
+## [param damage_modifier] Callable(cells: int, damage: float) -> float scales the FINAL damage number
+## of a damage/push hit (the attacker's passive); invalid = unchanged.
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -24,7 +26,8 @@ static func apply(
 	skill_id: String,
 	cut_config: CutConfig,
 	skill_config: SkillConfig,
-	status: StatusEffects = null
+	status: StatusEffects = null,
+	damage_modifier: Callable = Callable()
 ) -> Dictionary:
 	var target_side: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
 	var target_cell: Vector2i = state.cell_of(target_side)
@@ -61,6 +64,8 @@ static func apply(
 	var multiplier: float = float(skill.get("damage_multiplier", 1.0))
 	var push_cells: int = int(skill.get("push_cells", 0))
 	var damage: float = cut_config.slash_damage(cells.size()) * multiplier
+	if damage_modifier.is_valid():
+		damage = float(damage_modifier.call(cells.size(), damage))
 	result["hit"] = true
 	result["damage"] = damage
 	state.damage(target_side, damage)

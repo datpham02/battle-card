@@ -28,6 +28,9 @@ var _cut_config: CutConfig
 var _skill_config: SkillConfig
 var _pending: Array[Dictionary] = []
 var _status: StatusEffects = null
+## Story 018: Callable(cells: int, damage: float) -> float applied to the PLAYER's hit damage only
+## (the character passive); invalid = none.
+var player_damage_modifier: Callable = Callable()
 
 
 func _init(
@@ -87,7 +90,8 @@ func _step(slice: float) -> void:
 
 
 func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool) -> void:
-	var result: Dictionary = CutEffects.apply(_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status)
+	var modifier: Callable = player_damage_modifier if side == CombatState.Side.PLAYER else Callable()
+	var result: Dictionary = CutEffects.apply(_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier)
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	swing_resolved.emit(side, result)

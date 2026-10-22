@@ -1,0 +1,44 @@
+{
+	"default_character": "kiem_si",
+	"characters": [
+		{
+			"id": "kiem_si",
+			"name_key": "character.kiem_si.name",
+			"desc_key": "character.kiem_si.desc",
+			"max_hp": 100,
+			"step_cooldown_mult": 1.0,
+			"focus_max_sec": 4.0,
+			"passive": {"id": "second_wind", "params": {"heal_after_match": 10}},
+			"passive_name_key": "passive.second_wind.name",
+			"passive_desc_key": "passive.second_wind.desc",
+			"starter_deck": ["kiem_khi", "kiem_khi", "chan_phong", "chan_phong", "hoa_tran", "bang_phong"],
+			"unlocked": true
+		},
+		{
+			"id": "phap_su",
+			"name_key": "character.phap_su.name",
+			"desc_key": "character.phap_su.desc",
+			"max_hp": 80,
+			"step_cooldown_mult": 1.0,
+			"focus_max_sec": 5.0,
+			"passive": {"id": "wide_caster", "params": {"min_cells": 5, "duration_mult": 0.85}},
+			"passive_name_key": "passive.wide_caster.name",
+			"passive_desc_key": "passive.wide_caster.desc",
+			"starter_deck": ["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"],
+			"unlocked": true
+		},
+		{
+			"id": "sat_thu",
+			"name_key": "character.sat_thu.name",
+			"desc_key": "character.sat_thu.desc",
+			"max_hp": 90,
+			"step_cooldown_mult": 0.9,
+			"focus_max_sec": 4.0,
+			"passive": {"id": "quick_blade", "params": {"max_cells": 3, "damage_mult": 1.25}},
+			"passive_name_key": "passive.quick_blade.name",
+			"passive_desc_key": "passive.quick_blade.desc",
+			"starter_deck": ["kiem_khi", "kiem_khi", "kiem_khi", "chan_phong", "bang_phong", "bang_phong"],
+			"unlocked": true
+		}
+	]
+}

@@ -50,6 +50,10 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 @export var floor_label: String = ""
 ## Player deck card ids for the battles (Story 019 fills it); empty = the default deck.
 @export var deck: Array[String] = []
+## Story 018: the chosen character (a CharacterConfig.get_character dictionary); empty = the plain
+## combat.json player (old behaviour). Becomes match_params["character"]; its starter_deck is the
+## deck when [member deck] is empty. Set by GameFlow BEFORE add_child.
+@export var character: Dictionary = {}
 
 var _config: RunConfig
 var _state: RunState
@@ -196,6 +200,8 @@ func get_player_max_hp() -> float:
 	var view: CombatView = _get_view()
 	if view != null and view.get_state() != null:
 		return view.get_state().player_max_hp
+	if character.has("max_hp"):
+		return maxf(float(character["max_hp"]), 1.0)
 	return CombatConfig.load_from_file().player_max_hp
 
 
@@ -253,8 +259,12 @@ func _spawn_battle() -> void:
 		params["arena"] = _dev_arena.duplicate()
 	params["player_hp"] = _state.get_carried_hp()
 	params["floor_label"] = floor_label
+	if not character.is_empty():
+		params["character"] = character.duplicate(true)
 	if not deck.is_empty():
 		params["deck"] = deck.duplicate()
+	elif character.has("starter_deck"):
+		params["deck"] = (character["starter_deck"] as Array).duplicate()
 	params["match_label"] = _match_label()
 	view.match_params = params
 	view.match_ended.connect(_on_match_ended)
@@ -294,7 +304,9 @@ func _on_match_ended(player_won: bool, player_hp: float) -> void:
 	_clear_pause()
 	_freeze_battle()
 	if player_won:
-		_state.on_match_won(player_hp, get_player_max_hp())
+		var view: CombatView = _get_view()
+		var passive_heal: float = view.get_passive_heal() if view != null else 0.0
+		_state.on_match_won(player_hp + passive_heal, get_player_max_hp())
 		_between_left = _config.between_sec
 	else:
 		_state.on_match_lost()

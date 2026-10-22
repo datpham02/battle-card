@@ -10,6 +10,12 @@ ui.floor_select.cancel,Thôi,Cancel
 ui.floor_select.resume,Tiếp tục (Trận %d/%d),Resume (Match %d/%d)
 ui.floor_select.restart_floor,Chơi lại từ đầu,Restart from the start
 ui.floor_select.back,Về,Back
+ui.floor_select.hero,Nhân vật: %s,Hero: %s
+ui.character_select.title,CHỌN NHÂN VẬT,CHOOSE YOUR HERO
+ui.character_select.hp,Máu %d,HP %d
+ui.character_select.deck,Bộ khởi đầu,Starter deck
+ui.character_select.deck_entry,%s ×%d,%s ×%d
+ui.character_select.back,Về,Back
 ui.hold.rotten_timer,%.1f,%.1f
 ui.hud.focus,TẬP TRUNG  %.1f s,FOCUS  %.1f s
 ui.hud.focus_cooldown,Tập trung còn %d s,Focus in %d s
@@ -114,3 +120,15 @@ arena.staircase.name,Bậc thang,Staircase
 arena.diamond.name,Kim cương,Diamond
 trait.row_burner.name,Hỏa tức,Fire Breath
 trait.rotten_thrower.name,Ấn nguyền,Cursed Rune
+character.kiem_si.name,Kiếm sĩ,Swordsman
+character.kiem_si.desc,Cân bằng và bền bỉ: nhiều máu và bộ bài vững.,Balanced and sturdy: plenty of health and a solid deck.
+character.phap_su.name,Pháp sư,Mage
+character.phap_su.desc,Mong manh nhưng thạo trận pháp diện rộng; tập trung được lâu.,Frail but a master of wide spells; can focus for longer.
+character.sat_thu.name,Sát thủ,Assassin
+character.sat_thu.desc,Nhanh nhẹn và chí mạng với những đường chém nhỏ.,Nimble and deadly with short cuts.
+passive.second_wind.name,Hơi thở thứ hai,Second Wind
+passive.second_wind.desc,Hồi thêm 10 máu sau mỗi trận thắng.,Recover 10 extra HP after every won match.
+passive.wide_caster.name,Pháp trận rộng,Wide Caster
+passive.wide_caster.desc,Phép từ 5 ô trở lên niệm nhanh hơn 15%.,Spells covering 5 or more cells cast 15% faster.
+passive.quick_blade.name,Lưỡi kiếm nhanh,Quick Blade
+passive.quick_blade.desc,Phép tối đa 3 ô gây thêm 25% sát thương.,Spells covering 3 cells or fewer deal 25% more damage.

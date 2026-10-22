@@ -1,7 +1,7 @@
 # Story 018: Nhân vật theo lớp — chỉ số, nội tại, bộ khởi đầu, màn chọn nhân vật
 
 > **Epic**: Kaiten Duel (v4)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
@@ -68,7 +68,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/characters/`.
 
-**Status**: [ ] Not yet created
+**Status**: Screenshots retained (characters/01-05).
 
 ---
 
@@ -76,3 +76,14 @@
 
 - Depends on: Story 017 (cards.json, Deck), Story 016 (GameFlow pha, UiButtons)
 - Unlocks: Story 019
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-22
+**Criteria**: 9/9 pass. DEFERRED (needs real play): relative strength of the three classes, hand quality of the mage starter deck, card layout with 4–5 characters.
+**Deviations**: ADVISORY: without `--character` or a selection the match is character-less (old numbers), so old tests and demos are unchanged; `enter_floor` falls back to `default_id()` (kiem_si) when nothing is selected. ADVISORY: the title's Continue uses kiem_si until Story 019 saves the character. ADVISORY: the boss step cooldown derives from the pre-character base, so classes never change boss pace. ADVISORY: passive hooks are Callables (`CutActor.duration_modifier`, `SwingArbiter.player_damage_modifier`), single points, player side only. ADVISORY: the mage starter deck (3x Hỏa trận, 5 cells needed) often yields hands with three locked cards; balance note for gate 5. Dev args added: `--character`, `--select=character`.
+**Test Evidence**: Integration; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/characters/01-05*.png` (all opened and checked). Scratch tests: character 42 pass, i18n, chapters (67), deck, floor/pause/run flow 0 fails (headless); cut_flow and focus_flow 0 fails (windowed, `--no-autopause`).
+**Code Review**: Skipped (solo mode).
+**Not verified**: real feel, class balance, touch on a device.
+**Carries forward**: Story 019 (rewards, run state, permadeath, run save incl. the chosen character). Characters 4–5 are JSON only.

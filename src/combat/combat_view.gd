@@ -38,6 +38,11 @@ const BIG_FONT_SIZE: int = 72
 const MARKER_RADIUS_RATIO: float = 0.33
 ## Marker label font size as a share of the marker radius (so it shrinks with the grid).
 const MARKER_FONT_RATIO: float = 0.6
+## Player marker text fit (Story 018: the character name replaces "BẠN"): the font shrinks from
+## MARKER_FONT_RATIO down to this size until the text fits MARKER_TEXT_FILL of the diameter; if it
+## still does not fit, only the first word is drawn.
+const MARKER_MIN_FONT_SIZE: int = 10
+const MARKER_TEXT_FILL: float = 0.92
 const ENEMY_BODY_WIDTH_RATIO: float = 0.6
 const ENEMY_BODY_HEIGHT_RATIO: float = 0.8
 ## Cooldown ring: gap outside the marker (of cell height), line width, arc point count.
@@ -83,6 +88,8 @@ var _grid: BoardGrid
 var _state: CombatState
 var _mover: UnitMover
 var _player_step_cooldown: float = 0.45
+## Board-scaled step cooldown BEFORE the character multiplier; the boss's own cooldown derives from it.
+var _base_step_cooldown: float = 0.45
 var _drops: FieldDrops
 var _drops_config: FieldDropsConfig
 var _cut_config: CutConfig
@@ -107,6 +114,9 @@ var _status: StatusEffects
 var _learning: BossLearning
 ## The boss traits of this match (Story 014); built in _ready, torn down in _exit_tree.
 var _trait_host: TraitHost
+## The character passive of this match (Story 018); null without a character or with an unknown id.
+var _passive: BasePassive = null
+var _passive_heal: float = 0.0
 ## Dev/capture only: weight set name for the boss brain (empty = from boss_brain.json).
 var boss_set_override: String = ""
 ## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
@@ -116,7 +126,9 @@ var boss_set_override: String = ""
 ## match set's movement profile of boss_brain.json), end_delay_sec (default 1.5),
 ## name_key (boss name in the HUD, translated; legacy display_name literal), match_label, arena (object: {shape[, variant]} or a direct
 ## {side_cols, side_rows, missing_cells}; see ArenaLibrary.grid_for_spec), arena_seed (int, variants),
-## traits (array of {id, params}; see TraitRegistry.SCRIPTS and schema.md, Story 014).
+## traits (array of {id, params}; see TraitRegistry.SCRIPTS and schema.md, Story 014),
+## character (Story 018: {max_hp, step_cooldown_mult, focus_max_sec, passive: {id, params}}; absent =
+## the combat.json player and no passive).
 var match_params: Dictionary = {}
 
 ## Emitted ONCE, end_delay_sec of real time after either unit died.
@@ -125,7 +137,8 @@ signal match_ended(player_won: bool, player_hp: float)
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
 const DEFAULT_BOSS_NAME: String = "DUMMY"
-## HUD keys (Story 017): the player marker / HP label, the HP line and the dead line of a unit.
+## HUD keys (Story 017): the player marker / HP label (used when the match has no character, see
+## [method get_player_name]), the HP line and the dead line of a unit.
 const TEXT_YOU: String = "ui.hud.you"
 const TEXT_UNIT_HP: String = "ui.hud.unit_hp"
 const TEXT_UNIT_DEAD: String = "ui.hud.unit_dead"
@@ -145,13 +158,16 @@ func _ready() -> void:
 		_arena_info = {"shape": "", "variant": false, "seed": -1}
 	_grid = _config.grid
 	var boss_max_hp: float = maxf(float(match_params.get("boss_max_hp", _config.enemy_max_hp)), 1.0)
+	var character: Dictionary = _character()
+	var player_max_hp: float = maxf(float(character.get("max_hp", _config.player_max_hp)), 1.0)
 	_state = CombatState.new(
-		_grid, _config.player_max_hp, boss_max_hp, _config.player_start_cell, _config.enemy_start_cell
+		_grid, player_max_hp, boss_max_hp, _config.player_start_cell, _config.enemy_start_cell
 	)
 	var start_hp: float = float(match_params.get("player_hp", -1.0))
 	if start_hp >= 0.0:
 		_state.set_player_hp(start_hp)
-	_player_step_cooldown = _config.step_cooldown_for(_grid)
+	_base_step_cooldown = _config.step_cooldown_for(_grid)
+	_player_step_cooldown = _base_step_cooldown * _step_mult(character)
 	_mover = UnitMover.new(_state, CombatState.Side.PLAYER, _player_step_cooldown)
 	_drops_config = FieldDropsConfig.load_from_file(drops_config_path)
 	var boss_drops_config: FieldDropsConfig = _drops_config.copy()
@@ -163,6 +179,8 @@ func _ready() -> void:
 	_cooldowns = SkillCooldowns.new()
 	_deck = Deck.new(_deck_ids(), drops_seed if drops_seed >= 0 else randi())
 	_focus = FocusController.new(_skill_config)
+	if character.has("focus_max_sec"):
+		_focus.set_max_sec_override(float(character["focus_max_sec"]))
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
@@ -195,11 +213,61 @@ func _ready() -> void:
 	_boss.get_drops().point_spawned.connect(_on_point_spawned.bind(CombatState.Side.ENEMY))
 	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
 	_trait_host.on_match_start()
+	_setup_passive(character)
 
 
 func _exit_tree() -> void:
 	if _trait_host != null:
 		_trait_host.teardown_all()
+	if _passive != null:
+		_passive.teardown()
+
+
+## The character passive of this match; null when none (Story 018).
+func get_passive() -> BasePassive:
+	return _passive
+
+
+## Extra HP the passive heals after a WON match (computed when [signal match_ended] fires; 0 before
+## that, after a loss, or without a passive). RunController adds it to the between-match heal.
+func get_passive_heal() -> float:
+	return _passive_heal
+
+
+# match_params["character"] as a dictionary ({} when absent or not a dictionary).
+func _character() -> Dictionary:
+	var raw: Variant = match_params.get("character")
+	if typeof(raw) == TYPE_DICTIONARY:
+		return raw as Dictionary
+	return {}
+
+
+# Character step cooldown multiplier (> 0, else 1).
+func _step_mult(character: Dictionary) -> float:
+	var mult: float = float(character.get("step_cooldown_mult", 1.0))
+	return mult if mult > 0.0 else 1.0
+
+
+# Creates the character's passive and hooks it in at the two single points: the player actor's
+# swing duration and the arbiter's player damage. Unknown id: PassiveRegistry warns, no passive.
+func _setup_passive(character: Dictionary) -> void:
+	var spec: Variant = character.get("passive")
+	if typeof(spec) != TYPE_DICTIONARY:
+		return
+	var id: String = str((spec as Dictionary).get("id", ""))
+	if id.is_empty():
+		return
+	_passive = PassiveRegistry.create(id)
+	if _passive == null:
+		return
+	var params: Variant = (spec as Dictionary).get("params", {})
+	_passive.setup(
+		{"state": _state, "grid": _grid, "boss": _boss, "status": _status,
+			"skill_config": _skill_config, "cut_config": _cut_config},
+		(params as Dictionary) if typeof(params) == TYPE_DICTIONARY else {})
+	_cut_actor.duration_modifier = Callable(_passive, "modify_swing_duration")
+	_arbiter.player_damage_modifier = Callable(_passive, "modify_damage")
+	_passive.on_match_start()
 
 
 ## Public-API context the traits work through (BossTrait documents the keys): the same
@@ -262,7 +330,7 @@ func _apply_brain_params(brain_config: BossBrainConfig) -> void:
 		push_warning("CombatView: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")
 		brain_config.step_cooldown_sec = maxf(float(match_params["boss_step_cooldown_sec"]), 0.0)
 	elif match_params.has("boss_step_cooldown_mult"):
-		brain_config.step_cooldown_sec = maxf(_player_step_cooldown * float(match_params["boss_step_cooldown_mult"]), 0.0)
+		brain_config.step_cooldown_sec = maxf(_base_step_cooldown * float(match_params["boss_step_cooldown_mult"]), 0.0)
 	brain_config.think_interval_sec = maxf(float(match_params.get("boss_think_interval_sec", brain_config.think_interval_sec)), 0.0)
 	brain_config.reaction_sec = maxf(float(match_params.get("boss_reaction_sec", brain_config.reaction_sec)), 0.0)
 	var wanted: String = str(match_params.get("brain_set", ""))
@@ -294,7 +362,9 @@ func _tick_end(delta: float) -> void:
 	_end_timer -= delta
 	if _end_timer <= 0.0:
 		_end_emitted = true
-		match_ended.emit(not _state.is_player_dead(), _state.player_hp)
+		var won: bool = not _state.is_player_dead()
+		_passive_heal = maxf(_passive.on_match_won(), 0.0) if (won and _passive != null) else 0.0
+		match_ended.emit(won, _state.player_hp)
 
 
 ## The player's (board-scaled) step cooldown in seconds.
@@ -311,6 +381,13 @@ func get_player_hp() -> float:
 func get_boss_name() -> String:
 	var boss_name: String = RunConfig.match_name(match_params)
 	return boss_name if not boss_name.is_empty() else DEFAULT_BOSS_NAME
+
+
+## Story 018: the player's HUD name — the character's translated name when match_params["character"]
+## has a name_key, else tr(TEXT_YOU) ("BẠN" / "YOU"). Used by the HP label and the unit marker.
+func get_player_name() -> String:
+	var name_key: String = str(_character().get("name_key", ""))
+	return tr(name_key) if not name_key.is_empty() else tr(TEXT_YOU)
 
 
 ## Match label such as "Trận 2/4" from match_params (empty when none).
@@ -752,7 +829,7 @@ func _draw_hud(vp: Vector2) -> void:
 	var bar_y: float = text_y + 8.0
 	var left_x: float = hud.position.x + PAD
 	var right_x: float = hud.position.x + PAD + half_w + PAD * 2.0 + gap
-	var hp_text: String = tr(TEXT_UNIT_HP) % [tr(TEXT_YOU), ceili(_state.player_hp), ceili(_state.player_max_hp)]
+	var hp_text: String = tr(TEXT_UNIT_HP) % [get_player_name(), ceili(_state.player_hp), ceili(_state.player_max_hp)]
 	_draw_text(hp_text, Vector2(left_x, text_y), half_w, HORIZONTAL_ALIGNMENT_LEFT)
 	_draw_bar(Rect2(Vector2(left_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.player_hp / _state.player_max_hp, PLAYER_HP_COLOR)
 	var enemy_text: String = tr(TEXT_UNIT_DEAD) % get_boss_name()
@@ -826,11 +903,23 @@ func _draw_player_marker(vp: Vector2) -> void:
 	draw_circle(c, radius, color)
 	draw_arc(c, radius, 0.0, TAU, 32, TEXT_COLOR, 3.0)
 	var font_size: int = maxi(int(radius * MARKER_FONT_RATIO), 8)
-	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, font_size * 0.4), tr(TEXT_YOU), HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
+	var text: String = get_player_name()
+	var max_width: float = radius * 2.0 * MARKER_TEXT_FILL
+	# Auto-fit (Story 018): shrink the font to MARKER_MIN_FONT_SIZE, then fall back to the first word.
+	while font_size > MARKER_MIN_FONT_SIZE and _text_width(text, font_size) > max_width:
+		font_size -= 1
+	if _text_width(text, font_size) > max_width and text.contains(" "):
+		text = text.get_slice(" ", 0)
+	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, font_size * 0.4), text, HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
 
 
 func _marker_radius(vp: Vector2) -> float:
 	return ScreenLayout.cell_size(_grid, vp).y * MARKER_RADIUS_RATIO
+
+
+# Pixel width of [param text] in the fallback font at [param font_size].
+func _text_width(text: String, font_size: int) -> float:
+	return ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x
 
 
 func _draw_bar(rect: Rect2, ratio: float, color: Color) -> void:

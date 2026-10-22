@@ -22,6 +22,10 @@ var duration_mult: float = 1.0:
 	set(value):
 		duration_mult = value if value > 0.0 else 1.0
 
+## Story 018: optional Callable(cells: int, duration: float) -> float applied to the windup in
+## [method begin_swing] (the player's passive); invalid = none. Queued swings are not touched.
+var duration_modifier: Callable = Callable()
+
 var _config: CutConfig
 var _swinging: bool = false
 var _time_left: float = 0.0
@@ -51,7 +55,10 @@ func can_begin() -> bool:
 func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool) -> bool:
 	if _swinging or cells.is_empty():
 		return false
-	_start(cells, skill_id, target_is_enemy, _config.swing_duration(cells.size()) * duration_mult)
+	var duration: float = _config.swing_duration(cells.size()) * duration_mult
+	if duration_modifier.is_valid():
+		duration = float(duration_modifier.call(cells.size(), duration))
+	_start(cells, skill_id, target_is_enemy, duration)
 	return true
 
 

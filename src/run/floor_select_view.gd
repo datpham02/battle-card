@@ -8,6 +8,8 @@ extends Node2D
 ## progress: a confirm panel ("Bỏ tầng đang dở?") first. Tap the in-progress tile -> a panel with
 ## "Tiếp tục" / "Chơi lại từ đầu". Input dedup as in RunHudView / DPadView (emulated copies are
 ## consumed but never act). Placeholder art; all strings are TEXT_* keys drawn through tr() (Story 017).
+## Story 018: "Về" goes back to the character select, and the chosen character's name is shown
+## top-right (ScreenLayout.floor_hero_label_rect) when one is selected.
 
 enum Prompt { NONE, CONFIRM_ABANDON, RESUME_CHOICE }
 enum TileState { LOCKED, UNLOCKED, CLEARED, IN_PROGRESS }
@@ -40,6 +42,9 @@ const TILE_SUB_FONT_SIZE: int = 22
 const TILE_STATE_FONT_SIZE: int = 24
 const PANEL_FONT_SIZE: int = 36
 const BUTTON_FONT_SIZE: int = 28
+## Story 018: the "Nhân vật: …" label in the title band's right corner.
+const HERO_FONT_SIZE: int = 26
+const HERO_COLOR: Color = Color(0.4, 0.35, 0.3)
 
 ## Text baselines inside a tile / the chapter label / a panel, as shares of their height.
 const TILE_NAME_BASELINE: float = 0.3
@@ -63,8 +68,10 @@ const TEXT_ABANDON: String = "ui.floor_select.abandon"
 const TEXT_CANCEL: String = "ui.floor_select.cancel"
 const TEXT_RESUME: String = "ui.floor_select.resume"
 const TEXT_RESTART_FLOOR: String = "ui.floor_select.restart_floor"
-## Story 016: the back-to-title button (ScreenLayout.back_button_rect).
+## Story 016: the back button (ScreenLayout.back_button_rect); Story 018: it leads to the character select.
 const TEXT_BACK: String = "ui.floor_select.back"
+## Story 018: "Nhân vật: %s" with the selected character's translated name.
+const TEXT_HERO: String = "ui.floor_select.hero"
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -116,7 +123,7 @@ func _input(event: InputEvent) -> void:
 	if ScreenLayout.back_button_rect(vp).has_point(pos):
 		get_viewport().set_input_as_handled()
 		if event.device != InputEvent.DEVICE_ID_EMULATION:
-			_flow.show_title()
+			_flow.back_to_character_select()
 		return
 	var hit: Vector2i = _tile_at(vp, pos)
 	if hit == GameFlow.NO_FLOOR:
@@ -213,6 +220,7 @@ func _draw() -> void:
 	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
+	_draw_hero_label(vp)
 	for ci: int in config.chapter_count():
 		var label: Rect2 = ScreenLayout.floor_chapter_label_rect(vp, ci)
 		draw_string(ThemeDB.fallback_font, Vector2(label.position.x, label.position.y + label.size.y * CHAPTER_BASELINE), config.chapter_name(ci), HORIZONTAL_ALIGNMENT_LEFT, label.size.x, CHAPTER_FONT_SIZE, CHAPTER_COLOR)
@@ -293,6 +301,17 @@ func _draw_panel(vp: Vector2) -> void:
 	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, labels.size())
 	for i: int in rects.size():
 		UiButtons.draw_button(self, rects[i], labels[i], styles[i], UiButtons.is_pressed_at(self, rects[i]), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
+
+
+# Story 018: the selected character's name, right-aligned in the title band; nothing when none.
+func _draw_hero_label(vp: Vector2) -> void:
+	var id: String = _flow.get_character_id()
+	if id.is_empty():
+		return
+	var character: Dictionary = _flow.get_characters().get_character(id)
+	var rect: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
+	var text: String = tr(TEXT_HERO) % tr(str(character.get("name_key", id)))
+	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + HERO_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x, HERO_FONT_SIZE, HERO_COLOR)
 
 
 # Centred single-line text at baseline [param y] over the width of [param rect].

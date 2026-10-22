@@ -2,10 +2,11 @@ class_name GameFlow
 extends Node2D
 ## The thin layer above one run (Story 015, Story 016): chapters/floors data, the saved progress, the floor
 ## being played, and ONE RunController child created when a floor is entered and freed when it
-## is left. Phases: TITLE (Story 016, the first screen), FLOOR_SELECT (the FloorSelectView child
-## draws and takes taps) and IN_FLOOR (the RunController and RunHudView take over). [method go_back]
-## (Esc, Android back) acts per phase: IN_FLOOR toggles the pause, FLOOR_SELECT -> TITLE, TITLE ->
-## quit. App pause / focus loss while IN_FLOOR force-pauses the battle. Draws nothing itself. Direct child of Main in
+## is left. Phases: TITLE (Story 016, the first screen), CHARACTER_SELECT (Story 018, the
+## CharacterSelectView child), FLOOR_SELECT (the FloorSelectView child draws and takes taps) and
+## IN_FLOOR (the RunController and RunHudView take over). [method go_back] (Esc, Android back) acts
+## per phase: IN_FLOOR toggles the pause, FLOOR_SELECT -> CHARACTER_SELECT, CHARACTER_SELECT ->
+## TITLE, TITLE -> quit. App pause / focus loss while IN_FLOOR force-pauses the battle. Draws nothing itself. Direct child of Main in
 ## main.tscn, in place of the old RunController; RunHudView (a sibling) gets the controller
 ## through [signal controller_changed].
 ##
@@ -23,6 +24,8 @@ extends Node2D
 ##                              at the floor select; no dev arg at all starts at the title)
 ##   --seed=N                   force the floor seed (reproducible arenas)
 ##   --lang=vi|en               UI locale for this run only (not saved; captures)
+##   --character=<id>           pick the character like the select screen would (Story 018)
+##   --select=character         start in CHARACTER_SELECT with a memory store (captures)
 ##   --match=, --run=, --demo=, --arena=  (RunController / DemoArgs args) also switch to a memory
 ##                              store and, without --floor, enter chapter 1 floor 1
 
@@ -31,14 +34,19 @@ signal phase_changed(phase: int)
 ## Emitted when the RunController was created (after add_child) or is about to be freed (null).
 signal controller_changed(controller: RunController)
 
-enum Phase { TITLE, FLOOR_SELECT, IN_FLOOR }
+enum Phase { TITLE, CHARACTER_SELECT, FLOOR_SELECT, IN_FLOOR }
 
 const PROGRESS_ARG: String = "--progress="
 const FLOOR_ARG: String = "--floor="
 const SEED_ARG: String = "--seed="
 const TITLE_ARG: String = "--title"
+## DEV-ONLY (Story 018): --character=<id> picks the character like the select screen would.
+const CHARACTER_ARG: String = "--character="
 ## DEV-ONLY: locale override for captures (never saved).
 const LANG_ARG: String = "--lang="
+## DEV-ONLY (Story 018): --select=character starts in CHARACTER_SELECT (memory store; captures).
+const SELECT_ARG: String = "--select="
+const SELECT_CHARACTER: String = "character"
 ## Locales the CSV ships (Story 017); the title button cycles through them in this order.
 const SUPPORTED_LOCALES: Array[String] = ["vi", "en"]
 ## DEV-ONLY: disables the auto-pause on focus loss (windowed scratch tests run unfocused).
@@ -74,6 +82,15 @@ var _no_autopause: bool = false
 var _locale: String = ProgressState.DEFAULT_LOCALE
 ## DEV-ONLY: --lang= value ("" = use the save).
 var _dev_locale: String = ""
+## Selected character id (Story 018). Set by [method set_character] (the select screen, or
+## --character=<id>); every floor gets its dictionary and starter deck. Empty = none chosen yet:
+## [method enter_floor] then falls back to CharacterConfig.default_id() (continue from the title,
+## --progress= / --run= / --demo= captures), so a floor is never character-less — only
+## [method enter_test_floor] passes {} (plain combat.json numbers for the old tests).
+var _character_id: String = ""
+var _characters: CharacterConfig = null
+## DEV-ONLY: --character= value, applied in _ready.
+var _dev_character: String = ""
 
 
 ## Test hook: installs the store BEFORE the node enters the tree (wins over --progress args).
@@ -90,6 +107,7 @@ func enter_test_floor(run_config: RunConfig) -> RunController:
 	_current = NO_FLOOR
 	var controller := RunController.new()
 	controller.name = CONTROLLER_NODE
+	controller.character = _character_dict()
 	controller.configure(run_config, 0, -1.0)
 	controller.match_started.connect(_on_match_started)
 	controller.phase_changed.connect(_on_run_phase_changed)
@@ -107,9 +125,12 @@ func _ready() -> void:
 	var floor_text: String = ""
 	var dev_run: bool = false
 	var force_title: bool = false
+	var select_mode: String = ""
 	for arg: String in args:
 		if arg == TITLE_ARG:
 			force_title = true
+		elif arg.begins_with(SELECT_ARG):
+			select_mode = arg.trim_prefix(SELECT_ARG)
 		elif arg == NO_AUTOPAUSE_ARG:
 			_no_autopause = true
 		elif arg.begins_with(PROGRESS_ARG):
@@ -120,17 +141,29 @@ func _ready() -> void:
 			_dev_seed = int(arg.trim_prefix(SEED_ARG)) & ChaptersConfig.SEED_MASK
 		elif arg.begins_with(LANG_ARG):
 			_dev_locale = arg.trim_prefix(LANG_ARG)
+		elif arg.begins_with(CHARACTER_ARG):
+			_dev_character = arg.trim_prefix(CHARACTER_ARG)
 		else:
 			for prefix: String in DEV_RUN_ARGS:
 				if arg.begins_with(prefix):
 					dev_run = true
+	if not select_mode.is_empty() and select_mode != SELECT_CHARACTER:
+		push_warning("GameFlow: unknown --select=%s (character), ignored" % select_mode)
+		select_mode = ""
 	if _store == null:
-		_store = _make_store(progress_mode, dev_run)
+		_store = _make_store(progress_mode, dev_run or not select_mode.is_empty())
 	_progress = _load_progress(progress_mode)
 	# Locale before anything draws or caches a translated name (floor_label below).
 	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _progress.get_locale())
-	# Start phase: TITLE without dev args (or with --title); --progress alone -> FLOOR_SELECT.
-	_phase = Phase.FLOOR_SELECT if (not progress_mode.is_empty() and not force_title) else Phase.TITLE
+	if not _dev_character.is_empty():
+		set_character(_dev_character)
+	# Start phase: TITLE without dev args (or with --title); --progress alone -> FLOOR_SELECT;
+	# --select=character -> CHARACTER_SELECT.
+	_phase = Phase.TITLE
+	if select_mode == SELECT_CHARACTER:
+		_phase = Phase.CHARACTER_SELECT
+	elif not progress_mode.is_empty() and not force_title:
+		_phase = Phase.FLOOR_SELECT
 	if not floor_text.is_empty():
 		var resume: bool = floor_text.ends_with(RESUME_SUFFIX)
 		var pos: Vector2i = _config.find_floor(floor_text.trim_suffix(RESUME_SUFFIX))
@@ -157,6 +190,37 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		go_back()
 
 
+## Story 018: the character list (loaded once, lazily).
+func get_characters() -> CharacterConfig:
+	if _characters == null:
+		_characters = CharacterConfig.load_from_file()
+	return _characters
+
+
+## Story 018: selects the character for the next floors. Unknown id: warning, selection unchanged.
+## An empty id clears the selection (back to the plain, character-less match).
+func set_character(id: String) -> void:
+	if id.is_empty():
+		_character_id = ""
+		return
+	if not get_characters().has(id):
+		push_warning("GameFlow: unknown character '%s' (known: %s), ignored" % [id, ", ".join(get_characters().ids())])
+		return
+	_character_id = id
+
+
+## Story 018: the selected character id; "" when none was chosen.
+func get_character_id() -> String:
+	return _character_id
+
+
+# The selected character's dictionary for the controller; {} when none was chosen.
+func _character_dict() -> Dictionary:
+	if _character_id.is_empty():
+		return {}
+	return get_characters().get_character(_character_id)
+
+
 ## Current [enum Phase].
 func get_phase() -> int:
 	return _phase
@@ -172,12 +236,12 @@ func get_progress() -> ProgressState:
 	return _progress
 
 
-## The controller of the floor being played; null in FLOOR_SELECT.
+## The controller of the floor being played; null outside IN_FLOOR.
 func get_controller() -> RunController:
 	return _controller
 
 
-## (chapter, floor) being played; (-1, -1) in FLOOR_SELECT.
+## (chapter, floor) being played; (-1, -1) outside IN_FLOOR.
 func get_current_floor() -> Vector2i:
 	return _current
 
@@ -190,12 +254,15 @@ func get_floor_seed() -> int:
 ## Enters floor (ci, fi). [param from_start] false and the saved in-progress record is this floor
 ## -> resumes that match (saved seed, HP rule); otherwise match 0 at full HP with a fresh seed
 ## (or --seed), replacing any in-progress record (confirming that is the view's job). Frees the
-## previous controller first. Ignored for an unknown floor.
+## previous controller first. Ignored for an unknown floor. Story 018: when no character was chosen
+## (continue from the title, --progress= / dev-run captures) the default character is selected first.
 func enter_floor(ci: int, fi: int, from_start: bool) -> void:
 	var key: String = _config.floor_key(ci, fi)
 	if key.is_empty():
 		push_warning("GameFlow: enter_floor(%d, %d): no such floor" % [ci, fi])
 		return
+	if _character_id.is_empty():
+		set_character(get_characters().default_id())
 	_free_controller()
 	var saved: Dictionary = _progress.get_in_progress()
 	var start_index: int = 0
@@ -213,6 +280,7 @@ func enter_floor(ci: int, fi: int, from_start: bool) -> void:
 	var controller := RunController.new()
 	controller.name = CONTROLLER_NODE
 	controller.floor_label = _config.floor_name(ci, fi)
+	controller.character = _character_dict()
 	controller.configure(run_config, start_index, hp_at_start)
 	controller.match_started.connect(_on_match_started)
 	controller.phase_changed.connect(_on_run_phase_changed)
@@ -237,10 +305,31 @@ func show_floor_select() -> void:
 	_set_phase(Phase.FLOOR_SELECT)
 
 
-## Title "Chơi": TITLE -> FLOOR_SELECT. Ignored in other phases.
+## Story 018: shows the character select; frees the controller if a floor was running.
+func show_character_select() -> void:
+	_free_controller()
+	_current = NO_FLOOR
+	_set_phase(Phase.CHARACTER_SELECT)
+
+
+## Story 018: the select screen's tap on card [param id]: selects it and moves on to the floor
+## select. An unknown id (warning from [method set_character]) changes nothing.
+func character_chosen(id: String) -> void:
+	set_character(id)
+	if not id.is_empty() and _character_id == id:
+		show_floor_select()
+
+
+## Story 018: floor select "Về": back to the character select (the selection is kept, so the
+## cards can be re-read; tapping another card replaces it).
+func back_to_character_select() -> void:
+	show_character_select()
+
+
+## Title "Chơi": TITLE -> CHARACTER_SELECT (Story 018). Ignored in other phases.
 func start_requested() -> void:
 	if _phase == Phase.TITLE:
-		show_floor_select()
+		show_character_select()
 
 
 ## True when the save has an in-progress record whose floor still exists in the chapters data.
@@ -250,6 +339,8 @@ func has_continue() -> bool:
 
 
 ## Title "Tiếp tục": resumes the in-progress floor at its saved match. Ignored without a record.
+## Story 018: skips the character select; with no character chosen the floor gets the default one
+## (Story 019 saves the character with the run and restores it here).
 func continue_requested() -> void:
 	if not has_continue():
 		return
@@ -296,13 +387,15 @@ func can_show_quit() -> bool:
 
 
 ## Back / Esc by phase: IN_FLOOR toggles the pause (nothing when not pausable), FLOOR_SELECT ->
-## TITLE, TITLE -> quit (not on iOS).
+## CHARACTER_SELECT, CHARACTER_SELECT -> TITLE, TITLE -> quit (not on iOS).
 func go_back() -> void:
 	match _phase:
 		Phase.IN_FLOOR:
 			if _controller != null:
 				_controller.toggle_pause()
 		Phase.FLOOR_SELECT:
+			show_character_select()
+		Phase.CHARACTER_SELECT:
 			show_title()
 		Phase.TITLE:
 			if can_show_quit():
@@ -332,7 +425,7 @@ func next_floor_requested() -> void:
 	enter_floor(next.x, next.y, true)
 
 
-## The floor after the current one in linear order; (-1, -1) when none or in FLOOR_SELECT.
+## The floor after the current one in linear order; (-1, -1) when none or outside IN_FLOOR.
 func get_next_floor() -> Vector2i:
 	if _current == NO_FLOOR:
 		return NO_FLOOR

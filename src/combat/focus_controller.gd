@@ -22,6 +22,8 @@ var _config: SkillConfig
 var _state: State = State.READY
 var _time_left: float = 0.0
 var _cooldown_left: float = 0.0
+## Per-character Focus length (Story 018); negative = use SkillConfig.focus_max_sec.
+var _max_sec_override: float = -1.0
 
 
 func _init(skill_config: SkillConfig) -> void:
@@ -45,12 +47,18 @@ func tick_real(delta: float) -> void:
 				_state = State.READY
 
 
+## Story 018: overrides the Focus length (REAL seconds) for this match; a negative value removes
+## the override (SkillConfig value again). Affects the NEXT [method try_start].
+func set_max_sec_override(sec: float) -> void:
+	_max_sec_override = sec if sec >= 0.0 else -1.0
+
+
 ## Starts Focus; only possible from READY. Returns true when it started.
 func try_start() -> bool:
 	if _state != State.READY:
 		return false
 	_state = State.ACTIVE
-	_time_left = _config.focus_max_sec
+	_time_left = get_max_sec()
 	started.emit()
 	return true
 
@@ -89,7 +97,7 @@ func get_time_left() -> float:
 
 ## Total REAL seconds one Focus lasts.
 func get_max_sec() -> float:
-	return _config.focus_max_sec
+	return _config.focus_max_sec if _max_sec_override < 0.0 else _max_sec_override
 
 
 ## REAL seconds of cooldown left (0 unless on cooldown).

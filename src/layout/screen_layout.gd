@@ -95,6 +95,18 @@ const PAUSE_BUTTON_RATIO: float = 0.09
 ## (the "CHỌN TẦNG" text is centred and clear of it).
 const BACK_BUTTON_WIDTH_RATIO: float = 0.1
 const BACK_BUTTON_HEIGHT_RATIO: float = 0.09
+## Character select (Story 018), shares of the viewport: the card row's top and bottom (0.16 ..
+## 0.95 of the height = 569 px tall at 720p), the gap between cards (share of width) and the
+## widest a card may get (0.3 * 1280 = 384 px; three cards share the margin-to-margin width,
+## (1203 - 2 * 25.6) / 3 = 384 px >= 300 px). Five or more cards get narrower — a second row is
+## out of scope for Story 018.
+const CHARACTER_CARDS_TOP_RATIO: float = 0.16
+const CHARACTER_CARDS_BOTTOM_RATIO: float = 0.95
+const CHARACTER_CARD_GAP_RATIO: float = 0.02
+const CHARACTER_CARD_MAX_WIDTH_RATIO: float = 0.3
+## Floor select (Story 018): the "Nhân vật: …" label on the right margin inside the title band
+## (width as a share of the viewport width, same height as the back button).
+const FLOOR_HERO_LABEL_WIDTH_RATIO: float = 0.3
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -428,3 +440,30 @@ static func back_button_rect(viewport_size: Vector2) -> Rect2:
 	var title: Rect2 = floor_title_rect(viewport_size)
 	var size := Vector2(viewport_size.x * BACK_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
 	return Rect2(Vector2(viewport_size.x * MARGIN_RATIO, title.get_center().y - size.y * 0.5), size)
+
+
+## Character select (Story 018): [param count] cards side by side under the title band, centred,
+## left to right in CharacterConfig order; width = the smaller of the shared width and
+## [constant CHARACTER_CARD_MAX_WIDTH_RATIO]. Empty for count <= 0.
+static func character_card_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var gap: float = viewport_size.x * CHARACTER_CARD_GAP_RATIO
+	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1)) / count
+	var width: float = maxf(minf(shared, viewport_size.x * CHARACTER_CARD_MAX_WIDTH_RATIO), 0.0)
+	var top: float = viewport_size.y * CHARACTER_CARDS_TOP_RATIO
+	var height: float = viewport_size.y * CHARACTER_CARDS_BOTTOM_RATIO - top
+	var left: float = (viewport_size.x - (width * count + gap * (count - 1))) * 0.5
+	for i: int in count:
+		rects.append(Rect2(left + (width + gap) * i, top, width, height))
+	return rects
+
+
+## Floor select (Story 018): the selected character's label, right-aligned on the right margin
+## inside the title band (mirror of [method back_button_rect]).
+static func floor_hero_label_rect(viewport_size: Vector2) -> Rect2:
+	var title: Rect2 = floor_title_rect(viewport_size)
+	var size := Vector2(viewport_size.x * FLOOR_HERO_LABEL_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
+	return Rect2(Vector2(viewport_size.x * (1.0 - MARGIN_RATIO) - size.x, title.get_center().y - size.y * 0.5), size)
