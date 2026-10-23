@@ -217,19 +217,61 @@ const MENU_NAME_MIN_FONT_SIZE: int = 18
 const TEXT_PINNED: String = "ui.hud.pinned"
 const TEXT_LEVEL_SUFFIX: String = "ui.card.level_suffix"
 
+## Story 021 signature skill HUD. Physical key of the signature button (mirrors the DPadView dev keys;
+## not in combat.json: Part 1 owns that file), button fonts, the ready pulse (cycles per second and
+## brightness swing), border colour per signature id, border/timer sizes, banner duration / fade /
+## font and the colours of the charge and timer bars.
+## Fallback when the combat view has no config yet (the real key comes from combat.json signature_key).
+const SIGNATURE_KEY_FALLBACK: Key = KEY_Q
+const SIGNATURE_FONT_SIZE: int = 20
+const SIGNATURE_SMALL_FONT_SIZE: int = 16
+const SIGNATURE_MIN_FONT_SIZE: int = 12
+const SIGNATURE_PULSE_HZ: float = 1.6
+const SIGNATURE_PULSE_ALPHA: float = 0.35
+const SIGNATURE_TEXT_PAD: float = 6.0
+const SIGNATURE_COLORS: Dictionary = {
+	"tram": Color(0.95, 0.15, 0.1),
+	"thien_hoa": Color(1.0, 0.55, 0.1),
+	"anh_bo": Color(0.2, 0.45, 1.0),
+}
+const SIGNATURE_DEFAULT_COLOR: Color = Color(0.95, 0.85, 0.3)
+const SIGNATURE_BORDER_WIDTH: float = 6.0
+const SIGNATURE_TIMER_BACK: Color = Color(0.1, 0.1, 0.12, 0.7)
+const SIGNATURE_CHARGE_BACK: Color = Color(0.08, 0.08, 0.1, 0.85)
+const SIGNATURE_CHARGE_FILL: Color = Color(0.95, 0.85, 0.3)
+## Seconds the signature name stays in the middle of the board after activation, the last part
+## of it fading out, the banner font and its dark backing alpha.
+const SIGNATURE_BANNER_SEC: float = 0.8
+const SIGNATURE_BANNER_FADE_SEC: float = 0.25
+const SIGNATURE_BANNER_FONT_SIZE: int = 64
+const SIGNATURE_BANNER_BACK_ALPHA: float = 0.45
+const TEXT_SIGNATURE_READY: String = "ui.hud.signature_ready"
+const TEXT_SIGNATURE_ACTIVE: String = "ui.hud.signature_active"
+const TEXT_SIGNATURE_CHARGE: String = "ui.hud.signature_charge"
+
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
 var _combat: CombatView
 ## Real seconds since this view started: phase source of the row-warning blink.
 var _blink_time: float = 0.0
+## Story 021: the same node as _combat, untyped so the signature calls are dynamic (parse-safe).
+var _sig: Object
+## Story 021: the banner's signature id, translated name and seconds left.
+var _banner_id: String = ""
+var _banner_text: String = ""
+var _banner_left: float = 0.0
 
 
 func _ready() -> void:
 	_combat = get_node(combat_view_path) as CombatView
+	_sig = _combat
+	if _combat != null and _combat.has_signal("signature_activated"):
+		_combat.connect("signature_activated", _on_signature_activated)
 
 
 func _process(delta: float) -> void:
 	_blink_time += delta
+	_banner_left = maxf(_banner_left - delta, 0.0)
 	queue_redraw()
 
 
@@ -238,6 +280,12 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if _combat == null or _combat.get_cut_flow() == null:
+		return
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and not key.echo and key.physical_keycode == _signature_key():
+			_try_activate_signature()
+			get_viewport().set_input_as_handled()
 		return
 	var pos: Vector2
 	if event is InputEventMouseButton:
@@ -272,11 +320,120 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 					flow.choose(order[i])
 					break
 		return true
+	if _has_signature() and ScreenLayout.signature_button_rect(vp).has_point(pos):
+		if not emulated:
+			_try_activate_signature()
+		return true
 	if _combat.is_confirm_visible() and ScreenLayout.confirm_button_rect(vp).has_point(pos):
 		if not emulated and not _combat.get_cut_actor().is_swinging():
 			_combat.confirm_selection()
 		return true
 	return false
+
+
+# --- Story 021: signature skill ------------------------------------------------
+
+
+# True when CombatView exposes the signature interface and the character has a signature.
+func _has_signature() -> bool:
+	return _sig != null and _sig.has_method("get_signature") and _sig.get_signature() != null
+
+
+func _signature_id() -> String:
+	var sig: Variant = _sig.get_signature()
+	return str(sig.get_id()) if sig != null else ""
+
+
+func _on_signature_activated(id: String) -> void:
+	_banner_id = id
+	_banner_text = _sig.get_signature_name()
+	_banner_left = SIGNATURE_BANNER_SEC
+
+
+func _try_activate_signature() -> void:
+	if _has_signature() and _sig.can_activate_signature():
+		_sig.activate_signature()
+
+
+# Coloured border + thin timer bar on the player's half while a signature runs.
+func _draw_signature_effect(vp: Vector2) -> void:
+	if not _has_signature() or not _sig.is_signature_active():
+		return
+	var color: Color = SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR)
+	var grid: BoardGrid = _combat.get_grid()
+	var half: Rect2 = ScreenLayout.player_half_rect(grid, vp)
+	draw_rect(half.grow(-SIGNATURE_BORDER_WIDTH * 0.5), color, false, SIGNATURE_BORDER_WIDTH)
+	var duration: float = _sig.get_signature_duration()
+	var ratio: float = 0.0 if duration <= 0.0 else clampf(_sig.get_signature_time_left() / duration, 0.0, 1.0)
+	var bar: Rect2 = ScreenLayout.signature_timer_rect(grid, vp)
+	draw_rect(bar, SIGNATURE_TIMER_BACK)
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), color)
+
+
+# The signature name, large in the middle of the board, for SIGNATURE_BANNER_SEC with a short fade.
+func _draw_signature_banner(vp: Vector2) -> void:
+	if _banner_left <= 0.0 or _banner_text.is_empty():
+		return
+	var alpha: float = clampf(_banner_left / SIGNATURE_BANNER_FADE_SEC, 0.0, 1.0)
+	var color: Color = SIGNATURE_COLORS.get(_banner_id, SIGNATURE_DEFAULT_COLOR)
+	var band: Rect2 = ScreenLayout.signature_banner_rect(_combat.get_grid(), vp)
+	draw_rect(band, Color(0.0, 0.0, 0.0, SIGNATURE_BANNER_BACK_ALPHA * alpha))
+	var size: int = _fit_signature_font(_banner_text, band.size.x, SIGNATURE_BANNER_FONT_SIZE)
+	var shadow := Color(0.0, 0.0, 0.0, alpha)
+	_draw_centered(Rect2(band.position + Vector2.ONE * 2.0, band.size), _banner_text, size, shadow)
+	_draw_centered(band, _banner_text, size, Color(color.lightened(0.35), alpha))
+
+
+# The button: dimmed with a charge bar and "%" while charging, PRIMARY and pulsing when ready,
+# a countdown bar while the skill runs; also dimmed whenever it cannot be pressed (menu / Focus / pause).
+func _draw_signature_button(vp: Vector2) -> void:
+	if not _has_signature():
+		return
+	var rect: Rect2 = ScreenLayout.signature_button_rect(vp)
+	var active: bool = _sig.is_signature_active()
+	var is_ready: bool = _sig.is_signature_ready()
+	var usable: bool = _sig.can_activate_signature()
+	var name_text: String = _sig.get_signature_name()
+	var style: int = UiButtons.Style.PRIMARY if (is_ready or active) else UiButtons.Style.SECONDARY
+	if active:
+		style = UiButtons.Style.DANGER
+	var pressed: bool = usable and UiButtons.is_pressed_at(self, rect)
+	UiButtons.draw_button(self, rect, "", style, pressed, is_ready or active)
+	if is_ready and usable and not active:
+		var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * SIGNATURE_PULSE_HZ)
+		draw_rect(rect, Color(1.0, 1.0, 1.0, SIGNATURE_PULSE_ALPHA * pulse))
+	if is_ready and not usable and not active:
+		draw_rect(rect, Color(0.0, 0.0, 0.0, 1.0 - UiButtons.DIM_ALPHA))
+	var charge_rect: Rect2 = ScreenLayout.signature_charge_rect(vp)
+	var ratio: float = _sig.get_signature_charge()
+	var fill_color: Color = SIGNATURE_CHARGE_FILL
+	if active:
+		var duration: float = _sig.get_signature_duration()
+		ratio = 0.0 if duration <= 0.0 else clampf(_sig.get_signature_time_left() / duration, 0.0, 1.0)
+		fill_color = SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR)
+	draw_rect(charge_rect, SIGNATURE_CHARGE_BACK)
+	draw_rect(Rect2(charge_rect.position, Vector2(charge_rect.size.x * ratio, charge_rect.size.y)), fill_color)
+	var text_alpha: float = 1.0 if (usable or active) else UiButtons.DIM_ALPHA + 0.2
+	var inner := Rect2(rect.position + Vector2(SIGNATURE_TEXT_PAD, 0.0), Vector2(maxf(rect.size.x - SIGNATURE_TEXT_PAD * 2.0, 0.0), rect.size.y - charge_rect.size.y))
+	var name_size: int = _fit_signature_font(name_text, inner.size.x, SIGNATURE_FONT_SIZE)
+	var top_line := Rect2(inner.position, Vector2(inner.size.x, inner.size.y * 0.5))
+	_draw_centered(top_line, name_text, name_size, Color(TEXT_LIGHT, text_alpha))
+	var status: String = tr(TEXT_SIGNATURE_CHARGE) % roundi(clampf(_sig.get_signature_charge(), 0.0, 1.0) * 100.0)
+	if active:
+		status = tr(TEXT_SIGNATURE_ACTIVE)
+	elif is_ready:
+		status = tr(TEXT_SIGNATURE_READY)
+	var bottom_line := Rect2(inner.position + Vector2(0.0, inner.size.y * 0.5), Vector2(inner.size.x, inner.size.y * 0.5))
+	_draw_centered(bottom_line, status, _fit_signature_font(status, inner.size.x, SIGNATURE_SMALL_FONT_SIZE), Color(TEXT_LIGHT, text_alpha))
+
+
+# Largest font size <= [param size] (never below SIGNATURE_MIN_FONT_SIZE) at which [param text] fits [param width].
+func _fit_signature_font(text: String, width: float, size: int) -> int:
+	var font: Font = ThemeDB.fallback_font
+	var fitted: int = size
+	while fitted > SIGNATURE_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+		fitted -= 1
+	return fitted
 
 
 # --- Drawing ------------------------------------------------------------------
@@ -302,7 +459,10 @@ func _draw() -> void:
 	_draw_confirm(vp)
 	_draw_focus_bar(vp)
 	_draw_focus_tag(vp)
+	_draw_signature_effect(vp)
+	_draw_signature_button(vp)
 	_draw_menu(vp)
+	_draw_signature_banner(vp)
 	if _combat.debug_overlay:
 		_draw_learning_debug(vp)
 	_draw_boss_status(vp)
@@ -870,3 +1030,14 @@ func _fit_font_size(text: String, width: float, size: int) -> int:
 	while fitted > MENU_NAME_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
 		fitted -= 1
 	return fitted
+
+
+# The signature hotkey from combat.json (`signature_key`), SIGNATURE_KEY_FALLBACK without a config.
+func _signature_key() -> Key:
+	if _combat == null or not _combat.has_method("get_config"):
+		return SIGNATURE_KEY_FALLBACK
+	var config: CombatConfig = _combat.get_config()
+	if config == null:
+		return SIGNATURE_KEY_FALLBACK
+	var code: Key = OS.find_keycode_from_string(config.signature_key)
+	return code if code != KEY_NONE else SIGNATURE_KEY_FALLBACK

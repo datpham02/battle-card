@@ -1,12 +1,12 @@
 # Story 021: Tuyệt kỹ nhân vật — thanh nạp, nút riêng, ba tuyệt kỹ khuếch đại bộ bài
 
 > **Epic**: Kaiten Duel (v4)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-22
+> **Last Updated**: 2026-10-24
 
 ## Context
 
@@ -77,7 +77,7 @@
 - Bảng mô phỏng trong Completion Notes.
 - Retained screenshots trong `production/qa/evidence/signature-skills/`.
 
-**Status**: [ ] Not yet created
+**Status**: Screenshots retained (signature-skills/01-07) + simulation table (signature-skills/simulation-70seeds.md).
 
 ---
 
@@ -85,3 +85,14 @@
 
 - Depends on: Story 020 (damage_per_cell, cấp lá, Ghim/Đốt chồng), Story 018 (PassiveHost, UiButtons)
 - Unlocks: cổng chơi thử 6, nội dung chương 2–3
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-24
+**Criteria**: 10/11 pass, 1 not met (closed by user decision with tech debt TD-004/TD-005). DEFERRED (needs real play): timing feel of pressing the signature, banner clarity, button position on a real device.
+**Deviations**: BLOCKING (accepted, logged TD-004): Phase C simulation target of 25 pp not reached; signature policy vs always-skip is kiem_si +2.9, phap_su +2.9, sat_thu +17.1 (70 seeds x 3 characters x 4 policies, dt 0.05, run in two parts because of the 10-minute foreground cap); deck-difference condition passes (0.657). Signatures fire 3-8 times per run but give under 5 % of damage because the bot casts 1-2 cells against dodging bosses; Tram alone lifts kiem_si by 6-9 pp versus the Story 020 baseline; JSON deliberately not tuned. ADVISORY: signature hotkey is data-driven (`combat.json signature_key`, default Q) through `CombatConfig.signature_key` and the new `CombatView.get_config()`. ADVISORY: `name_key`/`desc_key` live inside the `signature` block; extra hook `BaseSignature.on_hit` for Tram's lifesteal; instant signatures emit activated then ended immediately; a signature can be re-earned and re-fired within a match. ADVISORY: Thien Hoa and Anh Bo descriptions shortened to fit two lines on the character cards. ADVISORY: `--signature=<id>` and `--demo=signature_ready|signature_half` dev args; `CombatView.debug_set_signature_charge` is dev-only. ADVISORY (balance, TD-005): upgrading owned cards beats picking new damage cards by 14 pp; Anh Bo may need its x2 without the pinned-boss condition; Thien Hoa needs a burn deck.
+**Test Evidence**: Integration; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/signature-skills/01-07*.png` (all opened and checked) and the simulation table `simulation-70seeds.md` plus raw output. Scratch suites 0 fails: signature_test (98), deck_power, keyword, deck, cut, status, i18n, character, chapters, reward_run, run_flow2, pause_flow, arbiter, run/trait/arena flow (headless); cut_flow and focus_flow (windowed, `--no-autopause`). Parse-check 74/74.
+**Code Review**: Skipped (solo mode).
+**Not verified**: real feel, balance with a human player, touch on a device.
+**Carries forward**: content story for chapters 2-3 (informed by design/reference/osfe-reference.md), then the playtest gate; TD-001..005.

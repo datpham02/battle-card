@@ -11,6 +11,7 @@
 			"passive": {"id": "second_wind", "params": {"heal_after_match": 10}},
 			"passive_name_key": "passive.second_wind.name",
 			"passive_desc_key": "passive.second_wind.desc",
+			"signature": {"id": "tram", "name_key": "signature.tram.name", "desc_key": "signature.tram.desc", "charge_cells": 18, "params": {"duration_sec": 3.0, "cell_mult": 2.0, "lifesteal": 0.2}},
 			"starter_deck": ["kiem_khi", "kiem_khi", "chan_phong", "chan_phong", "hoa_tran", "bang_phong"],
 			"unlocked": true
 		},
@@ -24,6 +25,7 @@
 			"passive": {"id": "wide_caster", "params": {"min_cells": 5, "duration_mult": 0.85}},
 			"passive_name_key": "passive.wide_caster.name",
 			"passive_desc_key": "passive.wide_caster.desc",
+			"signature": {"id": "thien_hoa", "name_key": "signature.thien_hoa.name", "desc_key": "signature.thien_hoa.desc", "charge_cells": 18, "params": {"detonate_mult": 2.0}},
 			"starter_deck": ["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"],
 			"unlocked": true
 		},
@@ -37,6 +39,7 @@
 			"passive": {"id": "quick_blade", "params": {"max_cells": 3, "damage_mult": 1.25}},
 			"passive_name_key": "passive.quick_blade.name",
 			"passive_desc_key": "passive.quick_blade.desc",
+			"signature": {"id": "anh_bo", "name_key": "signature.anh_bo.name", "desc_key": "signature.anh_bo.desc", "charge_cells": 18, "params": {"duration_sec": 2.0, "pinned_small_mult": 2.0, "small_cells": 3}},
 			"starter_deck": ["kiem_khi", "kiem_khi", "kiem_khi", "chan_phong", "bang_phong", "bang_phong"],
 			"unlocked": true
 		}

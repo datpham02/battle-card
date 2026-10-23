@@ -42,6 +42,10 @@ const PASSIVE_NAME_FONT_SIZE: int = 24
 const PASSIVE_DESC_FONT_SIZE: int = 18
 const DECK_HEADER_FONT_SIZE: int = 22
 const DECK_FONT_SIZE: int = 18
+const SIGNATURE_NAME_FONT_SIZE: int = 22
+const SIGNATURE_DESC_FONT_SIZE: int = 17
+const SIGNATURE_DESC_MAX_LINES: int = 2
+const SIGNATURE_COLOR: Color = Color(0.6, 0.25, 0.1)
 ## Line limits of the wrapped blocks (draw_multiline_string max_lines).
 const DESC_MAX_LINES: int = 2
 const PASSIVE_DESC_MAX_LINES: int = 3
@@ -59,6 +63,11 @@ const PASSIVE_DESC_BASELINE: float = 0.5
 const DIVIDER_2: float = 0.66
 const DECK_HEADER_BASELINE: float = 0.72
 const DECK_BASELINE: float = 0.78
+## Story 021: the signature block under the deck (unlocked cards only): a divider, then the
+## "Tuyệt kỹ: <tên>" line and its short description (two lines at most).
+const DIVIDER_3: float = 0.855
+const SIGNATURE_NAME_BASELINE: float = 0.895
+const SIGNATURE_DESC_BASELINE: float = 0.935
 ## Padlock geometry as shares of the card size: body size, body centre y, shackle radius.
 const LOCK_BODY_W: float = 0.14
 const LOCK_BODY_H: float = 0.05
@@ -73,6 +82,11 @@ const TEXT_TITLE: String = "ui.character_select.title"
 const TEXT_HP: String = "ui.character_select.hp"
 ## Header of the starter deck block.
 const TEXT_DECK: String = "ui.character_select.deck"
+## Story 021: "Tuyệt kỹ: %s" with the signature name; the names and descriptions are signature.<id>.name / .desc.
+const TEXT_SIGNATURE: String = "ui.character_select.signature"
+const SIGNATURE_KEY_PREFIX: String = "signature."
+const SIGNATURE_NAME_SUFFIX: String = ".name"
+const SIGNATURE_DESC_SUFFIX: String = ".desc"
 ## One deck entry: "%s ×%d" (card name, copies).
 const TEXT_DECK_ENTRY: String = "ui.character_select.deck_entry"
 ## The back-to-title button (ScreenLayout.back_button_rect).
@@ -188,6 +202,12 @@ func _draw_card(rect: Rect2, id: String) -> void:
 	_divider(inner, _y(rect, DIVIDER_2))
 	_text(inner, _y(rect, DECK_HEADER_BASELINE), tr(TEXT_DECK), DECK_HEADER_FONT_SIZE, name_color)
 	_wrapped(inner, _y(rect, DECK_BASELINE), _deck_summary(id), DECK_FONT_SIZE, DECK_MAX_LINES, body_color)
+	var signature_id: String = _signature_id(character)
+	if not locked and not signature_id.is_empty():
+		_divider(inner, _y(rect, DIVIDER_3))
+		var key_base: String = SIGNATURE_KEY_PREFIX + signature_id
+		_text(inner, _y(rect, SIGNATURE_NAME_BASELINE), tr(TEXT_SIGNATURE) % tr(key_base + SIGNATURE_NAME_SUFFIX), SIGNATURE_NAME_FONT_SIZE, SIGNATURE_COLOR)
+		_wrapped(inner, _y(rect, SIGNATURE_DESC_BASELINE), tr(key_base + SIGNATURE_DESC_SUFFIX), SIGNATURE_DESC_FONT_SIZE, SIGNATURE_DESC_MAX_LINES, body_color)
 	if locked:
 		_draw_padlock(rect)
 
@@ -242,3 +262,11 @@ func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void
 # Centred word-wrapped text from baseline [param y], at most [param max_lines] lines, over the width of [param rect].
 func _wrapped(rect: Rect2, y: float, text: String, size: int, max_lines: int, color: Color) -> void:
 	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, max_lines, color)
+
+
+# The character's signature id (characters.json signature.id); "" when it has none.
+func _signature_id(character: Dictionary) -> String:
+	var raw: Variant = character.get("signature")
+	if raw is Dictionary:
+		return str((raw as Dictionary).get("id", ""))
+	return ""

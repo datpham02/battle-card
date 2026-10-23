@@ -30,3 +30,8 @@ func remaining(id: String) -> float:
 func start(id: String, cooldown_sec: float) -> void:
 	if cooldown_sec > 0.0:
 		_remaining[id] = cooldown_sec
+
+
+## Story 021: ends the cooldown of [param id] at once.
+func clear(id: String) -> void:
+	_remaining.erase(id)

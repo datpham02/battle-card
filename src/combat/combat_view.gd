@@ -117,6 +117,12 @@ var _trait_host: TraitHost
 ## The character passive of this match (Story 018); null without a character or with an unknown id.
 var _passive: BasePassive = null
 var _passive_heal: float = 0.0
+## The character signature skill of this match (Story 021); null without one or with an unknown id.
+var _signature: BaseSignature = null
+## Charge bar of the signature (Story 021); null without a signature.
+var _signature_charge: SignatureCharge = null
+var _signature_name_key: String = ""
+var _signature_was_active: bool = false
 ## Dev/capture only: weight set name for the boss brain (empty = from boss_brain.json).
 var boss_set_override: String = ""
 ## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
@@ -133,6 +139,10 @@ var match_params: Dictionary = {}
 
 ## Emitted ONCE, end_delay_sec of real time after either unit died.
 signal match_ended(player_won: bool, player_hp: float)
+## Story 021: the player activated the signature [param id] (the charge was reset).
+signal signature_activated(id: String)
+## Story 021: the timed effect of the signature [param id] ran out.
+signal signature_ended(id: String)
 
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
@@ -216,6 +226,7 @@ func _ready() -> void:
 	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
 	_trait_host.on_match_start()
 	_setup_passive(character)
+	_setup_signature(character)
 
 
 func _exit_tree() -> void:
@@ -223,6 +234,116 @@ func _exit_tree() -> void:
 		_trait_host.teardown_all()
 	if _passive != null:
 		_passive.teardown()
+	if _signature != null:
+		_signature.teardown()
+		_signature = null
+
+
+# Story 021: creates the character's signature (characters.json `signature: {id, charge_cells,
+# params}`) and hooks it in: the arbiter's player cell-count / last damage modifiers, the player
+# mover's step cooldown scale, and the hit callback. Unknown id: SignatureRegistry warns, none.
+func _setup_signature(character: Dictionary) -> void:
+	var spec: Variant = character.get("signature")
+	if typeof(spec) != TYPE_DICTIONARY:
+		return
+	var dict: Dictionary = spec as Dictionary
+	var id: String = str(dict.get("id", ""))
+	if id.is_empty():
+		return
+	_signature = SignatureRegistry.create(id)
+	if _signature == null:
+		return
+	var params: Variant = dict.get("params", {})
+	_signature.setup(
+		{"state": _state, "grid": _grid, "boss": _boss, "status": _status,
+			"skill_config": _skill_config, "cut_config": _cut_config, "cooldowns": _cooldowns},
+		(params as Dictionary) if typeof(params) == TYPE_DICTIONARY else {})
+	_signature_charge = SignatureCharge.new(int(dict.get("charge_cells", _config.signature_charge_cells)))
+	_signature_name_key = str(dict.get("name_key", ""))
+	_arbiter.player_cells_modifier = Callable(_signature, "modify_cells")
+	_arbiter.player_signature_modifier = Callable(_signature, "modify_damage")
+	_mover.cooldown_scale = Callable(_signature, "step_cooldown_scale")
+
+
+## Story 021: the signature of this match; null without a character signature or with an unknown id.
+func get_signature() -> BaseSignature:
+	return _signature
+
+
+## Story 021: charge 0..1 (cells cast / charge_cells, clamped); 0 without a signature.
+func get_signature_charge() -> float:
+	return _signature_charge.fraction() if _signature_charge != null else 0.0
+
+
+## Story 021: true when the charge is full and no timed effect is running.
+func is_signature_ready() -> bool:
+	return _signature != null and _signature_charge.is_full() and not _signature.is_active()
+
+
+## Story 021: true while the signature's timed effect runs (always false for instant ones).
+func is_signature_active() -> bool:
+	return _signature != null and _signature.is_active()
+
+
+## Story 021: seconds of the timed effect left (0 when inactive / instant / none).
+func get_signature_time_left() -> float:
+	return _signature.time_left() if _signature != null else 0.0
+
+
+## Story 021: full length of the timed effect (0 for instant skills or none).
+func get_signature_duration() -> float:
+	return _signature.duration() if _signature != null else 0.0
+
+
+## Story 021: translated signature name ("" without one).
+func get_signature_name() -> String:
+	return tr(_signature_name_key) if not _signature_name_key.is_empty() else ""
+
+
+## Story 021: true when [method activate_signature] would fire now: ready, both units alive, the
+## battle not frozen, no skill menu open and Focus not locking the d-pad (the same lock as steps).
+func can_activate_signature() -> bool:
+	if not is_signature_ready() or freeze_time or _state == null:
+		return false
+	if _state.is_player_dead() or _state.is_enemy_dead():
+		return false
+	if _cut_flow.is_menu_open():
+		return false
+	if _focus.is_active() and _focus.locks_movement():
+		return false
+	return true
+
+
+## Story 021: activates the signature when [method can_activate_signature]; the charge drops to 0
+## and [signal signature_activated] fires. Returns false (nothing changes) otherwise.
+func activate_signature() -> bool:
+	if not can_activate_signature():
+		return false
+	_signature.activate()
+	_signature_charge.reset()
+	_signature_was_active = _signature.is_active()
+	signature_activated.emit(_signature.get_id())
+	if not _signature_was_active:
+		signature_ended.emit(_signature.get_id())
+	return true
+
+
+## Dev/capture only (Story 021): sets the charge bar to [param ratio] (0..1) of its capacity.
+func debug_set_signature_charge(ratio: float) -> void:
+	if _signature_charge == null:
+		return
+	_signature_charge.reset()
+	_signature_charge.add(int(ceilf(clampf(ratio, 0.0, 1.0) * float(_signature_charge.capacity()))))
+
+
+# Ticks the signature's timer with simulation time and reports the end of a timed effect.
+func _tick_signature(step: float) -> void:
+	if _signature == null:
+		return
+	_signature.tick(step)
+	if _signature_was_active and not _signature.is_active():
+		_signature_was_active = false
+		signature_ended.emit(_signature.get_id())
 
 
 ## The character passive of this match; null when none (Story 018).
@@ -415,6 +536,7 @@ func _process(delta: float) -> void:
 			queue_redraw()
 			return
 		_status.tick(step, _state)
+		_tick_signature(step)
 		_mover.tick(step)
 		var hold: HoldSlots = _get_hold()
 		var held: int = 0 if hold == null else hold.get_occupied_count()
@@ -518,6 +640,11 @@ func get_cut_config() -> CutConfig:
 
 
 ## The player's Focus (pause while connecting points).
+## The combat config of this match (Story 021: the HUD reads the signature hotkey from it).
+func get_config() -> CombatConfig:
+	return _config
+
+
 func get_focus() -> FocusController:
 	return _focus
 
@@ -663,6 +790,11 @@ func _begin_cut(skill_id: String, cells: Array[Vector2i]) -> void:
 	var level: int = get_card_level(skill_id)
 	if _cut_actor.begin_swing(cells, skill_id, true, level):
 		_cooldowns.start(skill_id, float(_resolved_card(skill_id, level).get("cooldown_sec", 0.0)))
+		# Story 021: the charge counts the cells of every CAST (swing started), hit or not.
+		if _signature_charge != null:
+			_signature_charge.add(cells.size())
+		if _signature != null:
+			_signature.on_cast(skill_id, cells.size())
 
 
 ## Story 020: the player's level of card [param skill_id] (highest copy in the deck; 1 when the
@@ -708,6 +840,8 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 	}
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback
+		if _signature != null and bool(result["hit"]):
+			_signature.on_hit(str(result.get("skill_id", "")), float(result["damage"]))
 		_trait_host.on_player_swing_resolved(result)
 		_trait_host.on_boss_damaged(float(result["damage"]))
 	else:

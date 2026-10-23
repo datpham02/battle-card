@@ -128,6 +128,14 @@ const CHARACTER_CARD_MAX_WIDTH_RATIO: float = 0.3
 ## Floor select (Story 018): the "Nhân vật: …" label on the right margin inside the title band
 ## (width as a share of the viewport width, same height as the back button).
 const FLOOR_HERO_LABEL_WIDTH_RATIO: float = 0.3
+## Signature skill UI (Story 021): button height (0.12 * 720 = 86 px >= 64 px, share of height),
+## the charge bar inside its bottom edge (share of height), the active-timer bar along the top of
+## the player's half (share of the board height) and the banner's height (share of the board height).
+## The button's width is whatever is free between the Focus bar and the FULL-label zone's right edge.
+const SIGNATURE_BUTTON_HEIGHT_RATIO: float = 0.12
+const SIGNATURE_CHARGE_HEIGHT_RATIO: float = 0.025
+const SIGNATURE_TIMER_HEIGHT_RATIO: float = 0.035
+const SIGNATURE_BANNER_HEIGHT_RATIO: float = 0.3
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -575,3 +583,41 @@ static func floor_hero_label_rect(viewport_size: Vector2) -> Rect2:
 	var title: Rect2 = floor_title_rect(viewport_size)
 	var size := Vector2(viewport_size.x * FLOOR_HERO_LABEL_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
 	return Rect2(Vector2(viewport_size.x * (1.0 - MARGIN_RATIO) - size.x, title.get_center().y - size.y * 0.5), size)
+
+
+## Signature button (Story 021): in the strip above the hand row, right of the Focus bar and
+## ending at the right edge of the FULL-label zone (so it sits over the hand row's left end,
+## clear of the slots, the CONFIRM button and the d-pad); its bottom is the Focus bar's bottom.
+static func signature_button_rect(viewport_size: Vector2) -> Rect2:
+	var bar: Rect2 = focus_bar_rect(viewport_size)
+	var side: Rect2 = slot_side_left_rect(viewport_size, HoldSlots.MAX_SLOTS)
+	var gap: float = viewport_size.y * STRIP_GAP_RATIO
+	var left: float = bar.end.x + gap
+	var height: float = viewport_size.y * SIGNATURE_BUTTON_HEIGHT_RATIO
+	return Rect2(left, bar.end.y - height, maxf(side.end.x - left, 0.0), height)
+
+
+## Charge bar along the bottom edge of the signature button (inside it).
+static func signature_charge_rect(viewport_size: Vector2) -> Rect2:
+	var button: Rect2 = signature_button_rect(viewport_size)
+	var height: float = viewport_size.y * SIGNATURE_CHARGE_HEIGHT_RATIO
+	return Rect2(button.position.x, button.end.y - height, button.size.x, height)
+
+
+## The player's half of the board (cells only), for the signature border.
+static func player_half_rect(grid: BoardGrid, viewport_size: Vector2) -> Rect2:
+	var board: Rect2 = board_rect(grid, viewport_size)
+	return Rect2(board.position, Vector2(cell_size(grid, viewport_size).x * grid.side_cols, board.size.y))
+
+
+## Thin timer bar along the top of the player's half while a signature runs.
+static func signature_timer_rect(grid: BoardGrid, viewport_size: Vector2) -> Rect2:
+	var half: Rect2 = player_half_rect(grid, viewport_size)
+	return Rect2(half.position, Vector2(half.size.x, half.size.y * SIGNATURE_TIMER_HEIGHT_RATIO))
+
+
+## Signature name banner: a band across the middle of the whole board.
+static func signature_banner_rect(grid: BoardGrid, viewport_size: Vector2) -> Rect2:
+	var board: Rect2 = board_rect(grid, viewport_size)
+	var height: float = board.size.y * SIGNATURE_BANNER_HEIGHT_RATIO
+	return Rect2(board.position.x, board.get_center().y - height * 0.5, board.size.x, height)

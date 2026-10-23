@@ -1,0 +1,106 @@
+Story 021 Phase C - seeded chapter-1 simulation, raw output (deck_sim.gd, Story 020 script extended with signatures)
+Date: 2026-10-24. Godot 4.6.3 headless, from C:\WorkSpace\my-game. 70 seeds x 3 characters x 4 policies, dt 0.05, match timeout 180 s.
+Script: <scratchpad>/deck_sim.gd (backup of the Story 020 version: deck_sim.gd.pre-021).
+Run split in two foreground invocations because 4 policies in one run (~650 s) exceed the 600 s tool cap:
+  part A: godot.exe --headless --path . -s deck_sim.gd -- --seeds=70 --dt=0.05 --policies=always_skip,build,signature   (493.0 s)
+  part B: godot.exe --headless --path . -s deck_sim.gd -- --seeds=70 --dt=0.05 --policies=random                        (171.4 s)
+Seeds, match seeds and bot RNG are identical in both parts (seed = f(seed index, character); policy only changes the reward picks),
+so the rows are directly comparable. The signature is wired into EVERY policy (it is part of the character, as in the game);
+only the reward policy differs. Bot activation rule and `signature` policy: see the header consts / _bot_signature / _signature_pick of deck_sim.gd.
+
+================================================================ PART A (always_skip, build, signature)
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim: seeds=70 dt=0.050 timeout=180s policies=["always_skip", "build", "signature"] characters=["kiem_si", "phap_su", "sat_thu"]
+  ... 25/70 seeds, 172.4 s
+  ... 50/70 seeds, 358.9 s
+
+| character | policy | chapter win % | mean floors cleared | mean HP at end (wins) | mean final deck size | mean deck level sum | mean matches won | timeouts/run | mean match sec | dmg taken/match | dmg dealt/match | bot hit rate | sig activations/run | sig damage share % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | always_skip | 27.1 | 1.79 | 54.0 | 6.00 | 6.00 | 7.96 | 0.00 | 50.8 | 32.8 | 109.6 | 0.67 | 7.96 | 4.8 |
+| kiem_si | build | 44.3 | 1.94 | 61.0 | 7.50 | 11.63 | 8.24 | 0.00 | 46.5 | 31.3 | 112.4 | 0.66 | 7.09 | 4.7 |
+| kiem_si | signature | 30.0 | 1.77 | 67.6 | 8.50 | 12.03 | 7.77 | 0.00 | 46.5 | 32.3 | 111.1 | 0.67 | 6.61 | 4.4 |
+| phap_su | always_skip | 1.4 | 0.66 | 22.0 | 6.00 | 6.00 | 4.19 | 0.00 | 45.0 | 33.4 | 97.0 | 0.71 | 3.03 | 0.9 |
+| phap_su | build | 2.9 | 0.91 | 30.5 | 7.19 | 9.81 | 5.01 | 0.00 | 44.1 | 31.4 | 100.7 | 0.69 | 3.31 | 1.1 |
+| phap_su | signature | 4.3 | 0.89 | 44.3 | 7.63 | 10.04 | 5.00 | 0.00 | 44.7 | 31.8 | 99.1 | 0.70 | 3.54 | 1.9 |
+| sat_thu | always_skip | 20.0 | 1.64 | 40.9 | 6.00 | 6.00 | 7.63 | 0.00 | 41.3 | 26.3 | 109.3 | 0.69 | 5.90 | 0.0 |
+| sat_thu | build | 32.9 | 1.73 | 32.3 | 7.44 | 11.31 | 7.67 | 0.00 | 37.1 | 26.1 | 110.5 | 0.68 | 4.91 | 0.2 |
+| sat_thu | signature | 37.1 | 1.87 | 32.7 | 8.54 | 12.40 | 8.01 | 0.00 | 37.3 | 25.9 | 110.6 | 0.68 | 5.17 | 0.5 |
+
+SIGNATURE USE kiem_si/always_skip: signature activations per run 7.96; signature damage share 4.8%
+SIGNATURE USE kiem_si/build: signature activations per run 7.09; signature damage share 4.7%
+SIGNATURE USE kiem_si/signature: signature activations per run 6.61; signature damage share 4.4%
+SIGNATURE USE phap_su/always_skip: signature activations per run 3.03; signature damage share 0.9%
+SIGNATURE USE phap_su/build: signature activations per run 3.31; signature damage share 1.1%
+SIGNATURE USE phap_su/signature: signature activations per run 3.54; signature damage share 1.9%
+SIGNATURE USE sat_thu/always_skip: signature activations per run 5.90; signature damage share 0.0%
+SIGNATURE USE sat_thu/build: signature activations per run 4.91; signature damage share 0.2%
+SIGNATURE USE sat_thu/signature: signature activations per run 5.17; signature damage share 0.5%
+
+MATCH BREAKDOWN (always_skip): | character | match | played | win % | mean sec | taken | dealt | bot hit rate | boss hit rate |
+| kiem_si | goblin_scout | 70 | 100.0 | 22.1 | 10.0 | 87.1 | 0.86 | 0.52 |
+| kiem_si | wolf | 70 | 98.6 | 44.7 | 24.3 | 102.5 | 0.85 | 0.47 |
+| kiem_si | goblin_chief | 69 | 88.4 | 66.0 | 47.1 | 116.3 | 0.58 | 0.14 |
+| kiem_si | goblin_warrior | 61 | 100.0 | 24.5 | 8.7 | 97.0 | 0.86 | 0.38 |
+| kiem_si | dire_wolf | 61 | 95.1 | 49.9 | 21.3 | 111.9 | 0.86 | 0.33 |
+| kiem_si | goblin_shaman | 58 | 100.0 | 68.5 | 23.4 | 132.2 | 0.67 | 0.09 |
+| kiem_si | wolf_alpha | 58 | 77.6 | 83.2 | 64.9 | 135.9 | 0.53 | 0.14 |
+| kiem_si | goblin_archer | 45 | 100.0 | 44.8 | 17.6 | 103.5 | 0.88 | 0.39 |
+| kiem_si | goblin_brute | 45 | 100.0 | 57.0 | 24.4 | 120.4 | 0.74 | 0.14 |
+| kiem_si | goblin_warlock | 45 | 57.8 | 69.0 | 66.2 | 117.2 | 0.58 | 0.23 |
+| kiem_si | forest_witch | 26 | 73.1 | 64.4 | 35.1 | 133.2 | 0.19 | 0.08 |
+| phap_su | goblin_scout | 70 | 100.0 | 21.7 | 8.5 | 88.8 | 0.88 | 0.42 |
+| phap_su | wolf | 70 | 90.0 | 47.6 | 31.1 | 100.5 | 0.85 | 0.52 |
+| phap_su | goblin_chief | 63 | 58.7 | 65.4 | 51.9 | 103.7 | 0.57 | 0.16 |
+| phap_su | goblin_warrior | 37 | 94.6 | 24.2 | 8.4 | 92.2 | 0.87 | 0.32 |
+| phap_su | dire_wolf | 35 | 91.4 | 56.0 | 28.1 | 110.3 | 0.83 | 0.36 |
+| phap_su | goblin_shaman | 32 | 96.9 | 73.1 | 25.9 | 130.9 | 0.67 | 0.08 |
+| phap_su | wolf_alpha | 31 | 25.8 | 58.0 | 61.7 | 89.8 | 0.56 | 0.17 |
+| phap_su | goblin_archer | 8 | 100.0 | 48.0 | 17.5 | 102.0 | 0.87 | 0.50 |
+| phap_su | goblin_brute | 8 | 87.5 | 63.8 | 37.5 | 113.3 | 0.67 | 0.16 |
+| phap_su | goblin_warlock | 7 | 14.3 | 54.4 | 46.0 | 82.3 | 0.57 | 0.26 |
+| phap_su | forest_witch | 1 | 100.0 | 82.2 | 58.0 | 164.0 | 0.23 | 0.08 |
+| sat_thu | goblin_scout | 70 | 100.0 | 18.0 | 4.3 | 87.9 | 0.86 | 0.31 |
+| sat_thu | wolf | 70 | 94.3 | 38.8 | 22.1 | 104.5 | 0.83 | 0.47 |
+| sat_thu | goblin_chief | 66 | 89.4 | 55.9 | 37.5 | 117.3 | 0.58 | 0.15 |
+| sat_thu | goblin_warrior | 59 | 100.0 | 19.6 | 6.2 | 93.5 | 0.86 | 0.34 |
+| sat_thu | dire_wolf | 59 | 98.3 | 42.4 | 20.0 | 112.3 | 0.84 | 0.37 |
+| sat_thu | goblin_shaman | 58 | 100.0 | 55.7 | 17.6 | 135.0 | 0.71 | 0.08 |
+| sat_thu | wolf_alpha | 58 | 72.4 | 62.4 | 49.8 | 129.7 | 0.56 | 0.14 |
+| sat_thu | goblin_archer | 42 | 97.6 | 36.9 | 14.4 | 104.0 | 0.88 | 0.35 |
+| sat_thu | goblin_brute | 41 | 97.6 | 45.3 | 17.6 | 118.8 | 0.76 | 0.16 |
+| sat_thu | goblin_warlock | 40 | 67.5 | 54.7 | 47.4 | 123.0 | 0.65 | 0.24 |
+| sat_thu | forest_witch | 27 | 51.9 | 54.6 | 37.8 | 122.2 | 0.21 | 0.14 |
+
+VERDICT kiem_si: FAIL — signature win 30.0% vs skip 27.1% (Δ 2.9 pp, need >= 25); HP at end signature 67.6 vs skip 54.0
+VERDICT phap_su: FAIL — signature win 4.3% vs skip 1.4% (Δ 2.9 pp, need >= 25); HP at end signature 44.3 vs skip 22.0
+VERDICT sat_thu: FAIL — signature win 37.1% vs skip 20.0% (Δ 17.1 pp, need >= 25); HP at end signature 32.7 vs skip 40.9
+SIGNATURE VS BUILD kiem_si: signature win 30.0% vs build 44.3% (Δ -14.3 pp); HP at end 67.6 vs 61.0; dmg dealt/match 111.1 vs 112.4
+SIGNATURE VS BUILD phap_su: signature win 4.3% vs build 2.9% (Δ 1.4 pp); HP at end 44.3 vs 30.5; dmg dealt/match 99.1 vs 100.7
+SIGNATURE VS BUILD sat_thu: signature win 37.1% vs build 32.9% (Δ 4.3 pp); HP at end 32.7 vs 32.3; dmg dealt/match 110.6 vs 110.5
+DECK DIFFERENCE (build, same seed, multiset Jaccard distance): all runs 0.589 (210 pairs); runs where all 3 reached floor 3: 0.502 (24 pairs); per pair: kiem_si/phap_su=0.57 kiem_si/sat_thu=0.53 phap_su/sat_thu=0.67 — PASS (need > 0.5)
+DECK DIFFERENCE (signature, same seed, multiset Jaccard distance): all runs 0.657 (210 pairs); runs where all 3 reached floor 3: 0.649 (21 pairs); per pair: kiem_si/phap_su=0.66 kiem_si/sat_thu=0.56 phap_su/sat_thu=0.75 — PASS (need > 0.5)
+RESULT: FAIL
+runtime: 493.0 s
+
+================================================================ PART B (random)
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim: seeds=70 dt=0.050 timeout=180s policies=["random"] characters=["kiem_si", "phap_su", "sat_thu"]
+  ... 25/70 seeds, 58.7 s
+  ... 50/70 seeds, 128.5 s
+
+| character | policy | chapter win % | mean floors cleared | mean HP at end (wins) | mean final deck size | mean deck level sum | mean matches won | timeouts/run | mean match sec | dmg taken/match | dmg dealt/match | bot hit rate | sig activations/run | sig damage share % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | random | 25.7 | 1.60 | 42.9 | 9.94 | 12.34 | 7.31 | 0.00 | 49.2 | 34.0 | 108.2 | 0.66 | 7.13 | 4.5 |
+| phap_su | random | 5.7 | 0.91 | 46.8 | 8.80 | 10.29 | 4.94 | 0.00 | 46.0 | 32.4 | 100.6 | 0.70 | 3.56 | 2.0 |
+| sat_thu | random | 21.4 | 1.70 | 37.6 | 10.37 | 12.63 | 7.64 | 0.00 | 40.3 | 25.9 | 110.5 | 0.69 | 5.43 | 0.2 |
+
+SIGNATURE USE kiem_si/random: signature activations per run 7.13; signature damage share 4.5%
+SIGNATURE USE phap_su/random: signature activations per run 3.56; signature damage share 2.0%
+SIGNATURE USE sat_thu/random: signature activations per run 5.43; signature damage share 0.2%
+
+MATCH BREAKDOWN (always_skip): | character | match | played | win % | mean sec | taken | dealt | bot hit rate | boss hit rate |
+
+RESULT: ALL PASS
+runtime: 171.4 s

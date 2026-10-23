@@ -69,6 +69,9 @@ const SEED_ARG: String = "--seed="
 const TITLE_ARG: String = "--title"
 ## DEV-ONLY (Story 018): --character=<id> picks the character like the select screen would.
 const CHARACTER_ARG: String = "--character="
+## DEV-ONLY (Story 021): --signature=<id> gives the character the signature block of whichever
+## character owns that id (scratch/demo captures only).
+const SIGNATURE_ARG: String = "--signature="
 ## DEV-ONLY: locale override for captures (never saved).
 const LANG_ARG: String = "--lang="
 ## DEV-ONLY (Story 018): --select=character starts in CHARACTER_SELECT (memory store; captures).
@@ -127,6 +130,8 @@ var _cards: SkillConfig = null
 var _reward_config: Dictionary = {}
 ## DEV-ONLY: --character= value, applied in _ready.
 var _dev_character: String = ""
+## DEV-ONLY: --signature= value.
+var _dev_signature: String = ""
 ## Story 019: the live run; null outside a run (title, menus, test floors).
 var _run: RunSession = null
 var _run_result: RunResult = RunResult.NONE
@@ -190,6 +195,8 @@ func _ready() -> void:
 			_dev_locale = arg.trim_prefix(LANG_ARG)
 		elif arg.begins_with(CHARACTER_ARG):
 			_dev_character = arg.trim_prefix(CHARACTER_ARG)
+		elif arg.begins_with(SIGNATURE_ARG):
+			_dev_signature = arg.trim_prefix(SIGNATURE_ARG)
 		else:
 			if arg.begins_with(RUN_ARG) and FLOW_RUN_KINDS.has(arg.trim_prefix(RUN_ARG)):
 				flow_run = arg.trim_prefix(RUN_ARG)
@@ -283,7 +290,15 @@ func get_character_id() -> String:
 func _character_dict() -> Dictionary:
 	if _character_id.is_empty():
 		return {}
-	return get_characters().get_character(_character_id)
+	var character: Dictionary = get_characters().get_character(_character_id)
+	if not _dev_signature.is_empty():
+		for other: String in get_characters().ids():
+			var raw: Variant = get_characters().get_character(other).get("signature")
+			if raw is Dictionary and str((raw as Dictionary).get("id", "")) == _dev_signature:
+				character = character.duplicate(true)
+				character["signature"] = raw
+				break
+	return character
 
 
 ## Current [enum Phase].

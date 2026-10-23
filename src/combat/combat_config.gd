@@ -27,6 +27,11 @@ var feedback_sec: float = 1.0
 ## Story 016: the pause is refused during the last this-many seconds of a running swing
 ## (no "preview the hit" pause). 0 = only the skill menu blocks the pause.
 var pause_lockout_sec: float = 0.5
+## Story 021: default cells the player must cast to fill the signature charge bar (a character's
+## `signature.charge_cells` overrides it).
+var signature_charge_cells: int = 18
+## Story 021: keyboard key name (OS.find_keycode_from_string) that fires the signature on desktop.
+var signature_key: String = "Q"
 ## Board-scaled step cooldown: [member step_cooldown_ref_sec] on a board that is
 ## [member step_cooldown_ref_steps] steps across, scaled by (ref_steps / steps_across)^exponent
 ## and clamped to [min, max]. See [method step_cooldown_for].
@@ -80,6 +85,12 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	config.max_tick_sec = maxf(float(data.get("max_tick_sec", config.max_tick_sec)), 0.001)
 	config.feedback_sec = maxf(float(data.get("feedback_sec", config.feedback_sec)), 0.0)
 	config.pause_lockout_sec = maxf(float(data.get("pause_lockout_sec", config.pause_lockout_sec)), 0.0)
+	config.signature_charge_cells = maxi(int(data.get("signature_charge_cells", config.signature_charge_cells)), 1)
+	var key_name: String = str(data.get("signature_key", config.signature_key)).strip_edges()
+	if key_name.is_empty() or OS.find_keycode_from_string(key_name) == KEY_NONE:
+		push_warning("CombatConfig: signature_key '%s' is not a key name, using '%s'" % [key_name, config.signature_key])
+	else:
+		config.signature_key = key_name
 	config._parse_step_cooldown(data)
 	config._parse_keywords(data)
 	return config

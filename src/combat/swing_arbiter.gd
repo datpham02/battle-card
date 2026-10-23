@@ -31,6 +31,10 @@ var _status: StatusEffects = null
 ## Story 018: Callable(cells: int, damage: float) -> float applied to the PLAYER's hit damage only
 ## (the character passive); invalid = none.
 var player_damage_modifier: Callable = Callable()
+## Story 021: signature hooks for the PLAYER only (see CutEffects.apply): the cell count used for
+## damage, and the LAST damage scale (after Ghim and the passive).
+var player_cells_modifier: Callable = Callable()
+var player_signature_modifier: Callable = Callable()
 
 
 func _init(
@@ -91,7 +95,11 @@ func _step(slice: float) -> void:
 
 func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int = 1) -> void:
 	var modifier: Callable = player_damage_modifier if side == CombatState.Side.PLAYER else Callable()
-	var result: Dictionary = CutEffects.apply(_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level)
+	var is_player: bool = side == CombatState.Side.PLAYER
+	var result: Dictionary = CutEffects.apply(
+		_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level,
+		player_cells_modifier if is_player else Callable(),
+		player_signature_modifier if is_player else Callable())
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	result["level"] = level

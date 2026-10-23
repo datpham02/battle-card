@@ -71,6 +71,7 @@ extends Node
 ##                                      (RunController.set_paused(true, force) after the intro is skipped):
 ##                                      time is NOT frozen here, the pause is what holds the swing clock,
 ##                                      so two captures >= 1 s apart show the same countdown under the overlay
+##   godot --path . -- --demo=signature_ready|signature_half   Story 021: signature charge full / half (needs CombatView.debug_set_signature_charge)
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -374,6 +375,13 @@ func _ready() -> void:
 				else:
 					burner.on_tick(burner.get_warn_left() + 0.001)
 					combat.get_status().tick(BURN_ELAPSED_SEC, combat.get_state())
+		"signature_ready", "signature_half":
+			# Story 021: the signature charge bar full (ready) or half full; the dev hook is Part 1's
+			# CombatView.debug_set_signature_charge(ratio).
+			if combat.has_method("debug_set_signature_charge"):
+				combat.call("debug_set_signature_charge", 1.0 if _mode == "signature_ready" else 0.5)
+			else:
+				push_warning("DemoArgs: CombatView.debug_set_signature_charge missing, signature demo skipped")
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 

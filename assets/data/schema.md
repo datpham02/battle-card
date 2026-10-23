@@ -1,3 +1,6 @@
+| `signature.<id>.name` / `.desc` | `characters.json` `signature.name_key` / `signature.desc_key` (Story 021) | `signature.tram.name` |
+| `characters[].signature` | object | Story 021: `{id, name_key, desc_key, charge_cells, params}`; id is a `SignatureRegistry` key (`tram`, `thien_hoa`, `anh_bo`), unknown or malformed -> warning and no signature (the character plays as before); `charge_cells` >= 1 (default combat.json `signature_charge_cells`) cells the player must CAST (swing started, hit or not) to fill the bar; the bar is not carried across matches; the boss never has one |
+| `signature_charge_cells` | integer >= 1 | cells | Story 021: default cells the player must cast to fill the signature charge bar; a character's `signature.charge_cells` overrides it | 18 |
 # Data file schemas
 
 Keys are `snake_case`. Pixel units are reference viewport pixels (1280x720 landscape,
@@ -361,6 +364,8 @@ Playable classes. Pure data; the stats and starter deck enter the match through 
 | `characters[].unlocked` | bool | Selectable now (only a data flag; unlock rules are out of scope) |
 
 Passive params: `second_wind {heal_after_match}` extra HP after a won match (added before the max clamp); `wide_caster {min_cells, duration_mult}` player swings over `min_cells` or more cells wind up `duration_mult` times as long; `quick_blade {max_cells, damage_mult}` player hits over `max_cells` or fewer cells deal `damage_mult` times the final damage. Passives only affect the player.
+
+Signature params (Story 021): `tram {duration_sec, cell_mult, lifesteal}` for `duration_sec` every player cut counts `cell_mult` x its cells for damage (the swing covers the real cells) and heals `lifesteal` x the damage dealt (clamped to max HP); `thien_hoa {detonate_mult}` instant: the boss takes `detonate_mult` x the total remaining burn damage of every burning enemy-half cell (time left / tick sec x damage per tick, stacks included), those cells stop burning and every `effect: burn` card's cooldown is reset (no burn: only the reset); `anh_bo {duration_sec, pinned_small_mult, small_cells}` for `duration_sec` the player's steps have no cooldown and hits of `small_cells` or fewer cells on a PINNED boss are multiplied by `pinned_small_mult`. Damage order: card `damage_per_cell` x cells (Tram cell count) -> Ghim -> passive -> signature.
 
 Dev arg: `--character=<id>` (GameFlow) selects a character; without it and without the select screen no character is passed.
 

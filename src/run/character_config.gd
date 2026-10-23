@@ -12,6 +12,8 @@ const DEFAULT_PATH: String = "res://assets/data/characters.json"
 const FALLBACK_ID: String = "kiem_si"
 const FALLBACK_MAX_HP: float = 100.0
 const FALLBACK_FOCUS_SEC: float = 4.0
+## Story 021: fallback `signature.charge_cells` when the block omits it (combat.json carries the tuned one).
+const DEFAULT_CHARGE_CELLS: int = 18
 
 var _order: Array[String] = []
 var _characters: Dictionary = {}
@@ -73,7 +75,8 @@ func has(id: String) -> bool:
 
 
 ## A copy of the cleaned character [param id] ({id, name_key, desc_key, max_hp, step_cooldown_mult,
-## focus_max_sec, passive {id, params}, passive_name_key, passive_desc_key, starter_deck, unlocked});
+## focus_max_sec, passive {id, params}, passive_name_key, passive_desc_key, signature ({} or
+## {id, name_key, desc_key, charge_cells, params}, Story 021), starter_deck, unlocked});
 ## {} when unknown.
 func get_character(id: String) -> Dictionary:
 	if not _characters.has(id):
@@ -121,6 +124,7 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 		passive["id"] = str((raw_passive as Dictionary).get("id", ""))
 		var params: Variant = (raw_passive as Dictionary).get("params", {})
 		passive["params"] = (params as Dictionary).duplicate(true) if typeof(params) == TYPE_DICTIONARY else {}
+	var signature: Dictionary = _read_signature(id, raw.get("signature"))
 	_characters[id] = {
 		"id": id,
 		"name_key": str(raw.get("name_key", "")),
@@ -131,10 +135,38 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 		"passive": passive,
 		"passive_name_key": str(raw.get("passive_name_key", "")),
 		"passive_desc_key": str(raw.get("passive_desc_key", "")),
+		"signature": signature,
 		"starter_deck": deck,
 		"unlocked": bool(raw.get("unlocked", true)),
 	}
 	_order.append(id)
+
+
+# Story 021: the cleaned `signature` block ({id, name_key, desc_key, charge_cells, params}) or {} when
+# absent; malformed (not an object, empty / unknown id, charge_cells < 1) -> warning and {} (no signature).
+func _read_signature(id: String, raw: Variant) -> Dictionary:
+	if raw == null:
+		return {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("CharacterConfig: %s signature is not an object, none used" % id)
+		return {}
+	var dict: Dictionary = raw as Dictionary
+	var sig_id: String = str(dict.get("id", ""))
+	if sig_id.is_empty() or not SignatureRegistry.has_id(sig_id):
+		push_warning("CharacterConfig: %s signature id '%s' unknown (known: %s), none used" % [id, sig_id, ", ".join(SignatureRegistry.known_ids())])
+		return {}
+	var charge: Variant = dict.get("charge_cells", DEFAULT_CHARGE_CELLS)
+	if (typeof(charge) != TYPE_FLOAT and typeof(charge) != TYPE_INT) or int(charge) < 1:
+		push_warning("CharacterConfig: %s signature charge_cells must be >= 1, none used" % id)
+		return {}
+	var params: Variant = dict.get("params", {})
+	return {
+		"id": sig_id,
+		"name_key": str(dict.get("name_key", "")),
+		"desc_key": str(dict.get("desc_key", "")),
+		"charge_cells": int(charge),
+		"params": (params as Dictionary).duplicate(true) if typeof(params) == TYPE_DICTIONARY else {},
+	}
 
 
 func _add_fallback(skills: SkillConfig) -> void:

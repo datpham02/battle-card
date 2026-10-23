@@ -22,6 +22,9 @@ static var _warned_no_status: bool = false
 ## SkillConfig.resolved. Damage = the card's damage_per_cell * cells (fallback: the cut config's
 ## base_damage_per_cell), then the Ghim multiplier while the target is pinned (result "pin_bonus"
 ## true), then the passive modifier.
+## Story 021: [param cells_modifier] Callable(cells: int) -> int gives the cell count used for the
+## card damage (signature Tram); [param signature_modifier] Callable(skill_id, cells, damage,
+## target_pinned) -> float scales the damage LAST (after Ghim and the passive modifier).
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -32,7 +35,9 @@ static func apply(
 	skill_config: SkillConfig,
 	status: StatusEffects = null,
 	damage_modifier: Callable = Callable(),
-	level: int = 1
+	level: int = 1,
+	cells_modifier: Callable = Callable(),
+	signature_modifier: Callable = Callable()
 ) -> Dictionary:
 	var target_side: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
 	var target_cell: Vector2i = state.cell_of(target_side)
@@ -69,7 +74,10 @@ static func apply(
 		return result
 	var push_cells: int = int(skill.get("push_cells", 0))
 	var per_cell: float = float(skill.get("damage_per_cell", cut_config.base_damage_per_cell * float(skill.get("damage_multiplier", 1.0))))
-	var damage: float = per_cell * float(cells.size())
+	var effective_cells: int = cells.size()
+	if cells_modifier.is_valid():
+		effective_cells = maxi(int(cells_modifier.call(effective_cells)), 0)
+	var damage: float = per_cell * float(effective_cells)
 	if status != null:
 		var pin_mult: float = status.damage_mult_against(target_side)
 		if pin_mult != 1.0:
@@ -77,6 +85,9 @@ static func apply(
 			result["pin_bonus"] = true
 	if damage_modifier.is_valid():
 		damage = float(damage_modifier.call(cells.size(), damage))
+	if signature_modifier.is_valid():
+		damage = float(signature_modifier.call(
+			skill_id, cells.size(), damage, status != null and status.is_pinned(target_side)))
 	result["hit"] = true
 	result["damage"] = damage
 	state.damage(target_side, damage)

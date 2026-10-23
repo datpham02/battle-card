@@ -9,6 +9,8 @@ var _side: int
 var _cooldown_sec: float
 var _remaining: float = 0.0
 var _status: StatusEffects = null
+## Story 021: Callable() -> float multiplying the cooldown a step starts (0.0 = free steps); invalid = 1.
+var cooldown_scale: Callable = Callable()
 
 
 ## [param side] is a CombatState.Side value.
@@ -40,8 +42,13 @@ func try_step(direction: Vector2i) -> bool:
 	else:
 		moved = _state.set_enemy_cell(_state.enemy_cell + direction)
 	if moved:
-		_remaining = _cooldown_sec
+		_remaining = _cooldown_sec * _scale()
 	return moved
+
+
+## Current cooldown multiplier (>= 0).
+func _scale() -> float:
+	return maxf(float(cooldown_scale.call()), 0.0) if cooldown_scale.is_valid() else 1.0
 
 
 ## Advances the cooldown.
@@ -56,7 +63,7 @@ func get_cooldown_remaining() -> float:
 
 ## 0 = ready .. 1 = just moved.
 func get_cooldown_fraction() -> float:
-	if _cooldown_sec <= 0.0:
+	if _cooldown_sec <= 0.0 or _remaining <= 0.0:
 		return 0.0
 	return clampf(_remaining / _cooldown_sec, 0.0, 1.0)
 

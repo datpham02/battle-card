@@ -151,6 +151,28 @@ func get_burn_left(cell: Vector2i) -> float:
 	return float((_burning[cell] as Dictionary)["left"])
 
 
+## Story 021: damage the burning [param cell] still has to deal if a unit stood on it until it burns
+## out: (seconds left / tick seconds) x damage per tick (stacks are already folded into the damage).
+## 0 when the cell is not burning.
+func remaining_burn_damage(cell: Vector2i) -> float:
+	if not _burning.has(cell):
+		return 0.0
+	var entry: Dictionary = _burning[cell] as Dictionary
+	return float(entry["left"]) / float(entry["tick_sec"]) * float(entry["damage"])
+
+
+## Story 021: stops the burning of [param cells] (every burning cell when empty), emitting
+## cell_burned_out for each. Returns how many cells were cleared.
+func clear_burn(cells: Array[Vector2i] = []) -> int:
+	var targets: Array[Vector2i] = cells if not cells.is_empty() else burning_cells()
+	var cleared: int = 0
+	for cell: Vector2i in targets:
+		if _burning.erase(cell):
+			cleared += 1
+			cell_burned_out.emit(cell)
+	return cleared
+
+
 ## True while the unit of [param side] is pinned.
 func is_pinned(side: int) -> bool:
 	return _pins.has(side)
