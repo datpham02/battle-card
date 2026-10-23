@@ -9,6 +9,14 @@ const DEFAULT_PATH: String = "res://assets/data/cards.json"
 ## Card id used when nothing else is chosen; always present in [member cards].
 const FALLBACK_SKILL: String = "kiem_khi"
 const RARITIES: Array[String] = ["common", "rare", "epic"]
+## Highest card level (levels are 1..MAX_LEVEL; Story 020).
+const MAX_LEVEL: int = 3
+const EFFECTS: Array[String] = ["damage", "push", "burn", "pin"]
+## Keys an `upgrade` table may change (additive deltas), with the floor each is clamped to.
+const UPGRADE_FLOORS: Dictionary = {
+	"damage_per_cell": 0.0, "min_cells": 1.0, "cooldown_sec": 0.0, "burn_damage_per_tick": 0.0,
+	"burn_duration_sec": 0.0, "pin_duration_sec": 0.0, "push_cells": 0.0,
+}
 
 ## Simulation speed factor while the card menu is open (0..1). Applied by the view.
 var menu_time_scale: float = 0.2
@@ -30,8 +38,8 @@ var focus_cooldown_sec: float = 8.0
 var focus_locks_movement: bool = true
 ## Stable display order of the known card ids (also the boss's default card list).
 var card_order: Array[String] = [FALLBACK_SKILL]
-## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_multiplier, push_cells,
-## burn_*, pin_duration_sec, rarity, class_tags, implemented}
+## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_per_cell, push_cells,
+## burn_*, pin_duration_sec, rarity, upgrade, implemented} (level 1 values; see [method resolved])
 var cards: Dictionary = {}
 
 
@@ -40,8 +48,8 @@ func _init() -> void:
 		"effect": "damage", "burn_duration_sec": 0.0, "burn_tick_sec": 0.5,
 		"burn_damage_per_tick": 0.0, "pin_duration_sec": 0.0,
 		"name_key": "card.kiem_khi.name", "desc_key": "card.kiem_khi.desc", "min_cells": 1, "cooldown_sec": 0.0,
-		"damage_multiplier": 1.0, "push_cells": 0, "rarity": "common", "class_tags": [],
-		"implemented": true,
+		"damage_per_cell": CutConfig.load_from_file().base_damage_per_cell, "push_cells": 0,
+			"rarity": "common", "upgrade": {"damage_per_cell": 1.0}, "implemented": true,
 	}
 
 
@@ -127,12 +135,21 @@ func get_rarity(id: String) -> String:
 	return str(get_skill(id).get("rarity", "common"))
 
 
-## Class tags of [param id] (empty if none or unknown).
-func get_class_tags(id: String) -> Array[String]:
-	var tags: Array[String] = []
-	for tag: Variant in get_skill(id).get("class_tags", []) as Array:
-		tags.append(str(tag))
-	return tags
+## The card [param id] at [param level] (clamped to 1..MAX_LEVEL) with its `upgrade` deltas applied
+## once per level above 1 (min_cells >= 1, cooldown >= 0, others >= 0). Same keys as
+## [method get_skill] plus "level". Unknown id: {}. The single place upgrades are summed.
+func resolved(id: String, level: int = 1) -> Dictionary:
+	if not cards.has(id):
+		return {}
+	var card: Dictionary = (cards[id] as Dictionary).duplicate(true)
+	var lv: int = clampi(level, 1, MAX_LEVEL)
+	var upgrade: Dictionary = card.get("upgrade", {}) as Dictionary
+	for key: Variant in upgrade.keys():
+		var floor_value: float = float(UPGRADE_FLOORS.get(str(key), 0.0))
+		var value: float = maxf(float(card.get(key, 0.0)) + float(upgrade[key]) * float(lv - 1), floor_value)
+		card[key] = int(value) if typeof(card.get(key, 0.0)) == TYPE_INT else value
+	card["level"] = lv
+	return card
 
 
 # Parses the optional "focus" object; bad or missing values keep the defaults (warning if bad).
@@ -178,15 +195,23 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 	if not RARITIES.has(rarity):
 		push_warning("SkillConfig: card %s rarity '%s' unknown, using common" % [id, rarity])
 		rarity = "common"
-	var tags: Array = []
-	var raw_tags: Variant = raw.get("class_tags", [])
-	if typeof(raw_tags) == TYPE_ARRAY:
-		for tag: Variant in raw_tags as Array:
-			tags.append(str(tag))
+	var effect: String = str(raw.get("effect", "damage"))
+	if not EFFECTS.has(effect):
+		push_warning("SkillConfig: card %s effect '%s' unknown" % [id, effect])
+	var upgrade: Dictionary = {}
+	var raw_up: Variant = raw.get("upgrade")
+	if typeof(raw_up) == TYPE_DICTIONARY:
+		for key: Variant in (raw_up as Dictionary).keys():
+			if UPGRADE_FLOORS.has(str(key)) and (typeof((raw_up as Dictionary)[key]) == TYPE_FLOAT or typeof((raw_up as Dictionary)[key]) == TYPE_INT):
+				upgrade[str(key)] = float((raw_up as Dictionary)[key])
+			else:
+				push_warning("SkillConfig: card %s upgrade key '%s' invalid, ignored" % [id, str(key)])
 	else:
-		push_warning("SkillConfig: card %s class_tags must be an array, ignored" % id)
+		push_warning("SkillConfig: card %s has no upgrade table" % id)
+	# Fallback for a card without damage_per_cell: the global cuts.json base_damage_per_cell.
+	var dpc: float = maxf(float(raw["damage_per_cell"]), 0.0) if raw.has("damage_per_cell") 			else CutConfig.load_from_file().base_damage_per_cell
 	return {
-		"effect": str(raw.get("effect", "damage")),
+		"effect": effect,
 		"burn_duration_sec": maxf(float(raw.get("burn_duration_sec", 0.0)), 0.0),
 		"burn_tick_sec": tick,
 		"burn_damage_per_tick": maxf(float(raw.get("burn_damage_per_tick", 0.0)), 0.0),
@@ -195,9 +220,9 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"desc_key": str(raw.get("desc_key", "card.%s.desc" % id)),
 		"min_cells": maxi(int(raw.get("min_cells", 1)), 1),
 		"cooldown_sec": maxf(float(raw.get("cooldown_sec", 0.0)), 0.0),
-		"damage_multiplier": maxf(float(raw.get("damage_multiplier", 1.0)), 0.0),
+		"damage_per_cell": dpc,
 		"push_cells": maxi(int(raw.get("push_cells", 0)), 0),
 		"rarity": rarity,
-		"class_tags": tags,
+		"upgrade": upgrade,
 		"implemented": bool(raw.get("implemented", false)),
 	}

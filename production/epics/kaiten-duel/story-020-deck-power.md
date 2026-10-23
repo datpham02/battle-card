@@ -1,12 +1,12 @@
 # Story 020: Bộ bài có sức nặng — sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá, từ khóa Ghim/Đốt, bỏ khái niệm lớp
 
 > **Epic**: Kaiten Duel (v4)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-22
+> **Last Updated**: 2026-10-24
 
 ## Context
 
@@ -43,6 +43,11 @@
 - [ ] **Đốt**: lá đốt trúng địch **đang cháy** → kéo dài thời gian cháy thêm `burn_stack_extend_sec` (2 s) và tăng `burn_damage_per_tick` thêm `burn_stack_tick_bonus` (+1), tối đa `burn_max_stacks` (3). HUD boss hiện số tầng cháy (vd. "🔥×2" bằng chữ, không icon mới).
 - [ ] Mô tả lá (CSV) nhắc từ khóa: "Ghim 1,2 s. Địch bị ghim ăn thêm 50 % từ đòn kiếm."
 
+**Phần E — Pool đủ rộng để build (người dùng 2026-10-22: "còn quá ít, hoàn thiện rồi mới trải nghiệm")**
+
+- [ ] `cards.json` có **≥ 20 lá** (hiện 8), chỉ dùng bốn hiệu ứng có sẵn (damage, push, burn, pin) với tham số khác nhau: nhiều lá sát thương theo số ô khác nhau (1–6 ô), lá đẩy 1–2 ô, lá đốt diện rộng/cháy lâu/cháy mạnh, lá ghim ngắn–dài, vài lá đánh đổi (ví dụ cần nhiều ô, cooldown dài, sát thương rất cao). Phân bố độ hiếm khoảng 10 thường / 7 hiếm / 3 sử thi. Mỗi lá có `name_key`/`desc_key`, bảng `upgrade`, dòng vi và en trong CSV. Mỗi từ khóa (Ghim, Đốt) có ít nhất 4 lá liên quan để build theo từ khóa khả thi.
+- [ ] Bộ khởi đầu của ba nhân vật giữ nguyên số lá nhưng không dùng lá nào chỉ có ở pool thưởng. `card_order` và scratch test đếm lá cập nhật.
+
 **Phần D — Kiểm chứng bằng số, không chỉ cảm giác**
 
 - [ ] Script mô phỏng seeded (scratch hoặc `tests/`) chạy ≥ 200 run chương 1 cho mỗi chính sách chọn thưởng: **luôn bỏ qua**, **ngẫu nhiên**, **theo build** (ưu tiên nâng cấp lá có `damage_per_cell` cao nhất, rồi từ khóa đang có). Yêu cầu: tỉ lệ thắng tầng 3 của "theo build" cao hơn "luôn bỏ qua" **ít nhất 25 điểm phần trăm**, và máu còn lại trung bình cao hơn rõ. Không đạt → chỉnh JSON, không chỉnh mã; ghi bảng số vào Completion Notes.
@@ -64,8 +69,8 @@
 
 ## Out of Scope
 
-- Tuyệt kỹ nhân vật (021). Kháng/yếu theo kẻ địch, lá mới có hiệu ứng mới, cửa hàng, xem bộ giữa trận (ngoài danh sách bỏ lá).
-- Nhân vật 4–5.
+- Tuyệt kỹ nhân vật (021), chương 2–3 (story riêng sau 021). Kháng/yếu theo kẻ địch, lá mới có hiệu ứng mới, cửa hàng, xem bộ giữa trận (ngoài danh sách bỏ lá).
+- Nhân vật 4–5, lá có hiệu ứng mới (chỉ lá dùng bốn hiệu ứng sẵn có).
 
 ---
 
@@ -84,7 +89,7 @@
 - Bảng mô phỏng ba chính sách trong Completion Notes.
 - Retained screenshots trong `production/qa/evidence/deck-power/`.
 
-**Status**: [ ] Not yet created
+**Status**: Screenshots retained (deck-power/01-08) + simulation table (deck-power/simulation-70seeds.md).
 
 ---
 
@@ -92,3 +97,14 @@
 
 - Depends on: Story 017 (Deck, cards.json), Story 019 (RewardRoller, RewardView, RunSession)
 - Unlocks: Story 021 (tuyệt kỹ khuếch đại từ khóa), nội dung chương 2–3
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-24
+**Criteria**: 14/15 pass, 1 not met (closed by user decision with tech debt TD-001). DEFERRED (needs real play): feel of upgrades, clarity of the keywords, readability of the 4-slot reward screen.
+**Deviations**: BLOCKING (accepted, logged TD-001): Phase D simulation target of 25 pp not reached, build vs always-skip is kiem_si +20.0, sat_thu +21.4, phap_su +4.3 (70 seeds x 3 characters x 3 policies, dt 0.05, 477.6 s); HP-at-end condition and deck-difference condition (0.562) pass. The bot casts 1-2 cells against dodging bosses so about two thirds of the pool is never used; JSON deliberately not tuned to fit it. ADVISORY: burn stacking is flat +1 damage per stack (base tracked separately), not compounding. ADVISORY: the fourth reward slot is a narrower card (0.16w); remove list is 6x2 tiles; card descriptions allow 4 lines; reward_view and cut_hud_view shrink long names with a fit-font helper. ADVISORY: `damage_per_cell` fallback comes from cuts.json (CutConfig), `damage_multiplier` and `class_tags` removed from the data. ADVISORY: scratch assertions updated for the new numbers (push of 5 cells = 20 in cut_test, status_test, cut_flow_test). ADVISORY: `--demo=pin` prints a pre-existing DemoArgs warning. ADVISORY (balance, TD-002/003): mage starter deck, 7-cell bang_phong in every starter deck.
+**Test Evidence**: Logic; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/deck-power/01-08*.png` (all opened and checked) and the simulation table `simulation-70seeds.md` plus raw output. Scratch suites 0 fails: deck_power (49), keyword (35), deck, cut, status, i18n, reward_run (45), character, chapters (67), run_flow2, pause_flow, arbiter, run/trait/arena flow (headless); cut_flow and focus_flow (windowed, `--no-autopause`). Parse-check 67/67.
+**Code Review**: Skipped (solo mode).
+**Not verified**: real feel, balance with a human player, touch on a device.
+**Carries forward**: Story 021 (signature skills amplify the deck), a content story for chapters 2-3, then the playtest gate; TD-001..003.

@@ -54,6 +54,10 @@ Combat start values, timing caps and the board shape (Stories 003, 007). The boa
 | `step_cooldown_exponent` | number >= 0 | - | How strongly bigger boards speed stepping up (0 = constant) | 0.75 |
 | `step_cooldown_min_sec` | number | seconds | Lower clamp (<= max) | 0.18 |
 | `step_cooldown_max_sec` | number | seconds | Upper clamp | 0.60 |
+| `pinned_damage_mult` | number | x | Ghim: damage/push hits on a pinned unit are multiplied by this (>= 1) | 1.5 |
+| `burn_stack_extend_sec` | number | seconds | Dot: added to the remaining time when a burning cell is re-ignited | 2.0 |
+| `burn_stack_tick_bonus` | number | damage | Dot: extra damage per tick per extra stack | 1.0 |
+| `burn_max_stacks` | int | stacks | Dot: stack cap (>= 1) | 3 |
 | `player_step_cooldown_sec` | number >= 0 | seconds | DEPRECATED, not shipped: if present it overrides the computed value on every board (warning) | absent |
 
 Measured (defaults): 2x2 = 0.60 (clamped), 3x3 = 0.45, 4x3 = 0.33, 6x6 = 0.23, 10x10 = 0.18 (clamped).
@@ -96,7 +100,7 @@ Card menu timing, hand size, default deck and card definitions (Story 008/010/01
 | `focus_cooldown_sec` | number >= 0 | REAL seconds | Cooldown after ANY end (confirm, deselect, timeout, death); selecting points does not pause meanwhile | 8.0 |
 | `focus_locks_movement` | boolean | - | true = step input is ignored (nothing queued) while Focus is active | true |
 
-Card entry keys (ids: `kiem_khi`, `chan_phong`, `hoa_tran`, `bang_phong`; `effect` names stay behaviours):
+Card entry keys (20 cards, see `card_order`; the class concept is gone, Story 020; `effect` names stay behaviours):
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
@@ -104,7 +108,7 @@ Card entry keys (ids: `kiem_khi`, `chan_phong`, `hoa_tran`, `bang_phong`; `effec
 | `desc_key` | string | i18n key | One-line description: `card.<id>.desc` | `card.<id>.desc` |
 | `min_cells` | integer >= 1 | cells | Covered real cells needed to use the skill (menu shows "need N cells") | 1 |
 | `cooldown_sec` | number >= 0 | seconds | Cooldown started when the skill is used | 0 |
-| `damage_multiplier` | number >= 0 | factor | Multiplier on the slash damage (`base_damage_per_cell * cells`) | 1.0 |
+| `damage_per_cell` | number >= 0 | HP per cell | Level-1 damage per covered cell of damage/push cards (0 for burn/pin); damage = `damage_per_cell * cells`. Replaces `damage_multiplier` (Story 020). Missing: cuts.json `base_damage_per_cell` | cuts.json base |
 | `push_cells` | integer >= 0 | cells | Cells the target is pushed away from the divider along its row (stops at a missing cell/edge); push only | 0 |
 | `effect` | `damage` / `push` / `burn` / `pin` | - | What the swing does on resolve (Story 010). `burn`: every covered cell ignites whether or not the target stands there; burning cells take no new field points and refuse pick-up. `pin`: pins the target if it stands in the covered cells | `damage` |
 | `burn_duration_sec` | number >= 0 | seconds | Burn only: how long ignited cells burn; re-igniting resets the timer | 0 |
@@ -112,7 +116,7 @@ Card entry keys (ids: `kiem_khi`, `chan_phong`, `hoa_tran`, `bang_phong`; `effec
 | `burn_damage_per_tick` | number >= 0 | HP | Burn only: damage per tick, per unit standing on the cell | 0 |
 | `pin_duration_sec` | number >= 0 | seconds | Pin only: how long the target cannot step; re-pinning refreshes it | 0 |
 | `rarity` | `common` / `rare` / `epic` | - | Card rarity (unknown -> common with a warning) | `common` |
-| `class_tags` | array of strings | - | Class tags for future class decks | `[]` |
+| `upgrade` | object key -> number | additive delta | Per level above 1 (level 2 = one application, level 3 = two): keys `damage_per_cell`, `min_cells` (never below 1), `cooldown_sec` (never below 0), `burn_damage_per_tick`, `burn_duration_sec`, `pin_duration_sec`, `push_cells`. Read through `SkillConfig.resolved(id, level)` | `{}` (warning) |
 | `implemented` | boolean | - | False = shown locked ("not yet"); using it falls back to slash | false |
 
 ## boss_brain.json  (read by `src/combat/boss_brain_config.gd`)
@@ -320,7 +324,7 @@ Player save written by `ProgressStore` (atomic: temp file renamed over the targe
 | `locale` | string | UI language code (`vi` / `en`) |
 | `cleared_chapters` | array of chapter ids | Chapters whose last floor boss was beaten, e.g. `["ch1"]`. Chapter 0 is always unlocked; chapter N+1 unlocks when chapter N is cleared (any character) |
 | `seen_cards` | array of card ids | Cards ever offered or owned (write-only for now) |
-| `run_in_progress` | object or null | The run being played (`RunSession.to_dict`): `character` (id), `chapter` (chapter id), `floor` (floor id), `match_index` (0-based), `hp` (HP at the start of that match, negative = full), `deck` (card ids, duplicates allowed), `run_seed`, `elapsed` (seconds), `pending_reward` (card ids offered but not yet picked/skipped, `[]` when none; kept so quitting on the reward screen cannot re-roll), `revives`. The floor seed is derived: `RunSession.floor_seed()` |
+| `run_in_progress` | object or null | The run being played (`RunSession.to_dict`): `character` (id), `chapter` (chapter id), `floor` (floor id), `match_index` (0-based), `hp` (HP at the start of that match, negative = full), `deck` (v3: `[{id, level}]`, duplicates allowed; the old v2 form, an array of id strings, loads as level 1), `run_seed`, `elapsed` (seconds), `pending_reward` (card ids offered but not yet picked/skipped, `[]` when none; kept so quitting on the reward screen cannot re-roll), `revives`. The floor seed is derived: `RunSession.floor_seed()` |
 
 ## `rewards.json` (Story 019, read by `src/run/reward_roller.gd`, class RewardRoller)
 
@@ -330,11 +334,14 @@ Card reward after every won match that does not end the run. Bad or missing file
 |---|---|---|---|
 | `offer_count` | integer >= 1 | Distinct cards offered | 3 |
 | `rarity_weights` | object rarity -> number >= 0 | Draw weight per rarity (`common`, `rare`, `epic`); a missing rarity = 0 weight | 70 / 25 / 5 |
-| `class_tag_bonus` | number >= 1 | Weight multiplier for a card whose `class_tags` contain the character's id | 2.0 |
+| `allow_remove` | boolean | The reward screen offers a fourth slot "remove 1 card" | true |
+| `min_deck_size` | integer >= 1 | The deck cannot drop below this many cards by removing | 4 |
+| `max_card_level` | integer 1..3 | A card at this level is not offered again (unless the pool is short) | 3 |
+| `offer_upgrades` | boolean | The reward view labels cards already owned as "upgrade" | true |
 | `allow_skip` | boolean | The reward screen offers a Skip button | true |
 | `pool_excludes_defaults` | boolean | Cards in `cards.json` `default_deck` are not offered | false |
 
-The pool is every `implemented` card; the roll is a seeded weighted draw without replacement.
+The pool is every `implemented` card; the roll is a seeded weighted draw without replacement, weighted by rarity only.
 
 ## `characters.json` (Story 018, read by `src/run/character_config.gd`, class CharacterConfig)
 

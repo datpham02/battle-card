@@ -16,27 +16,75 @@ signal pin_ended(side: int)
 ## Tolerance for float accumulation when comparing against a tick boundary.
 const _EPS: float = 0.000001
 
-# Vector2i -> {left: float, tick_acc: float, tick_sec: float, damage: float}
+# Vector2i -> {left: float, tick_acc: float, tick_sec: float, damage: float, stacks: int}
 var _burning: Dictionary = {}
 # CombatState.Side -> seconds left
 var _pins: Dictionary = {}
+# Keyword numbers, see configure(). Defaults = no stacking / no Ghim bonus (old behaviour).
+var _burn_extend_sec: float = 0.0
+var _burn_tick_bonus: float = 0.0
+var _burn_max_stacks: int = 1
+var _pinned_damage_mult: float = 1.0
 
 
 ## Ignites every cell in [param cells] for [param duration] seconds. A unit standing on a
-## burning cell takes [param damage_per_tick] every [param tick_sec]. Re-igniting resets the
-## timer to the full duration (no stacking).
+## burning cell takes [param damage_per_tick] every [param tick_sec]. Story 020 (Dot): igniting a
+## cell that is ALREADY burning stacks: left = max(left, duration) + extend, stacks + 1 (capped),
+## damage = max(old base, new) + tick_bonus * (stacks - 1), flat per stack (the base never includes a
+## bonus, so stacks go 2, 3, 4 and not 2, 3, 5). With the default (unconfigured) values
+## extend = 0, bonus = 0, max stacks = 1 this is the old "reset to the full duration".
 func ignite(cells: Array[Vector2i], duration: float, tick_sec: float, damage_per_tick: float) -> void:
 	if duration <= 0.0:
 		return
 	for cell: Vector2i in cells:
 		var acc: float = 0.0
+		var left: float = duration
+		var stacks: int = 1
+		var base: float = maxf(damage_per_tick, 0.0)
 		if _burning.has(cell):
-			acc = float((_burning[cell] as Dictionary)["tick_acc"])
+			var old: Dictionary = _burning[cell] as Dictionary
+			acc = float(old["tick_acc"])
+			left = maxf(float(old["left"]), duration) + _burn_extend_sec
+			stacks = mini(int(old["stacks"]) + 1, _burn_max_stacks)
+			base = maxf(float(old.get("base", old["damage"])), base)
+		var damage: float = base + _burn_tick_bonus * float(stacks - 1)
 		_burning[cell] = {
-			"left": duration, "tick_acc": acc,
-			"tick_sec": maxf(tick_sec, _EPS), "damage": maxf(damage_per_tick, 0.0),
+			"left": left, "tick_acc": acc, "stacks": stacks, "base": base,
+			"tick_sec": maxf(tick_sec, _EPS), "damage": damage,
 		}
 		cell_ignited.emit(cell)
+
+
+## Story 020: sets the keyword numbers (from combat.json, validated by CombatConfig).
+## [param extend_sec] seconds added to a re-ignited burning cell, [param tick_bonus] damage per
+## extra stack, [param max_stacks] cap (>= 1), [param pinned_mult] damage multiplier against a
+## pinned unit (Ghim, >= 1 means bonus; 1.0 = none).
+func configure(extend_sec: float, tick_bonus: float, max_stacks: int, pinned_mult: float = 1.0) -> void:
+	_burn_extend_sec = maxf(extend_sec, 0.0)
+	_burn_tick_bonus = maxf(tick_bonus, 0.0)
+	_burn_max_stacks = maxi(max_stacks, 1)
+	_pinned_damage_mult = maxf(pinned_mult, 0.0)
+
+
+## Damage multiplier for hits against the unit of [param side]: the Ghim multiplier while it is
+## pinned, else 1.0.
+func damage_mult_against(side: int) -> float:
+	return _pinned_damage_mult if is_pinned(side) else 1.0
+
+
+## Burn stacks on [param cell]; 0 when it is not burning.
+func stacks_at(cell: Vector2i) -> int:
+	if not _burning.has(cell):
+		return 0
+	return int((_burning[cell] as Dictionary)["stacks"])
+
+
+## Highest burn stack among [param cells] (0 when none burns).
+func max_stacks_on(cells: Array[Vector2i]) -> int:
+	var best: int = 0
+	for cell: Vector2i in cells:
+		best = maxi(best, stacks_at(cell))
+	return best
 
 
 ## Pins the unit of [param side] for [param duration] seconds; a pin already running is

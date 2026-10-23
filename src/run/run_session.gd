@@ -16,8 +16,19 @@ var floor_index: int = 0
 var match_index: int = 0
 ## Player HP at the START of the current match; negative = full HP.
 var hp: float = -1.0
-## Card ids of the deck (duplicates allowed).
-var deck_ids: Array[String] = []
+## The deck: {id, level} entries (duplicates allowed, level 1..SkillConfig.MAX_LEVEL).
+var deck: Array[Dictionary] = []
+## Card ids of the deck in order (view of [member deck]; assigning ids sets level-1 entries).
+var deck_ids: Array[String]:
+	get:
+		var ids: Array[String] = []
+		for e: Dictionary in deck:
+			ids.append(str(e["id"]))
+		return ids
+	set(value):
+		deck = []
+		for id: String in value:
+			deck.append({"id": id, "level": 1})
 ## Seed of the whole run (floor seeds derive from it).
 var run_seed: int = 0
 ## Seconds of PLAYING time of the run (written by the flow).
@@ -40,7 +51,7 @@ static func begin(chapters: ChaptersConfig, character: Dictionary, chapter_index
 	s.chapter_index = clampi(chapter_index, 0, chapters.chapter_count() - 1)
 	s.run_seed = run_seed
 	for id: Variant in character.get("starter_deck", []) as Array:
-		s.deck_ids.append(str(id))
+		s.deck.append({"id": str(id), "level": 1})
 	s.revives = int(chapters.defaults().get("revive_tokens", 0))
 	return s
 
@@ -66,9 +77,41 @@ func is_boss_match(chapters: ChaptersConfig) -> bool:
 	return match_index == chapters.match_count(chapter_index, floor_index) - 1
 
 
-## Adds a card to the deck.
-func add_card(id: String) -> void:
-	deck_ids.append(id)
+## Adds a card with Deck.add semantics: a copy below [param max_level] is upgraded by 1 (the first
+## such copy), else a new level-1 copy joins. Returns {"upgraded", "level", "id"}.
+func add_card(id: String, max_level: int = SkillConfig.MAX_LEVEL) -> Dictionary:
+	for e: Dictionary in deck:
+		if str(e["id"]) == id and int(e["level"]) < max_level:
+			e["level"] = int(e["level"]) + 1
+			return {"upgraded": true, "level": int(e["level"]), "id": id}
+	deck.append({"id": id, "level": 1})
+	return {"upgraded": false, "level": 1, "id": id}
+
+
+## Removes the card at [param index] unless the deck would drop below [param min_deck_size]
+## (default: rewards.json min_deck_size). True when removed.
+func remove_card_at(index: int, min_deck_size: int = -1) -> bool:
+	var floor_size: int = min_deck_size if min_deck_size >= 0 else int(RewardRoller.load_config()["min_deck_size"])
+	if index < 0 or index >= deck.size() or deck.size() <= floor_size:
+		return false
+	deck.remove_at(index)
+	return true
+
+
+## id -> highest copy level in the deck.
+func deck_levels() -> Dictionary:
+	var out: Dictionary = {}
+	for e: Dictionary in deck:
+		out[str(e["id"])] = maxi(int(out.get(str(e["id"]), 0)), int(e["level"]))
+	return out
+
+
+## Copies of the deck entries ({id, level}).
+func deck_entries() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for e: Dictionary in deck:
+		out.append(e.duplicate())
+	return out
 
 
 ## Applies a WON match. [param hp_end] = player HP when the fight ended. Non-boss:
@@ -108,13 +151,13 @@ func has_pending_reward() -> bool:
 	return not pending_reward.is_empty()
 
 
-## Save form: {character, chapter (id), floor (id), match_index, hp, deck, run_seed, elapsed,
+## Save form (v3: deck is [{id, level}]; an old v2 id-string deck loads as level 1): {character, chapter (id), floor (id), match_index, hp, deck, run_seed, elapsed,
 ## pending_reward, revives}.
 func to_dict() -> Dictionary:
 	return {
 		"character": character_id, "chapter": _chapters.chapter_id(chapter_index),
 		"floor": _chapters.floor_id(chapter_index, floor_index), "match_index": match_index, "hp": hp,
-		"deck": deck_ids.duplicate(), "run_seed": run_seed, "elapsed": elapsed_sec,
+		"deck": deck_entries(), "run_seed": run_seed, "elapsed": elapsed_sec,
 		"pending_reward": pending_reward.duplicate(), "revives": revives,
 	}
 
@@ -151,9 +194,9 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s.run_seed = int(d.get("run_seed", 0))
 	s.elapsed_sec = maxf(float(d.get("elapsed", 0.0)), 0.0)
 	s.revives = maxi(int(d.get("revives", 0)), 0)
-	s.deck_ids = _known_ids(d.get("deck", []), cards)
+	s.deck = _known_entries(d.get("deck", []), cards)
 	s.pending_reward = _known_ids(d.get("pending_reward", []), cards)
-	if s.character_id.is_empty() or s.deck_ids.is_empty():
+	if s.character_id.is_empty() or s.deck.is_empty():
 		push_warning("RunSession: no character or empty deck, run dropped")
 		return null
 	return s
@@ -169,4 +212,19 @@ static func _known_ids(raw: Variant, cards: SkillConfig) -> Array[String]:
 			push_warning("RunSession: unknown card '%s' dropped" % id)
 		else:
 			out.append(id)
+	return out
+
+
+# Deck entries from the v3 form ([{id, level}]) or the v2 form (id strings = level 1); unknown cards dropped.
+static func _known_entries(raw: Variant, cards: SkillConfig) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw as Array:
+		var id: String = str((entry as Dictionary).get("id", "")) if typeof(entry) == TYPE_DICTIONARY else str(entry)
+		var level: int = int((entry as Dictionary).get("level", 1)) if typeof(entry) == TYPE_DICTIONARY else 1
+		if id.is_empty() or (cards != null and not cards.has_skill(id)):
+			push_warning("RunSession: unknown card '%s' dropped" % id)
+		else:
+			out.append({"id": id, "level": clampi(level, 1, SkillConfig.MAX_LEVEL)})
 	return out

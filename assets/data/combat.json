@@ -12,5 +12,9 @@
 	"step_cooldown_ref_steps": 2,
 	"step_cooldown_exponent": 0.75,
 	"step_cooldown_min_sec": 0.18,
-	"step_cooldown_max_sec": 0.60
+	"step_cooldown_max_sec": 0.60,
+	"pinned_damage_mult": 1.5,
+	"burn_stack_extend_sec": 2.0,
+	"burn_stack_tick_bonus": 1.0,
+	"burn_max_stacks": 3
 }

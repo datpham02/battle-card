@@ -32,6 +32,8 @@ var _time_left: float = 0.0
 var _duration: float = 0.0
 var _cells: Array[Vector2i] = []
 var _skill_id: String = ""
+var _level: int = 1
+var _q_level: int = 1
 var _target_is_enemy: bool = true
 var _has_queued: bool = false
 var _q_cells: Array[Vector2i] = []
@@ -52,13 +54,13 @@ func can_begin() -> bool:
 
 ## Starts a swing over [param cells]. Returns false if one is already running or the
 ## cell list is empty. Duration = CutConfig.swing_duration(cells) * [member duration_mult].
-func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool) -> bool:
+func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, level: int = 1) -> bool:
 	if _swinging or cells.is_empty():
 		return false
 	var duration: float = _config.swing_duration(cells.size()) * duration_mult
 	if duration_modifier.is_valid():
 		duration = float(duration_modifier.call(cells.size(), duration))
-	_start(cells, skill_id, target_is_enemy, duration)
+	_start(cells, skill_id, target_is_enemy, duration, level)
 	return true
 
 
@@ -67,7 +69,7 @@ func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool
 ## [member duration_mult]). Refused (false) when no swing is running (use [method begin_swing]),
 ## when a swing is already queued, when [param cells] is empty or [param duration] <= 0.
 ## The queue is dropped when the running swing is cancelled.
-func queue_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, duration: float) -> bool:
+func queue_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, duration: float, level: int = 1) -> bool:
 	if not _swinging or _has_queued or cells.is_empty() or duration <= 0.0:
 		return false
 	_has_queued = true
@@ -75,6 +77,7 @@ func queue_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool
 	_q_skill_id = skill_id
 	_q_target_is_enemy = target_is_enemy
 	_q_duration = duration
+	_q_level = level
 	return true
 
 
@@ -124,8 +127,9 @@ func tick(delta: float) -> void:
 		var next_skill: String = _q_skill_id
 		var next_target: bool = _q_target_is_enemy
 		var next_duration: float = _q_duration
+		var next_level: int = _q_level
 		clear_queue()
-		_start(next_cells, next_skill, next_target, next_duration)
+		_start(next_cells, next_skill, next_target, next_duration, next_level)
 
 
 ## Cancels the running swing (no effect applied) and drops the queue. No-op when idle.
@@ -165,12 +169,19 @@ func get_skill_id() -> String:
 	return _skill_id
 
 
+## Story 020: card level of the current swing; while [signal swing_resolved] is being emitted it
+## is still the level of the swing that just resolved. 1 by default.
+func get_level() -> int:
+	return _level
+
+
 ## True if the current swing targets the enemy half.
 func targets_enemy() -> bool:
 	return _target_is_enemy
 
 
-func _start(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, duration: float) -> void:
+func _start(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, duration: float, level: int = 1) -> void:
+	_level = maxi(level, 1)
 	_swinging = true
 	_cells = cells.duplicate()
 	_skill_id = skill_id

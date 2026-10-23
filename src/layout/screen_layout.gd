@@ -78,6 +78,18 @@ const REWARD_CARDS_BOTTOM_RATIO: float = 0.82
 const REWARD_CARD_GAP_RATIO: float = 0.02
 const REWARD_CARD_MAX_WIDTH_RATIO: float = 0.27
 const REWARD_SKIP_TOP_RATIO: float = 0.86
+## Reward screen (Story 020): the "Bỏ 1 lá" slot's width (0.16 * 1280 = 205 px, a narrower fourth
+## card right of the offer); with it the three cards share (1203 - 205 - 3 * 25.6) / 3 = 307 px
+## >= 280 px. Remove list: tiles per row and rows shown (6 x 2 = 12 entries visible), tile height
+## (0.16 * 720 = 115 px >= 64 px) and the gap between the rows (share of height).
+const REWARD_REMOVE_SLOT_WIDTH_RATIO: float = 0.16
+const REWARD_REMOVE_COLS: int = 6
+const REWARD_REMOVE_ROWS: int = 2
+const REWARD_REMOVE_TILE_HEIGHT_RATIO: float = 0.16
+const REWARD_REMOVE_ROW_GAP_RATIO: float = 0.03
+## Boss status readouts (Story 020): the gap CombatView._draw_hud leaves between the HP text
+## baseline and its bar (mirrors the inline 8 px there; the bar itself is CombatView.BAR_HEIGHT).
+const HUD_BAR_TEXT_GAP: float = 8.0
 ## Run HUD (Story 019): left edge (share of width) of the deck label strip in the top margin;
 ## the centred match label (~450 px at 16 px) ends well before 0.72 * 1280 = 922 px.
 const RUN_DECK_LABEL_LEFT_RATIO: float = 0.72
@@ -392,20 +404,67 @@ static func chapter_tile_rects(viewport_size: Vector2, count: int) -> Array[Rect
 ## Reward screen (Story 019): [param count] offer cards side by side under the title band, centred,
 ## left to right in offer order; width = the smaller of the shared width and
 ## [constant REWARD_CARD_MAX_WIDTH_RATIO]. Empty for count <= 0.
-static func reward_card_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+## Story 020: with [param with_remove] the row also reserves the "Bỏ 1 lá" slot
+## ([method reward_remove_slot_rect]) right of the last card, and the cards get narrower.
+static func reward_card_rects(viewport_size: Vector2, count: int, with_remove: bool = false) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
 	var margin: float = viewport_size.x * MARGIN_RATIO
 	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
-	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1)) / count
+	var extra: float = viewport_size.x * REWARD_REMOVE_SLOT_WIDTH_RATIO + gap if with_remove else 0.0
+	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1) - extra) / count
 	var width: float = maxf(minf(shared, viewport_size.x * REWARD_CARD_MAX_WIDTH_RATIO), 0.0)
 	var top: float = viewport_size.y * REWARD_CARDS_TOP_RATIO
 	var height: float = viewport_size.y * REWARD_CARDS_BOTTOM_RATIO - top
-	var left: float = (viewport_size.x - (width * count + gap * (count - 1))) * 0.5
+	var left: float = (viewport_size.x - (width * count + gap * (count - 1) + extra)) * 0.5
 	for i: int in count:
 		rects.append(Rect2(left + (width + gap) * i, top, width, height))
 	return rects
+
+
+## Reward screen (Story 020): the "Bỏ 1 lá" slot — a narrower fourth card right of the
+## [param count] offer cards (same top / height), centred alone when the offer is empty.
+static func reward_remove_slot_rect(viewport_size: Vector2, count: int) -> Rect2:
+	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
+	var width: float = viewport_size.x * REWARD_REMOVE_SLOT_WIDTH_RATIO
+	var top: float = viewport_size.y * REWARD_CARDS_TOP_RATIO
+	var height: float = viewport_size.y * REWARD_CARDS_BOTTOM_RATIO - top
+	var cards: Array[Rect2] = reward_card_rects(viewport_size, count, true)
+	var left: float = (viewport_size.x - width) * 0.5 if cards.is_empty() else cards[cards.size() - 1].end.x + gap
+	return Rect2(left, top, width, height)
+
+
+## Reward screen (Story 020), remove list: one tile per deck entry in deck order, rows of
+## [constant REWARD_REMOVE_COLS] from the left margin under the title band, at most
+## [constant REWARD_REMOVE_ROWS] rows (entries beyond COLS * ROWS get no rect — the view says
+## how many are hidden). Empty for count <= 0.
+static func reward_remove_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
+	var width: float = maxf((viewport_size.x - margin * 2.0 - gap * (REWARD_REMOVE_COLS - 1)) / REWARD_REMOVE_COLS, 0.0)
+	var height: float = viewport_size.y * REWARD_REMOVE_TILE_HEIGHT_RATIO
+	var row_gap: float = viewport_size.y * REWARD_REMOVE_ROW_GAP_RATIO
+	var top: float = viewport_size.y * REWARD_CARDS_TOP_RATIO
+	var visible: int = mini(count, REWARD_REMOVE_COLS * REWARD_REMOVE_ROWS)
+	for i: int in visible:
+		@warning_ignore("integer_division")
+		var row: int = i / REWARD_REMOVE_COLS
+		var col: int = i % REWARD_REMOVE_COLS
+		rects.append(Rect2(margin + (width + gap) * col, top + (height + row_gap) * row, width, height))
+	return rects
+
+
+## Reward screen (Story 020), remove list: the full-width strip between the last tile row and
+## the cancel button ([method reward_skip_button_rect]), for the one-line hint.
+static func reward_remove_hint_rect(viewport_size: Vector2) -> Rect2:
+	var height: float = viewport_size.y * REWARD_REMOVE_TILE_HEIGHT_RATIO
+	var row_gap: float = viewport_size.y * REWARD_REMOVE_ROW_GAP_RATIO
+	var top: float = viewport_size.y * REWARD_CARDS_TOP_RATIO + (height + row_gap) * REWARD_REMOVE_ROWS
+	return Rect2(0.0, top, viewport_size.x, maxf(viewport_size.y * REWARD_SKIP_TOP_RATIO - top, 0.0))
 
 
 ## Reward screen (Story 019): the centred "Bỏ qua" button under the card row (title-button width,
@@ -422,6 +481,21 @@ static func run_deck_label_rect(viewport_size: Vector2) -> Rect2:
 	var left: float = viewport_size.x * RUN_DECK_LABEL_LEFT_RATIO
 	var right: float = viewport_size.x * (1.0 - MARGIN_RATIO)
 	return Rect2(left, 0.0, right - left, viewport_size.y * ARENA_TOP_RATIO)
+
+
+## Boss status readouts (Story 020): the strip right under the boss HP bar (the right half of the
+## HUD band as CombatView._draw_hud lays it out: PAD, HUD_GAP_RATIO, FONT_SIZE, the text-to-bar gap
+## and BAR_HEIGHT), from the bar's bottom down to the top of the board cells (the band's remaining
+## height plus the board area's top padding): 23 px at 1280x720, enough for one small text line.
+static func hud_boss_status_rect(viewport_size: Vector2) -> Rect2:
+	var hud: Rect2 = hud_rect(viewport_size)
+	var gap: float = hud.size.x * CombatView.HUD_GAP_RATIO
+	var half_w: float = (hud.size.x - gap) * 0.5 - CombatView.PAD * 2.0
+	var right_x: float = hud.position.x + CombatView.PAD + half_w + CombatView.PAD * 2.0 + gap
+	var bar_bottom: float = hud.position.y + CombatView.PAD + CombatView.FONT_SIZE + HUD_BAR_TEXT_GAP + CombatView.BAR_HEIGHT
+	var area: Rect2 = board_area_rect(viewport_size)
+	var cells_top: float = area.position.y + area.size.y * BOARD_PAD_RATIO
+	return Rect2(right_x, bar_bottom, half_w, maxf(cells_top - bar_bottom, 0.0))
 
 
 ## Title screen (Story 016): the band across the top that holds the game name, the knife motif

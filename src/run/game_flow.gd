@@ -254,8 +254,8 @@ func get_cards() -> SkillConfig:
 	return _cards
 
 
-## Story 019: the validated rewards.json dictionary (offer_count, rarity_weights, class_tag_bonus,
-## allow_skip, pool_excludes_defaults); loaded once, lazily. The reward view reads allow_skip.
+## Story 019: the validated rewards.json dictionary (offer_count, rarity_weights, allow_skip,
+## allow_remove, min_deck_size, max_card_level, offer_upgrades, pool_excludes_defaults); loaded once, lazily. The reward view reads allow_skip.
 func get_reward_config() -> Dictionary:
 	if _reward_config.is_empty():
 		_reward_config = RewardRoller.load_config()
@@ -544,7 +544,7 @@ func reward_chosen(id: String) -> void:
 	if not _run.pending_reward.has(id):
 		push_warning("GameFlow: reward_chosen('%s') is not in the offer %s, ignored" % [id, str(_run.pending_reward)])
 		return
-	_run.add_card(id)
+	_run.add_card(id, int(get_reward_config().get("max_card_level", SkillConfig.MAX_LEVEL)))
 	_progress.mark_card_seen(id)
 	_run.clear_pending_reward()
 	_save_run()
@@ -565,6 +565,40 @@ func reward_skipped() -> void:
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(false)
+
+
+## Story 020: the reward view asked to remove the deck card at [param index] ("Bỏ 1 lá"): refused with a
+## warning below min_deck_size, when rewards.json allow_remove is false, or with no offer open;
+## otherwise the card goes, the offer is cleared, the run is saved and goes on exactly like a skip.
+func reward_remove_requested(index: int) -> void:
+	if _run == null or not _run.has_pending_reward():
+		push_warning("GameFlow: reward_remove_requested(%d) with no offer open, ignored" % index)
+		return
+	var cfg: Dictionary = get_reward_config()
+	if not bool(cfg.get("allow_remove", true)):
+		push_warning("GameFlow: rewards.json allow_remove is false, ignored")
+		return
+	if not _run.remove_card_at(index, int(cfg.get("min_deck_size", 4))):
+		push_warning("GameFlow: card %d cannot be removed (out of range or deck at minimum)" % index)
+		return
+	_run.clear_pending_reward()
+	_save_run()
+	run_changed.emit()
+	_continue_after_reward(true)
+
+
+## Story 020: the run's deck as {id, level} entries ([] with no run).
+func get_run_deck_entries() -> Array[Dictionary]:
+	if _run == null:
+		return []
+	return _run.deck_entries()
+
+
+## Story 020: id -> highest copy level of the run's deck ({} with no run).
+func get_deck_levels() -> Dictionary:
+	if _run == null:
+		return {}
+	return _run.deck_levels()
 
 
 ## Deprecated (Story 019): there is no retry in a run; no-op with a warning (the HUD still calls it
@@ -618,7 +652,8 @@ func _enter_current_floor() -> void:
 	controller.name = CONTROLLER_NODE
 	controller.floor_label = _config.floor_name(ci, fi)
 	controller.character = _character_dict()
-	controller.deck = _run.deck_ids.duplicate()
+	controller.deck = _run.deck_ids
+	controller.deck_entries = _run.deck_entries()
 	controller.hold_intro = _reward_blocking
 	controller.configure(run_config, _run.match_index, _run.hp)
 	controller.match_started.connect(_on_match_started)
@@ -695,8 +730,7 @@ func _on_match_won() -> void:
 # Rolls the card offer for the run's current position (seeded by run seed + position), marks the
 # cards seen, saves. An empty pool (nothing implemented) skips the offer and goes on.
 func _offer_reward() -> void:
-	var tags: Array[String] = [_run.character_id]
-	var offer: Array[String] = RewardRoller.roll(get_cards(), get_reward_config(), tags, _reward_seed())
+	var offer: Array[String] = RewardRoller.roll(get_cards(), get_reward_config(), _reward_seed(), [], _run.deck_levels())
 	for id: String in offer:
 		_progress.mark_card_seen(id)
 	_run.set_pending_reward(offer)
@@ -727,7 +761,8 @@ func _continue_after_reward(deck_changed: bool) -> void:
 	if _controller.get_state().get_phase() == RunState.Phase.WON:
 		_enter_current_floor()
 		return
-	_controller.deck = _run.deck_ids.duplicate()
+	_controller.deck = _run.deck_ids
+	_controller.deck_entries = _run.deck_entries()
 	_controller.advance_requested()
 
 
@@ -774,8 +809,7 @@ func _load_progress(progress_mode: String) -> ProgressState:
 			session.floor_index = clampi(DEMO_RUN_FLOOR, 0, _config.floor_count(0) - 1)
 			session.match_index = clampi(DEMO_RUN_MATCH, 0, _config.match_count(0, session.floor_index) - 1)
 			session.hp = DEMO_RUN_HP
-			var tags: Array[String] = [session.character_id]
-			for id: String in RewardRoller.roll(get_cards(), get_reward_config(), tags, DEMO_RUN_SEED):
+			for id: String in RewardRoller.roll(get_cards(), get_reward_config(), DEMO_RUN_SEED, [], session.deck_levels()):
 				session.add_card(id)
 			state.set_run(session)
 			return state

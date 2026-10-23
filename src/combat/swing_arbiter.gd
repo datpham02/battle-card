@@ -10,7 +10,7 @@ extends RefCounted
 ## Implements: Story 009.
 
 ## Emitted after a swing's effects were applied. [param result] is CutEffects' dictionary
-## {hit, damage, pushed, cell} extended with {cells, skill_id}. [param side] = CombatState.Side.
+## {hit, damage, pushed, cell} extended with {cells, skill_id, level, pin_bonus}. [param side] = CombatState.Side.
 signal swing_resolved(side: int, result: Dictionary)
 ## Emitted when a hit cancelled the opponent's running swing; [param victim_side] is the
 ## side whose swing was cancelled, [param cells] / [param skill_id] that cancelled swing.
@@ -86,14 +86,15 @@ func _step(slice: float) -> void:
 	_pending.clear()
 	var trade: bool = batch.size() > 1
 	for entry: Dictionary in batch:
-		_settle(int(entry["side"]), entry["cells"] as Array[Vector2i], str(entry["skill_id"]), trade)
+		_settle(int(entry["side"]), entry["cells"] as Array[Vector2i], str(entry["skill_id"]), trade, int(entry["level"]))
 
 
-func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool) -> void:
+func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int = 1) -> void:
 	var modifier: Callable = player_damage_modifier if side == CombatState.Side.PLAYER else Callable()
-	var result: Dictionary = CutEffects.apply(_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier)
+	var result: Dictionary = CutEffects.apply(_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level)
 	result["cells"] = cells
 	result["skill_id"] = skill_id
+	result["level"] = level
 	swing_resolved.emit(side, result)
 	if trade or not bool(result["hit"]):
 		return
@@ -107,7 +108,7 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool) -
 
 
 func _on_actor_resolved(cells: Array[Vector2i], skill_id: String, side: int) -> void:
-	_pending.append({"side": side, "cells": cells, "skill_id": skill_id})
+	_pending.append({"side": side, "cells": cells, "skill_id": skill_id, "level": (_actors[side] as CutActor).get_level()})
 
 
 func _cancel_all() -> void:

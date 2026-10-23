@@ -97,14 +97,6 @@ ui.rarity.epic,Sử thi,Epic
 ui.hud.you,BẠN,YOU
 ui.hud.unit_hp,%s  HP %d/%d,%s  HP %d/%d
 ui.hud.unit_dead,%s  GỤC,%s  DOWN
-card.kiem_khi.name,Kiếm khí,Sword Qi
-card.kiem_khi.desc,Sát thương theo số ô,Damage per cell
-card.chan_phong.name,Chấn phong,Gale Burst
-card.chan_phong.desc,"Đẩy lùi 1 ô, sát thương nhẹ","Pushes 1 cell, light damage"
-card.hoa_tran.name,Hỏa trận,Fire Sigil
-card.hoa_tran.desc,Đốt các ô trong 3 s,Burns the cells for 3 s
-card.bang_phong.name,Băng phong,Frost Seal
-card.bang_phong.desc,"Đóng băng 1,2 s",Freezes for 1.2 s
 chapter.ch1.name,Rừng Sương,Misty Forest
 chapter.ch2.name,Hầm Ngục,The Dungeon
 floor.ch1.f1.name,Bìa rừng,Forest Edge
@@ -146,11 +138,53 @@ passive.wide_caster.name,Pháp trận rộng,Wide Caster
 passive.wide_caster.desc,Phép từ 5 ô trở lên niệm nhanh hơn 15%.,Spells covering 5 or more cells cast 15% faster.
 passive.quick_blade.name,Lưỡi kiếm nhanh,Quick Blade
 passive.quick_blade.desc,Phép tối đa 3 ô gây thêm 25% sát thương.,Spells covering 3 cells or fewer deal 25% more damage.
-card.cuong_phong.name,Cuồng phong,Gale Storm
-card.cuong_phong.desc,"Đẩy lùi 1 ô, sát thương vừa","Pushes 1 cell, moderate damage"
-card.liet_hoa.name,Liệt hỏa,Blaze
-card.liet_hoa.desc,Đốt các ô trong 4 s,Burns the cells for 4 s
+card.kiem_khi.name,Kiếm khí,Sword Qi
+card.kiem_khi.desc,Sát thương theo số ô.,Damage per cell.
+card.chan_phong.name,Chấn phong,Gale Burst
+card.chan_phong.desc,"Đẩy lùi 1 ô, sát thương nhẹ.","Pushes 1 cell, light damage."
 card.kiem_vu.name,Kiếm vũ,Blade Dance
-card.kiem_vu.desc,Sát thương mạnh theo số ô,Heavy damage per cell
+card.kiem_vu.desc,Sát thương mạnh theo số ô. Địch bị ghim ăn thêm.,Heavy damage per cell. Pinned foes take extra.
+card.thiet_kiem.name,Thiết kiếm,Iron Blade
+card.thiet_kiem.desc,"Nhát chém chắc tay, hồi nhanh.",A steady slash with a short recovery.
+card.dai_dao.name,Đại đao,Broadsword
+card.dai_dao.desc,"Cần nhiều ô, đổi lại một nhát nặng tay.",Needs many cells for one heavy blow.
+card.xung_kich.name,Xung kích,Shockwave
+card.xung_kich.desc,"Đẩy lùi 2 ô, sát thương vừa.","Pushes 2 cells, moderate damage."
+card.hoa_tinh.name,Hỏa tinh,Ember
+card.hoa_tinh.desc,"Đốt các ô trong 2,5 s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.",Burns the cells for 2.5 s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.hoa_xa.name,Hỏa xà,Fire Serpent
+card.hoa_xa.desc,Đốt nhanh trên ít ô trong 2 s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,A quick burn over few cells for 2 s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.suong_mong.name,Sương mỏng,Thin Mist
+card.suong_mong.desc,"Ghim 0,8 s. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 0.8 s. A pinned foe takes extra damage from blade strikes.
+card.bang_chau.name,Băng châu,Frost Pearl
+card.bang_chau.desc,"Ghim 0,7 s trên ít ô. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 0.7 s over few cells. A pinned foe takes extra damage from blade strikes.
+card.hoa_tran.name,Hỏa trận,Fire Sigil
+card.hoa_tran.desc,Đốt các ô trong 3 s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for 3 s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.bang_phong.name,Băng phong,Frost Seal
+card.bang_phong.desc,"Ghim 1,2 s. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 1.2 s. A pinned foe takes extra damage from blade strikes.
+card.cuong_phong.name,Cuồng phong,Gale Storm
+card.cuong_phong.desc,"Đẩy lùi 1 ô, sát thương vừa.","Pushes 1 cell, moderate damage."
+card.liet_hoa.name,Liệt hỏa,Blaze
+card.liet_hoa.desc,Đốt các ô trong 4 s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for 4 s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.kiem_than.name,Kiếm thần,Divine Blade
+card.kiem_than.desc,"Nhát chém sắc, ăn thêm nếu địch bị ghim.",A keen slash; extra against pinned foes.
+card.song_kiem.name,Song kiếm,Twin Blades
+card.song_kiem.desc,"Cần sáu ô, cooldown dài, sát thương rất cao.","Six cells, long recovery, huge damage."
+card.thien_lang.name,Thiên lãng,Heaven Wave
+card.thien_lang.desc,"Đẩy lùi 2 ô, sát thương khá.","Pushes 2 cells, solid damage."
 card.han_bang.name,Hàn băng,Deep Frost
-card.han_bang.desc,"Đóng băng 1,8 s",Freezes for 1.8 s
+card.han_bang.desc,"Ghim 1,8 s. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 1.8 s. A pinned foe takes extra damage from blade strikes.
+card.thien_hoa.name,Thiên hỏa,Heaven Fire
+card.thien_hoa.desc,"Đốt các ô trong 5 s, cháy dữ dội. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.",Burns the cells fiercely for 5 s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.tu_kiem.name,Tuyệt kiếm,Peerless Blade
+card.tu_kiem.desc,"Một nhát duy nhất, sát thương cực lớn.",One single stroke of immense damage.
+ui.card.level_suffix,+%d,+%d
+ui.reward.upgrade_to,Nâng cấp → +%d,Upgrade → +%d
+ui.reward.damage,%d sát thương/ô,%d dmg/cell
+ui.reward.remove,Bỏ 1 lá,Remove a card
+ui.reward.remove_title,CHỌN LÁ ĐỂ BỎ,PICK A CARD TO REMOVE
+ui.reward.cancel,Thôi,Cancel
+ui.reward.min_deck,Bộ đã ở mức tối thiểu,Deck is at minimum size
+ui.reward.more,… và %d lá nữa,… and %d more
+ui.hud.burn_stacks,Cháy ×%d,Burn ×%d
+ui.hud.pinned,Ghim,Pinned

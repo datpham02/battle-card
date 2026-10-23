@@ -56,6 +56,8 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 @export var floor_label: String = ""
 ## Player deck card ids for the battles (Story 019 fills it); empty = the default deck.
 @export var deck: Array[String] = []
+## Story 020: the deck as {id, level} entries; empty = use [member deck] (all level 1).
+@export var deck_entries: Array[Dictionary] = []
 ## Story 018: the chosen character (a CharacterConfig.get_character dictionary); empty = the plain
 ## combat.json player (old behaviour). Becomes match_params["character"]; its starter_deck is the
 ## deck when [member deck] is empty. Set by GameFlow BEFORE add_child.
@@ -275,7 +277,9 @@ func _spawn_battle() -> void:
 	params["floor_label"] = floor_label
 	if not character.is_empty():
 		params["character"] = character.duplicate(true)
-	if not deck.is_empty():
+	if not deck_entries.is_empty():
+		params["deck"] = deck_entries.duplicate(true)
+	elif not deck.is_empty():
 		params["deck"] = deck.duplicate()
 	elif character.has("starter_deck"):
 		params["deck"] = (character["starter_deck"] as Array).duplicate()

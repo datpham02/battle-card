@@ -177,12 +177,13 @@ func _ready() -> void:
 	_cut_config = CutConfig.load_from_file()
 	_skill_config = SkillConfig.load_from_file()
 	_cooldowns = SkillCooldowns.new()
-	_deck = Deck.new(_deck_ids(), drops_seed if drops_seed >= 0 else randi())
+	_deck = Deck.from_array(_deck_ids(),drops_seed if drops_seed >= 0 else randi())
 	_focus = FocusController.new(_skill_config)
 	if character.has("focus_max_sec"):
 		_focus.set_max_sec_override(float(character["focus_max_sec"]))
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
+	_cut_flow.level_of = Callable(self, "get_card_level")
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
 	_apply_brain_params(brain_config)
@@ -199,6 +200,7 @@ func _ready() -> void:
 	if not boss_set_override.is_empty() and not _boss.get_brain().use_set(boss_set_override):
 		push_warning("CombatView: unknown boss weight set '%s'" % boss_set_override)
 	_status = StatusEffects.new()
+	_config.configure_status(_status)
 	_mover.set_status(_status)
 	_boss.set_status(_status)
 	_learning = BossLearning.new(brain_config.learning)
@@ -531,15 +533,17 @@ func get_hand() -> Array[String]:
 
 
 # match_params["deck"] ids that exist in cards.json; absent, invalid or empty = default deck.
-func _deck_ids() -> Array[String]:
-	var ids: Array[String] = []
+func _deck_ids() -> Array:
+	# Story 020: entries are ids (level 1) or {id, level} dictionaries; Deck.from_array takes both.
+	var ids: Array = []
 	var raw: Variant = match_params.get("deck", [])
 	if typeof(raw) == TYPE_ARRAY:
-		for id: Variant in raw as Array:
-			if _skill_config.has_skill(str(id)):
-				ids.append(str(id))
+		for entry: Variant in raw as Array:
+			var id: String = str((entry as Dictionary).get("id", "")) if typeof(entry) == TYPE_DICTIONARY else str(entry)
+			if _skill_config.has_skill(id):
+				ids.append(entry)
 			else:
-				push_warning("CombatView: deck card '%s' unknown, dropped" % str(id))
+				push_warning("CombatView: deck card '%s' unknown, dropped" % id)
 	elif match_params.has("deck"):
 		push_warning("CombatView: match_params deck must be an array, using the default deck")
 	if ids.is_empty():
@@ -656,8 +660,43 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 
 
 func _begin_cut(skill_id: String, cells: Array[Vector2i]) -> void:
-	if _cut_actor.begin_swing(cells, skill_id, true):
-		_cooldowns.start(skill_id, float(_skill_config.get_skill(skill_id).get("cooldown_sec", 0.0)))
+	var level: int = get_card_level(skill_id)
+	if _cut_actor.begin_swing(cells, skill_id, true, level):
+		_cooldowns.start(skill_id, float(_resolved_card(skill_id, level).get("cooldown_sec", 0.0)))
+
+
+## Story 020: the player's level of card [param skill_id] (highest copy in the deck; 1 when the
+## deck has no levels or does not hold the card).
+func get_card_level(skill_id: String) -> int:
+	if _deck != null and _deck.has_method("level_of"):
+		return maxi(int(_deck.call("level_of", skill_id)), 1)
+	return 1
+
+
+## Story 020 HUD hook: burn stacks on the boss's half (highest over its burning cells; 0 = none).
+func get_burn_stacks() -> int:
+	var cells: Array[Vector2i] = []
+	for cell: Vector2i in _status.burning_cells():
+		if _grid.is_enemy_cell(cell):
+			cells.append(cell)
+	return _status.max_stacks_on(cells)
+
+
+## Story 020 HUD hook: true while the boss is pinned (Ghim: player sword hits are multiplied).
+func is_boss_pinned() -> bool:
+	return _status.is_pinned(CombatState.Side.ENEMY)
+
+
+## Story 020: true when the player's most recent resolved swing got the Ghim multiplier.
+func get_last_hit_pin_bonus() -> bool:
+	return bool(_feedback.get("pin_bonus", false))
+
+
+# The card dict at [param level] (resolved when SkillConfig supports levels).
+func _resolved_card(skill_id: String, level: int) -> Dictionary:
+	if _skill_config.has_method("resolved"):
+		return _skill_config.call("resolved", skill_id, level) as Dictionary
+	return _skill_config.get_skill(skill_id)
 
 
 # Arbiter result of either side: stores the HIT/MISS marker for that side's cut.
@@ -665,6 +704,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 	var feedback: Dictionary = {
 		"cells": result["cells"], "hit": bool(result["hit"]), "damage": float(result["damage"]),
 		"cell": result["cell"], "time_left": FEEDBACK_SEC,
+		"pin_bonus": bool(result.get("pin_bonus", false)),
 	}
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback

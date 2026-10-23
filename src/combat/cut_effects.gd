@@ -18,6 +18,10 @@ static var _warned_no_status: bool = false
 ## null [param status] burn/pin do nothing (warning once). Story 018: an optional
 ## [param damage_modifier] Callable(cells: int, damage: float) -> float scales the FINAL damage number
 ## of a damage/push hit (the attacker's passive); invalid = unchanged.
+## Story 020: [param level] (card level 1..) selects the upgraded numbers through
+## SkillConfig.resolved. Damage = the card's damage_per_cell * cells (fallback: the cut config's
+## base_damage_per_cell), then the Ghim multiplier while the target is pinned (result "pin_bonus"
+## true), then the passive modifier.
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -27,7 +31,8 @@ static func apply(
 	cut_config: CutConfig,
 	skill_config: SkillConfig,
 	status: StatusEffects = null,
-	damage_modifier: Callable = Callable()
+	damage_modifier: Callable = Callable(),
+	level: int = 1
 ) -> Dictionary:
 	var target_side: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
 	var target_cell: Vector2i = state.cell_of(target_side)
@@ -35,11 +40,12 @@ static func apply(
 		"hit": false, "damage": 0.0, "pushed": false, "cell": target_cell,
 		"burning": false, "pinned": false,
 	}
-	var skill: Dictionary = skill_config.get_skill(skill_id)
+	result["pin_bonus"] = false
+	var skill: Dictionary = _resolve(skill_config, skill_id, level)
 	if skill.is_empty() or not bool(skill["implemented"]):
 		push_warning("CutEffects: skill '%s' is not implemented, using slash" % skill_id)
 		skill_id = SkillConfig.FALLBACK_SKILL
-		skill = skill_config.get_skill(skill_id)
+		skill = _resolve(skill_config, skill_id, 1)
 	var effect: String = str(skill.get("effect", "damage"))
 	var inside: bool = cells.has(target_cell)
 	if effect == "burn" or effect == "pin":
@@ -61,9 +67,14 @@ static func apply(
 		return result
 	if not inside:
 		return result
-	var multiplier: float = float(skill.get("damage_multiplier", 1.0))
 	var push_cells: int = int(skill.get("push_cells", 0))
-	var damage: float = cut_config.slash_damage(cells.size()) * multiplier
+	var per_cell: float = float(skill.get("damage_per_cell", cut_config.base_damage_per_cell * float(skill.get("damage_multiplier", 1.0))))
+	var damage: float = per_cell * float(cells.size())
+	if status != null:
+		var pin_mult: float = status.damage_mult_against(target_side)
+		if pin_mult != 1.0:
+			damage *= pin_mult
+			result["pin_bonus"] = true
 	if damage_modifier.is_valid():
 		damage = float(damage_modifier.call(cells.size(), damage))
 	result["hit"] = true
@@ -72,6 +83,13 @@ static func apply(
 	if push_cells > 0:
 		result["pushed"] = _push(state, grid, target_side, push_cells)
 	return result
+
+
+# The card dict at [param level]: SkillConfig.resolved when available, else the plain entry.
+static func _resolve(skill_config: SkillConfig, skill_id: String, level: int) -> Dictionary:
+	if skill_config.has_method("resolved"):
+		return skill_config.call("resolved", skill_id, level) as Dictionary
+	return skill_config.get_skill(skill_id)
 
 
 # Moves the unit up to [param steps] cells away from the divider; stops at a missing cell

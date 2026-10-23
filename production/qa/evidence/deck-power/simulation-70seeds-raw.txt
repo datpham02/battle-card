@@ -1,0 +1,59 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim: seeds=70 dt=0.050 timeout=180s policies=["always_skip", "random", "build"] characters=["kiem_si", "phap_su", "sat_thu"]
+  ... 25/70 seeds, 175.9 s
+  ... 50/70 seeds, 352.6 s
+
+| character | policy | chapter win % | mean floors cleared | mean HP at end (wins) | mean final deck size | mean deck level sum | mean matches won | timeouts/run | mean match sec | dmg taken/match | dmg dealt/match | bot hit rate |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | always_skip | 18.6 | 1.57 | 38.0 | 6.00 | 6.00 | 7.20 | 0.00 | 50.6 | 34.3 | 106.4 | 0.69 |
+| kiem_si | random | 17.1 | 1.40 | 40.4 | 9.79 | 11.87 | 6.80 | 0.00 | 49.4 | 33.6 | 106.7 | 0.68 |
+| kiem_si | build | 38.6 | 1.91 | 38.7 | 7.50 | 11.54 | 8.13 | 0.00 | 46.2 | 29.3 | 110.5 | 0.68 |
+| phap_su | always_skip | 2.9 | 0.93 | 22.0 | 6.00 | 6.00 | 5.06 | 0.00 | 47.7 | 30.7 | 98.7 | 0.70 |
+| phap_su | random | 4.3 | 0.96 | 31.0 | 9.04 | 10.66 | 5.30 | 0.00 | 47.4 | 30.0 | 100.0 | 0.69 |
+| phap_su | build | 7.1 | 1.13 | 42.6 | 7.39 | 10.41 | 5.81 | 0.00 | 46.0 | 30.0 | 102.7 | 0.68 |
+| sat_thu | always_skip | 20.0 | 1.71 | 34.1 | 6.00 | 6.00 | 7.89 | 0.00 | 41.9 | 26.0 | 110.5 | 0.69 |
+| sat_thu | random | 20.0 | 1.67 | 33.6 | 10.43 | 12.74 | 7.74 | 0.00 | 39.7 | 25.7 | 108.8 | 0.69 |
+| sat_thu | build | 41.4 | 2.03 | 42.8 | 7.53 | 11.84 | 8.67 | 0.00 | 37.4 | 23.2 | 112.1 | 0.68 |
+
+MATCH BREAKDOWN (always_skip): | character | match | played | win % | mean sec | taken | dealt | bot hit rate | boss hit rate |
+| kiem_si | goblin_scout | 70 | 100.0 | 21.6 | 7.9 | 85.6 | 0.88 | 0.53 |
+| kiem_si | wolf | 70 | 98.6 | 46.1 | 26.0 | 101.5 | 0.85 | 0.47 |
+| kiem_si | goblin_chief | 69 | 87.0 | 67.5 | 52.8 | 113.4 | 0.58 | 0.16 |
+| kiem_si | goblin_warrior | 60 | 98.3 | 25.0 | 9.4 | 93.2 | 0.84 | 0.36 |
+| kiem_si | dire_wolf | 59 | 96.6 | 53.1 | 22.0 | 111.6 | 0.85 | 0.32 |
+| kiem_si | goblin_shaman | 57 | 93.0 | 68.8 | 29.8 | 129.5 | 0.67 | 0.10 |
+| kiem_si | wolf_alpha | 53 | 69.8 | 81.3 | 65.8 | 131.4 | 0.56 | 0.14 |
+| kiem_si | goblin_archer | 37 | 94.6 | 46.3 | 24.5 | 101.7 | 0.86 | 0.42 |
+| kiem_si | goblin_brute | 35 | 97.1 | 62.0 | 30.3 | 119.5 | 0.72 | 0.15 |
+| kiem_si | goblin_warlock | 34 | 50.0 | 70.0 | 64.0 | 115.9 | 0.59 | 0.24 |
+| kiem_si | forest_witch | 17 | 76.5 | 72.7 | 36.2 | 142.6 | 0.21 | 0.09 |
+| phap_su | goblin_scout | 70 | 100.0 | 22.2 | 9.8 | 85.7 | 0.87 | 0.46 |
+| phap_su | wolf | 70 | 97.1 | 48.0 | 25.0 | 101.4 | 0.85 | 0.46 |
+| phap_su | goblin_chief | 68 | 73.5 | 67.1 | 45.1 | 105.4 | 0.56 | 0.14 |
+| phap_su | goblin_warrior | 50 | 98.0 | 26.8 | 9.4 | 93.8 | 0.82 | 0.35 |
+| phap_su | dire_wolf | 49 | 89.8 | 53.7 | 23.5 | 108.7 | 0.84 | 0.32 |
+| phap_su | goblin_shaman | 44 | 81.8 | 70.3 | 27.2 | 124.1 | 0.67 | 0.09 |
+| phap_su | wolf_alpha | 36 | 36.1 | 78.1 | 65.2 | 112.2 | 0.52 | 0.15 |
+| phap_su | goblin_archer | 13 | 76.9 | 45.3 | 35.4 | 90.0 | 0.83 | 0.52 |
+| phap_su | goblin_brute | 10 | 90.0 | 59.9 | 19.8 | 114.6 | 0.74 | 0.13 |
+| phap_su | goblin_warlock | 9 | 33.3 | 64.7 | 62.9 | 102.0 | 0.60 | 0.23 |
+| phap_su | forest_witch | 3 | 66.7 | 72.7 | 39.3 | 136.7 | 0.22 | 0.11 |
+| sat_thu | goblin_scout | 70 | 100.0 | 17.9 | 3.8 | 87.8 | 0.86 | 0.29 |
+| sat_thu | wolf | 70 | 95.7 | 38.5 | 20.0 | 104.9 | 0.84 | 0.48 |
+| sat_thu | goblin_chief | 67 | 92.5 | 56.3 | 36.7 | 118.4 | 0.58 | 0.14 |
+| sat_thu | goblin_warrior | 62 | 100.0 | 19.2 | 5.4 | 93.4 | 0.87 | 0.30 |
+| sat_thu | dire_wolf | 62 | 100.0 | 42.1 | 19.5 | 112.7 | 0.85 | 0.38 |
+| sat_thu | goblin_shaman | 62 | 98.4 | 55.4 | 18.9 | 134.9 | 0.71 | 0.09 |
+| sat_thu | wolf_alpha | 61 | 72.1 | 63.1 | 50.0 | 132.3 | 0.57 | 0.14 |
+| sat_thu | goblin_archer | 44 | 97.7 | 37.1 | 14.5 | 103.7 | 0.87 | 0.38 |
+| sat_thu | goblin_brute | 43 | 95.3 | 46.5 | 22.0 | 118.7 | 0.74 | 0.15 |
+| sat_thu | goblin_warlock | 41 | 63.4 | 54.8 | 51.4 | 119.8 | 0.62 | 0.25 |
+| sat_thu | forest_witch | 26 | 53.8 | 58.5 | 42.2 | 123.8 | 0.20 | 0.13 |
+
+VERDICT kiem_si: FAIL — build win 38.6% vs skip 18.6% (Δ 20.0 pp, need >= 25); HP at end build 38.7 vs skip 38.0
+VERDICT phap_su: FAIL — build win 7.1% vs skip 2.9% (Δ 4.3 pp, need >= 25); HP at end build 42.6 vs skip 22.0
+VERDICT sat_thu: FAIL — build win 41.4% vs skip 20.0% (Δ 21.4 pp, need >= 25); HP at end build 42.8 vs skip 34.1
+DECK DIFFERENCE (build, same seed, multiset Jaccard distance): all runs 0.562 (210 pairs); runs where all 3 reached floor 3: 0.506 (33 pairs); per pair: kiem_si/phap_su=0.52 kiem_si/sat_thu=0.51 phap_su/sat_thu=0.65 — PASS (need > 0.5)
+RESULT: FAIL
+runtime: 477.6 s

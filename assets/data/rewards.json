@@ -1,7 +1,10 @@
 {
 	"offer_count": 3,
 	"rarity_weights": {"common": 70, "rare": 25, "epic": 5},
-	"class_tag_bonus": 2.0,
 	"allow_skip": true,
+	"allow_remove": true,
+	"min_deck_size": 4,
+	"max_card_level": 3,
+	"offer_upgrades": true,
 	"pool_excludes_defaults": false
 }

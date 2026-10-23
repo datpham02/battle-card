@@ -17,6 +17,8 @@ var _time_left: float = 0.0
 var _labels: Array[String] = []
 var _cells: Array[Vector2i] = []
 var _hand: Array[String] = []
+## Story 020: Callable(id: String) -> int giving the player's card level; invalid = level 1.
+var level_of: Callable = Callable()
 
 
 func _init(skill_config: SkillConfig, cooldowns: SkillCooldowns) -> void:
@@ -62,7 +64,7 @@ func choose(skill_id: String) -> bool:
 
 # Availability check + close + emit, without the hand test (the timeout path uses it).
 func _emit_choice(skill_id: String) -> bool:
-	var check: Dictionary = SkillAvailability.check(_config, _cooldowns, skill_id, _cells.size())
+	var check: Dictionary = SkillAvailability.check(_config, _cooldowns, skill_id, _cells.size(), card_level(skill_id))
 	if not bool(check["available"]):
 		return false
 	var labels: Array[String] = _labels
@@ -74,6 +76,13 @@ func _emit_choice(skill_id: String) -> bool:
 	_hand = []
 	skill_chosen.emit(skill_id, labels, cells)
 	return true
+
+
+## Level used for [param skill_id] (1 without a [member level_of] callable).
+func card_level(skill_id: String) -> int:
+	if level_of.is_valid():
+		return maxi(int(level_of.call(skill_id)), 1)
+	return 1
 
 
 ## True while the menu is open.

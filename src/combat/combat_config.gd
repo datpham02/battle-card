@@ -37,6 +37,14 @@ var step_cooldown_min_sec: float = 0.18
 var step_cooldown_max_sec: float = 0.60
 ## DEPRECATED absolute override of the computed player step cooldown; negative = not set.
 var player_step_cooldown_sec: float = -1.0
+## Story 020 keywords. These are the ONLY built-in fallbacks (used when combat.json omits or
+## invalidates a key); the tuned values live in combat.json.
+## Ghim: damage multiplier against a pinned unit (>= 1).
+var pinned_damage_mult: float = 1.5
+## Dot: seconds added to a re-ignited burning cell, extra damage per tick per extra stack, stack cap.
+var burn_stack_extend_sec: float = 2.0
+var burn_stack_tick_bonus: float = 1.0
+var burn_max_stacks: int = 3
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -73,6 +81,7 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	config.feedback_sec = maxf(float(data.get("feedback_sec", config.feedback_sec)), 0.0)
 	config.pause_lockout_sec = maxf(float(data.get("pause_lockout_sec", config.pause_lockout_sec)), 0.0)
 	config._parse_step_cooldown(data)
+	config._parse_keywords(data)
 	return config
 
 
@@ -95,6 +104,25 @@ func use_grid(new_grid: BoardGrid) -> void:
 	missing_cells = new_grid.missing_side_cells()
 	player_start_cell = BoardGrid.NO_CELL
 	enemy_start_cell = BoardGrid.NO_CELL
+
+
+func _parse_keywords(data: Dictionary) -> void:
+	var mult: float = float(data.get("pinned_damage_mult", pinned_damage_mult))
+	var extend: float = float(data.get("burn_stack_extend_sec", burn_stack_extend_sec))
+	var bonus: float = float(data.get("burn_stack_tick_bonus", burn_stack_tick_bonus))
+	var stacks: int = int(data.get("burn_max_stacks", burn_max_stacks))
+	if mult >= 1.0 and extend >= 0.0 and bonus >= 0.0 and stacks >= 1:
+		pinned_damage_mult = mult
+		burn_stack_extend_sec = extend
+		burn_stack_tick_bonus = bonus
+		burn_max_stacks = stacks
+	else:
+		push_warning("CombatConfig: invalid keyword values (pinned_damage_mult>=1, burn_stack_*>=0, burn_max_stacks>=1), using defaults")
+
+
+## Applies the keyword numbers to [param status].
+func configure_status(status: StatusEffects) -> void:
+	status.configure(burn_stack_extend_sec, burn_stack_tick_bonus, burn_max_stacks, pinned_damage_mult)
 
 
 func _parse_step_cooldown(data: Dictionary) -> void:

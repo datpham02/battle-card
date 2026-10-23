@@ -29,6 +29,10 @@ extends Node2D
 ## floors outside a run (test floors, no GameFlow): a run floor never shows them, the flow advances
 ## itself after the offer. A small "Bộ: N lá" label (ScreenLayout.run_deck_label_rect) sits in the
 ## top margin right of the match label while a run is live. All strings are TEXT_* keys through tr().
+##
+## Story 020: the result panels add ONE small line listing the final deck ("Kiếm khí +2 · Hỏa trận
+## · …": names from SkillConfig.resolved, the level suffix when the level is above 1), cut with an
+## ellipsis to the panel's inner width (font.get_string_size).
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const BAND_COLOR: Color = Color(0.08, 0.07, 0.06, 0.78)
@@ -68,8 +72,13 @@ const PANEL_LINE1_BASELINE: float = 0.29
 const PANEL_LINE2_BASELINE: float = 0.40
 const PANEL_LINE3_BASELINE: float = 0.51
 const PANEL_NOTE_BASELINE: float = 0.60
-## Story 019 result panels: up to five lines under the title, above the button (0.75).
-const RESULT_LINE_BASELINES: Array[float] = [0.28, 0.37, 0.46, 0.55, 0.64]
+## Story 019 / 020 result panels: up to six lines under the title, above the button (0.75); the
+## fifth slot is the small deck line.
+const RESULT_LINE_BASELINES: Array[float] = [0.27, 0.35, 0.43, 0.51, 0.585, 0.66]
+## Story 020: separator between deck entries, the cut mark, and the gap before a level suffix.
+const DECK_LINE_SEPARATOR: String = " · "
+const DECK_LINE_ELLIPSIS: String = "…"
+const LEVEL_SEPARATOR: String = " "
 
 const TEXT_MATCH_LABEL: String = "ui.run_hud.match_label"
 const TEXT_MATCH_LABEL_BOSS: String = "ui.run_hud.match_label_boss"
@@ -111,6 +120,8 @@ const TEXT_RUN_POSITION: String = "ui.run_hud.run_position"
 ## "Bộ: %d lá" on the result panel.
 const TEXT_RUN_DECK: String = "ui.run_hud.run_deck"
 const TEXT_BACK_TO_TITLE: String = "ui.run_hud.back_to_title"
+## Story 020: "+%d" after a card name on the result panels' deck line.
+const TEXT_LEVEL_SUFFIX: String = "ui.card.level_suffix"
 
 ## Path to the GameFlow (a sibling under Main) that owns the controller.
 @export var flow_path: NodePath = NodePath("../GameFlow")
@@ -424,31 +435,58 @@ func _draw_lost(vp: Vector2) -> void:
 	_draw_buttons(vp)
 
 
-# Story 019: RUN KẾT THÚC (character, chapter, floor · match, deck size, time) or RUN THẮNG
-# (chapter, deck size, time), with the one "Về title" button.
+# Story 019: RUN KẾT THÚC (character, chapter, floor · match, deck size, deck line, time) or RUN
+# THẮNG (chapter, deck size, deck line, time), with the one "Về title" button. Story 020: the deck
+# line (small font) lists the final deck in one line, cut to the panel's inner width.
 func _draw_run_result(vp: Vector2) -> void:
 	var run: RunSession = _flow.get_run()
 	var panel: Rect2 = _draw_panel(vp)
 	var won: bool = _flow.get_run_result() == GameFlow.RunResult.WON
+	var inner_width: float = panel.size.x - vp.y * ScreenLayout.RUN_PANEL_INSET_RATIO * 2.0
 	var lines: Array[String] = []
 	var colors: Array[Color] = []
+	var sizes: Array[int] = []
 	if run != null:
 		var chapter: String = _flow.get_config().chapter_name(run.chapter_index)
+		var deck_line: String = _deck_line(run, inner_width, SMALL_FONT_SIZE)
 		if won:
-			lines = [chapter, tr(TEXT_RUN_DECK) % run.deck_ids.size(), tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
-			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_WHITE]
+			lines = [chapter, tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
+			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
+			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
 		else:
 			var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 			lines = [
 				tr(str(character.get("name_key", run.character_id))), chapter,
 				tr(TEXT_RUN_POSITION) % [run.floor_index + 1, run.match_index + 1],
-				tr(TEXT_RUN_DECK) % run.deck_ids.size(), tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec),
+				tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec),
 			]
-			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_LIGHT, TEXT_WHITE]
+			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
+			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
 	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_RUN_WON_TITLE if won else TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_WIN if won else TEXT_LOSE)
 	for i: int in mini(lines.size(), RESULT_LINE_BASELINES.size()):
-		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], LINE_FONT_SIZE, colors[i])
+		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], sizes[i], colors[i])
 	_draw_buttons(vp)
+
+
+# Story 020: the run's deck as one line ("Kiếm khí +2 · Hỏa trận · …", deck order, level suffix
+# above level 1). Entries are dropped from the end and replaced by an ellipsis until the line fits
+# [param max_width] at [param font_size]; "" for an empty deck.
+func _deck_line(run: RunSession, max_width: float, font_size: int) -> String:
+	var cards: SkillConfig = _flow.get_cards()
+	var parts: Array[String] = []
+	for entry: Dictionary in run.deck_entries():
+		var id: String = str(entry.get("id", ""))
+		var level: int = int(entry.get("level", 1))
+		var name: String = tr(str(cards.resolved(id, level).get("name_key", id)))
+		if level > 1:
+			name += LEVEL_SEPARATOR + tr(TEXT_LEVEL_SUFFIX) % level
+		parts.append(name)
+	var font: Font = ThemeDB.fallback_font
+	var line: String = DECK_LINE_SEPARATOR.join(parts)
+	while parts.size() > 1 and font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x > max_width:
+		parts.pop_back()
+		line = DECK_LINE_SEPARATOR.join(parts) + DECK_LINE_SEPARATOR + DECK_LINE_ELLIPSIS
+	return line
 
 
 # Run clock as m:ss (seconds floored), like RunState.get_elapsed_text.

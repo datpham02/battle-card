@@ -105,6 +105,16 @@ const FEINT_INSET: float = 4.0
 const LEARNING_FONT_SIZE: int = 14
 const LEARNING_COLOR: Color = Color(0.3, 0.26, 0.22)
 const LEARNING_BASELINE_OFFSET: float = 4.0
+## Story 020 boss status readouts under the boss HP bar (ScreenLayout.hud_boss_status_rect):
+## "Cháy ×N" in orange, "Ghim" in blue beside it; font and the gap between the two.
+const STATUS_FONT_SIZE: int = 16
+const STATUS_GAP: float = 16.0
+const BURN_STACKS_COLOR: Color = Color(0.95, 0.5, 0.1)
+const PINNED_COLOR: Color = Color(0.25, 0.5, 0.95)
+## Story 020: the damage number of a hit that got the Ghim multiplier (same blue as "Ghim").
+const PIN_BONUS_TEXT: Color = Color(0.2, 0.4, 0.95)
+## Gap between a menu card name and its level suffix.
+const LEVEL_SEPARATOR: String = " "
 
 ## Focus (Story 012). While the match is paused: a cool blue-grey tint over the board area (both
 ## halves), a soft vignette of a few bands plus a thin frame around the viewport, and the
@@ -198,6 +208,14 @@ const TEXT_SWING: String = "ui.hud.swing"
 const TEXT_HIT: String = "ui.hud.hit"
 const TEXT_MISS: String = "ui.hud.miss"
 const TEXT_DAMAGE_NUMBER: String = "ui.hud.damage_number"
+## Story 020: "Cháy ×%d" (burn stacks on the boss), "Ghim" (boss pinned), "+%d" after a menu card name.
+const TEXT_BURN_STACKS: String = "ui.hud.burn_stacks"
+## Horizontal padding inside a menu slot for the card name (Story 020: names carry "+N").
+const MENU_NAME_PAD: float = 8.0
+## Smallest font size the menu name shrinks to before clipping.
+const MENU_NAME_MIN_FONT_SIZE: int = 18
+const TEXT_PINNED: String = "ui.hud.pinned"
+const TEXT_LEVEL_SUFFIX: String = "ui.card.level_suffix"
 
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
@@ -287,6 +305,7 @@ func _draw() -> void:
 	_draw_menu(vp)
 	if _combat.debug_overlay:
 		_draw_learning_debug(vp)
+	_draw_boss_status(vp)
 
 
 # --- Story 012: Focus (pause while connecting points) ---------------------------
@@ -568,7 +587,9 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	_draw_centered(line1, tr(TEXT_HIT) if hit else tr(TEXT_MISS), size, color)
 	if show_damage:
 		var line2 := Rect2(back.position + Vector2(0.0, size * 0.9), Vector2(back.size.x, size * 1.2))
-		_draw_centered(line2, tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), size, color)
+		# Story 020: a hit multiplied by Ghim shows its number in the pin blue.
+		var damage_color: Color = PIN_BONUS_TEXT if bool(fb.get("pin_bonus", false)) else color
+		_draw_centered(line2, tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), size, damage_color)
 
 
 # --- Story 014: row burner warning ---------------------------------------------
@@ -747,6 +768,27 @@ func _draw_learning_debug(vp: Vector2) -> void:
 	draw_string(ThemeDB.fallback_font, pos, text, HORIZONTAL_ALIGNMENT_RIGHT, width, LEARNING_FONT_SIZE, LEARNING_COLOR)
 
 
+# Story 020: "Cháy ×N" (orange) while the boss's half has burning cells, "Ghim" (blue) right
+# after it while the boss is pinned; left-aligned under the boss HP bar (clear of the right-aligned
+# learning line). Nothing while the boss is dead or nothing applies.
+func _draw_boss_status(vp: Vector2) -> void:
+	if _combat.get_state().is_enemy_dead():
+		return
+	var stacks: int = _combat.get_burn_stacks()
+	var pinned: bool = _combat.is_boss_pinned()
+	if stacks <= 0 and not pinned:
+		return
+	var rect: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
+	var font: Font = ThemeDB.fallback_font
+	var pos := Vector2(rect.position.x, rect.get_center().y + STATUS_FONT_SIZE * 0.35)
+	if stacks > 0:
+		var text: String = tr(TEXT_BURN_STACKS) % stacks
+		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, STATUS_FONT_SIZE, BURN_STACKS_COLOR)
+		pos.x += font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, STATUS_FONT_SIZE).x + STATUS_GAP
+	if pinned:
+		draw_string(font, pos, tr(TEXT_PINNED), HORIZONTAL_ALIGNMENT_LEFT, -1.0, STATUS_FONT_SIZE, PINNED_COLOR)
+
+
 func _draw_confirm(vp: Vector2) -> void:
 	if not _combat.is_confirm_visible():
 		return
@@ -787,7 +829,8 @@ func _draw_menu(vp: Vector2) -> void:
 		draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
 		var name_rect := Rect2(rect.position, Vector2(rect.size.x, rect.size.y * 0.6))
 		var note_rect := Rect2(rect.position + Vector2(0.0, rect.size.y * 0.5), Vector2(rect.size.x, rect.size.y * 0.45))
-		_draw_centered(name_rect, _skill_name(id), BUTTON_FONT_SIZE, Color(TEXT_LIGHT, alpha))
+		var menu_name: String = _menu_skill_name(id)
+		_draw_centered(name_rect, menu_name, _fit_font_size(menu_name, name_rect.size.x - MENU_NAME_PAD * 2.0, BUTTON_FONT_SIZE), Color(TEXT_LIGHT, alpha))
 		_draw_centered(note_rect, str(status["text"]), SMALL_FONT_SIZE, Color(TEXT_LIGHT, alpha))
 
 
@@ -795,7 +838,7 @@ func _draw_menu(vp: Vector2) -> void:
 # if it is also unimplemented), else "chưa có", else the cooldown seconds, else ready.
 func _skill_status(id: String, cell_count: int) -> Dictionary:
 	var config: SkillConfig = _combat.get_skill_config()
-	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count)
+	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count, _combat.get_card_level(id))
 	var min_cells: int = int(check["need_cells"])
 	var text: String = tr(TEXT_READY)
 	if cell_count < min_cells:
@@ -809,3 +852,21 @@ func _skill_status(id: String, cell_count: int) -> Dictionary:
 
 func _skill_name(id: String) -> String:
 	return tr(str(_combat.get_skill_config().get_skill(id).get("name_key", id)))
+
+
+# Story 020: the menu card name with the player's level suffix ("Kiếm khí +2") above level 1.
+func _menu_skill_name(id: String) -> String:
+	var level: int = _combat.get_card_level(id)
+	if level > 1:
+		return _skill_name(id) + LEVEL_SEPARATOR + tr(TEXT_LEVEL_SUFFIX) % level
+	return _skill_name(id)
+
+
+# Largest font size <= [param size] (never below MENU_NAME_MIN_FONT_SIZE) at which [param text]
+# fits in [param width] pixels (Story 020: "Chấn phong +3" must not clip in a menu slot).
+func _fit_font_size(text: String, width: float, size: int) -> int:
+	var font: Font = ThemeDB.fallback_font
+	var fitted: int = size
+	while fitted > MENU_NAME_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+		fitted -= 1
+	return fitted
