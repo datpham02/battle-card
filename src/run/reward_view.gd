@@ -1,7 +1,8 @@
 class_name RewardView
 extends Node2D
 ## Card reward screen (Story 019, Part B; Story 020): shown over the battle whenever the live run
-## has an open card offer ([method GameFlow.get_pending_reward] non-empty while IN_FLOOR).
+## has an open card offer ([method GameFlow.get_pending_reward] non-empty while IN_NODE — or while
+## MAP: a treasure node's offer and a resumed offer open over the chapter map, Story 022).
 ## Full-screen dim, a title, one card per offered id (ScreenLayout.reward_card_rects, offer order)
 ## with the card's name, its cell requirement, its damage per cell, its cooldown, a two-line effect
 ## text and the rarity as the border colour (plus a small rarity word), and — only when
@@ -26,6 +27,12 @@ extends Node2D
 ## the offer closes). Input dedup as in RunHudView (emulated copies — device ==
 ## InputEvent.DEVICE_ID_EMULATION — are consumed but never act). Placeholder art; all strings are
 ## TEXT_* keys drawn through tr().
+##
+## Story 022: the title follows the node kind ([method GameFlow.get_pending_reward_kind]): a
+## treasure offer is titled "KHO BÁU"; a miniboss offer carries the subtitle "Lá hiếm trở lên" and a
+## boss offer "+N token bỏ lá" (ScreenLayout.reward_subtitle_rect). The "Bỏ 1 lá" slot shows ONLY
+## while the run holds a removal token (RunSession.removal_tokens > 0) and reads "Bỏ 1 lá (N)";
+## removing spends one (the flow).
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const TITLE_COLOR: Color = Color(0.95, 0.9, 0.78)
@@ -38,6 +45,8 @@ const DIVIDER_COLOR: Color = Color(0.6, 0.52, 0.4, 0.5)
 ## Story 020: the "Nâng cấp → +N" line (gold) and the remove-list hint.
 const UPGRADE_COLOR: Color = Color(0.72, 0.5, 0.05)
 const HINT_COLOR: Color = Color(1.0, 0.75, 0.2)
+## Story 022: the kind subtitle under the title.
+const SUBTITLE_COLOR: Color = Color(0.75, 0.72, 0.65)
 ## Rarity border colours (common grey, rare blue, epic gold); unknown rarities draw as common.
 const RARITY_COMMON_COLOR: Color = Color(0.55, 0.55, 0.58)
 const RARITY_RARE_COLOR: Color = Color(0.25, 0.5, 0.95)
@@ -56,6 +65,7 @@ const DESC_FONT_SIZE: int = 22
 const BUTTON_FONT_SIZE: int = 32
 const TILE_FONT_SIZE: int = 22
 const HINT_FONT_SIZE: int = 24
+const SUBTITLE_FONT_SIZE: int = 24
 const MIN_FIT_FONT_SIZE: int = 18
 ## Line limit of the wrapped effect text (draw_multiline_string max_lines).
 const DESC_MAX_LINES: int = 4
@@ -78,6 +88,11 @@ const RARITY_RARE: String = "rare"
 const RARITY_EPIC: String = "epic"
 ## Separator between a card name and its level suffix.
 const LEVEL_SEPARATOR: String = " "
+## Story 022: node kinds with their own title / subtitle, and the rewards.json key of the boss token grant.
+const KIND_TREASURE: String = "treasure"
+const KIND_MINIBOSS: String = "miniboss"
+const KIND_BOSS: String = "boss"
+const CFG_BOSS_TOKENS: String = "boss_removal_tokens"
 
 const TEXT_TITLE: String = "ui.reward.title"
 ## "cần %d ô" with the card's min_cells; [constant TEXT_CELLS_ANY] when it is 1 or less.
@@ -101,6 +116,11 @@ const TEXT_REMOVE_TITLE: String = "ui.reward.remove_title"
 const TEXT_CANCEL: String = "ui.reward.cancel"
 const TEXT_MIN_DECK: String = "ui.reward.min_deck"
 const TEXT_MORE: String = "ui.reward.more"
+## Story 022: the treasure title, the miniboss / boss subtitles and "Bỏ 1 lá (%d)" with the token count.
+const TEXT_TITLE_TREASURE: String = "ui.reward.title_treasure"
+const TEXT_MIN_RARE: String = "ui.reward.min_rare"
+const TEXT_TOKEN_GRANTED: String = "ui.reward.token_granted"
+const TEXT_REMOVE_COUNT: String = "ui.reward.remove_count"
 
 ## Path to the GameFlow (a sibling under Main) that owns the run.
 @export var flow_path: NodePath = NodePath("../GameFlow")
@@ -120,9 +140,12 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 
-## True while the screen is up: IN_FLOOR with an open offer.
+## True while the screen is up: IN_NODE or MAP with an open offer.
 func is_shown() -> bool:
-	return _flow != null and _flow.get_phase() == GameFlow.Phase.IN_FLOOR and not _flow.get_pending_reward().is_empty()
+	if _flow == null or _flow.get_pending_reward().is_empty():
+		return false
+	var phase: int = _flow.get_phase()
+	return phase == GameFlow.Phase.IN_NODE or phase == GameFlow.Phase.MAP
 
 
 ## Story 020: true while the remove list is open over the offer.
@@ -206,8 +229,20 @@ func _can_skip() -> bool:
 
 
 # Story 020: rewards.json allow_remove (the slot shows even at minimum size: the list explains).
+# Story 022: and only while the run holds a removal token.
 func _can_remove() -> bool:
-	return bool(_flow.get_reward_config().get("allow_remove", false))
+	return bool(_flow.get_reward_config().get("allow_remove", false)) and _removal_tokens() > 0
+
+
+# Story 022: the run's removal tokens (0 without a run).
+func _removal_tokens() -> int:
+	var run: RunSession = _flow.get_run()
+	return 0 if run == null else run.removal_tokens
+
+
+# Story 022: the node kind the open offer belongs to.
+func _reward_kind() -> String:
+	return _flow.get_pending_reward_kind()
 
 
 # Story 020: true when a deck of [param size] may lose a card (above rewards.json min_deck_size).
@@ -232,7 +267,16 @@ func _draw() -> void:
 		_draw_remove_list(vp)
 		return
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
-	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
+	var kind: String = _reward_kind()
+	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE_TREASURE if kind == KIND_TREASURE else TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
+	var subtitle: String = ""
+	if kind == KIND_MINIBOSS:
+		subtitle = tr(TEXT_MIN_RARE)
+	elif kind == KIND_BOSS:
+		subtitle = tr(TEXT_TOKEN_GRANTED) % int(RunSession.cfg(_flow.get_reward_config(), CFG_BOSS_TOKENS))
+	if not subtitle.is_empty():
+		var strip: Rect2 = ScreenLayout.reward_subtitle_rect(vp)
+		_text(strip, strip.get_center().y + SUBTITLE_FONT_SIZE * 0.35, subtitle, SUBTITLE_FONT_SIZE, SUBTITLE_COLOR)
 	var offer: Array[String] = _flow.get_pending_reward()
 	var with_remove: bool = _can_remove()
 	var rects: Array[Rect2] = ScreenLayout.reward_card_rects(vp, offer.size(), with_remove)
@@ -241,7 +285,7 @@ func _draw() -> void:
 		_draw_card(rects[i], offer[i], levels)
 	if with_remove:
 		var slot: Rect2 = ScreenLayout.reward_remove_slot_rect(vp, offer.size())
-		var slot_text: String = tr(TEXT_REMOVE)
+		var slot_text: String = tr(TEXT_REMOVE_COUNT) % _removal_tokens()
 		UiButtons.draw_button(self, slot, slot_text, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, slot), true, _fit_font_size(slot_text, slot.size.x - slot.size.x * CARD_PAD_RATIO * 2.0, BUTTON_FONT_SIZE))
 	if _can_skip():
 		var skip: Rect2 = ScreenLayout.reward_skip_button_rect(vp)

@@ -3,7 +3,7 @@ extends Node2D
 ## Title screen (Story 016): the game name drawn with code (big text over a knife-stroke motif of
 ## three thick slanted lines), a one-line tagline, and a centred column of buttons — "Tiếp tục run"
 ## (only when the save holds a run in progress; resumes it; Story 019: the saved run's summary
-## "Kiếm sĩ · Rừng Sương · Tầng 2" sits in small text right under it,
+## "Kiếm sĩ · Rừng Sương · Cột 2" sits in small text right under it (Story 022),
 ## ScreenLayout.title_continue_summary_rect), "Chơi" (character select; the main action when there
 ## is nothing to continue) and "Thoát" (hidden on platforms without a quit
 ## button, see [method GameFlow.can_show_quit]). Child of GameFlow (reads it through
@@ -40,13 +40,10 @@ const TEXT_QUIT: String = "ui.title.quit"
 const TEXT_LANG_VI: String = "ui.title.lang.vi"
 const TEXT_LANG_EN: String = "ui.title.lang.en"
 const LANG_FONT_SIZE: int = 28
-## Story 019: "%s · %s · Tầng %d" — character name, chapter name, 1-based floor of the saved run.
+## Story 019 / 022: "%s · %s · Cột %d" — character name, chapter name, 1-based column of the saved run.
 const TEXT_RUN_SUMMARY: String = "ui.title.run_summary"
 const SUMMARY_FONT_SIZE: int = 15
 const SUMMARY_COLOR: Color = Color(0.4, 0.35, 0.3)
-## Key separator of ChaptersConfig.find_floor ("ch1/f2").
-const FLOOR_KEY_SEPARATOR: String = "/"
-
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
 
@@ -57,9 +54,10 @@ func _ready() -> void:
 	_flow = get_node(flow_path) as GameFlow
 
 
+# Redraws every frame, also while inactive: a CanvasItem keeps its last frame until the next
+# redraw, and a transparent screen drawn later (the chapter map) would show the stale title.
 func _process(_delta: float) -> void:
-	if _is_active():
-		queue_redraw()
+	queue_redraw()
 
 
 func _is_active() -> bool:
@@ -167,8 +165,9 @@ func _draw() -> void:
 	UiButtons.draw_button(self, lang, tr(_lang_label(_flow.next_locale())), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, lang), true, LANG_FONT_SIZE)
 
 
-# Story 019: the saved run as "Kiếm sĩ · Rừng Sương · Tầng 2" (character and chapter names
-# translated through their configs; ids fall back to themselves when unknown).
+# Story 019 / 022: the saved run as "Kiếm sĩ · Rừng Sương · Cột 2" (character and chapter names
+# translated through their configs; ids fall back to themselves when unknown; column 1 when the
+# save dictionary lacks `column`).
 func _run_summary() -> String:
 	var saved: Dictionary = _flow.get_progress().get_run_dict()
 	var character_id: String = str(saved.get("character", ""))
@@ -179,8 +178,7 @@ func _run_summary() -> String:
 	for ci: int in config.chapter_count():
 		if config.chapter_id(ci) == chapter_id:
 			chapter = config.chapter_name(ci)
-	var pos: Vector2i = config.find_floor(chapter_id + FLOOR_KEY_SEPARATOR + str(saved.get("floor", "")))
-	return tr(TEXT_RUN_SUMMARY) % [tr(str(character.get("name_key", character_id))), chapter, maxi(pos.y, 0) + 1]
+	return tr(TEXT_RUN_SUMMARY) % [tr(str(character.get("name_key", character_id))), chapter, maxi(int(saved.get("column", 0)), 0) + 1]
 
 
 # Label key of the language button for locale [param code].

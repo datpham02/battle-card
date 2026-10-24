@@ -33,6 +33,13 @@ extends Node2D
 ## Story 020: the result panels add ONE small line listing the final deck ("Kiếm khí +2 · Hỏa trận
 ## · …": names from SkillConfig.resolved, the level suffix when the level is above 1), cut with an
 ## ellipsis to the panel's inner width (font.get_string_size).
+##
+## Story 022 (chapter map): in a run the match label reads "Cột N · <kind> · <opponent> · <arena>"
+## (the run's column and node kind, ChapterMapView.kind_name) instead of "<floor> · Trận a/b · …",
+## and the RUN THẮNG / RUN KẾT THÚC panels show "Cột N · <kind>" (the node the run ended on: the
+## chosen node, else the last cleared one). The intro band names the node kind ("HIỂM ĐỊA"; the
+## boss node keeps "TRẬN BOSS") since a node is a one-match config. Floors outside a run keep the
+## Story 015 labels.
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const BAND_COLOR: Color = Color(0.08, 0.07, 0.06, 0.78)
@@ -115,8 +122,11 @@ const TEXT_DECK_LABEL: String = "ui.run_hud.deck_label"
 ## Story 019 result screens.
 const TEXT_RUN_OVER_TITLE: String = "ui.run_hud.run_over_title"
 const TEXT_RUN_WON_TITLE: String = "ui.run_hud.run_won_title"
-## "Tầng %d · Trận %d" (1-based) where the run ended.
+## Legacy "Tầng %d · Trận %d" of a floor run (kept for the CSV; unused since Story 022).
 const TEXT_RUN_POSITION: String = "ui.run_hud.run_position"
+## Story 022: "Cột %d · %s" (1-based column, node kind name) in the match label and on the result panels.
+const TEXT_NODE_LABEL: String = "ui.run_hud.node_label"
+const TEXT_RUN_NODE: String = "ui.run_hud.run_node"
 ## "Bộ: %d lá" on the result panel.
 const TEXT_RUN_DECK: String = "ui.run_hud.run_deck"
 const TEXT_BACK_TO_TITLE: String = "ui.run_hud.back_to_title"
@@ -337,9 +347,16 @@ func _boss_index() -> int:
 func _draw_match_label(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var opponent: String = _match_name(state.get_match_index())
-	var text: String = tr(TEXT_MATCH_LABEL_BOSS) % opponent if state.is_boss_match() else tr(TEXT_MATCH_LABEL) % [state.get_match_index() + 1, state.get_match_count(), opponent]
-	if not _controller.floor_label.is_empty():
-		text = tr(TEXT_MATCH_LABEL_FLOOR) % [_controller.floor_label, text]
+	var run: RunSession = _flow.get_run() if _flow != null else null
+	var text: String
+	if run != null and not run.map.is_empty():
+		# Story 022: "Cột N · <kind> · <opponent>".
+		var node: Array = _run_node_position(run)
+		text = tr(TEXT_MATCH_LABEL_FLOOR) % [tr(TEXT_NODE_LABEL) % [node[0], ChapterMapView.kind_name(str(node[1]))], opponent]
+	else:
+		text = tr(TEXT_MATCH_LABEL_BOSS) % opponent if state.is_boss_match() else tr(TEXT_MATCH_LABEL) % [state.get_match_index() + 1, state.get_match_count(), opponent]
+		if not _controller.floor_label.is_empty():
+			text = tr(TEXT_MATCH_LABEL_FLOOR) % [_controller.floor_label, text]
 	var arena: String = _arena_name()
 	if not arena.is_empty():
 		text = tr(TEXT_MATCH_LABEL_ARENA) % [text, arena]
@@ -379,8 +396,16 @@ func _draw_intro(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var band: Rect2 = ScreenLayout.run_intro_band_rect(vp)
 	draw_rect(band, BAND_COLOR)
-	var title: String = tr(TEXT_INTRO_TITLE_BOSS) if state.is_boss_match() else tr(TEXT_INTRO_TITLE) % [state.get_match_index() + 1, state.get_match_count()]
-	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if state.is_boss_match() else TEXT_WHITE)
+	var boss: bool = state.is_boss_match()
+	var title: String = tr(TEXT_INTRO_TITLE_BOSS) if boss else tr(TEXT_INTRO_TITLE) % [state.get_match_index() + 1, state.get_match_count()]
+	var run: RunSession = _flow.get_run() if _flow != null else null
+	if run != null and not run.map.is_empty():
+		# Story 022: a node is one match (every match is the config's "boss" match), so the band names
+		# the node kind instead; only the boss node keeps TRẬN BOSS, boss and miniboss draw gold.
+		var kind: String = str(_run_node_position(run)[1])
+		boss = kind == ChapterMapView.KIND_BOSS or kind == ChapterMapView.KIND_MINIBOSS
+		title = tr(TEXT_INTRO_TITLE_BOSS) if kind == ChapterMapView.KIND_BOSS else ChapterMapView.kind_name(kind).to_upper()
+	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if boss else TEXT_WHITE)
 	_text(band, band.position.y + band.size.y * BAND_NAME_BASELINE, _match_name(state.get_match_index()), BAND_NAME_FONT_SIZE, TEXT_LIGHT)
 	_text(band, band.position.y + band.size.y * BAND_HINT_BASELINE, tr(TEXT_INTRO_HINT), BAND_HINT_FONT_SIZE, TEXT_DIM)
 
@@ -449,15 +474,16 @@ func _draw_run_result(vp: Vector2) -> void:
 	if run != null:
 		var chapter: String = _flow.get_config().chapter_name(run.chapter_index)
 		var deck_line: String = _deck_line(run, inner_width, SMALL_FONT_SIZE)
+		var node: Array = _run_node_position(run)
+		var node_line: String = tr(TEXT_RUN_NODE) % [node[0], ChapterMapView.kind_name(str(node[1]))]
 		if won:
-			lines = [chapter, tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
-			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
-			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
+			lines = [chapter, node_line, tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
+			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
+			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
 		else:
 			var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 			lines = [
-				tr(str(character.get("name_key", run.character_id))), chapter,
-				tr(TEXT_RUN_POSITION) % [run.floor_index + 1, run.match_index + 1],
+				tr(str(character.get("name_key", run.character_id))), chapter, node_line,
 				tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec),
 			]
 			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
@@ -466,6 +492,18 @@ func _draw_run_result(vp: Vector2) -> void:
 	for i: int in mini(lines.size(), RESULT_LINE_BASELINES.size()):
 		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], sizes[i], colors[i])
 	_draw_buttons(vp)
+
+
+# Story 022: [1-based column, kind] of the run's node — the chosen node of the current column, else
+# the last cleared node (the run already advanced after a win), else the current column and "".
+func _run_node_position(run: RunSession) -> Array:
+	var node: Dictionary = run.current_node()
+	if not node.is_empty():
+		return [run.column + 1, str(node.get("kind", ""))]
+	if not run.cleared_nodes.is_empty():
+		var last: Dictionary = run.cleared_nodes[run.cleared_nodes.size() - 1]
+		return [int(last.get("column", 0)) + 1, str(last.get("kind", ""))]
+	return [run.column + 1, ""]
 
 
 # Story 020: the run's deck as one line ("Kiếm khí +2 · Hỏa trận · …", deck order, level suffix

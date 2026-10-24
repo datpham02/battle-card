@@ -41,8 +41,10 @@ const ARENA_ARG: String = "--arena="
 const ARENA_VARIANT_SUFFIX: String = ":variant"
 ## DEV-ONLY: --run= kinds this node handles.
 const RUN_KINDS: Array[String] = ["intro", "between", "won", "lost"]
-## DEV-ONLY (Story 019): --run= kinds GameFlow handles (reward|runover|runwon); ignored here.
-const FLOW_RUN_KINDS: Array[String] = ["reward", "runover", "runwon"]
+## DEV-ONLY (Story 019 / 022): --run= kinds GameFlow handles; ignored here.
+const FLOW_RUN_KINDS: Array[String] = [
+	"reward", "runover", "runwon", "map", "map3", "rest", "treasure", "miniboss_reward", "boss_reward",
+]
 ## DEV-ONLY: stable clock value (7:42) for run screen captures.
 const DEV_ELAPSED_SEC: float = 462.0
 const TEXT_MATCH_LABEL: String = "ui.run.match_label"

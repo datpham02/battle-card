@@ -1,0 +1,80 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim (Story 022 map): seeds=70 dt=0.050 timeout=180s policies=["always_skip", "build"] characters=["kiem_si", "phap_su", "sat_thu"] columns=7 cleared_bosses=1 (+ kiem_si onboarding at 0)
+node policy: treasure > rest (heal < 50% HP else forge) > miniboss at >= 70% HP > battle > danger (danger first with >= 2 burn cards); boss when alone. second_wind passive heal on win; no other heal.
+  ... 10/70 seeds, 31.8 s
+  ... 20/70 seeds, 62.8 s
+  ... 30/70 seeds, 103.2 s
+  ... 40/70 seeds, 137.6 s
+  ... 50/70 seeds, 171.0 s
+  ... 60/70 seeds, 204.6 s
+  ... 70/70 seeds, 241.5 s
+
+| character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | always_skip | 92.9 | 6.89 | 8.0 (n=65) | 8.4 | 8.4 | 136.5 | 0.06 | 0.93 | 0.83 | 0.00 | 6.00 | 6.93 | 51.2 | 5.14 | 0.00 | 28.1 | 118.1 | 62.4 | 0.13 | 5.44 |
+| kiem_si | build | 95.7 | 6.94 | 8.2 (n=67) | 8.5 | 8.7 | 135.4 | 0.07 | 0.93 | 0.83 | 0.67 | 7.46 | 11.30 | 48.3 | 5.16 | 0.00 | 28.0 | 119.5 | 58.1 | 0.15 | 4.90 |
+| phap_su | always_skip | 47.1 | 5.77 | 8.5 (n=33) | 9.1 | 10.5 | 45.8 | 0.47 | 0.33 | 0.83 | 0.00 | 6.00 | 6.33 | 50.9 | 4.67 | 0.00 | 32.0 | 108.1 | 55.5 | 0.16 | 4.16 |
+| phap_su | build | 44.3 | 5.74 | 7.8 (n=31) | 8.9 | 10.6 | 54.2 | 0.47 | 0.34 | 0.83 | 0.30 | 7.46 | 10.50 | 47.6 | 4.66 | 0.00 | 31.8 | 108.9 | 52.1 | 0.17 | 3.43 |
+| sat_thu | always_skip | 85.7 | 6.81 | 6.0 (n=60) | 6.7 | 9.1 | 78.5 | 0.16 | 0.83 | 0.83 | 0.00 | 6.00 | 6.83 | 43.4 | 5.14 | 0.00 | 21.7 | 115.9 | 52.2 | 0.13 | 4.37 |
+| sat_thu | build | 90.0 | 6.81 | 5.5 (n=63) | 5.9 | 9.5 | 86.5 | 0.11 | 0.86 | 0.83 | 0.59 | 7.53 | 11.29 | 40.4 | 5.11 | 0.00 | 19.8 | 116.6 | 46.5 | 0.13 | 3.71 |
+| kiem_si (onboarding) | always_skip | 95.7 | 6.96 | 8.1 (n=67) | 8.4 | 8.0 | 134.3 | 0.04 | 0.96 | 0.83 | 0.00 | 6.00 | 6.96 | 46.7 | 5.17 | 0.00 | 26.3 | 111.5 | 51.5 | 0.16 | 3.99 |
+| kiem_si (onboarding) | build | 87.1 | 6.87 | 8.5 (n=61) | 9.2 | 8.2 | 129.0 | 0.06 | 0.94 | 0.83 | 0.64 | 7.49 | 11.30 | 46.7 | 5.17 | 0.00 | 29.0 | 110.9 | 52.7 | 0.17 | 3.84 |
+
+NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec |
+|---|---|---|---|---|---|---|---|
+| kiem_si | always_skip | battle | 224 | 100.0 | 0.74 | 13.3 | 38.6 |
+| kiem_si | always_skip | miniboss | 67 | 98.5 | 2.88 | 53.4 | 75.7 |
+| kiem_si | always_skip | boss | 69 | 94.2 | 3.33 | 51.2 | 68.3 |
+| kiem_si | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| kiem_si | always_skip | rest | 69 | 100.0 | 0.00 | 0.0 | 0.0 |
+| kiem_si | build | battle | 186 | 100.0 | 0.73 | 13.3 | 35.7 |
+| kiem_si | build | danger | 39 | 97.4 | 1.95 | 33.4 | 46.9 |
+| kiem_si | build | miniboss | 67 | 100.0 | 2.69 | 49.0 | 69.0 |
+| kiem_si | build | boss | 69 | 97.1 | 3.00 | 44.3 | 62.9 |
+| kiem_si | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| kiem_si | build | rest | 70 | 100.0 | 0.00 | 0.0 | 0.0 |
+| phap_su | always_skip | battle | 74 | 98.6 | 0.34 | 7.0 | 25.4 |
+| phap_su | always_skip | danger | 169 | 92.3 | 2.30 | 37.4 | 54.4 |
+| phap_su | always_skip | miniboss | 31 | 90.3 | 2.84 | 50.4 | 79.1 |
+| phap_su | always_skip | boss | 53 | 62.3 | 2.55 | 38.8 | 62.5 |
+| phap_su | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| phap_su | always_skip | rest | 56 | 100.0 | 0.00 | 0.0 | 0.0 |
+| phap_su | build | battle | 77 | 98.7 | 0.34 | 7.1 | 25.8 |
+| phap_su | build | danger | 164 | 90.9 | 2.21 | 36.3 | 50.4 |
+| phap_su | build | miniboss | 32 | 96.9 | 2.97 | 54.3 | 74.4 |
+| phap_su | build | boss | 53 | 58.5 | 2.58 | 40.3 | 56.7 |
+| phap_su | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| phap_su | build | rest | 57 | 100.0 | 0.00 | 0.0 | 0.0 |
+| sat_thu | always_skip | battle | 224 | 100.0 | 0.57 | 9.7 | 32.0 |
+| sat_thu | always_skip | miniboss | 67 | 98.5 | 1.88 | 34.6 | 61.5 |
+| sat_thu | always_skip | boss | 69 | 87.0 | 3.16 | 48.3 | 63.0 |
+| sat_thu | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| sat_thu | always_skip | rest | 69 | 100.0 | 0.00 | 0.0 | 0.0 |
+| sat_thu | build | battle | 224 | 100.0 | 0.56 | 10.4 | 30.6 |
+| sat_thu | build | miniboss | 66 | 97.0 | 1.89 | 34.5 | 54.7 |
+| sat_thu | build | boss | 68 | 92.6 | 2.43 | 36.6 | 58.6 |
+| sat_thu | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| sat_thu | build | rest | 68 | 100.0 | 0.00 | 0.0 | 0.0 |
+| kiem_si (onboarding) | always_skip | battle | 225 | 100.0 | 0.58 | 10.5 | 35.2 |
+| kiem_si (onboarding) | always_skip | miniboss | 67 | 100.0 | 3.00 | 47.2 | 67.0 |
+| kiem_si (onboarding) | always_skip | boss | 70 | 95.7 | 3.64 | 57.2 | 64.5 |
+| kiem_si (onboarding) | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| kiem_si (onboarding) | always_skip | rest | 70 | 100.0 | 0.00 | 0.0 | 0.0 |
+| kiem_si (onboarding) | build | battle | 186 | 100.0 | 0.56 | 11.0 | 34.3 |
+| kiem_si (onboarding) | build | danger | 39 | 100.0 | 2.05 | 32.7 | 46.3 |
+| kiem_si (onboarding) | build | miniboss | 67 | 100.0 | 2.81 | 46.5 | 62.1 |
+| kiem_si (onboarding) | build | boss | 70 | 87.1 | 3.87 | 58.4 | 65.4 |
+| kiem_si (onboarding) | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 |
+| kiem_si (onboarding) | build | rest | 70 | 100.0 | 0.00 | 0.0 | 0.0 |
+
+INFO kiem_si/always_skip: FAIL — hits taken per WON run 8.0 (target 15–30, 65 wins of 70); all runs 8.4; win 92.9%; dmg/hit 8.4% max HP
+VERDICT kiem_si/build: FAIL — hits taken per WON run 8.2 (target 15–30, 67 wins of 70); all runs 8.5; win 95.7%; dmg/hit 8.7% max HP
+INFO phap_su/always_skip: FAIL — hits taken per WON run 8.5 (target 15–30, 33 wins of 70); all runs 9.1; win 47.1%; dmg/hit 10.5% max HP
+VERDICT phap_su/build: FAIL — hits taken per WON run 7.8 (target 15–30, 31 wins of 70); all runs 8.9; win 44.3%; dmg/hit 10.6% max HP
+INFO sat_thu/always_skip: FAIL — hits taken per WON run 6.0 (target 15–30, 60 wins of 70); all runs 6.7; win 85.7%; dmg/hit 9.1% max HP
+VERDICT sat_thu/build: FAIL — hits taken per WON run 5.5 (target 15–30, 63 wins of 70); all runs 5.9; win 90.0%; dmg/hit 9.5% max HP
+INFO kiem_si (onboarding)/always_skip: FAIL — hits taken per WON run 8.1 (target 15–30, 67 wins of 70); all runs 8.4; win 95.7%; dmg/hit 8.0% max HP
+INFO kiem_si (onboarding)/build: FAIL — hits taken per WON run 8.5 (target 15–30, 61 wins of 70); all runs 9.2; win 87.1%; dmg/hit 8.2% max HP
+RESULT: FAIL
+runtime: 241.8 s

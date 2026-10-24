@@ -1,211 +1,632 @@
 {
 	"defaults": {
-		"heal_between_matches": 25,
+		"heal_between_matches": 0,
 		"intro_sec": 1.5,
 		"end_delay_sec": 1.5,
 		"between_sec": 3.0,
-		"heal_between_floors": 40,
-		"revive_tokens": 0
+		"heal_between_floors": 0,
+		"revive_tokens": 0,
+		"onboarding_tier_cap": 1,
+		"danger_traits": [
+			{
+				"id": "row_burner",
+				"params": {}
+			}
+		],
+		"columns": [
+			{
+				"tier": 0,
+				"kinds": [
+					"battle"
+				],
+				"pick": [
+					1,
+					1
+				],
+				"required": []
+			},
+			{
+				"tier": 1,
+				"kinds": [
+					"battle",
+					"danger",
+					"treasure"
+				],
+				"pick": [
+					2,
+					3
+				],
+				"required": []
+			},
+			{
+				"tier": 1,
+				"kinds": [
+					"battle",
+					"danger"
+				],
+				"pick": [
+					2,
+					3
+				],
+				"required": []
+			},
+			{
+				"tier": 2,
+				"kinds": [
+					"battle",
+					"danger"
+				],
+				"pick": [
+					2,
+					3
+				],
+				"required": [
+					"miniboss"
+				]
+			},
+			{
+				"tier": 2,
+				"kinds": [
+					"battle",
+					"danger"
+				],
+				"pick": [
+					2,
+					3
+				],
+				"required": [
+					"rest",
+					"battle"
+				]
+			},
+			{
+				"tier": 2,
+				"kinds": [
+					"battle",
+					"danger"
+				],
+				"pick": [
+					2,
+					3
+				],
+				"required": []
+			},
+			{
+				"tier": 2,
+				"kinds": [],
+				"pick": [
+					1,
+					1
+				],
+				"required": [
+					"boss"
+				]
+			}
+		]
 	},
 	"chapters": [
 		{
 			"id": "ch1",
 			"name_key": "chapter.ch1.name",
-			"floors": [
+			"matches": {
+				"goblin_scout": {
+					"id": "goblin_scout",
+					"name_key": "boss.goblin_scout.name",
+					"boss_max_hp": 80,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.78,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"arena": {
+						"shape": "square"
+					}
+				},
+				"wolf": {
+					"id": "wolf",
+					"name_key": "boss.wolf.name",
+					"boss_max_hp": 100,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"swing_speed_mult": 1.0,
+					"movement": {
+						"move_commitment": 0.9,
+						"move_noise": 0.05,
+						"reaction_sec": 0.45
+					},
+					"arena": {
+						"shape": "square"
+					}
+				},
+				"goblin_chief": {
+					"id": "goblin_chief",
+					"name_key": "boss.goblin_chief.name",
+					"boss_max_hp": 120,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "square"
+					}
+				},
+				"goblin_warrior": {
+					"id": "goblin_warrior",
+					"name_key": "boss.goblin_warrior.name",
+					"boss_max_hp": 90,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.78,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"dire_wolf": {
+					"id": "dire_wolf",
+					"name_key": "boss.dire_wolf.name",
+					"boss_max_hp": 110,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"swing_speed_mult": 1.0,
+					"movement": {
+						"move_commitment": 0.9,
+						"move_noise": 0.05,
+						"reaction_sec": 0.45
+					},
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"goblin_shaman": {
+					"id": "goblin_shaman",
+					"name_key": "boss.goblin_shaman.name",
+					"boss_max_hp": 130,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"wolf_alpha": {
+					"id": "wolf_alpha",
+					"name_key": "boss.wolf_alpha.name",
+					"boss_max_hp": 140,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"goblin_archer": {
+					"id": "goblin_archer",
+					"name_key": "boss.goblin_archer.name",
+					"boss_max_hp": 100,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"swing_speed_mult": 1.0,
+					"arena": {
+						"shape": "cross",
+						"variant": true
+					}
+				},
+				"goblin_brute": {
+					"id": "goblin_brute",
+					"name_key": "boss.goblin_brute.name",
+					"boss_max_hp": 120,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"arena": {
+						"shape": "u_shape",
+						"variant": true
+					}
+				},
+				"goblin_warlock": {
+					"id": "goblin_warlock",
+					"name_key": "boss.goblin_warlock.name",
+					"boss_max_hp": 135,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "staircase",
+						"variant": true
+					}
+				},
+				"forest_witch": {
+					"id": "forest_witch",
+					"name_key": "boss.forest_witch.name",
+					"boss_max_hp": 150,
+					"brain_set": "aggressive",
+					"boss_step_cooldown_mult": 1.11,
+					"swing_speed_mult": 0.8,
+					"boss_think_interval_sec": 0.25,
+					"boss_reaction_sec": 0.3,
+					"boss_drop_interval_mult": 0.9,
+					"traits": [
+						{
+							"id": "rotten_thrower",
+							"params": {
+								"interval_sec": 5.0
+							}
+						}
+					],
+					"arena": {
+						"shape": "cross",
+						"variant": true
+					}
+				}
+			},
+			"pools": {
+				"battle": {
+					"0": [
+						"goblin_scout",
+						"goblin_warrior"
+					],
+					"1": [
+						"wolf",
+						"dire_wolf",
+						"goblin_archer",
+						"goblin_warrior"
+					],
+					"2": [
+						"dire_wolf",
+						"goblin_archer",
+						"goblin_brute",
+						"wolf"
+					]
+				},
+				"danger": {
+					"0": [],
+					"1": [
+						"wolf",
+						"goblin_archer"
+					],
+					"2": [
+						"dire_wolf",
+						"goblin_brute",
+						"goblin_warrior"
+					]
+				},
+				"miniboss": {
+					"1": [
+						"goblin_chief"
+					],
+					"2": [
+						"goblin_shaman",
+						"wolf_alpha"
+					]
+				},
+				"boss": {
+					"1": [
+						"goblin_warlock"
+					],
+					"2": [
+						"goblin_warlock",
+						"forest_witch"
+					]
+				}
+			},
+			"legacy_floors": [
 				{
 					"id": "f1",
 					"name_key": "floor.ch1.f1.name",
-					"arena": {"shape": "square"},
-					"matches": [
-						{
-							"id": "goblin_scout",
-							"name_key": "boss.goblin_scout.name",
-							"boss_max_hp": 80,
-							"brain_set": "cautious",
-							"boss_step_cooldown_mult": 1.78,
-							"swing_speed_mult": 1.0,
-							"boss_think_interval_sec": 0.5,
-							"boss_reaction_sec": 0.6,
-							"boss_drop_interval_mult": 1.3
-						},
-						{
-							"id": "wolf",
-							"name_key": "boss.wolf.name",
-							"boss_max_hp": 100,
-							"brain_set": "cautious",
-							"boss_step_cooldown_mult": 1.44,
-							"boss_think_interval_sec": 0.4,
-							"boss_reaction_sec": 0.45,
-							"boss_drop_interval_mult": 1.15,
-							"swing_speed_mult": 1.0,
-							"movement": {
-								"move_commitment": 0.9,
-								"move_noise": 0.05,
-								"reaction_sec": 0.45
-							}
-						},
-						{
-							"id": "goblin_chief",
-							"name_key": "boss.goblin_chief.name",
-							"boss_max_hp": 120,
-							"brain_set": "balanced",
-							"boss_step_cooldown_mult": 1.22,
-							"swing_speed_mult": 0.9,
-							"boss_think_interval_sec": 0.3,
-							"boss_reaction_sec": 0.35,
-							"boss_drop_interval_mult": 1.0,
-							"traits": [{"id": "row_burner", "params": {}}]
-						}
-					]
+					"match_ids": [
+						"goblin_scout",
+						"wolf",
+						"goblin_chief"
+					],
+					"arena": {
+						"shape": "square"
+					}
 				},
 				{
 					"id": "f2",
 					"name_key": "floor.ch1.f2.name",
-					"arena": {"shape": "rect"},
-					"matches": [
-						{
-							"id": "goblin_warrior",
-							"name_key": "boss.goblin_warrior.name",
-							"boss_max_hp": 90,
-							"brain_set": "cautious",
-							"boss_step_cooldown_mult": 1.78,
-							"swing_speed_mult": 1.0,
-							"boss_think_interval_sec": 0.5,
-							"boss_reaction_sec": 0.6,
-							"boss_drop_interval_mult": 1.3
-						},
-						{
-							"id": "dire_wolf",
-							"name_key": "boss.dire_wolf.name",
-							"boss_max_hp": 110,
-							"brain_set": "cautious",
-							"boss_step_cooldown_mult": 1.44,
-							"boss_think_interval_sec": 0.4,
-							"boss_reaction_sec": 0.45,
-							"boss_drop_interval_mult": 1.15,
-							"swing_speed_mult": 1.0,
-							"movement": {
-								"move_commitment": 0.9,
-								"move_noise": 0.05,
-								"reaction_sec": 0.45
-							}
-						},
-						{
-							"id": "goblin_shaman",
-							"name_key": "boss.goblin_shaman.name",
-							"boss_max_hp": 130,
-							"brain_set": "balanced",
-							"boss_step_cooldown_mult": 1.3,
-							"swing_speed_mult": 0.95,
-							"boss_think_interval_sec": 0.35,
-							"boss_reaction_sec": 0.4,
-							"boss_drop_interval_mult": 1.05
-						},
-						{
-							"id": "wolf_alpha",
-							"name_key": "boss.wolf_alpha.name",
-							"boss_max_hp": 140,
-							"brain_set": "balanced",
-							"boss_step_cooldown_mult": 1.22,
-							"swing_speed_mult": 0.9,
-							"boss_think_interval_sec": 0.3,
-							"boss_reaction_sec": 0.35,
-							"boss_drop_interval_mult": 1.0,
-							"traits": [{"id": "row_burner", "params": {}}]
-						}
-					]
+					"match_ids": [
+						"goblin_warrior",
+						"dire_wolf",
+						"goblin_shaman",
+						"wolf_alpha"
+					],
+					"arena": {
+						"shape": "rect"
+					}
 				},
 				{
 					"id": "f3",
 					"name_key": "floor.ch1.f3.name",
-					"arena_pool": ["cross", "u_shape", "staircase"],
-					"arena_variant": true,
-					"matches": [
-						{
-							"id": "goblin_archer",
-							"name_key": "boss.goblin_archer.name",
-							"boss_max_hp": 100,
-							"brain_set": "cautious",
-							"boss_step_cooldown_mult": 1.44,
-							"boss_think_interval_sec": 0.4,
-							"boss_reaction_sec": 0.45,
-							"boss_drop_interval_mult": 1.15,
-							"swing_speed_mult": 1.0
-						},
-						{
-							"id": "goblin_brute",
-							"name_key": "boss.goblin_brute.name",
-							"boss_max_hp": 120,
-							"brain_set": "balanced",
-							"boss_step_cooldown_mult": 1.3,
-							"swing_speed_mult": 0.95,
-							"boss_think_interval_sec": 0.35,
-							"boss_reaction_sec": 0.4,
-							"boss_drop_interval_mult": 1.05
-						},
-						{
-							"id": "goblin_warlock",
-							"name_key": "boss.goblin_warlock.name",
-							"boss_max_hp": 135,
-							"brain_set": "balanced",
-							"boss_step_cooldown_mult": 1.22,
-							"swing_speed_mult": 0.9,
-							"boss_think_interval_sec": 0.3,
-							"boss_reaction_sec": 0.35,
-							"boss_drop_interval_mult": 1.0,
-							"traits": [{"id": "row_burner", "params": {}}]
-						},
-						{
-							"id": "forest_witch",
-							"name_key": "boss.forest_witch.name",
-							"boss_max_hp": 150,
-							"brain_set": "aggressive",
-							"boss_step_cooldown_mult": 1.11,
-							"swing_speed_mult": 0.8,
-							"boss_think_interval_sec": 0.25,
-							"boss_reaction_sec": 0.3,
-							"boss_drop_interval_mult": 0.9,
-							"traits": [{"id": "rotten_thrower", "params": {"interval_sec": 5.0}}]
-						}
-					]
+					"match_ids": [
+						"goblin_archer",
+						"goblin_brute",
+						"goblin_warlock",
+						"forest_witch"
+					],
+					"arena_pool": [
+						"cross",
+						"u_shape",
+						"staircase"
+					],
+					"arena_variant": true
 				}
 			]
 		},
 		{
 			"id": "ch2",
 			"name_key": "chapter.ch2.name",
-			"floors": [
+			"matches": {
+				"zombie": {
+					"id": "zombie",
+					"name_key": "boss.zombie.name",
+					"boss_max_hp": 130,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ogre": {
+					"id": "ogre",
+					"name_key": "boss.ogre.name",
+					"boss_max_hp": 160,
+					"brain_set": "aggressive",
+					"boss_step_cooldown_mult": 1.11,
+					"swing_speed_mult": 0.8,
+					"boss_think_interval_sec": 0.25,
+					"boss_reaction_sec": 0.3,
+					"boss_drop_interval_mult": 0.9,
+					"traits": [
+						{
+							"id": "rotten_thrower",
+							"params": {
+								"interval_sec": 5.0
+							}
+						}
+					],
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ch2_placeholder_scout": {
+					"id": "ch2_placeholder_scout",
+					"name_key": "boss.goblin_scout.name",
+					"boss_max_hp": 80,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.78,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ch2_placeholder_wolf": {
+					"id": "ch2_placeholder_wolf",
+					"name_key": "boss.wolf.name",
+					"boss_max_hp": 100,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.44,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"swing_speed_mult": 1.0,
+					"movement": {
+						"move_commitment": 0.9,
+						"move_noise": 0.05,
+						"reaction_sec": 0.45
+					},
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ch2_placeholder_archer": {
+					"id": "ch2_placeholder_archer",
+					"name_key": "boss.goblin_archer.name",
+					"boss_max_hp": 100,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.44,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"swing_speed_mult": 1.0,
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ch2_placeholder_brute": {
+					"id": "ch2_placeholder_brute",
+					"name_key": "boss.goblin_brute.name",
+					"boss_max_hp": 120,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ch2_placeholder_chief": {
+					"id": "ch2_placeholder_chief",
+					"name_key": "boss.goblin_chief.name",
+					"boss_max_hp": 120,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ch2_placeholder_shaman": {
+					"id": "ch2_placeholder_shaman",
+					"name_key": "boss.goblin_shaman.name",
+					"boss_max_hp": 130,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				},
+				"ch2_placeholder_warlock": {
+					"id": "ch2_placeholder_warlock",
+					"name_key": "boss.goblin_warlock.name",
+					"boss_max_hp": 135,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "ring",
+						"variant": true
+					}
+				}
+			},
+			"pools": {
+				"battle": {
+					"0": [
+						"ch2_placeholder_scout",
+						"ch2_placeholder_wolf"
+					],
+					"1": [
+						"ch2_placeholder_wolf",
+						"ch2_placeholder_archer",
+						"zombie"
+					],
+					"2": [
+						"ch2_placeholder_archer",
+						"ch2_placeholder_brute",
+						"zombie"
+					]
+				},
+				"danger": {
+					"0": [],
+					"1": [
+						"ch2_placeholder_archer",
+						"zombie"
+					],
+					"2": [
+						"ch2_placeholder_brute",
+						"zombie"
+					]
+				},
+				"miniboss": {
+					"1": [
+						"ch2_placeholder_chief"
+					],
+					"2": [
+						"ch2_placeholder_shaman",
+						"ch2_placeholder_warlock"
+					]
+				},
+				"boss": {
+					"1": [
+						"ogre"
+					],
+					"2": [
+						"ogre"
+					]
+				}
+			},
+			"legacy_floors": [
 				{
 					"id": "f1",
 					"name_key": "floor.ch2.f1.name",
-					"arena_pool": ["ring"],
-					"arena_variant": true,
-					"matches": [
-						{
-							"id": "zombie",
-							"name_key": "boss.zombie.name",
-							"boss_max_hp": 130,
-							"brain_set": "balanced",
-							"boss_step_cooldown_mult": 1.22,
-							"swing_speed_mult": 0.9,
-							"boss_think_interval_sec": 0.3,
-							"boss_reaction_sec": 0.35,
-							"boss_drop_interval_mult": 1.0,
-							"traits": [{"id": "row_burner", "params": {}}]
-						},
-						{
-							"id": "ogre",
-							"name_key": "boss.ogre.name",
-							"boss_max_hp": 160,
-							"brain_set": "aggressive",
-							"boss_step_cooldown_mult": 1.11,
-							"swing_speed_mult": 0.8,
-							"boss_think_interval_sec": 0.25,
-							"boss_reaction_sec": 0.3,
-							"boss_drop_interval_mult": 0.9,
-							"traits": [{"id": "rotten_thrower", "params": {"interval_sec": 5.0}}]
-						}
-					]
+					"match_ids": [
+						"zombie",
+						"ogre"
+					],
+					"arena_pool": [
+						"ring"
+					],
+					"arena_variant": true
 				}
 			]
 		}

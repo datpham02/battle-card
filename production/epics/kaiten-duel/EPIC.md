@@ -85,5 +85,5 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 019 | Run roguelike: thưởng 1 trong 3 lá, máu cả run, chết là hết, chọn chương, save run | Integration | Complete | N/A (minimal) |
 | 020 | Bộ bài có sức nặng: sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá, từ khóa Ghim/Đốt, bỏ khái niệm lớp | Logic | Complete | N/A (minimal) |
 | 021 | Tuyệt kỹ nhân vật: thanh nạp, nút riêng, Trảm / Thiên Hỏa / Ảnh Bộ khuếch đại bộ bài | Integration | Complete | N/A (minimal) |
-| 022 | Bản đồ chương và kinh tế thưởng: 7 cột khung cố định + nhánh 2–3, token bỏ lá, thưởng theo loại nút, độ hiếm trôi theo may mắn, trại nghỉ, máu ×3 | Integration | Ready | N/A (minimal) |
+| 022 | Bản đồ chương và kinh tế thưởng: 7 cột khung cố định + nhánh 2–3, token bỏ lá, thưởng theo loại nút, độ hiếm trôi theo may mắn, trại nghỉ, máu ×3 | Integration | Complete | N/A (minimal) |
 | 023 | Nội dung chương 2–3: boss/trait mới, địch phá luật (Bóng Ma, Kẻ Phản Ứng, Pháo Ngòi), lá sử thi có điều kiện, Rạn/Hàn, pool 24 | Integration | Ready | N/A (minimal) |

@@ -4,7 +4,7 @@ extends Node2D
 ## chapter of [method GameFlow.get_chapter_states] in a centred row (ScreenLayout.chapter_tile_rects)
 ## in four looks — LOCKED (grey, code-drawn padlock), UNLOCKED (bright), CLEARED (green outline +
 ## check mark) and IN_RUN (gold outline + "Đang dở": the saved run is in this chapter; a cleared
-## chapter keeps its check). A tile shows the chapter name and its floor count. Child of GameFlow
+## chapter keeps its check). A tile shows the chapter name and its column count (Story 022). Child of GameFlow
 ## (reads it through [member flow_path]); draws and takes taps only in
 ## [constant GameFlow.Phase.CHAPTER_SELECT], owns no progress.
 ## Tap an unlocked / cleared tile -> [method GameFlow.start_run] — unless a run is saved (in this
@@ -63,14 +63,11 @@ const LOCK_SHACKLE_R: float = 0.05
 const ARC_POINTS: int = 12
 ## Check mark polyline as shares of the tile size.
 const CHECK_POINTS: Array[Vector2] = [Vector2(0.74, 0.78), Vector2(0.81, 0.86), Vector2(0.92, 0.68)]
-## Key separator of ChaptersConfig.find_floor ("ch1/f2").
-const FLOOR_KEY_SEPARATOR: String = "/"
-
 const TEXT_TITLE: String = "ui.chapter_select.title"
-## "%d tầng" with the chapter's floor count.
+## "%d cột" with the chapter's map column count (Story 022; the key name is historical).
 const TEXT_FLOORS: String = "ui.chapter_select.floors"
 const TEXT_IN_RUN: String = "ui.chapter_select.in_run"
-## "Tầng %d · Trận %d" (1-based) of the saved run, on the resume prompt.
+## "Cột %d" (1-based column) of the saved run, on the resume prompt (Story 022).
 const TEXT_SAVED_POSITION: String = "ui.chapter_select.saved_position"
 const TEXT_CONFIRM_ABANDON: String = "ui.chapter_select.confirm_abandon"
 const TEXT_ABANDON: String = "ui.chapter_select.abandon"
@@ -184,12 +181,11 @@ func _tap_panel(vp: Vector2, pos: Vector2) -> void:
 # --- State --------------------------------------------------------------------
 
 
-# (floor, match) of the saved run, 1-based, from the progress dictionary; (1, 1) when unreadable.
-func _saved_position() -> Vector2i:
+# 1-based column of the saved run from the progress dictionary (save v4 `column`); 1 when the
+# dictionary lacks it (an old floor save that the flow will restart).
+func _saved_position() -> int:
 	var saved: Dictionary = _flow.get_progress().get_run_dict()
-	var key: String = str(saved.get("chapter", "")) + FLOOR_KEY_SEPARATOR + str(saved.get("floor", ""))
-	var pos: Vector2i = _flow.get_config().find_floor(key)
-	return Vector2i(maxi(pos.y, 0) + 1, int(saved.get("match_index", 0)) + 1)
+	return maxi(int(saved.get("column", 0)), 0) + 1
 
 
 # --- Drawing ------------------------------------------------------------------
@@ -226,7 +222,7 @@ func _draw_tile(rect: Rect2, state: Dictionary) -> void:
 	var text_color: Color = TILE_LOCKED_TEXT if locked else TILE_TEXT
 	var sub_color: Color = TILE_LOCKED_TEXT if locked else TILE_SUB_TEXT
 	_text(rect, rect.position.y + rect.size.y * TILE_NAME_BASELINE, str(state.get("name", "")), TILE_NAME_FONT_SIZE, text_color)
-	_text(rect, rect.position.y + rect.size.y * TILE_SUB_BASELINE, tr(TEXT_FLOORS) % _flow.get_config().floor_count(int(state.get("index", 0))), TILE_SUB_FONT_SIZE, sub_color)
+	_text(rect, rect.position.y + rect.size.y * TILE_SUB_BASELINE, tr(TEXT_FLOORS) % _flow.get_config().column_count(int(state.get("index", 0))), TILE_SUB_FONT_SIZE, sub_color)
 	if locked:
 		_draw_padlock(rect)
 		return
@@ -271,9 +267,8 @@ func _draw_panel(vp: Vector2) -> void:
 			message = tr(TEXT_CONFIRM_ABANDON)
 			labels = [tr(TEXT_ABANDON), tr(TEXT_CANCEL)]
 		Prompt.RESUME_CHOICE:
-			var saved: Vector2i = _saved_position()
 			message = _flow.get_config().chapter_name(_pending)
-			sub = tr(TEXT_SAVED_POSITION) % [saved.x, saved.y]
+			sub = tr(TEXT_SAVED_POSITION) % _saved_position()
 			labels = [tr(TEXT_RESUME), tr(TEXT_RESTART)]
 			styles = [UiButtons.Style.PRIMARY, UiButtons.Style.DANGER]
 	_text(panel, panel.position.y + panel.size.y * PANEL_TEXT_BASELINE, message, PANEL_FONT_SIZE, PANEL_TEXT)

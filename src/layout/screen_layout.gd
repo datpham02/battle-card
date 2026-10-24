@@ -136,6 +136,25 @@ const SIGNATURE_BUTTON_HEIGHT_RATIO: float = 0.12
 const SIGNATURE_CHARGE_HEIGHT_RATIO: float = 0.025
 const SIGNATURE_TIMER_HEIGHT_RATIO: float = 0.035
 const SIGNATURE_BANNER_HEIGHT_RATIO: float = 0.3
+## Chapter map (Story 022), shares of the viewport: the column band's top and bottom under the
+## header strip (0.21 .. 0.96 of the height = 540 px), the gap between columns (share of width) and
+## between a column's node tiles (share of height). A column holds MAP_MAX_NODES tile slots and a
+## tile is a square of min(column width, slot height): with 7 columns a column is
+## (1203 - 6 * 19) / 7 = 155 px wide and a slot (540 - 2 * 14) / 3 = 170 px tall, so a tile is
+## 155 x 155 px >= 96 px. The header strip (hero, HP, deck, tokens, luck) sits between the title
+## band and the columns; the restart notice is a band across the middle of the column area.
+const MAP_COLUMNS_TOP_RATIO: float = 0.21
+const MAP_COLUMNS_BOTTOM_RATIO: float = 0.96
+const MAP_COLUMN_GAP_RATIO: float = 0.015
+const MAP_NODE_GAP_RATIO: float = 0.02
+const MAP_MAX_NODES: int = 3
+const MAP_NOTICE_HEIGHT_RATIO: float = 0.14
+## Rest view (Story 022): the two choice cards' top and bottom (0.2 .. 0.82 of the height = 446 px),
+## one card's width (0.3 * 1280 = 384 px) and the gap between them (shares of the viewport).
+const REST_CARDS_TOP_RATIO: float = 0.2
+const REST_CARDS_BOTTOM_RATIO: float = 0.82
+const REST_CARD_WIDTH_RATIO: float = 0.3
+const REST_CARD_GAP_RATIO: float = 0.04
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -621,3 +640,70 @@ static func signature_banner_rect(grid: BoardGrid, viewport_size: Vector2) -> Re
 	var board: Rect2 = board_rect(grid, viewport_size)
 	var height: float = board.size.y * SIGNATURE_BANNER_HEIGHT_RATIO
 	return Rect2(board.position.x, board.get_center().y - height * 0.5, board.size.x, height)
+
+
+## Chapter map (Story 022): the header strip between the title band and the columns, full width,
+## for the one-line run summary (hero, HP, deck size, removal tokens, luck).
+static func map_header_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * FLOOR_TITLE_BOTTOM_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * MAP_COLUMNS_TOP_RATIO - top)
+
+
+## Chapter map (Story 022): [param count] column rectangles left to right (map order), sharing the
+## width between the screen margins under the header strip. Empty for count <= 0.
+static func map_column_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var gap: float = viewport_size.x * MAP_COLUMN_GAP_RATIO
+	var width: float = maxf((viewport_size.x - margin * 2.0 - gap * (count - 1)) / count, 0.0)
+	var top: float = viewport_size.y * MAP_COLUMNS_TOP_RATIO
+	var height: float = viewport_size.y * MAP_COLUMNS_BOTTOM_RATIO - top
+	for i: int in count:
+		rects.append(Rect2(margin + (width + gap) * i, top, width, height))
+	return rects
+
+
+## Chapter map (Story 022): the tile of node [param index] of a column holding [param count] nodes
+## (top to bottom), inside [param column] (one of [method map_column_rects]). Tiles are squares of
+## the same size in every column (the column width or the height of one of MAP_MAX_NODES slots,
+## whichever is smaller), stacked with a gap and centred vertically as a group.
+static func map_node_rect(column: Rect2, index: int, count: int) -> Rect2:
+	# The gap is a share of the viewport height; the column is (BOTTOM - TOP) of that height.
+	var gap: float = column.size.y * MAP_NODE_GAP_RATIO / (MAP_COLUMNS_BOTTOM_RATIO - MAP_COLUMNS_TOP_RATIO)
+	var slot: float = (column.size.y - gap * (MAP_MAX_NODES - 1)) / MAP_MAX_NODES
+	var side: float = maxf(minf(column.size.x, slot), 0.0)
+	var total: float = side * count + gap * (count - 1)
+	var top: float = column.get_center().y - total * 0.5 + (side + gap) * index
+	return Rect2(column.get_center().x - side * 0.5, top, side, side)
+
+
+## Chapter map (Story 022): the restart-notice banner, a full-width band across the middle of the
+## column area (one tap dismisses it).
+static func map_notice_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * MAP_COLUMNS_TOP_RATIO
+	var height: float = viewport_size.y * MAP_COLUMNS_BOTTOM_RATIO - top
+	var band: float = viewport_size.y * MAP_NOTICE_HEIGHT_RATIO
+	return Rect2(0.0, top + (height - band) * 0.5, viewport_size.x, band)
+
+
+## Rest view (Story 022): the two choice cards ("Nghỉ", "Rèn") side by side, centred under the
+## title band.
+static func rest_card_rects(viewport_size: Vector2) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	var width: float = viewport_size.x * REST_CARD_WIDTH_RATIO
+	var gap: float = viewport_size.x * REST_CARD_GAP_RATIO
+	var top: float = viewport_size.y * REST_CARDS_TOP_RATIO
+	var height: float = viewport_size.y * REST_CARDS_BOTTOM_RATIO - top
+	var left: float = (viewport_size.x - (width * 2.0 + gap)) * 0.5
+	for i: int in 2:
+		rects.append(Rect2(left + (width + gap) * i, top, width, height))
+	return rects
+
+
+## Reward screen (Story 022): the strip between the title band and the card row, for the one-line
+## subtitle of a miniboss / boss offer.
+static func reward_subtitle_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * FLOOR_TITLE_BOTTOM_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * REWARD_CARDS_TOP_RATIO - top)

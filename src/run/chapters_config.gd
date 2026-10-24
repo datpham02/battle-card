@@ -1,10 +1,12 @@
 class_name ChaptersConfig
 extends RefCounted
-## Chapters -> floors -> matches from assets/data/chapters.json, plus the arena rules of a
-## floor (fixed shape, seeded shape pool, per-match override). A run is ONE floor: use
-## [method resolved_floor] and [method RunConfig.from_floor]. Never null after
-## [method load_from_file]: a bad file gives one default chapter / floor / match.
-## Schema: assets/data/schema.md. Implements: Story 015.
+## Chapters from assets/data/chapters.json (v2, Story 022): per chapter a `matches` map, `pools`
+## (kind -> tier -> match ids) and a `columns` spec feeding [ChapterMapGen]; use [method generate_map],
+## [method get_match_def] and [method RunConfig.from_node]. DEPRECATED (kept until GameFlow migrates,
+## Story 022 Part 2): the floor API ([method resolved_floor], [method floor_count], [method next_floor]
+## ...), fed by the optional `legacy_floors` list or the v1 `floors` format.
+## Never null after [method load_from_file]: a bad file gives one default chapter / match.
+## Schema: assets/data/schema.md. Implements: Story 015, Story 022.
 
 const DEFAULT_PATH: String = "res://assets/data/chapters.json"
 ## Keys of the `defaults` block (and of an optional per-floor override of them).
@@ -23,6 +25,8 @@ var _defaults: Dictionary = {}
 ## Each chapter: {id, name, name_is_key, floors: Array[Dictionary]}. Each floor: {id, name, name_is_key, arena, arena_pool,
 ## arena_variant, matches (raw dictionaries), overrides (defaults keys present on the floor)}.
 var _chapters: Array[Dictionary] = []
+## Map defaults shared by chapters: {columns, onboarding_tier_cap, danger_traits}.
+var _map_defaults: Dictionary = {"columns": [], "onboarding_tier_cap": 1, "danger_traits": []}
 
 
 ## Loads from a JSON file. Never null (defaults + warning when missing or bad).
@@ -41,6 +45,7 @@ static func load_from_file(path: String = DEFAULT_PATH) -> ChaptersConfig:
 static func from_dictionary(data: Dictionary) -> ChaptersConfig:
 	var c := ChaptersConfig.new()
 	c._defaults = _clean_defaults(data.get("defaults", {}))
+	c._map_defaults = _clean_map_defaults(data.get("defaults", {}))
 	var raw_chapters: Variant = data.get("chapters")
 	if typeof(raw_chapters) == TYPE_ARRAY:
 		var seen: Dictionary = {}
@@ -53,13 +58,86 @@ static func from_dictionary(data: Dictionary) -> ChaptersConfig:
 		c._chapters.append({
 			"id": "ch1", "name": TEXT_DEFAULT_CHAPTER_NAME, "name_is_key": true,
 			"floors": [_make_floor("f1", TEXT_DEFAULT_FLOOR_NAME, [{}])],
-		})
+			"matches": {"match_1": {"id": "match_1"}}, "match_ids": ["match_1"], "pools": {}, "columns": [],
+			})
 	return c
 
 
 ## Number of chapters (>= 1).
 func chapter_count() -> int:
 	return _chapters.size()
+
+
+## Map spec of chapter [param ci] for [method ChapterMapGen.generate]: {id, columns, pools, match_ids,
+## onboarding_tier_cap}. Empty when out of range.
+func get_map_spec(ci: int) -> Dictionary:
+	if ci < 0 or ci >= _chapters.size():
+		return {}
+	var ch: Dictionary = _chapters[ci]
+	var columns: Array = ch["columns"]
+	if columns.is_empty():
+		columns = _map_defaults["columns"]
+	if columns.is_empty():
+		columns = ChapterMapGen.DEFAULT_COLUMNS
+	return {
+		"id": ch["id"], "columns": columns.duplicate(true), "pools": (ch["pools"] as Dictionary).duplicate(true),
+		"match_ids": (ch["match_ids"] as Array).duplicate(), "onboarding_tier_cap": _map_defaults["onboarding_tier_cap"],
+	}
+
+
+## Seeded map of chapter [param ci] (see [method ChapterMapGen.generate]); [] when out of range.
+func generate_map(ci: int, run_seed: int, cleared_bosses: int) -> Array[Dictionary]:
+	var spec: Dictionary = get_map_spec(ci)
+	if spec.is_empty():
+		var none: Array[Dictionary] = []
+		return none
+	return ChapterMapGen.generate(spec, run_seed, cleared_bosses)
+
+
+## Number of columns of chapter [param ci]'s map skeleton (0 when out of range).
+func column_count(ci: int) -> int:
+	return (get_map_spec(ci).get("columns", []) as Array).size()
+
+
+## Total nodes of a generated [param map].
+func node_count(map: Array) -> int:
+	var total: int = 0
+	for column: Variant in map:
+		total += ((column as Dictionary).get("nodes", []) as Array).size()
+	return total
+
+
+## Match ids of chapter [param ci] in file order.
+func match_ids(ci: int) -> Array[String]:
+	var ids: Array[String] = []
+	if ci >= 0 and ci < _chapters.size():
+		for id: Variant in _chapters[ci]["match_ids"] as Array:
+			ids.append(str(id))
+	return ids
+
+
+## Normalized match dictionary (keys of [constant RunConfig.MATCH_KEYS], including `arena`) of
+## [param match_id] in chapter [param ci]; {} when unknown.
+func get_match_def(ci: int, match_id: String) -> Dictionary:
+	var raw: Dictionary = get_match_raw(ci, match_id)
+	if raw.is_empty():
+		return {}
+	return RunConfig.clean_match(raw, 0)
+
+
+## The match as written in the data (deep copy); {} when unknown.
+func get_match_raw(ci: int, match_id: String) -> Dictionary:
+	if ci < 0 or ci >= _chapters.size():
+		return {}
+	var matches: Dictionary = _chapters[ci]["matches"]
+	if not matches.has(match_id):
+		return {}
+	return (matches[match_id] as Dictionary).duplicate(true)
+
+
+## Extra traits a `danger` node adds to its match (from `defaults.danger_traits`).
+func danger_traits() -> Array:
+	return (_map_defaults["danger_traits"] as Array).duplicate(true)
 
 
 ## Number of floors of chapter [param ci] (0 when out of range).
@@ -326,6 +404,19 @@ func _clean_chapter(entry: Variant, index: int, seen: Dictionary) -> Dictionary:
 	if seen.has(id):
 		push_warning("ChaptersConfig: duplicate chapter id '%s', later one dropped" % id)
 		return {}
+	var matches: Dictionary = {}
+	var match_ids: Array[String] = []
+	var raw_matches: Variant = raw.get("matches")
+	if typeof(raw_matches) == TYPE_DICTIONARY:
+		for match_id: Variant in (raw_matches as Dictionary).keys():
+			var entry_match: Variant = (raw_matches as Dictionary)[match_id]
+			if typeof(entry_match) != TYPE_DICTIONARY:
+				push_warning("ChaptersConfig: match '%s' of '%s' is not an object, ignored" % [match_id, id])
+				continue
+			var def: Dictionary = (entry_match as Dictionary).duplicate(true)
+			def["id"] = str(match_id)
+			matches[str(match_id)] = def
+			match_ids.append(str(match_id))
 	var floors: Array[Dictionary] = []
 	var floor_ids: Dictionary = {}
 	var raw_floors: Variant = raw.get("floors")
@@ -334,12 +425,81 @@ func _clean_chapter(entry: Variant, index: int, seen: Dictionary) -> Dictionary:
 			var cleaned: Dictionary = _clean_floor(floor_entry, floors.size(), id, floor_ids)
 			if not cleaned.is_empty():
 				floors.append(cleaned)
-	if floors.is_empty():
-		push_warning("ChaptersConfig: chapter '%s' has no valid floors, dropped" % id)
+				# v1 format: the floor matches double as the chapter's match definitions.
+				for m: Variant in cleaned["matches"] as Array:
+					var mid: String = str((m as Dictionary).get("id", "match_%d" % (match_ids.size() + 1)))
+					if not matches.has(mid):
+						matches[mid] = (m as Dictionary).duplicate(true)
+						match_ids.append(mid)
+	var raw_legacy: Variant = raw.get("legacy_floors")
+	if floors.is_empty() and typeof(raw_legacy) == TYPE_ARRAY:
+		for floor_entry: Variant in raw_legacy as Array:
+			if typeof(floor_entry) != TYPE_DICTIONARY:
+				continue
+			var lf: Dictionary = (floor_entry as Dictionary).duplicate(true)
+			var resolved: Array = []
+			for mid: Variant in lf.get("match_ids", []) as Array:
+				if matches.has(str(mid)):
+					resolved.append((matches[str(mid)] as Dictionary).duplicate(true))
+			lf["matches"] = resolved
+			var cleaned_legacy: Dictionary = _clean_floor(lf, floors.size(), id, floor_ids)
+			if not cleaned_legacy.is_empty():
+				floors.append(cleaned_legacy)
+	if floors.is_empty() and not matches.is_empty():
+		# A v2 chapter without legacy floors: one synthetic floor holding every match.
+		var all: Array = []
+		for mid: String in match_ids:
+			all.append((matches[mid] as Dictionary).duplicate(true))
+		floors.append(_make_floor("f1", TEXT_DEFAULT_FLOOR_NAME, all))
+	if floors.is_empty() or matches.is_empty():
+		push_warning("ChaptersConfig: chapter '%s' has no valid matches, dropped" % id)
 		return {}
 	seen[id] = true
 	var named: Array = _name_of(raw, id, "chapter")
-	return {"id": id, "name": named[0], "name_is_key": named[1], "floors": floors}
+	var columns: Array = []
+	if typeof(raw.get("columns")) == TYPE_ARRAY:
+		columns = (raw["columns"] as Array).duplicate(true)
+	var pools: Dictionary = {}
+	if typeof(raw.get("pools")) == TYPE_DICTIONARY:
+		pools = _clean_pools(raw["pools"] as Dictionary, matches, id)
+	return {"id": id, "name": named[0], "name_is_key": named[1], "floors": floors, "matches": matches,
+		"match_ids": match_ids, "pools": pools, "columns": columns}
+
+
+# pools: kind -> tier ("0".."n") -> match ids; unknown ids are dropped with a warning.
+static func _clean_pools(raw: Dictionary, matches: Dictionary, chapter_id_text: String) -> Dictionary:
+	var result: Dictionary = {}
+	for kind: Variant in raw.keys():
+		if typeof(raw[kind]) != TYPE_DICTIONARY:
+			push_warning("ChaptersConfig: pools.%s of '%s' must be an object, ignored" % [kind, chapter_id_text])
+			continue
+		var tiers: Dictionary = {}
+		for tier: Variant in (raw[kind] as Dictionary).keys():
+			var ids: Array = []
+			var list: Variant = (raw[kind] as Dictionary)[tier]
+			if typeof(list) == TYPE_ARRAY:
+				for mid: Variant in list as Array:
+					if matches.has(str(mid)):
+						ids.append(str(mid))
+					else:
+						push_warning("ChaptersConfig: pools.%s.%s of '%s': unknown match '%s' dropped" % [kind, tier, chapter_id_text, mid])
+			tiers[str(tier)] = ids
+		result[str(kind)] = tiers
+	return result
+
+
+static func _clean_map_defaults(raw: Variant) -> Dictionary:
+	var result: Dictionary = {"columns": [], "onboarding_tier_cap": 1, "danger_traits": []}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return result
+	var source: Dictionary = raw as Dictionary
+	if typeof(source.get("columns")) == TYPE_ARRAY:
+		result["columns"] = (source["columns"] as Array).duplicate(true)
+	if source.has("onboarding_tier_cap"):
+		result["onboarding_tier_cap"] = maxi(int(source["onboarding_tier_cap"]), 0)
+	if typeof(source.get("danger_traits")) == TYPE_ARRAY:
+		result["danger_traits"] = (source["danger_traits"] as Array).duplicate(true)
+	return result
 
 
 func _clean_floor(entry: Variant, index: int, chapter_id_text: String, seen: Dictionary) -> Dictionary:

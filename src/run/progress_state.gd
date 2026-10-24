@@ -1,11 +1,11 @@
 class_name ProgressState
 extends RefCounted
-## Pure save data (v2, Story 019): UI locale, cleared chapters, seen cards and at most one run in
+## Pure save data (v4, Story 022; v2/v3 files still load): UI locale, cleared chapters, seen cards and at most one run in
 ## progress (a [RunSession] snapshot dictionary). The per-floor ladder API of Story 015 (cleared
 ## floors, in_progress) stays in memory only and is deprecated: it is NOT saved any more.
 ## No scene or file dependency; [ProgressStore] moves the JSON. Schema: assets/data/schema.md.
 
-const VERSION: int = 2
+const VERSION: int = 4
 ## Locale saved when none is in the file (v1 saves have no `locale`).
 const DEFAULT_LOCALE: String = "vi"
 
@@ -15,6 +15,8 @@ var _locale: String = DEFAULT_LOCALE
 var _cleared_chapters: Array[String] = []
 var _seen_cards: Array[String] = []
 var _run: Dictionary = {}
+## Bosses ever beaten (permanent; clamps the map tier while 0, Story 022).
+var _cleared_bosses: int = 0
 
 
 ## True when chapter [param chapter_id] has been cleared by any character.
@@ -49,6 +51,21 @@ func mark_card_seen(card_id: String) -> void:
 ## Copy of the seen card ids.
 func get_seen_cards() -> Array[String]:
 	return _seen_cards.duplicate()
+
+
+## Total bosses ever beaten (0 for a fresh or pre-v4 save).
+func get_cleared_bosses() -> int:
+	return _cleared_bosses
+
+
+## Counts one more boss beaten.
+func add_cleared_boss() -> void:
+	_cleared_bosses += 1
+
+
+## Call when a boss node completes (alias of [method add_cleared_boss]).
+func record_boss_clear() -> void:
+	add_cleared_boss()
 
 
 ## Stores the run in progress (a snapshot: [method RunSession.to_dict]).
@@ -137,11 +154,11 @@ func set_locale(code: String) -> void:
 	_locale = code if not code.is_empty() else DEFAULT_LOCALE
 
 
-## Serialises to {"version":2,"locale","cleared_chapters","seen_cards","run_in_progress":{...}|null}.
+## Serialises to {"version":4,"locale","cleared_chapters","seen_cards","cleared_bosses","run_in_progress":{...}|null}.
 func to_json() -> String:
 	return JSON.stringify({
 		"version": VERSION, "locale": _locale, "cleared_chapters": _cleared_chapters,
-		"seen_cards": _seen_cards, "run_in_progress": null if _run.is_empty() else _run,
+		"seen_cards": _seen_cards, "cleared_bosses": _cleared_bosses, "run_in_progress": null if _run.is_empty() else _run,
 	})
 
 
@@ -160,12 +177,14 @@ static func from_json(text: String, config: ChaptersConfig = null) -> ProgressSt
 	var version: int = -1
 	if typeof(data.get("version")) in [TYPE_INT, TYPE_FLOAT]:
 		version = int(data["version"])
-	if version != 1 and version != VERSION:
+	if version < 1 or version > VERSION:
 		push_warning("ProgressState: unsupported save version, starting empty")
 		return state
 	state.set_locale(str(data.get("locale", DEFAULT_LOCALE)))
 	if version == 1:
 		return state
+	if version >= 4:
+		state._cleared_bosses = maxi(int(data.get("cleared_bosses", 0)), 0)
 	var raw_cleared: Variant = data.get("cleared_chapters", [])
 	if typeof(raw_cleared) == TYPE_ARRAY:
 		for entry: Variant in raw_cleared as Array:

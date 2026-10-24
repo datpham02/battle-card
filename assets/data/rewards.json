@@ -1,10 +1,24 @@
 {
 	"offer_count": 3,
 	"rarity_weights": {"common": 70, "rare": 25, "epic": 5},
+	"rarity_weights_at_luck": {"0": [70, 25, 5], "70": [31, 35, 34]},
 	"allow_skip": true,
 	"allow_remove": true,
 	"min_deck_size": 4,
 	"max_card_level": 3,
 	"offer_upgrades": true,
-	"pool_excludes_defaults": false
+	"pool_excludes_defaults": false,
+	"starting_removals": 1,
+	"luck_start": 0,
+	"luck_per_node": 1,
+	"rest_heal_ratio": 0.3,
+	"rest_forge_levels": 1,
+	"node_rewards": {
+		"battle": {"offers": 3, "min_rarity": "common", "free": false, "removal_token": false},
+		"danger": {"offers": 3, "min_rarity": "common", "free": false, "removal_token": false},
+		"treasure": {"offers": 3, "min_rarity": "common", "free": true, "removal_token": false},
+		"miniboss": {"offers": 3, "min_rarity": "rare", "free": false, "removal_token": false},
+		"boss": {"offers": 3, "min_rarity": "common", "free": false, "removal_token": true},
+		"rest": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false}
+	}
 }

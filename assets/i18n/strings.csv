@@ -3,9 +3,9 @@ ui.arena.random,Ngẫu nhiên,Random
 ui.chapter.default_name,Chương 1,Chapter 1
 ui.floor.default_name,Tầng 1,Floor 1
 ui.chapter_select.title,CHỌN CHƯƠNG,CHOOSE A CHAPTER
-ui.chapter_select.floors,%d tầng,%d floors
+ui.chapter_select.floors,%d cột,%d columns
 ui.chapter_select.in_run,Đang dở,In progress
-ui.chapter_select.saved_position,Tầng %d · Trận %d,Floor %d · Match %d
+ui.chapter_select.saved_position,Cột %d,Column %d
 ui.chapter_select.confirm_abandon,Bỏ run đang dở?,Abandon the saved run?
 ui.chapter_select.abandon,Bỏ,Abandon
 ui.chapter_select.cancel,Thôi,Cancel
@@ -80,7 +80,7 @@ ui.run_hud.back_to_title,Về title,Back to title
 title.name,ẤN KIẾM,RUNE DUEL
 title.tagline,Nhặt ấn · nối trận pháp · Thi triển một đòn,Pick runes · draw the sigil · Cast one strike
 ui.title.continue,Tiếp tục run,Continue run
-ui.title.run_summary,%s · %s · Tầng %d,%s · %s · Floor %d
+ui.title.run_summary,%s · %s · Cột %d,%s · %s · Column %d
 ui.title.play,Chơi,Play
 ui.title.quit,Thoát,Quit
 ui.title.lang.vi,VI,VI
@@ -198,3 +198,32 @@ signature.thien_hoa.name,Thiên Hỏa,Heaven's Fire
 signature.thien_hoa.desc,Kích nổ mọi ô cháy bên địch: gấp đôi cháy còn lại; làm mới phép đốt.,Detonate burning enemy cells for double the burn left; reset burn spells.
 signature.anh_bo.name,Ảnh Bộ,Shadow Step
 signature.anh_bo.desc,2 giây: bước không cooldown; phép ≤ 3 ô gây gấp đôi lên địch bị ghim.,2 s: free steps; spells of 3 cells or fewer deal double to a pinned foe.
+node.battle.name,Trận,Battle
+node.danger.name,Hiểm địa,Danger
+node.treasure.name,Kho báu,Treasure
+node.rest.name,Trại nghỉ,Rest
+node.miniboss.name,Tiểu boss,Miniboss
+node.boss.name,Boss,Boss
+ui.map.column,Cột %d/%d,Column %d/%d
+ui.map.hp,HP %d/%d,HP %d/%d
+ui.map.deck,Bộ: %d lá,Deck: %d cards
+ui.map.removal_tokens,Token bỏ lá: %d,Removal tokens: %d
+ui.map.luck,May mắn %d,Luck %d
+ui.map.back,Về title,Back to title
+ui.map.notice_dismiss,Chạm để đóng,Tap to close
+ui.rest.title,TRẠI NGHỈ,REST SITE
+ui.rest.heal,Nghỉ,Rest
+ui.rest.heal_amount,+%d máu,+%d HP
+ui.rest.forge,Rèn,Forge
+ui.rest.forge_hint,+%d cấp một lá,+%d level on one card
+ui.rest.forge_title,CHỌN LÁ ĐỂ RÈN,PICK A CARD TO FORGE
+ui.rest.cancel,Thôi,Cancel
+ui.rest.all_maxed,Mọi lá đã tối đa,Every card is at max level
+ui.rest.more,… và %d lá nữa,… and %d more
+ui.reward.title_treasure,KHO BÁU,TREASURE
+ui.reward.min_rare,Lá hiếm trở lên,Rare or better
+ui.reward.token_granted,+%d token bỏ lá,+%d removal token
+ui.reward.remove_count,Bỏ 1 lá (%d),Remove a card (%d)
+ui.run_hud.node_label,Cột %d · %s,Column %d · %s
+ui.run_hud.run_node,Cột %d · %s,Column %d · %s
+run.restart.old_save,"Bản lưu cũ không còn dùng được, chương bắt đầu lại.",The old save no longer applies; the chapter starts over.

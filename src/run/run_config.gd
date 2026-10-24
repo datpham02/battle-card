@@ -21,7 +21,7 @@ const TIMING_KEYS: Array[String] = [
 ]
 
 ## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
-var heal_between_matches: float = 25.0
+var heal_between_matches: float = 0.0
 ## Seconds of real time the intro of each match lasts (battle frozen).
 var intro_sec: float = 1.5
 ## Seconds of real time between the last hit and leaving the match.
@@ -29,7 +29,7 @@ var end_delay_sec: float = 1.5
 ## Seconds before the between-matches screen advances alone (0 = wait for the button).
 var between_sec: float = 3.0
 ## HP the player recovers after a floor's boss (Story 019; used by RunSession, clamped to max HP).
-var heal_between_floors: float = 40.0
+var heal_between_floors: float = 0.0
 ## Revive tokens a run starts with (Story 019; reserved for the future revive item, unused).
 var revive_tokens: int = 0
 ## Share of the player's max HP a retried or resumed match starts with at least (0..1). Optional
@@ -80,7 +80,32 @@ static func from_dictionary(data: Dictionary) -> RunConfig:
 	return c
 
 
-## Builds the config of one floor from [method ChaptersConfig.resolved_floor] (arena and
+## Builds the single-match config of ONE map node (Story 022): the match [param match_id] of chapter
+## [param chapter_index] with its own arena, arena_seed = hash(run_seed, match id) and, for a
+## "danger" node, the chapter's extra danger traits. Timings come from the chapters defaults.
+static func from_node(chapters: ChaptersConfig, chapter_index: int, match_id: String, node_kind: String,
+		run_seed: int) -> RunConfig:
+	var raw: Dictionary = chapters.get_match_raw(chapter_index, match_id)
+	if raw.is_empty():
+		push_warning("RunConfig: unknown match '%s' in chapter %d, using the default match" % [match_id, chapter_index])
+		return from_dictionary(chapters.defaults())
+	raw["arena_seed"] = hash([run_seed, match_id]) & ChaptersConfig.SEED_MASK
+	if node_kind == "danger":
+		var traits: Array = (raw.get("traits", []) as Array).duplicate(true)
+		for extra: Variant in chapters.danger_traits():
+			var known: bool = false
+			for have: Variant in traits:
+				if typeof(have) == TYPE_DICTIONARY and (have as Dictionary).get("id") == (extra as Dictionary).get("id"):
+					known = true
+			if not known:
+				traits.append(extra)
+		raw["traits"] = traits
+	var data: Dictionary = chapters.defaults()
+	data["matches"] = [raw]
+	return from_dictionary(data)
+
+
+## DEPRECATED (Story 022; kept until GameFlow uses [method from_node]). Builds the config of one floor from [method ChaptersConfig.resolved_floor] (arena and
 ## arena_seed already filled per match). [param defaults] is [method ChaptersConfig.defaults];
 ## the floor's own optional `overrides` (or top-level keys) of those numbers win over it.
 static func from_floor(resolved_floor: Dictionary, defaults: Dictionary) -> RunConfig:
@@ -126,6 +151,11 @@ static func _default_match(index: int) -> Dictionary:
 		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0, "movement": {},
 		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "arena_seed": -1, "traits": [], "boss_cards": [],
 	}
+
+
+## Normalizes one raw match dictionary (see [constant MATCH_KEYS]).
+static func clean_match(raw: Dictionary, index: int) -> Dictionary:
+	return _clean_match(raw, index)
 
 
 static func _clean_match(raw: Dictionary, index: int) -> Dictionary:

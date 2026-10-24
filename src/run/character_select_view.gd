@@ -105,9 +105,10 @@ func _ready() -> void:
 	_skills = SkillConfig.load_from_file()
 
 
+# Redraws every frame, also while inactive: a CanvasItem keeps its last frame until the next
+# redraw, and a transparent screen drawn later (the chapter map) would show the stale title.
 func _process(_delta: float) -> void:
-	if _is_active():
-		queue_redraw()
+	queue_redraw()
 
 
 func _is_active() -> bool:
