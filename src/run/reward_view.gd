@@ -82,6 +82,18 @@ const DAMAGE_BASELINE: float = 0.48
 const COOLDOWN_BASELINE: float = 0.55
 const DIVIDER_2: float = 0.61
 const DESC_BASELINE: float = 0.7
+## Story 023: the keyword line (each keyword in its own colour) sits between the second divider and
+## the description; with it the description starts at DESC_BASELINE_KEYWORD instead.
+const KEYWORD_BASELINE: float = 0.665
+const DESC_BASELINE_KEYWORD: float = 0.745
+const KEYWORD_FONT_SIZE: int = 20
+const KEYWORD_GAP: float = 10.0
+const FRAGILE_COLOR: Color = Color(0.62, 0.32, 0.88)
+const FROST_COLOR: Color = Color(0.3, 0.68, 0.95)
+const PIERCE_COLOR: Color = Color(0.4, 0.45, 0.55)
+const EXECUTE_COLOR: Color = Color(0.75, 0.12, 0.12)
+## Decimals of the "x1.5 vs Fragile" multiplier.
+const MULT_DECIMALS: int = 1
 
 ## Rarity ids as written in cards.json.
 const RARITY_RARE: String = "rare"
@@ -110,6 +122,12 @@ const TEXT_RARITY_EPIC: String = "ui.rarity.epic"
 ## Story 020: "+%d" after a card name, "Nâng cấp → +%d" (the level after the pick), the remove
 ## slot, the remove list's title / cancel / minimum-size hint and "… và %d lá nữa" for hidden entries.
 const TEXT_LEVEL_SUFFIX: String = "ui.card.level_suffix"
+## Story 023 keyword line: "Rạn +N", "Hàn +N", "Xuyên giáp", "Hành quyết", "×1.5 khi Rạn".
+const TEXT_KEYWORD_FRAGILE_STACKS: String = "keyword.fragile_stacks"
+const TEXT_KEYWORD_FROST_STACKS: String = "keyword.frost_stacks"
+const TEXT_KEYWORD_PIERCE: String = "keyword.pierce"
+const TEXT_KEYWORD_EXECUTE: String = "keyword.execute"
+const TEXT_KEYWORD_VS_FRAGILE: String = "keyword.vs_fragile"
 const TEXT_UPGRADE_TO: String = "ui.reward.upgrade_to"
 const TEXT_REMOVE: String = "ui.reward.remove"
 const TEXT_REMOVE_TITLE: String = "ui.reward.remove_title"
@@ -323,7 +341,54 @@ func _draw_card(rect: Rect2, id: String, levels: Dictionary) -> void:
 	var cooldown_text: String = tr(TEXT_COOLDOWN_NONE) if cooldown <= 0.0 else tr(TEXT_COOLDOWN) % roundi(cooldown)
 	_text(inner, _y(rect, COOLDOWN_BASELINE), cooldown_text, STAT_FONT_SIZE, STAT_COLOR)
 	_divider(inner, _y(rect, DIVIDER_2))
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, _y(rect, DESC_BASELINE)), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
+	var keywords: Array = _keyword_parts(skill)
+	var desc_y: float = _y(rect, DESC_BASELINE)
+	if not keywords.is_empty():
+		_draw_keyword_line(inner, _y(rect, KEYWORD_BASELINE), keywords)
+		desc_y = _y(rect, DESC_BASELINE_KEYWORD)
+	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
+
+
+# Story 023: [text, colour] pairs of the keywords a resolved card carries, in a fixed order
+# (Rạn stacks, Hàn stacks, pierce, execute, the Rạn bonus); empty for a plain card.
+func _keyword_parts(skill: Dictionary) -> Array:
+	var parts: Array = []
+	var fragile: int = int(skill.get("fragile_stacks", 0))
+	if fragile > 0:
+		parts.append([tr(TEXT_KEYWORD_FRAGILE_STACKS) % fragile, FRAGILE_COLOR])
+	var frost: int = int(skill.get("frost_stacks", 0))
+	if frost > 0:
+		parts.append([tr(TEXT_KEYWORD_FROST_STACKS) % frost, FROST_COLOR])
+	if bool(skill.get("pierce_defense", false)):
+		parts.append([tr(TEXT_KEYWORD_PIERCE), PIERCE_COLOR])
+	if bool(skill.get("execute", false)) or float(skill.get("execute_ratio", 0.0)) > 0.0:
+		parts.append([tr(TEXT_KEYWORD_EXECUTE), EXECUTE_COLOR])
+	var vs_fragile: float = float(skill.get("bonus_vs_fragile_mult", 1.0))
+	if vs_fragile > 1.0:
+		parts.append([tr(TEXT_KEYWORD_VS_FRAGILE) % String.num(vs_fragile, MULT_DECIMALS), FRAGILE_COLOR])
+	return parts
+
+
+# One centred line of coloured [param parts] KEYWORD_GAP apart; the font shrinks (never below
+# MIN_FIT_FONT_SIZE) until the whole line fits [param inner].
+func _draw_keyword_line(inner: Rect2, y: float, parts: Array) -> void:
+	var font: Font = ThemeDB.fallback_font
+	var size: int = KEYWORD_FONT_SIZE
+	while size > MIN_FIT_FONT_SIZE and _parts_width(parts, size) > inner.size.x:
+		size -= 1
+	var x: float = inner.get_center().x - _parts_width(parts, size) * 0.5
+	for part: Array in parts:
+		draw_string(font, Vector2(x, y), str(part[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, size, part[1])
+		x += font.get_string_size(str(part[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x + KEYWORD_GAP
+
+
+# Width of [param parts] in a row at [param size], gaps included (none after the last).
+func _parts_width(parts: Array, size: int) -> float:
+	var font: Font = ThemeDB.fallback_font
+	var width: float = 0.0
+	for part: Array in parts:
+		width += font.get_string_size(str(part[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	return width + KEYWORD_GAP * maxi(parts.size() - 1, 0)
 
 
 # Story 020: the remove list — title, one tile per deck entry (name + level, rarity border; dimmed

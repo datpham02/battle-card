@@ -63,6 +63,10 @@ const LABEL_FONT_SIZE: int = 16
 const BAND_TITLE_FONT_SIZE: int = 64
 const BAND_NAME_FONT_SIZE: int = 36
 const BAND_HINT_FONT_SIZE: int = 24
+## Story 023: the match description line of the intro band (between the name and the hint).
+const BAND_DESC_FONT_SIZE: int = 20
+## Smallest font a long line (match description, chapter end text) shrinks to before clipping.
+const MIN_FIT_FONT_SIZE: int = 14
 const TITLE_FONT_SIZE: int = 56
 const LINE_FONT_SIZE: int = 30
 const SMALL_FONT_SIZE: int = 22
@@ -72,7 +76,8 @@ const BUTTON_PAIR_FONT_SIZE: int = 32
 ## Intro band text baselines as shares of the band height.
 const BAND_TITLE_BASELINE: float = 0.38
 const BAND_NAME_BASELINE: float = 0.64
-const BAND_HINT_BASELINE: float = 0.88
+const BAND_DESC_BASELINE: float = 0.78
+const BAND_HINT_BASELINE: float = 0.91
 ## Panel text baselines as shares of the panel height (the buttons sit below them).
 const PANEL_TITLE_BASELINE: float = 0.16
 const PANEL_LINE1_BASELINE: float = 0.29
@@ -331,6 +336,15 @@ func _draw() -> void:
 
 
 # Centred single-line text at baseline [param y] over the width of [param rect].
+# Largest font size <= [param size] (never below MIN_FIT_FONT_SIZE) at which [param text] fits [param width].
+func _fit_line_font(text: String, width: float, size: int) -> int:
+	var font: Font = ThemeDB.fallback_font
+	var fitted: int = size
+	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+		fitted -= 1
+	return fitted
+
+
 func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
 
@@ -407,6 +421,12 @@ func _draw_intro(vp: Vector2) -> void:
 		title = tr(TEXT_INTRO_TITLE_BOSS) if kind == ChapterMapView.KIND_BOSS else ChapterMapView.kind_name(kind).to_upper()
 	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if boss else TEXT_WHITE)
 	_text(band, band.position.y + band.size.y * BAND_NAME_BASELINE, _match_name(state.get_match_index()), BAND_NAME_FONT_SIZE, TEXT_LIGHT)
+	# Story 023: the match's one-line description (desc_key) under the name, shrunk to the band width.
+	var desc_key: String = str(_controller.get_config().matches[state.get_match_index()].get("desc_key", ""))
+	if not desc_key.is_empty():
+		var desc: String = tr(desc_key)
+		var desc_width: float = band.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0
+		_text(band, band.position.y + band.size.y * BAND_DESC_BASELINE, desc, _fit_line_font(desc, desc_width, BAND_DESC_FONT_SIZE), TEXT_DIM)
 	_text(band, band.position.y + band.size.y * BAND_HINT_BASELINE, tr(TEXT_INTRO_HINT), BAND_HINT_FONT_SIZE, TEXT_DIM)
 
 
@@ -480,6 +500,12 @@ func _draw_run_result(vp: Vector2) -> void:
 			lines = [chapter, node_line, tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
 			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
 			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
+			# Story 023: the chapter's closing line (end_key) right under its name.
+			var end_key: String = _flow.get_config().chapter_text_key(run.chapter_index, "end")
+			if not end_key.is_empty():
+				lines.insert(1, tr(end_key))
+				colors.insert(1, TEXT_DIM)
+				sizes.insert(1, SMALL_FONT_SIZE)
 		else:
 			var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 			lines = [
@@ -490,7 +516,7 @@ func _draw_run_result(vp: Vector2) -> void:
 			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
 	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_RUN_WON_TITLE if won else TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_WIN if won else TEXT_LOSE)
 	for i: int in mini(lines.size(), RESULT_LINE_BASELINES.size()):
-		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], sizes[i], colors[i])
+		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], _fit_line_font(lines[i], inner_width, sizes[i]), colors[i])
 	_draw_buttons(vp)
 
 

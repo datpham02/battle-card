@@ -401,126 +401,103 @@
 		{
 			"id": "ch2",
 			"name_key": "chapter.ch2.name",
+			"intro_key": "chapter.ch2.intro",
+			"end_key": "chapter.ch2.end",
 			"matches": {
-				"zombie": {
-					"id": "zombie",
-					"name_key": "boss.zombie.name",
-					"boss_max_hp": 130,
-					"brain_set": "balanced",
-					"boss_step_cooldown_mult": 1.22,
-					"swing_speed_mult": 0.9,
-					"boss_think_interval_sec": 0.3,
-					"boss_reaction_sec": 0.35,
-					"boss_drop_interval_mult": 1.0,
-					"traits": [
-						{
-							"id": "row_burner",
-							"params": {}
-						}
-					],
-					"arena": {
-						"shape": "ring",
-						"variant": true
-					}
-				},
-				"ogre": {
-					"id": "ogre",
-					"name_key": "boss.ogre.name",
-					"boss_max_hp": 160,
-					"brain_set": "aggressive",
-					"boss_step_cooldown_mult": 1.11,
-					"swing_speed_mult": 0.8,
-					"boss_think_interval_sec": 0.25,
-					"boss_reaction_sec": 0.3,
-					"boss_drop_interval_mult": 0.9,
-					"traits": [
-						{
-							"id": "rotten_thrower",
-							"params": {
-								"interval_sec": 5.0
-							}
-						}
-					],
-					"arena": {
-						"shape": "ring",
-						"variant": true
-					}
-				},
-				"ch2_placeholder_scout": {
-					"id": "ch2_placeholder_scout",
-					"name_key": "boss.goblin_scout.name",
-					"boss_max_hp": 80,
+				"skeleton": {
+					"id": "skeleton",
+					"name_key": "boss.skeleton.name",
+					"boss_max_hp": 92,
 					"brain_set": "cautious",
-					"boss_step_cooldown_mult": 1.78,
+					"boss_step_cooldown_mult": 1.68,
 					"swing_speed_mult": 1.0,
 					"boss_think_interval_sec": 0.5,
 					"boss_reaction_sec": 0.6,
 					"boss_drop_interval_mult": 1.3,
+					"boss_defense": 2,
 					"arena": {
-						"shape": "ring",
-						"variant": true
+						"shape": "square"
 					}
 				},
-				"ch2_placeholder_wolf": {
-					"id": "ch2_placeholder_wolf",
-					"name_key": "boss.wolf.name",
-					"boss_max_hp": 100,
-					"brain_set": "cautious",
-					"boss_step_cooldown_mult": 1.44,
+				"zombie": {
+					"id": "zombie",
+					"name_key": "boss.zombie.name",
+					"boss_max_hp": 104,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.68,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"boss_defense": 2,
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"bat_swarm": {
+					"id": "bat_swarm",
+					"name_key": "boss.bat_swarm.name",
+					"boss_max_hp": 115,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.7,
+					"swing_speed_mult": 1.0,
 					"boss_think_interval_sec": 0.4,
 					"boss_reaction_sec": 0.45,
 					"boss_drop_interval_mult": 1.15,
-					"swing_speed_mult": 1.0,
+					"boss_defense": 2,
 					"movement": {
 						"move_commitment": 0.9,
 						"move_noise": 0.05,
 						"reaction_sec": 0.45
 					},
 					"arena": {
-						"shape": "ring",
+						"shape": "cross",
 						"variant": true
 					}
 				},
-				"ch2_placeholder_archer": {
-					"id": "ch2_placeholder_archer",
-					"name_key": "boss.goblin_archer.name",
-					"boss_max_hp": 100,
-					"brain_set": "cautious",
-					"boss_step_cooldown_mult": 1.44,
-					"boss_think_interval_sec": 0.4,
-					"boss_reaction_sec": 0.45,
-					"boss_drop_interval_mult": 1.15,
-					"swing_speed_mult": 1.0,
-					"arena": {
-						"shape": "ring",
-						"variant": true
-					}
-				},
-				"ch2_placeholder_brute": {
-					"id": "ch2_placeholder_brute",
-					"name_key": "boss.goblin_brute.name",
-					"boss_max_hp": 120,
+				"slime": {
+					"id": "slime",
+					"name_key": "boss.slime.name",
+					"boss_max_hp": 138,
 					"brain_set": "balanced",
-					"boss_step_cooldown_mult": 1.3,
+					"boss_step_cooldown_mult": 1.2,
 					"swing_speed_mult": 0.95,
 					"boss_think_interval_sec": 0.35,
 					"boss_reaction_sec": 0.4,
 					"boss_drop_interval_mult": 1.05,
+					"boss_defense": 2,
 					"arena": {
-						"shape": "ring",
+						"shape": "u_shape",
 						"variant": true
 					}
 				},
-				"ch2_placeholder_chief": {
-					"id": "ch2_placeholder_chief",
-					"name_key": "boss.goblin_chief.name",
-					"boss_max_hp": 120,
+				"cultist": {
+					"id": "cultist",
+					"name_key": "boss.cultist.name",
+					"boss_max_hp": 150,
 					"brain_set": "balanced",
-					"boss_step_cooldown_mult": 1.22,
+					"boss_step_cooldown_mult": 1.2,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_defense": 2,
+					"arena": {
+						"shape": "staircase",
+						"variant": true
+					}
+				},
+				"rat_king_guard": {
+					"id": "rat_king_guard",
+					"name_key": "boss.rat_king_guard.name",
+					"boss_max_hp": 161,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
 					"swing_speed_mult": 0.9,
 					"boss_think_interval_sec": 0.3,
 					"boss_reaction_sec": 0.35,
 					"boss_drop_interval_mult": 1.0,
+					"boss_defense": 2,
 					"traits": [
 						{
 							"id": "row_burner",
@@ -532,34 +509,88 @@
 						"variant": true
 					}
 				},
-				"ch2_placeholder_shaman": {
-					"id": "ch2_placeholder_shaman",
-					"name_key": "boss.goblin_shaman.name",
-					"boss_max_hp": 130,
+				"ghost": {
+					"id": "ghost",
+					"name_key": "boss.ghost.name",
+					"desc_key": "match.ghost.desc",
+					"boss_max_hp": 24,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.0,
+					"boss_defense": 12,
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"reacter": {
+					"id": "reacter",
+					"name_key": "boss.reacter.name",
+					"desc_key": "match.reacter.desc",
+					"boss_max_hp": 70,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.3,
 					"swing_speed_mult": 0.95,
 					"boss_think_interval_sec": 0.35,
 					"boss_reaction_sec": 0.4,
 					"boss_drop_interval_mult": 1.05,
+					"boss_defense": 2,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "step_reactor",
+							"params": {}
+						}
+					],
 					"arena": {
-						"shape": "ring",
-						"variant": true
+						"shape": "cross"
 					}
 				},
-				"ch2_placeholder_warlock": {
-					"id": "ch2_placeholder_warlock",
-					"name_key": "boss.goblin_warlock.name",
-					"boss_max_hp": 135,
+				"jailer": {
+					"id": "jailer",
+					"name_key": "boss.jailer.name",
+					"boss_max_hp": 170,
 					"brain_set": "balanced",
-					"boss_step_cooldown_mult": 1.22,
+					"boss_step_cooldown_mult": 1.3,
 					"swing_speed_mult": 0.9,
 					"boss_think_interval_sec": 0.3,
 					"boss_reaction_sec": 0.35,
 					"boss_drop_interval_mult": 1.0,
+					"boss_min_runes": 2,
 					"traits": [
 						{
+							"id": "rotten_thrower",
+							"params": {
+								"interval_sec": 6.0
+							}
+						},
+						{
 							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "u_shape",
+						"variant": true
+					}
+				},
+				"ogre_king": {
+					"id": "ogre_king",
+					"name_key": "boss.ogre_king.name",
+					"desc_key": "match.ogre_king.desc",
+					"boss_max_hp": 290,
+					"brain_set": "aggressive",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 0.8,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 0.9,
+					"boss_min_runes": 3,
+					"traits": [
+						{
+							"id": "slam",
 							"params": {}
 						}
 					],
@@ -572,46 +603,53 @@
 			"pools": {
 				"battle": {
 					"0": [
-						"ch2_placeholder_scout",
-						"ch2_placeholder_wolf"
+						"skeleton",
+						"zombie"
 					],
 					"1": [
-						"ch2_placeholder_wolf",
-						"ch2_placeholder_archer",
-						"zombie"
+						"zombie",
+						"bat_swarm",
+						"slime",
+						"ghost",
+						"reacter"
 					],
 					"2": [
-						"ch2_placeholder_archer",
-						"ch2_placeholder_brute",
-						"zombie"
+						"slime",
+						"rat_king_guard",
+						"cultist",
+						"reacter",
+						"bat_swarm"
 					]
 				},
 				"danger": {
 					"0": [],
 					"1": [
-						"ch2_placeholder_archer",
-						"zombie"
+						"bat_swarm",
+						"slime",
+						"ghost",
+						"reacter"
 					],
 					"2": [
-						"ch2_placeholder_brute",
-						"zombie"
+						"rat_king_guard",
+						"cultist",
+						"reacter",
+						"slime"
 					]
 				},
 				"miniboss": {
 					"1": [
-						"ch2_placeholder_chief"
+						"jailer"
 					],
 					"2": [
-						"ch2_placeholder_shaman",
-						"ch2_placeholder_warlock"
+						"jailer"
 					]
 				},
 				"boss": {
 					"1": [
-						"ogre"
+						"ogre_king"
 					],
 					"2": [
-						"ogre"
+						"ogre_king"
 					]
 				}
 			},
@@ -621,7 +659,7 @@
 					"name_key": "floor.ch2.f1.name",
 					"match_ids": [
 						"zombie",
-						"ogre"
+						"ogre_king"
 					],
 					"arena_pool": [
 						"ring"
@@ -629,6 +667,255 @@
 					"arena_variant": true
 				}
 			]
+		},
+		{
+			"id": "ch3",
+			"name_key": "chapter.ch3.name",
+			"intro_key": "chapter.ch3.intro",
+			"end_key": "chapter.ch3.end",
+			"matches": {
+				"frost_sprite": {
+					"id": "frost_sprite",
+					"name_key": "boss.frost_sprite.name",
+					"boss_max_hp": 106,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.58,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"boss_defense": 4,
+					"arena": {
+						"shape": "square"
+					}
+				},
+				"wisp": {
+					"id": "wisp",
+					"name_key": "boss.wisp.name",
+					"boss_max_hp": 120,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.58,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"boss_defense": 4,
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"stone_sentry": {
+					"id": "stone_sentry",
+					"name_key": "boss.stone_sentry.name",
+					"boss_max_hp": 132,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.9,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"boss_defense": 4,
+					"movement": {
+						"move_commitment": 0.7,
+						"move_noise": 0.05,
+						"reaction_sec": 0.45
+					},
+					"arena": {
+						"shape": "cross_wide"
+					}
+				},
+				"snow_wolf": {
+					"id": "snow_wolf",
+					"name_key": "boss.snow_wolf.name",
+					"boss_max_hp": 159,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_defense": 4,
+					"arena": {
+						"shape": "pillars"
+					}
+				},
+				"rime_archer": {
+					"id": "rime_archer",
+					"name_key": "boss.rime_archer.name",
+					"boss_max_hp": 172,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.4,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_defense": 4,
+					"arena": {
+						"shape": "staircase",
+						"variant": true
+					}
+				},
+				"ice_golem": {
+					"id": "ice_golem",
+					"name_key": "boss.ice_golem.name",
+					"boss_max_hp": 185,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_defense": 4,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "diamond",
+						"variant": true
+					}
+				},
+				"ghost_elite": {
+					"id": "ghost_elite",
+					"name_key": "boss.ghost_elite.name",
+					"desc_key": "match.ghost_elite.desc",
+					"boss_max_hp": 36,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.0,
+					"boss_defense": 16,
+					"arena": {
+						"shape": "cross_wide"
+					}
+				},
+				"fuse_golem": {
+					"id": "fuse_golem",
+					"name_key": "boss.fuse_golem.name",
+					"desc_key": "match.fuse_golem.desc",
+					"boss_max_hp": 110,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.2,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "fuse_cannon",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"frost_mage": {
+					"id": "frost_mage",
+					"name_key": "boss.frost_mage.name",
+					"boss_max_hp": 210,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "frost_aura",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "diamond",
+						"variant": true
+					}
+				},
+				"mist_lord": {
+					"id": "mist_lord",
+					"name_key": "boss.mist_lord.name",
+					"desc_key": "match.mist_lord.desc",
+					"boss_max_hp": 320,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 0.85,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_min_runes": 3,
+					"traits": [
+						{
+							"id": "frost_aura",
+							"params": {}
+						},
+						{
+							"id": "phase_shift",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "pillars"
+					}
+				}
+			},
+			"pools": {
+				"battle": {
+					"0": [
+						"frost_sprite",
+						"wisp"
+					],
+					"1": [
+						"wisp",
+						"stone_sentry",
+						"snow_wolf",
+						"fuse_golem"
+					],
+					"2": [
+						"stone_sentry",
+						"snow_wolf",
+						"rime_archer",
+						"ice_golem",
+						"fuse_golem",
+						"ghost_elite"
+					]
+				},
+				"danger": {
+					"0": [],
+					"1": [
+						"stone_sentry",
+						"snow_wolf",
+						"fuse_golem"
+					],
+					"2": [
+						"rime_archer",
+						"ice_golem",
+						"fuse_golem",
+						"ghost_elite"
+					]
+				},
+				"miniboss": {
+					"1": [
+						"frost_mage"
+					],
+					"2": [
+						"frost_mage"
+					]
+				},
+				"boss": {
+					"1": [
+						"mist_lord"
+					],
+					"2": [
+						"mist_lord"
+					]
+				}
+			}
 		}
 	]
 }

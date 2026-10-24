@@ -12,6 +12,12 @@ signal cell_burned_out(cell: Vector2i)
 signal pinned(side: int)
 ## A pin expired.
 signal pin_ended(side: int)
+## Story 023: the Ran (fragile) stacks of [param side] changed (applied or consumed).
+signal fragile_changed(side: int)
+## Story 023: the Han (frost) stacks of [param side] changed (applied, burst or cleared).
+signal frost_changed(side: int)
+## Story 023: the frost stacks of [param side] reached the burst threshold and dealt [param damage].
+signal frost_burst(side: int, damage: float)
 
 ## Tolerance for float accumulation when comparing against a tick boundary.
 const _EPS: float = 0.000001
@@ -25,6 +31,13 @@ var _burn_extend_sec: float = 0.0
 var _burn_tick_bonus: float = 0.0
 var _burn_max_stacks: int = 1
 var _pinned_damage_mult: float = 1.0
+# Story 023 keywords, per SIDE (CombatState.Side -> stacks). Defaults are inert (set by configure_keywords).
+var _fragile: Dictionary = {}
+var _frost: Dictionary = {}
+var _fragile_mult: float = 1.0
+var _fragile_max_stacks: int = 1
+var _frost_stacks_to_burst: int = 0
+var _frost_burst_damage: float = 0.0
 
 
 ## Ignites every cell in [param cells] for [param duration] seconds. A unit standing on a
@@ -64,6 +77,82 @@ func configure(extend_sec: float, tick_bonus: float, max_stacks: int, pinned_mul
 	_burn_tick_bonus = maxf(tick_bonus, 0.0)
 	_burn_max_stacks = maxi(max_stacks, 1)
 	_pinned_damage_mult = maxf(pinned_mult, 0.0)
+
+
+## Story 023: sets the Ran / Han numbers (from combat.json, validated by CombatConfig).
+## [param fragile_mult] damage multiplier while a side has Ran stacks (>= 1), [param fragile_max] stack
+## cap (>= 1), [param burst_stacks] Han stacks that trigger the burst (0 = no burst), [param burst_damage]
+## the burst damage (ignores defense and Ran).
+func configure_keywords(fragile_mult: float, fragile_max: int, burst_stacks: int, burst_damage: float) -> void:
+	_fragile_mult = maxf(fragile_mult, 1.0)
+	_fragile_max_stacks = maxi(fragile_max, 1)
+	_frost_stacks_to_burst = maxi(burst_stacks, 0)
+	_frost_burst_damage = maxf(burst_damage, 0.0)
+
+
+## Story 023 Ran (fragile): adds [param stacks] to the unit of [param side], capped at the configured
+## maximum. The next damage/push hits against it deal x fragile_mult, one stack each.
+func apply_fragile(side: int, stacks: int) -> void:
+	if stacks <= 0:
+		return
+	_fragile[side] = mini(int(_fragile.get(side, 0)) + stacks, _fragile_max_stacks)
+	fragile_changed.emit(side)
+
+
+## Ran stacks on [param side] (0 = none).
+func fragile_stacks(side: int) -> int:
+	return int(_fragile.get(side, 0))
+
+
+## HUD alias of [method fragile_stacks].
+func get_fragile_stacks(side: int) -> int:
+	return fragile_stacks(side)
+
+
+## Damage multiplier a hit against [param side] gets from Ran right now (peek, consumes nothing).
+func fragile_mult_against(side: int) -> float:
+	return _fragile_mult if fragile_stacks(side) > 0 else 1.0
+
+
+## Spends one Ran stack of [param side] (a damage/push hit landed) and returns the multiplier that
+## hit gets: fragile_mult while a stack existed, else 1.0.
+func consume_fragile(side: int) -> float:
+	var have: int = fragile_stacks(side)
+	if have <= 0:
+		return 1.0
+	if have == 1:
+		_fragile.erase(side)
+	else:
+		_fragile[side] = have - 1
+	fragile_changed.emit(side)
+	return _fragile_mult
+
+
+## Story 023 Han (frost): adds [param stacks] to the unit of [param side]. Reaching the burst
+## threshold clears the stacks, emits frost_burst and returns the burst damage (the CALLER applies it
+## to the CombatState; it ignores defense and Ran). Returns 0.0 when no burst happened.
+func apply_frost(side: int, stacks: int) -> float:
+	if stacks <= 0:
+		return 0.0
+	var total: int = int(_frost.get(side, 0)) + stacks
+	if _frost_stacks_to_burst > 0 and total >= _frost_stacks_to_burst:
+		_frost.erase(side)
+		frost_changed.emit(side)
+		frost_burst.emit(side, _frost_burst_damage)
+		return _frost_burst_damage
+	_frost[side] = total
+	frost_changed.emit(side)
+	return 0.0
+
+
+## Han stacks on [param side] (0 = none).
+func frost_stacks(side: int) -> int:
+	return int(_frost.get(side, 0))
+
+
+## HUD alias of [method frost_stacks].
+func get_frost_stacks(side: int) -> int:
+	return frost_stacks(side)
 
 
 ## Damage multiplier for hits against the unit of [param side]: the Ghim multiplier while it is
@@ -187,6 +276,8 @@ func get_pin_left(side: int) -> float:
 func clear() -> void:
 	_burning.clear()
 	_pins.clear()
+	_fragile.clear()
+	_frost.clear()
 
 
 # Sides of the living units standing on [param cell].

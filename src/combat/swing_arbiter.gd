@@ -35,6 +35,11 @@ var player_damage_modifier: Callable = Callable()
 ## damage, and the LAST damage scale (after Ghim and the passive).
 var player_cells_modifier: Callable = Callable()
 var player_signature_modifier: Callable = Callable()
+## Story 023: flat defense of the BOSS (match key boss_defense, subtracted from the player's damage/push
+## hits last, minimum 1; `pierce_defense` cards skip it) and the default execute threshold (combat.json
+## execute_ratio). 0 = none; set by CombatView.
+var boss_defense: float = 0.0
+var execute_ratio: float = 0.0
 
 
 func _init(
@@ -99,7 +104,8 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 	var result: Dictionary = CutEffects.apply(
 		_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level,
 		player_cells_modifier if is_player else Callable(),
-		player_signature_modifier if is_player else Callable())
+		player_signature_modifier if is_player else Callable(),
+		{"target_defense": boss_defense, "execute_ratio": execute_ratio})
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	result["level"] = level

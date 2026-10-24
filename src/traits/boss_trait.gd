@@ -19,6 +19,9 @@ extends RefCounted
 ## - `hold_getter`: Callable returning the player's HoldSlots, or null until its view is ready
 ##   (use [method get_player_hold]).
 ## - `skill_config`: SkillConfig, `cut_config`: CutConfig.
+## - `player_mover`: the player's UnitMover (Story 023: `blocked_cell_fn`, `cooldown_mult`).
+## - `trait_host_ref`: WeakRef of the owning TraitHost (add_trait, phase_changed); use
+##   [method get_host].
 ## Every tuning number comes from `params` (chapters.json) with the trait's own defaults; read them
 ## with [method param_float] / [method param_int] / [method param_string] / [method param_bool].
 ## Time reaches a trait only through [method on_tick] in SCALED simulation seconds, so Focus
@@ -106,6 +109,12 @@ func on_boss_damaged(_amount: float) -> void:
 	pass
 
 
+## The PLAYER completed a successful step from [param _from] to [param _to] (refused steps and
+## standing still never call this). Called by CombatView after UnitMover.try_step succeeded.
+func on_player_stepped(_from: Vector2i, _to: Vector2i) -> void:
+	pass
+
+
 ## Drops every reference (context, params). Called once by the host when the battle ends.
 ## Override to disconnect signals; call super last.
 func teardown() -> void:
@@ -129,6 +138,14 @@ func get_player_hold() -> HoldSlots:
 	if typeof(getter) != TYPE_CALLABLE or not (getter as Callable).is_valid():
 		return null
 	return (getter as Callable).call() as HoldSlots
+
+
+## The owning TraitHost (through the weak ref in the context), or null.
+func get_host() -> TraitHost:
+	var ref: Variant = _ctx.get("trait_host_ref")
+	if ref is WeakRef:
+		return (ref as WeakRef).get_ref() as TraitHost
+	return null
 
 
 ## Float param [param key], or [param fallback] when absent or not a number.

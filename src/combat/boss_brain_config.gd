@@ -34,6 +34,7 @@ const DEFAULT_WEIGHTS: Dictionary = {
 	"escape_penalty": 4.0,
 	"combo_chance": 0.25,
 	"combo_gap_sec": 0.5,
+	"min_runes_penalty": 3.0,
 }
 ## Learning rules (see BossLearning) with defaults; the `learning` section of the file overrides.
 const DEFAULT_LEARNING: Dictionary = {

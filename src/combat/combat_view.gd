@@ -219,6 +219,10 @@ func _ready() -> void:
 	_boss.get_actor().swing_started.connect(_on_boss_swing_started)
 	_boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
 	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config, _status)
+	# Story 023: flat boss defense (match key boss_defense), default execute threshold, brain min runes.
+	_arbiter.boss_defense = maxf(float(match_params.get("boss_defense", 0.0)), 0.0)
+	_arbiter.execute_ratio = _config.execute_ratio
+	_boss.get_brain().min_runes = maxi(int(match_params.get("boss_min_runes", 0)), 0)
 	_arbiter.swing_resolved.connect(_on_swing_resolved)
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
 	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
@@ -399,7 +403,7 @@ func _setup_passive(character: Dictionary) -> void:
 func make_trait_ctx() -> Dictionary:
 	return {
 		"state": _state, "grid": _grid, "player_drops": _drops, "boss_drops": _boss.get_drops(),
-		"boss": _boss, "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"),
+		"boss": _boss, "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"), "player_mover": _mover,
 		"skill_config": _skill_config, "cut_config": _cut_config,
 	}
 
@@ -814,6 +818,16 @@ func get_burn_stacks() -> int:
 	return _status.max_stacks_on(cells)
 
 
+## Story 023 HUD hook: Ran (fragile) stacks on the boss (0 = none).
+func get_fragile_stacks() -> int:
+	return _status.get_fragile_stacks(CombatState.Side.ENEMY)
+
+
+## Story 023 HUD hook: Han (frost) stacks on the boss (0 = none).
+func get_frost_stacks() -> int:
+	return _status.get_frost_stacks(CombatState.Side.ENEMY)
+
+
 ## Story 020 HUD hook: true while the boss is pinned (Ghim: player sword hits are multiplied).
 func is_boss_pinned() -> bool:
 	return _status.is_pinned(CombatState.Side.ENEMY)
@@ -945,7 +959,11 @@ func get_drops_config() -> FieldDropsConfig:
 func try_step_player(direction: Vector2i) -> bool:
 	if _focus.is_active() and _focus.locks_movement():
 		return false
-	return _mover.try_step(direction)
+	var from_cell: Vector2i = _state.player_cell
+	var stepped: bool = _mover.try_step(direction)
+	if stepped and _trait_host != null:
+		_trait_host.on_player_stepped(from_cell, _state.player_cell)
+	return stepped
 
 
 func _get_hold() -> HoldSlots:

@@ -51,6 +51,9 @@ var _cut_config: CutConfig
 var _skill_config: SkillConfig
 ## Card ids the boss may use (match_params boss_cards; default = the basics in card_order).
 var cards: Array[String] = []
+## Story 023 (match key boss_min_runes): cuts of fewer cells than this are scored down by the weight
+## `min_runes_penalty` per missing cell, and dropped altogether when a cut that big exists. 0 = off.
+var min_runes: int = 0
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _weights: Dictionary = {}
 var _movement: Dictionary = {}
@@ -335,6 +338,15 @@ func _best_cut(
 	var single_bonus: float = float(mods.get("single_point_bonus", 0.0))
 	var escape_penalty: float = float(_weights["escape_penalty"])
 	var duration_mult: float = _swing_mult(actor)
+	var big_cut_exists: bool = false
+	if min_runes > 0:
+		for probe_variant: Variant in selections:
+			var probe: Array[String] = []
+			for probe_index: int in (probe_variant as Array):
+				probe.append(hand.get_point(probe_index).label)
+			if _cells_for(probe).size() >= min_runes:
+				big_cut_exists = true
+				break
 	for selection_variant: Variant in selections:
 		var selection: Array[int] = []
 		selection.assign(selection_variant as Array)
@@ -345,6 +357,8 @@ func _best_cut(
 		if cells.is_empty():
 			continue
 		var count: int = cells.size()
+		if big_cut_exists and count < min_runes:
+			continue
 		var duration: float = _cut_config.swing_duration(count) * duration_mult
 		var hits_now: bool = cells.has(state.player_cell)
 		var steps: int = EscapeAnalysis.steps_for_swing(duration, player_step_cooldown)
@@ -363,6 +377,7 @@ func _best_cut(
 		if player_actor.is_swinging() and not incoming.is_empty() and hits_now \
 				and duration < player_actor.get_time_left():
 			parts["interrupt"] = float(_weights["cut_interrupt_bonus"])
+		parts["min_runes"] = -float(_weights["min_runes_penalty"]) * float(maxi(min_runes - count, 0))
 		var skill_id: String = _choose_skill(cooldowns, count)
 		parts["skill"] = float(_weights.get(BossBrainConfig.SKILL_BONUS_PREFIX + skill_id, 0.0))
 		parts["noise"] = _noise()

@@ -7,31 +7,55 @@ extends RefCounted
 ## instances of one trait id do not share an RNG stream.
 ## Implements: Story 014 (Part B).
 
+## Story 023: a trait changed the boss phase (phase_shift): the new phase number (2 = first change).
+signal phase_changed(phase: int)
+
 var _traits: Array[BossTrait] = []
+var _ctx: Dictionary = {}
+var _seed_value: int = -1
+var _next_index: int = 0
 
 
 ## Builds a trait per entry of [param specs] (each `{id: String, params: Dictionary}`; `params`
 ## optional) from the TraitRegistry and calls its setup() with [param ctx] (see BossTrait for the
 ## keys). Hooks are NOT called here: call [method on_match_start] once the wiring is done.
 func _init(ctx: Dictionary, specs: Array, seed_value: int) -> void:
+	_ctx = ctx
+	_ctx["trait_host_ref"] = weakref(self)
+	_seed_value = seed_value
 	for entry: Variant in specs:
 		if typeof(entry) != TYPE_DICTIONARY:
 			push_warning("TraitHost: a trait entry is not an object, skipped")
 			continue
 		var spec: Dictionary = entry as Dictionary
 		var id: String = str(spec.get("id", ""))
-		var trait_instance: BossTrait = TraitRegistry.create(id)
-		if trait_instance == null:
-			continue
-		var raw_params: Variant = spec.get("params", {})
-		var params: Dictionary = {}
-		if typeof(raw_params) == TYPE_DICTIONARY:
-			params = raw_params as Dictionary
-		else:
-			push_warning("TraitHost: params of trait '%s' must be an object, using defaults" % id)
-		var trait_seed: int = seed_value + _traits.size() * BossTrait.SEED_STRIDE if seed_value >= 0 else -1
-		trait_instance.setup(ctx, params, trait_seed)
-		_traits.append(trait_instance)
+		_create_and_setup(id, spec.get("params", {}))
+
+
+## Story 023: adds a trait at runtime (phase_shift's extra_traits): created, set up with the
+## match context and on_match_start called at once. Returns it, or null for an unknown id.
+func add_trait(id: String, params: Dictionary = {}) -> BossTrait:
+	var trait_instance: BossTrait = _create_and_setup(id, params)
+	if trait_instance != null:
+		trait_instance.on_match_start()
+	return trait_instance
+
+
+# Registry lookup + setup + append; the seed stride follows the creation index.
+func _create_and_setup(id: String, raw_params: Variant) -> BossTrait:
+	var trait_instance: BossTrait = TraitRegistry.create(id)
+	if trait_instance == null:
+		return null
+	var params: Dictionary = {}
+	if typeof(raw_params) == TYPE_DICTIONARY:
+		params = raw_params as Dictionary
+	else:
+		push_warning("TraitHost: params of trait '%s' must be an object, using defaults" % id)
+	var trait_seed: int = _seed_value + _next_index * BossTrait.SEED_STRIDE if _seed_value >= 0 else -1
+	_next_index += 1
+	trait_instance.setup(_ctx, params, trait_seed)
+	_traits.append(trait_instance)
+	return trait_instance
 
 
 ## The live traits in order (shallow copy; empty after [method teardown_all]).
@@ -96,6 +120,17 @@ func on_point_spawned(side: int, point: FieldPoint) -> void:
 		trait_instance.on_point_spawned(side, point)
 
 
+## Forwards BossTrait.on_player_stepped.
+func on_player_stepped(from: Vector2i, to: Vector2i) -> void:
+	for trait_instance: BossTrait in _traits:
+		trait_instance.on_player_stepped(from, to)
+
+
+## Emits [signal phase_changed] (called by phase_shift).
+func announce_phase(phase: int) -> void:
+	phase_changed.emit(phase)
+
+
 ## Forwards BossTrait.on_boss_damaged (ignored for amounts <= 0).
 func on_boss_damaged(amount: float) -> void:
 	if amount <= 0.0:
@@ -118,3 +153,4 @@ func teardown_all() -> void:
 	for trait_instance: BossTrait in _traits:
 		trait_instance.teardown()
 	_traits.clear()
+	_ctx = {}

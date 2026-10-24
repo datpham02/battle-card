@@ -1,7 +1,7 @@
 # Story 023: Nội dung chương 2–3 — boss và trait mới, địch phá luật, lá sử thi có điều kiện, pool 24 lá
 
 > **Epic**: Kaiten Duel (v4)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
@@ -84,7 +84,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/chapters-2-3/`; bảng mô phỏng 3 chương.
 
-**Status**: [ ] Not yet created
+**Status**: Screenshots retained (chapters-2-3/01-10) + simulation summary (chapters-2-3/simulation-70seeds.md).
 
 ---
 
@@ -92,3 +92,14 @@
 
 - Depends on: Story 022 (bản đồ 7 cột, pool theo loại nút, máu ×3), Story 020 (từ khóa, cấp lá), Story 014 (TraitHost)
 - Unlocks: **cổng chơi thử 6** (run đầu tiên đủ nội dung), cửa hàng/pact, Android
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-24
+**Criteria**: 12/14 pass, 2 not met (closed by user decision with tech debt TD-006, TD-008, TD-009): the three-chapter win-rate targets (40–60 / 25–45 / 15–35 %) and 15–30 boss hits per won run. DEFERRED (needs real play): feel of the rule-breakers (Reacter and Fuse Golem win 90–100 %, Reacter under-measured because the bot rarely steps), readability of the new HUD readouts on a phone, character balance (TD-008).
+**Deviations**: BLOCKING (accepted): simulation targets. With the data as first delivered chapters 2 and 3 were never won (0 % for all three characters): the boss step cooldown shrinks with board size (0.23–0.29 s on large boards against 0.37–0.80 s in chapter 1) and the chapter escalation lowered it further. A per-match step tuning measured with `--step-mult` was applied (14 values in `chapters.json`: ogre_king step 1.01→1.5 and HP 260→290, rat_king_guard 1.12→1.6, bat_swarm 1.34→1.7, ghost 1.0→1.3, ghost_elite 0.9→1.3, stone_sentry 1.24→1.9 and move_commitment 0.9→0.7, snow_wolf 1.1→1.6, ice_golem 1.02→1.5, rime_archer 1.1→1.4, frost_mage 1.1→1.6 and HP 190→210, mist_lord 1.0→1.5, jailer 1.12→1.3). Result (build, 70 seeds): chapter 1 91.4 / 45.7 / 84.3 %, chapter 2 58.6 / 7.1 / 58.6 %, chapter 3 20.0 / 0.0 / 18.6 % (Swordsman / Mage / Assassin); chapter 3 is in band for the two melee characters, chapter 2 is easy for them. ADVISORY: pool is 26 cards, not 24 (Hàn needed 4 cards for a viable keyword build); `song_kiem` moved rare→epic to match its condition. ADVISORY: Ghim is control-only (`pinned_damage_mult` 1.0, the code path stays); Rạn and Hàn are per-side stacks; Hàn burst is applied by the caller so it bypasses defense and Rạn. ADVISORY: `boss_defense` travels as `options.target_defense` through `CutEffects.apply`. ADVISORY: trait names/descriptions, `desc_key` (match intro line) and `intro_key`/`end_key` (chapter lines on the map header and the RUN WON panel) were added after the logic parts; `--chapter=<id>` dev arg added. ADVISORY: Mage balance: HP 180/200 and a deck swap were measured and reverted (TD-008, balance by playtest). ADVISORY: not captured separately: frost_aura tag, slam warning outline, reactor 3/3 red state.
+**Test Evidence**: Integration; tests waived at `qa.level: minimal`. Retained screenshots `production/qa/evidence/chapters-2-3/01-10*.png` (opened and checked) and `simulation-70seeds.md` plus `simulation-70seeds-raw.txt`. Scratch suites 0 fails on the final data: keyword2 (70), defense (22), traits2 (71), chapters23 (125), map_gen (35), reward_luck (23), run_session_v4, run_flow2, pause_flow, reward_run, deck_power, signature, keyword, i18n, character, chapters (69), deck, cut, status, arbiter, run/trait/arena flow (headless, 24 suites); cut_flow and focus_flow (windowed, `--no-autopause`). Parse-check 83/83; strings.csv 296 rows, 3 columns each.
+**Code Review**: Skipped (solo mode).
+**Not verified**: feel with a human player, bot dodge calibration (TD-006), touch on a device.
+**Carries forward**: gate 6 playtest (first run with all three chapters); character balance (TD-008); chapter 2 retune (TD-009); TD-001..009.

@@ -1,0 +1,612 @@
+Story 023 Phan D - deck_sim campaign measurement (raw output)
+Date: 2026-10-24. Godot 4.6.3 headless. Simulator: scratchpad deck_sim.gd (Story 023 port; backup deck_sim.gd.pre-023).
+Settings: --seeds=70 --dt=0.05, match timeout 180 s, cleared_bosses=1 per chapter, each chapter an independent run with the starter deck.
+JSON data untouched (chapters.json / characters.json / combat.json as committed in the working tree at run time).
+Three foreground runs: ch1 build (152.9 s), ch1 always_skip (157.5 s), ch2+ch3 build (281.5 s).
+
+====================================================================================================
+CHAPTER 1 - policy build (verdict policy), 70 seeds x 3 characters + kiem_si onboarding
+====================================================================================================
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim (Story 023 campaign): seeds=70 dt=0.050 timeout=180s policies=["build"] characters=["kiem_si", "phap_su", "sat_thu"] chapters=[0] cleared_bosses=1 (always_skip + kiem_si onboarding on chapter 0 only)
+node policy: treasure > rest (heal < 50% HP else forge) > miniboss at >= 70% HP > battle > danger (danger first with >= 2 burn cards); boss when alone. second_wind passive heal on win; no other heal.
+
+=== CHAPTER 1 (ch1): 7 columns, policies ["build"] ===
+
+CH1 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 91.4 | 6.91 | 7.9 (n=64) | 8.5 | 8.6 | 142.8 | 0.09 | 0.91 | 0.83 | 0.70 | 7.57 | 11.09 | 49.6 | 5.17 | 0.00 | 27.4 | 118.6 | 60.6 | 0.14 | 5.03 |
+| phap_su | build | 45.7 | 5.84 | 8.4 (n=32) | 9.2 | 10.8 | 43.2 | 0.47 | 0.36 | 0.83 | 0.41 | 7.44 | 10.29 | 49.1 | 4.73 | 0.00 | 32.6 | 107.6 | 54.2 | 0.17 | 3.64 |
+| sat_thu | build | 84.3 | 6.76 | 5.6 (n=59) | 6.3 | 9.7 | 83.0 | 0.10 | 0.87 | 0.83 | 0.63 | 7.50 | 11.00 | 42.3 | 5.11 | 0.01 | 21.2 | 116.0 | 51.0 | 0.12 | 4.13 |
+| kiem_si (onboarding) | build | 90.0 | 6.90 | 8.7 (n=63) | 9.3 | 8.2 | 124.0 | 0.00 | 1.00 | 0.83 | 0.70 | 7.54 | 11.16 | 47.9 | 5.17 | 0.00 | 29.1 | 110.9 | 54.6 | 0.17 | 3.90 |
+
+CH1 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | battle | 195 | 100.0 | 0.71 | 12.8 | 36.8 | 0 | 0 | 0 |
+| kiem_si | build | danger | 28 | 100.0 | 2.07 | 32.6 | 45.2 | 0 | 0 | 0 |
+| kiem_si | build | miniboss | 69 | 100.0 | 2.72 | 50.3 | 73.7 | 0 | 0 | 0 |
+| kiem_si | build | boss | 70 | 91.4 | 3.00 | 43.4 | 63.2 | 0 | 6 | 100 |
+| kiem_si | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si | build | rest | 70 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | battle | 77 | 98.7 | 0.30 | 6.2 | 25.8 | 0 | 1 | 3 |
+| phap_su | build | danger | 167 | 93.4 | 2.23 | 36.7 | 51.7 | 0 | 11 | 29 |
+| phap_su | build | miniboss | 31 | 93.5 | 3.26 | 62.7 | 80.3 | 0 | 2 | 5 |
+| phap_su | build | boss | 56 | 57.1 | 2.64 | 40.1 | 57.7 | 0 | 24 | 63 |
+| phap_su | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | rest | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | battle | 224 | 100.0 | 0.52 | 9.8 | 31.0 | 0 | 0 | 0 |
+| sat_thu | build | miniboss | 66 | 97.0 | 1.86 | 34.8 | 57.6 | 0 | 2 | 18 |
+| sat_thu | build | boss | 68 | 86.8 | 3.00 | 45.7 | 64.5 | 1 | 9 | 82 |
+| sat_thu | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | rest | 68 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | battle | 195 | 100.0 | 0.60 | 11.0 | 34.5 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | danger | 28 | 100.0 | 2.29 | 32.2 | 48.9 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | miniboss | 69 | 100.0 | 3.09 | 50.4 | 64.1 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | boss | 70 | 90.0 | 3.63 | 57.4 | 68.6 | 0 | 7 | 100 |
+| kiem_si (onboarding) | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | rest | 70 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH1 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | dire_wolf | battle | 44 | 100.0 | 1.07 | 19.2 | 53.4 | 0 | 0 | 0 |
+| kiem_si | build | forest_witch | boss | 36 | 100.0 | 2.31 | 34.6 | 64.4 | 0 | 0 | 0 |
+| kiem_si | build | goblin_archer | battle | 22 | 100.0 | 1.00 | 13.8 | 47.1 | 0 | 0 | 0 |
+| kiem_si | build | goblin_brute | battle | 24 | 100.0 | 2.33 | 34.8 | 56.0 | 0 | 0 | 0 |
+| kiem_si | build | goblin_scout | battle | 48 | 100.0 | 0.38 | 10.8 | 21.7 | 0 | 0 | 0 |
+| kiem_si | build | goblin_shaman | miniboss | 35 | 100.0 | 1.26 | 22.4 | 62.3 | 0 | 0 | 0 |
+| kiem_si | build | goblin_warlock | boss | 34 | 82.4 | 3.74 | 52.8 | 62.0 | 0 | 6 | 100 |
+| kiem_si | build | goblin_warrior | battle | 58 | 100.0 | 0.34 | 6.5 | 22.3 | 0 | 0 | 0 |
+| kiem_si | build | wolf | battle | 27 | 100.0 | 1.22 | 19.6 | 51.0 | 0 | 0 | 0 |
+| kiem_si | build | wolf_alpha | miniboss | 34 | 100.0 | 4.24 | 79.1 | 85.5 | 0 | 0 | 0 |
+| phap_su | build | dire_wolf | danger | 35 | 94.3 | 2.14 | 36.1 | 62.1 | 0 | 2 | 5 |
+| phap_su | build | forest_witch | boss | 28 | 60.7 | 2.50 | 36.1 | 58.9 | 0 | 11 | 29 |
+| phap_su | build | goblin_archer | danger | 26 | 100.0 | 2.62 | 44.6 | 54.7 | 0 | 0 | 0 |
+| phap_su | build | goblin_brute | danger | 53 | 84.9 | 2.83 | 47.3 | 59.8 | 0 | 8 | 21 |
+| phap_su | build | goblin_scout | battle | 39 | 97.4 | 0.26 | 6.7 | 21.4 | 0 | 1 | 3 |
+| phap_su | build | goblin_shaman | miniboss | 16 | 93.8 | 2.00 | 36.0 | 70.0 | 0 | 1 | 3 |
+| phap_su | build | goblin_warlock | boss | 28 | 53.6 | 2.79 | 44.1 | 56.6 | 0 | 13 | 34 |
+| phap_su | build | goblin_warrior | battle | 67 | 100.0 | 0.45 | 6.9 | 25.3 | 0 | 0 | 0 |
+| phap_su | build | wolf | danger | 24 | 95.8 | 2.58 | 39.8 | 55.3 | 0 | 1 | 3 |
+| phap_su | build | wolf_alpha | miniboss | 15 | 93.3 | 4.60 | 91.2 | 91.3 | 0 | 1 | 3 |
+| sat_thu | build | dire_wolf | battle | 49 | 100.0 | 0.73 | 14.2 | 42.3 | 0 | 0 | 0 |
+| sat_thu | build | forest_witch | boss | 34 | 82.4 | 3.21 | 50.3 | 74.2 | 1 | 6 | 55 |
+| sat_thu | build | goblin_archer | battle | 23 | 100.0 | 0.57 | 9.4 | 38.5 | 0 | 0 | 0 |
+| sat_thu | build | goblin_brute | battle | 22 | 100.0 | 1.23 | 23.6 | 43.3 | 0 | 0 | 0 |
+| sat_thu | build | goblin_scout | battle | 49 | 100.0 | 0.14 | 3.3 | 17.5 | 0 | 0 | 0 |
+| sat_thu | build | goblin_shaman | miniboss | 35 | 100.0 | 0.71 | 12.0 | 49.7 | 0 | 0 | 0 |
+| sat_thu | build | goblin_warlock | boss | 34 | 91.2 | 2.79 | 41.1 | 54.8 | 0 | 3 | 27 |
+| sat_thu | build | goblin_warrior | battle | 51 | 100.0 | 0.25 | 5.3 | 18.8 | 0 | 0 | 0 |
+| sat_thu | build | wolf | battle | 30 | 100.0 | 0.67 | 10.9 | 40.1 | 0 | 0 | 0 |
+| sat_thu | build | wolf_alpha | miniboss | 31 | 93.5 | 3.16 | 60.6 | 66.4 | 0 | 2 | 18 |
+| kiem_si (onboarding) | build | dire_wolf | battle | 40 | 100.0 | 1.02 | 18.1 | 53.1 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | goblin_archer | battle | 28 | 100.0 | 1.11 | 14.4 | 47.1 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | goblin_brute | battle | 2 | 100.0 | 1.00 | 21.0 | 61.4 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | goblin_chief | miniboss | 69 | 100.0 | 3.09 | 50.4 | 64.1 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | goblin_scout | battle | 48 | 100.0 | 0.38 | 10.8 | 21.7 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | goblin_warlock | boss | 70 | 90.0 | 3.63 | 57.4 | 68.6 | 0 | 7 | 100 |
+| kiem_si (onboarding) | build | goblin_warrior | battle | 64 | 100.0 | 0.30 | 4.8 | 22.8 | 0 | 0 | 0 |
+| kiem_si (onboarding) | build | wolf | battle | 41 | 100.0 | 1.71 | 25.7 | 49.5 | 0 | 0 | 0 |
+
+VERDICT ch1 kiem_si/build: win 91.4% (target 40-60) TOO EASY; hits taken per WON run 7.9 (target 15-30, 64 wins of 70) FAIL; all runs 8.5; dmg/hit 8.6% max HP; timeouts/run 0.00
+VERDICT ch1 phap_su/build: win 45.7% (target 40-60) PASS; hits taken per WON run 8.4 (target 15-30, 32 wins of 70) FAIL; all runs 9.2; dmg/hit 10.8% max HP; timeouts/run 0.00
+VERDICT ch1 sat_thu/build: win 84.3% (target 40-60) TOO EASY; hits taken per WON run 5.6 (target 15-30, 59 wins of 70) FAIL; all runs 6.3; dmg/hit 9.7% max HP; timeouts/run 0.01
+INFO ch1 kiem_si (onboarding)/build: win 90.0% (target 40-60) TOO EASY; hits taken per WON run 8.7 (target 15-30, 63 wins of 70) FAIL; all runs 9.3; dmg/hit 8.2% max HP; timeouts/run 0.00
+RESULT: FAIL
+runtime: 152.9 s
+
+====================================================================================================
+CHAPTER 1 - policy always_skip (Story 022 baseline), 70 seeds
+====================================================================================================
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim (Story 023 campaign): seeds=70 dt=0.050 timeout=180s policies=["always_skip"] characters=["kiem_si", "phap_su", "sat_thu"] chapters=[0] cleared_bosses=1 (always_skip + kiem_si onboarding on chapter 0 only)
+node policy: treasure > rest (heal < 50% HP else forge) > miniboss at >= 70% HP > battle > danger (danger first with >= 2 burn cards); boss when alone. second_wind passive heal on win; no other heal.
+
+=== CHAPTER 1 (ch1): 7 columns, policies ["always_skip"] ===
+
+CH1 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | always_skip | 92.9 | 6.89 | 8.0 (n=65) | 8.4 | 8.4 | 136.6 | 0.06 | 0.93 | 0.83 | 0.00 | 6.00 | 6.93 | 51.2 | 5.14 | 0.00 | 28.0 | 118.1 | 62.4 | 0.13 | 5.44 |
+| phap_su | always_skip | 47.1 | 5.77 | 8.5 (n=33) | 9.1 | 10.5 | 45.8 | 0.47 | 0.33 | 0.83 | 0.00 | 6.00 | 6.33 | 50.9 | 4.67 | 0.00 | 32.0 | 108.1 | 55.5 | 0.16 | 4.16 |
+| sat_thu | always_skip | 85.7 | 6.81 | 6.0 (n=60) | 6.7 | 9.1 | 78.5 | 0.16 | 0.83 | 0.83 | 0.00 | 6.00 | 6.83 | 43.4 | 5.14 | 0.00 | 21.7 | 115.9 | 52.2 | 0.13 | 4.37 |
+| kiem_si (onboarding) | always_skip | 95.7 | 6.96 | 8.1 (n=67) | 8.4 | 8.0 | 134.4 | 0.04 | 0.96 | 0.83 | 0.00 | 6.00 | 6.96 | 46.7 | 5.17 | 0.00 | 26.3 | 111.5 | 51.5 | 0.16 | 3.99 |
+
+CH1 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | always_skip | battle | 224 | 100.0 | 0.74 | 13.3 | 38.6 | 0 | 0 | 0 |
+| kiem_si | always_skip | miniboss | 67 | 98.5 | 2.88 | 53.4 | 75.7 | 0 | 1 | 20 |
+| kiem_si | always_skip | boss | 69 | 94.2 | 3.33 | 51.1 | 68.3 | 0 | 4 | 80 |
+| kiem_si | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si | always_skip | rest | 69 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | always_skip | battle | 74 | 98.6 | 0.34 | 7.0 | 25.4 | 0 | 1 | 3 |
+| phap_su | always_skip | danger | 169 | 92.3 | 2.30 | 37.4 | 54.4 | 0 | 13 | 35 |
+| phap_su | always_skip | miniboss | 31 | 90.3 | 2.84 | 50.4 | 79.1 | 0 | 3 | 8 |
+| phap_su | always_skip | boss | 53 | 62.3 | 2.55 | 38.8 | 62.5 | 0 | 20 | 54 |
+| phap_su | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | always_skip | rest | 56 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | always_skip | battle | 224 | 100.0 | 0.57 | 9.7 | 32.0 | 0 | 0 | 0 |
+| sat_thu | always_skip | miniboss | 67 | 98.5 | 1.88 | 34.6 | 61.5 | 0 | 1 | 10 |
+| sat_thu | always_skip | boss | 69 | 87.0 | 3.16 | 48.3 | 63.0 | 0 | 9 | 90 |
+| sat_thu | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | always_skip | rest | 69 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | battle | 225 | 100.0 | 0.58 | 10.5 | 35.2 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | miniboss | 67 | 100.0 | 3.00 | 47.2 | 67.0 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | boss | 70 | 95.7 | 3.64 | 57.1 | 64.5 | 0 | 3 | 100 |
+| kiem_si (onboarding) | always_skip | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | rest | 70 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH1 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | always_skip | dire_wolf | battle | 48 | 100.0 | 0.81 | 13.0 | 54.0 | 0 | 0 | 0 |
+| kiem_si | always_skip | forest_witch | boss | 36 | 94.4 | 2.94 | 45.3 | 71.6 | 0 | 2 | 40 |
+| kiem_si | always_skip | goblin_archer | battle | 23 | 100.0 | 0.65 | 12.3 | 45.0 | 0 | 0 | 0 |
+| kiem_si | always_skip | goblin_brute | battle | 21 | 100.0 | 1.76 | 28.5 | 54.9 | 0 | 0 | 0 |
+| kiem_si | always_skip | goblin_scout | battle | 50 | 100.0 | 0.46 | 13.1 | 22.5 | 0 | 0 | 0 |
+| kiem_si | always_skip | goblin_shaman | miniboss | 34 | 100.0 | 1.68 | 27.9 | 66.5 | 0 | 0 | 0 |
+| kiem_si | always_skip | goblin_warlock | boss | 33 | 93.9 | 3.76 | 57.4 | 64.8 | 0 | 2 | 40 |
+| kiem_si | always_skip | goblin_warrior | battle | 51 | 100.0 | 0.24 | 4.4 | 23.4 | 0 | 0 | 0 |
+| kiem_si | always_skip | wolf | battle | 31 | 100.0 | 1.29 | 19.2 | 50.1 | 0 | 0 | 0 |
+| kiem_si | always_skip | wolf_alpha | miniboss | 33 | 97.0 | 4.12 | 79.8 | 85.3 | 0 | 1 | 20 |
+| phap_su | always_skip | dire_wolf | danger | 38 | 94.7 | 1.76 | 33.6 | 63.1 | 0 | 2 | 5 |
+| phap_su | always_skip | forest_witch | boss | 29 | 79.3 | 2.07 | 30.8 | 70.0 | 0 | 6 | 16 |
+| phap_su | always_skip | goblin_archer | danger | 26 | 100.0 | 2.58 | 43.8 | 57.3 | 0 | 0 | 0 |
+| phap_su | always_skip | goblin_brute | danger | 55 | 80.0 | 3.04 | 46.8 | 60.7 | 0 | 11 | 30 |
+| phap_su | always_skip | goblin_scout | battle | 38 | 97.4 | 0.26 | 6.8 | 21.6 | 0 | 1 | 3 |
+| phap_su | always_skip | goblin_shaman | miniboss | 16 | 100.0 | 1.69 | 27.4 | 71.6 | 0 | 0 | 0 |
+| phap_su | always_skip | goblin_warlock | boss | 24 | 41.7 | 3.13 | 48.5 | 53.5 | 0 | 14 | 38 |
+| phap_su | always_skip | goblin_warrior | battle | 62 | 100.0 | 0.53 | 8.3 | 25.7 | 0 | 0 | 0 |
+| phap_su | always_skip | wolf | danger | 24 | 100.0 | 2.88 | 44.7 | 59.6 | 0 | 0 | 0 |
+| phap_su | always_skip | wolf_alpha | miniboss | 15 | 80.0 | 4.07 | 74.9 | 87.2 | 0 | 3 | 8 |
+| sat_thu | always_skip | dire_wolf | battle | 48 | 100.0 | 0.77 | 13.5 | 44.8 | 0 | 0 | 0 |
+| sat_thu | always_skip | forest_witch | boss | 35 | 82.9 | 3.43 | 54.5 | 71.1 | 0 | 6 | 60 |
+| sat_thu | always_skip | goblin_archer | battle | 23 | 100.0 | 0.43 | 6.1 | 39.6 | 0 | 0 | 0 |
+| sat_thu | always_skip | goblin_brute | battle | 23 | 100.0 | 1.43 | 22.7 | 43.6 | 0 | 0 | 0 |
+| sat_thu | always_skip | goblin_scout | battle | 48 | 100.0 | 0.17 | 4.1 | 17.7 | 0 | 0 | 0 |
+| sat_thu | always_skip | goblin_shaman | miniboss | 35 | 100.0 | 1.20 | 19.0 | 55.2 | 0 | 0 | 0 |
+| sat_thu | always_skip | goblin_warlock | boss | 34 | 91.2 | 2.88 | 41.9 | 54.6 | 0 | 3 | 30 |
+| sat_thu | always_skip | goblin_warrior | battle | 51 | 100.0 | 0.29 | 5.9 | 19.0 | 0 | 0 | 0 |
+| sat_thu | always_skip | wolf | battle | 31 | 100.0 | 0.81 | 11.5 | 41.1 | 0 | 0 | 0 |
+| sat_thu | always_skip | wolf_alpha | miniboss | 32 | 96.9 | 2.63 | 51.7 | 68.4 | 0 | 1 | 10 |
+| kiem_si (onboarding) | always_skip | dire_wolf | battle | 45 | 100.0 | 0.71 | 11.8 | 53.6 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | goblin_archer | battle | 28 | 100.0 | 0.71 | 11.9 | 43.9 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | goblin_brute | battle | 1 | 100.0 | 0.00 | 0.0 | 62.1 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | goblin_chief | miniboss | 67 | 100.0 | 3.00 | 47.2 | 67.0 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | goblin_scout | battle | 50 | 100.0 | 0.46 | 13.1 | 22.5 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | goblin_warlock | boss | 70 | 95.7 | 3.64 | 57.1 | 64.5 | 0 | 3 | 100 |
+| kiem_si (onboarding) | always_skip | goblin_warrior | battle | 72 | 100.0 | 0.25 | 4.7 | 23.1 | 0 | 0 | 0 |
+| kiem_si (onboarding) | always_skip | wolf | battle | 29 | 100.0 | 1.28 | 17.4 | 49.7 | 0 | 0 | 0 |
+
+INFO ch1 kiem_si/always_skip: win 92.9% (target 40-60) TOO EASY; hits taken per WON run 8.0 (target 15-30, 65 wins of 70) FAIL; all runs 8.4; dmg/hit 8.4% max HP; timeouts/run 0.00
+INFO ch1 phap_su/always_skip: win 47.1% (target 40-60) PASS; hits taken per WON run 8.5 (target 15-30, 33 wins of 70) FAIL; all runs 9.1; dmg/hit 10.5% max HP; timeouts/run 0.00
+INFO ch1 sat_thu/always_skip: win 85.7% (target 40-60) TOO EASY; hits taken per WON run 6.0 (target 15-30, 60 wins of 70) FAIL; all runs 6.7; dmg/hit 9.1% max HP; timeouts/run 0.00
+INFO ch1 kiem_si (onboarding)/always_skip: win 95.7% (target 40-60) TOO EASY; hits taken per WON run 8.1 (target 15-30, 67 wins of 70) FAIL; all runs 8.4; dmg/hit 8.0% max HP; timeouts/run 0.00
+runtime: 157.5 s
+
+====================================================================================================
+CHAPTERS 2 and 3 - policy build, 70 seeds x 3 characters
+====================================================================================================
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim (Story 023 campaign): seeds=70 dt=0.050 timeout=180s policies=["build"] characters=["kiem_si", "phap_su", "sat_thu"] chapters=[1, 2] cleared_bosses=1 (always_skip + kiem_si onboarding on chapter 0 only)
+node policy: treasure > rest (heal < 50% HP else forge) > miniboss at >= 70% HP > battle > danger (danger first with >= 2 burn cards); boss when alone. second_wind passive heal on win; no other heal.
+
+=== CHAPTER 2 (ch2): 7 columns, policies ["build"] ===
+
+CH2 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 0.0 | 3.71 | 0.0 (n=0) | 11.4 | 8.2 | 0.0 | 0.11 | 0.29 | 0.83 | 0.24 | 7.04 | 8.94 | 88.0 | 3.49 | 0.54 | 52.3 | 102.0 | 67.5 | 0.17 | 4.76 |
+| phap_su | build | 0.0 | 2.67 | 0.0 (n=0) | 8.6 | 10.8 | 0.0 | 0.13 | 0.01 | 0.83 | 0.04 | 6.91 | 8.27 | 73.4 | 2.70 | 0.17 | 53.4 | 88.3 | 42.3 | 0.20 | 3.74 |
+| sat_thu | build | 0.0 | 3.86 | 0.0 (n=0) | 9.7 | 9.5 | 0.0 | 0.21 | 0.21 | 0.83 | 0.17 | 7.14 | 8.94 | 74.7 | 3.60 | 0.30 | 44.9 | 102.8 | 58.0 | 0.17 | 5.63 |
+
+CH2 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | battle | 170 | 81.2 | 2.45 | 40.7 | 74.3 | 22 | 32 | 46 |
+| kiem_si | build | danger | 22 | 59.1 | 4.55 | 69.3 | 96.7 | 3 | 9 | 13 |
+| kiem_si | build | miniboss | 31 | 74.2 | 5.65 | 84.7 | 94.1 | 0 | 8 | 11 |
+| kiem_si | build | boss | 21 | 0.0 | 4.90 | 81.0 | 152.6 | 13 | 21 | 30 |
+| kiem_si | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si | build | rest | 28 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | battle | 77 | 93.5 | 0.68 | 13.9 | 36.6 | 1 | 5 | 7 |
+| phap_su | build | danger | 97 | 40.2 | 4.95 | 81.4 | 96.6 | 11 | 58 | 83 |
+| phap_su | build | miniboss | 10 | 80.0 | 5.70 | 90.8 | 101.0 | 0 | 2 | 3 |
+| phap_su | build | boss | 5 | 0.0 | 2.80 | 43.6 | 95.9 | 0 | 5 | 7 |
+| phap_su | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | rest | 10 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | battle | 188 | 81.4 | 2.19 | 36.4 | 63.8 | 15 | 35 | 50 |
+| sat_thu | build | danger | 3 | 66.7 | 1.67 | 20.7 | 81.1 | 0 | 1 | 1 |
+| sat_thu | build | miniboss | 35 | 77.1 | 4.43 | 74.2 | 74.9 | 0 | 8 | 11 |
+| sat_thu | build | boss | 26 | 0.0 | 4.00 | 69.1 | 114.6 | 6 | 26 | 37 |
+| sat_thu | build | treasure | 58 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | rest | 30 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH2 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | bat_swarm | battle | 26 | 34.6 | 6.31 | 98.8 | 164.9 | 16 | 17 | 24 |
+| kiem_si | build | cultist | battle | 9 | 100.0 | 3.11 | 41.6 | 100.6 | 0 | 0 | 0 |
+| kiem_si | build | ghost | danger | 17 | 41.2 | 8.24 | 130.0 | 165.6 | 6 | 10 | 14 |
+| kiem_si | build | jailer | miniboss | 31 | 74.2 | 5.65 | 84.7 | 94.1 | 0 | 8 | 11 |
+| kiem_si | build | ogre_king | boss | 21 | 0.0 | 4.90 | 81.0 | 152.6 | 13 | 21 | 30 |
+| kiem_si | build | rat_king_guard | battle | 14 | 0.0 | 3.71 | 62.3 | 103.7 | 3 | 14 | 20 |
+| kiem_si | build | reacter | battle | 26 | 100.0 | 1.81 | 29.8 | 47.6 | 0 | 0 | 0 |
+| kiem_si | build | skeleton | battle | 38 | 100.0 | 0.53 | 13.7 | 28.3 | 0 | 0 | 0 |
+| kiem_si | build | slime | battle | 16 | 100.0 | 2.88 | 47.5 | 95.1 | 0 | 0 | 0 |
+| kiem_si | build | zombie | battle | 46 | 100.0 | 0.43 | 8.0 | 31.6 | 0 | 0 | 0 |
+| phap_su | build | bat_swarm | danger | 22 | 4.5 | 6.82 | 100.4 | 133.9 | 5 | 21 | 30 |
+| phap_su | build | cultist | danger | 11 | 45.5 | 3.64 | 61.3 | 71.0 | 0 | 6 | 9 |
+| phap_su | build | ghost | danger | 15 | 20.0 | 6.67 | 130.3 | 103.5 | 2 | 12 | 17 |
+| phap_su | build | jailer | miniboss | 10 | 80.0 | 5.70 | 90.8 | 101.0 | 0 | 2 | 3 |
+| phap_su | build | ogre_king | boss | 5 | 0.0 | 2.80 | 43.6 | 95.9 | 0 | 5 | 7 |
+| phap_su | build | rat_king_guard | battle | 14 | 0.0 | 3.57 | 49.6 | 109.5 | 5 | 14 | 20 |
+| phap_su | build | reacter | danger | 23 | 95.7 | 2.83 | 49.0 | 54.8 | 0 | 1 | 1 |
+| phap_su | build | skeleton | battle | 35 | 100.0 | 0.57 | 15.4 | 28.6 | 0 | 0 | 0 |
+| phap_su | build | slime | danger | 19 | 52.6 | 5.00 | 80.8 | 99.3 | 0 | 9 | 13 |
+| phap_su | build | zombie | battle | 35 | 100.0 | 0.34 | 6.9 | 35.2 | 0 | 0 | 0 |
+| sat_thu | build | bat_swarm | battle | 21 | 47.6 | 5.19 | 81.8 | 158.7 | 9 | 11 | 16 |
+| sat_thu | build | cultist | battle | 7 | 85.7 | 2.14 | 34.9 | 69.3 | 0 | 1 | 1 |
+| sat_thu | build | ghost | battle | 18 | 33.3 | 7.56 | 120.9 | 153.5 | 6 | 12 | 17 |
+| sat_thu | build | jailer | miniboss | 35 | 77.1 | 4.43 | 74.2 | 74.9 | 0 | 8 | 11 |
+| sat_thu | build | ogre_king | boss | 26 | 0.0 | 4.00 | 69.1 | 114.6 | 6 | 26 | 37 |
+| sat_thu | build | rat_king_guard | danger | 11 | 0.0 | 3.91 | 66.9 | 90.4 | 0 | 11 | 16 |
+| sat_thu | build | reacter | battle | 27 | 100.0 | 1.37 | 26.0 | 39.7 | 0 | 0 | 0 |
+| sat_thu | build | skeleton | battle | 38 | 100.0 | 0.32 | 5.9 | 23.5 | 0 | 0 | 0 |
+| sat_thu | build | slime | battle | 19 | 94.7 | 2.37 | 36.7 | 71.8 | 0 | 1 | 1 |
+| sat_thu | build | zombie | battle | 50 | 100.0 | 0.40 | 8.3 | 26.6 | 0 | 0 | 0 |
+
+VERDICT ch2 kiem_si/build: win 0.0% (target 25-45) TOO HARD; hits taken per WON run 0.0 (target 15-30, 0 wins of 70) NO WINS; all runs 11.4; dmg/hit 8.2% max HP; timeouts/run 0.54
+VERDICT ch2 phap_su/build: win 0.0% (target 25-45) TOO HARD; hits taken per WON run 0.0 (target 15-30, 0 wins of 70) NO WINS; all runs 8.6; dmg/hit 10.8% max HP; timeouts/run 0.17
+VERDICT ch2 sat_thu/build: win 0.0% (target 25-45) TOO HARD; hits taken per WON run 0.0 (target 15-30, 0 wins of 70) NO WINS; all runs 9.7; dmg/hit 9.5% max HP; timeouts/run 0.30
+
+=== CHAPTER 3 (ch3): 7 columns, policies ["build"] ===
+
+CH3 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 0.0 | 2.50 | 0.0 (n=0) | 9.2 | 8.7 | 0.0 | 0.00 | 0.00 | 0.84 | 0.00 | 6.89 | 8.41 | 93.7 | 2.66 | 0.61 | 57.5 | 109.2 | 54.9 | 0.17 | 3.77 |
+| phap_su | build | 0.0 | 2.11 | 0.0 (n=0) | 7.3 | 11.9 | 0.0 | 0.01 | 0.00 | 0.84 | 0.00 | 6.69 | 8.01 | 85.9 | 2.26 | 0.27 | 60.1 | 79.1 | 44.7 | 0.16 | 3.97 |
+| sat_thu | build | 0.0 | 2.84 | 0.0 (n=0) | 8.3 | 9.9 | 0.0 | 0.07 | 0.03 | 0.84 | 0.06 | 6.90 | 8.51 | 81.4 | 2.90 | 0.40 | 49.0 | 109.7 | 51.0 | 0.16 | 6.09 |
+
+CH3 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | battle | 137 | 83.2 | 1.70 | 31.9 | 70.7 | 18 | 23 | 33 |
+| kiem_si | build | danger | 10 | 20.0 | 7.10 | 121.4 | 109.5 | 2 | 8 | 11 |
+| kiem_si | build | miniboss | 39 | 0.0 | 8.67 | 130.9 | 161.2 | 23 | 39 | 56 |
+| kiem_si | build | treasure | 59 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | battle | 72 | 97.2 | 1.18 | 22.4 | 56.8 | 0 | 2 | 3 |
+| phap_su | build | danger | 85 | 21.2 | 4.91 | 90.9 | 102.8 | 19 | 67 | 96 |
+| phap_su | build | miniboss | 1 | 0.0 | 7.00 | 156.0 | 173.8 | 0 | 1 | 1 |
+| phap_su | build | treasure | 59 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | rest | 1 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | battle | 162 | 78.4 | 1.86 | 32.7 | 64.6 | 19 | 35 | 50 |
+| sat_thu | build | danger | 2 | 0.0 | 7.00 | 98.0 | 73.0 | 0 | 2 | 3 |
+| sat_thu | build | miniboss | 34 | 17.6 | 6.91 | 115.0 | 141.7 | 9 | 28 | 40 |
+| sat_thu | build | boss | 5 | 0.0 | 6.00 | 108.8 | 100.4 | 0 | 5 | 7 |
+| sat_thu | build | treasure | 59 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | rest | 7 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH3 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | frost_mage | miniboss | 39 | 0.0 | 8.67 | 130.9 | 161.2 | 23 | 39 | 56 |
+| kiem_si | build | frost_sprite | battle | 48 | 100.0 | 0.73 | 14.3 | 36.0 | 0 | 0 | 0 |
+| kiem_si | build | fuse_golem | battle | 17 | 100.0 | 2.12 | 42.2 | 56.0 | 0 | 0 | 0 |
+| kiem_si | build | ghost_elite | danger | 1 | 0.0 | 3.00 | 80.0 | 48.4 | 0 | 1 | 1 |
+| kiem_si | build | ice_golem | battle | 4 | 0.0 | 8.75 | 138.0 | 110.1 | 0 | 4 | 6 |
+| kiem_si | build | rime_archer | battle | 1 | 0.0 | 3.00 | 54.0 | 180.0 | 1 | 1 | 1 |
+| kiem_si | build | snow_wolf | battle | 14 | 0.0 | 7.36 | 129.6 | 156.3 | 8 | 14 | 20 |
+| kiem_si | build | stone_sentry | battle | 11 | 0.0 | 3.73 | 70.4 | 180.0 | 11 | 11 | 16 |
+| kiem_si | build | wisp | battle | 51 | 100.0 | 0.94 | 17.9 | 64.1 | 0 | 0 | 0 |
+| phap_su | build | frost_mage | miniboss | 1 | 0.0 | 7.00 | 156.0 | 173.8 | 0 | 1 | 1 |
+| phap_su | build | frost_sprite | battle | 36 | 100.0 | 0.86 | 18.7 | 40.2 | 0 | 0 | 0 |
+| phap_su | build | fuse_golem | danger | 19 | 89.5 | 3.84 | 86.5 | 64.9 | 0 | 2 | 3 |
+| phap_su | build | ghost_elite | danger | 10 | 10.0 | 3.80 | 80.8 | 74.5 | 1 | 9 | 13 |
+| phap_su | build | ice_golem | danger | 10 | 0.0 | 4.60 | 79.6 | 58.9 | 0 | 10 | 14 |
+| phap_su | build | rime_archer | danger | 5 | 0.0 | 4.20 | 78.0 | 102.9 | 1 | 5 | 7 |
+| phap_su | build | snow_wolf | danger | 19 | 0.0 | 5.95 | 103.3 | 103.8 | 1 | 19 | 27 |
+| phap_su | build | stone_sentry | danger | 24 | 0.0 | 5.50 | 92.9 | 157.9 | 16 | 24 | 34 |
+| phap_su | build | wisp | battle | 34 | 100.0 | 1.41 | 24.8 | 74.5 | 0 | 0 | 0 |
+| sat_thu | build | frost_mage | miniboss | 34 | 17.6 | 6.91 | 115.0 | 141.7 | 9 | 28 | 40 |
+| sat_thu | build | frost_sprite | battle | 53 | 100.0 | 0.55 | 12.5 | 30.3 | 0 | 0 | 0 |
+| sat_thu | build | fuse_golem | battle | 17 | 100.0 | 1.47 | 29.4 | 44.7 | 0 | 0 | 0 |
+| sat_thu | build | ghost_elite | battle | 3 | 0.0 | 3.67 | 118.7 | 75.3 | 0 | 3 | 4 |
+| sat_thu | build | ice_golem | danger | 11 | 0.0 | 6.09 | 86.2 | 88.5 | 1 | 11 | 16 |
+| sat_thu | build | mist_lord | boss | 5 | 0.0 | 6.00 | 108.8 | 100.4 | 0 | 5 | 7 |
+| sat_thu | build | rime_archer | battle | 1 | 100.0 | 1.00 | 0.0 | 107.2 | 0 | 0 | 0 |
+| sat_thu | build | snow_wolf | battle | 13 | 0.0 | 7.00 | 124.8 | 159.8 | 8 | 13 | 19 |
+| sat_thu | build | stone_sentry | battle | 11 | 9.1 | 3.73 | 56.7 | 178.7 | 10 | 10 | 14 |
+| sat_thu | build | wisp | battle | 55 | 100.0 | 0.93 | 14.2 | 52.7 | 0 | 0 | 0 |
+
+VERDICT ch3 kiem_si/build: win 0.0% (target 15-35) TOO HARD; hits taken per WON run 0.0 (target 15-30, 0 wins of 70) NO WINS; all runs 9.2; dmg/hit 8.7% max HP; timeouts/run 0.61
+VERDICT ch3 phap_su/build: win 0.0% (target 15-35) TOO HARD; hits taken per WON run 0.0 (target 15-30, 0 wins of 70) NO WINS; all runs 7.3; dmg/hit 11.9% max HP; timeouts/run 0.27
+VERDICT ch3 sat_thu/build: win 0.0% (target 15-35) TOO HARD; hits taken per WON run 0.0 (target 15-30, 0 wins of 70) NO WINS; all runs 8.3; dmg/hit 9.9% max HP; timeouts/run 0.40
+RESULT: FAIL
+runtime: 281.5 s
+
+====================================================================================================
+APPENDIX - diagnosis experiments. Effective boss step cooldown = clamp(0.45 x (2/(max(cols,rows)-1))^0.75, 0.18, 0.60) x boss_step_cooldown_mult:
+  square 0.45 s; rect/cross/u_shape/staircase 0.33 s; cross_wide/pillars/diamond (5x5) 0.27 s; ring (6x5) 0.23 s per step before the match multiplier.
+  ch1 band 0.37-0.80 s (forest_witch 0.37 .. goblin_scout 0.80); ch2: ogre_king 0.23, rat_king_guard 0.25, ghost 0.33, jailer 0.37; ch3: ghost_elite 0.24, ice_golem/mist_lord 0.27, snow_wolf/frost_mage 0.29, stone_sentry 0.33.
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+DIAGNOSIS EXPERIMENT (data NOT changed): chapters 2 and 3, build, 20 seeds, --step-mult=1.5 (boss_step_cooldown_mult of every match x1.5)
+----------------------------------------------------------------------------------------------------
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim (Story 023 campaign): seeds=20 dt=0.050 timeout=180s policies=["build"] characters=["kiem_si", "phap_su", "sat_thu"] chapters=[1, 2] cleared_bosses=1 (always_skip + kiem_si onboarding on chapter 0 only)
+EXPERIMENT: think-mult=1.00 combo=-1.00 hp-mult=1.00 dodge=0.85 no-treasure=false step-mult=1.50
+node policy: treasure > rest (heal < 50% HP else forge) > miniboss at >= 70% HP > battle > danger (danger first with >= 2 burn cards); boss when alone. second_wind passive heal on win; no other heal.
+
+=== CHAPTER 2 (ch2): 7 columns, policies ["build"] ===
+
+CH2 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 55.0 | 5.80 | 10.4 (n=11) | 11.3 | 8.2 | 120.5 | 0.20 | 0.60 | 0.75 | 0.50 | 7.55 | 10.25 | 70.1 | 4.70 | 0.00 | 38.8 | 137.8 | 69.9 | 0.16 | 5.45 |
+| phap_su | build | 10.0 | 3.65 | 8.0 (n=2) | 9.3 | 10.8 | 72.0 | 0.30 | 0.00 | 0.75 | 0.05 | 7.35 | 8.95 | 66.9 | 3.50 | 0.00 | 44.9 | 106.5 | 50.5 | 0.18 | 4.20 |
+| sat_thu | build | 80.0 | 6.50 | 8.7 (n=16) | 8.9 | 10.0 | 47.0 | 0.60 | 0.30 | 0.75 | 0.55 | 7.65 | 10.25 | 59.5 | 5.05 | 0.00 | 31.4 | 143.0 | 62.8 | 0.14 | 5.25 |
+
+CH2 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | battle | 53 | 100.0 | 0.91 | 14.7 | 51.3 | 0 | 0 | 0 |
+| kiem_si | build | danger | 9 | 66.7 | 3.89 | 62.4 | 63.8 | 0 | 3 | 33 |
+| kiem_si | build | miniboss | 19 | 78.9 | 5.58 | 86.2 | 91.6 | 0 | 4 | 44 |
+| kiem_si | build | boss | 13 | 84.6 | 2.85 | 51.1 | 122.5 | 0 | 2 | 22 |
+| kiem_si | build | treasure | 15 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si | build | rest | 16 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | battle | 21 | 95.2 | 0.24 | 5.3 | 33.6 | 0 | 1 | 6 |
+| phap_su | build | danger | 41 | 68.3 | 3.83 | 63.0 | 84.4 | 0 | 13 | 72 |
+| phap_su | build | miniboss | 4 | 50.0 | 5.00 | 85.0 | 76.1 | 0 | 2 | 11 |
+| phap_su | build | boss | 4 | 50.0 | 1.00 | 28.0 | 95.4 | 0 | 2 | 11 |
+| phap_su | build | treasure | 15 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | rest | 6 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | battle | 67 | 100.0 | 0.91 | 17.6 | 45.0 | 0 | 0 | 0 |
+| sat_thu | build | danger | 1 | 100.0 | 4.00 | 84.0 | 70.6 | 0 | 0 | 0 |
+| sat_thu | build | miniboss | 15 | 86.7 | 5.07 | 83.7 | 74.1 | 0 | 2 | 50 |
+| sat_thu | build | boss | 18 | 88.9 | 2.11 | 36.3 | 102.7 | 0 | 2 | 50 |
+| sat_thu | build | treasure | 15 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | rest | 18 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH2 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | bat_swarm | battle | 10 | 100.0 | 1.60 | 23.6 | 73.4 | 0 | 0 | 0 |
+| kiem_si | build | cultist | danger | 2 | 50.0 | 5.50 | 83.0 | 77.7 | 0 | 1 | 11 |
+| kiem_si | build | ghost | danger | 6 | 100.0 | 1.83 | 23.3 | 68.7 | 0 | 0 | 0 |
+| kiem_si | build | jailer | miniboss | 19 | 78.9 | 5.58 | 86.2 | 91.6 | 0 | 4 | 44 |
+| kiem_si | build | ogre_king | boss | 13 | 84.6 | 2.85 | 51.1 | 122.5 | 0 | 2 | 22 |
+| kiem_si | build | rat_king_guard | battle | 3 | 66.7 | 4.00 | 78.0 | 102.5 | 0 | 1 | 11 |
+| kiem_si | build | reacter | battle | 7 | 85.7 | 2.14 | 37.7 | 42.9 | 0 | 1 | 11 |
+| kiem_si | build | skeleton | battle | 14 | 100.0 | 0.14 | 3.4 | 21.5 | 0 | 0 | 0 |
+| kiem_si | build | slime | battle | 7 | 100.0 | 1.86 | 32.0 | 95.9 | 0 | 0 | 0 |
+| kiem_si | build | zombie | battle | 13 | 100.0 | 0.23 | 2.3 | 31.8 | 0 | 0 | 0 |
+| phap_su | build | bat_swarm | danger | 8 | 75.0 | 4.38 | 77.8 | 86.3 | 0 | 2 | 11 |
+| phap_su | build | cultist | danger | 5 | 20.0 | 2.80 | 49.2 | 76.6 | 0 | 4 | 22 |
+| phap_su | build | ghost | danger | 5 | 80.0 | 3.80 | 68.0 | 71.4 | 0 | 1 | 6 |
+| phap_su | build | jailer | miniboss | 4 | 50.0 | 5.00 | 85.0 | 76.1 | 0 | 2 | 11 |
+| phap_su | build | ogre_king | boss | 4 | 50.0 | 1.00 | 28.0 | 95.4 | 0 | 2 | 11 |
+| phap_su | build | rat_king_guard | danger | 7 | 71.4 | 2.57 | 40.6 | 115.7 | 0 | 2 | 11 |
+| phap_su | build | reacter | danger | 7 | 100.0 | 4.14 | 70.9 | 58.5 | 0 | 0 | 0 |
+| phap_su | build | skeleton | battle | 12 | 100.0 | 0.17 | 4.3 | 25.5 | 0 | 0 | 0 |
+| phap_su | build | slime | danger | 10 | 50.0 | 4.30 | 60.6 | 91.3 | 0 | 5 | 28 |
+| phap_su | build | zombie | battle | 8 | 100.0 | 0.25 | 6.0 | 37.2 | 0 | 0 | 0 |
+| sat_thu | build | bat_swarm | battle | 10 | 100.0 | 0.50 | 9.0 | 53.1 | 0 | 0 | 0 |
+| sat_thu | build | cultist | battle | 4 | 100.0 | 2.25 | 43.5 | 82.6 | 0 | 0 | 0 |
+| sat_thu | build | ghost | battle | 5 | 100.0 | 2.20 | 63.2 | 72.4 | 0 | 0 | 0 |
+| sat_thu | build | jailer | miniboss | 15 | 86.7 | 5.07 | 83.7 | 74.1 | 0 | 2 | 50 |
+| sat_thu | build | ogre_king | boss | 18 | 88.9 | 2.11 | 36.3 | 102.7 | 0 | 2 | 50 |
+| sat_thu | build | rat_king_guard | battle | 2 | 100.0 | 0.50 | 15.0 | 96.5 | 0 | 0 | 0 |
+| sat_thu | build | reacter | battle | 8 | 100.0 | 1.50 | 26.3 | 36.9 | 0 | 0 | 0 |
+| sat_thu | build | skeleton | battle | 13 | 100.0 | 0.00 | 0.0 | 17.6 | 0 | 0 | 0 |
+| sat_thu | build | slime | battle | 10 | 100.0 | 1.90 | 30.4 | 72.3 | 0 | 0 | 0 |
+| sat_thu | build | zombie | battle | 16 | 100.0 | 0.50 | 8.5 | 26.5 | 0 | 0 | 0 |
+
+VERDICT ch2 kiem_si/build: win 55.0% (target 25-45) TOO EASY; hits taken per WON run 10.4 (target 15-30, 11 wins of 20) FAIL; all runs 11.3; dmg/hit 8.2% max HP; timeouts/run 0.00
+VERDICT ch2 phap_su/build: win 10.0% (target 25-45) TOO HARD; hits taken per WON run 8.0 (target 15-30, 2 wins of 20) FAIL; all runs 9.3; dmg/hit 10.8% max HP; timeouts/run 0.00
+VERDICT ch2 sat_thu/build: win 80.0% (target 25-45) TOO EASY; hits taken per WON run 8.7 (target 15-30, 16 wins of 20) FAIL; all runs 8.9; dmg/hit 10.0% max HP; timeouts/run 0.00
+
+=== CHAPTER 3 (ch3): 7 columns, policies ["build"] ===
+
+CH3 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 35.0 | 4.90 | 10.1 (n=7) | 10.1 | 8.7 | 122.9 | 0.30 | 0.40 | 0.85 | 0.25 | 7.40 | 9.80 | 86.3 | 4.00 | 0.25 | 46.2 | 151.4 | 71.0 | 0.14 | 5.70 |
+| phap_su | build | 5.0 | 2.60 | 9.0 (n=1) | 6.0 | 12.8 | 86.0 | 0.10 | 0.00 | 0.85 | 0.05 | 6.85 | 8.30 | 87.4 | 2.60 | 0.30 | 45.0 | 101.4 | 44.4 | 0.14 | 4.00 |
+| sat_thu | build | 20.0 | 5.30 | 7.8 (n=4) | 9.6 | 10.7 | 43.0 | 0.40 | 0.40 | 0.85 | 0.35 | 7.35 | 9.80 | 62.9 | 4.45 | 0.00 | 39.4 | 147.4 | 59.3 | 0.16 | 6.65 |
+
+CH3 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | battle | 51 | 84.3 | 1.49 | 27.3 | 65.9 | 4 | 8 | 62 |
+| kiem_si | build | danger | 5 | 60.0 | 4.00 | 71.2 | 120.7 | 1 | 2 | 15 |
+| kiem_si | build | miniboss | 15 | 93.3 | 4.60 | 83.2 | 103.1 | 0 | 1 | 8 |
+| kiem_si | build | boss | 9 | 77.8 | 4.00 | 77.3 | 138.2 | 0 | 2 | 15 |
+| kiem_si | build | treasure | 17 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si | build | rest | 14 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | battle | 20 | 100.0 | 0.55 | 13.1 | 44.1 | 0 | 0 | 0 |
+| phap_su | build | danger | 29 | 37.9 | 3.34 | 67.6 | 111.6 | 6 | 18 | 95 |
+| phap_su | build | miniboss | 1 | 100.0 | 7.00 | 88.0 | 121.7 | 0 | 0 | 0 |
+| phap_su | build | boss | 2 | 50.0 | 2.50 | 15.0 | 77.8 | 0 | 1 | 5 |
+| phap_su | build | treasure | 17 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | rest | 2 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | battle | 63 | 87.3 | 1.52 | 30.0 | 54.5 | 0 | 8 | 50 |
+| sat_thu | build | danger | 1 | 0.0 | 7.00 | 96.0 | 56.8 | 0 | 1 | 6 |
+| sat_thu | build | miniboss | 15 | 93.3 | 3.60 | 57.9 | 84.2 | 0 | 1 | 6 |
+| sat_thu | build | boss | 10 | 40.0 | 3.40 | 65.2 | 93.6 | 0 | 6 | 38 |
+| sat_thu | build | treasure | 17 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | rest | 16 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH3 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | frost_mage | miniboss | 15 | 93.3 | 4.60 | 83.2 | 103.1 | 0 | 1 | 8 |
+| kiem_si | build | frost_sprite | battle | 15 | 100.0 | 0.47 | 10.9 | 25.6 | 0 | 0 | 0 |
+| kiem_si | build | fuse_golem | battle | 6 | 100.0 | 2.33 | 53.0 | 49.7 | 0 | 0 | 0 |
+| kiem_si | build | ghost_elite | battle | 4 | 100.0 | 1.00 | 14.5 | 99.7 | 0 | 0 | 0 |
+| kiem_si | build | ice_golem | battle | 3 | 0.0 | 6.67 | 122.7 | 123.2 | 0 | 3 | 23 |
+| kiem_si | build | mist_lord | boss | 9 | 77.8 | 4.00 | 77.3 | 138.2 | 0 | 2 | 15 |
+| kiem_si | build | rime_archer | battle | 2 | 50.0 | 5.50 | 75.0 | 154.8 | 1 | 1 | 8 |
+| kiem_si | build | snow_wolf | battle | 4 | 25.0 | 6.25 | 110.5 | 170.8 | 1 | 3 | 23 |
+| kiem_si | build | stone_sentry | battle | 5 | 40.0 | 1.80 | 28.8 | 161.3 | 3 | 3 | 23 |
+| kiem_si | build | wisp | battle | 17 | 100.0 | 0.35 | 6.2 | 42.1 | 0 | 0 | 0 |
+| phap_su | build | frost_mage | miniboss | 1 | 100.0 | 7.00 | 88.0 | 121.7 | 0 | 0 | 0 |
+| phap_su | build | frost_sprite | battle | 8 | 100.0 | 0.63 | 18.5 | 31.1 | 0 | 0 | 0 |
+| phap_su | build | fuse_golem | danger | 5 | 100.0 | 3.60 | 88.4 | 63.6 | 0 | 0 | 0 |
+| phap_su | build | ghost_elite | danger | 5 | 60.0 | 1.60 | 35.2 | 99.2 | 0 | 2 | 11 |
+| phap_su | build | ice_golem | danger | 3 | 0.0 | 3.67 | 64.7 | 66.3 | 0 | 3 | 16 |
+| phap_su | build | mist_lord | boss | 2 | 50.0 | 2.50 | 15.0 | 77.8 | 0 | 1 | 5 |
+| phap_su | build | rime_archer | danger | 1 | 0.0 | 1.00 | 16.0 | 5.3 | 0 | 1 | 5 |
+| phap_su | build | snow_wolf | danger | 8 | 0.0 | 4.63 | 100.5 | 133.6 | 2 | 8 | 42 |
+| phap_su | build | stone_sentry | danger | 7 | 42.9 | 3.14 | 46.9 | 164.2 | 4 | 4 | 21 |
+| phap_su | build | wisp | battle | 12 | 100.0 | 0.50 | 9.5 | 52.8 | 0 | 0 | 0 |
+| sat_thu | build | frost_mage | miniboss | 15 | 93.3 | 3.60 | 57.9 | 84.2 | 0 | 1 | 6 |
+| sat_thu | build | frost_sprite | battle | 17 | 100.0 | 0.65 | 17.9 | 23.0 | 0 | 0 | 0 |
+| sat_thu | build | fuse_golem | battle | 6 | 100.0 | 1.50 | 33.3 | 39.1 | 0 | 0 | 0 |
+| sat_thu | build | ghost_elite | battle | 2 | 100.0 | 1.00 | 20.0 | 91.5 | 0 | 0 | 0 |
+| sat_thu | build | ice_golem | battle | 8 | 0.0 | 5.38 | 89.0 | 81.1 | 0 | 8 | 50 |
+| sat_thu | build | mist_lord | boss | 10 | 40.0 | 3.40 | 65.2 | 93.6 | 0 | 6 | 38 |
+| sat_thu | build | rime_archer | battle | 3 | 100.0 | 2.67 | 57.3 | 114.0 | 0 | 0 | 0 |
+| sat_thu | build | snow_wolf | battle | 5 | 80.0 | 3.80 | 78.8 | 120.7 | 0 | 1 | 6 |
+| sat_thu | build | stone_sentry | battle | 4 | 100.0 | 1.00 | 7.5 | 104.3 | 0 | 0 | 0 |
+| sat_thu | build | wisp | battle | 19 | 100.0 | 0.37 | 7.1 | 35.4 | 0 | 0 | 0 |
+
+VERDICT ch3 kiem_si/build: win 35.0% (target 15-35) PASS; hits taken per WON run 10.1 (target 15-30, 7 wins of 20) FAIL; all runs 10.1; dmg/hit 8.7% max HP; timeouts/run 0.25
+VERDICT ch3 phap_su/build: win 5.0% (target 15-35) TOO HARD; hits taken per WON run 9.0 (target 15-30, 1 wins of 20) FAIL; all runs 6.0; dmg/hit 12.8% max HP; timeouts/run 0.30
+VERDICT ch3 sat_thu/build: win 20.0% (target 15-35) PASS; hits taken per WON run 7.8 (target 15-30, 4 wins of 20) FAIL; all runs 9.6; dmg/hit 10.7% max HP; timeouts/run 0.00
+RESULT: FAIL
+runtime: 83.7 s
+
+----------------------------------------------------------------------------------------------------
+DIAGNOSIS EXPERIMENT (data NOT changed): chapters 2 and 3, build, 20 seeds, --step-mult=2.0
+----------------------------------------------------------------------------------------------------
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim (Story 023 campaign): seeds=20 dt=0.050 timeout=180s policies=["build"] characters=["kiem_si", "phap_su", "sat_thu"] chapters=[1, 2] cleared_bosses=1 (always_skip + kiem_si onboarding on chapter 0 only)
+EXPERIMENT: think-mult=1.00 combo=-1.00 hp-mult=1.00 dodge=0.85 no-treasure=false step-mult=2.00
+node policy: treasure > rest (heal < 50% HP else forge) > miniboss at >= 70% HP > battle > danger (danger first with >= 2 burn cards); boss when alone. second_wind passive heal on win; no other heal.
+
+=== CHAPTER 2 (ch2): 7 columns, policies ["build"] ===
+
+CH2 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 95.0 | 6.95 | 5.3 (n=19) | 5.7 | 7.7 | 164.8 | 0.00 | 1.00 | 0.75 | 0.75 | 7.60 | 11.10 | 56.0 | 5.25 | 0.00 | 16.6 | 151.1 | 50.2 | 0.11 | 5.00 |
+| phap_su | build | 40.0 | 5.90 | 6.6 (n=8) | 8.4 | 10.2 | 73.3 | 0.50 | 0.40 | 0.75 | 0.45 | 7.45 | 10.15 | 56.1 | 4.85 | 0.00 | 27.4 | 131.8 | 48.3 | 0.18 | 4.65 |
+| sat_thu | build | 100.0 | 7.00 | 4.8 (n=20) | 4.8 | 8.0 | 99.8 | 0.25 | 0.75 | 0.75 | 0.65 | 7.65 | 10.85 | 46.1 | 5.25 | 0.00 | 14.5 | 148.6 | 42.3 | 0.11 | 4.75 |
+
+CH2 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | battle | 57 | 100.0 | 0.21 | 2.4 | 29.1 | 0 | 0 | 0 |
+| kiem_si | build | danger | 9 | 100.0 | 2.11 | 37.3 | 52.1 | 0 | 0 | 0 |
+| kiem_si | build | miniboss | 19 | 100.0 | 1.95 | 32.8 | 62.4 | 0 | 0 | 0 |
+| kiem_si | build | boss | 20 | 95.0 | 2.30 | 32.5 | 127.8 | 0 | 1 | 100 |
+| kiem_si | build | treasure | 15 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si | build | rest | 20 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | battle | 20 | 100.0 | 0.25 | 4.1 | 22.0 | 0 | 0 | 0 |
+| phap_su | build | danger | 48 | 91.7 | 1.83 | 29.0 | 51.2 | 0 | 4 | 33 |
+| phap_su | build | miniboss | 14 | 92.9 | 2.64 | 37.1 | 66.9 | 0 | 1 | 8 |
+| phap_su | build | boss | 15 | 53.3 | 2.60 | 43.9 | 110.8 | 0 | 7 | 58 |
+| phap_su | build | treasure | 15 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | rest | 18 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | battle | 66 | 100.0 | 0.35 | 5.6 | 26.9 | 0 | 0 | 0 |
+| sat_thu | build | miniboss | 19 | 100.0 | 2.26 | 34.2 | 52.7 | 0 | 0 | 0 |
+| sat_thu | build | boss | 20 | 100.0 | 1.55 | 24.9 | 102.9 | 0 | 0 | 0 |
+| sat_thu | build | treasure | 15 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | rest | 20 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH2 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | bat_swarm | battle | 10 | 100.0 | 0.40 | 4.2 | 35.4 | 0 | 0 | 0 |
+| kiem_si | build | cultist | danger | 4 | 100.0 | 0.50 | 4.5 | 39.2 | 0 | 0 | 0 |
+| kiem_si | build | ghost | danger | 6 | 100.0 | 1.50 | 25.7 | 55.3 | 0 | 0 | 0 |
+| kiem_si | build | jailer | miniboss | 19 | 100.0 | 1.95 | 32.8 | 62.4 | 0 | 0 | 0 |
+| kiem_si | build | ogre_king | boss | 20 | 95.0 | 2.30 | 32.5 | 127.8 | 0 | 1 | 100 |
+| kiem_si | build | rat_king_guard | danger | 2 | 100.0 | 5.00 | 87.0 | 105.2 | 0 | 0 | 0 |
+| kiem_si | build | reacter | battle | 8 | 100.0 | 0.38 | 5.3 | 21.0 | 0 | 0 | 0 |
+| kiem_si | build | skeleton | battle | 14 | 100.0 | 0.00 | 0.0 | 16.2 | 0 | 0 | 0 |
+| kiem_si | build | slime | battle | 8 | 100.0 | 0.25 | 4.0 | 42.2 | 0 | 0 | 0 |
+| kiem_si | build | zombie | battle | 14 | 100.0 | 0.07 | 0.9 | 24.3 | 0 | 0 | 0 |
+| phap_su | build | bat_swarm | danger | 8 | 100.0 | 1.88 | 36.5 | 42.2 | 0 | 0 | 0 |
+| phap_su | build | cultist | danger | 7 | 100.0 | 0.86 | 15.1 | 49.7 | 0 | 0 | 0 |
+| phap_su | build | ghost | danger | 5 | 80.0 | 3.40 | 50.8 | 58.4 | 0 | 1 | 8 |
+| phap_su | build | jailer | miniboss | 14 | 92.9 | 2.64 | 37.1 | 66.9 | 0 | 1 | 8 |
+| phap_su | build | ogre_king | boss | 15 | 53.3 | 2.60 | 43.9 | 110.8 | 0 | 7 | 58 |
+| phap_su | build | rat_king_guard | danger | 8 | 62.5 | 3.25 | 48.5 | 102.1 | 0 | 3 | 25 |
+| phap_su | build | reacter | danger | 11 | 100.0 | 0.91 | 14.5 | 22.9 | 0 | 0 | 0 |
+| phap_su | build | skeleton | battle | 12 | 100.0 | 0.08 | 0.0 | 18.0 | 0 | 0 | 0 |
+| phap_su | build | slime | danger | 9 | 100.0 | 1.56 | 21.6 | 45.8 | 0 | 0 | 0 |
+| phap_su | build | zombie | battle | 8 | 100.0 | 0.50 | 10.3 | 27.9 | 0 | 0 | 0 |
+| sat_thu | build | bat_swarm | battle | 10 | 100.0 | 0.10 | 0.0 | 25.8 | 0 | 0 | 0 |
+| sat_thu | build | cultist | battle | 1 | 100.0 | 0.00 | 0.0 | 31.5 | 0 | 0 | 0 |
+| sat_thu | build | ghost | battle | 5 | 100.0 | 1.40 | 14.4 | 68.0 | 0 | 0 | 0 |
+| sat_thu | build | jailer | miniboss | 19 | 100.0 | 2.26 | 34.2 | 52.7 | 0 | 0 | 0 |
+| sat_thu | build | ogre_king | boss | 20 | 100.0 | 1.55 | 24.9 | 102.9 | 0 | 0 | 0 |
+| sat_thu | build | rat_king_guard | battle | 1 | 100.0 | 2.00 | 42.0 | 116.6 | 0 | 0 | 0 |
+| sat_thu | build | reacter | battle | 8 | 100.0 | 0.13 | 1.5 | 14.0 | 0 | 0 | 0 |
+| sat_thu | build | skeleton | battle | 14 | 100.0 | 0.29 | 6.0 | 16.5 | 0 | 0 | 0 |
+| sat_thu | build | slime | battle | 10 | 100.0 | 0.40 | 6.0 | 35.1 | 0 | 0 | 0 |
+| sat_thu | build | zombie | battle | 17 | 100.0 | 0.24 | 5.9 | 19.8 | 0 | 0 | 0 |
+
+VERDICT ch2 kiem_si/build: win 95.0% (target 25-45) TOO EASY; hits taken per WON run 5.3 (target 15-30, 19 wins of 20) FAIL; all runs 5.7; dmg/hit 7.7% max HP; timeouts/run 0.00
+VERDICT ch2 phap_su/build: win 40.0% (target 25-45) PASS; hits taken per WON run 6.6 (target 15-30, 8 wins of 20) FAIL; all runs 8.4; dmg/hit 10.2% max HP; timeouts/run 0.00
+VERDICT ch2 sat_thu/build: win 100.0% (target 25-45) TOO EASY; hits taken per WON run 4.8 (target 15-30, 20 wins of 20) FAIL; all runs 4.8; dmg/hit 8.0% max HP; timeouts/run 0.00
+
+=== CHAPTER 3 (ch3): 7 columns, policies ["build"] ===
+
+CH3 | character | policy | chapter win % | mean columns cleared (of 7) | hits taken / WON run | hits taken / run (all) | dmg per hit % max HP | HP at end (wins) | rest: heal | rest: forge | treasure / run | tokens spent / run | final deck size | deck level sum | mean match sec | matches / run | timeouts / run | dmg taken / match | dmg dealt / match | boss swings / run | boss hit rate | sig acts / run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 25.0 | 5.25 | 8.0 (n=5) | 9.5 | 8.8 | 100.9 | 0.05 | 0.80 | 0.85 | 0.35 | 7.40 | 10.20 | 82.1 | 4.30 | 0.40 | 35.3 | 151.2 | 67.7 | 0.14 | 5.55 |
+| phap_su | build | 0.0 | 3.05 | 0.0 (n=0) | 7.0 | 10.6 | 0.0 | 0.15 | 0.15 | 0.85 | 0.10 | 6.90 | 8.55 | 88.0 | 2.90 | 0.30 | 39.2 | 112.2 | 46.6 | 0.15 | 4.45 |
+| sat_thu | build | 35.0 | 6.00 | 7.6 (n=7) | 9.1 | 9.7 | 57.7 | 0.35 | 0.60 | 0.85 | 0.50 | 7.35 | 10.25 | 64.0 | 4.85 | 0.00 | 31.0 | 156.6 | 61.9 | 0.15 | 7.65 |
+
+CH3 NODE KIND BREAKDOWN: | character | policy | kind | played | win % | hits taken / node | dmg taken / node | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | battle | 51 | 86.3 | 0.92 | 15.0 | 56.7 | 6 | 7 | 47 |
+| kiem_si | build | danger | 7 | 71.4 | 3.43 | 61.7 | 129.2 | 2 | 2 | 13 |
+| kiem_si | build | miniboss | 17 | 100.0 | 3.71 | 49.5 | 102.2 | 0 | 0 | 0 |
+| kiem_si | build | boss | 11 | 45.5 | 5.09 | 90.5 | 122.1 | 0 | 6 | 40 |
+| kiem_si | build | treasure | 17 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| kiem_si | build | rest | 17 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | battle | 22 | 95.5 | 0.86 | 15.0 | 39.5 | 0 | 1 | 5 |
+| phap_su | build | danger | 27 | 44.4 | 3.22 | 54.8 | 117.6 | 6 | 15 | 75 |
+| phap_su | build | miniboss | 6 | 83.3 | 4.67 | 69.3 | 99.4 | 0 | 1 | 5 |
+| phap_su | build | boss | 3 | 0.0 | 2.00 | 16.7 | 66.6 | 0 | 3 | 15 |
+| phap_su | build | treasure | 17 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| phap_su | build | rest | 6 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | battle | 66 | 92.4 | 1.11 | 18.9 | 51.4 | 0 | 5 | 38 |
+| sat_thu | build | miniboss | 16 | 100.0 | 3.63 | 54.9 | 81.0 | 0 | 0 | 0 |
+| sat_thu | build | boss | 15 | 46.7 | 3.40 | 59.1 | 104.7 | 0 | 8 | 62 |
+| sat_thu | build | treasure | 17 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+| sat_thu | build | rest | 19 | 100.0 | 0.00 | 0.0 | 0.0 | 0 | 0 | 0 |
+
+CH3 PER-MATCH: | character | policy | match | kind | played | win % | hits taken / match | dmg taken / match | mean sec | timeouts | deaths | deaths % of char deaths |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | frost_mage | miniboss | 17 | 100.0 | 3.71 | 49.5 | 102.2 | 0 | 0 | 0 |
+| kiem_si | build | frost_sprite | battle | 15 | 100.0 | 0.13 | 4.0 | 19.3 | 0 | 0 | 0 |
+| kiem_si | build | fuse_golem | battle | 6 | 100.0 | 0.67 | 13.7 | 27.5 | 0 | 0 | 0 |
+| kiem_si | build | ghost_elite | battle | 6 | 100.0 | 1.83 | 33.0 | 106.7 | 0 | 0 | 0 |
+| kiem_si | build | ice_golem | battle | 2 | 0.0 | 11.50 | 153.0 | 143.2 | 1 | 2 | 13 |
+| kiem_si | build | mist_lord | boss | 11 | 45.5 | 5.09 | 90.5 | 122.1 | 0 | 6 | 40 |
+| kiem_si | build | rime_archer | danger | 3 | 66.7 | 3.33 | 42.0 | 134.0 | 1 | 1 | 7 |
+| kiem_si | build | snow_wolf | battle | 4 | 25.0 | 3.00 | 56.5 | 172.8 | 3 | 3 | 20 |
+| kiem_si | build | stone_sentry | battle | 5 | 40.0 | 0.80 | 21.6 | 160.4 | 3 | 3 | 20 |
+| kiem_si | build | wisp | battle | 17 | 100.0 | 0.29 | 5.4 | 30.6 | 0 | 0 | 0 |
+| phap_su | build | frost_mage | miniboss | 6 | 83.3 | 4.67 | 69.3 | 99.4 | 0 | 1 | 5 |
+| phap_su | build | frost_sprite | battle | 8 | 100.0 | 0.25 | 4.0 | 22.7 | 0 | 0 | 0 |
+| phap_su | build | fuse_golem | danger | 5 | 100.0 | 1.00 | 27.2 | 32.0 | 0 | 0 | 0 |
+| phap_su | build | ghost_elite | battle | 4 | 75.0 | 2.75 | 46.5 | 114.1 | 0 | 1 | 5 |
+| phap_su | build | ice_golem | danger | 3 | 0.0 | 5.00 | 76.0 | 78.7 | 0 | 3 | 15 |
+| phap_su | build | mist_lord | boss | 3 | 0.0 | 2.00 | 16.7 | 66.6 | 0 | 3 | 15 |
+| phap_su | build | rime_archer | danger | 1 | 100.0 | 2.00 | 36.0 | 113.5 | 0 | 0 | 0 |
+| phap_su | build | snow_wolf | danger | 9 | 22.2 | 4.44 | 70.9 | 138.5 | 1 | 7 | 35 |
+| phap_su | build | stone_sentry | danger | 7 | 28.6 | 3.14 | 57.7 | 169.9 | 5 | 5 | 25 |
+| phap_su | build | wisp | battle | 12 | 100.0 | 0.75 | 12.5 | 38.6 | 0 | 0 | 0 |
+| sat_thu | build | frost_mage | miniboss | 16 | 100.0 | 3.63 | 54.9 | 81.0 | 0 | 0 | 0 |
+| sat_thu | build | frost_sprite | battle | 18 | 100.0 | 0.22 | 6.9 | 20.8 | 0 | 0 | 0 |
+| sat_thu | build | fuse_golem | battle | 6 | 100.0 | 0.17 | 0.0 | 21.4 | 0 | 0 | 0 |
+| sat_thu | build | ghost_elite | battle | 5 | 100.0 | 0.60 | 16.0 | 99.4 | 0 | 0 | 0 |
+| sat_thu | build | ice_golem | battle | 7 | 28.6 | 4.29 | 62.3 | 90.5 | 0 | 5 | 38 |
+| sat_thu | build | mist_lord | boss | 15 | 46.7 | 3.40 | 59.1 | 104.7 | 0 | 8 | 62 |
+| sat_thu | build | rime_archer | battle | 2 | 100.0 | 1.00 | 22.0 | 110.6 | 0 | 0 | 0 |
+| sat_thu | build | snow_wolf | battle | 5 | 100.0 | 4.40 | 78.0 | 129.7 | 0 | 0 | 0 |
+| sat_thu | build | stone_sentry | battle | 4 | 100.0 | 0.50 | 7.5 | 101.3 | 0 | 0 | 0 |
+| sat_thu | build | wisp | battle | 19 | 100.0 | 0.47 | 7.5 | 25.6 | 0 | 0 | 0 |
+
+VERDICT ch3 kiem_si/build: win 25.0% (target 15-35) PASS; hits taken per WON run 8.0 (target 15-30, 5 wins of 20) FAIL; all runs 9.5; dmg/hit 8.8% max HP; timeouts/run 0.40
+VERDICT ch3 phap_su/build: win 0.0% (target 15-35) TOO HARD; hits taken per WON run 0.0 (target 15-30, 0 wins of 20) NO WINS; all runs 7.0; dmg/hit 10.6% max HP; timeouts/run 0.30
+VERDICT ch3 sat_thu/build: win 35.0% (target 15-35) PASS; hits taken per WON run 7.6 (target 15-30, 7 wins of 20) FAIL; all runs 9.1; dmg/hit 9.7% max HP; timeouts/run 0.00
+RESULT: FAIL
+runtime: 78.5 s
+

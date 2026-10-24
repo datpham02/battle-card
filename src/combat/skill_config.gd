@@ -11,11 +11,12 @@ const FALLBACK_SKILL: String = "kiem_khi"
 const RARITIES: Array[String] = ["common", "rare", "epic"]
 ## Highest card level (levels are 1..MAX_LEVEL; Story 020).
 const MAX_LEVEL: int = 3
-const EFFECTS: Array[String] = ["damage", "push", "burn", "pin"]
+const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost"]
 ## Keys an `upgrade` table may change (additive deltas), with the floor each is clamped to.
 const UPGRADE_FLOORS: Dictionary = {
 	"damage_per_cell": 0.0, "min_cells": 1.0, "cooldown_sec": 0.0, "burn_damage_per_tick": 0.0,
 	"burn_duration_sec": 0.0, "pin_duration_sec": 0.0, "push_cells": 0.0,
+	"fragile_stacks": 0.0, "frost_stacks": 0.0,
 }
 
 ## Simulation speed factor while the card menu is open (0..1). Applied by the view.
@@ -39,7 +40,8 @@ var focus_locks_movement: bool = true
 ## Stable display order of the known card ids (also the boss's default card list).
 var card_order: Array[String] = [FALLBACK_SKILL]
 ## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_per_cell, push_cells,
-## burn_*, pin_duration_sec, rarity, upgrade, implemented} (level 1 values; see [method resolved])
+## burn_*, pin_duration_sec, fragile_stacks, frost_stacks, pierce_defense, execute, execute_ratio,
+## bonus_vs_fragile_mult, rarity, upgrade, implemented} (level 1 values; see [method resolved])
 var cards: Dictionary = {}
 
 
@@ -222,6 +224,14 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"cooldown_sec": maxf(float(raw.get("cooldown_sec", 0.0)), 0.0),
 		"damage_per_cell": dpc,
 		"push_cells": maxi(int(raw.get("push_cells", 0)), 0),
+		# Story 023: keyword stacks the card applies to a target it hits, defense piercing, execute
+		# (execute_ratio > 0 = own threshold; execute true = combat.json default) and the Ran bonus.
+		"fragile_stacks": maxi(int(raw.get("fragile_stacks", 0)), 0),
+		"frost_stacks": maxi(int(raw.get("frost_stacks", 0)), 0),
+		"pierce_defense": bool(raw.get("pierce_defense", false)),
+		"execute": bool(raw.get("execute", false)),
+		"execute_ratio": clampf(float(raw.get("execute_ratio", 0.0)), 0.0, 1.0),
+		"bonus_vs_fragile_mult": maxf(float(raw.get("bonus_vs_fragile_mult", 1.0)), 1.0),
 		"rarity": rarity,
 		"upgrade": upgrade,
 		"implemented": bool(raw.get("implemented", false)),

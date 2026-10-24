@@ -143,7 +143,7 @@ card.kiem_khi.desc,Sát thương theo số ô.,Damage per cell.
 card.chan_phong.name,Chấn phong,Gale Burst
 card.chan_phong.desc,"Đẩy lùi 1 ô, sát thương nhẹ.","Pushes 1 cell, light damage."
 card.kiem_vu.name,Kiếm vũ,Blade Dance
-card.kiem_vu.desc,Sát thương mạnh theo số ô. Địch bị ghim ăn thêm.,Heavy damage per cell. Pinned foes take extra.
+card.kiem_vu.desc,Sát thương mạnh theo số ô.,Heavy damage per cell.
 card.thiet_kiem.name,Thiết kiếm,Iron Blade
 card.thiet_kiem.desc,"Nhát chém chắc tay, hồi nhanh.",A steady slash with a short recovery.
 card.dai_dao.name,Đại đao,Broadsword
@@ -155,29 +155,29 @@ card.hoa_tinh.desc,"Đốt các ô trong 2,5 s. Đốt lại địch đang cháy
 card.hoa_xa.name,Hỏa xà,Fire Serpent
 card.hoa_xa.desc,Đốt nhanh trên ít ô trong 2 s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,A quick burn over few cells for 2 s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.suong_mong.name,Sương mỏng,Thin Mist
-card.suong_mong.desc,"Ghim 0,8 s. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 0.8 s. A pinned foe takes extra damage from blade strikes.
+card.suong_mong.desc,"Ghim 0,8 s: địch không bước được.",Pins for 0.8 s: the foe cannot step.
 card.bang_chau.name,Băng châu,Frost Pearl
-card.bang_chau.desc,"Ghim 0,7 s trên ít ô. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 0.7 s over few cells. A pinned foe takes extra damage from blade strikes.
+card.bang_chau.desc,"Ghim 0,7 s trên ít ô: địch không bước được.",Pins for 0.7 s over few cells: the foe cannot step.
 card.hoa_tran.name,Hỏa trận,Fire Sigil
 card.hoa_tran.desc,Đốt các ô trong 3 s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for 3 s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.bang_phong.name,Băng phong,Frost Seal
-card.bang_phong.desc,"Ghim 1,2 s. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 1.2 s. A pinned foe takes extra damage from blade strikes.
+card.bang_phong.desc,"Ghim 1,2 s: địch không bước được.",Pins for 1.2 s: the foe cannot step.
 card.cuong_phong.name,Cuồng phong,Gale Storm
 card.cuong_phong.desc,"Đẩy lùi 1 ô, sát thương vừa.","Pushes 1 cell, moderate damage."
 card.liet_hoa.name,Liệt hỏa,Blaze
 card.liet_hoa.desc,Đốt các ô trong 4 s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for 4 s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.kiem_than.name,Kiếm thần,Divine Blade
-card.kiem_than.desc,"Nhát chém sắc, ăn thêm nếu địch bị ghim.",A keen slash; extra against pinned foes.
+card.kiem_than.desc,"Nhát chém sắc, hồi nhanh.",A keen slash with a short recovery.
 card.song_kiem.name,Song kiếm,Twin Blades
-card.song_kiem.desc,"Cần sáu ô, cooldown dài, sát thương rất cao.","Six cells, long recovery, huge damage."
+card.song_kiem.desc,"Cần sáu ô. Địch đang Rạn ăn thêm ×1,5.",Six cells. A Fragile foe takes ×1.5.
 card.thien_lang.name,Thiên lãng,Heaven Wave
 card.thien_lang.desc,"Đẩy lùi 2 ô, sát thương khá.","Pushes 2 cells, solid damage."
 card.han_bang.name,Hàn băng,Deep Frost
-card.han_bang.desc,"Ghim 1,8 s. Địch bị ghim ăn thêm sát thương từ đòn kiếm.",Pins for 1.8 s. A pinned foe takes extra damage from blade strikes.
+card.han_bang.desc,"Ghim 1,8 s và gieo Rạn 2 tầng: đòn kế tiếp ăn ×1,5 mỗi tầng.",Pins for 1.8 s and applies 2 Fragile: the next hits take ×1.5 per stack.
 card.thien_hoa.name,Thiên hỏa,Heaven Fire
 card.thien_hoa.desc,"Đốt các ô trong 5 s, cháy dữ dội. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.",Burns the cells fiercely for 5 s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.tu_kiem.name,Tuyệt kiếm,Peerless Blade
-card.tu_kiem.desc,"Một nhát duy nhất, sát thương cực lớn.",One single stroke of immense damage.
+card.tu_kiem.desc,"Hành quyết: một nhát duy nhất, ×2 khi địch dưới 25 % máu.","Execute: one single stroke, ×2 when the foe is below 25 % HP."
 ui.card.level_suffix,+%d,+%d
 ui.reward.upgrade_to,Nâng cấp → +%d,Upgrade → +%d
 ui.reward.damage,%d sát thương/ô,%d dmg/cell
@@ -227,3 +227,70 @@ ui.reward.remove_count,Bỏ 1 lá (%d),Remove a card (%d)
 ui.run_hud.node_label,Cột %d · %s,Column %d · %s
 ui.run_hud.run_node,Cột %d · %s,Column %d · %s
 run.restart.old_save,"Bản lưu cũ không còn dùng được, chương bắt đầu lại.",The old save no longer applies; the chapter starts over.
+boss.skeleton.name,Bộ xương lính,Skeleton Guard
+boss.bat_swarm.name,Đàn dơi hầm,Crypt Bat Swarm
+boss.slime.name,Nhầy ngục,Dungeon Slime
+boss.cultist.name,Tín đồ tà giáo,Cultist
+boss.rat_king_guard.name,Lính gác Chuột Vương,Rat King's Guard
+boss.ghost.name,Bóng Ma,Ghost
+boss.reacter.name,Kẻ Phản Ứng,The Reacter
+boss.jailer.name,Cai Ngục,The Jailer
+boss.ogre_king.name,Quỷ Khổng Lồ,Giant Ogre
+boss.frost_sprite.name,Tiên sương,Frost Sprite
+boss.wisp.name,Ma trơi,Wisp
+boss.stone_sentry.name,Lính canh đá,Stone Sentry
+boss.snow_wolf.name,Sói tuyết,Snow Wolf
+boss.rime_archer.name,Cung thủ sương giá,Rime Archer
+boss.ice_golem.name,Người băng,Ice Golem
+boss.ghost_elite.name,Bóng Ma bản mạnh,Greater Ghost
+boss.fuse_golem.name,Pháo Ngòi,Fuse Cannon
+boss.frost_mage.name,Pháp Sư Sương,Frost Mage
+boss.mist_lord.name,Chúa Tể Sương,Lord of the Mist
+chapter.ch3.name,Tháp Sương,The Mist Tower
+arena.cross_wide.name,Chữ thập rộng,Wide Cross
+arena.pillars.name,Cột đá,Pillars
+match.ghost.desc,"Giáp dày, máu mỏng: chỉ lửa mới đủ sức.","Thick armor, thin blood: only fire is enough."
+match.reacter.desc,Mỗi bước của bạn đánh thức nó: đứng yên mà nối ấn.,Every step you take wakes it: stand still and draw.
+match.fuse_golem.desc,"Ngòi cháy đếm ngược: đánh mạnh để dập, hoặc nhận cả hàng.","A burning fuse counts down: hit hard to snuff it, or take a whole row."
+match.ghost_elite.desc,"Giáp còn dày hơn, hồn còn mỏng hơn: chỉ lửa và đòn xuyên giáp.","Even thicker armor, an even thinner soul: only fire and piercing strikes."
+match.ogre_king.desc,Mỗi nhịp đập làm nứt nền: đừng đứng trên ô nứt.,Each slam cracks the floor: do not stand on a cracked tile.
+match.mist_lord.desc,"Hạ nó xuống nửa máu, và cơn thịnh nộ bùng lên.",Bring it to half health and its fury awakens.
+chapter.ch2.intro,Cánh cổng ngục khép lại sau lưng. Tiếng xích kéo lê trong bóng tối.,The dungeon gate shuts behind you. Chains drag in the dark.
+chapter.ch2.end,"Quỷ Khổng Lồ gục xuống, ngục tối im lặng. Phía trên, màn sương đang chờ.","The Ogre falls and the dungeon goes silent. Above, the mist waits."
+chapter.ch3.intro,"Tháp Sương mọc lên từ biển mây, mỗi bậc thang lạnh hơn bậc trước.","The Mist Tower rises from a sea of cloud, each step colder than the last."
+chapter.ch3.end,"Chúa Tể Sương tan thành hơi. Đỉnh tháp sáng lên, hành trình khép lại.",The Mist Lord dissolves into vapor. The summit lights up and the journey ends.
+trait.step_reactor.name,Phản xạ,Reflex
+trait.fuse_cannon.name,Pháo ngòi,Fuse Cannon
+trait.slam.name,Giáng nứt,Slam
+trait.frost_aura.name,Hào quang sương,Frost Aura
+trait.phase_shift.name,Đổi pha,Phase Shift
+card.ran_kich.name,Rạn kích,Fracture Strike
+card.ran_kich.desc,"Gieo Rạn 1 tầng: đòn kế tiếp ăn ×1,5.",Applies 1 Fragile: the next hit takes ×1.5.
+card.ran_van.name,Rạn vân,Fracture Veins
+card.ran_van.desc,"Ít ô, gieo Rạn 2 tầng: hai đòn kế tiếp ăn ×1,5.","Few cells, applies 2 Fragile: the next two hits take ×1.5."
+card.han_khi.name,Hàn khí,Frost Breath
+card.han_khi.desc,Gieo Hàn 1 tầng. Đủ 3 tầng: nổ 24 sát thương xuyên giáp.,"Applies 1 Frost. At 3 stacks: bursts for 24, ignoring defense."
+card.han_phong.name,Hàn phong,Frost Gale
+card.han_phong.desc,"Diện rộng, gieo Hàn 2 tầng. Đủ 3 tầng: nổ 24 sát thương xuyên giáp.","Wide area, applies 2 Frost. At 3 stacks: bursts for 24, ignoring defense."
+card.han_kiem.name,Hàn kiếm,Frost Blade
+card.han_kiem.desc,Sát thương theo số ô và gieo Hàn 1 tầng.,Damage per cell and applies 1 Frost.
+card.han_tran.name,Hàn trận,Frost Sigil
+card.han_tran.desc,"Năm ô, sát thương nhẹ và gieo Hàn 2 tầng.","Five cells, light damage and applies 2 Frost."
+ui.hud.fragile_stacks,Rạn ×%d,Fragile ×%d
+ui.hud.frost_stacks,Hàn ×%d,Frost ×%d
+keyword.fragile,Rạn,Fragile
+keyword.frost,Hàn,Frost
+keyword.execute,Hành quyết,Execute
+trait.step_reactor.desc,Mỗi bước của bạn nạp một phát; đủ phát là nó chém ngay. Đứng yên nối ấn thì an toàn.,Every step you take charges a shot; when full it swings at once. Stand still and connect runes to stay safe.
+trait.fuse_cannon.desc,"Ngòi cháy dần, hết ngòi là nổ cả hàng của bạn. Đánh mạnh một đòn để dập ngòi.","A fuse burns down, then blasts your whole row. Land one heavy hit to snuff it out."
+trait.slam.desc,Cứ vài giây lại đập nứt hai ô bên bạn; ô nứt không bước vào được.,Every few seconds it cracks two cells on your side; cracked cells cannot be entered.
+trait.frost_aura.desc,Ấn rơi chậm hơn khi nó còn trên nửa máu.,Runes fall slower while it is above half health.
+trait.phase_shift.desc,"Ở nửa máu nó đổi sang thế hung hãn, nhanh hơn và thêm đòn mới.","At half health it turns aggressive, moves faster and gains a new attack."
+ui.hud.reactor_charges,Phản ứng %d/%d,Reaction %d/%d
+ui.hud.fuse,Ngòi %.1f s,Fuse %.1f s
+ui.hud.frost_aura,Khí sương,Frost aura
+ui.hud.phase_banner,PHA %d,PHASE %d
+keyword.pierce,Xuyên giáp,Pierce
+keyword.vs_fragile,×%s khi Rạn,×%s vs Fragile
+keyword.fragile_stacks,Rạn +%d,Fragile +%d
+keyword.frost_stacks,Hàn +%d,Frost +%d

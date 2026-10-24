@@ -54,12 +54,15 @@ func can_begin() -> bool:
 
 ## Starts a swing over [param cells]. Returns false if one is already running or the
 ## cell list is empty. Duration = CutConfig.swing_duration(cells) * [member duration_mult].
-func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, level: int = 1) -> bool:
+## Story 023: [param duration_override] > 0 fixes the windup (trait swings with their own telegraph).
+func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, level: int = 1, duration_override: float = -1.0) -> bool:
 	if _swinging or cells.is_empty():
 		return false
 	var duration: float = _config.swing_duration(cells.size()) * duration_mult
 	if duration_modifier.is_valid():
 		duration = float(duration_modifier.call(cells.size(), duration))
+	if duration_override > 0.0:
+		duration = duration_override
 	_start(cells, skill_id, target_is_enemy, duration, level)
 	return true
 

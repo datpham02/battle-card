@@ -6,7 +6,9 @@ extends Node2D
 ## (2) CONFIRM button ("Chốt"), dimmed with the swing countdown while a swing runs;
 ## (3) SKILL MENU panel: countdown bar + one button per skill with its lock reason;
 ## (4) SWING overlay: covered cells red with the countdown; (5) HIT / MISS marker after a swing;
-## (6) the boss's QUEUED combo swing (Story 013) as a hatched lighter-red layer under its running swing.
+## (6) the boss's QUEUED combo swing (Story 013) as a hatched lighter-red layer under its running swing;
+## (7) Story 023: Rạn / Hàn stacks in the boss status strip, trait readouts under the player HP bar
+## (reactor charges, fuse bar, frost aura), cracked / warned cells on the board and the phase banner.
 ## It owns no game state: it reads CombatView and calls confirm_selection() / CutFlow.choose().
 ##
 ## Input is read in _input (like DPadView) and consumed, so HandInputController never sees a
@@ -249,6 +251,45 @@ const TEXT_SIGNATURE_READY: String = "ui.hud.signature_ready"
 const TEXT_SIGNATURE_ACTIVE: String = "ui.hud.signature_active"
 const TEXT_SIGNATURE_CHARGE: String = "ui.hud.signature_charge"
 
+## Story 023 keyword stacks on the boss: "Rạn ×N" (purple) and "Hàn ×N" (ice blue) after "Cháy ×N" /
+## "Ghim" in the boss status strip. The strip stays one line: its font shrinks down to
+## STATUS_MIN_FONT_SIZE until every part fits the strip's width.
+const FRAGILE_COLOR: Color = Color(0.62, 0.32, 0.88)
+const FROST_COLOR: Color = Color(0.3, 0.68, 0.95)
+const STATUS_MIN_FONT_SIZE: int = 11
+const TEXT_FRAGILE_STACKS: String = "ui.hud.fragile_stacks"
+const TEXT_FROST_STACKS: String = "ui.hud.frost_stacks"
+## Story 023 trait readouts in ScreenLayout.hud_trait_status_rect (the strip under the PLAYER HP
+## bar): step_reactor "Phản ứng N/M" (red once full), frost_aura "Khí sương" while it runs,
+## fuse_cannon "Ngòi x.x s" followed by a thin fuse bar (red, text too, in the last FUSE_RED_SEC).
+const TRAIT_TEXT_COLOR: Color = Color(0.3, 0.26, 0.22)
+const TRAIT_FULL_COLOR: Color = Color(0.9, 0.12, 0.08)
+const FUSE_BAR_WIDTH: float = 120.0
+const FUSE_BAR_HEIGHT: float = 8.0
+const FUSE_BAR_BACK: Color = Color(0.25, 0.2, 0.15, 0.8)
+const FUSE_BAR_FILL: Color = Color(0.95, 0.6, 0.1)
+const FUSE_BAR_LOW_FILL: Color = Color(0.9, 0.12, 0.08)
+const FUSE_RED_SEC: float = 3.0
+const TEXT_REACTOR_CHARGES: String = "ui.hud.reactor_charges"
+const TEXT_FUSE: String = "ui.hud.fuse"
+const TEXT_FROST_AURA: String = "ui.hud.frost_aura"
+## Story 023 board cells on the player's half: the cells a slam or the fuse blast is about to hit
+## get a faint tint and a blinking ORANGE outline (the row warning's amber blink, hotter hue);
+## cracked cells (slam) a dark fill with a jagged crack polyline and a short branch.
+const TRAIT_WARN_OUTLINE: Color = Color(1.0, 0.5, 0.0, 0.95)
+const TRAIT_WARN_TINT: Color = Color(1.0, 0.5, 0.0, 0.15)
+const CRACK_TINT: Color = Color(0.12, 0.1, 0.08, 0.6)
+const CRACK_LINE: Color = Color(0.05, 0.04, 0.03, 0.95)
+const CRACK_LINE_WIDTH: float = 3.0
+## Crack shape as shares of the cell rect (main line, then a branch off its second point).
+const CRACK_POINTS: Array[Vector2] = [Vector2(0.2, 0.12), Vector2(0.45, 0.4), Vector2(0.36, 0.56), Vector2(0.6, 0.72), Vector2(0.78, 0.9)]
+const CRACK_BRANCH: Array[Vector2] = [Vector2(0.45, 0.4), Vector2(0.68, 0.3), Vector2(0.86, 0.36)]
+## Story 023 phase banner ("PHA 2", TraitHost.phase_changed): PHASE_BANNER_SEC in the middle of the
+## board, same band / fade as the signature banner.
+const PHASE_BANNER_SEC: float = 1.0
+const PHASE_BANNER_COLOR: Color = Color(0.95, 0.25, 0.2)
+const TEXT_PHASE_BANNER: String = "ui.hud.phase_banner"
+
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
 var _combat: CombatView
@@ -260,6 +301,10 @@ var _sig: Object
 var _banner_id: String = ""
 var _banner_text: String = ""
 var _banner_left: float = 0.0
+## Story 023: the phase banner's text and seconds left, and the TraitHost whose phase_changed is connected.
+var _phase_banner_text: String = ""
+var _phase_banner_left: float = 0.0
+var _phase_host: TraitHost = null
 
 
 func _ready() -> void:
@@ -272,7 +317,27 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_blink_time += delta
 	_banner_left = maxf(_banner_left - delta, 0.0)
+	_phase_banner_left = maxf(_phase_banner_left - delta, 0.0)
+	if _combat != null:
+		_connect_phase()
 	queue_redraw()
+
+
+# Story 023: connects TraitHost.phase_changed once the battle has its host (CombatView builds it in
+# its own _ready, so the sibling order must not matter); re-connects if the host is replaced.
+func _connect_phase() -> void:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null or host == _phase_host:
+		return
+	if _phase_host != null and _phase_host.phase_changed.is_connected(_on_phase_changed):
+		_phase_host.phase_changed.disconnect(_on_phase_changed)
+	_phase_host = host
+	host.phase_changed.connect(_on_phase_changed)
+
+
+func _on_phase_changed(phase: int) -> void:
+	_phase_banner_text = tr(TEXT_PHASE_BANNER) % phase
+	_phase_banner_left = PHASE_BANNER_SEC
 
 
 # --- Input --------------------------------------------------------------------
@@ -374,14 +439,26 @@ func _draw_signature_effect(vp: Vector2) -> void:
 func _draw_signature_banner(vp: Vector2) -> void:
 	if _banner_left <= 0.0 or _banner_text.is_empty():
 		return
-	var alpha: float = clampf(_banner_left / SIGNATURE_BANNER_FADE_SEC, 0.0, 1.0)
-	var color: Color = SIGNATURE_COLORS.get(_banner_id, SIGNATURE_DEFAULT_COLOR)
+	_draw_board_banner(vp, _banner_text, SIGNATURE_COLORS.get(_banner_id, SIGNATURE_DEFAULT_COLOR), _banner_left)
+
+
+# Story 023: "PHA 2" in the same band for PHASE_BANNER_SEC after TraitHost.phase_changed.
+func _draw_phase_banner(vp: Vector2) -> void:
+	if _phase_banner_left <= 0.0 or _phase_banner_text.is_empty():
+		return
+	_draw_board_banner(vp, _phase_banner_text, PHASE_BANNER_COLOR, _phase_banner_left)
+
+
+# One big line of [param text] on a dark band across the board's middle; fades out over the last
+# SIGNATURE_BANNER_FADE_SEC of [param left].
+func _draw_board_banner(vp: Vector2, text: String, color: Color, left: float) -> void:
+	var alpha: float = clampf(left / SIGNATURE_BANNER_FADE_SEC, 0.0, 1.0)
 	var band: Rect2 = ScreenLayout.signature_banner_rect(_combat.get_grid(), vp)
 	draw_rect(band, Color(0.0, 0.0, 0.0, SIGNATURE_BANNER_BACK_ALPHA * alpha))
-	var size: int = _fit_signature_font(_banner_text, band.size.x, SIGNATURE_BANNER_FONT_SIZE)
+	var size: int = _fit_signature_font(text, band.size.x, SIGNATURE_BANNER_FONT_SIZE)
 	var shadow := Color(0.0, 0.0, 0.0, alpha)
-	_draw_centered(Rect2(band.position + Vector2.ONE * 2.0, band.size), _banner_text, size, shadow)
-	_draw_centered(band, _banner_text, size, Color(color.lightened(0.35), alpha))
+	_draw_centered(Rect2(band.position + Vector2.ONE * 2.0, band.size), text, size, shadow)
+	_draw_centered(band, text, size, Color(color.lightened(0.35), alpha))
 
 
 # The button: dimmed with a charge bar and "%" while charging, PRIMARY and pulsing when ready,
@@ -452,6 +529,7 @@ func _draw() -> void:
 	_draw_feedback(vp)
 	_draw_boss_feedback(vp)
 	_draw_row_warning(vp)
+	_draw_trait_cells(vp)
 	_draw_burning(vp)
 	_draw_interrupt(vp)
 	_draw_feint(vp)
@@ -463,9 +541,11 @@ func _draw() -> void:
 	_draw_signature_button(vp)
 	_draw_menu(vp)
 	_draw_signature_banner(vp)
+	_draw_phase_banner(vp)
 	if _combat.debug_overlay:
 		_draw_learning_debug(vp)
 	_draw_boss_status(vp)
+	_draw_trait_status(vp)
 
 
 # --- Story 012: Focus (pause while connecting points) ---------------------------
@@ -928,25 +1008,129 @@ func _draw_learning_debug(vp: Vector2) -> void:
 	draw_string(ThemeDB.fallback_font, pos, text, HORIZONTAL_ALIGNMENT_RIGHT, width, LEARNING_FONT_SIZE, LEARNING_COLOR)
 
 
-# Story 020: "Cháy ×N" (orange) while the boss's half has burning cells, "Ghim" (blue) right
-# after it while the boss is pinned; left-aligned under the boss HP bar (clear of the right-aligned
-# learning line). Nothing while the boss is dead or nothing applies.
+# Story 020 / 023: "Cháy ×N" (orange) while the boss's half has burning cells, "Ghim" (blue) while
+# the boss is pinned, then "Rạn ×N" (purple) and "Hàn ×N" (ice blue) for its keyword stacks; one
+# line left-aligned under the boss HP bar (clear of the right-aligned learning line), font shrunk
+# to fit. Nothing while the boss is dead or nothing applies.
 func _draw_boss_status(vp: Vector2) -> void:
 	if _combat.get_state().is_enemy_dead():
 		return
+	var parts: Array = []
 	var stacks: int = _combat.get_burn_stacks()
-	var pinned: bool = _combat.is_boss_pinned()
-	if stacks <= 0 and not pinned:
-		return
-	var rect: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
-	var font: Font = ThemeDB.fallback_font
-	var pos := Vector2(rect.position.x, rect.get_center().y + STATUS_FONT_SIZE * 0.35)
 	if stacks > 0:
-		var text: String = tr(TEXT_BURN_STACKS) % stacks
-		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, STATUS_FONT_SIZE, BURN_STACKS_COLOR)
-		pos.x += font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, STATUS_FONT_SIZE).x + STATUS_GAP
-	if pinned:
-		draw_string(font, pos, tr(TEXT_PINNED), HORIZONTAL_ALIGNMENT_LEFT, -1.0, STATUS_FONT_SIZE, PINNED_COLOR)
+		parts.append([tr(TEXT_BURN_STACKS) % stacks, BURN_STACKS_COLOR])
+	if _combat.is_boss_pinned():
+		parts.append([tr(TEXT_PINNED), PINNED_COLOR])
+	var fragile: int = _combat.get_fragile_stacks()
+	if fragile > 0:
+		parts.append([tr(TEXT_FRAGILE_STACKS) % fragile, FRAGILE_COLOR])
+	var frost: int = _combat.get_frost_stacks()
+	if frost > 0:
+		parts.append([tr(TEXT_FROST_STACKS) % frost, FROST_COLOR])
+	if parts.is_empty():
+		return
+	_draw_status_parts(ScreenLayout.hud_boss_status_rect(vp), parts)
+
+
+# One line of [text, colour] [param parts], left-aligned in [param rect] and STATUS_GAP apart, at
+# the largest font <= STATUS_FONT_SIZE (never below STATUS_MIN_FONT_SIZE) that fits the width.
+# Returns the x right after the last part (plus the gap), so a caller can append a bar.
+func _draw_status_parts(rect: Rect2, parts: Array) -> float:
+	var font: Font = ThemeDB.fallback_font
+	var size: int = STATUS_FONT_SIZE
+	while size > STATUS_MIN_FONT_SIZE and _parts_width(parts, size) > rect.size.x:
+		size -= 1
+	var pos := Vector2(rect.position.x, rect.get_center().y + size * 0.35)
+	for part: Array in parts:
+		draw_string(font, pos, str(part[0]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, part[1])
+		pos.x += font.get_string_size(str(part[0]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x + STATUS_GAP
+	return pos.x
+
+
+# Width of [param parts] drawn in a row at [param size], gaps included (none after the last).
+func _parts_width(parts: Array, size: int) -> float:
+	var font: Font = ThemeDB.fallback_font
+	var width: float = 0.0
+	for part: Array in parts:
+		width += font.get_string_size(str(part[0]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x
+	return width + STATUS_GAP * maxi(parts.size() - 1, 0)
+
+
+# --- Story 023: trait readouts, trait cells --------------------------------------
+
+
+# Under the PLAYER HP bar (ScreenLayout.hud_trait_status_rect): "Phản ứng N/M" for step_reactor
+# (red at full), "Khí sương" while frost_aura runs, "Ngòi x.x s" plus a thin fuse bar for
+# fuse_cannon (bar and text red in the last FUSE_RED_SEC). Nothing without those traits or once a
+# unit is dead. The fuse bar's room is reserved before the text is fitted.
+func _draw_trait_status(vp: Vector2) -> void:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null:
+		return
+	var state: CombatState = _combat.get_state()
+	if state.is_player_dead() or state.is_enemy_dead():
+		return
+	var parts: Array = []
+	var reactor: StepReactorTrait = host.get_trait(StepReactorTrait.ID) as StepReactorTrait
+	if reactor != null:
+		var full: bool = reactor.get_charges() >= reactor.get_charges_to_fire()
+		parts.append([tr(TEXT_REACTOR_CHARGES) % [reactor.get_charges(), reactor.get_charges_to_fire()], TRAIT_FULL_COLOR if full else TRAIT_TEXT_COLOR])
+	var aura: FrostAuraTrait = host.get_trait(FrostAuraTrait.ID) as FrostAuraTrait
+	if aura != null and aura.is_active():
+		parts.append([tr(TEXT_FROST_AURA), FROST_COLOR])
+	var fuse: FuseCannonTrait = host.get_trait(FuseCannonTrait.ID) as FuseCannonTrait
+	var low: bool = fuse != null and fuse.get_fuse_left() <= FUSE_RED_SEC
+	if fuse != null:
+		parts.append([tr(TEXT_FUSE) % fuse.get_fuse_left(), FUSE_BAR_LOW_FILL if low else TRAIT_TEXT_COLOR])
+	if parts.is_empty():
+		return
+	var rect: Rect2 = ScreenLayout.hud_trait_status_rect(vp)
+	var text_width: float = rect.size.x - (FUSE_BAR_WIDTH + STATUS_GAP if fuse != null else 0.0)
+	var end_x: float = _draw_status_parts(Rect2(rect.position, Vector2(maxf(text_width, 0.0), rect.size.y)), parts)
+	if fuse != null:
+		var total: float = fuse.get_fuse_sec()
+		var ratio: float = 0.0 if total <= 0.0 else clampf(fuse.get_fuse_left() / total, 0.0, 1.0)
+		var bar := Rect2(Vector2(end_x, rect.get_center().y - FUSE_BAR_HEIGHT * 0.5), Vector2(FUSE_BAR_WIDTH, FUSE_BAR_HEIGHT))
+		draw_rect(bar, FUSE_BAR_BACK)
+		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), FUSE_BAR_LOW_FILL if low else FUSE_BAR_FILL)
+
+
+# Cracked cells (slam) as a dark fill with a crack polyline; the cells a slam or the fuse blast
+# announces with a faint orange tint and a blinking orange outline (same blink clock as the row
+# warning). Drawn under the burning layer so a burning cracked cell still shows its flame.
+func _draw_trait_cells(vp: Vector2) -> void:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null:
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var warned: Array[Vector2i] = []
+	var slam: SlamTrait = host.get_trait(SlamTrait.ID) as SlamTrait
+	if slam != null:
+		for cell: Vector2i in slam.get_cracked_cells():
+			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			draw_rect(rect, CRACK_TINT)
+			_draw_crack(rect)
+		warned.append_array(slam.get_warning_cells())
+	var fuse: FuseCannonTrait = host.get_trait(FuseCannonTrait.ID) as FuseCannonTrait
+	if fuse != null:
+		warned.append_array(fuse.get_warning_cells())
+	if warned.is_empty():
+		return
+	var bright: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
+	var outline := Color(TRAIT_WARN_OUTLINE, TRAIT_WARN_OUTLINE.a * (1.0 if bright else WARN_BLINK_DIM_ALPHA))
+	for cell: Vector2i in warned:
+		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+		draw_rect(rect, TRAIT_WARN_TINT)
+		draw_rect(rect.grow(-WARN_OUTLINE_INSET), outline, false, WARN_OUTLINE_WIDTH)
+
+
+# Crack glyph: CRACK_POINTS and CRACK_BRANCH scaled into [param rect].
+func _draw_crack(rect: Rect2) -> void:
+	for shape: Array[Vector2] in [CRACK_POINTS, CRACK_BRANCH]:
+		var points := PackedVector2Array()
+		for p: Vector2 in shape:
+			points.append(rect.position + p * rect.size)
+		draw_polyline(points, CRACK_LINE, CRACK_LINE_WIDTH)
 
 
 func _draw_confirm(vp: Vector2) -> void:

@@ -28,6 +28,8 @@ var _blocked_cells: Array[Vector2i] = []
 var _next_uid: int = 1
 var _spawn_timer: float = 0.0
 var _empty_hand_time: float = 0.0
+## Story 023: multiplies the spawn interval (frost_aura: > 1 = runes fall slower). > 0.
+var interval_scale: float = 1.0
 
 
 ## [param side_cells] is this side's half of the board (BoardGrid.player_cells()),
@@ -148,7 +150,7 @@ func _current_interval() -> float:
 	var interval: float = _config.spawn_interval_sec
 	if _empty_hand_time > _config.hungry_after_sec:
 		interval *= _config.hungry_interval_mult
-	return interval
+	return interval * maxf(interval_scale, 0.01)
 
 
 func _draw_label() -> String:

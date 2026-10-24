@@ -47,6 +47,7 @@ extends Node2D
 ##   --floor=ch1/f2             legacy alias of --node=ch1/c0/n0 (warning)
 ##   --title                    show the title even with --progress=... (without it --progress alone
 ##                              starts at the chapter select; no dev arg at all starts at the title)
+##   --chapter=ch2              fresh seeded run of that chapter, shown on its MAP (no node chosen)
 ##   --seed=N                   force the run seed (reproducible maps, arenas and offers)
 ##   --lang=vi|en               UI locale for this run only (not saved; captures)
 ##   --character=<id>           pick the character like the select screen would (Story 018)
@@ -80,6 +81,8 @@ const IN_FLOOR: int = Phase.IN_NODE
 const PROGRESS_ARG: String = "--progress="
 ## DEV-ONLY (Story 022): --node=chX/cC/nN.
 const NODE_ARG: String = "--node="
+## DEV-ONLY (Story 023): --chapter=<id> opens a fresh run of that chapter on its MAP (captures).
+const CHAPTER_ARG: String = "--chapter="
 ## DEV-ONLY legacy (Story 015): --floor=chX/fY, now an alias of --node=chX/c0/n0.
 const FLOOR_ARG: String = "--floor="
 const SEED_ARG: String = "--seed="
@@ -212,6 +215,7 @@ func _ready() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var progress_mode: String = ""
 	var node_text: String = ""
+	var chapter_text: String = ""
 	var dev_run: bool = false
 	var flow_run: String = ""
 	var force_title: bool = false
@@ -227,6 +231,8 @@ func _ready() -> void:
 			progress_mode = arg.trim_prefix(PROGRESS_ARG)
 		elif arg.begins_with(NODE_ARG):
 			node_text = arg.trim_prefix(NODE_ARG)
+		elif arg.begins_with(CHAPTER_ARG):
+			chapter_text = arg.trim_prefix(CHAPTER_ARG)
 		elif arg.begins_with(FLOOR_ARG):
 			var floor_text: String = arg.trim_prefix(FLOOR_ARG).trim_suffix(RESUME_SUFFIX)
 			node_text = "%s/c0/n0" % floor_text.get_slice("/", 0)
@@ -249,7 +255,7 @@ func _ready() -> void:
 		push_warning("GameFlow: unknown --select=%s (character), ignored" % select_mode)
 		select_mode = ""
 	if _store == null:
-		_store = _make_store(progress_mode, dev_run or not select_mode.is_empty() or not node_text.is_empty())
+		_store = _make_store(progress_mode, dev_run or not select_mode.is_empty() or not node_text.is_empty() or not chapter_text.is_empty())
 	_progress = _load_progress(progress_mode)
 	# Locale before anything draws or caches a translated name.
 	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _progress.get_locale())
@@ -264,6 +270,8 @@ func _ready() -> void:
 		_phase = Phase.CHAPTER_SELECT
 	if not node_text.is_empty():
 		_apply_dev_node(node_text)
+	elif not chapter_text.is_empty():
+		_apply_dev_chapter(chapter_text)
 	elif dev_run:
 		_begin_run(0)
 		if flow_run.is_empty():
@@ -1090,6 +1098,15 @@ func _load_progress(progress_mode: String) -> ProgressState:
 			if progress_mode != PROGRESS_NONE and not progress_mode.is_empty():
 				push_warning("GameFlow: unknown --progress=%s (none|all|demo), starting empty" % progress_mode)
 			return _store.load_state(_config)
+
+
+# DEV-ONLY (--chapter=<id>): fresh run of that chapter on its MAP (unknown id: warning, no run).
+func _apply_dev_chapter(id: String) -> void:
+	for i: int in _config.chapter_count():
+		if _config.chapter_id(i) == id:
+			_begin_run(i)
+			return
+	push_warning("GameFlow: unknown chapter in --chapter=%s" % id)
 
 
 # DEV-ONLY (--node=chX/cC/nN): fresh run of that chapter, columns before C cleared with their

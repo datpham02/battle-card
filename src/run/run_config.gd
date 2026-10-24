@@ -11,7 +11,8 @@ extends RefCounted
 const MATCH_KEYS: Array[String] = [
 	"id", "name_key", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
-	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards",
+	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards", "boss_defense", "boss_min_runes",
+	"desc_key",
 ]
 
 ## Keys of the flow numbers shared by chapters.json `defaults` and a floor's overrides.
@@ -150,6 +151,7 @@ static func _default_match(index: int) -> Dictionary:
 		"brain_set": "balanced", "boss_step_cooldown_mult": 1.0, "boss_think_interval_sec": 0.3,
 		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0, "movement": {},
 		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "arena_seed": -1, "traits": [], "boss_cards": [],
+		"boss_defense": 0.0, "boss_min_runes": 0, "desc_key": "",
 	}
 
 
@@ -162,6 +164,8 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 	var m: Dictionary = _default_match(index)
 	m["id"] = str(raw.get("id", m["id"]))
 	m["name_key"] = str(raw.get("name_key", ""))
+	# Story 023: one-line match description shown in the intro band (translated by the HUD; "" = none).
+	m["desc_key"] = str(raw.get("desc_key", ""))
 	if raw.has("display_name"):
 		# Legacy literal name (flat test configs); shipped data carries name_key only.
 		if m["name_key"].is_empty():
@@ -177,6 +181,9 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		m["combo_chance"] = clampf(float(raw["combo_chance"]), 0.0, 1.0)
 	if raw.has("combo_gap_sec"):
 		m["combo_gap_sec"] = maxf(float(raw["combo_gap_sec"]), 0.0)
+	# Story 023: flat defense of the boss (>= 0) and the smallest cut the boss brain prefers (>= 0).
+	m["boss_defense"] = maxf(float(raw.get("boss_defense", m["boss_defense"])), 0.0)
+	m["boss_min_runes"] = maxi(int(raw.get("boss_min_runes", m["boss_min_runes"])), 0)
 	for key: String in ["boss_think_interval_sec", "boss_reaction_sec"]:
 		m[key] = maxf(float(raw.get(key, m[key])), 0.0)
 	var raw_movement: Variant = raw.get("movement", {})

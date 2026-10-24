@@ -11,6 +11,11 @@ var _remaining: float = 0.0
 var _status: StatusEffects = null
 ## Story 021: Callable() -> float multiplying the cooldown a step starts (0.0 = free steps); invalid = 1.
 var cooldown_scale: Callable = Callable()
+## Story 023: Callable(cell: Vector2i) -> bool; true = that cell cannot be stepped onto (slam's
+## cracked cells). Invalid (default) = nothing blocked.
+var blocked_cell_fn: Callable = Callable()
+## Story 023: flat multiplier of every cooldown this mover starts (phase_shift speeds the boss up).
+var cooldown_mult: float = 1.0
 
 
 ## [param side] is a CombatState.Side value.
@@ -36,6 +41,10 @@ func try_step(direction: Vector2i) -> bool:
 		return false
 	if absi(direction.x) + absi(direction.y) != 1:
 		return false
+	if blocked_cell_fn.is_valid():
+		var origin: Vector2i = _state.cell_of(_side)
+		if bool(blocked_cell_fn.call(origin + direction)):
+			return false
 	var moved: bool
 	if _side == CombatState.Side.PLAYER:
 		moved = _state.set_player_cell(_state.player_cell + direction)
@@ -48,7 +57,8 @@ func try_step(direction: Vector2i) -> bool:
 
 ## Current cooldown multiplier (>= 0).
 func _scale() -> float:
-	return maxf(float(cooldown_scale.call()), 0.0) if cooldown_scale.is_valid() else 1.0
+	var base: float = maxf(float(cooldown_scale.call()), 0.0) if cooldown_scale.is_valid() else 1.0
+	return base * maxf(cooldown_mult, 0.0)
 
 
 ## Advances the cooldown.

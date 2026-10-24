@@ -170,6 +170,15 @@ func chapter_name(ci: int) -> String:
 	return _display(_chapters[ci])
 
 
+## Story 023: the translation key of chapter [param ci]'s one-line text of [param which] ("intro" or
+## "end"; chapters.json `intro_key` / `end_key`); "" when the chapter has none or is out of range.
+## Views call tr() on it.
+func chapter_text_key(ci: int, which: String) -> String:
+	if ci < 0 or ci >= _chapters.size():
+		return ""
+	return str(_chapters[ci].get(which + "_key", ""))
+
+
 ## Id of floor [param fi] of chapter [param ci] ("" when out of range).
 func floor_id(ci: int, fi: int) -> String:
 	return str(_floor(ci, fi).get("id", ""))
@@ -463,7 +472,8 @@ func _clean_chapter(entry: Variant, index: int, seen: Dictionary) -> Dictionary:
 	if typeof(raw.get("pools")) == TYPE_DICTIONARY:
 		pools = _clean_pools(raw["pools"] as Dictionary, matches, id)
 	return {"id": id, "name": named[0], "name_is_key": named[1], "floors": floors, "matches": matches,
-		"match_ids": match_ids, "pools": pools, "columns": columns}
+		"match_ids": match_ids, "pools": pools, "columns": columns,
+		"intro_key": str(raw.get("intro_key", "")), "end_key": str(raw.get("end_key", ""))}
 
 
 # pools: kind -> tier ("0".."n") -> match ids; unknown ids are dropped with a warning.

@@ -57,10 +57,17 @@ Combat start values, timing caps and the board shape (Stories 003, 007). The boa
 | `step_cooldown_exponent` | number >= 0 | - | How strongly bigger boards speed stepping up (0 = constant) | 0.75 |
 | `step_cooldown_min_sec` | number | seconds | Lower clamp (<= max) | 0.18 |
 | `step_cooldown_max_sec` | number | seconds | Upper clamp | 0.60 |
-| `pinned_damage_mult` | number | x | Ghim: damage/push hits on a pinned unit are multiplied by this (>= 1) | 1.5 |
+| `pinned_damage_mult` | number >= 0 | x | Ghim: damage/push hits on a pinned unit are multiplied by this. Story 023: Ghim is control only, so this is 1.0 (code path kept) | 1.0 |
 | `burn_stack_extend_sec` | number | seconds | Dot: added to the remaining time when a burning cell is re-ignited | 2.0 |
 | `burn_stack_tick_bonus` | number | damage | Dot: extra damage per tick per extra stack | 1.0 |
 | `burn_max_stacks` | int | stacks | Dot: stack cap (>= 1) | 3 |
+| `fragile_mult` | number >= 1 | x | Story 023 Ran (fragile): a damage/push hit on a unit with Ran stacks is multiplied by this and spends 1 stack. Order: card x conditions -> Ghim -> Ran -> execute -> passive -> signature -> defense | 1.5 |
+| `fragile_max_stacks` | int >= 1 | stacks | Ran stack cap per unit | 3 |
+| `frost_stacks_to_burst` | int >= 1 | stacks | Story 023 Han (frost): reaching this many stacks bursts (stacks cleared) | 3 |
+| `frost_burst_damage` | number >= 0 | HP | Damage of a Han burst; ignores flat defense and Ran | 24 |
+| `execute_ratio` | number 0..1 | share of max HP | Default threshold of cards with `execute: true`: damage x2 when the target's HP <= ratio x max HP (after Ran, before the passive) | 0.25 |
+
+All five Story 023 keys are validated together in `CombatConfig._parse_keywords` (one invalid -> all five fall back) and passed to `StatusEffects.configure_keywords` by `configure_status`.
 | `player_step_cooldown_sec` | number >= 0 | seconds | DEPRECATED, not shipped: if present it overrides the computed value on every board (warning) | absent |
 
 Measured (defaults): 2x2 = 0.60 (clamped), 3x3 = 0.45, 4x3 = 0.33, 6x6 = 0.23, 10x10 = 0.18 (clamped).
@@ -113,13 +120,19 @@ Card entry keys (20 cards, see `card_order`; the class concept is gone, Story 02
 | `cooldown_sec` | number >= 0 | seconds | Cooldown started when the skill is used | 0 |
 | `damage_per_cell` | number >= 0 | HP per cell | Level-1 damage per covered cell of damage/push cards (0 for burn/pin); damage = `damage_per_cell * cells`. Replaces `damage_multiplier` (Story 020). Missing: cuts.json `base_damage_per_cell` | cuts.json base |
 | `push_cells` | integer >= 0 | cells | Cells the target is pushed away from the divider along its row (stops at a missing cell/edge); push only | 0 |
-| `effect` | `damage` / `push` / `burn` / `pin` | - | What the swing does on resolve (Story 010). `burn`: every covered cell ignites whether or not the target stands there; burning cells take no new field points and refuse pick-up. `pin`: pins the target if it stands in the covered cells | `damage` |
+| `effect` | `damage` / `push` / `burn` / `pin` / `fragile` / `frost` | - | What the swing does on resolve (Story 010). Story 023: `fragile` / `frost` apply the card's `fragile_stacks` / `frost_stacks` to the target when it stands in the covered cells (no direct damage). `burn`: every covered cell ignites whether or not the target stands there; burning cells take no new field points and refuse pick-up. `pin`: pins the target if it stands in the covered cells | `damage` |
 | `burn_duration_sec` | number >= 0 | seconds | Burn only: how long ignited cells burn; re-igniting resets the timer | 0 |
 | `burn_tick_sec` | number > 0 | seconds | Burn only: interval of damage to a unit standing on a burning cell (<= 0 uses 0.5 with a warning) | 0.5 |
 | `burn_damage_per_tick` | number >= 0 | HP | Burn only: damage per tick, per unit standing on the cell | 0 |
 | `pin_duration_sec` | number >= 0 | seconds | Pin only: how long the target cannot step; re-pinning refreshes it | 0 |
-| `rarity` | `common` / `rare` / `epic` | - | Card rarity (unknown -> common with a warning) | `common` |
-| `upgrade` | object key -> number | additive delta | Per level above 1 (level 2 = one application, level 3 = two): keys `damage_per_cell`, `min_cells` (never below 1), `cooldown_sec` (never below 0), `burn_damage_per_tick`, `burn_duration_sec`, `pin_duration_sec`, `push_cells`. Read through `SkillConfig.resolved(id, level)` | `{}` (warning) |
+| `rarity` | `common` / `rare` / `epic` | - | Card rarity (unknown -> common with a warning). Story 023 curve: rarity buys conditions, not damage per cell (commons 6-7, rares 7-8, epics 8 + a condition) | `common` |
+| `fragile_stacks` | int >= 0 | stacks | Story 023: Ran stacks applied to the target on a hit (any effect) | 0 |
+| `frost_stacks` | int >= 0 | stacks | Story 023: Han stacks applied to the target on a hit (any effect) | 0 |
+| `pierce_defense` | bool | - | Story 023: the card's damage/push hit skips the match's `boss_defense` | false |
+| `execute` | bool | - | Story 023: damage x2 when the target's HP <= combat.json `execute_ratio` x max HP | false |
+| `execute_ratio` | number 0..1 | share | Card-level execute threshold overriding combat.json (0 = use `execute`) | 0 |
+| `bonus_vs_fragile_mult` | number >= 1 | x | Story 023: damage multiplier while the target has Ran stacks, applied BEFORE the Ran stack is spent (song_kiem) | 1 |
+| `upgrade` | object key -> number | additive delta | Per level above 1 (level 2 = one application, level 3 = two): keys `damage_per_cell`, `min_cells` (never below 1), `cooldown_sec` (never below 0), `burn_damage_per_tick`, `burn_duration_sec`, `pin_duration_sec`, `push_cells`, `fragile_stacks`, `frost_stacks`. Read through `SkillConfig.resolved(id, level)` | `{}` (warning) |
 | `implemented` | boolean | - | False = shown locked ("not yet"); using it falls back to slash | false |
 
 ## boss_brain.json  (read by `src/combat/boss_brain_config.gd`)
@@ -159,6 +172,7 @@ Weight keys (inside each set; missing keys take the built-in balanced value):
 | `skill_bonus_pin` | number >= 0 | score | Preference for Pin (needs >= 7 covered cells) when available (balanced 1.0, aggressive 0.5, cautious 2.0) | 1.0 |
 | `burn_avoid` | number >= 0 | score | Legacy weight (Story 009/010): since Story 013 burning cells are never entered or targeted at all (BFS routes around them), so this no longer enters a score. A field point lying on a burning cell is still worth 0 (pickup is refused there) | 3.0 |
 | `escape_penalty` | number >= 0 | score | Story 013 escape-route scoring: added as `escape_penalty / (1 + escape_cells)`, where `escape_cells` = cells the player can reach within `EscapeAnalysis.steps_for_swing(windup, player step cooldown)` 4-way steps on the player's half (burning cells excluded) that the cut does NOT cover. 0 escape cells = the full bonus (balanced 4.0, aggressive 5.0, cautious 3.0) | 4.0 |
+| `min_runes_penalty` | number >= 0 | score | Story 023: with a match `boss_min_runes` N > 0, a candidate cut of fewer than N cells loses this per missing cell, and is skipped altogether while any candidate of >= N cells exists (`BossBrain._best_cut`) | 3.0 |
 | `combo_chance` | number 0..1 | probability | Story 013 combo: when the boss holds >= 2 points and commits a cut, chance (own seeded RNG stream; no roll at 0 or 1) that it also queues a SECOND slash at once, chosen with the same escape analysis to cover the escape cells of the first (the two share no hand point). The player has no combo (the `CutActor` queue is boss-only). Shipped: cautious 0.0, balanced 0.25, aggressive 0.6 | 0.25 |
 | `combo_gap_sec` | number >= 0 | seconds | Seconds between the two impacts of a combo: swing 2 starts the moment swing 1 resolves and its windup is EXACTLY this gap, floored at `swing_base_sec` of `cuts.json` (`BossController.combo_gap_sec()`), independent of its cell count and of the match `swing_speed_mult`. Interrupting swing 1 drops swing 2 with it. `SwingArbiter` ticks both actors in time slices; the queued swing is started by `CutActor.tick` when swing 1 resolves and is ticked from the NEXT slice, never in the same one. HUD: swing 1 solid red with its countdown, swing 2 hatched lighter red with "2: +gap s" | 0.5 |
 
@@ -232,7 +246,9 @@ Each v2 `chapters` entry: `id`, `name_key`, and:
 | `matches` | object match id -> match block | Every match of the chapter (the same block as a floor `matches[]` entry below, `id` implied by the key, each with its own `arena`) |
 | `pools` | object kind -> object tier (`"0"`, `"1"`, `"2"`) -> array of match ids | Draw pools per node kind and tier; ids missing from `matches` are dropped with a warning. `miniboss` and `boss` have their own lists; the `boss` pool of the last tier must hold the chapter boss |
 | `columns` | array | Optional per-chapter override of `defaults.columns` |
-| `legacy_floors` | array of `{id, name_key, match_ids, arena?, arena_pool?, arena_variant?}` | Optional: the v1 floors expressed over `matches`, feeding the deprecated floor API (`resolved_floor`, `floor_count`, ...); `GameFlow` does not call it any more (Story 022 Part 2a). Chapter 2 placeholders `ch2_placeholder_*` are stand-ins until Story 023 |
+| `legacy_floors` | array of `{id, name_key, match_ids, arena?, arena_pool?, arena_variant?}` | Optional: the v1 floors expressed over `matches`, feeding the deprecated floor API (`resolved_floor`, `floor_count`, ...); `GameFlow` does not call it any more (Story 022 Part 2a). Story 023: chapters 2 (Hầm Ngục) and 3 (Tháp Sương) each ship 10 matches; ch3 has no legacy floors (one synthetic floor) |
+
+Per-chapter optional keys (Story 023): `intro_key` / `end_key` (`chapter.<id>.intro` / `chapter.<id>.end`, one line each in the CSV, shown by the run UI at chapter start / after the chapter boss), per-match `desc_key` (`match.<id>.desc`, one-line hint shown in the match intro for rule-breaker enemies and chapter bosses), `boss_defense` (number >= 0, flat armor subtracted per hit after Ghim/innate, min 1; Đốt and `pierce_defense` cards ignore it; default 0) and `boss_min_runes` (integer >= 0, the boss prefers sigils of at least this many cells; default 0). Escalation (OSFE §5): normal enemies HP x1.15 per chapter, `boss_step_cooldown_mult` -0.1 per chapter, `boss_defense` 0 / 2 / 4 for normals in ch1 / ch2 / ch3 (ghosts 12 / 16), `boss_min_runes` 2 for elites (reacter, jailer, fuse_golem, frost_mage) and 3 for the ch2 / ch3 bosses. Think / reaction never below 0.3 / 0.35 s.
 
 A chapter with the v1 `floors` key still loads: its floor matches become `matches` / `match_ids`, pools stay empty and every kind falls back to the whole match list.
 
@@ -270,6 +286,8 @@ Each floor `matches` entry (optional per-match `arena` override as below; `arena
 | `movement` | object | - | Story 013: keys of the `movement` block of `boss_brain.json` (`move_commitment`, `move_noise`, `reaction_sec`, `path_style`, `juke_chance`, `wander_when_idle`), merged over the match set's profile for this match only; unknown keys warn and are ignored | `{}` (set's profile) |
 | `traits` | array of `{id, params}` | - | Story 014: boss traits switched on for this match (see **Boss traits** below). `id` is a `TraitRegistry` key; `params` (optional object) overrides that trait's defaults. Unknown id / non-object entry = warning, skipped, the match still runs; a non-array = warning, no traits. Shipped: match 3 `row_burner`, match 4 (boss) `rotten_thrower` with `interval_sec` 5.0, matches 1-2 none | `[]` |
 | `arena` | object | - | Story 014: the board of this match. `{"shape": "<id>"}` = a shape of `arenas.json`; `{"shape": "<id>", "variant": true}` = a seeded variant of it (1-3 holes toggled, maybe flipped vertically; falls back to the base shape); or a direct block `{side_cols, side_rows, missing_cells}` (validated like a library shape). Unknown id / invalid block = warning, the `combat.json` board is kept. Absent = `combat.json`. Floors normally set the arena (see above); a match-level block overrides it. Dev: `--arena=<id>[:variant]` overrides match 1 | `{}` (combat.json board) |
+| `boss_defense` | number >= 0 | HP | Story 023 flat defense (OSFE 9.4): subtracted from every player damage/push hit on the boss AFTER Ran / execute / passive / signature; at least 1 damage lands; skipped by cards with `pierce_defense`; burn ticks and Han bursts ignore it. Applied in `CutEffects.apply` through `SwingArbiter.boss_defense` | 0 |
+| `boss_min_runes` | int >= 0 | cells | Story 023: the boss brain prefers cuts of at least this many cells (`min_runes_penalty` per missing cell; smaller cuts are skipped while a big enough one exists). 0 = off | 0 |
 
 Ramp (placeholder): matches 1..4 = hp 80/100/120/150, sets cautious/cautious/balanced/aggressive, step mult 1.78/1.44/1.22/1.11 (= 0.80/0.65/0.55/0.50 s on 3x3), think 0.50/0.40/0.30/0.25, reaction 0.60/0.45/0.35/0.30, drop mult 1.3/1.15/1.0/0.9. Match 2 overrides `movement` = {move_commitment 0.9, move_noise 0.05, reaction_sec 0.45} (Story 013).
 
@@ -303,6 +321,36 @@ A rotten point (`FieldPoint.rotten`) lands on a random seeded free, non-burning 
 | `damage_per_tick` | number >= 0 | HP | Damage per tick | 2.0 |
 | `row_pick` | `player_row` / `random` | - | Which row: the one the player stands on when the warning starts, or a seeded random row of the half | `player_row` |
 
+### Boss traits of Story 023 (all params optional; fallbacks live in each trait's constants)
+
+New hook: `on_player_stepped(from, to)` (after a SUCCESSFUL player step; CombatView.try_step_player). New context keys: `player_mover` (the player's `UnitMover`, with `blocked_cell_fn` and `cooldown_mult`) and `trait_host_ref` (WeakRef of the host; `TraitHost.add_trait(id, params)` adds a trait at runtime, `phase_changed(phase)` signal). `FieldDrops.interval_scale` multiplies the spawn interval; `CutActor.begin_swing(..., duration_override)` fixes a swing's windup.
+
+| Trait | Param | Default | Meaning |
+|---|---|---|---|
+| `step_reactor` | `charges_to_fire` | 3 | Player steps that load the shot |
+| | `warning_sec` | 0.5 | Windup of the fired boss swing (normal swing pipeline: interruptible, dodgeable) |
+| | `swing_cells` | 3 | Size of the connected cluster (includes the player's cell) |
+| | `cooldown_sec` | 2.0 | After firing no charges are gained for this long |
+| | `skill_id` | `kiem_khi` | Card id used for the swing's damage |
+| `fuse_cannon` | `fuse_sec` | 12.0 | Fuse length (sim seconds from match start / last blast / reset) |
+| | `fuse_damage` | 40.0 | Damage to the player if still in the row at resolve |
+| | `interrupt_damage` | 30.0 | A single player hit on the boss of at least this resets the fuse |
+| | `row_scope` | `player_row` | `player_row` or `random` |
+| | `warn_sec` | 0.6 | Row warning before the blast |
+| `slam` | `slam_interval_sec` | 7.0 | Time between slams (also the first delay unless `first_delay_sec`) |
+| | `cracked_cells` | 2 | Cells cracked per slam (player half, never the player's cell) |
+| | `crack_sec` | 4.0 | How long a cell stays cracked (cannot be stepped onto) |
+| | `warning_sec` | 0.8 | Warning before the cells crack |
+| | `slam_damage` | 20.0 | Damage to the player if standing on a cell when it cracks |
+| `frost_aura` | `rune_rate_mult` | 0.8 | Player rune drop rate multiplier (spawn interval x 1/mult) |
+| | `until_hp_ratio` | 0.5 | Active while boss HP ratio is above this; off for good at or below |
+| `phase_shift` | `at_hp_ratio` | 0.5 | Boss HP ratio that starts phase 2 (once) |
+| | `brain_set` | `aggressive` | Weight set the brain switches to |
+| | `extra_traits` | `[{"id":"row_burner","params":{}}]` | Traits added to the host at phase 2 |
+| | `step_mult` | 0.85 | Multiplies the boss's step cooldown |
+
+HUD getters: `StepReactorTrait.get_charges()/get_charges_to_fire()`, `FuseCannonTrait.get_fuse_left()/get_fuse_sec()/get_warning_cells()`, `SlamTrait.get_cracked_cells()/get_warning_cells()`, `FrostAuraTrait.is_active()`, `PhaseShiftTrait.get_phase()`.
+
 Adding a new boss = one JSON block in a floor's `matches` (`arena`, `traits`, the brain/timing keys above). Adding a new mechanic = one trait class + one registry line:
 1. Create `src/traits/<id>.gd`: `class_name <Name>Trait extends BossTrait`, override `get_id()` (return the id) and `seed_offset()`.
 2. Read every number in `setup()` with `param_float` / `param_int` / `param_string` against a `DEFAULT_*` constant; keep the live state in private vars and reset it in `on_match_start()`.
@@ -324,7 +372,7 @@ SIDE COORDINATES: `missing_cells` entries are `[col, row]` on ONE half. Col 0 is
 | `variant_max_attempts` | int >= 1 | tries | Candidates `ArenaVariants` tries before returning the base shape (warning) |
 | `variant_change_min` / `variant_change_max` | int >= 1 | cells | Random side cells toggled (hole added or filled) per candidate; a vertical flip is also tried with probability 0.5 |
 
-Each `shapes` entry: `id` (unique string), `name_key` (`arena.<id>.name`; `ArenaNames` holds the same keys for the HUD), `side_cols`, `side_rows` (cells of one half), `missing_cells` (`[[col,row],...]`), `difficulty` (1..5, for the later per-tier pools, Story 015).
+Each `shapes` entry: `id` (unique string), `name_key` (`arena.<id>.name`; `ArenaNames` holds the same keys for the HUD), `side_cols`, `side_rows` (cells of one half), `missing_cells` (`[[col,row],...]`), `difficulty` (1..5, for the later per-tier pools, Story 015). Shipped shapes: square, rect, cross, u_shape, ring, islands_bridge, staircase, diamond, and (Story 023, chapter 3) `cross_wide` (5x5 minus the four corners, 21 cells, difficulty 3) and `pillars` (5x5 with holes at [1,1] [1,3] [3,1] [3,3], 21 cells, difficulty 4). Both are pure data — no generator case was needed; `ArenaNames.NAMES` gained the two keys.
 
 Validator checks: each half has >= `min_cells_per_side` cells; each half is 4-connected; both default cells exist; the halves mirror each other; from each half's default cell, EVERY single-point cut (A1..D<n>) leaves >= 1 uncovered cell reachable in 1 step.
 

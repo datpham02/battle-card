@@ -55,6 +55,13 @@ const CONNECTOR_WIDTH: float = 3.0
 const TITLE_FONT_SIZE: int = 44
 const COLUMN_FONT_SIZE: int = 26
 const HEADER_FONT_SIZE: int = 22
+## Story 023: the chapter intro line (intro_key) shown in the header strip while the run is still at
+## column 0; the summary line moves to the strip's top row to make room.
+const INTRO_FONT_SIZE: int = 20
+const INTRO_MIN_FONT_SIZE: int = 14
+const INTRO_COLOR: Color = Color(0.5, 0.42, 0.3)
+const HEADER_TOP_BASELINE: float = 0.4
+const HEADER_INTRO_BASELINE: float = 0.88
 const TILE_FONT_SIZE: int = 20
 const BUTTON_FONT_SIZE: int = 24
 const NOTICE_FONT_SIZE: int = 30
@@ -247,7 +254,18 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 		tr(TEXT_LUCK) % roundi(_flow.get_luck()),
 	]
 	var header: Rect2 = ScreenLayout.map_header_rect(vp)
-	_text(header, header.get_center().y + HEADER_FONT_SIZE * 0.35, HEADER_SEPARATOR.join(parts), HEADER_FONT_SIZE, HEADER_COLOR)
+	var intro_key: String = _flow.get_config().chapter_text_key(run.chapter_index, "intro") if current == 0 else ""
+	if intro_key.is_empty():
+		_text(header, header.get_center().y + HEADER_FONT_SIZE * 0.35, HEADER_SEPARATOR.join(parts), HEADER_FONT_SIZE, HEADER_COLOR)
+		return
+	_text(header, header.position.y + header.size.y * HEADER_TOP_BASELINE, HEADER_SEPARATOR.join(parts), HEADER_FONT_SIZE, HEADER_COLOR)
+	var intro: String = tr(intro_key)
+	var intro_width: float = header.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0
+	var font: Font = ThemeDB.fallback_font
+	var size: int = INTRO_FONT_SIZE
+	while size > INTRO_MIN_FONT_SIZE and font.get_string_size(intro, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > intro_width:
+		size -= 1
+	_text(header, header.position.y + header.size.y * HEADER_INTRO_BASELINE, intro, size, INTRO_COLOR)
 
 
 # The path through the cleared nodes, then the fan-out from the last cleared node to every node of

@@ -15,8 +15,13 @@
 	"step_cooldown_exponent": 0.75,
 	"step_cooldown_min_sec": 0.18,
 	"step_cooldown_max_sec": 0.60,
-	"pinned_damage_mult": 1.5,
+	"pinned_damage_mult": 1.0,
 	"burn_stack_extend_sec": 2.0,
 	"burn_stack_tick_bonus": 1.0,
-	"burn_max_stacks": 3
+	"burn_max_stacks": 3,
+	"fragile_mult": 1.5,
+	"fragile_max_stacks": 3,
+	"frost_stacks_to_burst": 3,
+	"frost_burst_damage": 24,
+	"execute_ratio": 0.25
 }

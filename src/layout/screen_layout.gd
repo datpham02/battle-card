@@ -525,6 +525,19 @@ static func hud_boss_status_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(right_x, bar_bottom, half_w, maxf(cells_top - bar_bottom, 0.0))
 
 
+## Trait readouts (Story 023): the mirror strip right under the PLAYER HP bar (left half of the HUD
+## band, same vertical span as [method hud_boss_status_rect]), for left-aligned text. The traits it
+## reports (reactor charges, fuse, frost aura) all land on the player's half, so the line sits above
+## the half they threaten; clear of the pause button (band centre), the deck label (above the band)
+## and the right-aligned learning debug line (boss side).
+static func hud_trait_status_rect(viewport_size: Vector2) -> Rect2:
+	var hud: Rect2 = hud_rect(viewport_size)
+	var gap: float = hud.size.x * CombatView.HUD_GAP_RATIO
+	var half_w: float = (hud.size.x - gap) * 0.5 - CombatView.PAD * 2.0
+	var boss_strip: Rect2 = hud_boss_status_rect(viewport_size)
+	return Rect2(hud.position.x + CombatView.PAD, boss_strip.position.y, half_w, boss_strip.size.y)
+
+
 ## Title screen (Story 016): the band across the top that holds the game name, the knife motif
 ## and the tagline.
 static func title_rect(viewport_size: Vector2) -> Rect2:

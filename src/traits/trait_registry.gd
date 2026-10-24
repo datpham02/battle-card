@@ -9,6 +9,11 @@ extends RefCounted
 const SCRIPTS: Dictionary = {
 	"rotten_thrower": preload("res://src/traits/rotten_thrower.gd"),
 	"row_burner": preload("res://src/traits/row_burner.gd"),
+	"step_reactor": preload("res://src/traits/step_reactor.gd"),
+	"fuse_cannon": preload("res://src/traits/fuse_cannon.gd"),
+	"slam": preload("res://src/traits/slam.gd"),
+	"frost_aura": preload("res://src/traits/frost_aura.gd"),
+	"phase_shift": preload("res://src/traits/phase_shift.gd"),
 }
 
 

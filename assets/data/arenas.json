@@ -69,6 +69,22 @@
 			"side_rows": 5,
 			"missing_cells": [[0, 0], [1, 0], [0, 1], [3, 0], [4, 0], [4, 1], [0, 3], [0, 4], [1, 4], [4, 3], [3, 4], [4, 4]],
 			"difficulty": 4
+		},
+		{
+			"id": "cross_wide",
+			"name_key": "arena.cross_wide.name",
+			"side_cols": 5,
+			"side_rows": 5,
+			"missing_cells": [[0, 0], [0, 4], [4, 0], [4, 4]],
+			"difficulty": 3
+		},
+		{
+			"id": "pillars",
+			"name_key": "arena.pillars.name",
+			"side_cols": 5,
+			"side_rows": 5,
+			"missing_cells": [[1, 1], [1, 3], [3, 1], [3, 3]],
+			"difficulty": 4
 		}
 	]
 }
