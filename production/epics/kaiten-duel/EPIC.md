@@ -30,6 +30,8 @@ Story 007 viết lại; 008 (boss chơi thẻ) → **hệ cắt của người c
 
 Người dùng quyết định: **bỏ chủ đề bếp sushi, dựng thế giới fantasy** (ấn, trận pháp, phép; chương là vùng đất) và **thêm lớp roguelike**: 3–5 nhân vật theo lớp với bộ bài khởi đầu, menu phép rút 4 lá từ bộ, chọn 1 trong 3 lá sau mỗi trận, máu là tài nguyên cả run, **chết là hết run** (hồi sinh là item thêm sau). Luật "chơi lại trận đã thua" của Story 015 bị thay ở 019. Cơ chế lõi v3 không đổi. Brief v4 là bản ghi; tên làm việc "Ấn Kiếm", repo giữ tên.
 
+**Bổ sung 2026-10-24 (sau 021):** người dùng muốn nội dung dày hơn trước khi chơi thử; tài liệu tham chiếu `design/reference/osfe-reference.md` (One Step From Eden, đọc bằng REA + ILSpy) đưa ra khung bản đồ 7 cột, token bỏ lá, thưởng theo loại nút, độ hiếm trôi theo may mắn, giáp phẳng, địch phá luật → Story 022 (bản đồ + kinh tế) rồi 023 (nội dung chương 2–3).
+
 **Bổ sung 2026-10-22 (sau khi đóng 019):** người dùng muốn **chọn lá phải đổi kết quả trận** và **bỏ khái niệm "lớp"**. Chốt: nhân vật là cá nhân với bộ khởi đầu, nội tại và một **tuyệt kỹ** chủ động mạnh lên theo bộ bài (Kiếm sĩ Trảm, Pháp sư Thiên Hỏa, Sát thủ Ảnh Bộ); không lá nào gắn nhân vật, thưởng không nghiêng trọng số; sức nặng của bộ đến từ sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá và hai từ khóa Ghim/Đốt dùng chung → Story 020 (bộ bài) rồi 021 (tuyệt kỹ), đo bằng mô phỏng ba chính sách chọn thưởng (chênh ≥ 25 điểm phần trăm).
 
 ## Scope
@@ -50,8 +52,9 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 10. Lá bài và bộ bài + đổi vỏ fantasy (017)
 11. Nhân vật theo lớp (018)
 12. Run roguelike (019) → **Cổng quyết định 5: run đầu tiên có thật**
-13. Bộ bài có sức nặng (020), tuyệt kỹ nhân vật (021) → **Cổng quyết định 6: chọn lá có đổi kết quả không**
-14. Nội dung chương 2–3, lên Android, hình và âm — story viết sau cổng 6
+13. Bộ bài có sức nặng (020), tuyệt kỹ nhân vật (021) — mô phỏng: chọn lá nhân đôi tỉ lệ thắng nhưng dưới ngưỡng 25 điểm (TD-001, TD-004); người dùng hoãn chơi thử vì nội dung mỏng
+14. Bản đồ chương + kinh tế thưởng (022), nội dung chương 2–3 + địch phá luật (023), theo `design/reference/osfe-reference.md` → **Cổng quyết định 6: run đầu tiên đủ nội dung**
+15. Cửa hàng/pact, lên Android, hình và âm — story viết sau cổng 6
 
 **Cổng quyết định 1 (sau 003, v1):** "tạm ổn", thiếu áp lực → đi tiếp.
 **Cổng quyết định 2 (sau 005, v1):** băng chuyền khó thao tác, địch theo giờ nhàm, 3 làn basic → pivot v2.
@@ -82,3 +85,5 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 019 | Run roguelike: thưởng 1 trong 3 lá, máu cả run, chết là hết, chọn chương, save run | Integration | Complete | N/A (minimal) |
 | 020 | Bộ bài có sức nặng: sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá, từ khóa Ghim/Đốt, bỏ khái niệm lớp | Logic | Complete | N/A (minimal) |
 | 021 | Tuyệt kỹ nhân vật: thanh nạp, nút riêng, Trảm / Thiên Hỏa / Ảnh Bộ khuếch đại bộ bài | Integration | Complete | N/A (minimal) |
+| 022 | Bản đồ chương và kinh tế thưởng: 7 cột khung cố định + nhánh 2–3, token bỏ lá, thưởng theo loại nút, độ hiếm trôi theo may mắn, trại nghỉ, máu ×3 | Integration | Ready | N/A (minimal) |
+| 023 | Nội dung chương 2–3: boss/trait mới, địch phá luật (Bóng Ma, Kẻ Phản Ứng, Pháo Ngòi), lá sử thi có điều kiện, Rạn/Hàn, pool 24 | Integration | Ready | N/A (minimal) |

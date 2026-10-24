@@ -54,7 +54,14 @@
 - Nội tại là lớp nhỏ đăng ký như trait (`PassiveRegistry`), đọc/ghi qua API công khai.
 - **Không có "lớp" (quyết định 2026-10-22):** không lá nào gắn nhân vật, thưởng không nghiêng theo nhân vật. Nhân vật nào cũng chơi được mọi bộ; thứ lái người chơi là **tuyệt kỹ** (021): một kỹ năng chủ động nạp theo số ô đã Thi triển, **mạnh lên theo bộ bài** chứ không tự mạnh. **Kiếm sĩ — Trảm** (3 s, ô ×2, hút máu 20 %: khuếch đại lá sát thương cao); **Pháp sư — Thiên Hỏa** (kích nổ cháy ×2, đặt lại cooldown lá đốt: khuếch đại lửa chồng); **Sát thủ — Ảnh Bộ** (2 s bước không cooldown, địch bị ghim ăn ×2 từ lá ≤ 3 ô: khuếch đại ghim + lá nhỏ). Đa dạng đến từ pool lá (cần 16–20 lá tới cuối chương 2) và hai từ khóa dùng chung **Ghim** (địch bị ghim ăn ×1,5 từ đòn kiếm) và **Đốt** (cháy chồng tối đa 3 tầng).
 
-### Run (019)
+### Run (019) — mở rộng ở 022/023 theo tham chiếu OSFE
+- **Bản đồ chương (022):** một chương = **7 cột**, mỗi cột 1–3 nút để chọn, khung cố định + ngẫu nhiên seeded: cột 0 một trận; cột 1–2 và 5 là 2–3 nút {trận, nguy hiểm, kho báu}; cột 3 có đúng một **boss giữa**; cột 4 có đúng một **trại nghỉ**; cột 6 **boss**. Pool trận theo loại nút và bậc cột; người chưa thắng boss nào luôn gặp bậc dễ (onboarding ẩn, OSFE `CalculateStageNum`).
+- **Thưởng theo loại nút (022):** trận/nguy hiểm → 1 trong 3 lá; kho báu → 1 trong 3 lá không cần đánh; boss giữa → 3 lá sàn hiếm; boss → 3 lá + **1 token bỏ lá**. Bỏ lá là token (khởi đầu 1), không còn miễn phí mỗi trận. Độ hiếm **trôi theo may mắn** tích lũy +1 mỗi nút (70/25/5 % → 31/35/34 % ở 70).
+- **Máu (022):** không hồi tự động sau trận; chỉ hồi ở **trại nghỉ** (Nghỉ 30 % máu hoặc Rèn +1 cấp một lá). Máu tối đa ×3 (300/240/270) để một đòn ≈ 4–15 % máu, mục tiêu 15–30 đòn trúng một run (ngân sách OSFE).
+- **Độ hiếm không mua sát thương (023):** sử thi 8 sát thương/ô kèm điều kiện (Hành quyết dưới 25 %, ×1,5 khi Rạn); hiếm 7–8; thường 6–7. Từ khóa dùng chung: **Ghim** (khống chế), **Rạn** (×1,5 đòn kế tiếp, 3 tầng), **Hàn** (3 tầng nổ 24 xuyên giáp), **Đốt** (chồng 3). Pool 24 lá.
+- **Địch phá luật (023):** mỗi chương 2 kẻ ép đổi lối chơi: Bóng Ma (máu thấp, giáp phẳng cao: cần Đốt/xuyên giáp), Kẻ Phản Ứng (vung khi ta bước: thưởng đứng yên), Pháo Ngòi (ngòi 12 s: kiểm tra DPS). Địch leo thang 4 trục: máu, nhịp bước, giáp, cỡ trận pháp.
+
+### Run (019) — luật gốc
 - **Một run = chọn nhân vật → một chương** (3 tầng, mỗi tầng N trận rồi boss) → thắng boss tầng cuối là thắng run. Tầng trong chương đi tuần tự; màn chọn tầng thành **chọn chương** (chương mở khi chương trước đã thắng bằng bất kỳ nhân vật nào).
 - Sau mỗi trận thắng: **chọn 1 trong 3 lá** (rút từ pool theo độ hiếm, seeded; không nghiêng theo nhân vật), hoặc bỏ qua, hoặc (từ 020) **bỏ 1 lá**. Lá vào bộ ngay; nhặt lá đã có = **nâng cấp** (tối đa +2).
 - **Máu là tài nguyên của cả run**: hồi `heal_between_matches` sau mỗi trận, `heal_between_floors` sau boss tầng, không đầy lại khi sang tầng.
@@ -90,8 +97,10 @@
 11. **Nhân vật + nội tại + màn chọn nhân vật** (018).
 12. **Run roguelike: thưởng lá, máu cả run, chết là hết, save run** (019) → **cổng chơi thử 5: run đầu tiên có thật**.
 13. **Bộ bài có sức nặng** (020): sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá, từ khóa Ghim/Đốt, bỏ khái niệm lớp.
-14. **Tuyệt kỹ nhân vật** (021): thanh nạp, Trảm / Thiên Hỏa / Ảnh Bộ, khuếch đại bộ bài → **cổng chơi thử 6**.
-15. Nội dung chương 2–3 (boss, trait, lá mới) → lên Android → hình và âm.
+14. **Tuyệt kỹ nhân vật** (021): thanh nạp, Trảm / Thiên Hỏa / Ảnh Bộ, khuếch đại bộ bài.
+15. **Bản đồ chương và kinh tế thưởng** (022): 7 cột, khung cố định + nhánh 2–3, token bỏ lá, thưởng theo loại nút, độ hiếm trôi theo may mắn, trại nghỉ thay hồi 25/40, máu ×3.
+16. **Nội dung chương 2–3** (023): boss/trait mới, địch phá luật, lá sử thi có điều kiện, Rạn/Hàn, pool 24 → **cổng chơi thử 6: run đầu tiên đủ nội dung**.
+17. Cửa hàng/pact → lên Android → hình và âm.
 
 ---
 **Who it's for / what they feel:** Người chơi mobile thích Mega Man Battle Network và Slay the Spire, chơi ngang hai tay, phiên 15–25 phút một run; cảm giác "mình gom đủ ấn, vẽ một trận pháp to, rút đúng lá và nó ra kịp".
