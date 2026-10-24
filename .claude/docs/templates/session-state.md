@@ -41,6 +41,9 @@ Task:
 **Files in progress:** [paths, comma-separated, or `none`]
 **Run result:** [`/dev-story` writes its `Run result:` line here, verbatim, for `/story-done` to read; other writers leave this line out]
 **Open questions:** [one line each, or `none`]
+**Artifact trail:** [files created / changed this session, one line each, or `none`; the checkpoint is the only record of what a fresh session would not see]
+**Test commands:** [the exact commands that verify the current work, one line each: parse-check, suites, smoke, or `none`]
+**How to resume:** [one line: the first command or file to open, so a cold reader starts without searching]
 <!-- /CHECKPOINT -->
 
 ---

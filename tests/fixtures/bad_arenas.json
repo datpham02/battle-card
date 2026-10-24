@@ -1,0 +1,1 @@
+{"rules":{"min_cells_per_side":6},"shapes":[{"id":"tiny","side_cols":2,"side_rows":2,"missing_cells":[]},{"id":"ok","side_cols":3,"side_rows":3}]}

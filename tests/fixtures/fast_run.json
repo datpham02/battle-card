@@ -1,0 +1,48 @@
+{
+	"heal_between_matches": 25,
+	"intro_sec": 0.05,
+	"end_delay_sec": 0.05,
+	"between_sec": 0.1,
+	"matches": [
+		{
+			"id": "intern",
+			"display_name": "Thực tập sinh",
+			"boss_max_hp": 80,
+			"brain_set": "cautious",
+			"boss_step_cooldown_sec": 0.80,
+			"boss_think_interval_sec": 0.50,
+			"boss_reaction_sec": 0.60,
+			"boss_drop_interval_mult": 1.3
+		},
+		{
+			"id": "sous_chef",
+			"display_name": "Đầu bếp phụ",
+			"boss_max_hp": 100,
+			"brain_set": "cautious",
+			"boss_step_cooldown_sec": 0.65,
+			"boss_think_interval_sec": 0.40,
+			"boss_reaction_sec": 0.45,
+			"boss_drop_interval_mult": 1.15
+		},
+		{
+			"id": "head_chef",
+			"display_name": "Bếp trưởng",
+			"boss_max_hp": 120,
+			"brain_set": "balanced",
+			"boss_step_cooldown_sec": 0.55,
+			"boss_think_interval_sec": 0.30,
+			"boss_reaction_sec": 0.35,
+			"boss_drop_interval_mult": 1.0
+		},
+		{
+			"id": "sushi_master",
+			"display_name": "Sushi Master",
+			"boss_max_hp": 150,
+			"brain_set": "aggressive",
+			"boss_step_cooldown_sec": 0.50,
+			"boss_think_interval_sec": 0.25,
+			"boss_reaction_sec": 0.30,
+			"boss_drop_interval_mult": 0.9
+		}
+	]
+}

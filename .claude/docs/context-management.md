@@ -134,6 +134,40 @@ Two rules for helpers:
    eventually contradict a tier, mode, or per-system override it does not know
    about. Report what is on disk and let the caller decide what it means.
 
+## Long Outputs and Test Scratch
+
+Test runs, simulations and logs are the largest context cost in this project:
+a single simulation prints thousands of lines. Keep them out of the window and
+keep the result on disk.
+
+**Output rules**
+
+1. **Redirect, then query.** Run long commands with the output sent to a file,
+   and read only the verdict lines back:
+   `godot ... > "<scratch>/<name>.out" 2>&1` then
+   `grep -E "FAILS|VERDICT|RESULT|SCRIPT ERROR" "<scratch>/<name>.out"`.
+   Never print a full simulation or suite log into the conversation.
+2. **Summaries, not transcripts.** A test or simulation result in the conversation
+   is one line per suite (name, `FAILS=N`, script errors) or one table per run.
+3. **Evidence is the only raw output kept in the repo.** Raw output goes under
+   `production/qa/evidence/<story>/` and is named `*-raw.txt`. Nothing else
+   generated during a run is committed.
+4. **Quit by itself.** Every Godot run must end on its own (`quit()` in the
+   script or `--quit-after N`). Click-driven suites run windowed only; a headless
+   run of them stalls and must be killed.
+
+**Tests**
+
+- Suites live in `tests/` (moved from the session scratchpad on 2026-10-24):
+  `unit/<system>/`, `integration/run/`, `integration/ui/` (windowed only),
+  fixtures in `tests/fixtures/`. Run commands and the known-failing list are in
+  `tests/README.md`; do not repeat them here.
+- Naming: `<topic>_test.gd`, `extends SceneTree`, ends with `FAILS=N` and `quit()`.
+- New throwaway probes may still go to the session scratchpad; a suite that
+  protects a story goes into `tests/` with its fixtures and `res://` paths.
+- A change to shared data or a shared script means re-running every suite that
+  touches it, not only the new one, and recording the counts.
+
 ## Subagent Delegation
 
 Use subagents for research and exploration to keep the main session clean.
@@ -143,6 +177,25 @@ Subagents run in their own context window and return only summaries:
   or doing research that would consume >5k tokens of file reads
 - **Use direct reads** when you know exactly which 1-2 files to check
 - Subagents do not inherit conversation history — provide full context in the prompt
+
+### Subagent brief template
+
+A subagent knows only its brief. Point it at files instead of pasting them, and
+keep the brief to these parts:
+
+1. **Goal** — one sentence plus the story path to read first.
+2. **Read first** — paths only (code, data, docs). No pasted content.
+3. **Interface** — exact names and signatures other parts rely on.
+4. **Owns / must not touch** — files it may edit, files another agent is editing.
+5. **Verify** — "run the suites in `tests/README.md` that touch your files" plus
+   any new test it must add; report counts, not logs.
+6. **Process** — "follow Long Outputs and Test Scratch above" (no stdin waits,
+   every Godot run quits by itself, windowed suites windowed only).
+7. **Report** — files changed, deviations, test counts, what is left undone.
+
+Split a large story into parts by file ownership (logic, wiring, views): one
+agent per part keeps each under the turn budget. Resume a stopped agent with
+the list of what is already on disk instead of restating the task.
 
 ## Compaction Instructions
 

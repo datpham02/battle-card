@@ -1,0 +1,12 @@
+{
+	"heal_between_matches": 25,
+	"intro_sec": 0.05,
+	"end_delay_sec": 0.05,
+	"between_sec": 0.1,
+	"matches": [
+		{"id": "a", "boss_max_hp": 80, "arena": {"shape": "square"}},
+		{"id": "b", "boss_max_hp": 100, "arena": {"shape": "rect"}},
+		{"id": "c", "boss_max_hp": 120, "arena": {"shape": "cross"}},
+		{"id": "d", "boss_max_hp": 150, "arena": {"shape": "ring", "variant": true}}
+	]
+}

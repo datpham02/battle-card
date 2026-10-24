@@ -1,0 +1,16 @@
+{
+	"heal_between_matches": 25,
+	"intro_sec": 0.05,
+	"end_delay_sec": 0.05,
+	"between_sec": 0.1,
+	"matches": [
+		{
+			"id": "a", "boss_max_hp": 80, "brain_set": "cautious", "arena": {"shape": "square"},
+			"traits": [{"id": "row_burner", "params": {"first_delay_sec": 0.3, "warn_sec": 0.5, "burn_sec": 1.5, "interval_sec": 6.0, "damage_per_tick": 1.0}}]
+		},
+		{
+			"id": "b", "boss_max_hp": 100, "brain_set": "cautious", "arena": {"shape": "rect"},
+			"traits": [{"id": "rotten_thrower", "params": {"first_delay_sec": 0.3, "interval_sec": 0.5, "rot_in_hand_sec": 0.6, "field_freshness_sec": 30.0}}, {"id": "bogus_trait"}]
+		}
+	]
+}
