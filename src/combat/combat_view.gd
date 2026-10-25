@@ -304,12 +304,13 @@ func _setup_signature(character: Dictionary) -> void:
 	if _signature == null:
 		return
 	var params: Variant = dict.get("params", {})
-	_signature.setup(
-		{"state": _state, "grid": _grid, "boss": _boss, "status": _status,
-			"skill_config": _skill_config, "cut_config": _cut_config, "cooldowns": _cooldowns},
-		(params as Dictionary) if typeof(params) == TYPE_DICTIONARY else {})
 	var enemy_cells: Array[Vector2i] = _grid.enemy_cells()
 	_formation = FormationMap.new().init(enemy_cells, _config.formation_fade_for(enemy_cells.size()))
+	_signature.setup(
+		{"state": _state, "grid": _grid, "boss": _boss, "status": _status,
+			"skill_config": _skill_config, "cut_config": _cut_config, "cooldowns": _cooldowns,
+				"formation": _formation},
+		(params as Dictionary) if typeof(params) == TYPE_DICTIONARY else {})
 	_signature_name_key = str(dict.get("name_key", ""))
 	var cooldown: Variant = dict.get("cooldown_sec", 0.0)
 	_signature_cooldown_sec = maxf(float(cooldown), 0.0) if (typeof(cooldown) == TYPE_FLOAT or typeof(cooldown) == TYPE_INT) else 0.0

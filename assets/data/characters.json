@@ -25,7 +25,7 @@
 			"passive": {"id": "wide_caster", "params": {"min_cells": 5, "duration_mult": 0.85}},
 			"passive_name_key": "passive.wide_caster.name",
 			"passive_desc_key": "passive.wide_caster.desc",
-			"signature": {"id": "thien_hoa", "name_key": "signature.thien_hoa.name", "desc_key": "signature.thien_hoa.desc", "cooldown_sec": 15.0, "params": {"detonate_mult": 2.0}},
+			"signature": {"id": "thien_hoa", "name_key": "signature.thien_hoa.name", "desc_key": "signature.thien_hoa.desc", "cooldown_sec": 15.0, "params": {"burn_stacks": 1, "burn_duration_sec": 3.0, "burn_tick_sec": 0.5, "burn_damage_per_tick": 0.5, "detonate_mult": 2.0}},
 			"starter_deck": ["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"],
 			"unlocked": true
 		},
@@ -39,7 +39,7 @@
 			"passive": {"id": "quick_blade", "params": {"max_cells": 3, "damage_mult": 1.25}},
 			"passive_name_key": "passive.quick_blade.name",
 			"passive_desc_key": "passive.quick_blade.desc",
-			"signature": {"id": "anh_bo", "name_key": "signature.anh_bo.name", "desc_key": "signature.anh_bo.desc", "cooldown_sec": 12.0, "params": {"duration_sec": 2.0, "pinned_small_mult": 2.0, "small_cells": 3}},
+			"signature": {"id": "anh_bo", "name_key": "signature.anh_bo.name", "desc_key": "signature.anh_bo.desc", "cooldown_sec": 12.0, "params": {"duration_sec": 2.0, "small_mult": 1.75, "small_cells": 3}},
 			"starter_deck": ["kiem_khi", "kiem_khi", "kiem_khi", "chan_phong", "bang_phong", "bang_phong"],
 			"unlocked": true
 		}

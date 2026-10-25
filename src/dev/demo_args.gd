@@ -74,6 +74,13 @@ extends Node
 ##   godot --path . -- --demo=formation_half|formation_warn|formation_complete   Story 029: formation map half lit / cells about to fade / completed (flash + banner); skips the intro
 ##   godot --path . -- --demo=signature_cooldown   Story 029 Phần D: 40% of the enemy cells lit, signature cooldown ~9 s left ("Hồi 9 s"); skips the intro
 ##   godot --path . -- --demo=signature_ready|signature_half  Story 021: signature charge full / half (needs CombatView.debug_set_signature_charge)
+##   godot --path . --character=phap_su -- --demo=thien_hoa_fire   Story 030: the boss's cell already burning (as after a burn card), the
+##                                           whole enemy board lit, Thien Hoa fired through the real activate_signature(): the old burn
+##                                           detonates (boss HP drop, banner), then every lit cell is set on fire (burn hatch on the whole half)
+##   godot --path . --character=phap_su -- --demo=thien_hoa_burning  Story 030: as thien_hoa_fire, then the burn advanced by
+##                                           THIEN_HOA_BURNING_DEMO_SEC (StatusEffects.tick): the sea of fire still burning, its DoT on the boss
+##   godot --path . --character=sat_thu -- --demo=anh_bo_hit  Story 030: Anh Bo active (blue border, banner) and a 2-cell piece cast resolved on
+##                                           the boss: HIT and the doubled "-N"
 ##   Story 024 piece demos (the label demos above no longer apply to the player: the player has a piece bag now):
 ##   godot --path . -- --demo=pieces_hand    three pieces lying on the player's half (mini shapes, freshness bars) and a full bag
 ##   godot --path . -- --demo=placing_hit    PLACING with a piece (default l4, or --piece=<id>) over the boss's cell: green ghost,
@@ -175,10 +182,14 @@ const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
 const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
 const ROTTEN_PIECE_SLOT: int = 1
 ## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
-const PIECE_DEMOS: Array[String] = ["pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown"]
+const PIECE_DEMOS: Array[String] = ["pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit"]
+## Story 030 demo: the piece of the "anh_bo_hit" cast (2 cells, <= Anh Bo's small_cells).
+const ANH_BO_DEMO_PIECE: String = "bar2"
 ## Story 029 Phần D demo: share of the enemy cells lit and the cooldown seconds left (dev capture only).
 const SIGNATURE_COOLDOWN_DEMO_CHARGE: float = 0.4
 const SIGNATURE_COOLDOWN_DEMO_SEC: float = 9.0
+## Story 030 "thien_hoa_burning" demo: seconds of burn advanced after the activation (dev capture only).
+const THIEN_HOA_BURNING_DEMO_SEC: float = 1.0
 ## Story 028 join demos: piece 1 and piece 2 of "join_menu" / "join_split" (--piece= overrides piece 1).
 const JOIN_PIECE_1: String = "l3"
 const JOIN_PIECE_2: String = "bar2"
@@ -432,6 +443,10 @@ func _ready() -> void:
 			# Story 029 Phần D: some cells lit and the signature cooldown ~9 s left ("Hồi 9 s" button).
 			combat.debug_set_signature_charge(SIGNATURE_COOLDOWN_DEMO_CHARGE)
 			combat.debug_set_signature_cooldown(SIGNATURE_COOLDOWN_DEMO_SEC)
+		"thien_hoa_fire", "thien_hoa_burning":
+			_thien_hoa_demo(combat, grid)
+		"anh_bo_hit":
+			_anh_bo_demo(combat, grid)
 		"pieces_hand":
 			var lib: PieceLibrary = PieceLibrary.load_from_file()
 			var spots: Array[Vector2i] = _spread_cells(grid, FIELD_PIECES.size() + 1)
@@ -487,6 +502,64 @@ func _formation_demo(combat: CombatView, grid: BoardGrid) -> void:
 			var fraction: float = 0.9 if lit % 3 == 0 else warn * 0.5
 			map.set_cells([cells[i]] as Array[Vector2i], fraction)
 			lit += 1
+
+
+# Story 030 Thien Hoa demos (needs --character=phap_su). The boss's cell is set burning first (the signature's own
+# burn params, standing in for a burn card) so the detonation has something to blow up; the whole enemy board is
+# lit on the formation map; the real activate_signature() detonates that burn, then sets every lit cell on fire.
+# thien_hoa_burning then advances only the burn by THIEN_HOA_BURNING_DEMO_SEC (deterministic, time stays frozen).
+func _thien_hoa_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var map: FormationMap = combat.get_formation()
+	var sig: BaseSignature = combat.get_signature()
+	if map == null or not sig is ThienHoaSignature:
+		push_warning("DemoArgs: demo '%s' needs --character=phap_su (Thien Hoa signature)" % _mode)
+		return
+	var status: StatusEffects = combat.get_status()
+	status.ignite([combat.get_state().enemy_cell] as Array[Vector2i],
+		sig.param_float("burn_duration_sec", ThienHoaSignature.DEFAULT_BURN_DURATION_SEC),
+		sig.param_float("burn_tick_sec", ThienHoaSignature.DEFAULT_BURN_TICK_SEC),
+		sig.param_float("burn_damage_per_tick", ThienHoaSignature.DEFAULT_BURN_DAMAGE_PER_TICK))
+	map.cover(grid.enemy_cells())
+	_activate_signature_now(combat)
+	if _mode == "thien_hoa_burning":
+		status.tick(THIEN_HOA_BURNING_DEMO_SEC, combat.get_state())
+
+
+# Story 030 "anh_bo_hit" (needs --character=sat_thu): Anh Bo activated (border, timer, banner), then a 2-cell
+# piece cast through the real player path (select / aim / confirm / choose) resolved on the boss.
+func _anh_bo_demo(combat: CombatView, grid: BoardGrid) -> void:
+	if not combat.get_signature() is AnhBoSignature:
+		push_warning("DemoArgs: demo '%s' needs --character=sat_thu (Anh Bo signature)" % _mode)
+		return
+	_activate_signature_now(combat)
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	_fill_bag(lib, -1)
+	var held: FieldPoint = _hold().get_point(0)
+	held.piece = lib.make_piece(ANH_BO_DEMO_PIECE, 0)
+	held.label = ANH_BO_DEMO_PIECE
+	if not combat.select_piece(0):
+		push_warning("DemoArgs: select_piece failed for demo '%s'" % _mode)
+		return
+	_aim_hitting(combat, grid, combat.get_state().enemy_cell)
+	if not combat.confirm_placement():
+		push_warning("DemoArgs: confirm_placement failed for demo '%s'" % _mode)
+		return
+	var flow: CutFlow = combat.get_cut_flow()
+	if not flow.choose(SkillConfig.FALLBACK_SKILL):
+		push_warning("DemoArgs: skill '%s' not available for demo '%s'" % [SkillConfig.FALLBACK_SKILL, _mode])
+		return
+	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
+
+
+# Marks the signature ready and activates it through CombatView.activate_signature, which refuses while the
+# demo freeze is on: the freeze is lifted for this one synchronous call and restored right after.
+func _activate_signature_now(combat: CombatView) -> void:
+	combat.debug_set_signature_charge(1.0)
+	combat.freeze_time = false
+	var fired: bool = combat.activate_signature()
+	combat.freeze_time = true
+	if not fired:
+		push_warning("DemoArgs: activate_signature refused for demo '%s'" % _mode)
 
 
 # Story 024: ends the match intro (finds the RunController like _pause_run) so the banner does not cover

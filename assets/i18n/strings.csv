@@ -197,9 +197,9 @@ ui.character_select.signature,Tuyệt kỹ: %s,Signature: %s
 signature.tram.name,Trảm,Slash Fury
 signature.tram.desc,3 giây: mọi phép tính gấp đôi số ô và hồi 20% sát thương gây ra.,3 seconds: every spell counts double its cells and heals 20% of the damage dealt.
 signature.thien_hoa.name,Thiên Hỏa,Heaven's Fire
-signature.thien_hoa.desc,Kích nổ mọi ô cháy bên địch: gấp đôi cháy còn lại; làm mới phép đốt.,Detonate burning enemy cells for double the burn left; reset burn spells.
+signature.thien_hoa.desc,"Kích nổ lửa đang cháy gấp đôi, làm mới phép đốt, rồi đốt cả trận đồ sáng.","Detonate burns for double, reset burn spells, then set the lit map ablaze."
 signature.anh_bo.name,Ảnh Bộ,Shadow Step
-signature.anh_bo.desc,2 giây: bước không cooldown; phép ≤ 3 ô gây gấp đôi lên địch bị ghim.,2 s: free steps; spells of 3 cells or fewer deal double to a pinned foe.
+signature.anh_bo.desc,"2 giây: bước không cooldown; mọi phép ≤ 3 ô gây ×1,75.",2 s: free steps; every spell of 3 cells or fewer deals ×1.75.
 node.battle.name,Trận,Battle
 node.danger.name,Hiểm địa,Danger
 node.treasure.name,Kho báu,Treasure

@@ -1,7 +1,7 @@
 # Story 030: Làm lại Thiên Hỏa và Ảnh Bộ — gắn với trận đồ, bỏ điều kiện khó đạt, cân bằng giá trị mỗi phút
 
 > **Epic**: Kaiten Duel (v5)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
@@ -28,7 +28,9 @@
 
 **Phần A — Thiên Hỏa: đốt cả trận đồ**
 
-- [ ] Khi kích hoạt, Thiên Hỏa **đốt mọi ô thật của đất địch đang sáng trong trận đồ** (lúc kích hoạt trận đồ vừa đủ nên thường là cả sân) với `burn_stacks` tầng Đốt (params trong `characters.json`, khởi điểm 1), **rồi** kích nổ toàn bộ cháy trên sân như hiện nay (`detonate_mult`), và đặt lại cooldown lá đốt như cũ. Thứ tự đốt → nổ ghi rõ trong mã; số trong dữ liệu.
+> **Đổi thứ tự 2026-10-25 (người dùng chốt sau khi bot đo):** đốt rồi nổ ngay khiến mỗi ô trận đồ gây ~12 sát thương (sân 3×3: 108, 4×3: 144 — hạ gọn boss một lần dùng, giá trị mỗi phút gấp ~10 lần Trảm). Bộ số chỉ-dữ-liệu của bot đưa lửa trận đồ về gần 0, làm phần "đốt cả trận đồ" vô nghĩa. Luật mới: **kích nổ lửa đang có TRƯỚC, rồi đốt mọi ô trận đồ đang sáng thành biển lửa kéo dài** (`burn_duration_sec`): gây sát thương theo thời gian khi boss đứng trong lửa và chặn đường boss (não boss né ô cháy qua `burn_avoid`). Hai mục dưới được hiểu theo thứ tự này.
+
+- [ ] Khi kích hoạt, Thiên Hỏa **kích nổ toàn bộ cháy đang có** trên đất địch như hiện nay (`detonate_mult`), đặt lại cooldown lá đốt, **rồi đốt mọi ô thật của đất địch đang sáng trong trận đồ** (lúc kích hoạt trận đồ vừa đủ nên thường là cả sân) với `burn_stacks` tầng Đốt, kéo dài `burn_duration_sec` (params trong `characters.json`). Lửa mới **không** bị kích nổ trong cùng lần dùng. Thứ tự nổ → đốt ghi rõ trong mã; số trong dữ liệu.
 - [ ] Đọc trận đồ **trước** khi `activate_signature` xóa nó (một điểm duy nhất, không đổi luật Story 029).
 
 **Phần B — Ảnh Bộ: nhân đôi mọi đòn nhỏ**
@@ -73,7 +75,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/signature-rework/`; bảng cân bằng.
 
-**Status**: Not yet created
+**Status**: Screenshots retained (signature-rework/01-04, 5 PNG) + balance table (signature-rework/signature-balance.md) + suites (signature_test rewritten, character_test, i18n_test).
 
 ---
 
@@ -81,3 +83,14 @@
 
 - Depends on: Story 029 (trận đồ, thời gian hồi), Story 021 (tuyệt kỹ)
 - Unlocks: cân bằng nhân vật (TD-008), Story 026 (đo lại ba chương)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 9/9 pass, 1 only partly (Phần C screenshots: no detonation number is shown because the HUD never drew one). DEFERRED (needs real play): whether the 3 s sea of fire really blocks the boss (the bot saw only 0-2 boss hits per 30 matches inside fire windows, not significant), and Thien Hoa played by a patient human instead of the bot rules.
+**Deviations**: ADVISORY (user decision 2026-10-25): Thien Hoa order is detonate existing burn (x2) -> reset burn cards -> ignite every lit formation cell, not ignite-then-detonate; ignite-then-detonate measured 129.7 value/min against Tram 13.2 (a full 3x3 board detonated for 108, 4x3 for 144, one use killed the boss) and the data-only fix that kept ignite-then-detonate made the formation fire worth ~0. The new fire is not detonated in the same use. ADVISORY: data changes — `phap_su` signature `burn_duration_sec` 2.0 -> 3.0, `burn_damage_per_tick` 1.5 -> 0.5 (cooldown 15, `burn_stacks` 1, `burn_tick_sec` 0.5, `detonate_mult` 2.0 unchanged); `sat_thu` `small_mult` 2.0 -> 1.75 (the story placeholder was 2.0); `kiem_si` unchanged. ADVISORY: the 2 : 1 target holds on the four-board average only (1.99 : 1 at P=0.5, 1.2 : 1 at P=0.25) with order Tram > Thien Hoa > Anh Bo; per board Thien Hoa is weak on 3x3 (6.9/min against Tram 23.4) and strong on 4x3 and cross (16.8, 16.6), margins 12.7 vs 13.2 and 6.5 vs 6.4 are inside the noise of 30 matches per cell, and Tram : Anh Bo is already exactly 2.0 because Anh Bo went to x1.75 (TD-020). ADVISORY: bot caveats — fires on the Story 021 rules (Thien Hoa held up to 6 s), one piece per cast, no joins, TD-017 boss lock live; Anh Bo free steps (dodging value) not counted. ADVISORY (TD-021): no HUD number for the detonation damage; Mage card description is clipped on the Vietnamese card ("...tap trung duoc" for "...tap trung duoc lau", older than this story). ADVISORY: demo `thien_hoa_ignited` retired (it called a private method and showed a state the game cannot reach); added `thien_hoa_fire`, `thien_hoa_burning` (fire 1 s later) and `anh_bo_hit`, which lift `freeze_time` for the single activation call (dev only); `schema.md` rewritten for the new rules (not in the story's file list). The Anh Bo screenshot was recaptured after the x1.75 change (-26 = 15 x 1.75; the first capture showed x2).
+**Test Evidence**: Integration; tests waived at `qa.level: minimal` but present and run on the final code: `tests/unit/combat/signature_test.gd` (Thien Hoa through CombatView and with a real FormationMap + StatusEffects: detonation counts only pre-existing burn, lit cells burn afterwards with the configured duration/tick/damage, no formation or no lit cells gives the old behaviour, burn cards reset; Anh Bo small casts x small_mult unpinned, no multiplier for larger casts or after expiry, free steps, legacy `pinned_small_mult` read with a warning, `small_mult` wins when both exist), `character_test`, `i18n_test`; headless sweep of 41 suites: 39 green, `pace_test` FAILS=2 and `run_state_test` FAILS=16 are the known TD-011; windowed `join_flow_test`, `cut_flow_test`, `focus_flow_test`, `input_test` FAILS=0. Parse-check 5/5. strings.csv 323 rows, 3 columns each. Retained screenshots `production/qa/evidence/signature-rework/01-04*.png` (all opened and checked) and `signature-balance.md` plus `-raw.txt`. Bot results, value per minute, four-board mean, P=0.5 / P=0.25: Tram 13.2 / 7.7, Thien Hoa 12.7 / 6.5, Anh Bo 6.6 / 6.4; uses per match on the 3x3 board at P=0.5: Tram 1.30, Thien Hoa 1.43, Anh Bo 1.57.
+**Code Review**: Skipped (solo mode).
+**Not verified**: the sea of fire against a boss that is avoiding burning cells, human-timed activation, balance on bigger boards in real play.
+**Carries forward**: Story 025 (boss uses and joins pieces, aims at the featured shape, counter window; verify the live TD-017 edits first), Story 026, Story 027; TD-001..002, 004..021.
