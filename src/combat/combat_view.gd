@@ -193,6 +193,8 @@ signal signature_ended(id: String)
 signal formation_completed
 ## Story 032: the relic [param relic_id] acted (HUD flash).
 signal relic_triggered(relic_id: String)
+## Story 033: a curse card with draw_damage was drawn into the card menu and hurt the player.
+signal curse_drawn(card_id: String, damage: float)
 
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
@@ -230,7 +232,9 @@ func _ready() -> void:
 	if start_hp >= 0.0:
 		_state.set_player_hp(start_hp)
 	_base_step_cooldown = _config.step_cooldown_for(_grid)
-	_player_step_cooldown = _base_step_cooldown * _step_mult(character)
+	# Story 033: run modifiers (event `loi_the`: step_cooldown x1.2 for 2 matches) on top of the character.
+	_player_step_cooldown = RelicRegistry.apply_override(_base_step_cooldown * _step_mult(character),
+		match_params.get("run_modifiers", {}), "step_cooldown")
 	_mover = UnitMover.new(_state, CombatState.Side.PLAYER, _player_step_cooldown)
 	_drops_config = FieldDropsConfig.load_from_file(drops_config_path)
 	var boss_drops_config: FieldDropsConfig = _drops_config.copy()
@@ -1055,7 +1059,9 @@ func _boss_card_ids() -> Array[String]:
 	var raw: Variant = match_params.get("boss_cards", [])
 	if typeof(raw) == TYPE_ARRAY:
 		for id: Variant in raw as Array:
-			if _skill_config.is_zone_card(str(id)):
+			if _skill_config.is_curse(str(id)):
+				push_warning("CombatView: boss_cards '%s' is a curse card (the boss never has curses), dropped" % str(id))
+			elif _skill_config.is_zone_card(str(id)):
 				push_warning("CombatView: boss_cards '%s' is a zone card (the boss gets zones only through traits), dropped" % str(id))
 			elif _skill_config.has_skill(str(id)) and not ids.has(str(id)):
 				ids.append(str(id))
@@ -1259,8 +1265,22 @@ func confirm_placement() -> bool:
 	_join_points.clear()
 	_join_slots.clear()
 	_join_refusal = {}
-	_cut_flow.open_menu(labels, cells, _deck.draw(_skill_config.hand_size))
+	# Story 033: the menu hand keeps at least one non-curse card while the deck has one; a drawn curse
+	# with draw_damage (oan_hon) hurts the player once per draw.
+	var hand: Array[String] = _deck.draw_menu(_skill_config.hand_size, Callable(_skill_config, "is_curse"))
+	_cut_flow.open_menu(labels, cells, hand)
+	_apply_curse_draw_damage(hand)
 	return true
+
+
+# Story 033: each curse in [param hand] with draw_damage > 0 costs the player that much HP now
+# (CombatState.damage_player; one hit per copy drawn). Emits curse_drawn per hit.
+func _apply_curse_draw_damage(hand: Array[String]) -> void:
+	for id: String in hand:
+		var dmg: float = _skill_config.draw_damage(id)
+		if dmg > 0.0 and _state != null:
+			_state.damage_player(dmg)
+			curse_drawn.emit(id, dmg)
 
 
 ## Story 028: true while the open card menu still has room for another piece (max_pieces_per_cast):

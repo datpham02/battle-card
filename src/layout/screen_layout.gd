@@ -972,3 +972,187 @@ static func _reward_row(viewport_size: Vector2, count: int, top_ratio: float, bo
 	for i: int in count:
 		rects.append(Rect2(left + (width + gap) * i, top, width, height))
 	return rects
+
+
+# --- Story 033: shop and event screens, the deck picker ------------------------------------------
+
+## Shop: the item rows fill [MARGIN_RATIO, SHOP_ROWS_RIGHT_RATIO] of the width; the services column
+## sits right of it. Label bands, card row, relic row as shares of the height (720p: cards 227 px,
+## relics 176 px tall; every target well above 64 px).
+const SHOP_ROWS_RIGHT_RATIO: float = 0.74
+const SHOP_CARD_LABEL_TOP_RATIO: float = 0.135
+const SHOP_LABEL_HEIGHT_RATIO: float = 0.045
+const SHOP_CARDS_TOP_RATIO: float = 0.185
+const SHOP_CARDS_BOTTOM_RATIO: float = 0.5
+const SHOP_RELIC_LABEL_TOP_RATIO: float = 0.515
+const SHOP_RELICS_TOP_RATIO: float = 0.565
+const SHOP_RELICS_BOTTOM_RATIO: float = 0.81
+const SHOP_ITEM_GAP_RATIO: float = 0.02
+const SHOP_ITEM_MAX_WIDTH_RATIO: float = 0.2
+## How far a selected item rises (share of the height).
+const SHOP_ITEM_RAISE_RATIO: float = 0.025
+const SHOP_SERVICE_LEFT_RATIO: float = 0.765
+const SHOP_SERVICE_GAP_RATIO: float = 0.03
+## Bottom band: "Rời cửa hàng" bottom-left, "Mua (N vàng)" bottom-right (right thumb), a message between.
+const SHOP_BUTTON_TOP_RATIO: float = 0.85
+const SHOP_BUTTON_BOTTOM_RATIO: float = 0.97
+const SHOP_LEAVE_WIDTH_RATIO: float = 0.24
+const SHOP_BUY_WIDTH_RATIO: float = 0.28
+## Long-press detail panel (share of the screen).
+const SHOP_DETAIL_WIDTH_RATIO: float = 0.5
+const SHOP_DETAIL_HEIGHT_RATIO: float = 0.66
+## Deck picker: a horizontally scrolling row of card tiles across the full width.
+const DECK_PICKER_TOP_RATIO: float = 0.2
+const DECK_PICKER_BOTTOM_RATIO: float = 0.66
+const DECK_PICKER_TILE_WIDTH_RATIO: float = 0.15
+const DECK_PICKER_TILE_HEIGHT_RATIO: float = 0.36
+const DECK_PICKER_GAP_RATIO: float = 0.015
+const DECK_PICKER_HINT_TOP_RATIO: float = 0.7
+const DECK_PICKER_HINT_BOTTOM_RATIO: float = 0.8
+## Event: the text box (upper half), the choice stack (lower half), button height cap and gap.
+const EVENT_TEXT_TOP_RATIO: float = 0.14
+const EVENT_TEXT_BOTTOM_RATIO: float = 0.5
+const EVENT_CHOICES_TOP_RATIO: float = 0.53
+const EVENT_CHOICES_BOTTOM_RATIO: float = 0.97
+const EVENT_CHOICE_WIDTH_RATIO: float = 0.84
+const EVENT_CHOICE_MAX_HEIGHT_RATIO: float = 0.13
+const EVENT_CHOICE_GAP_RATIO: float = 0.015
+## Event result with a card offer: the text box shrinks to this bottom, the cards fill the rest.
+const EVENT_RESULT_SHORT_BOTTOM_RATIO: float = 0.36
+const EVENT_OFFER_TOP_RATIO: float = 0.39
+const EVENT_OFFER_BOTTOM_RATIO: float = 0.82
+
+
+# Story 033: [param count] shop items centred in the rows area between [param top_ratio] and
+# [param bottom_ratio] of the height (width capped at SHOP_ITEM_MAX_WIDTH_RATIO).
+static func _shop_row(viewport_size: Vector2, count: int, top_ratio: float, bottom_ratio: float) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var area: Rect2 = shop_rows_area_rect(viewport_size)
+	var gap: float = viewport_size.x * SHOP_ITEM_GAP_RATIO
+	var width: float = maxf(minf((area.size.x - gap * (count - 1)) / count, viewport_size.x * SHOP_ITEM_MAX_WIDTH_RATIO), 0.0)
+	var top: float = viewport_size.y * top_ratio
+	var left: float = area.position.x + (area.size.x - (width * count + gap * (count - 1))) * 0.5
+	for i: int in count:
+		rects.append(Rect2(left + (width + gap) * i, top, width, viewport_size.y * bottom_ratio - top))
+	return rects
+
+
+## Story 033: the area of the two item rows (left of the services column), full height.
+static func shop_rows_area_rect(viewport_size: Vector2) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	return Rect2(margin, 0.0, viewport_size.x * SHOP_ROWS_RIGHT_RATIO - margin, viewport_size.y)
+
+
+## Story 033: the card row of the shop.
+static func shop_card_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	return _shop_row(viewport_size, count, SHOP_CARDS_TOP_RATIO, SHOP_CARDS_BOTTOM_RATIO)
+
+
+## Story 033: the relic row of the shop.
+static func shop_relic_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	return _shop_row(viewport_size, count, SHOP_RELICS_TOP_RATIO, SHOP_RELICS_BOTTOM_RATIO)
+
+
+## Story 033: label band above the shop's card row ("Lá") — with [param relics], above the relic row.
+static func shop_row_label_rect(viewport_size: Vector2, relics: bool) -> Rect2:
+	var area: Rect2 = shop_rows_area_rect(viewport_size)
+	var top: float = viewport_size.y * (SHOP_RELIC_LABEL_TOP_RATIO if relics else SHOP_CARD_LABEL_TOP_RATIO)
+	return Rect2(area.position.x, top, area.size.x, viewport_size.y * SHOP_LABEL_HEIGHT_RATIO)
+
+
+## Story 033: label band above the services column ("Dịch vụ").
+static func shop_services_label_rect(viewport_size: Vector2) -> Rect2:
+	var left: float = viewport_size.x * SHOP_SERVICE_LEFT_RATIO
+	return Rect2(left, viewport_size.y * SHOP_CARD_LABEL_TOP_RATIO, viewport_size.x * (1.0 - MARGIN_RATIO) - left, viewport_size.y * SHOP_LABEL_HEIGHT_RATIO)
+
+
+## Story 033: the two service buttons (remove a card, heal) stacked at the right edge.
+static func shop_service_rects(viewport_size: Vector2) -> Array[Rect2]:
+	var left: float = viewport_size.x * SHOP_SERVICE_LEFT_RATIO
+	var width: float = viewport_size.x * (1.0 - MARGIN_RATIO) - left
+	var top: float = viewport_size.y * SHOP_CARDS_TOP_RATIO
+	var gap: float = viewport_size.y * SHOP_SERVICE_GAP_RATIO
+	var height: float = (viewport_size.y * SHOP_RELICS_BOTTOM_RATIO - top - gap) * 0.5
+	var rects: Array[Rect2] = [Rect2(left, top, width, height), Rect2(left, top + height + gap, width, height)]
+	return rects
+
+
+## Story 033: how far a selected shop item is drawn up (its touch area adds this lift on top).
+static func shop_item_raise(viewport_size: Vector2) -> float:
+	return viewport_size.y * SHOP_ITEM_RAISE_RATIO
+
+
+## Story 033: bottom-left button ("Rời cửa hàng", "Thôi").
+static func shop_leave_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * SHOP_BUTTON_TOP_RATIO
+	return Rect2(viewport_size.x * MARGIN_RATIO, top, viewport_size.x * SHOP_LEAVE_WIDTH_RATIO, viewport_size.y * SHOP_BUTTON_BOTTOM_RATIO - top)
+
+
+## Story 033: bottom-right button ("Mua (N vàng)", confirm, "Tiếp tục") — the right thumb's spot.
+static func shop_buy_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * SHOP_BUTTON_TOP_RATIO
+	var width: float = viewport_size.x * SHOP_BUY_WIDTH_RATIO
+	return Rect2(viewport_size.x * (1.0 - MARGIN_RATIO) - width, top, width, viewport_size.y * SHOP_BUTTON_BOTTOM_RATIO - top)
+
+
+## Story 033: the one-line message between the two bottom buttons (result of a buy, refusal reason).
+static func shop_message_rect(viewport_size: Vector2) -> Rect2:
+	var leave: Rect2 = shop_leave_rect(viewport_size)
+	var buy: Rect2 = shop_buy_rect(viewport_size)
+	var gap: float = viewport_size.x * SHOP_ITEM_GAP_RATIO
+	return Rect2(leave.end.x + gap, leave.position.y, maxf(buy.position.x - leave.end.x - gap * 2.0, 0.0), leave.size.y)
+
+
+## Story 033: the long-press detail panel, centred.
+static func shop_detail_rect(viewport_size: Vector2) -> Rect2:
+	var size := Vector2(viewport_size.x * SHOP_DETAIL_WIDTH_RATIO, viewport_size.y * SHOP_DETAIL_HEIGHT_RATIO)
+	return Rect2((viewport_size - size) * 0.5, size)
+
+
+## Story 033: the deck picker's scrolling band (full width; tiles scroll past the screen edges).
+static func deck_picker_row_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * DECK_PICKER_TOP_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * DECK_PICKER_BOTTOM_RATIO - top)
+
+
+## Story 033: size of one deck picker tile.
+static func deck_picker_tile_size(viewport_size: Vector2) -> Vector2:
+	return Vector2(viewport_size.x * DECK_PICKER_TILE_WIDTH_RATIO, viewport_size.y * DECK_PICKER_TILE_HEIGHT_RATIO)
+
+
+## Story 033: the hint line under the deck picker row.
+static func deck_picker_hint_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * DECK_PICKER_HINT_TOP_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * DECK_PICKER_HINT_BOTTOM_RATIO - top)
+
+
+## Story 033: the event text box (upper half); [param short] shrinks it above a card-offer row.
+static func event_text_rect(viewport_size: Vector2, short: bool = false) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var top: float = viewport_size.y * EVENT_TEXT_TOP_RATIO
+	var bottom: float = viewport_size.y * (EVENT_RESULT_SHORT_BOTTOM_RATIO if short else EVENT_TEXT_BOTTOM_RATIO)
+	return Rect2(margin, top, viewport_size.x - margin * 2.0, bottom - top)
+
+
+## Story 033: [param count] wide event choice buttons stacked in the lower half, centred, each at most
+## EVENT_CHOICE_MAX_HEIGHT_RATIO tall (4 choices at 720p: 69 px each).
+static func event_choice_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var top: float = viewport_size.y * EVENT_CHOICES_TOP_RATIO
+	var gap: float = viewport_size.y * EVENT_CHOICE_GAP_RATIO
+	var avail: float = viewport_size.y * EVENT_CHOICES_BOTTOM_RATIO - top
+	var height: float = minf((avail - gap * (count - 1)) / count, viewport_size.y * EVENT_CHOICE_MAX_HEIGHT_RATIO)
+	var width: float = viewport_size.x * EVENT_CHOICE_WIDTH_RATIO
+	var left: float = (viewport_size.x - width) * 0.5
+	for i: int in count:
+		rects.append(Rect2(left, top + (height + gap) * i, width, height))
+	return rects
+
+
+## Story 033: the card-offer row of an event result (the text box is short above it), centred.
+static func event_offer_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	return _reward_row(viewport_size, count, EVENT_OFFER_TOP_RATIO, EVENT_OFFER_BOTTOM_RATIO, 0.0)

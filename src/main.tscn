@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/run/game_flow.gd" id="2_flow"]
@@ -9,6 +9,8 @@
 [ext_resource type="Script" path="res://src/run/reward_view.gd" id="7_reward"]
 [ext_resource type="Script" path="res://src/run/chapter_map_view.gd" id="8_map"]
 [ext_resource type="Script" path="res://src/run/rest_view.gd" id="9_rest"]
+[ext_resource type="Script" path="res://src/run/shop_view.gd" id="10_shop"]
+[ext_resource type="Script" path="res://src/run/event_view.gd" id="11_event"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -27,6 +29,12 @@ script = ExtResource("3_world")
 
 [node name="ChapterMapView" type="Node2D" parent="GameFlow"]
 script = ExtResource("8_map")
+
+[node name="ShopView" type="Node2D" parent="GameFlow"]
+script = ExtResource("10_shop")
+
+[node name="EventView" type="Node2D" parent="GameFlow"]
+script = ExtResource("11_event")
 
 [node name="RunHudView" type="Node2D" parent="."]
 script = ExtResource("4_hud")

@@ -8,7 +8,10 @@ extends RefCounted
 const DEFAULT_PATH: String = "res://assets/data/cards.json"
 ## Card id used when nothing else is chosen; always present in [member cards].
 const FALLBACK_SKILL: String = "kiem_khi"
+## Reward / shop rarities (the pool tiers). `curse` is NOT one of them: curse cards never reach a pool.
 const RARITIES: Array[String] = ["common", "rare", "epic"]
+## Story 033: rarity id of a curse card (takes a menu slot, shown locked, never upgraded, never rewarded).
+const CURSE_RARITY: String = "curse"
 ## Highest card level (levels are 1..MAX_LEVEL; Story 020).
 const MAX_LEVEL: int = 3
 const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "seal", "thorns"]
@@ -43,11 +46,14 @@ var focus_max_sec: float = 4.0
 var focus_cooldown_sec: float = 8.0
 ## Focus: true = the player cannot step while Focus is active.
 var focus_locks_movement: bool = true
-## Stable display order of the known card ids (also the boss's default card list).
+## Stable display order of the known NON-curse card ids (also the boss's default card list and the
+## reward / shop pool: Story 033 curse cards are never in it, whatever cards.json lists).
 var card_order: Array[String] = [FALLBACK_SKILL]
 ## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_per_cell, push_cells,
 ## burn_*, pin_duration_sec, fragile_stacks, frost_stacks, pierce_defense, execute, execute_ratio,
-## bonus_vs_fragile_mult, rarity, upgrade, implemented} (level 1 values; see [method resolved]).
+## bonus_vs_fragile_mult, rarity, draw_damage, upgrade, implemented} (level 1 values; see [method resolved]).
+## Story 033: rarity `curse` cards (ganh_nang, oan_hon) carry `draw_damage` (HP the player loses each
+## time the card is drawn into the card menu; 0 = none).
 ## Story 027 zone cards (effect seal / thorns) may also carry the optional per-card overrides seal_sec,
 ## thorn_sec, thorn_damage, thorn_fragile_stacks; a key the card omits is absent here and combat.json
 ## `zones` supplies the number.
@@ -105,13 +111,13 @@ static func from_dictionary(data: Dictionary) -> SkillConfig:
 	var raw_order: Variant = data.get("card_order")
 	if typeof(raw_order) == TYPE_ARRAY:
 		for id: Variant in raw_order as Array:
-			if config.cards.has(str(id)) and not config.card_order.has(str(id)):
+			if config.cards.has(str(id)) and not config.card_order.has(str(id)) and not config.is_curse(str(id)):
 				config.card_order.append(str(id))
 	for id: Variant in config.cards.keys():
-		if not config.card_order.has(str(id)):
+		if not config.card_order.has(str(id)) and not config.is_curse(str(id)):
 			config.card_order.append(str(id))
 	var wanted: String = str(data.get("default_card", FALLBACK_SKILL))
-	if config.cards.has(wanted):
+	if config.cards.has(wanted) and not config.is_curse(wanted):
 		config.default_card = wanted
 	else:
 		push_warning("SkillConfig: default_card %s unknown, using the first card" % wanted)
@@ -120,8 +126,10 @@ static func from_dictionary(data: Dictionary) -> SkillConfig:
 	var raw_deck: Variant = data.get("default_deck")
 	if typeof(raw_deck) == TYPE_ARRAY:
 		for id: Variant in raw_deck as Array:
-			if config.cards.has(str(id)):
+			if config.cards.has(str(id)) and not config.is_curse(str(id)):
 				config.default_deck.append(str(id))
+			elif config.is_curse(str(id)):
+				push_warning("SkillConfig: default_deck card %s is a curse, dropped" % str(id))
 			else:
 				push_warning("SkillConfig: default_deck card %s unknown, dropped" % str(id))
 	if config.default_deck.is_empty():
@@ -156,7 +164,29 @@ func boss_card_order() -> Array[String]:
 	return out
 
 
-## Rarity of [param id] ("common" / "rare" / "epic"); "common" if unknown.
+## Story 033: true when [param id] is a curse card (rarity `curse`). Curses take a card-menu slot and
+## are shown locked, never upgrade, never appear in reward / shop pools or the boss deck, and do not
+## count toward the run's min_deck_size. Unknown id: false.
+func is_curse(id: String) -> bool:
+	return str(get_skill(id).get("rarity", "")) == CURSE_RARITY
+
+
+## Story 033: HP the player loses each time curse [param id] is drawn into the card menu (0 for any
+## other card).
+func draw_damage(id: String) -> float:
+	return maxf(float(get_skill(id).get("draw_damage", 0.0)), 0.0)
+
+
+## Story 033: ids of the curse cards in cards.json order.
+func curse_ids() -> Array[String]:
+	var out: Array[String] = []
+	for id: Variant in cards.keys():
+		if is_curse(str(id)):
+			out.append(str(id))
+	return out
+
+
+## Rarity of [param id] ("common" / "rare" / "epic" / "curse"); "common" if unknown.
 func get_rarity(id: String) -> String:
 	return str(get_skill(id).get("rarity", "common"))
 
@@ -168,7 +198,8 @@ func resolved(id: String, level: int = 1) -> Dictionary:
 	if not cards.has(id):
 		return {}
 	var card: Dictionary = (cards[id] as Dictionary).duplicate(true)
-	var lv: int = clampi(level, 1, MAX_LEVEL)
+	# Story 033: a curse never levels.
+	var lv: int = 1 if is_curse(id) else clampi(level, 1, MAX_LEVEL)
 	var upgrade: Dictionary = card.get("upgrade", {}) as Dictionary
 	for key: Variant in upgrade.keys():
 		var floor_value: float = float(UPGRADE_FLOORS.get(str(key), 0.0))
@@ -218,7 +249,7 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		push_warning("SkillConfig: card %s burn_tick_sec must be > 0, using 0.5" % id)
 		tick = 0.5
 	var rarity: String = str(raw.get("rarity", "common"))
-	if not RARITIES.has(rarity):
+	if not RARITIES.has(rarity) and rarity != CURSE_RARITY:
 		push_warning("SkillConfig: card %s rarity '%s' unknown, using common" % [id, rarity])
 		rarity = "common"
 	var effect: String = str(raw.get("effect", "damage"))
@@ -226,7 +257,9 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		push_warning("SkillConfig: card %s effect '%s' unknown" % [id, effect])
 	var upgrade: Dictionary = {}
 	var raw_up: Variant = raw.get("upgrade")
-	if typeof(raw_up) == TYPE_DICTIONARY:
+	if rarity == CURSE_RARITY:
+		pass  # Story 033: a curse has no upgrade table (never upgradable)
+	elif typeof(raw_up) == TYPE_DICTIONARY:
 		for key: Variant in (raw_up as Dictionary).keys():
 			if UPGRADE_FLOORS.has(str(key)) and (typeof((raw_up as Dictionary)[key]) == TYPE_FLOAT or typeof((raw_up as Dictionary)[key]) == TYPE_INT):
 				upgrade[str(key)] = float((raw_up as Dictionary)[key])
@@ -257,6 +290,7 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"execute_ratio": clampf(float(raw.get("execute_ratio", 0.0)), 0.0, 1.0),
 		"bonus_vs_fragile_mult": maxf(float(raw.get("bonus_vs_fragile_mult", 1.0)), 1.0),
 		"rarity": rarity,
+		"draw_damage": maxf(float(raw.get("draw_damage", 0.0)), 0.0) if rarity == CURSE_RARITY else 0.0,
 		"upgrade": upgrade,
 		"implemented": bool(raw.get("implemented", false)),
 	}

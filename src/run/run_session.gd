@@ -85,6 +85,26 @@ var relics: Array[String] = []
 ## Story 032: relic ids offered on the open treasure screen (the second row next to [member pending_reward]);
 ## [] when none. Picking a card or a relic, or skipping, closes BOTH rows.
 var pending_relic_offer: Array[String] = []
+## Story 033: gold of the run (never negative; starts at EconomyConfig `starting_gold`). Dropped by won
+## nodes (GameFlow), spent at the shop / events; not carried to the next run.
+var gold: int = EconomyConfig.shared().starting_gold()
+## Story 033: temporary rules of the run [{id, matches_left, params}] (event `run_modifier`, e.g. the pledge
+## `loi_the`): -1 per match played ([method tick_run_modifiers]), dropped at 0. `params` is a config override
+## per key in RelicRegistry.merge_overrides form, e.g. {"step_cooldown": {"mul": 1.2}}.
+var run_modifiers: Array[Dictionary] = []
+## Story 033: opaque shop state of the node being visited (stored / returned as is; written by the shop
+## logic, {} = none). Saved under `shop_state`.
+var shop_state: Dictionary = {}
+## Story 033: opaque event state of the node being visited (as [member shop_state]). Saved under `event_state`.
+var event_state: Dictionary = {}
+## Story 033: gold the node completed last dropped (the reward screen's "+N vàng"); saved under
+## `last_gold_gain` so a resumed reward screen still shows it (absent = 0).
+var last_gold_gain: int = 0
+## Story 033: card data used by the curse-aware deck rules ([method remove_card_at], [method rest_forge]).
+## Injected by the flow ([method from_dict] sets it from its `cards` argument); null = the shared
+## cards.json (loaded once, see [method _cards_config]).
+var cards_config: SkillConfig = null
+static var _shared_cards: SkillConfig = null
 ## Revive tokens (from chapters defaults; reserved, unused).
 var revives: int = 0
 ## True when this session came from a pre-v5 save: the flow must start a fresh world run for
@@ -340,7 +360,7 @@ func rest_forge(index: int, config: Dictionary) -> Dictionary:
 		return {"ok": false, "level": 0}
 	var e: Dictionary = deck[index]
 	var level: int = int(e["level"])
-	if level >= SkillConfig.MAX_LEVEL:
+	if level >= SkillConfig.MAX_LEVEL or is_curse_card(str(e["id"])):
 		return {"ok": false, "level": level}
 	e["level"] = mini(level + int(cfg(config, "rest_forge_levels")), SkillConfig.MAX_LEVEL)
 	return {"ok": true, "level": int(e["level"])}
@@ -358,15 +378,50 @@ func add_card(id: String, max_level: int = SkillConfig.MAX_LEVEL) -> Dictionary:
 
 
 ## Removes the card at [param index], spending one removal token. Refused (nothing changes, no
-## token spent) with no token, a bad index or when the deck would drop below [param min_deck_size]
-## (default: rewards.json min_deck_size). True when removed.
+## token spent) with no token, a bad index or when a NON-curse card would leave [param min_deck_size]
+## (default: rewards.json min_deck_size) or fewer non-curse cards. Story 033: curse cards do not count
+## toward the minimum and a curse can always be removed. True when removed.
 func remove_card_at(index: int, min_deck_size: int = -1) -> bool:
 	var floor_size: int = min_deck_size if min_deck_size >= 0 else int(RewardRoller.load_config()["min_deck_size"])
-	if removal_tokens <= 0 or index < 0 or index >= deck.size() or deck.size() <= floor_size:
+	if removal_tokens <= 0 or not can_remove_card_at(index, floor_size):
 		return false
 	removal_tokens -= 1
 	deck.remove_at(index)
 	return true
+
+
+## Story 033: whether the deck card at [param index] may leave the deck under the minimum-size rule
+## (tokens not checked): always for a curse card; for any other card only while more than
+## [param min_deck_size] non-curse cards remain. False for a bad index.
+func can_remove_card_at(index: int, min_deck_size: int) -> bool:
+	if index < 0 or index >= deck.size():
+		return false
+	if is_curse_card(str(deck[index]["id"])):
+		return true
+	return non_curse_count() > min_deck_size
+
+
+## Story 033: count of deck cards that are not curses.
+func non_curse_count() -> int:
+	var n: int = 0
+	for e: Dictionary in deck:
+		if not is_curse_card(str(e["id"])):
+			n += 1
+	return n
+
+
+## Story 033: true when [param id] is a curse card ([member cards_config], else the shared cards.json).
+func is_curse_card(id: String) -> bool:
+	var cards: SkillConfig = _cards_config()
+	return cards != null and cards.is_curse(id)
+
+
+func _cards_config() -> SkillConfig:
+	if cards_config != null:
+		return cards_config
+	if _shared_cards == null:
+		_shared_cards = SkillConfig.load_from_file()
+	return _shared_cards
 
 
 ## id -> highest copy level in the deck.
@@ -398,6 +453,97 @@ func clear_pending_reward() -> void:
 ## True while an offer waits for a pick.
 func has_pending_reward() -> bool:
 	return not pending_reward.is_empty()
+
+
+## Story 033: adds [param n] gold (a non-positive [param n] changes nothing). Returns the new total.
+func add_gold(n: int) -> int:
+	if n > 0:
+		gold += n
+	return gold
+
+
+## Story 033: spends [param n] gold. False (nothing changes) when the run has less than [param n]; gold never
+## goes below 0. A non-positive [param n] spends nothing and returns true.
+func spend_gold(n: int) -> bool:
+	if n <= 0:
+		return true
+	if gold < n:
+		return false
+	gold -= n
+	return true
+
+
+## Story 033: adds a run modifier {id, matches_left, params}. False (no change, warning) with an empty id or
+## `matches_left` < 1; the entry is stored as a deep copy (`matches_left` int, `params` object).
+func add_run_modifier(mod: Dictionary) -> bool:
+	var id: String = str(mod.get("id", ""))
+	var left: int = int(mod.get("matches_left", 0))
+	if id.is_empty() or left < 1:
+		push_warning("RunSession: run modifier '%s' with matches_left %d ignored" % [id, left])
+		return false
+	var params: Dictionary = {}
+	if typeof(mod.get("params")) == TYPE_DICTIONARY:
+		params = (mod["params"] as Dictionary).duplicate(true)
+	run_modifiers.append({"id": id, "matches_left": left, "params": params})
+	return true
+
+
+## Story 033: one match was played: every modifier loses 1 match; those that reach 0 are dropped. Returns
+## the ids that expired. Call once per match played (GameFlow does it when a match node closes).
+func tick_run_modifiers() -> Array[String]:
+	var expired: Array[String] = []
+	var kept: Array[Dictionary] = []
+	for m: Dictionary in run_modifiers:
+		m["matches_left"] = int(m["matches_left"]) - 1
+		if int(m["matches_left"]) <= 0:
+			expired.append(str(m["id"]))
+		else:
+			kept.append(m)
+	run_modifiers = kept
+	return expired
+
+
+## Story 033: true while a modifier of [param id] is active.
+func has_run_modifier(id: String) -> bool:
+	for m: Dictionary in run_modifiers:
+		if str(m["id"]) == id:
+			return true
+	return false
+
+
+## Story 033: the active modifiers' override of config [param key] folded like RelicRegistry.merge_overrides:
+## {add: sum, mul: product[, set: last]}; {} when no active modifier touches [param key]. Apply it with
+## RelicRegistry.apply_override(base, {key: result}, key). Key in use: `step_cooldown` (the player's step
+## cooldown, `{mul: 1.2}` = 20 % slower).
+func active_modifier_params(key: String) -> Dictionary:
+	var slot: Dictionary = {}
+	for m: Dictionary in run_modifiers:
+		var entry: Variant = (m["params"] as Dictionary).get(key)
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		if slot.is_empty():
+			slot = {"add": 0.0, "mul": 1.0}
+		slot["add"] = float(slot["add"]) + float((entry as Dictionary).get("add", 0.0))
+		slot["mul"] = float(slot["mul"]) * float((entry as Dictionary).get("mul", 1.0))
+		if (entry as Dictionary).has("set"):
+			slot["set"] = float((entry as Dictionary)["set"])
+	return slot
+
+
+## Story 033: the whole override table of the active modifiers: key -> [method active_modifier_params] (the
+## `merge_overrides` form; what GameFlow / RunController hand to the match as `run_modifiers`).
+func run_modifier_overrides() -> Dictionary:
+	var keys: Array[String] = []
+	for m: Dictionary in run_modifiers:
+		for k: Variant in (m["params"] as Dictionary).keys():
+			if not keys.has(str(k)):
+				keys.append(str(k))
+	var out: Dictionary = {}
+	for k: String in keys:
+		var slot: Dictionary = active_modifier_params(k)
+		if not slot.is_empty():
+			out[k] = slot
+	return out
 
 
 ## Story 032: adds relic [param id] (received order). False (no change) for a duplicate or an id unknown
@@ -466,8 +612,9 @@ func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 ## Save form (v5, Story 031): {version, character, floor, region, region_offer, region_path, map,
 ## column, node_index, cleared_nodes, nodes_cleared, last_node_kind, last_floor_heal, hp,
 ## deck [{id, level}], run_seed, elapsed, pending_reward, revives, removal_tokens,
-## cleared_bosses_this_run, won, relics [id], pending_relic_offer [id]} (the last two are optional:
-## Story 032 added them without a version bump, a save lacking them loads with no relics).
+## cleared_bosses_this_run, won, relics [id], pending_relic_offer [id], gold, run_modifiers [{id,
+## matches_left, params}], shop_state {}, event_state {}} (relics..event_state are optional: Stories 032 / 033
+## added them without a version bump; a save lacking them loads with no relics, `starting_gold`, [], {}, {}).
 ## A [member needs_restart] session saves only
 ## {version, character, needs_restart, restart_reason, map: []}.
 func to_dict() -> Dictionary:
@@ -485,6 +632,9 @@ func to_dict() -> Dictionary:
 		"removal_tokens": removal_tokens, "cleared_bosses_this_run": cleared_bosses_this_run,
 		"won": _won, "relics": relics.duplicate(),
 		"pending_relic_offer": pending_relic_offer.duplicate(),
+		"gold": gold, "run_modifiers": run_modifiers.duplicate(true),
+		"shop_state": shop_state.duplicate(true), "event_state": event_state.duplicate(true),
+		"last_gold_gain": last_gold_gain,
 	}
 
 
@@ -552,6 +702,12 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s.pending_reward = _known_ids(d.get("pending_reward", []), cards)
 	s.relics = _known_relics(d.get("relics", []), true)
 	s.pending_relic_offer = _known_relics(d.get("pending_relic_offer", []), false)
+	s.gold = maxi(int(d.get("gold", EconomyConfig.shared().starting_gold())), 0)
+	s.run_modifiers = _clean_modifiers(d.get("run_modifiers", []))
+	s.shop_state = (d["shop_state"] as Dictionary).duplicate(true) if typeof(d.get("shop_state")) == TYPE_DICTIONARY else {}
+	s.event_state = (d["event_state"] as Dictionary).duplicate(true) if typeof(d.get("event_state")) == TYPE_DICTIONARY else {}
+	s.last_gold_gain = maxi(int(d.get("last_gold_gain", 0)), 0)
+	s.cards_config = cards
 	if s.character_id.is_empty() or s.deck.is_empty():
 		push_warning("RunSession: no character or empty deck, run dropped")
 		return null
@@ -590,6 +746,25 @@ static func _clean_map(raw: Variant) -> Array[Dictionary]:
 		if nodes.is_empty():
 			return [] as Array[Dictionary]
 		out.append({"index": int((c as Dictionary).get("index", out.size())), "tier": int((c as Dictionary).get("tier", 0)), "nodes": nodes})
+	return out
+
+
+# Story 033: run modifiers from a save (JSON numbers are floats): entries with an id and matches_left >= 1.
+static func _clean_modifiers(raw: Variant) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw as Array:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var id: String = str((entry as Dictionary).get("id", ""))
+		var left: int = int((entry as Dictionary).get("matches_left", 0))
+		if id.is_empty() or left < 1:
+			continue
+		var params: Dictionary = {}
+		if typeof((entry as Dictionary).get("params")) == TYPE_DICTIONARY:
+			params = ((entry as Dictionary)["params"] as Dictionary).duplicate(true)
+		out.append({"id": id, "matches_left": left, "params": params})
 	return out
 
 

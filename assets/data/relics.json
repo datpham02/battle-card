@@ -3,6 +3,8 @@
   "rarity_weights": { "common": 60, "rare": 30, "epic": 10 },
   "source_rules": {
     "treasure": { "count": 3, "min_rarity": "common" },
+    "shop": { "count": 2, "min_rarity": "common" },
+    "event": { "count": 1, "min_rarity": "common" },
     "boss_kill": { "count": 1, "tiers": ["boss", "epic"] }
   },
   "relics": [

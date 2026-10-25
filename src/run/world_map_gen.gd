@@ -58,6 +58,25 @@ static func region_map_seed(run_seed: int, region_id: String, floor: int) -> int
 	return hash([run_seed, region_id, floor]) & SEED_MASK
 
 
+## Story 033: the run's SHOP PLAN: [param count] distinct 0-based floors (of [param floors]) whose region map
+## must hold a shop, drawn from the floors >= [param min_floor] (1-based number of the first eligible floor)
+## by hash([run_seed, "shop_floors"]), sorted ascending. Fewer eligible floors than [param count] gives all of
+## them. This is the run-level rule "at least 2 shops per run on two different floors": the flow asks
+## [method ChaptersConfig.shop_floors], and [method ChaptersConfig.generate_region_map] makes a shop certain on
+## those floors. Same inputs -> same plan.
+static func shop_floors(run_seed: int, floors: int, count: int, min_floor: int = 1) -> Array[int]:
+	var eligible: Array[int] = []
+	for f: int in range(maxi(min_floor - 1, 0), maxi(floors, 0)):
+		eligible.append(f)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([run_seed, "shop_floors"]) & SEED_MASK
+	var plan: Array[int] = []
+	while plan.size() < count and not eligible.is_empty():
+		plan.append(eligible.pop_at(rng.randi_range(0, eligible.size() - 1)))
+	plan.sort()
+	return plan
+
+
 static func _key_less(a: Array, b: Array) -> bool:
 	for i: int in a.size():
 		if int(a[i]) != int(b[i]):

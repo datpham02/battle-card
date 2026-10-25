@@ -146,7 +146,8 @@ func _init() -> void:
 	ck("clear() wipes Ran/Han", fx11.fragile_stacks(E) == 0 and fx11.frost_stacks(E) == 0)
 	# --- cards.json data checks
 	var real: SkillConfig = SkillConfig.load_from_file()
-	ck("pool >= 24 (%d)" % real.cards.size(), real.cards.size() >= 24 and real.card_order.size() == real.cards.size())
+	# Story 033: card_order is every card except the curses (never in a pool).
+	ck("pool >= 24 (%d)" % real.card_order.size(), real.card_order.size() >= 24 and real.card_order.size() == real.cards.size() - real.curse_ids().size())
 	var over: Array = []
 	var by_kw: Dictionary = {"pin": 0, "burn": 0, "fragile": 0, "frost": 0}
 	for id: String in real.cards:

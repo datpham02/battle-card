@@ -258,6 +258,59 @@ $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds
 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --relics=an_don --relic-set=an_don.mult:1.6
 ```
 
+## deck_sim `--world` economy (Story 033): gold, shops, events, curses
+
+World mode mirrors GameFlow's Story 033 economy. Chapter mode does not.
+
+- **Gold.** Every won match node, the final match included, and every treasure node drops
+  `EconomyConfig.gold_for(kind, floor, hash([run_seed, floor, column, node_index, "gold"]))`, the same
+  call GameFlow makes. A run starts with `starting_gold`.
+- **Shop and event nodes** go through the real `ShopLogic` (`build`, `buy`, `use_service`) and
+  `EventLogic` (`pick_event`, `describe`, `resolve`, `complete_pick`, `finish_fight`). Both take a
+  `RunSession` built from the sim's `WorldRun` (`_session_of`), and the results are copied back.
+- **Event fight.** `tran_thach`'s extra fight is a real sim match. It is drawn as in
+  `GameFlow._start_event_fight`: kind `danger`, column tier + `tier_add`, from the region pool. A loss
+  ends the run with death kind `event_fight`. A win ticks the run modifiers, carries HP and passive
+  heal, and applies the prize.
+- **Curses** are dealt into the bot's card menu by `Deck.draw_menu` with the safety rule, as in
+  CombatView. A curse takes a slot and the bot cannot pick it. *Oán Hồn*'s `draw_damage` hurts on
+  each draw.
+- **Run modifiers.** The run's modifiers reach `sim_core.run_modifiers`, which applies them to the
+  player's step cooldown as CombatView does (`loi_the`: ×1.2 for 2 matches). They tick after every
+  won match.
+
+Node choice: rest (HP < 50 %) > treasure > shop (greedy, gold ≥ 60) > event (risky) > the Story 022
+order. With `none` / `leave` the bot only enters a shop or event node when the column has nothing
+else, and walks past it.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--shop-policy=greedy\|eager\|none` | greedy | `eager`: same purchases as `greedy`, but on the map a shop beats a treasure once the bot holds the shop minimum gold (`greedy` takes the treasure first). `greedy`: below 50 % HP buy the heal service, then the most expensive relic you can afford (repeat), then the cards the build policy picks from the affordable stock (repeat). The remove-card service is not used. `none`: walk past. |
+| `--event-policy=risky\|leave` | risky | `risky`: above 60 % HP take the first enabled choice that is not a pure heal; otherwise take a pure heal choice (`suoi_tinh` drink) if there is one; otherwise Rời đi. Card offers use the build pick (first card if no rule fires). An upgrade goes to the Rèn target. A removal takes a curse first. `leave`: always the last choice. |
+| `--economy-set=key:value,...` | none | Overrides economy.json in memory; the file is never written. The key is a dotted path (`gold_drops.battle`, `shop.relic_prices.common`, `gold_floor_mult`); a last part of `*` means every key of that object. The value is a number, `xF` (multiply a number or every element of an array), or `a/b/c` (an array). |
+
+Extra output per character × policy:
+
+- **`WORLD ECONOMY`**: gold earned per run (drops + event gold, median and P10–P90), for all runs and
+  for won runs; event gold in and lost; gold spent at shops; gold left at the end, for all runs and
+  for won runs; shops per run; items per shop and per first shop; items per run; relics, cards and
+  heals bought. It also shows the gold in hand at the first column that offers a shop (entered or
+  not), and the % of runs that can buy that shop's cheapest item there.
+- **`WORLD EVENTS`**: events per run; non-leave choices; `tran_thach` extra fights, the deaths in them
+  and the death %; curses picked up; curse draws and damage; matches slowed by `loi_the`; a count per
+  `event/choice`.
+- **`ECONOMY RAW`**: one `earned|spent|left|won|items|first_shop_items|seen_shop_gold` cell per run.
+- **`ECONOMY TARGETS`**: the Story 033 Part A checks as observations: earned 350–450, items 4–6,
+  median gold left on won runs < 100, and the first offered shop affordable for at least 50 % of runs.
+
+```bash
+# Story 033: with vs without shops and events (70 seeds per character)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si --relic-policy=pick --shop-policy=greedy --event-policy=risky
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si --relic-policy=pick --shop-policy=none --event-policy=leave
+# Confirm a proposed economy number in memory
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --relic-policy=pick --economy-set=gold_drops.*:x1.2,shop.relic_prices.common:65
+```
+
 ## hit_probe flags and output
 
 | Flag | Default | Meaning |

@@ -73,6 +73,9 @@ const BUTTON_FONT_SIZE: int = 24
 const BACK_MIN_FONT_SIZE: int = 14
 const BACK_TEXT_INSET: float = 6.0
 const ENTER_FONT_SIZE: int = 36
+## Story 033: the gold count left of the hero label (font size; gap in px).
+const GOLD_FONT_SIZE: int = 26
+const GOLD_GAP: float = 20.0
 const NOTICE_FONT_SIZE: int = 30
 const NOTICE_SUB_FONT_SIZE: int = 22
 ## The description may wrap to this many lines inside the card before it is cut.
@@ -316,6 +319,9 @@ func _draw_header(vp: Vector2) -> void:
 	var label: String = tr(str(character.get("name_key", run.character_id))) + SEPARATOR + tr(TEXT_HP) % [ceili(hp), ceili(max_hp)]
 	var rect: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
 	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + HEADER_FONT_SIZE * 0.35), label, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x, HEADER_FONT_SIZE, HEADER_COLOR)
+	# Story 033: the gold count (code-drawn coin + number) left of the hero label.
+	var label_width: float = ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, HEADER_FONT_SIZE).x
+	ShopView.draw_gold(self, rect.end.x - label_width - GOLD_GAP, rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
 
 
 # Progress strip: one segment per floor, then the final match.

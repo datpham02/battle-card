@@ -256,6 +256,13 @@ const TEXT_CELLS: String = "ui.hud.cells"
 const TEXT_DAMAGE: String = "ui.hud.damage"
 const TEXT_NEED_CELLS: String = "ui.hud.need_cells"
 const TEXT_NOT_IMPLEMENTED: String = "ui.hud.not_implemented"
+## Story 033: the note under a locked curse card in the card menu.
+const TEXT_CURSE_LOCKED: String = "ui.hud.curse_locked"
+## Story 033: locked curse card look (purple border and tint, code-drawn padlock glyph).
+const CURSE_OUTLINE: Color = Color(0.62, 0.32, 0.85)
+const CURSE_BACK: Color = Color(0.22, 0.1, 0.3)
+const CURSE_LOCK_COLOR: Color = Color(0.85, 0.65, 1.0)
+const CURSE_LOCK_SIZE_RATIO: float = 0.3
 const TEXT_COOLDOWN: String = "ui.hud.cooldown"
 const TEXT_READY: String = "ui.hud.ready"
 const TEXT_SWING: String = "ui.hud.swing"
@@ -1787,13 +1794,29 @@ func _draw_menu(vp: Vector2) -> void:
 		var status: Dictionary = _skill_status(id, cell_count)
 		var available: bool = bool(status["available"])
 		var alpha: float = 1.0 if available else DIM_ALPHA
-		draw_rect(rect, Color(BUTTON_READY_BACK if available else BUTTON_BACK, alpha))
-		draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
+		var cursed: bool = config.is_curse(id)
+		if cursed:
+			draw_rect(rect, Color(CURSE_BACK, 0.9))
+			draw_rect(rect, CURSE_OUTLINE, false, OUTLINE_WIDTH)
+			_draw_lock_glyph(rect)
+		else:
+			draw_rect(rect, Color(BUTTON_READY_BACK if available else BUTTON_BACK, alpha))
+			draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
 		var name_rect := Rect2(rect.position, Vector2(rect.size.x, rect.size.y * 0.6))
 		var note_rect := Rect2(rect.position + Vector2(0.0, rect.size.y * 0.5), Vector2(rect.size.x, rect.size.y * 0.45))
 		var menu_name: String = _menu_skill_name(id)
 		_draw_centered(name_rect, menu_name, _fit_font_size(menu_name, name_rect.size.x - MENU_NAME_PAD * 2.0, BUTTON_FONT_SIZE), Color(TEXT_LIGHT, alpha))
 		_draw_centered(note_rect, str(status["text"]), SMALL_FONT_SIZE, Color(TEXT_LIGHT, alpha))
+
+
+# Story 033: a code-drawn padlock (body + shackle) in the top-right corner of a locked menu card.
+func _draw_lock_glyph(rect: Rect2) -> void:
+	var edge: float = minf(rect.size.x, rect.size.y) * CURSE_LOCK_SIZE_RATIO
+	var body := Rect2(rect.end.x - edge * 1.15, rect.position.y + edge * 0.45, edge * 0.8, edge * 0.6)
+	draw_rect(body, CURSE_LOCK_COLOR)
+	var center := Vector2(body.position.x + body.size.x * 0.5, body.position.y)
+	draw_arc(center, body.size.x * 0.28, PI, TAU, 12, CURSE_LOCK_COLOR, maxf(edge * 0.1, 2.0))
+	draw_rect(Rect2(center.x - 1.5, body.position.y + body.size.y * 0.3, 3.0, body.size.y * 0.35), CURSE_BACK)
 
 
 # {available, text}: "cần N ô" whenever the cut covers fewer cells than the skill needs (even
@@ -1803,7 +1826,9 @@ func _skill_status(id: String, cell_count: int) -> Dictionary:
 	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count, _combat.get_card_level(id))
 	var min_cells: int = int(check["need_cells"])
 	var text: String = tr(TEXT_READY)
-	if cell_count < min_cells:
+	if str(check["reason"]) == "curse":
+		text = tr(TEXT_CURSE_LOCKED)
+	elif cell_count < min_cells:
 		text = tr(TEXT_NEED_CELLS) % min_cells
 	elif str(check["reason"]) == "not_implemented":
 		text = tr(TEXT_NOT_IMPLEMENTED)

@@ -33,6 +33,8 @@ static func default_config() -> Dictionary:
 			"miniboss": {"offers": 3, "min_rarity": "rare", "free": false, "removal_token": false},
 			"boss": {"offers": 3, "min_rarity": "common", "free": false, "removal_token": true},
 			"rest": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false},
+			"shop": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false},
+			"event": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false},
 		},
 	}
 

@@ -36,6 +36,8 @@
 		"ket_gioi": {"name_key": "card.ket_gioi.name", "desc_key": "card.ket_gioi.desc", "effect": "seal", "seal_sec": 2.0, "min_cells": 2, "cooldown_sec": 5.0, "damage_per_cell": 0.0, "rarity": "common", "upgrade": {"cooldown_sec": -1.0}, "implemented": true},
 		"long_an": {"name_key": "card.long_an.name", "desc_key": "card.long_an.desc", "effect": "seal", "seal_sec": 2.0, "min_cells": 3, "cooldown_sec": 7.0, "damage_per_cell": 3.0, "rarity": "rare", "upgrade": {"damage_per_cell": 1.0}, "implemented": true},
 		"tran_gai": {"name_key": "card.tran_gai.name", "desc_key": "card.tran_gai.desc", "effect": "thorns", "min_cells": 3, "cooldown_sec": 6.0, "damage_per_cell": 0.0, "rarity": "common", "upgrade": {"cooldown_sec": -1.0}, "implemented": true},
-		"gai_nguyen": {"name_key": "card.gai_nguyen.name", "desc_key": "card.gai_nguyen.desc", "effect": "thorns", "min_cells": 4, "cooldown_sec": 8.0, "damage_per_cell": 0.0, "thorn_fragile_stacks": 2, "rarity": "rare", "upgrade": {"min_cells": -1}, "implemented": true}
+		"gai_nguyen": {"name_key": "card.gai_nguyen.name", "desc_key": "card.gai_nguyen.desc", "effect": "thorns", "min_cells": 4, "cooldown_sec": 8.0, "damage_per_cell": 0.0, "thorn_fragile_stacks": 2, "rarity": "rare", "upgrade": {"min_cells": -1}, "implemented": true},
+		"ganh_nang": {"name_key": "card.ganh_nang.name", "desc_key": "card.ganh_nang.desc", "effect": "damage", "min_cells": 1, "cooldown_sec": 0.0, "damage_per_cell": 0.0, "rarity": "curse", "implemented": true},
+		"oan_hon": {"name_key": "card.oan_hon.name", "desc_key": "card.oan_hon.desc", "effect": "damage", "min_cells": 1, "cooldown_sec": 0.0, "damage_per_cell": 0.0, "rarity": "curse", "draw_damage": 2.0, "implemented": true}
 	}
 }

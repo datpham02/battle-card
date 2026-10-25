@@ -110,7 +110,14 @@ func _initialize() -> void:
 	_check(one_left == ["tam_hop"], "boss_kill: the remaining boss relic")
 	var drained: Array[String] = RelicRoller.roll("boss_kill", cfg.ids(), _rng(5), cfg, 1)
 	_check(drained.is_empty(), "boss_kill: nothing left -> empty")
-	_check(RelicRoller.roll("shop", none, _rng(1), cfg).is_empty(), "unknown source -> empty (warning)")
+	# Story 033: "shop" / "event" are real sources now (treasure-like draw); an unknown one still gives nothing.
+	_check(RelicRoller.roll("nowhere", none, _rng(1), cfg).is_empty(), "unknown source -> empty (warning)")
+	_check(RelicRoller.roll("shop", none, _rng(1), cfg, 2).size() == 2, "shop source: a treasure-like draw of count")
+	var rare_up: bool = true
+	for s: int in 30:
+		for id: String in RelicRoller.roll("event", none, _rng(s), cfg, 1, "rare"):
+			rare_up = rare_up and RelicConfig.rarity_rank(str(cfg.get_relic(id)["rarity"])) >= RelicConfig.rarity_rank("rare")
+	_check(rare_up, "min_rarity argument raises the floor (event, rare)")
 	_check(RelicRoller.roll("treasure", none, null, cfg) == RelicRoller.roll("treasure", none, null, cfg), "null rng: fixed seed 0, deterministic")
 	_check(RelicRoller.roll("treasure", none, _rng(1), cfg, 0).is_empty(), "count 0 -> empty")
 	print("FAILS=%d" % _fails)

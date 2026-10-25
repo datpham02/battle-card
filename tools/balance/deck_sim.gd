@@ -27,6 +27,12 @@ extends SceneTree
 ## an empty relic row falls back to the card row. Default --relic-policy=none (card row only).
 ## Tool code only (not game code, not in the test suite). Flags and output: tools/balance/README.md.
 ## Usage: godot --headless --path . -s res://tools/balance/deck_sim.gd -- --seeds=70 --chapters=0,1,2 --policies=build
+## Story 033 economy (world mode): every won match node and every treasure drops gold through EconomyConfig
+## exactly like GameFlow._drop_gold (kind, floor, seed hash([run_seed, floor, column, node_index, "gold"]));
+## --shop-policy=greedy|none and --event-policy=risky|leave drive the SHOP / EVENT nodes through ShopLogic /
+## EventLogic on a RunSession proxy of the WorldRun (see _session_of). Curse cards are dealt and hurt in
+## sim_core like CombatView; run modifiers (loi_the) reach sim_core.run_modifiers. --economy-set=key:value
+## overrides economy.json in memory (README).
 ##        godot --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si
 
 const SimCore = preload("res://tools/balance/sim_core.gd")
@@ -64,6 +70,23 @@ const DEFAULT_NODE_OVERHEAD_SEC: float = 25.0
 ## Story 032 treasure policies (see the header).
 const RELIC_POLICIES: Array[String] = ["none", "pick"]
 const RELIC_SEED_TAG: String = "relic"
+## Story 033 shop / event policies (see the header and README) and the bot's thresholds.
+const SHOP_POLICIES: Array[String] = ["greedy", "eager", "none"]
+const EVENT_POLICIES: Array[String] = ["risky", "leave"]
+## greedy: the bot walks into a shop node only with at least this much gold.
+const SHOP_MIN_GOLD: int = 60
+## greedy: the heal service is bought below this share of max HP.
+const SHOP_HEAL_BELOW: float = 0.5
+## risky: above this share of max HP the first enabled non-heal choice is taken; at or below it a pure
+## heal choice (suoi_tinh "drink") when there is one, else the last choice (Rời đi).
+const EVENT_RISKY_ABOVE: float = 0.6
+## Seed salts of GameFlow (GOLD_SEED_TAG, EVENT_FIGHT_SEED_TAG).
+const GOLD_SEED_TAG: String = "gold"
+const EVENT_FIGHT_SEED_TAG: String = "event_fight"
+## Story 033 Part A targets (simulation-checked starting numbers).
+const ECON_EARNED_TARGET: Array = [350.0, 450.0]
+const ECON_ITEMS_TARGET: Array = [4.0, 6.0]
+const ECON_LEFT_WON_MAX: float = 100.0
 const REGION_PICKS: Array[String] = ["random", "first"]
 ## Story 031 targets (Part F), build policy.
 const WORLD_MINUTES_TARGET: Array = [40.0, 50.0]
@@ -107,6 +130,11 @@ var _node_overhead: float = DEFAULT_NODE_OVERHEAD_SEC
 var _world_set: Array[String] = []
 var _policies_given: bool = false
 var _relic_policy: String = "none"
+# Story 033 economy.
+var _shop_policy: String = "greedy"
+var _event_policy: String = "risky"
+var _economy_set: Array[String] = []
+var _economy: EconomyConfig
 
 
 ## Story 031 world mode: a run's state (the parts of RunSession the bot and the reward policy read), so the
@@ -126,6 +154,10 @@ class WorldRun:
 	var cleared_nodes: Array = []
 	## Story 032: owned relic ids in received order.
 	var relics: Array[String] = []
+	## Story 033: gold, active run modifiers ({id, matches_left, params}), event ids seen this run.
+	var gold: int = 0
+	var run_modifiers: Array[Dictionary] = []
+	var event_used: Array = []
 
 	func luck(config: Dictionary = {}) -> float:
 		return float(config.get("luck_start", 0.0)) + float(config.get("luck_per_node", 1.0)) * float(nodes_cleared)
@@ -223,6 +255,20 @@ func _init() -> void:
 				_relic_policy = v.strip_edges()
 			else:
 				print("--relic-policy: '%s' unknown, using %s (one of %s)" % [v, _relic_policy, str(RELIC_POLICIES)])
+		elif arg.begins_with("--shop-policy="):
+			if SHOP_POLICIES.has(v.strip_edges()):
+				_shop_policy = v.strip_edges()
+			else:
+				print("--shop-policy: '%s' unknown, using %s (one of %s)" % [v, _shop_policy, str(SHOP_POLICIES)])
+		elif arg.begins_with("--event-policy="):
+			if EVENT_POLICIES.has(v.strip_edges()):
+				_event_policy = v.strip_edges()
+			else:
+				print("--event-policy: '%s' unknown, using %s (one of %s)" % [v, _event_policy, str(EVENT_POLICIES)])
+		elif arg.begins_with("--economy-set="):
+			for item: String in arg.trim_prefix("--economy-set=").split(","):
+				if not item.strip_edges().is_empty():
+					_economy_set.append(item.strip_edges())
 		elif arg.begins_with("--trace="):
 			if v.is_valid_int():
 				_trace_n = int(v)
@@ -233,6 +279,7 @@ func _init() -> void:
 	_core.load_configs()
 	_chapters = ChaptersConfig.load_from_file() if _world_set.is_empty() else _chapters_with_overrides(_world_set)
 	_reward_config = RewardRoller.load_config()
+	_economy = EconomyConfig.shared() if _economy_set.is_empty() else _economy_with_overrides(_economy_set)
 	_max_level = int(_reward_config["max_card_level"])
 	_min_deck_size = int(_reward_config["min_deck_size"])
 	if _world:
@@ -787,6 +834,9 @@ func _run_world_mode(seeds: int) -> void:
 	print(_core.describe())
 	print("relics: start=%s relic-policy=%s (pick = relic row over card row at treasure, rarest first; damage cap %.1f)" % [
 		",".join(PackedStringArray(_core.ov["relics"])) if not (_core.ov["relics"] as Array).is_empty() else "none", _relic_policy, _core.relic_config.relic_damage_mult_cap])
+	print("economy (Story 033): shop-policy=%s event-policy=%s economy-set=%s | start gold %d | shop entered with >= %d gold; greedy = heal below %.0f%% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above %.0f%% HP, else a pure heal choice, else Rời đi" % [
+		_shop_policy, _event_policy, ",".join(PackedStringArray(_economy_set)) if not _economy_set.is_empty() else "none",
+		_economy.starting_gold(), SHOP_MIN_GOLD, 100.0 * SHOP_HEAL_BELOW, 100.0 * EVENT_RISKY_ABOVE])
 	print("world: floors=%d choices=%d pool=%s columns=%d heal=%.2f final=%s tiers=%s" % [floors, int(w["choices_per_floor"]),
 		str(w["region_pool"]), (w["region_columns"] as Array).size(), _chapters.floor_heal_ratio(), str(_chapters.final_match()), str(w["floor_tiers"])])
 	for f: int in floors + 1:
@@ -903,6 +953,7 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 		dk_cells.append("%s=%d" % [k, int(deaths_kind[k])])
 	print("WORLD DEATHS BY FLOOR/KIND %s: %s" % [char_id, ", ".join(PackedStringArray(dk_cells))])
 	_world_relic_report(char_id, policy, runs)
+	_world_economy_report(char_id, policy, runs)
 	var t_win: Array = WORLD_WIN_TARGET.get(char_id, [20.0, 40.0])
 	var win_ok: bool = win_pct >= float(t_win[0]) and win_pct <= float(t_win[1])
 	var min_mean: float = _mean(won_min)
@@ -976,6 +1027,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 	w.run_seed = seed_value
 	w.removal_tokens = int(_reward_config.get("starting_removals", 0))
 	w.relics.assign(_core.ov["relics"] as Array)
+	w.gold = _economy.starting_gold()
 	for id: Variant in character.get("starter_deck", []) as Array:
 		w.deck.append({"id": str(id), "level": 1})
 	var bot_rng := RandomNumberGenerator.new()
@@ -985,7 +1037,14 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 	pick_rng.seed = hash([seed_value, "region_pick"]) & SEED_MASK
 	var out: Dictionary = {"won": false, "death_floor": -1, "death_kind": "", "floors_cleared": 0, "path": [], "hits": 0.0,
 		"matches": 0.0, "nodes": 0.0, "real_sec": 0.0, "sim_sec": 0.0, "timeouts": 0.0, "hp_in": [], "hp_out": [],
-		"rest_heal": 0.0, "rest_forge": 0.0, "treasure": 0.0, "tokens": 0.0, "zpicks": 0.0, "relic_trig": {}}
+		"rest_heal": 0.0, "rest_forge": 0.0, "treasure": 0.0, "tokens": 0.0, "zpicks": 0.0, "relic_trig": {},
+		# Story 033 economy.
+		"gold_drop": 0.0, "gold_event_in": 0.0, "gold_event_out": 0.0, "gold_spent": 0.0, "gold_left": 0.0,
+		"shops": 0.0, "shop_items": [], "first_shop_items": -1.0, "first_shop_gold": -1.0,
+		"seen_shop_gold": -1.0, "seen_shop_afford": -1.0, "seen_shop_floor": -1.0,
+		"relics_bought": 0.0, "cards_bought": 0.0, "heals_bought": 0.0,
+		"events": 0.0, "event_risky": 0.0, "event_picks": {}, "tt_fights": 0.0, "tt_deaths": 0.0,
+		"curses": 0.0, "curse_draws": 0.0, "curse_dmg": 0.0, "mod_matches": 0.0}
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", 2))
 	var path: Array[String] = []
 	var lost: bool = false
@@ -1018,9 +1077,22 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				nodes.append(nd)
 			if nodes.is_empty():
 				continue
+			_note_first_shop(nodes, w, out)
 			var node: Dictionary = _world_choose_node(nodes, w, max_hp)
 			var kind: String = str(node.get("kind", ""))
 			out["nodes"] = float(out["nodes"]) + 1.0
+			if kind == ChapterMapGen.KIND_SHOP:
+				_visit_shop(w, int(node["node_index"]), policy, max_hp, out)
+				w.nodes_cleared += 1
+				continue
+			if kind == ChapterMapGen.KIND_EVENT:
+				if not _visit_event(w, int(node["node_index"]), int(map[col].get("tier", 0)), max_hp, character, bot_rng, out):
+					lost = true
+					out["death_floor"] = f
+					out["death_kind"] = "event_fight"
+					break
+				w.nodes_cleared += 1
+				continue
 			if kind == ChapterMapGen.KIND_REST:
 				var forge_index: int = _forge_index(w)
 				if _hp_ratio(w, max_hp) < REST_HEAL_BELOW or forge_index < 0:
@@ -1033,36 +1105,22 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				continue
 			if kind == ChapterMapGen.KIND_TREASURE:
 				out["treasure"] = float(out["treasure"]) + 1.0
+				_drop_gold(w, kind, int(node["node_index"]), out)
 				if not _take_relic(w.relics, policy, hash([seed_value, f, col, int(node["node_index"]), RELIC_SEED_TAG]) & SEED_MASK):
 					_apply_policy(w, policy, kind, out)
 				w.nodes_cleared += 1
 				continue
-			var run_config: RunConfig = RunConfig.from_node(_chapters, w.region_id, str(node.get("match_id", "")), kind, seed_value, f)
-			var m: Dictionary = _core.prepare_match(run_config.matches[0])
-			m["chapter_id"] = w.region_id
 			var match_seed: int = hash([seed_value, f, w.region_id, col, int(node["node_index"])]) & SEED_MASK
-			_core.invulnerable = false
-			_core.time_limit_sec = SimCore.MATCH_TIMEOUT_SEC
-			_core.trace = (_trace_n >= 0 and _matches_seen == _trace_n) or (not _trace_id.is_empty() and str(m.get("id", "")) == _trace_id)
-			if _core.trace and not _trace_id.is_empty():
-				_trace_id = ""
-			_matches_seen += 1
-			_core.relic_ids = w.relics.duplicate()
-			var r: Dictionary = _core.play_match(m, character, w.deck_entries(), w.hp, match_seed, bot_rng)
-			out["matches"] = float(out["matches"]) + 1.0
-			for rid: Variant in (r["relic_trig"] as Dictionary).keys():
-				out["relic_trig"][rid] = int((out["relic_trig"] as Dictionary).get(rid, 0)) + int(r["relic_trig"][rid])
-			out["hits"] = float(out["hits"]) + float(r["bhits"])
-			out["real_sec"] = float(out["real_sec"]) + float(r["real_sec"])
-			out["sim_sec"] = float(out["sim_sec"]) + float(r["sec"])
-			if bool(r["timeout"]):
-				out["timeouts"] = float(out["timeouts"]) + 1.0
+			var r: Dictionary = _world_match(w, kind, str(node.get("match_id", "")), match_seed, character, bot_rng, out)
 			if not bool(r["won"]):
 				lost = true
 				out["death_floor"] = f
 				out["death_kind"] = "final" if f == floors else kind
 				break
 			w.hp = minf(float(r["hp_end"]) + maxf(float(r["passive_heal"]), 0.0), max_hp)
+			# Story 033: GameFlow._complete_match_node = gold drop, then the run modifiers tick.
+			_drop_gold(w, kind, int(node["node_index"]), out)
+			_tick_modifiers(w)
 			w.nodes_cleared += 1
 			if kind == ChapterMapGen.KIND_BOSS:
 				w.removal_tokens += int(_reward_config.get("boss_removal_tokens", 1))
@@ -1078,6 +1136,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 	out["path"] = path
 	out["relics"] = w.relics.duplicate()
 	out["relic_n"] = w.relics.size()
+	out["gold_left"] = float(w.gold)
 	out["luck"] = w.luck(_reward_config)
 	out["minutes"] = (float(out["real_sec"]) + _node_overhead * float(out["nodes"])) / 60.0
 	out["size"] = w.deck.size()
@@ -1089,9 +1148,466 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 
 
 # Story 022 node policy plus Story 031's "take rest when HP < REST_HEAL_BELOW" (rest before treasure then).
+# Story 033: shop / event are treasure-level options: rest (HP low) > treasure > shop (greedy, gold >=
+# SHOP_MIN_GOLD) > event (risky) > the Story 022 order over the other nodes. With --shop-policy=none /
+# --event-policy=leave those nodes are only entered when the column has nothing else (walked past).
 func _world_choose_node(nodes: Array[Dictionary], w: WorldRun, max_hp: float) -> Dictionary:
 	if _hp_ratio(w, max_hp) < REST_HEAL_BELOW:
 		for n: Dictionary in nodes:
 			if str(n.get("kind", "")) == ChapterMapGen.KIND_REST:
 				return n
-	return _bot_choose_node(nodes, w, max_hp)
+	var by_kind: Dictionary = {}
+	var others: Array[Dictionary] = []
+	for n: Dictionary in nodes:
+		var k: String = str(n.get("kind", ""))
+		if not by_kind.has(k):
+			by_kind[k] = n
+		if k != ChapterMapGen.KIND_SHOP and k != ChapterMapGen.KIND_EVENT:
+			others.append(n)
+	# eager: a shop beats a treasure once the bot holds SHOP_MIN_GOLD (greedy takes the treasure first).
+	if _shop_policy == "eager" and by_kind.has(ChapterMapGen.KIND_SHOP) and w.gold >= SHOP_MIN_GOLD:
+		return by_kind[ChapterMapGen.KIND_SHOP]
+	if by_kind.has(ChapterMapGen.KIND_TREASURE) and not _no_treasure:
+		return by_kind[ChapterMapGen.KIND_TREASURE]
+	if _shop_policy == "greedy" and by_kind.has(ChapterMapGen.KIND_SHOP) and w.gold >= SHOP_MIN_GOLD:
+		return by_kind[ChapterMapGen.KIND_SHOP]
+	if _event_policy == "risky" and by_kind.has(ChapterMapGen.KIND_EVENT):
+		return by_kind[ChapterMapGen.KIND_EVENT]
+	if others.is_empty():
+		return nodes[0]
+	return _bot_choose_node(others, w, max_hp)
+
+
+# ---------------------------------------------------------------- Story 033 economy
+
+
+# Plays one match of the world run (a node's or an event's extra fight) with the run's relics and run
+# modifiers and adds its numbers to [param out]. Returns SimCore.play_match's result.
+func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, character: Dictionary,
+		bot_rng: RandomNumberGenerator, out: Dictionary) -> Dictionary:
+	var run_config: RunConfig = RunConfig.from_node(_chapters, w.region_id, match_id, kind, w.run_seed, w.floor)
+	var m: Dictionary = _core.prepare_match(run_config.matches[0])
+	m["chapter_id"] = w.region_id
+	_core.invulnerable = false
+	_core.time_limit_sec = SimCore.MATCH_TIMEOUT_SEC
+	_core.trace = (_trace_n >= 0 and _matches_seen == _trace_n) or (not _trace_id.is_empty() and str(m.get("id", "")) == _trace_id)
+	if _core.trace and not _trace_id.is_empty():
+		_trace_id = ""
+	_matches_seen += 1
+	_core.relic_ids = w.relics.duplicate()
+	_core.run_modifiers = _session_of(w, 0).run_modifier_overrides()
+	if not _core.run_modifiers.is_empty():
+		out["mod_matches"] = float(out["mod_matches"]) + 1.0
+	var r: Dictionary = _core.play_match(m, character, w.deck_entries(), w.hp, match_seed, bot_rng)
+	_core.run_modifiers = {}
+	out["matches"] = float(out["matches"]) + 1.0
+	for rid: Variant in (r["relic_trig"] as Dictionary).keys():
+		out["relic_trig"][rid] = int((out["relic_trig"] as Dictionary).get(rid, 0)) + int(r["relic_trig"][rid])
+	out["hits"] = float(out["hits"]) + float(r["bhits"])
+	out["real_sec"] = float(out["real_sec"]) + float(r["real_sec"])
+	out["sim_sec"] = float(out["sim_sec"]) + float(r["sec"])
+	out["curse_draws"] = float(out["curse_draws"]) + float(r.get("curse_draws", 0))
+	out["curse_dmg"] = float(out["curse_dmg"]) + float(r.get("curse_dmg", 0.0))
+	if bool(r["timeout"]):
+		out["timeouts"] = float(out["timeouts"]) + 1.0
+	return r
+
+
+# A RunSession carrying the WorldRun's state for ShopLogic / EventLogic (arrays are shared, scalars copied;
+# [method _sync_back] copies everything back). [param node_index] = the node being visited.
+func _session_of(w: WorldRun, node_index: int) -> RunSession:
+	var rs := RunSession.new()
+	rs.run_seed = w.run_seed
+	rs.floor = w.floor
+	rs.region_id = w.region_id
+	rs.chapter_index = w.chapter_index
+	rs.column = w.column
+	rs.node_index = node_index
+	rs.nodes_cleared = w.nodes_cleared
+	rs.hp = w.hp
+	rs.deck = w.deck
+	rs.relics = w.relics
+	rs.gold = w.gold
+	rs.removal_tokens = w.removal_tokens
+	rs.run_modifiers = w.run_modifiers
+	rs.cards_config = _core.cards
+	return rs
+
+
+func _sync_back(rs: RunSession, w: WorldRun) -> void:
+	w.hp = rs.hp
+	w.deck = rs.deck
+	w.relics = rs.relics
+	w.gold = rs.gold
+	w.removal_tokens = rs.removal_tokens
+	w.run_modifiers = rs.run_modifiers
+
+
+# GameFlow._drop_gold: EconomyConfig.gold_for(kind, floor, hash([run_seed, floor, column, node_index, "gold"])).
+func _drop_gold(w: WorldRun, kind: String, node_index: int, out: Dictionary) -> void:
+	var g: int = _economy.gold_for(kind, w.floor, hash([w.run_seed, w.floor, w.column, node_index, GOLD_SEED_TAG]) & SEED_MASK)
+	w.gold += g
+	out["gold_drop"] = float(out["gold_drop"]) + float(g)
+
+
+# One match was played (GameFlow: RunSession.tick_run_modifiers).
+func _tick_modifiers(w: WorldRun) -> void:
+	var rs: RunSession = _session_of(w, 0)
+	rs.tick_run_modifiers()
+	w.run_modifiers = rs.run_modifiers
+
+
+func _event_opts() -> Dictionary:
+	return {"cards": _core.cards, "reward_config": _reward_config, "relic_config": _core.relic_config}
+
+
+func _shop_state(w: WorldRun, node_index: int) -> Dictionary:
+	return ShopLogic.build(w.run_seed, w.floor, w.column, node_index, w.luck(_reward_config), w.relics,
+		_core.cards, _reward_config, _core.relic_config, _economy)
+
+
+# The first column of the run that OFFERS a shop (entered or not): the gold in hand and whether it buys
+# the cheapest card / relic of that shop's stock (the "can the average player afford 1 item" target).
+func _note_first_shop(nodes: Array[Dictionary], w: WorldRun, out: Dictionary) -> void:
+	if float(out["seen_shop_gold"]) >= 0.0:
+		return
+	for n: Dictionary in nodes:
+		if str(n.get("kind", "")) != ChapterMapGen.KIND_SHOP:
+			continue
+		var state: Dictionary = _shop_state(w, int(n["node_index"]))
+		var cheapest: int = 1 << 30
+		for row: Dictionary in (state["cards"] as Array) + (state["relics"] as Array):
+			cheapest = mini(cheapest, int(row["price"]))
+		out["seen_shop_gold"] = float(w.gold)
+		out["seen_shop_floor"] = float(w.floor)
+		out["seen_shop_afford"] = 1.0 if w.gold >= cheapest else 0.0
+		return
+
+
+# SHOP node. greedy: heal service below SHOP_HEAL_BELOW, then the dearest affordable relic (repeat), then
+# the cards the build policy's offer pickers want, while affordable. none: walks past.
+func _visit_shop(w: WorldRun, node_index: int, policy: String, max_hp: float, out: Dictionary) -> void:
+	var rs: RunSession = _session_of(w, node_index)
+	var state: Dictionary = _shop_state(w, node_index)
+	var gold_in: int = rs.gold
+	var bought: int = 0
+	if _shop_policy != "none" and policy != "always_skip":
+		if _hp_ratio(rs, max_hp) < SHOP_HEAL_BELOW:
+			if bool(ShopLogic.use_service(state, rs, ShopLogic.SERVICE_HEAL, max_hp, _core.cards)["ok"]):
+				bought += 1
+				out["heals_bought"] = float(out["heals_bought"]) + 1.0
+		while true:
+			var best_id: String = ""
+			var best_price: int = -1
+			for row: Dictionary in state["relics"] as Array:
+				if not bool(row["sold"]) and int(row["price"]) <= rs.gold and int(row["price"]) > best_price:
+					best_price = int(row["price"])
+					best_id = str(row["id"])
+			if best_id.is_empty() or not bool(ShopLogic.buy(state, rs, ShopLogic.KIND_RELIC, best_id)["ok"]):
+				break
+			bought += 1
+			out["relics_bought"] = float(out["relics_bought"]) + 1.0
+		while true:
+			var offer: Array[String] = []
+			for row: Dictionary in state["cards"] as Array:
+				if not bool(row["sold"]) and int(row["price"]) <= rs.gold:
+					offer.append(str(row["id"]))
+			var pick: String = _offer_pick(offer, rs, false)
+			if pick.is_empty() or not bool(ShopLogic.buy(state, rs, ShopLogic.KIND_CARD, pick)["ok"]):
+				break
+			bought += 1
+			out["cards_bought"] = float(out["cards_bought"]) + 1.0
+	_sync_back(rs, w)
+	out["gold_spent"] = float(out["gold_spent"]) + float(gold_in - w.gold)
+	out["shops"] = float(out["shops"]) + 1.0
+	(out["shop_items"] as Array).append(bought)
+	if float(out["first_shop_items"]) < 0.0:
+		out["first_shop_items"] = float(bought)
+		out["first_shop_gold"] = float(gold_in)
+
+
+# The card the build policy takes from [param offer] (upgrade > zone > new damage > keyword); "" = none.
+# [param must] = take the first card when no rule wants one (a paid-for event offer).
+func _offer_pick(offer: Array[String], session, must: bool) -> String:
+	if offer.is_empty():
+		return ""
+	var pick: String = _pick_upgrade(offer, session.deck_levels())
+	if pick.is_empty():
+		pick = _pick_zone(offer, session)
+	if pick.is_empty():
+		pick = _pick_new_damage(offer)
+	if pick.is_empty():
+		pick = _pick_keyword(offer, session)
+	if pick.is_empty() and must:
+		pick = offer[0]
+	return pick
+
+
+# EVENT node (GameFlow._open_event + event_choose + the extra fight + picks). False = died in the extra fight.
+func _visit_event(w: WorldRun, node_index: int, col_tier: int, max_hp: float, character: Dictionary,
+		bot_rng: RandomNumberGenerator, out: Dictionary) -> bool:
+	var opts: Dictionary = _event_opts()
+	var id: String = EventLogic.pick_event(w.run_seed, w.floor, w.column, node_index, w.event_used, opts)
+	if id.is_empty():
+		return true
+	if not w.event_used.has(id):
+		w.event_used.append(id)
+	out["events"] = float(out["events"]) + 1.0
+	var rs: RunSession = _session_of(w, node_index)
+	var view: Dictionary = EventLogic.describe(id, rs, max_hp, opts)
+	var choice: int = _event_choice(id, view, rs, max_hp, opts)
+	var choices: Array = view.get("choices", [])
+	var label: String = "%s/%s" % [id, str((choices[choice] as Dictionary).get("id", choice)) if choice >= 0 and choice < choices.size() else "?"]
+	out["event_picks"][label] = int((out["event_picks"] as Dictionary).get(label, 0)) + 1
+	if choice < choices.size() - 1:
+		out["event_risky"] = float(out["event_risky"]) + 1.0
+	var res: Dictionary = EventLogic.resolve(id, choice, rs, max_hp, opts)
+	if not bool(res.get("ok", false)):
+		_sync_back(rs, w)
+		return true
+	_event_effects(res, out)
+	_event_picks(res, rs, opts)
+	_sync_back(rs, w)
+	var fight: Dictionary = res.get("pending_fight", {})
+	if fight.is_empty():
+		return true
+	# GameFlow._start_event_fight: the fight's kind at the column tier + tier_add, drawn from the region pool.
+	out["tt_fights"] = float(out["tt_fights"]) + 1.0
+	var kind: String = str(fight.get("kind", ChapterMapGen.KIND_DANGER))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([w.run_seed, w.floor, w.column, node_index, EVENT_FIGHT_SEED_TAG]) & SEED_MASK
+	var used: Array[String] = []
+	var match_id: String = ChapterMapGen._draw_match(_chapters.region_spec(w.region_id, w.floor), kind,
+		col_tier + int(fight.get("tier_add", 0)), used, rng)
+	var match_seed: int = hash([w.run_seed, w.floor, w.region_id, w.column, node_index, EVENT_FIGHT_SEED_TAG]) & SEED_MASK
+	var r: Dictionary = _world_match(w, kind, match_id, match_seed, character, bot_rng, out)
+	if not bool(r["won"]):
+		out["tt_deaths"] = float(out["tt_deaths"]) + 1.0
+		return false
+	# GameFlow._finish_event_fight: modifiers tick, HP carries (+ passive heal), the prize is applied.
+	_tick_modifiers(w)
+	w.hp = minf(float(r["hp_end"]) + maxf(float(r["passive_heal"]), 0.0), max_hp)
+	rs = _session_of(w, node_index)
+	var won: Dictionary = EventLogic.finish_fight(rs, fight, true, max_hp, opts)
+	_event_effects(won, out)
+	_event_picks(won, rs, opts)
+	_sync_back(rs, w)
+	return true
+
+
+# --event-policy: leave = the last choice; risky = above EVENT_RISKY_ABOVE the first enabled choice that is
+# not a pure heal, else the first enabled pure heal choice, else the last (Rời đi).
+func _event_choice(id: String, view: Dictionary, rs: RunSession, max_hp: float, opts: Dictionary) -> int:
+	var choices: Array = view.get("choices", [])
+	var leave: int = choices.size() - 1
+	if _event_policy != "risky" or leave <= 0:
+		return leave
+	var raw: Array = EventLogic.get_event(id, opts).get("choices", [])
+	var high: bool = _hp_ratio(rs, max_hp) > EVENT_RISKY_ABOVE
+	for i: int in leave:
+		if not bool((choices[i] as Dictionary).get("enabled", false)) or i >= raw.size():
+			continue
+		if _is_pure_heal(raw[i] as Dictionary) != high:
+			return i
+	return leave
+
+
+func _is_pure_heal(choice: Dictionary) -> bool:
+	var any: bool = false
+	for outcome: Dictionary in choice.get("outcomes", []):
+		for effect: Dictionary in outcome.get("effects", []):
+			if str(effect.get("type", "")) != "hp" or float(effect.get("ratio", 0.0)) <= 0.0:
+				return false
+			any = true
+	return any
+
+
+func _event_effects(res: Dictionary, out: Dictionary) -> void:
+	for e: Dictionary in res.get("effects_applied", []):
+		match str(e.get("type", "")):
+			"gold":
+				var amount: int = int(e.get("amount", 0))
+				if amount >= 0:
+					out["gold_event_in"] = float(out["gold_event_in"]) + float(amount)
+				else:
+					out["gold_event_out"] = float(out["gold_event_out"]) - float(amount)
+			"curse":
+				out["curses"] = float(out["curses"]) + 1.0
+
+
+# Finishes the pending picks like a player of the build policy: card offer = the build pick (else the
+# first card), upgrade = the Rèn target (else the first upgradable), remove = a curse, else the weakest.
+func _event_picks(res: Dictionary, rs: RunSession, opts: Dictionary) -> void:
+	for pick: Dictionary in res.get("pending_picks", []):
+		match str(pick.get("type", "")):
+			"card_offer":
+				var ids: Array[String] = []
+				ids.assign(pick.get("ids", []) as Array)
+				EventLogic.complete_pick(rs, pick, _offer_pick(ids, rs, true), opts)
+			"upgrade_card":
+				var ok_idx: Array[int] = EventLogic.upgradable_indices(rs, opts)
+				var idx: int = _forge_index(rs)
+				if not ok_idx.has(idx):
+					idx = ok_idx[0] if not ok_idx.is_empty() else -1
+				if idx >= 0:
+					EventLogic.complete_pick(rs, pick, idx, opts)
+			"remove_card":
+				var target: int = -1
+				for i: int in rs.deck.size():
+					if _core.cards.is_curse(str(rs.deck[i]["id"])):
+						target = i
+						break
+				if target < 0:
+					target = _lowest_value_index(rs)
+				if target >= 0:
+					EventLogic.complete_pick(rs, pick, target, opts)
+
+
+# economy.json with --economy-set overrides, in memory. key = a dotted path (`gold_drops.battle`,
+# `shop.relic_prices.common`, `gold_floor_mult`); the last part may be `*` (every key of that object).
+# value = a number, `xF` (multiply the current number / every element of an array), or `a/b/c` (an array).
+func _economy_with_overrides(items: Array[String]) -> EconomyConfig:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(EconomyConfig.DEFAULT_PATH))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		print("--economy-set: economy.json did not parse, overrides ignored")
+		return EconomyConfig.shared()
+	var data: Dictionary = parsed as Dictionary
+	for item: String in items:
+		if not item.contains(":"):
+			print("--economy-set: '%s' is not key:value, ignored" % item)
+			continue
+		var key: String = item.get_slice(":", 0).strip_edges()
+		var text: String = item.get_slice(":", 1).strip_edges()
+		var parts: PackedStringArray = key.split(".")
+		var node: Variant = data
+		for i: int in parts.size() - 1:
+			node = (node as Dictionary).get(parts[i]) if typeof(node) == TYPE_DICTIONARY else null
+		if typeof(node) != TYPE_DICTIONARY:
+			print("--economy-set: unknown key '%s' ignored" % key)
+			continue
+		var last: String = parts[parts.size() - 1]
+		var targets: Array = (node as Dictionary).keys() if last == "*" else [last]
+		for k: Variant in targets:
+			if not (node as Dictionary).has(k):
+				print("--economy-set: unknown key '%s' ignored" % key)
+				continue
+			(node as Dictionary)[k] = _economy_value((node as Dictionary)[k], text)
+	print("economy-set result: %s" % JSON.stringify(data))
+	return EconomyConfig.from_dictionary(data)
+
+
+static func _economy_value(old: Variant, text: String) -> Variant:
+	var mul: bool = text.begins_with("x")
+	var f: float = float(text.substr(1)) if mul else 0.0
+	if typeof(old) == TYPE_ARRAY:
+		var out: Array = []
+		if mul:
+			for v: Variant in old as Array:
+				out.append(float(v) * f)
+		else:
+			for p: String in text.split("/"):
+				out.append(float(p))
+		return out
+	var value: float = float(old) * f if mul else float(text)
+	return roundi(value) if typeof(old) == TYPE_INT else value
+
+
+static func _pct(values: Array, p: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var s: Array = values.duplicate()
+	s.sort()
+	var pos: float = p * float(s.size() - 1)
+	var lo: int = floori(pos)
+	var hi: int = mini(lo + 1, s.size() - 1)
+	return lerpf(float(s[lo]), float(s[hi]), pos - float(lo))
+
+
+func _dist(values: Array) -> String:
+	if values.is_empty():
+		return "-"
+	return "%.0f (%.0f-%.0f)" % [_pct(values, 0.5), _pct(values, 0.1), _pct(values, 0.9)]
+
+
+func _world_economy_report(char_id: String, policy: String, runs: Array[Dictionary]) -> void:
+	var wins: Array[Dictionary] = []
+	for r: Dictionary in runs:
+		if bool(r["won"]):
+			wins.append(r)
+	var earned_all: Array = []
+	var earned_won: Array = []
+	var items_run: Array = []
+	var per_shop: Array = []
+	var first: Array = []
+	var seen_gold: Array = []
+	var afford: Array = []
+	var picks: Dictionary = {}
+	for r: Dictionary in runs:
+		var e: float = float(r["gold_drop"]) + float(r["gold_event_in"])
+		earned_all.append(e)
+		if bool(r["won"]):
+			earned_won.append(e)
+		var n_items: float = 0.0
+		for b: Variant in r["shop_items"] as Array:
+			per_shop.append(float(b))
+			n_items += float(b)
+		items_run.append(n_items)
+		if float(r["first_shop_items"]) >= 0.0:
+			first.append(float(r["first_shop_items"]))
+		if float(r["seen_shop_gold"]) >= 0.0:
+			seen_gold.append(float(r["seen_shop_gold"]))
+			afford.append(100.0 * float(r["seen_shop_afford"]))
+		for k: Variant in (r["event_picks"] as Dictionary).keys():
+			picks[k] = int(picks.get(k, 0)) + int(r["event_picks"][k])
+	var tt_n: float = _sum(_field(runs, "tt_fights"))
+	var tt_d: float = _sum(_field(runs, "tt_deaths"))
+	var left_won: Array = _field(wins, "gold_left")
+	print("")
+	print("WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |")
+	print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+	print("| %s | %s | %s | %s | %.1f | %s | %.0f | %s | %.0f / %.0f / %.0f | %s | %s | %s (%d) | %.2f | %.2f | %.2f (%d) | %.2f; %.2f | %.2f / %.2f / %.2f | %s (%d) | %.0f |" % [
+		char_id, policy, _shop_policy, _event_policy, 100.0 * wins.size() / maxf(float(runs.size()), 1.0),
+		_dist(earned_all), _mean(earned_all), _dist(earned_won),
+		_mean(_field(runs, "gold_drop")), _mean(_field(runs, "gold_event_in")), _mean(_field(runs, "gold_event_out")),
+		_dist(_field(runs, "gold_spent")), _dist(_field(runs, "gold_left")), _dist(left_won), left_won.size(),
+		_mean(_field(runs, "shops")), _mean(per_shop), _mean(first), first.size(), _mean(items_run), _mean(_field_items(wins)),
+		_mean(_field(runs, "relics_bought")), _mean(_field(runs, "cards_bought")), _mean(_field(runs, "heals_bought")),
+		_dist(seen_gold), seen_gold.size(), _mean(afford)])
+	var pick_cells: Array[String] = []
+	var keys: Array = picks.keys()
+	keys.sort()
+	for k: Variant in keys:
+		pick_cells.append("%s=%d" % [str(k), int(picks[k])])
+	print("WORLD EVENTS | %s | %s | events / run %.2f | non-leave choices / run %.2f | tran_thach extra fights %d, deaths %d (%.1f%%) | curses picked up / run %.2f | curse draws / run %.2f | curse dmg / run %.1f | matches slowed by loi_the / run %.2f | picks: %s" % [
+		char_id, policy, _mean(_field(runs, "events")), _mean(_field(runs, "event_risky")), int(tt_n), int(tt_d),
+		100.0 * tt_d / maxf(tt_n, 1.0), _mean(_field(runs, "curses")), _mean(_field(runs, "curse_draws")), _mean(_field(runs, "curse_dmg")),
+		_mean(_field(runs, "mod_matches")), ", ".join(PackedStringArray(pick_cells)) if not pick_cells.is_empty() else "none"])
+	print("ECONOMY RAW %s/%s: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = %s" % [char_id, policy,
+		" ".join(PackedStringArray(_raw_cells(runs)))])
+	print("ECONOMY TARGETS %s/%s (shop=%s event=%s): earned/run %.0f in %.0f-%.0f: %s | items/run %.2f in %.0f-%.0f: %s | median left WON < %.0f: %s | affords 1 item at first shop (median gold >= cheapest) %.0f%%: %s" % [
+		char_id, policy, _shop_policy, _event_policy, _mean(earned_all), ECON_EARNED_TARGET[0], ECON_EARNED_TARGET[1],
+		"PASS" if _mean(earned_all) >= ECON_EARNED_TARGET[0] and _mean(earned_all) <= ECON_EARNED_TARGET[1] else "MISS",
+		_mean(items_run), ECON_ITEMS_TARGET[0], ECON_ITEMS_TARGET[1],
+		"PASS" if _mean(items_run) >= ECON_ITEMS_TARGET[0] and _mean(items_run) <= ECON_ITEMS_TARGET[1] else "MISS",
+		ECON_LEFT_WON_MAX, ("PASS" if _pct(left_won, 0.5) < ECON_LEFT_WON_MAX else "MISS") if not left_won.is_empty() else "n/a (no wins)",
+		_mean(afford), "PASS" if _mean(afford) >= 50.0 else "MISS"])
+
+
+func _field_items(runs: Array) -> Array:
+	var out: Array = []
+	for r: Variant in runs:
+		var n: float = 0.0
+		for b: Variant in (r as Dictionary)["shop_items"] as Array:
+			n += float(b)
+		out.append(n)
+	return out
+
+
+func _raw_cells(runs: Array[Dictionary]) -> Array[String]:
+	var cells: Array[String] = []
+	var items: Array = _field_items(runs)
+	for i: int in runs.size():
+		var r: Dictionary = runs[i]
+		cells.append("%d|%d|%d|%d|%d|%d|%d" % [int(float(r["gold_drop"]) + float(r["gold_event_in"])), int(r["gold_spent"]),
+			int(r["gold_left"]), 1 if bool(r["won"]) else 0, int(items[i]), int(r["first_shop_items"]), int(r["seen_shop_gold"])])
+	return cells

@@ -1,7 +1,7 @@
 # Story 033: Vàng, cửa hàng và sự kiện — tiền rơi sau trận, nút cửa hàng, 8 sự kiện có rủi ro, lá nguyền
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
@@ -106,7 +106,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/gold-shop-events/` (màn mới có bản vi và en); `simulation-economy.md` + raw.
 
-**Status**: Not yet created
+**Status**: Created — production/qa/evidence/gold-shop-events/ (01-11 screenshots, simulation-economy.md + raw)
 
 ---
 
@@ -114,3 +114,16 @@
 
 - Depends on: Story 031 (bản đồ thế giới v6: vùng, nhánh, loại nút, save run v6), Story 032 (bảo vật, `RelicRoller`)
 - Unlocks: Story 034 thêm dịch vụ "Xóa hình" vào cửa hàng; Story 035 (Tha/Giết) có thể dùng vàng làm phần thưởng
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-25
+**Criteria**: 19/20 pass, 1 failing (A3, closed anyway by the user's explicit call, logged as TD-029); D1 has one DEFERRED part (hold a tile to read the full text: implemented, not screenshotted). The sim bot (dodge 0.85 = TD-006 default, always takes a treasure before a shop) is not a human, so the A3 numbers are not settled until the gate 8 playtest.
+**What changed**: `assets/data/economy.json` (new: starting gold, drops per node kind with +-20 % variance, `gold_floor_mult`, shop stock, prices, services), `assets/data/events.json` (new: 8 events), `cards.json` (curse cards `ganh_nang`, `oan_hon`), `rewards.json` and `relics.json` (`shop` / `event` sources), `chapters.json` (`world.special_nodes`), the sections in `schema.md`; `src/run/economy_config.gd`, `shop_logic.gd`, `event_logic.gd`, `shop_view.gd`, `event_view.gd`; `RunSession` (gold, `run_modifiers`, shop and event state, curse rules in `remove_card_at` / `rest_forge`, all in the save); `GameFlow` phases SHOP and EVENT with `shop_*` / `event_*` API, `tran_thach` extra fight that does not move the column; `ChapterMapGen` / `WorldMapGen` / `ChaptersConfig` (shop and event nodes, a planned shop on 3 of floors 2-5); curse cards in the spell menu (`Deck.draw_menu`, `SkillConfig.is_curse`, locked tile in `CutHudView`, `skill_availability` reason "curse", `Oan Hon` draw damage); map icons and gold badges; reward screen "+N gold" line; `ScreenLayout` rects; `deck_sim` / `sim_core` economy mode (`--shop-policy=greedy|eager|none`, `--event-policy=risky|leave`, `--economy-set`); dev flags `--run=shop`, `--run=event=<id>`, `--gold=N`, `--deck+=`, `--run=gold_reward`, `--hp=N`.
+**Simulation** (`deck_sim --world`, 70 seeds x 3 characters, build policy; tables in `production/qa/evidence/gold-shop-events/simulation-economy.md`, raw output beside it). Run win Kiem si / Phap su / Sat thu with shops and events, greedy route: 18.6 / 14.3 / 5.7 %; eager route: 22.9 / 12.9 / 7.1 %; without shops and events: 24.3 / 21.4 / 7.1 %. Gold left in WON runs (median): first data 235 / 283 / 324; shipped data greedy 216 / 210 / 214, eager 118 / 185 / 115 (target < 100). Items bought per WON run: greedy 1.7-2.9, eager 3.6-4.0 (target 4-6). Earned per WON run 343-385 (target 350-450). Price cuts alone did not change the gold left (0.7 x prices: 249-278); the number of shops reached did. The first shop is affordable in 100 % of runs.
+**Deviations**: FAIL (A3, TD-029): gold left in won runs and items bought per won run miss the targets in every simulated variant; the last 50-100 gold comes after the final shop the run can reach (floor-5 boss drop and the final match). ADVISORY (TD-029): data changed from the story's starting values after the simulation, not approved separately: card prices 30 / 40 / 60 (story 40 / 60 / 85), relic prices 50 / 70 / 90 (story 75 / 100 / 130), 3 planned shop floors (story: at least 2), random extra shops off (`shop_weight` 0.0, was 0.3; 0.6 pushed events from 111 to 45 per 1000 regions), services unchanged at 60 / 40. ADVISORY (TD-029): Phap su loses 7-8.5 run-win points with shops and events (about the noise of a 70-seed cell, cause not found); events are met 0.2-0.3 times per run by the bot; the "earned per run" target of 350-450 fits a won run, not the mean over runs that die early. ADVISORY (TD-029): display: "Vengeful Spirit" overlaps the padlock on the cursed tile (en), shop tiles cut long descriptions (full text on hold), one cost line is clipped (shot 04), shot 01 is staged with `--kind`, the hold-to-read view and the picker are not screenshotted, shots 02-04 were recaptured after the price change so the three shops show different cards (random run seed). Scope: touched beyond the story text: `relic_roller.gd` and `relic_roller_test.gd` (shop / event sources), `rest_view.gd` (a curse cannot be forged), `run_controller.gd`, `keyword2_test.gd`, `tools/balance/*`, `src/main.tscn` (ShopView and EventView nodes).
+**Test Evidence**: Integration; tests waived at `qa.level: minimal` but present and run on the final data: new suites `tests/unit/run/{economy,shop_event_nodes,shop_logic,event_logic}_test.gd`, `tests/unit/combat/curse_test.gd`, `tests/integration/run/shop_event_flow_test.gd`; parse-check 178/178; 63 headless and 4 windowed suites FAILS=0 with no script error; `main.tscn` launched windowed with `--quit-after 300`, 0 error lines (the first sweep after the shop-weight change failed `shop_event_nodes_test` on events per region; fixed by `shop_weight` 0.0 and a data check that accepts 0). Retained screenshots `production/qa/evidence/gold-shop-events/01-11*.png` (all opened and checked), `simulation-economy.md` and `simulation-economy-raw.txt`. New suites not mutation-checked.
+**Code Review**: Skipped (solo mode).
+**Not verified**: feel on a phone, whether a human reaches enough shops to spend the gold, how often the events appear in play, hold-to-read on a touch screen.
+**Carries forward**: gate 8 playtest (spend of gold, the missing shop before the final match, events per run, Phap su with shops); Story 034 (adds the "remove shape" service to the shop) and Story 035 (a kill can give gold); TD-001..006, 008..016, 018, 020, 021, 023..029.

@@ -4,7 +4,8 @@ extends Node2D
 ## select): the whole map of the live run as columns left to right ([method GameFlow.get_run_map],
 ## ScreenLayout.map_column_rects) with one square tile per node (ScreenLayout.map_node_rect). A tile
 ## shows a code-drawn glyph per node kind (battle: crossed blades; danger: triangle with "!";
-## treasure: a chest; rest: a flame; miniboss: a skull; boss: a crown) and the kind's name
+## treasure: a chest; rest: a flame; miniboss: a skull; boss: a crown; Story 033: shop: a coin purse;
+## event: a scroll with "?") and the kind's name
 ## ("node.<kind>.name"). Looks: CLEARED (filled, green check), CURRENT column (bright, tappable,
 ## pulsing gold outline), LOCKED (dimmed; the boss column keeps its glyph colour so the goal always
 ## reads). Thin connector lines trace the path taken (cleared node to cleared node) and fan out from
@@ -50,6 +51,12 @@ const GLYPH_TREASURE: Color = Color(0.72, 0.5, 0.05)
 const GLYPH_REST: Color = Color(0.9, 0.45, 0.1)
 const GLYPH_MINIBOSS: Color = Color(0.45, 0.2, 0.5)
 const GLYPH_BOSS: Color = Color(0.75, 0.15, 0.12)
+## Story 033: shop (green purse, gold coin) and event (blue scroll).
+const GLYPH_SHOP: Color = Color(0.1, 0.5, 0.33)
+const GLYPH_EVENT: Color = Color(0.2, 0.32, 0.72)
+## Story 033: the gold count in the title band (font size; gap to the column label in px).
+const GOLD_FONT_SIZE: int = 28
+const GOLD_GAP: float = 24.0
 
 const OUTLINE_WIDTH: float = 3.0
 const STATE_OUTLINE_WIDTH: float = 6.0
@@ -95,6 +102,8 @@ const KIND_TREASURE: String = "treasure"
 const KIND_REST: String = "rest"
 const KIND_MINIBOSS: String = "miniboss"
 const KIND_BOSS: String = "boss"
+const KIND_SHOP: String = "shop"
+const KIND_EVENT: String = "event"
 ## Format of a node kind's name key ("node.battle.name" ...; the CSV has a row per kind).
 const NODE_NAME_KEY_FORMAT: String = "node.%s.name"
 
@@ -268,6 +277,9 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 	var column_rect: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
 	var column_text: String = tr(TEXT_COLUMN) % [mini(current + 1, column_count), column_count]
 	draw_string(ThemeDB.fallback_font, Vector2(column_rect.position.x, column_rect.get_center().y + COLUMN_FONT_SIZE * 0.35), column_text, HORIZONTAL_ALIGNMENT_RIGHT, column_rect.size.x, COLUMN_FONT_SIZE, HEADER_COLOR)
+	# Story 033: the gold count (code-drawn coin + number) left of the column label.
+	var column_width: float = ThemeDB.fallback_font.get_string_size(column_text, HORIZONTAL_ALIGNMENT_LEFT, -1, COLUMN_FONT_SIZE).x
+	ShopView.draw_gold(self, column_rect.end.x - column_width - GOLD_GAP, column_rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
 	var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 	var max_hp: float = _max_hp(run)
 	var hp: float = max_hp if run.hp < 0.0 else minf(run.hp, max_hp)
@@ -399,6 +411,20 @@ func _draw_glyph(rect: Rect2, kind: String, color: Color) -> void:
 				c + Vector2(h, h * 0.7), c + Vector2(-h, h * 0.7),
 			])
 			draw_polyline(crown, color, GLYPH_WIDTH)
+		KIND_SHOP:
+			# Story 033: a coin purse — a round bag open at the top, a tied neck with two flaps, a coin in front.
+			var body_c: Vector2 = c + Vector2(0.0, h * 0.25)
+			draw_arc(body_c, h * 0.75, -PI * 0.5 + 0.35, PI * 1.5 - 0.35, ARC_POINTS, color, GLYPH_WIDTH)
+			draw_line(c + Vector2(-h * 0.35, -h * 0.55), c + Vector2(h * 0.35, -h * 0.55), color, GLYPH_WIDTH)
+			draw_line(c + Vector2(-h * 0.15, -h * 0.55), c + Vector2(-h * 0.4, -h * 0.9), color, GLYPH_WIDTH)
+			draw_line(c + Vector2(h * 0.15, -h * 0.55), c + Vector2(h * 0.4, -h * 0.9), color, GLYPH_WIDTH)
+			ShopView.draw_coin(self, body_c + Vector2(0.0, h * 0.05), h * 0.38)
+		KIND_EVENT:
+			# Story 033: a scroll — a sheet between two thick rolls — with a "?" on it.
+			draw_rect(Rect2(c + Vector2(-h * 0.65, -h * 0.8), Vector2(h * 1.3, h * 1.6)), color, false, GLYPH_WIDTH)
+			draw_line(c + Vector2(-h * 0.9, -h * 0.8), c + Vector2(h * 0.9, -h * 0.8), color, GLYPH_WIDTH * 2.0)
+			draw_line(c + Vector2(-h * 0.9, h * 0.8), c + Vector2(h * 0.9, h * 0.8), color, GLYPH_WIDTH * 2.0)
+			draw_string(ThemeDB.fallback_font, Vector2(c.x - h, c.y + h * 0.45), "?", HORIZONTAL_ALIGNMENT_CENTER, h * 2.0, int(h * 1.3), color)
 		_:
 			draw_circle(c, h * 0.5, color)
 
@@ -435,6 +461,10 @@ func _glyph_color(kind: String) -> Color:
 			return GLYPH_MINIBOSS
 		KIND_BOSS:
 			return GLYPH_BOSS
+		KIND_SHOP:
+			return GLYPH_SHOP
+		KIND_EVENT:
+			return GLYPH_EVENT
 	return GLYPH_BATTLE
 
 

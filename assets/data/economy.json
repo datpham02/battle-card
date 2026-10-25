@@ -1,0 +1,22 @@
+{
+	"starting_gold": 20,
+	"gold_drops": {
+		"battle": 12,
+		"danger": 22,
+		"miniboss": 25,
+		"boss": 35,
+		"treasure": 15
+	},
+	"variance": 0.2,
+	"gold_floor_mult": [1.0, 1.1, 1.2, 1.3, 1.4],
+	"shop": {
+		"stock": {"cards": 3, "relics": 2},
+		"card_prices": {"common": 30, "rare": 40, "epic": 60},
+		"relic_prices": {"common": 50, "rare": 70, "epic": 90},
+		"price_floor_mult": [1.0, 1.05, 1.1, 1.15, 1.2],
+		"services": {
+			"remove_card": {"price": 60, "max_uses": 1},
+			"heal": {"price": 40, "max_uses": 1, "heal_ratio": 0.25}
+		}
+	}
+}

@@ -217,6 +217,7 @@ func region_spec(region_id: String, floor: int) -> Dictionary:
 	spec["intro_key"] = str(chapter.get("intro_key", ""))
 	spec["end_key"] = str(chapter.get("end_key", ""))
 	spec["region_normalize"] = region_normalize(region_id)
+	spec["special_nodes"] = special_nodes()
 	return spec
 
 
@@ -228,7 +229,23 @@ func generate_region_map(region_id: String, run_seed: int, floor: int, cleared_b
 	if spec.is_empty():
 		var none: Array[Dictionary] = []
 		return none
+	spec["guarantee_shop"] = shop_floors(run_seed).has(clampi(floor, 0, world_floors() - 1))
 	return ChapterMapGen.generate(spec, WorldMapGen.region_map_seed(run_seed, region_id, floor), cleared_bosses)
+
+
+## Story 033: the cleaned `world.special_nodes` block: {column (0-based column of the region frame whose
+## fight nodes a shop / event replace, default 1), shop_weight, event_weight (0..1 probability per region), guaranteed_shops
+## (count of floors per run whose region always has a shop), guaranteed_min_floor (1-based first eligible floor)}.
+## Without the block: no shop / event nodes at all (old maps unchanged).
+func special_nodes() -> Dictionary:
+	return (_world["special_nodes"] as Dictionary).duplicate()
+
+
+## Story 033: the run's shop plan (0-based floors whose region map always has a shop), see
+## [method WorldMapGen.shop_floors]; [] when `guaranteed_shops` is 0.
+func shop_floors(run_seed: int) -> Array[int]:
+	var special: Dictionary = _world["special_nodes"]
+	return WorldMapGen.shop_floors(run_seed, world_floors(), int(special["guaranteed_shops"]), int(special["guaranteed_min_floor"]))
 
 
 ## Number of columns of chapter [param ci]'s map skeleton (0 when out of range).
@@ -605,4 +622,16 @@ func _clean_world(raw: Variant) -> Dictionary:
 	elif typeof(raw_final) != TYPE_NIL:
 		push_warning("ChaptersConfig: world.final_match must be an object, ignored")
 	world["final_match"] = final
+	var special: Dictionary = {"column": 1, "shop_weight": 0.0, "event_weight": 0.0, "guaranteed_shops": 0, "guaranteed_min_floor": 1}
+	var raw_special: Variant = source.get("special_nodes")
+	if typeof(raw_special) == TYPE_DICTIONARY:
+		var sp: Dictionary = raw_special as Dictionary
+		special["column"] = maxi(int(sp.get("column", 1)), 1)
+		special["shop_weight"] = clampf(float(sp.get("shop_weight", 0.0)), 0.0, 1.0)
+		special["event_weight"] = clampf(float(sp.get("event_weight", 0.0)), 0.0, 1.0)
+		special["guaranteed_shops"] = maxi(int(sp.get("guaranteed_shops", 0)), 0)
+		special["guaranteed_min_floor"] = maxi(int(sp.get("guaranteed_min_floor", 1)), 1)
+	elif raw_special != null:
+		push_warning("ChaptersConfig: world.special_nodes must be an object, ignored")
+	world["special_nodes"] = special
 	return world

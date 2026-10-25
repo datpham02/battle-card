@@ -401,3 +401,122 @@ relic.an_chu.name,Ấn Chủ,Master Seal
 relic.an_chu.desc,"Thưởng hình chủ đạo ×2 thay vì ×1,5.",The featured-shape bonus is ×2 instead of ×1.5.
 relic.tam_hop.name,Tam Hợp,Triple Join
 relic.tam_hop.desc,"Được ghép mảnh thứ ba vào đòn (+1,5 s chọn lá nữa).",You may join a third piece into a cast (+1.5 s more to pick a card).
+card.ganh_nang.name,Gánh Nặng,Dead Weight
+card.ganh_nang.desc,"Lá nguyền: chỉ chiếm một chỗ trong menu phép và bị khóa, không dùng được. Bỏ bằng token bỏ lá, cửa hàng hoặc sự kiện.","Curse: only takes a slot in the card menu and stays locked, it cannot be used. Remove it with a removal token, the shop or an event."
+card.oan_hon.name,Oán Hồn,Vengeful Spirit
+card.oan_hon.desc,"Lá nguyền: chiếm một chỗ trong menu phép và bị khóa. Mỗi lần được rút vào menu, bạn mất 2 máu. Bỏ bằng token bỏ lá, cửa hàng hoặc sự kiện.","Curse: takes a slot in the card menu and stays locked. Each time it is drawn into the menu you lose 2 HP. Remove it with a removal token, the shop or an event."
+ui.hud.curse_locked,Lá nguyền,Cursed
+ui.event.leave,Rời đi,Leave
+ui.event.leave_result,Bạn lặng lẽ rời đi.,You walk away quietly.
+ui.event.need_gold,Cần %d vàng,Needs %d gold
+ui.event.need_relic,Cần một bảo vật không phải bảo vật boss,Needs a relic that is not a boss relic
+ui.event.need_hp,Máu phải trên %d,HP must be above %d
+ui.event.need_cards,Cần ít nhất %d lá,Needs at least %d cards
+ui.event.need_upgradable,Không có lá nào nâng cấp được,No card can be upgraded
+ui.event.bad_choice,Lựa chọn không hợp lệ,Invalid choice
+ui.event.bad_pick,Lá đã chọn không hợp lệ,Invalid card choice
+ui.event.confirm_again,Chạm lần nữa để xác nhận,Tap again to confirm
+ui.event.continue,Tiếp tục,Continue
+ui.event.pick_card,Chọn 1 lá,Choose 1 card
+ui.event.pick_upgrade,Chọn lá để nâng cấp,Choose a card to upgrade
+ui.event.pick_remove,Chọn lá để bỏ,Choose a card to remove
+ui.event.result.gold_gain,+%d vàng,+%d gold
+ui.event.result.gold_lose,-%d vàng,-%d gold
+ui.event.result.hp_gain,+%d máu,+%d HP
+ui.event.result.hp_lose,-%d máu,-%d HP
+ui.event.result.relic,Nhận bảo vật: %s,Gained relic: %s
+ui.event.result.curse,Nhận lá nguyền: %s,Gained curse: %s
+ui.event.result.swap,Đổi %s lấy %s,Traded %s for %s
+ui.event.result.token,+%d token bỏ lá,+%d removal token
+ui.event.result.modifier,Bước chậm hơn trong %d trận,Slower steps for %d matches
+ui.event.result.upgrade,Một lá được nâng cấp,A card was upgraded
+ui.shop.title,CỬA HÀNG,SHOP
+ui.shop.cards,Lá,Cards
+ui.shop.relics,Bảo vật,Relics
+ui.shop.services,Dịch vụ,Services
+ui.shop.buy,Mua (%d vàng),Buy (%d gold)
+ui.shop.leave,Rời cửa hàng,Leave shop
+ui.shop.price,%d vàng,%d gold
+ui.shop.sold,Đã bán,Sold
+ui.shop.used,Đã dùng,Used
+ui.shop.service.remove_card,Bỏ một lá (%d vàng),Remove a card (%d gold)
+ui.shop.service.heal,Hồi máu (%d vàng),Heal (%d gold)
+ui.shop.pick_remove,Chọn lá để bỏ,Choose a card to remove
+ui.shop.healed,+%d máu,+%d HP
+ui.shop.removed,Đã bỏ một lá,Card removed
+ui.shop.upgraded,Nâng cấp lên cấp %d,Upgraded to level %d
+ui.shop.reason.unknown,Không có món này,No such item
+ui.shop.reason.sold,Đã bán,Already sold
+ui.shop.reason.used,Đã dùng rồi,Already used
+ui.shop.reason.no_gold,Không đủ vàng,Not enough gold
+ui.shop.reason.owned,Bạn đã có bảo vật này,You already own this relic
+ui.shop.reason.bad_index,Lá đã chọn không hợp lệ,Invalid card choice
+ui.shop.reason.min_deck,Bộ bài đã quá nhỏ,The deck is too small
+ui.shop.reason.full_hp,Máu đã đầy,HP is already full
+event.ban_tho_mau.title,Bàn thờ máu,Blood Altar
+event.ban_tho_mau.body,"Một bàn thờ đá nhuộm đỏ đứng giữa đường. Bia khắc: ""Dâng máu, nhận bảo vật."" Những vết rạch trên đá còn tươi, như vừa có ai đến trước bạn.","A stone altar stained red stands in the road. The inscription reads: ""Give blood, take a relic."" The cuts in the stone are still fresh, as if someone came before you."
+event.ban_tho_mau.give.label,Dâng máu,Offer blood
+event.ban_tho_mau.give.cost,Mất 15% máu tối đa,Lose 15% max HP
+event.ban_tho_mau.give.result,"Bàn thờ hút máu bạn, rồi nhả ra một bảo vật.","The altar drinks your blood, then gives up a relic."
+event.ke_buon_nguyen.title,Kẻ buôn lá nguyền,Curse Peddler
+event.ke_buon_nguyen.body,"Một kẻ buôn trùm áo choàng mở túi: ""Mang giúp ta món này, ta trả công bằng thứ quý nhất."" Lá nguyền sẽ nằm lại trong bộ bài của bạn cho tới khi bạn bỏ nó.","A cloaked peddler opens his bag: ""Carry this for me and I will pay you with something rare."" The cursed card stays in your deck until you remove it."
+event.ke_buon_nguyen.accept.label,Nhận lá nguyền,Take the curse
+event.ke_buon_nguyen.accept.cost,Nhận lá nguyền Gánh Nặng,Gain the curse Dead Weight
+event.ke_buon_nguyen.accept.result,Bạn nhận lấy gánh nặng. Kẻ buôn trải ba lá sử thi ra trước mặt bạn.,You take the burden. The peddler spreads three epic cards before you.
+event.song_bac.title,Sòng bạc ven đường,Roadside Dice
+event.song_bac.body,"Vài kẻ ngồi quanh chiếc trống úp, xúc xắc lách cách. ""Chơi một ván không? Thắng thì ăn, thua thì trả, đơn giản vậy thôi.""","A few men sit around an upturned drum, dice clattering. ""One round? Win and you take it, lose and you pay. Simple."""
+event.song_bac.bet_small.label,Cược nhỏ,Small bet
+event.song_bac.bet_small.cost,Cược 30 vàng: 50% thắng 75,Bet 30 gold: 50% to win 75
+event.song_bac.bet_small.win,Xúc xắc đổ về phía bạn. Bạn thắng!,The dice fall your way. You win!
+event.song_bac.bet_small.lose,Xúc xắc quay lưng với bạn. Bạn thua.,The dice turn on you. You lose.
+event.song_bac.bet_big.label,Cược lớn,Big bet
+event.song_bac.bet_big.cost,Cược 60 vàng: 40% thắng 160,Bet 60 gold: 40% to win 160
+event.song_bac.bet_big.win,Cả sòng im lặng. Bạn thắng lớn!,The whole table goes quiet. You win big!
+event.song_bac.bet_big.lose,Cả sòng cười. Vàng của bạn đã sang tay người khác.,The table laughs. Your gold is gone.
+event.tran_thach.title,Lời thách đấu,The Challenge
+event.tran_thach.body,"Một chiến binh chặn đường, kiếm đã tuốt: ""Ta thách ngươi một trận. Thắng thì lấy bảo vật của ta, thua thì ngươi biết rồi đấy."" Hắn mạnh hơn lính thường.","A warrior blocks the road, sword drawn: ""I challenge you to a duel. Win and take my relic, lose and you know what follows."" He is stronger than a common soldier."
+event.tran_thach.fight.label,Nhận lời thách,Accept the duel
+event.tran_thach.fight.cost,"Một trận nguy hiểm, khó hơn một bậc","A dangerous fight, one tier harder"
+event.tran_thach.fight.result,Bạn rút kiếm. Trận đấu bắt đầu!,You draw your sword. The duel begins!
+event.tran_thach.fight_won,Chiến binh gục xuống và trao phần thưởng như đã hứa.,The warrior falls and hands over the prize as promised.
+event.suoi_tinh.title,Suối tĩnh,Still Spring
+event.suoi_tinh.body,"Một dòng suối trong, mặt nước phẳng như gương. Bạn có thể uống để lấy lại sức, hoặc ngâm một lá phép xuống nước để tôi luyện, đổi lại một chút máu.","A clear spring, its surface flat as a mirror. You can drink to recover, or soak a card in the water to temper it, at the price of some blood."
+event.suoi_tinh.drink.label,Uống nước suối,Drink
+event.suoi_tinh.drink.cost,Không mất gì,Costs nothing
+event.suoi_tinh.drink.result,Nước suối mát lạnh. Bạn thấy khỏe hơn.,The water is cold and clean. You feel better.
+event.suoi_tinh.bathe.label,Ngâm lá phép,Temper a card
+event.suoi_tinh.bathe.cost,Mất 10% máu tối đa,Lose 10% max HP
+event.suoi_tinh.bathe.result,"Nước suối buốt như dao, nhưng lá phép sáng lên.","The water bites like a blade, but the card glows."
+event.ke_lang_thang.title,Kẻ lang thang,The Wanderer
+event.ke_lang_thang.body,"Một lão lang thang ngồi bên đống lửa tàn. ""Đưa ta một bảo vật, ta đổi lại thứ quý hơn. Nhưng món nào ta cũng nhận, đừng hỏi vì sao.""","An old wanderer sits by a dying fire. ""Give me a relic and I will trade you something finer. I take whatever I like, do not ask why."""
+event.ke_lang_thang.swap.label,Đổi bảo vật,Trade a relic
+event.ke_lang_thang.swap.cost,Mất một bảo vật (không phải của boss),Lose a relic (not a boss relic)
+event.ke_lang_thang.swap.result,"Lão cười, cầm bảo vật của bạn và đưa lại một món quý hơn.","He grins, takes your relic and hands back a finer one."
+event.mo_hoang.title,Mộ hoang,Lonely Grave
+event.mo_hoang.body,"Một ngôi mộ cũ, đất còn mới bị xới. Có thể bên dưới còn vàng, cũng có thể còn thứ không nên đánh thức.","An old grave, the earth freshly disturbed. There may be gold beneath, or something better left asleep."
+event.mo_hoang.dig.label,Đào mộ,Dig
+event.mo_hoang.dig.cost,40% nhận lá nguyền Oán Hồn,40% to gain the curse Vengeful Spirit
+event.mo_hoang.dig.gold,Dưới đất có một túi vàng cũ.,An old pouch of gold lies in the dirt.
+event.mo_hoang.dig.curse,Một tiếng thì thầm trồi lên từ huyệt mộ. Oán Hồn bám theo bạn.,A whisper rises from the grave. The Vengeful Spirit follows you.
+event.loi_the.title,Lời thề,The Vow
+event.loi_the.body,"Một thầy tu già đưa bạn bát nước: ""Thề bước chậm lại trong hai trận, ta ban cho một lần buông bỏ và chút vàng."" Lời thề này ràng buộc cả đôi chân.","An old monk offers you a bowl of water: ""Vow to move slower for two matches and I grant you a release and some gold."" The vow binds your very feet."
+event.loi_the.swear.label,Tuyên thệ,Swear the vow
+event.loi_the.swear.cost,Hai trận kế tiếp bước chậm hơn 20%,Steps are 20% slower for the next 2 matches
+event.loi_the.swear.result,"Lời thề trói chân bạn, nhưng túi bạn nặng hơn.","The vow shackles your feet, but your purse is heavier."
+node.shop.name,Cửa hàng,Shop
+node.event.name,Sự kiện,Event
+ui.shop.bought,Đã mua: %s,Bought: %s
+ui.shop.hold_hint,giữ để xem chi tiết,hold for details
+ui.shop.confirm_remove,Bỏ lá này (%d vàng),Remove it (%d gold)
+ui.shop.service.remove_card.name,Bỏ một lá,Remove a card
+ui.shop.service.remove_card.desc,Bỏ hẳn 1 lá khỏi bộ,Drop 1 card for good
+ui.shop.service.heal.name,Hồi máu,Heal
+ui.shop.service.heal.desc,Hồi %d%% máu tối đa,Heal %d%% of max HP
+ui.deck.curse,Lá nguyền,Curse
+ui.deck.drag_hint,Kéo ngang để xem thêm lá,Drag sideways to see more cards
+ui.event.fight,Vào trận,To battle
+ui.event.confirm_remove,Bỏ lá này,Remove this card
+ui.event.confirm_upgrade,Nâng cấp lá này,Upgrade this card
+ui.gold.gain,+%d vàng,+%d gold
+ui.rarity.curse,Nguyền,Curse
+ui.event.already_chosen,Bạn đã chọn rồi,You already chose

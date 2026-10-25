@@ -51,6 +51,44 @@ func draw_entries(n: int) -> Array[Dictionary]:
 	return hand
 
 
+## Story 033: deals the card-menu hand of up to [param n] entries like [method draw_entries], with the
+## curse safety rule: [param is_curse] is a Callable(id: String) -> bool; when every dealt card is a
+## curse but the deck still holds a non-curse card, the LAST slot is redrawn from the bag as the next
+## non-curse card (the displaced curse goes back to the front of the bag, so it is dealt next time).
+## A curse may otherwise sit anywhere in the hand. Invalid [param is_curse]: plain deal.
+func draw_menu_entries(n: int, is_curse: Callable) -> Array[Dictionary]:
+	var hand: Array[Dictionary] = draw_entries(n)
+	if not is_curse.is_valid() or hand.is_empty() or not _has_non_curse(is_curse):
+		return hand
+	for e: Dictionary in hand:
+		if not bool(is_curse.call(str(e["id"]))):
+			return hand
+	var pos: int = _next_non_curse_in_bag(is_curse)
+	if pos < 0:
+		_refill()
+		pos = _next_non_curse_in_bag(is_curse)
+	if pos < 0:
+		return hand
+	var taken: int = _bag[pos]
+	_bag.remove_at(pos)
+	# The displaced curse's copy goes back to the front of the bag; find it by value (id + level).
+	var displaced: Dictionary = hand[hand.size() - 1]
+	for i: int in _cards.size():
+		if i != taken and _cards[i] == displaced and not _bag.has(i):
+			_bag.push_front(i)
+			break
+	hand[hand.size() - 1] = (_cards[taken] as Dictionary).duplicate()
+	return hand
+
+
+## Story 033: [method draw_menu_entries] as card ids.
+func draw_menu(n: int, is_curse: Callable) -> Array[String]:
+	var hand: Array[String] = []
+	for e: Dictionary in draw_menu_entries(n, is_curse):
+		hand.append(str(e["id"]))
+	return hand
+
+
 ## Number of cards (copies) in the deck.
 func size() -> int:
 	return _cards.size()
@@ -123,6 +161,22 @@ static func _entry_of(entry: Variant) -> Dictionary:
 			return {}
 		return {"id": str(d["id"]), "level": maxi(int(d.get("level", 1)), 1)}
 	return {"id": str(entry), "level": 1}
+
+
+# True when at least one deck copy is not a curse.
+func _has_non_curse(is_curse: Callable) -> bool:
+	for e: Dictionary in _cards:
+		if not bool(is_curse.call(str(e["id"]))):
+			return true
+	return false
+
+
+# Index into the bag of the first non-curse copy; -1 when the bag has none.
+func _next_non_curse_in_bag(is_curse: Callable) -> int:
+	for pos: int in _bag.size():
+		if not bool(is_curse.call(str((_cards[_bag[pos]] as Dictionary)["id"]))):
+			return pos
+	return -1
 
 
 func _refill() -> void:

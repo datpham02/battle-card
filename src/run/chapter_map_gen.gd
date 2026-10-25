@@ -16,7 +16,12 @@ const KIND_TREASURE: String = "treasure"
 const KIND_REST: String = "rest"
 const KIND_MINIBOSS: String = "miniboss"
 const KIND_BOSS: String = "boss"
-const KINDS: Array[String] = [KIND_BATTLE, KIND_DANGER, KIND_TREASURE, KIND_REST, KIND_MINIBOSS, KIND_BOSS]
+## Story 033: the shop and event nodes (no match, empty match_id). Only [method _apply_special_nodes] places them.
+const KIND_SHOP: String = "shop"
+const KIND_EVENT: String = "event"
+const KINDS: Array[String] = [KIND_BATTLE, KIND_DANGER, KIND_TREASURE, KIND_REST, KIND_MINIBOSS, KIND_BOSS, KIND_SHOP, KIND_EVENT]
+## Story 033: kinds a shop / event may replace in the special column (optional fights, never rest / treasure / boss).
+const REPLACEABLE_KINDS: Array[String] = [KIND_BATTLE, KIND_DANGER, KIND_MINIBOSS]
 ## Kinds that play a match (the others have an empty match_id).
 const MATCH_KINDS: Array[String] = [KIND_BATTLE, KIND_DANGER, KIND_MINIBOSS, KIND_BOSS]
 const SEED_MASK: int = 0x7fffffff
@@ -64,7 +69,46 @@ static func generate(chapter: Dictionary, run_seed: int, cleared_bosses: int) ->
 				used.append(match_id)
 			nodes.append({"kind": kind, "match_id": match_id})
 		map.append({"index": ci, "tier": tier, "nodes": nodes})
+	_apply_special_nodes(map, chapter, run_seed)
 	return map
+
+
+# Story 033: the SHOP / EVENT pass, after the whole map is built, on its own rng stream
+# (hash([run_seed, chapter id, "special"])) so the rest of the map is the same as without it. Only with a
+# `special_nodes` block in [param chapter] ({column, shop_weight, event_weight}; chapters.json
+# `world.special_nodes` via ChaptersConfig.region_spec) and a map of >= 3 columns. In column `column`
+# (default 1) one optional fight node (REPLACEABLE_KINDS) may become a shop and one an event, so a region
+# has at most 1 shop and 1 event. Each is rolled by its weight (probability 0..1); `guarantee_shop` (set by
+# ChaptersConfig.generate_region_map on the floors of the run's shop plan) makes the shop certain. A
+# non-guaranteed shop / the event only replaces when 2 or more fights are left in the column (one fight is
+# always kept); a guaranteed shop may take the last one. Both rolls are always drawn (stable stream).
+static func _apply_special_nodes(map: Array[Dictionary], chapter: Dictionary, run_seed: int) -> void:
+	var special: Variant = chapter.get("special_nodes")
+	if typeof(special) != TYPE_DICTIONARY or map.size() < 3:
+		return
+	var column: int = clampi(int((special as Dictionary).get("column", 1)), 1, map.size() - 2)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([run_seed, str(chapter.get("id", "")), "special"]) & SEED_MASK
+	var shop_roll: float = rng.randf()
+	var event_roll: float = rng.randf()
+	var pick_roll: int = rng.randi()
+	var want_shop: bool = bool(chapter.get("guarantee_shop", false)) \
+			or shop_roll < float((special as Dictionary).get("shop_weight", 0.0))
+	var want_event: bool = event_roll < float((special as Dictionary).get("event_weight", 0.0))
+	var nodes: Array = map[column]["nodes"]
+	var fights: Array[int] = []
+	for i: int in nodes.size():
+		if REPLACEABLE_KINDS.has(str((nodes[i] as Dictionary)["kind"])):
+			fights.append(i)
+	var min_left: int = 0 if bool(chapter.get("guarantee_shop", false)) else 1
+	if want_shop and fights.size() > min_left:
+		var at: int = fights[pick_roll % fights.size()]
+		nodes[at] = {"kind": KIND_SHOP, "match_id": ""}
+		fights.erase(at)
+	if want_event and fights.size() > 1:
+		var at2: int = fights[(pick_roll >> 8) % fights.size()]
+		nodes[at2] = {"kind": KIND_EVENT, "match_id": ""}
+		fights.erase(at2)
 
 
 # Kinds of one column: required ones first, fillers up to a seeded count, siblings differ when

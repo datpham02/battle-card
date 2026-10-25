@@ -5,13 +5,29 @@ extends Node2D
 ## NODE that plays a match (created when the node is chosen, freed when it is left). Phases: TITLE,
 ## CHARACTER_SELECT (CharacterSelectView), WORLD_MAP (WorldMapView: pick one of the floor's offered
 ## regions), MAP (the region map, ChapterMapView: pick a node of the current column), IN_NODE (a
-## RunController plays the node's match; the run screens take over) and REST (RestView: heal or forge).
+## RunController plays the node's match; the run screens take over), REST (RestView: heal or forge) and
+## Story 033's SHOP (ShopView: [method get_shop], [method shop_buy], [method shop_use_service],
+## [method shop_leave]) and EVENT (EventView: [method get_event_view], [method event_choose],
+## [method get_event_result], [method event_complete_pick], [method event_leave]).
 ## [method go_back] (Esc, Android back) acts per phase: IN_NODE toggles the pause (or leaves a finished
 ## run), WORLD_MAP / MAP / REST leave to the title keeping the save, CHARACTER_SELECT -> TITLE,
 ## TITLE -> quit. App pause / focus loss while IN_NODE force-pauses the battle. Draws nothing itself.
 ## Direct child of Main in main.tscn; RunHudView (a sibling) gets the controller through
 ## [signal controller_changed]. Views the flow talks to are optional: a missing view node never breaks
 ## the flow (everything goes through signals and getters).
+##
+## Story 033 nodes (production/epics/kaiten-duel/story-033-gold-shop-events.md Parts B, C): a SHOP node
+## builds its stock with ShopLogic.build (seeded by run seed + floor + column + node; luck; owned relics)
+## into RunSession.shop_state (tagged with the node's "node_key"; a resume at the same node restores it,
+## sold / used flags included); every buy / service saves; [method shop_leave] completes the node (no
+## reward, no gold). An EVENT node picks an event never seen this run (ids kept in
+## RunSession.event_state["used"]); a choice resolves through EventLogic (seeded by the node) and its
+## result is kept in event_state BEFORE the save, so a resume shows that result and never re-rolls;
+## player picks ([method event_complete_pick]) finish one by one. A `fight` outcome (tran_thach) plays
+## an extra match of the outcome's kind (danger) drawn from the region's pool at the column tier +
+## tier_add, through the same controller path as a match node, WITHOUT completing the node or moving
+## the column: winning ticks the run modifiers, applies EventLogic.finish_fight (relic + gold) and
+## returns to EVENT; losing ends the run. [method event_leave] completes the node.
 ##
 ## Run rules (Story 031, design/game-brief.md v6 "Run v6 — mô hình OSFE"): title -> character ->
 ## [method start_run] (a fresh world run: floor 1, RunSession.begin_world rolls the floor's region
@@ -59,6 +75,17 @@ extends Node2D
 ##                              starts at the character select; no dev arg at all starts at the title)
 ##   --seed=N                   force the run seed (reproducible offers, maps, arenas and rewards)
 ##   --lang=vi|en               UI locale for this run only (not saved; captures)
+##   --gold=N                   Story 033: every run starts with N gold (memory store)
+##   --deck+=id,id,...          Story 033: every run's starting deck gets these cards (level 1; curses
+##                              too, e.g. --deck+=oan_hon) (memory store)
+##   --hp=N                     Story 033: every run starts at N HP (clamped to 1..max; e.g. the greyed
+##                              "need HP" choice of --run=event=ban_tho_mau) (memory store)
+##   --run=shop                 Story 033: standing in an open SHOP at floor 2 (--at-floor overrides) with
+##                              at least DEV_SHOP_GOLD gold (--gold wins); the region's shop node, or the
+##                              current column's first node turned into a shop when the region has none
+##   --run=event=<id>           Story 033: standing in EVENT <id> (an events.json id) at floor 2, same
+##                              node rule as --run=shop
+##   --run=gold_reward          Story 033: a won battle's reward screen (the "+N vàng" line shows)
 ##   --relics=id,id,...         Story 032: every run starts owning these relics (RelicRegistry ids; unknown
 ##                              ids and duplicates are dropped with a warning)
 ##   --character=<id>           pick the character like the select screen would (Story 018)
@@ -89,7 +116,7 @@ signal run_changed()
 
 ## IN_FLOOR is the Story 019 name of IN_NODE, kept for old callers and tests (same value). WORLD_MAP
 ## (Story 031) took the slot of the retired CHAPTER_SELECT.
-enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, IN_FLOOR = IN_NODE }
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -116,8 +143,14 @@ const CHARACTER_ARG: String = "--character="
 const SIGNATURE_ARG: String = "--signature="
 ## DEV-ONLY (Story 032): --relics=id,id,... the run starts owning these relics.
 const RELICS_ARG: String = "--relics="
+## DEV-ONLY (Story 033): --gold=N, --deck+=id,id,...
+const GOLD_ARG: String = "--gold="
+const DECK_ADD_ARG: String = "--deck+="
+const HP_ARG: String = "--hp="
 ## Story 032: seed salt of the treasure relic row (hash of run seed, floor, column, node, this tag).
 const RELIC_SEED_TAG: String = "relic"
+## Story 033: seed salt of a node's gold drop (hash of run seed, floor, column, node, this tag).
+const GOLD_SEED_TAG: String = "gold"
 ## Story 032: relic source id of the treasure node (RelicRoller source_rules key).
 const RELIC_SOURCE_TREASURE: String = "treasure"
 ## DEV-ONLY: locale override for captures (never saved).
@@ -143,12 +176,21 @@ const FLOW_RUN_WORLD: String = "world"
 const FLOW_RUN_WORLD3: String = "world3"
 const FLOW_RUN_FLOORCLEAR: String = "floorclear"
 const FLOW_RUN_FINAL: String = "final"
+## Story 033 captures: an open shop, an open event (--run=event=<id>), a battle reward with its gold line.
+const FLOW_RUN_SHOP: String = "shop"
+const FLOW_RUN_EVENT: String = "event"
+const FLOW_RUN_EVENT_PREFIX: String = "event="
+const FLOW_RUN_GOLD_REWARD: String = "gold_reward"
+## DEV-ONLY: 0-based floor --run=shop / --run=event=<id> start at without --at-floor (floor 2).
+const DEV_SPECIAL_FLOOR: int = 1
+## DEV-ONLY: gold --run=shop guarantees without --gold (enough for a relic and a service).
+const DEV_SHOP_GOLD: int = 300
 ## --run= kinds that must NOT auto-pick a region (they stage the world map themselves).
 const FLOW_RUN_WORLD_KINDS: Array[String] = [FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL]
 const FLOW_RUN_KINDS: Array[String] = [
 	FLOW_RUN_REWARD, FLOW_RUN_OVER, FLOW_RUN_WON, FLOW_RUN_MAP, FLOW_RUN_MAP3, FLOW_RUN_REST,
 	FLOW_RUN_TREASURE, FLOW_RUN_MINIBOSS_REWARD, FLOW_RUN_BOSS_REWARD, FLOW_RUN_RELIC_TREASURE,
-	FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL,
+	FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL, FLOW_RUN_SHOP, FLOW_RUN_GOLD_REWARD,
 ]
 ## DEV-ONLY: columns --run=map3 clears (capped before the region's boss column).
 const DEV_MAP3_COLUMNS: int = 2
@@ -199,6 +241,24 @@ const MATCH_NODE_KINDS: Array[String] = ["battle", "danger", "miniboss", "boss"]
 const KIND_TREASURE: String = "treasure"
 const KIND_REST: String = "rest"
 const KIND_BOSS: String = "boss"
+const KIND_SHOP: String = ChapterMapGen.KIND_SHOP
+const KIND_EVENT: String = ChapterMapGen.KIND_EVENT
+const KIND_BATTLE: String = "battle"
+## Story 033: seed salt of the extra match drawn for an event `fight`.
+const EVENT_FIGHT_SEED_TAG: String = "event_fight"
+## Story 033: keys of RunSession.event_state (the "used" list lives for the whole run; the others belong
+## to the event node being visited and are dropped when it is left).
+const EVENT_USED: String = "used"
+const EVENT_NODE: String = "node_key"
+const EVENT_ID: String = "event_id"
+const EVENT_CHOICE: String = "choice"
+const EVENT_RESULT: String = "result"
+const EVENT_FIGHT: String = "fight"
+const EVENT_FIGHT_ACTIVE: String = "fight_active"
+## Story 033: refusal key of a second [method event_choose] at the same event.
+const TEXT_EVENT_ALREADY_CHOSEN: String = "ui.event.already_chosen"
+## Story 033: key of RunSession.shop_state tagging the node the stock belongs to.
+const SHOP_NODE: String = "node_key"
 
 var _config: ChaptersConfig
 var _store: ProgressStore = null
@@ -240,6 +300,14 @@ var _pending_node_kind: String = ""
 var _restart_notice: String = ""
 ## Story 031: floor-clear notice waiting for [method take_floor_clear_notice] ({} when none).
 var _floor_clear_notice: Dictionary = {}
+## Story 033: gold dropped by the node completed last (see [method get_last_gold_gain]).
+var _last_gold_gain: int = 0
+## DEV-ONLY (Story 033): --gold= value (-1 = none), --deck+= ids, the event id of --run=event=<id>.
+var _dev_gold: int = -1
+## DEV-ONLY (Story 033): --hp= value (-1 = full).
+var _dev_hp: float = -1.0
+var _dev_deck_add: Array[String] = []
+var _dev_event_id: String = ""
 
 
 ## Test hook: installs the store BEFORE the node enters the tree (wins over --progress args).
@@ -313,9 +381,19 @@ func _ready() -> void:
 		elif arg.begins_with(RELICS_ARG):
 			for rid: String in arg.trim_prefix(RELICS_ARG).split(",", false):
 				_dev_relics.append(rid.strip_edges())
+		elif arg.begins_with(GOLD_ARG):
+			_dev_gold = maxi(int(arg.trim_prefix(GOLD_ARG)), 0)
+		elif arg.begins_with(HP_ARG):
+			_dev_hp = maxf(float(arg.trim_prefix(HP_ARG)), 1.0)
+		elif arg.begins_with(DECK_ADD_ARG):
+			for cid: String in arg.trim_prefix(DECK_ADD_ARG).split(",", false):
+				_dev_deck_add.append(cid.strip_edges())
 		else:
 			if arg.begins_with(RUN_ARG) and FLOW_RUN_KINDS.has(arg.trim_prefix(RUN_ARG)):
 				flow_run = arg.trim_prefix(RUN_ARG)
+			elif arg.begins_with(RUN_ARG + FLOW_RUN_EVENT_PREFIX):
+				flow_run = FLOW_RUN_EVENT
+				_dev_event_id = arg.trim_prefix(RUN_ARG + FLOW_RUN_EVENT_PREFIX)
 			for prefix: String in DEV_RUN_ARGS:
 				if arg.begins_with(prefix):
 					dev_run = true
@@ -324,7 +402,8 @@ func _ready() -> void:
 		select_mode = ""
 	var dev_world: bool = dev_run or not node_text.is_empty() or not region_text.is_empty() or at_floor > 0
 	if _store == null:
-		_store = _make_store(progress_mode, dev_world or not select_mode.is_empty())
+		_store = _make_store(progress_mode, dev_world or not select_mode.is_empty() or _dev_gold >= 0
+			or not _dev_deck_add.is_empty() or _dev_hp > 0.0)
 	_progress = _load_progress(progress_mode)
 	# Locale before anything draws or caches a translated name.
 	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _progress.get_locale())
@@ -343,11 +422,16 @@ func _ready() -> void:
 		var start_floor: int = at_floor - 1
 		if start_floor < 0:
 			start_floor = DEV_MINIBOSS_FLOOR if flow_run == FLOW_RUN_MINIBOSS_REWARD else 0
+			if flow_run == FLOW_RUN_SHOP or flow_run == FLOW_RUN_EVENT:
+				start_floor = DEV_SPECIAL_FLOOR
 		var world_only: bool = FLOW_RUN_WORLD_KINDS.has(flow_run) or (at_floor > 0 and not dev_run)
 		_dev_start(start_floor, "" if world_only else DEV_FIRST_OFFERED)
 		if dev_run and flow_run.is_empty() and _run != null:
 			# A RunController / DemoArgs arg: it needs a controller, so the first node is taken.
 			_dev_choose_first_available()
+	if _dev_hp > 0.0 and _run != null and _controller == null:
+		# Again after the dev floor walk (a region boss heals).
+		_run.hp = minf(_dev_hp, _character_max_hp(_character_dict()))
 	if not flow_run.is_empty() and _run != null:
 		_apply_dev_flow_run(flow_run)
 
@@ -445,7 +529,7 @@ func get_controller() -> RunController:
 ## Deprecated (Story 022; use [method get_current_column]): (chapter, column) of the live run while
 ## it is on the map, in a node or at a rest; [constant NO_FLOOR] otherwise (title, menus, test floors).
 func get_current_floor() -> Vector2i:
-	if _run == null or not (_phase == Phase.IN_NODE or _phase == Phase.MAP or _phase == Phase.REST):
+	if _run == null or not [Phase.IN_NODE, Phase.MAP, Phase.REST, Phase.SHOP, Phase.EVENT].has(_phase):
 		return NO_FLOOR
 	return Vector2i(_run.chapter_index, _run.column)
 
@@ -494,6 +578,24 @@ func get_cleared_nodes() -> Array:
 	if _run == null:
 		return []
 	return _run.cleared_nodes.duplicate(true)
+
+
+## Story 033: gold of the live run (0 without a run).
+func get_gold() -> int:
+	return 0 if _run == null else _run.gold
+
+
+## Story 033: the active run modifiers' config overrides (RunSession.run_modifier_overrides: key -> {add, mul[,
+## set]}); RunController puts them in match_params["run_modifiers"]. {} without a run or modifier.
+func get_run_modifier_overrides() -> Dictionary:
+	return {} if _run == null else _run.run_modifier_overrides()
+
+
+## Story 033: readout for the reward screen: the gold the last won node dropped ("+N vàng"; 0 before any and
+## for a node that drops none). Saved with the run (RunSession.last_gold_gain), so a resumed reward screen
+## shows the same amount.
+func get_last_gold_gain() -> int:
+	return _last_gold_gain
 
 
 ## Story 022: removal tokens of the live run (the reward view shows "Bỏ 1 lá" only above 0).
@@ -587,7 +689,8 @@ func start_run(_legacy_chapter: int = -1) -> void:
 
 ## Story 022: the map view picked node [param node_index] of the current column. Battle / danger /
 ## miniboss / boss spawn the node's controller (phase IN_NODE); treasure opens its free offer at
-## once (phase stays MAP); rest shows the REST screen. The run is saved. False with a warning
+## once (phase stays MAP); rest shows the REST screen; Story 033: shop opens SHOP, event opens EVENT
+## (see the class doc). The run is saved. False with a warning
 ## outside MAP, without a run, or when RunSession.choose_node refuses (bad index, cleared node).
 func choose_node(node_index: int) -> bool:
 	if _run == null or _phase != Phase.MAP or _run_result != RunResult.NONE:
@@ -598,10 +701,15 @@ func choose_node(node_index: int) -> bool:
 		return false
 	var kind: String = str(_run.current_node().get("kind", ""))
 	if kind == KIND_TREASURE:
+		_drop_gold(kind)
 		_offer_reward(kind)
 	elif kind == KIND_REST:
 		_save_run()
 		_set_phase(Phase.REST)
+	elif kind == KIND_SHOP:
+		_open_shop()
+	elif kind == KIND_EVENT:
+		_open_event()
 	else:
 		_enter_current_node()
 	run_changed.emit()
@@ -710,6 +818,7 @@ func continue_requested() -> void:
 	_reward_blocking = false
 	_floor_clear_notice = {}
 	_elapsed_base = _run.elapsed_sec
+	_last_gold_gain = _run.last_gold_gain
 	_pending_node_kind = _pending_kind_from_run()
 	_resume_position()
 	run_changed.emit()
@@ -763,7 +872,7 @@ func go_back() -> void:
 				leave_run()
 			elif _controller != null:
 				_controller.toggle_pause()
-		Phase.WORLD_MAP, Phase.MAP, Phase.REST:
+		Phase.WORLD_MAP, Phase.MAP, Phase.REST, Phase.SHOP, Phase.EVENT:
 			leave_run_keep_save()
 		Phase.CHARACTER_SELECT:
 			show_title()
@@ -942,6 +1051,301 @@ func get_deck_levels() -> Dictionary:
 	return _run.deck_levels()
 
 
+# ---- Story 033 shop / event API ----
+
+## Story 033: the open shop's ShopLogic state (a copy; see the ShopLogic header: "cards" / "relics" rows
+## {id, price, sold}, "services" {remove_card, heal: {price, used}}, plus "node_key"); {} outside SHOP.
+func get_shop() -> Dictionary:
+	if _run == null or _phase != Phase.SHOP:
+		return {}
+	return _run.shop_state.duplicate(true)
+
+
+## Story 033: buys [param id] of row [param kind] (ShopLogic.KIND_CARD / KIND_RELIC) in the open shop:
+## the ShopLogic.buy result ({ok, reason, reason_key, price, kind, id[, upgraded, level]}); a bought
+## card counts as seen. The run is saved on success. Outside SHOP: {ok false, reason "unknown"}.
+func shop_buy(kind: String, id: String) -> Dictionary:
+	if _run == null or _phase != Phase.SHOP:
+		push_warning("GameFlow: shop_buy('%s', '%s') outside a shop, ignored" % [kind, id])
+		return ShopLogic._refuse(ShopLogic.REASON_UNKNOWN, 0)
+	var result: Dictionary = ShopLogic.buy(_run.shop_state, _run, kind, id)
+	if bool(result.get("ok", false)):
+		if kind == ShopLogic.KIND_CARD:
+			_progress.mark_card_seen(id)
+		_save_run()
+		run_changed.emit()
+	return result
+
+
+## Story 033: uses service [param id] of the open shop once: ShopLogic.SERVICE_REMOVE_CARD with
+## [param arg] = deck index (a curse may always go; other cards keep min_deck_size non-curse cards),
+## ShopLogic.SERVICE_HEAL without arg (the flow passes the player's max HP). The ShopLogic.use_service
+## result; saved on success. Outside SHOP: {ok false, reason "unknown"}.
+func shop_use_service(id: String, arg: Variant = null) -> Dictionary:
+	if _run == null or _phase != Phase.SHOP:
+		push_warning("GameFlow: shop_use_service('%s') outside a shop, ignored" % id)
+		return ShopLogic._refuse(ShopLogic.REASON_UNKNOWN, 0)
+	var service_arg: Variant = _player_max_hp() if id == ShopLogic.SERVICE_HEAL else arg
+	var result: Dictionary = ShopLogic.use_service(_run.shop_state, _run, id, service_arg, get_cards())
+	if bool(result.get("ok", false)):
+		_save_run()
+		run_changed.emit()
+	return result
+
+
+## Story 033: "Rời cửa hàng": the shop node completes (no reward, no gold), the stock is dropped and the
+## MAP shows (saved). Ignored with a warning outside SHOP.
+func shop_leave() -> void:
+	if _run == null or _phase != Phase.SHOP:
+		push_warning("GameFlow: shop_leave() outside a shop, ignored")
+		return
+	_run.shop_state = {}
+	_complete_plain_node(KIND_SHOP)
+
+
+## Story 033: EventLogic.describe of the open event with the player's max HP ({id, title_key, body_key,
+## choices [{index, id, label_key, cost_key, enabled, reason_key, reason_args, needs_confirm}]}) plus
+## "chosen" (the index picked, -1 before a choice); {} outside EVENT.
+func get_event_view() -> Dictionary:
+	var cur: Dictionary = _current_event()
+	if cur.is_empty() or _phase != Phase.EVENT:
+		return {}
+	var view: Dictionary = EventLogic.describe(str(cur[EVENT_ID]), _run, _player_max_hp(), _event_opts())
+	if not view.is_empty():
+		view["chosen"] = int(cur.get(EVENT_CHOICE, -1))
+	return view
+
+
+## Story 033: picks choice [param index] of the open event: the EventLogic.resolve result ({ok,
+## outcome_index, text_key, effects_applied, pending_picks, pending_fight}). The result is stored in the
+## run BEFORE the save (a resume shows it, never re-rolls). A `fight` outcome starts the extra match at
+## once (phase IN_NODE; see the class doc). Refused (nothing changes): outside EVENT, a choice already
+## made ({ok false, reason_key "ui.event.already_chosen"}) or a choice whose requirements fail.
+func event_choose(index: int) -> Dictionary:
+	var cur: Dictionary = _current_event()
+	if cur.is_empty() or _phase != Phase.EVENT:
+		push_warning("GameFlow: event_choose(%d) outside an event, ignored" % index)
+		return {"ok": false, "reason_key": EventLogic.KEY_BAD_CHOICE, "reason_args": []}
+	if int(cur.get(EVENT_CHOICE, -1)) >= 0:
+		return {"ok": false, "reason_key": TEXT_EVENT_ALREADY_CHOSEN, "reason_args": []}
+	var result: Dictionary = EventLogic.resolve(str(cur[EVENT_ID]), index, _run, _player_max_hp(), _event_opts())
+	if not bool(result.get("ok", false)):
+		return result
+	cur[EVENT_CHOICE] = index
+	cur[EVENT_RESULT] = result.duplicate(true)
+	for effect: Variant in result.get("effects_applied", []) as Array:
+		if typeof(effect) == TYPE_DICTIONARY and str((effect as Dictionary).get("type", "")) == "card_offer":
+			for id: Variant in (effect as Dictionary).get("ids", []) as Array:
+				_progress.mark_card_seen(str(id))
+	var fight: Dictionary = result.get("pending_fight", {})
+	if not fight.is_empty():
+		cur[EVENT_FIGHT] = fight.duplicate(true)
+		cur[EVENT_FIGHT_ACTIVE] = true
+		_save_run()
+		_start_event_fight()
+		run_changed.emit()
+		return result
+	_save_run()
+	run_changed.emit()
+	return result
+
+
+## Story 033: the result of the choice made at the open event (as [method event_choose] returned it,
+## `pending_picks` = the picks still open); after a won extra fight, the EventLogic.finish_fight result
+## (text_key "event.<id>.fight_won", its prize in effects_applied) with "fight_won" true. {} before a
+## choice or outside EVENT.
+func get_event_result() -> Dictionary:
+	var cur: Dictionary = _current_event()
+	if cur.is_empty() or _phase != Phase.EVENT:
+		return {}
+	return (cur.get(EVENT_RESULT, {}) as Dictionary).duplicate(true)
+
+
+## Story 033: finishes the FIRST open pending pick of the event result with [param arg] (card_offer: the
+## chosen card id, "" = skip; remove_card / upgrade_card: a deck index): the EventLogic.complete_pick
+## result ({ok, reason_key}). On success the pick closes and the run is saved. {ok false} when no pick
+## is open or outside EVENT.
+func event_complete_pick(arg: Variant) -> Dictionary:
+	var cur: Dictionary = _current_event()
+	if cur.is_empty() or _phase != Phase.EVENT:
+		push_warning("GameFlow: event_complete_pick() outside an event, ignored")
+		return {"ok": false, "reason_key": "ui.event.bad_pick"}
+	var result: Dictionary = cur.get(EVENT_RESULT, {})
+	var picks: Array = result.get("pending_picks", [])
+	if picks.is_empty():
+		return {"ok": false, "reason_key": "ui.event.bad_pick"}
+	var pick: Dictionary = picks[0]
+	var done: Dictionary = EventLogic.complete_pick(_run, pick, arg, _event_opts())
+	if bool(done.get("ok", false)):
+		if str(pick.get("type", "")) == "card_offer" and not str(arg).is_empty():
+			_progress.mark_card_seen(str(arg))
+		picks.remove_at(0)
+		_save_run()
+		run_changed.emit()
+	return done
+
+
+## Story 033: leaves the event (any open pick is forfeited): the node completes (no reward, no gold), the
+## node's event state is dropped (the seen-event list stays) and the MAP shows. Ignored with a warning
+## outside EVENT.
+func event_leave() -> void:
+	if _run == null or _phase != Phase.EVENT:
+		push_warning("GameFlow: event_leave() outside an event, ignored")
+		return
+	_clear_current_event()
+	_complete_plain_node(KIND_EVENT)
+
+
+# Story 033: the chosen node's position key "floor/column/node" (shop / event state tag).
+func _node_key() -> String:
+	return "%d/%d/%d" % [_run.floor, _run.column, _run.node_index]
+
+
+# Story 033: opens the chosen SHOP node: restores RunSession.shop_state when it belongs to this node
+# (resume), else builds the seeded stock; saves; phase SHOP.
+func _open_shop() -> void:
+	var key: String = _node_key()
+	var state: Dictionary = {}
+	if str(_run.shop_state.get(SHOP_NODE, "")) == key:
+		state = ShopLogic.from_dict(_run.shop_state)
+	if state.is_empty():
+		var cfg: Dictionary = get_reward_config()
+		state = ShopLogic.build(_run.run_seed, _run.floor, _run.column, _run.node_index, _run.luck(cfg),
+			_run.relic_ids(), get_cards(), cfg, null, EconomyConfig.shared())
+	state[SHOP_NODE] = key
+	_run.shop_state = state
+	_save_run()
+	_set_phase(Phase.SHOP)
+
+
+# Story 033: opens the chosen EVENT node: resumes the node's saved event (an extra fight still running
+# respawns its match), else picks a fresh event (dev --run=event=<id> forces one) and records it as
+# seen; saves; phase EVENT. No event at all: the node completes at once.
+func _open_event() -> void:
+	var key: String = _node_key()
+	var cur: Dictionary = _current_event()
+	if not cur.is_empty() and str(cur.get(EVENT_NODE, "")) == key and not EventLogic.get_event(str(cur[EVENT_ID]), _event_opts()).is_empty():
+		_normalize_event_result(cur)
+		if bool(cur.get(EVENT_FIGHT_ACTIVE, false)):
+			_start_event_fight()
+			return
+		_save_run()
+		_set_phase(Phase.EVENT)
+		return
+	var used: Array = _run.event_state.get(EVENT_USED, [])
+	var id: String = ""
+	if not _dev_event_id.is_empty():
+		if EventLogic.get_event(_dev_event_id, _event_opts()).is_empty():
+			push_warning("GameFlow: --run=event=%s: unknown event (known: %s)" % [_dev_event_id, ", ".join(EventLogic.event_ids(_event_opts()))])
+		else:
+			id = _dev_event_id
+		_dev_event_id = ""
+	if id.is_empty():
+		id = EventLogic.pick_event(_run.run_seed, _run.floor, _run.column, _run.node_index, used, _event_opts())
+	if id.is_empty():
+		push_warning("GameFlow: no event to show, the event node completes")
+		_complete_plain_node(KIND_EVENT)
+		return
+	if not used.has(id):
+		used.append(id)
+	_run.event_state = {
+		EVENT_USED: used, EVENT_NODE: key, EVENT_ID: id, EVENT_CHOICE: -1, EVENT_RESULT: {},
+		EVENT_FIGHT: {}, EVENT_FIGHT_ACTIVE: false,
+	}
+	_save_run()
+	_set_phase(Phase.EVENT)
+
+
+# Story 033: the event node being visited (the live RunSession.event_state Dictionary); {} without one.
+func _current_event() -> Dictionary:
+	if _run == null or str(_run.event_state.get(EVENT_ID, "")).is_empty():
+		return {}
+	return _run.event_state
+
+
+# Story 033: drops the node's keys of RunSession.event_state, keeping the seen-event list.
+func _clear_current_event() -> void:
+	var used: Array = _run.event_state.get(EVENT_USED, [])
+	_run.event_state = {EVENT_USED: used}
+
+
+# Story 033: a resumed event state comes back from JSON (numbers as floats): restore the int fields.
+func _normalize_event_result(cur: Dictionary) -> void:
+	cur[EVENT_CHOICE] = int(cur.get(EVENT_CHOICE, -1))
+	var result: Variant = cur.get(EVENT_RESULT, {})
+	if typeof(result) != TYPE_DICTIONARY:
+		cur[EVENT_RESULT] = {}
+		return
+	if (result as Dictionary).has("outcome_index"):
+		(result as Dictionary)["outcome_index"] = int((result as Dictionary)["outcome_index"])
+	if typeof((result as Dictionary).get("pending_picks")) != TYPE_ARRAY:
+		(result as Dictionary)["pending_picks"] = []
+	var fight: Variant = cur.get(EVENT_FIGHT, {})
+	if typeof(fight) == TYPE_DICTIONARY and (fight as Dictionary).has("tier_add"):
+		(fight as Dictionary)["tier_add"] = int((fight as Dictionary)["tier_add"])
+
+
+# Story 033: options of every EventLogic call (the flow's card data and rewards.json).
+func _event_opts() -> Dictionary:
+	return {"cards": get_cards(), "reward_config": get_reward_config()}
+
+
+# Story 033: true while the open event's extra fight is being played (or waits to respawn on resume).
+func _is_event_fight_active() -> bool:
+	var cur: Dictionary = _current_event()
+	return not cur.is_empty() and bool(cur.get(EVENT_FIGHT_ACTIVE, false))
+
+
+# Story 033: spawns the event's extra match through the match-node path: a match of the fight's kind
+# drawn from the region's pool at the current column's tier + tier_add (seeded by the node, kept in the
+# state so a resume replays the same match). The node and the column do not move.
+func _start_event_fight() -> void:
+	var cur: Dictionary = _current_event()
+	var fight: Dictionary = cur.get(EVENT_FIGHT, {})
+	var kind: String = str(fight.get("kind", "danger"))
+	var match_id: String = str(fight.get("match_id", ""))
+	if match_id.is_empty():
+		var tier: int = int(_run.current_column().get("tier", 0)) + int(fight.get("tier_add", 0))
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash([_run.run_seed, _run.floor, _run.column, _run.node_index, EVENT_FIGHT_SEED_TAG]) & ChaptersConfig.SEED_MASK
+		var used: Array[String] = []
+		match_id = ChapterMapGen._draw_match(_config.region_spec(_run.region_id, _run.floor), kind, tier, used, rng)
+		fight["match_id"] = match_id
+		cur[EVENT_FIGHT] = fight
+	_spawn_match(match_id, kind)
+
+
+# Story 033: the event's extra match was won: run modifiers tick (a match was played), the HP carries
+# (plus passive heal, clamped), EventLogic.finish_fight applies the prize, the result becomes the fight
+# result and the EVENT screen shows again (saved). The node is NOT completed.
+func _finish_event_fight(hp_end: float, max_hp: float, passive_heal: float) -> void:
+	var cur: Dictionary = _current_event()
+	_run.tick_run_modifiers()
+	_run.hp = minf(hp_end + maxf(passive_heal, 0.0), max_hp)
+	var fight: Dictionary = cur.get(EVENT_FIGHT, {})
+	var won: Dictionary = EventLogic.finish_fight(_run, fight, true, max_hp, _event_opts())
+	var prev: Dictionary = cur.get(EVENT_RESULT, {})
+	won["outcome_index"] = int(prev.get("outcome_index", 0))
+	won["fight_won"] = true
+	cur[EVENT_RESULT] = won
+	cur[EVENT_FIGHT] = {}
+	cur[EVENT_FIGHT_ACTIVE] = false
+	_sync_elapsed()
+	_free_controller()
+	_save_run()
+	_set_phase(Phase.EVENT)
+	run_changed.emit()
+
+
+# Story 033: completes a fight-less, reward-less node (shop, event) and goes back to the MAP.
+func _complete_plain_node(kind: String) -> void:
+	_run.complete_node(_run.hp, _player_max_hp(), kind, get_reward_config(), 0.0)
+	if _run.is_run_won():
+		_finish_run_won()
+		return
+	_return_to_map()
+
+
 # Creates a fresh world run of the selected (or default) character with a fresh seed (or --seed):
 # floor 1, its region offer rolled, no region yet; records floor 1 reached, saves, shows WORLD_MAP.
 func _begin_run() -> void:
@@ -951,8 +1355,19 @@ func _begin_run() -> void:
 	var run_seed: int = _dev_seed if _dev_seed >= 0 else randi() & ChaptersConfig.SEED_MASK
 	var starting_removals: int = int(get_reward_config().get("starting_removals", 0))
 	_run = RunSession.begin_world(_config, _character_dict(), run_seed, starting_removals)
+	_run.cards_config = get_cards()
 	for relic_id: String in _dev_relics:
 		_run.add_relic(relic_id)
+	if _dev_gold >= 0:
+		_run.gold = _dev_gold
+	if _dev_hp > 0.0:
+		_run.hp = minf(_dev_hp, _character_max_hp(_character_dict()))
+	for card_id: String in _dev_deck_add:
+		if get_cards().has_skill(card_id):
+			_run.add_card(card_id, 1)
+		else:
+			push_warning("GameFlow: --deck+=: unknown card '%s', ignored" % card_id)
+	_last_gold_gain = 0
 	_run_result = RunResult.NONE
 	_reward_blocking = false
 	_pending_node_kind = ""
@@ -969,11 +1384,16 @@ func _begin_run() -> void:
 # (the reward screen gates the advance) and no minimum-HP rule (retry_min_hp_ratio 0: the saved HP is
 # the HP). A pending offer on a resumed match node holds the intro.
 func _enter_current_node() -> void:
-	_free_controller()
 	var node: Dictionary = _run.current_node()
-	var kind: String = str(node.get("kind", ""))
+	_spawn_match(str(node.get("match_id", "")), str(node.get("kind", "")))
+
+
+# The one match path (a match node, or Story 033's event extra fight): match [param match_id] of the
+# current region scaled for the floor, played as a [param kind] node (danger traits), at the run's HP.
+func _spawn_match(match_id: String, kind: String) -> void:
+	_free_controller()
 	_elapsed_base = _run.elapsed_sec
-	var run_config: RunConfig = RunConfig.from_node(_config, _run.region_id, str(node.get("match_id", "")), kind,
+	var run_config: RunConfig = RunConfig.from_node(_config, _run.region_id, match_id, kind,
 		_run.floor_seed(), _run.floor)
 	run_config.between_sec = 0.0
 	run_config.retry_min_hp_ratio = 0.0
@@ -1017,6 +1437,10 @@ func _resume_position() -> void:
 		_set_phase(Phase.MAP)
 		if not _run.has_pending_reward():
 			_offer_reward(kind)
+	elif kind == KIND_SHOP:
+		_open_shop()
+	elif kind == KIND_EVENT:
+		_open_event()
 	else:
 		_reward_blocking = _run.has_pending_reward()
 		_enter_current_node()
@@ -1100,6 +1524,9 @@ func _on_match_won() -> void:
 	var view: CombatView = null if battle == null else battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
 	if view != null:
 		passive_heal = view.get_passive_heal()
+	if _is_event_fight_active():
+		_finish_event_fight(_controller.get_last_player_hp(), _controller.get_player_max_hp(), passive_heal)
+		return
 	_complete_match_node(_controller.get_last_player_hp(), _controller.get_player_max_hp(), passive_heal)
 
 
@@ -1108,6 +1535,8 @@ func _on_match_won() -> void:
 # opens the boss offer. The final match: the run is won at once (no offer). Others: their offer.
 func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> void:
 	var kind: String = str(_run.current_node().get("kind", ""))
+	_drop_gold(kind)
+	_run.tick_run_modifiers()
 	var result: Dictionary = _run.complete_node(hp_end, max_hp, kind, get_reward_config(), passive_heal)
 	if kind == KIND_BOSS:
 		_record_boss(result)
@@ -1115,6 +1544,15 @@ func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> 
 		_finish_run_won()
 		return
 	_offer_reward(kind)
+
+
+# Story 033: the gold of the node being completed (position = floor / column / node, so a resume gives the
+# same amount): EconomyConfig.gold_for(kind, floor, hash([run_seed, floor, column, node_index, "gold"])).
+func _drop_gold(kind: String) -> void:
+	var gold_seed: int = hash([_run.run_seed, _run.floor, _run.column, _run.node_index, GOLD_SEED_TAG]) & ChaptersConfig.SEED_MASK
+	_last_gold_gain = EconomyConfig.shared().gold_for(kind, _run.floor, gold_seed)
+	_run.last_gold_gain = _last_gold_gain
+	_run.add_gold(_last_gold_gain)
 
 
 # Rolls the offer of a node kind (RewardRoller.reward_for_node: count and rarity floor) with the
@@ -1459,6 +1897,27 @@ func _dev_win_current_match(_offer: bool, hp_ratio: float = -1.0) -> void:
 	_complete_match_node(hp_ratio * max_hp if hp_ratio >= 0.0 else DEV_FLOW_HP, max_hp, 0.0)
 
 
+# DEV-ONLY (Story 033, --run=shop / --run=event=<id>): chooses the region's first [param kind] node
+# (columns before it cleared); without one, the current column's first available node becomes that kind.
+func _dev_open_special(kind: String) -> void:
+	if _run.is_choosing_region():
+		return
+	for col: int in range(_run.column, _run.map.size() - 1):
+		for node: Variant in (_run.map[col].get("nodes", []) as Array):
+			if str((node as Dictionary).get("kind", "")) == kind:
+				_dev_advance_to_kind(kind)
+				return
+	var nodes: Array[Dictionary] = _run.available_nodes()
+	if nodes.is_empty():
+		push_warning("GameFlow: --run=%s: no node to open" % kind)
+		return
+	var index: int = int(nodes[0]["node_index"])
+	var target: Dictionary = (_run.map[_run.column]["nodes"] as Array)[index]
+	target["kind"] = kind
+	target["match_id"] = ""
+	choose_node(index)
+
+
 # DEV-ONLY (--run=<flow kind>): puts the freshly started run into a capture state.
 func _apply_dev_flow_run(kind: String) -> void:
 	match kind:
@@ -1493,6 +1952,15 @@ func _apply_dev_flow_run(kind: String) -> void:
 		FLOW_RUN_REWARD:
 			if _dev_choose_first_available():
 				_dev_win_current_match(true)
+		FLOW_RUN_GOLD_REWARD:
+			if _dev_advance_to_kind(KIND_BATTLE):
+				_dev_win_current_match(true)
+		FLOW_RUN_SHOP:
+			if _dev_gold < 0:
+				_run.gold = maxi(_run.gold, DEV_SHOP_GOLD)
+			_dev_open_special(KIND_SHOP)
+		FLOW_RUN_EVENT:
+			_dev_open_special(KIND_EVENT)
 		FLOW_RUN_OVER:
 			if _dev_choose_first_available() and _controller != null:
 				var battle: Node = _controller.get_battle()

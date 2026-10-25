@@ -44,8 +44,10 @@ const RUN_KINDS: Array[String] = ["intro", "between", "won", "lost"]
 ## DEV-ONLY (Story 019 / 022): --run= kinds GameFlow handles; ignored here.
 const FLOW_RUN_KINDS: Array[String] = [
 	"reward", "runover", "runwon", "map", "map3", "rest", "treasure", "miniboss_reward", "boss_reward",
-	"world", "world3", "floorclear", "final",
+	"world", "world3", "floorclear", "final", "shop", "gold_reward",
 ]
+## DEV-ONLY (Story 033): prefix of the GameFlow --run=event=<id> kind; ignored here.
+const FLOW_RUN_EVENT_PREFIX: String = "event="
 ## DEV-ONLY: stable clock value (7:42) for run screen captures.
 const DEV_ELAPSED_SEC: float = 462.0
 const TEXT_MATCH_LABEL: String = "ui.run.match_label"
@@ -70,6 +72,11 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 ## Story 032: relic ids the run owns (received order); becomes match_params["relics"]. Empty = ask the
 ## parent (GameFlow.get_relics) when it has one, else no relics. Set BEFORE add_child (optional).
 @export var relics: Array[String] = []
+## Story 033: config overrides of the run's active run modifiers (RunSession.run_modifier_overrides, the
+## RelicRegistry.merge_overrides form: key -> {add, mul[, set]}, e.g. {"step_cooldown": {"add": 0.0, "mul": 1.2}});
+## becomes match_params["run_modifiers"] (absent when empty). Empty = ask the parent
+## (GameFlow.get_run_modifier_overrides) when it has one. Set BEFORE add_child (optional).
+@export var run_modifiers: Dictionary = {}
 ## Story 019: while true the INTRO timer does not tick (the battle stays frozen and drawn).
 ## GameFlow sets it before add_child on a resumed run whose saved card offer is still open and
 ## clears it when the offer is resolved. No effect outside INTRO.
@@ -110,7 +117,7 @@ func _ready() -> void:
 			dev_match = clampi(int(arg.trim_prefix(MATCH_ARG)), 1, _state.get_match_count()) - 1
 		elif arg.begins_with(RUN_ARG):
 			dev_run = arg.trim_prefix(RUN_ARG)
-			if FLOW_RUN_KINDS.has(dev_run):
+			if FLOW_RUN_KINDS.has(dev_run) or dev_run.begins_with(FLOW_RUN_EVENT_PREFIX):
 				dev_run = ""
 		elif arg.begins_with(ARENA_ARG):
 			var arena_text: String = arg.trim_prefix(ARENA_ARG)
@@ -281,6 +288,17 @@ func _relic_ids() -> Array[String]:
 	return ids
 
 
+# Story 033: [member run_modifiers], else the parent run's (GameFlow.get_run_modifier_overrides), else {}.
+func _run_modifier_overrides() -> Dictionary:
+	if not run_modifiers.is_empty():
+		return run_modifiers.duplicate(true)
+	if get_parent() != null and get_parent().has_method("get_run_modifier_overrides"):
+		var raw: Variant = get_parent().call("get_run_modifier_overrides")
+		if typeof(raw) == TYPE_DICTIONARY:
+			return (raw as Dictionary).duplicate(true)
+	return {}
+
+
 func _spawn_battle() -> void:
 	_free_battle()
 	_clear_pause()
@@ -299,6 +317,9 @@ func _spawn_battle() -> void:
 	var relic_ids: Array[String] = _relic_ids()
 	if not relic_ids.is_empty():
 		params["relics"] = relic_ids
+	var modifier_overrides: Dictionary = _run_modifier_overrides()
+	if not modifier_overrides.is_empty():
+		params["run_modifiers"] = modifier_overrides
 	if not deck_entries.is_empty():
 		params["deck"] = deck_entries.duplicate(true)
 	elif not deck.is_empty():

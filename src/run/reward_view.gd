@@ -33,6 +33,10 @@ extends Node2D
 ## boss offer "+N token bỏ lá" (ScreenLayout.reward_subtitle_rect). The "Bỏ 1 lá" slot shows ONLY
 ## while the run holds a removal token (RunSession.removal_tokens > 0) and reads "Bỏ 1 lá (N)";
 ## removing spends one (the flow).
+##
+## Story 033: the title band carries the gold — "+N vàng" with a coin at the left when the node just
+## paid gold ([method GameFlow.get_last_gold_gain] > 0), the run's total at the right. The remove list
+## counts only non-curse cards against min_deck_size; a curse tile (purple) is always removable.
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const TITLE_COLOR: Color = Color(0.95, 0.9, 0.78)
@@ -52,6 +56,12 @@ const RARITY_COMMON_COLOR: Color = Color(0.55, 0.55, 0.58)
 const RARITY_RARE_COLOR: Color = Color(0.25, 0.5, 0.95)
 const RARITY_EPIC_COLOR: Color = Color(0.95, 0.72, 0.15)
 const BORDER_WIDTH: float = 6.0
+## Story 033: the gold gain line (left of the title band) and the total (right).
+const GOLD_GAIN_COLOR: Color = Color(1.0, 0.82, 0.3)
+const GOLD_FONT_SIZE: int = 30
+const GOLD_COIN_GAP: float = 8.0
+## Story 033: "+%d vàng".
+const TEXT_GOLD_GAIN: String = "ui.gold.gain"
 const DIVIDER_WIDTH: float = 2.0
 ## Border of a remove-list tile (thinner than a card).
 const TILE_BORDER_WIDTH: float = 4.0
@@ -295,11 +305,9 @@ func _input_remove_list(pos: Vector2, vp: Vector2) -> void:
 		_removing = false
 		return
 	var entries: Array[Dictionary] = _flow.get_run_deck_entries()
-	if not _entries_removable(entries.size()):
-		return
 	var rects: Array[Rect2] = ScreenLayout.reward_remove_rects(vp, entries.size())
 	for i: int in rects.size():
-		if rects[i].has_point(pos):
+		if rects[i].has_point(pos) and _tile_removable(entries, i):
 			_removing = false
 			_flow.reward_remove_requested(i)
 			return
@@ -339,9 +347,15 @@ func _reward_kind() -> String:
 	return _flow.get_pending_reward_kind()
 
 
-# Story 020: true when a deck of [param size] may lose a card (above rewards.json min_deck_size).
-func _entries_removable(size: int) -> bool:
-	return size > int(_flow.get_reward_config().get("min_deck_size", 0))
+# Story 020: true when a normal card may go (Story 033: the NON-curse cards of [param entries] are above
+# rewards.json min_deck_size).
+func _entries_removable(entries: Array[Dictionary]) -> bool:
+	return ShopView.non_curse_count(entries, _flow.get_cards()) > int(_flow.get_reward_config().get("min_deck_size", 0))
+
+
+# Story 033: entry [param index] may go — a curse always, a normal card per [method _entries_removable].
+func _tile_removable(entries: Array[Dictionary], index: int) -> bool:
+	return _flow.get_cards().is_curse(str(entries[index].get("id", ""))) or _entries_removable(entries)
 
 
 # Story 020: the level cap offers stop at (rewards.json max_card_level, else SkillConfig.MAX_LEVEL).
@@ -363,6 +377,7 @@ func _draw() -> void:
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
 	var kind: String = _reward_kind()
 	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE_TREASURE if kind == KIND_TREASURE else TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
+	_draw_gold(vp, title)
 	var subtitle: String = ""
 	if kind == KIND_MINIBOSS:
 		subtitle = tr(TEXT_MIN_RARE)
@@ -620,7 +635,7 @@ func _draw_remove_list(vp: Vector2) -> void:
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
 	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_REMOVE_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
 	var entries: Array[Dictionary] = _flow.get_run_deck_entries()
-	var enabled: bool = _entries_removable(entries.size())
+	var normal_ok: bool = _entries_removable(entries)
 	var rects: Array[Rect2] = ScreenLayout.reward_remove_rects(vp, entries.size())
 	var cards: SkillConfig = _flow.get_cards()
 	for i: int in rects.size():
@@ -628,6 +643,7 @@ func _draw_remove_list(vp: Vector2) -> void:
 		var level: int = int(entries[i].get("level", 1))
 		var skill: Dictionary = cards.resolved(id, level)
 		var label: String = tr(str(skill.get("name_key", id))) + LEVEL_SEPARATOR + tr(TEXT_LEVEL_SUFFIX) % level
+		var enabled: bool = _tile_removable(entries, i)
 		var pressed: bool = enabled and UiButtons.is_pressed_at(self, rects[i])
 		var back: Color = CARD_BACK
 		var border: Color = CARD_PRESSED_OUTLINE if pressed else _rarity_color(str(skill.get("rarity", "")))
@@ -640,7 +656,7 @@ func _draw_remove_list(vp: Vector2) -> void:
 		draw_rect(rects[i], border, false, TILE_BORDER_WIDTH)
 		_text(rects[i], rects[i].get_center().y + TILE_FONT_SIZE * 0.35, label, TILE_FONT_SIZE, name_color)
 	var hint: Rect2 = ScreenLayout.reward_remove_hint_rect(vp)
-	if not enabled:
+	if not normal_ok:
 		_text(hint, hint.get_center().y + HINT_FONT_SIZE * 0.35, tr(TEXT_MIN_DECK), HINT_FONT_SIZE, HINT_COLOR)
 	elif entries.size() > rects.size():
 		_text(hint, hint.get_center().y + HINT_FONT_SIZE * 0.35, tr(TEXT_MORE) % (entries.size() - rects.size()), HINT_FONT_SIZE, TITLE_COLOR)
@@ -648,9 +664,24 @@ func _draw_remove_list(vp: Vector2) -> void:
 	UiButtons.draw_button(self, cancel, tr(TEXT_CANCEL), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, cancel), true, BUTTON_FONT_SIZE)
 
 
-# Border colour of a rarity id (common for anything unknown).
+# Story 033: "+N vàng" (coin + text) at the left of the title band when the node paid gold; the run's
+# gold total at the right.
+func _draw_gold(vp: Vector2, title: Rect2) -> void:
+	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	ShopView.draw_gold(self, vp.x - margin, title.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
+	var gain: int = _flow.get_last_gold_gain()
+	if gain <= 0:
+		return
+	var radius: float = GOLD_FONT_SIZE * ShopView.COIN_RADIUS_RATIO
+	ShopView.draw_coin(self, Vector2(margin + radius, title.get_center().y), radius)
+	draw_string(ThemeDB.fallback_font, Vector2(margin + radius * 2.0 + GOLD_COIN_GAP, title.get_center().y + GOLD_FONT_SIZE * 0.35), tr(TEXT_GOLD_GAIN) % gain, HORIZONTAL_ALIGNMENT_LEFT, -1, GOLD_FONT_SIZE, GOLD_GAIN_COLOR)
+
+
+# Border colour of a rarity id (common for anything unknown; Story 033: curses purple).
 func _rarity_color(rarity: String) -> Color:
 	match rarity:
+		"curse":
+			return ShopView.CURSE_COLOR
 		RARITY_RARE:
 			return RARITY_RARE_COLOR
 		RARITY_EPIC:

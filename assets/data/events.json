@@ -1,0 +1,197 @@
+{
+  "events": [
+    {
+      "id": "ban_tho_mau",
+      "title_key": "event.ban_tho_mau.title",
+      "body_key": "event.ban_tho_mau.body",
+      "choices": [
+        {
+          "id": "give",
+          "label_key": "event.ban_tho_mau.give.label",
+          "cost_key": "event.ban_tho_mau.give.cost",
+          "requires": { "hp_cost_ratio": 0.15 },
+          "confirm": true,
+          "outcomes": [
+            { "chance": 1.0, "result_key": "event.ban_tho_mau.give.result", "effects": [
+              { "type": "hp", "ratio": -0.15 },
+              { "type": "relic", "source": "event", "min_rarity": "rare" }
+            ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    },
+    {
+      "id": "ke_buon_nguyen",
+      "title_key": "event.ke_buon_nguyen.title",
+      "body_key": "event.ke_buon_nguyen.body",
+      "choices": [
+        {
+          "id": "accept",
+          "label_key": "event.ke_buon_nguyen.accept.label",
+          "cost_key": "event.ke_buon_nguyen.accept.cost",
+          "requires": {},
+          "confirm": true,
+          "outcomes": [
+            { "chance": 1.0, "result_key": "event.ke_buon_nguyen.accept.result", "effects": [
+              { "type": "curse", "id": "ganh_nang" },
+              { "type": "card_offer", "rarity": "epic", "count": 3 }
+            ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    },
+    {
+      "id": "song_bac",
+      "title_key": "event.song_bac.title",
+      "body_key": "event.song_bac.body",
+      "choices": [
+        {
+          "id": "bet_small",
+          "label_key": "event.song_bac.bet_small.label",
+          "cost_key": "event.song_bac.bet_small.cost",
+          "requires": { "gold": 30 },
+          "confirm": false,
+          "outcomes": [
+            { "chance": 0.5, "result_key": "event.song_bac.bet_small.win", "effects": [ { "type": "gold", "amount": 75 } ] },
+            { "chance": 0.5, "result_key": "event.song_bac.bet_small.lose", "effects": [ { "type": "gold", "amount": -30 } ] }
+          ]
+        },
+        {
+          "id": "bet_big",
+          "label_key": "event.song_bac.bet_big.label",
+          "cost_key": "event.song_bac.bet_big.cost",
+          "requires": { "gold": 60 },
+          "confirm": false,
+          "outcomes": [
+            { "chance": 0.4, "result_key": "event.song_bac.bet_big.win", "effects": [ { "type": "gold", "amount": 160 } ] },
+            { "chance": 0.6, "result_key": "event.song_bac.bet_big.lose", "effects": [ { "type": "gold", "amount": -60 } ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    },
+    {
+      "id": "tran_thach",
+      "title_key": "event.tran_thach.title",
+      "body_key": "event.tran_thach.body",
+      "choices": [
+        {
+          "id": "fight",
+          "label_key": "event.tran_thach.fight.label",
+          "cost_key": "event.tran_thach.fight.cost",
+          "requires": {},
+          "confirm": false,
+          "outcomes": [
+            { "chance": 1.0, "result_key": "event.tran_thach.fight.result", "effects": [
+              { "type": "fight", "kind": "danger", "tier_add": 1, "then_effects": [
+                { "type": "relic", "source": "event", "min_rarity": "common" },
+                { "type": "gold", "amount": 25 }
+              ] }
+            ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    },
+    {
+      "id": "suoi_tinh",
+      "title_key": "event.suoi_tinh.title",
+      "body_key": "event.suoi_tinh.body",
+      "choices": [
+        {
+          "id": "drink",
+          "label_key": "event.suoi_tinh.drink.label",
+          "cost_key": "event.suoi_tinh.drink.cost",
+          "requires": {},
+          "confirm": false,
+          "outcomes": [
+            { "chance": 1.0, "result_key": "event.suoi_tinh.drink.result", "effects": [ { "type": "hp", "ratio": 0.25 } ] }
+          ]
+        },
+        {
+          "id": "bathe",
+          "label_key": "event.suoi_tinh.bathe.label",
+          "cost_key": "event.suoi_tinh.bathe.cost",
+          "requires": { "hp_cost_ratio": 0.1 },
+          "confirm": true,
+          "outcomes": [
+            { "chance": 1.0, "result_key": "event.suoi_tinh.bathe.result", "effects": [
+              { "type": "hp", "ratio": -0.1 },
+              { "type": "upgrade_card", "levels": 1 }
+            ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    },
+    {
+      "id": "ke_lang_thang",
+      "title_key": "event.ke_lang_thang.title",
+      "body_key": "event.ke_lang_thang.body",
+      "choices": [
+        {
+          "id": "swap",
+          "label_key": "event.ke_lang_thang.swap.label",
+          "cost_key": "event.ke_lang_thang.swap.cost",
+          "requires": { "relic": "non_boss" },
+          "confirm": true,
+          "outcomes": [
+            { "chance": 1.0, "result_key": "event.ke_lang_thang.swap.result", "effects": [ { "type": "swap_relic", "rarity_up": 1 } ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    },
+    {
+      "id": "mo_hoang",
+      "title_key": "event.mo_hoang.title",
+      "body_key": "event.mo_hoang.body",
+      "choices": [
+        {
+          "id": "dig",
+          "label_key": "event.mo_hoang.dig.label",
+          "cost_key": "event.mo_hoang.dig.cost",
+          "requires": {},
+          "confirm": true,
+          "outcomes": [
+            { "chance": 0.6, "result_key": "event.mo_hoang.dig.gold", "effects": [ { "type": "gold", "amount": 40 } ] },
+            { "chance": 0.4, "result_key": "event.mo_hoang.dig.curse", "effects": [ { "type": "curse", "id": "oan_hon" } ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    },
+    {
+      "id": "loi_the",
+      "title_key": "event.loi_the.title",
+      "body_key": "event.loi_the.body",
+      "choices": [
+        {
+          "id": "swear",
+          "label_key": "event.loi_the.swear.label",
+          "cost_key": "event.loi_the.swear.cost",
+          "requires": {},
+          "confirm": false,
+          "outcomes": [
+            { "chance": 1.0, "result_key": "event.loi_the.swear.result", "effects": [
+              { "type": "run_modifier", "id": "slow_step", "matches_left": 2, "params": { "step_cooldown": { "mul": 1.2 } } },
+              { "type": "remove_card", "tokens": 1 },
+              { "type": "gold", "amount": 30 }
+            ] }
+          ]
+        },
+        { "id": "leave", "label_key": "ui.event.leave", "cost_key": "", "requires": {}, "confirm": false,
+          "outcomes": [ { "chance": 1.0, "result_key": "ui.event.leave_result", "effects": [] } ] }
+      ]
+    }
+  ]
+}

@@ -7,12 +7,17 @@ extends RefCounted
 
 const SOURCE_TREASURE: String = "treasure"
 const SOURCE_BOSS_KILL: String = "boss_kill"
+## Story 033: the shop and event sources draw exactly like `treasure` (own rule in `source_rules`).
+const SOURCE_SHOP: String = "shop"
+const SOURCE_EVENT: String = "event"
 
 
 ## Up to [param count] DIFFERENT relic ids for [param source]; never a duplicate, never an id of
 ## [param owned] unless it has the `stackable` tag; fewer than [param count] when the pool is short.
-## `treasure`: every slot draws a rarity by `rarity_weights` among the rarities at or above the rule's
-## `min_rarity` (floor, shipped `common`) that still have a candidate, then a relic of it.
+## `treasure` / `shop` / `event` (Story 033): every slot draws a rarity by `rarity_weights` among the
+## rarities at or above the source rule's `min_rarity` (floor, shipped `common`) that still have a
+## candidate, then a relic of it. A non-empty [param min_rarity] replaces the rule's floor (an event
+## that promises at least `rare`).
 ## `boss_kill`: tier `boss` first, then `epic` when no boss relic is left. Unknown source: empty
 ## (warning). A null [param rng] uses a fresh generator with seed 0; null [param config] the shared
 ## relics.json.
@@ -21,7 +26,8 @@ static func roll(
 	owned: Array,
 	rng: RandomNumberGenerator,
 	config: RelicConfig = null,
-	count: int = 3
+	count: int = 3,
+	min_rarity: String = ""
 ) -> Array[String]:
 	var cfg: RelicConfig = config if config != null else RelicRegistry.shared_config()
 	var generator: RandomNumberGenerator = rng
@@ -32,8 +38,8 @@ static func roll(
 	if count <= 0:
 		return out
 	match source:
-		SOURCE_TREASURE:
-			_roll_treasure(cfg, owned, generator, count, out)
+		SOURCE_TREASURE, SOURCE_SHOP, SOURCE_EVENT:
+			_roll_treasure(cfg, source, min_rarity, owned, generator, count, out)
 		SOURCE_BOSS_KILL:
 			_roll_tiers(cfg, owned, generator, count, out)
 		_:
@@ -56,9 +62,11 @@ static func _candidates(cfg: RelicConfig, rarity: String, owned: Array, taken: A
 	return pool
 
 
-static func _roll_treasure(cfg: RelicConfig, owned: Array, rng: RandomNumberGenerator, count: int, out: Array[String]) -> void:
-	var rule: Dictionary = cfg.source_rules.get(SOURCE_TREASURE, {})
-	var floor_rank: int = maxi(RelicConfig.rarity_rank(str(rule.get("min_rarity", "common"))), 0)
+static func _roll_treasure(cfg: RelicConfig, source: String, min_rarity: String, owned: Array,
+		rng: RandomNumberGenerator, count: int, out: Array[String]) -> void:
+	var rule: Dictionary = cfg.source_rules.get(source, cfg.source_rules.get(SOURCE_TREASURE, {}))
+	var floor_name: String = min_rarity if not min_rarity.is_empty() else str(rule.get("min_rarity", "common"))
+	var floor_rank: int = maxi(RelicConfig.rarity_rank(floor_name), 0)
 	while out.size() < count:
 		var buckets: Array[String] = []
 		var weights: Array[float] = []

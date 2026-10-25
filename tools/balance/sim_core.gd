@@ -118,6 +118,10 @@ var ov: Dictionary = {
 ## apply_args seeds it from --relics=). Instances, merged config overrides and the running cast's
 ## cast_info live below; see [method _setup_relics].
 var relic_ids: Array[String] = []
+## Story 033: the run modifiers' override table of the NEXT match (RunSession.run_modifier_overrides, the
+## form RunController puts in match_params["run_modifiers"]); deck_sim sets it per match. Key in use:
+## `step_cooldown` (event loi_the, {mul: 1.2}), folded onto the player's step cooldown as CombatView does.
+var run_modifiers: Dictionary = {}
 var relic_config: RelicConfig
 var relics: Array = []
 var relic_merged: Dictionary = {}
@@ -502,6 +506,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	var base_cd: float = combat.step_cooldown_for(grid)
 	var step_mult: float = float(character.get("step_cooldown_mult", 1.0))
 	var player_cd: float = base_cd * (step_mult if step_mult > 0.0 else 1.0)
+	# Story 033: mirrors CombatView._ready (run modifiers on top of the character's step multiplier).
+	player_cd = RelicRegistry.apply_override(player_cd, run_modifiers, "step_cooldown")
 	mover = UnitMover.new(state, PLAYER, player_cd)
 	var chapter_id: String = str(m.get("chapter_id", ""))
 	var player_drops_config: FieldDropsConfig = drops_config.copy()
@@ -598,6 +604,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		"casts": 0, "resolved": 0, "hits": 0, "dealt": 0.0, "taken": 0.0, "bstarts": 0, "bswings": 0, "bhits": 0, "shits": 0, "bdmg": 0.0,
 		"interrupts": 0, "counters": 0, "sig_acts": 0, "sig_dmg": 0.0, "sig_first": -1.0, "focus_uses": 0,
 		"joins": 0, "featured": 0, "cells": 0,
+		# Story 033: curse cards dealt into the card menu, and the HP their draw_damage took.
+		"curse_draws": 0, "curse_dmg": 0.0,
 		# Story 027: zone casts, seals / thorns that formed and their cells, boss / player thorn entries and
 		# damage, hit counts of non-zone casts started <= POST_SEAL_SEC after a seal (ps_) and of the others (o_).
 		"zone_casts": 0, "seals": 0, "seal_cells": 0, "thorns": 0, "thorn_cells": 0, "bthorn": 0, "bthorn_dmg": 0.0,
@@ -1478,7 +1486,17 @@ func _confirm_placement() -> void:
 	var cells: Array[Vector2i] = []
 	cells.assign(best["cells"])
 	plan.add_piece(slot, best["piece"] as Piece, cells)
-	flow.open_menu([(best["piece"] as Piece).shape_id] as Array[String], cells, deck.draw(cards.hand_size))
+	# Story 033: mirrors CombatView: curse-aware deal (at least one non-curse card while the deck has one),
+	# then each drawn curse's draw_damage hurts the player.
+	var hand: Array[String] = deck.draw_menu(cards.hand_size, Callable(cards, "is_curse"))
+	flow.open_menu([(best["piece"] as Piece).shape_id] as Array[String], cells, hand)
+	for id: String in hand:
+		if cards.is_curse(id):
+			ms["curse_draws"] = int(ms["curse_draws"]) + 1
+			var dmg: float = cards.draw_damage(id)
+			if dmg > 0.0:
+				state.damage_player(dmg)
+				ms["curse_dmg"] = float(ms["curse_dmg"]) + dmg
 	_cast["target"] = target
 	_phase = Phase.MENU
 	_phase_left = float(bot["join_sec"]) if (_cast.has("join") and rng.randf() < float(bot["join"])) else 0.0

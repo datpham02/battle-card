@@ -163,7 +163,7 @@ func _press_position(event: InputEvent) -> Vector2:
 
 # True when a deck entry may still be forged (below SkillConfig.MAX_LEVEL, the cap RunSession.rest_forge applies).
 func _can_forge(entry: Dictionary) -> bool:
-	return int(entry.get("level", 1)) < SkillConfig.MAX_LEVEL
+	return int(entry.get("level", 1)) < SkillConfig.MAX_LEVEL and not _flow.get_cards().is_curse(str(entry.get("id", "")))
 
 
 # HP the "Nghỉ" choice restores: rest_heal_ratio x the character's max HP.

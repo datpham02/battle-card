@@ -128,6 +128,13 @@
 			"4": [1, 2, 2],
 			"5": [1, 2, 2]
 		},
+		"special_nodes": {
+			"column": 1,
+			"shop_weight": 0.0,
+			"event_weight": 0.6,
+			"guaranteed_shops": 3,
+			"guaranteed_min_floor": 2
+		},
 		"floor_heal_ratio": 0.35,
 		"final_match": {"region": "ch3", "match_id": "mist_lord"}
 	},
