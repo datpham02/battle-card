@@ -8,7 +8,7 @@ from session scratch.
 | File | What it is |
 |---|---|
 | `sim_core.gd` | Shared harness. It builds one match the way `CombatView._ready` does and runs `CombatView._process`'s tick order headless. It contains the v5 player bot. Both tools preload it. |
-| `deck_sim.gd` | Full-run simulator. It plays seeds × characters × chapters through the chapter map with the reward policy, then prints win %, boss hits per won run, and per-kind and per-match tables. |
+| `deck_sim.gd` | Full-run simulator. It plays seeds × characters × chapters through the chapter map with the reward policy, then prints win %, boss hits per won run, and per-kind and per-match tables. `--world` (Story 031) plays whole 5-floor runs instead: region picks, short region maps, floor heal, the final match. |
 | `hit_probe.gd` | Per-boss probe of one chapter. It measures hit rates for pieces, pairs and counters, the boss's attack rate on an idle player (TD-022), and full-bot matches for signature and formation numbers. |
 
 Neither tool writes any file. Data experiments use the override flags below. These apply **in
@@ -25,6 +25,8 @@ GODOT=C:/Users/ADMIN/AppData/Local/Microsoft/WinGet/Links/godot.exe
 # Full measurement (Story 026 Phần C): 70 seeds x 3 characters x chapters 1-3, build policy
 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --seeds=70 --chapters=0,1,2 --policies=build > "<scratch>/deck_sim.out" 2>&1
 grep -E "VERDICT|INFO|RESULT|runtime|SCRIPT ERROR" "<scratch>/deck_sim.out"
+# World smoke (about 35 s): 5 seeds x 3 characters, 5 floors + final (Story 031)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=5
 # Smoke (about 35 s): 5 seeds, chapter 1
 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --seeds=5 --chapters=0 --policies=build
 # Per-boss probe of chapter 1: idle boss attack rate (TD-022) + piece/counter hit rates
@@ -146,6 +148,66 @@ Output for each chapter, in the same order as the rune-era sim (`deck_sim.s023.f
 Old and new numbers are comparable column by column. The bot is a different player, though: it must
 walk to pieces, and a cast is one or two puzzle pieces rather than connected runes. Treat a shift as
 "rules + bot changed" and not as balance drift alone.
+
+## deck_sim `--world` (Story 031): a 5-floor run
+
+`--world` swaps the per-chapter runs for whole world runs, the v6 run shape:
+
+1. For each floor `f` = 0..`world.floors`−1: `WorldMapGen.offer_for_floor(world.region_pool, seed, f, path,
+   choices_per_floor)` offers regions and the bot picks one (`--region-pick`). The region's map comes from
+   `ChaptersConfig.generate_region_map(region, seed, f, cleared_bosses = 1)`.
+2. The bot walks the map column by column. It uses the Story 022 node policy, plus one rule: **below 50 %
+   HP it takes a `rest` node first** (before a treasure). Every match is built by
+   `RunConfig.from_node(chapters, region, match_id, kind, seed, f)`, so `region_normalize` and
+   `floor_scaling[f]` apply.
+3. A region boss gives the normal boss reward (3 cards under the build policy) and +1 removal token. It
+   does **not** end the run: the bot heals `world.floor_heal_ratio` × max HP (clamped to max) and moves to
+   the next floor.
+4. After the last floor comes the final match (`world.final_match`, `from_node(..., floor = floors)` = the
+   `final` scaling row). Winning it wins the run. A lost or timed-out match ends the run.
+
+Luck counts every node cleared over the whole run (`luck_per_node`). The sim keeps its own run state
+(`WorldRun` in `deck_sim.gd`) and does not use `RunSession`. Region picks use their own RNG seeded by the
+seed alone, so all three characters walk the same path on the same seed while they are alive.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--world` | off | World mode. `--chapters` is ignored. The policy is `build` unless `--policies=` is passed. |
+| `--region-pick=random\|first` | random | Bot region pick: seeded random, or always the first id of the offer. |
+| `--node-overhead=S` | 25 | Seconds per node outside the match: node pick, reward screen, reading. **An assumption (story Part F), not a measurement.** It is printed in the header. |
+| `--world-set=key:value,...` | none | Overrides the world data in memory (chapters.json is never written). `heal:X` sets `world.floor_heal_ratio`. `scale.<row>.<axis>:X` sets a `floor_scaling` row: the row is `1`..`5`, `final` or `*` (every row), the axis is `hp_mult`, `step_mult`, `defense_add` or `size_add`. `norm.<region>.<axis>:X` sets a region's `region_normalize`. A value written `xF` multiplies instead of setting (`scale.*.hp_mult:x0.9`). `mid_columns:N` sets N copies of the middle region column between the first column and the boss column; the default frame has 1. `battle_columns:N` adds N copies of the first, battle-only column right after it. This is the only override that adds fights: the bot always takes the rest or treasure of a middle column. |
+
+```sh
+# Story 031 Part F: 70 seeds per character, 3 characters as 3 parallel processes (about 3-6 min each)
+for c in kiem_si phap_su sat_thu; do
+  timeout 3000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=$c > "<scratch>/world_$c.out" 2>&1 &
+done; wait
+grep -h "WORLD VERDICT" "<scratch>"/world_*.out
+# Data experiment: a longer region and a bigger floor heal
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --world-set=mid_columns:2,heal:0.35
+```
+
+Output for each character:
+
+- **Header**: the bot line, the world line (floors, choices, pool, columns, heal, final match, tiers),
+  every `floor_scaling` row and `region_normalize` in use, and the `--world-set` list.
+- **`WORLD SUMMARY`**: run win %, boss hits per won run and per run, matches and nodes per run, mean
+  match seconds (real, i.e. the player's wall clock with the card-menu slow motion, and sim), timeouts,
+  **estimated minutes** = (Σ real match seconds + `node_overhead` × nodes) / 60 for won runs (mean,
+  min–max) and for all runs, final luck and the rarity weights at that luck, deck size, levels, tokens
+  spent, and rest / treasure counts.
+- **`WORLD FLOORS`**: % of runs alive after each floor and after the final match; deaths and their
+  share of all deaths; the clear % of the runs that entered the floor; mean HP % entering the floor (after
+  the floor heal: the sawtooth) and after its boss.
+- **`WORLD REGIONS`**: for each floor and region, the runs that entered it, the runs that cleared it, and
+  the clear %. This is the "same floor, region against region" comparison.
+- **`WORLD DEATHS BY FLOOR/KIND`**: deaths keyed `f<floor>/<node kind>`.
+- **`WORLD VERDICT`**: the story targets. Run win 20–40 % (Kiếm sĩ, Sát thủ) or ≥ 10 % (Pháp sư); won
+  run 40–50 estimated minutes; region spread ≤ 15 points at every floor (regions entered ≥ 5 times);
+  no floor > 40 % of deaths; survival strictly decreasing (every floor kills someone).
+
+The match timeout is the same as in chapter mode (180 s sim) and counts as a death. The node overhead
+does not include the region pick screen or the intro and end delays of a match.
 
 ## hit_probe flags and output
 

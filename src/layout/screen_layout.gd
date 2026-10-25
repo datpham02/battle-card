@@ -155,6 +155,27 @@ const REST_CARDS_TOP_RATIO: float = 0.2
 const REST_CARDS_BOTTOM_RATIO: float = 0.82
 const REST_CARD_WIDTH_RATIO: float = 0.3
 const REST_CARD_GAP_RATIO: float = 0.04
+## Smallest touch target side in logical pixels (Story 031): a drawn button smaller than this
+## (the 128 x 65 px back button) is hit-tested on [method touch_rect], grown to this size around
+## its centre, so one thumb hits it.
+const MIN_TOUCH_SIDE: float = 96.0
+## World map (Story 031), shares of the viewport: the floor progress strip under the title band
+## (0.145 .. 0.245 of the height = 72 px) and the gap between its segments (share of width); the
+## region cards' top and bottom (0.28 .. 0.8 = 374 px, 52 % of the height >= 50 %), one card's
+## width (0.44 * 1280 = 563 px, >= 40 % of the width; two cards plus the margins leave a 77 px
+## gap in the middle), how far a selected card rises (share of height) and the "Vào vùng" button
+## under it (0.83 .. 0.97 of the height = 101 px >= MIN_TOUCH_SIDE; width a share of the width,
+## centred under its card, i.e. on that thumb's side).
+const WORLD_STRIP_TOP_RATIO: float = 0.145
+const WORLD_STRIP_BOTTOM_RATIO: float = 0.245
+const WORLD_STRIP_GAP_RATIO: float = 0.008
+const WORLD_CARDS_TOP_RATIO: float = 0.28
+const WORLD_CARDS_BOTTOM_RATIO: float = 0.8
+const WORLD_CARD_WIDTH_RATIO: float = 0.44
+const WORLD_CARD_RAISE_RATIO: float = 0.025
+const WORLD_ENTER_TOP_RATIO: float = 0.83
+const WORLD_ENTER_BOTTOM_RATIO: float = 0.97
+const WORLD_ENTER_WIDTH_RATIO: float = 0.3
 
 
 ## Rectangle of the arena area (HUD band + board).
@@ -769,3 +790,79 @@ static func rest_card_rects(viewport_size: Vector2) -> Array[Rect2]:
 static func reward_subtitle_rect(viewport_size: Vector2) -> Rect2:
 	var top: float = viewport_size.y * FLOOR_TITLE_BOTTOM_RATIO
 	return Rect2(0.0, top, viewport_size.x, viewport_size.y * REWARD_CARDS_TOP_RATIO - top)
+
+
+## Story 031: the touch area of a drawn target [param rect] — the rect itself when both sides are at
+## least [constant MIN_TOUCH_SIDE], else grown to that size around its centre.
+static func touch_rect(rect: Rect2) -> Rect2:
+	var grow := Vector2(maxf(MIN_TOUCH_SIDE - rect.size.x, 0.0), maxf(MIN_TOUCH_SIDE - rect.size.y, 0.0)) * 0.5
+	return Rect2(rect.position - grow, rect.size + grow * 2.0)
+
+
+## World map (Story 031): the floor progress strip, between the screen margins under the title band.
+static func world_strip_rect(viewport_size: Vector2) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var top: float = viewport_size.y * WORLD_STRIP_TOP_RATIO
+	return Rect2(margin, top, viewport_size.x - margin * 2.0, viewport_size.y * WORLD_STRIP_BOTTOM_RATIO - top)
+
+
+## World map (Story 031): [param count] equal segments of the progress strip, left to right (the
+## floors, then the final match). Empty for count <= 0.
+static func world_strip_segment_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var strip: Rect2 = world_strip_rect(viewport_size)
+	var gap: float = viewport_size.x * WORLD_STRIP_GAP_RATIO
+	var width: float = maxf((strip.size.x - gap * (count - 1)) / count, 0.0)
+	for i: int in count:
+		rects.append(Rect2(strip.position.x + (width + gap) * i, strip.position.y, width, strip.size.y))
+	return rects
+
+
+## World map (Story 031): the region cards at rest — two pinned to the left and right margins (one
+## per thumb), one centred; a third or more share the width (not offered in Story 031). Empty for
+## count <= 0.
+static func world_card_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var top: float = viewport_size.y * WORLD_CARDS_TOP_RATIO
+	var height: float = viewport_size.y * WORLD_CARDS_BOTTOM_RATIO - top
+	var width: float = viewport_size.x * WORLD_CARD_WIDTH_RATIO
+	if count == 1:
+		rects.append(Rect2((viewport_size.x - width) * 0.5, top, width, height))
+		return rects
+	if count == 2:
+		rects.append(Rect2(margin, top, width, height))
+		rects.append(Rect2(viewport_size.x - margin - width, top, width, height))
+		return rects
+	var gap: float = viewport_size.x * MAP_COLUMN_GAP_RATIO
+	var shared: float = maxf((viewport_size.x - margin * 2.0 - gap * (count - 1)) / count, 0.0)
+	for i: int in count:
+		rects.append(Rect2(margin + (shared + gap) * i, top, shared, height))
+	return rects
+
+
+## World map (Story 031): how far up a selected card is drawn (its touch area keeps the rest rect
+## plus this lift, see [method world_card_touch_rect]).
+static func world_card_raise(viewport_size: Vector2) -> float:
+	return viewport_size.y * WORLD_CARD_RAISE_RATIO
+
+
+## World map (Story 031): the touch area of a card at rest [param card]: the card plus the strip it
+## rises into when selected, so a tap on a raised card's top edge still lands.
+static func world_card_touch_rect(viewport_size: Vector2, card: Rect2) -> Rect2:
+	var lift: float = world_card_raise(viewport_size)
+	return Rect2(card.position.x, card.position.y - lift, card.size.x, card.size.y + lift)
+
+
+## World map (Story 031): the "Vào vùng" button at the bottom edge, centred under [param card]
+## (the selected card at rest), kept inside the screen margins.
+static func world_enter_button_rect(viewport_size: Vector2, card: Rect2) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var width: float = viewport_size.x * WORLD_ENTER_WIDTH_RATIO
+	var top: float = viewport_size.y * WORLD_ENTER_TOP_RATIO
+	var left: float = clampf(card.get_center().x - width * 0.5, margin, viewport_size.x - margin - width)
+	return Rect2(left, top, width, viewport_size.y * WORLD_ENTER_BOTTOM_RATIO - top)

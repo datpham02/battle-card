@@ -42,6 +42,9 @@ const TEXT_LANG_EN: String = "ui.title.lang.en"
 const LANG_FONT_SIZE: int = 28
 ## Story 019 / 022: "%s · %s · Cột %d" — character name, chapter name, 1-based column of the saved run.
 const TEXT_RUN_SUMMARY: String = "ui.title.run_summary"
+## Story 031: "Tầng %d/%d" in the world-run summary, and the final match's name.
+const TEXT_RUN_SUMMARY_FLOOR: String = "ui.title.run_summary_floor"
+const TEXT_FINAL_NAME: String = "ui.world.final_name"
 const SUMMARY_FONT_SIZE: int = 15
 const SUMMARY_COLOR: Color = Color(0.4, 0.35, 0.3)
 ## Path to the GameFlow (the parent by default).
@@ -173,6 +176,23 @@ func _run_summary() -> String:
 	var character_id: String = str(saved.get("character", ""))
 	var character: Dictionary = _flow.get_characters().get_character(character_id)
 	var config: ChaptersConfig = _flow.get_config()
+	var hero: String = tr(str(character.get("name_key", character_id)))
+	# Story 031: a v5 world run reads "Kiếm sĩ · Tầng 3/5 · Hầm Ngục" (no region while choosing,
+	# "Ấn Đài" at the final); an older save only names the hero (it restarts on Continue).
+	if saved.has("region"):
+		var floors: int = maxi(config.world_floors(), 1)
+		var floor_index: int = int(saved.get("floor", 0))
+		if floor_index >= floors:
+			return "%s · %s" % [hero, tr(TEXT_FINAL_NAME)]
+		var region_id: String = str(saved.get("region", ""))
+		var floor_text: String = tr(TEXT_RUN_SUMMARY_FLOOR) % [clampi(floor_index + 1, 1, floors), floors]
+		if region_id.is_empty():
+			return "%s · %s" % [hero, floor_text]
+		var ri: int = config.region_index(region_id)
+		var region_name: String = config.chapter_name(ri) if ri >= 0 else region_id
+		return "%s · %s · %s" % [hero, floor_text, region_name]
+	if not saved.has("chapter"):
+		return hero
 	var chapter_id: String = str(saved.get("chapter", ""))
 	var chapter: String = chapter_id
 	for ci: int in config.chapter_count():

@@ -72,7 +72,7 @@
 
 - File chạm: `src/run/run_session.gd` (fates, stats, save v6), `progress_state.gd`, `game_flow.gd` (bước `FATE` giữa thắng boss vùng và thưởng; cờ `--run=fate|ending_spare|ending_balance|ending_execute|final`), `reward_view.gd` (offer bảo vật), mới `src/run/fate_view.gd`, `src/run/ending_view.gd`, `run_hud_view.gd` (màn thua), `run_config.gd` (`phases`), lớp boss/`TraitHost` cho chuyển pha, `assets/data/chapters.json` (vùng `an_dai`, `world.endings`, `world.fate`), `arenas.json`, `boss_brain.json`, `schema.md`, `assets/i18n/strings.csv`. `src/dev/demo_args.gd`: `--demo=boss_downed`, `--demo=final_phase2`.
 - Số Tha/Giết đặt trong `chapters.json → world.fate` (`execute_artifact_offers`, `execute_min_rarity`, `fate_hold_sec`) — một chỗ, ghi vào schema.
-- Không làm biến thể trận cuối theo kết thúc ở story này (câu hỏi mở cho người dùng: kết thúc Giết hết có nên gặp boss cuối mạnh hơn / khác không, như Genocide của OSFE).
+- Không làm biến thể trận cuối theo kết thúc ở story này. Người dùng (2026-10-25): **để sau** — ý tưởng "tuyến Giết hết gặp boss cuối mạnh hơn hoặc khác, như Genocide của OSFE" nằm trong backlog v6 của brief.
 
 ---
 

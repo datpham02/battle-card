@@ -105,7 +105,7 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 028 | Ghép mảnh trên sân và hình chủ đạo: tối đa 2 mảnh một đòn, thưởng ×1,5 + hiệu ứng khi ghép đúng hình của trận | Integration | Complete | N/A (minimal) |
 | 029 | Trận đồ: ô sáng khi được phủ, phai dần, sáng đủ cùng lúc thì tuyệt kỹ sẵn sàng (thay thanh nạp 18 ô) | Integration | Complete | N/A (minimal) |
 | 030 | Làm lại Thiên Hỏa và Ảnh Bộ: Thiên Hỏa đốt cả trận đồ, Ảnh Bộ nhân đôi mọi đòn nhỏ, cân bằng giá trị mỗi phút ≤ ~2 : 1 | Integration | Complete | N/A (minimal) |
-| 031 | Bản đồ thế giới: 5 tầng × chọn 1 trong 2 vùng, vùng 3 cột, trận cuối Ấn Đài, độ khó theo tầng, save v5 | Integration | Ready | — |
+| 031 | Bản đồ thế giới: 5 tầng × chọn 1 trong 2 vùng, vùng 3 cột, trận cuối Ấn Đài, độ khó theo tầng, save v5 | Integration | Complete | — |
 | 032 | Bảo vật — đồ bị động đổi luật gắn với mảnh, ghép, trận đồ, vùng và từ khóa; 16 món khởi điểm, HUD chạm, lưu run | Integration | Ready | — |
 | 033 | Vàng, cửa hàng và sự kiện — vàng rơi theo loại nút, cửa hàng bán lá/bảo vật/dịch vụ, 8 sự kiện rủi ro, lá nguyền | Integration | Ready | — |
 | 034 | Bộ mảnh của run — trọng số hình riêng, Ấn hình và Xóa hình, luôn còn hình vừa sân, boss không đổi | Integration | Ready | — |

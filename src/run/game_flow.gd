@@ -1,65 +1,78 @@
 class_name GameFlow
 extends Node2D
-## The thin layer above one roguelike RUN (Story 015, 016, 018, 019, 022): chapters data, the
-## saved progress, ONE [RunSession] while a run is live and ONE RunController child per MAP NODE
-## that plays a match (created when the node is chosen, freed when it is left). Phases: TITLE,
-## CHARACTER_SELECT (CharacterSelectView), CHAPTER_SELECT (ChapterSelectView), MAP (the chapter map,
-## ChapterMapView: pick a node of the current column), IN_NODE (a RunController plays the node's
-## match; the run screens take over) and REST (RestView: heal or forge). [method go_back] (Esc,
-## Android back) acts per phase: IN_NODE toggles the pause (or leaves a finished run), MAP / REST
-## leave to the title keeping the save, CHAPTER_SELECT -> CHARACTER_SELECT, CHARACTER_SELECT ->
-## TITLE, TITLE -> quit. App pause / focus loss while IN_NODE force-pauses the battle. Draws nothing
-## itself. Direct child of Main in main.tscn; RunHudView (a sibling) gets the controller through
-## [signal controller_changed]. Views the flow talks to are optional: a missing view node never
-## breaks the flow (everything goes through signals and getters).
+## The thin layer above one roguelike RUN (Story 015, 016, 018, 019, 022, 031): chapters (= regions)
+## data, the saved progress, ONE [RunSession] while a run is live and ONE RunController child per MAP
+## NODE that plays a match (created when the node is chosen, freed when it is left). Phases: TITLE,
+## CHARACTER_SELECT (CharacterSelectView), WORLD_MAP (WorldMapView: pick one of the floor's offered
+## regions), MAP (the region map, ChapterMapView: pick a node of the current column), IN_NODE (a
+## RunController plays the node's match; the run screens take over) and REST (RestView: heal or forge).
+## [method go_back] (Esc, Android back) acts per phase: IN_NODE toggles the pause (or leaves a finished
+## run), WORLD_MAP / MAP / REST leave to the title keeping the save, CHARACTER_SELECT -> TITLE,
+## TITLE -> quit. App pause / focus loss while IN_NODE force-pauses the battle. Draws nothing itself.
+## Direct child of Main in main.tscn; RunHudView (a sibling) gets the controller through
+## [signal controller_changed]. Views the flow talks to are optional: a missing view node never breaks
+## the flow (everything goes through signals and getters).
 ##
-## Run rules (Story 022, design/game-brief.md v4 "Run"): title -> character -> chapter ->
-## [method start_run]: the chapter MAP is generated from the run seed
-## (ChaptersConfig.generate_map, tier capped while no boss was ever beaten), a RunSession
-## (character, deck, map, column, HP, seed, removal tokens) is saved at once and the MAP shows.
+## Run rules (Story 031, design/game-brief.md v6 "Run v6 — mô hình OSFE"): title -> character ->
+## [method start_run] (a fresh world run: floor 1, RunSession.begin_world rolls the floor's region
+## offer, saved at once) -> WORLD_MAP -> [method choose_region] generates that region's short map for
+## the floor (ChaptersConfig.generate_region_map, tier capped while no boss was ever beaten) -> MAP.
 ## [method choose_node] per node kind: battle / danger / miniboss / boss spawn a RunController for
-## RunConfig.from_node (one match, between_sec 0, no minimum-HP rule) and save; treasure opens a
-## free card offer at once (no fight); rest opens the REST screen. A WON match completes the node
-## (RunSession.complete_node: HP carried, NO automatic heal, boss grants a removal token and wins
-## the run; a boss clear is also counted in the permanent progress) and rolls the offer of the
-## node kind (RewardRoller.reward_for_node: offers, min_rarity, free, removal_token) with the run's
-## luck; the flow then WAITS for [method reward_chosen] / [method reward_skipped] /
-## [method reward_remove_requested] (the last one spends a removal token). After the offer: a won
-## run marks the chapter cleared, drops the save and shows the RUN WON result
-## ([method get_run_result] = WON); otherwise the controller is freed and the MAP shows the next
-## column. Death (controller phase LOST) drops the saved run at once (LOST); there is no retry.
-## [method leave_run] (the one button of the result screens) frees everything and shows the title.
+## RunConfig.from_node (one match scaled by region normalize + floor scaling, arena seed
+## RunSession.floor_seed() = arena_seed_for(run_seed, floor * 100 + column), between_sec 0, no
+## minimum-HP rule) and save; treasure opens a free card offer at once (no fight); rest opens the REST
+## screen. A WON match completes the node (RunSession.complete_node: HP carried, no automatic heal) and
+## rolls the offer of the node kind (RewardRoller.reward_for_node) with the run's luck; the flow WAITS
+## for [method reward_chosen] / [method reward_skipped] / [method reward_remove_requested]. A REGION
+## boss does not win the run: the floor goes up, floor_heal_ratio x max HP heals (clamped; the banner
+## reads [method take_floor_clear_notice]), the boss reward is offered, then WORLD_MAP shows the next
+## floor's offer. After the last floor the run stands at the FINAL match (a one-node MAP,
+## `world.final_match`); winning it drops the save and shows the RUN WON result
+## ([method get_run_result] = WON). Death drops the saved run at once (LOST); there is no retry.
+## Progress: best_floor (ProgressState.record_floor) on every floor reached, the region boss in
+## regions_boss_beaten. [method leave_run] (the one button of the result screens) shows the title.
 ##
-## Leaving mid-run ([method leave_run_keep_save], the pause menu / map back button): the controller
-## is freed, the run stays saved and the title shows "Tiếp tục". Resume ([method continue_requested])
-## rebuilds the v4 save: node chosen and no offer open -> the match respawns at the saved HP; offer
-## open -> MAP with the offer; nothing chosen -> MAP; a rest node chosen -> REST. A pre-v4 save
-## (RunSession.needs_restart) restarts the chapter for the saved character from a fresh map and
-## leaves a one-line notice in [method take_restart_notice]; cleared chapters are kept.
+## Leaving mid-run ([method leave_run_keep_save], the pause menu / map / world map back button): the
+## controller is freed, the run stays saved and the title shows "Tiếp tục". Resume
+## ([method continue_requested]) rebuilds the v5 save: node chosen and no offer open -> the match
+## respawns at the saved HP; offer open -> MAP with the offer; region offer open -> WORLD_MAP; nothing
+## chosen -> MAP; a rest node chosen -> REST. A pre-v5 save (RunSession.needs_restart) starts a fresh
+## world run for the saved character and leaves a one-line notice in [method take_restart_notice].
 ##
 ## DEV-ONLY user args (after "--"):
-##   --progress=none|all|demo   memory store (never writes user://progress.json): empty / every
-##                              chapter but the last cleared / chapter 1 cleared plus a v4 saved run
-##                              in chapter 1 at column 3 (3 nodes cleared, 1 removal token, HP 171)
-##   --node=ch1/c2/n1           skip the menus: fresh seeded run of the default character in that
-##                              chapter, columns before C cleared, node N of column C chosen (a match
-##                              node spawns its controller; treasure opens its offer; rest -> REST)
-##   --floor=ch1/f2             legacy alias of --node=ch1/c0/n0 (warning)
+##   --progress=none|all|demo|v4save
+##                              memory store (never writes user://progress.json): empty / every region
+##                              boss beaten (onboarding off) / a v5 saved run at floor 2 (region 1's
+##                              boss beaten, 1 column of the floor-2 region cleared, HP 171) / a real v4
+##                              (chapter) progress file parsed by ProgressState.from_json, starting on
+##                              the TITLE: "Tiếp tục" shows the one-line restart notice
+##   --region=<id>              fresh seeded run walking that region (at --at-floor, default floor 1),
+##                              shown on its MAP (alias: --chapter=<id>)
+##   --at-floor=N               1-based floor the dev run starts at (floors before cleared with the first
+##                              offered region and first nodes; no --region: the WORLD_MAP of floor N)
+##   --node=fF/<region>/cC/nN   skip the menus: fresh run at floor F in that region, columns before C
+##                              cleared, node N of column C chosen (a match node spawns its controller;
+##                              treasure opens its offer; rest -> REST). Legacy --node=chX/cC/nN = f1/chX
+##   --floor=ch1/f2             legacy alias of --node=f1/ch1/c0/n0 (warning)
 ##   --title                    show the title even with --progress=... (without it --progress alone
-##                              starts at the chapter select; no dev arg at all starts at the title)
-##   --chapter=ch2              fresh seeded run of that chapter, shown on its MAP (no node chosen)
-##   --seed=N                   force the run seed (reproducible maps, arenas and offers)
+##                              starts at the character select; no dev arg at all starts at the title)
+##   --seed=N                   force the run seed (reproducible offers, maps, arenas and rewards)
 ##   --lang=vi|en               UI locale for this run only (not saved; captures)
 ##   --character=<id>           pick the character like the select screen would (Story 018)
 ##   --select=character         start in CHARACTER_SELECT with a memory store (captures)
+##   --run=world|world3|floorclear|final
+##                              world map captures: floor 1 offer / floor 3 offer (2 floors walked on a
+##                              seeded path) / floor 2 offer right after a region boss (the floor-clear
+##                              notice waits; the boss ends at DEV_FLOORCLEAR_HP_RATIO x max HP so the
+##                              heal is non-zero) / standing before the final match (its one-node MAP)
 ##   --run=map|map3|rest|treasure|miniboss_reward|boss_reward|reward|runover|runwon
-##                              run states for captures: the fresh map / 3 columns cleared (luck 3,
-##                              1 token) / the REST screen / a treasure offer / the miniboss offer
-##                              (rare floor) / the boss offer (token just granted) / a battle offer
-##                              after the first node / the RUN KẾT THÚC result / the RUN THẮNG result
+##                              run states for captures (first offered region chosen): the fresh map /
+##                              every column but the boss cleared / the REST screen / a treasure offer /
+##                              the miniboss offer (floor 2 unless --at-floor) / the region boss offer /
+##                              a battle offer / the RUN KẾT THÚC result / the RUN THẮNG result (final won)
 ##   --match=, --run=intro|between|won|lost, --demo=, --arena=  (RunController / DemoArgs args) also
-##                              switch to a memory store and, without --node, start a run in chapter 1
-##                              with the first node chosen (so a controller exists for them)
+##                              switch to a memory store and, without --node, start a run in the first
+##                              offered region with the first node chosen (so a controller exists)
 
 ## Emitted after the phase changed; [param phase] is a [enum Phase] value.
 signal phase_changed(phase: int)
@@ -70,8 +83,9 @@ signal controller_changed(controller: RunController)
 ## Views may also poll the getters.
 signal run_changed()
 
-## IN_FLOOR is the Story 019 name of IN_NODE, kept for old callers and tests (same value).
-enum Phase { TITLE, CHARACTER_SELECT, CHAPTER_SELECT, IN_NODE, MAP, REST, IN_FLOOR = IN_NODE }
+## IN_FLOOR is the Story 019 name of IN_NODE, kept for old callers and tests (same value). WORLD_MAP
+## (Story 031) took the slot of the retired CHAPTER_SELECT.
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -81,8 +95,12 @@ const IN_FLOOR: int = Phase.IN_NODE
 const PROGRESS_ARG: String = "--progress="
 ## DEV-ONLY (Story 022): --node=chX/cC/nN.
 const NODE_ARG: String = "--node="
-## DEV-ONLY (Story 023): --chapter=<id> opens a fresh run of that chapter on its MAP (captures).
+## DEV-ONLY (Story 023): legacy alias of [constant REGION_ARG].
 const CHAPTER_ARG: String = "--chapter="
+## DEV-ONLY (Story 031): --region=<id> opens a fresh run walking that region on its MAP (captures).
+const REGION_ARG: String = "--region="
+## DEV-ONLY (Story 031): --at-floor=N (1-based) starts the dev run at that floor.
+const AT_FLOOR_ARG: String = "--at-floor="
 ## DEV-ONLY legacy (Story 015): --floor=chX/fY, now an alias of --node=chX/c0/n0.
 const FLOOR_ARG: String = "--floor="
 const SEED_ARG: String = "--seed="
@@ -108,12 +126,28 @@ const FLOW_RUN_REST: String = "rest"
 const FLOW_RUN_TREASURE: String = "treasure"
 const FLOW_RUN_MINIBOSS_REWARD: String = "miniboss_reward"
 const FLOW_RUN_BOSS_REWARD: String = "boss_reward"
+## Story 031 world captures.
+const FLOW_RUN_WORLD: String = "world"
+const FLOW_RUN_WORLD3: String = "world3"
+const FLOW_RUN_FLOORCLEAR: String = "floorclear"
+const FLOW_RUN_FINAL: String = "final"
+## --run= kinds that must NOT auto-pick a region (they stage the world map themselves).
+const FLOW_RUN_WORLD_KINDS: Array[String] = [FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL]
 const FLOW_RUN_KINDS: Array[String] = [
 	FLOW_RUN_REWARD, FLOW_RUN_OVER, FLOW_RUN_WON, FLOW_RUN_MAP, FLOW_RUN_MAP3, FLOW_RUN_REST,
 	FLOW_RUN_TREASURE, FLOW_RUN_MINIBOSS_REWARD, FLOW_RUN_BOSS_REWARD,
+	FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL,
 ]
-## DEV-ONLY: columns --run=map3 clears.
-const DEV_MAP3_COLUMNS: int = 3
+## DEV-ONLY: columns --run=map3 clears (capped before the region's boss column).
+const DEV_MAP3_COLUMNS: int = 2
+## DEV-ONLY: 0-based floor --run=world3 shows (floor 3).
+const DEV_WORLD3_FLOOR: int = 2
+## DEV-ONLY: 0-based floor --run=miniboss_reward starts at without --at-floor (miniboss min_floor 2).
+const DEV_MINIBOSS_FLOOR: int = 1
+## DEV-ONLY: _dev_start region marker "pick the first offered region".
+const DEV_FIRST_OFFERED: String = "*"
+## DEV-ONLY: step cap of the dev floor walk (defensive against bad data).
+const DEV_WALK_GUARD: int = 200
 ## DEV-ONLY: player HP the --run=*reward / --run=runwon captures end the match with (70 % of 300).
 const DEV_FLOW_HP: float = 210.0
 ## Locales the CSV ships (Story 017); the title button cycles through them in this order.
@@ -127,16 +161,26 @@ const RESUME_SUFFIX: String = ":resume"
 const PROGRESS_NONE: String = "none"
 const PROGRESS_ALL: String = "all"
 const PROGRESS_DEMO: String = "demo"
+## DEV-ONLY (Story 031): --progress=v4save loads a genuine v4 progress file (restart notice capture).
+const PROGRESS_V4SAVE: String = "v4save"
+## DEV-ONLY: the v4 run of --progress=v4save (chapter, column, HP, seed).
+const DEV_V4_CHAPTER: String = "ch2"
+const DEV_V4_COLUMN: int = 3
+const DEV_V4_HP: float = 150.0
+## DEV-ONLY: share of max HP the region boss of --run=floorclear ends with (banner shows a real heal).
+const DEV_FLOORCLEAR_HP_RATIO: float = 0.6
 ## Dev args that put the game into a capture state; they always get a memory store.
 const DEV_RUN_ARGS: Array[String] = ["--match=", "--run=", "--demo=", "--arena="]
 const CONTROLLER_NODE: String = "RunController"
-## DEV-ONLY (--progress=demo): the saved demo run (chapter 0, this many columns cleared).
-const DEMO_RUN_COLUMN: int = 3
+## DEV-ONLY (--progress=demo): the saved demo run (0-based floor DEMO_RUN_FLOOR, this many columns of
+## its region cleared, never the boss column).
+const DEMO_RUN_FLOOR: int = 1
+const DEMO_RUN_COLUMN: int = 1
 const DEMO_RUN_HP: float = 171.0
 const DEMO_RUN_SEED: int = 7
 ## Deprecated (Story 022): value of [method get_current_floor] outside a run.
 const NO_FLOOR: Vector2i = Vector2i(-1, -1)
-## One-line notice shown once when a pre-v4 save restarted its chapter (Story 022).
+## One-line notice shown once when a pre-v5 save restarted as a new world run (Story 022 / 031).
 const TEXT_RESTART_OLD_SAVE: String = "run.restart.old_save"
 ## Node kinds that play a match (the others never spawn a controller).
 const MATCH_NODE_KINDS: Array[String] = ["battle", "danger", "miniboss", "boss"]
@@ -180,6 +224,8 @@ var _elapsed_base: float = 0.0
 var _pending_node_kind: String = ""
 ## Story 022: translated restart notice waiting for [method take_restart_notice] ("" when none).
 var _restart_notice: String = ""
+## Story 031: floor-clear notice waiting for [method take_floor_clear_notice] ({} when none).
+var _floor_clear_notice: Dictionary = {}
 
 
 ## Test hook: installs the store BEFORE the node enters the tree (wins over --progress args).
@@ -215,7 +261,8 @@ func _ready() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var progress_mode: String = ""
 	var node_text: String = ""
-	var chapter_text: String = ""
+	var region_text: String = ""
+	var at_floor: int = 0
 	var dev_run: bool = false
 	var flow_run: String = ""
 	var force_title: bool = false
@@ -231,11 +278,15 @@ func _ready() -> void:
 			progress_mode = arg.trim_prefix(PROGRESS_ARG)
 		elif arg.begins_with(NODE_ARG):
 			node_text = arg.trim_prefix(NODE_ARG)
+		elif arg.begins_with(REGION_ARG):
+			region_text = arg.trim_prefix(REGION_ARG)
 		elif arg.begins_with(CHAPTER_ARG):
-			chapter_text = arg.trim_prefix(CHAPTER_ARG)
+			region_text = arg.trim_prefix(CHAPTER_ARG)
+		elif arg.begins_with(AT_FLOOR_ARG):
+			at_floor = maxi(int(arg.trim_prefix(AT_FLOOR_ARG)), 1)
 		elif arg.begins_with(FLOOR_ARG):
 			var floor_text: String = arg.trim_prefix(FLOOR_ARG).trim_suffix(RESUME_SUFFIX)
-			node_text = "%s/c0/n0" % floor_text.get_slice("/", 0)
+			node_text = "f1/%s/c0/n0" % floor_text.get_slice("/", 0)
 			push_warning("GameFlow: --floor=%s is deprecated (Story 022), using --node=%s" % [floor_text, node_text])
 		elif arg.begins_with(SEED_ARG):
 			_dev_seed = int(arg.trim_prefix(SEED_ARG)) & ChaptersConfig.SEED_MASK
@@ -254,27 +305,30 @@ func _ready() -> void:
 	if not select_mode.is_empty() and select_mode != SELECT_CHARACTER:
 		push_warning("GameFlow: unknown --select=%s (character), ignored" % select_mode)
 		select_mode = ""
+	var dev_world: bool = dev_run or not node_text.is_empty() or not region_text.is_empty() or at_floor > 0
 	if _store == null:
-		_store = _make_store(progress_mode, dev_run or not select_mode.is_empty() or not node_text.is_empty() or not chapter_text.is_empty())
+		_store = _make_store(progress_mode, dev_world or not select_mode.is_empty())
 	_progress = _load_progress(progress_mode)
 	# Locale before anything draws or caches a translated name.
 	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _progress.get_locale())
 	if not _dev_character.is_empty():
 		set_character(_dev_character)
-	# Start phase: TITLE without dev args (or with --title); --progress alone -> CHAPTER_SELECT;
+	# Start phase: TITLE without dev args (or with --title); --progress alone -> CHARACTER_SELECT;
 	# --select=character -> CHARACTER_SELECT.
 	_phase = Phase.TITLE
-	if select_mode == SELECT_CHARACTER:
+	if select_mode == SELECT_CHARACTER or (not progress_mode.is_empty() and not force_title and progress_mode != PROGRESS_V4SAVE):
 		_phase = Phase.CHARACTER_SELECT
-	elif not progress_mode.is_empty() and not force_title:
-		_phase = Phase.CHAPTER_SELECT
 	if not node_text.is_empty():
 		_apply_dev_node(node_text)
-	elif not chapter_text.is_empty():
-		_apply_dev_chapter(chapter_text)
-	elif dev_run:
-		_begin_run(0)
-		if flow_run.is_empty():
+	elif not region_text.is_empty():
+		_dev_start(maxi(at_floor, 1) - 1, region_text)
+	elif dev_world:
+		var start_floor: int = at_floor - 1
+		if start_floor < 0:
+			start_floor = DEV_MINIBOSS_FLOOR if flow_run == FLOW_RUN_MINIBOSS_REWARD else 0
+		var world_only: bool = FLOW_RUN_WORLD_KINDS.has(flow_run) or (at_floor > 0 and not dev_run)
+		_dev_start(start_floor, "" if world_only else DEV_FIRST_OFFERED)
+		if dev_run and flow_run.is_empty() and _run != null:
 			# A RunController / DemoArgs arg: it needs a controller, so the first node is taken.
 			_dev_choose_first_available()
 	if not flow_run.is_empty() and _run != null:
@@ -472,34 +526,46 @@ func take_restart_notice() -> String:
 	return notice
 
 
-## Story 019: one entry per chapter, for the chapter select: {index, id, name (translated),
-## cleared, unlocked, in_run (the saved run is in this chapter)}.
-func get_chapter_states() -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	var run_chapter: String = str(_progress.get_run_dict().get("chapter", ""))
-	for ci: int in _config.chapter_count():
-		var id: String = _config.chapter_id(ci)
-		out.append({
-			"index": ci, "id": id, "name": _config.chapter_name(ci),
-			"cleared": _progress.is_chapter_cleared(id),
-			"unlocked": _progress.is_chapter_unlocked(_config, ci),
-			"in_run": not run_chapter.is_empty() and run_chapter == id,
-		})
-	return out
+## Story 031: the WORLD_MAP card of [param region_id] at the current floor: {region_id, name
+## (translated), desc_key ("region.<id>.desc"; views tr() it and fall back to intro_key when the key is
+## missing), intro_key (the chapter's intro line, may be ""), boss_name (translated names of the
+## region's boss pool, " / "-joined), floor (0-based), floor_number (1-based), floor_scaling {hp_mult,
+## step_mult, defense_add, size_add} of the floor}. {} for an unknown region.
+func region_preview(region_id: String) -> Dictionary:
+	var ci: int = _config.region_index(region_id)
+	if ci < 0:
+		return {}
+	var at: int = get_floor()
+	var spec: Dictionary = _config.region_spec(region_id, at)
+	var names: Array[String] = []
+	var boss_pool: Variant = (spec.get("pools", {}) as Dictionary).get(KIND_BOSS, {})
+	var boss_ids: Array = []
+	if boss_pool is Dictionary:
+		for tier: Variant in (boss_pool as Dictionary).keys():
+			var ids: Variant = (boss_pool as Dictionary)[tier]
+			if ids is Array:
+				boss_ids.append_array(ids as Array)
+	elif boss_pool is Array:
+		boss_ids = boss_pool as Array
+	for id: Variant in boss_ids:
+		var raw: Dictionary = _config.get_match_raw(ci, str(id))
+		var key: String = str(raw.get("name_key", raw.get("name", str(id))))
+		var shown: String = tr(key)
+		if not names.has(shown):
+			names.append(shown)
+	return {
+		"region_id": region_id, "name": region_name(region_id), "desc_key": "region.%s.desc" % region_id,
+		"intro_key": _config.chapter_text_key(ci, "intro"), "boss_name": " / ".join(names),
+		"floor": at, "floor_number": at + 1, "floor_scaling": _config.floor_scaling(at),
+	}
 
 
-## Story 019 / 022: starts a run of the selected character in chapter [param ci] (fresh seeded map,
-## column 0, full HP, starter deck, starting removal tokens; any saved run is replaced — confirming
-## that is the view's job) and shows the MAP. Refused with a warning for an unknown or locked
-## chapter. With no character chosen the default one is used.
-func start_run(ci: int) -> void:
-	if _config.chapter_id(ci).is_empty():
-		push_warning("GameFlow: start_run(%d): no such chapter" % ci)
-		return
-	if not _progress.is_chapter_unlocked(_config, ci):
-		push_warning("GameFlow: start_run(%d): chapter '%s' is locked" % [ci, _config.chapter_id(ci)])
-		return
-	_begin_run(ci)
+## Story 031: starts a fresh WORLD run of the selected character (floor 1, the floor's region offer
+## rolled, full HP, starter deck, starting removal tokens; any saved run is replaced — confirming that
+## is the view's job) and shows the WORLD_MAP. With no character chosen the default one is used.
+## [param _legacy_chapter] is ignored (chapters no longer start runs; kept for old callers).
+func start_run(_legacy_chapter: int = -1) -> void:
+	_begin_run()
 
 
 ## Story 022: the map view picked node [param node_index] of the current column. Battle / danger /
@@ -560,10 +626,13 @@ func show_title() -> void:
 	_set_phase(Phase.TITLE)
 
 
-## Story 019: shows the chapter select; frees the controller if a node was running.
-func show_chapter_select() -> void:
+## Story 031: shows the WORLD_MAP of the live run (frees the controller). Ignored without a run.
+func show_world_map() -> void:
+	if _run == null:
+		push_warning("GameFlow: show_world_map() without a run, ignored")
+		return
 	_free_controller()
-	_set_phase(Phase.CHAPTER_SELECT)
+	_set_phase(Phase.WORLD_MAP)
 
 
 ## Story 018: shows the character select; frees the controller if a node was running.
@@ -572,16 +641,15 @@ func show_character_select() -> void:
 	_set_phase(Phase.CHARACTER_SELECT)
 
 
-## Story 018: the select screen's tap on card [param id]: selects it and moves on to the chapter
-## select. An unknown id (warning from [method set_character]) changes nothing.
+## Story 018 / 031: the select screen's tap on card [param id]: selects it and starts a fresh world run
+## (WORLD_MAP, floor 1). An unknown id (warning from [method set_character]) changes nothing.
 func character_chosen(id: String) -> void:
 	set_character(id)
 	if not id.is_empty() and _character_id == id:
-		show_chapter_select()
+		start_run()
 
 
-## Story 018: chapter select "Về": back to the character select (the selection is kept, so the
-## cards can be re-read; tapping another card replaces it).
+## Story 018: back to the character select (the selection is kept; a live run stays saved).
 func back_to_character_select() -> void:
 	show_character_select()
 
@@ -597,11 +665,11 @@ func has_continue() -> bool:
 	return _progress.has_run()
 
 
-## Title "Tiếp tục" / chapter tile of the run in progress: rebuilds the saved run (character, deck,
-## map, position, HP, tokens, pending offer) and restores its phase (see the class doc). A save
-## that no longer fits the data (unknown chapter, bad map, character, no known card) is dropped
-## with a warning and the title stays. A pre-v4 save restarts the chapter for its character and
-## leaves [method take_restart_notice]. Ignored without a saved run.
+## Title "Tiếp tục": rebuilds the saved run (character, deck, floor, region offer / path, map, position,
+## HP, tokens, pending offer) and restores its phase (see the class doc). A save that no longer fits the
+## data (unknown region, bad map, character, no known card) is dropped with a warning and the title
+## stays. A pre-v5 save starts a fresh world run for its character and leaves
+## [method take_restart_notice]. Ignored without a saved run.
 func continue_requested() -> void:
 	if not has_continue():
 		return
@@ -616,13 +684,14 @@ func continue_requested() -> void:
 	if session.needs_restart:
 		var key: String = session.restart_reason if not session.restart_reason.is_empty() else TEXT_RESTART_OLD_SAVE
 		_restart_notice = tr(key)
-		push_warning("GameFlow: pre-v4 saved run, chapter %d restarts for '%s'" % [session.chapter_index, session.character_id])
-		_begin_run(session.chapter_index)
+		push_warning("GameFlow: pre-v5 saved run, a new world run starts for '%s'" % session.character_id)
+		_begin_run()
 		return
 	_free_controller()
 	_run = session
 	_run_result = RunResult.NONE
 	_reward_blocking = false
+	_floor_clear_notice = {}
 	_elapsed_base = _run.elapsed_sec
 	_pending_node_kind = _pending_kind_from_run()
 	_resume_position()
@@ -668,8 +737,8 @@ func can_show_quit() -> bool:
 
 
 ## Back / Esc by phase: IN_NODE toggles the pause (nothing when not pausable; leaves the run when
-## it already ended), MAP / REST leave to the title keeping the save, CHAPTER_SELECT ->
-## CHARACTER_SELECT, CHARACTER_SELECT -> TITLE, TITLE -> quit (not on iOS).
+## it already ended), WORLD_MAP / MAP / REST leave to the title keeping the save, CHARACTER_SELECT ->
+## TITLE, TITLE -> quit (not on iOS).
 func go_back() -> void:
 	match _phase:
 		Phase.IN_NODE:
@@ -677,10 +746,8 @@ func go_back() -> void:
 				leave_run()
 			elif _controller != null:
 				_controller.toggle_pause()
-		Phase.MAP, Phase.REST:
+		Phase.WORLD_MAP, Phase.MAP, Phase.REST:
 			leave_run_keep_save()
-		Phase.CHAPTER_SELECT:
-			show_character_select()
 		Phase.CHARACTER_SELECT:
 			show_title()
 		Phase.TITLE:
@@ -715,6 +782,7 @@ func leave_run() -> void:
 	_run_result = RunResult.NONE
 	_reward_blocking = false
 	_pending_node_kind = ""
+	_floor_clear_notice = {}
 	_set_phase(Phase.TITLE)
 	run_changed.emit()
 
@@ -787,41 +855,43 @@ func get_deck_levels() -> Dictionary:
 	return _run.deck_levels()
 
 
-# Creates the run of the selected (or default) character in chapter ci with a fresh seed (or
-# --seed) and a freshly generated map, saves it and shows the MAP.
-func _begin_run(ci: int) -> void:
+# Creates a fresh world run of the selected (or default) character with a fresh seed (or --seed):
+# floor 1, its region offer rolled, no region yet; records floor 1 reached, saves, shows WORLD_MAP.
+func _begin_run() -> void:
 	if _character_id.is_empty():
 		set_character(get_characters().default_id())
 	_free_controller()
 	var run_seed: int = _dev_seed if _dev_seed >= 0 else randi() & ChaptersConfig.SEED_MASK
-	var map: Array[Dictionary] = _config.generate_map(ci, run_seed, _progress.get_cleared_bosses())
 	var starting_removals: int = int(get_reward_config().get("starting_removals", 0))
-	_run = RunSession.begin(_config, _character_dict(), ci, run_seed, map, starting_removals)
+	_run = RunSession.begin_world(_config, _character_dict(), run_seed, starting_removals)
 	_run_result = RunResult.NONE
 	_reward_blocking = false
 	_pending_node_kind = ""
+	_floor_clear_notice = {}
 	_elapsed_base = 0.0
+	_progress.record_floor(_run.floor + 1)
 	_save_run()
-	_set_phase(Phase.MAP)
+	_set_phase(Phase.WORLD_MAP)
 	run_changed.emit()
 
 
-# Spawns the controller of the run's chosen node (RunConfig.from_node: one match, the node's arena
-# seed, danger traits) at the run's HP / deck. between_sec 0 (the reward screen gates the advance)
-# and no minimum-HP rule (retry_min_hp_ratio 0: the saved HP is the HP). A pending offer on a
-# resumed match node holds the intro.
+# Spawns the controller of the run's chosen node (RunConfig.from_node: one match of the region scaled
+# for the floor, arena seed RunSession.floor_seed(), danger traits) at the run's HP / deck. between_sec 0
+# (the reward screen gates the advance) and no minimum-HP rule (retry_min_hp_ratio 0: the saved HP is
+# the HP). A pending offer on a resumed match node holds the intro.
 func _enter_current_node() -> void:
 	_free_controller()
 	var node: Dictionary = _run.current_node()
 	var kind: String = str(node.get("kind", ""))
 	_elapsed_base = _run.elapsed_sec
-	var run_config: RunConfig = RunConfig.from_node(_config, _run.chapter_index, str(node.get("match_id", "")), kind, _run.run_seed)
+	var run_config: RunConfig = RunConfig.from_node(_config, _run.region_id, str(node.get("match_id", "")), kind,
+		_run.floor_seed(), _run.floor)
 	run_config.between_sec = 0.0
 	run_config.retry_min_hp_ratio = 0.0
 	var controller := RunController.new()
 	controller.name = CONTROLLER_NODE
 	controller.floor_label = tr(_node_name_key(kind))
-	controller.chapter_id = _config.chapter_id(_run.chapter_index)
+	controller.chapter_id = _run.region_id
 	controller.character = _character_dict()
 	controller.deck = _run.deck_ids
 	controller.deck_entries = _run.deck_entries()
@@ -848,6 +918,9 @@ func _resume_position() -> void:
 		if _run.is_run_won() and not _run.has_pending_reward():
 			_finish_run_won()
 			return
+		if _run.is_choosing_region() and not _run.has_pending_reward():
+			_set_phase(Phase.WORLD_MAP)
+			return
 		_set_phase(Phase.MAP)
 	elif kind == KIND_REST:
 		_set_phase(Phase.REST)
@@ -868,9 +941,7 @@ func _pending_kind_from_run() -> String:
 	var chosen: String = str(_run.current_node().get("kind", ""))
 	if not chosen.is_empty():
 		return chosen
-	if _run.cleared_nodes.is_empty():
-		return ""
-	return str((_run.cleared_nodes[_run.cleared_nodes.size() - 1] as Dictionary).get("kind", ""))
+	return _run.last_node_kind
 
 
 # Player max HP for the run rules outside a battle: the live controller, else the character, else
@@ -943,12 +1014,17 @@ func _on_match_won() -> void:
 	_complete_match_node(_controller.get_last_player_hp(), _controller.get_player_max_hp(), passive_heal)
 
 
-# Completes the chosen match node with the given end HP, counts a boss clear, opens the offer.
+# Completes the chosen match node with the given end HP. A region boss: counts the boss, records the
+# region in regions_boss_beaten and the new floor in best_floor, leaves the floor-clear notice, then
+# opens the boss offer. The final match: the run is won at once (no offer). Others: their offer.
 func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> void:
 	var kind: String = str(_run.current_node().get("kind", ""))
-	_run.complete_node(hp_end, max_hp, kind, get_reward_config(), passive_heal)
+	var result: Dictionary = _run.complete_node(hp_end, max_hp, kind, get_reward_config(), passive_heal)
 	if kind == KIND_BOSS:
-		_progress.record_boss_clear()
+		_record_boss(result)
+	if bool(result.get("run_won", false)):
+		_finish_run_won()
+		return
 	_offer_reward(kind)
 
 
@@ -977,13 +1053,13 @@ func _offer_reward(kind: String) -> void:
 		_continue_after_reward(false)
 
 
-# Deterministic offer seed: run seed and the position (chapter, column, nodes cleared).
+# Deterministic offer seed: run seed and the position (floor, region, column, nodes cleared).
 func _reward_seed() -> int:
-	return hash([_run.run_seed, _run.chapter_index, _run.column, _run.cleared_nodes.size()]) & ChaptersConfig.SEED_MASK
+	return hash([_run.run_seed, _run.floor, _run.region_id, _run.column, _run.nodes_cleared]) & ChaptersConfig.SEED_MASK
 
 
 # The offer was resolved: release a held intro (defensive resume case), complete a fight-less node
-# (treasure), then end a won run or go back to the MAP.
+# (treasure), then end a won run, show the WORLD_MAP after a region boss, or go back to the MAP.
 func _continue_after_reward(deck_changed: bool) -> void:
 	if _run == null:
 		return
@@ -1012,20 +1088,21 @@ func _finish_rest() -> void:
 	_return_to_map()
 
 
-# Frees the node's controller (clock synced first), shows the MAP and saves.
+# Frees the node's controller (clock synced first), shows the WORLD_MAP while a region offer is open,
+# else the MAP, and saves.
 func _return_to_map() -> void:
 	_sync_elapsed()
 	_free_controller()
-	_set_phase(Phase.MAP)
+	_set_phase(Phase.WORLD_MAP if _run.is_choosing_region() else Phase.MAP)
 	_save_run()
 	run_changed.emit()
 
 
-# The boss fell and its offer was resolved: the chapter is cleared, the saved run is dropped,
-# result WON. The RUN THẮNG panel lives on the IN_NODE screens.
+# The final match fell: the saved run is dropped, result WON (best floor = the final). The RUN THẮNG
+# panel lives on the IN_NODE screens.
 func _finish_run_won() -> void:
 	_sync_elapsed()
-	_progress.mark_chapter_cleared(_config.chapter_id(_run.chapter_index))
+	_progress.record_floor(_run.floor + 1)
 	_progress.clear_run()
 	_store.save_state(_progress)
 	_run_result = RunResult.WON
@@ -1058,54 +1135,155 @@ func _make_store(progress_mode: String, dev_run: bool) -> ProgressStore:
 func _load_progress(progress_mode: String) -> ProgressState:
 	match progress_mode:
 		PROGRESS_ALL:
-			return ProgressState.unlocked_everything(_config)
+			# Story 031: "every region boss beaten" (onboarding tier cap off).
+			var all := ProgressState.new()
+			all.mark_all_regions_beaten(_config.region_ids())
+			for _id: String in _config.region_ids():
+				all.record_boss_clear()
+			return all
 		PROGRESS_DEMO:
-			var state := ProgressState.new()
-			state.mark_chapter_cleared(_config.chapter_id(0))
-			var character: Dictionary = get_characters().get_character(get_characters().default_id())
-			var cfg: Dictionary = get_reward_config()
-			var map: Array[Dictionary] = _config.generate_map(0, DEMO_RUN_SEED, state.get_cleared_bosses())
-			var session: RunSession = RunSession.begin(_config, character, 0, DEMO_RUN_SEED, map, int(cfg.get("starting_removals", 0)))
-			for _c: int in DEMO_RUN_COLUMN:
-				var nodes: Array[Dictionary] = session.available_nodes()
-				if nodes.is_empty():
-					break
-				session.choose_node(int(nodes[0]["node_index"]))
-				session.complete_node(session.hp, _character_max_hp(character), "", cfg, 0.0)
-			session.hp = DEMO_RUN_HP
-			for id: String in RewardRoller.roll(get_cards(), cfg, DEMO_RUN_SEED, [], session.deck_levels(), session.luck(cfg)):
-				session.add_card(id)
-			state.set_run(session)
-			return state
+			return _demo_progress()
+		PROGRESS_V4SAVE:
+			var loaded: ProgressState = ProgressState.from_json(JSON.stringify(_v4_progress_file()), _config)
+			_store.save_state(loaded)
+			return loaded
 		_:
 			if progress_mode != PROGRESS_NONE and not progress_mode.is_empty():
 				push_warning("GameFlow: unknown --progress=%s (none|all|demo), starting empty" % progress_mode)
 			return _store.load_state(_config)
 
 
-# DEV-ONLY (--chapter=<id>): fresh run of that chapter on its MAP (unknown id: warning, no run).
-func _apply_dev_chapter(id: String) -> void:
-	for i: int in _config.chapter_count():
-		if _config.chapter_id(i) == id:
-			_begin_run(i)
-			return
-	push_warning("GameFlow: unknown chapter in --chapter=%s" % id)
+# DEV-ONLY (--progress=v4save): a Story 022 v4 progress file with a chapter run in progress (the shape
+# RunSession v4 wrote: chapter id, 7-column map, column, hp, deck, seed).
+func _v4_progress_file() -> Dictionary:
+	var ci: int = maxi(_config.region_index(DEV_V4_CHAPTER), 0)
+	var character: Dictionary = get_characters().get_character(get_characters().default_id())
+	var deck: Array = []
+	for id: Variant in character.get("starter_deck", []) as Array:
+		deck.append({"id": str(id), "level": 1})
+	var run: Dictionary = {
+		"version": 4, "character": str(character.get("id", "")), "chapter": _config.chapter_id(ci),
+		"map": _config.generate_map(ci, DEMO_RUN_SEED, 1), "column": DEV_V4_COLUMN, "node_index": -1,
+		"cleared_nodes": [], "hp": DEV_V4_HP, "deck": deck, "run_seed": DEMO_RUN_SEED, "elapsed": 0.0,
+		"pending_reward": [], "revives": 0, "removal_tokens": 1, "cleared_bosses_this_run": 0,
+	}
+	return {"version": 4, "locale": _progress_locale_default(), "cleared_chapters": [_config.chapter_id(0)],
+		"seen_cards": [], "cleared_bosses": 1, "run_in_progress": run}
 
 
-# DEV-ONLY (--node=chX/cC/nN): fresh run of that chapter, columns before C cleared with their
-# first node, node N of column C chosen (out of range: the first available, warning).
+func _progress_locale_default() -> String:
+	return _dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else ProgressState.DEFAULT_LOCALE
+
+
+# DEV-ONLY (--progress=demo): a v5 save at floor 2: the first offered region walked with first nodes and
+# its boss beaten, the first floor-2 region chosen and DEMO_RUN_COLUMN columns of it cleared, HP
+# DEMO_RUN_HP, a few cards added.
+func _demo_progress() -> ProgressState:
+	var state := ProgressState.new()
+	var character: Dictionary = get_characters().get_character(get_characters().default_id())
+	var max_hp: float = _character_max_hp(character)
+	var cfg: Dictionary = get_reward_config()
+	var session: RunSession = RunSession.begin_world(_config, character, DEMO_RUN_SEED, int(cfg.get("starting_removals", 0)))
+	state.record_floor(1)
+	while session.floor < DEMO_RUN_FLOOR and not session.is_run_won():
+		if session.is_choosing_region():
+			if not session.choose_region(session.region_offer[0], state.get_cleared_bosses()):
+				break
+			continue
+		var nodes: Array[Dictionary] = session.available_nodes()
+		if nodes.is_empty():
+			break
+		session.choose_node(int(nodes[0]["node_index"]))
+		var result: Dictionary = session.complete_node(session.hp, max_hp, "", cfg, 0.0)
+		if bool(result.get("floor_cleared", false)):
+			state.record_boss_clear()
+			state.add_region_boss_beaten(str(result.get("region", "")))
+			state.record_floor(session.floor + 1)
+	if session.is_choosing_region():
+		session.choose_region(session.region_offer[0], state.get_cleared_bosses())
+	for _c: int in DEMO_RUN_COLUMN:
+		var nodes: Array[Dictionary] = session.available_nodes()
+		if nodes.is_empty() or session.column >= session.map.size() - 1:
+			break
+		session.choose_node(int(nodes[0]["node_index"]))
+		session.complete_node(session.hp, max_hp, "", cfg, 0.0)
+	session.hp = DEMO_RUN_HP
+	for id: String in RewardRoller.roll(get_cards(), cfg, DEMO_RUN_SEED, [], session.deck_levels(), session.luck(cfg)):
+		session.add_card(id)
+	state.set_run(session)
+	return state
+
+
+# DEV-ONLY: fresh run advanced to 0-based [param floor_index] (earlier floors walked with the first
+# offered region and first nodes, no fights, no rewards). [param region]: "" = stay on that floor's
+# WORLD_MAP; DEV_FIRST_OFFERED = pick the first offered region; an id = walk that region (forced into the
+# offer when not offered; unknown id: warning, WORLD_MAP).
+func _dev_start(floor_index: int, region: String) -> void:
+	_begin_run()
+	_dev_advance_floors(mini(floor_index, _run.floors() - 1))
+	if region.is_empty() or not _run.is_choosing_region():
+		_dev_settle_phase()
+		return
+	var id: String = _run.region_offer[0] if region == DEV_FIRST_OFFERED else region
+	if _config.region_index(id) < 0:
+		push_warning("GameFlow: unknown region in --region / --node: '%s' (known: %s)" % [id, ", ".join(_config.region_ids())])
+		_dev_settle_phase()
+		return
+	if not _run.region_offer.has(id):
+		_run.region_offer = [id] as Array[String]
+	choose_region(id)
+
+
+# DEV-ONLY: walks the run (first offered region, first available node, no fights, no offers) until
+# 0-based [param target] floor is reached (the final floor = floors()), recording the progress a real
+# boss clear would, then saves.
+func _dev_advance_floors(target: int) -> void:
+	var cfg: Dictionary = get_reward_config()
+	var guard: int = 0
+	while _run.floor < target and not _run.is_run_won() and guard < DEV_WALK_GUARD:
+		guard += 1
+		if _run.is_choosing_region():
+			if not _run.choose_region(_run.region_offer[0], _progress.get_cleared_bosses()):
+				break
+			continue
+		var nodes: Array[Dictionary] = _run.available_nodes()
+		if nodes.is_empty():
+			break
+		_run.choose_node(int(nodes[0]["node_index"]))
+		var kind: String = str(_run.current_node().get("kind", ""))
+		var result: Dictionary = _run.complete_node(_run.hp, _player_max_hp(), kind, cfg, 0.0)
+		if kind == KIND_BOSS:
+			_record_boss(result)
+	_floor_clear_notice = {}
+	_save_run()
+
+
+# DEV-ONLY: the phase of the run's position without an open offer: WORLD_MAP while choosing, else MAP.
+func _dev_settle_phase() -> void:
+	_set_phase(Phase.WORLD_MAP if _run.is_choosing_region() else Phase.MAP)
+	run_changed.emit()
+
+
+# DEV-ONLY (--node=fF/<region>/cC/nN, legacy chX/cC/nN = floor 1): fresh run at floor F in that region,
+# columns before C cleared with their first node (C clamped to the boss column), node N of column C
+# chosen (out of range: the first available, warning).
 func _apply_dev_node(text: String) -> void:
 	var parts: PackedStringArray = text.split("/")
-	var ci: int = -1
-	for i: int in _config.chapter_count():
-		if parts.size() > 0 and _config.chapter_id(i) == parts[0]:
-			ci = i
-	if ci < 0:
-		push_warning("GameFlow: unknown chapter in --node=%s (use e.g. ch1/c2/n1)" % text)
+	var floor_index: int = 0
+	if parts.size() > 0 and parts[0].begins_with("f") and parts[0].trim_prefix("f").is_valid_int():
+		floor_index = maxi(int(parts[0].trim_prefix("f")), 1) - 1
+		parts.remove_at(0)
+	if parts.is_empty() or _config.region_index(parts[0]) < 0:
+		push_warning("GameFlow: unknown region in --node=%s (use e.g. f2/ch1/c1/n0)" % text)
 		return
 	var column: int = int(parts[1].trim_prefix("c")) if parts.size() > 1 else 0
 	var n: int = int(parts[2].trim_prefix("n")) if parts.size() > 2 else 0
-	_begin_run(ci)
+	_dev_start(floor_index, parts[0])
+	if _run == null or _run.is_choosing_region():
+		return
+	if column > _run.map.size() - 1:
+		push_warning("GameFlow: --node=%s: the region has %d columns, using c%d" % [text, _run.map.size(), _run.map.size() - 1])
+		column = _run.map.size() - 1
 	_dev_clear_columns(column)
 	var nodes: Array[Dictionary] = _run.available_nodes()
 	if nodes.is_empty():
@@ -1117,13 +1295,13 @@ func _apply_dev_node(text: String) -> void:
 	choose_node(int(nodes[n]["node_index"]))
 
 
-# DEV-ONLY: clears the next [param count] columns of the live run with their first available
-# node (no fight, HP untouched) and saves.
+# DEV-ONLY: clears the next [param count] columns of the current region with their first available
+# node (no fight, HP untouched), never its boss column, and saves.
 func _dev_clear_columns(count: int) -> void:
 	var cfg: Dictionary = get_reward_config()
 	for _c: int in count:
 		var nodes: Array[Dictionary] = _run.available_nodes()
-		if nodes.is_empty():
+		if nodes.is_empty() or _run.column >= _run.map.size() - 1:
 			break
 		_run.choose_node(int(nodes[0]["node_index"]))
 		_run.complete_node(_run.hp, _player_max_hp(), "", cfg, 0.0)
@@ -1138,22 +1316,25 @@ func _dev_choose_first_available() -> bool:
 	return choose_node(int(nodes[0]["node_index"]))
 
 
-# DEV-ONLY: walks the map forward (clearing columns with their first node) until a node of
-# [param kind] is available, then chooses it. False with a warning when the map has none.
+# DEV-ONLY: walks the current region forward (clearing columns with their first node, never the boss
+# column) until a node of [param kind] is available, then chooses it. False with a warning when none.
 func _dev_advance_to_kind(kind: String) -> bool:
 	while _run.column < _run.map.size():
 		for node: Dictionary in _run.available_nodes():
 			if str(node.get("kind", "")) == kind:
 				return choose_node(int(node["node_index"]))
+		if _run.column >= _run.map.size() - 1:
+			break
 		_dev_clear_columns(1)
-	push_warning("GameFlow: --run=: this map has no '%s' node (try another --seed)" % kind)
+	push_warning("GameFlow: --run=: this region map has no '%s' node (try another --seed / --at-floor)" % kind)
 	return false
 
 
-# DEV-ONLY: the chosen match node is won on the spot (boss dead, phase WON, HP DEV_FLOW_HP);
-# with [param offer] the node completes and its offer opens, else it completes and the run is
-# finished as won (the RUN THẮNG capture).
-func _dev_win_current_match(offer: bool) -> void:
+# DEV-ONLY: the chosen match node is won on the spot (boss dead, phase WON, HP DEV_FLOW_HP) and
+# completed like a real win (offer opened; the final match wins the run). [param _offer] is kept for
+# old callers (a run is only won by the final match now). [param hp_ratio] >= 0 ends the match at that
+# share of max HP instead of DEV_FLOW_HP.
+func _dev_win_current_match(_offer: bool, hp_ratio: float = -1.0) -> void:
 	if _controller == null:
 		return
 	var state: RunState = _controller.get_state()
@@ -1162,21 +1343,28 @@ func _dev_win_current_match(offer: bool) -> void:
 	if view != null:
 		view.get_state().damage(CombatState.Side.ENEMY, 999999.0)
 	state.dev_jump(0, RunState.Phase.WON, RunController.DEV_ELAPSED_SEC, -1.0)
-	if offer:
-		_complete_match_node(DEV_FLOW_HP, _controller.get_player_max_hp(), 0.0)
-		return
-	var kind: String = str(_run.current_node().get("kind", ""))
-	_run.complete_node(DEV_FLOW_HP, _controller.get_player_max_hp(), kind, get_reward_config(), 0.0)
-	if kind == KIND_BOSS:
-		_progress.record_boss_clear()
-	_finish_run_won()
+	var max_hp: float = _controller.get_player_max_hp()
+	_complete_match_node(hp_ratio * max_hp if hp_ratio >= 0.0 else DEV_FLOW_HP, max_hp, 0.0)
 
 
 # DEV-ONLY (--run=<flow kind>): puts the freshly started run into a capture state.
 func _apply_dev_flow_run(kind: String) -> void:
 	match kind:
-		FLOW_RUN_MAP:
+		FLOW_RUN_WORLD, FLOW_RUN_MAP:
 			pass
+		FLOW_RUN_WORLD3:
+			_dev_advance_floors(maxi(_run.floor, DEV_WORLD3_FLOOR))
+			_dev_settle_phase()
+		FLOW_RUN_FLOORCLEAR:
+			if _run.is_choosing_region():
+				choose_region(_run.region_offer[0])
+			if _dev_advance_to_kind(KIND_BOSS):
+				_dev_win_current_match(true, DEV_FLOORCLEAR_HP_RATIO)
+				if _run != null and _run.has_pending_reward():
+					reward_skipped()
+		FLOW_RUN_FINAL:
+			_dev_advance_floors(_run.floors())
+			_dev_settle_phase()
 		FLOW_RUN_MAP3:
 			_dev_clear_columns(DEV_MAP3_COLUMNS)
 			run_changed.emit()
@@ -1202,5 +1390,94 @@ func _apply_dev_flow_run(kind: String) -> void:
 				_controller.get_state().dev_jump(0, RunState.Phase.LOST, RunController.DEV_ELAPSED_SEC, -1.0)
 				_finish_run_lost()
 		FLOW_RUN_WON:
-			if _dev_advance_to_kind(KIND_BOSS):
+			_dev_advance_floors(_run.floors())
+			_dev_settle_phase()
+			if _dev_choose_first_available():
 				_dev_win_current_match(false)
+
+
+# ---- Story 031 world API (published stubs; implemented in wave 2) ----
+
+## Story 031: 0-based floor of the live run (0..floors-1; == [method get_floor_count] at the final
+## match); 0 without a run.
+func get_floor() -> int:
+	return 0 if _run == null else _run.floor
+
+
+## Story 031: floors before the final match (chapters.json `world.floors`, 5).
+func get_floor_count() -> int:
+	return _config.world_floors()
+
+
+## Story 031: region ids offered at the current floor (WORLD_MAP cards, left to right); [] once one is
+## chosen, at the final match or without a run.
+func get_region_offer() -> Array[String]:
+	if _run == null:
+		return [] as Array[String]
+	return _run.region_offer.duplicate()
+
+
+## Story 031: region ids chosen so far, one per floor (index = 0-based floor); [] without a run. Also
+## readable on the result screens (until [method leave_run]).
+func get_region_path() -> Array[String]:
+	if _run == null:
+		return [] as Array[String]
+	return _run.region_path.duplicate()
+
+
+## Story 031: id of the region being walked; "" while a region offer is open or without a run. At the
+## final match: `world.final_match.region`.
+func get_current_region() -> String:
+	if _run == null or _run.is_choosing_region():
+		return ""
+	return _run.region_id
+
+
+## Story 031: translated display name of region [param region_id] ("" when unknown).
+func region_name(region_id: String) -> String:
+	var ci: int = _config.region_index(region_id)
+	return "" if ci < 0 else _config.chapter_name(ci)
+
+
+## Story 031: WORLD_MAP pick of [param region_id] from the offer: its map is generated for the floor,
+## the run is saved and the MAP shows. Ignored with a warning outside WORLD_MAP, without a run, while a
+## card offer is still open, or for a region not offered.
+func choose_region(region_id: String) -> void:
+	if _run == null or _phase != Phase.WORLD_MAP or _run_result != RunResult.NONE:
+		push_warning("GameFlow: choose_region('%s') outside the world map, ignored" % region_id)
+		return
+	if not _run.choose_region(region_id, _progress.get_cleared_bosses()):
+		push_warning("GameFlow: choose_region('%s'): not offered (offer: %s), ignored" % [region_id, str(_run.region_offer)])
+		return
+	_floor_clear_notice = {}
+	_save_run()
+	_set_phase(Phase.MAP)
+	run_changed.emit()
+
+
+## Story 031: the notice of the last region boss, returned ONCE (then {}): {floor (0-based new floor,
+## as [method get_floor]), floor_number (1-based), healed (HP healed, float), is_final (the next match
+## is the final one)}; {} when none.
+func take_floor_clear_notice() -> Dictionary:
+	var notice: Dictionary = _floor_clear_notice
+	_floor_clear_notice = {}
+	return notice
+
+
+## Story 031: true while the live run stands at (or plays) the final match.
+func is_final_floor() -> bool:
+	return _run != null and _run.is_final_floor()
+
+
+# A boss node completed ([param result] of RunSession.complete_node): a REGION boss counts in the
+# permanent progress (boss count, regions_boss_beaten, best_floor) and leaves the floor-clear notice.
+func _record_boss(result: Dictionary) -> void:
+	if not bool(result.get("floor_cleared", false)):
+		return
+	_progress.record_boss_clear()
+	_progress.add_region_boss_beaten(str(result.get("region", "")))
+	_progress.record_floor(_run.floor + 1)
+	_floor_clear_notice = {
+		"floor": _run.floor, "floor_number": _run.floor + 1,
+		"healed": float(result.get("healed", 0.0)), "is_final": _run.is_final_floor(),
+	}

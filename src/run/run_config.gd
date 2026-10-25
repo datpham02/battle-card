@@ -79,13 +79,26 @@ static func from_dictionary(data: Dictionary) -> RunConfig:
 ## Builds the single-match config of ONE map node (Story 022): the match [param match_id] of chapter
 ## [param chapter_index] with its own arena, arena_seed = hash(run_seed, match id) and, for a
 ## "danger" node, the chapter's extra danger traits. Timings come from the chapters defaults.
-static func from_node(chapters: ChaptersConfig, chapter_index: int, match_id: String, node_kind: String,
-		run_seed: int) -> RunConfig:
+## [param chapter_index_or_region] is the chapter index (int) or a region id (String, Story 031).
+## [param floor] < 0 (default) = no scaling (old behaviour). With [param floor] >= 0 (0-based run floor; a
+## floor >= `world.floors` = the final match, `final` row) the match is scaled at THIS one point, in order:
+## the region's `region_normalize`, then `floor_scaling` of the floor: boss_max_hp x hp_mult,
+## boss_step_cooldown_mult x step_mult, boss_defense + defense_add (clamped >= 0 after each step) and
+## boss_min_runes (the boss's smallest piece, Story 023/025) + size_add (clamped >= 0).
+static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant, match_id: String, node_kind: String,
+		run_seed: int, floor: int = -1) -> RunConfig:
+	var chapter_index: int = -1
+	if typeof(chapter_index_or_region) == TYPE_STRING or typeof(chapter_index_or_region) == TYPE_STRING_NAME:
+		chapter_index = chapters.region_index(str(chapter_index_or_region))
+	else:
+		chapter_index = int(chapter_index_or_region)
 	var raw: Dictionary = chapters.get_match_raw(chapter_index, match_id)
 	if raw.is_empty():
 		push_warning("RunConfig: unknown match '%s' in chapter %d, using the default match" % [match_id, chapter_index])
 		return from_dictionary(chapters.defaults())
 	raw["arena_seed"] = hash([run_seed, match_id]) & ChaptersConfig.SEED_MASK
+	if floor >= 0:
+		_apply_scaling(raw, chapters.region_normalize_at(chapter_index), chapters.floor_scaling(floor))
 	if node_kind == "danger":
 		var traits: Array = (raw.get("traits", []) as Array).duplicate(true)
 		for extra: Variant in chapters.danger_traits():
@@ -99,6 +112,31 @@ static func from_node(chapters: ChaptersConfig, chapter_index: int, match_id: St
 	var data: Dictionary = chapters.defaults()
 	data["matches"] = [raw]
 	return from_dictionary(data)
+
+
+## Story 031: the one application point of region normalization and floor scaling on a RAW match
+## dictionary (see [method from_node]). Absent keys count as the match defaults.
+static func _apply_scaling(raw: Dictionary, normalize: Dictionary, scaling: Dictionary) -> void:
+	var base: Dictionary = _default_match(0)
+	var hp: float = float(raw.get("boss_max_hp", base["boss_max_hp"]))
+	var step: float = float(raw.get("boss_step_cooldown_mult", base["boss_step_cooldown_mult"]))
+	var defense: float = float(raw.get("boss_defense", base["boss_defense"]))
+	var size: int = int(raw.get("boss_min_runes", base["boss_min_runes"]))
+	hp *= float(normalize.get("hp_mult", 1.0))
+	step *= float(normalize.get("step_mult", 1.0))
+	defense = maxf(defense + float(normalize.get("defense_add", 0.0)), 0.0)
+	hp *= float(scaling.get("hp_mult", 1.0))
+	step *= float(scaling.get("step_mult", 1.0))
+	defense = maxf(defense + float(scaling.get("defense_add", 0.0)), 0.0)
+	size = maxi(size + int(scaling.get("size_add", 0)), 0)
+	raw["boss_max_hp"] = hp
+	raw["boss_step_cooldown_mult"] = step
+	raw["boss_defense"] = defense
+	raw["boss_min_runes"] = size
+	if raw.has("boss_step_cooldown_sec"):
+		# Deprecated absolute cooldown: scaled the same way so old data keeps its relative pace.
+		raw["boss_step_cooldown_sec"] = float(raw["boss_step_cooldown_sec"]) \
+				* float(normalize.get("step_mult", 1.0)) * float(scaling.get("step_mult", 1.0))
 
 
 ## Number of matches (>= 1).

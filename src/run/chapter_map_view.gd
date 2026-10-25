@@ -9,13 +9,17 @@ extends Node2D
 ## pulsing gold outline), LOCKED (dimmed; the boss column keeps its glyph colour so the goal always
 ## reads). Thin connector lines trace the path taken (cleared node to cleared node) and fan out from
 ## the last cleared node to every node of the current column. Title band: "Về title" (NEUTRAL,
-## ScreenLayout.back_button_rect -> [method GameFlow.leave_run_keep_save]), the chapter name, and
-## "Cột %d/%d" at the right; the header strip under it lists hero, HP, deck size, removal tokens
+## ScreenLayout.back_button_rect, hit-tested on ScreenLayout.touch_rect so the touch area is
+## >= 96 px -> [method GameFlow.leave_run_keep_save]), the title and "Cột %d/%d" at the right.
+## Story 031: the map is the current REGION's (3 columns, tiles 170 px at 720p) and the title reads
+## "Tầng N/5 · <vùng>" ([method GameFlow.get_floor], [method GameFlow.get_current_region]; "Ấn Đài"
+## at the final match); the header strip under it lists hero, HP, deck size, removal tokens
 ## and luck. A tap on an available node -> [method GameFlow.choose_node]; every other pointer event
 ## is swallowed. While an offer is open over the map (a treasure node's, Story 022) RewardView draws
 ## and takes input above this view, and the title band / header are left to it. When
 ## [method GameFlow.take_restart_notice] returns text (a pre-v4 save was
-## restarted) a banner shows it until the first tap. Enter / Keypad Enter / Space pick the first
+## restarted) or [method GameFlow.take_floor_clear_notice] has a notice (Story 031) a banner shows
+## it until the first tap. Enter / Keypad Enter / Space pick the first
 ## available node (DEV convenience, as the other views). Child of GameFlow (reads it through
 ## [member flow_path]); draws and takes input only in phase MAP; owns no run state. Input dedup as in
 ## RunHudView (emulated copies — device == InputEvent.DEVICE_ID_EMULATION — are consumed but never
@@ -64,6 +68,9 @@ const HEADER_TOP_BASELINE: float = 0.4
 const HEADER_INTRO_BASELINE: float = 0.88
 const TILE_FONT_SIZE: int = 20
 const BUTTON_FONT_SIZE: int = 24
+## Story 031: the back button text shrinks to fit, not below this size; inset per side (pixels).
+const BACK_MIN_FONT_SIZE: int = 14
+const BACK_TEXT_INSET: float = 6.0
 const NOTICE_FONT_SIZE: int = 30
 const NOTICE_SUB_FONT_SIZE: int = 22
 const ARC_POINTS: int = 16
@@ -101,6 +108,10 @@ const TEXT_REMOVAL_TOKENS: String = "ui.map.removal_tokens"
 const TEXT_LUCK: String = "ui.map.luck"
 ## The back button: to the title, the run stays saved.
 const TEXT_BACK: String = "ui.map.back"
+## Story 031: the title "Tầng %d/%d · %s" (1-based floor, floor count, region name) and the final
+## match's name (shared with WorldMapView).
+const TEXT_FLOOR_TITLE: String = "ui.map.floor_title"
+const TEXT_FINAL_NAME: String = "ui.world.final_name"
 ## Second line of the restart notice banner ("Chạm để đóng").
 const TEXT_NOTICE_DISMISS: String = "ui.map.notice_dismiss"
 
@@ -123,6 +134,12 @@ func _process(_delta: float) -> void:
 		return
 	if _notice.is_empty():
 		_notice = _flow.take_restart_notice()
+	if _notice.is_empty():
+		# Story 031: after the last region boss the run goes straight to the final match's map, so
+		# the floor-clear banner ("Ấn Đài — hồi X máu") shows here (WorldMapView shows the others).
+		var clear: Dictionary = _flow.take_floor_clear_notice()
+		if not clear.is_empty():
+			_notice = WorldMapView.floor_clear_text(clear)
 	queue_redraw()
 
 
@@ -162,7 +179,7 @@ func _input(event: InputEvent) -> void:
 		_notice = ""
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	if ScreenLayout.back_button_rect(vp).has_point(pos):
+	if ScreenLayout.touch_rect(ScreenLayout.back_button_rect(vp)).has_point(pos):
 		_flow.leave_run_keep_save()
 		return
 	var map: Array[Dictionary] = _flow.get_run_map()
@@ -237,9 +254,10 @@ func _draw() -> void:
 # Title band (back button, chapter name, "Cột x/y") and the header strip (hero · HP · deck · tokens · luck).
 func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int) -> void:
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
-	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, _flow.get_config().chapter_name(run.chapter_index), TITLE_FONT_SIZE, TITLE_COLOR)
+	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, _title_text(), TITLE_FONT_SIZE, TITLE_COLOR)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
-	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
+	var back_text: String = tr(TEXT_BACK)
+	UiButtons.draw_button(self, back, back_text, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(back)), true, _back_font_size(back_text, back.size.x), OUTLINE_WIDTH)
 	var column_rect: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
 	var column_text: String = tr(TEXT_COLUMN) % [mini(current + 1, column_count), column_count]
 	draw_string(ThemeDB.fallback_font, Vector2(column_rect.position.x, column_rect.get_center().y + COLUMN_FONT_SIZE * 0.35), column_text, HORIZONTAL_ALIGNMENT_RIGHT, column_rect.size.x, COLUMN_FONT_SIZE, HEADER_COLOR)
@@ -254,7 +272,8 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 		tr(TEXT_LUCK) % roundi(_flow.get_luck()),
 	]
 	var header: Rect2 = ScreenLayout.map_header_rect(vp)
-	var intro_key: String = _flow.get_config().chapter_text_key(run.chapter_index, "intro") if current == 0 else ""
+	var region_index: int = _flow.get_config().region_index(_flow.get_current_region())
+	var intro_key: String = _flow.get_config().chapter_text_key(region_index, "intro") if current == 0 and region_index >= 0 else ""
 	if intro_key.is_empty():
 		_text(header, header.get_center().y + HEADER_FONT_SIZE * 0.35, HEADER_SEPARATOR.join(parts), HEADER_FONT_SIZE, HEADER_COLOR)
 		return
@@ -266,6 +285,14 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 	while size > INTRO_MIN_FONT_SIZE and font.get_string_size(intro, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > intro_width:
 		size -= 1
 	_text(header, header.position.y + header.size.y * HEADER_INTRO_BASELINE, intro, size, INTRO_COLOR)
+
+
+# Story 031: "Tầng N/5 · <vùng>", or "Ấn Đài" once the run stands at the final match.
+func _title_text() -> String:
+	var count: int = _flow.get_floor_count()
+	if _flow.is_final_floor() or _flow.get_floor() >= count:
+		return tr(TEXT_FINAL_NAME)
+	return tr(TEXT_FLOOR_TITLE) % [_flow.get_floor() + 1, count, _flow.region_name(_flow.get_current_region())]
 
 
 # The path through the cleared nodes, then the fan-out from the last cleared node to every node of
@@ -413,3 +440,13 @@ func _pulse_alpha() -> float:
 # Centred single-line text at baseline [param y] over the width of [param rect].
 func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+
+
+# Story 031: the back button's font, shrunk until [param text] fits [param width] minus a small inset
+# ("Back to title" is wider than the 128 px button at BUTTON_FONT_SIZE).
+func _back_font_size(text: String, width: float) -> int:
+	var font: Font = ThemeDB.fallback_font
+	var size: int = BUTTON_FONT_SIZE
+	while size > BACK_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > width - BACK_TEXT_INSET * 2.0:
+		size -= 1
+	return size

@@ -5,7 +5,13 @@ extends RefCounted
 ## [method get_match_def] and [method RunConfig.from_node]. The v1 `floors` format is still read (its floor
 ## matches become the chapter's matches); the floor API and `legacy_floors` are gone (Story 026).
 ## Never null after [method load_from_file]: a bad file gives one default chapter / match.
-## Schema: assets/data/schema.md. Implements: Story 015, Story 022.
+## Story 031: the chapters double as the REGIONS of a 5-floor run (never call them zones: `zone` is the
+## seals / thorns of Story 027). The `world` block (floors, region_pool, region_columns, floor_scaling,
+## floor_tiers, floor_heal_ratio, final_match) is read here; see [method world_spec], [method region_spec],
+## [method floor_scaling] and [method generate_region_map]. Every `floor` argument of this class is the
+## 0-based run floor of RunSession (0..floors-1; `floors` itself = the final match); data rows are keyed by
+## the 1-based floor number ("1".."5", "final").
+## Schema: assets/data/schema.md. Implements: Story 015, Story 022, Story 031.
 
 const DEFAULT_PATH: String = "res://assets/data/chapters.json"
 ## Keys of the `defaults` block (and of an optional per-floor override of them).
@@ -17,6 +23,18 @@ const DEFAULT_KEYS: Array[String] = [
 const SEED_MASK: int = 0x7fffffff
 const TEXT_DEFAULT_CHAPTER_NAME: String = "ui.chapter.default_name"
 const TEXT_DEFAULT_FLOOR_NAME: String = "ui.floor.default_name"
+## Fallbacks used only when chapters.json has no (valid) `world` block; the shipped numbers live in the file.
+const DEFAULT_WORLD_FLOORS: int = 5
+const DEFAULT_CHOICES_PER_FLOOR: int = 2
+const DEFAULT_FLOOR_HEAL_RATIO: float = 0.25
+## Identity row of `floor_scaling` (no change).
+const IDENTITY_SCALING: Dictionary = {"hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0}
+## Fallback region frame (col 0 one battle, col 1 two or three nodes with one rest-or-treasure, col 2 the boss).
+const DEFAULT_REGION_COLUMNS: Array[Dictionary] = [
+	{"tier": 0, "kinds": ["battle"], "pick": [1, 1], "required": []},
+	{"tier": 1, "kinds": ["battle", "danger"], "pick": [2, 3], "required": [["rest", "treasure"]]},
+	{"tier": 2, "kinds": [], "pick": [1, 1], "required": ["boss"]},
+]
 
 var _defaults: Dictionary = {}
 ## Each chapter: {id, name, name_is_key, floors: Array[Dictionary]}. Each floor: {id, name, name_is_key, arena, arena_pool,
@@ -24,6 +42,9 @@ var _defaults: Dictionary = {}
 var _chapters: Array[Dictionary] = []
 ## Map defaults shared by chapters: {columns, onboarding_tier_cap, danger_traits}.
 var _map_defaults: Dictionary = {"columns": [], "onboarding_tier_cap": 1, "danger_traits": []}
+## The cleaned `world` block (Story 031): {floors, choices_per_floor, region_pool, region_columns, floor_scaling,
+## floor_tiers, floor_heal_ratio, final_match}.
+var _world: Dictionary = {}
 
 
 ## Loads from a JSON file. Never null (defaults + warning when missing or bad).
@@ -56,7 +77,9 @@ static func from_dictionary(data: Dictionary) -> ChaptersConfig:
 			"id": "ch1", "name": TEXT_DEFAULT_CHAPTER_NAME, "name_is_key": true,
 			"floors": [_make_floor("f1", TEXT_DEFAULT_FLOOR_NAME, [{}])],
 			"matches": {"match_1": {"id": "match_1"}}, "match_ids": ["match_1"], "pools": {}, "columns": [],
+			"region_columns": [], "region_normalize": {"hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0},
 			})
+	c._world = c._clean_world(data.get("world"))
 	return c
 
 
@@ -89,6 +112,123 @@ func generate_map(ci: int, run_seed: int, cleared_bosses: int) -> Array[Dictiona
 		var none: Array[Dictionary] = []
 		return none
 	return ChapterMapGen.generate(spec, run_seed, cleared_bosses)
+
+
+## Story 031: the cleaned `world` block (deep copy): `floors` (int), `choices_per_floor` (int), `region_pool`
+## (Array[String] of region ids), `region_columns` (Array of column specs), `floor_scaling` (object
+## "1".."N" / "final" -> {hp_mult, step_mult, defense_add, size_add}), `floor_tiers` (object "1".."N" ->
+## [first column tier, middle column tier, boss column tier]), `floor_heal_ratio` (float 0..1),
+## `final_match` ({region, match_id} or {}). Built-in fallbacks when the file has no block.
+func world_spec() -> Dictionary:
+	return _world.duplicate(true)
+
+
+## Run floors before the final match (>= 1).
+func world_floors() -> int:
+	return int(_world["floors"])
+
+
+## Ids of the regions a world offers from (`world.region_pool`, only ids that exist as chapters).
+func region_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for id: Variant in _world["region_pool"] as Array:
+		ids.append(str(id))
+	return ids
+
+
+## Index into the chapters array of region [param region_id]; -1 when unknown.
+func region_index(region_id: String) -> int:
+	for i: int in _chapters.size():
+		if str(_chapters[i]["id"]) == region_id:
+			return i
+	return -1
+
+
+## `region_normalize` of region [param region_id] ({hp_mult, step_mult, defense_add}; identity when absent
+## or the region is unknown). Applied by [method RunConfig.from_node] BEFORE [method floor_scaling].
+func region_normalize(region_id: String) -> Dictionary:
+	var ci: int = region_index(region_id)
+	if ci < 0:
+		return {"hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0}
+	return (_chapters[ci]["region_normalize"] as Dictionary).duplicate()
+
+
+## Same as [method region_normalize] by chapter index (identity when out of range).
+func region_normalize_at(ci: int) -> Dictionary:
+	return region_normalize(chapter_id(ci))
+
+
+## The scaling row of 0-based run [param floor]: `floor_scaling["<floor+1>"]`; a floor >= `floors` (the
+## final match) gets the `final` row; a negative floor the first row. Identity when the data has no row.
+func floor_scaling(floor: int) -> Dictionary:
+	var rows: Dictionary = _world["floor_scaling"]
+	var key: String = "final" if floor >= world_floors() else str(maxi(floor, 0) + 1)
+	if rows.has(key):
+		return (rows[key] as Dictionary).duplicate()
+	if key == "final" and rows.has(str(world_floors())):
+		return (rows[str(world_floors())] as Dictionary).duplicate()
+	return IDENTITY_SCALING.duplicate()
+
+
+## Share of max HP the player heals when a region boss falls (`world.floor_heal_ratio`, 0..1).
+func floor_heal_ratio() -> float:
+	return float(_world["floor_heal_ratio"])
+
+
+## `world.final_match` ({region, match_id}); {} when not set or invalid.
+func final_match() -> Dictionary:
+	return (_world["final_match"] as Dictionary).duplicate()
+
+
+## Map spec of region [param region_id] for run [param floor] (0-based), for [method ChapterMapGen.generate]:
+## the [method get_map_spec] dictionary with `columns` = the region frame (`world.region_columns`, or the
+## region's own `region_columns`) whose tiers follow `world.floor_tiers` for that floor, plus `region_id`,
+## `floor`, `floor_number` (1-based; makes [ChapterMapGen] drop node kinds whose `min_floor` is higher),
+## `name_key`, `intro_key`, `end_key`, `region_normalize`. {} when the region is unknown.
+func region_spec(region_id: String, floor: int) -> Dictionary:
+	var ci: int = region_index(region_id)
+	if ci < 0:
+		return {}
+	var spec: Dictionary = get_map_spec(ci)
+	var chapter: Dictionary = _chapters[ci]
+	var frame: Array = _world["region_columns"]
+	if not (chapter["region_columns"] as Array).is_empty():
+		frame = chapter["region_columns"]
+	var number: int = clampi(floor, 0, world_floors() - 1) + 1
+	var columns: Array = frame.duplicate(true)
+	var tiers: Variant = (_world["floor_tiers"] as Dictionary).get(str(number))
+	if typeof(tiers) == TYPE_ARRAY and not (tiers as Array).is_empty():
+		var t: Array = tiers as Array
+		for i: int in columns.size():
+			if typeof(columns[i]) != TYPE_DICTIONARY:
+				continue
+			# [first, middle, boss]: the first column, every middle column, the last column.
+			var slot: int = 0
+			if i == columns.size() - 1 and i > 0:
+				slot = mini(2, t.size() - 1)
+			elif i > 0:
+				slot = mini(1, t.size() - 1)
+			(columns[i] as Dictionary)["tier"] = maxi(int(t[slot]), 0)
+	spec["columns"] = columns
+	spec["region_id"] = region_id
+	spec["floor"] = floor
+	spec["floor_number"] = number
+	spec["name_key"] = str(chapter["name"]) if bool(chapter["name_is_key"]) else ""
+	spec["intro_key"] = str(chapter.get("intro_key", ""))
+	spec["end_key"] = str(chapter.get("end_key", ""))
+	spec["region_normalize"] = region_normalize(region_id)
+	return spec
+
+
+## Seeded map of region [param region_id] at run [param floor] (0-based): [method ChapterMapGen.generate] of
+## [method region_spec] with the seed [method WorldMapGen.region_map_seed]. Same shape as [method generate_map];
+## [] for an unknown region.
+func generate_region_map(region_id: String, run_seed: int, floor: int, cleared_bosses: int) -> Array[Dictionary]:
+	var spec: Dictionary = region_spec(region_id, floor)
+	if spec.is_empty():
+		var none: Array[Dictionary] = []
+		return none
+	return ChapterMapGen.generate(spec, WorldMapGen.region_map_seed(run_seed, region_id, floor), cleared_bosses)
 
 
 ## Number of columns of chapter [param ci]'s map skeleton (0 when out of range).
@@ -270,8 +410,12 @@ func _clean_chapter(entry: Variant, index: int, seen: Dictionary) -> Dictionary:
 	var pools: Dictionary = {}
 	if typeof(raw.get("pools")) == TYPE_DICTIONARY:
 		pools = _clean_pools(raw["pools"] as Dictionary, matches, id)
+	var region_columns: Array = []
+	if typeof(raw.get("region_columns")) == TYPE_ARRAY:
+		region_columns = (raw["region_columns"] as Array).duplicate(true)
 	return {"id": id, "name": named[0], "name_is_key": named[1], "floors": floors, "matches": matches,
-		"match_ids": match_ids, "pools": pools, "columns": columns,
+		"match_ids": match_ids, "pools": pools, "columns": columns, "region_columns": region_columns,
+		"region_normalize": _clean_normalize(raw.get("region_normalize"), id),
 		"intro_key": str(raw.get("intro_key", "")), "end_key": str(raw.get("end_key", ""))}
 
 
@@ -351,3 +495,114 @@ func _clean_floor(entry: Variant, index: int, chapter_id_text: String, seen: Dic
 	floor_dict["overrides"] = overrides
 	seen[id] = true
 	return floor_dict
+
+
+# `region_normalize` of one chapter: {hp_mult > 0, step_mult > 0, defense_add}; identity for missing parts.
+static func _clean_normalize(raw: Variant, chapter_id_text: String) -> Dictionary:
+	var result: Dictionary = {"hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0}
+	if typeof(raw) == TYPE_NIL:
+		return result
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("ChaptersConfig: region_normalize of '%s' must be an object, ignored" % chapter_id_text)
+		return result
+	var source: Dictionary = raw as Dictionary
+	for key: String in ["hp_mult", "step_mult"]:
+		if source.has(key):
+			var value: float = float(source[key])
+			if value <= 0.0:
+				push_warning("ChaptersConfig: region_normalize.%s of '%s' must be > 0, using 1" % [key, chapter_id_text])
+			else:
+				result[key] = value
+	result["defense_add"] = float(source.get("defense_add", 0.0))
+	return result
+
+
+# One `floor_scaling` row: {hp_mult > 0, step_mult > 0, defense_add, size_add}; bad parts keep the identity.
+static func _clean_scaling_row(raw: Variant, label: String) -> Dictionary:
+	var row: Dictionary = IDENTITY_SCALING.duplicate()
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("ChaptersConfig: world.floor_scaling.%s must be an object, using no scaling" % label)
+		return row
+	var source: Dictionary = raw as Dictionary
+	for key: String in ["hp_mult", "step_mult"]:
+		if source.has(key):
+			var value: float = float(source[key])
+			if value <= 0.0:
+				push_warning("ChaptersConfig: world.floor_scaling.%s.%s must be > 0, using 1" % [label, key])
+			else:
+				row[key] = value
+	row["defense_add"] = float(source.get("defense_add", 0.0))
+	row["size_add"] = int(source.get("size_add", 0))
+	return row
+
+
+# The `world` block with defaults and warnings (see [method world_spec]).
+func _clean_world(raw: Variant) -> Dictionary:
+	var source: Dictionary = {}
+	if typeof(raw) == TYPE_DICTIONARY:
+		source = raw as Dictionary
+	else:
+		push_warning("ChaptersConfig: no `world` block, using the built-in run frame")
+	var world: Dictionary = {}
+	world["floors"] = maxi(int(source.get("floors", DEFAULT_WORLD_FLOORS)), 1)
+	world["choices_per_floor"] = maxi(int(source.get("choices_per_floor", DEFAULT_CHOICES_PER_FLOOR)), 1)
+	var pool: Array[String] = []
+	var raw_pool: Variant = source.get("region_pool")
+	if typeof(raw_pool) == TYPE_ARRAY:
+		for id: Variant in raw_pool as Array:
+			if region_index(str(id)) < 0:
+				push_warning("ChaptersConfig: world.region_pool: unknown region '%s' dropped" % id)
+			elif not pool.has(str(id)):
+				pool.append(str(id))
+	if pool.is_empty():
+		if typeof(raw_pool) == TYPE_ARRAY:
+			push_warning("ChaptersConfig: world.region_pool has no valid region, using every chapter")
+		for chapter: Dictionary in _chapters:
+			pool.append(str(chapter["id"]))
+	world["region_pool"] = pool
+	var columns: Array = []
+	if typeof(source.get("region_columns")) == TYPE_ARRAY:
+		columns = (source["region_columns"] as Array).duplicate(true)
+	if columns.is_empty():
+		if source.has("region_columns"):
+			push_warning("ChaptersConfig: world.region_columns is empty or not an array, using the built-in frame")
+		columns = DEFAULT_REGION_COLUMNS.duplicate(true)
+	world["region_columns"] = columns
+	var rows: Dictionary = {}
+	var raw_rows: Variant = source.get("floor_scaling")
+	if typeof(raw_rows) == TYPE_DICTIONARY:
+		for key: Variant in (raw_rows as Dictionary).keys():
+			rows[str(key)] = _clean_scaling_row((raw_rows as Dictionary)[key], str(key))
+	elif typeof(raw_rows) != TYPE_NIL:
+		push_warning("ChaptersConfig: world.floor_scaling must be an object, using no scaling")
+	world["floor_scaling"] = rows
+	var tiers: Dictionary = {}
+	var raw_tiers: Variant = source.get("floor_tiers")
+	if typeof(raw_tiers) == TYPE_DICTIONARY:
+		for key: Variant in (raw_tiers as Dictionary).keys():
+			var list: Variant = (raw_tiers as Dictionary)[key]
+			if typeof(list) == TYPE_ARRAY and not (list as Array).is_empty():
+				var cleaned: Array = []
+				for t: Variant in list as Array:
+					cleaned.append(maxi(int(t), 0))
+				tiers[str(key)] = cleaned
+			else:
+				push_warning("ChaptersConfig: world.floor_tiers.%s must be a non-empty array, ignored" % key)
+	elif typeof(raw_tiers) != TYPE_NIL:
+		push_warning("ChaptersConfig: world.floor_tiers must be an object, ignored")
+	world["floor_tiers"] = tiers
+	world["floor_heal_ratio"] = clampf(float(source.get("floor_heal_ratio", DEFAULT_FLOOR_HEAL_RATIO)), 0.0, 1.0)
+	var final: Dictionary = {}
+	var raw_final: Variant = source.get("final_match")
+	if typeof(raw_final) == TYPE_DICTIONARY:
+		var rid: String = str((raw_final as Dictionary).get("region", ""))
+		var mid: String = str((raw_final as Dictionary).get("match_id", ""))
+		var ci: int = region_index(rid)
+		if ci >= 0 and (_chapters[ci]["matches"] as Dictionary).has(mid):
+			final = {"region": rid, "match_id": mid}
+		else:
+			push_warning("ChaptersConfig: world.final_match '%s/%s' is unknown, ignored" % [rid, mid])
+	elif typeof(raw_final) != TYPE_NIL:
+		push_warning("ChaptersConfig: world.final_match must be an object, ignored")
+	world["final_match"] = final
+	return world

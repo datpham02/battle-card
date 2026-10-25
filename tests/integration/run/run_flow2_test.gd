@@ -1,9 +1,12 @@
 extends SceneTree
-## Scratch flow test for Story 022 Part 2a (GameFlow node wiring): start_run -> MAP -> choose a
-## battle node -> win -> reward -> MAP; save at choose and after the reward; leave / continue from
-## the map and from a node; treasure (free offer, no fight); rest (heal / forge); miniboss rarity
-## floor; boss -> token -> run won; removal token spent by remove; resume with a pending offer;
-## v3 save -> restart notice; death. Prints PASS/FAIL lines and FAILS=n; exits with that count.
+## Scratch flow test for Story 022 Part 2a, moved to the WORLD run of Story 031 (GameFlow node wiring):
+## character select -> WORLD_MAP (floor 1 offer) -> choose_region -> MAP -> choose a battle node -> win
+## -> reward -> MAP; save at the world map, at choose and after the reward; leave / continue from the
+## world map, the map and a node; treasure (free offer, no fight); rest (heal / forge); miniboss rarity
+## floor; region boss -> token, floor +1 with the floor heal, progress -> reward -> WORLD_MAP of the
+## next floor; the boss of the last floor -> the final match's map -> winning it wins the run; removal
+## token spent by remove; resume with a pending offer; pre-v5 save -> restart notice; death.
+## Prints PASS/FAIL lines and FAILS=n; exits with that count.
 
 const MAIN_SCENE: String = "res://src/main.tscn"
 const MAX_FRAMES: int = 4000
@@ -142,28 +145,40 @@ func _run() -> void:
 	flow.start_requested()
 	_check(flow.get_phase() == GameFlow.Phase.CHARACTER_SELECT, "start_requested -> CHARACTER_SELECT")
 	flow.character_chosen(HERO)
-	_check(flow.get_phase() == GameFlow.Phase.CHAPTER_SELECT, "character_chosen -> CHAPTER_SELECT")
-	var states: Array[Dictionary] = flow.get_chapter_states()
-	_check(states.size() == config.chapter_count() and states.size() >= 2, "one chapter state per chapter")
-	_check(bool(states[0]["unlocked"]) and not bool(states[0]["cleared"]) and not bool(states[0]["in_run"]), "ch1 unlocked, not cleared, no run: %s" % str(states[0]))
-	_check(not bool(states[1]["unlocked"]), "ch2 locked")
-	flow.start_run(1)
-	_check(flow.get_phase() == GameFlow.Phase.CHAPTER_SELECT and flow.get_controller() == null and flow.get_run() == null, "start_run on a locked chapter refused")
+	_check(flow.get_phase() == GameFlow.Phase.WORLD_MAP and flow.get_run() != null and flow.get_controller() == null, "character_chosen -> WORLD_MAP (Story 031)")
+	_check(flow.get_floor() == 0 and flow.get_floor_count() == config.world_floors() and not flow.is_final_floor(), "floor 1 of %d" % flow.get_floor_count())
+	_check(flow.get_current_region().is_empty() and flow.get_run_map().is_empty() and flow.get_region_path().is_empty(), "no region yet, no map")
+	var offer0: Array[String] = flow.get_region_offer()
+	_check(offer0.size() == mini(2, config.region_ids().size()) and _distinct(offer0), "floor 1 offers %s" % str(offer0))
+	var preview: Dictionary = flow.region_preview(offer0[0])
+	_check(str(preview.get("name", "")) == flow.region_name(offer0[0]) and not str(preview.get("name", "")).is_empty() and int(preview.get("floor_number", 0)) == 1, "region_preview: %s" % str(preview))
+	var saved: Dictionary = store.load_state(config).get_run_dict()
+	_check(int(saved.get("version", 0)) == RunSession.SAVE_VERSION and saved.get("region_offer", []) == offer0 and str(saved.get("region", "?")).is_empty(), "store holds the v5 run at the world map")
+	_check(store.load_state(config).get_best_floor() == 1, "best floor 1 recorded")
+	# leave at the WORLD_MAP, continue -> WORLD_MAP with the same offer
+	flow.go_back()
+	_check(flow.get_phase() == GameFlow.Phase.TITLE and flow.has_continue(), "go_back in WORLD_MAP -> TITLE, save kept")
+	flow.continue_requested()
+	_check(flow.get_phase() == GameFlow.Phase.WORLD_MAP and flow.get_region_offer() == offer0 and flow.get_floor() == 0, "continue -> WORLD_MAP, same offer")
+	_check(not flow.choose_node(0), "choose_node refused on the world map")
+	flow.choose_region("zz")
+	_check(flow.get_phase() == GameFlow.Phase.WORLD_MAP and flow.get_region_offer() == offer0, "choose_region(unknown) ignored")
 
-	# --- start the run: MAP ------------------------------------------------------------------------
-	flow.start_run(0)
-	_check(flow.get_phase() == GameFlow.Phase.MAP and flow.get_controller() == null and flow.get_run() != null, "start_run(0) -> MAP, no controller")
+	# --- choose the region: MAP ----------------------------------------------------------------------
+	var region: String = offer0[0]
+	flow.choose_region(region)
+	_check(flow.get_phase() == GameFlow.Phase.MAP and flow.get_controller() == null and flow.get_current_region() == region, "choose_region(%s) -> MAP, no controller" % region)
+	_check(flow.get_region_path() == ([region] as Array[String]) and flow.get_region_offer().is_empty(), "path [%s], offer closed" % region)
 	var map: Array[Dictionary] = flow.get_run_map()
-	_check(map.size() == config.column_count(0) and map.size() == 7, "map has %d columns" % map.size())
+	_check(map == config.generate_region_map(region, flow.get_run().run_seed, 0, 0) and map.size() >= 3, "map = the region's floor-1 map (%d columns)" % map.size())
 	_check(flow.get_current_column() == 0 and flow.get_cleared_nodes().is_empty(), "at column 0, nothing cleared")
 	var avail: Array[Dictionary] = flow.get_available_nodes()
 	_check(avail.size() == 1 and str(avail[0]["kind"]) == "battle" and int(avail[0]["node_index"]) == 0, "column 0 offers one battle: %s" % str(avail))
 	_check(flow.get_run().character_id == HERO and flow.get_run().deck_ids.size() == starter, "run: hero %s, starter deck %d" % [HERO, starter])
 	_check(flow.get_removal_tokens() == tokens0 and is_zero_approx(flow.get_luck()), "tokens %d, luck 0 at start" % tokens0)
-	_check(flow.get_chapter_states()[0]["in_run"] == true, "chapter state in_run true")
 	_check(flow.get_pending_reward_kind().is_empty() and flow.get_pending_reward_info().is_empty(), "no pending kind / info")
-	var saved: Dictionary = store.load_state(config).get_run_dict()
-	_check(int(saved.get("version", 0)) == 4 and str(saved.get("chapter", "")) == "ch1" and int(saved.get("column", -1)) == 0 and int(saved.get("node_index", 0)) == -1 and (saved.get("map", []) as Array).size() == 7 and int(saved.get("removal_tokens", -1)) == tokens0, "store holds the v4 run at start: column %s node %s" % [str(saved.get("column")), str(saved.get("node_index"))])
+	saved = store.load_state(config).get_run_dict()
+	_check(int(saved.get("version", 0)) == RunSession.SAVE_VERSION and str(saved.get("region", "")) == region and int(saved.get("column", -1)) == 0 and int(saved.get("node_index", 0)) == -1 and (saved.get("map", []) as Array).size() == map.size() and int(saved.get("removal_tokens", -1)) == tokens0, "store holds the v5 run in the region: column %s node %s" % [str(saved.get("column")), str(saved.get("node_index"))])
 	_check(not flow.choose_node(99), "choose_node(99) refused")
 
 	# --- choose the battle node -> IN_NODE -----------------------------------------------------------
@@ -172,7 +187,7 @@ func _run() -> void:
 	_check(c != null and flow.get_phase() == GameFlow.Phase.IN_NODE, "battle node -> IN_NODE with a controller")
 	_check(c.get_config().match_count() == 1 and is_zero_approx(c.get_config().between_sec), "one-match config, between_sec 0")
 	_check(c.get_config().matches[0]["id"] == str(map[0]["nodes"][0]["match_id"]), "controller plays the node's match %s" % str(map[0]["nodes"][0]["match_id"]))
-	_check(flow.get_current_floor() == Vector2i(0, 0), "get_current_floor (deprecated) = (chapter, column)")
+	_check(flow.get_current_floor() == Vector2i(config.region_index(region), 0), "get_current_floor (deprecated) = (region index, column)")
 	saved = store.load_state(config).get_run_dict()
 	_check(int(saved.get("node_index", -1)) == 0 and int(saved.get("column", -1)) == 0, "store saved at choose: node 0 of column 0")
 	_check(_deck_size(c) == starter, "first CombatView deck = starter %d" % starter)
@@ -223,7 +238,7 @@ func _run() -> void:
 	_check(flow.get_phase() == GameFlow.Phase.MAP and flow.get_controller() == null, "continue (nothing chosen) -> MAP")
 	_check(flow.get_run_map() == map and flow.get_current_column() == 1 and flow.get_run().deck_ids.size() == after1 and is_equal_approx(flow.get_run().hp, hp_after_node), "continue restored the map, column 1, deck %d, hp %.1f" % [after1, hp_after_node])
 	_check(flow.get_character_id() == HERO, "continue restores the character")
-	_check(flow.take_restart_notice().is_empty(), "no restart notice for a v4 save")
+	_check(flow.take_restart_notice().is_empty(), "no restart notice for a v5 save")
 
 	# --- die in column 1 ------------------------------------------------------------------------------
 	var fight: int = _find_node(flow, MATCH_KINDS)
@@ -244,7 +259,7 @@ func _run() -> void:
 	_check(flow.get_run_result() == GameFlow.RunResult.LOST, "run result LOST")
 	_check(flow.get_run() != null and flow.get_run().deck_ids.size() == after1, "run object kept for the result screen")
 	var after_death: ProgressState = store.load_state(config)
-	_check(not after_death.has_run() and after_death.get_cleared_chapters().is_empty(), "store: run dropped, chapter not cleared")
+	_check(not after_death.has_run() and after_death.get_regions_boss_beaten().is_empty(), "store: run dropped, no region boss beaten")
 	_check(not flow.has_continue(), "has_continue false after death")
 	_check(flow.get_phase() == GameFlow.Phase.IN_NODE and flow.get_controller() == c2, "result shown in IN_NODE")
 	flow.go_back()
@@ -347,24 +362,66 @@ func _run() -> void:
 	_check(all_rare, "every miniboss card is rare or better: %s" % str(flow2b.get_pending_reward()))
 	flow2b.reward_skipped()
 	_check(flow2b.get_phase() == GameFlow.Phase.MAP and flow2b.get_current_column() == 4 and flow2b.get_controller() == null, "skip -> MAP column 4")
-	# boss: token, progress, run won after the reward
+	# region boss (Story 031): token, progress, floor +1 with the floor heal, reward, then the WORLD_MAP
 	var cleared_before: int = store2.load_state(config).get_cleared_bosses()
 	var c6: RunController = await _win_node(flow2b, 0, 20.0)
 	_check(c6 != null and flow2b.get_pending_reward_kind() == "boss" and flow2b.get_pending_reward_info().get("removal_token") == true, "boss offer with the token info")
 	_check(flow2b.get_removal_tokens() == 1, "boss granted a removal token (1)")
-	_check(flow2b.get_run().is_run_won() and flow2b.get_run_result() == GameFlow.RunResult.NONE, "run won in the session, result still NONE until the reward")
-	_check(store2.load_state(config).get_cleared_bosses() == cleared_before + 1 and store2.load_state(config).has_run(), "progress counts the boss, run still saved with the offer")
+	_check(not flow2b.get_run().is_run_won() and flow2b.get_run_result() == GameFlow.RunResult.NONE, "a region boss does not win the run")
+	_check(flow2b.get_floor() == 1 and not flow2b.get_region_offer().is_empty() and flow2b.get_current_region().is_empty(), "floor 2, next offer open: %s" % str(flow2b.get_region_offer()))
+	var boss_end: float = minf(c6.get_last_player_hp() + _view(c6).get_passive_heal(), 190.0)
+	var floor_heal: float = minf(boss_end + config.floor_heal_ratio() * 190.0, 190.0) - boss_end
+	_check(is_equal_approx(flow2b.get_run().hp, boss_end + floor_heal), "floor heal: %.1f + %.1f = %.1f" % [boss_end, floor_heal, flow2b.get_run().hp])
+	var fnotice: Dictionary = flow2b.take_floor_clear_notice()
+	_check(int(fnotice.get("floor", -1)) == 1 and int(fnotice.get("floor_number", -1)) == 2 and is_equal_approx(float(fnotice.get("healed", -1.0)), floor_heal), "floor-clear notice %s" % str(fnotice))
+	_check(flow2b.take_floor_clear_notice().is_empty(), "floor-clear notice returned once")
+	var st_b: ProgressState = store2.load_state(config)
+	_check(st_b.get_cleared_bosses() == cleared_before + 1 and st_b.has_region_boss_beaten("ch1") and st_b.get_best_floor() == 2 and st_b.has_run(), "progress: boss counted, ch1 beaten, best floor 2, run saved with the offer")
 	var boss_offer: Array[String] = flow2b.get_pending_reward()
 	var after_b: int = after_t + (0 if RewardRoller.is_upgrade(boss_offer[0], flow2b.get_deck_levels()) else 1)
+	var offer1: Array[String] = flow2b.get_region_offer()
 	flow2b.reward_chosen(boss_offer[0])
-	_check(flow2b.get_run_result() == GameFlow.RunResult.WON and flow2b.get_phase() == GameFlow.Phase.IN_NODE and flow2b.get_controller() == c6, "boss reward -> RUN WON on the node screen")
-	var after_win: ProgressState = store2.load_state(config)
-	_check(after_win.get_cleared_chapters().has("ch1") and not after_win.has_run(), "store: ch1 cleared, run dropped")
-	_check(bool(flow2b.get_chapter_states()[0]["cleared"]) and bool(flow2b.get_chapter_states()[1]["unlocked"]), "ch1 cleared, ch2 unlocked")
-	_check(flow2b.get_run() != null and flow2b.get_run().deck_ids.size() == after_b, "run object kept for the RUN THẮNG screen (deck %d)" % after_b)
-	flow2b.leave_run()
-	_check(flow2b.get_phase() == GameFlow.Phase.TITLE and not flow2b.has_continue() and flow2b.get_run() == null, "leave_run after the win -> TITLE, no continue")
+	_check(flow2b.get_phase() == GameFlow.Phase.WORLD_MAP and flow2b.get_controller() == null and flow2b.get_run_result() == GameFlow.RunResult.NONE, "boss reward -> WORLD_MAP, controller freed")
+	_check(flow2b.get_run().deck_ids.size() == after_b and flow2b.get_region_offer() == offer1 and flow2b.get_region_path() == (["ch1"] as Array[String]), "deck %d, floor 2 offer %s" % [after_b, str(offer1)])
+	# continue from the v5 save at the floor-2 WORLD_MAP
+	flow2b.go_back()
+	_check(flow2b.get_phase() == GameFlow.Phase.TITLE and flow2b.has_continue(), "go_back in WORLD_MAP -> TITLE, save kept")
+	flow2b.continue_requested()
+	_check(flow2b.get_phase() == GameFlow.Phase.WORLD_MAP and flow2b.get_floor() == 1 and flow2b.get_region_offer() == offer1 and flow2b.get_run().deck_ids.size() == after_b, "continue -> floor 2 WORLD_MAP")
+	flow2b.choose_region(offer1[0])
+	_check(flow2b.get_phase() == GameFlow.Phase.MAP and flow2b.get_current_column() == 0 and flow2b.get_run_map() == config.generate_region_map(offer1[0], 11, 1, store2.load_state(config).get_cleared_bosses()), "floor 2 region %s: its floor-2 map" % offer1[0])
+	_check(flow2b.get_cleared_nodes().is_empty() and is_equal_approx(flow2b.get_luck(), 5.0 * float(reward_cfg["luck_per_node"])), "new region: cleared reset, luck carried (%.1f)" % flow2b.get_luck())
 	await _drop_main(main2b)
+
+	# --- the final match (Story 031): boss of the last floor -> final map -> win = run won ----------
+	var store5: ProgressStore = ProgressStore.memory_store()
+	var pre5: RunSession = RunSession.begin(config, hero, 0, 15, _map([[_node("boss", CH1_BOSS)]]), 1)
+	pre5.floor = config.world_floors() - 1
+	var progress5 := ProgressState.new()
+	progress5.set_run(pre5)
+	store5.save_state(progress5)
+	var main5: Node = await _new_main(store5)
+	var flow5: GameFlow = main5.get_node("GameFlow") as GameFlow
+	flow5.continue_requested()
+	_check(flow5.get_phase() == GameFlow.Phase.MAP and flow5.get_floor() == config.world_floors() - 1 and not flow5.is_final_floor(), "last floor's region boss on the MAP")
+	var c7: RunController = await _win_node(flow5, 0)
+	var final_match: Dictionary = config.final_match()
+	_check(c7 != null and flow5.get_pending_reward_kind() == "boss" and flow5.is_final_floor() and flow5.get_floor() == flow5.get_floor_count(), "last region boss -> final floor, boss offer open")
+	_check(flow5.get_current_region() == str(final_match["region"]) and flow5.get_run_map().size() == 1 and str(flow5.get_run_map()[0]["nodes"][0]["match_id"]) == str(final_match["match_id"]) and flow5.get_region_offer().is_empty(), "final map: one node %s" % str(final_match))
+	_check(flow5.get_run_result() == GameFlow.RunResult.NONE and bool(flow5.take_floor_clear_notice().get("is_final", false)), "not won yet, notice says final")
+	flow5.reward_skipped()
+	_check(flow5.get_phase() == GameFlow.Phase.MAP and flow5.get_available_nodes().size() == 1, "boss reward -> MAP of the final match")
+	flow5.go_back()
+	flow5.continue_requested()
+	_check(flow5.get_phase() == GameFlow.Phase.MAP and flow5.is_final_floor() and flow5.get_available_nodes().size() == 1, "continue -> the final match's MAP")
+	var c8: RunController = await _win_node(flow5, 0)
+	_check(c8 != null and flow5.get_run_result() == GameFlow.RunResult.WON and flow5.get_phase() == GameFlow.Phase.IN_NODE and flow5.get_pending_reward().is_empty(), "final match won -> RUN WON at once (no offer)")
+	var after_win: ProgressState = store5.load_state(config)
+	_check(not after_win.has_run() and after_win.get_best_floor() == config.world_floors() + 1, "store: run dropped, best floor %d" % after_win.get_best_floor())
+	_check(flow5.get_run() != null, "run object kept for the RUN THẮNG screen")
+	flow5.leave_run()
+	_check(flow5.get_phase() == GameFlow.Phase.TITLE and not flow5.has_continue() and flow5.get_run() == null, "leave_run after the win -> TITLE, no continue")
+	await _drop_main(main5)
 
 	# --- rest: forge --------------------------------------------------------------------------------
 	var store3: ProgressStore = ProgressStore.memory_store()
@@ -394,27 +451,38 @@ func _run() -> void:
 	_check(flow3.get_phase() == GameFlow.Phase.REST, "continue with a rest chosen -> REST")
 	await _drop_main(main3)
 
-	# --- v3 save -> restart notice -----------------------------------------------------------------
+	# --- pre-v5 save -> restart notice (Story 031) -------------------------------------------------
+	# Dropped with Story 031: the Story 022 checks that a v3 save offered Continue "in ch2", restarted
+	# that chapter at column 0 of a 7-column map and kept a v4 run. Every pre-v5 run now restarts as a
+	# fresh WORLD run for the saved character (WORLD_MAP, floor 1).
 	var v3: String = JSON.stringify({
 		"version": 3, "locale": "vi", "cleared_chapters": ["ch1"], "seen_cards": [],
 		"run_in_progress": {"version": 3, "character": HERO, "chapter": "ch2", "floor": "f1", "match_index": 1,
 			"hp": 50, "deck": [{"id": "kiem_khi", "level": 1}], "run_seed": 9, "elapsed": 12, "pending_reward": [], "revives": 0},
 	})
+	_check(bool(ProgressState.from_json(v3, config).get_run_dict().get("needs_restart", false)), "v3 run loads as needs_restart")
+	var v4: String = JSON.stringify({
+		"version": 4, "locale": "vi", "cleared_chapters": ["ch1"], "seen_cards": [], "cleared_bosses": 1,
+		"run_in_progress": {"version": 4, "character": HERO, "chapter": "ch2",
+			"map": [{"index": 0, "tier": 0, "nodes": [{"kind": "battle", "match_id": "skeleton"}]}], "column": 0, "node_index": -1,
+			"cleared_nodes": [], "hp": 50, "deck": [{"id": "kiem_khi", "level": 1}], "run_seed": 9, "elapsed": 12,
+			"pending_reward": [], "revives": 0, "removal_tokens": 1, "cleared_bosses_this_run": 0},
+	})
 	var store4: ProgressStore = ProgressStore.memory_store()
-	var old_state: ProgressState = ProgressState.from_json(v3, config)
-	_check(old_state.has_run() and bool(old_state.get_run_dict().get("needs_restart", false)), "v3 run loads as needs_restart")
+	var old_state: ProgressState = ProgressState.from_json(v4, config)
+	_check(old_state.has_run() and bool(old_state.get_run_dict().get("needs_restart", false)), "v4 run loads as needs_restart")
 	store4.save_state(old_state)
 	var main4: Node = await _new_main(store4)
 	var flow4: GameFlow = main4.get_node("GameFlow") as GameFlow
-	_check(flow4.has_continue() and flow4.get_chapter_states()[1]["in_run"] == true, "v3: continue offered in ch2")
+	_check(flow4.has_continue(), "v4: continue offered")
 	flow4.continue_requested()
 	var notice: String = flow4.take_restart_notice()
 	_check(notice == TranslationServer.translate("run.restart.old_save") and not notice.is_empty() and notice != "run.restart.old_save", "restart notice = '%s'" % notice)
 	_check(flow4.take_restart_notice().is_empty(), "notice returned once")
-	_check(flow4.get_phase() == GameFlow.Phase.MAP and flow4.get_run() != null and flow4.get_run().chapter_index == 1 and flow4.get_current_column() == 0 and flow4.get_run_map().size() == 7, "fresh run of ch2 at column 0")
+	_check(flow4.get_phase() == GameFlow.Phase.WORLD_MAP and flow4.get_run() != null and flow4.get_floor() == 0 and not flow4.get_region_offer().is_empty() and flow4.get_run_map().is_empty(), "fresh world run at the floor 1 WORLD_MAP")
 	_check(flow4.get_character_id() == HERO and flow4.get_run().deck_ids.size() == starter and flow4.get_run().hp < 0.0, "restart: saved character, starter deck, full hp")
 	var st4: ProgressState = store4.load_state(config)
-	_check(st4.get_cleared_chapters() == (["ch1"] as Array[String]) and int(st4.get_run_dict().get("version", 0)) == 4 and not bool(st4.get_run_dict().get("needs_restart", false)), "cleared chapters kept, v4 run saved")
+	_check(st4.has_region_boss_beaten("ch1") and st4.get_cleared_bosses() == 1 and int(st4.get_run_dict().get("version", 0)) == RunSession.SAVE_VERSION and not bool(st4.get_run_dict().get("needs_restart", false)), "regions and bosses kept, v5 run saved")
 	await _drop_main(main4)
 
 	print("FAILS=", _fails)

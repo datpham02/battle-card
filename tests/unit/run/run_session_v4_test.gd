@@ -1,5 +1,6 @@
 extends SceneTree
-## Story 022 Part 1b: RunSession v4 + ProgressState v4 (hand-built map, no generator).
+## Story 022 Part 1b: RunSession rules on a hand-built map (no generator) + the OLD-SAVE path: since
+## Story 031 every pre-v5 run (v2..v4) loads as needs_restart; ProgressState v5 keeps the regions.
 
 var fails: int = 0
 const CFG: Dictionary = {"luck_start": 0.0, "luck_per_node": 1.0, "rest_heal_ratio": 0.3, "rest_forge_levels": 1}
@@ -63,10 +64,10 @@ func _initialize() -> void:
 	var l: RunSession = _new()
 	_check("luck 0", l.luck(CFG) == 0.0)
 	for i: int in 3:
-		l.cleared_nodes.append({"column": i, "node_index": 0, "kind": "battle"})
+		l.nodes_cleared += 1
 	_check("luck 3", l.luck(CFG) == 3.0)
 	for i: int in 7:
-		l.cleared_nodes.append({"column": 3 + i, "node_index": 0, "kind": "battle"})
+		l.nodes_cleared += 1
 	_check("luck 10", l.luck(CFG) == 10.0)
 	_check("luck config-driven", l.luck({"luck_start": 5.0, "luck_per_node": 2.0}) == 25.0)
 	# boss
@@ -74,7 +75,7 @@ func _initialize() -> void:
 	b.column = 6
 	b.choose_node(0)
 	var rb: Dictionary = b.complete_node(200.0, 300.0, "boss", CFG)
-	_check("boss: token, counter, won", b.removal_tokens == 2 and b.cleared_bosses_this_run == 1 and bool(rb["run_won"]) and b.is_run_won() and b.column == 7)
+	_check("boss: token, counter, next floor, not won (Story 031)", b.removal_tokens == 2 and b.cleared_bosses_this_run == 1 and not bool(rb["run_won"]) and not b.is_run_won() and b.column == 7 and b.floor == 1 and b.is_choosing_region())
 	_check("not won before boss", not _new().is_run_won())
 	# removal tokens
 	var t: RunSession = _new(1)
@@ -118,7 +119,7 @@ func _initialize() -> void:
 	_check("round trip map content", back != null and back.map == q.map and int(back.map[3]["nodes"][0].get("kind", "") == "miniboss"))
 	_check("round trip cleared_bosses_this_run", (func() -> bool:
 		var z: RunSession = RunSession.from_dict(JSON.parse_string(JSON.stringify(b.to_dict())), chapters)
-		return z != null and z.cleared_bosses_this_run == 1 and z.is_run_won()).call())
+		return z != null and z.cleared_bosses_this_run == 1 and not z.is_run_won() and z.floor == 1).call())
 	var bad: Dictionary = q.to_dict()
 	bad["column"] = 99
 	_check("bad column -> null", RunSession.from_dict(bad, chapters) == null)
@@ -132,10 +133,11 @@ func _initialize() -> void:
 	_check("v2 -> needs_restart", o2 != null and o2.needs_restart and o2.character_id == "phap_su")
 	var rt: RunSession = RunSession.from_dict(o2.to_dict(), chapters)
 	_check("needs_restart survives to_dict", rt != null and rt.needs_restart and rt.restart_reason == "run.restart.old_save")
-	_check("old run unknown chapter -> null", RunSession.from_dict({"character": "kiem_si", "chapter": "zz"}, chapters) == null)
+	_check("old run unknown chapter -> needs_restart (Story 031)", RunSession.from_dict({"character": "kiem_si", "chapter": "zz"}, chapters).needs_restart)
+	_check("old run without character -> null", RunSession.from_dict({"chapter": "ch1", "version": 4}, chapters) == null)
 	# progress state
 	var ps := ProgressState.new()
-	ps.mark_chapter_cleared(chap_id)
+	ps.add_region_boss_beaten(chap_id)
 	ps.set_locale("en")
 	ps.record_boss_clear()
 	ps.add_cleared_boss()
@@ -143,19 +145,19 @@ func _initialize() -> void:
 	var store: ProgressStore = ProgressStore.memory_store()
 	_check("save ok", store.save_state(ps))
 	var loaded: ProgressState = store.load_state(chapters)
-	_check("progress v4 round trip", ProgressState.VERSION == 4 and loaded.get_cleared_bosses() == 2 and loaded.is_chapter_cleared(chap_id) and loaded.get_locale() == "en" and loaded.has_run())
+	_check("progress v5 round trip", ProgressState.VERSION == 5 and loaded.get_cleared_bosses() == 2 and loaded.has_region_boss_beaten(chap_id) and loaded.get_locale() == "en" and loaded.has_run())
 	var lr: RunSession = RunSession.from_dict(loaded.get_run_dict(), chapters)
 	_check("progress run back", lr != null and lr.column == 1 and lr.removal_tokens == 2 and lr.map.size() == 7)
-	_check("version field 4", int(JSON.parse_string(ps.to_json())["version"]) == 4)
+	_check("version field 5", int(JSON.parse_string(ps.to_json())["version"]) == 5)
 	var v3file: String = JSON.stringify({"version": 3, "locale": "en", "cleared_chapters": [chap_id], "seen_cards": ["kiem_khi"], "run_in_progress": v3})
 	var l3: ProgressState = ProgressState.from_json(v3file, chapters)
-	_check("v3 file loads", l3.get_cleared_bosses() == 0 and l3.is_chapter_cleared(chap_id) and l3.get_locale() == "en" and l3.get_seen_cards().has("kiem_khi"))
+	_check("v3 file loads", l3.get_cleared_bosses() == 0 and l3.has_region_boss_beaten(chap_id) and l3.get_locale() == "en" and l3.get_seen_cards().has("kiem_khi"))
 	var l3r: RunSession = RunSession.from_dict(l3.get_run_dict(), chapters)
 	_check("v3 file run -> needs_restart", l3.has_run() and l3r != null and l3r.needs_restart)
 	var v2file: String = JSON.stringify({"version": 2, "locale": "vi", "cleared_chapters": [], "seen_cards": [], "run_in_progress": null})
 	_check("v2 file loads", not ProgressState.from_json(v2file, chapters).has_run())
 	_check("v1 file loads", ProgressState.from_json("{\"version\":1,\"locale\":\"en\"}", chapters).get_locale() == "en")
-	_check("future version rejected", not ProgressState.from_json("{\"version\":9}", chapters).is_chapter_cleared(chap_id))
+	_check("future version rejected", not ProgressState.from_json("{\"version\":9}", chapters).has_region_boss_beaten(chap_id))
 	var ms: ProgressStore = ProgressStore.memory_store()
 	ms.save_state(ProgressState.new())
 	_check("memory empty state round trip", ms.load_state(chapters).get_cleared_bosses() == 0 and not ms.load_state(chapters).has_run())

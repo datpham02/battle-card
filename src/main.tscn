@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/run/game_flow.gd" id="2_flow"]
-[ext_resource type="Script" path="res://src/run/chapter_select_view.gd" id="3_chapters"]
+[ext_resource type="Script" path="res://src/run/world_map_view.gd" id="3_world"]
 [ext_resource type="Script" path="res://src/run/run_hud_view.gd" id="4_hud"]
 [ext_resource type="Script" path="res://src/run/title_view.gd" id="5_title"]
 [ext_resource type="Script" path="res://src/run/character_select_view.gd" id="6_characters"]
@@ -22,8 +22,8 @@ script = ExtResource("5_title")
 [node name="CharacterSelectView" type="Node2D" parent="GameFlow"]
 script = ExtResource("6_characters")
 
-[node name="ChapterSelectView" type="Node2D" parent="GameFlow"]
-script = ExtResource("3_chapters")
+[node name="WorldMapView" type="Node2D" parent="GameFlow"]
+script = ExtResource("3_world")
 
 [node name="ChapterMapView" type="Node2D" parent="GameFlow"]
 script = ExtResource("8_map")

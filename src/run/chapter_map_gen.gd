@@ -5,6 +5,9 @@ extends RefCounted
 ## from the chapter's `columns` spec (chapters.json): per column `kinds` (random filler kinds),
 ## `pick` ([min, max] node count), `required` (kinds that must appear once; an array entry is a set
 ## of alternatives, one drawn 50/50) and `tier`. Same (chapter, run_seed, cleared_bosses) -> same map.
+## Story 031: an entry of `kinds` / `required` may also be {"kind": String, "min_floor": int}; with a
+## positive `floor_number` (1-based run floor, set by ChaptersConfig.region_spec) entries whose min_floor is
+## higher are dropped; without `floor_number` min_floor is ignored (old maps are unchanged).
 ## Design: design/game-brief.md "Run", design/reference/osfe-reference.md section 9.3.
 
 const KIND_BATTLE: String = "battle"
@@ -44,6 +47,7 @@ static func generate(chapter: Dictionary, run_seed: int, cleared_bosses: int) ->
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([run_seed, str(chapter.get("id", ""))]) & SEED_MASK
 	var cap: int = int(chapter.get("onboarding_tier_cap", 1))
+	var floor_number: int = int(chapter.get("floor_number", 0))
 	var used: Array[String] = []
 	var spec_columns: Array = columns as Array
 	for ci: int in spec_columns.size():
@@ -51,7 +55,7 @@ static func generate(chapter: Dictionary, run_seed: int, cleared_bosses: int) ->
 		var tier: int = maxi(int(spec.get("tier", 0)), 0)
 		if cleared_bosses <= 0:
 			tier = mini(tier, cap)
-		var kinds: Array[String] = _column_kinds(spec, rng)
+		var kinds: Array[String] = _column_kinds(spec, rng, floor_number)
 		var nodes: Array[Dictionary] = []
 		for kind: String in kinds:
 			var match_id: String = ""
@@ -65,16 +69,19 @@ static func generate(chapter: Dictionary, run_seed: int, cleared_bosses: int) ->
 
 # Kinds of one column: required ones first, fillers up to a seeded count, siblings differ when
 # possible, then a seeded shuffle of the order.
-static func _column_kinds(spec: Dictionary, rng: RandomNumberGenerator) -> Array[String]:
+static func _column_kinds(spec: Dictionary, rng: RandomNumberGenerator, floor_number: int = 0) -> Array[String]:
 	var kinds: Array[String] = []
 	var required: Variant = spec.get("required", [])
 	if typeof(required) == TYPE_ARRAY:
 		for entry: Variant in required as Array:
 			if typeof(entry) == TYPE_ARRAY and not (entry as Array).is_empty():
-				var options: Array = entry as Array
-				kinds.append(str(options[rng.randi_range(0, options.size() - 1)]))
-			elif typeof(entry) == TYPE_STRING:
-				kinds.append(str(entry))
+				var options: Array[String] = _allowed_kinds(entry as Array, floor_number)
+				if not options.is_empty():
+					kinds.append(options[rng.randi_range(0, options.size() - 1)])
+			elif typeof(entry) == TYPE_STRING or typeof(entry) == TYPE_DICTIONARY:
+				var allowed: Array[String] = _allowed_kinds([entry], floor_number)
+				if not allowed.is_empty():
+					kinds.append(allowed[0])
 	var pick_min: int = 1
 	var pick_max: int = 1
 	var pick: Variant = spec.get("pick", 1)
@@ -89,8 +96,7 @@ static func _column_kinds(spec: Dictionary, rng: RandomNumberGenerator) -> Array
 	var fillers: Array[String] = []
 	var raw_fillers: Variant = spec.get("kinds", [])
 	if typeof(raw_fillers) == TYPE_ARRAY:
-		for k: Variant in raw_fillers as Array:
-			fillers.append(str(k))
+		fillers = _allowed_kinds(raw_fillers as Array, floor_number)
 	while kinds.size() < count and not fillers.is_empty():
 		var fresh: Array[String] = []
 		for k: String in fillers:
@@ -104,6 +110,21 @@ static func _column_kinds(spec: Dictionary, rng: RandomNumberGenerator) -> Array
 		kinds[i] = kinds[j]
 		kinds[j] = tmp
 	return kinds
+
+
+# Kind names of [param entries] (strings or {kind, min_floor}) available at [param floor_number]
+# (<= 0 = no floor filtering).
+static func _allowed_kinds(entries: Array, floor_number: int) -> Array[String]:
+	var result: Array[String] = []
+	for entry: Variant in entries:
+		if typeof(entry) == TYPE_DICTIONARY:
+			var def: Dictionary = entry as Dictionary
+			if floor_number > 0 and int(def.get("min_floor", 0)) > floor_number:
+				continue
+			result.append(str(def.get("kind", "")))
+		else:
+			result.append(str(entry))
+	return result
 
 
 # Match id for a node: the pool of its kind at [param tier], else the nearest lower tier, else any

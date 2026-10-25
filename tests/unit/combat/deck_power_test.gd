@@ -186,7 +186,7 @@ func _initialize() -> void:
 	check(not broke.remove_card_at(0, 1) and broke.deck.size() == n0 and broke.removal_tokens == 0, "no token -> no removal")
 	s.pending_reward = ["kiem_vu"]
 	var dict: Dictionary = s.to_dict()
-	check(typeof(dict["deck"][0]) == TYPE_DICTIONARY and dict["deck"][0].has("level") and int(dict["version"]) == 4 and int(dict["removal_tokens"]) == 10 - removed, "to_dict v4 deck entries + tokens")
+	check(typeof(dict["deck"][0]) == TYPE_DICTIONARY and dict["deck"][0].has("level") and int(dict["version"]) == RunSession.SAVE_VERSION and int(dict["removal_tokens"]) == 10 - removed, "to_dict deck entries + tokens (current save version)")
 	var loaded: RunSession = RunSession.from_dict(JSON.parse_string(JSON.stringify(dict)), chapters, cards)
 	check(loaded != null and loaded.deck_entries() == s.deck_entries() and loaded.removal_tokens == s.removal_tokens and loaded.map == s.map, "save/load keeps levels, tokens, map (via JSON)")
 	var old: Dictionary = dict.duplicate(true)

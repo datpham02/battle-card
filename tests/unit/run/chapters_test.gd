@@ -105,8 +105,9 @@ func _initialize() -> void:
 	var ghost: String = "{\"version\":1,\"cleared\":[],\"in_progress\":{\"floor\":\"x/y\",\"match_index\":0,\"hp_at_match_start\":-1,\"floor_seed\":1}}"
 	check(not ProgressState.from_json(ghost, cfg).has_in_progress(), "unknown in_progress floor dropped")
 	check(true, "no config keeps in_progress (deprecated floor record, not persisted since 019)")
-	var all: ProgressState = ProgressState.unlocked_everything(cfg)
-	check(all.get_cleared().is_empty() and all.is_chapter_cleared("ch1") and all.is_chapter_cleared("ch2") and not all.is_chapter_cleared("ch3"), "unlocked_everything: every chapter but the last")
+	var all := ProgressState.new()
+	all.mark_all_regions_beaten(cfg.region_ids())
+	check(all.get_cleared().is_empty() and all.has_region_boss_beaten("ch1") and all.has_region_boss_beaten("ch2") and all.has_region_boss_beaten("ch3"), "mark_all_regions_beaten (--progress=all, Story 031): every region boss beaten")
 
 	# ProgressStore
 	var store: ProgressStore = ProgressStore.memory_store()

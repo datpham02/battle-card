@@ -34,6 +34,13 @@ extends Node2D
 ## · …": names from SkillConfig.resolved, the level suffix when the level is above 1), cut with an
 ## ellipsis to the panel's inner width (font.get_string_size).
 ##
+## Story 031 (world map): in a run the match label leads with the run position "Tầng N/5 · <vùng> ·
+## cột C/3" ("Ấn Đài" at the final match; [method _run_position_text]), then "<kind> · <opponent> ·
+## <arena>"; the RUN THẮNG / RUN KẾT THÚC panels show the floor reached ("Tới tầng N/5" / "Tới Ấn
+## Đài") and the region path ("Đường: Rừng Sương → Hầm Ngục → …", [method GameFlow.get_region_path])
+## instead of the chapter. The floor-clear notice is shown by WorldMapView (the screen a region boss
+## leads to), not here.
+##
 ## Story 022 (chapter map): in a run the match label reads "Cột N · <kind> · <opponent> · <arena>"
 ## (the run's column and node kind, ChapterMapView.kind_name) instead of "<floor> · Trận a/b · …",
 ## and the RUN THẮNG / RUN KẾT THÚC panels show "Cột N · <kind>" (the node the run ended on: the
@@ -135,6 +142,15 @@ const TEXT_RUN_NODE: String = "ui.run_hud.run_node"
 ## "Bộ: %d lá" on the result panel.
 const TEXT_RUN_DECK: String = "ui.run_hud.run_deck"
 const TEXT_BACK_TO_TITLE: String = "ui.run_hud.back_to_title"
+## Story 031: "Tầng %d/%d · %s · cột %d/%d" (floor, floor count, region, column, column count) at
+## the head of the match label; "Ấn Đài" at the final match; on the result panels "Tới tầng %d/%d" /
+## "Tới Ấn Đài" and "Đường: %s" (the region names joined by PATH_SEPARATOR).
+const TEXT_RUN_FLOOR_POSITION: String = "ui.run_hud.run_floor_position"
+const TEXT_FINAL_NAME: String = "ui.world.final_name"
+const TEXT_RUN_FLOOR_REACHED: String = "ui.run_hud.run_floor_reached"
+const TEXT_RUN_FINAL_REACHED: String = "ui.run_hud.run_final_reached"
+const TEXT_RUN_PATH: String = "ui.run_hud.run_path"
+const PATH_SEPARATOR: String = " → "
 ## Story 020: "+%d" after a card name on the result panels' deck line.
 const TEXT_LEVEL_SUFFIX: String = "ui.card.level_suffix"
 
@@ -366,8 +382,10 @@ func _draw_match_label(vp: Vector2) -> void:
 	var text: String
 	if run != null and not run.map.is_empty():
 		# Story 022: "Cột N · <kind> · <opponent>".
+		# Story 031: "Tầng N/5 · <vùng> · cột C/3 · <kind> · <opponent>".
 		var node: Array = _run_node_position(run)
-		text = tr(TEXT_MATCH_LABEL_FLOOR) % [tr(TEXT_NODE_LABEL) % [node[0], ChapterMapView.kind_name(str(node[1]))], opponent]
+		var place: String = tr(TEXT_MATCH_LABEL_FLOOR) % [_run_position_text(run, int(node[0])), ChapterMapView.kind_name(str(node[1]))]
+		text = tr(TEXT_MATCH_LABEL_FLOOR) % [place, opponent]
 	else:
 		text = tr(TEXT_MATCH_LABEL_BOSS) % opponent if state.is_boss_match() else tr(TEXT_MATCH_LABEL) % [state.get_match_index() + 1, state.get_match_count(), opponent]
 		if not _controller.floor_label.is_empty():
@@ -493,32 +511,55 @@ func _draw_run_result(vp: Vector2) -> void:
 	var colors: Array[Color] = []
 	var sizes: Array[int] = []
 	if run != null:
-		var chapter: String = _flow.get_config().chapter_name(run.chapter_index)
+		# Story 031: the floor reached and the region path replace the chapter name.
+		var reached: String = _floor_reached_text()
+		var path_line: String = _region_path_text()
 		var deck_line: String = _deck_line(run, inner_width, SMALL_FONT_SIZE)
 		var node: Array = _run_node_position(run)
 		var node_line: String = tr(TEXT_RUN_NODE) % [node[0], ChapterMapView.kind_name(str(node[1]))]
+		var deck_size: String = tr(TEXT_RUN_DECK) % run.deck_ids.size()
 		if won:
-			lines = [chapter, node_line, tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
+			lines = [reached, path_line, deck_size, deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec)]
 			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
 			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
-			# Story 023: the chapter's closing line (end_key) right under its name.
-			var end_key: String = _flow.get_config().chapter_text_key(run.chapter_index, "end")
-			if not end_key.is_empty():
-				lines.insert(1, tr(end_key))
-				colors.insert(1, TEXT_DIM)
-				sizes.insert(1, SMALL_FONT_SIZE)
 		else:
 			var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 			lines = [
-				tr(str(character.get("name_key", run.character_id))), chapter, node_line,
-				tr(TEXT_RUN_DECK) % run.deck_ids.size(), deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec),
+				tr(str(character.get("name_key", run.character_id))) + DECK_LINE_SEPARATOR + reached,
+				path_line, node_line + DECK_LINE_SEPARATOR + deck_size, deck_line, tr(TEXT_TIME) % _elapsed_text(run.elapsed_sec),
 			]
-			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
-			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
+			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
+			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
 	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_RUN_WON_TITLE if won else TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_WIN if won else TEXT_LOSE)
 	for i: int in mini(lines.size(), RESULT_LINE_BASELINES.size()):
 		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], _fit_line_font(lines[i], inner_width, sizes[i]), colors[i])
 	_draw_buttons(vp)
+
+
+# Story 031: "Tầng N/5 · <vùng> · cột C/3" for 1-based column [param column], or "Ấn Đài" at the
+# final match.
+func _run_position_text(run: RunSession, column: int) -> String:
+	var count: int = _flow.get_floor_count()
+	if _flow.is_final_floor() or _flow.get_floor() >= count:
+		return tr(TEXT_FINAL_NAME)
+	var region: String = _flow.region_name(_flow.get_current_region())
+	return tr(TEXT_RUN_FLOOR_POSITION) % [_flow.get_floor() + 1, count, region, column, run.map.size()]
+
+
+# Story 031: "Tới tầng N/5" (the floor the run ended on), or "Tới Ấn Đài" at the final match.
+func _floor_reached_text() -> String:
+	var count: int = _flow.get_floor_count()
+	if _flow.is_final_floor() or _flow.get_floor() >= count:
+		return tr(TEXT_RUN_FINAL_REACHED)
+	return tr(TEXT_RUN_FLOOR_REACHED) % [_flow.get_floor() + 1, count]
+
+
+# Story 031: "Đường: Rừng Sương → Hầm Ngục → …" — the regions chosen, floor by floor.
+func _region_path_text() -> String:
+	var names: Array[String] = []
+	for id: String in _flow.get_region_path():
+		names.append(_flow.region_name(id))
+	return tr(TEXT_RUN_PATH) % PATH_SEPARATOR.join(names)
 
 
 # Story 022: [1-based column, kind] of the run's node — the chosen node of the current column, else

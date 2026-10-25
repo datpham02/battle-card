@@ -74,6 +74,7 @@
 
 ### Tha hay Giết
 - Hạ boss vùng xong chọn **Giết** (nhận ngay một bảo vật mạnh) hay **Tha** (không nhận gì ngay; mở nội dung về sau). Tổng Tha/Giết trong run quyết định **kết thúc** ở trận cuối: ba kết thúc (tha hết / lưng chừng / giết hết).
+- **Đã duyệt 2026-10-25** (khởi điểm trong Story 032–038): cả Tha lẫn Giết giữ thưởng boss thường, Giết thêm chọn 1 trong 3 bảo vật, xác nhận bằng giữ nút 0,6 s; Thợ săn mở khi tổng giết 3 boss, Giáo sĩ khi tổng tha 3 boss; 16 bảo vật khởi điểm, kho báu chọn lá hoặc bảo vật, thanh bảo vật trong trận chỉ hiển thị; lá nguyền chiếm chỗ trong 4 lá rút nhưng luôn còn ít nhất 1 lá thường; bộ mảnh thêm Z4, J4, Y5, luôn còn ít nhất 5 hình; mục tiêu thắng run 30–45 % ở Kiếp 0, run thắng 40–50 phút.
 
 ### Chơi lại (thay cho "vượt chương")
 - **Mở theo cột mốc trong run**: lần đầu hạ boss vùng X, lần đầu tới Ấn Đài, lần đầu thắng run, Tha đủ số boss… mở nhân vật (Thợ săn, Giáo sĩ), lá, bảo vật, hình mảnh, vùng mới vào pool. **Chỉ mở thêm lựa chọn, không cộng sức mạnh vĩnh viễn.**
@@ -134,7 +135,7 @@
 ## Out of scope
 - Đã loại: Parry/Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, Custom Gauge.
 - v4 chưa làm: bỏ/nâng lá, cửa hàng, tiền, sự kiện, item hồi sinh, Daily seed, PvP, online, cốt truyện dài, accessibility, ngôn ngữ thứ ba trở đi (khung đa ngôn ngữ có từ 017).
-- v6 chưa làm (để sau): thử thách ngày, đồ trang trí, tự chọn luật trước run, mod, co-op, sức mạnh vĩnh viễn giữa các run (cố ý không làm), chế độ chương riêng (đã cân nhắc và bỏ).
+- v6 chưa làm (để sau): trận cuối đổi theo kết thúc (tuyến Giết hết gặp boss cuối khác, như Genocide của OSFE — người dùng ghi để sau 2026-10-25), thử thách ngày, đồ trang trí, tự chọn luật trước run, mod, co-op, sức mạnh vĩnh viễn giữa các run (cố ý không làm), chế độ chương riêng (đã cân nhắc và bỏ).
 
 ## Build order
 1–9. v1→v3 (Story 001–016, xong 2026-10-21): lưới, di chuyển, ấn rơi, trận pháp, boss, phép, Tập trung, hồ sơ boss, sân và trait, chương/tầng + save, title/tạm dừng.

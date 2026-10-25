@@ -81,6 +81,7 @@ title.name,ẤN KIẾM,RUNE DUEL
 title.tagline,Nhặt mảnh ấn · đặt lên đất địch · Thi triển một đòn,Pick pieces · place them on the enemy's side · Cast one strike
 ui.title.continue,Tiếp tục run,Continue run
 ui.title.run_summary,%s · %s · Cột %d,%s · %s · Column %d
+ui.title.run_summary_floor,Tầng %d/%d,Floor %d/%d
 ui.title.play,Chơi,Play
 ui.title.quit,Thoát,Quit
 ui.title.lang.vi,VI,VI
@@ -224,7 +225,7 @@ ui.reward.token_granted,+%d token bỏ lá,+%d removal token
 ui.reward.remove_count,Bỏ 1 lá (%d),Remove a card (%d)
 ui.run_hud.node_label,Cột %d · %s,Column %d · %s
 ui.run_hud.run_node,Cột %d · %s,Column %d · %s
-run.restart.old_save,"Bản lưu cũ không còn dùng được, chương bắt đầu lại.",The old save no longer applies; the chapter starts over.
+run.restart.old_save,"Bản lưu cũ không còn dùng được, run bắt đầu lại.",The old save no longer applies; the run starts over.
 boss.skeleton.name,Bộ xương lính,Skeleton Guard
 boss.bat_swarm.name,Đàn dơi hầm,Crypt Bat Swarm
 boss.slime.name,Nhầy ngục,Dungeon Slime
@@ -332,3 +333,26 @@ trait.seal_caster.name,Ấn phong tỏa,Sealbinder
 trait.seal_caster.desc,"Trước một đòn lớn, nó dựng kết giới chặn đường thoát của bạn; luôn chừa một lối ra.",Before a big swing it seals cells on your escape path; one way out is always left.
 trait.thorn_field.name,Trận gai,Thorn Field
 trait.thorn_field.desc,"Khi vung đòn từ 4 ô trở lên, nó rải gai lên đường thoát của bạn; bước vào gai mất máu và bị Rạn.",When it swings 4 or more cells it lays thorns on your escape path; stepping in costs HP and adds Fragile.
+ui.world.title,Tầng %d/%d · Chọn vùng,Floor %d/%d · Choose a region
+ui.world.strip_floor,Tầng %d,Floor %d
+ui.world.final_name,Ấn Đài,Seal Altar
+ui.world.choosing,Đang chọn,Choosing
+ui.world.boss,Boss: %s,Boss: %s
+ui.world.floor_difficulty,Tầng %d — máu địch ×%s,Floor %d — enemy HP ×%s
+ui.world.floor_step,nhịp ×%s,tempo ×%s
+ui.world.floor_defense,giáp +%d,armor +%d
+ui.world.floor_size,đòn +%d ô,attacks +%d cells
+ui.world.decimal_point,",",.
+ui.world.tap_to_pick,Chạm để chọn,Tap to pick
+ui.world.tap_again,Chạm lại để vào,Tap again to enter
+ui.world.enter,Vào vùng,Enter region
+ui.world.floor_clear,Tầng %d — hồi %d máu,Floor %d — healed %d HP
+ui.map.floor_title,Tầng %d/%d · %s,Floor %d/%d · %s
+ui.run_hud.run_floor_position,Tầng %d/%d · %s · cột %d/%d,Floor %d/%d · %s · column %d/%d
+ui.run_hud.run_floor_reached,Tới tầng %d/%d,Reached floor %d/%d
+ui.run_hud.run_final_reached,Tới Ấn Đài,Reached the Seal Altar
+ui.run_hud.run_path,Đường: %s,Path: %s
+ui.world.final_clear,Ấn Đài — hồi %d máu,Seal Altar — healed %d HP
+region.ch1.desc,Rừng thưa nhiều lối né; goblin và bầy sói.,Open woods with room to dodge; goblins and wolf packs.
+region.ch2.desc,"Hầm tối chật hẹp; xương khô, xác sống, dơi và kết giới.","Cramped dark halls; skeletons, zombies, bats and seal wards."
+region.ch3.desc,"Tháp băng giá; sói tuyết, ma trơi, pháo ngòi và trận gai.","A frozen tower; snow wolves, wisps, fuse cannons and thorn fields."

@@ -44,6 +44,7 @@ const RUN_KINDS: Array[String] = ["intro", "between", "won", "lost"]
 ## DEV-ONLY (Story 019 / 022): --run= kinds GameFlow handles; ignored here.
 const FLOW_RUN_KINDS: Array[String] = [
 	"reward", "runover", "runwon", "map", "map3", "rest", "treasure", "miniboss_reward", "boss_reward",
+	"world", "world3", "floorclear", "final",
 ]
 ## DEV-ONLY: stable clock value (7:42) for run screen captures.
 const DEV_ELAPSED_SEC: float = 462.0

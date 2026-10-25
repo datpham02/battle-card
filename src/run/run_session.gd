@@ -1,19 +1,26 @@
 class_name RunSession
 extends RefCounted
-## Pure data + rules of one ROGUELIKE RUN (Story 019, map model Story 022 / save v4): one character
-## walks one chapter MAP (columns of nodes, one node taken per column). Holds what must survive
-## between nodes and in the save: deck, HP, map position, seed, clock, pending card offer, removal
-## tokens and cleared nodes. No nodes, no files. HP rules (Story 022): starts full (hp = -1); NO
-## automatic heal after a node (only passive/card heal passed in, the rest node, cards); hp never
-## exceeds max. Death simply ends the run (caller discards it).
+## Pure data + rules of one ROGUELIKE RUN (Story 019, map model Story 022, WORLD model Story 031 / save
+## v5): one character climbs [method floors] FLOORS; at each floor it picks one of the offered REGIONS
+## ([member region_offer], WorldMapGen) and walks that region's short MAP (columns of nodes, one node
+## taken per column). The region boss does NOT win the run: it moves to the next floor, heals
+## `world.floor_heal_ratio` x max HP (clamped) and rolls the next offer. After the last floor the run
+## stands at the FINAL match (`world.final_match`, a one-node map); winning it wins the run. Holds what
+## must survive between nodes and in the save: deck, HP, floor, region, offer, path, map position, seed,
+## clock, pending card offer, removal tokens and cleared nodes. No nodes, no files. HP rules (Story 022):
+## starts full (hp = -1); NO automatic heal after a node (only passive/card heal passed in, the rest
+## node, the floor heal, cards); hp never exceeds max. Death simply ends the run (caller discards it).
 ## Map shape (built by ChapterMapGen, Story 022 Part 1a): Array of columns
 ## {"index": int, "tier": int, "nodes": [{"kind": String, "match_id": String}]}.
+## A "region" is a chapter of chapters.json (never `zone`: that word is the seals/thorns of Story 027).
+## While a floor's offer is open the previous region's (finished) map stays in [member map] so a
+## pending boss offer can still be shown over it; [method choose_region] replaces it.
 
 ## Save format version written by [method to_dict].
-const SAVE_VERSION: int = 4
-## Restart reason key for a pre-v4 (floor/match) run found in a save (shown as one line by the flow).
+const SAVE_VERSION: int = 5
+## Restart reason key for a pre-v5 (chapter / floor) run found in a save (shown as one line by the flow).
 const RESTART_OLD_SAVE: String = "run.restart.old_save"
-## Node kind that ends the chapter and grants a removal token.
+## Node kind that ends a region (and grants a removal token).
 const KIND_BOSS: String = "boss"
 ## Documented fallbacks for the economy keys of rewards.json (the single place; the file wins).
 const CONFIG_DEFAULTS: Dictionary = {
@@ -23,16 +30,31 @@ const CONFIG_DEFAULTS: Dictionary = {
 
 ## Character id (CharacterConfig).
 var character_id: String = ""
-## Index into ChaptersConfig of the chapter being run.
+## Story 031: 0-based floor (0..floors-1); == [method floors] at the final match.
+var floor: int = 0
+## Story 031: id of the region being walked (the last one walked while [member region_offer] is open;
+## "" before the first pick). At the final match: `world.final_match.region`.
+var region_id: String = ""
+## Story 031: region ids offered at [member floor]; [] once one is chosen (and at the final match).
+var region_offer: Array[String] = []
+## Story 031: region ids chosen so far, one per floor (index = floor).
+var region_path: Array[String] = []
+## Index into ChaptersConfig of [member region_id] (kept in sync; -1 without a region).
 var chapter_index: int = 0
-## The chapter map (see class doc); fixed for the run.
+## The current region's map (see class doc); [] before the first region is chosen.
 var map: Array[Dictionary] = []
 ## Current column index (0-based); == map.size() once the last column is done.
 var column: int = 0
 ## Chosen node in the current column; -1 = none chosen yet.
 var node_index: int = -1
-## Nodes already passed: {column, node_index, kind}.
+## Nodes already passed in the CURRENT region: {column, node_index, kind}.
 var cleared_nodes: Array = []
+## Story 031: nodes cleared over the whole run (luck counts these; a new region resets [member cleared_nodes]).
+var nodes_cleared: int = 0
+## Story 031: kind of the node completed last ("" before any); the flow derives an open offer's kind.
+var last_node_kind: String = ""
+## Story 031: HP the last region boss healed (the floor-clear banner); 0 before any.
+var last_floor_heal: float = 0.0
 ## Tokens that allow removing a card from the deck at a reward screen.
 var removal_tokens: int = 0
 ## Bosses beaten in THIS run (the permanent total lives in ProgressState).
@@ -52,7 +74,7 @@ var deck_ids: Array[String]:
 		deck = []
 		for id: String in value:
 			deck.append({"id": id, "level": 1})
-## Seed of the whole run (map and arena seeds derive from it).
+## Seed of the whole run (offers, map and arena seeds derive from it).
 var run_seed: int = 0
 ## Seconds of PLAYING time of the run (written by the flow).
 var elapsed_sec: float = 0.0
@@ -60,34 +82,111 @@ var elapsed_sec: float = 0.0
 var pending_reward: Array[String] = []
 ## Revive tokens (from chapters defaults; reserved, unused).
 var revives: int = 0
-## True when this session came from a pre-v4 save: the flow must restart the chapter for
-## [member character_id] from a fresh run (map empty, deck/hp meaningless).
+## True when this session came from a pre-v5 save: the flow must start a fresh world run for
+## [member character_id] (map empty, deck/hp meaningless).
 var needs_restart: bool = false
 ## Localisation key of the one-line restart notice ("" when not [member needs_restart]).
 var restart_reason: String = ""
 var _won: bool = false
-# Config the session was built with (chapter id for [method to_dict]).
+# Config the session was built with (world rules, region ids).
 var _chapters: ChaptersConfig = null
 
 
-## New run: column 0, no node chosen, full HP, deck = the character's starter_deck, revives from
-## `defaults.revive_tokens`. [param character] is [method CharacterConfig.get_character];
-## [param map] the generated chapter map; [param starting_removals] = rewards.json starting_removals.
-## (Deviation from the brief: keeps the chapters+character form so the existing caller compiles;
-## max HP is not needed here.)
-static func begin(chapters: ChaptersConfig, character: Dictionary, chapter_index: int, run_seed: int,
-		map: Array[Dictionary] = [], starting_removals: int = 0) -> RunSession:
+## Story 031: new WORLD run: floor 0, the floor-0 [member region_offer] rolled, no region yet (empty
+## map), full HP, deck = the character's starter_deck, revives from `defaults.revive_tokens`.
+## [param starting_removals] = rewards.json starting_removals.
+static func begin_world(chapters: ChaptersConfig, character: Dictionary, run_seed: int,
+		starting_removals: int = 0) -> RunSession:
 	var s := RunSession.new()
 	s._chapters = chapters
 	s.character_id = str(character.get("id", ""))
-	s.chapter_index = clampi(chapter_index, 0, chapters.chapter_count() - 1)
 	s.run_seed = run_seed
-	s.map = map.duplicate(true)
+	s.region_id = ""
+	s.chapter_index = -1
 	s.removal_tokens = maxi(starting_removals, 0)
 	for id: Variant in character.get("starter_deck", []) as Array:
 		s.deck.append({"id": str(id), "level": 1})
 	s.revives = int(chapters.defaults().get("revive_tokens", 0))
+	s.region_offer = s.roll_offer()
 	return s
+
+
+## Legacy / test entry (Story 022): a run already INSIDE chapter (= region) [param chapter_index] at
+## floor 0 with the given [param map] (no offer, path = [that region]). Its boss moves to floor 1 like
+## any region boss.
+static func begin(chapters: ChaptersConfig, character: Dictionary, chapter_index: int, run_seed: int,
+		map: Array[Dictionary] = [], starting_removals: int = 0) -> RunSession:
+	var s := begin_world(chapters, character, run_seed, starting_removals)
+	s.chapter_index = clampi(chapter_index, 0, chapters.chapter_count() - 1)
+	s.region_id = chapters.chapter_id(s.chapter_index)
+	s.region_offer = []
+	s.region_path = [s.region_id]
+	s.map = map.duplicate(true)
+	return s
+
+
+## Story 031: floors before the final match (`world.floors`; the fallback without a config).
+func floors() -> int:
+	return _chapters.world_floors() if _chapters != null else ChaptersConfig.DEFAULT_WORLD_FLOORS
+
+
+## Story 031: true while the run stands at (or plays) the final match.
+func is_final_floor() -> bool:
+	return floor >= floors()
+
+
+## Story 031: true while [member region_offer] waits for [method choose_region].
+func is_choosing_region() -> bool:
+	return not region_offer.is_empty()
+
+
+## Story 031: the offer of [member floor] (WorldMapGen.offer_for_floor over `world.region_pool`,
+## `choices_per_floor` ids, seeded by run seed / floor / path). [] at the final floor or without config.
+func roll_offer() -> Array[String]:
+	if _chapters == null or is_final_floor():
+		return [] as Array[String]
+	var pool: Array[String] = _chapters.region_ids()
+	if pool.is_empty() and _chapters.chapter_count() > 0:
+		pool = [_chapters.chapter_id(0)]
+	var choices: int = int(_chapters.world_spec().get("choices_per_floor", ChaptersConfig.DEFAULT_CHOICES_PER_FLOOR))
+	return WorldMapGen.offer_for_floor(pool, run_seed, floor, region_path, choices)
+
+
+## Story 031: picks [param id] from [member region_offer]: its map is generated for this floor
+## (ChaptersConfig.generate_region_map, tier capped while [param cleared_bosses] is 0), column 0, the
+## region joins [member region_path], the offer closes. False (no change) when [param id] is not offered,
+## an offer is still pending a pick, or the region has no map.
+func choose_region(id: String, cleared_bosses: int) -> bool:
+	if not region_offer.has(id) or _chapters == null or has_pending_reward():
+		return false
+	var new_map: Array[Dictionary] = _chapters.generate_region_map(id, run_seed, floor, cleared_bosses)
+	if new_map.is_empty():
+		return false
+	_enter_region(id, new_map)
+	region_path.append(id)
+	region_offer = []
+	return true
+
+
+# Puts the run at column 0 of region [param id] with [param new_map].
+func _enter_region(id: String, new_map: Array[Dictionary]) -> void:
+	region_id = id
+	chapter_index = _chapters.region_index(id) if _chapters != null else chapter_index
+	map = new_map.duplicate(true)
+	column = 0
+	node_index = -1
+	cleared_nodes = []
+
+
+# The final match as a one-column map: [{index 0, tier 0, nodes [{kind boss, match_id}]}]; [] when
+# `world.final_match` is not set.
+func _final_map() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var fm: Dictionary = _chapters.final_match() if _chapters != null else {}
+	if fm.is_empty():
+		return out
+	out.append({"index": 0, "tier": 0, "nodes": [{"kind": KIND_BOSS, "match_id": str(fm.get("match_id", ""))}]})
+	return out
 
 
 ## Reads economy key [param key] from [param config] (rewards.json), else [constant CONFIG_DEFAULTS].
@@ -143,34 +242,72 @@ func current_node() -> Dictionary:
 
 ## Completes the chosen node. [param hp_end] = player HP when it ended; NO automatic heal:
 ## hp = min(hp_end + passive_heal, max_hp) ([param passive_heal] = passive/card heal such as
-## second_wind, 0 by default). Records {column, node_index, kind} in [member cleared_nodes], resets
-## [member node_index] to -1 and moves to the next column. A [constant KIND_BOSS] node grants
-## `boss_removal_tokens` (1) removal tokens, counts in [member cleared_bosses_this_run] and wins the
-## run. Returns {"advanced": bool, "run_won": bool}; no node chosen -> {advanced:false} and nothing
-## changes. [param node_kind] overrides the chosen node's kind when not empty.
+## second_wind, 0 by default). Records {column, node_index, kind} in [member cleared_nodes] (and counts
+## [member nodes_cleared] for luck), resets [member node_index] to -1 and moves to the next column. A
+## [constant KIND_BOSS] node grants `boss_removal_tokens` (1) removal tokens and counts in
+## [member cleared_bosses_this_run]; Story 031: a REGION boss does not win the run: [member floor] +1,
+## heal `world.floor_heal_ratio` x [param max_hp] (clamped, [member last_floor_heal]) and the next
+## [member region_offer] is rolled (after the last floor: the final match's one-node map instead); the
+## FINAL match's boss wins the run. Returns {"advanced": bool, "run_won": bool, "floor_cleared": bool,
+## "healed": float, "region": String (the region whose node completed)}; no node chosen ->
+## {advanced:false} and nothing changes. [param node_kind] overrides the chosen node's kind when not empty.
 func complete_node(hp_end: float, max_hp: float, node_kind: String, config: Dictionary, passive_heal: float = 0.0) -> Dictionary:
 	if node_index < 0 or current_column().is_empty():
-		return {"advanced": false, "run_won": is_run_won()}
+		return {"advanced": false, "run_won": is_run_won(), "floor_cleared": false, "healed": 0.0, "region": region_id}
 	var kind: String = node_kind if not node_kind.is_empty() else str(current_node().get("kind", ""))
+	var region_done: String = region_id
 	hp = minf(hp_end + maxf(passive_heal, 0.0), max_hp)
 	cleared_nodes.append({"column": column, "node_index": node_index, "kind": kind})
+	nodes_cleared += 1
+	last_node_kind = kind
 	node_index = -1
 	column += 1
+	var floor_cleared: bool = false
+	var healed: float = 0.0
 	if kind == KIND_BOSS:
 		removal_tokens += int(cfg(config, "boss_removal_tokens"))
 		cleared_bosses_this_run += 1
-		_won = true
-	return {"advanced": true, "run_won": is_run_won()}
+		if is_final_floor():
+			_won = true
+		else:
+			healed = _clear_floor(max_hp)
+			floor_cleared = true
+	return {"advanced": true, "run_won": is_run_won(), "floor_cleared": floor_cleared, "healed": healed, "region": region_done}
 
 
-## True once the boss node was cleared (or every column is done).
+# A region boss fell: heal floor_heal_ratio x max_hp (clamped; a full hp heals nothing), next floor,
+# next offer (or the final map after the last floor). Returns the HP healed.
+func _clear_floor(max_hp: float) -> float:
+	var ratio: float = _chapters.floor_heal_ratio() if _chapters != null else ChaptersConfig.DEFAULT_FLOOR_HEAL_RATIO
+	var before: float = max_hp if hp < 0.0 else minf(hp, max_hp)
+	var after: float = minf(before + maxf(ratio, 0.0) * max_hp, max_hp)
+	hp = after
+	last_floor_heal = after - before
+	floor += 1
+	if is_final_floor():
+		region_offer = []
+		var final_map: Array[Dictionary] = _final_map()
+		if final_map.is_empty():
+			push_warning("RunSession: world.final_match not set, the run is won after the last floor")
+			_won = true
+		else:
+			_enter_region(str(_chapters.final_match().get("region", region_id)), final_map)
+	else:
+		region_offer = roll_offer()
+		if region_offer.is_empty():
+			push_warning("RunSession: no region to offer at floor %d, the run is won" % floor)
+			_won = true
+	return last_floor_heal
+
+
+## True once the FINAL match was won (Story 031: a region boss never wins the run).
 func is_run_won() -> bool:
-	return _won or (not map.is_empty() and column >= map.size())
+	return _won
 
 
-## Run luck = luck_start + luck_per_node x nodes cleared (rewards.json via [param config]).
+## Run luck = luck_start + luck_per_node x nodes cleared over the whole run (rewards.json via [param config]).
 func luck(config: Dictionary = {}) -> float:
-	return cfg(config, "luck_start") + cfg(config, "luck_per_node") * float(cleared_nodes.size())
+	return cfg(config, "luck_start") + cfg(config, "luck_per_node") * float(nodes_cleared)
 
 
 ## Spends one removal token. False (no change) at 0.
@@ -258,15 +395,15 @@ func has_pending_reward() -> bool:
 	return not pending_reward.is_empty()
 
 
-## Deprecated shim (Story 022, for the unported flow): seed of the current column,
-## ChaptersConfig.arena_seed_for(run_seed, chapter_index * 100 + column).
+## Seed of the current column's arena (Story 031):
+## ChaptersConfig.arena_seed_for(run_seed, floor * 100 + column).
 func floor_seed() -> int:
-	return ChaptersConfig.arena_seed_for(run_seed, chapter_index * 100 + column)
+	return ChaptersConfig.arena_seed_for(run_seed, floor * 100 + column)
 
 
-## Deprecated shim: "chapter id/c<column>".
-func floor_key(chapters: ChaptersConfig) -> String:
-	return "%s/c%d" % [chapters.chapter_id(chapter_index), column]
+## Deprecated shim: "<region>/f<floor>/c<column>".
+func floor_key(_chapters_unused: ChaptersConfig = null) -> String:
+	return "%s/f%d/c%d" % [region_id, floor, column]
 
 
 ## Deprecated shim: true on the last column of the map.
@@ -279,63 +416,84 @@ func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 	return str(current_node().get("kind", "")) == KIND_BOSS
 
 
-## Save form (v4): {version, character, chapter (id), map, column, node_index, cleared_nodes, hp,
+## Save form (v5, Story 031): {version, character, floor, region, region_offer, region_path, map,
+## column, node_index, cleared_nodes, nodes_cleared, last_node_kind, last_floor_heal, hp,
 ## deck [{id, level}], run_seed, elapsed, pending_reward, revives, removal_tokens,
-## cleared_bosses_this_run}. A [member needs_restart] session saves only
-## {version, character, chapter, needs_restart, restart_reason, map: []}.
+## cleared_bosses_this_run, won}. A [member needs_restart] session saves only
+## {version, character, needs_restart, restart_reason, map: []}.
 func to_dict() -> Dictionary:
-	var chapter_id: String = _chapters.chapter_id(chapter_index) if _chapters != null else ""
 	if needs_restart:
-		return {"version": SAVE_VERSION, "character": character_id, "chapter": chapter_id,
+		return {"version": SAVE_VERSION, "character": character_id,
 			"needs_restart": true, "restart_reason": restart_reason, "map": []}
 	return {
-		"version": SAVE_VERSION, "character": character_id, "chapter": chapter_id,
+		"version": SAVE_VERSION, "character": character_id, "floor": floor, "region": region_id,
+		"region_offer": region_offer.duplicate(), "region_path": region_path.duplicate(),
 		"map": map.duplicate(true), "column": column, "node_index": node_index,
-		"cleared_nodes": cleared_nodes.duplicate(true), "hp": hp,
+		"cleared_nodes": cleared_nodes.duplicate(true), "nodes_cleared": nodes_cleared,
+		"last_node_kind": last_node_kind, "last_floor_heal": last_floor_heal, "hp": hp,
 		"deck": deck_entries(), "run_seed": run_seed, "elapsed": elapsed_sec,
 		"pending_reward": pending_reward.duplicate(), "revives": revives,
 		"removal_tokens": removal_tokens, "cleared_bosses_this_run": cleared_bosses_this_run,
+		"won": _won,
 	}
 
 
-## Rebuilds from [method to_dict]. Null on bad data (unknown chapter, bad map / position, no known
-## card in the deck, no character). A v2/v3 (floor/match) run or a saved needs_restart run gives a
-## session with [member needs_restart] true, [member restart_reason] [constant RESTART_OLD_SAVE],
-## an empty map and an empty deck. Unknown cards are dropped (warning). [param cards] is optional:
-## without it card ids are not validated.
+## Rebuilds from [method to_dict]. Null on bad data (unknown region, floor out of range, bad map /
+## position, an offer at the final floor, no known card in the deck, no character). A pre-v5 run
+## (v2..v4 chapter / floor saves) or a saved needs_restart run gives a session with
+## [member needs_restart] true, [member restart_reason] [constant RESTART_OLD_SAVE], an empty map and an
+## empty deck (the flow starts a fresh world run for that character). Unknown cards are dropped
+## (warning). [param cards] is optional: without it card ids are not validated.
 static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfig = null) -> RunSession:
-	var ci: int = -1
-	for i: int in chapters.chapter_count():
-		if chapters.chapter_id(i) == str(d.get("chapter", "")):
-			ci = i
-	if ci < 0:
-		push_warning("RunSession: unknown chapter '%s', run dropped" % str(d.get("chapter", "")))
-		return null
 	var s := RunSession.new()
 	s._chapters = chapters
 	s.character_id = str(d.get("character", ""))
-	s.chapter_index = ci
 	if int(d.get("version", 0)) < SAVE_VERSION or bool(d.get("needs_restart", false)):
 		if s.character_id.is_empty():
 			push_warning("RunSession: old run without character, dropped")
 			return null
 		s.needs_restart = true
 		s.restart_reason = RESTART_OLD_SAVE
+		s.chapter_index = -1
 		return s
+	s.floor = int(d.get("floor", 0))
+	if s.floor < 0 or s.floor > s.floors():
+		push_warning("RunSession: floor %d out of range, run dropped" % s.floor)
+		return null
+	s.region_id = str(d.get("region", ""))
+	s.chapter_index = -1
+	if not s.region_id.is_empty():
+		s.chapter_index = chapters.region_index(s.region_id)
+		if s.chapter_index < 0:
+			push_warning("RunSession: unknown region '%s', run dropped" % s.region_id)
+			return null
+	s.region_offer = _string_list(d.get("region_offer", []))
+	for id: String in s.region_offer:
+		if chapters.region_index(id) < 0:
+			push_warning("RunSession: unknown offered region '%s', run dropped" % id)
+			return null
+	s.region_path = _string_list(d.get("region_path", []))
 	s.map = _clean_map(d.get("map", []))
 	s.column = int(d.get("column", 0))
 	s.node_index = int(d.get("node_index", -1))
-	if s.map.is_empty() or s.column < 0 or s.column > s.map.size():
-		push_warning("RunSession: bad map or column %d, run dropped" % s.column)
+	if s.region_offer.is_empty():
+		if s.region_id.is_empty() or s.map.is_empty() or s.column < 0 or s.column > s.map.size():
+			push_warning("RunSession: bad region map or column %d, run dropped" % s.column)
+			return null
+	elif s.is_final_floor() or s.node_index != -1 or s.column < 0 or s.column > s.map.size():
+		push_warning("RunSession: region offer in a bad position, run dropped")
 		return null
 	if s.node_index != -1 and (s.column >= s.map.size() or s.node_index < 0
 			or s.node_index >= (s.map[s.column]["nodes"] as Array).size()):
 		push_warning("RunSession: node %d out of range, run dropped" % s.node_index)
 		return null
 	s.cleared_nodes = _clean_cleared(d.get("cleared_nodes", []))
+	s.nodes_cleared = maxi(int(d.get("nodes_cleared", s.cleared_nodes.size())), 0)
+	s.last_node_kind = str(d.get("last_node_kind", ""))
+	s.last_floor_heal = maxf(float(d.get("last_floor_heal", 0.0)), 0.0)
 	s.removal_tokens = maxi(int(d.get("removal_tokens", 0)), 0)
 	s.cleared_bosses_this_run = maxi(int(d.get("cleared_bosses_this_run", 0)), 0)
-	s._won = s.cleared_bosses_this_run > 0
+	s._won = bool(d.get("won", false))
 	s.hp = float(d.get("hp", -1.0))
 	s.run_seed = int(d.get("run_seed", 0))
 	s.elapsed_sec = maxf(float(d.get("elapsed", 0.0)), 0.0)
@@ -346,6 +504,15 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 		push_warning("RunSession: no character or empty deck, run dropped")
 		return null
 	return s
+
+
+static func _string_list(raw: Variant) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for v: Variant in raw as Array:
+		out.append(str(v))
+	return out
 
 
 func _is_cleared(col: int, idx: int) -> bool:
