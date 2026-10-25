@@ -34,6 +34,10 @@ Người dùng quyết định: **bỏ chủ đề bếp sushi, dựng thế gi�
 
 **Bổ sung 2026-10-22 (sau khi đóng 019):** người dùng muốn **chọn lá phải đổi kết quả trận** và **bỏ khái niệm "lớp"**. Chốt: nhân vật là cá nhân với bộ khởi đầu, nội tại và một **tuyệt kỹ** chủ động mạnh lên theo bộ bài (Kiếm sĩ Trảm, Pháp sư Thiên Hỏa, Sát thủ Ảnh Bộ); không lá nào gắn nhân vật, thưởng không nghiêng trọng số; sức nặng của bộ đến từ sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá và hai từ khóa Ghim/Đốt dùng chung → Story 020 (bộ bài) rồi 021 (tuyệt kỹ), đo bằng mô phỏng ba chính sách chọn thưởng (chênh ≥ 25 điểm phần trăm).
 
+## Pivot v5 — 2026-10-24 (sau cổng chơi thử 6)
+
+Chơi thử run đủ nội dung: người dùng thấy **đánh trúng boss rất khó**, nối ấn "đòi nhớ vị trí và quy ước", phải nhặt 3–4 ấn mới có một vùng. Đo bằng logic game thật (`hit_probe.gd`, 40 đòn mỗi ô, 11 địch chương 1): quái thường nối đại trúng 25–60 %, canh lúc boss vừa bước trúng gần 100 %; miniboss/boss nối đại 0–30 %, chỉ đòn 1 ô ổn định; ô giữa sân chỉ trúng được bằng trận pháp ≥ 3 ô. Người dùng quyết định **bỏ nối ấn, thay bằng mảnh ấn**: mỗi ấn rơi là một mảnh hình sẵn 1–5 ô (bộ hình chọn lọc, rút theo trọng số chương, xoay được), chọn mảnh → đặt lên chỗ bất kỳ vừa khít trên đất địch (Tập trung dừng trận như cũ) → chọn lá; mỗi đòn một mảnh. Kèm theo: báo trúng xanh/đỏ, boss đứng yên khi niệm, vòng hồi bước boss hiện khóa (vòng đã có sẵn), và **Kết giới / Trận gai** để đấu trí bằng vùng → Story 024–027. Brief v5 là bản ghi.
+
 ## Scope
 
 Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, meta progression (ngoại lệ từ 015: lưu tầng đã mở), quảng cáo/IAP, nhiều nhân vật/map, online/PvP, accessibility, đa ngôn ngữ.
@@ -54,12 +58,14 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 12. Run roguelike (019) → **Cổng quyết định 5: run đầu tiên có thật**
 13. Bộ bài có sức nặng (020), tuyệt kỹ nhân vật (021) — mô phỏng: chọn lá nhân đôi tỉ lệ thắng nhưng dưới ngưỡng 25 điểm (TD-001, TD-004); người dùng hoãn chơi thử vì nội dung mỏng
 14. Bản đồ chương + kinh tế thưởng (022), nội dung chương 2–3 + địch phá luật (023), theo `design/reference/osfe-reference.md` → **Cổng quyết định 6: run đầu tiên đủ nội dung**
-15. Cửa hàng/pact, lên Android, hình và âm — story viết sau cổng 6
+15. Mảnh ấn (v5): mảnh phía người chơi (024) → **Cổng quyết định 7: chơi lại với mảnh** (2026-10-25: người dùng muốn dùng nhiều mảnh, ghép mảnh, ghép thành hình sân → 028, 029); ghép mảnh + hình chủ đạo (028); trận đồ thay thanh nạp (029); boss dùng và ghép mảnh + cửa sổ phản công (025, tạm dừng tới khi 028–029 xong); gỡ nối ấn + đo lại cân bằng (026); Kết giới / Trận gai (027)
+16. Cửa hàng/pact, lên Android, hình và âm
 
 **Cổng quyết định 1 (sau 003, v1):** "tạm ổn", thiếu áp lực → đi tiếp.
 **Cổng quyết định 2 (sau 005, v1):** băng chuyền khó thao tác, địch theo giờ nhàm, 3 làn basic → pivot v2.
 **Cổng quyết định 3 (sau 009, v3, 2026-10-20):** lõi chơi "khá thú vị"; quá khó (boss ép); vừa di chuyển vừa nối điểm làm hai ngón cái quá tải. Quyết định: **hoàn thiện trước, cân bằng sau** → làm 010–011 với số hiện tại, rồi một đợt cân bằng riêng (nhịp boss trận 1, ý tưởng "Tập trung" làm chậm 0,5× khi đang chọn điểm, xem backlog).
 **Cổng quyết định 4 (sau 014, 2026-10-20):** sau Tập trung (012), hồ sơ boss + cooldown theo sân (013) và sân/trait theo trận (014), người dùng chơi thử: "ổn và cân bằng hơn rồi". Đợt cân bằng riêng **không cần nữa**; chuyển sang phase vỏ game: chương/tầng + lưu tiến độ (015), title/tạm dừng (016), rồi nội dung chương (017) và lên máy thật (018).
+**Cổng quyết định 6 (sau 023, 2026-10-24):** run đủ ba chương chơi được, nhưng đánh trúng quá khó và nối ấn khó học → pivot v5 (mảnh ấn, Story 024–027).
 
 ## Stories
 
@@ -87,3 +93,9 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 021 | Tuyệt kỹ nhân vật: thanh nạp, nút riêng, Trảm / Thiên Hỏa / Ảnh Bộ khuếch đại bộ bài | Integration | Complete | N/A (minimal) |
 | 022 | Bản đồ chương và kinh tế thưởng: 7 cột khung cố định + nhánh 2–3, token bỏ lá, thưởng theo loại nút, độ hiếm trôi theo may mắn, trại nghỉ, máu ×3 | Integration | Complete | N/A (minimal) |
 | 023 | Nội dung chương 2–3: boss/trait mới, địch phá luật (Bóng Ma, Kẻ Phản Ứng, Pháo Ngòi), lá sử thi có điều kiện, Rạn/Hàn, pool 24 | Integration | Complete | N/A (minimal) |
+| 024 | Mảnh ấn phía người chơi: mảnh rơi, túi 3, đặt và xoay lên đất địch, báo trúng, hạ min_cells | Integration | Complete | N/A (minimal) |
+| 025 | Boss dùng mảnh ấn: chấm điểm vị trí và hướng xoay, boss đứng yên khi niệm, vòng hồi bước hiện khóa | Integration | In Progress | N/A (minimal) |
+| 026 | Gỡ hệ nối ấn, chuyển test và mô phỏng sang mảnh, đo lại cân bằng ba chương | Integration | Ready | N/A (minimal) |
+| 027 | Kết giới và Trận gai: vùng chặn và vùng thu phí đặt bằng mảnh, cho cả người chơi và boss | Integration | Ready | N/A (minimal) |
+| 028 | Ghép mảnh trên sân và hình chủ đạo: tối đa 2 mảnh một đòn, thưởng ×1,5 + hiệu ứng khi ghép đúng hình của trận | Integration | Complete | N/A (minimal) |
+| 029 | Trận đồ: ô sáng khi được phủ, phai dần, sáng đủ cùng lúc thì tuyệt kỹ sẵn sàng (thay thanh nạp 18 ô) | Integration | Ready | N/A (minimal) |
