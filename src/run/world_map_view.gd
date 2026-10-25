@@ -134,6 +134,8 @@ const TEXT_NOTICE_DISMISS: String = "ui.map.notice_dismiss"
 @export var flow_path: NodePath = NodePath("..")
 
 var _flow: GameFlow = null
+## Story 032: owned-relic strip along the bottom band (tap an icon for its card).
+var _strip: RelicStrip = null
 ## Region id of the selected card ("" = none): the first tap selects, the second confirms.
 var _selected: String = ""
 ## Banner shown until the first tap: a string key ("" = none) and its format args (may be empty).
@@ -143,9 +145,12 @@ var _notice_args: Array = []
 
 func _ready() -> void:
 	_flow = get_node_or_null(flow_path) as GameFlow
+	_strip = RelicStrip.new()
+	add_child(_strip)
 
 
 func _process(_delta: float) -> void:
+	_sync_strip()
 	if not _is_active():
 		_selected = ""
 		_notice_key = ""
@@ -217,6 +222,8 @@ func _input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag):
 		return
 	get_viewport().set_input_as_handled()
+	if event.device != InputEvent.DEVICE_ID_EMULATION and _strip.visible and _strip.handle_input(event):
+		return
 	var pos: Vector2 = _press_position(event)
 	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
@@ -454,3 +461,14 @@ func _back_font_size(text: String, width: float) -> int:
 	while size > BACK_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > width - BACK_TEXT_INSET * 2.0:
 		size -= 1
 	return size
+
+
+# Story 032: the relic strip shows while this screen is up (nothing covering it); its card closes otherwise.
+func _sync_strip() -> void:
+	var shown: bool = _is_active() and _notice_key.is_empty()
+	if not shown:
+		_strip.close_tooltip()
+	_strip.visible = shown
+	if shown:
+		_strip.area = ScreenLayout.relic_strip_rect(get_viewport_rect().size)
+		_strip.set_relics(_flow.get_relics())

@@ -33,6 +33,17 @@ static func create_piece_hand(count: int) -> HoldSlots:
 	return hand
 
 
+## Story 032: resizes the bag to [param count] slots (at least 1; relic `hold_slots`). Growing adds empty
+## slots; shrinking drops the trailing slots and their points (call it before the match fills the bag).
+func set_slot_count(count: int) -> void:
+	_slots.resize(maxi(count, 1))
+	var kept: Array[int] = []
+	for index: int in _selected:
+		if index < _slots.size():
+			kept.append(index)
+	_selected = kept
+
+
 ## Number of slots (empty or not).
 func get_slot_count() -> int:
 	return _slots.size()

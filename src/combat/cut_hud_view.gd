@@ -421,6 +421,11 @@ var _zone_status: StatusEffects = null
 var _thorn_flashes: Dictionary = {}
 
 
+## Story 032: the in-match relic strip (display only) and demo-only relic ids used when CombatView has none.
+var _relic_strip: RelicStrip = null
+var _debug_relics: Array[String] = []
+
+
 func _ready() -> void:
 	_combat = get_node(combat_view_path) as CombatView
 	_sig = _combat
@@ -431,9 +436,14 @@ func _ready() -> void:
 		_combat.connect("signature_activated", _on_signature_activated)
 	if _combat != null and _combat.has_signal("formation_completed"):
 		_combat.connect("formation_completed", _on_formation_completed)
+	# Story 032: display-only relic strip along the top edge (no input; icons flash when a relic acts).
+	_relic_strip = RelicStrip.new()
+	_relic_strip.interactive = false
+	add_child(_relic_strip)
 
 
 func _process(delta: float) -> void:
+	_sync_relic_strip()
 	_blink_time += delta
 	_banner_left = maxf(_banner_left - delta, 0.0)
 	_phase_banner_left = maxf(_phase_banner_left - delta, 0.0)
@@ -1833,3 +1843,41 @@ func _signature_key() -> Key:
 		return SIGNATURE_KEY_FALLBACK
 	var code: Key = OS.find_keycode_from_string(config.signature_key)
 	return code if code != KEY_NONE else SIGNATURE_KEY_FALLBACK
+
+
+## Story 032: the in-match relic strip (display only), for demos / tests.
+func get_relic_strip() -> RelicStrip:
+	return _relic_strip
+
+
+## DEV-ONLY (Story 032 demos): relic ids to show while CombatView reports no relics.
+func debug_show_relics(ids: Array[String]) -> void:
+	_debug_relics = ids.duplicate()
+
+
+# Story 032: mirrors CombatView.get_relics() (when it exists) into the strip and wires each relic's
+# `triggered` signal to the 0.4 s flash.
+func _sync_relic_strip() -> void:
+	if _relic_strip == null:
+		return
+	var shown: bool = _combat != null and _combat.get_state() != null
+	_relic_strip.visible = shown
+	if not shown:
+		return
+	_relic_strip.area = ScreenLayout.hud_relic_strip_rect(get_viewport_rect().size)
+	var ids: Array[String] = []
+	if _combat.has_method("get_relics"):
+		for relic: Variant in _combat.call("get_relics"):
+			if relic is BaseRelic:
+				var base := relic as BaseRelic
+				ids.append(base.get_id())
+				if not base.triggered.is_connected(_on_relic_triggered):
+					base.triggered.connect(_on_relic_triggered)
+	if ids.is_empty():
+		ids = _debug_relics
+	_relic_strip.set_relics(ids)
+
+
+func _on_relic_triggered(relic_id: String) -> void:
+	if _relic_strip != null:
+		_relic_strip.flash(relic_id)

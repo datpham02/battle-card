@@ -120,8 +120,9 @@ var _pending_slot: int = -1
 ## slot while it is attached, and the last refused join ({cells, reason, time_left}) for the red ghost.
 var _plan: CastPlan = CastPlan.new()
 var _featured: Dictionary = {}
-var _join_point: FieldPoint = null
-var _join_slot: int = -1
+## Story 032: one entry per joined piece after the first (2nd, then 3rd with tam_hop), in join order.
+var _join_points: Array[FieldPoint] = []
+var _join_slots: Array[int] = []
 var _join_refusal: Dictionary = {}
 ## True while the pending piece is being taken out of the bag, so the slot-cleared hook does not
 ## auto-pick a piece lying under the player into the slot that must stay free for a cancel.
@@ -147,6 +148,13 @@ var _passive: BasePassive = null
 var _passive_heal: float = 0.0
 ## The character signature skill of this match (Story 021); null without one or with an unknown id.
 var _signature: BaseSignature = null
+## Story 032: the run's relics of this match (received order), their merged config overrides
+## (RelicRegistry.merge_overrides), the cast being swung ({pieces, cells, joined, featured, card_id, hit};
+## {} when none) and the piece library used by give_piece (loaded on first use).
+var _relics: Array[BaseRelic] = []
+var _relic_overrides: Dictionary = {}
+var _cast_info: Dictionary = {}
+var _relic_pieces: PieceLibrary = null
 ## Formation map of the enemy half (Story 029); null without a signature (it only feeds the signature).
 var _formation: FormationMap = null
 ## True once the formation map completed and the signature has not been activated yet.
@@ -183,6 +191,8 @@ signal signature_ended(id: String)
 ## the cooldown over — reached on a cover or when the cooldown ran out). The map is NOT reset here
 ## (Phần D: activation resets it).
 signal formation_completed
+## Story 032: the relic [param relic_id] acted (HUD flash).
+signal relic_triggered(relic_id: String)
 
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
@@ -211,6 +221,7 @@ func _ready() -> void:
 	_grid = _config.grid
 	var boss_max_hp: float = maxf(float(match_params.get("boss_max_hp", _config.enemy_max_hp)), 1.0)
 	var character: Dictionary = _character()
+	_setup_relics(_relic_ids())
 	var player_max_hp: float = maxf(float(character.get("max_hp", _config.player_max_hp)), 1.0)
 	_state = CombatState.new(
 		_grid, player_max_hp, boss_max_hp, _config.player_start_cell, _config.enemy_start_cell
@@ -226,12 +237,13 @@ func _ready() -> void:
 	var boss_drop_mult: float = maxf(float(match_params.get("boss_drop_interval_mult", 1.0)), 0.01)
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult
 	boss_drops_config.piece_spawn_interval_sec *= boss_drop_mult # Story 025: the boss drops pieces too
+	_apply_drop_overrides()
 	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), drops_seed)
 	# Story 024: the player's half drops puzzle pieces (the boss's drops stay classic labels).
 	_drops.enable_pieces(PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), _grid, drops_seed)
 	_drops.place_start_pieces(_state.player_cell)
 	_placement = PlacementController.new(_grid)
-	_plan.init(_config.max_pieces_per_cast, _config.max_cast_cells)
+	_plan.init(get_max_join_pieces(), _config.max_cast_cells)
 	_featured = ArenaLibrary.load_from_file().featured_for_match(match_params, _grid)
 	_state.cell_changed.connect(_on_cell_changed)
 	_cut_config = CutConfig.load_from_file()
@@ -241,6 +253,8 @@ func _ready() -> void:
 	_focus = FocusController.new(_skill_config)
 	if character.has("focus_max_sec"):
 		_focus.set_max_sec_override(float(character["focus_max_sec"]))
+	if _relic_overrides.has("focus_sec"):
+		_focus.set_max_sec_override(maxf(_override(_focus.get_max_sec(), "focus_sec"), 0.0))
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.level_of = Callable(self, "get_card_level")
@@ -250,6 +264,7 @@ func _ready() -> void:
 	var hold_config: HoldSlotsConfig = HoldSlotsConfig.load_from_file()
 	if hold_config == null:
 		hold_config = HoldSlotsConfig.new()
+	_apply_hold_override(hold_config)
 	_boss = BossController.new(
 		_state, _grid, _cut_config, _skill_config, brain_config, boss_drops_config, hold_config,
 		drops_seed + 1 if drops_seed >= 0 else -1
@@ -265,6 +280,7 @@ func _ready() -> void:
 	if not boss_set_override.is_empty() and not _boss.get_brain().use_set(boss_set_override):
 		push_warning("CombatView: unknown boss weight set '%s'" % boss_set_override)
 	_status = StatusEffects.new()
+	_apply_status_overrides()
 	_config.configure_status(_status)
 	_mover.set_status(_status)
 	_boss.set_status(_status)
@@ -279,6 +295,7 @@ func _ready() -> void:
 	_arbiter.execute_ratio = _config.execute_ratio
 	_boss.get_brain().min_runes = maxi(int(match_params.get("boss_min_runes", 0)), 0)
 	_wire_zones()
+	_wire_relics()
 	_arbiter.swing_resolved.connect(_on_swing_resolved)
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
 	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
@@ -287,6 +304,8 @@ func _ready() -> void:
 	_trait_host.on_match_start()
 	_setup_passive(character)
 	_setup_signature(character)
+	for relic: BaseRelic in _relics:
+		relic.on_match_start()
 
 
 # Story 027: sealed cells block stepping for BOTH movers (OR-ed with cracks and any other blocker via
@@ -308,6 +327,10 @@ func _exit_tree() -> void:
 		_trait_host.teardown_all()
 	if _passive != null:
 		_passive.teardown()
+	for relic: BaseRelic in _relics:
+		relic.teardown()
+	_relics.clear()
+	_cast_info = {}
 	if _signature != null:
 		_signature.teardown()
 		_signature = null
@@ -329,7 +352,8 @@ func _setup_signature(character: Dictionary) -> void:
 		return
 	var params: Variant = dict.get("params", {})
 	var enemy_cells: Array[Vector2i] = _grid.enemy_cells()
-	_formation = FormationMap.new().init(enemy_cells, _config.formation_fade_for(enemy_cells.size()))
+	_formation = FormationMap.new().init(
+		enemy_cells, maxf(_override(_config.formation_fade_for(enemy_cells.size()), "formation_fade"), 0.0))
 	_signature.setup(
 		{"state": _state, "grid": _grid, "boss": _boss, "status": _status,
 			"skill_config": _skill_config, "cut_config": _cut_config, "cooldowns": _cooldowns,
@@ -338,6 +362,7 @@ func _setup_signature(character: Dictionary) -> void:
 	_signature_name_key = str(dict.get("name_key", ""))
 	var cooldown: Variant = dict.get("cooldown_sec", 0.0)
 	_signature_cooldown_sec = maxf(float(cooldown), 0.0) if (typeof(cooldown) == TYPE_FLOAT or typeof(cooldown) == TYPE_INT) else 0.0
+	_signature_cooldown_sec = maxf(_override(_signature_cooldown_sec, "signature_cooldown"), 0.0)
 	_signature_cooldown_left = 0.0
 	_arbiter.player_cells_modifier = Callable(_signature, "modify_cells")
 	_arbiter.player_signature_modifier = Callable(_signature, "modify_damage")
@@ -557,6 +582,174 @@ func _setup_passive(character: Dictionary) -> void:
 	_cut_actor.duration_modifier = Callable(_passive, "modify_swing_duration")
 	_arbiter.player_damage_modifier = Callable(_passive, "modify_damage")
 	_passive.on_match_start()
+
+
+## Story 032: the run's relics of this match, in received order (empty without relics). For the HUD strip;
+## each relic's own `triggered` signal is re-emitted as [signal relic_triggered].
+func get_relics() -> Array[BaseRelic]:
+	return _relics
+
+
+## Story 032: the merged config overrides of this match's relics (RelicRegistry.merge_overrides form).
+func get_relic_overrides() -> Dictionary:
+	return _relic_overrides
+
+
+## Story 032: how many pieces may be joined into one cast: combat.json max_pieces_per_cast, raised by a
+## relic's max_join_pieces (tam_hop).
+func get_max_join_pieces() -> int:
+	return maxi(_config.max_pieces_per_cast, RelicRegistry.max_join_pieces(_relics))
+
+
+# Story 032: match_params["relics"] as relic ids (non-strings and empty ids skipped).
+func _relic_ids() -> Array[String]:
+	var ids: Array[String] = []
+	var raw: Variant = match_params.get("relics", [])
+	if typeof(raw) != TYPE_ARRAY:
+		return ids
+	for entry: Variant in raw as Array:
+		if typeof(entry) == TYPE_STRING and not (entry as String).is_empty():
+			ids.append(entry as String)
+	return ids
+
+
+# Story 032: builds the relics (RelicRegistry.instantiate; unknown ids warn and are skipped), merges their
+# config overrides ONCE (before FieldDrops, the bag, FormationMap and StatusEffects are built) and sets them
+# up with the match ctx: heal_player / damage_player (through CombatState) and give_piece (into the bag).
+# The ctx Callables resolve lazily, so this can run before the match objects exist.
+func _setup_relics(relic_ids: Array[String]) -> void:
+	_relics.clear()
+	for relic_id: String in relic_ids:
+		var relic: BaseRelic = RelicRegistry.instantiate(relic_id)
+		if relic == null:
+			continue
+		_relics.append(relic)
+	_relic_overrides = RelicRegistry.merge_overrides(_relics)
+	var ctx: Dictionary = {
+		"heal_player": Callable(self, "_relic_heal_player"),
+		"damage_player": Callable(self, "_relic_damage_player"),
+		"give_piece": Callable(self, "_relic_give_piece"),
+	}
+	for relic: BaseRelic in _relics:
+		relic.setup(ctx, relic.get_params())
+		relic.triggered.connect(_on_relic_triggered)
+
+
+# Story 032: [param base] after the relics' override of config [param key] (unchanged without one).
+func _override(base: float, key: String) -> float:
+	return RelicRegistry.apply_override(base, _relic_overrides, key)
+
+
+# Story 032: the player's piece drops (a copy separate from the boss's): freshness, start pieces, interval.
+# A non-positive result keeps the config's value.
+func _apply_drop_overrides() -> void:
+	if _relic_overrides.is_empty():
+		return
+	var fresh: float = _override(_drops_config.piece_freshness_sec, "piece_freshness_sec")
+	if fresh > 0.0:
+		_drops_config.piece_freshness_sec = fresh
+	_drops_config.start_pieces = maxi(roundi(_override(float(_drops_config.start_pieces), "start_pieces")), 0)
+	var interval: float = _override(_drops_config.piece_spawn_interval_sec, "piece_spawn_interval")
+	if interval > 0.0:
+		_drops_config.piece_spawn_interval_sec = interval
+
+
+# Story 032: the bag's slot count (hold_slots.json piece_slot_count, then the relics' hold_slots).
+func _apply_hold_override(hold_config: HoldSlotsConfig) -> void:
+	if not _relic_overrides.has("hold_slots"):
+		return
+	var view := get_node_or_null(hold_slots_view_path) as HoldSlotsView
+	if view != null:
+		view.set_slot_count_override(maxi(roundi(_override(float(hold_config.piece_slot_count), "hold_slots")), 1))
+
+
+# Story 032: burn stack cap and Han burst stacks / damage on this match's config copy, before
+# configure_status hands them to StatusEffects.
+func _apply_status_overrides() -> void:
+	if _relic_overrides.is_empty():
+		return
+	_config.burn_max_stacks = maxi(roundi(_override(float(_config.burn_max_stacks), "burn_max_stacks")), 1)
+	_config.frost_stacks_to_burst = maxi(roundi(_override(float(_config.frost_stacks_to_burst), "han_stacks")), 1)
+	_config.frost_burst_damage = maxf(_override(_config.frost_burst_damage, "han_damage"), 0.0)
+
+
+# Story 032: hooks the relics into the arbiter (damage, zones) and the player actor (windup).
+func _wire_relics() -> void:
+	_arbiter.player_zone_overrides = _relic_overrides
+	if _relics.is_empty():
+		return
+	_arbiter.player_relic_modifier = Callable(self, "_relic_damage")
+	_cut_actor.cast_time_modifier = Callable(self, "_relic_cast_time")
+
+
+# Story 032: cast_info of a player cast ({pieces, cells, joined, featured, card_id, hit}).
+func _make_cast_info(card_id: String, cells: Array[Vector2i], pieces: Array[String], joined: bool, featured: bool) -> Dictionary:
+	return {"pieces": pieces.duplicate(), "cells": cells.size(), "joined": joined, "featured": featured,
+		"card_id": card_id, "hit": false}
+
+
+# Story 032: the ONE relic damage point (SwingArbiter.player_relic_modifier -> CutEffects).
+func _relic_damage(cells: int, damage: float) -> float:
+	var info: Dictionary = _cast_info.duplicate()
+	info["cells"] = cells
+	return RelicRegistry.fold_damage(_relics, info, damage)
+
+
+# Story 032: the ONE relic windup point (CutActor.cast_time_modifier, once per begun player swing).
+func _relic_cast_time(cells: int, sec: float) -> float:
+	var info: Dictionary = _cast_info.duplicate()
+	info["cells"] = cells
+	return RelicRegistry.fold_cast_time(_relics, info, sec)
+
+
+func _relic_heal_player(amount: float) -> void:
+	if amount > 0.0 and not _state.is_player_dead():
+		_state.set_player_hp(_state.player_hp + amount)
+
+
+func _relic_damage_player(amount: float) -> void:
+	_state.damage_player(amount)
+
+
+# Story 032: puts one piece of [param shape_id] into the first free bag slot; false when the bag is full,
+# missing or the shape unknown.
+func _relic_give_piece(shape_id: String) -> bool:
+	var hold: HoldSlots = _get_hold()
+	if hold == null or hold.is_full() or _state.is_player_dead():
+		return false
+	if _relic_pieces == null:
+		_relic_pieces = PieceLibrary.load_from_file()
+	var piece: Piece = _relic_pieces.make_piece(shape_id)
+	if piece == null:
+		return false
+	var point := FieldPoint.new()
+	point.label = piece.shape_id
+	point.cell = _state.player_cell
+	point.piece = piece
+	return hold.place_in_first_free(point) >= 0
+
+
+func _on_relic_triggered(relic_id: String) -> void:
+	relic_triggered.emit(relic_id)
+
+
+# Story 032: a player swing resolved (hit or miss): on_cast_landed, and an_chu's flash when its featured
+# override was used on a featured hit.
+func _relics_on_cast_landed(result: Dictionary) -> void:
+	if _relics.is_empty():
+		_cast_info = {}
+		return
+	var info: Dictionary = _cast_info.duplicate()
+	info["hit"] = bool(result.get("hit", false))
+	var cast_cells: Array = result.get("cells", [])
+	info["cells"] = cast_cells.size()
+	_cast_info = {}
+	if bool(result.get("featured", false)):
+		for relic: BaseRelic in _relics:
+			if relic.featured_mult_override() > 0.0 and relic.has_method("flash"):
+				relic.call("flash")
+	for relic: BaseRelic in _relics:
+		relic.on_cast_landed(info)
 
 
 ## Public-API context the traits work through (BossTrait documents the keys): the same
@@ -1061,10 +1254,10 @@ func confirm_placement() -> bool:
 	_pending_piece = hold.remove(slot)
 	_consuming = false
 	var labels: Array[String] = [piece.shape_id]
-	_plan.init(_config.max_pieces_per_cast, _config.max_cast_cells)
+	_plan.init(get_max_join_pieces(), _config.max_cast_cells)
 	_plan.add_piece(slot, piece, cells)
-	_join_point = null
-	_join_slot = -1
+	_join_points.clear()
+	_join_slots.clear()
 	_join_refusal = {}
 	_cut_flow.open_menu(labels, cells, _deck.draw(_skill_config.hand_size))
 	return true
@@ -1118,16 +1311,15 @@ func get_join_refusal() -> Dictionary:
 	return _join_refusal
 
 
-## Story 028: takes the second piece off the cast and puts it back into its bag slot; the menu's cells
-## shrink to the first piece (the time already added stays). False when the cast has no second piece.
+## Story 028: takes the LAST joined piece off the cast (the second; Story 032 tam_hop: the third first) and
+## puts it back into its bag slot; the menu's cells shrink (the time already added stays). False when the
+## cast has a single piece.
 func detach_second_piece() -> bool:
 	if not _cut_flow.is_menu_open() or _plan.piece_count() < 2:
 		return false
-	_plan.remove_piece(1)
-	var point: FieldPoint = _join_point
-	var slot: int = _join_slot
-	_join_point = null
-	_join_slot = -1
+	_plan.remove_piece(_plan.piece_count() - 1)
+	var point: FieldPoint = _join_points.pop_back() if not _join_points.is_empty() else null
+	var slot: int = _join_slots.pop_back() if not _join_slots.is_empty() else -1
 	var hold: HoldSlots = _get_hold()
 	if point != null and hold != null and hold.place(point, slot) < 0:
 		hold.place_in_first_free(point)
@@ -1135,7 +1327,7 @@ func detach_second_piece() -> bool:
 	return true
 
 
-# Attaches the piece being placed as the cast's second piece (menu open). The piece leaves the bag; the
+# Attaches the piece being placed as the cast's next piece (menu open; Story 032: up to get_max_join_pieces). The piece leaves the bag; the
 # menu gets the union of the cells and join_extra_sec more time. A refused plan keeps the piece in the bag.
 func _attach_piece(hold: HoldSlots) -> bool:
 	var slot: int = _placement.get_slot()
@@ -1148,11 +1340,15 @@ func _attach_piece(hold: HoldSlots) -> bool:
 	_placement.cancel()
 	_dragging = false
 	_consuming = true
-	_join_slot = slot
-	_join_point = hold.remove(slot)
+	_join_slots.append(slot)
+	_join_points.append(hold.remove(slot))
 	_consuming = false
 	hold.clear_selection()
 	_cut_flow.update_cut(_plan_labels(), _plan.cells(), _config.join_extra_sec)
+	if not _relics.is_empty():
+		var info: Dictionary = _make_cast_info("", _plan.cells(), _plan_labels(), true, is_plan_featured())
+		for relic: BaseRelic in _relics:
+			relic.on_join(info)
 	return true
 
 
@@ -1237,17 +1433,19 @@ func _store_rotation() -> void:
 		point.piece = _placement.get_piece()
 
 
-# Story 028: puts the attached second piece back into the bag.
+# Story 028: puts the attached pieces 2.. back into the bag (Story 032: every joined piece).
 func _return_join_piece() -> void:
-	var point: FieldPoint = _join_point
-	var slot: int = _join_slot
-	_join_point = null
-	_join_slot = -1
+	var points: Array[FieldPoint] = _join_points.duplicate()
+	var slots: Array[int] = _join_slots.duplicate()
+	_join_points.clear()
+	_join_slots.clear()
 	var hold: HoldSlots = _get_hold()
-	if point == null or hold == null:
+	if hold == null:
 		return
-	if hold.place(point, slot) < 0:
-		hold.place_in_first_free(point)
+	for i: int in points.size():
+		var point: FieldPoint = points[i]
+		if point != null and hold.place(point, slots[i] if i < slots.size() else -1) < 0:
+			hold.place_in_first_free(point)
 
 
 # Puts the pending (consumed) piece back into the bag after a cancelled menu.
@@ -1294,21 +1492,30 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 	# The piece is spent for good once a card is chosen (a swing that gets interrupted loses it).
 	_pending_piece = null
 	_pending_slot = -1
-	_join_point = null
-	_join_slot = -1
+	_join_points.clear()
+	_join_slots.clear()
 	# Story 028: the featured bonus rides on the swing only for a two-piece cast matching the shape; a
 	# second piece still being dragged when the menu times out goes back to the bag.
 	var bonus: Dictionary = {}
 	if not _featured.is_empty() and _plan.is_featured(_featured["cells"] as Array[Vector2i]):
 		bonus = (_featured["bonus"] as Dictionary).duplicate(true)
+		# Story 032: an_chu replaces the featured multiplier (its flash fires when the swing lands).
+		var featured_override: float = RelicRegistry.featured_mult_override(_relics)
+		if featured_override > 0.0:
+			bonus["damage_mult"] = featured_override
+	var info: Dictionary = _make_cast_info(skill_id, cells, _plan_labels(), _plan.piece_count() >= 2, not bonus.is_empty())
 	_plan.clear()
 	_drop_placement()
-	_begin_cut(skill_id, cells, bonus)
+	_begin_cut(skill_id, cells, bonus, info)
 	_try_pick_up_under_player()
 
 
-func _begin_cut(skill_id: String, cells: Array[Vector2i], featured_bonus: Dictionary = {}) -> void:
+# Story 032: [param cast_info] is the relics' view of the cast (_make_cast_info); empty = a bare cast of
+# [param cells] with no pieces (tests / dev paths). It is kept until the swing resolves.
+func _begin_cut(skill_id: String, cells: Array[Vector2i], featured_bonus: Dictionary = {}, cast_info: Dictionary = {}) -> void:
 	var level: int = get_card_level(skill_id)
+	_cast_info = cast_info if not cast_info.is_empty() else _make_cast_info(
+		skill_id, cells, [] as Array[String], false, not featured_bonus.is_empty())
 	if _cut_actor.begin_swing(cells, skill_id, true, level, -1.0, featured_bonus):
 		_cooldowns.start(skill_id, float(_resolved_card(skill_id, level).get("cooldown_sec", 0.0)))
 		if _signature != null:
@@ -1371,6 +1578,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 	}
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback
+		_relics_on_cast_landed(result)
 		# Story 029: the one cover point (hit or miss; interrupted / cancelled swings never resolve).
 		var cast_cells: Array[Vector2i] = []
 		cast_cells.assign(result["cells"] as Array)
@@ -1389,6 +1597,8 @@ func _on_swing_interrupted(victim_side: int, cells: Array[Vector2i], _skill_id: 
 	_interrupt_flash = {"side": victim_side, "cells": cells, "time_left": FEEDBACK_SEC}
 	if victim_side == CombatState.Side.ENEMY:
 		_learning.on_player_interrupted_boss()
+		for relic: BaseRelic in _relics:
+			relic.on_interrupt_by_player()
 
 
 func _on_boss_swing_started(cells: Array[Vector2i], skill_id: String, _duration: float) -> void:

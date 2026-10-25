@@ -22,6 +22,6 @@ for f in tests/integration/ui/*_test.gd; do echo "$f: $($G --windowed --resoluti
 ```
 
 ## Known failing
-None. Baseline 2026-10-25 (Story 026, runes and the floor model retired; `boss_stall_test` added for TD-022; Story 027 added `zone_test`, `boss_zones_test`, `zone_traits_test`; Story 031 added `world_map_gen_test`, `floor_scaling_test`, `progress_v5_test`, `run_session_v5_test`): 51 headless suites (`unit/**`, `integration/run/**`) and 4 windowed suites (`integration/ui/**`), all FAILS=0.
+None. Baseline 2026-10-25 (Story 026, runes and the floor model retired; `boss_stall_test` added for TD-022; Story 027 added `zone_test`, `boss_zones_test`, `zone_traits_test`; Story 031 added `world_map_gen_test`, `floor_scaling_test`, `progress_v5_test`, `run_session_v5_test`; Story 032 added `tests/unit/relics/*` (5 suites) and `run_session_relics_test`): 57 headless suites (`unit/**`, `integration/run/**`) and 4 windowed suites (`integration/ui/**`), all FAILS=0.
 
 Story 026 migrations: `pace_test` asserts the current boss step cooldown (`CombatConfig.step_cooldown_for` x each chapters.json match's `boss_step_cooldown_mult`, via `RunConfig.from_node`); `run_state_test` keeps the RunState rules on a 4-match fixture (shipped runs are single-match nodes) and drops the old one-floor "monotone difficulty" check; `chapters_test` / `map_gen_test` / `i18n_test` dropped the floor-API cases (`resolved_floor`, `from_floor`, `floor_count`, `floor_name`...) and the perimeter-label checks left `grid_test`.

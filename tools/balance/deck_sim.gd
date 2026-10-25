@@ -19,6 +19,12 @@ extends SceneTree
 ## boss reward and heals `floor_heal_ratio` x max HP instead of ending the run. Runs its own run state
 ## (WorldRun below), not RunSession. --world-set=key:value overrides the `world` / `region_normalize`
 ## data in memory (chapters.json is never written).
+## Story 032 relics: --relics=id,... (sim_core) = the bot owns these relics from the start of every run, and
+## every match of the run gets the run's relics (sim_core.relic_ids -> sim_core._setup_relics, the port of
+## CombatView._setup_relics). --relic-policy=pick: at a treasure node the bot takes the RELIC row
+## (RelicRoller.roll("treasure", owned, rng), rng seeded like GameFlow: hash([run_seed, floor, column,
+## node_index, "relic"])) over the card row, rarest first (boss > epic > rare > common, then offer order);
+## an empty relic row falls back to the card row. Default --relic-policy=none (card row only).
 ## Tool code only (not game code, not in the test suite). Flags and output: tools/balance/README.md.
 ## Usage: godot --headless --path . -s res://tools/balance/deck_sim.gd -- --seeds=70 --chapters=0,1,2 --policies=build
 ##        godot --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si
@@ -55,6 +61,9 @@ const SEED_MASK: int = 0x7fffffff
 ## Story 031 world mode. Seconds per node outside the match (node pick, reward, reading the screen):
 ## an ASSUMPTION (story Part F), printed in the header; --node-overhead=S.
 const DEFAULT_NODE_OVERHEAD_SEC: float = 25.0
+## Story 032 treasure policies (see the header).
+const RELIC_POLICIES: Array[String] = ["none", "pick"]
+const RELIC_SEED_TAG: String = "relic"
 const REGION_PICKS: Array[String] = ["random", "first"]
 ## Story 031 targets (Part F), build policy.
 const WORLD_MINUTES_TARGET: Array = [40.0, 50.0]
@@ -97,6 +106,7 @@ var _region_pick: String = "random"
 var _node_overhead: float = DEFAULT_NODE_OVERHEAD_SEC
 var _world_set: Array[String] = []
 var _policies_given: bool = false
+var _relic_policy: String = "none"
 
 
 ## Story 031 world mode: a run's state (the parts of RunSession the bot and the reward policy read), so the
@@ -114,6 +124,8 @@ class WorldRun:
 	var chapter_index: int = 0
 	var column: int = 0
 	var cleared_nodes: Array = []
+	## Story 032: owned relic ids in received order.
+	var relics: Array[String] = []
 
 	func luck(config: Dictionary = {}) -> float:
 		return float(config.get("luck_start", 0.0)) + float(config.get("luck_per_node", 1.0)) * float(nodes_cleared)
@@ -206,6 +218,11 @@ func _init() -> void:
 			for item: String in v.split(","):
 				if not item.strip_edges().is_empty():
 					_world_set.append(item.strip_edges())
+		elif arg.begins_with("--relic-policy="):
+			if RELIC_POLICIES.has(v.strip_edges()):
+				_relic_policy = v.strip_edges()
+			else:
+				print("--relic-policy: '%s' unknown, using %s (one of %s)" % [v, _relic_policy, str(RELIC_POLICIES)])
 		elif arg.begins_with("--trace="):
 			if v.is_valid_int():
 				_trace_n = int(v)
@@ -408,6 +425,8 @@ func _run(seed_value: int, char_id: String, policy: String, cleared_bosses: int,
 	for k: String in RUN_SUMS:
 		out[k] = 0.0
 	var stats_key: String = "%s|%s|%d" % [label, policy, ci]
+	var run_relics: Array[String] = []
+	run_relics.assign(_core.ov["relics"] as Array)
 	var lost: bool = false
 	var boss_won: bool = false
 	while not session.is_run_won() and session.column < session.map.size():
@@ -432,7 +451,8 @@ func _run(seed_value: int, char_id: String, policy: String, cleared_bosses: int,
 			continue
 		if kind == ChapterMapGen.KIND_TREASURE:
 			out["treasure"] = float(out["treasure"]) + 1.0
-			_apply_policy(session, policy, kind, out)
+			if not _take_relic(run_relics, policy, hash([seed_value, 0, session.column, int(node["node_index"]), RELIC_SEED_TAG]) & SEED_MASK):
+				_apply_policy(session, policy, kind, out)
 			_record(_kind_stats, stats_key, kind, kind, true, 0, 0.0, 0.0, false)
 			session.complete_node(session.hp, max_hp, kind, _reward_config, 0.0)
 			continue
@@ -446,6 +466,7 @@ func _run(seed_value: int, char_id: String, policy: String, cleared_bosses: int,
 		if _core.trace and not _trace_id.is_empty():
 			_trace_id = ""
 		_matches_seen += 1
+		_core.relic_ids = run_relics.duplicate()
 		var r: Dictionary = _core.play_match(m, character, session.deck_entries(), session.hp, match_seed, bot_rng)
 		out["matches"] = float(out["matches"]) + 1.0
 		out["hits"] = int(out["hits"]) + int(r["bhits"])
@@ -764,6 +785,8 @@ func _run_world_mode(seeds: int) -> void:
 		seeds, SimCore.MATCH_TIMEOUT_SEC, str(pols), str(_characters_run), CLEARED_BOSSES_MAIN, _region_pick, _node_overhead,
 		",".join(PackedStringArray(_world_set)) if not _world_set.is_empty() else "none"])
 	print(_core.describe())
+	print("relics: start=%s relic-policy=%s (pick = relic row over card row at treasure, rarest first; damage cap %.1f)" % [
+		",".join(PackedStringArray(_core.ov["relics"])) if not (_core.ov["relics"] as Array).is_empty() else "none", _relic_policy, _core.relic_config.relic_damage_mult_cap])
 	print("world: floors=%d choices=%d pool=%s columns=%d heal=%.2f final=%s tiers=%s" % [floors, int(w["choices_per_floor"]),
 		str(w["region_pool"]), (w["region_columns"] as Array).size(), _chapters.floor_heal_ratio(), str(_chapters.final_match()), str(w["floor_tiers"])])
 	for f: int in floors + 1:
@@ -879,6 +902,7 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 	for k: Variant in dk_keys:
 		dk_cells.append("%s=%d" % [k, int(deaths_kind[k])])
 	print("WORLD DEATHS BY FLOOR/KIND %s: %s" % [char_id, ", ".join(PackedStringArray(dk_cells))])
+	_world_relic_report(char_id, policy, runs)
 	var t_win: Array = WORLD_WIN_TARGET.get(char_id, [20.0, 40.0])
 	var win_ok: bool = win_pct >= float(t_win[0]) and win_pct <= float(t_win[1])
 	var min_mean: float = _mean(won_min)
@@ -895,6 +919,48 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 		"PASS" if decreasing else "FAIL (a floor with no deaths)", hits_won])
 
 
+# Story 032: one line per character/policy: relics owned at run end (mean), how many runs owned each relic
+# at the end and the relic triggers per run (the relics' `triggered` signals, summed over the run's matches).
+func _world_relic_report(char_id: String, policy: String, runs: Array[Dictionary]) -> void:
+	var owned: Dictionary = {}
+	var trig: Dictionary = {}
+	for r: Dictionary in runs:
+		for id: Variant in r["relics"] as Array:
+			owned[id] = int(owned.get(id, 0)) + 1
+		for id: Variant in (r["relic_trig"] as Dictionary).keys():
+			trig[id] = int(trig.get(id, 0)) + int(r["relic_trig"][id])
+	var n: float = maxf(float(runs.size()), 1.0)
+	var owned_cells: Array[String] = []
+	var trig_cells: Array[String] = []
+	for id: String in _core.relic_config.ids():
+		if owned.has(id):
+			owned_cells.append("%s=%d" % [id, int(owned[id])])
+		if trig.has(id):
+			trig_cells.append("%s=%.1f" % [id, float(trig[id]) / n])
+	print("WORLD RELICS %s/%s: relic-policy=%s mean relics at end %.2f | owned at end (runs): %s | triggers / run: %s" % [char_id, policy, _relic_policy,
+		_mean(_field(runs, "relic_n")), ", ".join(PackedStringArray(owned_cells)) if not owned_cells.is_empty() else "none",
+		", ".join(PackedStringArray(trig_cells)) if not trig_cells.is_empty() else "none"])
+
+
+# Story 032 --relic-policy=pick at a treasure node: rolls the relic row and adds the rarest offered relic
+# to [param owned]. False (the card row is used) with relic-policy none, the always_skip policy or an
+# empty relic row.
+func _take_relic(owned: Array[String], policy: String, relic_seed: int) -> bool:
+	if _relic_policy != "pick" or policy == "always_skip":
+		return false
+	var rng := RandomNumberGenerator.new()
+	rng.seed = relic_seed
+	var offer: Array[String] = RelicRoller.roll(RelicRoller.SOURCE_TREASURE, owned, rng, _core.relic_config)
+	if offer.is_empty():
+		return false
+	var best: String = offer[0]
+	for id: String in offer:
+		if RelicConfig.rarity_rank(str(_core.relic_config.get_relic(id)["rarity"])) > RelicConfig.rarity_rank(str(_core.relic_config.get_relic(best)["rarity"])):
+			best = id
+	owned.append(best)
+	return true
+
+
 func _field(runs: Array, key: String) -> Array:
 	var out: Array = []
 	for r: Variant in runs:
@@ -909,6 +975,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 	var w := WorldRun.new()
 	w.run_seed = seed_value
 	w.removal_tokens = int(_reward_config.get("starting_removals", 0))
+	w.relics.assign(_core.ov["relics"] as Array)
 	for id: Variant in character.get("starter_deck", []) as Array:
 		w.deck.append({"id": str(id), "level": 1})
 	var bot_rng := RandomNumberGenerator.new()
@@ -918,7 +985,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 	pick_rng.seed = hash([seed_value, "region_pick"]) & SEED_MASK
 	var out: Dictionary = {"won": false, "death_floor": -1, "death_kind": "", "floors_cleared": 0, "path": [], "hits": 0.0,
 		"matches": 0.0, "nodes": 0.0, "real_sec": 0.0, "sim_sec": 0.0, "timeouts": 0.0, "hp_in": [], "hp_out": [],
-		"rest_heal": 0.0, "rest_forge": 0.0, "treasure": 0.0, "tokens": 0.0, "zpicks": 0.0}
+		"rest_heal": 0.0, "rest_forge": 0.0, "treasure": 0.0, "tokens": 0.0, "zpicks": 0.0, "relic_trig": {}}
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", 2))
 	var path: Array[String] = []
 	var lost: bool = false
@@ -966,7 +1033,8 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				continue
 			if kind == ChapterMapGen.KIND_TREASURE:
 				out["treasure"] = float(out["treasure"]) + 1.0
-				_apply_policy(w, policy, kind, out)
+				if not _take_relic(w.relics, policy, hash([seed_value, f, col, int(node["node_index"]), RELIC_SEED_TAG]) & SEED_MASK):
+					_apply_policy(w, policy, kind, out)
 				w.nodes_cleared += 1
 				continue
 			var run_config: RunConfig = RunConfig.from_node(_chapters, w.region_id, str(node.get("match_id", "")), kind, seed_value, f)
@@ -979,8 +1047,11 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			if _core.trace and not _trace_id.is_empty():
 				_trace_id = ""
 			_matches_seen += 1
+			_core.relic_ids = w.relics.duplicate()
 			var r: Dictionary = _core.play_match(m, character, w.deck_entries(), w.hp, match_seed, bot_rng)
 			out["matches"] = float(out["matches"]) + 1.0
+			for rid: Variant in (r["relic_trig"] as Dictionary).keys():
+				out["relic_trig"][rid] = int((out["relic_trig"] as Dictionary).get(rid, 0)) + int(r["relic_trig"][rid])
 			out["hits"] = float(out["hits"]) + float(r["bhits"])
 			out["real_sec"] = float(out["real_sec"]) + float(r["real_sec"])
 			out["sim_sec"] = float(out["sim_sec"]) + float(r["sec"])
@@ -1005,6 +1076,8 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			w.hp = minf(before + maxf(_chapters.floor_heal_ratio(), 0.0) * max_hp, max_hp)
 	out["won"] = not lost and int(out["floors_cleared"]) == floors + 1
 	out["path"] = path
+	out["relics"] = w.relics.duplicate()
+	out["relic_n"] = w.relics.size()
 	out["luck"] = w.luck(_reward_config)
 	out["minutes"] = (float(out["real_sec"]) + _node_overhead * float(out["nodes"])) / 60.0
 	out["size"] = w.deck.size()

@@ -57,6 +57,11 @@ const FEATURED_BURN_DAMAGE_PER_TICK: float = 1.5
 ## CombatConfig.zone_numbers; a card's own seal_sec / thorn_sec / thorn_damage / thorn_fragile_stacks win),
 ## target_blocked_fn (Callable(cell) -> bool, the target mover's blockers, used by the leave-a-path rule).
 ## The result gains zone_kind ("" / "seal" / "thorns") and zone_cells (the cells actually placed).
+## Story 032 relics (player swings only, through SwingArbiter): options.relic_modifier Callable(cells: int,
+## damage: float) -> float is the ONE relic damage point, right after the featured multiplier: FULL order =
+## card damage x conditions -> Ghim -> Ran -> featured -> RELICS (capped product) -> execute -> passive ->
+## signature -> flat defense. options.zone_overrides (RelicRegistry.merge_overrides form) changes the
+## player's seal seconds (`seal_sec`) and thorn Ran stacks per entry (`thorn_ran`) AFTER the card's own number.
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -161,6 +166,9 @@ static func apply(
 		var featured_mult: float = float(featured.get("damage_mult", 1.0))
 		damage *= featured_mult
 		result["featured_mult"] = featured_mult
+	var relic_modifier: Variant = options.get("relic_modifier")
+	if typeof(relic_modifier) == TYPE_CALLABLE and (relic_modifier as Callable).is_valid():
+		damage = float((relic_modifier as Callable).call(cells.size(), damage))
 	var ratio: float = float(skill.get("execute_ratio", 0.0))
 	if ratio <= 0.0 and bool(skill.get("execute", false)):
 		ratio = float(options.get("execute_ratio", 0.0))
@@ -197,17 +205,22 @@ static func _form_zone(
 	effect: String, skill: Dictionary, options: Dictionary, result: Dictionary
 ) -> void:
 	var numbers: Dictionary = _zone_defaults(options)
+	var overrides: Dictionary = {}
+	if typeof(options.get("zone_overrides")) == TYPE_DICTIONARY:
+		overrides = options["zone_overrides"] as Dictionary
 	var placed: Array[Vector2i] = []
 	if effect == "seal":
 		var blocked: Callable = options.get("target_blocked_fn", Callable()) as Callable
 		placed = ZoneRules.cast_seal(
 			state, grid, status, target_side, cells,
-			float(skill.get("seal_sec", numbers["seal_sec"])), blocked)
+			maxf(RelicRegistry.apply_override(float(skill.get("seal_sec", numbers["seal_sec"])), overrides, "seal_sec"), 0.0),
+			blocked)
 	else:
 		placed = ZoneRules.cast_thorns(
 			status, target_side, cells, float(skill.get("thorn_sec", numbers["thorn_sec"])),
 			float(skill.get("thorn_damage", numbers["thorn_damage"])),
-			int(skill.get("thorn_fragile_stacks", numbers["thorn_fragile_stacks"])))
+			maxi(roundi(RelicRegistry.apply_override(
+				float(skill.get("thorn_fragile_stacks", numbers["thorn_fragile_stacks"])), overrides, "thorn_ran")), 0))
 	result["zone_kind"] = effect
 	result["zone_cells"] = placed
 

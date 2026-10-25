@@ -56,6 +56,8 @@ const TEXT_CELLS: String = "ui.hud.cells"
 
 var _config: HoldSlotsConfig
 var _slots: HoldSlots
+## Story 032: slot count imposed by the match (relic `hold_slots`, set by CombatView); 0 = the config's.
+var _slot_count_override: int = 0
 
 
 func _ready() -> void:
@@ -64,7 +66,16 @@ func _ready() -> void:
 		push_warning("HoldSlotsView: using built-in default config")
 		_config = HoldSlotsConfig.new()
 	# Story 024: the player's bag holds puzzle pieces, piece_slot_count slots (the boss keeps slot_count).
-	_slots = HoldSlots.create_piece_hand(_config.piece_slot_count)
+	_slots = HoldSlots.create_piece_hand(
+		_slot_count_override if _slot_count_override > 0 else _config.piece_slot_count)
+
+
+## Story 032: the match's bag size (CombatView applies the relics' `hold_slots`); works before and after
+## _ready (an existing bag is resized). [param count] <= 0 = keep the config's count.
+func set_slot_count_override(count: int) -> void:
+	_slot_count_override = maxi(count, 0)
+	if _slots != null and _slot_count_override > 0:
+		_slots.set_slot_count(_slot_count_override)
 
 
 func _process(_delta: float) -> void:

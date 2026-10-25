@@ -37,6 +37,12 @@ var player_damage_modifier: Callable = Callable()
 ## damage, and the LAST damage scale (after Ghim and the passive).
 var player_cells_modifier: Callable = Callable()
 var player_signature_modifier: Callable = Callable()
+## Story 032: the relics' ONE damage hook for the PLAYER only: Callable(cells: int, damage: float) -> float
+## (CombatView folds RelicRegistry.fold_damage, product capped), applied by CutEffects right after the
+## featured multiplier; invalid = none. And the relics' merged config overrides for the PLAYER's zone cards
+## (seal_sec / thorn_ran, applied after the card's own number; RelicRegistry.merge_overrides form).
+var player_relic_modifier: Callable = Callable()
+var player_zone_overrides: Dictionary = {}
 ## Story 023: flat defense of the BOSS (match key boss_defense, subtracted from the player's damage/push
 ## hits last, minimum 1; `pierce_defense` cards skip it) and the default execute threshold (combat.json
 ## execute_ratio). 0 = none; set by CombatView.
@@ -113,7 +119,9 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		player_cells_modifier if is_player else Callable(),
 		player_signature_modifier if is_player else Callable(),
 		{"target_defense": boss_defense, "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
-			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable())})
+			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
+			"relic_modifier": player_relic_modifier if is_player else Callable(),
+			"zone_overrides": player_zone_overrides if is_player else {}})
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	result["level"] = level

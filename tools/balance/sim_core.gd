@@ -112,8 +112,17 @@ var bot: Dictionary = DEFAULT_BOT.duplicate()
 var ov: Dictionary = {
 	"hp_mult": 1.0, "boss_hp_mult": 1.0, "think_mult": 1.0, "combo": -1.0, "step_mult": 1.0,
 	"drop_mult": 1.0, "boss_drop_mult": 1.0, "root": -1, "sig_cd": {}, "match_set": {}, "passive_set": {}, "hp_ids": [], "hp_ids_mult": 1.0,
-	"no_zone_cards": false, "card_set": {},
+	"no_zone_cards": false, "card_set": {}, "relics": [], "relic_set": [],
 }
+## Story 032: relic ids the player owns in the NEXT match (deck_sim sets it per run from its run state;
+## apply_args seeds it from --relics=). Instances, merged config overrides and the running cast's
+## cast_info live below; see [method _setup_relics].
+var relic_ids: Array[String] = []
+var relic_config: RelicConfig
+var relics: Array = []
+var relic_merged: Dictionary = {}
+var _cast_info: Dictionary = {}
+var _max_join: int = 2
 ## Loop step in REAL seconds.
 var dt: float = 0.05
 ## Probe knobs (hit_probe): keep the player at full HP, stop after this many sim seconds.
@@ -209,6 +218,35 @@ func load_configs() -> void:
 	arena_library = ArenaLibrary.load_from_file()
 	piece_lib = PieceLibrary.load_from_file()
 	characters = CharacterConfig.load_from_file()
+	_load_relic_config()
+
+
+# Story 032: relics.json in memory with the --relic-set overrides (relics.json is never written); drops
+# unknown --relics ids with a message and seeds relic_ids.
+func _load_relic_config() -> void:
+	relic_config = RelicConfig.load_from_file()
+	for item: Variant in ov["relic_set"] as Array:
+		var path: PackedStringArray = str(item[0]).split(".")
+		var entry: Dictionary = {}
+		for e: Dictionary in relic_config.relics:
+			if str(e["id"]) == path[0]:
+				entry = e
+		if entry.is_empty() or path.size() < 2:
+			print("--relic-set: '%s' unknown relic or no param, ignored" % str(item[0]))
+			continue
+		var node: Dictionary = entry["params"]
+		for i: int in range(1, path.size() - 1):
+			if typeof(node.get(path[i])) != TYPE_DICTIONARY:
+				node[path[i]] = {}
+			node = node[path[i]]
+		node[path[path.size() - 1]] = item[1]
+	relic_ids = []
+	for id: Variant in ov["relics"] as Array:
+		if relic_config.get_relic(str(id)).is_empty():
+			print("--relics: '%s' is not a relics.json id, ignored" % str(id))
+		elif not relic_ids.has(str(id)):
+			relic_ids.append(str(id))
+	ov["relics"] = relic_ids.duplicate()
 
 
 ## Story 027: the zone cards (SkillConfig.is_zone_card) in card_order order.
@@ -307,6 +345,17 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 						(ov["card_set"] as Dictionary)[cid] = {}
 					var raw2: String = kv.get_slice(":", 1).strip_edges()
 					(ov["card_set"] as Dictionary)[cid][path.get_slice(".", 1)] = float(raw2) if raw2.is_valid_float() else raw2
+		elif arg.begins_with("--relics="):
+			# Story 032: the player owns these relics in every match (deck_sim: from the start of the run).
+			for id: String in v.split(","):
+				if not id.strip_edges().is_empty():
+					(ov["relics"] as Array).append(id.strip_edges())
+		elif arg.begins_with("--relic-set="):
+			# Story 032: id.param:value or id.param.field:value in memory, e.g. an_don.mult:1.6,la_ban.formation_fade.mul:1.2
+			for kv: String in v.split(","):
+				if kv.contains(":") and kv.get_slice(":", 0).contains("."):
+					var raw3: String = kv.get_slice(":", 1).strip_edges()
+					(ov["relic_set"] as Array).append([kv.get_slice(":", 0).strip_edges(), float(raw3) if raw3.is_valid_float() else raw3])
 		elif arg.begins_with("--match-set="):
 			for kv: String in v.split(","):
 				if kv.contains(":"):
@@ -344,6 +393,10 @@ func describe() -> String:
 		o.append("no_zone_cards")
 	if not (ov["card_set"] as Dictionary).is_empty():
 		o.append("card_set=%s" % str(ov["card_set"]))
+	if not (ov["relics"] as Array).is_empty():
+		o.append("relics=%s" % ",".join(PackedStringArray(ov["relics"])))
+	if not (ov["relic_set"] as Array).is_empty():
+		o.append("relic_set=%s" % str(ov["relic_set"]))
 	return "bot: %s | overrides: %s" % [" ".join(parts), ", ".join(o) if not o.is_empty() else "none"]
 
 
@@ -440,6 +493,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 			combat.use_grid(g)
 	grid = combat.grid
 	_anchor_cache = {}
+	_relic_config_overrides()
 	var boss_max_hp: float = maxf(float(m.get("boss_max_hp", combat.enemy_max_hp)), 1.0)
 	var player_max_hp: float = maxf(float(character.get("max_hp", combat.player_max_hp)), 1.0)
 	state = CombatState.new(grid, player_max_hp, boss_max_hp, combat.player_start_cell, combat.enemy_start_cell)
@@ -452,6 +506,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	var chapter_id: String = str(m.get("chapter_id", ""))
 	var player_drops_config: FieldDropsConfig = drops_config.copy()
 	player_drops_config.piece_spawn_interval_sec *= float(ov["drop_mult"])
+	_apply_drop_overrides(player_drops_config)
 	var boss_drops_config: FieldDropsConfig = drops_config.copy()
 	var boss_drop_mult: float = maxf(float(m.get("boss_drop_interval_mult", 1.0)), 0.01) * float(ov["boss_drop_mult"])
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult
@@ -459,9 +514,13 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	drops = FieldDrops.new(player_drops_config, grid.player_cells(), match_seed)
 	drops.enable_pieces(piece_lib, chapter_id, grid, match_seed)
 	drops.place_start_pieces(state.player_cell)
-	bag = HoldSlots.create_piece_hand(hold_config.piece_slot_count)
+	var slots: int = hold_config.piece_slot_count
+	if relic_merged.has("hold_slots"):
+		slots = maxi(roundi(_relic_value(float(slots), "hold_slots")), 1)
+	bag = HoldSlots.create_piece_hand(slots)
 	bag.slot_cleared.connect(_on_bag_slot_cleared)
-	plan = CastPlan.new().init(combat.max_pieces_per_cast, combat.max_cast_cells)
+	_max_join = maxi(combat.max_pieces_per_cast, RelicRegistry.max_join_pieces(relics))
+	plan = CastPlan.new().init(_max_join, combat.max_cast_cells)
 	featured = arena_library.featured_for_match(m, grid)
 	state.cell_changed.connect(_on_cell_changed)
 	cooldowns = SkillCooldowns.new()
@@ -469,6 +528,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	focus = FocusController.new(cards)
 	if character.has("focus_max_sec"):
 		focus.set_max_sec_override(float(character["focus_max_sec"]))
+	if relic_merged.has("focus_sec"):
+		focus.set_max_sec_override(maxf(_relic_value(focus.get_max_sec(), "focus_sec"), 0.0))
 	actor = CutActor.new(cut_config, PLAYER)
 	flow = CutFlow.new(cards, cooldowns)
 	flow.level_of = Callable(self, "card_level")
@@ -518,6 +579,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		_slam.slam_landed.connect(_on_slam_landed)
 	_setup_passive(character)
 	_setup_signature(character)
+	_setup_relics()
 	t = 0.0
 	real = 0.0
 	boss_step_at = -1.0
@@ -540,12 +602,18 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		# damage, hit counts of non-zone casts started <= POST_SEAL_SEC after a seal (ps_) and of the others (o_).
 		"zone_casts": 0, "seals": 0, "seal_cells": 0, "thorns": 0, "thorn_cells": 0, "bthorn": 0, "bthorn_dmg": 0.0,
 		"pthorn": 0, "pthorn_dmg": 0.0, "ps_res": 0, "ps_hits": 0, "o_res": 0, "o_hits": 0,
+		# Story 032: relic `triggered` signals by relic id.
+		"relic_trig": {},
 	}
 	_tr("match start %s boss_hp=%.0f player_hp=%.0f player=%s boss=%s player_cd=%.2f featured=%s" % [
 		str(m.get("id", "")), boss_max_hp, state.player_hp, str(state.player_cell), str(state.enemy_cell), player_cd, str(not featured.is_empty())])
 
 
 func _teardown() -> void:
+	for r: Variant in relics:
+		(r as BaseRelic).teardown()
+	relics = []
+	relic_merged = {}
 	if trait_host != null:
 		trait_host.teardown_all()
 	if passive != null:
@@ -652,7 +720,7 @@ func _setup_signature(character: Dictionary) -> void:
 	if signature == null:
 		return
 	var enemy_cells: Array[Vector2i] = grid.enemy_cells()
-	formation = FormationMap.new().init(enemy_cells, combat.formation_fade_for(enemy_cells.size()))
+	formation = FormationMap.new().init(enemy_cells, maxf(_relic_value(combat.formation_fade_for(enemy_cells.size()), "formation_fade"), 0.0))
 	var params: Variant = dict.get("params", {})
 	signature.setup({"state": state, "grid": grid, "boss": boss, "status": status, "skill_config": cards,
 		"cut_config": cut_config, "cooldowns": cooldowns, "formation": formation},
@@ -660,9 +728,124 @@ func _setup_signature(character: Dictionary) -> void:
 	_sig_id = id
 	var cooldown: Variant = dict.get("cooldown_sec", 0.0)
 	_sig_cd_sec = maxf(float(cooldown), 0.0) if (typeof(cooldown) == TYPE_FLOAT or typeof(cooldown) == TYPE_INT) else 0.0
+	_sig_cd_sec = maxf(_relic_value(_sig_cd_sec, "signature_cooldown"), 0.0)
 	arbiter.player_cells_modifier = Callable(signature, "modify_cells")
 	arbiter.player_signature_modifier = Callable(self, "_sig_mod_wrap")
 	mover.cooldown_scale = Callable(signature, "step_cooldown_scale")
+
+
+# ---------------------------------------------------------------- Story 032 relics (CombatView._setup_relics port)
+
+
+# Value of config [param key] after the relics' merged overrides (RelicRegistry.apply_override).
+func _relic_value(base_value: float, key: String) -> float:
+	return RelicRegistry.apply_override(base_value, relic_merged, key) if not relic_merged.is_empty() else base_value
+
+
+# Mirrors the first half of CombatView._setup_relics + _apply_status_overrides: instantiates relic_ids
+# (RelicRegistry.instantiate with the --relic-set config), merges their config overrides and writes the
+# status keys (burn_max_stacks, han_stacks -> frost_stacks_to_burst, han_damage -> frost_burst_damage) into
+# this match's CombatConfig copy BEFORE configure_status. The other keys are applied where their object is
+# built, as CombatView does: piece_* / start_pieces (_apply_drop_overrides), hold_slots (bag), focus_sec
+# (FocusController), formation_fade (FormationMap), signature_cooldown (_sig_cd_sec); seal_sec / thorn_ran
+# reach CutEffects through arbiter.player_zone_overrides (after the card's own value).
+func _relic_config_overrides() -> void:
+	relics = []
+	relic_merged = {}
+	for id: String in relic_ids:
+		var r: BaseRelic = RelicRegistry.instantiate(id, relic_config)
+		if r != null:
+			relics.append(r)
+	relic_merged = RelicRegistry.merge_overrides(relics)
+	if relic_merged.is_empty():
+		return
+	combat.burn_max_stacks = maxi(roundi(_relic_value(float(combat.burn_max_stacks), "burn_max_stacks")), 1)
+	combat.frost_stacks_to_burst = maxi(roundi(_relic_value(float(combat.frost_stacks_to_burst), "han_stacks")), 1)
+	combat.frost_burst_damage = maxf(_relic_value(combat.frost_burst_damage, "han_damage"), 0.0)
+
+
+# Mirrors CombatView._apply_drop_overrides (a non-positive result keeps the config value).
+func _apply_drop_overrides(cfg: FieldDropsConfig) -> void:
+	if relic_merged.is_empty():
+		return
+	var fresh: float = _relic_value(cfg.piece_freshness_sec, "piece_freshness_sec")
+	if fresh > 0.0:
+		cfg.piece_freshness_sec = fresh
+	cfg.start_pieces = maxi(roundi(_relic_value(float(cfg.start_pieces), "start_pieces")), 0)
+	var interval: float = _relic_value(cfg.piece_spawn_interval_sec, "piece_spawn_interval")
+	if interval > 0.0:
+		cfg.piece_spawn_interval_sec = interval
+
+
+# Mirrors the second half of CombatView._setup_relics + _wire_relics: the real ctx (heal / hurt the
+# player through CombatState, give a piece to the bag), arbiter.player_zone_overrides, the ONE damage
+# point (arbiter.player_relic_modifier, right after the featured multiplier) and the ONE windup point
+# (CutActor.cast_time_modifier); the triggered signals are counted.
+func _setup_relics() -> void:
+	_cast_info = {}
+	arbiter.player_zone_overrides = relic_merged
+	if relics.is_empty():
+		return
+	var ctx: Dictionary = {
+		"heal_player": Callable(self, "_relic_heal_player"),
+		"damage_player": Callable(self, "_relic_damage_player"),
+		"give_piece": Callable(self, "_relic_give_piece"),
+	}
+	for r: Variant in relics:
+		var relic: BaseRelic = r as BaseRelic
+		relic.setup(ctx, relic.get_params())
+		relic.triggered.connect(_on_relic_triggered)
+		relic.on_match_start()
+	arbiter.player_relic_modifier = Callable(self, "_relic_damage")
+	actor.cast_time_modifier = Callable(self, "_relic_cast_time")
+
+
+func _relic_damage(cells: int, damage: float) -> float:
+	var info: Dictionary = _cast_info.duplicate()
+	info["cells"] = cells
+	return RelicRegistry.fold_damage(relics, info, damage, relic_config)
+
+
+func _relic_cast_time(cells: int, sec: float) -> float:
+	var info: Dictionary = _cast_info.duplicate()
+	info["cells"] = cells
+	return RelicRegistry.fold_cast_time(relics, info, sec)
+
+
+func _relic_heal_player(amount: float) -> void:
+	if amount > 0.0 and not state.is_player_dead():
+		state.set_player_hp(state.player_hp + amount)
+
+
+func _relic_damage_player(amount: float) -> void:
+	state.damage_player(amount)
+
+
+# phan_don's give_piece (CombatView._relic_give_piece): one piece into the first free bag slot.
+func _relic_give_piece(shape: String) -> bool:
+	if bag.is_full() or state.is_player_dead():
+		return false
+	var piece: Piece = piece_lib.make_piece(shape)
+	if piece == null:
+		return false
+	var p := FieldPoint.new()
+	p.label = piece.shape_id
+	p.cell = state.player_cell
+	p.piece = piece
+	return bag.place_in_first_free(p) >= 0
+
+
+func _on_relic_triggered(relic_id: String) -> void:
+	var trig: Dictionary = ms["relic_trig"]
+	trig[relic_id] = int(trig.get(relic_id, 0)) + 1
+
+
+# cast_info (CombatView._make_cast_info): the plan's pieces, cells, joined, featured.
+func _make_cast_info(skill_id: String, cells: int, joined: bool, featured_on: bool) -> Dictionary:
+	var shapes: Array[String] = []
+	for p: Piece in plan.pieces():
+		shapes.append(p.shape_id)
+	return {"pieces": shapes, "cells": cells, "joined": joined, "featured": featured_on, "card_id": skill_id, "hit": false}
 
 
 ## The player's piece bag (TraitHost hold_getter).
@@ -885,6 +1068,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		_sig_pending_extra = 0.0
 		trait_host.on_player_swing_resolved(result)
 		trait_host.on_boss_damaged(damage)
+		_relics_on_cast_landed(result)
 		ms["dealt"] = float(ms["dealt"]) + damage
 		ms["resolved"] = int(ms["resolved"]) + 1
 		if bool(result["hit"]):
@@ -899,6 +1083,23 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 			ms["bhits"] = int(ms["bhits"]) + 1
 			ms["shits"] = int(ms["shits"]) + 1
 			ms["bdmg"] = float(ms["bdmg"]) + damage
+
+
+# Mirrors CombatView._relics_on_cast_landed (an_chu flashes on a featured hit).
+func _relics_on_cast_landed(result: Dictionary) -> void:
+	if relics.is_empty():
+		_cast_info = {}
+		return
+	var info: Dictionary = _cast_info.duplicate()
+	info["hit"] = bool(result.get("hit", false))
+	info["cells"] = (result.get("cells", []) as Array).size()
+	_cast_info = {}
+	if bool(result.get("featured", false)):
+		for r: Variant in relics:
+			if (r as BaseRelic).featured_mult_override() > 0.0 and (r as BaseRelic).has_method("flash"):
+				(r as BaseRelic).call("flash")
+	for r: Variant in relics:
+		(r as BaseRelic).on_cast_landed(info)
 
 
 # Story 027 counters of one resolved player swing, and the zone follow-up trigger.
@@ -961,6 +1162,8 @@ func _on_swing_interrupted(victim_side: int, _cells: Array[Vector2i], _skill_id:
 	if victim_side == ENEMY:
 		ms["interrupts"] = int(ms["interrupts"]) + 1
 		learning.on_player_interrupted_boss()
+		for r: Variant in relics:
+			(r as BaseRelic).on_interrupt_by_player()
 
 
 func _on_boss_swing_started(cells: Array[Vector2i], skill_id: String, duration: float) -> void:
@@ -1012,6 +1215,10 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 	var bonus: Dictionary = {}
 	if not featured.is_empty() and plan.is_featured(featured["cells"] as Array[Vector2i]):
 		bonus = (featured["bonus"] as Dictionary).duplicate(true)
+	var fm: float = RelicRegistry.featured_mult_override(relics)
+	if fm > 0.0 and not bonus.is_empty():
+		bonus["damage_mult"] = fm
+	_cast_info = _make_cast_info(skill_id, cells.size(), plan.pieces().size() >= 2, not bonus.is_empty())
 	plan.clear()
 	_phase = Phase.IDLE
 	var level: int = card_level(skill_id)
@@ -1267,7 +1474,7 @@ func _confirm_placement() -> void:
 	_consuming = true
 	bag.remove(slot)
 	_consuming = false
-	plan.init(combat.max_pieces_per_cast, combat.max_cast_cells)
+	plan.init(_max_join, combat.max_cast_cells)
 	var cells: Array[Vector2i] = []
 	cells.assign(best["cells"])
 	plan.add_piece(slot, best["piece"] as Piece, cells)
@@ -1317,6 +1524,13 @@ func _join_piece() -> void:
 		labels.append(p.shape_id)
 	flow.update_cut(labels, plan.cells(), combat.join_extra_sec)
 	ms["joins"] = int(ms["joins"]) + 1
+	if not relics.is_empty():
+		var jinfo: Dictionary = _make_cast_info("", plan.total_cells(), true, not featured.is_empty() and plan.is_featured(featured["cells"] as Array[Vector2i]))
+		for r: Variant in relics:
+			(r as BaseRelic).on_join(jinfo)
+		# tam_hop: another join attempt (greedy, same rule) while the plan has room.
+		if not plan.is_full():
+			_phase_left = float(bot["join_sec"])
 	_tr("PLAYER joined %s -> %d cells featured=%s" % [(best["piece"] as Piece).shape_id, plan.total_cells(), str(not featured.is_empty() and plan.is_featured(featured["cells"] as Array[Vector2i]))])
 
 

@@ -170,6 +170,11 @@ const JOIN_SLOT_2: int = 1
 var _mode: String = ""
 
 
+## Story 032 demos: the bag size of relic_bag4 and the relics relic_flash shows (first one flashing).
+const RELIC_BAG4_SLOTS: int = 4
+const RELIC_FLASH_IDS: Array[String] = ["an_don", "chi_khau", "tui_rong", "huyet_an"]
+
+
 func _enter_tree() -> void:
 	_mode = _parse_mode()
 	# Runs before any sibling _ready, so the grid and drops are created with these.
@@ -200,6 +205,22 @@ func _ready() -> void:
 	match _mode:
 		"board":
 			pass
+		"relic_bag4":
+			# Story 032: the 4-slot bag (tui_rong) as CombatView sizes it; intro skipped for the capture.
+			var view := get_node(hold_slots_view_path) as HoldSlotsView
+			if view.has_method("set_slot_count_override"):
+				view.call("set_slot_count_override", RELIC_BAG4_SLOTS)
+			_skip_intro()
+		"relic_flash":
+			# Story 032: the in-match relic strip with one icon mid-flash (as on a `triggered`).
+			_skip_intro()
+			for hud: Node in get_tree().root.find_children("*", "CutHudView", true, false):
+				var cut_hud := hud as CutHudView
+				if cut_hud.get_relic_strip().get_relics().is_empty():
+					cut_hud.debug_show_relics(RELIC_FLASH_IDS)
+				cut_hud.call_deferred("_sync_relic_strip")
+				cut_hud.get_relic_strip().set_relics(RELIC_FLASH_IDS)
+				cut_hud.get_relic_strip().flash(RELIC_FLASH_IDS[0])
 		"cooldown":
 			if not combat.try_step_player(Vector2i.RIGHT):
 				push_warning("DemoArgs: demo cooldown step failed")

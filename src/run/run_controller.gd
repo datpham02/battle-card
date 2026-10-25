@@ -67,6 +67,9 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 ## combat.json player (old behaviour). Becomes match_params["character"]; its starter_deck is the
 ## deck when [member deck] is empty. Set by GameFlow BEFORE add_child.
 @export var character: Dictionary = {}
+## Story 032: relic ids the run owns (received order); becomes match_params["relics"]. Empty = ask the
+## parent (GameFlow.get_relics) when it has one, else no relics. Set BEFORE add_child (optional).
+@export var relics: Array[String] = []
 ## Story 019: while true the INTRO timer does not tick (the battle stays frozen and drawn).
 ## GameFlow sets it before add_child on a resumed run whose saved card offer is still open and
 ## clears it when the offer is resolved. No effect outside INTRO.
@@ -268,6 +271,16 @@ func _begin_playing() -> void:
 	match_started.emit(_state.get_match_index(), _state.get_hp_at_match_start())
 
 
+# Story 032: [member relics], else the parent run's relics (GameFlow.get_relics), else none.
+func _relic_ids() -> Array[String]:
+	var ids: Array[String] = []
+	if not relics.is_empty():
+		ids.assign(relics)
+	elif get_parent() != null and get_parent().has_method("get_relics"):
+		ids.assign(get_parent().call("get_relics") as Array)
+	return ids
+
+
 func _spawn_battle() -> void:
 	_free_battle()
 	_clear_pause()
@@ -283,6 +296,9 @@ func _spawn_battle() -> void:
 	params["chapter_id"] = chapter_id
 	if not character.is_empty():
 		params["character"] = character.duplicate(true)
+	var relic_ids: Array[String] = _relic_ids()
+	if not relic_ids.is_empty():
+		params["relics"] = relic_ids
 	if not deck_entries.is_empty():
 		params["deck"] = deck_entries.duplicate(true)
 	elif not deck.is_empty():

@@ -25,6 +25,10 @@ var duration_mult: float = 1.0:
 ## Story 018: optional Callable(cells: int, duration: float) -> float applied to the windup in
 ## [method begin_swing] (the player's passive); invalid = none. Queued swings are not touched.
 var duration_modifier: Callable = Callable()
+## Story 032: Callable(cells: int, sec: float) -> float applied LAST to the windup of a begun swing (the
+## player's relics, RelicRegistry.fold_cast_time; called exactly once per begun swing, never for a refused
+## one). The result is floored at 0 (a 0 s windup resolves on the next tick). Invalid = none.
+var cast_time_modifier: Callable = Callable()
 
 var _config: CutConfig
 var _swinging: bool = false
@@ -69,6 +73,8 @@ func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool
 		duration = float(duration_modifier.call(cells.size(), duration))
 	if duration_override > 0.0:
 		duration = duration_override
+	if cast_time_modifier.is_valid():
+		duration = maxf(float(cast_time_modifier.call(cells.size(), duration)), 0.0)
 	_featured_bonus = featured_bonus.duplicate(true)
 	_start(cells, skill_id, target_is_enemy, duration, level)
 	return true

@@ -144,7 +144,8 @@ const SIGNATURE_BANNER_HEIGHT_RATIO: float = 0.3
 ## 155 x 155 px >= 96 px. The header strip (hero, HP, deck, tokens, luck) sits between the title
 ## band and the columns; the restart notice is a band across the middle of the column area.
 const MAP_COLUMNS_TOP_RATIO: float = 0.21
-const MAP_COLUMNS_BOTTOM_RATIO: float = 0.96
+## Story 032: 0.96 -> 0.86, the band under the columns holds the relic strip.
+const MAP_COLUMNS_BOTTOM_RATIO: float = 0.86
 const MAP_COLUMN_GAP_RATIO: float = 0.015
 const MAP_NODE_GAP_RATIO: float = 0.02
 const MAP_MAX_NODES: int = 3
@@ -170,11 +171,12 @@ const WORLD_STRIP_TOP_RATIO: float = 0.145
 const WORLD_STRIP_BOTTOM_RATIO: float = 0.245
 const WORLD_STRIP_GAP_RATIO: float = 0.008
 const WORLD_CARDS_TOP_RATIO: float = 0.28
-const WORLD_CARDS_BOTTOM_RATIO: float = 0.8
+## Story 032: cards and the enter button moved up (were 0.8 / 0.83-0.97) to free the relic strip band.
+const WORLD_CARDS_BOTTOM_RATIO: float = 0.71
 const WORLD_CARD_WIDTH_RATIO: float = 0.44
 const WORLD_CARD_RAISE_RATIO: float = 0.025
-const WORLD_ENTER_TOP_RATIO: float = 0.83
-const WORLD_ENTER_BOTTOM_RATIO: float = 0.97
+const WORLD_ENTER_TOP_RATIO: float = 0.735
+const WORLD_ENTER_BOTTOM_RATIO: float = 0.855
 const WORLD_ENTER_WIDTH_RATIO: float = 0.3
 
 
@@ -866,3 +868,107 @@ static func world_enter_button_rect(viewport_size: Vector2, card: Rect2) -> Rect
 	var top: float = viewport_size.y * WORLD_ENTER_TOP_RATIO
 	var left: float = clampf(card.get_center().x - width * 0.5, margin, viewport_size.x - margin - width)
 	return Rect2(left, top, width, viewport_size.y * WORLD_ENTER_BOTTOM_RATIO - top)
+
+
+# --- Story 032: relic strips and the treasure screen with two rows -----------------------------
+
+## Relic strip band (map, world map, pause): top / bottom as shares of the height (0.105 * 720 = 76 px,
+## room for a 72 px icon, >= 64 px touch target).
+const RELIC_STRIP_TOP_RATIO: float = 0.875
+const RELIC_STRIP_BOTTOM_RATIO: float = 0.98
+## Treasure screen with a relic row: label bands, the card row, the relic row and the bottom buttons.
+const REWARD_DUAL_CARD_LABEL_TOP_RATIO: float = 0.125
+const REWARD_DUAL_CARDS_TOP_RATIO: float = 0.175
+const REWARD_DUAL_CARDS_BOTTOM_RATIO: float = 0.53
+const REWARD_DUAL_RELIC_LABEL_TOP_RATIO: float = 0.54
+const REWARD_DUAL_RELICS_TOP_RATIO: float = 0.59
+const REWARD_DUAL_RELICS_BOTTOM_RATIO: float = 0.865
+const REWARD_DUAL_LABEL_HEIGHT_RATIO: float = 0.045
+const REWARD_DUAL_BUTTON_TOP_RATIO: float = 0.885
+const REWARD_DUAL_BUTTON_WIDTH_RATIO: float = 0.18
+## In-match relic strip (display only): in the HUD band between the player's name (left share) and the
+## featured-shape label (room left of the featured icon, share of width); icon edge and top pad in px.
+const HUD_RELIC_LEFT_RATIO: float = 0.225
+const HUD_RELIC_LABEL_ROOM_RATIO: float = 0.1
+const HUD_RELIC_ICON: float = 26.0
+const HUD_RELIC_TOP_PAD: float = 6.0
+
+
+## Story 032: the relic strip band under the chapter map / world map / pause panel, margin to margin.
+static func relic_strip_rect(viewport_size: Vector2) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var top: float = viewport_size.y * RELIC_STRIP_TOP_RATIO
+	return Rect2(margin, top, viewport_size.x - margin * 2.0, viewport_size.y * RELIC_STRIP_BOTTOM_RATIO - top)
+
+
+## Story 032: the in-match display-only relic strip (top edge, HUD band, far from the d-pad and the bag).
+static func hud_relic_strip_rect(viewport_size: Vector2) -> Rect2:
+	var hud: Rect2 = hud_rect(viewport_size)
+	var left: float = viewport_size.x * HUD_RELIC_LEFT_RATIO
+	var right: float = featured_icon_rect(viewport_size).position.x - viewport_size.x * HUD_RELIC_LABEL_ROOM_RATIO
+	return Rect2(left, hud.position.y + HUD_RELIC_TOP_PAD, maxf(right - left, 0.0), HUD_RELIC_ICON)
+
+
+## Story 032, treasure screen with a relic row: "Bỏ qua" at the bottom-left.
+static func reward_dual_skip_rect(viewport_size: Vector2) -> Rect2:
+	var size := Vector2(viewport_size.x * REWARD_DUAL_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
+	return Rect2(Vector2(viewport_size.x * MARGIN_RATIO, viewport_size.y * REWARD_DUAL_BUTTON_TOP_RATIO), size)
+
+
+## Story 032, treasure screen with a relic row: "Xác nhận" (relic pick) at the bottom-right.
+static func reward_dual_confirm_rect(viewport_size: Vector2) -> Rect2:
+	var size := Vector2(viewport_size.x * REWARD_DUAL_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
+	return Rect2(Vector2(viewport_size.x * (1.0 - MARGIN_RATIO) - size.x, viewport_size.y * REWARD_DUAL_BUTTON_TOP_RATIO), size)
+
+
+## Story 032: the owned-relic strip of the reward screen. With a relic row ([param dual]) it sits between
+## "Bỏ qua" and "Xác nhận"; on the plain card offer it fills the left of the centred skip button.
+static func reward_relic_strip_rect(viewport_size: Vector2, dual: bool) -> Rect2:
+	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
+	if dual:
+		var skip: Rect2 = reward_dual_skip_rect(viewport_size)
+		var confirm: Rect2 = reward_dual_confirm_rect(viewport_size)
+		return Rect2(skip.end.x + gap, skip.position.y, maxf(confirm.position.x - gap - skip.end.x - gap, 0.0), skip.size.y)
+	var centred: Rect2 = reward_skip_button_rect(viewport_size)
+	var left: float = viewport_size.x * MARGIN_RATIO
+	return Rect2(left, centred.position.y, maxf(centred.position.x - gap - left, 0.0), centred.size.y)
+
+
+## Story 032: label band above the card row ("CHỌN MỘT LÁ").
+static func reward_dual_cards_label_rect(viewport_size: Vector2) -> Rect2:
+	return Rect2(0.0, viewport_size.y * REWARD_DUAL_CARD_LABEL_TOP_RATIO, viewport_size.x, viewport_size.y * REWARD_DUAL_LABEL_HEIGHT_RATIO)
+
+
+## Story 032: label band above the relic row ("HOẶC MỘT BẢO VẬT").
+static func reward_dual_relics_label_rect(viewport_size: Vector2) -> Rect2:
+	return Rect2(0.0, viewport_size.y * REWARD_DUAL_RELIC_LABEL_TOP_RATIO, viewport_size.x, viewport_size.y * REWARD_DUAL_LABEL_HEIGHT_RATIO)
+
+
+## Story 032: the card row of the treasure screen with a relic row (plus room for the "Bỏ 1 lá" slot).
+static func reward_dual_card_rects(viewport_size: Vector2, count: int, with_remove: bool = false) -> Array[Rect2]:
+	return _reward_row(viewport_size, count, REWARD_DUAL_CARDS_TOP_RATIO, REWARD_DUAL_CARDS_BOTTOM_RATIO,
+		REWARD_REMOVE_SLOT_WIDTH_RATIO if with_remove else 0.0)
+
+
+## Story 032: the 3 large relic cards of the treasure screen, centred.
+static func reward_dual_relic_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	return _reward_row(viewport_size, count, REWARD_DUAL_RELICS_TOP_RATIO, REWARD_DUAL_RELICS_BOTTOM_RATIO, 0.0)
+
+
+# Story 032: [param count] centred cards between [param top_ratio] and [param bottom_ratio] of the height
+# (widths as reward_card_rects); [param extra_ratio] > 0 reserves a narrower slot on the right.
+static func _reward_row(viewport_size: Vector2, count: int, top_ratio: float, bottom_ratio: float, extra_ratio: float) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
+	var extra: float = viewport_size.x * extra_ratio + gap if extra_ratio > 0.0 else 0.0
+	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1) - extra) / count
+	var width: float = maxf(minf(shared, viewport_size.x * REWARD_CARD_MAX_WIDTH_RATIO), 0.0)
+	var top: float = viewport_size.y * top_ratio
+	var height: float = viewport_size.y * bottom_ratio - top
+	var left: float = (viewport_size.x - (width * count + gap * (count - 1) + extra)) * 0.5
+	for i: int in count:
+		rects.append(Rect2(left + (width + gap) * i, top, width, height))
+	return rects

@@ -356,3 +356,48 @@ ui.world.final_clear,Ấn Đài — hồi %d máu,Seal Altar — healed %d HP
 region.ch1.desc,Rừng thưa nhiều lối né; goblin và bầy sói.,Open woods with room to dodge; goblins and wolf packs.
 region.ch2.desc,"Hầm tối chật hẹp; xương khô, xác sống, dơi và kết giới.","Cramped dark halls; skeletons, zombies, bats and seal wards."
 region.ch3.desc,"Tháp băng giá; sói tuyết, ma trơi, pháo ngòi và trận gai.","A frozen tower; snow wolves, wisps, fuse cannons and thorn fields."
+ui.relic.title,BẢO VẬT,RELICS
+ui.relic.rarity.common,Thường,Common
+ui.relic.rarity.rare,Hiếm,Rare
+ui.relic.rarity.epic,Sử thi,Epic
+ui.relic.rarity.boss,Boss,Boss
+ui.relic.negative,Đánh đổi,Trade-off
+ui.relic.pick_one,CHỌN MỘT BẢO VẬT,CHOOSE A RELIC
+ui.relic.confirm,Xác nhận,Confirm
+ui.relic.skip,Bỏ qua,Skip
+ui.relic.empty,Chưa có bảo vật,No relics yet
+ui.relic.tap_close,Chạm ra ngoài để đóng,Tap outside to close
+ui.relic.cards_row,CHỌN MỘT LÁ,CHOOSE A CARD
+ui.relic.relics_row,HOẶC MỘT BẢO VẬT,OR A RELIC
+relic.an_don.name,Ấn Đơn,Lone Seal
+relic.an_don.desc,Đòn chỉ gồm 1 mảnh Ô đơn: sát thương ×2.,A cast of just 1 Single piece deals ×2 damage.
+relic.chi_khau.name,Chỉ Khâu,Stitch Thread
+relic.chi_khau.desc,Mỗi đòn ghép mảnh hồi 3 máu (tối đa 15 mỗi trận).,Every joined cast heals 3 HP (up to 15 per match).
+relic.phong_an.name,Phong Ấn Dài,Long Seal
+relic.phong_an.desc,Kết giới của bạn kéo dài thêm 1 giây.,Your seals last 1 s longer.
+relic.gai_ran.name,Gai Rạn,Crack Thorn
+relic.gai_ran.desc,Địch bước vào ô gai của bạn nhận thêm 1 tầng Rạn.,Foes stepping into your thorn cells get 1 more Fragile stack.
+relic.manh_tuoi.name,Mảnh Tươi,Fresh Shard
+relic.manh_tuoi.desc,Mảnh trên sân tươi lâu hơn 4 giây.,Pieces on the field stay fresh 4 s longer.
+relic.dinh_tam.name,Định Tâm,Steady Mind
+relic.dinh_tam.desc,Tập trung kéo dài thêm 1 giây.,Focus lasts 1 s longer.
+relic.la_ban.name,La Bàn Trận Đồ,Sigil Compass
+relic.la_ban.desc,Ô trận đồ phai chậm hơn 30 %.,Formation cells fade 30 % slower.
+relic.tam_huong.name,Tâm Hương,Heart Incense
+relic.tam_huong.desc,Tuyệt kỹ hồi nhanh hơn 20 %.,Your signature recharges 20 % faster.
+relic.tui_rong.name,Túi Rộng,Wide Pouch
+relic.tui_rong.desc,Túi mảnh có thêm 1 ô.,The piece bag gets 1 more slot.
+relic.dau_than.name,Dầu Thần,Divine Oil
+relic.dau_than.desc,Cháy chồng thêm 1 tầng.,Burn stacks 1 level higher.
+relic.khoi_the.name,Khởi Thế,Opening Stance
+relic.khoi_the.desc,Phép đầu tiên mỗi trận không có thời gian niệm.,The first spell of each match has no windup.
+relic.phan_don.name,Phản Đòn,Riposte
+relic.phan_don.desc,Phá phép boss: nhận ngay 1 mảnh Ô đơn vào túi (nếu còn chỗ).,Interrupt a boss spell: gain 1 Single piece in your bag at once (if there is room).
+relic.han_ky.name,Hàn Khí,Frost Vapor
+relic.han_ky.desc,"Hàn nổ ngay ở 2 tầng, nhưng nổ yếu hơn 33 %.","Frost bursts at 2 stacks, but the burst is 33 % weaker."
+relic.huyet_an.name,Huyết Ấn,Blood Seal
+relic.huyet_an.desc,Đòn từ 5 ô trở lên +30 % sát thương; mỗi đòn của bạn mất 2 máu.,Casts of 5 or more cells deal +30 % damage; every cast costs you 2 HP.
+relic.an_chu.name,Ấn Chủ,Master Seal
+relic.an_chu.desc,"Thưởng hình chủ đạo ×2 thay vì ×1,5.",The featured-shape bonus is ×2 instead of ×1.5.
+relic.tam_hop.name,Tam Hợp,Triple Join
+relic.tam_hop.desc,"Được ghép mảnh thứ ba vào đòn (+1,5 s chọn lá nữa).",You may join a third piece into a cast (+1.5 s more to pick a card).

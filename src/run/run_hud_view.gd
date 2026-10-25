@@ -163,7 +163,13 @@ var _flow: GameFlow = null
 var _controller: RunController = null
 
 
+## Story 032: owned-relic strip under the pause panel (tap an icon for its card).
+var _strip: RelicStrip = null
+
+
 func _ready() -> void:
+	_strip = RelicStrip.new()
+	add_child(_strip)
 	_flow = get_node_or_null(flow_path) as GameFlow
 	if _flow != null:
 		_flow.controller_changed.connect(_on_controller_changed)
@@ -173,6 +179,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	_sync_strip()
 	queue_redraw()
 
 
@@ -232,6 +239,8 @@ func _input_paused(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag):
 		return
 	get_viewport().set_input_as_handled()
+	if event.device != InputEvent.DEVICE_ID_EMULATION and _strip.visible and _strip.handle_input(event):
+		return
 	var pos: Vector2 = _press_position(event)
 	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
@@ -645,3 +654,14 @@ func _draw_buttons(vp: Vector2) -> void:
 	for i: int in rects.size():
 		var style: int = UiButtons.Style.PRIMARY if i == 0 else alt_style
 		UiButtons.draw_button(self, rects[i], tr(labels[i]), style, UiButtons.is_pressed_at(self, rects[i]), true, font_size)
+
+
+# Story 032: the relic strip shows while this screen is up (nothing covering it); its card closes otherwise.
+func _sync_strip() -> void:
+	var shown: bool = _has_controller() and _controller.is_paused() and get_node_or_null(^"../GameFlow") is GameFlow
+	if not shown:
+		_strip.close_tooltip()
+	_strip.visible = shown
+	if shown:
+		_strip.area = ScreenLayout.relic_strip_rect(get_viewport_rect().size)
+		_strip.set_relics((get_node_or_null(^"../GameFlow") as GameFlow).get_relics())

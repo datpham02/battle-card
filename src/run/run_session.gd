@@ -80,6 +80,11 @@ var run_seed: int = 0
 var elapsed_sec: float = 0.0
 ## Card ids offered after the last won node and not yet picked / skipped; [] when none.
 var pending_reward: Array[String] = []
+## Story 032: relic ids owned, in the order received (unique; RelicRegistry ids).
+var relics: Array[String] = []
+## Story 032: relic ids offered on the open treasure screen (the second row next to [member pending_reward]);
+## [] when none. Picking a card or a relic, or skipping, closes BOTH rows.
+var pending_relic_offer: Array[String] = []
 ## Revive tokens (from chapters defaults; reserved, unused).
 var revives: int = 0
 ## True when this session came from a pre-v5 save: the flow must start a fresh world run for
@@ -395,6 +400,48 @@ func has_pending_reward() -> bool:
 	return not pending_reward.is_empty()
 
 
+## Story 032: adds relic [param id] (received order). False (no change) for a duplicate or an id unknown
+## to RelicRegistry (warning).
+func add_relic(id: String) -> bool:
+	if id.is_empty() or relics.has(id):
+		return false
+	if not _relic_known(id):
+		push_warning("RunSession: unknown relic '%s' not added" % id)
+		return false
+	relics.append(id)
+	return true
+
+
+## Story 032: true when relic [param id] is owned.
+func has_relic(id: String) -> bool:
+	return relics.has(id)
+
+
+## Story 032: copy of the owned relic ids, in received order.
+func relic_ids() -> Array[String]:
+	return relics.duplicate()
+
+
+## Story 032: stores the relic row of the open treasure offer.
+func set_pending_relic_offer(ids: Array[String]) -> void:
+	pending_relic_offer = ids.duplicate()
+
+
+## Story 032: closes the relic row (picked or skipped).
+func clear_pending_relic_offer() -> void:
+	pending_relic_offer = []
+
+
+## Story 032: true while a relic row waits for a pick.
+func has_pending_relic_offer() -> bool:
+	return not pending_relic_offer.is_empty()
+
+
+# Story 032: [param id] is a relic of relics.json (RelicRegistry.info is not empty).
+static func _relic_known(id: String) -> bool:
+	return not RelicRegistry.info(id).is_empty()
+
+
 ## Seed of the current column's arena (Story 031):
 ## ChaptersConfig.arena_seed_for(run_seed, floor * 100 + column).
 func floor_seed() -> int:
@@ -419,7 +466,9 @@ func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 ## Save form (v5, Story 031): {version, character, floor, region, region_offer, region_path, map,
 ## column, node_index, cleared_nodes, nodes_cleared, last_node_kind, last_floor_heal, hp,
 ## deck [{id, level}], run_seed, elapsed, pending_reward, revives, removal_tokens,
-## cleared_bosses_this_run, won}. A [member needs_restart] session saves only
+## cleared_bosses_this_run, won, relics [id], pending_relic_offer [id]} (the last two are optional:
+## Story 032 added them without a version bump, a save lacking them loads with no relics).
+## A [member needs_restart] session saves only
 ## {version, character, needs_restart, restart_reason, map: []}.
 func to_dict() -> Dictionary:
 	if needs_restart:
@@ -434,7 +483,8 @@ func to_dict() -> Dictionary:
 		"deck": deck_entries(), "run_seed": run_seed, "elapsed": elapsed_sec,
 		"pending_reward": pending_reward.duplicate(), "revives": revives,
 		"removal_tokens": removal_tokens, "cleared_bosses_this_run": cleared_bosses_this_run,
-		"won": _won,
+		"won": _won, "relics": relics.duplicate(),
+		"pending_relic_offer": pending_relic_offer.duplicate(),
 	}
 
 
@@ -500,6 +550,8 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s.revives = maxi(int(d.get("revives", 0)), 0)
 	s.deck = _known_entries(d.get("deck", []), cards)
 	s.pending_reward = _known_ids(d.get("pending_reward", []), cards)
+	s.relics = _known_relics(d.get("relics", []), true)
+	s.pending_relic_offer = _known_relics(d.get("pending_relic_offer", []), false)
 	if s.character_id.is_empty() or s.deck.is_empty():
 		push_warning("RunSession: no character or empty deck, run dropped")
 		return null
@@ -561,6 +613,20 @@ static func _known_ids(raw: Variant, cards: SkillConfig) -> Array[String]:
 		if cards != null and not cards.has_skill(id):
 			push_warning("RunSession: unknown card '%s' dropped" % id)
 		else:
+			out.append(id)
+	return out
+
+
+# Story 032: relic ids from a save: unknown ids dropped (warning); [param unique] also drops duplicates.
+static func _known_relics(raw: Variant, unique: bool) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw as Array:
+		var id: String = str(entry)
+		if id.is_empty() or not _relic_known(id):
+			push_warning("RunSession: unknown relic '%s' dropped" % id)
+		elif not (unique and out.has(id)):
 			out.append(id)
 	return out
 

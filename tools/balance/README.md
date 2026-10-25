@@ -82,6 +82,36 @@ In-memory data overrides:
 | `--match-set=key:value,...` | Sets any RunConfig match key on every match, e.g. `--match-set=boss_defense:2,swing_speed_mult:1.1`. |
 | `--no-zone-cards` | Story 027 "before" measurement: drops the zone cards (`SkillConfig.is_zone_card`: effect `seal` / `thorns`) from every match deck, and deck_sim also drops them from the reward pool (`RewardRoller.roll` exclude list). Same tool, same seeds as the "after" run. Boss zone traits (`seal_caster`, `thorn_field`) are NOT affected. |
 | `--card-set=id.key:value,...` | Sets a key of a cards.json card in memory, e.g. `--card-set=ket_gioi.cooldown_sec:8,tran_gai.min_cells:4,long_an.rarity:epic`. Level-1 values; the card's `upgrade` deltas still apply on top. |
+| `--relics=id,...` | Story 032. The player owns these relics (relics.json ids; unknown ids are dropped with a message) in every match. In deck_sim, the run starts with them. In hit_probe, every probe match has them. |
+| `--relic-set=id.param:value,...` | Story 032. Sets a relic param in memory (relics.json is never written). A config-type relic takes a nested path: `--relic-set=an_don.mult:1.6,la_ban.formation_fade.mul:1.15,tui_rong.piece_spawn_interval.mul:1.4`. |
+
+### Relics in the sim (Story 032)
+
+`sim_core._relic_config_overrides` and `_setup_relics` port `CombatView._setup_relics`, `_apply_drop_overrides`, `_apply_status_overrides` and `_wire_relics`, as written by the combat wave on 2026-10-25. The relics are
+created per match from `relic_ids` (`RelicRegistry.instantiate`). Their merged `config_overrides()` are
+written into the per-match configs **before** FieldDrops, the bag, FormationMap and StatusEffects are
+built:
+
+| Key | Where it goes |
+|---|---|
+| `seal_sec`, `thorn_ran` | `arbiter.player_zone_overrides` = the merged overrides. CutEffects applies them after the card's own value, for the player's zone casts only. |
+| `burn_max_stacks`, `han_stacks`, `han_damage` | `combat.burn_max_stacks`, `frost_stacks_to_burst`, `frost_burst_damage` (then `configure_status`). |
+| `piece_spawn_interval`, `piece_freshness_sec`, `start_pieces` | The player's `FieldDropsConfig` copy, applied after `--drop-mult`. |
+| `hold_slots` | Bag size, clamped to `HoldSlots.MAX_SLOTS`. |
+| `focus_sec` | `FocusController.set_max_sec_override`, starting from the character's or the card config's value. |
+| `formation_fade` | Fade seconds of `FormationMap`. |
+| `signature_cooldown` | `_sig_cd_sec`. |
+
+The hooks are wired as follows:
+
+- **Damage.** It goes through `arbiter.player_relic_modifier`, the ONE relic damage point in CutEffects, right after the featured multiplier. It calls `RelicRegistry.fold_damage`, capped at `relic_damage_mult_cap`, with the `--relic-set` config.
+- **Cast time.** It goes through `CutActor.cast_time_modifier`, the ONE windup point, which calls `fold_cast_time` once per begun player swing.
+- **`an_chu`.** It replaces the featured bonus `damage_mult`.
+- **`tam_hop`.** It raises the CastPlan piece limit, and the bot then tries one more greedy join per `join_sec`.
+- **`phan_don`.** It puts a fresh piece into the first free bag slot.
+- **`chi_khau` / `huyet_an`.** They heal or hurt the player through `CombatState`.
+
+Each match counts its relic `triggered` signals (`relic_trig`). When CombatView's relic wiring changes, update this port to match it.
 
 ### Zone cards (Story 027)
 
@@ -206,8 +236,27 @@ Output for each character:
   run 40–50 estimated minutes; region spread ≤ 15 points at every floor (regions entered ≥ 5 times);
   no floor > 40 % of deaths; survival strictly decreasing (every floor kills someone).
 
+- **`WORLD RELICS`** (Story 032): the `--relic-policy`, the mean number of relics owned at the end of a
+  run, how many runs owned each relic at the end, and the relic triggers per run.
+
 The match timeout is the same as in chapter mode (180 s sim) and counts as a death. The node overhead
 does not include the region pick screen or the intro and end delays of a match.
+
+**`--relic-policy=none|pick`** (Story 032, world and chapter mode, default `none`). With `pick`, the bot
+takes the relic row at a treasure node instead of the card row. The row comes from
+`RelicRoller.roll("treasure", owned, rng)`, with the rng seeded like GameFlow:
+`hash([run_seed, floor, column, node_index, "relic"])`. The bot takes the rarest relic offered (boss >
+epic > rare > common; on a tie, the first in offer order). This includes the `negative` `huyet_an`. If
+the relic row is empty, the bot takes from the card row. The `always_skip` policy never takes a relic.
+
+```bash
+# Story 032 relic sweep: one relic alone, a pair, and the pick policy (70 seeds per character)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si --relics=an_don
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --relics=an_don,phan_don
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --relic-policy=pick
+# Confirm a proposed number in memory
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --relics=an_don --relic-set=an_don.mult:1.6
+```
 
 ## hit_probe flags and output
 

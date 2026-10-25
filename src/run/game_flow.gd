@@ -20,7 +20,8 @@ extends Node2D
 ## [method choose_node] per node kind: battle / danger / miniboss / boss spawn a RunController for
 ## RunConfig.from_node (one match scaled by region normalize + floor scaling, arena seed
 ## RunSession.floor_seed() = arena_seed_for(run_seed, floor * 100 + column), between_sec 0, no
-## minimum-HP rule) and save; treasure opens a free card offer at once (no fight); rest opens the REST
+## minimum-HP rule) and save; treasure opens a free offer at once (no fight; Story 032: ONE screen with a
+## row of 3 cards and a row of 3 relics, picking either closes both, skipping closes both); rest opens the REST
 ## screen. A WON match completes the node (RunSession.complete_node: HP carried, no automatic heal) and
 ## rolls the offer of the node kind (RewardRoller.reward_for_node) with the run's luck; the flow WAITS
 ## for [method reward_chosen] / [method reward_skipped] / [method reward_remove_requested]. A REGION
@@ -58,6 +59,8 @@ extends Node2D
 ##                              starts at the character select; no dev arg at all starts at the title)
 ##   --seed=N                   force the run seed (reproducible offers, maps, arenas and rewards)
 ##   --lang=vi|en               UI locale for this run only (not saved; captures)
+##   --relics=id,id,...         Story 032: every run starts owning these relics (RelicRegistry ids; unknown
+##                              ids and duplicates are dropped with a warning)
 ##   --character=<id>           pick the character like the select screen would (Story 018)
 ##   --select=character         start in CHARACTER_SELECT with a memory store (captures)
 ##   --run=world|world3|floorclear|final
@@ -65,6 +68,7 @@ extends Node2D
 ##                              seeded path) / floor 2 offer right after a region boss (the floor-clear
 ##                              notice waits; the boss ends at DEV_FLOORCLEAR_HP_RATIO x max HP so the
 ##                              heal is non-zero) / standing before the final match (its one-node MAP)
+##   --run=relic_treasure       Story 032: the treasure offer with BOTH rows open (3 cards + 3 relics)
 ##   --run=map|map3|rest|treasure|miniboss_reward|boss_reward|reward|runover|runwon
 ##                              run states for captures (first offered region chosen): the fresh map /
 ##                              every column but the boss cleared / the REST screen / a treasure offer /
@@ -110,6 +114,12 @@ const CHARACTER_ARG: String = "--character="
 ## DEV-ONLY (Story 021): --signature=<id> gives the character the signature block of whichever
 ## character owns that id (scratch/demo captures only).
 const SIGNATURE_ARG: String = "--signature="
+## DEV-ONLY (Story 032): --relics=id,id,... the run starts owning these relics.
+const RELICS_ARG: String = "--relics="
+## Story 032: seed salt of the treasure relic row (hash of run seed, floor, column, node, this tag).
+const RELIC_SEED_TAG: String = "relic"
+## Story 032: relic source id of the treasure node (RelicRoller source_rules key).
+const RELIC_SOURCE_TREASURE: String = "treasure"
 ## DEV-ONLY: locale override for captures (never saved).
 const LANG_ARG: String = "--lang="
 ## DEV-ONLY (Story 018): --select=character starts in CHARACTER_SELECT (memory store; captures).
@@ -124,6 +134,8 @@ const FLOW_RUN_MAP: String = "map"
 const FLOW_RUN_MAP3: String = "map3"
 const FLOW_RUN_REST: String = "rest"
 const FLOW_RUN_TREASURE: String = "treasure"
+## Story 032: treasure offer with the card row and the relic row open.
+const FLOW_RUN_RELIC_TREASURE: String = "relic_treasure"
 const FLOW_RUN_MINIBOSS_REWARD: String = "miniboss_reward"
 const FLOW_RUN_BOSS_REWARD: String = "boss_reward"
 ## Story 031 world captures.
@@ -135,7 +147,7 @@ const FLOW_RUN_FINAL: String = "final"
 const FLOW_RUN_WORLD_KINDS: Array[String] = [FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL]
 const FLOW_RUN_KINDS: Array[String] = [
 	FLOW_RUN_REWARD, FLOW_RUN_OVER, FLOW_RUN_WON, FLOW_RUN_MAP, FLOW_RUN_MAP3, FLOW_RUN_REST,
-	FLOW_RUN_TREASURE, FLOW_RUN_MINIBOSS_REWARD, FLOW_RUN_BOSS_REWARD,
+	FLOW_RUN_TREASURE, FLOW_RUN_MINIBOSS_REWARD, FLOW_RUN_BOSS_REWARD, FLOW_RUN_RELIC_TREASURE,
 	FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL,
 ]
 ## DEV-ONLY: columns --run=map3 clears (capped before the region's boss column).
@@ -212,6 +224,8 @@ var _reward_config: Dictionary = {}
 var _dev_character: String = ""
 ## DEV-ONLY: --signature= value.
 var _dev_signature: String = ""
+## DEV-ONLY (Story 032): --relics= ids, given to every run started by _begin_run.
+var _dev_relics: Array[String] = []
 ## Story 019: the live run; null outside a run (title, menus, test floors).
 var _run: RunSession = null
 var _run_result: RunResult = RunResult.NONE
@@ -296,6 +310,9 @@ func _ready() -> void:
 			_dev_character = arg.trim_prefix(CHARACTER_ARG)
 		elif arg.begins_with(SIGNATURE_ARG):
 			_dev_signature = arg.trim_prefix(SIGNATURE_ARG)
+		elif arg.begins_with(RELICS_ARG):
+			for rid: String in arg.trim_prefix(RELICS_ARG).split(",", false):
+				_dev_relics.append(rid.strip_edges())
 		else:
 			if arg.begins_with(RUN_ARG) and FLOW_RUN_KINDS.has(arg.trim_prefix(RUN_ARG)):
 				flow_run = arg.trim_prefix(RUN_ARG)
@@ -800,6 +817,7 @@ func reward_chosen(id: String) -> void:
 	_run.add_card(id, int(get_reward_config().get("max_card_level", SkillConfig.MAX_LEVEL)))
 	_progress.mark_card_seen(id)
 	_run.clear_pending_reward()
+	_run.clear_pending_relic_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(true)
@@ -815,6 +833,7 @@ func reward_skipped() -> void:
 		push_warning("GameFlow: rewards.json allow_skip is false, the offer must be picked")
 		return
 	_run.clear_pending_reward()
+	_run.clear_pending_relic_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(false)
@@ -836,9 +855,77 @@ func reward_remove_requested(index: int) -> void:
 		push_warning("GameFlow: card %d cannot be removed (no token, out of range or deck at minimum)" % index)
 		return
 	_run.clear_pending_reward()
+	_run.clear_pending_relic_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(true)
+
+
+## Story 032: relic ids owned by the live run, in received order; [] without a run.
+func get_relics() -> Array[String]:
+	if _run == null:
+		return []
+	return _run.relic_ids()
+
+
+## Story 032: the relic row of the open treasure offer (3 ids at most); [] when no relic offer is open
+## (the card row is [method get_pending_reward]).
+func get_relic_offer() -> Array[String]:
+	if _run == null:
+		return []
+	return _run.pending_relic_offer.duplicate()
+
+
+## Story 032: true while a relic row is open on the treasure screen.
+func has_relic_offer() -> bool:
+	return _run != null and _run.has_pending_relic_offer()
+
+
+## Story 032: the treasure screen's relic pick: [param id] must be in [method get_relic_offer]. It joins
+## the run's relics, BOTH rows close, the run is saved and the node completes (back to the MAP). Ignored
+## with a warning when no relic offer is open or the id is not in it.
+func choose_relic(id: String) -> void:
+	if _run == null or not _run.has_pending_relic_offer():
+		push_warning("GameFlow: choose_relic('%s') with no relic offer open, ignored" % id)
+		return
+	if not _run.pending_relic_offer.has(id):
+		push_warning("GameFlow: choose_relic('%s') is not in the offer %s, ignored" % [id, str(_run.pending_relic_offer)])
+		return
+	if not _run.add_relic(id):
+		push_warning("GameFlow: choose_relic('%s') was refused by the run (owned or unknown), ignored" % id)
+		return
+	_run.clear_pending_reward()
+	_run.clear_pending_relic_offer()
+	_save_run()
+	run_changed.emit()
+	_continue_after_reward(false)
+
+
+## Story 032: "Bỏ qua" on the treasure screen: BOTH rows close, nothing is taken. Same rules as
+## [method reward_skipped] (ignored with a warning when no relic offer is open or allow_skip is false).
+func skip_relic_offer() -> void:
+	if _run == null or not _run.has_pending_relic_offer():
+		push_warning("GameFlow: skip_relic_offer() with no relic offer open, ignored")
+		return
+	if not bool(get_reward_config().get("allow_skip", true)):
+		push_warning("GameFlow: rewards.json allow_skip is false, the offer must be picked")
+		return
+	_run.clear_pending_reward()
+	_run.clear_pending_relic_offer()
+	_save_run()
+	run_changed.emit()
+	_continue_after_reward(false)
+
+
+## Story 032: RelicRegistry.info(id) ({id, rarity, tags, name_key, desc_key, params}) plus the translated
+## "name" and "desc"; {} for an unknown id.
+func relic_info(id: String) -> Dictionary:
+	var info: Dictionary = _relic_info_raw(id).duplicate(true)
+	if info.is_empty():
+		return {}
+	info["name"] = tr(str(info.get("name_key", "")))
+	info["desc"] = tr(str(info.get("desc_key", "")))
+	return info
 
 
 ## Story 020: the run's deck as {id, level} entries ([] with no run).
@@ -864,6 +951,8 @@ func _begin_run() -> void:
 	var run_seed: int = _dev_seed if _dev_seed >= 0 else randi() & ChaptersConfig.SEED_MASK
 	var starting_removals: int = int(get_reward_config().get("starting_removals", 0))
 	_run = RunSession.begin_world(_config, _character_dict(), run_seed, starting_removals)
+	for relic_id: String in _dev_relics:
+		_run.add_relic(relic_id)
 	_run_result = RunResult.NONE
 	_reward_blocking = false
 	_pending_node_kind = ""
@@ -1046,11 +1135,34 @@ func _offer_reward(kind: String) -> void:
 	for id: String in offer:
 		_progress.mark_card_seen(id)
 	_run.set_pending_reward(offer)
+	_run.clear_pending_relic_offer()
+	if kind == KIND_TREASURE and not offer.is_empty():
+		_run.set_pending_relic_offer(_roll_treasure_relics())
 	_save_run()
 	run_changed.emit()
 	if offer.is_empty():
 		push_warning("GameFlow: no card to offer, continuing without a reward")
 		_continue_after_reward(false)
+
+
+# Story 032: the relic row of the treasure node being opened: RelicRoller.roll("treasure", owned, rng) with
+# an rng seeded by hash([run_seed, floor, column, node_index, "relic"]); [] when nothing can be rolled.
+func _roll_treasure_relics() -> Array[String]:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([_run.run_seed, _run.floor, _run.column, _run.node_index, RELIC_SEED_TAG]) & ChaptersConfig.SEED_MASK
+	return _relic_roll(RELIC_SOURCE_TREASURE, _run.relic_ids(), rng)
+
+
+# The two spots that touch the relic data classes (Story 032).
+func _relic_roll(source: String, owned: Array[String], rng: RandomNumberGenerator) -> Array[String]:
+	var out: Array[String] = []
+	for id: Variant in RelicRoller.roll(source, owned, rng):
+		out.append(str(id))
+	return out
+
+
+func _relic_info_raw(id: String) -> Dictionary:
+	return RelicRegistry.info(id)
 
 
 # Deterministic offer seed: run seed and the position (floor, region, column, nodes cleared).
@@ -1370,7 +1482,7 @@ func _apply_dev_flow_run(kind: String) -> void:
 			run_changed.emit()
 		FLOW_RUN_REST:
 			_dev_advance_to_kind(KIND_REST)
-		FLOW_RUN_TREASURE:
+		FLOW_RUN_TREASURE, FLOW_RUN_RELIC_TREASURE:
 			_dev_advance_to_kind(KIND_TREASURE)
 		FLOW_RUN_MINIBOSS_REWARD:
 			if _dev_advance_to_kind("miniboss"):

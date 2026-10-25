@@ -146,6 +146,36 @@ const TEXT_MIN_RARE: String = "ui.reward.min_rare"
 const TEXT_TOKEN_GRANTED: String = "ui.reward.token_granted"
 const TEXT_REMOVE_COUNT: String = "ui.reward.remove_count"
 
+## Story 032: the treasure screen with a relic row ([method GameFlow.has_relic_offer]): the card row moves
+## up and gets compact cards (COMPACT_* baselines as shares of the card height), the relic row of 3 large
+## cards sits under it, "Bỏ qua" bottom-left ([method GameFlow.skip_relic_offer], both rows close) and
+## "Xác nhận" bottom-right ([method GameFlow.choose_relic] with the selected relic; dim until one is
+## picked). A card tap still takes the card at once (both rows close). The owned-relic strip
+## (RelicStrip) sits at the bottom on both layouts.
+const TEXT_CARDS_ROW: String = "ui.relic.cards_row"
+const TEXT_RELICS_ROW: String = "ui.relic.relics_row"
+const TEXT_RELIC_CONFIRM: String = "ui.relic.confirm"
+const TEXT_RELIC_SKIP: String = "ui.relic.skip"
+const ROW_LABEL_FONT_SIZE: int = 22
+const RELIC_NAME_FONT_SIZE: int = 28
+const RELIC_DESC_FONT_SIZE: int = 19
+const RELIC_DESC_MAX_LINES: int = 3
+const RELIC_ICON_RATIO: float = 0.36
+const RELIC_SELECTED_BORDER: float = 10.0
+const COMPACT_NAME_FONT_SIZE: int = 26
+const COMPACT_STAT_FONT_SIZE: int = 20
+## The one stats line may shrink below MIN_FIT_FONT_SIZE (three facts on a short card).
+const COMPACT_STAT_MIN_FONT_SIZE: int = 13
+const COMPACT_DESC_FONT_SIZE: int = 18
+const COMPACT_DESC_LINES: int = 3
+const COMPACT_NAME_BASELINE: float = 0.15
+const COMPACT_RARITY_BASELINE: float = 0.26
+const COMPACT_DIVIDER: float = 0.31
+const COMPACT_STATS_BASELINE: float = 0.43
+const COMPACT_KEYWORD_BASELINE: float = 0.55
+const COMPACT_DESC_BASELINE: float = 0.58
+const COMPACT_DESC_BASELINE_KEYWORD: float = 0.68
+
 ## Path to the GameFlow (a sibling under Main) that owns the run.
 @export var flow_path: NodePath = NodePath("../GameFlow")
 
@@ -154,16 +184,45 @@ var _flow: GameFlow = null
 var _combat_config: CombatConfig = null
 ## Story 020: true while the remove list covers the offer.
 var _removing: bool = false
+## Story 032: the relic picked on the relic row (waits for "Xác nhận"); "" = none.
+var _selected_relic: String = ""
+## Story 032: the owned-relic strip along the bottom (tap an icon for its card).
+var _strip: RelicStrip = null
 
 
 func _ready() -> void:
 	_flow = get_node_or_null(flow_path) as GameFlow
+	_strip = RelicStrip.new()
+	add_child(_strip)
 
 
 func _process(_delta: float) -> void:
 	if _removing and not is_shown():
 		_removing = false
+	if not is_shown() or not _flow.get_relic_offer().has(_selected_relic):
+		_selected_relic = ""
+	var strip_shown: bool = is_shown() and not _removing
+	if not strip_shown:
+		_strip.close_tooltip()
+	_strip.visible = strip_shown
+	if strip_shown:
+		_strip.area = ScreenLayout.reward_relic_strip_rect(get_viewport_rect().size, _dual())
+		_strip.set_relics(_flow.get_relics())
 	queue_redraw()
+
+
+## Story 032: true while the treasure screen carries the relic row as well as the card row.
+func is_relic_row_shown() -> bool:
+	return is_shown() and _dual()
+
+
+## Story 032: the relic selected on the relic row ("" = none).
+func get_selected_relic() -> String:
+	return _selected_relic
+
+
+func _dual() -> bool:
+	return _flow != null and _flow.has_relic_offer()
 
 
 ## True while the screen is up: IN_NODE or MAP with an open offer.
@@ -192,6 +251,9 @@ func _input(event: InputEvent) -> void:
 			if _removing:
 				_removing = false
 				return
+			if not _selected_relic.is_empty() and _dual():
+				_flow.choose_relic(_selected_relic)
+				return
 			var offer: Array[String] = _flow.get_pending_reward()
 			if not offer.is_empty():
 				_flow.reward_chosen(offer[0])
@@ -199,6 +261,8 @@ func _input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag):
 		return
 	get_viewport().set_input_as_handled()
+	if event.device != InputEvent.DEVICE_ID_EMULATION and _strip.visible and _strip.handle_input(event):
+		return
 	var pos: Vector2 = _press_position(event)
 	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
@@ -207,13 +271,17 @@ func _input(event: InputEvent) -> void:
 		_input_remove_list(pos, vp)
 		return
 	var offer: Array[String] = _flow.get_pending_reward()
-	if _can_remove() and ScreenLayout.reward_remove_slot_rect(vp, offer.size()).has_point(pos):
+	var dual: bool = _dual()
+	if _can_remove() and _remove_slot_rect(vp, offer.size(), dual).has_point(pos):
 		_removing = true
 		return
-	if _can_skip() and ScreenLayout.reward_skip_button_rect(vp).has_point(pos):
+	if dual:
+		if _input_relic_row(pos, vp):
+			return
+	elif _can_skip() and ScreenLayout.reward_skip_button_rect(vp).has_point(pos):
 		_flow.reward_skipped()
 		return
-	var rects: Array[Rect2] = ScreenLayout.reward_card_rects(vp, offer.size(), _can_remove())
+	var rects: Array[Rect2] = _card_rects(vp, offer.size(), dual)
 	for i: int in rects.size():
 		if rects[i].has_point(pos):
 			_flow.reward_chosen(offer[i])
@@ -305,17 +373,146 @@ func _draw() -> void:
 		_text(strip, strip.get_center().y + SUBTITLE_FONT_SIZE * 0.35, subtitle, SUBTITLE_FONT_SIZE, SUBTITLE_COLOR)
 	var offer: Array[String] = _flow.get_pending_reward()
 	var with_remove: bool = _can_remove()
-	var rects: Array[Rect2] = ScreenLayout.reward_card_rects(vp, offer.size(), with_remove)
+	var dual: bool = _dual()
+	var rects: Array[Rect2] = _card_rects(vp, offer.size(), dual)
 	var levels: Dictionary = _flow.get_deck_levels()
 	for i: int in rects.size():
-		_draw_card(rects[i], offer[i], levels)
+		if dual:
+			_draw_card_compact(rects[i], offer[i], levels)
+		else:
+			_draw_card(rects[i], offer[i], levels)
+	if dual:
+		_draw_relic_row(vp)
 	if with_remove:
-		var slot: Rect2 = ScreenLayout.reward_remove_slot_rect(vp, offer.size())
+		var slot: Rect2 = _remove_slot_rect(vp, offer.size(), dual)
 		var slot_text: String = tr(TEXT_REMOVE_COUNT) % _removal_tokens()
 		UiButtons.draw_button(self, slot, slot_text, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, slot), true, _fit_font_size(slot_text, slot.size.x - slot.size.x * CARD_PAD_RATIO * 2.0, BUTTON_FONT_SIZE))
-	if _can_skip():
+	if _can_skip() and not dual:
 		var skip: Rect2 = ScreenLayout.reward_skip_button_rect(vp)
 		UiButtons.draw_button(self, skip, tr(TEXT_SKIP), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, skip), true, BUTTON_FONT_SIZE)
+
+
+# --- Story 032: the relic row -------------------------------------------------
+
+
+# Card rects: the plain offer layout, or the upper row of the two-row treasure screen.
+func _card_rects(vp: Vector2, count: int, dual: bool) -> Array[Rect2]:
+	if dual:
+		return ScreenLayout.reward_dual_card_rects(vp, count, _can_remove())
+	return ScreenLayout.reward_card_rects(vp, count, _can_remove())
+
+
+# The "Bỏ 1 lá" slot: right of the card row (same top / height as the cards of that layout).
+func _remove_slot_rect(vp: Vector2, count: int, dual: bool) -> Rect2:
+	if not dual:
+		return ScreenLayout.reward_remove_slot_rect(vp, count)
+	var cards: Array[Rect2] = ScreenLayout.reward_dual_card_rects(vp, count, true)
+	var width: float = vp.x * ScreenLayout.REWARD_REMOVE_SLOT_WIDTH_RATIO
+	if cards.is_empty():
+		return Rect2()
+	var last: Rect2 = cards[cards.size() - 1]
+	return Rect2(last.end.x + vp.x * ScreenLayout.REWARD_CARD_GAP_RATIO, last.position.y, width, last.size.y)
+
+
+# Relic row input: a relic card selects it (tap again keeps it), "Xác nhận" takes the selected relic,
+# "Bỏ qua" closes both rows. True when the press was used.
+func _input_relic_row(pos: Vector2, vp: Vector2) -> bool:
+	if _can_skip() and ScreenLayout.reward_dual_skip_rect(vp).has_point(pos):
+		_flow.skip_relic_offer()
+		return true
+	if ScreenLayout.reward_dual_confirm_rect(vp).has_point(pos):
+		if not _selected_relic.is_empty():
+			_flow.choose_relic(_selected_relic)
+		return true
+	var relics: Array[String] = _flow.get_relic_offer()
+	var rects: Array[Rect2] = ScreenLayout.reward_dual_relic_rects(vp, relics.size())
+	for i: int in rects.size():
+		if rects[i].has_point(pos):
+			_selected_relic = relics[i]
+			return true
+	return false
+
+
+# Row labels, the 3 relic cards and the bottom buttons ("Bỏ qua" left, "Xác nhận" right, dim until a pick).
+func _draw_relic_row(vp: Vector2) -> void:
+	var cards_label: Rect2 = ScreenLayout.reward_dual_cards_label_rect(vp)
+	_text(cards_label, cards_label.get_center().y + ROW_LABEL_FONT_SIZE * 0.35, tr(TEXT_CARDS_ROW), ROW_LABEL_FONT_SIZE, SUBTITLE_COLOR)
+	var relics_label: Rect2 = ScreenLayout.reward_dual_relics_label_rect(vp)
+	_text(relics_label, relics_label.get_center().y + ROW_LABEL_FONT_SIZE * 0.35, tr(TEXT_RELICS_ROW), ROW_LABEL_FONT_SIZE, SUBTITLE_COLOR)
+	var relics: Array[String] = _flow.get_relic_offer()
+	var rects: Array[Rect2] = ScreenLayout.reward_dual_relic_rects(vp, relics.size())
+	for i: int in rects.size():
+		_draw_relic_card(rects[i], relics[i], relics[i] == _selected_relic)
+	if _can_skip():
+		var skip: Rect2 = ScreenLayout.reward_dual_skip_rect(vp)
+		UiButtons.draw_button(self, skip, tr(TEXT_RELIC_SKIP), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, skip), true, _fit_font_size(tr(TEXT_RELIC_SKIP), skip.size.x * 0.9, BUTTON_FONT_SIZE))
+	var confirm: Rect2 = ScreenLayout.reward_dual_confirm_rect(vp)
+	var enabled: bool = not _selected_relic.is_empty()
+	UiButtons.draw_button(self, confirm, tr(TEXT_RELIC_CONFIRM), UiButtons.Style.PRIMARY, enabled and UiButtons.is_pressed_at(self, confirm), enabled, _fit_font_size(tr(TEXT_RELIC_CONFIRM), confirm.size.x * 0.9, BUTTON_FONT_SIZE))
+
+
+# One large relic card: icon (RelicStrip look) top-left, name and rarity line beside it, the rule text
+# below; rarity border (red for a negative relic); the selected card gets the thick gold outline.
+func _draw_relic_card(rect: Rect2, id: String, selected: bool) -> void:
+	var info: Dictionary = _flow.relic_info(id)
+	var negative: bool = RelicStrip.is_negative(info)
+	var color: Color = RelicStrip.rarity_color(str(info.get("rarity", "")))
+	var pressed: bool = UiButtons.is_pressed_at(self, rect)
+	draw_rect(rect, CARD_BACK)
+	if selected:
+		draw_rect(rect, CARD_PRESSED_OUTLINE, false, RELIC_SELECTED_BORDER)
+	else:
+		draw_rect(rect, CARD_PRESSED_OUTLINE if pressed else (RelicStrip.NEGATIVE_COLOR if negative else color), false, BORDER_WIDTH)
+	var pad: float = rect.size.x * CARD_PAD_RATIO
+	var icon_edge: float = minf(rect.size.y * RELIC_ICON_RATIO, RelicStrip.MAX_ICON)
+	var icon := Rect2(rect.position + Vector2(pad, pad), Vector2(icon_edge, icon_edge))
+	RelicStrip.draw_icon(self, icon, id, RelicStrip.BORDER_WIDTH, false, 0.0)
+	var text_x: float = icon.end.x + pad
+	var text_w: float = rect.end.x - pad - text_x
+	var name: String = str(info.get("name", id))
+	draw_string(ThemeDB.fallback_font, Vector2(text_x, icon.position.y + icon_edge * 0.45), name, HORIZONTAL_ALIGNMENT_LEFT, text_w, _fit_font_size(name, text_w, RELIC_NAME_FONT_SIZE), NAME_COLOR)
+	var rarity: String = RelicStrip.rarity_line(info)
+	draw_string(ThemeDB.fallback_font, Vector2(text_x, icon.position.y + icon_edge * 0.88), rarity, HORIZONTAL_ALIGNMENT_LEFT, text_w, _fit_font_size(rarity, text_w, RARITY_FONT_SIZE), (RelicStrip.NEGATIVE_COLOR if negative else color).darkened(0.2))
+	var inner_w: float = rect.size.x - pad * 2.0
+	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + pad, icon.end.y + pad + RELIC_DESC_FONT_SIZE), str(info.get("desc", "")), HORIZONTAL_ALIGNMENT_LEFT, inner_w, RELIC_DESC_FONT_SIZE, RELIC_DESC_MAX_LINES, BODY_COLOR)
+
+
+# The card row of the two-row treasure screen: the same facts as _draw_card on a shorter card — name,
+# rarity (+ upgrade), one stats line, the keyword line and up to COMPACT_DESC_LINES of effect text.
+func _draw_card_compact(rect: Rect2, id: String, levels: Dictionary) -> void:
+	var upgrade: bool = RewardRoller.is_upgrade(id, levels, _max_level())
+	var current: int = int(levels.get(id, 0))
+	var shown_level: int = current + 1 if upgrade else 1
+	var skill: Dictionary = _flow.get_cards().resolved(id, shown_level)
+	var rarity: String = str(skill.get("rarity", ""))
+	draw_rect(rect, CARD_BACK)
+	draw_rect(rect, CARD_PRESSED_OUTLINE if UiButtons.is_pressed_at(self, rect) else _rarity_color(rarity), false, BORDER_WIDTH)
+	var pad: float = rect.size.x * CARD_PAD_RATIO
+	var inner := Rect2(rect.position.x + pad, rect.position.y, rect.size.x - pad * 2.0, rect.size.y)
+	var title: String = tr(str(skill.get("name_key", id)))
+	if upgrade:
+		title += LEVEL_SEPARATOR + tr(TEXT_LEVEL_SUFFIX) % current
+	_text(inner, _y(rect, COMPACT_NAME_BASELINE), title, _fit_font_size(title, inner.size.x, COMPACT_NAME_FONT_SIZE), NAME_COLOR)
+	var rarity_text: String = tr(_rarity_key(rarity))
+	if upgrade:
+		rarity_text += RelicStrip.RARITY_SEPARATOR + tr(TEXT_UPGRADE_TO) % shown_level
+	_text(inner, _y(rect, COMPACT_RARITY_BASELINE), rarity_text, _fit_font_size(rarity_text, inner.size.x, RARITY_FONT_SIZE), UPGRADE_COLOR if upgrade else _rarity_color(rarity).darkened(0.2))
+	_divider(inner, _y(rect, COMPACT_DIVIDER))
+	var min_cells: int = int(skill.get("min_cells", 1))
+	var stats: Array[String] = [tr(TEXT_CELLS_ANY) if min_cells <= 1 else tr(TEXT_CELLS) % min_cells]
+	var damage: int = roundi(float(skill.get("damage_per_cell", 0.0)))
+	if damage > 0:
+		stats.append(tr(TEXT_DAMAGE) % damage)
+	var cooldown: float = float(skill.get("cooldown_sec", 0.0))
+	stats.append(tr(TEXT_COOLDOWN_NONE) if cooldown <= 0.0 else tr(TEXT_COOLDOWN) % roundi(cooldown))
+	var stat_line: String = RelicStrip.RARITY_SEPARATOR.join(stats)
+	_text(inner, _y(rect, COMPACT_STATS_BASELINE), stat_line, _fit_font_size(stat_line, inner.size.x, COMPACT_STAT_FONT_SIZE, COMPACT_STAT_MIN_FONT_SIZE), STAT_COLOR)
+	var keywords: Array = _keyword_parts(skill)
+	var desc_y: float = _y(rect, COMPACT_DESC_BASELINE)
+	if not keywords.is_empty():
+		_draw_keyword_line(inner, _y(rect, COMPACT_KEYWORD_BASELINE), keywords)
+		desc_y = _y(rect, COMPACT_DESC_BASELINE_KEYWORD)
+	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, COMPACT_DESC_FONT_SIZE, COMPACT_DESC_LINES, BODY_COLOR)
 
 
 # One offer card. [param levels] is the deck's id -> highest level: a held card below max is an
@@ -487,9 +684,9 @@ func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void
 
 # Largest font size <= [param size] (never below MIN_FIT_FONT_SIZE) at which [param text] fits in
 # [param width] pixels, so a long translation ("Remove a card") shrinks instead of clipping.
-func _fit_font_size(text: String, width: float, size: int) -> int:
+func _fit_font_size(text: String, width: float, size: int, min_size: int = MIN_FIT_FONT_SIZE) -> int:
 	var font: Font = ThemeDB.fallback_font
 	var fitted: int = size
-	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+	while fitted > min_size and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
 		fitted -= 1
 	return fitted
