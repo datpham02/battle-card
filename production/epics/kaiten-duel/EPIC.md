@@ -38,6 +38,10 @@ Người dùng quyết định: **bỏ chủ đề bếp sushi, dựng thế gi�
 
 Chơi thử run đủ nội dung: người dùng thấy **đánh trúng boss rất khó**, nối ấn "đòi nhớ vị trí và quy ước", phải nhặt 3–4 ấn mới có một vùng. Đo bằng logic game thật (`hit_probe.gd`, 40 đòn mỗi ô, 11 địch chương 1): quái thường nối đại trúng 25–60 %, canh lúc boss vừa bước trúng gần 100 %; miniboss/boss nối đại 0–30 %, chỉ đòn 1 ô ổn định; ô giữa sân chỉ trúng được bằng trận pháp ≥ 3 ô. Người dùng quyết định **bỏ nối ấn, thay bằng mảnh ấn**: mỗi ấn rơi là một mảnh hình sẵn 1–5 ô (bộ hình chọn lọc, rút theo trọng số chương, xoay được), chọn mảnh → đặt lên chỗ bất kỳ vừa khít trên đất địch (Tập trung dừng trận như cũ) → chọn lá; mỗi đòn một mảnh. Kèm theo: báo trúng xanh/đỏ, boss đứng yên khi niệm, vòng hồi bước boss hiện khóa (vòng đã có sẵn), và **Kết giới / Trận gai** để đấu trí bằng vùng → Story 024–027. Brief v5 là bản ghi.
 
+## Pivot v6 — 2026-10-25 (sau khi cả 29 story v5 xong)
+
+Người dùng muốn game là **roguelike thật** chứ không phải "vượt map" (một run = một chương, thắng thì mở chương sau) và muốn lối chơi đa dạng hơn. Đã cân nhắc giữ chế độ chương riêng cộng một chế độ roguelike; chọn **đi theo One Step From Eden**: một run = **5 tầng × chọn 1 trong 2 vùng** (vùng 3 cột, kết thúc bằng boss vùng) + trận cuối **Ấn Đài**, 40–50 phút, độ khó theo tầng; **bảo vật**, **vàng / cửa hàng / sự kiện**, **bộ mảnh**; **Tha/Giết** boss vùng quyết định ba kết thúc; chơi lại nhờ **mở khóa theo cột mốc**, **thành tựu**, **cấp Kiếp** — không có sức mạnh vĩnh viễn. Trận đấu (v5) không đổi. Brief: `design/game-brief.md` mục "Run v6". Story 031–040.
+
 ## Scope
 
 Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, thẻ hình dạng tầm, băng chuyền, quầy chung, ghép thẻ, AI học máy, meta progression (ngoại lệ từ 015: lưu tầng đã mở), quảng cáo/IAP, nhiều nhân vật/map, online/PvP, accessibility, đa ngôn ngữ.
@@ -59,7 +63,8 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 13. Bộ bài có sức nặng (020), tuyệt kỹ nhân vật (021) — mô phỏng: chọn lá nhân đôi tỉ lệ thắng nhưng dưới ngưỡng 25 điểm (TD-001, TD-004); người dùng hoãn chơi thử vì nội dung mỏng
 14. Bản đồ chương + kinh tế thưởng (022), nội dung chương 2–3 + địch phá luật (023), theo `design/reference/osfe-reference.md` → **Cổng quyết định 6: run đầu tiên đủ nội dung**
 15. Mảnh ấn (v5): mảnh phía người chơi (024) → **Cổng quyết định 7: chơi lại với mảnh** (2026-10-25: người dùng muốn dùng nhiều mảnh, ghép mảnh, ghép thành hình sân → 028, 029); ghép mảnh + hình chủ đạo (028); trận đồ thay thanh nạp (029); boss dùng và ghép mảnh + cửa sổ phản công (025, tạm dừng tới khi 028–029 xong); gỡ nối ấn + đo lại cân bằng (026); Kết giới / Trận gai (027)
-16. Cửa hàng/pact, lên Android, hình và âm
+16. Run v6 theo OSFE (2026-10-25): 031 bản đồ thế giới → 032 bảo vật → **Cổng quyết định 8: chơi thử run dài** → 033 vàng/cửa hàng/sự kiện → 034 bộ mảnh → 035 Tha/Giết + Ấn Đài + ba kết thúc → 036 vùng Đầm Lầy Độc, Sa Mạc Cát Ấn → 037 mở khóa, thành tựu, Thợ săn, Giáo sĩ → 038 cấp Kiếp → 039 vùng Thành Hỏa Ngục, Không Đảo → 040 cân bằng lại cả run
+17. Lên Android, hình và âm
 
 **Cổng quyết định 1 (sau 003, v1):** "tạm ổn", thiếu áp lực → đi tiếp.
 **Cổng quyết định 2 (sau 005, v1):** băng chuyền khó thao tác, địch theo giờ nhàm, 3 làn basic → pivot v2.
@@ -100,3 +105,13 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 028 | Ghép mảnh trên sân và hình chủ đạo: tối đa 2 mảnh một đòn, thưởng ×1,5 + hiệu ứng khi ghép đúng hình của trận | Integration | Complete | N/A (minimal) |
 | 029 | Trận đồ: ô sáng khi được phủ, phai dần, sáng đủ cùng lúc thì tuyệt kỹ sẵn sàng (thay thanh nạp 18 ô) | Integration | Complete | N/A (minimal) |
 | 030 | Làm lại Thiên Hỏa và Ảnh Bộ: Thiên Hỏa đốt cả trận đồ, Ảnh Bộ nhân đôi mọi đòn nhỏ, cân bằng giá trị mỗi phút ≤ ~2 : 1 | Integration | Complete | N/A (minimal) |
+| 031 | Bản đồ thế giới: 5 tầng × chọn 1 trong 2 vùng, vùng 3 cột, trận cuối Ấn Đài, độ khó theo tầng, save v5 | Integration | Ready | — |
+| 032 | Bảo vật — đồ bị động đổi luật gắn với mảnh, ghép, trận đồ, vùng và từ khóa; 16 món khởi điểm, HUD chạm, lưu run | Integration | Ready | — |
+| 033 | Vàng, cửa hàng và sự kiện — vàng rơi theo loại nút, cửa hàng bán lá/bảo vật/dịch vụ, 8 sự kiện rủi ro, lá nguyền | Integration | Ready | — |
+| 034 | Bộ mảnh của run — trọng số hình riêng, Ấn hình và Xóa hình, luôn còn hình vừa sân, boss không đổi | Integration | Ready | — |
+| 035 | Tha hay Giết boss vùng, boss cuối Ấn Đài hai pha, ba kết thúc, thống kê run | Integration | Ready | — |
+| 036 | Vùng Đầm Lầy Độc và Sa Mạc Cát Ấn — ô lầy, cát lấp ô, mảnh trôi theo gió, 12 địch, 4 kẻ phá luật, 2 boss vùng, 4 sân | Integration | Ready | — |
+| 037 | Mở khóa theo cột mốc, 22 thành tựu, nhân vật Thợ săn và Giáo sĩ — chỉ thêm lựa chọn, không thêm sức mạnh | Integration | Ready | — |
+| 038 | Cấp Kiếp: 10 cấp khó cộng dồn theo nhân vật, mở bằng thắng run, chọn ở màn nhân vật | Integration | Ready | — |
+| 039 | Vùng Thành Hỏa Ngục và Không Đảo — mạch dung nham, sân tách đảo, ô rơi; pool vùng lên 7 | Integration | Ready | — |
+| 040 | Cân bằng lại cả run v6 bằng mô phỏng — 5 tầng + Ấn Đài, bảo vật, vàng, bộ mảnh, Tha/Giết, Kiếp; chỉ chỉnh dữ liệu | Config/Data | Ready | — |
