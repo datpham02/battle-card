@@ -51,6 +51,8 @@ var _combo_count: int = 0
 var _player_step_cooldown: float = 0.0
 var _active: bool = true
 var _removing: bool = false
+var _hold_config: HoldSlotsConfig
+var _piece_mode: bool = false
 
 
 ## [param seed_value] below 0 = random; otherwise drops and brain noise are deterministic.
@@ -68,14 +70,42 @@ func _init(
 	_grid = grid
 	_cut_config = cut_config
 	_skill_config = skill_config
+	_hold_config = hold_config
 	_hand = HoldSlots.new(hold_config.slot_count)
 	_drops = FieldDrops.new(drops_config, grid.enemy_cells(), grid.perimeter_labels(), seed_value)
 	_mover = UnitMover.new(state, CombatState.Side.ENEMY, brain_config.step_cooldown_sec)
 	_actor = CutActor.new(cut_config, CombatState.Side.ENEMY)
+	_mover.step_lock_fn = Callable(self, "is_step_locked")
 	_cooldowns = SkillCooldowns.new()
 	_brain = BossBrain.new(brain_config, grid, cut_config, skill_config, seed_value)
 	state.cell_changed.connect(_on_cell_changed)
 	_hand.slot_cleared.connect(_on_slot_cleared)
+
+
+## Story 025: switches the boss to PIECES. Its field drops draw puzzle pieces of [param library]
+## (chapter weights of [param chapter_id], only shapes that fit the PLAYER half, seeded by
+## [param rng_seed]; the spawn interval keeps whatever scaling the drops config carries) and its
+## hand becomes a piece hand of HoldSlotsConfig.piece_slot_count slots (anything held is dropped).
+## Call before the first tick; without it the boss keeps the classic labelled points.
+func enable_pieces(library: PieceLibrary, chapter_id: String, rng_seed: int) -> void:
+	_drops.enable_pieces(library, chapter_id, _grid, rng_seed, false)
+	if _hand.slot_cleared.is_connected(_on_slot_cleared):
+		_hand.slot_cleared.disconnect(_on_slot_cleared)
+	_hand = HoldSlots.create_piece_hand(_hold_config.piece_slot_count)
+	_hand.slot_cleared.connect(_on_slot_cleared)
+	_piece_mode = true
+
+
+## True after [method enable_pieces].
+func is_piece_mode() -> bool:
+	return _piece_mode
+
+
+## Story 025: true while the boss is rooted: the config's root_while_swinging is on and its actor
+## swings (or has a combo swing queued). The boss's [UnitMover] refuses to step meanwhile; an
+## interrupt, feint cancel or resolve unlocks at once.
+func is_step_locked() -> bool:
+	return _brain_config.root_while_swinging and (_actor.is_swinging() or _actor.has_queued())
 
 
 ## Advances the boss's own clocks and makes at most one decision. [param player_actor] is the
@@ -191,18 +221,28 @@ func _do_cut(action: Dictionary) -> void:
 	indices.assign(action["hand_indices"] as Array)
 	var skill_id: String = str(action["skill_id"])
 	var labels: Array[String] = []
+	var piece_cut: bool = false
 	for index: int in indices:
 		var point: FieldPoint = _hand.get_point(index)
 		if point == null:
 			return
 		labels.append(point.label)
-	var cells: Array[Vector2i] = CutResolver.resolve_on_board(_grid, false, labels)
+		if point.piece != null:
+			piece_cut = true
+	var cells: Array[Vector2i] = []
+	if piece_cut:
+		if indices.size() != 1 or not _hand.get_piece(indices[0]).placeable():
+			return
+		cells = _valid_piece_cells(action.get("cells"))
+	else:
+		cells = CutResolver.resolve_on_board(_grid, false, labels)
 	if cells.is_empty() or not _actor.can_begin():
 		return
 	# Optional combo: validated up front (any bad index or empty cells = no combo, cut goes on).
 	var combo_indices: Array[int] = []
 	var combo_labels: Array[String] = []
 	var combo_cells: Array[Vector2i] = []
+	var combo_piece: bool = false
 	var combo: Variant = action.get("combo")
 	if typeof(combo) == TYPE_DICTIONARY:
 		combo_indices.assign((combo as Dictionary).get("hand_indices", []) as Array)
@@ -212,8 +252,14 @@ func _do_cut(action: Dictionary) -> void:
 				combo_labels.clear()
 				break
 			combo_labels.append(combo_point.label)
+			if combo_point.piece != null:
+				combo_piece = true
 		if not combo_labels.is_empty():
-			combo_cells = CutResolver.resolve_on_board(_grid, false, combo_labels)
+			if combo_piece:
+				if combo_indices.size() == 1 and _hand.get_piece(combo_indices[0]).placeable():
+					combo_cells = _valid_piece_cells((combo as Dictionary).get("cells"))
+			else:
+				combo_cells = CutResolver.resolve_on_board(_grid, false, combo_labels)
 	var has_combo: bool = not combo_cells.is_empty()
 	_removing = true
 	for index: int in indices:
@@ -231,14 +277,36 @@ func _do_cut(action: Dictionary) -> void:
 			_combo_count += 1
 			combo_queued.emit(combo_cells, combo_labels)
 		else:
-			_roll_feint(labels, cells)
+			_roll_feint(labels, cells, piece_cut)
 	_carry_over()
 
 
-# A one-point cut may be a feint when the learning says the player keeps dodging early.
-func _roll_feint(labels: Array[String], cells: Array[Vector2i]) -> void:
+# Story 025: [param raw] (the action's "cells") when it is a non-empty list of distinct real cells of
+# the PLAYER's half, else an empty array (the cut is refused and the piece stays in hand).
+func _valid_piece_cells(raw: Variant) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for cell_variant: Variant in (raw as Array):
+		if typeof(cell_variant) != TYPE_VECTOR2I:
+			return [] as Array[Vector2i]
+		var cell: Vector2i = cell_variant as Vector2i
+		if not _grid.is_player_cell(cell) or out.has(cell):
+			return [] as Array[Vector2i]
+		out.append(cell)
+	return out
+
+
+# A small cut may be a feint when the learning says the player keeps dodging early: a one-point
+# label cut (classic), or a piece of at most learning.feint_max_cells cells.
+func _roll_feint(labels: Array[String], cells: Array[Vector2i], piece_cut: bool = false) -> void:
 	_feint_pending = false
-	if force_next_feint and labels.size() == 1:
+	var eligible: bool = labels.size() == 1
+	if piece_cut:
+		eligible = cells.size() <= int(_brain_config.learning["feint_max_cells"])
+	if not eligible:
+		return
+	if force_next_feint:
 		force_next_feint = false
 		_feint_pending = true
 		_feint_cells = cells.duplicate()

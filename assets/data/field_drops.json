@@ -5,5 +5,9 @@
 	"freshness_sec": 7.0,
 	"hungry_after_sec": 4.0,
 	"hungry_interval_mult": 0.6,
-	"allow_drop_in_danger": true
+	"allow_drop_in_danger": true,
+	"piece_spawn_interval_sec": 3.0,
+	"piece_max_on_field": 3,
+	"piece_freshness_sec": 8.0,
+	"start_pieces": 1
 }

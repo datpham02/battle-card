@@ -117,7 +117,8 @@ func _init() -> void:
 	var a: Dictionary = SkillAvailability.check(sc, cd, "hoa_tran", 4)
 	ck("avail: burn 4 cells", a["reason"] == "need_cells" and a["need_cells"] == 5)
 	ck("avail: burn 5", SkillAvailability.check(sc, cd, "hoa_tran", 5)["available"] == true)
-	ck("avail: pin 6", SkillAvailability.check(sc, cd, "bang_phong", 6)["need_cells"] == 7 and not SkillAvailability.check(sc, cd, "bang_phong", 6)["available"])
-	ck("avail: pin 7", SkillAvailability.check(sc, cd, "bang_phong", 7)["available"] == true)
+	# Story 024 Part C: bang_phong min_cells 7 -> 4.
+	ck("avail: pin 3", SkillAvailability.check(sc, cd, "bang_phong", 3)["need_cells"] == 4 and not SkillAvailability.check(sc, cd, "bang_phong", 3)["available"])
+	ck("avail: pin 4", SkillAvailability.check(sc, cd, "bang_phong", 4)["available"] == true)
 	print("FAILS=%d" % fails)
 	quit(fails)

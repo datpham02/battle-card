@@ -58,6 +58,11 @@ var fragile_max_stacks: int = 3
 var frost_stacks_to_burst: int = 3
 var frost_burst_damage: float = 24.0
 var execute_ratio: float = 0.25
+## Story 028: most pieces one cast may join (1..3), extra seconds of card-choice time that a second
+## piece adds (>= 0) and the fallback cap on a cast's total cells (0 = off, else >= 1).
+var max_pieces_per_cast: int = 2
+var join_extra_sec: float = 1.5
+var max_cast_cells: int = 0
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -101,6 +106,10 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 		config.signature_key = key_name
 	config._parse_step_cooldown(data)
 	config._parse_keywords(data)
+	config.max_pieces_per_cast = clampi(int(data.get("max_pieces_per_cast", config.max_pieces_per_cast)), 1, 3)
+	config.join_extra_sec = maxf(float(data.get("join_extra_sec", config.join_extra_sec)), 0.0)
+	var cap: int = int(data.get("max_cast_cells", config.max_cast_cells))
+	config.max_cast_cells = 0 if cap <= 0 else cap
 	return config
 
 

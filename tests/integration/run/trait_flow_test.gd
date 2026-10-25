@@ -97,8 +97,10 @@ func _initialize() -> void:
 		for i: int in hold.get_slot_count():
 			if hold.get_point(i) == rotten:
 				idx = i
-		_check("m2 hand refuses to select it", idx >= 0 and hold.toggle_selected(idx) == false and not hold.is_selected(idx))
-		_check("m2 not in cut selection labels", not hold.get_selected_labels().has("X") and not v.get_cut_selection_labels().has("X"))
+		# Story 024: the bag holds pieces; a rotten one can be neither selected nor dragged.
+		_check("m2 hand refuses to select it", idx >= 0 and not v.select_piece(idx) and not v.is_placing() and not hold.is_selected(idx))
+		_check("m2 hand refuses to drag it", not v.begin_drag(idx, Vector2.ZERO) and not v.is_dragging() and v.get_placing_piece() == null)
+		_check("m2 rotten slot holds no placeable piece", hold.get_piece(idx) == null or not hold.get_piece(idx).placeable())
 		_check("m2 confirm not visible with only rotten", not v.is_confirm_visible())
 		for _i: int in 120:
 			if hold.get_rotten_count() == 0:

@@ -36,6 +36,10 @@ var _level: int = 1
 var _q_level: int = 1
 var _target_is_enemy: bool = true
 var _has_queued: bool = false
+## Story 028: the one-shot featured-shape bonus the running swing carries ({} = none). Kept after the
+## swing resolves (like the level) so the arbiter can read it while swing_resolved is emitted;
+## cleared by [method cancel], by the next swing start and by [method consume_featured_bonus].
+var _featured_bonus: Dictionary = {}
 var _q_cells: Array[Vector2i] = []
 var _q_skill_id: String = ""
 var _q_target_is_enemy: bool = true
@@ -55,7 +59,9 @@ func can_begin() -> bool:
 ## Starts a swing over [param cells]. Returns false if one is already running or the
 ## cell list is empty. Duration = CutConfig.swing_duration(cells) * [member duration_mult].
 ## Story 023: [param duration_override] > 0 fixes the windup (trait swings with their own telegraph).
-func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, level: int = 1, duration_override: float = -1.0) -> bool:
+## Story 028: a non-empty [param featured_bonus] ({damage_mult, effect, stacks, sec}) makes this a
+## FEATURED swing: the bonus is applied once when it resolves with a hit (SwingArbiter, PLAYER side only).
+func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, level: int = 1, duration_override: float = -1.0, featured_bonus: Dictionary = {}) -> bool:
 	if _swinging or cells.is_empty():
 		return false
 	var duration: float = _config.swing_duration(cells.size()) * duration_mult
@@ -63,6 +69,7 @@ func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool
 		duration = float(duration_modifier.call(cells.size(), duration))
 	if duration_override > 0.0:
 		duration = duration_override
+	_featured_bonus = featured_bonus.duplicate(true)
 	_start(cells, skill_id, target_is_enemy, duration, level)
 	return true
 
@@ -132,6 +139,7 @@ func tick(delta: float) -> void:
 		var next_duration: float = _q_duration
 		var next_level: int = _q_level
 		clear_queue()
+		_featured_bonus = {}
 		_start(next_cells, next_skill, next_target, next_duration, next_level)
 
 
@@ -143,6 +151,7 @@ func cancel() -> void:
 	var cells: Array[Vector2i] = _cells
 	var skill_id: String = _skill_id
 	_clear()
+	_featured_bonus = {}
 	swing_cancelled.emit(cells, skill_id)
 	_drop_queue_with_signal()
 
@@ -176,6 +185,18 @@ func get_skill_id() -> String:
 ## is still the level of the swing that just resolved. 1 by default.
 func get_level() -> int:
 	return _level
+
+
+## Story 028: the featured bonus the current (or just resolved) swing carries; {} when none.
+func get_featured_bonus() -> Dictionary:
+	return _featured_bonus.duplicate(true)
+
+
+## Story 028: returns the carried featured bonus and clears it, so it is applied at most once.
+func consume_featured_bonus() -> Dictionary:
+	var bonus: Dictionary = _featured_bonus
+	_featured_bonus = {}
+	return bonus
 
 
 ## True if the current swing targets the enemy half.

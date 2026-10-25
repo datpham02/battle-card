@@ -54,6 +54,9 @@ func _input(event: InputEvent) -> void:
 				_combat.try_step_player(KEYS[key.physical_keycode])
 			get_viewport().set_input_as_handled()
 		return
+	if _combat.is_placing():
+		# Story 024: the d-pad area is the ROTATE button while placing (CutHudView handles it).
+		return
 	var pos: Vector2
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
@@ -80,8 +83,7 @@ func _input(event: InputEvent) -> void:
 func _is_locked() -> bool:
 	if _combat == null:
 		return false
-	var focus: FocusController = _combat.get_focus()
-	return focus != null and focus.is_active() and focus.locks_movement()
+	return _combat.is_movement_locked()
 
 
 ## Direction of the button under viewport point [param point], or Vector2i.ZERO if none.
@@ -95,6 +97,8 @@ func direction_at(point: Vector2) -> Vector2i:
 
 func _draw() -> void:
 	if _combat == null or _combat.get_mover() == null:
+		return
+	if _combat.is_placing():
 		return
 	var locked: bool = _is_locked()
 	var alpha: float = LOCKED_ALPHA if locked else lerpf(1.0, DIM_ALPHA, _combat.get_mover().get_cooldown_fraction())

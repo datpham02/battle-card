@@ -839,6 +839,7 @@ func _enter_current_node() -> void:
 	var controller := RunController.new()
 	controller.name = CONTROLLER_NODE
 	controller.floor_label = tr(_node_name_key(kind))
+	controller.chapter_id = _config.chapter_id(_run.chapter_index)
 	controller.character = _character_dict()
 	controller.deck = _run.deck_ids
 	controller.deck_entries = _run.deck_entries()

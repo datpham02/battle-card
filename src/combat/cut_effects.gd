@@ -9,6 +9,10 @@ static var _warned_no_status: bool = false
 const EXECUTE_MULT: float = 2.0
 ## Flat defense never takes a hit below this much damage (OSFE 9.4: minimum 1).
 const MIN_DAMAGE_AFTER_DEFENSE: float = 1.0
+## Story 028: fallbacks of a `burn` featured bonus that omits its own burn_* numbers (arenas.json normally supplies them).
+const FEATURED_BURN_DURATION_SEC: float = 2.0
+const FEATURED_BURN_TICK_SEC: float = 0.5
+const FEATURED_BURN_DAMAGE_PER_TICK: float = 1.5
 
 
 ## Resolves a swing by the attacker [param side] (a CombatState.Side value) over
@@ -35,7 +39,15 @@ const MIN_DAMAGE_AFTER_DEFENSE: float = 1.0
 ## by `pierce_defense` cards). Effects "fragile" / "frost" (and the fragile_stacks / frost_stacks fields of
 ## any card) apply Ran / Han to the target when its cell is inside; Han reaching the burst deals the burst
 ## damage (ignores defense and Ran). [param options]: {target_defense: float (applies only to hits on the
-## ENEMY side), execute_ratio: float (default for cards with `execute: true`)}.
+## ENEMY side), execute_ratio: float (default for cards with `execute: true`),
+## featured_bonus: Dictionary (Story 028, see below)}.
+## Story 028 featured shape: when the PLAYER's swing carries `options.featured_bonus` {damage_mult, effect,
+## stacks, sec, optional burn_duration_sec / burn_tick_sec / burn_damage_per_tick} and it HITS, the damage is
+## multiplied by damage_mult. FULL damage order of a damage/push hit: card damage x conditions -> Ghim ->
+## Ran -> FEATURED (x damage_mult) -> execute -> passive -> signature -> flat defense. Then, once, the effect:
+## `fragile` / `frost` x stacks (Ran / Han on the boss, a Han burst damages directly), `burn` ignites the cast
+## cells `stacks` times, `pin` pins the boss for `sec`. A miss applies nothing; boss swings never apply it.
+## The result gains featured (bool), featured_mult, featured_effect, featured_stacks, featured_sec.
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -64,6 +76,14 @@ static func apply(
 	result["fragile_hit"] = false
 	result["executed"] = false
 	result["defense_applied"] = 0.0
+	result["featured"] = false
+	result["featured_mult"] = 1.0
+	result["featured_effect"] = ""
+	result["featured_stacks"] = 0
+	result["featured_sec"] = 0.0
+	var featured: Dictionary = {}
+	if side == CombatState.Side.PLAYER and typeof(options.get("featured_bonus")) == TYPE_DICTIONARY:
+		featured = options["featured_bonus"] as Dictionary
 	var skill: Dictionary = _resolve(skill_config, skill_id, level)
 	if skill.is_empty() or not bool(skill["implemented"]):
 		push_warning("CutEffects: skill '%s' is not implemented, using slash" % skill_id)
@@ -91,6 +111,7 @@ static func apply(
 			result["hit"] = true
 		if result["hit"]:
 			_apply_keywords(state, status, target_side, skill, result)
+			_apply_featured_effect(state, status, target_side, cells, featured, result)
 		return result
 	if not inside:
 		return result
@@ -110,6 +131,10 @@ static func apply(
 		if status.fragile_stacks(target_side) > 0:
 			damage *= status.consume_fragile(target_side)
 			result["fragile_hit"] = true
+	if not featured.is_empty():
+		var featured_mult: float = float(featured.get("damage_mult", 1.0))
+		damage *= featured_mult
+		result["featured_mult"] = featured_mult
 	var ratio: float = float(skill.get("execute_ratio", 0.0))
 	if ratio <= 0.0 and bool(skill.get("execute", false)):
 		ratio = float(options.get("execute_ratio", 0.0))
@@ -131,6 +156,7 @@ static func apply(
 	state.damage(target_side, damage)
 	if status != null:
 		_apply_keywords(state, status, target_side, skill, result)
+	_apply_featured_effect(state, status, target_side, cells, featured, result)
 	if push_cells > 0:
 		result["pushed"] = _push(state, grid, target_side, push_cells)
 	return result
@@ -150,6 +176,45 @@ static func _apply_keywords(state: CombatState, status: StatusEffects, target_si
 		if burst > 0.0:
 			result["frost_burst"] = burst
 			state.damage(target_side, burst)
+
+
+# Story 028: applies the featured bonus effect once after a HIT (no-op for an empty bonus, an unknown
+# effect, or a null status for the status effects) and fills the result's featured_* fields.
+static func _apply_featured_effect(
+	state: CombatState, status: StatusEffects, target_side: int, cells: Array[Vector2i],
+	featured: Dictionary, result: Dictionary
+) -> void:
+	if featured.is_empty():
+		return
+	var effect: String = str(featured.get("effect", ""))
+	var stacks: int = maxi(int(featured.get("stacks", 0)), 0)
+	var sec: float = maxf(float(featured.get("sec", 0.0)), 0.0)
+	result["featured"] = true
+	result["featured_effect"] = effect
+	result["featured_stacks"] = stacks
+	result["featured_sec"] = sec
+	if status == null:
+		return
+	match effect:
+		"fragile":
+			status.apply_fragile(target_side, stacks)
+			result["fragile_applied"] = int(result["fragile_applied"]) + stacks
+		"frost":
+			var burst: float = status.apply_frost(target_side, stacks)
+			result["frost_applied"] = int(result["frost_applied"]) + stacks
+			if burst > 0.0:
+				result["frost_burst"] = float(result["frost_burst"]) + burst
+				state.damage(target_side, burst)
+		"burn":
+			for _i: int in stacks:
+				status.ignite(
+					cells, float(featured.get("burn_duration_sec", FEATURED_BURN_DURATION_SEC)),
+					float(featured.get("burn_tick_sec", FEATURED_BURN_TICK_SEC)),
+					float(featured.get("burn_damage_per_tick", FEATURED_BURN_DAMAGE_PER_TICK)))
+			result["burning"] = stacks > 0
+		"pin":
+			status.pin(target_side, sec)
+			result["pinned"] = bool(result["pinned"]) or sec > 0.0
 
 
 static func _hp_of(state: CombatState, side: int) -> float:

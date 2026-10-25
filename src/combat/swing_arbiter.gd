@@ -11,6 +11,8 @@ extends RefCounted
 
 ## Emitted after a swing's effects were applied. [param result] is CutEffects' dictionary
 ## {hit, damage, pushed, cell} extended with {cells, skill_id, level, pin_bonus}. [param side] = CombatState.Side.
+## Story 028: a PLAYER swing started with a featured bonus (CutActor.begin_swing's `featured_bonus`) also
+## reports result.featured / featured_mult / featured_effect / featured_stacks / featured_sec (CutEffects).
 signal swing_resolved(side: int, result: Dictionary)
 ## Emitted when a hit cancelled the opponent's running swing; [param victim_side] is the
 ## side whose swing was cancelled, [param cells] / [param skill_id] that cancelled swing.
@@ -95,17 +97,17 @@ func _step(slice: float) -> void:
 	_pending.clear()
 	var trade: bool = batch.size() > 1
 	for entry: Dictionary in batch:
-		_settle(int(entry["side"]), entry["cells"] as Array[Vector2i], str(entry["skill_id"]), trade, int(entry["level"]))
+		_settle(int(entry["side"]), entry["cells"] as Array[Vector2i], str(entry["skill_id"]), trade, int(entry["level"]), entry["featured_bonus"] as Dictionary)
 
 
-func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int = 1) -> void:
+func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int = 1, featured_bonus: Dictionary = {}) -> void:
 	var modifier: Callable = player_damage_modifier if side == CombatState.Side.PLAYER else Callable()
 	var is_player: bool = side == CombatState.Side.PLAYER
 	var result: Dictionary = CutEffects.apply(
 		_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level,
 		player_cells_modifier if is_player else Callable(),
 		player_signature_modifier if is_player else Callable(),
-		{"target_defense": boss_defense, "execute_ratio": execute_ratio})
+		{"target_defense": boss_defense, "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {}})
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	result["level"] = level
@@ -122,7 +124,12 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 
 
 func _on_actor_resolved(cells: Array[Vector2i], skill_id: String, side: int) -> void:
-	_pending.append({"side": side, "cells": cells, "skill_id": skill_id, "level": (_actors[side] as CutActor).get_level()})
+	var actor: CutActor = _actors[side] as CutActor
+	# Story 028: a swing's featured bonus is consumed here (one-shot); the boss's swings never carry it.
+	var bonus: Dictionary = actor.consume_featured_bonus()
+	if side != CombatState.Side.PLAYER:
+		bonus = {}
+	_pending.append({"side": side, "cells": cells, "skill_id": skill_id, "level": actor.get_level(), "featured_bonus": bonus})
 
 
 func _cancel_all() -> void:

@@ -9,6 +9,10 @@ const DEFAULT_PATH: String = "res://assets/data/arenas.json"
 ## Id of the built-in shape used when the file is unusable.
 const FALLBACK_ID: String = "square"
 const FALLBACK_SIDE: int = 3
+## Story 028 rules of the featured shape (not tuning numbers): its size in cells and the bonus effects.
+const FEATURED_MIN_CELLS: int = 5
+const FEATURED_MAX_CELLS: int = 7
+const FEATURED_EFFECTS: Array[String] = ["fragile", "pin", "burn", "frost"]
 
 ## Rules block of the file (min_cells_per_side, variant_*); see ArenaValidator / ArenaVariants.
 var rules: Dictionary = {}
@@ -92,6 +96,95 @@ static func grid_for_spec(spec: Dictionary, library: ArenaLibrary, seed_value: i
 	return ArenaValidator.build_grid(shape)
 
 
+## Story 028: the featured shape (hinh chu dao) of the arena shape [param shape_id] as
+## {cells: Array[Vector2i] (normalised, sorted), bonus: {damage_mult, effect, stacks, sec, ...}};
+## an empty dictionary when the shape is unknown or defines none (the feature is then off).
+func featured_for_shape(shape_id: String) -> Dictionary:
+	var shape: Dictionary = get_shape(shape_id)
+	if shape.is_empty() or not shape.has("featured_shape") or not shape.has("featured_bonus"):
+		return {}
+	var cells: Array[Vector2i] = parse_featured_cells(shape["featured_shape"])
+	return {"cells": cells, "bonus": (shape["featured_bonus"] as Dictionary).duplicate(true)}
+
+
+## Story 028: the featured shape of a chapters.json match dictionary. The shape comes from the
+## match's `arena.shape` (see CombatView._apply_arena); the match's own `featured_shape` (array of
+## [x, y]) and `featured_bonus` (keys override the shape's bonus one by one) win when valid.
+## When [param grid] is given and the featured shape has no valid placement on its enemy half
+## in any of the 4 rotations (a variant too small), the feature is off for this match.
+## Returns {cells, bonus} like [method featured_for_shape] or an empty dictionary (feature off).
+func featured_for_match(match_dict: Dictionary, grid: BoardGrid = null) -> Dictionary:
+	var base: Dictionary = {}
+	var arena: Variant = match_dict.get("arena")
+	if typeof(arena) == TYPE_DICTIONARY and (arena as Dictionary).has("shape"):
+		base = featured_for_shape(str((arena as Dictionary)["shape"]))
+	var cells: Array[Vector2i] = []
+	if base.has("cells"):
+		cells.assign(base["cells"])
+	if match_dict.has("featured_shape"):
+		var own: Array[Vector2i] = parse_featured_cells(match_dict["featured_shape"])
+		if own.is_empty():
+			push_warning("ArenaLibrary: match featured_shape is invalid (5-7 edge-connected cells), ignored")
+		else:
+			cells = own
+	var raw_bonus: Dictionary = (base["bonus"] as Dictionary).duplicate(true) if base.has("bonus") else {}
+	var override: Variant = match_dict.get("featured_bonus")
+	if typeof(override) == TYPE_DICTIONARY:
+		for key: Variant in (override as Dictionary).keys():
+			raw_bonus[key] = (override as Dictionary)[key]
+	var bonus: Dictionary = parse_featured_bonus(raw_bonus)
+	if cells.is_empty() or bonus.is_empty():
+		return {}
+	if grid != null and not PiecePlacement.has_any_placement(grid, Piece.make("featured", cells)):
+		return {}
+	return {"cells": cells, "bonus": bonus}
+
+
+## Parses a `featured_shape` value ([[x, y], ...]). Returns the normalised, sorted cells, or an
+## empty array when malformed, outside FEATURED_MIN_CELLS..FEATURED_MAX_CELLS or not edge-connected.
+static func parse_featured_cells(raw: Variant) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return cells
+	for item: Variant in raw as Array:
+		if typeof(item) != TYPE_ARRAY or (item as Array).size() != 2:
+			return [] as Array[Vector2i]
+		cells.append(Vector2i(int((item as Array)[0]), int((item as Array)[1])))
+	var norm: Array[Vector2i] = FeaturedShape.normalize(cells)
+	if norm.size() != cells.size() or norm.size() < FEATURED_MIN_CELLS or norm.size() > FEATURED_MAX_CELLS:
+		return [] as Array[Vector2i]
+	var seen: Array[Vector2i] = [norm[0]]
+	var frontier: Array[Vector2i] = [norm[0]]
+	while not frontier.is_empty():
+		var cur: Vector2i = frontier.pop_back()
+		for step: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var next: Vector2i = cur + step
+			if norm.has(next) and not seen.has(next):
+				seen.append(next)
+				frontier.append(next)
+	return norm if seen.size() == norm.size() else ([] as Array[Vector2i])
+
+
+## Parses a `featured_bonus` value into {damage_mult (>= 0), effect, stacks (>= 0), sec (>= 0)}
+## (plus the optional burn_duration_sec / burn_tick_sec / burn_damage_per_tick when present).
+## Empty when [param raw] is not an object or its effect is not in FEATURED_EFFECTS.
+static func parse_featured_bonus(raw: Variant) -> Dictionary:
+	if typeof(raw) != TYPE_DICTIONARY:
+		return {}
+	var d: Dictionary = raw as Dictionary
+	var effect: String = str(d.get("effect", ""))
+	if not FEATURED_EFFECTS.has(effect):
+		return {}
+	var out: Dictionary = {
+		"damage_mult": maxf(float(d.get("damage_mult", 1.0)), 0.0), "effect": effect,
+		"stacks": maxi(int(d.get("stacks", 0)), 0), "sec": maxf(float(d.get("sec", 0.0)), 0.0),
+	}
+	for key: String in ["burn_duration_sec", "burn_tick_sec", "burn_damage_per_tick"]:
+		if d.has(key):
+			out[key] = maxf(float(d[key]), 0.0)
+	return out
+
+
 static func _fallback() -> ArenaLibrary:
 	var library := ArenaLibrary.new()
 	library._shapes.append({
@@ -118,6 +211,17 @@ func _add_checked(entry: Variant) -> void:
 	}
 	var verdict: Dictionary = ArenaValidator.validate(shape, rules)
 	if bool(verdict["ok"]):
+		if raw.has("featured_shape") or raw.has("featured_bonus"):
+			var cells: Array[Vector2i] = parse_featured_cells(raw.get("featured_shape"))
+			var bonus: Dictionary = parse_featured_bonus(raw.get("featured_bonus"))
+			if cells.is_empty() or bonus.is_empty():
+				push_warning("ArenaLibrary: shape '%s' has an invalid featured_shape / featured_bonus, feature off for it" % id)
+			else:
+				var raw_cells: Array = []
+				for cell: Vector2i in cells:
+					raw_cells.append([cell.x, cell.y])
+				shape["featured_shape"] = raw_cells
+				shape["featured_bonus"] = bonus
 		_shapes.append(shape)
 	else:
 		push_warning("ArenaLibrary: shape '%s' dropped: %s" % [id, "; ".join(verdict["reasons"])])

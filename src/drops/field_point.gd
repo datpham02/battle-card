@@ -17,3 +17,6 @@ var freshness_left: float = 0.0
 var rotten: bool = false
 ## Seconds a rotten point stays in the hand before it leaves on its own (counts down in hand).
 var rot_in_hand_sec: float = 0.0
+## Story 024: the puzzle piece this point carries (player half in piece mode), or null for a
+## classic labelled point (what the boss still uses). A rotten piece has [member rotten] true too.
+var piece: Piece = null

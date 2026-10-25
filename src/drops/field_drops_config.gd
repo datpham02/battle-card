@@ -19,6 +19,14 @@ var hungry_after_sec: float = 4.0
 var hungry_interval_mult: float = 0.6
 ## When false, points avoid the opponent's swing cells.
 var allow_drop_in_danger: bool = true
+## Story 024 (piece mode only): seconds between piece drops.
+var piece_spawn_interval_sec: float = 3.0
+## Story 024 (piece mode only): maximum pieces lying on the half at once.
+var piece_max_on_field: int = 3
+## Story 024 (piece mode only): seconds a piece survives on the field.
+var piece_freshness_sec: float = 8.0
+## Story 024 (piece mode only): pieces already lying on the field when a match starts.
+var start_pieces: int = 1
 
 
 ## Independent copy of this config (so one side's drops can be tuned without the other's).
@@ -31,6 +39,10 @@ func copy() -> FieldDropsConfig:
 	c.hungry_after_sec = hungry_after_sec
 	c.hungry_interval_mult = hungry_interval_mult
 	c.allow_drop_in_danger = allow_drop_in_danger
+	c.piece_spawn_interval_sec = piece_spawn_interval_sec
+	c.piece_max_on_field = piece_max_on_field
+	c.piece_freshness_sec = piece_freshness_sec
+	c.start_pieces = start_pieces
 	return c
 
 
@@ -61,6 +73,10 @@ static func from_dictionary(data: Dictionary) -> FieldDropsConfig:
 	c.hungry_after_sec = maxf(float(data.get("hungry_after_sec", c.hungry_after_sec)), 0.0)
 	c.hungry_interval_mult = _positive(data, "hungry_interval_mult", c.hungry_interval_mult)
 	c.allow_drop_in_danger = bool(data.get("allow_drop_in_danger", c.allow_drop_in_danger))
+	c.piece_spawn_interval_sec = _positive(data, "piece_spawn_interval_sec", c.piece_spawn_interval_sec)
+	c.piece_max_on_field = maxi(int(data.get("piece_max_on_field", c.piece_max_on_field)), 1)
+	c.piece_freshness_sec = _positive(data, "piece_freshness_sec", c.piece_freshness_sec)
+	c.start_pieces = maxi(int(data.get("start_pieces", c.start_pieces)), 0)
 	return c
 
 

@@ -35,12 +35,6 @@ func _wait_playing(rc: RunController) -> bool:
 	return false
 
 
-func _point(label: String) -> FieldPoint:
-	var p := FieldPoint.new()
-	p.label = label
-	return p
-
-
 func _view(rc: RunController) -> CombatView:
 	return rc.get_battle().get_node(RunController.COMBAT_VIEW_NODE) as CombatView
 
@@ -107,12 +101,15 @@ func _run() -> void:
 	rc.toggle_pause()
 	_check(not rc.is_paused(), "toggle_pause resumes")
 
-	# --- cut menu blocks the pause -----------------------------------------------------
-	hold.place_in_first_free(_point("A1"))
-	hold.place_in_first_free(_point("C3"))
-	hold.toggle_selected(0)
-	hold.toggle_selected(1)
-	_check(combat.confirm_selection(), "confirm_selection opens the cut")
+	# --- cut menu blocks the pause (Story 024: a piece is placed, then the menu opens) -------------
+	var bar2 := FieldPoint.new()
+	bar2.piece = PieceLibrary.load_from_file().make_piece("bar2")
+	_check(hold.place(bar2, 0) == 0, "bar2 piece placed in bag slot 0")
+	_check(combat.select_piece(0) and combat.is_placing(), "select_piece(0) enters PLACING")
+	_check(combat.aim_at_cell(state.enemy_cell) and combat.can_confirm_placement(), "ghost aimed at the boss cell can be confirmed")
+	_check(combat.get_placement().hits(state.enemy_cell), "the aimed ghost covers the boss cell")
+	_check(combat.confirm_placement(), "confirm_placement opens the cut")
+	_check(not combat.is_placing() and hold.get_piece(0) == null, "placing ended, the piece left the bag")
 	var flow_cut: CutFlow = combat.get_cut_flow()
 	_check(flow_cut.is_menu_open(), "skill menu is open")
 	_check(not combat.can_pause() and not rc.can_pause(), "can_pause false while the menu is open")

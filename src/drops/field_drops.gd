@@ -4,7 +4,10 @@ extends RefCounted
 ## freshness and pickup. One instance per side. No scene dependency.
 ## Story 014: [method place_rotten] lets a boss trait drop a ROTTEN point on this half; it lies,
 ## rots and is picked up like any point (and counts toward max_on_field) but is flagged.
-## Implements: Story 007, Story 014.
+## Story 024: [method enable_pieces] switches the half to PIECE MODE: each spawn draws a puzzle
+## [Piece] by chapter weight (instead of a perimeter label) and the piece_* keys of the config drive
+## the pacing. Without it nothing changes (the boss keeps classic labelled points).
+## Implements: Story 007, Story 014, Story 024.
 
 ## A point landed on the field.
 signal point_spawned(point: FieldPoint)
@@ -30,6 +33,12 @@ var _spawn_timer: float = 0.0
 var _empty_hand_time: float = 0.0
 ## Story 023: multiplies the spawn interval (frost_aura: > 1 = runes fall slower). > 0.
 var interval_scale: float = 1.0
+# Story 024 piece mode (all unused while _piece_mode is false).
+var _piece_mode: bool = false
+var _piece_library: PieceLibrary
+var _chapter_id: String = ""
+var _piece_shapes: Array[String] = [] # shapes with at least one placement on the placement grid
+var _piece_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 ## [param side_cells] is this side's half of the board (BoardGrid.player_cells()),
@@ -65,13 +74,78 @@ func tick(delta: float, stand_cell: Vector2i, hand_count: int) -> void:
 	else:
 		_empty_hand_time = 0.0
 	_spawn_timer = maxf(_spawn_timer - delta, 0.0)
-	if _spawn_timer > 0.0 or _points.size() >= _config.max_on_field:
+	if _spawn_timer > 0.0 or _points.size() >= _max_on_field():
 		return
 	var cell: Vector2i = _pick_free_cell(stand_cell)
 	if cell == NO_CELL:
 		return
-	_add_point(_draw_label(), cell, _config.freshness_sec)
+	if _piece_mode:
+		var piece: Piece = _draw_piece()
+		if piece == null:
+			return
+		_add_point(piece.shape_id, cell, _config.piece_freshness_sec, false, 0.0, piece)
+	else:
+		_add_point(_draw_label(), cell, _config.freshness_sec)
 	_spawn_timer = _current_interval()
+
+
+## Story 024: switches this half to piece mode. Shapes of [param library] for which no rotation
+## has a placement on the ENEMY half of [param placement_grid] (the PLAYER half when
+## [param target_is_enemy] is false, as for the boss, Story 025) are never drawn; the rest are drawn
+## by [method PieceLibrary.weight] for [param chapter_id], with a random rotation. [param rng_seed]
+## < 0 gives a random seed, otherwise draws are deterministic. Pacing then reads the config's
+## piece_spawn_interval_sec / piece_max_on_field / piece_freshness_sec; hunger compensation,
+## blocked cells and pickup are unchanged. Call before the first tick.
+func enable_pieces(
+	library: PieceLibrary, chapter_id: String, placement_grid: BoardGrid, rng_seed: int,
+	target_is_enemy: bool = true
+) -> void:
+	_piece_library = library
+	_chapter_id = chapter_id
+	_piece_shapes.clear()
+	if library != null and placement_grid != null:
+		for id: String in library.shape_ids():
+			if PiecePlacement.has_any_placement(placement_grid, library.make_piece(id), target_is_enemy):
+				_piece_shapes.append(id)
+	if _piece_shapes.is_empty():
+		push_warning("FieldDrops: no piece shape fits the target half, no pieces will drop")
+	if rng_seed >= 0:
+		_piece_rng.seed = rng_seed
+	else:
+		_piece_rng.randomize()
+	_piece_mode = true
+
+
+## True after [method enable_pieces].
+func is_piece_mode() -> bool:
+	return _piece_mode
+
+
+## Shapes that can currently be drawn (piece mode; empty before enable_pieces).
+func get_drawable_shapes() -> Array[String]:
+	return _piece_shapes.duplicate()
+
+
+## Story 024: puts config.start_pieces pieces on free cells (seeded, never [param stand_cell],
+## never a blocked cell, capped by piece_max_on_field) so a match opens with pieces to grab, and
+## restarts the spawn timer at one interval so the next drop does not follow at once. Piece mode
+## only; returns the number placed (0 in classic mode).
+func place_start_pieces(stand_cell: Vector2i) -> int:
+	if not _piece_mode:
+		return 0
+	var placed: int = 0
+	while placed < _config.start_pieces and _points.size() < _max_on_field():
+		var cell: Vector2i = _pick_free_cell(stand_cell)
+		if cell == NO_CELL:
+			break
+		var piece: Piece = _draw_piece()
+		if piece == null:
+			break
+		_add_point(piece.shape_id, cell, _config.piece_freshness_sec, false, 0.0, piece)
+		placed += 1
+	if placed > 0:
+		_spawn_timer = _current_interval()
+	return placed
 
 
 ## Points currently on the field (shallow copy).
@@ -127,12 +201,30 @@ func place_rotten(cell: Vector2i, label: String, freshness_left: float, rot_in_h
 	return _add_point(label, cell, freshness_left, true, maxf(rot_in_hand_sec, 0.0))
 
 
+## Story 024 trait API: like [method place_rotten] but the point carries a ROTTEN piece (1 cell,
+## grey, never placeable; label = Piece.ROTTEN_ID). Same cell rules; null when refused.
+func place_rotten_piece(cell: Vector2i, freshness_left: float, rot_in_hand_sec: float) -> FieldPoint:
+	if not _side_cells.has(cell) or _is_occupied(cell) or _blocked_cells.has(cell):
+		return null
+	return _add_point(
+		Piece.ROTTEN_ID, cell, freshness_left, true, maxf(rot_in_hand_sec, 0.0), Piece.make_rotten()
+	)
+
+
+## DEV-ONLY capture hook: puts a piece on the field, bypassing the draw, timer and caps.
+func debug_place_piece(piece: Piece, cell: Vector2i, freshness_left: float) -> FieldPoint:
+	return _add_point(piece.shape_id, cell, freshness_left, piece.is_rotten(), 0.0, piece)
+
+
 ## True when a real cell of this half has no point on it (missing cells are never free).
 func is_cell_free(cell: Vector2i) -> bool:
 	return _side_cells.has(cell) and not _is_occupied(cell)
 
 
-func _add_point(label: String, cell: Vector2i, freshness: float, rotten: bool = false, rot_in_hand_sec: float = 0.0) -> FieldPoint:
+func _add_point(
+	label: String, cell: Vector2i, freshness: float, rotten: bool = false, rot_in_hand_sec: float = 0.0,
+	piece: Piece = null
+) -> FieldPoint:
 	var p := FieldPoint.new()
 	p.uid = _next_uid
 	_next_uid += 1
@@ -141,13 +233,36 @@ func _add_point(label: String, cell: Vector2i, freshness: float, rotten: bool = 
 	p.freshness_left = freshness
 	p.rotten = rotten
 	p.rot_in_hand_sec = rot_in_hand_sec
+	p.piece = piece
 	_points.append(p)
 	point_spawned.emit(p)
 	return p
 
 
+func _max_on_field() -> int:
+	return _config.piece_max_on_field if _piece_mode else _config.max_on_field
+
+
+# Weighted draw among the drawable shapes (uniform when every weight is 0) + random rotation.
+func _draw_piece() -> Piece:
+	if _piece_shapes.is_empty() or _piece_library == null:
+		return null
+	var total: float = 0.0
+	for id: String in _piece_shapes:
+		total += _piece_library.weight(id, _chapter_id)
+	var chosen: String = _piece_shapes[_piece_rng.randi_range(0, _piece_shapes.size() - 1)]
+	if total > 0.0:
+		var roll: float = _piece_rng.randf() * total
+		for id: String in _piece_shapes:
+			roll -= _piece_library.weight(id, _chapter_id)
+			if roll < 0.0:
+				chosen = id
+				break
+	return _piece_library.make_piece(chosen, _piece_rng.randi_range(0, 3))
+
+
 func _current_interval() -> float:
-	var interval: float = _config.spawn_interval_sec
+	var interval: float = _config.piece_spawn_interval_sec if _piece_mode else _config.spawn_interval_sec
 	if _empty_hand_time > _config.hungry_after_sec:
 		interval *= _config.hungry_interval_mult
 	return interval * maxf(interval_scale, 0.01)

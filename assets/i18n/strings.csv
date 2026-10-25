@@ -52,7 +52,7 @@ ui.run_hud.match_label_arena,%s · %s,%s · %s
 ui.run_hud.arena_variant, (biến thể), (variant)
 ui.run_hud.intro_title,TRẬN %d/%d,MATCH %d/%d
 ui.run_hud.intro_title_boss,TRẬN BOSS,BOSS MATCH
-ui.run_hud.intro_hint,Nhặt ấn · nối trận pháp · Thi triển,Pick runes · draw the sigil · Cast
+ui.run_hud.intro_hint,Nhặt mảnh · đặt lên đất địch · Thi triển,Pick pieces · place them on the enemy's side · Cast
 ui.run_hud.between_title,THẮNG TRẬN!,MATCH WON!
 ui.run_hud.heal,+%d HP,+%d HP
 ui.run_hud.hp,HP %d/%d,HP %d/%d
@@ -78,7 +78,7 @@ ui.run_hud.run_position,Tầng %d · Trận %d,Floor %d · Match %d
 ui.run_hud.run_deck,Bộ: %d lá,Deck: %d cards
 ui.run_hud.back_to_title,Về title,Back to title
 title.name,ẤN KIẾM,RUNE DUEL
-title.tagline,Nhặt ấn · nối trận pháp · Thi triển một đòn,Pick runes · draw the sigil · Cast one strike
+title.tagline,Nhặt mảnh ấn · đặt lên đất địch · Thi triển một đòn,Pick pieces · place them on the enemy's side · Cast one strike
 ui.title.continue,Tiếp tục run,Continue run
 ui.title.run_summary,%s · %s · Cột %d,%s · %s · Column %d
 ui.title.play,Chơi,Play
@@ -125,7 +125,7 @@ arena.islands_bridge.name,Hai đảo,Twin Isles
 arena.staircase.name,Bậc thang,Staircase
 arena.diamond.name,Kim cương,Diamond
 trait.row_burner.name,Hỏa tức,Fire Breath
-trait.rotten_thrower.name,Ấn nguyền,Cursed Rune
+trait.rotten_thrower.name,Mảnh nguyền,Cursed Piece
 character.kiem_si.name,Kiếm sĩ,Swordsman
 character.kiem_si.desc,Cân bằng và bền bỉ: nhiều máu và bộ bài vững.,Balanced and sturdy: plenty of health and a solid deck.
 character.phap_su.name,Pháp sư,Mage
@@ -169,7 +169,7 @@ card.liet_hoa.desc,Đốt các ô trong 4 s. Đốt lại địch đang cháy: c
 card.kiem_than.name,Kiếm thần,Divine Blade
 card.kiem_than.desc,"Nhát chém sắc, hồi nhanh.",A keen slash with a short recovery.
 card.song_kiem.name,Song kiếm,Twin Blades
-card.song_kiem.desc,"Cần sáu ô. Địch đang Rạn ăn thêm ×1,5.",Six cells. A Fragile foe takes ×1.5.
+card.song_kiem.desc,"Cần năm ô. Địch đang Rạn ăn thêm ×1,5.",Five cells. A Fragile foe takes ×1.5.
 card.thien_lang.name,Thiên lãng,Heaven Wave
 card.thien_lang.desc,"Đẩy lùi 2 ô, sát thương khá.","Pushes 2 cells, solid damage."
 card.han_bang.name,Hàn băng,Deep Frost
@@ -250,7 +250,7 @@ chapter.ch3.name,Tháp Sương,The Mist Tower
 arena.cross_wide.name,Chữ thập rộng,Wide Cross
 arena.pillars.name,Cột đá,Pillars
 match.ghost.desc,"Giáp dày, máu mỏng: chỉ lửa mới đủ sức.","Thick armor, thin blood: only fire is enough."
-match.reacter.desc,Mỗi bước của bạn đánh thức nó: đứng yên mà nối ấn.,Every step you take wakes it: stand still and draw.
+match.reacter.desc,Mỗi bước của bạn đánh thức nó: đứng yên mà đặt mảnh.,Every step you take wakes it: stand still and place your piece.
 match.fuse_golem.desc,"Ngòi cháy đếm ngược: đánh mạnh để dập, hoặc nhận cả hàng.","A burning fuse counts down: hit hard to snuff it, or take a whole row."
 match.ghost_elite.desc,"Giáp còn dày hơn, hồn còn mỏng hơn: chỉ lửa và đòn xuyên giáp.","Even thicker armor, an even thinner soul: only fire and piercing strikes."
 match.ogre_king.desc,Mỗi nhịp đập làm nứt nền: đừng đứng trên ô nứt.,Each slam cracks the floor: do not stand on a cracked tile.
@@ -281,10 +281,10 @@ ui.hud.frost_stacks,Hàn ×%d,Frost ×%d
 keyword.fragile,Rạn,Fragile
 keyword.frost,Hàn,Frost
 keyword.execute,Hành quyết,Execute
-trait.step_reactor.desc,Mỗi bước của bạn nạp một phát; đủ phát là nó chém ngay. Đứng yên nối ấn thì an toàn.,Every step you take charges a shot; when full it swings at once. Stand still and connect runes to stay safe.
+trait.step_reactor.desc,Mỗi bước của bạn nạp một phát; đủ phát là nó chém ngay. Đứng yên đặt mảnh thì an toàn.,Every step you take charges a shot; when full it swings at once. Stand still and place pieces to stay safe.
 trait.fuse_cannon.desc,"Ngòi cháy dần, hết ngòi là nổ cả hàng của bạn. Đánh mạnh một đòn để dập ngòi.","A fuse burns down, then blasts your whole row. Land one heavy hit to snuff it out."
 trait.slam.desc,Cứ vài giây lại đập nứt hai ô bên bạn; ô nứt không bước vào được.,Every few seconds it cracks two cells on your side; cracked cells cannot be entered.
-trait.frost_aura.desc,Ấn rơi chậm hơn khi nó còn trên nửa máu.,Runes fall slower while it is above half health.
+trait.frost_aura.desc,Mảnh rơi chậm hơn khi nó còn trên nửa máu.,Pieces fall slower while it is above half health.
 trait.phase_shift.desc,"Ở nửa máu nó đổi sang thế hung hãn, nhanh hơn và thêm đòn mới.","At half health it turns aggressive, moves faster and gains a new attack."
 ui.hud.reactor_charges,Phản ứng %d/%d,Reaction %d/%d
 ui.hud.fuse,Ngòi %.1f s,Fuse %.1f s
@@ -294,3 +294,28 @@ keyword.pierce,Xuyên giáp,Pierce
 keyword.vs_fragile,×%s khi Rạn,×%s vs Fragile
 keyword.fragile_stacks,Rạn +%d,Fragile +%d
 keyword.frost_stacks,Hàn +%d,Frost +%d
+ui.hud.cancel,Hủy,Cancel
+ui.hud.place_hit,Sẽ trúng,Will hit
+ui.hud.place_miss,Sẽ trượt,Will miss
+ui.hud.place_off,Đặt lên đất địch,Place it on the enemy's side
+ui.hud.place_hint,Kéo mảnh lên đất địch rồi thả · Xoay: nút Xoay hoặc R,Drag the piece onto the enemy's side and let go · Rotate: the Rotate button or R
+piece.mono.name,Ô đơn,Single
+piece.bar2.name,Thanh 2,Bar 2
+piece.bar3.name,Thanh 3,Bar 3
+piece.l3.name,Chữ L nhỏ,Small L
+piece.square.name,Ô vuông,Square
+piece.t4.name,Chữ T,T
+piece.l4.name,Chữ L,L
+piece.s4.name,Chữ S,S
+piece.bar4.name,Thanh 4,Bar 4
+piece.plus5.name,Chữ thập,Plus
+piece.u5.name,Chữ U,U
+piece.bar5.name,Thanh 5,Bar 5
+ui.hud.rotate,Xoay,Rotate
+ui.hud.full,ĐẦY,FULL
+ui.hud.cast_total,Tổng %d ô · %d sát thương,Total %d cells · %d damage
+ui.hud.cast_total_preview,Tổng %d ô (+%d) · %d sát thương,Total %d cells (+%d) · %d damage
+ui.hud.featured_corner,Hình chủ đạo,Featured shape
+ui.hud.featured_label,Hình chủ đạo ×%s,Featured shape ×%s
+ui.hud.join_cap,Quá nhiều ô (tối đa %d),Too many cells (max %d)
+keyword.burn,Cháy,Burn

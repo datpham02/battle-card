@@ -10,7 +10,8 @@ scaled by the `canvas_items` stretch mode). All keys are read by code in `src/`.
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
-| `slot_count` | integer 3..4 | slots | Number of hold slots; clamped into 3..4 | 4 |
+| `slot_count` | integer 3..4 | slots | Number of hold slots; clamped into 3..4 (the boss hand) | 4 |
+| `piece_slot_count` | integer 1..6 | slots | Story 024: size of the player's piece bag (`HoldSlots.create_piece_hand`, not subject to the 3..4 clamp); clamped into 1..6 | 3 |
 | `drag_pick_padding_px` | number >= 0 | px | Extra margin around a belt card in which a press still picks it up (thumb tolerance) | 12.0 |
 | `drop_hit_padding_px` | number >= 0 | px | Extra margin around a slot in which a drop counts as on that slot | 16.0 |
 | `drag_lift_px` | number >= 0 | px | How far above the pointer the dragged card is held, so the thumb does not hide it | 56.0 |
@@ -29,8 +30,27 @@ Cut-point drops, one `FieldDrops` instance per side (Story 007). A missing or in
 | `hungry_after_sec` | number >= 0 | seconds | Empty-hand time after which the interval is shortened until a pickup | 4.0 |
 | `hungry_interval_mult` | number > 0 | factor | Interval multiplier while hungry (< 1 = faster) | 0.6 |
 | `allow_drop_in_danger` | boolean | - | When true points may land on the opponent's swing cells; when false they avoid them | true |
+| `piece_spawn_interval_sec` | number > 0 | seconds | Story 024, piece mode only (`FieldDrops.enable_pieces`): base time between piece drops (hunger multiplier still applies); replaces `spawn_interval_sec` in that mode | 3.0 |
+| `piece_max_on_field` | integer >= 1 | pieces | Story 024, piece mode only: maximum pieces (rotten ones included) lying on the half; replaces `max_on_field` in that mode | 3 |
+| `piece_freshness_sec` | number > 0 | seconds | Story 024, piece mode only: life of a piece on the field; held pieces never rot (rotten ones leave the hand after their `rot_in_hand_sec`) | 8.0 |
+| `start_pieces` | integer >= 0 | pieces | Story 024, piece mode only: pieces lying on the half when the match starts (`FieldDrops.place_start_pieces`, capped by `piece_max_on_field`) | 1 |
 
 Point labels are not configured here: they are the board's perimeter labels (`BoardGrid.perimeter_labels()`: A1..A`side_cols` top, B1..B`side_rows` right, C1..C`side_cols` bottom, D1..D`side_rows` left), so they follow the board size in `combat.json`.
+
+## pieces.json  (read by `src/pieces/piece_library.gd`)
+
+Story 024: the puzzle-piece shapes the player drops and places on the enemy half, and their per-chapter drop weights. A missing or invalid file gives a warning and a built-in library with only the `mono` shape. Rotation (0..3 quarter turns clockwise, no mirroring) is not data: the drop draws it at random.
+
+| Key | Type | Meaning | Default if missing |
+|---|---|---|---|
+| `shapes` | array | The shapes, in drawing order | mono only |
+| `shapes[].id` | string | Unique id (`mono`, `bar2`, `bar3`, `l3`, `square`, `t4`, `l4`, `s4`, `bar4`, `plus5`, `u5`, `bar5`); `rotten` is reserved for the rotten piece | - |
+| `shapes[].cells` | array of `[x, y]` | UNROTATED cells relative to any origin (normalised on load, y grows downward); 1..5 distinct cells, edge-connected; an invalid shape is dropped with a warning | - |
+| `shapes[].name_key` | string | `TEXT_*`-style translation key of the name (the strings live in `assets/i18n/strings.csv`) | `piece.<id>.name` |
+| `weights` | object | Drop weights: `{ "default": {<shape id>: weight}, "<chapter id>": {<shape id>: weight} }`; chapter ids are those of `chapters.json` (`ch1`, `ch2`, `ch3`) | - |
+| `weights.<map>.<shape id>` | number >= 0 | Relative chance of the shape being drawn; 0 = never. A chapter's map wins, else `default`, else 1.0 for a shape listed in neither. Shapes with no placement on the match's enemy half are skipped regardless of weight | 1.0 |
+
+Current balance intent: chapter 1 favours 1-3 cell shapes (5-cell shapes rare, `bar5` 0.5 of 100), chapters 2-3 progressively more large shapes. Numbers are a starting point for tuning.
 
 ## combat.json  (read by `src/combat/combat_config.gd`)
 
@@ -66,6 +86,9 @@ Combat start values, timing caps and the board shape (Stories 003, 007). The boa
 | `frost_stacks_to_burst` | int >= 1 | stacks | Story 023 Han (frost): reaching this many stacks bursts (stacks cleared) | 3 |
 | `frost_burst_damage` | number >= 0 | HP | Damage of a Han burst; ignores flat defense and Ran | 24 |
 | `execute_ratio` | number 0..1 | share of max HP | Default threshold of cards with `execute: true`: damage x2 when the target's HP <= ratio x max HP (after Ran, before the passive) | 0.25 |
+| `max_pieces_per_cast` | int 1..3 | pieces | Story 028: most pieces one cast may join on the boss's half (clamped) | 2 |
+| `join_extra_sec` | number >= 0 | s | Story 028: card-choice time added when a second piece joins the open card menu | 1.5 |
+| `max_cast_cells` | int >= 0 | cells | Story 028 fallback lock: a joined piece that would push the cast's total cells above this is refused; 0 = off | 0 |
 
 All five Story 023 keys are validated together in `CombatConfig._parse_keywords` (one invalid -> all five fall back) and passed to `StatusEffects.configure_keywords` by `configure_status`.
 | `player_step_cooldown_sec` | number >= 0 | seconds | DEPRECATED, not shipped: if present it overrides the computed value on every board (warning) | absent |
@@ -145,6 +168,8 @@ Boss brain timing and named weight sets (Story 009). The brain scores every orde
 | `think_interval_sec` | number >= 0 | seconds | Time between brain evaluations; `decide` returns wait in between | 0.3 |
 | `reaction_sec` | number >= 0 | seconds | How long the player's swing must have been visible before the brain reacts to it (dodge, interrupt, pickup danger). DEFAULT only: a set's `movement.reaction_sec` wins when present (Story 013) | 0.35 |
 | `noise` | number >= 0 | score | Amplitude of the uniform seeded noise added to every CUT candidate score (movement uses the set's `movement.move_noise`) | 0.15 |
+| `max_placements_scored` | integer >= 1 | placements | Story 025 (piece mode): every (piece, rotation, anchor) placement on the player's half is pre-ranked cheaply (covers the player's cell first, then reachable-escape cells covered); only the top N get the full score each think | 40 |
+| `root_while_swinging` | bool | - | Story 025: true = the boss's `UnitMover` refuses to step while its `CutActor` swings (a queued combo swing counts), so the player gets a counter window; interrupt / feint-cancel / resolve unlock at once. A match may override it with `boss_root_while_swinging` (bool) in `chapters.json` | true |
 | `active_set` | string | set name | Weight set in use; must exist in `sets` | `balanced` |
 | `sets` | object name -> weights | - | Named weight sets (below) | built-in `balanced` |
 
@@ -205,7 +230,8 @@ Rules of `BossLearning` (`src/combat/boss_learning.gd`): the boss adapts to the 
 | `full_hand_seconds` | number >= 0 | seconds | Player hand continuously full for this long switches on the quick-cut bias | 4.0 |
 | `quick_cut_bias` | number >= 1 | multiplier | Multiplies `cut_duration_penalty` while the bias is on (the boss prefers fast cuts) | 2.0 |
 | `interrupt_count_threshold` | integer >= 1 | interrupts | Times the player interrupted the boss before it favours 1-point cuts | 2 |
-| `single_point_bonus` | number >= 0 | score | Flat bonus added to 1-point cut candidates once the interrupt threshold is reached | 2.0 |
+| `single_point_bonus` | number >= 0 | score | Flat bonus added to 1-point cut candidates once the interrupt threshold is reached (piece mode: to pieces of 1 cell) | 2.0 |
+| `feint_max_cells` | integer >= 0 | cells | Story 025 (piece mode): a cut whose piece has at most this many cells may become a feint (the classic label path keeps the one-point rule) | 2 |
 
 ## `chapters.json` (Stories 011, 015; v2 in Story 022)
 
@@ -287,7 +313,8 @@ Each floor `matches` entry (optional per-match `arena` override as below; `arena
 | `traits` | array of `{id, params}` | - | Story 014: boss traits switched on for this match (see **Boss traits** below). `id` is a `TraitRegistry` key; `params` (optional object) overrides that trait's defaults. Unknown id / non-object entry = warning, skipped, the match still runs; a non-array = warning, no traits. Shipped: match 3 `row_burner`, match 4 (boss) `rotten_thrower` with `interval_sec` 5.0, matches 1-2 none | `[]` |
 | `arena` | object | - | Story 014: the board of this match. `{"shape": "<id>"}` = a shape of `arenas.json`; `{"shape": "<id>", "variant": true}` = a seeded variant of it (1-3 holes toggled, maybe flipped vertically; falls back to the base shape); or a direct block `{side_cols, side_rows, missing_cells}` (validated like a library shape). Unknown id / invalid block = warning, the `combat.json` board is kept. Absent = `combat.json`. Floors normally set the arena (see above); a match-level block overrides it. Dev: `--arena=<id>[:variant]` overrides match 1 | `{}` (combat.json board) |
 | `boss_defense` | number >= 0 | HP | Story 023 flat defense (OSFE 9.4): subtracted from every player damage/push hit on the boss AFTER Ran / execute / passive / signature; at least 1 damage lands; skipped by cards with `pierce_defense`; burn ticks and Han bursts ignore it. Applied in `CutEffects.apply` through `SwingArbiter.boss_defense` | 0 |
-| `boss_min_runes` | int >= 0 | cells | Story 023: the boss brain prefers cuts of at least this many cells (`min_runes_penalty` per missing cell; smaller cuts are skipped while a big enough one exists). 0 = off | 0 |
+| `boss_min_runes` | int >= 0 | cells | Story 023: the boss brain prefers cuts of at least this many cells (`min_runes_penalty` per missing cell; smaller cuts are skipped while a big enough one exists). Story 025: the cut is now a PIECE, so this is the minimum CELLS of the piece (key name unchanged so `chapters.json` keeps working). 0 = off | 0 |
+| `boss_root_while_swinging` | bool | - | Story 025: per-match override of `root_while_swinging` in `boss_brain.json` (true = the boss cannot step while it swings). Absent = the file's value | file value |
 
 Ramp (placeholder): matches 1..4 = hp 80/100/120/150, sets cautious/cautious/balanced/aggressive, step mult 1.78/1.44/1.22/1.11 (= 0.80/0.65/0.55/0.50 s on 3x3), think 0.50/0.40/0.30/0.25, reaction 0.60/0.45/0.35/0.30, drop mult 1.3/1.15/1.0/0.9. Match 2 overrides `movement` = {move_commitment 0.9, move_noise 0.05, reaction_sec 0.45} (Story 013).
 
@@ -308,6 +335,8 @@ A trait is one self-contained boss mechanic: a `BossTrait` subclass (`src/traits
 | `max_on_field` | integer >= 1 | points | Rotten points allowed on the player's half at once; at the cap the throw waits (no burst) | 1 |
 
 A rotten point (`FieldPoint.rotten`) lands on a random seeded free, non-burning player cell that is not the player's cell; it counts toward the half's `max_on_field` of `field_drops.json`, is picked up like any point (needs a free slot), occupies the slot, cannot be selected (`toggle_selected` is false) and never enters a cut.
+
+Story 024: when the player's drops are in piece mode (`FieldDrops.enable_pieces`) the throw is a ROTTEN PIECE instead (`FieldDrops.place_rotten_piece`): a 1-cell grey piece (`FieldPoint.piece.is_rotten()`, `placeable()` false), same cell rules, timers and hand behaviour; `label` is unused in that mode.
 
 `row_burner` params (defaults in `RowBurnerTrait`):
 
@@ -373,6 +402,25 @@ SIDE COORDINATES: `missing_cells` entries are `[col, row]` on ONE half. Col 0 is
 | `variant_change_min` / `variant_change_max` | int >= 1 | cells | Random side cells toggled (hole added or filled) per candidate; a vertical flip is also tried with probability 0.5 |
 
 Each `shapes` entry: `id` (unique string), `name_key` (`arena.<id>.name`; `ArenaNames` holds the same keys for the HUD), `side_cols`, `side_rows` (cells of one half), `missing_cells` (`[[col,row],...]`), `difficulty` (1..5, for the later per-tier pools, Story 015). Shipped shapes: square, rect, cross, u_shape, ring, islands_bridge, staircase, diamond, and (Story 023, chapter 3) `cross_wide` (5x5 minus the four corners, 21 cells, difficulty 3) and `pillars` (5x5 with holes at [1,1] [1,3] [3,1] [3,3], 21 cells, difficulty 4). Both are pure data — no generator case was needed; `ArenaNames.NAMES` gained the two keys.
+
+Story 028 featured shape (hinh chu dao), optional per shape (both keys or the feature is off for it, warning):
+- `featured_shape`: `[[x,y],...]` relative cells (any offset; normalised), 5..7 cells, edge-connected (rule constants `ArenaLibrary.FEATURED_MIN_CELLS` / `FEATURED_MAX_CELLS`). A TWO-piece cast whose union of cells equals it in one of its 4 rotations (no flip) gets the bonus. It must be tileable by >= 2 distinct pairs of `pieces.json` shapes and placeable on the enemy half (test: `tests/unit/pieces/arena_featured_test.gd`).
+- `featured_bonus`: `{damage_mult (>= 0, 1.5), effect ("fragile" | "pin" | "burn" | "frost"), stacks (int >= 0; Ran / Han stacks, or burn ignitions of the cast cells), sec (number >= 0; pin seconds, 0 for the others)}` plus, for `burn`, `burn_duration_sec` / `burn_tick_sec` / `burn_damage_per_tick` (fallbacks: CutEffects.FEATURED_BURN_*). Damage order: card x conditions -> Ghim -> Ran -> featured x damage_mult -> execute -> passive -> signature -> defense; the effect is applied once on a hit, never on a miss or for boss swings.
+- A `chapters.json` match may override with its own `featured_shape` / `featured_bonus` (bonus keys override one by one). `ArenaLibrary.featured_for_match(match, grid)` turns the feature off when the (variant) board's enemy half cannot hold the shape.
+- Theme mapping: solid ground (square, rect) = `pin` 1.2 s; stone (cross, cross_wide, pillars) = `fragile`; forge / climb (u_shape, staircase) = `burn` x1; water / crystal (ring, islands_bridge, diamond) = `frost`.
+
+| id | featured shape (rows, # = cell) | cells | effect |
+|---|---|---|---|
+| `square` | `###/##.` (P) | 5 | pin 1.2 s |
+| `rect` | `###/#.#` (U) | 5 | pin 1.2 s |
+| `cross` | `#../###/.#.` (F, plus-like) | 5 | fragile x1 |
+| `u_shape` | `###/#.#` (U) | 5 | burn x1 |
+| `ring` | `#.../#.../####` (ring corner) | 6 | frost x1 |
+| `islands_bridge` | `####/#...` (bridge + post) | 5 | frost x1 |
+| `staircase` | `.##/##./#..` (W, stairs) | 5 | burn x1 |
+| `diamond` | `.#./###/#..` (F, X-ish) | 5 | frost x2 |
+| `cross_wide` | `###./#.##` | 6 | fragile x1 |
+| `pillars` | `###/#.#/..#` | 6 | fragile x2 |
 
 Validator checks: each half has >= `min_cells_per_side` cells; each half is 4-connected; both default cells exist; the halves mirror each other; from each half's default cell, EVERY single-point cut (A1..D<n>) leaves >= 1 uncovered cell reachable in 1 step.
 

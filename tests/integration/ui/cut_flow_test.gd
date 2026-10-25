@@ -1,8 +1,14 @@
 extends SceneTree
-## Scratch: drives the real cut flow with mouse events (local coords).
+## Story 024 (piece flow): drives the real cut flow with mouse / touch events (local coords).
+## Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
+## Intents: select a piece (tap / drag), drag with lift onto the boss, release -> card menu with the
+## piece cells -> card -> swing with exactly those cells; locked card ignored; Huy returns the piece;
+## release off the board returns it; Xoay by a second finger mid-drag; tap-step fallback; menu
+## timeout picks the default card; confirm during a swing does nothing.
 
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
+const BOSS_CELL: Vector2i = Vector2i(4, 1)
 
 
 func _check(name: String, ok: bool, extra: String = "") -> void:
@@ -11,15 +17,52 @@ func _check(name: String, ok: bool, extra: String = "") -> void:
 		fails += 1
 
 
+func _mouse_button(p: Vector2, pressed: bool) -> void:
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = pressed
+	ev.position = p
+	ev.global_position = p
+	root.push_input(ev, true)
+	await process_frame
+
+
+func _mouse_move(p: Vector2) -> void:
+	var ev := InputEventMouseMotion.new()
+	ev.position = p
+	ev.global_position = p
+	ev.button_mask = MOUSE_BUTTON_MASK_LEFT
+	root.push_input(ev, true)
+	await process_frame
+
+
 func _click(p: Vector2) -> void:
-	for pressed: bool in [true, false]:
-		var ev := InputEventMouseButton.new()
-		ev.button_index = MOUSE_BUTTON_LEFT
-		ev.pressed = pressed
-		ev.position = p
-		ev.global_position = p
-		root.push_input(ev, true)
-		await process_frame
+	await _mouse_button(p, true)
+	await _mouse_button(p, false)
+
+
+# Left-mouse drag from a bag slot to [param to] (lifted ghost), released there.
+func _mouse_drag(from: Vector2, to: Vector2) -> void:
+	await _mouse_button(from, true)
+	await _mouse_move(from + Vector2(0, -60))
+	await _mouse_move(to)
+
+
+func _touch(index: int, pos: Vector2, pressed: bool) -> void:
+	var ev := InputEventScreenTouch.new()
+	ev.index = index
+	ev.pressed = pressed
+	ev.position = pos
+	root.push_input(ev, true)
+	await process_frame
+
+
+func _touch_drag(index: int, pos: Vector2) -> void:
+	var ev := InputEventScreenDrag.new()
+	ev.index = index
+	ev.position = pos
+	root.push_input(ev, true)
+	await process_frame
 
 
 func _wait_real(sec: float) -> void:
@@ -28,10 +71,24 @@ func _wait_real(sec: float) -> void:
 		await process_frame
 
 
-func _point(label: String) -> FieldPoint:
+func _put(hold: HoldSlots, lib: PieceLibrary, shape: String, slot: int) -> void:
 	var p := FieldPoint.new()
-	p.label = label
-	return p
+	p.uid = -100 - slot
+	p.freshness_left = 0.0
+	p.piece = lib.make_piece(shape, 0)
+	p.label = shape
+	hold.place(p, slot)
+
+
+func _shape(hold: HoldSlots, slot: int) -> String:
+	var piece: Piece = hold.get_piece(slot)
+	return "" if piece == null else piece.shape_id
+
+
+func _sorted(cells: Array[Vector2i]) -> Array[Vector2i]:
+	var out: Array[Vector2i] = cells.duplicate()
+	out.sort()
+	return out
 
 
 func _initialize() -> void:
@@ -59,23 +116,46 @@ func _initialize() -> void:
 	var cds: SkillCooldowns = combat.get_skill_cooldowns()
 	var drops: FieldDrops = combat.get_drops()
 	var skill_cfg: SkillConfig = combat.get_skill_config()
-	var confirm_c: Vector2 = ScreenLayout.confirm_button_rect(VP).get_center()
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	var cancel_c: Vector2 = ScreenLayout.cancel_button_rect(VP).get_center()
+	var rot_c: Vector2 = ScreenLayout.rotate_button_rect(VP).get_center()
+	var off_board: Vector2 = Vector2(40, 400)
 
-	hold.place_in_first_free(_point("A1"))
-	hold.place_in_first_free(_point("C3"))
-	hold.place_in_first_free(_point("D2"))
-	state.set_enemy_cell(Vector2i(4, 1))
-	_check("confirm hidden with nothing selected", not combat.is_confirm_visible())
-	await _click(sv.get_slot_rect(0).get_center())
-	await _click(sv.get_slot_rect(1).get_center())
-	_check("two tapped points selected in order", hold.get_selected_labels() == ["A1", "C3"], str(hold.get_selected_labels()))
-	_check("confirm visible", combat.is_confirm_visible())
+	drops.pick_up_at(state.player_cell, true)
+	for i: int in hold.get_slot_count():
+		hold.remove(i)
+	_check("bag has 3 slots", hold.get_slot_count() == 3, str(hold.get_slot_count()))
+	_put(hold, lib, "plus5", 0)
+	_put(hold, lib, "bar2", 1)
+	_put(hold, lib, "mono", 2)
+	state.set_enemy_cell(BOSS_CELL)
+	await process_frame
+	var slot0: Vector2 = sv.get_slot_rect(0).get_center()
+	var slot1: Vector2 = sv.get_slot_rect(1).get_center()
+	var slot2: Vector2 = sv.get_slot_rect(2).get_center()
+	var boss_finger: Vector2 = combat.drag_point_for_cell(BOSS_CELL)
+	_check("not placing / confirm hidden with nothing selected", not combat.is_placing() and not combat.is_confirm_visible())
 
-	await _click(confirm_c)
-	_check("confirm opened the menu (2 points)", flow.is_menu_open())
-	_check("points consumed, D2 left", hold.get_occupied_count() == 1 and hold.get_point(2) != null)
-	_check("selection cleared", hold.get_selected_indices().is_empty())
-	_check("no swing before a skill is chosen", not actor.is_swinging())
+	# --- Tap selects; tapping another slot switches; Huy leaves PLACING with the piece kept.
+	await _click(slot1)
+	_check("tap slot selects the piece (PLACING)", combat.is_placing() and combat.get_placing_piece().shape_id == "bar2")
+	_check("confirm visible while placing", combat.is_confirm_visible())
+	await _click(slot0)
+	_check("tap other slot switches piece", combat.is_placing() and combat.get_placing_piece().shape_id == "plus5")
+	await _click(cancel_c)
+	_check("Huy leaves PLACING, piece stays", not combat.is_placing() and _shape(hold, 0) == "plus5")
+
+	# --- Mouse drag bar2 onto the boss (lift), release -> menu with the piece cells.
+	await _mouse_drag(slot1, boss_finger)
+	_check("drag started (mouse)", combat.is_dragging())
+	var ghost: Array[Vector2i] = combat.get_placement().get_cells().duplicate()
+	_check("ghost on the boss cell, 2 cells", ghost.size() == 2 and ghost.has(BOSS_CELL), str(ghost))
+	_check("ghost aims above the finger (lift)", combat.get_drag_lift_px() > 0.0 and ScreenLayout.cell_at(combat.get_grid(), VP, boss_finger) != BOSS_CELL)
+	await _mouse_button(boss_finger, false)
+	_check("release on board opened the menu", flow.is_menu_open())
+	_check("menu cells == ghost cells", _sorted(flow.get_cells()) == _sorted(ghost), str(flow.get_cells()))
+	_check("piece left the bag, others kept", hold.get_piece(1) == null and _shape(hold, 0) == "plus5" and _shape(hold, 2) == "mono")
+	_check("no swing before a card is chosen", not actor.is_swinging())
 
 	var fp: FieldPoint = drops.debug_place("B2", Vector2i(0, 0), 5.0)
 	var t0: int = Time.get_ticks_msec()
@@ -87,22 +167,30 @@ func _initialize() -> void:
 	var order: Array[String] = combat.get_hand()
 	_check("hand holds the 4-card deck", order.size() == 4 and combat.get_deck().size() == 4, str(order))
 	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(VP, order.size())
-	var burn_i: int = order.find("bang_phong")
-	await _click(rects[burn_i].get_center())
-	_check("locked skill click ignored, menu stays", flow.is_menu_open() and not actor.is_swinging())
-	var push_i: int = order.find("chan_phong")
-	await _click(rects[push_i].get_center())
-	_check("push chosen: menu closed, swing running", not flow.is_menu_open() and actor.is_swinging())
-	_check("push cooldown started", not cds.is_ready("chan_phong") and cds.remaining("chan_phong") > 5.0, "%.2f" % cds.remaining("chan_phong"))
-	_check("swing covers 5 cells", actor.get_cells().size() == 5, str(actor.get_cells().size()))
+	await _click(rects[order.find("bang_phong")].get_center())
+	_check("locked card (needs >2 cells) ignored, menu stays", flow.is_menu_open() and not actor.is_swinging())
+	await _click(cancel_c)
+	_check("Huy in menu returns the piece to its slot", not flow.is_menu_open() and _shape(hold, 1) == "bar2" and not actor.is_swinging())
 
-	hold.place_in_first_free(_point("B1"))
-	await _click(sv.get_slot_rect(hold.get_slot_count() - 1 if false else 0).get_center())
-	var before: int = hold.get_occupied_count()
-	var left: float = actor.get_time_left()
-	await _click(confirm_c)
-	_check("confirm during swing does nothing", hold.get_occupied_count() == before and not flow.is_menu_open() and actor.is_swinging() and actor.get_time_left() <= left, "occupied=%d" % hold.get_occupied_count())
-	hold.clear_selection()
+	# --- Drag plus5 onto the boss, choose push: swing uses exactly the piece cells.
+	await _mouse_drag(slot0, boss_finger)
+	ghost = combat.get_placement().get_cells().duplicate()
+	await _mouse_button(boss_finger, false)
+	_check("plus5 placed: menu open with 5 cells", flow.is_menu_open() and flow.get_cells().size() == 5, str(flow.get_cells()))
+	order = combat.get_hand()
+	rects = ScreenLayout.skill_menu_rects(VP, order.size())
+	await _click(rects[order.find("chan_phong")].get_center())
+	_check("push chosen: menu closed, swing running", not flow.is_menu_open() and actor.is_swinging())
+	_check("swing cells == placed piece cells", _sorted(actor.get_cells()) == _sorted(ghost), str(actor.get_cells()))
+	_check("push cooldown started", not cds.is_ready("chan_phong") and cds.remaining("chan_phong") > 5.0, "%.2f" % cds.remaining("chan_phong"))
+	_check("piece spent", hold.get_piece(0) == null)
+
+	# --- Confirm during a swing does nothing (tap-step: select, aim, tap ghost).
+	await _click(slot1)
+	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
+	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
+	_check("confirm during swing does nothing", not flow.is_menu_open() and _shape(hold, 1) == "bar2" and actor.is_swinging())
+	await _click(cancel_c)
 
 	var guard: int = 0
 	while actor.is_swinging() and guard < 900:
@@ -111,35 +199,61 @@ func _initialize() -> void:
 	_check("swing resolved", not actor.is_swinging())
 	_check("push damage 20 (5 cells x 4 dmg/cell, Story 020)", is_equal_approx(state.enemy_hp, state.enemy_max_hp - 20.0), str(state.enemy_hp))
 	_check("boss pushed away from divider", state.enemy_cell == Vector2i(5, 1), str(state.enemy_cell))
+	state.set_enemy_cell(BOSS_CELL)
+	await process_frame
 
-	# Single point: select + confirm = straight to a slash, no menu.
-	hold.clear_selection()
-	var slot_a1: int = -1
-	for i: int in hold.get_slot_count():
-		if hold.get_point(i) != null and hold.get_point(i).label == "B1":
-			slot_a1 = i
-	await _click(sv.get_slot_rect(slot_a1).get_center())
-	_check("one point selected", hold.get_selected_labels() == ["B1"])
-	await _click(confirm_c)
-	_check("1 point: no menu, swing started", not flow.is_menu_open() and actor.is_swinging())
+	# --- Release off the board: piece goes back.
+	await _mouse_drag(slot2, boss_finger)
+	_check("mono drag started", combat.is_dragging())
+	await _mouse_move(off_board)
+	await _mouse_button(off_board, false)
+	_check("release off board: not placing, no menu", not combat.is_placing() and not flow.is_menu_open())
+	_check("release off board: piece back in slot", _shape(hold, 2) == "mono")
+
+	# --- Touch: finger 0 drags bar2, finger 1 presses Xoay mid-drag, release -> rotated cells.
+	await _touch(0, slot1, true)
+	await _touch_drag(0, slot1 + Vector2(0, -60))
+	await _touch_drag(0, boss_finger)
+	_check("touch drag started", combat.is_dragging())
+	var size0: Vector2i = combat.get_placing_piece().size()
+	await _touch(1, rot_c, true)
+	await _touch(1, rot_c, false)
+	_check("Xoay (finger 1) rotated mid-drag", combat.get_placing_piece().size() == Vector2i(size0.y, size0.x) and size0.x != size0.y, "%s -> %s" % [size0, combat.get_placing_piece().size()])
+	_check("drag not cancelled by Xoay", combat.is_dragging())
+	await _touch_drag(0, boss_finger + Vector2(2, 0))
+	await _touch(0, boss_finger + Vector2(2, 0), false)
+	var xs: Dictionary = {}
+	for c: Vector2i in flow.get_cells():
+		xs[c.x] = true
+	_check("touch release opened menu with the rotated (vertical) bar", flow.is_menu_open() and flow.get_cells().size() == 2 and xs.size() == 1 and flow.get_cells().has(BOSS_CELL), str(flow.get_cells()))
+	order = combat.get_hand()
+	rects = ScreenLayout.skill_menu_rects(VP, order.size())
+	await _touch(0, rects[order.find("kiem_khi")].get_center(), true)
+	await _touch(0, rects[order.find("kiem_khi")].get_center(), false)
+	_check("touch card choice starts the swing", not flow.is_menu_open() and actor.is_swinging() and actor.get_skill_id() == "kiem_khi")
 	guard = 0
 	while actor.is_swinging() and guard < 900:
 		await process_frame
 		guard += 1
 
-	# Menu timeout auto-picks slash.
-	for lab: String in ["A2", "C2"]:
-		hold.place_in_first_free(_point(lab))
-	var idxs: Array[int] = []
-	for i: int in hold.get_slot_count():
-		var p: FieldPoint = hold.get_point(i)
-		if p != null and (p.label == "A2" or p.label == "C2"):
-			idxs.append(i)
-	for i: int in idxs:
-		await _click(sv.get_slot_rect(i).get_center())
-	await _click(confirm_c)
-	_check("menu open again", flow.is_menu_open())
-	await _wait_real(skill_cfg.menu_choose_sec + 0.5)
-	_check("timeout auto-chose slash", not flow.is_menu_open() and actor.is_swinging() and actor.get_skill_id() == "kiem_khi", actor.get_skill_id())
+	# --- Tap-step fallback with mono, then menu timeout auto-picks the default card.
+	state.set_enemy_cell(BOSS_CELL)
+	await _click(slot2)
+	_check("tap-step: mono selected", combat.is_placing() and not combat.is_dragging())
+	var aim: Vector2i = BOSS_CELL + Vector2i(1, 0)
+	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, aim))
+	_check("tap-step: tap cell aims the ghost, no menu", combat.get_placement().get_cells() == [aim] and not flow.is_menu_open(), str(combat.get_placement().get_cells()))
+	_check("ghost off the boss reports a miss", not combat.get_placement().hits(state.enemy_cell))
+	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
+	_check("tap-step: re-aim onto the boss reports a hit", combat.get_placement().get_cells() == [BOSS_CELL] and combat.get_placement().hits(state.enemy_cell) and not flow.is_menu_open())
+	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
+	_check("tap-step: tap ghost confirms -> menu", flow.is_menu_open() and flow.get_cells() == [BOSS_CELL], str(flow.get_cells()))
+	var t_menu: int = Time.get_ticks_msec()
+	while flow.is_menu_open() and Time.get_ticks_msec() - t_menu < int((skill_cfg.menu_choose_sec + 1.0) * 1000.0):
+		await process_frame
+	var waited: float = float(Time.get_ticks_msec() - t_menu) / 1000.0
+	_check("timeout auto-chose slash on the piece cell", not flow.is_menu_open() and actor.is_swinging() and actor.get_skill_id() == "kiem_khi" and actor.get_cells() == [BOSS_CELL], "%s %s after %.2fs" % [actor.get_skill_id(), str(actor.get_cells()), waited])
+	_check("menu closed by its timeout (~menu_choose_sec)", absf(waited - skill_cfg.menu_choose_sec) < 0.6, "%.2f" % waited)
 	print("FAILS=%d" % fails)
+	print("VERDICT %s" % ("PASS" if fails == 0 else "FAIL"))
 	quit(fails)

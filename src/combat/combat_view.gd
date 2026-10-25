@@ -102,6 +102,26 @@ var _cut_flow: CutFlow
 ## Last resolved player cut for the HIT/MISS marker: {cells, hit, damage, cell, time_left}; empty = none.
 var _feedback: Dictionary = {}
 var _hold_hooked: bool = false
+## Story 024: PLACING mode logic (piece ghost, rotation, snap); idle outside of it.
+var _placement: PlacementController
+## Story 024: the piece consumed when the card menu opened ({point, slot}); returned to its slot on cancel.
+var _pending_piece: FieldPoint = null
+var _pending_slot: int = -1
+## Story 028: the pieces of the cast being built (piece 1 from the moment the card menu opens, piece 2 once
+## joined), the featured shape of the match ({cells, bonus} or {} = off), the second piece's bag point /
+## slot while it is attached, and the last refused join ({cells, reason, time_left}) for the red ghost.
+var _plan: CastPlan = CastPlan.new()
+var _featured: Dictionary = {}
+var _join_point: FieldPoint = null
+var _join_slot: int = -1
+var _join_refusal: Dictionary = {}
+## True while the pending piece is being taken out of the bag, so the slot-cleared hook does not
+## auto-pick a piece lying under the player into the slot that must stay free for a cancel.
+var _consuming: bool = false
+## Story 024 touch-first placing: true while a finger / the left mouse button drags a piece, and the
+## last pointer position of that drag (viewport pixels, the finger itself, not the lifted ghost).
+var _dragging: bool = false
+var _drag_point: Vector2 = Vector2.ZERO
 var _boss: BossController
 var _arbiter: SwingArbiter
 ## Last resolved boss cut, drawn on the player's half: same shape as [member _feedback].
@@ -147,6 +167,8 @@ signal signature_ended(id: String)
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
 const DEFAULT_BOSS_NAME: String = "DUMMY"
+## Real seconds the red "refused" ghost of a join stays on screen.
+const JOIN_REFUSAL_SEC: float = 1.2
 ## HUD keys (Story 017): the player marker / HP label (used when the match has no character, see
 ## [method get_player_name]), the HP line and the dead line of a unit.
 const TEXT_YOU: String = "ui.hud.you"
@@ -181,8 +203,16 @@ func _ready() -> void:
 	_mover = UnitMover.new(_state, CombatState.Side.PLAYER, _player_step_cooldown)
 	_drops_config = FieldDropsConfig.load_from_file(drops_config_path)
 	var boss_drops_config: FieldDropsConfig = _drops_config.copy()
-	boss_drops_config.spawn_interval_sec *= maxf(float(match_params.get("boss_drop_interval_mult", 1.0)), 0.01)
+	var boss_drop_mult: float = maxf(float(match_params.get("boss_drop_interval_mult", 1.0)), 0.01)
+	boss_drops_config.spawn_interval_sec *= boss_drop_mult
+	boss_drops_config.piece_spawn_interval_sec *= boss_drop_mult # Story 025: the boss drops pieces too
 	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), _grid.perimeter_labels(), drops_seed)
+	# Story 024: the player's half drops puzzle pieces (the boss's drops stay classic labels).
+	_drops.enable_pieces(PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), _grid, drops_seed)
+	_drops.place_start_pieces(_state.player_cell)
+	_placement = PlacementController.new(_grid)
+	_plan.init(_config.max_pieces_per_cast, _config.max_cast_cells)
+	_featured = ArenaLibrary.load_from_file().featured_for_match(match_params, _grid)
 	_state.cell_changed.connect(_on_cell_changed)
 	_cut_config = CutConfig.load_from_file()
 	_skill_config = SkillConfig.load_from_file()
@@ -203,6 +233,10 @@ func _ready() -> void:
 	_boss = BossController.new(
 		_state, _grid, _cut_config, _skill_config, brain_config, boss_drops_config, hold_config,
 		drops_seed + 1 if drops_seed >= 0 else -1
+	)
+	# Story 025: the boss plays pieces too (placement checked on the player's half).
+	_boss.enable_pieces(
+		PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), drops_seed + 2 if drops_seed >= 0 else -1
 	)
 	_boss.set_player_step_cooldown(_player_step_cooldown)
 	_boss.get_brain().cards = _boss_card_ids()
@@ -313,7 +347,7 @@ func can_activate_signature() -> bool:
 		return false
 	if _cut_flow.is_menu_open():
 		return false
-	if _focus.is_active() and _focus.locks_movement():
+	if is_movement_locked():
 		return false
 	return true
 
@@ -460,6 +494,8 @@ func _apply_brain_params(brain_config: BossBrainConfig) -> void:
 		brain_config.step_cooldown_sec = maxf(_base_step_cooldown * float(match_params["boss_step_cooldown_mult"]), 0.0)
 	brain_config.think_interval_sec = maxf(float(match_params.get("boss_think_interval_sec", brain_config.think_interval_sec)), 0.0)
 	brain_config.reaction_sec = maxf(float(match_params.get("boss_reaction_sec", brain_config.reaction_sec)), 0.0)
+	if match_params.has("boss_root_while_swinging"):
+		brain_config.root_while_swinging = bool(match_params["boss_root_while_swinging"])
 	var wanted: String = str(match_params.get("brain_set", ""))
 	if not wanted.is_empty():
 		if brain_config.has_set(wanted):
@@ -530,6 +566,7 @@ func _process(delta: float) -> void:
 		var real_step: float = minf(delta, _config.max_tick_sec)
 		# The menu countdown runs on REAL time; it may close the menu this frame.
 		_cut_flow.tick_real(real_step)
+		_age_refusal(real_step)
 		# Simulation time is scaled down while the skill menu is open (slow motion); the boss
 		# lives in the same scaled time.
 		_update_focus(real_step)
@@ -574,7 +611,9 @@ func _update_focus(real_step: float) -> void:
 	var hold: HoldSlots = _get_hold()
 	if _state.is_player_dead() or _state.is_enemy_dead():
 		_focus.end(FocusController.REASON_DEATH)
+		_drop_placement()
 		return
+	_sync_placement()
 	var selected: bool = hold != null and not hold.get_selected_indices().is_empty()
 	if _focus.is_active() and not selected:
 		_focus.end(FocusController.REASON_DESELECTED)
@@ -588,6 +627,9 @@ func _sim_scale() -> float:
 		return _skill_config.menu_time_scale
 	if _focus.is_active():
 		return _focus.get_time_scale()
+	if _placement != null and _placement.is_placing():
+		# Story 024: PLACING without Focus (on cooldown) still slows the match.
+		return _skill_config.menu_time_scale
 	return 1.0
 
 
@@ -713,57 +755,378 @@ func get_cut_feedback() -> Dictionary:
 	return _feedback
 
 
-## Labels of the current selection that a cut would use: the first hand_max_points in
-## selection order (extra selected points are left selected).
-func get_cut_selection_labels() -> Array[String]:
-	var labels: Array[String] = []
-	var hold: HoldSlots = _get_hold()
-	if hold == null:
-		return labels
-	for index: int in hold.get_selected_indices():
-		if labels.size() >= _cut_config.hand_max_points:
-			break
-		labels.append(hold.get_point(index).label)
-	return labels
+## Story 024: the PLACING logic (ghost cells, rotation, state); never null after _ready.
+func get_placement() -> PlacementController:
+	return _placement
 
 
-## True when the CONFIRM button should be on screen: >= 1 point selected, no menu open and
-## nobody dead. (While a swing runs it is shown dimmed and pressing it does nothing.)
+## Story 024: true while a piece is being placed (a bag slot is selected, the card menu is closed).
+func is_placing() -> bool:
+	return _placement != null and _placement.is_placing()
+
+
+## Story 024: true when the d-pad / signature are locked: Focus locks movement while active, and so
+## does PLACING (also when Focus is on cooldown and the match only runs slowed).
+func is_movement_locked() -> bool:
+	if _focus != null and _focus.is_active() and _focus.locks_movement():
+		return true
+	return is_placing()
+
+
+## Story 024: the piece being placed in its current rotation, null when not placing.
+func get_placing_piece() -> Piece:
+	return _placement.get_piece() if is_placing() else null
+
+
+## True when the CONFIRM button should be on screen: a piece is being placed, no menu open and
+## nobody dead. (It is dimmed when the ghost is off the enemy half or while a swing runs.)
 func is_confirm_visible() -> bool:
-	var hold: HoldSlots = _get_hold()
-	if hold == null or _state == null or _cut_flow.is_menu_open():
+	if _placement == null or _state == null or _cut_flow.is_menu_open():
 		return false
 	if _state.is_player_dead() or _state.is_enemy_dead():
 		return false
-	return not hold.get_selected_indices().is_empty()
+	return _placement.is_placing()
 
 
-## Confirms the current selection as a cut. Returns false (nothing changes) when blocked
-## (menu open, own swing running, dead, nothing selected) or when every covered cell is
-## missing. Otherwise the used points leave the hand NOW (more than hand_max_points selected:
-## the first hand_max_points in selection order are used, the rest stay selected); one
-## point with single_point_opens_menu == false swings slash at once, else the skill menu opens.
-func confirm_selection() -> bool:
+## True when confirming would open the card menu now: placing, ghost on a valid placement, no own
+## swing running.
+func can_confirm_placement() -> bool:
+	if _cut_flow.is_menu_open():
+		return can_join_piece() and is_placing() and _placement.can_confirm() and _fits_cap(_placement.get_cells())
+	return is_confirm_visible() and _placement.can_confirm() and not _cut_actor.is_swinging()
+
+
+## Story 024: selects the piece in bag slot [param index] and enters PLACING (the selection set of the
+## hand holds exactly that slot, so Focus starts / ends through _update_focus as before). Selecting
+## the slot that is already being placed rotates the piece instead when [param rotate_if_selected].
+## Returns false (nothing changes) for an empty / rotten slot, an open menu or a dead unit.
+func select_piece(index: int, rotate_if_selected: bool = true) -> bool:
 	var hold: HoldSlots = _get_hold()
-	if hold == null or not is_confirm_visible() or _cut_actor.is_swinging():
+	var joining: bool = _cut_flow.is_menu_open()
+	if hold == null or _state.is_player_dead() or _state.is_enemy_dead():
 		return false
-	var labels: Array[String] = get_cut_selection_labels()
-	var cells: Array[Vector2i] = CutResolver.resolve_on_board(_grid, true, labels)
+	if joining and not can_join_piece():
+		return false
+	var piece: Piece = hold.get_piece(index)
+	if piece == null or not piece.placeable():
+		return false
+	if is_placing() and _placement.get_slot() == index:
+		return rotate_piece() if rotate_if_selected else true
+	hold.clear_selection()
+	hold.toggle_selected(index)
+	_join_refusal = {}
+	var blocked: Array[Vector2i] = []
+	if joining:
+		blocked = _plan.cells()
+	return _placement.begin(index, piece, blocked)
+
+
+## Rotates the piece being placed 90 degrees (keeps the anchor if still valid, else re-snaps).
+func rotate_piece() -> bool:
+	if not is_placing():
+		return false
+	_placement.rotate()
+	_store_rotation()
+	return true
+
+
+## Aims the ghost at board cell [param cell] (NO_CELL / own half = off the board).
+func aim_at_cell(cell: Vector2i) -> bool:
+	return is_placing() and _placement.move_to(cell)
+
+
+## Aims the ghost at viewport point [param pos] (a tap). [param lift] raises the aimed point by that
+## many pixels (a drag keeps the ghost above the finger); a point above the board but over it
+## horizontally clamps to the board's top edge when the finger itself is on the board.
+func aim_at_position(pos: Vector2, lift: float = 0.0) -> bool:
+	if not is_placing():
+		return false
+	var vp: Vector2 = get_viewport_rect().size
+	var point := Vector2(pos.x, pos.y - lift)
+	var board: Rect2 = ScreenLayout.board_rect(_grid, vp)
+	if lift > 0.0 and board.has_point(pos) and point.y < board.position.y:
+		point.y = board.position.y + 1.0
+	return _placement.move_to(ScreenLayout.cell_at(_grid, vp, point))
+
+
+## Pixels the dragged ghost floats above the finger (hold_slots.json drag_lift_px).
+func get_drag_lift_px() -> float:
+	var view := get_node_or_null(hold_slots_view_path) as HoldSlotsView
+	return 0.0 if view == null else view.get_config().drag_lift_px
+
+
+## Touch-first: starts dragging the piece in bag slot [param slot] with the finger at [param pos]
+## (selects it, enters PLACING and puts the ghost above the finger). False when the slot cannot be
+## placed (nothing changes).
+func begin_drag(slot: int, pos: Vector2) -> bool:
+	if not select_piece(slot, false):
+		return false
+	_dragging = true
+	_drag_point = pos
+	_placement.move_to(BoardGrid.NO_CELL)
+	aim_at_position(pos, get_drag_lift_px())
+	return true
+
+
+## Moves the finger of the running drag to [param pos]; the ghost follows, [member drag_lift_px] above.
+func drag_to(pos: Vector2) -> bool:
+	if not _dragging or not is_placing():
+		return false
+	_drag_point = pos
+	return aim_at_position(pos, get_drag_lift_px())
+
+
+## Finger lifted at [param pos]: when the ghost sits on the enemy half the placement is confirmed (the
+## card menu opens, returns true); anywhere else the piece goes back (PLACING ends, returns false).
+func end_drag(pos: Vector2) -> bool:
+	if not _dragging:
+		return false
+	drag_to(pos)
+	_dragging = false
+	if can_confirm_placement() and confirm_placement():
+		return true
+	if _cut_flow.is_menu_open():
+		_note_refusal()
+	_drop_placement()
+	return false
+
+
+## True while a piece is being dragged by a finger / the mouse.
+func is_dragging() -> bool:
+	return _dragging and is_placing()
+
+
+## Last finger position of the drag (the ghost is drawn get_drag_lift_px() above it).
+func get_drag_point() -> Vector2:
+	return _drag_point
+
+
+## Viewport point where a finger must be for the lifted ghost to aim at board cell [param cell]
+## (the cell's centre, drag_lift_px lower). For tests and dev demos emulating a drag.
+func drag_point_for_cell(cell: Vector2i) -> Vector2:
+	return ScreenLayout.cell_center(_grid, get_viewport_rect().size, cell) + Vector2(0.0, get_drag_lift_px())
+
+
+## Confirms the placement: the piece leaves the bag, the card menu opens with its cells (0.2x, 3 s,
+## default card on timeout). Returns false (nothing changes) unless [method can_confirm_placement].
+func confirm_placement() -> bool:
+	var hold: HoldSlots = _get_hold()
+	if hold == null or not can_confirm_placement():
+		return false
+	if _cut_flow.is_menu_open():
+		return _attach_piece(hold)
+	var slot: int = _placement.get_slot()
+	var piece: Piece = _placement.get_piece()
+	var cells: Array[Vector2i] = _placement.confirm()
 	if cells.is_empty():
 		return false
+	_dragging = false
 	_focus.end(FocusController.REASON_CONFIRMED)
-	var used: Array[int] = []
-	for index: int in hold.get_selected_indices():
-		if used.size() >= labels.size():
-			break
-		used.append(index)
-	for index: int in used:
-		hold.remove(index)
-	if labels.size() == 1 and not _cut_config.single_point_opens_menu:
-		_begin_cut(SkillConfig.FALLBACK_SKILL, cells)
-	else:
-		_cut_flow.open_menu(labels, cells, _deck.draw(_skill_config.hand_size))
+	_consuming = true
+	_pending_slot = slot
+	_pending_piece = hold.remove(slot)
+	_consuming = false
+	var labels: Array[String] = [piece.shape_id]
+	_plan.init(_config.max_pieces_per_cast, _config.max_cast_cells)
+	_plan.add_piece(slot, piece, cells)
+	_join_point = null
+	_join_slot = -1
+	_join_refusal = {}
+	_cut_flow.open_menu(labels, cells, _deck.draw(_skill_config.hand_size))
 	return true
+
+
+## Story 028: true while the open card menu still has room for another piece (max_pieces_per_cast):
+## the bag stays live and a piece dragged from it is placed as the cast's next piece.
+func can_join_piece() -> bool:
+	if _cut_flow == null or _plan == null or not _cut_flow.is_menu_open():
+		return false
+	if _state.is_player_dead() or _state.is_enemy_dead():
+		return false
+	return _plan.piece_count() >= 1 and not _plan.is_full()
+
+
+## Story 028: the cast being built (empty outside the card menu).
+func get_cast_plan() -> CastPlan:
+	return _plan
+
+
+## Story 028: the featured shape of this match ({cells, bonus}; empty = feature off on this board).
+func get_featured() -> Dictionary:
+	return _featured
+
+
+## Story 028: true when the open menu's plan is a two-piece cast whose union equals the featured shape.
+func is_plan_featured() -> bool:
+	return _cut_flow != null and _cut_flow.is_menu_open() and not _featured.is_empty() \
+			and _plan.is_featured(_featured["cells"] as Array[Vector2i])
+
+
+## Story 028: true when the plan plus [param extra] (the second ghost's cells) would be a featured
+## two-piece cast. With an empty [param extra] it is [method is_plan_featured].
+func joined_is_featured(extra: Array[Vector2i]) -> bool:
+	if _featured.is_empty() or _plan.piece_count() == 0:
+		return false
+	if extra.is_empty():
+		return is_plan_featured()
+	if _plan.piece_count() != 1:
+		return false
+	var union: Array[Vector2i] = _plan.cells()
+	for cell: Vector2i in extra:
+		if union.has(cell):
+			return false
+		union.append(cell)
+	return FeaturedShape.matches(_featured["cells"] as Array[Vector2i], union)
+
+
+## Story 028: the last refused join ({cells, time_left}); empty when none is showing.
+func get_join_refusal() -> Dictionary:
+	return _join_refusal
+
+
+## Story 028: takes the second piece off the cast and puts it back into its bag slot; the menu's cells
+## shrink to the first piece (the time already added stays). False when the cast has no second piece.
+func detach_second_piece() -> bool:
+	if not _cut_flow.is_menu_open() or _plan.piece_count() < 2:
+		return false
+	_plan.remove_piece(1)
+	var point: FieldPoint = _join_point
+	var slot: int = _join_slot
+	_join_point = null
+	_join_slot = -1
+	var hold: HoldSlots = _get_hold()
+	if point != null and hold != null and hold.place(point, slot) < 0:
+		hold.place_in_first_free(point)
+	_cut_flow.update_cut(_plan_labels(), _plan.cells())
+	return true
+
+
+# Attaches the piece being placed as the cast's second piece (menu open). The piece leaves the bag; the
+# menu gets the union of the cells and join_extra_sec more time. A refused plan keeps the piece in the bag.
+func _attach_piece(hold: HoldSlots) -> bool:
+	var slot: int = _placement.get_slot()
+	var piece: Piece = _placement.get_piece()
+	var cells: Array[Vector2i] = _placement.get_cells()
+	if not _plan.add_piece(slot, piece, cells):
+		_note_refusal()
+		_drop_placement()
+		return false
+	_placement.cancel()
+	_dragging = false
+	_consuming = true
+	_join_slot = slot
+	_join_point = hold.remove(slot)
+	_consuming = false
+	hold.clear_selection()
+	_cut_flow.update_cut(_plan_labels(), _plan.cells(), _config.join_extra_sec)
+	return true
+
+
+func _plan_labels() -> Array[String]:
+	var labels: Array[String] = []
+	for piece: Piece in _plan.pieces():
+		labels.append(piece.shape_id)
+	return labels
+
+
+# True when [param cells] added to the plan stay within max_cast_cells (0 = no cap).
+func _fits_cap(cells: Array[Vector2i]) -> bool:
+	return _config.max_cast_cells <= 0 or _plan.total_cells() + cells.size() <= _config.max_cast_cells
+
+
+# The ghost sat on the board but the cell cap refuses it: keep its cells for the red ghost + hint.
+func _note_refusal() -> void:
+	if is_placing() and _placement.can_confirm() and not _fits_cap(_placement.get_cells()):
+		_join_refusal = {"cells": _placement.get_cells(), "time_left": JOIN_REFUSAL_SEC}
+
+
+func _age_refusal(real_step: float) -> void:
+	if _join_refusal.is_empty():
+		return
+	_join_refusal["time_left"] = float(_join_refusal["time_left"]) - real_step
+	if float(_join_refusal["time_left"]) <= 0.0:
+		_join_refusal = {}
+
+
+## Kept name of the old API: confirms the piece placement (see [method confirm_placement]).
+func confirm_selection() -> bool:
+	return confirm_placement()
+
+
+## Esc / cancel button. While PLACING: leaves the mode (piece stays in its slot). While the card
+## menu is open: closes it and puts the piece back into its slot (or the first free one).
+## Returns true when something was cancelled.
+func cancel_placement() -> bool:
+	if _cut_flow.is_menu_open():
+		# Story 028: Cancel returns BOTH pieces (and ends a second piece still being dragged).
+		_drop_placement()
+		_cut_flow.cancel_menu()
+		_return_join_piece()
+		_return_pending_piece()
+		_plan.clear()
+		return true
+	if not is_placing():
+		return false
+	_drop_placement()
+	return true
+
+
+# Leaves PLACING and clears the bag selection (Focus ends through _update_focus: DESELECTED).
+func _drop_placement() -> void:
+	_dragging = false
+	if _placement != null and _placement.is_placing():
+		_placement.cancel()
+	var hold: HoldSlots = _get_hold()
+	if hold != null:
+		hold.clear_selection()
+
+
+# Keeps the bag selection and the placement in step: if the selected slot changed or emptied from
+# outside (tests), PLACING ends.
+func _sync_placement() -> void:
+	if _placement == null or not _placement.is_placing():
+		return
+	var hold: HoldSlots = _get_hold()
+	var selected: Array[int] = [] if hold == null else hold.get_selected_indices()
+	if selected.size() != 1 or selected[0] != _placement.get_slot() or hold.get_piece(selected[0]) == null:
+		_placement.cancel()
+		_dragging = false
+
+
+# Stores the rotation of the piece being placed back on the bag's piece (so the slot shows it).
+func _store_rotation() -> void:
+	var hold: HoldSlots = _get_hold()
+	if hold == null or not is_placing():
+		return
+	var point: FieldPoint = hold.get_point(_placement.get_slot())
+	if point != null:
+		point.piece = _placement.get_piece()
+
+
+# Story 028: puts the attached second piece back into the bag.
+func _return_join_piece() -> void:
+	var point: FieldPoint = _join_point
+	var slot: int = _join_slot
+	_join_point = null
+	_join_slot = -1
+	var hold: HoldSlots = _get_hold()
+	if point == null or hold == null:
+		return
+	if hold.place(point, slot) < 0:
+		hold.place_in_first_free(point)
+
+
+# Puts the pending (consumed) piece back into the bag after a cancelled menu.
+func _return_pending_piece() -> void:
+	var point: FieldPoint = _pending_piece
+	var slot: int = _pending_slot
+	_pending_piece = null
+	_pending_slot = -1
+	var hold: HoldSlots = _get_hold()
+	if point == null or hold == null:
+		return
+	if hold.place(point, slot) < 0:
+		hold.place_in_first_free(point)
 
 
 # Hand slot cleared while the player stands on a field point: pick it up right away.
@@ -778,6 +1141,13 @@ func _hook_hold() -> void:
 
 
 func _on_slot_cleared(_index: int, _point: FieldPoint) -> void:
+	if _consuming:
+		return
+	_try_pick_up_under_player()
+
+
+# A piece lying under the player (blocked by a full bag) goes into the first free slot.
+func _try_pick_up_under_player() -> void:
 	var hold: HoldSlots = _get_hold()
 	if hold == null or _state.is_player_dead():
 		return
@@ -787,12 +1157,25 @@ func _on_slot_cleared(_index: int, _point: FieldPoint) -> void:
 
 
 func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vector2i]) -> void:
-	_begin_cut(skill_id, cells)
+	# The piece is spent for good once a card is chosen (a swing that gets interrupted loses it).
+	_pending_piece = null
+	_pending_slot = -1
+	_join_point = null
+	_join_slot = -1
+	# Story 028: the featured bonus rides on the swing only for a two-piece cast matching the shape; a
+	# second piece still being dragged when the menu times out goes back to the bag.
+	var bonus: Dictionary = {}
+	if not _featured.is_empty() and _plan.is_featured(_featured["cells"] as Array[Vector2i]):
+		bonus = (_featured["bonus"] as Dictionary).duplicate(true)
+	_plan.clear()
+	_drop_placement()
+	_begin_cut(skill_id, cells, bonus)
+	_try_pick_up_under_player()
 
 
-func _begin_cut(skill_id: String, cells: Array[Vector2i]) -> void:
+func _begin_cut(skill_id: String, cells: Array[Vector2i], featured_bonus: Dictionary = {}) -> void:
 	var level: int = get_card_level(skill_id)
-	if _cut_actor.begin_swing(cells, skill_id, true, level):
+	if _cut_actor.begin_swing(cells, skill_id, true, level, -1.0, featured_bonus):
 		_cooldowns.start(skill_id, float(_resolved_card(skill_id, level).get("cooldown_sec", 0.0)))
 		# Story 021: the charge counts the cells of every CAST (swing started), hit or not.
 		if _signature_charge != null:
@@ -851,6 +1234,9 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		"cells": result["cells"], "hit": bool(result["hit"]), "damage": float(result["damage"]),
 		"cell": result["cell"], "time_left": FEEDBACK_SEC,
 		"pin_bonus": bool(result.get("pin_bonus", false)),
+		"featured": bool(result.get("featured", false)),
+		"featured_mult": float(result.get("featured_mult", 1.0)),
+		"featured_effect": str(result.get("featured_effect", "")),
 	}
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback
@@ -957,7 +1343,7 @@ func get_drops_config() -> FieldDropsConfig:
 ## Tries one step of the player in [param direction] (Vector2i.UP/DOWN/LEFT/RIGHT).
 ## Returns false on cooldown, wall, when dead, or while Focus locks movement; nothing is queued.
 func try_step_player(direction: Vector2i) -> bool:
-	if _focus.is_active() and _focus.locks_movement():
+	if is_movement_locked():
 		return false
 	var from_cell: Vector2i = _state.player_cell
 	var stepped: bool = _mover.try_step(direction)

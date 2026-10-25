@@ -5,9 +5,14 @@ extends RefCounted
 ## Schema: assets/data/schema.md. Implements: Story 002.
 
 const DEFAULT_PATH: String = "res://assets/data/hold_slots.json"
+const MIN_PIECE_SLOTS: int = 1
+const MAX_PIECE_SLOTS: int = 6
 
 ## Number of hold slots; clamped to HoldSlots.MIN_SLOTS..MAX_SLOTS.
 var slot_count: int = HoldSlots.MAX_SLOTS
+## Story 024: number of slots in the PLAYER's piece bag (see HoldSlots.create_piece_hand);
+## clamped to MIN_PIECE_SLOTS..MAX_PIECE_SLOTS. The boss hand keeps using slot_count.
+var piece_slot_count: int = 3
 ## Extra pixels around a belt card in which a press still picks it up (thumb tolerance).
 var drag_pick_padding_px: float = 12.0
 ## Extra pixels around a slot in which a drop still counts as on that slot.
@@ -40,6 +45,9 @@ static func from_dictionary(data: Dictionary) -> HoldSlotsConfig:
 	var config := HoldSlotsConfig.new()
 	config.slot_count = clampi(
 		int(data.get("slot_count", config.slot_count)), HoldSlots.MIN_SLOTS, HoldSlots.MAX_SLOTS
+	)
+	config.piece_slot_count = clampi(
+		int(data.get("piece_slot_count", config.piece_slot_count)), MIN_PIECE_SLOTS, MAX_PIECE_SLOTS
 	)
 	config.drag_pick_padding_px = maxf(
 		float(data.get("drag_pick_padding_px", config.drag_pick_padding_px)), 0.0

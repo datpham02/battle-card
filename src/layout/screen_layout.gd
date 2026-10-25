@@ -295,6 +295,28 @@ static func confirm_button_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(side.position, Vector2(maxf(side.size.x - reserve, 0.0), side.size.y))
 
 
+## Story 024: inset of the ROTATE ("Xoay") button from the d-pad's bounding square, in px.
+const ROTATE_BUTTON_INSET: float = 6.0
+## Story 024: while PLACING the d-pad is locked, so its whole square becomes one big ROTATE button
+## the left thumb can hold while the right finger drags.
+static func rotate_button_rect(viewport_size: Vector2) -> Rect2:
+	return dpad_bounds(viewport_size).grow(-ROTATE_BUTTON_INSET)
+
+
+## Story 024: top of the CANCEL button as a share of the slot height, measured from the hand row's
+## top (clear of the "DỪNG" tag, which is 26 px high on the same zone).
+const CANCEL_TOP_RATIO: float = 0.3
+## Story 024: CANCEL button ("Hủy", PLACING and the card menu): the FULL-label reserve zone right of
+## the CONFIRM button, below the focus tag, down to the hand row's bottom.
+static func cancel_button_rect(viewport_size: Vector2) -> Rect2:
+	var side: Rect2 = slot_side_left_rect(viewport_size, HoldSlots.MAX_SLOTS)
+	var confirm: Rect2 = confirm_button_rect(viewport_size)
+	var gap: float = viewport_size.x * SLOT_SIDE_GAP_RATIO * 0.5
+	var left: float = confirm.end.x + gap
+	var top: float = side.position.y + side.size.y * CANCEL_TOP_RATIO
+	return Rect2(left, top, maxf(side.end.x - left, 0.0), maxf(side.end.y - top, 0.0))
+
+
 ## Strip between the arena bottom and the hand row, right of the d-pad column. Hosts the
 ## skill panel, and (split in halves) the preview and swing text.
 static func cut_strip_rect(viewport_size: Vector2) -> Rect2:
@@ -335,10 +357,25 @@ static func skill_menu_rects(viewport_size: Vector2, count: int) -> Array[Rect2]
 	return rects
 
 
-## Left half of the strip: cell count and expected damage of the current selection.
+## Share of the strip's free width (right of the signature button) taken by the cell-count /
+## damage readout; the rotate hint gets the rest (Story 024).
+const PREVIEW_INFO_SHARE: float = 0.42
+
+
+## Cell count and expected damage of the piece being placed: the strip right of the signature
+## button (it used to start at the strip's left edge, under that button).
 static func cut_preview_info_rect(viewport_size: Vector2) -> Rect2:
 	var strip: Rect2 = cut_strip_rect(viewport_size)
-	return Rect2(strip.position, Vector2(strip.size.x * 0.5, strip.size.y))
+	var gap: float = viewport_size.y * STRIP_GAP_RATIO
+	var left: float = signature_button_rect(viewport_size).end.x + gap
+	return Rect2(left, strip.position.y, maxf(strip.end.x - left, 0.0) * PREVIEW_INFO_SHARE, strip.size.y)
+
+
+## Story 024: the rotate hint, right of the readout in the same strip.
+static func place_hint_rect(viewport_size: Vector2) -> Rect2:
+	var info: Rect2 = cut_preview_info_rect(viewport_size)
+	var strip: Rect2 = cut_strip_rect(viewport_size)
+	return Rect2(info.end.x, strip.position.y, maxf(strip.end.x - info.end.x, 0.0), strip.size.y)
 
 
 ## Right half of the strip: skill name and countdown of the running swing.
@@ -536,6 +573,18 @@ static func hud_trait_status_rect(viewport_size: Vector2) -> Rect2:
 	var half_w: float = (hud.size.x - gap) * 0.5 - CombatView.PAD * 2.0
 	var boss_strip: Rect2 = hud_boss_status_rect(viewport_size)
 	return Rect2(hud.position.x + CombatView.PAD, boss_strip.position.y, half_w, boss_strip.size.y)
+
+
+## Story 028: the featured-shape icon, a square at the right end of the PLAYER half's HP text row
+## (the HUD band's top padding plus the text row: above the HP bar, clear of the pause button column
+## and of the left-aligned "YOU HP" text; its tiny label is drawn to its left).
+const FEATURED_ICON_SIZE: float = 38.0
+static func featured_icon_rect(viewport_size: Vector2) -> Rect2:
+	var hud: Rect2 = hud_rect(viewport_size)
+	var gap: float = hud.size.x * CombatView.HUD_GAP_RATIO
+	var half_w: float = (hud.size.x - gap) * 0.5 - CombatView.PAD * 2.0
+	var right: float = hud.position.x + CombatView.PAD + half_w
+	return Rect2(right - FEATURED_ICON_SIZE, hud.position.y + 4.0, FEATURED_ICON_SIZE, FEATURED_ICON_SIZE)
 
 
 ## Title screen (Story 016): the band across the top that holds the game name, the knife motif

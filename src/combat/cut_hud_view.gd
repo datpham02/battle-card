@@ -23,6 +23,51 @@ const PREVIEW_OUTLINE: Color = Color(1.0, 0.85, 0.2, 0.95)
 const PREVIEW_LINE: Color = Color(1.0, 1.0, 1.0, 0.95)
 const DOT_COLOR: Color = Color(1.0, 0.85, 0.2)
 const DOT_OUTLINE: Color = Color(0.15, 0.12, 0.1)
+## Story 024 placement ghost: green when the piece covers the boss's cell, red when it does not.
+const GHOST_HIT_TINT: Color = Color(0.2, 0.85, 0.3, 0.45)
+const GHOST_HIT_OUTLINE: Color = Color(0.1, 0.65, 0.2, 0.95)
+const GHOST_MISS_TINT: Color = Color(0.9, 0.2, 0.15, 0.4)
+const GHOST_MISS_OUTLINE: Color = Color(0.85, 0.1, 0.1, 0.95)
+const GHOST_OFF_FILL: Color = Color(0.7, 0.7, 0.75, 0.35)
+const GHOST_OFF_OUTLINE: Color = Color(0.3, 0.3, 0.35, 0.5)
+const TEXT_PLACE_HIT: String = "ui.hud.place_hit"
+const TEXT_PLACE_MISS: String = "ui.hud.place_miss"
+const TEXT_PLACE_OFF: String = "ui.hud.place_off"
+## Story 028: join + featured shape.
+const TEXT_CAST_TOTAL: String = "ui.hud.cast_total"
+const TEXT_CAST_TOTAL_PREVIEW: String = "ui.hud.cast_total_preview"
+const TEXT_FEATURED_CORNER: String = "ui.hud.featured_corner"
+const TEXT_FEATURED_LABEL: String = "ui.hud.featured_label"
+const TEXT_JOIN_CAP: String = "ui.hud.join_cap"
+const TEXT_EFFECT_PIN: String = "ui.hud.pinned"
+const TEXT_EFFECT_BURN: String = "keyword.burn"
+const TEXT_EFFECT_FRAGILE: String = "keyword.fragile"
+const TEXT_EFFECT_FROST: String = "keyword.frost"
+const FEATURED_GOLD: Color = Color(1.0, 0.82, 0.15)
+const FEATURED_GOLD_DARK: Color = Color(0.55, 0.42, 0.08)
+const FEATURED_IDLE_FILL: Color = Color(0.62, 0.5, 0.2, 0.9)
+const FEATURED_BACK: Color = Color(0.1, 0.09, 0.08, 0.8)
+const FEATURED_GLOW_HZ: float = 2.0
+const FEATURED_FONT_SIZE: int = 15
+const FEATURED_ICON_PAD: float = 4.0
+const FEATURED_LABEL_GAP: float = 8.0
+const DETACH_MARK_RADIUS: float = 11.0
+const DETACH_MARK_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
+const TEXT_PLACE_HINT: String = "ui.hud.place_hint"
+const TEXT_CANCEL: String = "ui.hud.cancel"
+const TEXT_ROTATE: String = "ui.hud.rotate"
+## Rotate button (Story 024): fill, glyph radius (share of the button's short side), how far the glyph
+## sits above the centre (share of height), glyph line width, the label's top (share) and font size.
+const ROTATE_BACK: Color = Color(0.2, 0.32, 0.6, 0.95)
+const ROTATE_GLYPH_RADIUS_RATIO: float = 0.2
+const ROTATE_GLYPH_UP_RATIO: float = 0.14
+const ROTATE_GLYPH_WIDTH: float = 9.0
+const ROTATE_LABEL_TOP_RATIO: float = 0.62
+const ROTATE_FONT_SIZE: int = 56
+## Ring under the dragging finger.
+const FINGER_RADIUS: float = 26.0
+const FINGER_FILL: Color = Color(1.0, 1.0, 1.0, 0.18)
+const FINGER_OUTLINE: Color = Color(1.0, 1.0, 1.0, 0.7)
 const SWING_TINT: Color = Color(0.95, 0.12, 0.08, 0.5)
 const SWING_OUTLINE: Color = Color(0.95, 0.12, 0.08)
 const HIT_TINT: Color = Color(0.95, 0.12, 0.08, 0.6)
@@ -146,6 +191,8 @@ const FOCUS_LOW_RATIO: float = 0.25
 ## the vertically centred FULL text): size, pause glyph bar size and gap, inner padding.
 const FOCUS_TAG_WIDTH: float = 78.0
 const FOCUS_TAG_HEIGHT: float = 26.0
+## Drop of the tag below the hand row's top, so it does not touch the signature button above it.
+const FOCUS_TAG_TOP_OFFSET: float = 8.0
 const FOCUS_TAG_GLYPH_WIDTH: float = 4.0
 const FOCUS_TAG_GLYPH_HEIGHT: float = 12.0
 const FOCUS_TAG_GLYPH_GAP: float = 3.0
@@ -348,14 +395,28 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey:
 		var key := event as InputEventKey
-		if key.pressed and not key.echo and key.physical_keycode == _signature_key():
-			_try_activate_signature()
-			get_viewport().set_input_as_handled()
+		if key.pressed and not key.echo:
+			if key.physical_keycode == _signature_key():
+				_try_activate_signature()
+				get_viewport().set_input_as_handled()
+			elif _piece_key(key.physical_keycode):
+				get_viewport().set_input_as_handled()
+		return
+	if event is InputEventMouseMotion or event is InputEventScreenDrag:
+		# Story 024 is touch-first: nothing here follows a hovering pointer. A drag is driven by
+		# HandInputController (it owns the finger that picked the piece up).
 		return
 	var pos: Vector2
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
-		if button.button_index != MOUSE_BUTTON_LEFT or not button.pressed:
+		if not button.pressed:
+			return
+		if button.button_index == MOUSE_BUTTON_RIGHT:
+			# Right click rotates the piece being placed.
+			if event.device != InputEvent.DEVICE_ID_EMULATION and _combat.rotate_piece():
+				get_viewport().set_input_as_handled()
+			return
+		if button.button_index != MOUSE_BUTTON_LEFT:
 			return
 		pos = button.position
 	elif event is InputEventScreenTouch:
@@ -369,14 +430,45 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+# Piece keys (Story 024): 1..3 select a bag slot, R rotates, Esc cancels placing / the card menu.
+# Returns true when the key was used (consumed, so Esc does not also pause the run).
+func _piece_key(code: Key) -> bool:
+	if code == KEY_ESCAPE:
+		return _combat.cancel_placement()
+	if code == KEY_R:
+		return _combat.rotate_piece()
+	var index: int = int(code) - int(KEY_1)
+	if index >= 0 and index < 9:
+		return _combat.select_piece(index, false)
+	return false
+
+
 # Handles a press at [param pos]; returns true if it landed on this UI (consumed). Emulated
 # duplicates are consumed but do nothing.
 func _press_at(pos: Vector2, emulated: bool) -> bool:
 	var vp: Vector2 = get_viewport_rect().size
 	var flow: CutFlow = _combat.get_cut_flow()
+	if _combat.is_placing() and ScreenLayout.rotate_button_rect(vp).has_point(pos):
+		# Real touches only act (the emulated mouse copy of the first finger is swallowed). Any finger
+		# may press it, including the left thumb while the right finger drags.
+		if not emulated:
+			_combat.rotate_piece()
+		return true
+	if (flow.is_menu_open() or _combat.is_placing()) and ScreenLayout.cancel_button_rect(vp).has_point(pos):
+		if not emulated:
+			_combat.cancel_placement()
+		return true
+	if flow.is_menu_open() and not _combat.is_placing():
+		# Story 028: a tap on the attached second piece takes it off the cast (back to its bag slot).
+		var tapped: Vector2i = ScreenLayout.cell_at(_combat.get_grid(), vp, pos)
+		if tapped != BoardGrid.NO_CELL and _combat.get_cast_plan().piece_cells(1).has(tapped):
+			if not emulated:
+				_combat.detach_second_piece()
+			return true
 	if flow.is_menu_open():
 		if not ScreenLayout.skill_menu_panel_rect(vp).has_point(pos):
-			return false
+			# Story 028: tap-fallback for the second piece (select its slot, tap the board / the ghost).
+			return _board_press(pos, emulated)
 		if not emulated:
 			var order: Array[String] = flow.get_hand()
 			var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
@@ -390,10 +482,30 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 			_try_activate_signature()
 		return true
 	if _combat.is_confirm_visible() and ScreenLayout.confirm_button_rect(vp).has_point(pos):
-		if not emulated and not _combat.get_cut_actor().is_swinging():
-			_combat.confirm_selection()
+		if not emulated:
+			_combat.confirm_placement()
 		return true
-	return false
+	return _board_press(pos, emulated)
+
+
+# Story 024: a left press on the board while PLACING. On the ghost (or on the cell it is already
+# aimed at) it confirms; elsewhere (a finger tapping a new spot) it aims the ghost there.
+func _board_press(pos: Vector2, emulated: bool) -> bool:
+	if not _combat.is_placing():
+		return false
+	var cell: Vector2i = ScreenLayout.cell_at(_combat.get_grid(), get_viewport_rect().size, pos)
+	if cell == BoardGrid.NO_CELL:
+		return false
+	if emulated or _combat.is_dragging():
+		# A second finger landing on the board mid-drag must not confirm or re-aim: the drag belongs
+		# to the first finger.
+		return true
+	var placement: PlacementController = _combat.get_placement()
+	if placement.get_cells().has(cell) or placement.get_target() == cell:
+		_combat.confirm_placement()
+	else:
+		_combat.aim_at_position(pos)
+	return true
 
 
 # --- Story 021: signature skill ------------------------------------------------
@@ -522,6 +634,7 @@ func _draw() -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	# Focus overlay first: the preview, markers and buttons stay fully readable above it.
 	_draw_focus_overlay(vp)
+	_draw_featured_icon(vp)
 	_draw_preview(vp)
 	_draw_swing(vp)
 	_draw_boss_queued_swing(vp)
@@ -535,6 +648,8 @@ func _draw() -> void:
 	_draw_feint(vp)
 	_draw_pins(vp)
 	_draw_confirm(vp)
+	_draw_cancel(vp)
+	_draw_rotate(vp)
 	_draw_focus_bar(vp)
 	_draw_focus_tag(vp)
 	_draw_signature_effect(vp)
@@ -601,7 +716,7 @@ func _draw_focus_tag(vp: Vector2) -> void:
 	if focus == null or not focus.is_active():
 		return
 	var side: Rect2 = ScreenLayout.slot_side_left_rect(vp, HoldSlots.MAX_SLOTS)
-	var tag := Rect2(Vector2(side.end.x - FOCUS_TAG_WIDTH, side.position.y), Vector2(FOCUS_TAG_WIDTH, FOCUS_TAG_HEIGHT))
+	var tag := Rect2(Vector2(side.end.x - FOCUS_TAG_WIDTH, side.position.y + FOCUS_TAG_TOP_OFFSET), Vector2(FOCUS_TAG_WIDTH, FOCUS_TAG_HEIGHT))
 	draw_rect(tag, FOCUS_BAR_FILL)
 	draw_rect(tag, FOCUS_BAR_OUTLINE, false, 2.0)
 	var glyph_top: float = tag.get_center().y - FOCUS_TAG_GLYPH_HEIGHT * 0.5
@@ -630,51 +745,252 @@ func _draw_centered(rect: Rect2, text: String, size: int, color: Color) -> void:
 
 
 func _draw_preview(vp: Vector2) -> void:
-	if _combat.get_cut_flow().is_menu_open():
+	var flow: CutFlow = _combat.get_cut_flow()
+	var enemy_cell: Vector2i = _combat.get_state().enemy_cell
+	if flow.is_menu_open():
+		_draw_plan_preview(vp, flow, enemy_cell)
 		return
-	var labels: Array[String] = _combat.get_cut_selection_labels()
-	if labels.is_empty():
+	if not _combat.is_placing():
 		return
-	var grid: BoardGrid = _combat.get_grid()
-	var cells: Array[Vector2i] = CutResolver.resolve_on_board(grid, true, labels)
-	_draw_cells(vp, cells, PREVIEW_TINT, PREVIEW_OUTLINE)
-	# Perimeter dots on the boss square's edge, lines in selection order.
-	var cell_size: Vector2 = ScreenLayout.cell_size(grid, vp)
-	var origin: Vector2 = ScreenLayout.board_rect(grid, vp).position + Vector2(cell_size.x * grid.side_cols, 0.0)
-	var square_center: Vector2 = origin + Vector2(grid.side_cols, grid.side_rows) * cell_size * 0.5
-	var line_points: Array[Vector2] = []
-	var dots: Array[Vector2] = []
-	var dot_labels: Array[String] = []
-	for label: String in labels:
-		var p: Vector2 = CutResolver.label_point(label, grid.side_cols, grid.side_rows)
-		if p == CutResolver.INVALID_POINT:
-			continue
-		dots.append(origin + p * cell_size)
-		dot_labels.append(label)
-		line_points.append(origin + p * cell_size)
-	if labels.size() == 1 and not line_points.is_empty():
-		var far: Vector2 = CutResolver.label_point(CutResolver.opposite_label(labels[0], grid.side_cols, grid.side_rows), grid.side_cols, grid.side_rows)
-		line_points.append(origin + far * cell_size)
-	for i: int in line_points.size() - 1:
-		draw_line(line_points[i], line_points[i + 1], PREVIEW_LINE, LINE_WIDTH)
-	if labels.size() >= 3 and line_points.size() >= 3:
-		draw_line(line_points[line_points.size() - 1], line_points[0], PREVIEW_LINE, LINE_WIDTH)
-	var radius: float = cell_size.y * DOT_RADIUS_RATIO
-	for i: int in dots.size():
-		draw_circle(dots[i], radius, DOT_COLOR)
-		draw_arc(dots[i], radius, 0.0, TAU, 20, DOT_OUTLINE, 2.0)
-		var inward: Vector2 = (square_center - dots[i]).normalized() * cell_size.y * DOT_LABEL_OFFSET_RATIO
-		var at: Vector2 = dots[i] + inward
-		draw_string(
-			ThemeDB.fallback_font, at + Vector2(-DOT_LABEL_WIDTH * 0.5, DOT_LABEL_FONT_SIZE * 0.35),
-			dot_labels[i], HORIZONTAL_ALIGNMENT_CENTER, DOT_LABEL_WIDTH, DOT_LABEL_FONT_SIZE, TEXT_DARK
-		)
-	# Cell count and expected damage (slash numbers) in the left half of the strip.
+	var placement: PlacementController = _combat.get_placement()
+	var cells: Array[Vector2i] = placement.get_cells()
 	var info: Rect2 = ScreenLayout.cut_preview_info_rect(vp)
 	var top := Rect2(info.position, Vector2(info.size.x, info.size.y * 0.5))
 	var bottom := Rect2(info.position + Vector2(0.0, info.size.y * 0.5), Vector2(info.size.x, info.size.y * 0.35))
+	var hint: Rect2 = ScreenLayout.place_hint_rect(vp)
+	draw_multiline_string(
+		ThemeDB.fallback_font, hint.position + Vector2(0.0, hint.size.y * 0.35), tr(TEXT_PLACE_HINT),
+		HORIZONTAL_ALIGNMENT_CENTER, hint.size.x, SMALL_FONT_SIZE, 3, TEXT_DARK
+	)
+	if cells.is_empty():
+		var off_text: String = tr(TEXT_PLACE_OFF)
+		_draw_centered(Rect2(info.position, Vector2(info.size.x, info.size.y * 0.7)), off_text, _fit_signature_font(off_text, info.size.x, FONT_SIZE), TEXT_DARK)
+		if _combat.is_dragging():
+			# Dim ghost lifted above the finger: releasing here puts the piece back.
+			var unit: Vector2 = ScreenLayout.cell_size(_combat.get_grid(), vp)
+			var piece: Piece = placement.get_piece()
+			var size: Vector2 = Vector2(piece.size()) * minf(unit.x, unit.y)
+			var at: Vector2 = _combat.get_drag_point() - Vector2(0.0, _combat.get_drag_lift_px())
+			PieceDraw.draw_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL, GHOST_OFF_OUTLINE)
+			_draw_finger(_combat.get_drag_point())
+		return
+	var hit: bool = placement.hits(enemy_cell)
+	_draw_cells(vp, cells, GHOST_HIT_TINT if hit else GHOST_MISS_TINT, GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
+	# The label rides on the ghost's top-right corner (above a lifted finger, never under it).
+	var damage: int = roundi(_combat.get_cut_config().slash_damage(cells.size()))
+	var label: String = "%s · %s · %s" % [tr(TEXT_PLACE_HIT) if hit else tr(TEXT_PLACE_MISS), tr(TEXT_CELLS) % cells.size(), tr(TEXT_DAMAGE_NUMBER) % damage]
+	_draw_corner_label(vp, cells, label, GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE, true)
 	_draw_centered(top, tr(TEXT_CELLS) % cells.size(), BIG_FONT_SIZE, TEXT_DARK)
-	_draw_centered(bottom, tr(TEXT_DAMAGE) % roundi(_combat.get_cut_config().slash_damage(cells.size())), FONT_SIZE, TEXT_DARK)
+	_draw_centered(bottom, tr(TEXT_DAMAGE) % damage, FONT_SIZE, TEXT_DARK)
+	if _combat.is_dragging():
+		_draw_finger(_combat.get_drag_point())
+
+
+# Story 028: the cast under the open card menu: its pieces (green / red by the boss's cell over the UNION
+# with the second ghost), the second ghost lifted above the finger, a total readout, the featured glow.
+func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> void:
+	var plan: CastPlan = _combat.get_cast_plan()
+	var placement: PlacementController = _combat.get_placement()
+	var ghost: Array[Vector2i] = placement.get_cells() if _combat.is_placing() else _no_cells()
+	var union: Array[Vector2i] = flow.get_cells()
+	for cell: Vector2i in ghost:
+		union.append(cell)
+	var hit: bool = union.has(enemy_cell)
+	var tint: Color = GHOST_HIT_TINT if hit else GHOST_MISS_TINT
+	var outline: Color = GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE
+	for i: int in plan.piece_count():
+		_draw_cells(vp, plan.piece_cells(i), tint, outline)
+	if plan.piece_count() >= 2:
+		_draw_detach_mark(vp, plan.piece_cells(1))
+	var refusal: Dictionary = _combat.get_join_refusal()
+	var refused: bool = false
+	if not ghost.is_empty():
+		refused = not _combat.can_confirm_placement()
+		_draw_cells(vp, ghost, GHOST_MISS_TINT if refused else tint, GHOST_MISS_OUTLINE if refused else outline)
+	elif _combat.is_placing() and _combat.is_dragging():
+		var unit: Vector2 = ScreenLayout.cell_size(_combat.get_grid(), vp)
+		var piece: Piece = placement.get_piece()
+		var size: Vector2 = Vector2(piece.size()) * minf(unit.x, unit.y)
+		var at: Vector2 = _combat.get_drag_point() - Vector2(0.0, _combat.get_drag_lift_px())
+		PieceDraw.draw_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL, GHOST_OFF_OUTLINE)
+	if _combat.is_placing() and _combat.is_dragging():
+		_draw_finger(_combat.get_drag_point())
+	if not refusal.is_empty():
+		var refused_cells: Array[Vector2i] = []
+		refused_cells.assign(refusal["cells"])
+		_draw_cells(vp, refused_cells, GHOST_MISS_TINT, GHOST_MISS_OUTLINE)
+		_draw_corner_label(vp, refused_cells, tr(TEXT_JOIN_CAP) % _combat.get_config().max_cast_cells, GHOST_MISS_OUTLINE, true)
+	elif refused and not ghost.is_empty():
+		_draw_corner_label(vp, ghost, tr(TEXT_JOIN_CAP) % _combat.get_config().max_cast_cells, GHOST_MISS_OUTLINE, true)
+	var featured: bool = _combat.joined_is_featured(ghost)
+	if featured:
+		_draw_featured_glow(vp, union)
+	# The readout counts the COMMITTED cast only (what card readiness counts); a piece still being dragged
+	# shows as an addition "(+n)".
+	var committed: int = flow.get_cells().size()
+	var damage: float = _combat.get_cut_config().slash_damage(committed)
+	if _combat.is_plan_featured():
+		damage *= float((_combat.get_featured()["bonus"] as Dictionary).get("damage_mult", 1.0))
+	var total: String
+	if ghost.is_empty():
+		total = tr(TEXT_CAST_TOTAL) % [committed, roundi(damage)]
+	else:
+		total = tr(TEXT_CAST_TOTAL_PREVIEW) % [committed, ghost.size(), roundi(damage)]
+	# Labels keep off the shape's cells, the x badge and each other.
+	var avoid: Array[Rect2] = []
+	for cell: Vector2i in union:
+		avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
+	if plan.piece_count() >= 2:
+		avoid.append(_detach_mark_rect(vp, plan.piece_cells(1)))
+	var total_rect: Rect2 = _place_label(vp, union, total, avoid)
+	_draw_label_box(total_rect, total, GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE, vp)
+	if featured:
+		avoid.append(total_rect)
+		var featured_text: String = _featured_label_text(_combat.get_featured()["bonus"] as Dictionary)
+		_draw_label_box(_place_label(vp, union, featured_text, avoid), featured_text, FEATURED_GOLD_DARK, vp)
+
+
+# Size of a one-line board label (same metrics as _draw_corner_label).
+func _label_size(vp: Vector2, text: String) -> Vector2:
+	var small: int = int(ScreenLayout.cell_size(_combat.get_grid(), vp).y * LABEL_SMALL_RATIO)
+	var width: float = ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, small).x + LABEL_PAD * 2.0
+	return Vector2(width, small * LABEL_LINE_SPACING + LABEL_PAD * 2.0)
+
+
+# Picks the label rect around the bounding box of [param cells] (above / below / beside it, clamped to the
+# enemy half of the board) that overlaps the [param avoid] rects least; the first of equal candidates wins.
+func _place_label(vp: Vector2, cells: Array[Vector2i], text: String, avoid: Array[Rect2]) -> Rect2:
+	var grid: BoardGrid = _combat.get_grid()
+	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
+	for cell: Vector2i in cells:
+		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
+	var size: Vector2 = _label_size(vp, text)
+	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
+	var half_w: float = ScreenLayout.cell_size(grid, vp).x * grid.side_cols
+	var bounds := Rect2(board.position.x + half_w, board.position.y, board.size.x - half_w, board.size.y)
+	var gap: float = 2.0
+	var spots: Array[Vector2] = [
+		Vector2(box.end.x - size.x, box.position.y - size.y - gap),
+		Vector2(box.end.x - size.x, box.end.y + gap),
+		Vector2(box.position.x, box.position.y - size.y - gap),
+		Vector2(box.position.x, box.end.y + gap),
+		Vector2(box.end.x + gap, box.position.y),
+		Vector2(box.position.x - size.x - gap, box.position.y),
+	]
+	var best: Rect2 = Rect2()
+	var best_score: float = INF
+	for spot: Vector2 in spots:
+		var pos := Vector2(
+			clampf(spot.x, bounds.position.x, maxf(bounds.end.x - size.x, bounds.position.x)),
+			clampf(spot.y, bounds.position.y, maxf(bounds.end.y - size.y, bounds.position.y)))
+		var rect := Rect2(pos, size)
+		var score: float = 0.0
+		for other: Rect2 in avoid:
+			var hit: Rect2 = rect.intersection(other)
+			score += hit.size.x * hit.size.y
+		if score < best_score:
+			best_score = score
+			best = rect
+	return best
+
+
+func _draw_label_box(back: Rect2, text: String, color: Color, vp: Vector2) -> void:
+	var small: int = int(ScreenLayout.cell_size(_combat.get_grid(), vp).y * LABEL_SMALL_RATIO)
+	draw_rect(back, TEXT_OUTLINE_LIGHT)
+	draw_rect(back, color, false, CELL_OUTLINE_WIDTH)
+	draw_string(ThemeDB.fallback_font, back.position + Vector2(0.0, LABEL_PAD + small * 0.85), text, HORIZONTAL_ALIGNMENT_CENTER, back.size.x, small, color)
+
+
+func _no_cells() -> Array[Vector2i]:
+	return []
+
+
+# Square around the x badge (centred on the second piece's first cell), a bit larger than the drawn disc.
+func _detach_mark_rect(vp: Vector2, cells: Array[Vector2i]) -> Rect2:
+	if cells.is_empty():
+		return Rect2()
+	var centre: Vector2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, cells[0]).get_center()
+	var half: float = DETACH_MARK_RADIUS + 4.0
+	return Rect2(centre - Vector2(half, half), Vector2(half, half) * 2.0)
+
+
+# A small "x" badge on the first cell of the attached second piece: tapping the piece takes it off.
+func _draw_detach_mark(vp: Vector2, cells: Array[Vector2i]) -> void:
+	if cells.is_empty():
+		return
+	var c: Vector2 = _detach_mark_rect(vp, cells).get_center()
+	draw_circle(c, DETACH_MARK_RADIUS, DETACH_MARK_BACK)
+	var d: float = DETACH_MARK_RADIUS * 0.5
+	draw_line(c + Vector2(-d, -d), c + Vector2(d, d), GHOST_MISS_OUTLINE, 3.0)
+	draw_line(c + Vector2(-d, d), c + Vector2(d, -d), GHOST_MISS_OUTLINE, 3.0)
+
+
+# Pulsing gold frame on every cell of a featured join (the ghosts and the corner icon glow together).
+func _draw_featured_glow(vp: Vector2, cells: Array[Vector2i]) -> void:
+	var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * FEATURED_GLOW_HZ)
+	for cell: Vector2i in cells:
+		var rect: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, cell)
+		draw_rect(rect, Color(FEATURED_GOLD, 0.18 + 0.22 * pulse))
+		draw_rect(rect.grow(-1.0), Color(FEATURED_GOLD, 0.7 + 0.3 * pulse), false, CELL_OUTLINE_WIDTH + 2.0)
+
+
+# "Hinh chu dao x1,5 . Ghim" (the multiplier uses the locale's decimal mark).
+func _featured_label_text(bonus: Dictionary) -> String:
+	var text: String = tr(TEXT_FEATURED_LABEL) % _mult_text(float(bonus.get("damage_mult", 1.0)))
+	var effect: String = _featured_effect_name(str(bonus.get("effect", "")))
+	return text if effect.is_empty() else text + " · " + effect
+
+
+func _mult_text(mult: float) -> String:
+	var text: String = ("%.2f" % mult).rstrip("0").rstrip(".")
+	return text.replace(".", ",") if TranslationServer.get_locale().begins_with("vi") else text
+
+
+func _featured_effect_name(effect: String) -> String:
+	match effect:
+		"pin":
+			return tr(TEXT_EFFECT_PIN)
+		"burn":
+			return tr(TEXT_EFFECT_BURN)
+		"fragile":
+			return tr(TEXT_EFFECT_FRAGILE)
+		"frost":
+			return tr(TEXT_EFFECT_FROST)
+	return ""
+
+
+# True while the cast (or the plan plus the dragged second ghost) is a featured join.
+func _featured_glowing() -> bool:
+	if _combat.get_featured().is_empty() or not _combat.get_cut_flow().is_menu_open():
+		return false
+	var ghost: Array[Vector2i] = _combat.get_placement().get_cells() if _combat.is_placing() else _no_cells()
+	return _combat.joined_is_featured(ghost)
+
+
+# Story 028: the match's featured shape drawn small at the right end of the player's HP text row, with a
+# tiny label to its left; both light up in gold while the cast being built matches it.
+func _draw_featured_icon(vp: Vector2) -> void:
+	var featured: Dictionary = _combat.get_featured()
+	if featured.is_empty():
+		return
+	var glow: bool = _featured_glowing()
+	var rect: Rect2 = ScreenLayout.featured_icon_rect(vp)
+	var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * FEATURED_GLOW_HZ)
+	draw_rect(rect, FEATURED_BACK)
+	var cells: Array[Vector2i] = featured["cells"]
+	var box := Vector2i.ZERO
+	for cell: Vector2i in cells:
+		box = Vector2i(maxi(box.x, cell.x + 1), maxi(box.y, cell.y + 1))
+	var inner: Rect2 = rect.grow(-FEATURED_ICON_PAD)
+	var unit: float = minf(inner.size.x / float(box.x), inner.size.y / float(box.y))
+	var origin: Vector2 = inner.get_center() - Vector2(box) * unit * 0.5
+	var fill: Color = Color(FEATURED_GOLD, 0.8 + 0.2 * pulse) if glow else FEATURED_IDLE_FILL
+	for cell: Vector2i in cells:
+		draw_rect(Rect2(origin + Vector2(cell) * unit, Vector2(unit, unit)).grow(-0.75), fill)
+	draw_rect(rect, FEATURED_GOLD if glow else FEATURED_GOLD_DARK, false, 4.0 if glow else 2.0)
+	var text: String = _featured_label_text(featured["bonus"] as Dictionary) if glow else tr(TEXT_FEATURED_CORNER)
+	var label := Rect2(rect.position.x - 320.0 - FEATURED_LABEL_GAP, rect.position.y, 320.0, rect.size.y)
+	draw_string(ThemeDB.fallback_font, Vector2(label.position.x, label.get_center().y + FEATURED_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_RIGHT, label.size.x, FEATURED_FONT_SIZE, TEXT_DARK if glow else FEATURED_GOLD_DARK)
 
 
 func _draw_swing(vp: Vector2) -> void:
@@ -830,6 +1146,17 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 		# Story 020: a hit multiplied by Ghim shows its number in the pin blue.
 		var damage_color: Color = PIN_BONUS_TEXT if bool(fb.get("pin_bonus", false)) else color
 		_draw_centered(line2, tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), size, damage_color)
+	if hit and bool(fb.get("featured", false)):
+		# Story 028: a featured-shape hit names its bonus under the HIT box.
+		var bonus_text: String = _featured_label_text({"damage_mult": fb.get("featured_mult", 1.0), "effect": fb.get("featured_effect", "")})
+		var small: int = FEATURED_FONT_SIZE + 3
+		var wide: float = ThemeDB.fallback_font.get_string_size(bonus_text, HORIZONTAL_ALIGNMENT_LEFT, -1, small).x + LABEL_PAD * 2.0
+		var board: Rect2 = ScreenLayout.board_rect(grid, vp)
+		var left: float = clampf(cell_rect.get_center().x - wide * 0.5, board.position.x, maxf(board.end.x - wide, board.position.x))
+		var pill := Rect2(left, back.end.y, wide, small * 1.5)
+		draw_rect(pill, FEATURED_GOLD)
+		draw_rect(pill, FEATURED_GOLD_DARK, false, 2.0)
+		draw_string(ThemeDB.fallback_font, pill.position + Vector2(0.0, small * 1.1), bonus_text, HORIZONTAL_ALIGNMENT_CENTER, wide, small, TEXT_DARK)
 
 
 # --- Story 014: row burner warning ---------------------------------------------
@@ -1139,13 +1466,50 @@ func _draw_confirm(vp: Vector2) -> void:
 	var rect: Rect2 = ScreenLayout.confirm_button_rect(vp)
 	var actor: CutActor = _combat.get_cut_actor()
 	var swinging: bool = actor.is_swinging()
-	var alpha: float = DIM_ALPHA if swinging else 1.0
+	var alpha: float = DIM_ALPHA if (swinging or not _combat.can_confirm_placement()) else 1.0
 	draw_rect(rect, Color(BUTTON_READY_BACK, BUTTON_READY_BACK.a * alpha))
 	draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
 	var text: String = tr(TEXT_CONFIRM)
 	if swinging:
 		text = tr(TEXT_COOLDOWN) % actor.get_time_left()
 	_draw_centered(rect, text, BIG_FONT_SIZE, Color(TEXT_LIGHT, alpha))
+
+
+# Story 024: a soft ring under the dragging finger, so the lifted ghost reads as "held from here".
+func _draw_finger(at: Vector2) -> void:
+	draw_circle(at, FINGER_RADIUS, FINGER_FILL)
+	draw_arc(at, FINGER_RADIUS, 0.0, TAU, 32, FINGER_OUTLINE, 3.0)
+
+
+# Story 024: the big "Xoay" button over the (locked) d-pad area while PLACING: a clockwise arrow glyph
+# and the label. Any finger may press it, also while another one drags.
+func _draw_rotate(vp: Vector2) -> void:
+	if not _combat.is_placing():
+		return
+	var rect: Rect2 = ScreenLayout.rotate_button_rect(vp)
+	draw_rect(rect, ROTATE_BACK)
+	draw_rect(rect, BUTTON_OUTLINE, false, OUTLINE_WIDTH)
+	var c: Vector2 = rect.get_center() - Vector2(0.0, rect.size.y * ROTATE_GLYPH_UP_RATIO)
+	var radius: float = minf(rect.size.x, rect.size.y) * ROTATE_GLYPH_RADIUS_RATIO
+	var end_angle: float = TAU * 0.8
+	draw_arc(c, radius, 0.0, end_angle, 40, TEXT_LIGHT, ROTATE_GLYPH_WIDTH)
+	var tip: Vector2 = c + Vector2(cos(end_angle), sin(end_angle)) * radius
+	var tangent := Vector2(-sin(end_angle), cos(end_angle))
+	var normal := Vector2(cos(end_angle), sin(end_angle))
+	var head: float = ROTATE_GLYPH_WIDTH * 2.2
+	draw_colored_polygon(PackedVector2Array([tip + tangent * head, tip + normal * head * 0.7, tip - normal * head * 0.7]), TEXT_LIGHT)
+	var label_rect := Rect2(rect.position + Vector2(0.0, rect.size.y * ROTATE_LABEL_TOP_RATIO), Vector2(rect.size.x, rect.size.y * (1.0 - ROTATE_LABEL_TOP_RATIO)))
+	_draw_centered(label_rect, tr(TEXT_ROTATE), ROTATE_FONT_SIZE, TEXT_LIGHT)
+
+
+# Story 024: the "Hủy" button while PLACING or while the card menu is open.
+func _draw_cancel(vp: Vector2) -> void:
+	if not (_combat.is_placing() or _combat.get_cut_flow().is_menu_open()):
+		return
+	var rect: Rect2 = ScreenLayout.cancel_button_rect(vp)
+	draw_rect(rect, BUTTON_BACK)
+	draw_rect(rect, BUTTON_OUTLINE, false, OUTLINE_WIDTH)
+	_draw_centered(rect, tr(TEXT_CANCEL), BUTTON_FONT_SIZE, TEXT_LIGHT)
 
 
 func _draw_menu(vp: Vector2) -> void:

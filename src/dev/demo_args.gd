@@ -72,6 +72,24 @@ extends Node
 ##                                      time is NOT frozen here, the pause is what holds the swing clock,
 ##                                      so two captures >= 1 s apart show the same countdown under the overlay
 ##   godot --path . -- --demo=signature_ready|signature_half   Story 021: signature charge full / half (needs CombatView.debug_set_signature_charge)
+##   Story 024 piece demos (the label demos above no longer apply to the player: the player has a piece bag now):
+##   godot --path . -- --demo=pieces_hand    three pieces lying on the player's half (mini shapes, freshness bars) and a full bag
+##   godot --path . -- --demo=placing_hit    PLACING with a piece (default l4, or --piece=<id>) over the boss's cell: green ghost,
+##                                           cell count + damage, Focus active (tint, bar, d-pad locked)
+##   godot --path . -- --demo=placing_miss   as placing_hit with the ghost on cells that do not cover the boss: red ghost
+##   godot --path . -- --demo=placing_rotated as placing_hit after one 90-degree rotation (CombatView.rotate_piece)
+##   godot --path . -- --demo=placing_center a single-cell piece (default mono) on the centre cell of the boss's half
+##   godot --path . -- --demo=placing_drag   mid-drag: a simulated finger holds the piece, the ghost floats drag_lift_px above it
+##                                           over the boss's cell (green), the "Xoay" button fills the d-pad area
+##   godot --path . -- --demo=pieces_menu    the piece placed and confirmed: card menu open (piece consumed from the bag)
+##   godot --path . -- --demo=rotten_piece   a ROTTEN piece on the player's half and in the bag (grey, X, countdown)
+##   godot --path . -- --piece=<id>          DEV-ONLY: the shape (pieces.json id) the placing / menu demos use
+##   Story 028 join demos (the cast of two pieces; the boss stays still):
+##   godot --path . -- --demo=join_menu      card menu open, piece 1 placed, piece 2 mid-drag (ghost lifted, Xoay shown)
+##   godot --path . -- --demo=join_featured  two pieces joined into the match's featured shape (needs --arena=<shape>): glow + label
+##   godot --path . -- --demo=join_split     two separate pieces attached, the menu shows the total cells
+##   godot --path . -- --arena=<shape>       DEV-ONLY arena shape id of arenas.json (cross, u_shape, ring, ...): sets
+##       match_params["arena"] before _ready, so the board and the featured-shape icon follow it. Works with or without --demo.
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -99,6 +117,8 @@ const BOSS_PREFIX: String = "--boss="
 const DEBUG_ARG: String = "--debug"
 const DECK_PREFIX: String = "--deck="
 const DROPS_SEED_PREFIX: String = "--drops-seed="
+const PIECE_PREFIX: String = "--piece="
+const ARENA_PREFIX: String = "--arena="
 const DEMO_SEED: int = 7
 ## Freshness (s) of the boss's field points in "boss_pick"; uid base of its synthetic hand points.
 const BOSS_FIELD_FRESHNESS: Array[float] = [6.5, 3.5, 1.5]
@@ -143,6 +163,22 @@ const ROTTEN_HAND_SLOT: int = 1
 const ROW_WARN_LEFT_SEC: float = 0.7
 const TRAIT_STEP_SEC: float = 0.05
 const TRAIT_MAX_STEPS: int = 10000
+## Story 024 piece demos: default shape of the placing demos and of the single-cell one, the bag
+## contents of the other demos as [shape id, rotation], freshness (s) of the lying pieces, the slot
+## the rotten piece sits in.
+const PLACING_DEFAULT_PIECE: String = "l4"
+const CENTER_DEFAULT_PIECE: String = "mono"
+const BAG_PIECES: Array = [["t4", 0], ["bar3", 1], ["square", 0]]
+const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
+const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
+const ROTTEN_PIECE_SLOT: int = 1
+## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
+const PIECE_DEMOS: Array[String] = ["pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split"]
+## Story 028 join demos: piece 1 and piece 2 of "join_menu" / "join_split" (--piece= overrides piece 1).
+const JOIN_PIECE_1: String = "l3"
+const JOIN_PIECE_2: String = "bar2"
+## Slot of the second piece in the join demos' bag.
+const JOIN_SLOT_2: int = 1
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -153,6 +189,9 @@ var _mode: String = ""
 func _enter_tree() -> void:
 	_mode = _parse_mode()
 	# Runs before any sibling _ready, so the grid and drops are created with these.
+	var arena_id: String = _parse_arena()
+	if not arena_id.is_empty():
+		_combat().match_params["arena"] = {"shape": arena_id}
 	if _mode != "":
 		_combat().drops_seed = DEMO_SEED
 	_combat().grid_override = _parse_grid()
@@ -382,8 +421,42 @@ func _ready() -> void:
 				combat.call("debug_set_signature_charge", 1.0 if _mode == "signature_ready" else 0.5)
 			else:
 				push_warning("DemoArgs: CombatView.debug_set_signature_charge missing, signature demo skipped")
+		"pieces_hand":
+			var lib: PieceLibrary = PieceLibrary.load_from_file()
+			var spots: Array[Vector2i] = _spread_cells(grid, FIELD_PIECES.size() + 1)
+			var placed: int = 0
+			for cell: Vector2i in spots:
+				if cell == combat.get_state().player_cell or placed >= FIELD_PIECES.size():
+					continue
+				var spec: Array = FIELD_PIECES[placed]
+				combat.get_drops().debug_place_piece(lib.make_piece(str(spec[0]), int(spec[1])), cell, FIELD_PIECE_FRESHNESS[placed])
+				placed += 1
+			_fill_bag(lib, -1)
+		"placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu":
+			_placing_demo(combat, grid)
+		"join_menu", "join_featured", "join_split":
+			_join_demo(combat, grid)
+		"rotten_piece":
+			var lib2: PieceLibrary = PieceLibrary.load_from_file()
+			var rotten_cell2: Vector2i = _other_player_cell(grid, combat.get_state().player_cell)
+			if combat.get_drops().place_rotten_piece(rotten_cell2, ROTTEN_FIELD_FRESHNESS, ROTTEN_HAND_LEFT_SEC) == null:
+				push_warning("DemoArgs: could not place the rotten piece on %s" % str(rotten_cell2))
+			_fill_bag(lib2, ROTTEN_PIECE_SLOT)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
+	if PIECE_DEMOS.has(_mode):
+		_skip_intro.call_deferred()
+
+
+# Story 024: ends the match intro (finds the RunController like _pause_run) so the banner does not cover
+# the board; the demo's freeze_time keeps the simulation still. No-op without a controller above.
+func _skip_intro() -> void:
+	var node: Node = get_parent()
+	while node != null and not node is RunController:
+		node = node.get_parent()
+	var controller: RunController = node as RunController
+	if controller != null and controller.get_state().get_phase() == RunState.Phase.INTRO:
+		controller.call("_begin_playing")
 
 
 # Story 016 "paused" demo: finds the RunController by walking up the parents (the battle is a
@@ -573,6 +646,14 @@ func _parse_grid() -> BoardGrid:
 	return null
 
 
+# Story 028: --arena=<shape id>, "" when absent.
+func _parse_arena() -> String:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(ARENA_PREFIX):
+			return arg.substr(ARENA_PREFIX.length())
+	return ""
+
+
 func _combat() -> CombatView:
 	return get_node(combat_view_path) as CombatView
 
@@ -635,3 +716,231 @@ func _fill_hand(count: int) -> void:
 		point.label = labels[i]
 		point.freshness_left = 0.0
 		_hold().place(point, i)
+
+
+# Story 024: bag of the piece demos: BAG_PIECES in the slots (as many as fit); [param rotten_slot] >= 0
+# swaps that slot for a ROTTEN piece (grey, counting down) instead.
+func _fill_bag(lib: PieceLibrary, rotten_slot: int) -> void:
+	for i: int in mini(BAG_PIECES.size(), _hold().get_slot_count()):
+		var point := FieldPoint.new()
+		point.uid = -1 - i
+		point.freshness_left = 0.0
+		if i == rotten_slot:
+			point.piece = Piece.make_rotten()
+			point.label = Piece.ROTTEN_ID
+			point.rotten = true
+			point.rot_in_hand_sec = ROTTEN_HAND_LEFT_SEC
+		else:
+			var spec: Array = BAG_PIECES[i]
+			point.piece = lib.make_piece(str(spec[0]), int(spec[1]))
+			point.label = point.piece.shape_id
+		_hold().place(point, i)
+
+
+# Story 024: the shape the placing demos use: --piece=<id>, else [param fallback].
+func _piece_id(fallback: String) -> String:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(PIECE_PREFIX):
+			return arg.substr(PIECE_PREFIX.length())
+	return fallback
+
+
+# Story 024 placing demos, through the real player path: the bag, select_piece (slot 0), Focus started
+# (time is frozen so _update_focus does not run), the ghost aimed with aim_at_cell, rotate_piece for
+# "placing_rotated", confirm_placement for "pieces_menu".
+func _placing_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	_fill_bag(lib, -1)
+	var shape: String = _piece_id(CENTER_DEFAULT_PIECE if _mode == "placing_center" else PLACING_DEFAULT_PIECE)
+	var held: FieldPoint = _hold().get_point(0)
+	held.piece = lib.make_piece(shape, 0)
+	held.label = shape
+	if not combat.select_piece(0):
+		push_warning("DemoArgs: select_piece failed for demo '%s'" % _mode)
+		return
+	var focus: FocusController = combat.get_focus()
+	if not focus.try_start():
+		push_warning("DemoArgs: Focus did not start for demo '%s'" % _mode)
+	var boss_cell: Vector2i = combat.get_state().enemy_cell
+	var placement: PlacementController = combat.get_placement()
+	if _mode == "placing_center":
+		combat.aim_at_cell(Vector2i(grid.side_cols + int(grid.side_cols * 0.5), int(grid.rows * 0.5)))
+		return
+	if _mode == "placing_drag":
+		# Real drag path: the finger picks slot 0 up and moves to the point whose lifted ghost aims at the boss.
+		var finger: Vector2 = combat.drag_point_for_cell(boss_cell)
+		if not combat.begin_drag(0, _hold_slot_centre(0)):
+			push_warning("DemoArgs: begin_drag failed for demo '%s'" % _mode)
+			return
+		combat.drag_to(finger)
+		if not placement.hits(boss_cell):
+			# The snap may settle on a position that misses the aimed cell (equal distance): walk the
+			# enemy cells with the finger until the lifted ghost covers the boss.
+			for cell: Vector2i in grid.enemy_cells():
+				combat.drag_to(combat.drag_point_for_cell(cell))
+				if placement.hits(boss_cell):
+					break
+		if not placement.hits(boss_cell):
+			push_warning("DemoArgs: the dragged ghost does not cover the boss for demo '%s'" % _mode)
+		return
+	var want_hit: bool = _mode != "placing_miss"
+	if _mode == "placing_rotated":
+		combat.rotate_piece()
+	combat.aim_at_cell(boss_cell)
+	if placement.hits(boss_cell) != want_hit:
+		for cell: Vector2i in grid.enemy_cells():
+			combat.aim_at_cell(cell)
+			if placement.can_confirm() and placement.hits(boss_cell) == want_hit:
+				break
+	if placement.hits(boss_cell) != want_hit:
+		push_warning("DemoArgs: no ghost position gives hit=%s for demo '%s'" % [want_hit, _mode])
+	if _mode == "pieces_menu":
+		if not combat.confirm_placement():
+			push_warning("DemoArgs: confirm_placement failed for demo '%s'" % _mode)
+
+
+# Centre of bag slot [param index] in viewport pixels (where a finger would pick the piece up).
+func _hold_slot_centre(index: int) -> Vector2:
+	return (get_node(hold_slots_view_path) as HoldSlotsView).get_slot_rect(index).get_center()
+
+
+# Story 028 join demos through the real player path (select / aim / confirm, then the second piece).
+# join_menu: piece 1 placed, the menu open, piece 2 mid-drag. join_split: piece 2 attached apart from
+# piece 1. join_featured: the two pieces tile the match's featured shape (--arena=<shape>).
+func _join_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	_fill_bag(lib, -1)
+	var boss_cell: Vector2i = combat.get_state().enemy_cell
+	var id_a: String = _piece_id(JOIN_PIECE_1)
+	var id_b: String = JOIN_PIECE_2
+	var turns_a: int = 0
+	var turns_b: int = 0
+	var anchor_a: Vector2i = BoardGrid.NO_CELL
+	var anchor_b: Vector2i = BoardGrid.NO_CELL
+	if _mode == "join_featured":
+		var featured: Dictionary = combat.get_featured()
+		if featured.is_empty():
+			push_warning("DemoArgs: join_featured needs --arena=<shape> with a featured shape that fits the board")
+			return
+		var plan: Dictionary = _featured_tiling(lib, grid, featured["cells"] as Array[Vector2i], boss_cell)
+		if plan.is_empty():
+			push_warning("DemoArgs: no two-piece tiling of the featured shape found")
+			return
+		id_a = str(plan["id_a"])
+		id_b = str(plan["id_b"])
+		turns_a = int(plan["turns_a"])
+		turns_b = int(plan["turns_b"])
+		anchor_a = plan["anchor_a"]
+		anchor_b = plan["anchor_b"]
+	var first: FieldPoint = _hold().get_point(0)
+	first.piece = lib.make_piece(id_a, turns_a)
+	first.label = id_a
+	var second: FieldPoint = _hold().get_point(JOIN_SLOT_2)
+	second.piece = lib.make_piece(id_b, turns_b)
+	second.label = id_b
+	if not combat.select_piece(0):
+		push_warning("DemoArgs: select_piece failed for demo '%s'" % _mode)
+		return
+	if anchor_a != BoardGrid.NO_CELL:
+		_aim_anchor(combat, anchor_a)
+	else:
+		_aim_hitting(combat, grid, boss_cell)
+	if not combat.confirm_placement():
+		push_warning("DemoArgs: confirm_placement failed for demo '%s'" % _mode)
+		return
+	var placement: PlacementController = combat.get_placement()
+	if _mode == "join_menu":
+		if not combat.begin_drag(JOIN_SLOT_2, _hold_slot_centre(JOIN_SLOT_2)):
+			push_warning("DemoArgs: begin_drag of the second piece failed")
+			return
+		for cell: Vector2i in grid.enemy_cells():
+			combat.drag_to(combat.drag_point_for_cell(cell))
+			if placement.can_confirm() and not combat.get_cast_plan().touches(placement.get_cells()):
+				break
+		return
+	if not combat.select_piece(JOIN_SLOT_2):
+		push_warning("DemoArgs: select_piece of the second piece failed")
+		return
+	if anchor_b != BoardGrid.NO_CELL:
+		_aim_anchor(combat, anchor_b)
+	else:
+		for cell: Vector2i in grid.enemy_cells():
+			combat.aim_at_cell(cell)
+			if placement.can_confirm() and not combat.get_cast_plan().touches(placement.get_cells()):
+				break
+	if not combat.confirm_placement():
+		push_warning("DemoArgs: attaching the second piece failed for demo '%s'" % _mode)
+
+
+# Aims the selected piece's ghost until its anchor is [param anchor] (walks the enemy cells).
+func _aim_anchor(combat: CombatView, anchor: Vector2i) -> bool:
+	var placement: PlacementController = combat.get_placement()
+	for cell: Vector2i in combat.get_grid().enemy_cells():
+		combat.aim_at_cell(cell)
+		if placement.get_anchor() == anchor:
+			return true
+	push_warning("DemoArgs: no aim reaches anchor %s" % str(anchor))
+	return false
+
+
+# Aims the ghost so that it covers [param boss_cell] when any position does.
+func _aim_hitting(combat: CombatView, grid: BoardGrid, boss_cell: Vector2i) -> void:
+	var placement: PlacementController = combat.get_placement()
+	combat.aim_at_cell(boss_cell)
+	if placement.hits(boss_cell):
+		return
+	for cell: Vector2i in grid.enemy_cells():
+		combat.aim_at_cell(cell)
+		if placement.hits(boss_cell):
+			return
+
+
+# Splits the featured shape (placed on the enemy half, covering the boss cell when possible) into two
+# library pieces: {id_a, turns_a, anchor_a, id_b, turns_b, anchor_b}; {} when none tiles it.
+func _featured_tiling(lib: PieceLibrary, grid: BoardGrid, featured: Array[Vector2i], boss_cell: Vector2i) -> Dictionary:
+	var shape: Piece = Piece.make("featured", featured)
+	var anchors: Array[Vector2i] = PiecePlacement.valid_anchors(grid, shape, true)
+	if anchors.is_empty():
+		return {}
+	var anchor: Vector2i = anchors[anchors.size() / 2]
+	for candidate: Vector2i in anchors:
+		if shape.cells_at(candidate).has(boss_cell):
+			anchor = candidate
+			break
+	var target: Array[Vector2i] = shape.cells_at(anchor)
+	for pair: Array in FeaturedShape.pair_compositions(lib, featured):
+		for order: int in 2:
+			var id_a: String = str(pair[order])
+			var id_b: String = str(pair[1 - order])
+			for turns_a: int in 4:
+				var piece_a: Piece = lib.make_piece(id_a, turns_a)
+				var rel_a: Array[Vector2i] = piece_a.relative_cells()
+				for start: Vector2i in target:
+					var origin: Vector2i = start - rel_a[0]
+					var placed: Array[Vector2i] = []
+					for cell: Vector2i in rel_a:
+						placed.append(cell + origin)
+					var inside: bool = true
+					for cell: Vector2i in placed:
+						inside = inside and target.has(cell)
+					if not inside:
+						continue
+					var rest: Array[Vector2i] = []
+					for cell: Vector2i in target:
+						if not placed.has(cell):
+							rest.append(cell)
+					var norm: Array[Vector2i] = FeaturedShape.normalize(rest)
+					for turns_b: int in 4:
+						if lib.make_piece(id_b, turns_b).relative_cells() == norm:
+							return {
+								"id_a": id_a, "turns_a": turns_a, "anchor_a": origin,
+								"id_b": id_b, "turns_b": turns_b, "anchor_b": _min_cell(rest),
+							}
+	return {}
+
+
+func _min_cell(cells: Array[Vector2i]) -> Vector2i:
+	var out := Vector2i(1000000, 1000000)
+	for cell: Vector2i in cells:
+		out = Vector2i(mini(out.x, cell.x), mini(out.y, cell.y))
+	return out

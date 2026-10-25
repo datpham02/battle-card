@@ -3,6 +3,8 @@
 	"think_interval_sec": 0.3,
 	"reaction_sec": 0.35,
 	"noise": 0.15,
+	"max_placements_scored": 40,
+	"root_while_swinging": true,
 	"active_set": "balanced",
 	"learning": {
 		"dodge_streak_threshold": 3,
@@ -13,7 +15,8 @@
 		"full_hand_seconds": 4.0,
 		"quick_cut_bias": 2.0,
 		"interrupt_count_threshold": 2,
-		"single_point_bonus": 2.0
+		"single_point_bonus": 2.0,
+		"feint_max_cells": 2
 	},
 	"sets": {
 		"balanced": {

@@ -47,6 +47,7 @@ const DEFAULT_LEARNING: Dictionary = {
 	"quick_cut_bias": 2.0,
 	"interrupt_count_threshold": 2,
 	"single_point_bonus": 2.0,
+	"feint_max_cells": 2,
 }
 ## Allowed `path_style` values of a movement profile.
 const PATH_STYLES: Array[String] = ["row_first", "shortest", "mixed"]
@@ -72,6 +73,10 @@ var think_interval_sec: float = 0.3
 var reaction_sec: float = 0.35
 ## Amplitude of the uniform score noise.
 var noise: float = 0.15
+## Story 025: how many piece placements (after the cheap pre-ranking) get a full score per think. >= 1.
+var max_placements_scored: int = 40
+## Story 025: true = the boss's mover refuses to step while its actor swings (counter window).
+var root_while_swinging: bool = true
 ## Name of the weight set in use.
 var active_set: String = DEFAULT_SET
 ## set name -> {weight key -> float}.
@@ -111,6 +116,9 @@ static func from_dictionary(data: Dictionary) -> BossBrainConfig:
 	config.think_interval_sec = maxf(float(data.get("think_interval_sec", config.think_interval_sec)), 0.0)
 	config.reaction_sec = maxf(float(data.get("reaction_sec", config.reaction_sec)), 0.0)
 	config.noise = maxf(float(data.get("noise", config.noise)), 0.0)
+	config.max_placements_scored = maxi(int(data.get("max_placements_scored", config.max_placements_scored)), 1)
+	var raw_root: Variant = data.get("root_while_swinging", config.root_while_swinging)
+	config.root_while_swinging = bool(raw_root) if typeof(raw_root) == TYPE_BOOL else float(raw_root) >= 0.5
 	var raw_learning: Variant = data.get("learning")
 	if typeof(raw_learning) == TYPE_DICTIONARY:
 		for key: Variant in DEFAULT_LEARNING.keys():
@@ -251,6 +259,8 @@ static func _clean_movement_value(set_name: String, key: String, value: Variant)
 static func _clean_learning(key: String, value: float) -> Variant:
 	if key == "dodge_streak_threshold" or key == "interrupt_count_threshold":
 		return maxi(roundi(value), 1)
+	if key == "feint_max_cells":
+		return maxi(roundi(value), 0)
 	if key == "feint_chance_base" or key == "feint_chance_max" or key == "feint_cancel_fraction":
 		return clampf(value, 0.0, 1.0)
 	if key == "quick_cut_bias":

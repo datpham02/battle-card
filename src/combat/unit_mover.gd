@@ -16,6 +16,9 @@ var cooldown_scale: Callable = Callable()
 var blocked_cell_fn: Callable = Callable()
 ## Story 023: flat multiplier of every cooldown this mover starts (phase_shift speeds the boss up).
 var cooldown_mult: float = 1.0
+## Story 025: Callable() -> bool; true = the unit is rooted: try_step refuses (no cooldown started)
+## and is_ready() is false (the boss while it swings). Invalid (default) = never locked.
+var step_lock_fn: Callable = Callable()
 
 
 ## [param side] is a CombatState.Side value.
@@ -35,7 +38,7 @@ func set_status(status: StatusEffects) -> void:
 ## changes nothing when on cooldown, dead, off the owner's half or direction is invalid.
 ## Only an accepted move starts the cooldown.
 func try_step(direction: Vector2i) -> bool:
-	if _remaining > 0.0:
+	if _remaining > 0.0 or is_step_locked():
 		return false
 	if _status != null and _status.is_pinned(_side):
 		return false
@@ -80,4 +83,9 @@ func get_cooldown_fraction() -> float:
 
 ## True when a step would be accepted (ignoring walls).
 func is_ready() -> bool:
-	return _remaining <= 0.0
+	return _remaining <= 0.0 and not is_step_locked()
+
+
+## True while [member step_lock_fn] says the unit is rooted (Story 025).
+func is_step_locked() -> bool:
+	return step_lock_fn.is_valid() and bool(step_lock_fn.call())

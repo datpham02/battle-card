@@ -25,6 +25,14 @@ func _init(slot_count: int = MAX_SLOTS) -> void:
 	_slots.resize(clampi(slot_count, MIN_SLOTS, MAX_SLOTS))
 
 
+## Story 024: a hand of exactly [param count] slots (at least 1), NOT clamped to
+## MIN_SLOTS..MAX_SLOTS, for the player's piece bag (hold_slots.json piece_slot_count).
+static func create_piece_hand(count: int) -> HoldSlots:
+	var hand := HoldSlots.new(MIN_SLOTS)
+	hand._slots.resize(maxi(count, 1))
+	return hand
+
+
 ## Number of slots (empty or not).
 func get_slot_count() -> int:
 	return _slots.size()
@@ -59,6 +67,15 @@ func get_point(index: int) -> FieldPoint:
 	if index < 0 or index >= _slots.size():
 		return null
 	return _slots[index]
+
+
+## Story 024: the piece held in slot [param index]; null when the slot is empty, out of range
+## or holds a classic (label) point.
+func get_piece(index: int) -> Piece:
+	var point: FieldPoint = get_point(index)
+	if point == null:
+		return null
+	return point.piece
 
 
 ## Index of the first free slot, or -1 when full.

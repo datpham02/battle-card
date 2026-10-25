@@ -40,6 +40,16 @@ const ROTTEN_X_INSET_RATIO: float = 0.18
 const ROTTEN_TIMER_FONT_RATIO: float = 0.17
 const ROTTEN_TIMER_BOTTOM_RATIO: float = 0.06
 const TEXT_ROTTEN_TIMER: String = "ui.hold.rotten_timer"
+## Piece slot (Story 024): mini shape fitted in the top part of the slot (share of its height), the
+## largest square (share of slot width), the cell-count font (share of slot width) and bottom gap.
+const PIECE_SHAPE_HEIGHT_RATIO: float = 0.6
+const PIECE_SHAPE_PAD_RATIO: float = 0.14
+const PIECE_MAX_UNIT_RATIO: float = 0.28
+const PIECE_COUNT_FONT_RATIO: float = 0.2
+const PIECE_COUNT_BOTTOM_RATIO: float = 0.08
+const PIECE_FILL: Color = Color(0.3, 0.65, 0.95)
+const PIECE_SELECTED_FILL: Color = Color(1.0, 0.85, 0.25)
+const TEXT_CELLS: String = "ui.hud.cells"
 
 ## Path to the hold-slot JSON config.
 @export_file("*.json") var config_path: String = HoldSlotsConfig.DEFAULT_PATH
@@ -53,7 +63,8 @@ func _ready() -> void:
 	if _config == null:
 		push_warning("HoldSlotsView: using built-in default config")
 		_config = HoldSlotsConfig.new()
-	_slots = HoldSlots.new(_config.slot_count)
+	# Story 024: the player's bag holds puzzle pieces, piece_slot_count slots (the boss keeps slot_count).
+	_slots = HoldSlots.create_piece_hand(_config.piece_slot_count)
 
 
 func _process(_delta: float) -> void:
@@ -73,6 +84,9 @@ func _draw() -> void:
 			continue
 		if point.rotten:
 			_draw_rotten_slot(rect, point)
+			continue
+		if point.piece != null:
+			_draw_piece_slot(rect, point, full, _slots.is_selected(i))
 			continue
 		var tint: Color = SIDE_COLORS.get(point.label.substr(0, 1), DEFAULT_SIDE_COLOR)
 		draw_rect(rect, SLOT_FILL_OCCUPIED)
@@ -94,7 +108,7 @@ func _draw() -> void:
 		draw_string(
 			ThemeDB.fallback_font,
 			Vector2(side.position.x, side.get_center().y + FULL_FONT_SIZE * 0.35),
-			"FULL", HORIZONTAL_ALIGNMENT_RIGHT, side.size.x, FULL_FONT_SIZE, OUTLINE_FULL
+			tr("ui.hud.full"), HORIZONTAL_ALIGNMENT_RIGHT, side.size.x, FULL_FONT_SIZE, OUTLINE_FULL
 		)
 
 
@@ -160,16 +174,40 @@ func _draw_rotten_slot(rect: Rect2, point: FieldPoint) -> void:
 	draw_line(x_rect.position, x_rect.end, ROTTEN_X_COLOR, ROTTEN_X_WIDTH)
 	draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), ROTTEN_X_COLOR, ROTTEN_X_WIDTH)
 	var font_size: int = int(rect.size.x * LABEL_FONT_RATIO)
-	draw_string(
-		ThemeDB.fallback_font,
-		rect.position + Vector2(0.0, rect.size.y * 0.5 + font_size * 0.35),
-		point.label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, ROTTEN_LABEL_COLOR
-	)
+	if point.piece == null:
+		draw_string(
+			ThemeDB.fallback_font,
+			rect.position + Vector2(0.0, rect.size.y * 0.5 + font_size * 0.35),
+			point.label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, ROTTEN_LABEL_COLOR
+		)
 	var timer_size: int = maxi(int(rect.size.x * ROTTEN_TIMER_FONT_RATIO), 8)
 	draw_string(
 		ThemeDB.fallback_font,
 		Vector2(rect.position.x, rect.end.y - rect.size.x * ROTTEN_TIMER_BOTTOM_RATIO),
 		tr(TEXT_ROTTEN_TIMER) % point.rot_in_hand_sec, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, timer_size, ROTTEN_LABEL_COLOR
+	)
+
+
+# A bag slot holding a piece: the piece as a mini shape in its current rotation, its cell count under
+# it; selected = thick white outline and a gold shape. A full bag keeps the gold outline like before.
+func _draw_piece_slot(rect: Rect2, point: FieldPoint, full: bool, selected: bool) -> void:
+	draw_rect(rect, SLOT_FILL_OCCUPIED)
+	var color: Color = OUTLINE_FULL if full else OUTLINE_OCCUPIED
+	var width: float = OUTLINE_WIDTH_STRONG if full else OUTLINE_WIDTH
+	if selected:
+		color = OUTLINE_SELECTED
+		width = OUTLINE_WIDTH_SELECTED
+	draw_rect(rect, color, false, width)
+	var area := Rect2(
+		rect.position + Vector2(rect.size.x * PIECE_SHAPE_PAD_RATIO, rect.size.y * PIECE_SHAPE_PAD_RATIO),
+		Vector2(rect.size.x * (1.0 - PIECE_SHAPE_PAD_RATIO * 2.0), rect.size.y * PIECE_SHAPE_HEIGHT_RATIO)
+	)
+	PieceDraw.draw_shape(self, point.piece, area, PIECE_SELECTED_FILL if selected else PIECE_FILL, Color(0.1, 0.1, 0.12, 0.7), rect.size.x * PIECE_MAX_UNIT_RATIO)
+	var font_size: int = int(rect.size.x * PIECE_COUNT_FONT_RATIO)
+	draw_string(
+		ThemeDB.fallback_font,
+		Vector2(rect.position.x, rect.end.y - rect.size.x * PIECE_COUNT_BOTTOM_RATIO),
+		tr(TEXT_CELLS) % point.piece.cell_count(), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, LABEL_COLOR
 	)
 
 

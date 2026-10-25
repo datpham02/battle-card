@@ -23,5 +23,8 @@
 	"fragile_max_stacks": 3,
 	"frost_stacks_to_burst": 3,
 	"frost_burst_damage": 24,
-	"execute_ratio": 0.25
+	"execute_ratio": 0.25,
+	"max_pieces_per_cast": 2,
+	"join_extra_sec": 1.5,
+	"max_cast_cells": 0
 }

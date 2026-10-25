@@ -78,6 +78,33 @@ func _emit_choice(skill_id: String) -> bool:
 	return true
 
 
+## Story 024: closes the open menu WITHOUT choosing (the piece goes back to the bag). Returns the
+## cells of the abandoned cut ([] when no menu was open). Emits nothing.
+func cancel_menu() -> Array[Vector2i]:
+	if not _open:
+		return []
+	var cells: Array[Vector2i] = _cells
+	_open = false
+	_time_left = 0.0
+	_labels = []
+	_cells = []
+	_hand = []
+	return cells
+
+
+## Story 028: replaces the pending cut with [param cells] / [param labels] (a piece was joined or taken
+## off) and adds [param extra_sec] REAL seconds to the choose countdown (the total never exceeds
+## menu_choose_sec plus every join bonus; a negative value is ignored). Returns false when the
+## menu is closed or [param cells] is empty. The drawn hand does not change.
+func update_cut(labels: Array[String], cells: Array[Vector2i], extra_sec: float = 0.0) -> bool:
+	if not _open or cells.is_empty():
+		return false
+	_labels = labels.duplicate()
+	_cells = cells.duplicate()
+	_time_left += maxf(extra_sec, 0.0)
+	return true
+
+
 ## Level used for [param skill_id] (1 without a [member level_of] callable).
 func card_level(skill_id: String) -> int:
 	if level_of.is_valid():

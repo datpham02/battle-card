@@ -56,6 +56,8 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 @export_file("*.json") var run_config_path: String = ""
 ## Display name of the floor this run plays ("Tầng 2"); shown in the match label. Set by GameFlow.
 @export var floor_label: String = ""
+## Story 024: chapters.json id of the run's chapter ("ch1"...); becomes match_params["chapter_id"] (piece drop weights).
+@export var chapter_id: String = ""
 ## Player deck card ids for the battles (Story 019 fills it); empty = the default deck.
 @export var deck: Array[String] = []
 ## Story 020: the deck as {id, level} entries; empty = use [member deck] (all level 1).
@@ -277,6 +279,7 @@ func _spawn_battle() -> void:
 		params["arena"] = _dev_arena.duplicate()
 	params["player_hp"] = _state.get_carried_hp()
 	params["floor_label"] = floor_label
+	params["chapter_id"] = chapter_id
 	if not character.is_empty():
 		params["character"] = character.duplicate(true)
 	if not deck_entries.is_empty():

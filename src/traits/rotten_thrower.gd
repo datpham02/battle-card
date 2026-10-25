@@ -9,7 +9,9 @@ extends BossTrait
 ## throw waits (no catch-up burst) and happens as soon as a rotten point leaves the field.
 ## Params (chapters.json `traits[].params`, defaults in the constants below): `interval_sec`,
 ## `field_freshness_sec`, `rot_in_hand_sec`, `label`, `max_on_field`, `first_delay_sec`.
-## Implements: Story 014 (Part B).
+## Story 024: when the player's drops are in piece mode the throw is a ROTTEN PIECE (1 cell, grey,
+## FieldPoint.piece.is_rotten(), never placeable) via FieldDrops.place_rotten_piece; `label` is then unused.
+## Implements: Story 014 (Part B), Story 024.
 
 ## A rotten point was thrown onto the player's half (FieldDrops.point_spawned fires too).
 signal thrown(point: FieldPoint)
@@ -75,7 +77,12 @@ func on_tick(step: float) -> void:
 	if candidates.is_empty():
 		return
 	var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
-	var point: FieldPoint = drops.place_rotten(cell, _label, _field_freshness_sec, _rot_in_hand_sec)
+	var point: FieldPoint
+	if drops.is_piece_mode():
+		# Story 024: the player's drops carry pieces, so the lie is a 1-cell grey piece.
+		point = drops.place_rotten_piece(cell, _field_freshness_sec, _rot_in_hand_sec)
+	else:
+		point = drops.place_rotten(cell, _label, _field_freshness_sec, _rot_in_hand_sec)
 	if point == null:
 		return
 	_last_thrown_cell = cell
