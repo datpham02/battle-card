@@ -190,7 +190,9 @@ ui.hud.burn_stacks,Cháy ×%d,Burn ×%d
 ui.hud.pinned,Ghim,Pinned
 ui.hud.signature_ready,SẴN SÀNG,READY
 ui.hud.signature_active,ĐANG DÙNG,ACTIVE
-ui.hud.signature_charge,%d %%,%d %%
+ui.hud.formation_count,Trận đồ %d/%d,Formation %d/%d
+ui.hud.formation_complete,Trận đồ hoàn thành: %s,Formation complete: %s
+ui.hud.signature_cooldown,Hồi %d s,Cooldown %d s
 ui.character_select.signature,Tuyệt kỹ: %s,Signature: %s
 signature.tram.name,Trảm,Slash Fury
 signature.tram.desc,3 giây: mọi phép tính gấp đôi số ô và hồi 20% sát thương gây ra.,3 seconds: every spell counts double its cells and heals 20% of the damage dealt.

@@ -296,7 +296,25 @@ const SIGNATURE_BANNER_FONT_SIZE: int = 64
 const SIGNATURE_BANNER_BACK_ALPHA: float = 0.45
 const TEXT_SIGNATURE_READY: String = "ui.hud.signature_ready"
 const TEXT_SIGNATURE_ACTIVE: String = "ui.hud.signature_active"
-const TEXT_SIGNATURE_CHARGE: String = "ui.hud.signature_charge"
+const TEXT_SIGNATURE_CHARGE: String = "ui.hud.formation_count"
+const TEXT_FORMATION_COMPLETE: String = "ui.hud.formation_complete"
+## Story 029 Phần D: "Hồi %d s" while the signature cooldown runs (seconds rounded up).
+const TEXT_SIGNATURE_COOLDOWN: String = "ui.hud.signature_cooldown"
+## Story 029 formation map on the enemy half: a lit cell gets a turquoise fill and border whose alpha
+## scales from FORMATION_FAINT (almost faded) to 1.0 (just covered); below the warn ratio (combat.json
+## formation_fade_warn_ratio) the border turns dashed and the whole cell blinks FORMATION_BLINK_HZ
+## (real time, alternating FORMATION_WARN_HIGH / FORMATION_WARN_LOW strength). The completion flash is a white wash over the real enemy
+## cells with alpha FORMATION_FLASH_ALPHA x the 1..0 flash value.
+const FORMATION_FILL: Color = Color(0.1, 0.85, 0.8, 0.38)
+const FORMATION_BORDER: Color = Color(0.45, 1.0, 0.95, 1.0)
+const FORMATION_FAINT: float = 0.22
+const FORMATION_BORDER_WIDTH: float = 4.0
+const FORMATION_INSET: float = 3.0
+const FORMATION_BLINK_HZ: float = 3.5
+const FORMATION_WARN_HIGH: float = 0.6
+const FORMATION_WARN_LOW: float = 0.3
+const FORMATION_FLASH_ALPHA: float = 0.6
+const FORMATION_DASH_LENGTH: float = 9.0
 
 ## Story 023 keyword stacks on the boss: "Rạn ×N" (purple) and "Hàn ×N" (ice blue) after "Cháy ×N" /
 ## "Ghim" in the boss status strip. The strip stays one line: its font shrinks down to
@@ -359,6 +377,8 @@ func _ready() -> void:
 	_sig = _combat
 	if _combat != null and _combat.has_signal("signature_activated"):
 		_combat.connect("signature_activated", _on_signature_activated)
+	if _combat != null and _combat.has_signal("formation_completed"):
+		_combat.connect("formation_completed", _on_formation_completed)
 
 
 func _process(delta: float) -> void:
@@ -527,6 +547,57 @@ func _on_signature_activated(id: String) -> void:
 	_banner_left = SIGNATURE_BANNER_SEC
 
 
+# Story 029: the map completed: the signature banner shows "Trận đồ hoàn thành: <signature name>".
+func _on_formation_completed() -> void:
+	if not _has_signature():
+		return
+	_banner_id = _signature_id()
+	_banner_text = tr(TEXT_FORMATION_COMPLETE) % _sig.get_signature_name()
+	_banner_left = SIGNATURE_BANNER_SEC
+
+
+# Story 029: lit cells of the enemy half (under every other marker) and the completion flash.
+func _draw_formation(vp: Vector2) -> void:
+	var formation: FormationMap = _combat.get_formation() if _combat.has_method("get_formation") else null
+	if formation == null:
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var flash: float = _combat.get_formation_flash()
+	if flash > 0.0:
+		for cell: Vector2i in grid.enemy_cells():
+			draw_rect(ScreenLayout.cell_rect(grid, vp, cell), Color(1.0, 1.0, 1.0, FORMATION_FLASH_ALPHA * flash))
+	var warn: float = _combat.get_config().formation_fade_warn_ratio
+	var blink_on: bool = fmod(_blink_time * FORMATION_BLINK_HZ, 1.0) < 0.5
+	for cell: Vector2i in formation.lit_cells():
+		var fraction: float = formation.fraction_left(cell)
+		var strength: float = lerpf(FORMATION_FAINT, 1.0, fraction)
+		var warning: bool = fraction < warn
+		if warning:
+			# Flat and low (never the bright fresh look) so a still frame reads as "about to fade".
+			strength = FORMATION_WARN_HIGH if blink_on else FORMATION_WARN_LOW
+		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell).grow(-FORMATION_INSET)
+		draw_rect(rect, Color(FORMATION_FILL, FORMATION_FILL.a * strength))
+		var border := Color(FORMATION_BORDER, strength)
+		if warning:
+			_draw_dashed_formation_rect(rect, border)
+		else:
+			draw_rect(rect, border, false, FORMATION_BORDER_WIDTH)
+
+
+# Dashed rectangle in the formation colour (the feint dashes are grey and thinner).
+func _draw_dashed_formation_rect(rect: Rect2, color: Color) -> void:
+	var corners: Array[Vector2] = [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
+	for i: int in corners.size():
+		var a: Vector2 = corners[i]
+		var b: Vector2 = corners[(i + 1) % corners.size()]
+		var length: float = a.distance_to(b)
+		var dir: Vector2 = (b - a).normalized()
+		var d: float = 0.0
+		while d < length:
+			draw_line(a + dir * d, a + dir * minf(d + FORMATION_DASH_LENGTH, length), color, FORMATION_BORDER_WIDTH)
+			d += FORMATION_DASH_LENGTH * 2.0
+
+
 func _try_activate_signature() -> void:
 	if _has_signature() and _sig.can_activate_signature():
 		_sig.activate_signature()
@@ -575,6 +646,7 @@ func _draw_board_banner(vp: Vector2, text: String, color: Color, left: float) ->
 
 # The button: dimmed with a charge bar and "%" while charging, PRIMARY and pulsing when ready,
 # a countdown bar while the skill runs; also dimmed whenever it cannot be pressed (menu / Focus / pause).
+# Status line (Story 029 Phần D): ACTIVE > READY > "Hồi N s" while the cooldown runs > "Trận đồ N/M".
 func _draw_signature_button(vp: Vector2) -> void:
 	if not _has_signature():
 		return
@@ -607,7 +679,13 @@ func _draw_signature_button(vp: Vector2) -> void:
 	var name_size: int = _fit_signature_font(name_text, inner.size.x, SIGNATURE_FONT_SIZE)
 	var top_line := Rect2(inner.position, Vector2(inner.size.x, inner.size.y * 0.5))
 	_draw_centered(top_line, name_text, name_size, Color(TEXT_LIGHT, text_alpha))
-	var status: String = tr(TEXT_SIGNATURE_CHARGE) % roundi(clampf(_sig.get_signature_charge(), 0.0, 1.0) * 100.0)
+	var formation: FormationMap = _combat.get_formation()
+	var status: String = ""
+	var cooldown_left: float = _sig.get_signature_cooldown_left() if _sig.has_method("get_signature_cooldown_left") else 0.0
+	if cooldown_left > 0.0:
+		status = tr(TEXT_SIGNATURE_COOLDOWN) % ceili(cooldown_left)
+	elif formation != null:
+		status = tr(TEXT_SIGNATURE_CHARGE) % [formation.lit_count(), formation.total()]
 	if active:
 		status = tr(TEXT_SIGNATURE_ACTIVE)
 	elif is_ready:
@@ -634,6 +712,7 @@ func _draw() -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	# Focus overlay first: the preview, markers and buttons stay fully readable above it.
 	_draw_focus_overlay(vp)
+	_draw_formation(vp)
 	_draw_featured_icon(vp)
 	_draw_preview(vp)
 	_draw_swing(vp)

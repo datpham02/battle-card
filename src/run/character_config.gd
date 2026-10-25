@@ -12,8 +12,6 @@ const DEFAULT_PATH: String = "res://assets/data/characters.json"
 const FALLBACK_ID: String = "kiem_si"
 const FALLBACK_MAX_HP: float = 100.0
 const FALLBACK_FOCUS_SEC: float = 4.0
-## Story 021: fallback `signature.charge_cells` when the block omits it (combat.json carries the tuned one).
-const DEFAULT_CHARGE_CELLS: int = 18
 
 var _order: Array[String] = []
 var _characters: Dictionary = {}
@@ -76,7 +74,7 @@ func has(id: String) -> bool:
 
 ## A copy of the cleaned character [param id] ({id, name_key, desc_key, max_hp, step_cooldown_mult,
 ## focus_max_sec, passive {id, params}, passive_name_key, passive_desc_key, signature ({} or
-## {id, name_key, desc_key, charge_cells, params}, Story 021), starter_deck, unlocked});
+## {id, name_key, desc_key, params}, Story 021), starter_deck, unlocked});
 ## {} when unknown.
 func get_character(id: String) -> Dictionary:
 	if not _characters.has(id):
@@ -142,8 +140,9 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 	_order.append(id)
 
 
-# Story 021: the cleaned `signature` block ({id, name_key, desc_key, charge_cells, params}) or {} when
-# absent; malformed (not an object, empty / unknown id, charge_cells < 1) -> warning and {} (no signature).
+# Story 021: the cleaned `signature` block ({id, name_key, desc_key, cooldown_sec, params}) or {} when
+# absent; malformed (not an object, empty / unknown id) -> warning and {} (no signature).
+# Story 029: `charge_cells` is gone (the formation map replaces the charge bar); a leftover key is ignored.
 func _read_signature(id: String, raw: Variant) -> Dictionary:
 	if raw == null:
 		return {}
@@ -155,16 +154,19 @@ func _read_signature(id: String, raw: Variant) -> Dictionary:
 	if sig_id.is_empty() or not SignatureRegistry.has_id(sig_id):
 		push_warning("CharacterConfig: %s signature id '%s' unknown (known: %s), none used" % [id, sig_id, ", ".join(SignatureRegistry.known_ids())])
 		return {}
-	var charge: Variant = dict.get("charge_cells", DEFAULT_CHARGE_CELLS)
-	if (typeof(charge) != TYPE_FLOAT and typeof(charge) != TYPE_INT) or int(charge) < 1:
-		push_warning("CharacterConfig: %s signature charge_cells must be >= 1, none used" % id)
-		return {}
 	var params: Variant = dict.get("params", {})
+	# Story 029 Phần D: cooldown after each use; missing -> 0, negative -> 0, non-number -> warning and 0.
+	var cooldown_raw: Variant = dict.get("cooldown_sec", 0.0)
+	var cooldown: float = 0.0
+	if typeof(cooldown_raw) == TYPE_FLOAT or typeof(cooldown_raw) == TYPE_INT:
+		cooldown = maxf(float(cooldown_raw), 0.0)
+	else:
+		push_warning("CharacterConfig: %s signature cooldown_sec is not a number, 0 used" % id)
 	return {
 		"id": sig_id,
 		"name_key": str(dict.get("name_key", "")),
 		"desc_key": str(dict.get("desc_key", "")),
-		"charge_cells": int(charge),
+		"cooldown_sec": cooldown,
 		"params": (params as Dictionary).duplicate(true) if typeof(params) == TYPE_DICTIONARY else {},
 	}
 

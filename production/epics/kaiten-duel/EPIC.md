@@ -98,4 +98,5 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 026 | Gỡ hệ nối ấn, chuyển test và mô phỏng sang mảnh, đo lại cân bằng ba chương | Integration | Ready | N/A (minimal) |
 | 027 | Kết giới và Trận gai: vùng chặn và vùng thu phí đặt bằng mảnh, cho cả người chơi và boss | Integration | Ready | N/A (minimal) |
 | 028 | Ghép mảnh trên sân và hình chủ đạo: tối đa 2 mảnh một đòn, thưởng ×1,5 + hiệu ứng khi ghép đúng hình của trận | Integration | Complete | N/A (minimal) |
-| 029 | Trận đồ: ô sáng khi được phủ, phai dần, sáng đủ cùng lúc thì tuyệt kỹ sẵn sàng (thay thanh nạp 18 ô) | Integration | Ready | N/A (minimal) |
+| 029 | Trận đồ: ô sáng khi được phủ, phai dần, sáng đủ cùng lúc thì tuyệt kỹ sẵn sàng (thay thanh nạp 18 ô) | Integration | Complete | N/A (minimal) |
+| 030 | Làm lại Thiên Hỏa và Ảnh Bộ: Thiên Hỏa đốt cả trận đồ, Ảnh Bộ nhân đôi mọi đòn nhỏ, cân bằng giá trị mỗi phút ≤ ~2 : 1 | Integration | Ready | N/A (minimal) |

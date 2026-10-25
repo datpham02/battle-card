@@ -71,7 +71,9 @@ extends Node
 ##                                      (RunController.set_paused(true, force) after the intro is skipped):
 ##                                      time is NOT frozen here, the pause is what holds the swing clock,
 ##                                      so two captures >= 1 s apart show the same countdown under the overlay
-##   godot --path . -- --demo=signature_ready|signature_half   Story 021: signature charge full / half (needs CombatView.debug_set_signature_charge)
+##   godot --path . -- --demo=formation_half|formation_warn|formation_complete   Story 029: formation map half lit / cells about to fade / completed (flash + banner); skips the intro
+##   godot --path . -- --demo=signature_cooldown   Story 029 Phần D: 40% of the enemy cells lit, signature cooldown ~9 s left ("Hồi 9 s"); skips the intro
+##   godot --path . -- --demo=signature_ready|signature_half  Story 021: signature charge full / half (needs CombatView.debug_set_signature_charge)
 ##   Story 024 piece demos (the label demos above no longer apply to the player: the player has a piece bag now):
 ##   godot --path . -- --demo=pieces_hand    three pieces lying on the player's half (mini shapes, freshness bars) and a full bag
 ##   godot --path . -- --demo=placing_hit    PLACING with a piece (default l4, or --piece=<id>) over the boss's cell: green ghost,
@@ -173,7 +175,10 @@ const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
 const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
 const ROTTEN_PIECE_SLOT: int = 1
 ## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
-const PIECE_DEMOS: Array[String] = ["pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split"]
+const PIECE_DEMOS: Array[String] = ["pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown"]
+## Story 029 Phần D demo: share of the enemy cells lit and the cooldown seconds left (dev capture only).
+const SIGNATURE_COOLDOWN_DEMO_CHARGE: float = 0.4
+const SIGNATURE_COOLDOWN_DEMO_SEC: float = 9.0
 ## Story 028 join demos: piece 1 and piece 2 of "join_menu" / "join_split" (--piece= overrides piece 1).
 const JOIN_PIECE_1: String = "l3"
 const JOIN_PIECE_2: String = "bar2"
@@ -421,6 +426,12 @@ func _ready() -> void:
 				combat.call("debug_set_signature_charge", 1.0 if _mode == "signature_ready" else 0.5)
 			else:
 				push_warning("DemoArgs: CombatView.debug_set_signature_charge missing, signature demo skipped")
+		"formation_half", "formation_warn", "formation_complete":
+			_formation_demo(combat, grid)
+		"signature_cooldown":
+			# Story 029 Phần D: some cells lit and the signature cooldown ~9 s left ("Hồi 9 s" button).
+			combat.debug_set_signature_charge(SIGNATURE_COOLDOWN_DEMO_CHARGE)
+			combat.debug_set_signature_cooldown(SIGNATURE_COOLDOWN_DEMO_SEC)
 		"pieces_hand":
 			var lib: PieceLibrary = PieceLibrary.load_from_file()
 			var spots: Array[Vector2i] = _spread_cells(grid, FIELD_PIECES.size() + 1)
@@ -446,6 +457,36 @@ func _ready() -> void:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 	if PIECE_DEMOS.has(_mode):
 		_skip_intro.call_deferred()
+
+
+# Story 029 formation demos (FormationMap.set_cells, freeze_time keeps the fades still). half: the first
+# half of the real enemy cells lit at mixed freshness. warn: every other cell lit, about half of those
+# under the warn ratio (they draw faint + dashed). complete: covers every enemy cell through the real
+# completion path (CombatView._cover_formation, DEV-ONLY): ready flag, flash and banner; time is
+# frozen, so the flash holds at 1.
+func _formation_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var map: FormationMap = combat.get_formation()
+	if map == null:
+		push_warning("DemoArgs: no formation map (character without a signature) for demo '%s'" % _mode)
+		return
+	var cells: Array[Vector2i] = grid.enemy_cells()
+	if _mode == "formation_complete":
+		combat.call("_cover_formation", cells)
+		return
+	var warn: float = combat.get_config().formation_fade_warn_ratio
+	var fresh: Array[float] = [1.0, 0.8, 0.55, 0.35]
+	var lit: int = 0
+	for i: int in cells.size():
+		if _mode == "formation_half":
+			if i >= (cells.size() + 1) / 2:
+				break
+			map.set_cells([cells[i]] as Array[Vector2i], fresh[i % fresh.size()])
+		else:
+			if i % 2 == 1:
+				continue
+			var fraction: float = 0.9 if lit % 3 == 0 else warn * 0.5
+			map.set_cells([cells[i]] as Array[Vector2i], fraction)
+			lit += 1
 
 
 # Story 024: ends the match intro (finds the RunController like _pause_run) so the banner does not cover

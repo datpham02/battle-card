@@ -44,6 +44,11 @@ func _cast(v: CombatView, count: int, skill: String = "kiem_khi") -> Dictionary:
 	var cells: Array[Vector2i] = []
 	for i: int in count:
 		cells.append(state.enemy_cell if i == 0 else Vector2i(state.enemy_cell.x, 100 + i))
+	return _cast_cells(v, cells, skill)
+
+
+# Story 029: casts [param skill] over exactly [param cells], resolves it, returns the result.
+func _cast_cells(v: CombatView, cells: Array[Vector2i], skill: String = "kiem_khi") -> Dictionary:
 	var got: Array[Dictionary] = [{}]
 	var cb: Callable = func(side: int, result: Dictionary) -> void:
 		if side == CombatState.Side.PLAYER:
@@ -61,7 +66,6 @@ func _per_cell(v: CombatView, skill: String = "kiem_khi") -> float:
 
 func _initialize() -> void:
 	_cc = CharacterConfig.load_from_file()
-	await _test_charge_unit()
 	await _test_charge_and_host()
 	await _test_locks()
 	await _test_tram()
@@ -74,37 +78,20 @@ func _initialize() -> void:
 	quit(1 if fails > 0 else 0)
 
 
-func _test_charge_unit() -> void:
-	var c := SignatureCharge.new(0)
-	_check("charge capacity clamps to 1", c.capacity() == 1)
-	c = SignatureCharge.new(18)
-	c.add(-3)
-	_check("charge ignores <= 0", c.cells() == 0 and c.fraction() == 0.0)
-	c.add(5)
-	_check("charge 5/18", c.cells() == 5 and _near(c.fraction(), 5.0 / 18.0) and not c.is_full())
-	c.add(20)
-	_check("charge caps at capacity", c.cells() == 18 and c.fraction() == 1.0 and c.is_full())
-	c.reset()
-	_check("charge reset", c.cells() == 0)
-
-
 func _test_charge_and_host() -> void:
 	var v: CombatView = await _view(_cc.get_character("kiem_si"))
 	_check("kiem_si has tram", v.get_signature() != null and v.get_signature().get_id() == "tram")
 	_check("charge starts at 0", v.get_signature_charge() == 0.0 and not v.is_signature_ready())
 	_check("name translated", v.get_signature_name() == tr("signature.tram.name") and v.get_signature_name() != "signature.tram.name", v.get_signature_name())
 	_check("duration 3 / time_left 0 / inactive", v.get_signature_duration() == 3.0 and v.get_signature_time_left() == 0.0 and not v.is_signature_active())
+	# Story 029: the charge is the formation map (lit real enemy cells / total); off-board cells do not count.
+	var total: float = float(v.get_formation().total())
 	_cast(v, 5)
-	_check("5 cells -> 5/18", _near(v.get_signature_charge(), 5.0 / 18.0))
-	_cast(v, 6)
-	_cast(v, 6)
-	_check("17 cells -> not ready", _near(v.get_signature_charge(), 17.0 / 18.0) and not v.is_signature_ready())
-	# An interrupted (cancelled) swing still counted as cast; an uncast one (begin refused while
-	# swinging) does not.
-	_cast(v, 1)
-	_check("18 cells -> full and ready", v.get_signature_charge() == 1.0 and v.is_signature_ready())
+	_check("1 real enemy cell lit -> 1/total", _near(v.get_signature_charge(), 1.0 / total) and not v.is_signature_ready())
+	_cast_cells(v, v.get_grid().enemy_cells())
+	_check("whole enemy half lit -> full and ready", v.get_signature_charge() == 1.0 and v.is_signature_ready())
 	_cast(v, 4)
-	_check("charge capped at 1", v.get_signature_charge() == 1.0)
+	_check("charge stays 1 while ready", v.get_signature_charge() == 1.0)
 	var fired: Array[String] = []
 	v.signature_activated.connect(func(id: String) -> void: fired.append(id))
 	var ended: Array[String] = []
@@ -112,7 +99,7 @@ func _test_charge_and_host() -> void:
 	_check("can activate", v.can_activate_signature())
 	_check("activate -> true", v.activate_signature())
 	_check("signal signature_activated(tram)", fired == (["tram"] as Array[String]))
-	_check("charge reset to 0 on activate", v.get_signature_charge() == 0.0 and not v.is_signature_ready())
+	_check("activate clears ready and resets the map (Story 029 Phần D)", v.get_signature_charge() == 0.0 and v.get_formation().lit_count() == 0 and not v.is_signature_ready())
 	_check("active, 3 s left", v.is_signature_active() and _near(v.get_signature_time_left(), 3.0))
 	_check("activate again -> false", not v.activate_signature() and fired.size() == 1)
 	v._tick_signature(1.0)
@@ -120,7 +107,7 @@ func _test_charge_and_host() -> void:
 	v._tick_signature(2.5)
 	_check("ended after 3 s + signal", not v.is_signature_active() and ended == (["tram"] as Array[String]))
 	v.debug_set_signature_charge(0.5)
-	_check("debug charge 0.5", _near(v.get_signature_charge(), 0.5))
+	_check("debug charge 0.5 -> round(total/2) cells lit", _near(v.get_signature_charge(), float(roundi(0.5 * total)) / total) and not v.is_signature_ready())
 	v.debug_set_signature_charge(1.0)
 	_check("debug charge 1.0 ready", v.is_signature_ready())
 	var sig: BaseSignature = v.get_signature()
@@ -244,7 +231,7 @@ func _test_thien_hoa() -> void:
 	before = state.enemy_hp
 	_check("thien_hoa no burn: activates", v.activate_signature())
 	_check("thien_hoa no burn: no damage, reset only", state.enemy_hp == before and cds.is_ready("hoa_tran") and (v.get_signature() as ThienHoaSignature).last_damage() == 0.0)
-	_check("thien_hoa: charge 0 after", v.get_signature_charge() == 0.0)
+	_check("thien_hoa: not ready after", not v.is_signature_ready() and v.get_signature_charge() < 1.0)
 	_drop(v)
 
 
@@ -335,7 +322,7 @@ func _test_unknown_and_none() -> void:
 func _test_character_config() -> void:
 	for id: String in ["kiem_si", "phap_su", "sat_thu"]:
 		var s: Dictionary = _cc.get_character(id)["signature"]
-		_check("%s signature loaded" % id, not s.is_empty() and int(s["charge_cells"]) == 18 and SignatureRegistry.has_id(str(s["id"])) and str(s["name_key"]).begins_with("signature."))
+		_check("%s signature loaded" % id, not s.is_empty() and not s.has("charge_cells") and SignatureRegistry.has_id(str(s["id"])) and str(s["name_key"]).begins_with("signature."))
 	_check("kiem_si tram params", _cc.get_character("kiem_si")["signature"]["params"] == {"duration_sec": 3.0, "cell_mult": 2.0, "lifesteal": 0.2})
 	var bad: CharacterConfig = CharacterConfig.from_dictionary({"characters": [
 		{"id": "a", "starter_deck": ["kiem_khi"], "signature": "tram"},
@@ -347,10 +334,24 @@ func _test_character_config() -> void:
 	]})
 	_check("signature not an object -> {}", (bad.get_character("a")["signature"] as Dictionary).is_empty())
 	_check("unknown signature id -> {}", (bad.get_character("b")["signature"] as Dictionary).is_empty())
-	_check("charge_cells 0 -> {}", (bad.get_character("c")["signature"] as Dictionary).is_empty())
+	_check("leftover charge_cells ignored (Story 029)", (bad.get_character("c")["signature"] as Dictionary).get("id", "") == "tram" and not (bad.get_character("c")["signature"] as Dictionary).has("charge_cells"))
 	var d: Dictionary = bad.get_character("d")["signature"]
-	_check("missing charge_cells -> default 18, bad params -> {}", int(d["charge_cells"]) == CharacterConfig.DEFAULT_CHARGE_CELLS and (d["params"] as Dictionary).is_empty())
+	_check("bad params -> {}", (d["params"] as Dictionary).is_empty())
 	_check("absent signature -> {}", (bad.get_character("e")["signature"] as Dictionary).is_empty())
 	var f: Dictionary = bad.get_character("f")["signature"]
-	_check("valid signature kept", f["id"] == "anh_bo" and int(f["charge_cells"]) == 12 and float(f["params"]["duration_sec"]) == 1.0)
-	_check("combat.json signature_charge_cells", CombatConfig.load_from_file().signature_charge_cells == 18)
+	_check("valid signature kept", f["id"] == "anh_bo" and float(f["params"]["duration_sec"]) == 1.0)
+	# Story 029 Phần D: cooldown_sec parsing (missing / negative / non-number -> 0) and shipped data.
+	var cd: CharacterConfig = CharacterConfig.from_dictionary({"characters": [
+		{"id": "m", "starter_deck": ["kiem_khi"], "signature": {"id": "tram"}},
+		{"id": "n", "starter_deck": ["kiem_khi"], "signature": {"id": "tram", "cooldown_sec": -4}},
+		{"id": "s", "starter_deck": ["kiem_khi"], "signature": {"id": "tram", "cooldown_sec": "ten"}},
+		{"id": "i", "starter_deck": ["kiem_khi"], "signature": {"id": "thien_hoa", "cooldown_sec": 7}},
+	]})
+	_check("cooldown_sec missing -> 0", float(cd.get_character("m")["signature"]["cooldown_sec"]) == 0.0)
+	_check("cooldown_sec negative -> 0", float(cd.get_character("n")["signature"]["cooldown_sec"]) == 0.0)
+	_check("cooldown_sec non-number -> 0, signature kept", float(cd.get_character("s")["signature"]["cooldown_sec"]) == 0.0 and cd.get_character("s")["signature"]["id"] == "tram")
+	_check("cooldown_sec int -> float 7", _near(float(cd.get_character("i")["signature"]["cooldown_sec"]), 7.0))
+	for id: String in ["kiem_si", "phap_su", "sat_thu"]:
+		var sig: Dictionary = _cc.get_character(id)["signature"]
+		_check("%s characters.json cooldown_sec loaded (> 0)" % id, sig.has("cooldown_sec") and float(sig["cooldown_sec"]) > 0.0, str(sig.get("cooldown_sec")))
+	_check("combat.json formation fade 3x3 = 12.2 s", _near(CombatConfig.load_from_file().formation_fade_for(9), 12.2))

@@ -139,10 +139,18 @@ var _passive: BasePassive = null
 var _passive_heal: float = 0.0
 ## The character signature skill of this match (Story 021); null without one or with an unknown id.
 var _signature: BaseSignature = null
-## Charge bar of the signature (Story 021); null without a signature.
-var _signature_charge: SignatureCharge = null
+## Formation map of the enemy half (Story 029); null without a signature (it only feeds the signature).
+var _formation: FormationMap = null
+## True once the formation map completed and the signature has not been activated yet.
+var _signature_ready_flag: bool = false
+## Seconds left of the completion flash (real time); 0 = none.
+var _formation_flash_left: float = 0.0
 var _signature_name_key: String = ""
 var _signature_was_active: bool = false
+## Story 029 Phần D: the character's signature cooldown (characters.json signature.cooldown_sec, >= 0)
+## and the seconds of it left (scaled sim time; starts when the effect ends, 0 at match start).
+var _signature_cooldown_sec: float = 0.0
+var _signature_cooldown_left: float = 0.0
 ## Dev/capture only: weight set name for the boss brain (empty = from boss_brain.json).
 var boss_set_override: String = ""
 ## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
@@ -163,6 +171,10 @@ signal match_ended(player_won: bool, player_hp: float)
 signal signature_activated(id: String)
 ## Story 021: the timed effect of the signature [param id] ran out.
 signal signature_ended(id: String)
+## Story 029: the signature just became ready through the map (every real enemy cell lit at once and
+## the cooldown over — reached on a cover or when the cooldown ran out). The map is NOT reset here
+## (Phần D: activation resets it).
+signal formation_completed
 
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
@@ -277,7 +289,7 @@ func _exit_tree() -> void:
 		_signature = null
 
 
-# Story 021: creates the character's signature (characters.json `signature: {id, charge_cells,
+# Story 021: creates the character's signature (characters.json `signature: {id, name_key, desc_key,
 # params}`) and hooks it in: the arbiter's player cell-count / last damage modifiers, the player
 # mover's step cooldown scale, and the hit callback. Unknown id: SignatureRegistry warns, none.
 func _setup_signature(character: Dictionary) -> void:
@@ -296,8 +308,12 @@ func _setup_signature(character: Dictionary) -> void:
 		{"state": _state, "grid": _grid, "boss": _boss, "status": _status,
 			"skill_config": _skill_config, "cut_config": _cut_config, "cooldowns": _cooldowns},
 		(params as Dictionary) if typeof(params) == TYPE_DICTIONARY else {})
-	_signature_charge = SignatureCharge.new(int(dict.get("charge_cells", _config.signature_charge_cells)))
+	var enemy_cells: Array[Vector2i] = _grid.enemy_cells()
+	_formation = FormationMap.new().init(enemy_cells, _config.formation_fade_for(enemy_cells.size()))
 	_signature_name_key = str(dict.get("name_key", ""))
+	var cooldown: Variant = dict.get("cooldown_sec", 0.0)
+	_signature_cooldown_sec = maxf(float(cooldown), 0.0) if (typeof(cooldown) == TYPE_FLOAT or typeof(cooldown) == TYPE_INT) else 0.0
+	_signature_cooldown_left = 0.0
 	_arbiter.player_cells_modifier = Callable(_signature, "modify_cells")
 	_arbiter.player_signature_modifier = Callable(_signature, "modify_damage")
 	_mover.cooldown_scale = Callable(_signature, "step_cooldown_scale")
@@ -308,14 +324,43 @@ func get_signature() -> BaseSignature:
 	return _signature
 
 
-## Story 021: charge 0..1 (cells cast / charge_cells, clamped); 0 without a signature.
+## Story 029: the formation map of the enemy half (lit cells, fade ratios); null without a signature.
+func get_formation() -> FormationMap:
+	return _formation
+
+
+## Story 029: completion flash 1..0 (1 right after the map completed, 0 = none / over); real time.
+func get_formation_flash() -> float:
+	var length: float = _config.formation_flash_sec
+	if length <= 0.0 or _formation_flash_left <= 0.0:
+		return 0.0
+	return clampf(_formation_flash_left / length, 0.0, 1.0)
+
+
+## Story 021 / 029: 0..1 progress to the signature: 1.0 when ready, else lit cells / real enemy cells of
+## the formation map; 0 without a signature.
 func get_signature_charge() -> float:
-	return _signature_charge.fraction() if _signature_charge != null else 0.0
+	if _signature == null or _formation == null:
+		return 0.0
+	if is_signature_ready():
+		return 1.0
+	return float(_formation.lit_count()) / float(maxi(_formation.total(), 1))
 
 
-## Story 021: true when the charge is full and no timed effect is running.
+## Story 021 / 029: true once the signature became ready (map complete with the cooldown over; kept until
+## used, fading cells do not revoke it) and no timed effect is running.
 func is_signature_ready() -> bool:
-	return _signature != null and _signature_charge.is_full() and not _signature.is_active()
+	return _signature != null and _signature_ready_flag and not _signature.is_active()
+
+
+## Story 029 Phần D: seconds of the signature cooldown left (0 when over, not started or no signature).
+func get_signature_cooldown_left() -> float:
+	return _signature_cooldown_left if _signature != null else 0.0
+
+
+## Story 029 Phần D: full cooldown of this character's signature (characters.json signature.cooldown_sec).
+func get_signature_cooldown_sec() -> float:
+	return _signature_cooldown_sec if _signature != null else 0.0
 
 
 ## Story 021: true while the signature's timed effect runs (always false for instant ones).
@@ -352,36 +397,94 @@ func can_activate_signature() -> bool:
 	return true
 
 
-## Story 021: activates the signature when [method can_activate_signature]; the charge drops to 0
-## and [signal signature_activated] fires. Returns false (nothing changes) otherwise.
+## Story 021 / 029: activates the signature when [method can_activate_signature]; the ready flag clears,
+## the formation map is reset (Phần D: every use needs a freshly completed map) and
+## [signal signature_activated] fires. An instant signature ends at once (cooldown starts now); a timed
+## one starts its cooldown when its effect ends. Returns false (nothing changes) otherwise.
 func activate_signature() -> bool:
 	if not can_activate_signature():
 		return false
 	_signature.activate()
-	_signature_charge.reset()
+	_signature_ready_flag = false
+	_formation.reset()
 	_signature_was_active = _signature.is_active()
 	signature_activated.emit(_signature.get_id())
 	if not _signature_was_active:
-		signature_ended.emit(_signature.get_id())
+		_end_signature_effect()
 	return true
 
 
-## Dev/capture only (Story 021): sets the charge bar to [param ratio] (0..1) of its capacity.
+## Dev/capture only (Story 021 / 029): ratio >= 1 sets the ready flag (and clears any cooldown); below 1
+## it lights round(ratio x total) enemy cells (grid order) at a full timer and clears the ready flag.
 func debug_set_signature_charge(ratio: float) -> void:
-	if _signature_charge == null:
+	if _formation == null:
 		return
-	_signature_charge.reset()
-	_signature_charge.add(int(ceilf(clampf(ratio, 0.0, 1.0) * float(_signature_charge.capacity()))))
+	if ratio >= 1.0:
+		_signature_cooldown_left = 0.0
+		_signature_ready_flag = true
+		return
+	_signature_ready_flag = false
+	_formation.reset()
+	var cells: Array[Vector2i] = _grid.enemy_cells()
+	_formation.cover(cells.slice(0, roundi(clampf(ratio, 0.0, 1.0) * float(_formation.total()))))
 
 
-# Ticks the signature's timer with simulation time and reports the end of a timed effect.
+## Dev/capture only (Story 029 Phần D): sets the cooldown left to [param sec] (>= 0). Above 0 it clears
+## the ready flag (ready needs the cooldown over); 0 re-checks readiness at once.
+func debug_set_signature_cooldown(sec: float) -> void:
+	if _signature == null:
+		return
+	_signature_cooldown_left = maxf(sec, 0.0)
+	if _signature_cooldown_left > 0.0:
+		_signature_ready_flag = false
+	else:
+		_check_signature_ready()
+
+
+# Story 029: a player swing arrived (hit or miss): lights its cells, then re-checks readiness (the map
+# keeps building during the cooldown; Phần D: completion no longer resets it).
+func _cover_formation(cells: Array[Vector2i]) -> void:
+	if _formation == null:
+		return
+	_formation.cover(cells)
+	_check_signature_ready()
+
+
+# Story 029 Phần D: the one readiness check (on every cover and when the cooldown reaches 0): not yet
+# ready, no effect running, cooldown over and the map fully lit -> ready (kept until used), flash and
+# formation_completed.
+func _check_signature_ready() -> void:
+	if _signature == null or _formation == null or _signature_ready_flag or _signature.is_active():
+		return
+	if _signature_cooldown_left > 0.0 or not _formation.is_complete():
+		return
+	_signature_ready_flag = true
+	_formation_flash_left = _config.formation_flash_sec
+	formation_completed.emit()
+
+
+# Story 021 / 029: the signature's effect ended (instant: right after activation; timed: when its timer
+# ran out): reports it and starts the cooldown — the one place the cooldown starts.
+func _end_signature_effect() -> void:
+	_signature_was_active = false
+	_signature_cooldown_left = _signature_cooldown_sec
+	signature_ended.emit(_signature.get_id())
+	if _signature_cooldown_left <= 0.0:
+		_check_signature_ready()
+
+
+# Ticks the signature's timer and cooldown with simulation time; reports the end of a timed effect.
+# The cooldown reaching 0 re-checks readiness (map already full -> ready at once).
 func _tick_signature(step: float) -> void:
 	if _signature == null:
 		return
+	if _signature_cooldown_left > 0.0 and step > 0.0:
+		_signature_cooldown_left = maxf(_signature_cooldown_left - step, 0.0)
+		if _signature_cooldown_left <= 0.0:
+			_check_signature_ready()
 	_signature.tick(step)
 	if _signature_was_active and not _signature.is_active():
-		_signature_was_active = false
-		signature_ended.emit(_signature.get_id())
+		_end_signature_effect()
 
 
 ## The character passive of this match; null when none (Story 018).
@@ -570,6 +673,7 @@ func _process(delta: float) -> void:
 		# Simulation time is scaled down while the skill menu is open (slow motion); the boss
 		# lives in the same scaled time.
 		_update_focus(real_step)
+		_formation_flash_left = maxf(_formation_flash_left - real_step, 0.0)
 		var step: float = real_step * _sim_scale()
 		if step <= 0.0:
 			# Full stop (Focus with scale 0): nothing in the simulation moves; real-time
@@ -578,6 +682,8 @@ func _process(delta: float) -> void:
 			return
 		_status.tick(step, _state)
 		_tick_signature(step)
+		if _formation != null:
+			_formation.tick(step)
 		_mover.tick(step)
 		var hold: HoldSlots = _get_hold()
 		var held: int = 0 if hold == null else hold.get_occupied_count()
@@ -1177,9 +1283,6 @@ func _begin_cut(skill_id: String, cells: Array[Vector2i], featured_bonus: Dictio
 	var level: int = get_card_level(skill_id)
 	if _cut_actor.begin_swing(cells, skill_id, true, level, -1.0, featured_bonus):
 		_cooldowns.start(skill_id, float(_resolved_card(skill_id, level).get("cooldown_sec", 0.0)))
-		# Story 021: the charge counts the cells of every CAST (swing started), hit or not.
-		if _signature_charge != null:
-			_signature_charge.add(cells.size())
 		if _signature != null:
 			_signature.on_cast(skill_id, cells.size())
 
@@ -1240,6 +1343,10 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 	}
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback
+		# Story 029: the one cover point (hit or miss; interrupted / cancelled swings never resolve).
+		var cast_cells: Array[Vector2i] = []
+		cast_cells.assign(result["cells"] as Array)
+		_cover_formation(cast_cells)
 		if _signature != null and bool(result["hit"]):
 			_signature.on_hit(str(result.get("skill_id", "")), float(result["damage"]))
 		_trait_host.on_player_swing_resolved(result)

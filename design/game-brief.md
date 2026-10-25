@@ -48,7 +48,7 @@
 - Mỗi sân có một **hình chủ đạo** 5–7 ô gợi dáng sân (`arenas.json`, trận ghi đè được), hiện nhỏ trên HUD. Đòn **2 mảnh** có hợp ô trùng hình chủ đạo (xoay được, không lật) được **×1,5 sát thương + một hiệu ứng theo chủ đề trận** (Rạn / Ghim / Đốt / Hàn). Mỗi sân phải ghép được hình của nó từ ít nhất 2 cặp mảnh.
 
 ### Trận đồ (Story 029, chốt 2026-10-25)
-- Mỗi đòn người chơi tới nơi (trúng hay trượt) làm sáng các ô nó phủ trên đất địch; ô sáng **phai** sau `4 s + 0,6 s × số ô đất địch` (3×3 ≈ 9,4 s). **Mọi ô cùng sáng** = trận đồ hoàn thành = **tuyệt kỹ sẵn sàng**, rồi trận đồ xóa. Trận đồ **thay thanh nạp 18 ô**. Không đồng hồ đếm ngược chung: phai từng ô là giới hạn.
+- Mỗi đòn người chơi tới nơi (trúng hay trượt) làm sáng các ô nó phủ trên đất địch; ô sáng **phai** sau `5 s + 0,8 s × số ô đất địch` (3×3 ≈ 12,2 s; chỉnh 2026-10-25 từ 4 s + 0,6 s theo đo bằng bot). **Mọi ô cùng sáng** = trận đồ hoàn thành. Tuyệt kỹ **sẵn sàng khi trận đồ đủ VÀ đã hết thời gian hồi** (riêng từng nhân vật, `cooldown_sec` trong `characters.json`; tuyệt kỹ có hiệu lực theo thời gian hồi sau khi hiệu lực hết). Dùng tuyệt kỹ thì trận đồ xóa; hồi và tích trận đồ mới chạy song song (chốt 2026-10-25). Trận đồ **thay thanh nạp 18 ô**. Không đồng hồ đếm ngược chung: phai từng ô là giới hạn.
 
 ### Vùng: Kết giới và Trận gai (Story 027)
 - **Kết giới**: ô của mảnh không bước vào được trong thời gian ngắn. **Trận gai**: bước vào được nhưng mất máu hoặc dính Rạn — đánh đổi máu để né. Cả người chơi (lá) và boss (trait chương 2–3) đều dùng. Luật cứng: luôn chừa ít nhất 1 ô bước được cho bên bị nhốt; tường và gai có hình khác hẳn nhau.

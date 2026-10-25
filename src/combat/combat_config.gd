@@ -27,9 +27,13 @@ var feedback_sec: float = 1.0
 ## Story 016: the pause is refused during the last this-many seconds of a running swing
 ## (no "preview the hit" pause). 0 = only the skill menu blocks the pause.
 var pause_lockout_sec: float = 0.5
-## Story 021: default cells the player must cast to fill the signature charge bar (a character's
-## `signature.charge_cells` overrides it).
-var signature_charge_cells: int = 18
+## Story 029 formation map: a covered enemy cell stays lit `base + per_cell x (real enemy cells)`
+## seconds (see [method formation_fade_for]); the HUD blinks a cell when its fade ratio left is
+## below warn_ratio (0..1); the completion flash lasts flash_sec.
+var formation_fade_base_sec: float = 5.0
+var formation_fade_per_cell_sec: float = 0.8
+var formation_fade_warn_ratio: float = 0.25
+var formation_flash_sec: float = 0.5
 ## Story 021: keyboard key name (OS.find_keycode_from_string) that fires the signature on desktop.
 var signature_key: String = "Q"
 ## Board-scaled step cooldown: [member step_cooldown_ref_sec] on a board that is
@@ -98,7 +102,10 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	config.max_tick_sec = maxf(float(data.get("max_tick_sec", config.max_tick_sec)), 0.001)
 	config.feedback_sec = maxf(float(data.get("feedback_sec", config.feedback_sec)), 0.0)
 	config.pause_lockout_sec = maxf(float(data.get("pause_lockout_sec", config.pause_lockout_sec)), 0.0)
-	config.signature_charge_cells = maxi(int(data.get("signature_charge_cells", config.signature_charge_cells)), 1)
+	config.formation_fade_base_sec = maxf(float(data.get("formation_fade_base_sec", config.formation_fade_base_sec)), 0.0)
+	config.formation_fade_per_cell_sec = maxf(float(data.get("formation_fade_per_cell_sec", config.formation_fade_per_cell_sec)), 0.0)
+	config.formation_fade_warn_ratio = clampf(float(data.get("formation_fade_warn_ratio", config.formation_fade_warn_ratio)), 0.0, 1.0)
+	config.formation_flash_sec = maxf(float(data.get("formation_flash_sec", config.formation_flash_sec)), 0.0)
 	var key_name: String = str(data.get("signature_key", config.signature_key)).strip_edges()
 	if key_name.is_empty() or OS.find_keycode_from_string(key_name) == KEY_NONE:
 		push_warning("CombatConfig: signature_key '%s' is not a key name, using '%s'" % [key_name, config.signature_key])
@@ -121,6 +128,12 @@ func step_cooldown_for(board: BoardGrid) -> float:
 	var steps_across: int = maxi(maxi(board.side_cols, board.side_rows) - 1, 1)
 	var raw: float = step_cooldown_ref_sec * pow(float(step_cooldown_ref_steps) / float(steps_across), step_cooldown_exponent)
 	return clampf(raw, step_cooldown_min_sec, step_cooldown_max_sec)
+
+
+## Story 029: seconds a covered cell stays lit on a board whose enemy half has [param cell_count]
+## real cells: formation_fade_base_sec + formation_fade_per_cell_sec x cell_count.
+func formation_fade_for(cell_count: int) -> float:
+	return formation_fade_base_sec + formation_fade_per_cell_sec * float(maxi(cell_count, 0))
 
 
 ## Replaces the board (dev / capture override). Start-cell overrides were authored for the

@@ -1,0 +1,195 @@
+# Story 029 formation-map timing probe - grep '^RESULT' of fp_full_{0,0.25,0.5,1}.log (scratch formation_probe.gd).
+# Command: godot --headless --path . -s formation_probe.gd -- --seeds=15 --boards=square,rect,cross,ring,u_shape,staircase --fades=3.0:0.5,5.0:0.8,8.0:1.0,12.0:1.2 --aware=<0|0.25|0.5|1>
+# NOTE: the label 'aware=0.3' is the --aware=0.25 run (printed with %.1f).
+RESULT aware=0.3 CASTS square | aware=178, mode interrupt=239, mode pin_followup=24, mode roll=93, mode strike=373, size 1=401, size 2=74, size 3=50, size 4=29, size 5=175
+RESULT aware=0.3 BOARD square | matches=45 | enemy_cells=9 | data_fade_sec=9.4 | sec=40.4 | casts=16.2 | resolved=15.8 | won=100% | died=0% | timeout=0%
+RESULT aware=0.3 square | old 18 cells | readies/match=1.53 | first_ready_sec=20.1 (reached 43/45) | 0=4% 1=49% 2=36% 3+=11% | peak_lit=0.99
+RESULT aware=0.3 square | new 4.0/0.60 (data) | readies/match=1.22 | first_ready_sec=22.4 (reached 32/45) | 0=29% 1=36% 2=24% 3+=11% | peak_lit=0.96
+RESULT aware=0.3 square | alt 3.0/0.50 | readies/match=0.89 | first_ready_sec=23.6 (reached 30/45) | 0=33% 1=49% 2=16% 3+=2% | peak_lit=0.94
+RESULT aware=0.3 square | alt 5.0/0.80 | readies/match=1.47 | first_ready_sec=21.2 (reached 36/45) | 0=20% 1=33% 2=31% 3+=16% | peak_lit=0.97
+RESULT aware=0.3 square | alt 8.0/1.00 | readies/match=1.67 | first_ready_sec=20.0 (reached 40/45) | 0=11% 1=38% 2=31% 3+=20% | peak_lit=0.99
+RESULT aware=0.3 square | alt 12.0/1.20 | readies/match=1.73 | first_ready_sec=20.3 (reached 41/45) | 0=9% 1=40% 2=29% 3+=22% | peak_lit=0.99
+RESULT aware=0.3 CASTS rect | aware=292, mode interrupt=394, mode pin_followup=22, mode roll=125, mode strike=682, size 1=758, size 2=87, size 3=42, size 4=36, size 5=300
+RESULT aware=0.3 BOARD rect | matches=60 | enemy_cells=12 | data_fade_sec=11.2 | sec=51.0 | casts=20.4 | resolved=20.0 | won=100% | died=0% | timeout=0%
+RESULT aware=0.3 rect | old 18 cells | readies/match=1.90 | first_ready_sec=21.2 (reached 57/60) | 0=5% 1=32% 2=38% 3+=25% | peak_lit=0.99
+RESULT aware=0.3 rect | new 4.0/0.60 (data) | readies/match=0.52 | first_ready_sec=29.8 (reached 23/60) | 0=62% 1=30% 2=5% 3+=3% | peak_lit=0.91
+RESULT aware=0.3 rect | alt 3.0/0.50 | readies/match=0.37 | first_ready_sec=31.4 (reached 16/60) | 0=73% 1=18% 2=7% 3+=2% | peak_lit=0.87
+RESULT aware=0.3 rect | alt 5.0/0.80 | readies/match=0.72 | first_ready_sec=31.4 (reached 32/60) | 0=47% 1=40% 2=10% 3+=3% | peak_lit=0.94
+RESULT aware=0.3 rect | alt 8.0/1.00 | readies/match=0.97 | first_ready_sec=29.2 (reached 40/60) | 0=33% 1=43% 2=18% 3+=5% | peak_lit=0.96
+RESULT aware=0.3 rect | alt 12.0/1.20 | readies/match=1.10 | first_ready_sec=28.1 (reached 45/60) | 0=25% 1=47% 2=23% 3+=5% | peak_lit=0.97
+RESULT aware=0.3 CASTS cross | aware=164, mode interrupt=227, mode pin_followup=20, mode roll=237, mode strike=146, size 1=274, size 2=33, size 3=75, size 4=97, size 5=151
+RESULT aware=0.3 BOARD cross | matches=30 | enemy_cells=11 | data_fade_sec=10.7 | sec=51.9 | casts=21.0 | resolved=20.5 | won=100% | died=0% | timeout=0%
+RESULT aware=0.3 cross | old 18 cells | readies/match=2.53 | first_ready_sec=17.6 (reached 30/30) | 0=0% 1=33% 2=20% 3+=47% | peak_lit=1.00
+RESULT aware=0.3 cross | new 4.0/0.60 (data) | readies/match=0.67 | first_ready_sec=29.8 (reached 15/30) | 0=50% 1=33% 2=17% 3+=0% | peak_lit=0.94
+RESULT aware=0.3 cross | alt 3.0/0.50 | readies/match=0.20 | first_ready_sec=18.7 (reached 5/30) | 0=83% 1=13% 2=3% 3+=0% | peak_lit=0.88
+RESULT aware=0.3 cross | alt 5.0/0.80 | readies/match=0.97 | first_ready_sec=26.8 (reached 18/30) | 0=40% 1=27% 2=30% 3+=3% | peak_lit=0.95
+RESULT aware=0.3 cross | alt 8.0/1.00 | readies/match=1.10 | first_ready_sec=25.2 (reached 19/30) | 0=37% 1=23% 2=33% 3+=7% | peak_lit=0.96
+RESULT aware=0.3 cross | alt 12.0/1.20 | readies/match=1.23 | first_ready_sec=27.1 (reached 22/30) | 0=27% 1=33% 2=30% 3+=10% | peak_lit=0.97
+RESULT aware=0.3 CASTS ring | aware=357, mode interrupt=414, mode pin_followup=39, mode roll=380, mode strike=607, size 1=767, size 2=65, size 3=128, size 4=85, size 5=395
+RESULT aware=0.3 BOARD ring | matches=45 | enemy_cells=21 | data_fade_sec=16.6 | sec=80.9 | casts=32.0 | resolved=31.6 | won=96% | died=0% | timeout=4%
+RESULT aware=0.3 ring | old 18 cells | readies/match=3.71 | first_ready_sec=18.2 (reached 45/45) | 0=0% 1=0% 2=24% 3+=76% | peak_lit=1.00
+RESULT aware=0.3 ring | new 4.0/0.60 (data) | readies/match=0.16 | first_ready_sec=53.2 (reached 7/45) | 0=84% 1=16% 2=0% 3+=0% | peak_lit=0.88
+RESULT aware=0.3 ring | alt 3.0/0.50 | readies/match=0.02 | first_ready_sec=33.0 (reached 1/45) | 0=98% 1=2% 2=0% 3+=0% | peak_lit=0.82
+RESULT aware=0.3 ring | alt 5.0/0.80 | readies/match=0.53 | first_ready_sec=54.7 (reached 23/45) | 0=49% 1=49% 2=2% 3+=0% | peak_lit=0.93
+RESULT aware=0.3 ring | alt 8.0/1.00 | readies/match=0.84 | first_ready_sec=54.2 (reached 31/45) | 0=31% 1=53% 2=16% 3+=0% | peak_lit=0.97
+RESULT aware=0.3 ring | alt 12.0/1.20 | readies/match=1.00 | first_ready_sec=50.3 (reached 32/45) | 0=29% 1=42% 2=29% 3+=0% | peak_lit=0.97
+RESULT aware=0.3 CASTS u_shape | aware=76, mode interrupt=78, mode pin_followup=8, mode roll=35, mode strike=201, size 1=210, size 2=6, size 3=15, size 4=37, size 5=54
+RESULT aware=0.3 BOARD u_shape | matches=15 | enemy_cells=9 | data_fade_sec=9.6 | sec=55.2 | casts=21.5 | resolved=20.9 | won=100% | died=0% | timeout=0%
+RESULT aware=0.3 u_shape | old 18 cells | readies/match=2.00 | first_ready_sec=24.1 (reached 15/15) | 0=0% 1=27% 2=47% 3+=27% | peak_lit=1.00
+RESULT aware=0.3 u_shape | new 4.0/0.60 (data) | readies/match=0.53 | first_ready_sec=33.6 (reached 6/15) | 0=60% 1=27% 2=13% 3+=0% | peak_lit=0.93
+RESULT aware=0.3 u_shape | alt 3.0/0.50 | readies/match=0.47 | first_ready_sec=33.6 (reached 6/15) | 0=60% 1=33% 2=7% 3+=0% | peak_lit=0.93
+RESULT aware=0.3 u_shape | alt 5.0/0.80 | readies/match=0.60 | first_ready_sec=38.1 (reached 7/15) | 0=53% 1=33% 2=13% 3+=0% | peak_lit=0.93
+RESULT aware=0.3 u_shape | alt 8.0/1.00 | readies/match=0.87 | first_ready_sec=35.4 (reached 9/15) | 0=40% 1=33% 2=27% 3+=0% | peak_lit=0.96
+RESULT aware=0.3 u_shape | alt 12.0/1.20 | readies/match=1.07 | first_ready_sec=34.0 (reached 11/15) | 0=27% 1=47% 2=20% 3+=7% | peak_lit=0.97
+RESULT aware=0.3 CASTS staircase | aware=95, mode interrupt=129, mode pin_followup=5, mode roll=30, mode strike=249, size 1=293, size 2=3, size 3=14, size 4=28, size 5=75
+RESULT aware=0.3 BOARD staircase | matches=15 | enemy_cells=10 | data_fade_sec=10.0 | sec=65.5 | casts=27.5 | resolved=26.5 | won=100% | died=0% | timeout=0%
+RESULT aware=0.3 staircase | old 18 cells | readies/match=2.40 | first_ready_sec=22.5 (reached 15/15) | 0=0% 1=13% 2=40% 3+=47% | peak_lit=1.00
+RESULT aware=0.3 staircase | new 4.0/0.60 (data) | readies/match=0.33 | first_ready_sec=30.8 (reached 5/15) | 0=67% 1=33% 2=0% 3+=0% | peak_lit=0.91
+RESULT aware=0.3 staircase | alt 3.0/0.50 | readies/match=0.33 | first_ready_sec=30.8 (reached 5/15) | 0=67% 1=33% 2=0% 3+=0% | peak_lit=0.90
+RESULT aware=0.3 staircase | alt 5.0/0.80 | readies/match=0.53 | first_ready_sec=37.0 (reached 8/15) | 0=47% 1=53% 2=0% 3+=0% | peak_lit=0.94
+RESULT aware=0.3 staircase | alt 8.0/1.00 | readies/match=0.67 | first_ready_sec=34.9 (reached 9/15) | 0=40% 1=53% 2=7% 3+=0% | peak_lit=0.95
+RESULT aware=0.3 staircase | alt 12.0/1.20 | readies/match=0.73 | first_ready_sec=33.8 (reached 10/15) | 0=33% 1=60% 2=7% 3+=0% | peak_lit=0.96
+RESULT aware=0.5 CASTS square | aware=418, mode interrupt=228, mode pin_followup=30, mode roll=99, mode strike=385, size 1=228, size 2=55, size 3=32, size 4=54, size 5=373
+RESULT aware=0.5 BOARD square | matches=45 | enemy_cells=9 | data_fade_sec=9.4 | sec=45.1 | casts=16.5 | resolved=15.5 | won=100% | died=0% | timeout=0%
+RESULT aware=0.5 square | old 18 cells | readies/match=2.44 | first_ready_sec=15.5 (reached 44/45) | 0=2% 1=36% 2=22% 3+=40% | peak_lit=1.00
+RESULT aware=0.5 square | new 4.0/0.60 (data) | readies/match=2.80 | first_ready_sec=13.8 (reached 39/45) | 0=13% 1=9% 2=24% 3+=53% | peak_lit=0.98
+RESULT aware=0.5 square | alt 3.0/0.50 | readies/match=2.36 | first_ready_sec=16.1 (reached 39/45) | 0=13% 1=16% 2=33% 3+=38% | peak_lit=0.98
+RESULT aware=0.5 square | alt 5.0/0.80 | readies/match=2.93 | first_ready_sec=14.2 (reached 42/45) | 0=7% 1=13% 2=27% 3+=53% | peak_lit=0.99
+RESULT aware=0.5 square | alt 8.0/1.00 | readies/match=3.09 | first_ready_sec=13.7 (reached 43/45) | 0=4% 1=13% 2=24% 3+=58% | peak_lit=1.00
+RESULT aware=0.5 square | alt 12.0/1.20 | readies/match=3.11 | first_ready_sec=13.7 (reached 43/45) | 0=4% 1=11% 2=27% 3+=58% | peak_lit=1.00
+RESULT aware=0.5 CASTS rect | aware=622, mode interrupt=395, mode pin_followup=28, mode roll=135, mode strike=693, size 1=484, size 2=73, size 3=41, size 4=47, size 5=606
+RESULT aware=0.5 BOARD rect | matches=60 | enemy_cells=12 | data_fade_sec=11.2 | sec=56.7 | casts=20.9 | resolved=20.2 | won=100% | died=0% | timeout=0%
+RESULT aware=0.5 rect | old 18 cells | readies/match=2.98 | first_ready_sec=17.3 (reached 58/60) | 0=3% 1=12% 2=23% 3+=62% | peak_lit=1.00
+RESULT aware=0.5 rect | new 4.0/0.60 (data) | readies/match=2.08 | first_ready_sec=25.4 (reached 55/60) | 0=8% 1=27% 2=30% 3+=35% | peak_lit=0.99
+RESULT aware=0.5 rect | alt 3.0/0.50 | readies/match=1.50 | first_ready_sec=28.9 (reached 47/60) | 0=22% 1=30% 2=32% 3+=17% | peak_lit=0.98
+RESULT aware=0.5 rect | alt 5.0/0.80 | readies/match=2.42 | first_ready_sec=22.6 (reached 57/60) | 0=5% 1=18% 2=32% 3+=45% | peak_lit=0.99
+RESULT aware=0.5 rect | alt 8.0/1.00 | readies/match=2.55 | first_ready_sec=21.3 (reached 57/60) | 0=5% 1=13% 2=32% 3+=50% | peak_lit=0.99
+RESULT aware=0.5 rect | alt 12.0/1.20 | readies/match=2.58 | first_ready_sec=21.1 (reached 57/60) | 0=5% 1=13% 2=32% 3+=50% | peak_lit=0.99
+RESULT aware=0.5 CASTS cross | aware=315, mode interrupt=218, mode pin_followup=35, mode roll=256, mode strike=130, size 1=175, size 2=23, size 3=67, size 4=122, size 5=252
+RESULT aware=0.5 BOARD cross | matches=30 | enemy_cells=11 | data_fade_sec=10.7 | sec=55.3 | casts=21.3 | resolved=20.8 | won=100% | died=0% | timeout=0%
+RESULT aware=0.5 cross | old 18 cells | readies/match=3.23 | first_ready_sec=14.4 (reached 30/30) | 0=0% 1=20% 2=23% 3+=57% | peak_lit=1.00
+RESULT aware=0.5 cross | new 4.0/0.60 (data) | readies/match=1.73 | first_ready_sec=24.0 (reached 22/30) | 0=27% 1=27% 2=13% 3+=33% | peak_lit=0.97
+RESULT aware=0.5 cross | alt 3.0/0.50 | readies/match=1.13 | first_ready_sec=32.8 (reached 18/30) | 0=40% 1=27% 2=20% 3+=13% | peak_lit=0.95
+RESULT aware=0.5 cross | alt 5.0/0.80 | readies/match=2.00 | first_ready_sec=22.2 (reached 25/30) | 0=17% 1=30% 2=13% 3+=40% | peak_lit=0.98
+RESULT aware=0.5 cross | alt 8.0/1.00 | readies/match=2.13 | first_ready_sec=20.8 (reached 26/30) | 0=13% 1=27% 2=20% 3+=40% | peak_lit=0.98
+RESULT aware=0.5 cross | alt 12.0/1.20 | readies/match=2.27 | first_ready_sec=20.8 (reached 27/30) | 0=10% 1=30% 2=20% 3+=40% | peak_lit=0.99
+RESULT aware=0.5 CASTS ring | aware=722, mode interrupt=412, mode pin_followup=35, mode roll=415, mode strike=577, size 1=501, size 2=42, size 3=100, size 4=58, size 5=738
+RESULT aware=0.5 BOARD ring | matches=45 | enemy_cells=21 | data_fade_sec=16.6 | sec=86.9 | casts=32.0 | resolved=31.7 | won=98% | died=0% | timeout=2%
+RESULT aware=0.5 ring | old 18 cells | readies/match=4.93 | first_ready_sec=15.1 (reached 45/45) | 0=0% 1=2% 2=7% 3+=91% | peak_lit=1.00
+RESULT aware=0.5 ring | new 4.0/0.60 (data) | readies/match=1.33 | first_ready_sec=43.5 (reached 37/45) | 0=18% 1=49% 2=18% 3+=16% | peak_lit=0.99
+RESULT aware=0.5 ring | alt 3.0/0.50 | readies/match=0.49 | first_ready_sec=40.6 (reached 18/45) | 0=60% 1=31% 2=9% 3+=0% | peak_lit=0.96
+RESULT aware=0.5 ring | alt 5.0/0.80 | readies/match=2.11 | first_ready_sec=33.4 (reached 42/45) | 0=7% 1=31% 2=16% 3+=47% | peak_lit=1.00
+RESULT aware=0.5 ring | alt 8.0/1.00 | readies/match=2.40 | first_ready_sec=31.7 (reached 44/45) | 0=2% 1=22% 2=24% 3+=51% | peak_lit=1.00
+RESULT aware=0.5 ring | alt 12.0/1.20 | readies/match=2.47 | first_ready_sec=30.3 (reached 44/45) | 0=2% 1=20% 2=22% 3+=56% | peak_lit=1.00
+RESULT aware=0.5 CASTS u_shape | aware=157, mode interrupt=94, mode pin_followup=13, mode roll=36, mode strike=205, size 1=164, size 2=3, size 3=13, size 4=53, size 5=115
+RESULT aware=0.5 BOARD u_shape | matches=15 | enemy_cells=9 | data_fade_sec=9.6 | sec=61.8 | casts=23.2 | resolved=22.4 | won=100% | died=0% | timeout=0%
+RESULT aware=0.5 u_shape | old 18 cells | readies/match=2.87 | first_ready_sec=17.9 (reached 15/15) | 0=0% 1=7% 2=27% 3+=67% | peak_lit=1.00
+RESULT aware=0.5 u_shape | new 4.0/0.60 (data) | readies/match=2.27 | first_ready_sec=25.7 (reached 14/15) | 0=7% 1=13% 2=33% 3+=47% | peak_lit=0.99
+RESULT aware=0.5 u_shape | alt 3.0/0.50 | readies/match=1.67 | first_ready_sec=27.4 (reached 13/15) | 0=13% 1=40% 2=13% 3+=33% | peak_lit=0.98
+RESULT aware=0.5 u_shape | alt 5.0/0.80 | readies/match=2.47 | first_ready_sec=23.1 (reached 14/15) | 0=7% 1=7% 2=33% 3+=53% | peak_lit=0.99
+RESULT aware=0.5 u_shape | alt 8.0/1.00 | readies/match=2.60 | first_ready_sec=22.9 (reached 14/15) | 0=7% 1=0% 2=40% 3+=53% | peak_lit=0.99
+RESULT aware=0.5 u_shape | alt 12.0/1.20 | readies/match=2.67 | first_ready_sec=21.9 (reached 14/15) | 0=7% 1=0% 2=40% 3+=53% | peak_lit=0.99
+RESULT aware=0.5 CASTS staircase | aware=203, mode interrupt=124, mode pin_followup=10, mode roll=33, mode strike=243, size 1=188, size 2=2, size 3=11, size 4=89, size 5=120
+RESULT aware=0.5 BOARD staircase | matches=15 | enemy_cells=10 | data_fade_sec=10.0 | sec=70.5 | casts=27.3 | resolved=25.9 | won=93% | died=7% | timeout=0%
+RESULT aware=0.5 staircase | old 18 cells | readies/match=3.60 | first_ready_sec=18.8 (reached 15/15) | 0=0% 1=0% 2=20% 3+=80% | peak_lit=1.00
+RESULT aware=0.5 staircase | new 4.0/0.60 (data) | readies/match=2.00 | first_ready_sec=35.0 (reached 13/15) | 0=13% 1=20% 2=47% 3+=20% | peak_lit=0.99
+RESULT aware=0.5 staircase | alt 3.0/0.50 | readies/match=1.60 | first_ready_sec=38.7 (reached 13/15) | 0=13% 1=47% 2=27% 3+=13% | peak_lit=0.99
+RESULT aware=0.5 staircase | alt 5.0/0.80 | readies/match=2.13 | first_ready_sec=33.7 (reached 13/15) | 0=13% 1=13% 2=47% 3+=27% | peak_lit=0.99
+RESULT aware=0.5 staircase | alt 8.0/1.00 | readies/match=2.33 | first_ready_sec=31.3 (reached 13/15) | 0=13% 1=7% 2=40% 3+=40% | peak_lit=0.99
+RESULT aware=0.5 staircase | alt 12.0/1.20 | readies/match=2.33 | first_ready_sec=31.3 (reached 13/15) | 0=13% 1=7% 2=40% 3+=40% | peak_lit=0.99
+RESULT aware=0.0 CASTS square | mode interrupt=236, mode pin_followup=8, mode roll=88, mode strike=362, size 1=520, size 2=97, size 3=40, size 4=24, size 5=13
+RESULT aware=0.0 BOARD square | matches=45 | enemy_cells=9 | data_fade_sec=9.4 | sec=35.9 | casts=15.4 | resolved=15.3 | won=100% | died=0% | timeout=0%
+RESULT aware=0.0 square | old 18 cells | readies/match=0.82 | first_ready_sec=29.5 (reached 37/45) | 0=18% 1=82% 2=0% 3+=0% | peak_lit=0.98
+RESULT aware=0.0 square | new 4.0/0.60 (data) | readies/match=0.02 | first_ready_sec=35.6 (reached 1/45) | 0=98% 1=2% 2=0% 3+=0% | peak_lit=0.74
+RESULT aware=0.0 square | alt 3.0/0.50 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/45) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.67
+RESULT aware=0.0 square | alt 5.0/0.80 | readies/match=0.09 | first_ready_sec=32.3 (reached 4/45) | 0=91% 1=9% 2=0% 3+=0% | peak_lit=0.80
+RESULT aware=0.0 square | alt 8.0/1.00 | readies/match=0.22 | first_ready_sec=27.2 (reached 9/45) | 0=80% 1=18% 2=2% 3+=0% | peak_lit=0.86
+RESULT aware=0.0 square | alt 12.0/1.20 | readies/match=0.42 | first_ready_sec=29.1 (reached 17/45) | 0=62% 1=33% 2=4% 3+=0% | peak_lit=0.91
+RESULT aware=0.0 CASTS rect | mode interrupt=330, mode pin_followup=14, mode roll=147, mode strike=624, size 1=858, size 2=121, size 3=67, size 4=47, size 5=22
+RESULT aware=0.0 BOARD rect | matches=60 | enemy_cells=12 | data_fade_sec=11.2 | sec=44.2 | casts=18.6 | resolved=18.3 | won=100% | died=0% | timeout=0%
+RESULT aware=0.0 rect | old 18 cells | readies/match=0.97 | first_ready_sec=30.2 (reached 54/60) | 0=10% 1=83% 2=7% 3+=0% | peak_lit=0.99
+RESULT aware=0.0 rect | new 4.0/0.60 (data) | readies/match=0.00 | first_ready_sec=0.0 (reached 0/60) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.67
+RESULT aware=0.0 rect | alt 3.0/0.50 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/60) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.61
+RESULT aware=0.0 rect | alt 5.0/0.80 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/60) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.73
+RESULT aware=0.0 rect | alt 8.0/1.00 | readies/match=0.05 | first_ready_sec=21.7 (reached 3/60) | 0=95% 1=5% 2=0% 3+=0% | peak_lit=0.80
+RESULT aware=0.0 rect | alt 12.0/1.20 | readies/match=0.08 | first_ready_sec=32.9 (reached 5/60) | 0=92% 1=8% 2=0% 3+=0% | peak_lit=0.84
+RESULT aware=0.0 CASTS cross | mode interrupt=180, mode pin_followup=15, mode roll=197, mode strike=152, size 1=333, size 2=30, size 3=86, size 4=71, size 5=24
+RESULT aware=0.0 BOARD cross | matches=30 | enemy_cells=11 | data_fade_sec=10.7 | sec=44.0 | casts=18.1 | resolved=18.0 | won=100% | died=0% | timeout=0%
+RESULT aware=0.0 cross | old 18 cells | readies/match=1.50 | first_ready_sec=23.8 (reached 25/30) | 0=17% 1=40% 2=27% 3+=17% | peak_lit=0.99
+RESULT aware=0.0 cross | new 4.0/0.60 (data) | readies/match=0.00 | first_ready_sec=0.0 (reached 0/30) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.71
+RESULT aware=0.0 cross | alt 3.0/0.50 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/30) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.66
+RESULT aware=0.0 cross | alt 5.0/0.80 | readies/match=0.10 | first_ready_sec=21.6 (reached 3/30) | 0=90% 1=10% 2=0% 3+=0% | peak_lit=0.77
+RESULT aware=0.0 cross | alt 8.0/1.00 | readies/match=0.37 | first_ready_sec=30.4 (reached 9/30) | 0=70% 1=23% 2=7% 3+=0% | peak_lit=0.82
+RESULT aware=0.0 cross | alt 12.0/1.20 | readies/match=0.50 | first_ready_sec=30.0 (reached 13/30) | 0=57% 1=37% 2=7% 3+=0% | peak_lit=0.88
+RESULT aware=0.0 CASTS ring | mode interrupt=404, mode pin_followup=26, mode roll=311, mode strike=564, size 1=968, size 2=56, size 3=130, size 4=101, size 5=50
+RESULT aware=0.0 BOARD ring | matches=45 | enemy_cells=21 | data_fade_sec=16.6 | sec=67.6 | casts=29.0 | resolved=28.9 | won=100% | died=0% | timeout=0%
+RESULT aware=0.0 ring | old 18 cells | readies/match=2.09 | first_ready_sec=25.6 (reached 45/45) | 0=0% 1=9% 2=73% 3+=18% | peak_lit=1.00
+RESULT aware=0.0 ring | new 4.0/0.60 (data) | readies/match=0.00 | first_ready_sec=0.0 (reached 0/45) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.61
+RESULT aware=0.0 ring | alt 3.0/0.50 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/45) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.56
+RESULT aware=0.0 ring | alt 5.0/0.80 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/45) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.69
+RESULT aware=0.0 ring | alt 8.0/1.00 | readies/match=0.02 | first_ready_sec=34.2 (reached 1/45) | 0=98% 1=2% 2=0% 3+=0% | peak_lit=0.77
+RESULT aware=0.0 ring | alt 12.0/1.20 | readies/match=0.02 | first_ready_sec=34.2 (reached 1/45) | 0=98% 1=2% 2=0% 3+=0% | peak_lit=0.82
+RESULT aware=0.0 CASTS u_shape | mode interrupt=96, mode pin_followup=2, mode roll=33, mode strike=170, size 1=266, size 2=3, size 3=16, size 4=14, size 5=2
+RESULT aware=0.0 BOARD u_shape | matches=15 | enemy_cells=9 | data_fade_sec=9.6 | sec=46.7 | casts=20.1 | resolved=19.9 | won=100% | died=0% | timeout=0%
+RESULT aware=0.0 u_shape | old 18 cells | readies/match=1.07 | first_ready_sec=33.4 (reached 15/15) | 0=0% 1=93% 2=7% 3+=0% | peak_lit=1.00
+RESULT aware=0.0 u_shape | new 4.0/0.60 (data) | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.71
+RESULT aware=0.0 u_shape | alt 3.0/0.50 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.66
+RESULT aware=0.0 u_shape | alt 5.0/0.80 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.77
+RESULT aware=0.0 u_shape | alt 8.0/1.00 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.84
+RESULT aware=0.0 u_shape | alt 12.0/1.20 | readies/match=0.33 | first_ready_sec=33.3 (reached 5/15) | 0=67% 1=33% 2=0% 3+=0% | peak_lit=0.89
+RESULT aware=0.0 CASTS staircase | mode interrupt=123, mode pin_followup=1, mode roll=29, mode strike=232, size 1=355, size 2=4, size 3=16, size 4=3, size 5=7
+RESULT aware=0.0 BOARD staircase | matches=15 | enemy_cells=10 | data_fade_sec=10.0 | sec=57.6 | casts=25.7 | resolved=25.1 | won=100% | died=0% | timeout=0%
+RESULT aware=0.0 staircase | old 18 cells | readies/match=1.20 | first_ready_sec=34.2 (reached 15/15) | 0=0% 1=80% 2=20% 3+=0% | peak_lit=1.00
+RESULT aware=0.0 staircase | new 4.0/0.60 (data) | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.61
+RESULT aware=0.0 staircase | alt 3.0/0.50 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.55
+RESULT aware=0.0 staircase | alt 5.0/0.80 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.67
+RESULT aware=0.0 staircase | alt 8.0/1.00 | readies/match=0.00 | first_ready_sec=0.0 (reached 0/15) | 0=100% 1=0% 2=0% 3+=0% | peak_lit=0.77
+RESULT aware=0.0 staircase | alt 12.0/1.20 | readies/match=0.07 | first_ready_sec=35.3 (reached 1/15) | 0=93% 1=7% 2=0% 3+=0% | peak_lit=0.84
+RESULT aware=1.0 CASTS square | aware=810, mode interrupt=205, mode pin_followup=44, mode roll=105, mode strike=456, size 3=1, size 4=144, size 5=665
+RESULT aware=1.0 BOARD square | matches=45 | enemy_cells=9 | data_fade_sec=9.4 | sec=55.2 | casts=18.0 | resolved=16.6 | won=100% | died=0% | timeout=0%
+RESULT aware=1.0 square | old 18 cells | readies/match=4.13 | first_ready_sec=11.3 (reached 45/45) | 0=0% 1=11% 2=18% 3+=71% | peak_lit=1.00
+RESULT aware=1.0 square | new 4.0/0.60 (data) | readies/match=5.56 | first_ready_sec=9.4 (reached 45/45) | 0=0% 1=0% 2=9% 3+=91% | peak_lit=1.00
+RESULT aware=1.0 square | alt 3.0/0.50 | readies/match=5.18 | first_ready_sec=10.1 (reached 45/45) | 0=0% 1=0% 2=11% 3+=89% | peak_lit=1.00
+RESULT aware=1.0 square | alt 5.0/0.80 | readies/match=5.58 | first_ready_sec=9.2 (reached 45/45) | 0=0% 1=0% 2=9% 3+=91% | peak_lit=1.00
+RESULT aware=1.0 square | alt 8.0/1.00 | readies/match=5.60 | first_ready_sec=9.2 (reached 45/45) | 0=0% 1=0% 2=9% 3+=91% | peak_lit=1.00
+RESULT aware=1.0 square | alt 12.0/1.20 | readies/match=5.60 | first_ready_sec=9.2 (reached 45/45) | 0=0% 1=0% 2=9% 3+=91% | peak_lit=1.00
+RESULT aware=1.0 CASTS rect | aware=1431, mode interrupt=416, mode pin_followup=54, mode roll=171, mode strike=790, size 4=84, size 5=1347
+RESULT aware=1.0 BOARD rect | matches=60 | enemy_cells=12 | data_fade_sec=11.2 | sec=74.8 | casts=23.9 | resolved=22.7 | won=95% | died=0% | timeout=5%
+RESULT aware=1.0 rect | old 18 cells | readies/match=5.63 | first_ready_sec=11.6 (reached 60/60) | 0=0% 1=5% 2=12% 3+=83% | peak_lit=1.00
+RESULT aware=1.0 rect | new 4.0/0.60 (data) | readies/match=6.18 | first_ready_sec=11.7 (reached 60/60) | 0=0% 1=7% 2=10% 3+=83% | peak_lit=1.00
+RESULT aware=1.0 rect | alt 3.0/0.50 | readies/match=5.72 | first_ready_sec=12.2 (reached 60/60) | 0=0% 1=8% 2=10% 3+=82% | peak_lit=1.00
+RESULT aware=1.0 rect | alt 5.0/0.80 | readies/match=6.23 | first_ready_sec=11.6 (reached 60/60) | 0=0% 1=7% 2=10% 3+=83% | peak_lit=1.00
+RESULT aware=1.0 rect | alt 8.0/1.00 | readies/match=6.25 | first_ready_sec=11.6 (reached 60/60) | 0=0% 1=7% 2=10% 3+=83% | peak_lit=1.00
+RESULT aware=1.0 rect | alt 12.0/1.20 | readies/match=6.25 | first_ready_sec=11.6 (reached 60/60) | 0=0% 1=7% 2=10% 3+=83% | peak_lit=1.00
+RESULT aware=1.0 CASTS cross | aware=776, mode interrupt=270, mode pin_followup=34, mode roll=340, mode strike=132, size 3=1, size 4=202, size 5=573
+RESULT aware=1.0 BOARD cross | matches=30 | enemy_cells=11 | data_fade_sec=10.7 | sec=75.8 | casts=25.9 | resolved=24.7 | won=90% | died=0% | timeout=10%
+RESULT aware=1.0 cross | old 18 cells | readies/match=6.03 | first_ready_sec=11.1 (reached 30/30) | 0=0% 1=7% 2=17% 3+=77% | peak_lit=1.00
+RESULT aware=1.0 cross | new 4.0/0.60 (data) | readies/match=5.17 | first_ready_sec=14.9 (reached 30/30) | 0=0% 1=10% 2=23% 3+=67% | peak_lit=1.00
+RESULT aware=1.0 cross | alt 3.0/0.50 | readies/match=4.00 | first_ready_sec=16.4 (reached 26/30) | 0=13% 1=13% 2=13% 3+=60% | peak_lit=0.99
+RESULT aware=1.0 cross | alt 5.0/0.80 | readies/match=5.27 | first_ready_sec=14.4 (reached 30/30) | 0=0% 1=10% 2=23% 3+=67% | peak_lit=1.00
+RESULT aware=1.0 cross | alt 8.0/1.00 | readies/match=5.30 | first_ready_sec=14.4 (reached 30/30) | 0=0% 1=10% 2=23% 3+=67% | peak_lit=1.00
+RESULT aware=1.0 cross | alt 12.0/1.20 | readies/match=5.30 | first_ready_sec=14.4 (reached 30/30) | 0=0% 1=10% 2=23% 3+=67% | peak_lit=1.00
+RESULT aware=1.0 CASTS ring | aware=1275, mode interrupt=369, mode pin_followup=43, mode roll=406, mode strike=457, size 4=5, size 5=1270
+RESULT aware=1.0 BOARD ring | matches=45 | enemy_cells=21 | data_fade_sec=16.6 | sec=86.7 | casts=28.3 | resolved=27.6 | won=98% | died=0% | timeout=2%
+RESULT aware=1.0 ring | old 18 cells | readies/match=6.78 | first_ready_sec=11.1 (reached 45/45) | 0=0% 1=0% 2=4% 3+=96% | peak_lit=1.00
+RESULT aware=1.0 ring | new 4.0/0.60 (data) | readies/match=4.53 | first_ready_sec=17.3 (reached 45/45) | 0=0% 1=4% 2=13% 3+=82% | peak_lit=1.00
+RESULT aware=1.0 ring | alt 3.0/0.50 | readies/match=3.40 | first_ready_sec=21.0 (reached 45/45) | 0=0% 1=9% 2=20% 3+=71% | peak_lit=1.00
+RESULT aware=1.0 ring | alt 5.0/0.80 | readies/match=4.53 | first_ready_sec=17.3 (reached 45/45) | 0=0% 1=4% 2=13% 3+=82% | peak_lit=1.00
+RESULT aware=1.0 ring | alt 8.0/1.00 | readies/match=4.53 | first_ready_sec=17.3 (reached 45/45) | 0=0% 1=4% 2=13% 3+=82% | peak_lit=1.00
+RESULT aware=1.0 ring | alt 12.0/1.20 | readies/match=4.53 | first_ready_sec=17.3 (reached 45/45) | 0=0% 1=4% 2=13% 3+=82% | peak_lit=1.00
+RESULT aware=1.0 CASTS u_shape | aware=430, mode interrupt=115, mode pin_followup=15, mode roll=49, mode strike=251, size 3=6, size 4=133, size 5=291
+RESULT aware=1.0 BOARD u_shape | matches=15 | enemy_cells=9 | data_fade_sec=9.6 | sec=87.2 | casts=28.7 | resolved=26.4 | won=93% | died=0% | timeout=7%
+RESULT aware=1.0 u_shape | old 18 cells | readies/match=6.60 | first_ready_sec=11.0 (reached 15/15) | 0=0% 1=0% 2=7% 3+=93% | peak_lit=1.00
+RESULT aware=1.0 u_shape | new 4.0/0.60 (data) | readies/match=6.93 | first_ready_sec=12.1 (reached 15/15) | 0=0% 1=0% 2=0% 3+=100% | peak_lit=1.00
+RESULT aware=1.0 u_shape | alt 3.0/0.50 | readies/match=6.53 | first_ready_sec=13.0 (reached 15/15) | 0=0% 1=0% 2=0% 3+=100% | peak_lit=1.00
+RESULT aware=1.0 u_shape | alt 5.0/0.80 | readies/match=6.93 | first_ready_sec=12.1 (reached 15/15) | 0=0% 1=0% 2=0% 3+=100% | peak_lit=1.00
+RESULT aware=1.0 u_shape | alt 8.0/1.00 | readies/match=6.93 | first_ready_sec=12.1 (reached 15/15) | 0=0% 1=0% 2=0% 3+=100% | peak_lit=1.00
+RESULT aware=1.0 u_shape | alt 12.0/1.20 | readies/match=6.93 | first_ready_sec=12.1 (reached 15/15) | 0=0% 1=0% 2=0% 3+=100% | peak_lit=1.00
+RESULT aware=1.0 CASTS staircase | aware=541, mode interrupt=138, mode pin_followup=18, mode roll=47, mode strike=338, size 3=5, size 4=235, size 5=301
+RESULT aware=1.0 BOARD staircase | matches=15 | enemy_cells=10 | data_fade_sec=10.0 | sec=106.4 | casts=36.1 | resolved=31.6 | won=67% | died=20% | timeout=13%
+RESULT aware=1.0 staircase | old 18 cells | readies/match=8.07 | first_ready_sec=11.4 (reached 15/15) | 0=0% 1=0% 2=7% 3+=93% | peak_lit=1.00
+RESULT aware=1.0 staircase | new 4.0/0.60 (data) | readies/match=7.07 | first_ready_sec=16.5 (reached 15/15) | 0=0% 1=7% 2=13% 3+=80% | peak_lit=1.00
+RESULT aware=1.0 staircase | alt 3.0/0.50 | readies/match=6.67 | first_ready_sec=19.0 (reached 15/15) | 0=0% 1=7% 2=20% 3+=73% | peak_lit=1.00
+RESULT aware=1.0 staircase | alt 5.0/0.80 | readies/match=7.07 | first_ready_sec=16.5 (reached 15/15) | 0=0% 1=7% 2=13% 3+=80% | peak_lit=1.00
+RESULT aware=1.0 staircase | alt 8.0/1.00 | readies/match=7.07 | first_ready_sec=16.5 (reached 15/15) | 0=0% 1=7% 2=13% 3+=80% | peak_lit=1.00
+RESULT aware=1.0 staircase | alt 12.0/1.20 | readies/match=7.07 | first_ready_sec=16.5 (reached 15/15) | 0=0% 1=7% 2=13% 3+=80% | peak_lit=1.00

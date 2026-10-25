@@ -1,8 +1,8 @@
 class_name BaseSignature
 extends RefCounted
 ## Base class of a pluggable character signature skill (Story 021), the sibling of BasePassive:
-## one ACTIVE rule the player triggers once the charge bar is full (characters.json
-## `signature: {id, charge_cells, params}`). CombatView creates ONE instance per match through
+## one ACTIVE rule the player triggers once the formation map is complete (Story 029; characters.json
+## `signature: {id, name_key, desc_key, params}`). CombatView creates ONE instance per match through
 ## SignatureRegistry and forwards the hooks; numbers come from `params` (script constants are
 ## fallbacks only).
 ##
@@ -30,7 +30,7 @@ func get_id() -> String:
 	return ""
 
 
-## Triggers the skill (the charge bar was already full and is reset by the host). Instant skills
+## Triggers the skill (the signature was already ready; the host clears the ready flag). Instant skills
 ## do their work here; timed ones start their timer.
 func activate() -> void:
 	pass
@@ -52,7 +52,7 @@ func modify_damage(_card_id: String, _cells: int, damage: float, _target_pinned:
 	return damage
 
 
-## Called when a player swing STARTS (the cast; the charge is counted by the host).
+## Called when a player swing STARTS (the cast).
 func on_cast(_card_id: String, _cells: int) -> void:
 	pass
 
