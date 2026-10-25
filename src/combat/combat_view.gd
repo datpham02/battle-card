@@ -53,8 +53,8 @@ const RING_POINTS: int = 48
 const HUD_GAP_RATIO: float = 0.04
 ## Boss hand tags (HUD band): tag size, gap, top offset from the text row's top, label font,
 ## width kept free for the right-aligned boss HP text.
-const HAND_TAG_WIDTH: float = 44.0
-const HAND_TAG_HEIGHT: float = 26.0
+const HAND_TAG_WIDTH: float = 52.0
+const HAND_TAG_HEIGHT: float = 30.0
 const HAND_TAG_GAP: float = 6.0
 const HAND_TAG_TOP_OFFSET: float = 0.0
 const HAND_FONT_SIZE: int = 18
@@ -63,7 +63,15 @@ const HAND_TAG_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
 const HAND_EMPTY_COLOR: Color = Color(0.15, 0.12, 0.1, 0.3)
 ## Boss cooldown ring radius as a share of cell height (around its body), line width.
 const BOSS_RING_RADIUS_RATIO: float = 0.5
-const BOSS_RING_WIDTH: float = 5.0
+const BOSS_RING_WIDTH: float = 7.0
+## Story 025: the ring while the boss is rooted by its own swing: a solid steel-blue ring (never the red arc).
+const BOSS_RING_LOCKED_COLOR: Color = Color(0.3, 0.5, 0.85)
+const BOSS_RING_LOCKED_WIDTH: float = 9.0
+## Boss hand piece (Story 025): mini shape padding inside its slot box and the largest square.
+const HAND_PIECE_PAD: float = 2.0
+const HAND_PIECE_MAX_UNIT: float = 13.0
+const HAND_ROTTEN_GREY: Color = Color(0.55, 0.55, 0.55)
+const HAND_ROTTEN_X: Color = Color(0.2, 0.2, 0.22, 0.9)
 ## Seed for the field drops RNG; negative = random. Dev/capture only (DemoArgs sets it).
 const RANDOM_SEED: int = -1
 
@@ -248,7 +256,8 @@ func _ready() -> void:
 	)
 	# Story 025: the boss plays pieces too (placement checked on the player's half).
 	_boss.enable_pieces(
-		PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), drops_seed + 2 if drops_seed >= 0 else -1
+		PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), drops_seed + 2 if drops_seed >= 0 else -1,
+		_config.max_pieces_per_cast
 	)
 	_boss.set_player_step_cooldown(_player_step_cooldown)
 	_boss.get_brain().cards = _boss_card_ids()
@@ -1398,6 +1407,11 @@ func get_boss() -> BossController:
 	return _boss
 
 
+## Story 025: true while the boss is rooted by its own swing (see BossController.is_step_locked).
+func is_boss_step_locked() -> bool:
+	return _boss.is_step_locked()
+
+
 ## The boss's queued second swing of a combo ({cells, duration}); empty when none is queued.
 func get_boss_queued_swing() -> Dictionary:
 	var actor: CutActor = _boss.get_actor()
@@ -1545,7 +1559,22 @@ func _draw_boss_hand(origin: Vector2, width: float) -> void:
 			continue
 		draw_rect(rect, HAND_TAG_BACK)
 		draw_rect(rect, HP_COLOR, false, 2.0)
+		if point.piece != null:
+			_draw_boss_hand_piece(point.piece, rect)
+			continue
 		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0.0, HAND_TAG_HEIGHT * 0.5 + HAND_FONT_SIZE * 0.35), point.label, HORIZONTAL_ALIGNMENT_CENTER, tag_w, HAND_FONT_SIZE, TEXT_COLOR)
+
+
+# Story 025: a held piece as a mini shape inside its slot box; a rotten one is grey with a dark X.
+func _draw_boss_hand_piece(piece: Piece, rect: Rect2) -> void:
+	var area: Rect2 = rect.grow(-HAND_PIECE_PAD)
+	if piece.is_rotten():
+		PieceDraw.draw_shape(self, piece, area, Color(HAND_ROTTEN_GREY, 0.85), Color(0.0, 0.0, 0.0, 0.0), HAND_PIECE_MAX_UNIT)
+		var x_rect: Rect2 = PieceDraw.shape_rect(piece, area, HAND_PIECE_MAX_UNIT).grow(HAND_PIECE_PAD)
+		draw_line(x_rect.position, x_rect.end, HAND_ROTTEN_X, 3.0)
+		draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), HAND_ROTTEN_X, 3.0)
+		return
+	PieceDraw.draw_shape(self, piece, area, ENEMY_COLOR, Color(TEXT_COLOR, 0.7), HAND_PIECE_MAX_UNIT)
 
 
 func _draw_enemy(vp: Vector2) -> void:
@@ -1573,11 +1602,17 @@ func _draw_cooldown_ring(vp: Vector2) -> void:
 
 # Ring around the boss's body: full right after its step, shrinks to nothing; hidden when ready.
 func _draw_boss_ring(vp: Vector2) -> void:
-	var fraction: float = _boss.get_mover().get_cooldown_fraction()
-	if fraction <= 0.0 or _state.is_enemy_dead():
+	if _state.is_enemy_dead():
 		return
 	var c: Vector2 = ScreenLayout.cell_center(_grid, vp, _state.enemy_cell)
 	var radius: float = ScreenLayout.cell_size(_grid, vp).y * BOSS_RING_RADIUS_RATIO
+	# Story 025: rooted by its own swing = one solid steel-blue ring (the same ring, a different state).
+	if _boss.is_step_locked():
+		draw_arc(c, radius, 0.0, TAU, RING_POINTS, BOSS_RING_LOCKED_COLOR, BOSS_RING_LOCKED_WIDTH)
+		return
+	var fraction: float = _boss.get_mover().get_cooldown_fraction()
+	if fraction <= 0.0:
+		return
 	draw_arc(c, radius, 0.0, TAU, RING_POINTS, RING_BACK_COLOR, BOSS_RING_WIDTH)
 	draw_arc(c, radius, -PI * 0.5, -PI * 0.5 + TAU * fraction, RING_POINTS, HP_COLOR, BOSS_RING_WIDTH)
 

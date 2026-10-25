@@ -53,6 +53,7 @@ var _active: bool = true
 var _removing: bool = false
 var _hold_config: HoldSlotsConfig
 var _piece_mode: bool = false
+var _max_pieces: int = 2
 
 
 ## [param seed_value] below 0 = random; otherwise drops and brain noise are deterministic.
@@ -86,8 +87,11 @@ func _init(
 ## (chapter weights of [param chapter_id], only shapes that fit the PLAYER half, seeded by
 ## [param rng_seed]; the spawn interval keeps whatever scaling the drops config carries) and its
 ## hand becomes a piece hand of HoldSlotsConfig.piece_slot_count slots (anything held is dropped).
+## [param max_pieces] (CombatConfig.max_pieces_per_cast, default 2) is the most pieces one cast may join.
 ## Call before the first tick; without it the boss keeps the classic labelled points.
-func enable_pieces(library: PieceLibrary, chapter_id: String, rng_seed: int) -> void:
+func enable_pieces(library: PieceLibrary, chapter_id: String, rng_seed: int, max_pieces: int = 2) -> void:
+	_max_pieces = maxi(max_pieces, 1)
+	_brain.max_pieces = _max_pieces
 	_drops.enable_pieces(library, chapter_id, _grid, rng_seed, false)
 	if _hand.slot_cleared.is_connected(_on_slot_cleared):
 		_hand.slot_cleared.disconnect(_on_slot_cleared)
@@ -231,7 +235,7 @@ func _do_cut(action: Dictionary) -> void:
 			piece_cut = true
 	var cells: Array[Vector2i] = []
 	if piece_cut:
-		if indices.size() != 1 or not _hand.get_piece(indices[0]).placeable():
+		if not _are_castable_pieces(indices):
 			return
 		cells = _valid_piece_cells(action.get("cells"))
 	else:
@@ -248,7 +252,7 @@ func _do_cut(action: Dictionary) -> void:
 		combo_indices.assign((combo as Dictionary).get("hand_indices", []) as Array)
 		for index: int in combo_indices:
 			var combo_point: FieldPoint = _hand.get_point(index)
-			if combo_point == null or indices.has(index):
+			if combo_point == null or indices.has(index) or combo_indices.count(index) > 1:
 				combo_labels.clear()
 				break
 			combo_labels.append(combo_point.label)
@@ -256,7 +260,7 @@ func _do_cut(action: Dictionary) -> void:
 				combo_piece = true
 		if not combo_labels.is_empty():
 			if combo_piece:
-				if combo_indices.size() == 1 and _hand.get_piece(combo_indices[0]).placeable():
+				if _are_castable_pieces(combo_indices):
 					combo_cells = _valid_piece_cells((combo as Dictionary).get("cells"))
 			else:
 				combo_cells = CutResolver.resolve_on_board(_grid, false, combo_labels)
@@ -279,6 +283,17 @@ func _do_cut(action: Dictionary) -> void:
 		else:
 			_roll_feint(labels, cells, piece_cut)
 	_carry_over()
+
+
+# Story 025: true when [param indices] name 1..max_pieces DISTINCT hand slots that all hold a placeable piece.
+func _are_castable_pieces(indices: Array[int]) -> bool:
+	if indices.is_empty() or indices.size() > _max_pieces:
+		return false
+	for i: int in indices.size():
+		var piece: Piece = _hand.get_piece(indices[i])
+		if piece == null or not piece.placeable() or indices.count(indices[i]) > 1:
+			return false
+	return true
 
 
 # Story 025: [param raw] (the action's "cells") when it is a non-empty list of distinct real cells of
@@ -312,7 +327,7 @@ func _roll_feint(labels: Array[String], cells: Array[Vector2i], piece_cut: bool 
 		_feint_cells = cells.duplicate()
 		_feint_labels = labels.duplicate()
 		return
-	if _learning == null or labels.size() != 1:
+	if _learning == null or (labels.size() != 1 and not piece_cut):
 		return
 	var chance: float = float(_learning.get_modifiers().get("feint_chance", 0.0))
 	if chance > 0.0 and _feint_rng.randf() < chance:

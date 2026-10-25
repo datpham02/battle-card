@@ -99,6 +99,14 @@ extends Node
 ##   godot --path . -- --demo=join_split     two separate pieces attached, the menu shows the total cells
 ##   godot --path . -- --arena=<shape>       DEV-ONLY arena shape id of arenas.json (cross, u_shape, ring, ...): sets
 ##       match_params["arena"] before _ready, so the board and the featured-shape icon follow it. Works with or without --demo.
+##   Story 025 boss piece demos (the boss casts puzzle pieces on the player's half and is rooted while it swings):
+##   godot --path . -- --demo=boss_placing   the boss mid-swing with a 2-piece JOIN (l3 + bar2) telegraphed on the player's half;
+##                                           its hand row shows the third piece, two field pieces lie on its half
+##   godot --path . -- --demo=boss_ring_normal  the boss just stepped and is NOT swinging: the normal red cooldown arc, part spent
+##   godot --path . -- --demo=boss_rooted    the boss swinging one piece: the ring is the solid steel-blue LOCKED ring
+##   godot --path . -- --demo=boss_counter   the boss's swing running, the player casts a piece over the boss through the real path:
+##                                           the player's swing resolves first: HIT "-N" on the boss and NGAT on the boss's cast
+##   godot --path . -- --demo=boss_rotten    the boss's rotten_thrower (the real trait path) just threw a rotten piece onto the player's half
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -182,7 +190,17 @@ const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
 const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
 const ROTTEN_PIECE_SLOT: int = 1
 ## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
-const PIECE_DEMOS: Array[String] = ["pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit"]
+const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit"]
+## Story 025 boss piece demos: the boss's hand (shape ids), how many of them each demo casts, the piece the counter-cast
+## uses, the boss's field pieces as [shape id, rotation] with their freshness (s), and the share of the step cooldown
+## still left in "boss_ring_normal".
+const BOSS_DEMO_HAND: Array[String] = ["l3", "bar2", "square"]
+const BOSS_DEMO_CAST_JOIN: int = 2
+const BOSS_DEMO_CAST_SINGLE: int = 1
+const BOSS_DEMO_FIELD: Array = [["t4", 0], ["bar3", 1]]
+const BOSS_DEMO_FIELD_FRESHNESS: Array[float] = [6.0, 3.0]
+const BOSS_DEMO_RING_LEFT: float = 0.65
+const BOSS_DEMO_COUNTER_PIECE: String = "bar2"
 ## Story 030 demo: the piece of the "anh_bo_hit" cast (2 cells, <= Anh Bo's small_cells).
 const ANH_BO_DEMO_PIECE: String = "bar2"
 ## Story 029 Phần D demo: share of the enemy cells lit and the cooldown seconds left (dev capture only).
@@ -447,6 +465,8 @@ func _ready() -> void:
 			_thien_hoa_demo(combat, grid)
 		"anh_bo_hit":
 			_anh_bo_demo(combat, grid)
+		"boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten":
+			_boss_piece_demo(combat, grid)
 		"pieces_hand":
 			var lib: PieceLibrary = PieceLibrary.load_from_file()
 			var spots: Array[Vector2i] = _spread_cells(grid, FIELD_PIECES.size() + 1)
@@ -472,6 +492,150 @@ func _ready() -> void:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 	if PIECE_DEMOS.has(_mode):
 		_skip_intro.call_deferred()
+
+
+# Story 025 boss piece demos. The boss hand holds BOSS_DEMO_HAND as pieces; boss_placing casts a 2-piece join through
+# the real BossController._do_cut (DEV-ONLY private call, like the label demos) with the player OUTSIDE the cells,
+# boss_rooted casts one piece, boss_ring_normal only steps the boss (no cast), boss_counter casts and then runs the
+# player's real cast over the boss, boss_rotten runs the real rotten_thrower trait.
+func _boss_piece_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	var boss: BossController = combat.get_boss()
+	_boss_piece_hand(boss, lib)
+	for i: int in BOSS_DEMO_FIELD.size():
+		var spec: Array = BOSS_DEMO_FIELD[i]
+		var cell: Vector2i = _free_enemy_cell(grid, combat, i)
+		boss.get_drops().debug_place_piece(lib.make_piece(str(spec[0]), int(spec[1])), cell, BOSS_DEMO_FIELD_FRESHNESS[i])
+	match _mode:
+		"boss_placing":
+			_boss_piece_cut(combat, grid, BOSS_DEMO_CAST_JOIN)
+			combat.get_arbiter().tick(SWING_ELAPSED_SEC)
+		"boss_rooted":
+			_boss_piece_cut(combat, grid, BOSS_DEMO_CAST_SINGLE)
+			combat.get_arbiter().tick(SWING_ELAPSED_SEC)
+		"boss_ring_normal":
+			var step: Vector2i = Vector2i.UP if grid.is_enemy_cell(combat.get_state().enemy_cell + Vector2i.UP) else Vector2i.DOWN
+			if not boss.get_mover().try_step(step):
+				push_warning("DemoArgs: the boss could not step for demo '%s'" % _mode)
+			boss.get_mover().tick(boss.get_mover().get_cooldown_remaining() * (1.0 - BOSS_DEMO_RING_LEFT))
+		"boss_counter":
+			_boss_piece_cut(combat, grid, BOSS_DEMO_CAST_JOIN)
+			_fill_bag(lib, -1)
+			var held: FieldPoint = _hold().get_point(0)
+			held.piece = lib.make_piece(BOSS_DEMO_COUNTER_PIECE, 0)
+			held.label = BOSS_DEMO_COUNTER_PIECE
+			if not combat.select_piece(0):
+				push_warning("DemoArgs: select_piece failed for demo '%s'" % _mode)
+				return
+			_aim_hitting(combat, grid, combat.get_state().enemy_cell)
+			if not combat.confirm_placement():
+				push_warning("DemoArgs: confirm_placement failed for demo '%s'" % _mode)
+				return
+			if not combat.get_cut_flow().choose(SkillConfig.FALLBACK_SKILL):
+				push_warning("DemoArgs: skill not available for demo '%s'" % _mode)
+				return
+			combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
+		"boss_rotten":
+			var thrower: RottenThrowerTrait = TraitRegistry.create(RottenThrowerTrait.ID) as RottenThrowerTrait
+			if thrower == null:
+				push_warning("DemoArgs: TraitRegistry could not create '%s'" % RottenThrowerTrait.ID)
+				return
+			thrower.setup(combat.make_trait_ctx(), {"first_delay_sec": 0.0, "field_freshness_sec": ROTTEN_FIELD_FRESHNESS}, DEMO_SEED)
+			thrower.on_match_start()
+			combat.get_trait_host().debug_add_trait(thrower)
+			thrower.on_tick(TRAIT_STEP_SEC)
+			if thrower.get_throw_count() == 0:
+				push_warning("DemoArgs: the rotten thrower did not throw for demo '%s'" % _mode)
+
+
+# Fills the boss's piece hand with BOSS_DEMO_HAND (one piece per slot, as many as fit).
+func _boss_piece_hand(boss: BossController, lib: PieceLibrary) -> void:
+	var hand: HoldSlots = boss.get_hand()
+	for i: int in mini(BOSS_DEMO_HAND.size(), hand.get_slot_count()):
+		var point := FieldPoint.new()
+		point.uid = BOSS_UID_BASE - i
+		point.freshness_left = 0.0
+		point.piece = lib.make_piece(BOSS_DEMO_HAND[i], 0)
+		point.label = point.piece.shape_id
+		hand.place(point, i)
+
+
+# A free boss-half cell for field piece [param index], spread over the half, never the boss's own cell.
+func _free_enemy_cell(grid: BoardGrid, combat: CombatView, index: int) -> Vector2i:
+	var spread: Array[Vector2i] = _spread_enemy_cells(grid, BOSS_DEMO_FIELD.size() + 2)
+	for k: int in spread.size():
+		var cell: Vector2i = spread[(k + index * 2 + 1) % spread.size()]
+		if cell != combat.get_state().enemy_cell and combat.get_boss().get_drops().is_cell_free(cell):
+			return cell
+	return combat.get_state().enemy_cell
+
+
+# Commits the boss's cast of the first [param use] hand pieces through BossController's real cut path, over player
+# cells found by _boss_piece_cells. Warns when no placement exists or the cut did not start.
+func _boss_piece_cut(combat: CombatView, grid: BoardGrid, use: int) -> void:
+	var boss: BossController = combat.get_boss()
+	var pieces: Array[Piece] = []
+	var indices: Array[int] = []
+	for i: int in use:
+		pieces.append(boss.get_hand().get_piece(i))
+		indices.append(i)
+	var cells: Array[Vector2i] = _boss_piece_cells(grid, pieces, combat.get_state().player_cell)
+	if cells.is_empty():
+		push_warning("DemoArgs: no boss placement for demo '%s'" % _mode)
+		return
+	boss.call("_do_cut", {"hand_indices": indices, "skill_id": SkillConfig.FALLBACK_SKILL, "cells": cells})
+	if not boss.get_actor().is_swinging():
+		push_warning("DemoArgs: the boss cut did not start for demo '%s'" % _mode)
+	# On a narrow half the countdown label (centred on the cast's bounding box) would hide the player: move the
+	# player to a cell outside that box when one exists.
+	if _box_has(cells, combat.get_state().player_cell):
+		for cell: Vector2i in grid.player_cells():
+			if not _box_has(cells, cell) and combat.get_state().set_player_cell(cell):
+				break
+
+
+# Cells of [param pieces] (1 or 2) on the player's half: one piece anywhere, two joined by an edge without overlap;
+# the union never covers [param avoid] (the player's cell). Empty when none fits.
+func _boss_piece_cells(grid: BoardGrid, pieces: Array[Piece], avoid: Vector2i) -> Array[Vector2i]:
+	# First pass also keeps the player out of the cast's bounding box (the countdown label is centred on it and
+	# would hide the player); the second pass only keeps the player's cell uncovered.
+	var strict: Array[Vector2i] = _boss_piece_cells_pass(grid, pieces, avoid, true)
+	return strict if not strict.is_empty() else _boss_piece_cells_pass(grid, pieces, avoid, false)
+
+
+func _boss_piece_cells_pass(grid: BoardGrid, pieces: Array[Piece], avoid: Vector2i, keep_box_clear: bool) -> Array[Vector2i]:
+	for anchor_a: Vector2i in PiecePlacement.valid_anchors(grid, pieces[0], false):
+		var cells_a: Array[Vector2i] = pieces[0].cells_at(anchor_a)
+		if cells_a.has(avoid):
+			continue
+		if pieces.size() == 1:
+			if not keep_box_clear or not _box_has(cells_a, avoid):
+				return cells_a
+			continue
+		for anchor_b: Vector2i in PiecePlacement.valid_anchors(grid, pieces[1], false):
+			var cells_b: Array[Vector2i] = pieces[1].cells_at(anchor_b)
+			var ok: bool = not cells_b.has(avoid)
+			var touching: bool = false
+			for cell: Vector2i in cells_b:
+				ok = ok and not cells_a.has(cell)
+				for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+					touching = touching or cells_a.has(cell + step)
+			if ok and touching:
+				var union: Array[Vector2i] = cells_a.duplicate()
+				union.append_array(cells_b)
+				if not keep_box_clear or not _box_has(union, avoid):
+					return union
+	return [] as Array[Vector2i]
+
+
+# True when [param cell] lies inside the bounding box of [param cells].
+func _box_has(cells: Array[Vector2i], cell: Vector2i) -> bool:
+	var low: Vector2i = cells[0]
+	var high: Vector2i = cells[0]
+	for c: Vector2i in cells:
+		low = Vector2i(mini(low.x, c.x), mini(low.y, c.y))
+		high = Vector2i(maxi(high.x, c.x), maxi(high.y, c.y))
+	return cell.x >= low.x and cell.x <= high.x and cell.y >= low.y and cell.y <= high.y
 
 
 # Story 029 formation demos (FormationMap.set_cells, freeze_time keeps the fades still). half: the first

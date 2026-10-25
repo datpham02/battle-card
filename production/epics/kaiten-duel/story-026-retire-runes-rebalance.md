@@ -1,7 +1,7 @@
 # Story 026: Gỡ hệ nối ấn, chuyển test và mô phỏng sang mảnh, đo lại cân bằng ba chương
 
 > **Epic**: Kaiten Duel (v5)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: —
@@ -26,11 +26,15 @@
 
 ## Acceptance Criteria
 
+> **Cập nhật 2026-10-25 (sau Story 025, 028, 029, 030):** người chơi và boss đều đã dùng mảnh; hệ nối ấn chỉ còn sống trong **chế độ kép** của não boss (`boss_brain.gd`, `boss_controller.gd`), `arena_validator.gd` (kiểm sân bằng bộ giải nhãn `CutResolver`) và các test cũ. Việc đã đổi so với bản viết đầu: (1) gỡ cả **chế độ kép** của boss — não và điều khiển chỉ còn đường mảnh, các suite boss cũ chuyển sang túi mảnh; (2) `arena_validator` phải viết lại theo vị trí đặt mảnh, không chỉ xóa; (3) mô phỏng chuyển vào repo ở `tools/balance/` (không nằm trong `tests/` nên không vào lượt chạy suite) thay vì thư mục tạm của phiên, kèm hướng dẫn chạy; (4) đo lại phải gồm **trận đồ, tuyệt kỹ có thời gian hồi, ghép hai mảnh, boss mảnh**, và chẩn đoán ba địch ra đòn quá thưa (TD-022).
+
 **Phần A — Gỡ hệ nối ấn**
 
 - [ ] Xóa code chỉ phục vụ nối ấn và không còn ai gọi: `CutResolver` (nhãn → ô), `BoardGrid.perimeter_labels`, túi nhãn trong `FieldDrops`, vẽ nhãn và đường nối trong `cut_hud_view.gd`, khóa `hand_max_points` / `single_point_opens_menu` trong `cuts.json`, chuỗi `TEXT_*` không còn dùng. Mỗi xóa kiểm bằng tìm tham chiếu trước; gì còn người gọi thì giữ và ghi lý do.
 - [ ] Gỡ cùng lượt phần thừa của mô hình tầng cũ (TD-007) nếu không đụng mảnh: `ChaptersConfig` floor API, `RunConfig.from_floor`, shim `floor_index`/`match_index`, `legacy_floors`, các no-op trong `GameFlow`.
 - [ ] `schema.md` khớp dữ liệu sau khi gỡ.
+- [ ] **Gỡ chế độ kép của boss**: `BossBrain` và `BossController` chỉ còn đường mảnh (xóa nhánh nhãn, `_cells_for`, `_collect_selections`, `hand_max_points`, `CutResolver`); `FieldDrops` không còn túi nhãn (chế độ mảnh là duy nhất, `enable_pieces` thành mặc định hoặc bắt buộc); `BoardGrid.perimeter_labels` xóa nếu không còn ai gọi.
+- [ ] **`ArenaValidator`** kiểm sân bằng mảnh thay cho nhãn: mọi ô thật của đất địch đặt phủ được bằng ít nhất một mảnh trong `pieces.json`, và có ít nhất một hình ≥ 3 ô đặt vừa trên mỗi nửa sân; sân sinh ra (`ArenaVariants`) vẫn qua kiểm; test cập nhật.
 
 **Phần B — Test**
 
@@ -40,8 +44,10 @@
 
 **Phần C — Mô phỏng và cân bằng**
 
-- [ ] `deck_sim.gd` chuyển bot sang mảnh: nhặt mảnh, chọn (mảnh, vị trí, hướng xoay) phủ ô boss và ô kề, phản công khi boss niệm, Tập trung khi sẵn. **Neo lại tỉ lệ né của bot** (TD-006): dùng ước lượng từ lần chơi thử của người dùng nếu có, không thì ghi giả định trong Completion Notes.
-- [ ] Đo 70 seed × 3 nhân vật × chương 1–3 (chính sách build). Mục tiêu giữ như Story 023: **ch1 40–60 %, ch2 25–45 %, ch3 15–35 %**, 15–30 đòn boss trúng mỗi run thắng; khoảng cách giữa ba nhân vật theo tỉ lệ tương đối (TD-008, không cần bằng nhau). Không đạt thì chỉnh **dữ liệu** (nhịp và trọng số mảnh, máu boss, `boss_step_cooldown_mult`, `min_cells`), không chỉnh mã. TD-001, TD-004, TD-006, TD-009 đo lại và đóng hoặc cập nhật.
+- [ ] **Chuyển các bộ mô phỏng vào repo**: `deck_sim.gd` và `hit_probe.gd` (bản mới nhất ở thư mục tạm của các phiên, hiện **không còn parse được** vì `SignatureCharge` đã bị xóa ở Story 029) vào `tools/balance/` với `README.md` ghi lệnh chạy, tham số và cách đọc kết quả; thêm một dòng trỏ tới đó trong `.claude/docs/context-management.md`. Không để trong `tests/`.
+- [ ] `deck_sim.gd` chuyển bot sang mảnh (và trận đồ, tuyệt kỹ có hồi, ghép hai mảnh, boss mảnh): nhặt mảnh, chọn (mảnh, vị trí, hướng xoay) phủ ô boss và ô kề, phản công khi boss niệm, Tập trung khi sẵn. **Neo lại tỉ lệ né của bot** (TD-006): dùng ước lượng từ lần chơi thử của người dùng nếu có, không thì ghi giả định trong Completion Notes.
+- [ ] Đo 70 seed × 3 nhân vật × chương 1–3 (chính sách build). Mục tiêu giữ như Story 023: **ch1 40–60 %, ch2 25–45 %, ch3 15–35 %**, 15–30 đòn boss trúng mỗi run thắng; khoảng cách giữa ba nhân vật theo tỉ lệ tương đối (TD-008, không cần bằng nhau). Không đạt thì chỉnh **dữ liệu** (nhịp và trọng số mảnh, máu boss, `boss_step_cooldown_mult`, `min_cells`), không chỉnh mã. TD-001, TD-004, TD-006, TD-009, TD-012, TD-020, TD-022 đo lại và đóng hoặc cập nhật.
+- [ ] **Chẩn đoán TD-022**: vì sao goblin trinh sát, sói dữ, goblin to xác chỉ ra đòn 4–6 lần mỗi phút khi dùng mảnh (so với 8–15 lần khi dùng nhãn): nguồn mảnh rơi hay lựa chọn đặt? Ghi nguyên nhân và sửa bằng dữ liệu (nhịp rơi mảnh của boss, `min_cut_score`, trọng số) nếu được.
 - [ ] Bảng số vào Completion Notes và `production/qa/evidence/pieces-balance/simulation-70seeds.md` (kèm `*-raw.txt`).
 
 **Phần D — Kiểm chứng**

@@ -75,6 +75,8 @@ var reaction_sec: float = 0.35
 var noise: float = 0.15
 ## Story 025: how many piece placements (after the cheap pre-ranking) get a full score per think. >= 1.
 var max_placements_scored: int = 40
+## Story 025: how many of the best single placements are paired up into two-piece cast candidates. >= 1.
+var pair_seed_placements: int = 12
 ## Story 025: true = the boss's mover refuses to step while its actor swings (counter window).
 var root_while_swinging: bool = true
 ## Name of the weight set in use.
@@ -117,6 +119,7 @@ static func from_dictionary(data: Dictionary) -> BossBrainConfig:
 	config.reaction_sec = maxf(float(data.get("reaction_sec", config.reaction_sec)), 0.0)
 	config.noise = maxf(float(data.get("noise", config.noise)), 0.0)
 	config.max_placements_scored = maxi(int(data.get("max_placements_scored", config.max_placements_scored)), 1)
+	config.pair_seed_placements = maxi(int(data.get("pair_seed_placements", config.pair_seed_placements)), 1)
 	var raw_root: Variant = data.get("root_while_swinging", config.root_while_swinging)
 	config.root_while_swinging = bool(raw_root) if typeof(raw_root) == TYPE_BOOL else float(raw_root) >= 0.5
 	var raw_learning: Variant = data.get("learning")

@@ -4,6 +4,7 @@
 	"reaction_sec": 0.35,
 	"noise": 0.15,
 	"max_placements_scored": 40,
+	"pair_seed_placements": 12,
 	"root_while_swinging": true,
 	"active_set": "balanced",
 	"learning": {

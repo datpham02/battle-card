@@ -1093,6 +1093,9 @@ func _draw_boss_swing(vp: Vector2) -> void:
 	var last: Dictionary = boss.get_last_cut()
 	var labels: Array = last.get("labels", [])
 	var joined: String = "+".join(PackedStringArray(labels))
+	if boss.is_piece_mode():
+		# Story 025: the labels are shape ids ("bar2", "l3"): show the cell count, never the raw ids.
+		joined = tr(TEXT_CELLS) % cells.size()
 	var line2: String = tr(TEXT_BOSS_SWING) % [joined, _skill_name(actor.get_skill_id())]
 	_draw_cells_label(vp, cells, ("%.1f s" % actor.get_time_left()), line2, SWING_OUTLINE)
 
