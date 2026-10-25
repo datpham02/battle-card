@@ -78,6 +78,37 @@ In-memory data overrides:
 | `--hp-ids=id,id,...` + `--hp-ids-mult=X` | `boss_max_hp` × X only for the listed match ids (e.g. the chapter's miniboss and boss). |
 | `--passive-set=key:value,...` | Sets a passive param on the played character when its passive has that key, e.g. `--passive-set=min_cells:4` (Mage `wide_caster`). |
 | `--match-set=key:value,...` | Sets any RunConfig match key on every match, e.g. `--match-set=boss_defense:2,swing_speed_mult:1.1`. |
+| `--no-zone-cards` | Story 027 "before" measurement: drops the zone cards (`SkillConfig.is_zone_card`: effect `seal` / `thorns`) from every match deck, and deck_sim also drops them from the reward pool (`RewardRoller.roll` exclude list). Same tool, same seeds as the "after" run. Boss zone traits (`seal_caster`, `thorn_field`) are NOT affected. |
+| `--card-set=id.key:value,...` | Sets a key of a cards.json card in memory, e.g. `--card-set=ket_gioi.cooldown_sec:8,tran_gai.min_cells:4,long_an.rarity:epic`. Level-1 values; the card's `upgrade` deltas still apply on top. |
+
+### Zone cards (Story 027)
+
+The match gets `CombatView._wire_zones`'s wiring: a seal blocker on both movers (`UnitMover.add_blocker`),
+each side's `UnitMover.is_cell_blocked` as the arbiter's leave-a-path test (`blocked_cell_fns`), and
+`CombatConfig.zone_numbers()` on the arbiter. The boss's card list skips zone cards
+(`SkillConfig.boss_card_order`), as in the game. Without this wiring zone cards would do nothing in the sim.
+
+Bot rule (`SimCore._zone_choice`, decided in the card menu once the cast cells are placed; the bot only
+sees its hand after placing, like a player):
+
+1. Never when an available damage card in the hand would kill the boss, and never as the follow-up cast.
+2. **Seal** when the boss has at most `ZONE_SEAL_MAX_EXITS` (3) open exits (enemy-half neighbours its
+   mover may step into) and the cast covers all of them but one (at least one). The leave-a-path rule then
+   leaves the boss one exit at most.
+3. Else **thorns** when the cast covers at least `ZONE_THORN_MIN_COVER` (2) open exits (its dodge cells).
+4. After a zone forms, the bot follows up at once while the zone lasts: no gap, no strike wait, aimed at
+   the boss. The placement planner scores only open neighbours (sealed 0, thorned half), so the follow-up
+   covers the boss cell and the exit still open.
+
+On its own half the bot treats sealed cells as blocked (mover blockers), walks around thorns, and dodges
+into thorns only when no other cell is free. deck_sim's build policy takes an offered zone card right after
+an upgrade pick, at most `ZONE_PER_EFFECT` (1) per effect in the deck (seal before thorns).
+
+Match counters (`play_match` result): `zone_casts`, `seals` / `seal_cells`, `thorns` / `thorn_cells`
+(zones that formed and their cells after the leave-a-path rule), `bthorn` / `bthorn_dmg` (boss thorn
+entries, damage counted in `dealt`), `pthorn` / `pthorn_dmg` (player entries, counted in `taken`), and
+`ps_res` / `ps_hits` (non-zone casts started at most `POST_SEAL_SEC` = 2 s after a seal formed) against
+`o_res` / `o_hits` (the other non-zone casts).
 
 The header line `bot: ... | overrides: ...` prints every value in use. Paste it next to any number
 you report.
@@ -102,9 +133,13 @@ Output for each chapter, in the same order as the rune-era sim (`deck_sim.s023.f
    acts per run. v5 columns are appended at the end: casts / match, player hit % (of resolved swings),
    Focus / match, joins / match, featured / match, counters / match, and interrupts / match (boss
    swings the bot interrupted).
-2. **`NODE KIND BREAKDOWN`** and **`PER-MATCH`**: win %, hits, damage and deaths by node kind and by
+2. **`CHn ZONES`** (Story 027): zone cards picked per run and held in the final deck, zone casts, seals
+   and thorns formed per match with their mean cells, boss and player thorn entries per match, thorn
+   damage to the boss, the hit % of non-zone casts started at most 2 s after a seal (with n) against the
+   other non-zone casts, and the overall player hit %. With `--no-zone-cards` the zone columns are 0.
+3. **`NODE KIND BREAKDOWN`** and **`PER-MATCH`**: win %, hits, damage and deaths by node kind and by
    boss. These show which boss breaks the curve.
-3. **`VERDICT chN char/build`**: win % against the Story 023/026 targets (ch1 40–60, ch2 25–45,
+4. **`VERDICT chN char/build`**: win % against the Story 023/026 targets (ch1 40–60, ch2 25–45,
    ch3 15–35) and hits per won run against 15–30. **`RESULT: ALL PASS | FAIL`** covers only the build
    rows' win targets, as before.
 

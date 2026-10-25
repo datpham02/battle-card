@@ -14,6 +14,8 @@ var cooldown_scale: Callable = Callable()
 ## Story 023: Callable(cell: Vector2i) -> bool; true = that cell cannot be stepped onto (slam's
 ## cracked cells). Invalid (default) = nothing blocked.
 var blocked_cell_fn: Callable = Callable()
+# Story 027: extra blockers, see add_blocker().
+var _blockers: Array[Callable] = []
 ## Story 023: flat multiplier of every cooldown this mover starts (phase_shift speeds the boss up).
 var cooldown_mult: float = 1.0
 ## Story 025: Callable() -> bool; true = the unit is rooted: try_step refuses (no cooldown started)
@@ -44,10 +46,8 @@ func try_step(direction: Vector2i) -> bool:
 		return false
 	if absi(direction.x) + absi(direction.y) != 1:
 		return false
-	if blocked_cell_fn.is_valid():
-		var origin: Vector2i = _state.cell_of(_side)
-		if bool(blocked_cell_fn.call(origin + direction)):
-			return false
+	if is_cell_blocked(_state.cell_of(_side) + direction):
+		return false
 	var moved: bool
 	if _side == CombatState.Side.PLAYER:
 		moved = _state.set_player_cell(_state.player_cell + direction)
@@ -56,6 +56,30 @@ func try_step(direction: Vector2i) -> bool:
 	if moved:
 		_remaining = _cooldown_sec * _scale()
 	return moved
+
+
+## Story 027: adds a step-destination blocker Callable(cell: Vector2i) -> bool that is OR-ed with
+## [member blocked_cell_fn] and every other blocker (seals, cracks...). Safe to call from several
+## sources: it never replaces anything, and a trait that overwrites blocked_cell_fn (slam) does not
+## drop blockers added here. The same Callable added twice is kept once.
+func add_blocker(fn: Callable) -> void:
+	if fn.is_valid() and not _blockers.has(fn):
+		_blockers.append(fn)
+
+
+## Removes a blocker added with [method add_blocker] (no-op when absent).
+func remove_blocker(fn: Callable) -> void:
+	_blockers.erase(fn)
+
+
+## True when [param cell] cannot be stepped onto: [member blocked_cell_fn] or any added blocker says so.
+func is_cell_blocked(cell: Vector2i) -> bool:
+	if blocked_cell_fn.is_valid() and bool(blocked_cell_fn.call(cell)):
+		return true
+	for fn: Callable in _blockers:
+		if fn.is_valid() and bool(fn.call(cell)):
+			return true
+	return false
 
 
 ## Current cooldown multiplier (>= 0).

@@ -8,7 +8,9 @@ extends Node2D
 ## (4) SWING overlay: covered cells red with the countdown; (5) HIT / MISS marker after a swing;
 ## (6) the boss's QUEUED combo swing (Story 013) as a hatched lighter-red layer under its running swing;
 ## (7) Story 023: Rạn / Hàn stacks in the boss status strip, trait readouts under the player HP bar
-## (reactor charges, fuse bar, frost aura), cracked / warned cells on the board and the phase banner.
+## (reactor charges, fuse bar, frost aura), cracked / warned cells on the board and the phase banner;
+## (8) Story 027: seal zones (solid violet block, glowing border) and thorn zones (inward sawtooth, light
+## tint) on both halves, each with a remaining-time bar, plus a short flash when a unit enters thorns.
 ## It owns no game state: it reads CombatView and calls confirm_selection() / CutFlow.choose().
 ##
 ## Input is read in _input (like DPadView) and consumed, so HandInputController never sees a
@@ -43,6 +45,9 @@ const TEXT_EFFECT_PIN: String = "ui.hud.pinned"
 const TEXT_EFFECT_BURN: String = "keyword.burn"
 const TEXT_EFFECT_FRAGILE: String = "keyword.fragile"
 const TEXT_EFFECT_FROST: String = "keyword.frost"
+## Story 027 zone effect names (effect ids = StatusEffects.KIND_SEAL / KIND_THORNS).
+const TEXT_EFFECT_SEAL: String = "keyword.seal"
+const TEXT_EFFECT_THORNS: String = "keyword.thorns"
 const FEATURED_GOLD: Color = Color(1.0, 0.82, 0.15)
 const FEATURED_GOLD_DARK: Color = Color(0.55, 0.42, 0.08)
 const FEATURED_IDLE_FILL: Color = Color(0.62, 0.5, 0.2, 0.9)
@@ -354,6 +359,46 @@ const CRACK_BRANCH: Array[Vector2] = [Vector2(0.45, 0.4), Vector2(0.68, 0.3), Ve
 const PHASE_BANNER_SEC: float = 1.0
 const PHASE_BANNER_COLOR: Color = Color(0.95, 0.25, 0.2)
 const TEXT_PHASE_BANNER: String = "ui.hud.phase_banner"
+## Story 027 zones (StatusEffects seals / thorns, both halves). Drawn right above the formation layer and
+## under every telegraph, label and marker of this view. This view sits ABOVE CombatView (units) and the
+## field-drops views (pieces), so an opaque seal over a cell holding a unit or a piece would hide it:
+## such a cell gets SEAL_FILL_OCCUPIED (see-through, no glyph) instead of the solid SEAL_FILL.
+## SEAL = solid cool violet block + a bright lavender border with a soft outer glow (SEAL_GLOW_STEPS
+## strokes, each wider and fainter) + a barrier glyph + a lavender time bar along the top.
+const SEAL_FILL: Color = Color(0.36, 0.26, 0.58, 0.93)
+const SEAL_FILL_OCCUPIED: Color = Color(0.36, 0.26, 0.58, 0.45)
+const SEAL_BORDER: Color = Color(0.88, 0.8, 1.0, 1.0)
+const SEAL_GLOW: Color = Color(0.8, 0.66, 1.0, 0.4)
+const SEAL_BORDER_WIDTH: float = 4.0
+const SEAL_BORDER_INSET: float = 4.0
+const SEAL_GLOW_STEPS: int = 3
+const SEAL_GLOW_STEP_WIDTH: float = 3.0
+## Barrier glyph: two horizontal bars across the middle of the block (fractions of the cell).
+const SEAL_GLYPH: Color = Color(0.88, 0.8, 1.0, 0.75)
+const SEAL_GLYPH_WIDTH_RATIO: float = 0.5
+const SEAL_GLYPH_GAP_RATIO: float = 0.14
+const SEAL_GLYPH_THICKNESS: float = 5.0
+const SEAL_BAR_BACK: Color = Color(0.12, 0.08, 0.22, 0.85)
+const SEAL_BAR_FILL: Color = Color(0.9, 0.82, 1.0)
+## THORNS = light bramble tint (the cell stays visibly walkable) + a ring of dark-green spikes along
+## every edge pointing INWARD (THORN_TEETH per edge, depth THORN_DEPTH_RATIO of the shorter cell side)
+## with a light edge line + a lime time bar along the top, below the spikes.
+const THORN_TINT: Color = Color(0.55, 0.78, 0.2, 0.2)
+const THORN_SPIKE: Color = Color(0.2, 0.45, 0.08, 0.95)
+const THORN_EDGE: Color = Color(0.75, 0.95, 0.35, 0.95)
+const THORN_EDGE_WIDTH: float = 2.0
+const THORN_TEETH: int = 5
+const THORN_DEPTH_RATIO: float = 0.17
+const THORN_INSET: float = 2.0
+const THORN_BAR_BACK: Color = Color(0.12, 0.22, 0.04, 0.75)
+const THORN_BAR_FILL: Color = Color(0.72, 0.95, 0.25)
+## Zone time bars: height and inset as fractions of the cell height (same scale as the burn bar).
+const ZONE_BAR_HEIGHT_RATIO: float = 0.06
+const ZONE_BAR_INSET_RATIO: float = 0.08
+## Thorn entry flash (StatusEffects.thorn_entered): a red-white fill fading out over THORN_FLASH_SEC
+## (presentation only).
+const THORN_FLASH: Color = Color(1.0, 0.55, 0.45, 0.6)
+const THORN_FLASH_SEC: float = 0.45
 
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
@@ -370,11 +415,18 @@ var _banner_left: float = 0.0
 var _phase_banner_text: String = ""
 var _phase_banner_left: float = 0.0
 var _phase_host: TraitHost = null
+## Story 027: the StatusEffects whose thorn_entered is connected, and the entry flashes (cell -> seconds left;
+## the halves never share a cell, so the cell alone is the key).
+var _zone_status: StatusEffects = null
+var _thorn_flashes: Dictionary = {}
 
 
 func _ready() -> void:
 	_combat = get_node(combat_view_path) as CombatView
 	_sig = _combat
+	# Story 027: connect thorn_entered as early as possible (the status exists once CombatView is ready).
+	if _combat != null:
+		_connect_zones()
 	if _combat != null and _combat.has_signal("signature_activated"):
 		_combat.connect("signature_activated", _on_signature_activated)
 	if _combat != null and _combat.has_signal("formation_completed"):
@@ -385,8 +437,15 @@ func _process(delta: float) -> void:
 	_blink_time += delta
 	_banner_left = maxf(_banner_left - delta, 0.0)
 	_phase_banner_left = maxf(_phase_banner_left - delta, 0.0)
+	for cell: Vector2i in _thorn_flashes.keys():
+		var left: float = float(_thorn_flashes[cell]) - delta
+		if left <= 0.0:
+			_thorn_flashes.erase(cell)
+		else:
+			_thorn_flashes[cell] = left
 	if _combat != null:
 		_connect_phase()
+		_connect_zones()
 	queue_redraw()
 
 
@@ -405,6 +464,22 @@ func _connect_phase() -> void:
 func _on_phase_changed(phase: int) -> void:
 	_phase_banner_text = tr(TEXT_PHASE_BANNER) % phase
 	_phase_banner_left = PHASE_BANNER_SEC
+
+
+# Story 027: connects StatusEffects.thorn_entered once the battle has its status (and again if it is replaced).
+func _connect_zones() -> void:
+	var status: StatusEffects = _combat.get_status()
+	if status == null or status == _zone_status:
+		return
+	if _zone_status != null and _zone_status.thorn_entered.is_connected(_on_thorn_entered):
+		_zone_status.thorn_entered.disconnect(_on_thorn_entered)
+	_zone_status = status
+	_thorn_flashes.clear()
+	status.thorn_entered.connect(_on_thorn_entered)
+
+
+func _on_thorn_entered(_side: int, cell: Vector2i, _damage: float) -> void:
+	_thorn_flashes[cell] = THORN_FLASH_SEC
 
 
 # --- Input --------------------------------------------------------------------
@@ -713,6 +788,8 @@ func _draw() -> void:
 	# Focus overlay first: the preview, markers and buttons stay fully readable above it.
 	_draw_focus_overlay(vp)
 	_draw_formation(vp)
+	# Story 027: zones under every telegraph / label / marker below, so a swing over a zone stays readable.
+	_draw_zones(vp)
 	_draw_featured_icon(vp)
 	_draw_preview(vp)
 	_draw_swing(vp)
@@ -1035,6 +1112,10 @@ func _featured_effect_name(effect: String) -> String:
 			return tr(TEXT_EFFECT_FRAGILE)
 		"frost":
 			return tr(TEXT_EFFECT_FROST)
+		StatusEffects.KIND_SEAL:
+			return tr(TEXT_EFFECT_SEAL)
+		StatusEffects.KIND_THORNS:
+			return tr(TEXT_EFFECT_THORNS)
 	return ""
 
 
@@ -1498,6 +1579,91 @@ func _draw_trait_status(vp: Vector2) -> void:
 		var bar := Rect2(Vector2(end_x, rect.get_center().y - FUSE_BAR_HEIGHT * 0.5), Vector2(FUSE_BAR_WIDTH, FUSE_BAR_HEIGHT))
 		draw_rect(bar, FUSE_BAR_BACK)
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), FUSE_BAR_LOW_FILL if low else FUSE_BAR_FILL)
+
+
+# --- Story 027: seal and thorn zones ------------------------------------------
+
+
+# Seals and thorns of BOTH halves (cells are board cells, so ScreenLayout maps them like burning cells).
+func _draw_zones(vp: Vector2) -> void:
+	var status: StatusEffects = _combat.get_status()
+	if status == null:
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		for cell: Vector2i in status.thorn_cells(side):
+			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			_draw_thorn_cell(rect)
+			_draw_zone_bar(rect, status.thorn_left(side, cell), status.thorn_total_sec(side, cell),
+				THORN_BAR_BACK, THORN_BAR_FILL, minf(rect.size.x, rect.size.y) * THORN_DEPTH_RATIO)
+		for cell: Vector2i in status.sealed_cells(side):
+			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			_draw_seal_cell(rect, _cell_occupied(side, cell))
+			_draw_zone_bar(rect, status.seal_left(side, cell), status.seal_total_sec(side, cell),
+				SEAL_BAR_BACK, SEAL_BAR_FILL, SEAL_BORDER_INSET + SEAL_BORDER_WIDTH)
+	for cell: Vector2i in _thorn_flashes.keys():
+		var alpha: float = clampf(float(_thorn_flashes[cell]) / THORN_FLASH_SEC, 0.0, 1.0)
+		draw_rect(ScreenLayout.cell_rect(grid, vp, cell), Color(THORN_FLASH, THORN_FLASH.a * alpha))
+
+
+# True when a unit or a field piece lies on [param cell] of [param side]'s half (drawn under this view).
+func _cell_occupied(side: int, cell: Vector2i) -> bool:
+	var state: CombatState = _combat.get_state()
+	if state.player_cell == cell or state.enemy_cell == cell:
+		return true
+	var drops: FieldDrops = _combat.get_drops() if side == CombatState.Side.PLAYER else _combat.get_boss().get_drops()
+	return drops != null and not drops.is_cell_free(cell)
+
+
+# Seal block: solid fill (see-through when [param occupied]), soft outer glow, bright border, barrier glyph.
+func _draw_seal_cell(rect: Rect2, occupied: bool) -> void:
+	draw_rect(rect, SEAL_FILL_OCCUPIED if occupied else SEAL_FILL)
+	var inner: Rect2 = rect.grow(-SEAL_BORDER_INSET)
+	for i: int in range(SEAL_GLOW_STEPS, 0, -1):
+		var glow := Color(SEAL_GLOW, SEAL_GLOW.a / float(i))
+		draw_rect(inner, glow, false, SEAL_BORDER_WIDTH + SEAL_GLOW_STEP_WIDTH * float(i) * 2.0)
+	draw_rect(inner, SEAL_BORDER, false, SEAL_BORDER_WIDTH)
+	if occupied:
+		return
+	var c: Vector2 = rect.get_center()
+	var half_w: float = rect.size.x * SEAL_GLYPH_WIDTH_RATIO * 0.5
+	var gap: float = rect.size.y * SEAL_GLYPH_GAP_RATIO * 0.5
+	for dy: float in [-gap, gap]:
+		draw_line(c + Vector2(-half_w, dy), c + Vector2(half_w, dy), SEAL_GLYPH, SEAL_GLYPH_THICKNESS)
+
+
+# Thorn cell: light tint, then THORN_TEETH inward spikes on each edge and a light zigzag edge line.
+func _draw_thorn_cell(rect: Rect2) -> void:
+	draw_rect(rect, THORN_TINT)
+	var r: Rect2 = rect.grow(-THORN_INSET)
+	var depth: float = minf(r.size.x, r.size.y) * THORN_DEPTH_RATIO
+	var corners: Array[Vector2] = [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
+	var edge := PackedVector2Array()
+	for e: int in 4:
+		var a: Vector2 = corners[e]
+		var b: Vector2 = corners[(e + 1) % 4]
+		# The corners run clockwise on screen (y down), so the inward normal is the edge turned +90 degrees.
+		var inward: Vector2 = (b - a).normalized().rotated(PI * 0.5)
+		for t: int in THORN_TEETH:
+			var p0: Vector2 = a.lerp(b, float(t) / float(THORN_TEETH))
+			var p1: Vector2 = a.lerp(b, float(t + 1) / float(THORN_TEETH))
+			var tip: Vector2 = (p0 + p1) * 0.5 + inward * depth
+			draw_colored_polygon(PackedVector2Array([p0, tip, p1]), THORN_SPIKE)
+			edge.append(p0)
+			edge.append(tip)
+	edge.append(corners[0])
+	draw_polyline(edge, THORN_EDGE, THORN_EDGE_WIDTH)
+
+
+# Remaining-time bar along the top of [param rect], [param top_pad] px below the cell's top edge (clear of
+# the seal border / thorn spikes): full when the zone forms, empty when it expires.
+func _draw_zone_bar(rect: Rect2, left: float, total: float, back: Color, fill: Color, top_pad: float) -> void:
+	var ratio: float = 0.0 if total <= 0.0 else clampf(left / total, 0.0, 1.0)
+	var inset: float = rect.size.y * ZONE_BAR_INSET_RATIO
+	var bar_h: float = rect.size.y * ZONE_BAR_HEIGHT_RATIO
+	var bar := Rect2(Vector2(rect.position.x + inset, rect.position.y + top_pad + inset * 0.5), Vector2(rect.size.x - inset * 2.0, bar_h))
+	draw_rect(bar, back)
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), fill)
 
 
 # Cracked cells (slam) as a dark fill with a crack polyline; the cells a slam or the fuse blast

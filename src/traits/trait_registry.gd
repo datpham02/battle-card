@@ -14,6 +14,8 @@ const SCRIPTS: Dictionary = {
 	"slam": preload("res://src/traits/slam.gd"),
 	"frost_aura": preload("res://src/traits/frost_aura.gd"),
 	"phase_shift": preload("res://src/traits/phase_shift.gd"),
+	"seal_caster": preload("res://src/traits/seal_caster.gd"),
+	"thorn_field": preload("res://src/traits/thorn_field.gd"),
 }
 
 

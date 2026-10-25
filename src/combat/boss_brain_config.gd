@@ -31,6 +31,9 @@ const DEFAULT_WEIGHTS: Dictionary = {
 	"skill_bonus_hoa_tran": 1.0,
 	"skill_bonus_bang_phong": 1.0,
 	"burn_avoid": 3.0,
+	## Story 027: cost per HP of thorn damage when the boss steps into a thorn cell of its half (paths go
+	## around while the detour is cheaper; a dodge goes through when the swing would hurt more).
+	"thorn_avoid": 1.0,
 	"escape_penalty": 4.0,
 	"combo_chance": 0.25,
 	"combo_gap_sec": 0.5,

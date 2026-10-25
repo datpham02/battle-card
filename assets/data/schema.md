@@ -91,6 +91,11 @@ Combat start values, timing caps and the board shape (Stories 003, 007). The boa
 | `max_pieces_per_cast` | int 1..3 | pieces | Story 028: most pieces one cast may join on the boss's half (clamped) | 2 |
 | `join_extra_sec` | number >= 0 | s | Story 028: card-choice time added when a second piece joins the open card menu | 1.5 |
 | `max_cast_cells` | int >= 0 | cells | Story 028 fallback lock: a joined piece that would push the cast's total cells above this is refused; 0 = off | 0 |
+| `zones` | object | - | Story 027 Ket gioi / Tran gai numbers, keys below (validated together in `CombatConfig._parse_zones`: one invalid -> all four fall back with a warning). A card overrides them per card (see cards.json `seal_sec`, `thorn_sec`, `thorn_damage`, `thorn_fragile_stacks`) | defaults below |
+| `zones.seal_sec` | number > 0 | s | How long a sealed cell cannot be stepped INTO (a unit already inside is not pushed, but cannot re-enter once out) | 1.2 |
+| `zones.thorn_sec` | number > 0 | s | How long a thorn cell lasts | 3.0 |
+| `zones.thorn_damage` | number >= 0 | HP | Damage each time a unit CHANGES cell into a thorn cell (walk, push, teleport); standing in it when it forms does not trigger | 6 |
+| `zones.thorn_fragile_stacks` | int >= 0 | stacks | Ran stacks added per entry into a thorn cell | 1 |
 
 All five Story 023 keys are validated together in `CombatConfig._parse_keywords` (one invalid -> all five fall back) and passed to `StatusEffects.configure_keywords` by `configure_status`.
 | `player_step_cooldown_sec` | number >= 0 | seconds | DEPRECATED, not shipped: if present it overrides the computed value on every board (warning) | absent |
@@ -143,7 +148,7 @@ Card entry keys (20 cards, see `card_order`; the class concept is gone, Story 02
 | `cooldown_sec` | number >= 0 | seconds | Cooldown started when the skill is used | 0 |
 | `damage_per_cell` | number >= 0 | HP per cell | Level-1 damage per covered cell of damage/push cards (0 for burn/pin); damage = `damage_per_cell * cells`. Replaces `damage_multiplier` (Story 020). Missing: cuts.json `base_damage_per_cell` | cuts.json base |
 | `push_cells` | integer >= 0 | cells | Cells the target is pushed away from the divider along its row (stops at a missing cell/edge); push only | 0 |
-| `effect` | `damage` / `push` / `burn` / `pin` / `fragile` / `frost` | - | What the swing does on resolve (Story 010). Story 023: `fragile` / `frost` apply the card's `fragile_stacks` / `frost_stacks` to the target when it stands in the covered cells (no direct damage). `burn`: every covered cell ignites whether or not the target stands there; burning cells take no new field points and refuse pick-up. `pin`: pins the target if it stands in the covered cells | `damage` |
+| `effect` | `damage` / `push` / `burn` / `pin` / `fragile` / `frost` / `seal` / `thorns` | - | What the swing does on resolve (Story 010). Story 023: `fragile` / `frost` apply the card's `fragile_stacks` / `frost_stacks` to the target when it stands in the covered cells (no direct damage). `burn`: every covered cell ignites whether or not the target stands there; burning cells take no new field points and refuse pick-up. `pin`: pins the target if it stands in the covered cells. Story 027 `seal` / `thorns`: form a Ket gioi / Tran gai zone over the covered cells on the target half, hit or miss (see `seal_sec` .. `thorn_fragile_stacks` below) | `damage` |
 | `burn_duration_sec` | number >= 0 | seconds | Burn only: how long ignited cells burn; re-igniting resets the timer | 0 |
 | `burn_tick_sec` | number > 0 | seconds | Burn only: interval of damage to a unit standing on a burning cell (<= 0 uses 0.5 with a warning) | 0.5 |
 | `burn_damage_per_tick` | number >= 0 | HP | Burn only: damage per tick, per unit standing on the cell | 0 |
@@ -154,6 +159,10 @@ Card entry keys (20 cards, see `card_order`; the class concept is gone, Story 02
 | `pierce_defense` | bool | - | Story 023: the card's damage/push hit skips the match's `boss_defense` | false |
 | `execute` | bool | - | Story 023: damage x2 when the target's HP <= combat.json `execute_ratio` x max HP | false |
 | `execute_ratio` | number 0..1 | share | Card-level execute threshold overriding combat.json (0 = use `execute`) | 0 |
+| `seal_sec` | number >= 0 | s | Story 027, effect `seal` only: this card's seal duration, overriding combat.json `zones.seal_sec`. Effect `seal` (Ket gioi) seals the cut cells on the TARGET's half when the swing arrives, HIT OR MISS (they cannot be stepped into; a unit already inside is not pushed), minus the cells the leave-a-path rule drops (`ZoneRules.fit_cells`: the target keeps at least one steppable neighbour, fewest cells dropped). A seal card with `damage_per_cell` > 0 (Long an) also deals the normal damage on a hit; with 0 a hit only applies its keywords | combat.json |
+| `thorn_sec` | number >= 0 | s | Story 027, effect `thorns` only: this card's thorn duration (overrides `zones.thorn_sec`). Effect `thorns` (Tran gai) covers the cut cells on the target's half, hit or miss; thorns are never reduced by the leave-a-path rule | combat.json |
+| `thorn_damage` | number >= 0 | HP | Story 027: damage per entry into one of this card's thorn cells (overrides `zones.thorn_damage`) | combat.json |
+| `thorn_fragile_stacks` | int >= 0 | stacks | Story 027: Ran stacks per entry into one of this card's thorn cells (overrides `zones.thorn_fragile_stacks`; Gai nguyen = 2) | combat.json |
 | `bonus_vs_fragile_mult` | number >= 1 | x | Story 023: damage multiplier while the target has Ran stacks, applied BEFORE the Ran stack is spent (song_kiem) | 1 |
 | `upgrade` | object key -> number | additive delta | Per level above 1 (level 2 = one application, level 3 = two): keys `damage_per_cell`, `min_cells` (never below 1), `cooldown_sec` (never below 0), `burn_damage_per_tick`, `burn_duration_sec`, `pin_duration_sec`, `push_cells`, `fragile_stacks`, `frost_stacks`. Read through `SkillConfig.resolved(id, level)` | `{}` (warning) |
 | `implemented` | boolean | - | False = shown locked ("not yet"); using it falls back to slash | false |
@@ -197,6 +206,7 @@ Weight keys (inside each set; missing keys take the built-in balanced value):
 | `skill_bonus_burn` | number >= 0 | score | Preference for Burn (needs >= 5 covered cells) when available (balanced 1.0, aggressive 1.5, cautious 0.5) | 1.0 |
 | `skill_bonus_pin` | number >= 0 | score | Preference for Pin (needs >= 7 covered cells) when available (balanced 1.0, aggressive 0.5, cautious 2.0) | 1.0 |
 | `burn_avoid` | number >= 0 | score | Legacy weight (Story 009/010): since Story 013 burning cells are never entered or targeted at all (BFS routes around them), so this no longer enters a score. A field point lying on a burning cell is still worth 0 (pickup is refused there) | 3.0 |
+| `thorn_avoid` | number >= 0 | score per HP | Story 027: cost of stepping INTO a thorn cell of the boss's half = `thorn_avoid` x that cell's thorn damage. Paths count 1 per step plus this cost (a thorn is walked around while the detour is cheaper); a non-dodge step into a thorn adds `-cost` to the move score (`thorn` in the debug breakdown); a dodge picks the cell with the lowest thorn cost + (incoming swing's slash damage if it would arrive late), so the boss steps through thorns when the swing hurts more and goes around / stays when the thorns cost more (`dodge_plan` in last_debug). Sealed cells are never entered (like burning). Shipped: balanced 1.0, aggressive 0.5, cautious 1.5 | 1.0 |
 | `escape_penalty` | number >= 0 | score | Story 013 escape-route scoring: added as `escape_penalty / (1 + escape_cells)`, where `escape_cells` = cells the player can reach within `EscapeAnalysis.steps_for_swing(windup, player step cooldown)` 4-way steps on the player's half (burning cells excluded) that the cut does NOT cover. 0 escape cells = the full bonus (balanced 4.0, aggressive 5.0, cautious 3.0) | 4.0 |
 | `min_runes_penalty` | number >= 0 | score | Story 023: with a match `boss_min_runes` N > 0, a candidate cut of fewer than N cells loses this per missing cell, and is skipped altogether while any candidate of >= N cells exists (`BossBrain._best_cut`) | 3.0 |
 | `combo_chance` | number 0..1 | probability | Story 013 combo: when the boss holds >= 2 points and commits a cut, chance (own seeded RNG stream; no roll at 0 or 1) that it also queues a SECOND slash at once, chosen with the same escape analysis to cover the escape cells of the first (the two share no hand point). The player has no combo (the `CutActor` queue is boss-only). Shipped: cautious 0.0, balanced 0.25, aggressive 0.6 | 0.25 |
@@ -369,6 +379,18 @@ New hook: `on_player_stepped(from, to)` (after a SUCCESSFUL player step; CombatV
 | | `brain_set` | `aggressive` | Weight set the brain switches to |
 | | `extra_traits` | `[{"id":"row_burner","params":{}}]` | Traits added to the host at phase 2 |
 | | `step_mult` | 0.85 | Multiplies the boss's step cooldown |
+| `seal_caster` | `interval_sec` | 8.0 | Story 027: seconds between seals (armed again after each seal) |
+| | `first_delay_sec` | = interval | Seconds before the first arming |
+| | `cells_min` / `cells_max` | 2 / 3 | Seeded cell count of one seal (player half, escape cells of the swing: reachable within `escape_steps`, not covered, never the player's cell; at least one escape cell is always left, then ZoneRules.cast_seal applies the leave-a-path rule) |
+| | `lead_sec` | 0.6 | The seal forms when an armed qualifying boss swing has this long left (at once for a shorter swing) |
+| | `min_swing_cells` | 3 | Smallest boss swing that carries a seal |
+| | `escape_steps` | 2 | Steps the player is assumed to make when its escape cells are counted |
+| | `seal_sec` | combat.json `zones.seal_sec` | Seal duration override |
+| `thorn_field` | `min_swing_cells` | 4 | Story 027: a boss swing of at least this many cells lays thorns when it starts |
+| | `max_cells` | 3 | Most thorn cells per field (escape cells touching the swing, nearest the player first) |
+| | `escape_steps` | 2 | Reach of the player used to find its escape cells |
+| | `cooldown_sec` | 0.0 | Seconds after a field before the next (0 = every qualifying swing) |
+| | `thorn_sec` / `thorn_damage` / `fragile_stacks` | combat.json `zones` | Thorn numbers override |
 
 HUD getters: `StepReactorTrait.get_charges()/get_charges_to_fire()`, `FuseCannonTrait.get_fuse_left()/get_fuse_sec()/get_warning_cells()`, `SlamTrait.get_cracked_cells()/get_warning_cells()`, `FrostAuraTrait.is_active()`, `PhaseShiftTrait.get_phase()`.
 

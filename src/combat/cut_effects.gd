@@ -5,6 +5,8 @@ extends RefCounted
 
 
 static var _warned_no_status: bool = false
+# Story 027: CombatConfig's built-in zone numbers, used when options.zones is missing.
+static var _zone_fallback: Dictionary = {}
 ## Execute (Hanh quyet) damage multiplier: the rule of the keyword, not a tuning number (the threshold is).
 const EXECUTE_MULT: float = 2.0
 ## Flat defense never takes a hit below this much damage (OSFE 9.4: minimum 1).
@@ -48,6 +50,13 @@ const FEATURED_BURN_DAMAGE_PER_TICK: float = 1.5
 ## `fragile` / `frost` x stacks (Ran / Han on the boss, a Han burst damages directly), `burn` ignites the cast
 ## cells `stacks` times, `pin` pins the boss for `sec`. A miss applies nothing; boss swings never apply it.
 ## The result gains featured (bool), featured_mult, featured_effect, featured_stacks, featured_sec.
+## Story 027 zones: effect `seal` / `thorns` forms the zone ONCE on the target's half over [param cells]
+## when the swing arrives, HIT OR MISS (seals through ZoneRules.cast_seal, which keeps a path open). hit =
+## the target stands inside (like burn). A seal card with damage_per_cell > 0 then deals the normal damage
+## path on a hit; without it a hit only applies the card's keywords. options: zones (Dictionary, see
+## CombatConfig.zone_numbers; a card's own seal_sec / thorn_sec / thorn_damage / thorn_fragile_stacks win),
+## target_blocked_fn (Callable(cell) -> bool, the target mover's blockers, used by the leave-a-path rule).
+## The result gains zone_kind ("" / "seal" / "thorns") and zone_cells (the cells actually placed).
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -91,6 +100,23 @@ static func apply(
 		skill = _resolve(skill_config, skill_id, 1)
 	var effect: String = str(skill.get("effect", "damage"))
 	var inside: bool = cells.has(target_cell)
+	result["zone_kind"] = ""
+	result["zone_cells"] = [] as Array[Vector2i]
+	if effect == "seal" or effect == "thorns":
+		if status == null:
+			if not _warned_no_status:
+				_warned_no_status = true
+				push_warning("CutEffects: skill '%s' needs a StatusEffects, ignored" % skill_id)
+			return result
+		_form_zone(state, grid, status, target_side, cells, effect, skill, options, result)
+		if not inside:
+			return result
+		if float(skill.get("damage_per_cell", 0.0)) <= 0.0:
+			result["hit"] = true
+			_apply_keywords(state, status, target_side, skill, result)
+			_apply_featured_effect(state, status, target_side, cells, featured, result)
+			return result
+		# A seal card with damage_per_cell > 0 (Long an) falls through to the normal damage path.
 	if effect == "burn" or effect == "pin" or effect == "fragile" or effect == "frost":
 		if status == null:
 			if not _warned_no_status:
@@ -160,6 +186,46 @@ static func apply(
 	if push_cells > 0:
 		result["pushed"] = _push(state, grid, target_side, push_cells)
 	return result
+
+
+# Story 027: forms the card's zone ONCE when the swing arrives, hit or miss, on the TARGET side's half
+# over the cut cells. Numbers: the card's own seal_sec / thorn_sec / thorn_damage / thorn_fragile_stacks,
+# else options.zones (CombatConfig.zone_numbers()), else the CombatConfig built-in fallbacks. Seals go
+# through ZoneRules.cast_seal (leave-a-path rule; options.target_blocked_fn adds cracks etc.).
+static func _form_zone(
+	state: CombatState, grid: BoardGrid, status: StatusEffects, target_side: int, cells: Array[Vector2i],
+	effect: String, skill: Dictionary, options: Dictionary, result: Dictionary
+) -> void:
+	var numbers: Dictionary = _zone_defaults(options)
+	var placed: Array[Vector2i] = []
+	if effect == "seal":
+		var blocked: Callable = options.get("target_blocked_fn", Callable()) as Callable
+		placed = ZoneRules.cast_seal(
+			state, grid, status, target_side, cells,
+			float(skill.get("seal_sec", numbers["seal_sec"])), blocked)
+	else:
+		placed = ZoneRules.cast_thorns(
+			status, target_side, cells, float(skill.get("thorn_sec", numbers["thorn_sec"])),
+			float(skill.get("thorn_damage", numbers["thorn_damage"])),
+			int(skill.get("thorn_fragile_stacks", numbers["thorn_fragile_stacks"])))
+	result["zone_kind"] = effect
+	result["zone_cells"] = placed
+
+
+# options.zones when it is a dictionary, else the CombatConfig fallbacks (built once).
+static func _zone_defaults(options: Dictionary) -> Dictionary:
+	if typeof(options.get("zones")) == TYPE_DICTIONARY:
+		var given: Dictionary = options["zones"] as Dictionary
+		var merged: Dictionary = _fallback_zone_numbers().duplicate()
+		merged.merge(given, true)
+		return merged
+	return _fallback_zone_numbers()
+
+
+static func _fallback_zone_numbers() -> Dictionary:
+	if _zone_fallback.is_empty():
+		_zone_fallback = CombatConfig.new().zone_numbers()
+	return _zone_fallback
 
 
 # Applies the card's Ran / Han stacks to the target after a hit (a card's own hit never benefits from

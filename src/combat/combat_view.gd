@@ -278,6 +278,7 @@ func _ready() -> void:
 	_arbiter.boss_defense = maxf(float(match_params.get("boss_defense", 0.0)), 0.0)
 	_arbiter.execute_ratio = _config.execute_ratio
 	_boss.get_brain().min_runes = maxi(int(match_params.get("boss_min_runes", 0)), 0)
+	_wire_zones()
 	_arbiter.swing_resolved.connect(_on_swing_resolved)
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
 	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
@@ -286,6 +287,20 @@ func _ready() -> void:
 	_trait_host.on_match_start()
 	_setup_passive(character)
 	_setup_signature(character)
+
+
+# Story 027: sealed cells block stepping for BOTH movers (OR-ed with cracks and any other blocker via
+# UnitMover.add_blocker), and the arbiter gets the zone numbers and each side's blocked test for the
+# seal leave-a-path rule.
+func _wire_zones() -> void:
+	var status: StatusEffects = _status
+	var movers: Dictionary = {CombatState.Side.PLAYER: _mover, CombatState.Side.ENEMY: _boss.get_mover()}
+	for side: int in movers:
+		var mover: UnitMover = movers[side] as UnitMover
+		var seal_side: int = side
+		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_sealed(seal_side, cell))
+		_arbiter.blocked_cell_fns[side] = Callable(mover, "is_cell_blocked")
+	_arbiter.zone_numbers = _config.zone_numbers()
 
 
 func _exit_tree() -> void:
@@ -841,17 +856,20 @@ func _deck_ids() -> Array:
 
 
 # match_params["boss_cards"] ids that exist; absent, invalid or empty = the basics (card_order).
+# Story 027: zone cards (seal / thorns) are never the boss's (SkillConfig.boss_card_order).
 func _boss_card_ids() -> Array[String]:
 	var ids: Array[String] = []
 	var raw: Variant = match_params.get("boss_cards", [])
 	if typeof(raw) == TYPE_ARRAY:
 		for id: Variant in raw as Array:
-			if _skill_config.has_skill(str(id)) and not ids.has(str(id)):
+			if _skill_config.is_zone_card(str(id)):
+				push_warning("CombatView: boss_cards '%s' is a zone card (the boss gets zones only through traits), dropped" % str(id))
+			elif _skill_config.has_skill(str(id)) and not ids.has(str(id)):
 				ids.append(str(id))
 	elif match_params.has("boss_cards"):
 		push_warning("CombatView: match_params boss_cards must be an array, using the basics")
 	if ids.is_empty():
-		ids = _skill_config.card_order.duplicate()
+		ids = _skill_config.boss_card_order()
 	return ids
 
 

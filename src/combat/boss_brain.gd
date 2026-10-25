@@ -33,7 +33,18 @@ extends RefCounted
 ## profile (commitment 1, noise 0, row_first, juke 0, no wander) therefore moves identically
 ## whatever the seed. Best of cut / move / wait wins.
 ##
-## Implements: Story 009, Story 013 (Parts 1 and 2), Story 025 (piece cuts), Story 026 (label path removed), TD-022 (full-hand rule).
+## ZONES (Story 027): a sealed cell of the boss's half (StatusEffects.is_sealed, side ENEMY) is a blocked
+## cell for every path / step / dodge / juke search, exactly like a burning cell; a sealed cell of the
+## PLAYER's half is blocked for the player's reach when cuts are scored (escape cells). A thorn cell of the
+## boss's half stays steppable but costs `thorn_avoid` x its thorn damage (HP-weighted, see thorns_at):
+## paths (one step = 1) go around a thorn while the detour is cheaper than that cost, a non-dodge step
+## into a thorn adds the negative `thorn` term to the move score, and a DODGE picks the cell with the
+## lowest expected cost = thorn cost of the path + the incoming swing's damage (CutConfig.slash_damage of
+## its cells) when the boss would arrive too late ((steps - 1) x its step cooldown >= the swing's time
+## left). The boss therefore steps through thorns when the swing hurts more than the thorns, goes around
+## (or stays) when the thorns cost more, and records the trade in last_debug().dodge_plan.
+##
+## Implements: Story 009, Story 013 (Parts 1 and 2), Story 025 (piece cuts), Story 026 (label path removed), TD-022 (full-hand rule), Story 027 (zones).
 
 ## Destination purposes reported by [method get_destination].
 const PURPOSE_PICKUP: String = "pickup"
@@ -50,6 +61,8 @@ const _DIRECTIONS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(
 const _COMBO_SEED_OFFSET: int = 104729
 ## Floor for the time left used to scale danger urgency.
 const _MIN_TIME_LEFT: float = 0.1
+## Float tolerance of path-cost comparisons.
+const _COST_EPS: float = 0.0001
 
 var _config: BossBrainConfig
 var _grid: BoardGrid
@@ -80,6 +93,16 @@ var _learning: BossLearning = null
 ## Current destination: {cell, purpose, path_style_in_use, target_uid (pickup), from_cell and
 ## juke (dodge)}; empty when the boss has nowhere to go.
 var _destination: Dictionary = {}
+## Story 027: own-half thorn cell -> cost (thorn_avoid x thorn damage), rebuilt every decide.
+var _thorn_pen: Dictionary = {}
+## Story 027: expected damage of the visible incoming swing (0 = none), its time left and the boss's
+## step cooldown (seconds), used by the dodge trade-off.
+var _swing_damage: float = 0.0
+var _swing_time_left: float = 0.0
+var _boss_step_sec: float = 0.0
+## Story 027: the last dodge decision {cell, thorn_cost, hit_cost, steps, late, swing_damage, stay_cost}
+## or {stay: true, ...} when staying in the swing was cheaper; empty when no dodge was planned.
+var _dodge_plan: Dictionary = {}
 
 
 ## [param seed_value] below 0 gives a random seed; otherwise noise is deterministic.
@@ -90,7 +113,7 @@ func _init(
 	_grid = grid
 	_cut_config = cut_config
 	_skill_config = skill_config
-	cards = skill_config.card_order.duplicate()
+	cards = skill_config.boss_card_order()
 	if seed_value >= 0:
 		_rng.seed = seed_value
 		_combo_rng.seed = seed_value + _COMBO_SEED_OFFSET
@@ -195,16 +218,30 @@ func decide(ctx: Dictionary) -> Dictionary:
 	_think_clock = 0.0
 
 	var incoming: Array[Vector2i] = _visible_incoming(player_actor)
-	var burning: Array[Vector2i] = []
+	# Story 027: own_blocked = burning + sealed cells of the boss's half (never entered); player_blocked =
+	# burning + sealed cells of the player's half (the player cannot escape into them).
+	var own_blocked: Array[Vector2i] = []
+	var player_blocked: Array[Vector2i] = []
+	_thorn_pen = {}
 	if _status != null:
-		burning = _status.burning_cells()
+		own_blocked = _status.burning_cells()
+		player_blocked = own_blocked.duplicate()
+		own_blocked.append_array(_status.sealed_cells(CombatState.Side.ENEMY))
+		player_blocked.append_array(_status.sealed_cells(CombatState.Side.PLAYER))
+		var thorn_avoid: float = float(_weights.get("thorn_avoid", 0.0))
+		for cell: Vector2i in _status.thorn_cells(CombatState.Side.ENEMY):
+			_thorn_pen[cell] = thorn_avoid * float(_status.thorns_at(CombatState.Side.ENEMY, cell).get("damage", 0.0))
+	_swing_damage = _cut_config.slash_damage(incoming.size()) if not incoming.is_empty() else 0.0
+	_swing_time_left = player_actor.get_time_left() if not incoming.is_empty() else 0.0
+	_boss_step_sec = _config.step_cooldown_sec * maxf(mover.cooldown_mult, 0.0)
+	_dodge_plan = {}
 	var urgency: float = 1.0 / maxf(player_actor.get_time_left(), _MIN_TIME_LEFT)
 	var player_step_cooldown: float = float(ctx.get("player_step_cooldown", _config.step_cooldown_sec))
 	var idle_score: float = float(_weights["idle_bias"])
 	var best_cut: Dictionary = _best_cut(
-		state, hand, actor, cooldowns, player_actor, incoming, burning, player_step_cooldown
+		state, hand, actor, cooldowns, player_actor, incoming, player_blocked, player_step_cooldown
 	)
-	var best_move: Dictionary = _plan_move(state, hand, drops, incoming, burning, urgency, mover.is_ready())
+	var best_move: Dictionary = _plan_move(state, hand, drops, incoming, own_blocked, urgency, mover.is_ready())
 
 	var choice: Dictionary = {"type": "wait", "score": idle_score, "breakdown": {"idle_bias": idle_score}}
 	if not best_move.is_empty() and float(best_move["score"]) >= float(choice["score"]):
@@ -216,6 +253,8 @@ func decide(ctx: Dictionary) -> Dictionary:
 	_debug["reason"] = "chosen"
 	_debug["destination"] = get_destination()
 	_debug["cut_candidates"] = _cut_candidates.duplicate()
+	if not _dodge_plan.is_empty():
+		_debug["dodge_plan"] = _dodge_plan.duplicate()
 	_debug["alternatives"] = {
 		"cut": float(best_cut["score"]) if not best_cut.is_empty() else null,
 		"move": float(best_move["score"]) if not best_move.is_empty() else null,
@@ -227,7 +266,7 @@ func decide(ctx: Dictionary) -> Dictionary:
 			"type": "cut", "hand_indices": choice["hand_indices"], "skill_id": choice["skill_id"], "cells": choice["cells"],
 		}
 		var combo: Dictionary = _choose_combo(
-			state, hand, choice, burning, player_step_cooldown, _swing_mult(actor)
+				state, hand, choice, player_blocked, player_step_cooldown, _swing_mult(actor)
 		)
 		if not combo.is_empty():
 			cut_action["combo"] = {"hand_indices": combo["hand_indices"], "skill_id": combo["skill_id"], "cells": combo["cells"]}
@@ -241,7 +280,9 @@ func decide(ctx: Dictionary) -> Dictionary:
 ## Score breakdown of the last decision: {type, score, set, reason, breakdown, alternatives,
 ## destination {cell, purpose, path_style_in_use} (empty = idle), cut_candidates (every scored
 ## cut: {labels, score, escape, escape_term, hit_now}), and for cuts hand_indices / skill_id /
-## labels / cells / escape, for moves direction / purpose}.
+## labels / cells / escape, for moves direction / purpose; breakdown of a move = {purpose, thorn,
+## noise}, thorn = -thorn cost of the step (0 for a dodge: its trade is in dodge_plan); dodge_plan when a
+## dodge was planned this think (Story 027)}.
 func last_debug() -> Dictionary:
 	return _debug.duplicate(true)
 
@@ -667,9 +708,11 @@ func _plan_move(
 	var purpose: String = str(_destination["purpose"])
 	var base: float = _purpose_score(purpose, here, incoming, urgency)
 	var noise: float = _move_noise()
+	# Story 027: a non-dodge step into a thorn pays its cost; a dodge already weighed it (dodge_plan).
+	var thorn: float = 0.0 if purpose == PURPOSE_DODGE else -_thorn_penalty(here + direction)
 	return {
-		"type": "move", "score": base + noise, "direction": direction, "purpose": purpose,
-		"breakdown": {purpose: base, "noise": noise},
+		"type": "move", "score": base + thorn + noise, "direction": direction, "purpose": purpose,
+		"breakdown": {purpose: base, "thorn": thorn, "noise": noise},
 	}
 
 
@@ -729,7 +772,7 @@ func _arrive(here: Vector2i, incoming: Array[Vector2i], burning: Array[Vector2i]
 	var best_key: Array = []
 	for dir: Vector2i in perpendicular:
 		var cell: Vector2i = here + dir
-		if not _grid.is_enemy_cell(cell) or burning.has(cell) or incoming.has(cell):
+		if not _grid.is_enemy_cell(cell) or burning.has(cell) or incoming.has(cell) or _thorn_pen.has(cell):
 			continue
 		var key: Array = [-_grid.to_side_coords(cell).x, cell.y]
 		if best == here or _key_less(key, best_key):
@@ -787,19 +830,35 @@ func _choose_destination(
 	_destination = best
 
 
-# Nearest reachable cell outside the visible swing (may be the current cell = wait there).
+# Cheapest reachable cell outside the visible swing (may be the current cell = wait there). Story 027:
+# cost = thorn cost of the cheapest path + the swing's damage when the boss would arrive late; ties: fewer
+# steps, same row, nearer the divider... (the pre-zone order, which it reproduces when no thorn exists).
+# When standing in the swing and every escape costs MORE than taking the hit, the boss stays.
 func _set_dodge(here: Vector2i, incoming: Array[Vector2i], burning: Array[Vector2i]) -> void:
-	var reach: Dictionary = _bfs(here, burning)
+	var paths: Dictionary = _cost_map(here, burning, false)
 	var best: Vector2i = BoardGrid.NO_CELL
 	var best_key: Array = []
-	for cell: Vector2i in reach.keys():
+	for cell: Vector2i in paths.keys():
 		if incoming.has(cell):
 			continue
-		var key: Array = [int(reach[cell]), 0 if cell.y == here.y else 1, -_grid.to_side_coords(cell).x, cell.y]
-		if best == BoardGrid.NO_CELL or _key_less(key, best_key):
+		var entry: Array = paths[cell]
+		var steps: int = int(entry[2])
+		var cost: float = float(entry[1]) + (_swing_damage if _arrives_late(steps) else 0.0)
+		var key: Array = [cost, steps, 0 if cell.y == here.y else 1, -_grid.to_side_coords(cell).x, cell.y]
+		if best == BoardGrid.NO_CELL or _key_less_float(key, best_key):
 			best = cell
 			best_key = key
 	if best == BoardGrid.NO_CELL:
+		_destination = {}
+		return
+	var stay_cost: float = _swing_damage if incoming.has(here) else 0.0
+	_dodge_plan = {
+		"cell": best, "thorn_cost": float((paths[best] as Array)[1]), "steps": int(best_key[1]),
+		"late": _arrives_late(int(best_key[1])), "hit_cost": float(best_key[0]) - float((paths[best] as Array)[1]),
+		"swing_damage": _swing_damage, "stay_cost": stay_cost, "stay": false,
+	}
+	if incoming.has(here) and float(best_key[0]) > stay_cost + _COST_EPS:
+		_dodge_plan["stay"] = true
 		_destination = {}
 		return
 	_destination = {
@@ -848,13 +907,15 @@ func _bfs(start: Vector2i, blocked: Array[Vector2i]) -> Dictionary:
 # distance); otherwise, and for shortest, the step with the smallest remaining distance wins,
 # ties broken by: horizontal (keeps the row) first, then the cell nearer the divider, then the
 # direction order up / right / down / left.
+# Story 027: distances are path costs (1 per step + the thorn cost of each cell entered, so a thorn is
+# walked around while the detour is cheaper), and [param from] may itself be blocked (standing in a seal).
 func _step_toward(from: Vector2i, to: Vector2i, style: String, blocked: Array[Vector2i]) -> Vector2i:
 	if from == to:
 		return Vector2i.ZERO
-	var dist: Dictionary = _bfs(to, blocked)
+	var dist: Dictionary = _cost_map(to, blocked, true, from)
 	if not dist.has(from):
 		return Vector2i.ZERO
-	var here_dist: int = int(dist[from])
+	var here_dist: float = float((dist[from] as Array)[0])
 	var delta: Vector2i = to - from
 	if style == STYLE_ROW_FIRST or style == STYLE_COLUMN_FIRST:
 		var horizontal: Vector2i = Vector2i(signi(delta.x), 0)
@@ -868,7 +929,7 @@ func _step_toward(from: Vector2i, to: Vector2i, style: String, blocked: Array[Ve
 			if dir == Vector2i.ZERO:
 				continue
 			var cell: Vector2i = from + dir
-			if dist.has(cell) and int(dist[cell]) <= here_dist:
+			if dist.has(cell) and cell != from and _via(dist, cell) <= here_dist + _COST_EPS:
 				return dir
 	var best_dir: Vector2i = Vector2i.ZERO
 	var best_key: Array = []
@@ -876,8 +937,8 @@ func _step_toward(from: Vector2i, to: Vector2i, style: String, blocked: Array[Ve
 		var cell: Vector2i = from + dir
 		if not dist.has(cell):
 			continue
-		var key: Array = [int(dist[cell]), 0 if dir.y == 0 else 1, -_grid.to_side_coords(cell).x]
-		if best_dir == Vector2i.ZERO or _key_less(key, best_key):
+		var key: Array = [_via(dist, cell), 0 if dir.y == 0 else 1, -_grid.to_side_coords(cell).x]
+		if best_dir == Vector2i.ZERO or _key_less_float(key, best_key):
 			best_dir = dir
 			best_key = key
 	return best_dir
@@ -920,3 +981,68 @@ static func _key_less(a: Array, b: Array) -> bool:
 		if int(a[i]) != int(b[i]):
 			return int(a[i]) < int(b[i])
 	return false
+
+
+# Lexicographic "a < b" whose FIRST element is a float cost (compared with _COST_EPS), the rest integers.
+static func _key_less_float(a: Array, b: Array) -> bool:
+	if absf(float(a[0]) - float(b[0])) > _COST_EPS:
+		return float(a[0]) < float(b[0])
+	for i: int in range(1, a.size()):
+		if int(a[i]) != int(b[i]):
+			return int(a[i]) < int(b[i])
+	return false
+
+
+# ---------------------------------------------------------------- zones (Story 027)
+
+
+# Cost of stepping INTO [param cell] of the boss's half: thorn_avoid x its thorn damage (0 = no thorn).
+func _thorn_penalty(cell: Vector2i) -> float:
+	return float(_thorn_pen.get(cell, 0.0))
+
+
+# Total cost of reaching the search origin from [param from] when the next step is [param cell].
+func _via(dist: Dictionary, cell: Vector2i) -> float:
+	return float((dist[cell] as Array)[0]) + 1.0 + _thorn_penalty(cell)
+
+
+# True when a dodge of [param steps] steps would land after the visible swing resolves (no swing: false).
+func _arrives_late(steps: int) -> bool:
+	if _swing_time_left <= 0.0 or steps <= 0:
+		return false
+	return float(steps - 1) * _boss_step_sec >= _swing_time_left
+
+
+# Cheapest paths over the boss's real, non-blocked cells (Dijkstra; tiny grid, linear scan). Returns
+# cell -> [metric, thorn cost, steps] where metric = steps + thorn cost of every cell entered. Forward
+# (from [param origin]) the cost of a step is that of the cell entered; [param backward] (origin = a
+# target) charges the cell stepped from, so metric = the cost of walking from that cell TO the origin.
+# [param allow] may be entered even if blocked (the walker standing in a seal or a burning cell).
+func _cost_map(origin: Vector2i, blocked: Array[Vector2i], backward: bool, allow: Vector2i = BoardGrid.NO_CELL) -> Dictionary:
+	var best: Dictionary = {origin: [0.0, 0.0, 0]}
+	var done: Dictionary = {}
+	while true:
+		var cell: Vector2i = BoardGrid.NO_CELL
+		var cell_metric: float = INF
+		for candidate: Vector2i in best.keys():
+			if done.has(candidate):
+				continue
+			var metric: float = float((best[candidate] as Array)[0])
+			if metric < cell_metric - _COST_EPS:
+				cell = candidate
+				cell_metric = metric
+		if cell == BoardGrid.NO_CELL:
+			break
+		done[cell] = true
+		var entry: Array = best[cell]
+		for dir: Vector2i in _DIRECTIONS:
+			var next: Vector2i = cell + dir
+			if done.has(next) or not _grid.is_enemy_cell(next):
+				continue
+			if blocked.has(next) and next != allow:
+				continue
+			var pen: float = _thorn_penalty(cell) if backward else _thorn_penalty(next)
+			var next_metric: float = float(entry[0]) + 1.0 + pen
+			if not best.has(next) or next_metric < float((best[next] as Array)[0]) - _COST_EPS:
+				best[next] = [next_metric, float(entry[1]) + pen, int(entry[2]) + 1]
+	return best

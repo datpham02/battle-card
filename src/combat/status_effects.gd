@@ -2,7 +2,9 @@ class_name StatusEffects
 extends RefCounted
 ## Timed board effects: burning cells (area denial, damage per unit standing on them) and
 ## per-side pins (the unit cannot step). Pure logic, time is injected through tick().
-## Implements: Story 010 (Burn and Pin).
+## Story 027 adds per-side zones: seal (cells a unit cannot step INTO) and thorns (cells that cost
+## damage + Ran each time a unit enters them).
+## Implements: Story 010 (Burn and Pin), Story 027 (Seal and Thorns zones).
 
 ## A cell started burning (also emitted when a burning cell is re-ignited).
 signal cell_ignited(cell: Vector2i)
@@ -19,6 +21,18 @@ signal frost_changed(side: int)
 ## Story 023: the frost stacks of [param side] reached the burst threshold and dealt [param damage].
 signal frost_burst(side: int, damage: float)
 
+## Story 027: a zone formed or was refreshed. [param kind] is "seal" or "thorns", [param side] the side
+## whose half holds the cells.
+signal zone_applied(kind: String, side: int, cells: Array[Vector2i])
+## Story 027: a zone cell expired (or was cleared by clear_zones). [param kind] is "seal" or "thorns".
+signal zone_expired(kind: String, side: int, cell: Vector2i)
+## Story 027: the unit of [param side] stepped into a thorn cell and took [param damage].
+signal thorn_entered(side: int, cell: Vector2i, damage: float)
+
+## Zone kind names (also the zone_applied / zone_expired payload).
+const KIND_SEAL: String = "seal"
+const KIND_THORNS: String = "thorns"
+
 ## Tolerance for float accumulation when comparing against a tick boundary.
 const _EPS: float = 0.000001
 
@@ -26,6 +40,11 @@ const _EPS: float = 0.000001
 var _burning: Dictionary = {}
 # CombatState.Side -> seconds left
 var _pins: Dictionary = {}
+# Story 027 zones: Side -> {Vector2i -> {left, total}} (seal) / {left, total, damage, fragile} (thorns).
+var _seals: Dictionary = {}
+var _thorns: Dictionary = {}
+# Side -> the cell the unit stood on at the previous tick (thorn entry detection).
+var _last_cell: Dictionary = {}
 # Keyword numbers, see configure(). Defaults = no stacking / no Ghim bonus (old behaviour).
 var _burn_extend_sec: float = 0.0
 var _burn_tick_bonus: float = 0.0
@@ -188,6 +207,7 @@ func pin(side: int, duration: float) -> void:
 ## Advances all timers by [param delta]; burning cells hurt the units standing on them in
 ## [param state] once per elapsed tick, however large the delta.
 func tick(delta: float, state: CombatState) -> void:
+	_check_thorn_entries(state)
 	if delta <= 0.0:
 		return
 	for cell: Vector2i in _burning.keys():
@@ -218,6 +238,8 @@ func tick(delta: float, state: CombatState) -> void:
 			pin_ended.emit(side)
 		else:
 			_pins[side] = pin_left
+	_tick_zones(_seals, KIND_SEAL, delta)
+	_tick_zones(_thorns, KIND_THORNS, delta)
 
 
 ## True while [param cell] is burning.
@@ -278,6 +300,154 @@ func clear() -> void:
 	_pins.clear()
 	_fragile.clear()
 	_frost.clear()
+	_seals.clear()
+	_thorns.clear()
+	_last_cell.clear()
+
+
+## Story 027 Seal (Ket gioi): the [param cells] (cells of [param side]'s half) cannot be stepped INTO for
+## [param duration] seconds. A unit already standing inside is not moved, but cannot re-enter after
+## leaving. Re-applying a cell refreshes its time. Pure state, no damage.
+func apply_seal(side: int, cells: Array[Vector2i], duration: float) -> void:
+	if duration <= 0.0 or cells.is_empty():
+		return
+	var zone: Dictionary = _zone_of(_seals, side)
+	for cell: Vector2i in cells:
+		zone[cell] = {"left": duration, "total": duration}
+	zone_applied.emit(KIND_SEAL, side, cells)
+
+
+## Story 027 Thorns (Tran gai): the [param cells] (cells of [param side]'s half) stay steppable, but every
+## time the unit of [param side] CHANGES cell into one it takes [param damage] and gets
+## [param fragile_stacks] Ran, for [param duration] seconds. Re-applying a cell refreshes its time and numbers.
+## Standing in a thorn cell when it forms does not trigger; leaving and re-entering does. Entries are
+## detected in [method tick] (the first tick only records where each unit stands).
+func apply_thorns(side: int, cells: Array[Vector2i], duration: float, damage: float, fragile_stacks: int) -> void:
+	if duration <= 0.0 or cells.is_empty():
+		return
+	var zone: Dictionary = _zone_of(_thorns, side)
+	for cell: Vector2i in cells:
+		zone[cell] = {
+			"left": duration, "total": duration,
+			"damage": maxf(damage, 0.0), "fragile": maxi(fragile_stacks, 0),
+		}
+	zone_applied.emit(KIND_THORNS, side, cells)
+
+
+## True while [param cell] of [param side]'s half is sealed (cannot be stepped into).
+func is_sealed(side: int, cell: Vector2i) -> bool:
+	return (_seals.get(side, {}) as Dictionary).has(cell)
+
+
+## The thorn on [param cell] of [param side]'s half: {left, damage, fragile_stacks}, {} when none.
+func thorns_at(side: int, cell: Vector2i) -> Dictionary:
+	var zone: Dictionary = _thorns.get(side, {}) as Dictionary
+	if not zone.has(cell):
+		return {}
+	var entry: Dictionary = zone[cell] as Dictionary
+	return {"left": float(entry["left"]), "damage": float(entry["damage"]), "fragile_stacks": int(entry["fragile"])}
+
+
+## Sealed cells of [param side], sorted by x then y.
+func sealed_cells(side: int) -> Array[Vector2i]:
+	return _sorted_cells(_seals.get(side, {}) as Dictionary)
+
+
+## Thorn cells of [param side], sorted by x then y.
+func thorn_cells(side: int) -> Array[Vector2i]:
+	return _sorted_cells(_thorns.get(side, {}) as Dictionary)
+
+
+## Seconds of seal left on [param cell] (0 when not sealed).
+func seal_left(side: int, cell: Vector2i) -> float:
+	return _zone_value(_seals, side, cell, "left")
+
+
+## Seconds of thorns left on [param cell] (0 when none).
+func thorn_left(side: int, cell: Vector2i) -> float:
+	return _zone_value(_thorns, side, cell, "left")
+
+
+## Full duration the seal on [param cell] was set with (remaining-time bar denominator; 0 when none).
+func seal_total_sec(side: int, cell: Vector2i) -> float:
+	return _zone_value(_seals, side, cell, "total")
+
+
+## Full duration the thorns on [param cell] were set with (0 when none).
+func thorn_total_sec(side: int, cell: Vector2i) -> float:
+	return _zone_value(_thorns, side, cell, "total")
+
+
+## Removes the seals and thorns of [param side] (both sides when -1), emitting zone_expired per cell.
+func clear_zones(side: int = -1) -> void:
+	for kind: String in [KIND_SEAL, KIND_THORNS]:
+		var book: Dictionary = _seals if kind == KIND_SEAL else _thorns
+		for s: int in book.keys():
+			if side != -1 and s != side:
+				continue
+			var cells: Array[Vector2i] = _sorted_cells(book[s] as Dictionary)
+			book.erase(s)
+			for cell: Vector2i in cells:
+				zone_expired.emit(kind, s, cell)
+
+
+# Zone dictionary of [param side] inside [param book], created on demand.
+func _zone_of(book: Dictionary, side: int) -> Dictionary:
+	if not book.has(side):
+		book[side] = {}
+	return book[side] as Dictionary
+
+
+func _zone_value(book: Dictionary, side: int, cell: Vector2i, key: String) -> float:
+	var zone: Dictionary = book.get(side, {}) as Dictionary
+	if not zone.has(cell):
+		return 0.0
+	return float((zone[cell] as Dictionary)[key])
+
+
+func _sorted_cells(zone: Dictionary) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in zone.keys():
+		out.append(cell)
+	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x or (a.x == b.x and a.y < b.y))
+	return out
+
+
+# Counts the zone cells of [param book] down by [param delta]; expired ones are removed with a signal.
+func _tick_zones(book: Dictionary, kind: String, delta: float) -> void:
+	for side: int in book.keys():
+		var zone: Dictionary = book[side] as Dictionary
+		for cell: Vector2i in _sorted_cells(zone):
+			var entry: Dictionary = zone[cell] as Dictionary
+			var left: float = float(entry["left"]) - delta
+			if left <= _EPS:
+				zone.erase(cell)
+				zone_expired.emit(kind, side, cell)
+			else:
+				entry["left"] = left
+		if zone.is_empty():
+			book.erase(side)
+
+
+# A unit that CHANGED cell since the last tick and now stands on a thorn cell pays the toll once.
+func _check_thorn_entries(state: CombatState) -> void:
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		var cell: Vector2i = state.cell_of(side)
+		var had: bool = _last_cell.has(side)
+		var last: Vector2i = _last_cell.get(side, cell)
+		_last_cell[side] = cell
+		if not had or last == cell:
+			continue
+		var thorn: Dictionary = thorns_at(side, cell)
+		if thorn.is_empty():
+			continue
+		var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+		if dead:
+			continue
+		var damage: float = float(thorn["damage"])
+		state.damage(side, damage)
+		apply_fragile(side, int(thorn["fragile_stacks"]))
+		thorn_entered.emit(side, cell, damage)
 
 
 # Sides of the living units standing on [param cell].

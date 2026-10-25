@@ -52,6 +52,27 @@ extends Node
 ##   godot --path . -- --demo=boss_counter   the boss's swing running, the player casts a piece over the boss through the real path:
 ##                                           the player's swing resolves first: HIT "-N" on the boss and NGAT on the boss's cast
 ##   godot --path . -- --demo=boss_rotten    the boss's rotten_thrower (the real trait path) just threw a rotten piece onto the player's half
+##   Story 027 zone demos (StatusEffects.apply_seal / apply_thorns called directly with the combat.json "zones" numbers,
+##   then ZONE_DEMO_ELAPSED_RATIO of each zone's time ticked through StatusEffects.tick so the time bars show draining):
+##   godot --path . -- --demo=seal_on_boss   the boss moved to the far top corner of its half, every neighbour of it
+##                                           (8-neighbourhood) sealed except ONE orthogonal exit, and a pending player
+##                                           swing (CutActor.begin_swing) over the exit and the boss's cell
+##   godot --path . -- --demo=thorns_on_boss thorns on every orthogonal neighbour of the boss (boss half)
+##   godot --path . -- --demo=boss_through_thorns  thorns on the boss's divider-side neighbour (and the cell beside it),
+##                                           a player swing on the boss's cell, the boss steps into the thorns through its
+##                                           real mover (dodge): thorn_entered fires (damage, Ran +1, entry flash)
+##   godot --path . -- --demo=boss_seal      a seal on the player's half (every orthogonal neighbour of the player except
+##                                           one exit), with a boss swing (its CutActor) telegraphed over the player and the exit
+##   godot --path . -- --demo=trait_seal     the REAL SealCasterTrait: the match's own (a jailer node, e.g. --node=chX/cC/nN
+##                                           landing on the ch2 miniboss) or, on any other match, one built through
+##                                           TraitRegistry with the jailer's chapters.json params (warning). It is made
+##                                           ready at once (ticked past its delay), the boss swings a 3-cell row that ends on
+##                                           the player (label off the player), then swing + trait are ticked until seal_cast
+##   godot --path . -- --demo=trait_thorns   the REAL ThornFieldTrait (frost_mage's, or built with its chapters.json params):
+##                                           the boss swings a 2x2 block (4 cells) beside the player; the trait lays thorns
+##                                           through BossController's swing_started -> TraitHost path
+##   godot --path . -- --demo=reward_zone_cards  the card offer forced to ZONE_REWARD_CARDS (GameFlow's run pending reward +
+##                                           run_changed), so RewardView shows the zone keyword lines; use with --lang=vi|en
 ##   (every demo deactivates the boss: BossController.set_active(false); swings are fast-forwarded
 ##    through SwingArbiter.tick, the boss cuts through BossController's real cut path)
 ##   godot --path . -- --boss=<set>   DEV-ONLY boss weight set (balanced/aggressive/cautious, see
@@ -109,7 +130,7 @@ const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
 const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
 const ROTTEN_PIECE_SLOT: int = 1
 ## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
-const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit"]
+const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit", "seal_on_boss", "thorns_on_boss", "boss_through_thorns", "boss_seal", "trait_seal", "trait_thorns", "reward_zone_cards"]
 ## Story 025 boss piece demos: the boss's hand (shape ids), how many of them each demo casts, the piece the counter-cast
 ## uses, the boss's field pieces as [shape id, rotation] with their freshness (s), and the share of the step cooldown
 ## still left in "boss_ring_normal".
@@ -127,6 +148,16 @@ const SIGNATURE_COOLDOWN_DEMO_CHARGE: float = 0.4
 const SIGNATURE_COOLDOWN_DEMO_SEC: float = 9.0
 ## Story 030 "thien_hoa_burning" demo: seconds of burn advanced after the activation (dev capture only).
 const THIEN_HOA_BURNING_DEMO_SEC: float = 1.0
+## Story 027 zone demos: share of each zone's duration (combat.json "zones") already elapsed when captured.
+const ZONE_DEMO_ELAPSED_RATIO: float = 0.3
+## Story 027 zone demos: orthogonal steps in preference order (the first one points toward the divider on the boss half).
+const ZONE_DEMO_STEPS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP, Vector2i.RIGHT]
+## Story 027 trait demos: the chapters.json matches whose trait params are used when the booted match lacks the
+## trait, the cards forced into the "reward_zone_cards" offer, and the bound (steps) of the walk to seal_cast.
+const CHAPTERS_PATH: String = "res://assets/data/chapters.json"
+const SEAL_TRAIT_MATCH: String = "jailer"
+const THORN_TRAIT_MATCH: String = "frost_mage"
+const ZONE_REWARD_CARDS: Array[String] = ["ket_gioi", "tran_gai", "gai_nguyen"]
 ## Story 028 join demos: piece 1 and piece 2 of "join_menu" / "join_split" (--piece= overrides piece 1).
 const JOIN_PIECE_1: String = "l3"
 const JOIN_PIECE_2: String = "bar2"
@@ -215,6 +246,14 @@ func _ready() -> void:
 			_thien_hoa_demo(combat, grid)
 		"anh_bo_hit":
 			_anh_bo_demo(combat, grid)
+		"seal_on_boss", "thorns_on_boss", "boss_through_thorns", "boss_seal":
+			_zone_demo(combat, grid)
+		"trait_seal":
+			_trait_seal_demo(combat, grid)
+		"trait_thorns":
+			_trait_thorns_demo(combat, grid)
+		"reward_zone_cards":
+			_force_reward_offer.call_deferred()
 		"boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten":
 			_boss_piece_demo(combat, grid)
 		"pieces_hand":
@@ -296,6 +335,197 @@ func _boss_piece_demo(combat: CombatView, grid: BoardGrid) -> void:
 			thrower.on_tick(TRAIT_STEP_SEC)
 			if thrower.get_throw_count() == 0:
 				push_warning("DemoArgs: the rotten thrower did not throw for demo '%s'" % _mode)
+
+
+# Story 027 zone demos (see the header). Zones go straight through the StatusEffects API with the combat.json
+# "zones" numbers; ZONE_DEMO_ELAPSED_RATIO of the duration is then ticked (time is frozen afterwards).
+func _zone_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var status: StatusEffects = combat.get_status()
+	var state: CombatState = combat.get_state()
+	var cfg: CombatConfig = combat.get_config()
+	var boss: BossController = combat.get_boss()
+	var enemy: int = CombatState.Side.ENEMY
+	match _mode:
+		"seal_on_boss":
+			var corner: Vector2i = state.enemy_cell
+			for cell: Vector2i in grid.enemy_cells():
+				if cell.x > corner.x or (cell.x == corner.x and cell.y < corner.y):
+					corner = cell
+			if not state.set_enemy_cell(corner):
+				push_warning("DemoArgs: could not move the boss to %s" % str(corner))
+			var exits: Array[Vector2i] = _zone_neighbours(grid, corner, true, false)
+			if exits.is_empty():
+				push_warning("DemoArgs: no exit around the boss for demo '%s'" % _mode)
+				return
+			var seals: Array[Vector2i] = _zone_neighbours(grid, corner, true, true)
+			seals.erase(exits[0])
+			status.apply_seal(enemy, seals, cfg.seal_sec)
+			status.tick(cfg.seal_sec * ZONE_DEMO_ELAPSED_RATIO, state)
+			if not combat.get_cut_actor().begin_swing([exits[0], corner] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, true):
+				push_warning("DemoArgs: the player swing did not start for demo '%s'" % _mode)
+		"thorns_on_boss":
+			var around: Array[Vector2i] = _zone_neighbours(grid, state.enemy_cell, true, false)
+			status.apply_thorns(enemy, around, cfg.thorn_sec, cfg.thorn_damage, cfg.thorn_fragile_stacks)
+			status.tick(cfg.thorn_sec * ZONE_DEMO_ELAPSED_RATIO, state)
+		"boss_through_thorns":
+			var from: Vector2i = state.enemy_cell
+			var around2: Array[Vector2i] = _zone_neighbours(grid, from, true, false)
+			if around2.is_empty():
+				push_warning("DemoArgs: no cell beside the boss for demo '%s'" % _mode)
+				return
+			var target: Vector2i = around2[0]
+			var thorns: Array[Vector2i] = [target]
+			for step: Vector2i in [Vector2i.UP, Vector2i.DOWN]:
+				if grid.is_enemy_cell(target + step) and thorns.size() < 2:
+					thorns.append(target + step)
+			status.apply_thorns(enemy, thorns, cfg.thorn_sec, cfg.thorn_damage, cfg.thorn_fragile_stacks)
+			# First tick only records where each unit stands (StatusEffects._check_thorn_entries).
+			status.tick(0.0, state)
+			if not combat.get_cut_actor().begin_swing([from] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, true):
+				push_warning("DemoArgs: the player swing did not start for demo '%s'" % _mode)
+			if not boss.get_mover().try_step(target - from):
+				push_warning("DemoArgs: the boss could not step into the thorns for demo '%s'" % _mode)
+			status.tick(cfg.thorn_sec * ZONE_DEMO_ELAPSED_RATIO, state)
+		"boss_seal":
+			var here: Vector2i = state.player_cell
+			var around3: Array[Vector2i] = _zone_neighbours(grid, here, false, false)
+			if around3.size() < 2:
+				push_warning("DemoArgs: not enough cells around the player for demo '%s'" % _mode)
+				return
+			var exit: Vector2i = around3[around3.size() - 1]
+			around3.erase(exit)
+			status.apply_seal(CombatState.Side.PLAYER, around3, cfg.seal_sec)
+			status.tick(cfg.seal_sec * ZONE_DEMO_ELAPSED_RATIO, state)
+			if not boss.get_actor().begin_swing([here, exit] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, false):
+				push_warning("DemoArgs: the boss swing did not start for demo '%s'" % _mode)
+
+
+# Story 027: the real seal_caster on the boss's swing (see the header).
+func _trait_seal_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var seal: SealCasterTrait = _zone_trait(combat, SealCasterTrait.ID, SEAL_TRAIT_MATCH) as SealCasterTrait
+	if seal == null:
+		return
+	# Ready at once: tick the trait past its delay with no boss swing running (nothing is cast).
+	seal.on_tick(seal.get_next_seal_left() + TRAIT_STEP_SEC)
+	var here: Vector2i = combat.get_state().player_cell
+	var swing: Array[Vector2i] = []
+	for step: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+		if grid.is_player_cell(here + step) and grid.is_player_cell(here + step * 2):
+			swing = [here + step * 2, here + step, here] as Array[Vector2i]
+			break
+	# Arenas without a straight 3-cell row through the player (the jailer's U): any 3 connected cells.
+	if swing.is_empty():
+		for first: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			for second: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+				var a: Vector2i = here + first
+				var b: Vector2i = a + second
+				if swing.is_empty() and b != here and grid.is_player_cell(a) and grid.is_player_cell(b):
+					swing = [b, a, here] as Array[Vector2i]
+	if swing.is_empty():
+		push_warning("DemoArgs: no 3 connected cells through the player for demo '%s'" % _mode)
+		return
+	var actor: CutActor = combat.get_boss().get_actor()
+	if not actor.begin_swing(swing, SkillConfig.FALLBACK_SKILL, false):
+		push_warning("DemoArgs: the boss swing did not start for demo '%s'" % _mode)
+		return
+	var steps: int = 0
+	while seal.get_seal_count() == 0 and actor.is_swinging() and steps < TRAIT_MAX_STEPS:
+		combat.get_arbiter().tick(TRAIT_STEP_SEC)
+		seal.on_tick(TRAIT_STEP_SEC)
+		steps += 1
+	if seal.get_seal_count() == 0:
+		push_warning("DemoArgs: seal_caster never cast for demo '%s'" % _mode)
+	else:
+		print("DemoArgs: seal_cast ", seal.get_last_cells())
+
+
+# Story 027: the real thorn_field on a 4-cell boss swing beside the player (see the header).
+func _trait_thorns_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var field: ThornFieldTrait = _zone_trait(combat, ThornFieldTrait.ID, THORN_TRAIT_MATCH) as ThornFieldTrait
+	if field == null:
+		return
+	field.on_tick(field.get_cooldown_left() + TRAIT_STEP_SEC)
+	var here: Vector2i = combat.get_state().player_cell
+	var best: Array[Vector2i] = []
+	var best_dist: float = INF
+	for a: Vector2i in grid.player_cells():
+		var block: Array[Vector2i] = [a, a + Vector2i.RIGHT, a + Vector2i.DOWN, a + Vector2i.ONE]
+		var ok: bool = not block.has(here)
+		for c: Vector2i in block:
+			ok = ok and grid.is_player_cell(c)
+		var dist: float = (Vector2(a) + Vector2(0.5, 0.5)).distance_to(Vector2(here))
+		if ok and dist < best_dist:
+			best = block
+			best_dist = dist
+	if best.is_empty():
+		push_warning("DemoArgs: no 2x2 block beside the player for demo '%s'" % _mode)
+		return
+	if not combat.get_boss().get_actor().begin_swing(best, SkillConfig.FALLBACK_SKILL, false):
+		push_warning("DemoArgs: the boss swing did not start for demo '%s'" % _mode)
+	if field.get_field_count() == 0:
+		push_warning("DemoArgs: thorn_field laid nothing for demo '%s'" % _mode)
+	else:
+		print("DemoArgs: thorns_laid ", field.get_last_cells())
+
+
+# The match's own trait [param id] when the booted match has it; else one built through TraitRegistry with the
+# params chapters.json gives it in match [param match_id], set up on this battle and added to its TraitHost.
+func _zone_trait(combat: CombatView, id: String, match_id: String) -> BossTrait:
+	var host: TraitHost = combat.get_trait_host()
+	var own: BossTrait = host.get_trait(id)
+	if own != null:
+		print("DemoArgs: %s from the booted match" % id)
+		return own
+	push_warning("DemoArgs: the match has no '%s', building one with %s's params" % [id, match_id])
+	var made: BossTrait = TraitRegistry.create(id)
+	if made == null:
+		push_warning("DemoArgs: TraitRegistry could not create '%s'" % id)
+		return null
+	made.setup(combat.make_trait_ctx(), _chapter_trait_params(match_id, id), DEMO_SEED)
+	made.on_match_start()
+	host.debug_add_trait(made)
+	return made
+
+
+# Params of trait [param id] in chapters.json match [param match_id] ({} when not found).
+func _chapter_trait_params(match_id: String, id: String) -> Dictionary:
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(CHAPTERS_PATH))
+	if not data is Dictionary:
+		return {}
+	for chapter: Variant in (data as Dictionary).get("chapters", []):
+		var matches: Dictionary = (chapter as Dictionary).get("matches", {}) as Dictionary
+		if not matches.has(match_id):
+			continue
+		for t: Variant in (matches[match_id] as Dictionary).get("traits", []):
+			if str((t as Dictionary).get("id", "")) == id:
+				return (t as Dictionary).get("params", {}) as Dictionary
+	return {}
+
+
+# Story 027 "reward_zone_cards": forces the run's pending offer to ZONE_REWARD_CARDS and tells the views.
+func _force_reward_offer() -> void:
+	for n: Node in get_tree().root.find_children("*", "GameFlow", true, false):
+		var flow: GameFlow = n as GameFlow
+		if flow.get_run() == null:
+			continue
+		flow.get_run().set_pending_reward(ZONE_REWARD_CARDS)
+		flow.run_changed.emit()
+		return
+	push_warning("DemoArgs: no GameFlow with a run for demo '%s'" % _mode)
+
+
+# Real cells of one half ([param enemy_half]) next to [param cell]: the orthogonal ones in ZONE_DEMO_STEPS order,
+# plus the diagonal ones when [param diagonal].
+func _zone_neighbours(grid: BoardGrid, cell: Vector2i, enemy_half: bool, diagonal: bool) -> Array[Vector2i]:
+	var steps: Array[Vector2i] = ZONE_DEMO_STEPS.duplicate()
+	if diagonal:
+		steps.append_array([Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)] as Array[Vector2i])
+	var out: Array[Vector2i] = []
+	for step: Vector2i in steps:
+		var c: Vector2i = cell + step
+		if grid.is_enemy_cell(c) if enemy_half else grid.is_player_cell(c):
+			out.append(c)
+	return out
 
 
 # Fills the boss's piece hand with BOSS_DEMO_HAND (one piece per slot, as many as fit).

@@ -92,6 +92,9 @@ const FRAGILE_COLOR: Color = Color(0.62, 0.32, 0.88)
 const FROST_COLOR: Color = Color(0.3, 0.68, 0.95)
 const PIERCE_COLOR: Color = Color(0.4, 0.45, 0.55)
 const EXECUTE_COLOR: Color = Color(0.75, 0.12, 0.12)
+## Story 027 zone keywords: Kết giới (seal, indigo like the board's seal block) and Trận gai (thorns, thorn green).
+const SEAL_COLOR: Color = Color(0.36, 0.3, 0.7)
+const THORN_COLOR: Color = Color(0.35, 0.72, 0.3)
 ## Decimals of the "x1.5 vs Fragile" multiplier.
 const MULT_DECIMALS: int = 1
 
@@ -128,6 +131,9 @@ const TEXT_KEYWORD_FROST_STACKS: String = "keyword.frost_stacks"
 const TEXT_KEYWORD_PIERCE: String = "keyword.pierce"
 const TEXT_KEYWORD_EXECUTE: String = "keyword.execute"
 const TEXT_KEYWORD_VS_FRAGILE: String = "keyword.vs_fragile"
+## Story 027 zone keywords.
+const TEXT_KEYWORD_SEAL: String = "keyword.seal"
+const TEXT_KEYWORD_THORNS: String = "keyword.thorns"
 const TEXT_UPGRADE_TO: String = "ui.reward.upgrade_to"
 const TEXT_REMOVE: String = "ui.reward.remove"
 const TEXT_REMOVE_TITLE: String = "ui.reward.remove_title"
@@ -144,6 +150,8 @@ const TEXT_REMOVE_COUNT: String = "ui.reward.remove_count"
 @export var flow_path: NodePath = NodePath("../GameFlow")
 
 var _flow: GameFlow = null
+# Story 027: lazily loaded combat.json (see _zone_config).
+var _combat_config: CombatConfig = null
 ## Story 020: true while the remove list covers the offer.
 var _removing: bool = false
 
@@ -353,6 +361,15 @@ func _draw_card(rect: Rect2, id: String, levels: Dictionary) -> void:
 # (Rạn stacks, Hàn stacks, pierce, execute, the Rạn bonus); empty for a plain card.
 func _keyword_parts(skill: Dictionary) -> Array:
 	var parts: Array = []
+	# Story 027: zone cards lead with their zone keyword; thorns add the Ran per entry.
+	var effect: String = str(skill.get("effect", ""))
+	if effect == "seal":
+		parts.append([tr(TEXT_KEYWORD_SEAL), SEAL_COLOR])
+	elif effect == "thorns":
+		parts.append([tr(TEXT_KEYWORD_THORNS), THORN_COLOR])
+		var thorn_stacks: int = int(skill.get("thorn_fragile_stacks", _zone_config().thorn_fragile_stacks))
+		if thorn_stacks > 0:
+			parts.append([tr(TEXT_KEYWORD_FRAGILE_STACKS) % thorn_stacks, FRAGILE_COLOR])
 	var fragile: int = int(skill.get("fragile_stacks", 0))
 	if fragile > 0:
 		parts.append([tr(TEXT_KEYWORD_FRAGILE_STACKS) % fragile, FRAGILE_COLOR])
@@ -367,6 +384,15 @@ func _keyword_parts(skill: Dictionary) -> Array:
 	if vs_fragile > 1.0:
 		parts.append([tr(TEXT_KEYWORD_VS_FRAGILE) % String.num(vs_fragile, MULT_DECIMALS), FRAGILE_COLOR])
 	return parts
+
+
+# Story 027: combat.json numbers (the thorn Ran default of a thorns card that omits its own), loaded once.
+func _zone_config() -> CombatConfig:
+	if _combat_config == null:
+		_combat_config = CombatConfig.load_from_file()
+		if _combat_config == null:
+			_combat_config = CombatConfig.new()
+	return _combat_config
 
 
 # One centred line of coloured [param parts] KEYWORD_GAP apart; the font shrinks (never below

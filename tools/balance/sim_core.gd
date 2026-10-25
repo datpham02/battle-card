@@ -21,6 +21,22 @@ extends RefCounted
 ## hand and fires the signature when ready (rules below). Human time is modelled in REAL seconds:
 ## place_sec per drag, join_sec per joined piece, choose_sec per card pick.
 ## A driver object (hit_probe) may replace the bot: it gets probe_tick(core) every loop step.
+##
+## Story 027 zones: the match gets CombatView._wire_zones's wiring (seal blocker on both movers, each side's
+## UnitMover.is_cell_blocked as the arbiter's leave-a-path test, CombatConfig.zone_numbers on the arbiter)
+## and the boss never gets zone cards (SkillConfig.boss_card_order). Zone-card rule of the bot
+## ([method _zone_choice]): in the card menu, with the cast cells already placed, it picks
+## - a SEAL card when the boss has at most ZONE_SEAL_MAX_EXITS open exits (enemy-half neighbours it may
+##   step into) and the cast covers all of them but one (at least one): the seal closes the escape cells
+##   and the leave-a-path rule leaves at most one open;
+## - else a THORNS card when the cast covers at least ZONE_THORN_MIN_COVER open exits (the boss's dodge
+##   cells);
+## - never when an available damage card in the hand would kill the boss, and never as the follow-up.
+## After a zone forms the bot follows up at once (no gap, no strike wait, aimed at the boss) while the zone
+## lasts, and its placement scores only OPEN neighbours of the boss (sealed ones 0, thorned ones half), so
+## the follow-up covers the boss cell and the exit still open. On its own half it treats sealed cells as
+## blocked and walks around thorns (dodges into them only when nothing else is free).
+## --no-zone-cards drops the zone cards from the match decks (deck_sim also drops them from the reward pool).
 
 const PLAYER: int = CombatState.Side.PLAYER
 const ENEMY: int = CombatState.Side.ENEMY
@@ -77,6 +93,15 @@ const AVG_CELLS: float = 3.5
 const PIN_FOLLOWUP: float = 1.0
 const PIN_CELLS: int = 5
 
+## Story 027 zone-card rule (see [method _zone_choice]): seal only when the boss has at most this many open
+## exits; thorns only when the cast covers at least this many open exits; a cast started at most
+## POST_SEAL_SEC after a seal formed counts as a post-seal cast (ps_res / ps_hits).
+const ZONE_SEAL_MAX_EXITS: int = 3
+const ZONE_THORN_MIN_COVER: int = 2
+const POST_SEAL_SEC: float = 2.0
+## Neighbour score share of a thorned neighbour (the boss avoids thorns but may cross them).
+const THORN_NEIGHBOUR_SHARE: float = 0.5
+
 enum Phase { IDLE, PLACING, MENU, MENU_WAIT }
 
 ## Bot parameters (DEFAULT_BOT plus CLI overrides).
@@ -87,6 +112,7 @@ var bot: Dictionary = DEFAULT_BOT.duplicate()
 var ov: Dictionary = {
 	"hp_mult": 1.0, "boss_hp_mult": 1.0, "think_mult": 1.0, "combo": -1.0, "step_mult": 1.0,
 	"drop_mult": 1.0, "boss_drop_mult": 1.0, "root": -1, "sig_cd": {}, "match_set": {}, "passive_set": {}, "hp_ids": [], "hp_ids_mult": 1.0,
+	"no_zone_cards": false, "card_set": {},
 }
 ## Loop step in REAL seconds.
 var dt: float = 0.05
@@ -162,11 +188,18 @@ var _next_cast: float = 0.0
 var _dodge_at: float = -1.0
 var _force_aim: bool = false
 var _wait_since: float = -1.0
+# Story 027 zone state: follow-up after a zone (until sim time), last seal time, the running cast's start
+# time and whether it is a zone card.
+var _zone_follow_until: float = -1.0
+var _last_seal_at: float = -1.0
+var _cast_t: float = -1.0
+var _cast_zone: bool = false
 
 
 ## Loads every shared config once.
 func load_configs() -> void:
 	cards = SkillConfig.load_from_file()
+	_apply_card_set()
 	cut_config = CutConfig.load_from_file()
 	brain_data = JSON.parse_string(FileAccess.get_file_as_string(BossBrainConfig.DEFAULT_PATH)) as Dictionary
 	drops_config = FieldDropsConfig.load_from_file()
@@ -176,6 +209,29 @@ func load_configs() -> void:
 	arena_library = ArenaLibrary.load_from_file()
 	piece_lib = PieceLibrary.load_from_file()
 	characters = CharacterConfig.load_from_file()
+
+
+## Story 027: the zone cards (SkillConfig.is_zone_card) in card_order order.
+func zone_card_ids() -> Array[String]:
+	var out: Array[String] = []
+	for id: String in cards.card_order:
+		if cards.is_zone_card(id):
+			out.append(id)
+	return out
+
+
+# --card-set: writes id.key = value into the loaded SkillConfig in memory (cards.json is never touched).
+# Must run before the configs are used; apply_args runs before load_configs in both tools.
+func _apply_card_set() -> void:
+	var sets: Dictionary = ov["card_set"]
+	for id: Variant in sets.keys():
+		var skill: Dictionary = cards.get_skill(str(id))
+		if skill.is_empty():
+			push_warning("sim_core: --card-set unknown card %s" % str(id))
+			continue
+		for k: Variant in (sets[id] as Dictionary).keys():
+			var val: Variant = sets[id][k]
+			skill[k] = int(val) if (str(k) == "min_cells" or str(k) == "thorn_fragile_stacks") else val
 
 
 ## Applies the shared flags (bot model and data overrides) and returns the arguments it did not know.
@@ -239,6 +295,18 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 			for kv: String in v.split(","):
 				if kv.contains(":"):
 					(ov["passive_set"] as Dictionary)[kv.get_slice(":", 0).strip_edges()] = float(kv.get_slice(":", 1))
+		elif arg == "--no-zone-cards":
+			ov["no_zone_cards"] = true
+		elif arg.begins_with("--card-set="):
+			# id.key:value,... e.g. --card-set=ket_gioi.cooldown_sec:8,tran_gai.min_cells:4
+			for kv: String in v.split(","):
+				if kv.contains(":") and kv.get_slice(":", 0).contains("."):
+					var path: String = kv.get_slice(":", 0).strip_edges()
+					var cid: String = path.get_slice(".", 0)
+					if not (ov["card_set"] as Dictionary).has(cid):
+						(ov["card_set"] as Dictionary)[cid] = {}
+					var raw2: String = kv.get_slice(":", 1).strip_edges()
+					(ov["card_set"] as Dictionary)[cid][path.get_slice(".", 1)] = float(raw2) if raw2.is_valid_float() else raw2
 		elif arg.begins_with("--match-set="):
 			for kv: String in v.split(","):
 				if kv.contains(":"):
@@ -272,6 +340,10 @@ func describe() -> String:
 		o.append("hp_ids=%s x%.2f" % [",".join(PackedStringArray(ov["hp_ids"])), float(ov["hp_ids_mult"])])
 	if not (ov["passive_set"] as Dictionary).is_empty():
 		o.append("passive_set=%s" % str(ov["passive_set"]))
+	if bool(ov["no_zone_cards"]):
+		o.append("no_zone_cards")
+	if not (ov["card_set"] as Dictionary).is_empty():
+		o.append("card_set=%s" % str(ov["card_set"]))
 	return "bot: %s | overrides: %s" % [" ".join(parts), ", ".join(o) if not o.is_empty() else "none"]
 
 
@@ -326,6 +398,12 @@ func play_match(m: Dictionary, character: Dictionary, deck_entries: Array, start
 		p_rng: RandomNumberGenerator, driver: Object = null) -> Dictionary:
 	_driver = driver
 	rng = p_rng
+	if bool(ov["no_zone_cards"]):
+		var kept: Array = []
+		for e: Variant in deck_entries:
+			if not cards.is_zone_card(str((e as Dictionary).get("id", ""))):
+				kept.append(e)
+		deck_entries = kept
 	_setup(m, character, deck_entries, start_hp, match_seed)
 	var timeout: bool = false
 	while true:
@@ -418,6 +496,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	var brain: BossBrain = boss.get_brain()
 	if "min_runes" in brain:
 		brain.set("min_runes", maxi(int(m.get("boss_min_runes", 0)), 0))
+	_wire_zones()
+	status.thorn_entered.connect(_on_thorn_entered)
 	arbiter.swing_resolved.connect(_on_swing_resolved)
 	arbiter.swing_interrupted.connect(_on_swing_interrupted)
 	actor.swing_resolved.connect(_on_player_swing_done)
@@ -447,11 +527,19 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_dodge_at = -1.0
 	_force_aim = false
 	_wait_since = -1.0
+	_zone_follow_until = -1.0
+	_last_seal_at = -1.0
+	_cast_t = -1.0
+	_cast_zone = false
 	_next_cast = rng.randf_range(float(bot["gap_min"]), float(bot["gap_max"]))
 	ms = {
 		"casts": 0, "resolved": 0, "hits": 0, "dealt": 0.0, "taken": 0.0, "bstarts": 0, "bswings": 0, "bhits": 0, "shits": 0, "bdmg": 0.0,
 		"interrupts": 0, "counters": 0, "sig_acts": 0, "sig_dmg": 0.0, "sig_first": -1.0, "focus_uses": 0,
 		"joins": 0, "featured": 0, "cells": 0,
+		# Story 027: zone casts, seals / thorns that formed and their cells, boss / player thorn entries and
+		# damage, hit counts of non-zone casts started <= POST_SEAL_SEC after a seal (ps_) and of the others (o_).
+		"zone_casts": 0, "seals": 0, "seal_cells": 0, "thorns": 0, "thorn_cells": 0, "bthorn": 0, "bthorn_dmg": 0.0,
+		"pthorn": 0, "pthorn_dmg": 0.0, "ps_res": 0, "ps_hits": 0, "o_res": 0, "o_hits": 0,
 	}
 	_tr("match start %s boss_hp=%.0f player_hp=%.0f player=%s boss=%s player_cd=%.2f featured=%s" % [
 		str(m.get("id", "")), boss_max_hp, state.player_hp, str(state.player_cell), str(state.enemy_cell), player_cd, str(not featured.is_empty())])
@@ -499,15 +587,29 @@ func _apply_brain_params(bc: BossBrainConfig, m: Dictionary, base_cd: float) -> 
 		bc.override_movement(bc.active_set, movement_override as Dictionary)
 
 
+# Mirrors CombatView._wire_zones (Story 027): seals block stepping for both movers (OR-ed via add_blocker),
+# the arbiter gets each side's blocked test (seal leave-a-path rule) and the zone numbers.
+func _wire_zones() -> void:
+	var st: StatusEffects = status
+	var movers: Dictionary = {PLAYER: mover, ENEMY: boss.get_mover()}
+	for side: int in movers:
+		var mv: UnitMover = movers[side] as UnitMover
+		var seal_side: int = side
+		mv.add_blocker(func(cell: Vector2i) -> bool: return st.is_sealed(seal_side, cell))
+		arbiter.blocked_cell_fns[side] = Callable(mv, "is_cell_blocked")
+	arbiter.zone_numbers = combat.zone_numbers()
+
+
+# Mirrors CombatView._boss_card_ids: zone cards are never the boss's (SkillConfig.boss_card_order).
 func _boss_card_ids(m: Dictionary) -> Array[String]:
 	var ids: Array[String] = []
 	var raw: Variant = m.get("boss_cards", [])
 	if typeof(raw) == TYPE_ARRAY:
 		for id: Variant in raw as Array:
-			if cards.has_skill(str(id)) and not ids.has(str(id)):
+			if cards.has_skill(str(id)) and not cards.is_zone_card(str(id)) and not ids.has(str(id)):
 				ids.append(str(id))
 	if ids.is_empty():
-		ids = cards.card_order.duplicate()
+		ids = cards.boss_card_order()
 	return ids
 
 
@@ -787,6 +889,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		ms["resolved"] = int(ms["resolved"]) + 1
 		if bool(result["hit"]):
 			ms["hits"] = int(ms["hits"]) + 1
+		_count_zone_result(result)
 	else:
 		learning.on_boss_swing_resolved(bool(result["hit"]))
 		trait_host.on_boss_swing_resolved(result)
@@ -796,6 +899,47 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 			ms["bhits"] = int(ms["bhits"]) + 1
 			ms["shits"] = int(ms["shits"]) + 1
 			ms["bdmg"] = float(ms["bdmg"]) + damage
+
+
+# Story 027 counters of one resolved player swing, and the zone follow-up trigger.
+func _count_zone_result(result: Dictionary) -> void:
+	var hit: bool = bool(result["hit"])
+	var kind: String = str(result.get("zone_kind", ""))
+	var placed: Array = result.get("zone_cells", []) as Array
+	if kind.is_empty() and not _cast_zone:
+		var post: bool = _last_seal_at >= 0.0 and _cast_t >= _last_seal_at and _cast_t - _last_seal_at <= POST_SEAL_SEC
+		var pre: String = "ps_" if post else "o_"
+		ms[pre + "res"] = int(ms[pre + "res"]) + 1
+		if hit:
+			ms[pre + "hits"] = int(ms[pre + "hits"]) + 1
+		return
+	if placed.is_empty():
+		return
+	var first: Vector2i = placed[0]
+	if kind == StatusEffects.KIND_SEAL:
+		ms["seals"] = int(ms["seals"]) + 1
+		ms["seal_cells"] = int(ms["seal_cells"]) + placed.size()
+		_last_seal_at = t
+		_zone_follow_until = t + status.seal_left(ENEMY, first)
+	elif kind == StatusEffects.KIND_THORNS:
+		ms["thorns"] = int(ms["thorns"]) + 1
+		ms["thorn_cells"] = int(ms["thorn_cells"]) + placed.size()
+		_zone_follow_until = t + status.thorn_left(ENEMY, first)
+	if _zone_follow_until > t:
+		_next_cast = t
+	_tr("PLAYER zone %s formed %s follow-up until %.2f" % [kind, str(placed), _zone_follow_until])
+
+
+func _on_thorn_entered(side: int, cell: Vector2i, damage: float) -> void:
+	_tr("THORN entered by %s at %s dmg=%.1f" % ["BOSS" if side == ENEMY else "PLAYER", str(cell), damage])
+	if side == ENEMY:
+		ms["bthorn"] = int(ms["bthorn"]) + 1
+		ms["bthorn_dmg"] = float(ms["bthorn_dmg"]) + damage
+		ms["dealt"] = float(ms["dealt"]) + damage
+	else:
+		ms["pthorn"] = int(ms["pthorn"]) + 1
+		ms["pthorn_dmg"] = float(ms["pthorn_dmg"]) + damage
+		ms["taken"] = float(ms["taken"]) + damage
 
 
 func _on_blast_fired(cells: Array[Vector2i], hit: bool) -> void:
@@ -859,7 +1003,8 @@ func _on_bag_slot_cleared(_index: int, _point: FieldPoint) -> void:
 
 
 func _on_player_swing_done(_cells: Array[Vector2i], _skill_id: String) -> void:
-	_next_cast = t + rng.randf_range(float(bot["gap_min"]), float(bot["gap_max"]))
+	var gap: float = rng.randf_range(float(bot["gap_min"]), float(bot["gap_max"]))
+	_next_cast = t if _zone_follow_until > t else t + gap
 
 
 # CombatView._on_skill_chosen + _begin_cut: the featured bonus rides only on a featured two-piece cast.
@@ -877,6 +1022,10 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 			signature.on_cast(skill_id, cells.size())
 		ms["casts"] = int(ms["casts"]) + 1
 		ms["cells"] = int(ms["cells"]) + cells.size()
+		_cast_t = t
+		_cast_zone = cards.is_zone_card(skill_id)
+		if _cast_zone:
+			ms["zone_casts"] = int(ms["zone_casts"]) + 1
 		if not bonus.is_empty():
 			ms["featured"] = int(ms["featured"]) + 1
 	else:
@@ -935,7 +1084,7 @@ func _ready_to_cast() -> bool:
 			n += 1
 	if n <= 0:
 		return false
-	return n >= int(bot["hold"]) or _force_aim or bag.is_full()
+	return n >= int(bot["hold"]) or _force_aim or bag.is_full() or _zone_follow_until > t
 
 
 # One real step through the mover; a success is forwarded to the TraitHost (CombatView.try_step_player).
@@ -959,6 +1108,8 @@ func _warned_cells() -> Array[Vector2i]:
 
 
 func _step_blocked(c: Vector2i) -> bool:
+	if mover.is_cell_blocked(c):
+		return true
 	var slam: SlamTrait = trait_host.get_trait("slam") as SlamTrait
 	return slam != null and (slam.is_cracked(c) or slam.get_warning_cells().has(c))
 
@@ -993,10 +1144,16 @@ func _telegraph_dodge() -> void:
 		return
 	var danger: Array[Vector2i] = boss_actor.get_cells()
 	var options: Array[Vector2i] = []
+	var thorned: Array[Vector2i] = []
 	for d: Vector2i in DIRS:
 		var c: Vector2i = here + d
 		if grid.is_player_cell(c) and not danger.has(c) and not status.is_burning(c) and not _step_blocked(c):
-			options.append(d)
+			if status.thorns_at(PLAYER, c).is_empty():
+				options.append(d)
+			else:
+				thorned.append(d)
+	if options.is_empty():
+		options = thorned
 	if options.is_empty() or _bot_step(options[rng.randi_range(0, options.size() - 1)]):
 		_dodge_at = -1.0
 
@@ -1014,6 +1171,7 @@ func _walk_to_piece() -> void:
 		return
 	var avoid: Array[Vector2i] = _warned_cells()
 	avoid.append_array(status.burning_cells())
+	avoid.append_array(status.thorn_cells(PLAYER))
 	if boss.get_actor().is_swinging():
 		avoid.append_array(boss.get_actor().get_cells())
 	var start: Vector2i = state.player_cell
@@ -1060,7 +1218,8 @@ func _swing_sec(n: int) -> float:
 # Starts a cast: chooses the target and the plan, fires Tram / Anh Bo under the rules, enters PLACING.
 func _try_start_cast() -> bool:
 	var forced: bool = _force_aim
-	if not forced and boss.get_brain().get_reaction_sec() > 0.0 and not boss.is_step_locked():
+	var follow: bool = _zone_follow_until > t
+	if not forced and not follow and boss.get_brain().get_reaction_sec() > 0.0 and not boss.is_step_locked():
 		var fresh: bool = boss_step_at >= 0.0 and t - boss_step_at <= float(bot["strike_fresh"])
 		if not fresh and (_wait_since < 0.0 or t - _wait_since < float(bot["wait_step"])):
 			if _wait_since < 0.0:
@@ -1069,7 +1228,7 @@ func _try_start_cast() -> bool:
 	_wait_since = -1.0
 	_force_aim = false
 	var enemy: Array[Vector2i] = grid.enemy_cells()
-	var aimed: bool = forced or rng.randf() < float(bot["aim"])
+	var aimed: bool = forced or follow or rng.randf() < float(bot["aim"])
 	var target: Vector2i = state.enemy_cell if aimed else enemy[rng.randi_range(0, enemy.size() - 1)]
 	var c: Dictionary = _plan_cast(target, _strike_budget() - _latency_estimate(false), true)
 	if c.is_empty():
@@ -1164,10 +1323,15 @@ func _join_piece() -> void:
 # Picks the best available card of the drawn hand; none available = wait for the menu timeout (default card).
 func _choose_card() -> void:
 	var count: int = plan.total_cells()
+	var zone: String = _zone_choice(count)
+	if not zone.is_empty() and flow.choose(zone):
+		return
 	var best: String = ""
 	var best_value: float = -INF
 	for id: String in flow.get_hand():
 		if not bool(SkillAvailability.check(cards, cooldowns, id, count, card_level(id))["available"]):
+			continue
+		if cards.is_zone_card(id):
 			continue
 		var v: float = cast_value(id, card_level(id), count)
 		if v > best_value:
@@ -1175,6 +1339,59 @@ func _choose_card() -> void:
 			best = id
 	if best.is_empty() or not flow.choose(best):
 		_phase = Phase.MENU_WAIT
+
+
+# Enemy-half neighbours of the boss's cell it may step into now (its mover's blockers: seals...).
+func _boss_open_exits() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var b_mover: UnitMover = boss.get_mover()
+	for d: Vector2i in DIRS:
+		var c: Vector2i = state.enemy_cell + d
+		if grid.is_enemy_cell(c) and not b_mover.is_cell_blocked(c):
+			out.append(c)
+	return out
+
+
+# Story 027 zone-card rule (see the file header): the zone card to pick for the placed cast, or "".
+# Among available zone cards of the hand the higher damage_per_cell / Ran stacks wins.
+func _zone_choice(count: int) -> String:
+	if _zone_follow_until > t:
+		return ""
+	var seal: String = ""
+	var thorn: String = ""
+	var seal_key: float = -1.0
+	var thorn_key: float = -1.0
+	var kill_hp: float = -INF
+	for id: String in flow.get_hand():
+		var level: int = card_level(id)
+		if not bool(SkillAvailability.check(cards, cooldowns, id, count, level)["available"]):
+			continue
+		if not cards.is_zone_card(id):
+			kill_hp = maxf(kill_hp, cast_value(id, level, count))
+			continue
+		var c: Dictionary = cards.resolved(id, level)
+		var key: float = float(c.get("damage_per_cell", 0.0)) + float(c.get("thorn_fragile_stacks", 0))
+		if str(c["effect"]) == "seal" and key > seal_key:
+			seal = id
+			seal_key = key
+		elif str(c["effect"]) == "thorns" and key > thorn_key:
+			thorn = id
+			thorn_key = key
+	if (seal.is_empty() and thorn.is_empty()) or kill_hp >= state.enemy_hp:
+		return ""
+	var exits: Array[Vector2i] = _boss_open_exits()
+	var cells: Array[Vector2i] = plan.cells()
+	var covered: int = 0
+	for c: Vector2i in exits:
+		if cells.has(c):
+			covered += 1
+	if not seal.is_empty() and not exits.is_empty() and exits.size() <= ZONE_SEAL_MAX_EXITS and covered >= maxi(1, exits.size() - 1):
+		_tr("PLAYER zone rule: seal %s exits=%s covered=%d" % [seal, str(exits), covered])
+		return seal
+	if not thorn.is_empty() and covered >= ZONE_THORN_MIN_COVER:
+		_tr("PLAYER zone rule: thorns %s exits=%s covered=%d" % [thorn, str(exits), covered])
+		return thorn
+	return ""
 
 
 # ---------------------------------------------------------------- placement planner
@@ -1204,8 +1421,9 @@ func _score(cells: Array[Vector2i], target: Vector2i, budget: float, pair: bool)
 	if cells.has(target):
 		s += SCORE_TARGET
 	for d: Vector2i in DIRS:
-		if cells.has(target + d):
-			s += SCORE_NEIGHBOUR
+		var nb: Vector2i = target + d
+		if cells.has(nb) and not status.is_sealed(ENEMY, nb):
+			s += SCORE_NEIGHBOUR * (1.0 if status.thorns_at(ENEMY, nb).is_empty() else THORN_NEIGHBOUR_SHARE)
 	var over: float = _swing_sec(cells.size()) - maxf(budget, 0.0)
 	if over > 0.0:
 		s -= SCORE_OVER_BUDGET_PER_SEC * over

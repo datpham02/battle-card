@@ -29,5 +29,11 @@
 	"execute_ratio": 0.25,
 	"max_pieces_per_cast": 2,
 	"join_extra_sec": 1.5,
-	"max_cast_cells": 0
+	"max_cast_cells": 0,
+	"zones": {
+		"seal_sec": 1.2,
+		"thorn_sec": 3.0,
+		"thorn_damage": 6.0,
+		"thorn_fragile_stacks": 1
+	}
 }

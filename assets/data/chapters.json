@@ -526,6 +526,17 @@
 						{
 							"id": "row_burner",
 							"params": {}
+						},
+						{
+							"id": "seal_caster",
+							"params": {
+								"interval_sec": 9.0,
+								"first_delay_sec": 6.0,
+								"cells_min": 2,
+								"cells_max": 3,
+								"lead_sec": 0.6,
+								"min_swing_cells": 3
+							}
 						}
 					],
 					"arena": {
@@ -773,6 +784,14 @@
 						{
 							"id": "frost_aura",
 							"params": {}
+						},
+						{
+							"id": "thorn_field",
+							"params": {
+								"min_swing_cells": 4,
+								"max_cells": 3,
+								"cooldown_sec": 6.0
+							}
 						}
 					],
 					"arena": {

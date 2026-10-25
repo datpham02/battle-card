@@ -318,3 +318,17 @@ ui.hud.featured_corner,Hình chủ đạo,Featured shape
 ui.hud.featured_label,Hình chủ đạo ×%s,Featured shape ×%s
 ui.hud.join_cap,Quá nhiều ô (tối đa %d),Too many cells (max %d)
 keyword.burn,Cháy,Burn
+card.ket_gioi.name,Kết giới,Seal Ward
+card.ket_gioi.desc,Phong ấn các ô trúng: không bước vào được trong 2 giây. Trúng hay trượt đều có kết giới.,Seals the cut cells: they cannot be stepped into for 2 s. Forms on a hit or a miss.
+card.long_an.name,Lồng ấn,Seal Cage
+card.long_an.desc,Phong ấn các ô trúng trong 2 giây và gây sát thương nhẹ nếu trúng.,Seals the cut cells for 2 s and deals light damage on a hit.
+card.tran_gai.name,Trận gai,Thorn Field
+card.tran_gai.desc,Rải gai lên các ô trúng trong 3 giây: mỗi lần bước vào mất 6 máu và nhận Rạn 1 tầng.,Covers the cut cells in thorns for 3 s: each entry costs 6 HP and applies 1 Fragile.
+card.gai_nguyen.name,Gai nguyền,Cursed Thorns
+card.gai_nguyen.desc,Rải gai nguyền lên các ô trúng trong 3 giây: mỗi lần bước vào mất 6 máu và nhận Rạn 2 tầng.,Covers the cut cells in cursed thorns for 3 s: each entry costs 6 HP and applies 2 Fragile.
+keyword.seal,Kết giới,Seal
+keyword.thorns,Trận gai,Thorns
+trait.seal_caster.name,Ấn phong tỏa,Sealbinder
+trait.seal_caster.desc,"Trước một đòn lớn, nó dựng kết giới chặn đường thoát của bạn; luôn chừa một lối ra.",Before a big swing it seals cells on your escape path; one way out is always left.
+trait.thorn_field.name,Trận gai,Thorn Field
+trait.thorn_field.desc,"Khi vung đòn từ 4 ô trở lên, nó rải gai lên đường thoát của bạn; bước vào gai mất máu và bị Rạn.",When it swings 4 or more cells it lays thorns on your escape path; stepping in costs HP and adds Fragile.

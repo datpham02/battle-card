@@ -11,13 +11,19 @@ const FALLBACK_SKILL: String = "kiem_khi"
 const RARITIES: Array[String] = ["common", "rare", "epic"]
 ## Highest card level (levels are 1..MAX_LEVEL; Story 020).
 const MAX_LEVEL: int = 3
-const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost"]
+const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "seal", "thorns"]
 ## Keys an `upgrade` table may change (additive deltas), with the floor each is clamped to.
 const UPGRADE_FLOORS: Dictionary = {
 	"damage_per_cell": 0.0, "min_cells": 1.0, "cooldown_sec": 0.0, "burn_damage_per_tick": 0.0,
 	"burn_duration_sec": 0.0, "pin_duration_sec": 0.0, "push_cells": 0.0,
 	"fragile_stacks": 0.0, "frost_stacks": 0.0,
+	"seal_sec": 0.0, "thorn_sec": 0.0, "thorn_damage": 0.0, "thorn_fragile_stacks": 0.0,
 }
+
+## Story 027: the optional per-card zone number keys.
+const ZONE_KEYS: Array[String] = ["seal_sec", "thorn_sec", "thorn_damage", "thorn_fragile_stacks"]
+## Story 027: card effects that form a zone (kept out of the boss's card list).
+const ZONE_EFFECTS: Array[String] = ["seal", "thorns"]
 
 ## Simulation speed factor while the card menu is open (0..1). Applied by the view.
 var menu_time_scale: float = 0.2
@@ -41,7 +47,10 @@ var focus_locks_movement: bool = true
 var card_order: Array[String] = [FALLBACK_SKILL]
 ## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_per_cell, push_cells,
 ## burn_*, pin_duration_sec, fragile_stacks, frost_stacks, pierce_defense, execute, execute_ratio,
-## bonus_vs_fragile_mult, rarity, upgrade, implemented} (level 1 values; see [method resolved])
+## bonus_vs_fragile_mult, rarity, upgrade, implemented} (level 1 values; see [method resolved]).
+## Story 027 zone cards (effect seal / thorns) may also carry the optional per-card overrides seal_sec,
+## thorn_sec, thorn_damage, thorn_fragile_stacks; a key the card omits is absent here and combat.json
+## `zones` supplies the number.
 var cards: Dictionary = {}
 
 
@@ -132,6 +141,21 @@ func get_skill(id: String) -> Dictionary:
 	return {}
 
 
+## Story 027: true when [param id] is a zone card (effect in [constant ZONE_EFFECTS]). The boss never
+## plays these: it gets zones only through its traits (seal_caster, thorn_field).
+func is_zone_card(id: String) -> bool:
+	return ZONE_EFFECTS.has(str(get_skill(id).get("effect", "")))
+
+
+## Story 027: [member card_order] without the zone cards: the boss's default card list.
+func boss_card_order() -> Array[String]:
+	var out: Array[String] = []
+	for id: String in card_order:
+		if not is_zone_card(id):
+			out.append(id)
+	return out
+
+
 ## Rarity of [param id] ("common" / "rare" / "epic"); "common" if unknown.
 func get_rarity(id: String) -> String:
 	return str(get_skill(id).get("rarity", "common"))
@@ -212,7 +236,7 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		push_warning("SkillConfig: card %s has no upgrade table" % id)
 	# Fallback for a card without damage_per_cell: the global cuts.json base_damage_per_cell.
 	var dpc: float = maxf(float(raw["damage_per_cell"]), 0.0) if raw.has("damage_per_cell") 			else CutConfig.load_from_file().base_damage_per_cell
-	return {
+	var out: Dictionary = {
 		"effect": effect,
 		"burn_duration_sec": maxf(float(raw.get("burn_duration_sec", 0.0)), 0.0),
 		"burn_tick_sec": tick,
@@ -236,3 +260,8 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"upgrade": upgrade,
 		"implemented": bool(raw.get("implemented", false)),
 	}
+	# Story 027: optional per-card zone numbers (absent = the combat.json `zones` block decides).
+	for key: String in ZONE_KEYS:
+		if raw.has(key):
+			out[key] = maxi(int(raw[key]), 0) if key == "thorn_fragile_stacks" else maxf(float(raw[key]), 0.0)
+	return out

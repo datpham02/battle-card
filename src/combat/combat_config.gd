@@ -67,6 +67,12 @@ var execute_ratio: float = 0.25
 var max_pieces_per_cast: int = 2
 var join_extra_sec: float = 1.5
 var max_cast_cells: int = 0
+## Story 027 zones (combat.json `zones` block; cards may override per card): seconds a Ket gioi (seal) holds,
+## seconds a Tran gai (thorns) lasts, damage per entry into a thorn cell, Ran stacks per entry.
+var seal_sec: float = 1.2
+var thorn_sec: float = 3.0
+var thorn_damage: float = 6.0
+var thorn_fragile_stacks: int = 1
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -117,6 +123,7 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	config.join_extra_sec = maxf(float(data.get("join_extra_sec", config.join_extra_sec)), 0.0)
 	var cap: int = int(data.get("max_cast_cells", config.max_cast_cells))
 	config.max_cast_cells = 0 if cap <= 0 else cap
+	config._parse_zones(data)
 	return config
 
 
@@ -145,6 +152,34 @@ func use_grid(new_grid: BoardGrid) -> void:
 	missing_cells = new_grid.missing_side_cells()
 	player_start_cell = BoardGrid.NO_CELL
 	enemy_start_cell = BoardGrid.NO_CELL
+
+
+## Story 027: the zone numbers as a dictionary {seal_sec, thorn_sec, thorn_damage, thorn_fragile_stacks}
+## (what CutEffects takes as options.zones and a card may override).
+func zone_numbers() -> Dictionary:
+	return {
+		"seal_sec": seal_sec, "thorn_sec": thorn_sec,
+		"thorn_damage": thorn_damage, "thorn_fragile_stacks": thorn_fragile_stacks,
+	}
+
+
+# Story 027: the `zones` block; one invalid value -> all four fall back to the defaults (warning).
+func _parse_zones(data: Dictionary) -> void:
+	var raw: Variant = data.get("zones")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var zones: Dictionary = raw as Dictionary
+	var seal: float = float(zones.get("seal_sec", seal_sec))
+	var thorn: float = float(zones.get("thorn_sec", thorn_sec))
+	var damage: float = float(zones.get("thorn_damage", thorn_damage))
+	var stacks: int = int(zones.get("thorn_fragile_stacks", thorn_fragile_stacks))
+	if seal > 0.0 and thorn > 0.0 and damage >= 0.0 and stacks >= 0:
+		seal_sec = seal
+		thorn_sec = thorn
+		thorn_damage = damage
+		thorn_fragile_stacks = stacks
+	else:
+		push_warning("CombatConfig: invalid zones values (seal_sec>0, thorn_sec>0, thorn_damage>=0, thorn_fragile_stacks>=0), using defaults")
 
 
 func _parse_keywords(data: Dictionary) -> void:

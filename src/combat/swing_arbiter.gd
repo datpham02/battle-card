@@ -42,6 +42,11 @@ var player_signature_modifier: Callable = Callable()
 ## execute_ratio). 0 = none; set by CombatView.
 var boss_defense: float = 0.0
 var execute_ratio: float = 0.0
+## Story 027: zone numbers for seal / thorns cards (CombatConfig.zone_numbers(); empty = CombatConfig
+## fallbacks) and, per CombatState.Side, the Callable(cell) -> bool that says whether that side's unit is
+## blocked from stepping onto a cell (UnitMover.is_cell_blocked); used by the seal leave-a-path rule.
+var zone_numbers: Dictionary = {}
+var blocked_cell_fns: Dictionary = {}
 
 
 func _init(
@@ -107,7 +112,8 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level,
 		player_cells_modifier if is_player else Callable(),
 		player_signature_modifier if is_player else Callable(),
-		{"target_defense": boss_defense, "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {}})
+		{"target_defense": boss_defense, "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
+			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable())})
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	result["level"] = level

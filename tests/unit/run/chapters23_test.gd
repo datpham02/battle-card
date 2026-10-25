@@ -2,7 +2,7 @@ extends SceneTree
 ## Story 023 Part Z: chapters 2-3 data.
 var fails: int = 0
 var passes: int = 0
-const TRAITS: Array[String] = ["row_burner", "rotten_thrower", "step_reactor", "fuse_cannon", "slam", "frost_aura", "phase_shift"]
+const TRAITS: Array[String] = ["row_burner", "rotten_thrower", "step_reactor", "fuse_cannon", "slam", "frost_aura", "phase_shift", "seal_caster", "thorn_field"]
 const BOSSES: Array[String] = ["forest_witch", "ogre_king", "mist_lord"]
 const NORMALS: Array[String] = ["skeleton", "zombie", "bat_swarm", "slime", "cultist", "rat_king_guard", "frost_sprite", "wisp", "stone_sentry", "snow_wolf", "rime_archer", "ice_golem"]
 
