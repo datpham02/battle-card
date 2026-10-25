@@ -107,18 +107,6 @@ func get_cleared() -> Array[String]:
 	return _cleared.duplicate()
 
 
-## Deprecated (Story 019): superseded by [method is_chapter_unlocked]. Floor (ci, fi) is playable:
-## the first floor of the first chapter, or the previous floor in linear order is cleared.
-func is_unlocked(config: ChaptersConfig, ci: int, fi: int) -> bool:
-	var index: int = config.linear_index(ci, fi)
-	if index < 0:
-		return false
-	if index == 0:
-		return true
-	var previous: Vector2i = config.floor_at_linear(index - 1)
-	return is_cleared(config.floor_key(previous.x, previous.y))
-
-
 ## Deprecated (Story 019): not saved. Records the floor being played.
 ## [param hp_at_match_start] negative = full HP.
 func set_in_progress(key: String, match_index: int, hp_at_match_start: float, floor_seed: int) -> void:
@@ -212,13 +200,9 @@ static func from_json(text: String, config: ChaptersConfig = null) -> ProgressSt
 	return state
 
 
-## Dev (--progress=all): every floor except the very last is cleared (legacy floor API) and every
-## chapter except the last is cleared.
+## Dev (--progress=all): every chapter except the last is cleared.
 static func unlocked_everything(config: ChaptersConfig) -> ProgressState:
 	var state := ProgressState.new()
-	for i: int in config.total_floors() - 1:
-		var pos: Vector2i = config.floor_at_linear(i)
-		state._cleared.append(config.floor_key(pos.x, pos.y))
 	for ci: int in config.chapter_count() - 1:
 		state.mark_chapter_cleared(config.chapter_id(ci))
 	return state

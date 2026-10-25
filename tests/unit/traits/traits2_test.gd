@@ -21,7 +21,7 @@ func _world(seed_value: int) -> Dictionary:
 	var hold_config := HoldSlotsConfig.new()
 	var drops_config := FieldDropsConfig.new()
 	drops_config.initial_delay_sec = 100000.0
-	var player_drops := FieldDrops.new(drops_config, grid.player_cells(), grid.perimeter_labels(), seed_value)
+	var player_drops := FieldDrops.new(drops_config, grid.player_cells(), seed_value)
 	var boss := BossController.new(state, grid, cut_config, skill_config, brain_config, drops_config, hold_config, seed_value + 1)
 	boss.set_active(false)
 	var status := StatusEffects.new()
@@ -287,12 +287,15 @@ func _test_frost() -> void:
 	_check("frost stays off", not tr.is_active())
 	var cfg := FieldDropsConfig.new()
 	cfg.initial_delay_sec = 0.0
-	cfg.spawn_interval_sec = 1.0
-	cfg.max_on_field = 99
-	cfg.freshness_sec = 1000.0
+	cfg.piece_spawn_interval_sec = 1.0
+	cfg.piece_max_on_field = 99
+	cfg.piece_freshness_sec = 1000.0
 	var grid := BoardGrid.new(3, 3)
-	var fast := FieldDrops.new(cfg, grid.player_cells(), grid.perimeter_labels(), 1)
-	var slow := FieldDrops.new(cfg, grid.player_cells(), grid.perimeter_labels(), 1)
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	var fast := FieldDrops.new(cfg, grid.player_cells(), 1)
+	var slow := FieldDrops.new(cfg, grid.player_cells(), 1)
+	fast.enable_pieces(lib, "ch1", grid, 1)
+	slow.enable_pieces(lib, "ch1", grid, 1)
 	slow.interval_scale = 1.0 / 0.8
 	for i: int in 60:
 		fast.tick(0.1, Vector2i(-1, -1), 1)

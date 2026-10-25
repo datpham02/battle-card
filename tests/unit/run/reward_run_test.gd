@@ -69,7 +69,6 @@ func _initialize() -> void:
 	var map: Array[Dictionary] = cfg.generate_map(0, 777, 0)
 	var s: RunSession = RunSession.begin(cfg, ch, 0, 777, map, int(rcfg["starting_removals"]))
 	check(s.column == 0 and s.node_index == -1 and s.hp == -1.0 and s.deck_ids.size() == 6 and s.character_id == "kiem_si" and s.removal_tokens == 1 and s.map.size() == cfg.column_count(0), "begin (v4: map, column 0, 1 token)")
-	check(s.floor_index == 0 and s.match_index == -1, "deprecated floor_index / match_index alias column / node_index")
 	check(s.available_nodes().size() == 1 and str(s.available_nodes()[0]["kind"]) == "battle" and s.current_node().is_empty(), "column 0: one battle, none chosen")
 	check(not s.complete_node(60.0, 300.0, "", rcfg, 0.0)["advanced"], "complete_node without a chosen node does nothing")
 	check(s.choose_node(0) and not s.choose_node(0) and s.current_node()["kind"] == "battle", "choose_node once")

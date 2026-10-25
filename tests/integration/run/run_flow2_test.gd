@@ -179,7 +179,7 @@ func _run() -> void:
 	var ok: bool = await _wait_phase(c, RunState.Phase.PLAYING)
 	_check(ok, "intro -> PLAYING")
 	var max_hp: float = c.get_player_max_hp()
-	_check(is_equal_approx(max_hp, 160.0), "mage max HP 160 (from characters.json)")
+	_check(is_equal_approx(max_hp, 190.0), "mage max HP 190 (from characters.json, Story 026)")
 
 	# --- win -> node completed -> reward gate --------------------------------------------------------
 	_view(c).get_state().damage(CombatState.Side.PLAYER, 30.0)
@@ -332,7 +332,7 @@ func _run() -> void:
 	_check(flow2b.get_phase() == GameFlow.Phase.REST, "forge out of range refused, still REST")
 	var hp_before_rest: float = flow2b.get_run().hp
 	flow2b.rest_heal_requested()
-	var expected_rest: float = minf(hp_before_rest + float(reward_cfg["rest_heal_ratio"]) * 160.0, 160.0)
+	var expected_rest: float = minf(hp_before_rest + float(reward_cfg["rest_heal_ratio"]) * 190.0, 190.0)
 	_check(is_equal_approx(flow2b.get_run().hp, expected_rest), "rest heal: %.1f -> %.1f" % [hp_before_rest, flow2b.get_run().hp])
 	_check(flow2b.get_phase() == GameFlow.Phase.MAP and flow2b.get_current_column() == 3 and str(flow2b.get_cleared_nodes()[2]["kind"]) == "rest", "rest completed -> MAP column 3")
 	saved = store2.load_state(config).get_run_dict()

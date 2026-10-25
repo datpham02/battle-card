@@ -5,14 +5,20 @@ extends RefCounted
 ## an action the controller applies ({"type":"wait"}, {"type":"move","direction":Vector2i},
 ## {"type":"cut","hand_indices":Array[int],"skill_id":String}).
 ##
-## CUTS: candidates are every ORDERED selection of 1..min(4, hand_max_points, points in hand)
-## points (order = connection order, so A-B-C differs from C-B-A); a full 4-point hand gives
-## 4 + 12 + 24 + 24 = 64 candidates. Covered cells are cached by label sequence.
+## CUTS (Story 025, the only path since Story 026): the hand holds puzzle pieces
+## (FieldPoint.piece). Candidates are PLACEMENTS: every held piece x distinct rotation x
+## PiecePlacement.valid_anchors on the PLAYER's half. All single placements are ranked cheaply
+## (covers the player's cell, then reachable cells covered) and only the top
+## BossBrainConfig.max_placements_scored are scored in full; two-piece casts (up to max_pieces,
+## across different held pieces, non-overlapping) are built from the best
+## BossBrainConfig.pair_seed_placements singles and scored as ONE cast (union cells). The boss
+## never uses featured-shape logic (that bonus is player-only).
 ## Cut score = per_cell*cells + hit_now(player cell covered)
 ## + escape_penalty / (1 + escape cells: cells the player can still reach during the wind-up
 ## that the cut does not cover, see EscapeAnalysis) - duration_penalty*windup
-## - point_cost*points - hand_wait(points < hand_target while the hand is not full)
-## + interrupt bonus + skill bonus + noise (the file-level `noise`).
+## - point_cost*pieces - hand_wait(pieces held < hand_target while the hand is not full)
+## + interrupt bonus + skill bonus + noise (the file-level `noise`). A cut below min_cut_score is dropped,
+## except with a FULL hand: then the best candidate is cast anyway so the boss never stalls (TD-022).
 ##
 ## MOVEMENT (Story 013): the brain keeps ONE destination {cell, purpose} (purpose: pickup /
 ## dodge / retreat / wander) and walks one step per decision toward it along the set's
@@ -27,16 +33,7 @@ extends RefCounted
 ## profile (commitment 1, noise 0, row_first, juke 0, no wander) therefore moves identically
 ## whatever the seed. Best of cut / move / wait wins.
 ##
-## PIECE MODE (Story 025): when the hand holds puzzle pieces (FieldPoint.piece != null) the
-## candidates are PLACEMENTS instead of label selections: every held piece x distinct rotation x
-## PiecePlacement.valid_anchors on the PLAYER's half. All single placements are ranked cheaply
-## (covers the player's cell, then reachable cells covered) and only the top
-## BossBrainConfig.max_placements_scored are scored in full; two-piece casts (up to max_pieces,
-## across different held pieces, non-overlapping) are built from the best
-## BossBrainConfig.pair_seed_placements singles and scored as ONE cast (union cells). The boss
-## never uses featured-shape logic (that bonus is player-only). A hand of classic label points
-## keeps the old path above unchanged.
-## Implements: Story 009, Story 013 (Parts 1 and 2), Story 025 (piece cuts).
+## Implements: Story 009, Story 013 (Parts 1 and 2), Story 025 (piece cuts), Story 026 (label path removed), TD-022 (full-hand rule).
 
 ## Destination purposes reported by [method get_destination].
 const PURPOSE_PICKUP: String = "pickup"
@@ -49,7 +46,6 @@ const STYLE_COLUMN_FIRST: String = "column_first"
 const STYLE_SHORTEST: String = "shortest"
 
 const _DIRECTIONS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
-const _MAX_POINTS: int = 4
 ## Added to the seed for the combo roll so it never shares a stream with the score noise.
 const _COMBO_SEED_OFFSET: int = 104729
 ## Floor for the time left used to scale danger urgency.
@@ -74,7 +70,6 @@ var _reaction_sec: float = 0.0
 var _set_name: String = ""
 var _think_clock: float = 0.0
 var _player_seen_sec: float = 0.0
-var _cell_cache: Dictionary = {}
 var _combo_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _debug: Dictionary = {}
 ## "shape|rotated cells" -> valid anchors on the player's half (the grid never changes).
@@ -228,16 +223,14 @@ func decide(ctx: Dictionary) -> Dictionary:
 	}
 	var type: String = str(choice["type"])
 	if type == "cut":
-		var cut_action: Dictionary = {"type": "cut", "hand_indices": choice["hand_indices"], "skill_id": choice["skill_id"]}
-		if bool(choice.get("piece_mode", false)):
-			cut_action["cells"] = choice["cells"]
+		var cut_action: Dictionary = {
+			"type": "cut", "hand_indices": choice["hand_indices"], "skill_id": choice["skill_id"], "cells": choice["cells"],
+		}
 		var combo: Dictionary = _choose_combo(
 			state, hand, choice, burning, player_step_cooldown, _swing_mult(actor)
 		)
 		if not combo.is_empty():
-			cut_action["combo"] = {"hand_indices": combo["hand_indices"], "skill_id": combo["skill_id"]}
-			if bool(combo.get("piece_mode", false)):
-				(cut_action["combo"] as Dictionary)["cells"] = combo["cells"]
+			cut_action["combo"] = {"hand_indices": combo["hand_indices"], "skill_id": combo["skill_id"], "cells": combo["cells"]}
 			_debug["combo"] = combo
 		return cut_action
 	if type == "move":
@@ -258,10 +251,7 @@ func _swing_mult(actor: CutActor) -> float:
 	return actor.duration_mult
 
 
-# Second cut of a combo, or empty. Rolls combo_chance (own seeded stream, skipped at 0 and 1),
-# then scores every ordered selection of the points left in hand ONLY by how many of the first
-# cut's escape cells (where the player can stand when swing 1 lands) it covers; ties: fewer
-# points, then fewer cells. Needs >= 1 covered escape cell. Combos always use slash.
+# Second cut of a combo, or empty (see _choose_piece_combo). Combos always use slash.
 func _choose_combo(
 	state: CombatState, hand: HoldSlots, first: Dictionary, burning: Array[Vector2i],
 	player_step_cooldown: float, duration_mult: float
@@ -269,51 +259,7 @@ func _choose_combo(
 	var chance: float = float(_weights.get("combo_chance", 0.0))
 	if chance <= 0.0:
 		return {}
-	if bool(first.get("piece_mode", false)):
-		return _choose_piece_combo(state, hand, first, burning, player_step_cooldown, duration_mult, chance)
-	var used: Array[int] = []
-	used.assign(first["hand_indices"] as Array)
-	var pool: Array[int] = []
-	for i: int in hand.get_slot_count():
-		if hand.get_point(i) != null and not used.has(i):
-			pool.append(i)
-	if pool.is_empty():
-		return {}
-	if chance < 1.0 and _combo_rng.randf() >= chance:
-		return {}
-	var cells1: Array[Vector2i] = first["cells"] as Array[Vector2i]
-	var steps1: int = EscapeAnalysis.steps_for_swing(_cut_config.swing_duration(cells1.size()) * duration_mult, player_step_cooldown)
-	var escape_before: Array[Vector2i] = EscapeAnalysis.escape_cells(_grid, state.player_cell, steps1, true, cells1, burning)
-	var selections: Array = []
-	_collect_selections(pool, mini(mini(_MAX_POINTS, _cut_config.hand_max_points), pool.size()), [] as Array[int], selections)
-	var best: Dictionary = {}
-	for selection_variant: Variant in selections:
-		var selection: Array[int] = []
-		selection.assign(selection_variant as Array)
-		var labels: Array[String] = []
-		for index: int in selection:
-			labels.append(hand.get_point(index).label)
-		var cells2: Array[Vector2i] = _cells_for(labels)
-		if cells2.is_empty():
-			continue
-		var covered: int = 0
-		for cell: Vector2i in escape_before:
-			if cells2.has(cell):
-				covered += 1
-		if covered < 1:
-			continue
-		if not best.is_empty():
-			var better: bool = covered > int(best["covered"])
-			if covered == int(best["covered"]):
-				better = selection.size() < (best["hand_indices"] as Array).size() \
-					or (selection.size() == (best["hand_indices"] as Array).size() and cells2.size() < (best["cells"] as Array).size())
-			if not better:
-				continue
-		best = {
-			"hand_indices": selection, "skill_id": SkillConfig.FALLBACK_SKILL, "labels": labels, "cells": cells2,
-			"covered": covered, "escape_before": escape_before.size(), "escape_after": escape_before.size() - covered,
-		}
-	return best
+	return _choose_piece_combo(state, hand, first, burning, player_step_cooldown, duration_mult, chance)
 
 
 func _finish_wait(reason: String, score: float) -> Dictionary:
@@ -343,93 +289,10 @@ func _best_cut(
 	_cut_candidates = []
 	if not actor.can_begin():
 		return best
-	if _hand_has_pieces(hand):
-		return _best_piece_cut(state, hand, cooldowns, player_actor, incoming, burning, player_step_cooldown, _swing_mult(actor))
-	var occupied: Array[int] = []
-	for i: int in hand.get_slot_count():
-		if hand.get_point(i) != null:
-			occupied.append(i)
-	if occupied.is_empty():
-		return best
-	var max_points: int = mini(mini(_MAX_POINTS, _cut_config.hand_max_points), occupied.size())
-	var selections: Array = []
-	_collect_selections(occupied, max_points, [] as Array[int], selections)
-	var hand_full: bool = hand.is_full()
-	var hand_target: int = int(_weights["hand_target"])
-	var mods: Dictionary = {} if _learning == null else _learning.get_modifiers()
-	var quick_bias: float = float(mods.get("quick_cut_bias", 1.0))
-	var single_bonus: float = float(mods.get("single_point_bonus", 0.0))
-	var escape_penalty: float = float(_weights["escape_penalty"])
-	var duration_mult: float = _swing_mult(actor)
-	var big_cut_exists: bool = false
-	if min_runes > 0:
-		for probe_variant: Variant in selections:
-			var probe: Array[String] = []
-			for probe_index: int in (probe_variant as Array):
-				probe.append(hand.get_point(probe_index).label)
-			if _cells_for(probe).size() >= min_runes:
-				big_cut_exists = true
-				break
-	for selection_variant: Variant in selections:
-		var selection: Array[int] = []
-		selection.assign(selection_variant as Array)
-		var labels: Array[String] = []
-		for index: int in selection:
-			labels.append(hand.get_point(index).label)
-		var cells: Array[Vector2i] = _cells_for(labels)
-		if cells.is_empty():
-			continue
-		var count: int = cells.size()
-		if big_cut_exists and count < min_runes:
-			continue
-		var duration: float = _cut_config.swing_duration(count) * duration_mult
-		var hits_now: bool = cells.has(state.player_cell)
-		var steps: int = EscapeAnalysis.steps_for_swing(duration, player_step_cooldown)
-		var escape: int = EscapeAnalysis.escape_cells(_grid, state.player_cell, steps, true, cells, burning).size()
-		var parts: Dictionary = {}
-		parts["cells"] = float(_weights["cut_per_cell"]) * float(count)
-		parts["hit_now"] = float(_weights["cut_hit_now"]) if hits_now else 0.0
-		parts["escape"] = escape_penalty / (1.0 + float(escape))
-		parts["duration"] = -float(_weights["cut_duration_penalty"]) * quick_bias * duration
-		parts["single_point"] = single_bonus if selection.size() == 1 else 0.0
-		parts["points"] = -float(_weights["cut_point_cost"]) * float(selection.size())
-		parts["hand_wait"] = 0.0
-		if selection.size() < hand_target and not hand_full:
-			parts["hand_wait"] = -float(_weights["cut_hand_wait"])
-		parts["interrupt"] = 0.0
-		if player_actor.is_swinging() and not incoming.is_empty() and hits_now \
-				and duration < player_actor.get_time_left():
-			parts["interrupt"] = float(_weights["cut_interrupt_bonus"])
-		parts["min_runes"] = -float(_weights["min_runes_penalty"]) * float(maxi(min_runes - count, 0))
-		var skill_id: String = _choose_skill(cooldowns, count)
-		parts["skill"] = float(_weights.get(BossBrainConfig.SKILL_BONUS_PREFIX + skill_id, 0.0))
-		parts["noise"] = _noise()
-		var score: float = 0.0
-		for value: Variant in parts.values():
-			score += float(value)
-		_cut_candidates.append({
-			"labels": ",".join(labels), "score": score, "escape": escape,
-			"escape_term": float(parts["escape"]), "hit_now": hits_now,
-		})
-		if score < float(_weights["min_cut_score"]):
-			continue
-		if best.is_empty() or score > float(best["score"]):
-			best = {
-				"type": "cut", "score": score, "hand_indices": selection, "skill_id": skill_id,
-				"labels": labels, "cells": cells, "escape": escape, "breakdown": parts,
-			}
-	return best
+	return _best_piece_cut(state, hand, cooldowns, player_actor, incoming, burning, player_step_cooldown, _swing_mult(actor))
 
 
 # ---------------------------------------------------------------- piece cuts (Story 025)
-
-
-# True when any held point carries a puzzle piece (the hand is a piece hand).
-func _hand_has_pieces(hand: HoldSlots) -> bool:
-	for i: int in hand.get_slot_count():
-		if hand.get_piece(i) != null:
-			return true
-	return false
 
 
 # Slots holding a piece that can be placed (rotten pieces are skipped), ascending.
@@ -579,12 +442,13 @@ func _cut_rank(cells: Array[Vector2i], player_cell: Vector2i, burning: Array[Vec
 
 
 # Best piece cast: single placements (top max_placements_scored by cheap rank) plus two-piece joins of the
-# best singles, each scored with the same parts and weights as the label path (see the file header).
+# best singles, each scored with the parts and weights in the file header.
 func _best_piece_cut(
 	state: CombatState, hand: HoldSlots, cooldowns: SkillCooldowns, player_actor: CutActor,
 	incoming: Array[Vector2i], burning: Array[Vector2i], player_step_cooldown: float, duration_mult: float
 ) -> Dictionary:
 	var best: Dictionary = {}
+	var best_any: Dictionary = {} # best candidate ignoring min_cut_score (TD-022 full-hand rule)
 	var slots: Array[int] = _placeable_slots(hand)
 	if slots.is_empty():
 		return best
@@ -657,14 +521,24 @@ func _best_piece_cut(
 			"anchors": anchors.duplicate(), "cells": count, "score": score, "escape": escape,
 			"escape_term": float(parts["escape"]), "hit_now": hits_now,
 		})
+		var entry: Dictionary = {
+			"type": "cut", "score": score, "hand_indices": (cand["slots"] as Array).duplicate(), "skill_id": skill_id,
+			"labels": (cand["pieces"] as Array).duplicate(), "cells": cells, "escape": escape, "breakdown": parts,
+			"rotations": rotations.duplicate(), "anchors": anchors.duplicate(),
+		}
+		if best_any.is_empty() or score > float(best_any["score"]):
+			best_any = entry
 		if score < float(_weights["min_cut_score"]):
 			continue
 		if best.is_empty() or score > float(best["score"]):
-			best = {
-				"type": "cut", "score": score, "hand_indices": (cand["slots"] as Array).duplicate(), "skill_id": skill_id,
-				"labels": (cand["pieces"] as Array).duplicate(), "cells": cells, "escape": escape, "breakdown": parts,
-				"piece_mode": true, "rotations": rotations.duplicate(), "anchors": anchors.duplicate(),
-			}
+			best = entry
+	# TD-022 full-hand rule: a FULL hand never stalls. When every candidate is below min_cut_score and the
+	# hand is full, the best candidate is cast anyway: a full hand cannot pick up anything better (pickup is
+	# refused and normal pieces never rot in hand), so rejecting would freeze the boss for the rest of the
+	# match (seen with three single-cell pieces). A partial hand still needs the bar (and pays cut_hand_wait).
+	if best.is_empty() and hand_full and not best_any.is_empty():
+		best = best_any
+		best["full_hand_override"] = true
 	return best
 
 
@@ -724,29 +598,9 @@ func _choose_piece_combo(
 		best = {
 			"hand_indices": (cand["slots"] as Array).duplicate(), "skill_id": SkillConfig.FALLBACK_SKILL,
 			"labels": (cand["pieces"] as Array).duplicate(), "cells": cells2, "covered": covered,
-			"escape_before": escape_before.size(), "escape_after": escape_before.size() - covered, "piece_mode": true,
+			"escape_before": escape_before.size(), "escape_after": escape_before.size() - covered,
 		}
 	return best
-
-
-# Appends every ordered selection of 1..max_points items of pool to out.
-func _collect_selections(pool: Array[int], max_points: int, chosen: Array[int], out: Array) -> void:
-	for index: int in pool:
-		if chosen.has(index):
-			continue
-		chosen.append(index)
-		out.append(chosen.duplicate())
-		if chosen.size() < max_points:
-			_collect_selections(pool, max_points, chosen, out)
-		chosen.pop_back()
-
-
-func _cells_for(labels: Array[String]) -> Array[Vector2i]:
-	var key: String = ",".join(labels)
-	if not _cell_cache.has(key):
-		_cell_cache[key] = CutResolver.resolve_on_board(_grid, false, labels)
-	var cached: Array[Vector2i] = _cell_cache[key]
-	return cached
 
 
 # Highest-preference available skill for [param cell_count]: slash has preference 0, any other

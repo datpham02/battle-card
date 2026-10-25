@@ -272,7 +272,7 @@ func _spawn_battle() -> void:
 	_clear_pause()
 	var battle: Node = (load(BATTLE_SCENE_PATH) as PackedScene).instantiate()
 	var view := battle.get_node(COMBAT_VIEW_NODE) as CombatView
-	# The match spec already carries "arena" and "arena_seed" (ChaptersConfig.resolved_floor).
+	# The match spec already carries "arena" and "arena_seed" (RunConfig.from_node).
 	var params: Dictionary = _state.get_match_spec()
 	params["end_delay_sec"] = _config.end_delay_sec
 	if not _dev_arena.is_empty() and _state.get_match_index() == 0:

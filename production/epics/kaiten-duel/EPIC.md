@@ -95,7 +95,7 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 023 | Nội dung chương 2–3: boss/trait mới, địch phá luật (Bóng Ma, Kẻ Phản Ứng, Pháo Ngòi), lá sử thi có điều kiện, Rạn/Hàn, pool 24 | Integration | Complete | N/A (minimal) |
 | 024 | Mảnh ấn phía người chơi: mảnh rơi, túi 3, đặt và xoay lên đất địch, báo trúng, hạ min_cells | Integration | Complete | N/A (minimal) |
 | 025 | Boss dùng mảnh ấn: chấm điểm vị trí và hướng xoay, boss đứng yên khi niệm, vòng hồi bước hiện khóa | Integration | Complete | N/A (minimal) |
-| 026 | Gỡ hệ nối ấn, chuyển test và mô phỏng sang mảnh, đo lại cân bằng ba chương | Integration | In Progress | N/A (minimal) |
+| 026 | Gỡ hệ nối ấn, chuyển test và mô phỏng sang mảnh, đo lại cân bằng ba chương | Integration | Complete | N/A (minimal) |
 | 027 | Kết giới và Trận gai: vùng chặn và vùng thu phí đặt bằng mảnh, cho cả người chơi và boss | Integration | Ready | N/A (minimal) |
 | 028 | Ghép mảnh trên sân và hình chủ đạo: tối đa 2 mảnh một đòn, thưởng ×1,5 + hiệu ứng khi ghép đúng hình của trận | Integration | Complete | N/A (minimal) |
 | 029 | Trận đồ: ô sáng khi được phủ, phai dần, sáng đủ cùng lúc thì tuyệt kỹ sẵn sàng (thay thanh nạp 18 ô) | Integration | Complete | N/A (minimal) |

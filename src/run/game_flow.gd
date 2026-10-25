@@ -502,13 +502,6 @@ func start_run(ci: int) -> void:
 	_begin_run(ci)
 
 
-## Deprecated (Story 019 / 022): floors are gone; starts a run of chapter [param ci] like
-## [method start_run] (warning). [param _fi] and [param _from_start] are ignored.
-func enter_floor(ci: int, _fi: int, _from_start: bool) -> void:
-	push_warning("GameFlow: enter_floor() is deprecated (Story 022), starting the chapter run")
-	start_run(ci)
-
-
 ## Story 022: the map view picked node [param node_index] of the current column. Battle / danger /
 ## miniboss / boss spawn the node's controller (phase IN_NODE); treasure opens its free offer at
 ## once (phase stays MAP); rest shows the REST screen. The run is saved. False with a warning
@@ -792,17 +785,6 @@ func get_deck_levels() -> Dictionary:
 	if _run == null:
 		return {}
 	return _run.deck_levels()
-
-
-## Deprecated (Story 019): there is no retry in a run; no-op with a warning (the HUD still calls it
-## until the result screens are redesigned).
-func retry_requested() -> void:
-	push_warning("GameFlow: retry_requested() is gone (Story 019: death ends the run)")
-
-
-## Deprecated (Story 019): the run moves on by itself after the reward; no-op with a warning.
-func next_floor_requested() -> void:
-	push_warning("GameFlow: next_floor_requested() is gone (Story 019: the run advances after the reward)")
 
 
 # Creates the run of the selected (or default) character in chapter ci with a fresh seed (or

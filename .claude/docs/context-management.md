@@ -167,6 +167,8 @@ keep the result on disk.
   protects a story goes into `tests/` with its fixtures and `res://` paths.
 - A change to shared data or a shared script means re-running every suite that
   touches it, not only the new one, and recording the counts.
+- Balance simulators (`deck_sim`, `hit_probe`) live in `tools/balance/`, not in
+  `tests/` or the scratchpad; run commands, flags and how to read them: `tools/balance/README.md`.
 
 ## Subagent Delegation
 

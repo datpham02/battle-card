@@ -44,7 +44,7 @@ class World:
 		if not natural_spawns:
 			drops_config.spawn_interval_sec = 1.0e9
 			drops_config.initial_delay_sec = 1.0e9
-		drops = FieldDrops.new(drops_config, grid.enemy_cells(), grid.perimeter_labels(), drops_seed)
+		drops = FieldDrops.new(drops_config, grid.enemy_cells(), drops_seed)
 		mover = UnitMover.new(state, CombatState.Side.ENEMY, brain_config.step_cooldown_sec)
 		actor = CutActor.new(cut_config, CombatState.Side.ENEMY)
 		var slow := CutConfig.new()
@@ -253,11 +253,14 @@ func _test_wander() -> void:
 	_check("(f2) cautious stays put for 10 s: %s" % str(c.cells_log), c.cells_log.is_empty())
 
 
+# Story 026: the boss hand holds puzzle pieces; [param labels] are shape ids of pieces.json.
 func _escape_case(set_name: String, labels: Array[String], player_cell: Vector2i) -> Dictionary:
 	var w := World.new(set_name, 1, 1, {}, false)
 	w.state.set_player_cell(player_cell)
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
 	for label: String in labels:
 		var p := FieldPoint.new()
+		p.piece = lib.make_piece(label)
 		p.label = label
 		w.hand.place_in_first_free(p)
 	w.ctx["player_step_cooldown"] = CombatConfig.load_from_file().step_cooldown_for(w.grid)
@@ -281,17 +284,20 @@ func _escape_case(set_name: String, labels: Array[String], player_cell: Vector2i
 
 
 func _test_escape_scoring() -> void:
-	print("  (g1) player (0,0), balanced, hand A1,B1:")
-	var g1: Dictionary = _escape_case("balanced", ["A1", "B1"], Vector2i(0, 0))
+	print("  (g1) player (0,0), balanced, hand bar2,l3:")
+	var g1: Dictionary = _escape_case("balanced", ["bar2", "l3"], Vector2i(0, 0))
 	_check("(g1) corner: chosen %s escape=%d vs best hit-now alternative escape=%d (chosen <= alt)" % [g1["chosen"], g1["escape"], g1["alt_escape"]],
 		g1["type"] == "cut" and int(g1["escape"]) <= int(g1["alt_escape"]))
-	print("  (g1b) player (0,0), aggressive, hand A1,D1 (corner nick A1-D1 = 1 cell):")
-	var g1b: Dictionary = _escape_case("aggressive", ["A1", "D1"], Vector2i(0, 0))
+	print("  (g1b) player (0,0), aggressive, hand mono,bar2:")
+	var g1b: Dictionary = _escape_case("aggressive", ["mono", "bar2"], Vector2i(0, 0))
 	print("      -> chosen %s escape=%d min_escape=%d" % [g1b["chosen"], g1b["escape"], g1b["min_escape"]])
-	print("  (g2) player (1,1), balanced, hand A1,B1:")
-	var g2: Dictionary = _escape_case("balanced", ["A1", "B1"], Vector2i(1, 1))
+	print("  (g2) player (1,1), balanced, hand mono,bar2 (at most 3 cells vs a 5+ cell reach):")
+	var g2: Dictionary = _escape_case("balanced", ["mono", "bar2"], Vector2i(1, 1))
 	_check("(g2) centre: no single candidate leaves 0 escape cells (min=%d)" % int(g2["min_escape"]), int(g2["min_escape"]) > 0)
-	print("  (g3) player (1,1), balanced, hand A1,A3,C3,C1:")
-	var g3: Dictionary = _escape_case("balanced", ["A1", "A3", "C3", "C1"], Vector2i(1, 1))
-	_check("(g3) full-board polygon chosen: %s cells=%d escape=%d" % [g3["chosen"], g3["cells"], g3["escape"]],
-		g3["type"] == "cut" and int(g3["cells"]) == 9 and int(g3["escape"]) == 0)
+	# Story 026: the label-era "full-board polygon" case has no piece equivalent the search is
+	# guaranteed to find (pairs are seeded from the best-ranked singles), so (g3) now checks that a
+	# big hand still picks a big cast that beats every other hit-now candidate on escape cells.
+	print("  (g3) player (1,1), balanced, hand u5,t4:")
+	var g3: Dictionary = _escape_case("balanced", ["u5", "t4"], Vector2i(1, 1))
+	_check("(g3) big cast chosen: %s cells=%d escape=%d alt=%d" % [g3["chosen"], g3["cells"], g3["escape"], g3["alt_escape"]],
+		g3["type"] == "cut" and int(g3["cells"]) >= 4 and int(g3["escape"]) <= int(g3["alt_escape"]))

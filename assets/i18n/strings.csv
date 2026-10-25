@@ -99,10 +99,6 @@ ui.hud.unit_hp,%s  HP %d/%d,%s  HP %d/%d
 ui.hud.unit_dead,%s  GỤC,%s  DOWN
 chapter.ch1.name,Rừng Sương,Misty Forest
 chapter.ch2.name,Hầm Ngục,The Dungeon
-floor.ch1.f1.name,Bìa rừng,Forest Edge
-floor.ch1.f2.name,Lối mòn,The Trail
-floor.ch1.f3.name,Hang sói,Wolf Den
-floor.ch2.f1.name,Cổng ngục,Dungeon Gate
 boss.goblin_scout.name,Goblin trinh sát,Goblin Scout
 boss.wolf.name,Sói xám,Grey Wolf
 boss.goblin_chief.name,Thủ lĩnh Goblin,Goblin Chief
@@ -135,7 +131,7 @@ character.sat_thu.desc,Nhanh nhẹn và chí mạng với những đường ché
 passive.second_wind.name,Hơi thở thứ hai,Second Wind
 passive.second_wind.desc,Hồi thêm 10 máu sau mỗi trận thắng.,Recover 10 extra HP after every won match.
 passive.wide_caster.name,Pháp trận rộng,Wide Caster
-passive.wide_caster.desc,Phép từ 5 ô trở lên niệm nhanh hơn 15%.,Spells covering 5 or more cells cast 15% faster.
+passive.wide_caster.desc,Phép từ 4 ô trở lên niệm nhanh hơn 25%.,Spells covering 4 or more cells cast 25% faster.
 passive.quick_blade.name,Lưỡi kiếm nhanh,Quick Blade
 passive.quick_blade.desc,Phép tối đa 3 ô gây thêm 25% sát thương.,Spells covering 3 cells or fewer deal 25% more damage.
 card.kiem_khi.name,Kiếm khí,Sword Qi
@@ -312,6 +308,7 @@ piece.s4.name,Chữ S,S
 piece.bar4.name,Thanh 4,Bar 4
 piece.plus5.name,Chữ thập,Plus
 piece.u5.name,Chữ U,U
+piece.p5.name,Chữ P,P
 piece.bar5.name,Thanh 5,Bar 5
 ui.hud.rotate,Xoay,Rotate
 ui.hud.full,ĐẦY,FULL

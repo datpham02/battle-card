@@ -291,12 +291,13 @@ func _activate(index: int) -> void:
 			_flow.leave_run()
 
 
-# True when the floor just won is the last of its chapter ("CHƯƠNG XONG" on a test floor's panel).
+# True when the node just won is on the last column of the run's map (the boss column): "CHƯƠNG XONG".
+# Story 026: the legacy floor API is gone, the map column decides.
 func _is_chapter_clear() -> bool:
-	if _flow == null:
+	if _flow == null or _flow.get_run() == null:
 		return false
-	var pos: Vector2i = _flow.get_current_floor()
-	return _flow.get_config().is_last_floor_of_chapter(pos.x, pos.y)
+	var run: RunSession = _flow.get_run()
+	return not run.map.is_empty() and run.column >= run.map.size() - 1
 
 
 # --- Drawing ------------------------------------------------------------------
@@ -460,7 +461,7 @@ func _draw_won(vp: Vector2) -> void:
 			line = _flow.get_config().chapter_name(pos.x)
 		else:
 			title = tr(TEXT_FLOOR_CLEAR_TITLE)
-			line = _flow.get_config().floor_name(pos.x, pos.y)
+			line = _flow.get_config().chapter_name(pos.x)
 	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, title, TITLE_FONT_SIZE, TEXT_WIN)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, line, LINE_FONT_SIZE, TEXT_BOSS)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_TIME) % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)

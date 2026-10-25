@@ -30,10 +30,24 @@ func _init() -> void:
 	var bad: CombatConfig = CombatConfig.from_dictionary({"step_cooldown_ref_sec": 0, "step_cooldown_min_sec": 5})
 	check("invalid -> defaults", near(bad.step_cooldown_for(BoardGrid.new(3, 3)), 0.45, 0.0001))
 
-	var rc: RunConfig = RunConfig.load_from_file()
-	check("mult parsed", near(float(rc.matches[0]["boss_step_cooldown_mult"]), 1.78, 0.0001) and near(float(rc.matches[3]["boss_step_cooldown_mult"]), 1.11, 0.0001))
-	check("shipped has no abs key", not rc.matches[0].has("boss_step_cooldown_sec"))
-	check("boss cooldown m1 on 3x3", near(cfg.step_cooldown_for(BoardGrid.new(3, 3)) * float(rc.matches[0]["boss_step_cooldown_mult"]), 0.80, 0.005))
+	# Story 026 (TD-011): the boss step cooldown = CombatConfig.step_cooldown_for(board) x the match's
+	# boss_step_cooldown_mult from chapters.json, read through the live path (RunConfig.from_node).
+	var chapters: ChaptersConfig = ChaptersConfig.load_from_file()
+	var mults_ok: bool = true
+	var abs_free: bool = true
+	var cooldown_ok: bool = true
+	for ci: int in chapters.chapter_count():
+		for id: String in chapters.match_ids(ci):
+			var raw: Dictionary = chapters.get_match_raw(ci, id)
+			var m: Dictionary = RunConfig.from_node(chapters, ci, id, "battle", 1).matches[0]
+			var mult: float = float(m["boss_step_cooldown_mult"])
+			mults_ok = mults_ok and near(mult, float(raw.get("boss_step_cooldown_mult", 1.0)), 0.0001) and mult > 0.0
+			abs_free = abs_free and not m.has("boss_step_cooldown_sec")
+			var board: BoardGrid = BoardGrid.new(3, 3)
+			cooldown_ok = cooldown_ok and near(cfg.step_cooldown_for(board) * mult, 0.45 * mult, 0.0001)
+	check("mult parsed from chapters.json for every match", mults_ok)
+	check("shipped has no abs key", abs_free)
+	check("boss cooldown = 3x3 step cooldown x mult", cooldown_ok)
 	print("--- expect RunConfig deprecation warning next ---")
 	var rold: RunConfig = RunConfig.from_dictionary({"matches": [{"boss_step_cooldown_sec": 0.7}]})
 	check("old abs key", near(float(rold.matches[0]["boss_step_cooldown_sec"]), 0.7, 0.0001))

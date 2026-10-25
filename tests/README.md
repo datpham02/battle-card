@@ -21,8 +21,7 @@ for f in $(find tests/unit tests/integration/run -name '*_test.gd'); do echo "$f
 for f in tests/integration/ui/*_test.gd; do echo "$f: $($G --windowed --resolution 1280x720 --path . -s res://$f -- --no-autopause 2>&1 | grep -oE 'FAILS[=: ]+[0-9]+' | tail -1)"; done
 ```
 
-## Known failing (pre-existing, stale assertions — TD-011)
-- `unit/combat/pace_test.gd` — FAILS=2 (old boss step-cooldown multipliers)
-- `unit/run/run_state_test.gd` — FAILS=16 (pre-022 floor/match run model)
+## Known failing
+None. Baseline 2026-10-25 (Story 026, runes and the floor model retired; `boss_stall_test` added for TD-022): 44 headless suites (`unit/**`, `integration/run/**`) and 4 windowed suites (`integration/ui/**`), all FAILS=0.
 
-Baseline 2026-10-24 after the move: 35 suites, 33 pass, the 2 above fail identically to their scratchpad originals.
+Story 026 migrations: `pace_test` asserts the current boss step cooldown (`CombatConfig.step_cooldown_for` x each chapters.json match's `boss_step_cooldown_mult`, via `RunConfig.from_node`); `run_state_test` keeps the RunState rules on a 4-match fixture (shipped runs are single-match nodes) and drops the old one-floor "monotone difficulty" check; `chapters_test` / `map_gen_test` / `i18n_test` dropped the floor-API cases (`resolved_floor`, `from_floor`, `floor_count`, `floor_name`...) and the perimeter-label checks left `grid_test`.

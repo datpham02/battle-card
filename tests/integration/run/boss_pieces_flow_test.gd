@@ -31,7 +31,7 @@ func _initialize() -> void:
 	var boss: BossController = v.get_boss()
 	var state: CombatState = v.get_state()
 	var grid: BoardGrid = v.get_grid()
-	_check("boss is in piece mode", boss.is_piece_mode())
+	_check("boss wired (pieces are the only mode since Story 026)", boss.get_brain() != null and boss.get_drops() != null)
 	var swings: Array = []
 	boss.get_actor().swing_started.connect(func(cells: Array[Vector2i], _k: String, _d: float) -> void:
 		swings.append({"cells": cells.duplicate(), "hand_had_piece": true}))

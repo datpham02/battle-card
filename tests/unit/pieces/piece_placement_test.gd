@@ -195,7 +195,7 @@ func _test_any_placement() -> void:
 	for id: String in lib.shape_ids():
 		if PiecePlacement.has_any_placement(grid, lib.make_piece(id)):
 			drawable += 1
-	ck("any: on 3x3, 10 of the 12 shapes fit (bar4, bar5 do not)", drawable == 10)
+	ck("any: on 3x3, 11 of the 13 shapes fit (bar4, bar5 do not)", drawable == 11)
 	ck("any: null grid or piece is false and empty", not PiecePlacement.has_any_placement(null, lib.make_piece("mono")) and PiecePlacement.valid_anchors(null, lib.make_piece("mono")).is_empty() and PiecePlacement.valid_anchors(grid, null).is_empty())
 
 

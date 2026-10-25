@@ -30,8 +30,8 @@ func _init() -> void:
 
 
 func _test_library_file(lib: PieceLibrary) -> void:
-	var expected_ids: Array[String] = ["mono", "bar2", "bar3", "l3", "square", "t4", "l4", "s4", "bar4", "plus5", "u5", "bar5"]
-	ck("library: the 12 story shapes in order", lib.shape_ids() == expected_ids)
+	var expected_ids: Array[String] = ["mono", "bar2", "bar3", "l3", "square", "t4", "l4", "s4", "bar4", "plus5", "u5", "p5", "bar5"]
+	ck("library: the 12 story shapes plus p5 (Story 026) in order", lib.shape_ids() == expected_ids)
 	var expected_counts: Array[int] = [1, 2, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5]
 	var counts_ok: bool = true
 	for i: int in expected_ids.size():
@@ -66,7 +66,7 @@ func _test_rotation(lib: PieceLibrary) -> void:
 			step = step.rotated(1)
 			count_ok = count_ok and step.cell_count() == piece.cell_count() and step.relative_cells().size() == piece.cell_count()
 		all_ok = all_ok and step.relative_cells() == piece.relative_cells()
-	ck("rotation: four single turns return the original cells (all 12 shapes)", all_ok)
+	ck("rotation: four single turns return the original cells (all 13 shapes)", all_ok)
 	ck("rotation: rotated(4) equals the original and rotation wraps to 0", four_ok)
 	ck("rotation: cell_count never changes while rotating", count_ok)
 	var l3: Piece = lib.make_piece("l3")

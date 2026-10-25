@@ -21,7 +21,7 @@ func _world(seed_value: int) -> Dictionary:
 	var hold_config := HoldSlotsConfig.new()
 	var drops_config := FieldDropsConfig.new()
 	drops_config.initial_delay_sec = 100000.0
-	var player_drops := FieldDrops.new(drops_config, grid.player_cells(), grid.perimeter_labels(), seed_value)
+	var player_drops := FieldDrops.new(drops_config, grid.player_cells(), seed_value)
 	var boss := BossController.new(state, grid, cut_config, skill_config, brain_config, drops_config, hold_config, seed_value + 1)
 	boss.set_active(false)
 	var status := StatusEffects.new()
@@ -188,7 +188,7 @@ func _test_rotten_thrower() -> void:
 	_run_until(w, host, t, 1.05)
 	_check("rt first throw at first_delay", thrown.size() == 1 and absf(times[0] - 1.0) <= DT + 0.001, str(times))
 	var p: FieldPoint = thrown[0]
-	_check("rt point rotten with label and rot time", p.rotten and p.label == "X" and is_equal_approx(p.rot_in_hand_sec, 1.0))
+	_check("rt point is a rotten piece with rot time", p.rotten and p.piece != null and p.piece.is_rotten() and p.label == Piece.ROTTEN_ID and is_equal_approx(p.rot_in_hand_sec, 1.0))
 	_check("rt cell is a free player cell, not the player, not burning", grid.is_player_cell(p.cell) and p.cell != state.player_cell and not status.is_burning(p.cell), str(p.cell))
 	_check("rt only free candidates were (1,2)/(2,1)/(2,2)... got %s" % p.cell, p.cell == Vector2i(2, 1) or p.cell == Vector2i(2, 2))
 	_check("rt last thrown cell", rt.get_last_thrown_cell() == p.cell)
@@ -213,10 +213,10 @@ func _test_rotten_thrower() -> void:
 	_run_until(w, host, t, 3.8)
 	_check("rt pending throw once the field is free", thrown.size() == 2 and drops.get_points().size() == 1, str(times))
 	_check("rt debug", rt.get_debug()["throws"] == 2 and rt.get_throw_count() == 2)
-	# place_rotten refuses bad cells
-	_check("place_rotten refuses occupied", drops.place_rotten(thrown[1].cell, "X", 5.0, 5.0) == null)
-	_check("place_rotten refuses boss cell", drops.place_rotten(Vector2i(4, 1), "X", 5.0, 5.0) == null)
-	_check("place_rotten refuses blocked (burning) cell", drops.place_rotten(Vector2i(0, 0), "X", 5.0, 5.0) == null)
+	# place_rotten_piece refuses bad cells (Story 026: the labelled place_rotten is gone)
+	_check("place_rotten_piece refuses occupied", drops.place_rotten_piece(thrown[1].cell, 5.0, 5.0) == null)
+	_check("place_rotten_piece refuses boss cell", drops.place_rotten_piece(Vector2i(4, 1), 5.0, 5.0) == null)
+	_check("place_rotten_piece refuses blocked (burning) cell", drops.place_rotten_piece(Vector2i(0, 0), 5.0, 5.0) == null)
 
 
 func _throw_cells(seed_value: int) -> Array[Vector2i]:

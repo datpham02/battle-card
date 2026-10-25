@@ -1,13 +1,13 @@
 class_name FieldDrops
 extends RefCounted
-## Cut-point drops for one side: shuffle bag, spawn pacing, hunger compensation,
+## Puzzle-piece drops for one side: weighted piece draw, spawn pacing, hunger compensation,
 ## freshness and pickup. One instance per side. No scene dependency.
 ## Story 014: [method place_rotten] lets a boss trait drop a ROTTEN point on this half; it lies,
 ## rots and is picked up like any point (and counts toward max_on_field) but is flagged.
-## Story 024: [method enable_pieces] switches the half to PIECE MODE: each spawn draws a puzzle
-## [Piece] by chapter weight (instead of a perimeter label) and the piece_* keys of the config drive
-## the pacing. Without it nothing changes (the boss keeps classic labelled points).
-## Implements: Story 007, Story 014, Story 024.
+## Story 024: each spawn draws a puzzle [Piece] by chapter weight from the library given to
+## [method enable_pieces] (nothing drops before that call); the piece_* keys of the config drive the
+## pacing. Story 026 removed the perimeter-label shuffle bag (pieces are the only mode).
+## Implements: Story 007, Story 014, Story 024, Story 026.
 
 ## A point landed on the field.
 signal point_spawned(point: FieldPoint)
@@ -22,9 +22,7 @@ const NO_CELL: Vector2i = BoardGrid.NO_CELL
 
 var _config: FieldDropsConfig
 var _side_cells: Array[Vector2i] = []
-var _labels: Array[String] = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
-var _bag: Array[String] = []
 var _points: Array[FieldPoint] = []
 var _danger_cells: Array[Vector2i] = []
 var _blocked_cells: Array[Vector2i] = []
@@ -33,26 +31,19 @@ var _spawn_timer: float = 0.0
 var _empty_hand_time: float = 0.0
 ## Story 023: multiplies the spawn interval (frost_aura: > 1 = runes fall slower). > 0.
 var interval_scale: float = 1.0
-# Story 024 piece mode (all unused while _piece_mode is false).
-var _piece_mode: bool = false
+# Story 024 pieces (set by enable_pieces).
 var _piece_library: PieceLibrary
 var _chapter_id: String = ""
 var _piece_shapes: Array[String] = [] # shapes with at least one placement on the placement grid
 var _piece_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
-## [param side_cells] is this side's half of the board (BoardGrid.player_cells()),
-## [param labels] the shuffle-bag contents (BoardGrid.perimeter_labels()). A negative
-## [param seed_value] gives a random seed; otherwise the bag order and cell choice are
-## deterministic.
-func _init(
-	config: FieldDropsConfig, side_cells: Array[Vector2i], labels: Array[String], seed_value: int = -1
-) -> void:
+## [param side_cells] is this side's half of the board (BoardGrid.player_cells()). A negative
+## [param seed_value] gives a random seed; otherwise the cell choice is deterministic (the piece
+## draw has its own seed, see [method enable_pieces]).
+func _init(config: FieldDropsConfig, side_cells: Array[Vector2i], seed_value: int = -1) -> void:
 	_config = config
 	_side_cells = side_cells.duplicate()
-	_labels = labels.duplicate()
-	if _labels.is_empty():
-		push_warning("FieldDrops: no labels given, points will have empty labels")
 	if seed_value >= 0:
 		_rng.seed = seed_value
 	else:
@@ -79,17 +70,14 @@ func tick(delta: float, stand_cell: Vector2i, hand_count: int) -> void:
 	var cell: Vector2i = _pick_free_cell(stand_cell)
 	if cell == NO_CELL:
 		return
-	if _piece_mode:
-		var piece: Piece = _draw_piece()
-		if piece == null:
-			return
-		_add_point(piece.shape_id, cell, _config.piece_freshness_sec, false, 0.0, piece)
-	else:
-		_add_point(_draw_label(), cell, _config.freshness_sec)
+	var piece: Piece = _draw_piece()
+	if piece == null:
+		return
+	_add_point(piece.shape_id, cell, _config.piece_freshness_sec, false, 0.0, piece)
 	_spawn_timer = _current_interval()
 
 
-## Story 024: switches this half to piece mode. Shapes of [param library] for which no rotation
+## Story 024: gives this half its pieces (required: nothing drops before it). Shapes of [param library] for which no rotation
 ## has a placement on the ENEMY half of [param placement_grid] (the PLAYER half when
 ## [param target_is_enemy] is false, as for the boss, Story 025) are never drawn; the rest are drawn
 ## by [method PieceLibrary.weight] for [param chapter_id], with a random rotation. [param rng_seed]
@@ -113,26 +101,18 @@ func enable_pieces(
 		_piece_rng.seed = rng_seed
 	else:
 		_piece_rng.randomize()
-	_piece_mode = true
 
 
-## True after [method enable_pieces].
-func is_piece_mode() -> bool:
-	return _piece_mode
-
-
-## Shapes that can currently be drawn (piece mode; empty before enable_pieces).
+## Shapes that can currently be drawn (empty before enable_pieces).
 func get_drawable_shapes() -> Array[String]:
 	return _piece_shapes.duplicate()
 
 
 ## Story 024: puts config.start_pieces pieces on free cells (seeded, never [param stand_cell],
 ## never a blocked cell, capped by piece_max_on_field) so a match opens with pieces to grab, and
-## restarts the spawn timer at one interval so the next drop does not follow at once. Piece mode
-## only; returns the number placed (0 in classic mode).
+## restarts the spawn timer at one interval so the next drop does not follow at once. Returns
+## the number placed (0 before enable_pieces).
 func place_start_pieces(stand_cell: Vector2i) -> int:
-	if not _piece_mode:
-		return 0
 	var placed: int = 0
 	while placed < _config.start_pieces and _points.size() < _max_on_field():
 		var cell: Vector2i = _pick_free_cell(stand_cell)
@@ -185,24 +165,17 @@ func set_danger_cells(cells: Array[Vector2i]) -> void:
 	_danger_cells = cells.duplicate()
 
 
-## DEV-ONLY capture hook: puts a point on the field, bypassing the bag, timer and caps.
+## DEV-ONLY capture/test hook: puts a piece-less point on the field, bypassing the draw, timer and
+## caps (tests use it to track freshness and pickup timing).
 func debug_place(label: String, cell: Vector2i, freshness_left: float) -> FieldPoint:
 	return _add_point(label, cell, freshness_left)
 
 
-## Story 014 trait API: puts a ROTTEN point labelled [param label] on [param cell] of this
-## half, bypassing the bag and the spawn timer (NOT the cell rules: the cell must be a real cell
-## of this half, free of points and not blocked/burning, else null and nothing changes). It rots
-## off the field after [param freshness_left] seconds; once held it leaves the hand after
-## [param rot_in_hand_sec]. Emits point_spawned like any landing point.
-func place_rotten(cell: Vector2i, label: String, freshness_left: float, rot_in_hand_sec: float) -> FieldPoint:
-	if not _side_cells.has(cell) or _is_occupied(cell) or _blocked_cells.has(cell):
-		return null
-	return _add_point(label, cell, freshness_left, true, maxf(rot_in_hand_sec, 0.0))
-
-
-## Story 024 trait API: like [method place_rotten] but the point carries a ROTTEN piece (1 cell,
-## grey, never placeable; label = Piece.ROTTEN_ID). Same cell rules; null when refused.
+## Story 014 / 024 trait API: puts a point carrying a ROTTEN piece (1 cell, grey, never placeable;
+## label = Piece.ROTTEN_ID) on [param cell] of this half, bypassing the draw and the spawn timer (NOT
+## the cell rules: the cell must be a real cell of this half, free of points and not blocked/burning,
+## else null and nothing changes). It rots off the field after [param freshness_left] seconds; once
+## held it leaves the hand after [param rot_in_hand_sec]. Emits point_spawned like any landing point.
 func place_rotten_piece(cell: Vector2i, freshness_left: float, rot_in_hand_sec: float) -> FieldPoint:
 	if not _side_cells.has(cell) or _is_occupied(cell) or _blocked_cells.has(cell):
 		return null
@@ -240,7 +213,7 @@ func _add_point(
 
 
 func _max_on_field() -> int:
-	return _config.piece_max_on_field if _piece_mode else _config.max_on_field
+	return _config.piece_max_on_field
 
 
 # Weighted draw among the drawable shapes (uniform when every weight is 0) + random rotation.
@@ -262,23 +235,10 @@ func _draw_piece() -> Piece:
 
 
 func _current_interval() -> float:
-	var interval: float = _config.piece_spawn_interval_sec if _piece_mode else _config.spawn_interval_sec
+	var interval: float = _config.piece_spawn_interval_sec
 	if _empty_hand_time > _config.hungry_after_sec:
 		interval *= _config.hungry_interval_mult
 	return interval * maxf(interval_scale, 0.01)
-
-
-func _draw_label() -> String:
-	if _labels.is_empty():
-		return ""
-	if _bag.is_empty():
-		_bag.assign(_labels)
-		for i: int in range(_bag.size() - 1, 0, -1):
-			var j: int = _rng.randi_range(0, i)
-			var tmp: String = _bag[i]
-			_bag[i] = _bag[j]
-			_bag[j] = tmp
-	return _bag.pop_back()
 
 
 func _pick_free_cell(stand_cell: Vector2i) -> Vector2i:

@@ -13,99 +13,44 @@ func check(ok: bool, label: String) -> void:
 		print("FAIL ", label)
 
 
-func _shapes(rf: Dictionary) -> Array:
-	var out: Array = []
-	for m: Dictionary in rf["matches"]:
-		out.append((m["arena"] as Dictionary).get("shape", ""))
-	return out
-
-
 func _initialize() -> void:
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
 	check(cfg.chapter_count() == 3, "chapter count 3")
-	check(cfg.floor_count(0) == 3 and cfg.floor_count(1) == 1, "floor counts 3,1")
-	check(cfg.total_floors() == 5, "total floors")
-	check(cfg.match_count(0, 0) == 3 and cfg.match_count(0, 1) == 4 and cfg.match_count(0, 2) == 4 and cfg.match_count(1, 0) == 2, "match counts")
-	check(cfg.floor_key(0, 1) == "ch1/f2", "floor_key")
-	check(cfg.find_floor("ch1/f2") == Vector2i(0, 1) and cfg.find_floor("ch2/f1") == Vector2i(1, 0), "find_floor round trip")
-	check(cfg.find_floor("nope") == Vector2i(-1, -1), "find_floor unknown")
-	check(cfg.next_floor(0, 2) == Vector2i(1, 0), "next across chapter")
-	check(cfg.next_floor(0, 0) == Vector2i(0, 1), "next within chapter")
-	check(cfg.next_floor(1, 0) == Vector2i(2, 0) and cfg.next_floor(2, 0) == Vector2i(-1, -1), "next at end (ch3 synthetic floor)")
-	check(cfg.is_last_floor_of_chapter(0, 2) and not cfg.is_last_floor_of_chapter(0, 1), "last of chapter")
-	check(cfg.floor_at_linear(3) == Vector2i(1, 0) and cfg.floor_at_linear(4) == Vector2i(2, 0) and cfg.floor_at_linear(5) == Vector2i(-1, -1), "floor_at_linear")
-	check(cfg.arena_summary(0, 0)["kind"] == "fixed" and cfg.arena_summary(0, 0)["shape"] == "square", "summary fixed")
-	check(cfg.arena_summary(0, 2)["kind"] == "pool" and (cfg.arena_summary(0, 2)["pool"] as Array).size() == 3, "summary pool")
 	check(is_equal_approx(float(cfg.defaults()["heal_between_floors"]), 0.0) and int(cfg.defaults()["revive_tokens"]) == 0, "defaults heal_between_floors / revive_tokens (019)")
 
-	# Fixed arena
-	var rf: Dictionary = cfg.resolved_floor(0, 1, 42)
-	var shapes: Array = _shapes(rf)
-	var seeds: Array = []
-	for m: Dictionary in rf["matches"]:
-		seeds.append(m["arena_seed"])
-	check(shapes == ["rect", "rect", "rect", "rect"], "fixed arena same shape")
-	var distinct: Dictionary = {}
-	for sd in seeds:
-		distinct[sd] = true
-		check(int(sd) >= 0, "seed non-negative")
-	check(distinct.size() == seeds.size(), "arena seeds differ per match")
-	check(ChaptersConfig.arena_seed_for(42, 1) == seeds[1], "arena_seed_for deterministic")
+	# Arena seeds (still used by RunSession per column)
+	var seed_a: int = ChaptersConfig.arena_seed_for(42, 1)
+	check(seed_a == ChaptersConfig.arena_seed_for(42, 1) and seed_a >= 0, "arena_seed_for deterministic, non-negative")
+	check(seed_a != ChaptersConfig.arena_seed_for(42, 2), "arena seeds differ per index")
 
-	# Pool (Story 022: the shipped v2 file gives every f3 match its own arena, so the seeded pool
-	# shuffle is exercised on a v1-format floor with the same pool; the v2 fact is asserted below)
-	var v2_own: Array = _shapes(cfg.resolved_floor(0, 2, 7))
-	check(v2_own == ["cross", "u_shape", "staircase", "cross"], "v2 f3 matches carry their own arena " + str(v2_own))
-	var pool_cfg: ChaptersConfig = ChaptersConfig.from_dictionary({"chapters": [{"id": "ch1", "floors": [{"id": "f3",
-		"arena_pool": ["cross", "u_shape", "staircase"], "arena_variant": true, "matches": [{"id": "a"}, {"id": "b"}, {"id": "c"}, {"id": "d"}]}]}]})
-	var p1: Dictionary = pool_cfg.resolved_floor(0, 0, 7)
-	var p2: Dictionary = pool_cfg.resolved_floor(0, 0, 7)
-	check(p1 == p2, "pool same seed identical")
-	var ps: Array = _shapes(p1)
-	var adjacent_ok: bool = true
-	for i in range(1, ps.size()):
-		if ps[i] == ps[i - 1]:
-			adjacent_ok = false
-	check(adjacent_ok and ps.size() == 4, "pool adjacent differ " + str(ps))
-	check(bool((p1["matches"][0]["arena"] as Dictionary)["variant"]), "pool variant flag")
-	var orders: Dictionary = {}
-	for s in range(0, 20):
-		orders[str(_shapes(pool_cfg.resolved_floor(0, 0, s)))] = true
-	check(orders.size() > 1, "different seeds change order")
-	var orig_floor: Dictionary = cfg._chapters[0]["floors"][2]["matches"][0]
-	check(not orig_floor.has("arena_seed") and orig_floor.get("arena", {}) == {"shape": "cross", "variant": true}, "config not mutated (v2: own arena stays as written)")
-
-	# Custom configs
-	var match_block: Dictionary = {"id": "a"}
-	var both := ChaptersConfig.from_dictionary({"chapters": [{"id": "c", "floors": [{
-		"id": "f", "arena": {"shape": "rect"}, "arena_pool": ["cross", "ring"],
-		"matches": [match_block, {"id": "b", "arena": {"shape": "diamond"}}]}]}]})
-	var br: Dictionary = both.resolved_floor(0, 0, 1)
-	check(_shapes(br) == ["rect", "diamond"], "both -> arena; match override wins")
-	var unk := ChaptersConfig.from_dictionary({"chapters": [{"id": "c", "floors": [{
-		"id": "f", "arena_pool": ["cross", "bogus"], "matches": [{}, {}, {}]}]}]})
-	check(_shapes(unk.resolved_floor(0, 0, 3)) == ["cross", "cross", "cross"], "unknown pool id dropped")
-	var empty := ChaptersConfig.from_dictionary({"chapters": [{"id": "c", "floors": [{
-		"id": "f", "arena_pool": ["bogus"], "matches": [{}]}]}]})
-	check((empty.resolved_floor(0, 0, 3)["matches"][0]["arena"] as Dictionary).is_empty(), "empty pool -> {}")
+	# The v1 `floors` format is still read: its floor matches become the chapter's matches
+	var v1 := ChaptersConfig.from_dictionary({"chapters": [{"id": "c", "floors": [{"id": "f", "matches": [{"id": "a"}, {"id": "b"}]}]}]})
+	check(v1.chapter_count() == 1 and ",".join(v1.match_ids(0)) == "a,b", "v1 floors feed the chapter matches")
 	var bad := ChaptersConfig.from_dictionary({"chapters": [
 		{"id": "c", "floors": [{"id": "f", "matches": []}]},
 		{"id": "d", "floors": [{"id": "f", "matches": [{}]}, {"id": "f", "matches": [{}, {}]}]},
 		{"id": "d", "floors": [{"id": "g", "matches": [{}]}]}]})
-	check(bad.chapter_count() == 1 and bad.floor_count(0) == 1 and bad.match_count(0, 0) == 1, "invalid/duplicate dropped")
-	check(ChaptersConfig.from_dictionary({}).total_floors() == 1, "empty -> default")
+	check(bad.chapter_count() == 1 and bad.match_ids(0).size() == 1, "invalid/duplicate dropped")
+	check(ChaptersConfig.from_dictionary({}).chapter_count() == 1, "empty -> default")
+	check(not cfg.get_match_def(0, cfg.match_ids(0)[0]).is_empty(), "shipped ch1 still loads its matches without legacy_floors")
 
-	# RunConfig.from_floor
-	var rc: RunConfig = RunConfig.from_floor(rf, cfg.defaults())
-	check(rc.match_count() == 4 and is_equal_approx(rc.heal_between_floors, 0.0), "from_floor count + heal_between_floors 0 (022)")
-	check(int(rc.matches[2]["arena_seed"]) == seeds[2] and (rc.matches[2]["arena"] as Dictionary)["shape"] == "rect", "from_floor keeps seed/arena")
+	# RunConfig from the chapter defaults (Story 026: from_floor is gone; from_node is covered by chapters23_test)
+	var four: Dictionary = cfg.defaults()
+	four["matches"] = [{}, {}, {}, {}]
+	var rc: RunConfig = RunConfig.from_dictionary(four)
+	check(rc.match_count() == 4 and is_equal_approx(rc.heal_between_floors, 0.0), "defaults config count + heal_between_floors 0 (022)")
 	check(RunConfig.load_from_file("").match_count() == 1, "run config empty path default")
-	var rc2: RunConfig = RunConfig.from_floor({"matches": [{}], "overrides": {"retry_min_hp_ratio": 0.8}}, cfg.defaults())
-	check(is_equal_approx(rc2.retry_min_hp_ratio, 0.8), "floor override of ratio")
+	var ratio: Dictionary = cfg.defaults()
+	ratio["retry_min_hp_ratio"] = 0.8
+	ratio["matches"] = [{}]
+	check(is_equal_approx(RunConfig.from_dictionary(ratio).retry_min_hp_ratio, 0.8), "override of ratio")
 
 	# RunState (Story 022: the shipped heal_between_matches is 0, so the heal rule is tested with an
-	# explicit floor override of 25)
-	var heal_rc: RunConfig = RunConfig.from_floor({"matches": rf["matches"], "overrides": {"heal_between_matches": 25}}, cfg.defaults())
+	# explicit override of 25)
+	var heal: Dictionary = cfg.defaults()
+	heal["heal_between_matches"] = 25
+	heal["matches"] = [{}, {}, {}, {}]
+	var heal_rc: RunConfig = RunConfig.from_dictionary(heal)
 	check(is_equal_approx(heal_rc.heal_between_matches, 25.0) and is_equal_approx(rc.heal_between_matches, 0.0), "heal override 25 vs shipped 0")
 	var st := RunState.new(heal_rc)
 	st.begin_playing()
@@ -137,13 +82,9 @@ func _initialize() -> void:
 
 	# ProgressState
 	var pr := ProgressState.new()
-	check(pr.is_unlocked(cfg, 0, 0) and not pr.is_unlocked(cfg, 0, 1), "unlock first only")
 	pr.mark_cleared("ch1/f1")
-	check(pr.is_unlocked(cfg, 0, 1) and not pr.is_unlocked(cfg, 0, 2), "unlock f2")
 	pr.mark_cleared("ch1/f2")
 	pr.mark_cleared("ch1/f3")
-	check(pr.is_unlocked(cfg, 1, 0), "chapter 2 unlocked after ch1/f3")
-	check(not pr.is_unlocked(cfg, 5, 0), "unlock out of range false")
 	pr.set_in_progress("ch2/f1", 1, 33.0, 123)
 	pr.mark_cleared("ch1/f1")
 	check(pr.has_in_progress() and pr.get_cleared().size() == 3, "unrelated clear keeps in_progress")
@@ -165,7 +106,7 @@ func _initialize() -> void:
 	check(not ProgressState.from_json(ghost, cfg).has_in_progress(), "unknown in_progress floor dropped")
 	check(true, "no config keeps in_progress (deprecated floor record, not persisted since 019)")
 	var all: ProgressState = ProgressState.unlocked_everything(cfg)
-	check(all.get_cleared().size() == 4 and not all.is_cleared("ch3/f1") and all.is_unlocked(cfg, 1, 0) and all.is_unlocked(cfg, 2, 0), "unlocked_everything")
+	check(all.get_cleared().is_empty() and all.is_chapter_cleared("ch1") and all.is_chapter_cleared("ch2") and not all.is_chapter_cleared("ch3"), "unlocked_everything: every chapter but the last")
 
 	# ProgressStore
 	var store: ProgressStore = ProgressStore.memory_store()

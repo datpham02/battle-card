@@ -69,19 +69,6 @@ var _won: bool = false
 # Config the session was built with (chapter id for [method to_dict]).
 var _chapters: ChaptersConfig = null
 
-## Deprecated (Story 022): alias of [member column] kept so unported callers compile.
-var floor_index: int:
-	get:
-		return column
-	set(value):
-		column = value
-## Deprecated (Story 022): alias of [member node_index] kept so unported callers compile.
-var match_index: int:
-	get:
-		return node_index
-	set(value):
-		node_index = value
-
 
 ## New run: column 0, no node chosen, full HP, deck = the character's starter_deck, revives from
 ## `defaults.revive_tokens`. [param character] is [method CharacterConfig.get_character];
@@ -290,12 +277,6 @@ func is_last_floor(_chapters_unused: ChaptersConfig) -> bool:
 ## Deprecated shim: true when the chosen node is a boss.
 func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 	return str(current_node().get("kind", "")) == KIND_BOSS
-
-
-## Deprecated shim for the old per-match flow: no automatic heal, only [param passive_heal]; does
-## NOT advance the map (the flow must call [method complete_node]).
-func apply_match_won(hp_end: float, max_hp: float, _chapters_unused: ChaptersConfig, _is_boss: bool, passive_heal: float) -> void:
-	hp = minf(hp_end + passive_heal, max_hp)
 
 
 ## Save form (v4): {version, character, chapter (id), map, column, node_index, cleared_nodes, hp,

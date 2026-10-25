@@ -16,7 +16,7 @@ func ck(name: String, cond: bool) -> void:
 
 func _init() -> void:
 	lib = PieceLibrary.load_from_file()
-	_test_classic_unchanged()
+	_test_no_library_no_drops()
 	_test_seeded_determinism()
 	_test_unplaceable_shapes_skipped()
 	_test_weights()
@@ -43,7 +43,7 @@ func _config(interval: float = 0.01, max_on: int = 3, freshness: float = 4.0, st
 
 
 func _piece_drops(grid: BoardGrid, config: FieldDropsConfig, chapter: String = "ch1", seed_value: int = 11) -> FieldDrops:
-	var drops := FieldDrops.new(config, grid.player_cells(), grid.perimeter_labels(), seed_value)
+	var drops := FieldDrops.new(config, grid.player_cells(), seed_value)
 	drops.enable_pieces(lib, chapter, grid, seed_value)
 	return drops
 
@@ -58,37 +58,26 @@ func _spawn_log(drops: FieldDrops, ticks: int) -> Array[String]:
 	return log
 
 
-func _test_classic_unchanged() -> void:
+# Story 026: the label bag is gone; before enable_pieces nothing drops at all.
+func _test_no_library_no_drops() -> void:
 	var grid := BoardGrid.new(3, 3)
 	var config := FieldDropsConfig.new()
-	var a := FieldDrops.new(config, grid.player_cells(), grid.perimeter_labels(), 5)
-	var b := FieldDrops.new(config, grid.player_cells(), grid.perimeter_labels(), 5)
-	var labels_a: Array[String] = []
-	var labels_b: Array[String] = []
-	a.point_spawned.connect(func(p: FieldPoint) -> void: labels_a.append(p.label))
-	b.point_spawned.connect(func(p: FieldPoint) -> void: labels_b.append(p.label))
-	var all_classic: bool = true
+	config.initial_delay_sec = 0.0
+	var a := FieldDrops.new(config, grid.player_cells(), 5)
 	for _i: int in 400:
 		a.tick(0.05, Vector2i(1, 1), 1)
-		b.tick(0.05, Vector2i(1, 1), 1)
-		for p: FieldPoint in a.get_points():
-			all_classic = all_classic and p.piece == null and not p.rotten and grid.perimeter_labels().has(p.label)
-	ck("classic: no piece on any point, labels are perimeter labels", all_classic and labels_a.size() > 5)
-	ck("classic: same seed gives the same label sequence", labels_a == labels_b)
-	ck("classic: is_piece_mode false, no start pieces, no drawable shapes", not a.is_piece_mode() and a.place_start_pieces(Vector2i(1, 1)) == 0 and a.get_drawable_shapes().is_empty())
+	ck("no library: nothing drops before enable_pieces", a.get_points().is_empty())
+	ck("no library: no start pieces, no drawable shapes", a.place_start_pieces(Vector2i(1, 1)) == 0 and a.get_drawable_shapes().is_empty())
 	var small := FieldDropsConfig.new()
-	small.max_on_field = 2
-	small.piece_max_on_field = 5
+	small.piece_max_on_field = 2
 	small.initial_delay_sec = 0.0
-	small.spawn_interval_sec = 0.01
-	small.freshness_sec = 100.0
-	var c := FieldDrops.new(small, grid.player_cells(), grid.perimeter_labels(), 3)
+	small.piece_spawn_interval_sec = 0.01
+	small.piece_freshness_sec = 100.0
+	var c := FieldDrops.new(small, grid.player_cells(), 3)
+	c.enable_pieces(lib, "ch1", grid, 3)
 	for _i: int in 50:
 		c.tick(0.05, Vector2i(1, 1), 1)
-	ck("classic: reads max_on_field, not piece_max_on_field", c.get_points().size() == 2)
-	var d := FieldDrops.new(small, grid.player_cells(), grid.perimeter_labels(), 3)
-	var rotten: FieldPoint = d.place_rotten(Vector2i(0, 0), "X", 5.0, 5.0)
-	ck("classic: place_rotten still makes a label point without a piece", rotten != null and rotten.rotten and rotten.piece == null and rotten.label == "X")
+	ck("pacing reads piece_max_on_field", c.get_points().size() == 2)
 
 
 func _test_seeded_determinism() -> void:
@@ -107,7 +96,7 @@ func _test_seeded_determinism() -> void:
 
 func _test_unplaceable_shapes_skipped() -> void:
 	var tiny := BoardGrid.new(1, 1)
-	var d := FieldDrops.new(_config(), tiny.player_cells(), tiny.perimeter_labels(), 1)
+	var d := FieldDrops.new(_config(), tiny.player_cells(), 1)
 	d.enable_pieces(lib, "ch3", tiny, 1)
 	ck("skip: a 1x1 enemy half can only draw the mono", d.get_drawable_shapes() == (["mono"] as Array[String]))
 	var shapes_seen: Dictionary = {}
@@ -116,12 +105,12 @@ func _test_unplaceable_shapes_skipped() -> void:
 		d.tick(0.02, Vector2i(5, 5), 1)
 	ck("skip: 100 ticks on the 1x1 half only ever spawned mono", shapes_seen.keys() == ["mono"])
 	var narrow := BoardGrid.new(2, 3)
-	var n := FieldDrops.new(_config(), narrow.player_cells(), narrow.perimeter_labels(), 1)
+	var n := FieldDrops.new(_config(), narrow.player_cells(), 1)
 	n.enable_pieces(lib, "ch3", narrow, 1)
 	var drawable: Array[String] = n.get_drawable_shapes()
 	ck("skip: a 2x3 half drops neither bar4, bar5 nor plus5 but keeps bar3 (placed turned)", not drawable.has("bar4") and not drawable.has("bar5") and not drawable.has("plus5") and drawable.has("bar3") and drawable.has("u5"))
 	var holey := BoardGrid.new(3, 3, [Vector2i(1, 1)] as Array[Vector2i])
-	var h := FieldDrops.new(_config(), holey.player_cells(), holey.perimeter_labels(), 2)
+	var h := FieldDrops.new(_config(), holey.player_cells(), 2)
 	h.enable_pieces(lib, "ch3", holey, 2)
 	ck("skip: a centre hole removes plus5 and square from the draw", not h.get_drawable_shapes().has("plus5") and not h.get_drawable_shapes().has("square") and h.get_drawable_shapes().has("mono"))
 	var seen_holey: Dictionary = {}
@@ -134,7 +123,7 @@ func _test_unplaceable_shapes_skipped() -> void:
 		every_fits = every_fits and PiecePlacement.has_any_placement(holey, lib.make_piece(id))
 	ck("skip: every drawable shape has a placement", every_fits)
 	var one_lib: PieceLibrary = PieceLibrary.from_dictionary({"shapes": [{"id": "bar5", "cells": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]]}]})
-	var none := FieldDrops.new(_config(), tiny.player_cells(), tiny.perimeter_labels(), 1)
+	var none := FieldDrops.new(_config(), tiny.player_cells(), 1)
 	none.enable_pieces(one_lib, "ch1", tiny, 1)
 	for _i: int in 10:
 		none.tick(0.02, Vector2i(5, 5), 1)
@@ -155,7 +144,7 @@ func _shape_counts(chapter: String, draws: int, seed_value: int) -> Dictionary:
 
 
 func _large_share(counts: Dictionary, draws: int) -> float:
-	return float(int(counts.get("plus5", 0)) + int(counts.get("u5", 0)) + int(counts.get("bar5", 0))) / float(draws)
+	return float(int(counts.get("plus5", 0)) + int(counts.get("u5", 0)) + int(counts.get("p5", 0)) + int(counts.get("bar5", 0))) / float(draws)
 
 
 func _test_weights() -> void:
@@ -177,7 +166,7 @@ func _test_weights() -> void:
 		"weights": {"default": {"mono": 0, "bar2": 1}},
 	})
 	var grid := BoardGrid.new(3, 3)
-	var d := FieldDrops.new(_config(), grid.player_cells(), grid.perimeter_labels(), 9)
+	var d := FieldDrops.new(_config(), grid.player_cells(), 9)
 	d.enable_pieces(only_bar2, "ch1", grid, 9)
 	var seen: Dictionary = {}
 	d.point_spawned.connect(func(p: FieldPoint) -> void: seen[p.piece.shape_id] = true)
@@ -188,7 +177,7 @@ func _test_weights() -> void:
 		"shapes": [{"id": "mono", "cells": [[0, 0]]}, {"id": "bar2", "cells": [[0, 0], [1, 0]]}],
 		"weights": {"default": {"mono": 0, "bar2": 0}},
 	})
-	var z := FieldDrops.new(_config(), grid.player_cells(), grid.perimeter_labels(), 9)
+	var z := FieldDrops.new(_config(), grid.player_cells(), 9)
 	z.enable_pieces(zeros, "ch1", grid, 9)
 	for _i: int in 20:
 		z.tick(0.02, Vector2i(1, 1), 1)
@@ -247,7 +236,7 @@ func _test_start_pieces() -> void:
 	var none := _piece_drops(grid, _config(3.0, 3, 8.0, 0))
 	ck("start: start_pieces 0 places nothing", none.place_start_pieces(Vector2i(1, 1)) == 0 and none.get_points().is_empty())
 	var one := BoardGrid.new(1, 1)
-	var lone := FieldDrops.new(_config(3.0, 3, 8.0, 2), one.player_cells(), one.perimeter_labels(), 1)
+	var lone := FieldDrops.new(_config(3.0, 3, 8.0, 2), one.player_cells(), 1)
 	lone.enable_pieces(lib, "ch1", one, 1)
 	ck("start: no free cell besides the player's places nothing", lone.place_start_pieces(Vector2i(0, 0)) == 0)
 	var a := _piece_drops(grid, _config(3.0, 3, 8.0, 2), "ch1", 77)
@@ -262,7 +251,7 @@ func _test_start_pieces() -> void:
 
 func _test_pickup_and_bag() -> void:
 	var grid := BoardGrid.new(3, 3)
-	var drops := FieldDrops.new(_config(), grid.player_cells(), grid.perimeter_labels(), 1)
+	var drops := FieldDrops.new(_config(), grid.player_cells(), 1)
 	drops.enable_pieces(lib, "ch1", grid, 1)
 	var hand: HoldSlots = HoldSlots.create_piece_hand(3)
 	ck("bag: create_piece_hand(3) has 3 slots; 5 and 0 are not clamped to 3..4", hand.get_slot_count() == 3 and HoldSlots.create_piece_hand(5).get_slot_count() == 5 and HoldSlots.create_piece_hand(0).get_slot_count() == 1)
@@ -306,7 +295,7 @@ func _test_blocked_and_hunger() -> void:
 			seen += 1
 			bad = bad or blocked_cells.has(p.cell)
 	ck("blocked: pieces never spawn on a burning cell (%d seen)" % seen, not bad and seen > 0)
-	var e := FieldDrops.new(_config(), grid.player_cells(), grid.perimeter_labels(), 1)
+	var e := FieldDrops.new(_config(), grid.player_cells(), 1)
 	e.enable_pieces(lib, "ch1", grid, 1)
 	e.debug_place_piece(lib.make_piece("bar2"), Vector2i(0, 0), 5.0)
 	e.debug_place_piece(lib.make_piece("mono"), Vector2i(1, 0), 5.0)
@@ -369,9 +358,9 @@ func _test_rotten_piece() -> void:
 	for p: FieldPoint in lying.get_points():
 		still_rotten = still_rotten or p.rotten
 	ck("rotten piece: rots off the field after freshness_left", not still_rotten)
-	var classic_mode := FieldDrops.new(FieldDropsConfig.new(), grid.player_cells(), grid.perimeter_labels(), 1)
+	var classic_mode := FieldDrops.new(FieldDropsConfig.new(), grid.player_cells(), 1)
 	var in_classic: FieldPoint = classic_mode.place_rotten_piece(Vector2i(0, 0), 5.0, 5.0)
-	ck("rotten piece: place_rotten_piece also works without piece mode", in_classic != null and in_classic.piece.is_rotten())
+	ck("rotten piece: place_rotten_piece also works before enable_pieces", in_classic != null and in_classic.piece.is_rotten())
 
 
 func _test_rotten_thrower() -> void:
@@ -390,14 +379,7 @@ func _test_rotten_thrower() -> void:
 	t1.on_tick(0.1)
 	t1.on_tick(0.1)
 	ck("thrower: max_on_field still respected in piece mode", piece_drops.get_points().size() == 1 and t1.get_throw_count() == 1)
-	# Classic mode: unchanged label point.
-	var classic_drops := FieldDrops.new(FieldDropsConfig.new(), grid.player_cells(), grid.perimeter_labels(), 3)
-	var t2 := RottenThrowerTrait.new()
-	t2.setup({"player_drops": classic_drops, "state": state, "grid": grid}, params, 3)
-	t2.on_match_start()
-	t2.on_tick(0.1)
-	var classic_points: Array[FieldPoint] = classic_drops.get_points()
-	ck("thrower: classic mode still throws a labelled rotten point without a piece", classic_points.size() == 1 and classic_points[0].rotten and classic_points[0].piece == null and classic_points[0].label == "X")
+	# Story 026: the classic labelled rotten point (and its test) was removed with the label bag.
 
 
 func _test_config_keys() -> void:

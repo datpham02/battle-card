@@ -112,7 +112,7 @@
 				"goblin_scout": {
 					"id": "goblin_scout",
 					"name_key": "boss.goblin_scout.name",
-					"boss_max_hp": 80,
+					"boss_max_hp": 86,
 					"brain_set": "cautious",
 					"boss_step_cooldown_mult": 1.78,
 					"swing_speed_mult": 1.0,
@@ -126,7 +126,7 @@
 				"wolf": {
 					"id": "wolf",
 					"name_key": "boss.wolf.name",
-					"boss_max_hp": 100,
+					"boss_max_hp": 108,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.44,
 					"boss_think_interval_sec": 0.4,
@@ -145,7 +145,7 @@
 				"goblin_chief": {
 					"id": "goblin_chief",
 					"name_key": "boss.goblin_chief.name",
-					"boss_max_hp": 120,
+					"boss_max_hp": 130,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.22,
 					"swing_speed_mult": 0.9,
@@ -165,7 +165,7 @@
 				"goblin_warrior": {
 					"id": "goblin_warrior",
 					"name_key": "boss.goblin_warrior.name",
-					"boss_max_hp": 90,
+					"boss_max_hp": 97,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.78,
 					"swing_speed_mult": 1.0,
@@ -179,7 +179,7 @@
 				"dire_wolf": {
 					"id": "dire_wolf",
 					"name_key": "boss.dire_wolf.name",
-					"boss_max_hp": 110,
+					"boss_max_hp": 119,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.44,
 					"boss_think_interval_sec": 0.4,
@@ -198,7 +198,7 @@
 				"goblin_shaman": {
 					"id": "goblin_shaman",
 					"name_key": "boss.goblin_shaman.name",
-					"boss_max_hp": 130,
+					"boss_max_hp": 140,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.3,
 					"swing_speed_mult": 0.95,
@@ -212,7 +212,7 @@
 				"wolf_alpha": {
 					"id": "wolf_alpha",
 					"name_key": "boss.wolf_alpha.name",
-					"boss_max_hp": 140,
+					"boss_max_hp": 151,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.22,
 					"swing_speed_mult": 0.9,
@@ -232,7 +232,7 @@
 				"goblin_archer": {
 					"id": "goblin_archer",
 					"name_key": "boss.goblin_archer.name",
-					"boss_max_hp": 100,
+					"boss_max_hp": 108,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.44,
 					"boss_think_interval_sec": 0.4,
@@ -247,7 +247,7 @@
 				"goblin_brute": {
 					"id": "goblin_brute",
 					"name_key": "boss.goblin_brute.name",
-					"boss_max_hp": 120,
+					"boss_max_hp": 130,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.3,
 					"swing_speed_mult": 0.95,
@@ -262,7 +262,7 @@
 				"goblin_warlock": {
 					"id": "goblin_warlock",
 					"name_key": "boss.goblin_warlock.name",
-					"boss_max_hp": 135,
+					"boss_max_hp": 146,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.22,
 					"swing_speed_mult": 0.9,
@@ -283,7 +283,7 @@
 				"forest_witch": {
 					"id": "forest_witch",
 					"name_key": "boss.forest_witch.name",
-					"boss_max_hp": 150,
+					"boss_max_hp": 162,
 					"brain_set": "aggressive",
 					"boss_step_cooldown_mult": 1.11,
 					"swing_speed_mult": 0.8,
@@ -353,50 +353,7 @@
 						"forest_witch"
 					]
 				}
-			},
-			"legacy_floors": [
-				{
-					"id": "f1",
-					"name_key": "floor.ch1.f1.name",
-					"match_ids": [
-						"goblin_scout",
-						"wolf",
-						"goblin_chief"
-					],
-					"arena": {
-						"shape": "square"
-					}
-				},
-				{
-					"id": "f2",
-					"name_key": "floor.ch1.f2.name",
-					"match_ids": [
-						"goblin_warrior",
-						"dire_wolf",
-						"goblin_shaman",
-						"wolf_alpha"
-					],
-					"arena": {
-						"shape": "rect"
-					}
-				},
-				{
-					"id": "f3",
-					"name_key": "floor.ch1.f3.name",
-					"match_ids": [
-						"goblin_archer",
-						"goblin_brute",
-						"goblin_warlock",
-						"forest_witch"
-					],
-					"arena_pool": [
-						"cross",
-						"u_shape",
-						"staircase"
-					],
-					"arena_variant": true
-				}
-			]
+			}
 		},
 		{
 			"id": "ch2",
@@ -551,7 +508,7 @@
 				"jailer": {
 					"id": "jailer",
 					"name_key": "boss.jailer.name",
-					"boss_max_hp": 170,
+					"boss_max_hp": 77,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.3,
 					"swing_speed_mult": 0.9,
@@ -580,7 +537,7 @@
 					"id": "ogre_king",
 					"name_key": "boss.ogre_king.name",
 					"desc_key": "match.ogre_king.desc",
-					"boss_max_hp": 290,
+					"boss_max_hp": 132,
 					"brain_set": "aggressive",
 					"boss_step_cooldown_mult": 1.5,
 					"swing_speed_mult": 0.8,
@@ -652,21 +609,7 @@
 						"ogre_king"
 					]
 				}
-			},
-			"legacy_floors": [
-				{
-					"id": "f1",
-					"name_key": "floor.ch2.f1.name",
-					"match_ids": [
-						"zombie",
-						"ogre_king"
-					],
-					"arena_pool": [
-						"ring"
-					],
-					"arena_variant": true
-				}
-			]
+			}
 		},
 		{
 			"id": "ch3",
@@ -818,7 +761,7 @@
 				"frost_mage": {
 					"id": "frost_mage",
 					"name_key": "boss.frost_mage.name",
-					"boss_max_hp": 210,
+					"boss_max_hp": 92,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.6,
 					"swing_speed_mult": 0.9,
@@ -841,7 +784,7 @@
 					"id": "mist_lord",
 					"name_key": "boss.mist_lord.name",
 					"desc_key": "match.mist_lord.desc",
-					"boss_max_hp": 320,
+					"boss_max_hp": 139,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.5,
 					"swing_speed_mult": 0.85,

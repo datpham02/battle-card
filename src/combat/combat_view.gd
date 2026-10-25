@@ -226,7 +226,7 @@ func _ready() -> void:
 	var boss_drop_mult: float = maxf(float(match_params.get("boss_drop_interval_mult", 1.0)), 0.01)
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult
 	boss_drops_config.piece_spawn_interval_sec *= boss_drop_mult # Story 025: the boss drops pieces too
-	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), _grid.perimeter_labels(), drops_seed)
+	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), drops_seed)
 	# Story 024: the player's half drops puzzle pieces (the boss's drops stay classic labels).
 	_drops.enable_pieces(PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), _grid, drops_seed)
 	_drops.place_start_pieces(_state.player_cell)

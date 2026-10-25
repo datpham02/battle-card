@@ -8,10 +8,11 @@ extends BossTrait
 ## At most `max_on_field` rotten points lie on the field at once: when the cap is reached the
 ## throw waits (no catch-up burst) and happens as soon as a rotten point leaves the field.
 ## Params (chapters.json `traits[].params`, defaults in the constants below): `interval_sec`,
-## `field_freshness_sec`, `rot_in_hand_sec`, `label`, `max_on_field`, `first_delay_sec`.
-## Story 024: when the player's drops are in piece mode the throw is a ROTTEN PIECE (1 cell, grey,
-## FieldPoint.piece.is_rotten(), never placeable) via FieldDrops.place_rotten_piece; `label` is then unused.
-## Implements: Story 014 (Part B), Story 024.
+## `field_freshness_sec`, `rot_in_hand_sec`, `max_on_field`, `first_delay_sec`.
+## Story 024: the throw is a ROTTEN PIECE (1 cell, grey, FieldPoint.piece.is_rotten(), never
+## placeable) via FieldDrops.place_rotten_piece (Story 026 removed the labelled rotten point and
+## its `label` param).
+## Implements: Story 014 (Part B), Story 024, Story 026.
 
 ## A rotten point was thrown onto the player's half (FieldDrops.point_spawned fires too).
 signal thrown(point: FieldPoint)
@@ -20,7 +21,6 @@ const ID: String = "rotten_thrower"
 const DEFAULT_INTERVAL_SEC: float = 6.0
 const DEFAULT_FIELD_FRESHNESS_SEC: float = 5.0
 const DEFAULT_ROT_IN_HAND_SEC: float = 6.0
-const DEFAULT_LABEL: String = "X"
 const DEFAULT_MAX_ON_FIELD: int = 1
 const DEFAULT_FIRST_DELAY_SEC: float = 3.0
 const _SEED_OFFSET: int = 4201
@@ -28,7 +28,6 @@ const _SEED_OFFSET: int = 4201
 var _interval_sec: float = DEFAULT_INTERVAL_SEC
 var _field_freshness_sec: float = DEFAULT_FIELD_FRESHNESS_SEC
 var _rot_in_hand_sec: float = DEFAULT_ROT_IN_HAND_SEC
-var _label: String = DEFAULT_LABEL
 var _max_on_field: int = DEFAULT_MAX_ON_FIELD
 var _first_delay_sec: float = DEFAULT_FIRST_DELAY_SEC
 ## Seconds until the next throw; <= 0 = a throw is due (waits for a free cell / the cap).
@@ -50,7 +49,6 @@ func setup(ctx: Dictionary, params: Dictionary, seed_value: int) -> void:
 	_interval_sec = maxf(param_float("interval_sec", DEFAULT_INTERVAL_SEC), 0.0)
 	_field_freshness_sec = maxf(param_float("field_freshness_sec", DEFAULT_FIELD_FRESHNESS_SEC), 0.0)
 	_rot_in_hand_sec = maxf(param_float("rot_in_hand_sec", DEFAULT_ROT_IN_HAND_SEC), 0.0)
-	_label = param_string("label", DEFAULT_LABEL)
 	_max_on_field = maxi(param_int("max_on_field", DEFAULT_MAX_ON_FIELD), 1)
 	_first_delay_sec = maxf(param_float("first_delay_sec", DEFAULT_FIRST_DELAY_SEC), 0.0)
 
@@ -77,12 +75,8 @@ func on_tick(step: float) -> void:
 	if candidates.is_empty():
 		return
 	var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
-	var point: FieldPoint
-	if drops.is_piece_mode():
-		# Story 024: the player's drops carry pieces, so the lie is a 1-cell grey piece.
-		point = drops.place_rotten_piece(cell, _field_freshness_sec, _rot_in_hand_sec)
-	else:
-		point = drops.place_rotten(cell, _label, _field_freshness_sec, _rot_in_hand_sec)
+	# Story 024: the player's drops carry pieces, so the lie is a 1-cell grey piece.
+	var point: FieldPoint = drops.place_rotten_piece(cell, _field_freshness_sec, _rot_in_hand_sec)
 	if point == null:
 		return
 	_last_thrown_cell = cell

@@ -117,22 +117,6 @@ func to_side_coords(cell: Vector2i) -> Vector2i:
 	return Vector2i(total_cols - 1 - cell.x, cell.y)
 
 
-## Perimeter point labels: A1..A<side_cols> (top edge, by column), B1..B<side_rows> (right
-## edge, by row), C1..C<side_cols> (bottom edge, by column), D1..D<side_rows> (left edge,
-## by row).
-func perimeter_labels() -> Array[String]:
-	var labels: Array[String] = []
-	for i: int in side_cols:
-		labels.append("A%d" % (i + 1))
-	for i: int in side_rows:
-		labels.append("B%d" % (i + 1))
-	for i: int in side_cols:
-		labels.append("C%d" % (i + 1))
-	for i: int in side_rows:
-		labels.append("D%d" % (i + 1))
-	return labels
-
-
 # Doubled-integer distance to the side centre keeps ties exact (no float compare).
 func _default_cell(cells: Array[Vector2i]) -> Vector2i:
 	var best: Vector2i = NO_CELL

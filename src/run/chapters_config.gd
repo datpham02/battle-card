@@ -2,9 +2,8 @@ class_name ChaptersConfig
 extends RefCounted
 ## Chapters from assets/data/chapters.json (v2, Story 022): per chapter a `matches` map, `pools`
 ## (kind -> tier -> match ids) and a `columns` spec feeding [ChapterMapGen]; use [method generate_map],
-## [method get_match_def] and [method RunConfig.from_node]. DEPRECATED (kept until GameFlow migrates,
-## Story 022 Part 2): the floor API ([method resolved_floor], [method floor_count], [method next_floor]
-## ...), fed by the optional `legacy_floors` list or the v1 `floors` format.
+## [method get_match_def] and [method RunConfig.from_node]. The v1 `floors` format is still read (its floor
+## matches become the chapter's matches); the floor API and `legacy_floors` are gone (Story 026).
 ## Never null after [method load_from_file]: a bad file gives one default chapter / match.
 ## Schema: assets/data/schema.md. Implements: Story 015, Story 022.
 
@@ -19,8 +18,6 @@ const SEED_MASK: int = 0x7fffffff
 const TEXT_DEFAULT_CHAPTER_NAME: String = "ui.chapter.default_name"
 const TEXT_DEFAULT_FLOOR_NAME: String = "ui.floor.default_name"
 
-## Optional library used to validate pool ids; loaded from arenas.json on first use.
-var arena_library: ArenaLibrary = null
 var _defaults: Dictionary = {}
 ## Each chapter: {id, name, name_is_key, floors: Array[Dictionary]}. Each floor: {id, name, name_is_key, arena, arena_pool,
 ## arena_variant, matches (raw dictionaries), overrides (defaults keys present on the floor)}.
@@ -140,21 +137,6 @@ func danger_traits() -> Array:
 	return (_map_defaults["danger_traits"] as Array).duplicate(true)
 
 
-## Number of floors of chapter [param ci] (0 when out of range).
-func floor_count(ci: int) -> int:
-	if ci < 0 or ci >= _chapters.size():
-		return 0
-	return (_chapters[ci]["floors"] as Array).size()
-
-
-## Floors over all chapters.
-func total_floors() -> int:
-	var total: int = 0
-	for ci: int in _chapters.size():
-		total += floor_count(ci)
-	return total
-
-
 ## Id of chapter [param ci] ("" when out of range).
 func chapter_id(ci: int) -> String:
 	if ci < 0 or ci >= _chapters.size():
@@ -179,184 +161,15 @@ func chapter_text_key(ci: int, which: String) -> String:
 	return str(_chapters[ci].get(which + "_key", ""))
 
 
-## Id of floor [param fi] of chapter [param ci] ("" when out of range).
-func floor_id(ci: int, fi: int) -> String:
-	return str(_floor(ci, fi).get("id", ""))
-
-
-## Translated display name of the floor ("" when out of range); see [method chapter_name].
-func floor_name(ci: int, fi: int) -> String:
-	var fl: Dictionary = _floor(ci, fi)
-	return "" if fl.is_empty() else _display(fl)
-
-
-## "<chapter id>/<floor id>" (e.g. "ch1/f2"); "" when out of range.
-func floor_key(ci: int, fi: int) -> String:
-	if _floor(ci, fi).is_empty():
-		return ""
-	return "%s/%s" % [chapter_id(ci), floor_id(ci, fi)]
-
-
-## (chapter, floor) of a key, or (-1, -1) when unknown.
-func find_floor(key: String) -> Vector2i:
-	for ci: int in _chapters.size():
-		for fi: int in floor_count(ci):
-			if floor_key(ci, fi) == key:
-				return Vector2i(ci, fi)
-	return Vector2i(-1, -1)
-
-
-## Position of a floor in the linear order across chapters (-1 when out of range).
-func linear_index(ci: int, fi: int) -> int:
-	if _floor(ci, fi).is_empty():
-		return -1
-	var index: int = fi
-	for previous: int in ci:
-		index += floor_count(previous)
-	return index
-
-
-## Inverse of [method linear_index]; (-1, -1) when out of range.
-func floor_at_linear(i: int) -> Vector2i:
-	if i < 0:
-		return Vector2i(-1, -1)
-	var rest: int = i
-	for ci: int in _chapters.size():
-		var count: int = floor_count(ci)
-		if rest < count:
-			return Vector2i(ci, rest)
-		rest -= count
-	return Vector2i(-1, -1)
-
-
-## The floor after (ci, fi) in linear order across chapters; (-1, -1) after the last one.
-func next_floor(ci: int, fi: int) -> Vector2i:
-	var index: int = linear_index(ci, fi)
-	if index < 0:
-		return Vector2i(-1, -1)
-	return floor_at_linear(index + 1)
-
-
-## True when (ci, fi) is the last floor of its chapter.
-func is_last_floor_of_chapter(ci: int, fi: int) -> bool:
-	return not _floor(ci, fi).is_empty() and fi == floor_count(ci) - 1
-
-
-## Number of matches of a floor (0 when out of range).
-func match_count(ci: int, fi: int) -> int:
-	return (_floor(ci, fi).get("matches", []) as Array).size()
-
-
-## Arena info of a floor for the floor-select screen:
-## {"kind": "fixed"|"pool"|"none", "shape": String, "pool": Array[String], "variant": bool}.
-## A floor with both arena and arena_pool reports "fixed" (the arena wins).
-func arena_summary(ci: int, fi: int) -> Dictionary:
-	var fl: Dictionary = _floor(ci, fi)
-	var summary: Dictionary = {"kind": "none", "shape": "", "pool": [] as Array[String], "variant": false}
-	if fl.is_empty():
-		return summary
-	var arena: Dictionary = fl["arena"]
-	if not arena.is_empty():
-		summary["kind"] = "fixed"
-		summary["shape"] = str(arena.get("shape", ""))
-		summary["variant"] = bool(arena.get("variant", false))
-	elif not (fl["arena_pool"] as Array).is_empty():
-		var pool: Array[String] = []
-		for id: Variant in fl["arena_pool"] as Array:
-			pool.append(str(id))
-		summary["kind"] = "pool"
-		summary["pool"] = pool
-		summary["variant"] = bool(fl["arena_variant"])
-	return summary
-
-
 ## The validated defaults block (all keys of [constant DEFAULT_KEYS]).
 func defaults() -> Dictionary:
 	return _defaults.duplicate()
-
-
-## Deep copy of floor (ci, fi) whose matches[i] carry "arena" and "arena_seed". Rules: the match's
-## own non-empty arena wins; else the floor's fixed arena; else a shape drawn from the floor's
-## pool with a seeded shuffle bag (adjacent matches differ when the pool has >= 2 shapes); else {}
-## (the combat.json board). Empty dictionary when the floor does not exist. Does not mutate.
-func resolved_floor(ci: int, fi: int, floor_seed: int) -> Dictionary:
-	var fl: Dictionary = _floor(ci, fi)
-	if fl.is_empty():
-		return {}
-	var result: Dictionary = fl.duplicate(true)
-	var floor_arena: Dictionary = result["arena"]
-	var pool: Array[String] = []
-	if not floor_arena.is_empty():
-		if not (result["arena_pool"] as Array).is_empty():
-			push_warning("ChaptersConfig: floor %s has both arena and arena_pool, using arena" % floor_key(ci, fi))
-	else:
-		pool = _validated_pool(result["arena_pool"] as Array, floor_key(ci, fi))
-	var bag: Array[String] = _shuffled(pool, floor_seed)
-	var variant: bool = bool(result["arena_variant"])
-	var matches: Array = result["matches"]
-	for i: int in matches.size():
-		var match_dict: Dictionary = matches[i]
-		var own: Variant = match_dict.get("arena", {})
-		var has_own: bool = typeof(own) == TYPE_DICTIONARY and not (own as Dictionary).is_empty()
-		if not has_own:
-			if not floor_arena.is_empty():
-				match_dict["arena"] = floor_arena.duplicate(true)
-			elif not bag.is_empty():
-				match_dict["arena"] = {"shape": bag[i % bag.size()], "variant": variant}
-			else:
-				match_dict["arena"] = {}
-		match_dict["arena_seed"] = arena_seed_for(floor_seed, i)
-		matches[i] = match_dict
-	return result
 
 
 ## Deterministic, non-negative seed of match [param match_index] of a floor entered with
 ## [param floor_seed].
 static func arena_seed_for(floor_seed: int, match_index: int) -> int:
 	return hash([floor_seed, match_index]) & SEED_MASK
-
-
-func _floor(ci: int, fi: int) -> Dictionary:
-	if ci < 0 or ci >= _chapters.size():
-		return {}
-	var floors: Array = _chapters[ci]["floors"]
-	if fi < 0 or fi >= floors.size():
-		return {}
-	return floors[fi]
-
-
-func _library() -> ArenaLibrary:
-	if arena_library == null:
-		arena_library = ArenaLibrary.load_from_file()
-	return arena_library
-
-
-func _validated_pool(raw_pool: Array, key: String) -> Array[String]:
-	var pool: Array[String] = []
-	if raw_pool.is_empty():
-		return pool
-	var valid: Array[String] = _library().shape_ids()
-	for id: Variant in raw_pool:
-		var text: String = str(id)
-		if not valid.has(text):
-			push_warning("ChaptersConfig: floor %s: unknown arena '%s' dropped from arena_pool" % [key, text])
-		elif not pool.has(text):
-			pool.append(text)
-	if pool.is_empty():
-		push_warning("ChaptersConfig: floor %s: arena_pool is empty after validation, using the combat.json board" % key)
-	return pool
-
-
-static func _shuffled(pool: Array[String], floor_seed: int) -> Array[String]:
-	var bag: Array[String] = pool.duplicate()
-	var rng := RandomNumberGenerator.new()
-	rng.seed = floor_seed
-	for i: int in range(bag.size() - 1, 0, -1):
-		var j: int = rng.randi_range(0, i)
-		var tmp: String = bag[i]
-		bag[i] = bag[j]
-		bag[j] = tmp
-	return bag
 
 
 static func _clean_defaults(raw: Variant) -> Dictionary:
@@ -440,22 +253,8 @@ func _clean_chapter(entry: Variant, index: int, seen: Dictionary) -> Dictionary:
 					if not matches.has(mid):
 						matches[mid] = (m as Dictionary).duplicate(true)
 						match_ids.append(mid)
-	var raw_legacy: Variant = raw.get("legacy_floors")
-	if floors.is_empty() and typeof(raw_legacy) == TYPE_ARRAY:
-		for floor_entry: Variant in raw_legacy as Array:
-			if typeof(floor_entry) != TYPE_DICTIONARY:
-				continue
-			var lf: Dictionary = (floor_entry as Dictionary).duplicate(true)
-			var resolved: Array = []
-			for mid: Variant in lf.get("match_ids", []) as Array:
-				if matches.has(str(mid)):
-					resolved.append((matches[str(mid)] as Dictionary).duplicate(true))
-			lf["matches"] = resolved
-			var cleaned_legacy: Dictionary = _clean_floor(lf, floors.size(), id, floor_ids)
-			if not cleaned_legacy.is_empty():
-				floors.append(cleaned_legacy)
 	if floors.is_empty() and not matches.is_empty():
-		# A v2 chapter without legacy floors: one synthetic floor holding every match.
+		# A v2 chapter: one internal floor holding every match (the v1 parse path expects one).
 		var all: Array = []
 		for mid: String in match_ids:
 			all.append((matches[mid] as Dictionary).duplicate(true))

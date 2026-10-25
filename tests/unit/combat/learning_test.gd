@@ -101,7 +101,7 @@ func _burn_avoid_test() -> void:
 		var cut_config: CutConfig = CutConfig.load_from_file()
 		var skill_config: SkillConfig = SkillConfig.load_from_file()
 		var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
-		var drops := FieldDrops.new(FieldDropsConfig.new(), grid.enemy_cells(), grid.perimeter_labels(), seed_value)
+		var drops := FieldDrops.new(FieldDropsConfig.new(), grid.enemy_cells(), seed_value)
 		var status := StatusEffects.new()
 		var here: Vector2i = state.enemy_cell
 		var burning: Array[Vector2i] = []
@@ -140,6 +140,7 @@ func _sim(seed_value: int, set_name: String, mode: String, refill: bool) -> Dict
 	var skill_config: SkillConfig = SkillConfig.load_from_file()
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
 	var boss := BossController.new(state, grid, cut_config, skill_config, brain_config, FieldDropsConfig.new(), HoldSlotsConfig.new(), seed_value)
+	boss.enable_pieces(PieceLibrary.load_from_file(), "", seed_value, 2) # Story 026: pieces are the only mode
 	boss.get_brain().use_set(set_name)
 	var status := StatusEffects.new()
 	var learning := BossLearning.new(brain_config.learning)
@@ -152,7 +153,8 @@ func _sim(seed_value: int, set_name: String, mode: String, refill: bool) -> Dict
 	var home: Vector2i = state.player_cell
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
-	var labels_all: Array[String] = grid.perimeter_labels()
+	var piece_lib: PieceLibrary = PieceLibrary.load_from_file()
+	var shape_ids: Array[String] = piece_lib.shape_ids()
 	boss.get_actor().swing_started.connect(func(cells: Array[Vector2i], _s: String, _d: float) -> void:
 		learning.on_boss_swing_started(cells, state.player_cell))
 	boss.get_actor().swing_cancelled.connect(func(_c: Array[Vector2i], _s: String) -> void:
@@ -184,7 +186,8 @@ func _sim(seed_value: int, set_name: String, mode: String, refill: bool) -> Dict
 			var hand: HoldSlots = boss.get_hand()
 			while not hand.is_full():
 				var p := FieldPoint.new()
-				p.label = labels_all[rng.randi() % labels_all.size()]
+				p.piece = piece_lib.make_piece(shape_ids[rng.randi() % shape_ids.size()], rng.randi() % 4)
+				p.label = p.piece.shape_id
 				hand.place_in_first_free(p)
 		boss.tick(DT, player_actor)
 		arbiter.tick(DT)

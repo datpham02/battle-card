@@ -43,7 +43,7 @@ func _initialize() -> void:
 	for id: String in cc.ids():
 		_check("deck of %s has 6" % id, cc.deck_of(id).size() == 6)
 	_check("phap_su deck", cc.deck_of("phap_su") == (["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"] as Array[String]))
-	_check("get_character copy / unknown", cc.get_character("nope").is_empty() and int(cc.get_character("phap_su")["max_hp"]) == 160)
+	_check("get_character copy / unknown", cc.get_character("nope").is_empty() and int(cc.get_character("phap_su")["max_hp"]) == 190)
 	var bad: CharacterConfig = CharacterConfig.from_dictionary({"characters": [
 		{"id": "a", "max_hp": -5, "step_cooldown_mult": 0, "starter_deck": ["kiem_khi", "zzz"]},
 		{"id": "a", "max_hp": 50, "starter_deck": ["kiem_khi"]},
@@ -78,17 +78,20 @@ func _initialize() -> void:
 	# ---- phap_su
 	var ps: Dictionary = await _start("phap_su")
 	var pv: CombatView = ps["view"]
-	_check("phap_su max hp 160", pv.get_state().player_max_hp == 160.0 and pv.get_player_hp() == 160.0)
+	_check("phap_su max hp 190", pv.get_state().player_max_hp == 190.0 and pv.get_player_hp() == 190.0)
 	_check("phap_su focus 5.0", pv.get_focus().get_max_sec() == 5.0)
 	_check("phap_su deck = starter ids", pv.get_deck().to_array() == cc.deck_of("phap_su"))
 	_check("phap_su step x1.0", is_equal_approx(pv.get_player_step_cooldown(), base_cd))
 	_check("phap_su passive wide_caster", pv.get_passive() != null and pv.get_passive().get_id() == "wide_caster")
-	# 5-cell player swing duration is 0.85x, 3-cell unchanged, boss actor unaffected
+	# 4+-cell player swing duration is 0.75x (Story 026: min_cells 4, duration_mult 0.75), 3-cell unchanged, boss actor unaffected
 	var cut: CutConfig = pv.get_cut_config()
 	var cells5: Array[Vector2i] = [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 0), Vector2i(1, 1)]
 	var cells3: Array[Vector2i] = [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]
 	pv.get_cut_actor().begin_swing(cells5, "kiem_khi", true)
-	_check("5-cell player swing 0.85x", is_equal_approx(pv.get_cut_actor().get_duration(), cut.swing_duration(5) * 0.85), "%f vs %f" % [pv.get_cut_actor().get_duration(), cut.swing_duration(5) * 0.85])
+	_check("5-cell player swing 0.75x", is_equal_approx(pv.get_cut_actor().get_duration(), cut.swing_duration(5) * 0.75), "%f vs %f" % [pv.get_cut_actor().get_duration(), cut.swing_duration(5) * 0.75])
+	pv.get_cut_actor().cancel()
+	pv.get_cut_actor().begin_swing(cells5.slice(0, 4), "kiem_khi", true)
+	_check("4-cell player swing 0.75x", is_equal_approx(pv.get_cut_actor().get_duration(), cut.swing_duration(4) * 0.75), "%f vs %f" % [pv.get_cut_actor().get_duration(), cut.swing_duration(4) * 0.75])
 	pv.get_cut_actor().cancel()
 	pv.get_cut_actor().begin_swing(cells3, "kiem_khi", true)
 	_check("3-cell player swing unchanged", is_equal_approx(pv.get_cut_actor().get_duration(), cut.swing_duration(3)))

@@ -1,9 +1,9 @@
 class_name RunConfig
 extends RefCounted
-## One run = ONE floor: ordered matches (the last one is the boss match), HP carried between
-## matches and the timings of the run flow. Built from a resolved floor of chapters.json with
-## [method from_floor] (Story 015), or from the flat single-floor format with
-## [method from_dictionary] / [method load_from_file] (used by tests and ad-hoc floors).
+## One run config: ordered matches (the last one is the boss match), HP carried between
+## matches and the timings of the run flow. Built for one map node of chapters.json with
+## [method from_node] (Story 022), or from the flat format with
+## [method from_dictionary] / [method load_from_file] (used by tests and ad-hoc runs).
 ## Schema: assets/data/schema.md. Implements: Story 011, Story 015.
 
 ## Keys every match entry carries after validation (a deprecated absolute
@@ -15,11 +15,6 @@ const MATCH_KEYS: Array[String] = [
 	"desc_key",
 ]
 
-## Keys of the flow numbers shared by chapters.json `defaults` and a floor's overrides.
-const TIMING_KEYS: Array[String] = [
-	"heal_between_matches", "intro_sec", "end_delay_sec", "between_sec", "heal_between_floors",
-	"retry_min_hp_ratio",
-]
 
 ## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
 var heal_between_matches: float = 0.0
@@ -106,21 +101,6 @@ static func from_node(chapters: ChaptersConfig, chapter_index: int, match_id: St
 	return from_dictionary(data)
 
 
-## DEPRECATED (Story 022; kept until GameFlow uses [method from_node]). Builds the config of one floor from [method ChaptersConfig.resolved_floor] (arena and
-## arena_seed already filled per match). [param defaults] is [method ChaptersConfig.defaults];
-## the floor's own optional `overrides` (or top-level keys) of those numbers win over it.
-static func from_floor(resolved_floor: Dictionary, defaults: Dictionary) -> RunConfig:
-	var data: Dictionary = defaults.duplicate()
-	var overrides: Variant = resolved_floor.get("overrides", {})
-	if typeof(overrides) == TYPE_DICTIONARY:
-		data.merge(overrides as Dictionary, true)
-	for key: String in TIMING_KEYS:
-		if resolved_floor.has(key):
-			data[key] = resolved_floor[key]
-	data["matches"] = resolved_floor.get("matches", [])
-	return from_dictionary(data)
-
-
 ## Number of matches (>= 1).
 func match_count() -> int:
 	return matches.size()
@@ -198,7 +178,7 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		m["arena"] = (raw_arena as Dictionary).duplicate(true)
 	else:
 		push_warning("RunConfig: arena of match %s must be an object, ignored" % m["id"])
-	# Filled by ChaptersConfig.resolved_floor; negative = no seed (random).
+	# Filled by RunConfig.from_node; negative = no seed (random).
 	m["arena_seed"] = int(raw.get("arena_seed", m["arena_seed"]))
 	var raw_traits: Variant = raw.get("traits", [])
 	if typeof(raw_traits) == TYPE_ARRAY:

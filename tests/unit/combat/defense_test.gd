@@ -107,6 +107,7 @@ func _brain_checks(bcfg: BossBrainConfig, cc: CutConfig) -> void:
 			var grid: BoardGrid = BoardGrid.new(3, 3)
 			var state: CombatState = CombatState.new(grid, 1000.0, 1000.0, Vector2i(1, 1), Vector2i(4, 1))
 			var boss: BossController = BossController.new(state, grid, cc, sc, bcfg, drops_cfg, hold, seed_value)
+			boss.enable_pieces(PieceLibrary.load_from_file(), "", seed_value, 2) # Story 026: pieces are the only mode
 			boss.get_brain().use_set("aggressive")
 			boss.get_brain().min_runes = min_runes
 			var pa: CutActor = CutActor.new(cc, CombatState.Side.PLAYER)
@@ -129,4 +130,6 @@ func _brain_checks(bcfg: BossBrainConfig, cc: CutConfig) -> void:
 	ck("min_runes 5: brain still cuts", int(counts[5][2]) > 0)
 	ck("min_runes 0 (aggressive): small cuts happen (%d)" % counts[0][0], int(counts[0][0]) > 0)
 	ck("min_runes 5: fewer small cuts than with 0 (%d vs %d)" % [counts[5][0], counts[0][0]], int(counts[5][0]) < int(counts[0][0]))
-	ck("min_runes 5: big cuts dominate (%d big / %d small)" % [counts[5][1], counts[5][0]], int(counts[5][1]) >= int(counts[5][0]) * 2)
+	# Story 026 (pieces): a 5+ cell cast needs a big piece or a join in hand, so small casts stay common;
+	# the label-era "big cuts dominate" ratio no longer holds. Assert the share of big casts rises instead.
+	ck("min_runes 5: bigger share of big cuts than with 0 (%d/%d vs %d/%d)" % [counts[5][1], counts[5][2], counts[0][1], counts[0][2]], float(counts[5][1]) / maxf(float(counts[5][2]), 1.0) > float(counts[0][1]) / maxf(float(counts[0][2]), 1.0))

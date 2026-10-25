@@ -56,10 +56,11 @@ func _init() -> void:
 	# 3 drops
 	var grid: BoardGrid = BoardGrid.new(3, 3)
 	var cfgd: FieldDropsConfig = FieldDropsConfig.new()
-	cfgd.spawn_interval_sec = 0.01
+	cfgd.piece_spawn_interval_sec = 0.01
 	cfgd.initial_delay_sec = 0.0
-	cfgd.freshness_sec = 0.02
-	var fd: FieldDrops = FieldDrops.new(cfgd, grid.player_cells(), grid.perimeter_labels(), 7)
+	cfgd.piece_freshness_sec = 0.02
+	var fd: FieldDrops = FieldDrops.new(cfgd, grid.player_cells(), 7)
+	fd.enable_pieces(PieceLibrary.load_from_file(), "ch1", grid, 7)
 	var blocked: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 1), Vector2i(2, 2)]
 	fd.set_blocked_cells(blocked)
 	var bad: bool = false
@@ -71,7 +72,7 @@ func _init() -> void:
 			if blocked.has(p.cell):
 				bad = true
 	ck("drops: 500 ticks no blocked spawn (seen %d)" % spawned, not bad and spawned > 0)
-	var fd2: FieldDrops = FieldDrops.new(FieldDropsConfig.new(), grid.player_cells(), grid.perimeter_labels(), 1)
+	var fd2: FieldDrops = FieldDrops.new(FieldDropsConfig.new(), grid.player_cells(), 1)
 	fd2.debug_place("A1", Vector2i(0, 0), 5.0)
 	fd2.debug_place("A2", Vector2i(1, 0), 5.0)
 	fd2.set_blocked_cells([Vector2i(0, 0)] as Array[Vector2i])

@@ -8,19 +8,34 @@ extends RefCounted
 ##  - each half is 4-connected,
 ##  - both default cells exist,
 ##  - the halves mirror each other across the divider,
-##  - from each half's default cell, EVERY single-point cut of that half leaves at least one
-##    uncovered cell reachable in 1 step (EscapeAnalysis).
-## Implements: Story 014 (arena validator).
+##  - every real cell of each half can be covered by at least one placement of a piece from
+##    pieces.json, and at least one shape of >= MIN_BIG_PIECE_CELLS cells fits on each half,
+##  - from each half's default cell, EVERY single placement of a piece of at most
+##    ESCAPE_MAX_PIECE_CELLS cells on that half leaves at least one uncovered cell reachable in
+##    1 step (EscapeAnalysis). Bigger pieces are skipped on purpose: a 3-5 cell piece can seal the
+##    whole neighbourhood of a default cell with 2-4 neighbours on shipped arenas too (ring,
+##    staircase, every open board for the plus), so it says nothing about a broken arena. With
+##    1-2 cells the check means "the default cell is not a dead end".
+## Implements: Story 014 (arena validator); piece-placement checks: Story 026 (replaced the
+## perimeter-label cut checks).
 
 ## Used only when [param rules] lacks the key (arenas.json normally supplies it).
 const FALLBACK_MIN_CELLS: int = 6
+## A half must fit at least one piece of this many cells (a bigger shape than the mono/bar2).
+const MIN_BIG_PIECE_CELLS: int = 3
+## Largest piece the escape check tries (see the class doc).
+const ESCAPE_MAX_PIECE_CELLS: int = 2
 ## Steps the escape check allows (a single-point cut is judged with one step).
 const ESCAPE_STEPS: int = 1
 const _DIRECTIONS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
+## Library loaded on first use when [method validate] gets no [param pieces] (pieces.json).
+static var _default_pieces: PieceLibrary = null
 
-## Returns {ok: bool, reasons: Array[String]}; reasons lists every failing check.
-static func validate(spec: Dictionary, rules: Dictionary) -> Dictionary:
+
+## Returns {ok: bool, reasons: Array[String]}; reasons lists every failing check. [param pieces]
+## is the shape library the placement checks use (null = pieces.json, loaded once and cached).
+static func validate(spec: Dictionary, rules: Dictionary, pieces: PieceLibrary = null) -> Dictionary:
 	var reasons: Array[String] = []
 	var side_cols: int = int(spec.get("side_cols", 0))
 	var side_rows: int = int(spec.get("side_rows", 0))
@@ -53,10 +68,15 @@ static func validate(spec: Dictionary, rules: Dictionary) -> Dictionary:
 		reasons.append("no default boss cell")
 	if not _is_symmetric(grid, player_cells, enemy_cells):
 		reasons.append("halves are not mirror images")
+	var library: PieceLibrary = pieces if pieces != null else _library()
+	var placements_player: Array[Array] = _placements(grid, library, false)
+	var placements_enemy: Array[Array] = _placements(grid, library, true)
+	_check_coverage(player_cells, placements_player, library, "player", reasons)
+	_check_coverage(enemy_cells, placements_enemy, library, "boss", reasons)
 	if player_default != BoardGrid.NO_CELL:
-		_check_escapes(grid, player_default, true, reasons)
+		_check_escapes(grid, player_default, true, placements_player, reasons)
 	if enemy_default != BoardGrid.NO_CELL:
-		_check_escapes(grid, enemy_default, false, reasons)
+		_check_escapes(grid, enemy_default, false, placements_enemy, reasons)
 	return {"ok": reasons.is_empty(), "reasons": reasons}
 
 
@@ -107,10 +127,56 @@ static func _is_symmetric(grid: BoardGrid, player_cells: Array[Vector2i], enemy_
 	return true
 
 
-static func _check_escapes(grid: BoardGrid, from_cell: Vector2i, player_half: bool, reasons: Array[String]) -> void:
+static func _library() -> PieceLibrary:
+	if _default_pieces == null:
+		_default_pieces = PieceLibrary.load_from_file()
+	return _default_pieces
+
+
+## Every placement of every shape (all 4 rotations) on one half: an array of
+## {cells: Array[Vector2i], size: int}. Duplicate cell sets (symmetric shapes) are kept once.
+static func _placements(grid: BoardGrid, library: PieceLibrary, boss_half: bool) -> Array[Array]:
+	var out: Array[Array] = []
+	var seen: Dictionary = {}
+	for id: String in library.shape_ids():
+		var base: Piece = library.make_piece(id)
+		for turns: int in 4:
+			var piece: Piece = base.rotated(turns)
+			for anchor: Vector2i in PiecePlacement.valid_anchors(grid, piece, boss_half):
+				var cells: Array[Vector2i] = piece.cells_at(anchor)
+				var key: String = str(cells)
+				if not seen.has(key):
+					seen[key] = true
+					out.append([cells, piece.cell_count()])
+	return out
+
+
+static func _check_coverage(
+	cells: Array[Vector2i], placements: Array[Array], library: PieceLibrary, half_name: String, reasons: Array[String]
+) -> void:
+	var covered: Dictionary = {}
+	var has_big: bool = false
+	for entry: Array in placements:
+		for cell: Vector2i in entry[0] as Array[Vector2i]:
+			covered[cell] = true
+		if int(entry[1]) >= MIN_BIG_PIECE_CELLS:
+			has_big = true
+	for cell: Vector2i in cells:
+		if not covered.has(cell):
+			reasons.append("no piece placement covers the %s cell %s" % [half_name, cell])
+	if not has_big:
+		reasons.append("no piece of %d+ cells fits on the %s half" % [MIN_BIG_PIECE_CELLS, half_name])
+
+
+static func _check_escapes(
+	grid: BoardGrid, from_cell: Vector2i, player_half: bool, placements: Array[Array], reasons: Array[String]
+) -> void:
 	var half_name: String = "player" if player_half else "boss"
-	for label: String in grid.perimeter_labels():
-		var covered: Array[Vector2i] = CutResolver.resolve_on_board(grid, not player_half, [label] as Array[String])
+	for entry: Array in placements:
+		if int(entry[1]) > ESCAPE_MAX_PIECE_CELLS:
+			continue
+		var covered: Array[Vector2i] = entry[0]
 		var escapes: Array[Vector2i] = EscapeAnalysis.escape_cells(grid, from_cell, ESCAPE_STEPS, player_half, covered)
 		if escapes.is_empty():
-			reasons.append("no escape from the %s default cell %s against cut %s" % [half_name, from_cell, label])
+			reasons.append("no escape from the %s default cell %s against the piece at %s" % [half_name, from_cell, covered])
+			return

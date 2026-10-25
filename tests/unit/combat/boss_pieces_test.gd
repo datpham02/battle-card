@@ -36,7 +36,6 @@ func _initialize() -> void:
 	_test_controller_accepts_pair()
 	_test_feint_eligibility()
 	_test_root()
-	_test_classic_labels()
 	print("FAILS=%d" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -62,7 +61,7 @@ func _world(grid: BoardGrid, ids: Array, config: BossBrainConfig = null) -> Dict
 	var drops_config := FieldDropsConfig.new()
 	drops_config.spawn_interval_sec = 1.0e9
 	drops_config.initial_delay_sec = 1.0e9
-	var drops := FieldDrops.new(drops_config, grid.enemy_cells(), grid.perimeter_labels(), SEED)
+	var drops := FieldDrops.new(drops_config, grid.enemy_cells(), SEED)
 	var brain := BossBrain.new(config, grid, cut_config, skill_config, SEED)
 	var ctx: Dictionary = {
 		"state": state, "hand": hand, "drops": drops,
@@ -308,30 +307,3 @@ func _test_root() -> void:
 	var free: BossController = _controller(["bar2"], false)
 	free._do_cut(_cut([0], _v([[0, 0], [1, 0]])))
 	_check("root off: steps while swinging", free.get_actor().is_swinging() and not free.is_step_locked() and _try_any_step(free))
-
-
-func _test_classic_labels() -> void:
-	var grid := BoardGrid.new(3, 3)
-	var w: Dictionary = _world(grid, [])
-	var hand := HoldSlots.new(4)
-	for label: String in ["A1", "C1", "B2"]:
-		var p := FieldPoint.new()
-		p.label = label
-		hand.place_in_first_free(p)
-	(w["ctx"] as Dictionary)["hand"] = hand
-	var action: Dictionary = _decide(w)
-	var rows: Array = (w["brain"] as BossBrain).last_debug()["cut_candidates"]
-	var labels_ok: bool = not rows.is_empty()
-	for row: Dictionary in rows:
-		if row.has("pieces"):
-			labels_ok = false
-	_check("classic: label candidates (no piece rows), no cells in the action", labels_ok and not action.has("cells"), "rows=%d type=%s" % [rows.size(), action["type"]])
-	var boss := BossController.new(
-		CombatState.new(grid, 1.0e6, 1.0e6), grid, CutConfig.load_from_file(), SkillConfig.load_from_file(),
-		_brain_config(), FieldDropsConfig.new(), HoldSlotsConfig.new(), SEED
-	)
-	var q := FieldPoint.new()
-	q.label = "A1"
-	boss.get_hand().place_in_first_free(q)
-	boss._do_cut({"type": "cut", "hand_indices": [0], "skill_id": SkillConfig.FALLBACK_SKILL})
-	_check("classic: controller cuts a label point", not boss.is_piece_mode() and boss.get_actor().is_swinging())

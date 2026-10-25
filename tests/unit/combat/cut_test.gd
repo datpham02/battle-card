@@ -4,46 +4,9 @@ func ck(name: String, cond: bool) -> void:
 	if not cond:
 		fails += 1
 	print(("PASS " if cond else "FAIL ") + name)
-func sq(l: Array[String], c: int = 3, r: int = 3) -> Array[Vector2i]:
-	return CutResolver.resolve_square(l, c, r)
 func _init() -> void:
-	ck("A1 col1", sq(["A1"]) == ([Vector2i(0,0),Vector2i(0,1),Vector2i(0,2)] as Array[Vector2i]))
-	ck("D2 row2", sq(["D2"]) == ([Vector2i(0,1),Vector2i(1,1),Vector2i(2,1)] as Array[Vector2i]))
-	ck("A1+A3", sq(["A1","A3"]) == ([Vector2i(0,0),Vector2i(1,0),Vector2i(2,0)] as Array[Vector2i]))
-	var d: Array[Vector2i] = sq(["A1","C3"])
-	print(d)
-	ck("A1+C3", d == ([Vector2i(0,0),Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(2,2)] as Array[Vector2i]))
-	ck("poly9", sq(["A1","A3","C3","C1"]).size() == 9)
-	ck("poly 4x3 12", sq(["A1","A4","C4","C1"], 4, 3).size() == 12)
-	print("triangle A1+A3+D3: ", sq(["A1","A3","D3"]))
-	for g: Array in [[3,3],[4,3]]:
-		var cols: int = g[0]
-		var rows: int = g[1]
-		var ok: bool = true
-		var n: int = 0
-		for e: String in ["A","C"]:
-			for i in range(1, cols+1):
-				var l: String = "%s%d" % [e, i]
-				ok = ok and CutResolver.opposite_label(CutResolver.opposite_label(l, cols, rows), cols, rows) == l
-				ok = ok and CutResolver.opposite_label(l, cols, rows) != ""
-				n += 1
-		for e: String in ["B","D"]:
-			for i in range(1, rows+1):
-				var l: String = "%s%d" % [e, i]
-				ok = ok and CutResolver.opposite_label(CutResolver.opposite_label(l, cols, rows), cols, rows) == l
-				ok = ok and CutResolver.opposite_label(l, cols, rows) != ""
-				n += 1
-		print("labels ", n)
-		ck("opposite %dx%d" % [cols, rows], ok)
-	ck("opp A2=C2 B1=D1", CutResolver.opposite_label("A2",3,3) == "C2" and CutResolver.opposite_label("B1",3,3) == "D1")
-	ck("invalid", sq(["Z9"]).is_empty() and not CutResolver.is_valid_label("A4", 3, 3))
-	var g1 := BoardGrid.new(3, 3, [Vector2i(0,0)] as Array[Vector2i])
-	var lb: Array[String] = ["A1"]
-	print("enemy A1 with hole side(0,0): ", CutResolver.resolve_on_board(g1, true, lb), " player: ", CutResolver.resolve_on_board(g1, false, lb))
-	var g2 := BoardGrid.new(3, 3, [Vector2i(2,0)] as Array[Vector2i])
-	print("hole side(2,0) (board 2,0 and 3,0): enemy A1 ", CutResolver.resolve_on_board(g2, true, lb), " player A1 ", CutResolver.resolve_on_board(g2, false, lb))
-	ck("hole side(2,0) enemy A1 loses 1", CutResolver.resolve_on_board(g2, true, lb).size() == 2)
-	ck("hole side(2,0) player A1 intact (col 0)", CutResolver.resolve_on_board(g2, false, lb).size() == 3)
+	# Story 026: the perimeter-label resolver checks were removed with the resolver;
+	# piece placement geometry is covered by tests/unit/pieces/piece_placement_test.gd.
 	var cc := CutConfig.new()
 	var a := CutActor.new(cc, 0)
 	var three: Array[Vector2i] = [Vector2i(4,0),Vector2i(4,1),Vector2i(4,2)]

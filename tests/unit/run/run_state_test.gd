@@ -10,7 +10,9 @@ func _check(name: String, ok: bool, extra: String = "") -> void:
 
 
 func _initialize() -> void:
-	var cfg: RunConfig = RunConfig.load_from_file()
+	# Story 026 (TD-011): RunState is still the per-node state machine of RunController; the shipped
+	# runs are single-match nodes (RunConfig.from_node), so the multi-match rules use a 4-match fixture.
+	var cfg: RunConfig = RunConfig.from_dictionary({"heal_between_matches": 10, "matches": [{}, {}, {}, {}]})
 	var s := RunState.new(cfg)
 	_check("4 matches", s.get_match_count() == 4)
 	_check("initial INTRO idx0", s.get_phase() == RunState.Phase.INTRO and s.get_match_index() == 0)
@@ -55,20 +57,14 @@ func _initialize() -> void:
 	_check("missing => defaults", missing.match_count() == 1)
 	var clamp: RunConfig = RunConfig.from_json_text('{"intro_sec": -3, "matches": [{"boss_max_hp": -5}]}')
 	_check("clamp", clamp.intro_sec == 0.0 and float(clamp.matches[0]["boss_max_hp"]) > 0.0)
-	var mono: bool = true
-	for i: int in range(1, cfg.match_count()):
-		var a: Dictionary = cfg.matches[i - 1]
-		var b: Dictionary = cfg.matches[i]
-		mono = mono and float(b["boss_max_hp"]) >= float(a["boss_max_hp"])
-		mono = mono and float(b["boss_step_cooldown_mult"]) <= float(a["boss_step_cooldown_mult"])
-		mono = mono and float(b["boss_think_interval_sec"]) <= float(a["boss_think_interval_sec"])
-		mono = mono and float(b["boss_reaction_sec"]) <= float(a["boss_reaction_sec"])
-		mono = mono and float(b["boss_drop_interval_mult"]) <= float(a["boss_drop_interval_mult"])
-	_check("monotone difficulty", mono)
+	# Story 026 (TD-011): v4 chapters are tiered pools, not an ordered floor, so the old "monotone
+	# difficulty" check over one floor is gone; every shipped match must still name a known brain set.
 	var brain: BossBrainConfig = BossBrainConfig.load_from_file()
+	var chapters: ChaptersConfig = ChaptersConfig.load_from_file()
 	var sets_ok: bool = true
-	for m: Dictionary in cfg.matches:
-		sets_ok = sets_ok and brain.has_set(str(m["brain_set"]))
+	for ci: int in chapters.chapter_count():
+		for id: String in chapters.match_ids(ci):
+			sets_ok = sets_ok and brain.has_set(str(chapters.get_match_def(ci, id)["brain_set"]))
 	_check("brain sets exist", sets_ok)
 	print("FAILS=%d" % fails)
 	quit(fails)

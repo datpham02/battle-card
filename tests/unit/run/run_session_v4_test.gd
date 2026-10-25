@@ -34,7 +34,6 @@ func _initialize() -> void:
 	var chapters: ChaptersConfig = ChaptersConfig.load_from_file()
 	var s: RunSession = _new()
 	_check("begin", s.column == 0 and s.node_index == -1 and s.removal_tokens == 1 and s.hp == -1.0 and s.map.size() == 7 and s.deck.size() == 6 and not s.needs_restart)
-	_check("shims", s.floor_index == 0 and s.match_index == -1)
 	_check("current_column", int(s.current_column()["index"]) == 0)
 	_check("current_node none", s.current_node().is_empty())
 	_check("complete without choose rejected", not bool(s.complete_node(50.0, 300.0, "battle", CFG)["advanced"]) and s.column == 0 and s.cleared_nodes.is_empty())

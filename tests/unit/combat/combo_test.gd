@@ -3,6 +3,7 @@ extends SceneTree
 var fails: int = 0
 var resolves: Array = []
 var interrupts: Array = []
+var _pieces: PieceLibrary = PieceLibrary.load_from_file()
 
 
 func check(name: String, cond: bool) -> void:
@@ -151,25 +152,27 @@ func _test_arbiter() -> void:
 
 # ------------------------------------------------------------------ (3) brain
 
-func _brain_case(set_name: String, chance: float, seed_value: int, player_cell: Vector2i, labels: Array[String], max_points: int = 4) -> Dictionary:
+# Story 026: the boss hand holds puzzle pieces ([param labels] = shape ids); [param max_pieces] is the
+# most pieces one cast may join.
+func _brain_case(set_name: String, chance: float, seed_value: int, player_cell: Vector2i, labels: Array[String], max_pieces: int = 2) -> Dictionary:
 	var grid := BoardGrid.new(3, 3)
 	var state := CombatState.new(grid, 100000.0, 100000.0)
 	state.set_player_cell(player_cell)
 	var cut_config: CutConfig = CutConfig.load_from_file()
-	cut_config.hand_max_points = max_points
 	var skill_config: SkillConfig = SkillConfig.load_from_file()
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
 	brain_config.override_weight(set_name, "combo_chance", chance)
-	var hand := HoldSlots.new(4)
+	var hand := HoldSlots.create_piece_hand(4)
 	var drops_config := FieldDropsConfig.new()
-	drops_config.spawn_interval_sec = 1.0e9
+	drops_config.piece_spawn_interval_sec = 1.0e9
 	drops_config.initial_delay_sec = 1.0e9
-	var drops := FieldDrops.new(drops_config, grid.enemy_cells(), grid.perimeter_labels(), 1)
+	var drops := FieldDrops.new(drops_config, grid.enemy_cells(), 1)
 	var mover := UnitMover.new(state, CombatState.Side.ENEMY, brain_config.step_cooldown_sec)
 	var actor := CutActor.new(cut_config, CombatState.Side.ENEMY)
 	var pactor := CutActor.new(cut_config, CombatState.Side.PLAYER)
 	var brain := BossBrain.new(brain_config, grid, cut_config, skill_config, seed_value)
 	brain.use_set(set_name)
+	brain.max_pieces = max_pieces
 	var w: Dictionary = {
 		"grid": grid, "state": state, "hand": hand, "brain": brain, "cut_config": cut_config,
 		"ctx": {"state": state, "hand": hand, "drops": drops, "mover": mover, "actor": actor,
@@ -186,13 +189,14 @@ func _fill(hand: HoldSlots, labels: Array[String]) -> void:
 			hand.remove(i)
 	for label: String in labels:
 		var p := FieldPoint.new()
+		p.piece = _pieces.make_piece(label)
 		p.label = label
 		hand.place_in_first_free(p)
 
 
 func _test_brain() -> void:
-	var labels: Array[String] = ["A1", "B1", "C3"]
-	var w: Dictionary = _brain_case("aggressive", 1.0, 1, Vector2i(0, 0), labels, 2)
+	var labels: Array[String] = ["bar2", "mono", "l3"]
+	var w: Dictionary = _brain_case("aggressive", 1.0, 1, Vector2i(0, 0), labels, 1)
 	var brain: BossBrain = w["brain"]
 	brain.tick(1.0, false)
 	var action: Dictionary = brain.decide(w["ctx"])
@@ -209,7 +213,7 @@ func _test_brain() -> void:
 			uniq[i] = true
 		check("3a2 combo uses points disjoint from the first cut", uniq.size() == used.size())
 	# cautious: never over 60 s
-	var cw: Dictionary = _brain_case("cautious", 0.0, 3, Vector2i(0, 0), ["A1", "B1", "C3"] as Array[String])
+	var cw: Dictionary = _brain_case("cautious", 0.0, 3, Vector2i(0, 0), ["t4", "square", "l3", "bar3"] as Array[String])
 	var cb: BossBrain = cw["brain"]
 	var cuts: int = 0
 	var combos: int = 0
@@ -222,10 +226,10 @@ func _test_brain() -> void:
 			cuts += 1
 			if act.has("combo"):
 				combos += 1
-			_fill(cw["hand"], ["A1", "B1", "C3"] as Array[String])
+			_fill(cw["hand"], ["t4", "square", "l3", "bar3"] as Array[String])
 	check("3b cautious over 60 s: cuts=%d combos=%d (must be 0)" % [cuts, combos], combos == 0 and cuts > 0)
 	# balanced rate
-	var bw: Dictionary = _brain_case("balanced", 0.25, 5, Vector2i(0, 0), ["A1", "B1", "C3"] as Array[String], 2)
+	var bw: Dictionary = _brain_case("balanced", 0.25, 5, Vector2i(0, 0), ["bar2", "mono", "l3"] as Array[String], 1)
 	var bb: BossBrain = bw["brain"]
 	cuts = 0
 	combos = 0
@@ -236,11 +240,11 @@ func _test_brain() -> void:
 			cuts += 1
 			if act2.has("combo"):
 				combos += 1
-			_fill(bw["hand"], ["A1", "B1", "C3"] as Array[String])
-	print("  balanced combo rate (hand_max_points 2): %d/%d = %.3f (chance 0.25)" % [combos, cuts, float(combos) / maxf(cuts, 1)])
+			_fill(bw["hand"], ["bar2", "mono", "l3"] as Array[String])
+	print("  balanced combo rate (max_pieces 1): %d/%d = %.3f (chance 0.25)" % [combos, cuts, float(combos) / maxf(cuts, 1)])
 	check("3c balanced combos measurable (0.05..0.5)", cuts > 20 and float(combos) / maxf(cuts, 1) > 0.05 and float(combos) / maxf(cuts, 1) < 0.5)
 	# swing multiplier reaches the escape calc: slower swing (mult 0.5) never gives MORE escape cells
-	var mw: Dictionary = _brain_case("balanced", 0.0, 1, Vector2i(0, 0), ["A1", "B1", "C3"] as Array[String])
+	var mw: Dictionary = _brain_case("balanced", 0.0, 1, Vector2i(0, 0), ["t4", "square", "l3", "bar3"] as Array[String])
 	var mb: BossBrain = mw["brain"]
 	mb.tick(1.0, false)
 	mb.decide(mw["ctx"])
@@ -270,8 +274,9 @@ func _sim(seed_value: int) -> Dictionary:
 	brain_config.override_weight("balanced", "combo_chance", 0.6)
 	brain_config.active_set = "balanced"
 	var drops_config := FieldDropsConfig.new()
-	drops_config.spawn_interval_sec = 0.8
+	drops_config.piece_spawn_interval_sec = 0.8
 	var boss := BossController.new(state, grid, cut_config, skill_config, brain_config, drops_config, HoldSlotsConfig.new(), seed_value)
+	boss.enable_pieces(_pieces, "", seed_value, 2)
 	boss.set_status(StatusEffects.new())
 	var pactor := CutActor.new(cut_config, CombatState.Side.PLAYER)
 	var counters: Dictionary = {"cuts": 0, "combos": 0, "log": ""}

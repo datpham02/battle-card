@@ -168,8 +168,7 @@ func _run() -> void:
 	_check(rc.get_battle().process_mode == Node.PROCESS_MODE_DISABLED, "battle stays frozen after the match ended")
 	rc.set_paused(true, true)
 	_check(not rc.is_paused(), "cannot pause in LOST")
-	flow.retry_requested()
-	_check(not rc.is_paused(), "new match: no pause flag")
+	_check(not rc.is_paused(), "still no pause flag after the refused pause in LOST")
 
 	# --- go_back and auto pause ----------------------------------------------------------------
 	rc = flow.enter_test_floor(RunConfig.load_from_file(FAST_RUN))
