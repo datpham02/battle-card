@@ -30,15 +30,15 @@ func _init() -> void:
 
 
 func _test_library_file(lib: PieceLibrary) -> void:
-	var expected_ids: Array[String] = ["mono", "bar2", "bar3", "l3", "square", "t4", "l4", "s4", "bar4", "plus5", "u5", "p5", "bar5"]
+	var expected_ids: Array[String] = ["mono", "bar2", "bar3", "l3", "square", "t4", "l4", "s4", "bar4", "plus5", "u5", "p5", "bar5", "w5", "n5", "v5"]
 	# Story 034: the 3 run_only shapes (z4, j4, y5) follow; base_shape_ids() is the default pool.
-	ck("library: the 12 story shapes plus p5 (Story 026) in order", lib.base_shape_ids() == expected_ids)
-	var expected_counts: Array[int] = [1, 2, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5]
+	ck("library: the 12 story shapes plus p5 (Story 026) plus w5 n5 v5 (Story 037) in order", lib.base_shape_ids() == expected_ids)
+	var expected_counts: Array[int] = [1, 2, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5]
 	var counts_ok: bool = true
 	for i: int in expected_ids.size():
 		var piece: Piece = lib.make_piece(expected_ids[i])
 		counts_ok = counts_ok and piece.cell_count() == expected_counts[i] and piece.relative_cells().size() == expected_counts[i]
-	ck("library: cell counts 1,2,3,3,4,4,4,4,4,5,5,5,5", counts_ok)
+	ck("library: cell counts 1,2,3,3,4,4,4,4,4,5,5,5,5,5,5,5", counts_ok)
 	ck("library: name_key is a piece.<id>.name key", lib.name_key("t4") == "piece.t4.name" and lib.name_key("nope") == "")
 	ck("library: shape_cells of an unknown id is empty", lib.shape_cells("nope").is_empty())
 	ck("library: unknown make_piece is null", lib.make_piece("nope") == null)

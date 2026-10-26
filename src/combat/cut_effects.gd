@@ -104,6 +104,13 @@ static func apply(
 		skill_id = SkillConfig.FALLBACK_SKILL
 		skill = _resolve(skill_config, skill_id, 1)
 	var effect: String = str(skill.get("effect", "damage"))
+	# Story 037: heal_self heals the CASTER (the player) when the swing lands, hit or miss, at this ONE point.
+	result["healed"] = 0.0
+	var heal_self: float = float(skill.get("heal_self", 0.0))
+	if side == CombatState.Side.PLAYER and heal_self > 0.0 and not state.is_player_dead():
+		var hp_before: float = state.player_hp
+		state.set_player_hp(hp_before + heal_self)
+		result["healed"] = state.player_hp - hp_before
 	# Story 036: options.target_untargetable (burrowed boss) = the cast misses the unit; zones still form (Story 027).
 	var inside: bool = cells.has(target_cell) and not bool(options.get("target_untargetable", false))
 	result["zone_kind"] = ""
@@ -209,16 +216,18 @@ static func _form_zone(
 	var overrides: Dictionary = {}
 	if typeof(options.get("zone_overrides")) == TYPE_DICTIONARY:
 		overrides = options["zone_overrides"] as Dictionary
+	# Story 037: the player's signature may lengthen the zones it forms (1.0 = unchanged).
+	var sec_mult: float = maxf(float(options.get("zone_sec_mult", 1.0)), 0.0)
 	var placed: Array[Vector2i] = []
 	if effect == "seal":
 		var blocked: Callable = options.get("target_blocked_fn", Callable()) as Callable
 		placed = ZoneRules.cast_seal(
 			state, grid, status, target_side, cells,
-			maxf(RelicRegistry.apply_override(float(skill.get("seal_sec", numbers["seal_sec"])), overrides, "seal_sec"), 0.0),
+			maxf(RelicRegistry.apply_override(float(skill.get("seal_sec", numbers["seal_sec"])), overrides, "seal_sec"), 0.0) * sec_mult,
 			blocked)
 	else:
 		placed = ZoneRules.cast_thorns(
-			status, target_side, cells, float(skill.get("thorn_sec", numbers["thorn_sec"])),
+			status, target_side, cells, float(skill.get("thorn_sec", numbers["thorn_sec"])) * sec_mult,
 			float(skill.get("thorn_damage", numbers["thorn_damage"])),
 			maxi(roundi(RelicRegistry.apply_override(
 				float(skill.get("thorn_fragile_stacks", numbers["thorn_fragile_stacks"])), overrides, "thorn_ran")), 0))

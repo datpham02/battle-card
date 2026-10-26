@@ -1,12 +1,12 @@
 # Story 037: Mở khóa theo cột mốc, 22 thành tựu, nhân vật Thợ săn và Giáo sĩ — chỉ thêm lựa chọn, không thêm sức mạnh
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-25
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -128,7 +128,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/unlocks-achievements/`; bảng mô phỏng nhân vật và mở khóa.
 
-**Status**: Not yet created
+**Status**: Created — 11 new suites (`tests/unit/run/{unlock_rules,progress_state_v7,achievements_config,unlock_content_consistency,unlock_content,character_unlock,unlock_pools,run_start_parity}_test`, `tests/unit/combat/hunter_prayer_test`, `tests/unit/ui/unlock_strings_test`, `tests/integration/run/unlock_flow_test`), 9 screenshots and `simulation-characters.md` + raw in `production/qa/evidence/unlocks-achievements/`
 
 ---
 
@@ -136,3 +136,14 @@
 
 - Depends on: Story 031 (vùng, Ấn Đài, sự kiện run), Story 035 (Tha/Giết, ba kết thúc); dùng danh sách bảo vật của Story 032
 - Unlocks: Story 038 (cấp Kiếp theo nhân vật), Story 039 (mục mở khóa cho vùng mới), Story 040 (cân bằng 5 nhân vật)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 21/21 passing or passing with notes. DEFERRED: how the achievements screen scrolls and the unlock list read on a real phone (gate 8 playtest; UI polish waits for the art assets, user decision 2026-10-26).
+**Deviations**: shape `y5` -> `v5` (`y5` already exists as a run_only Ink shape); save is v7 (the story says v5, the file was already v6); the 3 new shapes' drop weights x0.25 (0.25 in default/ch2/ch3, 0.125 in ch1/swamp/desert) because at the story's weights unlocking cost Kiem si and Phap su 11-13 run-win points; `reached_final` is written when the last region boss opens the final floor, not when the final match starts (a resume would count it twice); the "Moi" mark exists on card and relic offers only (pieces drop on the field, no reward screen); the Phap su -> Giao si unlock speed is 3.03 runs (mean of the three players 2.79, target 1-3).
+**Reward relics** (the story leaves the choice): `tui_rong` (first_run_won), `phong_an` (ending_mercy), `gai_ran` (ending_slaughter), `han_ky` (frost_burst_5).
+**Test Evidence**: Integration: 11 new suites + 8 updated, sweep 232 parse, 95 headless + 4 windowed FAILS=0, launch 0 errors; screenshots `production/qa/evidence/unlocks-achievements/01-09*.png`; simulation `simulation-characters.md` + `simulation-characters-raw.txt` (run win none/all per character, runs to unlock, shape-weight tuning table).
+**Code Review**: Skipped (solo mode)
+**Tech debt**: TD-033 (display leftovers deferred until art assets, "Moi" mark for pieces).

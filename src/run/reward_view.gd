@@ -234,6 +234,19 @@ var _strip: RelicStrip = null
 ## Story 034: the shape selected on the ink row ("" = none) and the ink tile under the current press (-1).
 var _selected_ink: String = ""
 var _ink_press: int = -1
+## Story 037: the unlocked content that showed a "Mới" badge while this screen was up ({"kind:id": [kind, id]});
+## marked seen when the screen is left.
+var _new_shown: Dictionary = {}
+
+## Story 037: the "Mới" badge on a card or relic the player unlocked and has not seen yet.
+const TEXT_NEW: String = "unlock.new"
+const NEW_BADGE_COLOR: Color = Color(0.85, 0.35, 0.1)
+const NEW_BADGE_TEXT_COLOR: Color = Color(1.0, 1.0, 1.0)
+const NEW_BADGE_FONT_SIZE: int = 18
+const NEW_BADGE_SIZE: Vector2 = Vector2(58.0, 26.0)
+const NEW_BADGE_INSET: float = 8.0
+const UNLOCK_KIND_CARD: String = "card"
+const UNLOCK_KIND_RELIC: String = "relic"
 
 
 func _ready() -> void:
@@ -245,6 +258,10 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _removing and not is_shown():
 		_removing = false
+	if not _new_shown.is_empty() and not is_shown():
+		for entry: Variant in _new_shown.values():
+			_flow.mark_unlock_seen(str((entry as Array)[0]), str((entry as Array)[1]))
+		_new_shown.clear()
 	if not is_shown() or not _relic_choices().has(_selected_relic):
 		_selected_relic = ""
 	if not is_shown() or not _flow.get_ink_offer().has(_selected_ink):
@@ -778,6 +795,7 @@ func _draw_relic_card(rect: Rect2, id: String, selected: bool) -> void:
 	var line_h: float = ThemeDB.fallback_font.get_height(RELIC_DESC_FONT_SIZE)
 	var lines: int = clampi(int((rect.end.y - pad * 0.5 - desc_y) / line_h) + 1, 1, RELIC_DESC_MAX_LINES)
 	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + pad, desc_y), str(info.get("desc", "")), HORIZONTAL_ALIGNMENT_LEFT, inner_w, RELIC_DESC_FONT_SIZE, lines, BODY_COLOR)
+	_draw_new_badge(rect, UNLOCK_KIND_RELIC, id)
 
 
 # The card row of the two-row treasure screen: the same facts as _draw_card on a shorter card — name,
@@ -816,6 +834,7 @@ func _draw_card_compact(rect: Rect2, id: String, levels: Dictionary) -> void:
 		_draw_keyword_line(inner, _y(rect, COMPACT_KEYWORD_BASELINE), keywords)
 		desc_y = _y(rect, COMPACT_DESC_BASELINE_KEYWORD)
 	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, COMPACT_DESC_FONT_SIZE, COMPACT_DESC_LINES, BODY_COLOR)
+	_draw_new_badge(rect, UNLOCK_KIND_CARD, id)
 
 
 # One offer card. [param levels] is the deck's id -> highest level: a held card below max is an
@@ -855,6 +874,19 @@ func _draw_card(rect: Rect2, id: String, levels: Dictionary) -> void:
 		_draw_keyword_line(inner, _y(rect, KEYWORD_BASELINE), keywords)
 		desc_y = _y(rect, DESC_BASELINE_KEYWORD)
 	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
+	_draw_new_badge(rect, UNLOCK_KIND_CARD, id)
+
+
+# Story 037: a small "Mới" tab on the top edge of the card at [param rect] when [param kind] / [param id] was
+# unlocked by an achievement and not seen yet; remembers it so the screen marks it seen when it is left.
+func _draw_new_badge(rect: Rect2, kind: String, id: String) -> void:
+	var progress: ProgressState = _flow.get_progress()
+	if progress == null or not progress.is_new_unlock(kind, id):
+		return
+	_new_shown["%s:%s" % [kind, id]] = [kind, id]
+	var badge := Rect2(Vector2(rect.end.x - NEW_BADGE_SIZE.x - NEW_BADGE_INSET, rect.position.y - NEW_BADGE_SIZE.y * 0.5), NEW_BADGE_SIZE)
+	draw_rect(badge, NEW_BADGE_COLOR)
+	draw_string(ThemeDB.fallback_font, Vector2(badge.position.x, badge.get_center().y + NEW_BADGE_FONT_SIZE * 0.35), tr(TEXT_NEW), HORIZONTAL_ALIGNMENT_CENTER, badge.size.x, NEW_BADGE_FONT_SIZE, NEW_BADGE_TEXT_COLOR)
 
 
 # Story 023: [text, colour] pairs of the keywords a resolved card carries, in a fixed order

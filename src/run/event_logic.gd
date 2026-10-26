@@ -320,9 +320,9 @@ static func _grant_relic(effect: Dictionary, run: RunSession, rng: RandomNumberG
 	var cfg: RelicConfig = opts.get("relic_config", null)
 	var source: String = str(effect.get("source", RelicRoller.SOURCE_EVENT))
 	var floor_name: String = str(effect.get("min_rarity", ""))
-	var ids: Array[String] = RelicRoller.roll(source, run.relic_ids(), rng, cfg, 1, floor_name)
+	var ids: Array[String] = RelicRoller.roll(source, run.relic_ids(), rng, cfg, 1, floor_name, run.locked_ids("relic"))
 	if ids.is_empty() and not floor_name.is_empty():
-		ids = RelicRoller.roll(source, run.relic_ids(), rng, cfg, 1, RelicConfig.RARITIES[0])
+		ids = RelicRoller.roll(source, run.relic_ids(), rng, cfg, 1, RelicConfig.RARITIES[0], run.locked_ids("relic"))
 	if ids.is_empty():
 		return ""
 	run.add_relic(ids[0])
@@ -334,7 +334,7 @@ static func _card_offer(effect: Dictionary, run: RunSession, rng: RandomNumberGe
 	var cards: SkillConfig = _cards(opts)
 	var cfg: Dictionary = RewardRoller.clean_config(opts.get("reward_config", {}))
 	cfg["offer_count"] = maxi(int(effect.get("count", cfg["offer_count"])), 1)
-	var ids: Array[String] = RewardRoller.roll(cards, cfg, rng.randi(), [] as Array[String], run.deck_levels(),
+	var ids: Array[String] = RewardRoller.roll(cards, cfg, rng.randi(), run.locked_ids("card"), run.deck_levels(),
 		run.luck(opts.get("reward_config", {})), str(effect.get("rarity", "common")))
 	var out: Array[String] = []
 	for id: String in ids:
@@ -360,7 +360,7 @@ static func _swap_relic(effect: Dictionary, run: RunSession, rng: RandomNumberGe
 	var rank: int = mini(RelicConfig.rarity_rank(str(cfg.get_relic(lost).get("rarity", "common"))) + maxi(int(effect.get("rarity_up", 1)), 1), top)
 	var pool: Array[String] = []
 	for entry: Dictionary in cfg.relics:
-		if RelicConfig.rarity_rank(str(entry["rarity"])) == rank and not run.relics.has(str(entry["id"])):
+		if RelicConfig.rarity_rank(str(entry["rarity"])) == rank and not run.relics.has(str(entry["id"])) and not run.is_locked("relic", str(entry["id"])):
 			pool.append(str(entry["id"]))
 	if pool.is_empty():
 		return {"type": "swap_relic", "lost": "", "gained": ""}

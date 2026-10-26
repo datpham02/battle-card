@@ -286,6 +286,8 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"fragile_stacks": maxi(int(raw.get("fragile_stacks", 0)), 0),
 		"frost_stacks": maxi(int(raw.get("frost_stacks", 0)), 0),
 		"pierce_defense": bool(raw.get("pierce_defense", false)),
+		# Story 037: HP the CASTER heals when the cut lands (hit or miss); 0 = none.
+		"heal_self": maxf(float(raw.get("heal_self", 0.0)), 0.0),
 		"execute": bool(raw.get("execute", false)),
 		"execute_ratio": clampf(float(raw.get("execute_ratio", 0.0)), 0.0, 1.0),
 		"bonus_vs_fragile_mult": maxf(float(raw.get("bonus_vs_fragile_mult", 1.0)), 1.0),

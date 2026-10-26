@@ -112,7 +112,7 @@ func _run() -> void:
 		total += float(row["percent"])
 		if str(row["id"]) == SMALL:
 			mono_row = row
-	_check(rows.size() == lib.base_shape_ids().size(), "rows: one per default shape (%d)" % rows.size())
+	_check(rows.size() == lib.base_shape_ids().size() - flow.get_run().locked_ids("piece").size(), "rows: one per default shape that is not locked (%d)" % rows.size())
 	_check(bool(mono_row.get("removed", false)) and int(mono_row.get("dots", -1)) == 0 and float(mono_row.get("percent", -1.0)) == 0.0, "removed row: removed, no dots, 0 %")
 	_check(is_equal_approx(total, 100.0), "drop percents sum to 100 (%.3f)" % total)
 	_check(str(rows[1]["reason"]) == RunSession.REASON_NO_TOKEN and not bool(rows[1]["can_remove"]), "rows carry the no_token reason")

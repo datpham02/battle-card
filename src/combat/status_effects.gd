@@ -57,6 +57,11 @@ var _fragile_mult: float = 1.0
 var _fragile_max_stacks: int = 1
 var _frost_stacks_to_burst: int = 0
 var _frost_burst_damage: float = 0.0
+## Story 037 hooks of the BOSS side only (the player's signature; invalid = none, the config numbers stand):
+## [member fragile_mult_fn] Callable() -> float gives the multiplier ONE consumed Ran stack applies instead of
+## fragile_mult (<= 0 = use the config's); [member frost_burst_mult_fn] Callable() -> float scales a Han burst.
+var fragile_mult_fn: Callable = Callable()
+var frost_burst_mult_fn: Callable = Callable()
 
 
 ## Ignites every cell in [param cells] for [param duration] seconds. A unit standing on a
@@ -130,7 +135,7 @@ func get_fragile_stacks(side: int) -> int:
 
 ## Damage multiplier a hit against [param side] gets from Ran right now (peek, consumes nothing).
 func fragile_mult_against(side: int) -> float:
-	return _fragile_mult if fragile_stacks(side) > 0 else 1.0
+	return _effective_fragile_mult(side) if fragile_stacks(side) > 0 else 1.0
 
 
 ## Spends one Ran stack of [param side] (a damage/push hit landed) and returns the multiplier that
@@ -144,6 +149,15 @@ func consume_fragile(side: int) -> float:
 	else:
 		_fragile[side] = have - 1
 	fragile_changed.emit(side)
+	return _effective_fragile_mult(side)
+
+
+# Story 037: the Ran multiplier of one stack on [param side]: the boss side may take it from fragile_mult_fn.
+func _effective_fragile_mult(side: int) -> float:
+	if side == CombatState.Side.ENEMY and fragile_mult_fn.is_valid():
+		var override: float = float(fragile_mult_fn.call())
+		if override > 0.0:
+			return maxf(override, 1.0)
 	return _fragile_mult
 
 
@@ -157,8 +171,11 @@ func apply_frost(side: int, stacks: int) -> float:
 	if _frost_stacks_to_burst > 0 and total >= _frost_stacks_to_burst:
 		_frost.erase(side)
 		frost_changed.emit(side)
-		frost_burst.emit(side, _frost_burst_damage)
-		return _frost_burst_damage
+		var burst: float = _frost_burst_damage
+		if side == CombatState.Side.ENEMY and frost_burst_mult_fn.is_valid():
+			burst *= maxf(float(frost_burst_mult_fn.call()), 0.0)
+		frost_burst.emit(side, burst)
+		return burst
 	_frost[side] = total
 	frost_changed.emit(side)
 	return 0.0

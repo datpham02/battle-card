@@ -5,7 +5,7 @@ extends SceneTree
 ## button fits. Prints PASS/FAIL lines and FAILS=n.
 
 const CSV_PATH: String = "res://assets/i18n/strings.csv"
-const KEY_RE: String = "^(ui|title|card|chapter|floor|boss|arena|trait|character|passive|signature|node|run|keyword|match)\\.[a-z0-9_.]+$"
+const KEY_RE: String = "^(ui|title|card|chapter|floor|boss|arena|trait|character|passive|signature|node|run|keyword|match|achievements|unlock)\\.[a-z0-9_.]+$"
 
 var _fails: int = 0
 

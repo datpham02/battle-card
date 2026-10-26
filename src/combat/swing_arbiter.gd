@@ -43,6 +43,9 @@ var player_signature_modifier: Callable = Callable()
 ## (seal_sec / thorn_ran, applied after the card's own number; RelicRegistry.merge_overrides form).
 var player_relic_modifier: Callable = Callable()
 var player_zone_overrides: Dictionary = {}
+## Story 037: Callable() -> float, the factor the PLAYER's zone cards multiply their seal / thorn seconds by
+## (the character signature Vay Bat); invalid = 1.0.
+var player_zone_sec_mult_fn: Callable = Callable()
 ## Story 023: flat defense of the BOSS (match key boss_defense, subtracted from the player's damage/push
 ## hits last, minimum 1; `pierce_defense` cards skip it) and the default execute threshold (combat.json
 ## execute_ratio). 0 = none; set by CombatView.
@@ -125,6 +128,7 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
 			"relic_modifier": player_relic_modifier if is_player else Callable(),
 			"zone_overrides": player_zone_overrides if is_player else {},
+			"zone_sec_mult": float(player_zone_sec_mult_fn.call()) if (is_player and player_zone_sec_mult_fn.is_valid()) else 1.0,
 			"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call())})
 	result["cells"] = cells
 	result["skill_id"] = skill_id

@@ -101,10 +101,12 @@ static func base_weight(lib: PieceLibrary, id: String, chapter_id: String, cfg: 
 
 ## `{id: base * mult}` for the active shapes whose weight is above 0.
 static func effective_weights(
-	state: Dictionary, lib: PieceLibrary, chapter_id: String, cfg: PieceDeckConfig
+	state: Dictionary, lib: PieceLibrary, chapter_id: String, cfg: PieceDeckConfig, locked: Array = []
 ) -> Dictionary:
 	var out: Dictionary = {}
 	for id: String in active_ids(state, lib):
+		if locked.has(id):
+			continue # Story 037: a shape the run started without is not drawable (the state itself is untouched)
 		var w: float = base_weight(lib, id, chapter_id, cfg) * mult_of(state, id)
 		if w > 0.0:
 			out[id] = w
@@ -117,14 +119,16 @@ static func effective_weights(
 ## (the player's pieces land there), the original weights of the default-pool shapes that DO fit
 ## are returned with fallback = true and a warning, so the match always has a piece that fits.
 static func weights_for_match(
-	state: Dictionary, lib: PieceLibrary, chapter_id: String, grid: BoardGrid, cfg: PieceDeckConfig
+	state: Dictionary, lib: PieceLibrary, chapter_id: String, grid: BoardGrid, cfg: PieceDeckConfig,
+	locked: Array = []
 ) -> Dictionary:
 	if typeof(_mult(state)) != TYPE_DICTIONARY or _mult(state).is_empty():
 		var orig: Dictionary = {}
 		for id: String in lib.base_shape_ids():
-			orig[id] = lib.weight(id, chapter_id)
+			if not locked.has(id):
+				orig[id] = lib.weight(id, chapter_id)
 		return {"weights": orig, "fallback": false}
-	var weights: Dictionary = effective_weights(state, lib, chapter_id, cfg)
+	var weights: Dictionary = effective_weights(state, lib, chapter_id, cfg, locked)
 	if grid == null:
 		return {"weights": weights, "fallback": false}
 	for id: String in weights.keys():
@@ -132,7 +136,7 @@ static func weights_for_match(
 			return {"weights": weights, "fallback": false}
 	var fitting: Dictionary = {}
 	for id: String in lib.base_shape_ids():
-		if PiecePlacement.has_any_placement(grid, lib.make_piece(id), true):
+		if not locked.has(id) and PiecePlacement.has_any_placement(grid, lib.make_piece(id), true):
 			fitting[id] = lib.weight(id, chapter_id)
 	push_warning("PieceDeck: no shape of the deck fits this arena, using the original weights")
 	return {"weights": fitting, "fallback": true}
@@ -180,11 +184,11 @@ static func apply_ink(
 ## [param cfg].ink_offer_count distinct shapes that can still be inked, drawn with a generator
 ## seeded by [param rng_seed] (same seed, same offer); fewer when fewer qualify, empty when none.
 static func roll_ink_offer(
-	state: Dictionary, lib: PieceLibrary, cfg: PieceDeckConfig, rng_seed: int
+	state: Dictionary, lib: PieceLibrary, cfg: PieceDeckConfig, rng_seed: int, locked: Array = []
 ) -> Array[String]:
 	var pool: Array[String] = []
 	for id: String in lib.shape_ids():
-		if can_ink(state, id, lib, cfg):
+		if not locked.has(id) and can_ink(state, id, lib, cfg): # Story 037: never offer a locked shape
 			pool.append(id)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = rng_seed

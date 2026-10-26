@@ -151,7 +151,7 @@ func _init() -> void:
 	_check("unknown saved fates dropped", cleaned != null and cleaned.boss_fates.size() == 1 and str(cleaned.boss_fates[0]["fate"]) == "execute")
 
 	# --- ProgressState v6 ---
-	_check("ProgressState version 6", ProgressState.VERSION == 6)
+	_check("ProgressState version 7", ProgressState.VERSION == 7)
 	var ps := ProgressState.new()
 	_check("fresh progress: empty fate keys", ps.get_spared_bosses().is_empty() and ps.get_executed_bosses().is_empty()
 		and ps.get_spare_total() == 0 and ps.get_execute_total() == 0 and ps.get_endings_seen().is_empty())
@@ -167,7 +167,7 @@ func _init() -> void:
 		and ps.get_executed_bosses() == (["boss_b", "boss_a"] as Array[String]) and ps.get_spare_total() == 2 and ps.get_execute_total() == 2)
 	_check("record_ending dedup", ps.get_endings_seen() == (["spare", "balance"] as Array[String]))
 	var json: Dictionary = JSON.parse_string(ps.to_json())
-	_check("to_json carries the v6 keys", int(json["version"]) == 6 and json.has("spared_bosses") and json.has("executed_bosses")
+	_check("to_json carries the v6 keys (progress is v7 since Story 037)", int(json["version"]) == ProgressState.VERSION and json.has("spared_bosses") and json.has("executed_bosses")
 		and json.has("spare_total") and json.has("execute_total") and json.has("endings_seen"))
 	var ps_back: ProgressState = ProgressState.from_json(ps.to_json(), chapters)
 	_check("progress v6 round trip", ps_back.get_spared_bosses() == ps.get_spared_bosses() and ps_back.get_executed_bosses() == ps.get_executed_bosses()

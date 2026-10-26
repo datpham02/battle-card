@@ -19,7 +19,7 @@ const SOURCE_EVENT: String = "event"
 ## candidate, then a relic of it. A non-empty [param min_rarity] replaces the rule's floor (an event
 ## that promises at least `rare`).
 ## `boss_kill`: tier `boss` first, then `epic` when no boss relic is left. Unknown source: empty
-## (warning). A null [param rng] uses a fresh generator with seed 0; null [param config] the shared
+## (warning). Story 037: ids in [param locked] (RunSession.locked_ids("relic")) are never drawn. A null [param rng] uses a fresh generator with seed 0; null [param config] the shared
 ## relics.json.
 static func roll(
 	source: String,
@@ -27,7 +27,8 @@ static func roll(
 	rng: RandomNumberGenerator,
 	config: RelicConfig = null,
 	count: int = 3,
-	min_rarity: String = ""
+	min_rarity: String = "",
+	locked: Array = []
 ) -> Array[String]:
 	var cfg: RelicConfig = config if config != null else RelicRegistry.shared_config()
 	var generator: RandomNumberGenerator = rng
@@ -39,22 +40,23 @@ static func roll(
 		return out
 	match source:
 		SOURCE_TREASURE, SOURCE_SHOP, SOURCE_EVENT:
-			_roll_treasure(cfg, source, min_rarity, owned, generator, count, out)
+			_roll_treasure(cfg, source, min_rarity, owned, generator, count, out, locked)
 		SOURCE_BOSS_KILL:
-			_roll_tiers(cfg, owned, generator, count, out)
+			_roll_tiers(cfg, owned, generator, count, out, locked)
 		_:
 			push_warning("RelicRoller: unknown source '%s', nothing offered" % source)
 	return out
 
 
 ## Candidates of [param rarity] in file order: not owned (unless stackable) and not yet in [param taken].
-static func _candidates(cfg: RelicConfig, rarity: String, owned: Array, taken: Array[String]) -> Array[String]:
+static func _candidates(cfg: RelicConfig, rarity: String, owned: Array, taken: Array[String],
+		locked: Array = []) -> Array[String]:
 	var pool: Array[String] = []
 	for entry: Dictionary in cfg.relics:
 		if entry["rarity"] != rarity:
 			continue
 		var id: String = str(entry["id"])
-		if taken.has(id):
+		if taken.has(id) or locked.has(id): # Story 037: a locked relic is never offered
 			continue
 		if owned.has(id) and not (entry["tags"] as Array).has("stackable"):
 			continue
@@ -63,7 +65,7 @@ static func _candidates(cfg: RelicConfig, rarity: String, owned: Array, taken: A
 
 
 static func _roll_treasure(cfg: RelicConfig, source: String, min_rarity: String, owned: Array,
-		rng: RandomNumberGenerator, count: int, out: Array[String]) -> void:
+		rng: RandomNumberGenerator, count: int, out: Array[String], locked: Array = []) -> void:
 	var rule: Dictionary = cfg.source_rules.get(source, cfg.source_rules.get(SOURCE_TREASURE, {}))
 	var floor_name: String = min_rarity if not min_rarity.is_empty() else str(rule.get("min_rarity", "common"))
 	var floor_rank: int = maxi(RelicConfig.rarity_rank(floor_name), 0)
@@ -74,7 +76,7 @@ static func _roll_treasure(cfg: RelicConfig, source: String, min_rarity: String,
 		for rank: int in range(floor_rank, RelicConfig.RARITIES.size()):
 			var rarity: String = RelicConfig.RARITIES[rank]
 			var weight: float = float(cfg.rarity_weights.get(rarity, 0.0))
-			if weight > 0.0 and not _candidates(cfg, rarity, owned, out).is_empty():
+			if weight > 0.0 and not _candidates(cfg, rarity, owned, out, locked).is_empty():
 				buckets.append(rarity)
 				weights.append(weight)
 				total += weight
@@ -87,16 +89,17 @@ static func _roll_treasure(cfg: RelicConfig, source: String, min_rarity: String,
 				chosen = i
 				break
 			pick -= weights[i]
-		var pool: Array[String] = _candidates(cfg, buckets[chosen], owned, out)
+		var pool: Array[String] = _candidates(cfg, buckets[chosen], owned, out, locked)
 		out.append(pool[rng.randi_range(0, pool.size() - 1)])
 
 
-static func _roll_tiers(cfg: RelicConfig, owned: Array, rng: RandomNumberGenerator, count: int, out: Array[String]) -> void:
+static func _roll_tiers(cfg: RelicConfig, owned: Array, rng: RandomNumberGenerator, count: int,
+		out: Array[String], locked: Array = []) -> void:
 	var rule: Dictionary = cfg.source_rules.get(SOURCE_BOSS_KILL, {})
 	var tiers: Array = rule.get("tiers", ["boss", "epic"])
 	for tier: Variant in tiers:
 		while out.size() < count:
-			var pool: Array[String] = _candidates(cfg, str(tier), owned, out)
+			var pool: Array[String] = _candidates(cfg, str(tier), owned, out, locked)
 			if pool.is_empty():
 				break
 			out.append(pool[rng.randi_range(0, pool.size() - 1)])

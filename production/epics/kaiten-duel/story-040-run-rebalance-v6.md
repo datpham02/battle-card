@@ -49,6 +49,14 @@
 - [ ] **Kinh tế vàng**: vàng tiêu ≥ 70 % vàng kiếm trong run thắng; vàng tồn ở Ấn Đài trung vị ≤ giá một bảo vật cửa hàng (không tích vàng vô dụng).
 - [ ] **Cấp Kiếp** (nếu Story 038 xong): tỉ lệ thắng giảm đơn điệu từ Kiếp 0 tới Kiếp 10 (cho phép lùi ≤ 3 điểm); Kiếp 10 ≥ 3 % với bot đã neo; không cấp nào làm tụt > 12 điểm một mình.
 
+**Phần C2 — Bản sắc bộ khởi đầu (yêu cầu của người dùng, 2026-10-26)**
+
+Mỗi nhân vật phải có "sắc màu" riêng ngay từ trận đầu, không chỉ khác tỉ lệ của cùng 4 lá. Luật "không có lớp" vẫn giữ: lá nào cũng nằm trong pool chung, chỉ bộ khởi đầu nghiêng về hướng mà tuyệt kỹ của nhân vật khuếch đại.
+
+- [ ] Bộ khởi đầu (`assets/data/characters.json` `starter_deck`) của mỗi nhân vật có **≥ 3 / 6 lá thuộc hướng của nó**: Kiếm sĩ → lá sát thương cao (Trảm); Pháp sư → lá Đốt (Thiên Hỏa); Sát thủ → Ghim + lá nhỏ (Ảnh Bộ); Thợ săn → vùng + Rạn (Vây Bắt); Giáo sĩ → Hàn (Thánh Ấn). `kiem_khi` (lá nền) tối đa 2 lá mỗi bộ.
+- [ ] Hai nhân vật bất kỳ chung **≤ 3 lá** trong bộ khởi đầu (đếm cả lá trùng), để không bộ nào là bản sao đổi tỉ lệ của bộ khác. Hiện tại Kiếm sĩ / Pháp sư / Sát thủ dựng từ cùng 4 lá (Kiếm khí, Chấn phong, Hỏa trận, Băng phong); Kiếm sĩ không có lá sát thương cao nào dù Trảm khuếch đại hướng đó.
+- [ ] Kiểm chứng: test dữ liệu cho hai luật trên; mô phỏng Phần E chạy sau khi đổi bộ, và mục tiêu tỉ lệ thắng của Phần C áp dụng cho bộ mới (đổi bộ là chỉnh dữ liệu, theo Phần D).
+
 **Phần D — Chỉ chỉnh dữ liệu**
 
 - [ ] Mọi thay đổi để đạt Phần C nằm trong `assets/data/*.json` (máu, nhịp bước, giáp, cỡ đòn của trận; hệ số theo tầng của 031; hồi máu khi sang tầng; giá và lượng vàng; trọng số thưởng/bảo vật/hình mảnh; tham số Kiếp). Không đổi mã game; nếu một mục tiêu chỉ đạt được bằng mã thì ghi TD mới và để mục đó DEFERRED.

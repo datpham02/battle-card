@@ -84,6 +84,7 @@ const DEFAULT_BOT: Dictionary = {
 	"sig_th_min_burn": 15.0,
 	"sig_th_min_cells": 2,
 	"sig_th_hold": 6.0,
+	"sig_thanh_an_min_stacks": 1,  # Story 037: Thanh An fires when the boss has this many Han stacks
 }
 ## Placement score weights (planner): covering the target, each covered neighbour (escape cell), each
 ## cell, a featured two-piece union, Anh Bo small cut, per second of wind-up beyond the strike budget.
@@ -128,6 +129,15 @@ var ov: Dictionary = {
 ## apply_args seeds it from --relics=). Instances, merged config overrides and the running cast's
 ## cast_info live below; see [method _setup_relics].
 var relic_ids: Array[String] = []
+## Story 037: `--progress=none|all` (default all). `none` = an empty save: [member locked] is
+## AchievementsConfig.locked_content(ProgressState.new()); `all` = nothing locked (every sim before Story 037
+## is unchanged). deck_sim's unlock-runs mode replaces [member locked] before each run from its ledger.
+var progress_mode: String = "all"
+## {kind: Array[String]} of the ids locked in the NEXT run (character, card, piece, relic, region), the
+## RunSession.locked form. deck_sim filters its pools through it; sim_core filters the player's piece drops.
+var locked: Dictionary = {}
+## Story 037 bot rules: set when a player zone (seal / thorns) formed, cleared when Vay Bat fires or the zone follow-up ends.
+var _zone_formed_pending: bool = false
 ## Story 033: the run modifiers' override table of the NEXT match (RunSession.run_modifier_overrides, the
 ## form RunController puts in match_params["run_modifiers"]); deck_sim sets it per match. Key in use:
 ## `step_cooldown` (event loi_the, {mul: 1.2}), folded onto the player's step cooldown as CombatView does.
@@ -260,6 +270,36 @@ func load_configs() -> void:
 	characters = CharacterConfig.load_from_file()
 	_load_relic_config()
 	_build_piece_deck()
+	set_locked_from_progress(ProgressState.new() if progress_mode == "none" else null)
+
+
+## Story 037: [member locked] for the next run. A [param progress] gives AchievementsConfig.locked_content of it;
+## null = nothing locked.
+func set_locked_from_progress(progress: ProgressState) -> void:
+	locked = {} if progress == null else AchievementsConfig.shared().locked_content(progress)
+
+
+## Story 037: the locked ids of [param kind] ([] when none), as a typed array (exclusion lists).
+func locked_ids(kind: String) -> Array[String]:
+	var out: Array[String] = []
+	for v: Variant in locked.get(kind, []) as Array:
+		out.append(str(v))
+	return out
+
+
+## Story 037: true when [param id] of [param kind] is locked in the next run.
+func is_locked(kind: String, id: String) -> bool:
+	return (locked.get(kind, []) as Array).has(id)
+
+
+## Story 037 header text: "progress=none locked: card[...] ..." ("" with --progress=all).
+func describe_progress() -> String:
+	if progress_mode != "none":
+		return ""
+	var parts: Array[String] = []
+	for kind: Variant in locked.keys():
+		parts.append("%s[%s]" % [str(kind), ",".join(PackedStringArray(locked[kind] as Array))])
+	return "progress=none (Story 037, empty save): locked %s" % (" ".join(PackedStringArray(parts)) if not parts.is_empty() else "nothing")
 
 
 # Story 034: resolves --piece-deck (a preset or `remove:a,b|add:c,d`, sections applied in the order written)
@@ -499,6 +539,9 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 				if kv.contains(":") and kv.get_slice(":", 0).contains("."):
 					var raw3: String = kv.get_slice(":", 1).strip_edges()
 					(ov["relic_set"] as Array).append([kv.get_slice(":", 0).strip_edges(), float(raw3) if raw3.is_valid_float() else raw3])
+		elif arg.begins_with("--progress="):
+			# Story 037: none = empty save (locked content stays out of every pool), all = nothing locked.
+			progress_mode = v.strip_edges() if v.strip_edges() in ["none", "all"] else "all"
 		elif arg.begins_with("--piece-deck="):
 			# Story 034: preset (base, small_out, big_out) or remove:mono,bar2|add:y5,square.
 			piece_deck_spec = arg.trim_prefix("--piece-deck=").strip_edges()
@@ -670,8 +713,16 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	boss_drops_config.piece_spawn_interval_sec *= boss_drop_mult
 	drops = FieldDrops.new(player_drops_config, grid.player_cells(), match_seed)
 	_piece_fallback = false
-	if piece_deck_spec.is_empty():
+	var locked_pieces: Array[String] = locked_ids("piece")
+	if piece_deck_spec.is_empty() and locked_pieces.is_empty():
 		drops.enable_pieces(piece_lib, chapter_id, grid, match_seed)
+	elif piece_deck_spec.is_empty():
+		# Story 037: a locked shape is not drawable for the player (the boss keeps the library weights below).
+		var open_weights: Dictionary = {}
+		for pid: String in piece_lib.base_shape_ids():
+			if not locked_pieces.has(pid):
+				open_weights[pid] = piece_lib.weight(pid, chapter_id)
+		drops.enable_pieces(piece_lib, chapter_id, grid, match_seed, true, open_weights)
 	else:
 		# Story 034: the player's drops follow the run's piece deck (CombatView._setup); the boss call below is untouched.
 		var wm: Dictionary = PieceDeck.weights_for_match(piece_deck_state, piece_lib, chapter_id, grid, piece_deck_cfg)
@@ -679,7 +730,10 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		piece_deck_matches += 1
 		if _piece_fallback:
 			piece_deck_fallbacks += 1
-		drops.enable_pieces(piece_lib, chapter_id, grid, match_seed, true, wm["weights"])
+		var deck_weights: Dictionary = (wm["weights"] as Dictionary).duplicate()
+		for pid: String in locked_pieces:
+			deck_weights.erase(pid)
+		drops.enable_pieces(piece_lib, chapter_id, grid, match_seed, true, deck_weights)
 	drops.place_start_pieces(state.player_cell)
 	var slots: int = hold_config.piece_slot_count
 	if relic_merged.has("hold_slots"):
@@ -727,6 +781,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_wire_zones()
 	_setup_hazards(m, match_seed)
 	status.thorn_entered.connect(_on_thorn_entered)
+	status.frost_burst.connect(_on_frost_burst)
+	status.zone_applied.connect(_on_zone_applied)
 	arbiter.swing_resolved.connect(_on_swing_resolved)
 	arbiter.swing_interrupted.connect(_on_swing_interrupted)
 	actor.swing_resolved.connect(_on_player_swing_done)
@@ -760,6 +816,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_wait_since = -1.0
 	_zone_follow_until = -1.0
 	_last_seal_at = -1.0
+	_zone_formed_pending = false
 	_cast_t = -1.0
 	_cast_zone = false
 	_next_cast = rng.randf_range(float(bot["gap_min"]), float(bot["gap_max"]))
@@ -782,6 +839,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		# pieces buried by sand and drifted by the wind (player / boss half), sand cells filled on the player's half.
 		"mire_in": 0, "mire_dmg": 0.0, "bmire_in": 0, "bmire_dmg": 0.0, "buried": 0, "bburied": 0,
 		"drifted": 0, "bdrifted": 0, "sand_cells": 0,
+		# Story 037: Han bursts that fired on the boss (CombatView match stat `frost_bursts`).
+		"frost_bursts": 0,
 	}
 	_tr("match start %s boss_hp=%.0f player_hp=%.0f player=%s boss=%s player_cd=%.2f featured=%s" % [
 		str(m.get("id", "")), boss_max_hp, state.player_hp, str(state.player_cell), str(state.enemy_cell), player_cd, str(not featured.is_empty())])
@@ -875,7 +934,8 @@ func _setup_passive(character: Dictionary) -> void:
 	if passive == null:
 		return
 	var params: Variant = (spec as Dictionary).get("params", {})
-	passive.setup({"state": state, "grid": grid, "boss": boss, "status": status, "skill_config": cards, "cut_config": cut_config},
+	passive.setup({"state": state, "grid": grid, "boss": boss, "status": status, "skill_config": cards, "cut_config": cut_config,
+		"heal_player": Callable(self, "_relic_heal_player")},
 		(params as Dictionary) if typeof(params) == TYPE_DICTIONARY else {})
 	actor.duration_modifier = Callable(passive, "modify_swing_duration")
 	arbiter.player_damage_modifier = Callable(passive, "modify_damage")
@@ -914,6 +974,10 @@ func _setup_signature(character: Dictionary) -> void:
 	arbiter.player_cells_modifier = Callable(signature, "modify_cells")
 	arbiter.player_signature_modifier = Callable(self, "_sig_mod_wrap")
 	mover.cooldown_scale = Callable(signature, "step_cooldown_scale")
+	# Story 037: the zone / Ran / Han hooks of the signatures (the base returns the neutral value).
+	arbiter.player_zone_sec_mult_fn = Callable(signature, "zone_sec_mult")
+	status.fragile_mult_fn = Callable(signature, "fragile_mult_override")
+	status.frost_burst_mult_fn = Callable(signature, "frost_burst_mult")
 
 
 # ---------------------------------------------------------------- Story 032 relics (CombatView._setup_relics port)
@@ -1065,6 +1129,8 @@ func _world_tick(step: float) -> void:
 	_drift_since += step
 	hazards.tick(step, state)
 	_tick_signature(step)
+	if passive != null:
+		passive.tick(step)
 	if formation != null:
 		formation.tick(step)
 	mover.tick(step)
@@ -1216,6 +1282,17 @@ func _bot_signature() -> void:
 				_activate_signature("boss pinned")
 			elif _dodge_at >= 0.0:
 				_activate_signature("dodge")
+		"vay_bat":
+			# Story 037: right after a player zone (seal / thorns) formed, so the follow-up casts of that zone
+			# and the zones cast in the next seconds are in the window. The flag lapses with the zone.
+			if _zone_formed_pending:
+				if t <= _zone_follow_until:
+					_activate_signature("zone formed")
+				_zone_formed_pending = false
+		"thanh_an":
+			# Story 037: when the boss carries at least one Han stack (the extra stack then reaches the burst sooner).
+			if status.frost_stacks(ENEMY) >= int(bot["sig_thanh_an_min_stacks"]):
+				_activate_signature("boss han %d" % status.frost_stacks(ENEMY))
 
 
 # Rules, cast-start part: Tram before a cast of >= sig_tram_min_cells cells or once the boss is low;
@@ -1316,12 +1393,15 @@ func _count_zone_result(result: Dictionary) -> void:
 		_zone_follow_until = t + status.thorn_left(ENEMY, first)
 	if _zone_follow_until > t:
 		_next_cast = t
+		_zone_formed_pending = true
 	_tr("PLAYER zone %s formed %s follow-up until %.2f" % [kind, str(placed), _zone_follow_until])
 
 
 func _on_thorn_entered(side: int, cell: Vector2i, damage: float) -> void:
 	_tr("THORN entered by %s at %s dmg=%.1f" % ["BOSS" if side == ENEMY else "PLAYER", str(cell), damage])
 	if side == ENEMY:
+		if passive != null:
+			passive.on_boss_thorn_step(cell)
 		ms["bthorn"] = int(ms["bthorn"]) + 1
 		ms["bthorn_dmg"] = float(ms["bthorn_dmg"]) + damage
 		ms["dealt"] = float(ms["dealt"]) + damage
@@ -1329,6 +1409,21 @@ func _on_thorn_entered(side: int, cell: Vector2i, damage: float) -> void:
 		ms["pthorn"] = int(ms["pthorn"]) + 1
 		ms["pthorn_dmg"] = float(ms["pthorn_dmg"]) + damage
 		ms["taken"] = float(ms["taken"]) + damage
+
+
+# Story 037: a Han burst on the boss counts as the match stat `frost_bursts` (achievement frost_burst_5).
+func _on_frost_burst(side: int, damage: float) -> void:
+	_tr("FROST burst on %s dmg=%.1f" % ["BOSS" if side == ENEMY else "PLAYER", damage])
+	if side == ENEMY and ms.has("frost_bursts"):
+		ms["frost_bursts"] = int(ms["frost_bursts"]) + 1
+		if passive != null:
+			passive.on_frost_burst(damage)
+
+
+# Story 037 (CombatView._on_status_zone_applied): a zone the player forms on the boss half reaches the passive.
+func _on_zone_applied(kind: String, side: int, cells: Array[Vector2i]) -> void:
+	if side == ENEMY and passive != null:
+		passive.on_player_zone_formed(kind, cells)
 
 
 func _on_blast_fired(cells: Array[Vector2i], hit: bool) -> void:

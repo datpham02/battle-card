@@ -227,7 +227,10 @@ const DOWNED_COLOR: Color = Color(0.55, 0.32, 0.32, 0.55)
 const INVULNERABLE_OUTLINE: Color = Color(0.95, 0.95, 1.0, 0.95)
 var _downed: bool = false
 ## Story 035 match stats (see [method get_match_stats]); counted from the existing hooks only.
-var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_casts": 0, "signatures_used": 0}
+var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_casts": 0, "signatures_used": 0,
+	"frost_bursts": 0, "boss_thorn_steps": 0}
+## Story 037: the last passive heal ({amount, time_left}) for the HUD "+N" flash; {} when none.
+var _heal_flash: Dictionary = {}
 
 
 func _ready() -> void:
@@ -270,7 +273,7 @@ func _ready() -> void:
 	var piece_deck: Variant = match_params.get("piece_deck", {})
 	if typeof(piece_deck) == TYPE_DICTIONARY and not (piece_deck as Dictionary).is_empty():
 		var deck_weights: Dictionary = PieceDeck.weights_for_match(piece_deck as Dictionary, player_pieces,
-			str(match_params.get("chapter_id", "")), _grid, PieceDeckConfig.load_from_file())
+			str(match_params.get("chapter_id", "")), _grid, PieceDeckConfig.load_from_file(), match_params.get("locked_pieces", []) as Array)
 		_piece_deck_fallback = bool(deck_weights["fallback"])
 		_player_piece_weights = deck_weights["weights"]
 		_drops.enable_pieces(player_pieces, str(match_params.get("chapter_id", "")), _grid, drops_seed, true, _player_piece_weights)
@@ -340,8 +343,59 @@ func _ready() -> void:
 	_trait_host.on_match_start()
 	_setup_passive(character)
 	_setup_signature(character)
+	_wire_status_hooks()
 	for relic: BaseRelic in _relics:
 		relic.on_match_start()
+
+
+# Story 037: the ONE point where the status events of the boss reach the match stats and the passive:
+# a Han burst on the boss (frost_bursts, passive.on_frost_burst), the boss stepping onto one of the player's
+# thorn cells (boss_thorn_steps, passive.on_boss_thorn_step) and a zone the player forms on the boss's half
+# (passive.on_player_zone_formed).
+func _wire_status_hooks() -> void:
+	_status.frost_burst.connect(_on_status_frost_burst)
+	_status.thorn_entered.connect(_on_status_thorn_entered)
+	_status.zone_applied.connect(_on_status_zone_applied)
+
+
+func _on_status_frost_burst(side: int, damage: float) -> void:
+	if side != CombatState.Side.ENEMY:
+		return
+	_stats["frost_bursts"] = int(_stats["frost_bursts"]) + 1
+	if _passive != null:
+		_passive.on_frost_burst(damage)
+
+
+func _on_status_thorn_entered(side: int, cell: Vector2i, _damage: float) -> void:
+	if side != CombatState.Side.ENEMY:
+		return
+	_stats["boss_thorn_steps"] = int(_stats["boss_thorn_steps"]) + 1
+	if _passive != null:
+		_passive.on_boss_thorn_step(cell)
+
+
+func _on_status_zone_applied(kind: String, side: int, cells: Array[Vector2i]) -> void:
+	if side == CombatState.Side.ENEMY and _passive != null:
+		_passive.on_player_zone_formed(kind, cells)
+
+
+# Story 037: the passive's heal (prayer): heals the player, clamped to max HP, and starts the "+N" HUD flash
+# with the HP actually gained (nothing when already full or dead).
+func _passive_heal_player(amount: float) -> void:
+	if amount <= 0.0 or _state.is_player_dead():
+		return
+	var before: float = _state.player_hp
+	_relic_heal_player(amount)
+	var gained: float = _state.player_hp - before
+	if gained <= 0.0:
+		return
+	var total: float = gained + (float(_heal_flash.get("amount", 0.0)) if not _heal_flash.is_empty() else 0.0)
+	_heal_flash = {"amount": total, "time_left": FEEDBACK_SEC}
+
+
+## Story 037: the last passive heal as {amount: float, time_left: float} for the HUD; {} when none is showing.
+func get_heal_flash() -> Dictionary:
+	return _heal_flash
 
 
 # Story 027: sealed cells block stepping for BOTH movers (OR-ed with cracks and any other blocker via
@@ -501,6 +555,10 @@ func _setup_signature(character: Dictionary) -> void:
 	_arbiter.player_cells_modifier = Callable(_signature, "modify_cells")
 	_arbiter.player_signature_modifier = Callable(_signature, "modify_damage")
 	_mover.cooldown_scale = Callable(_signature, "step_cooldown_scale")
+	# Story 037: the three hooks of the zone / Ran / Han signatures (the base returns the neutral value).
+	_arbiter.player_zone_sec_mult_fn = Callable(_signature, "zone_sec_mult")
+	_status.fragile_mult_fn = Callable(_signature, "fragile_mult_override")
+	_status.frost_burst_mult_fn = Callable(_signature, "frost_burst_mult")
 
 
 ## Story 021: the signature of this match; null without a character signature or with an unknown id.
@@ -712,7 +770,8 @@ func _setup_passive(character: Dictionary) -> void:
 	var params: Variant = (spec as Dictionary).get("params", {})
 	_passive.setup(
 		{"state": _state, "grid": _grid, "boss": _boss, "status": _status,
-			"skill_config": _skill_config, "cut_config": _cut_config},
+			"skill_config": _skill_config, "cut_config": _cut_config,
+			"heal_player": Callable(self, "_passive_heal_player")},
 		(params as Dictionary) if typeof(params) == TYPE_DICTIONARY else {})
 	_cut_actor.duration_modifier = Callable(_passive, "modify_swing_duration")
 	_arbiter.player_damage_modifier = Callable(_passive, "modify_damage")
@@ -1037,6 +1096,8 @@ func _process(delta: float) -> void:
 		_status.tick(step, _state)
 		_hazards.tick(step, _state)
 		_tick_signature(step)
+		if _passive != null:
+			_passive.tick(step)
 		if _formation != null:
 			_formation.tick(step)
 		_mover.tick(step)
@@ -1063,6 +1124,7 @@ func _process(delta: float) -> void:
 		_age_flash(_boss_feedback, step)
 		_age_flash(_interrupt_flash, step)
 		_age_flash(_feint_flash, step)
+		_age_flash(_heal_flash, step)
 	queue_redraw()
 
 
@@ -1818,7 +1880,9 @@ func is_boss_downed() -> bool:
 
 ## Story 035: this match's numbers for the run stats: {damage_dealt (HP the boss lost), damage_taken (HP the
 ## player lost), hits_taken (boss swings that hit the player), casts (player swings that resolved), joins (of
-## them, casts of joined pieces), featured_casts (casts of the arena's featured shape), signatures_used}.
+## them, casts of joined pieces), featured_casts (casts of the arena's featured shape), signatures_used,
+## frost_bursts (Han bursts on the boss, Story 037), boss_thorn_steps (times the boss stepped onto one of the
+## player's thorn cells, Story 037)}.
 ## All 0 before anything happened. Read-only.
 func get_match_stats() -> Dictionary:
 	var out: Dictionary = _stats.duplicate()

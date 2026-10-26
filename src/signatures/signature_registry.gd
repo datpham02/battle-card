@@ -9,6 +9,8 @@ const SCRIPTS: Dictionary = {
 	"tram": preload("res://src/signatures/tram.gd"),
 	"thien_hoa": preload("res://src/signatures/thien_hoa.gd"),
 	"anh_bo": preload("res://src/signatures/anh_bo.gd"),
+	"vay_bat": preload("res://src/signatures/vay_bat.gd"),
+	"thanh_an": preload("res://src/signatures/thanh_an.gd"),
 }
 
 

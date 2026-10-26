@@ -37,8 +37,8 @@ func _start(character: String) -> Dictionary:
 func _initialize() -> void:
 	# ---- config
 	var cc: CharacterConfig = CharacterConfig.load_from_file()
-	_check("3 characters", cc.ids() == (["kiem_si", "phap_su", "sat_thu"] as Array[String]), str(cc.ids()))
-	_check("3 unlocked", cc.unlocked_ids().size() == 3)
+	_check("5 characters (Story 037 adds tho_san, giao_si)", cc.ids() == (["kiem_si", "phap_su", "sat_thu", "tho_san", "giao_si"] as Array[String]), str(cc.ids()))
+	_check("5 unlocked without an unlock source", cc.unlocked_ids().size() == 5)
 	_check("default kiem_si", cc.default_id() == "kiem_si")
 	for id: String in cc.ids():
 		_check("deck of %s has 6" % id, cc.deck_of(id).size() == 6)

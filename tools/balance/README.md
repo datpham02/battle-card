@@ -61,7 +61,8 @@ Bot model. Defaults are in `sim_core.gd` `DEFAULT_BOT`:
 | `--hold=N` | 1 | Placeable pieces held before a non-counter cast. 1 = cast as soon as one piece is held, which almost never joins. 2 = wait for a pair; this is how joins and featured casts appear. A full bag casts anyway. |
 | `--aware=P` | 0.0 | Chance a placement lights dark formation-map cells instead of aiming at the boss. At 0, signatures rarely become ready. |
 | `--aware-min=N` | 3 | Smallest piece a formation-aware placement uses. |
-| `--sig=off\|ready\|rules` | rules | Signature activation. `rules` = the Story 021 rules: Tram before a cast of 3+ cells or when the boss is at 40 % HP or less; Thien Hoa on 15+ burn or 2+ burning enemy cells, otherwise after holding 6 s; Anh Bo when the boss is pinned, on a dodge, or at the next cast. `ready` fires as soon as the signature is usable. |
+| `--sig=off\|ready\|rules` | rules | Signature activation. `rules` = the Story 021 rules: Tram before a cast of 3+ cells or when the boss is at 40 % HP or less; Thien Hoa on 15+ burn or 2+ burning enemy cells, otherwise after holding 6 s; Anh Bo when the boss is pinned, on a dodge, or at the next cast; Story 037: Vay Bat right after a player zone forms, Thanh An when the boss has >= 1 Han stack (section below). `ready` fires as soon as the signature is usable. |
+| `--progress=none\|all` | all | Story 037, see the section below. `none` = an empty save (every unlock still locked in the pools), `all` = nothing locked. |
 | `--dt=S` | 0.05 | Loop step in REAL seconds. The sim step is dt × scale. |
 
 In-memory data overrides:
@@ -152,7 +153,7 @@ you report.
 | `--seeds=N` | 70 | Runs per character, policy and chapter. |
 | `--chapters=0,1,2` | 0 | Chapter indices (0-based). |
 | `--policies=build,always_skip` | both | `always_skip` runs on chapter 1 only. `build` is the verdict policy. |
-| `--characters=kiem_si,phap_su,sat_thu` | all | Subset of characters. The kiem_si onboarding row (cleared_bosses 0) is added on chapter 1. |
+| `--characters=kiem_si,phap_su,sat_thu,tho_san,giao_si` | the first three | Subset of characters. Story 037: `tho_san` and `giao_si` are accepted but are not in the default list (older command lines stay as they were). The kiem_si onboarding row (cleared_bosses 0) is added on chapter 1. |
 | `--no-treasure` | off | The bot never takes a treasure node (map experiment). |
 | `--trace=N` or `--trace=<match id>` | off | Event log of match N, or of the first match against that boss. |
 
@@ -520,3 +521,90 @@ assumptions, not measurements.
   account for the featured shape's bonus effect.
 - Cut from the label-era probes: the `naive` and `blob` connected-rune modes (runes no longer exist)
   and the `--boss=rune` boss mode.
+
+## Story 037: `--progress`, the two new characters, `--unlock-runs`
+
+Milestone unlocks only widen the POOLS (card rewards, piece drops, relics, regions, character select). The sim has
+three tools for the Part F "Mô phỏng" checks: the character list, `--progress` and the unlock-runs mode.
+
+**`--characters`** accepts `tho_san` (Thợ săn) and `giao_si` (Giáo sĩ) next to the three open ones. The default list
+stays `kiem_si,phap_su,sat_thu`, so every older command line (and its output) is unchanged. The sim never gates the
+character list by progress: you pick who plays.
+
+**`--progress=none|all`** (shared, `sim_core.gd`; default `all`). `none` = an empty save: `SimCore.locked` =
+`AchievementsConfig.shared().locked_content(ProgressState.new())`, the `RunSession.locked` form (`{kind: [ids]}`);
+`all` = `{}`, nothing locked (every sim before Story 037 behaves as before, apart from the new shapes and cards now
+being in the open data). The header prints `progress=none (Story 037, empty save): locked card[...] piece[...] ...`.
+Where the sim builds a pool itself, it applies `locked`:
+
+| Pool | Where | How |
+|---|---|---|
+| Card rewards (boss / treasure / battle rows) | `deck_sim._apply_policy` | locked cards join the `RewardRoller.roll` exclude list |
+| Relic row at a treasure, fate offers | `deck_sim._take_relic` | locked relic ids are passed as already owned to `RelicRoller.roll` |
+| Shop and event offers | `ShopLogic` / `EventLogic` | `_session_of` copies `locked` into the `RunSession` proxy, so the game's own filters apply |
+| Player's piece drops | `sim_core._setup` | locked shapes get no weight in the player's `FieldDrops` (also with `--piece-deck`); the boss's drops are untouched |
+| Region offer (`--world`) | `deck_sim._open_region_ids` | locked regions are left out of the pool (an all-locked pool keeps the full one) |
+| Chapter-mode `RunSession` | `deck_sim._run` | `session.locked` is set |
+
+Compare win rates of the two modes with two invocations, same seeds:
+
+```sh
+for p in none all; do
+  timeout 3000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si,phap_su,sat_thu,tho_san,giao_si --progress=$p > "<scratch>/chars_$p.out" 2>&1
+done
+grep -h "WORLD CHARACTERS\|WORLD VERDICT" "<scratch>"/chars_*.out
+```
+
+`WORLD CHARACTERS | progress=<mode> | policy | character | run win % ... | mean of N open characters ... | delta ... (band +-10): PASS|FAIL`
+prints once per new character at the end of a `--world` run that played it together with the open ones (Part F
+bullet 1: within 10 points of the mean of the three open characters). Bullet 2 (`none` against `all` within 10 points,
+per character) is read from the `WORLD VERDICT` / `WORLD SUMMARY` win % of the two files.
+
+### Bot rules for the new signatures (`--sig=rules`)
+
+The bot activates once the signature is ready (formation map covered, cooldown over), like the older ones:
+
+| Signature | Rule (`SimCore._bot_signature`) |
+|---|---|
+| `vay_bat` (Thợ săn) | Right after a player zone (seal or thorns) formed: the tick after a zone cast resolved, while that zone's follow-up window is still open (`_zone_follow_until`). It covers the bot's follow-up casts of that zone (Ran stacks consumed at `fragile_mult`) and any zone cast in the next `duration_sec`; the zone that just formed is not lengthened. |
+| `thanh_an` (Giáo sĩ) | When the boss has at least `sig_thanh_an_min_stacks` (1) Han stack (`StatusEffects.frost_stacks(ENEMY)`). |
+
+`--sig=ready` fires both as soon as they are usable; `--sig=off` never. `sim_core` also ports the Story 037 combat wiring of
+`CombatView`: the passive hooks (`on_frost_burst`, `on_boss_thorn_step`, `on_player_zone_formed`, `tick`, ctx `heal_player`),
+the signature hooks (`zone_sec_mult`, `fragile_mult_override`, `frost_burst_mult`) and the match counter `frost_bursts`
+(a Han burst on the boss; `boss_thorn_steps` is the existing `bthorn`). When `CombatView` changes that wiring, update the port.
+
+### `--unlock-runs=N [--unlock-reps=R] [--unlock-full]`
+
+Unlock speed (Part F bullet 3). For each open character (`--characters`, default the three; new characters are ignored
+here), R repetitions (default 30) of up to N consecutive `--world` runs on ONE `ProgressState`, seeds `rep * 1000 + run`,
+the `build` policy, and the fate policy `--fate=alternate` (default here; execute, spare, execute, ... per run in the order of
+the run's region bosses; `--fate=execute|spare` is honoured). Before each run `SimCore.locked` is set from the ledger
+(`AchievementsConfig.locked_content(progress)`), so pools widen as achievements are earned, as in the game. After each run the
+sim writes what `GameFlow` writes and raises the events through `UnlockRules.process`, in this order per match:
+
+1. a won REGION boss (`FateLogic.is_boss_fate_node`): `record_boss_clear`, `add_region_boss_beaten(region)`, `record_fate(match_id, fate)`;
+2. `final_reached` (`record_final_reached` + the event) before the first final-floor match;
+3. a `match_won` event for EVERY won match: `match_stats` = that match's `hits_taken` (boss hits), `casts`, `joins`, `featured_casts`,
+   `signatures_used`, `frost_bursts`, `boss_thorn_steps`, `damage_*`; `run_stats` = the sum so far (a lost match also adds its stats);
+   `deck_ids` = the deck after that node's reward;
+4. at the end: on a win `record_run_won(character)` + `record_ending(FateLogic.ending_for(...))`, then the `run_ended` event (won or lost).
+
+Not modelled: the extra fights of `tran_thach` events (no event, their stats are not summed). A repetition stops as soon as both
+new characters are open, unless `--unlock-full` (then all N runs are played, which also gives the full achievement picture).
+The sim does not play the new characters inside this mode.
+
+| Output line | What |
+|---|---|
+| `UNLOCK RUNS RAW <char> rep K` | one repetition: `W`/`L` per run, the run index at which `tho_san` / `giao_si` opened (`-` = not within N), new achievements per run, total held |
+| `UNLOCK RUNS SUMMARY <char> \| <new character> (via <achievement>)` | opened in X of R reps, mean run index (median, max) over the reps that opened it, the mean with a never-opened rep counted as N+1, and the story target 1-3 runs (PASS needs that last mean in range) |
+| `UNLOCK RUNS ACHIEVEMENTS <char>` | new achievements per run index (mean over reps that played it), mean held at the end of a rep, run win % over all runs |
+| `UNLOCK RUNS EARNED <char>` | how many reps held each of the 22 achievements at the end of the rep |
+
+```sh
+# Smoke (about 20 s)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --unlock-runs=2 --unlock-reps=2 --characters=kiem_si
+# Part F bullet 3: 30 reps, up to 8 runs, three open characters (about 5 min per character), then read the summary lines
+timeout 3000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --unlock-runs=8 --unlock-reps=30 > "<scratch>/unlock_runs.out" 2>&1
+grep "^UNLOCK RUNS" "<scratch>/unlock_runs.out"
+```

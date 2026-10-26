@@ -16,6 +16,8 @@ const FALLBACK_FOCUS_SEC: float = 4.0
 var _order: Array[String] = []
 var _characters: Dictionary = {}
 var _default_id: String = ""
+# Story 037: Callable(character_id: String) -> bool, the progress-based unlock test; invalid = everything unlocked.
+var _unlock_source: Callable = Callable()
 
 
 ## Loads [param path]; a missing / unparsable / empty file gives one built-in character (warning).
@@ -58,11 +60,18 @@ func ids() -> Array[String]:
 	return _order.duplicate()
 
 
-## Ids of the characters with `unlocked: true`, in file order.
+## Story 037: sets the unlock test, Callable(character_id: String) -> bool (GameFlow: the earned achievements
+## that list the character as a reward). An invalid Callable (the default) = every character is unlocked, which
+## keeps tests and the simulation as they were. A character without `unlock_by` is always unlocked.
+func set_unlock_source(fn: Callable) -> void:
+	_unlock_source = fn
+
+
+## Ids of the unlocked characters (see [method set_unlock_source]), in file order.
 func unlocked_ids() -> Array[String]:
 	var out: Array[String] = []
 	for id: String in _order:
-		if bool((_characters[id] as Dictionary)["unlocked"]):
+		if _is_unlocked(id):
 			out.append(id)
 	return out
 
@@ -74,12 +83,14 @@ func has(id: String) -> bool:
 
 ## A copy of the cleaned character [param id] ({id, name_key, desc_key, max_hp, step_cooldown_mult,
 ## focus_max_sec, passive {id, params}, passive_name_key, passive_desc_key, signature ({} or
-## {id, name_key, desc_key, params}, Story 021), starter_deck, unlocked});
-## {} when unknown.
+## {id, name_key, desc_key, params}, Story 021), starter_deck, unlock_by (Story 037: achievement id or ""),
+## unlocked (computed with the unlock source)}); {} when unknown.
 func get_character(id: String) -> Dictionary:
 	if not _characters.has(id):
 		return {}
-	return (_characters[id] as Dictionary).duplicate(true)
+	var out: Dictionary = (_characters[id] as Dictionary).duplicate(true)
+	out["unlocked"] = _is_unlocked(id)
+	return out
 
 
 ## Id of the default character (default_character of the file, else the first one).
@@ -94,6 +105,13 @@ func deck_of(id: String) -> Array[String]:
 		for card: Variant in (_characters[id] as Dictionary)["starter_deck"] as Array:
 			out.append(str(card))
 	return out
+
+
+# Story 037: no unlock_by or no source = unlocked; else the source decides.
+func _is_unlocked(id: String) -> bool:
+	if str((_characters[id] as Dictionary)["unlock_by"]).is_empty() or not _unlock_source.is_valid():
+		return true
+	return bool(_unlock_source.call(id))
 
 
 func _add(raw: Dictionary, skills: SkillConfig) -> void:
@@ -135,7 +153,7 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 		"passive_desc_key": str(raw.get("passive_desc_key", "")),
 		"signature": signature,
 		"starter_deck": deck,
-		"unlocked": bool(raw.get("unlocked", true)),
+		"unlock_by": str(raw.get("unlock_by", "")),
 	}
 	_order.append(id)
 
@@ -174,4 +192,4 @@ func _read_signature(id: String, raw: Variant) -> Dictionary:
 func _add_fallback(skills: SkillConfig) -> void:
 	_add({"id": FALLBACK_ID, "name_key": "character.kiem_si.name", "desc_key": "character.kiem_si.desc",
 		"max_hp": FALLBACK_MAX_HP, "step_cooldown_mult": 1.0, "focus_max_sec": FALLBACK_FOCUS_SEC,
-		"starter_deck": skills.default_deck, "unlocked": true}, skills)
+		"starter_deck": skills.default_deck}, skills)

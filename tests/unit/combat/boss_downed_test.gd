@@ -162,11 +162,11 @@ func _test_match_stats() -> void:
 	var holder: Node = await _match({"boss_max_hp": BOSS_HP})
 	var v: CombatView = _view(holder)
 	var zero: Dictionary = v.get_match_stats()
-	var keys: Array[String] = ["damage_dealt", "damage_taken", "hits_taken", "casts", "joins", "featured_casts", "signatures_used"]
+	var keys: Array[String] = ["damage_dealt", "damage_taken", "hits_taken", "casts", "joins", "featured_casts", "signatures_used", "frost_bursts", "boss_thorn_steps"]
 	var all_zero: bool = true
 	for key: String in keys:
 		all_zero = all_zero and zero.has(key) and is_zero_approx(float(zero[key]))
-	_check("stats: 7 keys, all 0 at start", all_zero and zero.size() == keys.size(), str(zero))
+	_check("stats: 9 keys (Story 037 adds frost_bursts, boss_thorn_steps), all 0 at start", all_zero and zero.size() == keys.size(), str(zero))
 	var cell: Vector2i = v.get_state().enemy_cell
 	var cells: Array[Vector2i] = [cell]
 	# Act: 10 HP off the boss, 5 HP off the player, one joined featured cast resolving, one boss hit, one miss.

@@ -108,7 +108,7 @@ func _test_default_source_unchanged() -> void:
 	var counts: Dictionary = _counts(boss)
 	ck("boss path: run_only shapes never drop", not (counts.has("z4") or counts.has("j4") or counts.has("y5")))
 	var drawable: FieldDrops = _drops(grid, 9, null, false)
-	ck("boss path: run_only shapes are not drawable", drawable.get_drawable_shapes().size() == 13)
+	ck("boss path: run_only shapes are not drawable", drawable.get_drawable_shapes().size() == lib.base_shape_ids().size())
 
 
 func _test_player_distribution() -> void:
@@ -170,7 +170,7 @@ func _test_zero_weight_rule() -> void:
 		none_fit.get_drawable_shapes().has("mono") and not none_fit.get_drawable_shapes().has("bar5"))
 	var junk: FieldDrops = _drops(grid, 4, 42)
 	ck("a source that is neither Dictionary nor Callable is ignored (library weights)",
-		junk.get_drawable_shapes().size() == 13)
+		junk.get_drawable_shapes().size() == lib.base_shape_ids().size())
 
 
 func _test_start_pieces_use_source() -> void:

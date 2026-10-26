@@ -8,7 +8,8 @@ extends RefCounted
 ## the PLAYER's swings only (the boss never sees them).
 ##
 ## Context keys (`ctx` of [method setup]): `state` CombatState, `grid` BoardGrid, `boss`
-## BossController (read-only), `status` StatusEffects, `skill_config`, `cut_config`.
+## BossController (read-only), `status` StatusEffects, `skill_config`, `cut_config`; Story 037 adds
+## `heal_player` Callable(amount: float) -> Variant (heals the player, clamped to max HP; optional).
 ## Implements: Story 018.
 
 var _ctx: Dictionary = {}
@@ -48,6 +49,29 @@ func modify_swing_duration(_cells: int, duration: float) -> float:
 ## damage to apply (default: unchanged).
 func modify_damage(_cells: int, damage: float) -> float:
 	return damage
+
+
+## Story 037: advances the passive's own clock by [param dt] SIMULATION seconds (CombatView calls it once per
+## simulation step; default: nothing).
+func tick(_dt: float) -> void:
+	pass
+
+
+## Story 037: the BOSS stepped onto a thorn cell of the player's zone (StatusEffects.thorn_entered on the enemy
+## side), standing on [param cell]. Default: nothing.
+func on_boss_thorn_step(_cell: Vector2i) -> void:
+	pass
+
+
+## Story 037: the player formed a zone ([param kind] "seal" or "thorns", StatusEffects.KIND_*) on the boss's half;
+## [param cells] are the cells actually placed. Default: nothing.
+func on_player_zone_formed(_kind: String, _cells: Array[Vector2i]) -> void:
+	pass
+
+
+## Story 037: a Han burst fired on the boss for [param damage]. Default: nothing.
+func on_frost_burst(_damage: float) -> void:
+	pass
 
 
 ## Drops every reference. Called when the battle leaves the tree. Override, then call super.

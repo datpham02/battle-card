@@ -68,7 +68,7 @@ static func ending_for(fates: Array, endings_cfg: Dictionary) -> String:
 ## [param luck] is accepted for the API of the contract: RelicRoller has no luck input for relics, so it does
 ## not change the draw today.
 static func roll_execute_offer(owned_relics: Array, fate_cfg: Dictionary, relic_cfg: Variant, rng_seed: int,
-		luck: float = 0.0) -> Array[String]:
+		luck: float = 0.0, locked_relics: Array = []) -> Array[String]:
 	var _unused_luck: float = luck
 	var count: int = int(fate_cfg.get("execute_artifact_offers", FATE_DEFAULTS["execute_artifact_offers"]))
 	var floor_name: String = str(fate_cfg.get("execute_min_rarity", FATE_DEFAULTS["execute_min_rarity"]))
@@ -79,7 +79,7 @@ static func roll_execute_offer(owned_relics: Array, fate_cfg: Dictionary, relic_
 		cfg = RelicConfig.from_dictionary(relic_cfg as Dictionary)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = rng_seed
-	return RelicRoller.roll(RelicRoller.SOURCE_TREASURE, owned_relics, rng, cfg, count, floor_name)
+	return RelicRoller.roll(RelicRoller.SOURCE_TREASURE, owned_relics, rng, cfg, count, floor_name, locked_relics)
 
 
 ## True only for the `boss` node of a REGION: the final match ([param is_final]) and every other kind

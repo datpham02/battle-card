@@ -30,7 +30,9 @@ const KIND_BOSS: String = "boss"
 const REASON_NO_TOKEN: String = "piece_deck.reason.no_token"
 ## Story 035: counters of [member stats] that are HP sums (floats); the others are counts (ints).
 const STAT_DAMAGE_KEYS: Array[String] = ["damage_dealt", "damage_taken"]
-const STAT_COUNT_KEYS: Array[String] = ["hits_taken", "casts", "joins", "featured_casts", "signatures_used"]
+## Story 037 adds `frost_bursts` and `boss_thorn_steps` (summed over the run, saved with the stats).
+const STAT_COUNT_KEYS: Array[String] = ["hits_taken", "casts", "joins", "featured_casts", "signatures_used",
+	"frost_bursts", "boss_thorn_steps"]
 const CONFIG_DEFAULTS: Dictionary = {
 	"starting_removals": 1, "luck_start": 0.0, "luck_per_node": 1.0,
 	"rest_heal_ratio": 0.3, "rest_forge_levels": 1, "boss_removal_tokens": 1,
@@ -137,6 +139,11 @@ var pending_fate_match: Dictionary = {}
 ## joins, featured_casts, signatures_used (numbers, start 0) and `death` ({} or {floor, region_id, match_id,
 ## boss_name_key}). Filled by [method add_match_stats] / [method record_death].
 var stats: Dictionary = _new_stats()
+## Story 037: content still locked when the run STARTED, {kind: Array[String]} with kind in character, card,
+## piece, relic, region (AchievementsConfig.locked_content). Unlocking mid-run changes nothing for this run.
+## {} = nothing locked (tests, sims, `--progress=all`): every pool behaves as before. Saved under `locked`
+## (absent = {}, no version bump). Unlocks only widen POOLS: this never changes the run's start state.
+var locked: Dictionary = {}
 ## Revive tokens (from chapters defaults; reserved, unused).
 var revives: int = 0
 ## True when this session came from a pre-v5 save: the flow must start a fresh world run for
@@ -153,9 +160,10 @@ var _chapters: ChaptersConfig = null
 ## map), full HP, deck = the character's starter_deck, revives from `defaults.revive_tokens`.
 ## [param starting_removals] = rewards.json starting_removals.
 static func begin_world(chapters: ChaptersConfig, character: Dictionary, run_seed: int,
-		starting_removals: int = 0) -> RunSession:
+		starting_removals: int = 0, locked_content: Dictionary = {}) -> RunSession:
 	var s := RunSession.new()
 	s._chapters = chapters
+	s.locked = _clean_locked(locked_content)
 	s.character_id = str(character.get("id", ""))
 	s.run_seed = run_seed
 	s.region_id = ""
@@ -206,7 +214,46 @@ func roll_offer() -> Array[String]:
 	if pool.is_empty() and _chapters.chapter_count() > 0:
 		pool = [_chapters.chapter_id(0)]
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", ChaptersConfig.DEFAULT_CHOICES_PER_FLOOR))
+	# Story 037: a locked region is not in the pool (nothing is locked today, so the pool is unchanged).
+	var open_pool: Array[String] = []
+	for rid: String in pool:
+		if not is_locked("region", rid):
+			open_pool.append(rid)
+	if not open_pool.is_empty():
+		pool = open_pool
 	return WorldMapGen.offer_for_floor(pool, run_seed, floor, region_path, choices)
+
+
+## Story 037: true when content [param id] of [param kind] (character, card, piece, relic, region) was locked
+## when the run started ([member locked]). The one helper every pool filter calls.
+func is_locked(kind: String, id: String) -> bool:
+	return (locked.get(kind, []) as Array).has(id)
+
+
+## Story 037: the locked ids of [param kind] ([] when none), as a fresh typed array (exclusion lists).
+func locked_ids(kind: String) -> Array[String]:
+	var out: Array[String] = []
+	for v: Variant in locked.get(kind, []) as Array:
+		out.append(str(v))
+	return out
+
+
+# Story 037: {kind: Array[String]} with string ids only; empty kinds are dropped; anything else -> {}.
+static func _clean_locked(raw: Variant) -> Dictionary:
+	var out: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for k: Variant in (raw as Dictionary).keys():
+		var v: Variant = (raw as Dictionary)[k]
+		if typeof(v) != TYPE_ARRAY:
+			continue
+		var ids: Array[String] = []
+		for id: Variant in v as Array:
+			if not ids.has(str(id)):
+				ids.append(str(id))
+		if not ids.is_empty():
+			out[str(k)] = ids
+	return out
 
 
 ## Story 031: picks [param id] from [member region_offer]: its map is generated for this floor
@@ -873,6 +920,7 @@ func to_dict() -> Dictionary:
 		"pending_ink_offer": pending_ink_offer.duplicate(),
 		"boss_fates": boss_fates.duplicate(true), "pending_fate": pending_fate,
 		"pending_fate_match": pending_fate_match.duplicate(true), "stats": stats.duplicate(true),
+		"locked": locked.duplicate(true),
 	}
 
 
@@ -951,6 +999,7 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s.pending_ink_offer = _known_shapes(d.get("pending_ink_offer", []))
 	s.boss_fates = _clean_fates(d.get("boss_fates", []))
 	s.stats = _clean_stats(d.get("stats"))
+	s.locked = _clean_locked(d.get("locked", {}))
 	s.pending_fate = bool(d.get("pending_fate", false))
 	if s.pending_fate:
 		var pm: Dictionary = (d["pending_fate_match"] as Dictionary) if typeof(d.get("pending_fate_match")) == TYPE_DICTIONARY else {}

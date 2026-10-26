@@ -140,7 +140,7 @@ func _run() -> void:
 	var shop_relics: Array = shop.get("relics", [])
 	_check(shop_cards.size() >= 2 and shop_relics.size() >= 1, "stock: %d cards, %d relics" % [shop_cards.size(), shop_relics.size()])
 	var expected: Dictionary = ShopLogic.build(run.run_seed, run.floor, 0, 0, run.luck(flow.get_reward_config()), [], cards,
-		flow.get_reward_config(), null, EconomyConfig.shared())
+		flow.get_reward_config(), null, EconomyConfig.shared(), run.locked)
 	_check(expected.get("cards") == shop.get("cards") and expected.get("relics") == shop.get("relics"), "stock = ShopLogic.build seeded by run + floor + column + node")
 	var saved: Dictionary = store.load_state(config).get_run_dict()
 	_check(int(saved.get("node_index", -1)) == 0 and not (saved.get("shop_state", {}) as Dictionary).is_empty(), "the open shop is saved")

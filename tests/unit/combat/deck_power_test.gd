@@ -54,20 +54,20 @@ func _initialize() -> void:
 			up_ok = false
 		if c.has("damage_multiplier") or c.has("class_tags"):
 			no_mult = false
-	check(rar["common"] == 15 and rar["rare"] == 11 and rar["epic"] == 4, "rarity spread (Story 027: 30 cards, song_kiem epic) %s" % str(rar))
+	check(rar["common"] == 17 and rar["rare"] == 13 and rar["epic"] == 4, "rarity spread (Story 037: 34 cards, song_kiem epic) %s" % str(rar))
 	# Story 027: the boss's default card list never holds a zone card (zones come from its traits only).
 	var boss_ids: Array[String] = cards.boss_card_order()
 	var boss_zone_free: bool = true
 	for id: String in boss_ids:
 		if cards.is_zone_card(id):
 			boss_zone_free = false
-	var zone_ids: Array[String] = ["ket_gioi", "long_an", "tran_gai", "gai_nguyen"]
+	var zone_ids: Array[String] = ["ket_gioi", "long_an", "tran_gai", "gai_nguyen", "gai_doc", "luoi_san"]
 	var all_zone: bool = true
 	for id: String in zone_ids:
 		if not cards.is_zone_card(id):
 			all_zone = false
 	check(boss_zone_free and all_zone and boss_ids.size() == cards.card_order.size() - zone_ids.size(),
-		"boss card list excludes the 4 zone cards (%d of %d)" % [boss_ids.size(), cards.card_order.size()])
+		"boss card list excludes the 6 zone cards (%d of %d)" % [boss_ids.size(), cards.card_order.size()])
 	check(all_ok, "all name/desc keys in CSV vi+en")
 	check(dpc_ok, "every card has float damage_per_cell")
 	check(up_ok, "every card has upgrade table")

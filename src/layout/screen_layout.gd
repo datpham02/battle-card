@@ -103,6 +103,10 @@ const TITLE_BUTTONS_TOP_RATIO: float = 0.47
 const TITLE_BUTTON_WIDTH_RATIO: float = 0.3
 const TITLE_BUTTON_HEIGHT_RATIO: float = 0.11
 const TITLE_BUTTON_GAP_RATIO: float = 0.025
+## Story 037: the lowest the title button column may reach (share of the height).
+const TITLE_BUTTONS_BOTTOM_RATIO: float = 0.95
+## Story 037: the full column (Continue, Play, Achievements, Quit); the continue summary strip sits under its first button.
+const TITLE_BUTTON_COLUMN_COUNT: int = 4
 ## Title screen language button (Story 017): width / height as shares of the viewport.
 const TITLE_LANG_BUTTON_WIDTH_RATIO: float = 0.1
 const TITLE_LANG_BUTTON_HEIGHT_RATIO: float = 0.09
@@ -627,6 +631,8 @@ static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect
 	var gap: float = viewport_size.y * TITLE_BUTTON_GAP_RATIO
 	var left: float = (viewport_size.x - size.x) * 0.5
 	var top: float = viewport_size.y * TITLE_BUTTONS_TOP_RATIO
+	# Story 037: four buttons (Continue, Play, Achievements, Quit) shrink to end by TITLE_BUTTONS_BOTTOM_RATIO.
+	size.y = minf(size.y, (viewport_size.y * TITLE_BUTTONS_BOTTOM_RATIO - top - gap * (count - 1)) / count)
 	for i: int in count:
 		rects.append(Rect2(left, top + (size.y + gap) * i, size.x, size.y))
 	return rects
@@ -635,7 +641,7 @@ static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect
 ## Title screen (Story 019): the strip right under the first button of [method title_button_rects]
 ## (the "Tiếp tục run" button; the gap before the next button), for the saved run's one-line summary.
 static func title_continue_summary_rect(viewport_size: Vector2) -> Rect2:
-	var first: Rect2 = title_button_rects(viewport_size, 1)[0]
+	var first: Rect2 = title_button_rects(viewport_size, TITLE_BUTTON_COLUMN_COUNT)[0]
 	return Rect2(Vector2(first.position.x, first.end.y), Vector2(first.size.x, viewport_size.y * TITLE_BUTTON_GAP_RATIO))
 
 

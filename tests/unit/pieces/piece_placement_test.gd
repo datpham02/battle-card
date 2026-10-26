@@ -195,7 +195,7 @@ func _test_any_placement() -> void:
 	for id: String in lib.base_shape_ids(): # Story 034: the default pool (run_only shapes excluded)
 		if PiecePlacement.has_any_placement(grid, lib.make_piece(id)):
 			drawable += 1
-	ck("any: on 3x3, 11 of the 13 shapes fit (bar4, bar5 do not)", drawable == 11)
+	ck("any: on 3x3, 13 of the 16 default shapes fit (bar4, bar5, n5 do not; Story 037)", drawable == 13)
 	ck("any: null grid or piece is false and empty", not PiecePlacement.has_any_placement(null, lib.make_piece("mono")) and PiecePlacement.valid_anchors(null, lib.make_piece("mono")).is_empty() and PiecePlacement.valid_anchors(grid, null).is_empty())
 
 

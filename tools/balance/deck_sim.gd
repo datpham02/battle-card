@@ -41,6 +41,14 @@ const SimCore = preload("res://tools/balance/sim_core.gd")
 const DEFAULT_SEEDS: int = 70
 const POLICIES: Array[String] = ["always_skip", "build"]
 const CHARACTERS: Array[String] = ["kiem_si", "phap_su", "sat_thu"]
+## Story 037: the two milestone characters. `--characters` accepts them; the default list stays the three open ones,
+## so every older command line is unchanged.
+const NEW_CHARACTERS: Array[String] = ["tho_san", "giao_si"]
+## Story 037 unlock-runs mode: defaults and the story target (mean runs to open a new character).
+const UNLOCK_DEFAULT_REPS: int = 30
+const UNLOCK_TARGET_RUNS: Array[float] = [1.0, 3.0]
+## Story 037 Part F: a new character's run win % must sit within this many points of the mean of the three open ones.
+const NEW_CHARACTER_WIN_BAND: float = 10.0
 ## Main runs use cleared_bosses = 1 (tier 2 exists); one onboarding set (cleared_bosses = 0) is reported
 ## for ONBOARDING_CHARACTER on chapter 1.
 const CLEARED_BOSSES_MAIN: int = 1
@@ -149,6 +157,13 @@ var _economy: EconomyConfig
 ## Story 036: --region=<id,...> (region / chapter ids) and --floor=1,3,5 (1-based floors) of the region mode.
 var _regions: Array[String] = []
 var _region_floors: Array[int] = []
+## Story 037: --unlock-runs=N (0 = off) consecutive runs on one ProgressState per repetition, --unlock-reps=R
+## repetitions, --unlock-full = play all N runs even after both new characters are open.
+var _unlock_runs: int = 0
+var _unlock_reps: int = UNLOCK_DEFAULT_REPS
+var _unlock_full: bool = false
+## "character|policy" -> {win, wins, n} of the world runs, for the WORLD CHARACTERS comparison line.
+var _world_wins: Dictionary = {}
 
 
 ## Story 031 world mode: a run's state (the parts of RunSession the bot and the reward policy read), so the
@@ -238,7 +253,7 @@ func _init() -> void:
 		elif arg.begins_with("--characters="):
 			_characters_run = []
 			for c: String in v.split(","):
-				if CHARACTERS.has(c.strip_edges()):
+				if CHARACTERS.has(c.strip_edges()) or NEW_CHARACTERS.has(c.strip_edges()):
 					_characters_run.append(c.strip_edges())
 			if _characters_run.is_empty():
 				_characters_run = CHARACTERS.duplicate()
@@ -259,6 +274,12 @@ func _init() -> void:
 			for fl: String in v.split(","):
 				if fl.strip_edges().is_valid_int() and int(fl.strip_edges()) >= 1:
 					_region_floors.append(int(fl.strip_edges()))
+		elif arg.begins_with("--unlock-runs="):
+			_unlock_runs = maxi(int(v), 0)
+		elif arg.begins_with("--unlock-reps="):
+			_unlock_reps = maxi(int(v), 1)
+		elif arg == "--unlock-full":
+			_unlock_full = true
 		elif arg == "--world":
 			_world = true
 		elif arg.begins_with("--region-pick="):
@@ -309,6 +330,11 @@ func _init() -> void:
 	_economy = EconomyConfig.shared() if _economy_set.is_empty() else _economy_with_overrides(_economy_set)
 	_max_level = int(_reward_config["max_card_level"])
 	_min_deck_size = int(_reward_config["min_deck_size"])
+	if _unlock_runs > 0:
+		_run_unlock_mode()
+		print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
+		quit(0)
+		return
 	if not _regions.is_empty():
 		_run_region_mode(seeds)
 		print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
@@ -322,6 +348,8 @@ func _init() -> void:
 	print("deck_sim (Story 026, v5 pieces): seeds=%d timeout=%.0fs policies=%s characters=%s chapters=%s cleared_bosses=%d (always_skip + %s onboarding on chapter 1 only)" % [
 		seeds, SimCore.MATCH_TIMEOUT_SEC, str(_policies), str(_characters_run), str(_chapter_list), CLEARED_BOSSES_MAIN, ONBOARDING_CHARACTER])
 	print(_core.describe())
+	if not _core.describe_progress().is_empty():
+		print(_core.describe_progress())
 	if not _core.describe_piece_deck().is_empty():
 		print(_core.describe_piece_deck())
 	if not _core.describe_piece_weight_set().is_empty():
@@ -505,6 +533,7 @@ func _run(seed_value: int, char_id: String, policy: String, cleared_bosses: int,
 	var max_hp: float = float(character["max_hp"])
 	var map: Array[Dictionary] = _chapters.generate_map(ci, seed_value, cleared_bosses)
 	var session: RunSession = RunSession.begin(_chapters, character, ci, seed_value, map, int(_reward_config.get("starting_removals", 0)))
+	session.locked = _core.locked.duplicate(true)
 	var bot_rng := RandomNumberGenerator.new()
 	bot_rng.seed = hash([seed_value, char_id]) & SEED_MASK
 	var out: Dictionary = {"won": false, "cols": 0, "hp_end": 0.0, "max_hp": max_hp, "hits": 0}
@@ -676,6 +705,10 @@ func _apply_policy(session, policy: String, kind: String, out: Dictionary) -> vo
 	var reward_seed: int = (session as WorldRun).reward_seed() if session is WorldRun else (hash([session.run_seed, session.chapter_index, session.column, session.cleared_nodes.size()]) & SEED_MASK)
 	var levels: Dictionary = session.deck_levels()
 	var excluded: Array[String] = _core.zone_card_ids() if bool(_core.ov["no_zone_cards"]) else ([] as Array[String])
+	# Story 037: locked cards are not rolled (RunSession.locked["card"], the RewardRoller exclusion list).
+	for locked_card: String in _core.locked_ids("card"):
+		if not excluded.has(locked_card):
+			excluded.append(locked_card)
 	var offer: Array[String] = RewardRoller.roll(_core.cards, cfg, reward_seed, excluded, levels, session.luck(cfg), str(info.get("min_rarity", "common")))
 	if policy == "always_skip" or offer.is_empty():
 		return
@@ -874,6 +907,8 @@ func _run_world_mode(seeds: int) -> void:
 		seeds, SimCore.MATCH_TIMEOUT_SEC, str(pols), str(_characters_run), CLEARED_BOSSES_MAIN, _region_pick, _node_overhead,
 		",".join(PackedStringArray(_world_set)) if not _world_set.is_empty() else "none"])
 	print(_core.describe())
+	if not _core.describe_progress().is_empty():
+		print(_core.describe_progress())
 	if not _core.describe_piece_deck().is_empty():
 		print(_core.describe_piece_deck())
 	if not _core.describe_piece_weight_set().is_empty():
@@ -896,6 +931,7 @@ func _run_world_mode(seeds: int) -> void:
 	for char_id: String in _characters_run:
 		for p: String in pols:
 			_world_report(char_id, p, seeds, floors)
+	_world_characters_report(pols)
 
 
 func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> void:
@@ -1006,6 +1042,7 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 		_world_piece_report(char_id, policy, runs, win_pct)
 	if not _fate_policy.is_empty():
 		_world_fate_report(char_id, policy, runs, floors, win_pct)
+	_world_wins["%s|%s" % [char_id, policy]] = {"win": win_pct, "wins": wins.size(), "n": runs.size()}
 	var t_win: Array = WORLD_WIN_TARGET.get(char_id, [20.0, 40.0])
 	var win_ok: bool = win_pct >= float(t_win[0]) and win_pct <= float(t_win[1])
 	var min_mean: float = _mean(won_min)
@@ -1089,11 +1126,21 @@ func _take_relic(owned: Array[String], policy: String, relic_seed: int) -> bool:
 		return false
 	var rng := RandomNumberGenerator.new()
 	rng.seed = relic_seed
-	var offer: Array[String] = RelicRoller.roll(RelicRoller.SOURCE_TREASURE, owned, rng, _core.relic_config)
+	# Story 037: a locked relic is not rolled; it is passed as "owned", which RelicRoller already never offers.
+	var offer: Array[String] = RelicRoller.roll(RelicRoller.SOURCE_TREASURE, _owned_or_locked(owned), rng, _core.relic_config)
 	if offer.is_empty():
 		return false
 	owned.append(_rarest_relic(offer))
 	return true
+
+
+# Story 037: the owned relics plus the ones still locked (a fresh array; [param owned] is not changed).
+func _owned_or_locked(owned: Array[String]) -> Array[String]:
+	var out: Array[String] = owned.duplicate()
+	for id: String in _core.locked_ids("relic"):
+		if not out.has(id):
+			out.append(id)
+	return out
 
 
 # The relic --relic-policy=pick takes from a non-empty [param offer]: the rarest, the first on a tie.
@@ -1109,19 +1156,25 @@ func _rarest_relic(offer: Array[String]) -> String:
 # execute -> FateLogic.roll_execute_offer (world.fate of the chapters in use, the sim's relic config) and one
 # relic of it is taken (the rarest with --relic-policy=pick, else the first offered); spare -> nothing;
 # alternate -> execute, spare, execute, ... The boss reward (cards + token) is applied by the caller as today.
-func _take_fate(w: WorldRun, fate_index: int, fate_seed: int, out: Dictionary) -> void:
+# Story 037: added to the fate index of --fate=alternate; --unlock-runs sets it to the ledger's choices so far, so the
+# alternation continues across runs (0 everywhere else: unchanged).
+var _fate_offset: int = 0
+
+
+func _take_fate(w: WorldRun, fate_index: int, fate_seed: int, out: Dictionary) -> String:
 	var fate: String = _fate_policy
 	if fate == "alternate":
-		fate = FateLogic.FATE_EXECUTE if fate_index % 2 == 0 else FateLogic.FATE_SPARE
+		fate = FateLogic.FATE_EXECUTE if (fate_index + _fate_offset) % 2 == 0 else FateLogic.FATE_SPARE
 	if fate == FateLogic.FATE_SPARE:
 		out["fate_spare"] = float(out["fate_spare"]) + 1.0
-		return
+		return fate
 	out["fate_exec"] = float(out["fate_exec"]) + 1.0
-	var offer: Array[String] = FateLogic.roll_execute_offer(w.relics, _chapters.fate_config(), _core.relic_config, fate_seed)
+	var offer: Array[String] = FateLogic.roll_execute_offer(w.relics, _chapters.fate_config(), _core.relic_config, fate_seed, 0.0, _core.locked_ids("relic"))
 	if offer.is_empty():
-		return
+		return fate
 	w.relics.append(_rarest_relic(offer) if _relic_policy == "pick" else offer[0])
 	out["fate_relics"] = float(out["fate_relics"]) + 1.0
+	return fate
 
 
 # Story 035 F4 (only with --fate): run win, final-match win when reached, the final's share of deaths,
@@ -1213,6 +1266,8 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		"p_int": 0.0, "p_intd": 0.0, "p_size_res": {}, "p_size_hits": {}, "p_fallback": 0.0,
 		# Story 035 (printed only with --fate): fates taken, relics from executes, the final match reached
 		# and the highest boss_phases phase entered in it.
+		# Story 037 (read by the unlock-runs mode only): one entry per match node played, in order, see _match_record.
+		"match_log": [],
 		"fate_exec": 0.0, "fate_spare": 0.0, "fate_relics": 0.0, "final_reached": false, "final_phase": 0,
 		"final_boss_hp": 0.0}
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", 2))
@@ -1222,7 +1277,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		w.floor = f
 		var map: Array[Dictionary] = []
 		if f < floors:
-			var offer: Array[String] = WorldMapGen.offer_for_floor(_chapters.region_ids(), seed_value, f, path, choices)
+			var offer: Array[String] = WorldMapGen.offer_for_floor(_open_region_ids(), seed_value, f, path, choices)
 			if offer.is_empty():
 				break
 			var region: String = offer[0] if _region_pick == "first" else offer[pick_rng.randi_range(0, offer.size() - 1)]
@@ -1284,6 +1339,8 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				continue
 			var match_seed: int = hash([seed_value, f, w.region_id, col, int(node["node_index"])]) & SEED_MASK
 			var r: Dictionary = _world_match(w, kind, str(node.get("match_id", "")), match_seed, character, bot_rng, out)
+			var rec: Dictionary = _match_record(r, w, kind, str(node.get("match_id", "")), f == floors)
+			(out["match_log"] as Array).append(rec)
 			if f == floors:
 				out["final_phase"] = int(r.get("boss_phase", 0))
 				out["final_boss_hp"] = float(r.get("boss_hp_end_ratio", 0.0))
@@ -1301,9 +1358,10 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				w.removal_tokens += int(_reward_config.get("boss_removal_tokens", 1))
 			# Story 035: the fate of a downed region boss comes before its reward (GameFlow order).
 			if not _fate_policy.is_empty() and FateLogic.is_boss_fate_node(kind, f == floors):
-				_take_fate(w, int(float(out["fate_exec"]) + float(out["fate_spare"])),
+				rec["fate"] = _take_fate(w, int(float(out["fate_exec"]) + float(out["fate_spare"])),
 					hash([seed_value, f, w.region_id, FATE_SEED_TAG]) & SEED_MASK, out)
 			_apply_policy(w, policy, kind, out)
+			rec["deck_ids"] = _deck_ids(w)
 		if lost:
 			break
 		(out["hp_out"] as Array).append(_hp_ratio(w, max_hp))
@@ -1312,6 +1370,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			var before: float = max_hp if w.hp < 0.0 else minf(w.hp, max_hp)
 			w.hp = minf(before + maxf(_chapters.floor_heal_ratio(), 0.0) * max_hp, max_hp)
 	out["won"] = not lost and int(out["floors_cleared"]) == floors + 1
+	out["deck_ids"] = _deck_ids(w)
 	out["path"] = path
 	out["relics"] = w.relics.duplicate()
 	out["relic_n"] = w.relics.size()
@@ -1399,6 +1458,18 @@ func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, 
 	return r
 
 
+# Story 037: the region pool without the locked regions (RunSession.roll_offer's rule: an all-locked pool keeps the full one).
+func _open_region_ids() -> Array[String]:
+	var ids: Array[String] = _chapters.region_ids()
+	if _core.locked_ids("region").is_empty():
+		return ids
+	var open: Array[String] = []
+	for id: String in ids:
+		if not _core.is_locked("region", id):
+			open.append(id)
+	return open if not open.is_empty() else ids
+
+
 # A RunSession carrying the WorldRun's state for ShopLogic / EventLogic (arrays are shared, scalars copied;
 # [method _sync_back] copies everything back). [param node_index] = the node being visited.
 func _session_of(w: WorldRun, node_index: int) -> RunSession:
@@ -1417,6 +1488,7 @@ func _session_of(w: WorldRun, node_index: int) -> RunSession:
 	rs.removal_tokens = w.removal_tokens
 	rs.run_modifiers = w.run_modifiers
 	rs.cards_config = _core.cards
+	rs.locked = _core.locked.duplicate(true)
 	return rs
 
 
@@ -1449,7 +1521,7 @@ func _event_opts() -> Dictionary:
 
 func _shop_state(w: WorldRun, node_index: int) -> Dictionary:
 	return ShopLogic.build(w.run_seed, w.floor, w.column, node_index, w.luck(_reward_config), w.relics,
-		_core.cards, _reward_config, _core.relic_config, _economy)
+		_core.cards, _reward_config, _core.relic_config, _economy, _core.locked)
 
 
 # The first column of the run that OFFERS a shop (entered or not): the gold in hand and whether it buys
@@ -1836,6 +1908,8 @@ func _run_region_mode(seeds: int) -> void:
 	print("deck_sim --region (Story 036): regions=%s floors=%s seeds=%d characters=%s timeout=%.0fs; each match alone, full HP, starter deck, floor N = floor_scaling row N after region_normalize" % [
 		str(_regions), str(floors), seeds, str(_characters_run), SimCore.MATCH_TIMEOUT_SEC])
 	print(_core.describe())
+	if not _core.describe_progress().is_empty():
+		print(_core.describe_progress())
 	print("columns: match | kind | n | win % | timeout % | hits landed/match | boss hits/match | HP taken/match | mire entries/match | mire HP/match | mire share of HP taken % | pieces buried/match | pieces drifted/match | boss mire entries/match | sand cells/match | arena hazards")
 	for char_id: String in _characters_run:
 		var character: Dictionary = _core.prepare_character(_core.characters.get_character(char_id))
@@ -1906,3 +1980,214 @@ func _region_mean(char_id: String, region: String, f: int, rows: Array[Dictionar
 		win_note = ("none" if outside.is_empty() else ", ".join(outside))
 	print("REGION CHECK %s | %s | floor %d | matches outside 15-95 %% win at floor 1: %s | mire share %.1f %% (target <= 15): %s | compare win %% %.1f with the ch1-ch3 REGION MEAN at this floor (target +-10 pts)" % [
 		char_id, region, f, win_note, share, "PASS" if share <= 15.0 else "MISS", float(sums["win"]) / n])
+
+
+# ---------------------------------------------------------------- Story 037: unlocks, characters, unlock-runs
+
+
+# Story 037: one match node of a world run as the unlock replay needs it: {won, kind, region, match_id, final,
+# boss (a REGION boss: FateLogic.is_boss_fate_node), fate (set by the caller after a region boss), deck_ids, stats}.
+# `stats` has the keys of CombatView.get_match_stats() that the achievements read.
+func _match_record(r: Dictionary, w: WorldRun, kind: String, match_id: String, is_final: bool) -> Dictionary:
+	return {
+		"won": bool(r["won"]), "kind": kind, "region": w.region_id, "match_id": match_id, "final": is_final,
+		"boss": FateLogic.is_boss_fate_node(kind, is_final), "fate": "", "deck_ids": _deck_ids(w),
+		"stats": {
+			"hits_taken": int(r["bhits"]), "casts": int(r["casts"]), "joins": int(r["joins"]),
+			"featured_casts": int(r["featured"]), "signatures_used": int(r["sig_acts"]),
+			"frost_bursts": int(r.get("frost_bursts", 0)), "boss_thorn_steps": int(r["bthorn"]),
+			"damage_dealt": float(r["dealt"]), "damage_taken": float(r["taken"]),
+		},
+	}
+
+
+# The card ids of the world run's deck (RunSession.deck_ids form), in deck order.
+func _deck_ids(w: WorldRun) -> Array[String]:
+	var ids: Array[String] = []
+	for e: Dictionary in w.deck:
+		ids.append(str(e["id"]))
+	return ids
+
+
+# Story 037 Part F: the run win % of every new character against the mean of the open ones, same policy and
+# progress mode, only when a new character was played in this invocation.
+func _world_characters_report(pols: Array[String]) -> void:
+	for p: String in pols:
+		for cid: String in NEW_CHARACTERS:
+			var key: String = "%s|%s" % [cid, p]
+			if not _world_wins.has(key):
+				continue
+			var base: Array[float] = []
+			for open_id: String in CHARACTERS:
+				var ok: String = "%s|%s" % [open_id, p]
+				if _world_wins.has(ok):
+					base.append(float((_world_wins[ok] as Dictionary)["win"]))
+			var mine: Dictionary = _world_wins[key]
+			if base.is_empty():
+				print("WORLD CHARACTERS | progress=%s | %s | %s | run win %.1f%% (%d/%d) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,%s)" % [
+					_core.progress_mode, p, cid, float(mine["win"]), int(mine["wins"]), int(mine["n"]), cid])
+				continue
+			var mean_open: float = _mean(base)
+			var delta: float = float(mine["win"]) - mean_open
+			print("WORLD CHARACTERS | progress=%s | %s | %s | run win %.1f%% (%d/%d) | mean of %d open characters %.1f%% | delta %+.1f pts (band +-%.0f): %s" % [
+				_core.progress_mode, p, cid, float(mine["win"]), int(mine["wins"]), int(mine["n"]), base.size(), mean_open, delta,
+				NEW_CHARACTER_WIN_BAND, "PASS" if absf(delta) <= NEW_CHARACTER_WIN_BAND else "FAIL"])
+
+
+# Story 037 `--unlock-runs=N [--unlock-reps=R]`: for each open character, R repetitions of up to N consecutive world runs
+# on ONE ProgressState (empty at the start), the `build` policy and an alternating Spare / Execute fate (execute, spare,
+# execute, ... per run, as `--fate=alternate`; `--fate=execute|spare` is honoured). Before each run the locked content is
+# the ledger's (AchievementsConfig.locked_content of the progress), as in the game. After each run the ledger gets the writes
+# GameFlow makes and UnlockRules.process the events (see _unlock_apply_run). A repetition stops once both new characters
+# are open unless --unlock-full. Output lines start with `UNLOCK RUNS`.
+func _run_unlock_mode() -> void:
+	var cfg: AchievementsConfig = AchievementsConfig.shared()
+	var floors: int = _chapters.world_floors()
+	if _fate_policy.is_empty():
+		_fate_policy = "alternate"
+	var players: Array[String] = []
+	for c: String in _characters_run:
+		if CHARACTERS.has(c):
+			players.append(c)
+	if players.is_empty():
+		players = CHARACTERS.duplicate()
+	var targets: Array[Dictionary] = []
+	for cid: String in NEW_CHARACTERS:
+		targets.append({"character": cid, "achievement": cfg.reward_owner("character", cid)})
+	var target_names: Array[String] = []
+	for t0: Dictionary in targets:
+		target_names.append("%s via %s" % [t0["character"], t0["achievement"]])
+	print("deck_sim --unlock-runs (Story 037): runs<=%d reps=%d players=%s fate=%s policy=%s stop-when-both-open=%s seeds=rep*1000+run | new characters: %s" % [
+		_unlock_runs, _unlock_reps, str(players), _fate_policy, VERDICT_POLICY, str(not _unlock_full), ", ".join(PackedStringArray(target_names))])
+	print(_core.describe())
+	for char_id: String in players:
+		var t_c: int = Time.get_ticks_msec()
+		var opened_at: Dictionary = {}
+		for t1: Dictionary in targets:
+			opened_at[str(t1["character"])] = []
+		var new_by_run: Array = []
+		var earned_in: Dictionary = {}
+		var runs_played: int = 0
+		var runs_won: int = 0
+		var totals: Array[float] = []
+		for rep: int in _unlock_reps:
+			var progress := ProgressState.new()
+			var opened: Dictionary = {}
+			var per_run: Array[int] = []
+			var wins_row: String = ""
+			for run_idx: int in range(1, _unlock_runs + 1):
+				_core.set_locked_from_progress(progress)
+				_fate_offset = progress.get_spare_total() + progress.get_execute_total()
+				var out: Dictionary = _run_world(rep * 1000 + run_idx, char_id, VERDICT_POLICY, floors)
+				var new_ids: Array[String] = _unlock_apply_run(cfg, progress, char_id, out)
+				runs_played += 1
+				if bool(out["won"]):
+					runs_won += 1
+				wins_row += "W" if bool(out["won"]) else "L"
+				per_run.append(new_ids.size())
+				while new_by_run.size() < run_idx:
+					new_by_run.append([])
+				(new_by_run[run_idx - 1] as Array).append(float(new_ids.size()))
+				for t2: Dictionary in targets:
+					var cid2: String = str(t2["character"])
+					if not opened.has(cid2) and cfg.is_unlocked("character", cid2, progress):
+						opened[cid2] = run_idx
+				if not _unlock_full and opened.size() == targets.size():
+					break
+			var opened_cells: Array[String] = []
+			for t3: Dictionary in targets:
+				var cid3: String = str(t3["character"])
+				(opened_at[cid3] as Array).append(int(opened.get(cid3, -1)))
+				opened_cells.append("%s@%s" % [cid3, str(opened.get(cid3, "-"))])
+			for aid: String in progress.get_achievements():
+				earned_in[aid] = int(earned_in.get(aid, 0)) + 1
+			totals.append(float(progress.get_achievements().size()))
+			print("UNLOCK RUNS RAW %s rep %d: runs %s | opened %s | new achievements per run %s | total %d" % [
+				char_id, rep + 1, wins_row, ", ".join(PackedStringArray(opened_cells)), str(per_run), progress.get_achievements().size()])
+		_unlock_report(char_id, targets, opened_at, new_by_run, earned_in, runs_played, runs_won, totals, cfg)
+		print("  ... %s unlock-runs done in %.1f s" % [char_id, (Time.get_ticks_msec() - t_c) / 1000.0])
+	_core.set_locked_from_progress(null)
+
+
+# The `UNLOCK RUNS` summary of one player character: mean run index at which each new character opened (over the
+# repetitions that opened it, and with a never-opened repetition counted as N+1), the story target 1-3, the
+# achievements earned per run index and how many repetitions earned each achievement.
+func _unlock_report(char_id: String, targets: Array[Dictionary], opened_at: Dictionary, new_by_run: Array,
+		earned_in: Dictionary, runs_played: int, runs_won: int, totals: Array[float], cfg: AchievementsConfig) -> void:
+	print("")
+	for t: Dictionary in targets:
+		var cid: String = str(t["character"])
+		var idx: Array = opened_at[cid]
+		var got: Array = []
+		var capped: Array = []
+		for v: Variant in idx:
+			if int(v) > 0:
+				got.append(float(int(v)))
+				capped.append(float(int(v)))
+			else:
+				capped.append(float(_unlock_runs + 1))
+		var sorted_got: Array = got.duplicate()
+		sorted_got.sort()
+		var median: String = "-" if sorted_got.is_empty() else ("%.1f" % float(sorted_got[sorted_got.size() / 2]))
+		var max_idx: String = "-" if sorted_got.is_empty() else ("%d" % int(sorted_got.back()))
+		var mean_capped: float = _mean(capped)
+		var ok: bool = mean_capped >= UNLOCK_TARGET_RUNS[0] and mean_capped <= UNLOCK_TARGET_RUNS[1]
+		print("UNLOCK RUNS SUMMARY %s | %s (via %s) | opened in %d of %d reps | mean run index %s (median %s, max %s) | mean with never-opened = %d: %.2f | target %.0f-%.0f runs: %s" % [
+			char_id, cid, str(t["achievement"]), got.size(), idx.size(), ("%.2f" % _mean(got)) if not got.is_empty() else "-",
+			median, max_idx, _unlock_runs + 1, mean_capped, UNLOCK_TARGET_RUNS[0], UNLOCK_TARGET_RUNS[1], "PASS" if ok else "FAIL"])
+	var per_cells: Array[String] = []
+	for i: int in new_by_run.size():
+		per_cells.append("run%d=%.2f (n=%d)" % [i + 1, _mean(new_by_run[i]), (new_by_run[i] as Array).size()])
+	print("UNLOCK RUNS ACHIEVEMENTS %s | new achievements per run index (mean over the reps that played it): %s | mean held at the end of a rep %.2f of %d | run win %% over all runs %.1f (%d/%d)" % [
+		char_id, ", ".join(PackedStringArray(per_cells)), _mean(totals), cfg.ids().size(),
+		100.0 * float(runs_won) / maxf(float(runs_played), 1.0), runs_won, runs_played])
+	var earn_cells: Array[String] = []
+	for aid: String in cfg.ids():
+		earn_cells.append("%s=%d" % [aid, int(earned_in.get(aid, 0))])
+	print("UNLOCK RUNS EARNED %s | reps that held each achievement at the end of the rep: %s" % [char_id, ", ".join(PackedStringArray(earn_cells))])
+
+
+# Story 037: the milestone writes GameFlow makes for one finished world run, then UnlockRules.process on the events
+# in the order the flow raises them. Per match (in order): a won REGION boss = record_boss_clear, add_region_boss_beaten,
+# record_fate (the fate the bot took), then a `match_won` event for EVERY won match (frost_burst_5 reads every match);
+# `final_reached` just before the first final-floor match; at the end of the run record_run_won + record_ending on a
+# win, and the `run_ended` event (won or lost). A lost match adds its stats to the run totals (GameFlow does on a
+# defeat). tran_thach extra fights are not events (their stats are not in the log). Returns every achievement id
+# earned by this run, in order.
+func _unlock_apply_run(cfg: AchievementsConfig, progress: ProgressState, char_id: String, out: Dictionary) -> Array[String]:
+	var earned: Array[String] = []
+	var run_stats: Dictionary = {}
+	var fates: Array = []
+	var final_noted: bool = false
+	for rec: Dictionary in out["match_log"] as Array:
+		var stats: Dictionary = rec["stats"]
+		for k: Variant in stats.keys():
+			run_stats[k] = run_stats.get(k, 0) + stats[k]
+		if bool(rec["final"]) and not final_noted:
+			final_noted = true
+			progress.record_final_reached()
+			earned.append_array(UnlockRules.process(cfg, progress, {"type": "final_reached"}))
+		if not bool(rec["won"]):
+			continue
+		var is_region_boss: bool = bool(rec["boss"])
+		if is_region_boss:
+			progress.record_boss_clear()
+			progress.add_region_boss_beaten(str(rec["region"]))
+			var fate: String = str(rec["fate"])
+			if not fate.is_empty():
+				progress.record_fate(str(rec["match_id"]), fate)
+				fates.append({"fate": fate, "match_id": str(rec["match_id"])})
+		earned.append_array(UnlockRules.process(cfg, progress, {
+			"type": "match_won", "character_id": char_id, "region_id": str(rec["region"]), "is_region_boss": is_region_boss,
+			"is_final": bool(rec["final"]), "match_stats": stats.duplicate(), "run_stats": run_stats.duplicate(),
+			"deck_ids": (rec["deck_ids"] as Array).duplicate()}))
+	var won: bool = bool(out["won"])
+	var ending_id: String = ""
+	if won:
+		ending_id = FateLogic.ending_for(fates, _chapters.endings_config())
+		progress.record_run_won(char_id)
+		progress.record_ending(ending_id)
+	earned.append_array(UnlockRules.process(cfg, progress, {
+		"type": "run_ended", "won": won, "ending_id": ending_id, "character_id": char_id,
+		"run_stats": run_stats.duplicate(), "deck_ids": (out["deck_ids"] as Array).duplicate()}))
+	return earned

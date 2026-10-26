@@ -12,8 +12,7 @@
 			"passive_name_key": "passive.second_wind.name",
 			"passive_desc_key": "passive.second_wind.desc",
 			"signature": {"id": "tram", "name_key": "signature.tram.name", "desc_key": "signature.tram.desc", "cooldown_sec": 25.0, "params": {"duration_sec": 3.0, "cell_mult": 2.0, "lifesteal": 0.2}},
-			"starter_deck": ["kiem_khi", "kiem_khi", "chan_phong", "chan_phong", "hoa_tran", "bang_phong"],
-			"unlocked": true
+			"starter_deck": ["kiem_khi", "kiem_khi", "chan_phong", "chan_phong", "hoa_tran", "bang_phong"]
 		},
 		{
 			"id": "phap_su",
@@ -26,8 +25,7 @@
 			"passive_name_key": "passive.wide_caster.name",
 			"passive_desc_key": "passive.wide_caster.desc",
 			"signature": {"id": "thien_hoa", "name_key": "signature.thien_hoa.name", "desc_key": "signature.thien_hoa.desc", "cooldown_sec": 15.0, "params": {"burn_stacks": 1, "burn_duration_sec": 3.0, "burn_tick_sec": 0.5, "burn_damage_per_tick": 0.5, "detonate_mult": 2.0}},
-			"starter_deck": ["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"],
-			"unlocked": true
+			"starter_deck": ["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"]
 		},
 		{
 			"id": "sat_thu",
@@ -40,8 +38,35 @@
 			"passive_name_key": "passive.quick_blade.name",
 			"passive_desc_key": "passive.quick_blade.desc",
 			"signature": {"id": "anh_bo", "name_key": "signature.anh_bo.name", "desc_key": "signature.anh_bo.desc", "cooldown_sec": 12.0, "params": {"duration_sec": 2.0, "small_mult": 1.75, "small_cells": 3}},
-			"starter_deck": ["kiem_khi", "kiem_khi", "kiem_khi", "chan_phong", "bang_phong", "bang_phong"],
-			"unlocked": true
+			"starter_deck": ["kiem_khi", "kiem_khi", "kiem_khi", "chan_phong", "bang_phong", "bang_phong"]
+		},
+		{
+			"id": "tho_san",
+			"name_key": "character.tho_san.name",
+			"desc_key": "character.tho_san.desc",
+			"unlock_by": "hunter_path",
+			"max_hp": 190,
+			"step_cooldown_mult": 0.95,
+			"focus_max_sec": 4.0,
+			"passive": {"id": "hunter_mark", "params": {"fragile_stacks": 1, "icd_sec": 3.0}},
+			"passive_name_key": "passive.hunter_mark.name",
+			"passive_desc_key": "passive.hunter_mark.desc",
+			"signature": {"id": "vay_bat", "name_key": "signature.vay_bat.name", "desc_key": "signature.vay_bat.desc", "cooldown_sec": 20.0, "params": {"duration_sec": 4.0, "zone_sec_mult": 1.5, "fragile_mult": 2.0}},
+			"starter_deck": ["kiem_khi", "kiem_khi", "ket_gioi", "tran_gai", "ran_kich", "chan_phong"]
+		},
+		{
+			"id": "giao_si",
+			"name_key": "character.giao_si.name",
+			"desc_key": "character.giao_si.desc",
+			"unlock_by": "mercy_path",
+			"max_hp": 210,
+			"step_cooldown_mult": 1.05,
+			"focus_max_sec": 4.5,
+			"passive": {"id": "prayer", "params": {"heal_per_burst": 8}},
+			"passive_name_key": "passive.prayer.name",
+			"passive_desc_key": "passive.prayer.desc",
+			"signature": {"id": "thanh_an", "name_key": "signature.thanh_an.name", "desc_key": "signature.thanh_an.desc", "cooldown_sec": 22.0, "params": {"duration_sec": 4.0, "extra_frost_stacks": 1, "burst_mult": 1.5}},
+			"starter_deck": ["kiem_khi", "kiem_khi", "han_khi", "han_khi", "han_kiem", "bang_phong"]
 		}
 	]
 }

@@ -157,7 +157,7 @@ func _init() -> void:
 		var rar: String = str(c["rarity"])
 		var dpc: float = float(c["damage_per_cell"])
 		if dpc > 0.0:
-			if rar == "common" and (dpc < 6.0 or dpc > 7.0) and id != "chan_phong" and id != "xung_kich" and id != "han_tran":
+			if rar == "common" and (dpc < 6.0 or dpc > 7.0) and id != "chan_phong" and id != "xung_kich" and id != "han_tran" and id != "gai_doc":
 				over.append(id + ":common")
 			if rar == "rare" and dpc > 8.0:
 				over.append(id + ":rare")

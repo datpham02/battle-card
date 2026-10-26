@@ -36,6 +36,8 @@ const TEXT_TAGLINE: String = "title.tagline"
 const TEXT_CONTINUE: String = "ui.title.continue"
 const TEXT_PLAY: String = "ui.title.play"
 const TEXT_QUIT: String = "ui.title.quit"
+## Story 037: the achievements screen.
+const TEXT_ACHIEVEMENTS: String = "title.achievements"
 ## Labels of the language button by locale code (the button shows the NEXT locale's label).
 const TEXT_LANG_VI: String = "ui.title.lang.vi"
 const TEXT_LANG_EN: String = "ui.title.lang.en"
@@ -115,6 +117,7 @@ func _button_labels() -> Array[String]:
 	if _flow.has_continue():
 		labels.append(TEXT_CONTINUE)
 	labels.append(TEXT_PLAY)
+	labels.append(TEXT_ACHIEVEMENTS)
 	if _flow.can_show_quit():
 		labels.append(TEXT_QUIT)
 	return labels
@@ -124,7 +127,7 @@ func _button_labels() -> Array[String]:
 # "Tiếp tục" is SECONDARY, "Thoát" is NEUTRAL.
 func _button_style(labels: Array[String], index: int) -> int:
 	match labels[index]:
-		TEXT_QUIT:
+		TEXT_QUIT, TEXT_ACHIEVEMENTS:
 			return UiButtons.Style.NEUTRAL
 		TEXT_PLAY:
 			return UiButtons.Style.PRIMARY if index == 0 else UiButtons.Style.SECONDARY
@@ -141,6 +144,8 @@ func _activate(index: int) -> void:
 			_flow.continue_requested()
 		TEXT_PLAY:
 			_flow.start_requested()
+		TEXT_ACHIEVEMENTS:
+			_flow.open_achievements()
 		TEXT_QUIT:
 			_flow.quit_requested()
 

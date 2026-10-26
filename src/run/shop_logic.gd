@@ -44,10 +44,10 @@ const REASON_BAD_SHAPE: String = "bad_shape"
 ## `reward_cfg` from RewardRoller.load_config, curse cards never), `.relics` relics by RelicRoller
 ## "shop" (none of [param owned_relics]) and the two services, each with its price
 ## (`economy.price_card / price_relic / service_price`, scaled by [param floor]). Same inputs = same
-## state.
+## state. Story 037: [param locked] (RunSession.locked) keeps locked cards and relics out of the stock ({} = none).
 static func build(run_seed: int, floor: int, column: int, node_index: int, luck: float,
 		owned_relics: Array, cards_cfg: SkillConfig, reward_cfg: Dictionary, relic_cfg: RelicConfig,
-		economy: EconomyConfig) -> Dictionary:
+		economy: EconomyConfig, locked: Dictionary = {}) -> Dictionary:
 	var seed_value: int = hash([run_seed, floor, column, node_index, "shop"])
 	var counts: Dictionary = economy.stock_counts()
 	var card_count: int = maxi(int(counts.get("cards", 0)), 0)
@@ -56,7 +56,7 @@ static func build(run_seed: int, floor: int, column: int, node_index: int, luck:
 	if card_count > 0 and cards_cfg != null:
 		var roll_cfg: Dictionary = RewardRoller.clean_config(reward_cfg)
 		roll_cfg["offer_count"] = card_count
-		var ids: Array[String] = RewardRoller.roll(cards_cfg, roll_cfg, seed_value, [] as Array[String], {}, luck)
+		var ids: Array[String] = RewardRoller.roll(cards_cfg, roll_cfg, seed_value, _locked_of(locked, "card"), {}, luck)
 		for id: String in ids:
 			if _is_curse(cards_cfg, id):
 				continue
@@ -65,7 +65,7 @@ static func build(run_seed: int, floor: int, column: int, node_index: int, luck:
 	if relic_count > 0:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = hash([seed_value, "relics"])
-		var relic_ids: Array[String] = RelicRoller.roll(RELIC_SOURCE, owned_relics, rng, relic_cfg, relic_count)
+		var relic_ids: Array[String] = RelicRoller.roll(RELIC_SOURCE, owned_relics, rng, relic_cfg, relic_count, "", _locked_of(locked, "relic"))
 		var cfg: RelicConfig = relic_cfg if relic_cfg != null else RelicRegistry.shared_config()
 		for id: String in relic_ids:
 			var rarity: String = str(cfg.get_relic(id).get("rarity", "common"))
@@ -263,3 +263,11 @@ static func _refuse(reason: String, price: int) -> Dictionary:
 # Story 033: true when [param id] is a curse card (SkillConfig.is_curse).
 static func _is_curse(cards: SkillConfig, id: String) -> bool:
 	return cards.is_curse(id)
+
+
+# Story 037: the locked ids of [param kind] in a RunSession.locked-shaped dictionary, as a typed list.
+static func _locked_of(locked: Dictionary, kind: String) -> Array[String]:
+	var out: Array[String] = []
+	for v: Variant in locked.get(kind, []) as Array:
+		out.append(str(v))
+	return out

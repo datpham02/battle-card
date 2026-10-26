@@ -1,0 +1,435 @@
+===== w_none_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+progress=none (Story 037, empty save): locked card[gai_doc,bang_tam,luoi_san,thanh_thuy] piece[w5,v5,n5] relic[tui_rong,phong_an,gai_ran,han_ky] character[tho_san,giao_si]
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=11, f2/boss=16, f3/battle=1, f3/boss=14, f4/battle=2, f4/boss=2, f5/boss=8, ffinal/final=5
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.46 | owned at end (runs): an_don=14, chi_khau=12, manh_tuoi=15, dinh_tam=13, la_ban=9, tam_huong=6, dau_than=8, khoi_the=6, phan_don=9, huyet_an=10 | triggers / run: an_don=0.9, chi_khau=0.3, khoi_the=0.3, phan_don=1.3, huyet_an=0.8
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | kiem_si | build | events / run 0.21 | non-leave choices / run 0.20 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.73 | curse dmg / run 0.5 | matches slowed by loi_the / run 0.01 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=1, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=3, tran_thach/fight=2
+WORLD VERDICT kiem_si/build: run win 15.7% (target 20-40) TOO HARD; est. minutes won run 29.5 (target 40-50) TOO SHORT; max region spread at a floor 55.7 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 27.1% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 38.8
+===== w_none_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+progress=none (Story 037, empty save): locked card[gai_doc,bang_tam,luoi_san,thanh_thuy] piece[w5,v5,n5] relic[tui_rong,phong_an,gai_ran,han_ky] character[tho_san,giao_si]
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=12, f2/boss=21, f3/boss=7, f4/battle=2, f4/boss=14, f5/battle=1, f5/boss=4, ffinal/final=1
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 0.89 | owned at end (runs): an_don=13, chi_khau=4, manh_tuoi=9, dinh_tam=7, la_ban=5, tam_huong=3, dau_than=1, khoi_the=6, phan_don=6, huyet_an=8 | triggers / run: an_don=0.4, chi_khau=0.2, khoi_the=0.2, phan_don=0.6, huyet_an=0.7
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | phap_su | build | events / run 0.20 | non-leave choices / run 0.17 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.80 | curse dmg / run 0.5 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=1
+WORLD VERDICT phap_su/build: run win 11.4% (target 10-100) PASS; est. minutes won run 29.7 (target 40-50) TOO SHORT; max region spread at a floor 57.1 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 33.9% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 37.0
+===== w_none_sat_thu
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+progress=none (Story 037, empty save): locked card[gai_doc,bang_tam,luoi_san,thanh_thuy] piece[w5,v5,n5] relic[tui_rong,phong_an,gai_ran,han_ky] character[tho_san,giao_si]
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=10, f2/boss=11, f3/battle=1, f3/boss=14, f4/battle=1, f4/boss=10, f5/battle=1, f5/boss=11, ffinal/final=4
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 1.10 | owned at end (runs): an_don=9, chi_khau=11, manh_tuoi=12, dinh_tam=12, la_ban=8, tam_huong=3, dau_than=4, khoi_the=5, phan_don=6, huyet_an=7 | triggers / run: an_don=0.4, chi_khau=0.4, khoi_the=0.4, phan_don=0.7, huyet_an=0.5
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | sat_thu | build | events / run 0.20 | non-leave choices / run 0.16 | tran_thach extra fights 0, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.64 | curse dmg / run 0.6 | matches slowed by loi_the / run 0.00 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, suoi_tinh/drink=1, tran_thach/leave=1
+WORLD VERDICT sat_thu/build: run win 10.0% (target 20-40) TOO HARD; est. minutes won run 26.3 (target 40-50) TOO SHORT; max region spread at a floor 40.5 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 23.8% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 31.7
+===== w_none_tho_san
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["tho_san"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+progress=none (Story 037, empty save): locked card[gai_doc,bang_tam,luoi_san,thanh_thuy] piece[w5,v5,n5] relic[tui_rong,phong_an,gai_ran,han_ky] character[tho_san,giao_si]
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND tho_san: f1/boss=9, f2/boss=5, f3/battle=1, f3/boss=22, f4/battle=3, f4/boss=11, f5/battle=1, f5/boss=3, f5/event_fight=1, ffinal/final=4
+WORLD RELICS tho_san/build: relic-policy=none mean relics at end 1.14 | owned at end (runs): an_don=11, chi_khau=9, manh_tuoi=13, dinh_tam=12, la_ban=7, tam_huong=3, dau_than=3, khoi_the=7, phan_don=7, huyet_an=8 | triggers / run: an_don=0.8, chi_khau=0.1, khoi_the=0.4, phan_don=0.9, huyet_an=0.6
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | tho_san | build | events / run 0.21 | non-leave choices / run 0.19 | tran_thach extra fights 2, deaths 1 (50.0%) | curses picked up / run 0.04 | curse draws / run 0.86 | curse dmg / run 0.4 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=2
+WORLD VERDICT tho_san/build: run win 14.3% (target 20-40) TOO HARD; est. minutes won run 28.1 (target 40-50) TOO SHORT; max region spread at a floor 41.4 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 38.3% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 31.3
+WORLD CHARACTERS | progress=none | build | tho_san | run win 14.3% (10/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,tho_san)
+===== w_none_giao_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["giao_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+progress=none (Story 037, empty save): locked card[gai_doc,bang_tam,luoi_san,thanh_thuy] piece[w5,v5,n5] relic[tui_rong,phong_an,gai_ran,han_ky] character[tho_san,giao_si]
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND giao_si: f1/boss=6, f2/battle=2, f2/boss=10, f3/battle=1, f3/boss=17, f4/battle=1, f4/boss=11, f5/battle=1, f5/boss=11, ffinal/final=6
+WORLD RELICS giao_si/build: relic-policy=none mean relics at end 1.10 | owned at end (runs): an_don=11, chi_khau=10, manh_tuoi=9, dinh_tam=10, la_ban=5, tam_huong=4, dau_than=4, khoi_the=6, phan_don=8, huyet_an=10 | triggers / run: an_don=0.7, chi_khau=0.6, khoi_the=0.3, phan_don=1.0, huyet_an=0.9
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | giao_si | build | events / run 0.21 | non-leave choices / run 0.19 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.49 | curse dmg / run 0.5 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=2, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=1
+WORLD VERDICT giao_si/build: run win 5.7% (target 20-40) TOO HARD; est. minutes won run 29.1 (target 40-50) TOO SHORT; max region spread at a floor 31.6 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 27.3% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 32.8
+WORLD CHARACTERS | progress=none | build | giao_si | run win 5.7% (4/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,giao_si)
+===== w_all_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=11, f2/boss=17, f3/boss=14, f4/boss=13, f5/boss=9, ffinal/final=4
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 0.99 | owned at end (runs): an_don=9, chi_khau=4, phong_an=5, gai_ran=5, manh_tuoi=12, dinh_tam=6, la_ban=4, tam_huong=3, tui_rong=1, dau_than=4, khoi_the=4, phan_don=6, han_ky=4, huyet_an=2 | triggers / run: an_don=0.2, chi_khau=0.1, khoi_the=0.1, phan_don=0.8, huyet_an=0.0
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | kiem_si | build | events / run 0.21 | non-leave choices / run 0.19 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.81 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=1, loi_the/leave=1, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=2
+WORLD VERDICT kiem_si/build: run win 2.9% (target 20-40) TOO HARD; est. minutes won run 30.3 (target 40-50) TOO SHORT; max region spread at a floor 69.2 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 25.0% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 38.0
+===== w_all_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=9, f2/boss=11, f3/battle=1, f3/boss=22, f4/battle=2, f4/boss=13, f5/boss=9, ffinal/final=3
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 0.74 | owned at end (runs): an_don=7, chi_khau=1, phong_an=7, gai_ran=5, manh_tuoi=7, dinh_tam=6, la_ban=4, tam_huong=5, tui_rong=1, dau_than=3, khoi_the=1, phan_don=2, han_ky=2, huyet_an=1 | triggers / run: an_don=0.2, chi_khau=0.0, khoi_the=0.0, phan_don=0.6, huyet_an=0.1
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | phap_su | build | events / run 0.19 | non-leave choices / run 0.16 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.96 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.01 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=2, suoi_tinh/bathe=2, tran_thach/fight=1
+WORLD VERDICT phap_su/build: run win 0.0% (target 10-100) TOO HARD; est. minutes won run - (target 40-50) NO WINS; max region spread at a floor 50.0 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 32.9% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run -
+===== w_all_sat_thu
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=9, f2/battle=1, f2/boss=13, f3/battle=1, f3/boss=15, f4/battle=1, f4/boss=13, f5/boss=7, ffinal/final=2
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 1.00 | owned at end (runs): an_don=5, chi_khau=2, phong_an=11, gai_ran=5, manh_tuoi=12, dinh_tam=8, la_ban=4, tam_huong=3, tui_rong=1, dau_than=3, khoi_the=2, phan_don=7, han_ky=5, huyet_an=2 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.1, phan_don=1.2, huyet_an=0.2
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | sat_thu | build | events / run 0.21 | non-leave choices / run 0.17 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.57 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=1, tran_thach/leave=1
+WORLD VERDICT sat_thu/build: run win 11.4% (target 20-40) TOO HARD; est. minutes won run 26.8 (target 40-50) TOO SHORT; max region spread at a floor 63.6 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 25.8% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 34.0
+===== w_all_tho_san
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["tho_san"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND tho_san: f1/boss=8, f2/boss=13, f3/battle=2, f3/boss=16, f4/battle=1, f4/boss=5, f5/boss=9, ffinal/final=6
+WORLD RELICS tho_san/build: relic-policy=none mean relics at end 1.26 | owned at end (runs): an_don=12, chi_khau=3, phong_an=9, gai_ran=7, manh_tuoi=9, dinh_tam=10, la_ban=4, tam_huong=7, tui_rong=1, dau_than=5, khoi_the=6, phan_don=11, han_ky=2, huyet_an=2 | triggers / run: an_don=0.5, chi_khau=0.1, khoi_the=0.2, phan_don=1.4, huyet_an=0.2
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | tho_san | build | events / run 0.20 | non-leave choices / run 0.16 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.80 | curse dmg / run 0.2 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=1, tran_thach/leave=1
+WORLD VERDICT tho_san/build: run win 14.3% (target 20-40) TOO HARD; est. minutes won run 28.4 (target 40-50) TOO SHORT; max region spread at a floor 72.7 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 30.0% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 34.9
+WORLD CHARACTERS | progress=all | build | tho_san | run win 14.3% (10/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,tho_san)
+===== w_all_giao_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["giao_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND giao_si: f1/boss=6, f2/boss=20, f3/battle=2, f3/boss=14, f4/battle=1, f4/boss=15, f5/boss=4, ffinal/final=5
+WORLD RELICS giao_si/build: relic-policy=none mean relics at end 0.86 | owned at end (runs): an_don=6, chi_khau=2, phong_an=6, gai_ran=4, manh_tuoi=9, dinh_tam=9, la_ban=4, tam_huong=3, dau_than=5, khoi_the=2, phan_don=4, han_ky=3, huyet_an=3 | triggers / run: an_don=0.3, khoi_the=0.0, phan_don=1.4, huyet_an=0.3
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | giao_si | build | events / run 0.14 | non-leave choices / run 0.13 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.59 | curse dmg / run 1.2 | matches slowed by loi_the / run 0.00 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=1, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=1, tran_thach/fight=1
+WORLD VERDICT giao_si/build: run win 4.3% (target 20-40) TOO HARD; est. minutes won run 30.8 (target 40-50) TOO SHORT; max region spread at a floor 57.1 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 29.9% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 33.3
+WORLD CHARACTERS | progress=all | build | giao_si | run win 4.3% (3/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,giao_si)
+===== p_noshape_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+piece-weight-set: w5:0,n5:0,v5:0 -> ch1{w5 0.0, n5 0.0, v5 0.0} ch2{w5 0.0, n5 0.0, v5 0.0} ch3{w5 0.0, n5 0.0, v5 0.0} default{w5 0.0, n5 0.0, v5 0.0} desert{w5 0.0, n5 0.0, v5 0.0} swamp{w5 0.0, n5 0.0, v5 0.0} (in memory, player and boss drops)
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=13, f2/boss=12, f3/boss=10, f4/battle=4, f4/boss=6, f5/battle=2, f5/boss=11, ffinal/final=5
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.20 | owned at end (runs): an_don=7, chi_khau=5, phong_an=10, gai_ran=6, manh_tuoi=12, dinh_tam=11, la_ban=5, tam_huong=5, tui_rong=3, dau_than=2, khoi_the=5, phan_don=7, han_ky=4, huyet_an=2 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.1, phan_don=1.3, huyet_an=0.1
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | kiem_si | build | events / run 0.23 | non-leave choices / run 0.20 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.71 | curse dmg / run 0.4 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=4, tran_thach/fight=1
+WORLD VERDICT kiem_si/build: run win 10.0% (target 20-40) TOO HARD; est. minutes won run 33.0 (target 40-50) TOO SHORT; max region spread at a floor 50.0 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 20.6% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 39.1
+===== p_noshape_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+piece-weight-set: w5:0,n5:0,v5:0 -> ch1{w5 0.0, n5 0.0, v5 0.0} ch2{w5 0.0, n5 0.0, v5 0.0} ch3{w5 0.0, n5 0.0, v5 0.0} default{w5 0.0, n5 0.0, v5 0.0} desert{w5 0.0, n5 0.0, v5 0.0} swamp{w5 0.0, n5 0.0, v5 0.0} (in memory, player and boss drops)
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=10, f2/battle=2, f2/boss=9, f3/battle=1, f3/boss=18, f4/battle=4, f4/boss=11, f5/boss=7, ffinal/final=2
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 0.77 | owned at end (runs): an_don=7, chi_khau=2, phong_an=5, gai_ran=5, manh_tuoi=6, dinh_tam=7, la_ban=3, tam_huong=5, tui_rong=1, dau_than=3, khoi_the=2, phan_don=5, han_ky=2, huyet_an=1 | triggers / run: an_don=0.3, chi_khau=0.0, khoi_the=0.0, phan_don=1.1, huyet_an=0.0
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | phap_su | build | events / run 0.17 | non-leave choices / run 0.14 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.79 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.00 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=1, suoi_tinh/drink=1, tran_thach/fight=1
+WORLD VERDICT phap_su/build: run win 8.6% (target 10-100) TOO HARD; est. minutes won run 29.3 (target 40-50) TOO SHORT; max region spread at a floor 38.5 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 29.7% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 34.0
+===== p_half0.5_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+piece-weight-set: w5:x0.5,n5:x0.5,v5:x0.5 -> ch1{w5 0.25, n5 0.25, v5 0.25} ch2{w5 0.5, n5 0.5, v5 0.5} ch3{w5 0.5, n5 0.5, v5 0.5} default{w5 0.5, n5 0.5, v5 0.5} desert{w5 0.25, n5 0.25, v5 0.25} swamp{w5 0.25, n5 0.25, v5 0.25} (in memory, player and boss drops)
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=9, f2/battle=1, f2/boss=16, f3/boss=16, f4/battle=3, f4/boss=9, f5/boss=4, ffinal/final=7
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.26 | owned at end (runs): an_don=10, chi_khau=2, phong_an=12, gai_ran=4, manh_tuoi=12, dinh_tam=11, la_ban=2, tam_huong=6, tui_rong=1, dau_than=5, khoi_the=5, phan_don=6, han_ky=7, huyet_an=5 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.2, phan_don=1.2, huyet_an=0.3
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | kiem_si | build | events / run 0.19 | non-leave choices / run 0.16 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.86 | curse dmg / run 0.2 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=1, tran_thach/fight=1
+WORLD VERDICT kiem_si/build: run win 7.1% (target 20-40) TOO HARD; est. minutes won run 30.6 (target 40-50) TOO SHORT; max region spread at a floor 56.6 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 26.2% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 37.8
+===== p_half0.5_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+piece-weight-set: w5:x0.5,n5:x0.5,v5:x0.5 -> ch1{w5 0.25, n5 0.25, v5 0.25} ch2{w5 0.5, n5 0.5, v5 0.5} ch3{w5 0.5, n5 0.5, v5 0.5} default{w5 0.5, n5 0.5, v5 0.5} desert{w5 0.25, n5 0.25, v5 0.25} swamp{w5 0.25, n5 0.25, v5 0.25} (in memory, player and boss drops)
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=10, f2/boss=20, f3/battle=1, f3/boss=11, f4/battle=2, f4/boss=10, f5/boss=11, ffinal/final=1
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 0.89 | owned at end (runs): an_don=4, phong_an=12, gai_ran=4, manh_tuoi=5, dinh_tam=8, la_ban=4, tam_huong=8, tui_rong=2, dau_than=6, khoi_the=2, phan_don=4, han_ky=1, huyet_an=2 | triggers / run: an_don=0.2, khoi_the=0.0, phan_don=0.9, huyet_an=0.0
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | phap_su | build | events / run 0.19 | non-leave choices / run 0.16 | tran_thach extra fights 0, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.83 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.03 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, suoi_tinh/drink=1
+WORLD VERDICT phap_su/build: run win 5.7% (target 10-100) TOO HARD; est. minutes won run 30.1 (target 40-50) TOO SHORT; max region spread at a floor 71.4 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 30.3% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 35.5
+===== p_half0.25_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+piece-weight-set: w5:x0.25,n5:x0.25,v5:x0.25 -> ch1{w5 0.125, n5 0.125, v5 0.125} ch2{w5 0.25, n5 0.25, v5 0.25} ch3{w5 0.25, n5 0.25, v5 0.25} default{w5 0.25, n5 0.25, v5 0.25} desert{w5 0.125, n5 0.125, v5 0.125} swamp{w5 0.125, n5 0.125, v5 0.125} (in memory, player and boss drops)
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=12, f2/boss=15, f3/battle=2, f3/boss=9, f4/battle=2, f4/boss=10, f5/boss=7, ffinal/final=4
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.20 | owned at end (runs): an_don=7, chi_khau=3, phong_an=11, gai_ran=8, manh_tuoi=13, dinh_tam=9, la_ban=6, tam_huong=4, tui_rong=4, dau_than=2, khoi_the=2, phan_don=9, han_ky=3, huyet_an=3 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.1, phan_don=1.6, huyet_an=0.3
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | kiem_si | build | events / run 0.23 | non-leave choices / run 0.20 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.73 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=2, mo_hoang/dig=2, song_bac/bet_small=2, suoi_tinh/bathe=3, tran_thach/fight=2
+WORLD VERDICT kiem_si/build: run win 12.9% (target 20-40) TOO HARD; est. minutes won run 33.6 (target 40-50) TOO SHORT; max region spread at a floor 54.2 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 24.6% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 43.6
+===== p_half0.25_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+piece-weight-set: w5:x0.25,n5:x0.25,v5:x0.25 -> ch1{w5 0.125, n5 0.125, v5 0.125} ch2{w5 0.25, n5 0.25, v5 0.25} ch3{w5 0.25, n5 0.25, v5 0.25} default{w5 0.25, n5 0.25, v5 0.25} desert{w5 0.125, n5 0.125, v5 0.125} swamp{w5 0.125, n5 0.125, v5 0.125} (in memory, player and boss drops)
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=12, f2/battle=1, f2/boss=14, f3/boss=9, f4/boss=14, f5/battle=1, f5/boss=12, ffinal/final=2
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 0.96 | owned at end (runs): an_don=6, chi_khau=1, phong_an=9, gai_ran=6, manh_tuoi=11, dinh_tam=7, la_ban=5, tam_huong=3, tui_rong=1, dau_than=6, khoi_the=5, phan_don=4, han_ky=2, huyet_an=1 | triggers / run: an_don=0.2, chi_khau=0.0, khoi_the=0.2, phan_don=1.2, huyet_an=0.0
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | phap_su | build | events / run 0.16 | non-leave choices / run 0.13 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.80 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.00 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=1, tran_thach/fight=1
+WORLD VERDICT phap_su/build: run win 7.1% (target 10-100) TOO HARD; est. minutes won run 29.5 (target 40-50) TOO SHORT; max region spread at a floor 64.3 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 23.1% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 35.8
+===== final/w_all_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=12, f2/boss=15, f3/battle=2, f3/boss=9, f4/battle=2, f4/boss=10, f5/boss=7, ffinal/final=4
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.20 | owned at end (runs): an_don=7, chi_khau=3, phong_an=11, gai_ran=8, manh_tuoi=13, dinh_tam=9, la_ban=6, tam_huong=4, tui_rong=4, dau_than=2, khoi_the=2, phan_don=9, han_ky=3, huyet_an=3 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.1, phan_don=1.6, huyet_an=0.3
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | kiem_si | build | events / run 0.23 | non-leave choices / run 0.20 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.73 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=2, mo_hoang/dig=2, song_bac/bet_small=2, suoi_tinh/bathe=3, tran_thach/fight=2
+WORLD VERDICT kiem_si/build: run win 12.9% (target 20-40) TOO HARD; est. minutes won run 33.6 (target 40-50) TOO SHORT; max region spread at a floor 54.2 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 24.6% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 43.6
+===== final/w_all_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=12, f2/battle=1, f2/boss=14, f3/boss=9, f4/boss=14, f5/battle=1, f5/boss=12, ffinal/final=2
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 0.96 | owned at end (runs): an_don=6, chi_khau=1, phong_an=9, gai_ran=6, manh_tuoi=11, dinh_tam=7, la_ban=5, tam_huong=3, tui_rong=1, dau_than=6, khoi_the=5, phan_don=4, han_ky=2, huyet_an=1 | triggers / run: an_don=0.2, chi_khau=0.0, khoi_the=0.2, phan_don=1.2, huyet_an=0.0
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | phap_su | build | events / run 0.16 | non-leave choices / run 0.13 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.80 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.00 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=1, tran_thach/fight=1
+WORLD VERDICT phap_su/build: run win 7.1% (target 10-100) TOO HARD; est. minutes won run 29.5 (target 40-50) TOO SHORT; max region spread at a floor 64.3 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 23.1% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 35.8
+===== final/w_all_sat_thu
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=5, f2/boss=20, f3/boss=13, f4/battle=1, f4/boss=15, f5/battle=2, f5/boss=7, ffinal/final=3
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 0.83 | owned at end (runs): an_don=7, chi_khau=3, phong_an=8, gai_ran=3, manh_tuoi=11, dinh_tam=9, la_ban=2, tam_huong=1, tui_rong=1, dau_than=4, phan_don=5, han_ky=3, huyet_an=1 | triggers / run: an_don=0.2, chi_khau=0.0, phan_don=0.5, huyet_an=0.0
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | sat_thu | build | events / run 0.21 | non-leave choices / run 0.19 | tran_thach extra fights 0, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.67 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.04 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=2, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, suoi_tinh/drink=1
+WORLD VERDICT sat_thu/build: run win 5.7% (target 20-40) TOO HARD; est. minutes won run 26.3 (target 40-50) TOO SHORT; max region spread at a floor 58.3 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 30.3% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 32.3
+===== final/w_all_tho_san
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["tho_san"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND tho_san: f1/boss=10, f2/boss=7, f3/boss=12, f4/battle=2, f4/boss=19, f5/battle=1, f5/boss=7, ffinal/final=4
+WORLD RELICS tho_san/build: relic-policy=none mean relics at end 1.10 | owned at end (runs): an_don=9, chi_khau=4, phong_an=10, gai_ran=4, manh_tuoi=8, dinh_tam=3, la_ban=2, tam_huong=5, tui_rong=1, dau_than=5, khoi_the=3, phan_don=12, han_ky=7, huyet_an=4 | triggers / run: an_don=0.4, chi_khau=0.0, khoi_the=0.1, phan_don=1.2, huyet_an=0.2
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | tho_san | build | events / run 0.23 | non-leave choices / run 0.20 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.77 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=1, loi_the/swear=2, mo_hoang/dig=2, song_bac/bet_small=3, suoi_tinh/bathe=2, suoi_tinh/drink=1, tran_thach/fight=1, tran_thach/leave=1
+WORLD VERDICT tho_san/build: run win 11.4% (target 20-40) TOO HARD; est. minutes won run 28.5 (target 40-50) TOO SHORT; max region spread at a floor 58.9 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 33.9% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 35.5
+WORLD CHARACTERS | progress=all | build | tho_san | run win 11.4% (8/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,tho_san)
+===== final/w_all_giao_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["giao_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+WORLD DEATHS BY FLOOR/KIND giao_si: f1/boss=9, f2/battle=1, f2/boss=9, f3/battle=2, f3/boss=18, f4/battle=2, f4/boss=12, f5/battle=1, f5/boss=9, ffinal/final=3
+WORLD RELICS giao_si/build: relic-policy=none mean relics at end 1.06 | owned at end (runs): an_don=5, chi_khau=2, phong_an=9, gai_ran=6, manh_tuoi=11, dinh_tam=8, la_ban=3, tam_huong=6, tui_rong=1, dau_than=7, khoi_the=3, phan_don=5, han_ky=4, huyet_an=4 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.1, phan_don=0.9, huyet_an=0.1
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+WORLD EVENTS | giao_si | build | events / run 0.20 | non-leave choices / run 0.17 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.54 | curse dmg / run 1.0 | matches slowed by loi_the / run 0.01 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/leave=2, loi_the/swear=1, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=2
+WORLD VERDICT giao_si/build: run win 5.7% (target 20-40) TOO HARD; est. minutes won run 31.6 (target 40-50) TOO SHORT; max region spread at a floor 58.6 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 30.3% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 41.8
+WORLD CHARACTERS | progress=all | build | giao_si | run win 5.7% (4/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,giao_si)
+===== unlock_runs
+deck_sim --unlock-runs (Story 037): runs<=8 reps=30 players=["kiem_si", "phap_su", "sat_thu"] fate=alternate policy=build stop-when-both-open=true seeds=rep*1000+run | new characters: tho_san via hunter_path, giao_si via mercy_path
+UNLOCK RUNS RAW kiem_si rep 1: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 2: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [10, 1] | total 11
+UNLOCK RUNS RAW kiem_si rep 3: runs LLLLW | opened tho_san@5, giao_si@5 | new achievements per run [2, 0, 1, 0, 8] | total 11
+UNLOCK RUNS RAW kiem_si rep 4: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [10, 2] | total 12
+UNLOCK RUNS RAW kiem_si rep 5: runs LLLW | opened tho_san@4, giao_si@4 | new achievements per run [0, 0, 3, 8] | total 11
+UNLOCK RUNS RAW kiem_si rep 6: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [5, 1, 1] | total 7
+UNLOCK RUNS RAW kiem_si rep 7: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [3, 8] | total 11
+UNLOCK RUNS RAW kiem_si rep 8: runs LLLL | opened tho_san@2, giao_si@4 | new achievements per run [2, 2, 0, 1] | total 5
+UNLOCK RUNS RAW kiem_si rep 9: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [6, 1] | total 7
+UNLOCK RUNS RAW kiem_si rep 10: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 3] | total 5
+UNLOCK RUNS RAW kiem_si rep 11: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 2, 3] | total 7
+UNLOCK RUNS RAW kiem_si rep 12: runs LLLLL | opened tho_san@5, giao_si@5 | new achievements per run [0, 3, 0, 0, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 13: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 2] | total 5
+UNLOCK RUNS RAW kiem_si rep 14: runs LLLLL | opened tho_san@4, giao_si@5 | new achievements per run [1, 0, 1, 2, 3] | total 7
+UNLOCK RUNS RAW kiem_si rep 15: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [4, 3] | total 7
+UNLOCK RUNS RAW kiem_si rep 16: runs WLL | opened tho_san@1, giao_si@3 | new achievements per run [9, 0, 2] | total 11
+UNLOCK RUNS RAW kiem_si rep 17: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [6, 1] | total 7
+UNLOCK RUNS RAW kiem_si rep 18: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 19: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [4, 6] | total 10
+UNLOCK RUNS RAW kiem_si rep 20: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [10, 1] | total 11
+UNLOCK RUNS RAW kiem_si rep 21: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 3] | total 5
+UNLOCK RUNS RAW kiem_si rep 22: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 3, 2] | total 7
+UNLOCK RUNS RAW kiem_si rep 23: runs LWL | opened tho_san@2, giao_si@3 | new achievements per run [2, 6, 2] | total 10
+UNLOCK RUNS RAW kiem_si rep 24: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [3, 2, 1] | total 6
+UNLOCK RUNS RAW kiem_si rep 25: runs LLLL | opened tho_san@4, giao_si@4 | new achievements per run [0, 3, 0, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 26: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [2, 0, 5] | total 7
+UNLOCK RUNS RAW kiem_si rep 27: runs LLLLLLL | opened tho_san@3, giao_si@7 | new achievements per run [1, 1, 2, 1, 0, 0, 1] | total 6
+UNLOCK RUNS RAW kiem_si rep 28: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [8, 2] | total 10
+UNLOCK RUNS RAW kiem_si rep 29: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [3, 1, 3] | total 7
+UNLOCK RUNS RAW kiem_si rep 30: runs LLWLLLL | opened tho_san@3, giao_si@7 | new achievements per run [0, 0, 10, 0, 0, 0, 1] | total 11
+UNLOCK RUNS SUMMARY kiem_si | tho_san (via hunter_path) | opened in 30 of 30 reps | mean run index 2.27 (median 2.0, max 5) | mean with never-opened = 9: 2.27 | target 1-3 runs: PASS
+UNLOCK RUNS SUMMARY kiem_si | giao_si (via mercy_path) | opened in 30 of 30 reps | mean run index 3.10 (median 3.0, max 7) | mean with never-opened = 9: 3.10 | target 1-3 runs: FAIL
+UNLOCK RUNS ACHIEVEMENTS kiem_si | new achievements per run index (mean over the reps that played it): run1=3.60 (n=30), run2=2.10 (n=30), run3=2.25 (n=16), run4=1.88 (n=8), run5=2.80 (n=5), run6=0.00 (n=2), run7=1.00 (n=2) | mean held at the end of a rep 7.93 of 22 | run win % over all runs 11.8 (11/93)
+UNLOCK RUNS EARNED kiem_si | reps that held each achievement at the end of the rep: first_region_boss=30, reach_an_dai=15, first_run_won=11, hunter_path=30, mercy_path=30, ending_mercy=0, ending_middle=11, ending_slaughter=0, boss_forest=27, boss_dungeon=28, boss_frost=30, zone_trap=5, frost_burst_5=0, win_kiem_si=11, win_phap_su=0, win_sat_thu=0, win_tho_san=0, win_giao_si=0, burn_build=0, featured_10=0, no_hit_boss=6, small_deck=4
+UNLOCK RUNS RAW phap_su rep 1: runs LLLLLL | opened tho_san@3, giao_si@6 | new achievements per run [0, 4, 1, 0, 0, 2] | total 7
+UNLOCK RUNS RAW phap_su rep 2: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [3, 2, 1] | total 6
+UNLOCK RUNS RAW phap_su rep 3: runs LLLLL | opened tho_san@3, giao_si@5 | new achievements per run [3, 0, 2, 0, 3] | total 8
+UNLOCK RUNS RAW phap_su rep 4: runs LLW | opened tho_san@2, giao_si@3 | new achievements per run [3, 2, 8] | total 13
+UNLOCK RUNS RAW phap_su rep 5: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [3, 9] | total 12
+UNLOCK RUNS RAW phap_su rep 6: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [2, 2, 2] | total 6
+UNLOCK RUNS RAW phap_su rep 7: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [11, 2] | total 13
+UNLOCK RUNS RAW phap_su rep 8: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS RAW phap_su rep 9: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [3, 0, 1, 1] | total 5
+UNLOCK RUNS RAW phap_su rep 10: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 3, 2] | total 7
+UNLOCK RUNS RAW phap_su rep 11: runs LLLLLLLL | opened tho_san@3, giao_si@8 | new achievements per run [2, 0, 4, 0, 0, 0, 0, 3] | total 9
+UNLOCK RUNS RAW phap_su rep 12: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 3, 1] | total 6
+UNLOCK RUNS RAW phap_su rep 13: runs LLLL | opened tho_san@2, giao_si@4 | new achievements per run [2, 2, 0, 3] | total 7
+UNLOCK RUNS RAW phap_su rep 14: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [2, 0, 1, 2] | total 5
+UNLOCK RUNS RAW phap_su rep 15: runs LLLLLL | opened tho_san@3, giao_si@6 | new achievements per run [4, 0, 2, 0, 0, 1] | total 7
+UNLOCK RUNS RAW phap_su rep 16: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [9, 2] | total 11
+UNLOCK RUNS RAW phap_su rep 17: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [5, 8] | total 13
+UNLOCK RUNS RAW phap_su rep 18: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW phap_su rep 19: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [7, 1] | total 8
+UNLOCK RUNS RAW phap_su rep 20: runs LLLLLLWL | opened tho_san@5, giao_si@8 | new achievements per run [0, 2, 0, 2, 1, 0, 5, 2] | total 12
+UNLOCK RUNS RAW phap_su rep 21: runs WW | opened tho_san@1, giao_si@2 | new achievements per run [9, 2] | total 11
+UNLOCK RUNS RAW phap_su rep 22: runs LLLLLLL | opened tho_san@4, giao_si@7 | new achievements per run [3, 0, 1, 1, 0, 0, 2] | total 7
+UNLOCK RUNS RAW phap_su rep 23: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [3, 1, 3] | total 7
+UNLOCK RUNS RAW phap_su rep 24: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW phap_su rep 25: runs LLW | opened tho_san@2, giao_si@3 | new achievements per run [3, 2, 5] | total 10
+UNLOCK RUNS RAW phap_su rep 26: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 5] | total 7
+UNLOCK RUNS RAW phap_su rep 27: runs LLLLL | opened tho_san@3, giao_si@5 | new achievements per run [2, 1, 2, 1, 2] | total 8
+UNLOCK RUNS RAW phap_su rep 28: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW phap_su rep 29: runs LLLL | opened tho_san@2, giao_si@4 | new achievements per run [1, 4, 0, 2] | total 7
+UNLOCK RUNS RAW phap_su rep 30: runs WLL | opened tho_san@1, giao_si@3 | new achievements per run [10, 0, 2] | total 12
+UNLOCK RUNS SUMMARY phap_su | tho_san (via hunter_path) | opened in 30 of 30 reps | mean run index 2.30 (median 2.0, max 5) | mean with never-opened = 9: 2.30 | target 1-3 runs: PASS
+UNLOCK RUNS SUMMARY phap_su | giao_si (via mercy_path) | opened in 30 of 30 reps | mean run index 3.57 (median 3.0, max 8) | mean with never-opened = 9: 3.57 | target 1-3 runs: FAIL
+UNLOCK RUNS ACHIEVEMENTS phap_su | new achievements per run index (mean over the reps that played it): run1=3.60 (n=30), run2=2.33 (n=30), run3=2.00 (n=19), run4=1.09 (n=11), run5=0.86 (n=7), run6=0.60 (n=5), run7=2.33 (n=3), run8=2.50 (n=2) | mean held at the end of a rep 8.30 of 22 | run win % over all runs 9.3 (10/107)
+UNLOCK RUNS EARNED phap_su | reps that held each achievement at the end of the rep: first_region_boss=30, reach_an_dai=12, first_run_won=9, hunter_path=30, mercy_path=30, ending_mercy=0, ending_middle=9, ending_slaughter=0, boss_forest=26, boss_dungeon=29, boss_frost=30, zone_trap=4, frost_burst_5=0, win_kiem_si=0, win_phap_su=9, win_sat_thu=0, win_tho_san=0, win_giao_si=0, burn_build=19, featured_10=0, no_hit_boss=7, small_deck=5
+UNLOCK RUNS RAW sat_thu rep 1: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [3, 9] | total 12
+UNLOCK RUNS RAW sat_thu rep 2: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [1, 5, 1] | total 7
+UNLOCK RUNS RAW sat_thu rep 3: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [3, 0, 3, 2] | total 8
+UNLOCK RUNS RAW sat_thu rep 4: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [11, 1] | total 12
+UNLOCK RUNS RAW sat_thu rep 5: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS RAW sat_thu rep 6: runs LLLLL | opened tho_san@3, giao_si@5 | new achievements per run [2, 1, 1, 0, 1] | total 5
+UNLOCK RUNS RAW sat_thu rep 7: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [4, 7] | total 11
+UNLOCK RUNS RAW sat_thu rep 8: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW sat_thu rep 9: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [3, 0, 2] | total 5
+UNLOCK RUNS RAW sat_thu rep 10: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW sat_thu rep 11: runs LLLLLLL | opened tho_san@3, giao_si@7 | new achievements per run [2, 0, 3, 0, 0, 0, 1] | total 6
+UNLOCK RUNS RAW sat_thu rep 12: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 3, 1] | total 6
+UNLOCK RUNS RAW sat_thu rep 13: runs LLLW | opened tho_san@3, giao_si@4 | new achievements per run [1, 1, 2, 7] | total 11
+UNLOCK RUNS RAW sat_thu rep 14: runs LLLLLL | opened tho_san@4, giao_si@6 | new achievements per run [0, 1, 1, 2, 0, 3] | total 7
+UNLOCK RUNS RAW sat_thu rep 15: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [10, 2] | total 12
+UNLOCK RUNS RAW sat_thu rep 16: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [4, 2] | total 6
+UNLOCK RUNS RAW sat_thu rep 17: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 4] | total 6
+UNLOCK RUNS RAW sat_thu rep 18: runs LWW | opened tho_san@2, giao_si@3 | new achievements per run [0, 10, 1] | total 11
+UNLOCK RUNS RAW sat_thu rep 19: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [11, 1] | total 12
+UNLOCK RUNS RAW sat_thu rep 20: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [0, 4, 3] | total 7
+UNLOCK RUNS RAW sat_thu rep 21: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [6, 1] | total 7
+UNLOCK RUNS RAW sat_thu rep 22: runs LWL | opened tho_san@2, giao_si@3 | new achievements per run [1, 8, 1] | total 10
+UNLOCK RUNS RAW sat_thu rep 23: runs LWL | opened tho_san@2, giao_si@3 | new achievements per run [0, 8, 2] | total 10
+UNLOCK RUNS RAW sat_thu rep 24: runs LLLLLL | opened tho_san@3, giao_si@6 | new achievements per run [0, 2, 1, 0, 0, 1] | total 4
+UNLOCK RUNS RAW sat_thu rep 25: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 5] | total 7
+UNLOCK RUNS RAW sat_thu rep 26: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 4] | total 6
+UNLOCK RUNS RAW sat_thu rep 27: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 5] | total 8
+UNLOCK RUNS RAW sat_thu rep 28: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS RAW sat_thu rep 29: runs LLLW | opened tho_san@2, giao_si@4 | new achievements per run [1, 3, 0, 6] | total 10
+UNLOCK RUNS RAW sat_thu rep 30: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS SUMMARY sat_thu | tho_san (via hunter_path) | opened in 30 of 30 reps | mean run index 2.17 (median 2.0, max 4) | mean with never-opened = 9: 2.17 | target 1-3 runs: PASS
+UNLOCK RUNS SUMMARY sat_thu | giao_si (via mercy_path) | opened in 30 of 30 reps | mean run index 2.97 (median 2.0, max 7) | mean with never-opened = 9: 2.97 | target 1-3 runs: PASS
+UNLOCK RUNS ACHIEVEMENTS sat_thu | new achievements per run index (mean over the reps that played it): run1=2.97 (n=30), run2=3.50 (n=30), run3=1.57 (n=14), run4=2.43 (n=7), run5=0.25 (n=4), run6=1.33 (n=3), run7=1.00 (n=1) | mean held at the end of a rep 7.97 of 22 | run win % over all runs 12.4 (11/89)
+UNLOCK RUNS EARNED sat_thu | reps that held each achievement at the end of the rep: first_region_boss=30, reach_an_dai=18, first_run_won=10, hunter_path=30, mercy_path=30, ending_mercy=0, ending_middle=10, ending_slaughter=0, boss_forest=27, boss_dungeon=29, boss_frost=27, zone_trap=2, frost_burst_5=0, win_kiem_si=0, win_phap_su=0, win_sat_thu=10, win_tho_san=0, win_giao_si=0, burn_build=0, featured_10=0, no_hit_boss=10, small_deck=6
+===== unlock_runs2
+deck_sim --unlock-runs (Story 037): runs<=8 reps=30 players=["kiem_si", "phap_su", "sat_thu"] fate=alternate policy=build stop-when-both-open=true seeds=rep*1000+run | new characters: tho_san via hunter_path, giao_si via mercy_path
+UNLOCK RUNS RAW kiem_si rep 1: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 2: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [10, 1] | total 11
+UNLOCK RUNS RAW kiem_si rep 3: runs LLLLW | opened tho_san@5, giao_si@5 | new achievements per run [2, 0, 1, 0, 8] | total 11
+UNLOCK RUNS RAW kiem_si rep 4: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [10, 1] | total 11
+UNLOCK RUNS RAW kiem_si rep 5: runs LLLW | opened tho_san@4, giao_si@4 | new achievements per run [0, 0, 3, 8] | total 11
+UNLOCK RUNS RAW kiem_si rep 6: runs LLW | opened tho_san@2, giao_si@3 | new achievements per run [5, 1, 7] | total 13
+UNLOCK RUNS RAW kiem_si rep 7: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [3, 8] | total 11
+UNLOCK RUNS RAW kiem_si rep 8: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [2, 1, 2] | total 5
+UNLOCK RUNS RAW kiem_si rep 9: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [6, 1] | total 7
+UNLOCK RUNS RAW kiem_si rep 10: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 3] | total 5
+UNLOCK RUNS RAW kiem_si rep 11: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 2, 3] | total 7
+UNLOCK RUNS RAW kiem_si rep 12: runs LLLLW | opened tho_san@5, giao_si@5 | new achievements per run [0, 3, 0, 0, 8] | total 11
+UNLOCK RUNS RAW kiem_si rep 13: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 2] | total 5
+UNLOCK RUNS RAW kiem_si rep 14: runs LLW | opened tho_san@3, giao_si@3 | new achievements per run [1, 0, 9] | total 10
+UNLOCK RUNS RAW kiem_si rep 15: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [4, 3] | total 7
+UNLOCK RUNS RAW kiem_si rep 16: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [9, 1] | total 10
+UNLOCK RUNS RAW kiem_si rep 17: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [6, 1] | total 7
+UNLOCK RUNS RAW kiem_si rep 18: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 19: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [4, 6] | total 10
+UNLOCK RUNS RAW kiem_si rep 20: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [10, 1] | total 11
+UNLOCK RUNS RAW kiem_si rep 21: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 3] | total 5
+UNLOCK RUNS RAW kiem_si rep 22: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 3, 2] | total 7
+UNLOCK RUNS RAW kiem_si rep 23: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [2, 1, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 24: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 25: runs LLLL | opened tho_san@4, giao_si@4 | new achievements per run [0, 3, 0, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 26: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [2, 0, 5] | total 7
+UNLOCK RUNS RAW kiem_si rep 27: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [1, 11] | total 12
+UNLOCK RUNS RAW kiem_si rep 28: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [8, 2] | total 10
+UNLOCK RUNS RAW kiem_si rep 29: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW kiem_si rep 30: runs LLWL | opened tho_san@3, giao_si@4 | new achievements per run [0, 0, 10, 1] | total 11
+UNLOCK RUNS SUMMARY kiem_si | tho_san (via hunter_path) | opened in 30 of 30 reps | mean run index 2.27 (median 2.0, max 5) | mean with never-opened = 9: 2.27 | target 1-3 runs: PASS
+UNLOCK RUNS SUMMARY kiem_si | giao_si (via mercy_path) | opened in 30 of 30 reps | mean run index 2.63 (median 2.0, max 5) | mean with never-opened = 9: 2.63 | target 1-3 runs: PASS
+UNLOCK RUNS ACHIEVEMENTS kiem_si | new achievements per run index (mean over the reps that played it): run1=3.60 (n=30), run2=2.33 (n=30), run3=3.75 (n=12), run4=2.40 (n=5), run5=8.00 (n=2) | mean held at the end of a rep 8.37 of 22 | run win % over all runs 17.7 (14/79)
+UNLOCK RUNS EARNED kiem_si | reps that held each achievement at the end of the rep: first_region_boss=30, reach_an_dai=18, first_run_won=14, hunter_path=30, mercy_path=30, ending_mercy=0, ending_middle=14, ending_slaughter=0, boss_forest=26, boss_dungeon=28, boss_frost=30, zone_trap=5, frost_burst_5=0, win_kiem_si=14, win_phap_su=0, win_sat_thu=0, win_tho_san=0, win_giao_si=0, burn_build=0, featured_10=0, no_hit_boss=6, small_deck=6
+UNLOCK RUNS RAW phap_su rep 1: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [0, 4, 1, 2] | total 7
+UNLOCK RUNS RAW phap_su rep 2: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [3, 1, 1] | total 5
+UNLOCK RUNS RAW phap_su rep 3: runs LLLLW | opened tho_san@4, giao_si@5 | new achievements per run [3, 0, 1, 1, 6] | total 11
+UNLOCK RUNS RAW phap_su rep 4: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [3, 2, 4] | total 9
+UNLOCK RUNS RAW phap_su rep 5: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [3, 9] | total 12
+UNLOCK RUNS RAW phap_su rep 6: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [2, 3, 2] | total 7
+UNLOCK RUNS RAW phap_su rep 7: runs WW | opened tho_san@1, giao_si@2 | new achievements per run [11, 2] | total 13
+UNLOCK RUNS RAW phap_su rep 8: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS RAW phap_su rep 9: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [3, 0, 1, 1] | total 5
+UNLOCK RUNS RAW phap_su rep 10: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 5] | total 7
+UNLOCK RUNS RAW phap_su rep 11: runs LLLLLLLL | opened tho_san@8, giao_si@8 | new achievements per run [2, 0, 2, 0, 0, 0, 0, 4] | total 8
+UNLOCK RUNS RAW phap_su rep 12: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [2, 2, 2] | total 6
+UNLOCK RUNS RAW phap_su rep 13: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 4] | total 6
+UNLOCK RUNS RAW phap_su rep 14: runs LLW | opened tho_san@3, giao_si@3 | new achievements per run [2, 0, 8] | total 10
+UNLOCK RUNS RAW phap_su rep 15: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [4, 0, 3] | total 7
+UNLOCK RUNS RAW phap_su rep 16: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [9, 2] | total 11
+UNLOCK RUNS RAW phap_su rep 17: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [5, 3] | total 8
+UNLOCK RUNS RAW phap_su rep 18: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW phap_su rep 19: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [7, 1] | total 8
+UNLOCK RUNS RAW phap_su rep 20: runs LLLLLLW | opened tho_san@7, giao_si@7 | new achievements per run [0, 2, 0, 2, 0, 0, 7] | total 11
+UNLOCK RUNS RAW phap_su rep 21: runs WW | opened tho_san@1, giao_si@2 | new achievements per run [9, 2] | total 11
+UNLOCK RUNS RAW phap_su rep 22: runs LLLLL | opened tho_san@4, giao_si@5 | new achievements per run [3, 0, 1, 1, 2] | total 7
+UNLOCK RUNS RAW phap_su rep 23: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [3, 1, 3] | total 7
+UNLOCK RUNS RAW phap_su rep 24: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW phap_su rep 25: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [3, 2, 1] | total 6
+UNLOCK RUNS RAW phap_su rep 26: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [2, 9] | total 11
+UNLOCK RUNS RAW phap_su rep 27: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [2, 10] | total 12
+UNLOCK RUNS RAW phap_su rep 28: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW phap_su rep 29: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [1, 4, 1] | total 6
+UNLOCK RUNS RAW phap_su rep 30: runs WLL | opened tho_san@1, giao_si@3 | new achievements per run [10, 0, 1] | total 11
+UNLOCK RUNS SUMMARY phap_su | tho_san (via hunter_path) | opened in 30 of 30 reps | mean run index 2.57 (median 2.0, max 8) | mean with never-opened = 9: 2.57 | target 1-3 runs: PASS
+UNLOCK RUNS SUMMARY phap_su | giao_si (via mercy_path) | opened in 30 of 30 reps | mean run index 3.03 (median 3.0, max 8) | mean with never-opened = 9: 3.03 | target 1-3 runs: FAIL
+UNLOCK RUNS ACHIEVEMENTS phap_su | new achievements per run index (mean over the reps that played it): run1=3.60 (n=30), run2=2.70 (n=30), run3=2.00 (n=16), run4=1.17 (n=6), run5=2.00 (n=4), run6=0.00 (n=2), run7=3.50 (n=2), run8=4.00 (n=1) | mean held at the end of a rep 8.23 of 22 | run win % over all runs 13.2 (12/91)
+UNLOCK RUNS EARNED phap_su | reps that held each achievement at the end of the rep: first_region_boss=30, reach_an_dai=13, first_run_won=10, hunter_path=30, mercy_path=30, ending_mercy=0, ending_middle=10, ending_slaughter=0, boss_forest=25, boss_dungeon=29, boss_frost=30, zone_trap=2, frost_burst_5=0, win_kiem_si=0, win_phap_su=10, win_sat_thu=0, win_tho_san=0, win_giao_si=0, burn_build=18, featured_10=0, no_hit_boss=5, small_deck=5
+UNLOCK RUNS RAW sat_thu rep 1: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [3, 9] | total 12
+UNLOCK RUNS RAW sat_thu rep 2: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [1, 10] | total 11
+UNLOCK RUNS RAW sat_thu rep 3: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [3, 0, 3, 1] | total 7
+UNLOCK RUNS RAW sat_thu rep 4: runs WL | opened tho_san@1, giao_si@2 | new achievements per run [11, 2] | total 13
+UNLOCK RUNS RAW sat_thu rep 5: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS RAW sat_thu rep 6: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [2, 1, 1, 1] | total 5
+UNLOCK RUNS RAW sat_thu rep 7: runs LW | opened tho_san@2, giao_si@2 | new achievements per run [4, 7] | total 11
+UNLOCK RUNS RAW sat_thu rep 8: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW sat_thu rep 9: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [3, 0, 2] | total 5
+UNLOCK RUNS RAW sat_thu rep 10: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 3] | total 6
+UNLOCK RUNS RAW sat_thu rep 11: runs LLLLLLL | opened tho_san@6, giao_si@7 | new achievements per run [2, 0, 2, 0, 0, 1, 1] | total 6
+UNLOCK RUNS RAW sat_thu rep 12: runs LLL | opened tho_san@2, giao_si@3 | new achievements per run [2, 3, 1] | total 6
+UNLOCK RUNS RAW sat_thu rep 13: runs LLLW | opened tho_san@4, giao_si@4 | new achievements per run [1, 1, 1, 8] | total 11
+UNLOCK RUNS RAW sat_thu rep 14: runs LLLL | opened tho_san@4, giao_si@4 | new achievements per run [0, 1, 1, 3] | total 5
+UNLOCK RUNS RAW sat_thu rep 15: runs WW | opened tho_san@1, giao_si@2 | new achievements per run [10, 1] | total 11
+UNLOCK RUNS RAW sat_thu rep 16: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [4, 2] | total 6
+UNLOCK RUNS RAW sat_thu rep 17: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 4] | total 6
+UNLOCK RUNS RAW sat_thu rep 18: runs LWL | opened tho_san@2, giao_si@3 | new achievements per run [0, 10, 1] | total 11
+UNLOCK RUNS RAW sat_thu rep 19: runs WW | opened tho_san@1, giao_si@2 | new achievements per run [11, 1] | total 12
+UNLOCK RUNS RAW sat_thu rep 20: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [0, 4, 3] | total 7
+UNLOCK RUNS RAW sat_thu rep 21: runs LL | opened tho_san@1, giao_si@2 | new achievements per run [6, 1] | total 7
+UNLOCK RUNS RAW sat_thu rep 22: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [1, 6] | total 7
+UNLOCK RUNS RAW sat_thu rep 23: runs LWL | opened tho_san@2, giao_si@3 | new achievements per run [0, 8, 2] | total 10
+UNLOCK RUNS RAW sat_thu rep 24: runs LLL | opened tho_san@3, giao_si@3 | new achievements per run [0, 2, 3] | total 5
+UNLOCK RUNS RAW sat_thu rep 25: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 5] | total 7
+UNLOCK RUNS RAW sat_thu rep 26: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [2, 4] | total 6
+UNLOCK RUNS RAW sat_thu rep 27: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 5] | total 8
+UNLOCK RUNS RAW sat_thu rep 28: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS RAW sat_thu rep 29: runs LLLL | opened tho_san@3, giao_si@4 | new achievements per run [1, 3, 1, 3] | total 8
+UNLOCK RUNS RAW sat_thu rep 30: runs LL | opened tho_san@2, giao_si@2 | new achievements per run [3, 4] | total 7
+UNLOCK RUNS SUMMARY sat_thu | tho_san (via hunter_path) | opened in 30 of 30 reps | mean run index 2.33 (median 2.0, max 6) | mean with never-opened = 9: 2.33 | target 1-3 runs: PASS
+UNLOCK RUNS SUMMARY sat_thu | giao_si (via mercy_path) | opened in 30 of 30 reps | mean run index 2.70 (median 2.0, max 7) | mean with never-opened = 9: 2.70 | target 1-3 runs: PASS
+UNLOCK RUNS ACHIEVEMENTS sat_thu | new achievements per run index (mean over the reps that played it): run1=2.97 (n=30), run2=3.60 (n=30), run3=1.75 (n=12), run4=2.67 (n=6), run5=0.00 (n=1), run6=1.00 (n=1), run7=1.00 (n=1) | mean held at the end of a rep 7.87 of 22 | run win % over all runs 13.6 (11/81)
+UNLOCK RUNS EARNED sat_thu | reps that held each achievement at the end of the rep: first_region_boss=30, reach_an_dai=15, first_run_won=9, hunter_path=30, mercy_path=30, ending_mercy=0, ending_middle=9, ending_slaughter=0, boss_forest=26, boss_dungeon=29, boss_frost=28, zone_trap=3, frost_burst_5=0, win_kiem_si=0, win_phap_su=0, win_sat_thu=9, win_tho_san=0, win_giao_si=0, burn_build=0, featured_10=0, no_hit_boss=11, small_deck=7

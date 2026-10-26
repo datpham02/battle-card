@@ -59,8 +59,8 @@ func _test_config() -> void:
 func _test_initial() -> void:
 	var st: Dictionary = PieceDeck.initial(lib)
 	var ids: Array[String] = PieceDeck.active_ids(st, lib)
-	ck("initial: 13 active default shapes in library order", ids == lib.base_shape_ids())
-	ck("initial: every mult is 1.0", (st["mult"] as Dictionary).size() == 13
+	ck("initial: every default-pool shape active, in library order (16 since Story 037)", ids == lib.base_shape_ids())
+	ck("initial: every mult is 1.0", (st["mult"] as Dictionary).size() == lib.base_shape_ids().size()
 		and near(PieceDeck.mult_of(st, "mono"), 1.0) and near(PieceDeck.mult_of(st, "bar5"), 1.0))
 	ck("initial: added empty, run_only absent",
 		(st["added"] as Array).is_empty() and PieceDeck.mult_of(st, "y5") == 0.0 and not PieceDeck.has_shape(st, "y5"))
@@ -70,7 +70,7 @@ func _test_initial() -> void:
 func _test_effective_weights() -> void:
 	var st: Dictionary = PieceDeck.initial(lib)
 	var w: Dictionary = PieceDeck.effective_weights(st, lib, "ch1", cfg)
-	var ok: bool = w.size() == 13
+	var ok: bool = w.size() == lib.base_shape_ids().size()
 	for id: String in lib.base_shape_ids():
 		ok = ok and near(float(w[id]), lib.weight(id, "ch1"))
 	ck("initial deck: effective weights = original weights", ok)
@@ -156,14 +156,15 @@ func _test_remove() -> void:
 	ck("can_remove ok above min_shapes", bool(v["ok"]) and str(v["reason"]) == "")
 	var cur: Dictionary = st
 	var ids: Array[String] = lib.base_shape_ids()
-	for i: int in 8: # 13 -> 5 active
+	var removals: int = ids.size() - cfg.min_shapes # all default shapes -> min_shapes active
+	for i: int in removals:
 		cur = PieceDeck.remove(cur, ids[i], lib, cfg)
-	ck("8 removals leave exactly min_shapes active", PieceDeck.active_ids(cur, lib).size() == cfg.min_shapes)
+	ck("removals down to the floor leave exactly min_shapes active", PieceDeck.active_ids(cur, lib).size() == cfg.min_shapes)
 	ck("removed shape has mult 0", PieceDeck.mult_of(cur, ids[0]) == 0.0 and not PieceDeck.has_shape(cur, ids[0]))
-	var refused: Dictionary = PieceDeck.can_remove(cur, ids[8], lib, cfg)
+	var refused: Dictionary = PieceDeck.can_remove(cur, ids[removals], lib, cfg)
 	ck("remove is refused at min_shapes with the reason key",
 		not bool(refused["ok"]) and str(refused["reason"]) == "piece_deck.reason.min_shapes")
-	var same: Dictionary = PieceDeck.remove(cur, ids[8], lib, cfg)
+	var same: Dictionary = PieceDeck.remove(cur, ids[removals], lib, cfg)
 	ck("a refused remove changes nothing", same == cur)
 	var gone: Dictionary = PieceDeck.can_remove(cur, ids[0], lib, cfg)
 	ck("already removed is reported", str(gone["reason"]) == "piece_deck.reason.already_removed")
@@ -172,7 +173,7 @@ func _test_remove() -> void:
 		str(PieceDeck.can_remove(st, "y5", lib, cfg)["reason"]) == "piece_deck.reason.already_removed")
 	# An added run_only shape counts toward min_shapes: with it, one more default may go.
 	var with_y: Dictionary = PieceDeck.apply_ink(cur, "y5", lib, cfg)
-	ck("an added shape lifts the floor by one", bool(PieceDeck.can_remove(with_y, ids[8], lib, cfg)["ok"]))
+	ck("an added shape lifts the floor by one", bool(PieceDeck.can_remove(with_y, ids[removals], lib, cfg)["ok"]))
 	var no_y: Dictionary = PieceDeck.remove(with_y, "y5", lib, cfg)
 	ck("removing a run_only shape drops it from added", not (no_y["added"] as Array).has("y5")
 		and PieceDeck.mult_of(no_y, "y5") == 0.0)
@@ -203,7 +204,7 @@ func _test_fallback() -> void:
 	ck("a roomy arena: no fallback, effective weights", not bool(r["fallback"])
 		and near(float((r["weights"] as Dictionary)["mono"]), lib.weight("mono", "ch1")))
 	var empty: Dictionary = PieceDeck.weights_for_match({}, lib, "ch1", wide, cfg)
-	var all_orig: bool = (empty["weights"] as Dictionary).size() == 13 and not bool(empty["fallback"])
+	var all_orig: bool = (empty["weights"] as Dictionary).size() == lib.base_shape_ids().size() and not bool(empty["fallback"])
 	for id: String in lib.base_shape_ids():
 		all_orig = all_orig and near(float((empty["weights"] as Dictionary)[id]), lib.weight(id, "ch1"))
 	ck("an empty state means the original weights of every default shape", all_orig)
@@ -258,7 +259,7 @@ func _test_sanitize() -> void:
 	ck("a good value is kept", near(float(m["mono"]), 2.0))
 	ck("a negative value becomes 0", near(float(m["bar2"]), 0.0))
 	ck("a non-number is dropped then refilled with 1.0", near(float(m["bar3"]), 1.0))
-	ck("missing default shapes are filled with 1.0", m.has("bar5") and near(float(m["bar5"]), 1.0) and m.size() == 14)
+	ck("missing default shapes are filled with 1.0", m.has("bar5") and near(float(m["bar5"]), 1.0) and m.size() == lib.base_shape_ids().size() + 1)
 	ck("added keeps only existing run_only ids, once", (clean["added"] as Array) == ["y5"])
 	ck("a run_only mult that is not in added is dropped", not m.has("z4"))
 	ck("kept run_only shape is active", PieceDeck.active_ids(clean, lib).has("y5") and near(float(m["y5"]), 3.0))

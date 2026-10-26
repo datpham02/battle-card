@@ -266,6 +266,10 @@ const TEXT_SWING: String = "ui.hud.swing"
 const TEXT_HIT: String = "ui.hud.hit"
 const TEXT_MISS: String = "ui.hud.miss"
 const TEXT_DAMAGE_NUMBER: String = "ui.hud.damage_number"
+## Story 037: "+%d" flash over the player's cell when the Priest's Prayer heals (a green pill that rises and fades).
+const TEXT_HEAL_NUMBER: String = "ui.hud.heal_number"
+const HEAL_TEXT: Color = Color(0.1, 0.55, 0.2)
+const HEAL_RISE_RATIO: float = 0.5
 ## Story 020: "Cháy ×%d" (burn stacks on the boss), "Ghim" (boss pinned), "+%d" after a menu card name.
 const TEXT_BURN_STACKS: String = "ui.hud.burn_stacks"
 ## Horizontal padding inside a menu slot for the card name (Story 020: names carry "+N").
@@ -914,6 +918,7 @@ func _draw() -> void:
 	_draw_boss_swing(vp)
 	_draw_feedback(vp)
 	_draw_boss_feedback(vp)
+	_draw_heal_flash(vp)
 	_draw_row_warning(vp)
 	_draw_trait_cells(vp)
 	_draw_hazard_traits(vp)
@@ -1374,6 +1379,20 @@ func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color
 	draw_rect(back, TEXT_OUTLINE_LIGHT)
 	draw_rect(back, color, false, CELL_OUTLINE_WIDTH)
 	draw_string(font, pos + Vector2(0.0, LABEL_PAD + small * 0.85), text, HORIZONTAL_ALIGNMENT_CENTER, width, small, color)
+
+
+# Story 037: "+N" over the player's cell while CombatView.get_heal_flash() runs: rises a little and fades out.
+func _draw_heal_flash(vp: Vector2) -> void:
+	var flash: Dictionary = _combat.get_heal_flash()
+	if flash.is_empty():
+		return
+	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
+	var cell: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, _combat.get_state().player_cell)
+	var size: int = int(cell.size.y * FEEDBACK_FONT_RATIO * 1.3)
+	var rise: float = cell.size.y * HEAL_RISE_RATIO * (1.0 - fade)
+	var back := Rect2(cell.position + Vector2(0.0, -size * 1.4 - rise), Vector2(cell.size.x, size * 1.4))
+	draw_rect(back, Color(TEXT_OUTLINE_LIGHT, TEXT_OUTLINE_LIGHT.a * fade))
+	_draw_centered(back, tr(TEXT_HEAL_NUMBER) % roundi(float(flash["amount"])), size, Color(HEAL_TEXT, fade))
 
 
 # Boss HIT / MISS on the player's half (same look as the player's feedback).

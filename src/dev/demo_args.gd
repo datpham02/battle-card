@@ -26,6 +26,10 @@ extends Node
 ##                                           THIEN_HOA_BURNING_DEMO_SEC (StatusEffects.tick): the sea of fire still burning, its DoT on the boss
 ##   godot --path . --character=sat_thu -- --demo=anh_bo_hit  Story 030: Anh Bo active (blue border, banner) and a 2-cell piece cast resolved on
 ##                                           the boss: HIT and the doubled "-N"
+##   godot --path . -- --character=tho_san --demo=vay_bat   Story 037: Vay Bat active (border, banner) and a real ket_gioi cast beside the boss:
+##                                           the seal lasts 1.5x (zone bars), hunter_mark put a Ran on the boss; skips the intro
+##   godot --path . -- --character=giao_si --demo=thanh_an  Story 037: Thanh An active (border, banner), the boss at 2 Han, the player hurt; a real
+##                                           hit adds the 3rd Han: the x1.5 burst damages the boss and Prayer heals ("+8" over the player); skips the intro
 ##   Story 024 piece demos (the player has a piece bag):
 ##   godot --path . -- --demo=pieces_hand    three pieces lying on the player's half (mini shapes, freshness bars) and a full bag
 ##   godot --path . -- --demo=placing_hit    PLACING with a piece (default l4, or --piece=<id>) over the boss's cell: green ghost,
@@ -163,6 +167,12 @@ const BOSS_DEMO_RING_LEFT: float = 0.65
 const BOSS_DEMO_COUNTER_PIECE: String = "bar2"
 ## Story 030 demo: the piece of the "anh_bo_hit" cast (2 cells, <= Anh Bo's small_cells).
 const ANH_BO_DEMO_PIECE: String = "bar2"
+## Story 037 demos (they also skip the intro): Vay Bat (Hunter) and Thanh An (Priest), the share of max HP the Priest
+## demo starts with and the Han stacks the boss already carries before the hit that bursts (dev capture only).
+const SIGNATURE_DEMOS_037: Array[String] = ["vay_bat", "thanh_an"]
+const THANH_AN_DEMO_HP_RATIO: float = 0.6
+const THANH_AN_DEMO_FROST_STACKS: int = 2
+const VAY_BAT_DEMO_ZONE_ELAPSED_RATIO: float = 0.2
 ## Story 029 Phần D demo: share of the enemy cells lit and the cooldown seconds left (dev capture only).
 const SIGNATURE_COOLDOWN_DEMO_CHARGE: float = 0.4
 const SIGNATURE_COOLDOWN_DEMO_SEC: float = 9.0
@@ -304,6 +314,10 @@ func _ready() -> void:
 			_thien_hoa_demo(combat, grid)
 		"anh_bo_hit":
 			_anh_bo_demo(combat, grid)
+		"vay_bat":
+			_vay_bat_demo(combat, grid)
+		"thanh_an":
+			_thanh_an_demo(combat, grid)
 		"seal_on_boss", "thorns_on_boss", "boss_through_thorns", "boss_seal":
 			_zone_demo(combat, grid)
 		"trait_seal":
@@ -341,7 +355,7 @@ func _ready() -> void:
 			_fill_bag(lib2, ROTTEN_PIECE_SLOT)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
-	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode):
+	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode):
 		_skip_intro.call_deferred()
 
 
@@ -911,6 +925,47 @@ func _anh_bo_demo(combat: CombatView, grid: BoardGrid) -> void:
 	if not flow.choose(SkillConfig.FALLBACK_SKILL):
 		push_warning("DemoArgs: skill '%s' not available for demo '%s'" % [SkillConfig.FALLBACK_SKILL, _mode])
 		return
+	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
+
+
+# Story 037 "vay_bat" (needs --character=tho_san): Vay Bat activated, then the real ket_gioi cast (the dev
+# CombatView._begin_cut path) over the cells around the boss except one exit (the leave-a-path rule keeps it open): the
+# seal lasts zone_sec_mult x longer, hunter_mark marks the boss (Ran) because the seal formed beside it.
+func _vay_bat_demo(combat: CombatView, grid: BoardGrid) -> void:
+	if not combat.get_signature() is VayBatSignature:
+		push_warning("DemoArgs: demo '%s' needs --character=tho_san (Vay Bat signature)" % _mode)
+		return
+	_activate_signature_now(combat)
+	var state: CombatState = combat.get_state()
+	var cells: Array[Vector2i] = _zone_neighbours(grid, state.enemy_cell, true, true)
+	if cells.size() > 1:
+		cells.pop_back()
+	combat._begin_cut("ket_gioi", cells)
+	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
+	var status: StatusEffects = combat.get_status()
+	var sealed: Array[Vector2i] = status.sealed_cells(CombatState.Side.ENEMY)
+	if sealed.is_empty():
+		push_warning("DemoArgs: no seal formed for demo '%s'" % _mode)
+		return
+	status.tick(status.seal_total_sec(CombatState.Side.ENEMY, sealed[0]) * VAY_BAT_DEMO_ZONE_ELAPSED_RATIO, state)
+
+
+# Story 037 "thanh_an" (needs --character=giao_si): the player hurt (so the heal shows), the boss at
+# THANH_AN_DEMO_FROST_STACKS Han, Thanh An activated, then a real 2-cell kiem_khi hit on the boss: Thanh An adds the
+# next Han stack, the burst is x burst_mult, Prayer heals (the "+N" flash over the player).
+func _thanh_an_demo(combat: CombatView, grid: BoardGrid) -> void:
+	if not combat.get_signature() is ThanhAnSignature:
+		push_warning("DemoArgs: demo '%s' needs --character=giao_si (Thanh An signature)" % _mode)
+		return
+	var state: CombatState = combat.get_state()
+	state.set_player_hp(state.player_max_hp * THANH_AN_DEMO_HP_RATIO)
+	combat.get_status().apply_frost(CombatState.Side.ENEMY, THANH_AN_DEMO_FROST_STACKS)
+	_activate_signature_now(combat)
+	var cells: Array[Vector2i] = [state.enemy_cell]
+	var beside: Array[Vector2i] = _zone_neighbours(grid, state.enemy_cell, true, false)
+	if not beside.is_empty():
+		cells.append(beside[0])
+	combat._begin_cut(SkillConfig.FALLBACK_SKILL, cells)
 	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
 
 

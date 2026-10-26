@@ -15,10 +15,10 @@ func _init() -> void:
 	var lib: PieceLibrary = PieceLibrary.load_from_file()
 	var run_only: Array[String] = ["z4", "j4", "y5"]
 	ck("run_only_ids are z4, j4, y5 in file order", lib.run_only_ids() == run_only)
-	ck("base_shape_ids holds the 13 original shapes", lib.base_shape_ids().size() == 13)
+	ck("base_shape_ids holds the 13 original shapes + w5 n5 v5 (Story 037)", lib.base_shape_ids().size() == 16)
 	ck("base_shape_ids keeps file order (mono first, bar5 last)",
 		lib.base_shape_ids()[0] == "mono" and lib.base_shape_ids()[12] == "bar5")
-	ck("shape_ids = base + run_only", lib.shape_ids().size() == 16)
+	ck("shape_ids = base + run_only", lib.shape_ids().size() == 19)
 	for id: String in run_only:
 		ck("%s pool is run_only" % id, lib.pool(id) == "run_only" and lib.is_run_only(id))
 		ck("%s has no table weight (0 for every chapter)" % id,

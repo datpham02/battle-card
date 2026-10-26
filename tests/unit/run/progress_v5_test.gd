@@ -17,7 +17,7 @@ func _init() -> void:
 
 	# defaults
 	var fresh := ProgressState.new()
-	_check("version is 6 (Story 035)", ProgressState.VERSION == 6)
+	_check("version is 7 (Story 037)", ProgressState.VERSION == 7)
 	_check("fresh defaults", fresh.get_best_floor() == 0 and fresh.get_regions_boss_beaten().is_empty() and fresh.get_cleared_bosses() == 0)
 
 	# regions
@@ -97,7 +97,7 @@ func _init() -> void:
 	_check("corrupt -> default", ProgressState.from_json("{{not json").get_best_floor() == 0 and ProgressState.from_json("{{not json").get_regions_boss_beaten().is_empty())
 	_check("non-object -> default", ProgressState.from_json("[1]").get_locale() == ProgressState.DEFAULT_LOCALE)
 	_check("empty text -> default", ProgressState.from_json("").get_regions_boss_beaten().is_empty())
-	var future: ProgressState = ProgressState.from_json('{"version":7,"locale":"en","regions_boss_beaten":["ch1"],"best_floor":5}')
+	var future: ProgressState = ProgressState.from_json('{"version":8,"locale":"en","regions_boss_beaten":["ch1"],"best_floor":5}')
 	_check("future version -> default", future.get_locale() == ProgressState.DEFAULT_LOCALE and future.get_regions_boss_beaten().is_empty() and future.get_best_floor() == 0)
 	var empty_store: ProgressStore = ProgressStore.memory_store()
 	_check("missing file -> default", empty_store.load_state(cfg).get_best_floor() == 0 and not empty_store.load_state(cfg).has_run())

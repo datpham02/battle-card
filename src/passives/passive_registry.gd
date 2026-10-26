@@ -9,6 +9,8 @@ const SCRIPTS: Dictionary = {
 	"second_wind": preload("res://src/passives/second_wind.gd"),
 	"wide_caster": preload("res://src/passives/wide_caster.gd"),
 	"quick_blade": preload("res://src/passives/quick_blade.gd"),
+	"hunter_mark": preload("res://src/passives/hunter_mark.gd"),
+	"prayer": preload("res://src/passives/prayer.gd"),
 }
 
 

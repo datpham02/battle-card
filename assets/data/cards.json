@@ -5,7 +5,7 @@
 	"hand_size": 4,
 	"default_card": "kiem_khi",
 	"default_deck": ["kiem_khi", "kiem_khi", "chan_phong", "chan_phong", "hoa_tran", "bang_phong"],
-	"card_order": ["kiem_khi", "chan_phong", "hoa_tran", "bang_phong", "kiem_vu", "thiet_kiem", "dai_dao", "xung_kich", "hoa_tinh", "hoa_xa", "suong_mong", "bang_chau", "cuong_phong", "liet_hoa", "kiem_than", "song_kiem", "thien_lang", "han_bang", "thien_hoa", "tu_kiem", "ran_kich", "han_khi", "ran_van", "han_phong", "han_kiem", "han_tran", "ket_gioi", "long_an", "tran_gai", "gai_nguyen"],
+	"card_order": ["kiem_khi", "chan_phong", "hoa_tran", "bang_phong", "kiem_vu", "thiet_kiem", "dai_dao", "xung_kich", "hoa_tinh", "hoa_xa", "suong_mong", "bang_chau", "cuong_phong", "liet_hoa", "kiem_than", "song_kiem", "thien_lang", "han_bang", "thien_hoa", "tu_kiem", "ran_kich", "han_khi", "ran_van", "han_phong", "han_kiem", "han_tran", "ket_gioi", "long_an", "tran_gai", "gai_nguyen", "gai_doc", "luoi_san", "thanh_thuy", "bang_tam"],
 	"cards": {
 		"kiem_khi": {"name_key": "card.kiem_khi.name", "desc_key": "card.kiem_khi.desc", "effect": "damage", "min_cells": 1, "cooldown_sec": 0.0, "damage_per_cell": 6.0, "rarity": "common", "upgrade": {"damage_per_cell": 1.0}, "implemented": true},
 		"chan_phong": {"name_key": "card.chan_phong.name", "desc_key": "card.chan_phong.desc", "effect": "push", "min_cells": 3, "cooldown_sec": 6.0, "damage_per_cell": 4.0, "push_cells": 1, "rarity": "common", "upgrade": {"cooldown_sec": -1.0}, "implemented": true},
@@ -37,6 +37,10 @@
 		"long_an": {"name_key": "card.long_an.name", "desc_key": "card.long_an.desc", "effect": "seal", "seal_sec": 2.0, "min_cells": 3, "cooldown_sec": 7.0, "damage_per_cell": 3.0, "rarity": "rare", "upgrade": {"damage_per_cell": 1.0}, "implemented": true},
 		"tran_gai": {"name_key": "card.tran_gai.name", "desc_key": "card.tran_gai.desc", "effect": "thorns", "min_cells": 3, "cooldown_sec": 6.0, "damage_per_cell": 0.0, "rarity": "common", "upgrade": {"cooldown_sec": -1.0}, "implemented": true},
 		"gai_nguyen": {"name_key": "card.gai_nguyen.name", "desc_key": "card.gai_nguyen.desc", "effect": "thorns", "min_cells": 4, "cooldown_sec": 8.0, "damage_per_cell": 0.0, "thorn_fragile_stacks": 2, "rarity": "rare", "upgrade": {"min_cells": -1}, "implemented": true},
+		"gai_doc": {"name_key": "card.gai_doc.name", "desc_key": "card.gai_doc.desc", "effect": "thorns", "min_cells": 3, "cooldown_sec": 6.0, "damage_per_cell": 2.0, "thorn_fragile_stacks": 1, "rarity": "common", "upgrade": {"cooldown_sec": -1.0}, "implemented": true, "unlock_by": "first_region_boss"},
+		"luoi_san": {"name_key": "card.luoi_san.name", "desc_key": "card.luoi_san.desc", "effect": "seal", "seal_sec": 2.0, "min_cells": 2, "cooldown_sec": 7.0, "damage_per_cell": 0.0, "fragile_stacks": 1, "rarity": "rare", "upgrade": {"cooldown_sec": -1.0}, "implemented": true, "unlock_by": "boss_dungeon"},
+		"thanh_thuy": {"name_key": "card.thanh_thuy.name", "desc_key": "card.thanh_thuy.desc", "effect": "frost", "min_cells": 3, "cooldown_sec": 6.0, "damage_per_cell": 0.0, "frost_stacks": 1, "heal_self": 4.0, "rarity": "common", "upgrade": {"cooldown_sec": -1.0}, "implemented": true, "unlock_by": "boss_frost"},
+		"bang_tam": {"name_key": "card.bang_tam.name", "desc_key": "card.bang_tam.desc", "effect": "damage", "min_cells": 4, "cooldown_sec": 6.0, "damage_per_cell": 5.0, "frost_stacks": 2, "rarity": "rare", "upgrade": {"damage_per_cell": 1.0}, "implemented": true, "unlock_by": "ending_middle"},
 		"ganh_nang": {"name_key": "card.ganh_nang.name", "desc_key": "card.ganh_nang.desc", "effect": "damage", "min_cells": 1, "cooldown_sec": 0.0, "damage_per_cell": 0.0, "rarity": "curse", "implemented": true},
 		"oan_hon": {"name_key": "card.oan_hon.name", "desc_key": "card.oan_hon.desc", "effect": "damage", "min_cells": 1, "cooldown_sec": 0.0, "damage_per_cell": 0.0, "rarity": "curse", "draw_damage": 2.0, "implemented": true}
 	}

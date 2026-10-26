@@ -563,11 +563,13 @@ Playable classes. Pure data; the stats and starter deck enter the match through 
 | `characters[].passive` | object | `{id, params}`; id is a `PassiveRegistry` key (`second_wind`, `wide_caster`, `quick_blade`), unknown id -> warning and no passive |
 | `characters[].passive_name_key` / `passive_desc_key` | translation keys | Passive name / description for the select screen (`passive.<id>.name` / `.desc`) |
 | `characters[].starter_deck` | array of card ids | Deck of the match; unknown card -> warning and dropped, empty -> cards.json `default_deck` |
-| `characters[].unlocked` | bool | Selectable now (only a data flag; unlock rules are out of scope) |
+| `characters[].unlock_by` | string (optional) | Story 037: id of the achievement that unlocks the character (`achievements.json` rewards list it); absent = open from the start. The old static `unlocked` flag is gone: `CharacterConfig.set_unlock_source(fn)` decides (no source = everything unlocked), `get_character(id)` returns the computed `unlocked` and `unlock_by` |
 
 Passive params: `second_wind {heal_after_match}` extra HP after a won match (added before the max clamp); `wide_caster {min_cells, duration_mult}` player swings over `min_cells` or more cells wind up `duration_mult` times as long; `quick_blade {max_cells, damage_mult}` player hits over `max_cells` or fewer cells deal `damage_mult` times the final damage. Passives only affect the player.
 
 Signature params (Story 021): `tram {duration_sec, cell_mult, lifesteal}` for `duration_sec` every player cut counts `cell_mult` x its cells for damage (the swing covers the real cells) and heals `lifesteal` x the damage dealt (clamped to max HP); `thien_hoa {burn_stacks, burn_duration_sec, burn_tick_sec, burn_damage_per_tick, detonate_mult}` instant (Story 030, order chốt 2026-10-25): first the boss takes `detonate_mult` x the total remaining burn damage of every enemy-half cell ALREADY burning (time left / tick sec x damage per tick, stacks included; nothing burning: 0) and those cells stop burning; then every `effect: burn` card's cooldown is reset; then every LIT formation-map cell of the enemy half is ignited `burn_stacks` times with `burn_duration_sec` / `burn_tick_sec` / `burn_damage_per_tick` — a lasting fire that hurts the boss while it stands in it (the boss brain avoids burning cells, `burn_avoid`) and is NOT detonated in the same use (no formation or no lit cell: nothing is ignited). Shipped (bot-tuned, `production/qa/evidence/signature-rework/signature-balance.md`): 1 stack, `burn_duration_sec` 3.0, `burn_tick_sec` 0.5, `burn_damage_per_tick` 0.5, `detonate_mult` 2.0; `anh_bo {duration_sec, small_mult, small_cells}` for `duration_sec` the player's steps have no cooldown and EVERY player hit of `small_cells` or fewer cells is multiplied by `small_mult` (Story 030: the boss need not be pinned; shipped 1.75). The legacy key `pinned_small_mult` is still read when `small_mult` is absent (warning, used as `small_mult`). Damage order: card `damage_per_cell` x cells (Tram cell count) -> Ghim -> passive -> signature.
+
+Story 037 characters: `tho_san` (Hunter, `unlock_by` `hunter_path`; max HP 190, step x0.95, focus 4.0; deck `kiem_khi` x2, `ket_gioi`, `tran_gai`, `ran_kich`, `chan_phong`) and `giao_si` (Priest, `unlock_by` `mercy_path`; max HP 210, step x1.05, focus 4.5; deck `kiem_khi` x2, `han_khi` x2, `han_kiem`, `bang_phong`). Passives: `hunter_mark {fragile_stacks, icd_sec}` the boss gets `fragile_stacks` Ran when it steps onto one of the player's thorn cells (`StatusEffects.thorn_entered`, enemy side) or when the player forms a seal with the boss on a cell next to (4-neighbour) one of the placed cells, then waits `icd_sec` simulation seconds (`BasePassive.tick`); `prayer {heal_per_burst}` every Han burst on the boss heals the player (ctx `heal_player`, clamped to max HP; the HUD shows a "+N" flash). Signatures (both timed): `vay_bat {duration_sec, zone_sec_mult, fragile_mult}` while active every zone the player forms lasts `zone_sec_mult` x (seal and thorn seconds, read through `BaseSignature.zone_sec_mult`) and one consumed Ran stack multiplies the hit by `fragile_mult` instead of combat.json `fragile_mult` (`BaseSignature.fragile_mult_override`); `thanh_an {duration_sec, extra_frost_stacks, burst_mult}` while active every player hit that lands on the boss adds `extra_frost_stacks` Han stacks and a Han burst on the boss deals `burst_mult` x (`BaseSignature.frost_burst_mult`). Match stats (`CombatView.get_match_stats()`): new int keys `frost_bursts` (Han bursts on the boss) and `boss_thorn_steps` (the boss stepped onto a player thorn cell, one per step).
 
 Dev arg: `--character=<id>` (GameFlow) selects a character; without it and without the select screen no character is passed.
 
@@ -773,3 +775,61 @@ A bad value keeps its default (warning). Code hooks: `UnitMover.step_cost_fn` (C
 | | `first_delay_sec` | = interval | Seconds before the first storm |
 
 HUD getters: `HopSkipTrait.get_hop_target()/get_hop_warn_left()`, `BurrowTrait.is_burrowed()/get_surface_cell()/get_surface_warn_left()`, `RiposteTrait.get_riposte_cell()/get_riposte_warn_left()`, `SandstormTrait.is_storm()/get_storm_fraction()`. Untargetable hook: `BossTrait.untargetable()` -> `TraitHost.is_boss_untargetable()` -> `SwingArbiter.enemy_untargetable_fn` (set by TraitHost from ctx `arbiter`) -> CutEffects option `target_untargetable`.
+
+## Story 037 (W2): locked content keys, `heal_self`, three new shapes (`cards.json`, `pieces.json`, `relics.json`)
+
+| File | Key | Type | Meaning |
+|---|---|---|---|
+| `cards.json` card | `heal_self` | number >= 0 (HP) | HP the CASTER (player swings only) heals when the cut lands, hit or miss, capped at max HP (`CutEffects.apply` ONE point, then `CombatState.set_player_hp`). Result key `healed` = HP actually restored. Used by `thanh_thuy` (4). Not upgradable. 0 / absent = none |
+| `cards.json` card | `unlock_by` | achievement id | Human cross-reference: the achievement in `achievements.json` whose `rewards` unlock this card. Absent = open from the start. Ignored by `SkillConfig` (the `rewards` list is the runtime source of truth) |
+| `pieces.json` shape | `unlock_by` | achievement id | Same, for a shape. Ignored by `PieceLibrary` |
+| `relics.json` relic | `unlock_by` | achievement id | Same, for a relic. Ignored by `RelicConfig` |
+
+New cards: `gai_doc` (common thorns, 3 cells, 2 dmg/cell on a hit, 1 Ran per thorn entry), `luoi_san` (rare seal, 2 cells, 2 s, `fragile_stacks` 1 applied when the cut hits the boss), `thanh_thuy` (common frost, 3 cells, 1 Han, `heal_self` 4), `bang_tam` (rare damage, 4 cells, 5 dmg/cell, 2 Han). `gai_doc` and `luoi_san` are zone cards (kept out of the boss's card list).
+New default-pool shapes (5 cells; weights 0.25 in `default ch2 ch3` and 0.125 in `ch1 swamp desert`, tuned x0.25 from the story's 0.5-1.0 because the unlocked shapes cost the bot 11-13 points of run win: production/qa/evidence/unlocks-achievements/simulation-characters.md): `w5` staircase `[[0,0],[0,1],[1,1],[1,2],[2,2]]`, `n5` `[[0,0],[0,1],[1,1],[1,2],[1,3]]`, `v5` `[[0,0],[0,1],[0,2],[1,2],[2,2]]`. Test: `tests/unit/run/unlock_content_test.gd`.
+
+## `achievements.json` (Story 037, read by `src/run/achievements_config.gd`, class AchievementsConfig; evaluated by `src/run/unlock_rules.gd`, class UnlockRules)
+
+22 achievements. The `rewards` lists are the SINGLE runtime source of "what is locked": content that is not the reward of any achievement is open from the start. The `unlock_by` keys in `cards.json`, `pieces.json`, `relics.json` and `characters.json` (the achievement id) are the human cross-reference; `tests/unit/run/unlock_content_consistency_test.gd` asserts both agree in both directions. Unlocks only widen the pools (card rewards, piece pool, relic pool, region pool, character select); no permanent power.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `achievements[].id` | string | Unique id (duplicate -> warning, later dropped) |
+| `achievements[].name_key` / `desc_key` | translation keys | `achievement.<id>.name` / `.desc` (the desc states the condition in one line; the UI appends " - current/target" for milestone conditions) |
+| `achievements[].condition` | `{type, params}` | One of the types below. Unknown type or a missing / non-positive param drops the entry (warning) |
+| `achievements[].rewards` | array of `{kind, id}` | `kind` is `character`, `card`, `piece`, `relic` or `region`; may be empty. Content already rewarded by an earlier achievement drops the entry (warning) |
+| `achievements[].hidden` | bool (default false) | Shown as "???" in the list until earned |
+
+Condition types (`UnlockRules.process(cfg, progress, event)`; events are built by GameFlow after it wrote the milestones of a completed node / ended run):
+
+| `type` | `params` | Meaning | Evaluated on |
+|---|---|---|---|
+| `milestone` | `key`, `min` | `ProgressState.get_milestone(key) >= min` | every event (self-heals) |
+| `milestone_sum` | `prefix`, `min` | sum of the milestones whose key starts with `prefix` is `>= min` | every event |
+| `run_counter` | `key`, `min` | `event.run_stats[key] >= min` (RunSession stats after adding the match) | `match_won`, `run_ended` |
+| `match_counter` | `key`, `min` | `event.match_stats[key] >= min` (that match's stats) | `match_won` |
+| `boss_clear_deck` | `min_cards` | a region boss match won (`is_region_boss`) with at least `min_cards` BURN cards in `deck_ids` (duplicates count). A card is a burn card when its `cards.json` definition has `"effect": "burn"` or a `burn_stacks` value above 0 (today: `hoa_tinh`, `hoa_xa`, `hoa_tran`, `liet_hoa`, `thien_hoa`) | `match_won` |
+| `boss_clear_no_hit` | none | a region boss match won with `match_stats.hits_taken == 0` (the key must be present) | `match_won` |
+| `run_won_deck_max` | `max` | the run is won (`won`) with `1 <= deck_ids.size() <= max` | `run_ended` |
+
+Events: `{"type":"match_won","character_id","region_id","is_region_boss","is_final","match_stats","run_stats","deck_ids"}`, `{"type":"final_reached"}`, `{"type":"run_ended","won","ending_id","character_id","run_stats","deck_ids"}`. A contextual condition (`run_counter`, `match_counter`, `boss_clear_*`, `run_won_deck_max`) is never granted by another event type, and nothing is granted retroactively on a migrated save.
+
+Milestone keys written to `ProgressState` (only at save points: end of a boss node, end of a run): `region_boss:<region_id>`, `reached_final`, `runs_won`, `runs_won:<character_id>`, `kills_total`, `spares_total`, `ending:<ending_id>`.
+
+Shipped table: `first_region_boss` (milestone_sum `region_boss:` 1 -> card `gai_doc`), `reach_an_dai` (`reached_final` -> piece `w5`), `first_run_won` (`runs_won` -> relic `tui_rong`), `hunter_path` (`kills_total` 3 -> character `tho_san`), `mercy_path` (`spares_total` 3 -> character `giao_si`), `ending_mercy` (`ending:spare` -> relic `phong_an`), `ending_middle` (`ending:balance` -> card `bang_tam`), `ending_slaughter` (`ending:execute` -> relic `gai_ran`), `boss_forest` (`region_boss:ch1` -> piece `v5`), `boss_dungeon` (`region_boss:ch2` -> card `luoi_san`), `boss_frost` (`region_boss:ch3` -> card `thanh_thuy`), `zone_trap` (hidden, run_counter `boss_thorn_steps` 5 -> piece `n5`), `frost_burst_5` (match_counter `frost_bursts` 5 -> relic `han_ky`), `win_kiem_si` / `win_phap_su` / `win_sat_thu` / `win_tho_san` / `win_giao_si` (`runs_won:<id>`), `burn_build` (boss_clear_deck 4), `featured_10` (run_counter `featured_casts` 10), `no_hit_boss` (hidden), `small_deck` (hidden, run_won_deck_max 8). The story names the third new shape `y5`; that id already exists as a run-only Ink shape, so the shape is `v5`.
+
+### Progress save v7 (`ProgressState.VERSION` 7, Story 037)
+
+New keys on top of v6 (a v7 file round-trips exactly; files v1..v6 still load and re-save as v7):
+
+| Key | Type | Meaning |
+|---|---|---|
+| `milestones` | object `{key: int > 0}` | The milestone ledger (keys above). `add_region_boss_beaten` (+1 on `region_boss:<r>` on every call, the list stays deduped), `record_fate` (+1 `spares_total` / `kills_total`), `record_ending` (+1 `ending:<id>`), `record_run_won(character_id)` (+1 `runs_won` and `runs_won:<character_id>`), `record_final_reached()` (+1 `reached_final`) keep it in step |
+| `achievements` | array of ids | Earned achievements, earned order, no duplicates (`add_achievement` returns true when new) |
+| `seen_unlocks` | array of `"kind:id"` | Unlocked content the player has already seen (`mark_unlock_seen`); `is_new_unlock(kind, id)` = owner achievement earned and not in this list (drives the "New" mark) |
+
+Migration of a v1..v6 file: `milestones` = `region_boss:<r>` 1 for each region in `regions_boss_beaten` (v4 `cleared_chapters` included), `spares_total` / `kills_total` from `spare_total` / `execute_total`, `ending:<id>` 1 for each `endings_seen`; `achievements` empty and `seen_unlocks` empty (no retroactive grants: the first `UnlockRules.process` after load grants the milestone-type achievements the ledger already satisfies). Dev `--progress=all` = `ProgressState.mark_all_unlocked(cfg, region_ids)`.
+
+### `unlock_by` keys
+
+`cards.json` cards, `pieces.json` shapes, `relics.json` relics and `characters.json` characters carry an optional `unlock_by` (an achievement id); none = open from the start. Only the content named in the table above is locked: 4 cards (`gai_doc`, `luoi_san`, `thanh_thuy`, `bang_tam`), 3 shapes (`w5`, `n5`, `v5`), 4 relics (`tui_rong`, `phong_an`, `gai_ran`, `han_ky`) and 2 characters (`tho_san`, `giao_si`); every other card, shape and relic is open from the start. A run takes its locked set at its start (`RunSession.locked`), so an unlock mid-run changes nothing for that run.

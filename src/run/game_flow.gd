@@ -154,7 +154,8 @@ signal run_changed()
 ## PIECE_DECK (Story 034) is the piece deck screen opened over WORLD_MAP / MAP.
 ## FATE (Story 035): Tha / Giết after a downed REGION boss, then (Giết) its artifact offer; ENDING (Story 035):
 ## the ending screen after the final match.
-enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, IN_FLOOR = IN_NODE }
+## ACHIEVEMENTS (Story 037): the achievements screen opened from the title ([method open_achievements]).
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, ACHIEVEMENTS, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -204,6 +205,16 @@ const LANG_ARG: String = "--lang="
 ## DEV-ONLY (Story 018): --select=character starts in CHARACTER_SELECT (memory store; captures).
 const SELECT_ARG: String = "--select="
 const SELECT_CHARACTER: String = "character"
+## DEV-ONLY (Story 037): --screen=achievements opens the achievements screen (memory store);
+## --screen=achievements_demo also seeds a few earned achievements and milestones (never saved);
+## --screen=achievements_detail=<id> opens that detail (AchievementsView reads it too);
+## --screen=unlock_toast / --screen=character_locked=<id> are read by their views.
+const SCREEN_ARG: String = "--screen="
+const SCREEN_ACHIEVEMENTS: String = "achievements"
+const SCREEN_ACHIEVEMENTS_DEMO: String = "achievements_demo"
+const SCREEN_ACHIEVEMENTS_DETAIL: String = "achievements_detail="
+## Milestones the demo seeds, as {key: count}; the achievements they earn come from UnlockRules.
+const DEV_ACHIEVEMENTS_DEMO_MILESTONES: Dictionary = {"region_boss:ch1": 1, "kills_total": 2, "spares_total": 1, "runs_won": 1}
 ## DEV-ONLY (Story 019 / 022): --run=<kind> values handled HERE (the others belong to RunController).
 const RUN_ARG: String = "--run="
 const FLOW_RUN_REWARD: String = "reward"
@@ -338,6 +349,10 @@ const SHOP_NODE: String = "node_key"
 var _config: ChaptersConfig
 var _store: ProgressStore = null
 var _progress: ProgressState
+## Story 037: achievement ids earned since the last [method take_new_unlocks] (the "Moi mo" toast queue).
+var _new_unlocks: Array[String] = []
+## Story 037: CombatView.get_match_stats() of the match just won (read by [method _complete_match_node]).
+var _last_match_stats: Dictionary = {}
 var _phase: Phase = Phase.TITLE
 var _controller: RunController = null
 var _dev_seed: int = -1
@@ -437,11 +452,14 @@ func _ready() -> void:
 	var flow_run: String = ""
 	var force_title: bool = false
 	var select_mode: String = ""
+	var screen_mode: String = ""
 	for arg: String in args:
 		if arg == TITLE_ARG:
 			force_title = true
 		elif arg.begins_with(SELECT_ARG):
 			select_mode = arg.trim_prefix(SELECT_ARG)
+		elif arg.begins_with(SCREEN_ARG):
+			screen_mode = arg.trim_prefix(SCREEN_ARG)
 		elif arg == NO_AUTOPAUSE_ARG:
 			_no_autopause = true
 		elif arg.begins_with(PROGRESS_ARG):
@@ -498,7 +516,7 @@ func _ready() -> void:
 		select_mode = ""
 	var dev_world: bool = dev_run or not node_text.is_empty() or not region_text.is_empty() or at_floor > 0
 	if _store == null:
-		_store = _make_store(progress_mode, dev_world or not select_mode.is_empty() or _dev_gold >= 0
+		_store = _make_store(progress_mode, dev_world or not select_mode.is_empty() or not screen_mode.is_empty() or _dev_gold >= 0
 			or not _dev_deck_add.is_empty() or _dev_hp > 0.0 or _dev_shape_removals >= 0
 			or not _dev_piece_deck_state.is_empty())
 	_progress = _load_progress(progress_mode)
@@ -511,6 +529,10 @@ func _ready() -> void:
 	_phase = Phase.TITLE
 	if select_mode == SELECT_CHARACTER or (not progress_mode.is_empty() and not force_title and progress_mode != PROGRESS_V4SAVE):
 		_phase = Phase.CHARACTER_SELECT
+	if screen_mode.begins_with(SCREEN_ACHIEVEMENTS):
+		_phase = Phase.ACHIEVEMENTS
+		if screen_mode == SCREEN_ACHIEVEMENTS_DEMO:
+			_dev_seed_achievements_demo()
 	if not node_text.is_empty():
 		_apply_dev_node(node_text)
 	elif not region_text.is_empty():
@@ -560,6 +582,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func get_characters() -> CharacterConfig:
 	if _characters == null:
 		_characters = CharacterConfig.load_from_file()
+		# Story 037: a character with `unlock_by` is open when that achievement is earned (live progress).
+		_characters.set_unlock_source(func(character_id: String) -> bool:
+			return _progress == null or AchievementsConfig.shared().is_unlocked("character", character_id, _progress))
 	return _characters
 
 
@@ -619,6 +644,38 @@ func get_phase() -> int:
 ## The chapters data.
 func get_config() -> ChaptersConfig:
 	return _config
+
+
+## Story 037: the ids of the achievements earned since the last call (earned order), then forgets them: the
+## "Moi mo" toast asks once per showing (after a region boss node's flow, on the ending / defeat screens).
+## Content is shown with AchievementsConfig.rewards_of(ids).
+func take_new_unlocks() -> Array[String]:
+	var out: Array[String] = _new_unlocks.duplicate()
+	_new_unlocks.clear()
+	return out
+
+
+# Story 037: evaluates the achievements against the progress (milestones already written by the caller) and
+# [param event], queues the new ones for [method take_new_unlocks]. The caller saves right after.
+func _process_unlocks(event: Dictionary) -> void:
+	if _progress == null:
+		return
+	for id: String in UnlockRules.process(AchievementsConfig.shared(), _progress, event):
+		if not _new_unlocks.has(id):
+			_new_unlocks.append(id)
+
+
+# Story 037: the `match_won` event of the match just won (see UnlockRules).
+func _match_won_event(is_region_boss: bool, is_final: bool) -> Dictionary:
+	return {"type": UnlockRules.EVENT_MATCH_WON, "character_id": _run.character_id, "region_id": _run.region_id,
+		"is_region_boss": is_region_boss, "is_final": is_final, "match_stats": _last_match_stats.duplicate(),
+		"run_stats": _run.stats.duplicate(true), "deck_ids": _run.deck_ids}
+
+
+# Story 037: the `run_ended` event (win: ending id of the boss fates; loss: "").
+func _run_ended_event(won: bool, ending_id: String) -> Dictionary:
+	return {"type": UnlockRules.EVENT_RUN_ENDED, "won": won, "ending_id": ending_id, "character_id": _run.character_id,
+		"run_stats": _run.stats.duplicate(true), "deck_ids": _run.deck_ids}
 
 
 ## The saved progress (live object; GameFlow writes it through the store).
@@ -890,6 +947,34 @@ func start_requested() -> void:
 		show_character_select()
 
 
+## Story 037: title "Thành tựu": TITLE -> ACHIEVEMENTS. Ignored in other phases.
+func open_achievements() -> void:
+	if _phase != Phase.TITLE:
+		return
+	_set_phase(Phase.ACHIEVEMENTS)
+
+
+## Story 037: the achievements screen's "Về": ACHIEVEMENTS -> TITLE. Ignored in other phases.
+func close_achievements() -> void:
+	if _phase != Phase.ACHIEVEMENTS:
+		return
+	_set_phase(Phase.TITLE)
+
+
+## Story 037 (reward / relic offer cards): marks the unlock [param kind] / [param id] seen (the "Mới" badge
+## goes away for good) and saves the progress.
+func mark_unlock_seen(kind: String, id: String) -> void:
+	_progress.mark_unlock_seen(kind, id)
+	_store.save_state(_progress)
+
+
+# DEV-ONLY (--screen=achievements_demo): fills a few milestones and earns what they open, in the memory store.
+func _dev_seed_achievements_demo() -> void:
+	for key: String in DEV_ACHIEVEMENTS_DEMO_MILESTONES:
+		_progress.add_milestone(key, int(DEV_ACHIEVEMENTS_DEMO_MILESTONES[key]))
+	UnlockRules.process(AchievementsConfig.shared(), _progress, {"type": "final_reached"})
+
+
 ## True when the save holds a run in progress (Story 019).
 func has_continue() -> bool:
 	return _progress.has_run()
@@ -984,6 +1069,8 @@ func go_back() -> void:
 			leave_run_keep_save()
 		Phase.CHARACTER_SELECT:
 			show_title()
+		Phase.ACHIEVEMENTS:
+			close_achievements()
 		Phase.TITLE:
 			if can_show_quit():
 				quit_requested()
@@ -1123,9 +1210,10 @@ func choose_fate(fate: String) -> void:
 		push_warning("GameFlow: choose_fate('%s') is not a known fate, ignored" % fate)
 		return
 	_progress.record_fate(match_id, fate)
+	_process_unlocks({"type": "fate", "fate": fate}) # Story 037: kills_total / spares_total moved
 	if fate == FateLogic.FATE_EXECUTE:
 		var offer: Array[String] = FateLogic.roll_execute_offer(_run.relic_ids(), _config.fate_config(), null,
-			hash([_run.run_seed, fate_floor, FATE_SEED_TAG]) & ChaptersConfig.SEED_MASK, _run.luck(get_reward_config()))
+			hash([_run.run_seed, fate_floor, FATE_SEED_TAG]) & ChaptersConfig.SEED_MASK, _run.luck(get_reward_config()), _run.locked_ids("relic"))
 		if not offer.is_empty():
 			_run.clear_pending_reward()
 			_run.set_pending_relic_offer(offer)
@@ -1338,8 +1426,11 @@ func get_piece_deck_rows() -> Array[Dictionary]:
 	var cfg: PieceDeckConfig = RunSession.piece_config()
 	var state: Dictionary = _run.piece_deck
 	var active: Array[String] = PieceDeck.active_ids(state, lib)
-	var percent: Dictionary = PieceDeck.drop_percent(PieceDeck.effective_weights(state, lib, _run.region_id, cfg))
-	var ids: Array[String] = lib.base_shape_ids()
+	var percent: Dictionary = PieceDeck.drop_percent(PieceDeck.effective_weights(state, lib, _run.region_id, cfg, _run.locked_ids("piece")))
+	var ids: Array[String] = []
+	for base_id: String in lib.base_shape_ids():
+		if not _run.is_locked("piece", base_id): # Story 037: a locked shape is not listed
+			ids.append(base_id)
 	for id: String in lib.run_only_ids():
 		if active.has(id) or _run.pending_ink_offer.has(id):
 			ids.append(id)
@@ -1454,7 +1545,7 @@ func _roll_ink_for(kind: String, force: bool) -> Array[String]:
 	var hit: bool = rng.randf() < cfg.ink_offer_chance
 	if not (force or INK_ALWAYS_KINDS.has(kind) or (INK_CHANCE_KINDS.has(kind) and hit)):
 		return [] as Array[String]
-	return PieceDeck.roll_ink_offer(_run.piece_deck, RunSession.piece_library(), cfg, rng.randi() & ChaptersConfig.SEED_MASK)
+	return PieceDeck.roll_ink_offer(_run.piece_deck, RunSession.piece_library(), cfg, rng.randi() & ChaptersConfig.SEED_MASK, _run.locked_ids("piece"))
 
 
 # DEV-ONLY (Story 034, --piece-deck-state / --run=piece_deck): applies SPEC ("|"-separated remove:id,id /
@@ -1652,7 +1743,7 @@ func _open_shop() -> void:
 	if state.is_empty():
 		var cfg: Dictionary = get_reward_config()
 		state = ShopLogic.build(_run.run_seed, _run.floor, _run.column, _run.node_index, _run.luck(cfg),
-			_run.relic_ids(), get_cards(), cfg, null, EconomyConfig.shared())
+			_run.relic_ids(), get_cards(), cfg, null, EconomyConfig.shared(), _run.locked)
 	state[SHOP_NODE] = key
 	_run.shop_state = state
 	_save_run()
@@ -1795,7 +1886,9 @@ func _begin_run() -> void:
 	_free_controller()
 	var run_seed: int = _dev_seed if _dev_seed >= 0 else randi() & ChaptersConfig.SEED_MASK
 	var starting_removals: int = int(get_reward_config().get("starting_removals", 0))
-	_run = RunSession.begin_world(_config, _character_dict(), run_seed, starting_removals)
+	# Story 037: the content still locked NOW is frozen into the run (unlocking mid-run changes nothing for it).
+	_run = RunSession.begin_world(_config, _character_dict(), run_seed, starting_removals,
+		AchievementsConfig.shared().locked_content(_progress))
 	_run.cards_config = get_cards()
 	for relic_id: String in _dev_relics:
 		_run.add_relic(relic_id)
@@ -1852,6 +1945,7 @@ func _spawn_match(match_id: String, kind: String) -> void:
 	controller.deck = _run.deck_ids
 	controller.deck_entries = _run.deck_entries()
 	controller.piece_deck = _run.piece_deck.duplicate(true)
+	controller.locked_pieces = _run.locked_ids("piece")
 	controller.boss_can_down = FateLogic.is_boss_fate_node(kind, _run.is_final_floor()) and not _is_event_fight_active()
 	_live_match_id = match_id
 	controller.hold_intro = _reward_blocking
@@ -1978,8 +2072,12 @@ func _on_match_won() -> void:
 	var view: CombatView = null if battle == null else battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
 	if view != null:
 		passive_heal = view.get_passive_heal()
-		_run.add_match_stats(view.get_match_stats(), true)
+		_last_match_stats = view.get_match_stats()
+		_run.add_match_stats(_last_match_stats, true)
+	else:
+		_last_match_stats = {}
 	if _is_event_fight_active():
+		_process_unlocks(_match_won_event(false, false))
 		_finish_event_fight(_controller.get_last_player_hp(), _controller.get_player_max_hp(), passive_heal)
 		return
 	_complete_match_node(_controller.get_last_player_hp(), _controller.get_player_max_hp(), passive_heal)
@@ -2000,6 +2098,8 @@ func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> 
 	var result: Dictionary = _run.complete_node(hp_end, max_hp, kind, get_reward_config(), passive_heal)
 	if kind == KIND_BOSS:
 		_record_boss(result)
+	# Story 037: milestones of this finished node are written (_record_boss); evaluate the achievements now.
+	_process_unlocks(_match_won_event(fate_node, bool(result.get("run_won", false))))
 	if bool(result.get("run_won", false)):
 		_finish_run_won()
 		return
@@ -2035,7 +2135,7 @@ func _offer_reward(kind: String) -> void:
 		_continue_after_reward(false)
 		return
 	cfg["offer_count"] = offers
-	var offer: Array[String] = RewardRoller.roll(get_cards(), cfg, _reward_seed(), [], _run.deck_levels(),
+	var offer: Array[String] = RewardRoller.roll(get_cards(), cfg, _reward_seed(), _run.locked_ids("card"), _run.deck_levels(),
 		_run.luck(cfg), str(info.get("min_rarity", "common")))
 	for id: String in offer:
 		_progress.mark_card_seen(id)
@@ -2064,7 +2164,7 @@ func _roll_treasure_relics() -> Array[String]:
 # The two spots that touch the relic data classes (Story 032).
 func _relic_roll(source: String, owned: Array[String], rng: RandomNumberGenerator) -> Array[String]:
 	var out: Array[String] = []
-	for id: Variant in RelicRoller.roll(source, owned, rng):
+	for id: Variant in RelicRoller.roll(source, owned, rng, null, 3, "", _run.locked_ids("relic")):
 		out.append(str(id))
 	return out
 
@@ -2126,6 +2226,8 @@ func _finish_run_won() -> void:
 	# Story 035: the ending of the run's boss fates (world.endings), recorded, shown on the ENDING screen.
 	var ending_id: String = _run.ending_id(_config.endings_config())
 	_progress.record_ending(ending_id)
+	_progress.record_run_won(_run.character_id) # Story 037: runs_won / runs_won:<character>
+	_process_unlocks(_run_ended_event(true, ending_id))
 	var line_keys: Array[String] = []
 	for i: int in ENDING_LINE_COUNT:
 		line_keys.append("ending.%s.line%d" % [ending_id, i + 1])
@@ -2150,6 +2252,7 @@ func _finish_run_lost() -> void:
 	_run.record_death({"floor": _run.floor, "region_id": _run.region_id, "match_id": _live_match_id,
 		"boss_name_key": _match_name_key(_run.region_id, _live_match_id)})
 	_defeat_summary = _run.stats_summary()
+	_process_unlocks(_run_ended_event(false, ""))
 	_progress.clear_run()
 	_store.save_state(_progress)
 	_run_result = RunResult.LOST
@@ -2176,6 +2279,8 @@ func _load_progress(progress_mode: String) -> ProgressState:
 			all.mark_all_regions_beaten(_config.region_ids())
 			for _id: String in _config.region_ids():
 				all.record_boss_clear()
+			# Story 037: every achievement earned and every unlock seen (nothing is locked in the runs of this save).
+			all.mark_all_unlocked(AchievementsConfig.shared(), _config.region_ids())
 			return all
 		PROGRESS_DEMO:
 			return _demo_progress()
@@ -2590,6 +2695,9 @@ func _record_boss(result: Dictionary) -> void:
 	_progress.record_boss_clear()
 	_progress.add_region_boss_beaten(str(result.get("region", "")))
 	_progress.record_floor(_run.floor + 1)
+	if _run.is_final_floor():
+		_progress.record_final_reached() # Story 037: An Dai reached (the last region boss opens the final floor)
+		_process_unlocks({"type": UnlockRules.EVENT_FINAL_REACHED})
 	_floor_clear_notice = {
 		"floor": _run.floor, "floor_number": _run.floor + 1,
 		"healed": float(result.get("healed", 0.0)), "is_final": _run.is_final_floor(),

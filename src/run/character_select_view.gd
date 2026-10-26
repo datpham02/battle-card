@@ -12,8 +12,11 @@ extends Node2D
 ## button only; input dedup as in TitleView (emulated copies — device ==
 ## InputEvent.DEVICE_ID_EMULATION — are consumed but never act).
 ## DEV convenience: Enter / Keypad Enter / Space (pressed, not echo) pick the FIRST unlocked card.
-## Placeholder art; all strings are TEXT_* keys drawn through tr(). More than four characters only
-## narrow the cards (a second row is out of scope for Story 018).
+## Placeholder art; all strings are TEXT_* keys drawn through tr(). Story 037: five cards share the width
+## (fonts shrink with the card width, wrapped blocks get one more line); a tap on a LOCKED card fills the
+## strip under the cards with its unlock condition and progress ("Giết 3 boss vùng - 1/3", from
+## AchievementsConfig / UnlockRules); the strip is reserved whenever any card is locked.
+## DEV-ONLY user arg `--screen=character_locked=<id>` shows that card's strip on entry (captures).
 
 const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
 const CARD_OPEN_BACK: Color = Color(1.0, 0.97, 0.9)
@@ -91,6 +94,31 @@ const SIGNATURE_DESC_SUFFIX: String = ".desc"
 const TEXT_DECK_ENTRY: String = "ui.character_select.deck_entry"
 ## The back-to-title button (ScreenLayout.back_button_rect).
 const TEXT_BACK: String = "ui.character_select.back"
+## Story 037: the strip under the cards: the hint before any locked card was tapped, and "%s - %d/%d" (condition,
+## current, target) after.
+const TEXT_LOCKED_HINT: String = "character.locked_hint"
+const TEXT_LOCKED_PROGRESS: String = "character.locked_progress"
+const DEV_LOCKED_ARG: String = "--screen=character_locked="
+const REWARD_KIND_CHARACTER: String = "character"
+## Story 037 layout: the card width the base font sizes were made for, the smallest font scale, the share of the
+## height where the cards end when the strip is reserved, and the strip itself.
+const REF_CARD_WIDTH: float = 384.0
+const MIN_FONT_SCALE: float = 0.66
+const NARROW_SCALE: float = 0.9
+const MIN_FONT_SIZE: int = 12
+const CARDS_BOTTOM_WITH_STRIP: float = 0.86
+const STRIP_TOP: float = 0.88
+const STRIP_BOTTOM: float = 0.96
+const STRIP_FONT_SIZE: int = 26
+const STRIP_BACK: Color = Color(1.0, 0.97, 0.9)
+const STRIP_TEXT_COLOR: Color = Color(0.4, 0.2, 0.12)
+## Narrow cards: lower signature block (shares of the card height).
+const NARROW_DECK_HEADER_BASELINE: float = 0.70
+const NARROW_DECK_BASELINE: float = 0.755
+const NARROW_DIVIDER_3: float = 0.865
+const NARROW_SIGNATURE_NAME_BASELINE: float = 0.90
+const NARROW_SIGNATURE_DESC_BASELINE: float = 0.93
+const NARROW_SIGNATURE_DESC_MAX_LINES: int = 3
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -98,17 +126,60 @@ const TEXT_BACK: String = "ui.character_select.back"
 var _flow: GameFlow
 ## Card names for the deck summary (loaded once).
 var _skills: SkillConfig
+## Story 037: the locked character whose unlock condition the strip shows ("" = the hint).
+var _hint_id: String = ""
 
 
 func _ready() -> void:
 	_flow = get_node(flow_path) as GameFlow
 	_skills = SkillConfig.load_from_file()
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(DEV_LOCKED_ARG):
+			_hint_id = arg.trim_prefix(DEV_LOCKED_ARG)
 
 
 # Redraws every frame, also while inactive: a CanvasItem keeps its last frame until the next
 # redraw, and a transparent screen drawn later (the chapter map) would show the stale title.
 func _process(_delta: float) -> void:
 	queue_redraw()
+
+
+## The id whose unlock condition the strip shows ("" = none yet).
+func get_hint_id() -> String:
+	return _hint_id
+
+
+## Story 037: the card rectangles; with any locked card they end at [constant CARDS_BOTTOM_WITH_STRIP] of the height.
+func card_rects(vp: Vector2) -> Array[Rect2]:
+	var ids: Array[String] = _flow.get_characters().ids()
+	var rects: Array[Rect2] = ScreenLayout.character_card_rects(vp, ids.size())
+	if _any_locked(ids):
+		for i: int in rects.size():
+			rects[i].size.y = vp.y * CARDS_BOTTOM_WITH_STRIP - rects[i].position.y
+	return rects
+
+
+## The strip under the cards (only meaningful while a card is locked).
+static func strip_rect(vp: Vector2) -> Rect2:
+	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	return Rect2(margin, vp.y * STRIP_TOP, vp.x - margin * 2.0, vp.y * (STRIP_BOTTOM - STRIP_TOP))
+
+
+func _any_locked(ids: Array[String]) -> bool:
+	for id: String in ids:
+		if not _is_unlocked(id):
+			return true
+	return false
+
+
+## The strip text for locked character [param id]: the condition of the achievement that owns it, " - cur/target".
+func locked_text(id: String) -> String:
+	var cfg: AchievementsConfig = AchievementsConfig.shared()
+	var owner_id: String = cfg.reward_owner(REWARD_KIND_CHARACTER, id)
+	if owner_id.is_empty():
+		return tr(TEXT_LOCKED_HINT)
+	var info: Dictionary = UnlockRules.progress_of(cfg, owner_id, _flow.get_progress())
+	return tr(TEXT_LOCKED_PROGRESS) % [tr(str(cfg.get_def(owner_id).get("desc_key", ""))), int(info.get("current", 0)), int(info.get("target", 1))]
 
 
 func _is_active() -> bool:
@@ -149,12 +220,15 @@ func _input(event: InputEvent) -> void:
 			_flow.show_title()
 		return
 	var ids: Array[String] = _flow.get_characters().ids()
-	var rects: Array[Rect2] = ScreenLayout.character_card_rects(vp, ids.size())
+	var rects: Array[Rect2] = card_rects(vp)
 	for i: int in rects.size():
 		if rects[i].has_point(pos):
 			get_viewport().set_input_as_handled()
-			if event.device != InputEvent.DEVICE_ID_EMULATION and _is_unlocked(ids[i]):
-				_flow.character_chosen(ids[i])
+			if event.device != InputEvent.DEVICE_ID_EMULATION:
+				if _is_unlocked(ids[i]):
+					_flow.character_chosen(ids[i])
+				else:
+					_hint_id = ids[i]
 			return
 
 
@@ -174,43 +248,75 @@ func _draw() -> void:
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
 	var ids: Array[String] = _flow.get_characters().ids()
-	var rects: Array[Rect2] = ScreenLayout.character_card_rects(vp, ids.size())
+	var rects: Array[Rect2] = card_rects(vp)
 	for i: int in rects.size():
 		_draw_card(rects[i], ids[i])
+	if _any_locked(ids):
+		_draw_strip(vp)
+
+
+# Story 037: the unlock condition of the tapped locked card (or the hint to tap one).
+func _draw_strip(vp: Vector2) -> void:
+	var strip: Rect2 = strip_rect(vp)
+	draw_rect(strip, STRIP_BACK)
+	draw_rect(strip, CARD_LOCKED_OUTLINE, false, OUTLINE_WIDTH)
+	var text: String = locked_text(_hint_id) if not _hint_id.is_empty() else tr(TEXT_LOCKED_HINT)
+	var pad: float = strip.size.x * 0.02
+	var size: int = _fit(text, strip.size.x - pad * 2.0, STRIP_FONT_SIZE)
+	draw_string(ThemeDB.fallback_font, Vector2(strip.position.x + pad, strip.get_center().y + size * 0.35), text, HORIZONTAL_ALIGNMENT_CENTER, strip.size.x - pad * 2.0, size, STRIP_TEXT_COLOR if not _hint_id.is_empty() else LOCKED_TEXT)
 
 
 func _draw_card(rect: Rect2, id: String) -> void:
 	var character: Dictionary = _flow.get_characters().get_character(id)
 	var locked: bool = not bool(character.get("unlocked", false))
 	var pressed: bool = not locked and UiButtons.is_pressed_at(self, rect)
+	var picked: bool = locked and id == _hint_id
 	draw_rect(rect, CARD_LOCKED_BACK if locked else CARD_OPEN_BACK)
-	if pressed:
+	if pressed or picked:
 		draw_rect(rect, CARD_PRESSED_OUTLINE, false, PRESSED_OUTLINE_WIDTH)
 	else:
 		draw_rect(rect, CARD_LOCKED_OUTLINE if locked else CARD_OPEN_OUTLINE, false, OUTLINE_WIDTH)
+	var scale: float = clampf(rect.size.x / REF_CARD_WIDTH, MIN_FONT_SCALE, 1.0)
+	var narrow: bool = scale < NARROW_SCALE
+	var extra: int = 1 if narrow else 0
 	var pad: float = rect.size.x * CARD_PAD_RATIO
 	var inner := Rect2(rect.position.x + pad, rect.position.y, rect.size.x - pad * 2.0, rect.size.y)
 	var name_color: Color = LOCKED_TEXT if locked else NAME_COLOR
 	var hp_color: Color = LOCKED_TEXT if locked else HP_COLOR
 	var body_color: Color = LOCKED_TEXT if locked else BODY_COLOR
 	var passive_color: Color = LOCKED_TEXT if locked else PASSIVE_COLOR
-	_text(inner, _y(rect, NAME_BASELINE), tr(str(character.get("name_key", id))), NAME_FONT_SIZE, name_color)
-	_text(inner, _y(rect, HP_BASELINE), tr(TEXT_HP) % int(float(character.get("max_hp", 0.0))), HP_FONT_SIZE, hp_color)
-	_wrapped(inner, _y(rect, DESC_BASELINE), tr(str(character.get("desc_key", ""))), DESC_FONT_SIZE, DESC_MAX_LINES, body_color)
+	var name_text: String = tr(str(character.get("name_key", id)))
+	_text(inner, _y(rect, NAME_BASELINE), name_text, _fit(name_text, inner.size.x, _fs(NAME_FONT_SIZE, scale)), name_color)
+	_text(inner, _y(rect, HP_BASELINE), tr(TEXT_HP) % int(float(character.get("max_hp", 0.0))), _fs(HP_FONT_SIZE, scale), hp_color)
+	_wrapped(inner, _y(rect, DESC_BASELINE), tr(str(character.get("desc_key", ""))), _fs(DESC_FONT_SIZE, scale), DESC_MAX_LINES + extra, body_color)
 	_divider(inner, _y(rect, DIVIDER_1))
-	_text(inner, _y(rect, PASSIVE_NAME_BASELINE), tr(str(character.get("passive_name_key", ""))), PASSIVE_NAME_FONT_SIZE, passive_color)
-	_wrapped(inner, _y(rect, PASSIVE_DESC_BASELINE), tr(str(character.get("passive_desc_key", ""))), PASSIVE_DESC_FONT_SIZE, PASSIVE_DESC_MAX_LINES, body_color)
+	var passive_name: String = tr(str(character.get("passive_name_key", "")))
+	_text(inner, _y(rect, PASSIVE_NAME_BASELINE), passive_name, _fit(passive_name, inner.size.x, _fs(PASSIVE_NAME_FONT_SIZE, scale)), passive_color)
+	_wrapped(inner, _y(rect, PASSIVE_DESC_BASELINE), tr(str(character.get("passive_desc_key", ""))), _fs(PASSIVE_DESC_FONT_SIZE, scale), PASSIVE_DESC_MAX_LINES + extra, body_color)
 	_divider(inner, _y(rect, DIVIDER_2))
-	_text(inner, _y(rect, DECK_HEADER_BASELINE), tr(TEXT_DECK), DECK_HEADER_FONT_SIZE, name_color)
-	_wrapped(inner, _y(rect, DECK_BASELINE), _deck_summary(id), DECK_FONT_SIZE, DECK_MAX_LINES, body_color)
+	_text(inner, _y(rect, NARROW_DECK_HEADER_BASELINE if narrow else DECK_HEADER_BASELINE), tr(TEXT_DECK), _fs(DECK_HEADER_FONT_SIZE, scale), name_color)
+	_wrapped(inner, _y(rect, NARROW_DECK_BASELINE if narrow else DECK_BASELINE), _deck_summary(id), _fs(DECK_FONT_SIZE, scale), DECK_MAX_LINES + extra, body_color)
 	var signature_id: String = _signature_id(character)
 	if not locked and not signature_id.is_empty():
-		_divider(inner, _y(rect, DIVIDER_3))
+		_divider(inner, _y(rect, NARROW_DIVIDER_3 if narrow else DIVIDER_3))
 		var key_base: String = SIGNATURE_KEY_PREFIX + signature_id
-		_text(inner, _y(rect, SIGNATURE_NAME_BASELINE), tr(TEXT_SIGNATURE) % tr(key_base + SIGNATURE_NAME_SUFFIX), SIGNATURE_NAME_FONT_SIZE, SIGNATURE_COLOR)
-		_wrapped(inner, _y(rect, SIGNATURE_DESC_BASELINE), tr(key_base + SIGNATURE_DESC_SUFFIX), SIGNATURE_DESC_FONT_SIZE, SIGNATURE_DESC_MAX_LINES, body_color)
+		var sig_text: String = tr(TEXT_SIGNATURE) % tr(key_base + SIGNATURE_NAME_SUFFIX)
+		_text(inner, _y(rect, NARROW_SIGNATURE_NAME_BASELINE if narrow else SIGNATURE_NAME_BASELINE), sig_text, _fit(sig_text, inner.size.x, _fs(SIGNATURE_NAME_FONT_SIZE, scale)), SIGNATURE_COLOR)
+		_wrapped(inner, _y(rect, NARROW_SIGNATURE_DESC_BASELINE if narrow else SIGNATURE_DESC_BASELINE), tr(key_base + SIGNATURE_DESC_SUFFIX), _fs(SIGNATURE_DESC_FONT_SIZE, scale), NARROW_SIGNATURE_DESC_MAX_LINES if narrow else SIGNATURE_DESC_MAX_LINES, body_color)
 	if locked:
 		_draw_padlock(rect)
+
+
+# Font size [param base] scaled by [param scale], never below MIN_FONT_SIZE.
+func _fs(base: int, scale: float) -> int:
+	return maxi(roundi(base * scale), MIN_FONT_SIZE)
+
+
+# The largest size from [param size] down to MIN_FONT_SIZE whose one-line [param text] fits [param width].
+func _fit(text: String, width: float, size: int) -> int:
+	while size > MIN_FONT_SIZE and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x > width:
+		size -= 1
+	return size
 
 
 # The starter deck of [param id] by copies, in first-appearance order: "Kiếm khí ×2 · Chấn phong ×2 …".

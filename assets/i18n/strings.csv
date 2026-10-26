@@ -645,3 +645,100 @@ ui.hud.hop,NHẢY,HOP
 ui.hud.riposte,PHẢN ĐÒN,RIPOSTE
 ui.hud.surface,TRỒI LÊN,SURFACING
 ui.hud.burrowed,ĐANG LẶN,BURROWED
+card.gai_doc.name,Gai độc,Venom Thorns
+card.gai_doc.desc,Rải gai lên các ô trúng trong 3 giây: mỗi lần bước vào mất 6 máu và nhận Rạn 1 tầng. Trúng thì gây thêm sát thương nhẹ.,Covers the cut cells in thorns for 3 s: each entry costs 6 HP and applies 1 Fragile. Also deals light damage on a hit.
+card.luoi_san.name,Lưới săn,Hunting Net
+card.luoi_san.desc,Phong ấn các ô trúng trong 2 giây. Trúng boss thì gieo Rạn 1 tầng.,Seals the cut cells for 2 s. A hit on the boss applies 1 Fragile.
+card.thanh_thuy.name,Thánh thủy,Holy Water
+card.thanh_thuy.desc,"Gieo Hàn 1 tầng. Hồi 4 máu cho người niệm khi đòn tới nơi, trúng hay trượt.","Applies 1 Frost. Heals the caster 4 HP when the cut lands, hit or miss."
+card.bang_tam.name,Băng tâm,Frost Heart
+card.bang_tam.desc,Sát thương theo số ô và gieo Hàn 2 tầng.,Damage per cell and applies 2 Frost.
+piece.w5.name,Bậc thang,Staircase
+piece.n5.name,Chữ N,N
+piece.v5.name,Chữ V,V
+achievement.first_region_boss.name,Boss vùng đầu tiên,First Region Boss
+achievement.first_region_boss.desc,Hạ boss vùng đầu tiên,Defeat your first region boss
+achievement.reach_an_dai.name,Tới Ấn Đài,Reach the Dais
+achievement.reach_an_dai.desc,Lần đầu tới Ấn Đài,Reach the Seal Dais for the first time
+achievement.first_run_won.name,Chiến thắng đầu tiên,First Victory
+achievement.first_run_won.desc,Thắng một run,Win a run
+achievement.hunter_path.name,Đường Thợ săn,The Hunter's Path
+achievement.hunter_path.desc,Giết tổng cộng 3 boss vùng,Execute 3 region bosses in total
+achievement.mercy_path.name,Đường Từ bi,The Path of Mercy
+achievement.mercy_path.desc,Tha tổng cộng 3 boss vùng,Spare 3 region bosses in total
+achievement.ending_mercy.name,Lòng Tha Thứ,Mercy Ending
+achievement.ending_mercy.desc,Xem kết thúc tha hết,See the ending where every boss is spared
+achievement.ending_middle.name,Cán Cân,Balance Ending
+achievement.ending_middle.desc,Xem kết thúc lưng chừng,See the ending of mixed choices
+achievement.ending_slaughter.name,Lưỡi Kiếm Lạnh,Cold Blade Ending
+achievement.ending_slaughter.desc,Xem kết thúc giết hết,See the ending where every boss is executed
+achievement.boss_forest.name,Chủ Rừng Sương,Master of the Mist
+achievement.boss_forest.desc,Hạ boss vùng Rừng Sương,Defeat the Misty Forest boss
+achievement.boss_dungeon.name,Vua Hầm Ngục,Dungeon Conqueror
+achievement.boss_dungeon.desc,Hạ boss vùng Hầm Ngục,Defeat the Dungeon boss
+achievement.boss_frost.name,Phá Tháp Sương,Mist Tower Breaker
+achievement.boss_frost.desc,Hạ boss vùng Tháp Sương,Defeat the Mist Tower boss
+achievement.zone_trap.name,Bẫy gai,Thorn Trap
+achievement.zone_trap.desc,Boss bước vào gai 5 lần trong một run,Make a boss step on your thorns 5 times in one run
+achievement.frost_burst_5.name,Bão Hàn,Frost Storm
+achievement.frost_burst_5.desc,Hàn nổ 5 lần trong một trận,Burst Frost 5 times in one match
+achievement.win_kiem_si.name,Kiếm sĩ khải hoàn,Swordsman's Triumph
+achievement.win_kiem_si.desc,Thắng một run với Kiếm sĩ,Win a run as the Swordsman
+achievement.win_phap_su.name,Pháp sư khải hoàn,Mage's Triumph
+achievement.win_phap_su.desc,Thắng một run với Pháp sư,Win a run as the Mage
+achievement.win_sat_thu.name,Sát thủ khải hoàn,Assassin's Triumph
+achievement.win_sat_thu.desc,Thắng một run với Sát thủ,Win a run as the Assassin
+achievement.win_tho_san.name,Thợ săn khải hoàn,Hunter's Triumph
+achievement.win_tho_san.desc,Thắng một run với Thợ săn,Win a run as the Hunter
+achievement.win_giao_si.name,Giáo sĩ khải hoàn,Priest's Triumph
+achievement.win_giao_si.desc,Thắng một run với Giáo sĩ,Win a run as the Priest
+achievement.burn_build.name,Bộ bài lửa,Burning Deck
+achievement.burn_build.desc,Hạ boss vùng với từ 4 lá Đốt trong bộ,Defeat a region boss with 4 or more Burn cards in your deck
+achievement.featured_10.name,Bậc thầy hình chủ đạo,Featured Master
+achievement.featured_10.desc,10 đòn hình chủ đạo trong một run,Land 10 featured-shape casts in one run
+achievement.no_hit_boss.name,Bất khả xâm phạm,Untouchable
+achievement.no_hit_boss.desc,Hạ boss vùng mà không nhận đòn nào,Defeat a region boss without taking a hit
+achievement.small_deck.name,Bộ bài gọn,Lean Deck
+achievement.small_deck.desc,Thắng run với bộ từ 8 lá trở xuống,Win a run with a deck of 8 cards or fewer
+character.tho_san.name,Thợ săn,Hunter
+character.tho_san.desc,Giăng bẫy và kết giới để boss lộ sơ hở; tuyệt kỹ kéo dài vùng.,Sets traps and seals to leave the boss open; its signature stretches zones.
+character.giao_si.name,Giáo sĩ,Priest
+character.giao_si.desc,"Bền bỉ, xây bộ Hàn; mỗi lần Hàn nổ lại hồi máu.","Sturdy, builds on Frost; every Frost burst heals."
+passive.hunter_mark.name,Dấu săn,Hunter's Mark
+passive.hunter_mark.desc,"Boss bước vào gai của bạn, hoặc đứng kề kết giới vừa lập, nhận 1 tầng Rạn (chờ 3 giây).","A boss that steps onto your thorns, or stands next to a fresh seal, gains 1 Fragile (3 s cooldown)."
+passive.prayer.name,Lời nguyện,Prayer
+passive.prayer.desc,"Mỗi lần Hàn nổ trên boss, hồi 8 máu.",Every Frost burst on the boss heals 8 HP.
+signature.vay_bat.name,Vây Bắt,Snare
+signature.vay_bat.desc,"4 giây: vùng bạn tạo kéo dài ×1,5; mỗi tầng Rạn bị tiêu nhân ×2 thay vì ×1,5.",4 s: zones you form last ×1.5 longer; each Fragile stack spent deals ×2 instead of ×1.5.
+signature.thanh_an.name,Thánh Ấn,Holy Seal
+signature.thanh_an.desc,"4 giây: mỗi đòn trúng boss thêm 1 tầng Hàn; Hàn nổ gây ×1,5.",4 s: every hit on the boss adds 1 Frost; Frost bursts deal ×1.5.
+ui.hud.heal_number,+%d,+%d
+title.achievements,Thành tựu,Achievements
+achievements.title,THÀNH TỰU,ACHIEVEMENTS
+achievements.counter,%d/%d,%d/%d
+achievements.hidden,???,???
+achievements.hidden_desc,Thành tựu ẩn: cứ chơi rồi sẽ biết.,Hidden achievement: keep playing to find out.
+achievements.earned,Đã đạt,Earned
+achievements.back,Về,Back
+achievements.detail.condition,Điều kiện,Condition
+achievements.detail.rewards,Phần thưởng,Rewards
+achievements.detail.progress,Tiến độ %d/%d,Progress %d/%d
+achievements.detail.no_reward,"Không có phần thưởng, chỉ có danh dự.","No reward, just bragging rights."
+achievements.detail.close,Chạm để đóng,Tap to close
+achievements.reward.card,Lá bài,Card
+achievements.reward.piece,Mảnh,Piece
+achievements.reward.relic,Bảo vật,Relic
+achievements.reward.character,Nhân vật,Character
+achievements.reward.region,Vùng,Region
+unlock.new,Mới,New
+unlock.title,Mới mở,Unlocked
+unlock.kind.card,Lá bài,Card
+unlock.kind.piece,Mảnh,Piece
+unlock.kind.relic,Bảo vật,Relic
+unlock.kind.character,Nhân vật,Character
+unlock.kind.region,Vùng,Region
+unlock.kind.achievement,Thành tựu,Achievement
+unlock.more,+%d nữa,+%d more
+unlock.tap,Chạm để tiếp tục,Tap to continue
+character.locked_hint,Chạm vào thẻ khóa để xem cách mở,Tap a locked card to see how to unlock it
+character.locked_progress,%s - %d/%d,%s - %d/%d

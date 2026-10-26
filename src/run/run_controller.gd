@@ -80,6 +80,9 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 ## Story 034: the run's piece deck (RunSession.piece_deck, a PieceDeck state); becomes match_params["piece_deck"]
 ## (absent when empty = original drop weights). Set by GameFlow BEFORE add_child (optional).
 @export var piece_deck: Dictionary = {}
+## Story 037: shape ids locked when the run started (RunSession.locked_ids("piece")); becomes match_params["locked_pieces"]
+## (absent when empty): the player's drops never draw them. Set by GameFlow BEFORE add_child (optional).
+@export var locked_pieces: Array[String] = []
 ## Story 035: this match is a REGION boss node: becomes match_params[CombatView.PARAM_BOSS_CAN_DOWN] (the boss is
 ## downed at 0 HP instead of removed). Set by GameFlow; never for a miniboss, normal, event fight or the final match.
 @export var boss_can_down: bool = false
@@ -328,6 +331,8 @@ func _spawn_battle() -> void:
 		params["run_modifiers"] = modifier_overrides
 	if not piece_deck.is_empty():
 		params["piece_deck"] = piece_deck.duplicate(true)
+	if not locked_pieces.is_empty():
+		params["locked_pieces"] = locked_pieces.duplicate()
 	if boss_can_down:
 		params[CombatView.PARAM_BOSS_CAN_DOWN] = true
 	if not deck_entries.is_empty():

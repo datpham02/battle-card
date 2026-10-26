@@ -72,6 +72,8 @@ func _initialize() -> void:
 	await _test_tram()
 	await _test_thien_hoa()
 	await _test_anh_bo()
+	await _test_vay_bat()
+	await _test_thanh_an()
 	await _test_unknown_and_none()
 	await _test_character_config()
 	await process_frame
@@ -460,9 +462,104 @@ func _test_anh_bo() -> void:
 	_check("anh_bo no mult param -> fallback 1.0", bare.modify_damage("x", 3, 10.0, false) == 10.0)
 
 
+# Story 037: Vay Bat lengthens the player's zones x1.5 and Ran consumption x2.0 ONLY while active.
+func _test_vay_bat() -> void:
+	var v: CombatView = await _view(_cc.get_character("tho_san"))
+	var sig: BaseSignature = v.get_signature()
+	_check("vay_bat: registered, timed 4 s", sig != null and sig.get_id() == "vay_bat" and _near(v.get_signature_duration(), 4.0))
+	var status: StatusEffects = v.get_status()
+	var state: CombatState = v.get_state()
+	var enemy: int = CombatState.Side.ENEMY
+	var cfg_mult: float = CombatConfig.load_from_file().fragile_mult
+	# Inactive: the config numbers.
+	var far: Array[Vector2i] = []
+	for cell: Vector2i in v.get_grid().enemy_cells():
+		if cell != state.enemy_cell and far.size() < 2:
+			far.append(cell)
+	var seal_sec: float = float(v.get_skill_config().get_skill("ket_gioi")["seal_sec"])
+	_cast_cells(v, far, "ket_gioi")
+	var sealed: Array[Vector2i] = status.sealed_cells(enemy)
+	_check("vay_bat inactive: seal lasts the card's seal_sec", not sealed.is_empty() and _near(status.seal_total_sec(enemy, sealed[0]), seal_sec))
+	_check("vay_bat inactive: hooks neutral", sig.zone_sec_mult() == 1.0 and sig.fragile_mult_override() == 0.0)
+	status.clear_zones()
+	status.apply_fragile(enemy, 1)
+	_check("vay_bat inactive: Ran uses the config multiplier", _near(status.consume_fragile(enemy), cfg_mult))
+	# Active.
+	sig.activate()
+	_check("vay_bat active: zone x1.5, Ran override 2.0", _near(sig.zone_sec_mult(), 1.5) and _near(sig.fragile_mult_override(), 2.0))
+	_cast_cells(v, far, "ket_gioi")
+	sealed = status.sealed_cells(enemy)
+	_check("vay_bat active: seal lasts 1.5x", not sealed.is_empty() and _near(status.seal_total_sec(enemy, sealed[0]), seal_sec * 1.5))
+	var thorn_sec: float = float(CombatConfig.load_from_file().zone_numbers()["thorn_sec"])
+	_cast_cells(v, far, "tran_gai")
+	_check("vay_bat active: thorns last 1.5x", _near(status.thorn_total_sec(enemy, far[0]), thorn_sec * 1.5), str(status.thorn_total_sec(enemy, far[0])))
+	status.apply_fragile(enemy, 2)
+	_check("vay_bat active: each Ran stack spent is x2.0 (then x2.0 again)", _near(status.consume_fragile(enemy), 2.0) and _near(status.fragile_mult_against(enemy), 2.0))
+	status.consume_fragile(enemy)
+	_check("vay_bat active: the player's own Ran is untouched", (func() -> bool:
+		status.apply_fragile(CombatState.Side.PLAYER, 1)
+		return _near(status.consume_fragile(CombatState.Side.PLAYER), cfg_mult)).call())
+	# A real damage hit on a Ran boss while active: x2.0 instead of x1.5.
+	status.clear_zones()
+	status.apply_fragile(enemy, 1)
+	var per: float = _per_cell(v)
+	var r: Dictionary = _cast(v, 3)
+	_check("vay_bat active: a Ran'd hit deals x2.0", _near(float(r["damage"]), per * 3.0 * 2.0), str(r["damage"]))
+	# Expired.
+	sig.tick(4.5)
+	_check("vay_bat expired: neutral hooks again", not sig.is_active() and sig.zone_sec_mult() == 1.0 and sig.fragile_mult_override() == 0.0)
+	_cast_cells(v, far, "ket_gioi")
+	sealed = status.sealed_cells(enemy)
+	_check("vay_bat expired: seal back to seal_sec", not sealed.is_empty() and _near(status.seal_total_sec(enemy, sealed[0]), seal_sec))
+	status.apply_fragile(enemy, 1)
+	_check("vay_bat expired: Ran back to config", _near(status.consume_fragile(enemy), cfg_mult))
+	_drop(v)
+
+
+# Story 037: Thanh An adds Han on every hit and x1.5 on a burst, only inside its window.
+func _test_thanh_an() -> void:
+	var v: CombatView = await _view(_cc.get_character("giao_si"))
+	var sig: BaseSignature = v.get_signature()
+	var status: StatusEffects = v.get_status()
+	var state: CombatState = v.get_state()
+	var enemy: int = CombatState.Side.ENEMY
+	var cfg: CombatConfig = CombatConfig.load_from_file()
+	_check("thanh_an: registered, timed 4 s", sig != null and sig.get_id() == "thanh_an" and _near(v.get_signature_duration(), 4.0))
+	_cast(v, 3)
+	_check("thanh_an inactive: a plain hit adds no Han", status.frost_stacks(enemy) == 0)
+	sig.activate()
+	_cast(v, 3)
+	_check("thanh_an active: a hit adds 1 extra Han stack", status.frost_stacks(enemy) == 1, str(status.frost_stacks(enemy)))
+	_cast(v, 3)
+	_check("thanh_an active: second hit -> 2 stacks", status.frost_stacks(enemy) == 2)
+	var before: float = state.enemy_hp
+	_cast(v, 3)
+	var hit_only: float = float(v.get_cut_feedback()["damage"])
+	var burst_expect: float = cfg.frost_burst_damage * 1.5
+	_check("thanh_an active: the third stack bursts for x1.5", _near(before - state.enemy_hp, hit_only + burst_expect), "dealt %s hit %s burst %s" % [str(before - state.enemy_hp), str(hit_only), str(burst_expect)])
+	_check("thanh_an active: stacks reset after the burst", status.frost_stacks(enemy) == 0)
+	_check("thanh_an: the burst is counted in the match stats (frost_bursts)", int(v.get_match_stats()["frost_bursts"]) == 1)
+	# A miss adds nothing.
+	var far: Array[Vector2i] = [Vector2i(state.enemy_cell.x, 100)]
+	_cast_cells(v, far)
+	_check("thanh_an active: a miss adds no Han", status.frost_stacks(enemy) == 0)
+	# A card's own Han burst inside the window is x1.5 too (han_khi x3 stacks via the host).
+	status.apply_frost(enemy, 2)
+	var direct: float = status.apply_frost(enemy, 1)
+	_check("thanh_an active: apply_frost burst is x1.5", _near(direct, burst_expect), str(direct))
+	# Expired.
+	sig.tick(4.5)
+	_check("thanh_an expired: neutral hooks", not sig.is_active() and sig.frost_burst_mult() == 1.0)
+	_cast(v, 3)
+	_check("thanh_an expired: hits add no Han again", status.frost_stacks(enemy) == 0)
+	status.apply_frost(enemy, 2)
+	_check("thanh_an expired: burst x1 again", _near(status.apply_frost(enemy, 1), cfg.frost_burst_damage))
+	_drop(v)
+
+
 func _test_unknown_and_none() -> void:
 	_check("registry unknown -> null", SignatureRegistry.create("zzz") == null)
-	_check("registry known ids", SignatureRegistry.known_ids() == (["anh_bo", "thien_hoa", "tram"] as Array[String]))
+	_check("registry known ids", SignatureRegistry.known_ids() == (["anh_bo", "thanh_an", "thien_hoa", "tram", "vay_bat"] as Array[String]))
 	var ch: Dictionary = _cc.get_character("kiem_si")
 	ch["signature"] = {"id": "zzz", "charge_cells": 18, "params": {}}
 	var v: CombatView = await _view(ch)

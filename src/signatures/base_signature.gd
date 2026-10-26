@@ -67,6 +67,23 @@ func step_cooldown_scale() -> float:
 	return 1.0
 
 
+## Story 037: multiplier of the duration of every zone (seal / thorns) the PLAYER forms (1.0 = unchanged).
+## Read by CutEffects at the moment a zone card's swing arrives.
+func zone_sec_mult() -> float:
+	return 1.0
+
+
+## Story 037: damage multiplier ONE consumed Ran stack of the boss gives instead of the config's fragile_mult
+## (0.0 = use the config's). Read by StatusEffects.consume_fragile.
+func fragile_mult_override() -> float:
+	return 0.0
+
+
+## Story 037: multiplier of a Han burst on the boss (1.0 = unchanged). Read by StatusEffects.apply_frost.
+func frost_burst_mult() -> float:
+	return 1.0
+
+
 ## True while a timed effect runs.
 func is_active() -> bool:
 	return false
