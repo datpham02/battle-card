@@ -20,9 +20,9 @@ func _good(id: String, rewards: Array = []) -> Dictionary:
 func _init() -> void:
 	var cfg: AchievementsConfig = AchievementsConfig.load_from_file()
 	var ids: Array[String] = cfg.ids()
-	_check("loads 22 achievements", ids.size() == 22, str(ids.size()))
-	_check("file order starts with first_region_boss and ends with small_deck", ids[0] == "first_region_boss" and ids[21] == "small_deck")
-	_check("shared() is cached", AchievementsConfig.shared() == AchievementsConfig.shared() and AchievementsConfig.shared().ids().size() == 22)
+	_check("loads 24 achievements (22 of Story 037 + 2 of Story 039)", ids.size() == 24, str(ids.size()))
+	_check("file order starts with first_region_boss, small_deck is 22nd, the Story 039 pair ends the file", ids[0] == "first_region_boss" and ids[21] == "small_deck" and ids[22] == "reach_floor_4" and ids[23] == "reach_floor_5")
+	_check("shared() is cached", AchievementsConfig.shared() == AchievementsConfig.shared() and AchievementsConfig.shared().ids().size() == 24)
 	_check("has", cfg.has("hunter_path") and not cfg.has("nope"))
 	var d: Dictionary = cfg.get_def("hunter_path")
 	_check("get_def fields", d["id"] == "hunter_path" and d["name_key"] == "achievement.hunter_path.name" and d["desc_key"] == "achievement.hunter_path.desc"
@@ -38,7 +38,7 @@ func _init() -> void:
 	var types: Dictionary = {}
 	for id: String in ids:
 		types[cfg.get_def(id)["condition"]["type"]] = true
-	_check("all 7 condition types used", types.size() == 7, str(types.keys()))
+	_check("all 8 condition types used (Story 039: + best_floor)", types.size() == 8, str(types.keys()))
 
 	# --- reward owner / is_unlocked
 	_check("reward_owner of locked content", cfg.reward_owner("card", "gai_doc") == "first_region_boss" and cfg.reward_owner("character", "giao_si") == "mercy_path"
@@ -54,7 +54,7 @@ func _init() -> void:
 	# --- locked_content
 	var empty := ProgressState.new()
 	var locked: Dictionary = cfg.locked_content(empty)
-	_check("locked_content kinds = card, piece, relic, character (no region)", locked.keys().size() == 4 and not locked.has("region"), str(locked.keys()))
+	_check("locked_content kinds = card, piece, relic, character, region (Story 039: hellfire, sky_isles)", locked.keys().size() == 5 and (locked.get("region", []) as Array) == ["hellfire", "sky_isles"], str(locked))
 	_check("locked cards", (locked["card"] as Array) == ["gai_doc", "bang_tam", "luoi_san", "thanh_thuy"], str(locked["card"]))
 	_check("locked pieces", (locked["piece"] as Array) == ["w5", "v5", "n5"], str(locked["piece"]))
 	_check("locked relics", (locked["relic"] as Array) == ["tui_rong", "phong_an", "gai_ran", "han_ky"], str(locked["relic"]))
@@ -68,7 +68,7 @@ func _init() -> void:
 	# --- rewards_of
 	var r: Array[Dictionary] = cfg.rewards_of(["hunter_path", "win_kiem_si", "boss_forest", "nope"])
 	_check("rewards_of flat list, skips empty and unknown", r == [{"kind": "character", "id": "tho_san", "achievement": "hunter_path"}, {"kind": "piece", "id": "v5", "achievement": "boss_forest"}], str(r))
-	_check("all_rewards = 13 rewards (4 cards, 3 pieces, 4 relics, 2 characters)", cfg.all_rewards().size() == 13, str(cfg.all_rewards().size()))
+	_check("all_rewards = 15 rewards (4 cards, 3 pieces, 4 relics, 2 characters, 2 regions)", cfg.all_rewards().size() == 15, str(cfg.all_rewards().size()))
 
 	# --- bad entries dropped
 	var bad: AchievementsConfig = AchievementsConfig.from_dictionary({"achievements": [

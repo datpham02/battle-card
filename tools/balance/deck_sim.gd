@@ -165,6 +165,8 @@ var _economy: EconomyConfig
 ## Story 036: --region=<id,...> (region / chapter ids) and --floor=1,3,5 (1-based floors) of the region mode.
 var _regions: Array[String] = []
 var _region_floors: Array[int] = []
+## Story 039: --region-freq=N (0 = off): N seeded world-map runs counting how often each region is offered / chosen.
+var _region_freq: int = 0
 ## Story 037: --unlock-runs=N (0 = off) consecutive runs on one ProgressState per repetition, --unlock-reps=R
 ## repetitions, --unlock-full = play all N runs even after both new characters are open.
 var _unlock_runs: int = 0
@@ -299,6 +301,8 @@ func _init() -> void:
 			for fl: String in v.split(","):
 				if fl.strip_edges().is_valid_int() and int(fl.strip_edges()) >= 1:
 					_region_floors.append(int(fl.strip_edges()))
+		elif arg.begins_with("--region-freq="):
+			_region_freq = maxi(int(v), 0)
 		elif arg.begins_with("--unlock-runs="):
 			_unlock_runs = maxi(int(v), 0)
 		elif arg.begins_with("--unlock-reps="):
@@ -370,6 +374,11 @@ func _init() -> void:
 		_kiep_active = false
 	if _unlock_runs > 0:
 		_run_unlock_mode()
+		print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
+		quit(0)
+		return
+	if _region_freq > 0:
+		_run_region_freq(_region_freq)
 		print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
 		quit(0)
 		return
@@ -2200,8 +2209,11 @@ func _run_region_mode(seeds: int) -> void:
 				for id: String in _chapters.match_ids(ci):
 					var kind: String = str(kinds.get(id, "battle"))
 					var a: Dictionary = {"n": 0.0, "won": 0.0, "timeout": 0.0, "hits": 0.0, "bhits": 0.0, "taken": 0.0, "mire_in": 0.0,
-						"mire_dmg": 0.0, "buried": 0.0, "drifted": 0.0, "bmire_in": 0.0, "sand_cells": 0.0}
+						"mire_dmg": 0.0, "buried": 0.0, "drifted": 0.0, "bmire_in": 0.0, "sand_cells": 0.0,
+						"resolved": 0.0, "vent_hp": 0.0, "fall_hp": 0.0, "pushed": 0.0, "vent_erupts": 0.0, "cell_falls": 0.0, "boss_heal": 0.0, "rebirth": 0.0}
 					var haz: String = ""
+					var trait_ids: Array[String] = []
+					var h039: bool = false
 					for s: int in seeds:
 						var run_config: RunConfig = RunConfig.from_node(_chapters, ci, id, kind, s, f - 1)
 						var m: Dictionary = _core.prepare_match(run_config.matches[0])
@@ -2213,22 +2225,38 @@ func _run_region_mode(seeds: int) -> void:
 						bot_rng.seed = hash([s, char_id, region, id, f]) & SEED_MASK
 						var r: Dictionary = _core.play_match(m, character, deck_entries, -1.0, hash([s, region, id, f, "m"]) & SEED_MASK, bot_rng)
 						haz = "mire %d cells%s%s" % [_core._haz_mire, ", sand" if _core._haz_sand else "", ", wind" if _core._haz_wind else ""]
+						h039 = _core._haz_vents > 0 or _core._haz_crumble
+						if h039:
+							haz += " | vents %d%s" % [_core._haz_vents, ", crumble" if _core._haz_crumble else ""]
+						if trait_ids.is_empty():
+							for te: Variant in m.get("traits", []) as Array:
+								if typeof(te) == TYPE_DICTIONARY:
+									trait_ids.append(str((te as Dictionary).get("id", "")))
 						a["n"] = float(a["n"]) + 1.0
 						a["won"] = float(a["won"]) + (1.0 if bool(r["won"]) else 0.0)
 						a["timeout"] = float(a["timeout"]) + (1.0 if bool(r["timeout"]) else 0.0)
-						for k: String in ["hits", "bhits", "taken", "mire_in", "mire_dmg", "buried", "drifted", "bmire_in", "sand_cells"]:
+						for k: String in ["hits", "bhits", "taken", "mire_in", "mire_dmg", "buried", "drifted", "bmire_in", "sand_cells", "resolved", "vent_hp", "fall_hp", "pushed", "vent_erupts", "cell_falls", "boss_heal"]:
 							a[k] = float(a[k]) + float(r.get(k, 0))
+						a["rebirth"] = float(a["rebirth"]) + float(r.get("rebirth_used", 0))
 					var n: float = maxf(float(a["n"]), 1.0)
 					var row: Dictionary = {"id": id, "kind": kind, "win": 100.0 * float(a["won"]) / n, "hits": float(a["hits"]) / n,
 						"mire_in": float(a["mire_in"]) / n, "mire_dmg": float(a["mire_dmg"]) / n, "taken": float(a["taken"]) / n,
-						"buried": float(a["buried"]) / n, "drifted": float(a["drifted"]) / n}
+						"buried": float(a["buried"]) / n, "drifted": float(a["drifted"]) / n,
+						# Story 039 fields (not printed by the Story 036 lines).
+						"hit_rate": 100.0 * float(a["hits"]) / maxf(float(a["resolved"]), 1.0), "vent_hp": float(a["vent_hp"]) / n,
+						"fall_hp": float(a["fall_hp"]) / n, "pushed": float(a["pushed"]) / n, "traits": trait_ids, "h039": h039}
 					rows.append(row)
 					print("REGION %s | %s | floor %d | %s | %s | %d | %.0f | %.0f | %.1f | %.1f | %.1f | %.2f | %.1f | %.1f | %.2f | %.2f | %.2f | %.2f | %s" % [
 						char_id, region, f, id, kind, int(a["n"]), row["win"], 100.0 * float(a["timeout"]) / n, row["hits"],
 						float(a["bhits"]) / n, row["taken"], row["mire_in"], row["mire_dmg"],
 						100.0 * float(a["mire_dmg"]) / maxf(float(a["taken"]), 0.001), row["buried"], row["drifted"],
 						float(a["bmire_in"]) / n, float(a["sand_cells"]) / n, haz])
+					if float(a["vent_erupts"]) + float(a["cell_falls"]) + float(a["boss_heal"]) + float(a["rebirth"]) > 0.0:
+						print("REGION 039 | %s | %s | floor %d | %s | vent HP/match %.1f | fall HP/match %.1f | times pushed/match %.2f | vents erupted/match %.2f | cells fallen/match %.2f | boss HP healed by burn/match %.1f | rebirth used %.0f %% | player hit %% %.1f" % [
+							char_id, region, f, id, row["vent_hp"], row["fall_hp"], row["pushed"], float(a["vent_erupts"]) / n,
+							float(a["cell_falls"]) / n, float(a["boss_heal"]) / n, 100.0 * float(a["rebirth"]) / n, row["hit_rate"]])
 				_region_mean(char_id, region, f, rows)
+				_region_039_lines(char_id, region, f, rows)
 
 
 # REGION MEAN (unweighted over the matches) + REGION CHECK (story 036 E3 targets that one region run can show:
@@ -2253,6 +2281,126 @@ func _region_mean(char_id: String, region: String, f: int, rows: Array[Dictionar
 		win_note = ("none" if outside.is_empty() else ", ".join(outside))
 	print("REGION CHECK %s | %s | floor %d | matches outside 15-95 %% win at floor 1: %s | mire share %.1f %% (target <= 15): %s | compare win %% %.1f with the ch1-ch3 REGION MEAN at this floor (target +-10 pts)" % [
 		char_id, region, f, win_note, share, "PASS" if share <= 15.0 else "MISS", float(sums["win"]) / n])
+
+
+# Story 039: the extra REGION lines of a (region, floor): REGION MEAN 039 (vent / fall HP and pushes per match, mean
+# over the matches, only when some match of the region has vents or a crumbling arena), REGION 039 SHROUD (the
+# hit rate of the match with the `shroud` trait vs the region's other matches: the hit forecast is hidden there,
+# the bot never uses the forecast, so a gap is only the cloud match's own difficulty) and REGION 039 FIRE EATER
+# (the Phap su starter deck's win % in the `burn_eater` match at floor 1, story target >= 25 %). Nothing is
+# printed for a region without those, so the Story 036 output is unchanged.
+func _region_039_lines(char_id: String, region: String, f: int, rows: Array[Dictionary]) -> void:
+	if rows.is_empty():
+		return
+	var has_hazard: bool = false
+	var sums: Dictionary = {"vent_hp": 0.0, "fall_hp": 0.0, "pushed": 0.0, "hit_rate": 0.0}
+	for row: Dictionary in rows:
+		has_hazard = has_hazard or bool(row.get("h039", false))
+		for k: String in sums.keys():
+			sums[k] = float(sums[k]) + float(row[k])
+	var n: float = float(rows.size())
+	if has_hazard:
+		print("REGION MEAN 039 %s | %s | floor %d | matches %d | vent HP/match %.2f | fall HP/match %.2f | HP lost to vents + falls/match %.2f | times pushed/match %.2f | player hit %% (mean of matches) %.1f" % [
+			char_id, region, f, rows.size(), float(sums["vent_hp"]) / n, float(sums["fall_hp"]) / n,
+			(float(sums["vent_hp"]) + float(sums["fall_hp"])) / n, float(sums["pushed"]) / n, float(sums["hit_rate"]) / n])
+	for row: Dictionary in rows:
+		var ids: Array = row.get("traits", []) as Array
+		if ids.has("shroud"):
+			var others: float = 0.0
+			var cnt: int = 0
+			for o: Dictionary in rows:
+				if o != row:
+					others += float(o["hit_rate"])
+					cnt += 1
+			var other_mean: float = others / float(maxi(cnt, 1))
+			print("REGION 039 SHROUD %s | %s | floor %d | match %s | player hit %% %.1f | the region's other matches %.1f | all matches %.1f | delta vs others %+.1f pts" % [
+				char_id, region, f, row["id"], row["hit_rate"], other_mean, float(sums["hit_rate"]) / n, float(row["hit_rate"]) - other_mean])
+		if ids.has("burn_eater") and f == 1:
+			var win: float = float(row["win"])
+			var verdict: String = "PASS" if win >= 25.0 else "MISS"
+			if char_id != "phap_su":
+				verdict = "INFO (the story target is for phap_su)"
+			print("REGION 039 FIRE EATER %s | %s | floor %d | match %s | win %% %.1f (story target >= 25 for phap_su): %s" % [
+				char_id, region, f, row["id"], win, verdict])
+
+
+# Story 039 `--region-freq=N`: N seeded runs of the world map generator the way the game does it (RunSession.begin_world,
+# then roll_offer every floor, the pool of `world.region_pool` minus the locked regions). The bot picks at random between
+# the offered regions (seeded); a run walks the floors 0..world.floors-1 (no match is played). Prints the share of
+# choice events each region was OFFERED in (story target 20-40 %: with 2 offers out of 7 regions the mean is 28.6 %) and
+# CHOSEN in, the offers by floor, and the number of runs that repeat a region.
+func _run_region_freq(runs: int) -> void:
+	var character: Dictionary = _core.characters.get_character(_characters_run[0] if not _characters_run.is_empty() else "kiem_si")
+	var locked: Dictionary = {"region": _core.locked_ids("region")}
+	var pool: Array[String] = _open_region_ids()
+	var floors: int = _chapters.world_floors()
+	var choices: int = int(_chapters.world_spec().get("choices_per_floor", ChaptersConfig.DEFAULT_CHOICES_PER_FLOOR))
+	print("deck_sim --region-freq (Story 039): runs=%d floors=%d choices_per_floor=%d pool=%s locked=%s; no match is played, the bot picks at random between the offers" % [
+		runs, floors, choices, str(pool), str(locked["region"])])
+	var offered: Dictionary = {}
+	var chosen: Dictionary = {}
+	var offered_at: Dictionary = {}
+	for id: String in pool:
+		offered[id] = 0
+		chosen[id] = 0
+		offered_at[id] = []
+		for f: int in floors:
+			(offered_at[id] as Array).append(0)
+	var events: int = 0
+	var repeat_runs: int = 0
+	var short_runs: int = 0
+	for s: int in runs:
+		var run_seed: int = hash([s, "region_freq"]) & SEED_MASK
+		var pick_rng := RandomNumberGenerator.new()
+		pick_rng.seed = hash([run_seed, "region_pick"]) & SEED_MASK
+		var session: RunSession = RunSession.begin_world(_chapters, character, run_seed, 0, locked)
+		var seen: Dictionary = {}
+		var repeated: bool = false
+		var f: int = 0
+		while f < floors:
+			var offer: Array[String] = session.region_offer
+			if offer.is_empty():
+				short_runs += 1
+				break
+			events += 1
+			for id: String in offer:
+				offered[id] = int(offered.get(id, 0)) + 1
+				if offered_at.has(id):
+					(offered_at[id] as Array)[f] = int((offered_at[id] as Array)[f]) + 1
+			var pick: String = offer[pick_rng.randi_range(0, offer.size() - 1)]
+			chosen[pick] = int(chosen.get(pick, 0)) + 1
+			if seen.has(pick):
+				repeated = true
+			seen[pick] = true
+			if not session.choose_region(pick, CLEARED_BOSSES_MAIN):
+				short_runs += 1
+				break
+			# GameFlow / RunSession._clear_floor: the region boss fell, next floor, next offer.
+			session.floor += 1
+			session.region_offer = session.roll_offer()
+			f += 1
+		if repeated:
+			repeat_runs += 1
+	var ev: float = float(maxi(events, 1))
+	print("REGION FREQ | region | offered in N choice events | offered %% of choice events | chosen | chosen %% of choice events | offered per floor (f1..f%d) |" % floors)
+	var worst_lo: float = 100.0
+	var worst_hi: float = 0.0
+	var out_of_band: Array[String] = []
+	for id: String in pool:
+		var share: float = 100.0 * float(int(offered[id])) / ev
+		worst_lo = minf(worst_lo, share)
+		worst_hi = maxf(worst_hi, share)
+		if share < 20.0 or share > 40.0:
+			out_of_band.append("%s %.1f%%" % [id, share])
+		var per_floor: Array[String] = []
+		for c: Variant in offered_at[id] as Array:
+			per_floor.append(str(int(c)))
+		print("REGION FREQ | %s | %d of %d | %.1f | %d | %.1f | %s |" % [id, int(offered[id]), events, share, int(chosen[id]),
+			100.0 * float(int(chosen[id])) / ev, " ".join(per_floor)])
+	print("REGION FREQ CHECK offered share 20-40 %% of choice events per region: %s (min %.1f %%, max %.1f %%%s)" % [
+		"PASS" if out_of_band.is_empty() else "MISS", worst_lo, worst_hi, "" if out_of_band.is_empty() else "; outside: " + ", ".join(out_of_band)])
+	print("REGION FREQ CHECK runs that repeat a region: %d of %d (%.1f %%), runs cut short (no offer): %d" % [
+		repeat_runs, runs, 100.0 * float(repeat_runs) / float(maxi(runs, 1)), short_runs])
 
 
 # ---------------------------------------------------------------- Story 037: unlocks, characters, unlock-runs

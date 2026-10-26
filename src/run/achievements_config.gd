@@ -1,6 +1,6 @@
 class_name AchievementsConfig
 extends RefCounted
-## The 22 achievements of Story 037 from assets/data/achievements.json: id, name / description keys, condition
+## The achievements of Story 037 (22) and 039 (24 with `reach_floor_4` / `reach_floor_5`) from assets/data/achievements.json: id, name / description keys, condition
 ## (`type` + `params`), rewards (content they unlock) and the `hidden` flag. The `rewards` lists are the SINGLE runtime
 ## source of what is locked at the start: content that is not the reward of any achievement is open from the start.
 ## Pure data, no scene. A bad entry is dropped with a warning. Schema: assets/data/schema.md `achievements.json`.
@@ -13,6 +13,7 @@ const REWARD_KINDS: Array[String] = ["character", "card", "piece", "relic", "reg
 const CONDITION_PARAMS: Dictionary = {
 	"milestone": {"key": "string", "min": "int"},
 	"milestone_sum": {"prefix": "string", "min": "int"},
+	"best_floor": {"min": "int"},
 	"run_counter": {"key": "string", "min": "int"},
 	"match_counter": {"key": "string", "min": "int"},
 	"boss_clear_deck": {"min_cards": "int"},

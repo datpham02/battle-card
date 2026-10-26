@@ -680,3 +680,94 @@ One invocation with all three characters (`--characters=kiem_si,phap_su,sat_thu`
 rows and checks per character at the end. Other flags compose as before (`--fate=execute --relic-policy=pick` for the Story 035
 fate pick, `--progress=none`, `--world-set=`, `--economy-set=`, `--relics=`), but a tuning pass should vary one thing at a time:
 the level rules and `kiep_levels.json` numbers are edited in the data file, the sim reads them at start.
+
+## Story 039: Hellfire and Sky Isles (`--region=hellfire,sky_isles`, `--region-freq=N`)
+
+Two new regions (7 in `world.region_pool`): `hellfire` (lava vents, `burn_eater`, `rebirth`, `vent_surge` boss) and `sky_isles`
+(crumbling cells, `gust`, `shroud`, `island_drop` boss). The sim mirrors the game's wiring and the report gets the Story 039
+columns. Every new output is additive: a run that meets no vent, no crumble arena and no new trait prints exactly the lines it
+printed before (checked: `--region=swamp --floor=1 --seeds=2 --characters=kiem_si` and `--world --seeds=2` before / after).
+
+### What sim_core mirrors (`SimCore._setup_hazards` and handlers, the CombatView wiring of W1 / W3)
+
+| Game | Sim |
+|---|---|
+| `hazards_for_match` -> `set_vents`, `enable_crumble` | the same calls with the arena's `vents_player` / `vents_enemy` / `crumble` (guarded with `has_method`, so a build without the model still runs) |
+| `vent_erupted` -> `StatusEffects.ignite` on the cells (`vent_sec`, `vent_tick_sec`, `vent_tick_damage` of the hazards block) + the field pieces there are burnt (`bury_cells`) | `_on_vent_erupted`: the same ignite; the burnt pieces count in the "buried" column |
+| `cell_fell` -> pieces lost, `fall_damage` for a pushed unit (the model moves the unit), the fallen cell is the 4th mover blocker | `_on_cell_fell` + `is_fallen` blocker on both movers; the HP actually lost goes into `fall_hp` and "HP taken" |
+| `burn_eater` (`StatusEffects.burn_heal_ratio_fn`), `rebirth` (`CombatState.enemy_death_hook_fn`), `gust`, `island_drop`, `vent_surge`, `shroud` | traits run through `TraitHost` with `ctx["hazards"]` as in the game (no sim code); the sim only counts: boss HP healed by burns (`boss_heal`), `rebirth_used` |
+
+Bot rules (assumptions, like Story 036's mire cost; they live in `sim_core.gd`):
+
+- A vent line that has been in its WARNING phase for `VENT_REACT_SEC` (0.4 s, a human noticing it) counts as a warned cell (`_haz_warned`, with a cracking cell): the bot
+  leaves it like a row_burner warning (`_fire_dodge`; if no neighbour is safe it walks along the shortest way to a safe cell), keeps off it
+  while walking, and an erupting vent is a burning cell (`status.is_burning`). It does NOT keep off a quiet vent line.
+- On a `crumble` arena it never camps: after `CRUMBLE_LEAVE_SEC` (1.5 s, vs `crumble_after_sec` 2.0) on one cell it steps to
+  the neighbour it stood on longest ago (a piece first), only when the step is free and its own swing is not running; a
+  cracking cell is left at once. It never steps onto a fallen cell (the mover blocker). Standing still happens only while
+  it places / waits in the card menu, which is where falls and pushes come from.
+- Not modelled: the hit forecast (the bot never reads it, so `shroud` only shows up as the match's own difficulty), the gust
+  arrow (the bot is pushed like a player who ignores it), the island warning (it reacts to nothing before the drop).
+
+Shared flags (both tools; printed in the `overrides:` header only when changed): `--vent-react=S` (default 0.4, `SimCore.VENT_REACT_SEC`:
+seconds a vent has warned before the bot notices it) and `--crumble-leave=S` (default 1.5, `CRUMBLE_LEAVE_SEC`: seconds on one cell
+before it steps off on a crumble arena).
+
+**Reading the vent numbers.** The bot leaves an erupting vent cell at once (the Story 021 burning-cell dodge, shared with
+row_burner, unchanged), so even with `--vent-react=2` (it never notices a warning) the HP it loses to vents is close to 0
+(phap_su, hellfire floor 1, 6 seeds: 0.04 HP / match): the first burn tick needs 0.5 s on the cell. The cost of a vent to the bot
+is the burnt field pieces (`buried`) and the steps it spends; the HP a human loses standing in a vent is NOT measured. Do not tune
+`vent_tick_damage` / `vent_interval_sec` from the vent HP column alone.
+
+### New output (all start with `REGION`)
+
+| Line | What |
+|---|---|
+| `REGION 039` | per match, printed only when a vent erupted, a cell fell, burn_eater healed or rebirth was used: vent HP / match, fall HP / match, times pushed / match, vents erupted, cells fallen, boss HP healed by burn, rebirth used %, player hit % |
+| `REGION MEAN 039` | per region and floor, only for a region with vents or crumble: the means of vent HP, fall HP, their sum, times pushed, hit % |
+| `REGION 039 SHROUD` | the match with the `shroud` trait: its hit % vs the region's other matches and vs all (story: hit rate at the Shroud match vs the mean) |
+| `REGION 039 FIRE EATER` | the `burn_eater` match at floor 1: win % vs the story target >= 25 (meant for `--characters=phap_su`; other characters print INFO) |
+| `REGION` (extended) | the arena column of a vent / crumble match gains ` \| vents N, crumble` |
+
+`HP lost to vents` = HP the player loses to burn ticks while standing on an erupting vent cell (also part of "HP taken");
+`HP lost to falls` = `fall_damage` of every fall that pushed the player. `hit_probe` prints the same numbers in one
+`RESULT BOT HAZARDS039` line per match (only when a vent / fall / heal happened).
+
+### `--region-freq=N`
+
+N seeded runs of the world map generator as the game does (`RunSession.begin_world`, `roll_offer` each floor over
+`world.region_pool` minus the locked regions, the bot picks one of the offers at random, `choose_region`, next floor), floors
+1..`world.floors`. No match is played, so it takes seconds. `--progress` composes (locked regions leave the pool).
+
+| Line | What |
+|---|---|
+| `REGION FREQ` header | runs, floors, choices per floor, pool |
+| `REGION FREQ \| region \| ...` | per region: times offered, offered % of choice events, times chosen, chosen % of choice events, offers per floor |
+| `REGION FREQ CHECK offered share` | story E3: every region OFFERED in 20-40 % of the choice events (with 2 offers out of 7 regions the mean is 28.6 %; chosen % is half of it by construction) |
+| `REGION FREQ CHECK runs that repeat a region` | runs that chose one region twice (the "unvisited first" rule of `WorldMapGen.offer_for_floor` makes it 0 with 7 regions and 5 floors) |
+
+### Command lines
+
+```sh
+GODOT=C:/Users/ADMIN/AppData/Local/Microsoft/WinGet/Links/godot.exe
+# Frequency of the regions (seconds): the story's 200 seeded runs
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --region-freq=200 > "<scratch>/region_freq.out" 2>&1
+grep "^REGION FREQ" "<scratch>/region_freq.out"
+# Smoke (about 1 min): one new region, one floor, 2 seeds
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --region=hellfire --floor=1 --seeds=2 --characters=kiem_si
+# The story table: both new regions and the five existing ones at floors 1, 3, 5 (one character per invocation)
+for c in kiem_si phap_su sat_thu; do
+  $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --region=hellfire,sky_isles --floor=1,3,5 --seeds=70 --characters=$c > "<scratch>/regions039_$c.out" 2>&1
+  $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --region=ch1,ch2,ch3,swamp,desert --floor=1,3,5 --seeds=70 --characters=$c > "<scratch>/regions_old5_$c.out" 2>&1
+done
+grep "REGION MEAN \|REGION 039\|REGION CHECK" "<scratch>"/regions039_*.out "<scratch>"/regions_old5_*.out
+# The fire_eater bullet: the Phap su starter deck at floor 1 (REGION 039 FIRE EATER line)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --region=hellfire --floor=1 --seeds=70 --characters=phap_su > "<scratch>/fire_eater.out" 2>&1
+# One match in detail (vents / falls per match, the hazards line):
+$GODOT --headless --path . -s res://tools/balance/hit_probe.gd -- --region=sky_isles --floor=1 --seeds=20 --characters=kiem_si
+```
+
+Reading the story targets from the output: the mean win % of a new region (`REGION MEAN`, same floor and character) within
++-10 points of the mean of the five existing regions' `REGION MEAN` rows (average the five lines by hand); no floor-1 match
+outside 15-95 % (`REGION CHECK`); `REGION 039 FIRE EATER` >= 25 for `phap_su`; `REGION FREQ CHECK` PASS. Tuning is JSON only
+(`chapters.json` match numbers, `combat.json` `hazards`, `arenas.json`).

@@ -169,7 +169,9 @@ func zone_numbers() -> Dictionary:
 
 
 ## Story 036: the tile hazard numbers {mire_step_mult, mire_tick_damage, mire_tick_sec, mire_grace_sec,
-## sand_interval_sec, sand_cells, sand_sec, sand_warn_sec, drift_sec, wind_shift_sec} (a copy). A bad value keeps
+## sand_interval_sec, sand_cells, sand_sec, sand_warn_sec, drift_sec, wind_shift_sec, plus the Story 039 keys
+## vent_interval_sec, vent_warn_sec, vent_sec, vent_tick_sec, vent_tick_damage, crumble_after_sec, crumble_warn_sec,
+## fall_sec, fall_damage} (a copy; every key of TileHazards.DEFAULTS). A bad value keeps
 ## its default (warning); a match may override each key by the same name (TileHazards.configure).
 func hazards() -> Dictionary:
 	return _hazards.duplicate()

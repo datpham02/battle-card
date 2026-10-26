@@ -219,6 +219,9 @@ func _apply(phase: Dictionary) -> void:
 				ids.append(str(card))
 		if not ids.is_empty():
 			boss.get_brain().cards = ids
+	var vent_mult: Variant = phase.get("vent_interval_mult")
+	if typeof(vent_mult) == TYPE_FLOAT or typeof(vent_mult) == TYPE_INT:
+		apply_vent_interval_mult(float(vent_mult))
 	var root: Variant = phase.get("root_while_swinging")
 	if typeof(root) == TYPE_BOOL:
 		boss.set_root_while_swinging(bool(root))

@@ -37,6 +37,10 @@ const DEFAULT_WEIGHTS: Dictionary = {
 	## Story 036: cost per unit of mire (mire_step_mult - 1 + mire_tick_damage) when the boss steps into a
 	## mire cell of its half (0 for a mire_immune boss); paths go around while the detour is cheaper.
 	"mire_avoid": 1.0,
+	## Story 039: cost per HP of fall_damage, scaled by how far the standing timer has run, of staying on a cell of a
+	## `crumble` arena (the boss relocates instead of camping); 0 = the boss ignores the timer (fallen and cracking
+	## cells stay blocked either way).
+	"crumble_avoid": 1.0,
 	"escape_penalty": 4.0,
 	"combo_chance": 0.25,
 	"combo_gap_sec": 0.5,

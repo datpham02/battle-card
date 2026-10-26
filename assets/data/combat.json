@@ -46,6 +46,15 @@
 		"sand_sec": 3.0,
 		"sand_warn_sec": 0.8,
 		"drift_sec": 2.0,
-		"wind_shift_sec": 8.0
+		"wind_shift_sec": 8.0,
+		"vent_interval_sec": 7.0,
+		"vent_warn_sec": 1.0,
+		"vent_sec": 2.0,
+		"vent_tick_sec": 0.5,
+		"vent_tick_damage": 2.0,
+		"crumble_after_sec": 2.0,
+		"crumble_warn_sec": 0.6,
+		"fall_sec": 4.0,
+		"fall_damage": 8.0
 	}
 }

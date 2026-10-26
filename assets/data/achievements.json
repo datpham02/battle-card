@@ -21,6 +21,8 @@
 	{"id": "burn_build", "name_key": "achievement.burn_build.name", "desc_key": "achievement.burn_build.desc", "condition": {"type": "boss_clear_deck", "params": {"min_cards": 4}}, "rewards": [], "hidden": false},
 	{"id": "featured_10", "name_key": "achievement.featured_10.name", "desc_key": "achievement.featured_10.desc", "condition": {"type": "run_counter", "params": {"key": "featured_casts", "min": 10}}, "rewards": [], "hidden": false},
 	{"id": "no_hit_boss", "name_key": "achievement.no_hit_boss.name", "desc_key": "achievement.no_hit_boss.desc", "condition": {"type": "boss_clear_no_hit", "params": {}}, "rewards": [], "hidden": true},
-	{"id": "small_deck", "name_key": "achievement.small_deck.name", "desc_key": "achievement.small_deck.desc", "condition": {"type": "run_won_deck_max", "params": {"max": 8}}, "rewards": [], "hidden": true}
+	{"id": "small_deck", "name_key": "achievement.small_deck.name", "desc_key": "achievement.small_deck.desc", "condition": {"type": "run_won_deck_max", "params": {"max": 8}}, "rewards": [], "hidden": true},
+	{"id": "reach_floor_4", "name_key": "achievement.reach_floor_4.name", "desc_key": "achievement.reach_floor_4.desc", "condition": {"type": "best_floor", "params": {"min": 4}}, "rewards": [{"kind": "region", "id": "hellfire"}], "hidden": false},
+	{"id": "reach_floor_5", "name_key": "achievement.reach_floor_5.name", "desc_key": "achievement.reach_floor_5.desc", "condition": {"type": "best_floor", "params": {"min": 5}}, "rewards": [{"kind": "region", "id": "sky_isles"}], "hidden": false}
  ]
 }

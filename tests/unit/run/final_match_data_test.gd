@@ -32,7 +32,7 @@ func _test_region_and_match(cfg: ChaptersConfig) -> void:
 	var ci: int = cfg.region_index(FINAL_REGION)
 	check(ci >= 0, "region an_dai is a chapters entry")
 	check(not cfg.region_ids().has(FINAL_REGION), "an_dai is not in world.region_pool")
-	check(cfg.region_ids().size() == 5, "region_pool has its 5 regions (Story 036: + swamp, desert)")
+	check(cfg.region_ids().size() == 7, "region_pool has its 7 regions (Story 036: + swamp, desert; Story 039: + hellfire, sky_isles)")
 	var final: Dictionary = cfg.final_match()
 	check(final.get("region") == FINAL_REGION and final.get("match_id") == FINAL_MATCH, "world.final_match -> an_dai / an_dai_keeper")
 	check(cfg.match_ids(ci) == ([FINAL_MATCH] as Array[String]), "an_dai has exactly one match")

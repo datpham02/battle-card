@@ -14,6 +14,9 @@ signal changed
 signal enemy_died
 ## Emitted once when the player reaches 0 HP (Story 007 listens for the defeat).
 signal player_died
+## Story 039: emitted when the enemy gained HP through [method heal_enemy] ([param amount] = HP actually gained). The HUD
+## reads it for the green heal number (burn_eater).
+signal enemy_healed(amount: float)
 ## Emitted when a unit actually changes cell. [param side] is a [enum Side] value.
 signal cell_changed(side: int, old_cell: Vector2i, new_cell: Vector2i)
 
@@ -37,6 +40,12 @@ var enemy_hp_floor: float = 0.0
 ## ignored damage not counted). Read-only counters, no effect on the rules.
 var enemy_damage_taken: float = 0.0
 var player_damage_taken: float = 0.0
+## Story 039 (rebirth): Callable() -> bool asked at the ONE place the enemy's death is decided (a damage that would
+## take HP to 0). true = something took over (TraitHost.on_boss_would_die): the enemy is held at [constant HOLD_HP]
+## instead of dying. Invalid = no hook (the old behaviour).
+var enemy_death_hook_fn: Callable = Callable()
+## HP the enemy is held at while a death hook (rebirth) has taken the death over.
+const HOLD_HP: float = 1.0
 
 
 ## [param p_grid] is the board. A start cell of BoardGrid.NO_CELL means "use the grid's
@@ -80,12 +89,27 @@ func damage_enemy(amount: float) -> void:
 		return
 	var before: float = enemy_hp
 	enemy_hp = maxf(enemy_hp - amount, minf(maxf(enemy_hp_floor, 0.0), enemy_hp))
+	if enemy_hp <= 0.0 and enemy_death_hook_fn.is_valid() and bool(enemy_death_hook_fn.call()):
+		enemy_hp = minf(HOLD_HP, before)
 	if enemy_hp >= before:
 		return
 	enemy_damage_taken += before - enemy_hp
 	changed.emit()
 	if is_enemy_dead():
 		enemy_died.emit()
+
+
+## Story 039: gives the enemy [param amount] HP (clamped to its max HP). Returns the HP actually gained; 0 when dead or
+## the amount is not positive. Emits [signal enemy_healed] and [signal changed].
+func heal_enemy(amount: float) -> float:
+	if is_enemy_dead() or amount <= 0.0 or enemy_hp >= enemy_max_hp:
+		return 0.0
+	var before: float = enemy_hp
+	enemy_hp = minf(enemy_hp + amount, enemy_max_hp)
+	var gained: float = enemy_hp - before
+	changed.emit()
+	enemy_healed.emit(gained)
+	return gained
 
 
 ## True when the player has 0 HP.

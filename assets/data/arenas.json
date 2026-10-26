@@ -161,6 +161,50 @@
 			"hazards": { "sand": true },
 			"featured_shape": [[0,0],[1,0],[2,0],[1,1],[1,2]],
 			"featured_bonus": { "damage_mult": 1.5, "effect": "fragile", "stacks": 1, "sec": 0 }
+		},
+		{
+			"id": "forge",
+			"name_key": "arena.forge.name",
+			"side_cols": 5,
+			"side_rows": 3,
+			"missing_cells": [],
+			"difficulty": 3,
+			"hazards": { "vents": { "player": [{ "row": 0 }, { "row": 1 }], "enemy": [{ "row": 0 }, { "row": 1 }] } },
+			"featured_shape": [[0,0],[1,0],[2,0],[0,1],[1,1]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "burn", "stacks": 1, "sec": 0, "burn_duration_sec": 2.0, "burn_tick_sec": 0.5, "burn_damage_per_tick": 1.5 }
+		},
+		{
+			"id": "caldera",
+			"name_key": "arena.caldera.name",
+			"side_cols": 5,
+			"side_rows": 5,
+			"missing_cells": [[3, 1], [3, 2], [3, 3]],
+			"difficulty": 4,
+			"hazards": { "vents": { "player": [{ "col": 1 }, { "col": 4 }], "enemy": [{ "col": 1 }, { "col": 4 }] } },
+			"featured_shape": [[0,0],[1,0],[2,0],[2,1],[2,2]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "burn", "stacks": 1, "sec": 0, "burn_duration_sec": 2.0, "burn_tick_sec": 0.5, "burn_damage_per_tick": 1.5 }
+		},
+		{
+			"id": "twin_isles",
+			"name_key": "arena.twin_isles.name",
+			"side_cols": 6,
+			"side_rows": 3,
+			"missing_cells": [[0, 0], [0, 2], [2, 0], [2, 2]],
+			"difficulty": 4,
+			"crumble": true,
+			"featured_shape": [[0,0],[1,0],[2,0],[0,1],[1,1]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "pin", "stacks": 0, "sec": 1.2 }
+		},
+		{
+			"id": "three_isles",
+			"name_key": "arena.three_isles.name",
+			"side_cols": 7,
+			"side_rows": 2,
+			"missing_cells": [[2, 0], [5, 0]],
+			"difficulty": 4,
+			"crumble": true,
+			"featured_shape": [[0,0],[1,0],[0,1],[1,1],[2,1]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "pin", "stacks": 0, "sec": 1.2 }
 		}
 	]
 }

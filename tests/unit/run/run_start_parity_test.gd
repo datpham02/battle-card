@@ -30,11 +30,15 @@ func _init() -> void:
 	_check("an empty save locks content", not locked_empty.is_empty())
 	_check("an every-unlock save locks nothing", locked_full.is_empty(), str(locked_full))
 	_check("--progress=all opens every character", _all_open(cfg, full, characters))
+	# Story 039: locked REGIONS (hellfire, sky_isles) shrink the region pool by design, so the first offer is compared with the
+	# region lock left out; the real lock is checked on its own below (the offer never contains a locked region).
+	var locked_cmp: Dictionary = locked_empty.duplicate(true)
+	locked_cmp.erase("region")
 	var removals: int = int(RewardRoller.load_config().get("starting_removals", 0))
 	for cid: String in characters.ids():
 		var ch: Dictionary = characters.get_character(cid)
 		for sd: int in SEEDS:
-			var a: RunSession = RunSession.begin_world(chapters, ch, sd, removals, locked_empty)
+			var a: RunSession = RunSession.begin_world(chapters, ch, sd, removals, locked_cmp)
 			var b: RunSession = RunSession.begin_world(chapters, ch, sd, removals, locked_full)
 			var da: Dictionary = a.to_dict()
 			var db: Dictionary = b.to_dict()
@@ -46,6 +50,12 @@ func _init() -> void:
 			_check("start state %s seed %d identical (hp, deck, relics, gold, piece deck, offer)" % [cid, sd],
 				a.hp == b.hp and a.deck_ids == b.deck_ids and a.relics == b.relics and a.gold == b.gold
 				and a.piece_deck == b.piece_deck and a.shape_removals == b.shape_removals and a.region_offer == b.region_offer)
+	var offer_ok: bool = true
+	for sd2: int in SEEDS:
+		var real: RunSession = RunSession.begin_world(chapters, characters.get_character(characters.ids()[0]), sd2, removals, locked_empty)
+		for rid: Variant in real.region_offer:
+			offer_ok = offer_ok and str(rid) != "hellfire" and str(rid) != "sky_isles"
+	_check("an empty save never offers a locked region (hellfire, sky_isles)", offer_ok)
 	print("FAILS=%d" % fails)
 	quit(fails)
 

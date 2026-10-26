@@ -440,7 +440,9 @@ func _setup_hazards() -> void:
 	for side: int in movers:
 		var mover: UnitMover = movers[side] as UnitMover
 		var hazard_side: int = side
-		mover.add_blocker(func(cell: Vector2i) -> bool: return hazards.is_sanded(hazard_side, cell))
+		# Story 039: a fallen (crumbled) cell is the fourth blocker source (crack, seal, sand, fall) of the same callable.
+		mover.add_blocker(func(cell: Vector2i) -> bool:
+			return hazards.is_sanded(hazard_side, cell) or hazards.is_fallen(hazard_side, cell))
 		mover.step_cost_fn = func(from_cell: Vector2i) -> float: return hazards.step_cost_mult(hazard_side, from_cell)
 	# Leave-a-path sees seals and cracks through the movers' own blocked test.
 	_hazards.extra_blocked_fn = func(side: int, cell: Vector2i) -> bool:
@@ -455,6 +457,12 @@ func _setup_hazards() -> void:
 	_hazards.set_mire(CombatState.Side.ENEMY, mire_enemy)
 	_hazards.enable_sand(bool(arena.get("sand", false)))
 	_hazards.enable_wind(bool(arena.get("wind", false)))
+	# Story 039: lava vents and crumbling cells (has()/get() with defaults: arenas without them change nothing).
+	_hazards.set_vents(CombatState.Side.PLAYER, arena.get("vents_player", []) as Array)
+	_hazards.set_vents(CombatState.Side.ENEMY, arena.get("vents_enemy", []) as Array)
+	_hazards.enable_crumble(bool(arena.get("crumble", false)))
+	_hazards.vent_erupted.connect(_on_vent_erupted)
+	_hazards.cell_fell.connect(_on_cell_fell)
 	_hazards.mire_damage.connect(_on_mire_damage)
 	_hazards.sand_filled.connect(_on_sand_filled)
 	_hazards.drift_due.connect(_on_drift_due)
@@ -466,6 +474,23 @@ func _setup_hazards() -> void:
 # The unit standing in mire takes the tick damage (CombatState keeps its own invulnerability rules).
 func _on_mire_damage(side: int, amount: float) -> void:
 	_state.damage(side, amount)
+
+
+# Story 039: a vent erupts: its cells burn through the SAME StatusEffects burning cell as row_burner / Hoa tran (units
+# standing there take the tick damage, the boss brain's burn handling already avoids them) and the field pieces lying
+# there are burnt (lost).
+func _on_vent_erupted(side: int, _vent_index: int, cells: Array[Vector2i]) -> void:
+	_status.ignite(cells, _hazards.config_value("vent_sec"), _hazards.config_value("vent_tick_sec"),
+		_hazards.config_value("vent_tick_damage"))
+	_drops_of(side).bury_cells(cells)
+
+
+# Story 039: a cell fell: the pieces on it are lost; a unit the model pushed off it takes fall_damage.
+func _on_cell_fell(side: int, cell: Vector2i, occupant_pushed: bool) -> void:
+	var lost: Array[Vector2i] = [cell]
+	_drops_of(side).bury_cells(lost)
+	if occupant_pushed:
+		_state.damage(side, _hazards.config_value("fall_damage"))
 
 
 # Sand filled on [param cells] of [param side]: field pieces lying there are buried.
@@ -499,10 +524,11 @@ func _drop_blocked_cells(base: Array[Vector2i], side: int) -> Array[Vector2i]:
 		return base
 	var sand: Array[Vector2i] = _hazards.sand_cells(side)
 	var warning: Array[Vector2i] = _hazards.sand_warning_cells(side)
-	if sand.is_empty() and warning.is_empty():
+	var fallen: Array[Vector2i] = _hazards.fallen_cells(side)
+	if sand.is_empty() and warning.is_empty() and fallen.is_empty():
 		return base
 	var out: Array[Vector2i] = base.duplicate()
-	for cell: Vector2i in sand + warning:
+	for cell: Vector2i in sand + warning + fallen:
 		if not out.has(cell):
 			out.append(cell)
 	return out
@@ -959,7 +985,7 @@ func make_trait_ctx() -> Dictionary:
 		"state": _state, "grid": _grid, "player_drops": _drops, "boss_drops": _boss.get_drops(),
 		"boss": _boss, "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"), "player_mover": _mover,
 		"skill_config": _skill_config, "cut_config": _cut_config,
-		"hazards": _hazards,
+		"hazards": _hazards, "placement": _placement,
 	}
 
 

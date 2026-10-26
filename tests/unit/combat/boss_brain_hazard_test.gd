@@ -3,6 +3,10 @@ extends SceneTree
 ## mire_avoid x (mire_step_mult - 1 + mire_tick_damage) to step into (0 for a mire_immune boss), sand cells
 ## (filled and warning) are blocked for steps and paths, and with wind on a field piece that drifts before
 ## the boss gets there is targeted at its drift cell. Null hazards = the pre-036 decisions (same RNG draws).
+## Story 039 (W4): crumble_avoid (cost of standing long on a cell of a crumble arena: the boss relocates instead of
+## camping), fallen and cracking cells blocked in paths and steps, a warning vent scored like a burning cell about to
+## be and an erupting vent as a burning cell. The brain-side checks run on a stub TileHazards (no dependency on the
+## model timers); the last test drives the real TileHazards when it has the crumble API.
 ## Pure brain world, headless; FAILS=N. Deterministic: fixed seeds, noise 0 in the fixture config.
 
 const SEED: int = 7
@@ -18,6 +22,43 @@ const SAND_WARN_SEC: float = 0.8
 ## Halves drift_sec (2.0) so a two-step walk (2 x 0.55 s) is slower than the next drift.
 const DRIFT_MULT: float = 0.5
 const DECISIONS: int = 20
+const ENEMY: int = CombatState.Side.ENEMY
+const PLAYER: int = CombatState.Side.PLAYER
+
+
+## Test double: the Story 039 state the brain reads, set by the test (no timers).
+class StubHazards extends TileHazards:
+	var crumble_on: bool = false
+	var progress: float = 0.0
+	var vents: Array[Vector2i] = []
+	var vent_warn: Array[Vector2i] = []
+	var vent_fire: Array[Vector2i] = []
+	var fallen: Array[Vector2i] = []
+	var cracking: Array[Vector2i] = []
+
+	func _init(grid: BoardGrid, seed_value: int) -> void:
+		super(grid, seed_value)
+
+	func crumble_enabled() -> bool:
+		return crumble_on
+
+	func crumble_progress(_side: int, _cell: Vector2i) -> float:
+		return progress
+
+	func vent_cells(_side: int) -> Array[Vector2i]:
+		return vents
+
+	func is_venting(_side: int, cell: Vector2i) -> bool:
+		return vent_fire.has(cell)
+
+	func is_vent_warning(_side: int, cell: Vector2i) -> bool:
+		return vent_warn.has(cell)
+
+	func fallen_cells(_side: int) -> Array[Vector2i]:
+		return fallen
+
+	func is_crumble_warning(_side: int, cell: Vector2i) -> bool:
+		return cracking.has(cell)
 
 var fails: int = 0
 
@@ -37,6 +78,14 @@ func _initialize() -> void:
 	_test_sand_blocks_path()
 	_test_pickup_follows_wind()
 	_test_null_hazards_unchanged()
+	_test_crumble_weights_in_every_set()
+	_test_crumble_avoid_steers_off_long_stood_cell()
+	_test_crumble_cost_ordered_by_set_weight()
+	_test_fallen_cells_blocked()
+	_test_cracking_cell_blocked_and_left()
+	_test_vent_scoring()
+	_test_idle_crumble_stub_identical_to_null()
+	_test_real_tile_hazards_crumble()
 	print("FAILS=%d" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -255,3 +304,223 @@ func _test_null_hazards_unchanged() -> void:
 			_check("null hazards: no hazards key in last_debug", not (w["brain"] as BossBrain).last_debug().has("hazards"))
 		runs.append(seq)
 	_check("idle hazards = null hazards decisions", str(runs[0]) == str(runs[1]), str(runs[0]))
+
+
+# ------------------------------------------------------------------ Story 039
+
+const CENTER: Vector2i = Vector2i(4, 1)
+
+
+# Config for the Story 039 tests: like _config but with crumble_avoid.
+func _config_crumble(crumble_avoid: float) -> BossBrainConfig:
+	return BossBrainConfig.from_dictionary({
+		"step_cooldown_sec": 0.55, "think_interval_sec": 0.0, "reaction_sec": 0.0, "noise": 0.0,
+		"active_set": "t",
+		"sets": {"t": {
+			"dodge_danger": 10.0, "idle_bias": 0.2, "retreat_bonus": 0.0, "pickup_value": 2.0,
+			"crumble_avoid": crumble_avoid, "combo_chance": 0.0,
+			"movement": {
+				"move_commitment": 1.0, "move_noise": 0.0, "reaction_sec": 0.0, "path_style": "shortest",
+				"juke_chance": 0.0, "wander_when_idle": false,
+			},
+		}},
+	})
+
+
+# Same world as _world with a StubHazards handed to the brain.
+func _stub_world(config: BossBrainConfig, boss_cell: Vector2i, piece_cell: Vector2i) -> Dictionary:
+	var w: Dictionary = _world(config, boss_cell, piece_cell)
+	var stub := StubHazards.new(w["grid"], SEED)
+	stub.bind_state(w["state"])
+	w["stub"] = stub
+	(w["brain"] as BossBrain).set_hazards(stub)
+	return w
+
+
+func _crumble_debug(w: Dictionary) -> Dictionary:
+	var hz: Dictionary = (w["brain"] as BossBrain).last_debug().get("hazards", {})
+	return hz.get("crumble", {}) as Dictionary
+
+
+# The weight exists with the default and in every shipped set: balanced 1.0, aggressive 0.5, cautious 1.5.
+func _test_crumble_weights_in_every_set() -> void:
+	_check("default weight crumble_avoid 1.0", float(BossBrainConfig.DEFAULT_WEIGHTS.get("crumble_avoid", -1.0)) == 1.0)
+	var config: BossBrainConfig = BossBrainConfig.load_from_file()
+	var want: Dictionary = {"balanced": 1.0, "aggressive": 0.5, "cautious": 1.5}
+	for set_name: String in want.keys():
+		var got: float = float(config.weights_for(set_name).get("crumble_avoid", -1.0))
+		_check("set %s crumble_avoid = %.1f" % [set_name, float(want[set_name])], absf(got - float(want[set_name])) < 0.0001, str(got))
+
+
+# On a crumble arena an idle boss waits at first, then walks off the cell once the standing timer is near the
+# crack; with crumble_avoid 0 it camps; without a crumble arena it camps too.
+func _test_crumble_avoid_steers_off_long_stood_cell() -> void:
+	var w: Dictionary = _stub_world(_config_crumble(1.0), CENTER, BoardGrid.NO_CELL)
+	(w["stub"] as StubHazards).crumble_on = true
+	var first: Dictionary = _decide(w)
+	_check("crumble: first think on a fresh cell waits", str(first["type"]) == "wait", str(first))
+	_check("crumble: debug has the stand state", _crumble_debug(w).has("stand_sec") and bool(_crumble_debug(w).get("on", false)), str(_crumble_debug(w)))
+	var second: Dictionary = _decide(w)
+	_check("crumble: after 1 s of standing the boss relocates", str(second["type"]) == "move" and str((w["brain"] as BossBrain).last_debug().get("purpose", "")) == "crumble", str(second))
+	var dbg: Dictionary = _crumble_debug(w)
+	_check("crumble: leave flagged, cost > 0", bool(dbg.get("leave", false)) and float(dbg.get("cost", 0.0)) > 0.0, str(dbg))
+	var dest: Vector2i = (w["brain"] as BossBrain).get_destination().get("cell", BoardGrid.NO_CELL)
+	_check("crumble: destination is another own cell", dest != CENTER and (w["grid"] as BoardGrid).is_enemy_cell(dest), str(dest))
+	var camp: Dictionary = _stub_world(_config_crumble(0.0), CENTER, BoardGrid.NO_CELL)
+	(camp["stub"] as StubHazards).crumble_on = true
+	var camped: bool = true
+	for i: int in 4:
+		camped = camped and str(_decide(camp)["type"]) == "wait"
+	_check("crumble_avoid 0: the boss camps", camped)
+	var dry: Dictionary = _stub_world(_config_crumble(1.0), CENTER, BoardGrid.NO_CELL)
+	var stayed: bool = true
+	for i: int in 4:
+		stayed = stayed and str(_decide(dry)["type"]) == "wait"
+	_check("no crumble arena: the boss stays put", stayed)
+	var moved: Dictionary = _stub_world(_config_crumble(1.0), CENTER, BoardGrid.NO_CELL)
+	(moved["stub"] as StubHazards).crumble_on = true
+	_decide(moved)
+	_decide(moved)
+	(moved["state"] as CombatState).set_enemy_cell(Vector2i(3, 1))
+	_decide(moved)
+	_check("standing timer restarts on a new cell", float(_crumble_debug(moved).get("stand_sec", -1.0)) == 0.0, str(_crumble_debug(moved)))
+
+
+# The model's own timer counts too: progress 0.5 gives each set its weighted cost at once.
+func _test_crumble_cost_ordered_by_set_weight() -> void:
+	var damage: float = float(TileHazards.DEFAULTS.get("fall_damage", 8.0))
+	var costs: Dictionary = {}
+	for set_name: String in ["aggressive", "balanced", "cautious"]:
+		var w: Dictionary = _stub_world(BossBrainConfig.load_from_file(), CENTER, BoardGrid.NO_CELL)
+		_check("set %s exists (crumble)" % set_name, (w["brain"] as BossBrain).use_set(set_name))
+		var stub: StubHazards = w["stub"]
+		stub.crumble_on = true
+		stub.progress = 0.5
+		_decide(w)
+		costs[set_name] = float(_crumble_debug(w).get("cost", -1.0))
+	var ok: bool = float(costs["aggressive"]) > 0.0 and float(costs["aggressive"]) < float(costs["balanced"]) \
+			and float(costs["balanced"]) < float(costs["cautious"])
+	_check("crumble cost aggressive < balanced < cautious", ok, str(costs))
+	_check("shipped weights 0.5 / 1.0 / 1.5 x fall_damage x fraction", absf(float(costs["aggressive"]) - 0.5 * damage * 0.5) < 0.0001
+			and absf(float(costs["balanced"]) - damage * 0.5) < 0.0001 and absf(float(costs["cautious"]) - 1.5 * damage * 0.5) < 0.0001, str(costs))
+
+
+# A fallen cell is blocked for paths and steps: the walk goes around it; a relocation never picks it.
+func _test_fallen_cells_blocked() -> void:
+	var w: Dictionary = _stub_world(_config_crumble(1.0), Vector2i(3, 1), Vector2i(5, 1))
+	(w["stub"] as StubHazards).fallen = _cells([Vector2i(4, 1)])
+	var visited: Array[Vector2i] = _walk(w, 8)
+	_check("fallen cell: path never enters it", not visited.has(Vector2i(4, 1)), str(visited))
+	_check("fallen cell: boss still reaches the piece around it", visited.has(Vector2i(5, 1)) and visited.size() == 5, str(visited))
+	var hz: Dictionary = (w["brain"] as BossBrain).last_debug().get("hazards", {})
+	_check("fallen cell listed in crumble_blocked", (hz.get("crumble_blocked", []) as Array).has(Vector2i(4, 1)), str(hz.get("crumble_blocked")))
+	# Relocation off a cracking cell with three of four neighbours fallen: the only way out is (4,2).
+	var r: Dictionary = _stub_world(_config_crumble(1.0), CENTER, BoardGrid.NO_CELL)
+	var stub: StubHazards = r["stub"]
+	stub.crumble_on = true
+	stub.progress = 1.0
+	stub.fallen = _cells([Vector2i(3, 1), Vector2i(5, 1), Vector2i(4, 0)])
+	var dir: Vector2i = _dir_of(_decide(r))
+	_check("relocation never steps onto fallen cells: goes (0,1)", dir == Vector2i(0, 1), str(dir))
+
+
+# A cell in its crack warning is blocked like a sealed cell (the tie-break cell (4,0) is avoided), and a boss
+# standing on a cracking cell steps off at once.
+func _test_cracking_cell_blocked_and_left() -> void:
+	var w: Dictionary = _stub_world(_config_crumble(1.0), Vector2i(3, 0), Vector2i(4, 1))
+	(w["stub"] as StubHazards).cracking = _cells([Vector2i(4, 0)])
+	var dir: Vector2i = _dir_of(_decide(w))
+	_check("cracking cell not stepped: boss goes (0,1)", dir == Vector2i(0, 1), str(dir))
+	var r: Dictionary = _stub_world(_config_crumble(1.0), CENTER, BoardGrid.NO_CELL)
+	var stub: StubHazards = r["stub"]
+	stub.crumble_on = true
+	stub.progress = 1.0
+	stub.cracking = _cells([CENTER])
+	var action: Dictionary = _decide(r)
+	_check("standing on a cracking cell: relocates on the first think", str(action["type"]) == "move" and str((r["brain"] as BossBrain).last_debug().get("purpose", "")) == "crumble", str(action))
+	var other: Dictionary = _stub_world(_config_crumble(1.0), Vector2i(3, 0), Vector2i(4, 1))
+	(other["stub"] as StubHazards).fallen = _cells([Vector2i(1, 1)])
+	_decide(other)
+	var hz: Dictionary = (other["brain"] as BossBrain).last_debug().get("hazards", {})
+	_check("a fallen cell of the player's half is listed too", (hz.get("crumble_blocked", []) as Array).has(Vector2i(1, 1)), str(hz.get("crumble_blocked")))
+
+
+# A warning vent is a burning cell about to be and an erupting vent a burning cell: neither is stepped into; an idle
+# vent (only the red streak) is walked like any cell.
+func _test_vent_scoring() -> void:
+	var idle: Dictionary = _stub_world(_config(1.0), Vector2i(3, 0), Vector2i(4, 1))
+	(idle["stub"] as StubHazards).vents = _cells([Vector2i(4, 0), Vector2i(4, 1), Vector2i(4, 2)])
+	var idle_dir: Vector2i = _dir_of(_decide(idle))
+	_check("idle vent streak is walked: boss goes (1,0)", idle_dir == Vector2i(1, 0), str(idle_dir))
+	var idle_hz: Dictionary = (idle["brain"] as BossBrain).last_debug().get("hazards", {})
+	_check("idle vent is not blocked", (idle_hz.get("vent_blocked", [1]) as Array).is_empty(), str(idle_hz.get("vent_blocked")))
+	for phase: String in ["warning", "erupting"]:
+		var w: Dictionary = _stub_world(_config(1.0), Vector2i(3, 0), Vector2i(4, 1))
+		var stub: StubHazards = w["stub"]
+		stub.vents = _cells([Vector2i(4, 0)])
+		if phase == "warning":
+			stub.vent_warn = _cells([Vector2i(4, 0)])
+		else:
+			stub.vent_fire = _cells([Vector2i(4, 0)])
+		var dir: Vector2i = _dir_of(_decide(w))
+		_check("%s vent not stepped: boss goes (0,1)" % phase, dir == Vector2i(0, 1), str(dir))
+		var hz: Dictionary = (w["brain"] as BossBrain).last_debug().get("hazards", {})
+		_check("%s vent listed in vent_blocked" % phase, (hz.get("vent_blocked", []) as Array).has(Vector2i(4, 0)), str(hz.get("vent_blocked")))
+	# A walk across a warning vent line goes around it (the line (4,1) is in the way of (3,1) -> (5,1)).
+	var path: Dictionary = _stub_world(_config(1.0), Vector2i(3, 1), Vector2i(5, 1))
+	(path["stub"] as StubHazards).vents = _cells([Vector2i(4, 1)])
+	(path["stub"] as StubHazards).vent_warn = _cells([Vector2i(4, 1)])
+	var visited: Array[Vector2i] = _walk(path, 8)
+	_check("warning vent blocks the path", not visited.has(Vector2i(4, 1)) and visited.has(Vector2i(5, 1)), str(visited))
+	# A vent on the player's half is a blocked escape cell too (listed in the debug).
+	var side: Dictionary = _stub_world(_config(1.0), Vector2i(3, 0), Vector2i(4, 1))
+	(side["stub"] as StubHazards).vents = _cells([Vector2i(1, 1)])
+	(side["stub"] as StubHazards).vent_fire = _cells([Vector2i(1, 1)])
+	_decide(side)
+	var side_hz: Dictionary = (side["brain"] as BossBrain).last_debug().get("hazards", {})
+	_check("player-half erupting vent is listed", (side_hz.get("vent_blocked", []) as Array).has(Vector2i(1, 1)), str(side_hz.get("vent_blocked")))
+
+
+# A hazards object with nothing active (crumble off, no vents, nothing fallen) gives the same decisions as no
+# hazards with the shipped noisy balanced set: the new code draws no RNG until a crumble arena or a vent matters.
+func _test_idle_crumble_stub_identical_to_null() -> void:
+	var runs: Array[Array] = []
+	for with_stub: bool in [false, true]:
+		var w: Dictionary = _world(BossBrainConfig.load_from_file(), Vector2i(5, 2), Vector2i(3, 0))
+		if with_stub:
+			var stub := StubHazards.new(w["grid"], SEED)
+			(w["brain"] as BossBrain).set_hazards(stub)
+		var seq: Array = []
+		var state: CombatState = w["state"]
+		for i: int in DECISIONS:
+			var action: Dictionary = _decide(w)
+			seq.append([str(action["type"]), _dir_of(action), (w["brain"] as BossBrain).get_destination()])
+			if _dir_of(action) != Vector2i.ZERO:
+				state.set_enemy_cell(state.enemy_cell + _dir_of(action))
+		runs.append(seq)
+	_check("idle stub hazards = null hazards decisions (RNG draws)", str(runs[0]) == str(runs[1]), str(runs[0]))
+
+
+# With the real TileHazards (when the Story 039 API has landed): standing on a crumble arena builds crumble_progress
+# and the brain's cost follows it.
+func _test_real_tile_hazards_crumble() -> void:
+	var w: Dictionary = _world(_config_crumble(1.0), CENTER, BoardGrid.NO_CELL)
+	var hazards: TileHazards = w["hazards"]
+	if not (hazards.has_method("enable_crumble") and hazards.has_method("crumble_progress") and hazards.has_method("is_fallen")):
+		print("SKIP real TileHazards crumble (API not present yet)")
+		return
+	hazards.call("enable_crumble", true)
+	(w["brain"] as BossBrain).set_hazards(hazards)
+	var state: CombatState = w["state"]
+	# The player stands elsewhere; the boss does not move for 1.2 s of model time (crumble_after_sec 2.0).
+	for i: int in 12:
+		hazards.tick(0.1, state)
+	var progress: float = float(hazards.call("crumble_progress", ENEMY, CENTER))
+	_check("real hazards: standing builds crumble_progress", progress > 0.0, str(progress))
+	_decide(w)
+	var dbg: Dictionary = _crumble_debug(w)
+	_check("real hazards: brain cost follows progress", float(dbg.get("fraction", 0.0)) >= progress - 0.0001 and float(dbg.get("cost", 0.0)) > 0.0, str(dbg))
+	for i: int in 20:
+		hazards.tick(0.1, state)
+	_check("real hazards: the cell fell or cracks after long standing", bool(hazards.call("is_fallen", ENEMY, CENTER)) \
+			or bool(hazards.call("is_crumble_warning", ENEMY, CENTER)) or float(hazards.call("crumble_progress", ENEMY, CENTER)) >= 1.0)

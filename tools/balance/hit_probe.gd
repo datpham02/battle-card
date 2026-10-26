@@ -208,7 +208,8 @@ func _run_bot(m: Dictionary, id: String, character: Dictionary, deck_entries: Ar
 	for k: String in keys:
 		acc[k] = 0.0
 	var firsts: Array[float] = []
-	var hz: Dictionary = {"mire_in": 0.0, "mire_dmg": 0.0, "buried": 0.0, "drifted": 0.0, "bmire_in": 0.0, "taken": 0.0}
+	var hz: Dictionary = {"mire_in": 0.0, "mire_dmg": 0.0, "buried": 0.0, "drifted": 0.0, "bmire_in": 0.0, "taken": 0.0,
+		"vent_hp": 0.0, "fall_hp": 0.0, "pushed": 0.0, "vent_erupts": 0.0, "cell_falls": 0.0, "boss_heal": 0.0}
 	for s: int in seeds:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = hash([id, "bot", s]) & SimCore.SEED_MASK
@@ -239,6 +240,7 @@ func _run_bot(m: Dictionary, id: String, character: Dictionary, deck_entries: Ar
 		float(acc["counters"]) / n, float(acc["focus_uses"]) / n, float(acc["joins"]) / n, float(acc["featured"]) / n,
 		float(acc["sig_acts"]) / n, first, float(acc["sig_dmg"]) / maxf(float(acc["sig_acts"]), 1.0)])
 	_print_hazard_line(id, character, n, hz)
+	_print_hazard_039_line(id, character, n, hz)
 
 
 ## Driver hook (sim_core): true once the cast modes reached their trials and the last swing is over.
@@ -297,3 +299,13 @@ func _print_hazard_line(id: String, character: Dictionary, n: float, hz: Diction
 		id, str(character.get("id", "")), float(hz["mire_in"]) / n, float(hz["mire_dmg"]) / n,
 		100.0 * float(hz["mire_dmg"]) / maxf(float(hz["taken"]), 0.001), float(hz["buried"]) / n, float(hz["drifted"]) / n,
 		float(hz["bmire_in"]) / n])
+
+
+# Story 039: one extra BOT line per match, only when a vent erupted, a cell fell or burn_eater healed, so older
+# output is unchanged.
+func _print_hazard_039_line(id: String, character: Dictionary, n: float, hz: Dictionary) -> void:
+	if float(hz["vent_erupts"]) + float(hz["cell_falls"]) + float(hz["boss_heal"]) <= 0.0:
+		return
+	print("RESULT BOT HAZARDS039 | %s | %s | vent HP/match %.1f | fall HP/match %.1f | times pushed/match %.2f | vents erupted/match %.2f | cells fallen/match %.2f | boss HP healed by burn/match %.1f" % [
+		id, str(character.get("id", "")), float(hz["vent_hp"]) / n, float(hz["fall_hp"]) / n, float(hz["pushed"]) / n,
+		float(hz["vent_erupts"]) / n, float(hz["cell_falls"]) / n, float(hz["boss_heal"]) / n])

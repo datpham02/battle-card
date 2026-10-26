@@ -19,6 +19,9 @@ const MATCH_KEYS: Array[String] = [
 const HAZARD_OVERRIDE_KEYS: Array[String] = [
 	"mire_step_mult", "mire_tick_damage", "mire_tick_sec", "mire_grace_sec", "sand_interval_sec",
 	"sand_cells", "sand_sec", "sand_warn_sec", "drift_sec", "wind_shift_sec",
+	# Story 039: vents and crumbling cells.
+	"vent_interval_sec", "vent_warn_sec", "vent_sec", "vent_tick_sec", "vent_tick_damage",
+	"crumble_after_sec", "crumble_warn_sec", "fall_sec", "fall_damage",
 ]
 ## Story 035: trait id a match's `phases` key turns into (see [method _apply_phases]).
 const BOSS_PHASES_TRAIT_ID: String = "boss_phases"

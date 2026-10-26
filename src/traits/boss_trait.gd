@@ -21,6 +21,7 @@ extends RefCounted
 ## - `skill_config`: SkillConfig, `cut_config`: CutConfig.
 ## - `player_mover`: the player's UnitMover (Story 023: `blocked_cell_fn`, `cooldown_mult`).
 ## - `hazards`: TileHazards (Story 036; mire, sand, wind), see [method get_hazards].
+## - `placement`: PlacementController (Story 039: shroud's hit forecast switch; may be absent in tests).
 ## - `trait_host_ref`: WeakRef of the owning TraitHost (add_trait, phase_changed); use
 ##   [method get_host].
 ## Every tuning number comes from `params` (chapters.json) with the trait's own defaults; read them
@@ -116,6 +117,37 @@ func on_boss_damaged(_amount: float) -> void:
 ## (Story 027 rule). Default false.
 func untargetable() -> bool:
 	return false
+
+
+## Story 039 (burn_eater): the ratio of a burn tick's damage that HEALS the boss instead of hurting it (0 = the tick
+## hurts as usual). TraitHost.burn_heal_ratio() takes the largest over the live traits; StatusEffects asks it at the ONE
+## place a burning cell ticks on the boss. Default 0.
+func burn_heal_ratio() -> float:
+	return 0.0
+
+
+## Story 039 (rebirth): the boss's HP just fell to 0. Return true to take the death over (CombatState holds the boss at
+## 1 HP and no `enemy_died` fires; the trait then revives it later). TraitHost.on_boss_would_die() asks every live
+## trait; the FIRST true wins. Called by CombatState.damage_enemy, the one place the boss's death is decided. Default false.
+func on_boss_would_die() -> bool:
+	return false
+
+
+## Story 039 (shroud): true while the placement preview's HIT FORECAST (green / red ghost + hit / miss tag) must be hidden.
+## TraitHost.hit_forecast_blocked() ORs it over the live traits; PlacementController.forecast_blocked() is what the HUD
+## reads. Default false.
+func hit_forecast_blocked() -> bool:
+	return false
+
+
+## Story 039: applies a vent interval multiplier to the match TileHazards (phase_shift / boss_phases phase 2). Guarded
+## with has_method so it is a no-op before / without the vent API. [param mult] <= 0 is ignored.
+func apply_vent_interval_mult(mult: float) -> void:
+	if mult <= 0.0:
+		return
+	var hazards: TileHazards = get_hazards()
+	if hazards != null and hazards.has_method("set_vent_interval_mult"):
+		hazards.call("set_vent_interval_mult", mult)
 
 
 ## The PLAYER completed a successful step from [param _from] to [param _to] (refused steps and

@@ -79,7 +79,7 @@ func _init() -> void:
 func _test_registry() -> void:
 	var w: Dictionary = _world(5)
 	_check("registry unknown null", TraitRegistry.create("nope") == null)
-	_check("registry known ids", TraitRegistry.known_ids() == (["bog_spread", "boss_phases", "burrow", "frost_aura", "fuse_cannon", "hop_skip", "phase_shift", "riposte", "rotten_thrower", "row_burner", "sandstorm", "seal_caster", "slam", "spore_burst", "step_reactor", "thorn_field"] as Array[String]), str(TraitRegistry.known_ids()))
+	_check("registry known ids", TraitRegistry.known_ids() == (["bog_spread", "boss_phases", "burn_eater", "burrow", "frost_aura", "fuse_cannon", "gust", "hop_skip", "island_drop", "phase_shift", "rebirth", "riposte", "rotten_thrower", "row_burner", "sandstorm", "seal_caster", "shroud", "slam", "spore_burst", "step_reactor", "thorn_field", "vent_surge"] as Array[String]), str(TraitRegistry.known_ids()))
 	var host := TraitHost.new(w["ctx"], [{"id": "nope"}, 42, {"id": "row_burner", "params": 7}, {"id": "row_burner"}], 5)
 	_check("host skips unknown (1 of 4 entries bad, 2 valid)", host.size() == 2, str(host.get_ids()))
 	host.on_match_start()

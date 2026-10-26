@@ -8,8 +8,9 @@ const E: int = CombatState.Side.ENEMY
 const HP: float = 1000.0
 const NEW_CARDS: Array[String] = ["gai_doc", "luoi_san", "thanh_thuy", "bang_tam"]
 const NEW_SHAPES: Array[String] = ["w5", "n5", "v5"]
-const WEIGHT_SETS: Array[String] = ["default", "ch1", "ch2", "ch3", "swamp", "desert"]
-const REGIONS: Array[String] = ["ch1", "ch2", "ch3", "swamp", "desert"]
+const WEIGHT_SETS: Array[String] = ["default", "ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"]
+## Story 039: sky_isles is left out on purpose: its arenas are 2-3 rows tall, so a 5-cell shape that is 4 long (n5) cannot be placed there (such a shape is simply never placed, Story 024).
+const REGIONS: Array[String] = ["ch1", "ch2", "ch3", "swamp", "desert", "hellfire"]
 const CHAPTERS_PATH: String = "res://assets/data/chapters.json"
 
 var fails: int = 0
@@ -173,7 +174,7 @@ func _shapes() -> void:
 				all_sets = false
 				print("weight out of 0.1..0.25 (tuned x0.25 from 0.5..1.0, simulation-characters.md) in ", set_id, " for ", id, ": ", w)
 			ck("%s: lib.weight in %s is that entry" % [id, set_id], is_equal_approx(lib.weight(id, set_id), w))
-		ck("%s: weight 0.1..0.25 in all 6 weight sets (tuned)" % id, all_sets)
+		ck("%s: weight 0.1..0.25 in all 8 weight sets (tuned)" % id, all_sets)
 		var piece: Piece = Piece.make(id, cells)
 		for region: String in REGIONS:
 			var fits: bool = false

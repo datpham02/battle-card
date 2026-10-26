@@ -15,7 +15,7 @@ func check(ok: bool, label: String) -> void:
 
 func _initialize() -> void:
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
-	check(cfg.chapter_count() == 6, "chapter count 6 (3 regions + an_dai + swamp + desert, Story 036)")
+	check(cfg.chapter_count() == 8, "chapter count 8 (3 regions + an_dai + swamp + desert + hellfire + sky_isles, Stories 036 / 039)")
 	check(is_equal_approx(float(cfg.defaults()["heal_between_floors"]), 0.0) and int(cfg.defaults()["revive_tokens"]) == 0, "defaults heal_between_floors / revive_tokens (019)")
 
 	# Arena seeds (still used by RunSession per column)

@@ -1,12 +1,12 @@
 # Story 039: Vùng Thành Hỏa Ngục và Không Đảo — mạch dung nham, sân tách đảo, ô rơi; pool vùng lên 7
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-25
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -97,7 +97,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/regions-hellfire-skyisles/`; bảng mô phỏng theo tầng và tần suất vùng.
 
-**Status**: Not yet created
+**Status**: Created — 3 new suites (`tests/unit/run/regions_hellfire_sky_test`, `tests/unit/combat/vent_crumble_view_test`, `tests/unit/ui/hazard_strings_039_test`) and 4 extended (`hazard_test`, `region_traits_test`, `boss_brain_hazard_test`, the Story 037 unlock suites), 9 screenshots and `simulation-regions.md` + raw in `production/qa/evidence/regions-hellfire-skyisles/`
 
 ---
 
@@ -105,3 +105,13 @@
 
 - Depends on: Story 036 (khối `hazards`, mẫu vùng, cờ mô phỏng vùng/tầng), Story 031 (pool vùng, hệ số tầng); dùng dữ liệu mở khóa của Story 037 nếu đã xong
 - Unlocks: Story 040 (cân bằng cả run với đủ 7 vùng)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 22/23 passing or passing with notes; E3 (simulation) partly met. Met: each new region within +-10 points of the five-region mean at floors 1 / 3 / 5 (hellfire +1.6 / +3.9 / +6.5, sky_isles after tuning +0.6 / -6.8 / -6.1 against 95.8 / 89.9 / 80.8), region frequency 27.5-31.1 % of floor choices over 200 runs (target 20-40 %), fire_eater with the Phap su starter deck 100 % at floor 1 (target >= 25 %). NOT met: "no match above 95 % at floor 1" (measurement limit: the old regions are 97-100 % there too, as in Story 036). DEFERRED: how vents / crumble / the traits read and feel on a real phone (gate 8 playtest; UI polish waits for the art assets).
+**Deviations**: JSON tuning `sky_isles.region_normalize.hp_mult` 0.75 -> 0.53 (without it -21 / -23 points at floors 3 / 5, mostly 180 s timeouts on the small split arenas; crumble timing was probed and is not the cause); two extra hazards keys `vent_tick_sec` 0.5 and `vent_tick_damage` 2.0 (the story gives no burn numbers for vents; `RunConfig.HAZARD_OVERRIDE_KEYS` now has 19 entries); a crumbling cell pushes its occupant to the nearest free 4-neighbour that keeps an exit (the chan_phong push only pushes away from the divider); `island_drop` removes the arena's bridge cells from the islands and never drops a bridge or the last island; there was no enemy heal path, so `CombatState.heal_enemy` / `enemy_healed` were added for `burn_eater`; `rebirth`: a Han stack applied by the same lethal cut does not stop that death, a Han burst that kills clears its own stacks first (so it revives); two new achievements `reach_floor_4` (-> hellfire) and `reach_floor_5` (-> sky_isles) with a new `best_floor` condition, so the Story 037 counts became 24 achievements and the locked list gained 2 regions; `n5` (4 long) fits no sky_isles arena (2-3 rows), accepted by the story.
+**Test Evidence**: Integration: 3 new suites + 4 extended + 12 updated, sweep 246 parse, 102 headless + 4 windowed FAILS=0 (`piece_deck_flow_test` failed once under machine load, 3 of 3 alone, already flaky in the register), launch 0 errors; screenshots `production/qa/evidence/regions-hellfire-skyisles/01,03-09*.png`; simulation `simulation-regions.md` + `simulation-regions-raw.txt`.
+**Code Review**: Skipped (solo mode)
+**Tech debt**: TD-035.

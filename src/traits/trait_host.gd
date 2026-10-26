@@ -27,6 +27,16 @@ func _init(ctx: Dictionary, specs: Array, seed_value: int) -> void:
 	var arbiter: SwingArbiter = ctx.get("arbiter") as SwingArbiter
 	if arbiter != null:
 		arbiter.enemy_untargetable_fn = Callable(self, "is_boss_untargetable")
+	# Story 039: the three one-point hooks (burn heal, boss would die, hit forecast).
+	var status: StatusEffects = ctx.get("status") as StatusEffects
+	if status != null:
+		status.burn_heal_ratio_fn = Callable(self, "burn_heal_ratio")
+	var combat_state: CombatState = ctx.get("state") as CombatState
+	if combat_state != null:
+		combat_state.enemy_death_hook_fn = Callable(self, "on_boss_would_die")
+	var placement: PlacementController = ctx.get("placement") as PlacementController
+	if placement != null:
+		placement.forecast_blocked_fn = Callable(self, "hit_forecast_blocked")
 	for entry: Variant in specs:
 		if typeof(entry) != TYPE_DICTIONARY:
 			push_warning("TraitHost: a trait entry is not an object, skipped")
@@ -174,6 +184,33 @@ func is_boss_untargetable() -> bool:
 	return false
 
 
+## Story 039: the largest burn-heal ratio of the live traits (burn_eater); 0 = burning hurts the boss as usual.
+## StatusEffects.burn_heal_ratio_fn points here: the ONE place a burn tick on the boss asks.
+func burn_heal_ratio() -> float:
+	var best: float = 0.0
+	for trait_instance: BossTrait in _traits:
+		best = maxf(best, trait_instance.burn_heal_ratio())
+	return best
+
+
+## Story 039: true when a live trait (rebirth) takes the boss's death over. CombatState.enemy_death_hook_fn points here:
+## the ONE place the death is decided (damage_enemy). The first trait that says true wins.
+func on_boss_would_die() -> bool:
+	for trait_instance: BossTrait in _traits.duplicate():
+		if _traits.has(trait_instance) and trait_instance.on_boss_would_die():
+			return true
+	return false
+
+
+## Story 039: true when a live trait (shroud) hides the placement preview's hit forecast. PlacementController.
+## forecast_blocked_fn points here: the ONE place the forecast switch is read.
+func hit_forecast_blocked() -> bool:
+	for trait_instance: BossTrait in _traits:
+		if trait_instance.hit_forecast_blocked():
+			return true
+	return false
+
+
 ## Tears every trait down and forgets them. Safe to call more than once.
 func teardown_all() -> void:
 	for trait_instance: BossTrait in _traits:
@@ -182,4 +219,13 @@ func teardown_all() -> void:
 	var arbiter: SwingArbiter = _ctx.get("arbiter") as SwingArbiter
 	if arbiter != null and arbiter.enemy_untargetable_fn == Callable(self, "is_boss_untargetable"):
 		arbiter.enemy_untargetable_fn = Callable()
+	var status: StatusEffects = _ctx.get("status") as StatusEffects
+	if status != null and status.burn_heal_ratio_fn == Callable(self, "burn_heal_ratio"):
+		status.burn_heal_ratio_fn = Callable()
+	var combat_state: CombatState = _ctx.get("state") as CombatState
+	if combat_state != null and combat_state.enemy_death_hook_fn == Callable(self, "on_boss_would_die"):
+		combat_state.enemy_death_hook_fn = Callable()
+	var placement: PlacementController = _ctx.get("placement") as PlacementController
+	if placement != null and placement.forecast_blocked_fn == Callable(self, "hit_forecast_blocked"):
+		placement.forecast_blocked_fn = Callable()
 	_ctx = {}

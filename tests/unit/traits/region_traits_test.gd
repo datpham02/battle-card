@@ -2,7 +2,8 @@ extends SceneTree
 ## Story 036 Parts B-D: the six region traits spore_burst, hop_skip, bog_spread, burrow, riposte, sandstorm, each on
 ## its cadence with its params, against a real CombatState + BoardGrid + TileHazards + BossController; plus the
 ## untargetable window (a burrowed boss: a landing cast misses, its seal still forms) through the real
-## SwingArbiter + TraitHost. Headless; FAILS=N. Deterministic: fixed seeds, fixed steps.
+## SwingArbiter + TraitHost. Story 039 adds burn_eater, rebirth, vent_surge, gust, shroud, island_drop and the
+## phase_shift vent interval multiplier. Headless; FAILS=N. Deterministic: fixed seeds, fixed steps.
 
 const SEED: int = 23
 const STEP: float = 0.1
@@ -31,14 +32,23 @@ func _initialize() -> void:
 	_test_riposte_min_cells()
 	_test_sandstorm_drift_mult()
 	_test_missing_hazards_is_inert()
+	_test_registry_039()
+	_test_burn_eater_heals_instead_of_damaging()
+	_test_rebirth_once_and_not_with_frost()
+	_test_vent_surge_timing()
+	_test_gust_cancels_into_forbidden_cells()
+	_test_gust_pushes_one_cell()
+	_test_shroud_blocks_forecast_except_pinned_or_casting()
+	_test_island_drop_never_the_last_island()
+	_test_phase_shift_vent_interval_mult()
 	print("FAILS=%d" % fails)
 	quit(0 if fails == 0 else 1)
 
 
 # ------------------------------------------------------------------ fixtures
 
-func _world(player_cell: Vector2i, enemy_cell: Vector2i, with_hazards: bool = true) -> Dictionary:
-	var grid := BoardGrid.new(SIDE_COLS, SIDE_ROWS)
+func _world(player_cell: Vector2i, enemy_cell: Vector2i, with_hazards: bool = true, cols: int = SIDE_COLS, rows: int = SIDE_ROWS) -> Dictionary:
+	var grid := BoardGrid.new(cols, rows)
 	var state := CombatState.new(grid, 100.0, 1000.0, player_cell, enemy_cell)
 	var cut_config: CutConfig = CutConfig.load_from_file()
 	var skill_config: SkillConfig = SkillConfig.load_from_file()
@@ -265,4 +275,308 @@ func _test_missing_hazards_is_inert() -> void:
 	var t: SporeBurstTrait = _make("spore_burst", w, {}) as SporeBurstTrait
 	t.on_boss_damaged(5.0)
 	_check("no hazards: spore_burst does nothing", t.get_burst_count() == 0)
+	t.teardown()
+
+
+# ------------------------------------------------------------------ Story 039 traits
+
+func _test_registry_039() -> void:
+	_check("registry: burn_eater", TraitRegistry.create("burn_eater") is BurnEaterTrait)
+	_check("registry: rebirth", TraitRegistry.create("rebirth") is RebirthTrait)
+	_check("registry: vent_surge", TraitRegistry.create("vent_surge") is VentSurgeTrait)
+	_check("registry: gust", TraitRegistry.create("gust") is GustTrait)
+	_check("registry: shroud", TraitRegistry.create("shroud") is ShroudTrait)
+	_check("registry: island_drop", TraitRegistry.create("island_drop") is IslandDropTrait)
+
+
+# A burning cell under the boss heals it by the tick damage x heal_ratio; without the trait it hurts as before.
+func _test_burn_eater_heals_instead_of_damaging() -> void:
+	var control: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	(control["state"] as CombatState).damage_enemy(500.0)
+	var cells: Array[Vector2i] = [Vector2i(4, 1)]
+	(control["status"] as StatusEffects).ignite(cells, 2.0, 0.5, 10.0)
+	(control["status"] as StatusEffects).tick(0.5, control["state"])
+	_check("burn_eater: control (no trait) burning hurts", absf((control["state"] as CombatState).enemy_hp - 490.0) < EPS,
+		str((control["state"] as CombatState).enemy_hp))
+
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var state: CombatState = w["state"]
+	var status: StatusEffects = w["status"]
+	var host := TraitHost.new(w["ctx"], [{"id": "burn_eater", "params": {"heal_ratio": 1.0}}], SEED)
+	host.on_match_start()
+	var eater: BurnEaterTrait = host.get_trait("burn_eater") as BurnEaterTrait
+	var heals: Array[float] = []
+	state.enemy_healed.connect(func(amount: float) -> void: heals.append(amount))
+	state.damage_enemy(500.0)
+	status.ignite(cells, 2.0, 0.5, 10.0)
+	status.tick(0.5, state)
+	_check("burn_eater: a burn tick heals instead of damaging", absf(state.enemy_hp - 510.0) < EPS, str(state.enemy_hp))
+	_check("burn_eater: green-number signal fired with the amount", heals.size() == 1 and absf(heals[0] - 10.0) < EPS, str(heals))
+	_check("burn_eater: getters", eater.heals_from_burn() and absf(eater.get_heal_total() - 10.0) < EPS and host.burn_heal_ratio() == 1.0)
+	status.tick(0.5, state)
+	_check("burn_eater: every tick heals", absf(state.enemy_hp - 520.0) < EPS and eater.get_heal_count() == 2, str(state.enemy_hp))
+	# The PLAYER standing on a burning cell is hurt as usual.
+	var player_cells: Array[Vector2i] = [Vector2i(1, 1)]
+	status.ignite(player_cells, 2.0, 0.5, 10.0)
+	status.tick(0.5, state)
+	_check("burn_eater: the player's own burn still hurts the player", absf(state.player_hp - 90.0) < EPS, str(state.player_hp))
+	# Never above max HP.
+	state.enemy_hp = state.enemy_max_hp - 4.0
+	status.tick(0.5, state)
+	_check("burn_eater: heal clamps at max HP", absf(state.enemy_hp - state.enemy_max_hp) < EPS, str(state.enemy_hp))
+	host.teardown_all()
+	_check("burn_eater: teardown unwires the hook", not status.burn_heal_ratio_fn.is_valid())
+
+
+# The first death is taken over (held at 1 HP, untargetable, boss paused), then the boss revives at revive_ratio; a second
+# death is final; a Han stack at the moment of death makes the first one final too.
+func _test_rebirth_once_and_not_with_frost() -> void:
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var state: CombatState = w["state"]
+	var boss: BossController = w["boss"]
+	var host := TraitHost.new(w["ctx"], [{"id": "rebirth", "params": {"revive_ratio": 0.4, "revive_sec": 1.5}}], SEED)
+	host.on_match_start()
+	var phoenix: RebirthTrait = host.get_trait("rebirth") as RebirthTrait
+	var deaths: Array[int] = [0]
+	state.enemy_died.connect(func() -> void: deaths[0] += 1)
+	_check("rebirth: one life before", phoenix.lives_left() == 1 and not phoenix.is_reviving())
+	state.damage_enemy(5000.0)
+	_check("rebirth: the first death is taken over (held at 1 HP, no enemy_died)", deaths[0] == 0 and not state.is_enemy_dead()
+		and absf(state.enemy_hp - CombatState.HOLD_HP) < EPS, "hp=%f deaths=%d" % [state.enemy_hp, deaths[0]])
+	_check("rebirth: reviving, untargetable, boss paused, lives 0", phoenix.is_reviving() and host.is_boss_untargetable()
+		and not boss.is_active() and phoenix.lives_left() == 0 and absf(phoenix.revive_left() - 1.5) < EPS)
+	state.damage_enemy(50.0)
+	_check("rebirth: a blow while reviving does not kill", deaths[0] == 0 and not state.is_enemy_dead())
+	for i: int in 14:
+		host.on_tick(STEP)
+	_check("rebirth: still reviving before revive_sec", phoenix.is_reviving())
+	host.on_tick(STEP)
+	_check("rebirth: revived at revive_ratio x max HP, active again", not phoenix.is_reviving()
+		and absf(state.enemy_hp - 400.0) < EPS and boss.is_active() and not host.is_boss_untargetable(), str(state.enemy_hp))
+	state.damage_enemy(5000.0)
+	_check("rebirth: the second death is final", deaths[0] == 1 and state.is_enemy_dead() and phoenix.lives_left() == 0)
+	host.teardown_all()
+	_check("rebirth: teardown unwires the death hook", not state.enemy_death_hook_fn.is_valid())
+
+	var f: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var fstate: CombatState = f["state"]
+	var fhost := TraitHost.new(f["ctx"], [{"id": "rebirth", "params": {}}], SEED)
+	fhost.on_match_start()
+	(f["status"] as StatusEffects).apply_frost(CombatState.Side.ENEMY, 1)
+	fstate.damage_enemy(5000.0)
+	_check("rebirth: >= 1 Han stack at death means it dies", fstate.is_enemy_dead()
+		and (fhost.get_trait("rebirth") as RebirthTrait).lives_left() == 1)
+	fhost.teardown_all()
+
+
+# Every interval_sec the player's half vents surge: 2 vents warn at once, the one holding the player's cell included.
+func _test_vent_surge_timing() -> void:
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var hz: TileHazards = w["hazards"]
+	var row0: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
+	var row1: Array[Vector2i] = [Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)]
+	var row2: Array[Vector2i] = [Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)]
+	hz.set_vents(CombatState.Side.PLAYER, [row0, row1, row2])
+	var t: VentSurgeTrait = _make("vent_surge", w, {"interval_sec": 10.0, "vents": 2}) as VentSurgeTrait
+	_run(t, 9.9)
+	_check("vent_surge: nothing before interval_sec", t.get_surge_count() == 0
+		and not hz.is_vent_warning(CombatState.Side.PLAYER, Vector2i(1, 1)))
+	_run(t, 0.1)
+	var warning: int = 0
+	for cell: Vector2i in hz.vent_cells(CombatState.Side.PLAYER):
+		if hz.is_vent_warning(CombatState.Side.PLAYER, cell):
+			warning += 1
+	_check("vent_surge: 2 vents warn at interval_sec (6 cells)", t.get_surge_count() == 1 and t.get_last_count() == 2 and warning == 6,
+		"surges=%d count=%d cells=%d" % [t.get_surge_count(), t.get_last_count(), warning])
+	_check("vent_surge: the vent holding the player's cell is one of them", hz.is_vent_warning(CombatState.Side.PLAYER, Vector2i(1, 1)))
+	t.teardown()
+	var bare: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var inert: VentSurgeTrait = _make("vent_surge", bare, {"interval_sec": 1.0}) as VentSurgeTrait
+	_run(inert, 2.0)
+	_check("vent_surge: no vents on the side = nothing happens", inert.get_surge_count() == 0)
+	inert.teardown()
+
+
+# All four neighbours forbidden (seal, sand): every gust is cancelled and the player stays.
+func _test_gust_cancels_into_forbidden_cells() -> void:
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var state: CombatState = w["state"]
+	var hz: TileHazards = w["hazards"]
+	var status: StatusEffects = w["status"]
+	var t: GustTrait = _make("gust", w, {"interval_sec": 6.0, "warn_sec": 0.6}) as GustTrait
+	var sealed: Array[Vector2i] = [Vector2i(1, 0), Vector2i(1, 2)]
+	status.apply_seal(CombatState.Side.PLAYER, sealed, 60.0)
+	var sand: Array[Vector2i] = [Vector2i(0, 1), Vector2i(2, 1)]
+	hz.add_sand(CombatState.Side.PLAYER, sand, 60.0, 0.0)
+	hz.tick(STEP, state)
+	_check("gust: sealed and sand cells are no push targets", not t.can_push_to(Vector2i(1, 0)) and not t.can_push_to(Vector2i(0, 1))
+		and not t.can_push_to(Vector2i(2, 1)) and not t.can_push_to(Vector2i(1, 2)))
+	_check("gust: outside the half is refused, a free cell is allowed", not t.can_push_to(Vector2i(3, 1))
+		and not t.can_push_to(Vector2i(-1, 1)) and t.can_push_to(Vector2i(0, 0)))
+	_run(t, 5.9)
+	_check("gust: no arrow before interval_sec", t.get_gust_dir() == Vector2i.ZERO and t.get_gust_warn_left() == 0.0)
+	_run(t, 0.1)
+	var dir: Vector2i = t.get_gust_dir()
+	_check("gust: arrow with a 1-cell direction and warn_sec", absi(dir.x) + absi(dir.y) == 1 and absf(t.get_gust_warn_left() - 0.6) < EPS,
+		"%s %f" % [dir, t.get_gust_warn_left()])
+	_run(t, 0.6)
+	_check("gust: the push into a forbidden cell is cancelled (the player stays)", state.player_cell == Vector2i(1, 1)
+		and t.get_cancel_count() == 1 and t.get_push_count() == 0 and t.get_gust_dir() == Vector2i.ZERO, str(state.player_cell))
+	t.teardown()
+
+
+# A free board: every gust moves the player exactly 1 cell (or cancels at the edge) and keeps it inside its half.
+func _test_gust_pushes_one_cell() -> void:
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var state: CombatState = w["state"]
+	var t: GustTrait = _make("gust", w, {"interval_sec": 2.0, "warn_sec": 0.5}) as GustTrait
+	var grid: BoardGrid = w["grid"]
+	var ok: bool = true
+	var moved: int = 0
+	for i: int in 12:
+		var before: Vector2i = state.player_cell
+		_run(t, 2.5)
+		var delta: Vector2i = state.player_cell - before
+		if delta != Vector2i.ZERO:
+			moved += 1
+		ok = ok and absi(delta.x) + absi(delta.y) <= 1 and grid.is_player_cell(state.player_cell)
+	_check("gust: every gust moves the player 0 or 1 cell inside its half", ok and moved > 0 and t.get_push_count() == moved,
+		"moved=%d pushes=%d" % [moved, t.get_push_count()])
+	t.teardown()
+
+
+# The forecast is off unless the boss is pinned or casting; the switch reaches the PlacementController through the host.
+func _test_shroud_blocks_forecast_except_pinned_or_casting() -> void:
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var status: StatusEffects = w["status"]
+	var boss: BossController = w["boss"]
+	var placement := PlacementController.new(w["grid"])
+	var ctx: Dictionary = w["ctx"]
+	ctx["placement"] = placement
+	var host := TraitHost.new(ctx, [{"id": "shroud", "params": {}}], SEED)
+	host.on_match_start()
+	var cloud: ShroudTrait = host.get_trait("shroud") as ShroudTrait
+	_check("shroud: forecast blocked by default (host + placement controller)", host.hit_forecast_blocked()
+		and placement.forecast_blocked() and cloud.is_shrouding() and not cloud.is_cloud_lifted())
+	status.pin(CombatState.Side.ENEMY, 1.0)
+	_check("shroud: not blocked while the boss is pinned", not host.hit_forecast_blocked() and not placement.forecast_blocked()
+		and cloud.is_cloud_lifted())
+	status.tick(1.5, w["state"])
+	_check("shroud: blocked again once the pin ends", placement.forecast_blocked())
+	boss.get_actor().begin_swing([Vector2i(0, 0), Vector2i(1, 0)] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, false, 1, 20.0)
+	_check("shroud: not blocked while the boss is casting", not placement.forecast_blocked() and not cloud.is_shrouding())
+	host.teardown_all()
+	_check("shroud: teardown unwires the switch", not placement.forecast_blocked() and not placement.forecast_blocked_fn.is_valid())
+	var plain: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var plain_host := TraitHost.new(plain["ctx"], [], SEED)
+	_check("shroud: a match without the trait never blocks", not plain_host.hit_forecast_blocked())
+
+
+# The real sky_isles arenas (twin_isles, three_isles): the trait's islands are ArenaValidator.island_cells (bridge cells
+# removed, every island >= 2 cells); over a long run with a short interval the bridges never fall and at least one
+# whole island always stands (never the last island); a half with a single island is left alone.
+func _test_island_drop_never_the_last_island() -> void:
+	var arenas: ArenaLibrary = ArenaLibrary.load_from_file()
+	for id: String in ["twin_isles", "three_isles"]:
+		var grid: BoardGrid = ArenaLibrary.grid_for_spec({"shape": id}, arenas, 0)
+		var w: Dictionary = _world_on(grid)
+		var hz: TileHazards = w["hazards"]
+		var state: CombatState = w["state"]
+		var t: IslandDropTrait = _make("island_drop", w, {"interval_sec": 2.0, "fall_sec": 4.0, "warn_sec": 1.2}) as IslandDropTrait
+		var expected: Array = ArenaValidator.island_cells(grid, true)
+		var bridges: Array[Vector2i] = ArenaValidator.bridge_cells(grid, true)
+		var islands: Array = t.get_islands()
+		var sizes_ok: bool = true
+		var no_bridge_inside: bool = true
+		for island: Variant in islands:
+			sizes_ok = sizes_ok and (island as Array).size() >= 2
+			for bridge: Vector2i in bridges:
+				no_bridge_inside = no_bridge_inside and not (island as Array).has(bridge)
+		_check("island_drop %s: islands = the arena's islands (bridges removed, each >= 2 cells)" % id,
+			islands.size() == expected.size() and islands.size() >= 2 and sizes_ok and no_bridge_inside,
+			"trait=%s arena=%s" % [islands, expected])
+		_run(t, 1.9)
+		_check("island_drop %s: nothing before interval_sec" % id, t.get_drop_count() == 0 and t.get_drop_cells().is_empty())
+		t.on_tick(STEP)
+		var cells: Array[Vector2i] = t.get_drop_cells()
+		var in_one_island: bool = false
+		for island: Variant in expected:
+			var all_in: bool = not cells.is_empty()
+			for cell: Vector2i in cells:
+				all_in = all_in and (island as Array).has(cell)
+			in_one_island = in_one_island or all_in
+		_check("island_drop %s: the announced cells lie in ONE island, >= 2 cells, warn_sec" % id, t.get_drop_count() == 1
+			and cells.size() >= 2 and in_one_island and absf(t.get_drop_warn_left() - 1.2) < EPS, "%s %f" % [cells, t.get_drop_warn_left()])
+		var whole_island_stands: bool = true
+		var bridges_stand: bool = true
+		var fell_any: bool = false
+		for i: int in 400:
+			t.on_tick(STEP)
+			hz.tick(STEP, state)
+			var any_whole: bool = false
+			for island: Variant in expected:
+				var whole: bool = true
+				for cell: Vector2i in island as Array:
+					if hz.is_fallen(CombatState.Side.PLAYER, cell):
+						whole = false
+						fell_any = true
+				any_whole = any_whole or whole
+			if whole_island_stands and not any_whole:
+				print("  island_drop %s: no whole island at step %d, fallen=%s" % [id, i, hz.fallen_cells(CombatState.Side.PLAYER)])
+			whole_island_stands = whole_island_stands and any_whole
+			for bridge: Vector2i in bridges:
+				if bridges_stand and hz.is_fallen(CombatState.Side.PLAYER, bridge):
+					print("  island_drop %s: bridge %s fell at step %d" % [id, bridge, i])
+				bridges_stand = bridges_stand and not hz.is_fallen(CombatState.Side.PLAYER, bridge)
+		_check("island_drop %s: an island really fell during the run" % id, fell_any)
+		_check("island_drop %s: one whole island and every bridge always stand (never the last island)" % id,
+			whole_island_stands and bridges_stand)
+		t.teardown()
+
+	var single: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var one: IslandDropTrait = _make("island_drop", single, {"interval_sec": 1.0}) as IslandDropTrait
+	_run(one, 30.0)
+	_check("island_drop: a half with one island never drops", one.get_drop_count() == 0
+		and (single["hazards"] as TileHazards).fallen_cells(CombatState.Side.PLAYER).is_empty())
+	one.teardown()
+
+
+# A _world on a given arena grid (both units on the grid's default cells).
+func _world_on(grid: BoardGrid) -> Dictionary:
+	var w: Dictionary = _world(BoardGrid.NO_CELL, BoardGrid.NO_CELL, true, grid.side_cols, grid.rows)
+	var state := CombatState.new(grid, 100.0, 1000.0)
+	var hazards := TileHazards.new(grid, SEED)
+	hazards.bind_state(state)
+	var boss := BossController.new(
+		state, grid, w["cut_config"], w["skill_config"], BossBrainConfig.load_from_file(), _idle_drops(),
+		HoldSlotsConfig.new(), SEED
+	)
+	boss.set_active(true)
+	var status := StatusEffects.new()
+	var mover := UnitMover.new(state, CombatState.Side.PLAYER, 0.3)
+	var ctx: Dictionary = {"state": state, "grid": grid, "status": status, "boss": boss, "player_mover": mover, "hazards": hazards}
+	return {"grid": grid, "state": state, "status": status, "boss": boss, "mover": mover, "ctx": ctx, "hazards": hazards}
+
+
+func _idle_drops() -> FieldDropsConfig:
+	var drops_config := FieldDropsConfig.new()
+	drops_config.initial_delay_sec = 1.0e9
+	return drops_config
+
+
+# phase_shift param vent_interval_mult scales the vent clock when phase 2 starts.
+func _test_phase_shift_vent_interval_mult() -> void:
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var hz: TileHazards = w["hazards"]
+	var state: CombatState = w["state"]
+	var row0: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
+	hz.set_vents(CombatState.Side.PLAYER, [row0])
+	var before: float = hz.vent_timer_left()
+	var t: PhaseShiftTrait = _make("phase_shift", w, {"at_hp_ratio": 0.5, "extra_traits": [], "vent_interval_mult": 0.7}) as PhaseShiftTrait
+	t.on_tick(STEP)
+	_check("phase_shift: phase 1 leaves the vent clock alone", t.get_phase() == 1 and absf(hz.vent_timer_left() - before) < EPS)
+	state.damage_enemy(600.0)
+	t.on_boss_damaged(600.0)
+	_check("phase_shift: phase 2 multiplies the vent interval by 0.7", t.get_phase() == 2
+		and absf(hz.vent_timer_left() - before * 0.7) < EPS, "%f -> %f" % [before, hz.vent_timer_left()])
 	t.teardown()

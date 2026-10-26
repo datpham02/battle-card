@@ -107,7 +107,7 @@
 	"world": {
 		"floors": 5,
 		"choices_per_floor": 2,
-		"region_pool": ["ch1", "ch2", "ch3", "swamp", "desert"],
+		"region_pool": ["ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"],
 		"region_columns": [
 			{"tier": 0, "kinds": ["battle"], "pick": [1, 1], "required": []},
 			{"tier": 1, "kinds": ["battle", "danger", {"kind": "miniboss", "min_floor": 2}], "pick": [2, 3], "required": [["rest", "treasure"]]},
@@ -1470,6 +1470,491 @@
 					],
 					"2": [
 						"sand_sphinx"
+					]
+				}
+			}
+		},
+		{
+			"id": "hellfire",
+			"name_key": "chapter.hellfire.name",
+			"region_normalize": {
+				"hp_mult": 0.75,
+				"step_mult": 1.05,
+				"defense_add": 0
+			},
+			"intro_key": "chapter.hellfire.intro",
+			"end_key": "chapter.hellfire.end",
+			"matches": {
+				"imp": {
+					"id": "imp",
+					"name_key": "boss.imp.name",
+					"boss_max_hp": 92,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.78,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"arena": {
+						"shape": "forge"
+					}
+				},
+				"ember_hound": {
+					"id": "ember_hound",
+					"name_key": "boss.ember_hound.name",
+					"boss_max_hp": 110,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"movement": {
+						"move_commitment": 0.9
+					},
+					"arena": {
+						"shape": "caldera"
+					}
+				},
+				"ash_golem": {
+					"id": "ash_golem",
+					"name_key": "boss.ash_golem.name",
+					"boss_max_hp": 132,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"boss_defense": 3,
+					"arena": {
+						"shape": "forge"
+					}
+				},
+				"flame_cultist": {
+					"id": "flame_cultist",
+					"name_key": "boss.flame_cultist.name",
+					"boss_max_hp": 128,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "caldera"
+					}
+				},
+				"magma_slug": {
+					"id": "magma_slug",
+					"name_key": "boss.magma_slug.name",
+					"boss_max_hp": 140,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"arena": {
+						"shape": "forge"
+					}
+				},
+				"hell_knight": {
+					"id": "hell_knight",
+					"name_key": "boss.hell_knight.name",
+					"boss_max_hp": 156,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_defense": 2,
+					"boss_min_runes": 3,
+					"arena": {
+						"shape": "caldera"
+					}
+				},
+				"fire_eater": {
+					"id": "fire_eater",
+					"name_key": "boss.fire_eater.name",
+					"desc_key": "match.fire_eater.desc",
+					"boss_max_hp": 90,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "burn_eater",
+							"params": {
+								"heal_ratio": 1.0
+							}
+						}
+					],
+					"arena": {
+						"shape": "forge"
+					}
+				},
+				"ash_phoenix": {
+					"id": "ash_phoenix",
+					"name_key": "boss.ash_phoenix.name",
+					"desc_key": "match.ash_phoenix.desc",
+					"boss_max_hp": 74,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "rebirth",
+							"params": {
+								"revive_ratio": 0.4,
+								"revive_sec": 1.5
+							}
+						}
+					],
+					"arena": {
+						"shape": "caldera"
+					}
+				},
+				"inferno_lord": {
+					"id": "inferno_lord",
+					"name_key": "boss.inferno_lord.name",
+					"desc_key": "match.inferno_lord.desc",
+					"boss_max_hp": 180,
+					"brain_set": "aggressive",
+					"boss_step_cooldown_mult": 1.25,
+					"swing_speed_mult": 0.8,
+					"boss_think_interval_sec": 0.25,
+					"boss_reaction_sec": 0.3,
+					"boss_drop_interval_mult": 0.9,
+					"boss_min_runes": 3,
+					"traits": [
+						{
+							"id": "vent_surge",
+							"params": {
+								"interval_sec": 10.0,
+								"vents": 2
+							}
+						},
+						{
+							"id": "phase_shift",
+							"params": {
+								"at_hp_ratio": 0.5,
+								"brain_set": "aggressive",
+								"step_mult": 1.0,
+								"extra_traits": [],
+								"vent_interval_mult": 0.7
+							}
+						}
+					],
+					"arena": {
+						"shape": "caldera"
+					}
+				}
+			},
+			"pools": {
+				"battle": {
+					"0": [
+						"imp",
+						"ember_hound"
+					],
+					"1": [
+						"ember_hound",
+						"ash_golem",
+						"flame_cultist",
+						"imp"
+					],
+					"2": [
+						"ash_golem",
+						"flame_cultist",
+						"magma_slug",
+						"hell_knight"
+					]
+				},
+				"danger": {
+					"0": [],
+					"1": [
+						"ash_golem",
+						"flame_cultist",
+						"magma_slug"
+					],
+					"2": [
+						"flame_cultist",
+						"magma_slug",
+						"hell_knight"
+					]
+				},
+				"miniboss": {
+					"1": [
+						"fire_eater",
+						"ash_phoenix"
+					],
+					"2": [
+						"ash_phoenix",
+						"fire_eater"
+					]
+				},
+				"boss": {
+					"1": [
+						"inferno_lord"
+					],
+					"2": [
+						"inferno_lord"
+					]
+				}
+			}
+		},
+		{
+			"id": "sky_isles",
+			"name_key": "chapter.sky_isles.name",
+			"region_normalize": {
+				"hp_mult": 0.53,
+				"step_mult": 1.05,
+				"defense_add": 0
+			},
+			"intro_key": "chapter.sky_isles.intro",
+			"end_key": "chapter.sky_isles.end",
+			"matches": {
+				"cloud_sprite": {
+					"id": "cloud_sprite",
+					"name_key": "boss.cloud_sprite.name",
+					"boss_max_hp": 88,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.78,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"arena": {
+						"shape": "twin_isles"
+					}
+				},
+				"harpy": {
+					"id": "harpy",
+					"name_key": "boss.harpy.name",
+					"boss_max_hp": 104,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"movement": {
+						"move_noise": 0.1
+					},
+					"arena": {
+						"shape": "three_isles"
+					}
+				},
+				"wind_monk": {
+					"id": "wind_monk",
+					"name_key": "boss.wind_monk.name",
+					"boss_max_hp": 118,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"arena": {
+						"shape": "islands_bridge",
+						"crumble": true
+					}
+				},
+				"storm_eagle": {
+					"id": "storm_eagle",
+					"name_key": "boss.storm_eagle.name",
+					"boss_max_hp": 126,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.2,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"arena": {
+						"shape": "twin_isles"
+					}
+				},
+				"sky_sentinel": {
+					"id": "sky_sentinel",
+					"name_key": "boss.sky_sentinel.name",
+					"boss_max_hp": 144,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_defense": 3,
+					"arena": {
+						"shape": "three_isles"
+					}
+				},
+				"thunder_shaman": {
+					"id": "thunder_shaman",
+					"name_key": "boss.thunder_shaman.name",
+					"boss_max_hp": 150,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "islands_bridge",
+						"crumble": true
+					}
+				},
+				"gale_bird": {
+					"id": "gale_bird",
+					"name_key": "boss.gale_bird.name",
+					"desc_key": "match.gale_bird.desc",
+					"boss_max_hp": 86,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "gust",
+							"params": {
+								"interval_sec": 6.0,
+								"warn_sec": 0.6
+							}
+						}
+					],
+					"arena": {
+						"shape": "twin_isles"
+					}
+				},
+				"cloud_veil": {
+					"id": "cloud_veil",
+					"name_key": "boss.cloud_veil.name",
+					"desc_key": "match.cloud_veil.desc",
+					"boss_max_hp": 96,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "shroud",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "three_isles"
+					}
+				},
+				"storm_dragon": {
+					"id": "storm_dragon",
+					"name_key": "boss.storm_dragon.name",
+					"desc_key": "match.storm_dragon.desc",
+					"boss_max_hp": 185,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_min_runes": 3,
+					"traits": [
+						{
+							"id": "island_drop",
+							"params": {
+								"interval_sec": 11.0,
+								"fall_sec": 4.0,
+								"warn_sec": 1.2
+							}
+						},
+						{
+							"id": "gust",
+							"params": {
+								"interval_sec": 12.0,
+								"warn_sec": 0.6
+							}
+						}
+					],
+					"arena": {
+						"shape": "islands_bridge",
+						"crumble": true
+					}
+				}
+			},
+			"pools": {
+				"battle": {
+					"0": [
+						"cloud_sprite",
+						"harpy"
+					],
+					"1": [
+						"harpy",
+						"wind_monk",
+						"storm_eagle",
+						"cloud_sprite"
+					],
+					"2": [
+						"wind_monk",
+						"storm_eagle",
+						"sky_sentinel",
+						"thunder_shaman"
+					]
+				},
+				"danger": {
+					"0": [],
+					"1": [
+						"wind_monk",
+						"storm_eagle",
+						"sky_sentinel"
+					],
+					"2": [
+						"storm_eagle",
+						"sky_sentinel",
+						"thunder_shaman"
+					]
+				},
+				"miniboss": {
+					"1": [
+						"gale_bird",
+						"cloud_veil"
+					],
+					"2": [
+						"cloud_veil",
+						"gale_bird"
+					]
+				},
+				"boss": {
+					"1": [
+						"storm_dragon"
+					],
+					"2": [
+						"storm_dragon"
 					]
 				}
 			}

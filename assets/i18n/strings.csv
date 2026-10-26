@@ -772,3 +772,63 @@ ui.character_select.tap_to_start,Chạm thẻ đã chọn để vào,Tap the cho
 ui.run.kiep,Kiếp %d,Rebirth %d
 ui.ending.kiep_unlocked,Đã mở Kiếp %d,Unlocked Rebirth %d
 ui.stats.kiep,Kiếp,Rebirth
+ui.hud.vent_warn,SẮP PHUN,ERUPTS
+ui.hud.crumble,SẮP RƠI,CRUMBLING
+ui.hud.island_drop,ĐẢO SẮP RƠI,ISLE FALLS
+ui.hud.gust,GIÓ ĐẨY,GUST
+ui.hud.shroud,MÂY CHE,CLOUDED
+ui.hud.forecast_hidden,Báo trúng bị mây che,Forecast hidden
+ui.hud.rebirth_life,1 MẠNG,1 LIFE
+ui.hud.reviving,HỒI SINH %.1f s,REVIVING %.1f s
+region.hellfire.desc,"Mạch dung nham phun theo nhịp; quỷ nuốt lửa, phượng tro và Chúa Quỷ Lửa.","Lava vents erupt on a beat; fire eaters, ash phoenixes and the Inferno Lord."
+region.sky_isles.desc,"Đảo nối bằng cầu, ô đứng lâu thì rơi; chim gió, thần mây và Long Vương.","Bridged islands whose tiles crumble; gale birds, cloud veils and the Storm Dragon."
+chapter.hellfire.name,Thành Hỏa Ngục,The Hellfire Citadel
+chapter.hellfire.intro,Dung nham sôi dưới những bức tường cháy đen. Mạch lửa phun lên theo từng nhịp đập của thành.,Lava seethes beneath scorched walls. Fire bursts up with every beat of the citadel.
+chapter.hellfire.end,"Chúa Quỷ Lửa tan thành tro, mạch dung nham nguội dần. Lối ra mở ra phía trước.",The Inferno Lord falls to ash and the lava vents cool. A way out opens ahead.
+chapter.sky_isles.name,Không Đảo,The Sky Isles
+chapter.sky_isles.intro,"Những hòn đảo trôi giữa gió lộng, nối nhau bằng những nhịp cầu mong manh. Đứng lâu một chỗ, đất sẽ rơi.","Islands drift in the roaring wind, joined by fragile bridges. Stand still too long and the ground gives way."
+chapter.sky_isles.end,"Long Vương Gió gục xuống, gió lặng dần. Những nhịp cầu vững lại dưới chân.",The Storm Dragon falls and the wind dies down. The bridges steady beneath your feet.
+arena.forge.name,Lò rèn,Forge
+arena.caldera.name,Miệng núi lửa,Caldera
+arena.twin_isles.name,Song đảo,Twin Isles
+arena.three_isles.name,Tam đảo,Three Isles
+boss.imp.name,Tiểu Quỷ,Imp
+boss.ember_hound.name,Chó Than Hồng,Ember Hound
+boss.ash_golem.name,Khôi Tro,Ash Golem
+boss.flame_cultist.name,Tín Đồ Lửa,Flame Cultist
+boss.magma_slug.name,Sên Dung Nham,Magma Slug
+boss.hell_knight.name,Hiệp Sĩ Địa Ngục,Hell Knight
+boss.fire_eater.name,Quỷ Nuốt Lửa,Fire Eater
+boss.ash_phoenix.name,Phượng Tro,Ash Phoenix
+boss.inferno_lord.name,Chúa Quỷ Lửa,Inferno Lord
+boss.cloud_sprite.name,Tinh Mây,Cloud Sprite
+boss.harpy.name,Điểu Nữ,Harpy
+boss.wind_monk.name,Võ Tăng Gió,Wind Monk
+boss.storm_eagle.name,Đại Bàng Bão,Storm Eagle
+boss.sky_sentinel.name,Lính Gác Trời,Sky Sentinel
+boss.thunder_shaman.name,Pháp Sư Sấm,Thunder Shaman
+boss.gale_bird.name,Chim Gió,Gale Bird
+boss.cloud_veil.name,Thần Mây,Cloud Veil
+boss.storm_dragon.name,Long Vương Gió,Storm Dragon
+match.fire_eater.desc,Đốt và ô cháy hồi máu cho nó thay vì làm nó đau: lá đốt thành lá dở trong trận này.,Burn and fire heal it instead of hurting it: burn cards are poor picks in this match.
+match.ash_phoenix.desc,"Lần đầu gục nó hồi sinh với 40% máu sau 1,5 giây, trừ khi đang chịu Hàn: hãy mang băng.","The first time it falls it revives at 40% health after 1.5 s, unless it carries Frost: bring ice."
+match.inferno_lord.desc,"Cứ 10 giây lại cho 2 mạch dung nham bên bạn cùng phun, ưu tiên mạch bạn đứng; ở nửa máu mạch phun dồn dập hơn.","Every 10 s two lava vents on your side erupt at once, the one you stand on first; at half health the vents erupt faster."
+match.gale_bird.desc,Cứ 6 giây lại thổi bạn đi 1 ô theo mũi tên cảnh báo: đừng đứng sát mép đảo.,Every 6 s a gust shoves you 1 tile along the warned arrow: do not stand at an island edge.
+match.cloud_veil.desc,"Mây che ô nó đứng: báo trúng bị tắt, trừ lúc nó bị Ghim hoặc đang niệm.","Cloud covers its tile: the hit forecast is hidden, except while it is pinned or casting."
+match.storm_dragon.desc,"Cứ 11 giây lại làm rơi một đảo bên bạn, kèm gió nhẹ: luôn giữ đường sang đảo khác.","Every 11 s an island on your side falls, with a light gust: always keep a way to another island."
+trait.burn_eater.name,Nuốt lửa,Fire Eater
+trait.burn_eater.desc,Đốt và ô cháy hồi máu cho nó thay vì gây sát thương.,Burn and fire heal it instead of dealing damage.
+trait.rebirth.name,Tái sinh,Rebirth
+trait.rebirth.desc,"Lần đầu về 0 máu nó hồi sinh với 40% máu sau 1,5 giây, trừ khi đang chịu Hàn.","The first time it reaches 0 health it revives at 40% after 1.5 s, unless it carries Frost."
+trait.vent_surge.name,Mạch phun trào,Vent Surge
+trait.vent_surge.desc,"Cứ 10 giây cho 2 mạch dung nham bên bạn cùng phun, ưu tiên mạch chứa ô bạn đứng.","Every 10 s two lava vents on your side erupt together, the one under you first."
+trait.gust.name,Gió đẩy,Gust
+trait.gust.desc,"Định kỳ đẩy bạn 1 ô theo mũi tên cảnh báo; không đẩy vào ô thiếu, ô rơi hay ô kết giới.","Now and then it shoves you 1 tile along the warned arrow; never into a missing, fallen or sealed tile."
+trait.shroud.name,Mây che,Cloud Shroud
+trait.shroud.desc,"Mây che ô nó đứng: báo trúng bị ẩn, trừ khi nó bị Ghim hoặc đang niệm.","Cloud covers its tile: hit forecast hidden, unless it is pinned or casting."
+trait.island_drop.name,Đảo rơi,Island Drop
+trait.island_drop.desc,"Định kỳ làm rơi một đảo bên bạn trong vài giây, không bao giờ đảo cuối cùng còn đứng được.","Now and then an island on your side falls for a few seconds, never the last one left standing."
+achievement.reach_floor_4.name,Tới tầng 4,Reach Floor 4
+achievement.reach_floor_4.desc,Tới tầng 4 trong một run,Reach floor 4 in a run
+achievement.reach_floor_5.name,Tới tầng 5,Reach Floor 5
+achievement.reach_floor_5.desc,Tới tầng 5 trong một run,Reach floor 5 in a run

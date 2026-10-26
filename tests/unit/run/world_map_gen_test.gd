@@ -133,7 +133,7 @@ func _initialize() -> void:
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
 	var world: Dictionary = cfg.world_spec()
 	check(int(world["floors"]) == 5 and int(world["choices_per_floor"]) == 2, "world: 5 floors, 2 choices")
-	check(",".join(cfg.region_ids()) == "ch1,ch2,ch3,swamp,desert" and cfg.region_index("ch2") == 1 and cfg.region_index("zz") == -1, "region ids and indexes")
+	check(",".join(cfg.region_ids()) == "ch1,ch2,ch3,swamp,desert,hellfire,sky_isles" and cfg.region_index("ch2") == 1 and cfg.region_index("zz") == -1, "region ids and indexes")
 	check(is_equal_approx(cfg.floor_heal_ratio(), 0.35), "floor_heal_ratio 0.35 (Story 031 tuning, was 0.25)")
 	var final: Dictionary = cfg.final_match()
 	check(final.get("region") == "an_dai" and final.get("match_id") == "an_dai_keeper", "final_match is an_dai / an_dai_keeper (Story 035)")

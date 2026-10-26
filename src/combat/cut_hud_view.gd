@@ -494,6 +494,95 @@ const TEXT_HOP: String = "ui.hud.hop"
 const TEXT_RIPOSTE: String = "ui.hud.riposte"
 const TEXT_SURFACE: String = "ui.hud.surface"
 const TEXT_BURROWED: String = "ui.hud.burrowed"
+## Story 039 (hellfire / sky isles) cues, all read through has_method / call so the HUD runs before and without W1 / W3:
+## VENT = a fixed dark-red ember streak on every vent cell, brightening (and a blinking border) through the warning,
+## flame orange with a pale border while erupting (the burning layer adds its own flame on top: the pale border and the
+## streak are what tell a vent from a player's own burning cell). CRUMBLE = a crack that grows with crumble_progress on
+## the cell being stood on, a big blinking crack in the warning. FALLEN = a dark void with a torn rock edge and a time bar
+## (a plain missing cell is simply not drawn). ISLAND = a blinking border round the island about to fall. GUST = an
+## arrow on the player's cell. SHROUD = a cloud over the boss's cell and grey hit shadows. REBIRTH = a flame badge and
+## "1 life" text under the boss HP bar, a rising timer while it revives. BURN_EATER = a green "+N" rising off the boss.
+const ISLAND_DROP_TRAIT_ID: String = "island_drop"
+const GUST_TRAIT_ID: String = "gust"
+const SHROUD_TRAIT_ID: String = "shroud"
+const REBIRTH_TRAIT_ID: String = "rebirth"
+const VENT_WARN_FALLBACK_SEC: float = 1.0
+const ISLAND_WARN_FALLBACK_SEC: float = 1.2
+const GUST_WARN_FALLBACK_SEC: float = 0.6
+const REVIVE_FALLBACK_SEC: float = 1.5
+const VENT_FILL: Color = Color(0.4, 0.04, 0.02, 0.4)
+const VENT_STREAK: Color = Color(0.85, 0.2, 0.05, 0.85)
+const VENT_HEAT_FILL: Color = Color(0.95, 0.3, 0.05, 0.62)
+const VENT_HEAT_STREAK: Color = Color(1.0, 0.7, 0.15, 1.0)
+const VENT_ERUPT_FILL: Color = Color(1.0, 0.42, 0.04, 0.68)
+const VENT_ERUPT_BORDER: Color = Color(1.0, 0.92, 0.5, 1.0)
+const VENT_WARN_BORDER: Color = Color(1.0, 0.45, 0.1, 1.0)
+const VENT_STREAK_WIDTH: float = 3.0
+const VENT_STREAK_POINTS: int = 7
+const VENT_STREAK_AMP_RATIO: float = 0.1
+const VENT_BORDER_WIDTH: float = 4.0
+const CRUMBLE_TINT: Color = Color(0.25, 0.17, 0.08, 0.34)
+const CRUMBLE_CRACK: Color = Color(0.08, 0.05, 0.03, 0.95)
+const CRUMBLE_WARN_TINT: Color = Color(1.0, 0.6, 0.1, 0.3)
+const CRUMBLE_WARN_BORDER: Color = Color(1.0, 0.6, 0.1, 1.0)
+const CRUMBLE_CRACK_WIDTH: float = 3.5
+const CRUMBLE_BIG_CRACK_WIDTH: float = 7.0
+const FALLEN_VOID: Color = Color(0.02, 0.02, 0.06, 0.97)
+const FALLEN_DEPTH: Color = Color(0.1, 0.12, 0.25, 0.9)
+const FALLEN_EDGE: Color = Color(0.5, 0.36, 0.2, 1.0)
+const FALLEN_EDGE_WIDTH: float = 3.0
+const FALLEN_EDGE_STEPS: int = 6
+const FALLEN_EDGE_DEPTH_RATIO: float = 0.07
+const FALLEN_BAR_BACK: Color = Color(0.04, 0.05, 0.12, 0.9)
+const FALLEN_BAR_FILL: Color = Color(0.55, 0.78, 1.0)
+const ISLAND_TINT: Color = Color(1.0, 0.85, 0.3, 0.2)
+const ISLAND_BORDER: Color = Color(1.0, 0.9, 0.35, 1.0)
+const ISLAND_BORDER_WIDTH: float = 6.0
+const ISLAND_BAR_BACK: Color = Color(0.35, 0.28, 0.04, 0.8)
+const GUST_ARROW: Color = Color(0.82, 0.96, 1.0, 1.0)
+const GUST_OUTLINE: Color = Color(0.1, 0.25, 0.4, 0.95)
+const GUST_TINT: Color = Color(0.6, 0.85, 1.0, 0.22)
+const GUST_BAR_BACK: Color = Color(0.08, 0.2, 0.32, 0.8)
+const GUST_ARROW_WIDTH: float = 8.0
+const GUST_ARROW_LENGTH_RATIO: float = 0.34
+const GUST_HEAD_RATIO: float = 0.3
+const GHOST_BLOCKED_TINT: Color = Color(0.62, 0.64, 0.7, 0.42)
+const GHOST_BLOCKED_OUTLINE: Color = Color(0.42, 0.44, 0.5, 0.95)
+const CLOUD_FILL: Color = Color(0.93, 0.95, 0.98, 0.82)
+const CLOUD_EDGE: Color = Color(0.45, 0.48, 0.56, 0.9)
+const CLOUD_COVER_ALPHA: float = 0.7
+const CLOUD_TEXT: Color = Color(0.3, 0.33, 0.45)
+## Cloud puffs: x, y as shares of the cloud box (width x width * 0.6), z = radius as a share of the box width.
+const CLOUD_PUFFS: Array[Vector3] = [Vector3(0.25, 0.62, 0.2), Vector3(0.5, 0.4, 0.27), Vector3(0.75, 0.62, 0.2), Vector3(0.5, 0.68, 0.22)]
+const CLOUD_EDGE_GROW: float = 2.0
+const REBIRTH_COLOR: Color = Color(1.0, 0.62, 0.15)
+const REBIRTH_BAR_BACK: Color = Color(0.3, 0.14, 0.02, 0.85)
+const REBIRTH_ICON_MIN: float = 18.0
+const REBIRTH_ICON_MAX: float = 30.0
+const REVIVE_RING_RATIO: float = 0.46
+const BOSS_HEAL_COLOR: Color = Color(0.15, 0.85, 0.3)
+const BOSS_HEAL_BACK: Color = Color(0.0, 0.1, 0.02, 0.6)
+## Burn ticks heal in small steps: they are summed for BOSS_HEAL_BATCH_SEC and shown as one number that lives BOSS_HEAL_SEC.
+const BOSS_HEAL_BATCH_SEC: float = 0.4
+const BOSS_HEAL_SEC: float = 1.0
+const BOSS_HEAL_RISE_RATIO: float = 0.6
+const TEXT_VENT_WARN: String = "ui.hud.vent_warn"
+const TEXT_CRUMBLE: String = "ui.hud.crumble"
+const TEXT_ISLAND_DROP: String = "ui.hud.island_drop"
+const TEXT_GUST: String = "ui.hud.gust"
+const TEXT_SHROUD: String = "ui.hud.shroud"
+const TEXT_FORECAST_HIDDEN: String = "ui.hud.forecast_hidden"
+const TEXT_REBIRTH_LIFE: String = "ui.hud.rebirth_life"
+const TEXT_REVIVING: String = "ui.hud.reviving"
+
+## Story 039: the TileHazards config cached for the vent warning total, the burn_eater heal numbers ([amount, seconds
+## left] each), the heal being summed and the state the enemy_healed signal is connected to.
+var _hz_cfg_owner: int = 0
+var _hz_cfg: Dictionary = {}
+var _boss_heals: Array = []
+var _heal_pending: float = 0.0
+var _heal_pending_t: float = 0.0
+var _heal_state: CombatState = null
 
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
@@ -543,6 +632,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_sync_relic_strip()
 	_blink_time += delta
+	_tick_boss_heals(delta)
 	_banner_left = maxf(_banner_left - delta, 0.0)
 	_phase_banner_left = maxf(_phase_banner_left - delta, 0.0)
 	_piece_deck_notice_left = maxf(_piece_deck_notice_left - delta, 0.0)
@@ -559,6 +649,7 @@ func _process(delta: float) -> void:
 	if _combat != null:
 		_connect_phase()
 		_connect_zones()
+		_connect_burn_heal()
 	queue_redraw()
 
 
@@ -919,10 +1010,12 @@ func _draw() -> void:
 	_draw_feedback(vp)
 	_draw_boss_feedback(vp)
 	_draw_heal_flash(vp)
+	_draw_boss_heals(vp)
 	_draw_row_warning(vp)
 	_draw_trait_cells(vp)
 	_draw_hazard_traits(vp)
 	_draw_burning(vp)
+	_draw_vent_eruptions(vp)
 	_draw_interrupt(vp)
 	_draw_feint(vp)
 	_draw_pins(vp)
@@ -939,6 +1032,7 @@ func _draw() -> void:
 	if _combat.debug_overlay:
 		_draw_learning_debug(vp)
 	_draw_boss_status(vp)
+	_draw_rebirth(vp)
 	_draw_trait_status(vp)
 	_draw_wind_badge(vp)
 	_draw_piece_deck_notice(vp)
@@ -1079,11 +1173,17 @@ func _draw_preview(vp: Vector2) -> void:
 			_draw_finger(_combat.get_drag_point())
 		return
 	var hit: bool = placement.hits(enemy_cell)
-	_draw_cells(vp, cells, GHOST_HIT_TINT if hit else GHOST_MISS_TINT, GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
+	# Story 039 (shroud): the forecast is blocked: a grey shadow with a cloud icon says why there is no green / red.
+	var blocked: bool = _forecast_blocked()
+	var ghost_outline: Color = GHOST_BLOCKED_OUTLINE if blocked else (GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
+	_draw_cells(vp, cells, GHOST_BLOCKED_TINT if blocked else (GHOST_HIT_TINT if hit else GHOST_MISS_TINT), ghost_outline)
+	if blocked:
+		_draw_cloud_over_cells(vp, cells)
 	# The label rides on the ghost's top-right corner (above a lifted finger, never under it).
 	var damage: int = roundi(_combat.get_cut_config().slash_damage(cells.size()))
-	var label: String = "%s · %s · %s" % [tr(TEXT_PLACE_HIT) if hit else tr(TEXT_PLACE_MISS), tr(TEXT_CELLS) % cells.size(), tr(TEXT_DAMAGE_NUMBER) % damage]
-	_draw_corner_label(vp, cells, label, GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE, true)
+	var forecast: String = tr(TEXT_FORECAST_HIDDEN) if blocked else (tr(TEXT_PLACE_HIT) if hit else tr(TEXT_PLACE_MISS))
+	var label: String = "%s · %s · %s" % [forecast, tr(TEXT_CELLS) % cells.size(), tr(TEXT_DAMAGE_NUMBER) % damage]
+	_draw_corner_label(vp, cells, label, ghost_outline, true)
 	_draw_centered(top, tr(TEXT_CELLS) % cells.size(), BIG_FONT_SIZE, TEXT_DARK)
 	_draw_centered(bottom, tr(TEXT_DAMAGE) % damage, FONT_SIZE, TEXT_DARK)
 	if _combat.is_dragging():
@@ -1100,10 +1200,13 @@ func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> voi
 	for cell: Vector2i in ghost:
 		union.append(cell)
 	var hit: bool = union.has(enemy_cell)
-	var tint: Color = GHOST_HIT_TINT if hit else GHOST_MISS_TINT
-	var outline: Color = GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE
+	var blocked: bool = _forecast_blocked()
+	var tint: Color = GHOST_BLOCKED_TINT if blocked else (GHOST_HIT_TINT if hit else GHOST_MISS_TINT)
+	var outline: Color = GHOST_BLOCKED_OUTLINE if blocked else (GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
 	for i: int in plan.piece_count():
 		_draw_cells(vp, plan.piece_cells(i), tint, outline)
+	if blocked:
+		_draw_cloud_over_cells(vp, union)
 	if plan.piece_count() >= 2:
 		_draw_detach_mark(vp, plan.piece_cells(1))
 	var refusal: Dictionary = _combat.get_join_refusal()
@@ -1690,6 +1793,9 @@ func _draw_boss_status(vp: Vector2) -> void:
 		parts.append([tr(TEXT_BURN_STACKS) % stacks, BURN_STACKS_COLOR])
 	if _combat.is_boss_pinned():
 		parts.append([tr(TEXT_PINNED), PINNED_COLOR])
+	var status_host: TraitHost = _combat.get_trait_host()
+	if status_host != null and _is_shrouding(status_host):
+		parts.append([tr(TEXT_SHROUD), CLOUD_TEXT])
 	var fragile: int = _combat.get_fragile_stacks()
 	if fragile > 0:
 		parts.append([tr(TEXT_FRAGILE_STACKS) % fragile, FRAGILE_COLOR])
@@ -1698,7 +1804,9 @@ func _draw_boss_status(vp: Vector2) -> void:
 		parts.append([tr(TEXT_FROST_STACKS) % frost, FROST_COLOR])
 	if parts.is_empty():
 		return
-	_draw_status_parts(ScreenLayout.hud_boss_status_rect(vp), parts)
+	var boss_strip: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
+	boss_strip.size.x = maxf(boss_strip.size.x - _rebirth_reserve(vp), 0.0)
+	_draw_status_parts(boss_strip, parts)
 
 
 # One line of [text, colour] [param parts], left-aligned in [param rect] and STATUS_GAP apart, at
@@ -1775,6 +1883,384 @@ func _draw_trait_status(vp: Vector2) -> void:
 		var bar := Rect2(Vector2(end_x, rect.get_center().y - FUSE_BAR_HEIGHT * 0.5), Vector2(FUSE_BAR_WIDTH, FUSE_BAR_HEIGHT))
 		draw_rect(bar, FUSE_BAR_BACK)
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), FUSE_BAR_LOW_FILL if low else FUSE_BAR_FILL)
+
+
+# --- Story 039: vents, crumbling and fallen cells, island drop, gust, shroud, rebirth, burn_eater heals ----
+
+
+# TileHazards config (combat.json hazards merged with the match), cached per TileHazards instance.
+func _hz_config(hazards: TileHazards) -> Dictionary:
+	var id: int = hazards.get_instance_id()
+	if id != _hz_cfg_owner or _hz_cfg.is_empty():
+		_hz_cfg_owner = id
+		_hz_cfg = hazards.get_debug().get("cfg", {}) as Dictionary
+	return _hz_cfg
+
+
+# [param method](side) of [param hazards] as cells, empty while the method does not exist yet.
+func _hz_cells(hazards: TileHazards, method: String, side: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if hazards.has_method(method):
+		out.assign(hazards.call(method, side))
+	return out
+
+
+# [param method](side, cell) of [param hazards] as a number, 0 while the method does not exist yet.
+func _hz_num(hazards: TileHazards, method: String, side: int, cell: Vector2i) -> float:
+	return float(hazards.call(method, side, cell)) if hazards.has_method(method) else 0.0
+
+
+# [param method](side, cell) of [param hazards] as a flag, false while the method does not exist yet.
+func _hz_flag(hazards: TileHazards, method: String, side: int, cell: Vector2i) -> bool:
+	return bool(hazards.call(method, side, cell)) if hazards.has_method(method) else false
+
+
+# Vents (both halves), crumbling cells and fallen cells; called at the end of _draw_hazards (under the zones).
+func _draw_hazards_039(vp: Vector2, hazards: TileHazards, grid: BoardGrid, blink_on: bool) -> void:
+	var warn_total: float = float(_hz_config(hazards).get("vent_warn_sec", VENT_WARN_FALLBACK_SEC))
+	var crumble_on: bool = hazards.has_method("crumble_enabled") and bool(hazards.call("crumble_enabled"))
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		var warned: Array[Vector2i] = []
+		for cell: Vector2i in _hz_cells(hazards, "vent_cells", side):
+			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			if _hz_flag(hazards, "is_venting", side, cell):
+				_draw_vent_cell(rect, 2, 1.0, blink_on)
+			elif _hz_flag(hazards, "is_vent_warning", side, cell):
+				var heat: float = 1.0 - clampf(_hz_num(hazards, "vent_warn_left", side, cell) / maxf(warn_total, 0.001), 0.0, 1.0)
+				_draw_vent_cell(rect, 1, heat, blink_on)
+				warned.append(cell)
+			else:
+				_draw_vent_cell(rect, 0, 0.0, blink_on)
+		_draw_corner_label(vp, warned, tr(TEXT_VENT_WARN), VENT_WARN_BORDER)
+		var cracking: Array[Vector2i] = []
+		if crumble_on:
+			for cell: Vector2i in (grid.player_cells() if side == CombatState.Side.PLAYER else grid.enemy_cells()):
+				var warning: bool = _hz_flag(hazards, "is_crumble_warning", side, cell)
+				var progress: float = 1.0 if warning else _hz_num(hazards, "crumble_progress", side, cell)
+				if progress > 0.0:
+					_draw_crumble_cell(ScreenLayout.cell_rect(grid, vp, cell), progress, warning, blink_on)
+				if warning:
+					cracking.append(cell)
+		for cell: Vector2i in _hz_cells(hazards, "fallen_cells", side):
+			_draw_fallen_cell(ScreenLayout.cell_rect(grid, vp, cell), _hz_num(hazards, "fallen_left", side, cell), _hz_num(hazards, "fall_total_sec", side, cell))
+		_draw_corner_label(vp, cracking, tr(TEXT_CRUMBLE), CRUMBLE_WARN_BORDER)
+
+
+# Erupting vent cells again ABOVE the burning layer: a pale double border and a bright ember streak, so a vent
+# stays different from the player's own burning cell (hatched orange with a flame and a bottom bar).
+func _draw_vent_eruptions(vp: Vector2) -> void:
+	var hazards: TileHazards = _combat.get_hazards()
+	if hazards == null or not hazards.has_method("vent_cells"):
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		for cell: Vector2i in _hz_cells(hazards, "vent_cells", side):
+			if not _hz_flag(hazards, "is_venting", side, cell):
+				continue
+			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			draw_rect(rect.grow(-WARN_OUTLINE_INSET), VENT_ERUPT_BORDER, false, VENT_BORDER_WIDTH)
+			draw_rect(rect.grow(-WARN_OUTLINE_INSET - VENT_BORDER_WIDTH - 1.0), VENT_WARN_BORDER, false, VENT_BORDER_WIDTH * 0.5)
+			var amp: float = rect.size.y * VENT_STREAK_AMP_RATIO
+			var points := PackedVector2Array()
+			for k: int in VENT_STREAK_POINTS:
+				var t: float = float(k) / float(VENT_STREAK_POINTS - 1)
+				points.append(Vector2(rect.position.x + rect.size.x * (0.08 + 0.84 * t), rect.get_center().y + rect.size.y * 0.3 + (amp if k % 2 == 0 else -amp)))
+			draw_polyline(points, VENT_ERUPT_BORDER, VENT_STREAK_WIDTH + 1.0)
+
+
+# One vent cell. [param phase]: 0 idle (dark red streak), 1 warning ([param heat] 0..1 brightens it, border blinks),
+# 2 erupting (flame fill, pale border).
+func _draw_vent_cell(rect: Rect2, phase: int, heat: float, blink_on: bool) -> void:
+	var fill: Color = VENT_FILL
+	var streak: Color = VENT_STREAK
+	if phase == 1:
+		fill = VENT_FILL.lerp(VENT_HEAT_FILL, heat)
+		streak = VENT_STREAK.lerp(VENT_HEAT_STREAK, heat)
+	elif phase == 2:
+		fill = VENT_ERUPT_FILL
+		streak = VENT_HEAT_STREAK
+	draw_rect(rect, fill)
+	var amp: float = rect.size.y * VENT_STREAK_AMP_RATIO
+	var points := PackedVector2Array()
+	for k: int in VENT_STREAK_POINTS:
+		var t: float = float(k) / float(VENT_STREAK_POINTS - 1)
+		points.append(Vector2(rect.position.x + rect.size.x * (0.08 + 0.84 * t), rect.get_center().y + (amp if k % 2 == 0 else -amp)))
+	draw_polyline(points, streak, VENT_STREAK_WIDTH)
+	if phase == 1:
+		draw_rect(rect.grow(-WARN_OUTLINE_INSET), Color(VENT_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), false, VENT_BORDER_WIDTH)
+	elif phase == 2:
+		draw_rect(rect.grow(-WARN_OUTLINE_INSET), VENT_ERUPT_BORDER, false, VENT_BORDER_WIDTH)
+
+
+# A cell being stood on: a crack growing with [param progress] (0..1); in the warning ([param warning]) a big
+# full crack, a tint and a blinking amber border.
+func _draw_crumble_cell(rect: Rect2, progress: float, warning: bool, blink_on: bool) -> void:
+	draw_rect(rect, CRUMBLE_WARN_TINT if warning else Color(CRUMBLE_TINT, CRUMBLE_TINT.a * progress))
+	_draw_crack_partial(rect, progress, CRUMBLE_CRACK, CRUMBLE_BIG_CRACK_WIDTH if warning else CRUMBLE_CRACK_WIDTH)
+	if warning:
+		draw_rect(rect.grow(-WARN_OUTLINE_INSET), Color(CRUMBLE_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), false, WARN_OUTLINE_WIDTH)
+
+
+# CRACK_POINTS then CRACK_BRANCH scaled into [param rect], drawn only as far as [param ratio] (0..1) of their length.
+func _draw_crack_partial(rect: Rect2, ratio: float, color: Color, width: float) -> void:
+	var total: float = 0.0
+	for shape: Array[Vector2] in [CRACK_POINTS, CRACK_BRANCH]:
+		for i: int in range(1, shape.size()):
+			total += shape[i - 1].distance_to(shape[i])
+	var budget: float = clampf(ratio, 0.0, 1.0) * total
+	for shape: Array[Vector2] in [CRACK_POINTS, CRACK_BRANCH]:
+		var points := PackedVector2Array([rect.position + shape[0] * rect.size])
+		for i: int in range(1, shape.size()):
+			var seg: float = shape[i - 1].distance_to(shape[i])
+			if budget <= 0.0 or seg <= 0.0:
+				break
+			var share: float = minf(1.0, budget / seg)
+			points.append(rect.position + shape[i - 1].lerp(shape[i], share) * rect.size)
+			budget -= seg
+		if points.size() >= 2:
+			draw_polyline(points, color, width)
+
+
+# A fallen cell: a dark void, bluish depth bands, a torn rock edge and a time bar (full when it fell, empty when it
+# is back): nothing like the plain missing cell, which is not drawn at all.
+func _draw_fallen_cell(rect: Rect2, left: float, total: float) -> void:
+	draw_rect(rect, FALLEN_VOID)
+	draw_rect(rect.grow(-rect.size.y * 0.18), FALLEN_DEPTH)
+	draw_rect(rect.grow(-rect.size.y * 0.32), FALLEN_VOID)
+	var corners: Array[Vector2] = [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
+	var depth: float = minf(rect.size.x, rect.size.y) * FALLEN_EDGE_DEPTH_RATIO
+	var edge := PackedVector2Array()
+	for i: int in corners.size():
+		var a: Vector2 = corners[i]
+		var b: Vector2 = corners[(i + 1) % corners.size()]
+		var inward: Vector2 = (rect.get_center() - (a + b) * 0.5).normalized()
+		for k: int in FALLEN_EDGE_STEPS:
+			var t: float = float(k) / float(FALLEN_EDGE_STEPS)
+			edge.append(a.lerp(b, t) + inward * (depth if k % 2 == 1 else 0.0))
+	edge.append(edge[0])
+	draw_polyline(edge, FALLEN_EDGE, FALLEN_EDGE_WIDTH)
+	_draw_zone_bar(rect, left, total, FALLEN_BAR_BACK, FALLEN_BAR_FILL, FALLEN_EDGE_WIDTH + 1.0)
+
+
+# Island drop warning, gust arrow and the shroud's cloud over the boss; called at the end of _draw_hazard_traits.
+func _draw_hazard_traits_039(vp: Vector2) -> void:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null:
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var drop: BossTrait = host.get_trait(ISLAND_DROP_TRAIT_ID)
+	if drop != null and drop.has_method("get_drop_cells") and drop.has_method("get_drop_warn_left"):
+		var left: float = float(drop.call("get_drop_warn_left"))
+		var cells: Array[Vector2i] = []
+		cells.assign(drop.call("get_drop_cells"))
+		if left > 0.0 and not cells.is_empty():
+			_draw_island_warning(vp, grid, cells, left, drop.param_float(WARN_SEC_PARAM, ISLAND_WARN_FALLBACK_SEC))
+	var gust: BossTrait = host.get_trait(GUST_TRAIT_ID)
+	if gust != null and gust.has_method("get_gust_dir") and gust.has_method("get_gust_warn_left"):
+		var dir: Vector2i = gust.call("get_gust_dir")
+		var warn: float = float(gust.call("get_gust_warn_left"))
+		if warn > 0.0 and dir != Vector2i.ZERO:
+			var from: Vector2i = _combat.get_state().player_cell
+			_draw_gust_arrow(vp, grid, from, dir, warn, gust.param_float(WARN_SEC_PARAM, GUST_WARN_FALLBACK_SEC))
+	if _is_shrouding(host) and not _combat.get_state().is_enemy_dead():
+		var boss_rect: Rect2 = ScreenLayout.cell_rect(grid, vp, _combat.get_state().enemy_cell)
+		var width: float = minf(boss_rect.size.x, boss_rect.size.y) * 0.9
+		_draw_cloud(Vector2(boss_rect.get_center().x, boss_rect.position.y + boss_rect.size.y * 0.22), width, CLOUD_COVER_ALPHA)
+
+
+# The island about to fall: a tint, a blinking border along its outer edge, a draining bar and a label.
+func _draw_island_warning(vp: Vector2, grid: BoardGrid, cells: Array[Vector2i], left: float, total: float) -> void:
+	var on: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
+	var color := Color(ISLAND_BORDER, 1.0 if on else WARN_BLINK_DIM_ALPHA)
+	for cell: Vector2i in cells:
+		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell).grow(-WARN_OUTLINE_INSET)
+		draw_rect(rect, ISLAND_TINT)
+		var corners: Array[Vector2] = [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
+		var steps: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
+		for i: int in 4:
+			if not cells.has(cell + steps[i]):
+				draw_line(corners[i], corners[(i + 1) % 4], color, ISLAND_BORDER_WIDTH)
+	_draw_zone_bar(ScreenLayout.cell_rect(grid, vp, cells[0]), left, total, ISLAND_BAR_BACK, ISLAND_BORDER, WARN_OUTLINE_INSET + ISLAND_BORDER_WIDTH)
+	_draw_corner_label(vp, cells, tr(TEXT_ISLAND_DROP), ISLAND_BORDER)
+
+
+# Gust warning: a big arrow on the unit's cell [param from] along [param dir] (grid +y = screen down), the cell it
+# would push to tinted when it is a board cell, and a draining bar.
+func _draw_gust_arrow(vp: Vector2, grid: BoardGrid, from: Vector2i, dir: Vector2i, left: float, total: float) -> void:
+	var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, from)
+	var target: Vector2i = from + dir
+	if grid.is_player_cell(target):
+		draw_rect(ScreenLayout.cell_rect(grid, vp, target), GUST_TINT)
+	var d := Vector2(dir)
+	var side_len: float = minf(rect.size.x, rect.size.y)
+	var c: Vector2 = rect.get_center()
+	var tail: Vector2 = c - d * side_len * GUST_ARROW_LENGTH_RATIO
+	var tip: Vector2 = c + d * side_len * GUST_ARROW_LENGTH_RATIO
+	var head: float = side_len * GUST_HEAD_RATIO
+	var normal := Vector2(-d.y, d.x)
+	var head_pts := PackedVector2Array([tip + d * head * 0.4, tip - d * head * 0.6 + normal * head * 0.7, tip - d * head * 0.6 - normal * head * 0.7])
+	draw_line(tail, tip - d * head * 0.3, GUST_OUTLINE, GUST_ARROW_WIDTH + 4.0)
+	draw_colored_polygon(PackedVector2Array([head_pts[0] + d * 3.0, head_pts[1] + normal * 3.0, head_pts[2] - normal * 3.0]), GUST_OUTLINE)
+	draw_line(tail, tip - d * head * 0.3, GUST_ARROW, GUST_ARROW_WIDTH)
+	draw_colored_polygon(head_pts, GUST_ARROW)
+	_draw_zone_bar(rect, left, total, GUST_BAR_BACK, GUST_ARROW, WARN_OUTLINE_INSET)
+	_draw_corner_label(vp, [from] as Array[Vector2i], tr(TEXT_GUST), GUST_OUTLINE)
+
+
+# A small cloud icon centred on [param center], [param width] wide: grey-edged white puffs.
+func _draw_cloud(center: Vector2, width: float, alpha: float) -> void:
+	var origin := Vector2(center.x - width * 0.5, center.y - width * 0.3)
+	for fill_pass: bool in [false, true]:
+		for puff: Vector3 in CLOUD_PUFFS:
+			var radius: float = width * puff.z + (0.0 if fill_pass else CLOUD_EDGE_GROW)
+			var color: Color = CLOUD_FILL if fill_pass else CLOUD_EDGE
+			draw_circle(origin + Vector2(width * puff.x, width * puff.y), radius, Color(color, color.a * alpha))
+
+
+# True while the shroud trait covers the boss's cell (W3: is_shrouding(); a present trait counts when it lacks the getter).
+func _is_shrouding(host: TraitHost) -> bool:
+	var shroud: BossTrait = host.get_trait(SHROUD_TRAIT_ID)
+	if shroud == null:
+		return false
+	return bool(shroud.call("is_shrouding")) if shroud.has_method("is_shrouding") else true
+
+
+# True while the hit forecast (the green / red piece shadow) is switched off by the shroud (W3 TraitHost model switch).
+func _forecast_blocked() -> bool:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null or not host.has_method("hit_forecast_blocked"):
+		return false
+	return bool(host.call("hit_forecast_blocked"))
+
+
+# A cloud icon over the middle of the bounding box of [param cells] (the grey hit shadow's "why").
+func _draw_cloud_over_cells(vp: Vector2, cells: Array[Vector2i]) -> void:
+	if cells.is_empty():
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
+	for cell: Vector2i in cells:
+		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
+	var unit: Vector2 = ScreenLayout.cell_size(grid, vp)
+	_draw_cloud(box.get_center(), minf(unit.x, unit.y) * 0.8, 1.0)
+
+
+# --- Story 039: rebirth badge under the boss HP bar, revive ring, burn_eater heal numbers ----
+
+
+# "rebirth" trait when the boss has it and it still matters (one life left or reviving), else null.
+func _rebirth_active() -> BossTrait:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null:
+		return null
+	var rebirth: BossTrait = host.get_trait(REBIRTH_TRAIT_ID)
+	if rebirth == null:
+		return null
+	var reviving: bool = rebirth.has_method("is_reviving") and bool(rebirth.call("is_reviving"))
+	var lives: int = int(rebirth.call("lives_left")) if rebirth.has_method("lives_left") else 1
+	if reviving or (lives > 0 and not _combat.get_state().is_enemy_dead()):
+		return rebirth
+	return null
+
+
+# Text of the rebirth badge: "1 life" or "reviving 1.2 s".
+func _rebirth_text(rebirth: BossTrait) -> String:
+	if rebirth.has_method("is_reviving") and bool(rebirth.call("is_reviving")):
+		return tr(TEXT_REVIVING) % (float(rebirth.call("revive_left")) if rebirth.has_method("revive_left") else 0.0)
+	return tr(TEXT_REBIRTH_LIFE)
+
+
+func _rebirth_icon_side(vp: Vector2) -> float:
+	return clampf(ScreenLayout.hud_boss_status_rect(vp).size.y, REBIRTH_ICON_MIN, REBIRTH_ICON_MAX)
+
+
+# Width the rebirth badge takes at the right end of the boss status strip (0 without it).
+func _rebirth_reserve(vp: Vector2) -> float:
+	var rebirth: BossTrait = _rebirth_active()
+	if rebirth == null:
+		return 0.0
+	var reviving: bool = rebirth.has_method("is_reviving") and bool(rebirth.call("is_reviving"))
+	var text_w: float = ThemeDB.fallback_font.get_string_size(_rebirth_text(rebirth), HORIZONTAL_ALIGNMENT_LEFT, -1, STATUS_FONT_SIZE).x
+	return _rebirth_icon_side(vp) + STATUS_GAP * 2.0 + text_w + (FUSE_BAR_WIDTH + STATUS_GAP if reviving else 0.0)
+
+
+# The "one life left" flame badge + text right-aligned in the boss status strip (just under the boss HP bar); while it
+# revives a bar fills as the timer runs out and a ring closes on the boss's cell.
+func _draw_rebirth(vp: Vector2) -> void:
+	var rebirth: BossTrait = _rebirth_active()
+	if rebirth == null:
+		return
+	var reviving: bool = rebirth.has_method("is_reviving") and bool(rebirth.call("is_reviving"))
+	var rect: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
+	var side_len: float = _rebirth_icon_side(vp)
+	var text: String = _rebirth_text(rebirth)
+	var font: Font = ThemeDB.fallback_font
+	var text_w: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, STATUS_FONT_SIZE).x
+	var icon := Rect2(Vector2(rect.end.x - side_len, rect.get_center().y - side_len * 0.5), Vector2(side_len, side_len))
+	draw_rect(icon, WIND_BACK)
+	draw_rect(icon, REBIRTH_COLOR, false, 2.0)
+	_draw_flame(icon.get_center(), icon.size * 1.3)
+	var text_x: float = icon.position.x - STATUS_GAP - text_w
+	draw_string(font, Vector2(text_x, rect.get_center().y + STATUS_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, STATUS_FONT_SIZE, REBIRTH_COLOR)
+	if not reviving:
+		return
+	var total: float = rebirth.param_float("revive_sec", REVIVE_FALLBACK_SEC)
+	var left: float = float(rebirth.call("revive_left")) if rebirth.has_method("revive_left") else 0.0
+	var ratio: float = 1.0 - (0.0 if total <= 0.0 else clampf(left / total, 0.0, 1.0))
+	var bar := Rect2(Vector2(text_x - STATUS_GAP - FUSE_BAR_WIDTH, rect.get_center().y - FUSE_BAR_HEIGHT * 0.5), Vector2(FUSE_BAR_WIDTH, FUSE_BAR_HEIGHT))
+	draw_rect(bar, REBIRTH_BAR_BACK)
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), REBIRTH_COLOR)
+	var cell: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, _combat.get_state().enemy_cell)
+	var radius: float = minf(cell.size.x, cell.size.y) * REVIVE_RING_RATIO
+	draw_arc(cell.get_center(), radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, RING_POINTS, REBIRTH_COLOR, RING_WIDTH * 1.5)
+
+
+# Connects CombatState.enemy_healed (W3: every heal of the boss, burn_eater's burn heals included) once the state exists.
+func _connect_burn_heal() -> void:
+	var state: CombatState = _combat.get_state()
+	if state == null or state == _heal_state or not state.has_signal("enemy_healed"):
+		return
+	if _heal_state != null and _heal_state.is_connected("enemy_healed", _on_enemy_healed):
+		_heal_state.disconnect("enemy_healed", _on_enemy_healed)
+	_heal_state = state
+	state.connect("enemy_healed", _on_enemy_healed)
+
+
+func _on_enemy_healed(amount: float) -> void:
+	if amount > 0.0:
+		_heal_pending += amount
+
+
+## A green "+N" rising off the boss, for [param seconds] (dev hook of the burn_eater demo: a long time keeps it on screen).
+func debug_show_boss_heal(amount: float, seconds: float = BOSS_HEAL_SEC) -> void:
+	_boss_heals.append([amount, seconds])
+
+
+# Sums the burn heals of a short batch into one number and ages the numbers on screen.
+func _tick_boss_heals(delta: float) -> void:
+	if _heal_pending > 0.0:
+		_heal_pending_t += delta
+		if _heal_pending_t >= BOSS_HEAL_BATCH_SEC:
+			_boss_heals.append([_heal_pending, BOSS_HEAL_SEC])
+			_heal_pending = 0.0
+			_heal_pending_t = 0.0
+	for entry: Array in _boss_heals:
+		entry[1] = float(entry[1]) - delta
+	_boss_heals = _boss_heals.filter(func(e: Array) -> bool: return float(e[1]) > 0.0)
+
+
+# The burn_eater heal numbers: green "+N" over the boss's cell, rising and fading in the last BOSS_HEAL_SEC.
+func _draw_boss_heals(vp: Vector2) -> void:
+	if _boss_heals.is_empty():
+		return
+	var cell: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, _combat.get_state().enemy_cell)
+	var size: int = int(cell.size.y * FEEDBACK_FONT_RATIO * 1.3)
+	for entry: Array in _boss_heals:
+		var fade: float = clampf(float(entry[1]) / BOSS_HEAL_SEC, 0.0, 1.0)
+		var rise: float = cell.size.y * BOSS_HEAL_RISE_RATIO * (1.0 - fade)
+		var back := Rect2(cell.position + Vector2(0.0, -size * 1.4 - rise), Vector2(cell.size.x, size * 1.4))
+		draw_rect(back, Color(BOSS_HEAL_BACK, BOSS_HEAL_BACK.a * fade))
+		_draw_centered(back, tr(TEXT_HEAL_NUMBER) % maxi(roundi(float(entry[0])), 1), size, Color(BOSS_HEAL_COLOR, fade))
 
 
 # --- Story 027: seal and thorn zones ------------------------------------------
@@ -1874,6 +2360,7 @@ func _draw_hazards(vp: Vector2) -> void:
 				SAND_BAR_BACK, SAND_BAR_FILL, SAND_EDGE_WIDTH)
 		for cell: Vector2i in hazards.sand_warning_cells(side):
 			_draw_sand_warning(ScreenLayout.cell_rect(grid, vp, cell), blink_on)
+	_draw_hazards_039(vp, hazards, grid, blink_on)
 
 
 # Mire cell: dark peat fill (see-through when [param occupied]) and bubble rings that rise and fade in a loop.
@@ -1987,6 +2474,7 @@ func _draw_hazard_traits(vp: Vector2) -> void:
 		if grid.is_enemy_cell(surface) and warn > 0.0:
 			_draw_surface_circle(ScreenLayout.cell_rect(grid, vp, surface), _warn_ratio(burrow, "get_surface_warn_left", "surface_warn_sec", SURFACE_WARN_FALLBACK_SEC))
 			_draw_corner_label(vp, [surface] as Array[Vector2i], tr(TEXT_SURFACE), SURFACE_COLOR)
+	_draw_hazard_traits_039(vp)
 
 
 # Share (0..1) of a trait's warning left: getter [param getter] over param [param param] (fallback seconds).

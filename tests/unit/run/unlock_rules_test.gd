@@ -24,7 +24,7 @@ func _run_ended(won: bool, run_stats: Dictionary = {}, deck: Array = []) -> Dict
 
 func _init() -> void:
 	var cfg: AchievementsConfig = AchievementsConfig.load_from_file()
-	_check("22 achievements loaded", cfg.ids().size() == 22)
+	_check("24 achievements loaded", cfg.ids().size() == 24)
 
 	# --- milestone: reached_final
 	var p := ProgressState.new()

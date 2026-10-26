@@ -281,6 +281,8 @@ func mark_all_unlocked(cfg: AchievementsConfig, region_ids: Array) -> void:
 						sum += int(_milestones[k])
 				if sum < int(params["min"]):
 					add_milestone(prefix + "dev", int(params["min"]) - sum)
+			"best_floor":
+				record_floor(int(params["min"])) # Story 039: reach_floor_4 / reach_floor_5
 	for aid: String in cfg.ids():
 		add_achievement(aid)
 		for reward: Dictionary in cfg.get_def(aid)["rewards"]:

@@ -56,7 +56,7 @@ func _init() -> void:
 
 func _test_regions(cfg: ChaptersConfig) -> void:
 	var pool: Array[String] = cfg.region_ids()
-	check(pool == (["ch1", "ch2", "ch3", "swamp", "desert"] as Array[String]), "region_pool = ch1 ch2 ch3 swamp desert (%s)" % [pool])
+	check(pool == (["ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"] as Array[String]), "region_pool = ch1 ch2 ch3 swamp desert hellfire sky_isles (Story 039, %s)" % [pool])
 	check(not pool.has("an_dai"), "an_dai is not in the pool")
 	for id: String in ["swamp", "desert"]:
 		var ci: int = cfg.region_index(id)
@@ -199,7 +199,7 @@ func _test_clean_match() -> void:
 	var leaked: bool = plain.has("mire_immune")
 	for key: String in RunConfig.HAZARD_OVERRIDE_KEYS:
 		leaked = leaked or plain.has(key)
-	check(not leaked and RunConfig.HAZARD_OVERRIDE_KEYS.size() == 10, "absent hazard keys stay absent (10 override keys)")
+	check(not leaked and RunConfig.HAZARD_OVERRIDE_KEYS.size() == 19, "absent hazard keys stay absent (19 override keys)")
 
 
 func _test_strings() -> void:

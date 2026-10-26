@@ -20,6 +20,9 @@ var _anchor: Vector2i = BoardGrid.NO_CELL
 var _cells: Array[Vector2i] = []
 ## Story 028: cells the ghost must not cover (the first piece of a cast while the second one is placed).
 var _blocked: Array[Vector2i] = []
+## Story 039 (shroud): Callable() -> bool; true = the HIT FORECAST (green / red ghost, the "hit" / "miss" tag) is hidden.
+## TraitHost wires it to hit_forecast_blocked(). Invalid = never blocked. [method hits] stays the pure geometry.
+var forecast_blocked_fn: Callable = Callable()
 
 
 func _init(grid: BoardGrid) -> void:
@@ -135,6 +138,12 @@ func can_confirm() -> bool:
 ## True when [param enemy_cell] (where the boss stands) is one of the ghost's cells.
 func hits(enemy_cell: Vector2i) -> bool:
 	return can_confirm() and PiecePlacement.covers(_cells, enemy_cell)
+
+
+## Story 039: true while the hit forecast must NOT be shown (a Shroud match, boss neither pinned nor casting). The HUD
+## draws the neutral grey ghost and the cloud icon then; [method hits] itself is unchanged.
+func forecast_blocked() -> bool:
+	return forecast_blocked_fn.is_valid() and bool(forecast_blocked_fn.call())
 
 
 ## Number of cells of the piece being placed (0 when idle).

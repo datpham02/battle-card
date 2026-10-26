@@ -27,6 +27,8 @@ const MIN_BIG_PIECE_CELLS: int = 3
 const ESCAPE_MAX_PIECE_CELLS: int = 2
 ## Steps the escape check allows (a single-point cut is judged with one step).
 const ESCAPE_STEPS: int = 1
+## Story 039: every island of a `crumble` arena has at least this many cells.
+const CRUMBLE_MIN_ISLAND_CELLS: int = 2
 const _DIRECTIONS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 ## Library loaded on first use when [method validate] gets no [param pieces] (pieces.json).
@@ -104,10 +106,39 @@ static func featured_reasons(cells: Array[Vector2i], min_pairs: int, pieces: Pie
 	return reasons
 
 
-## Story 036: the optional `hazards` ({mire: {per_side} | {player, enemy}, sand: bool}) and `wind` (bool) keys.
+## Story 039: the real cells of one half that lie on the vent line [param line] (`{"row": r}` or `{"col": c}`, SIDE
+## coordinates: side col 0 = farthest from the divider on both halves). [] when the line is malformed (not exactly one
+## numeric key `row` / `col`) or none of its cells is real. Cells are BoardGrid cell coordinates of that half.
+static func vent_line_cells(grid: BoardGrid, line: Variant, player_half: bool) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if typeof(line) != TYPE_DICTIONARY:
+		return out
+	var d: Dictionary = line as Dictionary
+	if d.size() != 1 or not (d.has("row") or d.has("col")):
+		return out
+	var key: String = "row" if d.has("row") else "col"
+	if typeof(d[key]) != TYPE_INT and typeof(d[key]) != TYPE_FLOAT:
+		return out
+	var index: int = int(d[key])
+	for cell: Vector2i in (grid.player_cells() if player_half else grid.enemy_cells()):
+		var side: Vector2i = grid.to_side_coords(cell)
+		if (side.y if key == "row" else side.x) == index:
+			out.append(cell)
+	return out
+
+
+## Story 036 / 039: the optional `hazards` ({mire: {per_side} | {player, enemy}, sand: bool, vents: {player: [line],
+## enemy: [line]}}), `wind` (bool) and `crumble` (bool) keys. A vent line is {"row": r} or {"col": c} with at least one
+## real cell on its half; a `crumble` arena needs every real cell of each half connected to that half's unit start cell
+## (islands joined by bridge cells, so nothing is stranded while no cell has fallen).
 static func _check_hazards(spec: Dictionary, grid: BoardGrid, reasons: Array[String]) -> void:
 	if spec.has("wind") and typeof(spec["wind"]) != TYPE_BOOL:
 		reasons.append("wind must be true or false")
+	if spec.has("crumble"):
+		if typeof(spec["crumble"]) != TYPE_BOOL:
+			reasons.append("crumble must be true or false")
+		elif bool(spec["crumble"]):
+			_check_crumble_connected(grid, reasons)
 	if not spec.has("hazards"):
 		return
 	if typeof(spec["hazards"]) != TYPE_DICTIONARY:
@@ -115,10 +146,12 @@ static func _check_hazards(spec: Dictionary, grid: BoardGrid, reasons: Array[Str
 		return
 	var hazards: Dictionary = spec["hazards"] as Dictionary
 	for key: Variant in hazards.keys():
-		if not ["mire", "sand"].has(str(key)):
+		if not ["mire", "sand", "vents"].has(str(key)):
 			reasons.append("unknown hazards key '%s'" % str(key))
 	if hazards.has("sand") and typeof(hazards["sand"]) != TYPE_BOOL:
 		reasons.append("hazards.sand must be true or false")
+	if hazards.has("vents"):
+		_check_vents(hazards["vents"], grid, reasons)
 	if not hazards.has("mire"):
 		return
 	if typeof(hazards["mire"]) != TYPE_DICTIONARY:
@@ -160,6 +193,110 @@ static func _check_hazards(spec: Dictionary, grid: BoardGrid, reasons: Array[Str
 			reasons.append("hazards.mire.%s has %d cells (max half of the half = %d)" % [half_name, listed.size(), cells.size() / 2])
 		if start != BoardGrid.NO_CELL and not leaves_path(grid, start, listed, player_half):
 			reasons.append("hazards.mire.%s leaves no clean cell next to the start cell" % half_name)
+
+
+# Story 039: `hazards.vents` = {player: [line, ...], enemy: [line, ...]}; every line needs >= 1 real cell on its half.
+static func _check_vents(raw: Variant, grid: BoardGrid, reasons: Array[String]) -> void:
+	if typeof(raw) != TYPE_DICTIONARY:
+		reasons.append("hazards.vents must be an object")
+		return
+	var vents: Dictionary = raw as Dictionary
+	for key: Variant in vents.keys():
+		if not ["player", "enemy"].has(str(key)):
+			reasons.append("unknown hazards.vents key '%s'" % str(key))
+	for half_name: String in ["player", "enemy"]:
+		if not vents.has(half_name):
+			continue
+		if typeof(vents[half_name]) != TYPE_ARRAY:
+			reasons.append("hazards.vents.%s must be an array of {row} / {col} lines" % half_name)
+			continue
+		for line: Variant in vents[half_name] as Array:
+			if vent_line_cells(grid, line, half_name == "player").is_empty():
+				reasons.append("hazards.vents.%s line %s has no real cell on that half" % [half_name, str(line)])
+
+
+## Story 039: the BRIDGE cells of one half: a real cell with exactly two real neighbours on the half, on opposite sides
+## (a one-cell-wide straight corridor), whose removal splits the half. The cells left after removing the bridges fall into
+## the islands of the arena (see [method island_cells]); bridges join them. [] on an arena without a one-cell bridge.
+static func bridge_cells(grid: BoardGrid, player_half: bool) -> Array[Vector2i]:
+	return bridges_in(grid.player_cells() if player_half else grid.enemy_cells())
+
+
+## Story 039: the bridge cells (see [method bridge_cells]) of any connected set of cells (no grid needed), e.g. the
+## standing cells of a half at run time: a cell with exactly two neighbours in [param cells], on opposite sides, whose
+## removal splits the set.
+static func bridges_in(cells: Array[Vector2i]) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in cells:
+		var near: Array[Vector2i] = []
+		for dir: Vector2i in _DIRECTIONS:
+			if cells.has(cell + dir):
+				near.append(cell + dir)
+		if near.size() != 2 or near[0] + near[1] != cell * 2:
+			continue
+		var rest: Array[Vector2i] = cells.duplicate()
+		rest.erase(cell)
+		if components_of(rest).size() > 1:
+			out.append(cell)
+	return out
+
+
+## Story 039: the islands of one half: the 4-connected components of its real cells once the [method bridge_cells] are
+## removed (an arena without a bridge has one island: the whole half). An Array of Array[Vector2i].
+static func island_cells(grid: BoardGrid, player_half: bool) -> Array:
+	var rest: Array[Vector2i] = grid.player_cells() if player_half else grid.enemy_cells()
+	for bridge: Vector2i in bridge_cells(grid, player_half):
+		rest.erase(bridge)
+	return components_of(rest)
+
+
+## Story 039: the 4-connected components of [param cells] (only cells of the list connect). An Array of Array[Vector2i].
+static func components_of(cells: Array[Vector2i]) -> Array:
+	var seen: Dictionary = {}
+	var out: Array = []
+	for start: Vector2i in cells:
+		if seen.has(start):
+			continue
+		var comp: Array[Vector2i] = [start]
+		seen[start] = true
+		var head: int = 0
+		while head < comp.size():
+			var cur: Vector2i = comp[head]
+			head += 1
+			for dir: Vector2i in _DIRECTIONS:
+				var next: Vector2i = cur + dir
+				if cells.has(next) and not seen.has(next):
+					seen[next] = true
+					comp.append(next)
+		out.append(comp)
+	return out
+
+
+# Story 039: every real cell of each half is 4-connected to that half's unit start cell (nothing stranded before a cell falls).
+static func _check_crumble_connected(grid: BoardGrid, reasons: Array[String]) -> void:
+	for player_half: bool in [true, false]:
+		var cells: Array[Vector2i] = grid.player_cells() if player_half else grid.enemy_cells()
+		var start: Vector2i = grid.default_player_cell() if player_half else grid.default_enemy_cell()
+		var half_name: String = "player" if player_half else "boss"
+		if start == BoardGrid.NO_CELL or not cells.has(start):
+			reasons.append("crumble: no start cell on the %s half" % half_name)
+			continue
+		var seen: Dictionary = {start: true}
+		var queue: Array[Vector2i] = [start]
+		var head: int = 0
+		while head < queue.size():
+			var cell: Vector2i = queue[head]
+			head += 1
+			for dir: Vector2i in _DIRECTIONS:
+				var next: Vector2i = cell + dir
+				if cells.has(next) and not seen.has(next):
+					seen[next] = true
+					queue.append(next)
+		if seen.size() != cells.size():
+			reasons.append("crumble: %d of %d %s cells are not connected to the start cell" % [cells.size() - seen.size(), cells.size(), half_name])
+		for island: Variant in island_cells(grid, player_half):
+			if (island as Array).size() < CRUMBLE_MIN_ISLAND_CELLS:
+				reasons.append("crumble: a %s island of %d cell(s) (min %d)" % [half_name, (island as Array).size(), CRUMBLE_MIN_ISLAND_CELLS])
 
 
 ## Parses missing_cells ([[col,row], ...] or Vector2i entries); bad entries are skipped.

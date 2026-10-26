@@ -76,6 +76,17 @@ extends Node
 ##   godot --path . -- --demo=riposte     a 4-cell player cast hits the boss: riposte (scorpion) warns the player's cell
 ##   godot --path . -- --demo=bog_spread  bog_spread (toad_matriarch) ticked until it lays mire on the player's half
 ##   godot --path . -- --demo=sandstorm   sandstorm (sand_sphinx) ticked into a storm (haze, bar, extra sand) with wind and pieces
+##   Story 039 hazard demos (same engine as the 036 ones). Pass --arena=forge|caldera (vents) or twin_isles|three_isles (crumble, islands):
+##   godot --path . -- --demo=vent        vents on both halves (set through set_vents when the arena has none): one ERUPTING on the boss's
+##                                        half, one in the WARNING on the player's half, the rest idle dark-red streaks
+##   godot --path . -- --demo=crumble     crumble on (enable_crumble when the arena lacks it): a fallen cell (void + time bar), the boss's cell in
+##                                        the crack warning, the player's cell with a half-grown crack
+##   godot --path . -- --demo=burn_eater  burn_eater (fire_eater): the boss at 60 % HP on a burning cell ticked once: it heals, green "+N" over it
+##   godot --path . -- --demo=rebirth     rebirth (ash_phoenix): a lethal hit on the boss, which revives: the timer bar and ring (rebirth_life = the
+##                                        "one life left" badge before the kill)
+##   godot --path . -- --demo=gust        gust (gale_bird) ticked until its arrow warning shows on the player's cell
+##   godot --path . -- --demo=island_drop island_drop (storm_dragon) ticked until an island of the player's half blinks before it falls
+##   godot --path . -- --demo=shroud      shroud (cloud_veil): the placement preview aimed at the boss with the hit forecast blocked (grey shadow + cloud)
 ##   godot --path . -- --demo=boss_through_thorns  thorns on the boss's divider-side neighbour (and the cell beside it),
 ##                                           a player swing on the boss's cell, the boss steps into the thorns through its
 ##                                           real mover (dodge): thorn_entered fires (damage, Ran +1, entry flash)
@@ -191,11 +202,26 @@ const ZONE_REWARD_CARDS: Array[String] = ["ket_gioi", "tran_gai", "gai_nguyen"]
 ## Story 036 hazard demos (they also skip the intro), the trait each needs as [trait id, chapters.json match whose
 ## params build it when the booted match lacks it], the mire / sand cells staged per half, the share of the warning /
 ## sand / storm time already elapsed at capture, the cells of the riposte demo's cast and the boss-hit wait bound.
-const HAZARD_DEMOS: Array[String] = ["mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm"]
+const HAZARD_DEMOS: Array[String] = ["mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm",
+	"vent", "crumble", "burn_eater", "rebirth", "rebirth_life", "gust", "island_drop", "shroud"]
 const HAZARD_TRAITS: Dictionary = {
 	"spore": ["spore_burst", "spore_cap"], "hop": ["hop_skip", "leap_frog"], "burrow": ["burrow", "sand_burrower"],
 	"riposte": ["riposte", "scorpion"], "bog_spread": ["bog_spread", "toad_matriarch"], "sandstorm": ["sandstorm", "sand_sphinx"],
+	"burn_eater": ["burn_eater", "fire_eater"], "rebirth": ["rebirth", "ash_phoenix"], "rebirth_life": ["rebirth", "ash_phoenix"],
+	"gust": ["gust", "gale_bird"], "island_drop": ["island_drop", "storm_dragon"], "shroud": ["shroud", "cloud_veil"],
 }
+## Story 039 hazard demos: vent warning / eruption share staged, the burn_eater burn (duration, tick, damage per tick), how long the
+## demo heal number stays up, the share of the revive time elapsed and the cells tried for the fallen cell.
+const HAZARD_DEMO_VENT_ERUPT_RATIO: float = 0.3
+const HAZARD_DEMO_VENT_WARN_RATIO: float = 0.6
+const HAZARD_DEMO_CRUMBLE_RATIO: float = 0.5
+const HAZARD_DEMO_BURN_SEC: float = 3.0
+const HAZARD_DEMO_BURN_TICK_SEC: float = 0.5
+const HAZARD_DEMO_BURN_DAMAGE: float = 5.0
+const HAZARD_DEMO_BOSS_HP_RATIO: float = 0.6
+const HAZARD_DEMO_HEAL_HOLD_SEC: float = 600.0
+const HAZARD_DEMO_REVIVE_RATIO: float = 0.4
+const HAZARD_DEMO_DROP_TRIES: int = 8
 const HAZARD_DEMO_MIRE_CELLS: int = 3
 const HAZARD_DEMO_SAND_CELLS: int = 2
 const HAZARD_DEMO_WARN_RATIO: float = 0.4
@@ -324,7 +350,8 @@ func _ready() -> void:
 			_trait_seal_demo(combat, grid)
 		"trait_thorns":
 			_trait_thorns_demo(combat, grid)
-		"mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm":
+		"mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm", \
+		"vent", "crumble", "burn_eater", "rebirth", "rebirth_life", "gust", "island_drop", "shroud":
 			_hazard_demo(combat, grid)
 		"reward_zone_cards":
 			_force_reward_offer.call_deferred()
@@ -618,7 +645,102 @@ func _hazard_demo(combat: CombatView, grid: BoardGrid) -> void:
 			_wind_with_pieces(combat, grid, hazards)
 			_tick_until(hazards, hazard_trait, state, func() -> bool: return hazard_trait.has_method("is_storm") and bool(hazard_trait.call("is_storm")))
 			_tick_hazards(hazards, hazard_trait, state, hazard_trait.param_float("storm_sec", 0.0) * HAZARD_DEMO_ELAPSED_RATIO if hazard_trait != null else 0.0)
+		"vent":
+			_vent_demo(hazards, grid, state)
+		"crumble":
+			_crumble_demo(hazards, grid, state)
+		"burn_eater":
+			_burn_eater_demo(combat, hazards, state)
+		"rebirth", "rebirth_life":
+			if _mode == "rebirth" and hazard_trait != null:
+				state.damage_enemy(state.enemy_hp + 1.0)
+				if state.is_enemy_dead():
+					push_warning("DemoArgs: rebirth did not catch the lethal hit")
+				_tick_hazards(hazards, hazard_trait, state, hazard_trait.param_float("revive_sec", 0.0) * HAZARD_DEMO_REVIVE_RATIO)
+		"gust":
+			_tick_until(hazards, hazard_trait, state, func() -> bool: return _trait_float(hazard_trait, "get_gust_warn_left") > 0.0)
+			_tick_hazards(hazards, hazard_trait, state, _trait_float(hazard_trait, "get_gust_warn_left") * HAZARD_DEMO_ELAPSED_RATIO)
+		"island_drop":
+			if hazards.islands(player).size() < 2:
+				push_warning("DemoArgs: the player's half has fewer than 2 islands, pass --arena=twin_isles or three_isles")
+			_tick_until(hazards, hazard_trait, state, func() -> bool: return _trait_float(hazard_trait, "get_drop_warn_left") > 0.0)
+			_tick_hazards(hazards, hazard_trait, state, _trait_float(hazard_trait, "get_drop_warn_left") * HAZARD_DEMO_ELAPSED_RATIO)
+		"shroud":
+			_placing_demo(combat, grid)
 	print("DemoArgs: hazards ", hazards.get_debug())
+
+
+# Story 039 "vent": vents are staged per half when the arena has none (a whole row each, side rows 0 and the last), then the boss
+# half's first vent erupts and the player half's first vent is mid-warning.
+func _vent_demo(hazards: TileHazards, grid: BoardGrid, state: CombatState) -> void:
+	var player: int = CombatState.Side.PLAYER
+	var enemy: int = CombatState.Side.ENEMY
+	for side: int in [player, enemy]:
+		if not hazards.vent_cells(side).is_empty():
+			continue
+		var cells: Array[Vector2i] = grid.player_cells() if side == player else grid.enemy_cells()
+		var vents: Array = []
+		for row: int in [0, grid.rows - 1]:
+			var line: Array[Vector2i] = []
+			for cell: Vector2i in cells:
+				if cell.y == row:
+					line.append(cell)
+			if not line.is_empty():
+				vents.append(line)
+		hazards.set_vents(side, vents)
+	var cfg: Dictionary = hazards.get_debug().get("cfg", {}) as Dictionary
+	var warn: float = float(cfg.get("vent_warn_sec", 0.0))
+	var erupt_sec: float = float(cfg.get("vent_sec", 0.0))
+	if not hazards.trigger_vent(enemy, 0):
+		push_warning("DemoArgs: the boss half has no vent for demo '%s'" % _mode)
+	_tick_hazards(hazards, null, state, warn + erupt_sec * HAZARD_DEMO_VENT_ERUPT_RATIO)
+	if not hazards.trigger_vent(player, 0):
+		push_warning("DemoArgs: the player half has no vent for demo '%s'" % _mode)
+	_tick_hazards(hazards, null, state, warn * HAZARD_DEMO_VENT_WARN_RATIO)
+
+
+# Story 039 "crumble": one cell fallen, the boss's cell cracking (warning) and the player's cell half way to a crack.
+func _crumble_demo(hazards: TileHazards, grid: BoardGrid, state: CombatState) -> void:
+	var player: int = CombatState.Side.PLAYER
+	if not hazards.crumble_enabled():
+		push_warning("DemoArgs: the arena has no crumble, switching it on for demo '%s' (pass --arena=twin_isles)" % _mode)
+		hazards.enable_crumble(true)
+	var cfg: Dictionary = hazards.get_debug().get("cfg", {}) as Dictionary
+	var after: float = float(cfg.get("crumble_after_sec", 0.0))
+	var warn: float = float(cfg.get("crumble_warn_sec", 0.0))
+	var fall: float = float(cfg.get("fall_sec", 0.0))
+	var fell: bool = false
+	for cell: Vector2i in _hazard_spread(grid, player, HAZARD_DEMO_DROP_TRIES, state):
+		if not hazards.drop_cells(player, [cell] as Array[Vector2i], fall, warn).is_empty():
+			fell = true
+			break
+	if not fell:
+		push_warning("DemoArgs: no player cell could fall (leave-a-path rule) for demo '%s'" % _mode)
+	var elapsed: float = warn + TRAIT_STEP_SEC + after * HAZARD_DEMO_CRUMBLE_RATIO
+	_tick_hazards(hazards, null, state, warn + TRAIT_STEP_SEC)
+	_tick_hazards(hazards, null, state, after * HAZARD_DEMO_CRUMBLE_RATIO)
+	var here: Vector2i = state.player_cell
+	for cell: Vector2i in _zone_neighbours(grid, here, false, false):
+		if not hazards.is_fallen(player, cell) and state.set_player_cell(cell):
+			break
+	# The boss has stood since the start: it is half way through its crack warning, the player (moved) is part way to one.
+	_tick_hazards(hazards, null, state, after + warn * 0.5 - elapsed)
+
+
+# Story 039 "burn_eater": the boss hurt to HAZARD_DEMO_BOSS_HP_RATIO, its own cell burning, one burn tick: it heals (the HUD's
+# green number comes from CombatState.enemy_healed; the number is also pinned by a dev hook so a capture finds it).
+func _burn_eater_demo(combat: CombatView, hazards: TileHazards, state: CombatState) -> void:
+	state.enemy_hp = state.enemy_max_hp * HAZARD_DEMO_BOSS_HP_RATIO
+	state.changed.emit()
+	combat.get_status().ignite([state.enemy_cell] as Array[Vector2i], HAZARD_DEMO_BURN_SEC, HAZARD_DEMO_BURN_TICK_SEC, HAZARD_DEMO_BURN_DAMAGE)
+	var before: float = state.enemy_hp
+	combat.get_status().tick(HAZARD_DEMO_BURN_TICK_SEC + TRAIT_STEP_SEC, state)
+	var gained: float = state.enemy_hp - before
+	if gained <= 0.0:
+		push_warning("DemoArgs: the burn did not heal the boss (hp %s -> %s), showing the nominal tick" % [before, state.enemy_hp])
+		gained = HAZARD_DEMO_BURN_DAMAGE
+	for hud: Node in get_tree().root.find_children("*", "CutHudView", true, false):
+		(hud as CutHudView).debug_show_boss_heal(gained, HAZARD_DEMO_HEAL_HOLD_SEC)
 
 
 # Advances [param hazards] (and [param hazard_trait] when given) by [param sec] in TRAIT_STEP_SEC steps, like the match clock.

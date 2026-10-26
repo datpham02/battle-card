@@ -20,6 +20,8 @@ signal fragile_changed(side: int)
 signal frost_changed(side: int)
 ## Story 023: the frost stacks of [param side] reached the burst threshold and dealt [param damage].
 signal frost_burst(side: int, damage: float)
+## Story 039 (burn_eater): a burning cell healed the unit of [param side] by [param amount] instead of hurting it.
+signal burn_healed(side: int, amount: float)
 
 ## Story 027: a zone formed or was refreshed. [param kind] is "seal" or "thorns", [param side] the side
 ## whose half holds the cells.
@@ -62,6 +64,9 @@ var _frost_burst_damage: float = 0.0
 ## fragile_mult (<= 0 = use the config's); [member frost_burst_mult_fn] Callable() -> float scales a Han burst.
 var fragile_mult_fn: Callable = Callable()
 var frost_burst_mult_fn: Callable = Callable()
+## Story 039 (burn_eater): Callable() -> float, asked at the ONE place a burning cell ticks on the BOSS (ENEMY side):
+## 0 (or invalid) = the tick hurts as usual, r > 0 = the tick HEALS the boss by damage x r instead (TraitHost.burn_heal_ratio).
+var burn_heal_ratio_fn: Callable = Callable()
 
 
 ## Ignites every cell in [param cells] for [param duration] seconds. A unit standing on a
@@ -240,7 +245,12 @@ func tick(delta: float, state: CombatState) -> void:
 			while acc >= tick_sec - _EPS:
 				acc -= tick_sec
 				for side: int in victims:
-					state.damage(side, float(entry["damage"]))
+					var ratio: float = _burn_heal_ratio(side)
+					if ratio > 0.0:
+						var gained: float = state.heal_enemy(float(entry["damage"]) * ratio)
+						burn_healed.emit(side, gained)
+					else:
+						state.damage(side, float(entry["damage"]))
 		var left: float = float(entry["left"]) - delta
 		if left <= _EPS:
 			_burning.erase(cell)
@@ -444,6 +454,13 @@ func _tick_zones(book: Dictionary, kind: String, delta: float) -> void:
 				entry["left"] = left
 		if zone.is_empty():
 			book.erase(side)
+
+
+# Story 039: the burn-heal ratio asked for the BOSS side only (0 = the tick hurts).
+func _burn_heal_ratio(side: int) -> float:
+	if side != CombatState.Side.ENEMY or not burn_heal_ratio_fn.is_valid():
+		return 0.0
+	return maxf(float(burn_heal_ratio_fn.call()), 0.0)
 
 
 # A unit that CHANGED cell since the last tick and now stands on a thorn cell pays the toll once.

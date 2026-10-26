@@ -20,6 +20,10 @@ const NAMES: Dictionary = {
 	"reed_maze": "arena.reed_maze.name",
 	"dunes": "arena.dunes.name",
 	"oasis": "arena.oasis.name",
+	"forge": "arena.forge.name",
+	"caldera": "arena.caldera.name",
+	"twin_isles": "arena.twin_isles.name",
+	"three_isles": "arena.three_isles.name",
 }
 ## Key shown for a floor whose arena is drawn from a pool (translate with tr()).
 const TEXT_RANDOM: String = "ui.arena.random"

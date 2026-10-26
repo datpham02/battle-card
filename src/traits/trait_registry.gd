@@ -23,6 +23,12 @@ const SCRIPTS: Dictionary = {
 	"burrow": preload("res://src/traits/burrow.gd"),
 	"riposte": preload("res://src/traits/riposte.gd"),
 	"sandstorm": preload("res://src/traits/sandstorm.gd"),
+	"burn_eater": preload("res://src/traits/burn_eater.gd"),
+	"rebirth": preload("res://src/traits/rebirth.gd"),
+	"vent_surge": preload("res://src/traits/vent_surge.gd"),
+	"gust": preload("res://src/traits/gust.gd"),
+	"shroud": preload("res://src/traits/shroud.gd"),
+	"island_drop": preload("res://src/traits/island_drop.gd"),
 }
 
 

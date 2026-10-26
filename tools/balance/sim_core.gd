@@ -51,6 +51,22 @@ var _drift_since: float = 0.0
 var _haz_mire: int = 0
 var _haz_sand: bool = false
 var _haz_wind: bool = false
+## Story 039: vent lines of both halves (count), whether the arena crumbles, seconds the bot stands on one cell on
+## a crumble arena before it steps off (a bot assumption: crumble_after_sec is 2.0, a move about every 1.5 s),
+## the cell it stands on and since when (sim seconds), and when it last stood on each cell (to pick the stalest).
+const CRUMBLE_LEAVE_SEC: float = 1.5
+## Story 039: seconds a vent line has been warning before the bot notices it and leaves (a human reaction). The bot
+## also leaves an erupting (burning) cell at once, so vent damage stays near 0 whatever this is (README, Story 039).
+const VENT_REACT_SEC: float = 0.4
+## The two bot numbers above as run values (flags --vent-react=S, --crumble-leave=S).
+var vent_react_sec: float = VENT_REACT_SEC
+var crumble_leave_sec: float = CRUMBLE_LEAVE_SEC
+var _haz_vents: int = 0
+var _haz_crumble: bool = false
+var _haz_cfg: Dictionary = {}
+var _stand_cell: Vector2i = Vector2i(-1, -1)
+var _stand_since: float = 0.0
+var _visit_t: Dictionary = {}
 const SEED_MASK: int = 0x7fffffff
 ## Simulation seconds before a match counts as a timeout (lost).
 const MATCH_TIMEOUT_SEC: float = 180.0
@@ -485,6 +501,10 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 			bot["aware_min"] = clampi(int(v), 1, PieceLibrary.MAX_CELLS)
 		elif arg.begins_with("--sig="):
 			bot["sig"] = v if v in ["off", "ready", "rules"] else "rules"
+		elif arg.begins_with("--vent-react="):
+			vent_react_sec = maxf(float(v), 0.0)
+		elif arg.begins_with("--crumble-leave="):
+			crumble_leave_sec = maxf(float(v), 0.0)
 		elif arg.begins_with("--dt="):
 			dt = maxf(float(v), 0.005)
 		elif arg.begins_with("--hp-mult="):
@@ -585,6 +605,10 @@ func describe() -> String:
 		o.append("no_zone_cards")
 	if not (ov["card_set"] as Dictionary).is_empty():
 		o.append("card_set=%s" % str(ov["card_set"]))
+	if not is_equal_approx(vent_react_sec, VENT_REACT_SEC):
+		o.append("vent_react=%.2fs" % vent_react_sec)
+	if not is_equal_approx(crumble_leave_sec, CRUMBLE_LEAVE_SEC):
+		o.append("crumble_leave=%.2fs" % crumble_leave_sec)
 	if not (ov["relics"] as Array).is_empty():
 		o.append("relics=%s" % ",".join(PackedStringArray(ov["relics"])))
 	if not (ov["relic_set"] as Array).is_empty():
@@ -674,6 +698,11 @@ func play_match(m: Dictionary, character: Dictionary, deck_entries: Array, start
 	# Story 035: the boss_phases phase (1-based) the match ended in, 0 without that trait (read before teardown).
 	var phases_trait: BossTrait = trait_host.get_trait(RunConfig.BOSS_PHASES_TRAIT_ID) if trait_host != null else null
 	out["boss_phase"] = (phases_trait as BossPhasesTrait).get_phase() if phases_trait is BossPhasesTrait else 0
+	# Story 039: TileHazards.stats() {pushes, vent_ticks, fall_damage_total} when the model has it (a cross-check of
+	# the sim's own vent_hp / fall_hp / pushed counters) and 1 when the boss's rebirth was used up.
+	out["haz_stats"] = (hazards.call("stats") as Dictionary) if hazards != null and hazards.has_method("stats") else {}
+	var rebirth: BossTrait = trait_host.get_trait("rebirth") if trait_host != null else null
+	out["rebirth_used"] = 1 if (rebirth != null and rebirth.has_method("lives_left") and int(rebirth.call("lives_left")) <= 0) else 0
 	_teardown()
 	trace = false
 	return out
@@ -820,6 +849,9 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_force_aim = false
 	_wait_since = -1.0
 	_zone_follow_until = -1.0
+	_stand_cell = state.player_cell
+	_stand_since = 0.0
+	_visit_t = {}
 	_last_seal_at = -1.0
 	_zone_formed_pending = false
 	_cast_t = -1.0
@@ -844,6 +876,9 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		# pieces buried by sand and drifted by the wind (player / boss half), sand cells filled on the player's half.
 		"mire_in": 0, "mire_dmg": 0.0, "bmire_in": 0, "bmire_dmg": 0.0, "buried": 0, "bburied": 0,
 		"drifted": 0, "bdrifted": 0, "sand_cells": 0,
+		# Story 039: HP the player lost standing in an erupting vent / to a cell falling under it, times the
+		# player / boss was pushed off a falling cell, vents that erupted, cells that fell, boss HP healed by burn_eater.
+		"vent_hp": 0.0, "fall_hp": 0.0, "pushed": 0, "bpushed": 0, "vent_erupts": 0, "cell_falls": 0, "boss_heal": 0.0,
 		# Story 037: Han bursts that fired on the boss (CombatView match stat `frost_bursts`).
 		"frost_bursts": 0,
 	}
@@ -1130,7 +1165,17 @@ func _loop_step() -> void:
 
 func _world_tick(step: float) -> void:
 	t += step
+	# Story 039: HP the player loses to burn ticks while standing in an erupting vent, boss HP a burn tick healed.
+	var vent_here: bool = _haz_vents > 0 and bool(hazards.call("is_venting", PLAYER, state.player_cell))
+	var php0: float = state.player_hp
+	var bhp0: float = state.enemy_hp
 	status.tick(step, state)
+	if vent_here:
+		var vent_lost: float = maxf(php0 - state.player_hp, 0.0)
+		ms["vent_hp"] = float(ms["vent_hp"]) + vent_lost
+		ms["taken"] = float(ms["taken"]) + vent_lost
+	if state.enemy_hp > bhp0:
+		ms["boss_heal"] = float(ms["boss_heal"]) + state.enemy_hp - bhp0
 	_drift_since += step
 	hazards.tick(step, state)
 	_tick_signature(step)
@@ -1478,6 +1523,11 @@ func _on_boss_swing_cancelled(_cells: Array[Vector2i], _skill_id: String) -> voi
 
 
 func _on_cell_changed(side: int, _old_cell: Vector2i, new_cell: Vector2i) -> void:
+	if side == PLAYER:
+		# Story 039: how long the bot has stood on this cell (crumble) and when it last stood on each cell.
+		_stand_cell = new_cell
+		_stand_since = t
+		_visit_t[new_cell] = t
 	if hazards != null and hazards.is_mire(side, new_cell):
 		var mk: String = "mire_in" if side == PLAYER else "bmire_in"
 		ms[mk] = int(ms[mk]) + 1
@@ -1572,6 +1622,8 @@ func _bot_idle() -> void:
 		return
 	if _mire_exit():
 		return
+	if _crumble_exit():
+		return
 	if not actor.is_swinging() and t >= _next_cast and _ready_to_cast() and _try_start_cast():
 		return
 	_walk_to_piece()
@@ -1606,7 +1658,78 @@ func _warned_cells() -> Array[Vector2i]:
 	var fuse: FuseCannonTrait = trait_host.get_trait("fuse_cannon") as FuseCannonTrait
 	if fuse != null:
 		out.append_array(fuse.get_warning_cells())
+	if _haz_vents > 0 or _haz_crumble:
+		out.append_array(_haz_warned())
 	return out
+
+
+# Story 039: cells of the player's half the bot must leave or keep off: a vent line in its warning phase (an
+# erupting vent is a burning cell, status.is_burning covers it) and a cracking cell (about to fall).
+func _haz_warned() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if _haz_vents > 0:
+		var warn_total: float = float(_haz_cfg.get("vent_warn_sec", 1.0))
+		for c: Vector2i in hazards.call("vent_cells", PLAYER) as Array[Vector2i]:
+			if bool(hazards.call("is_vent_warning", PLAYER, c)) and float(hazards.call("vent_warn_left", PLAYER, c)) <= warn_total - vent_react_sec:
+				out.append(c)
+	if _haz_crumble:
+		for c: Vector2i in grid.player_cells():
+			if bool(hazards.call("is_crumble_warning", PLAYER, c)):
+				out.append(c)
+	return out
+
+
+# Story 039: on a crumble arena the bot never camps: after CRUMBLE_LEAVE_SEC on one cell (the unit only stands
+# still when it casts or waits) it steps to the neighbour it stood on longest ago, a piece first. Not while its own
+# swing runs (it is rooted). True when it stepped.
+func _crumble_exit() -> bool:
+	if not _haz_crumble or not mover.is_ready() or actor.is_swinging():
+		return false
+	if t - _stand_since < crumble_leave_sec:
+		return false
+	var here: Vector2i = state.player_cell
+	var warned: Array[Vector2i] = _warned_cells()
+	var danger: Array[Vector2i] = boss.get_actor().get_cells() if boss.get_actor().is_swinging() else ([] as Array[Vector2i])
+	var piece_cells: Dictionary = {}
+	for p: FieldPoint in drops.get_points():
+		if not p.rotten:
+			piece_cells[p.cell] = true
+	var best: Vector2i = Vector2i.ZERO
+	var best_score: float = -INF
+	for d: Vector2i in DIRS:
+		var c: Vector2i = here + d
+		if not grid.is_player_cell(c) or warned.has(c) or danger.has(c) or status.is_burning(c) or _step_blocked(c):
+			continue
+		if not status.thorns_at(PLAYER, c).is_empty():
+			continue
+		var score: float = -float(_visit_t.get(c, -100.0)) - (0.5 if hazards.is_mire(PLAYER, c) else 0.0)
+		if piece_cells.has(c) and not bag.is_full():
+			score += 1000.0
+		if score > best_score:
+			best_score = score
+			best = d
+	if best_score == -INF:
+		return false
+	return _bot_step(best)
+
+
+# Story 039: no adjacent safe cell: one step along the shortest way to the nearest cell that is neither in
+# [param bad] nor burning (BFS over the player's half, blocked cells and fallen cells excluded). True when it stepped.
+func _step_toward_safe(bad: Array[Vector2i]) -> bool:
+	var start: Vector2i = state.player_cell
+	var first: Dictionary = {start: Vector2i.ZERO}
+	var queue: Array[Vector2i] = [start]
+	while not queue.is_empty():
+		var cur: Vector2i = queue.pop_front()
+		if cur != start and not bad.has(cur) and not status.is_burning(cur):
+			return _bot_step(first[cur] as Vector2i)
+		for d: Vector2i in DIRS:
+			var nb: Vector2i = cur + d
+			if first.has(nb) or not grid.is_player_cell(nb) or _step_blocked(nb):
+				continue
+			first[nb] = d if cur == start else first[cur]
+			queue.append(nb)
+	return false
 
 
 func _step_blocked(c: Vector2i) -> bool:
@@ -1630,6 +1753,8 @@ func _fire_dodge() -> bool:
 		if grid.is_player_cell(c) and not warned.has(c) and not status.is_burning(c) and not _step_blocked(c):
 			if _bot_step(d):
 				return true
+	if _haz_vents > 0 and _step_toward_safe(warned):
+		return true
 	return false
 
 
@@ -2187,6 +2312,9 @@ func _setup_hazards(m: Dictionary, match_seed: int) -> void:
 		var hazard_side: int = side
 		mv.add_blocker(func(cell: Vector2i) -> bool: return h.is_sanded(hazard_side, cell))
 		mv.step_cost_fn = func(from_cell: Vector2i) -> float: return h.step_cost_mult(hazard_side, from_cell)
+		# Story 039: a fallen (crumbled) cell is the fourth blocker source on both movers (W1 model; older builds skip it).
+		if h.has_method("is_fallen"):
+			mv.add_blocker(func(cell: Vector2i) -> bool: return bool(h.call("is_fallen", hazard_side, cell)))
 	hazards.extra_blocked_fn = func(side: int, cell: Vector2i) -> bool:
 		return st.is_sealed(side, cell) or (movers[side] as UnitMover).is_cell_blocked(cell)
 	hazards.set_mire_immune(ENEMY, bool(m.get("mire_immune", false)))
@@ -2205,6 +2333,20 @@ func _setup_hazards(m: Dictionary, match_seed: int) -> void:
 	var wind_fn: Callable = func() -> Vector2i: return h.wind_dir()
 	drops.wind_offset_fn = wind_fn
 	boss.get_drops().wind_offset_fn = wind_fn
+	# Story 039: lava vents (burn through the SAME StatusEffects burning cells) and crumbling cells.
+	_haz_cfg = merged
+	_haz_vents = 0
+	_haz_crumble = false
+	if hazards.has_method("set_vents"):
+		var vents_player: Array = arena.get("vents_player", []) as Array
+		var vents_enemy: Array = arena.get("vents_enemy", []) as Array
+		hazards.call("set_vents", PLAYER, vents_player)
+		hazards.call("set_vents", ENEMY, vents_enemy)
+		_haz_vents = vents_player.size() + vents_enemy.size()
+		_haz_crumble = bool(arena.get("crumble", false))
+		hazards.call("enable_crumble", _haz_crumble)
+		hazards.connect("vent_erupted", _on_vent_erupted)
+		hazards.connect("cell_fell", _on_cell_fell)
 	# W4 adds BossController.set_hazards; older builds run without it.
 	if boss.has_method("set_hazards"):
 		boss.call("set_hazards", hazards)
@@ -2238,6 +2380,43 @@ func _on_sand_filled(side: int, cells: Array[Vector2i]) -> void:
 		ms["sand_cells"] = int(ms["sand_cells"]) + cells.size()
 
 
+# Story 039: a vent erupts: its cells burn through StatusEffects (the combat.json hazards numbers vent_sec /
+# vent_tick_sec / vent_tick_damage, like row_burner's burn) and the field pieces lying there are burnt.
+func _on_vent_erupted(side: int, _vent_index: int, cells: Array[Vector2i]) -> void:
+	status.ignite(cells, float(_haz_cfg.get("vent_sec", 2.0)), float(_haz_cfg.get("vent_tick_sec", 0.5)),
+		float(_haz_cfg.get("vent_tick_damage", 2.0)))
+	var fd: FieldDrops = drops if side == PLAYER else boss.get_drops()
+	var n: int = fd.bury_cells(cells)
+	var key: String = "buried" if side == PLAYER else "bburied"
+	ms[key] = int(ms[key]) + n
+	if side == PLAYER:
+		ms["vent_erupts"] = int(ms["vent_erupts"]) + 1
+	_tr("vent erupted side=%d cells=%s" % [side, str(cells)])
+
+
+# Story 039: a cell fell: the pieces on it are lost; the unit that stood on it was already moved to a steppable
+# neighbour by the model and takes fall_damage here (the HP actually lost is counted, the player's also in "taken").
+func _on_cell_fell(side: int, cell: Vector2i, occupant_pushed: bool) -> void:
+	var fd: FieldDrops = drops if side == PLAYER else boss.get_drops()
+	var n: int = fd.bury_cells([cell] as Array[Vector2i])
+	var key: String = "buried" if side == PLAYER else "bburied"
+	ms[key] = int(ms[key]) + n
+	if side == PLAYER:
+		ms["cell_falls"] = int(ms["cell_falls"]) + 1
+	if not occupant_pushed:
+		return
+	var before: float = state.player_hp if side == PLAYER else state.enemy_hp
+	state.damage(side, float(_haz_cfg.get("fall_damage", 8.0)))
+	var lost: float = maxf(before - (state.player_hp if side == PLAYER else state.enemy_hp), 0.0)
+	if side == PLAYER:
+		ms["pushed"] = int(ms["pushed"]) + 1
+		ms["fall_hp"] = float(ms["fall_hp"]) + lost
+		ms["taken"] = float(ms["taken"]) + lost
+	else:
+		ms["bpushed"] = int(ms["bpushed"]) + 1
+	_tr("%s pushed off cell %s, fall damage %.1f" % ["PLAYER" if side == PLAYER else "BOSS", str(cell), lost])
+
+
 # The wind moves the field pieces of both halves one cell (a piece never drifts into sand). No piece is
 # dragged on the field (pieces are placed from the bag), as in CombatView.
 func _on_drift_due() -> void:
@@ -2260,10 +2439,12 @@ func _drop_blocked(base: Array[Vector2i], side: int) -> Array[Vector2i]:
 		return base
 	var sand: Array[Vector2i] = hazards.sand_cells(side)
 	var warning: Array[Vector2i] = hazards.sand_warning_cells(side)
-	if sand.is_empty() and warning.is_empty():
+	# Story 039: fallen cells refuse drops too (CombatView._drop_blocked_cells; only when the model has them).
+	var fallen: Array[Vector2i] = (hazards.call("fallen_cells", side) as Array[Vector2i]) if _haz_crumble else ([] as Array[Vector2i])
+	if sand.is_empty() and warning.is_empty() and fallen.is_empty():
 		return base
 	var out: Array[Vector2i] = base.duplicate()
-	for c: Vector2i in sand + warning:
+	for c: Vector2i in sand + warning + fallen:
 		if not out.has(c):
 			out.append(c)
 	return out

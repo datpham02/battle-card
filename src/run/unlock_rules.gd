@@ -12,7 +12,8 @@ extends RefCounted
 ## {"type": "run_ended", "won": bool, "ending_id": String, "character_id": String,
 ##  "run_stats": Dictionary, "deck_ids": Array}
 ## [/codeblock]
-## `milestone` / `milestone_sum` conditions are re-evaluated on EVERY event (a missed event self-heals); the
+## `milestone` / `milestone_sum` / `best_floor` (Story 039: ProgressState best floor >= `min`) conditions are re-evaluated on
+## EVERY event (a missed event self-heals); the
 ## contextual types only react to their own event: `boss_clear_deck` / `boss_clear_no_hit` on `match_won` with
 ## `is_region_boss` (the final match counts only when the caller also sets `is_region_boss`), `run_counter` on
 ## `match_won` and `run_ended`, `match_counter` on `match_won`, `run_won_deck_max` on `run_ended` with `won`.
@@ -57,6 +58,9 @@ static func progress_of(cfg: AchievementsConfig, id: String, progress: ProgressS
 		"milestone_sum":
 			var target_sum: int = int(params["min"])
 			return {"current": target_sum if done else mini(_sum_prefix(progress, str(params["prefix"])), target_sum), "target": target_sum, "done": done}
+		"best_floor":
+			var target_floor: int = int(params["min"])
+			return {"current": target_floor if done else mini(progress.get_best_floor(), target_floor), "target": target_floor, "done": done}
 		_:
 			return {"current": 1 if done else 0, "target": 1, "done": done}
 
@@ -92,6 +96,8 @@ static func _met(type: String, params: Dictionary, progress: ProgressState, even
 			return progress.get_milestone(str(params["key"])) >= int(params["min"])
 		"milestone_sum":
 			return _sum_prefix(progress, str(params["prefix"])) >= int(params["min"])
+		"best_floor":
+			return progress.get_best_floor() >= int(params["min"])
 		"run_counter":
 			if ev != EVENT_MATCH_WON and ev != EVENT_RUN_ENDED:
 				return false

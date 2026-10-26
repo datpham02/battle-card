@@ -120,10 +120,11 @@ func _init() -> void:
 	# --- dev: mark_all_unlocked
 	var all := ProgressState.new()
 	all.mark_all_unlocked(cfg, ["ch1", "ch2", "ch3", "swamp", "desert"])
+	_check("mark_all_unlocked: best floor meets reach_floor_5 (Story 039)", all.get_best_floor() >= 5)
 	var every: bool = true
 	for id: String in cfg.ids():
 		every = every and all.has_achievement(id)
-	_check("mark_all_unlocked: every achievement earned", every and all.get_achievements().size() == 22)
+	_check("mark_all_unlocked: every achievement earned", every and all.get_achievements().size() == 24)
 	_check("mark_all_unlocked: every region boss beaten", all.get_regions_boss_beaten().size() == 5 and all.get_milestone("region_boss:ch2") >= 1)
 	_check("mark_all_unlocked: milestones satisfy their conditions", all.get_milestone("kills_total") >= 3 and all.get_milestone("spares_total") >= 3 and all.get_milestone("reached_final") >= 1 and all.get_milestone("runs_won") >= 1 and all.get_milestone("ending:execute") >= 1)
 	var nothing_new: bool = true

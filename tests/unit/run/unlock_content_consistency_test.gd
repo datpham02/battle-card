@@ -104,9 +104,9 @@ func _init() -> void:
 	_check("card count: 32 pre-existing ids open", OPEN_CARDS.size() == 32)
 	_check("relics: 16 pre-existing, 4 locked, 12 open", OPEN_RELICS.size() + LOCKED_RELICS.size() == 16)
 	var locked: Dictionary = cfg.locked_content(ProgressState.new())
-	_check("locked content = 4 cards, 3 shapes, 4 relics, 2 characters, nothing else",
+	_check("locked content = 4 cards, 3 shapes, 4 relics, 2 characters, 2 regions (Story 039), nothing else",
 		(locked.get("card", []) as Array).size() == 4 and (locked.get("piece", []) as Array).size() == 3 and (locked.get("relic", []) as Array).size() == 4
-		and (locked.get("character", []) as Array).size() == 2 and locked.size() == 4, str(locked))
+		and (locked.get("character", []) as Array).size() == 2 and (locked.get("region", []) as Array).size() == 2 and locked.size() == 5, str(locked))
 	# every locked piece shape is a default-pool shape (not run_only)
 	var pieces: Dictionary = _json("res://assets/data/pieces.json")
 	var bad_pool: Array[String] = []

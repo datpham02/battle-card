@@ -51,6 +51,8 @@ const PURPOSE_PICKUP: String = "pickup"
 const PURPOSE_DODGE: String = "dodge"
 const PURPOSE_RETREAT: String = "retreat"
 const PURPOSE_WANDER: String = "wander"
+## Story 039: leaving a cell of a crumble arena before it cracks.
+const PURPOSE_CRUMBLE: String = "crumble"
 ## Path styles actually walked (a set's "mixed" resolves to one of the first two per destination).
 const STYLE_ROW_FIRST: String = "row_first"
 const STYLE_COLUMN_FIRST: String = "column_first"
@@ -112,6 +114,15 @@ var _mire_pen: Dictionary = {}
 ## Story 036: hazard components of the last think (mire costs, sand cells blocked, wind, pickup drift);
 ## copied into last_debug().hazards when hazards are set.
 var _hazard_debug: Dictionary = {}
+## Story 039: the cell the boss has been standing on, how long (seconds, counted at each think) and the
+## time banked by tick() since the last think. Only read when hazards are set on a crumble arena.
+var _stand_cell: Vector2i = BoardGrid.NO_CELL
+var _stand_sec: float = 0.0
+var _stand_clock: float = 0.0
+## Story 039: cost of staying on the current cell (crumble_avoid x fall_damage x standing fraction), and whether
+## the boss should leave it now; rebuilt every think, 0 / false without hazards or crumble.
+var _crumble_cost: float = 0.0
+var _crumble_leave: bool = false
 
 
 ## [param seed_value] below 0 gives a random seed; otherwise noise is deterministic.
@@ -208,6 +219,7 @@ func get_hazards() -> TileHazards:
 ## running right now; the time it has been visible resets when it ends.
 func tick(delta: float, player_swing_active: bool) -> void:
 	_think_clock += delta
+	_stand_clock += delta
 	if player_swing_active:
 		_player_seen_sec += delta
 	else:
@@ -255,15 +267,19 @@ func decide(ctx: Dictionary) -> Dictionary:
 			_thorn_pen[cell] = thorn_avoid * float(_status.thorns_at(CombatState.Side.ENEMY, cell).get("damage", 0.0))
 	_mire_pen = {}
 	_hazard_debug = {}
+	_crumble_cost = 0.0
+	_crumble_leave = false
 	if _hazards != null:
 		_apply_hazards(own_blocked, player_blocked)
+		_apply_crumble(state.enemy_cell)
+	_stand_clock = 0.0
 	_swing_damage = _cut_config.slash_damage(incoming.size()) if not incoming.is_empty() else 0.0
 	_swing_time_left = player_actor.get_time_left() if not incoming.is_empty() else 0.0
 	_boss_step_sec = _config.step_cooldown_sec * maxf(mover.cooldown_mult, 0.0)
 	_dodge_plan = {}
 	var urgency: float = 1.0 / maxf(player_actor.get_time_left(), _MIN_TIME_LEFT)
 	var player_step_cooldown: float = float(ctx.get("player_step_cooldown", _config.step_cooldown_sec))
-	var idle_score: float = float(_weights["idle_bias"])
+	var idle_score: float = float(_weights["idle_bias"]) - _crumble_cost
 	var best_cut: Dictionary = _best_cut(
 		state, hand, actor, cooldowns, player_actor, incoming, player_blocked, player_step_cooldown
 	)
@@ -312,7 +328,9 @@ func decide(ctx: Dictionary) -> Dictionary:
 ## noise}, thorn = -thorn cost of the step (0 for a dodge: its trade is in dodge_plan); dodge_plan when a
 ## dodge was planned this think (Story 027); Story 036 with hazards set: breakdown.mire = -mire cost of the
 ## step and hazards {mire_avoid, mire_unit_cost, mire_immune, mire_pen (cell -> cost), sand_blocked,
-## wind_dir, drift_left, pickup_drift [{uid, from, to, steps}]}}.
+## wind_dir, drift_left, pickup_drift [{uid, from, to, steps}], Story 039: vent_blocked (warning + erupting vent
+## cells of both halves, blocked like burning cells), crumble_blocked (fallen + cracking cells of both halves),
+## crumble {avoid, on, after_sec, stand_sec, fraction, cost, leave}}}.
 func last_debug() -> Dictionary:
 	return _debug.duplicate(true)
 
@@ -718,6 +736,9 @@ func _plan_move(
 	# 2. Choose a destination, or re-evaluate the current one with probability 1 - commitment.
 	if not _is_dodging() and (_destination.is_empty() or _rolls_re_evaluation()):
 		_choose_destination(here, state, hand, points, incoming, burning)
+	# Story 039: close to a crack with nowhere to go, relocate to a safe neighbouring cell.
+	if _crumble_leave and _destination.is_empty() and not _is_dodging():
+		_choose_crumble_exit(here, incoming, burning)
 	# 3. A visible swing on the current cell or on the next cell of the path forces a dodge.
 	var threatened: bool = incoming.has(here)
 	if not threatened and not _destination.is_empty() and not _is_dodging():
@@ -1015,6 +1036,8 @@ func _purpose_score(purpose: String, here: Vector2i, incoming: Array[Vector2i], 
 		return value
 	if purpose == PURPOSE_RETREAT:
 		return float(_weights["retreat_bonus"])
+	if purpose == PURPOSE_CRUMBLE:
+		return float(_weights["idle_bias"]) + _crumble_cost
 	return float(_weights["idle_bias"])
 
 
@@ -1121,6 +1144,27 @@ func _apply_hazards(own_blocked: Array[Vector2i], player_blocked: Array[Vector2i
 	for cell: Vector2i in player_sand:
 		if not player_blocked.has(cell):
 			player_blocked.append(cell)
+	# Story 039: vents about to burn and burning (warning + erupting), fallen and cracking cells: blocked like
+	# burning cells, the same code path as the sand above and the StatusEffects burning cells.
+	var vent_blocked: Array[Vector2i] = []
+	var crumble_blocked: Array[Vector2i] = []
+	for side: int in [enemy, player]:
+		var side_blocked: Array[Vector2i] = []
+		for cell: Vector2i in _hz_cells("vent_cells", side):
+			if _hz_flag("is_venting", side, cell) or _hz_flag("is_vent_warning", side, cell):
+				vent_blocked.append(cell)
+				side_blocked.append(cell)
+		for cell: Vector2i in _hz_cells("fallen_cells", side):
+			crumble_blocked.append(cell)
+			side_blocked.append(cell)
+		for cell: Vector2i in (_grid.enemy_cells() if side == enemy else _grid.player_cells()):
+			if _hz_flag("is_crumble_warning", side, cell) and not crumble_blocked.has(cell):
+				crumble_blocked.append(cell)
+				side_blocked.append(cell)
+		var target: Array[Vector2i] = own_blocked if side == enemy else player_blocked
+		for cell: Vector2i in side_blocked:
+			if not target.has(cell):
+				target.append(cell)
 	var cfg: Dictionary = _hazards.get_debug().get("cfg", {}) as Dictionary
 	var step_mult: float = float(cfg.get("mire_step_mult", 1.0))
 	var unit_cost: float = maxf(step_mult - 1.0, 0.0) + maxf(float(cfg.get("mire_tick_damage", 0.0)), 0.0)
@@ -1132,6 +1176,76 @@ func _apply_hazards(own_blocked: Array[Vector2i], player_blocked: Array[Vector2i
 	_hazard_debug = {
 		"mire_avoid": weight, "mire_unit_cost": unit_cost, "mire_immune": immune, "mire_pen": _mire_pen.duplicate(),
 		"sand_blocked": own_sand, "wind_dir": _drift_dir(), "drift_left": _time_to_drift(), "pickup_drift": [],
+		"vent_blocked": vent_blocked, "crumble_blocked": crumble_blocked,
+	}
+
+
+# Story 039: a cell list getter of TileHazards ([param method]: vent_cells, fallen_cells) when it exists, else empty.
+func _hz_cells(method: String, side: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if not _hazards.has_method(method):
+		return out
+	for cell: Variant in _hazards.call(method, side) as Array:
+		out.append(cell as Vector2i)
+	return out
+
+
+# Story 039: a (side, cell) -> bool query of TileHazards when it exists, else false.
+func _hz_flag(method: String, side: int, cell: Vector2i) -> bool:
+	return _hazards.has_method(method) and bool(_hazards.call(method, side, cell))
+
+
+# Story 039: on a crumble arena works out the cost of staying on [param here]: crumble_avoid x fall_damage x the
+# fraction of the standing timer that has run (the larger of TileHazards.crumble_progress and the brain's own idle
+# time on the cell over crumble_after_sec), and whether to leave now: the weight is on and the time left before the
+# crack is no more than the time to walk two steps (+ one think). Merges the components into _hazard_debug.crumble.
+func _apply_crumble(here: Vector2i) -> void:
+	var enemy: int = CombatState.Side.ENEMY
+	var on: bool = _hazards.has_method("crumble_enabled") and bool(_hazards.call("crumble_enabled"))
+	var weight: float = float(_weights.get("crumble_avoid", 0.0))
+	var cfg: Dictionary = _hazards.get_debug().get("cfg", {}) as Dictionary
+	var after: float = maxf(float(cfg.get("crumble_after_sec", float(TileHazards.DEFAULTS.get("crumble_after_sec", 2.0)))), 0.001)
+	var damage: float = maxf(float(cfg.get("fall_damage", float(TileHazards.DEFAULTS.get("fall_damage", 8.0)))), 0.0)
+	var fraction: float = 0.0
+	if on:
+		if here != _stand_cell:
+			_stand_cell = here
+			_stand_sec = 0.0
+		else:
+			_stand_sec += _stand_clock
+		fraction = clampf(_stand_sec / after, 0.0, 1.0)
+		if _hazards.has_method("crumble_progress"):
+			fraction = maxf(fraction, clampf(float(_hazards.call("crumble_progress", enemy, here)), 0.0, 1.0))
+		_crumble_cost = weight * damage * fraction
+		var lead: float = 2.0 * _config.step_cooldown_sec + _config.think_interval_sec
+		_crumble_leave = weight > 0.0 and fraction > 0.0 and (1.0 - fraction) * after <= lead
+	else:
+		_stand_cell = BoardGrid.NO_CELL
+		_stand_sec = 0.0
+	_hazard_debug["crumble"] = {
+		"avoid": weight, "on": on, "after_sec": after, "stand_sec": _stand_sec, "fraction": fraction,
+		"cost": _crumble_cost, "leave": _crumble_leave,
+	}
+
+
+# Story 039: sets the destination to the best cell to leave to: not the current one, reachable, outside the visible
+# swing, cheapest by zone cost, then fewest steps, same row, nearest the divider (no RNG). No cell = no destination.
+func _choose_crumble_exit(here: Vector2i, incoming: Array[Vector2i], burning: Array[Vector2i]) -> void:
+	var paths: Dictionary = _cost_map(here, burning, false)
+	var best: Vector2i = BoardGrid.NO_CELL
+	var best_key: Array = []
+	for cell: Vector2i in paths.keys():
+		if cell == here or incoming.has(cell):
+			continue
+		var entry: Array = paths[cell]
+		var key: Array = [float(entry[1]), int(entry[2]), 0 if cell.y == here.y else 1, -_grid.to_side_coords(cell).x, cell.y]
+		if best == BoardGrid.NO_CELL or _key_less_float(key, best_key):
+			best = cell
+			best_key = key
+	if best == BoardGrid.NO_CELL:
+		return
+	_destination = {
+		"cell": best, "purpose": PURPOSE_CRUMBLE, "path_style_in_use": _pick_path_style(), "from_cell": here,
 	}
 
 

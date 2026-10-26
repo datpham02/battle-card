@@ -101,7 +101,8 @@ static func grid_for_spec(spec: Dictionary, library: ArenaLibrary, seed_value: i
 
 
 ## Story 036: the tile hazards of one match on [param grid] (the board built for it):
-## {mire_player: Array[Vector2i], mire_enemy: Array[Vector2i], sand: bool, wind: bool}. The hazards come from the
+## {mire_player: Array[Vector2i], mire_enemy: Array[Vector2i], sand: bool, wind: bool}; Story 039 adds vents_player /
+## vents_enemy (Array of Array[Vector2i], one array of cells per vent) and crumble (bool). The hazards come from the
 ## arena block of [param match_params] (`arena.shape` looked up in [param library], default arenas.json; a direct
 ## arena block may carry its own `hazards` / `wind`). All empty / false for an arena without hazards.
 ## `hazards.mire` is either {per_side: N} (N cells on EACH half, seeded by the match's `arena_seed`, never the
@@ -110,7 +111,8 @@ static func grid_for_spec(spec: Dictionary, library: ArenaLibrary, seed_value: i
 ## grid or are a start cell are dropped). Cells are BoardGrid cell coordinates of the right half.
 static func hazards_for_match(match_params: Dictionary, grid: BoardGrid, library: ArenaLibrary = null) -> Dictionary:
 	var no_cells: Array[Vector2i] = []
-	var result: Dictionary = {"mire_player": no_cells.duplicate(), "mire_enemy": no_cells.duplicate(), "sand": false, "wind": false}
+	var result: Dictionary = {"mire_player": no_cells.duplicate(), "mire_enemy": no_cells.duplicate(), "sand": false, "wind": false,
+		"vents_player": [], "vents_enemy": [], "crumble": false}
 	var arena: Variant = match_params.get("arena")
 	if typeof(arena) != TYPE_DICTIONARY or grid == null:
 		return result
@@ -128,17 +130,37 @@ static func hazards_for_match(match_params: Dictionary, grid: BoardGrid, library
 	if shape.is_empty():
 		return result
 	result["wind"] = bool(shape.get("wind", false))
+	# Story 039: `crumble` of the shape; a match-level arena block naming a shape may switch it on (or off) for this match.
+	result["crumble"] = bool(spec.get("crumble", shape.get("crumble", false))) if spec.has("shape") else bool(shape.get("crumble", false))
 	var raw_hazards: Variant = shape.get("hazards")
 	if typeof(raw_hazards) != TYPE_DICTIONARY:
 		return result
 	var hazards: Dictionary = raw_hazards as Dictionary
 	result["sand"] = bool(hazards.get("sand", false))
+	var vents: Variant = hazards.get("vents")
+	if typeof(vents) == TYPE_DICTIONARY:
+		result["vents_player"] = _vents_side(vents as Dictionary, grid, true)
+		result["vents_enemy"] = _vents_side(vents as Dictionary, grid, false)
 	var mire: Variant = hazards.get("mire")
 	if typeof(mire) == TYPE_DICTIONARY:
 		var arena_seed: int = maxi(int(match_params.get("arena_seed", -1)), 0)
 		result["mire_player"] = _mire_side(mire as Dictionary, grid, true, arena_seed)
 		result["mire_enemy"] = _mire_side(mire as Dictionary, grid, false, arena_seed)
 	return result
+
+
+## Story 039: the vents of one half: one Array[Vector2i] per `hazards.vents.<player|enemy>` line ({"row": r} or
+## {"col": c} in side coordinates), holding every real cell of that half on the line; a line without a real cell is dropped.
+static func _vents_side(vents: Dictionary, grid: BoardGrid, player_half: bool) -> Array:
+	var out: Array = []
+	var key: String = "player" if player_half else "enemy"
+	if typeof(vents.get(key)) != TYPE_ARRAY:
+		return out
+	for line: Variant in vents[key] as Array:
+		var cells: Array[Vector2i] = ArenaValidator.vent_line_cells(grid, line, player_half)
+		if not cells.is_empty():
+			out.append(cells)
+	return out
 
 
 ## Mire cells of one half (see [method hazards_for_match]).
@@ -297,6 +319,8 @@ func _add_checked(entry: Variant) -> void:
 		shape["hazards"] = (raw["hazards"] as Dictionary).duplicate(true) if typeof(raw["hazards"]) == TYPE_DICTIONARY else raw["hazards"]
 	if raw.has("wind"):
 		shape["wind"] = raw["wind"]
+	if raw.has("crumble"):
+		shape["crumble"] = raw["crumble"]
 	var verdict: Dictionary = ArenaValidator.validate(shape, rules)
 	if bool(verdict["ok"]):
 		if raw.has("featured_shape") or raw.has("featured_bonus"):

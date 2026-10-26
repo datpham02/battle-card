@@ -5,7 +5,9 @@ extends BossTrait
 ## (BossBrain.use_set), the boss's step cooldown is multiplied by `step_mult`, and every entry of
 ## `extra_traits` ([{id, params}]) is added to the TraitHost at runtime. The host emits
 ## `phase_changed(2)` (HUD banner).
-## Params (fallbacks below): `at_hp_ratio`, `brain_set`, `extra_traits`, `step_mult`.
+## Params (fallbacks below): `at_hp_ratio`, `brain_set`, `extra_traits`, `step_mult`, `vent_interval_mult` (Story 039:
+## > 0 and != 1 multiplies the lava vents' interval through TileHazards.set_vent_interval_mult on entering phase 2;
+## absent = untouched).
 ## HUD: [method get_phase] (1 then 2).
 ## Implements: Story 023 (Part B).
 
@@ -23,6 +25,7 @@ var _at_ratio: float = DEFAULT_AT_HP_RATIO
 var _brain_set: String = DEFAULT_BRAIN_SET
 var _step_mult: float = DEFAULT_STEP_MULT
 var _extra: Array = DEFAULT_EXTRA_TRAITS
+var _vent_interval_mult: float = 1.0
 var _phase: int = 1
 
 
@@ -35,6 +38,7 @@ func setup(ctx: Dictionary, params: Dictionary, seed_value: int) -> void:
 	_at_ratio = clampf(param_float("at_hp_ratio", DEFAULT_AT_HP_RATIO), 0.0, 1.0)
 	_brain_set = param_string("brain_set", DEFAULT_BRAIN_SET)
 	_step_mult = maxf(param_float("step_mult", DEFAULT_STEP_MULT), 0.01)
+	_vent_interval_mult = param_float("vent_interval_mult", 1.0)
 	var raw: Variant = _params.get("extra_traits", DEFAULT_EXTRA_TRAITS)
 	_extra = raw as Array if typeof(raw) == TYPE_ARRAY else DEFAULT_EXTRA_TRAITS
 
@@ -72,6 +76,8 @@ func _check() -> void:
 		if not boss.get_brain().use_set(_brain_set):
 			push_warning("PhaseShiftTrait: unknown brain_set '%s'" % _brain_set)
 		boss.get_mover().cooldown_mult *= _step_mult
+	if _vent_interval_mult > 0.0 and not is_equal_approx(_vent_interval_mult, 1.0):
+		apply_vent_interval_mult(_vent_interval_mult)
 	var host: TraitHost = get_host()
 	if host != null:
 		for entry: Variant in _extra:
