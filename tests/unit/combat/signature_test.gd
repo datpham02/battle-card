@@ -406,12 +406,13 @@ func _test_anh_bo() -> void:
 	_check("anh_bo active: pinned 3 cells x small_mult (stacks with Ghim + Quick Blade)", _near(float(r["damage"]), per * 3.0 * ghim * quick * small), str(r["damage"]))
 	_check("anh_bo: pin_bonus off (Ghim control-only, Story 023)", not bool(r["pin_bonus"]))
 	r = _cast(v, 4)
-	_check("anh_bo active: pinned 4 cells = Ghim only", _near(float(r["damage"]), per * 4.0 * ghim), str(r["damage"]))
+	# TD-027 (2026-10-26): Quick Blade now reaches 4 cells; Anh Bo small_mult still stops at 3.
+	_check("anh_bo active: pinned 4 cells = Ghim x Quick Blade, no small_mult", _near(float(r["damage"]), per * 4.0 * ghim * quick), str(r["damage"]))
 	status.clear()
 	r = _cast(v, 3)
 	_check("anh_bo active: UNPINNED 3 cells x small_mult x Quick Blade (Story 030)", _near(float(r["damage"]), per * 3.0 * quick * small), str(r["damage"]))
 	r = _cast(v, 4)
-	_check("anh_bo active: unpinned 4 cells = no multiplier", _near(float(r["damage"]), per * 4.0), str(r["damage"]))
+	_check("anh_bo active: unpinned 4 cells = Quick Blade only", _near(float(r["damage"]), per * 4.0 * quick), str(r["damage"]))
 	r = _cast(v, 1)
 	_check("anh_bo active: unpinned 1 cell x small_mult", _near(float(r["damage"]), per * 1.0 * quick * small), str(r["damage"]))
 	# Free steps while active.

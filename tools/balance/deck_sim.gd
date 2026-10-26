@@ -15,7 +15,8 @@ extends SceneTree
 ## --no-zone-cards drops the zone cards from the reward pool and the decks (the "before" measurement).
 ## Story 031 --world: a run = `world.floors` floors (pick 1 of the WorldMapGen offer per floor, bot pick
 ## --region-pick=random|first, seeded) of short region maps (ChaptersConfig.generate_region_map), then the
-## final match (`world.final_match`); every match RunConfig.from_node(..., floor); a region boss gives the
+## final floor (TD-029: the `world.final_prelude` columns, a shop, through the same shop / node policy as
+## the region maps, then the final match `world.final_match`); every match RunConfig.from_node(..., floor); a region boss gives the
 ## boss reward and heals `floor_heal_ratio` x max HP instead of ending the run. Runs its own run state
 ## (WorldRun below), not RunSession. --world-set=key:value overrides the `world` / `region_normalize`
 ## data in memory (chapters.json is never written).
@@ -307,6 +308,8 @@ func _init() -> void:
 	print(_core.describe())
 	if not _core.describe_piece_deck().is_empty():
 		print(_core.describe_piece_deck())
+	if not _core.describe_piece_weight_set().is_empty():
+		print(_core.describe_piece_weight_set())
 	if _no_treasure:
 		print("EXPERIMENT: no-treasure")
 	print("node policy: treasure > rest (heal < %.0f%% HP else forge) > miniboss at >= %.0f%% HP > battle > danger (danger first with >= %d burn cards); boss when alone. passive heal on win; no other heal." % [
@@ -831,6 +834,9 @@ func _chapters_with_overrides(items: Array[String]) -> ChaptersConfig:
 					new_cols.append((cols[1] as Dictionary).duplicate(true))
 				new_cols.append(cols[cols.size() - 1])
 				world["region_columns"] = new_cols
+		elif key == "final_prelude" and raw_value == "none":
+			# TD-029: no columns before the final boss (the pre-TD-029 one-column final map).
+			world["final_prelude"] = []
 		elif key == "battle_columns":
 			# N extra copies of the first (battle-only) column right after it: more fights per region.
 			var bcols: Array = world.get("region_columns", [])
@@ -854,6 +860,8 @@ func _run_world_mode(seeds: int) -> void:
 	print(_core.describe())
 	if not _core.describe_piece_deck().is_empty():
 		print(_core.describe_piece_deck())
+	if not _core.describe_piece_weight_set().is_empty():
+		print(_core.describe_piece_weight_set())
 	print("relics: start=%s relic-policy=%s (pick = relic row over card row at treasure, rarest first; damage cap %.1f)" % [
 		",".join(PackedStringArray(_core.ov["relics"])) if not (_core.ov["relics"] as Array).is_empty() else "none", _relic_policy, _core.relic_config.relic_damage_mult_cap])
 	print("economy (Story 033): shop-policy=%s event-policy=%s economy-set=%s | start gold %d | shop entered with >= %d gold; greedy = heal below %.0f%% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above %.0f%% HP, else a pure heal choice, else Rời đi" % [
@@ -861,6 +869,8 @@ func _run_world_mode(seeds: int) -> void:
 		_economy.starting_gold(), SHOP_MIN_GOLD, 100.0 * SHOP_HEAL_BELOW, 100.0 * EVENT_RISKY_ABOVE])
 	print("world: floors=%d choices=%d pool=%s columns=%d heal=%.2f final=%s tiers=%s" % [floors, int(w["choices_per_floor"]),
 		str(w["region_pool"]), (w["region_columns"] as Array).size(), _chapters.floor_heal_ratio(), str(_chapters.final_match()), str(w["floor_tiers"])])
+	if not _chapters.final_prelude().is_empty():
+		print("final prelude (TD-029): %s before the final boss column" % str(_chapters.final_prelude()))
 	for f: int in floors + 1:
 		print("  floor_scaling %s: %s" % ["final" if f == floors else str(f + 1), str(_chapters.floor_scaling(f))])
 	for id: String in _chapters.region_ids():
@@ -1208,7 +1218,8 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			if fm.is_empty():
 				break
 			w.region_id = str(fm["region"])
-			map = [{"index": 0, "tier": 0, "nodes": [{"kind": ChapterMapGen.KIND_BOSS, "match_id": str(fm["match_id"])}]}]
+			# TD-029: the `world.final_prelude` columns (a shop) come first, through the same node policy.
+			map = _chapters.final_map()
 			out["final_reached"] = true
 		w.chapter_index = _chapters.region_index(w.region_id)
 		(out["hp_in"] as Array).append(_hp_ratio(w, max_hp))

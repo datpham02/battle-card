@@ -183,6 +183,62 @@ func final_match() -> Dictionary:
 	return (_world["final_match"] as Dictionary).duplicate()
 
 
+## TD-029: node kinds a `world.final_prelude` column may hold (kinds that need no match id).
+const FINAL_PRELUDE_KINDS: Array[String] = ["shop", "rest"]
+
+
+## TD-029: `world.final_prelude` (deep copy): columns placed before the final match's boss column, each
+## an Array[String] of node kinds from [constant FINAL_PRELUDE_KINDS] (shipped: [["shop"]], so the gold
+## of the floor-5 boss can be spent before the final). [] when the key is missing or empty (the final
+## floor is then the boss column alone, the pre-TD-029 behaviour).
+func final_prelude() -> Array:
+	return (_world["final_prelude"] as Array).duplicate(true)
+
+
+## TD-029: the final floor's map: the [method final_prelude] columns (indices 0..n-1, tier 0, nodes
+## {kind, match_id ""}) then the boss column {index n, tier 0, nodes [{kind boss, match_id}]} of
+## [method final_match]. [] when there is no final match.
+func final_map() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var fm: Dictionary = final_match()
+	if fm.is_empty():
+		return out
+	for kinds: Variant in final_prelude():
+		var nodes: Array = []
+		for kind: Variant in kinds as Array:
+			nodes.append({"kind": str(kind), "match_id": ""})
+		out.append({"index": out.size(), "tier": 0, "nodes": nodes})
+	out.append({"index": out.size(), "tier": 0, "nodes": [{"kind": ChapterMapGen.KIND_BOSS, "match_id": str(fm.get("match_id", ""))}]})
+	return out
+
+
+# TD-029: `world.final_prelude` cleaned: an array of columns, each an array of node kinds. Only kinds that
+# need no match id (FINAL_PRELUDE_KINDS) are kept; anything else is dropped with a warning (a column left
+# empty is dropped too). Missing / null = [] (no prelude).
+static func _clean_final_prelude(raw: Variant) -> Array:
+	var out: Array = []
+	if typeof(raw) == TYPE_NIL:
+		return out
+	if typeof(raw) != TYPE_ARRAY:
+		push_warning("ChaptersConfig: world.final_prelude must be an array of columns, ignored")
+		return out
+	for col: Variant in raw as Array:
+		if typeof(col) != TYPE_ARRAY:
+			push_warning("ChaptersConfig: world.final_prelude: column %s is not an array of kinds, dropped" % str(col))
+			continue
+		var kinds: Array = []
+		for kind: Variant in col as Array:
+			if typeof(kind) == TYPE_STRING and FINAL_PRELUDE_KINDS.has(str(kind)):
+				kinds.append(str(kind))
+			else:
+				push_warning("ChaptersConfig: world.final_prelude: kind '%s' not allowed (one of %s), dropped" % [str(kind), str(FINAL_PRELUDE_KINDS)])
+		if kinds.is_empty():
+			push_warning("ChaptersConfig: world.final_prelude: a column has no allowed kind, dropped")
+			continue
+		out.append(kinds)
+	return out
+
+
 ## Story 035: `world.fate` = {execute_artifact_offers (int >= 1), execute_min_rarity (String),
 ## fate_hold_sec (float >= 0)}; built-in values mirror the shipped JSON ([constant DEFAULT_FATE]).
 func fate_config() -> Dictionary:
@@ -650,6 +706,7 @@ func _clean_world(raw: Variant) -> Dictionary:
 	elif typeof(raw_final) != TYPE_NIL:
 		push_warning("ChaptersConfig: world.final_match must be an object, ignored")
 	world["final_match"] = final
+	world["final_prelude"] = _clean_final_prelude(source.get("final_prelude"))
 	var special: Dictionary = {"column": 1, "shop_weight": 0.0, "event_weight": 0.0, "guaranteed_shops": 0, "guaranteed_min_floor": 1}
 	var raw_special: Variant = source.get("special_nodes")
 	if typeof(raw_special) == TYPE_DICTIONARY:

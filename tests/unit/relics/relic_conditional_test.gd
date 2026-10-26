@@ -31,6 +31,13 @@ func _cast(pieces: Array, joined: bool = false, cells: int = -1) -> Dictionary:
 	}
 
 
+# A cast_info like [method _cast] whose swing missed the boss (`hit` false).
+func _missed(pieces: Array, cells: int, joined: bool = false) -> Dictionary:
+	var info: Dictionary = _cast(pieces, joined, cells)
+	info["hit"] = false
+	return info
+
+
 func _heal(amount: float) -> void:
 	_healed.append(amount)
 
@@ -143,11 +150,15 @@ func _huyet_an() -> void:
 	_check(_near(r.modify_cast_damage(_cast(["bar5"], false, 5), 10.0), 13.0), "huyet_an: 5 cells x1.3")
 	_check(_near(r.modify_cast_damage(_cast(["bar4"], false, 4), 10.0), 10.0), "huyet_an: 4 cells unchanged")
 	_check(_near(r.modify_cast_damage(_cast(["bar5", "mono"], true, 6), 10.0), 13.0), "huyet_an: 6 cells x1.3")
-	r.on_cast_landed(_cast(["bar4"], false, 4))
 	r.on_cast_landed(_cast(["bar5"], false, 5))
-	_check(_hurt == [2.0, 2.0], "huyet_an: every cast costs self_damage 2: %s" % str(_hurt))
+	_check(_hurt.is_empty(), "huyet_an: a 5-cell hit costs no HP: %s" % str(_hurt))
+	r.on_cast_landed(_missed(["bar4"], 4))
+	_check(_hurt.is_empty(), "huyet_an: a 4-cell miss costs no HP: %s" % str(_hurt))
+	r.on_cast_landed(_missed(["bar5"], 5))
+	r.on_cast_landed(_missed(["bar5", "mono"], 6, true))
+	_check(_hurt == [2.0, 2.0], "huyet_an: each 5+-cell miss costs self_damage 2: %s" % str(_hurt))
 	var bare: BaseRelic = _make("huyet_an")
-	bare.on_cast_landed(_cast(["bar5"], false, 5))
+	bare.on_cast_landed(_missed(["bar5"], 5))
 	_check(_hurt.size() == 2, "huyet_an: missing damage_player key does nothing")
 
 

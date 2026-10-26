@@ -138,9 +138,15 @@ func _initialize() -> void:
 		s.complete_node(s.hp, MAX_HP, "", CFG)
 	var fm: Dictionary = chapters.final_match()
 	_check("after floor %d -> final match node" % floors, s.floor == floors and s.is_final_floor() and s.region_offer.is_empty()
-		and s.region_id == str(fm["region"]) and s.map.size() == 1 and str(s.map[0]["nodes"][0]["match_id"]) == str(fm["match_id"]) and not s.is_run_won())
+		and s.region_id == str(fm["region"]) and s.map == chapters.final_map() and str(s.map[s.map.size() - 1]["nodes"][0]["match_id"]) == str(fm["match_id"]) and not s.is_run_won())
 	_check("region path one id per floor", s.region_path.size() == floors)
 	_check("round trip at the final", _same(s, _rt(s, chapters)))
+	# TD-029: the `world.final_prelude` columns (shop) complete without winning the run.
+	while s.column < s.map.size() - 1:
+		s.choose_node(0)
+		var pre_res: Dictionary = s.complete_node(s.hp, MAX_HP, "", CFG)
+		_check("prelude node %s completes, run not won" % str(s.cleared_nodes[s.cleared_nodes.size() - 1]["kind"]), bool(pre_res["advanced"]) and not s.is_run_won() and s.is_final_floor())
+	_check("round trip at the final boss column", _same(s, _rt(s, chapters)) and str(s.current_column()["nodes"][0]["kind"]) == "boss")
 	s.choose_node(0)
 	var fin: Dictionary = s.complete_node(50.0, MAX_HP, "", CFG)
 	_check("final match won -> run won", bool(fin["run_won"]) and s.is_run_won() and not bool(fin["floor_cleared"]))

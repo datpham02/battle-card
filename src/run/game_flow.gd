@@ -127,7 +127,9 @@ extends Node2D
 ##                              world map captures: floor 1 offer / floor 3 offer (2 floors walked on a
 ##                              seeded path) / floor 2 offer right after a region boss (the floor-clear
 ##                              notice waits; the boss ends at DEV_FLOORCLEAR_HP_RATIO x max HP so the
-##                              heal is non-zero) / standing before the final match (its one-node MAP)
+##                              heal is non-zero) / standing on the final floor's MAP at column 0 (TD-029:
+##                              the `world.final_prelude` shop column, then the final boss column; without
+##                              a prelude the boss column alone)
 ##   --run=relic_treasure       Story 032: the treasure offer with BOTH rows open (3 cards + 3 relics)
 ##   --run=map|map3|rest|treasure|miniboss_reward|boss_reward|reward|runover|runwon
 ##                              run states for captures (first offered region chosen): the fresh map /
@@ -528,7 +530,8 @@ func _ready() -> void:
 				_dev_advance_to_kind(KIND_BOSS)
 			elif _dev_demo_stage == DEV_DEMO_STAGE_FINAL:
 				_dev_advance_floors(_run.floors())
-				_dev_choose_first_available()
+				# TD-029: past the `world.final_prelude` columns to the final boss node.
+				_dev_advance_to_kind(KIND_BOSS)
 			else:
 				_dev_choose_first_available()
 	if _dev_hp > 0.0 and _run != null and _controller == null:
@@ -2501,7 +2504,8 @@ func _apply_dev_flow_run(kind: String) -> void:
 		FLOW_RUN_WON:
 			_dev_advance_floors(_run.floors())
 			_dev_settle_phase()
-			if _dev_choose_first_available():
+			# TD-029: past the `world.final_prelude` columns to the final boss node.
+			if _dev_advance_to_kind(KIND_BOSS):
 				_dev_win_current_match(false)
 
 

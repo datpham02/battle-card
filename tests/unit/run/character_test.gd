@@ -112,10 +112,14 @@ func _initialize() -> void:
 	# damage through the real arbiter path: player swing, boss standing inside
 	var hit3: float = _player_hit(sv, 3)
 	var hit4: float = _player_hit(sv, 4)
+	var hit5: float = _player_hit(sv, 5)
 	var base3: float = sv.get_cut_config().slash_damage(3)
 	var base4: float = sv.get_cut_config().slash_damage(4)
+	var base5: float = sv.get_cut_config().slash_damage(5)
 	_check("sat_thu 3-cell hit 1.25x", is_equal_approx(hit3, base3 * 1.25), "%f vs %f" % [hit3, base3 * 1.25])
-	_check("sat_thu 4-cell hit unchanged", is_equal_approx(hit4, base4), "%f vs %f" % [hit4, base4])
+	# TD-027 (2026-10-26): quick_blade max_cells 3 -> 4, so 4 cells get the bonus and 5 cells do not.
+	_check("sat_thu 4-cell hit 1.25x", is_equal_approx(hit4, base4 * 1.25), "%f vs %f" % [hit4, base4 * 1.25])
+	_check("sat_thu 5-cell hit unchanged", is_equal_approx(hit5, base5), "%f vs %f" % [hit5, base5])
 	(st["main"] as Node).queue_free()
 	await process_frame
 	# ---- second_wind through the run

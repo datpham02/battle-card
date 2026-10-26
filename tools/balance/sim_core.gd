@@ -134,6 +134,13 @@ var piece_deck_spec: String = ""
 ## The fixed PieceDeck state of the player for the whole run (no ink offers, no removals in play).
 var piece_deck_state: Dictionary = {}
 var piece_deck_cfg: PieceDeckConfig
+## The raw --piece-weight-set value ("" = flag absent: pieces.json weights untouched). `id:value` sets the
+## base drop weight of shape id in EVERY weights map (default, ch1..ch3); `id:xF` multiplies it. Applied
+## in memory to [member piece_lib] by [method _apply_piece_weight_set], so the player's and the boss's
+## drops (both read piece_lib) see it. README "Piece drop weights in the sim".
+var piece_weight_spec: String = ""
+## Warnings of --piece-weight-set (unknown or run_only ids, bad values), echoed by [method describe_piece_weight_set].
+var piece_weight_warnings: Array[String] = []
 ## Matches set up with a piece deck, and those where PieceDeck.weights_for_match fell back to the
 ## original weights (no deck shape fits the arena). Callers diff them around a batch.
 var piece_deck_matches: int = 0
@@ -237,6 +244,7 @@ func load_configs() -> void:
 		hold_config = HoldSlotsConfig.new()
 	arena_library = ArenaLibrary.load_from_file()
 	piece_lib = PieceLibrary.load_from_file()
+	_apply_piece_weight_set()
 	characters = CharacterConfig.load_from_file()
 	_load_relic_config()
 	_build_piece_deck()
@@ -275,6 +283,51 @@ func _build_piece_deck() -> void:
 					continue
 				st = PieceDeck.apply_ink(st, id, piece_lib, piece_deck_cfg)
 	piece_deck_state = st
+
+
+# --piece-weight-set: overrides piece_lib's base drop weights in memory, in every weights map. The tool
+# writes PieceLibrary._weights directly (no public setter exists; src/ is not changed for a sim flag).
+# `id:xF` multiplies the weight in each map that lists the id; `id:N` sets it in every map. Negative
+# results clamp to 0 like PieceLibrary._read_weights. Unknown / run_only ids and bad values -> warning.
+func _apply_piece_weight_set() -> void:
+	piece_weight_warnings = []
+	if piece_weight_spec.is_empty():
+		return
+	for kv: String in piece_weight_spec.split(",", false):
+		var id: String = kv.get_slice(":", 0).strip_edges()
+		var raw: String = kv.get_slice(":", 1).strip_edges() if kv.contains(":") else ""
+		var mul: bool = raw.begins_with("x")
+		var num: String = raw.trim_prefix("x")
+		if not piece_lib.has_shape(id) or piece_lib.is_run_only(id) or not num.is_valid_float():
+			piece_weight_warnings.append("'%s' ignored (%s)" % [kv.strip_edges(),
+				"unknown shape" if not piece_lib.has_shape(id) else ("run_only shape has no table weight" if piece_lib.is_run_only(id) else "value must be N or xF")])
+			continue
+		for key: Variant in piece_lib._weights.keys():
+			var map: Dictionary = piece_lib._weights[key] as Dictionary
+			if mul:
+				if map.has(id):
+					map[id] = maxf(float(map[id]) * float(num), 0.0)
+			else:
+				map[id] = maxf(float(num), 0.0)
+
+
+## --piece-weight-set: one header line echoing the override and the resulting weights per map, or "" when
+## the flag is absent (the output is then unchanged).
+func describe_piece_weight_set() -> String:
+	if piece_weight_spec.is_empty():
+		return ""
+	var maps: Array[String] = []
+	var keys: Array = piece_lib._weights.keys()
+	keys.sort()
+	for key: Variant in keys:
+		var parts: Array[String] = []
+		for kv: String in piece_weight_spec.split(",", false):
+			var id: String = kv.get_slice(":", 0).strip_edges()
+			if (piece_lib._weights[key] as Dictionary).has(id) and not parts.has("%s %s" % [id, str(snappedf(float((piece_lib._weights[key] as Dictionary)[id]), 0.001))]):
+				parts.append("%s %s" % [id, str(snappedf(float((piece_lib._weights[key] as Dictionary)[id]), 0.001))])
+		maps.append("%s{%s}" % [str(key), ", ".join(PackedStringArray(parts))])
+	return "piece-weight-set: %s -> %s (in memory, player and boss drops)%s" % [piece_weight_spec, " ".join(PackedStringArray(maps)),
+		"" if piece_weight_warnings.is_empty() else "; WARNING " + "; ".join(PackedStringArray(piece_weight_warnings))]
 
 
 ## Story 034: one header line with the --piece-deck spec, the resolved active shapes (x mult when not 1)
@@ -437,6 +490,9 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 		elif arg.begins_with("--piece-deck="):
 			# Story 034: preset (base, small_out, big_out) or remove:mono,bar2|add:y5,square.
 			piece_deck_spec = arg.trim_prefix("--piece-deck=").strip_edges()
+		elif arg.begins_with("--piece-weight-set="):
+			# Base drop weights in memory, every chapter map: mono:x0.5,bar2:x0.5 (multiply) or bar5:2 (set).
+			piece_weight_spec = arg.trim_prefix("--piece-weight-set=").strip_edges()
 		elif arg.begins_with("--match-set="):
 			for kv: String in v.split(","):
 				if kv.contains(":"):

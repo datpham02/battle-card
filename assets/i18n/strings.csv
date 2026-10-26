@@ -134,7 +134,7 @@ passive.second_wind.desc,Hồi thêm 10 máu sau mỗi trận thắng.,Recover 1
 passive.wide_caster.name,Pháp trận rộng,Wide Caster
 passive.wide_caster.desc,Phép từ 4 ô trở lên niệm nhanh hơn 25%.,Spells covering 4 or more cells cast 25% faster.
 passive.quick_blade.name,Lưỡi kiếm nhanh,Quick Blade
-passive.quick_blade.desc,Phép tối đa 3 ô gây thêm 25% sát thương.,Spells covering 3 cells or fewer deal 25% more damage.
+passive.quick_blade.desc,Phép tối đa 4 ô gây thêm 25% sát thương.,Spells covering 4 cells or fewer deal 25% more damage.
 card.kiem_khi.name,Kiếm khí,Sword Qi
 card.kiem_khi.desc,Sát thương theo số ô.,Damage per cell.
 card.chan_phong.name,Chấn phong,Gale Burst
@@ -396,7 +396,7 @@ relic.phan_don.desc,Phá phép boss: nhận ngay 1 mảnh Ô đơn vào túi (n�
 relic.han_ky.name,Hàn Khí,Frost Vapor
 relic.han_ky.desc,"Hàn nổ ngay ở 2 tầng, nhưng nổ yếu hơn 33 %.","Frost bursts at 2 stacks, but the burst is 33 % weaker."
 relic.huyet_an.name,Huyết Ấn,Blood Seal
-relic.huyet_an.desc,Đòn từ 5 ô trở lên +30 % sát thương; mỗi đòn của bạn mất 2 máu.,Casts of 5 or more cells deal +30 % damage; every cast costs you 2 HP.
+relic.huyet_an.desc,"Đòn từ 5 ô trở lên +30 % sát thương; nếu đòn đó trượt, bạn mất 2 máu.","Casts of 5 or more cells deal +30 % damage; if such a cast misses, you lose 2 HP."
 relic.an_chu.name,Ấn Chủ,Master Seal
 relic.an_chu.desc,"Thưởng hình chủ đạo ×2 thay vì ×1,5.",The featured-shape bonus is ×2 instead of ×1.5.
 relic.tam_hop.name,Tam Hợp,Triple Join

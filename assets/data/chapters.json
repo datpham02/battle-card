@@ -138,7 +138,8 @@
 		"floor_heal_ratio": 0.35,
 		"fate": {"execute_artifact_offers": 3, "execute_min_rarity": "rare", "fate_hold_sec": 0.6},
 		"endings": {"spare_min_ratio": 1.0, "execute_max_ratio": 0.0},
-		"final_match": {"region": "an_dai", "match_id": "an_dai_keeper"}
+		"final_match": {"region": "an_dai", "match_id": "an_dai_keeper"},
+		"final_prelude": [["shop"]]
 	},
 	"chapters": [
 		{

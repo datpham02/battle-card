@@ -36,7 +36,7 @@
 			"max_hp": 180,
 			"step_cooldown_mult": 0.9,
 			"focus_max_sec": 4.0,
-			"passive": {"id": "quick_blade", "params": {"max_cells": 3, "damage_mult": 1.25}},
+			"passive": {"id": "quick_blade", "params": {"max_cells": 4, "damage_mult": 1.25}},
 			"passive_name_key": "passive.quick_blade.name",
 			"passive_desc_key": "passive.quick_blade.desc",
 			"signature": {"id": "anh_bo", "name_key": "signature.anh_bo.name", "desc_key": "signature.anh_bo.desc", "cooldown_sec": 12.0, "params": {"duration_sec": 2.0, "small_mult": 1.75, "small_cells": 3}},

@@ -228,6 +228,9 @@ func _run() -> void:
 		flow.reward_skipped()
 		_check(flow.is_final_floor() and flow.get_phase() == GameFlow.Phase.MAP, "%s run: the final match's MAP" % fate)
 		flow.get_run().boss_fates = _fates_of(fate)
+		# TD-029: leave the `world.final_prelude` shop column(s) first.
+		while flow.get_current_column() < flow.get_run_map().size() - 1 and flow.choose_node(0) and flow.get_phase() == GameFlow.Phase.SHOP:
+			flow.shop_leave()
 		c = await _win_node(flow, "final match (%s run)" % fate)
 		# Real-play order: the HUD connected at match start, the phase change came later -> banner text set.
 		var banner: String = ""

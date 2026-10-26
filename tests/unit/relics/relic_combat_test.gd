@@ -73,6 +73,15 @@ func _cells(v: CombatView, count: int) -> Array[Vector2i]:
 	return cells
 
 
+# [param count] cells none of which is the boss's cell (the swing misses).
+func _miss_cells(v: CombatView, count: int) -> Array[Vector2i]:
+	var x: int = v.get_state().enemy_cell.x
+	var cells: Array[Vector2i] = []
+	for i: int in count:
+		cells.append(Vector2i(x, 200 + i))
+	return cells
+
+
 func _info(pieces: Array[String], cells: int, joined: bool = false) -> Dictionary:
 	return {"pieces": pieces, "cells": cells, "joined": joined, "featured": false, "card_id": SKILL, "hit": false}
 
@@ -147,7 +156,7 @@ func _test_cap() -> void:
 	_check("cap: 2 x 1.3 under the cap multiplies", _near(RelicRegistry.fold_damage(two, info, 10.0, cfg), 26.0))
 
 
-# an_don (lone mono), huyet_an (>= min_cells, self damage), in a built match through CombatView -> arbiter.
+# an_don (lone mono), huyet_an (>= min_cells, self damage on a miss only), in a built match through CombatView -> arbiter.
 func _test_damage_relics() -> void:
 	var plain: CombatView = await _view([])
 	var d_mono: float = float(_cast(plain, _cells(plain, 1), _info(["mono"] as Array[String], 1))["damage"])
@@ -165,10 +174,14 @@ func _test_damage_relics() -> void:
 	var hp0: float = v.get_state().player_hp
 	var five: Dictionary = _cast(v, _cells(v, 5), _info(["domino", "tri"] as Array[String], 5, true))
 	_check("huyet_an: >= min_cells x mult", _near(float(five["damage"]), d_five * float(_params("huyet_an")["mult"])), str(five["damage"]))
-	_check("huyet_an: self damage per cast", _near(v.get_state().player_hp, hp0 - float(_params("huyet_an")["self_damage"])))
+	_check("huyet_an: a big cast that hits costs no HP", bool(five["hit"]) and _near(v.get_state().player_hp, hp0), str(v.get_state().player_hp))
 	var small: Dictionary = _cast(v, _cells(v, 1), _info(["mono"] as Array[String], 1))
 	_check("huyet_an: small cast unchanged", _near(float(small["damage"]), d_mono))
-	_check("huyet_an: costs HP on every cast", _near(v.get_state().player_hp, hp0 - 2.0 * float(_params("huyet_an")["self_damage"])))
+	var small_miss: Dictionary = _cast(v, _miss_cells(v, 1), _info(["mono"] as Array[String], 1))
+	_check("huyet_an: a small cast that misses costs no HP", not bool(small_miss["hit"]) and _near(v.get_state().player_hp, hp0))
+	var big_miss: Dictionary = _cast(v, _miss_cells(v, 5), _info(["domino", "tri"] as Array[String], 5, true))
+	_check("huyet_an: a big cast that misses costs self_damage HP", not bool(big_miss["hit"])
+		and _near(v.get_state().player_hp, hp0 - float(_params("huyet_an")["self_damage"])), str(v.get_state().player_hp))
 	_drop(v)
 
 

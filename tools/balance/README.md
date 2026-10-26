@@ -193,7 +193,8 @@ walk to pieces, and a cast is one or two puzzle pieces rather than connected run
 3. A region boss gives the normal boss reward (3 cards under the build policy) and +1 removal token. It
    does **not** end the run: the bot heals `world.floor_heal_ratio` × max HP (clamped to max) and moves to
    the next floor.
-4. After the last floor comes the final match (`world.final_match`, `from_node(..., floor = floors)` = the
+4. TD-029: the final floor first walks the `world.final_prelude` columns (shipped: one shop column) with the same node / shop policy as a region map (greedy / eager / none), so the gold of the floor-5 boss can be spent; the header prints a `final prelude` line when it is not empty.
+   4. After the last floor comes the final match (`world.final_match`, `from_node(..., floor = floors)` = the
    `final` scaling row). Winning it wins the run. A lost or timed-out match ends the run.
 
 Luck counts every node cleared over the whole run (`luck_per_node`). The sim keeps its own run state
@@ -205,7 +206,7 @@ seed alone, so all three characters walk the same path on the same seed while th
 | `--world` | off | World mode. `--chapters` is ignored. The policy is `build` unless `--policies=` is passed. |
 | `--region-pick=random\|first` | random | Bot region pick: seeded random, or always the first id of the offer. |
 | `--node-overhead=S` | 25 | Seconds per node outside the match: node pick, reward screen, reading. **An assumption (story Part F), not a measurement.** It is printed in the header. |
-| `--world-set=key:value,...` | none | Overrides the world data in memory (chapters.json is never written). `heal:X` sets `world.floor_heal_ratio`. `scale.<row>.<axis>:X` sets a `floor_scaling` row: the row is `1`..`5`, `final` or `*` (every row), the axis is `hp_mult`, `step_mult`, `defense_add` or `size_add`. `norm.<region>.<axis>:X` sets a region's `region_normalize`. A value written `xF` multiplies instead of setting (`scale.*.hp_mult:x0.9`). `mid_columns:N` sets N copies of the middle region column between the first column and the boss column; the default frame has 1. `battle_columns:N` adds N copies of the first, battle-only column right after it. This is the only override that adds fights: the bot always takes the rest or treasure of a middle column. |
+| `--world-set=key:value,...` | none | Overrides the world data in memory (chapters.json is never written). `heal:X` sets `world.floor_heal_ratio`. `scale.<row>.<axis>:X` sets a `floor_scaling` row: the row is `1`..`5`, `final` or `*` (every row), the axis is `hp_mult`, `step_mult`, `defense_add` or `size_add`. `norm.<region>.<axis>:X` sets a region's `region_normalize`. A value written `xF` multiplies instead of setting (`scale.*.hp_mult:x0.9`). `mid_columns:N` sets N copies of the middle region column between the first column and the boss column; the default frame has 1. `battle_columns:N` adds N copies of the first, battle-only column right after it. `final_prelude:none` (TD-029) empties `world.final_prelude`: the final floor is the boss column alone, the pre-TD-029 run (the no-prelude output is byte-identical to the sim before TD-029). This is the only override that adds fights: the bot always takes the rest or treasure of a middle column. |
 
 ```sh
 # Story 031 Part F: 70 seeds per character, 3 characters as 3 parallel processes (about 3-6 min each)
@@ -361,6 +362,32 @@ $GODOT --headless --path . -s res://tools/balance/hit_probe.gd -- --chapter=0 --
 
 Run one configuration per process at a time when other Godot processes share the machine (the README's
 "Running" rules).
+
+### Piece drop weights in the sim: `--piece-weight-set`
+
+A shared flag (`sim_core.gd`, both tools, every mode). `--piece-weight-set=<id>:<value>,...` overrides the
+`pieces.json` base drop weights **in memory** for the whole run, in **every** weights map (`default`, `ch1`, `ch2`,
+`ch3`), right after `PieceLibrary.load_from_file()` in `SimCore.load_configs`. The player's and the boss's field
+drops both read that one library, so both see the change (and `--piece-deck`'s `weights_for_match` starts from the
+changed base weights). Nothing on disk changes.
+
+| Value | Meaning |
+|---|---|
+| `xF` (e.g. `mono:x0.5`) | Multiplies the shape's existing weight in each map by F |
+| a plain number (e.g. `bar5:2`) | Sets the shape's weight to that number in each map |
+
+A negative result clamps to 0 (0 = never drops). An unknown shape, a `run_only` shape (`z4`, `j4`, `y5`: no table
+weight, only the piece deck gives them one) or a value that is neither `N` nor `xF` is ignored with a `WARNING`
+in the header line. deck_sim and hit_probe print one header line after the `--piece-deck` line:
+`piece-weight-set: <spec> -> ch1{mono 7, bar2 7} ch2{...} ch3{...} default{...} (in memory, player and boss drops)`.
+hit_probe prints the same line (only its `bot` mode feels field-drop weights). Without the flag the output is byte-identical to before.
+
+```bash
+# Halve the small shapes everywhere (about 12 s)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=3 --characters=kiem_si --piece-weight-set=mono:x0.5,bar2:x0.5
+# Set bar5 to 2 in every chapter map, combined with a deck
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=3 --characters=kiem_si --piece-weight-set=bar5:2 --piece-deck=small_out
+```
 
 ## deck_sim `--world --fate` (Story 035): Spare / Execute and the final match
 

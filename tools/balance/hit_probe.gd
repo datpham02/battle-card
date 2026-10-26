@@ -99,6 +99,9 @@ func _init() -> void:
 		# Story 034: the deck shapes the player's FIELD DROPS, so only the bot mode feels it (the cast modes
 		# cast pieces.json shapes of exactly n cells directly).
 		print(_core.describe_piece_deck())
+	if not _core.describe_piece_weight_set().is_empty():
+		# The weights shape field drops, so (like the deck) only the bot mode feels them.
+		print(_core.describe_piece_weight_set())
 	for mode: String in modes:
 		_mode = mode
 		print("")

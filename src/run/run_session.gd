@@ -235,15 +235,13 @@ func _enter_region(id: String, new_map: Array[Dictionary]) -> void:
 	cleared_nodes = []
 
 
-# The final match as a one-column map: [{index 0, tier 0, nodes [{kind boss, match_id}]}]; [] when
-# `world.final_match` is not set.
+# The final floor's map (ChaptersConfig.final_map): the `world.final_prelude` columns (TD-029: a shop
+# before the final) then the final match's boss column; [] when `world.final_match` is not set. Only the
+# boss column holds a match; the prelude nodes complete like region shop / rest nodes (column + 1).
 func _final_map() -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	var fm: Dictionary = _chapters.final_match() if _chapters != null else {}
-	if fm.is_empty():
-		return out
-	out.append({"index": 0, "tier": 0, "nodes": [{"kind": KIND_BOSS, "match_id": str(fm.get("match_id", ""))}]})
-	return out
+	if _chapters == null:
+		return [] as Array[Dictionary]
+	return _chapters.final_map()
 
 
 ## Reads economy key [param key] from [param config] (rewards.json), else [constant CONFIG_DEFAULTS].
