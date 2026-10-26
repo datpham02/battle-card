@@ -557,7 +557,12 @@ func play_match(m: Dictionary, character: Dictionary, deck_entries: Array, start
 	out["sec"] = t
 	out["real_sec"] = real
 	out["hp_end"] = state.player_hp
+	# Story 035: boss HP left as a share of its max (0 when killed), read by deck_sim --fate for the final match.
+	out["boss_hp_end_ratio"] = maxf(state.enemy_hp, 0.0) / maxf(state.enemy_max_hp, 1.0)
 	out["passive_heal"] = heal
+	# Story 035: the boss_phases phase (1-based) the match ended in, 0 without that trait (read before teardown).
+	var phases_trait: BossTrait = trait_host.get_trait(RunConfig.BOSS_PHASES_TRAIT_ID) if trait_host != null else null
+	out["boss_phase"] = (phases_trait as BossPhasesTrait).get_phase() if phases_trait is BossPhasesTrait else 0
 	_teardown()
 	trace = false
 	return out

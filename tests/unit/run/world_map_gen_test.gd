@@ -136,7 +136,7 @@ func _initialize() -> void:
 	check(",".join(cfg.region_ids()) == "ch1,ch2,ch3" and cfg.region_index("ch2") == 1 and cfg.region_index("zz") == -1, "region ids and indexes")
 	check(is_equal_approx(cfg.floor_heal_ratio(), 0.35), "floor_heal_ratio 0.35 (Story 031 tuning, was 0.25)")
 	var final: Dictionary = cfg.final_match()
-	check(final.get("region") == "ch3" and final.get("match_id") == "mist_lord", "final_match is ch3 / mist_lord")
+	check(final.get("region") == "an_dai" and final.get("match_id") == "an_dai_keeper", "final_match is an_dai / an_dai_keeper (Story 035)")
 	var frame_ok: bool = true
 	var mini_floor1: int = 0
 	var mini_later: int = 0

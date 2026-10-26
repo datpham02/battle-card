@@ -362,6 +362,43 @@ $GODOT --headless --path . -s res://tools/balance/hit_probe.gd -- --chapter=0 --
 Run one configuration per process at a time when other Godot processes share the machine (the README's
 "Running" rules).
 
+## deck_sim `--world --fate` (Story 035): Spare / Execute and the final match
+
+`--fate=execute|spare|alternate` (only in `--world` mode; default none = no fate, output unchanged). At
+every downed REGION boss (`FateLogic.is_boss_fate_node`: kind `boss`, never a miniboss or the final match)
+the bot takes the fate before the boss reward:
+
+- `execute`: `FateLogic.roll_execute_offer(owned relics, ChaptersConfig.fate_config(), the sim's relic
+  config, seed)` (seed `hash([run_seed, floor, region, "fate"])`), and the bot takes one relic of the offer:
+  the rarest with `--relic-policy=pick` (same rule as at a treasure), else the first offered.
+- `spare`: nothing.
+- `alternate`: execute, spare, execute, ... (by the order of the run's region bosses).
+
+The boss reward (cards + removal token) is the same in all three. The final match (`world.final_match`,
+`an_dai_keeper`) is played with its `boss_phases` trait: SimCore builds its TraitHost from
+`match_params["traits"]` like CombatView, and the match result carries `boss_phase` (the phase it ended in)
+and `boss_hp_end_ratio`.
+
+Extra lines per character/policy (only with `--fate`):
+
+| Line | What |
+|---|---|
+| `WORLD FATE \| ...` | run win %, final reached / won, final-match win % when reached (won / reached), deaths, final deaths and their share of all deaths, executes / spares / relics from executes per run |
+| `FATE DEATHS BY FLOOR` | deaths on floors 1..5 and in the final |
+| `FATE FINAL PHASES` | "final phase 2 reached in X of Y final matches" and the final boss's HP % left at the end (mean, min) |
+| `FATE TARGETS` | Story 035 F4: final-match win when reached 35-55 %, final <= 40 % of deaths; the run win to compare across runs ("execute beats spare by 8-20 points" needs the `--fate=execute` and `--fate=spare` runs side by side) |
+
+```sh
+# Smoke (about 12 s each)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=3 --characters=kiem_si --fate=execute
+# Story 035 F4: 70 seeds x 3 characters, once per fate policy, then compare the run wins
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --fate=execute --relic-policy=pick > "<scratch>/fate_exec.out" 2>&1
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --fate=spare --relic-policy=pick > "<scratch>/fate_spare.out" 2>&1
+grep -E "^FATE|^\| .* \| (execute|spare|alternate) \|" "<scratch>/fate_exec.out" "<scratch>/fate_spare.out"
+# Probe the final match only: weak floor bosses so runs reach it (the final keeps its own scaling)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=4 --fate=alternate --world-set=heal:1.0,scale.1.hp_mult:0.05,scale.2.hp_mult:0.05,scale.3.hp_mult:0.05,scale.4.hp_mult:0.05,scale.5.hp_mult:0.05
+```
+
 ## hit_probe flags and output
 
 | Flag | Default | Meaning |

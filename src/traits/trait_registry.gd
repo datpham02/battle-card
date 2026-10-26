@@ -16,6 +16,7 @@ const SCRIPTS: Dictionary = {
 	"phase_shift": preload("res://src/traits/phase_shift.gd"),
 	"seal_caster": preload("res://src/traits/seal_caster.gd"),
 	"thorn_field": preload("res://src/traits/thorn_field.gd"),
+	"boss_phases": preload("res://src/traits/boss_phases.gd"),
 }
 
 

@@ -214,6 +214,19 @@ const TEXT_UNIT_DEAD: String = "ui.hud.unit_dead"
 var _end_timer: float = -1.0
 var _end_emitted: bool = false
 
+## Story 035: match_params key, true for a REGION boss match (set by the run for a region's `boss` node; never for
+## a miniboss, a normal match or the final match). Such a boss is DOWNED at 0 HP instead of dying (see
+## [method is_boss_downed]); absent/false keeps the plain dead-boss behaviour.
+const PARAM_BOSS_CAN_DOWN: String = "boss_can_down"
+## Story 035 downed look: body height ratio of the kneeling boss and its dim color.
+const DOWNED_BODY_HEIGHT_RATIO: float = 0.5
+const DOWNED_COLOR: Color = Color(0.55, 0.32, 0.32, 0.55)
+## Story 035 phase shift look: outline of the invulnerable boss.
+const INVULNERABLE_OUTLINE: Color = Color(0.95, 0.95, 1.0, 0.95)
+var _downed: bool = false
+## Story 035 match stats (see [method get_match_stats]); counted from the existing hooks only.
+var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_casts": 0, "signatures_used": 0}
+
 
 func _ready() -> void:
 	_config = CombatConfig.load_from_file(config_path)
@@ -235,6 +248,7 @@ func _ready() -> void:
 	var start_hp: float = float(match_params.get("player_hp", -1.0))
 	if start_hp >= 0.0:
 		_state.set_player_hp(start_hp)
+	_state.enemy_died.connect(_on_enemy_died)
 	_base_step_cooldown = _config.step_cooldown_for(_grid)
 	# Story 033: run modifiers (event `loi_the`: step_cooldown x1.2 for 2 matches) on top of the character.
 	_player_step_cooldown = RelicRegistry.apply_override(_base_step_cooldown * _step_mult(character),
@@ -477,6 +491,7 @@ func activate_signature() -> bool:
 	_signature_ready_flag = false
 	_formation.reset()
 	_signature_was_active = _signature.is_active()
+	_stats["signatures_used"] = int(_stats["signatures_used"]) + 1
 	signature_activated.emit(_signature.get_id())
 	if not _signature_was_active:
 		_end_signature_effect()
@@ -1613,6 +1628,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 	}
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback
+		_count_cast(_cast_info)
 		_relics_on_cast_landed(result)
 		# Story 029: the one cover point (hit or miss; interrupted / cancelled swings never resolve).
 		var cast_cells: Array[Vector2i] = []
@@ -1624,6 +1640,8 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		_trait_host.on_boss_damaged(float(result["damage"]))
 	else:
 		_boss_feedback = feedback
+		if bool(result["hit"]):
+			_stats["hits_taken"] = int(_stats["hits_taken"]) + 1
 		_learning.on_boss_swing_resolved(bool(result["hit"]))
 		_trait_host.on_boss_swing_resolved(result)
 
@@ -1648,6 +1666,59 @@ func _on_boss_swing_cancelled(_cells: Array[Vector2i], _skill_id: String) -> voi
 
 func _on_boss_feinted(cells: Array[Vector2i], _labels: Array[String]) -> void:
 	_feint_flash = {"cells": cells, "time_left": FEEDBACK_SEC}
+
+
+# Story 035: one resolved player cast for the match stats ([param info] = the cast's _make_cast_info).
+func _count_cast(info: Dictionary) -> void:
+	_stats["casts"] = int(_stats["casts"]) + 1
+	if bool(info.get("joined", false)):
+		_stats["joins"] = int(_stats["joins"]) + 1
+	if bool(info.get("featured", false)):
+		_stats["featured_casts"] = int(_stats["featured_casts"]) + 1
+
+
+# Story 035: a REGION boss (match_params boss_can_down) reaching 0 HP is DOWNED: it stays drawn (kneeling),
+# stops deciding / moving / dropping, its field pieces are removed and its zones and burns on the player's
+# half stop and clear. The match ends as before (_tick_end, end_delay_sec, match_ended).
+func _on_enemy_died() -> void:
+	if not can_boss_down() or _downed:
+		return
+	_downed = true
+	_boss.set_active(false)
+	_boss.get_actor().cancel()
+	var boss_drops: FieldDrops = _boss.get_drops()
+	boss_drops.set_blocked_cells(_no_cells())
+	for point: FieldPoint in boss_drops.get_points():
+		boss_drops.pick_up_at(point.cell, true)
+	_status.clear_zones(CombatState.Side.PLAYER)
+	var burning: Array[Vector2i] = []
+	for cell: Vector2i in _status.burning_cells():
+		if _grid.is_player_cell(cell):
+			burning.append(cell)
+	if not burning.is_empty():
+		_status.clear_burn(burning)
+
+
+## Story 035: true when this match's boss is a region boss that is downed (not removed) at 0 HP
+## (match_params [constant PARAM_BOSS_CAN_DOWN]).
+func can_boss_down() -> bool:
+	return bool(match_params.get(PARAM_BOSS_CAN_DOWN, false))
+
+
+## Story 035: true once the region boss reached 0 HP and is downed (stays drawn behind the FATE screen).
+func is_boss_downed() -> bool:
+	return _downed
+
+
+## Story 035: this match's numbers for the run stats: {damage_dealt (HP the boss lost), damage_taken (HP the
+## player lost), hits_taken (boss swings that hit the player), casts (player swings that resolved), joins (of
+## them, casts of joined pieces), featured_casts (casts of the arena's featured shape), signatures_used}.
+## All 0 before anything happened. Read-only.
+func get_match_stats() -> Dictionary:
+	var out: Dictionary = _stats.duplicate()
+	out["damage_dealt"] = _state.enemy_damage_taken if _state != null else 0.0
+	out["damage_taken"] = _state.player_damage_taken if _state != null else 0.0
+	return out
 
 
 ## The shared burning cells / pins.
@@ -1857,8 +1928,17 @@ func _draw_enemy(vp: Vector2) -> void:
 	var cell: Vector2 = ScreenLayout.cell_size(_grid, vp)
 	var body_size := Vector2(cell.x * ENEMY_BODY_WIDTH_RATIO, cell.y * ENEMY_BODY_HEIGHT_RATIO)
 	var body := Rect2(ScreenLayout.cell_center(_grid, vp, _state.enemy_cell) - body_size * 0.5, body_size)
+	if _downed:
+		# Story 035: kneeling (a lower, wider-looking body resting on the cell's bottom), dimmed, no cross.
+		var kneel_h: float = body_size.y * DOWNED_BODY_HEIGHT_RATIO
+		var kneel := Rect2(Vector2(body.position.x, body.end.y - kneel_h), Vector2(body_size.x, kneel_h))
+		draw_rect(kneel, DOWNED_COLOR)
+		draw_rect(kneel, Color(TEXT_COLOR, 0.6), false, 3.0)
+		return
 	draw_rect(body, ENEMY_DEAD_COLOR if dead else ENEMY_COLOR)
 	draw_rect(body, TEXT_COLOR, false, 3.0)
+	if not dead and _state.enemy_invulnerable_left > 0.0:
+		draw_rect(body.grow(4.0), INVULNERABLE_OUTLINE, false, 4.0)
 	if dead:
 		draw_line(body.position, body.end, TEXT_COLOR, 6.0)
 		draw_line(Vector2(body.end.x, body.position.y), Vector2(body.position.x, body.end.y), TEXT_COLOR, 6.0)

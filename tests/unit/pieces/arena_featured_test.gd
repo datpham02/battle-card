@@ -13,7 +13,7 @@ const VARIANT_SEEDS: int = 100
 const FULL_COVERAGE: Array[String] = ["rect", "ring", "diamond", "cross_wide", "pillars"]
 ## Lowest share of seeded variants that must still hold the featured shape on the other boards.
 const MIN_COVERAGE: float = 0.6
-const EXPECTED_SHAPES: int = 10
+const EXPECTED_SHAPES: int = 11
 
 var fails: int = 0
 

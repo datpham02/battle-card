@@ -27,6 +27,16 @@ var player_cell: Vector2i = BoardGrid.NO_CELL
 var enemy_cell: Vector2i = BoardGrid.NO_CELL
 var enemy_max_hp: float
 var enemy_hp: float
+## Story 035 (boss phases): while > 0 the enemy takes no damage at all ([method damage_enemy] is ignored). The
+## BossPhasesTrait sets it on a phase change and counts it down in scaled simulation seconds.
+var enemy_invulnerable_left: float = 0.0
+## Story 035 (boss phases): enemy HP never drops below this value through [method damage_enemy] (a hit that would
+## cross it is clamped at it), so a boss phase can never be skipped by one big hit. 0 = no floor (default).
+var enemy_hp_floor: float = 0.0
+## Story 035 (match stats): HP the enemy / the player actually lost so far this match (clamped HP, overkill and
+## ignored damage not counted). Read-only counters, no effect on the rules.
+var enemy_damage_taken: float = 0.0
+var player_damage_taken: float = 0.0
 
 
 ## [param p_grid] is the board. A start cell of BoardGrid.NO_CELL means "use the grid's
@@ -63,11 +73,16 @@ func is_enemy_dead() -> bool:
 	return enemy_hp <= 0.0
 
 
-## Subtracts [param amount] from enemy HP (floored at 0). Ignored once dead.
+## Subtracts [param amount] from enemy HP (floored at 0, or at [member enemy_hp_floor] while that is set).
+## Ignored once dead and while [member enemy_invulnerable_left] > 0.
 func damage_enemy(amount: float) -> void:
-	if is_enemy_dead() or amount <= 0.0:
+	if is_enemy_dead() or amount <= 0.0 or enemy_invulnerable_left > 0.0:
 		return
-	enemy_hp = maxf(enemy_hp - amount, 0.0)
+	var before: float = enemy_hp
+	enemy_hp = maxf(enemy_hp - amount, minf(maxf(enemy_hp_floor, 0.0), enemy_hp))
+	if enemy_hp >= before:
+		return
+	enemy_damage_taken += before - enemy_hp
 	changed.emit()
 	if is_enemy_dead():
 		enemy_died.emit()
@@ -132,7 +147,9 @@ func set_player_hp(hp: float) -> void:
 func damage_player(amount: float) -> void:
 	if is_player_dead() or amount <= 0.0:
 		return
+	var before: float = player_hp
 	player_hp = maxf(player_hp - amount, 0.0)
+	player_damage_taken += before - player_hp
 	changed.emit()
 	if is_player_dead():
 		player_died.emit()

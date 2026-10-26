@@ -104,7 +104,7 @@ func _initialize() -> void:
 	check(r.deck_ids.size() == 9 and r.has_pending_reward(), "9 cards pending reward")
 	var back: RunSession = RunSession.from_dict(r.to_dict(), cfg, cards)
 	check(back != null and back.deck_ids == r.deck_ids and back.hp == 57.0 and back.column == 1 and back.node_index == r.node_index and back.map == r.map and back.cleared_nodes == r.cleared_nodes and back.removal_tokens == 1 and back.pending_reward == r.pending_reward and back.run_seed == 99 and back.elapsed_sec == 123.5 and back.character_id == "kiem_si" and back.luck(rcfg) == r.luck(rcfg), "round trip (v5)")
-	check(back.to_dict()["region"] == "ch1" and int(back.to_dict()["version"]) == 5, "dict ids, version 5")
+	check(back.to_dict()["region"] == "ch1" and int(back.to_dict()["version"]) == RunSession.SAVE_VERSION, "dict ids, current save version")
 	var bad: Dictionary = r.to_dict()
 	bad["region"] = "zz"
 	check(RunSession.from_dict(bad, cfg) == null, "unknown region -> null")
@@ -140,7 +140,7 @@ func _initialize() -> void:
 	check(p.has_run() and p.get_run_dict()["hp"] == 57.0, "set_run")
 	var rt: ProgressState = ProgressState.from_json(p.to_json(), cfg)
 	check(rt.get_locale() == "en" and rt.has_region_boss_beaten("ch1") and rt.get_seen_cards() == ["han_bang"] and rt.get_cleared_bosses() == 1 and rt.has_run() and rt.get_run_dict() == p.get_run_dict(), "json round trip")
-	check(JSON.parse_string(p.to_json())["version"] == 5, "writes v5")
+	check(int(JSON.parse_string(p.to_json())["version"]) == ProgressState.VERSION, "writes the current progress version")
 	p.clear_run()
 	check(not p.has_run() and JSON.parse_string(p.to_json())["run_in_progress"] == null, "clear_run -> null")
 	var v1: ProgressState = ProgressState.from_json("{\"version\":1,\"locale\":\"en\",\"cleared\":[\"ch1/f1\"],\"in_progress\":{\"floor\":\"ch1/f1\",\"match_index\":1,\"hp_at_match_start\":50,\"floor_seed\":3}}", cfg)

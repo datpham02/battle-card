@@ -84,16 +84,28 @@ func get_ids() -> Array[String]:
 	return ids
 
 
-## Forwards BossTrait.on_match_start.
+## Story 035: removes [param trait_instance] from the live list and tears it down (boss_phases ends a
+## phase). Returns false when it is not live. Safe during a hook (the hooks below walk a snapshot).
+func remove_trait(trait_instance: BossTrait) -> bool:
+	if trait_instance == null or not _traits.has(trait_instance):
+		return false
+	_traits.erase(trait_instance)
+	trait_instance.teardown()
+	return true
+
+
+## Forwards BossTrait.on_match_start (a snapshot: a trait added meanwhile already got its own call).
 func on_match_start() -> void:
-	for trait_instance: BossTrait in _traits:
-		trait_instance.on_match_start()
+	for trait_instance: BossTrait in _traits.duplicate():
+		if _traits.has(trait_instance):
+			trait_instance.on_match_start()
 
 
-## Forwards BossTrait.on_tick with the scaled [param step].
+## Forwards BossTrait.on_tick with the scaled [param step] (a snapshot; a trait removed meanwhile is skipped).
 func on_tick(step: float) -> void:
-	for trait_instance: BossTrait in _traits:
-		trait_instance.on_tick(step)
+	for trait_instance: BossTrait in _traits.duplicate():
+		if _traits.has(trait_instance):
+			trait_instance.on_tick(step)
 
 
 ## Forwards BossTrait.on_boss_swing_started.
@@ -135,8 +147,9 @@ func announce_phase(phase: int) -> void:
 func on_boss_damaged(amount: float) -> void:
 	if amount <= 0.0:
 		return
-	for trait_instance: BossTrait in _traits:
-		trait_instance.on_boss_damaged(amount)
+	for trait_instance: BossTrait in _traits.duplicate():
+		if _traits.has(trait_instance):
+			trait_instance.on_boss_damaged(amount)
 
 
 ## DEV-ONLY (DemoArgs captures): appends an already set-up [param trait_instance] to the live

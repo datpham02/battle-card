@@ -1,13 +1,13 @@
 class_name ProgressState
 extends RefCounted
-## Pure save data (v5, Story 031; v1..v4 files still load): UI locale, regions whose boss was ever
+## Pure save data (v6, Story 035; v1..v5 files still load): UI locale, regions whose boss was ever
 ## beaten, best floor reached, seen cards, bosses beaten and at most one run in progress (a
 ## [RunSession] snapshot dictionary). Chapter unlocking is gone (Run v6: every region is open); the
 ## per-floor ladder API of Story 015 (cleared floors, in_progress) stays in memory only and is
 ## deprecated: it is NOT saved. No scene or file dependency; [ProgressStore] moves the JSON.
 ## Schema: assets/data/schema.md.
 
-const VERSION: int = 5
+const VERSION: int = 6
 ## Locale saved when none is in the file (v1 saves have no `locale`).
 const DEFAULT_LOCALE: String = "vi"
 ## Highest value [method record_floor] stores: floors 1..5 plus the final match (Story 031). A
@@ -26,6 +26,14 @@ var _run: Dictionary = {}
 var _cleared_bosses: int = 0
 ## Highest floor ever reached, 1..[constant BEST_FLOOR_MAX]; 0 = none yet.
 var _best_floor: int = 0
+## Story 035: match ids of region bosses ever spared / executed (insertion order, no duplicates; a boss can be in both).
+var _spared_bosses: Array[String] = []
+var _executed_bosses: Array[String] = []
+## Story 035: total Spare / Execute choices ever made (every choice counts, repeats included).
+var _spare_total: int = 0
+var _execute_total: int = 0
+## Story 035: ending ids ever reached ("spare", "execute", "balance"; no duplicates).
+var _endings_seen: Array[String] = []
 
 
 ## True when the boss of region [param region_id] was ever beaten.
@@ -61,6 +69,54 @@ func record_floor(floor_reached: int) -> void:
 	if floor_reached < 1:
 		return
 	_best_floor = maxi(_best_floor, mini(floor_reached, BEST_FLOOR_MAX))
+
+
+## Story 035: records one Spare / Execute choice on boss [param match_id] ("spare" | "execute", see FateLogic):
+## the id joins [method get_spared_bosses] / [method get_executed_bosses] (dedup, empty ids not stored) and the
+## matching total +1. An unknown fate is ignored (warning).
+func record_fate(match_id: String, fate: String) -> void:
+	match fate:
+		FateLogic.FATE_SPARE:
+			_spare_total += 1
+			if not match_id.is_empty() and not _spared_bosses.has(match_id):
+				_spared_bosses.append(match_id)
+		FateLogic.FATE_EXECUTE:
+			_execute_total += 1
+			if not match_id.is_empty() and not _executed_bosses.has(match_id):
+				_executed_bosses.append(match_id)
+		_:
+			push_warning("ProgressState: unknown fate '%s' ignored" % fate)
+
+
+## Story 035: records that ending [param id] was reached (dedup; empty ids ignored).
+func record_ending(id: String) -> void:
+	if not id.is_empty() and not _endings_seen.has(id):
+		_endings_seen.append(id)
+
+
+## Story 035: copy of the match ids of bosses ever spared.
+func get_spared_bosses() -> Array[String]:
+	return _spared_bosses.duplicate()
+
+
+## Story 035: copy of the match ids of bosses ever executed.
+func get_executed_bosses() -> Array[String]:
+	return _executed_bosses.duplicate()
+
+
+## Story 035: total Spare choices ever made.
+func get_spare_total() -> int:
+	return _spare_total
+
+
+## Story 035: total Execute choices ever made.
+func get_execute_total() -> int:
+	return _execute_total
+
+
+## Story 035: copy of the ending ids ever reached.
+func get_endings_seen() -> Array[String]:
+	return _endings_seen.duplicate()
 
 
 ## Records that a card was seen (offered or owned). Write-only for now.
@@ -163,19 +219,23 @@ func set_locale(code: String) -> void:
 	_locale = code if not code.is_empty() else DEFAULT_LOCALE
 
 
-## Serialises to {"version":5,"locale","regions_boss_beaten","best_floor","seen_cards",
-## "cleared_bosses","run_in_progress":{...}|null}.
+## Serialises to {"version":6,"locale","regions_boss_beaten","best_floor","seen_cards",
+## "cleared_bosses","spared_bosses","executed_bosses","spare_total","execute_total","endings_seen",
+## "run_in_progress":{...}|null}.
 func to_json() -> String:
 	return JSON.stringify({
 		"version": VERSION, "locale": _locale, "regions_boss_beaten": _regions_boss_beaten,
 		"best_floor": _best_floor, "seen_cards": _seen_cards, "cleared_bosses": _cleared_bosses,
+		"spared_bosses": _spared_bosses, "executed_bosses": _executed_bosses,
+		"spare_total": _spare_total, "execute_total": _execute_total, "endings_seen": _endings_seen,
 		"run_in_progress": null if _run.is_empty() else _run,
 	})
 
 
 ## Parses saved text. Never null: empty, corrupt, non-object or unknown-version text gives an empty
 ## state (warning). Version 1 files load silently (only `locale` is read). v2..v4 files load with
-## `cleared_chapters` migrated into `regions_boss_beaten` (the old chapter ids are the region ids).
+## `cleared_chapters` migrated into `regions_boss_beaten` (the old chapter ids are the region ids). Files below v6
+## load with the Story 035 keys empty / 0.
 ## With [param config] an invalid run is dropped (warning). Region ids are kept as saved (not
 ## validated against the config here).
 static func from_json(text: String, config: ChaptersConfig = null) -> ProgressState:
@@ -207,6 +267,12 @@ static func from_json(text: String, config: ChaptersConfig = null) -> ProgressSt
 			state.add_region_boss_beaten(str(entry))
 	else:
 		push_warning("ProgressState: %s must be an array, ignored" % regions_key)
+	if version >= 6:
+		state._spared_bosses = _clean_ids(data.get("spared_bosses", []))
+		state._executed_bosses = _clean_ids(data.get("executed_bosses", []))
+		state._spare_total = maxi(_to_int(data.get("spare_total", 0)), 0)
+		state._execute_total = maxi(_to_int(data.get("execute_total", 0)), 0)
+		state._endings_seen = _clean_ids(data.get("endings_seen", []))
 	var raw_seen: Variant = data.get("seen_cards", [])
 	if typeof(raw_seen) == TYPE_ARRAY:
 		for entry: Variant in raw_seen as Array:
@@ -222,6 +288,18 @@ static func from_json(text: String, config: ChaptersConfig = null) -> ProgressSt
 	elif raw_run != null:
 		push_warning("ProgressState: run_in_progress must be an object or null, ignored")
 	return state
+
+
+# Story 035: unique non-empty ids from a saved array ([] for anything else).
+static func _clean_ids(raw: Variant) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw as Array:
+		var id: String = str(entry)
+		if not id.is_empty() and not out.has(id):
+			out.append(id)
+	return out
 
 
 static func _to_int(value: Variant) -> int:

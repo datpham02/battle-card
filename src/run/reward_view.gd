@@ -174,6 +174,9 @@ const TEXT_CARDS_ROW: String = "ui.relic.cards_row"
 const TEXT_RELICS_ROW: String = "ui.relic.relics_row"
 const TEXT_RELIC_CONFIRM: String = "ui.relic.confirm"
 const TEXT_RELIC_SKIP: String = "ui.relic.skip"
+## Story 035: the Execute relic offer (after "Giết" on the fate screen): its title and hint line.
+const TEXT_FATE_OFFER_TITLE: String = "ui.fate.offer_title"
+const TEXT_FATE_OFFER_HINT: String = "ui.fate.offer_hint"
 const ROW_LABEL_FONT_SIZE: int = 22
 const RELIC_NAME_FONT_SIZE: int = 28
 const RELIC_DESC_FONT_SIZE: int = 19
@@ -242,7 +245,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _removing and not is_shown():
 		_removing = false
-	if not is_shown() or not _flow.get_relic_offer().has(_selected_relic):
+	if not is_shown() or not _relic_choices().has(_selected_relic):
 		_selected_relic = ""
 	if not is_shown() or not _flow.get_ink_offer().has(_selected_ink):
 		_selected_ink = ""
@@ -253,7 +256,7 @@ func _process(_delta: float) -> void:
 		_strip.close_tooltip()
 	_strip.visible = strip_shown
 	if strip_shown:
-		_strip.area = ScreenLayout.reward_relic_strip_rect(get_viewport_rect().size, _dual())
+		_strip.area = ScreenLayout.reward_relic_strip_rect(get_viewport_rect().size, _dual() or _fate_offer())
 		_strip.set_relics(_flow.get_relics())
 	queue_redraw()
 
@@ -269,7 +272,7 @@ func get_selected_relic() -> String:
 
 
 func _dual() -> bool:
-	return _flow != null and _flow.has_relic_offer()
+	return _flow != null and _flow.has_relic_offer() and not _flow.has_fate_offer()
 
 
 ## Story 034: true while the screen carries the ink row ([method GameFlow.has_ink_offer]).
@@ -288,6 +291,8 @@ func _ink() -> bool:
 
 ## True while the screen is up: IN_NODE or MAP with an open offer.
 func is_shown() -> bool:
+	if _fate_offer():
+		return true
 	if _flow == null or _flow.get_pending_reward().is_empty():
 		return false
 	var phase: int = _flow.get_phase()
@@ -304,6 +309,9 @@ func is_remove_list_shown() -> bool:
 
 func _input(event: InputEvent) -> void:
 	if not is_shown():
+		return
+	if _fate_offer():
+		_input_fate_offer(event)
 		return
 	if event is InputEventKey:
 		var key := event as InputEventKey
@@ -443,6 +451,9 @@ func _draw() -> void:
 		return
 	var vp: Vector2 = get_viewport_rect().size
 	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
+	if _fate_offer():
+		_draw_fate_offer(vp)
+		return
 	if _removing:
 		_draw_remove_list(vp)
 		return
@@ -479,6 +490,80 @@ func _draw() -> void:
 	if _can_skip() and not dual:
 		var skip: Rect2 = ScreenLayout.reward_skip_button_rect(vp)
 		UiButtons.draw_button(self, skip, tr(TEXT_SKIP), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, skip), true, BUTTON_FONT_SIZE)
+
+
+# --- Story 035: the Execute relic offer -------------------------------------------
+
+
+## Story 035: true while the Execute relic offer is open ([method GameFlow.has_fate_offer]): the screen
+## shows only the 3 relic cards of the treasure layout; a tap selects a card, a tap on the selected card
+## (or "Xác nhận") takes it ([method GameFlow.choose_fate_relic]), "Bỏ qua" -> [method GameFlow.skip_fate_relic].
+func is_fate_offer_shown() -> bool:
+	return _fate_offer()
+
+
+func _fate_offer() -> bool:
+	return _flow != null and _flow.has_fate_offer()
+
+
+# The relics the selection may point at: the Execute offer while it is open, else the treasure relic row.
+func _relic_choices() -> Array[String]:
+	return _flow.get_fate_offer() if _fate_offer() else _flow.get_relic_offer()
+
+
+func _input_fate_offer(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and not key.echo and (key.keycode == KEY_ENTER or key.keycode == KEY_KP_ENTER or key.keycode == KEY_SPACE):
+			get_viewport().set_input_as_handled()
+			if not _selected_relic.is_empty():
+				_flow.choose_fate_relic(_selected_relic)
+		return
+	if not (event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag):
+		return
+	get_viewport().set_input_as_handled()
+	if event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
+	if _strip.visible and _strip.handle_input(event):
+		return
+	var pos: Vector2 = _press_position(event)
+	if pos == Vector2.INF:
+		return
+	var vp: Vector2 = get_viewport_rect().size
+	if ScreenLayout.reward_dual_skip_rect(vp).has_point(pos):
+		_flow.skip_fate_relic()
+		return
+	if ScreenLayout.reward_dual_confirm_rect(vp).has_point(pos):
+		if not _selected_relic.is_empty():
+			_flow.choose_fate_relic(_selected_relic)
+		return
+	var relics: Array[String] = _flow.get_fate_offer()
+	var rects: Array[Rect2] = ScreenLayout.reward_dual_relic_rects(vp, relics.size())
+	for i: int in rects.size():
+		if rects[i].has_point(pos):
+			if relics[i] == _selected_relic:
+				_flow.choose_fate_relic(relics[i])  # tap again confirms
+			else:
+				_selected_relic = relics[i]
+			return
+
+
+# Title, hint, the 3 relic cards (treasure layout, no "or" row label) and "Bỏ qua" / "Xác nhận".
+func _draw_fate_offer(vp: Vector2) -> void:
+	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
+	var title_text: String = tr(TEXT_FATE_OFFER_TITLE)
+	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, title_text, _fit_font_size(title_text, vp.x * 0.9, TITLE_FONT_SIZE), TITLE_COLOR)
+	var strip: Rect2 = ScreenLayout.reward_subtitle_rect(vp)
+	_text(strip, strip.get_center().y + SUBTITLE_FONT_SIZE * 0.35, tr(TEXT_FATE_OFFER_HINT), SUBTITLE_FONT_SIZE, SUBTITLE_COLOR)
+	var relics: Array[String] = _flow.get_fate_offer()
+	var rects: Array[Rect2] = ScreenLayout.reward_dual_relic_rects(vp, relics.size())
+	for i: int in rects.size():
+		_draw_relic_card(rects[i], relics[i], relics[i] == _selected_relic)
+	var skip: Rect2 = ScreenLayout.reward_dual_skip_rect(vp)
+	UiButtons.draw_button(self, skip, tr(TEXT_RELIC_SKIP), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, skip), true, _fit_font_size(tr(TEXT_RELIC_SKIP), skip.size.x * 0.9, BUTTON_FONT_SIZE))
+	var confirm: Rect2 = ScreenLayout.reward_dual_confirm_rect(vp)
+	var enabled: bool = not _selected_relic.is_empty()
+	UiButtons.draw_button(self, confirm, tr(TEXT_RELIC_CONFIRM), UiButtons.Style.PRIMARY, enabled and UiButtons.is_pressed_at(self, confirm), enabled, _fit_font_size(tr(TEXT_RELIC_CONFIRM), confirm.size.x * 0.9, BUTTON_FONT_SIZE))
 
 
 # --- Story 032: the relic row -------------------------------------------------

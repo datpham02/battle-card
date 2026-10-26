@@ -70,6 +70,14 @@ const DEFAULT_NODE_OVERHEAD_SEC: float = 25.0
 ## Story 032 treasure policies (see the header).
 const RELIC_POLICIES: Array[String] = ["none", "pick"]
 const RELIC_SEED_TAG: String = "relic"
+## Story 035 --fate: what the bot does at each region boss (none given = no fate, today's output).
+const FATE_POLICIES: Array[String] = ["execute", "spare", "alternate"]
+const FATE_SEED_TAG: String = "fate"
+## Story 035 F4 targets: final-match win % when the final is reached, and the final's max share of deaths.
+const FATE_FINAL_WIN_TARGET: Array[float] = [35.0, 55.0]
+const FATE_FINAL_DEATH_SHARE_MAX: float = 40.0
+## Story 035 F4: execute should beat spare by this many run-win points (needs two runs; printed as a reminder).
+const FATE_EXECUTE_EDGE_TARGET: Array[float] = [8.0, 20.0]
 ## Story 033 shop / event policies (see the header and README) and the bot's thresholds.
 const SHOP_POLICIES: Array[String] = ["greedy", "eager", "none"]
 const EVENT_POLICIES: Array[String] = ["risky", "leave"]
@@ -130,6 +138,8 @@ var _node_overhead: float = DEFAULT_NODE_OVERHEAD_SEC
 var _world_set: Array[String] = []
 var _policies_given: bool = false
 var _relic_policy: String = "none"
+# Story 035: "" (no --fate) or one of FATE_POLICIES.
+var _fate_policy: String = ""
 # Story 033 economy.
 var _shop_policy: String = "greedy"
 var _event_policy: String = "risky"
@@ -255,6 +265,11 @@ func _init() -> void:
 				_relic_policy = v.strip_edges()
 			else:
 				print("--relic-policy: '%s' unknown, using %s (one of %s)" % [v, _relic_policy, str(RELIC_POLICIES)])
+		elif arg.begins_with("--fate="):
+			if FATE_POLICIES.has(v.strip_edges()):
+				_fate_policy = v.strip_edges()
+			else:
+				print("--fate: '%s' unknown, no fate is taken (one of %s)" % [v, str(FATE_POLICIES)])
 		elif arg.begins_with("--shop-policy="):
 			if SHOP_POLICIES.has(v.strip_edges()):
 				_shop_policy = v.strip_edges()
@@ -963,6 +978,8 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 	_world_economy_report(char_id, policy, runs)
 	if not _core.piece_deck_spec.is_empty():
 		_world_piece_report(char_id, policy, runs, win_pct)
+	if not _fate_policy.is_empty():
+		_world_fate_report(char_id, policy, runs, floors, win_pct)
 	var t_win: Array = WORLD_WIN_TARGET.get(char_id, [20.0, 40.0])
 	var win_ok: bool = win_pct >= float(t_win[0]) and win_pct <= float(t_win[1])
 	var min_mean: float = _mean(won_min)
@@ -1049,12 +1066,86 @@ func _take_relic(owned: Array[String], policy: String, relic_seed: int) -> bool:
 	var offer: Array[String] = RelicRoller.roll(RelicRoller.SOURCE_TREASURE, owned, rng, _core.relic_config)
 	if offer.is_empty():
 		return false
+	owned.append(_rarest_relic(offer))
+	return true
+
+
+# The relic --relic-policy=pick takes from a non-empty [param offer]: the rarest, the first on a tie.
+func _rarest_relic(offer: Array[String]) -> String:
 	var best: String = offer[0]
 	for id: String in offer:
 		if RelicConfig.rarity_rank(str(_core.relic_config.get_relic(id)["rarity"])) > RelicConfig.rarity_rank(str(_core.relic_config.get_relic(best)["rarity"])):
 			best = id
-	owned.append(best)
-	return true
+	return best
+
+
+# Story 035 --fate: the bot's fate at a downed region boss (the [param fate_index]-th of the run, 0-based):
+# execute -> FateLogic.roll_execute_offer (world.fate of the chapters in use, the sim's relic config) and one
+# relic of it is taken (the rarest with --relic-policy=pick, else the first offered); spare -> nothing;
+# alternate -> execute, spare, execute, ... The boss reward (cards + token) is applied by the caller as today.
+func _take_fate(w: WorldRun, fate_index: int, fate_seed: int, out: Dictionary) -> void:
+	var fate: String = _fate_policy
+	if fate == "alternate":
+		fate = FateLogic.FATE_EXECUTE if fate_index % 2 == 0 else FateLogic.FATE_SPARE
+	if fate == FateLogic.FATE_SPARE:
+		out["fate_spare"] = float(out["fate_spare"]) + 1.0
+		return
+	out["fate_exec"] = float(out["fate_exec"]) + 1.0
+	var offer: Array[String] = FateLogic.roll_execute_offer(w.relics, _chapters.fate_config(), _core.relic_config, fate_seed)
+	if offer.is_empty():
+		return
+	w.relics.append(_rarest_relic(offer) if _relic_policy == "pick" else offer[0])
+	out["fate_relics"] = float(out["fate_relics"]) + 1.0
+
+
+# Story 035 F4 (only with --fate): run win, final-match win when reached, the final's share of deaths,
+# deaths by floor, fates and relics from executes per run, how many final matches reached phase 2, and
+# the FATE TARGETS line. The "execute beats spare" target compares two runs (the orchestrator does).
+func _world_fate_report(char_id: String, policy: String, runs: Array[Dictionary], floors: int, win_pct: float) -> void:
+	var n: float = maxf(float(runs.size()), 1.0)
+	var reached: int = 0
+	var final_won: int = 0
+	var phase2: int = 0
+	var boss_hp_left: Array = []
+	var deaths: int = 0
+	var by_floor: Array = []
+	by_floor.resize(floors + 1)
+	by_floor.fill(0)
+	for r: Dictionary in runs:
+		if bool(r["final_reached"]):
+			reached += 1
+			if bool(r["won"]):
+				final_won += 1
+			if int(r["final_phase"]) >= 2:
+				phase2 += 1
+			boss_hp_left.append(100.0 * float(r["final_boss_hp"]))
+		if not bool(r["won"]):
+			deaths += 1
+			var df: int = clampi(int(r["death_floor"]), 0, floors)
+			by_floor[df] = int(by_floor[df]) + 1
+	var floor_cells: Array[String] = []
+	for f: int in floors + 1:
+		floor_cells.append("%s=%d" % ["final" if f == floors else "f%d" % (f + 1), int(by_floor[f])])
+	var final_deaths: int = int(by_floor[floors])
+	var final_pct: float = 100.0 * final_won / maxf(float(reached), 1.0)
+	var share: float = 100.0 * final_deaths / maxf(float(deaths), 1.0)
+	print("")
+	print("WORLD FATE | character | policy | fate | relic-policy | run win % | wins | final reached | final won | final-match win % when reached | deaths | final deaths | final % of deaths | executes / run | spares / run | relics from executes / run |")
+	print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+	print("| %s | %s | %s | %s | %.1f | %d | %d | %d | %s | %d | %d | %s | %.2f | %.2f | %.2f |" % [char_id, policy, _fate_policy, _relic_policy,
+		win_pct, runs.size() - deaths, reached, final_won, ("%.1f" % final_pct) if reached > 0 else "-", deaths, final_deaths,
+		("%.1f" % share) if deaths > 0 else "-", _mean(_field(runs, "fate_exec")), _mean(_field(runs, "fate_spare")), _sum(_field(runs, "fate_relics")) / n])
+	print("FATE DEATHS BY FLOOR %s/%s (fate=%s): %s" % [char_id, policy, _fate_policy, ", ".join(PackedStringArray(floor_cells))])
+	print("FATE FINAL PHASES %s/%s: final phase 2 reached in %d of %d final matches | final boss HP %% left at the end: mean %s, min %s" % [
+		char_id, policy, phase2, reached, ("%.1f" % _mean(boss_hp_left)) if reached > 0 else "-", ("%.1f" % float(boss_hp_left.min())) if reached > 0 else "-"])
+	var win_verdict: String = "NO DATA (final never reached)"
+	if reached > 0:
+		win_verdict = "PASS" if final_pct >= FATE_FINAL_WIN_TARGET[0] and final_pct <= FATE_FINAL_WIN_TARGET[1] else ("TOO EASY" if final_pct > FATE_FINAL_WIN_TARGET[1] else "TOO HARD")
+	var share_verdict: String = "NO DEATHS" if deaths == 0 else ("PASS" if share <= FATE_FINAL_DEATH_SHARE_MAX else "FAIL")
+	print("FATE TARGETS %s/%s (fate=%s): final-match win when reached %s%% (%d/%d) in %.0f-%.0f: %s | final share of deaths %s%% (%d/%d) <= %.0f: %s | run win %.1f%% (execute beats spare by %.0f-%.0f pts: compare the --fate=execute and --fate=spare run wins)" % [
+		char_id, policy, _fate_policy, ("%.1f" % final_pct) if reached > 0 else "-", final_won, reached, FATE_FINAL_WIN_TARGET[0], FATE_FINAL_WIN_TARGET[1], win_verdict,
+		("%.1f" % share) if deaths > 0 else "-", final_deaths, deaths, FATE_FINAL_DEATH_SHARE_MAX, share_verdict,
+		win_pct, FATE_EXECUTE_EDGE_TARGET[0], FATE_EXECUTE_EDGE_TARGET[1]])
 
 
 func _field(runs: Array, key: String) -> Array:
@@ -1093,7 +1184,11 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		# Story 034 (printed only with --piece-deck): player casts, cells, resolved, hits, joins, featured,
 		# interrupts landed / suffered, resolved / hits by cast cells, matches where the deck fell back.
 		"p_casts": 0.0, "p_cells": 0.0, "p_res": 0.0, "p_hits": 0.0, "p_joins": 0.0, "p_feat": 0.0,
-		"p_int": 0.0, "p_intd": 0.0, "p_size_res": {}, "p_size_hits": {}, "p_fallback": 0.0}
+		"p_int": 0.0, "p_intd": 0.0, "p_size_res": {}, "p_size_hits": {}, "p_fallback": 0.0,
+		# Story 035 (printed only with --fate): fates taken, relics from executes, the final match reached
+		# and the highest boss_phases phase entered in it.
+		"fate_exec": 0.0, "fate_spare": 0.0, "fate_relics": 0.0, "final_reached": false, "final_phase": 0,
+		"final_boss_hp": 0.0}
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", 2))
 	var path: Array[String] = []
 	var lost: bool = false
@@ -1114,6 +1209,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				break
 			w.region_id = str(fm["region"])
 			map = [{"index": 0, "tier": 0, "nodes": [{"kind": ChapterMapGen.KIND_BOSS, "match_id": str(fm["match_id"])}]}]
+			out["final_reached"] = true
 		w.chapter_index = _chapters.region_index(w.region_id)
 		(out["hp_in"] as Array).append(_hp_ratio(w, max_hp))
 		for col: int in map.size():
@@ -1161,6 +1257,9 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				continue
 			var match_seed: int = hash([seed_value, f, w.region_id, col, int(node["node_index"])]) & SEED_MASK
 			var r: Dictionary = _world_match(w, kind, str(node.get("match_id", "")), match_seed, character, bot_rng, out)
+			if f == floors:
+				out["final_phase"] = int(r.get("boss_phase", 0))
+				out["final_boss_hp"] = float(r.get("boss_hp_end_ratio", 0.0))
 			if not bool(r["won"]):
 				lost = true
 				out["death_floor"] = f
@@ -1173,6 +1272,10 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			w.nodes_cleared += 1
 			if kind == ChapterMapGen.KIND_BOSS:
 				w.removal_tokens += int(_reward_config.get("boss_removal_tokens", 1))
+			# Story 035: the fate of a downed region boss comes before its reward (GameFlow order).
+			if not _fate_policy.is_empty() and FateLogic.is_boss_fate_node(kind, f == floors):
+				_take_fate(w, int(float(out["fate_exec"]) + float(out["fate_spare"])),
+					hash([seed_value, f, w.region_id, FATE_SEED_TAG]) & SEED_MASK, out)
 			_apply_policy(w, policy, kind, out)
 		if lost:
 			break

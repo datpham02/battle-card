@@ -80,6 +80,9 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 ## Story 034: the run's piece deck (RunSession.piece_deck, a PieceDeck state); becomes match_params["piece_deck"]
 ## (absent when empty = original drop weights). Set by GameFlow BEFORE add_child (optional).
 @export var piece_deck: Dictionary = {}
+## Story 035: this match is a REGION boss node: becomes match_params[CombatView.PARAM_BOSS_CAN_DOWN] (the boss is
+## downed at 0 HP instead of removed). Set by GameFlow; never for a miniboss, normal, event fight or the final match.
+@export var boss_can_down: bool = false
 ## Story 019: while true the INTRO timer does not tick (the battle stays frozen and drawn).
 ## GameFlow sets it before add_child on a resumed run whose saved card offer is still open and
 ## clears it when the offer is resolved. No effect outside INTRO.
@@ -325,6 +328,8 @@ func _spawn_battle() -> void:
 		params["run_modifiers"] = modifier_overrides
 	if not piece_deck.is_empty():
 		params["piece_deck"] = piece_deck.duplicate(true)
+	if boss_can_down:
+		params[CombatView.PARAM_BOSS_CAN_DOWN] = true
 	if not deck_entries.is_empty():
 		params["deck"] = deck_entries.duplicate(true)
 	elif not deck.is_empty():

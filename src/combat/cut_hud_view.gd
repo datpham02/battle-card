@@ -494,6 +494,12 @@ func _connect_phase() -> void:
 
 func _on_phase_changed(phase: int) -> void:
 	_phase_banner_text = tr(TEXT_PHASE_BANNER) % phase
+	# Story 035: a boss_phases boss names its phase ("PHA 2 — <name>").
+	var phases: BossPhasesTrait = null
+	if _phase_host != null:
+		phases = _phase_host.get_trait(BossPhasesTrait.ID) as BossPhasesTrait
+	if phases != null and not phases.get_phase_name_key().is_empty():
+		_phase_banner_text = "%s — %s" % [_phase_banner_text, tr(phases.get_phase_name_key())]
 	_phase_banner_left = PHASE_BANNER_SEC
 
 

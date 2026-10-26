@@ -647,3 +647,62 @@ Every player-facing string is a key. The CSV has the header `keys,vi,en` (UTF-8;
 | `passive.<id>.name` / `.desc` | `characters.json` `passive_name_key` / `passive_desc_key` | `passive.wide_caster.name` |
 
 A missing key shows the raw key (Godot's default), on purpose. The saved UI locale lives in `progress.json` as `locale` (`"vi"` when absent, v1 saves load unchanged).
+
+## Story 035: fate, endings and the Ấn Đài final match (`chapters.json`, `arenas.json`)
+
+Read by `ChaptersConfig.fate_config()`, `endings_config()`, `final_match_phases()` (`src/run/chapters_config.gd`). A missing block uses the built-in values (= the shipped ones below); a bad value is replaced by its default with a warning. This section supersedes the `final_match` row of "World v6" above (shipped value is now `{"region": "an_dai", "match_id": "an_dai_keeper"}`).
+
+| Key (`world.`) | Type | Meaning | Shipped | Default |
+|---|---|---|---|---|
+| `fate.execute_artifact_offers` | int >= 1 | Relics offered after **Execute** on a region boss (the player may skip; it still counts as Execute) | 3 | 3 |
+| `fate.execute_min_rarity` | rarity id of `relics.json` | Lowest relic rarity of the Execute offer | `"rare"` | `"rare"` |
+| `fate.fate_hold_sec` | number >= 0 | Seconds the Spare / Execute button must be held to confirm (released early = cancelled) | 0.6 | 0.6 |
+| `endings.spare_min_ratio` | number 0..1 | `spare_ratio = spared / (spared + executed)` at or above this = ending `spare` | 1.0 (every boss spared) | 1.0 |
+| `endings.execute_max_ratio` | number 0..1, <= `spare_min_ratio` | `spare_ratio` at or below this = ending `execute`; anything between, or no fate at all = `balance` | 0.0 (every boss executed) | 0.0 |
+| `final_match` | `{region, match_id}` | The final match: region `an_dai` (a `chapters` entry that is NOT in `region_pool`, so it is never offered on a floor), match `an_dai_keeper`. `floor_scaling.final` still applies | `{"region": "an_dai", "match_id": "an_dai_keeper"}` | none |
+
+**Match key `phases`** (optional, any match; shipped only on `an_dai_keeper`): an array of phase objects. Element 0 is phase 1 (active from the start, no `at_hp_ratio`); element i >= 1 starts when the boss HP ratio falls to its `at_hp_ratio` (descending), once, in order. Every field is optional: a missing one keeps the previous phase's value.
+
+| Phase key | Type | Meaning | Default |
+|---|---|---|---|
+| `at_hp_ratio` | number 0..1 | Phase i >= 1 starts at this boss HP ratio (a hit cannot carry the HP past it) | - |
+| `phase_shift_sec` | number >= 0 | Boss invulnerable for this long on the shift (its cast in progress is cancelled) | 1.0 |
+| `name_key` | string key | Banner of the phase (`phase.<match>.<n>`) | "" |
+| `traits` | trait list (same shape as the match `traits`) | Traits active during the phase (the previous phase's are torn down) | previous |
+| `brain_set` | set id of `boss_brain.json` | Brain weights of the phase | previous |
+| `boss_step_cooldown_mult` | number > 0 | Multiplies the boss step cooldown for the phase (the match's own `boss_step_cooldown_mult` and floor scaling still apply) | previous |
+| `boss_cards` | array of card ids | The boss's card list for the phase (curses / zone cards dropped like the match key) | previous |
+| `root_while_swinging` | bool | `boss_brain.json` `root_while_swinging` for the phase | previous |
+
+Reading: `RunConfig.clean_match` (so `RunConfig.from_node` and `ChaptersConfig.get_match_def` too) turns `phases` into the ONE match trait `{"id": "boss_phases", "params": {"phases": <the array>}}`, REPLACING the match's own `traits`, `brain_set` (back to the default) and `boss_cards` (back to `[]`); CombatView and the balance sim build their TraitHost from `match_params["traits"]`, so the trait `boss_phases` (Story 035, `src/traits/boss_phases.gd`) applies each phase. A `phases` value that is not a non-empty array of objects is ignored (warning). Matches without the key are unchanged.
+
+Shipped `an_dai_keeper` (starting values, the Story 035 simulation retunes them): `boss_max_hp` 130 (x `floor_scaling.final` 1.5 = 195 in play; the old final `mist_lord` was 139 x ch3 normalize 0.75 x 1.5 = 156, the strongest floor-5 region boss about 170), `boss_step_cooldown_mult` 1.6 (x final 0.8 = 1.28 in both phases), `swing_speed_mult` 0.85, `boss_min_runes` 3 (+1 final), no `boss_defense` (+2 final), no `region_normalize` (identity). Phase 1: `seal_caster` (default params), `balanced`, step x1.0, cards `kiem_khi chan_phong kiem_vu hoa_tinh suong_mong ran_kich`, rooted while swinging. Phase 2 at 0.5 HP, 1.0 s shift, banner `phase.an_dai_keeper.2`: `seal_caster` + `row_burner` (default params), `aggressive`, step x1.0, phase 1's cards (no `boss_cards` key), still rooted while swinging. Retuned by the Story 035 simulation from the starting values (`thorn_field` added, step x0.85, strong cards, not rooted): with those the final-match win when reached was 0-7 %; an unrooted phase 2 alone gave 0 % (the bot cannot land a cast on a boss that moves while swinging) and `thorn_field` cost about 30 points; see `production/qa/evidence/spare-execute-endings/simulation-fate.md`. No new brain set: `balanced` / `aggressive` already express "measured then relentless" (no `final` set in `boss_brain.json`). The region `an_dai` has a `boss` pool (tiers 0-2) holding only `an_dai_keeper` so tools that build a map of every chapter still work; it is never offered as a region.
+
+**Arena `an_dai_dais`** (`arenas.json`): a round dais with a hole in the middle of each half: 5x5 side minus the four corners and the centre `[2,2]` (20 cells per side, difficulty 4). Featured shape `###/..#/..#` (V, 5 cells; pairs `bar2+bar3`, `l4+mono`), bonus `fragile` x1 (stone theme). `ArenaNames.NAMES` gained `arena.an_dai_dais.name`.
+
+New string keys: `boss.an_dai_keeper.name`, `match.an_dai_keeper.desc`, `phase.an_dai_keeper.2`, `chapter.an_dai.name` / `.intro` / `.end`, `arena.an_dai_dais.name` (placeholder texts marked "(Tạm)" / "(Placeholder)" until the narrative-director's text).
+
+## Story 035 save keys (run save v6, progress v6; `src/run/run_session.gd`, `src/run/progress_state.gd`, `src/run/fate_logic.gd`)
+
+Run save (`run_in_progress`, `RunSession.SAVE_VERSION` 6). A v5 run loads as a live run with the keys below at their defaults
+(`[]`, `false`, `{}`, zero counters); runs below v5 still load as `needs_restart`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `boss_fates` | array of `{floor: int, region_id: String, match_id: String, fate: "spare"\|"execute"}` | One entry per region boss met, in order. Entries with another `fate` are dropped on load. Decides the ending. |
+| `pending_fate` | bool | True from the moment a region boss is downed until a fate is chosen; a resumed run opens the Spare / Execute screen. |
+| `pending_fate_match` | `{floor, region_id, match_id}` | The boss waiting for a fate (`{}` when not pending; filled from `floor` / `region` when missing). |
+| `stats` | object | `matches_won`, `hits_taken`, `casts`, `joins`, `featured_casts`, `signatures_used` (int >= 0), `damage_dealt`, `damage_taken` (float >= 0, HP), `death` (`{}` or `{floor, region_id, match_id, boss_name_key}`). Unknown keys dropped. |
+
+Progress file (`user://progress.json`, `ProgressState.VERSION` 6). Files v1..v5 load with these keys empty / 0. Written by Story 035, read by Story 037.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `spared_bosses` | array of match ids | Bosses ever spared (no duplicates). |
+| `executed_bosses` | array of match ids | Bosses ever executed (no duplicates; a boss can be in both lists). |
+| `spare_total` / `execute_total` | int >= 0 | Every Spare / Execute choice ever made. |
+| `endings_seen` | array of ending ids | `spare`, `execute`, `balance` ever reached (no duplicates). |
+
+Execute relic offer: no `execute` source in `relics.json`. `FateLogic.roll_execute_offer` draws through `RelicRoller.roll("treasure", owned, rng, cfg, count, min_rarity)`
+with `count = world.fate.execute_artifact_offers` and `min_rarity = world.fate.execute_min_rarity` (the rarity-weighted `treasure` draw restricted to that rarity or
+above, by `rarity_weights`; never an owned relic unless `stackable`). Tune the Execute offer in `chapters.json -> world.fate` only.

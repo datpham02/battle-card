@@ -27,6 +27,9 @@ const TEXT_DEFAULT_FLOOR_NAME: String = "ui.floor.default_name"
 const DEFAULT_WORLD_FLOORS: int = 5
 const DEFAULT_CHOICES_PER_FLOOR: int = 2
 const DEFAULT_FLOOR_HEAL_RATIO: float = 0.25
+## Story 035 fallbacks of `world.fate` / `world.endings` (mirror the shipped chapters.json).
+const DEFAULT_FATE: Dictionary = {"execute_artifact_offers": 3, "execute_min_rarity": "rare", "fate_hold_sec": 0.6}
+const DEFAULT_ENDINGS: Dictionary = {"spare_min_ratio": 1.0, "execute_max_ratio": 0.0}
 ## Identity row of `floor_scaling` (no change).
 const IDENTITY_SCALING: Dictionary = {"hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0}
 ## Fallback region frame (col 0 one battle, col 1 two or three nodes with one rest-or-treasure, col 2 the boss).
@@ -178,6 +181,31 @@ func floor_heal_ratio() -> float:
 ## `world.final_match` ({region, match_id}); {} when not set or invalid.
 func final_match() -> Dictionary:
 	return (_world["final_match"] as Dictionary).duplicate()
+
+
+## Story 035: `world.fate` = {execute_artifact_offers (int >= 1), execute_min_rarity (String),
+## fate_hold_sec (float >= 0)}; built-in values mirror the shipped JSON ([constant DEFAULT_FATE]).
+func fate_config() -> Dictionary:
+	return (_world["fate"] as Dictionary).duplicate()
+
+
+## Story 035: `world.endings` = {spare_min_ratio, execute_max_ratio} (0..1, execute <= spare); see
+## [method FateLogic.ending_for]. Built-in values mirror the shipped JSON ([constant DEFAULT_ENDINGS]).
+func endings_config() -> Dictionary:
+	return (_world["endings"] as Dictionary).duplicate()
+
+
+## Story 035: the raw `phases` array of the final match (deep copy; [] when there is no final match or
+## it has no phases). [method RunConfig.clean_match] turns it into the `boss_phases` trait.
+func final_match_phases() -> Array:
+	var final: Dictionary = _world["final_match"]
+	if final.is_empty():
+		return []
+	var raw: Dictionary = get_match_raw(region_index(str(final["region"])), str(final["match_id"]))
+	var phases: Variant = raw.get("phases")
+	if typeof(phases) != TYPE_ARRAY:
+		return []
+	return (phases as Array).duplicate(true)
 
 
 ## Map spec of region [param region_id] for run [param floor] (0-based), for [method ChapterMapGen.generate]:
@@ -634,4 +662,59 @@ func _clean_world(raw: Variant) -> Dictionary:
 	elif raw_special != null:
 		push_warning("ChaptersConfig: world.special_nodes must be an object, ignored")
 	world["special_nodes"] = special
+	world["fate"] = _clean_fate(source.get("fate"))
+	world["endings"] = _clean_endings(source.get("endings"))
 	return world
+
+
+# Story 035: `world.fate` with defaults (DEFAULT_FATE) and a warning per bad value.
+static func _clean_fate(raw: Variant) -> Dictionary:
+	var fate: Dictionary = DEFAULT_FATE.duplicate()
+	if typeof(raw) == TYPE_NIL:
+		return fate
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("ChaptersConfig: world.fate must be an object, using defaults")
+		return fate
+	var source: Dictionary = raw as Dictionary
+	if source.has("execute_artifact_offers"):
+		var offers: int = int(source["execute_artifact_offers"])
+		if offers < 1:
+			push_warning("ChaptersConfig: world.fate.execute_artifact_offers must be >= 1, using %d" % fate["execute_artifact_offers"])
+		else:
+			fate["execute_artifact_offers"] = offers
+	if source.has("execute_min_rarity"):
+		var rarity: String = str(source["execute_min_rarity"])
+		if rarity.is_empty():
+			push_warning("ChaptersConfig: world.fate.execute_min_rarity is empty, using '%s'" % fate["execute_min_rarity"])
+		else:
+			fate["execute_min_rarity"] = rarity
+	if source.has("fate_hold_sec"):
+		var hold: float = float(source["fate_hold_sec"])
+		if hold < 0.0:
+			push_warning("ChaptersConfig: world.fate.fate_hold_sec must be >= 0, using %s" % fate["fate_hold_sec"])
+		else:
+			fate["fate_hold_sec"] = hold
+	return fate
+
+
+# Story 035: `world.endings` with defaults (DEFAULT_ENDINGS): both ratios in 0..1 and
+# execute_max_ratio <= spare_min_ratio, else a warning and the defaults for the pair.
+static func _clean_endings(raw: Variant) -> Dictionary:
+	var endings: Dictionary = DEFAULT_ENDINGS.duplicate()
+	if typeof(raw) == TYPE_NIL:
+		return endings
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("ChaptersConfig: world.endings must be an object, using defaults")
+		return endings
+	var source: Dictionary = raw as Dictionary
+	for key: String in ["spare_min_ratio", "execute_max_ratio"]:
+		if source.has(key):
+			var value: float = float(source[key])
+			if value < 0.0 or value > 1.0:
+				push_warning("ChaptersConfig: world.endings.%s must be in 0..1, using %s" % [key, endings[key]])
+			else:
+				endings[key] = value
+	if float(endings["execute_max_ratio"]) > float(endings["spare_min_ratio"]):
+		push_warning("ChaptersConfig: world.endings.execute_max_ratio > spare_min_ratio, using defaults")
+		endings = DEFAULT_ENDINGS.duplicate()
+	return endings

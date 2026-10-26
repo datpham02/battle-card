@@ -102,6 +102,11 @@ func is_step_locked() -> bool:
 	return _brain_config.root_while_swinging and (_actor.is_swinging() or _actor.has_queued())
 
 
+## Story 035 (boss_phases): switches the root-while-swinging rule of this boss (its brain config value).
+func set_root_while_swinging(value: bool) -> void:
+	_brain_config.root_while_swinging = value
+
+
 ## Advances the boss's own clocks and makes at most one decision. [param player_actor] is the
 ## player's cut actor (read only). Does nothing while frozen.
 func tick(delta: float, player_actor: CutActor) -> void:

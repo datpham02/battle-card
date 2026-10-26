@@ -548,3 +548,56 @@ ui.shop.service.remove_shape.name,Xóa hình,Remove a shape
 ui.shop.service.remove_shape.desc,Bỏ một hình khỏi bộ mảnh,Take a shape out of your piece deck
 ui.shop.confirm_remove_shape,Xóa hình này (%d vàng),Remove this shape (%d gold)
 ui.piece_deck.new_shape,Hình mới,New
+boss.an_dai_keeper.name,Người Giữ Ấn Đài,Keeper of the Seal Dais
+match.an_dai_keeper.desc,"(Tạm) Kẻ canh Ấn Đài: tới nửa máu nó thức tỉnh, gai và lửa phủ kín sân.","(Placeholder) The dais keeper: at half health it awakens, thorns and fire cover the field."
+phase.an_dai_keeper.2,Ấn Đài thức tỉnh,The Dais Awakens
+chapter.an_dai.name,Ấn Đài,The Seal Dais
+chapter.an_dai.intro,(Tạm) Cuối con đường là Ấn Đài. Mọi lựa chọn của ngươi đều được ghi ở đây.,(Placeholder) The road ends at the Seal Dais. Every choice you made is written here.
+chapter.an_dai.end,(Tạm) Ấn Đài lặng đi. Hành trình khép lại.,(Placeholder) The Seal Dais falls silent. The journey ends.
+arena.an_dai_dais.name,Bệ Ấn,Seal Dais
+ui.fate.title,%s đã quỵ,%s is down
+ui.fate.question,Tha hay giết?,Spare or execute?
+ui.fate.spare,Tha,Spare
+ui.fate.execute,Giết,Execute
+ui.fate.spare_line,Không nhận gì lúc này,Nothing for now
+ui.fate.execute_line,Chọn 1 trong %d bảo vật,Pick 1 of %d relics
+ui.fate.hold_hint,Giữ để xác nhận,Hold to confirm
+ui.fate.offer_title,CHIẾN LỢI PHẨM,SPOILS
+ui.fate.offer_hint,"Chạm để chọn, chạm lại để lấy","Tap to pick, tap again to take"
+ending.spare.title,Kết thúc: Lòng Tha Thứ,Ending: Mercy
+ending.spare.line1,"Những kẻ gác vùng còn sống, và họ nhớ bàn tay đã chừa mạng mình.","The wardens still live, and they remember the hand that spared them."
+ending.spare.line2,Ấn Đài lặng đi khi bạn bước xuống bậc đá cuối cùng.,The Seal Dais falls silent as you step down its last stone stair.
+ending.spare.line3,"Không ai hát về trận này, nhưng các vùng đất thở dễ hơn.","No one sings of this fight, yet the lands breathe easier."
+ending.spare.line4,"Đường về nhà còn dài, và lần đầu tiên nó không có kẻ thù.","The road home is long, and for once it holds no enemies."
+ending.balance.title,Kết thúc: Cán Cân,Ending: The Balance
+ending.balance.line1,"Có kẻ bạn tha, có kẻ bạn chém; cán cân không nghiêng bên nào.","Some you spared, some you cut down; the scales tip neither way."
+ending.balance.line2,"Ấn Đài vỡ làm đôi, một nửa sáng, một nửa tối.","The Seal Dais splits in two, one half light, one half dark."
+ending.balance.line3,Các vùng đất sẽ nhớ bạn theo những cách rất khác nhau.,The lands will remember you in very different ways.
+ending.balance.line4,Bạn mang cả hai nửa ấy theo trên đường về.,You carry both halves with you on the road home.
+ending.execute.title,Kết thúc: Lưỡi Kiếm Lạnh,Ending: The Cold Blade
+ending.execute.line1,Không kẻ gác vùng nào còn đứng; bảo vật của họ nặng trong túi bạn.,No warden is left standing; their relics weigh heavy in your pack.
+ending.execute.line2,"Ấn Đài cúi đầu trước sức mạnh, không phải trước lòng tin.","The Seal Dais bows to strength, not to trust."
+ending.execute.line3,"Các vùng đất im lặng, nhưng đó là im lặng của nỗi sợ.","The lands are quiet now, but it is the quiet of fear."
+ending.execute.line4,"Bạn là kẻ mạnh nhất còn lại, và cũng là kẻ cô độc nhất.","You are the strongest one left, and the loneliest."
+ui.ending.leave,Về màn chính,Back to title
+ui.ending.page_next,Trang 2,Page 2
+ui.ending.page_prev,Trang 1,Page 1
+ui.stats.path,Đường: %s,Path: %s
+ui.stats.character,Nhân vật,Character
+ui.stats.time,Thời gian,Time
+ui.stats.floor,Tầng tới được,Floor reached
+ui.stats.matches_won,Trận thắng,Matches won
+ui.stats.damage_dealt,Sát thương gây ra,Damage dealt
+ui.stats.damage_taken,Sát thương nhận,Damage taken
+ui.stats.hits_taken,Đòn trúng nhận,Hits taken
+ui.stats.casts,Đòn đã tung,Casts
+ui.stats.joins,Đòn ghép,Joined casts
+ui.stats.featured,Đòn hình chủ đạo,Featured-shape casts
+ui.stats.signatures,Tuyệt kỹ đã dùng,Signatures used
+ui.stats.deck_size,Số lá cuối,Final deck size
+ui.stats.highest_level,Lá cấp cao nhất,Highest card level
+ui.stats.relics,Bảo vật,Relics
+ui.stats.fates,Tha / Giết,Spared / Executed
+ui.stats.fates_value,%d / %d,%d / %d
+ui.run_hud.fell_at,Gục ở tầng %d · %s,Fell on floor %d · %s
+ui.run_hud.killed_by,Kẻ hạ bạn: %s,Defeated by: %s

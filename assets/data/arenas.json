@@ -105,6 +105,16 @@
 			"difficulty": 4,
 			"featured_shape": [[0,0],[1,0],[2,0],[0,1],[2,1],[2,2]],
 			"featured_bonus": { "damage_mult": 1.5, "effect": "fragile", "stacks": 2, "sec": 0 }
+		},
+		{
+			"id": "an_dai_dais",
+			"name_key": "arena.an_dai_dais.name",
+			"side_cols": 5,
+			"side_rows": 5,
+			"missing_cells": [[0, 0], [0, 4], [4, 0], [4, 4], [2, 2]],
+			"difficulty": 4,
+			"featured_shape": [[0,0],[1,0],[2,0],[2,1],[2,2]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "fragile", "stacks": 1, "sec": 0 }
 		}
 	]
 }

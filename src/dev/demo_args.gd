@@ -89,6 +89,10 @@ extends Node
 ##       every demo): --demo=pieces_menu --drops-seed=1 vs --drops-seed=2 give two different hands.
 ##   godot --path . -- --debug         DEV overlay: sets CombatView.debug_overlay (Story 016), so the HUD draws its
 ##       debug text (the boss learning line "né | ngắt | giả"); hidden by default. Works with or without --demo.
+##   godot --path . -- --demo=boss_downed   Story 035: GameFlow stages the first offered region's boss node; the boss is hit to 0
+##       HP one frame after the intro is skipped: DOWNED (dimmed / kneeling, still drawn), time frozen so the FATE screen never opens
+##   godot --path . -- --demo=final_phase2  Story 035: GameFlow stages the final match (an_dai_keeper); one huge hit is clamped at the
+##       phase-2 threshold: the phase-2 banner shows, the boss invulnerable, time frozen
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
 ## seeds the drop RNG. No argument = normal game, this node does nothing. State is set in
 ## _ready, before the first frame (the seed and the grid in _enter_tree, before
@@ -107,6 +111,8 @@ const DEMO_SEED: int = 7
 const BOSS_UID_BASE: int = -100
 ## Seconds the boss piece demos fast-forward the running swing (so the countdown is mid-way).
 const SWING_ELAPSED_SEC: float = 0.3
+## Story 035 final_phase2: frames waited at most for the HUD to connect TraitHost.phase_changed before the hit.
+const HUD_CONNECT_MAX_FRAMES: int = 30
 ## Story 010 / 014 demos: seconds of burning elapsed in "row_burning" and the learning events fed by
 ## the "learning" demo.
 const BURN_ELAPSED_SEC: float = 1.0
@@ -183,6 +189,9 @@ func _enter_tree() -> void:
 		_combat().match_params["arena"] = {"shape": arena_id}
 	if _mode != "":
 		_combat().drops_seed = DEMO_SEED
+	if _mode == "boss_downed":
+		# Story 035: downing needs a region boss match; forced so the demo also works on a --match= boot.
+		_combat().match_params[CombatView.PARAM_BOSS_CAN_DOWN] = true
 	_combat().grid_override = _parse_grid()
 	_combat().boss_set_override = _parse_boss_set()
 	_combat().debug_overlay = OS.get_cmdline_user_args().has(DEBUG_ARG)
@@ -275,6 +284,8 @@ func _ready() -> void:
 			_trait_thorns_demo(combat, grid)
 		"reward_zone_cards":
 			_force_reward_offer.call_deferred()
+		"boss_downed", "final_phase2":
+			_final_boss_demo.call_deferred()
 		"boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten":
 			_boss_piece_demo(combat, grid)
 		"pieces_hand":
@@ -729,6 +740,43 @@ func _activate_signature_now(combat: CombatView) -> void:
 
 # Story 024: ends the match intro (walks up the parents to the RunController) so the banner does not cover
 # the board; the demo's freeze_time keeps the simulation still. No-op without a controller above.
+# Story 035 "boss_downed" / "final_phase2": intro skipped, then one huge hit on the boss: a region boss is downed at
+# 0 HP; the phased final boss is clamped at its next threshold and enters phase 2 (banner, invulnerable).
+func _final_boss_demo() -> void:
+	_skip_intro()
+	var combat: CombatView = _combat()
+	if _mode == "final_phase2":
+		# The HUD connects TraitHost.phase_changed in its own _process: hit only once someone listens, or the
+		# phase-2 banner is missed (bounded wait so a HUD-less layout cannot hang).
+		for _i: int in HUD_CONNECT_MAX_FRAMES:
+			var host: TraitHost = combat.get_trait_host()
+			if host != null and not host.phase_changed.get_connections().is_empty():
+				break
+			await get_tree().process_frame
+	combat.get_state().damage(CombatState.Side.ENEMY, 999999.0)
+	if _mode == "boss_downed":
+		if not combat.is_boss_downed():
+			push_warning("DemoArgs: boss_downed: the boss was not downed (not a region boss match?)")
+		return
+	var phased: bool = false
+	for t: BossTrait in combat.get_trait_host().get_traits():
+		if t.has_method("get_phase"):
+			phased = true
+			if int(t.call("get_phase")) < 2:
+				t.on_tick(0.0)
+	if not phased:
+		push_warning("DemoArgs: final_phase2: the booted match has no boss_phases trait (not the final match?)")
+		return
+	var banners: int = 0
+	for hud: Node in get_tree().root.find_children("*", "CutHudView", true, false):
+		if float(hud.get("_phase_banner_left")) > 0.0:
+			banners += 1
+	if banners == 0:
+		push_warning("DemoArgs: final_phase2: no HUD showed the phase banner")
+	else:
+		print("DemoArgs: final_phase2: phase banner shown on %d HUD(s)" % banners)
+
+
 func _skip_intro() -> void:
 	var node: Node = get_parent()
 	while node != null and not node is RunController:

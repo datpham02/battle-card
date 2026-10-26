@@ -84,7 +84,7 @@ func _initialize() -> void:
 	var expect_def: float = maxf(float(wisp["boss_defense"]) - 1.0, 0.0) + 1.0
 	check(_near(float(s_m["boss_defense"]), expect_def), "ch3 stone_sentry floor 3: max(def-1, 0) + 1")
 
-	# Final match: region ch3 / mist_lord with the `final` row, no double application.
+	# Final match (Story 035: an_dai / an_dai_keeper, identity normalize) with the `final` row, no double application.
 	var fin: Dictionary = cfg.final_match()
 	var final_base: Dictionary = cfg.get_match_def(cfg.region_index(fin["region"]), fin["match_id"])
 	var final_m: Dictionary = RunConfig.from_node(cfg, fin["region"], fin["match_id"], "boss", 5, 5).matches[0]
@@ -92,8 +92,8 @@ func _initialize() -> void:
 	var final_row: Dictionary = cfg.floor_scaling(5)
 	check(_near(float(final_m["boss_max_hp"]), float(final_base["boss_max_hp"]) * float(norm3["hp_mult"]) * float(final_row["hp_mult"]))
 			and _near(float(final_m["boss_step_cooldown_mult"]), float(final_base["boss_step_cooldown_mult"]) * float(norm3["step_mult"]) * float(final_row["step_mult"]))
-			and int(final_m["boss_min_runes"]) == maxi(int(final_base["boss_min_runes"]) + int(final_row["size_add"]), 0), "final match: ch3 normalize then the `final` row")
-	check(cfg.get_match_def(2, "mist_lord")["boss_max_hp"] == final_base["boss_max_hp"], "scaling never mutates the stored match data")
+			and int(final_m["boss_min_runes"]) == maxi(int(final_base["boss_min_runes"]) + int(final_row["size_add"]), 0), "final match: region normalize then the `final` row")
+	check(cfg.get_match_def(cfg.region_index(fin["region"]), fin["match_id"])["boss_max_hp"] == final_base["boss_max_hp"], "scaling never mutates the stored match data")
 
 	# Everything else of the match is untouched; danger traits still added.
 	var danger: Dictionary = RunConfig.from_node(cfg, "ch1", "wolf", "danger", 5, 2).matches[0]

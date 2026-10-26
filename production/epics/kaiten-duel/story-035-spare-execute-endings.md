@@ -1,12 +1,12 @@
 # Story 035: Tha hay Giết boss vùng, boss cuối Ấn Đài, ba kết thúc và thống kê run
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-25
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -96,7 +96,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/spare-execute-endings/` (danh sách Phần F); bảng mô phỏng theo chính sách fate `simulation-fate.md` + raw.
 
-**Status**: Not yet created
+**Status**: Created — production/qa/evidence/spare-execute-endings/ (01-10 screenshots, simulation-fate.md + raw)
 
 ---
 
@@ -104,3 +104,16 @@
 
 - Depends on: Story 031 (thế giới 5 tầng, boss vùng, trận cuối tạm, save v5), Story 032 (bảo vật: pool, độ hiếm, offer)
 - Unlocks: Story 037 (cột mốc Tha/Giết, kết thúc đã xem), Story 038 (cấp Kiếp cần trận cuối thật)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 21/22 pass, 1 failing (F4: in the simulation the all-execute run does not beat the all-spare run; closed anyway by the user's explicit call, logged as TD-031, to be re-measured after the bot and the floors are fixed in Story 040). The simulation bot (dodge 0.85 = TD-006 default, rarest-relic pick) is not a player, and only 1-13 runs per cell reach the final match, so the final-match numbers carry about +-15 points of noise.
+**What changed**: `assets/data/chapters.json` (`world.fate`, `world.endings`, `world.final_match` -> `an_dai` / `an_dai_keeper`, the `an_dai` chapter with its match, a boss pool for tools, and the two `phases`), `assets/data/arenas.json` (`an_dai_dais`: a round dais with a hole, featured shape of 5 cells built by bar2+bar3, l4+mono and j4+mono), schema sections; `ChaptersConfig` (`fate_config`, `endings_config`, `final_match_phases`), `RunConfig` (a match's `phases` becomes a `boss_phases` trait param); `src/traits/boss_phases.gd` (`BossPhasesTrait`: phase entry once and in order, `phase_shift_sec` invulnerability, cast cancelled, traits swapped, brain set / step / cards / root flag switched, HP clamped at the next threshold through `CombatState.enemy_hp_floor` / `enemy_invulnerable_left`), `TraitHost.remove_trait`, `BossController.set_root_while_swinging`; `CombatView` (region boss downed: stays drawn, kneeling and dimmed, no casts, its pieces and the zones/thorns/burns on the player's half clear; `is_boss_downed`, `get_match_stats` with 7 counters; `PARAM_BOSS_CAN_DOWN`); `RunSession` (save v6: `boss_fates`, `pending_fate`, `pending_fate_match`, `stats` incl. `death`; v5 saves load), `ProgressState` v6 (`spared_bosses`, `executed_bosses`, `spare_total`, `execute_total`, `endings_seen`), `FateLogic` (spare ratio, ending id, execute offer through `RelicRoller` with the min rarity); `GameFlow` (`Phase.FATE` / `Phase.ENDING`, fate API, resume on FATE, stats at every match end, defeat summary, dev flags `--run=fate|fate_resumed|fate_offer|ending_spare|ending_balance|ending_execute`, demos `boss_downed` and `final_phase2`); `FateView` (hold-to-confirm with a progress ring), `EndingView` (typed lines, tap to show all, two-column stats), the defeat panel with stats, the execute offer on `RewardView`; 53 strings (vi + en); `deck_sim --fate=execute|spare|alternate`.
+**Simulation** (`deck_sim --world`, 70 seeds x 3 characters, `--relic-policy=pick`; tables in `production/qa/evidence/spare-execute-endings/simulation-fate.md`, raw beside it). Starting final boss: 0 of 90 probe runs won it (the old final `mist_lord` was won 67-83 %). Cause found by variants: a boss that moves while casting gives 0 % (the bot cannot land a cast), `thorn_field` costs about 30 points. Shipped phase 2 (row_burner, aggressive, rooted, step x1.0, phase-1 cards): final probe 53.3 / 56.7 / 50.0 % won. Real runs, final win when reached: execute 57.1 % (4/7) / 60.0 % (3/5) / 0 % (0/1); spare 38.5 % (5/13) / 54.5 % (6/11) / 57.1 % (4/7); the final is 1.4-12.3 % of deaths. Run win: execute 5.7 / 4.3 / 0.0 %, spare 7.1 / 8.6 / 5.7 % (Kiem si / Phap su / Sat thu).
+**Deviations**: FAIL (F4, TD-031): execute does not beat spare (1.4-5.7 points worse; target 8-20 better); cause not proven (the rarest-relic pick takes the trap relic `huyet_an`, and the bot cannot use several relics, TD-028); `execute_artifact_offers` and `execute_min_rarity` were not changed because the data cannot fix a bot policy. ADVISORY (TD-031): phase 2 differs from the story's starting values (no `thorn_field`, step x1.0 not x0.85, no strong card list, still rooted) after the simulation; run luck is not applied to the execute offer (RelicRoller has no luck input: a design decision); the fate step runs after `complete_node` and `_record_boss` (so a resumed save needs no controller) and the choice then only opens the boss reward; the execute offer lives in `pending_relic_offer`, so views must test `has_fate_offer()` first; burns the player set on the boss's half stay after the boss is downed; `_finish_run_won` always ends on the ending screen (also `--run=runwon`); ending texts, boss and region names are placeholders ("(Tam)") until the narrative-director's text; shots 06-08 use dev-filled stats and 05 a demo; the in-match relic strip text "Chua co bao vat" still shows under the plain reward screen (`cut_hud_view.gd`); one real-mouse check run failed once at the first press and then passed 6 times in a row (cause not found). Scope: touched beyond the story text: `trait_host.gd`, `boss_controller.gd`, `combat_state.gd`, `cut_hud_view.gd`, `arena_names.gd`, `src/main.tscn` (FateView, EndingView), `tools/balance/*`, and existing tests updated for the new final match, the 4th chapter and save / progress version 6 (`chapters_test`, `chapters23_test`, `map_gen_test`, `world_map_gen_test`, `floor_scaling_test`, `arena_featured_test`, `trait_test`, `run_flow2_test`, `economy_test`, `progress_v5_test`, `reward_run_test`, `run_session_v4_test`).
+**Test Evidence**: Integration; tests waived at `qa.level: minimal` but present and run on the final code: new suites `tests/unit/run/{final_match_data,boss_fate,run_session_stats}_test.gd`, `tests/unit/combat/{final_boss_phase,boss_downed}_test.gd`, `tests/integration/run/fate_flow_test.gd`, `tests/unit/ui/ending_strings_test.gd`; parse-check 199/199; 77 headless and 4 windowed suites FAILS=0 with no script error; `main.tscn` launched windowed with `--quit-after 300`, 0 error lines. A scratch script drove the fate hold, the early release and the offer taps with real mouse events (6 passes in a row after one unexplained first failure). Retained screenshots `production/qa/evidence/spare-execute-endings/01-10*.png` (all opened and checked) plus `simulation-fate.md` and `simulation-fate-raw.txt`. New suites not mutation-checked.
+**Code Review**: Skipped (solo mode).
+**Not verified**: feel of the hold-to-confirm on a phone, whether a human can win the final (the bot wins it about half the time when it gets there), the real ending flow with real stats, how often a player reaches the final at all.
+**Carries forward**: Story 037 (reads `spared_bosses`, `executed_bosses`, `endings_seen`), Story 038 (Kiep levels need this real final), Story 040 (floors that let runs reach the final, the execute-vs-spare balance, bot relic policy); gate 8 playtest; TD-001..006, 008..016, 018, 020, 021, 023..031.

@@ -69,6 +69,23 @@ func _kill_boss(controller: RunController) -> void:
 	_view(controller).get_state().damage(CombatState.Side.ENEMY, 999999.0)
 
 
+# Story 035: a phased boss (the final an_dai_keeper, trait boss_phases) clamps one huge hit at its next
+# phase threshold and is then invulnerable for phase_shift_sec; the test skips that wait by clearing the
+# invulnerability and hitting again each frame until the run controller reports WON.
+func _kill_until_won(controller: RunController) -> bool:
+	for _i: int in MAX_FRAMES:
+		if controller == null or not is_instance_valid(controller):
+			return false
+		if _phase(controller) == RunState.Phase.WON:
+			return true
+		var view: CombatView = _view(controller) if controller.get_battle() != null else null
+		if view != null and view.get_state() != null and not view.get_state().is_enemy_dead():
+			view.get_state().enemy_invulnerable_left = 0.0
+			_kill_boss(controller)
+		await process_frame
+	return false
+
+
 func _distinct(ids: Array[String]) -> bool:
 	var seen: Dictionary = {}
 	for id: String in ids:
@@ -121,8 +138,7 @@ func _win_node(flow: GameFlow, node_index: int, hurt: float = 0.0) -> RunControl
 	_check(ok, "node PLAYING")
 	if hurt > 0.0:
 		_view(c).get_state().damage(CombatState.Side.PLAYER, hurt)
-	_kill_boss(c)
-	ok = await _wait_phase(c, RunState.Phase.WON)
+	ok = await _kill_until_won(c)
 	_check(ok, "foe dead -> WON")
 	return c
 
@@ -365,6 +381,9 @@ func _run() -> void:
 	# region boss (Story 031): token, progress, floor +1 with the floor heal, reward, then the WORLD_MAP
 	var cleared_before: int = store2.load_state(config).get_cleared_bosses()
 	var c6: RunController = await _win_node(flow2b, 0, 20.0)
+	# Story 035: a region boss opens FATE first; spare leads to today's boss offer.
+	_check(flow2b.get_phase() == GameFlow.Phase.FATE, "region boss won -> FATE")
+	flow2b.choose_fate("spare")
 	_check(c6 != null and flow2b.get_pending_reward_kind() == "boss" and flow2b.get_pending_reward_info().get("removal_token") == true, "boss offer with the token info")
 	_check(flow2b.get_removal_tokens() == 1, "boss granted a removal token (1)")
 	_check(not flow2b.get_run().is_run_won() and flow2b.get_run_result() == GameFlow.RunResult.NONE, "a region boss does not win the run")
@@ -405,6 +424,7 @@ func _run() -> void:
 	flow5.continue_requested()
 	_check(flow5.get_phase() == GameFlow.Phase.MAP and flow5.get_floor() == config.world_floors() - 1 and not flow5.is_final_floor(), "last floor's region boss on the MAP")
 	var c7: RunController = await _win_node(flow5, 0)
+	flow5.choose_fate("spare")
 	var final_match: Dictionary = config.final_match()
 	_check(c7 != null and flow5.get_pending_reward_kind() == "boss" and flow5.is_final_floor() and flow5.get_floor() == flow5.get_floor_count(), "last region boss -> final floor, boss offer open")
 	_check(flow5.get_current_region() == str(final_match["region"]) and flow5.get_run_map().size() == 1 and str(flow5.get_run_map()[0]["nodes"][0]["match_id"]) == str(final_match["match_id"]) and flow5.get_region_offer().is_empty(), "final map: one node %s" % str(final_match))
@@ -415,7 +435,7 @@ func _run() -> void:
 	flow5.continue_requested()
 	_check(flow5.get_phase() == GameFlow.Phase.MAP and flow5.is_final_floor() and flow5.get_available_nodes().size() == 1, "continue -> the final match's MAP")
 	var c8: RunController = await _win_node(flow5, 0)
-	_check(c8 != null and flow5.get_run_result() == GameFlow.RunResult.WON and flow5.get_phase() == GameFlow.Phase.IN_NODE and flow5.get_pending_reward().is_empty(), "final match won -> RUN WON at once (no offer)")
+	_check(c8 != null and flow5.get_run_result() == GameFlow.RunResult.WON and flow5.get_phase() == GameFlow.Phase.ENDING and flow5.get_pending_reward().is_empty(), "final match won -> RUN WON at once (no offer), ENDING (Story 035)")
 	var after_win: ProgressState = store5.load_state(config)
 	_check(not after_win.has_run() and after_win.get_best_floor() == config.world_floors() + 1, "store: run dropped, best floor %d" % after_win.get_best_floor())
 	_check(flow5.get_run() != null, "run object kept for the RUN THẮNG screen")

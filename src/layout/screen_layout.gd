@@ -1322,3 +1322,123 @@ static func map_piece_deck_button_rect(viewport_size: Vector2) -> Rect2:
 	var back: Rect2 = back_button_rect(viewport_size)
 	var left: float = back.end.x + viewport_size.x * MAP_PIECE_DECK_BUTTON_GAP_RATIO
 	return Rect2(left, back.position.y, viewport_size.x * MAP_PIECE_DECK_BUTTON_WIDTH_RATIO, back.size.y)
+
+
+# --- Story 035: fate screen, ending screen, defeat panel --------------------------------------------
+
+## Story 035: fate buttons (Tha / Giết): width share of each, the outer margin, and their top / bottom.
+const FATE_BUTTON_WIDTH_RATIO: float = 0.4
+const FATE_BUTTON_SIDE_RATIO: float = 0.06
+const FATE_BUTTON_TOP_RATIO: float = 0.52
+const FATE_BUTTON_BOTTOM_RATIO: float = 0.8
+## Story 035: the consequence line under each fate button (top / bottom) and the hold hint above them.
+const FATE_LINE_TOP_RATIO: float = 0.82
+const FATE_LINE_BOTTOM_RATIO: float = 0.9
+const FATE_HINT_TOP_RATIO: float = 0.42
+const FATE_HINT_BOTTOM_RATIO: float = 0.5
+## Story 035: the boss name band and the question line of the fate screen.
+const FATE_TITLE_TOP_RATIO: float = 0.05
+const FATE_TITLE_BOTTOM_RATIO: float = 0.17
+const FATE_QUESTION_BOTTOM_RATIO: float = 0.25
+## Story 035: ending screen bands (title, story lines, stats block, bottom buttons).
+const ENDING_TITLE_TOP_RATIO: float = 0.03
+const ENDING_TITLE_BOTTOM_RATIO: float = 0.13
+const ENDING_LINES_TOP_RATIO: float = 0.14
+const ENDING_LINE_HEIGHT_RATIO: float = 0.052
+const ENDING_STATS_TOP_RATIO: float = 0.36
+const ENDING_STATS_BOTTOM_RATIO: float = 0.76
+const ENDING_BUTTON_TOP_RATIO: float = 0.79
+const ENDING_BUTTON_BOTTOM_RATIO: float = 0.95
+const ENDING_LEAVE_WIDTH_RATIO: float = 0.4
+const ENDING_PAGE_WIDTH_RATIO: float = 0.18
+## Story 035: the wide defeat panel (RUN KẾT THÚC with the stats block) and its bands.
+const DEFEAT_PANEL_SIDE_RATIO: float = 0.04
+const DEFEAT_PANEL_TOP_RATIO: float = 0.03
+const DEFEAT_STATS_TOP_RATIO: float = 0.25
+const DEFEAT_STATS_GAP_RATIO: float = 0.02
+
+
+## Story 035: the two fate buttons in the bottom half, [Tha (left thumb), Giết (right thumb)], each
+## FATE_BUTTON_WIDTH_RATIO (>= 35 %) of the width.
+static func fate_button_rects(viewport_size: Vector2) -> Array[Rect2]:
+	var width: float = viewport_size.x * FATE_BUTTON_WIDTH_RATIO
+	var side: float = viewport_size.x * FATE_BUTTON_SIDE_RATIO
+	var top: float = viewport_size.y * FATE_BUTTON_TOP_RATIO
+	var height: float = viewport_size.y * FATE_BUTTON_BOTTOM_RATIO - top
+	return [Rect2(side, top, width, height), Rect2(viewport_size.x - side - width, top, width, height)]
+
+
+## Story 035: the consequence line under fate button [param button] (same x span).
+static func fate_line_rect(viewport_size: Vector2, button: Rect2) -> Rect2:
+	var top: float = viewport_size.y * FATE_LINE_TOP_RATIO
+	return Rect2(button.position.x, top, button.size.x, viewport_size.y * FATE_LINE_BOTTOM_RATIO - top)
+
+
+## Story 035: the "Giữ để xác nhận" hint band right above the fate buttons.
+static func fate_hint_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * FATE_HINT_TOP_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * FATE_HINT_BOTTOM_RATIO - top)
+
+
+## Story 035: the boss name band at the top of the fate screen.
+static func fate_title_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * FATE_TITLE_TOP_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * FATE_TITLE_BOTTOM_RATIO - top)
+
+
+## Story 035: the question line under the boss name.
+static func fate_question_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * FATE_TITLE_BOTTOM_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * FATE_QUESTION_BOTTOM_RATIO - top)
+
+
+## Story 035: the ending title band.
+static func ending_title_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * ENDING_TITLE_TOP_RATIO
+	return Rect2(0.0, top, viewport_size.x, viewport_size.y * ENDING_TITLE_BOTTOM_RATIO - top)
+
+
+## Story 035: story line [param index] (0-based) of the ending, one under the other.
+static func ending_line_rect(viewport_size: Vector2, index: int) -> Rect2:
+	var height: float = viewport_size.y * ENDING_LINE_HEIGHT_RATIO
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	return Rect2(margin, viewport_size.y * ENDING_LINES_TOP_RATIO + height * index, viewport_size.x - margin * 2.0, height)
+
+
+## Story 035: the run stats block of the ending screen (two columns are laid inside it).
+static func ending_stats_rect(viewport_size: Vector2) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO * 2.0
+	var top: float = viewport_size.y * ENDING_STATS_TOP_RATIO
+	return Rect2(margin, top, viewport_size.x - margin * 2.0, viewport_size.y * ENDING_STATS_BOTTOM_RATIO - top)
+
+
+## Story 035: the big "Về màn chính" button, centred in the bottom band.
+static func ending_leave_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * ENDING_BUTTON_TOP_RATIO
+	var width: float = viewport_size.x * ENDING_LEAVE_WIDTH_RATIO
+	return Rect2((viewport_size.x - width) * 0.5, top, width, viewport_size.y * ENDING_BUTTON_BOTTOM_RATIO - top)
+
+
+## Story 035: the stats page button (only when the stats need two pages), bottom-right, as tall as the
+## leave button (>= 96 px at 720 px high).
+static func ending_page_rect(viewport_size: Vector2) -> Rect2:
+	var leave: Rect2 = ending_leave_rect(viewport_size)
+	var width: float = viewport_size.x * ENDING_PAGE_WIDTH_RATIO
+	return Rect2(viewport_size.x * (1.0 - MARGIN_RATIO) - width, leave.position.y, width, leave.size.y)
+
+
+## Story 035: the wide RUN KẾT THÚC panel (it carries the stats block); its bottom matches
+## run_panel_rect so the run buttons (run_button_rects) stay where they were.
+static func defeat_panel_rect(viewport_size: Vector2) -> Rect2:
+	var side: float = viewport_size.x * DEFEAT_PANEL_SIDE_RATIO
+	var top: float = viewport_size.y * DEFEAT_PANEL_TOP_RATIO
+	return Rect2(side, top, viewport_size.x - side * 2.0, run_panel_rect(viewport_size).end.y - top)
+
+
+## Story 035: the stats block of the defeat panel, between the death lines and the buttons.
+static func defeat_stats_rect(viewport_size: Vector2) -> Rect2:
+	var panel: Rect2 = defeat_panel_rect(viewport_size)
+	var inset: float = viewport_size.y * RUN_PANEL_INSET_RATIO
+	var top: float = viewport_size.y * DEFEAT_STATS_TOP_RATIO
+	var bottom: float = run_button_rect(viewport_size).position.y - viewport_size.y * DEFEAT_STATS_GAP_RATIO
+	return Rect2(panel.position.x + inset * 2.0, top, panel.size.x - inset * 4.0, bottom - top)

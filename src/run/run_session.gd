@@ -16,8 +16,11 @@ extends RefCounted
 ## While a floor's offer is open the previous region's (finished) map stays in [member map] so a
 ## pending boss offer can still be shown over it; [method choose_region] replaces it.
 
-## Save format version written by [method to_dict].
-const SAVE_VERSION: int = 5
+## Save format version written by [method to_dict] (v6, Story 035: boss_fates, pending_fate, stats).
+const SAVE_VERSION: int = 6
+## Oldest save [method from_dict] still loads as a live run (a v5 save gets the Story 035 fields at their
+## defaults); anything older loads as [member needs_restart].
+const MIN_LOADABLE_VERSION: int = 5
 ## Restart reason key for a pre-v5 (chapter / floor) run found in a save (shown as one line by the flow).
 const RESTART_OLD_SAVE: String = "run.restart.old_save"
 ## Node kind that ends a region (and grants a removal token).
@@ -25,6 +28,9 @@ const KIND_BOSS: String = "boss"
 ## Documented fallbacks for the economy keys of rewards.json (the single place; the file wins).
 ## Story 034: refusal key of a shape removal with no `shape_removals` token left.
 const REASON_NO_TOKEN: String = "piece_deck.reason.no_token"
+## Story 035: counters of [member stats] that are HP sums (floats); the others are counts (ints).
+const STAT_DAMAGE_KEYS: Array[String] = ["damage_dealt", "damage_taken"]
+const STAT_COUNT_KEYS: Array[String] = ["hits_taken", "casts", "joins", "featured_casts", "signatures_used"]
 const CONFIG_DEFAULTS: Dictionary = {
 	"starting_removals": 1, "luck_start": 0.0, "luck_per_node": 1.0,
 	"rest_heal_ratio": 0.3, "rest_forge_levels": 1, "boss_removal_tokens": 1,
@@ -119,6 +125,18 @@ var cards_config: SkillConfig = null
 static var _shared_cards: SkillConfig = null
 static var _shared_pieces: PieceLibrary = null
 static var _shared_piece_config: PieceDeckConfig = null
+## Story 035: one entry per region boss met, in order: {floor: int, region_id: String, match_id: String,
+## fate: "spare"|"execute"}. Saved under `boss_fates`; decides the ending ([method ending_id]).
+var boss_fates: Array[Dictionary] = []
+## Story 035: true from the moment a region boss is downed until a fate is chosen ([method begin_fate] ..
+## [method record_fate]); a saved run with it set resumes on the Spare / Execute screen, no match replay.
+var pending_fate: bool = false
+## Story 035: the boss waiting for a fate: {floor, region_id, match_id} ({} when not [member pending_fate]).
+var pending_fate_match: Dictionary = {}
+## Story 035: run counters (all in the save): matches_won, damage_dealt, damage_taken, hits_taken, casts,
+## joins, featured_casts, signatures_used (numbers, start 0) and `death` ({} or {floor, region_id, match_id,
+## boss_name_key}). Filled by [method add_match_stats] / [method record_death].
+var stats: Dictionary = _new_stats()
 ## Revive tokens (from chapters defaults; reserved, unused).
 var revives: int = 0
 ## True when this session came from a pre-v5 save: the flow must start a fresh world run for
@@ -630,6 +648,135 @@ func has_pending_ink_offer() -> bool:
 	return not pending_ink_offer.is_empty()
 
 
+## Story 035: a REGION boss was downed: the run now waits for a fate. [param match_info] = {floor, region_id,
+## match_id} (a missing key defaults to the run's [member floor], [member region_id] and ""). Sets
+## [member pending_fate] / [member pending_fate_match]; call it BEFORE [method complete_node] (which moves the floor).
+func begin_fate(match_info: Dictionary) -> void:
+	pending_fate = true
+	pending_fate_match = {
+		"floor": int(match_info.get("floor", floor)),
+		"region_id": str(match_info.get("region_id", region_id)),
+		"match_id": str(match_info.get("match_id", "")),
+	}
+
+
+## Story 035: the player chose [param fate] ("spare" | "execute") for the pending boss: appends the entry to
+## [member boss_fates] and clears the pending state. False (no change) when no fate is pending or the fate is unknown.
+func record_fate(fate: String) -> bool:
+	if not pending_fate or not FateLogic.is_valid_fate(fate):
+		return false
+	boss_fates.append({
+		"floor": int(pending_fate_match.get("floor", floor)),
+		"region_id": str(pending_fate_match.get("region_id", region_id)),
+		"match_id": str(pending_fate_match.get("match_id", "")),
+		"fate": fate,
+	})
+	pending_fate = false
+	pending_fate_match = {}
+	return true
+
+
+## Story 035: true while a fate waits for a choice.
+func is_fate_pending() -> bool:
+	return pending_fate
+
+
+## Story 035: adds one match's counters ([param d] = CombatView.get_match_stats(): damage_dealt, damage_taken,
+## hits_taken, casts, joins, featured_casts, signatures_used; missing keys count 0, negatives are ignored) to
+## [member stats]; `matches_won` +1 when [param won].
+func add_match_stats(d: Dictionary, won: bool) -> void:
+	for k: String in STAT_DAMAGE_KEYS:
+		stats[k] = float(stats.get(k, 0.0)) + maxf(float(d.get(k, 0.0)), 0.0)
+	for k: String in STAT_COUNT_KEYS:
+		stats[k] = int(stats.get(k, 0)) + maxi(int(d.get(k, 0)), 0)
+	if won:
+		stats["matches_won"] = int(stats.get("matches_won", 0)) + 1
+
+
+## Story 035: stores where and to whom the run fell: [param info] = {floor, region_id, match_id, boss_name_key}
+## (missing keys default to the run's floor / region and ""). Saved in [member stats] under `death`.
+func record_death(info: Dictionary) -> void:
+	stats["death"] = {
+		"floor": int(info.get("floor", floor)),
+		"region_id": str(info.get("region_id", region_id)),
+		"match_id": str(info.get("match_id", "")),
+		"boss_name_key": str(info.get("boss_name_key", "")),
+	}
+
+
+## Story 035: the ending of this run ([member boss_fates] through FateLogic.ending_for with
+## [param endings_cfg] = `world.endings`): "spare", "execute" or "balance".
+func ending_id(endings_cfg: Dictionary) -> String:
+	return FateLogic.ending_for(boss_fates, endings_cfg)
+
+
+## Story 035: everything the ending and defeat screens show: {character, elapsed_sec, region_path (Array[String]),
+## floor_reached (1-based: [member floor] + 1, so 6 at the final match), matches_won, damage_dealt, damage_taken,
+## hits_taken, casts, joins, featured_casts, signatures_used, deck_size, highest_card_level (0 for an empty
+## deck), relics (Array[String]), fates (Array[Dictionary], copies of [member boss_fates]), death (Dictionary,
+## {} when the run did not end in a defeat)}.
+func stats_summary() -> Dictionary:
+	var highest: int = 0
+	for e: Dictionary in deck:
+		highest = maxi(highest, int(e["level"]))
+	var fates: Array[Dictionary] = []
+	for f: Dictionary in boss_fates:
+		fates.append(f.duplicate())
+	return {
+		"character": character_id, "elapsed_sec": elapsed_sec, "region_path": region_path.duplicate(),
+		"floor_reached": floor + 1, "matches_won": int(stats.get("matches_won", 0)),
+		"damage_dealt": float(stats.get("damage_dealt", 0.0)), "damage_taken": float(stats.get("damage_taken", 0.0)),
+		"hits_taken": int(stats.get("hits_taken", 0)), "casts": int(stats.get("casts", 0)),
+		"joins": int(stats.get("joins", 0)), "featured_casts": int(stats.get("featured_casts", 0)),
+		"signatures_used": int(stats.get("signatures_used", 0)), "deck_size": deck.size(),
+		"highest_card_level": highest, "relics": relics.duplicate(), "fates": fates,
+		"death": (stats.get("death", {}) as Dictionary).duplicate(),
+	}
+
+
+# Story 035: the zeroed counters ([member stats] at the start of a run).
+static func _new_stats() -> Dictionary:
+	var out: Dictionary = {"matches_won": 0, "death": {}}
+	for k: String in STAT_DAMAGE_KEYS:
+		out[k] = 0.0
+	for k: String in STAT_COUNT_KEYS:
+		out[k] = 0
+	return out
+
+
+# Story 035: counters from a save (JSON numbers are floats): known keys only, negatives -> 0, `death` cleaned.
+static func _clean_stats(raw: Variant) -> Dictionary:
+	var out: Dictionary = _new_stats()
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	var d: Dictionary = raw as Dictionary
+	for k: String in STAT_DAMAGE_KEYS:
+		out[k] = maxf(float(d.get(k, 0.0)), 0.0)
+	for k: String in STAT_COUNT_KEYS:
+		out[k] = maxi(int(d.get(k, 0)), 0)
+	out["matches_won"] = maxi(int(d.get("matches_won", 0)), 0)
+	if typeof(d.get("death")) == TYPE_DICTIONARY and not (d["death"] as Dictionary).is_empty():
+		var dd: Dictionary = d["death"] as Dictionary
+		out["death"] = {"floor": int(dd.get("floor", 0)), "region_id": str(dd.get("region_id", "")),
+			"match_id": str(dd.get("match_id", "")), "boss_name_key": str(dd.get("boss_name_key", ""))}
+	return out
+
+
+# Story 035: boss_fates from a save: entries with a known fate only.
+static func _clean_fates(raw: Variant) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw as Array:
+		if typeof(entry) != TYPE_DICTIONARY or not FateLogic.is_valid_fate(str((entry as Dictionary).get("fate", ""))):
+			continue
+		out.append({"floor": int((entry as Dictionary).get("floor", 0)),
+			"region_id": str((entry as Dictionary).get("region_id", "")),
+			"match_id": str((entry as Dictionary).get("match_id", "")),
+			"fate": str((entry as Dictionary)["fate"])})
+	return out
+
+
 ## Story 032: adds relic [param id] (received order). False (no change) for a duplicate or an id unknown
 ## to RelicRegistry (warning).
 func add_relic(id: String) -> bool:
@@ -693,7 +840,7 @@ func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 	return str(current_node().get("kind", "")) == KIND_BOSS
 
 
-## Save form (v5, Story 031): {version, character, floor, region, region_offer, region_path, map,
+## Save form (v6, Story 035; v5 added by Story 031): {version, character, floor, region, region_offer, region_path, map,
 ## column, node_index, cleared_nodes, nodes_cleared, last_node_kind, last_floor_heal, hp,
 ## deck [{id, level}], run_seed, elapsed, pending_reward, revives, removal_tokens,
 ## cleared_bosses_this_run, won, relics [id], pending_relic_offer [id], gold, run_modifiers [{id,
@@ -701,6 +848,9 @@ func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 ## pending_ink_offer [id]} (Story 034 added the last three, optional like the rest: a save lacking them loads
 ## with PieceDeck.initial, `piece_rewards.shape_removals_start` and []) (relics..event_state are optional: Stories 032 / 033
 ## added them without a version bump; a save lacking them loads with no relics, `starting_gold`, [], {}, {}).
+## Story 035 (v6) added `boss_fates` [{floor, region_id, match_id, fate}], `pending_fate` bool,
+## `pending_fate_match` {floor, region_id, match_id} and `stats` {matches_won, damage_dealt, damage_taken,
+## hits_taken, casts, joins, featured_casts, signatures_used, death}; a v5 save loads with [], false, {} and zeros.
 ## A [member needs_restart] session saves only
 ## {version, character, needs_restart, restart_reason, map: []}.
 func to_dict() -> Dictionary:
@@ -723,12 +873,14 @@ func to_dict() -> Dictionary:
 		"last_gold_gain": last_gold_gain,
 		"piece_deck": piece_deck.duplicate(true), "shape_removals": shape_removals,
 		"pending_ink_offer": pending_ink_offer.duplicate(),
+		"boss_fates": boss_fates.duplicate(true), "pending_fate": pending_fate,
+		"pending_fate_match": pending_fate_match.duplicate(true), "stats": stats.duplicate(true),
 	}
 
 
-## Rebuilds from [method to_dict]. Null on bad data (unknown region, floor out of range, bad map /
+## Rebuilds from [method to_dict] (v5 and v6 saves). Null on bad data (unknown region, floor out of range, bad map /
 ## position, an offer at the final floor, no known card in the deck, no character). A pre-v5 run
-## (v2..v4 chapter / floor saves) or a saved needs_restart run gives a session with
+## (v2..v4 chapter / floor saves, version < [constant MIN_LOADABLE_VERSION]) or a saved needs_restart run gives a session with
 ## [member needs_restart] true, [member restart_reason] [constant RESTART_OLD_SAVE], an empty map and an
 ## empty deck (the flow starts a fresh world run for that character). Unknown cards are dropped
 ## (warning). [param cards] is optional: without it card ids are not validated.
@@ -736,7 +888,7 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	var s := RunSession.new()
 	s._chapters = chapters
 	s.character_id = str(d.get("character", ""))
-	if int(d.get("version", 0)) < SAVE_VERSION or bool(d.get("needs_restart", false)):
+	if int(d.get("version", 0)) < MIN_LOADABLE_VERSION or bool(d.get("needs_restart", false)):
 		if s.character_id.is_empty():
 			push_warning("RunSession: old run without character, dropped")
 			return null
@@ -799,6 +951,13 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s.piece_deck = PieceDeck.sanitize(d["piece_deck"], piece_library()) if typeof(d.get("piece_deck")) == TYPE_DICTIONARY else PieceDeck.initial(piece_library())
 	s.shape_removals = maxi(int(d.get("shape_removals", piece_config().shape_removals_start)), 0)
 	s.pending_ink_offer = _known_shapes(d.get("pending_ink_offer", []))
+	s.boss_fates = _clean_fates(d.get("boss_fates", []))
+	s.stats = _clean_stats(d.get("stats"))
+	s.pending_fate = bool(d.get("pending_fate", false))
+	if s.pending_fate:
+		var pm: Dictionary = (d["pending_fate_match"] as Dictionary) if typeof(d.get("pending_fate_match")) == TYPE_DICTIONARY else {}
+		s.pending_fate_match = {"floor": int(pm.get("floor", s.floor)), "region_id": str(pm.get("region_id", s.region_id)),
+			"match_id": str(pm.get("match_id", ""))}
 	if s.character_id.is_empty() or s.deck.is_empty():
 		push_warning("RunSession: no character or empty deck, run dropped")
 		return null

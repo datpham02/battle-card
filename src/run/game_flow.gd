@@ -108,6 +108,17 @@ extends Node2D
 ##                              treasure's when the chance missed)
 ##   --run=ink_offer_capped     Story 034: as --run=ink_offer, with the deck's first shape at mult_max so the
 ##                              offer can never show it (captures of the "capped" rule)
+##   --run=fate                 Story 035: a floor-1 region boss downed (won through the dev win) and the run
+##                              standing on the FATE screen (Tha / Giết), the controller alive (boss drawn)
+##   --run=fate_resumed         Story 035: as --run=fate, then left and resumed from the save: FATE again,
+##                              no controller, no replay
+##   --run=fate_offer           Story 035: as --run=fate with "execute" chosen: the artifact offer open
+##   --run=ending_spare|ending_balance|ending_execute
+##                              Story 035: the final match won on a run whose boss_fates give that ending
+##                              (all spared / alternating / all executed) with DEV_ENDING_MATCHES x
+##                              DEV_ENDING_STATS in the run stats: the ENDING screen
+##   --demo=boss_downed         Story 035 (DemoArgs): the first offered region's boss node, its boss downed
+##   --demo=final_phase2        Story 035 (DemoArgs): the final match right after the phase-2 banner
 ##   --relics=id,id,...         Story 032: every run starts owning these relics (RelicRegistry ids; unknown
 ##                              ids and duplicates are dropped with a warning)
 ##   --character=<id>           pick the character like the select screen would (Story 018)
@@ -139,7 +150,9 @@ signal run_changed()
 ## IN_FLOOR is the Story 019 name of IN_NODE, kept for old callers and tests (same value). WORLD_MAP
 ## (Story 031) took the slot of the retired CHAPTER_SELECT.
 ## PIECE_DECK (Story 034) is the piece deck screen opened over WORLD_MAP / MAP.
-enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, IN_FLOOR = IN_NODE }
+## FATE (Story 035): Tha / Giết after a downed REGION boss, then (Giết) its artifact offer; ENDING (Story 035):
+## the ending screen after the final match.
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -216,6 +229,25 @@ const FLOW_RUN_GOLD_REWARD: String = "gold_reward"
 const FLOW_RUN_PIECE_DECK: String = "piece_deck"
 const FLOW_RUN_INK_OFFER: String = "ink_offer"
 const FLOW_RUN_INK_OFFER_CAPPED: String = "ink_offer_capped"
+## Story 035 captures: the FATE screen (live / resumed), the execute offer, the three endings.
+const FLOW_RUN_FATE: String = "fate"
+const FLOW_RUN_FATE_RESUMED: String = "fate_resumed"
+const FLOW_RUN_FATE_OFFER: String = "fate_offer"
+const FLOW_RUN_ENDING_SPARE: String = "ending_spare"
+const FLOW_RUN_ENDING_BALANCE: String = "ending_balance"
+const FLOW_RUN_ENDING_EXECUTE: String = "ending_execute"
+## DEV-ONLY (--run=ending_*): matches added to the run stats, and the numbers of each.
+const DEV_ENDING_MATCHES: int = 12
+const DEV_ENDING_STATS: Dictionary = {"damage_dealt": 640.0, "damage_taken": 85.0, "hits_taken": 4, "casts": 21,
+	"joins": 6, "featured_casts": 3, "signatures_used": 2}
+## DEV-ONLY: the --demo= args GameFlow stages a match for (DemoArgs does the rest).
+const DEMO_BOSS_DOWNED_ARG: String = "--demo=boss_downed"
+const DEMO_FINAL_PHASE2_ARG: String = "--demo=final_phase2"
+const DEV_DEMO_STAGE_FINAL: String = "final"
+## Story 035: seed tag of the execute artifact offer.
+const FATE_SEED_TAG: String = "fate"
+## Story 035: lines of an ending (keys ending.<id>.line1..N in strings.csv).
+const ENDING_LINE_COUNT: int = 4
 ## DEV-ONLY: tokens and deck --run=piece_deck sets up without --shape-removals / --piece-deck-state.
 const DEV_PIECE_DECK_REMOVALS: int = 2
 const DEV_PIECE_DECK_STATE: String = "remove:mono|mult:bar3=3"
@@ -230,6 +262,8 @@ const FLOW_RUN_KINDS: Array[String] = [
 	FLOW_RUN_TREASURE, FLOW_RUN_MINIBOSS_REWARD, FLOW_RUN_BOSS_REWARD, FLOW_RUN_RELIC_TREASURE,
 	FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL, FLOW_RUN_SHOP, FLOW_RUN_GOLD_REWARD,
 	FLOW_RUN_PIECE_DECK, FLOW_RUN_INK_OFFER, FLOW_RUN_INK_OFFER_CAPPED,
+	FLOW_RUN_FATE, FLOW_RUN_FATE_RESUMED, FLOW_RUN_FATE_OFFER,
+	FLOW_RUN_ENDING_SPARE, FLOW_RUN_ENDING_BALANCE, FLOW_RUN_ENDING_EXECUTE,
 ]
 ## DEV-ONLY: columns --run=map3 clears (capped before the region's boss column).
 const DEV_MAP3_COLUMNS: int = 2
@@ -350,6 +384,14 @@ var _dev_event_id: String = ""
 ## DEV-ONLY (Story 034): --shape-removals= value (-1 = none), --piece-deck-state= spec ("" = none).
 var _dev_shape_removals: int = -1
 var _dev_piece_deck_state: String = ""
+## Story 035: the ending screen's data ([method get_ending]); {} until a final match is won.
+var _ending: Dictionary = {}
+## Story 035: the stats summary of the last lost run ([method get_defeat_summary]); kept after the run is dropped.
+var _defeat_summary: Dictionary = {}
+## Story 035: match id of the live controller's match (death record).
+var _live_match_id: String = ""
+## DEV-ONLY (Story 035): the match a --demo=boss_downed / final_phase2 boot stages ("" = first node).
+var _dev_demo_stage: String = ""
 ## Story 034: the phase [method close_piece_deck] returns to (WORLD_MAP or MAP).
 var _piece_deck_return: Phase = Phase.MAP
 
@@ -442,6 +484,10 @@ func _ready() -> void:
 			elif arg.begins_with(RUN_ARG + FLOW_RUN_EVENT_PREFIX):
 				flow_run = FLOW_RUN_EVENT
 				_dev_event_id = arg.trim_prefix(RUN_ARG + FLOW_RUN_EVENT_PREFIX)
+			if arg == DEMO_BOSS_DOWNED_ARG:
+				_dev_demo_stage = KIND_BOSS
+			elif arg == DEMO_FINAL_PHASE2_ARG:
+				_dev_demo_stage = DEV_DEMO_STAGE_FINAL
 			for prefix: String in DEV_RUN_ARGS:
 				if arg.begins_with(prefix):
 					dev_run = true
@@ -476,8 +522,15 @@ func _ready() -> void:
 		var world_only: bool = FLOW_RUN_WORLD_KINDS.has(flow_run) or (at_floor > 0 and not dev_run)
 		_dev_start(start_floor, "" if world_only else DEV_FIRST_OFFERED)
 		if dev_run and flow_run.is_empty() and _run != null:
-			# A RunController / DemoArgs arg: it needs a controller, so the first node is taken.
-			_dev_choose_first_available()
+			# A RunController / DemoArgs arg: it needs a controller, so the first node is taken
+			# (Story 035 demos: the region's boss node / the final match).
+			if _dev_demo_stage == KIND_BOSS:
+				_dev_advance_to_kind(KIND_BOSS)
+			elif _dev_demo_stage == DEV_DEMO_STAGE_FINAL:
+				_dev_advance_floors(_run.floors())
+				_dev_choose_first_available()
+			else:
+				_dev_choose_first_available()
 	if _dev_hp > 0.0 and _run != null and _controller == null:
 		# Again after the dev floor walk (a region boss heals).
 		_run.hp = minf(_dev_hp, _character_max_hp(_character_dict()))
@@ -1023,6 +1076,144 @@ func reward_remove_requested(index: int) -> void:
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(true)
+
+
+## Story 035: true while a downed region boss waits for Tha / Giết (also on a resumed save).
+func is_fate_pending() -> bool:
+	return _run != null and _run.is_fate_pending()
+
+
+## Story 035: what the FATE screen shows: {boss_name (translated), match_id, hold_sec (world.fate.fate_hold_sec),
+## offers (execute_artifact_offers), min_rarity (execute_min_rarity)}. The boss is the pending one, else the
+## last fate taken (the execute offer screen); boss_name "" without a run.
+func get_fate_view() -> Dictionary:
+	var cfg: Dictionary = _config.fate_config()
+	var info: Dictionary = {}
+	if _run != null:
+		if _run.is_fate_pending():
+			info = _run.pending_fate_match
+		elif not _run.boss_fates.is_empty():
+			info = _run.boss_fates.back()
+	var match_id: String = str(info.get("match_id", ""))
+	var key: String = _match_name_key(str(info.get("region_id", "")), match_id)
+	return {
+		"boss_name": "" if key.is_empty() else tr(key),
+		"match_id": match_id,
+		"hold_sec": float(cfg.get("fate_hold_sec", FateLogic.FATE_DEFAULTS["fate_hold_sec"])),
+		"offers": int(cfg.get("execute_artifact_offers", FateLogic.FATE_DEFAULTS["execute_artifact_offers"])),
+		"min_rarity": str(cfg.get("execute_min_rarity", FateLogic.FATE_DEFAULTS["execute_min_rarity"])),
+	}
+
+
+## Story 035: the FATE choice ([param fate] "spare" | "execute") for the pending region boss: recorded in the run
+## (boss_fates) and the permanent progress. "spare" goes straight on to the boss reward (3 cards + token);
+## "execute" opens the artifact offer ([method get_fate_offer]; FateLogic.roll_execute_offer with world.fate),
+## or goes straight on when nothing can be offered. Ignored with a warning when no fate is pending or the fate
+## is unknown.
+func choose_fate(fate: String) -> void:
+	if not is_fate_pending():
+		push_warning("GameFlow: choose_fate('%s') with no fate pending, ignored" % fate)
+		return
+	var match_id: String = str(_run.pending_fate_match.get("match_id", ""))
+	var fate_floor: int = int(_run.pending_fate_match.get("floor", _run.floor))
+	if not _run.record_fate(fate):
+		push_warning("GameFlow: choose_fate('%s') is not a known fate, ignored" % fate)
+		return
+	_progress.record_fate(match_id, fate)
+	if fate == FateLogic.FATE_EXECUTE:
+		var offer: Array[String] = FateLogic.roll_execute_offer(_run.relic_ids(), _config.fate_config(), null,
+			hash([_run.run_seed, fate_floor, FATE_SEED_TAG]) & ChaptersConfig.SEED_MASK, _run.luck(get_reward_config()))
+		if not offer.is_empty():
+			_run.clear_pending_reward()
+			_run.set_pending_relic_offer(offer)
+			_save_run()
+			run_changed.emit()
+			return
+	_save_run()
+	_after_fate()
+
+
+## Story 035: true while the execute artifact offer is open (a relic offer with no card offer beside it).
+func has_fate_offer() -> bool:
+	return _run != null and not _run.is_fate_pending() and _run.has_pending_relic_offer() and not _run.has_pending_reward()
+
+
+## Story 035: the relic ids of the open execute offer; [] when none is open.
+func get_fate_offer() -> Array[String]:
+	if not has_fate_offer():
+		return []
+	return _run.pending_relic_offer.duplicate()
+
+
+## Story 035: takes relic [param id] of the execute offer, then the boss reward opens. Ignored with a warning
+## when no offer is open, the id is not in it or the run refuses it.
+func choose_fate_relic(id: String) -> void:
+	if not has_fate_offer():
+		push_warning("GameFlow: choose_fate_relic('%s') with no fate offer open, ignored" % id)
+		return
+	if not _run.pending_relic_offer.has(id):
+		push_warning("GameFlow: choose_fate_relic('%s') is not in the offer %s, ignored" % [id, str(_run.pending_relic_offer)])
+		return
+	if not _run.add_relic(id):
+		push_warning("GameFlow: choose_fate_relic('%s') was refused by the run (owned or unknown), ignored" % id)
+		return
+	_run.clear_pending_relic_offer()
+	_save_run()
+	_after_fate()
+
+
+## Story 035: leaves the execute offer without a relic (still an execute), then the boss reward opens.
+func skip_fate_relic() -> void:
+	if not has_fate_offer():
+		push_warning("GameFlow: skip_fate_relic() with no fate offer open, ignored")
+		return
+	_run.clear_pending_relic_offer()
+	_save_run()
+	_after_fate()
+
+
+## Story 035: the ENDING screen's data: {id ("spare" | "balance" | "execute"), title_key (ending.<id>.title),
+## line_keys (ending.<id>.line1..N), stats (RunSession.stats_summary())}; {} before a final match is won.
+func get_ending() -> Dictionary:
+	return _ending.duplicate(true)
+
+
+## Story 035: the ENDING screen's "Về màn chính": the run (already dropped from the save) goes, TITLE shows.
+func leave_ending() -> void:
+	if _phase != Phase.ENDING:
+		push_warning("GameFlow: leave_ending() outside the ENDING screen, ignored")
+		return
+	leave_run()
+
+
+## Story 035: the lost screen's stats (RunSession.stats_summary() taken at death; `death` = {floor, region_id,
+## match_id, boss_name_key}); kept after the run is dropped, {} before any defeat.
+func get_defeat_summary() -> Dictionary:
+	return _defeat_summary.duplicate(true)
+
+
+# Story 035: the fate (and its offer) is resolved: the boss reward of Story 022/031 opens as today's boss path
+# (IN_NODE over the live controller, or the MAP on a resumed run).
+func _after_fate() -> void:
+	_set_phase(Phase.IN_NODE if _controller != null else Phase.MAP)
+	_offer_reward(KIND_BOSS)
+	run_changed.emit()
+
+
+# Story 035: name_key of [param match_id] in region [param region_id]; "" when unknown.
+func _match_name_key(region_id: String, match_id: String) -> String:
+	var ci: int = _config.region_index(region_id)
+	if ci < 0 or match_id.is_empty():
+		return ""
+	return str(_config.get_match_def(ci, match_id).get("name_key", ""))
+
+
+# Story 035: the live controller's CombatView, null without one.
+func _live_view() -> CombatView:
+	if _controller == null:
+		return null
+	var battle: Node = _controller.get_battle()
+	return null if battle == null else battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
 
 
 ## Story 032: relic ids owned by the live run, in received order; [] without a run.
@@ -1624,6 +1815,8 @@ func _begin_run() -> void:
 	_pending_node_kind = ""
 	_floor_clear_notice = {}
 	_elapsed_base = 0.0
+	_ending = {}
+	_defeat_summary = {}
 	_progress.record_floor(_run.floor + 1)
 	_save_run()
 	_set_phase(Phase.WORLD_MAP)
@@ -1656,6 +1849,8 @@ func _spawn_match(match_id: String, kind: String) -> void:
 	controller.deck = _run.deck_ids
 	controller.deck_entries = _run.deck_entries()
 	controller.piece_deck = _run.piece_deck.duplicate(true)
+	controller.boss_can_down = FateLogic.is_boss_fate_node(kind, _run.is_final_floor()) and not _is_event_fight_active()
+	_live_match_id = match_id
 	controller.hold_intro = _reward_blocking
 	controller.configure(run_config, 0, _run.hp)
 	controller.match_started.connect(_on_match_started)
@@ -1674,6 +1869,10 @@ func _node_name_key(kind: String) -> String:
 
 # Restores the phase of a resumed run from its position (see the class doc).
 func _resume_position() -> void:
+	if _run.is_fate_pending() or has_fate_offer():
+		# Story 035: the region boss was downed (node already completed): FATE again, no replay.
+		_set_phase(Phase.FATE)
+		return
 	var kind: String = str(_run.current_node().get("kind", ""))
 	if kind.is_empty():
 		if _run.is_run_won() and not _run.has_pending_reward():
@@ -1776,6 +1975,7 @@ func _on_match_won() -> void:
 	var view: CombatView = null if battle == null else battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
 	if view != null:
 		passive_heal = view.get_passive_heal()
+		_run.add_match_stats(view.get_match_stats(), true)
 	if _is_event_fight_active():
 		_finish_event_fight(_controller.get_last_player_hp(), _controller.get_player_max_hp(), passive_heal)
 		return
@@ -1787,6 +1987,11 @@ func _on_match_won() -> void:
 # opens the boss offer. The final match: the run is won at once (no offer). Others: their offer.
 func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> void:
 	var kind: String = str(_run.current_node().get("kind", ""))
+	# Story 035: a REGION boss (not the final match) waits for its fate; begin_fate before complete_node.
+	var fate_node: bool = FateLogic.is_boss_fate_node(kind, _run.is_final_floor())
+	if fate_node:
+		_run.begin_fate({"floor": _run.floor, "region_id": _run.region_id,
+			"match_id": str(_run.current_node().get("match_id", ""))})
 	_drop_gold(kind)
 	_run.tick_run_modifiers()
 	var result: Dictionary = _run.complete_node(hp_end, max_hp, kind, get_reward_config(), passive_heal)
@@ -1794,6 +1999,13 @@ func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> 
 		_record_boss(result)
 	if bool(result.get("run_won", false)):
 		_finish_run_won()
+		return
+	if fate_node:
+		# The node is completed now (end HP / heal belong to the live match); the boss reward waits for the fate.
+		_pending_node_kind = kind
+		_save_run()
+		_set_phase(Phase.FATE)
+		run_changed.emit()
 		return
 	_offer_reward(kind)
 
@@ -1908,17 +2120,33 @@ func _return_to_map() -> void:
 func _finish_run_won() -> void:
 	_sync_elapsed()
 	_progress.record_floor(_run.floor + 1)
+	# Story 035: the ending of the run's boss fates (world.endings), recorded, shown on the ENDING screen.
+	var ending_id: String = _run.ending_id(_config.endings_config())
+	_progress.record_ending(ending_id)
+	var line_keys: Array[String] = []
+	for i: int in ENDING_LINE_COUNT:
+		line_keys.append("ending.%s.line%d" % [ending_id, i + 1])
+	_ending = {"id": ending_id, "title_key": "ending.%s.title" % ending_id, "line_keys": line_keys,
+		"stats": _run.stats_summary()}
 	_progress.clear_run()
 	_store.save_state(_progress)
 	_run_result = RunResult.WON
-	if _phase != Phase.IN_NODE:
-		_set_phase(Phase.IN_NODE)
+	_set_phase(Phase.ENDING)
 	run_changed.emit()
 
 
 # The player died: the saved run is dropped at once, result LOST (no retry).
 func _finish_run_lost() -> void:
+	if _run_result != RunResult.NONE:
+		return
 	_sync_elapsed()
+	# Story 035: the match's numbers and where / to whom the run fell, before the save is dropped.
+	var view: CombatView = _live_view()
+	if view != null:
+		_run.add_match_stats(view.get_match_stats(), false)
+	_run.record_death({"floor": _run.floor, "region_id": _run.region_id, "match_id": _live_match_id,
+		"boss_name_key": _match_name_key(_run.region_id, _live_match_id)})
+	_defeat_summary = _run.stats_summary()
 	_progress.clear_run()
 	_store.save_state(_progress)
 	_run_result = RunResult.LOST
@@ -2152,6 +2380,21 @@ func _dev_win_current_match(_offer: bool, hp_ratio: float = -1.0) -> void:
 	_complete_match_node(hp_ratio * max_hp if hp_ratio >= 0.0 else DEV_FLOW_HP, max_hp, 0.0)
 
 
+# DEV-ONLY (Story 035, --run=ending_*): one boss fate per floor walked (all spare / alternating / all execute)
+# and DEV_ENDING_MATCHES x DEV_ENDING_STATS in the run stats, so the ending screen has numbers.
+func _dev_fill_fates(kind: String) -> void:
+	var path: Array[String] = get_region_path()
+	_run.boss_fates.clear()
+	for i: int in _run.floors():
+		var fate: String = FateLogic.FATE_SPARE
+		if kind == FLOW_RUN_ENDING_EXECUTE or (kind == FLOW_RUN_ENDING_BALANCE and i % 2 == 1):
+			fate = FateLogic.FATE_EXECUTE
+		_run.boss_fates.append({"floor": i, "region_id": path[i] if i < path.size() else "", "match_id": "", "fate": fate})
+	for _m: int in DEV_ENDING_MATCHES:
+		_run.add_match_stats(DEV_ENDING_STATS, true)
+	_save_run()
+
+
 # DEV-ONLY (Story 033, --run=shop / --run=event=<id>): chooses the region's first [param kind] node
 # (columns before it cleared); without one, the current column's first available node becomes that kind.
 func _dev_open_special(kind: String) -> void:
@@ -2241,6 +2484,20 @@ func _apply_dev_flow_run(kind: String) -> void:
 					view.get_state().damage(CombatState.Side.PLAYER, 999999.0)
 				_controller.get_state().dev_jump(0, RunState.Phase.LOST, RunController.DEV_ELAPSED_SEC, -1.0)
 				_finish_run_lost()
+		FLOW_RUN_FATE, FLOW_RUN_FATE_RESUMED, FLOW_RUN_FATE_OFFER:
+			if _dev_advance_to_kind(KIND_BOSS):
+				_dev_win_current_match(true)
+				if kind == FLOW_RUN_FATE_OFFER and is_fate_pending():
+					choose_fate(FateLogic.FATE_EXECUTE)
+				elif kind == FLOW_RUN_FATE_RESUMED and is_fate_pending():
+					leave_run_keep_save()
+					continue_requested()
+		FLOW_RUN_ENDING_SPARE, FLOW_RUN_ENDING_BALANCE, FLOW_RUN_ENDING_EXECUTE:
+			_dev_advance_floors(_run.floors())
+			_dev_settle_phase()
+			_dev_fill_fates(kind)
+			if _dev_choose_first_available():
+				_dev_win_current_match(false)
 		FLOW_RUN_WON:
 			_dev_advance_floors(_run.floors())
 			_dev_settle_phase()

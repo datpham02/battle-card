@@ -14,6 +14,8 @@ const MATCH_KEYS: Array[String] = [
 	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards", "boss_defense", "boss_min_runes",
 	"desc_key",
 ]
+## Story 035: trait id a match's `phases` key turns into (see [method _apply_phases]).
+const BOSS_PHASES_TRAIT_ID: String = "boss_phases"
 
 
 ## Flat HP the player recovers after winning a match (clamped to max HP by RunState).
@@ -230,11 +232,33 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		m["boss_cards"] = (raw_cards as Array).duplicate()
 	else:
 		push_warning("RunConfig: boss_cards of match %s must be an array, ignored" % m["id"])
+	if raw.has("phases"):
+		_apply_phases(m, raw["phases"])
 	if raw.has("boss_step_cooldown_sec"):
 		# Deprecated absolute value: carried (and used by CombatView) only for old data.
 		push_warning("RunConfig: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")
 		m["boss_step_cooldown_sec"] = maxf(float(raw["boss_step_cooldown_sec"]), 0.0)
 	return m
+
+
+## Story 035: a match key `phases` (non-empty array of phase objects, see schema.md) becomes the ONE trait
+## `{"id": "boss_phases", "params": {"phases": <the array>}}`, replacing the match's own `traits`,
+## `brain_set` (back to the default) and `boss_cards` (back to []): the trait applies each phase's
+## values at runtime. A bad `phases` value is ignored with a warning (the match keeps its own keys).
+static func _apply_phases(m: Dictionary, raw_phases: Variant) -> void:
+	if typeof(raw_phases) != TYPE_ARRAY or (raw_phases as Array).is_empty():
+		push_warning("RunConfig: phases of match %s must be a non-empty array, ignored" % m["id"])
+		return
+	var phases: Array = []
+	for entry: Variant in raw_phases as Array:
+		if typeof(entry) != TYPE_DICTIONARY:
+			push_warning("RunConfig: a phase of match %s is not an object, phases ignored" % m["id"])
+			return
+		phases.append((entry as Dictionary).duplicate(true))
+	var base: Dictionary = _default_match(0)
+	m["traits"] = [{"id": BOSS_PHASES_TRAIT_ID, "params": {"phases": phases}}]
+	m["brain_set"] = base["brain_set"]
+	m["boss_cards"] = (base["boss_cards"] as Array).duplicate()
 
 
 static func _positive(data: Dictionary, key: String, fallback: float) -> float:

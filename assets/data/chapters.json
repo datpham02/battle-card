@@ -136,7 +136,9 @@
 			"guaranteed_min_floor": 2
 		},
 		"floor_heal_ratio": 0.35,
-		"final_match": {"region": "ch3", "match_id": "mist_lord"}
+		"fate": {"execute_artifact_offers": 3, "execute_min_rarity": "rare", "fate_hold_sec": 0.6},
+		"endings": {"spare_min_ratio": 1.0, "execute_max_ratio": 0.0},
+		"final_match": {"region": "an_dai", "match_id": "an_dai_keeper"}
 	},
 	"chapters": [
 		{
@@ -913,6 +915,59 @@
 					"2": [
 						"mist_lord"
 					]
+				}
+			}
+		},
+		{
+			"id": "an_dai",
+			"name_key": "chapter.an_dai.name",
+			"intro_key": "chapter.an_dai.intro",
+			"end_key": "chapter.an_dai.end",
+			"matches": {
+				"an_dai_keeper": {
+					"id": "an_dai_keeper",
+					"name_key": "boss.an_dai_keeper.name",
+					"desc_key": "match.an_dai_keeper.desc",
+					"boss_max_hp": 130,
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 0.85,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_min_runes": 3,
+					"phases": [
+						{
+							"traits": [
+								{"id": "seal_caster", "params": {}}
+							],
+							"brain_set": "balanced",
+							"boss_step_cooldown_mult": 1.0,
+							"boss_cards": ["kiem_khi", "chan_phong", "kiem_vu", "hoa_tinh", "suong_mong", "ran_kich"],
+							"root_while_swinging": true
+						},
+						{
+							"at_hp_ratio": 0.5,
+							"phase_shift_sec": 1.0,
+							"name_key": "phase.an_dai_keeper.2",
+							"traits": [
+								{"id": "seal_caster", "params": {}},
+								{"id": "row_burner", "params": {}}
+							],
+							"brain_set": "aggressive",
+							"boss_step_cooldown_mult": 1.0,
+							"root_while_swinging": true
+						}
+					],
+					"arena": {
+						"shape": "an_dai_dais"
+					}
+				}
+			},
+			"pools": {
+				"boss": {
+					"0": ["an_dai_keeper"],
+					"1": ["an_dai_keeper"],
+					"2": ["an_dai_keeper"]
 				}
 			}
 		}

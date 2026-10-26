@@ -133,6 +133,13 @@ const TEXT_LEAVE_RUN: String = "ui.run_hud.leave_run"
 const TEXT_DECK_LABEL: String = "ui.run_hud.deck_label"
 ## Story 019 result screens.
 const TEXT_RUN_OVER_TITLE: String = "ui.run_hud.run_over_title"
+## Story 035: "Gục ở tầng %d · %s" (floor, region) and "Kẻ hạ bạn: %s" (boss) on the defeat panel.
+const TEXT_FELL_AT: String = "ui.run_hud.fell_at"
+const TEXT_KILLED_BY: String = "ui.run_hud.killed_by"
+## Story 035: baselines of the defeat panel's title and two death lines, as shares of the screen height.
+const DEFEAT_TITLE_BASELINE_RATIO: float = 0.1
+const DEFEAT_LINE1_BASELINE_RATIO: float = 0.16
+const DEFEAT_LINE2_BASELINE_RATIO: float = 0.215
 const TEXT_RUN_WON_TITLE: String = "ui.run_hud.run_won_title"
 ## Legacy "Tầng %d · Trận %d" of a floor run (kept for the CSV; unused since Story 022).
 const TEXT_RUN_POSITION: String = "ui.run_hud.run_position"
@@ -282,6 +289,8 @@ func _run_ended() -> bool:
 # the phase has none. Story 016: while paused, the overlay's buttons (only "Tiếp tục" without a
 # GameFlow). Story 019: a finished run has the one "Về title" button whatever the controller phase.
 func _button_labels() -> Array[String]:
+	if _fate_or_ending():
+		return []  # Story 035: FateView / EndingView own the screen (no stray RESTART on Enter)
 	if _controller.is_paused():
 		if _flow == null:
 			return [TEXT_RESUME]
@@ -330,6 +339,8 @@ func _is_chapter_clear() -> bool:
 
 func _draw() -> void:
 	if not _has_controller():
+		return
+	if _fate_or_ending():
 		return
 	var vp: Vector2 = get_viewport_rect().size
 	if _run_ended():
@@ -513,8 +524,11 @@ func _draw_lost(vp: Vector2) -> void:
 # line (small font) lists the final deck in one line, cut to the panel's inner width.
 func _draw_run_result(vp: Vector2) -> void:
 	var run: RunSession = _flow.get_run()
-	var panel: Rect2 = _draw_panel(vp)
 	var won: bool = _flow.get_run_result() == GameFlow.RunResult.WON
+	if not won and run != null:
+		_draw_defeat(vp)
+		return
+	var panel: Rect2 = _draw_panel(vp)
 	var inner_width: float = panel.size.x - vp.y * ScreenLayout.RUN_PANEL_INSET_RATIO * 2.0
 	var lines: Array[String] = []
 	var colors: Array[Color] = []
@@ -553,6 +567,39 @@ func _run_position_text(run: RunSession, column: int) -> String:
 		return tr(TEXT_FINAL_NAME)
 	var region: String = _flow.region_name(_flow.get_current_region())
 	return tr(TEXT_RUN_FLOOR_POSITION) % [_flow.get_floor() + 1, count, region, column, run.map.size()]
+
+
+# Story 035: true while GameFlow is in phase FATE or ENDING (FateView / EndingView draw and take input).
+func _fate_or_ending() -> bool:
+	if _flow == null:
+		return false
+	var phase: int = _flow.get_phase()
+	return phase == GameFlow.Phase.FATE or phase == GameFlow.Phase.ENDING
+
+
+# Story 035 D: RUN KẾT THÚC on a wide panel — the title, "Gục ở tầng N · <vùng>", "Kẻ hạ bạn: <boss>",
+# then the run stats block (EndingView helpers, two columns at SMALL_FONT_SIZE) from
+# [method GameFlow.get_defeat_summary]; the run buttons stay where they were (run_button_rects).
+func _draw_defeat(vp: Vector2) -> void:
+	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
+	var panel: Rect2 = ScreenLayout.defeat_panel_rect(vp)
+	draw_rect(panel, PANEL_BACK)
+	draw_rect(panel, PANEL_OUTLINE, false, OUTLINE_WIDTH)
+	var summary: Dictionary = _flow.get_defeat_summary()
+	var death: Dictionary = summary.get("death", {})
+	var inner_width: float = panel.size.x - vp.y * ScreenLayout.RUN_PANEL_INSET_RATIO * 2.0
+	_text(panel, vp.y * DEFEAT_TITLE_BASELINE_RATIO, tr(TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_LOSE)
+	var region_id: String = str(death.get("region_id", summary.get("region_id", _flow.get_current_region())))
+	var floor_number: int = int(summary.get("floor_reached", _flow.get_floor() + 1))
+	var fell: String = EndingView.format_text(tr(TEXT_FELL_AT), [floor_number, _flow.region_name(region_id)])
+	_text(panel, vp.y * DEFEAT_LINE1_BASELINE_RATIO, fell, _fit_line_font(fell, inner_width, LINE_FONT_SIZE), TEXT_LIGHT)
+	var killer_key: String = str(death.get("boss_name_key", summary.get("boss_name_key", "")))
+	if not killer_key.is_empty():
+		var killer: String = EndingView.format_text(tr(TEXT_KILLED_BY), [tr(killer_key)])
+		_text(panel, vp.y * DEFEAT_LINE2_BASELINE_RATIO, killer, _fit_line_font(killer, inner_width, LINE_FONT_SIZE), TEXT_BOSS)
+	var block: Rect2 = ScreenLayout.defeat_stats_rect(vp)
+	EndingView.draw_stats(self, block, EndingView.path_text(self, summary, _flow), EndingView.stat_rows(self, summary, _flow), 0, SMALL_FONT_SIZE)
+	_draw_buttons(vp)
 
 
 # Story 031: "Tới tầng N/5" (the floor the run ended on), or "Tới Ấn Đài" at the final match.

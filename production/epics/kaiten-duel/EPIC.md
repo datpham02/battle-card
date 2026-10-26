@@ -109,7 +109,7 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 032 | Bảo vật — đồ bị động đổi luật gắn với mảnh, ghép, trận đồ, vùng và từ khóa; 16 món khởi điểm, HUD chạm, lưu run | Integration | Complete | — |
 | 033 | Vàng, cửa hàng và sự kiện — vàng rơi theo loại nút, cửa hàng bán lá/bảo vật/dịch vụ, 8 sự kiện rủi ro, lá nguyền | Integration | Complete | — |
 | 034 | Bộ mảnh của run — trọng số hình riêng, Ấn hình và Xóa hình, luôn còn hình vừa sân, boss không đổi | Integration | Complete | — |
-| 035 | Tha hay Giết boss vùng, boss cuối Ấn Đài hai pha, ba kết thúc, thống kê run | Integration | Ready | — |
+| 035 | Tha hay Giết boss vùng, boss cuối Ấn Đài hai pha, ba kết thúc, thống kê run | Integration | Complete | — |
 | 036 | Vùng Đầm Lầy Độc và Sa Mạc Cát Ấn — ô lầy, cát lấp ô, mảnh trôi theo gió, 12 địch, 4 kẻ phá luật, 2 boss vùng, 4 sân | Integration | Ready | — |
 | 037 | Mở khóa theo cột mốc, 22 thành tựu, nhân vật Thợ săn và Giáo sĩ — chỉ thêm lựa chọn, không thêm sức mạnh | Integration | Ready | — |
 | 038 | Cấp Kiếp: 10 cấp khó cộng dồn theo nhân vật, mở bằng thắng run, chọn ở màn nhân vật | Integration | Ready | — |
