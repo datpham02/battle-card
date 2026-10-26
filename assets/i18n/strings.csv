@@ -356,6 +356,8 @@ ui.world.final_clear,Ấn Đài — hồi %d máu,Seal Altar — healed %d HP
 region.ch1.desc,Rừng thưa nhiều lối né; goblin và bầy sói.,Open woods with room to dodge; goblins and wolf packs.
 region.ch2.desc,"Hầm tối chật hẹp; xương khô, xác sống, dơi và kết giới.","Cramped dark halls; skeletons, zombies, bats and seal wards."
 region.ch3.desc,"Tháp băng giá; sói tuyết, ma trơi, pháo ngòi và trận gai.","A frozen tower; snow wolves, wisps, fuse cannons and thorn fields."
+region.swamp.desc,"Đầm lầy độc; ô lầy làm chậm và rút máu, nấm bào tử, ếch nhảy và cóc chúa.","A poison bog; mire slows and drains you, with spore caps, leap frogs and the toad matriarch."
+region.desert.desc,"Sa mạc cát ấn; cát lấp ô, gió đẩy mảnh trôi, bọ cát lặn và nhân sư.","Sealed sands; sand fills cells, wind drifts the pieces, burrowing beetles and the sphinx."
 ui.relic.title,BẢO VẬT,RELICS
 ui.relic.rarity.common,Thường,Common
 ui.relic.rarity.rare,Hiếm,Rare
@@ -602,3 +604,44 @@ ui.stats.fates_value,%d / %d,%d / %d
 ui.run_hud.fell_at,Gục ở tầng %d · %s,Fell on floor %d · %s
 ui.run_hud.killed_by,Kẻ hạ bạn: %s,Defeated by: %s
 ui.hud.join_hint,Kéo thêm mảnh vào để ghép,Drag another piece in to join
+chapter.swamp.name,Đầm Lầy Độc,The Poison Swamp
+chapter.swamp.intro,Hơi độc bốc lên từ bùn đen. Mỗi bước chân chìm sâu hơn bước trước.,Poison vapor rises from the black mud. Every step sinks deeper than the last.
+chapter.swamp.end,"Cóc Chúa lặn xuống bùn, đầm lầy lặng tiếng. Con đường lại hiện ra.",The Toad Matriarch sinks into the mud and the swamp falls quiet. The road shows itself again.
+chapter.desert.name,Sa Mạc Cát Ấn,The Sealed Sands
+chapter.desert.intro,Gió nóng cuốn cát qua những cồn đá cổ. Cát nuốt từng ô đất dưới chân.,Hot wind drives sand across ancient dunes. The sand swallows the ground tile by tile.
+chapter.desert.end,"Nhân Sư Cát vỡ vụn thành bụi, bão tan. Chân trời mở ra phía trước.",The Sand Sphinx crumbles to dust and the storm dies. The horizon opens ahead.
+arena.bog.name,Đầm lầy,Bog
+arena.reed_maze.name,Mê cung lau sậy,Reed Maze
+arena.dunes.name,Cồn cát,Dunes
+arena.oasis.name,Ốc đảo,Oasis
+boss.bog_rat.name,Chuột Lầy,Bog Rat
+boss.mire_slug.name,Sên Bùn,Mire Slug
+boss.swamp_lizard.name,Thằn Lằn Đầm,Swamp Lizard
+boss.marsh_toad.name,Cóc Đầm,Marsh Toad
+boss.reed_witch.name,Phù Thủy Lau Sậy,Reed Witch
+boss.bog_hound.name,Chó Săn Đầm,Bog Hound
+boss.spore_cap.name,Nấm Bào Tử,Spore Cap
+boss.leap_frog.name,Ếch Nhảy,Leap Frog
+boss.toad_matriarch.name,Cóc Chúa,Toad Matriarch
+boss.dune_jackal.name,Chó Rừng Cồn,Dune Jackal
+boss.sand_beetle.name,Bọ Cát,Sand Beetle
+boss.dust_nomad.name,Du Mục Bụi,Dust Nomad
+boss.mirage_sprite.name,Bóng Ảo Ảnh,Mirage Sprite
+boss.scarab_guard.name,Vệ Binh Bọ Hung,Scarab Guard
+boss.sun_archer.name,Xạ Thủ Mặt Trời,Sun Archer
+boss.sand_burrower.name,Bọ Cát Ẩn,Sand Burrower
+boss.scorpion.name,Bọ Cạp Phản,Riposte Scorpion
+boss.sand_sphinx.name,Nhân Sư Cát,Sand Sphinx
+match.mire_slug.desc,Sống trong bùn: lầy không làm nó chậm hay mất máu.,It lives in the mud: mire neither slows nor hurts it.
+match.spore_cap.desc,"Mỗi lần trúng đòn, nó rải lầy lên đất bạn: đánh ít mà đau.","Every hit makes it scatter mire over your side: strike few, strike hard."
+match.leap_frog.desc,Cứ vài bước lại nhảy 2 ô qua kết giới và gai: đón đầu bóng đích.,Every few steps it hops 2 tiles over seals and thorns: hit the landing shadow.
+match.toad_matriarch.desc,"Miễn nhiễm với lầy, biến đất bạn thành bãi lầy và chặn đường thoát.","Immune to mire, it turns your ground to bog and cuts off your escape."
+match.sand_burrower.desc,"Lặn xuống cát rồi trồi lên chỗ khác: canh nhịp, đừng đánh lúc nó lặn.","It dives under the sand and resurfaces elsewhere: time your cut, not while it is buried."
+match.scorpion.desc,Trúng đòn lớn là nó phản lại ngay: hãy dùng đòn nhỏ.,A big hit earns an instant counter-sting: use small cuts.
+match.sand_sphinx.desc,"Cứ vài nhịp lại dấy bão cát: gió trôi nhanh gấp đôi, cát lấp thêm ô.",Every so often a sandstorm rises: pieces drift twice as fast and more tiles fill with sand.
+ui.hud.wind,GIÓ,WIND
+ui.hud.sandstorm,BÃO CÁT,SANDSTORM
+ui.hud.hop,NHẢY,HOP
+ui.hud.riposte,PHẢN ĐÒN,RIPOSTE
+ui.hud.surface,TRỒI LÊN,SURFACING
+ui.hud.burrowed,ĐANG LẶN,BURROWED

@@ -146,6 +146,9 @@ var _shop_policy: String = "greedy"
 var _event_policy: String = "risky"
 var _economy_set: Array[String] = []
 var _economy: EconomyConfig
+## Story 036: --region=<id,...> (region / chapter ids) and --floor=1,3,5 (1-based floors) of the region mode.
+var _regions: Array[String] = []
+var _region_floors: Array[int] = []
 
 
 ## Story 031 world mode: a run's state (the parts of RunSession the bot and the reward policy read), so the
@@ -248,6 +251,14 @@ func _init() -> void:
 				_chapter_list = [0]
 		elif arg == "--no-treasure":
 			_no_treasure = true
+		elif arg.begins_with("--region="):
+			for r: String in v.split(","):
+				if not r.strip_edges().is_empty():
+					_regions.append(r.strip_edges())
+		elif arg.begins_with("--floor="):
+			for fl: String in v.split(","):
+				if fl.strip_edges().is_valid_int() and int(fl.strip_edges()) >= 1:
+					_region_floors.append(int(fl.strip_edges()))
 		elif arg == "--world":
 			_world = true
 		elif arg.begins_with("--region-pick="):
@@ -298,6 +309,11 @@ func _init() -> void:
 	_economy = EconomyConfig.shared() if _economy_set.is_empty() else _economy_with_overrides(_economy_set)
 	_max_level = int(_reward_config["max_card_level"])
 	_min_deck_size = int(_reward_config["min_deck_size"])
+	if not _regions.is_empty():
+		_run_region_mode(seeds)
+		print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
+		quit(0)
+		return
 	if _world:
 		_run_world_mode(seeds)
 		print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
@@ -1781,3 +1797,112 @@ func _raw_cells(runs: Array[Dictionary]) -> Array[String]:
 		cells.append("%d|%d|%d|%d|%d|%d|%d" % [int(float(r["gold_drop"]) + float(r["gold_event_in"])), int(r["gold_spent"]),
 			int(r["gold_left"]), 1 if bool(r["won"]) else 0, int(items[i]), int(r["first_shop_items"]), int(r["seen_shop_gold"])])
 	return cells
+
+
+# --- Story 036: --region / --floor mode --------------------------------------------------------------
+
+# Chapter index of region / chapter id [param id] (any chapters.json entry, ch1..ch3 included); -1 unknown.
+func _region_ci(id: String) -> int:
+	return _chapters.region_index(id)
+
+
+# Pool kind of every match of chapter [param ci] (pools.<kind>.<tier>; the first kind wins; "battle" default).
+func _region_match_kinds(ci: int) -> Dictionary:
+	var kinds: Dictionary = {}
+	var pools: Variant = _chapters.get_map_spec(ci).get("pools", {})
+	if typeof(pools) != TYPE_DICTIONARY:
+		return kinds
+	for kind: Variant in (pools as Dictionary).keys():
+		var tiers: Variant = (pools as Dictionary)[kind]
+		if typeof(tiers) != TYPE_DICTIONARY:
+			continue
+		for tier: Variant in (tiers as Dictionary).keys():
+			for id: Variant in (tiers as Dictionary)[tier] as Array:
+				if not kinds.has(str(id)):
+					kinds[str(id)] = str(kind)
+	return kinds
+
+
+# Story 036 Part E: every match of each --region played on its own at each --floor (Story 031 scaling through
+# RunConfig.from_node: region_normalize then floor_scaling row N), N seeds per match, full HP, the character's
+# starter deck, --relics if given. One REGION row per match and floor, one REGION MEAN row per region and floor
+# (unweighted mean over the matches), then a REGION CHECK line against the story targets. Nothing else runs.
+func _run_region_mode(seeds: int) -> void:
+	var floors: Array[int] = _region_floors.duplicate()
+	if floors.is_empty():
+		floors = [1]
+	var relics: Array[String] = []
+	relics.assign(_core.ov["relics"] as Array)
+	print("deck_sim --region (Story 036): regions=%s floors=%s seeds=%d characters=%s timeout=%.0fs; each match alone, full HP, starter deck, floor N = floor_scaling row N after region_normalize" % [
+		str(_regions), str(floors), seeds, str(_characters_run), SimCore.MATCH_TIMEOUT_SEC])
+	print(_core.describe())
+	print("columns: match | kind | n | win % | timeout % | hits landed/match | boss hits/match | HP taken/match | mire entries/match | mire HP/match | mire share of HP taken % | pieces buried/match | pieces drifted/match | boss mire entries/match | sand cells/match | arena hazards")
+	for char_id: String in _characters_run:
+		var character: Dictionary = _core.prepare_character(_core.characters.get_character(char_id))
+		var deck_entries: Array = []
+		for id: Variant in character.get("starter_deck", []) as Array:
+			deck_entries.append({"id": str(id), "level": 1})
+		for region: String in _regions:
+			var ci: int = _region_ci(region)
+			if ci < 0:
+				print("--region: '%s' is not a chapters.json id, skipped" % region)
+				continue
+			var kinds: Dictionary = _region_match_kinds(ci)
+			for f: int in floors:
+				var rows: Array[Dictionary] = []
+				for id: String in _chapters.match_ids(ci):
+					var kind: String = str(kinds.get(id, "battle"))
+					var a: Dictionary = {"n": 0.0, "won": 0.0, "timeout": 0.0, "hits": 0.0, "bhits": 0.0, "taken": 0.0, "mire_in": 0.0,
+						"mire_dmg": 0.0, "buried": 0.0, "drifted": 0.0, "bmire_in": 0.0, "sand_cells": 0.0}
+					var haz: String = ""
+					for s: int in seeds:
+						var run_config: RunConfig = RunConfig.from_node(_chapters, ci, id, kind, s, f - 1)
+						var m: Dictionary = _core.prepare_match(run_config.matches[0])
+						m["chapter_id"] = region
+						_core.invulnerable = false
+						_core.time_limit_sec = SimCore.MATCH_TIMEOUT_SEC
+						_core.relic_ids = relics.duplicate()
+						var bot_rng := RandomNumberGenerator.new()
+						bot_rng.seed = hash([s, char_id, region, id, f]) & SEED_MASK
+						var r: Dictionary = _core.play_match(m, character, deck_entries, -1.0, hash([s, region, id, f, "m"]) & SEED_MASK, bot_rng)
+						haz = "mire %d cells%s%s" % [_core._haz_mire, ", sand" if _core._haz_sand else "", ", wind" if _core._haz_wind else ""]
+						a["n"] = float(a["n"]) + 1.0
+						a["won"] = float(a["won"]) + (1.0 if bool(r["won"]) else 0.0)
+						a["timeout"] = float(a["timeout"]) + (1.0 if bool(r["timeout"]) else 0.0)
+						for k: String in ["hits", "bhits", "taken", "mire_in", "mire_dmg", "buried", "drifted", "bmire_in", "sand_cells"]:
+							a[k] = float(a[k]) + float(r.get(k, 0))
+					var n: float = maxf(float(a["n"]), 1.0)
+					var row: Dictionary = {"id": id, "kind": kind, "win": 100.0 * float(a["won"]) / n, "hits": float(a["hits"]) / n,
+						"mire_in": float(a["mire_in"]) / n, "mire_dmg": float(a["mire_dmg"]) / n, "taken": float(a["taken"]) / n,
+						"buried": float(a["buried"]) / n, "drifted": float(a["drifted"]) / n}
+					rows.append(row)
+					print("REGION %s | %s | floor %d | %s | %s | %d | %.0f | %.0f | %.1f | %.1f | %.1f | %.2f | %.1f | %.1f | %.2f | %.2f | %.2f | %.2f | %s" % [
+						char_id, region, f, id, kind, int(a["n"]), row["win"], 100.0 * float(a["timeout"]) / n, row["hits"],
+						float(a["bhits"]) / n, row["taken"], row["mire_in"], row["mire_dmg"],
+						100.0 * float(a["mire_dmg"]) / maxf(float(a["taken"]), 0.001), row["buried"], row["drifted"],
+						float(a["bmire_in"]) / n, float(a["sand_cells"]) / n, haz])
+				_region_mean(char_id, region, f, rows)
+
+
+# REGION MEAN (unweighted over the matches) + REGION CHECK (story 036 E3 targets that one region run can show:
+# floor-1 match win in 15-95 %, mire HP <= 15 % of HP taken; the +-10 points vs ch1-ch3 needs those runs too).
+func _region_mean(char_id: String, region: String, f: int, rows: Array[Dictionary]) -> void:
+	if rows.is_empty():
+		return
+	var sums: Dictionary = {"win": 0.0, "hits": 0.0, "mire_in": 0.0, "mire_dmg": 0.0, "taken": 0.0, "buried": 0.0, "drifted": 0.0}
+	var outside: Array[String] = []
+	for row: Dictionary in rows:
+		for k: String in sums.keys():
+			sums[k] = float(sums[k]) + float(row[k])
+		if float(row["win"]) > 95.0 or float(row["win"]) < 15.0:
+			outside.append("%s %.0f%%" % [row["id"], row["win"]])
+	var n: float = float(rows.size())
+	var share: float = 100.0 * float(sums["mire_dmg"]) / maxf(float(sums["taken"]), 0.001)
+	print("REGION MEAN %s | %s | floor %d | matches %d | win %% %.1f | hits landed/match %.1f | HP taken/match %.1f | mire entries/match %.2f | mire HP/match %.1f | mire share %.1f %% | buried/match %.2f | drifted/match %.2f" % [
+		char_id, region, f, rows.size(), float(sums["win"]) / n, float(sums["hits"]) / n, float(sums["taken"]) / n,
+		float(sums["mire_in"]) / n, float(sums["mire_dmg"]) / n, share, float(sums["buried"]) / n, float(sums["drifted"]) / n])
+	var win_note: String = "n/a (floor %d)" % f
+	if f == 1:
+		win_note = ("none" if outside.is_empty() else ", ".join(outside))
+	print("REGION CHECK %s | %s | floor %d | matches outside 15-95 %% win at floor 1: %s | mire share %.1f %% (target <= 15): %s | compare win %% %.1f with the ch1-ch3 REGION MEAN at this floor (target +-10 pts)" % [
+		char_id, region, f, win_note, share, "PASS" if share <= 15.0 else "MISS", float(sums["win"]) / n])

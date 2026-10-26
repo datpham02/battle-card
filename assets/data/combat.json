@@ -35,5 +35,17 @@
 		"thorn_sec": 3.0,
 		"thorn_damage": 6.0,
 		"thorn_fragile_stacks": 1
+	},
+	"hazards": {
+		"mire_step_mult": 1.6,
+		"mire_tick_damage": 0.5,
+		"mire_tick_sec": 0.5,
+		"mire_grace_sec": 0.5,
+		"sand_interval_sec": 6.0,
+		"sand_cells": 2,
+		"sand_sec": 3.0,
+		"sand_warn_sec": 0.8,
+		"drift_sec": 2.0,
+		"wind_shift_sec": 8.0
 	}
 }

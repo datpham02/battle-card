@@ -1,12 +1,12 @@
 # Story 036: Vùng Đầm Lầy Độc và Sa Mạc Cát Ấn — ô lầy, cát lấp ô, mảnh trôi theo gió, địch và boss vùng mới
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-25
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -99,7 +99,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/regions-swamp-desert/`; bảng mô phỏng theo tầng.
 
-**Status**: Not yet created
+**Status**: Created — 5 test suites (`tests/unit/combat/{hazard,boss_brain_hazard}_test`, `tests/unit/traits/region_traits_test`, `tests/unit/run/regions_swamp_desert_test`, `tests/unit/ui/hazard_strings_test`), 10 screenshots and `simulation-regions.md` in `production/qa/evidence/regions-swamp-desert/`
 
 ---
 
@@ -107,3 +107,13 @@
 
 - Depends on: Story 031 (bản đồ thế giới, pool vùng, hệ số theo tầng), Story 027 (luật chừa đường, `add_blocker`), Story 024/025 (mảnh trên sân, boss dùng mảnh)
 - Unlocks: Story 039 (đợt vùng 3 dùng lại lớp ô), Story 040 (cân bằng cả run)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 20/21 passing; E3 (simulation) partly met. Region mean within +-10 points at floors 1/3/5 (swamp +0.8/-0.5/-0.3, desert +3.7/+0.3/-3.4 against ch1-ch3) and mire share 10.7-13.4 % (<= 15 %). NOT met: "no match above 95 % at floor 1" — every old-region match is also 97-100 % there; the sim plays one match alone at full HP with the starter deck, so it is a measurement limit. DEFERRED: how the new tiles read and feel on a real phone (gate 8 playtest).
+**Deviations** (JSON tuning, as the story allows): `mire_tick_damage` 1 -> 0.5 (mire share was 19-23 %); `bog_hound` / `sun_archer` step 1.3 -> 1.6 and swing 0.9 -> 1.0; `reed_witch` step 1.35 -> 1.6 and `rotten_thrower.interval_sec` 7 -> 9; `scarab_guard` `boss_defense` 3 -> 2. Tuning table: `simulation-regions.md`.
+**Test Evidence**: Integration: 5 new suites + 6 updated, sweep 213 parse, 84 headless + 4 windowed FAILS=0, launch 0 errors; screenshots `production/qa/evidence/regions-swamp-desert/01-10*.png`; simulation `simulation-regions.md` + `simulation-regions-raw.txt`.
+**Code Review**: Skipped (solo mode)
+**Tech debt**: TD-032 (floor-1 target, region bosses low at floor 5, display issues, EN world title overlap).

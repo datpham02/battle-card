@@ -103,6 +103,15 @@ var _boss_step_sec: float = 0.0
 ## Story 027: the last dodge decision {cell, thorn_cost, hit_cost, steps, late, swing_damage, stay_cost}
 ## or {stay: true, ...} when staying in the swing was cheaper; empty when no dodge was planned.
 var _dodge_plan: Dictionary = {}
+## Story 036: the match's tile hazards (null = none: the brain decides exactly as before Story 036,
+## same RNG draws). Set through BossController.set_hazards.
+var _hazards: TileHazards = null
+## Story 036: own-half mire cell -> cost (mire_avoid x (mire_step_mult - 1 + mire_tick_damage)), rebuilt
+## every decide; empty without hazards or when the boss is mire_immune.
+var _mire_pen: Dictionary = {}
+## Story 036: hazard components of the last think (mire costs, sand cells blocked, wind, pickup drift);
+## copied into last_debug().hazards when hazards are set.
+var _hazard_debug: Dictionary = {}
 
 
 ## [param seed_value] below 0 gives a random seed; otherwise noise is deterministic.
@@ -182,6 +191,19 @@ func get_destination() -> Dictionary:
 	}
 
 
+## Story 036: shares the match's tile hazards (null = none). Mire cells of the boss's half cost
+## mire_avoid x (mire_step_mult - 1 + mire_tick_damage) to step into (0 when the boss is mire_immune),
+## sand cells (filled and warning) of both halves are blocked like seals, and with wind on a field
+## piece that will drift before the boss reaches it is scored at the cell it drifts to.
+func set_hazards(hazards: TileHazards) -> void:
+	_hazards = hazards
+
+
+## The tile hazards the brain reads (null = none).
+func get_hazards() -> TileHazards:
+	return _hazards
+
+
 ## Advances the brain's clocks. [param player_swing_active] is whether the player has a swing
 ## running right now; the time it has been visible resets when it ends.
 func tick(delta: float, player_swing_active: bool) -> void:
@@ -231,6 +253,10 @@ func decide(ctx: Dictionary) -> Dictionary:
 		var thorn_avoid: float = float(_weights.get("thorn_avoid", 0.0))
 		for cell: Vector2i in _status.thorn_cells(CombatState.Side.ENEMY):
 			_thorn_pen[cell] = thorn_avoid * float(_status.thorns_at(CombatState.Side.ENEMY, cell).get("damage", 0.0))
+	_mire_pen = {}
+	_hazard_debug = {}
+	if _hazards != null:
+		_apply_hazards(own_blocked, player_blocked)
 	_swing_damage = _cut_config.slash_damage(incoming.size()) if not incoming.is_empty() else 0.0
 	_swing_time_left = player_actor.get_time_left() if not incoming.is_empty() else 0.0
 	_boss_step_sec = _config.step_cooldown_sec * maxf(mover.cooldown_mult, 0.0)
@@ -255,6 +281,8 @@ func decide(ctx: Dictionary) -> Dictionary:
 	_debug["cut_candidates"] = _cut_candidates.duplicate()
 	if not _dodge_plan.is_empty():
 		_debug["dodge_plan"] = _dodge_plan.duplicate()
+	if _hazards != null:
+		_debug["hazards"] = _hazard_debug.duplicate(true)
 	_debug["alternatives"] = {
 		"cut": float(best_cut["score"]) if not best_cut.is_empty() else null,
 		"move": float(best_move["score"]) if not best_move.is_empty() else null,
@@ -282,7 +310,9 @@ func decide(ctx: Dictionary) -> Dictionary:
 ## cut: {labels, score, escape, escape_term, hit_now}), and for cuts hand_indices / skill_id /
 ## labels / cells / escape, for moves direction / purpose; breakdown of a move = {purpose, thorn,
 ## noise}, thorn = -thorn cost of the step (0 for a dodge: its trade is in dodge_plan); dodge_plan when a
-## dodge was planned this think (Story 027)}.
+## dodge was planned this think (Story 027); Story 036 with hazards set: breakdown.mire = -mire cost of the
+## step and hazards {mire_avoid, mire_unit_cost, mire_immune, mire_pen (cell -> cost), sand_blocked,
+## wind_dir, drift_left, pickup_drift [{uid, from, to, steps}]}}.
 func last_debug() -> Dictionary:
 	return _debug.duplicate(true)
 
@@ -710,9 +740,16 @@ func _plan_move(
 	var noise: float = _move_noise()
 	# Story 027: a non-dodge step into a thorn pays its cost; a dodge already weighed it (dodge_plan).
 	var thorn: float = 0.0 if purpose == PURPOSE_DODGE else -_thorn_penalty(here + direction)
+	if _hazards == null:
+		return {
+			"type": "move", "score": base + thorn + noise, "direction": direction, "purpose": purpose,
+			"breakdown": {purpose: base, "thorn": thorn, "noise": noise},
+		}
+	# Story 036: a non-dodge step into mire pays its cost too (a dodge weighed it in its path cost).
+	var mire: float = 0.0 if purpose == PURPOSE_DODGE else -_mire_penalty(here + direction)
 	return {
-		"type": "move", "score": base + thorn + noise, "direction": direction, "purpose": purpose,
-		"breakdown": {purpose: base, "thorn": thorn, "noise": noise},
+		"type": "move", "score": base + thorn + mire + noise, "direction": direction, "purpose": purpose,
+		"breakdown": {purpose: base, "thorn": thorn, "mire": mire, "noise": noise},
 	}
 
 
@@ -740,6 +777,10 @@ func _destination_invalid(points: Array[FieldPoint], incoming: Array[Vector2i], 
 		var uid: int = int(_destination["target_uid"])
 		for point: FieldPoint in points:
 			if point.uid == uid and point.cell == cell:
+				return false
+			# Story 036: the piece has not drifted yet but the wind still carries it to the destination.
+			if point.uid == uid and _destination.has("drift_from") and point.cell == _destination["drift_from"] \
+					and point.cell + _drift_dir() == cell:
 				return false
 		return true
 	if purpose == PURPOSE_DODGE:
@@ -772,7 +813,8 @@ func _arrive(here: Vector2i, incoming: Array[Vector2i], burning: Array[Vector2i]
 	var best_key: Array = []
 	for dir: Vector2i in perpendicular:
 		var cell: Vector2i = here + dir
-		if not _grid.is_enemy_cell(cell) or burning.has(cell) or incoming.has(cell) or _thorn_pen.has(cell):
+		if not _grid.is_enemy_cell(cell) or burning.has(cell) or incoming.has(cell) or _thorn_pen.has(cell) \
+				or _mire_pen.has(cell):
 			continue
 		var key: Array = [-_grid.to_side_coords(cell).x, cell.y]
 		if best == here or _key_less(key, best_key):
@@ -796,16 +838,24 @@ func _choose_destination(
 	var best: Dictionary = {}
 	var best_score: float = -INF
 	if not (hand.is_full() and float(_weights["pickup_full_hand_zero"]) >= 0.5):
+		var occupied: Dictionary = {}
+		if _drift_dir() != Vector2i.ZERO:
+			for point: FieldPoint in points:
+				occupied[point.cell] = true
 		for point: FieldPoint in points:
-			if point.cell == here or not reach.has(point.cell):
+			# Story 036: with wind on, a piece that drifts before the boss gets there is scored where it drifts to.
+			var target: Vector2i = _drift_target(point, reach, burning, occupied)
+			if target == here or not reach.has(target):
 				continue
-			var score: float = float(_weights["pickup_value"]) / (1.0 + float(reach[point.cell]))
-			if incoming.has(point.cell):
+			var score: float = float(_weights["pickup_value"]) / (1.0 + float(reach[target]))
+			if incoming.has(target):
 				score -= float(_weights["pickup_danger_penalty"])
 			score += _move_noise()
 			if best.is_empty() or score > best_score:
 				best_score = score
-				best = {"cell": point.cell, "purpose": PURPOSE_PICKUP, "target_uid": point.uid}
+				best = {"cell": target, "purpose": PURPOSE_PICKUP, "target_uid": point.uid}
+				if target != point.cell:
+					best["drift_from"] = point.cell
 	if best.is_empty():
 		var hp_ratio: float = state.enemy_hp / maxf(state.enemy_max_hp, 0.001)
 		if hp_ratio < float(_weights["retreat_hp_ratio"]) and float(_weights["retreat_bonus"]) > 0.0:
@@ -1001,9 +1051,14 @@ func _thorn_penalty(cell: Vector2i) -> float:
 	return float(_thorn_pen.get(cell, 0.0))
 
 
+# Story 027 + 036: everything a path pays to enter [param cell]: thorn cost + mire cost.
+func _zone_penalty(cell: Vector2i) -> float:
+	return _thorn_penalty(cell) + _mire_penalty(cell)
+
+
 # Total cost of reaching the search origin from [param from] when the next step is [param cell].
 func _via(dist: Dictionary, cell: Vector2i) -> float:
-	return float((dist[cell] as Array)[0]) + 1.0 + _thorn_penalty(cell)
+	return float((dist[cell] as Array)[0]) + 1.0 + _zone_penalty(cell)
 
 
 # True when a dodge of [param steps] steps would land after the visible swing resolves (no swing: false).
@@ -1014,7 +1069,7 @@ func _arrives_late(steps: int) -> bool:
 
 
 # Cheapest paths over the boss's real, non-blocked cells (Dijkstra; tiny grid, linear scan). Returns
-# cell -> [metric, thorn cost, steps] where metric = steps + thorn cost of every cell entered. Forward
+# cell -> [metric, zone cost, steps] where metric = steps + thorn (+ Story 036 mire) cost of every cell entered. Forward
 # (from [param origin]) the cost of a step is that of the cell entered; [param backward] (origin = a
 # target) charges the cell stepped from, so metric = the cost of walking from that cell TO the origin.
 # [param allow] may be entered even if blocked (the walker standing in a seal or a burning cell).
@@ -1041,8 +1096,92 @@ func _cost_map(origin: Vector2i, blocked: Array[Vector2i], backward: bool, allow
 				continue
 			if blocked.has(next) and next != allow:
 				continue
-			var pen: float = _thorn_penalty(cell) if backward else _thorn_penalty(next)
+			var pen: float = _zone_penalty(cell) if backward else _zone_penalty(next)
 			var next_metric: float = float(entry[0]) + 1.0 + pen
 			if not best.has(next) or next_metric < float((best[next] as Array)[0]) - _COST_EPS:
 				best[next] = [next_metric, float(entry[1]) + pen, int(entry[2]) + 1]
 	return best
+
+
+# ---------------------------------------------------------------- hazards (Story 036)
+
+
+# Reads the hazards for this think: sand (filled + warning) joins the blocked cells of each half, the mire
+# cost map of the boss's half is rebuilt (empty when immune), the components go to _hazard_debug.
+func _apply_hazards(own_blocked: Array[Vector2i], player_blocked: Array[Vector2i]) -> void:
+	var enemy: int = CombatState.Side.ENEMY
+	var player: int = CombatState.Side.PLAYER
+	var own_sand: Array[Vector2i] = _hazards.sand_cells(enemy)
+	own_sand.append_array(_hazards.sand_warning_cells(enemy))
+	for cell: Vector2i in own_sand:
+		if not own_blocked.has(cell):
+			own_blocked.append(cell)
+	var player_sand: Array[Vector2i] = _hazards.sand_cells(player)
+	player_sand.append_array(_hazards.sand_warning_cells(player))
+	for cell: Vector2i in player_sand:
+		if not player_blocked.has(cell):
+			player_blocked.append(cell)
+	var cfg: Dictionary = _hazards.get_debug().get("cfg", {}) as Dictionary
+	var step_mult: float = float(cfg.get("mire_step_mult", 1.0))
+	var unit_cost: float = maxf(step_mult - 1.0, 0.0) + maxf(float(cfg.get("mire_tick_damage", 0.0)), 0.0)
+	var weight: float = float(_weights.get("mire_avoid", 0.0))
+	var immune: bool = _is_mire_immune(enemy, step_mult)
+	if not immune and weight > 0.0 and unit_cost > 0.0:
+		for cell: Vector2i in _hazards.mire_cells(enemy):
+			_mire_pen[cell] = weight * unit_cost
+	_hazard_debug = {
+		"mire_avoid": weight, "mire_unit_cost": unit_cost, "mire_immune": immune, "mire_pen": _mire_pen.duplicate(),
+		"sand_blocked": own_sand, "wind_dir": _drift_dir(), "drift_left": _time_to_drift(), "pickup_drift": [],
+	}
+
+
+# Cost of stepping INTO [param cell] of the boss's half: mire_avoid x the mire unit cost (0 = dry or immune).
+func _mire_penalty(cell: Vector2i) -> float:
+	return float(_mire_pen.get(cell, 0.0))
+
+
+# True when [param side] ignores mire. Uses TileHazards.is_mire_immune when it exists; otherwise a mire cell
+# whose step costs no more than 1.0 while mire_step_mult > 1 means immune.
+func _is_mire_immune(side: int, step_mult: float) -> bool:
+	if _hazards.has_method("is_mire_immune"):
+		return bool(_hazards.call("is_mire_immune", side))
+	var cells: Array[Vector2i] = _hazards.mire_cells(side)
+	if cells.is_empty() or step_mult <= 1.0:
+		return false
+	return _hazards.step_cost_mult(side, cells[0]) <= 1.0
+
+
+# The wind direction field pieces drift along (ZERO without hazards or with the wind off).
+func _drift_dir() -> Vector2i:
+	if _hazards == null or not _hazards.wind_enabled():
+		return Vector2i.ZERO
+	return _hazards.wind_dir()
+
+
+# Seconds until the next drift: TileHazards.drift_left when it exists, else one full drift interval
+# (drift_sec x drift_mult; conservative: fewer pieces are assumed to drift).
+func _time_to_drift() -> float:
+	if _hazards == null:
+		return INF
+	if _hazards.has_method("drift_left"):
+		return float(_hazards.call("drift_left"))
+	var snap: Dictionary = _hazards.get_debug()
+	var cfg: Dictionary = snap.get("cfg", {}) as Dictionary
+	return float(cfg.get("drift_sec", 0.0)) * float(snap.get("drift_mult", 1.0))
+
+
+# Where the boss should go to pick [param point] up: one cell along the wind when the piece will drift
+# before the boss reaches it (path steps x boss step cooldown > time to the next drift) and the drift cell
+# is an own, unblocked cell holding no piece (the FieldDrops drift rule); else the piece's own cell.
+func _drift_target(point: FieldPoint, reach: Dictionary, blocked: Array[Vector2i], occupied: Dictionary) -> Vector2i:
+	var dir: Vector2i = _drift_dir()
+	if dir == Vector2i.ZERO or not reach.has(point.cell):
+		return point.cell
+	var steps: int = int(reach[point.cell])
+	if float(steps) * _boss_step_sec <= _time_to_drift():
+		return point.cell
+	var next: Vector2i = point.cell + dir
+	if not _grid.is_enemy_cell(next) or blocked.has(next) or occupied.has(next):
+		return point.cell
+	(_hazard_debug["pickup_drift"] as Array).append({"uid": point.uid, "from": point.cell, "to": next, "steps": steps})
+	return next

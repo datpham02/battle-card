@@ -53,6 +53,9 @@ var execute_ratio: float = 0.0
 ## blocked from stepping onto a cell (UnitMover.is_cell_blocked); used by the seal leave-a-path rule.
 var zone_numbers: Dictionary = {}
 var blocked_cell_fns: Dictionary = {}
+## Story 036: Callable() -> bool, true while the BOSS cannot be hit (TraitHost.is_boss_untargetable, burrow; set by
+## TraitHost). A player cast that lands then is a miss (no damage, no interrupt) but still leaves its zone. Invalid = never.
+var enemy_untargetable_fn: Callable = Callable()
 
 
 func _init(
@@ -121,7 +124,8 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		{"target_defense": boss_defense, "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
 			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
 			"relic_modifier": player_relic_modifier if is_player else Callable(),
-			"zone_overrides": player_zone_overrides if is_player else {}})
+			"zone_overrides": player_zone_overrides if is_player else {},
+			"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call())})
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	result["level"] = level

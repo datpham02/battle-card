@@ -48,6 +48,18 @@ const PIECE_TOP_RATIO: float = 0.14
 const PIECE_BOTTOM_RATIO: float = 0.22
 const PIECE_MAX_UNIT_RATIO: float = 0.3
 
+## Story 036 wind streak (see _draw_drift_streak): colour, line width, number of speed lines, their spread across
+## the cell, where they start behind the centre and how long they run (shares of the half cell), the chevron's
+## distance ahead of the centre and its arm (share of the shorter cell side).
+const STREAK_COLOR: Color = Color(0.86, 0.95, 1.0, 0.95)
+const STREAK_WIDTH: float = 3.0
+const STREAK_LINES: int = 3
+const STREAK_SPREAD_RATIO: float = 0.45
+const STREAK_BACK_RATIO: float = 0.95
+const STREAK_LENGTH_RATIO: float = 0.45
+const STREAK_TIP_RATIO: float = 0.92
+const STREAK_CHEVRON_RATIO: float = 0.12
+
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 ## True = draw the BOSS half's field points (boss.get_drops()) instead of the player's; the
@@ -125,6 +137,51 @@ func _draw() -> void:
 			draw_rect(full_tag, FULL_BACK)
 			draw_rect(full_tag, TEXT_COLOR, false, OUTLINE_WIDTH)
 			draw_string(ThemeDB.fallback_font, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, full_font, TEXT_COLOR)
+
+
+	# Story 036: a wind streak on every point the next drift will move, drawn above all points.
+	for point: FieldPoint in drifting_points(_source().get_points(), grid):
+		_draw_drift_streak(ScreenLayout.cell_rect(grid, vp, point.cell), _combat.get_hazards().wind_dir())
+
+
+## Story 036: the points of [param points] that the next wind drift moves, by the rule of FieldDrops.drift_pieces:
+## the cell one step along TileHazards.wind_dir() is a cell of this half, holds no other point (before the drift)
+## and is not filled sand. Empty while no wind blows. No field point is ever dragged (pieces are placed from the
+## hold bag), so no point is excluded as "dragged" (Story 036 W1 deviation).
+func drifting_points(points: Array[FieldPoint], grid: BoardGrid) -> Array[FieldPoint]:
+	var out: Array[FieldPoint] = []
+	var hazards: TileHazards = _combat.get_hazards() if _combat != null else null
+	if hazards == null or not hazards.wind_enabled() or hazards.wind_dir() == Vector2i.ZERO:
+		return out
+	var side: int = CombatState.Side.ENEMY if boss_side else CombatState.Side.PLAYER
+	var dir: Vector2i = hazards.wind_dir()
+	var occupied: Array[Vector2i] = []
+	for p: FieldPoint in points:
+		occupied.append(p.cell)
+	for p: FieldPoint in points:
+		var target: Vector2i = p.cell + dir
+		var in_half: bool = grid.is_enemy_cell(target) if boss_side else grid.is_player_cell(target)
+		if in_half and not occupied.has(target) and not hazards.is_sanded(side, target):
+			out.append(p)
+	return out
+
+
+# Wind streak: STREAK_LINES short speed lines trailing on the upwind side of the cell and a chevron on the
+# downwind edge, pointing along [param dir] (grid +y = screen down).
+func _draw_drift_streak(rect: Rect2, dir_cell: Vector2i) -> void:
+	var dir := Vector2(dir_cell)
+	var normal := Vector2(-dir.y, dir.x)
+	var c: Vector2 = rect.get_center()
+	var half: Vector2 = rect.size * 0.5
+	var reach: float = absf(dir.x) * half.x + absf(dir.y) * half.y
+	var spread: float = absf(normal.x) * half.x + absf(normal.y) * half.y
+	for i: int in STREAK_LINES:
+		var offset: float = spread * STREAK_SPREAD_RATIO * (float(i) - float(STREAK_LINES - 1) * 0.5)
+		var start: Vector2 = c - dir * reach * STREAK_BACK_RATIO + normal * offset
+		draw_line(start, start + dir * reach * STREAK_LENGTH_RATIO, STREAK_COLOR, STREAK_WIDTH)
+	var tip: Vector2 = c + dir * reach * STREAK_TIP_RATIO
+	var arm: float = minf(rect.size.x, rect.size.y) * STREAK_CHEVRON_RATIO
+	draw_polyline(PackedVector2Array([tip - dir * arm + normal * arm, tip, tip - dir * arm - normal * arm]), STREAK_COLOR, STREAK_WIDTH)
 
 
 # Story 024: a piece lying on the player's half: a mini shape of the piece in its rotation (no text

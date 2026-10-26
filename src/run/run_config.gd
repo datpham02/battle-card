@@ -13,6 +13,12 @@ const MATCH_KEYS: Array[String] = [
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
 	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards", "boss_defense", "boss_min_runes",
 	"desc_key", "boss_root_while_swinging",
+	"mire_immune",
+]
+## Story 036: combat.json `hazards` keys a match may override (same name in the match; absent = not set in the match dict).
+const HAZARD_OVERRIDE_KEYS: Array[String] = [
+	"mire_step_mult", "mire_tick_damage", "mire_tick_sec", "mire_grace_sec", "sand_interval_sec",
+	"sand_cells", "sand_sec", "sand_warn_sec", "drift_sec", "wind_shift_sec",
 ]
 ## Story 035: trait id a match's `phases` key turns into (see [method _apply_phases]).
 const BOSS_PHASES_TRAIT_ID: String = "boss_phases"
@@ -209,6 +215,12 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 	m["boss_min_runes"] = maxi(int(raw.get("boss_min_runes", m["boss_min_runes"])), 0)
 	for key: String in ["boss_think_interval_sec", "boss_reaction_sec"]:
 		m[key] = maxf(float(raw.get(key, m[key])), 0.0)
+	# Story 036: the boss ignores mire (absent = not set, the combat default is false) and per-match hazard numbers.
+	if raw.has("mire_immune"):
+		m["mire_immune"] = bool(raw["mire_immune"])
+	for key: String in HAZARD_OVERRIDE_KEYS:
+		if raw.has(key):
+			m[key] = maxf(float(raw[key]), 0.0)
 	var raw_movement: Variant = raw.get("movement", {})
 	if typeof(raw_movement) == TYPE_DICTIONARY:
 		# Passed through as-is; BossBrainConfig.override_movement validates the keys.

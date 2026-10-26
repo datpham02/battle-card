@@ -58,6 +58,20 @@ extends Node
 ##                                           (8-neighbourhood) sealed except ONE orthogonal exit, and a pending player
 ##                                           swing (CutActor.begin_swing) over the exit and the boss's cell
 ##   godot --path . -- --demo=thorns_on_boss thorns on every orthogonal neighbour of the boss (boss half)
+##   Story 036 hazard demos (the match's TileHazards, CombatView.get_hazards(), driven through its real calls and ticked in
+##   TRAIT_STEP_SEC steps; trait demos use the match's own trait or one built with the region match's chapters.json params;
+##   a missing trait prints a warning and the demo stages what it can). Pass --arena=bog|reed_maze|dunes|oasis for the board:
+##   godot --path . -- --demo=mire        arena mire on both halves (seeded spread through set_mire when the arena has none);
+##                                        the player moved onto a mire cell and ticked past the grace: one mire damage tick
+##   godot --path . -- --demo=sand        2 filled sand cells per half (time bars draining) + 2 player cells in the warning blink
+##   godot --path . -- --demo=wind        wind on, field pieces on both halves, one drift already run: the HUD wind arrow and a
+##                                        streak on each piece the next drift moves
+##   godot --path . -- --demo=spore       the player's real cast hits the boss: spore_burst (spore_cap) lays mire on the player's side
+##   godot --path . -- --demo=hop         hop_skip (leap_frog): the boss steps through its real mover until a hop is announced: shadow
+##   godot --path . -- --demo=burrow      burrow (sand_burrower) ticked until under the sand with the surface circle showing
+##   godot --path . -- --demo=riposte     a 4-cell player cast hits the boss: riposte (scorpion) warns the player's cell
+##   godot --path . -- --demo=bog_spread  bog_spread (toad_matriarch) ticked until it lays mire on the player's half
+##   godot --path . -- --demo=sandstorm   sandstorm (sand_sphinx) ticked into a storm (haze, bar, extra sand) with wind and pieces
 ##   godot --path . -- --demo=boss_through_thorns  thorns on the boss's divider-side neighbour (and the cell beside it),
 ##                                           a player swing on the boss's cell, the boss steps into the thorns through its
 ##                                           real mover (dodge): thorn_entered fires (damage, Ran +1, entry flash)
@@ -164,6 +178,20 @@ const CHAPTERS_PATH: String = "res://assets/data/chapters.json"
 const SEAL_TRAIT_MATCH: String = "jailer"
 const THORN_TRAIT_MATCH: String = "frost_mage"
 const ZONE_REWARD_CARDS: Array[String] = ["ket_gioi", "tran_gai", "gai_nguyen"]
+## Story 036 hazard demos (they also skip the intro), the trait each needs as [trait id, chapters.json match whose
+## params build it when the booted match lacks it], the mire / sand cells staged per half, the share of the warning /
+## sand / storm time already elapsed at capture, the cells of the riposte demo's cast and the boss-hit wait bound.
+const HAZARD_DEMOS: Array[String] = ["mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm"]
+const HAZARD_TRAITS: Dictionary = {
+	"spore": ["spore_burst", "spore_cap"], "hop": ["hop_skip", "leap_frog"], "burrow": ["burrow", "sand_burrower"],
+	"riposte": ["riposte", "scorpion"], "bog_spread": ["bog_spread", "toad_matriarch"], "sandstorm": ["sandstorm", "sand_sphinx"],
+}
+const HAZARD_DEMO_MIRE_CELLS: int = 3
+const HAZARD_DEMO_SAND_CELLS: int = 2
+const HAZARD_DEMO_WARN_RATIO: float = 0.4
+const HAZARD_DEMO_ELAPSED_RATIO: float = 0.3
+const HAZARD_DEMO_RIPOSTE_CELLS: int = 4
+const HAZARD_DEMO_MAX_STEPS: int = 2000
 ## Story 028 join demos: piece 1 and piece 2 of "join_menu" / "join_split" (--piece= overrides piece 1).
 const JOIN_PIECE_1: String = "l3"
 const JOIN_PIECE_2: String = "bar2"
@@ -282,6 +310,8 @@ func _ready() -> void:
 			_trait_seal_demo(combat, grid)
 		"trait_thorns":
 			_trait_thorns_demo(combat, grid)
+		"mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm":
+			_hazard_demo(combat, grid)
 		"reward_zone_cards":
 			_force_reward_offer.call_deferred()
 		"boss_downed", "final_phase2":
@@ -311,7 +341,7 @@ func _ready() -> void:
 			_fill_bag(lib2, ROTTEN_PIECE_SLOT)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
-	if PIECE_DEMOS.has(_mode):
+	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode):
 		_skip_intro.call_deferred()
 
 
@@ -498,6 +528,163 @@ func _trait_thorns_demo(combat: CombatView, grid: BoardGrid) -> void:
 		push_warning("DemoArgs: thorn_field laid nothing for demo '%s'" % _mode)
 	else:
 		print("DemoArgs: thorns_laid ", field.get_last_cells())
+
+
+# Story 036 hazard demos (see the header). Every number comes from the match's merged hazards config or the trait's params.
+func _hazard_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var hazards: TileHazards = combat.get_hazards()
+	if hazards == null:
+		push_warning("DemoArgs: CombatView has no TileHazards for demo '%s'" % _mode)
+		return
+	var state: CombatState = combat.get_state()
+	var cfg: Dictionary = hazards.get_debug().get("cfg", {}) as Dictionary
+	var player: int = CombatState.Side.PLAYER
+	var enemy: int = CombatState.Side.ENEMY
+	var hazard_trait: BossTrait = null
+	if HAZARD_TRAITS.has(_mode):
+		var spec: Array = HAZARD_TRAITS[_mode]
+		hazard_trait = _zone_trait(combat, str(spec[0]), str(spec[1]))
+		if hazard_trait == null:
+			push_warning("DemoArgs: trait '%s' missing, demo '%s' stages only the board" % [spec[0], _mode])
+	match _mode:
+		"mire":
+			for side: int in [player, enemy]:
+				if hazards.mire_cells(side).is_empty():
+					hazards.set_mire(side, _hazard_spread(grid, side, HAZARD_DEMO_MIRE_CELLS, state))
+			var mire: Array[Vector2i] = hazards.mire_cells(player)
+			if not mire.is_empty() and not state.set_player_cell(mire[0]):
+				push_warning("DemoArgs: could not move the player onto mire %s" % str(mire[0]))
+			_tick_hazards(hazards, null, state, float(cfg.get("mire_grace_sec", 0.0)) + float(cfg.get("mire_tick_sec", 0.0)) + TRAIT_STEP_SEC)
+		"sand":
+			var warn: float = float(cfg.get("sand_warn_sec", 0.0))
+			var sec: float = float(cfg.get("sand_sec", 0.0))
+			var cells: Array[Vector2i] = _hazard_spread(grid, player, HAZARD_DEMO_SAND_CELLS * 2, state)
+			var filled: Array[Vector2i] = []
+			var warned: Array[Vector2i] = []
+			for i: int in cells.size():
+				(filled if i % 2 == 0 else warned).append(cells[i])
+			hazards.add_sand(player, filled, sec, warn)
+			hazards.add_sand(enemy, _hazard_spread(grid, enemy, HAZARD_DEMO_SAND_CELLS, state), sec, warn)
+			_tick_hazards(hazards, null, state, warn + sec * HAZARD_DEMO_ELAPSED_RATIO)
+			hazards.add_sand(player, warned, sec, warn)
+			_tick_hazards(hazards, null, state, warn * HAZARD_DEMO_WARN_RATIO)
+		"wind":
+			_wind_with_pieces(combat, grid, hazards)
+			_tick_hazards(hazards, null, state, float(cfg.get("drift_sec", 0.0)) + TRAIT_STEP_SEC)
+		"spore":
+			_player_cast_on_boss(combat, grid, 1)
+			_tick_until(hazards, hazard_trait, state, func() -> bool: return not hazards.mire_cells(player).is_empty())
+		"riposte":
+			_player_cast_on_boss(combat, grid, hazard_trait.param_int("min_cells", HAZARD_DEMO_RIPOSTE_CELLS) if hazard_trait != null else HAZARD_DEMO_RIPOSTE_CELLS)
+			_tick_until(hazards, hazard_trait, state, func() -> bool: return _trait_float(hazard_trait, "get_riposte_warn_left") > 0.0)
+			_tick_hazards(hazards, hazard_trait, state, _trait_float(hazard_trait, "get_riposte_warn_left") * HAZARD_DEMO_ELAPSED_RATIO)
+		"bog_spread":
+			var before: int = hazards.mire_cells(player).size()
+			_tick_until(hazards, hazard_trait, state, func() -> bool: return hazards.mire_cells(player).size() > before)
+		"burrow":
+			_tick_until(hazards, hazard_trait, state, func() -> bool: return _trait_float(hazard_trait, "get_surface_warn_left") > 0.0)
+		"hop":
+			var mover: UnitMover = combat.get_boss().get_mover()
+			# hop_skip only announces for an active boss; time stays frozen, so the brain still never acts.
+			combat.get_boss().set_active(true)
+			var steps: int = 0
+			while hazard_trait != null and not grid.is_enemy_cell(_trait_cell(hazard_trait, "get_hop_target")) and steps < HAZARD_DEMO_MAX_STEPS:
+				# Ready the mover, let the trait look (it announces only while the boss could step), then step.
+				mover.tick(mover.get_cooldown_remaining() + TRAIT_STEP_SEC)
+				_tick_hazards(hazards, hazard_trait, state, TRAIT_STEP_SEC)
+				steps += 1
+				if grid.is_enemy_cell(_trait_cell(hazard_trait, "get_hop_target")):
+					break
+				for dir: Vector2i in ZONE_DEMO_STEPS:
+					if mover.try_step(dir if steps % 2 == 0 else -dir):
+						break
+			if hazard_trait != null and not grid.is_enemy_cell(_trait_cell(hazard_trait, "get_hop_target")):
+				push_warning("DemoArgs: hop_skip announced no hop for demo '%s'" % _mode)
+		"sandstorm":
+			_wind_with_pieces(combat, grid, hazards)
+			_tick_until(hazards, hazard_trait, state, func() -> bool: return hazard_trait.has_method("is_storm") and bool(hazard_trait.call("is_storm")))
+			_tick_hazards(hazards, hazard_trait, state, hazard_trait.param_float("storm_sec", 0.0) * HAZARD_DEMO_ELAPSED_RATIO if hazard_trait != null else 0.0)
+	print("DemoArgs: hazards ", hazards.get_debug())
+
+
+# Advances [param hazards] (and [param hazard_trait] when given) by [param sec] in TRAIT_STEP_SEC steps, like the match clock.
+func _tick_hazards(hazards: TileHazards, hazard_trait: BossTrait, state: CombatState, sec: float) -> void:
+	var left: float = sec
+	while left > 0.0:
+		var step: float = minf(TRAIT_STEP_SEC, left)
+		if hazard_trait != null:
+			hazard_trait.on_tick(step)
+		hazards.tick(step, state)
+		left -= step
+
+
+# Ticks until [param done] is true (bounded by HAZARD_DEMO_MAX_STEPS); warns when it never is. No-op without the trait.
+func _tick_until(hazards: TileHazards, hazard_trait: BossTrait, state: CombatState, done: Callable) -> void:
+	if hazard_trait == null:
+		return
+	var steps: int = 0
+	while not bool(done.call()) and steps < HAZARD_DEMO_MAX_STEPS:
+		_tick_hazards(hazards, hazard_trait, state, TRAIT_STEP_SEC)
+		steps += 1
+	if not bool(done.call()):
+		push_warning("DemoArgs: '%s' never reached its demo state" % hazard_trait.get_id())
+
+
+func _trait_float(hazard_trait: BossTrait, getter: String) -> float:
+	return float(hazard_trait.call(getter)) if hazard_trait != null and hazard_trait.has_method(getter) else 0.0
+
+
+func _trait_cell(hazard_trait: BossTrait, getter: String) -> Vector2i:
+	return hazard_trait.call(getter) if hazard_trait != null and hazard_trait.has_method(getter) else BoardGrid.NO_CELL
+
+
+# Wind on (TileHazards.enable_wind) and the FIELD_PIECES / BOSS_DEMO_FIELD pieces spread over both halves.
+func _wind_with_pieces(combat: CombatView, grid: BoardGrid, hazards: TileHazards) -> void:
+	if not hazards.wind_enabled():
+		hazards.enable_wind(true)
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	var spots: Array[Vector2i] = _hazard_spread(grid, CombatState.Side.PLAYER, FIELD_PIECES.size(), combat.get_state())
+	for i: int in spots.size():
+		var spec: Array = FIELD_PIECES[i]
+		combat.get_drops().debug_place_piece(lib.make_piece(str(spec[0]), int(spec[1])), spots[i], FIELD_PIECE_FRESHNESS[i])
+	var enemy_spots: Array[Vector2i] = _hazard_spread(grid, CombatState.Side.ENEMY, BOSS_DEMO_FIELD.size(), combat.get_state())
+	for i: int in enemy_spots.size():
+		var spec2: Array = BOSS_DEMO_FIELD[i]
+		combat.get_boss().get_drops().debug_place_piece(lib.make_piece(str(spec2[0]), int(spec2[1])), enemy_spots[i], BOSS_DEMO_FIELD_FRESHNESS[i])
+
+
+# The player's real cast over the boss's cell plus orthogonal neighbours up to [param count] cells, resolved
+# through the arbiter (damage, trait hooks), as in boss_counter.
+func _player_cast_on_boss(combat: CombatView, grid: BoardGrid, count: int) -> void:
+	var boss_cell: Vector2i = combat.get_state().enemy_cell
+	var cells: Array[Vector2i] = [boss_cell]
+	for cell: Vector2i in _zone_neighbours(grid, boss_cell, true, false):
+		if cells.size() < count:
+			cells.append(cell)
+	var actor: CutActor = combat.get_cut_actor()
+	if not actor.begin_swing(cells, SkillConfig.FALLBACK_SKILL, true):
+		push_warning("DemoArgs: the player cast did not start for demo '%s'" % _mode)
+		return
+	var steps: int = 0
+	while actor.is_swinging() and steps < HAZARD_DEMO_MAX_STEPS:
+		combat.get_arbiter().tick(TRAIT_STEP_SEC)
+		steps += 1
+
+
+# [param count] cells of [param side]'s half spread evenly, never a unit's cell.
+func _hazard_spread(grid: BoardGrid, side: int, count: int, state: CombatState) -> Array[Vector2i]:
+	var all: Array[Vector2i] = []
+	for cell: Vector2i in (grid.player_cells() if side == CombatState.Side.PLAYER else grid.enemy_cells()):
+		if cell != state.player_cell and cell != state.enemy_cell:
+			all.append(cell)
+	var out: Array[Vector2i] = []
+	for i: int in count:
+		if all.is_empty():
+			break
+		var index: int = 0 if count <= 1 else roundi(float(all.size() - 1) * i / float(count - 1))
+		if not out.has(all[index]):
+			out.append(all[index])
+	return out
 
 
 # The match's own trait [param id] when the booted match has it; else one built through TraitRegistry with the

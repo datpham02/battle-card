@@ -13,10 +13,14 @@ const FALLBACK_SIDE: int = 3
 const FEATURED_MIN_CELLS: int = 5
 const FEATURED_MAX_CELLS: int = 7
 const FEATURED_EFFECTS: Array[String] = ["fragile", "pin", "burn", "frost"]
+## Story 036 rule of the featured shape: it must be buildable from at least this many DISTINCT piece pairs.
+const FEATURED_MIN_PAIRS: int = 2
 
 ## Rules block of the file (min_cells_per_side, variant_*); see ArenaValidator / ArenaVariants.
 var rules: Dictionary = {}
 var _shapes: Array[Dictionary] = []
+## Library behind [method hazards_for_match] when the caller passes none (loaded once, arenas.json).
+static var _default_library: ArenaLibrary = null
 
 
 ## Loads and validates the file (never null; see the class doc).
@@ -94,6 +98,85 @@ static func grid_for_spec(spec: Dictionary, library: ArenaLibrary, seed_value: i
 		push_warning("ArenaLibrary: arena block has neither shape nor side_cols/side_rows, ignored")
 		return null
 	return ArenaValidator.build_grid(shape)
+
+
+## Story 036: the tile hazards of one match on [param grid] (the board built for it):
+## {mire_player: Array[Vector2i], mire_enemy: Array[Vector2i], sand: bool, wind: bool}. The hazards come from the
+## arena block of [param match_params] (`arena.shape` looked up in [param library], default arenas.json; a direct
+## arena block may carry its own `hazards` / `wind`). All empty / false for an arena without hazards.
+## `hazards.mire` is either {per_side: N} (N cells on EACH half, seeded by the match's `arena_seed`, never the
+## unit start cell, never a missing cell, at most half of the half, the start cell always keeps a mire-free
+## neighbour) or {player: [[c, r], ...], enemy: [[c, r], ...]} in side coordinates (cells that are not on the
+## grid or are a start cell are dropped). Cells are BoardGrid cell coordinates of the right half.
+static func hazards_for_match(match_params: Dictionary, grid: BoardGrid, library: ArenaLibrary = null) -> Dictionary:
+	var no_cells: Array[Vector2i] = []
+	var result: Dictionary = {"mire_player": no_cells.duplicate(), "mire_enemy": no_cells.duplicate(), "sand": false, "wind": false}
+	var arena: Variant = match_params.get("arena")
+	if typeof(arena) != TYPE_DICTIONARY or grid == null:
+		return result
+	var spec: Dictionary = arena as Dictionary
+	var shape: Dictionary = {}
+	if spec.has("shape"):
+		var lib: ArenaLibrary = library
+		if lib == null:
+			if _default_library == null:
+				_default_library = load_from_file()
+			lib = _default_library
+		shape = lib.get_shape(str(spec["shape"]))
+	else:
+		shape = spec
+	if shape.is_empty():
+		return result
+	result["wind"] = bool(shape.get("wind", false))
+	var raw_hazards: Variant = shape.get("hazards")
+	if typeof(raw_hazards) != TYPE_DICTIONARY:
+		return result
+	var hazards: Dictionary = raw_hazards as Dictionary
+	result["sand"] = bool(hazards.get("sand", false))
+	var mire: Variant = hazards.get("mire")
+	if typeof(mire) == TYPE_DICTIONARY:
+		var arena_seed: int = maxi(int(match_params.get("arena_seed", -1)), 0)
+		result["mire_player"] = _mire_side(mire as Dictionary, grid, true, arena_seed)
+		result["mire_enemy"] = _mire_side(mire as Dictionary, grid, false, arena_seed)
+	return result
+
+
+## Mire cells of one half (see [method hazards_for_match]).
+static func _mire_side(mire: Dictionary, grid: BoardGrid, player_half: bool, arena_seed: int) -> Array[Vector2i]:
+	var half: Array[Vector2i] = grid.player_cells() if player_half else grid.enemy_cells()
+	var start: Vector2i = grid.default_player_cell() if player_half else grid.default_enemy_cell()
+	var cap: int = half.size() / 2
+	var picked: Array[Vector2i] = []
+	var key: String = "player" if player_half else "enemy"
+	if mire.has(key) and typeof(mire[key]) == TYPE_ARRAY:
+		for item: Variant in mire[key] as Array:
+			if typeof(item) != TYPE_ARRAY or (item as Array).size() != 2:
+				continue
+			var cell := Vector2i(int((item as Array)[0]), int((item as Array)[1]))
+			if not player_half:
+				cell = Vector2i(grid.total_cols - 1 - cell.x, cell.y)
+			var with_cell: Array[Vector2i] = picked.duplicate()
+			with_cell.append(cell)
+			if half.has(cell) and cell != start and not picked.has(cell) and picked.size() < cap \
+					and ArenaValidator.leaves_path(grid, start, with_cell, player_half):
+				picked.append(cell)
+		return picked
+	var want: int = mini(maxi(int(mire.get("per_side", 0)), 0), cap)
+	if want <= 0:
+		return picked
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([arena_seed, key]) & 0x7fffffff
+	var pool: Array[Vector2i] = []
+	for cell: Vector2i in half:
+		if cell != start:
+			pool.append(cell)
+	while picked.size() < want and not pool.is_empty():
+		var cell: Vector2i = pool.pop_at(rng.randi_range(0, pool.size() - 1))
+		var with_cell: Array[Vector2i] = picked.duplicate()
+		with_cell.append(cell)
+		if ArenaValidator.leaves_path(grid, start, with_cell, player_half):
+			picked.append(cell)
+	return picked
 
 
 ## Story 028: the featured shape (hinh chu dao) of the arena shape [param shape_id] as
@@ -209,13 +292,21 @@ func _add_checked(entry: Variant) -> void:
 		"missing_cells": (raw.get("missing_cells", []) as Array).duplicate(true) if typeof(raw.get("missing_cells", [])) == TYPE_ARRAY else [],
 		"difficulty": clampi(int(raw.get("difficulty", 1)), 1, 5),
 	}
+	# Story 036: tile hazards of the arena (checked by ArenaValidator together with the rest of the shape).
+	if raw.has("hazards"):
+		shape["hazards"] = (raw["hazards"] as Dictionary).duplicate(true) if typeof(raw["hazards"]) == TYPE_DICTIONARY else raw["hazards"]
+	if raw.has("wind"):
+		shape["wind"] = raw["wind"]
 	var verdict: Dictionary = ArenaValidator.validate(shape, rules)
 	if bool(verdict["ok"]):
 		if raw.has("featured_shape") or raw.has("featured_bonus"):
 			var cells: Array[Vector2i] = parse_featured_cells(raw.get("featured_shape"))
 			var bonus: Dictionary = parse_featured_bonus(raw.get("featured_bonus"))
+			var pair_reasons: Array[String] = ArenaValidator.featured_reasons(cells, FEATURED_MIN_PAIRS) if not cells.is_empty() else []
 			if cells.is_empty() or bonus.is_empty():
 				push_warning("ArenaLibrary: shape '%s' has an invalid featured_shape / featured_bonus, feature off for it" % id)
+			elif not pair_reasons.is_empty():
+				push_warning("ArenaLibrary: shape '%s' featured_shape rejected: %s" % [id, "; ".join(pair_reasons)])
 			else:
 				var raw_cells: Array = []
 				for cell: Vector2i in cells:

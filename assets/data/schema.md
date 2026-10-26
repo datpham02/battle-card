@@ -211,6 +211,7 @@ Weight keys (inside each set; missing keys take the built-in balanced value):
 | `skill_bonus_pin` | number >= 0 | score | Preference for Pin (needs >= 7 covered cells) when available (balanced 1.0, aggressive 0.5, cautious 2.0) | 1.0 |
 | `burn_avoid` | number >= 0 | score | Legacy weight (Story 009/010): since Story 013 burning cells are never entered or targeted at all (BFS routes around them), so this no longer enters a score. A field point lying on a burning cell is still worth 0 (pickup is refused there) | 3.0 |
 | `thorn_avoid` | number >= 0 | score per HP | Story 027: cost of stepping INTO a thorn cell of the boss's half = `thorn_avoid` x that cell's thorn damage. Paths count 1 per step plus this cost (a thorn is walked around while the detour is cheaper); a non-dodge step into a thorn adds `-cost` to the move score (`thorn` in the debug breakdown); a dodge picks the cell with the lowest thorn cost + (incoming swing's slash damage if it would arrive late), so the boss steps through thorns when the swing hurts more and goes around / stays when the thorns cost more (`dodge_plan` in last_debug). Sealed cells are never entered (like burning). Shipped: balanced 1.0, aggressive 0.5, cautious 1.5 | 1.0 |
+| `mire_avoid` | number >= 0 | score per mire unit | Story 036: cost of stepping INTO a mire cell of the boss's half = `mire_avoid` x (`mire_step_mult` - 1 + `mire_tick_damage`) (hazards block of combat.json / match overrides); 0 when the match boss is `mire_immune`. Added to path costs like `thorn_avoid` (mire is walked around while the detour is cheaper; a dodge goes through when the swing hurts more); a non-dodge step into mire adds `-cost` to the move score (`mire` in the debug breakdown). With hazards set, sand cells (filled and warning) are blocked cells for paths and steps, and with wind on a field piece that drifts before the boss reaches it is scored at its drift cell; components in `last_debug().hazards`. Shipped: balanced 1.0, aggressive 0.5, cautious 1.5 | 1.0 |
 | `escape_penalty` | number >= 0 | score | Story 013 escape-route scoring: added as `escape_penalty / (1 + escape_cells)`, where `escape_cells` = cells the player can reach within `EscapeAnalysis.steps_for_swing(windup, player step cooldown)` 4-way steps on the player's half (burning cells excluded) that the cut does NOT cover. 0 escape cells = the full bonus (balanced 4.0, aggressive 5.0, cautious 3.0) | 4.0 |
 | `min_runes_penalty` | number >= 0 | score | Story 023: with a match `boss_min_runes` N > 0, a candidate cut of fewer than N cells loses this per missing cell, and is skipped altogether while any candidate of >= N cells exists (`BossBrain._best_cut`) | 3.0 |
 | `combo_chance` | number 0..1 | probability | Story 013 combo: when the boss holds >= 2 points and commits a cut, chance (own seeded RNG stream; no roll at 0 or 1) that it also queues a SECOND slash at once, chosen with the same escape analysis to cover the escape cells of the first (the two share no hand point). The player has no combo (the `CutActor` queue is boss-only). Shipped: cautious 0.0, balanced 0.25, aggressive 0.6 | 0.25 |
@@ -707,3 +708,68 @@ Progress file (`user://progress.json`, `ProgressState.VERSION` 6). Files v1..v5 
 Execute relic offer: no `execute` source in `relics.json`. `FateLogic.roll_execute_offer` draws through `RelicRoller.roll("treasure", owned, rng, cfg, count, min_rarity)`
 with `count = world.fate.execute_artifact_offers` and `min_rarity = world.fate.execute_min_rarity` (the rarity-weighted `treasure` draw restricted to that rarity or
 above, by `rarity_weights`; never an owned relic unless `stackable`). Tune the Execute offer in `chapters.json -> world.fate` only.
+
+## Story 036: swamp and desert regions, arena hazards (`chapters.json`, `arenas.json`, `pieces.json`)
+
+| Key | Where | Type / default | Meaning |
+|---|---|---|---|
+| `swamp`, `desert` | `chapters.json` -> `chapters[]` | region entries | Đầm Lầy Độc / Sa Mạc Cát Ấn, same format as `ch2`/`ch3` (`name_key`, `intro_key`, `end_key`, `region_normalize` = ch1's values, `matches`, `pools` battle 0-2 / danger 0-2 / miniboss 1-2 / boss 1-2). Appended after `an_dai` (indices of ch1-ch3 and an_dai unchanged). |
+| `world.region_pool` | `chapters.json` | `["ch1","ch2","ch3","swamp","desert"]` | `an_dai` stays outside the pool. |
+| `mire_immune` | match entry | bool, absent = not set (combat default false) | The boss ignores mire (no tick damage, no step slow). Passed through by `RunConfig.clean_match`. |
+| `mire_step_mult`, `mire_tick_damage`, `mire_tick_sec`, `mire_grace_sec`, `sand_interval_sec`, `sand_cells`, `sand_sec`, `sand_warn_sec`, `drift_sec`, `wind_shift_sec` | match entry | number >= 0, absent = not set | Per-match override of the same key of `combat.json` `hazards` (`RunConfig.HAZARD_OVERRIDE_KEYS`). |
+| `hazards` | `arenas.json` shape | object, optional | `{"mire": {"per_side": N}}` (N mired cells on EACH half, seeded by the match `arena_seed`; 0..half of the half) or `{"mire": {"player": [[c,r]...], "enemy": [[c,r]...]}}` (side coordinates); `"sand": true` = periodic sand fall on. Unknown keys / bad values reject the shape (ArenaValidator). Mire never on a missing cell or the unit start cell, and the start cell keeps a mire-free neighbour (leave-a-path). |
+| `wind` | `arenas.json` shape | bool, default false | Wind drift of field pieces on. |
+| `featured_shape` rule | `arenas.json` shape | — | Story 036: must be buildable from >= 2 distinct piece pairs (`ArenaLibrary.FEATURED_MIN_PAIRS`, `FeaturedShape.pair_compositions`); otherwise the feature is off for the shape (warning). |
+| `bog`, `reed_maze`, `dunes`, `oasis` | `arenas.json` shapes | — | Swamp arenas (`hazards.mire`, featured bonus `pin`) and desert arenas (`wind: true`, `hazards.sand: true`, featured bonus `fragile`). |
+| `weights.swamp`, `weights.desert` | `pieces.json` | shape -> weight | Swamp leans 2-3 cell pieces (5-cell rare like ch1); desert leans `bar2`/`bar3`/`bar4`. Default-pool shapes only. |
+
+`ArenaLibrary.hazards_for_match(match_params, grid, library = null) -> {mire_player, mire_enemy, sand, wind}` (static; `library` null = arenas.json, loaded once).
+
+## Story 036: tile hazards (`combat.json` `hazards`, match overrides; read by `src/combat/combat_config.gd` `hazards()` and `src/combat/tile_hazards.gd`)
+
+| Key | Where | Default | Meaning |
+|---|---|---|---|
+| `hazards.mire_step_mult` | `combat.json` (match key of the same name overrides) | 1.6 | Cooldown multiplier of a step that starts ON a mire cell (leaving mire). >= 0. Applied after the step's `cooldown_scale` (a free step, scale 0, stays free). |
+| `hazards.mire_tick_damage` | same | 0.5 | Damage per mire tick while standing in mire. >= 0. Story 036 sim: 1.0 made mire 19-23 % of the HP lost in swamp matches (target <= 15 %); 0.5 gives 10-14 %. |
+| `hazards.mire_tick_sec` | same | 0.5 | Seconds between mire ticks after the first. > 0. |
+| `hazards.mire_grace_sec` | same | 0.5 | Seconds standing on one mire cell before the first tick (walking through one cell costs nothing). >= 0. |
+| `hazards.sand_interval_sec` | same | 6.0 | Seconds between periodic sand falls (arena `hazards.sand: true`). > 0. |
+| `hazards.sand_cells` | same | 2 | Cells per side per fall (never under a unit; leave-a-path may keep one fewer). >= 0. |
+| `hazards.sand_sec` | same | 3.0 | Seconds a filled sand cell blocks. > 0. |
+| `hazards.sand_warn_sec` | same | 0.8 | Warning seconds before a fall fills. >= 0. |
+| `hazards.drift_sec` | same | 2.0 | Seconds between wind drifts (x the drift multiplier, sandstorm 0.5). > 0. |
+| `hazards.wind_shift_sec` | same | 8.0 | Seconds between wind direction changes (seeded; a shift always turns to one of the 3 other directions). > 0. |
+| `mire_immune` | match entry | false | The boss ignores mire (no tick damage, no step slow). |
+
+A bad value keeps its default (warning). Code hooks: `UnitMover.step_cost_fn` (Callable(from_cell) -> float, after `cooldown_scale`), sand blocks through `UnitMover.add_blocker`, `FieldDrops.bury_cells(cells) -> int`, `FieldDrops.drift_pieces(dir, blocked_fn, dragged_cells) -> int` (signal `point_moved(point, old_cell)`), `FieldDrops.wind_offset_fn` (Callable() -> Vector2i; a new drop lands one cell along it when that cell is free), `CombatView.get_hazards()` and trait ctx key `hazards`. Drops never land on sand or sand-warning cells.
+
+### Story 036 boss traits (match `traits[].params`; code defaults = the values below)
+
+| Trait | Param | Default | Meaning |
+|---|---|---|---|
+| `spore_burst` | `spread_cells` | 2 | Each hit on the boss mires the player's cell plus up to this many real neighbours (seeded) |
+| | `spore_mire_sec` | 4.0 | Seconds the spore mire lasts |
+| | `icd_sec` | 1.5 | Internal cooldown between two bursts |
+| `hop_skip` | `hop_every` | 3 | After this many boss steps the next move is a straight 2-cell hop over the middle cell (seals, thorns ignored; destination real, not sealed, not sand) |
+| | `hop_warn_sec` | 0.4 | Seconds the destination shadow shows before the hop (boss steps locked meanwhile) |
+| `bog_spread` | `interval_sec` | 8.0 | Seconds between two mire spreads on the player's half |
+| | `cells` | 2 | Cells per spread (escape cells first while the boss casts >= `min_swing_cells`, else seeded) |
+| | `mire_sec` | 5.0 | Seconds the spread mire lasts |
+| | `min_swing_cells` | 3 | Smallest boss cast that turns on the escape-cell priority |
+| | `escape_steps` | 2 | Reach of the player used to find its escape cells |
+| | `first_delay_sec` | = interval | Seconds before the first spread |
+| `burrow` | `interval_sec` | 7.0 | Seconds between two burrows (waits for a cast in progress) |
+| | `burrow_sec` | 1.5 | Seconds underground: untargetable (a landing cast misses, its zone still forms), no decisions |
+| | `surface_warn_sec` | 0.5 | The surface cell (seeded free cell of its half) shows for the last this-many seconds of the burrow |
+| | `first_delay_sec` | = interval | Seconds before the first burrow |
+| `riposte` | `min_cells` | 4 | A player cast of at least this many cells that hits the boss triggers a counter |
+| | `warn_sec` | 0.4 | Warning on the player's cell at the moment of the hit (not re-aimed) |
+| | `damage` | 10.0 | Damage if the player is still on that cell when the warning ends |
+| `sandstorm` | `interval_sec` | 12.0 | Seconds between two storms |
+| | `storm_sec` | 3.0 | Storm length (HUD bar) |
+| | `drift_mult` | 0.5 | TileHazards drift multiplier during the storm (back to 1 after) |
+| | `extra_sand` | 2 | Seeded player-half cells sent to TileHazards.add_sand at storm start (leave-a-path kept) |
+| | `sand_sec` / `sand_warn_sec` | combat.json `hazards` | Sand duration / warning override (<= 0 = the hazards default) |
+| | `first_delay_sec` | = interval | Seconds before the first storm |
+
+HUD getters: `HopSkipTrait.get_hop_target()/get_hop_warn_left()`, `BurrowTrait.is_burrowed()/get_surface_cell()/get_surface_warn_left()`, `RiposteTrait.get_riposte_cell()/get_riposte_warn_left()`, `SandstormTrait.is_storm()/get_storm_fraction()`. Untargetable hook: `BossTrait.untargetable()` -> `TraitHost.is_boss_untargetable()` -> `SwingArbiter.enemy_untargetable_fn` (set by TraitHost from ctx `arbiter`) -> CutEffects option `target_untargetable`.

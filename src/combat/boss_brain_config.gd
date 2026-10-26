@@ -34,6 +34,9 @@ const DEFAULT_WEIGHTS: Dictionary = {
 	## Story 027: cost per HP of thorn damage when the boss steps into a thorn cell of its half (paths go
 	## around while the detour is cheaper; a dodge goes through when the swing would hurt more).
 	"thorn_avoid": 1.0,
+	## Story 036: cost per unit of mire (mire_step_mult - 1 + mire_tick_damage) when the boss steps into a
+	## mire cell of its half (0 for a mire_immune boss); paths go around while the detour is cheaper.
+	"mire_avoid": 1.0,
 	"escape_penalty": 4.0,
 	"combo_chance": 0.25,
 	"combo_gap_sec": 0.5,

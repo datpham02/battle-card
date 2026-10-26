@@ -17,6 +17,8 @@ signal point_expired(point: FieldPoint)
 signal point_picked(point: FieldPoint)
 ## A pickup was refused because the hand is full; the point stays on its cell.
 signal pickup_blocked(point: FieldPoint)
+## Story 036: the wind drifted a point one cell ([param old_cell] is where it lay; point.cell is the new one).
+signal point_moved(point: FieldPoint, old_cell: Vector2i)
 
 const NO_CELL: Vector2i = BoardGrid.NO_CELL
 
@@ -38,6 +40,9 @@ var _piece_shapes: Array[String] = [] # shapes with at least one placement on th
 var _piece_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 # Story 034: injected weight source (Dictionary {id: float} or Callable(id) -> float); null = library weights.
 var _weight_source: Variant = null
+## Story 036: Callable() -> Vector2i, the wind direction ("piece lands off by one"): a NEW drop lands one cell
+## along it when that cell is free. Invalid (default) or (0,0) = drops land where picked.
+var wind_offset_fn: Callable = Callable()
 
 
 ## [param side_cells] is this side's half of the board (BoardGrid.player_cells()). A negative
@@ -75,8 +80,50 @@ func tick(delta: float, stand_cell: Vector2i, hand_count: int) -> void:
 	var piece: Piece = _draw_piece()
 	if piece == null:
 		return
+	cell = _wind_offset_cell(cell, stand_cell)
 	_add_point(piece.shape_id, cell, _config.piece_freshness_sec, false, 0.0, piece)
 	_spawn_timer = _current_interval()
+
+
+## Story 036: buries (removes, emitting point_expired) every point lying on one of [param cells] (sand filled
+## on them). Returns how many were buried.
+func bury_cells(cells: Array[Vector2i]) -> int:
+	var buried: int = 0
+	for i: int in range(_points.size() - 1, -1, -1):
+		var p: FieldPoint = _points[i]
+		if cells.has(p.cell):
+			_points.remove_at(i)
+			point_expired.emit(p)
+			buried += 1
+	return buried
+
+
+## Story 036: the wind moves every point one cell along [param dir]. A point stays where it is when the target is
+## not a real cell of this half (missing / outside), is blocked by [param blocked_fn] (Callable(cell) -> bool, sand),
+## holds another point (checked against the field BEFORE this drift, so the result does not depend on the order),
+## or when its own cell is in [param dragged_cells]. Emits point_moved per move; returns the number moved.
+func drift_pieces(dir: Vector2i, blocked_fn: Callable = Callable(), dragged_cells: Array[Vector2i] = []) -> int:
+	if dir == Vector2i.ZERO:
+		return 0
+	var occupied: Array[Vector2i] = []
+	for p: FieldPoint in _points:
+		occupied.append(p.cell)
+	var moves: Array = []
+	for p: FieldPoint in _points:
+		if dragged_cells.has(p.cell):
+			continue
+		var target: Vector2i = p.cell + dir
+		if not _side_cells.has(target) or occupied.has(target):
+			continue
+		if blocked_fn.is_valid() and bool(blocked_fn.call(target)):
+			continue
+		moves.append([p, target])
+	for move: Array in moves:
+		var p: FieldPoint = move[0]
+		var old_cell: Vector2i = p.cell
+		p.cell = move[1]
+		point_moved.emit(p, old_cell)
+	return moves.size()
 
 
 ## Story 024: gives this half its pieces (required: nothing drops before it). Shapes of [param library] for which no rotation
@@ -284,6 +331,19 @@ func _pick_free_cell(stand_cell: Vector2i) -> Vector2i:
 	if free.is_empty():
 		return NO_CELL
 	return free[_rng.randi_range(0, free.size() - 1)]
+
+
+# Story 036: one cell along the wind when that cell is a free cell of this half (not the owner's cell, not blocked).
+func _wind_offset_cell(cell: Vector2i, stand_cell: Vector2i) -> Vector2i:
+	if not wind_offset_fn.is_valid():
+		return cell
+	var offset: Vector2i = wind_offset_fn.call()
+	if offset == Vector2i.ZERO:
+		return cell
+	var target: Vector2i = cell + offset
+	if not _side_cells.has(target) or target == stand_cell or _is_occupied(target) or _blocked_cells.has(target):
+		return cell
+	return target
 
 
 func _is_occupied(cell: Vector2i) -> bool:

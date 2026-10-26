@@ -141,6 +141,12 @@ func set_status(status: StatusEffects) -> void:
 	_mover.set_status(status)
 
 
+## Story 036: shares the match's tile hazards with the brain (mire cost, sand blocked, wind drift of
+## pickups); null = none (decisions identical to a match without hazards).
+func set_hazards(hazards: TileHazards) -> void:
+	_brain.set_hazards(hazards)
+
+
 ## The player's (board-scaled) step cooldown in seconds: the brain counts the player's escape
 ## cells with it when scoring cuts. <= 0 (default) = the brain falls back to the boss's own
 ## step cooldown.

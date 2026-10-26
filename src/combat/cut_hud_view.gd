@@ -409,6 +409,87 @@ const ZONE_BAR_INSET_RATIO: float = 0.08
 ## (presentation only).
 const THORN_FLASH: Color = Color(1.0, 0.55, 0.45, 0.6)
 const THORN_FLASH_SEC: float = 0.45
+## Story 036 tile hazards (TileHazards through CombatView.get_hazards()), drawn under the Story 027 zones. Zones sit
+## above units (TD-026), so like SEAL_FILL_OCCUPIED a mire cell holding a unit or a piece is drawn see-through.
+## MIRE = dark peat fill with rising bubble rings and NO border or spikes (unlike the sawtooth thorns and the solid
+## violet seal); bubbles keep to the cell's edges so a unit in the middle stays readable.
+const MIRE_FILL: Color = Color(0.16, 0.19, 0.09, 0.9)
+const MIRE_FILL_OCCUPIED: Color = Color(0.16, 0.19, 0.09, 0.42)
+const MIRE_BUBBLE: Color = Color(0.64, 0.74, 0.36, 0.95)
+const MIRE_BUBBLE_WIDTH: float = 2.5
+const MIRE_BUBBLE_POINTS: int = 16
+## Bubble anchors: x, y as shares of the cell, z = radius as a share of the shorter cell side.
+const MIRE_BUBBLES: Array[Vector3] = [Vector3(0.2, 0.8, 0.075), Vector3(0.8, 0.74, 0.06), Vector3(0.76, 0.3, 0.05), Vector3(0.24, 0.34, 0.055)]
+## Each bubble rises this share of the cell side per loop, MIRE_BUBBLE_HZ loops per second, phase-shifted per bubble.
+const MIRE_BUBBLE_RISE_RATIO: float = 0.08
+const MIRE_BUBBLE_HZ: float = 0.6
+const MIRE_BUBBLE_PHASE_STEP: float = 0.37
+## SAND: filled = opaque sand block with dune ripples, a darker edge and the zone time bar; warning = a sand tint
+## and a thick sand-coloured border blinking at SAND_WARN_BLINK_HZ (on the same blink clock as the row warning).
+const SAND_FILL: Color = Color(0.87, 0.72, 0.42, 0.97)
+const SAND_RIPPLE: Color = Color(0.64, 0.48, 0.24, 0.9)
+const SAND_RIPPLE_WIDTH: float = 3.0
+const SAND_RIPPLES: int = 3
+const SAND_RIPPLE_POINTS: int = 9
+const SAND_RIPPLE_AMP_RATIO: float = 0.05
+const SAND_RIPPLE_TOP_RATIO: float = 0.3
+const SAND_EDGE_WIDTH: float = 2.0
+const SAND_BAR_BACK: Color = Color(0.35, 0.26, 0.1, 0.85)
+const SAND_BAR_FILL: Color = Color(1.0, 0.94, 0.75)
+const SAND_WARN_BORDER: Color = Color(0.96, 0.78, 0.38, 1.0)
+const SAND_WARN_TINT: Color = Color(0.96, 0.78, 0.38, 0.24)
+const SAND_WARN_WIDTH: float = 6.0
+const SAND_WARN_INSET: float = 4.0
+const SAND_WARN_BLINK_HZ: float = 5.0
+## Sandstorm: a light sand haze over the player's half while the storm blows, and a draining bar in the trait line.
+const STORM_HAZE: Color = Color(0.92, 0.76, 0.45, 0.14)
+const STORM_COLOR: Color = Color(0.78, 0.55, 0.15)
+const STORM_BAR_BACK: Color = Color(0.3, 0.22, 0.08, 0.8)
+const STORM_BAR_FILL: Color = Color(0.95, 0.78, 0.4)
+## Wind: a dark badge with an arrow at the RIGHT end of the trait status line (the HUD corner by the band centre),
+## its label to the left. The badge side is the strip height clamped to [WIND_BADGE_MIN, WIND_BADGE_MAX].
+const WIND_BADGE_MIN: float = 28.0
+const WIND_BADGE_MAX: float = 40.0
+const WIND_BACK: Color = Color(0.1, 0.09, 0.08, 0.85)
+const WIND_ARROW: Color = Color(0.86, 0.95, 1.0)
+const WIND_ARROW_WIDTH: float = 5.0
+const WIND_ARROW_LENGTH_RATIO: float = 0.34
+const WIND_HEAD_RATIO: float = 0.22
+const WIND_TEXT: Color = Color(0.3, 0.45, 0.6)
+## Region trait cues (W3 traits, read through has_method so the HUD runs before / without them): the hop shadow
+## (dark ellipse + white ring closing as the warning runs out), the riposte cell (blinking crimson outline, tint,
+## crosshair, bar) and the burrow surface circle (sand ring closing in).
+const HOP_TRAIT_ID: String = "hop_skip"
+const RIPOSTE_TRAIT_ID: String = "riposte"
+const BURROW_TRAIT_ID: String = "burrow"
+const STORM_TRAIT_ID: String = "sandstorm"
+## Fallback warning totals (mirror schema.md defaults) used only as the bar / ring denominator when a trait lacks the param.
+const HOP_WARN_FALLBACK_SEC: float = 0.4
+const RIPOSTE_WARN_FALLBACK_SEC: float = 0.4
+const SURFACE_WARN_FALLBACK_SEC: float = 0.5
+const HOP_SHADOW: Color = Color(0.04, 0.04, 0.08, 0.55)
+const HOP_RING: Color = Color(0.95, 0.95, 1.0, 0.95)
+const HOP_COLOR: Color = Color(0.25, 0.3, 0.45)
+const HOP_SHADOW_RX_RATIO: float = 0.36
+const HOP_SHADOW_RY_RATIO: float = 0.15
+const HOP_SHADOW_Y_RATIO: float = 0.66
+const HOP_RING_RATIO: float = 0.44
+const RING_WIDTH: float = 4.0
+const RING_POINTS: int = 40
+const RIPOSTE_COLOR: Color = Color(0.92, 0.12, 0.38)
+const RIPOSTE_TINT: Color = Color(0.92, 0.12, 0.38, 0.3)
+const RIPOSTE_CROSS_RATIO: float = 0.28
+const RIPOSTE_BAR_BACK: Color = Color(0.3, 0.04, 0.12, 0.8)
+const SURFACE_COLOR: Color = Color(0.9, 0.62, 0.18)
+const SURFACE_TINT: Color = Color(0.9, 0.62, 0.18, 0.18)
+const SURFACE_RING_RATIO: float = 0.46
+const SURFACE_INNER_MIN: float = 0.25
+const TEXT_WIND: String = "ui.hud.wind"
+const TEXT_SANDSTORM: String = "ui.hud.sandstorm"
+const TEXT_HOP: String = "ui.hud.hop"
+const TEXT_RIPOSTE: String = "ui.hud.riposte"
+const TEXT_SURFACE: String = "ui.hud.surface"
+const TEXT_BURROWED: String = "ui.hud.burrowed"
 
 @export var combat_view_path: NodePath = NodePath("../CombatView")
 
@@ -822,6 +903,8 @@ func _draw() -> void:
 	# Focus overlay first: the preview, markers and buttons stay fully readable above it.
 	_draw_focus_overlay(vp)
 	_draw_formation(vp)
+	# Story 036: mire and sand under the Story 027 zones (and so under every telegraph below).
+	_draw_hazards(vp)
 	# Story 027: zones under every telegraph / label / marker below, so a swing over a zone stays readable.
 	_draw_zones(vp)
 	_draw_featured_icon(vp)
@@ -833,6 +916,7 @@ func _draw() -> void:
 	_draw_boss_feedback(vp)
 	_draw_row_warning(vp)
 	_draw_trait_cells(vp)
+	_draw_hazard_traits(vp)
 	_draw_burning(vp)
 	_draw_interrupt(vp)
 	_draw_feint(vp)
@@ -851,6 +935,7 @@ func _draw() -> void:
 		_draw_learning_debug(vp)
 	_draw_boss_status(vp)
 	_draw_trait_status(vp)
+	_draw_wind_badge(vp)
 	_draw_piece_deck_notice(vp)
 
 
@@ -1647,11 +1732,24 @@ func _draw_trait_status(vp: Vector2) -> void:
 	var low: bool = fuse != null and fuse.get_fuse_left() <= FUSE_RED_SEC
 	if fuse != null:
 		parts.append([tr(TEXT_FUSE) % fuse.get_fuse_left(), FUSE_BAR_LOW_FILL if low else TRAIT_TEXT_COLOR])
+	# Story 036: "burrowed" while the burrow trait is under the sand; "sandstorm" + a draining bar during a storm.
+	var burrow: BossTrait = host.get_trait(BURROW_TRAIT_ID)
+	if burrow != null and burrow.has_method("is_burrowed") and bool(burrow.call("is_burrowed")):
+		parts.append([tr(TEXT_BURROWED), SURFACE_COLOR])
+	var storm_ratio: float = _storm_fraction()
+	if storm_ratio >= 0.0:
+		parts.append([tr(TEXT_SANDSTORM), STORM_COLOR])
 	if parts.is_empty():
 		return
 	var rect: Rect2 = ScreenLayout.hud_trait_status_rect(vp)
 	var text_width: float = rect.size.x - (FUSE_BAR_WIDTH + STATUS_GAP if fuse != null else 0.0)
+	text_width -= (FUSE_BAR_WIDTH + STATUS_GAP if storm_ratio >= 0.0 else 0.0) + _wind_badge_reserve(vp)
 	var end_x: float = _draw_status_parts(Rect2(rect.position, Vector2(maxf(text_width, 0.0), rect.size.y)), parts)
+	if storm_ratio >= 0.0:
+		var storm_x: float = end_x + (FUSE_BAR_WIDTH + STATUS_GAP if fuse != null else 0.0)
+		var storm_bar := Rect2(Vector2(storm_x, rect.get_center().y - FUSE_BAR_HEIGHT * 0.5), Vector2(FUSE_BAR_WIDTH, FUSE_BAR_HEIGHT))
+		draw_rect(storm_bar, STORM_BAR_BACK)
+		draw_rect(Rect2(storm_bar.position, Vector2(storm_bar.size.x * storm_ratio, storm_bar.size.y)), STORM_BAR_FILL)
 	if fuse != null:
 		var total: float = fuse.get_fuse_sec()
 		var ratio: float = 0.0 if total <= 0.0 else clampf(fuse.get_fuse_left() / total, 0.0, 1.0)
@@ -1732,6 +1830,187 @@ func _draw_thorn_cell(rect: Rect2) -> void:
 			edge.append(tip)
 	edge.append(corners[0])
 	draw_polyline(edge, THORN_EDGE, THORN_EDGE_WIDTH)
+
+
+# --- Story 036: tile hazards (mire, sand, wind) and the region traits' cues ----------------------------
+
+
+# Mire (bottom), filled sand and sand warnings of BOTH halves, and the storm haze over the player's half.
+func _draw_hazards(vp: Vector2) -> void:
+	var hazards: TileHazards = _combat.get_hazards()
+	if hazards == null:
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var blink_on: bool = int(_blink_time * SAND_WARN_BLINK_HZ * 2.0) % 2 == 0
+	if _storm_fraction() >= 0.0:
+		for cell: Vector2i in grid.player_cells():
+			draw_rect(ScreenLayout.cell_rect(grid, vp, cell), STORM_HAZE)
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		for cell: Vector2i in hazards.mire_cells(side):
+			_draw_mire_cell(ScreenLayout.cell_rect(grid, vp, cell), _cell_occupied(side, cell))
+		for cell: Vector2i in hazards.sand_cells(side):
+			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			_draw_sand_cell(rect)
+			_draw_zone_bar(rect, hazards.sand_left(side, cell), hazards.sand_total_sec(side, cell),
+				SAND_BAR_BACK, SAND_BAR_FILL, SAND_EDGE_WIDTH)
+		for cell: Vector2i in hazards.sand_warning_cells(side):
+			_draw_sand_warning(ScreenLayout.cell_rect(grid, vp, cell), blink_on)
+
+
+# Mire cell: dark peat fill (see-through when [param occupied]) and bubble rings that rise and fade in a loop.
+func _draw_mire_cell(rect: Rect2, occupied: bool) -> void:
+	draw_rect(rect, MIRE_FILL_OCCUPIED if occupied else MIRE_FILL)
+	var side_len: float = minf(rect.size.x, rect.size.y)
+	for i: int in MIRE_BUBBLES.size():
+		var b: Vector3 = MIRE_BUBBLES[i]
+		var phase: float = fposmod(_blink_time * MIRE_BUBBLE_HZ + float(i) * MIRE_BUBBLE_PHASE_STEP, 1.0)
+		var center := rect.position + Vector2(rect.size.x * b.x, rect.size.y * b.y - side_len * MIRE_BUBBLE_RISE_RATIO * phase)
+		var radius: float = side_len * b.z * (0.7 + 0.3 * phase)
+		var color := Color(MIRE_BUBBLE, MIRE_BUBBLE.a * (1.0 - phase * 0.6))
+		draw_arc(center, radius, 0.0, TAU, MIRE_BUBBLE_POINTS, color, MIRE_BUBBLE_WIDTH)
+		draw_circle(center - Vector2(radius, radius) * 0.35, radius * 0.25, color)
+
+
+# Filled sand: opaque sand block, SAND_RIPPLES wavy dune lines below the time bar, darker edge.
+func _draw_sand_cell(rect: Rect2) -> void:
+	draw_rect(rect, SAND_FILL)
+	var amp: float = rect.size.y * SAND_RIPPLE_AMP_RATIO
+	for r: int in SAND_RIPPLES:
+		var y: float = rect.position.y + rect.size.y * (SAND_RIPPLE_TOP_RATIO + (1.0 - SAND_RIPPLE_TOP_RATIO) * float(r) / float(SAND_RIPPLES))
+		var points := PackedVector2Array()
+		for k: int in SAND_RIPPLE_POINTS:
+			var t: float = float(k) / float(SAND_RIPPLE_POINTS - 1)
+			points.append(Vector2(rect.position.x + rect.size.x * (0.1 + 0.8 * t), y + sin(t * TAU) * amp))
+		draw_polyline(points, SAND_RIPPLE, SAND_RIPPLE_WIDTH)
+	draw_rect(rect.grow(-SAND_EDGE_WIDTH * 0.5), SAND_RIPPLE, false, SAND_EDGE_WIDTH)
+
+
+# Sand about to fall: sand tint and a thick sand border, both dimmed on the off phase of the blink.
+func _draw_sand_warning(rect: Rect2, blink_on: bool) -> void:
+	draw_rect(rect, Color(SAND_WARN_TINT, SAND_WARN_TINT.a * (1.0 if blink_on else 0.5)))
+	draw_rect(rect.grow(-SAND_WARN_INSET), Color(SAND_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), false, SAND_WARN_WIDTH)
+
+
+# Share (0..1) of the running sandstorm left, or -1.0 when no storm blows (or the trait is absent).
+func _storm_fraction() -> float:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null:
+		return -1.0
+	var storm: BossTrait = host.get_trait(STORM_TRAIT_ID)
+	if storm == null or not storm.has_method("is_storm") or not bool(storm.call("is_storm")):
+		return -1.0
+	if not storm.has_method("get_storm_fraction"):
+		return 1.0
+	return clampf(float(storm.call("get_storm_fraction")), 0.0, 1.0)
+
+
+# Width the wind badge and its label take at the right end of the trait status line (0 while no wind blows).
+func _wind_badge_reserve(vp: Vector2) -> float:
+	var hazards: TileHazards = _combat.get_hazards()
+	if hazards == null or not hazards.wind_enabled() or hazards.wind_dir() == Vector2i.ZERO:
+		return 0.0
+	var side_len: float = _wind_badge_side(vp)
+	return side_len + STATUS_GAP + ThemeDB.fallback_font.get_string_size(tr(TEXT_WIND), HORIZONTAL_ALIGNMENT_LEFT, -1, STATUS_FONT_SIZE).x + STATUS_GAP
+
+
+func _wind_badge_side(vp: Vector2) -> float:
+	return clampf(ScreenLayout.hud_trait_status_rect(vp).size.y, WIND_BADGE_MIN, WIND_BADGE_MAX)
+
+
+# Wind: a dark square badge with an arrow along TileHazards.wind_dir() (grid +y = screen down), label to its left.
+func _draw_wind_badge(vp: Vector2) -> void:
+	if _wind_badge_reserve(vp) <= 0.0 or _combat.get_state().is_player_dead() or _combat.get_state().is_enemy_dead():
+		return
+	var dir := Vector2(_combat.get_hazards().wind_dir())
+	var rect: Rect2 = ScreenLayout.hud_trait_status_rect(vp)
+	var side_len: float = _wind_badge_side(vp)
+	var badge := Rect2(Vector2(rect.end.x - side_len, rect.get_center().y - side_len * 0.5), Vector2(side_len, side_len))
+	draw_rect(badge, WIND_BACK)
+	draw_rect(badge, WIND_ARROW, false, 2.0)
+	var c: Vector2 = badge.get_center()
+	var tip: Vector2 = c + dir * side_len * WIND_ARROW_LENGTH_RATIO
+	var head: float = side_len * WIND_HEAD_RATIO
+	draw_line(c - dir * side_len * WIND_ARROW_LENGTH_RATIO, tip - dir * head * 0.5, WIND_ARROW, WIND_ARROW_WIDTH)
+	var normal := Vector2(-dir.y, dir.x)
+	draw_colored_polygon(PackedVector2Array([tip, tip - dir * head + normal * head * 0.6, tip - dir * head - normal * head * 0.6]), WIND_ARROW)
+	var label: String = tr(TEXT_WIND)
+	var width: float = ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, STATUS_FONT_SIZE).x
+	draw_string(ThemeDB.fallback_font, Vector2(badge.position.x - STATUS_GAP - width, c.y + STATUS_FONT_SIZE * 0.35), label,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, STATUS_FONT_SIZE, WIND_TEXT)
+
+
+# Region trait cues on the board: hop shadow, riposte warning cell, burrow surface circle.
+func _draw_hazard_traits(vp: Vector2) -> void:
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null:
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var hop: BossTrait = host.get_trait(HOP_TRAIT_ID)
+	if hop != null and hop.has_method("get_hop_target"):
+		var target: Vector2i = hop.call("get_hop_target")
+		if grid.is_enemy_cell(target):
+			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, target)
+			_draw_hop_shadow(rect, _warn_ratio(hop, "get_hop_warn_left", "hop_warn_sec", HOP_WARN_FALLBACK_SEC))
+			_draw_corner_label(vp, [target] as Array[Vector2i], tr(TEXT_HOP), HOP_COLOR)
+	var riposte: BossTrait = host.get_trait(RIPOSTE_TRAIT_ID)
+	if riposte != null and riposte.has_method("get_riposte_cell"):
+		var cell: Vector2i = riposte.call("get_riposte_cell")
+		var left: float = float(riposte.call("get_riposte_warn_left")) if riposte.has_method("get_riposte_warn_left") else 0.0
+		if grid.is_player_cell(cell) and left > 0.0:
+			var rect2: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			_draw_riposte_cell(rect2)
+			_draw_zone_bar(rect2, left, riposte.param_float("warn_sec", RIPOSTE_WARN_FALLBACK_SEC), RIPOSTE_BAR_BACK, RIPOSTE_COLOR, WARN_OUTLINE_INSET + WARN_OUTLINE_WIDTH)
+			_draw_corner_label(vp, [cell] as Array[Vector2i], tr(TEXT_RIPOSTE), RIPOSTE_COLOR)
+	var burrow: BossTrait = host.get_trait(BURROW_TRAIT_ID)
+	if burrow != null and burrow.has_method("get_surface_cell"):
+		var surface: Vector2i = burrow.call("get_surface_cell")
+		var warn: float = float(burrow.call("get_surface_warn_left")) if burrow.has_method("get_surface_warn_left") else 0.0
+		if grid.is_enemy_cell(surface) and warn > 0.0:
+			_draw_surface_circle(ScreenLayout.cell_rect(grid, vp, surface), _warn_ratio(burrow, "get_surface_warn_left", "surface_warn_sec", SURFACE_WARN_FALLBACK_SEC))
+			_draw_corner_label(vp, [surface] as Array[Vector2i], tr(TEXT_SURFACE), SURFACE_COLOR)
+
+
+# Share (0..1) of a trait's warning left: getter [param getter] over param [param param] (fallback seconds).
+func _warn_ratio(trait_instance: BossTrait, getter: String, param: String, fallback: float) -> float:
+	if not trait_instance.has_method(getter):
+		return 1.0
+	var total: float = trait_instance.param_float(param, fallback)
+	return 1.0 if total <= 0.0 else clampf(float(trait_instance.call(getter)) / total, 0.0, 1.0)
+
+
+# Hop landing: a dark ground shadow low in the cell and a white ring that closes on it as [param ratio] runs out.
+func _draw_hop_shadow(rect: Rect2, ratio: float) -> void:
+	var c := Vector2(rect.get_center().x, rect.position.y + rect.size.y * HOP_SHADOW_Y_RATIO)
+	var rx: float = rect.size.x * HOP_SHADOW_RX_RATIO
+	var ry: float = rect.size.y * HOP_SHADOW_RY_RATIO
+	var points := PackedVector2Array()
+	for i: int in RING_POINTS:
+		var a: float = TAU * float(i) / float(RING_POINTS)
+		points.append(c + Vector2(cos(a) * rx, sin(a) * ry))
+	draw_colored_polygon(points, HOP_SHADOW)
+	var side_len: float = minf(rect.size.x, rect.size.y)
+	draw_arc(rect.get_center(), side_len * HOP_RING_RATIO * maxf(ratio, SURFACE_INNER_MIN), 0.0, TAU, RING_POINTS, HOP_RING, RING_WIDTH)
+
+
+# Riposte target: crimson tint, blinking crimson outline and a crosshair.
+func _draw_riposte_cell(rect: Rect2) -> void:
+	var on: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
+	draw_rect(rect, RIPOSTE_TINT)
+	draw_rect(rect.grow(-WARN_OUTLINE_INSET), Color(RIPOSTE_COLOR, 1.0 if on else WARN_BLINK_DIM_ALPHA), false, WARN_OUTLINE_WIDTH)
+	var c: Vector2 = rect.get_center()
+	var arm: float = minf(rect.size.x, rect.size.y) * RIPOSTE_CROSS_RATIO
+	draw_line(c - Vector2(arm, 0.0), c + Vector2(arm, 0.0), RIPOSTE_COLOR, RING_WIDTH)
+	draw_line(c - Vector2(0.0, arm), c + Vector2(0.0, arm), RIPOSTE_COLOR, RING_WIDTH)
+	draw_arc(c, arm * 0.6, 0.0, TAU, RING_POINTS, RIPOSTE_COLOR, RING_WIDTH * 0.5)
+
+
+# Burrow surfacing cell: sand tint, a fixed outer sand ring and an inner ring closing in as [param ratio] runs out.
+func _draw_surface_circle(rect: Rect2, ratio: float) -> void:
+	var c: Vector2 = rect.get_center()
+	var r: float = minf(rect.size.x, rect.size.y) * SURFACE_RING_RATIO
+	draw_circle(c, r, SURFACE_TINT)
+	draw_arc(c, r, 0.0, TAU, RING_POINTS, SURFACE_COLOR, RING_WIDTH)
+	draw_arc(c, r * maxf(ratio, SURFACE_INNER_MIN), 0.0, TAU, RING_POINTS, SURFACE_COLOR, RING_WIDTH * 0.75)
 
 
 # Remaining-time bar along the top of [param rect], [param top_pad] px below the cell's top edge (clear of

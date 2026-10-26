@@ -73,6 +73,8 @@ var seal_sec: float = 1.2
 var thorn_sec: float = 3.0
 var thorn_damage: float = 6.0
 var thorn_fragile_stacks: int = 1
+## Story 036 tile hazards (combat.json `hazards` block), kept as a dictionary (see [method hazards]).
+var _hazards: Dictionary = TileHazards.DEFAULTS.duplicate()
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -124,6 +126,9 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	var cap: int = int(data.get("max_cast_cells", config.max_cast_cells))
 	config.max_cast_cells = 0 if cap <= 0 else cap
 	config._parse_zones(data)
+	var hazard_block: Variant = data.get("hazards")
+	if typeof(hazard_block) == TYPE_DICTIONARY:
+		config._hazards = TileHazards.clean(hazard_block as Dictionary)
 	return config
 
 
@@ -161,6 +166,13 @@ func zone_numbers() -> Dictionary:
 		"seal_sec": seal_sec, "thorn_sec": thorn_sec,
 		"thorn_damage": thorn_damage, "thorn_fragile_stacks": thorn_fragile_stacks,
 	}
+
+
+## Story 036: the tile hazard numbers {mire_step_mult, mire_tick_damage, mire_tick_sec, mire_grace_sec,
+## sand_interval_sec, sand_cells, sand_sec, sand_warn_sec, drift_sec, wind_shift_sec} (a copy). A bad value keeps
+## its default (warning); a match may override each key by the same name (TileHazards.configure).
+func hazards() -> Dictionary:
+	return _hazards.duplicate()
 
 
 # Story 027: the `zones` block; one invalid value -> all four fall back to the defaults (warning).

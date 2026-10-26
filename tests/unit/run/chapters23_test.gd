@@ -44,7 +44,7 @@ func _initialize() -> void:
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
 	var strings: Dictionary = _csv()
 	var lib: ArenaLibrary = ArenaLibrary.load_from_file()
-	check(cfg.chapter_count() == 4, "4 chapters (3 regions + an_dai, Story 035)")
+	check(cfg.chapter_count() == 6, "6 chapters (3 regions + an_dai + swamp + desert, Story 036)")
 	var tiers_used: Dictionary = {}
 	for c: Dictionary in cfg.get_map_spec(0)["columns"]:
 		tiers_used[int(c["tier"])] = true

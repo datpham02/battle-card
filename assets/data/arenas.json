@@ -115,6 +115,52 @@
 			"difficulty": 4,
 			"featured_shape": [[0,0],[1,0],[2,0],[2,1],[2,2]],
 			"featured_bonus": { "damage_mult": 1.5, "effect": "fragile", "stacks": 1, "sec": 0 }
+		},
+		{
+			"id": "bog",
+			"name_key": "arena.bog.name",
+			"side_cols": 5,
+			"side_rows": 3,
+			"missing_cells": [[0, 0], [0, 2]],
+			"difficulty": 3,
+			"hazards": { "mire": { "per_side": 4 } },
+			"featured_shape": [[0,0],[1,0],[2,0],[0,1],[1,1]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "pin", "stacks": 0, "sec": 1.2 }
+		},
+		{
+			"id": "reed_maze",
+			"name_key": "arena.reed_maze.name",
+			"side_cols": 5,
+			"side_rows": 5,
+			"missing_cells": [[0, 1], [1, 1], [2, 1], [3, 1], [1, 3], [2, 3], [3, 3], [4, 3]],
+			"difficulty": 4,
+			"hazards": { "mire": { "per_side": 3 } },
+			"featured_shape": [[0,0],[1,0],[2,0],[3,0],[3,1]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "pin", "stacks": 0, "sec": 1.2 }
+		},
+		{
+			"id": "dunes",
+			"name_key": "arena.dunes.name",
+			"side_cols": 5,
+			"side_rows": 4,
+			"missing_cells": [[0, 0], [0, 3]],
+			"difficulty": 3,
+			"wind": true,
+			"hazards": { "sand": true },
+			"featured_shape": [[0,0],[1,0],[1,1],[2,1],[2,2]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "fragile", "stacks": 1, "sec": 0 }
+		},
+		{
+			"id": "oasis",
+			"name_key": "arena.oasis.name",
+			"side_cols": 5,
+			"side_rows": 5,
+			"missing_cells": [[2, 2]],
+			"difficulty": 3,
+			"wind": true,
+			"hazards": { "sand": true },
+			"featured_shape": [[0,0],[1,0],[2,0],[1,1],[1,2]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "fragile", "stacks": 1, "sec": 0 }
 		}
 	]
 }

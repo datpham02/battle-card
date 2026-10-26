@@ -23,7 +23,7 @@ func _count(col: Dictionary, kind: String) -> int:
 
 func _initialize() -> void:
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
-	check(cfg.chapter_count() == 4 and cfg.chapter_id(3) == "an_dai" and cfg.chapter_id(0) == "ch1" and cfg.chapter_id(1) == "ch2" and cfg.chapter_id(2) == "ch3", "chapters.json v2 loads 3 chapters + an_dai (Story 035)")
+	check(cfg.chapter_count() == 6 and cfg.chapter_id(3) == "an_dai" and cfg.chapter_id(0) == "ch1" and cfg.chapter_id(1) == "ch2" and cfg.chapter_id(2) == "ch3" and cfg.chapter_id(4) == "swamp" and cfg.chapter_id(5) == "desert", "chapters.json v2 loads 3 chapters + an_dai + swamp + desert (Story 036)")
 	check(cfg.column_count(0) == 7 and cfg.column_count(1) == 7 and cfg.column_count(2) == 7, "7 columns default spec")
 	var d: Dictionary = cfg.defaults()
 	check(float(d["heal_between_matches"]) == 0.0 and float(d["heal_between_floors"]) == 0.0 and int(d["revive_tokens"]) == 0, "heal defaults 0, revive 0")
@@ -44,7 +44,7 @@ func _initialize() -> void:
 				for id: String in spec["pools"][kind][tier]:
 					if cfg.get_match_def(ci, id).is_empty():
 						bad += 1
-					if kind == "boss" and id == ["forest_witch", "ogre_king", "mist_lord", "an_dai_keeper"][ci]:
+					if kind == "boss" and id == ["forest_witch", "ogre_king", "mist_lord", "an_dai_keeper", "toad_matriarch", "sand_sphinx"][ci]:
 						boss_ok = true
 		check(bad == 0, "ch%d pools reference existing matches" % (ci + 1))
 		check(boss_ok, "ch%d boss pool has its final boss" % (ci + 1))

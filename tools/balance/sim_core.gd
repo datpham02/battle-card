@@ -41,6 +41,16 @@ extends RefCounted
 const PLAYER: int = CombatState.Side.PLAYER
 const ENEMY: int = CombatState.Side.ENEMY
 const DIRS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
+## Story 036: extra path cost (in steps) the bot gives a step INTO mire; it walks around mire unless the detour
+## is longer than this many steps. A bot assumption, not game data.
+const MIRE_STEP_EXTRA: float = 2.0
+## Story 036: the player's step cooldown of this match, sim seconds since the last wind drift, and whether the
+## arena has mire (cell count) / sand / wind (printed by deck_sim --region).
+var _player_cd: float = 0.0
+var _drift_since: float = 0.0
+var _haz_mire: int = 0
+var _haz_sand: bool = false
+var _haz_wind: bool = false
 const SEED_MASK: int = 0x7fffffff
 ## Simulation seconds before a match counts as a timeout (lost).
 const MATCH_TIMEOUT_SEC: float = 180.0
@@ -187,6 +197,8 @@ var boss: BossController
 var arbiter: SwingArbiter
 var learning: BossLearning
 var trait_host: TraitHost
+## Story 036: the match's TileHazards (mire, sand, wind); null outside a match.
+var hazards: TileHazards = null
 var passive: BasePassive = null
 var signature: BaseSignature = null
 var formation: FormationMap = null
@@ -646,6 +658,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	var player_cd: float = base_cd * (step_mult if step_mult > 0.0 else 1.0)
 	# Story 033: mirrors CombatView._ready (run modifiers on top of the character's step multiplier).
 	player_cd = RelicRegistry.apply_override(player_cd, run_modifiers, "step_cooldown")
+	_player_cd = player_cd
 	mover = UnitMover.new(state, PLAYER, player_cd)
 	var chapter_id: String = str(m.get("chapter_id", ""))
 	var player_drops_config: FieldDropsConfig = drops_config.copy()
@@ -712,6 +725,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	if "min_runes" in brain:
 		brain.set("min_runes", maxi(int(m.get("boss_min_runes", 0)), 0))
 	_wire_zones()
+	_setup_hazards(m, match_seed)
 	status.thorn_entered.connect(_on_thorn_entered)
 	arbiter.swing_resolved.connect(_on_swing_resolved)
 	arbiter.swing_interrupted.connect(_on_swing_interrupted)
@@ -721,6 +735,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		"state": state, "grid": grid, "player_drops": drops, "boss_drops": boss.get_drops(),
 		"boss": boss, "status": status, "arbiter": arbiter, "hold_getter": Callable(self, "get_bag"), "player_mover": mover,
 		"skill_config": cards, "cut_config": cut_config,
+		"hazards": hazards,
 	}
 	var traits: Variant = m.get("traits", [])
 	trait_host = TraitHost.new(ctx, (traits as Array) if typeof(traits) == TYPE_ARRAY else [], match_seed)
@@ -763,6 +778,10 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		# Story 034: player casts resolved / hit by cast size (cells), interrupts the player SUFFERED (the
 		# boss broke the player's swing; "interrupts" counts the ones the player landed), deck fallback (0/1).
 		"size_res": {}, "size_hits": {}, "interrupted": 0, "piece_fallback": 1 if _piece_fallback else 0,
+		# Story 036: player / boss mire entries and the HP mire took (the player's is also in "taken"), field
+		# pieces buried by sand and drifted by the wind (player / boss half), sand cells filled on the player's half.
+		"mire_in": 0, "mire_dmg": 0.0, "bmire_in": 0, "bmire_dmg": 0.0, "buried": 0, "bburied": 0,
+		"drifted": 0, "bdrifted": 0, "sand_cells": 0,
 	}
 	_tr("match start %s boss_hp=%.0f player_hp=%.0f player=%s boss=%s player_cd=%.2f featured=%s" % [
 		str(m.get("id", "")), boss_max_hp, state.player_hp, str(state.player_cell), str(state.enemy_cell), player_cd, str(not featured.is_empty())])
@@ -786,6 +805,10 @@ func _teardown() -> void:
 	_fuse = null
 	_slam = null
 	_driver = null
+	# Break the TileHazards <-> mover closure cycle (extra_blocked_fn holds the movers) so matches do not leak.
+	if hazards != null:
+		hazards.extra_blocked_fn = Callable()
+	hazards = null
 
 
 # Mirrors CombatView._apply_brain_params (+ the --root override).
@@ -1039,14 +1062,16 @@ func _loop_step() -> void:
 func _world_tick(step: float) -> void:
 	t += step
 	status.tick(step, state)
+	_drift_since += step
+	hazards.tick(step, state)
 	_tick_signature(step)
 	if formation != null:
 		formation.tick(step)
 	mover.tick(step)
 	learning.tick(step, bag.is_full())
 	var burning: Array[Vector2i] = status.burning_cells()
-	drops.set_blocked_cells(burning)
-	boss.get_drops().set_blocked_cells(burning)
+	drops.set_blocked_cells(_drop_blocked(burning, PLAYER))
+	boss.get_drops().set_blocked_cells(_drop_blocked(burning, ENEMY))
 	var boss_actor: CutActor = boss.get_actor()
 	drops.set_danger_cells(boss_actor.get_cells() if boss_actor.is_swinging() else ([] as Array[Vector2i]))
 	boss.get_drops().set_danger_cells(actor.get_cells() if actor.is_swinging() else ([] as Array[Vector2i]))
@@ -1353,6 +1378,9 @@ func _on_boss_swing_cancelled(_cells: Array[Vector2i], _skill_id: String) -> voi
 
 
 func _on_cell_changed(side: int, _old_cell: Vector2i, new_cell: Vector2i) -> void:
+	if hazards != null and hazards.is_mire(side, new_cell):
+		var mk: String = "mire_in" if side == PLAYER else "bmire_in"
+		ms[mk] = int(ms[mk]) + 1
 	if side != PLAYER:
 		boss_step_at = t
 		return
@@ -1441,6 +1469,8 @@ func _bot_idle() -> void:
 		return
 	if _dodge_at >= 0.0:
 		_telegraph_dodge()
+		return
+	if _mire_exit():
 		return
 	if not actor.is_swinging() and t >= _next_cast and _ready_to_cast() and _try_start_cast():
 		return
@@ -1546,6 +1576,9 @@ func _walk_to_piece() -> void:
 	avoid.append_array(status.thorn_cells(PLAYER))
 	if boss.get_actor().is_swinging():
 		avoid.append_array(boss.get_actor().get_cells())
+	if hazards != null and (hazards.wind_enabled() or not hazards.mire_cells(PLAYER).is_empty()):
+		_walk_weighted(targets, avoid)
+		return
 	var start: Vector2i = state.player_cell
 	var first: Dictionary = {start: Vector2i.ZERO}
 	var queue: Array[Vector2i] = [start]
@@ -2030,3 +2063,183 @@ func cast_value(id: String, level: int, count: int) -> float:
 	if effect == "frost":
 		return _frost_value(int(c.get("frost_stacks", 0)))
 	return 0.0
+
+
+# --- Story 036: tile hazards (mirrors CombatView._setup_hazards and its handlers) ---------------------
+
+# Builds the TileHazards of this match: combat.json `hazards` overlaid by the match keys of the same names,
+# arena mire / sand / wind from ArenaLibrary.hazards_for_match, the sand blocker and the mire step cost on both
+# movers, the boss's mire immunity, the wind offset of new drops. With no hazard data nothing here draws a
+# random number of the sim or changes a tick, so no-hazard runs stay byte-identical.
+func _setup_hazards(m: Dictionary, match_seed: int) -> void:
+	var merged: Dictionary = combat.hazards()
+	for key: String in merged.keys():
+		if m.has(key):
+			merged[key] = m[key]
+	hazards = TileHazards.new(grid, match_seed)
+	hazards.configure(merged)
+	hazards.bind_state(state)
+	var h: TileHazards = hazards
+	var st: StatusEffects = status
+	var movers: Dictionary = {PLAYER: mover, ENEMY: boss.get_mover()}
+	for side: int in movers:
+		var mv: UnitMover = movers[side] as UnitMover
+		var hazard_side: int = side
+		mv.add_blocker(func(cell: Vector2i) -> bool: return h.is_sanded(hazard_side, cell))
+		mv.step_cost_fn = func(from_cell: Vector2i) -> float: return h.step_cost_mult(hazard_side, from_cell)
+	hazards.extra_blocked_fn = func(side: int, cell: Vector2i) -> bool:
+		return st.is_sealed(side, cell) or (movers[side] as UnitMover).is_cell_blocked(cell)
+	hazards.set_mire_immune(ENEMY, bool(m.get("mire_immune", false)))
+	var arena: Dictionary = ArenaLibrary.hazards_for_match(m, grid)
+	var mire_player: Array[Vector2i] = []
+	var mire_enemy: Array[Vector2i] = []
+	mire_player.assign(arena.get("mire_player", []))
+	mire_enemy.assign(arena.get("mire_enemy", []))
+	hazards.set_mire(PLAYER, mire_player)
+	hazards.set_mire(ENEMY, mire_enemy)
+	hazards.enable_sand(bool(arena.get("sand", false)))
+	hazards.enable_wind(bool(arena.get("wind", false)))
+	hazards.mire_damage.connect(_on_mire_damage)
+	hazards.sand_filled.connect(_on_sand_filled)
+	hazards.drift_due.connect(_on_drift_due)
+	var wind_fn: Callable = func() -> Vector2i: return h.wind_dir()
+	drops.wind_offset_fn = wind_fn
+	boss.get_drops().wind_offset_fn = wind_fn
+	# W4 adds BossController.set_hazards; older builds run without it.
+	if boss.has_method("set_hazards"):
+		boss.call("set_hazards", hazards)
+	_drift_since = 0.0
+	_haz_mire = mire_player.size() + mire_enemy.size()
+	_haz_sand = bool(arena.get("sand", false))
+	_haz_wind = bool(arena.get("wind", false))
+
+
+# The unit standing in mire takes the tick damage (CombatState keeps its own invulnerability rules). The HP
+# actually lost is counted (mire_dmg / bmire_dmg) and the player's also goes into "taken".
+func _on_mire_damage(side: int, amount: float) -> void:
+	var before: float = state.player_hp if side == PLAYER else state.enemy_hp
+	state.damage(side, amount)
+	var lost: float = maxf(before - (state.player_hp if side == PLAYER else state.enemy_hp), 0.0)
+	if side == PLAYER:
+		ms["mire_dmg"] = float(ms["mire_dmg"]) + lost
+		ms["taken"] = float(ms["taken"]) + lost
+	else:
+		ms["bmire_dmg"] = float(ms["bmire_dmg"]) + lost
+	_tr("%s mire damage %.1f" % ["PLAYER" if side == PLAYER else "BOSS", lost])
+
+
+# Sand filled on [param cells] of [param side]: field pieces lying there are buried.
+func _on_sand_filled(side: int, cells: Array[Vector2i]) -> void:
+	var fd: FieldDrops = drops if side == PLAYER else boss.get_drops()
+	var n: int = fd.bury_cells(cells)
+	var key: String = "buried" if side == PLAYER else "bburied"
+	ms[key] = int(ms[key]) + n
+	if side == PLAYER:
+		ms["sand_cells"] = int(ms["sand_cells"]) + cells.size()
+
+
+# The wind moves the field pieces of both halves one cell (a piece never drifts into sand). No piece is
+# dragged on the field (pieces are placed from the bag), as in CombatView.
+func _on_drift_due() -> void:
+	_drift_since = 0.0
+	var dir: Vector2i = hazards.wind_dir()
+	var dragged: Array[Vector2i] = []
+	var h: TileHazards = hazards
+	for side: int in [PLAYER, ENEMY]:
+		var drift_side: int = side
+		var fd: FieldDrops = drops if side == PLAYER else boss.get_drops()
+		var n: int = fd.drift_pieces(dir, func(cell: Vector2i) -> bool: return h.is_sanded(drift_side, cell), dragged)
+		var key: String = "drifted" if side == PLAYER else "bdrifted"
+		ms[key] = int(ms[key]) + n
+
+
+# Cells that refuse new drops: [param base] (burning) plus, when sand is active, the sand and sand-warning
+# cells of [param side] (CombatView._drop_blocked_cells). Without sand it returns [param base] itself.
+func _drop_blocked(base: Array[Vector2i], side: int) -> Array[Vector2i]:
+	if hazards == null:
+		return base
+	var sand: Array[Vector2i] = hazards.sand_cells(side)
+	var warning: Array[Vector2i] = hazards.sand_warning_cells(side)
+	if sand.is_empty() and warning.is_empty():
+		return base
+	var out: Array[Vector2i] = base.duplicate()
+	for c: Vector2i in sand + warning:
+		if not out.has(c):
+			out.append(c)
+	return out
+
+
+# Story 036 bot walk on a hazard map (mire or wind present; the plain BFS above runs otherwise). Dijkstra over
+# the player's half: a step costs 1, a step INTO mire 1 + MIRE_STEP_EXTRA, so the bot walks around mire unless
+# the way round is much longer (like thorns, but by cost). Sand is blocked through the mover's sand blocker
+# (_step_blocked). With the wind on, a piece the bot cannot reach before the next drift (steps x step cooldown
+# > time to the drift) is chased at the cell it drifts to (when that cell can take it).
+func _walk_weighted(targets: Dictionary, avoid: Array[Vector2i]) -> void:
+	var start: Vector2i = state.player_cell
+	var cost: Dictionary = {start: 0.0}
+	var steps: Dictionary = {start: 0}
+	var first: Dictionary = {start: Vector2i.ZERO}
+	var done: Dictionary = {}
+	var open: Array[Vector2i] = [start]
+	while not open.is_empty():
+		var bi: int = 0
+		for i: int in range(1, open.size()):
+			if float(cost[open[i]]) < float(cost[open[bi]]):
+				bi = i
+		var cur: Vector2i = open[bi]
+		open.remove_at(bi)
+		if done.has(cur):
+			continue
+		done[cur] = true
+		for d: Vector2i in DIRS:
+			var nb: Vector2i = cur + d
+			if done.has(nb) or not grid.is_player_cell(nb) or avoid.has(nb) or _step_blocked(nb):
+				continue
+			var c: float = float(cost[cur]) + 1.0 + (MIRE_STEP_EXTRA if hazards.is_mire(PLAYER, nb) else 0.0)
+			if not cost.has(nb) or c < float(cost[nb]):
+				cost[nb] = c
+				steps[nb] = int(steps[cur]) + 1
+				first[nb] = d if cur == start else first[cur]
+				open.append(nb)
+	var wind: Vector2i = Vector2i.ZERO
+	var drift_left: float = INF
+	var occupied: Dictionary = {}
+	if hazards.wind_enabled():
+		wind = hazards.wind_dir()
+		var dbg: Dictionary = hazards.get_debug()
+		var interval: float = float((dbg.get("cfg", {}) as Dictionary).get("drift_sec", 2.0)) * float(dbg.get("drift_mult", 1.0))
+		drift_left = maxf(interval - _drift_since, 0.0)
+		for p: FieldPoint in drops.get_points():
+			occupied[p.cell] = true
+	var best: Vector2i = start
+	var best_cost: float = INF
+	for cell: Vector2i in targets.keys():
+		var goal: Vector2i = cell
+		if wind != Vector2i.ZERO and (not steps.has(cell) or float(int(steps[cell])) * _player_cd > drift_left):
+			var next: Vector2i = cell + wind
+			if next != start and grid.is_player_cell(next) and not occupied.has(next) and not hazards.is_sanded(PLAYER, next):
+				goal = next
+		if goal != start and cost.has(goal) and float(cost[goal]) < best_cost:
+			best_cost = float(cost[goal])
+			best = goal
+	if best != start:
+		_bot_step(first[best] as Vector2i)
+
+
+# Story 036: standing in mire, the bot steps out to a dry neighbour that is safe (not burning, warned, thorned,
+# blocked or under the boss's swing) before anything else, as a player would. Not while its own swing runs.
+# True when it stepped. Without mire (hazards absent or no mire cell under the bot) it does nothing.
+func _mire_exit() -> bool:
+	if hazards == null or not hazards.is_mire(PLAYER, state.player_cell) or not mover.is_ready() or actor.is_swinging():
+		return false
+	var here: Vector2i = state.player_cell
+	var warned: Array[Vector2i] = _warned_cells()
+	var danger: Array[Vector2i] = boss.get_actor().get_cells() if boss.get_actor().is_swinging() else ([] as Array[Vector2i])
+	for d: Vector2i in DIRS:
+		var c: Vector2i = here + d
+		if not grid.is_player_cell(c) or hazards.is_mire(PLAYER, c) or warned.has(c) or danger.has(c):
+			continue
+		if status.is_burning(c) or not status.thorns_at(PLAYER, c).is_empty() or _step_blocked(c):
+			continue
+		return _bot_step(d)
+	return false

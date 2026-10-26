@@ -426,11 +426,51 @@ grep -E "^FATE|^\| .* \| (execute|spare|alternate) \|" "<scratch>/fate_exec.out"
 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=4 --fate=alternate --world-set=heal:1.0,scale.1.hp_mult:0.05,scale.2.hp_mult:0.05,scale.3.hp_mult:0.05,scale.4.hp_mult:0.05,scale.5.hp_mult:0.05
 ```
 
+## deck_sim `--region` (Story 036): one region at chosen floors
+
+`--region=<id,...>` plays every match of each listed chapters.json entry (`swamp`, `desert`, and also `ch1`,
+`ch2`, `ch3` for the comparison) on its own: full HP, the character's starter deck, `--relics` if given, N seeds
+per match (`--seeds`), at each floor of `--floor=1,3,5` (1-based, default 1). The Story 031 scaling is the one of
+the game: `RunConfig.from_node(..., floor - 1)` applies `region_normalize`, then `floor_scaling` row N. The pool
+kind (`battle`, `miniboss`, `boss`) is printed; breakers sit in the `miniboss` pool (min floor 2 on the map) but
+are played at every listed floor. `--region` replaces the chapter and `--world` runs; other shared flags apply.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--region=id,...` | off | Region mode. Unknown ids print a line and are skipped. |
+| `--floor=1,3,5` | 1 | Floors (1-based) every match is played at. |
+
+Output, per character, region and floor:
+
+| Line | What |
+|---|---|
+| `REGION` | one match: kind, n, win %, timeout %, hits landed / match, boss hits / match, HP taken / match, mire entries / match, mire HP / match, mire share of HP taken %, pieces buried / match, pieces drifted / match (player half), boss mire entries / match, sand cells filled / match, the arena's hazards (mire cells, sand, wind) |
+| `REGION MEAN` | the unweighted mean over the region's matches at that floor: the line to compare with `--region=ch1,ch2,ch3` at the same floor |
+| `REGION CHECK` | story 036 E3: floor-1 matches outside 15-95 % win, mire share <= 15 %; the +-10 points vs ch1-ch3 needs the other run |
+
+Hazards (Story 036, both tools): `sim_core` mirrors `CombatView._setup_hazards`: a `TileHazards` per match
+(seed = the drops seed; combat.json `hazards` overlaid by the match keys of the same names), arena mire / sand /
+wind from `ArenaLibrary.hazards_for_match`, the sand blocker and the mire step cost on both movers, `mire_immune`
+for the boss, mire damage on the unit standing in it (counted in "HP taken"), burial on `sand_filled`, the
+drift on `drift_due`, the wind offset of new drops, sand / sand-warning cells refusing drops, `ctx["hazards"]`
+for the traits and `BossController.set_hazards` when it exists. The bot walks with a Dijkstra on hazard maps:
+a step INTO mire costs `MIRE_STEP_EXTRA` (2) extra steps (an assumption), sand is blocked, and with the wind on a
+piece it cannot reach before the next drift is chased at the cell it will drift to. Maps without mire or wind
+keep the plain BFS walk, so hazard-free output is byte-identical to the sim before Story 036.
+
+```bash
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --region=swamp,desert --floor=1,3,5 --seeds=70 --characters=kiem_si > "<scratch>/regions_new.out" 2>&1
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --region=ch1,ch2,ch3 --floor=1,3,5 --seeds=70 --characters=kiem_si > "<scratch>/regions_old.out" 2>&1
+grep "REGION MEAN\|REGION CHECK" "<scratch>"/regions_*.out
+```
+
 ## hit_probe flags and output
 
 | Flag | Default | Meaning |
 |---|---|---|
 | `--chapter=N` | 0 | One chapter (0-based). Every match of it is probed on its own arena. |
+| `--region=id` | off | Story 036: the chapter by chapters.json id (`swamp`, `desert`, `ch1`...); overrides `--chapter`. |
+| `--floor=N` | off | Story 036: plays every match at floor N (1-based) with the Story 031 scaling (`region_normalize`, then `floor_scaling` row N). Off = the unscaled match, as before. `bot` mode adds a `RESULT BOT HAZARDS` line (mire entries / HP / share of HP taken, buried, drifted, boss mire entries per match) after each match that had a hazard effect. |
 | `--modes=a,b` | piece,counter,idle | See below. |
 | `--sizes=1,2,...` | 1..5 | Cast sizes for the cast modes. |
 | `--trials=N` | 40 | Casts per boss × mode × size. |

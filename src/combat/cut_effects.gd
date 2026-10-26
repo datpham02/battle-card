@@ -104,7 +104,8 @@ static func apply(
 		skill_id = SkillConfig.FALLBACK_SKILL
 		skill = _resolve(skill_config, skill_id, 1)
 	var effect: String = str(skill.get("effect", "damage"))
-	var inside: bool = cells.has(target_cell)
+	# Story 036: options.target_untargetable (burrowed boss) = the cast misses the unit; zones still form (Story 027).
+	var inside: bool = cells.has(target_cell) and not bool(options.get("target_untargetable", false))
 	result["zone_kind"] = ""
 	result["zone_cells"] = [] as Array[Vector2i]
 	if effect == "seal" or effect == "thorns":

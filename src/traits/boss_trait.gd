@@ -20,6 +20,7 @@ extends RefCounted
 ##   (use [method get_player_hold]).
 ## - `skill_config`: SkillConfig, `cut_config`: CutConfig.
 ## - `player_mover`: the player's UnitMover (Story 023: `blocked_cell_fn`, `cooldown_mult`).
+## - `hazards`: TileHazards (Story 036; mire, sand, wind), see [method get_hazards].
 ## - `trait_host_ref`: WeakRef of the owning TraitHost (add_trait, phase_changed); use
 ##   [method get_host].
 ## Every tuning number comes from `params` (chapters.json) with the trait's own defaults; read them
@@ -40,6 +41,7 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _ctx: Dictionary = {}
 var _params: Dictionary = {}
 var _seed_value: int = -1
+var _warned_no_hazards: bool = false
 
 
 ## Stores the context and params and seeds [member rng] from [param seed_value] (negative =
@@ -109,6 +111,13 @@ func on_boss_damaged(_amount: float) -> void:
 	pass
 
 
+## Story 036: true while the boss cannot be hit (burrow). The damage path asks TraitHost.is_boss_untargetable(),
+## which ORs this over the live traits: a player cast that lands meanwhile is a miss but still leaves its zone
+## (Story 027 rule). Default false.
+func untargetable() -> bool:
+	return false
+
+
 ## The PLAYER completed a successful step from [param _from] to [param _to] (refused steps and
 ## standing still never call this). Called by CombatView after UnitMover.try_step succeeded.
 func on_player_stepped(_from: Vector2i, _to: Vector2i) -> void:
@@ -138,6 +147,16 @@ func get_player_hold() -> HoldSlots:
 	if typeof(getter) != TYPE_CALLABLE or not (getter as Callable).is_valid():
 		return null
 	return (getter as Callable).call() as HoldSlots
+
+
+## Story 036: the match TileHazards (ctx key `hazards`), or null with ONE warning per trait instance when absent
+## (the trait then does nothing).
+func get_hazards() -> TileHazards:
+	var hazards: TileHazards = _ctx.get("hazards") as TileHazards
+	if hazards == null and not _warned_no_hazards:
+		_warned_no_hazards = true
+		push_warning("%s: ctx has no `hazards` (TileHazards), trait inactive" % get_id())
+	return hazards
 
 
 ## The owning TraitHost (through the weak ref in the context), or null.

@@ -107,7 +107,7 @@
 	"world": {
 		"floors": 5,
 		"choices_per_floor": 2,
-		"region_pool": ["ch1", "ch2", "ch3"],
+		"region_pool": ["ch1", "ch2", "ch3", "swamp", "desert"],
 		"region_columns": [
 			{"tier": 0, "kinds": ["battle"], "pick": [1, 1], "required": []},
 			{"tier": 1, "kinds": ["battle", "danger", {"kind": "miniboss", "min_floor": 2}], "pick": [2, 3], "required": [["rest", "treasure"]]},
@@ -969,6 +969,508 @@
 					"0": ["an_dai_keeper"],
 					"1": ["an_dai_keeper"],
 					"2": ["an_dai_keeper"]
+				}
+			}
+		},
+		{
+			"id": "swamp",
+			"name_key": "chapter.swamp.name",
+			"region_normalize": {
+				"hp_mult": 0.75,
+				"step_mult": 1.05,
+				"defense_add": 0
+			},
+			"intro_key": "chapter.swamp.intro",
+			"end_key": "chapter.swamp.end",
+			"matches": {
+				"bog_rat": {
+					"id": "bog_rat",
+					"name_key": "boss.bog_rat.name",
+					"boss_max_hp": 88,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.78,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"arena": {
+						"shape": "bog"
+					}
+				},
+				"mire_slug": {
+					"id": "mire_slug",
+					"name_key": "boss.mire_slug.name",
+					"desc_key": "match.mire_slug.desc",
+					"boss_max_hp": 104,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"mire_immune": true,
+					"arena": {
+						"shape": "bog"
+					}
+				},
+				"swamp_lizard": {
+					"id": "swamp_lizard",
+					"name_key": "boss.swamp_lizard.name",
+					"boss_max_hp": 112,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"movement": {
+						"move_commitment": 0.9,
+						"move_noise": 0.05,
+						"reaction_sec": 0.45
+					},
+					"arena": {
+						"shape": "reed_maze"
+					}
+				},
+				"marsh_toad": {
+					"id": "marsh_toad",
+					"name_key": "boss.marsh_toad.name",
+					"boss_max_hp": 126,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"arena": {
+						"shape": "bog",
+						"variant": true
+					}
+				},
+				"reed_witch": {
+					"id": "reed_witch",
+					"name_key": "boss.reed_witch.name",
+					"boss_max_hp": 138,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"traits": [
+						{
+							"id": "rotten_thrower",
+							"params": {
+								"interval_sec": 9.0
+							}
+						}
+					],
+					"arena": {
+						"shape": "reed_maze",
+						"variant": true
+					}
+				},
+				"bog_hound": {
+					"id": "bog_hound",
+					"name_key": "boss.bog_hound.name",
+					"boss_max_hp": 150,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "bog",
+						"variant": true
+					}
+				},
+				"spore_cap": {
+					"id": "spore_cap",
+					"name_key": "boss.spore_cap.name",
+					"desc_key": "match.spore_cap.desc",
+					"boss_max_hp": 70,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "spore_burst",
+							"params": {
+								"icd_sec": 1.5,
+								"spread_cells": 2,
+								"spore_mire_sec": 4.0
+							}
+						}
+					],
+					"arena": {
+						"shape": "bog"
+					}
+				},
+				"leap_frog": {
+					"id": "leap_frog",
+					"name_key": "boss.leap_frog.name",
+					"desc_key": "match.leap_frog.desc",
+					"boss_max_hp": 80,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "hop_skip",
+							"params": {
+								"hop_every": 3,
+								"hop_warn_sec": 0.4
+							}
+						}
+					],
+					"arena": {
+						"shape": "reed_maze"
+					}
+				},
+				"toad_matriarch": {
+					"id": "toad_matriarch",
+					"name_key": "boss.toad_matriarch.name",
+					"desc_key": "match.toad_matriarch.desc",
+					"boss_max_hp": 170,
+					"brain_set": "aggressive",
+					"boss_step_cooldown_mult": 1.25,
+					"swing_speed_mult": 0.8,
+					"boss_think_interval_sec": 0.25,
+					"boss_reaction_sec": 0.3,
+					"boss_drop_interval_mult": 0.9,
+					"boss_min_runes": 3,
+					"mire_immune": true,
+					"traits": [
+						{
+							"id": "bog_spread",
+							"params": {
+								"interval_sec": 8.0,
+								"cells": 2,
+								"mire_sec": 5.0
+							}
+						},
+						{
+							"id": "seal_caster",
+							"params": {
+								"interval_sec": 12.0,
+								"first_delay_sec": 8.0,
+								"cells_min": 2,
+								"cells_max": 2,
+								"lead_sec": 0.6,
+								"min_swing_cells": 3
+							}
+						}
+					],
+					"arena": {
+						"shape": "bog",
+						"variant": true
+					}
+				}
+			},
+			"pools": {
+				"battle": {
+					"0": [
+						"bog_rat",
+						"mire_slug"
+					],
+					"1": [
+						"mire_slug",
+						"swamp_lizard",
+						"marsh_toad",
+						"bog_rat"
+					],
+					"2": [
+						"swamp_lizard",
+						"marsh_toad",
+						"reed_witch",
+						"bog_hound"
+					]
+				},
+				"danger": {
+					"0": [],
+					"1": [
+						"swamp_lizard",
+						"marsh_toad",
+						"reed_witch"
+					],
+					"2": [
+						"marsh_toad",
+						"reed_witch",
+						"bog_hound"
+					]
+				},
+				"miniboss": {
+					"1": [
+						"spore_cap",
+						"leap_frog"
+					],
+					"2": [
+						"leap_frog",
+						"spore_cap"
+					]
+				},
+				"boss": {
+					"1": [
+						"toad_matriarch"
+					],
+					"2": [
+						"toad_matriarch"
+					]
+				}
+			}
+		},
+		{
+			"id": "desert",
+			"name_key": "chapter.desert.name",
+			"region_normalize": {
+				"hp_mult": 0.75,
+				"step_mult": 1.05,
+				"defense_add": 0
+			},
+			"intro_key": "chapter.desert.intro",
+			"end_key": "chapter.desert.end",
+			"matches": {
+				"dune_jackal": {
+					"id": "dune_jackal",
+					"name_key": "boss.dune_jackal.name",
+					"boss_max_hp": 90,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.78,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.5,
+					"boss_reaction_sec": 0.6,
+					"boss_drop_interval_mult": 1.3,
+					"arena": {
+						"shape": "dunes"
+					}
+				},
+				"sand_beetle": {
+					"id": "sand_beetle",
+					"name_key": "boss.sand_beetle.name",
+					"boss_max_hp": 106,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"boss_defense": 2,
+					"arena": {
+						"shape": "dunes"
+					}
+				},
+				"dust_nomad": {
+					"id": "dust_nomad",
+					"name_key": "boss.dust_nomad.name",
+					"boss_max_hp": 116,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"arena": {
+						"shape": "oasis"
+					}
+				},
+				"mirage_sprite": {
+					"id": "mirage_sprite",
+					"name_key": "boss.mirage_sprite.name",
+					"boss_max_hp": 124,
+					"brain_set": "cautious",
+					"boss_step_cooldown_mult": 1.5,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"boss_drop_interval_mult": 1.15,
+					"movement": {
+						"move_noise": 0.15
+					},
+					"arena": {
+						"shape": "dunes",
+						"variant": true
+					}
+				},
+				"scarab_guard": {
+					"id": "scarab_guard",
+					"name_key": "boss.scarab_guard.name",
+					"boss_max_hp": 140,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_defense": 2,
+					"arena": {
+						"shape": "oasis",
+						"variant": true
+					}
+				},
+				"sun_archer": {
+					"id": "sun_archer",
+					"name_key": "boss.sun_archer.name",
+					"boss_max_hp": 152,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.6,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"traits": [
+						{
+							"id": "row_burner",
+							"params": {}
+						}
+					],
+					"arena": {
+						"shape": "dunes",
+						"variant": true
+					}
+				},
+				"sand_burrower": {
+					"id": "sand_burrower",
+					"name_key": "boss.sand_burrower.name",
+					"desc_key": "match.sand_burrower.desc",
+					"boss_max_hp": 84,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"boss_min_runes": 2,
+					"traits": [
+						{
+							"id": "burrow",
+							"params": {
+								"interval_sec": 7.0,
+								"burrow_sec": 1.5,
+								"surface_warn_sec": 0.5
+							}
+						}
+					],
+					"arena": {
+						"shape": "dunes"
+					}
+				},
+				"scorpion": {
+					"id": "scorpion",
+					"name_key": "boss.scorpion.name",
+					"desc_key": "match.scorpion.desc",
+					"boss_max_hp": 96,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.35,
+					"swing_speed_mult": 0.95,
+					"boss_think_interval_sec": 0.35,
+					"boss_reaction_sec": 0.4,
+					"boss_drop_interval_mult": 1.05,
+					"traits": [
+						{
+							"id": "riposte",
+							"params": {
+								"min_cells": 4,
+								"warn_sec": 0.4,
+								"damage": 10
+							}
+						}
+					],
+					"arena": {
+						"shape": "oasis"
+					}
+				},
+				"sand_sphinx": {
+					"id": "sand_sphinx",
+					"name_key": "boss.sand_sphinx.name",
+					"desc_key": "match.sand_sphinx.desc",
+					"boss_max_hp": 175,
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.3,
+					"swing_speed_mult": 0.9,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"boss_drop_interval_mult": 1.0,
+					"boss_min_runes": 3,
+					"traits": [
+						{
+							"id": "sandstorm",
+							"params": {
+								"interval_sec": 12.0,
+								"storm_sec": 3.0,
+								"extra_sand": 2
+							}
+						}
+					],
+					"arena": {
+						"shape": "oasis",
+						"variant": true
+					}
+				}
+			},
+			"pools": {
+				"battle": {
+					"0": [
+						"dune_jackal",
+						"sand_beetle"
+					],
+					"1": [
+						"sand_beetle",
+						"dust_nomad",
+						"mirage_sprite",
+						"dune_jackal"
+					],
+					"2": [
+						"dust_nomad",
+						"mirage_sprite",
+						"scarab_guard",
+						"sun_archer"
+					]
+				},
+				"danger": {
+					"0": [],
+					"1": [
+						"dust_nomad",
+						"mirage_sprite",
+						"scarab_guard"
+					],
+					"2": [
+						"mirage_sprite",
+						"scarab_guard",
+						"sun_archer"
+					]
+				},
+				"miniboss": {
+					"1": [
+						"sand_burrower",
+						"scorpion"
+					],
+					"2": [
+						"scorpion",
+						"sand_burrower"
+					]
+				},
+				"boss": {
+					"1": [
+						"sand_sphinx"
+					],
+					"2": [
+						"sand_sphinx"
+					]
 				}
 			}
 		}

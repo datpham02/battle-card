@@ -143,6 +143,8 @@ var _status: StatusEffects
 var _learning: BossLearning
 ## The boss traits of this match (Story 014); built in _ready, torn down in _exit_tree.
 var _trait_host: TraitHost
+## Story 036: the tile hazard model (mire, sand, wind); null before setup.
+var _hazards: TileHazards
 ## The character passive of this match (Story 018); null without a character or with an unknown id.
 var _passive: BasePassive = null
 var _passive_heal: float = 0.0
@@ -328,6 +330,7 @@ func _ready() -> void:
 	_arbiter.execute_ratio = _config.execute_ratio
 	_boss.get_brain().min_runes = maxi(int(match_params.get("boss_min_runes", 0)), 0)
 	_wire_zones()
+	_setup_hazards()
 	_wire_relics()
 	_arbiter.swing_resolved.connect(_on_swing_resolved)
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
@@ -355,9 +358,107 @@ func _wire_zones() -> void:
 	_arbiter.zone_numbers = _config.zone_numbers()
 
 
+# Story 036 Part A: builds the TileHazards of this match. Numbers = combat.json `hazards` overlaid by the match
+# keys of the same names; the arena shape (ArenaLibrary.hazards_for_match) says which hazards run. Both movers get
+# the sand blocker and the mire step cost; mire damage hits the unit standing in it (match key mire_immune frees
+# the boss); sand buries field pieces, the wind drifts them and offsets new drops. With no hazard data nothing here
+# draws a random number or changes a tick.
+func _setup_hazards() -> void:
+	var merged: Dictionary = _config.hazards()
+	for key: String in merged.keys():
+		if match_params.has(key):
+			merged[key] = match_params[key]
+	_hazards = TileHazards.new(_grid, drops_seed)
+	_hazards.configure(merged)
+	_hazards.bind_state(_state)
+	# Story 036 (W4): the boss brain prices mire, treats sand as blocked and leads drifting pieces.
+	if _boss != null and _boss.has_method("set_hazards"):
+		_boss.set_hazards(_hazards)
+	var status: StatusEffects = _status
+	var boss_mover: UnitMover = _boss.get_mover()
+	var movers: Dictionary = {CombatState.Side.PLAYER: _mover, CombatState.Side.ENEMY: boss_mover}
+	var hazards: TileHazards = _hazards
+	for side: int in movers:
+		var mover: UnitMover = movers[side] as UnitMover
+		var hazard_side: int = side
+		mover.add_blocker(func(cell: Vector2i) -> bool: return hazards.is_sanded(hazard_side, cell))
+		mover.step_cost_fn = func(from_cell: Vector2i) -> float: return hazards.step_cost_mult(hazard_side, from_cell)
+	# Leave-a-path sees seals and cracks through the movers' own blocked test.
+	_hazards.extra_blocked_fn = func(side: int, cell: Vector2i) -> bool:
+		return status.is_sealed(side, cell) or (movers[side] as UnitMover).is_cell_blocked(cell)
+	_hazards.set_mire_immune(CombatState.Side.ENEMY, bool(match_params.get("mire_immune", false)))
+	var arena: Dictionary = ArenaLibrary.hazards_for_match(match_params, _grid)
+	var mire_player: Array[Vector2i] = []
+	var mire_enemy: Array[Vector2i] = []
+	mire_player.assign(arena.get("mire_player", []))
+	mire_enemy.assign(arena.get("mire_enemy", []))
+	_hazards.set_mire(CombatState.Side.PLAYER, mire_player)
+	_hazards.set_mire(CombatState.Side.ENEMY, mire_enemy)
+	_hazards.enable_sand(bool(arena.get("sand", false)))
+	_hazards.enable_wind(bool(arena.get("wind", false)))
+	_hazards.mire_damage.connect(_on_mire_damage)
+	_hazards.sand_filled.connect(_on_sand_filled)
+	_hazards.drift_due.connect(_on_drift_due)
+	var wind_fn: Callable = func() -> Vector2i: return hazards.wind_dir()
+	_drops.wind_offset_fn = wind_fn
+	_boss.get_drops().wind_offset_fn = wind_fn
+
+
+# The unit standing in mire takes the tick damage (CombatState keeps its own invulnerability rules).
+func _on_mire_damage(side: int, amount: float) -> void:
+	_state.damage(side, amount)
+
+
+# Sand filled on [param cells] of [param side]: field pieces lying there are buried.
+func _on_sand_filled(side: int, cells: Array[Vector2i]) -> void:
+	_drops_of(side).bury_cells(cells)
+
+
+# The wind moves the field pieces of both halves one cell (a piece never drifts into sand).
+func _on_drift_due() -> void:
+	var dir: Vector2i = _hazards.wind_dir()
+	var dragged: Array[Vector2i] = []  # pieces are placed from the hold bag, never dragged on the field
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		var drift_side: int = side
+		var hazards: TileHazards = _hazards
+		_drops_of(side).drift_pieces(dir, func(cell: Vector2i) -> bool: return hazards.is_sanded(drift_side, cell), dragged)
+
+
+func _drops_of(side: int) -> FieldDrops:
+	return _drops if side == CombatState.Side.PLAYER else _boss.get_drops()
+
+
+## Story 036: the tile hazard model of this match (mire, sand, wind); null before setup. Traits get it as
+## ctx["hazards"], the HUD and tests read it here.
+func get_hazards() -> TileHazards:
+	return _hazards
+
+
+# Cells that refuse new drops: [param base] (burning) plus, when sand is active, the sand and sand-warning cells.
+func _drop_blocked_cells(base: Array[Vector2i], side: int) -> Array[Vector2i]:
+	if _hazards == null:
+		return base
+	var sand: Array[Vector2i] = _hazards.sand_cells(side)
+	var warning: Array[Vector2i] = _hazards.sand_warning_cells(side)
+	if sand.is_empty() and warning.is_empty():
+		return base
+	var out: Array[Vector2i] = base.duplicate()
+	for cell: Vector2i in sand + warning:
+		if not out.has(cell):
+			out.append(cell)
+	return out
+
+
 func _exit_tree() -> void:
 	if _trait_host != null:
 		_trait_host.teardown_all()
+	if _hazards != null:
+		# Story 036: extra_blocked_fn holds the movers and the movers' sand blocker / step cost hold the hazards;
+		# break that RefCounted cycle so a finished match does not leak its TileHazards.
+		_hazards.extra_blocked_fn = Callable()
+		for mover: UnitMover in [_mover, _boss.get_mover() if _boss != null else null]:
+			if mover != null:
+				mover.step_cost_fn = Callable()
 	if _passive != null:
 		_passive.teardown()
 	for relic: BaseRelic in _relics:
@@ -794,6 +895,7 @@ func make_trait_ctx() -> Dictionary:
 		"state": _state, "grid": _grid, "player_drops": _drops, "boss_drops": _boss.get_drops(),
 		"boss": _boss, "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"), "player_mover": _mover,
 		"skill_config": _skill_config, "cut_config": _cut_config,
+		"hazards": _hazards,
 	}
 
 
@@ -933,6 +1035,7 @@ func _process(delta: float) -> void:
 			queue_redraw()
 			return
 		_status.tick(step, _state)
+		_hazards.tick(step, _state)
 		_tick_signature(step)
 		if _formation != null:
 			_formation.tick(step)
@@ -941,8 +1044,8 @@ func _process(delta: float) -> void:
 		var held: int = 0 if hold == null else hold.get_occupied_count()
 		_learning.tick(step, hold != null and hold.is_full())
 		var burning: Array[Vector2i] = _status.burning_cells()
-		_drops.set_blocked_cells(burning)
-		_boss.get_drops().set_blocked_cells(burning)
+		_drops.set_blocked_cells(_drop_blocked_cells(burning, CombatState.Side.PLAYER))
+		_boss.get_drops().set_blocked_cells(_drop_blocked_cells(burning, CombatState.Side.ENEMY))
 		# Each side's drops avoid the cells the opponent's swing is about to cut.
 		var boss_actor: CutActor = _boss.get_actor()
 		_drops.set_danger_cells(boss_actor.get_cells() if boss_actor.is_swinging() else _no_cells())

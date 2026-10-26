@@ -21,6 +21,10 @@ var cooldown_mult: float = 1.0
 ## Story 025: Callable() -> bool; true = the unit is rooted: try_step refuses (no cooldown started)
 ## and is_ready() is false (the boss while it swings). Invalid (default) = never locked.
 var step_lock_fn: Callable = Callable()
+## Story 036: Callable(from_cell: Vector2i) -> float multiplying the cooldown of the step that starts on
+## [param from_cell] (mire: leaving a mire cell), applied AFTER [member cooldown_scale] so a free step stays free.
+## Invalid (default) = 1.
+var step_cost_fn: Callable = Callable()
 
 
 ## [param side] is a CombatState.Side value.
@@ -48,13 +52,19 @@ func try_step(direction: Vector2i) -> bool:
 		return false
 	if is_cell_blocked(_state.cell_of(_side) + direction):
 		return false
+	var from_cell: Vector2i = _state.cell_of(_side)
 	var moved: bool
 	if _side == CombatState.Side.PLAYER:
 		moved = _state.set_player_cell(_state.player_cell + direction)
 	else:
 		moved = _state.set_enemy_cell(_state.enemy_cell + direction)
 	if moved:
-		_remaining = _cooldown_sec * _scale()
+		var scale: float = _scale()
+		# Story 036: a plugged-in step cost (mire: leaving a mire cell) multiplies AFTER cooldown_scale, so a
+		# free step (scale 0.0, Anh Bo) stays free.
+		if scale > 0.0 and step_cost_fn.is_valid():
+			scale *= maxf(float(step_cost_fn.call(from_cell)), 0.0)
+		_remaining = _cooldown_sec * scale
 	return moved
 
 

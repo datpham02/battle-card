@@ -77,7 +77,89 @@ static func validate(spec: Dictionary, rules: Dictionary, pieces: PieceLibrary =
 		_check_escapes(grid, player_default, true, placements_player, reasons)
 	if enemy_default != BoardGrid.NO_CELL:
 		_check_escapes(grid, enemy_default, false, placements_enemy, reasons)
+	_check_hazards(spec, grid, reasons)
 	return {"ok": reasons.is_empty(), "reasons": reasons}
+
+
+## Story 036: true when a half keeps a way out of [param start] with [param mire_cells] mired: at least one
+## neighbour of the start cell that is a real cell of that half and not mire (mire never blocks a step, but a
+## start cell ringed by mire would make every first step slow, so the rule keeps one clean exit).
+static func leaves_path(grid: BoardGrid, start: Vector2i, mire_cells: Array[Vector2i], player_half: bool) -> bool:
+	for dir: Vector2i in _DIRECTIONS:
+		var next: Vector2i = start + dir
+		var on_half: bool = grid.is_player_cell(next) if player_half else grid.is_enemy_cell(next)
+		if on_half and not mire_cells.has(next):
+			return true
+	return false
+
+
+## Story 036: reasons why [param cells] (a parsed featured shape) cannot be a featured shape of a shipped arena:
+## it must be buildable from at least [param min_pairs] distinct pairs of the library's pieces. [] = fine.
+static func featured_reasons(cells: Array[Vector2i], min_pairs: int, pieces: PieceLibrary = null) -> Array[String]:
+	var reasons: Array[String] = []
+	var library: PieceLibrary = pieces if pieces != null else _library()
+	var pairs: Array = FeaturedShape.pair_compositions(library, cells)
+	if pairs.size() < min_pairs:
+		reasons.append("buildable from only %d piece pairs (min %d)" % [pairs.size(), min_pairs])
+	return reasons
+
+
+## Story 036: the optional `hazards` ({mire: {per_side} | {player, enemy}, sand: bool}) and `wind` (bool) keys.
+static func _check_hazards(spec: Dictionary, grid: BoardGrid, reasons: Array[String]) -> void:
+	if spec.has("wind") and typeof(spec["wind"]) != TYPE_BOOL:
+		reasons.append("wind must be true or false")
+	if not spec.has("hazards"):
+		return
+	if typeof(spec["hazards"]) != TYPE_DICTIONARY:
+		reasons.append("hazards must be an object")
+		return
+	var hazards: Dictionary = spec["hazards"] as Dictionary
+	for key: Variant in hazards.keys():
+		if not ["mire", "sand"].has(str(key)):
+			reasons.append("unknown hazards key '%s'" % str(key))
+	if hazards.has("sand") and typeof(hazards["sand"]) != TYPE_BOOL:
+		reasons.append("hazards.sand must be true or false")
+	if not hazards.has("mire"):
+		return
+	if typeof(hazards["mire"]) != TYPE_DICTIONARY:
+		reasons.append("hazards.mire must be an object")
+		return
+	var mire: Dictionary = hazards["mire"] as Dictionary
+	var half_size: int = grid.player_cells().size()
+	if mire.has("per_side"):
+		if typeof(mire["per_side"]) != TYPE_INT and typeof(mire["per_side"]) != TYPE_FLOAT:
+			reasons.append("hazards.mire.per_side must be a number")
+		else:
+			var count: int = int(mire["per_side"])
+			if count < 0 or count > half_size / 2:
+				reasons.append("hazards.mire.per_side %d is outside 0..%d (half of a half)" % [count, half_size / 2])
+	for half_name: String in ["player", "enemy"]:
+		if not mire.has(half_name):
+			continue
+		var player_half: bool = half_name == "player"
+		var cells: Array[Vector2i] = grid.player_cells() if player_half else grid.enemy_cells()
+		var start: Vector2i = grid.default_player_cell() if player_half else grid.default_enemy_cell()
+		if typeof(mire[half_name]) != TYPE_ARRAY:
+			reasons.append("hazards.mire.%s must be an array of [col, row]" % half_name)
+			continue
+		var listed: Array[Vector2i] = []
+		for item: Variant in mire[half_name] as Array:
+			if typeof(item) != TYPE_ARRAY or (item as Array).size() != 2:
+				reasons.append("hazards.mire.%s has a bad cell" % half_name)
+				continue
+			var cell := Vector2i(int((item as Array)[0]), int((item as Array)[1]))
+			if not player_half:
+				cell = Vector2i(grid.total_cols - 1 - cell.x, cell.y)
+			if not cells.has(cell):
+				reasons.append("hazards.mire.%s cell %s is not a real cell of the half" % [half_name, item])
+			elif cell == start:
+				reasons.append("hazards.mire.%s cell %s is the unit start cell" % [half_name, item])
+			else:
+				listed.append(cell)
+		if listed.size() > cells.size() / 2:
+			reasons.append("hazards.mire.%s has %d cells (max half of the half = %d)" % [half_name, listed.size(), cells.size() / 2])
+		if start != BoardGrid.NO_CELL and not leaves_path(grid, start, listed, player_half):
+			reasons.append("hazards.mire.%s leaves no clean cell next to the start cell" % half_name)
 
 
 ## Parses missing_cells ([[col,row], ...] or Vector2i entries); bad entries are skipped.

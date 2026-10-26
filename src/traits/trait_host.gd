@@ -23,6 +23,10 @@ func _init(ctx: Dictionary, specs: Array, seed_value: int) -> void:
 	_ctx = ctx
 	_ctx["trait_host_ref"] = weakref(self)
 	_seed_value = seed_value
+	# Story 036: the ONE untargetable point of the damage path (burrow). Callables do not keep the host alive.
+	var arbiter: SwingArbiter = ctx.get("arbiter") as SwingArbiter
+	if arbiter != null:
+		arbiter.enemy_untargetable_fn = Callable(self, "is_boss_untargetable")
 	for entry: Variant in specs:
 		if typeof(entry) != TYPE_DICTIONARY:
 			push_warning("TraitHost: a trait entry is not an object, skipped")
@@ -161,9 +165,21 @@ func debug_add_trait(trait_instance: BossTrait) -> void:
 	_traits.append(trait_instance)
 
 
+## Story 036: true while any live trait says the boss cannot be hit (BossTrait.untargetable(), burrow).
+## SwingArbiter asks it for every player cast (a landing cast is then a miss that still leaves its zone).
+func is_boss_untargetable() -> bool:
+	for trait_instance: BossTrait in _traits:
+		if trait_instance.untargetable():
+			return true
+	return false
+
+
 ## Tears every trait down and forgets them. Safe to call more than once.
 func teardown_all() -> void:
 	for trait_instance: BossTrait in _traits:
 		trait_instance.teardown()
 	_traits.clear()
+	var arbiter: SwingArbiter = _ctx.get("arbiter") as SwingArbiter
+	if arbiter != null and arbiter.enemy_untargetable_fn == Callable(self, "is_boss_untargetable"):
+		arbiter.enemy_untargetable_fn = Callable()
 	_ctx = {}

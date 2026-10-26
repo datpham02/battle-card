@@ -51,10 +51,17 @@ func _init() -> void:
 	var idle_sec: float = 600.0
 	var char_id: String = "kiem_si"
 	var immortal: bool = false
+	# Story 036: --region=<id> picks the chapter by id (overrides --chapter); --floor=N applies floor_scaling row N.
+	var region: String = ""
+	var floor_n: int = 0
 	for arg: String in rest:
 		var v: String = arg.get_slice("=", 1) if arg.contains("=") else ""
 		if arg.begins_with("--chapter="):
 			ci = int(v)
+		elif arg.begins_with("--region="):
+			region = v.strip_edges()
+		elif arg.begins_with("--floor="):
+			floor_n = maxi(int(v), 0)
 		elif arg.begins_with("--modes="):
 			modes = []
 			for x: String in v.split(","):
@@ -84,6 +91,10 @@ func _init() -> void:
 			print("unknown flag %s (see tools/balance/README.md)" % arg)
 	_core.load_configs()
 	var chapters: ChaptersConfig = ChaptersConfig.load_from_file()
+	if not region.is_empty():
+		ci = chapters.region_index(region)
+		if ci < 0:
+			print("--region: '%s' is not a chapters.json id" % region)
 	if ci < 0 or ci >= chapters.chapter_count():
 		print("chapter %d out of range (chapter_count=%d)" % [ci, chapters.chapter_count()])
 		quit(1)
@@ -94,6 +105,8 @@ func _init() -> void:
 	for id: Variant in character.get("starter_deck", []):
 		deck_entries.append({"id": str(id), "level": 1})
 	print("hit_probe chapter=%d (%s) modes=%s sizes=%s trials=%d seeds=%d idle_sec=%.0f char=%s" % [ci + 1, chapter_id, str(modes), str(sizes), _trials, seeds, idle_sec, char_id])
+	if floor_n > 0:
+		print("floor=%d (Story 031: region_normalize then floor_scaling row %d)" % [floor_n, floor_n])
 	print(_core.describe())
 	if not _core.describe_piece_deck().is_empty():
 		# Story 034: the deck shapes the player's FIELD DROPS, so only the bot mode feels it (the cast modes
@@ -114,7 +127,7 @@ func _init() -> void:
 		for id: String in chapters.match_ids(ci):
 			if not only.is_empty() and not only.has(id):
 				continue
-			var rc: RunConfig = RunConfig.from_node(chapters, ci, id, "battle", 1)
+			var rc: RunConfig = RunConfig.from_node(chapters, ci, id, "battle", 1, floor_n - 1)
 			var m: Dictionary = _core.prepare_match(rc.matches[0] as Dictionary)
 			m["chapter_id"] = chapter_id
 			var bc: BossBrainConfig = BossBrainConfig.from_dictionary(_core.brain_data)
@@ -195,6 +208,7 @@ func _run_bot(m: Dictionary, id: String, character: Dictionary, deck_entries: Ar
 	for k: String in keys:
 		acc[k] = 0.0
 	var firsts: Array[float] = []
+	var hz: Dictionary = {"mire_in": 0.0, "mire_dmg": 0.0, "buried": 0.0, "drifted": 0.0, "bmire_in": 0.0, "taken": 0.0}
 	for s: int in seeds:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = hash([id, "bot", s]) & SimCore.SEED_MASK
@@ -206,6 +220,8 @@ func _run_bot(m: Dictionary, id: String, character: Dictionary, deck_entries: Ar
 		acc["died"] = float(acc["died"]) + (1.0 if (not bool(r["won"]) and not bool(r["timeout"])) else 0.0)
 		for k: String in ["sec", "casts", "resolved", "hits", "bstarts", "bhits", "taken", "interrupts", "counters", "focus_uses", "joins", "featured", "sig_acts", "sig_dmg"]:
 			acc[k] = float(acc[k]) + float(r[k])
+		for k: String in hz.keys():
+			hz[k] = float(hz[k]) + float(r.get(k, 0))
 		if float(r["sig_first"]) >= 0.0:
 			firsts.append(float(r["sig_first"]))
 	var n: float = float(seeds)
@@ -222,6 +238,7 @@ func _run_bot(m: Dictionary, id: String, character: Dictionary, deck_entries: Ar
 		float(acc["bstarts"]) / mins, float(acc["bhits"]) / mins, float(acc["taken"]) / mins, float(acc["interrupts"]) / n,
 		float(acc["counters"]) / n, float(acc["focus_uses"]) / n, float(acc["joins"]) / n, float(acc["featured"]) / n,
 		float(acc["sig_acts"]) / n, first, float(acc["sig_dmg"]) / maxf(float(acc["sig_acts"]), 1.0)])
+	_print_hazard_line(id, character, n, hz)
 
 
 ## Driver hook (sim_core): true once the cast modes reached their trials and the last swing is over.
@@ -269,3 +286,14 @@ func _cast_at_boss(core: SimCore, pair: bool) -> void:
 		_next = core.t + core.actor.get_duration() + core.rng.randf_range(PROBE_GAP_MIN, PROBE_GAP_MAX)
 	else:
 		_next = core.t + 0.2
+
+
+# Story 036: one extra BOT line per match, only when the arena had a hazard effect (mire entries, buried or
+# drifted pieces), so hazard-free output is unchanged.
+func _print_hazard_line(id: String, character: Dictionary, n: float, hz: Dictionary) -> void:
+	if float(hz["mire_in"]) + float(hz["buried"]) + float(hz["drifted"]) + float(hz["bmire_in"]) <= 0.0:
+		return
+	print("RESULT BOT HAZARDS | %s | %s | mire entries/match %.2f | mire HP/match %.1f | mire share of HP taken %.1f %% | buried/match %.2f | drifted/match %.2f | boss mire entries/match %.2f" % [
+		id, str(character.get("id", "")), float(hz["mire_in"]) / n, float(hz["mire_dmg"]) / n,
+		100.0 * float(hz["mire_dmg"]) / maxf(float(hz["taken"]), 0.001), float(hz["buried"]) / n, float(hz["drifted"]) / n,
+		float(hz["bmire_in"]) / n])

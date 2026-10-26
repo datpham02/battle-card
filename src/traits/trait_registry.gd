@@ -17,6 +17,12 @@ const SCRIPTS: Dictionary = {
 	"seal_caster": preload("res://src/traits/seal_caster.gd"),
 	"thorn_field": preload("res://src/traits/thorn_field.gd"),
 	"boss_phases": preload("res://src/traits/boss_phases.gd"),
+	"spore_burst": preload("res://src/traits/spore_burst.gd"),
+	"hop_skip": preload("res://src/traits/hop_skip.gd"),
+	"bog_spread": preload("res://src/traits/bog_spread.gd"),
+	"burrow": preload("res://src/traits/burrow.gd"),
+	"riposte": preload("res://src/traits/riposte.gd"),
+	"sandstorm": preload("res://src/traits/sandstorm.gd"),
 }
 
 
