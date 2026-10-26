@@ -2,6 +2,9 @@
 
 Headless SceneTree suites (`extends SceneTree`). Each prints PASS/FAIL lines and ends with `FAILS=N`. Not gdUnit4 (see TD-010).
 
+## Test runner decision
+SceneTree suites that print PASS/FAIL lines and end with `FAILS=N` are the project's standard test runner (TD-010). Why: the project has 77 headless and 4 windowed suites written this way, they need no addon, and no gdUnit4 addon is installed (there is no `addons/` folder), so the gdUnit4 command named in the coding standards cannot run here. CI should run the two loops under **Run** below and fail the job when any suite prints `FAILS=` with a value other than 0, prints `SCRIPT ERROR`, or prints no `FAILS` line at all; the windowed `integration/ui/` suites need a display (a virtual one such as Xvfb on Linux CI), one at a time. Moving to gdUnit4 would be a separate decision, taken when CI is set up.
+
 ## Layout
 - `unit/<system>/` — pure logic (combat, traits, run, ui)
 - `integration/run/` — game-flow suites (headless)

@@ -23,8 +23,6 @@ extends Node2D
 const PREVIEW_TINT: Color = Color(1.0, 0.85, 0.2, 0.35)
 const PREVIEW_OUTLINE: Color = Color(1.0, 0.85, 0.2, 0.95)
 const PREVIEW_LINE: Color = Color(1.0, 1.0, 1.0, 0.95)
-const DOT_COLOR: Color = Color(1.0, 0.85, 0.2)
-const DOT_OUTLINE: Color = Color(0.15, 0.12, 0.1)
 ## Story 024 placement ghost: green when the piece covers the boss's cell, red when it does not.
 const GHOST_HIT_TINT: Color = Color(0.2, 0.85, 0.3, 0.45)
 const GHOST_HIT_OUTLINE: Color = Color(0.1, 0.65, 0.2, 0.95)
@@ -59,6 +57,10 @@ const FEATURED_LABEL_GAP: float = 8.0
 const DETACH_MARK_RADIUS: float = 11.0
 const DETACH_MARK_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
 const TEXT_PLACE_HINT: String = "ui.hud.place_hint"
+## TD-016: one line on the card menu countdown bar while another piece can still join the cast.
+const TEXT_JOIN_HINT: String = "ui.hud.join_hint"
+## Overlays that cover the battle (paths under the main scene); the relic strip hides while one is shown.
+const OVERLAY_PATHS: Array[String] = ["RewardView", "GameFlow/FateView", "GameFlow/EndingView"]
 const TEXT_CANCEL: String = "ui.hud.cancel"
 const TEXT_ROTATE: String = "ui.hud.rotate"
 ## Rotate button (Story 024): fill, glyph radius (share of the button's short side), how far the glyph
@@ -93,11 +95,6 @@ const DIM_ALPHA: float = 0.4
 const OUTLINE_WIDTH: float = 4.0
 const CELL_OUTLINE_WIDTH: float = 3.0
 const LINE_WIDTH: float = 4.0
-## Perimeter dot radius and its label offset toward the board centre (shares of cell height).
-const DOT_RADIUS_RATIO: float = 0.08
-const DOT_LABEL_OFFSET_RATIO: float = 0.24
-const DOT_LABEL_WIDTH: float = 60.0
-const DOT_LABEL_FONT_SIZE: int = 22
 const BIG_FONT_SIZE: int = 44
 const FONT_SIZE: int = 26
 const SMALL_FONT_SIZE: int = 20
@@ -1235,7 +1232,11 @@ func _draw_boss_swing(vp: Vector2) -> void:
 	# Story 025: the cast's labels are shape ids ("bar2", "l3"): show the cell count, never the raw ids.
 	var joined: String = tr(TEXT_CELLS) % cells.size()
 	var line2: String = tr(TEXT_BOSS_SWING) % [joined, _skill_name(actor.get_skill_id())]
-	_draw_cells_label(vp, cells, ("%.1f s" % actor.get_time_left()), line2, SWING_OUTLINE)
+	var avoid: Array[Rect2] = []
+	for cell: Vector2i in cells:
+		if _cell_occupied(CombatState.Side.PLAYER, cell):
+			avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
+	_draw_cells_label(vp, cells, ("%.1f s" % actor.get_time_left()), line2, SWING_OUTLINE, 1.0, avoid)
 
 
 # Boss's queued combo swing (Story 013), drawn BEFORE _draw_boss_swing so the running swing's
@@ -1318,7 +1319,9 @@ func rect_inset(vp: Vector2) -> float:
 
 # Two lines (big, small) on a white backing, centred on the bounding box of [param cells] and
 # clamped inside the board, so it never reaches the strip under the arena.
-func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2: String, color: Color, alpha: float = 1.0) -> void:
+# TD-023: when the centred box would cover a rect in [param avoid] (a unit / field piece under the cast), it
+# moves above or below the cells' bounding box, whichever covers less.
+func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2: String, color: Color, alpha: float = 1.0, avoid: Array[Rect2] = []) -> void:
 	if cells.is_empty():
 		return
 	var grid: BoardGrid = _combat.get_grid()
@@ -1335,10 +1338,25 @@ func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2
 	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
 	pos.y = clampf(pos.y, board.position.y, maxf(board.end.y - height, board.position.y))
 	var back := Rect2(pos, Vector2(width, height))
+	if _overlap_area(back, avoid) > 0.0:
+		for y: float in [box.position.y - height - 2.0, box.end.y + 2.0]:
+			var moved := Rect2(Vector2(pos.x, clampf(y, board.position.y, maxf(board.end.y - height, board.position.y))), back.size)
+			if _overlap_area(moved, avoid) < _overlap_area(back, avoid):
+				back = moved
+		pos = back.position
 	draw_rect(back, Color(TEXT_OUTLINE_LIGHT, TEXT_OUTLINE_LIGHT.a * alpha))
 	draw_rect(back, Color(color, alpha), false, CELL_OUTLINE_WIDTH)
 	draw_string(font, pos + Vector2(0.0, LABEL_PAD + big * 0.85), line1, HORIZONTAL_ALIGNMENT_CENTER, width, big, Color(color, alpha))
 	draw_string(font, pos + Vector2(0.0, LABEL_PAD + big * LABEL_LINE_SPACING + small * 0.85), line2, HORIZONTAL_ALIGNMENT_CENTER, width, small, Color(TEXT_DARK, alpha))
+
+
+# Summed overlap area of [param rect] with each rect in [param others].
+func _overlap_area(rect: Rect2, others: Array[Rect2]) -> float:
+	var total: float = 0.0
+	for other: Rect2 in others:
+		var hit: Rect2 = rect.intersection(other)
+		total += hit.size.x * hit.size.y
+	return total
 
 
 func _draw_feedback(vp: Vector2) -> void:
@@ -1828,6 +1846,12 @@ func _draw_menu(vp: Vector2) -> void:
 	draw_rect(bar, BAR_BACK)
 	draw_rect(Rect2(bar.position, Vector2(bar.size.x * clampf(ratio, 0.0, 1.0), bar.size.y)), BAR_FILL)
 	draw_rect(bar, BUTTON_OUTLINE, false, 2.0)
+	# TD-016: the panel covers the place hint strip, so the bar says another piece can still be dragged in.
+	if _combat.can_join_piece():
+		var hint_size: int = maxi(mini(SMALL_FONT_SIZE, int(bar.size.y * 0.9)), 12)
+		var hint_pos: Vector2 = bar.position + Vector2(0.0, bar.size.y * 0.5 + hint_size * 0.35)
+		draw_string_outline(ThemeDB.fallback_font, hint_pos, tr(TEXT_JOIN_HINT), HORIZONTAL_ALIGNMENT_CENTER, bar.size.x, hint_size, 4, TEXT_OUTLINE_LIGHT)
+		draw_string(ThemeDB.fallback_font, hint_pos, tr(TEXT_JOIN_HINT), HORIZONTAL_ALIGNMENT_CENTER, bar.size.x, hint_size, TEXT_DARK)
 	var config: SkillConfig = _combat.get_skill_config()
 	var order: Array[String] = flow.get_hand()
 	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
@@ -1929,7 +1953,7 @@ func debug_show_relics(ids: Array[String]) -> void:
 func _sync_relic_strip() -> void:
 	if _relic_strip == null:
 		return
-	var shown: bool = _combat != null and _combat.get_state() != null
+	var shown: bool = _combat != null and _combat.get_state() != null and not _overlay_shown()
 	_relic_strip.visible = shown
 	if not shown:
 		return
@@ -1950,3 +1974,15 @@ func _sync_relic_strip() -> void:
 func _on_relic_triggered(relic_id: String) -> void:
 	if _relic_strip != null:
 		_relic_strip.flash(relic_id)
+
+
+# True while the reward / fate / ending screen covers the battle (main scene only; false in a bare battle).
+func _overlay_shown() -> bool:
+	var root: Node = get_tree().current_scene
+	if root == null:
+		return false
+	for path: String in OVERLAY_PATHS:
+		var view: Node = root.get_node_or_null(path)
+		if view != null and view.has_method("is_shown") and bool(view.call("is_shown")):
+			return true
+	return false

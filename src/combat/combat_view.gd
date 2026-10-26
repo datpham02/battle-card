@@ -1441,6 +1441,9 @@ func cancel_placement() -> bool:
 		# Story 028: Cancel returns BOTH pieces (and ends a second piece still being dragged).
 		_drop_placement()
 		_cut_flow.cancel_menu()
+		# TD-013: the drawn menu cards go back to the front of the bag, so a retry offers them again.
+		if _deck != null:
+			_deck.return_last_draw()
 		_return_join_piece()
 		_return_pending_piece()
 		_plan.clear()

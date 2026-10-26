@@ -601,3 +601,4 @@ ui.stats.fates,Tha / Giết,Spared / Executed
 ui.stats.fates_value,%d / %d,%d / %d
 ui.run_hud.fell_at,Gục ở tầng %d · %s,Fell on floor %d · %s
 ui.run_hud.killed_by,Kẻ hạ bạn: %s,Defeated by: %s
+ui.hud.join_hint,Kéo thêm mảnh vào để ghép,Drag another piece in to join

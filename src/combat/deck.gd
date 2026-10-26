@@ -7,6 +7,8 @@ extends RefCounted
 
 var _cards: Array[Dictionary] = []
 var _bag: Array[int] = []
+# TD-013: copy indexes of the last dealt hand, in hand order (see [method return_last_draw]).
+var _last_dealt: Array[int] = []
 var _rng := RandomNumberGenerator.new()
 
 
@@ -27,6 +29,7 @@ static func from_array(cards: Array, seed_value: int = 0) -> Deck:
 ## Reseeds the rng and refills the bag with a fresh shuffle of the whole deck.
 func reset_bag(seed_value: int) -> void:
 	_rng.seed = seed_value
+	_last_dealt = []
 	_refill()
 
 
@@ -44,10 +47,13 @@ func draw(n: int) -> Array[String]:
 func draw_entries(n: int) -> Array[Dictionary]:
 	var hand: Array[Dictionary] = []
 	var want: int = mini(maxi(n, 0), _cards.size())
+	_last_dealt = []
 	while hand.size() < want:
 		if _bag.is_empty():
 			_refill()
-		hand.append((_cards[_bag.pop_front()] as Dictionary).duplicate())
+		var idx: int = _bag.pop_front()
+		_last_dealt.append(idx)
+		hand.append((_cards[idx] as Dictionary).duplicate())
 	return hand
 
 
@@ -78,6 +84,7 @@ func draw_menu_entries(n: int, is_curse: Callable) -> Array[Dictionary]:
 			_bag.push_front(i)
 			break
 	hand[hand.size() - 1] = (_cards[taken] as Dictionary).duplicate()
+	_last_dealt[_last_dealt.size() - 1] = taken
 	return hand
 
 
@@ -87,6 +94,23 @@ func draw_menu(n: int, is_curse: Callable) -> Array[String]:
 	for e: Dictionary in draw_menu_entries(n, is_curse):
 		hand.append(str(e["id"]))
 	return hand
+
+
+## TD-013: puts the copies of the last dealt hand ([method draw_entries] / [method draw_menu_entries])
+## back at the FRONT of the bag in hand order, so the next draw deals the same hand again (a
+## cancelled card menu does not burn a draw). A copy already back in the bag (the hand straddled a
+## refill) is moved, never duplicated; the rng is not touched, so draws stay deterministic per seed.
+## Only one return per draw (a second call does nothing). Returns how many copies went back.
+func return_last_draw() -> int:
+	var dealt: Array[int] = _last_dealt
+	_last_dealt = []
+	for i: int in range(dealt.size() - 1, -1, -1):
+		var idx: int = dealt[i]
+		if idx < 0 or idx >= _cards.size():
+			continue
+		_bag.erase(idx)
+		_bag.push_front(idx)
+	return dealt.size()
 
 
 ## Number of cards (copies) in the deck.
@@ -112,6 +136,7 @@ func remove_at(index: int) -> void:
 	if index < 0 or index >= _cards.size():
 		return
 	_cards.remove_at(index)
+	_last_dealt = []
 	var rebuilt: Array[int] = []
 	for i: int in _bag:
 		if i != index:

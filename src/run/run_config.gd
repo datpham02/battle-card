@@ -12,7 +12,7 @@ const MATCH_KEYS: Array[String] = [
 	"id", "name_key", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
 	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards", "boss_defense", "boss_min_runes",
-	"desc_key",
+	"desc_key", "boss_root_while_swinging",
 ]
 ## Story 035: trait id a match's `phases` key turns into (see [method _apply_phases]).
 const BOSS_PHASES_TRAIT_ID: String = "boss_phases"
@@ -201,6 +201,9 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		m["combo_chance"] = clampf(float(raw["combo_chance"]), 0.0, 1.0)
 	if raw.has("combo_gap_sec"):
 		m["combo_gap_sec"] = maxf(float(raw["combo_gap_sec"]), 0.0)
+	# TD-023: per-match override of boss_brain.json root_while_swinging (absent = the brain set's value).
+	if raw.has("boss_root_while_swinging"):
+		m["boss_root_while_swinging"] = bool(raw["boss_root_while_swinging"])
 	# Story 023: flat defense of the boss (>= 0) and the smallest cut the boss brain prefers (>= 0).
 	m["boss_defense"] = maxf(float(raw.get("boss_defense", m["boss_defense"])), 0.0)
 	m["boss_min_runes"] = maxi(int(raw.get("boss_min_runes", m["boss_min_runes"])), 0)

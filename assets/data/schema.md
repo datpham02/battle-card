@@ -109,7 +109,7 @@ Measured (defaults): 2x2 = 0.60 (clamped), 3x3 = 0.45, 4x3 = 0.33, 6x6 = 0.23, 1
 
 Cut numbers (Story 008). A missing or invalid file gives the defaults below with a warning.
 
-**Perimeter label convention** (same on both boards, by SCREEN position, referring to the TARGET half's square): `A` = top edge, numbered left to right (`A1` = leftmost column); `C` = bottom edge, left to right; `B` = right edge, top to bottom; `D` = left edge, top to bottom. In square coordinates `[0,cols] x [0,rows]` (x right, y down, 1 unit per cell): `A_i=(i-0.5,0)`, `C_i=(i-0.5,rows)`, `D_i=(0,i-0.5)`, `B_i=(cols,i-0.5)`. One point cuts straight to its opposite (`A_i`<->`C_i` = column i, `B_i`<->`D_i` = row i); 2 points = segment, 3-4 points = closed polygon, in selection order. Covered cells = cells a segment/edge crosses with positive length, plus polygon-interior cells (centre inside, even-odd). Missing board cells never count.
+**Covered cells** (Story 026: runes and the perimeter cut are retired; no code uses perimeter labels): a cast covers exactly the board cells of the piece(s) placed for it on the TARGET half (`CastPlan`, 1..`max_pieces_per_cast` pieces, optional `max_cast_cells` cap in combat.json). Missing board cells never count.
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
@@ -288,7 +288,7 @@ Each v2 `chapters` entry: `id`, `name_key`, and:
 | `pools` | object kind -> object tier (`"0"`, `"1"`, `"2"`) -> array of match ids | Draw pools per node kind and tier; ids missing from `matches` are dropped with a warning. `miniboss` and `boss` have their own lists; the `boss` pool of the last tier must hold the chapter boss |
 | `columns` | array | Optional per-chapter override of `defaults.columns` |
 
-Per-chapter optional keys (Story 023): `intro_key` / `end_key` (`chapter.<id>.intro` / `chapter.<id>.end`, one line each in the CSV, shown by the run UI at chapter start / after the chapter boss), per-match `desc_key` (`match.<id>.desc`, one-line hint shown in the match intro for rule-breaker enemies and chapter bosses), `boss_defense` (number >= 0, flat armor subtracted per hit after Ghim/innate, min 1; Đốt and `pierce_defense` cards ignore it; default 0) and `boss_min_runes` (integer >= 0, the boss prefers sigils of at least this many cells; default 0). Escalation (OSFE §5): normal enemies HP x1.15 per chapter, `boss_step_cooldown_mult` -0.1 per chapter, `boss_defense` 0 / 2 / 4 for normals in ch1 / ch2 / ch3 (ghosts 12 / 16), `boss_min_runes` 2 for elites (reacter, jailer, fuse_golem, frost_mage) and 3 for the ch2 / ch3 bosses. Think / reaction never below 0.3 / 0.35 s.
+Per-chapter optional keys (Story 023): `intro_key` / `end_key` (`chapter.<id>.intro` / `chapter.<id>.end`, one line each in the CSV, shown by the run UI at chapter start / after the chapter boss), per-match `desc_key` (`match.<id>.desc`, one-line hint shown in the match intro for rule-breaker enemies and chapter bosses), `boss_defense` (number >= 0, flat armor subtracted per hit after Ghim/innate, min 1; Đốt and `pierce_defense` cards ignore it; default 0) and `boss_min_runes` (integer >= 0, the boss prefers pieces of at least this many cells; rune-era key name kept; default 0). Escalation (OSFE §5): normal enemies HP x1.15 per chapter, `boss_step_cooldown_mult` -0.1 per chapter, `boss_defense` 0 / 2 / 4 for normals in ch1 / ch2 / ch3 (ghosts 12 / 16), `boss_min_runes` 2 for elites (reacter, jailer, fuse_golem, frost_mage) and 3 for the ch2 / ch3 bosses. Think / reaction never below 0.3 / 0.35 s.
 
 A chapter with the v1 `floors` key still loads: its floor matches become `matches` / `match_ids`, pools stay empty and every kind falls back to the whole match list.
 
@@ -413,7 +413,7 @@ New hook: `on_player_stepped(from, to)` (after a SUCCESSFUL player step; CombatV
 | | `crack_sec` | 4.0 | How long a cell stays cracked (cannot be stepped onto) |
 | | `warning_sec` | 0.8 | Warning before the cells crack |
 | | `slam_damage` | 20.0 | Damage to the player if standing on a cell when it cracks |
-| `frost_aura` | `rune_rate_mult` | 0.8 | Player rune drop rate multiplier (spawn interval x 1/mult) |
+| `frost_aura` | `rune_rate_mult` | 0.8 | Player field-piece drop rate multiplier (spawn interval x 1/mult; rune-era key name kept so chapters.json keeps working) |
 | | `until_hp_ratio` | 0.5 | Active while boss HP ratio is above this; off for good at or below |
 | `phase_shift` | `at_hp_ratio` | 0.5 | Boss HP ratio that starts phase 2 (once) |
 | | `brain_set` | `aggressive` | Weight set the brain switches to |
