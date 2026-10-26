@@ -23,7 +23,7 @@ func _same(a: ProgressState, b: ProgressState) -> bool:
 
 
 func _init() -> void:
-	_check("VERSION is 7", ProgressState.VERSION == 7)
+	_check("VERSION is 8 (Story 038)", ProgressState.VERSION == 8)
 	var fresh := ProgressState.new()
 	_check("fresh: empty ledger", fresh.get_milestones().is_empty() and fresh.get_achievements().is_empty() and fresh.get_seen_unlocks().is_empty() and fresh.get_milestone("x") == 0)
 
@@ -77,7 +77,7 @@ func _init() -> void:
 	p.set_locale("en")
 	var json: String = p.to_json()
 	var parsed: Dictionary = JSON.parse_string(json)
-	_check("json carries version 7 and the new keys", int(parsed["version"]) == 7 and parsed.has("milestones") and parsed.has("achievements") and parsed.has("seen_unlocks"))
+	_check("json carries version 7 and the new keys", int(parsed["version"]) == ProgressState.VERSION and parsed.has("milestones") and parsed.has("achievements") and parsed.has("seen_unlocks"))
 	var back: ProgressState = ProgressState.from_json(json)
 	_check("v7 round trip: every field equal", _same(p, back))
 	_check("v7 round trip: json stable", back.to_json() == json)
@@ -91,7 +91,7 @@ func _init() -> void:
 	_check("v6: ending:<id> = 1 per ending seen", m6.get_milestone("ending:spare") == 1 and m6.get_milestone("ending:balance") == 1 and m6.get_milestone("ending:execute") == 0)
 	_check("v6: nothing else invented, no achievements", m6.get_milestone("runs_won") == 0 and m6.get_milestone("reached_final") == 0 and m6.get_achievements().is_empty() and m6.get_seen_unlocks().is_empty())
 	_check("v6: old fields kept", m6.get_locale() == "en" and m6.get_best_floor() == 4 and m6.get_cleared_bosses() == 2 and m6.get_spared_bosses() == (["m1"] as Array[String]) and m6.get_execute_total() == 3)
-	_check("v6 re-saves as v7 and reloads equal", _same(m6, ProgressState.from_json(m6.to_json())) and int(JSON.parse_string(m6.to_json())["version"]) == 7)
+	_check("v6 re-saves as v7 and reloads equal", _same(m6, ProgressState.from_json(m6.to_json())) and int(JSON.parse_string(m6.to_json())["version"]) == ProgressState.VERSION)
 
 	# --- v5 / v4 migration
 	var v5: Dictionary = {"version": 5, "locale": "vi", "regions_boss_beaten": ["ch3"], "best_floor": 2, "seen_cards": [], "cleared_bosses": 1}
@@ -107,7 +107,7 @@ func _init() -> void:
 	_check("v1: only locale, empty ledger", v1.get_locale() == "en" and v1.get_milestones().is_empty())
 
 	# --- unknown versions and bad v7 content
-	_check("version 8 -> empty", ProgressState.from_json(JSON.stringify({"version": 8, "milestones": {"x": 5}, "locale": "en"})).get_milestones().is_empty())
+	_check("version 9 -> empty", ProgressState.from_json(JSON.stringify({"version": 9, "milestones": {"x": 5}, "locale": "en"})).get_milestones().is_empty())
 	_check("version 0 -> empty", ProgressState.from_json(JSON.stringify({"version": 0, "milestones": {"x": 5}})).get_milestones().is_empty())
 	_check("no version -> empty", ProgressState.from_json(JSON.stringify({"milestones": {"x": 5}})).get_milestones().is_empty())
 	_check("corrupt text -> empty", ProgressState.from_json("{nope").get_milestones().is_empty() and ProgressState.from_json("").get_milestones().is_empty())

@@ -16,8 +16,10 @@ extends RefCounted
 ## While a floor's offer is open the previous region's (finished) map stays in [member map] so a
 ## pending boss offer can still be shown over it; [method choose_region] replaces it.
 
-## Save format version written by [method to_dict] (v6, Story 035: boss_fates, pending_fate, stats).
-const SAVE_VERSION: int = 6
+## Save format version written by [method to_dict] (v7, Story 038: kiep_level; v6 was Story 035: boss_fates, pending_fate, stats).
+const SAVE_VERSION: int = 7
+## Story 038: highest Kiep level (the session clamps [member kiep_level] to 0..this; the rows of kiep_levels.json are 1..this).
+const KIEP_LEVEL_MAX: int = 10
 ## Oldest save [method from_dict] still loads as a live run (a v5 save gets the Story 035 fields at their
 ## defaults); anything older loads as [member needs_restart].
 const MIN_LOADABLE_VERSION: int = 5
@@ -144,6 +146,9 @@ var stats: Dictionary = _new_stats()
 ## {} = nothing locked (tests, sims, `--progress=all`): every pool behaves as before. Saved under `locked`
 ## (absent = {}, no version bump). Unlocks only widen POOLS: this never changes the run's start state.
 var locked: Dictionary = {}
+## Story 038: Kiep level of this run (0..[constant KIEP_LEVEL_MAX], 0 = the normal game): set at begin, saved as `kiep_level`
+## (absent = 0), never changed during a run. The apply points read it through [KiepRules].
+var kiep_level: int = 0
 ## Revive tokens (from chapters defaults; reserved, unused).
 var revives: int = 0
 ## True when this session came from a pre-v5 save: the flow must start a fresh world run for
@@ -160,10 +165,11 @@ var _chapters: ChaptersConfig = null
 ## map), full HP, deck = the character's starter_deck, revives from `defaults.revive_tokens`.
 ## [param starting_removals] = rewards.json starting_removals.
 static func begin_world(chapters: ChaptersConfig, character: Dictionary, run_seed: int,
-		starting_removals: int = 0, locked_content: Dictionary = {}) -> RunSession:
+		starting_removals: int = 0, locked_content: Dictionary = {}, kiep_level: int = 0) -> RunSession:
 	var s := RunSession.new()
 	s._chapters = chapters
 	s.locked = _clean_locked(locked_content)
+	s.kiep_level = clampi(kiep_level, 0, KIEP_LEVEL_MAX)
 	s.character_id = str(character.get("id", ""))
 	s.run_seed = run_seed
 	s.region_id = ""
@@ -263,7 +269,7 @@ static func _clean_locked(raw: Variant) -> Dictionary:
 func choose_region(id: String, cleared_bosses: int) -> bool:
 	if not region_offer.has(id) or _chapters == null or has_pending_reward():
 		return false
-	var new_map: Array[Dictionary] = _chapters.generate_region_map(id, run_seed, floor, cleared_bosses)
+	var new_map: Array[Dictionary] = _chapters.generate_region_map(id, run_seed, floor, cleared_bosses, kiep_level)
 	if new_map.is_empty():
 		return false
 	_enter_region(id, new_map)
@@ -382,6 +388,8 @@ func complete_node(hp_end: float, max_hp: float, node_kind: String, config: Dict
 # next offer (or the final map after the last floor). Returns the HP healed.
 func _clear_floor(max_hp: float) -> float:
 	var ratio: float = _chapters.floor_heal_ratio() if _chapters != null else ChaptersConfig.DEFAULT_FLOOR_HEAL_RATIO
+	if kiep_level > 0:
+		ratio = KiepRules.shared().floor_heal_ratio(ratio, kiep_level)
 	var before: float = max_hp if hp < 0.0 else minf(hp, max_hp)
 	var after: float = minf(before + maxf(ratio, 0.0) * max_hp, max_hp)
 	hp = after
@@ -425,7 +433,10 @@ func spend_removal() -> bool:
 ## (= full) counts as full and heals nothing. Returns the amount actually healed.
 func rest_heal(max_hp: float, config: Dictionary) -> float:
 	var before: float = max_hp if hp < 0.0 else minf(hp, max_hp)
-	var after: float = minf(before + cfg(config, "rest_heal_ratio") * max_hp, max_hp)
+	var ratio: float = cfg(config, "rest_heal_ratio")
+	if kiep_level > 0:
+		ratio = KiepRules.shared().rest_heal_ratio(ratio, kiep_level)
+	var after: float = minf(before + ratio * max_hp, max_hp)
 	hp = after
 	return after - before
 
@@ -885,7 +896,7 @@ func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 	return str(current_node().get("kind", "")) == KIND_BOSS
 
 
-## Save form (v6, Story 035; v5 added by Story 031): {version, character, floor, region, region_offer, region_path, map,
+## Save form (v7, Story 038 added `kiep_level`, absent = 0; v6 Story 035; v5 added by Story 031): {version, character, floor, region, region_offer, region_path, map,
 ## column, node_index, cleared_nodes, nodes_cleared, last_node_kind, last_floor_heal, hp,
 ## deck [{id, level}], run_seed, elapsed, pending_reward, revives, removal_tokens,
 ## cleared_bosses_this_run, won, relics [id], pending_relic_offer [id], gold, run_modifiers [{id,
@@ -920,11 +931,11 @@ func to_dict() -> Dictionary:
 		"pending_ink_offer": pending_ink_offer.duplicate(),
 		"boss_fates": boss_fates.duplicate(true), "pending_fate": pending_fate,
 		"pending_fate_match": pending_fate_match.duplicate(true), "stats": stats.duplicate(true),
-		"locked": locked.duplicate(true),
+		"locked": locked.duplicate(true), "kiep_level": kiep_level,
 	}
 
 
-## Rebuilds from [method to_dict] (v5 and v6 saves). Null on bad data (unknown region, floor out of range, bad map /
+## Rebuilds from [method to_dict] (v5, v6 and v7 saves; `kiep_level` absent = 0, clamped to 0..10). Null on bad data (unknown region, floor out of range, bad map /
 ## position, an offer at the final floor, no known card in the deck, no character). A pre-v5 run
 ## (v2..v4 chapter / floor saves, version < [constant MIN_LOADABLE_VERSION]) or a saved needs_restart run gives a session with
 ## [member needs_restart] true, [member restart_reason] [constant RESTART_OLD_SAVE], an empty map and an
@@ -1000,6 +1011,7 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s.boss_fates = _clean_fates(d.get("boss_fates", []))
 	s.stats = _clean_stats(d.get("stats"))
 	s.locked = _clean_locked(d.get("locked", {}))
+	s.kiep_level = clampi(int(d.get("kiep_level", 0)) if typeof(d.get("kiep_level", 0)) in [TYPE_INT, TYPE_FLOAT] else 0, 0, KIEP_LEVEL_MAX)
 	s.pending_fate = bool(d.get("pending_fate", false))
 	if s.pending_fate:
 		var pm: Dictionary = (d["pending_fate_match"] as Dictionary) if typeof(d.get("pending_fate_match")) == TYPE_DICTIONARY else {}

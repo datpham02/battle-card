@@ -104,6 +104,8 @@ const SEPARATOR: String = " · "
 const TEXT_TITLE: String = "ui.world.title"
 ## "Tầng %d" on a strip segment.
 const TEXT_STRIP_FLOOR: String = "ui.world.strip_floor"
+## Story 038: " · Kiếp k" after the floor title while the run's Kiep level k is above 0.
+const TEXT_KIEP: String = "ui.run.kiep"
 ## "Ấn Đài": the final match (strip segment, map title, HUD line).
 const TEXT_FINAL_NAME: String = "ui.world.final_name"
 ## "Đang chọn" under the current floor's segment while no region is chosen there.
@@ -313,6 +315,8 @@ func _draw_header(vp: Vector2) -> void:
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
 	var count: int = _flow.get_floor_count()
 	var text: String = tr(TEXT_TITLE) % [mini(_flow.get_floor() + 1, count), count]
+	if _flow.get_run_kiep_level() > 0:
+		text += SEPARATOR + tr(TEXT_KIEP) % _flow.get_run_kiep_level()
 	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, text, TITLE_FONT_SIZE, TITLE_COLOR)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	var back_text: String = tr(TEXT_BACK)

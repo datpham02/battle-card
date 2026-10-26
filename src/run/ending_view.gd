@@ -58,6 +58,11 @@ const TEXT_STAT_DECK_SIZE: String = "ui.stats.deck_size"
 const TEXT_STAT_HIGHEST_LEVEL: String = "ui.stats.highest_level"
 const TEXT_STAT_RELICS: String = "ui.stats.relics"
 const TEXT_STAT_FATES: String = "ui.stats.fates"
+## Story 038: the Kiep level row of the stats (only above 0) and the "Đã mở Kiếp k" line of a win that opened a level.
+const TEXT_STAT_KIEP: String = "ui.stats.kiep"
+const TEXT_KIEP_UNLOCKED: String = "ui.ending.kiep_unlocked"
+const KIEP_UNLOCK_FONT_SIZE: int = 22
+const KIEP_UNLOCK_COLOR: Color = Color(1.0, 0.85, 0.3)
 ## "%d / %d" (spared / executed).
 const TEXT_STAT_FATES_VALUE: String = "ui.stats.fates_value"
 
@@ -156,7 +161,7 @@ static func stat_rows(node: Node, stats: Dictionary, flow: GameFlow) -> Array:
 			spared += 1 if kind == "spare" else 0
 			executed += 1 if kind == "execute" else 0
 	var relics: Variant = stats.get("relics", [])
-	return [
+	var rows: Array = [
 		[node.tr(TEXT_STAT_CHARACTER), character_name],
 		[node.tr(TEXT_STAT_TIME), elapsed_text(float(stats.get("elapsed_sec", 0.0)))],
 		[node.tr(TEXT_STAT_FLOOR), str(int(stats.get("floor_reached", 0)))],
@@ -173,6 +178,10 @@ static func stat_rows(node: Node, stats: Dictionary, flow: GameFlow) -> Array:
 		[node.tr(TEXT_STAT_RELICS), str((relics as Array).size() if relics is Array else 0)],
 		[node.tr(TEXT_STAT_FATES), format_text(node.tr(TEXT_STAT_FATES_VALUE), [spared, executed])],
 	]
+	# Story 038: the run's Kiep level right under the character (only above 0; level 0 keeps today's rows).
+	if int(stats.get("kiep_level", 0)) > 0:
+		rows.insert(1, [node.tr(TEXT_STAT_KIEP), str(int(stats.get("kiep_level", 0)))])
+	return rows
 
 
 ## Story 035 D: "Đường: A → B → …" from the stats' region_path (region names through [param flow]).
@@ -314,11 +323,25 @@ func _draw() -> void:
 	draw_stats(self, block, path_text(self, stats, _flow), rows, mini(_page, pages - 1), STATS_FONT_SIZE)
 	var leave: Rect2 = ScreenLayout.ending_leave_rect(vp)
 	var leave_text: String = tr(TEXT_LEAVE)
+	_draw_kiep_unlock(vp)
 	UiButtons.draw_button(self, leave, leave_text, UiButtons.Style.PRIMARY, UiButtons.is_pressed_at(self, leave), true, _fit(leave_text, leave.size.x * 0.9, BUTTON_FONT_SIZE))
 	if pages > 1:
 		var page: Rect2 = ScreenLayout.ending_page_rect(vp)
 		var page_text: String = tr(TEXT_PAGE_PREV if _page > 0 else TEXT_PAGE_NEXT)
 		UiButtons.draw_button(self, page, page_text, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, page), true, _fit(page_text, page.size.x * 0.9, BUTTON_FONT_SIZE))
+
+
+# Story 038: "Đã mở Kiếp k" in the gap between the stats block and the leave button, after a win that opened a level.
+func _draw_kiep_unlock(vp: Vector2) -> void:
+	if _flow == null or not _flow.has_method("get_kiep_new_unlock"):
+		return
+	var level: int = int(_flow.call("get_kiep_new_unlock"))
+	if level <= 0:
+		return
+	var stats_rect: Rect2 = ScreenLayout.ending_stats_rect(vp)
+	var gap := Rect2(stats_rect.position.x, stats_rect.end.y, stats_rect.size.x, ScreenLayout.ending_leave_rect(vp).position.y - stats_rect.end.y)
+	var text: String = tr(TEXT_KIEP_UNLOCKED) % level
+	_text(gap, gap.get_center().y + KIEP_UNLOCK_FONT_SIZE * 0.35, text, _fit(text, gap.size.x, KIEP_UNLOCK_FONT_SIZE), KIEP_UNLOCK_COLOR)
 
 
 func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:

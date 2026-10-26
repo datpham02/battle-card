@@ -742,3 +742,33 @@ unlock.more,+%d nữa,+%d more
 unlock.tap,Chạm để tiếp tục,Tap to continue
 character.locked_hint,Chạm vào thẻ khóa để xem cách mở,Tap a locked card to see how to unlock it
 character.locked_progress,%s - %d/%d,%s - %d/%d
+kiep.level.1.name,Túi lép,Thin Purse
+kiep.level.1.desc,Vàng nhận được giảm 25%,Gold earned is 25% lower
+kiep.level.2.name,Trại nghèo,Poor Camps
+kiep.level.2.desc,Nghỉ ở trại hồi ít hơn 33%,Camp rest heals 33% less
+kiep.level.3.name,Đường nguy,Perilous Paths
+kiep.level.3.desc,Nút Nguy hiểm xuất hiện gấp đôi,Danger nodes appear twice as often
+kiep.level.4.name,Địch trưởng thành,Hardened Foes
+kiep.level.4.desc,Địch mạnh như tầng kế; trận cuối thêm 10% máu,Enemies scale as the next floor; final boss +10% HP
+kiep.level.5.name,Giá cắt cổ,Steep Prices
+kiep.level.5.desc,Giá cửa hàng tăng 20%; boss cuối thêm 1 đặc tính,Shop prices +20%; the final boss gains 1 extra trait
+kiep.level.6.name,Vết thương dai,Lingering Wounds
+kiep.level.6.desc,Hồi máu khi sang tầng giảm một nửa,Healing between floors is halved
+kiep.level.7.name,Thân mỏng,Frail Body
+kiep.level.7.desc,Máu tối đa giảm 15%,Max HP is 15% lower
+kiep.level.8.name,Mảnh chậm,Slow Pieces
+kiep.level.8.desc,Mảnh của bạn rơi chậm hơn 15%,Your pieces drop 15% slower
+kiep.level.9.name,Boss nhanh tay,Quick Bosses
+kiep.level.9.desc,Boss niệm nhanh hơn 10%,Bosses wind up 10% faster
+kiep.level.10.name,Thủ lĩnh hung hãn,Fierce Bosses
+kiep.level.10.desc,Boss vùng có thêm 1 đặc tính,Regional bosses gain 1 extra trait
+ui.character_select.kiep_badge,Kiếp %d,Rebirth %d
+ui.character_select.kiep_label,Cấp Kiếp,Rebirth level
+ui.character_select.kiep_locked_hint,Thắng Kiếp %d để mở,Win Rebirth %d to unlock
+ui.character_select.kiep_rules_title,Luật đang bật,Active rules
+ui.character_select.kiep_rule_line,%d. %s,%d. %s
+ui.character_select.kiep_none,Kiếp 0: không có luật thêm,Rebirth 0: no extra rules
+ui.character_select.tap_to_start,Chạm thẻ đã chọn để vào,Tap the chosen card to start
+ui.run.kiep,Kiếp %d,Rebirth %d
+ui.ending.kiep_unlocked,Đã mở Kiếp %d,Unlocked Rebirth %d
+ui.stats.kiep,Kiếp,Rebirth

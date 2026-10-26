@@ -145,7 +145,7 @@ func _initialize() -> void:
 	var store: ProgressStore = ProgressStore.memory_store()
 	_check("save ok", store.save_state(ps))
 	var loaded: ProgressState = store.load_state(chapters)
-	_check("progress round trip (current version)", ProgressState.VERSION == 7 and loaded.get_cleared_bosses() == 2 and loaded.has_region_boss_beaten(chap_id) and loaded.get_locale() == "en" and loaded.has_run())
+	_check("progress round trip (current version)", ProgressState.VERSION == 8 and loaded.get_cleared_bosses() == 2 and loaded.has_region_boss_beaten(chap_id) and loaded.get_locale() == "en" and loaded.has_run())
 	var lr: RunSession = RunSession.from_dict(loaded.get_run_dict(), chapters)
 	_check("progress run back", lr != null and lr.column == 1 and lr.removal_tokens == 2 and lr.map.size() == 7)
 	_check("version field = ProgressState.VERSION", int(JSON.parse_string(ps.to_json())["version"]) == ProgressState.VERSION)

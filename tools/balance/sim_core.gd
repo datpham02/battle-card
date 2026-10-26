@@ -707,6 +707,11 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	var player_drops_config: FieldDropsConfig = drops_config.copy()
 	player_drops_config.piece_spawn_interval_sec *= float(ov["drop_mult"])
 	_apply_drop_overrides(player_drops_config)
+	# Story 038 (Kiep 4): the PLAYER's piece drop interval x the match key `player_drop_interval_mult`, after the relic overrides
+	# exactly as CombatView does; absent / 1.0 = untouched, so a sim without a Kiep level is unchanged.
+	var kiep_drop_mult: float = maxf(float(m.get("player_drop_interval_mult", 1.0)), 0.01)
+	if not is_equal_approx(kiep_drop_mult, 1.0):
+		player_drops_config.piece_spawn_interval_sec *= kiep_drop_mult
 	var boss_drops_config: FieldDropsConfig = drops_config.copy()
 	var boss_drop_mult: float = maxf(float(m.get("boss_drop_interval_mult", 1.0)), 0.01) * float(ov["boss_drop_mult"])
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult

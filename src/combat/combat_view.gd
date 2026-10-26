@@ -177,7 +177,7 @@ var _signature_cooldown_left: float = 0.0
 var boss_set_override: String = ""
 ## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
 ## Keys (all optional): player_hp (start HP, used when >= 0), boss_max_hp, brain_set,
-## boss_step_cooldown_mult (x the player's computed step cooldown; deprecated absolute: boss_step_cooldown_sec), boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult
+## boss_step_cooldown_mult (x the player's computed step cooldown; deprecated absolute: boss_step_cooldown_sec), boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult, player_drop_interval_mult (Story 038, the player's piece drop interval x)
 ## (applied to a copy of the drops config for the boss only), movement (object merged over the
 ## match set's movement profile of boss_brain.json), end_delay_sec (default 1.5),
 ## name_key (boss name in the HUD, translated; legacy display_name literal), match_label, arena (object: {shape[, variant]} or a direct
@@ -265,6 +265,11 @@ func _ready() -> void:
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult
 	boss_drops_config.piece_spawn_interval_sec *= boss_drop_mult # Story 025: the boss drops pieces too
 	_apply_drop_overrides()
+	# Story 038 (Kiep 4): the PLAYER's piece drop interval x match key `player_drop_interval_mult` (default 1.0 = untouched;
+	# the boss copy above is made before, so it never sees this).
+	var player_drop_mult: float = maxf(float(match_params.get("player_drop_interval_mult", 1.0)), 0.01)
+	if not is_equal_approx(player_drop_mult, 1.0):
+		_drops_config.piece_spawn_interval_sec *= player_drop_mult
 	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), drops_seed)
 	# Story 024: the player's half drops puzzle pieces (the boss's drops stay classic labels).
 	# Story 034: a run's piece deck (match_params["piece_deck"]) gives the PLAYER side its own weights;

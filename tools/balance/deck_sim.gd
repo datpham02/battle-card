@@ -105,6 +105,14 @@ const ECON_EARNED_TARGET: Array = [350.0, 450.0]
 const ECON_ITEMS_TARGET: Array = [4.0, 6.0]
 const ECON_LEFT_WON_MAX: float = 100.0
 const REGION_PICKS: Array[String] = ["random", "first"]
+## Story 038 Kiep levels (README "Story 038"): the story's checks. win(k) <= win(k-1) + KIEP_STEP_TOLERANCE, win(k) < win(k-2),
+## no drop above KIEP_MAX_DROP points between neighbours, the level-10 win % floor per character (only Kiem si is gated), level 10
+## est. minutes (WON run mean) <= KIEP_MINUTES_MAX; an --kiep-only rule that moves the win % less than KIEP_NO_EFFECT_PTS is "NO EFFECT".
+const KIEP_STEP_TOLERANCE: float = 3.0
+const KIEP_MAX_DROP: float = 12.0
+const KIEP_WIN10_MIN: Dictionary = {"kiem_si": 3.0}
+const KIEP_MINUTES_MAX: float = 55.0
+const KIEP_NO_EFFECT_PTS: float = 1.0
 ## Story 031 targets (Part F), build policy.
 const WORLD_MINUTES_TARGET: Array = [40.0, 50.0]
 const WORLD_WIN_TARGET: Dictionary = {"kiem_si": [20.0, 40.0], "sat_thu": [20.0, 40.0], "phap_su": [10.0, 100.0]}
@@ -164,6 +172,18 @@ var _unlock_reps: int = UNLOCK_DEFAULT_REPS
 var _unlock_full: bool = false
 ## "character|policy" -> {win, wins, n} of the world runs, for the WORLD CHARACTERS comparison line.
 var _world_wins: Dictionary = {}
+## Story 038: `--kiep=<list|a..b>` (stacked rules of levels 1..k) or `--kiep-only=<list|a..b>` (level k's own rules alone, a
+## single-rule table through KiepRules.set_only), `--kiep-full` (several levels: print every level's full WORLD tables).
+## [member _kiep_active] = one of the two flags was given (no flag: nothing below runs and the output is the old one).
+var _kiep_levels: Array[int] = []
+var _kiep_only: bool = false
+var _kiep_active: bool = false
+var _kiep_full: bool = false
+## The level the world runs in progress play at (0 = the normal game) and whether the per-level WORLD tables are suppressed.
+var _kiep_level: int = 0
+var _kiep_compact: bool = false
+## One row per (level, character, policy), see [method _kiep_note].
+var _kiep_rows: Array[Dictionary] = []
 
 
 ## Story 031 world mode: a run's state (the parts of RunSession the bot and the reward policy read), so the
@@ -187,6 +207,8 @@ class WorldRun:
 	var gold: int = 0
 	var run_modifiers: Array[Dictionary] = []
 	var event_used: Array = []
+	## Story 038: the run's Kiep level (0 = the normal game).
+	var kiep_level: int = 0
 
 	func luck(config: Dictionary = {}) -> float:
 		return float(config.get("luck_start", 0.0)) + float(config.get("luck_per_node", 1.0)) * float(nodes_cleared)
@@ -196,7 +218,10 @@ class WorldRun:
 
 	func rest_heal(max_hp: float, config: Dictionary) -> float:
 		var before: float = max_hp if hp < 0.0 else minf(hp, max_hp)
-		var after: float = minf(before + float(config.get("rest_heal_ratio", 0.3)) * max_hp, max_hp)
+		var ratio: float = float(config.get("rest_heal_ratio", 0.3))
+		if kiep_level > 0:
+			ratio = KiepRules.shared().rest_heal_ratio(ratio, kiep_level)
+		var after: float = minf(before + ratio * max_hp, max_hp)
 		hp = after
 		return after - before
 
@@ -282,6 +307,16 @@ func _init() -> void:
 			_unlock_full = true
 		elif arg == "--world":
 			_world = true
+		elif arg.begins_with("--kiep-only="):
+			_kiep_levels = _parse_kiep_levels(v)
+			_kiep_only = true
+			_kiep_active = true
+		elif arg.begins_with("--kiep="):
+			_kiep_levels = _parse_kiep_levels(v)
+			_kiep_only = false
+			_kiep_active = true
+		elif arg == "--kiep-full":
+			_kiep_full = true
 		elif arg.begins_with("--region-pick="):
 			if REGION_PICKS.has(v.strip_edges()):
 				_region_pick = v.strip_edges()
@@ -330,6 +365,9 @@ func _init() -> void:
 	_economy = EconomyConfig.shared() if _economy_set.is_empty() else _economy_with_overrides(_economy_set)
 	_max_level = int(_reward_config["max_card_level"])
 	_min_deck_size = int(_reward_config["min_deck_size"])
+	if _kiep_active and (not _world or _unlock_runs > 0 or not _regions.is_empty() or _kiep_levels.is_empty()):
+		print("KIEP: --kiep / --kiep-only need --world (and no --region / --unlock-runs) and at least one valid level 0..%d; ignored" % KiepRules.shared().max_level())
+		_kiep_active = false
 	if _unlock_runs > 0:
 		_run_unlock_mode()
 		print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
@@ -928,6 +966,9 @@ func _run_world_mode(seeds: int) -> void:
 		print("  region_normalize %s: %s" % [id, str(_chapters.region_normalize(id))])
 	print("node policy: rest when HP < %.0f%%, else treasure > rest (heal < %.0f%% else forge) > miniboss at >= %.0f%% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60." % [
 		100.0 * REST_HEAL_BELOW, 100.0 * REST_HEAL_BELOW, 100.0 * MINIBOSS_MIN_HP])
+	if _kiep_active:
+		_run_kiep_levels(pols, seeds, floors)
+		return
 	for char_id: String in _characters_run:
 		for p: String in pols:
 			_world_report(char_id, p, seeds, floors)
@@ -940,7 +981,11 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 	for s: int in seeds:
 		runs.append(_run_world(s + 1, char_id, policy, floors))
 		if (s + 1) % 10 == 0:
-			print("  ... %s %d/%d seeds, %.1f s" % [char_id, s + 1, seeds, (Time.get_ticks_msec() - t_c) / 1000.0])
+			print("  ... %s %d/%d seeds, %.1f s%s" % [char_id, s + 1, seeds, (Time.get_ticks_msec() - t_c) / 1000.0, (" (kiep %d%s)" % [_kiep_level, " only" if _kiep_only else ""]) if _kiep_active else ""])
+	if _kiep_active:
+		_kiep_note(char_id, policy, runs, floors)
+		if _kiep_compact:
+			return
 	var n: float = float(runs.size())
 	var wins: Array = []
 	var deaths_by_floor: Array = []
@@ -1236,10 +1281,15 @@ func _field(runs: Array, key: String) -> Array:
 
 # One world run: floors x (offer -> pick -> region map column by column) then the final match.
 func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -> Dictionary:
-	var character: Dictionary = _core.prepare_character(_core.characters.get_character(char_id))
+	var base_character: Dictionary = _core.characters.get_character(char_id)
+	if _kiep_level > 0:
+		# Story 038 (Kiep 8): the run's max HP = the character's x max_hp_mult (GameFlow's _character_dict), before the sim's --hp-mult.
+		base_character = KiepRules.shared().apply_run_start(base_character, _kiep_level)
+	var character: Dictionary = _core.prepare_character(base_character)
 	var max_hp: float = float(character["max_hp"])
 	var w := WorldRun.new()
 	w.run_seed = seed_value
+	w.kiep_level = _kiep_level
 	w.removal_tokens = int(_reward_config.get("starting_removals", 0))
 	w.relics.assign(_core.ov["relics"] as Array)
 	w.gold = _economy.starting_gold()
@@ -1283,7 +1333,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			var region: String = offer[0] if _region_pick == "first" else offer[pick_rng.randi_range(0, offer.size() - 1)]
 			path.append(region)
 			w.region_id = region
-			map = _chapters.generate_region_map(region, seed_value, f, CLEARED_BOSSES_MAIN)
+			map = _chapters.generate_region_map(region, seed_value, f, CLEARED_BOSSES_MAIN, _kiep_level)
 		else:
 			var fm: Dictionary = _chapters.final_match()
 			if fm.is_empty():
@@ -1368,7 +1418,10 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		out["floors_cleared"] = f + 1
 		if f < floors:
 			var before: float = max_hp if w.hp < 0.0 else minf(w.hp, max_hp)
-			w.hp = minf(before + maxf(_chapters.floor_heal_ratio(), 0.0) * max_hp, max_hp)
+			var heal_ratio: float = _chapters.floor_heal_ratio()
+			if _kiep_level > 0:
+				heal_ratio = KiepRules.shared().floor_heal_ratio(heal_ratio, _kiep_level)
+			w.hp = minf(before + maxf(heal_ratio, 0.0) * max_hp, max_hp)
 	out["won"] = not lost and int(out["floors_cleared"]) == floors + 1
 	out["deck_ids"] = _deck_ids(w)
 	out["path"] = path
@@ -1416,6 +1469,222 @@ func _world_choose_node(nodes: Array[Dictionary], w: WorldRun, max_hp: float) ->
 	return _bot_choose_node(others, w, max_hp)
 
 
+# ---------------------------------------------------------------- Story 038 Kiep levels
+
+
+# "0..10", "3", "0,2,5" or "0,3..5" -> the distinct levels 0..KiepRules.max_level() in ascending order (bad items skipped).
+func _parse_kiep_levels(v: String) -> Array[int]:
+	var top: int = KiepRules.shared().max_level()
+	var seen: Dictionary = {}
+	for item: String in v.split(","):
+		var s: String = item.strip_edges()
+		if s.is_empty():
+			continue
+		var lo: int = -1
+		var hi: int = -1
+		if s.contains(".."):
+			var a: String = s.get_slice("..", 0).strip_edges()
+			var b: String = s.get_slice("..", 1).strip_edges()
+			if a.is_valid_int() and b.is_valid_int():
+				lo = int(a)
+				hi = int(b)
+		elif s.is_valid_int():
+			lo = int(s)
+			hi = lo
+		if lo < 0 or hi < lo or hi > top:
+			print("KIEP: '%s' is not a level or range inside 0..%d, skipped" % [s, top])
+			continue
+		for k: int in range(lo, hi + 1):
+			seen[k] = true
+	var out: Array[int] = []
+	for k: Variant in seen.keys():
+		out.append(int(k))
+	out.sort()
+	return out
+
+
+# Every level in turn on the same seeds (a level 0 run is the normal game). --kiep-only sets KiepRules.set_only(k) first (that level's
+# own rules alone). Several levels = compact (the KIEP tables only) unless --kiep-full.
+func _run_kiep_levels(pols: Array[String], seeds: int, floors: int) -> void:
+	var rules: KiepRules = KiepRules.shared()
+	_kiep_compact = _kiep_levels.size() > 1 and not _kiep_full
+	print("KIEP: %s levels=%s seeds=%d characters=%s policies=%s (same seeds at every level; %s)" % [
+		"ONLY (each level's own rules alone)" if _kiep_only else "STACKED (rules of levels 1..k)", str(_kiep_levels), seeds,
+		str(_characters_run), str(pols), "compact: the KIEP tables only (--kiep-full = every level's WORLD tables)" if _kiep_compact else "full WORLD tables per level"])
+	for k: int in _kiep_levels:
+		_kiep_level = k
+		rules.set_only(k if _kiep_only else 0)
+		print("")
+		print("=== KIEP LEVEL %d%s ===" % [k, " (only its own rules)" if _kiep_only and k > 0 else ""])
+		for char_id: String in _characters_run:
+			for p: String in pols:
+				_world_report(char_id, p, seeds, floors)
+	rules.set_only(0)
+	_kiep_level = 0
+	if _kiep_levels.size() == 1:
+		_world_characters_report(pols)
+	_kiep_report(pols, floors)
+
+
+# Records the row of one (level, character, policy): win %, wins, deaths by floor, est. minutes (WON run mean and all runs), boss hits per WON run.
+func _kiep_note(char_id: String, policy: String, runs: Array[Dictionary], floors: int) -> void:
+	var deaths: Array[int] = []
+	deaths.resize(floors + 1)
+	deaths.fill(0)
+	var won: Array[Dictionary] = []
+	for r: Dictionary in runs:
+		if bool(r["won"]):
+			won.append(r)
+		else:
+			var df: int = clampi(int(r["death_floor"]), 0, floors)
+			deaths[df] += 1
+	_kiep_rows.append({"character": char_id, "policy": policy, "level": _kiep_level, "n": runs.size(), "wins": won.size(),
+		"win": 100.0 * won.size() / maxf(float(runs.size()), 1.0), "deaths": deaths,
+		"min_won": _mean(_field(won, "minutes")) if not won.is_empty() else -1.0, "min_all": _mean(_field(runs, "minutes")),
+		"hits_won": _mean(_field(won, "hits")) if not won.is_empty() else -1.0})
+
+
+func _kiep_row(char_id: String, policy: String, level: int) -> Dictionary:
+	for row: Dictionary in _kiep_rows:
+		if str(row["character"]) == char_id and str(row["policy"]) == policy and int(row["level"]) == level:
+			return row
+	return {}
+
+
+# The rule type names of level [param k] from kiep_levels.json ("shop_price_mult+boss_extra_trait").
+func _kiep_rule_names(k: int) -> String:
+	var names: Array[String] = []
+	for rule: Variant in KiepRules.shared().level_def(k).get("rules", []) as Array:
+		names.append(str((rule as Dictionary).get("type", "?")))
+	return "+".join(PackedStringArray(names)) if not names.is_empty() else "none"
+
+
+# The KIEP table (every row), then KIEP CHECK lines (stacked, 2+ levels) or KIEP ONLY lines (per-rule deltas vs level 0).
+func _kiep_report(pols: Array[String], floors: int) -> void:
+	var floor_names: Array[String] = []
+	for f: int in floors + 1:
+		floor_names.append("final" if f == floors else "f%d" % (f + 1))
+	print("")
+	print("KIEP | character | policy | level%s | run win %% | wins / runs | deaths by floor (%s) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |" % [
+		" (only)" if _kiep_only else "", " ".join(PackedStringArray(floor_names))])
+	for char_id: String in _characters_run:
+		for p: String in pols:
+			for k: int in _kiep_levels:
+				var row: Dictionary = _kiep_row(char_id, p, k)
+				if row.is_empty():
+					continue
+				var cells: Array[String] = []
+				for f: int in floors + 1:
+					cells.append(str((row["deaths"] as Array)[f]))
+				print("KIEP | %s | %s | %d | %.1f | %d / %d | %s | %s | %.1f | %s |" % [char_id, p, k, float(row["win"]), int(row["wins"]), int(row["n"]),
+					" ".join(PackedStringArray(cells)), ("%.1f" % float(row["min_won"])) if float(row["min_won"]) >= 0.0 else "-", float(row["min_all"]),
+					("%.1f" % float(row["hits_won"])) if float(row["hits_won"]) >= 0.0 else "-"])
+	if _kiep_only:
+		_kiep_only_lines(pols)
+	elif _kiep_levels.size() >= 2:
+		_kiep_checks(pols)
+
+
+# --kiep-only: one line per level: the rule, the win % and the change vs level 0 (when level 0 ran too), with 1 sd of the win %
+# (sqrt(p(1-p)/n)) so a delta inside the noise is not read as an effect.
+func _kiep_only_lines(pols: Array[String]) -> void:
+	print("")
+	print("KIEP ONLY | character | policy | level | rule | run win % | +-1 sd | vs level 0 (pts) | verdict | wins / runs |")
+	for char_id: String in _characters_run:
+		for p: String in pols:
+			var base: Dictionary = _kiep_row(char_id, p, 0)
+			for k: int in _kiep_levels:
+				var row: Dictionary = _kiep_row(char_id, p, k)
+				if row.is_empty():
+					continue
+				var pr: float = float(row["win"]) / 100.0
+				var sd: float = 100.0 * sqrt(pr * (1.0 - pr) / maxf(float(row["n"]), 1.0))
+				var delta_text: String = "-"
+				var verdict: String = "BASELINE" if k == 0 else "no level 0 in this run"
+				if k > 0 and not base.is_empty():
+					var delta: float = float(row["win"]) - float(base["win"])
+					delta_text = "%+.1f" % delta
+					if delta <= -KIEP_NO_EFFECT_PTS:
+						verdict = "HARDER"
+					elif delta < KIEP_NO_EFFECT_PTS:
+						verdict = "NO EFFECT (< %.0f pt: change the number or the order in kiep_levels.json)" % KIEP_NO_EFFECT_PTS
+					else:
+						verdict = "EASIER (noise or a bug)"
+				print("KIEP ONLY | %s | %s | %d | %s | %.1f | %.1f | %s | %s | %d / %d |" % [char_id, p, k, _kiep_rule_names(k), float(row["win"]), sd,
+					delta_text, verdict, int(row["wins"]), int(row["n"])])
+
+
+# The story's checks per character / policy over the levels that ran (a check needing a level that did not run is skipped, said so).
+func _kiep_checks(pols: Array[String]) -> void:
+	print("")
+	var all_ok: bool = true
+	for char_id: String in _characters_run:
+		for p: String in pols:
+			var win: Dictionary = {}
+			var minutes: Dictionary = {}
+			var curve: Array[String] = []
+			for k: int in _kiep_levels:
+				var row: Dictionary = _kiep_row(char_id, p, k)
+				if row.is_empty():
+					continue
+				win[k] = float(row["win"])
+				minutes[k] = float(row["min_won"]) if float(row["min_won"]) >= 0.0 else -float(row["min_all"])
+				curve.append("%d=%.1f" % [k, float(row["win"])])
+			print("KIEP CHECK curve %s/%s: run win %% by level: %s" % [char_id, p, " ".join(PackedStringArray(curve))])
+			var step_bad: Array[String] = []
+			var skip_bad: Array[String] = []
+			var drop_bad: Array[String] = []
+			var worst_drop: float = 0.0
+			var step_n: int = 0
+			var skip_n: int = 0
+			for k: int in _kiep_levels:
+				if k >= 1 and win.has(k) and win.has(k - 1):
+					step_n += 1
+					if float(win[k]) > float(win[k - 1]) + KIEP_STEP_TOLERANCE:
+						step_bad.append("k=%d (%.1f > %.1f + %.0f)" % [k, float(win[k]), float(win[k - 1]), KIEP_STEP_TOLERANCE])
+					var drop: float = float(win[k - 1]) - float(win[k])
+					worst_drop = maxf(worst_drop, drop)
+					if drop > KIEP_MAX_DROP:
+						drop_bad.append("k=%d (-%.1f)" % [k, drop])
+				if k >= 2 and win.has(k) and win.has(k - 2):
+					skip_n += 1
+					if not float(win[k]) < float(win[k - 2]):
+						skip_bad.append("k=%d (%.1f not < %.1f)" % [k, float(win[k]), float(win[k - 2])])
+			var fails: int = 0
+			fails += _kiep_check_line("monotone step %s/%s: win(k) <= win(k-1) + %.0f over %d pairs" % [char_id, p, KIEP_STEP_TOLERANCE, step_n], step_n, step_bad)
+			fails += _kiep_check_line("monotone skip %s/%s: win(k) < win(k-2) over %d pairs" % [char_id, p, skip_n], skip_n, skip_bad)
+			fails += _kiep_check_line("no big drop %s/%s: no drop > %.0f pts between neighbours (worst %.1f)" % [char_id, p, KIEP_MAX_DROP, worst_drop], step_n, drop_bad)
+			var top: int = KiepRules.shared().max_level()
+			if win.has(top):
+				if KIEP_WIN10_MIN.has(char_id):
+					var ok10: bool = float(win[top]) >= float(KIEP_WIN10_MIN[char_id])
+					fails += 0 if ok10 else 1
+					print("KIEP CHECK winnable %s/%s: level %d run win %.1f%% >= %.0f%%: %s" % [char_id, p, top, float(win[top]), float(KIEP_WIN10_MIN[char_id]), "PASS" if ok10 else "FAIL"])
+				else:
+					print("KIEP CHECK winnable %s/%s: level %d run win %.1f%% (INFO: the >= %.0f%% target is the Kiem si build's)" % [char_id, p, top, float(win[top]), float(KIEP_WIN10_MIN["kiem_si"])])
+				var m10: float = float(minutes[top])
+				var m_ok: bool = m10 > 0.0 and m10 <= KIEP_MINUTES_MAX
+				fails += 0 if m_ok else 1
+				print("KIEP CHECK minutes %s/%s: level %d est. minutes %s %.1f <= %.0f: %s" % [char_id, p, top, "(WON run mean)" if m10 > 0.0 else "(NO WINS: all-runs mean)", absf(m10), KIEP_MINUTES_MAX, "PASS" if m_ok else "FAIL"])
+			else:
+				print("KIEP CHECK winnable / minutes %s/%s: SKIPPED (level %d not in this run)" % [char_id, p, top])
+			all_ok = all_ok and fails == 0
+			print("KIEP CHECK RESULT %s/%s: %s" % [char_id, p, "ALL PASS" if fails == 0 else "FAIL (%d check(s))" % fails])
+	print("KIEP CHECK RESULT: %s" % ("ALL PASS" if all_ok else "FAIL"))
+
+
+# One KIEP CHECK line: SKIPPED when [param n] = 0 pairs, PASS when [param bad] is empty, else FAIL with the offenders. Returns 1 on FAIL.
+func _kiep_check_line(label: String, n: int, bad: Array[String]) -> int:
+	if n == 0:
+		print("KIEP CHECK %s: SKIPPED (the needed levels did not run)" % label)
+		return 0
+	if bad.is_empty():
+		print("KIEP CHECK %s: PASS" % label)
+		return 0
+	print("KIEP CHECK %s: FAIL at %s" % [label, ", ".join(PackedStringArray(bad))])
+	return 1
+
+
 # ---------------------------------------------------------------- Story 033 economy
 
 
@@ -1423,7 +1692,7 @@ func _world_choose_node(nodes: Array[Dictionary], w: WorldRun, max_hp: float) ->
 # modifiers and adds its numbers to [param out]. Returns SimCore.play_match's result.
 func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, character: Dictionary,
 		bot_rng: RandomNumberGenerator, out: Dictionary) -> Dictionary:
-	var run_config: RunConfig = RunConfig.from_node(_chapters, w.region_id, match_id, kind, w.run_seed, w.floor)
+	var run_config: RunConfig = RunConfig.from_node(_chapters, w.region_id, match_id, kind, w.run_seed, w.floor, w.kiep_level)
 	var m: Dictionary = _core.prepare_match(run_config.matches[0])
 	m["chapter_id"] = w.region_id
 	_core.invulnerable = false
@@ -1489,6 +1758,7 @@ func _session_of(w: WorldRun, node_index: int) -> RunSession:
 	rs.run_modifiers = w.run_modifiers
 	rs.cards_config = _core.cards
 	rs.locked = _core.locked.duplicate(true)
+	rs.kiep_level = w.kiep_level
 	return rs
 
 
@@ -1504,6 +1774,9 @@ func _sync_back(rs: RunSession, w: WorldRun) -> void:
 # GameFlow._drop_gold: EconomyConfig.gold_for(kind, floor, hash([run_seed, floor, column, node_index, "gold"])).
 func _drop_gold(w: WorldRun, kind: String, node_index: int, out: Dictionary) -> void:
 	var g: int = _economy.gold_for(kind, w.floor, hash([w.run_seed, w.floor, w.column, node_index, GOLD_SEED_TAG]) & SEED_MASK)
+	if w.kiep_level > 0:
+		# Story 038 (Kiep 5): GameFlow's drop x economy_mult("gold"), rounded, at least 0.
+		g = maxi(roundi(float(g) * KiepRules.shared().economy_mult("gold", w.kiep_level)), 0)
 	w.gold += g
 	out["gold_drop"] = float(out["gold_drop"]) + float(g)
 
@@ -1521,7 +1794,7 @@ func _event_opts() -> Dictionary:
 
 func _shop_state(w: WorldRun, node_index: int) -> Dictionary:
 	return ShopLogic.build(w.run_seed, w.floor, w.column, node_index, w.luck(_reward_config), w.relics,
-		_core.cards, _reward_config, _core.relic_config, _economy, _core.locked)
+		_core.cards, _reward_config, _core.relic_config, _economy, _core.locked, w.kiep_level)
 
 
 # The first column of the run that OFFERS a shop (entered or not): the gold in hand and whether it buys
@@ -1635,7 +1908,7 @@ func _visit_event(w: WorldRun, node_index: int, col_tier: int, max_hp: float, ch
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([w.run_seed, w.floor, w.column, node_index, EVENT_FIGHT_SEED_TAG]) & SEED_MASK
 	var used: Array[String] = []
-	var match_id: String = ChapterMapGen._draw_match(_chapters.region_spec(w.region_id, w.floor), kind,
+	var match_id: String = ChapterMapGen._draw_match(_chapters.region_spec(w.region_id, w.floor, w.kiep_level), kind,
 		col_tier + int(fight.get("tier_add", 0)), used, rng)
 	var match_seed: int = hash([w.run_seed, w.floor, w.region_id, w.column, node_index, EVENT_FIGHT_SEED_TAG]) & SEED_MASK
 	var r: Dictionary = _world_match(w, kind, match_id, match_seed, character, bot_rng, out)

@@ -1,6 +1,6 @@
 class_name ProgressState
 extends RefCounted
-## Pure save data (v7, Story 037; v1..v6 files still load): UI locale, regions whose boss was ever
+## Pure save data (v8, Story 038; v1..v7 files still load): UI locale, regions whose boss was ever
 ## beaten, best floor reached, seen cards, bosses beaten and at most one run in progress (a
 ## [RunSession] snapshot dictionary). Chapter unlocking is gone (Run v6: every region is open); the
 ## per-floor ladder API of Story 015 (cleared floors, in_progress) stays in memory only and is
@@ -8,7 +8,9 @@ extends RefCounted
 ## Story 037 adds the milestone ledger, the earned achievements and the unlocks the player has seen.
 ## Schema: assets/data/schema.md.
 
-const VERSION: int = 7
+const VERSION: int = 8
+## Story 038: highest Kiep level (cap of `kiep_unlocked`, the levels in assets/data/kiep_levels.json are 1..10).
+const KIEP_MAX: int = 10
 ## Locale saved when none is in the file (v1 saves have no `locale`).
 const DEFAULT_LOCALE: String = "vi"
 ## Highest value [method record_floor] stores: floors 1..5 plus the final match (Story 031). A
@@ -49,6 +51,10 @@ var _endings_seen: Array[String] = []
 var _milestones: Dictionary = {}
 var _achievements: Array[String] = []
 var _seen_unlocks: Array[String] = []
+## Story 038: per character id the highest Kiep level the player may pick (0..KIEP_MAX) and the highest Kiep level
+## ever won (-1 = never won). A missing id reads as 0 / -1.
+var _kiep_unlocked: Dictionary = {}
+var _kiep_best_won: Dictionary = {}
 
 
 ## True when the boss of region [param region_id] was ever beaten.
@@ -217,6 +223,35 @@ func record_final_reached() -> void:
 	add_milestone(MS_REACHED_FINAL)
 
 
+## Story 038: highest Kiep level [param character_id] may pick (0..10; 0 for an unknown character or an old save).
+func get_kiep_unlocked(character_id: String) -> int:
+	return int(_kiep_unlocked.get(character_id, 0))
+
+
+## Story 038: highest Kiep level [param character_id] ever won; -1 when never won (or an old save).
+func get_kiep_best_won(character_id: String) -> int:
+	return int(_kiep_best_won.get(character_id, -1))
+
+
+## Story 038: a run of [param character_id] ended at Kiep [param level]. A win at k: best_won = max(best_won, k),
+## unlocked = max(unlocked, min(k + 1, 10)); winning below the unlocked level changes nothing more; a loss changes
+## nothing. Levels outside 0..10 and empty ids are ignored.
+func record_kiep_result(character_id: String, level: int, won: bool) -> void:
+	if character_id.is_empty() or not won or level < 0 or level > KIEP_MAX:
+		return
+	_kiep_best_won[character_id] = maxi(get_kiep_best_won(character_id), level)
+	_kiep_unlocked[character_id] = maxi(get_kiep_unlocked(character_id), mini(level + 1, KIEP_MAX))
+
+
+## Dev (--progress=all / kiep3): every id in [param character_ids] gets Kiep [param level] (default 10) unlocked and won
+## (best_won = level, unlocked = min(level + 1, 10)); never lowers a value.
+func mark_all_kiep(character_ids: Array, level: int = KIEP_MAX) -> void:
+	for id: Variant in character_ids:
+		var cid: String = str(id)
+		if not cid.is_empty():
+			record_kiep_result(cid, clampi(level, 0, KIEP_MAX), true)
+
+
 ## Dev (--progress=all): every region boss beaten (in [param region_ids]), every `milestone` / `milestone_sum`
 ## condition of [param cfg] met, every achievement earned and its rewards marked seen.
 func mark_all_unlocked(cfg: AchievementsConfig, region_ids: Array) -> void:
@@ -352,9 +387,10 @@ func set_locale(code: String) -> void:
 	_locale = code if not code.is_empty() else DEFAULT_LOCALE
 
 
-## Serialises to {"version":7,"locale","regions_boss_beaten","best_floor","seen_cards",
+## Serialises to {"version":8,"locale","regions_boss_beaten","best_floor","seen_cards",
 ## "cleared_bosses","spared_bosses","executed_bosses","spare_total","execute_total","endings_seen",
-## "milestones":{key:int},"achievements":[id],"seen_unlocks":["kind:id"],"run_in_progress":{...}|null}.
+## "milestones":{key:int},"achievements":[id],"seen_unlocks":["kind:id"],"kiep_unlocked":{id:int},"kiep_best_won":{id:int},
+## "run_in_progress":{...}|null}.
 func to_json() -> String:
 	return JSON.stringify({
 		"version": VERSION, "locale": _locale, "regions_boss_beaten": _regions_boss_beaten,
@@ -362,6 +398,7 @@ func to_json() -> String:
 		"spared_bosses": _spared_bosses, "executed_bosses": _executed_bosses,
 		"spare_total": _spare_total, "execute_total": _execute_total, "endings_seen": _endings_seen,
 		"milestones": _milestones, "achievements": _achievements, "seen_unlocks": _seen_unlocks,
+		"kiep_unlocked": _kiep_unlocked, "kiep_best_won": _kiep_best_won,
 		"run_in_progress": null if _run.is_empty() else _run,
 	})
 
@@ -371,7 +408,7 @@ func to_json() -> String:
 ## `cleared_chapters` migrated into `regions_boss_beaten` (the old chapter ids are the region ids). Files below v6
 ## load with the Story 035 keys empty / 0. Files below v7 (Story 037) migrate the ledger: `region_boss:<r>` = 1 per
 ## beaten region, `spares_total` / `kills_total` from `spare_total` / `execute_total`, `ending:<id>` = 1 per ending
-## seen; no achievement is granted retroactively.
+## seen; no achievement is granted retroactively. Files below v8 (Story 038) load with every character at Kiep 0 unlocked / -1 best won.
 ## With [param config] an invalid run is dropped (warning). Region ids are kept as saved (not
 ## validated against the config here).
 static func from_json(text: String, config: ChaptersConfig = null) -> ProgressState:
@@ -417,6 +454,9 @@ static func from_json(text: String, config: ChaptersConfig = null) -> ProgressSt
 		state._seen_unlocks = _clean_ids(data.get("seen_unlocks", []))
 	else:
 		state._migrate_ledger()
+	if version >= 8:
+		state._kiep_unlocked = _clean_kiep(data.get("kiep_unlocked", {}), 0)
+		state._kiep_best_won = _clean_kiep(data.get("kiep_best_won", {}), -1)
 	var raw_seen: Variant = data.get("seen_cards", [])
 	if typeof(raw_seen) == TYPE_ARRAY:
 		for entry: Variant in raw_seen as Array:
@@ -443,6 +483,22 @@ func _migrate_ledger() -> void:
 	add_milestone(MS_KILLS_TOTAL, _execute_total)
 	for ending_id: String in _endings_seen:
 		add_milestone(MS_ENDING_PREFIX + ending_id)
+
+
+# Story 038: {character_id: int} from a saved object, values clamped to [floor_value, KIEP_MAX]; entries equal to the
+# default ([param floor_value]) and bad entries are dropped ({} for anything else).
+static func _clean_kiep(raw: Variant, floor_value: int) -> Dictionary:
+	var out: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	var src: Dictionary = raw as Dictionary
+	for key: Variant in src:
+		var value: Variant = src[key]
+		if typeof(value) in [TYPE_INT, TYPE_FLOAT] and not str(key).is_empty():
+			var v: int = clampi(int(value), floor_value, KIEP_MAX)
+			if v != floor_value:
+				out[str(key)] = v
+	return out
 
 
 # Story 037: {key: int > 0} from a saved object ({} for anything else; bad entries dropped).

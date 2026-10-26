@@ -45,9 +45,12 @@ const REASON_BAD_SHAPE: String = "bad_shape"
 ## "shop" (none of [param owned_relics]) and the two services, each with its price
 ## (`economy.price_card / price_relic / service_price`, scaled by [param floor]). Same inputs = same
 ## state. Story 037: [param locked] (RunSession.locked) keeps locked cards and relics out of the stock ({} = none).
+## Story 038: [param kiep_level] > 0 multiplies every price (cards, relics, services) by [method KiepRules.economy_mult] `shop_price`
+## (rounded, at least 1); 0 = the prices above untouched.
 static func build(run_seed: int, floor: int, column: int, node_index: int, luck: float,
 		owned_relics: Array, cards_cfg: SkillConfig, reward_cfg: Dictionary, relic_cfg: RelicConfig,
-		economy: EconomyConfig, locked: Dictionary = {}) -> Dictionary:
+		economy: EconomyConfig, locked: Dictionary = {}, kiep_level: int = 0) -> Dictionary:
+	var price_mult: float = KiepRules.shared().economy_mult("shop_price", kiep_level) if kiep_level > 0 else 1.0
 	var seed_value: int = hash([run_seed, floor, column, node_index, "shop"])
 	var counts: Dictionary = economy.stock_counts()
 	var card_count: int = maxi(int(counts.get("cards", 0)), 0)
@@ -60,7 +63,7 @@ static func build(run_seed: int, floor: int, column: int, node_index: int, luck:
 		for id: String in ids:
 			if _is_curse(cards_cfg, id):
 				continue
-			cards.append({"id": id, "price": int(economy.price_card(cards_cfg.get_rarity(id), floor)), "sold": false})
+			cards.append({"id": id, "price": _kiep_price(int(economy.price_card(cards_cfg.get_rarity(id), floor)), price_mult), "sold": false})
 	var relics: Array = []
 	if relic_count > 0:
 		var rng := RandomNumberGenerator.new()
@@ -69,10 +72,10 @@ static func build(run_seed: int, floor: int, column: int, node_index: int, luck:
 		var cfg: RelicConfig = relic_cfg if relic_cfg != null else RelicRegistry.shared_config()
 		for id: String in relic_ids:
 			var rarity: String = str(cfg.get_relic(id).get("rarity", "common"))
-			relics.append({"id": id, "price": int(economy.price_relic(rarity, floor)), "sold": false})
+			relics.append({"id": id, "price": _kiep_price(int(economy.price_relic(rarity, floor)), price_mult), "sold": false})
 	var services: Dictionary = {}
 	for service: String in SERVICES:
-		services[service] = {"price": int(economy.service_price(service, floor)), "used": false}
+		services[service] = {"price": _kiep_price(int(economy.service_price(service, floor)), price_mult), "used": false}
 	return {
 		"version": STATE_VERSION,
 		"floor": floor,
@@ -254,6 +257,13 @@ static func _find(state: Dictionary, kind: String, id: String) -> Dictionary:
 			if typeof(services) == TYPE_DICTIONARY and (services as Dictionary).has(id):
 				return (services as Dictionary)[id] as Dictionary
 	return {}
+
+
+# Story 038: a price x the Kiep shop multiplier, rounded, at least 1 (the price unchanged when the multiplier is 1.0).
+static func _kiep_price(price: int, mult: float) -> int:
+	if is_equal_approx(mult, 1.0):
+		return price
+	return maxi(roundi(float(price) * mult), 1)
 
 
 static func _refuse(reason: String, price: int) -> Dictionary:

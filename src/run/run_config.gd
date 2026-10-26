@@ -13,7 +13,7 @@ const MATCH_KEYS: Array[String] = [
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
 	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards", "boss_defense", "boss_min_runes",
 	"desc_key", "boss_root_while_swinging",
-	"mire_immune",
+	"mire_immune", "player_drop_interval_mult",
 ]
 ## Story 036: combat.json `hazards` keys a match may override (same name in the match; absent = not set in the match dict).
 const HAZARD_OVERRIDE_KEYS: Array[String] = [
@@ -93,8 +93,12 @@ static func from_dictionary(data: Dictionary) -> RunConfig:
 ## the region's `region_normalize`, then `floor_scaling` of the floor: boss_max_hp x hp_mult,
 ## boss_step_cooldown_mult x step_mult, boss_defense + defense_add (clamped >= 0 after each step) and
 ## boss_min_runes (the boss's smallest piece, Story 023/025) + size_add (clamped >= 0).
+## Story 038: [param kiep_level] (0..10, default 0 = exactly the call without it) picks the scaling row of
+## [method KiepRules.scaling_floor] (+ [method KiepRules.final_extra] hp), then [method KiepRules.apply_match] changes the
+## raw match (extra boss trait, boss swing speed, the player's drop interval via the match key
+## `player_drop_interval_mult`) after the danger traits are added.
 static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant, match_id: String, node_kind: String,
-		run_seed: int, floor: int = -1) -> RunConfig:
+		run_seed: int, floor: int = -1, kiep_level: int = 0) -> RunConfig:
 	var chapter_index: int = -1
 	if typeof(chapter_index_or_region) == TYPE_STRING or typeof(chapter_index_or_region) == TYPE_STRING_NAME:
 		chapter_index = chapters.region_index(str(chapter_index_or_region))
@@ -106,7 +110,14 @@ static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant
 		return from_dictionary(chapters.defaults())
 	raw["arena_seed"] = hash([run_seed, match_id]) & ChaptersConfig.SEED_MASK
 	if floor >= 0:
-		_apply_scaling(raw, chapters.region_normalize_at(chapter_index), chapters.floor_scaling(floor))
+		var scaling: Dictionary = chapters.floor_scaling(floor)
+		if kiep_level > 0:
+			var rules: KiepRules = KiepRules.shared()
+			scaling = chapters.floor_scaling(rules.scaling_floor(floor, kiep_level, chapters.world_floors()))
+			var extra: Dictionary = rules.final_extra(floor, kiep_level, chapters.world_floors())
+			if extra.has("hp_mult"):
+				scaling["hp_mult"] = float(scaling.get("hp_mult", 1.0)) * float(extra["hp_mult"])
+		_apply_scaling(raw, chapters.region_normalize_at(chapter_index), scaling)
 	if node_kind == "danger":
 		var traits: Array = (raw.get("traits", []) as Array).duplicate(true)
 		for extra: Variant in chapters.danger_traits():
@@ -117,6 +128,9 @@ static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant
 			if not known:
 				traits.append(extra)
 		raw["traits"] = traits
+	if kiep_level > 0:
+		raw = KiepRules.shared().apply_match(raw, kiep_level, {"run_seed": run_seed, "floor": floor, "match_id": match_id,
+				"node_kind": node_kind, "is_final": floor >= chapters.world_floors()})
 	var data: Dictionary = chapters.defaults()
 	data["matches"] = [raw]
 	return from_dictionary(data)
@@ -177,7 +191,7 @@ static func _default_match(index: int) -> Dictionary:
 		"brain_set": "balanced", "boss_step_cooldown_mult": 1.0, "boss_think_interval_sec": 0.3,
 		"boss_reaction_sec": 0.35, "boss_drop_interval_mult": 1.0, "movement": {},
 		"swing_speed_mult": 1.0, "combo_chance": -1.0, "combo_gap_sec": -1.0, "arena": {}, "arena_seed": -1, "traits": [], "boss_cards": [],
-		"boss_defense": 0.0, "boss_min_runes": 0, "desc_key": "",
+		"boss_defense": 0.0, "boss_min_runes": 0, "desc_key": "", "player_drop_interval_mult": 1.0,
 	}
 
 
@@ -200,6 +214,8 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 	m["brain_set"] = str(raw.get("brain_set", m["brain_set"]))
 	m["boss_max_hp"] = _positive(raw, "boss_max_hp", float(m["boss_max_hp"]))
 	m["boss_drop_interval_mult"] = _positive(raw, "boss_drop_interval_mult", float(m["boss_drop_interval_mult"]))
+	# Story 038: the player's piece drop interval x (Kiep 4; default 1.0, positive; read by CombatView).
+	m["player_drop_interval_mult"] = _positive(raw, "player_drop_interval_mult", float(m["player_drop_interval_mult"]))
 	m["boss_step_cooldown_mult"] = _positive(raw, "boss_step_cooldown_mult", float(m["boss_step_cooldown_mult"]))
 	m["swing_speed_mult"] = _positive(raw, "swing_speed_mult", float(m["swing_speed_mult"]))
 	# combo_chance / combo_gap_sec: negative (default) = keep the brain set's own value.

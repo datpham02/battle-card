@@ -153,6 +153,8 @@ const TEXT_BACK_TO_TITLE: String = "ui.run_hud.back_to_title"
 ## the head of the match label; "Ấn Đài" at the final match; on the result panels "Tới tầng %d/%d" /
 ## "Tới Ấn Đài" and "Đường: %s" (the region names joined by PATH_SEPARATOR).
 const TEXT_RUN_FLOOR_POSITION: String = "ui.run_hud.run_floor_position"
+## Story 038: "Kiếp %d" shown before the floor line while the run's Kiep level is above 0.
+const TEXT_RUN_KIEP: String = "ui.run.kiep"
 const TEXT_FINAL_NAME: String = "ui.world.final_name"
 const TEXT_RUN_FLOOR_REACHED: String = "ui.run_hud.run_floor_reached"
 const TEXT_RUN_FINAL_REACHED: String = "ui.run_hud.run_final_reached"
@@ -562,6 +564,16 @@ func _draw_run_result(vp: Vector2) -> void:
 # Story 031: "Tầng N/5 · <vùng> · cột C/3" for 1-based column [param column], or "Ấn Đài" at the
 # final match.
 func _run_position_text(run: RunSession, column: int) -> String:
+	return _kiep_prefix() + _floor_position_text(run, column)
+
+
+# Story 038: "Kiếp k · " while the run's Kiep level k is above 0, else "".
+func _kiep_prefix() -> String:
+	var level: int = _flow.get_run_kiep_level()
+	return (tr(TEXT_RUN_KIEP) % level + DECK_LINE_SEPARATOR) if level > 0 else ""
+
+
+func _floor_position_text(run: RunSession, column: int) -> String:
 	var count: int = _flow.get_floor_count()
 	if _flow.is_final_floor() or _flow.get_floor() >= count:
 		return tr(TEXT_FINAL_NAME)

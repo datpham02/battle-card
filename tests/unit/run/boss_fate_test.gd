@@ -140,7 +140,7 @@ func _init() -> void:
 	_check("v5 save loads as a live run", o5 != null and not o5.needs_restart and not o5.map.is_empty())
 	_check("v5 save: empty fates, nothing pending, zero stats", o5 != null and o5.boss_fates.is_empty() and not o5.pending_fate
 		and int(o5.stats["matches_won"]) == 0 and float(o5.stats["damage_dealt"]) == 0.0 and (o5.stats["death"] as Dictionary).is_empty())
-	_check("v5 save re-saves as v6", o5 != null and int(o5.to_dict()["version"]) == RunSession.SAVE_VERSION and RunSession.SAVE_VERSION == 6)
+	_check("v5 save re-saves as the current version (v7, Story 038)", o5 != null and int(o5.to_dict()["version"]) == RunSession.SAVE_VERSION and RunSession.SAVE_VERSION == 7)
 	var v4: Dictionary = v5.duplicate(true)
 	v4["version"] = 4
 	var o4: RunSession = RunSession.from_dict(v4, chapters)
@@ -151,7 +151,7 @@ func _init() -> void:
 	_check("unknown saved fates dropped", cleaned != null and cleaned.boss_fates.size() == 1 and str(cleaned.boss_fates[0]["fate"]) == "execute")
 
 	# --- ProgressState v6 ---
-	_check("ProgressState version 7", ProgressState.VERSION == 7)
+	_check("ProgressState version 8 (Story 038)", ProgressState.VERSION == 8)
 	var ps := ProgressState.new()
 	_check("fresh progress: empty fate keys", ps.get_spared_bosses().is_empty() and ps.get_executed_bosses().is_empty()
 		and ps.get_spare_total() == 0 and ps.get_execute_total() == 0 and ps.get_endings_seen().is_empty())

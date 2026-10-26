@@ -303,6 +303,12 @@ const PROGRESS_ALL: String = "all"
 const PROGRESS_DEMO: String = "demo"
 ## DEV-ONLY (Story 031): --progress=v4save loads a genuine v4 progress file (restart notice capture).
 const PROGRESS_V4SAVE: String = "v4save"
+## DEV-ONLY (Story 038): --progress=kiep3 = Kiem si won Kiep 2 and has Kiep 3 open (in-memory save, for captures);
+## --kiep=N starts the next run at Kiep N whatever is unlocked.
+const PROGRESS_KIEP3: String = "kiep3"
+const KIEP_ARG: String = "--kiep="
+const DEV_KIEP3_CHARACTER: String = "kiem_si"
+const DEV_KIEP3_WON_LEVELS: Array[int] = [1, 2]
 ## DEV-ONLY: the v4 run of --progress=v4save (chapter, column, HP, seed).
 const DEV_V4_CHAPTER: String = "ch2"
 const DEV_V4_COLUMN: int = 3
@@ -372,6 +378,10 @@ var _cards: SkillConfig = null
 var _reward_config: Dictionary = {}
 ## DEV-ONLY: --character= value, applied in _ready.
 var _dev_character: String = ""
+## Story 038: the Kiep level picked for the NEXT run (-1 = not picked: the selected character's unlocked level);
+## reset to -1 whenever the selected character changes. DEV --kiep=N (-1 = none) bypasses the lock.
+var _kiep_level: int = -1
+var _dev_kiep: int = -1
 ## DEV-ONLY: --signature= value.
 var _dev_signature: String = ""
 ## DEV-ONLY (Story 032): --relics= ids, given to every run started by _begin_run.
@@ -392,6 +402,8 @@ var _restart_notice: String = ""
 var _floor_clear_notice: Dictionary = {}
 ## Story 033: gold dropped by the node completed last (see [method get_last_gold_gain]).
 var _last_gold_gain: int = 0
+## Story 038: the Kiep level the last finished run newly opened (0 = none), see [method get_kiep_new_unlock].
+var _last_kiep_unlock: int = 0
 ## DEV-ONLY (Story 033): --gold= value (-1 = none), --deck+= ids, the event id of --run=event=<id>.
 var _dev_gold: int = -1
 ## DEV-ONLY (Story 033): --hp= value (-1 = full).
@@ -482,6 +494,8 @@ func _ready() -> void:
 			_dev_locale = arg.trim_prefix(LANG_ARG)
 		elif arg.begins_with(CHARACTER_ARG):
 			_dev_character = arg.trim_prefix(CHARACTER_ARG)
+		elif arg.begins_with(KIEP_ARG):
+			_dev_kiep = clampi(int(arg.trim_prefix(KIEP_ARG)), 0, KiepRules.shared().max_level())
 		elif arg.begins_with(SIGNATURE_ARG):
 			_dev_signature = arg.trim_prefix(SIGNATURE_ARG)
 		elif arg.begins_with(RELICS_ARG):
@@ -609,16 +623,77 @@ func get_reward_config() -> Dictionary:
 func set_character(id: String) -> void:
 	if id.is_empty():
 		_character_id = ""
+		_kiep_level = -1
 		return
 	if not get_characters().has(id):
 		push_warning("GameFlow: unknown character '%s' (known: %s), ignored" % [id, ", ".join(get_characters().ids())])
 		return
+	if id != _character_id:
+		_kiep_level = -1
 	_character_id = id
 
 
 ## Story 018: the selected character id; "" when none was chosen.
 func get_character_id() -> String:
 	return _character_id
+
+
+## Story 038: the highest Kiep level the character [param character_id] may start (0 when none / unknown).
+func kiep_unlocked_for(character_id: String) -> int:
+	if _progress == null or character_id.is_empty():
+		return 0
+	return _progress.get_kiep_unlocked(character_id)
+
+
+## Story 038: the highest Kiep level the character won (-1 = never won a run).
+func kiep_best_for(character_id: String) -> int:
+	if _progress == null or character_id.is_empty():
+		return -1
+	return _progress.get_kiep_best_won(character_id)
+
+
+## Story 038: the Kiep level of the NEXT run: the picked one, else the selected (or default) character's unlocked level.
+func get_kiep_level() -> int:
+	if _kiep_level >= 0:
+		return _kiep_level
+	if _dev_kiep >= 0:
+		return _dev_kiep
+	return kiep_unlocked_for(_kiep_character_id())
+
+
+## Story 038: picks the Kiep level of the next run. False (selection unchanged) when it is above the selected
+## character's unlocked level or outside 0..max (the dev --kiep=N flag bypasses the lock).
+func set_kiep_level(level: int) -> bool:
+	if level < 0 or level > KiepRules.shared().max_level():
+		return false
+	if _dev_kiep < 0 and level > kiep_unlocked_for(_kiep_character_id()):
+		return false
+	_kiep_level = level
+	return true
+
+
+## Story 038: the desc keys of the rules active at [param level] (levels 1..level, in order).
+func get_kiep_rules_keys(level: int) -> Array[String]:
+	return KiepRules.shared().rules_text_keys(level)
+
+
+# Story 038: [param summary] (RunSession.stats_summary shape) with the run's Kiep level, for the ending / defeat stats.
+func _stats_with_kiep(summary: Dictionary) -> Dictionary:
+	if not summary.has("kiep_level"):
+		summary["kiep_level"] = get_run_kiep_level()
+	return summary
+
+
+## Story 038: the Kiep level of the live run (0 outside a run).
+func get_run_kiep_level() -> int:
+	if _run == null:
+		return 0
+	return int(_run.get("kiep_level"))
+
+
+# The selected character, or the default one when none was chosen yet (the select screen's focus).
+func _kiep_character_id() -> String:
+	return _character_id if not _character_id.is_empty() else get_characters().default_id()
 
 
 # The selected character's dictionary for the controller; {} when none was chosen.
@@ -633,6 +708,13 @@ func _character_dict() -> Dictionary:
 				character = character.duplicate(true)
 				character["signature"] = raw
 				break
+	# Story 038 (Kiep 8): the ONE point where the run's max HP changes; the HUD, rest, events and matches all read this dict.
+	var kiep: int = get_run_kiep_level()
+	if kiep > 0:
+		if not character.has("max_hp"):
+			character = character.duplicate(true)
+			character["max_hp"] = _character_max_hp(character)
+		character = KiepRules.shared().apply_run_start(character, kiep)
 	return character
 
 
@@ -817,7 +899,7 @@ func region_preview(region_id: String) -> Dictionary:
 	if ci < 0:
 		return {}
 	var at: int = get_floor()
-	var spec: Dictionary = _config.region_spec(region_id, at)
+	var spec: Dictionary = _config.region_spec(region_id, at, get_run_kiep_level())
 	var names: Array[String] = []
 	var boss_pool: Variant = (spec.get("pools", {}) as Dictionary).get(KIND_BOSS, {})
 	var boss_ids: Array = []
@@ -1743,7 +1825,7 @@ func _open_shop() -> void:
 	if state.is_empty():
 		var cfg: Dictionary = get_reward_config()
 		state = ShopLogic.build(_run.run_seed, _run.floor, _run.column, _run.node_index, _run.luck(cfg),
-			_run.relic_ids(), get_cards(), cfg, null, EconomyConfig.shared(), _run.locked)
+			_run.relic_ids(), get_cards(), cfg, null, EconomyConfig.shared(), _run.locked, _run.kiep_level)
 	state[SHOP_NODE] = key
 	_run.shop_state = state
 	_save_run()
@@ -1841,7 +1923,7 @@ func _start_event_fight() -> void:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = hash([_run.run_seed, _run.floor, _run.column, _run.node_index, EVENT_FIGHT_SEED_TAG]) & ChaptersConfig.SEED_MASK
 		var used: Array[String] = []
-		match_id = ChapterMapGen._draw_match(_config.region_spec(_run.region_id, _run.floor), kind, tier, used, rng)
+		match_id = ChapterMapGen._draw_match(_config.region_spec(_run.region_id, _run.floor, _run.kiep_level), kind, tier, used, rng)
 		fight["match_id"] = match_id
 		cur[EVENT_FIGHT] = fight
 	_spawn_match(match_id, kind)
@@ -1888,7 +1970,7 @@ func _begin_run() -> void:
 	var starting_removals: int = int(get_reward_config().get("starting_removals", 0))
 	# Story 037: the content still locked NOW is frozen into the run (unlocking mid-run changes nothing for it).
 	_run = RunSession.begin_world(_config, _character_dict(), run_seed, starting_removals,
-		AchievementsConfig.shared().locked_content(_progress))
+		AchievementsConfig.shared().locked_content(_progress), get_kiep_level())
 	_run.cards_config = get_cards()
 	for relic_id: String in _dev_relics:
 		_run.add_relic(relic_id)
@@ -1906,6 +1988,7 @@ func _begin_run() -> void:
 		else:
 			push_warning("GameFlow: --deck+=: unknown card '%s', ignored" % card_id)
 	_last_gold_gain = 0
+	_last_kiep_unlock = 0
 	_run_result = RunResult.NONE
 	_reward_blocking = false
 	_pending_node_kind = ""
@@ -1934,7 +2017,7 @@ func _spawn_match(match_id: String, kind: String) -> void:
 	_free_controller()
 	_elapsed_base = _run.elapsed_sec
 	var run_config: RunConfig = RunConfig.from_node(_config, _run.region_id, match_id, kind,
-		_run.floor_seed(), _run.floor)
+		_run.floor_seed(), _run.floor, _run.kiep_level)
 	run_config.between_sec = 0.0
 	run_config.retry_min_hp_ratio = 0.0
 	var controller := RunController.new()
@@ -2118,6 +2201,8 @@ func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> 
 func _drop_gold(kind: String) -> void:
 	var gold_seed: int = hash([_run.run_seed, _run.floor, _run.column, _run.node_index, GOLD_SEED_TAG]) & ChaptersConfig.SEED_MASK
 	_last_gold_gain = EconomyConfig.shared().gold_for(kind, _run.floor, gold_seed)
+	if _run.kiep_level > 0: # Story 038 (Kiep 5): gold x economy_mult("gold"), rounded, never below 0
+		_last_gold_gain = maxi(roundi(float(_last_gold_gain) * KiepRules.shared().economy_mult("gold", _run.kiep_level)), 0)
 	_run.last_gold_gain = _last_gold_gain
 	_run.add_gold(_last_gold_gain)
 
@@ -2227,17 +2312,36 @@ func _finish_run_won() -> void:
 	var ending_id: String = _run.ending_id(_config.endings_config())
 	_progress.record_ending(ending_id)
 	_progress.record_run_won(_run.character_id) # Story 037: runs_won / runs_won:<character>
+	_record_kiep_result(true) # Story 038: a win at Kiep k opens k + 1 for this character
 	_process_unlocks(_run_ended_event(true, ending_id))
 	var line_keys: Array[String] = []
 	for i: int in ENDING_LINE_COUNT:
 		line_keys.append("ending.%s.line%d" % [ending_id, i + 1])
 	_ending = {"id": ending_id, "title_key": "ending.%s.title" % ending_id, "line_keys": line_keys,
-		"stats": _run.stats_summary()}
+		"stats": _stats_with_kiep(_run.stats_summary())}
 	_progress.clear_run()
 	_store.save_state(_progress)
 	_run_result = RunResult.WON
 	_set_phase(Phase.ENDING)
 	run_changed.emit()
+
+
+# Story 038: records the finished run's Kiep result into the progress (before it is saved) and remembers the level a win
+# newly opened (0 otherwise) for the end screen.
+func _record_kiep_result(won: bool) -> void:
+	_last_kiep_unlock = 0
+	var cid: String = _run.character_id
+	var before: int = _progress.get_kiep_unlocked(cid)
+	_progress.record_kiep_result(cid, _run.kiep_level, won)
+	var after: int = _progress.get_kiep_unlocked(cid)
+	if won and after > before:
+		_last_kiep_unlock = after
+
+
+## Story 038: the Kiep level the run that just ended newly opened for its character (the level number), 0 when none
+## (a loss, a win below the unlocked level, or already at 10). For the ending screen line "Da mo Kiep k".
+func get_kiep_new_unlock() -> int:
+	return _last_kiep_unlock
 
 
 # The player died: the saved run is dropped at once, result LOST (no retry).
@@ -2251,7 +2355,8 @@ func _finish_run_lost() -> void:
 		_run.add_match_stats(view.get_match_stats(), false)
 	_run.record_death({"floor": _run.floor, "region_id": _run.region_id, "match_id": _live_match_id,
 		"boss_name_key": _match_name_key(_run.region_id, _live_match_id)})
-	_defeat_summary = _run.stats_summary()
+	_defeat_summary = _stats_with_kiep(_run.stats_summary())
+	_record_kiep_result(false) # Story 038: a loss changes nothing (the call keeps the new-unlock line at 0)
 	_process_unlocks(_run_ended_event(false, ""))
 	_progress.clear_run()
 	_store.save_state(_progress)
@@ -2281,9 +2386,15 @@ func _load_progress(progress_mode: String) -> ProgressState:
 				all.record_boss_clear()
 			# Story 037: every achievement earned and every unlock seen (nothing is locked in the runs of this save).
 			all.mark_all_unlocked(AchievementsConfig.shared(), _config.region_ids())
+			all.mark_all_kiep(get_characters().ids()) # Story 038: every Kiep level open and won for every character
 			return all
 		PROGRESS_DEMO:
 			return _demo_progress()
+		PROGRESS_KIEP3:
+			var kiep := ProgressState.new()
+			for won_level: int in DEV_KIEP3_WON_LEVELS:
+				kiep.record_kiep_result(DEV_KIEP3_CHARACTER, won_level, true)
+			return kiep
 		PROGRESS_V4SAVE:
 			var loaded: ProgressState = ProgressState.from_json(JSON.stringify(_v4_progress_file()), _config)
 			_store.save_state(loaded)
@@ -2604,7 +2715,8 @@ func _apply_dev_flow_run(kind: String) -> void:
 			_dev_advance_floors(_run.floors())
 			_dev_settle_phase()
 			_dev_fill_fates(kind)
-			if _dev_choose_first_available():
+			# Story 038: past the `world.final_prelude` shop column to the final boss node (as FLOW_RUN_WON does).
+			if _dev_advance_to_kind(KIND_BOSS):
 				_dev_win_current_match(false)
 		FLOW_RUN_WON:
 			_dev_advance_floors(_run.floors())

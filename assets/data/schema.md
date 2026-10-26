@@ -833,3 +833,54 @@ Migration of a v1..v6 file: `milestones` = `region_boss:<r>` 1 for each region i
 ### `unlock_by` keys
 
 `cards.json` cards, `pieces.json` shapes, `relics.json` relics and `characters.json` characters carry an optional `unlock_by` (an achievement id); none = open from the start. Only the content named in the table above is locked: 4 cards (`gai_doc`, `luoi_san`, `thanh_thuy`, `bang_tam`), 3 shapes (`w5`, `n5`, `v5`), 4 relics (`tui_rong`, `phong_an`, `gai_ran`, `han_ky`) and 2 characters (`tho_san`, `giao_si`); every other card, shape and relic is open from the start. A run takes its locked set at its start (`RunSession.locked`), so an unlock mid-run changes nothing for that run.
+
+## `kiep_levels.json` (Story 038: Kiep levels)
+
+Read by `KiepRules` (`src/run/kiep_rules.gd`, pure). Kiep only makes the game harder (no permanent power). Level 0 is the game exactly as without Kiep (every `KiepRules` function returns an equal copy / the base number). Level k applies the rules of levels 1..k in order; stacked multipliers are bounded by `clamp`. An unknown rule `type` = warning, that rule dropped (the level stays); a bad number (not a number or <= 0) = warning, the documented default kept; a row with no valid `level` (integer >= 1) or a duplicate level is skipped. The shipped file has 10 levels, ordered by the difficulty each rule adds alone (Story 038 sim, `--kiep-only`, Kiem si: gold -2.9 points, rest 0, danger 0, floor_shift -7.1, shop + final trait -10, floor heal / max HP / player drop / swing about -11.4, region boss trait -12.9):
+
+| Level | Rule(s) | Shipped |
+|---|---|---|
+| 1 | `gold_mult` | 0.75 |
+| 2 | `rest_heal_mult` | 0.67 |
+| 3 | `node_weight` | danger x2 |
+| 4 | `floor_shift` | shift 1, final hp x1.1 |
+| 5 | `shop_price_mult` + `boss_extra_trait` (scope `final`) | 1.2; pool `thorn_field`, `slam` |
+| 6 | `floor_heal_mult` | 0.5 |
+| 7 | `max_hp_mult` | 0.85 |
+| 8 | `player_drop_mult` | 1.15 |
+| 9 | `boss_swing_mult` | 0.909 |
+| 10 | `boss_extra_trait` (scope `region_boss`) | pool `row_burner`, `seal_caster`, `thorn_field`, `slam` |
+
+| Key | Type | Meaning |
+|---|---|---|
+| `clamp` | object | Bounds on the STACKED multiplier of a rule type (keys below; an unknown key warns) |
+| `levels[]` | array | One row per level 1..10: `{level, name_key, desc_key, rule}` |
+| `levels[].name_key` / `desc_key` | translation keys | `kiep.level.N.name` / `kiep.level.N.desc` (the desc states the rule and its number in one line; shown in the select screen's rule list) |
+| `levels[].rule` | `{type, params}` or an array of them | Level 5 has two (`shop_price_mult` + `boss_extra_trait` scope `final`) |
+
+Rule types (fixed in code; numbers here). Every `mult` is a number > 0; the shipped starting values are in the last column:
+
+| `type` | `params` | Applied at | Effect | Shipped |
+|---|---|---|---|---|
+| `boss_extra_trait` | `trait_pool` (array of `{id, params}`, `id` a `TraitRegistry` key), `count` (int >= 1, default 1), `scope` (`region_boss` = a `boss` node that is not the final, or `final` = the final match) | `KiepRules.apply_match` (match creation, `RunConfig.from_node`) | Appends `count` traits drawn from `trait_pool` with the seed `hash([run_seed, floor, match_id])` (+ the rule's index), never one the match already has; no candidate left = nothing added. A phased match (`phases`, the final) gets the same trait in EVERY phase's `traits` (a `phases` match ignores its top-level `traits`) | level 10: pool `row_burner`, `seal_caster`, `thorn_field`, `slam`, scope `region_boss`; level 5: pool `thorn_field`, `slam`, scope `final` |
+| `node_weight` | `kind` (node kind, default `danger`), `mult` | `KiepRules.apply_map_spec` (region map generation) | `ChapterMapGen` has no weight table: a column's `kinds` filler list is drawn uniformly, so the weight of a kind is its number of copies in that list. The rule multiplies the copies of `kind` (mult rounded, at least 1) in the BRANCH columns only (not the first, not the last = boss column) | 2.0 (danger x2) |
+| `rest_heal_mult` | `mult` | `KiepRules.rest_heal_ratio` (rest camp) | heal ratio x mult | 0.67 |
+| `player_drop_mult` | `mult` | `apply_match` | NEW match key `player_drop_interval_mult` (default 1.0, > 0; multiplies the PLAYER's field piece drop interval, > 1 = slower drops, like `boss_drop_interval_mult` for the boss) x mult | 1.15 |
+| `gold_mult` | `mult` | `KiepRules.economy_mult("gold")` | gold of a node x mult | 0.75 |
+| `boss_swing_mult` | `mult` | `apply_match` | match `swing_speed_mult` x mult. `swing_speed_mult` scales the windup (< 1 = FASTER swings), so the shipped 0.909 (= 1 / 1.10) makes bosses wind up 10 % faster | 0.909 |
+| `floor_heal_mult` | `mult` | `KiepRules.floor_heal_ratio` (heal when a region boss falls) | heal ratio x mult | 0.5 |
+| `max_hp_mult` | `mult` | `KiepRules.apply_run_start` (run start) | character `max_hp` x mult (rounded, at least 1), the same value for the whole run | 0.85 |
+| `floor_shift` | `shift` (int >= 0, default 1), `final_hp_mult` (> 0, default 1.1) | `KiepRules.scaling_floor` / `final_extra` (match creation) | Enemies use the `floor_scaling` row of floor + `shift` (never past the `final` row); on the last floor and the final match `hp_mult` is multiplied by `final_hp_mult` on top | shift 1, final hp x1.1 |
+| `shop_price_mult` | `mult` | `KiepRules.economy_mult("shop_price")` | shop prices (cards, relics, services) x mult | 1.2 |
+
+`clamp` keys (the stacked product of every rule of the type is bounded; defaults in the code when a key is absent): `node_weight_mult_max` 4.0 (copies of the kind), `rest_heal_mult_min` 0.25, `player_drop_mult_max` 1.5 (player drop interval at most x1.5), `gold_mult_min` 0.4, `boss_swing_mult_min` 0.6, `floor_heal_mult_min` 0.25, `max_hp_mult_min` 0.4 (max HP never below 40 % of the original), `floor_shift_max` 2 (total shift), `final_hp_mult_max` 1.5, `shop_price_mult_max` 2.0.
+
+`KiepRules.set_only(level)` is for the balance sim only: every level > 0 then applies just that one level's rules, to measure one rule alone.
+
+New string keys: `kiep.level.1.name` .. `kiep.level.10.name` and `kiep.level.1.desc` .. `kiep.level.10.desc`.
+
+### Kiep save keys (Story 038: progress v8, run save v7)
+
+`ProgressState.VERSION` 8 adds `kiep_unlocked` ({character_id: int 0..10}, the highest selectable level) and `kiep_best_won` ({character_id: int}, the highest level won; -1 / absent = never won). A win at level k sets `kiep_best_won = max(best, k)` and `kiep_unlocked = max(unlocked, min(k + 1, 10))`; a loss or a win below the unlocked level changes nothing (`ProgressState.record_kiep_result`). v1..v7 files load with every character at 0 / -1.
+
+`RunSession.SAVE_VERSION` 7 adds `kiep_level` (int 0..10, chosen before the run, fixed for the whole run; clamped on load; absent = 0, so a v6 run save loads at Kiep 0).

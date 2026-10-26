@@ -1,0 +1,165 @@
+===== kiep_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+KIEP: STACKED (rules of levels 1..k) levels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] seeds=70 characters=["kiem_si"] policies=["build"] (same seeds at every level; compact: the KIEP tables only (--kiep-full = every level's WORLD tables))
+KIEP | character | policy | level | run win % | wins / runs | deaths by floor (f1 f2 f3 f4 f5 final) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |
+KIEP | kiem_si | build | 0 | 12.9 | 9 / 70 | 12 15 11 12 7 4 | 33.6 | 19.2 | 43.6 |
+KIEP | kiem_si | build | 1 | 0.0 | 0 / 70 | 19 25 13 7 5 1 | - | 13.1 | - |
+KIEP | kiem_si | build | 2 | 0.0 | 0 / 70 | 19 25 13 7 5 1 | - | 13.1 | - |
+KIEP | kiem_si | build | 3 | 0.0 | 0 / 70 | 19 25 13 7 5 1 | - | 13.1 | - |
+KIEP | kiem_si | build | 4 | 0.0 | 0 / 70 | 30 26 9 4 1 0 | - | 10.4 | - |
+KIEP | kiem_si | build | 5 | 0.0 | 0 / 70 | 30 25 10 4 1 0 | - | 10.5 | - |
+KIEP | kiem_si | build | 6 | 0.0 | 0 / 70 | 34 28 7 1 0 0 | - | 9.3 | - |
+KIEP | kiem_si | build | 7 | 0.0 | 0 / 70 | 34 32 4 0 0 0 | - | 8.7 | - |
+KIEP | kiem_si | build | 8 | 0.0 | 0 / 70 | 41 26 3 0 0 0 | - | 7.7 | - |
+KIEP | kiem_si | build | 9 | 0.0 | 0 / 70 | 46 22 2 0 0 0 | - | 7.4 | - |
+KIEP | kiem_si | build | 10 | 0.0 | 0 / 70 | 46 22 2 0 0 0 | - | 7.4 | - |
+KIEP CHECK curve kiem_si/build: run win % by level: 0=12.9 1=0.0 2=0.0 3=0.0 4=0.0 5=0.0 6=0.0 7=0.0 8=0.0 9=0.0 10=0.0
+KIEP CHECK monotone step kiem_si/build: win(k) <= win(k-1) + 3 over 10 pairs: PASS
+KIEP CHECK monotone skip kiem_si/build: win(k) < win(k-2) over 9 pairs: FAIL at k=3 (0.0 not < 0.0), k=4 (0.0 not < 0.0), k=5 (0.0 not < 0.0), k=6 (0.0 not < 0.0), k=7 (0.0 not < 0.0), k=8 (0.0 not < 0.0), k=9 (0.0 not < 0.0), k=10 (0.0 not < 0.0)
+KIEP CHECK no big drop kiem_si/build: no drop > 12 pts between neighbours (worst 12.9): FAIL at k=1 (-12.9)
+KIEP CHECK winnable kiem_si/build: level 10 run win 0.0% >= 3%: FAIL
+KIEP CHECK minutes kiem_si/build: level 10 est. minutes (NO WINS: all-runs mean) 7.4 <= 55: FAIL
+KIEP CHECK RESULT kiem_si/build: FAIL (4 check(s))
+KIEP CHECK RESULT: FAIL
+===== kiep_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+KIEP: STACKED (rules of levels 1..k) levels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] seeds=70 characters=["phap_su"] policies=["build"] (same seeds at every level; compact: the KIEP tables only (--kiep-full = every level's WORLD tables))
+KIEP | character | policy | level | run win % | wins / runs | deaths by floor (f1 f2 f3 f4 f5 final) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |
+KIEP | phap_su | build | 0 | 7.1 | 5 / 70 | 12 15 9 14 13 2 | 29.5 | 18.2 | 35.8 |
+KIEP | phap_su | build | 1 | 1.4 | 1 / 70 | 15 26 14 12 2 0 | 28.9 | 12.7 | 26.0 |
+KIEP | phap_su | build | 2 | 1.4 | 1 / 70 | 15 26 14 12 2 0 | 28.9 | 12.7 | 26.0 |
+KIEP | phap_su | build | 3 | 1.4 | 1 / 70 | 15 26 15 12 1 0 | 28.9 | 12.6 | 26.0 |
+KIEP | phap_su | build | 4 | 0.0 | 0 / 70 | 29 32 5 3 1 0 | - | 9.4 | - |
+KIEP | phap_su | build | 5 | 0.0 | 0 / 70 | 29 32 6 3 0 0 | - | 9.2 | - |
+KIEP | phap_su | build | 6 | 0.0 | 0 / 70 | 34 27 6 3 0 0 | - | 8.9 | - |
+KIEP | phap_su | build | 7 | 0.0 | 0 / 70 | 34 30 6 0 0 0 | - | 8.0 | - |
+KIEP | phap_su | build | 8 | 0.0 | 0 / 70 | 39 28 3 0 0 0 | - | 7.0 | - |
+KIEP | phap_su | build | 9 | 0.0 | 0 / 70 | 48 20 2 0 0 0 | - | 7.0 | - |
+KIEP | phap_su | build | 10 | 0.0 | 0 / 70 | 48 20 2 0 0 0 | - | 7.0 | - |
+KIEP CHECK curve phap_su/build: run win % by level: 0=7.1 1=1.4 2=1.4 3=1.4 4=0.0 5=0.0 6=0.0 7=0.0 8=0.0 9=0.0 10=0.0
+KIEP CHECK monotone step phap_su/build: win(k) <= win(k-1) + 3 over 10 pairs: PASS
+KIEP CHECK monotone skip phap_su/build: win(k) < win(k-2) over 9 pairs: FAIL at k=3 (1.4 not < 1.4), k=6 (0.0 not < 0.0), k=7 (0.0 not < 0.0), k=8 (0.0 not < 0.0), k=9 (0.0 not < 0.0), k=10 (0.0 not < 0.0)
+KIEP CHECK no big drop phap_su/build: no drop > 12 pts between neighbours (worst 5.7): PASS
+KIEP CHECK winnable phap_su/build: level 10 run win 0.0% (INFO: the >= 3% target is the Kiem si build's)
+KIEP CHECK minutes phap_su/build: level 10 est. minutes (NO WINS: all-runs mean) 7.0 <= 55: FAIL
+KIEP CHECK RESULT phap_su/build: FAIL (2 check(s))
+KIEP CHECK RESULT: FAIL
+===== kiep_sat_thu
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+KIEP: STACKED (rules of levels 1..k) levels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] seeds=70 characters=["sat_thu"] policies=["build"] (same seeds at every level; compact: the KIEP tables only (--kiep-full = every level's WORLD tables))
+KIEP | character | policy | level | run win % | wins / runs | deaths by floor (f1 f2 f3 f4 f5 final) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |
+KIEP | sat_thu | build | 0 | 5.7 | 4 / 70 | 5 20 13 16 9 3 | 26.3 | 16.3 | 32.3 |
+KIEP | sat_thu | build | 1 | 1.4 | 1 / 70 | 18 27 10 10 4 0 | 28.2 | 11.1 | 42.0 |
+KIEP | sat_thu | build | 2 | 1.4 | 1 / 70 | 18 27 10 10 4 0 | 28.2 | 11.1 | 42.0 |
+KIEP | sat_thu | build | 3 | 0.0 | 0 / 70 | 18 27 11 9 4 1 | - | 10.9 | - |
+KIEP | sat_thu | build | 4 | 0.0 | 0 / 70 | 21 30 12 6 1 0 | - | 9.6 | - |
+KIEP | sat_thu | build | 5 | 0.0 | 0 / 70 | 21 32 12 4 1 0 | - | 9.4 | - |
+KIEP | sat_thu | build | 6 | 0.0 | 0 / 70 | 31 30 5 2 2 0 | - | 8.3 | - |
+KIEP | sat_thu | build | 7 | 0.0 | 0 / 70 | 31 33 6 0 0 0 | - | 7.5 | - |
+KIEP | sat_thu | build | 8 | 0.0 | 0 / 70 | 36 29 5 0 0 0 | - | 6.7 | - |
+KIEP | sat_thu | build | 9 | 0.0 | 0 / 70 | 48 21 1 0 0 0 | - | 6.2 | - |
+KIEP | sat_thu | build | 10 | 0.0 | 0 / 70 | 48 21 1 0 0 0 | - | 6.2 | - |
+KIEP CHECK curve sat_thu/build: run win % by level: 0=5.7 1=1.4 2=1.4 3=0.0 4=0.0 5=0.0 6=0.0 7=0.0 8=0.0 9=0.0 10=0.0
+KIEP CHECK monotone step sat_thu/build: win(k) <= win(k-1) + 3 over 10 pairs: PASS
+KIEP CHECK monotone skip sat_thu/build: win(k) < win(k-2) over 9 pairs: FAIL at k=5 (0.0 not < 0.0), k=6 (0.0 not < 0.0), k=7 (0.0 not < 0.0), k=8 (0.0 not < 0.0), k=9 (0.0 not < 0.0), k=10 (0.0 not < 0.0)
+KIEP CHECK no big drop sat_thu/build: no drop > 12 pts between neighbours (worst 4.3): PASS
+KIEP CHECK winnable sat_thu/build: level 10 run win 0.0% (INFO: the >= 3% target is the Kiem si build's)
+KIEP CHECK minutes sat_thu/build: level 10 est. minutes (NO WINS: all-runs mean) 6.2 <= 55: FAIL
+KIEP CHECK RESULT sat_thu/build: FAIL (2 check(s))
+KIEP CHECK RESULT: FAIL
+===== kiep_only_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+KIEP: ONLY (each level's own rules alone) levels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] seeds=70 characters=["kiem_si"] policies=["build"] (same seeds at every level; compact: the KIEP tables only (--kiep-full = every level's WORLD tables))
+KIEP | character | policy | level (only) | run win % | wins / runs | deaths by floor (f1 f2 f3 f4 f5 final) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |
+KIEP | kiem_si | build | 0 | 12.9 | 9 / 70 | 12 15 11 12 7 4 | 33.6 | 19.2 | 43.6 |
+KIEP | kiem_si | build | 1 | 0.0 | 0 / 70 | 19 25 13 7 5 1 | - | 13.1 | - |
+KIEP | kiem_si | build | 2 | 12.9 | 9 / 70 | 12 15 11 12 7 4 | 33.6 | 19.2 | 43.6 |
+KIEP | kiem_si | build | 3 | 12.9 | 9 / 70 | 12 15 11 12 7 4 | 33.6 | 19.2 | 43.6 |
+KIEP | kiem_si | build | 4 | 1.4 | 1 / 70 | 18 20 17 10 3 1 | 32.5 | 15.1 | 40.0 |
+KIEP | kiem_si | build | 5 | 10.0 | 7 / 70 | 12 17 11 11 12 0 | 32.7 | 18.6 | 42.3 |
+KIEP | kiem_si | build | 6 | 1.4 | 1 / 70 | 18 18 17 8 8 0 | 33.0 | 15.4 | 55.0 |
+KIEP | kiem_si | build | 7 | 1.4 | 1 / 70 | 12 16 15 11 13 2 | 30.2 | 17.5 | 33.0 |
+KIEP | kiem_si | build | 8 | 1.4 | 1 / 70 | 17 15 14 12 9 2 | 30.2 | 15.8 | 33.0 |
+KIEP | kiem_si | build | 9 | 5.7 | 4 / 70 | 17 15 14 14 6 0 | 32.4 | 17.2 | 36.8 |
+KIEP | kiem_si | build | 10 | 2.9 | 2 / 70 | 12 17 11 13 7 8 | 31.7 | 18.5 | 44.0 |
+KIEP ONLY | character | policy | level | rule | run win % | +-1 sd | vs level 0 (pts) | verdict | wins / runs |
+KIEP ONLY | kiem_si | build | 0 | none | 12.9 | 4.0 | - | BASELINE | 9 / 70 |
+KIEP ONLY | kiem_si | build | 1 | boss_extra_trait | 0.0 | 0.0 | -12.9 | HARDER | 0 / 70 |
+KIEP ONLY | kiem_si | build | 2 | node_weight | 12.9 | 4.0 | +0.0 | NO EFFECT (< 1 pt: change the number or the order in kiep_levels.json) | 9 / 70 |
+KIEP ONLY | kiem_si | build | 3 | rest_heal_mult | 12.9 | 4.0 | +0.0 | NO EFFECT (< 1 pt: change the number or the order in kiep_levels.json) | 9 / 70 |
+KIEP ONLY | kiem_si | build | 4 | player_drop_mult | 1.4 | 1.4 | -11.4 | HARDER | 1 / 70 |
+KIEP ONLY | kiem_si | build | 5 | gold_mult | 10.0 | 3.6 | -2.9 | HARDER | 7 / 70 |
+KIEP ONLY | kiem_si | build | 6 | boss_swing_mult | 1.4 | 1.4 | -11.4 | HARDER | 1 / 70 |
+KIEP ONLY | kiem_si | build | 7 | floor_heal_mult | 1.4 | 1.4 | -11.4 | HARDER | 1 / 70 |
+KIEP ONLY | kiem_si | build | 8 | max_hp_mult | 1.4 | 1.4 | -11.4 | HARDER | 1 / 70 |
+KIEP ONLY | kiem_si | build | 9 | floor_shift | 5.7 | 2.8 | -7.1 | HARDER | 4 / 70 |
+KIEP ONLY | kiem_si | build | 10 | shop_price_mult+boss_extra_trait | 2.9 | 2.0 | -10.0 | HARDER | 2 / 70 |
+===== v2/kiep_kiem_si
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+KIEP: STACKED (rules of levels 1..k) levels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] seeds=70 characters=["kiem_si"] policies=["build"] (same seeds at every level; compact: the KIEP tables only (--kiep-full = every level's WORLD tables))
+KIEP | character | policy | level | run win % | wins / runs | deaths by floor (f1 f2 f3 f4 f5 final) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |
+KIEP | kiem_si | build | 0 | 12.9 | 9 / 70 | 12 15 11 12 7 4 | 33.6 | 19.2 | 43.6 |
+KIEP | kiem_si | build | 1 | 10.0 | 7 / 70 | 12 17 11 11 12 0 | 32.7 | 18.6 | 42.3 |
+KIEP | kiem_si | build | 2 | 10.0 | 7 / 70 | 12 17 11 11 12 0 | 32.7 | 18.5 | 42.3 |
+KIEP | kiem_si | build | 3 | 10.0 | 7 / 70 | 12 17 11 11 12 0 | 32.7 | 18.5 | 42.3 |
+KIEP | kiem_si | build | 4 | 1.4 | 1 / 70 | 17 14 12 14 8 4 | 31.4 | 17.9 | 32.0 |
+KIEP | kiem_si | build | 5 | 2.9 | 2 / 70 | 17 14 12 13 8 4 | 32.5 | 18.0 | 38.5 |
+KIEP | kiem_si | build | 6 | 1.4 | 1 / 70 | 17 17 17 11 5 2 | 28.9 | 15.6 | 29.0 |
+KIEP | kiem_si | build | 7 | 0.0 | 0 / 70 | 20 20 15 8 5 2 | - | 14.1 | - |
+KIEP | kiem_si | build | 8 | 0.0 | 0 / 70 | 29 22 13 6 0 0 | - | 11.3 | - |
+KIEP | kiem_si | build | 9 | 0.0 | 0 / 70 | 39 22 9 0 0 0 | - | 9.3 | - |
+KIEP | kiem_si | build | 10 | 0.0 | 0 / 70 | 46 21 2 1 0 0 | - | 7.4 | - |
+KIEP CHECK curve kiem_si/build: run win % by level: 0=12.9 1=10.0 2=10.0 3=10.0 4=1.4 5=2.9 6=1.4 7=0.0 8=0.0 9=0.0 10=0.0
+KIEP CHECK monotone step kiem_si/build: win(k) <= win(k-1) + 3 over 10 pairs: PASS
+KIEP CHECK monotone skip kiem_si/build: win(k) < win(k-2) over 9 pairs: FAIL at k=3 (10.0 not < 10.0), k=6 (1.4 not < 1.4), k=9 (0.0 not < 0.0), k=10 (0.0 not < 0.0)
+KIEP CHECK no big drop kiem_si/build: no drop > 12 pts between neighbours (worst 8.6): PASS
+KIEP CHECK winnable kiem_si/build: level 10 run win 0.0% >= 3%: FAIL
+KIEP CHECK minutes kiem_si/build: level 10 est. minutes (NO WINS: all-runs mean) 7.4 <= 55: FAIL
+KIEP CHECK RESULT kiem_si/build: FAIL (3 check(s))
+KIEP CHECK RESULT: FAIL
+===== v2/kiep_phap_su
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+KIEP: STACKED (rules of levels 1..k) levels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] seeds=70 characters=["phap_su"] policies=["build"] (same seeds at every level; compact: the KIEP tables only (--kiep-full = every level's WORLD tables))
+KIEP | character | policy | level | run win % | wins / runs | deaths by floor (f1 f2 f3 f4 f5 final) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |
+KIEP | phap_su | build | 0 | 7.1 | 5 / 70 | 12 15 9 14 13 2 | 29.5 | 18.2 | 35.8 |
+KIEP | phap_su | build | 1 | 7.1 | 5 / 70 | 12 17 10 14 10 2 | 30.6 | 17.5 | 37.0 |
+KIEP | phap_su | build | 2 | 5.7 | 4 / 70 | 12 18 10 14 10 2 | 30.8 | 17.2 | 36.3 |
+KIEP | phap_su | build | 3 | 5.7 | 4 / 70 | 12 18 10 14 10 2 | 30.8 | 17.2 | 36.3 |
+KIEP | phap_su | build | 4 | 2.9 | 2 / 70 | 15 24 14 12 3 0 | 32.3 | 14.9 | 39.5 |
+KIEP | phap_su | build | 5 | 1.4 | 1 / 70 | 15 25 16 10 2 1 | 34.7 | 14.5 | 33.0 |
+KIEP | phap_su | build | 6 | 0.0 | 0 / 70 | 15 29 15 9 2 0 | - | 13.0 | - |
+KIEP | phap_su | build | 7 | 0.0 | 0 / 70 | 21 32 11 6 0 0 | - | 11.0 | - |
+KIEP | phap_su | build | 8 | 0.0 | 0 / 70 | 27 33 8 2 0 0 | - | 10.0 | - |
+KIEP | phap_su | build | 9 | 0.0 | 0 / 70 | 36 25 8 1 0 0 | - | 9.1 | - |
+KIEP | phap_su | build | 10 | 0.0 | 0 / 70 | 49 21 0 0 0 0 | - | 6.7 | - |
+KIEP CHECK curve phap_su/build: run win % by level: 0=7.1 1=7.1 2=5.7 3=5.7 4=2.9 5=1.4 6=0.0 7=0.0 8=0.0 9=0.0 10=0.0
+KIEP CHECK monotone step phap_su/build: win(k) <= win(k-1) + 3 over 10 pairs: PASS
+KIEP CHECK monotone skip phap_su/build: win(k) < win(k-2) over 9 pairs: FAIL at k=8 (0.0 not < 0.0), k=9 (0.0 not < 0.0), k=10 (0.0 not < 0.0)
+KIEP CHECK no big drop phap_su/build: no drop > 12 pts between neighbours (worst 2.9): PASS
+KIEP CHECK winnable phap_su/build: level 10 run win 0.0% (INFO: the >= 3% target is the Kiem si build's)
+KIEP CHECK minutes phap_su/build: level 10 est. minutes (NO WINS: all-runs mean) 6.7 <= 55: FAIL
+KIEP CHECK RESULT phap_su/build: FAIL (2 check(s))
+KIEP CHECK RESULT: FAIL
+===== v2/kiep_sat_thu
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+KIEP: STACKED (rules of levels 1..k) levels=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] seeds=70 characters=["sat_thu"] policies=["build"] (same seeds at every level; compact: the KIEP tables only (--kiep-full = every level's WORLD tables))
+KIEP | character | policy | level | run win % | wins / runs | deaths by floor (f1 f2 f3 f4 f5 final) | est. minutes WON run mean | est. minutes all runs | boss hits / WON run |
+KIEP | sat_thu | build | 0 | 5.7 | 4 / 70 | 5 20 13 16 9 3 | 26.3 | 16.3 | 32.3 |
+KIEP | sat_thu | build | 1 | 7.1 | 5 / 70 | 5 19 12 14 12 3 | 26.2 | 16.8 | 32.0 |
+KIEP | sat_thu | build | 2 | 2.9 | 2 / 70 | 5 20 12 15 11 5 | 24.2 | 16.5 | 30.0 |
+KIEP | sat_thu | build | 3 | 2.9 | 2 / 70 | 5 20 12 15 11 5 | 24.2 | 16.5 | 30.0 |
+KIEP | sat_thu | build | 4 | 4.3 | 3 / 70 | 11 19 19 14 1 3 | 28.8 | 14.9 | 32.0 |
+KIEP | sat_thu | build | 5 | 0.0 | 0 / 70 | 11 18 19 10 4 8 | - | 15.4 | - |
+KIEP | sat_thu | build | 6 | 1.4 | 1 / 70 | 11 24 22 9 1 2 | 28.9 | 12.8 | 27.0 |
+KIEP | sat_thu | build | 7 | 1.4 | 1 / 70 | 17 24 22 5 0 1 | 27.6 | 10.9 | 28.0 |
+KIEP | sat_thu | build | 8 | 0.0 | 0 / 70 | 22 34 11 3 0 0 | - | 9.2 | - |
+KIEP | sat_thu | build | 9 | 0.0 | 0 / 70 | 36 26 7 1 0 0 | - | 7.9 | - |
+KIEP | sat_thu | build | 10 | 0.0 | 0 / 70 | 51 16 3 0 0 0 | - | 5.9 | - |
+KIEP CHECK curve sat_thu/build: run win % by level: 0=5.7 1=7.1 2=2.9 3=2.9 4=4.3 5=0.0 6=1.4 7=1.4 8=0.0 9=0.0 10=0.0
+KIEP CHECK monotone step sat_thu/build: win(k) <= win(k-1) + 3 over 10 pairs: PASS
+KIEP CHECK monotone skip sat_thu/build: win(k) < win(k-2) over 9 pairs: FAIL at k=4 (4.3 not < 2.9), k=7 (1.4 not < 0.0), k=10 (0.0 not < 0.0)
+KIEP CHECK no big drop sat_thu/build: no drop > 12 pts between neighbours (worst 4.3): PASS
+KIEP CHECK winnable sat_thu/build: level 10 run win 0.0% (INFO: the >= 3% target is the Kiem si build's)
+KIEP CHECK minutes sat_thu/build: level 10 est. minutes (NO WINS: all-runs mean) 5.9 <= 55: FAIL
+KIEP CHECK RESULT sat_thu/build: FAIL (2 check(s))
+KIEP CHECK RESULT: FAIL

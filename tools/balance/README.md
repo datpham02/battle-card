@@ -608,3 +608,75 @@ $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --unlock-runs=2
 timeout 3000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --unlock-runs=8 --unlock-reps=30 > "<scratch>/unlock_runs.out" 2>&1
 grep "^UNLOCK RUNS" "<scratch>/unlock_runs.out"
 ```
+
+
+## Story 038: `--kiep`, `--kiep-only` (Kiep levels 1..10 in the world run)
+
+Kiep makes the run harder (never stronger), per character, rules stacking: level k applies the rules of levels 1..k from
+`assets/data/kiep_levels.json` (`KiepRules`). Level 0 = the game as it is. Both flags need `--world` (they are ignored with
+a `KIEP:` notice under `--region`, `--unlock-runs` or the chapter mode) and run **the same seeds at every level**.
+
+| Flag | Meaning |
+|---|---|
+| `--kiep=<levels>` | The run's level. `<levels>` = one level (`5`), a comma list (`0,3,6,10`), a range (`0..10`) or a mix (`0,3..5`); distinct, ascending, valid 0..10. One level = a normal world run (full WORLD tables) plus its KIEP row. Several levels = one invocation runs each in turn, prints only the KIEP tables (`=== KIEP LEVEL k ===` markers and the seed progress lines), then the table and the checks at the end |
+| `--kiep-only=<levels>` | Same list syntax, but each level runs **its own rules alone** (`KiepRules.shared().set_only(k)`, a single-rule table, run at level k) to measure one rule's own difficulty. Put `0` in the list: it is the baseline the deltas are read against |
+| `--kiep-full` | With several levels, also print every level's full WORLD tables (volume: levels x characters x ~20 lines) |
+
+No flag = nothing of the above runs and the output is byte-identical to the sim before this story (checked: `--world
+--seeds=2 --characters=kiem_si` before and after, `diff` empty apart from the `runtime:` and seed progress lines).
+
+**Where the level is applied** (the same points, with the same `KiepRules` calls, as the game: W2 wiring): matches
+`RunConfig.from_node(..., floor, kiep_level)` (extra boss trait, boss swing, scaling row shift, final HP; the event
+fights too), the region map `generate_region_map(..., kiep_level)` and the event fight's `region_spec(..., kiep_level)`
+(node weight), max HP `KiepRules.apply_run_start` on the character before `--hp-mult`, rest heal (`WorldRun.rest_heal`
+through `rest_heal_ratio`), floor heal (`floor_heal_ratio` at the end of floors 1..5), gold (`economy_mult("gold")`, rounded,
+>= 0, in `_drop_gold`), shop prices (`ShopLogic.build(..., kiep_level)`; the `RunSession` proxy carries `kiep_level`). The
+player's drop interval (`player_drop_interval_mult`, Kiep 4) is applied in `sim_core._setup` like `CombatView`: x on
+`piece_spawn_interval_sec` of the PLAYER's drops, after the relic overrides.
+
+### Output (every line starts with `KIEP`)
+
+| Line | Content |
+|---|---|
+| `KIEP: STACKED\|ONLY ... levels=[...]` | header: mode, levels, seeds, characters, policies |
+| `KIEP \| character \| policy \| level \| run win % \| wins / runs \| deaths by floor (f1 f2 f3 f4 f5 final) \| est. minutes WON run mean \| est. minutes all runs \| boss hits / WON run \|` | the table, one row per (character, policy, level). Est. minutes = real match seconds + `--node-overhead` per node, as the WORLD table; `-` = no won run |
+| `KIEP CHECK curve <char>/<policy>` | the win % per level in one line |
+| `KIEP CHECK monotone step` | `win(k) <= win(k-1) + 3` for every pair of consecutive levels that ran |
+| `KIEP CHECK monotone skip` | `win(k) < win(k-2)` for every k >= 2 (strict: two zeros fail it, a floor effect, read it with the curve) |
+| `KIEP CHECK no big drop` | no single drop > 12 points between neighbours (the worst one is printed) |
+| `KIEP CHECK winnable` | level 10 run win % >= 3 % for `kiem_si` (the story's Kiem si build); the other characters print the number as INFO |
+| `KIEP CHECK minutes` | level 10 est. minutes (WON run mean; `NO WINS` falls back to the all-runs mean and fails) <= 55 |
+| `KIEP CHECK RESULT <char>/<policy>`, `KIEP CHECK RESULT` | ALL PASS or FAIL (n checks), per character and over all |
+| `KIEP ONLY \| character \| policy \| level \| rule \| run win % \| +-1 sd \| vs level 0 (pts) \| verdict \| wins / runs \|` | `--kiep-only` only: the rule type(s) of the level, its win %, the binomial noise sqrt(p(1-p)/n), the change vs level 0 and the verdict `HARDER` (<= -1 pt), `NO EFFECT` (within 1 pt: change the number or the order in `kiep_levels.json`, the story rule), `EASIER` (a positive delta of >= 1 pt: noise or a bug) |
+
+A check whose levels did not run is `SKIPPED`, never PASS (e.g. `--kiep=0..5` skips `winnable` and `minutes`). Checks are
+not printed in `--kiep-only` mode (the levels are not stacked there, the monotone rules do not apply).
+
+**Reading `--kiep-only`.** Level k's row = only rule k on top of the base game, so `vs level 0` is that rule's own cost
+in win points. With 70 seeds one sd of a win % near 40 is about 6 points: a rule inside `+-1 sd` is "not measurable",
+not "zero", so trust a `NO EFFECT` only when it also shows in the deaths by floor / hits columns (or rerun with more
+seeds). Level 10 only = both its rules (`shop_price_mult+boss_extra_trait`). Rules interact (HP x gold x heals), so the
+sum of the single deltas is not the stacked drop; the stacked table is the one the checks use.
+
+### Command lines
+
+```sh
+GODOT=C:/Users/ADMIN/AppData/Local/Microsoft/WinGet/Links/godot.exe
+# Smoke (about 20 s): three levels, 2 seeds
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=2 --characters=kiem_si --kiep=0..2
+# The story bullet: levels 0..10, 70 seeds, the default build policy. About 3 s per seed and character at level 0, less at
+# high levels (runs die earlier): roughly 35-45 min per character. One invocation per character keeps the output small
+# and survives a timeout; the three can only run one after the other (one Godot at a time)
+timeout 7000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si --kiep=0..10 > "<scratch>/kiep_kiem_si.out" 2>&1
+timeout 7000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=phap_su --kiep=0..10 > "<scratch>/kiep_phap_su.out" 2>&1
+timeout 7000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=sat_thu --kiep=0..10 > "<scratch>/kiep_sat_thu.out" 2>&1
+grep "^KIEP" "<scratch>/kiep_kiem_si.out"
+# Per rule alone (with the level-0 baseline):
+timeout 7000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si --kiep-only=0..10 > "<scratch>/kiep_only_kiem_si.out" 2>&1
+grep "^KIEP ONLY" "<scratch>/kiep_only_kiem_si.out"
+```
+
+One invocation with all three characters (`--characters=kiem_si,phap_su,sat_thu`, or no `--characters`) prints one block of
+rows and checks per character at the end. Other flags compose as before (`--fate=execute --relic-policy=pick` for the Story 035
+fate pick, `--progress=none`, `--world-set=`, `--economy-set=`, `--relics=`), but a tuning pass should vary one thing at a time:
+the level rules and `kiep_levels.json` numbers are edited in the data file, the sim reads them at start.

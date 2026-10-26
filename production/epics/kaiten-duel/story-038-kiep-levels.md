@@ -1,12 +1,12 @@
 # Story 038: Cấp Kiếp — 10 cấp khó cộng dồn theo nhân vật, mở bằng thắng run (như Hell Pass)
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: —
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-10-25
+> **Last Updated**: 2026-10-26
 
 ## Context
 
@@ -102,7 +102,7 @@
 **Required evidence**:
 - Retained screenshots trong `production/qa/evidence/kiep-levels/` (danh sách Phần E); bảng mô phỏng theo cấp và theo luật `simulation-kiep.md` + raw.
 
-**Status**: Not yet created
+**Status**: Created — 4 new suites (`tests/unit/run/{kiep_rules,kiep_progress,kiep_wiring}_test`, `tests/unit/ui/kiep_strings_test`), 7 screenshots and `simulation-kiep.md` + raw in `production/qa/evidence/kiep-levels/`
 
 ---
 
@@ -110,3 +110,13 @@
 
 - Depends on: Story 031 (run 5 tầng, `floor_scaling`), Story 035 (trận cuối thật, màn kết thúc), Story 037 (khung mở khóa và ProgressState theo nhân vật); dùng Story 033 cho hai luật kinh tế
 - Unlocks: Story 040 (cân bằng lại cả run bằng mô phỏng, gồm đường cong Kiếp)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-26
+**Criteria**: 17/18 passing or passing with notes; E4 (simulation) partly met: tables per level and per rule, no single drop above 12 points (worst 8.6); NOT met: level 10 still winnable at >= 3 %, win(k) < win(k-2), level 10 run <= 55 min. Cause: the run win rate at Kiep 0 is only 6-13 %, so every hard level falls to 0; DEFERRED to Story 040 (user decision 2026-10-26: reorder the rules by measured difficulty now, tune the curve there). DEFERRED: dragging the rules list and the +/- buttons on a real phone (gate 8 playtest).
+**Deviations**: `boss_swing_mult` is x0.909, not x1.10 (`swing_speed_mult` is the windup duration, below 1 = faster); the ten rules are ordered by measured difficulty (1 gold, 2 rest heal, 3 danger x2, 4 floor shift, 5 shop price + final trait, 6 floor heal, 7 max HP, 8 player drop, 9 boss swing, 10 region-boss extra trait) instead of the story table; the character select needs two taps (the first focuses a card so the level bar sits under it, a tap on the focused card starts the run); danger x2 is done by duplicating the `danger` kind in the branch columns (ChapterMapGen has no weight table); danger x2 and rest heal cannot be measured with the bot (it never enters extra danger nodes and rarely rests); the extra trait's name is not shown at the match intro because the game shows no trait names there at all (covered by tests only); `--run=ending_*` dev flow fixed (it stopped at the pre-final shop since the final-prelude commit).
+**Test Evidence**: Integration: 4 new suites + 7 updated for version asserts, sweep 237 parse, 99 headless + 4 windowed FAILS=0, launch 0 errors; screenshots `production/qa/evidence/kiep-levels/01-07*.png`; simulation `simulation-kiep.md` + `simulation-kiep-raw.txt`.
+**Code Review**: Skipped (solo mode)
+**Tech debt**: TD-034.

@@ -269,7 +269,8 @@ func final_match_phases() -> Array:
 ## region's own `region_columns`) whose tiers follow `world.floor_tiers` for that floor, plus `region_id`,
 ## `floor`, `floor_number` (1-based; makes [ChapterMapGen] drop node kinds whose `min_floor` is higher),
 ## `name_key`, `intro_key`, `end_key`, `region_normalize`. {} when the region is unknown.
-func region_spec(region_id: String, floor: int) -> Dictionary:
+## Story 038: [param kiep_level] > 0 passes the spec through [method KiepRules.apply_map_spec] (0 = unchanged).
+func region_spec(region_id: String, floor: int, kiep_level: int = 0) -> Dictionary:
 	var ci: int = region_index(region_id)
 	if ci < 0:
 		return {}
@@ -302,14 +303,16 @@ func region_spec(region_id: String, floor: int) -> Dictionary:
 	spec["end_key"] = str(chapter.get("end_key", ""))
 	spec["region_normalize"] = region_normalize(region_id)
 	spec["special_nodes"] = special_nodes()
+	if kiep_level > 0:
+		return KiepRules.shared().apply_map_spec(spec, kiep_level)
 	return spec
 
 
 ## Seeded map of region [param region_id] at run [param floor] (0-based): [method ChapterMapGen.generate] of
-## [method region_spec] with the seed [method WorldMapGen.region_map_seed]. Same shape as [method generate_map];
+## [method region_spec] (Story 038: trailing [param kiep_level] too) with the seed [method WorldMapGen.region_map_seed]. Same shape as [method generate_map];
 ## [] for an unknown region.
-func generate_region_map(region_id: String, run_seed: int, floor: int, cleared_bosses: int) -> Array[Dictionary]:
-	var spec: Dictionary = region_spec(region_id, floor)
+func generate_region_map(region_id: String, run_seed: int, floor: int, cleared_bosses: int, kiep_level: int = 0) -> Array[Dictionary]:
+	var spec: Dictionary = region_spec(region_id, floor, kiep_level)
 	if spec.is_empty():
 		var none: Array[Dictionary] = []
 		return none

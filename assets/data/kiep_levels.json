@@ -1,0 +1,101 @@
+{
+	"clamp": {
+		"node_weight_mult_max": 4.0,
+		"rest_heal_mult_min": 0.25,
+		"player_drop_mult_max": 1.5,
+		"gold_mult_min": 0.4,
+		"boss_swing_mult_min": 0.6,
+		"floor_heal_mult_min": 0.25,
+		"max_hp_mult_min": 0.4,
+		"floor_shift_max": 2,
+		"final_hp_mult_max": 1.5,
+		"shop_price_mult_max": 2.0
+	},
+	"levels": [
+		{
+			"level": 1,
+			"name_key": "kiep.level.1.name",
+			"desc_key": "kiep.level.1.desc",
+			"rule": {"type": "gold_mult", "params": {"mult": 0.75}}
+		},
+		{
+			"level": 2,
+			"name_key": "kiep.level.2.name",
+			"desc_key": "kiep.level.2.desc",
+			"rule": {"type": "rest_heal_mult", "params": {"mult": 0.67}}
+		},
+		{
+			"level": 3,
+			"name_key": "kiep.level.3.name",
+			"desc_key": "kiep.level.3.desc",
+			"rule": {"type": "node_weight", "params": {"kind": "danger", "mult": 2.0}}
+		},
+		{
+			"level": 4,
+			"name_key": "kiep.level.4.name",
+			"desc_key": "kiep.level.4.desc",
+			"rule": {"type": "floor_shift", "params": {"shift": 1, "final_hp_mult": 1.1}}
+		},
+		{
+			"level": 5,
+			"name_key": "kiep.level.5.name",
+			"desc_key": "kiep.level.5.desc",
+			"rule": [
+				{"type": "shop_price_mult", "params": {"mult": 1.2}},
+				{
+					"type": "boss_extra_trait",
+					"params": {
+						"scope": "final",
+						"count": 1,
+						"trait_pool": [
+							{"id": "thorn_field", "params": {}},
+							{"id": "slam", "params": {}}
+						]
+					}
+				}
+			]
+		},
+		{
+			"level": 6,
+			"name_key": "kiep.level.6.name",
+			"desc_key": "kiep.level.6.desc",
+			"rule": {"type": "floor_heal_mult", "params": {"mult": 0.5}}
+		},
+		{
+			"level": 7,
+			"name_key": "kiep.level.7.name",
+			"desc_key": "kiep.level.7.desc",
+			"rule": {"type": "max_hp_mult", "params": {"mult": 0.85}}
+		},
+		{
+			"level": 8,
+			"name_key": "kiep.level.8.name",
+			"desc_key": "kiep.level.8.desc",
+			"rule": {"type": "player_drop_mult", "params": {"mult": 1.15}}
+		},
+		{
+			"level": 9,
+			"name_key": "kiep.level.9.name",
+			"desc_key": "kiep.level.9.desc",
+			"rule": {"type": "boss_swing_mult", "params": {"mult": 0.909}}
+		},
+		{
+			"level": 10,
+			"name_key": "kiep.level.10.name",
+			"desc_key": "kiep.level.10.desc",
+			"rule": {
+				"type": "boss_extra_trait",
+				"params": {
+					"scope": "region_boss",
+					"count": 1,
+					"trait_pool": [
+						{"id": "row_burner", "params": {}},
+						{"id": "seal_caster", "params": {}},
+						{"id": "thorn_field", "params": {}},
+						{"id": "slam", "params": {}}
+					]
+				}
+			}
+		}
+	]
+}
