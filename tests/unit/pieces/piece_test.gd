@@ -31,7 +31,8 @@ func _init() -> void:
 
 func _test_library_file(lib: PieceLibrary) -> void:
 	var expected_ids: Array[String] = ["mono", "bar2", "bar3", "l3", "square", "t4", "l4", "s4", "bar4", "plus5", "u5", "p5", "bar5"]
-	ck("library: the 12 story shapes plus p5 (Story 026) in order", lib.shape_ids() == expected_ids)
+	# Story 034: the 3 run_only shapes (z4, j4, y5) follow; base_shape_ids() is the default pool.
+	ck("library: the 12 story shapes plus p5 (Story 026) in order", lib.base_shape_ids() == expected_ids)
 	var expected_counts: Array[int] = [1, 2, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5]
 	var counts_ok: bool = true
 	for i: int in expected_ids.size():
@@ -47,7 +48,7 @@ func _test_library_file(lib: PieceLibrary) -> void:
 	ck("weights: chapter 3 has more 5-cell weight than chapter 1", large_ch3 > large_ch1)
 	ck("weights: unknown chapter uses the default map", lib.weight("mono", "ch99") == lib.weight("mono", "default") and lib.weight("mono", "default") > 0.0)
 	var every_positive: bool = true
-	for id: String in lib.shape_ids():
+	for id: String in lib.base_shape_ids(): # Story 034: run_only shapes have no table weight
 		for chapter: String in ["ch1", "ch2", "ch3", "default"]:
 			every_positive = every_positive and lib.weight(id, chapter) > 0.0
 	ck("weights: every shape has a positive weight in every chapter", every_positive)

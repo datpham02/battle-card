@@ -155,6 +155,10 @@ var _relics: Array[BaseRelic] = []
 var _relic_overrides: Dictionary = {}
 var _cast_info: Dictionary = {}
 var _relic_pieces: PieceLibrary = null
+## Story 034: the player's piece weights from the run's deck ({} = original library weights) and
+## whether the "always a shape that fits" fallback replaced them for this arena.
+var _player_piece_weights: Dictionary = {}
+var _piece_deck_fallback: bool = false
 ## Formation map of the enemy half (Story 029); null without a signature (it only feeds the signature).
 var _formation: FormationMap = null
 ## True once the formation map completed and the signature has not been activated yet.
@@ -244,7 +248,18 @@ func _ready() -> void:
 	_apply_drop_overrides()
 	_drops = FieldDrops.new(_drops_config, _grid.player_cells(), drops_seed)
 	# Story 024: the player's half drops puzzle pieces (the boss's drops stay classic labels).
-	_drops.enable_pieces(PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), _grid, drops_seed)
+	# Story 034: a run's piece deck (match_params["piece_deck"]) gives the PLAYER side its own weights;
+	# absent/empty keeps today's call (original library weights).
+	var player_pieces: PieceLibrary = PieceLibrary.load_from_file()
+	var piece_deck: Variant = match_params.get("piece_deck", {})
+	if typeof(piece_deck) == TYPE_DICTIONARY and not (piece_deck as Dictionary).is_empty():
+		var deck_weights: Dictionary = PieceDeck.weights_for_match(piece_deck as Dictionary, player_pieces,
+			str(match_params.get("chapter_id", "")), _grid, PieceDeckConfig.load_from_file())
+		_piece_deck_fallback = bool(deck_weights["fallback"])
+		_player_piece_weights = deck_weights["weights"]
+		_drops.enable_pieces(player_pieces, str(match_params.get("chapter_id", "")), _grid, drops_seed, true, _player_piece_weights)
+	else:
+		_drops.enable_pieces(player_pieces, str(match_params.get("chapter_id", "")), _grid, drops_seed)
 	_drops.place_start_pieces(_state.player_cell)
 	_placement = PlacementController.new(_grid)
 	_plan.init(get_max_join_pieces(), _config.max_cast_cells)
@@ -1703,6 +1718,18 @@ func get_mover() -> UnitMover:
 ## Field points of the player's half.
 func get_drops() -> FieldDrops:
 	return _drops
+
+
+## Story 034: the weights the player's drops use, from match_params["piece_deck"]
+## (PieceDeck.weights_for_match); empty when the match has no deck (original library weights).
+func get_player_piece_weights() -> Dictionary:
+	return _player_piece_weights.duplicate()
+
+
+## Story 034: true when none of the deck's shapes fits this arena's enemy half, so the player's drops
+## fell back to the original weights of the shapes that fit (the HUD shows ui.piece_deck.fallback).
+func is_piece_deck_fallback() -> bool:
+	return _piece_deck_fallback
 
 
 ## Drop tuning in use (freshness total etc.).

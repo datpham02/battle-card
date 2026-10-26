@@ -2,7 +2,7 @@ class_name EconomyConfig
 extends RefCounted
 ## Gold economy of a run from assets/data/economy.json (Story 033): the gold a won node drops (per node kind,
 ## +-`variance`, scaled per floor), the starting gold, the shop prices (card and relic by rarity, a per-floor
-## price multiplier, two services) and the shop stock counts. Pure data + seeded maths, no nodes. Never null
+## price multiplier, three services: remove_card, heal, Story 034 remove_shape) and the shop stock counts. Pure data + seeded maths, no nodes. Never null
 ## after [method load_from_file]: a missing / bad file or key falls back to [constant DEFAULTS] (warning).
 ## Every `floor` argument is the 0-based run floor of RunSession (a floor past the last row uses the last
 ## row, so the final match uses the last multiplier). Schema: assets/data/schema.md `economy.json`.
@@ -23,12 +23,15 @@ const DEFAULTS: Dictionary = {
 		"services": {
 			"remove_card": {"price": 60, "max_uses": 1},
 			"heal": {"price": 40, "max_uses": 1, "heal_ratio": 0.25},
+			"remove_shape": {"price": 45, "max_uses": 1},
 		},
 	},
 }
 ## Service ids of the shop (the keys of `shop.services`).
 const SERVICE_REMOVE_CARD: String = "remove_card"
 const SERVICE_HEAL: String = "heal"
+## Story 034: removes a piece shape from the run's piece deck for gold (no removal token).
+const SERVICE_REMOVE_SHAPE: String = "remove_shape"
 ## Keeps seeds non-negative.
 const SEED_MASK: int = 0x7fffffff
 
@@ -136,7 +139,8 @@ func price_relic(rarity: String, floor: int) -> int:
 	return _price(float(prices.get(rarity, prices["common"])), floor)
 
 
-## Price of shop service [param id] ([constant SERVICE_REMOVE_CARD] / [constant SERVICE_HEAL]) at
+## Price of shop service [param id] ([constant SERVICE_REMOVE_CARD] / [constant SERVICE_HEAL] /
+## [constant SERVICE_REMOVE_SHAPE]) at
 ## [param floor] (base x price_floor_mult, rounded); 0 for an unknown id (warning).
 func service_price(id: String, floor: int) -> int:
 	var services: Dictionary = _shop()["services"]

@@ -9,7 +9,8 @@ extends RefCounted
 ## {"version": int, "floor": int, "heal_ratio": float, "min_deck_size": int,
 ##  "cards":  [{"id": String, "price": int, "sold": bool}],
 ##  "relics": [{"id": String, "price": int, "sold": bool}],
-##  "services": {"remove_card": {"price": int, "used": bool}, "heal": {"price": int, "used": bool}}}
+##  "services": {"remove_card": {"price": int, "used": bool}, "heal": {"price": int, "used": bool},
+##               "remove_shape": {"price": int, "used": bool}}}   (remove_shape: Story 034)
 ## Every refusal result carries `reason` (a code of the REASON_* constants) and `reason_key`
 ## (`ui.shop.reason.<code>`, a translation key the view may show).
 
@@ -19,7 +20,9 @@ const KIND_RELIC: String = "relic"
 const KIND_SERVICE: String = "service"
 const SERVICE_REMOVE_CARD: String = "remove_card"
 const SERVICE_HEAL: String = "heal"
-const SERVICES: Array[String] = [SERVICE_REMOVE_CARD, SERVICE_HEAL]
+## Story 034: removes a piece shape from the run's piece deck (gold, not a removal token).
+const SERVICE_REMOVE_SHAPE: String = "remove_shape"
+const SERVICES: Array[String] = [SERVICE_REMOVE_CARD, SERVICE_HEAL, SERVICE_REMOVE_SHAPE]
 ## Relic source of RelicRoller (relics.json `source_rules.shop`).
 const RELIC_SOURCE: String = "shop"
 
@@ -31,6 +34,9 @@ const REASON_OWNED: String = "owned"
 const REASON_BAD_INDEX: String = "bad_index"
 const REASON_MIN_DECK: String = "min_deck"
 const REASON_FULL_HP: String = "full_hp"
+## Story 034: remove_shape refused by PieceDeck.can_remove; `reason_key` is then the PieceDeck reason key
+## (`piece_deck.reason.unknown|already_removed|min_shapes`) instead of `ui.shop.reason.bad_shape`.
+const REASON_BAD_SHAPE: String = "bad_shape"
 
 
 ## Seeded stock of the shop at ([param floor], [param column], [param node_index]) of the run
@@ -124,11 +130,15 @@ static func buy(state: Dictionary, run: RunSession, kind: String, id: String) ->
 ## Uses service [param id] once. `remove_card`: [param arg] = deck index; the card leaves the deck
 ## right away (no removal token), refused for a bad index or when a non-curse card would drop the
 ## non-curse count to `min_deck_size` or below (a curse card may always go; [param cards] tells which
-## cards are curses, default the shipped cards.json). `heal`: [param arg] = the player's max HP; heals
+## cards are curses, default the shipped cards.json). `remove_shape` (Story 034): [param arg] = shape id;
+## the shape leaves `run.piece_deck` right away for gold (no `shape_removals` token), refused with
+## `bad_shape` (reason_key = the PieceDeck reason key) when PieceDeck.can_remove is not ok; [param opts]
+## may inject `piece_library` (PieceLibrary) and `piece_config` (PieceDeckConfig), default the shipped
+## files. `heal`: [param arg] = the player's max HP; heals
 ## `heal_ratio` x max HP clamped, refused at full HP (nothing charged). Result: {"ok", "reason",
 ## "reason_key", "price", "kind": "service", "id"} plus `removed_id` (remove_card) or `healed` (heal).
 static func use_service(state: Dictionary, run: RunSession, id: String, arg: Variant = null,
-		cards: SkillConfig = null) -> Dictionary:
+		cards: SkillConfig = null, opts: Dictionary = {}) -> Dictionary:
 	var check: Dictionary = can_buy(state, KIND_SERVICE, id, run.gold)
 	if not bool(check["ok"]):
 		return check
@@ -159,6 +169,19 @@ static func use_service(state: Dictionary, run: RunSession, id: String, arg: Var
 			if not run.spend_gold(price):
 				return _refuse(REASON_NO_GOLD, price)
 			result["healed"] = run.rest_heal(max_hp, {"rest_heal_ratio": float(state.get("heal_ratio", 0.0))})
+		SERVICE_REMOVE_SHAPE:
+			var shape_id: String = str(arg) if typeof(arg) == TYPE_STRING or typeof(arg) == TYPE_STRING_NAME else ""
+			var lib: PieceLibrary = opts["piece_library"] as PieceLibrary if opts.get("piece_library") != null else PieceLibrary.load_from_file()
+			var pcfg: PieceDeckConfig = opts["piece_config"] as PieceDeckConfig if opts.get("piece_config") != null else PieceDeckConfig.load_from_file()
+			var verdict: Dictionary = PieceDeck.can_remove(run.piece_deck, shape_id, lib, pcfg)
+			if not bool(verdict.get("ok", false)):
+				var refused: Dictionary = _refuse(REASON_BAD_SHAPE, price)
+				refused["reason_key"] = str(verdict.get("reason", ""))
+				return refused
+			if not run.spend_gold(price):
+				return _refuse(REASON_NO_GOLD, price)
+			run.remove_shape(shape_id, false, lib, pcfg)
+			result["removed_id"] = shape_id
 		_:
 			return _refuse(REASON_UNKNOWN, 0)
 	var service_row: Dictionary = _find(state, KIND_SERVICE, id)
@@ -190,6 +213,9 @@ static func from_dict(raw: Variant) -> Dictionary:
 	var services: Dictionary = {}
 	for service: String in SERVICES:
 		var s: Variant = (d["services"] as Dictionary).get(service) if typeof(d["services"]) == TYPE_DICTIONARY else null
+		if typeof(s) != TYPE_DICTIONARY and service == SERVICE_REMOVE_SHAPE:
+			# Story 034: a shop saved before the service existed gets it at the current price.
+			s = {"price": EconomyConfig.shared().service_price(service, int(d.get("floor", 0))), "used": false}
 		if typeof(s) != TYPE_DICTIONARY:
 			return {}
 		services[service] = {"price": int((s as Dictionary).get("price", 0)), "used": bool((s as Dictionary).get("used", false))}

@@ -123,6 +123,22 @@ var relic_ids: Array[String] = []
 ## `step_cooldown` (event loi_the, {mul: 1.2}), folded onto the player's step cooldown as CombatView does.
 var run_modifiers: Dictionary = {}
 var relic_config: RelicConfig
+## Story 034: presets of --piece-deck (README "Piece deck in the sim"). `base` = the start deck through
+## PieceDeck.weights_for_match, the baseline the other two are compared with.
+const PIECE_DECK_PRESETS: Dictionary = {
+	"base": "", "small_out": "remove:mono,bar2,bar3", "big_out": "remove:plus5,u5,bar5",
+}
+## Story 034: the raw --piece-deck value ("" = flag absent: the player's drops use enable_pieces' default
+## weights exactly as before the story). Resolved by [method _build_piece_deck] in [method load_configs].
+var piece_deck_spec: String = ""
+## The fixed PieceDeck state of the player for the whole run (no ink offers, no removals in play).
+var piece_deck_state: Dictionary = {}
+var piece_deck_cfg: PieceDeckConfig
+## Matches set up with a piece deck, and those where PieceDeck.weights_for_match fell back to the
+## original weights (no deck shape fits the arena). Callers diff them around a batch.
+var piece_deck_matches: int = 0
+var piece_deck_fallbacks: int = 0
+var _piece_fallback: bool = false
 var relics: Array = []
 var relic_merged: Dictionary = {}
 var _cast_info: Dictionary = {}
@@ -223,6 +239,64 @@ func load_configs() -> void:
 	piece_lib = PieceLibrary.load_from_file()
 	characters = CharacterConfig.load_from_file()
 	_load_relic_config()
+	_build_piece_deck()
+
+
+# Story 034: resolves --piece-deck (a preset or `remove:a,b|add:c,d`, sections applied in the order written)
+# into piece_deck_state. remove -> PieceDeck.remove when PieceDeck.can_remove is ok, else one WARNING line
+# naming the shape and the reason and the deck is kept; add -> PieceDeck.apply_ink once per listed id.
+func _build_piece_deck() -> void:
+	piece_deck_state = {}
+	if piece_deck_spec.is_empty():
+		return
+	piece_deck_cfg = PieceDeckConfig.load_from_file()
+	var st: Dictionary = PieceDeck.initial(piece_lib)
+	var spec: String = str(PIECE_DECK_PRESETS.get(piece_deck_spec, piece_deck_spec))
+	for section: String in spec.split("|", false):
+		var op: String = section.get_slice(":", 0).strip_edges()
+		if not section.contains(":") or (op != "remove" and op != "add"):
+			print("--piece-deck: WARNING section '%s' ignored (remove:id,... or add:id,... or a preset %s)" % [section, str(PIECE_DECK_PRESETS.keys())])
+			continue
+		for raw: String in section.get_slice(":", 1).split(",", false):
+			var id: String = raw.strip_edges()
+			if id.is_empty():
+				continue
+			if op == "remove":
+				var verdict: Dictionary = PieceDeck.can_remove(st, id, piece_lib, piece_deck_cfg)
+				if not bool(verdict["ok"]):
+					print("--piece-deck: WARNING remove '%s' refused: %s (min_shapes=%d, active now %d); the run continues with it" % [
+						id, str(verdict["reason"]), piece_deck_cfg.min_shapes, PieceDeck.active_ids(st, piece_lib).size()])
+					continue
+				st = PieceDeck.remove(st, id, piece_lib, piece_deck_cfg)
+			else:
+				if not PieceDeck.can_ink(st, id, piece_lib, piece_deck_cfg):
+					print("--piece-deck: WARNING add '%s' refused: %s" % [id,
+						"unknown shape" if not piece_lib.has_shape(id) else "mult already at mult_max %.1f" % piece_deck_cfg.mult_max])
+					continue
+				st = PieceDeck.apply_ink(st, id, piece_lib, piece_deck_cfg)
+	piece_deck_state = st
+
+
+## Story 034: one header line with the --piece-deck spec, the resolved active shapes (x mult when not 1)
+## and the removed ones; "" when the flag is absent (so the output without it is unchanged).
+func describe_piece_deck() -> String:
+	if piece_deck_spec.is_empty():
+		return ""
+	var spec: String = piece_deck_spec
+	if PIECE_DECK_PRESETS.has(piece_deck_spec):
+		spec = "%s (= %s)" % [piece_deck_spec, str(PIECE_DECK_PRESETS[piece_deck_spec]) if not str(PIECE_DECK_PRESETS[piece_deck_spec]).is_empty() else "start deck"]
+	var active: Array[String] = PieceDeck.active_ids(piece_deck_state, piece_lib)
+	var cells: Array[String] = []
+	for id: String in active:
+		var m: float = PieceDeck.mult_of(piece_deck_state, id)
+		cells.append(id if is_equal_approx(m, 1.0) else "%s x%.1f" % [id, m])
+	var removed: Array[String] = []
+	for id: String in piece_lib.base_shape_ids():
+		if not active.has(id):
+			removed.append(id)
+	return "piece deck (Story 034): spec=%s | active %d: %s | removed: %s | min_shapes=%d run_only_weight=%.1f | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights" % [
+		spec, active.size(), ", ".join(PackedStringArray(cells)), ", ".join(PackedStringArray(removed)) if not removed.is_empty() else "none",
+		piece_deck_cfg.min_shapes, piece_deck_cfg.run_only_weight]
 
 
 # Story 032: relics.json in memory with the --relic-set overrides (relics.json is never written); drops
@@ -360,6 +434,9 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 				if kv.contains(":") and kv.get_slice(":", 0).contains("."):
 					var raw3: String = kv.get_slice(":", 1).strip_edges()
 					(ov["relic_set"] as Array).append([kv.get_slice(":", 0).strip_edges(), float(raw3) if raw3.is_valid_float() else raw3])
+		elif arg.begins_with("--piece-deck="):
+			# Story 034: preset (base, small_out, big_out) or remove:mono,bar2|add:y5,square.
+			piece_deck_spec = arg.trim_prefix("--piece-deck=").strip_edges()
 		elif arg.begins_with("--match-set="):
 			for kv: String in v.split(","):
 				if kv.contains(":"):
@@ -518,7 +595,17 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult
 	boss_drops_config.piece_spawn_interval_sec *= boss_drop_mult
 	drops = FieldDrops.new(player_drops_config, grid.player_cells(), match_seed)
-	drops.enable_pieces(piece_lib, chapter_id, grid, match_seed)
+	_piece_fallback = false
+	if piece_deck_spec.is_empty():
+		drops.enable_pieces(piece_lib, chapter_id, grid, match_seed)
+	else:
+		# Story 034: the player's drops follow the run's piece deck (CombatView._setup); the boss call below is untouched.
+		var wm: Dictionary = PieceDeck.weights_for_match(piece_deck_state, piece_lib, chapter_id, grid, piece_deck_cfg)
+		_piece_fallback = bool(wm["fallback"])
+		piece_deck_matches += 1
+		if _piece_fallback:
+			piece_deck_fallbacks += 1
+		drops.enable_pieces(piece_lib, chapter_id, grid, match_seed, true, wm["weights"])
 	drops.place_start_pieces(state.player_cell)
 	var slots: int = hold_config.piece_slot_count
 	if relic_merged.has("hold_slots"):
@@ -612,6 +699,9 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		"pthorn": 0, "pthorn_dmg": 0.0, "ps_res": 0, "ps_hits": 0, "o_res": 0, "o_hits": 0,
 		# Story 032: relic `triggered` signals by relic id.
 		"relic_trig": {},
+		# Story 034: player casts resolved / hit by cast size (cells), interrupts the player SUFFERED (the
+		# boss broke the player's swing; "interrupts" counts the ones the player landed), deck fallback (0/1).
+		"size_res": {}, "size_hits": {}, "interrupted": 0, "piece_fallback": 1 if _piece_fallback else 0,
 	}
 	_tr("match start %s boss_hp=%.0f player_hp=%.0f player=%s boss=%s player_cd=%.2f featured=%s" % [
 		str(m.get("id", "")), boss_max_hp, state.player_hp, str(state.player_cell), str(state.enemy_cell), player_cd, str(not featured.is_empty())])
@@ -1079,8 +1169,12 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		_relics_on_cast_landed(result)
 		ms["dealt"] = float(ms["dealt"]) + damage
 		ms["resolved"] = int(ms["resolved"]) + 1
+		var size_res: Dictionary = ms["size_res"]
+		size_res[cells.size()] = int(size_res.get(cells.size(), 0)) + 1
 		if bool(result["hit"]):
 			ms["hits"] = int(ms["hits"]) + 1
+			var size_hits: Dictionary = ms["size_hits"]
+			size_hits[cells.size()] = int(size_hits.get(cells.size(), 0)) + 1
 		_count_zone_result(result)
 	else:
 		learning.on_boss_swing_resolved(bool(result["hit"]))
@@ -1172,6 +1266,8 @@ func _on_swing_interrupted(victim_side: int, _cells: Array[Vector2i], _skill_id:
 		learning.on_player_interrupted_boss()
 		for r: Variant in relics:
 			(r as BaseRelic).on_interrupt_by_player()
+	else:
+		ms["interrupted"] = int(ms["interrupted"]) + 1
 
 
 func _on_boss_swing_started(cells: Array[Vector2i], skill_id: String, duration: float) -> void:

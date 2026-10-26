@@ -290,6 +290,8 @@ func _init() -> void:
 	print("deck_sim (Story 026, v5 pieces): seeds=%d timeout=%.0fs policies=%s characters=%s chapters=%s cleared_bosses=%d (always_skip + %s onboarding on chapter 1 only)" % [
 		seeds, SimCore.MATCH_TIMEOUT_SEC, str(_policies), str(_characters_run), str(_chapter_list), CLEARED_BOSSES_MAIN, ONBOARDING_CHARACTER])
 	print(_core.describe())
+	if not _core.describe_piece_deck().is_empty():
+		print(_core.describe_piece_deck())
 	if _no_treasure:
 		print("EXPERIMENT: no-treasure")
 	print("node policy: treasure > rest (heal < %.0f%% HP else forge) > miniboss at >= %.0f%% HP > battle > danger (danger first with >= %d burn cards); boss when alone. passive heal on win; no other heal." % [
@@ -302,6 +304,9 @@ func _init() -> void:
 		all_pass = _run_chapter(ci, seeds) and all_pass
 	if _policies.has(VERDICT_POLICY):
 		print("RESULT: %s" % ("ALL PASS" if all_pass else "FAIL"))
+	if not _core.piece_deck_spec.is_empty():
+		print("PIECE DECK %s: fallback matches %d of %d (no deck shape fit the arena; original weights used)" % [
+			_core.piece_deck_spec, _core.piece_deck_fallbacks, _core.piece_deck_matches])
 	print("runtime: %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
 	quit(0)
 
@@ -832,6 +837,8 @@ func _run_world_mode(seeds: int) -> void:
 		seeds, SimCore.MATCH_TIMEOUT_SEC, str(pols), str(_characters_run), CLEARED_BOSSES_MAIN, _region_pick, _node_overhead,
 		",".join(PackedStringArray(_world_set)) if not _world_set.is_empty() else "none"])
 	print(_core.describe())
+	if not _core.describe_piece_deck().is_empty():
+		print(_core.describe_piece_deck())
 	print("relics: start=%s relic-policy=%s (pick = relic row over card row at treasure, rarest first; damage cap %.1f)" % [
 		",".join(PackedStringArray(_core.ov["relics"])) if not (_core.ov["relics"] as Array).is_empty() else "none", _relic_policy, _core.relic_config.relic_damage_mult_cap])
 	print("economy (Story 033): shop-policy=%s event-policy=%s economy-set=%s | start gold %d | shop entered with >= %d gold; greedy = heal below %.0f%% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above %.0f%% HP, else a pure heal choice, else Rời đi" % [
@@ -954,6 +961,8 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 	print("WORLD DEATHS BY FLOOR/KIND %s: %s" % [char_id, ", ".join(PackedStringArray(dk_cells))])
 	_world_relic_report(char_id, policy, runs)
 	_world_economy_report(char_id, policy, runs)
+	if not _core.piece_deck_spec.is_empty():
+		_world_piece_report(char_id, policy, runs, win_pct)
 	var t_win: Array = WORLD_WIN_TARGET.get(char_id, [20.0, 40.0])
 	var win_ok: bool = win_pct >= float(t_win[0]) and win_pct <= float(t_win[1])
 	var min_mean: float = _mean(won_min)
@@ -968,6 +977,42 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 		max_spread, WORLD_REGION_SPREAD_MAX, WORLD_REGION_MIN_N, "PASS" if max_spread <= WORLD_REGION_SPREAD_MAX else "FAIL",
 		max_share, WORLD_FLOOR_DEATH_SHARE_MAX, "PASS" if max_share <= WORLD_FLOOR_DEATH_SHARE_MAX else "FAIL",
 		"PASS" if decreasing else "FAIL (a floor with no deaths)", hits_won])
+
+
+# Story 034 (only with --piece-deck): the D2 measures of one character/policy over its world runs, every
+# match of the run summed (tran_thach extra fights included). Hit % by cast cells = hits / resolved player
+# casts of that many cells; join % and featured % are per cast; region clear % = regions cleared / entered.
+func _world_piece_report(char_id: String, policy: String, runs: Array[Dictionary], win_pct: float) -> void:
+	var t: Dictionary = {}
+	for k: String in ["matches", "p_casts", "p_cells", "p_res", "p_hits", "p_joins", "p_feat", "p_int", "p_intd", "p_fallback"]:
+		t[k] = _sum(_field(runs, k))
+	var size_res: Dictionary = {}
+	var size_hits: Dictionary = {}
+	var entered: float = 0.0
+	var cleared: float = 0.0
+	for r: Dictionary in runs:
+		for size: Variant in (r["p_size_res"] as Dictionary).keys():
+			size_res[int(size)] = int(size_res.get(int(size), 0)) + int(r["p_size_res"][size])
+		for size: Variant in (r["p_size_hits"] as Dictionary).keys():
+			size_hits[int(size)] = int(size_hits.get(int(size), 0)) + int(r["p_size_hits"][size])
+		entered += float((r["path"] as Array).size())
+		cleared += float(mini(int(r["floors_cleared"]), (r["path"] as Array).size()))
+	var sizes: Array = size_res.keys()
+	sizes.sort()
+	var by_size: Array[String] = []
+	for size: Variant in sizes:
+		var n_res: int = int(size_res[size])
+		by_size.append("%d:%.0f(%d)" % [int(size), 100.0 * int(size_hits.get(size, 0)) / maxf(float(n_res), 1.0), n_res])
+	var mm: float = maxf(float(t["matches"]), 1.0)
+	var casts: float = maxf(float(t["p_casts"]), 1.0)
+	print("")
+	print("WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |")
+	print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+	print("| %s | %s | %s | %d / %d | %.2f | %.2f | %.1f | %s | %.2f (%.0f) | %.2f (%.0f) | %.2f | %.2f | %.1f (%d/%d) | %.1f |" % [
+		char_id, policy, _core.piece_deck_spec.replace("|", " + "), int(t["p_fallback"]), int(t["matches"]), float(t["p_casts"]) / mm,
+		float(t["p_cells"]) / casts, 100.0 * float(t["p_hits"]) / maxf(float(t["p_res"]), 1.0), " ".join(PackedStringArray(by_size)),
+		float(t["p_joins"]) / mm, 100.0 * float(t["p_joins"]) / casts, float(t["p_feat"]) / mm, 100.0 * float(t["p_feat"]) / casts,
+		float(t["p_int"]) / mm, float(t["p_intd"]) / mm, 100.0 * cleared / maxf(entered, 1.0), int(cleared), int(entered), win_pct])
 
 
 # Story 032: one line per character/policy: relics owned at run end (mean), how many runs owned each relic
@@ -1044,7 +1089,11 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		"seen_shop_gold": -1.0, "seen_shop_afford": -1.0, "seen_shop_floor": -1.0,
 		"relics_bought": 0.0, "cards_bought": 0.0, "heals_bought": 0.0,
 		"events": 0.0, "event_risky": 0.0, "event_picks": {}, "tt_fights": 0.0, "tt_deaths": 0.0,
-		"curses": 0.0, "curse_draws": 0.0, "curse_dmg": 0.0, "mod_matches": 0.0}
+		"curses": 0.0, "curse_draws": 0.0, "curse_dmg": 0.0, "mod_matches": 0.0,
+		# Story 034 (printed only with --piece-deck): player casts, cells, resolved, hits, joins, featured,
+		# interrupts landed / suffered, resolved / hits by cast cells, matches where the deck fell back.
+		"p_casts": 0.0, "p_cells": 0.0, "p_res": 0.0, "p_hits": 0.0, "p_joins": 0.0, "p_feat": 0.0,
+		"p_int": 0.0, "p_intd": 0.0, "p_size_res": {}, "p_size_hits": {}, "p_fallback": 0.0}
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", 2))
 	var path: Array[String] = []
 	var lost: bool = false
@@ -1210,6 +1259,13 @@ func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, 
 	out["curse_dmg"] = float(out["curse_dmg"]) + float(r.get("curse_dmg", 0.0))
 	if bool(r["timeout"]):
 		out["timeouts"] = float(out["timeouts"]) + 1.0
+	for pair: Array in [["p_casts", "casts"], ["p_cells", "cells"], ["p_res", "resolved"], ["p_hits", "hits"], ["p_joins", "joins"],
+			["p_feat", "featured"], ["p_int", "interrupts"], ["p_intd", "interrupted"], ["p_fallback", "piece_fallback"]]:
+		out[pair[0]] = float(out[pair[0]]) + float(r.get(pair[1], 0))
+	for k: String in ["size_res", "size_hits"]:
+		var into: Dictionary = out["p_" + k]
+		for size: Variant in (r.get(k, {}) as Dictionary).keys():
+			into[size] = int(into.get(size, 0)) + int(r[k][size])
 	return r
 
 

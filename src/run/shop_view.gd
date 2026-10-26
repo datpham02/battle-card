@@ -5,7 +5,7 @@ extends Node2D
 ## [method draw_gold]) at the right. Middle: the card row ("Lá") over the relic row ("Bảo vật")
 ## (ScreenLayout.shop_card_rects / shop_relic_rects, large cards, every target >= 64 px), each item
 ## with its price — red when ShopLogic.can_buy refuses for lack of gold. Sold items stay in place,
-## dimmed, stamped "Đã bán". Right: the two services as two big buttons (ScreenLayout.shop_service_rects:
+## dimmed, stamped "Đã bán". Right: the services as big buttons (ScreenLayout.shop_service_column_rects:
 ## "Bỏ một lá", "Hồi máu", price or "Đã dùng"). Bottom-left "Rời cửa hàng" -> [method GameFlow.shop_leave].
 ## Touch: a tap on an item (on release) selects it — it rises with a gold outline — and the "Mua (N vàng)"
 ## button appears bottom-right (the right thumb) -> [method GameFlow.shop_buy]; the heal service selects
@@ -19,6 +19,15 @@ extends Node2D
 ## [member flow_path]); draws and takes input only in phase SHOP; owns no run state. Input dedup as in
 ## RunHudView (emulated copies — device == InputEvent.DEVICE_ID_EMULATION — are consumed but never act).
 ## Placeholder art drawn in code; all strings are TEXT_* keys through tr().
+##
+## Story 034: a third service "Xóa hình" (ShopLogic `remove_shape`, gold, once per shop) under the other
+## two when the shop state carries it (ScreenLayout.shop_service_column_rects: three buttons, each >= 64 px
+## tall). It opens the SHAPE PICKER: the run's piece deck ([method GameFlow.get_piece_deck_rows]) as a
+## scrolling row of shape tiles (RewardView.draw_shape_tile: shape, name, mult dots); a shape PieceDeck
+## refuses (removed already, min_shapes) is dimmed with its reason. A tap marks a tile, a second tap or the
+## bottom-right "Xóa hình này (N vàng)" -> [method GameFlow.shop_use_service]("remove_shape", shape id);
+## "Thôi" closes it. The shop charges gold, not a token, so the dim rule is PieceDeck.can_remove on the
+## GameFlow getters (not the rows' token-aware can_remove).
 
 ## Background, panels, outlines.
 const BACK_COLOR: Color = Color(0.93, 0.89, 0.8)
@@ -114,6 +123,16 @@ const KIND_RELIC: String = "relic"
 const KIND_SERVICE: String = "service"
 const SERVICE_REMOVE: String = "remove_card"
 const SERVICE_HEAL: String = "heal"
+## Story 034: the shape-removal service (ShopLogic.SERVICE_REMOVE_SHAPE), its button colour and strings.
+const SERVICE_REMOVE_SHAPE: String = "remove_shape"
+const SERVICE_REMOVE_SHAPE_BACK: Color = Color(0.22, 0.3, 0.5)
+const TEXT_SERVICE_REMOVE_SHAPE_NAME: String = "ui.shop.service.remove_shape.name"
+const TEXT_SERVICE_REMOVE_SHAPE_DESC: String = "ui.shop.service.remove_shape.desc"
+const TEXT_PICK_REMOVE_SHAPE: String = "ui.piece_deck.pick_remove"
+const TEXT_CONFIRM_REMOVE_SHAPE: String = "ui.shop.confirm_remove_shape"
+const TEXT_REMOVED_SHAPE: String = "ui.piece_deck.removed_msg"
+## Colour of a refused shape's reason line on its tile.
+const SHAPE_REASON_COLOR: Color = Color(0.8, 0.15, 0.1)
 const CFG_MIN_DECK: String = "min_deck_size"
 
 const TEXT_TITLE: String = "ui.shop.title"
@@ -273,6 +292,9 @@ var _message_bad: bool = false
 ## Deck picker of the remove service (open while [member _picking]).
 var _picker: DeckPicker = DeckPicker.new()
 var _picking: bool = false
+## Story 034: shape picker of the remove_shape service (open while [member _shape_picking]); marked = row index.
+var _shape_picker: DeckPicker = DeckPicker.new()
+var _shape_picking: bool = false
 
 
 func _ready() -> void:
@@ -299,6 +321,11 @@ func get_selected() -> Dictionary:
 ## True while the remove-card deck picker is open — for tests.
 func is_picking() -> bool:
 	return _is_active() and _picking
+
+
+## Story 034: true while the remove_shape shape picker is open - for tests.
+func is_shape_picking() -> bool:
+	return _is_active() and _shape_picking
 
 
 ## Selects an item as a tap would ({} clears) — for tests and captures.
@@ -386,6 +413,8 @@ func _reset() -> void:
 	_message_bad = false
 	_picking = false
 	_picker.reset()
+	_shape_picking = false
+	_shape_picker.reset()
 
 
 # --- Input --------------------------------------------------------------------
@@ -400,6 +429,8 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			if _picking:
 				_close_picker()
+			elif _shape_picking:
+				_close_shape_picker()
 			else:
 				_flow.shop_leave()
 		return
@@ -411,6 +442,9 @@ func _input(event: InputEvent) -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	if _picking:
 		_input_picker(event, vp)
+		return
+	if _shape_picking:
+		_input_shape_picker(event, vp)
 		return
 	var press: Vector2 = _pointer(event, true)
 	var release: Vector2 = _pointer(event, false)
@@ -433,12 +467,18 @@ func _on_press(pos: Vector2, vp: Vector2) -> void:
 	if not _selected.is_empty() and ScreenLayout.shop_buy_rect(vp).has_point(pos):
 		_buy()
 		return
-	var services: Array[Rect2] = ScreenLayout.shop_service_rects(vp)
-	if services[0].has_point(pos):
-		_open_picker()
-		return
-	if services[1].has_point(pos):
-		_select({"kind": KIND_SERVICE, "id": SERVICE_HEAL})
+	var ids: Array[String] = _service_ids()
+	var services: Array[Rect2] = ScreenLayout.shop_service_column_rects(vp, ids.size())
+	for i: int in services.size():
+		if not services[i].has_point(pos):
+			continue
+		match ids[i]:
+			SERVICE_REMOVE:
+				_open_picker()
+			SERVICE_HEAL:
+				_select({"kind": KIND_SERVICE, "id": SERVICE_HEAL})
+			SERVICE_REMOVE_SHAPE:
+				_open_shape_picker()
 		return
 	var item: Dictionary = _item_at(pos, vp)
 	if not item.is_empty():
@@ -647,6 +687,9 @@ func _draw() -> void:
 	if _picking:
 		_draw_picker(vp)
 		return
+	if _shape_picking:
+		_draw_shape_picker(vp)
+		return
 	_draw_header(vp, tr(TEXT_TITLE))
 	var shop: Dictionary = _flow.get_shop()
 	var card_label: Rect2 = ScreenLayout.shop_row_label_rect(vp, false)
@@ -663,9 +706,10 @@ func _draw() -> void:
 	var relic_rects: Array[Rect2] = ScreenLayout.shop_relic_rects(vp, relics.size())
 	for i: int in relic_rects.size():
 		_draw_item(vp, relic_rects[i], KIND_RELIC, relics[i] as Dictionary)
-	var services: Array[Rect2] = ScreenLayout.shop_service_rects(vp)
-	_draw_service(services[0], SERVICE_REMOVE, SERVICE_REMOVE_BACK)
-	_draw_service(services[1], SERVICE_HEAL, SERVICE_HEAL_BACK)
+	var ids: Array[String] = _service_ids()
+	var services: Array[Rect2] = ScreenLayout.shop_service_column_rects(vp, ids.size())
+	for i: int in services.size():
+		_draw_service(services[i], ids[i], _service_back(ids[i]))
 	var leave: Rect2 = ScreenLayout.shop_leave_rect(vp)
 	UiButtons.draw_button(self, leave, tr(TEXT_LEAVE), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, leave), true, _fit(tr(TEXT_LEAVE), leave.size.x * 0.9, BUTTON_FONT_SIZE))
 	if not _selected.is_empty():
@@ -778,9 +822,19 @@ func _draw_service(rect: Rect2, id: String, back: Color) -> void:
 	draw_rect(rect, fill)
 	draw_rect(rect, outline, false, SELECTED_BORDER if selected else UiButtons.OUTLINE_WIDTH)
 	var inner: float = rect.size.x * (1.0 - PAD_RATIO * 2.0)
-	var name: String = tr(TEXT_SERVICE_REMOVE_NAME if id == SERVICE_REMOVE else TEXT_SERVICE_HEAL_NAME)
+	var name: String
+	var desc: String
+	match id:
+		SERVICE_REMOVE:
+			name = tr(TEXT_SERVICE_REMOVE_NAME)
+			desc = tr(TEXT_SERVICE_REMOVE_DESC)
+		SERVICE_REMOVE_SHAPE:
+			name = tr(TEXT_SERVICE_REMOVE_SHAPE_NAME)
+			desc = tr(TEXT_SERVICE_REMOVE_SHAPE_DESC)
+		_:
+			name = tr(TEXT_SERVICE_HEAL_NAME)
+			desc = tr(TEXT_SERVICE_HEAL_DESC) % roundi(float(_flow.get_shop().get("heal_ratio", 0.0)) * 100.0)
 	_text(rect, rect.position.y + rect.size.y * SERVICE_NAME_BASELINE, name, _fit(name, inner, SERVICE_NAME_FONT_SIZE), text)
-	var desc: String = tr(TEXT_SERVICE_REMOVE_DESC) if id == SERVICE_REMOVE else tr(TEXT_SERVICE_HEAL_DESC) % roundi(float(_flow.get_shop().get("heal_ratio", 0.0)) * 100.0)
 	_text(rect, rect.position.y + rect.size.y * SERVICE_DESC_BASELINE, desc, _fit(desc, inner, SERVICE_DESC_FONT_SIZE), text)
 	var price: String = tr(TEXT_USED) if used else tr(TEXT_PRICE) % int(entry.get("price", 0))
 	var price_color: Color = text if used else (SERVICE_PRICE_SHORT if _short(KIND_SERVICE, id) else SERVICE_PRICE)
@@ -822,6 +876,125 @@ func _draw_detail(vp: Vector2) -> void:
 	y += DETAIL_FONT_SIZE * 1.8
 	draw_multiline_string(ThemeDB.fallback_font, Vector2(panel.position.x + panel.size.x * PAD_RATIO, y), desc, HORIZONTAL_ALIGNMENT_LEFT, inner, DETAIL_FONT_SIZE, DETAIL_MAX_LINES, DETAIL_TEXT)
 	_text(panel, panel.end.y - DETAIL_FONT_SIZE, tr(TEXT_DISMISS), DETAIL_FONT_SIZE, DETAIL_SUB_TEXT)
+
+
+# --- Story 034: the shape picker ------------------------------------------------
+
+
+# Service ids in column order: remove a card, heal, then remove a shape when the shop state carries it.
+func _service_ids() -> Array[String]:
+	var ids: Array[String] = [SERVICE_REMOVE, SERVICE_HEAL]
+	if (_flow.get_shop().get("services", {}) as Dictionary).has(SERVICE_REMOVE_SHAPE):
+		ids.append(SERVICE_REMOVE_SHAPE)
+	return ids
+
+
+func _service_back(id: String) -> Color:
+	match id:
+		SERVICE_REMOVE:
+			return SERVICE_REMOVE_BACK
+		SERVICE_REMOVE_SHAPE:
+			return SERVICE_REMOVE_SHAPE_BACK
+	return SERVICE_HEAL_BACK
+
+
+func _open_shape_picker() -> void:
+	var check: Dictionary = _can_buy(KIND_SERVICE, SERVICE_REMOVE_SHAPE)
+	if not bool(check.get("ok", false)):
+		_message = tr(str(check.get("reason_key", "")))
+		_message_bad = true
+		return
+	_selected = {}
+	_message = ""
+	_shape_picker.reset()
+	_shape_picking = true
+
+
+func _close_shape_picker() -> void:
+	_shape_picking = false
+	_shape_picker.reset()
+
+
+# PieceDeck's verdict for shape [param id] with the gold path (no token rule): {ok, reason}.
+func _shape_verdict(id: String) -> Dictionary:
+	return PieceDeck.can_remove(_flow.get_piece_deck(), id, _flow.get_piece_library(), _flow.get_piece_deck_config())
+
+
+# Shape picker input: "Thôi" closes it; a tap marks a removable shape (a refused one shows its reason); a
+# second tap on the marked tile or the confirm button buys the removal.
+func _input_shape_picker(event: InputEvent, vp: Vector2) -> void:
+	var rows: Array[Dictionary] = _flow.get_piece_deck_rows()
+	var press: Vector2 = _pointer(event, true)
+	if press != Vector2.INF:
+		if ScreenLayout.shop_leave_rect(vp).has_point(press):
+			_close_shape_picker()
+			return
+		if _shape_picker.marked >= 0 and _shape_picker.marked < rows.size() and ScreenLayout.shop_buy_rect(vp).has_point(press):
+			_remove_shape(str(rows[_shape_picker.marked].get("id", "")))
+			return
+	var tapped: int = _shape_picker.handle(event, vp, rows.size())
+	if tapped < 0:
+		return
+	var id: String = str(rows[tapped].get("id", ""))
+	var verdict: Dictionary = _shape_verdict(id)
+	if not bool(verdict.get("ok", false)):
+		_message = _shape_reason_text(str(verdict.get("reason", "")))
+		_message_bad = true
+		return
+	if tapped == _shape_picker.marked:
+		_remove_shape(id)
+	else:
+		_shape_picker.marked = tapped
+		_message = ""
+
+
+func _remove_shape(id: String) -> void:
+	var result: Dictionary = _flow.shop_use_service(SERVICE_REMOVE_SHAPE, id)
+	_close_shape_picker()
+	if bool(result.get("ok", false)):
+		_message = tr(TEXT_REMOVED_SHAPE) % tr(_flow.get_piece_library().name_key(id))
+		_message_bad = false
+	else:
+		_message = _shape_reason_text(str(result.get("reason_key", "")))
+		_message_bad = true
+
+
+# Translated refusal text of a PieceDeck / shop reason key; the min_shapes reason carries
+# PieceDeckConfig.min_shapes (its string has a %d).
+func _shape_reason_text(key: String) -> String:
+	if key.is_empty():
+		return ""
+	if key == PieceDeck.REASON_MIN_SHAPES:
+		return tr(key) % _flow.get_piece_deck_config().min_shapes
+	return tr(key)
+
+
+# Shape picker: title, the scrolling shape row (refused shapes dimmed with their reason), a hint, "Thôi" and
+# the confirm button.
+func _draw_shape_picker(vp: Vector2) -> void:
+	_draw_header(vp, tr(TEXT_PICK_REMOVE_SHAPE))
+	var rows: Array[Dictionary] = _flow.get_piece_deck_rows()
+	var lib: PieceLibrary = _flow.get_piece_library()
+	var max_dots: int = ceili(_flow.get_piece_deck_config().mult_max)
+	var rects: Array[Rect2] = _shape_picker.tile_rects(vp, rows.size())
+	for i: int in rects.size():
+		if rects[i].end.x < 0.0 or rects[i].position.x > vp.x:
+			continue
+		var id: String = str(rows[i].get("id", ""))
+		var verdict: Dictionary = _shape_verdict(id)
+		var ok: bool = bool(verdict.get("ok", false))
+		var reason: String = "" if ok else _shape_reason_text(str(verdict.get("reason", "")))
+		RewardView.draw_shape_tile(self, rects[i], lib.make_piece(id), tr(lib.name_key(id)), int(rows[i].get("dots", 0)), max_dots, reason, SHAPE_REASON_COLOR, 2 if i == _shape_picker.marked else 0, not ok)
+	if _shape_picker.max_scroll(vp, rows.size()) > 0.0:
+		var hint: Rect2 = ScreenLayout.deck_picker_hint_rect(vp)
+		_text(hint, hint.get_center().y + LABEL_FONT_SIZE * 0.35, tr(TEXT_DRAG_HINT), LABEL_FONT_SIZE, LABEL_COLOR)
+	var cancel: Rect2 = ScreenLayout.shop_leave_rect(vp)
+	UiButtons.draw_button(self, cancel, tr(TEXT_CANCEL), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, cancel), true, BUTTON_FONT_SIZE)
+	if _shape_picker.marked >= 0:
+		var confirm: Rect2 = ScreenLayout.shop_buy_rect(vp)
+		var label: String = tr(TEXT_CONFIRM_REMOVE_SHAPE) % _price(KIND_SERVICE, SERVICE_REMOVE_SHAPE)
+		UiButtons.draw_button(self, confirm, label, UiButtons.Style.DANGER, UiButtons.is_pressed_at(self, confirm), true, _fit(label, confirm.size.x * 0.9, BUTTON_FONT_SIZE))
+	_draw_message(vp)
 
 
 # Remove picker: title, the scrolling deck row, a hint, "Thôi" and the confirm button.

@@ -77,6 +77,9 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 ## becomes match_params["run_modifiers"] (absent when empty). Empty = ask the parent
 ## (GameFlow.get_run_modifier_overrides) when it has one. Set BEFORE add_child (optional).
 @export var run_modifiers: Dictionary = {}
+## Story 034: the run's piece deck (RunSession.piece_deck, a PieceDeck state); becomes match_params["piece_deck"]
+## (absent when empty = original drop weights). Set by GameFlow BEFORE add_child (optional).
+@export var piece_deck: Dictionary = {}
 ## Story 019: while true the INTRO timer does not tick (the battle stays frozen and drawn).
 ## GameFlow sets it before add_child on a resumed run whose saved card offer is still open and
 ## clears it when the offer is resolved. No effect outside INTRO.
@@ -320,6 +323,8 @@ func _spawn_battle() -> void:
 	var modifier_overrides: Dictionary = _run_modifier_overrides()
 	if not modifier_overrides.is_empty():
 		params["run_modifiers"] = modifier_overrides
+	if not piece_deck.is_empty():
+		params["piece_deck"] = piece_deck.duplicate(true)
 	if not deck_entries.is_empty():
 		params["deck"] = deck_entries.duplicate(true)
 	elif not deck.is_empty():

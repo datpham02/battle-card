@@ -29,6 +29,16 @@ extends Node2D
 ## the column: winning ticks the run modifiers, applies EventLogic.finish_fight (relic + gold) and
 ## returns to EVENT; losing ends the run. [method event_leave] completes the node.
 ##
+## Story 034 piece deck (production/epics/kaiten-duel/story-034-piece-deck.md Parts A, B): the run keeps a
+## PIECE DECK (RunSession.piece_deck, PieceDeck rules, rewards.json `piece_rewards`). A won battle / danger
+## node adds an INK row to its reward screen with chance `ink_offer_chance` (seeded by the position), a
+## treasure always does ([method get_ink_offer], [method choose_ink] keeps the card / relic choice open,
+## [method skip_ink_offer]; closing the reward screen any other way drops it). [method open_piece_deck] /
+## [method close_piece_deck] show the PIECE_DECK screen from WORLD_MAP / MAP ([method get_piece_deck_rows],
+## [method remove_shape] spends a `shape_removals` token; +shape_removals_per_boss per boss). Every player
+## match of a run gets match_params["piece_deck"] (RunController.piece_deck -> CombatView). The shop sells
+## the `remove_shape` service for gold.
+##
 ## Run rules (Story 031, design/game-brief.md v6 "Run v6 — mô hình OSFE"): title -> character ->
 ## [method start_run] (a fresh world run: floor 1, RunSession.begin_world rolls the floor's region
 ## offer, saved at once) -> WORLD_MAP -> [method choose_region] generates that region's short map for
@@ -86,6 +96,18 @@ extends Node2D
 ##   --run=event=<id>           Story 033: standing in EVENT <id> (an events.json id) at floor 2, same
 ##                              node rule as --run=shop
 ##   --run=gold_reward          Story 033: a won battle's reward screen (the "+N vàng" line shows)
+##   --shape-removals=N         Story 034: every run starts with N shape-removal tokens (memory store)
+##   --piece-deck-state=SPEC    Story 034: every run's piece deck starts as SPEC, "|"-separated parts:
+##                              remove:id,id (PieceDeck.remove, min_shapes respected, refusals warn) /
+##                              mult:id=N,id=N (mult set to N, clamped to 0..mult_max; a run-only id joins) /
+##                              add:id,id (one ink each), e.g. remove:mono|mult:bar3=3|add:y5 (memory store)
+##   --run=piece_deck           Story 034: the PIECE_DECK screen of a started run (first region's MAP) with
+##                              DEV_PIECE_DECK_REMOVALS tokens and DEV_PIECE_DECK_STATE (mono removed, bar3
+##                              at mult 3); --shape-removals / --piece-deck-state win
+##   --run=ink_offer            Story 034: a won battle's reward screen with the ink row open (rolled like a
+##                              treasure's when the chance missed)
+##   --run=ink_offer_capped     Story 034: as --run=ink_offer, with the deck's first shape at mult_max so the
+##                              offer can never show it (captures of the "capped" rule)
 ##   --relics=id,id,...         Story 032: every run starts owning these relics (RelicRegistry ids; unknown
 ##                              ids and duplicates are dropped with a warning)
 ##   --character=<id>           pick the character like the select screen would (Story 018)
@@ -116,7 +138,8 @@ signal run_changed()
 
 ## IN_FLOOR is the Story 019 name of IN_NODE, kept for old callers and tests (same value). WORLD_MAP
 ## (Story 031) took the slot of the retired CHAPTER_SELECT.
-enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, IN_FLOOR = IN_NODE }
+## PIECE_DECK (Story 034) is the piece deck screen opened over WORLD_MAP / MAP.
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -147,6 +170,14 @@ const RELICS_ARG: String = "--relics="
 const GOLD_ARG: String = "--gold="
 const DECK_ADD_ARG: String = "--deck+="
 const HP_ARG: String = "--hp="
+## DEV-ONLY (Story 034): --shape-removals=N, --piece-deck-state=SPEC (see the class doc).
+const SHAPE_REMOVALS_ARG: String = "--shape-removals="
+const PIECE_DECK_STATE_ARG: String = "--piece-deck-state="
+## Story 034: seed salt of the ink row roll (hash of run seed, floor, region, column, nodes cleared, this tag).
+const INK_SEED_TAG: String = "ink"
+## Story 034: node kinds whose reward gets an ink row with `ink_offer_chance`, and those that always get one.
+const INK_CHANCE_KINDS: Array[String] = ["battle", "danger"]
+const INK_ALWAYS_KINDS: Array[String] = ["treasure"]
 ## Story 032: seed salt of the treasure relic row (hash of run seed, floor, column, node, this tag).
 const RELIC_SEED_TAG: String = "relic"
 ## Story 033: seed salt of a node's gold drop (hash of run seed, floor, column, node, this tag).
@@ -181,6 +212,13 @@ const FLOW_RUN_SHOP: String = "shop"
 const FLOW_RUN_EVENT: String = "event"
 const FLOW_RUN_EVENT_PREFIX: String = "event="
 const FLOW_RUN_GOLD_REWARD: String = "gold_reward"
+## Story 034 captures: the piece deck screen, a battle reward with the ink row (optionally a capped shape).
+const FLOW_RUN_PIECE_DECK: String = "piece_deck"
+const FLOW_RUN_INK_OFFER: String = "ink_offer"
+const FLOW_RUN_INK_OFFER_CAPPED: String = "ink_offer_capped"
+## DEV-ONLY: tokens and deck --run=piece_deck sets up without --shape-removals / --piece-deck-state.
+const DEV_PIECE_DECK_REMOVALS: int = 2
+const DEV_PIECE_DECK_STATE: String = "remove:mono|mult:bar3=3"
 ## DEV-ONLY: 0-based floor --run=shop / --run=event=<id> start at without --at-floor (floor 2).
 const DEV_SPECIAL_FLOOR: int = 1
 ## DEV-ONLY: gold --run=shop guarantees without --gold (enough for a relic and a service).
@@ -191,6 +229,7 @@ const FLOW_RUN_KINDS: Array[String] = [
 	FLOW_RUN_REWARD, FLOW_RUN_OVER, FLOW_RUN_WON, FLOW_RUN_MAP, FLOW_RUN_MAP3, FLOW_RUN_REST,
 	FLOW_RUN_TREASURE, FLOW_RUN_MINIBOSS_REWARD, FLOW_RUN_BOSS_REWARD, FLOW_RUN_RELIC_TREASURE,
 	FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL, FLOW_RUN_SHOP, FLOW_RUN_GOLD_REWARD,
+	FLOW_RUN_PIECE_DECK, FLOW_RUN_INK_OFFER, FLOW_RUN_INK_OFFER_CAPPED,
 ]
 ## DEV-ONLY: columns --run=map3 clears (capped before the region's boss column).
 const DEV_MAP3_COLUMNS: int = 2
@@ -308,6 +347,11 @@ var _dev_gold: int = -1
 var _dev_hp: float = -1.0
 var _dev_deck_add: Array[String] = []
 var _dev_event_id: String = ""
+## DEV-ONLY (Story 034): --shape-removals= value (-1 = none), --piece-deck-state= spec ("" = none).
+var _dev_shape_removals: int = -1
+var _dev_piece_deck_state: String = ""
+## Story 034: the phase [method close_piece_deck] returns to (WORLD_MAP or MAP).
+var _piece_deck_return: Phase = Phase.MAP
 
 
 ## Test hook: installs the store BEFORE the node enters the tree (wins over --progress args).
@@ -385,6 +429,10 @@ func _ready() -> void:
 			_dev_gold = maxi(int(arg.trim_prefix(GOLD_ARG)), 0)
 		elif arg.begins_with(HP_ARG):
 			_dev_hp = maxf(float(arg.trim_prefix(HP_ARG)), 1.0)
+		elif arg.begins_with(SHAPE_REMOVALS_ARG):
+			_dev_shape_removals = maxi(int(arg.trim_prefix(SHAPE_REMOVALS_ARG)), 0)
+		elif arg.begins_with(PIECE_DECK_STATE_ARG):
+			_dev_piece_deck_state = arg.trim_prefix(PIECE_DECK_STATE_ARG)
 		elif arg.begins_with(DECK_ADD_ARG):
 			for cid: String in arg.trim_prefix(DECK_ADD_ARG).split(",", false):
 				_dev_deck_add.append(cid.strip_edges())
@@ -403,7 +451,8 @@ func _ready() -> void:
 	var dev_world: bool = dev_run or not node_text.is_empty() or not region_text.is_empty() or at_floor > 0
 	if _store == null:
 		_store = _make_store(progress_mode, dev_world or not select_mode.is_empty() or _dev_gold >= 0
-			or not _dev_deck_add.is_empty() or _dev_hp > 0.0)
+			or not _dev_deck_add.is_empty() or _dev_hp > 0.0 or _dev_shape_removals >= 0
+			or not _dev_piece_deck_state.is_empty())
 	_progress = _load_progress(progress_mode)
 	# Locale before anything draws or caches a translated name.
 	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _progress.get_locale())
@@ -529,7 +578,7 @@ func get_controller() -> RunController:
 ## Deprecated (Story 022; use [method get_current_column]): (chapter, column) of the live run while
 ## it is on the map, in a node or at a rest; [constant NO_FLOOR] otherwise (title, menus, test floors).
 func get_current_floor() -> Vector2i:
-	if _run == null or not [Phase.IN_NODE, Phase.MAP, Phase.REST, Phase.SHOP, Phase.EVENT].has(_phase):
+	if _run == null or not [Phase.IN_NODE, Phase.MAP, Phase.REST, Phase.SHOP, Phase.EVENT, Phase.PIECE_DECK].has(_phase):
 		return NO_FLOOR
 	return Vector2i(_run.chapter_index, _run.column)
 
@@ -863,7 +912,8 @@ func can_show_quit() -> bool:
 
 
 ## Back / Esc by phase: IN_NODE toggles the pause (nothing when not pausable; leaves the run when
-## it already ended), WORLD_MAP / MAP / REST leave to the title keeping the save, CHARACTER_SELECT ->
+## it already ended), PIECE_DECK closes the piece deck screen (Story 034), WORLD_MAP / MAP / REST leave to
+## the title keeping the save, CHARACTER_SELECT ->
 ## TITLE, TITLE -> quit (not on iOS).
 func go_back() -> void:
 	match _phase:
@@ -872,6 +922,8 @@ func go_back() -> void:
 				leave_run()
 			elif _controller != null:
 				_controller.toggle_pause()
+		Phase.PIECE_DECK:
+			close_piece_deck()
 		Phase.WORLD_MAP, Phase.MAP, Phase.REST, Phase.SHOP, Phase.EVENT:
 			leave_run_keep_save()
 		Phase.CHARACTER_SELECT:
@@ -927,6 +979,7 @@ func reward_chosen(id: String) -> void:
 	_progress.mark_card_seen(id)
 	_run.clear_pending_reward()
 	_run.clear_pending_relic_offer()
+	_run.clear_pending_ink_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(true)
@@ -943,6 +996,7 @@ func reward_skipped() -> void:
 		return
 	_run.clear_pending_reward()
 	_run.clear_pending_relic_offer()
+	_run.clear_pending_ink_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(false)
@@ -965,6 +1019,7 @@ func reward_remove_requested(index: int) -> void:
 		return
 	_run.clear_pending_reward()
 	_run.clear_pending_relic_offer()
+	_run.clear_pending_ink_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(true)
@@ -1005,6 +1060,7 @@ func choose_relic(id: String) -> void:
 		return
 	_run.clear_pending_reward()
 	_run.clear_pending_relic_offer()
+	_run.clear_pending_ink_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(false)
@@ -1021,6 +1077,7 @@ func skip_relic_offer() -> void:
 		return
 	_run.clear_pending_reward()
 	_run.clear_pending_relic_offer()
+	_run.clear_pending_ink_offer()
 	_save_run()
 	run_changed.emit()
 	_continue_after_reward(false)
@@ -1051,6 +1108,194 @@ func get_deck_levels() -> Dictionary:
 	return _run.deck_levels()
 
 
+# ---- Story 034 piece deck API ----
+
+## Story 034: a copy of the run's piece deck (PieceDeck state {mult, added}); {} without a run.
+func get_piece_deck() -> Dictionary:
+	return {} if _run == null else _run.piece_deck.duplicate(true)
+
+
+## Story 034: shape-removal tokens of the live run (0 without a run).
+func get_shape_removals() -> int:
+	return 0 if _run == null else _run.shape_removals
+
+
+## Story 034: the piece-deck rules (rewards.json `piece_rewards`; shared, read-only for the views).
+func get_piece_deck_config() -> PieceDeckConfig:
+	return RunSession.piece_config()
+
+
+## Story 034: the shared piece library (pieces.json; read-only for the views).
+func get_piece_library() -> PieceLibrary:
+	return RunSession.piece_library()
+
+
+## Story 034: the PIECE_DECK screen rows, library order: every default-pool shape, then the run-only shapes
+## that are in the deck or offered on the open ink row. Each row: {id, name (translated), cells
+## Array[Vector2i], mult float, dots int (ceil of mult, 0 when not in the deck), removed bool (a default shape
+## at mult 0), run_only bool, percent float (PieceDeck.drop_percent of the effective weights for the current
+## region, 0 when not drawable), can_remove bool, reason String (a translation key; "" when can_remove; tokens
+## counted: `piece_deck.reason.no_token` at 0)}. [] without a run.
+func get_piece_deck_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	if _run == null:
+		return rows
+	var lib: PieceLibrary = RunSession.piece_library()
+	var cfg: PieceDeckConfig = RunSession.piece_config()
+	var state: Dictionary = _run.piece_deck
+	var active: Array[String] = PieceDeck.active_ids(state, lib)
+	var percent: Dictionary = PieceDeck.drop_percent(PieceDeck.effective_weights(state, lib, _run.region_id, cfg))
+	var ids: Array[String] = lib.base_shape_ids()
+	for id: String in lib.run_only_ids():
+		if active.has(id) or _run.pending_ink_offer.has(id):
+			ids.append(id)
+	for id: String in ids:
+		var in_deck: bool = active.has(id)
+		var mult: float = PieceDeck.mult_of(state, id) if in_deck else 0.0
+		var verdict: Dictionary = _run.can_remove_shape(id, true, lib, cfg)
+		rows.append({
+			"id": id, "name": tr(lib.name_key(id)), "cells": lib.shape_cells(id), "mult": mult,
+			"dots": ceili(mult) if in_deck else 0, "removed": not in_deck and not lib.is_run_only(id),
+			"run_only": lib.is_run_only(id), "percent": float(percent.get(id, 0.0)),
+			"can_remove": bool(verdict["ok"]), "reason": str(verdict["reason"]),
+		})
+	return rows
+
+
+## Story 034: whether shape [param id] can be removed with a token now ({ok, reason}; RunSession.can_remove_shape
+## with the token rule). {ok false, reason piece_deck.reason.unknown} without a run.
+func can_remove_shape(id: String) -> Dictionary:
+	if _run == null:
+		return {"ok": false, "reason": PieceDeck.REASON_UNKNOWN}
+	return _run.can_remove_shape(id, true)
+
+
+## Story 034: the PIECE_DECK screen's "Xóa hình": removes shape [param id] spending one shape-removal token;
+## saves and emits [signal run_changed]. False (nothing changes, warning) when [method can_remove_shape] refuses.
+func remove_shape(id: String) -> bool:
+	if _run == null:
+		push_warning("GameFlow: remove_shape('%s') without a run, ignored" % id)
+		return false
+	var result: Dictionary = _run.remove_shape(id, true)
+	if not bool(result.get("ok", false)):
+		push_warning("GameFlow: remove_shape('%s') refused (%s)" % [id, str(result.get("reason", ""))])
+		return false
+	_save_run()
+	run_changed.emit()
+	return true
+
+
+## Story 034: shape ids of the open reward screen's ink row; [] when none.
+func get_ink_offer() -> Array[String]:
+	if _run == null:
+		return [] as Array[String]
+	return _run.pending_ink_offer.duplicate()
+
+
+## Story 034: true while an ink row is open.
+func has_ink_offer() -> bool:
+	return _run != null and _run.has_pending_ink_offer()
+
+
+## Story 034: picks ink [param id] from [method get_ink_offer]: RunSession.apply_ink, the ink row closes, the
+## run is saved and [signal run_changed] emitted. The node does NOT advance: the card / relic choice of the
+## same screen stays open. Ignored with a warning without an ink row, for an id not offered, or when the ink
+## is refused (unknown shape or at the ceiling).
+func choose_ink(id: String) -> void:
+	if _run == null or not _run.has_pending_ink_offer():
+		push_warning("GameFlow: choose_ink('%s') with no ink offer open, ignored" % id)
+		return
+	if not _run.pending_ink_offer.has(id):
+		push_warning("GameFlow: choose_ink('%s') is not in the offer %s, ignored" % [id, str(_run.pending_ink_offer)])
+		return
+	if not _run.apply_ink(id):
+		push_warning("GameFlow: choose_ink('%s') was refused (unknown or at mult_max), ignored" % id)
+		return
+	_run.clear_pending_ink_offer()
+	_save_run()
+	run_changed.emit()
+
+
+## Story 034: "Bỏ qua" of the ink row: the row closes (nothing inked), the card / relic choice stays open.
+## Ignored with a warning when no ink row is open.
+func skip_ink_offer() -> void:
+	if _run == null or not _run.has_pending_ink_offer():
+		push_warning("GameFlow: skip_ink_offer() with no ink offer open, ignored")
+		return
+	_run.clear_pending_ink_offer()
+	_save_run()
+	run_changed.emit()
+
+
+## Story 034: opens the PIECE_DECK screen from WORLD_MAP or MAP (the phase is remembered for
+## [method close_piece_deck]); emits [signal run_changed]. Refused with a warning in any other phase, without
+## a run or once the run ended.
+func open_piece_deck() -> void:
+	if _run == null or _run_result != RunResult.NONE or (_phase != Phase.WORLD_MAP and _phase != Phase.MAP):
+		push_warning("GameFlow: open_piece_deck() outside the world map / map, ignored")
+		return
+	_piece_deck_return = _phase
+	_set_phase(Phase.PIECE_DECK)
+	run_changed.emit()
+
+
+## Story 034: closes the PIECE_DECK screen back to the phase it was opened from; emits [signal run_changed].
+## Ignored with a warning when the screen is not open.
+func close_piece_deck() -> void:
+	if _phase != Phase.PIECE_DECK:
+		push_warning("GameFlow: close_piece_deck() while the piece deck is not open, ignored")
+		return
+	_set_phase(_piece_deck_return)
+	run_changed.emit()
+
+
+# Story 034: the ink row of the reward of a [param kind] node at the current position: with chance
+# `ink_offer_chance` after a battle / danger, always after a treasure ([param force] too), else []. Seeded by
+# hash([run_seed, floor, region, column, nodes_cleared, "ink"]) like [method _reward_seed]; the offer itself is
+# saved, so a resume shows the same row.
+func _roll_ink_for(kind: String, force: bool) -> Array[String]:
+	var cfg: PieceDeckConfig = RunSession.piece_config()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([_run.run_seed, _run.floor, _run.region_id, _run.column, _run.nodes_cleared, INK_SEED_TAG]) & ChaptersConfig.SEED_MASK
+	var hit: bool = rng.randf() < cfg.ink_offer_chance
+	if not (force or INK_ALWAYS_KINDS.has(kind) or (INK_CHANCE_KINDS.has(kind) and hit)):
+		return [] as Array[String]
+	return PieceDeck.roll_ink_offer(_run.piece_deck, RunSession.piece_library(), cfg, rng.randi() & ChaptersConfig.SEED_MASK)
+
+
+# DEV-ONLY (Story 034, --piece-deck-state / --run=piece_deck): applies SPEC ("|"-separated remove:id,id /
+# mult:id=N,id=N / add:id,id) to the run's piece deck (see the class doc); bad parts warn.
+func _dev_apply_piece_deck_state(spec: String) -> void:
+	var lib: PieceLibrary = RunSession.piece_library()
+	var cfg: PieceDeckConfig = RunSession.piece_config()
+	for part: String in spec.split("|", false):
+		var op: String = part.get_slice(":", 0).strip_edges()
+		var items: PackedStringArray = part.trim_prefix(op + ":").split(",", false)
+		for raw: String in items:
+			var item: String = raw.strip_edges()
+			match op:
+				"remove":
+					var r: Dictionary = _run.remove_shape(item, false, lib, cfg)
+					if not bool(r["ok"]):
+						push_warning("GameFlow: --piece-deck-state remove:%s refused (%s)" % [item, str(r["reason"])])
+				"mult":
+					var id: String = item.get_slice("=", 0).strip_edges()
+					if not lib.has_shape(id) or not item.contains("="):
+						push_warning("GameFlow: --piece-deck-state mult:%s ignored (use id=N, known shape)" % item)
+						continue
+					var state: Dictionary = _run.piece_deck.duplicate(true)
+					(state[PieceDeck.KEY_MULT] as Dictionary)[id] = clampf(float(item.get_slice("=", 1)), 0.0, cfg.mult_max)
+					if lib.is_run_only(id) and not (state[PieceDeck.KEY_ADDED] as Array).has(id):
+						(state[PieceDeck.KEY_ADDED] as Array).append(id)
+					_run.piece_deck = PieceDeck.sanitize(state, lib)
+				"add":
+					if not _run.apply_ink(item, lib, cfg):
+						push_warning("GameFlow: --piece-deck-state add:%s refused (unknown or at mult_max)" % item)
+				_:
+					push_warning("GameFlow: --piece-deck-state part '%s' unknown (remove|mult|add), ignored" % part)
+					break
+
+
 # ---- Story 033 shop / event API ----
 
 ## Story 033: the open shop's ShopLogic state (a copy; see the ShopLogic header: "cards" / "relics" rows
@@ -1079,14 +1324,16 @@ func shop_buy(kind: String, id: String) -> Dictionary:
 
 ## Story 033: uses service [param id] of the open shop once: ShopLogic.SERVICE_REMOVE_CARD with
 ## [param arg] = deck index (a curse may always go; other cards keep min_deck_size non-curse cards),
-## ShopLogic.SERVICE_HEAL without arg (the flow passes the player's max HP). The ShopLogic.use_service
+## ShopLogic.SERVICE_HEAL without arg (the flow passes the player's max HP), Story 034's
+## ShopLogic.SERVICE_REMOVE_SHAPE with [param arg] = shape id (gold, not a token). The ShopLogic.use_service
 ## result; saved on success. Outside SHOP: {ok false, reason "unknown"}.
 func shop_use_service(id: String, arg: Variant = null) -> Dictionary:
 	if _run == null or _phase != Phase.SHOP:
 		push_warning("GameFlow: shop_use_service('%s') outside a shop, ignored" % id)
 		return ShopLogic._refuse(ShopLogic.REASON_UNKNOWN, 0)
 	var service_arg: Variant = _player_max_hp() if id == ShopLogic.SERVICE_HEAL else arg
-	var result: Dictionary = ShopLogic.use_service(_run.shop_state, _run, id, service_arg, get_cards())
+	var opts: Dictionary = {"piece_library": RunSession.piece_library(), "piece_config": RunSession.piece_config()}
+	var result: Dictionary = ShopLogic.use_service(_run.shop_state, _run, id, service_arg, get_cards(), opts)
 	if bool(result.get("ok", false)):
 		_save_run()
 		run_changed.emit()
@@ -1362,6 +1609,10 @@ func _begin_run() -> void:
 		_run.gold = _dev_gold
 	if _dev_hp > 0.0:
 		_run.hp = minf(_dev_hp, _character_max_hp(_character_dict()))
+	if _dev_shape_removals >= 0:
+		_run.shape_removals = _dev_shape_removals
+	if not _dev_piece_deck_state.is_empty():
+		_dev_apply_piece_deck_state(_dev_piece_deck_state)
 	for card_id: String in _dev_deck_add:
 		if get_cards().has_skill(card_id):
 			_run.add_card(card_id, 1)
@@ -1404,6 +1655,7 @@ func _spawn_match(match_id: String, kind: String) -> void:
 	controller.character = _character_dict()
 	controller.deck = _run.deck_ids
 	controller.deck_entries = _run.deck_entries()
+	controller.piece_deck = _run.piece_deck.duplicate(true)
 	controller.hold_intro = _reward_blocking
 	controller.configure(run_config, 0, _run.hp)
 	controller.match_started.connect(_on_match_started)
@@ -1576,6 +1828,9 @@ func _offer_reward(kind: String) -> void:
 	_run.clear_pending_relic_offer()
 	if kind == KIND_TREASURE and not offer.is_empty():
 		_run.set_pending_relic_offer(_roll_treasure_relics())
+	_run.clear_pending_ink_offer()
+	if not offer.is_empty():
+		_run.set_pending_ink_offer(_roll_ink_for(kind, false))
 	_save_run()
 	run_changed.emit()
 	if offer.is_empty():
@@ -1961,6 +2216,23 @@ func _apply_dev_flow_run(kind: String) -> void:
 			_dev_open_special(KIND_SHOP)
 		FLOW_RUN_EVENT:
 			_dev_open_special(KIND_EVENT)
+		FLOW_RUN_PIECE_DECK:
+			if _dev_shape_removals < 0:
+				_run.shape_removals = DEV_PIECE_DECK_REMOVALS
+			if _dev_piece_deck_state.is_empty():
+				_dev_apply_piece_deck_state(DEV_PIECE_DECK_STATE)
+			_save_run()
+			open_piece_deck()
+		FLOW_RUN_INK_OFFER, FLOW_RUN_INK_OFFER_CAPPED:
+			if kind == FLOW_RUN_INK_OFFER_CAPPED:
+				var first: String = RunSession.piece_library().base_shape_ids()[0]
+				_dev_apply_piece_deck_state("mult:%s=%s" % [first, str(get_piece_deck_config().mult_max)])
+			if _dev_advance_to_kind(KIND_BATTLE):
+				_dev_win_current_match(true)
+				if _run != null and _run.has_pending_reward() and not _run.has_pending_ink_offer():
+					_run.set_pending_ink_offer(_roll_ink_for(KIND_BATTLE, true))
+					_save_run()
+					run_changed.emit()
 		FLOW_RUN_OVER:
 			if _dev_choose_first_available() and _controller != null:
 				var battle: Node = _controller.get_battle()

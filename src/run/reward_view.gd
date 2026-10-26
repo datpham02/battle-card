@@ -37,6 +37,14 @@ extends Node2D
 ## Story 033: the title band carries the gold — "+N vàng" with a coin at the left when the node just
 ## paid gold ([method GameFlow.get_last_gold_gain] > 0), the run's total at the right. The remove list
 ## counts only non-curse cards against min_deck_size; a curse tile (purple) is always removable.
+##
+## Story 034: while [method GameFlow.has_ink_offer] the screen also carries the INK ROW under the card row
+## (and under the relic row on a treasure screen): the offered shapes as tiles (shape drawn with PieceDraw,
+## name, the current mult as dots, a "new shape" tag for a run-only shape not owned yet). A tap (on
+## release) selects a tile; the row's own confirm button (right end of the row) ->
+## [method GameFlow.choose_ink], its small skip -> [method GameFlow.skip_ink_offer]. Neither closes the
+## screen. The card row (and relic row) get shorter instead of moving the bottom buttons
+## (ScreenLayout.reward_ink_*): the screen's skip / confirm stay in the bottom thumb zone.
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
 const TITLE_COLOR: Color = Color(0.95, 0.9, 0.78)
@@ -186,6 +194,28 @@ const COMPACT_KEYWORD_BASELINE: float = 0.55
 const COMPACT_DESC_BASELINE: float = 0.58
 const COMPACT_DESC_BASELINE_KEYWORD: float = 0.68
 
+## Story 034: the ink row - label, confirm, skip, the "new shape" tag; the shape tile look (shared with the
+## shop's shape picker through [method draw_shape_tile]).
+const TEXT_INK_TITLE: String = "ui.piece_deck.ink_title"
+const TEXT_INK_CONFIRM: String = "ui.piece_deck.ink_confirm"
+const TEXT_INK_SKIP: String = "ui.piece_deck.ink_skip"
+const TEXT_INK_NEW: String = "ui.piece_deck.new_shape"
+const SHAPE_TILE_BORDER: Color = Color(0.45, 0.4, 0.34)
+const SHAPE_FILL: Color = Color(0.25, 0.48, 0.72)
+const SHAPE_OUTLINE: Color = Color(0.1, 0.2, 0.32, 0.8)
+const DOT_ON: Color = Color(0.72, 0.5, 0.05)
+const DOT_OFF: Color = Color(0.6, 0.52, 0.4, 0.35)
+const NEW_TAG_COLOR: Color = Color(0.2, 0.55, 0.25)
+const SHAPE_NAME_FONT_SIZE: int = 24
+const SHAPE_TAG_FONT_SIZE: int = 18
+## Tile padding and the dot radius as shares of the tile's short side; the largest square of a shape as a
+## share of its drawing area (so a 1-cell shape does not fill the tile).
+const SHAPE_TILE_PAD_RATIO: float = 0.08
+const SHAPE_DOT_RADIUS_RATIO: float = 0.05
+const SHAPE_MAX_UNIT_RATIO: float = 0.3
+## A tile at least this much wider than tall draws the shape on its left, text on the right; else on top.
+const SHAPE_TILE_WIDE_ASPECT: float = 1.3
+
 ## Path to the GameFlow (a sibling under Main) that owns the run.
 @export var flow_path: NodePath = NodePath("../GameFlow")
 
@@ -198,6 +228,9 @@ var _removing: bool = false
 var _selected_relic: String = ""
 ## Story 032: the owned-relic strip along the bottom (tap an icon for its card).
 var _strip: RelicStrip = null
+## Story 034: the shape selected on the ink row ("" = none) and the ink tile under the current press (-1).
+var _selected_ink: String = ""
+var _ink_press: int = -1
 
 
 func _ready() -> void:
@@ -211,6 +244,10 @@ func _process(_delta: float) -> void:
 		_removing = false
 	if not is_shown() or not _flow.get_relic_offer().has(_selected_relic):
 		_selected_relic = ""
+	if not is_shown() or not _flow.get_ink_offer().has(_selected_ink):
+		_selected_ink = ""
+	if not is_ink_row_shown():
+		_ink_press = -1
 	var strip_shown: bool = is_shown() and not _removing
 	if not strip_shown:
 		_strip.close_tooltip()
@@ -233,6 +270,20 @@ func get_selected_relic() -> String:
 
 func _dual() -> bool:
 	return _flow != null and _flow.has_relic_offer()
+
+
+## Story 034: true while the screen carries the ink row ([method GameFlow.has_ink_offer]).
+func is_ink_row_shown() -> bool:
+	return is_shown() and not _removing and _ink()
+
+
+## Story 034: the shape selected on the ink row ("" = none).
+func get_selected_ink() -> String:
+	return _selected_ink
+
+
+func _ink() -> bool:
+	return _flow != null and _flow.has_ink_offer()
 
 
 ## True while the screen is up: IN_NODE or MAP with an open offer.
@@ -273,10 +324,16 @@ func _input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 	if event.device != InputEvent.DEVICE_ID_EMULATION and _strip.visible and _strip.handle_input(event):
 		return
+	var vp: Vector2 = get_viewport_rect().size
+	var release: Vector2 = _release_position(event)
+	if release != Vector2.INF and event.device != InputEvent.DEVICE_ID_EMULATION:
+		if is_ink_row_shown():
+			_ink_release(release, vp)
+		_ink_press = -1
+		return
 	var pos: Vector2 = _press_position(event)
 	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	var vp: Vector2 = get_viewport_rect().size
 	if _removing:
 		_input_remove_list(pos, vp)
 		return
@@ -284,6 +341,8 @@ func _input(event: InputEvent) -> void:
 	var dual: bool = _dual()
 	if _can_remove() and _remove_slot_rect(vp, offer.size(), dual).has_point(pos):
 		_removing = true
+		return
+	if _ink() and _input_ink_press(pos, vp, dual):
 		return
 	if dual:
 		if _input_relic_row(pos, vp):
@@ -322,6 +381,19 @@ func _press_position(event: InputEvent) -> Vector2:
 	elif event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
+			return touch.position
+	return Vector2.INF
+
+
+# Story 034: position of a left mouse release or a touch release; Vector2.INF for any other event.
+func _release_position(event: InputEvent) -> Vector2:
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		if button.button_index == MOUSE_BUTTON_LEFT and not button.pressed:
+			return button.position
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed:
 			return touch.position
 	return Vector2.INF
 
@@ -392,12 +464,14 @@ func _draw() -> void:
 	var rects: Array[Rect2] = _card_rects(vp, offer.size(), dual)
 	var levels: Dictionary = _flow.get_deck_levels()
 	for i: int in rects.size():
-		if dual:
+		if dual or _ink():
 			_draw_card_compact(rects[i], offer[i], levels)
 		else:
 			_draw_card(rects[i], offer[i], levels)
 	if dual:
 		_draw_relic_row(vp)
+	if _ink():
+		_draw_ink_row(vp, dual)
 	if with_remove:
 		var slot: Rect2 = _remove_slot_rect(vp, offer.size(), dual)
 		var slot_text: String = tr(TEXT_REMOVE_COUNT) % _removal_tokens()
@@ -412,6 +486,8 @@ func _draw() -> void:
 
 # Card rects: the plain offer layout, or the upper row of the two-row treasure screen.
 func _card_rects(vp: Vector2, count: int, dual: bool) -> Array[Rect2]:
+	if _ink():
+		return ScreenLayout.reward_ink_card_rects(vp, count, _can_remove(), dual)
 	if dual:
 		return ScreenLayout.reward_dual_card_rects(vp, count, _can_remove())
 	return ScreenLayout.reward_card_rects(vp, count, _can_remove())
@@ -419,9 +495,9 @@ func _card_rects(vp: Vector2, count: int, dual: bool) -> Array[Rect2]:
 
 # The "Bỏ 1 lá" slot: right of the card row (same top / height as the cards of that layout).
 func _remove_slot_rect(vp: Vector2, count: int, dual: bool) -> Rect2:
-	if not dual:
+	if not dual and not _ink():
 		return ScreenLayout.reward_remove_slot_rect(vp, count)
-	var cards: Array[Rect2] = ScreenLayout.reward_dual_card_rects(vp, count, true)
+	var cards: Array[Rect2] = ScreenLayout.reward_ink_card_rects(vp, count, true, dual) if _ink() else ScreenLayout.reward_dual_card_rects(vp, count, true)
 	var width: float = vp.x * ScreenLayout.REWARD_REMOVE_SLOT_WIDTH_RATIO
 	if cards.is_empty():
 		return Rect2()
@@ -440,7 +516,7 @@ func _input_relic_row(pos: Vector2, vp: Vector2) -> bool:
 			_flow.choose_relic(_selected_relic)
 		return true
 	var relics: Array[String] = _flow.get_relic_offer()
-	var rects: Array[Rect2] = ScreenLayout.reward_dual_relic_rects(vp, relics.size())
+	var rects: Array[Rect2] = _relic_rects(vp, relics.size())
 	for i: int in rects.size():
 		if rects[i].has_point(pos):
 			_selected_relic = relics[i]
@@ -452,10 +528,10 @@ func _input_relic_row(pos: Vector2, vp: Vector2) -> bool:
 func _draw_relic_row(vp: Vector2) -> void:
 	var cards_label: Rect2 = ScreenLayout.reward_dual_cards_label_rect(vp)
 	_text(cards_label, cards_label.get_center().y + ROW_LABEL_FONT_SIZE * 0.35, tr(TEXT_CARDS_ROW), ROW_LABEL_FONT_SIZE, SUBTITLE_COLOR)
-	var relics_label: Rect2 = ScreenLayout.reward_dual_relics_label_rect(vp)
+	var relics_label: Rect2 = ScreenLayout.reward_ink_relics_label_rect(vp) if _ink() else ScreenLayout.reward_dual_relics_label_rect(vp)
 	_text(relics_label, relics_label.get_center().y + ROW_LABEL_FONT_SIZE * 0.35, tr(TEXT_RELICS_ROW), ROW_LABEL_FONT_SIZE, SUBTITLE_COLOR)
 	var relics: Array[String] = _flow.get_relic_offer()
-	var rects: Array[Rect2] = ScreenLayout.reward_dual_relic_rects(vp, relics.size())
+	var rects: Array[Rect2] = _relic_rects(vp, relics.size())
 	for i: int in rects.size():
 		_draw_relic_card(rects[i], relics[i], relics[i] == _selected_relic)
 	if _can_skip():
@@ -464,6 +540,129 @@ func _draw_relic_row(vp: Vector2) -> void:
 	var confirm: Rect2 = ScreenLayout.reward_dual_confirm_rect(vp)
 	var enabled: bool = not _selected_relic.is_empty()
 	UiButtons.draw_button(self, confirm, tr(TEXT_RELIC_CONFIRM), UiButtons.Style.PRIMARY, enabled and UiButtons.is_pressed_at(self, confirm), enabled, _fit_font_size(tr(TEXT_RELIC_CONFIRM), confirm.size.x * 0.9, BUTTON_FONT_SIZE))
+
+
+# Story 034: relic rects of the treasure screen - moved up and shorter while the ink row is open.
+func _relic_rects(vp: Vector2, count: int) -> Array[Rect2]:
+	if _ink():
+		return ScreenLayout.reward_ink_relic_rects(vp, count)
+	return ScreenLayout.reward_dual_relic_rects(vp, count)
+
+
+# --- Story 034: the ink row ---------------------------------------------------
+
+
+# Ink row press: its skip closes the row, its confirm inks the selected shape (nothing without a pick), a
+# tile press is remembered (it selects on release). True when the press was used.
+func _input_ink_press(pos: Vector2, vp: Vector2, dual: bool) -> bool:
+	if ScreenLayout.reward_ink_skip_rect(vp, dual).has_point(pos):
+		_flow.skip_ink_offer()
+		return true
+	if ScreenLayout.reward_ink_confirm_rect(vp, dual).has_point(pos):
+		if not _selected_ink.is_empty():
+			_flow.choose_ink(_selected_ink)
+		return true
+	var rects: Array[Rect2] = ScreenLayout.reward_ink_tile_rects(vp, _flow.get_ink_offer().size(), dual)
+	for i: int in rects.size():
+		if rects[i].has_point(pos):
+			_ink_press = i
+			return true
+	return false
+
+
+# Ink row release: a release on the tile the press began on selects that shape.
+func _ink_release(pos: Vector2, vp: Vector2) -> void:
+	var offer: Array[String] = _flow.get_ink_offer()
+	var rects: Array[Rect2] = ScreenLayout.reward_ink_tile_rects(vp, offer.size(), _dual())
+	if _ink_press >= 0 and _ink_press < rects.size() and rects[_ink_press].has_point(pos):
+		_selected_ink = offer[_ink_press]
+
+
+# The ink row: label, one tile per offered shape, the small skip and the confirm (dim until a pick).
+func _draw_ink_row(vp: Vector2, dual: bool) -> void:
+	var label: Rect2 = ScreenLayout.reward_ink_label_rect(vp, dual)
+	_text(label, label.get_center().y + ROW_LABEL_FONT_SIZE * 0.35, tr(TEXT_INK_TITLE), ROW_LABEL_FONT_SIZE, SUBTITLE_COLOR)
+	var offer: Array[String] = _flow.get_ink_offer()
+	var rects: Array[Rect2] = ScreenLayout.reward_ink_tile_rects(vp, offer.size(), dual)
+	var rows: Dictionary = {}
+	for row: Dictionary in _flow.get_piece_deck_rows():
+		rows[str(row.get("id", ""))] = row
+	var lib: PieceLibrary = _flow.get_piece_library()
+	var max_dots: int = ceili(_flow.get_piece_deck_config().mult_max)
+	for i: int in rects.size():
+		var id: String = offer[i]
+		var row: Dictionary = rows.get(id, {})
+		var dots: int = int(row.get("dots", 0))
+		var tag: String = tr(TEXT_INK_NEW) if bool(row.get("run_only", lib.is_run_only(id))) and dots <= 0 else ""
+		var highlight: int = 2 if id == _selected_ink else (1 if i == _ink_press else 0)
+		draw_shape_tile(self, rects[i], lib.make_piece(id), tr(lib.name_key(id)), dots, max_dots, tag, NEW_TAG_COLOR, highlight, false)
+	var skip: Rect2 = ScreenLayout.reward_ink_skip_rect(vp, dual)
+	UiButtons.draw_button(self, skip, tr(TEXT_INK_SKIP), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, skip), true, _fit_font_size(tr(TEXT_INK_SKIP), skip.size.x * 0.9, BUTTON_FONT_SIZE))
+	var confirm: Rect2 = ScreenLayout.reward_ink_confirm_rect(vp, dual)
+	var enabled: bool = not _selected_ink.is_empty()
+	UiButtons.draw_button(self, confirm, tr(TEXT_INK_CONFIRM), UiButtons.Style.PRIMARY, enabled and UiButtons.is_pressed_at(self, confirm), enabled, _fit_font_size(tr(TEXT_INK_CONFIRM), confirm.size.x * 0.9, BUTTON_FONT_SIZE))
+
+
+## Story 034: one shape tile at [param rect] - [param piece] drawn with PieceDraw, [param name], the mult as
+## [param dots] filled of [param max_dots], and an optional [param tag] line in [param tag_color] (the shop
+## passes a refusal reason). A wide tile puts the shape on the left and the text on the right, a tall one
+## the shape on top. [param highlight]: 0 none, 1 pressed (gold outline), 2 selected (thick gold outline,
+## raised). [param disabled] dims everything but the tag. Shared by the reward screen's ink row and the
+## shop's shape picker.
+static func draw_shape_tile(canvas: CanvasItem, rect: Rect2, piece: Piece, name: String, dots: int, max_dots: int, tag: String, tag_color: Color, highlight: int, disabled: bool) -> void:
+	var r: Rect2 = rect
+	var short_side: float = minf(rect.size.x, rect.size.y)
+	if highlight == 2:
+		canvas.draw_rect(Rect2(rect.position + Vector2(5.0, 5.0), rect.size), ShopView.SHADOW_COLOR)
+		r.position.y -= short_side * SHAPE_TILE_PAD_RATIO * 0.5
+	var back: Color = CARD_BACK
+	var border: Color = CARD_PRESSED_OUTLINE if highlight > 0 else SHAPE_TILE_BORDER
+	var text: Color = NAME_COLOR
+	var fill: Color = SHAPE_FILL
+	var outline: Color = SHAPE_OUTLINE
+	var on: Color = DOT_ON
+	var off: Color = DOT_OFF
+	if disabled:
+		back.a *= UiButtons.DIM_ALPHA
+		border.a *= UiButtons.DIM_ALPHA
+		text.a *= UiButtons.DIM_ALPHA
+		fill.a *= UiButtons.DIM_ALPHA
+		outline.a *= UiButtons.DIM_ALPHA
+		on.a *= UiButtons.DIM_ALPHA
+		off.a *= UiButtons.DIM_ALPHA
+	canvas.draw_rect(r, back)
+	canvas.draw_rect(r, border, false, RELIC_SELECTED_BORDER if highlight == 2 else BORDER_WIDTH)
+	var pad: float = short_side * SHAPE_TILE_PAD_RATIO
+	var inner: Rect2 = r.grow(-pad)
+	var shape_area: Rect2
+	var text_area: Rect2
+	if r.size.x >= r.size.y * SHAPE_TILE_WIDE_ASPECT:
+		shape_area = Rect2(inner.position, Vector2(inner.size.y, inner.size.y))
+		text_area = Rect2(shape_area.end.x + pad, inner.position.y, maxf(inner.end.x - shape_area.end.x - pad, 0.0), inner.size.y)
+	else:
+		shape_area = Rect2(inner.position, Vector2(inner.size.x, inner.size.y * 0.5))
+		text_area = Rect2(inner.position.x, shape_area.end.y + pad * 0.5, inner.size.x, maxf(inner.end.y - shape_area.end.y - pad * 0.5, 0.0))
+	PieceDraw.draw_shape(canvas, piece, shape_area, fill, outline, minf(shape_area.size.x, shape_area.size.y) * SHAPE_MAX_UNIT_RATIO)
+	var font: Font = ThemeDB.fallback_font
+	canvas.draw_string(font, Vector2(text_area.position.x, text_area.position.y + text_area.size.y * 0.28), name, HORIZONTAL_ALIGNMENT_CENTER, text_area.size.x, _fit_static(name, text_area.size.x, SHAPE_NAME_FONT_SIZE), text)
+	var radius: float = maxf(short_side * SHAPE_DOT_RADIUS_RATIO, 3.0)
+	var count: int = maxi(max_dots, 1)
+	var step: float = radius * 2.8
+	var x0: float = text_area.get_center().x - step * (count - 1) * 0.5
+	var dot_y: float = text_area.position.y + text_area.size.y * 0.55
+	for i: int in count:
+		canvas.draw_circle(Vector2(x0 + step * i, dot_y), radius, on if i < dots else off)
+	if not tag.is_empty():
+		canvas.draw_string(font, Vector2(text_area.position.x, text_area.position.y + text_area.size.y * 0.88), tag, HORIZONTAL_ALIGNMENT_CENTER, text_area.size.x, _fit_static(tag, text_area.size.x, SHAPE_TAG_FONT_SIZE), tag_color)
+
+
+# Static twin of _fit_font_size for draw_shape_tile.
+static func _fit_static(text: String, width: float, size: int) -> int:
+	var font: Font = ThemeDB.fallback_font
+	var fitted: int = size
+	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+		fitted -= 1
+	return fitted
 
 
 # One large relic card: icon (RelicStrip look) top-left, name and rarity line beside it, the rule text
@@ -489,7 +688,11 @@ func _draw_relic_card(rect: Rect2, id: String, selected: bool) -> void:
 	var rarity: String = RelicStrip.rarity_line(info)
 	draw_string(ThemeDB.fallback_font, Vector2(text_x, icon.position.y + icon_edge * 0.88), rarity, HORIZONTAL_ALIGNMENT_LEFT, text_w, _fit_font_size(rarity, text_w, RARITY_FONT_SIZE), (RelicStrip.NEGATIVE_COLOR if negative else color).darkened(0.2))
 	var inner_w: float = rect.size.x - pad * 2.0
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + pad, icon.end.y + pad + RELIC_DESC_FONT_SIZE), str(info.get("desc", "")), HORIZONTAL_ALIGNMENT_LEFT, inner_w, RELIC_DESC_FONT_SIZE, RELIC_DESC_MAX_LINES, BODY_COLOR)
+	# Story 034: the shorter relic card of the ink layout keeps only the description lines that fit.
+	var desc_y: float = icon.end.y + pad + RELIC_DESC_FONT_SIZE
+	var line_h: float = ThemeDB.fallback_font.get_height(RELIC_DESC_FONT_SIZE)
+	var lines: int = clampi(int((rect.end.y - pad * 0.5 - desc_y) / line_h) + 1, 1, RELIC_DESC_MAX_LINES)
+	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + pad, desc_y), str(info.get("desc", "")), HORIZONTAL_ALIGNMENT_LEFT, inner_w, RELIC_DESC_FONT_SIZE, lines, BODY_COLOR)
 
 
 # The card row of the two-row treasure screen: the same facts as _draw_card on a shorter card — name,

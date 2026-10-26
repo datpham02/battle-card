@@ -192,7 +192,7 @@ func _test_any_placement() -> void:
 	ck("any: has_any_placement does not depend on the piece's current rotation", PiecePlacement.has_any_placement(column, lib.make_piece("bar3", 1)) and PiecePlacement.has_any_placement(column, lib.make_piece("bar3", 2)))
 	var grid := BoardGrid.new(3, 3)
 	var drawable: int = 0
-	for id: String in lib.shape_ids():
+	for id: String in lib.base_shape_ids(): # Story 034: the default pool (run_only shapes excluded)
 		if PiecePlacement.has_any_placement(grid, lib.make_piece(id)):
 			drawable += 1
 	ck("any: on 3x3, 11 of the 13 shapes fit (bar4, bar5 do not)", drawable == 11)

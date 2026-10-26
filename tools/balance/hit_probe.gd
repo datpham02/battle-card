@@ -95,6 +95,10 @@ func _init() -> void:
 		deck_entries.append({"id": str(id), "level": 1})
 	print("hit_probe chapter=%d (%s) modes=%s sizes=%s trials=%d seeds=%d idle_sec=%.0f char=%s" % [ci + 1, chapter_id, str(modes), str(sizes), _trials, seeds, idle_sec, char_id])
 	print(_core.describe())
+	if not _core.describe_piece_deck().is_empty():
+		# Story 034: the deck shapes the player's FIELD DROPS, so only the bot mode feels it (the cast modes
+		# cast pieces.json shapes of exactly n cells directly).
+		print(_core.describe_piece_deck())
 	for mode: String in modes:
 		_mode = mode
 		print("")
@@ -119,6 +123,9 @@ func _init() -> void:
 			else:
 				_run_bot(m, id, character, deck_entries, seeds, immortal)
 	print("")
+	if not _core.piece_deck_spec.is_empty():
+		print("PIECE DECK %s: fallback matches %d of %d (no deck shape fit the arena; original weights used)" % [
+			_core.piece_deck_spec, _core.piece_deck_fallbacks, _core.piece_deck_matches])
 	print("hit_probe done, runtime %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
 	quit(0)
 

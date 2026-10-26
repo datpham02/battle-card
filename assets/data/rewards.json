@@ -11,6 +11,16 @@
 	"starting_removals": 1,
 	"luck_start": 0,
 	"luck_per_node": 1,
+	"piece_rewards": {
+		"ink_offer_chance": 0.35,
+		"ink_offer_count": 2,
+		"mult_step": 1.0,
+		"mult_max": 4.0,
+		"min_shapes": 5,
+		"run_only_weight": 6.0,
+		"shape_removals_start": 1,
+		"shape_removals_per_boss": 1
+	},
 	"rest_heal_ratio": 0.3,
 	"rest_forge_levels": 1,
 	"node_rewards": {

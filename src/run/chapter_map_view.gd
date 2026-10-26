@@ -117,6 +117,8 @@ const TEXT_REMOVAL_TOKENS: String = "ui.map.removal_tokens"
 const TEXT_LUCK: String = "ui.map.luck"
 ## The back button: to the title, the run stays saved.
 const TEXT_BACK: String = "ui.map.back"
+## Story 034: the title band's "Bộ mảnh" button (ScreenLayout.map_piece_deck_button_rect) -> GameFlow.open_piece_deck.
+const TEXT_PIECE_DECK: String = "ui.piece_deck.open"
 ## Story 031: the title "Tầng %d/%d · %s" (1-based floor, floor count, region name) and the final
 ## match's name (shared with WorldMapView).
 const TEXT_FLOOR_TITLE: String = "ui.map.floor_title"
@@ -198,6 +200,9 @@ func _input(event: InputEvent) -> void:
 	if ScreenLayout.touch_rect(ScreenLayout.back_button_rect(vp)).has_point(pos):
 		_flow.leave_run_keep_save()
 		return
+	if ScreenLayout.touch_rect(ScreenLayout.map_piece_deck_button_rect(vp)).has_point(pos):
+		_flow.open_piece_deck()
+		return
 	var map: Array[Dictionary] = _flow.get_run_map()
 	var current: int = _flow.get_current_column()
 	if current < 0 or current >= map.size():
@@ -274,6 +279,9 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	var back_text: String = tr(TEXT_BACK)
 	UiButtons.draw_button(self, back, back_text, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(back)), true, _back_font_size(back_text, back.size.x), OUTLINE_WIDTH)
+	var deck_button: Rect2 = ScreenLayout.map_piece_deck_button_rect(vp)
+	var deck_text: String = tr(TEXT_PIECE_DECK)
+	UiButtons.draw_button(self, deck_button, deck_text, UiButtons.Style.SECONDARY, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(deck_button)), true, _back_font_size(deck_text, deck_button.size.x), OUTLINE_WIDTH)
 	var column_rect: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
 	var column_text: String = tr(TEXT_COLUMN) % [mini(current + 1, column_count), column_count]
 	draw_string(ThemeDB.fallback_font, Vector2(column_rect.position.x, column_rect.get_center().y + COLUMN_FONT_SIZE * 0.35), column_text, HORIZONTAL_ALIGNMENT_RIGHT, column_rect.size.x, COLUMN_FONT_SIZE, HEADER_COLOR)

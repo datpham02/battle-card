@@ -12,7 +12,10 @@
 		{ "id": "plus5",  "name_key": "piece.plus5.name",  "cells": [[1,0],[0,1],[1,1],[2,1],[1,2]] },
 		{ "id": "u5",     "name_key": "piece.u5.name",     "cells": [[0,0],[2,0],[0,1],[1,1],[2,1]] },
 		{ "id": "p5",     "name_key": "piece.p5.name",     "cells": [[0,0],[1,0],[0,1],[1,1],[0,2]] },
-		{ "id": "bar5",   "name_key": "piece.bar5.name",   "cells": [[0,0],[1,0],[2,0],[3,0],[4,0]] }
+		{ "id": "bar5",   "name_key": "piece.bar5.name",   "cells": [[0,0],[1,0],[2,0],[3,0],[4,0]] },
+		{ "id": "z4",     "name_key": "piece.z4.name",     "cells": [[0,0],[1,0],[1,1],[2,1]], "pool": "run_only" },
+		{ "id": "j4",     "name_key": "piece.j4.name",     "cells": [[1,0],[1,1],[1,2],[0,2]], "pool": "run_only" },
+		{ "id": "y5",     "name_key": "piece.y5.name",     "cells": [[0,1],[1,1],[2,1],[3,1],[1,0]], "pool": "run_only" }
 	],
 	"weights": {
 		"default": { "mono": 10, "bar2": 10, "bar3": 8, "l3": 8, "square": 6, "t4": 5, "l4": 5, "s4": 5, "bar4": 4, "plus5": 2, "u5": 2, "p5": 3, "bar5": 1 },

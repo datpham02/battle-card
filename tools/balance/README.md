@@ -311,6 +311,57 @@ $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds
 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --relic-policy=pick --economy-set=gold_drops.*:x1.2,shop.relic_prices.common:65
 ```
 
+## Piece deck in the sim (Story 034): `--piece-deck`
+
+A shared flag (`sim_core.gd`, both tools, deck_sim chapter and `--world` modes). It gives the bot a **fixed** piece
+deck from the start of the run to its end: no ink offers, no shape removals in play. Each match the player's field
+drops get `PieceDeck.weights_for_match(state, lib, chapter_id, grid, cfg)["weights"]` as the 6th argument of
+`FieldDrops.enable_pieces` (what `CombatView._setup` does); the boss's drops keep the original weights. When no deck
+shape fits the arena, `weights_for_match` falls back to the original weights (`fallback`) and the match is counted.
+Numbers (`min_shapes`, `mult_step`, `mult_max`, `run_only_weight`) come from `rewards.json` `piece_rewards`.
+
+| Value | Meaning |
+|---|---|
+| `base` | The start deck (every default-pool shape at mult 1) through `weights_for_match`: the baseline the other configurations are compared with. Its results equal a run without the flag; it only adds the header line and the tables below. |
+| `small_out` | `remove:mono,bar2,bar3` |
+| `big_out` | `remove:plus5,u5,bar5` |
+| `remove:a,b\|add:c,d` | Sections separated by `\|`, applied in the order written. `remove:` calls `PieceDeck.remove` per id and respects `min_shapes`: a refused removal (unknown, already removed, or `min_shapes`) prints one `--piece-deck: WARNING remove '<id>' refused: <reason key> ...` line and the run continues with that shape. `add:` calls `PieceDeck.apply_ink` once per listed id: a `run_only` shape (`z4`, `j4`, `y5`) joins at mult 1, a default shape gains `mult_step` (`add:square,square` gives square mult 3), capped at `mult_max` (a refused add prints a WARNING line). Quote the value in a shell: `\|` is a pipe. |
+
+Without the flag nothing changes: the output is byte-identical to before Story 034 for the same seeds (checked on
+`--world --seeds=3 --characters=kiem_si`; only the wall-clock `runtime:` line differs).
+
+Output with the flag:
+
+- a header line after the `bot:` line: `piece deck (Story 034): spec=... | active N: <ids, "x2.0" when mult is not 1> | removed: ... | min_shapes=.. run_only_weight=..`;
+- `--world`: one `WORLD PIECES` table per character/policy, after the economy lines. It sums every match of the
+  run (tran_thach extra fights included): fallback matches / matches, casts / match, cells / cast, player hit %,
+  hit % by cast cells (`cells:hit%(resolved n)`; a joined cast counts its union), joins / match (% of casts),
+  featured / match (% of casts), interrupts landed / match (the player broke a boss swing), interrupts suffered /
+  match (the boss broke the player's), region clear % (regions cleared / entered) and run win %. The existing
+  tables still give the rest (WORLD SUMMARY, FLOORS, REGIONS);
+- chapter mode and hit_probe: a final `PIECE DECK <spec>: fallback matches X of Y` line. The chapter `CH<n>` table
+  already has casts, hit %, joins, featured and interrupts per match. In hit_probe the deck only matters to the
+  `bot` mode: the cast modes cast `pieces.json` shapes of exactly n cells directly, not field drops.
+
+Story 034 D2 compares the three configurations, 70 seeds x 3 characters each; a configuration that raises the
+run win % more than 10 points over `base` is a dominant strategy (tune `min_shapes`, `mult_max` or
+`run_only_weight` and measure again):
+
+```bash
+for d in base small_out big_out; do for c in kiem_si phap_su sat_thu; do
+  timeout 3000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=$c --piece-deck=$d > "<scratch>/deck_${d}_$c.out" 2>&1
+done; done
+# Smoke (about 12 s): one configuration, 3 seeds
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=3 --characters=kiem_si --piece-deck=small_out
+# A custom deck: no mono or bar2, y5 added, square at mult 2
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=3 --characters=kiem_si "--piece-deck=remove:mono,bar2|add:y5,square"
+# The bot against each chapter-1 boss with a deck
+$GODOT --headless --path . -s res://tools/balance/hit_probe.gd -- --chapter=0 --modes=bot --seeds=3 --piece-deck=big_out
+```
+
+Run one configuration per process at a time when other Godot processes share the machine (the README's
+"Running" rules).
+
 ## hit_probe flags and output
 
 | Flag | Default | Meaning |

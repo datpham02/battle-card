@@ -1,0 +1,1095 @@
+===== base / kiem_si
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=base (= start deck) | active 13: mono, bar2, bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: none | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... kiem_si 10/70 seeds, 46.7 s
+  ... kiem_si 20/70 seeds, 96.2 s
+  ... kiem_si 30/70 seeds, 145.1 s
+  ... kiem_si 40/70 seeds, 197.2 s
+  ... kiem_si 50/70 seeds, 244.4 s
+  ... kiem_si 60/70 seeds, 290.2 s
+  ... kiem_si 70/70 seeds, 328.8 s
+
+=== WORLD kiem_si / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 18.6 | 13 | 44.6 | 34.2 | 7.83 | 11.51 | 117.1 | 75.3 | 0.19 | 28.0 (23.6-30.4) | 20.1 | 10.7 | 64/27/9 | 7.93 | 11.76 | 1.99 | 0.10 / 0.54 / 1.89 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| kiem_si | 1 | 90.0 | 7 | 12.3 | 90.0 | 100.0 | 69.5 |
+| kiem_si | 2 | 80.0 | 7 | 12.3 | 88.9 | 93.0 | 63.1 |
+| kiem_si | 3 | 61.4 | 13 | 22.8 | 76.8 | 88.8 | 56.5 |
+| kiem_si | 4 | 45.7 | 11 | 19.3 | 74.4 | 86.7 | 57.5 |
+| kiem_si | 5 | 28.6 | 12 | 21.1 | 62.5 | 87.1 | 41.3 |
+| kiem_si | final | 18.6 | 7 | 12.3 | 65.0 | 74.9 | 48.2 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| kiem_si | 1 | ch1 | 21 | 20 | 95.2 |
+| kiem_si | 1 | ch2 | 26 | 23 | 88.5 |
+| kiem_si | 1 | ch3 | 23 | 20 | 87.0 |
+| kiem_si | 2 | ch1 | 16 | 13 | 81.3 |
+| kiem_si | 2 | ch2 | 24 | 23 | 95.8 |
+| kiem_si | 2 | ch3 | 23 | 20 | 87.0 |
+| kiem_si | 3 | ch1 | 20 | 14 | 70.0 |
+| kiem_si | 3 | ch2 | 14 | 12 | 85.7 |
+| kiem_si | 3 | ch3 | 22 | 17 | 77.3 |
+| kiem_si | 4 | ch1 | 9 | 6 | 66.7 |
+| kiem_si | 4 | ch2 | 17 | 15 | 88.2 |
+| kiem_si | 4 | ch3 | 17 | 11 | 64.7 |
+| kiem_si | 5 | ch1 | 16 | 10 | 62.5 |
+| kiem_si | 5 | ch2 | 9 | 4 | 44.4 |
+| kiem_si | 5 | ch3 | 7 | 6 | 85.7 |
+
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=7, f2/boss=7, f3/battle=2, f3/boss=11, f4/boss=11, f5/battle=1, f5/boss=11, ffinal/final=7
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.37 | owned at end (runs): an_don=9, chi_khau=11, phong_an=11, gai_ran=6, manh_tuoi=12, dinh_tam=5, la_ban=4, tam_huong=6, tui_rong=4, dau_than=5, khoi_the=7, phan_don=4, han_ky=5, huyet_an=7 | triggers / run: an_don=0.6, chi_khau=0.4, khoi_the=0.4, phan_don=0.4, huyet_an=7.1
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | greedy | risky | 18.6 | 212 (56-365) | 217 | 385 (354-414) | 214 / 2 / 1 | 90 (0-223) | 112 (31-259) | 216 (110-392) (13) | 0.96 | 1.81 | 1.94 (47) | 1.73; 2.85 | 1.29 / 0.44 / 0.00 | 91 (78-145) (61) | 100 |
+WORLD EVENTS | kiem_si | build | events / run 0.24 | non-leave choices / run 0.24 | tran_thach extra fights 3, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.03 | curse dmg / run 0.6 | matches slowed by loi_the / run 0.09 | picks: ban_tho_mau/give=3, ke_buon_nguyen/accept=2, loi_the/swear=3, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=3
+ECONOMY RAW kiem_si/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 259|160|119|0|3|3|129 193|85|128|0|2|2|88 241|0|261|0|0|-1|99 127|53|94|0|1|1|78 285|293|12|0|5|1|78 121|95|46|0|1|1|102 281|291|10|0|5|3|91 100|0|120|0|0|-1|104 144|85|79|0|2|2|98 32|0|52|0|0|-1|-1 401|0|421|1|0|-1|145 356|268|108|1|4|3|74 214|143|91|0|3|3|89 118|77|31|0|1|1|44 79|0|99|0|0|-1|84 192|154|58|0|2|2|90 362|110|272|1|2|2|125 299|53|266|0|1|1|78 63|0|83|0|0|-1|83 146|0|166|0|0|-1|80 323|156|187|0|3|3|144 151|132|39|0|2|2|100 188|189|19|0|3|2|156 31|0|51|0|0|-1|-1 248|251|17|0|4|3|150 274|53|241|0|1|1|90 269|99|160|0|1|1|47 363|213|170|1|3|2|93 338|261|97|1|5|2|93 24|0|44|0|0|-1|-1 325|190|155|0|3|1|82 323|189|154|0|3|2|151 197|85|132|0|2|2|86 97|74|43|0|1|1|74 87|0|107|0|0|-1|88 190|108|102|0|2|1|79 289|224|85|0|4|3|96 415|223|212|1|4|2|98 220|74|166|0|1|1|91 166|0|186|0|0|-1|99 121|110|31|0|2|2|141 439|0|459|1|0|-1|90 356|219|157|0|4|4|90 154|0|174|0|0|-1|87 93|0|113|0|0|-1|-1 87|0|107|0|0|-1|94 251|177|94|0|2|1|91 397|143|274|1|3|3|90 29|0|49|0|0|-1|-1 185|0|175|0|0|-1|46 306|106|220|0|2|2|113 363|192|191|1|4|4|147 385|189|216|1|3|2|147 209|0|229|0|0|-1|142 129|129|20|0|2|1|97 353|254|119|1|4|1|83 59|0|79|0|0|-1|-1 251|198|73|0|3|2|101 11|0|31|0|0|-1|-1 243|85|178|0|2|2|93 300|0|320|0|0|-1|148 308|190|138|0|3|1|77 13|0|33|0|0|-1|-1 135|53|102|0|1|1|84 152|85|87|0|2|2|89 410|192|238|1|3|3|97 297|180|137|0|3|3|105 390|151|259|1|2|1|101 14|0|34|0|0|-1|-1 201|110|111|0|2|2|89
+ECONOMY TARGETS kiem_si/build (shop=greedy event=risky): earned/run 217 in 350-450: MISS | items/run 1.73 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | base | 0 / 548 | 23.06 | 3.28 | 33.3 | 1:32(1447) 2:38(1702) 3:37(2964) 4:31(4072) 5:28(1520) 6:45(58) 7:38(13) 8:17(6) | 0.62 (3) | 0.09 (0) | 2.79 | 1.55 | 81.1 (214/264) | 18.6 |
+WORLD VERDICT kiem_si/build: run win 18.6% (target 20-40) TOO HARD; est. minutes won run 28.0 (target 40-50) TOO SHORT; max region spread at a floor 41.3 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 22.8% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 44.6
+runtime: 329.2 s
+===== base / phap_su
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=base (= start deck) | active 13: mono, bar2, bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: none | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... phap_su 10/70 seeds, 36.4 s
+  ... phap_su 20/70 seeds, 89.2 s
+  ... phap_su 30/70 seeds, 126.7 s
+  ... phap_su 40/70 seeds, 173.6 s
+  ... phap_su 50/70 seeds, 216.5 s
+  ... phap_su 60/70 seeds, 257.4 s
+  ... phap_su 70/70 seeds, 294.9 s
+
+=== WORLD phap_su / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | 14.3 | 10 | 34.4 | 27.4 | 7.47 | 11.00 | 106.4 | 65.9 | 0.07 | 25.2 (20.9-30.7) | 17.8 | 10.1 | 64/26/9 | 8.14 | 11.69 | 1.70 | 0.23 / 0.50 / 1.81 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| phap_su | 1 | 92.9 | 5 | 8.3 | 92.9 | 100.0 | 58.0 |
+| phap_su | 2 | 77.1 | 11 | 18.3 | 83.1 | 86.7 | 51.7 |
+| phap_su | 3 | 55.7 | 15 | 25.0 | 72.2 | 83.6 | 45.6 |
+| phap_su | 4 | 38.6 | 12 | 20.0 | 69.2 | 77.2 | 32.5 |
+| phap_su | 5 | 21.4 | 12 | 20.0 | 55.6 | 66.5 | 26.3 |
+| phap_su | final | 14.3 | 5 | 8.3 | 66.7 | 61.3 | 23.9 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| phap_su | 1 | ch1 | 21 | 17 | 81.0 |
+| phap_su | 1 | ch2 | 26 | 25 | 96.2 |
+| phap_su | 1 | ch3 | 23 | 23 | 100.0 |
+| phap_su | 2 | ch1 | 19 | 13 | 68.4 |
+| phap_su | 2 | ch2 | 24 | 22 | 91.7 |
+| phap_su | 2 | ch3 | 22 | 19 | 86.4 |
+| phap_su | 3 | ch1 | 18 | 12 | 66.7 |
+| phap_su | 3 | ch2 | 15 | 13 | 86.7 |
+| phap_su | 3 | ch3 | 21 | 14 | 66.7 |
+| phap_su | 4 | ch1 | 14 | 8 | 57.1 |
+| phap_su | 4 | ch2 | 9 | 8 | 88.9 |
+| phap_su | 4 | ch3 | 16 | 11 | 68.8 |
+| phap_su | 5 | ch1 | 15 | 8 | 53.3 |
+| phap_su | 5 | ch2 | 7 | 2 | 28.6 |
+| phap_su | 5 | ch3 | 5 | 5 | 100.0 |
+
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=5, f2/boss=11, f3/battle=1, f3/boss=14, f4/battle=1, f4/boss=11, f5/battle=3, f5/boss=9, ffinal/final=5
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 1.11 | owned at end (runs): an_don=7, chi_khau=7, phong_an=8, gai_ran=6, manh_tuoi=7, dinh_tam=3, la_ban=5, tam_huong=7, tui_rong=3, dau_than=3, khoi_the=5, phan_don=4, han_ky=5, huyet_an=8 | triggers / run: an_don=0.4, chi_khau=0.2, khoi_the=0.3, phan_don=0.6, huyet_an=5.0
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | greedy | risky | 14.3 | 191 (66-363) | 203 | 371 (352-392) | 200 / 2 / 1 | 74 (0-208) | 106 (30-277) | 210 (185-321) (10) | 0.77 | 1.76 | 1.79 (43) | 1.36; 2.80 | 1.04 / 0.31 / 0.00 | 91 (77-145) (63) | 100 |
+WORLD EVENTS | phap_su | build | events / run 0.26 | non-leave choices / run 0.26 | tran_thach extra fights 3, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.06 | curse dmg / run 0.4 | matches slowed by loi_the / run 0.09 | picks: ban_tho_mau/give=2, ke_buon_nguyen/accept=2, ke_lang_thang/swap=1, loi_the/swear=3, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, suoi_tinh/drink=1, tran_thach/fight=3
+ECONOMY RAW phap_su/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 128|0|148|0|0|-1|129 193|85|128|0|2|2|88 30|0|50|0|0|-1|-1 127|53|94|0|1|1|78 285|293|12|0|5|1|78 152|95|77|0|1|1|102 29|0|49|0|0|-1|-1 295|228|87|0|3|3|104 144|85|79|0|2|2|98 286|213|93|0|3|1|105 306|0|326|0|0|-1|145 199|208|11|0|3|3|74 387|143|264|1|3|3|89 73|0|63|0|0|-1|44 326|0|346|0|0|-1|84 283|154|149|0|2|2|90 362|110|272|1|2|2|125 354|53|321|1|1|1|78 63|53|30|0|1|1|83 376|208|188|1|4|4|80 220|0|240|0|0|-1|144 286|213|93|0|3|2|100 188|132|76|0|2|2|156 242|0|262|0|0|-1|95 331|143|208|1|3|3|150 138|53|105|0|1|1|90 115|99|6|0|1|1|47 242|132|130|0|2|2|93 25|0|45|0|0|-1|-1 24|0|44|0|0|-1|-1 135|74|81|0|1|1|82 81|0|101|0|0|-1|-1 266|85|201|0|2|2|86 132|74|78|0|1|1|74 87|0|107|0|0|-1|88 190|108|102|0|2|1|79 389|224|185|1|4|3|96 415|223|212|1|4|2|98 379|74|325|1|1|1|91 93|0|113|0|0|-1|99 66|0|86|0|0|-1|-1 157|0|177|0|0|-1|90 86|0|106|0|0|-1|90 154|0|174|0|0|-1|87 225|154|91|0|2|2|164 308|0|328|0|0|-1|94 235|177|78|0|2|1|91 348|143|225|0|3|3|90 85|95|10|0|1|1|105 87|0|77|0|0|-1|46 93|106|7|0|2|2|113 145|0|165|0|0|-1|147 191|132|79|0|2|2|147 177|0|197|0|0|-1|142 296|74|242|0|1|1|97 14|0|34|0|0|-1|-1 181|0|201|0|0|-1|136 363|198|185|1|3|2|101 200|191|29|0|3|1|83 243|85|178|0|2|2|93 352|0|372|0|0|-1|148 366|190|196|1|3|1|77 136|74|82|0|1|1|81 64|0|84|0|0|-1|84 152|85|87|0|2|2|89 367|0|387|0|0|-1|97 104|0|124|0|0|-1|105 289|151|158|0|2|1|101 203|208|15|0|4|4|77 129|110|39|0|2|2|89
+ECONOMY TARGETS phap_su/build (shop=greedy event=risky): earned/run 203 in 350-450: MISS | items/run 1.36 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | base | 0 / 523 | 20.34 | 3.23 | 38.2 | 1:32(1334) 2:36(1510) 3:36(2436) 4:42(3479) 5:39(1264) 6:65(66) 7:43(23) 8:67(12) | 0.56 (3) | 0.07 (0) | 2.86 | 0.96 | 78.4 (200/255) | 14.3 |
+WORLD VERDICT phap_su/build: run win 14.3% (target 10-100) PASS; est. minutes won run 25.2 (target 40-50) TOO SHORT; max region spread at a floor 71.4 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 25.0% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 34.4
+runtime: 295.2 s
+===== base / sat_thu
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=base (= start deck) | active 13: mono, bar2, bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: none | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... sat_thu 10/70 seeds, 34.5 s
+  ... sat_thu 20/70 seeds, 73.5 s
+  ... sat_thu 30/70 seeds, 113.4 s
+  ... sat_thu 40/70 seeds, 154.1 s
+  ... sat_thu 50/70 seeds, 186.9 s
+  ... sat_thu 60/70 seeds, 217.3 s
+  ... sat_thu 70/70 seeds, 257.7 s
+
+=== WORLD sat_thu / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | 5.7 | 4 | 31.8 | 24.0 | 6.59 | 9.77 | 101.7 | 66.0 | 0.06 | 23.5 (21.0-25.5) | 15.2 | 8.8 | 65/26/9 | 8.03 | 11.06 | 1.36 | 0.39 / 0.41 / 1.56 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| sat_thu | 1 | 90.0 | 7 | 10.6 | 90.0 | 100.0 | 56.5 |
+| sat_thu | 2 | 74.3 | 11 | 16.7 | 82.5 | 85.5 | 49.0 |
+| sat_thu | 3 | 40.0 | 24 | 36.4 | 53.8 | 80.3 | 39.7 |
+| sat_thu | 4 | 22.9 | 12 | 18.2 | 57.1 | 74.4 | 37.0 |
+| sat_thu | 5 | 7.1 | 11 | 16.7 | 31.3 | 71.3 | 31.3 |
+| sat_thu | final | 5.7 | 1 | 1.5 | 80.0 | 66.3 | 29.9 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| sat_thu | 1 | ch1 | 21 | 17 | 81.0 |
+| sat_thu | 1 | ch2 | 26 | 24 | 92.3 |
+| sat_thu | 1 | ch3 | 23 | 22 | 95.7 |
+| sat_thu | 2 | ch1 | 19 | 18 | 94.7 |
+| sat_thu | 2 | ch2 | 23 | 19 | 82.6 |
+| sat_thu | 2 | ch3 | 21 | 15 | 71.4 |
+| sat_thu | 3 | ch1 | 17 | 8 | 47.1 |
+| sat_thu | 3 | ch2 | 12 | 10 | 83.3 |
+| sat_thu | 3 | ch3 | 23 | 10 | 43.5 |
+| sat_thu | 4 | ch1 | 7 | 2 | 28.6 |
+| sat_thu | 4 | ch2 | 9 | 5 | 55.6 |
+| sat_thu | 4 | ch3 | 12 | 9 | 75.0 |
+| sat_thu | 5 | ch1 | 6 | 1 | 16.7 |
+| sat_thu | 5 | ch2 | 7 | 3 | 42.9 |
+| sat_thu | 5 | ch3 | 3 | 1 | 33.3 |
+
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=7, f2/boss=11, f3/battle=1, f3/boss=23, f4/battle=2, f4/boss=10, f5/battle=1, f5/boss=10, ffinal/final=1
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 0.89 | owned at end (runs): an_don=5, chi_khau=7, phong_an=6, gai_ran=5, manh_tuoi=4, dinh_tam=4, la_ban=4, tam_huong=6, tui_rong=4, dau_than=2, khoi_the=4, phan_don=4, han_ky=4, huyet_an=3 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.2, phan_don=0.3, huyet_an=2.4
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | greedy | risky | 5.7 | 144 (50-298) | 165 | 378 (337-407) | 163 / 2 / 1 | 53 (0-159) | 94 (22-228) | 214 (193-226) (4) | 0.66 | 1.70 | 1.79 (38) | 1.11; 2.75 | 0.84 / 0.27 / 0.00 | 91 (77-145) (58) | 100 |
+WORLD EVENTS | sat_thu | build | events / run 0.20 | non-leave choices / run 0.19 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.13 | curse dmg / run 0.6 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/swap=1, loi_the/swear=2, mo_hoang/dig=1, song_bac/bet_small=2, song_bac/leave=1, suoi_tinh/bathe=2, tran_thach/fight=2
+ECONOMY RAW sat_thu/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 52|0|72|0|0|-1|-1 254|85|189|0|2|2|88 30|0|50|0|0|-1|-1 278|53|245|0|1|1|78 133|0|153|0|0|-1|78 192|95|117|0|1|1|102 29|0|49|0|0|-1|-1 174|0|194|0|0|-1|104 144|85|79|0|2|2|98 247|95|172|0|2|2|105 67|0|87|0|0|-1|-1 270|268|22|0|4|3|74 135|143|12|0|3|3|89 118|77|31|0|1|1|44 208|132|96|0|2|2|84 283|154|149|0|2|2|90 57|0|77|0|0|-1|-1 123|53|90|0|1|1|78 231|233|18|0|4|3|83 146|0|166|0|0|-1|80 323|0|343|0|0|-1|144 208|0|228|0|0|-1|100 136|0|156|0|0|-1|156 305|0|325|0|0|-1|95 130|143|7|0|3|3|150 29|0|49|0|0|-1|-1 324|99|215|1|1|1|47 200|132|88|0|2|2|93 111|85|46|0|2|2|93 24|0|44|0|0|-1|-1 135|74|81|0|1|1|82 184|0|204|0|0|-1|151 121|85|56|0|2|2|86 132|74|78|0|1|1|74 143|0|163|0|0|-1|88 59|0|79|0|0|-1|79 389|224|185|1|4|3|96 415|223|212|1|4|2|98 220|74|166|0|1|1|91 30|0|50|0|0|-1|-1 181|191|10|0|3|2|141 157|0|177|0|0|-1|90 164|0|184|0|0|-1|90 86|0|106|0|0|-1|87 144|0|164|0|0|-1|164 87|0|107|0|0|-1|94 134|74|80|0|1|1|91 307|143|184|0|3|3|90 85|95|10|0|1|1|105 185|74|131|0|1|1|76 137|106|51|0|2|2|113 145|0|165|0|0|-1|147 71|0|91|0|0|-1|-1 67|0|87|0|0|-1|-1 129|129|20|0|2|1|97 14|0|34|0|0|-1|-1 11|0|31|0|0|-1|-1 251|95|176|0|2|2|101 183|53|150|0|1|1|83 121|85|56|0|2|2|93 220|0|240|0|0|-1|148 366|155|231|1|2|1|77 297|74|243|0|1|1|81 64|53|31|0|1|1|84 285|277|28|0|4|2|89 172|0|192|0|0|-1|97 242|0|262|0|0|-1|105 135|132|23|0|2|2|101 203|208|15|0|4|4|77 84|0|104|0|0|-1|89
+ECONOMY TARGETS sat_thu/build (shop=greedy event=risky): earned/run 165 in 350-450: MISS | items/run 1.11 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | base | 0 / 461 | 20.39 | 3.26 | 34.9 | 1:38(1108) 2:39(1289) 3:36(2230) 4:33(3015) 5:29(1124) 6:40(42) 7:43(7) 8:75(4) | 0.44 (2) | 0.08 (0) | 2.51 | 1.23 | 71.6 (164/229) | 5.7 |
+WORLD VERDICT sat_thu/build: run win 5.7% (target 20-40) TOO HARD; est. minutes won run 23.5 (target 40-50) TOO SHORT; max region spread at a floor 46.4 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 36.4% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 31.8
+runtime: 257.9 s
+===== small_out / kiem_si
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=small_out (= remove:mono,bar2,bar3) | active 10: l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono, bar2, bar3 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... kiem_si 10/70 seeds, 49.3 s
+  ... kiem_si 20/70 seeds, 96.0 s
+  ... kiem_si 30/70 seeds, 147.7 s
+  ... kiem_si 40/70 seeds, 196.4 s
+  ... kiem_si 50/70 seeds, 247.3 s
+  ... kiem_si 60/70 seeds, 293.9 s
+  ... kiem_si 70/70 seeds, 331.2 s
+
+=== WORLD kiem_si / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 32.9 | 23 | 40.8 | 36.3 | 8.83 | 12.97 | 106.4 | 69.7 | 0.14 | 25.7 (20.3-29.9) | 21.1 | 12.3 | 63/27/10 | 8.20 | 12.41 | 2.39 | 0.11 / 0.57 / 2.14 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| kiem_si | 1 | 91.4 | 6 | 12.8 | 91.4 | 100.0 | 73.1 |
+| kiem_si | 2 | 90.0 | 1 | 2.1 | 98.4 | 95.4 | 62.2 |
+| kiem_si | 3 | 81.4 | 6 | 12.8 | 90.5 | 88.6 | 58.2 |
+| kiem_si | 4 | 60.0 | 15 | 31.9 | 73.7 | 86.1 | 52.3 |
+| kiem_si | 5 | 40.0 | 14 | 29.8 | 66.7 | 84.4 | 54.8 |
+| kiem_si | final | 32.9 | 5 | 10.6 | 82.1 | 83.2 | 59.5 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| kiem_si | 1 | ch1 | 21 | 18 | 85.7 |
+| kiem_si | 1 | ch2 | 26 | 24 | 92.3 |
+| kiem_si | 1 | ch3 | 23 | 22 | 95.7 |
+| kiem_si | 2 | ch1 | 17 | 17 | 100.0 |
+| kiem_si | 2 | ch2 | 24 | 23 | 95.8 |
+| kiem_si | 2 | ch3 | 23 | 23 | 100.0 |
+| kiem_si | 3 | ch1 | 21 | 19 | 90.5 |
+| kiem_si | 3 | ch2 | 18 | 17 | 94.4 |
+| kiem_si | 3 | ch3 | 24 | 21 | 87.5 |
+| kiem_si | 4 | ch1 | 15 | 12 | 80.0 |
+| kiem_si | 4 | ch2 | 20 | 15 | 75.0 |
+| kiem_si | 4 | ch3 | 22 | 15 | 68.2 |
+| kiem_si | 5 | ch1 | 18 | 16 | 88.9 |
+| kiem_si | 5 | ch2 | 15 | 8 | 53.3 |
+| kiem_si | 5 | ch3 | 9 | 4 | 44.4 |
+
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=6, f2/boss=1, f3/battle=1, f3/boss=5, f4/battle=2, f4/boss=13, f5/battle=1, f5/boss=13, ffinal/final=5
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.57 | owned at end (runs): an_don=12, chi_khau=13, phong_an=12, gai_ran=9, manh_tuoi=8, dinh_tam=5, la_ban=6, tam_huong=7, tui_rong=5, dau_than=3, khoi_the=8, phan_don=5, han_ky=8, huyet_an=9 | triggers / run: chi_khau=0.1, khoi_the=0.4, phan_don=0.4, huyet_an=9.1
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | greedy | risky | 32.9 | 287 (96-384) | 259 | 374 (341-392) | 258 / 2 / 1 | 132 (0-255) | 145 (21-328) | 205 (102-397) (23) | 1.11 | 1.82 | 1.96 (50) | 2.03; 2.87 | 1.50 / 0.53 / 0.00 | 93 (78-145) (63) | 100 |
+WORLD EVENTS | kiem_si | build | events / run 0.23 | non-leave choices / run 0.23 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.06 | curse dmg / run 0.6 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=3, ke_buon_nguyen/accept=2, loi_the/swear=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=3, tran_thach/fight=2
+ECONOMY RAW kiem_si/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 304|160|164|0|3|3|129 68|85|3|0|2|2|88 326|0|346|0|0|-1|99 361|53|328|1|1|1|78 12|0|32|0|0|-1|-1 152|95|77|0|1|1|102 384|291|113|1|5|3|91 295|303|12|0|4|3|104 205|85|140|0|2|2|98 32|0|52|0|0|-1|-1 401|0|421|1|0|-1|145 356|268|108|1|4|3|74 214|143|91|0|3|3|89 12|0|2|0|0|-1|-1 126|132|14|0|2|2|84 384|154|250|1|2|2|90 362|110|272|1|2|2|125 193|53|160|0|1|1|78 330|251|99|1|4|1|83 146|0|166|0|0|-1|80 368|156|232|1|3|3|144 374|213|181|1|3|2|100 188|132|76|0|2|2|156 409|0|429|1|0|-1|95 331|251|100|1|4|3|150 364|53|331|1|1|1|90 269|99|160|0|1|1|47 258|213|65|0|3|2|93 338|261|97|1|5|2|93 24|0|44|0|0|-1|-1 375|190|205|1|3|1|82 27|0|47|0|0|-1|-1 266|265|21|0|5|2|86 245|262|3|0|5|1|74 24|0|44|0|0|-1|-1 190|108|102|0|2|1|79 389|224|185|1|4|3|96 219|223|16|0|4|2|98 280|74|226|0|1|1|91 166|0|186|0|0|-1|99 364|191|193|1|3|2|141 329|0|349|0|0|-1|90 212|0|232|0|0|-1|90 379|184|215|1|4|4|87 312|154|178|0|2|2|164 308|0|328|0|0|-1|94 309|177|152|0|2|1|91 222|143|99|0|3|3|90 222|150|92|0|2|1|105 185|0|175|0|0|-1|46 306|106|220|0|2|2|113 220|0|240|0|0|-1|147 385|189|216|1|3|2|147 313|180|153|0|3|3|142 185|129|76|0|2|1|97 353|254|119|1|4|1|83 99|0|119|0|0|-1|-1 310|198|132|0|3|2|101 281|191|110|0|3|1|83 243|85|178|0|2|2|93 393|0|413|1|0|-1|148 191|207|4|0|3|3|77 212|74|158|0|1|1|81 359|245|134|1|5|1|84 375|277|118|1|4|2|89 215|0|235|0|0|-1|97 297|180|137|0|3|3|105 390|151|259|1|2|1|101 293|208|105|0|4|4|77 129|0|149|0|0|-1|89
+ECONOMY TARGETS kiem_si/build (shop=greedy event=risky): earned/run 259 in 350-450: MISS | items/run 2.03 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | small_out | 0 / 618 | 21.45 | 4.00 | 31.8 | 1:5(19) 3:36(2692) 4:32(6935) 5:27(2406) 6:40(10) 7:7(15) 8:54(13) | 0.09 (0) | 0.00 (0) | 2.08 | 1.87 | 85.8 (254/296) | 32.9 |
+WORLD VERDICT kiem_si/build: run win 32.9% (target 20-40) PASS; est. minutes won run 25.7 (target 40-50) TOO SHORT; max region spread at a floor 44.4 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 31.9% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 40.8
+runtime: 331.5 s
+===== small_out / phap_su
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=small_out (= remove:mono,bar2,bar3) | active 10: l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono, bar2, bar3 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... phap_su 10/70 seeds, 41.2 s
+  ... phap_su 20/70 seeds, 80.0 s
+  ... phap_su 30/70 seeds, 116.3 s
+  ... phap_su 40/70 seeds, 166.8 s
+  ... phap_su 50/70 seeds, 210.3 s
+  ... phap_su 60/70 seeds, 247.4 s
+  ... phap_su 70/70 seeds, 278.7 s
+
+=== WORLD phap_su / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | 27.1 | 19 | 27.1 | 25.3 | 8.06 | 11.84 | 89.0 | 57.2 | 0.09 | 21.2 (17.8-24.2) | 16.9 | 11.1 | 64/27/10 | 8.16 | 12.01 | 1.97 | 0.24 / 0.50 / 1.91 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| phap_su | 1 | 90.0 | 7 | 13.7 | 90.0 | 100.0 | 64.4 |
+| phap_su | 2 | 85.7 | 3 | 5.9 | 95.2 | 91.3 | 57.9 |
+| phap_su | 3 | 62.9 | 16 | 31.4 | 73.3 | 85.4 | 51.4 |
+| phap_su | 4 | 48.6 | 10 | 19.6 | 77.3 | 81.3 | 45.3 |
+| phap_su | 5 | 34.3 | 10 | 19.6 | 70.6 | 77.0 | 45.1 |
+| phap_su | final | 27.1 | 5 | 9.8 | 79.2 | 77.6 | 49.1 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| phap_su | 1 | ch1 | 21 | 18 | 85.7 |
+| phap_su | 1 | ch2 | 26 | 22 | 84.6 |
+| phap_su | 1 | ch3 | 23 | 23 | 100.0 |
+| phap_su | 2 | ch1 | 18 | 18 | 100.0 |
+| phap_su | 2 | ch2 | 24 | 23 | 95.8 |
+| phap_su | 2 | ch3 | 21 | 19 | 90.5 |
+| phap_su | 3 | ch1 | 19 | 14 | 73.7 |
+| phap_su | 3 | ch2 | 17 | 13 | 76.5 |
+| phap_su | 3 | ch3 | 24 | 17 | 70.8 |
+| phap_su | 4 | ch1 | 14 | 11 | 78.6 |
+| phap_su | 4 | ch2 | 14 | 11 | 78.6 |
+| phap_su | 4 | ch3 | 16 | 12 | 75.0 |
+| phap_su | 5 | ch1 | 12 | 12 | 100.0 |
+| phap_su | 5 | ch2 | 12 | 4 | 33.3 |
+| phap_su | 5 | ch3 | 10 | 8 | 80.0 |
+
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=7, f2/boss=3, f3/battle=1, f3/boss=15, f4/battle=1, f4/boss=9, f5/battle=2, f5/boss=8, ffinal/final=5
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 1.30 | owned at end (runs): an_don=9, chi_khau=9, phong_an=15, gai_ran=9, manh_tuoi=11, dinh_tam=4, la_ban=4, tam_huong=6, tui_rong=4, dau_than=2, khoi_the=2, phan_don=3, han_ky=6, huyet_an=7 | triggers / run: an_don=0.0, chi_khau=0.1, khoi_the=0.2, phan_don=0.5, huyet_an=4.8
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | greedy | risky | 27.1 | 222 (61-385) | 231 | 383 (360-401) | 229 / 2 / 1 | 85 (0-214) | 158 (31-311) | 232 (156-368) (19) | 0.94 | 1.71 | 1.81 (47) | 1.61; 2.53 | 1.26 / 0.36 / 0.00 | 92 (77-145) (62) | 100 |
+WORLD EVENTS | phap_su | build | events / run 0.21 | non-leave choices / run 0.21 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.07 | curse dmg / run 0.4 | matches slowed by loi_the / run 0.07 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, loi_the/swear=3, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=3, tran_thach/fight=2
+ECONOMY RAW phap_su/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 184|160|44|0|3|3|129 254|241|33|0|5|2|88 158|0|178|0|0|-1|99 361|53|328|1|1|1|78 285|293|12|0|5|1|78 152|95|77|0|1|1|102 29|0|49|0|0|-1|-1 385|303|102|1|4|3|104 272|199|93|0|4|2|98 200|53|167|0|1|1|105 221|0|241|0|0|-1|145 144|0|164|0|0|-1|74 214|143|91|0|3|3|89 159|0|149|0|0|-1|44 365|132|253|1|2|2|84 384|154|250|1|2|2|90 362|110|272|1|2|2|125 354|53|321|1|1|1|78 63|53|30|0|1|1|83 146|0|166|0|0|-1|80 368|156|232|1|3|3|144 151|132|39|0|2|2|100 188|189|19|0|3|2|156 290|0|310|0|0|-1|95 287|251|56|0|4|3|150 138|53|105|0|1|1|90 115|99|6|0|1|1|47 363|213|170|1|3|2|93 338|261|97|1|5|2|93 24|0|44|0|0|-1|-1 135|74|81|0|1|1|82 271|189|102|0|3|2|151 322|85|257|0|2|2|86 97|74|43|0|1|1|74 219|0|239|0|0|-1|88 242|108|154|0|2|1|79 389|224|185|1|4|3|96 415|223|212|1|4|2|98 220|74|166|0|1|1|91 166|0|186|0|0|-1|99 121|110|31|0|2|2|141 439|0|459|1|0|-1|90 164|0|184|0|0|-1|90 26|0|46|0|0|-1|-1 93|0|113|0|0|-1|-1 308|0|328|0|0|-1|94 309|177|152|0|2|1|91 397|143|274|1|3|3|90 222|150|92|0|2|1|105 302|204|88|0|3|3|46 306|106|220|0|2|2|113 145|0|165|0|0|-1|147 385|189|216|1|3|2|147 313|0|333|0|0|-1|142 129|129|20|0|2|1|97 14|0|34|0|0|-1|-1 11|0|31|0|0|-1|-1 363|189|194|1|3|2|101 390|53|357|1|1|1|83 218|85|153|0|2|2|93 393|0|413|1|0|-1|148 366|190|196|1|3|1|77 136|74|82|0|1|1|81 64|53|31|0|1|1|84 227|85|162|0|2|2|89 172|0|192|0|0|-1|97 42|0|62|0|0|-1|-1 29|0|49|0|0|-1|-1 383|208|195|1|4|4|77 280|110|190|0|2|2|89
+ECONOMY TARGETS phap_su/build (shop=greedy event=risky): earned/run 231 in 350-450: MISS | items/run 1.61 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | small_out | 0 / 564 | 17.79 | 4.00 | 38.7 | 1:17(18) 3:37(2027) 4:40(5545) 5:37(1817) 6:53(15) 7:50(28) 8:42(26) 9:33(3) 10:50(2) | 0.18 (1) | 0.01 (0) | 2.28 | 0.97 | 83.0 (225/271) | 27.1 |
+WORLD VERDICT phap_su/build: run win 27.1% (target 10-100) PASS; est. minutes won run 21.2 (target 40-50) TOO SHORT; max region spread at a floor 66.7 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 31.4% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 27.1
+runtime: 278.9 s
+===== small_out / sat_thu
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=small_out (= remove:mono,bar2,bar3) | active 10: l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono, bar2, bar3 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... sat_thu 10/70 seeds, 29.4 s
+  ... sat_thu 20/70 seeds, 64.2 s
+  ... sat_thu 30/70 seeds, 98.7 s
+  ... sat_thu 40/70 seeds, 134.4 s
+  ... sat_thu 50/70 seeds, 170.0 s
+  ... sat_thu 60/70 seeds, 212.1 s
+  ... sat_thu 70/70 seeds, 243.4 s
+
+=== WORLD sat_thu / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | 4.3 | 3 | 41.3 | 24.4 | 6.46 | 9.60 | 101.7 | 66.5 | 0.17 | 26.1 (22.8-31.9) | 14.9 | 8.6 | 65/26/9 | 7.86 | 10.91 | 1.44 | 0.26 / 0.44 / 1.63 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| sat_thu | 1 | 88.6 | 8 | 11.9 | 88.6 | 100.0 | 56.3 |
+| sat_thu | 2 | 77.1 | 8 | 11.9 | 87.1 | 86.7 | 48.6 |
+| sat_thu | 3 | 40.0 | 26 | 38.8 | 51.9 | 80.4 | 36.6 |
+| sat_thu | 4 | 20.0 | 14 | 20.9 | 50.0 | 69.9 | 31.2 |
+| sat_thu | 5 | 4.3 | 11 | 16.4 | 21.4 | 64.2 | 21.5 |
+| sat_thu | final | 4.3 | 0 | 0.0 | 100.0 | 56.5 | 23.9 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| sat_thu | 1 | ch1 | 21 | 18 | 85.7 |
+| sat_thu | 1 | ch2 | 26 | 24 | 92.3 |
+| sat_thu | 1 | ch3 | 23 | 20 | 87.0 |
+| sat_thu | 2 | ch1 | 17 | 16 | 94.1 |
+| sat_thu | 2 | ch2 | 24 | 22 | 91.7 |
+| sat_thu | 2 | ch3 | 21 | 16 | 76.2 |
+| sat_thu | 3 | ch1 | 17 | 13 | 76.5 |
+| sat_thu | 3 | ch2 | 14 | 4 | 28.6 |
+| sat_thu | 3 | ch3 | 23 | 11 | 47.8 |
+| sat_thu | 4 | ch1 | 6 | 3 | 50.0 |
+| sat_thu | 4 | ch2 | 11 | 5 | 45.5 |
+| sat_thu | 4 | ch3 | 11 | 6 | 54.5 |
+| sat_thu | 5 | ch1 | 7 | 1 | 14.3 |
+| sat_thu | 5 | ch2 | 5 | 0 | 0.0 |
+| sat_thu | 5 | ch3 | 2 | 2 | 100.0 |
+
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=8, f2/boss=8, f3/battle=3, f3/boss=22, f3/event_fight=1, f4/battle=1, f4/boss=13, f5/battle=3, f5/boss=8
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 0.80 | owned at end (runs): an_don=5, chi_khau=6, phong_an=7, gai_ran=5, manh_tuoi=6, dinh_tam=2, la_ban=3, tam_huong=5, tui_rong=2, dau_than=1, khoi_the=3, phan_don=2, han_ky=3, huyet_an=6 | triggers / run: an_don=0.0, chi_khau=0.0, khoi_the=0.1, phan_don=0.2, huyet_an=4.0
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | greedy | risky | 4.3 | 146 (39-277) | 161 | 387 (372-395) | 160 / 1 / 1 | 53 (0-175) | 106 (17-241) | 274 (266-365) (3) | 0.64 | 1.56 | 1.61 (36) | 1.00; 2.00 | 0.79 / 0.21 / 0.00 | 91 (78-147) (60) | 100 |
+WORLD EVENTS | sat_thu | build | events / run 0.19 | non-leave choices / run 0.17 | tran_thach extra fights 1, deaths 1 (100.0%) | curses picked up / run 0.04 | curse draws / run 0.89 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.04 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, loi_the/swear=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=1, tran_thach/leave=1
+ECONOMY RAW sat_thu/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 10|0|30|0|0|-1|-1 193|85|128|0|2|2|88 92|0|112|0|0|-1|99 127|53|94|0|1|1|78 133|53|100|0|1|1|78 152|95|77|0|1|1|102 167|0|187|0|0|-1|91 232|0|252|0|0|-1|104 144|85|79|0|2|2|98 32|0|52|0|0|-1|-1 110|0|130|0|0|-1|-1 270|0|290|0|0|-1|74 387|143|264|1|3|3|89 12|0|2|0|0|-1|-1 22|0|42|0|0|-1|-1 138|154|4|0|2|2|90 185|0|205|0|0|-1|125 193|53|160|0|1|1|78 63|53|30|0|1|1|83 146|0|166|0|0|-1|80 220|0|240|0|0|-1|144 151|165|6|0|3|3|100 136|132|24|0|2|2|156 290|0|310|0|0|-1|95 248|251|17|0|4|3|150 102|53|69|0|1|1|90 166|99|57|0|1|1|47 242|213|49|0|3|2|93 191|201|10|0|4|2|93 85|0|105|0|0|-1|-1 277|190|107|0|3|1|82 131|0|151|0|0|-1|151 266|85|201|0|2|2|86 97|74|43|0|1|1|74 87|0|107|0|0|-1|88 190|53|157|0|1|1|79 91|0|111|0|0|-1|96 219|223|16|0|4|2|98 142|74|88|0|1|1|91 30|0|50|0|0|-1|-1 121|0|141|0|0|-1|141 132|0|152|0|0|-1|90 300|173|147|0|3|3|90 154|0|174|0|0|-1|87 144|154|10|0|2|2|164 146|0|166|0|0|-1|94 134|74|80|0|1|1|91 397|143|274|1|3|3|90 141|150|11|0|2|1|105 102|0|92|0|0|-1|46 40|0|60|0|0|-1|-1 183|0|203|0|0|-1|147 284|189|115|0|3|2|147 368|0|388|1|0|-1|142 185|129|76|0|2|1|97 137|74|83|0|1|1|83 11|0|31|0|0|-1|-1 251|198|73|0|3|2|101 281|53|248|0|1|1|83 218|85|153|0|2|2|93 220|0|240|0|0|-1|148 128|74|74|0|1|1|77 212|74|158|0|1|1|81 202|53|169|0|1|1|84 23|0|43|0|0|-1|-1 94|0|114|0|0|-1|97 169|0|189|0|0|-1|105 81|0|101|0|0|-1|101 147|0|167|0|0|-1|77 84|0|104|0|0|-1|89
+ECONOMY TARGETS sat_thu/build (shop=greedy event=risky): earned/run 161 in 350-450: MISS | items/run 1.00 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | small_out | 0 / 452 | 20.53 | 4.00 | 31.5 | 1:25(4) 3:37(1882) 4:31(4839) 5:26(1723) 6:67(3) 7:33(9) 8:40(5) | 0.06 (0) | 0.00 (0) | 2.00 | 1.76 | 70.6 (161/228) | 4.3 |
+WORLD VERDICT sat_thu/build: run win 4.3% (target 20-40) TOO HARD; est. minutes won run 26.1 (target 40-50) TOO SHORT; max region spread at a floor 47.9 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 38.8% (target <= 40) PASS; survival strictly decreasing FAIL (a floor with no deaths); boss hits / won run 41.3
+runtime: 243.6 s
+===== big_out / kiem_si
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=big_out (= remove:plus5,u5,bar5) | active 10: mono, bar2, bar3, l3, square, t4, l4, s4, bar4, p5 | removed: plus5, u5, bar5 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... kiem_si 10/70 seeds, 44.9 s
+  ... kiem_si 20/70 seeds, 98.2 s
+  ... kiem_si 30/70 seeds, 145.1 s
+  ... kiem_si 40/70 seeds, 195.6 s
+  ... kiem_si 50/70 seeds, 246.6 s
+  ... kiem_si 60/70 seeds, 287.2 s
+  ... kiem_si 70/70 seeds, 318.4 s
+
+=== WORLD kiem_si / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 18.6 | 13 | 41.3 | 33.2 | 7.46 | 10.99 | 119.5 | 76.5 | 0.14 | 27.8 (22.6-33.1) | 19.4 | 10.2 | 64/26/9 | 7.96 | 11.53 | 1.81 | 0.17 / 0.56 / 1.77 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| kiem_si | 1 | 88.6 | 8 | 14.0 | 88.6 | 100.0 | 68.1 |
+| kiem_si | 2 | 74.3 | 10 | 17.5 | 83.9 | 91.5 | 63.3 |
+| kiem_si | 3 | 58.6 | 11 | 19.3 | 78.8 | 89.5 | 56.8 |
+| kiem_si | 4 | 42.9 | 11 | 19.3 | 73.2 | 85.8 | 55.5 |
+| kiem_si | 5 | 22.9 | 14 | 24.6 | 53.3 | 84.8 | 59.4 |
+| kiem_si | final | 18.6 | 3 | 5.3 | 81.3 | 86.1 | 52.5 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| kiem_si | 1 | ch1 | 21 | 17 | 81.0 |
+| kiem_si | 1 | ch2 | 26 | 26 | 100.0 |
+| kiem_si | 1 | ch3 | 23 | 19 | 82.6 |
+| kiem_si | 2 | ch1 | 16 | 13 | 81.3 |
+| kiem_si | 2 | ch2 | 23 | 21 | 91.3 |
+| kiem_si | 2 | ch3 | 23 | 18 | 78.3 |
+| kiem_si | 3 | ch1 | 18 | 12 | 66.7 |
+| kiem_si | 3 | ch2 | 14 | 13 | 92.9 |
+| kiem_si | 3 | ch3 | 20 | 16 | 80.0 |
+| kiem_si | 4 | ch1 | 13 | 10 | 76.9 |
+| kiem_si | 4 | ch2 | 13 | 10 | 76.9 |
+| kiem_si | 4 | ch3 | 15 | 10 | 66.7 |
+| kiem_si | 5 | ch1 | 12 | 5 | 41.7 |
+| kiem_si | 5 | ch2 | 9 | 3 | 33.3 |
+| kiem_si | 5 | ch3 | 9 | 8 | 88.9 |
+
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=8, f2/boss=10, f3/battle=1, f3/boss=10, f4/battle=2, f4/boss=9, f5/battle=3, f5/boss=11, ffinal/final=3
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.20 | owned at end (runs): an_don=8, chi_khau=6, phong_an=10, gai_ran=8, manh_tuoi=7, dinh_tam=7, la_ban=5, tam_huong=5, tui_rong=5, dau_than=3, khoi_the=6, phan_don=4, han_ky=5, huyet_an=5 | triggers / run: an_don=0.6, chi_khau=0.2, khoi_the=0.2, phan_don=0.7, huyet_an=2.5
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | greedy | risky | 18.6 | 197 (29-365) | 204 | 376 (339-411) | 202 / 2 / 1 | 80 (0-213) | 110 (16-288) | 245 (186-352) (13) | 0.84 | 1.73 | 1.88 (43) | 1.46; 2.54 | 1.13 / 0.33 / 0.00 | 93 (77-147) (60) | 100 |
+WORLD EVENTS | kiem_si | build | events / run 0.21 | non-leave choices / run 0.21 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.19 | curse dmg / run 0.6 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=3, ke_buon_nguyen/accept=2, loi_the/swear=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=2
+ECONOMY RAW kiem_si/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 184|160|44|0|3|3|129 193|0|213|0|0|-1|88 92|0|112|0|0|-1|99 361|53|328|1|1|1|78 133|0|153|0|0|-1|78 192|95|117|0|1|1|102 29|0|49|0|0|-1|-1 217|0|237|0|0|-1|104 144|85|79|0|2|2|98 200|213|7|0|3|1|105 349|0|369|0|0|-1|145 311|268|63|0|4|3|74 82|0|102|0|0|-1|89 118|0|108|0|0|-1|44 22|0|42|0|0|-1|-1 283|154|149|0|2|2|90 362|110|272|1|2|2|125 244|53|211|0|1|1|78 177|191|6|0|3|1|83 376|208|188|1|4|4|80 78|0|98|0|0|-1|-1 286|213|93|0|3|2|100 136|132|24|0|2|2|156 305|0|325|0|0|-1|95 248|251|17|0|4|3|150 274|53|241|0|1|1|90 115|99|6|0|1|1|47 258|213|65|0|3|2|93 338|261|97|1|5|2|93 24|0|44|0|0|-1|-1 14|0|34|0|0|-1|-1 131|0|151|0|0|-1|151 266|85|201|0|2|2|86 194|190|24|0|3|1|74 24|0|44|0|0|-1|-1 333|108|245|1|2|1|79 389|224|185|1|4|3|96 415|223|212|1|4|2|98 71|74|17|0|1|1|91 219|0|239|0|0|-1|99 364|191|193|1|3|2|141 439|0|459|1|0|-1|90 264|0|284|0|0|-1|90 154|0|174|0|0|-1|87 272|154|138|0|2|2|164 87|0|107|0|0|-1|94 71|74|17|0|1|1|91 397|143|274|1|3|3|90 85|95|10|0|1|1|105 343|0|333|1|0|-1|46 124|106|38|0|2|2|113 321|192|149|0|4|4|147 191|189|22|0|3|2|147 209|0|229|0|0|-1|142 129|129|20|0|2|1|97 63|74|9|0|1|1|83 59|0|79|0|0|-1|-1 81|95|6|0|2|2|101 390|53|357|1|1|1|83 218|85|153|0|2|2|93 300|0|320|0|0|-1|148 128|74|74|0|1|1|77 13|0|33|0|0|-1|-1 13|0|33|0|0|-1|-1 227|85|162|0|2|2|89 28|0|48|0|0|-1|-1 297|180|137|0|3|3|105 135|151|4|0|2|1|101 383|208|195|1|4|4|77 280|110|190|0|2|2|89
+ECONOMY TARGETS kiem_si/build (shop=greedy event=risky): earned/run 204 in 350-450: MISS | items/run 1.46 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | big_out | 0 / 522 | 23.61 | 3.09 | 34.5 | 1:35(1581) 2:37(1787) 3:36(3261) 4:32(4349) 5:40(499) 6:32(66) 7:67(3) 8:50(6) | 0.65 (3) | 0.11 (0) | 3.08 | 1.45 | 78.8 (201/255) | 18.6 |
+WORLD VERDICT kiem_si/build: run win 18.6% (target 20-40) TOO HARD; est. minutes won run 27.8 (target 40-50) TOO SHORT; max region spread at a floor 55.6 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 24.6% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 41.3
+runtime: 318.7 s
+===== big_out / phap_su
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=big_out (= remove:plus5,u5,bar5) | active 10: mono, bar2, bar3, l3, square, t4, l4, s4, bar4, p5 | removed: plus5, u5, bar5 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... phap_su 10/70 seeds, 39.8 s
+  ... phap_su 20/70 seeds, 82.7 s
+  ... phap_su 30/70 seeds, 127.5 s
+  ... phap_su 40/70 seeds, 176.8 s
+  ... phap_su 50/70 seeds, 224.7 s
+  ... phap_su 60/70 seeds, 267.1 s
+  ... phap_su 70/70 seeds, 300.4 s
+
+=== WORLD phap_su / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | 17.1 | 12 | 34.1 | 27.5 | 7.43 | 11.01 | 108.9 | 67.2 | 0.06 | 25.4 (20.4-30.5) | 18.1 | 10.2 | 64/26/9 | 8.13 | 11.74 | 1.67 | 0.30 / 0.47 / 1.84 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| phap_su | 1 | 94.3 | 4 | 6.9 | 94.3 | 100.0 | 57.6 |
+| phap_su | 2 | 81.4 | 9 | 15.5 | 86.4 | 87.7 | 47.2 |
+| phap_su | 3 | 54.3 | 19 | 32.8 | 66.7 | 79.3 | 36.7 |
+| phap_su | 4 | 32.9 | 15 | 25.9 | 60.5 | 71.0 | 38.2 |
+| phap_su | 5 | 18.6 | 10 | 17.2 | 56.5 | 71.9 | 35.7 |
+| phap_su | final | 17.1 | 1 | 1.7 | 92.3 | 69.8 | 29.7 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| phap_su | 1 | ch1 | 21 | 17 | 81.0 |
+| phap_su | 1 | ch2 | 26 | 26 | 100.0 |
+| phap_su | 1 | ch3 | 23 | 23 | 100.0 |
+| phap_su | 2 | ch1 | 19 | 14 | 73.7 |
+| phap_su | 2 | ch2 | 24 | 23 | 95.8 |
+| phap_su | 2 | ch3 | 23 | 20 | 87.0 |
+| phap_su | 3 | ch1 | 19 | 11 | 57.9 |
+| phap_su | 3 | ch2 | 17 | 12 | 70.6 |
+| phap_su | 3 | ch3 | 21 | 15 | 71.4 |
+| phap_su | 4 | ch1 | 12 | 6 | 50.0 |
+| phap_su | 4 | ch2 | 11 | 9 | 81.8 |
+| phap_su | 4 | ch3 | 15 | 8 | 53.3 |
+| phap_su | 5 | ch1 | 13 | 6 | 46.2 |
+| phap_su | 5 | ch2 | 7 | 4 | 57.1 |
+| phap_su | 5 | ch3 | 3 | 3 | 100.0 |
+
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=4, f2/boss=9, f3/boss=19, f4/boss=15, f5/battle=2, f5/boss=8, ffinal/final=1
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 1.00 | owned at end (runs): an_don=6, chi_khau=6, phong_an=9, gai_ran=6, manh_tuoi=7, dinh_tam=4, la_ban=4, tam_huong=3, tui_rong=4, dau_than=4, khoi_the=5, phan_don=3, han_ky=4, huyet_an=5 | triggers / run: an_don=0.3, chi_khau=0.2, khoi_the=0.3, phan_don=0.5, huyet_an=3.0
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | greedy | risky | 17.1 | 190 (78-365) | 202 | 375 (357-396) | 200 / 2 / 1 | 64 (0-208) | 151 (30-263) | 213 (168-320) (12) | 0.74 | 1.65 | 1.74 (42) | 1.23; 2.75 | 0.97 / 0.26 / 0.00 | 93 (78-146) (65) | 100 |
+WORLD EVENTS | phap_su | build | events / run 0.24 | non-leave choices / run 0.21 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.09 | curse dmg / run 0.5 | matches slowed by loi_the / run 0.07 | picks: ban_tho_mau/give=1, ban_tho_mau/leave=1, ke_buon_nguyen/accept=2, ke_lang_thang/swap=1, loi_the/swear=3, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=3, tran_thach/fight=1, tran_thach/leave=1
+ECONOMY RAW phap_su/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 184|160|44|0|3|3|129 254|85|189|0|2|2|88 241|0|261|0|0|-1|99 127|53|94|0|1|1|78 230|53|197|0|1|1|78 152|95|77|0|1|1|102 29|0|49|0|0|-1|-1 100|0|120|0|0|-1|104 78|0|98|0|0|-1|98 286|213|93|0|3|1|105 140|0|160|0|0|-1|145 356|208|168|1|3|3|74 214|143|91|0|3|3|89 118|77|31|0|1|1|44 126|0|146|0|0|-1|84 138|154|4|0|2|2|90 362|110|272|1|2|2|125 244|53|211|0|1|1|78 63|53|30|0|1|1|83 146|0|166|0|0|-1|80 78|0|98|0|0|-1|-1 286|0|306|0|0|-1|100 188|132|76|0|2|2|156 242|0|262|0|0|-1|95 248|251|17|0|4|3|150 274|53|241|0|1|1|90 14|0|4|0|0|-1|-1 363|213|170|1|3|2|93 338|261|97|1|5|2|93 24|0|44|0|0|-1|-1 375|74|321|1|1|1|82 131|0|151|0|0|-1|151 197|0|217|0|0|-1|86 132|74|78|0|1|1|74 87|0|107|0|0|-1|88 11|0|31|0|0|-1|-1 389|224|185|1|4|3|96 390|223|187|1|4|2|98 220|74|166|0|1|1|91 166|0|186|0|0|-1|99 364|191|193|1|3|2|141 439|0|459|1|0|-1|90 164|0|184|0|0|-1|90 154|0|174|0|0|-1|87 225|154|91|0|2|2|164 225|0|245|0|0|-1|94 235|74|181|0|1|1|91 397|143|274|1|3|3|90 85|95|10|0|1|1|105 185|0|175|0|0|-1|46 214|106|128|0|2|2|113 145|0|165|0|0|-1|147 385|173|232|1|3|3|147 209|0|229|0|0|-1|142 129|129|20|0|2|1|97 137|74|83|0|1|1|83 131|0|151|0|0|-1|136 251|198|73|0|3|2|101 63|53|30|0|1|1|83 218|85|153|0|2|2|93 352|0|372|0|0|-1|148 191|74|137|0|1|1|77 136|74|82|0|1|1|81 135|53|102|0|1|1|84 375|85|310|1|2|2|89 172|0|192|0|0|-1|97 104|0|124|0|0|-1|105 81|74|27|0|1|1|101 203|208|15|0|4|4|77 280|110|190|0|2|2|89
+ECONOMY TARGETS phap_su/build (shop=greedy event=risky): earned/run 202 in 350-450: MISS | items/run 1.23 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | big_out | 0 / 520 | 20.81 | 3.07 | 39.1 | 1:34(1437) 2:36(1653) 3:37(2807) 4:42(3908) 5:53(425) 6:52(66) 7:59(34) 8:50(8) | 0.60 (3) | 0.07 (0) | 3.03 | 0.90 | 77.6 (197/254) | 17.1 |
+WORLD VERDICT phap_su/build: run win 17.1% (target 10-100) PASS; est. minutes won run 25.4 (target 40-50) TOO SHORT; max region spread at a floor 31.8 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 32.8% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 34.1
+runtime: 300.7 s
+===== big_out / sat_thu
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=big_out (= remove:plus5,u5,bar5) | active 10: mono, bar2, bar3, l3, square, t4, l4, s4, bar4, p5 | removed: plus5, u5, bar5 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... sat_thu 10/70 seeds, 41.4 s
+  ... sat_thu 20/70 seeds, 88.0 s
+  ... sat_thu 30/70 seeds, 126.7 s
+  ... sat_thu 40/70 seeds, 168.4 s
+  ... sat_thu 50/70 seeds, 201.9 s
+  ... sat_thu 60/70 seeds, 233.4 s
+  ... sat_thu 70/70 seeds, 270.6 s
+
+=== WORLD sat_thu / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | 11.4 | 8 | 34.3 | 24.5 | 6.74 | 9.99 | 102.4 | 66.3 | 0.07 | 23.8 (20.9-27.1) | 15.7 | 9.1 | 65/26/9 | 7.97 | 11.09 | 1.54 | 0.24 / 0.47 / 1.61 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| sat_thu | 1 | 88.6 | 8 | 12.9 | 88.6 | 100.0 | 58.0 |
+| sat_thu | 2 | 75.7 | 9 | 14.5 | 85.5 | 88.2 | 47.1 |
+| sat_thu | 3 | 47.1 | 20 | 32.3 | 62.3 | 79.1 | 35.7 |
+| sat_thu | 4 | 21.4 | 18 | 29.0 | 45.5 | 70.0 | 38.8 |
+| sat_thu | 5 | 11.4 | 7 | 11.3 | 53.3 | 73.6 | 47.3 |
+| sat_thu | final | 11.4 | 0 | 0.0 | 100.0 | 82.2 | 31.2 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| sat_thu | 1 | ch1 | 21 | 16 | 76.2 |
+| sat_thu | 1 | ch2 | 26 | 26 | 100.0 |
+| sat_thu | 1 | ch3 | 23 | 20 | 87.0 |
+| sat_thu | 2 | ch1 | 17 | 14 | 82.4 |
+| sat_thu | 2 | ch2 | 23 | 20 | 87.0 |
+| sat_thu | 2 | ch3 | 22 | 19 | 86.4 |
+| sat_thu | 3 | ch1 | 16 | 9 | 56.3 |
+| sat_thu | 3 | ch2 | 14 | 11 | 78.6 |
+| sat_thu | 3 | ch3 | 23 | 13 | 56.5 |
+| sat_thu | 4 | ch1 | 12 | 5 | 41.7 |
+| sat_thu | 4 | ch2 | 10 | 4 | 40.0 |
+| sat_thu | 4 | ch3 | 11 | 6 | 54.5 |
+| sat_thu | 5 | ch1 | 8 | 4 | 50.0 |
+| sat_thu | 5 | ch2 | 5 | 2 | 40.0 |
+| sat_thu | 5 | ch3 | 2 | 2 | 100.0 |
+
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=8, f2/boss=9, f3/battle=1, f3/boss=19, f4/battle=1, f4/boss=17, f5/battle=2, f5/boss=5
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 0.96 | owned at end (runs): an_don=4, chi_khau=5, phong_an=10, gai_ran=4, manh_tuoi=9, dinh_tam=4, la_ban=5, tam_huong=5, tui_rong=4, dau_than=2, khoi_the=3, phan_don=4, han_ky=2, huyet_an=6 | triggers / run: an_don=0.3, chi_khau=0.1, khoi_the=0.2, phan_don=0.7, huyet_an=3.7
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | greedy | risky | 11.4 | 159 (31-332) | 173 | 359 (336-393) | 171 / 2 / 1 | 53 (0-193) | 107 (26-218) | 177 (99-287) (8) | 0.73 | 1.69 | 1.78 (41) | 1.23; 3.25 | 0.93 / 0.30 / 0.00 | 91 (77-145) (60) | 100 |
+WORLD EVENTS | sat_thu | build | events / run 0.21 | non-leave choices / run 0.16 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.03 | curse draws / run 0.43 | curse dmg / run 0.6 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/leave=2, ke_buon_nguyen/accept=1, ke_lang_thang/leave=1, loi_the/leave=1, loi_the/swear=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=2
+ECONOMY RAW sat_thu/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 259|160|119|0|3|3|129 193|85|128|0|2|2|88 30|0|50|0|0|-1|-1 127|53|94|0|1|1|78 200|53|167|0|1|1|78 152|95|77|0|1|1|102 167|0|187|0|0|-1|91 217|0|237|0|0|-1|104 144|85|79|0|2|2|98 200|95|125|0|2|2|105 221|0|241|0|0|-1|145 356|208|168|1|3|3|74 214|143|91|0|3|3|89 118|0|108|0|0|-1|44 22|0|42|0|0|-1|-1 283|154|149|0|2|2|90 362|0|382|1|0|-1|125 244|53|211|0|1|1|78 14|0|34|0|0|-1|-1 196|0|216|0|0|-1|80 220|0|240|0|0|-1|144 249|165|104|0|3|3|100 136|132|24|0|2|2|156 31|0|51|0|0|-1|-1 331|251|100|1|4|3|150 138|53|105|0|1|1|90 166|99|57|0|1|1|47 87|0|107|0|0|-1|93 338|261|97|1|5|2|93 160|0|180|0|0|-1|159 135|74|81|0|1|1|82 131|0|151|0|0|-1|151 197|85|132|0|2|2|86 338|242|116|1|3|1|74 143|0|163|0|0|-1|88 59|53|26|0|1|1|79 389|224|185|1|4|3|96 390|223|187|1|4|2|98 71|74|17|0|1|1|91 30|0|50|0|0|-1|-1 266|191|95|0|3|2|141 157|0|177|0|0|-1|90 399|173|246|1|3|3|90 154|0|174|0|0|-1|87 29|0|49|0|0|-1|-1 87|0|107|0|0|-1|94 134|74|80|0|1|1|91 29|0|49|0|0|-1|-1 85|95|10|0|1|1|105 102|0|92|0|0|-1|46 214|106|128|0|2|2|113 28|0|48|0|0|-1|-1 191|189|22|0|3|2|147 67|0|87|0|0|-1|-1 129|129|20|0|2|1|97 137|74|83|0|1|1|83 99|0|119|0|0|-1|-1 81|0|101|0|0|-1|101 141|53|108|0|1|1|83 243|85|178|0|2|2|93 145|0|165|0|0|-1|148 261|155|126|0|2|1|77 61|74|7|0|1|1|81 202|53|169|0|1|1|84 227|85|162|0|2|2|89 253|0|273|0|0|-1|97 242|0|262|0|0|-1|105 81|74|27|0|1|1|101 203|208|15|0|4|4|77 201|143|78|0|3|3|89
+ECONOMY TARGETS sat_thu/build (shop=greedy event=risky): earned/run 173 in 350-450: MISS | items/run 1.23 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | big_out | 0 / 472 | 20.53 | 3.09 | 36.2 | 1:39(1292) 2:41(1392) 3:36(2512) 4:32(3475) 5:43(407) 6:30(50) 7:50(6) 8:0(3) | 0.57 (3) | 0.10 (0) | 2.74 | 1.13 | 73.4 (171/233) | 11.4 |
+WORLD VERDICT sat_thu/build: run win 11.4% (target 20-40) TOO HARD; est. minutes won run 23.8 (target 40-50) TOO SHORT; max region spread at a floor 23.8 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 32.3% (target <= 40) PASS; survival strictly decreasing FAIL (a floor with no deaths); boss hits / won run 34.3
+runtime: 270.8 s
+===== remove_mono / kiem_si
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=remove:mono | active 12: bar2, bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... kiem_si 10/70 seeds, 62.5 s
+  ... kiem_si 20/70 seeds, 110.1 s
+  ... kiem_si 30/70 seeds, 147.3 s
+  ... kiem_si 40/70 seeds, 189.7 s
+  ... kiem_si 50/70 seeds, 225.3 s
+  ... kiem_si 60/70 seeds, 262.5 s
+  ... kiem_si 70/70 seeds, 300.7 s
+
+=== WORLD kiem_si / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 40.0 | 28 | 41.4 | 34.6 | 8.50 | 12.49 | 108.5 | 70.2 | 0.07 | 26.4 (19.5-33.0) | 20.6 | 11.9 | 63/27/10 | 8.09 | 12.21 | 2.23 | 0.19 / 0.59 / 1.87 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| kiem_si | 1 | 92.9 | 5 | 11.9 | 92.9 | 100.0 | 70.8 |
+| kiem_si | 2 | 85.7 | 5 | 11.9 | 92.3 | 92.8 | 67.6 |
+| kiem_si | 3 | 67.1 | 13 | 31.0 | 78.3 | 90.6 | 58.6 |
+| kiem_si | 4 | 58.6 | 6 | 14.3 | 87.2 | 87.2 | 57.0 |
+| kiem_si | 5 | 44.3 | 10 | 23.8 | 75.6 | 85.8 | 53.0 |
+| kiem_si | final | 40.0 | 3 | 7.1 | 90.3 | 82.5 | 47.2 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| kiem_si | 1 | ch1 | 21 | 19 | 90.5 |
+| kiem_si | 1 | ch2 | 26 | 24 | 92.3 |
+| kiem_si | 1 | ch3 | 23 | 22 | 95.7 |
+| kiem_si | 2 | ch1 | 19 | 17 | 89.5 |
+| kiem_si | 2 | ch2 | 23 | 21 | 91.3 |
+| kiem_si | 2 | ch3 | 23 | 22 | 95.7 |
+| kiem_si | 3 | ch1 | 19 | 14 | 73.7 |
+| kiem_si | 3 | ch2 | 18 | 15 | 83.3 |
+| kiem_si | 3 | ch3 | 23 | 18 | 78.3 |
+| kiem_si | 4 | ch1 | 14 | 11 | 78.6 |
+| kiem_si | 4 | ch2 | 13 | 11 | 84.6 |
+| kiem_si | 4 | ch3 | 20 | 19 | 95.0 |
+| kiem_si | 5 | ch1 | 17 | 12 | 70.6 |
+| kiem_si | 5 | ch2 | 12 | 10 | 83.3 |
+| kiem_si | 5 | ch3 | 12 | 9 | 75.0 |
+
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=5, f2/boss=5, f3/battle=1, f3/boss=12, f4/battle=1, f4/boss=5, f5/battle=1, f5/boss=9, ffinal/final=3
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.57 | owned at end (runs): an_don=12, chi_khau=10, phong_an=11, gai_ran=11, manh_tuoi=11, dinh_tam=8, la_ban=5, tam_huong=5, tui_rong=5, dau_than=5, khoi_the=7, phan_don=4, han_ky=8, huyet_an=8 | triggers / run: an_don=0.1, chi_khau=0.2, khoi_the=0.4, phan_don=0.7, huyet_an=8.0
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | greedy | risky | 40.0 | 282 (85-385) | 250 | 376 (339-392) | 249 / 2 / 1 | 110 (0-251) | 128 (33-272) | 196 (101-327) (28) | 1.14 | 1.77 | 1.93 (54) | 2.03; 2.96 | 1.53 / 0.50 / 0.00 | 91 (77-146) (64) | 100 |
+WORLD EVENTS | kiem_si | build | events / run 0.21 | non-leave choices / run 0.21 | tran_thach extra fights 1, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.13 | curse dmg / run 0.5 | matches slowed by loi_the / run 0.09 | picks: ban_tho_mau/give=2, ke_buon_nguyen/accept=2, loi_the/swear=3, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=3, tran_thach/fight=1
+ECONOMY RAW kiem_si/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 351|160|211|1|3|3|129 193|85|128|0|2|2|88 92|0|112|0|0|-1|99 127|53|94|0|1|1|78 285|293|12|0|5|1|78 152|95|77|0|1|1|102 332|291|61|0|5|3|91 385|303|102|1|4|3|104 377|85|312|1|2|2|98 372|213|179|1|3|1|105 110|0|130|0|0|-1|-1 356|268|108|1|4|3|74 387|143|264|1|3|3|89 118|77|31|0|1|1|44 283|132|171|0|2|2|84 384|154|250|1|2|2|90 362|110|272|1|2|2|125 123|53|90|0|1|1|78 330|251|99|1|4|1|83 376|208|188|1|4|4|80 13|0|33|0|0|-1|-1 151|0|171|0|0|-1|100 250|132|138|0|2|2|156 409|0|429|1|0|-1|95 331|251|100|1|4|3|150 364|53|331|1|1|1|90 208|99|99|0|1|1|47 363|213|170|1|3|2|93 338|261|97|1|5|2|93 24|0|44|0|0|-1|-1 135|74|81|0|1|1|82 378|189|209|1|3|2|151 376|265|131|1|5|2|86 245|190|75|0|3|1|74 87|0|107|0|0|-1|88 107|108|19|0|2|1|79 389|224|185|1|4|3|96 78|85|13|0|2|2|98 379|74|325|1|1|1|91 30|0|50|0|0|-1|-1 364|191|193|1|3|2|141 439|0|459|1|0|-1|90 86|0|106|0|0|-1|90 154|0|174|0|0|-1|87 225|154|91|0|2|2|164 28|0|48|0|0|-1|-1 188|177|31|0|2|1|91 397|143|274|1|3|3|90 222|150|92|0|2|1|105 151|0|141|0|0|-1|46 137|106|51|0|2|2|113 363|192|191|1|4|4|147 385|189|216|1|3|2|147 139|0|159|0|0|-1|142 241|249|12|0|4|1|97 14|0|34|0|0|-1|-1 340|233|127|1|4|3|136 251|198|73|0|3|2|101 281|53|248|0|1|1|83 121|85|56|0|2|2|93 352|0|372|0|0|-1|148 366|190|196|1|3|1|77 61|74|7|0|1|1|81 135|53|102|0|1|1|84 285|85|220|0|2|2|89 326|192|154|0|3|3|97 340|180|180|0|3|3|105 390|151|259|1|2|1|101 383|208|195|1|4|4|77 201|110|111|0|2|2|89
+ECONOMY TARGETS kiem_si/build (shop=greedy event=risky): earned/run 250 in 350-450: MISS | items/run 2.03 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | remove:mono | 0 / 595 | 21.65 | 3.57 | 33.7 | 1:29(24) 2:38(1887) 3:36(3533) 4:32(4654) 5:28(1754) 6:33(69) 7:22(23) 8:67(3) | 0.36 (2) | 0.08 (0) | 2.54 | 1.55 | 86.2 (244/283) | 40.0 |
+WORLD VERDICT kiem_si/build: run win 40.0% (target 20-40) PASS; est. minutes won run 26.4 (target 40-50) TOO SHORT; max region spread at a floor 16.4 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 31.0% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 41.4
+runtime: 301.1 s
+===== remove_mono / phap_su
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=remove:mono | active 12: bar2, bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... phap_su 10/70 seeds, 45.5 s
+  ... phap_su 20/70 seeds, 93.0 s
+  ... phap_su 30/70 seeds, 131.9 s
+  ... phap_su 40/70 seeds, 171.2 s
+  ... phap_su 50/70 seeds, 202.9 s
+  ... phap_su 60/70 seeds, 243.4 s
+  ... phap_su 70/70 seeds, 279.0 s
+
+=== WORLD phap_su / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | 25.7 | 18 | 32.3 | 27.5 | 8.20 | 12.09 | 99.0 | 62.5 | 0.06 | 24.0 (20.9-28.2) | 18.6 | 11.3 | 64/27/10 | 8.11 | 12.10 | 2.09 | 0.27 / 0.46 / 2.00 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| phap_su | 1 | 92.9 | 5 | 9.6 | 92.9 | 100.0 | 59.2 |
+| phap_su | 2 | 82.9 | 7 | 13.5 | 89.2 | 87.7 | 52.4 |
+| phap_su | 3 | 68.6 | 10 | 19.2 | 82.8 | 82.9 | 46.6 |
+| phap_su | 4 | 50.0 | 13 | 25.0 | 72.9 | 77.9 | 46.7 |
+| phap_su | 5 | 31.4 | 13 | 25.0 | 62.9 | 79.1 | 35.8 |
+| phap_su | final | 25.7 | 4 | 7.7 | 81.8 | 69.8 | 47.6 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| phap_su | 1 | ch1 | 21 | 18 | 85.7 |
+| phap_su | 1 | ch2 | 26 | 25 | 96.2 |
+| phap_su | 1 | ch3 | 23 | 22 | 95.7 |
+| phap_su | 2 | ch1 | 18 | 16 | 88.9 |
+| phap_su | 2 | ch2 | 24 | 24 | 100.0 |
+| phap_su | 2 | ch3 | 23 | 18 | 78.3 |
+| phap_su | 3 | ch1 | 17 | 14 | 82.4 |
+| phap_su | 3 | ch2 | 17 | 16 | 94.1 |
+| phap_su | 3 | ch3 | 24 | 18 | 75.0 |
+| phap_su | 4 | ch1 | 17 | 8 | 47.1 |
+| phap_su | 4 | ch2 | 13 | 12 | 92.3 |
+| phap_su | 4 | ch3 | 18 | 15 | 83.3 |
+| phap_su | 5 | ch1 | 14 | 8 | 57.1 |
+| phap_su | 5 | ch2 | 12 | 8 | 66.7 |
+| phap_su | 5 | ch3 | 9 | 6 | 66.7 |
+
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=5, f2/boss=7, f3/boss=10, f4/boss=13, f5/battle=2, f5/boss=11, ffinal/final=4
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 1.39 | owned at end (runs): an_don=11, chi_khau=12, phong_an=11, gai_ran=10, manh_tuoi=9, dinh_tam=3, la_ban=3, tam_huong=8, tui_rong=3, dau_than=3, khoi_the=7, phan_don=3, han_ky=8, huyet_an=6 | triggers / run: chi_khau=0.4, khoi_the=0.4, phan_don=0.4, huyet_an=4.0
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | greedy | risky | 25.7 | 228 (78-378) | 234 | 367 (339-398) | 232 / 2 / 1 | 90 (0-230) | 108 (15-326) | 222 (123-371) (18) | 0.96 | 1.93 | 2.02 (48) | 1.84; 2.56 | 1.33 / 0.51 / 0.00 | 93 (78-146) (65) | 100 |
+WORLD EVENTS | phap_su | build | events / run 0.23 | non-leave choices / run 0.23 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.07 | curse dmg / run 0.5 | matches slowed by loi_the / run 0.09 | picks: ban_tho_mau/give=2, ke_buon_nguyen/accept=2, ke_lang_thang/swap=1, loi_the/swear=3, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=2
+ECONOMY RAW phap_su/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 10|0|30|0|0|-1|-1 193|85|128|0|2|2|88 92|0|112|0|0|-1|99 361|53|328|1|1|1|78 285|293|12|0|5|1|78 152|95|77|0|1|1|102 281|291|10|0|5|3|91 295|303|12|0|4|3|104 144|85|79|0|2|2|98 372|213|179|1|3|1|105 306|0|326|0|0|-1|145 356|268|108|1|4|3|74 387|143|264|1|3|3|89 73|0|63|0|0|-1|44 79|0|99|0|0|-1|84 138|154|4|0|2|2|90 185|110|95|0|2|2|125 299|53|266|0|1|1|78 231|209|42|0|4|1|83 274|208|86|0|4|4|80 368|156|232|1|3|3|144 249|213|56|0|3|2|100 136|132|24|0|2|2|156 358|0|378|0|0|-1|95 331|251|100|1|4|3|150 215|53|182|0|1|1|90 14|0|4|0|0|-1|-1 363|213|170|1|3|2|93 338|228|130|1|5|5|93 24|0|44|0|0|-1|-1 135|74|81|0|1|1|82 378|0|398|1|0|-1|151 197|0|217|0|0|-1|86 245|262|3|0|5|1|74 87|0|107|0|0|-1|88 190|108|102|0|2|1|79 389|197|212|1|3|3|96 415|223|212|1|4|2|98 220|74|166|0|1|1|91 166|0|186|0|0|-1|99 364|191|193|1|3|2|141 382|0|402|0|0|-1|90 164|0|184|0|0|-1|90 295|184|131|0|4|4|87 225|154|91|0|2|2|164 87|0|107|0|0|-1|94 134|74|80|0|1|1|91 307|143|184|0|3|3|90 222|150|92|0|2|1|105 10|0|0|0|0|-1|-1 214|106|128|0|2|2|113 220|0|240|0|0|-1|147 191|189|22|0|3|2|147 265|180|105|0|3|3|142 185|129|76|0|2|1|97 63|0|83|0|0|-1|83 340|0|360|1|0|-1|136 237|198|59|0|3|2|101 390|53|357|1|1|1|83 256|85|191|0|2|2|93 393|0|413|1|0|-1|148 366|74|312|1|1|1|77 13|0|33|0|0|-1|-1 359|245|134|1|5|1|84 152|85|87|0|2|2|89 410|192|238|1|3|3|97 169|0|189|0|0|-1|105 81|74|27|0|1|1|101 203|208|15|0|4|4|77 324|110|234|0|2|2|89
+ECONOMY TARGETS phap_su/build (shop=greedy event=risky): earned/run 234 in 350-450: MISS | items/run 1.84 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | remove:mono | 0 / 574 | 19.27 | 3.60 | 37.8 | 1:10(10) 2:36(1661) 3:34(2994) 4:42(4170) 5:37(1525) 6:52(60) 7:36(53) 8:38(29) 9:67(3) | 0.46 (2) | 0.07 (0) | 2.65 | 0.94 | 82.6 (228/276) | 25.7 |
+WORLD VERDICT phap_su/build: run win 25.7% (target 10-100) PASS; est. minutes won run 24.0 (target 40-50) TOO SHORT; max region spread at a floor 45.2 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 25.0% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 32.3
+runtime: 279.2 s
+===== remove_mono / sat_thu
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=remove:mono | active 12: bar2, bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... sat_thu 10/70 seeds, 43.2 s
+  ... sat_thu 20/70 seeds, 75.5 s
+  ... sat_thu 30/70 seeds, 106.9 s
+  ... sat_thu 40/70 seeds, 144.2 s
+  ... sat_thu 50/70 seeds, 173.8 s
+  ... sat_thu 60/70 seeds, 208.7 s
+  ... sat_thu 70/70 seeds, 245.5 s
+
+=== WORLD sat_thu / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | 11.4 | 8 | 34.0 | 25.4 | 7.14 | 10.56 | 97.6 | 63.6 | 0.01 | 24.0 (21.2-29.5) | 16.0 | 9.7 | 65/26/9 | 7.99 | 11.30 | 1.71 | 0.34 / 0.46 / 1.71 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| sat_thu | 1 | 91.4 | 6 | 9.7 | 91.4 | 100.0 | 61.3 |
+| sat_thu | 2 | 77.1 | 10 | 16.1 | 84.4 | 88.4 | 51.4 |
+| sat_thu | 3 | 51.4 | 18 | 29.0 | 66.7 | 82.3 | 42.7 |
+| sat_thu | 4 | 30.0 | 15 | 24.2 | 58.3 | 75.2 | 37.7 |
+| sat_thu | 5 | 17.1 | 9 | 14.5 | 57.1 | 71.6 | 31.4 |
+| sat_thu | final | 11.4 | 4 | 6.5 | 66.7 | 66.4 | 36.5 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| sat_thu | 1 | ch1 | 21 | 17 | 81.0 |
+| sat_thu | 1 | ch2 | 26 | 26 | 100.0 |
+| sat_thu | 1 | ch3 | 23 | 21 | 91.3 |
+| sat_thu | 2 | ch1 | 17 | 15 | 88.2 |
+| sat_thu | 2 | ch2 | 24 | 20 | 83.3 |
+| sat_thu | 2 | ch3 | 23 | 19 | 82.6 |
+| sat_thu | 3 | ch1 | 15 | 10 | 66.7 |
+| sat_thu | 3 | ch2 | 17 | 13 | 76.5 |
+| sat_thu | 3 | ch3 | 22 | 13 | 59.1 |
+| sat_thu | 4 | ch1 | 12 | 3 | 25.0 |
+| sat_thu | 4 | ch2 | 10 | 9 | 90.0 |
+| sat_thu | 4 | ch3 | 14 | 9 | 64.3 |
+| sat_thu | 5 | ch1 | 9 | 3 | 33.3 |
+| sat_thu | 5 | ch2 | 5 | 2 | 40.0 |
+| sat_thu | 5 | ch3 | 7 | 7 | 100.0 |
+
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=6, f2/boss=10, f3/battle=3, f3/boss=15, f4/battle=1, f4/boss=14, f5/boss=9, ffinal/final=4
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 1.03 | owned at end (runs): an_don=7, chi_khau=8, phong_an=7, gai_ran=7, manh_tuoi=6, dinh_tam=5, la_ban=2, tam_huong=7, tui_rong=2, dau_than=2, khoi_the=4, phan_don=4, han_ky=6, huyet_an=5 | triggers / run: an_don=0.0, chi_khau=0.1, khoi_the=0.2, phan_don=0.3, huyet_an=3.0
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | greedy | risky | 11.4 | 182 (59-354) | 188 | 367 (360-397) | 187 / 1 / 1 | 74 (0-214) | 98 (13-255) | 271 (181-393) (8) | 0.76 | 1.81 | 1.88 (43) | 1.37; 1.88 | 1.00 / 0.37 / 0.00 | 91 (77-145) (62) | 100 |
+WORLD EVENTS | sat_thu | build | events / run 0.17 | non-leave choices / run 0.16 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.79 | curse dmg / run 0.3 | matches slowed by loi_the / run 0.01 | picks: ke_buon_nguyen/accept=2, loi_the/leave=1, loi_the/swear=1, mo_hoang/dig=1, song_bac/bet_small=2, suoi_tinh/bathe=3, tran_thach/fight=2
+ECONOMY RAW sat_thu/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 184|160|44|0|3|3|129 180|85|115|0|2|2|88 30|0|50|0|0|-1|-1 320|53|287|0|1|1|78 200|53|167|0|1|1|78 152|95|77|0|1|1|102 90|0|110|0|0|-1|91 138|0|158|0|0|-1|104 78|85|13|0|2|2|98 286|198|108|0|3|2|105 140|0|160|0|0|-1|145 199|208|11|0|3|3|74 82|0|102|0|0|-1|89 12|0|2|0|0|-1|-1 365|132|253|1|2|2|84 138|154|4|0|2|2|90 105|110|15|0|2|2|125 58|0|78|0|0|-1|78 107|53|74|0|1|1|83 196|0|216|0|0|-1|80 368|0|388|1|0|-1|144 208|222|6|0|4|3|100 10|0|30|0|0|-1|-1 31|0|51|0|0|-1|-1 11|0|31|0|0|-1|-1 138|53|105|0|1|1|90 115|99|6|0|1|1|47 363|213|170|1|3|2|93 297|241|76|0|5|2|93 282|266|36|0|3|2|159 106|74|52|0|1|1|82 323|160|183|0|3|3|151 266|265|21|0|5|2|86 132|74|78|0|1|1|74 311|132|199|0|2|2|88 107|53|74|0|1|1|79 389|224|185|1|4|3|96 415|223|212|1|4|2|98 220|74|166|0|1|1|91 166|0|186|0|0|-1|99 66|0|86|0|0|-1|-1 86|0|106|0|0|-1|90 164|0|184|0|0|-1|90 154|0|174|0|0|-1|87 225|154|91|0|2|2|164 225|0|245|0|0|-1|94 251|74|197|0|1|1|91 86|0|106|0|0|-1|90 222|150|92|0|2|1|105 102|74|48|0|1|1|76 40|0|60|0|0|-1|-1 276|240|56|0|5|5|147 191|208|3|0|4|4|147 209|0|229|0|0|-1|142 129|74|75|0|1|1|97 353|0|373|1|0|-1|83 59|0|79|0|0|-1|-1 363|95|288|1|2|2|101 281|208|93|0|4|4|83 194|85|129|0|2|2|93 352|0|372|0|0|-1|148 261|74|207|0|1|1|77 212|74|158|0|1|1|81 64|53|31|0|1|1|84 152|85|87|0|2|2|89 253|0|273|0|0|-1|97 74|0|94|0|0|-1|75 289|151|158|0|2|1|101 383|0|403|1|0|-1|77 129|143|6|0|3|3|89
+ECONOMY TARGETS sat_thu/build (shop=greedy event=risky): earned/run 188 in 350-450: MISS | items/run 1.37 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | remove:mono | 0 / 500 | 19.58 | 3.58 | 34.2 | 1:17(12) 2:39(1446) 3:36(2648) 4:33(3587) 5:29(1342) 6:40(63) 7:25(8) 8:33(3) | 0.33 (2) | 0.09 (0) | 2.32 | 1.32 | 76.3 (187/245) | 11.4 |
+WORLD VERDICT sat_thu/build: run win 11.4% (target 20-40) TOO HARD; est. minutes won run 24.0 (target 40-50) TOO SHORT; max region spread at a floor 66.7 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 29.0% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 34.0
+runtime: 245.7 s
+===== remove_mono_bar2 / kiem_si
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=remove:mono,bar2 | active 11: bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono, bar2 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... kiem_si 10/70 seeds, 53.5 s
+  ... kiem_si 20/70 seeds, 101.0 s
+  ... kiem_si 30/70 seeds, 138.5 s
+  ... kiem_si 40/70 seeds, 182.1 s
+  ... kiem_si 50/70 seeds, 216.7 s
+  ... kiem_si 60/70 seeds, 253.5 s
+  ... kiem_si 70/70 seeds, 289.5 s
+
+=== WORLD kiem_si / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 34.3 | 24 | 37.6 | 32.2 | 8.29 | 12.13 | 103.3 | 67.5 | 0.21 | 24.5 (18.9-33.1) | 19.3 | 11.5 | 64/27/10 | 8.03 | 12.20 | 2.11 | 0.06 / 0.57 / 2.04 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| kiem_si | 1 | 92.9 | 5 | 10.9 | 92.9 | 100.0 | 70.6 |
+| kiem_si | 2 | 81.4 | 8 | 17.4 | 87.7 | 92.0 | 67.9 |
+| kiem_si | 3 | 67.1 | 10 | 21.7 | 82.5 | 92.4 | 60.8 |
+| kiem_si | 4 | 54.3 | 9 | 19.6 | 80.9 | 85.9 | 55.7 |
+| kiem_si | 5 | 40.0 | 10 | 21.7 | 73.7 | 84.7 | 56.8 |
+| kiem_si | final | 34.3 | 4 | 8.7 | 85.7 | 84.6 | 62.0 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| kiem_si | 1 | ch1 | 21 | 19 | 90.5 |
+| kiem_si | 1 | ch2 | 26 | 24 | 92.3 |
+| kiem_si | 1 | ch3 | 23 | 22 | 95.7 |
+| kiem_si | 2 | ch1 | 18 | 16 | 88.9 |
+| kiem_si | 2 | ch2 | 24 | 20 | 83.3 |
+| kiem_si | 2 | ch3 | 23 | 21 | 91.3 |
+| kiem_si | 3 | ch1 | 19 | 15 | 78.9 |
+| kiem_si | 3 | ch2 | 17 | 15 | 88.2 |
+| kiem_si | 3 | ch3 | 21 | 17 | 81.0 |
+| kiem_si | 4 | ch1 | 16 | 12 | 75.0 |
+| kiem_si | 4 | ch2 | 15 | 14 | 93.3 |
+| kiem_si | 4 | ch3 | 16 | 12 | 75.0 |
+| kiem_si | 5 | ch1 | 17 | 12 | 70.6 |
+| kiem_si | 5 | ch2 | 12 | 8 | 66.7 |
+| kiem_si | 5 | ch3 | 9 | 8 | 88.9 |
+
+WORLD DEATHS BY FLOOR/KIND kiem_si: f1/boss=5, f2/boss=8, f3/boss=10, f4/battle=1, f4/boss=8, f5/battle=4, f5/boss=6, ffinal/final=4
+WORLD RELICS kiem_si/build: relic-policy=none mean relics at end 1.39 | owned at end (runs): an_don=6, chi_khau=12, phong_an=10, gai_ran=6, manh_tuoi=10, dinh_tam=5, la_ban=6, tam_huong=7, tui_rong=4, dau_than=4, khoi_the=7, phan_don=3, han_ky=9, huyet_an=8 | triggers / run: chi_khau=0.0, khoi_the=0.5, phan_don=0.3, huyet_an=6.7
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | greedy | risky | 34.3 | 247 (65-389) | 244 | 379 (358-410) | 241 / 2 / 1 | 90 (0-213) | 166 (19-314) | 235 (168-346) (24) | 0.99 | 1.72 | 1.80 (50) | 1.70; 2.50 | 1.33 / 0.37 / 0.00 | 92 (77-146) (64) | 100 |
+WORLD EVENTS | kiem_si | build | events / run 0.23 | non-leave choices / run 0.23 | tran_thach extra fights 3, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.39 | curse dmg / run 0.9 | matches slowed by loi_the / run 0.07 | picks: ban_tho_mau/give=1, ke_buon_nguyen/accept=2, ke_lang_thang/swap=1, loi_the/swear=3, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=3
+ECONOMY RAW kiem_si/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 128|0|148|0|0|-1|129 193|85|128|0|2|2|88 293|0|313|0|0|-1|99 361|53|328|1|1|1|78 285|293|12|0|5|1|78 228|95|153|0|1|1|102 29|0|49|0|0|-1|-1 385|303|102|1|4|3|104 78|85|13|0|2|2|98 372|213|179|1|3|1|105 349|0|369|0|0|-1|145 356|208|168|1|3|3|74 387|143|264|1|3|3|89 118|77|31|0|1|1|44 365|132|253|1|2|2|84 138|154|4|0|2|2|90 362|110|272|1|2|2|125 230|53|197|0|1|1|78 177|191|6|0|3|1|83 146|0|166|0|0|-1|80 368|156|232|1|3|3|144 329|213|136|0|3|2|100 136|132|24|0|2|2|156 409|0|429|1|0|-1|95 331|251|100|1|4|3|150 29|0|49|0|0|-1|-1 269|99|160|0|1|1|47 363|213|170|1|3|2|93 73|85|8|0|2|2|93 24|0|44|0|0|-1|-1 375|74|321|1|1|1|82 184|189|15|0|3|2|151 66|85|1|0|2|2|86 338|190|168|1|3|1|74 419|132|307|1|2|2|88 107|108|19|0|2|1|79 389|224|185|1|4|3|96 313|223|110|0|4|2|98 220|74|166|0|1|1|91 166|0|186|0|0|-1|99 305|191|134|0|3|2|141 439|0|459|1|0|-1|90 164|0|184|0|0|-1|90 86|0|106|0|0|-1|87 312|154|178|0|2|2|164 87|0|107|0|0|-1|94 134|74|80|0|1|1|91 397|143|274|1|3|3|90 222|150|92|0|2|1|105 56|0|46|0|0|-1|46 214|106|128|0|2|2|113 145|0|165|0|0|-1|147 385|189|216|1|3|2|147 177|0|197|0|0|-1|142 77|74|23|0|1|1|97 241|74|187|0|1|1|83 59|0|79|0|0|-1|-1 251|198|73|0|3|2|101 390|191|219|1|3|1|83 243|85|178|0|2|2|93 300|0|320|0|0|-1|148 366|190|196|1|3|1|77 407|74|353|1|1|1|81 202|53|169|0|1|1|84 285|277|28|0|4|2|89 410|192|238|1|3|3|97 42|0|62|0|0|-1|-1 29|0|49|0|0|-1|-1 383|208|195|1|4|4|77 372|110|282|1|2|2|89
+ECONOMY TARGETS kiem_si/build (shop=greedy event=risky): earned/run 244 in 350-450: MISS | items/run 1.70 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | remove:mono,bar2 | 0 / 580 | 20.87 | 3.83 | 32.4 | 1:22(9) 2:0(1) 3:35(3998) 4:32(5260) 5:29(1786) 6:22(37) 7:36(11) 8:33(9) | 0.14 (1) | 0.02 (0) | 2.26 | 1.69 | 84.8 (235/277) | 34.3 |
+WORLD VERDICT kiem_si/build: run win 34.3% (target 20-40) PASS; est. minutes won run 24.5 (target 40-50) TOO SHORT; max region spread at a floor 22.2 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 21.7% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 37.6
+runtime: 289.9 s
+===== remove_mono_bar2 / phap_su
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["phap_su"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=remove:mono,bar2 | active 11: bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono, bar2 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... phap_su 10/70 seeds, 43.1 s
+  ... phap_su 20/70 seeds, 91.0 s
+  ... phap_su 30/70 seeds, 122.1 s
+  ... phap_su 40/70 seeds, 162.0 s
+  ... phap_su 50/70 seeds, 199.0 s
+  ... phap_su 60/70 seeds, 234.9 s
+  ... phap_su 70/70 seeds, 267.4 s
+
+=== WORLD phap_su / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | 38.6 | 27 | 29.3 | 26.4 | 8.49 | 12.44 | 90.2 | 57.9 | 0.01 | 22.6 (19.0-27.9) | 17.9 | 11.8 | 63/27/10 | 8.03 | 12.16 | 2.27 | 0.26 / 0.56 / 1.99 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| phap_su | 1 | 92.9 | 5 | 11.6 | 92.9 | 100.0 | 66.5 |
+| phap_su | 2 | 81.4 | 8 | 18.6 | 87.7 | 92.6 | 59.0 |
+| phap_su | 3 | 72.9 | 6 | 14.0 | 89.5 | 88.2 | 48.9 |
+| phap_su | 4 | 57.1 | 11 | 25.6 | 78.4 | 79.6 | 43.2 |
+| phap_su | 5 | 40.0 | 12 | 27.9 | 70.0 | 75.8 | 46.7 |
+| phap_su | final | 38.6 | 1 | 2.3 | 96.4 | 79.4 | 51.0 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| phap_su | 1 | ch1 | 21 | 16 | 76.2 |
+| phap_su | 1 | ch2 | 26 | 26 | 100.0 |
+| phap_su | 1 | ch3 | 23 | 23 | 100.0 |
+| phap_su | 2 | ch1 | 19 | 18 | 94.7 |
+| phap_su | 2 | ch2 | 22 | 19 | 86.4 |
+| phap_su | 2 | ch3 | 24 | 20 | 83.3 |
+| phap_su | 3 | ch1 | 17 | 16 | 94.1 |
+| phap_su | 3 | ch2 | 17 | 16 | 94.1 |
+| phap_su | 3 | ch3 | 23 | 19 | 82.6 |
+| phap_su | 4 | ch1 | 16 | 14 | 87.5 |
+| phap_su | 4 | ch2 | 16 | 15 | 93.8 |
+| phap_su | 4 | ch3 | 19 | 11 | 57.9 |
+| phap_su | 5 | ch1 | 16 | 12 | 75.0 |
+| phap_su | 5 | ch2 | 12 | 7 | 58.3 |
+| phap_su | 5 | ch3 | 12 | 9 | 75.0 |
+
+WORLD DEATHS BY FLOOR/KIND phap_su: f1/boss=5, f2/boss=8, f3/boss=6, f4/battle=1, f4/boss=10, f5/battle=2, f5/boss=10, ffinal/final=1
+WORLD RELICS phap_su/build: relic-policy=none mean relics at end 1.33 | owned at end (runs): an_don=8, chi_khau=10, phong_an=12, gai_ran=9, manh_tuoi=7, dinh_tam=4, la_ban=3, tam_huong=6, tui_rong=5, dau_than=3, khoi_the=8, phan_don=6, han_ky=6, huyet_an=6 | triggers / run: an_don=0.1, chi_khau=0.2, khoi_the=0.4, phan_don=0.9, huyet_an=5.1
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | greedy | risky | 38.6 | 285 (64-385) | 249 | 375 (341-398) | 247 / 2 / 1 | 90 (0-219) | 168 (49-321) | 210 (126-330) (27) | 0.91 | 1.81 | 1.91 (45) | 1.66; 2.63 | 1.26 / 0.40 / 0.00 | 92 (78-145) (62) | 100 |
+WORLD EVENTS | phap_su | build | events / run 0.29 | non-leave choices / run 0.26 | tran_thach extra fights 3, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 0.81 | curse dmg / run 0.4 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/give=2, ban_tho_mau/leave=1, ke_buon_nguyen/accept=2, ke_lang_thang/swap=1, loi_the/leave=1, loi_the/swear=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=4, tran_thach/fight=3
+ECONOMY RAW phap_su/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 184|160|44|0|3|3|129 236|85|171|0|2|2|88 158|0|178|0|0|-1|99 361|53|328|1|1|1|78 255|257|18|0|4|1|78 152|95|77|0|1|1|102 29|0|49|0|0|-1|-1 385|195|210|1|3|3|104 144|85|79|0|2|2|98 200|53|167|0|1|1|105 306|0|326|0|0|-1|145 356|268|108|1|4|3|74 293|143|170|0|3|3|89 73|0|63|0|0|-1|44 208|0|228|0|0|-1|84 384|154|250|1|2|2|90 362|110|272|1|2|2|125 354|53|321|1|1|1|78 231|191|60|0|3|1|83 322|0|342|0|0|-1|80 78|0|98|0|0|-1|-1 374|213|181|1|3|2|100 171|132|59|0|2|2|156 290|0|310|0|0|-1|95 331|184|167|1|4|4|150 138|53|105|0|1|1|90 166|99|57|0|1|1|47 363|213|170|1|3|2|93 338|261|97|1|5|2|93 24|0|44|0|0|-1|-1 375|190|205|1|3|1|82 271|114|177|0|2|2|151 376|265|131|1|5|2|86 338|190|168|1|3|1|74 87|0|107|0|0|-1|88 11|0|31|0|0|-1|-1 389|224|185|1|4|3|96 313|223|110|0|4|2|98 379|74|325|1|1|1|91 30|0|50|0|0|-1|-1 364|191|193|1|3|2|141 157|0|177|0|0|-1|90 300|219|101|0|4|4|90 295|0|315|0|0|-1|87 413|154|279|1|2|2|164 225|0|245|0|0|-1|94 71|74|17|0|1|1|91 397|143|274|1|3|3|90 280|150|150|0|2|1|105 343|0|333|1|0|-1|46 399|106|313|1|2|2|113 145|0|165|0|0|-1|147 71|0|91|0|0|-1|-1 209|0|229|0|0|-1|142 185|129|76|0|2|1|97 353|0|373|1|0|-1|83 59|0|79|0|0|-1|-1 363|198|185|1|3|2|101 390|191|219|1|3|1|83 194|85|129|0|2|2|93 393|0|413|1|0|-1|148 11|0|31|0|0|-1|-1 61|0|81|0|0|-1|81 64|53|31|0|1|1|84 375|277|118|1|4|2|89 410|192|238|1|3|3|97 297|0|317|0|0|-1|105 209|151|78|0|2|1|101 383|208|195|1|4|4|77 201|110|111|0|2|2|89
+ECONOMY TARGETS phap_su/build (shop=greedy event=risky): earned/run 249 in 350-450: MISS | items/run 1.66 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| phap_su | build | remove:mono,bar2 | 0 / 594 | 17.90 | 3.86 | 39.2 | 1:37(38) 3:36(3448) 4:41(4762) 5:38(1691) 6:52(42) 7:52(61) 8:59(27) 9:50(4) 10:0(1) | 0.30 (2) | 0.03 (0) | 2.58 | 0.92 | 85.2 (241/283) | 38.6 |
+WORLD VERDICT phap_su/build: run win 38.6% (target 10-100) PASS; est. minutes won run 22.6 (target 40-50) TOO SHORT; max region spread at a floor 35.9 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 27.9% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 29.3
+runtime: 267.6 s
+===== remove_mono_bar2 / sat_thu
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["sat_thu"] cleared_bosses=1 region-pick=random node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none
+piece deck (Story 034): spec=remove:mono,bar2 | active 11: bar3, l3, square, t4, l4, s4, bar4, plus5, u5, p5, bar5 | removed: mono, bar2 | min_shapes=5 run_only_weight=6.0 | fixed for the whole run (no ink offers, no removals in play); boss drops keep the original weights
+relics: start=none relic-policy=none (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=5 choices=2 pool=["ch1", "ch2", "ch3"] columns=3 heal=0.35 final={ "region": "ch3", "match_id": "mist_lord" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [1, 2, 2], "4": [1, 2, 2], "5": [1, 2, 2] }
+  floor_scaling 1: { "hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+  ... sat_thu 10/70 seeds, 47.6 s
+  ... sat_thu 20/70 seeds, 80.2 s
+  ... sat_thu 30/70 seeds, 114.9 s
+  ... sat_thu 40/70 seeds, 149.9 s
+  ... sat_thu 50/70 seeds, 181.8 s
+  ... sat_thu 60/70 seeds, 220.7 s
+  ... sat_thu 70/70 seeds, 256.8 s
+
+=== WORLD sat_thu / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | 14.3 | 10 | 31.5 | 25.9 | 7.46 | 11.01 | 99.0 | 64.6 | 0.07 | 24.2 (21.2-26.8) | 16.9 | 10.2 | 64/26/9 | 8.14 | 11.60 | 1.80 | 0.30 / 0.44 / 1.87 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| sat_thu | 1 | 94.3 | 4 | 6.7 | 94.3 | 100.0 | 64.5 |
+| sat_thu | 2 | 82.9 | 8 | 13.3 | 87.9 | 91.0 | 46.7 |
+| sat_thu | 3 | 55.7 | 19 | 31.7 | 67.2 | 78.4 | 34.1 |
+| sat_thu | 4 | 32.9 | 16 | 26.7 | 59.0 | 68.4 | 41.4 |
+| sat_thu | 5 | 18.6 | 10 | 16.7 | 56.5 | 74.4 | 40.0 |
+| sat_thu | final | 14.3 | 3 | 5.0 | 76.9 | 74.2 | 40.0 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| sat_thu | 1 | ch1 | 21 | 19 | 90.5 |
+| sat_thu | 1 | ch2 | 26 | 25 | 96.2 |
+| sat_thu | 1 | ch3 | 23 | 22 | 95.7 |
+| sat_thu | 2 | ch1 | 18 | 18 | 100.0 |
+| sat_thu | 2 | ch2 | 25 | 23 | 92.0 |
+| sat_thu | 2 | ch3 | 23 | 17 | 73.9 |
+| sat_thu | 3 | ch1 | 20 | 13 | 65.0 |
+| sat_thu | 3 | ch2 | 14 | 10 | 71.4 |
+| sat_thu | 3 | ch3 | 24 | 16 | 66.7 |
+| sat_thu | 4 | ch1 | 10 | 8 | 80.0 |
+| sat_thu | 4 | ch2 | 15 | 11 | 73.3 |
+| sat_thu | 4 | ch3 | 14 | 4 | 28.6 |
+| sat_thu | 5 | ch1 | 11 | 7 | 63.6 |
+| sat_thu | 5 | ch2 | 7 | 1 | 14.3 |
+| sat_thu | 5 | ch3 | 5 | 5 | 100.0 |
+
+WORLD DEATHS BY FLOOR/KIND sat_thu: f1/boss=4, f2/boss=8, f3/battle=2, f3/boss=17, f4/boss=16, f5/battle=3, f5/boss=7, ffinal/final=3
+WORLD RELICS sat_thu/build: relic-policy=none mean relics at end 1.04 | owned at end (runs): an_don=5, chi_khau=8, phong_an=8, gai_ran=6, manh_tuoi=9, dinh_tam=4, la_ban=5, tam_huong=4, tui_rong=4, dau_than=2, khoi_the=4, phan_don=3, han_ky=5, huyet_an=6 | triggers / run: an_don=0.1, chi_khau=0.0, khoi_the=0.2, phan_don=0.3, huyet_an=3.9
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | greedy | risky | 14.3 | 188 (84-364) | 201 | 386 (359-411) | 199 / 2 / 1 | 74 (0-208) | 109 (29-275) | 281 (176-415) (10) | 0.77 | 1.80 | 1.93 (43) | 1.39; 2.30 | 1.01 / 0.37 / 0.00 | 93 (78-146) (64) | 100 |
+WORLD EVENTS | sat_thu | build | events / run 0.20 | non-leave choices / run 0.19 | tran_thach extra fights 2, deaths 0 (0.0%) | curses picked up / run 0.04 | curse draws / run 1.10 | curse dmg / run 0.7 | matches slowed by loi_the / run 0.06 | picks: ban_tho_mau/leave=1, ke_buon_nguyen/accept=2, ke_lang_thang/swap=1, loi_the/swear=2, mo_hoang/dig=1, song_bac/bet_small=3, suoi_tinh/bathe=2, tran_thach/fight=2
+ECONOMY RAW sat_thu/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 128|0|148|0|0|-1|129 132|85|67|0|2|2|88 92|0|112|0|0|-1|99 361|53|328|1|1|1|78 133|53|100|0|1|1|78 228|95|153|0|1|1|102 90|0|110|0|0|-1|91 174|0|194|0|0|-1|104 144|85|79|0|2|2|98 331|198|153|0|3|2|105 140|0|160|0|0|-1|145 199|208|11|0|3|3|74 135|143|12|0|3|3|89 118|0|108|0|0|-1|44 22|0|42|0|0|-1|-1 192|154|58|0|2|2|90 185|110|95|0|2|2|125 193|53|160|0|1|1|78 63|53|30|0|1|1|83 146|0|166|0|0|-1|80 368|0|388|1|0|-1|144 286|208|98|0|4|4|100 136|132|24|0|2|2|156 290|0|310|0|0|-1|95 248|251|17|0|4|3|150 215|53|182|0|1|1|90 14|0|4|0|0|-1|-1 28|0|48|0|0|-1|-1 338|261|97|1|5|2|93 282|206|96|0|2|2|159 135|74|81|0|1|1|82 114|0|134|0|0|-1|-1 197|85|132|0|2|2|86 54|0|74|0|0|-1|74 219|132|107|0|2|2|88 11|0|31|0|0|-1|-1 389|224|185|1|4|3|96 415|223|212|1|4|2|98 142|74|88|0|1|1|91 334|264|90|0|5|5|99 105|0|125|0|0|-1|-1 86|0|106|0|0|-1|90 356|173|203|0|3|3|90 86|0|106|0|0|-1|87 312|154|178|0|2|2|164 87|0|107|0|0|-1|94 251|74|197|0|1|1|91 397|143|274|1|3|3|90 222|150|92|0|2|1|105 185|0|175|0|0|-1|46 266|132|154|0|2|2|113 145|0|165|0|0|-1|147 284|0|304|0|0|-1|147 209|0|229|0|0|-1|142 185|129|76|0|2|1|97 63|74|9|0|1|1|83 181|0|201|0|0|-1|136 363|95|288|1|2|2|101 200|191|29|0|3|1|83 243|85|178|0|2|2|93 393|0|413|1|0|-1|148 191|155|56|0|2|1|77 136|74|82|0|1|1|81 255|53|222|0|1|1|84 152|85|87|0|2|2|89 410|0|430|1|0|-1|97 169|0|189|0|0|-1|105 135|151|4|0|2|1|101 383|208|195|1|4|4|77 201|143|78|0|3|3|89
+ECONOMY TARGETS sat_thu/build (shop=greedy event=risky): earned/run 201 in 350-450: MISS | items/run 1.39 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+
+WORLD PIECES | character | policy | piece deck | fallback matches / matches | casts / match | cells / cast | player hit % | hit % by cast cells (resolved n) | joins / match (% of casts) | featured / match (% of casts) | interrupts landed / match | interrupts suffered / match | region clear % (cleared/entered) | run win % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sat_thu | build | remove:mono,bar2 | 0 / 522 | 20.04 | 3.83 | 33.1 | 1:54(13) 3:37(3387) 4:32(4641) 5:27(1595) 6:26(23) 7:38(8) 8:33(3) | 0.10 (1) | 0.01 (0) | 2.11 | 1.47 | 77.7 (199/256) | 14.3 |
+WORLD VERDICT sat_thu/build: run win 14.3% (target 20-40) TOO HARD; est. minutes won run 24.2 (target 40-50) TOO SHORT; max region spread at a floor 85.7 pts (target <= 15, n >= 5) FAIL; max floor share of deaths 31.7% (target <= 40) PASS; survival strictly decreasing PASS; boss hits / won run 31.5
+runtime: 257.0 s

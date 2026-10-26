@@ -46,13 +46,16 @@ Story 024: the puzzle-piece shapes the player drops and places on the enemy half
 | Key | Type | Meaning | Default if missing |
 |---|---|---|---|
 | `shapes` | array | The shapes, in drawing order | mono only |
-| `shapes[].id` | string | Unique id (`mono`, `bar2`, `bar3`, `l3`, `square`, `t4`, `l4`, `s4`, `bar4`, `plus5`, `u5`, `p5`, `bar5`); `rotten` is reserved for the rotten piece | - |
+| `shapes[].id` | string | Unique id (`mono`, `bar2`, `bar3`, `l3`, `square`, `t4`, `l4`, `s4`, `bar4`, `plus5`, `u5`, `p5`, `bar5`; run_only: `z4`, `j4`, `y5`); `rotten` is reserved for the rotten piece | - |
 | `shapes[].cells` | array of `[x, y]` | UNROTATED cells relative to any origin (normalised on load, y grows downward); 1..5 distinct cells, edge-connected; an invalid shape is dropped with a warning | - |
 | `shapes[].name_key` | string | `TEXT_*`-style translation key of the name (the strings live in `assets/i18n/strings.csv`) | `piece.<id>.name` |
+| `shapes[].pool` | `"default"` or `"run_only"` | Story 034: `default` shapes are in every run's starting piece deck and drop by `weights`; `run_only` shapes enter the player's deck only through Ink (`PieceDeck`), have NO entry in `weights` (`PieceLibrary.weight` returns 0 for them: the boss and runless matches never draw them) and, once owned, drop with `rewards.json` `piece_rewards.run_only_weight` x mult. An unknown value falls back to `default` with a warning (`PieceLibrary.pool / is_run_only / base_shape_ids / run_only_ids`) | `default` |
 | `weights` | object | Drop weights: `{ "default": {<shape id>: weight}, "<chapter id>": {<shape id>: weight} }`; chapter ids are those of `chapters.json` (`ch1`, `ch2`, `ch3`) | - |
 | `weights.<map>.<shape id>` | number >= 0 | Relative chance of the shape being drawn; 0 = never. A chapter's map wins, else `default`, else 1.0 for a shape listed in neither. Shapes with no placement on the match's enemy half are skipped regardless of weight | 1.0 |
 
 Current balance intent: chapter 1 favours 1-3 cell shapes (5-cell shapes rare, `bar5` 0.5 of 100), chapters 2-3 progressively more large shapes. Numbers are a starting point for tuning.
+
+Story 034 shapes (cells UNROTATED, x right, y down; no mirroring exists, so a mirror image is a separate shape): `z4` = `[[0,0],[1,0],[1,1],[2,1]]` (mirror of `s4`), `j4` = `[[1,0],[1,1],[1,2],[0,2]]` (mirror of `l4`), `y5` = `[[0,1],[1,1],[2,1],[3,1],[1,0]]` (a bar of 4 with one bump). All three are `pool: "run_only"`.
 
 ## combat.json  (read by `src/combat/combat_config.gd`)
 
@@ -530,6 +533,17 @@ Card reward after a map node (Story 022: by node kind, see `node_rewards`). Bad 
 | `rest_heal_ratio` | number 0..1 | Story 022: share of max HP healed by "Rest" at a `rest` node | 0.3 |
 | `rest_forge_levels` | integer >= 1 | Story 022: card levels added by "Forge" at a `rest` node (capped at `max_card_level`) | 1 |
 | `node_rewards` | object kind -> `{offers, min_rarity, free, removal_token}` | Story 022: card pick per node kind (`RewardRoller.reward_for_node`). `offers` 0 = no card; `min_rarity` = every offered card is at least this rarity (topped up from the whole pool with a warning when too few exist); `free` = no fight; `removal_token` = grants one token. Shipped: battle / danger 3 common; treasure 3 common free; miniboss 3 min rare; boss 3 common + token; rest 0; shop / event 0 (Story 033: no post-fight offer for them) | as listed |
+| `piece_rewards` | object | Story 034, read by `src/pieces/piece_deck_config.gd` (class PieceDeckConfig); a missing block / key / out-of-range or non-number value keeps the default (warning). Keys below | see below |
+| `piece_rewards.ink_offer_chance` | number 0..1 | Chance that a won `battle` / `danger` node also offers the Ink row (a `treasure` node always does; bosses never) | 0.35 |
+| `piece_rewards.ink_offer_count` | integer >= 0 | Distinct shapes in one Ink offer (`PieceDeck.roll_ink_offer`, seeded; shapes at `mult_max` are not offered) | 2 |
+| `piece_rewards.mult_step` | number > 0 | `mult` gained when an owned shape is inked again (a run_only shape not yet owned enters `added` at 1.0; a removed shape returns to 1.0) | 1.0 |
+| `piece_rewards.mult_max` | number >= 1 | Ceiling of a shape's `mult` (drop weight = base x mult) | 4.0 |
+| `piece_rewards.min_shapes` | integer >= 1 | Removing a shape is refused when fewer than this many shapes with `mult > 0` would stay | 5 |
+| `piece_rewards.run_only_weight` | number >= 0 | Base drop weight of an owned run_only shape (the default pool uses `pieces.json` `weights`) | 6.0 |
+| `piece_rewards.shape_removals_start` | integer >= 0 | Shape-removal tokens (`RunSession.shape_removals`) at the start of a run | 1 |
+| `piece_rewards.shape_removals_per_boss` | integer >= 0 | Extra shape-removal tokens per region boss | 1 |
+
+Player drop weight in a match (Story 034, `PieceDeck.effective_weights`): `w(shape) = base(shape, chapter key) x mult(shape)`, with `base = piece_rewards.run_only_weight` for a run_only shape; `w = 0` never drops. When no shape with `w > 0` has a placement on the enemy half, the match uses the ORIGINAL weights of the default shapes that fit (`PieceDeck.weights_for_match` -> `fallback: true`). Deck state in the run save: `piece_deck` = `{"mult": {shape id: number >= 0}, "added": [run_only shape id]}`.
 
 The pool is every `implemented` card; the roll (`RewardRoller.roll(cards, config, seed, exclude_ids, deck_levels, luck, min_rarity)`) is a seeded weighted draw without replacement, weighted by rarity at the given luck and floored at `min_rarity`.
 
@@ -595,6 +609,7 @@ Gold of a run and shop prices. A missing / bad file or key keeps the `EconomyCon
 | `shop.relic_prices` | object rarity -> int | gold | Relic price by rarity (`price_relic`) | common 50, rare 70, epic 90 (Story 033 sim; started at 75 / 100 / 130) |
 | `shop.price_floor_mult` | array of float >= 0 | x | Price multiplier per floor, also applied to services | 1.0, 1.05, 1.1, 1.15, 1.2 |
 | `shop.services.remove_card` | `{price, max_uses}` | gold / uses | Remove one chosen card at once (no token); uses per shop visit (`service_price`, `service_max_uses`) | 60, 1 |
+| `shop.services.remove_shape` | `{price, max_uses}` | gold / uses | Story 034: remove one chosen shape from the piece deck at once (gold, no shape-removal token); refused when `PieceDeck.can_remove` is not ok (e.g. `min_shapes`) | 45, 1 |
 | `shop.services.heal` | `{price, max_uses, heal_ratio 0..1}` | gold / uses / share of max HP | Heal `heal_ratio` x max HP (`service_heal_ratio`) | 40, 1, 0.25 |
 
 ## `events.json` (Story 033, read by `src/run/event_logic.gd`, class EventLogic)

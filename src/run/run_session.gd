@@ -23,6 +23,8 @@ const RESTART_OLD_SAVE: String = "run.restart.old_save"
 ## Node kind that ends a region (and grants a removal token).
 const KIND_BOSS: String = "boss"
 ## Documented fallbacks for the economy keys of rewards.json (the single place; the file wins).
+## Story 034: refusal key of a shape removal with no `shape_removals` token left.
+const REASON_NO_TOKEN: String = "piece_deck.reason.no_token"
 const CONFIG_DEFAULTS: Dictionary = {
 	"starting_removals": 1, "luck_start": 0.0, "luck_per_node": 1.0,
 	"rest_heal_ratio": 0.3, "rest_forge_levels": 1, "boss_removal_tokens": 1,
@@ -85,6 +87,16 @@ var relics: Array[String] = []
 ## Story 032: relic ids offered on the open treasure screen (the second row next to [member pending_reward]);
 ## [] when none. Picking a card or a relic, or skipping, closes BOTH rows.
 var pending_relic_offer: Array[String] = []
+## Story 034: the run's PIECE DECK (PieceDeck state {mult: {shape_id: float}, added: [shape_id]}); starts as
+## PieceDeck.initial (every default-pool shape at mult 1.0, nothing added). Saved under `piece_deck`.
+var piece_deck: Dictionary = PieceDeck.initial(piece_library())
+## Story 034: tokens that remove a shape from [member piece_deck] at the piece deck screen (start value and
+## shape_removals_per_boss per boss, both from rewards.json `piece_rewards`). Saved under `shape_removals`.
+var shape_removals: int = piece_config().shape_removals_start
+## Story 034: shape ids offered on the open reward screen's ink row ([] when none). Saved under
+## `pending_ink_offer`. Picking an ink keeps the card / relic choice open; every other way to close the
+## reward screen clears it (GameFlow).
+var pending_ink_offer: Array[String] = []
 ## Story 033: gold of the run (never negative; starts at EconomyConfig `starting_gold`). Dropped by won
 ## nodes (GameFlow), spent at the shop / events; not carried to the next run.
 var gold: int = EconomyConfig.shared().starting_gold()
@@ -105,6 +117,8 @@ var last_gold_gain: int = 0
 ## cards.json (loaded once, see [method _cards_config]).
 var cards_config: SkillConfig = null
 static var _shared_cards: SkillConfig = null
+static var _shared_pieces: PieceLibrary = null
+static var _shared_piece_config: PieceDeckConfig = null
 ## Revive tokens (from chapters defaults; reserved, unused).
 var revives: int = 0
 ## True when this session came from a pre-v5 save: the flow must start a fresh world run for
@@ -291,6 +305,7 @@ func complete_node(hp_end: float, max_hp: float, node_kind: String, config: Dict
 	var healed: float = 0.0
 	if kind == KIND_BOSS:
 		removal_tokens += int(cfg(config, "boss_removal_tokens"))
+		shape_removals += maxi(piece_config().shape_removals_per_boss, 0)
 		cleared_bosses_this_run += 1
 		if is_final_floor():
 			_won = true
@@ -546,6 +561,75 @@ func run_modifier_overrides() -> Dictionary:
 	return out
 
 
+## Story 034: the shared piece library (pieces.json, loaded once per process).
+static func piece_library() -> PieceLibrary:
+	if _shared_pieces == null:
+		_shared_pieces = PieceLibrary.load_from_file()
+	return _shared_pieces
+
+
+## Story 034: the shared piece-deck rules (rewards.json `piece_rewards`, loaded once per process).
+static func piece_config() -> PieceDeckConfig:
+	if _shared_piece_config == null:
+		_shared_piece_config = PieceDeckConfig.load_from_file()
+	return _shared_piece_config
+
+
+## Story 034: inks shape [param id] into [member piece_deck] (PieceDeck.apply_ink: a new run-only shape joins,
+## a removed one returns at mult 1.0, others gain mult_step up to mult_max). False (no change) when the shape
+## is unknown or already at the ceiling. [param lib] / [param cfg] default to the shipped data.
+func apply_ink(id: String, lib: PieceLibrary = null, cfg: PieceDeckConfig = null) -> bool:
+	var l: PieceLibrary = lib if lib != null else piece_library()
+	var c: PieceDeckConfig = cfg if cfg != null else piece_config()
+	if not PieceDeck.can_ink(piece_deck, id, l, c):
+		return false
+	piece_deck = PieceDeck.apply_ink(piece_deck, id, l, c)
+	return true
+
+
+## Story 034: whether shape [param id] may be removed now: {"ok": bool, "reason": String}. With
+## [param spend_token] a token is needed ([constant REASON_NO_TOKEN] at 0 [member shape_removals]); then
+## PieceDeck.can_remove (unknown, already removed, would leave fewer than `min_shapes` active shapes).
+func can_remove_shape(id: String, spend_token: bool, lib: PieceLibrary = null, cfg: PieceDeckConfig = null) -> Dictionary:
+	var l: PieceLibrary = lib if lib != null else piece_library()
+	var c: PieceDeckConfig = cfg if cfg != null else piece_config()
+	if spend_token and shape_removals <= 0:
+		return {"ok": false, "reason": REASON_NO_TOKEN}
+	var verdict: Dictionary = PieceDeck.can_remove(piece_deck, id, l, c)
+	return {"ok": bool(verdict.get("ok", false)), "reason": str(verdict.get("reason", ""))}
+
+
+## Story 034: removes shape [param id] from [member piece_deck] (mult 0). With [param spend_token] true it
+## also spends one [member shape_removals] token; the shop service passes false (it charges gold instead).
+## Refused (nothing changes) when [method can_remove_shape] says no. Returns {"ok": bool, "reason": String}
+## (reason is a translation key, "" when ok).
+func remove_shape(id: String, spend_token: bool, lib: PieceLibrary = null, cfg: PieceDeckConfig = null) -> Dictionary:
+	var l: PieceLibrary = lib if lib != null else piece_library()
+	var c: PieceDeckConfig = cfg if cfg != null else piece_config()
+	var verdict: Dictionary = can_remove_shape(id, spend_token, l, c)
+	if not bool(verdict["ok"]):
+		return verdict
+	piece_deck = PieceDeck.remove(piece_deck, id, l, c)
+	if spend_token:
+		shape_removals -= 1
+	return {"ok": true, "reason": ""}
+
+
+## Story 034: stores the ink row of the open reward screen.
+func set_pending_ink_offer(ids: Array[String]) -> void:
+	pending_ink_offer = ids.duplicate()
+
+
+## Story 034: closes the ink row (picked, skipped or the reward screen closed another way).
+func clear_pending_ink_offer() -> void:
+	pending_ink_offer = []
+
+
+## Story 034: true while an ink row waits for a pick.
+func has_pending_ink_offer() -> bool:
+	return not pending_ink_offer.is_empty()
+
+
 ## Story 032: adds relic [param id] (received order). False (no change) for a duplicate or an id unknown
 ## to RelicRegistry (warning).
 func add_relic(id: String) -> bool:
@@ -613,7 +697,9 @@ func is_boss_match(_chapters_unused: ChaptersConfig) -> bool:
 ## column, node_index, cleared_nodes, nodes_cleared, last_node_kind, last_floor_heal, hp,
 ## deck [{id, level}], run_seed, elapsed, pending_reward, revives, removal_tokens,
 ## cleared_bosses_this_run, won, relics [id], pending_relic_offer [id], gold, run_modifiers [{id,
-## matches_left, params}], shop_state {}, event_state {}} (relics..event_state are optional: Stories 032 / 033
+## matches_left, params}], shop_state {}, event_state {}, piece_deck {mult, added}, shape_removals,
+## pending_ink_offer [id]} (Story 034 added the last three, optional like the rest: a save lacking them loads
+## with PieceDeck.initial, `piece_rewards.shape_removals_start` and []) (relics..event_state are optional: Stories 032 / 033
 ## added them without a version bump; a save lacking them loads with no relics, `starting_gold`, [], {}, {}).
 ## A [member needs_restart] session saves only
 ## {version, character, needs_restart, restart_reason, map: []}.
@@ -635,6 +721,8 @@ func to_dict() -> Dictionary:
 		"gold": gold, "run_modifiers": run_modifiers.duplicate(true),
 		"shop_state": shop_state.duplicate(true), "event_state": event_state.duplicate(true),
 		"last_gold_gain": last_gold_gain,
+		"piece_deck": piece_deck.duplicate(true), "shape_removals": shape_removals,
+		"pending_ink_offer": pending_ink_offer.duplicate(),
 	}
 
 
@@ -708,6 +796,9 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s.event_state = (d["event_state"] as Dictionary).duplicate(true) if typeof(d.get("event_state")) == TYPE_DICTIONARY else {}
 	s.last_gold_gain = maxi(int(d.get("last_gold_gain", 0)), 0)
 	s.cards_config = cards
+	s.piece_deck = PieceDeck.sanitize(d["piece_deck"], piece_library()) if typeof(d.get("piece_deck")) == TYPE_DICTIONARY else PieceDeck.initial(piece_library())
+	s.shape_removals = maxi(int(d.get("shape_removals", piece_config().shape_removals_start)), 0)
+	s.pending_ink_offer = _known_shapes(d.get("pending_ink_offer", []))
 	if s.character_id.is_empty() or s.deck.is_empty():
 		push_warning("RunSession: no character or empty deck, run dropped")
 		return null
@@ -788,6 +879,20 @@ static func _known_ids(raw: Variant, cards: SkillConfig) -> Array[String]:
 		if cards != null and not cards.has_skill(id):
 			push_warning("RunSession: unknown card '%s' dropped" % id)
 		else:
+			out.append(id)
+	return out
+
+
+# Story 034: shape ids of a saved ink offer: unknown ids dropped (warning), duplicates dropped.
+static func _known_shapes(raw: Variant) -> Array[String]:
+	var out: Array[String] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw as Array:
+		var id: String = str(entry)
+		if not piece_library().has_shape(id):
+			push_warning("RunSession: unknown ink shape '%s' dropped" % id)
+		elif not out.has(id):
 			out.append(id)
 	return out
 

@@ -130,6 +130,8 @@ const TEXT_FLOOR_CLEAR: String = "ui.world.floor_clear"
 const TEXT_FINAL_CLEAR: String = "ui.world.final_clear"
 ## Shared with ChapterMapView: back button, "HP %d/%d", the banner's "Chạm để đóng".
 const TEXT_BACK: String = "ui.map.back"
+## Story 034: the title band's "Bộ mảnh" button (ScreenLayout.map_piece_deck_button_rect) -> GameFlow.open_piece_deck.
+const TEXT_PIECE_DECK: String = "ui.piece_deck.open"
 const TEXT_HP: String = "ui.map.hp"
 const TEXT_NOTICE_DISMISS: String = "ui.map.notice_dismiss"
 
@@ -242,6 +244,9 @@ func _tap(pos: Vector2) -> void:
 	if ScreenLayout.touch_rect(ScreenLayout.back_button_rect(vp)).has_point(pos):
 		_flow.leave_run_keep_save()
 		return
+	if ScreenLayout.touch_rect(ScreenLayout.map_piece_deck_button_rect(vp)).has_point(pos):
+		_flow.open_piece_deck()
+		return
 	var offer: Array[String] = _flow.get_region_offer()
 	var cards: Array[Rect2] = ScreenLayout.world_card_rects(vp, offer.size())
 	var selected_index: int = offer.find(_selected)
@@ -312,6 +317,9 @@ func _draw_header(vp: Vector2) -> void:
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	var back_text: String = tr(TEXT_BACK)
 	UiButtons.draw_button(self, back, back_text, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(back)), true, _back_font_size(back_text, back.size.x), OUTLINE_WIDTH)
+	var deck_button: Rect2 = ScreenLayout.map_piece_deck_button_rect(vp)
+	var deck_text: String = tr(TEXT_PIECE_DECK)
+	UiButtons.draw_button(self, deck_button, deck_text, UiButtons.Style.SECONDARY, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(deck_button)), true, _back_font_size(deck_text, deck_button.size.x), OUTLINE_WIDTH)
 	var run: RunSession = _flow.get_run()
 	var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 	var max_hp: float = float(character.get("max_hp", 1.0))

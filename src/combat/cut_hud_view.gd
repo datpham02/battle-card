@@ -366,6 +366,12 @@ const CRACK_BRANCH: Array[Vector2] = [Vector2(0.45, 0.4), Vector2(0.68, 0.3), Ve
 const PHASE_BANNER_SEC: float = 1.0
 const PHASE_BANNER_COLOR: Color = Color(0.95, 0.25, 0.2)
 const TEXT_PHASE_BANNER: String = "ui.hud.phase_banner"
+## Story 034: "the deck does not fit this arena" notice, shown once at match start for
+## PIECE_DECK_NOTICE_SEC (presentation timing) in the status row under the HP bars (clear of the
+## phase banner in the middle of the board), when CombatView.is_piece_deck_fallback().
+const TEXT_PIECE_DECK_FALLBACK: String = "ui.piece_deck.fallback"
+const PIECE_DECK_NOTICE_SEC: float = 3.0
+const PIECE_DECK_NOTICE_COLOR: Color = Color(1.0, 0.85, 0.35)
 ## Story 027 zones (StatusEffects seals / thorns, both halves). Drawn right above the formation layer and
 ## under every telegraph, label and marker of this view. This view sits ABOVE CombatView (units) and the
 ## field-drops views (pieces), so an opaque seal over a cell holding a unit or a piece would hide it:
@@ -422,6 +428,9 @@ var _banner_left: float = 0.0
 var _phase_banner_text: String = ""
 var _phase_banner_left: float = 0.0
 var _phase_host: TraitHost = null
+## Story 034: seconds left of the piece-deck fallback notice; checked once, when the match state exists.
+var _piece_deck_notice_left: float = 0.0
+var _piece_deck_notice_checked: bool = false
 ## Story 027: the StatusEffects whose thorn_entered is connected, and the entry flashes (cell -> seconds left;
 ## the halves never share a cell, so the cell alone is the key).
 var _zone_status: StatusEffects = null
@@ -454,6 +463,11 @@ func _process(delta: float) -> void:
 	_blink_time += delta
 	_banner_left = maxf(_banner_left - delta, 0.0)
 	_phase_banner_left = maxf(_phase_banner_left - delta, 0.0)
+	_piece_deck_notice_left = maxf(_piece_deck_notice_left - delta, 0.0)
+	if _combat != null and not _piece_deck_notice_checked and _combat.get_state() != null:
+		_piece_deck_notice_checked = true
+		if _combat.is_piece_deck_fallback():
+			_piece_deck_notice_left = PIECE_DECK_NOTICE_SEC
 	for cell: Vector2i in _thorn_flashes.keys():
 		var left: float = float(_thorn_flashes[cell]) - delta
 		if left <= 0.0:
@@ -834,6 +848,30 @@ func _draw() -> void:
 		_draw_learning_debug(vp)
 	_draw_boss_status(vp)
 	_draw_trait_status(vp)
+	_draw_piece_deck_notice(vp)
+
+
+## Story 034: true while the piece-deck fallback notice is on screen (tests / captures).
+func is_piece_deck_notice_visible() -> bool:
+	return _piece_deck_notice_left > 0.0
+
+
+# Story 034: one line across the status row under both HP bars (trait strip left edge to boss strip
+# right edge) on a dark back, fading over the banner fade time; drawn last so it stays readable.
+func _draw_piece_deck_notice(vp: Vector2) -> void:
+	if _piece_deck_notice_left <= 0.0:
+		return
+	var left: Rect2 = ScreenLayout.hud_trait_status_rect(vp)
+	var right: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
+	var row := Rect2(left.position, Vector2(right.end.x - left.position.x, left.size.y))
+	var alpha: float = clampf(_piece_deck_notice_left / SIGNATURE_BANNER_FADE_SEC, 0.0, 1.0)
+	draw_rect(row, Color(0.0, 0.0, 0.0, SIGNATURE_BANNER_BACK_ALPHA * alpha))
+	var text: String = tr(TEXT_PIECE_DECK_FALLBACK)
+	var font: Font = ThemeDB.fallback_font
+	var size: int = STATUS_FONT_SIZE
+	while size > STATUS_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x > row.size.x:
+		size -= 1
+	draw_string(font, Vector2(row.position.x, row.get_center().y + size * 0.35), text, HORIZONTAL_ALIGNMENT_CENTER, row.size.x, size, Color(PIECE_DECK_NOTICE_COLOR, alpha))
 
 
 # --- Story 012: Focus (pause while connecting points) ---------------------------

@@ -520,3 +520,31 @@ ui.event.confirm_upgrade,Nâng cấp lá này,Upgrade this card
 ui.gold.gain,+%d vàng,+%d gold
 ui.rarity.curse,Nguyền,Curse
 ui.event.already_chosen,Bạn đã chọn rồi,You already chose
+piece.z4.name,Chữ Z,Z
+piece.j4.name,Chữ J,J
+piece.y5.name,Chữ Y,Y
+ui.piece_deck.title,BỘ MẢNH,PIECE DECK
+ui.piece_deck.open,Bộ mảnh,Pieces
+ui.piece_deck.tokens,Token Xóa hình: %d,Removal tokens: %d
+ui.piece_deck.percent,Rơi %s%%,Drop %s%%
+ui.piece_deck.remove,Xóa hình (còn %d token),Remove shape (%d tokens left)
+ui.piece_deck.close,Đóng,Close
+ui.piece_deck.run_only,Hình mới,New shape
+ui.piece_deck.removed_tag,Đã xóa,Removed
+ui.piece_deck.hint,Chạm một hình để chọn rồi xóa,"Tap a shape to select it, then remove it"
+ui.piece_deck.removed_msg,Đã xóa: %s,Removed: %s
+ui.piece_deck.fallback,Bộ mảnh không vừa sân này — dùng mảnh gốc,Your piece deck does not fit this arena — using the base pieces
+piece_deck.reason.unknown,Hình này không có trong bộ,This shape is not in your deck
+piece_deck.reason.already_removed,Hình này đã bị xóa,This shape is already removed
+piece_deck.reason.min_shapes,Bộ mảnh cần ít nhất %d hình,Your deck needs at least %d shapes
+piece_deck.reason.no_token,Hết token Xóa hình,No removal tokens left
+ui.piece_deck.ink_title,Ấn hình,Imprint a shape
+ui.piece_deck.ink_confirm,Ấn hình này,Imprint this shape
+ui.piece_deck.ink_skip,Không ấn,No imprint
+ui.piece_deck.ink_new,Thêm vào bộ mảnh,Adds it to your deck
+ui.piece_deck.ink_up,Rơi nhiều hơn: ×%d → ×%d,Drops more often: ×%d → ×%d
+ui.piece_deck.pick_remove,Chọn hình để xóa,Pick a shape to remove
+ui.shop.service.remove_shape.name,Xóa hình,Remove a shape
+ui.shop.service.remove_shape.desc,Bỏ một hình khỏi bộ mảnh,Take a shape out of your piece deck
+ui.shop.confirm_remove_shape,Xóa hình này (%d vàng),Remove this shape (%d gold)
+ui.piece_deck.new_shape,Hình mới,New

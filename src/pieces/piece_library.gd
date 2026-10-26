@@ -12,10 +12,14 @@ const _FALLBACK_ID: String = "mono"
 const _FALLBACK_NAME_KEY: String = "piece.mono.name"
 ## Weight used for a shape that appears in neither the chapter map nor the default map.
 const _UNLISTED_WEIGHT: float = 1.0
+## Story 034: pool names. A run_only shape only enters the player's deck through Ink.
+const POOL_DEFAULT: String = "default"
+const POOL_RUN_ONLY: String = "run_only"
 
 var _ids: Array[String] = []
 var _cells: Dictionary = {} # id -> Array[Vector2i] (normalised, sorted)
 var _name_keys: Dictionary = {} # id -> String
+var _pools: Dictionary = {} # id -> "default" | "run_only" (Story 034)
 var _weights: Dictionary = {} # chapter id or "default" -> {shape id -> float}
 
 
@@ -79,12 +83,36 @@ func name_key(id: String) -> String:
 
 ## Drop weight of shape [param id] in chapter [param chapter_id]: the chapter's own map first,
 ## then the `default` map, then 1.0 when listed in neither. Never negative; 0 = never drops.
+## Story 034: a run_only shape is always 0 here (it has no table weight; the player's deck gives
+## it one), so it never drops for the boss or in a match without a run.
 func weight(id: String, chapter_id: String) -> float:
+	if is_run_only(id):
+		return 0.0
 	for key: String in [chapter_id, "default"]:
 		var map: Variant = _weights.get(key)
 		if map is Dictionary and (map as Dictionary).has(id):
 			return maxf(float((map as Dictionary)[id]), 0.0)
 	return _UNLISTED_WEIGHT
+
+
+## Story 034: pool of shape [param id], "default" or "run_only"; empty for an unknown id.
+func pool(id: String) -> String:
+	return str(_pools.get(id, ""))
+
+
+## Story 034: true when [param id] is a known shape of the run_only pool.
+func is_run_only(id: String) -> bool:
+	return str(_pools.get(id, "")) == POOL_RUN_ONLY
+
+
+## Story 034: ids of the default pool, in file order.
+func base_shape_ids() -> Array[String]:
+	return _ids_in_pool(POOL_DEFAULT)
+
+
+## Story 034: ids of the run_only pool, in file order.
+func run_only_ids() -> Array[String]:
+	return _ids_in_pool(POOL_RUN_ONLY)
 
 
 ## A new piece of shape [param id] turned [param rotation] quarter turns, or null (with a
@@ -101,6 +129,7 @@ static func _fallback() -> PieceLibrary:
 	lib._ids.append(_FALLBACK_ID)
 	lib._cells[_FALLBACK_ID] = [Vector2i.ZERO] as Array[Vector2i]
 	lib._name_keys[_FALLBACK_ID] = _FALLBACK_NAME_KEY
+	lib._pools[_FALLBACK_ID] = POOL_DEFAULT
 	lib._weights["default"] = {_FALLBACK_ID: 1.0}
 	return lib
 
@@ -136,6 +165,19 @@ func _add_shape(entry: Variant) -> void:
 	_ids.append(id)
 	_cells[id] = normalised
 	_name_keys[id] = str(d.get("name_key", "piece.%s.name" % id))
+	var pool_name: String = str(d.get("pool", POOL_DEFAULT))
+	if pool_name != POOL_DEFAULT and pool_name != POOL_RUN_ONLY:
+		push_warning("PieceLibrary: shape '%s' has unknown pool '%s', using default" % [id, pool_name])
+		pool_name = POOL_DEFAULT
+	_pools[id] = pool_name
+
+
+func _ids_in_pool(pool_name: String) -> Array[String]:
+	var out: Array[String] = []
+	for id: String in _ids:
+		if str(_pools.get(id, POOL_DEFAULT)) == pool_name:
+			out.append(id)
+	return out
 
 
 func _read_weights(raw: Variant) -> void:

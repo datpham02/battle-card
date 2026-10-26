@@ -1156,3 +1156,169 @@ static func event_choice_rects(viewport_size: Vector2, count: int) -> Array[Rect
 ## Story 033: the card-offer row of an event result (the text box is short above it), centred.
 static func event_offer_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
 	return _reward_row(viewport_size, count, EVENT_OFFER_TOP_RATIO, EVENT_OFFER_BOTTOM_RATIO, 0.0)
+
+
+# --- Story 034 (P3b): the ink row of the reward screen, the shop's services column ---------------
+
+## Plain reward screen WITH an ink row: the card row shrinks to 0.17 .. 0.53 (259 px at 720p, compact
+## cards), the ink label band starts at 0.545 and the ink row fills 0.595 .. 0.835 (173 px). The centred
+## skip button keeps its place at REWARD_SKIP_TOP_RATIO (0.86): nothing is pushed out of the thumb zone.
+const REWARD_INK_CARDS_BOTTOM_RATIO: float = 0.53
+const REWARD_INK_LABEL_TOP_RATIO: float = 0.545
+const REWARD_INK_ROW_TOP_RATIO: float = 0.595
+const REWARD_INK_ROW_BOTTOM_RATIO: float = 0.835
+## Treasure screen with a relic row AND an ink row: cards 0.175 .. 0.39 (155 px), relic label 0.398,
+## relics 0.445 .. 0.645 (144 px), ink label 0.653, ink row 0.7 .. 0.87 (122 px); "Bỏ qua" / "Xác nhận"
+## keep REWARD_DUAL_BUTTON_TOP_RATIO (0.885).
+const REWARD_INK_DUAL_CARDS_BOTTOM_RATIO: float = 0.39
+const REWARD_INK_DUAL_RELIC_LABEL_TOP_RATIO: float = 0.398
+const REWARD_INK_DUAL_RELICS_TOP_RATIO: float = 0.445
+const REWARD_INK_DUAL_RELICS_BOTTOM_RATIO: float = 0.645
+const REWARD_INK_DUAL_LABEL_TOP_RATIO: float = 0.653
+const REWARD_INK_DUAL_ROW_TOP_RATIO: float = 0.7
+const REWARD_INK_DUAL_ROW_BOTTOM_RATIO: float = 0.87
+## One ink tile's width (0.22 * 1280 = 282 px; height = the row, >= 122 px) and the ink row's two buttons
+## (0.15 * 1280 = 192 px wide, BACK_BUTTON_HEIGHT_RATIO tall = 65 px >= 64 px), right-aligned in the row.
+const REWARD_INK_TILE_WIDTH_RATIO: float = 0.22
+const REWARD_INK_BUTTON_WIDTH_RATIO: float = 0.15
+
+
+## Story 034: the card row of the reward screen while an ink row is open ([param dual] = the treasure
+## screen that also carries a relic row); [param with_remove] reserves the "Bỏ 1 lá" slot as usual.
+static func reward_ink_card_rects(viewport_size: Vector2, count: int, with_remove: bool, dual: bool) -> Array[Rect2]:
+	var top: float = REWARD_DUAL_CARDS_TOP_RATIO if dual else REWARD_CARDS_TOP_RATIO
+	var bottom: float = REWARD_INK_DUAL_CARDS_BOTTOM_RATIO if dual else REWARD_INK_CARDS_BOTTOM_RATIO
+	return _reward_row(viewport_size, count, top, bottom, REWARD_REMOVE_SLOT_WIDTH_RATIO if with_remove else 0.0)
+
+
+## Story 034: the relic row of the treasure screen while an ink row is open (shorter, moved up).
+static func reward_ink_relic_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	return _reward_row(viewport_size, count, REWARD_INK_DUAL_RELICS_TOP_RATIO, REWARD_INK_DUAL_RELICS_BOTTOM_RATIO, 0.0)
+
+
+## Story 034: the relic row's label band while an ink row is open.
+static func reward_ink_relics_label_rect(viewport_size: Vector2) -> Rect2:
+	return Rect2(0.0, viewport_size.y * REWARD_INK_DUAL_RELIC_LABEL_TOP_RATIO, viewport_size.x, viewport_size.y * REWARD_DUAL_LABEL_HEIGHT_RATIO)
+
+
+## Story 034: the ink row's label band ("ẤN HÌNH").
+static func reward_ink_label_rect(viewport_size: Vector2, dual: bool) -> Rect2:
+	var top: float = REWARD_INK_DUAL_LABEL_TOP_RATIO if dual else REWARD_INK_LABEL_TOP_RATIO
+	return Rect2(0.0, viewport_size.y * top, viewport_size.x, viewport_size.y * REWARD_DUAL_LABEL_HEIGHT_RATIO)
+
+
+## Story 034: the whole ink row band, margin to margin.
+static func reward_ink_row_rect(viewport_size: Vector2, dual: bool) -> Rect2:
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var top: float = viewport_size.y * (REWARD_INK_DUAL_ROW_TOP_RATIO if dual else REWARD_INK_ROW_TOP_RATIO)
+	var bottom: float = viewport_size.y * (REWARD_INK_DUAL_ROW_BOTTOM_RATIO if dual else REWARD_INK_ROW_BOTTOM_RATIO)
+	return Rect2(margin, top, viewport_size.x - margin * 2.0, bottom - top)
+
+
+## Story 034: [param count] ink tiles from the left of the ink row, full row height. Empty for count <= 0.
+static func reward_ink_tile_rects(viewport_size: Vector2, count: int, dual: bool) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	var row: Rect2 = reward_ink_row_rect(viewport_size, dual)
+	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
+	var width: float = viewport_size.x * REWARD_INK_TILE_WIDTH_RATIO
+	for i: int in maxi(count, 0):
+		rects.append(Rect2(row.position.x + (width + gap) * i, row.position.y, width, row.size.y))
+	return rects
+
+
+## Story 034: the ink row's confirm button, at the right end of the row (right thumb), vertically centred.
+static func reward_ink_confirm_rect(viewport_size: Vector2, dual: bool) -> Rect2:
+	var row: Rect2 = reward_ink_row_rect(viewport_size, dual)
+	var size := Vector2(viewport_size.x * REWARD_INK_BUTTON_WIDTH_RATIO, minf(viewport_size.y * BACK_BUTTON_HEIGHT_RATIO, row.size.y))
+	return Rect2(Vector2(row.end.x - size.x, row.get_center().y - size.y * 0.5), size)
+
+
+## Story 034: the ink row's small skip button, left of its confirm button.
+static func reward_ink_skip_rect(viewport_size: Vector2, dual: bool) -> Rect2:
+	var confirm: Rect2 = reward_ink_confirm_rect(viewport_size, dual)
+	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
+	return Rect2(confirm.position.x - gap - confirm.size.x, confirm.position.y, confirm.size.x, confirm.size.y)
+
+
+## Story 034: [param count] service buttons stacked in the shop's services column (the area of
+## [method shop_service_rects]); three at 720p are (450 - 2 * 21.6) / 3 = 135 px tall >= 64 px.
+static func shop_service_column_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var left: float = viewport_size.x * SHOP_SERVICE_LEFT_RATIO
+	var width: float = viewport_size.x * (1.0 - MARGIN_RATIO) - left
+	var top: float = viewport_size.y * SHOP_CARDS_TOP_RATIO
+	var gap: float = viewport_size.y * SHOP_SERVICE_GAP_RATIO
+	var height: float = (viewport_size.y * SHOP_RELICS_BOTTOM_RATIO - top - gap * (count - 1)) / count
+	for i: int in count:
+		rects.append(Rect2(left, top + (height + gap) * i, width, height))
+	return rects
+
+
+# --- Story 034: piece deck screen and the map HUD "Bộ mảnh" button (P3a) ---------------------------
+
+## Piece deck grid: top and bottom of the tile area (shares of height), tiles per row, gaps between
+## tiles (column gap share of width, row gap share of height), tallest tile as a multiple of its width.
+const PIECE_DECK_GRID_TOP_RATIO: float = 0.16
+const PIECE_DECK_GRID_BOTTOM_RATIO: float = 0.78
+const PIECE_DECK_COLUMNS: int = 8
+const PIECE_DECK_GAP_RATIO: float = 0.012
+const PIECE_DECK_ROW_GAP_RATIO: float = 0.03
+const PIECE_DECK_TILE_MAX_ASPECT: float = 1.35
+## How far a selected tile is drawn up (share of height).
+const PIECE_DECK_RAISE_RATIO: float = 0.02
+## The refusal line right above the bottom-right button: top / bottom (shares of height) and width as a
+## multiple of that button's width (right-aligned with it).
+const PIECE_DECK_REASON_TOP_RATIO: float = 0.79
+const PIECE_DECK_REASON_BOTTOM_RATIO: float = 0.845
+const PIECE_DECK_REASON_WIDTH_SCALE: float = 1.8
+## Map HUD "Bộ mảnh" button: width (share of width) and the gap to the back button (share of width).
+const MAP_PIECE_DECK_BUTTON_WIDTH_RATIO: float = 0.12
+const MAP_PIECE_DECK_BUTTON_GAP_RATIO: float = 0.012
+
+
+## Story 034: [param count] piece deck tiles in rows of PIECE_DECK_COLUMNS (each row centred, the block
+## centred vertically in the grid area), in the given order. At 1280x720 with 16 shapes: 137 x 185 px.
+## Empty for count <= 0.
+static func piece_deck_tile_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if count <= 0:
+		return rects
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	var top: float = viewport_size.y * PIECE_DECK_GRID_TOP_RATIO
+	var avail_h: float = viewport_size.y * PIECE_DECK_GRID_BOTTOM_RATIO - top
+	var gap: float = viewport_size.x * PIECE_DECK_GAP_RATIO
+	var row_gap: float = viewport_size.y * PIECE_DECK_ROW_GAP_RATIO
+	var columns: int = mini(count, PIECE_DECK_COLUMNS)
+	var row_count: int = ceili(float(count) / PIECE_DECK_COLUMNS)
+	var width: float = maxf((viewport_size.x - margin * 2.0 - gap * (PIECE_DECK_COLUMNS - 1)) / PIECE_DECK_COLUMNS, 0.0)
+	var height: float = minf(maxf((avail_h - row_gap * (row_count - 1)) / row_count, 0.0), width * PIECE_DECK_TILE_MAX_ASPECT)
+	var block_top: float = top + (avail_h - (height * row_count + row_gap * (row_count - 1))) * 0.5
+	for i: int in count:
+		var r: int = floori(float(i) / PIECE_DECK_COLUMNS)
+		var in_row: int = mini(count - r * PIECE_DECK_COLUMNS, columns)
+		var left: float = (viewport_size.x - (width * in_row + gap * (in_row - 1))) * 0.5
+		rects.append(Rect2(left + (width + gap) * (i % PIECE_DECK_COLUMNS), block_top + (height + row_gap) * r, width, height))
+	return rects
+
+
+## Story 034: how far a selected piece deck tile is drawn up (its touch area adds this lift on top).
+static func piece_deck_tile_raise(viewport_size: Vector2) -> float:
+	return viewport_size.y * PIECE_DECK_RAISE_RATIO
+
+
+## Story 034: the refusal line right above the bottom-right button (shop_buy_rect), right-aligned with it.
+static func piece_deck_reason_rect(viewport_size: Vector2) -> Rect2:
+	var button: Rect2 = shop_buy_rect(viewport_size)
+	var width: float = minf(button.size.x * PIECE_DECK_REASON_WIDTH_SCALE, viewport_size.x * (1.0 - MARGIN_RATIO * 2.0))
+	var top: float = viewport_size.y * PIECE_DECK_REASON_TOP_RATIO
+	return Rect2(button.end.x - width, top, width, viewport_size.y * PIECE_DECK_REASON_BOTTOM_RATIO - top)
+
+
+## Story 034: the "Bộ mảnh" button of the world map / chapter map title band, right of the back button and
+## as tall as it (hit-test it on touch_rect, like the back button).
+static func map_piece_deck_button_rect(viewport_size: Vector2) -> Rect2:
+	var back: Rect2 = back_button_rect(viewport_size)
+	var left: float = back.end.x + viewport_size.x * MAP_PIECE_DECK_BUTTON_GAP_RATIO
+	return Rect2(left, back.position.y, viewport_size.x * MAP_PIECE_DECK_BUTTON_WIDTH_RATIO, back.size.y)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/run/game_flow.gd" id="2_flow"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://src/run/rest_view.gd" id="9_rest"]
 [ext_resource type="Script" path="res://src/run/shop_view.gd" id="10_shop"]
 [ext_resource type="Script" path="res://src/run/event_view.gd" id="11_event"]
+[ext_resource type="Script" path="res://src/run/piece_deck_view.gd" id="12_piece_deck"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -35,6 +36,9 @@ script = ExtResource("10_shop")
 
 [node name="EventView" type="Node2D" parent="GameFlow"]
 script = ExtResource("11_event")
+
+[node name="PieceDeckView" type="Node2D" parent="GameFlow"]
+script = ExtResource("12_piece_deck")
 
 [node name="RunHudView" type="Node2D" parent="."]
 script = ExtResource("4_hud")

@@ -36,6 +36,8 @@ var _piece_library: PieceLibrary
 var _chapter_id: String = ""
 var _piece_shapes: Array[String] = [] # shapes with at least one placement on the placement grid
 var _piece_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+# Story 034: injected weight source (Dictionary {id: float} or Callable(id) -> float); null = library weights.
+var _weight_source: Variant = null
 
 
 ## [param side_cells] is this side's half of the board (BoardGrid.player_cells()). A negative
@@ -84,17 +86,36 @@ func tick(delta: float, stand_cell: Vector2i, hand_count: int) -> void:
 ## < 0 gives a random seed, otherwise draws are deterministic. Pacing then reads the config's
 ## piece_spawn_interval_sec / piece_max_on_field / piece_freshness_sec; hunger compensation,
 ## blocked cells and pickup are unchanged. Call before the first tick.
+## Story 034: [param weight_source] is an optional injected weight (a Dictionary {shape id: float},
+## absent id = 0, or a Callable (id: String) -> float); null keeps [method PieceLibrary.weight] for
+## [param chapter_id] (the boss path and every older call; run_only shapes are then not drawable at
+## all). With a source, fitting shapes of
+## weight 0 are not drawable unless EVERY fitting shape has weight 0 (then all of them are, uniformly).
 func enable_pieces(
 	library: PieceLibrary, chapter_id: String, placement_grid: BoardGrid, rng_seed: int,
-	target_is_enemy: bool = true
+	target_is_enemy: bool = true, weight_source: Variant = null
 ) -> void:
 	_piece_library = library
 	_chapter_id = chapter_id
+	_weight_source = (weight_source as Dictionary).duplicate() if weight_source is Dictionary else weight_source
+	if _weight_source != null and not (_weight_source is Dictionary or _weight_source is Callable):
+		push_warning("FieldDrops: weight_source must be a Dictionary or a Callable, ignored")
+		_weight_source = null
 	_piece_shapes.clear()
 	if library != null and placement_grid != null:
 		for id: String in library.shape_ids():
+			# Story 034: without an injected source (boss, runless match) a run_only shape never drops.
+			if _weight_source == null and library.is_run_only(id):
+				continue
 			if PiecePlacement.has_any_placement(placement_grid, library.make_piece(id), target_is_enemy):
 				_piece_shapes.append(id)
+	if _weight_source != null:
+		var weighted: Array[String] = []
+		for id: String in _piece_shapes:
+			if _weight_of(id) > 0.0:
+				weighted.append(id)
+		if not weighted.is_empty():
+			_piece_shapes = weighted
 	if _piece_shapes.is_empty():
 		push_warning("FieldDrops: no piece shape fits the target half, no pieces will drop")
 	if rng_seed >= 0:
@@ -222,16 +243,25 @@ func _draw_piece() -> Piece:
 		return null
 	var total: float = 0.0
 	for id: String in _piece_shapes:
-		total += _piece_library.weight(id, _chapter_id)
+		total += _weight_of(id)
 	var chosen: String = _piece_shapes[_piece_rng.randi_range(0, _piece_shapes.size() - 1)]
 	if total > 0.0:
 		var roll: float = _piece_rng.randf() * total
 		for id: String in _piece_shapes:
-			roll -= _piece_library.weight(id, _chapter_id)
+			roll -= _weight_of(id)
 			if roll < 0.0:
 				chosen = id
 				break
 	return _piece_library.make_piece(chosen, _piece_rng.randi_range(0, 3))
+
+
+# Weight of a shape: the injected source when there is one, else the library's chapter weight.
+func _weight_of(id: String) -> float:
+	if _weight_source is Dictionary:
+		return maxf(float((_weight_source as Dictionary).get(id, 0.0)), 0.0)
+	if _weight_source is Callable:
+		return maxf(float((_weight_source as Callable).call(id)), 0.0)
+	return _piece_library.weight(id, _chapter_id)
 
 
 func _current_interval() -> float:
