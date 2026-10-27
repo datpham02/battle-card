@@ -8,7 +8,7 @@
     "boss_kill": { "count": 1, "tiers": ["boss", "epic"] }
   },
   "relics": [
-    { "id": "an_don", "rarity": "common", "tags": [], "name_key": "relic.an_don.name", "desc_key": "relic.an_don.desc", "script": "an_don", "params": { "mult": 2.0 } },
+    { "id": "an_don", "rarity": "common", "tags": [], "name_key": "relic.an_don.name", "desc_key": "relic.an_don.desc", "script": "an_don", "params": { "mult": 1.75 } },
     { "id": "chi_khau", "rarity": "common", "tags": [], "name_key": "relic.chi_khau.name", "desc_key": "relic.chi_khau.desc", "script": "chi_khau", "params": { "heal": 3, "max_heal_per_match": 15 } },
     { "id": "phong_an", "rarity": "common", "tags": [], "name_key": "relic.phong_an.name", "desc_key": "relic.phong_an.desc", "script": "config_mod", "params": { "seal_sec": { "add": 1.0 } }, "unlock_by": "ending_mercy" },
     { "id": "gai_ran", "rarity": "common", "tags": [], "name_key": "relic.gai_ran.name", "desc_key": "relic.gai_ran.desc", "script": "config_mod", "params": { "thorn_ran": { "add": 1 } }, "unlock_by": "ending_slaughter" },

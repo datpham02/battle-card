@@ -114,12 +114,12 @@
 			{"tier": 2, "kinds": [], "pick": [1, 1], "required": ["boss"]}
 		],
 		"floor_scaling": {
-			"1": {"hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0, "size_add": 0},
-			"2": {"hp_mult": 1.1, "step_mult": 0.95, "defense_add": 0, "size_add": 0},
-			"3": {"hp_mult": 1.2, "step_mult": 0.9, "defense_add": 1, "size_add": 0},
-			"4": {"hp_mult": 1.3, "step_mult": 0.85, "defense_add": 1, "size_add": 0},
-			"5": {"hp_mult": 1.4, "step_mult": 0.8, "defense_add": 2, "size_add": 1},
-			"final": {"hp_mult": 1.5, "step_mult": 0.8, "defense_add": 2, "size_add": 1}
+			"1": {"hp_mult": 0.7, "step_mult": 1.0, "defense_add": 0, "size_add": 0},
+			"2": {"hp_mult": 0.8, "step_mult": 0.95, "defense_add": 0, "size_add": 0},
+			"3": {"hp_mult": 0.85, "step_mult": 0.9, "defense_add": 1, "size_add": 0},
+			"4": {"hp_mult": 1.05, "step_mult": 0.85, "defense_add": 1, "size_add": 0},
+			"5": {"hp_mult": 1.15, "step_mult": 0.8, "defense_add": 2, "size_add": 1},
+			"final": {"hp_mult": 1.25, "step_mult": 0.8, "defense_add": 2, "size_add": 1}
 		},
 		"floor_tiers": {
 			"1": [0, 1, 1],
@@ -135,8 +135,8 @@
 			"guaranteed_shops": 3,
 			"guaranteed_min_floor": 2
 		},
-		"floor_heal_ratio": 0.35,
-		"fate": {"execute_artifact_offers": 3, "execute_min_rarity": "rare", "fate_hold_sec": 0.6},
+		"floor_heal_ratio": 0.6,
+		"fate": {"execute_artifact_offers": 2, "execute_min_rarity": "rare", "fate_hold_sec": 0.6},
 		"endings": {"spare_min_ratio": 1.0, "execute_max_ratio": 0.0},
 		"final_match": {"region": "an_dai", "match_id": "an_dai_keeper"},
 		"final_prelude": [["shop"]]
@@ -929,7 +929,7 @@
 					"id": "an_dai_keeper",
 					"name_key": "boss.an_dai_keeper.name",
 					"desc_key": "match.an_dai_keeper.desc",
-					"boss_max_hp": 130,
+					"boss_max_hp": 198,
 					"boss_step_cooldown_mult": 1.6,
 					"swing_speed_mult": 0.85,
 					"boss_think_interval_sec": 0.3,
@@ -1722,7 +1722,7 @@
 			"id": "sky_isles",
 			"name_key": "chapter.sky_isles.name",
 			"region_normalize": {
-				"hp_mult": 0.53,
+				"hp_mult": 0.45,
 				"step_mult": 1.05,
 				"defense_add": 0
 			},

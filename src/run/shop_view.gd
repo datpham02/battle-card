@@ -787,7 +787,7 @@ func _draw_card_body(rect: Rect2, id: String) -> void:
 	_text(rect, rect.position.y + rect.size.y * CARD_RARITY_BASELINE, line, _fit(line, inner, RARITY_FONT_SIZE), line_color)
 	var stats: String = _stats_line(skill)
 	_text(rect, rect.position.y + rect.size.y * CARD_STATS_BASELINE, stats, _fit(stats, inner, STAT_FONT_SIZE), STAT_COLOR)
-	var desc: String = tr(str(skill.get("desc_key", "")))
+	var desc: String = CardText.describe_resolved(skill)
 	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + rect.size.x * PAD_RATIO, rect.position.y + rect.size.y * CARD_DESC_TOP + DESC_FONT_SIZE), desc, HORIZONTAL_ALIGNMENT_CENTER, inner, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
 
 
@@ -870,7 +870,7 @@ func _draw_detail(vp: Vector2) -> void:
 		var current: int = int(_flow.get_deck_levels().get(id, 0))
 		var skill: Dictionary = _flow.get_cards().resolved(id, current + 1 if current > 0 else 1)
 		sub = tr(RARITY_KEY_FORMAT % str(skill.get("rarity", "common"))) + SEPARATOR + _stats_line(skill)
-		desc = tr(str(skill.get("desc_key", "")))
+		desc = CardText.describe_resolved(skill)
 	y += DETAIL_FONT_SIZE * 1.8
 	_text(panel, y, sub, _fit(sub, inner, DETAIL_FONT_SIZE), DETAIL_SUB_TEXT)
 	y += DETAIL_FONT_SIZE * 1.8

@@ -35,6 +35,10 @@ extends SceneTree
 ## sim_core like CombatView; run modifiers (loi_the) reach sim_core.run_modifiers. --economy-set=key:value
 ## overrides economy.json in memory (README).
 ##        godot --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=70 --characters=kiem_si
+## Story 040 (README "Story 040"): `--run=v6 --floors=a..b --final=on|off --mercy=kill|spare|mixed --shop=on|off --pieces=on|off
+## --relic=value|random|none --dodge=a,b,c --tables=v6|none` (world mode). They add bot policies (value / random relic pick, a
+## piece-deck policy, shop extras), the v6 out-of-match time table and the RUN / REGION x FLOOR / RELIC LIFT / SHOP / VERDICT run /
+## DODGE SENSITIVITY tables (the block at the end of this file). No such flag = the old output, byte for byte.
 
 const SimCore = preload("res://tools/balance/sim_core.gd")
 
@@ -120,6 +124,51 @@ const WORLD_REGION_SPREAD_MAX: float = 15.0
 const WORLD_FLOOR_DEATH_SHARE_MAX: float = 40.0
 ## Regions entered fewer times than this at a floor are left out of the spread check (too few runs).
 const WORLD_REGION_MIN_N: int = 5
+## Story 040 (README "Story 040"): out-of-match seconds of the v6 run-time estimate. ASSUMPTIONS (TD-006 family), printed in the
+## v6 header. A match adds its own intro_sec + end_delay_sec (RunConfig). `--node-overhead=S` replaces the whole table with
+## S per node (the old formula, no intro / end delay).
+const OOM_MAP_SEC: float = 8.0
+const OOM_REWARD_SEC: float = 15.0
+const OOM_SHOP_SEC: float = 45.0
+const OOM_EVENT_SEC: float = 30.0
+const OOM_REST_SEC: float = 10.0
+const OOM_FATE_SEC: float = 10.0
+## Story 040 Part C targets (starting values; the user re-fixes them after a playtest).
+const V6_WIN_TARGET: Array[float] = [30.0, 45.0]
+const V6_WIN_SPREAD_MAX: float = 20.0
+const V6_DEATH_STEP_TOLERANCE: float = 3.0
+const V6_FLOOR1_DEATH_MAX: float = 10.0
+const V6_FINAL_WIN_TARGET: Array[float] = [50.0, 70.0]
+const V6_MINUTES_WON_TARGET: Array[float] = [40.0, 50.0]
+const V6_MINUTES_LOST_MIN: float = 15.0
+const V6_HITS_TARGET: Array[float] = [15.0, 30.0]
+const V6_BOSS_HIT_PCT_TARGET: Array[float] = [4.0, 15.0]
+const V6_GOLD_SPENT_MIN_PCT: float = 70.0
+const V6_REGION_BAND: float = 10.0
+const V6_MERCY_EDGE_MAX: float = 10.0
+const V6_PIECES_EDGE_MAX: float = 10.0
+const V6_RELIC_LIFT_MAX: float = 15.0
+const V6_SHOP_MIN_PCT: float = 2.0
+## Cells (matches / runs) below which a REGION x FLOOR, RELIC LIFT or SHOP cell is marked small and left out of its check.
+const V6_REGION_MIN_N: int = 20
+const V6_LIFT_MIN_N: int = 10
+const V6_SHOP_MIN_OFFERS: int = 10
+const V6_SHOP_MIN_VISITS: int = 20
+## `--relic=value`: the static value of an offered relic = rarity rank x 10 + this bonus (ASSUMPTION; a relic not listed = 0).
+## Printed in the v6 header. huyet_an is negative (self damage) so it is never the first pick.
+const RELIC_VALUE_BONUS: Dictionary = {
+	"an_don": 3.0, "chi_khau": 2.0, "tui_rong": 3.0, "tam_hop": 3.0, "khoi_the": 2.0, "tam_huong": 2.0, "an_chu": 2.0,
+	"phan_don": 1.0, "dau_than": 1.0, "manh_tuoi": 1.0, "dinh_tam": 1.0, "han_ky": 1.0, "huyet_an": -50.0,
+}
+const RELIC_MODES: Array[String] = ["value", "random", "none"]
+## `--pieces=on` bot rule: inks only shapes of this many cells (smallest first), removes 5-cell shapes (see _pieces_remove_pick).
+const PIECES_INK_MIN_CELLS: int = 2
+const PIECES_INK_MAX_CELLS: int = 3
+const PIECES_REMOVE_CELLS: int = 5
+const INK_SEED_TAG: String = "ink"
+## `--shop=on`: the bot also buys the remove-card service while the deck holds more than this many cards.
+const SHOP_REMOVE_CARD_OVER: int = 10
+const MERCY_ALIASES: Dictionary = {"kill": "execute", "spare": "spare", "mixed": "alternate"}
 const METRICS: Array[String] = [
 	"win", "cols", "hits_won", "hits_all", "dmg_hit_pct", "hp_win", "rest_heal", "rest_forge", "treasure",
 	"tokens", "size", "levels", "sec", "timeouts", "matches", "taken", "dealt", "sig_acts", "bswings",
@@ -153,6 +202,9 @@ var _world: bool = false
 var _region_pick: String = "random"
 var _node_overhead: float = DEFAULT_NODE_OVERHEAD_SEC
 var _world_set: Array[String] = []
+## Story 040: `--char-set=<id>.<key path>:<X|xF>[,...]` overrides characters.json in memory (e.g.
+## phap_su.max_hp:210, phap_su.signature.params.burn_damage_per_tick:x1.5), so character probes run side by side.
+var _char_set: Array[String] = []
 var _policies_given: bool = false
 var _relic_policy: String = "none"
 # Story 035: "" (no --fate) or one of FATE_POLICIES.
@@ -181,11 +233,40 @@ var _kiep_levels: Array[int] = []
 var _kiep_only: bool = false
 var _kiep_active: bool = false
 var _kiep_full: bool = false
+## Story 040: `--seed-offset=N` runs seeds N+1..N+seeds (world mode), so a final check can use a seed set the tuning
+## rounds never saw.
+var _seed_offset: int = 0
 ## The level the world runs in progress play at (0 = the normal game) and whether the per-level WORLD tables are suppressed.
 var _kiep_level: int = 0
 var _kiep_compact: bool = false
 ## One row per (level, character, policy), see [method _kiep_note].
 var _kiep_rows: Array[Dictionary] = []
+## Story 040 (README "Story 040"): the run v6 aliases and the v6 tables. All of it is off by default (then the output is the old one).
+## [member _v6] = the v6 tables are printed (any alias flag, or `--tables=v6`; `--tables=none` forces them off).
+var _v6: bool = false
+var _tables_forced_off: bool = false
+## `--floors=a..b` (`_f_from` = a - 1; `_floors_b` = b, -1 = the default 5) and `--final=on|off` (off = no final match), see [method _f_range].
+var _f_from: int = 0
+var _floors_b: int = -1
+var _final_on: bool = true
+## `--relic=value|random|none` ("" = the legacy `--relic-policy`): how a relic is chosen from an offer.
+var _relic_mode: String = ""
+## `--pieces=on` bot piece-deck policy (see `_pieces_*`), `--shop=on` extras (remove card / remove shape).
+var _pieces_on: bool = false
+var _shop_extras: bool = false
+## Lists (`--dodge=a,b,c`, `--mercy=kill,spare`, `--pieces=on,off`): the same seeds run once per combination.
+var _dodge_list: Array[float] = []
+var _mercy_list: Array[String] = []
+var _pieces_list: Array[bool] = []
+var _node_overhead_given: bool = false
+## The runs of the variant in progress (RELIC LIFT / SHOP) and, per variant, {label, dodge, mercy, pieces, wins: {character: win %}}.
+var _v6_runs: Array[Dictionary] = []
+var _v6_summary: Array[Dictionary] = []
+var _variant_label: String = ""
+var _orig_piece_spec: String = ""
+var _orig_piece_state: Dictionary = {}
+var _pieces_flag: bool = false
+## `--relic=value|random` pick seed of the call in progress is passed explicitly; nothing global.
 
 
 ## Story 031 world mode: a run's state (the parts of RunSession the bot and the reward policy read), so the
@@ -211,6 +292,9 @@ class WorldRun:
 	var event_used: Array = []
 	## Story 038: the run's Kiep level (0 = the normal game).
 	var kiep_level: int = 0
+	## Story 040 (`--pieces=on` only): the run's piece deck and its shape-removal tokens (see RunSession).
+	var piece_deck: Dictionary = {}
+	var shape_removals: int = 0
 
 	func luck(config: Dictionary = {}) -> float:
 		return float(config.get("luck_start", 0.0)) + float(config.get("luck_per_node", 1.0)) * float(nodes_cleared)
@@ -263,12 +347,26 @@ class WorldRun:
 func _init() -> void:
 	var t0: int = Time.get_ticks_msec()
 	_core = SimCore.new()
-	var rest: PackedStringArray = _core.apply_args(OS.get_cmdline_user_args())
+	# Story 040: `--dodge=a,b,c` runs the same seeds at each value; the bot core only sees the first one.
+	var core_args: PackedStringArray = []
+	for raw: String in OS.get_cmdline_user_args():
+		if raw.begins_with("--dodge=") and raw.contains(","):
+			for item: String in raw.get_slice("=", 1).split(","):
+				if item.strip_edges().is_valid_float():
+					_dodge_list.append(clampf(float(item.strip_edges()), 0.0, 1.0))
+			core_args.append("--dodge=%s" % (str(_dodge_list[0]) if not _dodge_list.is_empty() else "0.85"))
+			if _dodge_list.size() > 1:
+				_v6 = true
+		else:
+			core_args.append(raw)
+	var rest: PackedStringArray = _core.apply_args(core_args)
 	var seeds: int = DEFAULT_SEEDS
 	for arg: String in rest:
 		var v: String = arg.get_slice("=", 1) if arg.contains("=") else ""
 		if arg.begins_with("--seeds="):
 			seeds = maxi(int(v), 1)
+		elif arg.begins_with("--seed-offset="):
+			_seed_offset = maxi(int(v), 0)
 		elif arg.begins_with("--policies="):
 			_policies_given = true
 			_policies = []
@@ -328,6 +426,11 @@ func _init() -> void:
 				print("--region-pick: '%s' unknown, using %s (one of %s)" % [v, _region_pick, str(REGION_PICKS)])
 		elif arg.begins_with("--node-overhead="):
 			_node_overhead = maxf(float(v), 0.0)
+			_node_overhead_given = true
+		elif arg.begins_with("--char-set="):
+			for item: String in v.split(","):
+				if not item.strip_edges().is_empty():
+					_char_set.append(item.strip_edges())
 		elif arg.begins_with("--world-set="):
 			for item: String in v.split(","):
 				if not item.strip_edges().is_empty():
@@ -361,9 +464,14 @@ func _init() -> void:
 				_trace_n = int(v)
 			else:
 				_trace_id = v
+		elif _parse_v6_flag(arg, v):
+			pass
 		else:
 			print("unknown flag %s (see tools/balance/README.md)" % arg)
 	_core.load_configs()
+	if not _char_set.is_empty():
+		_core.characters = _characters_with_overrides(_char_set)
+	_v6_setup()
 	_chapters = ChaptersConfig.load_from_file() if _world_set.is_empty() else _chapters_with_overrides(_world_set)
 	_reward_config = RewardRoller.load_config()
 	_economy = EconomyConfig.shared() if _economy_set.is_empty() else _economy_with_overrides(_economy_set)
@@ -747,6 +855,8 @@ func _apply_policy(session, policy: String, kind: String, out: Dictionary) -> vo
 	var offers: int = int(info.get("offers", 0))
 	if offers <= 0:
 		return
+	if out.has("oo_sec"):
+		out["oo_sec"] = float(out["oo_sec"]) + OOM_REWARD_SEC
 	var cfg: Dictionary = _reward_config.duplicate(true)
 	cfg["offer_count"] = offers
 	var reward_seed: int = (session as WorldRun).reward_seed() if session is WorldRun else (hash([session.run_seed, session.chapter_index, session.column, session.cleared_nodes.size()]) & SEED_MASK)
@@ -946,6 +1056,33 @@ func _chapters_with_overrides(items: Array[String]) -> ChaptersConfig:
 	return ChaptersConfig.from_dictionary(data)
 
 
+# Story 040: CharacterConfig from characters.json with the --char-set overrides applied to the raw dictionary
+# (key = <character id>.<dictionary path>; X sets, xF multiplies a number). Printed once so the run header shows it.
+func _characters_with_overrides(items: Array[String]) -> CharacterConfig:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(CharacterConfig.DEFAULT_PATH))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		print("--char-set: characters.json did not parse, overrides ignored")
+		return _core.characters
+	var data: Dictionary = parsed as Dictionary
+	for item: String in items:
+		var parts: PackedStringArray = item.get_slice(":", 0).split(".")
+		var raw_value: String = item.get_slice(":", 1)
+		var target: Dictionary = {}
+		for c: Variant in data.get("characters", []) as Array:
+			if typeof(c) == TYPE_DICTIONARY and str((c as Dictionary).get("id", "")) == parts[0]:
+				target = c
+		for i: int in range(1, parts.size() - 1):
+			target = target.get(parts[i], {}) if typeof(target.get(parts[i], {})) == TYPE_DICTIONARY else {}
+		var leaf: String = parts[parts.size() - 1]
+		if parts.size() < 2 or not target.has(leaf):
+			print("--char-set: unknown key '%s' ignored" % item)
+			continue
+		var value: float = float(raw_value.trim_prefix("x"))
+		target[leaf] = float(target[leaf]) * value if raw_value.begins_with("x") else value
+		print("--char-set: %s = %s" % [item.get_slice(":", 0), str(target[leaf])])
+	return CharacterConfig.from_dictionary(data)
+
+
 func _run_world_mode(seeds: int) -> void:
 	var pols: Array[String] = _policies.duplicate() if _policies_given else ([VERDICT_POLICY] as Array[String])
 	var w: Dictionary = _chapters.world_spec()
@@ -956,7 +1093,7 @@ func _run_world_mode(seeds: int) -> void:
 	print(_core.describe())
 	if not _core.describe_progress().is_empty():
 		print(_core.describe_progress())
-	if not _core.describe_piece_deck().is_empty():
+	if not _core.describe_piece_deck().is_empty() and not _pieces_on:
 		print(_core.describe_piece_deck())
 	if not _core.describe_piece_weight_set().is_empty():
 		print(_core.describe_piece_weight_set())
@@ -975,22 +1112,41 @@ func _run_world_mode(seeds: int) -> void:
 		print("  region_normalize %s: %s" % [id, str(_chapters.region_normalize(id))])
 	print("node policy: rest when HP < %.0f%%, else treasure > rest (heal < %.0f%% else forge) > miniboss at >= %.0f%% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60." % [
 		100.0 * REST_HEAL_BELOW, 100.0 * REST_HEAL_BELOW, 100.0 * MINIBOSS_MIN_HP])
+	if _v6:
+		_v6_header(floors)
 	if _kiep_active:
 		_run_kiep_levels(pols, seeds, floors)
 		return
-	for char_id: String in _characters_run:
-		for p: String in pols:
-			_world_report(char_id, p, seeds, floors)
+	var combos: Array[Dictionary] = _v6_combos()
+	for combo: Dictionary in combos:
+		if _v6:
+			_v6_apply(combo)
+			if combos.size() > 1:
+				print("")
+				print("=== VARIANT %s ===" % _variant_label)
+				print(_core.describe())
+		_v6_runs = []
+		for char_id: String in _characters_run:
+			for p: String in pols:
+				_world_report(char_id, p, seeds, floors)
+		if _v6:
+			_v6_aggregate_report(combo, floors)
 	_world_characters_report(pols)
+	if _v6:
+		_v6_compare_report(combos)
 
 
 func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> void:
 	var t_c: int = Time.get_ticks_msec()
 	var runs: Array[Dictionary] = []
 	for s: int in seeds:
-		runs.append(_run_world(s + 1, char_id, policy, floors))
+		runs.append(_run_world(s + 1 + _seed_offset, char_id, policy, floors))
 		if (s + 1) % 10 == 0:
 			print("  ... %s %d/%d seeds, %.1f s%s" % [char_id, s + 1, seeds, (Time.get_ticks_msec() - t_c) / 1000.0, (" (kiep %d%s)" % [_kiep_level, " only" if _kiep_only else ""]) if _kiep_active else ""])
+	if _v6:
+		for tagged: Dictionary in runs:
+			tagged["character"] = char_id
+			tagged["policy"] = policy
 	if _kiep_active:
 		_kiep_note(char_id, policy, runs, floors)
 		if _kiep_compact:
@@ -1016,17 +1172,18 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 			var dk: String = "f%s/%s" % ["final" if df == floors else str(df + 1), str(r["death_kind"])]
 			deaths_kind[dk] = int(deaths_kind.get(dk, 0)) + 1
 		var path: Array = r["path"]
+		var f0: int = int(r.get("f_from", 0))
 		for f: int in path.size():
-			var key: String = "%d|%s" % [f, str(path[f])]
+			var key: String = "%d|%s" % [f + f0, str(path[f])]
 			if not by_region.has(key):
 				by_region[key] = [0, 0]
 			by_region[key][0] = int(by_region[key][0]) + 1
-			if int(r["floors_cleared"]) > f:
+			if int(r["floors_cleared"]) > f + f0:
 				by_region[key][1] = int(by_region[key][1]) + 1
 		for f: int in (r["hp_in"] as Array).size():
-			(hp_in[f] as Array).append(float(r["hp_in"][f]))
+			(hp_in[mini(f + f0, floors)] as Array).append(float(r["hp_in"][f]))
 		for f: int in (r["hp_out"] as Array).size():
-			(hp_out[f] as Array).append(float(r["hp_out"][f]))
+			(hp_out[mini(f + f0, floors)] as Array).append(float(r["hp_out"][f]))
 	var total_deaths: int = runs.size() - wins.size()
 	var win_pct: float = 100.0 * wins.size() / maxf(n, 1.0)
 	var won_min: Array = _field(wins, "minutes")
@@ -1111,6 +1268,9 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 		max_spread, WORLD_REGION_SPREAD_MAX, WORLD_REGION_MIN_N, "PASS" if max_spread <= WORLD_REGION_SPREAD_MAX else "FAIL",
 		max_share, WORLD_FLOOR_DEATH_SHARE_MAX, "PASS" if max_share <= WORLD_FLOOR_DEATH_SHARE_MAX else "FAIL",
 		"PASS" if decreasing else "FAIL (a floor with no deaths)", hits_won])
+	if _v6:
+		_v6_runs.append_array(runs)
+		_v6_run_report(char_id, policy, runs, floors, win_pct)
 
 
 # Story 034 (only with --piece-deck): the D2 measures of one character/policy over its world runs, every
@@ -1184,7 +1344,7 @@ func _take_relic(owned: Array[String], policy: String, relic_seed: int) -> bool:
 	var offer: Array[String] = RelicRoller.roll(RelicRoller.SOURCE_TREASURE, _owned_or_locked(owned), rng, _core.relic_config)
 	if offer.is_empty():
 		return false
-	owned.append(_rarest_relic(offer))
+	owned.append(_rarest_relic(offer, relic_seed))
 	return true
 
 
@@ -1198,7 +1358,13 @@ func _owned_or_locked(owned: Array[String]) -> Array[String]:
 
 
 # The relic --relic-policy=pick takes from a non-empty [param offer]: the rarest, the first on a tie.
-func _rarest_relic(offer: Array[String]) -> String:
+func _rarest_relic(offer: Array[String], pick_seed: int = 0) -> String:
+	if _relic_mode == "value":
+		return _value_relic(offer)
+	if _relic_mode == "random":
+		var pick_rng := RandomNumberGenerator.new()
+		pick_rng.seed = hash([pick_seed, "relic_pick"]) & SEED_MASK
+		return offer[pick_rng.randi_range(0, offer.size() - 1)]
 	var best: String = offer[0]
 	for id: String in offer:
 		if RelicConfig.rarity_rank(str(_core.relic_config.get_relic(id)["rarity"])) > RelicConfig.rarity_rank(str(_core.relic_config.get_relic(best)["rarity"])):
@@ -1226,7 +1392,7 @@ func _take_fate(w: WorldRun, fate_index: int, fate_seed: int, out: Dictionary) -
 	var offer: Array[String] = FateLogic.roll_execute_offer(w.relics, _chapters.fate_config(), _core.relic_config, fate_seed, 0.0, _core.locked_ids("relic"))
 	if offer.is_empty():
 		return fate
-	w.relics.append(_rarest_relic(offer) if _relic_policy == "pick" else offer[0])
+	w.relics.append(_rarest_relic(offer, fate_seed) if _relic_policy == "pick" else offer[0])
 	out["fate_relics"] = float(out["fate_relics"]) + 1.0
 	return fate
 
@@ -1328,11 +1494,23 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		# Story 037 (read by the unlock-runs mode only): one entry per match node played, in order, see _match_record.
 		"match_log": [],
 		"fate_exec": 0.0, "fate_spare": 0.0, "fate_relics": 0.0, "final_reached": false, "final_phase": 0,
-		"final_boss_hp": 0.0}
+		"final_boss_hp": 0.0,
+		# Story 040 (read by the v6 tables only): out-of-match seconds, the matches' intro + end delay, the boss swing hits and
+		# damage, the per-match log [floor, region, won, kind], the per-shop log, the relics owned when floor 2 ended, the
+		# gold when the final floor was entered, the run's first floor index, max HP, piece-deck policy counters.
+		"oo_sec": 0.0, "match_extra_sec": 0.0, "shits": 0.0, "bdmg": 0.0, "mlog": [], "shop_log": [], "relics_f2": [],
+		"gold_at_final": -1.0, "f_from": 0, "max_hp": max_hp, "ink_taken": 0.0, "shape_removed": 0.0, "piece_n": 0.0}
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", 2))
 	var path: Array[String] = []
 	var lost: bool = false
-	for f: int in floors + 1:
+	var f_range: Vector2i = _f_range(floors)
+	out["f_from"] = f_range.x
+	out["relics_f2"] = w.relics.duplicate()
+	if _pieces_on:
+		w.piece_deck = PieceDeck.initial(_core.piece_lib)
+		w.shape_removals = _core.piece_deck_cfg.shape_removals_start
+		_pieces_use_tokens(w, out)
+	for f: int in range(f_range.x, f_range.y + 1):
 		w.floor = f
 		var map: Array[Dictionary] = []
 		if f < floors:
@@ -1367,11 +1545,14 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			var node: Dictionary = _world_choose_node(nodes, w, max_hp)
 			var kind: String = str(node.get("kind", ""))
 			out["nodes"] = float(out["nodes"]) + 1.0
+			out["oo_sec"] = float(out["oo_sec"]) + OOM_MAP_SEC
 			if kind == ChapterMapGen.KIND_SHOP:
+				out["oo_sec"] = float(out["oo_sec"]) + OOM_SHOP_SEC
 				_visit_shop(w, int(node["node_index"]), policy, max_hp, out)
 				w.nodes_cleared += 1
 				continue
 			if kind == ChapterMapGen.KIND_EVENT:
+				out["oo_sec"] = float(out["oo_sec"]) + OOM_EVENT_SEC
 				if not _visit_event(w, int(node["node_index"]), int(map[col].get("tier", 0)), max_hp, character, bot_rng, out):
 					lost = true
 					out["death_floor"] = f
@@ -1380,6 +1561,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				w.nodes_cleared += 1
 				continue
 			if kind == ChapterMapGen.KIND_REST:
+				out["oo_sec"] = float(out["oo_sec"]) + OOM_REST_SEC
 				var forge_index: int = _forge_index(w)
 				if _hp_ratio(w, max_hp) < REST_HEAL_BELOW or forge_index < 0:
 					w.rest_heal(max_hp, _reward_config)
@@ -1394,9 +1576,14 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				_drop_gold(w, kind, int(node["node_index"]), out)
 				if not _take_relic(w.relics, policy, hash([seed_value, f, col, int(node["node_index"]), RELIC_SEED_TAG]) & SEED_MASK):
 					_apply_policy(w, policy, kind, out)
+				else:
+					out["oo_sec"] = float(out["oo_sec"]) + OOM_REWARD_SEC
 				w.nodes_cleared += 1
+				_pieces_after_node(w, kind, out)
 				continue
 			var match_seed: int = hash([seed_value, f, w.region_id, col, int(node["node_index"])]) & SEED_MASK
+			if f == floors:
+				out["gold_at_final"] = float(w.gold)
 			var r: Dictionary = _world_match(w, kind, str(node.get("match_id", "")), match_seed, character, bot_rng, out)
 			var rec: Dictionary = _match_record(r, w, kind, str(node.get("match_id", "")), f == floors)
 			(out["match_log"] as Array).append(rec)
@@ -1415,12 +1602,18 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			w.nodes_cleared += 1
 			if kind == ChapterMapGen.KIND_BOSS:
 				w.removal_tokens += int(_reward_config.get("boss_removal_tokens", 1))
+				if _pieces_on:
+					w.shape_removals += maxi(_core.piece_deck_cfg.shape_removals_per_boss, 0)
 			# Story 035: the fate of a downed region boss comes before its reward (GameFlow order).
 			if not _fate_policy.is_empty() and FateLogic.is_boss_fate_node(kind, f == floors):
 				rec["fate"] = _take_fate(w, int(float(out["fate_exec"]) + float(out["fate_spare"])),
 					hash([seed_value, f, w.region_id, FATE_SEED_TAG]) & SEED_MASK, out)
+				out["oo_sec"] = float(out["oo_sec"]) + OOM_FATE_SEC
 			_apply_policy(w, policy, kind, out)
+			_pieces_after_node(w, kind, out)
 			rec["deck_ids"] = _deck_ids(w)
+		if f == 1 or (lost and f <= 1):
+			out["relics_f2"] = w.relics.duplicate()
 		if lost:
 			break
 		(out["hp_out"] as Array).append(_hp_ratio(w, max_hp))
@@ -1431,7 +1624,7 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			if _kiep_level > 0:
 				heal_ratio = KiepRules.shared().floor_heal_ratio(heal_ratio, _kiep_level)
 			w.hp = minf(before + maxf(heal_ratio, 0.0) * max_hp, max_hp)
-	out["won"] = not lost and int(out["floors_cleared"]) == floors + 1
+	out["won"] = not lost and int(out["floors_cleared"]) == f_range.y + 1
 	out["deck_ids"] = _deck_ids(w)
 	out["path"] = path
 	out["relics"] = w.relics.duplicate()
@@ -1439,6 +1632,10 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 	out["gold_left"] = float(w.gold)
 	out["luck"] = w.luck(_reward_config)
 	out["minutes"] = (float(out["real_sec"]) + _node_overhead * float(out["nodes"])) / 60.0
+	# Story 040: the v6 estimate = match real seconds + the out-of-match table (+ each match's intro / end delay); `--node-overhead`
+	# given = the old formula. The WORLD SUMMARY keeps `minutes` above, so the old output is unchanged.
+	out["minutes_est"] = float(out["minutes"]) if _node_overhead_given else (float(out["real_sec"]) + float(out["oo_sec"]) + float(out["match_extra_sec"])) / 60.0
+	out["piece_n"] = float(PieceDeck.active_ids(w.piece_deck, _core.piece_lib).size()) if _pieces_on else float(_core.piece_lib.base_shape_ids().size())
 	out["size"] = w.deck.size()
 	var level_sum: int = 0
 	for e: Dictionary in w.deck:
@@ -1714,9 +1911,16 @@ func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, 
 	_core.run_modifiers = _session_of(w, 0).run_modifier_overrides()
 	if not _core.run_modifiers.is_empty():
 		out["mod_matches"] = float(out["mod_matches"]) + 1.0
+	if _pieces_on:
+		_core.piece_deck_state = w.piece_deck
 	var r: Dictionary = _core.play_match(m, character, w.deck_entries(), w.hp, match_seed, bot_rng)
 	_core.run_modifiers = {}
 	out["matches"] = float(out["matches"]) + 1.0
+	# Story 040: the v6 run time (a match's intro + end delay) and the per-match log of the REGION x FLOOR table.
+	out["match_extra_sec"] = float(out["match_extra_sec"]) + run_config.intro_sec + run_config.end_delay_sec
+	out["shits"] = float(out["shits"]) + float(r["shits"])
+	out["bdmg"] = float(out["bdmg"]) + float(r["bdmg"])
+	(out["mlog"] as Array).append([w.floor, w.region_id, bool(r["won"]), kind])
 	for rid: Variant in (r["relic_trig"] as Dictionary).keys():
 		out["relic_trig"][rid] = int((out["relic_trig"] as Dictionary).get(rid, 0)) + int(r["relic_trig"][rid])
 	out["hits"] = float(out["hits"]) + float(r["bhits"])
@@ -1768,6 +1972,9 @@ func _session_of(w: WorldRun, node_index: int) -> RunSession:
 	rs.cards_config = _core.cards
 	rs.locked = _core.locked.duplicate(true)
 	rs.kiep_level = w.kiep_level
+	if _pieces_on:
+		rs.piece_deck = w.piece_deck.duplicate(true)
+		rs.shape_removals = w.shape_removals
 	return rs
 
 
@@ -1778,6 +1985,9 @@ func _sync_back(rs: RunSession, w: WorldRun) -> void:
 	w.gold = rs.gold
 	w.removal_tokens = rs.removal_tokens
 	w.run_modifiers = rs.run_modifiers
+	if _pieces_on:
+		w.piece_deck = rs.piece_deck
+		w.shape_removals = rs.shape_removals
 
 
 # GameFlow._drop_gold: EconomyConfig.gold_for(kind, floor, hash([run_seed, floor, column, node_index, "gold"])).
@@ -1831,10 +2041,19 @@ func _visit_shop(w: WorldRun, node_index: int, policy: String, max_hp: float, ou
 	var state: Dictionary = _shop_state(w, node_index)
 	var gold_in: int = rs.gold
 	var bought: int = 0
+	var offered_ids: Array[String] = []
+	var bought_ids: Array[String] = []
+	for row: Dictionary in state["cards"] as Array:
+		offered_ids.append("card:%s" % str(row["id"]))
+	for row: Dictionary in state["relics"] as Array:
+		offered_ids.append("relic:%s" % str(row["id"]))
+	for service: String in ShopLogic.SERVICES:
+		offered_ids.append("service:%s" % service)
 	if _shop_policy != "none" and policy != "always_skip":
 		if _hp_ratio(rs, max_hp) < SHOP_HEAL_BELOW:
 			if bool(ShopLogic.use_service(state, rs, ShopLogic.SERVICE_HEAL, max_hp, _core.cards)["ok"]):
 				bought += 1
+				bought_ids.append("service:%s" % ShopLogic.SERVICE_HEAL)
 				out["heals_bought"] = float(out["heals_bought"]) + 1.0
 		while true:
 			var best_id: String = ""
@@ -1846,6 +2065,7 @@ func _visit_shop(w: WorldRun, node_index: int, policy: String, max_hp: float, ou
 			if best_id.is_empty() or not bool(ShopLogic.buy(state, rs, ShopLogic.KIND_RELIC, best_id)["ok"]):
 				break
 			bought += 1
+			bought_ids.append("relic:%s" % best_id)
 			out["relics_bought"] = float(out["relics_bought"]) + 1.0
 		while true:
 			var offer: Array[String] = []
@@ -1856,8 +2076,12 @@ func _visit_shop(w: WorldRun, node_index: int, policy: String, max_hp: float, ou
 			if pick.is_empty() or not bool(ShopLogic.buy(state, rs, ShopLogic.KIND_CARD, pick)["ok"]):
 				break
 			bought += 1
+			bought_ids.append("card:%s" % pick)
 			out["cards_bought"] = float(out["cards_bought"]) + 1.0
+		if _shop_extras:
+			bought += _visit_shop_extras(rs, state, bought_ids)
 	_sync_back(rs, w)
+	(out["shop_log"] as Array).append({"offered": offered_ids, "bought": bought_ids})
 	out["gold_spent"] = float(out["gold_spent"]) + float(gold_in - w.gold)
 	out["shops"] = float(out["shops"]) + 1.0
 	(out["shop_items"] as Array).append(bought)
@@ -2612,3 +2836,656 @@ func _unlock_apply_run(cfg: AchievementsConfig, progress: ProgressState, char_id
 		"type": "run_ended", "won": won, "ending_id": ending_id, "character_id": char_id,
 		"run_stats": run_stats.duplicate(), "deck_ids": (out["deck_ids"] as Array).duplicate()}))
 	return earned
+
+
+# ================================================================ Story 040: run v6 aliases, bot policies and tables
+# README "Story 040". Everything below is reached only through the new flags, so a run without them is the old output.
+
+
+# The Story 040 alias flags. True when [param arg] is one of them (handled here, [param v] = the text after "=").
+# Every alias also turns on world mode and the v6 tables (`--tables=none` turns the tables off again).
+func _parse_v6_flag(arg: String, v: String) -> bool:
+	var val: String = v.strip_edges()
+	if arg.begins_with("--run="):
+		if val != "v6":
+			print("--run: '%s' unknown (only v6), ignored" % val)
+	elif arg.begins_with("--floors="):
+		var lo: int = 1
+		var hi: int = 5
+		if val.contains(".."):
+			lo = int(val.get_slice("..", 0).strip_edges())
+			hi = int(val.get_slice("..", 1).strip_edges())
+		elif val.is_valid_int():
+			lo = int(val)
+			hi = lo
+		if lo < 1 or hi < lo:
+			print("--floors: '%s' is not a or a..b with 1 <= a <= b, using 1..5" % val)
+			lo = 1
+			hi = 5
+		_f_from = lo - 1
+		_floors_b = hi
+	elif arg.begins_with("--final="):
+		if val == "on" or val == "off":
+			_final_on = val == "on"
+		else:
+			print("--final: '%s' unknown (on|off), keeping %s" % [val, "on" if _final_on else "off"])
+	elif arg.begins_with("--mercy="):
+		var list: Array[String] = []
+		for item: String in val.split(","):
+			if MERCY_ALIASES.has(item.strip_edges()):
+				list.append(str(MERCY_ALIASES[item.strip_edges()]))
+			else:
+				print("--mercy: '%s' unknown (kill|spare|mixed), skipped" % item)
+		if not list.is_empty():
+			_fate_policy = list[0]
+			_mercy_list = list if list.size() > 1 else ([] as Array[String])
+	elif arg.begins_with("--shop="):
+		if val == "on":
+			_shop_policy = "greedy"
+			_shop_extras = true
+		elif val == "off":
+			_shop_policy = "none"
+		else:
+			print("--shop: '%s' unknown (on|off), ignored" % val)
+	elif arg.begins_with("--pieces="):
+		var flags: Array[bool] = []
+		for item: String in val.split(","):
+			if item.strip_edges() == "on" or item.strip_edges() == "off":
+				flags.append(item.strip_edges() == "on")
+			else:
+				print("--pieces: '%s' unknown (on|off|on,off), skipped" % item)
+		if not flags.is_empty():
+			_pieces_flag = true
+			_pieces_on = flags[0]
+			_pieces_list = flags if flags.size() > 1 else ([] as Array[bool])
+	elif arg.begins_with("--relic="):
+		if RELIC_MODES.has(val):
+			_relic_mode = val
+			_relic_policy = "none" if val == "none" else "pick"
+		else:
+			print("--relic: '%s' unknown (value|random|none), ignored" % val)
+	elif arg.begins_with("--tables="):
+		if val == "v6":
+			_v6 = true
+			_world = true
+		elif val == "none" or val == "old":
+			_tables_forced_off = true
+		else:
+			print("--tables: '%s' unknown (v6|none), ignored" % val)
+		return true
+	else:
+		return false
+	_world = true
+	_v6 = true
+	return true
+
+
+# After the data is loaded: `--tables=none` wins over the aliases; `--pieces=` gets its piece-deck config and state.
+func _v6_setup() -> void:
+	if _tables_forced_off:
+		_v6 = false
+	_orig_piece_spec = _core.piece_deck_spec
+	_orig_piece_state = _core.piece_deck_state
+	if _pieces_flag:
+		if not _orig_piece_spec.is_empty():
+			print("--pieces: --piece-deck=%s is given too; an `on` variant uses the policy deck, an `off` variant keeps that spec" % _orig_piece_spec)
+		_core.piece_deck_cfg = PieceDeckConfig.load_from_file()
+		_set_pieces(_pieces_on)
+
+
+# `--pieces=on|off`: on = the sim_core piece-deck branch with a per-run state (set before every match in [method _world_match]);
+# off = whatever `--piece-deck` gave (nothing by default).
+func _set_pieces(on: bool) -> void:
+	_pieces_on = on
+	if on:
+		_core.piece_deck_spec = "run_v6_policy"
+		_core.piece_deck_state = PieceDeck.initial(_core.piece_lib)
+	else:
+		_core.piece_deck_spec = _orig_piece_spec
+		_core.piece_deck_state = _orig_piece_state
+
+
+# The floor indices a run plays: Vector2i(first, last) of 0-based indices; index `floors` is the final match. `--floors=a..b` =
+# a-1 .. b-1; the final match is played when the range ends at the last floor (or is the default) and `--final` is not off.
+func _f_range(floors: int) -> Vector2i:
+	var a: int = clampi(_f_from, 0, floors)
+	var last_region: int = floors - 1 if _floors_b < 0 else clampi(_floors_b, 1, floors) - 1
+	var to: int = last_region
+	if last_region == floors - 1 and _final_on:
+		to = floors
+	return Vector2i(a, maxi(to, a))
+
+
+# `--relic=value`: the offered relic with the best rarity rank x 10 + RELIC_VALUE_BONUS (the first one on a tie).
+func _value_relic(offer: Array[String]) -> String:
+	var best: String = offer[0]
+	var best_score: float = -INF
+	for id: String in offer:
+		var rank: int = RelicConfig.rarity_rank(str(_core.relic_config.get_relic(id)["rarity"]))
+		var score: float = 10.0 * float(rank) + float(RELIC_VALUE_BONUS.get(id, 0.0))
+		if score > best_score:
+			best_score = score
+			best = id
+	return best
+
+
+# ---- `--pieces=on`: the bot's piece-deck policy. Ink rows are rolled exactly as GameFlow._roll_ink_for (chance after a battle /
+# danger, always after a treasure, same seed salt); the bot inks the offered shape of 2..3 cells with the fewest cells (none = skip).
+# Shape removals (the start token, +1 per region boss, the shop service under `--shop=on`) take the 5-cell default shape with the
+# biggest bounding box first (a static stand-in for "fits the arenas least"), never below min_shapes.
+
+
+# After a won match node or a treasure ([param kind]): the ink row, then the removal tokens.
+func _pieces_after_node(w: WorldRun, kind: String, out: Dictionary) -> void:
+	if not _pieces_on:
+		return
+	var cfg: PieceDeckConfig = _core.piece_deck_cfg
+	if kind == ChapterMapGen.KIND_BATTLE or kind == ChapterMapGen.KIND_DANGER or kind == ChapterMapGen.KIND_TREASURE:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash([w.run_seed, w.floor, w.region_id, w.column, w.nodes_cleared, INK_SEED_TAG]) & SEED_MASK
+		var hit: bool = rng.randf() < cfg.ink_offer_chance
+		if kind == ChapterMapGen.KIND_TREASURE or hit:
+			var offer: Array[String] = PieceDeck.roll_ink_offer(w.piece_deck, _core.piece_lib, cfg, rng.randi() & SEED_MASK, _core.locked_ids("piece"))
+			var pick: String = _ink_pick(offer)
+			if not pick.is_empty():
+				w.piece_deck = PieceDeck.apply_ink(w.piece_deck, pick, _core.piece_lib, cfg)
+				out["ink_taken"] = float(out["ink_taken"]) + 1.0
+	_pieces_use_tokens(w, out)
+
+
+# The ink the bot takes from [param offer]: 2..3 cells, fewest cells first, the first on a tie; "" = skip.
+func _ink_pick(offer: Array[String]) -> String:
+	var best: String = ""
+	var best_cells: int = 1 << 30
+	for id: String in offer:
+		var cells: int = _core.piece_lib.shape_cells(id).size()
+		if cells >= PIECES_INK_MIN_CELLS and cells <= PIECES_INK_MAX_CELLS and cells < best_cells:
+			best_cells = cells
+			best = id
+	return best
+
+
+# Spends every shape-removal token the bot holds on [method _pieces_remove_pick].
+func _pieces_use_tokens(w: WorldRun, out: Dictionary) -> void:
+	while w.shape_removals > 0:
+		var pick: String = _pieces_remove_pick(w.piece_deck)
+		if pick.is_empty():
+			return
+		w.piece_deck = PieceDeck.remove(w.piece_deck, pick, _core.piece_lib, _core.piece_deck_cfg)
+		w.shape_removals -= 1
+		out["shape_removed"] = float(out["shape_removed"]) + 1.0
+
+
+# The shape to remove from [param state]: an active default-pool 5-cell shape (biggest bounding box, then id order) that
+# PieceDeck.can_remove accepts; "" = none.
+func _pieces_remove_pick(state: Dictionary) -> String:
+	var best: String = ""
+	var best_area: int = -1
+	for id: String in PieceDeck.active_ids(state, _core.piece_lib):
+		if _core.piece_lib.is_run_only(id):
+			continue
+		var cells: Array[Vector2i] = _core.piece_lib.shape_cells(id)
+		if cells.size() != PIECES_REMOVE_CELLS:
+			continue
+		var lo := Vector2i(1 << 20, 1 << 20)
+		var hi := Vector2i(-(1 << 20), -(1 << 20))
+		for c: Vector2i in cells:
+			lo = Vector2i(mini(lo.x, c.x), mini(lo.y, c.y))
+			hi = Vector2i(maxi(hi.x, c.x), maxi(hi.y, c.y))
+		var area: int = (hi.x - lo.x + 1) * (hi.y - lo.y + 1)
+		if area > best_area and bool(PieceDeck.can_remove(state, id, _core.piece_lib, _core.piece_deck_cfg)["ok"]):
+			best_area = area
+			best = id
+	return best
+
+
+# `--shop=on` extras after the greedy buys: the remove-card service while the deck holds more than SHOP_REMOVE_CARD_OVER cards
+# (the lowest-value card), and with `--pieces=on` the remove-shape service. Returns the number of services bought.
+func _visit_shop_extras(rs: RunSession, state: Dictionary, bought_ids: Array[String]) -> int:
+	var n: int = 0
+	if rs.deck.size() > SHOP_REMOVE_CARD_OVER:
+		var index: int = _lowest_value_index(rs)
+		if index >= 0 and bool(ShopLogic.use_service(state, rs, ShopLogic.SERVICE_REMOVE_CARD, index, _core.cards)["ok"]):
+			n += 1
+			bought_ids.append("service:%s" % ShopLogic.SERVICE_REMOVE_CARD)
+	if _pieces_on:
+		var pick: String = _pieces_remove_pick(rs.piece_deck)
+		if not pick.is_empty():
+			var res: Dictionary = ShopLogic.use_service(state, rs, ShopLogic.SERVICE_REMOVE_SHAPE, pick, null,
+				{"piece_library": _core.piece_lib, "piece_config": _core.piece_deck_cfg})
+			if bool(res["ok"]):
+				n += 1
+				bought_ids.append("service:%s" % ShopLogic.SERVICE_REMOVE_SHAPE)
+	return n
+
+
+# The variants of one invocation: the cartesian product of the `--dodge` / `--mercy` / `--pieces` lists (a flag without a
+# list = one value). Without the v6 tables: one empty variant, nothing is applied.
+func _v6_combos() -> Array[Dictionary]:
+	var combos: Array[Dictionary] = []
+	if not _v6:
+		combos.append({})
+		return combos
+	var dodges: Array[float] = []
+	if _dodge_list.size() > 1:
+		dodges.append_array(_dodge_list)
+	else:
+		dodges.append(float(_core.bot["dodge"]))
+	var mercies: Array[String] = []
+	if _mercy_list.size() > 1:
+		mercies.append_array(_mercy_list)
+	else:
+		mercies.append(_fate_policy)
+	var pieces: Array[bool] = []
+	if _pieces_list.size() > 1:
+		pieces.append_array(_pieces_list)
+	else:
+		pieces.append(_pieces_on)
+	for d: float in dodges:
+		for m: String in mercies:
+			for pc: bool in pieces:
+				combos.append({"dodge": d, "mercy": m, "pieces": pc})
+	return combos
+
+
+# The mercy name of a fate policy for output ("" = no fate).
+func _mercy_name(fate: String) -> String:
+	for key: Variant in MERCY_ALIASES.keys():
+		if str(MERCY_ALIASES[key]) == fate:
+			return str(key)
+	return "none"
+
+
+# Applies one variant to the shared state (bot dodge, fate policy, piece policy) and sets its label.
+func _v6_apply(combo: Dictionary) -> void:
+	_core.bot["dodge"] = float(combo["dodge"])
+	_fate_policy = str(combo["mercy"])
+	if _pieces_flag:
+		_set_pieces(bool(combo["pieces"]))
+	_variant_label = "dodge=%.2f mercy=%s pieces=%s" % [float(combo["dodge"]), _mercy_name(_fate_policy), "on" if _pieces_on else "off"]
+
+
+# The `policy` cell of the RUN table: the build policy plus the Story 040 policy flags in force.
+func _policy_tag(policy: String) -> String:
+	return "%s [mercy=%s shop=%s pieces=%s relic=%s dodge=%.2f]" % [policy, _mercy_name(_fate_policy),
+		("on" if _shop_extras else _shop_policy), "on" if _pieces_on else "off",
+		_relic_mode if not _relic_mode.is_empty() else "legacy:" + _relic_policy, float(_core.bot["dodge"])]
+
+
+# Header lines of the v6 tables: the flags, the out-of-match seconds and the relic value table.
+func _v6_header(floors: int) -> void:
+	var fr: Vector2i = _f_range(floors)
+	print("v6 (Story 040): floors=%d..%d%s | final=%s | mercy=%s%s | shop=%s%s | pieces=%s%s | relic=%s | dodge=%s | kiep=%s" % [
+		fr.x + 1, mini(fr.y, floors - 1) + 1, "" if _floors_b < 0 else " (--floors)", "on" if fr.y == floors else "off",
+		_mercy_name(_fate_policy), (" (list " + ",".join(PackedStringArray(_mercy_list)) + ")") if not _mercy_list.is_empty() else "",
+		"on" if _shop_extras else _shop_policy, " (+ remove card over %d cards, remove shape with pieces on)" % SHOP_REMOVE_CARD_OVER if _shop_extras else "",
+		"on" if _pieces_on else "off", " (list)" if not _pieces_list.is_empty() else "",
+		_relic_mode if not _relic_mode.is_empty() else "legacy:" + _relic_policy,
+		",".join(PackedStringArray(_dodge_list.map(func(x: float) -> String: return "%.2f" % x))) if _dodge_list.size() > 1 else "%.2f" % float(_core.bot["dodge"]),
+		str(_kiep_levels) if _kiep_active else "0"])
+	if _seed_offset > 0:
+		print("v6 seeds start at %d (--seed-offset=%d), not 1" % [_seed_offset + 1, _seed_offset])
+	if _node_overhead_given:
+		print("v6 run time: --node-overhead=%.0f s per node (the old formula) replaces the out-of-match table below; no intro / end delay" % _node_overhead)
+	print("v6 run time (ASSUMPTIONS, TD-006 family): out-of-match seconds map %.0f / node, reward pick %.0f, shop %.0f, event %.0f, rest %.0f, fate choice %.0f; + intro_sec + end_delay_sec of every match; est. minutes = (match real sec + out-of-match sec) / 60" % [
+		OOM_MAP_SEC, OOM_REWARD_SEC, OOM_SHOP_SEC, OOM_EVENT_SEC, OOM_REST_SEC, OOM_FATE_SEC])
+	var cells: Array[String] = []
+	for id: String in _core.relic_config.ids():
+		cells.append("%s=%+.0f" % [id, float(RELIC_VALUE_BONUS.get(id, 0.0))])
+	print("v6 relic value (--relic=value: first best of the offer by rarity rank x 10 + bonus; ASSUMPTION): %s" % " ".join(PackedStringArray(cells)))
+	print("v6 pieces policy (--pieces=on): ink a 2-3 cell shape (fewest cells) when offered, remove 5-cell shapes (biggest bounding box first) with every shape-removal token; shop extras (--shop=on): remove-card over %d cards, remove-shape when pieces on" % SHOP_REMOVE_CARD_OVER)
+
+
+# ---- the v6 tables. Every line starts with RUN, REGION x FLOOR, RELIC LIFT, SHOP, DODGE SENSITIVITY or VERDICT run.
+
+
+# "PASS" / "FAIL" for a value against an inclusive [lo, hi] range.
+func _in_band(value: float, band: Array[float]) -> String:
+	return "PASS" if value >= band[0] and value <= band[1] else "FAIL"
+
+
+# One VERDICT line of the run table: `VERDICT run <character>/<policy> | <what> | <value text> | PASS|FAIL|DEFERRED`.
+func _v6_verdict(char_id: String, policy: String, what: String, text: String, result: String) -> void:
+	print("VERDICT run %s/%s | %s | %s | %s" % [char_id, policy, what, text, result])
+
+
+# Per character and policy, after the old WORLD tables: the RUN table, its detail line, REGION x FLOOR and the VERDICT run lines.
+func _v6_run_report(char_id: String, policy: String, runs: Array[Dictionary], floors: int, win_pct: float) -> void:
+	var n: int = runs.size()
+	var fr: Vector2i = _f_range(floors)
+	var won_runs: Array[Dictionary] = []
+	var lost_runs: Array[Dictionary] = []
+	var deaths: Array[int] = []
+	deaths.resize(floors + 1)
+	deaths.fill(0)
+	for r: Dictionary in runs:
+		if bool(r["won"]):
+			won_runs.append(r)
+		else:
+			lost_runs.append(r)
+			deaths[clampi(int(r["death_floor"]), 0, floors)] += 1
+	var entering: Array[int] = []
+	entering.resize(floors + 1)
+	var alive: int = n
+	for f: int in floors + 1:
+		entering[f] = alive if f >= fr.x else 0
+		alive -= deaths[f]
+	var death_cells: Array[String] = []
+	for f: int in floors + 1:
+		death_cells.append(str(deaths[f]))
+	var minutes_won: Array = _field(won_runs, "minutes_est")
+	var minutes_lost: Array = _field(lost_runs, "minutes_est")
+	var earned: Array = []
+	for r: Dictionary in runs:
+		earned.append(float(r["gold_drop"]) + float(r["gold_event_in"]))
+	var earned_won: Array = []
+	for r: Dictionary in won_runs:
+		earned_won.append(float(r["gold_drop"]) + float(r["gold_event_in"]))
+	var spent: Array = _field(runs, "gold_spent")
+	var spent_won: Array = _field(won_runs, "gold_spent")
+	var hits_won: float = _mean(_field(won_runs, "hits"))
+	print("")
+	print("=== RUN v6 %s / %s: %d runs, %s ===" % [char_id, policy, n, _variant_label if not _variant_label.is_empty() else "kiep %d" % _kiep_level])
+	print("RUN | character | policy | kiep | win % | deaths by floor (f1 f2 f3 f4 f5 final) | hits taken / won run | run minutes (est., won median / lost median) | gold earned / spent (all runs; won runs) | relics / run | deck size | piece set size |")
+	print("RUN | %s | %s | %d | %.1f | %s | %s | %s / %s | %.0f / %.0f; %.0f / %.0f | %.2f | %.2f | %.1f |" % [
+		char_id, _policy_tag(policy), _kiep_level, win_pct, "/".join(PackedStringArray(death_cells)),
+		("%.1f" % hits_won) if not won_runs.is_empty() else "-",
+		("%.1f" % _pct(minutes_won, 0.5)) if not won_runs.is_empty() else "-", ("%.1f" % _pct(minutes_lost, 0.5)) if not lost_runs.is_empty() else "-",
+		_mean(earned), _mean(spent), _mean(earned_won), _mean(spent_won),
+		_mean(_field(runs, "relic_n")), _mean(_field(runs, "size")), _mean(_field(runs, "piece_n"))])
+	# Death probability per floor given the floor was entered, final-match win when reached, mean boss swing hit, gold at the final.
+	var prob_cells: Array[String] = []
+	var probs: Array[float] = []
+	var small_floor: bool = false
+	for f: int in floors:
+		if entering[f] <= 0:
+			probs.append(-1.0)
+			prob_cells.append("-")
+			continue
+		var p: float = 100.0 * float(deaths[f]) / float(entering[f])
+		probs.append(p)
+		prob_cells.append("%.1f" % p)
+		if f >= fr.x and f <= fr.y and entering[f] < 10:
+			small_floor = true
+	var reached: int = 0
+	var final_won: int = 0
+	for r: Dictionary in runs:
+		if bool(r["final_reached"]):
+			reached += 1
+			if bool(r["won"]):
+				final_won += 1
+	var final_pct: float = 100.0 * float(final_won) / maxf(float(reached), 1.0)
+	var swing_hits: float = _sum(_field(runs, "shits"))
+	var boss_hit_pct: float = 100.0 * _sum(_field(runs, "bdmg")) / maxf(swing_hits, 1.0) / maxf(_mean(_field(runs, "max_hp")), 1.0)
+	var gold_final: Array = []
+	for r: Dictionary in won_runs:
+		if float(r["gold_at_final"]) >= 0.0:
+			gold_final.append(float(r["gold_at_final"]))
+	var relic_price: int = _economy.price_relic("common", maxi(floors - 1, 0))
+	print("RUN DETAIL %s/%s: death %% of runs entering floor f1..f%d: %s | final reached %d, won %d (%.1f %%) | mean boss swing hit %.1f %% of max HP (%d swing hits) | gold at the final median %s (cheapest shop relic %d at the last floor) | wins %d / %d" % [
+		char_id, policy, floors, "/".join(PackedStringArray(prob_cells)), reached, final_won, final_pct, boss_hit_pct, int(swing_hits),
+		("%.0f" % _pct(gold_final, 0.5)) if not gold_final.is_empty() else "-", relic_price, won_runs.size(), n])
+	var region_state: String = _v6_region_floor(char_id, policy, runs, floors)
+	var sd: float = 100.0 * sqrt(maxf(win_pct / 100.0 * (1.0 - win_pct / 100.0), 0.0) / maxf(float(n), 1.0))
+	# The Part C lines. A comparison that needs a second run is printed by _v6_compare_report.
+	_v6_verdict(char_id, policy, "run win %% %.0f-%.0f" % [V6_WIN_TARGET[0], V6_WIN_TARGET[1]], "%.1f %% (+-%.1f sd, n=%d)" % [win_pct, sd, n], _in_band(win_pct, V6_WIN_TARGET))
+	var step_bad: Array[String] = []
+	for f: int in range(maxi(fr.x, 0) + 1, floors):
+		if probs[f] >= 0.0 and probs[f - 1] >= 0.0 and probs[f] < probs[f - 1] - V6_DEATH_STEP_TOLERANCE:
+			step_bad.append("f%d %.1f < f%d %.1f" % [f + 1, probs[f], f, probs[f - 1]])
+	var steps_text: String = "death prob by floor %s (allow -%.0f pts)" % ["/".join(PackedStringArray(prob_cells)), V6_DEATH_STEP_TOLERANCE]
+	if fr.y - fr.x < 1:
+		_v6_verdict(char_id, policy, "death probability non-decreasing f1..f5", "fewer than two floors played", "DEFERRED")
+	elif small_floor:
+		_v6_verdict(char_id, policy, "death probability non-decreasing f1..f5", steps_text + "; a floor was entered < 10 times (small n)", "DEFERRED")
+	else:
+		_v6_verdict(char_id, policy, "death probability non-decreasing f1..f5", steps_text + (("; falls: " + ", ".join(PackedStringArray(step_bad))) if not step_bad.is_empty() else ""), "PASS" if step_bad.is_empty() else "FAIL")
+	if fr.x > 0:
+		_v6_verdict(char_id, policy, "floor-1 deaths <= %.0f %% of runs" % V6_FLOOR1_DEATH_MAX, "floor 1 not played (--floors)", "DEFERRED")
+	else:
+		var f1_pct: float = 100.0 * float(deaths[0]) / maxf(float(n), 1.0)
+		_v6_verdict(char_id, policy, "floor-1 deaths <= %.0f %% of runs" % V6_FLOOR1_DEATH_MAX, "%.1f %%" % f1_pct, "PASS" if f1_pct <= V6_FLOOR1_DEATH_MAX else "FAIL")
+	if reached == 0:
+		_v6_verdict(char_id, policy, "final-match win when reached %.0f-%.0f %%" % [V6_FINAL_WIN_TARGET[0], V6_FINAL_WIN_TARGET[1]], "the final was never reached (or --final=off)", "DEFERRED")
+	else:
+		_v6_verdict(char_id, policy, "final-match win when reached %.0f-%.0f %%" % [V6_FINAL_WIN_TARGET[0], V6_FINAL_WIN_TARGET[1]], "%.1f %% (%d / %d)" % [final_pct, final_won, reached], _in_band(final_pct, V6_FINAL_WIN_TARGET))
+	if won_runs.is_empty():
+		_v6_verdict(char_id, policy, "won-run minutes median %.0f-%.0f" % [V6_MINUTES_WON_TARGET[0], V6_MINUTES_WON_TARGET[1]], "no won run", "DEFERRED")
+		_v6_verdict(char_id, policy, "boss hits per won run %.0f-%.0f" % [V6_HITS_TARGET[0], V6_HITS_TARGET[1]], "no won run", "DEFERRED")
+		_v6_verdict(char_id, policy, "gold spent >= %.0f %% of earned (won runs)" % V6_GOLD_SPENT_MIN_PCT, "no won run", "DEFERRED")
+		_v6_verdict(char_id, policy, "gold left at the final median <= one shop relic", "no won run", "DEFERRED")
+	else:
+		var med_won: float = _pct(minutes_won, 0.5)
+		_v6_verdict(char_id, policy, "won-run minutes median %.0f-%.0f" % [V6_MINUTES_WON_TARGET[0], V6_MINUTES_WON_TARGET[1]], "%.1f min (%d won runs)" % [med_won, won_runs.size()], _in_band(med_won, V6_MINUTES_WON_TARGET))
+		_v6_verdict(char_id, policy, "boss hits per won run %.0f-%.0f" % [V6_HITS_TARGET[0], V6_HITS_TARGET[1]], "%.1f" % hits_won, _in_band(hits_won, V6_HITS_TARGET))
+		var spent_pct: float = 100.0 * _sum(spent_won) / maxf(_sum(earned_won), 1.0)
+		_v6_verdict(char_id, policy, "gold spent >= %.0f %% of earned (won runs)" % V6_GOLD_SPENT_MIN_PCT, "%.1f %% (%.0f of %.0f per run)" % [spent_pct, _mean(spent_won), _mean(earned_won)], "PASS" if spent_pct >= V6_GOLD_SPENT_MIN_PCT else "FAIL")
+		if gold_final.is_empty():
+			_v6_verdict(char_id, policy, "gold left at the final median <= one shop relic", "the final was not played", "DEFERRED")
+		else:
+			var left_med: float = _pct(gold_final, 0.5)
+			_v6_verdict(char_id, policy, "gold left at the final median <= one shop relic", "%.0f <= %d" % [left_med, relic_price], "PASS" if left_med <= float(relic_price) else "FAIL")
+	if lost_runs.is_empty():
+		_v6_verdict(char_id, policy, "lost-run minutes median >= %.0f" % V6_MINUTES_LOST_MIN, "no lost run", "DEFERRED")
+	else:
+		var med_lost: float = _pct(minutes_lost, 0.5)
+		_v6_verdict(char_id, policy, "lost-run minutes median >= %.0f" % V6_MINUTES_LOST_MIN, "%.1f min (%d lost runs)" % [med_lost, lost_runs.size()], "PASS" if med_lost >= V6_MINUTES_LOST_MIN else "FAIL")
+	if swing_hits <= 0.0:
+		_v6_verdict(char_id, policy, "mean boss hit %.0f-%.0f %% of max HP" % [V6_BOSS_HIT_PCT_TARGET[0], V6_BOSS_HIT_PCT_TARGET[1]], "no boss swing hit", "DEFERRED")
+	else:
+		_v6_verdict(char_id, policy, "mean boss hit %.0f-%.0f %% of max HP" % [V6_BOSS_HIT_PCT_TARGET[0], V6_BOSS_HIT_PCT_TARGET[1]], "%.1f %% (swing hits only)" % boss_hit_pct, _in_band(boss_hit_pct, V6_BOSS_HIT_PCT_TARGET))
+	_v6_verdict(char_id, policy, "regions within +-%.0f pts of the floor mean" % V6_REGION_BAND, "see REGION x FLOOR CHECK", region_state)
+	if _core.describe_progress().is_empty():
+		_v6_verdict(char_id, policy, "onboarding (empty save) win >= 20 %", "this run has every unlock open (--progress=all)", "DEFERRED (run with --progress=none)")
+	else:
+		_v6_verdict(char_id, policy, "onboarding (empty save) win >= 20 %", "%.1f %% under --progress=none" % win_pct, "PASS" if win_pct >= 20.0 else "FAIL")
+	_v6_verdict(char_id, policy, "bot anchored on a playtest (Part A, TD-006)", "dodge=%.2f%s" % [float(_core.bot["dodge"]), " (legacy default)" if is_equal_approx(float(_core.bot["dodge"]), SimCore.LEGACY_DODGE_P) else " (override)"], "DEFERRED (no playtest log: DEFAULT_BOT stays, TD-006 open; read the DODGE SENSITIVITY run)")
+
+
+# REGION x FLOOR: per region and floor the matches entered and the match win %, from every match of the runs (event fights
+# included, the final match left out). The check: a region with >= V6_REGION_MIN_N matches sits within +-V6_REGION_BAND of
+# the floor's mean match win %. Returns PASS / FAIL / DEFERRED for the VERDICT line.
+func _v6_region_floor(char_id: String, policy: String, runs: Array[Dictionary], floors: int) -> String:
+	var by: Dictionary = {}
+	var by_floor: Dictionary = {}
+	for r: Dictionary in runs:
+		for e: Array in r["mlog"] as Array:
+			var f: int = int(e[0])
+			if f >= floors:
+				continue
+			var key: String = "%d|%s" % [f, str(e[1])]
+			if not by.has(key):
+				by[key] = [0, 0]
+			by[key][0] = int(by[key][0]) + 1
+			by[key][1] = int(by[key][1]) + (1 if bool(e[2]) else 0)
+			if not by_floor.has(f):
+				by_floor[f] = [0, 0]
+			by_floor[f][0] = int(by_floor[f][0]) + 1
+			by_floor[f][1] = int(by_floor[f][1]) + (1 if bool(e[2]) else 0)
+	print("REGION x FLOOR | character | floor | region | matches entered | match win % |")
+	var bad: Array[String] = []
+	var checked: int = 0
+	var small: int = 0
+	var cells: Array[String] = []
+	for f: int in floors:
+		if not by_floor.has(f):
+			continue
+		var mean_pct: float = 100.0 * float(by_floor[f][1]) / maxf(float(by_floor[f][0]), 1.0)
+		cells.append("f%d mean %.1f (n=%d)" % [f + 1, mean_pct, int(by_floor[f][0])])
+		for id: String in _chapters.region_ids():
+			var key: String = "%d|%s" % [f, id]
+			if not by.has(key):
+				continue
+			var m: int = int(by[key][0])
+			var pct: float = 100.0 * float(by[key][1]) / maxf(float(m), 1.0)
+			var note: String = ""
+			if m < V6_REGION_MIN_N:
+				note = " small (n < %d)" % V6_REGION_MIN_N
+				small += 1
+			else:
+				checked += 1
+				if absf(pct - mean_pct) > V6_REGION_BAND:
+					bad.append("f%d %s %.1f vs mean %.1f" % [f + 1, id, pct, mean_pct])
+			print("REGION x FLOOR | %s | %d | %s | %d | %.1f |%s" % [char_id, f + 1, id, m, pct, note])
+	var state: String = "DEFERRED" if checked == 0 else ("PASS" if bad.is_empty() else "FAIL")
+	print("REGION x FLOOR CHECK %s/%s: floors %s | regions within +-%.0f pts of the floor mean (cells with n >= %d: %d checked, %d small): %s%s" % [
+		char_id, policy, "; ".join(PackedStringArray(cells)) if not cells.is_empty() else "none", V6_REGION_BAND, V6_REGION_MIN_N, checked, small, state,
+		(" | outside: " + ", ".join(PackedStringArray(bad))) if not bad.is_empty() else ""])
+	return state
+
+
+# Per variant, over every run of the invocation's characters and policies: RELIC LIFT, SHOP, the spread between characters.
+func _v6_aggregate_report(combo: Dictionary, _floors: int) -> void:
+	var runs: Array[Dictionary] = _v6_runs
+	if runs.is_empty():
+		return
+	var total: int = runs.size()
+	var total_wins: int = 0
+	var by_char: Dictionary = {}
+	for r: Dictionary in runs:
+		var won: int = 1 if bool(r["won"]) else 0
+		total_wins += won
+		var key: String = str(r["character"])
+		if str(r["policy"]) != VERDICT_POLICY and _policies_given_has_verdict():
+			continue
+		if not by_char.has(key):
+			by_char[key] = [0, 0]
+		by_char[key][0] = int(by_char[key][0]) + 1
+		by_char[key][1] = int(by_char[key][1]) + won
+	var wins_by_char: Dictionary = {}
+	var runs_by_char: Dictionary = {}
+	for key: Variant in by_char.keys():
+		wins_by_char[key] = 100.0 * float(by_char[key][1]) / maxf(float(by_char[key][0]), 1.0)
+		runs_by_char[key] = int(by_char[key][0])
+	_v6_summary.append({"label": _variant_label, "dodge": float(combo.get("dodge", _core.bot["dodge"])), "mercy": _fate_policy,
+		"pieces": _pieces_on, "wins": wins_by_char, "runs": runs_by_char})
+	print("")
+	print("=== RUN v6 AGGREGATE (%s): %d runs of %s ===" % [_variant_label, total, str(wins_by_char.keys())])
+	# RELIC LIFT.
+	var with_n: Dictionary = {}
+	var with_w: Dictionary = {}
+	for r: Dictionary in runs:
+		var seen: Dictionary = {}
+		for id: Variant in r["relics_f2"] as Array:
+			seen[str(id)] = true
+		for id: Variant in seen.keys():
+			with_n[id] = int(with_n.get(id, 0)) + 1
+			with_w[id] = int(with_w.get(id, 0)) + (1 if bool(r["won"]) else 0)
+	print("RELIC LIFT | relic | runs with it by floor <= 2 | win % with | win % without | lift (pts) | note |")
+	var lift_bad: Array[String] = []
+	var lift_small: Array[String] = []
+	var lift_max: float = -INF
+	var lift_max_id: String = ""
+	var ids: Array = with_n.keys()
+	ids.sort()
+	for id: Variant in ids:
+		var n_with: int = int(with_n[id])
+		var n_wo: int = total - n_with
+		var pct_with: float = 100.0 * float(with_w[id]) / maxf(float(n_with), 1.0)
+		var pct_wo: float = 100.0 * float(total_wins - int(with_w[id])) / maxf(float(n_wo), 1.0)
+		var lift: float = pct_with - pct_wo
+		var small: bool = n_with < V6_LIFT_MIN_N or n_wo < V6_LIFT_MIN_N
+		if small:
+			lift_small.append(str(id))
+		else:
+			if lift > lift_max:
+				lift_max = lift
+				lift_max_id = str(id)
+			if lift > V6_RELIC_LIFT_MAX:
+				lift_bad.append("%s %+.1f" % [id, lift])
+		print("RELIC LIFT | %s | %d | %.1f | %s | %+.1f |%s" % [id, n_with, pct_with, ("%.1f" % pct_wo) if n_wo > 0 else "-", lift if n_wo > 0 else 0.0, " small (n < %d)" % V6_LIFT_MIN_N if small else ""])
+	var lift_state: String = "DEFERRED" if lift_max_id.is_empty() else ("PASS" if lift_bad.is_empty() else "FAIL")
+	print("RELIC LIFT CHECK: no relic above +%.0f pts (cells with >= %d runs with and without): max %s%s | %s%s" % [
+		V6_RELIC_LIFT_MAX, V6_LIFT_MIN_N, ("%+.1f (%s)" % [lift_max, lift_max_id]) if not lift_max_id.is_empty() else "none checked", "" if lift_bad.is_empty() else " | above: " + ", ".join(PackedStringArray(lift_bad)),
+		lift_state, (" | small cells: " + ",".join(PackedStringArray(lift_small))) if not lift_small.is_empty() else ""])
+	print("VERDICT run all | no relic lift > +%.0f pts | max %s | %s" % [V6_RELIC_LIFT_MAX, ("%+.1f (%s)" % [lift_max, lift_max_id]) if not lift_max_id.is_empty() else "none checked", lift_state])
+	# SHOP.
+	var visits: int = 0
+	var offered: Dictionary = {}
+	var bought: Dictionary = {}
+	for r: Dictionary in runs:
+		for visit: Dictionary in r["shop_log"] as Array:
+			visits += 1
+			for id: Variant in visit["offered"] as Array:
+				offered[id] = int(offered.get(id, 0)) + 1
+			for id: Variant in visit["bought"] as Array:
+				bought[id] = int(bought.get(id, 0)) + 1
+	print("SHOP | item | bought | offered | bought % of shop visits | bought % of offers |")
+	var items: Array = offered.keys()
+	items.sort_custom(func(a: Variant, b: Variant) -> bool:
+		var ba: int = int(bought.get(a, 0))
+		var bb: int = int(bought.get(b, 0))
+		return ba > bb or (ba == bb and str(a) < str(b)))
+	var rare_items: Array[String] = []
+	var dead_items: Array[String] = []
+	for id: Variant in items:
+		var b: int = int(bought.get(id, 0))
+		var o: int = int(offered[id])
+		var of_visits: float = 100.0 * float(b) / maxf(float(visits), 1.0)
+		var of_offers: float = 100.0 * float(b) / maxf(float(o), 1.0)
+		if of_visits < V6_SHOP_MIN_PCT:
+			rare_items.append("%s %d/%d" % [id, b, o])
+		if o >= V6_SHOP_MIN_OFFERS and of_offers < V6_SHOP_MIN_PCT:
+			dead_items.append("%s %d/%d" % [id, b, o])
+		print("SHOP | %s | %d | %d | %.1f | %.1f |" % [id, b, o, of_visits, of_offers])
+	var shop_state: String = "DEFERRED" if visits < V6_SHOP_MIN_VISITS else ("PASS" if dead_items.is_empty() else "FAIL")
+	print("SHOP CHECK: %d shop visits | literal rule, bought in < %.0f %% of shop visits: %d of %d items (a relic / card that is rarely in stock lands here; read the next line) | never worth buying, offered >= %d times and bought < %.0f %% of those offers: %d items%s | %s" % [
+		visits, V6_SHOP_MIN_PCT, rare_items.size(), items.size(), V6_SHOP_MIN_OFFERS, V6_SHOP_MIN_PCT, dead_items.size(),
+		(" (" + ", ".join(PackedStringArray(dead_items)) + ")") if not dead_items.is_empty() else "", shop_state])
+	print("VERDICT run all | no shop item bought < %.0f %% of its offers (offered >= %d times) | %d visits, %d items flagged | %s" % [V6_SHOP_MIN_PCT, V6_SHOP_MIN_OFFERS, visits, dead_items.size(), shop_state])
+	# Spread between characters.
+	if wins_by_char.size() > 1:
+		var lo: float = INF
+		var hi: float = -INF
+		for key: Variant in wins_by_char.keys():
+			lo = minf(lo, float(wins_by_char[key]))
+			hi = maxf(hi, float(wins_by_char[key]))
+		print("VERDICT run all | spread between characters <= %.0f pts | %.1f (max %.1f, min %.1f over %s) | %s" % [
+			V6_WIN_SPREAD_MAX, hi - lo, hi, lo, str(wins_by_char.keys()), "PASS" if hi - lo <= V6_WIN_SPREAD_MAX else "FAIL"])
+	else:
+		print("VERDICT run all | spread between characters <= %.0f pts | one character | DEFERRED (run --characters=kiem_si,phap_su,sat_thu,tho_san,giao_si)" % V6_WIN_SPREAD_MAX)
+
+
+# True when the invocation plays the verdict policy (the spread and the compare lines count that policy's rows only then).
+func _policies_given_has_verdict() -> bool:
+	return not _policies_given or _policies.has(VERDICT_POLICY)
+
+
+# After every variant: the DODGE SENSITIVITY summary, the kill-vs-spare and pieces on-vs-off comparisons (PASS / FAIL when both
+# variants ran in this invocation, else DEFERRED with the command) and the Kiep line.
+func _v6_compare_report(_combos: Array[Dictionary]) -> void:
+	print("")
+	if _dodge_list.size() > 1:
+		print("DODGE SENSITIVITY | character | dodge | win % | variant |")
+		for entry: Dictionary in _v6_summary:
+			for key: Variant in (entry["wins"] as Dictionary).keys():
+				print("DODGE SENSITIVITY | %s | %.2f | %.1f | mercy=%s pieces=%s (n=%d) |" % [key, float(entry["dodge"]), float((entry["wins"] as Dictionary)[key]),
+					_mercy_name(str(entry["mercy"])), "on" if bool(entry["pieces"]) else "off", int((entry["runs"] as Dictionary)[key])])
+	var cmd: String = "godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70"
+	var kill_spare: bool = _mercy_list.has("execute") and _mercy_list.has("spare")
+	var pieces_pair: bool = _pieces_list.has(true) and _pieces_list.has(false)
+	if not kill_spare:
+		print("VERDICT run all | kill vs spare win gap <= %.0f pts | needs both runs | DEFERRED (%s --mercy=kill,spare)" % [V6_MERCY_EDGE_MAX, cmd])
+	if not pieces_pair:
+		print("VERDICT run all | pieces on not above off by > %.0f pts | needs both runs | DEFERRED (%s --pieces=on,off)" % [V6_PIECES_EDGE_MAX, cmd])
+	for entry: Dictionary in _v6_summary:
+		for other: Dictionary in _v6_summary:
+			if not is_equal_approx(float(entry["dodge"]), float(other["dodge"])):
+				continue
+			if kill_spare and str(entry["mercy"]) == "execute" and str(other["mercy"]) == "spare" and bool(entry["pieces"]) == bool(other["pieces"]):
+				for key: Variant in (entry["wins"] as Dictionary).keys():
+					if not (other["wins"] as Dictionary).has(key):
+						continue
+					var gap: float = absf(float((entry["wins"] as Dictionary)[key]) - float((other["wins"] as Dictionary)[key]))
+					print("VERDICT run %s | kill vs spare win gap <= %.0f pts | kill %.1f vs spare %.1f = %.1f (dodge %.2f pieces %s) | %s" % [
+						key, V6_MERCY_EDGE_MAX, float((entry["wins"] as Dictionary)[key]), float((other["wins"] as Dictionary)[key]), gap, float(entry["dodge"]),
+						"on" if bool(entry["pieces"]) else "off", "PASS" if gap <= V6_MERCY_EDGE_MAX else "FAIL"])
+			if pieces_pair and bool(entry["pieces"]) and not bool(other["pieces"]) and str(entry["mercy"]) == str(other["mercy"]):
+				for key: Variant in (entry["wins"] as Dictionary).keys():
+					if not (other["wins"] as Dictionary).has(key):
+						continue
+					var edge: float = float((entry["wins"] as Dictionary)[key]) - float((other["wins"] as Dictionary)[key])
+					print("VERDICT run %s | pieces on not above off by > %.0f pts | on %.1f vs off %.1f = %+.1f (dodge %.2f mercy %s) | %s" % [
+						key, V6_PIECES_EDGE_MAX, float((entry["wins"] as Dictionary)[key]), float((other["wins"] as Dictionary)[key]), edge, float(entry["dodge"]),
+						_mercy_name(str(entry["mercy"])), "PASS" if edge <= V6_PIECES_EDGE_MAX else "FAIL"])
+	print("VERDICT run all | Kiep win %% monotone 0..10, Kiep 10 >= 3 %% | see the KIEP CHECK lines | DEFERRED (%s --kiep=0..10 --seeds=30 --characters=kiem_si)" % cmd)

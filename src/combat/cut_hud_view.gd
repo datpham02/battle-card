@@ -1,8 +1,10 @@
 class_name CutHudView
 extends Node2D
-## Cut UI (Story 008), drawn above the board and the field points, below the d-pad:
-## (1) PREVIEW of the current selection on the boss half: covered cells, perimeter dots with
-## labels, lines in selection order (closed for 3-4 points), cell count and expected damage;
+## Cut UI (Story 008; piece casts since Story 024/026), drawn above the board and the field pieces, below
+## the d-pad:
+## (1) PREVIEW of the cast being placed on the target half: the piece ghost over the cells it covers
+## (green = covers the boss's cell, red = misses, grey = off the board), a corner label with the
+## forecast, cell count and expected damage, and (Story 028) the joined second piece and the total;
 ## (2) CONFIRM button ("Chốt"), dimmed with the swing countdown while a swing runs;
 ## (3) SKILL MENU panel: countdown bar + one button per skill with its lock reason;
 ## (4) SWING overlay: covered cells red with the countdown; (5) HIT / MISS marker after a swing;
@@ -18,7 +20,7 @@ extends Node2D
 ## also arrives as a mouse event, and with emulate_touch_from_mouse a click also arrives as a
 ## touch. Both emulated copies carry device == InputEvent.DEVICE_ID_EMULATION; they are
 ## consumed on a button but never act, so one physical press = one action.
-## All UI strings are constants here (no localization system exists yet at this tier).
+## UI strings are translation keys (TEXT_* constants, assets/i18n/strings.csv) passed through tr().
 
 const PREVIEW_TINT: Color = Color(1.0, 0.85, 0.2, 0.35)
 const PREVIEW_OUTLINE: Color = Color(1.0, 0.85, 0.2, 0.95)

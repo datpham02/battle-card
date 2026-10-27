@@ -457,7 +457,7 @@ func _draw_offer_card(rect: Rect2, id: String) -> void:
 	var name: String = tr(str(skill.get("name_key", id)))
 	_text(rect, rect.position.y + rect.size.y * 0.14, name, _fit(name, inner, 30), BODY_COLOR)
 	_text(rect, rect.position.y + rect.size.y * 0.25, tr(ShopView.RARITY_KEY_FORMAT % str(skill.get("rarity", "common"))), 20, NEUTRAL_COLOR)
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + rect.size.x * 0.06, rect.position.y + rect.size.y * 0.38), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner, 20, 6, NEUTRAL_COLOR)
+	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + rect.size.x * 0.06, rect.position.y + rect.size.y * 0.38), CardText.describe_resolved(skill), HORIZONTAL_ALIGNMENT_CENTER, inner, 20, 6, NEUTRAL_COLOR)
 
 
 func _draw_picker(vp: Vector2, type: String) -> void:

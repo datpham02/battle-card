@@ -833,7 +833,7 @@ func _draw_card_compact(rect: Rect2, id: String, levels: Dictionary) -> void:
 	if not keywords.is_empty():
 		_draw_keyword_line(inner, _y(rect, COMPACT_KEYWORD_BASELINE), keywords)
 		desc_y = _y(rect, COMPACT_DESC_BASELINE_KEYWORD)
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, COMPACT_DESC_FONT_SIZE, COMPACT_DESC_LINES, BODY_COLOR)
+	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), CardText.describe_resolved(skill), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, COMPACT_DESC_FONT_SIZE, COMPACT_DESC_LINES, BODY_COLOR)
 	_draw_new_badge(rect, UNLOCK_KIND_CARD, id)
 
 
@@ -873,7 +873,7 @@ func _draw_card(rect: Rect2, id: String, levels: Dictionary) -> void:
 	if not keywords.is_empty():
 		_draw_keyword_line(inner, _y(rect, KEYWORD_BASELINE), keywords)
 		desc_y = _y(rect, DESC_BASELINE_KEYWORD)
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), tr(str(skill.get("desc_key", ""))), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
+	draw_multiline_string(ThemeDB.fallback_font, Vector2(inner.position.x, desc_y), CardText.describe_resolved(skill), HORIZONTAL_ALIGNMENT_CENTER, inner.size.x, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
 	_draw_new_badge(rect, UNLOCK_KIND_CARD, id)
 
 

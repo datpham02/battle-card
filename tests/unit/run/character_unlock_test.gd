@@ -1,6 +1,6 @@
 extends SceneTree
 ## Story 037 (headless): the character unlock source, the five characters of characters.json, the three old ones
-## unchanged and the starter decks of the new two. Prints PASS/FAIL lines and FAILS=n.
+## unchanged (Story 040 Part C2 gave every character a new starter deck) and the starter decks of the new two. Prints PASS/FAIL lines and FAILS=n.
 
 var fails: int = 0
 
@@ -54,25 +54,25 @@ func _initialize() -> void:
 
 	# --- the old three are unchanged
 	var kiem: Dictionary = cc.get_character("kiem_si")
-	_check("kiem_si unchanged", int(kiem["max_hp"]) == 200 and float(kiem["step_cooldown_mult"]) == 1.0 and float(kiem["focus_max_sec"]) == 4.0 and kiem["passive"]["id"] == "second_wind" and kiem["signature"]["id"] == "tram" and cc.deck_of("kiem_si") == (["kiem_khi", "kiem_khi", "chan_phong", "chan_phong", "hoa_tran", "bang_phong"] as Array[String]))
+	_check("kiem_si unchanged", int(kiem["max_hp"]) == 200 and float(kiem["step_cooldown_mult"]) == 1.0 and float(kiem["focus_max_sec"]) == 4.0 and kiem["passive"]["id"] == "second_wind" and kiem["signature"]["id"] == "tram" and cc.deck_of("kiem_si") == (["kiem_khi", "kiem_vu", "kiem_vu", "thiet_kiem", "thiet_kiem", "chan_phong"] as Array[String]))
 	var phap: Dictionary = cc.get_character("phap_su")
-	_check("phap_su unchanged", int(phap["max_hp"]) == 190 and float(phap["focus_max_sec"]) == 5.0 and phap["passive"]["id"] == "wide_caster" and phap["signature"]["id"] == "thien_hoa" and cc.deck_of("phap_su") == (["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"] as Array[String]))
+	_check("phap_su unchanged", int(phap["max_hp"]) == 210 and float(phap["focus_max_sec"]) == 5.0 and phap["passive"]["id"] == "wide_caster" and phap["signature"]["id"] == "thien_hoa" and cc.deck_of("phap_su") == (["kiem_khi", "hoa_xa", "hoa_tinh", "hoa_tinh", "hoa_tran", "bang_phong"] as Array[String]))
 	var sat: Dictionary = cc.get_character("sat_thu")
-	_check("sat_thu unchanged", int(sat["max_hp"]) == 180 and float(sat["step_cooldown_mult"]) == 0.9 and sat["passive"]["id"] == "quick_blade" and sat["signature"]["id"] == "anh_bo" and cc.deck_of("sat_thu") == (["kiem_khi", "kiem_khi", "kiem_khi", "chan_phong", "bang_phong", "bang_phong"] as Array[String]))
+	_check("sat_thu unchanged", int(sat["max_hp"]) == 180 and float(sat["step_cooldown_mult"]) == 0.9 and sat["passive"]["id"] == "quick_blade" and sat["signature"]["id"] == "anh_bo" and cc.deck_of("sat_thu") == (["kiem_khi", "kiem_khi", "kiem_vu", "thiet_kiem", "bang_chau", "han_kiem"] as Array[String]))
 
 	# --- the new two: numbers of the story
 	var tho: Dictionary = cc.get_character("tho_san")
-	_check("tho_san stats 190 / 0.95 / 4.0", int(tho["max_hp"]) == 190 and is_equal_approx(float(tho["step_cooldown_mult"]), 0.95) and float(tho["focus_max_sec"]) == 4.0)
+	_check("tho_san stats 200 / 0.95 / 4.0", int(tho["max_hp"]) == 200 and is_equal_approx(float(tho["step_cooldown_mult"]), 0.95) and float(tho["focus_max_sec"]) == 4.0)
 	_check("tho_san passive hunter_mark {1, 3.0}", tho["passive"]["id"] == "hunter_mark" and int(tho["passive"]["params"]["fragile_stacks"]) == 1 and float(tho["passive"]["params"]["icd_sec"]) == 3.0)
 	var vb: Dictionary = tho["signature"]
 	_check("tho_san signature vay_bat {20 s, 4 s, x1.5, x2.0}", vb["id"] == "vay_bat" and float(vb["cooldown_sec"]) == 20.0 and float(vb["params"]["duration_sec"]) == 4.0 and float(vb["params"]["zone_sec_mult"]) == 1.5 and float(vb["params"]["fragile_mult"]) == 2.0)
-	_check("tho_san deck", cc.deck_of("tho_san") == (["kiem_khi", "kiem_khi", "ket_gioi", "tran_gai", "ran_kich", "chan_phong"] as Array[String]), str(cc.deck_of("tho_san")))
+	_check("tho_san deck", cc.deck_of("tho_san") == (["kiem_khi", "kiem_khi", "ket_gioi", "ket_gioi", "tran_gai", "ran_kich"] as Array[String]), str(cc.deck_of("tho_san")))
 	var giao: Dictionary = cc.get_character("giao_si")
 	_check("giao_si stats 210 / 1.05 / 4.5", int(giao["max_hp"]) == 210 and is_equal_approx(float(giao["step_cooldown_mult"]), 1.05) and float(giao["focus_max_sec"]) == 4.5)
 	_check("giao_si passive prayer {8}", giao["passive"]["id"] == "prayer" and float(giao["passive"]["params"]["heal_per_burst"]) == 8.0)
 	var ta: Dictionary = giao["signature"]
 	_check("giao_si signature thanh_an {22 s, 4 s, +1, x1.5}", ta["id"] == "thanh_an" and float(ta["cooldown_sec"]) == 22.0 and float(ta["params"]["duration_sec"]) == 4.0 and int(ta["params"]["extra_frost_stacks"]) == 1 and float(ta["params"]["burst_mult"]) == 1.5)
-	_check("giao_si deck", cc.deck_of("giao_si") == (["kiem_khi", "kiem_khi", "han_khi", "han_khi", "han_kiem", "bang_phong"] as Array[String]), str(cc.deck_of("giao_si")))
+	_check("giao_si deck", cc.deck_of("giao_si") == (["kiem_khi", "kiem_khi", "han_khi", "han_khi", "han_kiem", "han_kiem"] as Array[String]), str(cc.deck_of("giao_si")))
 
 	# --- starter decks reference real cards; every id of the characters resolves
 	for id: String in order:

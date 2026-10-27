@@ -98,7 +98,7 @@ func _initialize() -> void:
 	r.complete_node(57.0, 300.0, "", rcfg, 0.0)
 	r.choose_node(int(r.available_nodes()[0]["node_index"]))
 	r.elapsed_sec = 123.5
-	for extra: String in ["kiem_vu", "han_bang", "liet_hoa"]:
+	for extra: String in ["dai_dao", "han_bang", "liet_hoa"]:
 		r.add_card(extra)
 	r.set_pending_reward(["cuong_phong", "kiem_vu", "han_bang"])
 	check(r.deck_ids.size() == 9 and r.has_pending_reward(), "9 cards pending reward")

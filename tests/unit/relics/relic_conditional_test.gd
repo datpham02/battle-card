@@ -80,7 +80,7 @@ func _initialize() -> void:
 func _an_don() -> void:
 	_flashes.clear()
 	var r: BaseRelic = _make("an_don")
-	_check(_near(r.modify_cast_damage(_cast(["mono"]), 10.0), 20.0), "an_don: lone mono x2")
+	_check(_near(r.modify_cast_damage(_cast(["mono"]), 10.0), 17.5), "an_don: lone mono x1.75 (Story 040)")
 	_check(_flashes == ["an_don"], "an_don emits triggered with its id")
 	_check(_near(r.modify_cast_damage(_cast(["bar2"], false, 2), 10.0), 10.0), "an_don: lone bar2 unchanged")
 	_check(_near(r.modify_cast_damage(_cast(["mono", "mono"], true), 10.0), 10.0), "an_don: two monos joined unchanged")

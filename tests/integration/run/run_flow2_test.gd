@@ -210,7 +210,7 @@ func _run() -> void:
 	var ok: bool = await _wait_phase(c, RunState.Phase.PLAYING)
 	_check(ok, "intro -> PLAYING")
 	var max_hp: float = c.get_player_max_hp()
-	_check(is_equal_approx(max_hp, 190.0), "mage max HP 190 (from characters.json, Story 026)")
+	_check(is_equal_approx(max_hp, 210.0), "mage max HP 210 (from characters.json, Story 040)")
 
 	# --- win -> node completed -> reward gate --------------------------------------------------------
 	_view(c).get_state().damage(CombatState.Side.PLAYER, 30.0)
@@ -363,7 +363,7 @@ func _run() -> void:
 	_check(flow2b.get_phase() == GameFlow.Phase.REST, "forge out of range refused, still REST")
 	var hp_before_rest: float = flow2b.get_run().hp
 	flow2b.rest_heal_requested()
-	var expected_rest: float = minf(hp_before_rest + float(reward_cfg["rest_heal_ratio"]) * 190.0, 190.0)
+	var expected_rest: float = minf(hp_before_rest + float(reward_cfg["rest_heal_ratio"]) * 210.0, 210.0)
 	_check(is_equal_approx(flow2b.get_run().hp, expected_rest), "rest heal: %.1f -> %.1f" % [hp_before_rest, flow2b.get_run().hp])
 	_check(flow2b.get_phase() == GameFlow.Phase.MAP and flow2b.get_current_column() == 3 and str(flow2b.get_cleared_nodes()[2]["kind"]) == "rest", "rest completed -> MAP column 3")
 	saved = store2.load_state(config).get_run_dict()
@@ -388,8 +388,8 @@ func _run() -> void:
 	_check(flow2b.get_removal_tokens() == 1, "boss granted a removal token (1)")
 	_check(not flow2b.get_run().is_run_won() and flow2b.get_run_result() == GameFlow.RunResult.NONE, "a region boss does not win the run")
 	_check(flow2b.get_floor() == 1 and not flow2b.get_region_offer().is_empty() and flow2b.get_current_region().is_empty(), "floor 2, next offer open: %s" % str(flow2b.get_region_offer()))
-	var boss_end: float = minf(c6.get_last_player_hp() + _view(c6).get_passive_heal(), 190.0)
-	var floor_heal: float = minf(boss_end + config.floor_heal_ratio() * 190.0, 190.0) - boss_end
+	var boss_end: float = minf(c6.get_last_player_hp() + _view(c6).get_passive_heal(), 210.0)
+	var floor_heal: float = minf(boss_end + config.floor_heal_ratio() * 210.0, 210.0) - boss_end
 	_check(is_equal_approx(flow2b.get_run().hp, boss_end + floor_heal), "floor heal: %.1f + %.1f = %.1f" % [boss_end, floor_heal, flow2b.get_run().hp])
 	var fnotice: Dictionary = flow2b.take_floor_clear_notice()
 	_check(int(fnotice.get("floor", -1)) == 1 and int(fnotice.get("floor_number", -1)) == 2 and is_equal_approx(float(fnotice.get("healed", -1.0)), floor_heal), "floor-clear notice %s" % str(fnotice))

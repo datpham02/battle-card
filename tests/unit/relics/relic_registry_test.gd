@@ -154,21 +154,21 @@ func _fold() -> void:
 	var cast: Dictionary = {"pieces": ["mono"], "cells": 1, "joined": false, "featured": false, "card_id": "kiem_khi", "hit": true}
 	var an_don: BaseRelic = RelicRegistry.instantiate("an_don")
 	var cfg: RelicConfig = RelicConfig.load_from_file()
-	_check(_near(RelicRegistry.fold_damage([an_don], cast, 10.0, cfg), 20.0), "fold: an_don x2")
+	_check(_near(RelicRegistry.fold_damage([an_don], cast, 10.0, cfg), 17.5), "fold: an_don x1.75 (Story 040)")
 	_check(_near(RelicRegistry.fold_damage([], cast, 10.0, cfg), 10.0), "fold: no relics unchanged")
 	_check(_near(RelicRegistry.fold_damage([an_don], cast, 0.0, cfg), 0.0), "fold: zero damage stays zero")
 	# Damage order: per cell x cells -> relics -> passive -> keywords (Fragile x1.5). 10 x 1 cell,
-	# an_don x2 = 20, quick_blade x1.25 = 25, Fragile x1.5 = 37.5.
+	# an_don x1.75 = 17.5, quick_blade x1.25 = 21.875, Fragile x1.5 = 32.8125 (Story 040: an_don 2.0 -> 1.75).
 	var passive: BasePassive = PassiveRegistry.create("quick_blade")
 	passive.setup({}, {"max_cells": 3, "damage_mult": 1.25})
 	var per_cell: float = 10.0
 	var after_relics: float = RelicRegistry.fold_damage([an_don], cast, per_cell * 1.0, cfg)
 	var after_passive: float = passive.modify_damage(1, after_relics)
 	var fragile_mult: float = 1.5
-	_check(_near(after_passive * fragile_mult, 37.5), "an_don + quick_blade on a Fragile foe = 37.5 (hand calc), got %f" % (after_passive * fragile_mult))
-	# Cap: two an_don instances multiply to 4, capped to 3.
+	_check(_near(after_passive * fragile_mult, 32.8125), "an_don + quick_blade on a Fragile foe = 32.8125 (hand calc), got %f" % (after_passive * fragile_mult))
+	# Cap: two an_don instances multiply to 3.0625, capped to 3.
 	var second: BaseRelic = RelicRegistry.instantiate("an_don")
-	_check(_near(RelicRegistry.fold_damage([an_don, second], cast, 10.0, cfg), 30.0), "fold: product 4 capped at 3.0 -> 30")
+	_check(_near(RelicRegistry.fold_damage([an_don, second], cast, 10.0, cfg), 30.0), "fold: product 3.0625 capped at 3.0 -> 30")
 	var tight: RelicConfig = RelicConfig.from_dictionary({"relic_damage_mult_cap": 1.5})
 	_check(_near(RelicRegistry.fold_damage([an_don], cast, 10.0, tight), 15.0), "fold: cap 1.5 -> 15")
 	var big: Dictionary = {"pieces": ["bar5"], "cells": 5, "joined": false}

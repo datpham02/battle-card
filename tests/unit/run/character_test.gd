@@ -42,8 +42,8 @@ func _initialize() -> void:
 	_check("default kiem_si", cc.default_id() == "kiem_si")
 	for id: String in cc.ids():
 		_check("deck of %s has 6" % id, cc.deck_of(id).size() == 6)
-	_check("phap_su deck", cc.deck_of("phap_su") == (["kiem_khi", "chan_phong", "hoa_tran", "hoa_tran", "hoa_tran", "bang_phong"] as Array[String]))
-	_check("get_character copy / unknown", cc.get_character("nope").is_empty() and int(cc.get_character("phap_su")["max_hp"]) == 190)
+	_check("phap_su deck", cc.deck_of("phap_su") == (["kiem_khi", "hoa_xa", "hoa_tinh", "hoa_tinh", "hoa_tran", "bang_phong"] as Array[String]))
+	_check("get_character copy / unknown", cc.get_character("nope").is_empty() and int(cc.get_character("phap_su")["max_hp"]) == 210)
 	var bad: CharacterConfig = CharacterConfig.from_dictionary({"characters": [
 		{"id": "a", "max_hp": -5, "step_cooldown_mult": 0, "starter_deck": ["kiem_khi", "zzz"]},
 		{"id": "a", "max_hp": 50, "starter_deck": ["kiem_khi"]},
@@ -78,7 +78,7 @@ func _initialize() -> void:
 	# ---- phap_su
 	var ps: Dictionary = await _start("phap_su")
 	var pv: CombatView = ps["view"]
-	_check("phap_su max hp 190", pv.get_state().player_max_hp == 190.0 and pv.get_player_hp() == 190.0)
+	_check("phap_su max hp 210 (Story 040)", pv.get_state().player_max_hp == 210.0 and pv.get_player_hp() == 210.0)
 	_check("phap_su focus 5.0", pv.get_focus().get_max_sec() == 5.0)
 	_check("phap_su deck = starter ids", pv.get_deck().to_array() == cc.deck_of("phap_su"))
 	_check("phap_su step x1.0", is_equal_approx(pv.get_player_step_cooldown(), base_cd))
@@ -116,9 +116,9 @@ func _initialize() -> void:
 	var base3: float = sv.get_cut_config().slash_damage(3)
 	var base4: float = sv.get_cut_config().slash_damage(4)
 	var base5: float = sv.get_cut_config().slash_damage(5)
-	_check("sat_thu 3-cell hit 1.25x", is_equal_approx(hit3, base3 * 1.25), "%f vs %f" % [hit3, base3 * 1.25])
+	_check("sat_thu 3-cell hit 1.4x", is_equal_approx(hit3, base3 * 1.4), "%f vs %f" % [hit3, base3 * 1.4])
 	# TD-027 (2026-10-26): quick_blade max_cells 3 -> 4, so 4 cells get the bonus and 5 cells do not.
-	_check("sat_thu 4-cell hit 1.25x", is_equal_approx(hit4, base4 * 1.25), "%f vs %f" % [hit4, base4 * 1.25])
+	_check("sat_thu 4-cell hit 1.4x", is_equal_approx(hit4, base4 * 1.4), "%f vs %f" % [hit4, base4 * 1.4])
 	_check("sat_thu 5-cell hit unchanged", is_equal_approx(hit5, base5), "%f vs %f" % [hit5, base5])
 	(st["main"] as Node).queue_free()
 	await process_frame

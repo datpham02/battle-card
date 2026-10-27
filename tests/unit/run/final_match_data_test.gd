@@ -39,13 +39,14 @@ func _test_region_and_match(cfg: ChaptersConfig) -> void:
 	var raw: Dictionary = cfg.get_match_raw(ci, FINAL_MATCH)
 	check(str(raw.get("name_key")) == "boss.an_dai_keeper.name" and str(raw.get("desc_key")) == "match.an_dai_keeper.desc", "name_key / desc_key")
 	check(str((raw.get("arena", {}) as Dictionary).get("shape")) == ARENA_ID, "match uses the an_dai_dais arena")
-	# HP in the family of the old final (mist_lord in play: 139 x 0.75 x 1.5) and below a region boss x 1.3.
+	# HP above the old final (mist_lord in play) and below a floor-5 region boss x 2.0. Story 040 raised the bound from
+	# x 1.3: the run sim won the final 80-96 % when reached with the lower floors, so the final now carries the last check.
 	var played: Dictionary = RunConfig.from_node(cfg, FINAL_REGION, FINAL_MATCH, "boss", 7, cfg.world_floors()).matches[0]
 	var mist: Dictionary = RunConfig.from_node(cfg, "ch3", "mist_lord", "boss", 7, cfg.world_floors()).matches[0]
 	var witch_f5: Dictionary = RunConfig.from_node(cfg, "ch1", "forest_witch", "boss", 7, cfg.world_floors() - 1).matches[0]
 	var hp: float = float(played["boss_max_hp"])
-	check(hp > float(mist["boss_max_hp"]) and hp < float(witch_f5["boss_max_hp"]) * 1.3,
-		"final HP %.1f between mist_lord final %.1f and region boss x1.3 %.1f" % [hp, float(mist["boss_max_hp"]), float(witch_f5["boss_max_hp"]) * 1.3])
+	check(hp > float(mist["boss_max_hp"]) and hp < float(witch_f5["boss_max_hp"]) * 2.0,
+		"final HP %.1f between mist_lord final %.1f and region boss x2.0 %.1f" % [hp, float(mist["boss_max_hp"]), float(witch_f5["boss_max_hp"]) * 2.0])
 	var scaling: Dictionary = cfg.floor_scaling(cfg.world_floors())
 	check(is_equal_approx(hp, float(raw["boss_max_hp"]) * float(scaling["hp_mult"])), "floor_scaling.final applies to the final match")
 
@@ -100,7 +101,7 @@ func _test_phases_conversion(cfg: ChaptersConfig) -> void:
 
 func _test_readers(cfg: ChaptersConfig) -> void:
 	var fate: Dictionary = cfg.fate_config()
-	check(int(fate["execute_artifact_offers"]) == 3 and str(fate["execute_min_rarity"]) == "rare" and is_equal_approx(float(fate["fate_hold_sec"]), 0.6), "world.fate shipped")
+	check(int(fate["execute_artifact_offers"]) == 2 and str(fate["execute_min_rarity"]) == "rare" and is_equal_approx(float(fate["fate_hold_sec"]), 0.6), "world.fate shipped (Story 040: 2 offers)")
 	var endings: Dictionary = cfg.endings_config()
 	check(is_equal_approx(float(endings["spare_min_ratio"]), 1.0) and is_equal_approx(float(endings["execute_max_ratio"]), 0.0), "world.endings shipped")
 	var chapters: Array = [{"id": "a", "matches": {"m": {}}}]
@@ -122,7 +123,7 @@ func _test_readers(cfg: ChaptersConfig) -> void:
 	check(is_equal_approx(float(custom.endings_config()["spare_min_ratio"]), 0.8), "custom endings read")
 	var mutated: Dictionary = cfg.fate_config()
 	mutated["execute_artifact_offers"] = 99
-	check(int(cfg.fate_config()["execute_artifact_offers"]) == 3, "fate_config returns a copy")
+	check(int(cfg.fate_config()["execute_artifact_offers"]) == 2, "fate_config returns a copy")
 
 
 func _test_arena() -> void:

@@ -19,6 +19,10 @@ const MID: String = "bar3"
 ## Boundary chances: the ink row always / never shows after a battle.
 const ALWAYS: float = 1.0
 const NEVER: float = 0.0
+## Fixed run seed (GameFlow._dev_seed, same as --seed=): without it _begin_run rolls randi(), so the map,
+## ink offers and relics changed every run and the suite was flaky. This seed is the one that exposed the
+## flake: its first ink row offers SMALL (already removed) in slot 0, which _pick_ink must step over.
+const RUN_SEED: int = 87109
 
 var _fails: int = 0
 
@@ -46,6 +50,16 @@ func _node(kind: String, match_id: String = "") -> Dictionary:
 	return {"kind": kind, "match_id": match_id}
 
 
+# The shape to ink from [param offer]: the first one the later checks do not depend on. Inking a removed
+# shape brings it back at mult 1.0 (PieceDeck.apply_ink, by design), so inking SMALL would undo the
+# token removal the shop check relies on; MID is the shape the shop service removes. "" when none.
+func _pick_ink(offer: Array[String]) -> String:
+	for id: String in offer:
+		if id != SMALL and id != MID:
+			return id
+	return ""
+
+
 func _set_chance(chance: float) -> void:
 	RunSession._shared_piece_config = PieceDeckConfig.from_dictionary({"ink_offer_chance": chance})
 
@@ -69,6 +83,7 @@ func _run() -> void:
 	flow.set_store_for_test(store)
 	root.add_child(main)
 	await process_frame
+	flow._dev_seed = RUN_SEED # after _ready (which reads --seed=), before the run begins
 	var lib: PieceLibrary = flow.get_piece_library()
 	var shipped: PieceDeckConfig = RunSession.piece_config()
 	_check(GameFlow.Phase.PIECE_DECK != GameFlow.Phase.MAP and GameFlow.Phase.IN_FLOOR == GameFlow.Phase.IN_NODE, "Phase.PIECE_DECK is a new value")
@@ -85,6 +100,7 @@ func _run() -> void:
 	_check(flow.get_phase() == GameFlow.Phase.WORLD_MAP, "close -> back to WORLD_MAP")
 	flow.choose_region(flow.get_region_offer()[0])
 	var run: RunSession = flow.get_run()
+	_check(run.run_seed == RUN_SEED, "the run uses the fixed test seed (%d)" % run.run_seed)
 	_check(flow.get_piece_deck() == PieceDeck.initial(lib) and flow.get_shape_removals() == shipped.shape_removals_start, "the run starts with the initial deck and token count")
 	flow.open_piece_deck()
 	_check(flow.get_phase() == GameFlow.Phase.PIECE_DECK, "open from MAP -> PIECE_DECK")
@@ -129,7 +145,8 @@ func _run() -> void:
 	var offer: Array[String] = flow.get_ink_offer()
 	_check(offer.size() == shipped.ink_offer_count, "ink row has ink_offer_count shapes (%d)" % offer.size())
 	var column_before: int = run.column
-	var inked: String = offer[0]
+	var inked: String = _pick_ink(offer)
+	_check(not inked.is_empty(), "ink row has a shape other than %s / %s to ink %s" % [SMALL, MID, str(offer)])
 	var mult_before: float = PieceDeck.mult_of(run.piece_deck, inked)
 	flow.choose_ink(inked)
 	_check(not flow.has_ink_offer() and PieceDeck.mult_of(run.piece_deck, inked) > mult_before, "choose_ink applies the ink and closes the row")
@@ -173,6 +190,8 @@ func _run() -> void:
 	_check(flow.choose_node(0) and flow.get_phase() == GameFlow.Phase.SHOP, "shop node -> SHOP")
 	flow.open_piece_deck()
 	_check(flow.get_phase() == GameFlow.Phase.SHOP, "open_piece_deck refused in the SHOP")
+	_check(not PieceDeck.has_shape(run.piece_deck, SMALL) and PieceDeck.has_shape(run.piece_deck, MID) and run.gold == RICH_GOLD,
+		"shop precondition: %s still removed, %s still in the deck, gold %d" % [SMALL, MID, run.gold])
 	var price: int = int(flow.get_shop()["services"][ShopLogic.SERVICE_REMOVE_SHAPE]["price"])
 	var bad: Dictionary = flow.shop_use_service(ShopLogic.SERVICE_REMOVE_SHAPE, SMALL)
 	_check(not bool(bad["ok"]) and str(bad["reason_key"]) == PieceDeck.REASON_ALREADY_REMOVED and run.gold == RICH_GOLD, "removing a removed shape: refused, no gold")

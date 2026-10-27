@@ -168,14 +168,14 @@ func _initialize() -> void:
 	var s := RunSession.begin(chapters, character, 0, 123, chapters.generate_map(0, 123, 0), 10)
 	var n0: int = s.deck.size()
 	check(s.deck_ids.size() == n0 and s.deck[0].has("level") and s.removal_tokens == 10 and not s.map.is_empty(), "begin: deck entries level 1, 10 tokens, map")
-	var res: Dictionary = s.add_card("kiem_khi")
-	check(res["upgraded"] and res["level"] == 2 and s.deck.size() == n0 and s.deck_levels()["kiem_khi"] == 2, "add_card upgrades")
-	s.add_card("kiem_khi")
-	check(s.deck_levels()["kiem_khi"] == 3, "level 3")
-	s.add_card("kiem_khi")  # second copy upgraded 1->2
-	check(s.deck.size() == n0 and s.deck_levels()["kiem_khi"] == 3, "second copy upgraded, not added")
-	s.add_card("kiem_khi")
-	var res2: Dictionary = s.add_card("kiem_khi")
+	var res: Dictionary = s.add_card("kiem_vu")
+	check(res["upgraded"] and res["level"] == 2 and s.deck.size() == n0 and s.deck_levels()["kiem_vu"] == 2, "add_card upgrades")
+	s.add_card("kiem_vu")
+	check(s.deck_levels()["kiem_vu"] == 3, "level 3")
+	s.add_card("kiem_vu")  # second copy upgraded 1->2
+	check(s.deck.size() == n0 and s.deck_levels()["kiem_vu"] == 3, "second copy upgraded, not added")
+	s.add_card("kiem_vu")
+	var res2: Dictionary = s.add_card("kiem_vu")
 	check(not res2["upgraded"] and s.deck.size() == n0 + 1, "all copies lvl3 -> new copy")
 	var removed: int = 0
 	while s.remove_card_at(0, 4):

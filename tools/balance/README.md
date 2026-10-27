@@ -8,7 +8,7 @@ from session scratch.
 | File | What it is |
 |---|---|
 | `sim_core.gd` | Shared harness. It builds one match the way `CombatView._ready` does and runs `CombatView._process`'s tick order headless. It contains the v5 player bot. Both tools preload it. |
-| `deck_sim.gd` | Full-run simulator. It plays seeds × characters × chapters through the chapter map with the reward policy, then prints win %, boss hits per won run, and per-kind and per-match tables. `--world` (Story 031) plays whole 5-floor runs instead: region picks, short region maps, floor heal, the final match. |
+| `deck_sim.gd` | Full-run simulator. It plays seeds × characters × chapters through the chapter map with the reward policy, then prints win %, boss hits per won run, and per-kind and per-match tables. `--world` (Story 031) plays whole 5-floor runs instead: region picks, short region maps, floor heal, the final match. `--run=v6` (Story 040) adds the whole-run tables and VERDICT lines. |
 | `hit_probe.gd` | Per-boss probe of one chapter. It measures hit rates for pieces, pairs and counters, the boss's attack rate on an idle player (TD-022), and full-bot matches for signature and formation numbers. |
 
 Neither tool writes any file. Data experiments use the override flags below. These apply **in
@@ -511,6 +511,9 @@ estimate exists, pass it with `--dodge=` and record it in the story's Completion
 applies to the human-time defaults (`--place-sec`, `--choose-sec`, `--join-sec`, `--gap`): they are
 assumptions, not measurements.
 
+Story 040 (the v6 run tables) prints every table at three dodge values on request (`--dodge=0.7,0.85,0.95`) and
+keeps the anchoring criterion DEFERRED while no playtest exists: see "Story 040" below.
+
 ## What the bot does not model
 
 - It never cancels a placement or a menu, and never rotates for its own sake: it re-aims the same
@@ -771,3 +774,162 @@ Reading the story targets from the output: the mean win % of a new region (`REGI
 +-10 points of the mean of the five existing regions' `REGION MEAN` rows (average the five lines by hand); no floor-1 match
 outside 15-95 % (`REGION CHECK`); `REGION 039 FIRE EATER` >= 25 for `phap_su`; `REGION FREQ CHECK` PASS. Tuning is JSON only
 (`chapters.json` match numbers, `combat.json` `hazards`, `arenas.json`).
+
+## Story 040: the v6 run tables (`--run=v6`, `--floors`, `--mercy`, `--shop`, `--pieces`, `--relic`, `--dodge=a,b,c`)
+
+Story 040 balances the whole v6 run (5 floors + the final match, relics, gold, piece deck, Spare / Execute, Kiep) by data. This
+section is the tooling half: aliases for the policy flags that already existed, two new bot policies, the out-of-match time
+table, and the Part C table / VERDICT lines. **Without any flag below the output is byte-identical to before** (checked
+before / after on `--world --seeds=3 --fate=alternate --relic-policy=pick`, `--world --piece-deck=small_out --shop-policy=eager
+--node-overhead=30 --dodge=0.7`, `--world --kiep=0..1` and chapter mode, `diff` empty apart from `runtime:` and the seed
+progress lines). Nothing here reads or writes game code or `assets/data`.
+
+### Flags
+
+Every flag below turns on world mode and the v6 tables (`--tables=v6`); `--tables=none` turns the tables off again.
+
+| Flag | Meaning |
+|---|---|
+| `--run=v6` | `--world` plus the v6 tables. Nothing else is implied: the policy flags below stay at the old defaults. |
+| `--floors=a..b` or `a` | Play only floors a..b of the 5 (1-based). Default 1..5. The run starts at floor a with the starter deck at full HP, so this is a probe, not a slice of a real run. The final match is played only when b is the last floor and `--final` is not `off`. A run "wins" when it clears the last floor it plays. The old WORLD tables show unplayed floors as 100 % alive: read the RUN tables. |
+| `--final=on\|off` | Play the final match (default on). `off` ends the run after the last floor. |
+| `--mercy=kill\|spare\|mixed` | `--fate=execute\|spare\|alternate`. A comma list (`--mercy=kill,spare`) runs the same seeds once per value, see Variants. |
+| `--shop=on\|off` | `on` = `--shop-policy=greedy` **plus the v6 extras**: after the greedy buys the bot also buys the remove-card service while the deck holds more than 10 cards (the lowest-value card), and with `--pieces=on` the remove-shape service. `off` = `--shop-policy=none`. For the old greedy bot alone use `--shop-policy=greedy`. |
+| `--pieces=on\|off` | `on` = the bot piece-deck policy below; `off` = no piece deck (or whatever `--piece-deck` gave). `--pieces=on,off` = both, see Variants. |
+| `--relic=value\|random\|none` | How the bot chooses from a relic offer (treasure row and Execute offer). `value` = the offered relic with the best score = rarity rank x 10 + a per-relic bonus from a STATIC table in `deck_sim.gd` (`RELIC_VALUE_BONUS`, printed in the header: `an_don`, `tui_rong`, `tam_hop` +3; `chi_khau`, `khoi_the`, `tam_huong`, `an_chu` +2; others +1 / 0; `huyet_an` -50 so it is never the first pick; the first best on a tie). It is an assumption, not a measurement. `random` = a seeded random pick of the offer. `none` = `--relic-policy=none` (never takes a relic row). The old `--relic-policy=pick\|none` still works (`pick` = rarest first). |
+| `--dodge=a,b,c` | A list runs the SAME seeds at each dodge value (the bot dodge chance, TD-006). One value = the old flag. |
+| `--tables=v6\|none` | Force the v6 tables on, or off. |
+| `--seed-offset=N` | Run seeds N+1..N+seeds instead of 1..seeds (the header prints it). The final check of a tuning pass uses a seed set the tuning rounds never saw (Story 040 Implementation Notes). |
+| `--char-set=<id>.<key path>:<X\|xF>[,...]` | Override characters.json in memory, like `--world-set` for chapters.json: `X` sets, `xF` multiplies; the key path walks the character's dictionary (`phap_su.max_hp:210`, `phap_su.signature.params.burn_damage_per_tick:x1.5`). Each applied override is printed; unknown keys are printed and ignored. Lets character probes run side by side without editing the data file. |
+| `--node-overhead=S` | Still works. When passed it replaces the out-of-match table below (S seconds per node, no intro / end delay), which is exactly the old formula. |
+
+### Piece-deck policy (`--pieces=on`)
+
+The run keeps its own `PieceDeck` state (`WorldRun.piece_deck`, set into `sim_core` before every match, boss drops untouched,
+exactly the `--piece-deck` path of Story 034 but per run). It mirrors the real run:
+
+- **Ink rows**: after a won battle / danger node with chance `piece_rewards.ink_offer_chance`, after every treasure, rolled by
+  `PieceDeck.roll_ink_offer` with `GameFlow._roll_ink_for`'s seed (`hash([run_seed, floor, region, column, nodes_cleared, "ink"])`).
+  The bot inks the offered shape of **2 or 3 cells** with the fewest cells (first on a tie); if none is offered it skips.
+  In the shipped `pieces.json` the only 2-3 cell shapes are the default ones (`bar2`, `bar3`, `l3`; `mono` has 1 cell, the run-only
+  `z4` / `j4` / `y5` have 4-5), so the bot only ever raises the multiplier of those three (`mult_step` each, up to `mult_max`) and
+  never takes a run-only shape.
+- **Removals**: it has `shape_removals_start` tokens at the start and gains `shape_removals_per_boss` per region boss, and spends
+  every token at once on the **5-cell default shape with the biggest bounding box** (a static stand-in for "fits the arenas
+  least"), never below `min_shapes`. With `--shop=on` it also buys the remove-shape service when it can pay.
+
+The header line `v6 pieces policy` says this, the `WORLD PIECES` table (Story 034) is printed as with `--piece-deck`, and the
+RUN table's last column is the mean number of active shapes at the end of the run (16 = the start deck).
+
+### Run time, with the out-of-match seconds
+
+`est. minutes` of the v6 tables = (sum of match **real** seconds (the player's wall clock, including the 0.2x menu slow motion)
++ the out-of-match seconds below) / 60. The match's own `intro_sec` + `end_delay_sec` (RunConfig) are added per match; event
+fights included. Constants at the top of `deck_sim.gd` and printed in the header, all **assumptions** (TD-006 family):
+
+| Visit | Seconds | | Visit | Seconds |
+|---|---|---|---|---|
+| map pick, per node | 8 | | event node | 30 |
+| reward pick (cards, or the relic row; the ink row is part of it) | 15 | | rest node | 10 |
+| shop node | 45 | | Spare / Execute choice | 10 |
+
+The old `WORLD SUMMARY` line keeps the old 25 s per node formula (`--node-overhead`), so the old output does not move; the v6
+tables use the table above. Pass `--node-overhead=S` to put the old formula in the v6 tables too.
+
+### Output (all lines start with the name in the first column)
+
+| Line | Content |
+|---|---|
+| `RUN \| character \| policy \| kiep \| win % \| deaths by floor \| hits taken / won run \| run minutes \| gold earned / spent \| relics / run \| deck size \| piece set size` | One row per character and policy. `policy` = `build` plus the flags in force. Deaths by floor = `f1/f2/f3/f4/f5/final` (counts). Run minutes = won median / lost median. Gold = mean per run over all runs; then over won runs. |
+| `RUN DETAIL` | death % of the runs entering each floor, final reached / won, the mean boss swing hit as % of max HP (swing hits only: `bdmg / shits / max HP`), the median gold when the final floor starts, the shop relic price it is compared with (common relic at the last floor). |
+| `REGION x FLOOR \| character \| floor \| region \| matches entered \| match win %` and `REGION x FLOOR CHECK` | Every match of the runs (event fights included, the final left out) by floor and region. The CHECK needs >= 20 matches in a cell (smaller cells are marked `small` and left out; `DEFERRED` when none is left) and passes when every checked region sits within +-10 points of that floor's mean match win %. |
+| `RELIC LIFT \| relic \| runs with it by floor <= 2 \| win % with \| win % without \| lift (pts)` | From the runs of the invocation (all characters and policies pooled). A relic counts as "with" when owned at the end of floor 2 (or at death, when the run ended earlier). It is a correlation, not a causal lift: a relic that is found in a good run looks good. Cells under 10 runs (with or without) are `small`. `RELIC LIFT CHECK`: no non-small relic above +15. |
+| `SHOP \| item \| bought \| offered \| bought % of shop visits \| bought % of offers` | Items are `card:<id>`, `relic:<id>`, `service:<id>` (`remove_card`, `heal`, `remove_shape`). `SHOP CHECK` prints the literal story rule (bought in < 2 % of shop visits; almost every card and relic fails it because a given item is rarely in stock, so it is information only) and the rule it judges: **offered in >= 10 visits and bought in < 2 % of those offers** = "never worth buying". `DEFERRED` under 20 shop visits. |
+| `VERDICT run <character>/<policy> \| what \| value \| PASS\|FAIL\|DEFERRED` | The Part C targets, one line each, see below. |
+| `VERDICT run all` | The invocation-wide ones: relic lift, shop, spread between characters, and the comparisons. |
+| `DODGE SENSITIVITY \| character \| dodge \| win % \| variant` | With a `--dodge` list: one row per character and value. |
+
+The old WORLD tables and `WORLD VERDICT` lines are printed first, unchanged, then the RUN block (RUN, RUN DETAIL, REGION x FLOOR,
+VERDICT run), then the AGGREGATE block (RELIC LIFT, SHOP, spread).
+
+### How to read `VERDICT run`
+
+| Line | Target (Part C) | Notes |
+|---|---|---|
+| run win % | 30-45 per character | shown with its binomial sd: at 70 seeds one sd is about 6 points. The 20-point spread between characters is `VERDICT run all`. |
+| death probability non-decreasing f1..f5 | p(f) >= p(f-1) - 3 pts, p = deaths on floor f / runs that entered it | `DEFERRED` when a floor was entered < 10 times. |
+| floor-1 deaths | <= 10 % of runs | |
+| final-match win when reached | 50-70 % | `DEFERRED` with `--final=off` or no run reaching it. |
+| won-run minutes median / lost-run minutes median | 40-50 / >= 15 | the table above. |
+| boss hits per won run; mean boss hit | 15-30; 4-15 % of max HP | swing hits only in the second (fuse / slam hits are in the first, not the second). |
+| gold | spent >= 70 % of earned in won runs; median gold when the final floor starts <= the common shop relic price at the last floor | |
+| regions | the REGION x FLOOR CHECK result | |
+| onboarding win >= 20 % | needs an empty save | `DEFERRED` unless the run has `--progress=none` (then the run win % is used; this is the closest the world sim has to "cleared_bosses 0"). |
+| bot anchored on a playtest | Part A | **always `DEFERRED`** while `DEFAULT_BOT` is the legacy dodge. |
+| kill vs spare gap <= 10; pieces on not above off by > 10 | needs both runs | PASS / FAIL when one invocation ran `--mercy=kill,spare` / `--pieces=on,off`; otherwise `DEFERRED` with the command. |
+| Kiep monotone 0..10, Kiep 10 >= 3 % | the `KIEP CHECK` lines | always `DEFERRED` here: run `--kiep=0..10` (Story 038 section). |
+| no relic lift > +15; no shop item never worth buying | see the tables above | |
+
+**DEFERRED is not a pass.** The story forbids PASS for the anchor criterion without playtest data: `DEFAULT_BOT` (`sim_core.gd`)
+still holds `dodge=0.85`, the TD-006 legacy value, and TD-006 stays open. Every number above is conditional on that dodge: read
+the `DODGE SENSITIVITY` rows (below) before trusting a verdict.
+
+### Variants: `--dodge=a,b,c`, `--mercy=kill,spare`, `--pieces=on,off`
+
+A list on any of the three runs the same seeds once per combination (the cartesian product). Each variant prints
+`=== VARIANT dodge=.. mercy=.. pieces=.. ===`, its `bot:` header, its WORLD tables, its RUN / REGION x FLOOR / VERDICT block and
+its AGGREGATE block. At the end: `DODGE SENSITIVITY` (with a dodge list) and the comparison VERDICT lines (kill vs spare gap
+<= 10; pieces on not above off by > 10) per character, within the same dodge. A single value, or no list, is a plain run.
+Runs of the Kiep modes (`--kiep`) take the first value only.
+
+### DODGE SENSITIVITY (Story 040 Part A, second bullet)
+
+While no playtest log exists, report every table at three dodge values and say how far the verdicts move:
+
+```sh
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --characters=kiem_si --dodge=0.7,0.85,0.95 > "<scratch>/dodge_kiem_si.out" 2>&1
+grep -E "^RUN \||^DODGE SENSITIVITY|^VERDICT run" "<scratch>/dodge_kiem_si.out"
+```
+
+Read it as: if the win % band (30-45) is hit at 0.85 but missed at 0.70 and 0.95, the data is tuned to one guess about the
+player; widen the margin until the three rows are inside or near the band, or record the spread in Completion Notes. When a
+playtest gives the real dodge, change `DEFAULT_BOT["dodge"]` (and `LEGACY_DODGE_P` label), update "The TD-006 dodge assumption"
+and re-run; until then the criterion is `DEFERRED`.
+
+### Command lines
+
+```sh
+GODOT=C:/Users/ADMIN/AppData/Local/Microsoft/WinGet/Links/godot.exe
+# Smoke (about 13 s): parse + the tables, 3 seeds, one character
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=3 --characters=kiem_si
+# The final Part E run, one character per invocation (about 3.5 s per run: ~4-5 min each; one Godot at a time):
+for c in kiem_si phap_su sat_thu tho_san giao_si; do
+  timeout 3000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --characters=$c --mercy=mixed --shop=on --pieces=off --relic=value > "<scratch>/v6_$c.out" 2>&1
+done
+# The comparisons (4 variants in one invocation, about 4x as long): kill vs spare and pieces on vs off
+timeout 6000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --characters=kiem_si --mercy=kill,spare --pieces=on,off --shop=on --relic=value > "<scratch>/v6_cmp_kiem_si.out" 2>&1
+# Relic lift needs many runs of one invocation: all five characters, 70 seeds, pooled (run the characters in one process)
+timeout 9000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --characters=kiem_si,phap_su,sat_thu,tho_san,giao_si --mercy=mixed --shop=on --relic=value > "<scratch>/v6_all.out" 2>&1
+# Relic none, Kiep (Story 038 flags compose; the v6 per-character tables print only for a single Kiep level)
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --characters=kiem_si --relic=none
+$GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --world --seeds=30 --characters=kiem_si --kiep=0..10
+grep -E "^RUN \||^RUN DETAIL|^REGION x FLOOR CHECK|^VERDICT run|^RELIC LIFT CHECK|^SHOP CHECK|^DODGE" "<scratch>/v6_all.out"
+```
+
+Change one thing at a time between tuning runs and use a different seed set for the final run: seeds are `1..N` unless
+`--seed-offset=N` moves them (`N+1..N+seeds`); Story 040 tuned on offsets 0 / 100 / 200 / 300 and checked on 1000 and 2000.
+`--char-set` probes a character change without editing characters.json, so several probes run side by side.
+
+Measured runtimes (Story 040 Part E, 12-thread Windows machine, up to 11 Godot processes at once): smoke 5 seeds x one
+character 38 s; 70 seeds x one character about 7-9 minutes; five characters in one process at 70 seeds 36 minutes
+(2184 s); Kiep 0..3 at 30 seeds about 14 minutes. One 70-seed cell has about 5-6 points of standard deviation on run win %,
+a 30-seed cell about 8-9.
+
+### What the v6 policies do not model
+
+- The relic value table, the 5-cell removal order and the 2-3 cell ink rule are simple rules written for the bot, not a solver.
+- The bot never skips a shop for lack of a plan: with `--shop=on` it buys greedy, then the extras.
+- `--floors=a..b` is a probe: the run starts with the starter deck and full HP at floor a.
+- The onboarding line uses `--progress=none` (locked pools), not `cleared_bosses 0`.
+- Out-of-match times are assumptions until a playtest gives them (TD-006 family, Part A also asks for the drag and card-pick
+  times: `--place-sec`, `--choose-sec`, `--join-sec`).

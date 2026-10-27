@@ -573,7 +573,7 @@ func _test_unknown_and_none() -> void:
 	v = await _view(ch)
 	var per: float = _per_cell(v)
 	var r: Dictionary = _cast(v, 3)
-	_check("no signature: casts work, Quick Blade still applies", _near(float(r["damage"]), per * 3.0 * 1.25))
+	_check("no signature: casts work, Quick Blade still applies", _near(float(r["damage"]), per * 3.0 * 1.4))
 	_check("no signature: charge 0, never ready", v.get_signature() == null and v.get_signature_charge() == 0.0 and not v.is_signature_ready() and not v.activate_signature())
 	var mover: UnitMover = v.get_mover()
 	var dir: Vector2i = Vector2i.ZERO
