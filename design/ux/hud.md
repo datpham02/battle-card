@@ -29,6 +29,8 @@
 
 ### Full Information Inventory
 
+**Phạm vi:** spec này chỉ gồm HUD trong trận và dải chuyến leo. Các màn title, chọn nhân vật, thưởng, cửa hàng, sự kiện, trại nghỉ, Tha/Giết, kết thúc, thành tựu, mở khóa và cài đặt cần spec UX riêng.
+
 Không có GDD với mục UI Requirements (ở tầng `minimal`, `game-brief.md` thay GDD). Danh sách lập từ `design/game-mechanics.md` và các view đang vẽ HUD. Thuật ngữ theo `design/glossary.md` (chữ trong game vẫn là tên cũ cho tới khi story đổi thuật ngữ chạy).
 
 **M** = Luôn hiện · **C** = Theo ngữ cảnh · **D** = Theo yêu cầu (chạm để xem) · **H** = Ẩn (truyền đạt bằng hình trên ô, không có chữ riêng)
@@ -72,6 +74,11 @@ Không có GDD với mục UI Requirements (ở tầng `minimal`, `game-brief.md
 | I-35 | Thông báo Bộ khối bị thay | bộ khối | **C** (một lần) |
 | I-36 | Biểu ngữ Thức Tỉnh đang chạy | Thức Tỉnh | **C** |
 | I-37 | Bộ đếm "học" của boss (né / ngắt / giả) | gỡ lỗi | **H** (chỉ dùng khi dev) |
+| I-38 | Độ tươi của khối trên sân (hết 8 s thì tan) | khối rơi | **M**, gắn trên khối (chỉ khi có khối) |
+| I-39 | Kết quả trận: thắng (+máu hồi, đối thủ kế, đếm tự tiếp tục) / thua (thống kê) | chuyến leo | **C** (ngữ cảnh riêng) |
+| I-40 | Hẹn giờ khối hỏng trong túi | đặc tính boss | **C**, gắn trên ô túi |
+| I-41 | "Bản Khắc hoàn thành" | Bản Khắc | **C** |
+| I-42 | Dòng mô tả trận (một câu) | trận | **C**, trong dải giới thiệu (cùng I-04) |
 
 ### Categorization
 
@@ -79,13 +86,13 @@ Người dùng duyệt cả 8 nhóm theo đề xuất (2026-10-28).
 
 | Loại | Số mục | Mục |
 |---|---|---|
-| **M: Luôn hiện** (trong trận) | **9** | I-01, I-02, I-03, I-06, I-07, I-08, I-16*, I-17*, I-18 (*chỉ khi boss có đòn) |
+| **M: Luôn hiện** (trong trận) | **9** + 1 | I-01, I-02, I-03, I-06, I-07, I-08, I-16*, I-17*, I-18 (*chỉ khi boss có đòn); I-38 gắn trên khối (không tính vào 9, xem cách đếm ở Visual Budget) |
 | **M** (màn bản đồ) | 2 | I-29, I-30 |
-| **C: Theo ngữ cảnh** | 20 | I-04, I-09–I-15, I-19–I-23, I-26–I-28, I-30 (trong trận), I-34–I-36 |
+| **C: Theo ngữ cảnh** | 24 | I-04, I-09–I-15, I-19–I-23, I-26–I-28, I-30 (trong trận), I-34–I-36, I-39–I-42 |
 | **D: Theo yêu cầu** | 4 | I-05, I-31–I-33 |
 | **H: Ẩn** | 4 | I-24, I-25, I-29 (trong trận), I-37 |
 
-**Kiểm tra xung đột với triết lý (mục A):** chỉ 9 yếu tố luôn hiện trong trận, hợp với "tối giản". Hiện trạng HUD trong build có khoảng 60 yếu tố đang vẽ; mục D sẽ đối chiếu từng yếu tố với bảng này để biết cái nào phải hạ xuống C, D hay H.
+**Kiểm tra xung đột với triết lý (mục A):** chỉ 9 yếu tố luôn hiện trong trận, hợp với "tối giản". Bổ sung sau `/ux-review` (2026-10-28, người dùng duyệt): I-38 (M, gắn trên khối), I-39 (C, ngữ cảnh riêng), I-40–I-42 (C). Hiện trạng HUD trong build có khoảng 60 yếu tố đang vẽ; mục D sẽ đối chiếu từng yếu tố với bảng này để biết cái nào phải hạ xuống C, D hay H.
 
 ---
 
@@ -109,14 +116,40 @@ Màn ngang 1280×720 (tham chiếu), tỉ lệ lấy từ `src/layout/screen_lay
 
 | Vùng | Vị trí | Chứa | Ghi chú |
 |---|---|---|---|
-| **Z1** Dải trên | 0–11 % cao | Hai thanh máu (I-01, I-02), tạm dừng (I-03), biểu tượng Hình Cộng Hưởng (I-15, khi cầm khối) | Ngoài vùng ngón cái, không che lưới |
+| **Z1** Dải trên | ≈ 3–14 % cao (dải thanh máu bên trong khung lưới) | Hai thanh máu (I-01, I-02), tạm dừng (I-03), biểu tượng Hình Cộng Hưởng (I-15, khi cầm khối) | Ngoài vùng ngón cái, không che lưới |
 | **Z1b** | dưới thanh máu boss | Hàng khối boss đang giữ (I-18) | Giữ nguyên chỗ hiện tại |
-| **Z2** Lưới | 3–55 % cao | Hai lưới; ô đỏ báo đòn và đếm ngược (I-16, I-17); từ khóa gắn trên đơn vị (I-23); địa hình (I-24, I-25); số sát thương và hồi máu (I-21, I-22); biểu ngữ và thông báo (I-19, I-20, I-26–I-28) | Mọi thông báo chuyển động nằm trên lớp này |
+| **Z2** Lưới | ≈ 14–55 % cao | Hai lưới; ô đỏ báo đòn và đếm ngược (I-16, I-17); từ khóa gắn trên đơn vị (I-23); địa hình (I-24, I-25); số sát thương và hồi máu (I-21, I-22); biểu ngữ và thông báo (I-19, I-20, I-26–I-28) | Mọi thông báo chuyển động nằm trên lớp này |
 | **Z3** Trái dưới | góc trái | Pad 4 hướng (I-06); khi đặt khối chuyển thành nút Xoay lớn (I-12) | Ngón cái trái: **đi** |
 | **Z4** Dải giữa | giữa dưới | Thức Tỉnh + Bản Khắc (I-08); khi đặt khối: số ô, sát thương (I-11), Tung phép, Hủy (I-12), Tập trung (I-09); khi chọn lá: menu 4 lá (I-13) | Ngón nào rảnh thì bấm |
 | **Z5** Phải dưới | góc phải | Túi khối, 3 ô (I-07) | Ngón cái phải: **kéo khối** lên lưới địch |
 
 **Lý do:** ngón trái đi, ngón phải đặt khối, ở giữa là trạng thái và nút xác nhận. Vùng điều khiển **đổi nội dung theo ngữ cảnh** (pad thành Xoay, Thức Tỉnh thành Tung phép) nên không thêm yếu tố mới, đúng triết lý mục A.
+
+### Lề vùng an toàn (Android, iOS)
+
+| Lề | Giá trị |
+|---|---|
+| Trái, phải | lớn hơn của 3 % chiều rộng (38 px ở 1280) và vùng an toàn hệ điều hành (tai thỏ, góc bo, vùng vuốt cử chỉ ở mép của Android) |
+| Trên | lớn hơn của 3 % chiều cao (22 px ở 720) và vùng an toàn |
+| Dưới | lớn hơn của 2 % chiều cao (14 px ở 720) và vạch vuốt hệ thống (thanh Home của iOS) |
+
+Không nút chạm nào nằm trong phần lề này.
+
+### Vị trí của các thông tin còn lại
+
+| Thông tin | Vùng / nơi hiện |
+|---|---|
+| I-04, I-42 (bối cảnh, mô tả trận) | Dải giới thiệu đè lên Z2 trong 2 giây đầu trận |
+| I-05, I-32, I-33 (bộ bài, Giao Kèo, may mắn, lượt) | Màn Tạm dừng; I-32/I-33 cũng ở màn bản đồ |
+| I-10 (bóng khối, báo trúng) | Z2, trên đất địch |
+| I-14 (gợi ý ghép) | Z4, dưới menu lá |
+| I-29, I-30 (vàng, tầng, chặng, máu) | Dải trên của màn bản đồ |
+| I-31 (bảo vật) | Màn bản đồ (dải dưới trái); trong trận chỉ nháy biểu tượng ở Z1 cạnh thanh máu người chơi khi kích hoạt |
+| I-34, I-35, I-36, I-41 (nhắc một lần, Thức Tỉnh đang chạy, Bản Khắc hoàn thành) | Dải hẹp ở mép trên Z2; **không phủ đất người chơi và ô đỏ** (sửa TD-038) |
+| I-37 | Không hiện (chỉ dev) |
+| I-38 (độ tươi khối) | Z2, gắn dưới từng khối trên sân |
+| I-39 (kết quả trận) | Khung giữa màn hình (ngữ cảnh "Kết quả trận") |
+| I-40 (hẹn giờ khối hỏng) | Z5, trên ô túi chứa khối hỏng |
 
 **Phương án đã bỏ:** túi khối ở giữa, Thức Tỉnh bên phải. Ngón kéo khối sẽ che đường giữa hai lưới, là nơi cần nhìn nhất.
 
@@ -146,7 +179,7 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 | E-01 | Máu người chơi (M) | Thanh ngang + "200/200" + tên nhân vật | Liên tục, mượt 0,2 s | Luôn | Mất máu: đoạn "vết" nhạt co dần 0,4 s. Dưới 25 %: viền nhấp nháy 1 Hz + biểu tượng "!" |
 | E-02 | Máu boss (M) | Như E-01, kèm vạch nửa máu nếu boss có đổi pha | Liên tục | Luôn | Như E-01; đổi pha thì vạch nháy 0,5 s |
 | E-03 | Tạm dừng (M) | Nút tròn 65 px, góc giữa trên | Sự kiện | Luôn | Nhấn: dừng ngay, không cần xác nhận |
-| E-04 | Bối cảnh trận (C) | Dải một dòng: "Tầng 1/5 · Rừng Sương · Chặng 1/3" + tên địch | Một lần | 2 giây đầu trận | Trượt vào, mờ dần. Xem lại trong màn Tạm dừng |
+| E-04 | Bối cảnh trận (C) | Dải một dòng: "Tầng 1/5 · Rừng Sương · Chặng 1/3" + tên địch, dòng thứ hai là mô tả trận (I-42) | Một lần | 2 giây đầu trận | Trượt vào, mờ dần. Xem lại trong màn Tạm dừng |
 | E-05 | Số lá trong bộ (D) | Chữ trong màn Tạm dừng | Sự kiện | Chỉ khi mở Tạm dừng | — |
 | E-15 | Hình Cộng Hưởng (C) | Hình thu nhỏ 5–7 ô cạnh nút tạm dừng | Sự kiện | Khi trong túi có ≥ 1 khối | Sáng viền khi hai khối đang ghép khớp hình |
 | E-18 | Khối boss đang giữ (M) | 3 ô nhỏ dưới thanh máu boss, mỗi ô là hình thu nhỏ (Khối Lạ có dấu sao). **Trống:** khung ô mờ, không chữ | Sự kiện | Luôn | Ô bị dùng xóa mờ 0,2 s |
@@ -155,7 +188,7 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 
 | ID | Yếu tố | Hình dạng | Cập nhật | Hiện khi | Hiệu ứng |
 |---|---|---|---|---|---|
-| E-06 | Pad 4 hướng (M) | Chữ thập 4 nút 97 px | Liên tục | Luôn; khóa khi đang đặt | Nút lún khi bấm. Viền sáng dần theo hồi bước (0,18–0,6 s) |
+| E-06 | Pad 4 hướng (M) | Chữ thập 4 nút 97 px | Liên tục | Luôn; khóa khi đang đặt | Nút lún khi bấm. Viền sáng dần theo hồi bước (0,18–0,6 s). Giữ nút: lặp bước theo nhịp hồi bước, không bước thừa |
 | E-07 | Túi khối (M) | 3 ô, mỗi ô hình thu nhỏ + "5 ô" | Sự kiện | Luôn | Nhặt: khối bay vào ô 0,2 s. Đầy: nhãn "ĐẦY". Khối chọn: viền vàng. Khối Lạ: dấu sao. Khối hỏng: xám + dấu X |
 | E-08 | Thức Tỉnh (M) | Nút lớn: tên + thanh Bản Khắc "0/21" | Liên tục | Luôn | **Đang nạp:** mờ, thanh chạy. **Đang hồi:** mờ + "Hồi 12 s". **Sẵn sàng:** sáng + chữ "SẴN SÀNG", nhịp đập 1 Hz. **Đang chạy:** thanh thời gian + "ĐANG DÙNG" |
 
@@ -168,7 +201,7 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 | E-11 | Số ô và sát thương (C) | Chữ lớn "7 ô" + "Sát thương 42" ở dải giữa | Theo xoay hoặc ghép | — |
 | E-12 | Xoay, Tung phép, Hủy (C) | Xoay: nút lớn thay pad. Tung phép: nút xanh lá ở giữa. Hủy: nút nhỏ | Sự kiện | Xoay: khối quay 90° trong 0,1 s |
 | E-13 | Menu 4 lá (C) | 4 thẻ ngang: tên, số ô tối thiểu, hồi chiêu, sát thương/ô; thanh đếm 3 s phía trên | Liên tục | Lá chưa đủ ô: mờ + "cần N ô". Hết giờ: tự chọn nhát chém cơ bản |
-| E-14 | Gợi ý ghép (C) | Một dòng nhỏ: "Kéo thêm khối để ghép · +1,5 s" | Mỗi lần mở menu | Ẩn sau khi người chơi đã ghép ít nhất một lần (cờ trong tiến trình). **Đề xuất mới.** |
+| E-14 | Gợi ý ghép (C) | Một dòng nhỏ: "Kéo thêm khối để ghép · +1,5 s" | Mỗi lần mở menu | Hiện suốt thời gian menu 4 lá mở, theo **thời gian chọn lá** (3 s / 6 s / không giới hạn); không xếp hàng với các dòng nhắc một lần. Ẩn hẳn sau khi người chơi đã ghép ít nhất một lần (cờ trong tiến trình). **Đề xuất mới.** |
 
 ### Đọc đòn boss (trên lưới)
 
@@ -204,7 +237,42 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 | E-29/30 | Vàng, tầng, chặng, máu (M ở bản đồ) | Dải trên màn bản đồ: ❤ 170/200 · 🪙 44 · Tầng 2/5 | Sự kiện | Chỉ màn bản đồ, không có trong trận |
 | E-31 | Bảo vật (D) | Dải biểu tượng bảo vật nhỏ; chạm mở chi tiết. **Trống:** chữ "Chưa có bảo vật" | Sự kiện | Chạm; biểu tượng nháy 0,5 s khi kích hoạt |
 | E-32/33 | Giao Kèo, may mắn, lượt bỏ lá, lượt quên hình (D) | Chữ trong màn Tạm dừng và màn bản đồ | Sự kiện | Theo yêu cầu |
-| E-34/35 | Nhắc một lần: Khối Lạ, đổi Bộ khối (C) | Dòng nhắc 4 s dưới thanh máu | Sự kiện | Một lần, lưu cờ "đã thấy" trong tiến trình |
+| E-34/35 | Nhắc một lần: Khối Lạ, đổi Bộ khối (C) | Dòng nhắc **6 s** (≥ 5 s theo `design/accessibility-requirements.md`) ở mép trên Z2; đọc lại ở "Xem lại hướng dẫn" | Sự kiện | Một lần, lưu cờ "đã thấy" trong tiến trình |
+
+### Bổ sung sau `/ux-review`
+
+| ID | Yếu tố | Hình dạng | Cập nhật | Hiện khi | Hiệu ứng |
+|---|---|---|---|---|---|
+| E-24 | Ô Tường, Bãi Gai, ô cháy (H) | Tường: khối dựng nổi, viền đặc, gạch chéo. Bãi Gai: gai nhọn trên nền thưa, đi qua được. Ô cháy: ngọn lửa + sọc. **Ba loại khác hình hẳn nhau** (không chỉ khác màu) | Sự kiện | Khi ô có hiệu ứng | Bật lên 0,15 s khi xuất hiện, mờ dần khi hết |
+| E-38 | Độ tươi khối trên sân (M, gắn trên khối) | Thanh ngắn dưới mỗi khối, **chiều dài = thời gian còn lại** + màu xanh → vàng → đỏ | Liên tục | Khi có khối trên sân | Dưới 2 s: khối nháy chậm 1 Hz (giảm chuyển động: viền nét đứt) |
+| E-39 | Kết quả trận (C) | Khung giữa màn hình. Thắng: "THẮNG TRẬN!", "+N máu", "Đối thủ kế: X", nút Tiếp tục ≥ 96 px, "tự động sau N s". Thua: "THUA!", trận và tầng gục, thống kê, nút | Một lần | Khi trận kết thúc | Phóng nhẹ vào 0,2 s |
+| E-40 | Hẹn giờ khối hỏng (C) | Số giây trên ô túi chứa khối hỏng + vạch co dần | Liên tục | Khi trong túi có khối hỏng | — |
+| E-41 | Bản Khắc hoàn thành (C) | Dải ngắn ở mép trên Z2: "Bản Khắc hoàn thành"; nút Thức Tỉnh nháy | Sự kiện | Khi mọi ô cùng sáng | 1 s |
+
+### Ánh xạ yếu tố → thông tin, vùng, nguồn dữ liệu
+
+| Yếu tố | Thông tin | Vùng | Nguồn (hệ thống sở hữu dữ liệu) |
+|---|---|---|---|
+| E-01, E-02 | I-01, I-02 | Z1 | trạng thái trận (CombatState) |
+| E-03, E-05 | I-03, I-05 | Z1; màn Tạm dừng | luồng trận (GameFlow) |
+| E-04 | I-04, I-42 | Dải giới thiệu trên Z2 | dữ liệu trận và chuyến leo |
+| E-06 | I-06 | Z3 | di chuyển (UnitMover) |
+| E-07, E-40 | I-07, I-40 | Z5 | túi khối (HoldSlots) |
+| E-08, E-36, E-41 | I-08, I-36, I-41 | Z4; mép trên Z2 | Thức Tỉnh và Bản Khắc |
+| E-09 | I-09 | Z4 | Tập trung (FocusController) |
+| E-10, E-11, E-12 | I-10, I-11, I-12 | Z2 (đất địch); Z3, Z4 | đặt khối (PlacementController, CastPlan) |
+| E-13, E-14 | I-13, I-14 | Z4 | lá phép (CutFlow, Deck) |
+| E-15 | I-15 | Z1 | Hình Cộng Hưởng của sân |
+| E-16, E-17, E-20 | I-16, I-17, I-20 | Z2 | đòn của boss (BossController) |
+| E-18 | I-18 | Z1b | túi khối của boss |
+| E-19, E-21, E-22 | I-19, I-21, I-22 | Z2 | kết quả đòn |
+| E-23 | I-23 | Z2 (trên đơn vị) | từ khóa (StatusEffects) |
+| E-24, E-25 | I-24, I-25 | Z2 | vùng và địa hình (ZoneRules, TileHazards) |
+| E-26, E-27, E-28 | I-26, I-27, I-28 | Z2 | đặc tính boss (TraitHost) |
+| E-29/30, E-31, E-32/33 | I-29–I-33 | Màn bản đồ, màn Tạm dừng | chuyến leo (RunSession) |
+| E-34, E-35 | I-34, I-35 | Mép trên Z2 | tiến trình (cờ "đã thấy") |
+| E-38 | I-38 | Z2 (trên khối) | khối rơi (FieldDrops) |
+| E-39 | I-39 | Khung giữa màn hình | luồng chuyến leo (GameFlow, RunSession) |
 
 **Số lượng:** trong trận chỉ 9 yếu tố luôn hiện (E-01, E-02, E-03, E-06, E-07, E-08, E-16, E-17, E-18). Mọi hiệu ứng nhấp nháy hoặc rung có phương án giảm chuyển động (mục Accessibility).
 
@@ -226,6 +294,7 @@ Game không có thế giới thăm dò hay đối thoại. Ánh xạ: **thăm d�
 | **Chiến đấu: đòn đang niệm** | Ô đỏ của boss (E-16, E-17) và đòn bạn đang niệm trên đất địch | Tung phép |
 | **Chiến đấu: Thức Tỉnh đang chạy** | E-08 "ĐANG DÙNG", dải thời gian (E-36) | — |
 | **Chiến đấu: pha 2 của boss** | Biểu ngữ pha (E-27) 1,5 s, rồi trở lại như bình thường | — |
+| **Kết quả trận** | Khung kết quả (E-39) + thanh máu người chơi (E-01, để thấy máu hồi) | Mọi HUD trận khác; mọi thông báo đang chờ bị xóa, nhắc một lần (P5) dời sang trận sau |
 | **Tha/Giết** (cắt cảnh) | Chỉ màn Tha/Giết toàn màn hình | Toàn bộ HUD trận |
 | **Kết thúc** (cắt cảnh) | Các trang kết thúc toàn màn hình | Toàn bộ HUD |
 | **Tạm dừng** | Phủ mờ: bối cảnh (E-04), số lá trong bộ (E-05), Giao Kèo, may mắn, bảo vật (E-31–E-33); nút Tiếp tục, Thoát (đã lưu) | Điều khiển trận |
@@ -257,12 +326,27 @@ Dùng khi HUD quá đông: bỏ từ dưới lên. Cột cuối nói cái gì ma
 | | E-16, E-17 (ô đỏ + đếm ngược) | Né đòn là cách phòng thủ duy nhất | Không có thay thế |
 | | E-06, E-07 (pad, túi khối) | Điều khiển | — |
 | | E-10, E-11, E-12 (khi đang đặt) | Quyết định đặt khối | — |
+| | E-13 (menu lá, khi mở) | Chọn đòn | Hết giờ tự chọn nhát chém cơ bản |
+| | E-38 (độ tươi khối) | Quyết định nhặt khối nào trước | Khối tan mà không báo |
+| | E-29/30 (trên màn bản đồ) | Chọn đường đi | — |
+| | E-39 (kết quả trận) | Biết máu đã hồi, đối thủ kế | — |
 | **SHOULD KEEP** | E-08 (Thức Tỉnh) | Chiều sâu chiến thuật | Hiệu ứng hình trên lưới |
 | | E-18 (khối boss đang giữ) | Đoán đòn kế tiếp của boss | Cảnh báo ô đỏ khi tung |
 | | E-23 (từ khóa trên đơn vị) | Biết có đòn đang tích | Hiệu ứng trên ô |
 | | E-25 (cảnh báo địa hình) | Tránh sát thương môi trường | Hình vẽ trên ô |
+| | E-24 (Tường, Bãi Gai, ô cháy) | Biết ô nào đi được | Không có thay thế (H: chính là hình trên ô) |
+| | E-03 (tạm dừng) | Cần nhưng ít bấm | Nút Back của hệ điều hành mở Tạm dừng |
+| | E-09 (Tập trung) | Biết còn bao lâu được dừng | Trận chuyển sang chậm 0,2× |
+| | E-19 (NGẮT!) | Biết đòn bị phá | Ô đỏ biến mất, âm thanh |
+| | E-26 (đặc tính boss có đếm) | Canh thời điểm | Hình trên ô boss |
+| | E-27 (biểu ngữ pha) | Boss đổi lối đánh | Vạch nửa máu nháy (E-02) |
+| | E-28 (mây che báo trúng) | Biết báo trúng không dùng được | Không có bóng xanh/đỏ |
+| | E-40 (khối hỏng) | Biết khi nào ô túi trống lại | Khối xám có dấu X |
 | **CAN HIDE** | E-21, E-22 (số nổi) | Phản hồi, không quyết định | Thanh máu cho thấy thay đổi |
 | | E-04, E-15, E-34, E-35 | Chỉ giúp lần đầu | Màn Tạm dừng, thông báo một lần |
+| | E-14 (gợi ý ghép) | Chỉ cần với người mới | Thanh đếm menu lá vẫn có +1,5 s |
+| | E-20 (ĐÒN GIẢ!) | Phản hồi | Ô đỏ biến mất |
+| | E-36, E-41 (Thức Tỉnh đang chạy, Bản Khắc hoàn thành) | Phản hồi | Trạng thái của nút E-08 |
 | **ALWAYS HIDE** (trong trận) | E-05, E-31–E-33 | Xem được ở Tạm dừng | Màn Tạm dừng |
 | | E-37 (bộ đếm học của boss) | Chỉ dùng khi dev | — |
 
@@ -270,13 +354,15 @@ Dùng khi HUD quá đông: bỏ từ dưới lên. Cột cuối nói cái gì ma
 
 ## Visual Budget
 
+**Cách đếm:** một yếu tố là một khối thông tin có **vị trí riêng** trên màn hình. Một nhóm nút đứng cùng chỗ (Xoay + Tung phép + Hủy) tính **1**. Thông tin gắn trên khối hoặc đơn vị (thanh tươi E-38, chip từ khóa E-23) **không tính** vào số yếu tố mà tính vào diện tích phủ lưới.
+
 Đo theo **số yếu tố** và **diện tích**. Diện tích tính từ kích thước nút hiện có (pad 97 px, túi khối 113×158 px, nút Xoay 288×288 px). Người dùng duyệt 2026-10-28.
 
 | Tiêu chí | Giới hạn | Hiện trạng ước tính |
 |---|---|---|
 | Số yếu tố đồng thời: nhàn rỗi | **9** (đúng bộ "luôn hiện") | 9 |
-| Số yếu tố đồng thời: đang đặt khối hoặc chọn lá | **≤ 16** | khoảng 15 |
-| Số yếu tố đồng thời, kể cả thông báo | **≤ 18** | — |
+| Số yếu tố đồng thời: đang đặt khối hoặc chọn lá | **≤ 16** | Đặt khối: E-01, 02, 03, 07, 08 (mờ), 18 + nhóm nút E-12 + E-09, 10, 11, 15 = **11**. Chọn lá khi boss đang niệm: E-01, 02, 03, 07, 08, 18, 13, 14, 15, 16, 17 = **11** |
+| Số yếu tố đồng thời, kể cả thông báo | **≤ 18** | Trường hợp xấu nhất: 11 + 4 thông báo P2 (NGẮT!, pha, 2 nhãn địa hình) = **15** |
 | Diện tích điều khiển và thanh máu: nhàn rỗi | **≤ 20 %** diện tích màn hình | khoảng 14 % |
 | Diện tích điều khiển và thanh máu: đang đặt khối | **≤ 30 %** | khoảng 25 % |
 | Diện tích phủ lên lưới bởi biểu ngữ và nhãn (không tính ô đỏ báo đòn và chip trên đơn vị) | **≤ 15 %** diện tích lưới | — |
@@ -301,10 +387,12 @@ Mức ưu tiên: **P1** an toàn tính mạng, **P2** sự kiện chiến đấu
 | Thức Tỉnh đang chạy (E-36) | Kích hoạt | Dải trên lưới | Hết thời gian kỹ năng | 1 | P3 | — |
 | Số sát thương và hồi máu (E-21, E-22) | Trúng đòn, hồi máu | Trên đơn vị | 0,8 s | 6 | P4 | Số cũ nhất gộp vào số mới khi vượt 6 |
 | Bảo vật kích hoạt (E-31) | Bảo vật phát tác | Biểu tượng bảo vật | 0,5 s | 3 | P4 | Cùng một bảo vật trong 1 s chỉ nháy một lần |
-| Nhắc một lần (E-14, E-34, E-35) | Sự kiện lần đầu | Dưới thanh máu | 4 s | 1 | P5 | **Xếp hàng tối đa 2.** Chỉ hiện khi 1,5 s qua không có P1 hay P2 và người chơi không đang kéo. Sau 10 s chưa hiện được thì bỏ; cờ "đã thấy" chỉ ghi khi đã thật sự hiện, nên lần sau vẫn nhắc |
+| Bản Khắc hoàn thành (E-41) | Mọi ô cùng sáng | Mép trên Z2 | 1 s | 1 | P3 | Thay thế |
+| Nhắc một lần (E-34, E-35) | Sự kiện lần đầu | Mép trên Z2 | 6 s | 1 | P5 | **Xếp hàng tối đa 2.** Chỉ hiện khi 1,5 s qua không có P1 hay P2 và người chơi không đang kéo. Sau 10 s chưa hiện được thì bỏ; cờ "đã thấy" chỉ ghi khi đã thật sự hiện, nên lần sau vẫn nhắc |
 
 **Quy tắc chung:**
 - **Không bao giờ che ô đỏ báo đòn (P1).** Mọi thông báo khác phải tránh vùng đất người chơi đang đứng và vùng ô đỏ.
+- **Kết quả trận (E-39)** không phải thông báo: khi trận kết thúc, mọi thông báo đang hiện hoặc đang chờ bị xóa; P5 chưa hiện dời sang trận sau.
 - **Giữ trong khi chiến đấu:** chỉ P5 bị giữ lại chờ khoảnh khắc yên. P1–P4 hiện ngay.
 - **Âm thanh:** mỗi thông báo P1 và P2 có âm thanh riêng; âm thanh không thay thế hình (hình luôn có).
 
@@ -330,7 +418,7 @@ Màn ngang cố định, **chỉ cảm ứng** (không hover, không gamepad). C
 
 ## Accessibility
 
-**Chưa có cấp trợ năng nào được cam kết cho dự án** (chưa có `design/accessibility-requirements.md`). Tạm dùng **WCAG-AA làm nền**; xem Open Questions. Người dùng chấp nhận tạm thời 2026-10-28 (có thể sửa nhỏ sau).
+**Cấp đã cam kết: Standard, điều chỉnh cho cảm ứng** (`design/accessibility-requirements.md`, 2026-10-28). Các hạng mục dưới đây là phần của HUD; cam kết đầy đủ, bảng kiểm màu và kế hoạch kiểm thử nằm ở file đó. Người dùng chấp nhận tạm thời 2026-10-28 (có thể sửa nhỏ sau).
 
 | Hạng mục | Yêu cầu |
 |---|---|
@@ -360,7 +448,10 @@ Game **chưa có màn Cài đặt** (màn chính chỉ có nút VI/EN), nên cá
 | Cỡ điều khiển | 90 / 100 / 110 % | 100 % | Pad và túi khối (110 % vẫn vừa vùng dưới 45 %) |
 | Số nổi | Tất cả / Chỉ đòn lớn / Tắt | Tất cả | Số sát thương và hồi máu |
 | Bảng màu báo trúng | Xanh lá – đỏ / Xanh dương – cam | Xanh lá – đỏ | Bóng khối và ô báo đòn (vẫn có ✓/✗ và sọc) |
-| Nhắc hướng dẫn | Đầy đủ / Ẩn, kèm nút "Hiện lại nhắc" | Đầy đủ | Gợi ý ghép và các dòng nhắc một lần |
+| Nhắc hướng dẫn | Đầy đủ / Ẩn, kèm mục "Xem lại hướng dẫn" | Đầy đủ | Gợi ý ghép và các dòng nhắc một lần |
+| Thời gian chọn lá | 3 s / 6 s / không giới hạn | 3 s | Menu 4 lá (E-13): hết giờ tự chọn nhát chém cơ bản; không giới hạn thì chờ người chơi chọn (trận vẫn chậm 0,2×) |
+| Tự tiếp tục sau trận | 3 s / 8 s / Tắt | 3 s | Màn kết quả trận (E-39); nút Tiếp tục luôn có |
+| Xác nhận Giết | Giữ 0,6 s / Chạm hai lần | Giữ 0,6 s | Màn Tha/Giết |
 
 ---
 
@@ -384,13 +475,21 @@ QA kiểm được mà không cần đọc tài liệu khác. Người dùng duy
 - [ ] **Giảm chuyển động bật:** không có nhấp nháy, nhịp đập hay rung; thay bằng dấu tĩnh.
 - [ ] **Thuận tay trái bật:** pad bên phải, túi khối bên trái; kéo đặt khối vẫn hoạt động.
 - [ ] **Đa chạm:** giữ pad bằng ngón trái trong khi kéo khối bằng ngón phải hoạt động bình thường.
+- [ ] **Độ tươi khối:** trên ảnh chụp đen trắng, phân biệt được khối sắp tan (thanh ngắn) với khối mới rơi (thanh đầy).
+- [ ] **Kết quả trận:** khi thắng trận, khung kết quả hiện máu hồi và đối thủ kế, nút Tiếp tục ≥ 96 px, tự tiếp tục sau đúng số giây ghi trên màn; không còn thông báo trận nào hiện trên khung.
+- [ ] **Dòng nhắc không đè lưới:** dòng nhắc một lần không phủ ô nào của đất người chơi và không phủ ô đỏ báo đòn (TD-038).
 - [ ] **Art ở ô nhỏ:** trên ảnh chụp sân 5×5 (ô khoảng 55 px cao), nhận ra được 5 nhân vật và boss qua dáng hình.
+- [ ] **Cỡ chữ 130 %:** bật Cỡ chữ HUD 130 % trên màn 1280×720; không chữ nào bị cắt và không chữ nào che ô đỏ báo trúng.
+- [ ] **Đường một ngón:** chơi trọn một chuyến leo chỉ bằng một ngón, thao tác tuần tự (chạm khối trong túi rồi chạm ô đích, bấm pad, chạm lá); không bước nào bắt buộc hai ngón.
+- [ ] **Thời gian chọn lá:** đặt 6 s thì menu 4 lá mở đủ 6 s rồi mới tự chọn nhát chém cơ bản; đặt không giới hạn thì menu chờ đến khi người chơi chọn.
+- [ ] **Giữ pad:** giữ một nút pad 2 s thì nhân vật bước lặp đúng nhịp hồi bước; thả tay là dừng ngay, không có bước thừa sau khi thả.
+- [ ] **Tự tiếp tục sau trận:** đặt 8 s thì màn kết quả chờ 8 s; đặt Tắt thì chờ vô hạn; ở mọi mức, nút Tiếp tục luôn hiện và bấm được.
 
 ---
 
 ## Open Questions
 
-1. **Cấp trợ năng chưa cam kết.** Cần tạo `design/accessibility-requirements.md` (`/ux-design accessibility`). Đề xuất nền WCAG-AA.
+1. ~~Cấp trợ năng chưa cam kết~~ **Đã giải quyết 2026-10-28:** Standard, điều chỉnh cho cảm ứng (`design/accessibility-requirements.md`).
 2. **Chưa có bản đồ hành trình người chơi.** `design/player-journey.md` viết tay theo mẫu `.claude/docs/templates/player-journey.md`.
 3. **Chưa có art bible.** Màu, phông chữ, biểu tượng từ khóa và chất liệu khối của HUD chờ `/art-bible`.
 4. **Chưa có thư viện mẫu tương tác.** Spec này dùng 3 mẫu mới, nên thêm vào `design/ux/interaction-patterns.md`:
@@ -407,4 +506,5 @@ QA kiểm được mà không cần đọc tài liệu khác. Người dùng duy
 8. **AccessKit cho các màn menu** (Godot 4.5+): có làm không, khi nào.
 9. **Danh sách khác biệt giữa build hiện tại và spec** (vạch nửa máu, sọc ô đỏ, ✓/✗, chip từ khóa, viền hồi bước…): lập khi làm story HUD.
 10. **Chữ trong HUD vẫn dùng tên cũ** (mảnh, trận đồ, tuyệt kỹ…). Đổi theo `design/glossary.md` trong story đổi thuật ngữ.
-11. **TD-038** (dòng nhắc bị lưới đè): sửa trong story HUD theo quy tắc mục Feedback & Notification Systems.
+11. **TD-038** (dòng nhắc bị lưới đè): sửa trong story HUD theo quy tắc mục Feedback & Notification Systems và vị trí "mép trên Z2" ở mục Layout Zones.
+12. **Độ dài chữ vi/en.** Bản tiếng Anh dài hơn; cần độ dài tối đa cho các nhãn trên lưới (E-17, E-25) và dải giữa (E-11, E-13) trước khi làm story HUD. Nhãn trên lưới tự thu nhỏ cho vừa ô (mục Tuning Knobs).
