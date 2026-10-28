@@ -7,10 +7,14 @@ extends RefCounted
 ## top-left corner of the bounding box is (0, 0).
 ## A ROTTEN piece (thrown by the rotten_thrower trait) is a 1-cell grey piece that can never be
 ## placed ([method placeable] is false).
-## Implements: Story 024 (Part A), design/game-brief.md "Core loop (v5)".
+## Story 041: an ODD piece ("Khoi La") is a runtime polyomino not in pieces.json; its shape_id is
+## [constant ODD_PREFIX] + its [method canonical_key]. It obeys every rule of a classic piece.
+## Implements: Story 024 (Part A), Story 041, design/game-brief.md "Core loop (v5)".
 
 ## Shape id used by every rotten piece.
 const ROTTEN_ID: String = "rotten"
+## Story 041: shape_id prefix of every odd (runtime-generated) piece.
+const ODD_PREFIX: String = "odd:"
 
 ## Id of the shape in assets/data/pieces.json ("mono", "t4", ...), or [constant ROTTEN_ID].
 var shape_id: String = ""
@@ -89,6 +93,34 @@ func is_rotten() -> bool:
 ## True when the piece may be placed on a board (false for a rotten piece).
 func placeable() -> bool:
 	return not _rotten and not _base_cells.is_empty()
+
+
+## Story 041: true for an odd piece (shape_id starts with [constant ODD_PREFIX]).
+func is_odd() -> bool:
+	return shape_id.begins_with(ODD_PREFIX)
+
+
+## Story 041: rotation-invariant key of a cell set (any offset): for each of the 4 quarter turns (the
+## [method relative_cells] rule, normalised and sorted) the cells as "x,y;x,y;...", and the
+## lexicographically smallest string wins. Mirror images (L vs J) give different keys. Empty = "".
+static func canonical_key(cells: Array[Vector2i]) -> String:
+	if cells.is_empty():
+		return ""
+	var best: String = ""
+	for turns: int in 4:
+		var turned: Array[Vector2i] = []
+		for cell: Vector2i in cells:
+			var c: Vector2i = cell
+			for _i: int in turns:
+				c = Vector2i(-c.y, c.x)
+			turned.append(c)
+		var parts: PackedStringArray = []
+		for cell: Vector2i in _normalise(turned):
+			parts.append("%d,%d" % [cell.x, cell.y])
+		var key: String = ";".join(parts)
+		if turns == 0 or key < best:
+			best = key
+	return best
 
 
 # Shifts [param cells] so min x = min y = 0 and sorts them by (y, x).

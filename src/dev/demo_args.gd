@@ -122,6 +122,17 @@ extends Node
 ##       HP one frame after the intro is skipped: DOWNED (dimmed / kneeling, still drawn), time frozen so the FATE screen never opens
 ##   godot --path . -- --demo=final_phase2  Story 035: GameFlow stages the final match (an_dai_keeper); one huge hit is clamped at the
 ##       phase-2 threshold: the phase-2 banner shows, the boss invulnerable, time frozen
+##   Story 041 Odd Block (Khoi La) demos: odd pieces come from the REAL OddBlock.generate on the match's board, with the match's
+##   odd_blocks config (chance forced to 1, one size kept: the largest or smallest the target half allows), rng seeded
+##   ODD_DEMO_SEED + a fixed salt, so the same board gives the same shapes. Pass --arena=<shape> for a bigger board (6-7 cells):
+##   godot --path . -- --demo=odd_field   an odd piece (largest size) and a classic one lying on the player's half, an odd piece on the boss's
+##   godot --path . -- --demo=odd_bag     the bag: odd (largest size) + classic t4 + odd (smallest size), corner sparkle marks
+##   godot --path . -- --demo=odd_place   mid-drag of an odd piece (largest size) from slot 0, the lifted ghost over the boss: green forecast
+##                                        with the magenta odd edge and mark
+##   godot --path . -- --demo=odd_boss    the boss's hand slot 0 holds an odd piece (largest size for the player's half), cast through the real
+##                                        BossController._do_cut: the red telegraph on the player's half with the odd mark
+##   godot --path . -- --demo=odd_hint    CombatView.odd_hint_enabled forced on and an odd piece put in the bag: the first-pickup hint line
+##                                        under the HP bars (CutHudView.debug_odd_hint_hold keeps it up for the capture)
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
 ## seeds the drop RNG. No argument = normal game, this node does nothing. State is set in
 ## _ready, before the first frame (the seed and the grid in _enter_tree, before
@@ -228,6 +239,16 @@ const HAZARD_DEMO_WARN_RATIO: float = 0.4
 const HAZARD_DEMO_ELAPSED_RATIO: float = 0.3
 const HAZARD_DEMO_RIPOSTE_CELLS: int = 4
 const HAZARD_DEMO_MAX_STEPS: int = 2000
+## Story 041 odd demos (they also skip the intro): the generator seed, the salts of each odd piece, the classic pieces shown
+## beside the odd ones and their freshness on the field.
+const ODD_DEMOS: Array[String] = ["odd_field", "odd_bag", "odd_place", "odd_boss", "odd_hint"]
+const ODD_DEMO_SEED: int = 4101
+const ODD_SALT_PLAYER: int = 0
+const ODD_SALT_SMALL: int = 1
+const ODD_SALT_BOSS: int = 2
+const ODD_DEMO_CLASSIC: String = "l3"
+const ODD_DEMO_BAG_CLASSIC: String = "t4"
+const ODD_DEMO_FRESHNESS: Array[float] = [7.0, 5.0, 6.0]
 ## Story 028 join demos: piece 1 and piece 2 of "join_menu" / "join_split" (--piece= overrides piece 1).
 const JOIN_PIECE_1: String = "l3"
 const JOIN_PIECE_2: String = "bar2"
@@ -374,6 +395,8 @@ func _ready() -> void:
 			_placing_demo(combat, grid)
 		"join_menu", "join_featured", "join_split":
 			_join_demo(combat, grid)
+		"odd_field", "odd_bag", "odd_place", "odd_boss", "odd_hint":
+			_odd_demo(combat, grid)
 		"rotten_piece":
 			var lib2: PieceLibrary = PieceLibrary.load_from_file()
 			var rotten_cell2: Vector2i = _other_player_cell(grid, combat.get_state().player_cell)
@@ -382,8 +405,120 @@ func _ready() -> void:
 			_fill_bag(lib2, ROTTEN_PIECE_SLOT)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
-	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode):
+	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode) or ODD_DEMOS.has(_mode):
 		_skip_intro.call_deferred()
+
+
+# Story 041 odd demos (see the header), through the real paths: debug_place_piece for the field, the bag's points, begin_drag /
+# drag_to for the drag, BossController._do_cut for the boss's cast, CombatView's own bag scan for the hint.
+func _odd_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	print("DemoArgs: %s on halves of %d (player) / %d (boss) cells" % [_mode, grid.player_cells().size(), grid.enemy_cells().size()])
+	match _mode:
+		"odd_field":
+			var odd: Piece = _odd_piece(combat, lib, true, true, ODD_SALT_PLAYER)
+			var spots: Array[Vector2i] = _spread_cells(grid, 3)
+			var placed: int = 0
+			for cell: Vector2i in spots:
+				if cell == combat.get_state().player_cell or placed >= 2:
+					continue
+				var piece: Piece = odd if placed == 0 else lib.make_piece(ODD_DEMO_CLASSIC, 1)
+				if piece != null:
+					combat.get_drops().debug_place_piece(piece, cell, ODD_DEMO_FRESHNESS[placed])
+				placed += 1
+			var boss_odd: Piece = _odd_piece(combat, lib, false, true, ODD_SALT_BOSS)
+			if boss_odd != null:
+				combat.get_boss().get_drops().debug_place_piece(boss_odd, _free_enemy_cell(grid, combat, 0), ODD_DEMO_FRESHNESS[2])
+		"odd_bag":
+			_fill_bag(lib, -1)
+			_set_bag_piece(0, _odd_piece(combat, lib, true, true, ODD_SALT_PLAYER))
+			_set_bag_piece(1, lib.make_piece(ODD_DEMO_BAG_CLASSIC, 0))
+			_set_bag_piece(2, _odd_piece(combat, lib, true, false, ODD_SALT_SMALL))
+		"odd_place":
+			_fill_bag(lib, -1)
+			_set_bag_piece(0, _odd_piece(combat, lib, true, true, ODD_SALT_PLAYER))
+			var boss_cell: Vector2i = combat.get_state().enemy_cell
+			if not combat.begin_drag(0, _hold_slot_centre(0)):
+				push_warning("DemoArgs: begin_drag failed for demo '%s'" % _mode)
+				return
+			var placement: PlacementController = combat.get_placement()
+			# Walk the finger over the enemy cells (boss's cell first), turning the piece between walks, until the
+			# lifted ghost covers the boss; an odd shape may need a turn to reach it.
+			var targets: Array[Vector2i] = [boss_cell]
+			targets.append_array(grid.enemy_cells())
+			for _turn: int in 4:
+				for cell: Vector2i in targets:
+					combat.drag_to(combat.drag_point_for_cell(cell))
+					if placement.hits(boss_cell):
+						break
+				if placement.hits(boss_cell):
+					break
+				combat.rotate_piece()
+			if not placement.hits(boss_cell):
+				push_warning("DemoArgs: the dragged odd ghost does not cover the boss for demo '%s'" % _mode)
+		"odd_boss":
+			var boss: BossController = combat.get_boss()
+			_boss_piece_hand(boss, lib)
+			var boss_odd2: Piece = _odd_piece(combat, lib, false, true, ODD_SALT_BOSS)
+			var slot0: FieldPoint = boss.get_hand().get_point(0)
+			if boss_odd2 == null or slot0 == null:
+				return
+			slot0.piece = boss_odd2
+			slot0.label = boss_odd2.shape_id
+			# A big odd shape may only fit over the player's cell: move the player to the first cell it can leave free.
+			var player_cells: Array[Vector2i] = [combat.get_state().player_cell]
+			player_cells.append_array(grid.player_cells())
+			for cell: Vector2i in player_cells:
+				if not _boss_piece_cells(grid, [boss_odd2] as Array[Piece], cell).is_empty():
+					combat.get_state().set_player_cell(cell)
+					break
+			_boss_piece_cut(combat, grid, BOSS_DEMO_CAST_SINGLE)
+			combat.get_arbiter().tick(SWING_ELAPSED_SEC)
+		"odd_hint":
+			combat.odd_hint_enabled = true
+			for hud: Node in get_tree().root.find_children("*", "CutHudView", true, false):
+				(hud as CutHudView).debug_odd_hint_hold = true
+			var odd2: Piece = _odd_piece(combat, lib, true, false, ODD_SALT_SMALL)
+			if odd2 != null:
+				var point := FieldPoint.new()
+				point.uid = -1
+				point.freshness_left = 0.0
+				point.piece = odd2
+				point.label = odd2.shape_id
+				_hold().place(point, 0)
+
+
+# Story 041: puts [param piece] into the bag point of slot [param index] (filled by _fill_bag); no-op on null.
+func _set_bag_piece(index: int, piece: Piece) -> void:
+	var point: FieldPoint = _hold().get_point(index)
+	if point == null or piece == null:
+		return
+	point.piece = piece
+	point.label = piece.shape_id
+
+
+# Story 041: an Odd Block for the target half ([param target_is_enemy]: the boss's half, as the player's drops) from the real
+# OddBlock.generate, with the match's odd config (chance 1, only one size kept: the largest or smallest the half allows; when
+# the generator gives up on it the next size is tried), rng seeded ODD_DEMO_SEED + [param salt]. Null + warning when none.
+func _odd_piece(combat: CombatView, lib: PieceLibrary, target_is_enemy: bool, prefer_largest: bool, salt: int) -> Piece:
+	var grid: BoardGrid = combat.get_grid()
+	var base: OddBlockConfig = combat.get_drops_config().odd
+	var target: int = grid.enemy_cells().size() if target_is_enemy else grid.player_cells().size()
+	var sizes: Array[int] = base.allowed_sizes(target)
+	if not prefer_largest:
+		sizes.reverse()
+	while not sizes.is_empty():
+		var cfg: OddBlockConfig = base.copy()
+		cfg.chance = 1.0
+		var size: int = sizes.pop_back()
+		cfg.size_weights = {size: 1.0}
+		var rng := RandomNumberGenerator.new()
+		rng.seed = ODD_DEMO_SEED + salt
+		var piece: Piece = OddBlock.generate(lib, grid, target_is_enemy, cfg, rng)
+		if piece != null:
+			return piece
+	push_warning("DemoArgs: no odd block fits the %s half for demo '%s'" % ["boss's" if target_is_enemy else "player's", _mode])
+	return null
 
 
 # Story 025 boss piece demos. The boss hand holds BOSS_DEMO_HAND as pieces; boss_placing casts a 2-piece join through

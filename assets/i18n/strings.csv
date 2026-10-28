@@ -832,3 +832,7 @@ achievement.reach_floor_4.name,Tới tầng 4,Reach Floor 4
 achievement.reach_floor_4.desc,Tới tầng 4 trong một run,Reach floor 4 in a run
 achievement.reach_floor_5.name,Tới tầng 5,Reach Floor 5
 achievement.reach_floor_5.desc,Tới tầng 5 trong một run,Reach floor 5 in a run
+piece.odd.name,Khối Lạ,Odd Block
+ui.hud.odd_hint,"%s: hình mới, to và mạnh, niệm lâu hơn","%s: a new shape, big and strong, slower to cast"
+ui.piece_deck.odd_rule,"%s: khoảng %d%% khối rơi, %d–%d ô tùy sân (không học, không quên)","%s: about %d%% of drops, %d–%d cells by arena (never learned, never forgotten)"
+ui.piece_deck.odd_none,Không có %s,No %s

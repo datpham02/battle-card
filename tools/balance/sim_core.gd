@@ -177,6 +177,15 @@ var piece_deck_cfg: PieceDeckConfig
 var piece_weight_spec: String = ""
 ## Warnings of --piece-weight-set (unknown or run_only ids, bad values), echoed by [method describe_piece_weight_set].
 var piece_weight_warnings: Array[String] = []
+## Story 041 (README "Story 041: odd blocks"): `--odd=on|off` ("" = flag absent = on, the data's chance;
+## off = chance 0 on both sides) and `--odd-chance=X` (0..1 on both sides, -1 = absent). Both are applied in
+## [method _setup] AFTER the match key `odd_blocks` (merged over the file block), as CombatView applies its
+## DEV arg --odd-chance after it.
+var odd_mode: String = ""
+var odd_chance_override: float = -1.0
+## Largest value `--aware-min` accepts: odd blocks reach 7 cells (OddBlockConfig size_max), above
+## PieceLibrary.MAX_CELLS (5) of the library shapes.
+const AWARE_MIN_MAX: int = 7
 ## Matches set up with a piece deck, and those where PieceDeck.weights_for_match fell back to the
 ## original weights (no deck shape fits the arena). Callers diff them around a batch.
 var piece_deck_matches: int = 0
@@ -244,6 +253,8 @@ var _boss_think: float = 0.0
 var _fuse: FuseCannonTrait = null
 var _slam: SlamTrait = null
 var _anchor_cache: Dictionary = {}
+# Story 041: cells of the odd blocks spawned this match, [player, boss].
+var _odd_cells: Array = [0, 0]
 var _consuming: bool = false
 # Signature state (mirrors CombatView).
 var _sig_id: String = ""
@@ -498,9 +509,15 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 		elif arg.begins_with("--aware="):
 			bot["aware"] = clampf(float(v), 0.0, 1.0)
 		elif arg.begins_with("--aware-min="):
-			bot["aware_min"] = clampi(int(v), 1, PieceLibrary.MAX_CELLS)
+			# Story 041: up to the largest odd block (7 cells), not PieceLibrary.MAX_CELLS (5).
+			bot["aware_min"] = clampi(int(v), 1, AWARE_MIN_MAX)
 		elif arg.begins_with("--sig="):
 			bot["sig"] = v if v in ["off", "ready", "rules"] else "rules"
+		elif arg.begins_with("--odd="):
+			# Story 041: on = the data's odd block chance (default), off = chance 0 on both sides.
+			odd_mode = "off" if v.strip_edges() == "off" else "on"
+		elif arg.begins_with("--odd-chance="):
+			odd_chance_override = clampf(float(v), 0.0, 1.0)
 		elif arg.begins_with("--vent-react="):
 			vent_react_sec = maxf(float(v), 0.0)
 		elif arg.begins_with("--crumble-leave="):
@@ -613,7 +630,37 @@ func describe() -> String:
 		o.append("relics=%s" % ",".join(PackedStringArray(ov["relics"])))
 	if not (ov["relic_set"] as Array).is_empty():
 		o.append("relic_set=%s" % str(ov["relic_set"]))
-	return "bot: %s | overrides: %s" % [" ".join(parts), ", ".join(o) if not o.is_empty() else "none"]
+	return "bot: %s | overrides: %s | %s" % [" ".join(parts), ", ".join(o) if not o.is_empty() else "none", describe_odd()]
+
+
+## Story 041: `odd=on chance=0.25 (data)` / `odd=on chance=1.00 (--odd-chance)` / `odd=off` (flag or chance 0)
+## plus the size rule of the file block. A chapter match key `odd_blocks` can still change one match.
+func describe_odd() -> String:
+	if odd_mode == "off":
+		return "odd=off (--odd=off: chance 0 on both sides)"
+	var cfg: OddBlockConfig = drops_config.odd if drops_config != null and drops_config.odd != null else null
+	var chance: float = odd_chance_override if odd_chance_override >= 0.0 else (cfg.chance if cfg != null else 0.0)
+	if chance <= 0.0:
+		return "odd=off (chance 0%s)" % (" from --odd-chance" if odd_chance_override >= 0.0 else " in data")
+	var rule: String = ""
+	if cfg != null:
+		rule = " sizes %d..%d max=clamp(cells/%d+%d, %d, %d) weights=%s tries=%d" % [cfg.min_cells, cfg.size_max,
+			cfg.size_divisor, cfg.size_add, cfg.size_min, cfg.size_max, str(cfg.size_weights), cfg.max_tries]
+	return "odd=on chance=%.2f (%s)%s" % [chance, "--odd-chance" if odd_chance_override >= 0.0 else "data", rule]
+
+
+# Story 041: the odd block tuning of one side's drops config: the match key `odd_blocks` merged over the file
+# block (CombatView._apply_odd_overrides), then --odd=off / --odd-chance=X.
+func _apply_odd_overrides(cfg: FieldDropsConfig, m: Dictionary) -> void:
+	if cfg.odd == null:
+		cfg.odd = OddBlockConfig.new()
+	var raw: Variant = m.get("odd_blocks", null)
+	if raw is Dictionary:
+		cfg.odd = cfg.odd.with_overrides(raw as Dictionary)
+	if odd_mode == "off":
+		cfg.odd.chance = 0.0
+	elif odd_chance_override >= 0.0:
+		cfg.odd.chance = odd_chance_override
 
 
 ## Copy of [param character] with the hp_mult / sig_cd / passive_set overrides applied.
@@ -702,6 +749,20 @@ func play_match(m: Dictionary, character: Dictionary, deck_entries: Array, start
 	# the sim's own vent_hp / fall_hp / pushed counters) and 1 when the boss's rebirth was used up.
 	out["haz_stats"] = (hazards.call("stats") as Dictionary) if hazards != null and hazards.has_method("stats") else {}
 	var rebirth: BossTrait = trait_host.get_trait("rebirth") if trait_host != null else null
+	# Story 041: odd block counters of both sides (FieldDrops getters; cells from point_spawned): odd spawns, all
+	# piece spawns (start pieces included), failed generations that fell back to a classic piece, odd cells, and
+	# whether odd blocks could drop on that half at all (the size rule allows no size on a small half).
+	var bdrops: FieldDrops = boss.get_drops()
+	out["odd_p"] = drops.get_odd_spawned()
+	out["drops_p"] = drops.get_total_spawned()
+	out["odd_fb_p"] = drops.get_odd_fallbacks()
+	out["odd_cells_p"] = int(_odd_cells[0])
+	out["odd_on_p"] = 1 if drops.is_odd_enabled() else 0
+	out["odd_b"] = bdrops.get_odd_spawned()
+	out["drops_b"] = bdrops.get_total_spawned()
+	out["odd_fb_b"] = bdrops.get_odd_fallbacks()
+	out["odd_cells_b"] = int(_odd_cells[1])
+	out["odd_on_b"] = 1 if bdrops.is_odd_enabled() else 0
 	out["rebirth_used"] = 1 if (rebirth != null and rebirth.has_method("lives_left") and int(rebirth.call("lives_left")) <= 0) else 0
 	_teardown()
 	trace = false
@@ -742,6 +803,9 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	if not is_equal_approx(kiep_drop_mult, 1.0):
 		player_drops_config.piece_spawn_interval_sec *= kiep_drop_mult
 	var boss_drops_config: FieldDropsConfig = drops_config.copy()
+	# Story 041: both sides get the same odd block tuning (match key, then the --odd / --odd-chance flags).
+	_apply_odd_overrides(player_drops_config, m)
+	_apply_odd_overrides(boss_drops_config, m)
 	var boss_drop_mult: float = maxf(float(m.get("boss_drop_interval_mult", 1.0)), 0.01) * float(ov["boss_drop_mult"])
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult
 	boss_drops_config.piece_spawn_interval_sec *= boss_drop_mult
@@ -769,6 +833,9 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 			deck_weights.erase(pid)
 		drops.enable_pieces(piece_lib, chapter_id, grid, match_seed, true, deck_weights)
 	drops.place_start_pieces(state.player_cell)
+	# Story 041: odd block sizes per side (the shares come from the FieldDrops counters in play_match).
+	_odd_cells = [0, 0]
+	drops.point_spawned.connect(_on_odd_point_spawned.bind(PLAYER))
 	var slots: int = hold_config.piece_slot_count
 	if relic_merged.has("hold_slots"):
 		slots = maxi(roundi(_relic_value(float(slots), "hold_slots")), 1)
@@ -793,6 +860,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_apply_brain_params(brain_config, m, base_cd)
 	boss = BossController.new(state, grid, cut_config, cards, brain_config, boss_drops_config, hold_config, match_seed + 1)
 	boss.enable_pieces(piece_lib, chapter_id, match_seed + 2, combat.max_pieces_per_cast)
+	boss.get_drops().point_spawned.connect(_on_odd_point_spawned.bind(ENEMY))
 	boss.set_player_step_cooldown(player_cd)
 	boss.get_brain().cards = _boss_card_ids(m)
 	boss.get_actor().duration_mult = maxf(float(m.get("swing_speed_mult", 1.0)), 0.01)
@@ -1540,6 +1608,12 @@ func _on_cell_changed(side: int, _old_cell: Vector2i, new_cell: Vector2i) -> voi
 		bag.place_in_first_free(point)
 
 
+# Story 041: adds an odd block's cells to its side's total (start pieces are never odd).
+func _on_odd_point_spawned(point: FieldPoint, side: int) -> void:
+	if point.piece != null and point.piece.is_odd():
+		_odd_cells[0 if side == PLAYER else 1] = int(_odd_cells[0 if side == PLAYER else 1]) + point.piece.cell_count()
+
+
 func _on_bag_slot_cleared(_index: int, _point: FieldPoint) -> void:
 	if _consuming or state.is_player_dead():
 		return
@@ -2046,6 +2120,10 @@ func _zone_choice(count: int) -> String:
 
 func _placements(piece: Piece) -> Array:
 	var key: String = "%s|%d" % [piece.shape_id, piece.rotation]
+	if piece.is_odd():
+		# Story 041: two odd blocks of one canonical key can be grown in different base orientations, so
+		# (shape_id, rotation) does not fix their cells; key on the turned cells instead.
+		key = "%s|%s" % [piece.shape_id, str(piece.relative_cells())]
 	if not _anchor_cache.has(key):
 		var list: Array = []
 		for anchor: Vector2i in PiecePlacement.valid_anchors(grid, piece):

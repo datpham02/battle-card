@@ -9,5 +9,7 @@
 	"piece_spawn_interval_sec": 3.0,
 	"piece_max_on_field": 3,
 	"piece_freshness_sec": 8.0,
-	"start_pieces": 1
+	"start_pieces": 1,
+	"odd_blocks": {"chance": 0.12, "min_cells": 5, "size_divisor": 4, "size_add": 3, "size_min": 4, "size_max": 7,
+		"size_weights": {"5": 6, "6": 3, "7": 1}, "max_tries": 40}
 }

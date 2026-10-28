@@ -60,7 +60,7 @@ Bot model. Defaults are in `sim_core.gd` `DEFAULT_BOT`:
 | `--join=P` | 1.0 | Chance to join a second piece when the planner says the union scores higher. |
 | `--hold=N` | 1 | Placeable pieces held before a non-counter cast. 1 = cast as soon as one piece is held, which almost never joins. 2 = wait for a pair; this is how joins and featured casts appear. A full bag casts anyway. |
 | `--aware=P` | 0.0 | Chance a placement lights dark formation-map cells instead of aiming at the boss. At 0, signatures rarely become ready. |
-| `--aware-min=N` | 3 | Smallest piece a formation-aware placement uses. |
+| `--aware-min=N` | 3 | Smallest piece a formation-aware placement uses (1..7 since Story 041; odd blocks reach 7 cells). |
 | `--sig=off\|ready\|rules` | rules | Signature activation. `rules` = the Story 021 rules: Tram before a cast of 3+ cells or when the boss is at 40 % HP or less; Thien Hoa on 15+ burn or 2+ burning enemy cells, otherwise after holding 6 s; Anh Bo when the boss is pinned, on a dodge, or at the next cast; Story 037: Vay Bat right after a player zone forms, Thanh An when the boss has >= 1 Han stack (section below). `ready` fires as soon as the signature is usable. |
 | `--progress=none\|all` | all | Story 037, see the section below. `none` = an empty save (every unlock still locked in the pools), `all` = nothing locked. |
 | `--dt=S` | 0.05 | Loop step in REAL seconds. The sim step is dt × scale. |
@@ -933,3 +933,61 @@ a 30-seed cell about 8-9.
 - The onboarding line uses `--progress=none` (locked pools), not `cleared_bosses 0`.
 - Out-of-match times are assumptions until a playtest gives them (TD-006 family, Part A also asks for the drag and card-pick
   times: `--place-sec`, `--choose-sec`, `--join-sec`).
+
+## Story 041: odd blocks (`--odd=on|off`, `--odd-chance=X`, the `ODD` line)
+
+Odd blocks ("Khối Lạ") reach the sim through the same path as the game: sim_core loads `FieldDropsConfig` from
+`assets/data/field_drops.json` (block `odd_blocks`, chance 0.25 shipped), both sides' drops configs are copies of it, and
+`FieldDrops.enable_pieces` prepares odd blocks for its target half (player drops target the boss's half, the boss's drops
+the player's half). Tick spawns roll the odd chance on the drops' own odd RNG; start pieces are never odd; a failed
+generation falls back to a classic piece. The bot picks up, rotates, places and joins odd pieces with the same planner as
+classic pieces (5-7 cells; the placement cache keys odd pieces on their turned cells, because two odd blocks of one
+canonical shape can be grown in different base orientations). Per match, sim_core applies the chapter match key
+`odd_blocks` (merged over the file block, like `CombatView._apply_odd_overrides`), then the flags below.
+
+### Flags (sim_core, so deck_sim and hit_probe both take them)
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--odd=on\|off` | on | `on` = the data's chance (and the match key, if any). `off` = chance 0 on BOTH sides (no odd roll at all, so the classic draw sequence is the pre-041 one). |
+| `--odd-chance=X` | data | 0..1, overrides the chance on BOTH sides, after the match key. `--odd=off` wins over it. |
+| `--aware-min=N` | 3 | Now accepts 1..7 (odd blocks reach 7 cells), was 1..5. |
+
+The header (`bot: ... | overrides: ... | <odd>`, every mode) ends with `odd=on chance=0.25 (data) sizes 5..7
+max=clamp(cells/4+3, 4, 7) weights={...} tries=40`, `odd=on chance=1.00 (--odd-chance) ...`, `odd=off (--odd=off: chance
+0 on both sides)` or `odd=off (chance 0 in data)`.
+
+### The `ODD` line (world mode, plain `--world` and `--run=v6`; one per character / policy)
+
+```
+ODD | character | odd share of player drops % | mean odd size | odd fallbacks (total; per run) | boss odd share % | policy | player odd / drops | boss odd / drops | boss mean odd size | boss fallbacks | matches with odd possible player / boss / all | <odd header>
+ODD | kiem_si | 20.7 | 5.48 | 3; 1.00 | 28.9 | build [mercy=none ...] | 131 / 632 | 178 / 616 | 5.44 | 2 | 33 / 33 / 33 |
+```
+
+Every match of the character's runs is summed (extra fights included). Share = odd spawns / ALL piece spawns of that half
+(`FieldDrops.get_odd_spawned / get_total_spawned`; start pieces count as drops, so at `--odd-chance=1` the player share stays
+below 100 %). Mean size = odd cells / odd spawns (from `point_spawned`). Fallbacks = odd rolls whose generation failed
+(`get_odd_fallbacks`, player half; the boss's are a later column). "Matches with odd possible" = matches whose half allowed an
+odd size (`is_odd_enabled`; the size rule turns them off when `min_cells` > the half's max size). With the shipped
+chance 0.25 the expected player share is a bit under 25 % (start pieces dilute it). The `--kiep` compact tables do not print it.
+
+### Comparing on / off on the same seeds (Story 041 Part E)
+
+Run the two variants as two invocations with the SAME `--seed-offset` and only the odd flag different; use a seed set the
+Story 040 tuning never saw (it used offsets 0 / 100 / 200 / 300 / 1000 / 2000):
+
+```sh
+for c in kiem_si phap_su sat_thu tho_san giao_si; do
+  for o in on off; do
+    timeout 3000 $GODOT --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --seed-offset=3000 --characters=$c --mercy=mixed --shop=on --pieces=off --relic=value --odd=$o > "<scratch>/v6_odd_${o}_$c.out" 2>&1
+  done
+done
+grep -hE "^RUN \||^ODD \|" "<scratch>"/v6_odd_*.out
+```
+
+Compare the `RUN` win % of each character between the on and off files (Part E: 30-45 %, or within ±5 points of Story 040's
+44.3 / 35.7 / 42.9 / 27.1 / 47.1, and no character > 10 points apart between on and off). Odd blocks draw on their own RNG,
+but the matches still diverge once an odd piece lands (different casts, different HP), so on/off is a paired comparison of
+the same seeds, not identical runs. Tune only data (`chance`, `size_weights`, `min_cells`); `--odd-chance=X` probes a chance
+without editing the JSON. Smoke (3 seeds, about 10-25 s each): `--run=v6 --seeds=3 --characters=kiem_si --odd=on`
+(then `--odd=off`, `--odd-chance=1`).

@@ -13,7 +13,7 @@ const MATCH_KEYS: Array[String] = [
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
 	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards", "boss_defense", "boss_min_runes",
 	"desc_key", "boss_root_while_swinging",
-	"mire_immune", "player_drop_interval_mult",
+	"mire_immune", "player_drop_interval_mult", "odd_blocks",
 ]
 ## Story 036: combat.json `hazards` keys a match may override (same name in the match; absent = not set in the match dict).
 const HAZARD_OVERRIDE_KEYS: Array[String] = [
@@ -240,6 +240,13 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 	for key: String in HAZARD_OVERRIDE_KEYS:
 		if raw.has(key):
 			m[key] = maxf(float(raw[key]), 0.0)
+	# Story 041: per-match odd block override (keys of field_drops.json `odd_blocks`, merged over it by
+	# CombatView); absent = not set (the file's block applies).
+	if raw.has("odd_blocks"):
+		if typeof(raw["odd_blocks"]) == TYPE_DICTIONARY:
+			m["odd_blocks"] = (raw["odd_blocks"] as Dictionary).duplicate(true)
+		else:
+			push_warning("RunConfig: odd_blocks of match %s must be an object, ignored" % m["id"])
 	var raw_movement: Variant = raw.get("movement", {})
 	if typeof(raw_movement) == TYPE_DICTIONARY:
 		# Passed through as-is; BossBrainConfig.override_movement validates the keys.

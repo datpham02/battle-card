@@ -7,7 +7,8 @@ extends Node2D
 ## Story 014: a ROTTEN point's slot is grey with a dark X, a grey label, never the selection
 ## outline (HoldSlots refuses to select it) and a small "x.x" countdown at the slot's bottom:
 ## the seconds (FieldPoint.rot_in_hand_sec) until it leaves the hand on its own.
-## Placeholder art. Implements: Story 002, Story 007, Story 014.
+## Story 041: an Odd Block in a slot is drawn in the PieceDraw odd look with a small sparkle mark in the corner.
+## Placeholder art. Implements: Story 002, Story 007, Story 014, Story 041.
 
 const SLOT_FILL_EMPTY: Color = Color(0.2, 0.17, 0.15, 0.35)
 const SLOT_FILL_OCCUPIED: Color = Color(0.2, 0.17, 0.15, 0.7)
@@ -50,6 +51,8 @@ const PIECE_COUNT_BOTTOM_RATIO: float = 0.08
 const PIECE_FILL: Color = Color(0.3, 0.65, 0.95)
 const PIECE_SELECTED_FILL: Color = Color(1.0, 0.85, 0.25)
 const TEXT_CELLS: String = "ui.hud.cells"
+## Story 041: radius of the odd sparkle mark in a slot's top-right corner (share of slot width).
+const ODD_MARK_RADIUS_RATIO: float = 0.1
 
 ## Path to the hold-slot JSON config.
 @export_file("*.json") var config_path: String = HoldSlotsConfig.DEFAULT_PATH
@@ -213,7 +216,14 @@ func _draw_piece_slot(rect: Rect2, point: FieldPoint, full: bool, selected: bool
 		rect.position + Vector2(rect.size.x * PIECE_SHAPE_PAD_RATIO, rect.size.y * PIECE_SHAPE_PAD_RATIO),
 		Vector2(rect.size.x * (1.0 - PIECE_SHAPE_PAD_RATIO * 2.0), rect.size.y * PIECE_SHAPE_HEIGHT_RATIO)
 	)
-	PieceDraw.draw_shape(self, point.piece, area, PIECE_SELECTED_FILL if selected else PIECE_FILL, Color(0.1, 0.1, 0.12, 0.7), rect.size.x * PIECE_MAX_UNIT_RATIO)
+	if point.piece.is_odd():
+		# Story 041: an Odd Block: violet-magenta shape (gold when selected) with the odd outer edge, fitted by its
+		# bounding box like any piece (6-7 cells shrink), and the sparkle mark in the slot's top-right corner.
+		PieceDraw.draw_odd_shape(self, point.piece, area, PIECE_SELECTED_FILL if selected else PieceDraw.ODD_FILL, rect.size.x * PIECE_MAX_UNIT_RATIO)
+		var mark_r: float = rect.size.x * ODD_MARK_RADIUS_RATIO
+		PieceDraw.draw_odd_mark(self, Vector2(rect.end.x - mark_r * 1.5, rect.position.y + mark_r * 1.5), mark_r)
+	else:
+		PieceDraw.draw_shape(self, point.piece, area, PIECE_SELECTED_FILL if selected else PIECE_FILL, Color(0.1, 0.1, 0.12, 0.7), rect.size.x * PIECE_MAX_UNIT_RATIO)
 	var font_size: int = int(rect.size.x * PIECE_COUNT_FONT_RATIO)
 	draw_string(
 		ThemeDB.fallback_font,

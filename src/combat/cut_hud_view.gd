@@ -375,6 +375,18 @@ const TEXT_PHASE_BANNER: String = "ui.hud.phase_banner"
 const TEXT_PIECE_DECK_FALLBACK: String = "ui.piece_deck.fallback"
 const PIECE_DECK_NOTICE_SEC: float = 3.0
 const PIECE_DECK_NOTICE_COLOR: Color = Color(1.0, 0.85, 0.35)
+## Story 041: Odd Block look on the board (PieceDraw ODD_*): the odd edge around a placement ghost / committed odd
+## piece (drawn UNDER the green / red cells so their tint and outline stay readable) and the sparkle mark on the top-left
+## corner of an odd ghost / cast / boss telegraph (radius as a share of the cell's short side). The first-pickup hint:
+## one line in the status row under the HP bars for ODD_HINT_SEC (after any piece-deck notice), "%s" = the odd name.
+const ODD_GHOST_EDGE_WIDTH: float = 3.0
+const ODD_CAST_MARK_RATIO: float = 0.14
+const TEXT_ODD_HINT: String = "ui.hud.odd_hint"
+const ODD_NAME_KEY: String = "piece.odd.name"
+const ODD_HINT_SEC: float = 4.0
+const ODD_HINT_MARK_RADIUS: float = 8.0
+## Dark magenta back of the hint row (the odd light text reads on it over any board colour).
+const ODD_HINT_BACK: Color = Color(0.22, 0.03, 0.2, 0.88)
 ## Story 027 zones (StatusEffects seals / thorns, both halves). Drawn right above the formation layer and
 ## under every telegraph, label and marker of this view. This view sits ABOVE CombatView (units) and the
 ## field-drops views (pieces), so an opaque seal over a cell holding a unit or a piece would hide it:
@@ -591,6 +603,11 @@ var _heal_state: CombatState = null
 var _combat: CombatView
 ## Real seconds since this view started: phase source of the row-warning blink.
 var _blink_time: float = 0.0
+## Story 041: seconds left of the first-pickup Odd Block hint and whether this match's hint was already started.
+var _odd_hint_left: float = 0.0
+var _odd_hint_started: bool = false
+## Story 041 DEV-ONLY (DemoArgs odd_hint): true keeps the hint on screen (no countdown) for a capture.
+var debug_odd_hint_hold: bool = false
 ## Story 021: the same node as _combat, untyped so the signature calls are dynamic (parse-safe).
 var _sig: Object
 ## Story 021: the banner's signature id, translated name and seconds left.
@@ -642,6 +659,12 @@ func _process(delta: float) -> void:
 		_piece_deck_notice_checked = true
 		if _combat.is_piece_deck_fallback():
 			_piece_deck_notice_left = PIECE_DECK_NOTICE_SEC
+	# Story 041: the first-pickup hint starts once CombatView fired it and the piece-deck notice (same row) is gone.
+	if not debug_odd_hint_hold:
+		_odd_hint_left = maxf(_odd_hint_left - delta, 0.0)
+	if _combat != null and not _odd_hint_started and _piece_deck_notice_left <= 0.0 and _combat.is_odd_hint_fired():
+		_odd_hint_started = true
+		_odd_hint_left = ODD_HINT_SEC
 	for cell: Vector2i in _thorn_flashes.keys():
 		var left: float = float(_thorn_flashes[cell]) - delta
 		if left <= 0.0:
@@ -1038,6 +1061,66 @@ func _draw() -> void:
 	_draw_trait_status(vp)
 	_draw_wind_badge(vp)
 	_draw_piece_deck_notice(vp)
+	_draw_odd_hint(vp)
+
+
+## Story 041: true while the first-pickup Odd Block hint is on screen (tests / captures).
+func is_odd_hint_visible() -> bool:
+	return _odd_hint_left > 0.0
+
+
+# Story 041: the first-pickup hint in the status row (as the piece-deck notice): dark back, a sparkle mark, then the
+# line in the odd light colour, fading out over the banner fade time.
+func _draw_odd_hint(vp: Vector2) -> void:
+	if _odd_hint_left <= 0.0:
+		return
+	var left: Rect2 = ScreenLayout.hud_trait_status_rect(vp)
+	var right: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
+	var row := Rect2(left.position, Vector2(right.end.x - left.position.x, left.size.y))
+	var alpha: float = clampf(_odd_hint_left / SIGNATURE_BANNER_FADE_SEC, 0.0, 1.0)
+	draw_rect(row, Color(ODD_HINT_BACK, ODD_HINT_BACK.a * alpha))
+	var text: String = tr(TEXT_ODD_HINT) % tr(ODD_NAME_KEY)
+	var font: Font = ThemeDB.fallback_font
+	var room: float = row.size.x - ODD_HINT_MARK_RADIUS * 3.0
+	var size: int = STATUS_FONT_SIZE
+	while size > STATUS_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x > room:
+		size -= 1
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x
+	var start: float = row.get_center().x - (width + ODD_HINT_MARK_RADIUS * 3.0) * 0.5
+	PieceDraw.draw_odd_mark(self, Vector2(start + ODD_HINT_MARK_RADIUS, row.get_center().y), ODD_HINT_MARK_RADIUS)
+	draw_string(font, Vector2(start + ODD_HINT_MARK_RADIUS * 3.0, row.get_center().y + size * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, Color(PieceDraw.ODD_MARK_LIGHT, alpha))
+
+
+# Story 041: the odd edge along the outer border of board [param cells] (call it BEFORE drawing their green / red
+# cells, so the tint and outline stay on top inside and the magenta shows around them).
+func _draw_odd_edge_cells(vp: Vector2, cells: Array[Vector2i]) -> void:
+	if cells.is_empty():
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	PieceDraw.draw_odd_edge(self, cells, ScreenLayout.cell_rect(grid, vp, Vector2i.ZERO).position, ScreenLayout.cell_size(grid, vp), ODD_GHOST_EDGE_WIDTH)
+
+
+# Story 041: the odd sparkle mark inside the top-left corner of the top-most (then left-most) cell of board [param cells],
+# so it always sits on the shape itself.
+func _draw_odd_corner_mark(vp: Vector2, cells: Array[Vector2i]) -> void:
+	if cells.is_empty():
+		return
+	var grid: BoardGrid = _combat.get_grid()
+	var first: Vector2i = cells[0]
+	for cell: Vector2i in cells:
+		if cell.y < first.y or (cell.y == first.y and cell.x < first.x):
+			first = cell
+	var unit: Vector2 = ScreenLayout.cell_size(grid, vp)
+	var radius: float = minf(unit.x, unit.y) * ODD_CAST_MARK_RATIO
+	PieceDraw.draw_odd_mark(self, ScreenLayout.cell_rect(grid, vp, first).position + Vector2(radius, radius) * 1.3, radius)
+
+
+# Story 041: the shape ids of the boss's RUNNING swing (its combo labels while the combo swing runs).
+func _boss_swing_labels(boss: BossController, actor: CutActor) -> Array:
+	var last: Dictionary = boss.get_last_cut()
+	if actor.get_skill_id() == BossController.COMBO_SKILL and last.has("combo"):
+		return (last["combo"] as Dictionary).get("labels", []) as Array
+	return last.get("labels", []) as Array
 
 
 ## Story 034: true while the piece-deck fallback notice is on screen (tests / captures).
@@ -1171,14 +1254,23 @@ func _draw_preview(vp: Vector2) -> void:
 			var piece: Piece = placement.get_piece()
 			var size: Vector2 = Vector2(piece.size()) * minf(unit.x, unit.y)
 			var at: Vector2 = _combat.get_drag_point() - Vector2(0.0, _combat.get_drag_lift_px())
-			PieceDraw.draw_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL, GHOST_OFF_OUTLINE)
+			if piece.is_odd():
+				PieceDraw.draw_odd_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL)  # Story 041
+			else:
+				PieceDraw.draw_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL, GHOST_OFF_OUTLINE)
 			_draw_finger(_combat.get_drag_point())
 		return
 	var hit: bool = placement.hits(enemy_cell)
 	# Story 039 (shroud): the forecast is blocked: a grey shadow with a cloud icon says why there is no green / red.
 	var blocked: bool = _forecast_blocked()
 	var ghost_outline: Color = GHOST_BLOCKED_OUTLINE if blocked else (GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
+	# Story 041: an odd ghost gets the magenta edge under its green / red cells and the sparkle mark.
+	var odd_ghost: bool = PieceDraw.is_odd(placement.get_piece())
+	if odd_ghost:
+		_draw_odd_edge_cells(vp, cells)
 	_draw_cells(vp, cells, GHOST_BLOCKED_TINT if blocked else (GHOST_HIT_TINT if hit else GHOST_MISS_TINT), ghost_outline)
+	if odd_ghost:
+		_draw_odd_corner_mark(vp, cells)
 	if blocked:
 		_draw_cloud_over_cells(vp, cells)
 	# The label rides on the ghost's top-right corner (above a lifted finger, never under it).
@@ -1205,8 +1297,15 @@ func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> voi
 	var blocked: bool = _forecast_blocked()
 	var tint: Color = GHOST_BLOCKED_TINT if blocked else (GHOST_HIT_TINT if hit else GHOST_MISS_TINT)
 	var outline: Color = GHOST_BLOCKED_OUTLINE if blocked else (GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
+	var plan_pieces: Array[Piece] = plan.pieces()
 	for i: int in plan.piece_count():
+		# Story 041: a committed odd piece keeps its magenta edge and sparkle mark under the open card menu.
+		var odd_plan: bool = i < plan_pieces.size() and PieceDraw.is_odd(plan_pieces[i])
+		if odd_plan:
+			_draw_odd_edge_cells(vp, plan.piece_cells(i))
 		_draw_cells(vp, plan.piece_cells(i), tint, outline)
+		if odd_plan:
+			_draw_odd_corner_mark(vp, plan.piece_cells(i))
 	if blocked:
 		_draw_cloud_over_cells(vp, union)
 	if plan.piece_count() >= 2:
@@ -1215,13 +1314,21 @@ func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> voi
 	var refused: bool = false
 	if not ghost.is_empty():
 		refused = not _combat.can_confirm_placement()
+		var odd_second: bool = PieceDraw.is_odd(placement.get_piece())
+		if odd_second:
+			_draw_odd_edge_cells(vp, ghost)
 		_draw_cells(vp, ghost, GHOST_MISS_TINT if refused else tint, GHOST_MISS_OUTLINE if refused else outline)
+		if odd_second:
+			_draw_odd_corner_mark(vp, ghost)
 	elif _combat.is_placing() and _combat.is_dragging():
 		var unit: Vector2 = ScreenLayout.cell_size(_combat.get_grid(), vp)
 		var piece: Piece = placement.get_piece()
 		var size: Vector2 = Vector2(piece.size()) * minf(unit.x, unit.y)
 		var at: Vector2 = _combat.get_drag_point() - Vector2(0.0, _combat.get_drag_lift_px())
-		PieceDraw.draw_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL, GHOST_OFF_OUTLINE)
+		if piece.is_odd():
+			PieceDraw.draw_odd_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL)  # Story 041
+		else:
+			PieceDraw.draw_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL, GHOST_OFF_OUTLINE)
 	if _combat.is_placing() and _combat.is_dragging():
 		_draw_finger(_combat.get_drag_point())
 	if not refusal.is_empty():
@@ -1411,6 +1518,8 @@ func _draw_swing(vp: Vector2) -> void:
 	if not actor.is_swinging():
 		return
 	_draw_cells(vp, actor.get_cells(), SWING_TINT, SWING_OUTLINE)
+	if PieceDraw.any_odd_id(_combat.get_cast_piece_ids()):
+		_draw_odd_corner_mark(vp, actor.get_cells())  # Story 041: the cast holds an Odd Block
 	var info: Rect2 = ScreenLayout.cut_swing_info_rect(vp)
 	var text: String = tr(TEXT_SWING) % [_skill_name(actor.get_skill_id()), actor.get_time_left()]
 	_draw_centered(info, text, BIG_FONT_SIZE, SWING_OUTLINE)
@@ -1424,6 +1533,9 @@ func _draw_boss_swing(vp: Vector2) -> void:
 		return
 	var cells: Array[Vector2i] = actor.get_cells()
 	_draw_cells(vp, cells, SWING_TINT, SWING_OUTLINE)
+	# Story 041: the boss's red telegraph of a cast holding an Odd Block carries the sparkle mark.
+	if PieceDraw.any_odd_id(_boss_swing_labels(boss, actor)):
+		_draw_odd_corner_mark(vp, cells)
 	# Story 025: the cast's labels are shape ids ("bar2", "l3"): show the cell count, never the raw ids.
 	var joined: String = tr(TEXT_CELLS) % cells.size()
 	var line2: String = tr(TEXT_BOSS_SWING) % [joined, _skill_name(actor.get_skill_id())]
@@ -1458,6 +1570,9 @@ func _draw_boss_queued_swing(vp: Vector2) -> void:
 		_draw_hatching(rect, rect.size.y * COMBO_HATCH_STEP_RATIO, COMBO_HATCH, COMBO_HATCH_WIDTH)
 		draw_rect(rect.grow(-2.0), COMBO_OUTLINE, false, CELL_OUTLINE_WIDTH)
 	_draw_corner_label(vp, cells, tr(TEXT_COMBO_QUEUED) % float(queued["duration"]), COMBO_OUTLINE)
+	var last: Dictionary = _combat.get_boss().get_last_cut()
+	if last.has("combo") and PieceDraw.any_odd_id((last["combo"] as Dictionary).get("labels", []) as Array):
+		_draw_odd_corner_mark(vp, cells)  # Story 041
 
 
 # One small line on a white backing, anchored to the bottom-right corner (or, with

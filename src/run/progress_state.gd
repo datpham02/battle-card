@@ -197,6 +197,12 @@ func is_new_unlock(kind: String, id: String, cfg: AchievementsConfig = null) -> 
 	return not owner_id.is_empty() and has_achievement(owner_id)
 
 
+## Story 041: true when [param kind]:[param id] is in the seen list (e.g. "hint", "odd_block" for the first-pickup
+## Odd Block hint). Plain lookup: no achievement check, unlike [method is_new_unlock].
+func is_unlock_seen(kind: String, id: String) -> bool:
+	return _seen_unlocks.has(kind + ":" + id)
+
+
 ## Story 037: records that the player has seen unlocked content (dedup; empty ids ignored).
 func mark_unlock_seen(kind: String, id: String) -> void:
 	if kind.is_empty() or id.is_empty():

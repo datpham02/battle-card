@@ -39,6 +39,8 @@ extends SceneTree
 ## --relic=value|random|none --dodge=a,b,c --tables=v6|none` (world mode). They add bot policies (value / random relic pick, a
 ## piece-deck policy, shop extras), the v6 out-of-match time table and the RUN / REGION x FLOOR / RELIC LIFT / SHOP / VERDICT run /
 ## DODGE SENSITIVITY tables (the block at the end of this file). No such flag = the old output, byte for byte.
+## Story 041 (README "Story 041: odd blocks"): `--odd=on|off` and `--odd-chance=X` (sim_core flags, both sides); world mode
+## (plain or v6) prints one ODD line per character/policy: odd share of the player's drops, mean odd size, fallbacks, boss share.
 
 const SimCore = preload("res://tools/balance/sim_core.gd")
 
@@ -1271,6 +1273,27 @@ func _world_report(char_id: String, policy: String, seeds: int, floors: int) -> 
 	if _v6:
 		_v6_runs.append_array(runs)
 		_v6_run_report(char_id, policy, runs, floors, win_pct)
+	_world_odd_report(char_id, policy, runs)
+
+
+# Story 041: the ODD line of one character/policy, every match of its runs summed (tran_thach extra fights included).
+# Shares = odd spawns / all piece spawns of that half (start pieces count, they are never odd); mean size = odd cells /
+# odd spawns; fallbacks = odd rolls whose generation failed (a classic piece dropped instead); "odd possible" = matches
+# whose half allowed an odd size (the size rule turns them off on a small half).
+func _world_odd_report(char_id: String, policy: String, runs: Array[Dictionary]) -> void:
+	var t: Dictionary = {}
+	for k: String in ["matches", "odd_p", "drops_p", "odd_fb_p", "odd_cells_p", "odd_on_p", "odd_b", "drops_b", "odd_fb_b", "odd_cells_b", "odd_on_b"]:
+		t[k] = _sum(_field(runs, k))
+	var n: float = maxf(float(runs.size()), 1.0)
+	var mean_size: Callable = func(cells: float, odd: float) -> String: return ("%.2f" % (cells / odd)) if odd > 0.0 else "-"
+	print("")
+	print("ODD | character | odd share of player drops % | mean odd size | odd fallbacks (total; per run) | boss odd share % | policy | player odd / drops | boss odd / drops | boss mean odd size | boss fallbacks | matches with odd possible player / boss / all | " + _core.describe_odd())
+	print("ODD | %s | %.1f | %s | %d; %.2f | %.1f | %s | %d / %d | %d / %d | %s | %d | %d / %d / %d |" % [
+		char_id, 100.0 * float(t["odd_p"]) / maxf(float(t["drops_p"]), 1.0), mean_size.call(float(t["odd_cells_p"]), float(t["odd_p"])),
+		int(t["odd_fb_p"]), float(t["odd_fb_p"]) / n, 100.0 * float(t["odd_b"]) / maxf(float(t["drops_b"]), 1.0),
+		_policy_tag(policy) if _v6 else policy, int(t["odd_p"]), int(t["drops_p"]), int(t["odd_b"]), int(t["drops_b"]),
+		mean_size.call(float(t["odd_cells_b"]), float(t["odd_b"])), int(t["odd_fb_b"]),
+		int(t["odd_on_p"]), int(t["odd_on_b"]), int(t["matches"])])
 
 
 # Story 034 (only with --piece-deck): the D2 measures of one character/policy over its world runs, every
@@ -1499,7 +1522,11 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		# damage, the per-match log [floor, region, won, kind], the per-shop log, the relics owned when floor 2 ended, the
 		# gold when the final floor was entered, the run's first floor index, max HP, piece-deck policy counters.
 		"oo_sec": 0.0, "match_extra_sec": 0.0, "shits": 0.0, "bdmg": 0.0, "mlog": [], "shop_log": [], "relics_f2": [],
-		"gold_at_final": -1.0, "f_from": 0, "max_hp": max_hp, "ink_taken": 0.0, "shape_removed": 0.0, "piece_n": 0.0}
+		"gold_at_final": -1.0, "f_from": 0, "max_hp": max_hp, "ink_taken": 0.0, "shape_removed": 0.0, "piece_n": 0.0,
+		# Story 041 (the ODD line): odd spawns, all piece spawns, fallbacks, odd cells and matches with odd blocks
+		# possible, player (_p) and boss (_b) half, summed over every match of the run.
+		"odd_p": 0.0, "drops_p": 0.0, "odd_fb_p": 0.0, "odd_cells_p": 0.0, "odd_on_p": 0.0,
+		"odd_b": 0.0, "drops_b": 0.0, "odd_fb_b": 0.0, "odd_cells_b": 0.0, "odd_on_b": 0.0}
 	var choices: int = int(_chapters.world_spec().get("choices_per_floor", 2))
 	var path: Array[String] = []
 	var lost: bool = false
@@ -1933,6 +1960,9 @@ func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, 
 	for pair: Array in [["p_casts", "casts"], ["p_cells", "cells"], ["p_res", "resolved"], ["p_hits", "hits"], ["p_joins", "joins"],
 			["p_feat", "featured"], ["p_int", "interrupts"], ["p_intd", "interrupted"], ["p_fallback", "piece_fallback"]]:
 		out[pair[0]] = float(out[pair[0]]) + float(r.get(pair[1], 0))
+	# Story 041: odd block counters of both halves (sim_core.play_match).
+	for k: String in ["odd_p", "drops_p", "odd_fb_p", "odd_cells_p", "odd_on_p", "odd_b", "drops_b", "odd_fb_b", "odd_cells_b", "odd_on_b"]:
+		out[k] = float(out[k]) + float(r.get(k, 0))
 	for k: String in ["size_res", "size_hits"]:
 		var into: Dictionary = out["p_" + k]
 		for size: Variant in (r.get(k, {}) as Dictionary).keys():

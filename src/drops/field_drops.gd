@@ -7,7 +7,9 @@ extends RefCounted
 ## Story 024: each spawn draws a puzzle [Piece] by chapter weight from the library given to
 ## [method enable_pieces] (nothing drops before that call); the piece_* keys of the config drive the
 ## pacing. Story 026 removed the perimeter-label shuffle bag (pieces are the only mode).
-## Implements: Story 007, Story 014, Story 024, Story 026.
+## Story 041: a TICK spawn (never a start piece) is an odd block ([OddBlock]) with the config's
+## `odd.chance`, drawn with its own RNG; a failed generation falls back to the classic draw.
+## Implements: Story 007, Story 014, Story 024, Story 026, Story 041.
 
 ## A point landed on the field.
 signal point_spawned(point: FieldPoint)
@@ -43,6 +45,15 @@ var _weight_source: Variant = null
 ## Story 036: Callable() -> Vector2i, the wind direction ("piece lands off by one"): a NEW drop lands one cell
 ## along it when that cell is free. Invalid (default) or (0,0) = drops land where picked.
 var wind_offset_fn: Callable = Callable()
+# Story 041 odd blocks (set by enable_pieces).
+var _odd_enabled: bool = false
+var _odd_max_size: int = 0
+var _odd_grid: BoardGrid
+var _odd_target_is_enemy: bool = true
+var _odd_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _odd_spawned: int = 0
+var _odd_fallbacks: int = 0
+var _total_spawned: int = 0
 
 
 ## [param side_cells] is this side's half of the board (BoardGrid.player_cells()). A negative
@@ -77,10 +88,13 @@ func tick(delta: float, stand_cell: Vector2i, hand_count: int) -> void:
 	var cell: Vector2i = _pick_free_cell(stand_cell)
 	if cell == NO_CELL:
 		return
-	var piece: Piece = _draw_piece()
+	var piece: Piece = _draw_tick_piece()
 	if piece == null:
 		return
 	cell = _wind_offset_cell(cell, stand_cell)
+	_total_spawned += 1
+	if piece.is_odd():
+		_odd_spawned += 1
 	_add_point(piece.shape_id, cell, _config.piece_freshness_sec, false, 0.0, piece)
 	_spawn_timer = _current_interval()
 
@@ -138,6 +152,8 @@ func drift_pieces(dir: Vector2i, blocked_fn: Callable = Callable(), dragged_cell
 ## [param chapter_id] (the boss path and every older call; run_only shapes are then not drawable at
 ## all). With a source, fitting shapes of
 ## weight 0 are not drawable unless EVERY fitting shape has weight 0 (then all of them are, uniformly).
+## Story 041: also prepares odd blocks for the same target half (config `odd`, size from the half's real
+## cell count); their own RNG is seeded hash([rng_seed, "odd"]) & 0x7fffffff (random when rng_seed < 0).
 func enable_pieces(
 	library: PieceLibrary, chapter_id: String, placement_grid: BoardGrid, rng_seed: int,
 	target_is_enemy: bool = true, weight_source: Variant = null
@@ -169,6 +185,45 @@ func enable_pieces(
 		_piece_rng.seed = rng_seed
 	else:
 		_piece_rng.randomize()
+	# Story 041: odd blocks for this target half (off when the config allows no size here).
+	_odd_grid = placement_grid
+	_odd_target_is_enemy = target_is_enemy
+	_odd_enabled = false
+	_odd_max_size = 0
+	if library != null and placement_grid != null and _config.odd != null:
+		var target_cells: int = placement_grid.enemy_cells().size() if target_is_enemy else placement_grid.player_cells().size()
+		if _config.odd.is_enabled_for(target_cells):
+			_odd_enabled = true
+			_odd_max_size = _config.odd.max_size_for(target_cells)
+	if rng_seed >= 0:
+		_odd_rng.seed = hash([rng_seed, "odd"]) & 0x7fffffff
+	else:
+		_odd_rng.randomize()
+
+
+## Story 041: true when odd blocks can drop on this half (after [method enable_pieces]).
+func is_odd_enabled() -> bool:
+	return _odd_enabled
+
+
+## Story 041: largest odd block on this half's target (0 when odd blocks are off).
+func get_odd_max_size() -> int:
+	return _odd_max_size
+
+
+## Story 041: odd blocks spawned so far.
+func get_odd_spawned() -> int:
+	return _odd_spawned
+
+
+## Story 041: odd rolls whose generation failed and fell back to a classic piece.
+func get_odd_fallbacks() -> int:
+	return _odd_fallbacks
+
+
+## Story 041: every drawn piece spawned so far (start pieces and tick spawns; not debug / rotten points).
+func get_total_spawned() -> int:
+	return _total_spawned
 
 
 ## Shapes that can currently be drawn (empty before enable_pieces).
@@ -189,6 +244,7 @@ func place_start_pieces(stand_cell: Vector2i) -> int:
 		var piece: Piece = _draw_piece()
 		if piece == null:
 			break
+		_total_spawned += 1
 		_add_point(piece.shape_id, cell, _config.piece_freshness_sec, false, 0.0, piece)
 		placed += 1
 	if placed > 0:
@@ -282,6 +338,17 @@ func _add_point(
 
 func _max_on_field() -> int:
 	return _config.piece_max_on_field
+
+
+# Story 041: a tick spawn's piece: an odd block with the config's chance (own RNG; no roll at all when odd
+# blocks are off, so classic sequences are unchanged), else / on a failed generation the classic draw.
+func _draw_tick_piece() -> Piece:
+	if _odd_enabled and _odd_rng.randf() < _config.odd.chance:
+		var odd: Piece = OddBlock.generate(_piece_library, _odd_grid, _odd_target_is_enemy, _config.odd, _odd_rng)
+		if odd != null:
+			return odd
+		_odd_fallbacks += 1
+	return _draw_piece()
 
 
 # Weighted draw among the drawable shapes (uniform when every weight is 0) + random rotation.

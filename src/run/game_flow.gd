@@ -253,6 +253,9 @@ const FLOW_RUN_ENDING_EXECUTE: String = "ending_execute"
 const DEV_ENDING_MATCHES: int = 12
 const DEV_ENDING_STATS: Dictionary = {"damage_dealt": 640.0, "damage_taken": 85.0, "hits_taken": 4, "casts": 21,
 	"joins": 6, "featured_casts": 3, "signatures_used": 2}
+## Story 041: the progress seen_unlocks entry ("hint:odd_block") of the first-pickup Odd Block hint.
+const ODD_HINT_KIND: String = "hint"
+const ODD_HINT_ID: String = "odd_block"
 ## DEV-ONLY: the --demo= args GameFlow stages a match for (DemoArgs does the rest).
 const DEMO_BOSS_DOWNED_ARG: String = "--demo=boss_downed"
 const DEMO_FINAL_PHASE2_ARG: String = "--demo=final_phase2"
@@ -2136,6 +2139,23 @@ func _on_match_started(_match_index: int, hp_at_match_start: float) -> void:
 		return
 	_run.hp = hp_at_match_start
 	_save_run()
+	_arm_odd_hint()
+
+
+# Story 041: while progress has not seen "hint:odd_block", the live match shows the first-pickup Odd Block hint; when
+# it fires the hint is marked seen (and saved), so it never shows again. Never turns a forced (demo) hint off.
+func _arm_odd_hint() -> void:
+	var view: CombatView = _live_view()
+	if view == null or _progress == null or _progress.is_unlock_seen(ODD_HINT_KIND, ODD_HINT_ID):
+		return
+	view.odd_hint_enabled = true
+	if not view.odd_hint_shown.is_connected(_on_odd_hint_shown):
+		view.odd_hint_shown.connect(_on_odd_hint_shown)
+
+
+func _on_odd_hint_shown() -> void:
+	if _progress != null and not _progress.is_unlock_seen(ODD_HINT_KIND, ODD_HINT_ID):
+		mark_unlock_seen(ODD_HINT_KIND, ODD_HINT_ID)
 
 
 func _on_run_phase_changed(phase: int) -> void:

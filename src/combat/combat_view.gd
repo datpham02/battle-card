@@ -12,7 +12,10 @@ extends Node2D
 ## both units live, torn down when the battle leaves the tree; ticks the hand's rot.
 ## Story 016: [method can_pause] tells the run whether the pause button / Esc may freeze the
 ## battle now; [member debug_overlay] gates the HUD's debug text.
-## Implements: Story 003, Story 005, Story 006, Story 007, Story 014, Story 016.
+## Story 041: both sides' drops use the `odd_blocks` block of field_drops.json, merged with the match key
+## `odd_blocks`; DEV arg `--odd-chance=X` (0..1, user args after `--`) then overrides the chance of both
+## sides (captures/tests).
+## Implements: Story 003, Story 005, Story 006, Story 007, Story 014, Story 016, Story 041.
 
 const ENEMY_COLOR: Color = Color(0.7, 0.3, 0.3)
 const ENEMY_DEAD_COLOR: Color = Color(0.45, 0.45, 0.45)
@@ -74,6 +77,8 @@ const HAND_ROTTEN_GREY: Color = Color(0.55, 0.55, 0.55)
 const HAND_ROTTEN_X: Color = Color(0.2, 0.2, 0.22, 0.9)
 ## Seed for the field drops RNG; negative = random. Dev/capture only (DemoArgs sets it).
 const RANDOM_SEED: int = -1
+## Story 041 DEV-ONLY user arg prefix: `--odd-chance=X` overrides the odd block chance of both sides.
+const DEV_ODD_CHANCE_ARG: String = "--odd-chance="
 
 @export_file("*.json") var config_path: String = CombatConfig.DEFAULT_PATH
 @export_file("*.json") var drops_config_path: String = FieldDropsConfig.DEFAULT_PATH
@@ -88,6 +93,11 @@ var grid_override: BoardGrid = null
 ## DEV overlay flag (Story 016): the HUD draws its debug text (boss learning line) only when true.
 ## Set by DemoArgs from the --debug user arg.
 var debug_overlay: bool = false
+## Story 041: true = the first Odd Block that reaches the player's bag shows the first-pickup hint. False by default;
+## GameFlow sets it at match start while progress has not seen "hint:odd_block" (DemoArgs odd_hint forces it).
+var odd_hint_enabled: bool = false
+## Story 041: the first-pickup hint fired in this match (see [signal odd_hint_shown]).
+var _odd_hint_fired: bool = false
 
 var _config: CombatConfig
 ## Arena of this match for the HUD: {shape, variant, seed} (shape "" = the combat.json board).
@@ -177,7 +187,8 @@ var _signature_cooldown_left: float = 0.0
 var boss_set_override: String = ""
 ## Per-match settings from the run (set BEFORE _ready; empty = the plain single-match setup).
 ## Keys (all optional): player_hp (start HP, used when >= 0), boss_max_hp, brain_set,
-## boss_step_cooldown_mult (x the player's computed step cooldown; deprecated absolute: boss_step_cooldown_sec), boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult, player_drop_interval_mult (Story 038, the player's piece drop interval x)
+## boss_step_cooldown_mult (x the player's computed step cooldown; deprecated absolute: boss_step_cooldown_sec), boss_think_interval_sec, boss_reaction_sec, boss_drop_interval_mult, player_drop_interval_mult (Story 038, the player's piece drop interval x),
+## odd_blocks (Story 041: object with keys of field_drops.json `odd_blocks`, merged over it for BOTH sides)
 ## (applied to a copy of the drops config for the boss only), movement (object merged over the
 ## match set's movement profile of boss_brain.json), end_delay_sec (default 1.5),
 ## name_key (boss name in the HUD, translated; legacy display_name literal), match_label, arena (object: {shape[, variant]} or a direct
@@ -201,6 +212,9 @@ signal formation_completed
 signal relic_triggered(relic_id: String)
 ## Story 033: a curse card with draw_damage was drawn into the card menu and hurt the player.
 signal curse_drawn(card_id: String, damage: float)
+## Story 041: the first Odd Block of the match reached the player's bag while [member odd_hint_enabled]: the HUD
+## shows the first-pickup hint now (GameFlow marks progress "hint:odd_block" seen). Emitted at most once per match.
+signal odd_hint_shown
 
 ## Real seconds between a death and [signal match_ended] when match_params has no end_delay_sec.
 const DEFAULT_END_DELAY_SEC: float = 1.5
@@ -260,6 +274,7 @@ func _ready() -> void:
 		match_params.get("run_modifiers", {}), "step_cooldown")
 	_mover = UnitMover.new(_state, CombatState.Side.PLAYER, _player_step_cooldown)
 	_drops_config = FieldDropsConfig.load_from_file(drops_config_path)
+	_apply_odd_overrides(_drops_config)
 	var boss_drops_config: FieldDropsConfig = _drops_config.copy()
 	var boss_drop_mult: float = maxf(float(match_params.get("boss_drop_interval_mult", 1.0)), 0.01)
 	boss_drops_config.spawn_interval_sec *= boss_drop_mult
@@ -879,6 +894,27 @@ func _apply_drop_overrides() -> void:
 		_drops_config.piece_spawn_interval_sec = interval
 
 
+# Story 041: the match key `odd_blocks` (merged over the file block), then the DEV arg --odd-chance=X, on
+# [param config] BEFORE the boss copy is made (both sides get the same odd tuning).
+func _apply_odd_overrides(config: FieldDropsConfig) -> void:
+	var raw: Variant = match_params.get("odd_blocks", null)
+	if raw is Dictionary:
+		config.odd = config.odd.with_overrides(raw as Dictionary)
+	elif raw != null:
+		push_warning("CombatView: match odd_blocks must be an object, ignored")
+	var dev_chance: float = dev_odd_chance()
+	if dev_chance >= 0.0:
+		config.odd.chance = dev_chance
+
+
+## Story 041 DEV-ONLY: the chance given by the user arg `--odd-chance=X` (clamped 0..1), or -1 when absent.
+static func dev_odd_chance() -> float:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(DEV_ODD_CHANCE_ARG):
+			return clampf(arg.substr(DEV_ODD_CHANCE_ARG.length()).to_float(), 0.0, 1.0)
+	return -1.0
+
+
 # Story 032: the bag's slot count (hold_slots.json piece_slot_count, then the relics' hold_slots).
 func _apply_hold_override(hold_config: HoldSlotsConfig) -> void:
 	if not _relic_overrides.has("hold_slots"):
@@ -1108,6 +1144,7 @@ func get_match_label() -> String:
 func _process(delta: float) -> void:
 	_tick_end(delta)
 	_hook_hold()
+	_check_odd_hint()
 	if not freeze_time:
 		# Cap the step so a frame hitch cannot skip a whole timing window.
 		var real_step: float = minf(delta, _config.max_tick_sec)
@@ -2004,6 +2041,37 @@ func is_piece_deck_fallback() -> bool:
 	return _piece_deck_fallback
 
 
+## Story 041: true once the first-pickup Odd Block hint fired in this match (the HUD shows it then).
+func is_odd_hint_fired() -> bool:
+	return _odd_hint_fired
+
+
+## Story 041: shape ids of the pieces of the player's RUNNING cast ("odd:<key>" for an Odd Block); [] when no cast
+## info is kept (no swing, or a bare dev swing). The HUD marks an odd cast with it.
+func get_cast_piece_ids() -> Array[String]:
+	var ids: Array[String] = []
+	if _cut_actor != null and _cut_actor.is_swinging():
+		for id: Variant in _cast_info.get("pieces", []):
+			ids.append(str(id))
+	return ids
+
+
+# Story 041: fires the first-pickup hint the first frame an Odd Block sits in the player's bag (scanned, so every
+# path into the bag counts and nothing depends on when the bag's signals are connected).
+func _check_odd_hint() -> void:
+	if not odd_hint_enabled or _odd_hint_fired:
+		return
+	var hold: HoldSlots = _get_hold()
+	if hold == null:
+		return
+	for i: int in hold.get_slot_count():
+		var point: FieldPoint = hold.get_point(i)
+		if point != null and point.piece != null and point.piece.is_odd() and not point.rotten:
+			_odd_hint_fired = true
+			odd_hint_shown.emit()
+			return
+
+
 ## Drop tuning in use (freshness total etc.).
 func get_drops_config() -> FieldDropsConfig:
 	return _drops_config
@@ -2120,6 +2188,10 @@ func _draw_boss_hand_piece(piece: Piece, rect: Rect2) -> void:
 		var x_rect: Rect2 = PieceDraw.shape_rect(piece, area, HAND_PIECE_MAX_UNIT).grow(HAND_PIECE_PAD)
 		draw_line(x_rect.position, x_rect.end, HAND_ROTTEN_X, 3.0)
 		draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), HAND_ROTTEN_X, 3.0)
+		return
+	if piece.is_odd():
+		# Story 041: an Odd Block in the boss's hand row: odd fill and edge (the tag is too small for the mark).
+		PieceDraw.draw_odd_shape(self, piece, area, PieceDraw.ODD_FILL, HAND_PIECE_MAX_UNIT, 2.0)
 		return
 	PieceDraw.draw_shape(self, piece, area, ENEMY_COLOR, Color(TEXT_COLOR, 0.7), HAND_PIECE_MAX_UNIT)
 

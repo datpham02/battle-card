@@ -7,7 +7,9 @@ extends Node2D
 ## Story 014: a ROTTEN point (FieldPoint.rotten, thrown by a boss trait) is drawn grey with a
 ## dark X across its marker, a grey tag and a grey freshness bar (no green-yellow-red ramp), so
 ## it never reads as something worth picking up.
-## Implements: Story 007, Story 014.
+## Story 041: an Odd Block (Khoi La) lying on either half is drawn in the PieceDraw odd look (violet-magenta shape,
+## magenta outer edge) with a sparkle mark in the cell's top-right corner; a rotten one stays grey.
+## Implements: Story 007, Story 014, Story 041.
 
 const COLOR_FRESH: Color = Color(0.2, 0.75, 0.3)
 const COLOR_WARN: Color = Color(0.95, 0.8, 0.1)
@@ -47,6 +49,8 @@ const PIECE_PAD_RATIO: float = 0.14
 const PIECE_TOP_RATIO: float = 0.14
 const PIECE_BOTTOM_RATIO: float = 0.22
 const PIECE_MAX_UNIT_RATIO: float = 0.3
+## Story 041: radius of the odd sparkle mark in the cell's top-right corner (share of cell height).
+const ODD_MARK_RADIUS_RATIO: float = 0.085
 
 ## Story 036 wind streak (see _draw_drift_streak): colour, line width, number of speed lines, their spread across
 ## the cell, where they start behind the centre and how long they run (shares of the half cell), the chevron's
@@ -200,6 +204,12 @@ func _draw_piece_point(point: FieldPoint, rect: Rect2, cell: Vector2, color: Col
 		var x_rect: Rect2 = PieceDraw.shape_rect(point.piece, area, unit_max).grow(-cell.y * ROTTEN_X_INSET_RATIO * 0.4)
 		draw_line(x_rect.position, x_rect.end, Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
 		draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
+	elif point.piece.is_odd():
+		# Story 041: an Odd Block keeps the freshness colour on its cell outline and bar; its shape is violet-magenta
+		# with the odd edge, and the sparkle mark sits in the cell's top-right corner.
+		PieceDraw.draw_odd_shape(self, point.piece, area, Color(PieceDraw.ODD_FILL, 0.9 * alpha), unit_max)
+		var mark_r: float = cell.y * ODD_MARK_RADIUS_RATIO
+		PieceDraw.draw_odd_mark(self, Vector2(rect.end.x - mark_r * 1.6, rect.position.y + mark_r * 1.6), mark_r)
 	else:
 		PieceDraw.draw_shape(self, point.piece, area, Color(color, 0.85 * alpha), Color(TEXT_COLOR, 0.6 * alpha), unit_max)
 	var bar_w: float = cell.x * BAR_WIDTH_RATIO

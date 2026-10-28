@@ -1,7 +1,7 @@
 class_name FieldDropsConfig
 extends RefCounted
 ## Cut-point drop tuning, loaded from assets/data/field_drops.json.
-## Schema: assets/data/schema.md. Implements: Story 007.
+## Schema: assets/data/schema.md. Implements: Story 007, Story 041 (odd_blocks).
 
 const DEFAULT_PATH: String = "res://assets/data/field_drops.json"
 
@@ -27,6 +27,8 @@ var piece_max_on_field: int = 3
 var piece_freshness_sec: float = 8.0
 ## Story 024 (piece mode only): pieces already lying on the field when a match starts.
 var start_pieces: int = 1
+## Story 041: odd block ("Khoi La") tuning from the `odd_blocks` block; absent = off (chance 0).
+var odd: OddBlockConfig = OddBlockConfig.new()
 
 
 ## Independent copy of this config (so one side's drops can be tuned without the other's).
@@ -43,6 +45,7 @@ func copy() -> FieldDropsConfig:
 	c.piece_max_on_field = piece_max_on_field
 	c.piece_freshness_sec = piece_freshness_sec
 	c.start_pieces = start_pieces
+	c.odd = odd.copy() if odd != null else OddBlockConfig.new()
 	return c
 
 
@@ -77,6 +80,12 @@ static func from_dictionary(data: Dictionary) -> FieldDropsConfig:
 	c.piece_max_on_field = maxi(int(data.get("piece_max_on_field", c.piece_max_on_field)), 1)
 	c.piece_freshness_sec = _positive(data, "piece_freshness_sec", c.piece_freshness_sec)
 	c.start_pieces = maxi(int(data.get("start_pieces", c.start_pieces)), 0)
+	# Story 041: odd blocks; a missing or non-object block keeps them off.
+	var raw_odd: Variant = data.get("odd_blocks", null)
+	if raw_odd is Dictionary:
+		c.odd = OddBlockConfig.from_dictionary(raw_odd as Dictionary)
+	elif raw_odd != null:
+		push_warning("FieldDropsConfig: odd_blocks must be an object, odd blocks are off")
 	return c
 
 

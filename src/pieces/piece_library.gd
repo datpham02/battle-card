@@ -6,7 +6,8 @@ extends RefCounted
 ## Schema: assets/data/schema.md. Implements: Story 024 (Part A).
 
 const DEFAULT_PATH: String = "res://assets/data/pieces.json"
-## Largest piece the rules allow (cards never need more; see story 024).
+## Largest shape pieces.json may hold (cards never need more; see story 024). Story 041: runtime odd
+## pieces ([OddBlock]) may be bigger (6-7 cells); only the library's own shapes obey this limit.
 const MAX_CELLS: int = 5
 const _FALLBACK_ID: String = "mono"
 const _FALLBACK_NAME_KEY: String = "piece.mono.name"
@@ -21,6 +22,9 @@ var _cells: Dictionary = {} # id -> Array[Vector2i] (normalised, sorted)
 var _name_keys: Dictionary = {} # id -> String
 var _pools: Dictionary = {} # id -> "default" | "run_only" (Story 034)
 var _weights: Dictionary = {} # chapter id or "default" -> {shape id -> float}
+# Story 041: Piece.canonical_key of every shape (both pools) -> true; built on first use.
+var _canonical_keys: Dictionary = {}
+var _canonical_built: bool = false
 
 
 ## Loads from a JSON file; falls back to the mono-only library (warning) when missing or bad.
@@ -122,6 +126,16 @@ func make_piece(id: String, rotation: int = 0) -> Piece:
 		push_warning("PieceLibrary: unknown shape '%s'" % id)
 		return null
 	return Piece.make(id, shape_cells(id), rotation)
+
+
+## Story 041: true when [param cells] (any offset) equal one of this library's shapes (default AND
+## run_only pools) under some 90-degree rotation (no mirroring), compared by [method Piece.canonical_key].
+func has_equivalent_shape(cells: Array[Vector2i]) -> bool:
+	if not _canonical_built:
+		_canonical_built = true
+		for id: String in _ids:
+			_canonical_keys[Piece.canonical_key(shape_cells(id))] = true
+	return _canonical_keys.has(Piece.canonical_key(cells))
 
 
 static func _fallback() -> PieceLibrary:

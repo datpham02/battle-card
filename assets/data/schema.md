@@ -38,6 +38,26 @@ Cut-point drops, one `FieldDrops` instance per side (Story 007). A missing or in
 | `piece_max_on_field` | integer >= 1 | pieces | Story 024, piece mode only: maximum pieces (rotten ones included) lying on the half; replaces `max_on_field` in that mode | 3 |
 | `piece_freshness_sec` | number > 0 | seconds | Story 024, piece mode only: life of a piece on the field; held pieces never rot (rotten ones leave the hand after their `rot_in_hand_sec`) | 8.0 |
 | `start_pieces` | integer >= 0 | pieces | Story 024, piece mode only: pieces lying on the half when the match starts (`FieldDrops.place_start_pieces`, capped by `piece_max_on_field`) | 1 |
+| `odd_blocks` | object | - | Story 041: odd blocks ("Khối Lạ"), see below. Absent or not an object = odd blocks off | absent (off) |
+
+### `odd_blocks` block (Story 041, read by `src/pieces/odd_block_config.gd`, class OddBlockConfig)
+
+Each TICK spawn of either side (never a `start_pieces` piece) is an odd block with probability `chance`; otherwise (and when the generation fails) it is the classic weighted draw. An odd block is a random edge-connected polyomino generated at runtime by `OddBlock.generate`: it is never equivalent under a 90° rotation (no mirroring) to any shape of `pieces.json` (both pools), it fits the TARGET half (the boss's half for the player's drops, the player's half for the boss's) somewhere in some rotation, and its `shape_id` is `odd:` + its canonical key. It follows every rule of a classic piece (bag, rotation, placement, join, cast time, damage per cell, featured shape on the union, imprint, interrupt) but never enters the piece deck (learn / forget / ink / shop) and is never saved. Odd draws use their own RNG (`hash([drops seed, "odd"])`), so with `chance` 0 no extra draw happens and the classic sequences are unchanged.
+
+Size: with `N` = the real cells of the target half (after the arena variant; sand and fallen cells are not subtracted), `max_size = clamp(N / size_divisor + size_add, size_min, size_max)` (integer division). The allowed sizes are `min_cells .. max_size` whose `size_weights` entry is > 0; each try draws one of them by weight. No allowed size = no odd blocks on that half for the match (e.g. `size_max` < `min_cells`). Shipped arenas: 9 cells → 5, 10–11 → 5, 12–15 → 6, 16+ → 7.
+
+| Key | Type | Unit | Meaning | Default if missing |
+|---|---|---|---|---|
+| `chance` | number 0..1 (clamped) | probability | Chance that one tick spawn is an odd block; 0 = off. Shipped 0.25 (to be tuned by the Story 041 simulation) | 0 |
+| `min_cells` | integer >= 1 | cells | Smallest odd block. Below 5 only wastes tries (every 1–4 cell shape is in `pieces.json`), so it warns but is accepted | 5 |
+| `size_divisor` | integer >= 1 | cells | Divisor of the target half's cell count in the max size formula | 4 |
+| `size_add` | integer | cells | Added after the division | 3 |
+| `size_min` | integer >= 1 | cells | Lower clamp of the max size | 4 |
+| `size_max` | integer >= `size_min` | cells | Upper clamp of the max size | 7 |
+| `size_weights` | object {"size": weight >= 0} | weight | Draw weight per size (negative → 0, missing size = 0). Shipped `{"5": 6, "6": 3, "7": 1}` | `{"5": 6, "6": 3, "7": 1}` |
+| `max_tries` | integer >= 1 | tries | Generation tries per spawn; all failing = the classic draw and `FieldDrops.get_odd_fallbacks()` + 1 | 40 |
+
+Match override: a match's `odd_blocks` (same keys) is merged over this block for BOTH sides (a `size_weights` override replaces the whole map), e.g. `"odd_blocks": {"chance": 0}` turns odd blocks off for that match. DEV: the user arg `--odd-chance=X` overrides `chance` for both sides (captures/tests).
 
 ## pieces.json  (read by `src/pieces/piece_library.gd`)
 
@@ -359,6 +379,7 @@ Each match block (a value of a chapter's `matches`, or a v1 floor `matches[]` en
 | `boss_defense` | number >= 0 | HP | Story 023 flat defense (OSFE 9.4): subtracted from every player damage/push hit on the boss AFTER Ran / execute / passive / signature; at least 1 damage lands; skipped by cards with `pierce_defense`; burn ticks and Han bursts ignore it. Applied in `CutEffects.apply` through `SwingArbiter.boss_defense` | 0 |
 | `boss_min_runes` | int >= 0 | cells | Story 023: the boss brain prefers cuts of at least this many cells (`min_runes_penalty` per missing cell; smaller cuts are skipped while a big enough one exists). Story 025: the cut is now a PIECE, so this is the minimum CELLS of the piece (key name unchanged so `chapters.json` keeps working). 0 = off | 0 |
 | `boss_root_while_swinging` | bool | - | Story 025: per-match override of `root_while_swinging` in `boss_brain.json` (true = the boss cannot step while it swings). Absent = the file's value | file value |
+| `odd_blocks` | object | - | Story 041: keys of the `odd_blocks` block of `field_drops.json`, merged over it for both sides of this match (`{"chance": 0}` = no odd blocks in this match). Passed through by `RunConfig.clean_match`; a non-object = warning, ignored | absent (file block) |
 
 Ramp (placeholder): matches 1..4 = hp 80/100/120/150, sets cautious/cautious/balanced/aggressive, step mult 1.78/1.44/1.22/1.11 (= 0.80/0.65/0.55/0.50 s on 3x3), think 0.50/0.40/0.30/0.25, reaction 0.60/0.45/0.35/0.30, drop mult 1.3/1.15/1.0/0.9. Match 2 overrides `movement` = {move_commitment 0.9, move_noise 0.05, reaction_sec 0.45} (Story 013).
 

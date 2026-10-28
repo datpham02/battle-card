@@ -20,6 +20,10 @@ extends Node2D
 ## InputEvent.DEVICE_ID_EMULATION — are consumed but never act). Placeholder art drawn in code; every string
 ## is a TEXT_* key (or a row's reason key) through tr(). Layout / presentation constants only, no gameplay
 ## numbers.
+## Story 041: one line under the shape grid (left part of the band above the bottom buttons, clear of the right-aligned
+## refusal line) states the Odd Block rule from field_drops.json `odd_blocks`: chance x 100 and the size range
+## (min_cells .. largest weighted size up to size_max), "not learned, not forgotten"; or "no Odd Blocks" when the
+## chance is 0 / no size has weight. The screen opens outside a match, so it states the rule, not a per-arena value.
 
 const BACK_COLOR: Color = Color(0.93, 0.89, 0.8)
 const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
@@ -87,6 +91,17 @@ const TEXT_HINT: String = "ui.piece_deck.hint"
 const TEXT_REMOVED_MSG: String = "ui.piece_deck.removed_msg"
 ## Shared: the locale's decimal separator (Story 031).
 const TEXT_DECIMAL_POINT: String = "ui.world.decimal_point"
+## Story 041: "%s: khoảng %d%% khối rơi, %d–%d ô tùy sân (...)" (name, percent, smallest, largest size) and "Không có %s".
+const TEXT_ODD_RULE: String = "ui.piece_deck.odd_rule"
+const TEXT_ODD_NONE: String = "ui.piece_deck.odd_none"
+const ODD_NAME_KEY: String = "piece.odd.name"
+const ODD_RULE_COLOR: Color = Color(0.52, 0.08, 0.48)
+const ODD_RULE_FONT_SIZE: int = 20
+## Odd sparkle mark before the line (radius px) and the gap between the line and the refusal line (share of width).
+const ODD_RULE_MARK_RADIUS: float = 8.0
+const ODD_RULE_GAP_RATIO: float = 0.012
+## Target-half size used to state the rule's largest size (big enough that max_size_for clamps at size_max).
+const ODD_RULE_ANY_ARENA_CELLS: int = 1 << 20
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -100,6 +115,8 @@ var _press_pos: Vector2 = Vector2.INF
 ## Message line between the bottom buttons: a ready string and whether it is a refusal (red).
 var _message: String = ""
 var _message_bad: bool = false
+## Story 041: the odd_blocks config of field_drops.json (loaded on first use).
+var _odd_config: OddBlockConfig = null
 
 
 func _ready() -> void:
@@ -129,6 +146,23 @@ func select_shape(id: String) -> void:
 ## True while the screen is shown (phase PIECE_DECK of a run).
 func is_open() -> bool:
 	return _is_active()
+
+
+## Story 041: the Odd Block rule line (translated): chance %, size range, or the "no Odd Blocks" line.
+func odd_rule_text() -> String:
+	var cfg: OddBlockConfig = _odd()
+	var sizes: Array[int] = cfg.allowed_sizes(ODD_RULE_ANY_ARENA_CELLS)
+	if cfg.chance <= 0.0 or sizes.is_empty():
+		return tr(TEXT_ODD_NONE) % tr(ODD_NAME_KEY)
+	return tr(TEXT_ODD_RULE) % [tr(ODD_NAME_KEY), roundi(cfg.chance * 100.0), sizes.min(), sizes.max()]
+
+
+# Story 041: the odd block tuning of field_drops.json (built-in disabled default when the file is missing).
+func _odd() -> OddBlockConfig:
+	if _odd_config == null:
+		var drops: FieldDropsConfig = FieldDropsConfig.load_from_file()
+		_odd_config = drops.odd if drops != null else OddBlockConfig.new()
+	return _odd_config
 
 
 ## Story 034: the drop chance [param percent] with one decimal and the locale's separator ("12,5").
@@ -293,6 +327,23 @@ func _draw() -> void:
 	if not selected_row.is_empty():
 		_draw_remove_button(vp, selected_row)
 	_draw_message(vp)
+	_draw_odd_rule(vp)
+
+
+# Story 041: the odd rule line under the grid: the left part of the refusal band (the refusal line is right-aligned
+# with the bottom-right button), a sparkle mark then the text in dark magenta.
+func _draw_odd_rule(vp: Vector2) -> void:
+	var reason: Rect2 = ScreenLayout.piece_deck_reason_rect(vp)
+	var left: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var right: float = reason.position.x - vp.x * ODD_RULE_GAP_RATIO
+	if right - left <= ODD_RULE_MARK_RADIUS * 4.0:
+		return
+	var text: String = odd_rule_text()
+	var text_left: float = left + ODD_RULE_MARK_RADIUS * 3.0
+	var size: int = _fit(text, right - text_left, ODD_RULE_FONT_SIZE)
+	var y: float = reason.get_center().y
+	PieceDraw.draw_odd_mark(self, Vector2(left + ODD_RULE_MARK_RADIUS, y), ODD_RULE_MARK_RADIUS)
+	draw_string(ThemeDB.fallback_font, Vector2(text_left, y + size * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, right - text_left, size, ODD_RULE_COLOR)
 
 
 # Title band: "BỘ MẢNH" centred, the shape-removal tokens at the right.
