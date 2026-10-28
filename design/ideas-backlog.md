@@ -46,6 +46,9 @@ Người dùng muốn người chơi vượt chương/tầng: mỗi tầng N tr�
 ### Meta progression bằng "thực đơn" → **Story 017–019 (v4, 2026-10-22)**
 Đã thành lớp roguelike: lá bài (017), nhân vật (018), thưởng lá và run (019); **bỏ khái niệm "lớp"** (2026-10-22) → bộ bài có sức nặng: sát thương theo lá, nâng cấp khi nhặt trùng, bỏ lá, Ghim/Đốt (020) và tuyệt kỹ nhân vật khuếch đại bộ bài (021). Còn lại cho sau: xem bộ bài trong run, cửa hàng và tiền, sự kiện giữa trận, **item hồi sinh** (người dùng: chết là hết trước, hồi sinh thêm sau), mở pool lá theo `seen_cards`, kháng/yếu theo kẻ địch, pool 16–20 lá tới cuối chương 2, mở khóa nhân vật 4–5 (Thợ săn, Giáo sĩ).
 
+### Ghi hình (sau Story 041, chờ buổi chơi thử)
+Gặp một Khối Lạ ưng ý thì "ghi" nó vào bộ khối để nó thành khối hình học riêng của chuyến leo, rơi theo trọng số như các hình khác. Thêm một lớp xây build cho khối, nhưng cần biết trước người chơi có đọc kịp Khối Lạ không.
+
 ### Daily Counter
 Túi xáo có seed theo ngày; mọi người gặp cùng chuỗi điểm, so điểm. Offline hoàn toàn; bảng xếp hạng online là tùy chọn sau. Cần điểm số và Story 011.
 
