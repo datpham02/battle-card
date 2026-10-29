@@ -38,7 +38,7 @@ func _initialize() -> void:
 	_check(missing.is_empty(), "every code/data key is in the CSV (missing: %s)" % str(missing))
 	# Locale switch.
 	TranslationServer.set_locale("en")
-	_check(TranslationServer.translate("title.name") == "RUNE DUEL", "en title.name = %s" % TranslationServer.translate("title.name"))
+	_check(TranslationServer.translate("title.name") == "TESSERA", "en title.name = %s" % TranslationServer.translate("title.name"))
 	_check(TranslationServer.translate("card.kiem_khi.name") == "Sword Qi", "en card name = %s" % TranslationServer.translate("card.kiem_khi.name"))
 	_check(TranslationServer.translate("ui.hud.cast") == "Cast", "en ui.hud.cast = %s" % TranslationServer.translate("ui.hud.cast"))
 	var config: ChaptersConfig = ChaptersConfig.load_from_file()
@@ -48,8 +48,8 @@ func _initialize() -> void:
 	_check(RunConfig.match_name({"display_name": "Legacy"}) == "Legacy", "legacy display_name literal")
 	_check(ArenaNames.name_for("square") == "Square", "en arena name = %s" % ArenaNames.name_for("square"))
 	TranslationServer.set_locale("vi")
-	_check(TranslationServer.translate("title.name") == "ẤN KIẾM", "vi title.name = %s" % TranslationServer.translate("title.name"))
-	_check(TranslationServer.translate("ui.hud.cast") == "Thi triển", "vi ui.hud.cast")
+	_check(TranslationServer.translate("title.name") == "TESSERA", "vi title.name = %s" % TranslationServer.translate("title.name"))
+	_check(TranslationServer.translate("ui.hud.cast") == "Tung phép", "vi ui.hud.cast (Story 042: Tung phép)")
 	# ProgressState locale round trip.
 	var state := ProgressState.new()
 	_check(state.get_locale() == "en", "default locale en")

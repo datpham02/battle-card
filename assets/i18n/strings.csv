@@ -3,10 +3,10 @@ ui.arena.random,Ngẫu nhiên,Random
 ui.chapter.default_name,Chương 1,Chapter 1
 ui.floor.default_name,Tầng 1,Floor 1
 ui.chapter_select.title,CHỌN CHƯƠNG,CHOOSE A CHAPTER
-ui.chapter_select.floors,%d cột,%d columns
+ui.chapter_select.floors,%d chặng,%d stages
 ui.chapter_select.in_run,Đang dở,In progress
-ui.chapter_select.saved_position,Cột %d,Column %d
-ui.chapter_select.confirm_abandon,Bỏ run đang dở?,Abandon the saved run?
+ui.chapter_select.saved_position,Chặng %d,Stage %d
+ui.chapter_select.confirm_abandon,Bỏ chuyến leo đang dở?,Abandon the saved climb?
 ui.chapter_select.abandon,Bỏ,Abandon
 ui.chapter_select.cancel,Thôi,Cancel
 ui.chapter_select.resume,Tiếp tục,Continue
@@ -22,17 +22,17 @@ ui.hold.rotten_timer,%.1f,%.1f
 ui.hud.focus,TẬP TRUNG  %.1f s,FOCUS  %.1f s
 ui.hud.focus_cooldown,Tập trung còn %d s,Focus in %d s
 ui.hud.focus_paused_tag,DỪNG,HOLD
-ui.hud.pin,GHIM %.1f s,PINNED %.1f s
+ui.hud.pin,ĐÓNG BĂNG %.1f s,FROZEN %.1f s
 ui.hud.feint,ĐÒN GIẢ!,FEINT!
 ui.hud.feint_note,boss vung rồi tự hủy,the boss cancelled its own cast
-ui.hud.learning,né: %d | ngắt: %d | giả: %d%%,dodge: %d | break: %d | feint: %d%%
+ui.hud.learning,né: %d | ngắt: %d | giả: %d%%,dodge: %d | interrupt: %d | feint: %d%%
 ui.hud.combo_queued,2: +%.1f s,2: +%.1f s
 ui.hud.row_warning,SẮP CHÁY,BURNING SOON
 ui.hud.boss_swing,BOSS %s %s,BOSS %s %s
-ui.hud.interrupt,NGẮT!,BROKEN!
-ui.hud.interrupt_boss,boss bị hủy đòn,the boss's cast was broken
-ui.hud.interrupt_player,đòn của bạn bị hủy,your cast was broken
-ui.hud.cast,Thi triển,Cast
+ui.hud.interrupt,NGẮT!,INTERRUPT!
+ui.hud.interrupt_boss,boss bị hủy đòn,the boss's cast was interrupted
+ui.hud.interrupt_player,đòn của bạn bị hủy,your cast was interrupted
+ui.hud.cast,Tung phép,Cast
 ui.hud.cells,%d ô,%d cells
 ui.hud.damage,Sát thương %d,Damage %d
 ui.hud.need_cells,cần %d ô,need %d cells
@@ -52,7 +52,7 @@ ui.run_hud.match_label_arena,%s · %s,%s · %s
 ui.run_hud.arena_variant, (biến thể), (variant)
 ui.run_hud.intro_title,TRẬN %d/%d,MATCH %d/%d
 ui.run_hud.intro_title_boss,TRẬN BOSS,BOSS MATCH
-ui.run_hud.intro_hint,Nhặt mảnh · đặt lên đất địch · Thi triển,Pick pieces · place them on the enemy's side · Cast
+ui.run_hud.intro_hint,Nhặt khối · đặt lên đất địch · Tung phép,Pick up blocks · place on enemy ground · Cast
 ui.run_hud.between_title,THẮNG TRẬN!,MATCH WON!
 ui.run_hud.heal,+%d HP,+%d HP
 ui.run_hud.hp,HP %d/%d,HP %d/%d
@@ -70,17 +70,17 @@ ui.run_hud.cleared,Trận thắng %d/%d,Matches won %d/%d
 ui.run_hud.restart,Chơi lại,Play again
 ui.run_hud.pause_title,TẠM DỪNG,PAUSED
 ui.run_hud.resume,Tiếp tục,Resume
-ui.run_hud.leave_run,Thoát run (đã lưu),Leave run (saved)
+ui.run_hud.leave_run,Thoát chuyến leo (đã lưu),Leave climb (saved)
 ui.run_hud.deck_label,Bộ: %d lá,Deck: %d
-ui.run_hud.run_over_title,RUN KẾT THÚC,RUN OVER
-ui.run_hud.run_won_title,RUN THẮNG,RUN WON
+ui.run_hud.run_over_title,CHUYẾN LEO KẾT THÚC,CLIMB OVER
+ui.run_hud.run_won_title,CHUYẾN LEO THẮNG,CLIMB WON
 ui.run_hud.run_position,Tầng %d · Trận %d,Floor %d · Match %d
 ui.run_hud.run_deck,Bộ: %d lá,Deck: %d cards
 ui.run_hud.back_to_title,Về title,Back to title
-title.name,ẤN KIẾM,RUNE DUEL
-title.tagline,Nhặt mảnh ấn · đặt lên đất địch · Thi triển một đòn,Pick pieces · place them on the enemy's side · Cast one strike
-ui.title.continue,Tiếp tục run,Continue run
-ui.title.run_summary,%s · %s · Cột %d,%s · %s · Column %d
+title.name,TESSERA,TESSERA
+title.tagline,Nhặt khối · đặt lên đất địch · Tung phép một đòn,Pick up blocks · place on enemy ground · Cast one strike
+ui.title.continue,Tiếp tục chuyến leo,Continue climb
+ui.title.run_summary,%s · %s · Chặng %d,%s · %s · Stage %d
 ui.title.run_summary_floor,Tầng %d/%d,Floor %d/%d
 ui.title.play,Chơi,Play
 ui.title.quit,Thoát,Quit
@@ -132,7 +132,7 @@ character.sat_thu.desc,Nhanh nhẹn và chí mạng với những đường ché
 passive.second_wind.name,Hơi thở thứ hai,Second Wind
 passive.second_wind.desc,Hồi thêm 20 máu sau mỗi trận thắng.,Recover 20 extra HP after every won match.
 passive.wide_caster.name,Pháp trận rộng,Wide Caster
-passive.wide_caster.desc,Phép từ 4 ô trở lên niệm nhanh hơn 25%.,Spells covering 4 or more cells cast 25% faster.
+passive.wide_caster.desc,Phép từ 4 ô trở lên niệm nhanh hơn 25%.,Spells covering 4 or more cells channel 25% faster.
 passive.quick_blade.name,Lưỡi kiếm nhanh,Quick Blade
 passive.quick_blade.desc,Phép tối đa 4 ô gây thêm 40% sát thương.,Spells covering 4 cells or fewer deal 40% more damage.
 card.kiem_khi.name,Kiếm khí,Sword Qi
@@ -152,13 +152,13 @@ card.hoa_tinh.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang
 card.hoa_xa.name,Hỏa xà,Fire Serpent
 card.hoa_xa.desc,Đốt nhanh trên ít ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,A quick burn over few cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.suong_mong.name,Sương mỏng,Thin Mist
-card.suong_mong.desc,Ghim {pin_sec} s: địch không bước được.,Pins for {pin_sec} s: the foe cannot step.
+card.suong_mong.desc,Đóng Băng {pin_sec} s: địch không bước được.,Applies Frozen for {pin_sec} s: the foe cannot step.
 card.bang_chau.name,Băng châu,Frost Pearl
-card.bang_chau.desc,Ghim {pin_sec} s trên ít ô: địch không bước được.,Pins for {pin_sec} s over few cells: the foe cannot step.
+card.bang_chau.desc,Đóng Băng {pin_sec} s trên ít ô: địch không bước được.,Applies Frozen for {pin_sec} s over few cells: the foe cannot step.
 card.hoa_tran.name,Hỏa trận,Fire Sigil
 card.hoa_tran.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.bang_phong.name,Băng phong,Frost Seal
-card.bang_phong.desc,Ghim {pin_sec} s: địch không bước được.,Pins for {pin_sec} s: the foe cannot step.
+card.bang_phong.desc,Đóng Băng {pin_sec} s: địch không bước được.,Applies Frozen for {pin_sec} s: the foe cannot step.
 card.cuong_phong.name,Cuồng phong,Gale Storm
 card.cuong_phong.desc,"Đẩy lùi {push_cells} ô, sát thương vừa.","Pushes {push_cells} cell, moderate damage."
 card.liet_hoa.name,Liệt hỏa,Blaze
@@ -170,7 +170,7 @@ card.song_kiem.desc,Cần {min_cells} ô. Địch đang Rạn ăn thêm ×{fragi
 card.thien_lang.name,Thiên lãng,Heaven Wave
 card.thien_lang.desc,"Đẩy lùi {push_cells} ô, sát thương khá.","Pushes {push_cells} cells, solid damage."
 card.han_bang.name,Hàn băng,Deep Frost
-card.han_bang.desc,Ghim {pin_sec} s và gieo Rạn {fragile_stacks} tầng: đòn kế tiếp ăn ×{fragile_mult} mỗi tầng.,Pins for {pin_sec} s and applies {fragile_stacks} Fragile: the next hits take ×{fragile_mult} per stack.
+card.han_bang.desc,Đóng Băng {pin_sec} s và gieo Rạn {fragile_stacks} tầng: đòn kế tiếp ăn ×{fragile_mult} mỗi tầng.,Applies Frozen for {pin_sec} s and applies {fragile_stacks} Fragile: the next hits take ×{fragile_mult} per stack.
 card.thien_hoa.name,Thiên hỏa,Heaven Fire
 card.thien_hoa.desc,"Đốt các ô trong {burn_sec} s, cháy dữ dội. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.",Burns the cells fiercely for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.tu_kiem.name,Tuyệt kiếm,Peerless Blade
@@ -184,29 +184,29 @@ ui.reward.cancel,Thôi,Cancel
 ui.reward.min_deck,Bộ đã ở mức tối thiểu,Deck is at minimum size
 ui.reward.more,… và %d lá nữa,… and %d more
 ui.hud.burn_stacks,Cháy ×%d,Burn ×%d
-ui.hud.pinned,Ghim,Pinned
+ui.hud.pinned,Đóng Băng,Frozen
 ui.hud.signature_ready,SẴN SÀNG,READY
 ui.hud.signature_active,ĐANG DÙNG,ACTIVE
-ui.hud.formation_count,Trận đồ %d/%d,Formation %d/%d
-ui.hud.formation_complete,Trận đồ hoàn thành: %s,Formation complete: %s
+ui.hud.formation_count,Bản Khắc %d/%d,Engraving %d/%d
+ui.hud.formation_complete,Bản Khắc hoàn thành: %s,Engraving complete: %s
 ui.hud.signature_cooldown,Hồi %d s,Cooldown %d s
-ui.character_select.signature,Tuyệt kỹ: %s,Signature: %s
+ui.character_select.signature,Thức Tỉnh: %s,Awakening: %s
 signature.tram.name,Trảm,Slash Fury
 signature.tram.desc,3 giây: mọi phép tính gấp đôi số ô và hồi 20% sát thương gây ra.,3 seconds: every spell counts double its cells and heals 20% of the damage dealt.
 signature.thien_hoa.name,Thiên Hỏa,Heaven's Fire
-signature.thien_hoa.desc,"Kích nổ lửa đang cháy gấp đôi, làm mới phép đốt, rồi đốt cả trận đồ sáng.","Detonate burns for double, reset burn spells, then set the lit map ablaze."
+signature.thien_hoa.desc,"Kích nổ lửa đang cháy gấp đôi, làm mới phép đốt, rồi đốt cả Bản Khắc sáng.","Detonate burns for double, reset burn spells, then set the lit Engraving ablaze."
 signature.anh_bo.name,Ảnh Bộ,Shadow Step
 signature.anh_bo.desc,"2 giây: bước không cooldown; mọi phép ≤ 3 ô gây ×1,75.",2 s: free steps; every spell of 3 cells or fewer deals ×1.75.
 node.battle.name,Trận,Battle
 node.danger.name,Hiểm địa,Danger
 node.treasure.name,Kho báu,Treasure
 node.rest.name,Trại nghỉ,Rest
-node.miniboss.name,Tiểu boss,Miniboss
+node.miniboss.name,Tinh Anh,Elite
 node.boss.name,Boss,Boss
-ui.map.column,Cột %d/%d,Column %d/%d
+ui.map.column,Chặng %d/%d,Stage %d/%d
 ui.map.hp,HP %d/%d,HP %d/%d
 ui.map.deck,Bộ: %d lá,Deck: %d cards
-ui.map.removal_tokens,Token bỏ lá: %d,Removal tokens: %d
+ui.map.removal_tokens,Lượt bỏ lá: %d,Card removals: %d
 ui.map.luck,May mắn %d,Luck %d
 ui.map.back,Về title,Back to title
 ui.map.notice_dismiss,Chạm để đóng,Tap to close
@@ -221,11 +221,11 @@ ui.rest.all_maxed,Mọi lá đã tối đa,Every card is at max level
 ui.rest.more,… và %d lá nữa,… and %d more
 ui.reward.title_treasure,KHO BÁU,TREASURE
 ui.reward.min_rare,Lá hiếm trở lên,Rare or better
-ui.reward.token_granted,+%d token bỏ lá,+%d removal token
+ui.reward.token_granted,+%d lượt bỏ lá,+%d card removals
 ui.reward.remove_count,Bỏ 1 lá (%d),Remove a card (%d)
-ui.run_hud.node_label,Cột %d · %s,Column %d · %s
-ui.run_hud.run_node,Cột %d · %s,Column %d · %s
-run.restart.old_save,"Bản lưu cũ không còn dùng được, run bắt đầu lại.",The old save no longer applies; the run starts over.
+ui.run_hud.node_label,Chặng %d · %s,Stage %d · %s
+ui.run_hud.run_node,Chặng %d · %s,Stage %d · %s
+run.restart.old_save,"Bản lưu cũ không còn dùng được, chuyến leo bắt đầu lại.",The old save no longer applies; the climb starts over.
 boss.skeleton.name,Bộ xương lính,Skeleton Guard
 boss.bat_swarm.name,Đàn dơi hầm,Crypt Bat Swarm
 boss.slime.name,Nhầy ngục,Dungeon Slime
@@ -249,15 +249,15 @@ chapter.ch3.name,Tháp Sương,The Mist Tower
 arena.cross_wide.name,Chữ thập rộng,Wide Cross
 arena.pillars.name,Cột đá,Pillars
 match.ghost.desc,"Giáp dày, máu mỏng: chỉ lửa mới đủ sức.","Thick armor, thin blood: only fire is enough."
-match.reacter.desc,Mỗi bước của bạn đánh thức nó: đứng yên mà đặt mảnh.,Every step you take wakes it: stand still and place your piece.
+match.reacter.desc,Mỗi bước của bạn đánh thức nó: đứng yên mà đặt khối.,Every step you take wakes it: stand still and place your block.
 match.fuse_golem.desc,"Ngòi cháy đếm ngược: đánh mạnh để dập, hoặc nhận cả hàng.","A burning fuse counts down: hit hard to snuff it, or take a whole row."
 match.ghost_elite.desc,"Giáp còn dày hơn, hồn còn mỏng hơn: chỉ lửa và đòn xuyên giáp.","Even thicker armor, an even thinner soul: only fire and piercing strikes."
 match.ogre_king.desc,Mỗi nhịp đập làm nứt nền: đừng đứng trên ô nứt.,Each slam cracks the floor: do not stand on a cracked tile.
 match.mist_lord.desc,"Hạ nó xuống nửa máu, và cơn thịnh nộ bùng lên.",Bring it to half health and its fury awakens.
 chapter.ch2.intro,Cánh cổng ngục khép lại sau lưng. Tiếng xích kéo lê trong bóng tối.,The dungeon gate shuts behind you. Chains drag in the dark.
-chapter.ch2.end,"Quỷ Khổng Lồ gục xuống, ngục tối im lặng. Phía trên, màn sương đang chờ.","The Ogre falls and the dungeon goes silent. Above, the mist waits."
+chapter.ch2.end,"Quỷ Khổng Lồ gục xuống, ngục tối im lặng. Phía trên, mạng lưới hiện rõ hơn.","The Giant Ogre falls and the dungeon goes silent. Above, the lattice shows more clearly."
 chapter.ch3.intro,"Tháp Sương mọc lên từ biển mây, mỗi bậc thang lạnh hơn bậc trước.","The Mist Tower rises from a sea of cloud, each step colder than the last."
-chapter.ch3.end,"Chúa Tể Sương tan thành hơi. Đỉnh tháp sáng lên, hành trình khép lại.",The Mist Lord dissolves into vapor. The summit lights up and the journey ends.
+chapter.ch3.end,"Chúa Tể Sương tan thành hơi. Đỉnh tháp sáng lên, và chuyến leo vẫn tiếp tục.","The Mist Lord dissolves into vapor. The tower's summit glows, and the climb goes on."
 trait.step_reactor.name,Phản xạ,Reflex
 trait.fuse_cannon.name,Pháo ngòi,Fuse Cannon
 trait.slam.name,Giáng nứt,Slam
@@ -268,22 +268,22 @@ card.ran_kich.desc,Gieo Rạn {fragile_stacks} tầng: đòn kế tiếp ăn ×{
 card.ran_van.name,Rạn vân,Fracture Veins
 card.ran_van.desc,"Ít ô, gieo Rạn {fragile_stacks} tầng: {fragile_stacks} đòn kế tiếp ăn ×{fragile_mult}.","Few cells, applies {fragile_stacks} Fragile: the next {fragile_stacks} hits take ×{fragile_mult}."
 card.han_khi.name,Hàn khí,Frost Breath
-card.han_khi.desc,Gieo Hàn {frost_stacks} tầng. Đủ {frost_burst_stacks} tầng: nổ {frost_burst_damage} sát thương xuyên giáp.,"Applies {frost_stacks} Frost. At {frost_burst_stacks} stacks: bursts for {frost_burst_damage}, ignoring defense."
+card.han_khi.desc,Gieo Giá Lạnh {frost_stacks} tầng. Đủ {frost_burst_stacks} tầng: nổ {frost_burst_damage} sát thương xuyên giáp.,"Applies {frost_stacks} Chill. At {frost_burst_stacks} stacks: bursts for {frost_burst_damage}, ignoring defense."
 card.han_phong.name,Hàn phong,Frost Gale
-card.han_phong.desc,"Diện rộng, gieo Hàn {frost_stacks} tầng. Đủ {frost_burst_stacks} tầng: nổ {frost_burst_damage} sát thương xuyên giáp.","Wide area, applies {frost_stacks} Frost. At {frost_burst_stacks} stacks: bursts for {frost_burst_damage}, ignoring defense."
+card.han_phong.desc,"Diện rộng, gieo Giá Lạnh {frost_stacks} tầng. Đủ {frost_burst_stacks} tầng: nổ {frost_burst_damage} sát thương xuyên giáp.","Wide area, applies {frost_stacks} Chill. At {frost_burst_stacks} stacks: bursts for {frost_burst_damage}, ignoring defense."
 card.han_kiem.name,Hàn kiếm,Frost Blade
-card.han_kiem.desc,Sát thương theo số ô và gieo Hàn {frost_stacks} tầng.,Damage per cell and applies {frost_stacks} Frost.
+card.han_kiem.desc,Sát thương theo số ô và gieo Giá Lạnh {frost_stacks} tầng.,Damage per cell and applies {frost_stacks} Chill.
 card.han_tran.name,Hàn trận,Frost Sigil
-card.han_tran.desc,"{min_cells} ô, sát thương nhẹ và gieo Hàn {frost_stacks} tầng.","{min_cells} cells, light damage and applies {frost_stacks} Frost."
+card.han_tran.desc,"{min_cells} ô, sát thương nhẹ và gieo Giá Lạnh {frost_stacks} tầng.","{min_cells} cells, light damage and applies {frost_stacks} Chill."
 ui.hud.fragile_stacks,Rạn ×%d,Fragile ×%d
-ui.hud.frost_stacks,Hàn ×%d,Frost ×%d
+ui.hud.frost_stacks,Giá Lạnh ×%d,Chill ×%d
 keyword.fragile,Rạn,Fragile
-keyword.frost,Hàn,Frost
+keyword.frost,Giá Lạnh,Chill
 keyword.execute,Hành quyết,Execute
-trait.step_reactor.desc,Mỗi bước của bạn nạp một phát; đủ phát là nó chém ngay. Đứng yên đặt mảnh thì an toàn.,Every step you take charges a shot; when full it swings at once. Stand still and place pieces to stay safe.
+trait.step_reactor.desc,Mỗi bước của bạn nạp một phát; đủ phát là nó chém ngay. Đứng yên đặt khối thì an toàn.,Every step you take charges a shot; when full it swings at once. Stand still and place blocks to stay safe.
 trait.fuse_cannon.desc,"Ngòi cháy dần, hết ngòi là nổ cả hàng của bạn. Đánh mạnh một đòn để dập ngòi.","A fuse burns down, then blasts your whole row. Land one heavy hit to snuff it out."
 trait.slam.desc,Cứ vài giây lại đập nứt hai ô bên bạn; ô nứt không bước vào được.,Every few seconds it cracks two cells on your side; cracked cells cannot be entered.
-trait.frost_aura.desc,Mảnh rơi chậm hơn khi nó còn trên nửa máu.,Pieces fall slower while it is above half health.
+trait.frost_aura.desc,Khối rơi chậm hơn khi nó còn trên nửa máu.,Blocks fall slower while it is above half health.
 trait.phase_shift.desc,"Ở nửa máu nó đổi sang thế hung hãn, nhanh hơn và thêm đòn mới.","At half health it turns aggressive, moves faster and gains a new attack."
 ui.hud.reactor_charges,Phản ứng %d/%d,Reaction %d/%d
 ui.hud.fuse,Ngòi %.1f s,Fuse %.1f s
@@ -292,12 +292,12 @@ ui.hud.phase_banner,PHA %d,PHASE %d
 keyword.pierce,Xuyên giáp,Pierce
 keyword.vs_fragile,×%s khi Rạn,×%s vs Fragile
 keyword.fragile_stacks,Rạn +%d,Fragile +%d
-keyword.frost_stacks,Hàn +%d,Frost +%d
+keyword.frost_stacks,Giá Lạnh +%d,Chill +%d
 ui.hud.cancel,Hủy,Cancel
 ui.hud.place_hit,Sẽ trúng,Will hit
 ui.hud.place_miss,Sẽ trượt,Will miss
 ui.hud.place_off,Đặt lên đất địch,Place it on the enemy's side
-ui.hud.place_hint,Kéo mảnh lên đất địch rồi thả · Xoay: nút Xoay hoặc R,Drag the piece onto the enemy's side and let go · Rotate: the Rotate button or R
+ui.hud.place_hint,Kéo khối lên đất địch rồi thả · Xoay: nút Xoay hoặc R,Drag the block onto the enemy's side and let go · Rotate: the Rotate button or R
 piece.mono.name,Ô đơn,Single
 piece.bar2.name,Thanh 2,Bar 2
 piece.bar3.name,Thanh 3,Bar 3
@@ -315,29 +315,29 @@ ui.hud.rotate,Xoay,Rotate
 ui.hud.full,ĐẦY,FULL
 ui.hud.cast_total,Tổng %d ô · %d sát thương,Total %d cells · %d damage
 ui.hud.cast_total_preview,Tổng %d ô (+%d) · %d sát thương,Total %d cells (+%d) · %d damage
-ui.hud.featured_corner,Hình chủ đạo,Featured shape
-ui.hud.featured_label,Hình chủ đạo ×%s,Featured shape ×%s
+ui.hud.featured_corner,Hình Cộng Hưởng,Resonant shape
+ui.hud.featured_label,Hình Cộng Hưởng ×%s,Resonant shape ×%s
 ui.hud.join_cap,Quá nhiều ô (tối đa %d),Too many cells (max %d)
 keyword.burn,Cháy,Burn
 card.ket_gioi.name,Kết giới,Seal Ward
-card.ket_gioi.desc,Phong ấn các ô trúng: không bước vào được trong {seal_sec} giây. Trúng hay trượt đều có kết giới.,Seals the cut cells: they cannot be stepped into for {seal_sec} s. Forms on a hit or a miss.
+card.ket_gioi.desc,Dựng Tường trên các ô trúng: không bước vào được trong {seal_sec} giây. Trúng hay trượt đều có Tường.,Builds Walls on the cut cells: they cannot be stepped into for {seal_sec} s. Walls form on a hit or a miss.
 card.long_an.name,Lồng ấn,Seal Cage
-card.long_an.desc,Phong ấn các ô trúng trong {seal_sec} giây và gây sát thương nhẹ nếu trúng.,Seals the cut cells for {seal_sec} s and deals light damage on a hit.
+card.long_an.desc,Dựng Tường trên các ô trúng trong {seal_sec} giây và gây sát thương nhẹ nếu trúng.,Builds Walls on the cut cells for {seal_sec} s and deals light damage on a hit.
 card.tran_gai.name,Trận gai,Thorn Field
 card.tran_gai.desc,Rải gai lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.,Covers the cut cells in thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile.
 card.gai_nguyen.name,Gai nguyền,Cursed Thorns
 card.gai_nguyen.desc,Rải gai nguyền lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.,Covers the cut cells in cursed thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile.
-keyword.seal,Kết giới,Seal
-keyword.thorns,Trận gai,Thorns
+keyword.seal,Tường,Wall
+keyword.thorns,Bãi Gai,Thorns
 trait.seal_caster.name,Ấn phong tỏa,Sealbinder
-trait.seal_caster.desc,"Trước một đòn lớn, nó dựng kết giới chặn đường thoát của bạn; luôn chừa một lối ra.",Before a big swing it seals cells on your escape path; one way out is always left.
+trait.seal_caster.desc,"Trước một đòn lớn, nó dựng Tường chặn đường thoát của bạn; luôn chừa một lối ra.",Before a big swing it builds Walls on your escape path; one way out is always left.
 trait.thorn_field.name,Trận gai,Thorn Field
 trait.thorn_field.desc,"Khi vung đòn từ 4 ô trở lên, nó rải gai lên đường thoát của bạn; bước vào gai mất máu và bị Rạn.",When it swings 4 or more cells it lays thorns on your escape path; stepping in costs HP and adds Fragile.
 ui.world.title,Tầng %d/%d · Chọn vùng,Floor %d/%d · Choose a region
 ui.world.strip_floor,Tầng %d,Floor %d
-ui.world.final_name,Ấn Đài,Seal Altar
+ui.world.final_name,Tâm Lưới,The Lattice Heart
 ui.world.choosing,Đang chọn,Choosing
-ui.world.boss,Boss: %s,Boss: %s
+ui.world.boss,Kẻ Gác: %s,Warden: %s
 ui.world.floor_difficulty,Tầng %d — máu địch ×%s,Floor %d — enemy HP ×%s
 ui.world.floor_step,nhịp ×%s,tempo ×%s
 ui.world.floor_defense,giáp +%d,armor +%d
@@ -348,21 +348,21 @@ ui.world.tap_again,Chạm lại để vào,Tap again to enter
 ui.world.enter,Vào vùng,Enter region
 ui.world.floor_clear,Tầng %d — hồi %d máu,Floor %d — healed %d HP
 ui.map.floor_title,Tầng %d/%d · %s,Floor %d/%d · %s
-ui.run_hud.run_floor_position,Tầng %d/%d · %s · cột %d/%d,Floor %d/%d · %s · column %d/%d
+ui.run_hud.run_floor_position,Tầng %d/%d · %s · chặng %d/%d,Floor %d/%d · %s · stage %d/%d
 ui.run_hud.run_floor_reached,Tới tầng %d/%d,Reached floor %d/%d
-ui.run_hud.run_final_reached,Tới Ấn Đài,Reached the Seal Altar
+ui.run_hud.run_final_reached,Tới Tâm Lưới,Reached the Lattice Heart
 ui.run_hud.run_path,Đường: %s,Path: %s
-ui.world.final_clear,Ấn Đài — hồi %d máu,Seal Altar — healed %d HP
+ui.world.final_clear,Tâm Lưới — hồi %d máu,The Lattice Heart — healed %d HP
 region.ch1.desc,Rừng thưa nhiều lối né; goblin và bầy sói.,Open woods with room to dodge; goblins and wolf packs.
-region.ch2.desc,"Hầm tối chật hẹp; xương khô, xác sống, dơi và kết giới.","Cramped dark halls; skeletons, zombies, bats and seal wards."
-region.ch3.desc,"Tháp băng giá; sói tuyết, ma trơi, pháo ngòi và trận gai.","A frozen tower; snow wolves, wisps, fuse cannons and thorn fields."
+region.ch2.desc,"Hầm tối chật hẹp; xương khô, xác sống, dơi và Tường.","Cramped dark halls; skeletons, zombies, bats and Walls."
+region.ch3.desc,"Tháp băng giá; sói tuyết, ma trơi, pháo ngòi và Bãi Gai.","A frozen tower; snow wolves, wisps, fuse cannons and Thorns."
 region.swamp.desc,"Đầm lầy độc; ô lầy làm chậm và rút máu, nấm bào tử, ếch nhảy và cóc chúa.","A poison bog; mire slows and drains you, with spore caps, leap frogs and the toad matriarch."
-region.desert.desc,"Sa mạc cát ấn; cát lấp ô, gió đẩy mảnh trôi, bọ cát lặn và nhân sư.","Sealed sands; sand fills cells, wind drifts the pieces, burrowing beetles and the sphinx."
+region.desert.desc,"Sa mạc cát vùi; cát lấp ô, gió đẩy khối trôi, bọ cát lặn và nhân sư.","Buried sands; sand fills cells, wind drifts the blocks, burrowing beetles and the sphinx."
 ui.relic.title,BẢO VẬT,RELICS
 ui.relic.rarity.common,Thường,Common
 ui.relic.rarity.rare,Hiếm,Rare
 ui.relic.rarity.epic,Sử thi,Epic
-ui.relic.rarity.boss,Boss,Boss
+ui.relic.rarity.boss,Mảnh Gốc,Primal Shard
 ui.relic.negative,Đánh đổi,Trade-off
 ui.relic.pick_one,CHỌN MỘT BẢO VẬT,CHOOSE A RELIC
 ui.relic.confirm,Xác nhận,Confirm
@@ -372,46 +372,46 @@ ui.relic.tap_close,Chạm ra ngoài để đóng,Tap outside to close
 ui.relic.cards_row,CHỌN MỘT LÁ,CHOOSE A CARD
 ui.relic.relics_row,HOẶC MỘT BẢO VẬT,OR A RELIC
 relic.an_don.name,Ấn Đơn,Lone Seal
-relic.an_don.desc,"Đòn chỉ gồm 1 mảnh Ô đơn: sát thương ×1,75.",A cast of just 1 Single piece deals ×1.75 damage.
+relic.an_don.desc,"Đòn chỉ gồm 1 khối Ô đơn: sát thương ×1,75.",A cast of just 1 Single block deals ×1.75 damage.
 relic.chi_khau.name,Chỉ Khâu,Stitch Thread
-relic.chi_khau.desc,Mỗi đòn ghép mảnh hồi 3 máu (tối đa 15 mỗi trận).,Every joined cast heals 3 HP (up to 15 per match).
+relic.chi_khau.desc,Mỗi đòn ghép khối hồi 3 máu (tối đa 15 mỗi trận).,Every joined cast heals 3 HP (up to 15 per match).
 relic.phong_an.name,Phong Ấn Dài,Long Seal
-relic.phong_an.desc,Kết giới của bạn kéo dài thêm 1 giây.,Your seals last 1 s longer.
+relic.phong_an.desc,Tường của bạn kéo dài thêm 1 giây.,Your Walls last 1 s longer.
 relic.gai_ran.name,Gai Rạn,Crack Thorn
 relic.gai_ran.desc,Địch bước vào ô gai của bạn nhận thêm 1 tầng Rạn.,Foes stepping into your thorn cells get 1 more Fragile stack.
 relic.manh_tuoi.name,Mảnh Tươi,Fresh Shard
-relic.manh_tuoi.desc,Mảnh trên sân tươi lâu hơn 4 giây.,Pieces on the field stay fresh 4 s longer.
+relic.manh_tuoi.desc,Khối trên sân tươi lâu hơn 4 giây.,Blocks on the field stay fresh 4 s longer.
 relic.dinh_tam.name,Định Tâm,Steady Mind
 relic.dinh_tam.desc,Tập trung kéo dài thêm 1 giây.,Focus lasts 1 s longer.
 relic.la_ban.name,La Bàn Trận Đồ,Sigil Compass
-relic.la_ban.desc,Ô trận đồ phai chậm hơn 30 %.,Formation cells fade 30 % slower.
+relic.la_ban.desc,Ô Bản Khắc phai chậm hơn 30 %.,Engraving cells fade 30 % slower.
 relic.tam_huong.name,Tâm Hương,Heart Incense
-relic.tam_huong.desc,Tuyệt kỹ hồi nhanh hơn 20 %.,Your signature recharges 20 % faster.
+relic.tam_huong.desc,Thức Tỉnh hồi nhanh hơn 20 %.,Your Awakening recharges 20 % faster.
 relic.tui_rong.name,Túi Rộng,Wide Pouch
-relic.tui_rong.desc,Túi mảnh có thêm 1 ô.,The piece bag gets 1 more slot.
+relic.tui_rong.desc,Túi khối có thêm 1 ô.,The block bag gets 1 more slot.
 relic.dau_than.name,Dầu Thần,Divine Oil
 relic.dau_than.desc,Cháy chồng thêm 1 tầng.,Burn stacks 1 level higher.
 relic.khoi_the.name,Khởi Thế,Opening Stance
-relic.khoi_the.desc,Phép đầu tiên mỗi trận không có thời gian niệm.,The first spell of each match has no windup.
+relic.khoi_the.desc,Phép đầu tiên mỗi trận không có thời gian niệm.,The first spell of each match has no channeling time.
 relic.phan_don.name,Phản Đòn,Riposte
-relic.phan_don.desc,Phá phép boss: nhận ngay 1 mảnh Ô đơn vào túi (nếu còn chỗ).,Interrupt a boss spell: gain 1 Single piece in your bag at once (if there is room).
+relic.phan_don.desc,Phá phép boss: nhận ngay 1 khối Ô đơn vào túi (nếu còn chỗ).,Interrupt a boss spell: gain 1 Single block in your bag at once (if there is room).
 relic.han_ky.name,Hàn Khí,Frost Vapor
-relic.han_ky.desc,"Hàn nổ ngay ở 2 tầng, nhưng nổ yếu hơn 33 %.","Frost bursts at 2 stacks, but the burst is 33 % weaker."
+relic.han_ky.desc,"Giá Lạnh nổ ngay ở 2 tầng, nhưng nổ yếu hơn 33 %.","Chill bursts at 2 stacks, but the burst is 33 % weaker."
 relic.huyet_an.name,Huyết Ấn,Blood Seal
 relic.huyet_an.desc,"Đòn từ 5 ô trở lên +30 % sát thương; nếu đòn đó trượt, bạn mất 2 máu.","Casts of 5 or more cells deal +30 % damage; if such a cast misses, you lose 2 HP."
 relic.an_chu.name,Ấn Chủ,Master Seal
-relic.an_chu.desc,"Thưởng hình chủ đạo ×2 thay vì ×1,5.",The featured-shape bonus is ×2 instead of ×1.5.
+relic.an_chu.desc,"Thưởng Hình Cộng Hưởng ×2 thay vì ×1,5.",The Resonant-shape bonus is ×2 instead of ×1.5.
 relic.tam_hop.name,Tam Hợp,Triple Join
-relic.tam_hop.desc,"Được ghép mảnh thứ ba vào đòn (+1,5 s chọn lá nữa).",You may join a third piece into a cast (+1.5 s more to pick a card).
+relic.tam_hop.desc,"Được ghép khối thứ ba vào đòn (+1,5 s chọn lá nữa).",You may join a third block into a cast (+1.5 s more to pick a card).
 card.ganh_nang.name,Gánh Nặng,Dead Weight
-card.ganh_nang.desc,"Lá nguyền: chỉ chiếm một chỗ trong menu phép và bị khóa, không dùng được. Bỏ bằng token bỏ lá, cửa hàng hoặc sự kiện.","Curse: only takes a slot in the card menu and stays locked, it cannot be used. Remove it with a removal token, the shop or an event."
+card.ganh_nang.desc,"Lá nguyền: chỉ chiếm một chỗ trong menu phép và bị khóa, không dùng được. Bỏ bằng lượt bỏ lá, cửa hàng hoặc sự kiện.","Curse: only takes a slot in the card menu and stays locked, it cannot be used. Remove it with a card removal, the shop or an event."
 card.oan_hon.name,Oán Hồn,Vengeful Spirit
-card.oan_hon.desc,"Lá nguyền: chiếm một chỗ trong menu phép và bị khóa. Mỗi lần được rút vào menu, bạn mất {draw_damage} máu. Bỏ bằng token bỏ lá, cửa hàng hoặc sự kiện.","Curse: takes a slot in the card menu and stays locked. Each time it is drawn into the menu you lose {draw_damage} HP. Remove it with a removal token, the shop or an event."
+card.oan_hon.desc,"Lá nguyền: chiếm một chỗ trong menu phép và bị khóa. Mỗi lần được rút vào menu, bạn mất {draw_damage} máu. Bỏ bằng lượt bỏ lá, cửa hàng hoặc sự kiện.","Curse: takes a slot in the card menu and stays locked. Each time it is drawn into the menu you lose {draw_damage} HP. Remove it with a card removal, the shop or an event."
 ui.hud.curse_locked,Lá nguyền,Cursed
 ui.event.leave,Rời đi,Leave
 ui.event.leave_result,Bạn lặng lẽ rời đi.,You walk away quietly.
 ui.event.need_gold,Cần %d vàng,Needs %d gold
-ui.event.need_relic,Cần một bảo vật không phải bảo vật boss,Needs a relic that is not a boss relic
+ui.event.need_relic,Cần một bảo vật không phải Mảnh Gốc,Needs a relic that is not a Primal Shard
 ui.event.need_hp,Máu phải trên %d,HP must be above %d
 ui.event.need_cards,Cần ít nhất %d lá,Needs at least %d cards
 ui.event.need_upgradable,Không có lá nào nâng cấp được,No card can be upgraded
@@ -429,7 +429,7 @@ ui.event.result.hp_lose,-%d máu,-%d HP
 ui.event.result.relic,Nhận bảo vật: %s,Gained relic: %s
 ui.event.result.curse,Nhận lá nguyền: %s,Gained curse: %s
 ui.event.result.swap,Đổi %s lấy %s,Traded %s for %s
-ui.event.result.token,+%d token bỏ lá,+%d removal token
+ui.event.result.token,+%d lượt bỏ lá,+%d card removals
 ui.event.result.modifier,Bước chậm hơn trong %d trận,Slower steps for %d matches
 ui.event.result.upgrade,Một lá được nâng cấp,A card was upgraded
 ui.shop.title,CỬA HÀNG,SHOP
@@ -492,7 +492,7 @@ event.suoi_tinh.bathe.result,"Nước suối buốt như dao, nhưng lá phép s
 event.ke_lang_thang.title,Kẻ lang thang,The Wanderer
 event.ke_lang_thang.body,"Một lão lang thang ngồi bên đống lửa tàn. ""Đưa ta một bảo vật, ta đổi lại thứ quý hơn. Nhưng món nào ta cũng nhận, đừng hỏi vì sao.""","An old wanderer sits by a dying fire. ""Give me a relic and I will trade you something finer. I take whatever I like, do not ask why."""
 event.ke_lang_thang.swap.label,Đổi bảo vật,Trade a relic
-event.ke_lang_thang.swap.cost,Mất một bảo vật (không phải của boss),Lose a relic (not a boss relic)
+event.ke_lang_thang.swap.cost,Mất một bảo vật (không phải Mảnh Gốc),Lose a relic (not a Primal Shard)
 event.ke_lang_thang.swap.result,"Lão cười, cầm bảo vật của bạn và đưa lại một món quý hơn.","He grins, takes your relic and hands back a finer one."
 event.mo_hoang.title,Mộ hoang,Lonely Grave
 event.mo_hoang.body,"Một ngôi mộ cũ, đất còn mới bị xới. Có thể bên dưới còn vàng, cũng có thể còn thứ không nên đánh thức.","An old grave, the earth freshly disturbed. There may be gold beneath, or something better left asleep."
@@ -525,38 +525,38 @@ ui.event.already_chosen,Bạn đã chọn rồi,You already chose
 piece.z4.name,Chữ Z,Z
 piece.j4.name,Chữ J,J
 piece.y5.name,Chữ Y,Y
-ui.piece_deck.title,BỘ MẢNH,PIECE DECK
-ui.piece_deck.open,Bộ mảnh,Pieces
-ui.piece_deck.tokens,Token Xóa hình: %d,Removal tokens: %d
+ui.piece_deck.title,BỘ KHỐI,BLOCK SET
+ui.piece_deck.open,Bộ khối,Block set
+ui.piece_deck.tokens,Lượt quên hình: %d,Forget tokens: %d
 ui.piece_deck.percent,Rơi %s%%,Drop %s%%
-ui.piece_deck.remove,Xóa hình (còn %d token),Remove shape (%d tokens left)
+ui.piece_deck.remove,Quên hình (còn %d lượt),Forget shape (%d tokens left)
 ui.piece_deck.close,Đóng,Close
 ui.piece_deck.run_only,Hình mới,New shape
-ui.piece_deck.removed_tag,Đã xóa,Removed
-ui.piece_deck.hint,Chạm một hình để chọn rồi xóa,"Tap a shape to select it, then remove it"
-ui.piece_deck.removed_msg,Đã xóa: %s,Removed: %s
-ui.piece_deck.fallback,Bộ mảnh không vừa sân này — dùng mảnh gốc,Your piece deck does not fit this arena — using the base pieces
-piece_deck.reason.unknown,Hình này không có trong bộ,This shape is not in your deck
-piece_deck.reason.already_removed,Hình này đã bị xóa,This shape is already removed
-piece_deck.reason.min_shapes,Bộ mảnh cần ít nhất %d hình,Your deck needs at least %d shapes
-piece_deck.reason.no_token,Hết token Xóa hình,No removal tokens left
-ui.piece_deck.ink_title,Ấn hình,Imprint a shape
-ui.piece_deck.ink_confirm,Ấn hình này,Imprint this shape
-ui.piece_deck.ink_skip,Không ấn,No imprint
-ui.piece_deck.ink_new,Thêm vào bộ mảnh,Adds it to your deck
+ui.piece_deck.removed_tag,Đã quên,Forgotten
+ui.piece_deck.hint,Chạm một hình để chọn rồi quên,"Tap a shape to select it, then forget it"
+ui.piece_deck.removed_msg,Đã quên: %s,Forgotten: %s
+ui.piece_deck.fallback,Bộ khối không vừa sân này — dùng khối gốc,Your block set does not fit this arena — using the base blocks
+piece_deck.reason.unknown,Hình này không có trong bộ,This shape is not in your block set
+piece_deck.reason.already_removed,Hình này đã bị quên,This shape is already forgotten
+piece_deck.reason.min_shapes,Bộ khối cần ít nhất %d hình,Your block set needs at least %d shapes
+piece_deck.reason.no_token,Hết lượt quên hình,No forget tokens left
+ui.piece_deck.ink_title,Học hình,Learn a shape
+ui.piece_deck.ink_confirm,Học hình này,Learn this shape
+ui.piece_deck.ink_skip,Không học,Don't learn
+ui.piece_deck.ink_new,Thêm vào bộ khối,Adds it to your block set
 ui.piece_deck.ink_up,Rơi nhiều hơn: ×%d → ×%d,Drops more often: ×%d → ×%d
-ui.piece_deck.pick_remove,Chọn hình để xóa,Pick a shape to remove
-ui.shop.service.remove_shape.name,Xóa hình,Remove a shape
-ui.shop.service.remove_shape.desc,Bỏ một hình khỏi bộ mảnh,Take a shape out of your piece deck
-ui.shop.confirm_remove_shape,Xóa hình này (%d vàng),Remove this shape (%d gold)
+ui.piece_deck.pick_remove,Chọn hình để quên,Pick a shape to forget
+ui.shop.service.remove_shape.name,Quên hình,Forget a shape
+ui.shop.service.remove_shape.desc,Bỏ một hình khỏi bộ khối,Take a shape out of your block set
+ui.shop.confirm_remove_shape,Quên hình này (%d vàng),Forget this shape (%d gold)
 ui.piece_deck.new_shape,Hình mới,New
-boss.an_dai_keeper.name,Người Giữ Ấn Đài,Keeper of the Seal Dais
-match.an_dai_keeper.desc,"(Tạm) Kẻ canh Ấn Đài: tới nửa máu nó thức tỉnh, gai và lửa phủ kín sân.","(Placeholder) The dais keeper: at half health it awakens, thorns and fire cover the field."
-phase.an_dai_keeper.2,Ấn Đài thức tỉnh,The Dais Awakens
-chapter.an_dai.name,Ấn Đài,The Seal Dais
-chapter.an_dai.intro,(Tạm) Cuối con đường là Ấn Đài. Mọi lựa chọn của ngươi đều được ghi ở đây.,(Placeholder) The road ends at the Seal Dais. Every choice you made is written here.
-chapter.an_dai.end,(Tạm) Ấn Đài lặng đi. Hành trình khép lại.,(Placeholder) The Seal Dais falls silent. The journey ends.
-arena.an_dai_dais.name,Bệ Ấn,Seal Dais
+boss.an_dai_keeper.name,Người Giữ Tâm Lưới,Heart Keeper
+match.an_dai_keeper.desc,"Người Giữ Tâm Lưới: tới nửa máu, Tâm Lưới bừng sáng, gai và lửa phủ kín sân.","The Heart Keeper: at half health the Lattice Heart awakens, and thorns and fire cover the field."
+phase.an_dai_keeper.2,Tâm Lưới bừng sáng,The Lattice Heart awakens
+chapter.an_dai.name,Tâm Lưới,The Lattice Heart
+chapter.an_dai.intro,"Chuyến leo dừng ở Tâm Lưới, nơi Biến Cố bắt đầu. Mọi lựa chọn của ngươi đều được ghi ở đây.","The climb ends at the Lattice Heart, where the Cataclysm began. Every choice you made is written here."
+chapter.an_dai.end,Ánh sáng Tâm Lưới dịu đi. Chuyến leo khép lại.,The Lattice Heart's glow softens. The climb is over.
+arena.an_dai_dais.name,Bệ Tâm Lưới,Lattice Dais
 ui.fate.title,%s đã quỵ,%s is down
 ui.fate.question,Tha hay giết?,Spare or execute?
 ui.fate.spare,Tha,Spare
@@ -567,18 +567,18 @@ ui.fate.hold_hint,Giữ để xác nhận,Hold to confirm
 ui.fate.offer_title,CHIẾN LỢI PHẨM,SPOILS
 ui.fate.offer_hint,"Chạm để chọn, chạm lại để lấy","Tap to pick, tap again to take"
 ending.spare.title,Kết thúc: Lòng Tha Thứ,Ending: Mercy
-ending.spare.line1,"Những kẻ gác vùng còn sống, và họ nhớ bàn tay đã chừa mạng mình.","The wardens still live, and they remember the hand that spared them."
-ending.spare.line2,Ấn Đài lặng đi khi bạn bước xuống bậc đá cuối cùng.,The Seal Dais falls silent as you step down its last stone stair.
+ending.spare.line1,"Các Kẻ Gác vẫn còn sống, và họ nhớ bàn tay đã chừa mạng mình.","The Wardens still live, and they remember the hand that spared them."
+ending.spare.line2,Tâm Lưới sáng một màu ấm khi bạn bước xuống bậc đá cuối cùng.,The Lattice Heart glows warm as you step down its last stone stair.
 ending.spare.line3,"Không ai hát về trận này, nhưng các vùng đất thở dễ hơn.","No one sings of this fight, yet the lands breathe easier."
 ending.spare.line4,"Đường về nhà còn dài, và lần đầu tiên nó không có kẻ thù.","The road home is long, and for once it holds no enemies."
 ending.balance.title,Kết thúc: Cán Cân,Ending: The Balance
 ending.balance.line1,"Có kẻ bạn tha, có kẻ bạn chém; cán cân không nghiêng bên nào.","Some you spared, some you cut down; the scales tip neither way."
-ending.balance.line2,"Ấn Đài vỡ làm đôi, một nửa sáng, một nửa tối.","The Seal Dais splits in two, one half light, one half dark."
+ending.balance.line2,"Tâm Lưới vỡ làm đôi, một nửa sáng, một nửa tối.","The Lattice Heart splits in two, one half light, one half dark."
 ending.balance.line3,Các vùng đất sẽ nhớ bạn theo những cách rất khác nhau.,The lands will remember you in very different ways.
 ending.balance.line4,Bạn mang cả hai nửa ấy theo trên đường về.,You carry both halves with you on the road home.
 ending.execute.title,Kết thúc: Lưỡi Kiếm Lạnh,Ending: The Cold Blade
-ending.execute.line1,Không kẻ gác vùng nào còn đứng; bảo vật của họ nặng trong túi bạn.,No warden is left standing; their relics weigh heavy in your pack.
-ending.execute.line2,"Ấn Đài cúi đầu trước sức mạnh, không phải trước lòng tin.","The Seal Dais bows to strength, not to trust."
+ending.execute.line1,Không Kẻ Gác nào còn đứng; những Mảnh Gốc của họ nặng trong túi bạn.,No Warden is left standing; their Primal Shards weigh heavy in your pack.
+ending.execute.line2,"Tâm Lưới cúi đầu trước sức mạnh, không phải trước lòng tin.","The Lattice Heart bows to strength, not to trust."
 ending.execute.line3,"Các vùng đất im lặng, nhưng đó là im lặng của nỗi sợ.","The lands are quiet now, but it is the quiet of fear."
 ending.execute.line4,"Bạn là kẻ mạnh nhất còn lại, và cũng là kẻ cô độc nhất.","You are the strongest one left, and the loneliest."
 ui.ending.leave,Về màn chính,Back to title
@@ -594,8 +594,8 @@ ui.stats.damage_taken,Sát thương nhận,Damage taken
 ui.stats.hits_taken,Đòn trúng nhận,Hits taken
 ui.stats.casts,Đòn đã tung,Casts
 ui.stats.joins,Đòn ghép,Joined casts
-ui.stats.featured,Đòn hình chủ đạo,Featured-shape casts
-ui.stats.signatures,Tuyệt kỹ đã dùng,Signatures used
+ui.stats.featured,Đòn Hình Cộng Hưởng,Resonant-shape casts
+ui.stats.signatures,Thức Tỉnh đã dùng,Awakenings used
 ui.stats.deck_size,Số lá cuối,Final deck size
 ui.stats.highest_level,Lá cấp cao nhất,Highest card level
 ui.stats.relics,Bảo vật,Relics
@@ -603,11 +603,11 @@ ui.stats.fates,Tha / Giết,Spared / Executed
 ui.stats.fates_value,%d / %d,%d / %d
 ui.run_hud.fell_at,Gục ở tầng %d · %s,Fell on floor %d · %s
 ui.run_hud.killed_by,Kẻ hạ bạn: %s,Defeated by: %s
-ui.hud.join_hint,Kéo thêm mảnh vào để ghép,Drag another piece in to join
+ui.hud.join_hint,Kéo thêm khối vào để ghép,Drag another block in to join
 chapter.swamp.name,Đầm Lầy Độc,The Poison Swamp
 chapter.swamp.intro,Hơi độc bốc lên từ bùn đen. Mỗi bước chân chìm sâu hơn bước trước.,Poison vapor rises from the black mud. Every step sinks deeper than the last.
 chapter.swamp.end,"Cóc Chúa lặn xuống bùn, đầm lầy lặng tiếng. Con đường lại hiện ra.",The Toad Matriarch sinks into the mud and the swamp falls quiet. The road shows itself again.
-chapter.desert.name,Sa Mạc Cát Ấn,The Sealed Sands
+chapter.desert.name,Sa Mạc Cát Vùi,The Buried Sands
 chapter.desert.intro,Gió nóng cuốn cát qua những cồn đá cổ. Cát nuốt từng ô đất dưới chân.,Hot wind drives sand across ancient dunes. The sand swallows the ground tile by tile.
 chapter.desert.end,"Nhân Sư Cát vỡ vụn thành bụi, bão tan. Chân trời mở ra phía trước.",The Sand Sphinx crumbles to dust and the storm dies. The horizon opens ahead.
 arena.bog.name,Đầm lầy,Bog
@@ -634,11 +634,11 @@ boss.scorpion.name,Bọ Cạp Phản,Riposte Scorpion
 boss.sand_sphinx.name,Nhân Sư Cát,Sand Sphinx
 match.mire_slug.desc,Sống trong bùn: lầy không làm nó chậm hay mất máu.,It lives in the mud: mire neither slows nor hurts it.
 match.spore_cap.desc,"Mỗi lần trúng đòn, nó rải lầy lên đất bạn: đánh ít mà đau.","Every hit makes it scatter mire over your side: strike few, strike hard."
-match.leap_frog.desc,Cứ vài bước lại nhảy 2 ô qua kết giới và gai: đón đầu bóng đích.,Every few steps it hops 2 tiles over seals and thorns: hit the landing shadow.
+match.leap_frog.desc,Cứ vài bước lại nhảy 2 ô qua Tường và gai: đón đầu bóng đích.,Every few steps it hops 2 tiles over Walls and thorns: hit the landing shadow.
 match.toad_matriarch.desc,"Miễn nhiễm với lầy, biến đất bạn thành bãi lầy và chặn đường thoát.","Immune to mire, it turns your ground to bog and cuts off your escape."
 match.sand_burrower.desc,"Lặn xuống cát rồi trồi lên chỗ khác: canh nhịp, đừng đánh lúc nó lặn.","It dives under the sand and resurfaces elsewhere: time your cut, not while it is buried."
 match.scorpion.desc,Trúng đòn lớn là nó phản lại ngay: hãy dùng đòn nhỏ.,A big hit earns an instant counter-sting: use small cuts.
-match.sand_sphinx.desc,"Cứ vài nhịp lại dấy bão cát: gió trôi nhanh gấp đôi, cát lấp thêm ô.",Every so often a sandstorm rises: pieces drift twice as fast and more tiles fill with sand.
+match.sand_sphinx.desc,"Cứ vài nhịp lại dấy bão cát: gió trôi nhanh gấp đôi, cát lấp thêm ô.",Every so often a sandstorm rises: blocks drift twice as fast and more tiles fill with sand.
 ui.hud.wind,GIÓ,WIND
 ui.hud.sandstorm,BÃO CÁT,SANDSTORM
 ui.hud.hop,NHẢY,HOP
@@ -648,70 +648,70 @@ ui.hud.burrowed,ĐANG LẶN,BURROWED
 card.gai_doc.name,Gai độc,Venom Thorns
 card.gai_doc.desc,Rải gai lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng. Trúng thì gây thêm sát thương nhẹ.,Covers the cut cells in thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile. Also deals light damage on a hit.
 card.luoi_san.name,Lưới săn,Hunting Net
-card.luoi_san.desc,Phong ấn các ô trúng trong {seal_sec} giây. Trúng boss thì gieo Rạn {fragile_stacks} tầng.,Seals the cut cells for {seal_sec} s. A hit on the boss applies {fragile_stacks} Fragile.
+card.luoi_san.desc,Dựng Tường trên các ô trúng trong {seal_sec} giây. Trúng boss thì gieo Rạn {fragile_stacks} tầng.,Builds Walls on the cut cells for {seal_sec} s. A hit on the boss applies {fragile_stacks} Fragile.
 card.thanh_thuy.name,Thánh thủy,Holy Water
-card.thanh_thuy.desc,"Gieo Hàn {frost_stacks} tầng. Hồi {heal_self} máu cho người niệm khi đòn tới nơi, trúng hay trượt.","Applies {frost_stacks} Frost. Heals the caster {heal_self} HP when the cut lands, hit or miss."
+card.thanh_thuy.desc,"Gieo Giá Lạnh {frost_stacks} tầng. Hồi {heal_self} máu cho người niệm khi đòn tới nơi, trúng hay trượt.","Applies {frost_stacks} Chill. Heals the caster {heal_self} HP when the cut lands, hit or miss."
 card.bang_tam.name,Băng tâm,Frost Heart
-card.bang_tam.desc,Sát thương theo số ô và gieo Hàn {frost_stacks} tầng.,Damage per cell and applies {frost_stacks} Frost.
+card.bang_tam.desc,Sát thương theo số ô và gieo Giá Lạnh {frost_stacks} tầng.,Damage per cell and applies {frost_stacks} Chill.
 piece.w5.name,Bậc thang,Staircase
 piece.n5.name,Chữ N,N
 piece.v5.name,Chữ V,V
-achievement.first_region_boss.name,Boss vùng đầu tiên,First Region Boss
-achievement.first_region_boss.desc,Hạ boss vùng đầu tiên,Defeat your first region boss
-achievement.reach_an_dai.name,Tới Ấn Đài,Reach the Dais
-achievement.reach_an_dai.desc,Lần đầu tới Ấn Đài,Reach the Seal Dais for the first time
+achievement.first_region_boss.name,Kẻ Gác đầu tiên,First Warden
+achievement.first_region_boss.desc,Hạ Kẻ Gác đầu tiên,Defeat your first Warden
+achievement.reach_an_dai.name,Tới Tâm Lưới,Reach the Lattice Heart
+achievement.reach_an_dai.desc,Lần đầu tới Tâm Lưới,Reach the Lattice Heart for the first time
 achievement.first_run_won.name,Chiến thắng đầu tiên,First Victory
-achievement.first_run_won.desc,Thắng một run,Win a run
+achievement.first_run_won.desc,Thắng một chuyến leo,Win a climb
 achievement.hunter_path.name,Đường Thợ săn,The Hunter's Path
-achievement.hunter_path.desc,Giết tổng cộng 3 boss vùng,Execute 3 region bosses in total
+achievement.hunter_path.desc,Giết tổng cộng 3 Kẻ Gác,Execute 3 Wardens in total
 achievement.mercy_path.name,Đường Từ bi,The Path of Mercy
-achievement.mercy_path.desc,Tha tổng cộng 3 boss vùng,Spare 3 region bosses in total
+achievement.mercy_path.desc,Tha tổng cộng 3 Kẻ Gác,Spare 3 Wardens in total
 achievement.ending_mercy.name,Lòng Tha Thứ,Mercy Ending
-achievement.ending_mercy.desc,Xem kết thúc tha hết,See the ending where every boss is spared
+achievement.ending_mercy.desc,Xem kết thúc tha hết,See the ending where every Warden is spared
 achievement.ending_middle.name,Cán Cân,Balance Ending
 achievement.ending_middle.desc,Xem kết thúc lưng chừng,See the ending of mixed choices
 achievement.ending_slaughter.name,Lưỡi Kiếm Lạnh,Cold Blade Ending
-achievement.ending_slaughter.desc,Xem kết thúc giết hết,See the ending where every boss is executed
+achievement.ending_slaughter.desc,Xem kết thúc giết hết,See the ending where every Warden is executed
 achievement.boss_forest.name,Chủ Rừng Sương,Master of the Mist
-achievement.boss_forest.desc,Hạ boss vùng Rừng Sương,Defeat the Misty Forest boss
+achievement.boss_forest.desc,Hạ Kẻ Gác vùng Rừng Sương,Defeat the Misty Forest Warden
 achievement.boss_dungeon.name,Vua Hầm Ngục,Dungeon Conqueror
-achievement.boss_dungeon.desc,Hạ boss vùng Hầm Ngục,Defeat the Dungeon boss
+achievement.boss_dungeon.desc,Hạ Kẻ Gác vùng Hầm Ngục,Defeat the Dungeon Warden
 achievement.boss_frost.name,Phá Tháp Sương,Mist Tower Breaker
-achievement.boss_frost.desc,Hạ boss vùng Tháp Sương,Defeat the Mist Tower boss
+achievement.boss_frost.desc,Hạ Kẻ Gác vùng Tháp Sương,Defeat the Mist Tower Warden
 achievement.zone_trap.name,Bẫy gai,Thorn Trap
-achievement.zone_trap.desc,Boss bước vào gai 5 lần trong một run,Make a boss step on your thorns 5 times in one run
-achievement.frost_burst_5.name,Bão Hàn,Frost Storm
-achievement.frost_burst_5.desc,Hàn nổ 5 lần trong một trận,Burst Frost 5 times in one match
+achievement.zone_trap.desc,Boss bước vào gai 5 lần trong một chuyến leo,Make a boss step on your thorns 5 times in one climb
+achievement.frost_burst_5.name,Bão Giá Lạnh,Chill Storm
+achievement.frost_burst_5.desc,Giá Lạnh nổ 5 lần trong một trận,Burst Chill 5 times in one match
 achievement.win_kiem_si.name,Kiếm sĩ khải hoàn,Swordsman's Triumph
-achievement.win_kiem_si.desc,Thắng một run với Kiếm sĩ,Win a run as the Swordsman
+achievement.win_kiem_si.desc,Thắng một chuyến leo với Kiếm sĩ,Win a climb as the Swordsman
 achievement.win_phap_su.name,Pháp sư khải hoàn,Mage's Triumph
-achievement.win_phap_su.desc,Thắng một run với Pháp sư,Win a run as the Mage
+achievement.win_phap_su.desc,Thắng một chuyến leo với Pháp sư,Win a climb as the Mage
 achievement.win_sat_thu.name,Sát thủ khải hoàn,Assassin's Triumph
-achievement.win_sat_thu.desc,Thắng một run với Sát thủ,Win a run as the Assassin
+achievement.win_sat_thu.desc,Thắng một chuyến leo với Sát thủ,Win a climb as the Assassin
 achievement.win_tho_san.name,Thợ săn khải hoàn,Hunter's Triumph
-achievement.win_tho_san.desc,Thắng một run với Thợ săn,Win a run as the Hunter
+achievement.win_tho_san.desc,Thắng một chuyến leo với Thợ săn,Win a climb as the Hunter
 achievement.win_giao_si.name,Giáo sĩ khải hoàn,Priest's Triumph
-achievement.win_giao_si.desc,Thắng một run với Giáo sĩ,Win a run as the Priest
+achievement.win_giao_si.desc,Thắng một chuyến leo với Giáo sĩ,Win a climb as the Priest
 achievement.burn_build.name,Bộ bài lửa,Burning Deck
-achievement.burn_build.desc,Hạ boss vùng với từ 4 lá Đốt trong bộ,Defeat a region boss with 4 or more Burn cards in your deck
-achievement.featured_10.name,Bậc thầy hình chủ đạo,Featured Master
-achievement.featured_10.desc,10 đòn hình chủ đạo trong một run,Land 10 featured-shape casts in one run
+achievement.burn_build.desc,Hạ Kẻ Gác với từ 4 lá Cháy trong bộ,Defeat a Warden with 4 or more Burn cards in your deck
+achievement.featured_10.name,Bậc thầy Hình Cộng Hưởng,Resonant Master
+achievement.featured_10.desc,10 đòn Hình Cộng Hưởng trong một chuyến leo,Land 10 Resonant-shape casts in one climb
 achievement.no_hit_boss.name,Bất khả xâm phạm,Untouchable
-achievement.no_hit_boss.desc,Hạ boss vùng mà không nhận đòn nào,Defeat a region boss without taking a hit
+achievement.no_hit_boss.desc,Hạ Kẻ Gác mà không nhận đòn nào,Defeat a Warden without taking a hit
 achievement.small_deck.name,Bộ bài gọn,Lean Deck
-achievement.small_deck.desc,Thắng run với bộ từ 8 lá trở xuống,Win a run with a deck of 8 cards or fewer
+achievement.small_deck.desc,Thắng chuyến leo với bộ từ 8 lá trở xuống,Win a climb with a deck of 8 cards or fewer
 character.tho_san.name,Thợ săn,Hunter
-character.tho_san.desc,Giăng bẫy và kết giới để boss lộ sơ hở; tuyệt kỹ kéo dài vùng.,Sets traps and seals to leave the boss open; its signature stretches zones.
+character.tho_san.desc,Giăng bẫy và Tường để boss lộ sơ hở; Thức Tỉnh kéo dài vùng.,Sets traps and Walls to leave the boss open; its Awakening stretches zones.
 character.giao_si.name,Giáo sĩ,Priest
-character.giao_si.desc,"Bền bỉ, xây bộ Hàn; mỗi lần Hàn nổ lại hồi máu.","Sturdy, builds on Frost; every Frost burst heals."
+character.giao_si.desc,"Bền bỉ, xây bộ Giá Lạnh; mỗi lần Giá Lạnh nổ lại hồi máu.","Sturdy, builds on Chill; every Chill burst heals."
 passive.hunter_mark.name,Dấu săn,Hunter's Mark
-passive.hunter_mark.desc,"Boss bước vào gai của bạn, hoặc đứng kề kết giới vừa lập, nhận 1 tầng Rạn (chờ 3 giây).","A boss that steps onto your thorns, or stands next to a fresh seal, gains 1 Fragile (3 s cooldown)."
+passive.hunter_mark.desc,"Boss bước vào gai của bạn, hoặc đứng kề Tường vừa lập, nhận 1 tầng Rạn (chờ 3 giây).","A boss that steps onto your thorns, or stands next to a fresh Wall, gains 1 Fragile (3 s cooldown)."
 passive.prayer.name,Lời nguyện,Prayer
-passive.prayer.desc,"Mỗi lần Hàn nổ trên boss, hồi 8 máu.",Every Frost burst on the boss heals 8 HP.
+passive.prayer.desc,"Mỗi lần Giá Lạnh nổ trên boss, hồi 8 máu.",Every Chill burst on the boss heals 8 HP.
 signature.vay_bat.name,Vây Bắt,Snare
 signature.vay_bat.desc,"4 giây: vùng bạn tạo kéo dài ×1,5; mỗi tầng Rạn bị tiêu nhân ×2 thay vì ×1,5.",4 s: zones you form last ×1.5 longer; each Fragile stack spent deals ×2 instead of ×1.5.
 signature.thanh_an.name,Thánh Ấn,Holy Seal
-signature.thanh_an.desc,"4 giây: mỗi đòn trúng boss thêm 1 tầng Hàn; Hàn nổ gây ×1,5.",4 s: every hit on the boss adds 1 Frost; Frost bursts deal ×1.5.
+signature.thanh_an.desc,"4 giây: mỗi đòn trúng boss thêm 1 tầng Giá Lạnh; Giá Lạnh nổ gây ×1,5.",4 s: every hit on the boss adds 1 Chill; Chill bursts deal ×1.5.
 ui.hud.heal_number,+%d,+%d
 title.achievements,Thành tựu,Achievements
 achievements.title,THÀNH TỰU,ACHIEVEMENTS
@@ -725,15 +725,15 @@ achievements.detail.rewards,Phần thưởng,Rewards
 achievements.detail.progress,Tiến độ %d/%d,Progress %d/%d
 achievements.detail.no_reward,"Không có phần thưởng, chỉ có danh dự.","No reward, just bragging rights."
 achievements.detail.close,Chạm để đóng,Tap to close
-achievements.reward.card,Lá bài,Card
-achievements.reward.piece,Mảnh,Piece
+achievements.reward.card,Lá phép,Card
+achievements.reward.piece,Khối,Block
 achievements.reward.relic,Bảo vật,Relic
 achievements.reward.character,Nhân vật,Character
 achievements.reward.region,Vùng,Region
 unlock.new,Mới,New
 unlock.title,Mới mở,Unlocked
-unlock.kind.card,Lá bài,Card
-unlock.kind.piece,Mảnh,Piece
+unlock.kind.card,Lá phép,Card
+unlock.kind.piece,Khối,Block
 unlock.kind.relic,Bảo vật,Relic
 unlock.kind.character,Nhân vật,Character
 unlock.kind.region,Vùng,Region
@@ -756,22 +756,22 @@ kiep.level.6.name,Vết thương dai,Lingering Wounds
 kiep.level.6.desc,Hồi máu khi sang tầng giảm một nửa,Healing between floors is halved
 kiep.level.7.name,Thân mỏng,Frail Body
 kiep.level.7.desc,Máu tối đa giảm 15%,Max HP is 15% lower
-kiep.level.8.name,Mảnh chậm,Slow Pieces
-kiep.level.8.desc,Mảnh của bạn rơi chậm hơn 15%,Your pieces drop 15% slower
+kiep.level.8.name,Khối chậm,Slow Blocks
+kiep.level.8.desc,Khối của bạn rơi chậm hơn 15%,Your blocks drop 15% slower
 kiep.level.9.name,Boss nhanh tay,Quick Bosses
-kiep.level.9.desc,Boss niệm nhanh hơn 10%,Bosses wind up 10% faster
-kiep.level.10.name,Thủ lĩnh hung hãn,Fierce Bosses
-kiep.level.10.desc,Boss vùng có thêm 1 đặc tính,Regional bosses gain 1 extra trait
-ui.character_select.kiep_badge,Kiếp %d,Rebirth %d
-ui.character_select.kiep_label,Cấp Kiếp,Rebirth level
-ui.character_select.kiep_locked_hint,Thắng Kiếp %d để mở,Win Rebirth %d to unlock
-ui.character_select.kiep_rules_title,Luật đang bật,Active rules
+kiep.level.9.desc,Boss niệm nhanh hơn 10%,Bosses channel 10% faster
+kiep.level.10.name,Thủ lĩnh hung hãn,Fierce Wardens
+kiep.level.10.desc,Kẻ Gác có thêm 1 đặc tính,Wardens gain 1 extra trait
+ui.character_select.kiep_badge,Giao Kèo %d,Pact %d
+ui.character_select.kiep_label,Cấp Giao Kèo,Pact level
+ui.character_select.kiep_locked_hint,Thắng Giao Kèo %d để mở,Win Pact %d to unlock
+ui.character_select.kiep_rules_title,Điều khoản đang bật,Active terms
 ui.character_select.kiep_rule_line,%d. %s,%d. %s
-ui.character_select.kiep_none,Kiếp 0: không có luật thêm,Rebirth 0: no extra rules
+ui.character_select.kiep_none,Giao Kèo 0: không có điều khoản thêm,Pact 0: no extra terms
 ui.character_select.tap_to_start,Chạm thẻ đã chọn để vào,Tap the chosen card to start
-ui.run.kiep,Kiếp %d,Rebirth %d
-ui.ending.kiep_unlocked,Đã mở Kiếp %d,Unlocked Rebirth %d
-ui.stats.kiep,Kiếp,Rebirth
+ui.run.kiep,Giao Kèo %d,Pact %d
+ui.ending.kiep_unlocked,Đã mở Giao Kèo %d,Unlocked Pact %d
+ui.stats.kiep,Giao Kèo,Pact
 ui.hud.vent_warn,SẮP PHUN,ERUPTS
 ui.hud.crumble,SẮP RƠI,CRUMBLING
 ui.hud.island_drop,ĐẢO SẮP RƠI,ISLE FALLS
@@ -810,29 +810,29 @@ boss.thunder_shaman.name,Pháp Sư Sấm,Thunder Shaman
 boss.gale_bird.name,Chim Gió,Gale Bird
 boss.cloud_veil.name,Thần Mây,Cloud Veil
 boss.storm_dragon.name,Long Vương Gió,Storm Dragon
-match.fire_eater.desc,Đốt và ô cháy hồi máu cho nó thay vì làm nó đau: lá đốt thành lá dở trong trận này.,Burn and fire heal it instead of hurting it: burn cards are poor picks in this match.
-match.ash_phoenix.desc,"Lần đầu gục nó hồi sinh với 40% máu sau 1,5 giây, trừ khi đang chịu Hàn: hãy mang băng.","The first time it falls it revives at 40% health after 1.5 s, unless it carries Frost: bring ice."
+match.fire_eater.desc,Đốt và ô cháy hồi máu cho nó thay vì làm nó đau: lá Cháy thành lá dở trong trận này.,Burn and fire heal it instead of hurting it: burn cards are poor picks in this match.
+match.ash_phoenix.desc,"Lần đầu gục nó hồi sinh với 40% máu sau 1,5 giây, trừ khi đang chịu Giá Lạnh: hãy mang băng.","The first time it falls it revives at 40% health after 1.5 s, unless it carries Chill: bring ice."
 match.inferno_lord.desc,"Cứ 10 giây lại cho 2 mạch dung nham bên bạn cùng phun, ưu tiên mạch bạn đứng; ở nửa máu mạch phun dồn dập hơn.","Every 10 s two lava vents on your side erupt at once, the one you stand on first; at half health the vents erupt faster."
 match.gale_bird.desc,Cứ 6 giây lại thổi bạn đi 1 ô theo mũi tên cảnh báo: đừng đứng sát mép đảo.,Every 6 s a gust shoves you 1 tile along the warned arrow: do not stand at an island edge.
-match.cloud_veil.desc,"Mây che ô nó đứng: báo trúng bị tắt, trừ lúc nó bị Ghim hoặc đang niệm.","Cloud covers its tile: the hit forecast is hidden, except while it is pinned or casting."
+match.cloud_veil.desc,"Mây che ô nó đứng: báo trúng bị tắt, trừ lúc nó bị Đóng Băng hoặc đang niệm.","Cloud covers its tile: the hit forecast is hidden, except while it is Frozen or channeling."
 match.storm_dragon.desc,"Cứ 11 giây lại làm rơi một đảo bên bạn, kèm gió nhẹ: luôn giữ đường sang đảo khác.","Every 11 s an island on your side falls, with a light gust: always keep a way to another island."
 trait.burn_eater.name,Nuốt lửa,Fire Eater
 trait.burn_eater.desc,Đốt và ô cháy hồi máu cho nó thay vì gây sát thương.,Burn and fire heal it instead of dealing damage.
 trait.rebirth.name,Tái sinh,Rebirth
-trait.rebirth.desc,"Lần đầu về 0 máu nó hồi sinh với 40% máu sau 1,5 giây, trừ khi đang chịu Hàn.","The first time it reaches 0 health it revives at 40% after 1.5 s, unless it carries Frost."
+trait.rebirth.desc,"Lần đầu về 0 máu nó hồi sinh với 40% máu sau 1,5 giây, trừ khi đang chịu Giá Lạnh.","The first time it reaches 0 health it revives at 40% after 1.5 s, unless it carries Chill."
 trait.vent_surge.name,Mạch phun trào,Vent Surge
 trait.vent_surge.desc,"Cứ 10 giây cho 2 mạch dung nham bên bạn cùng phun, ưu tiên mạch chứa ô bạn đứng.","Every 10 s two lava vents on your side erupt together, the one under you first."
 trait.gust.name,Gió đẩy,Gust
-trait.gust.desc,"Định kỳ đẩy bạn 1 ô theo mũi tên cảnh báo; không đẩy vào ô thiếu, ô rơi hay ô kết giới.","Now and then it shoves you 1 tile along the warned arrow; never into a missing, fallen or sealed tile."
+trait.gust.desc,"Định kỳ đẩy bạn 1 ô theo mũi tên cảnh báo; không đẩy vào ô thiếu, ô rơi hay ô Tường.","Now and then it shoves you 1 tile along the warned arrow; never into a missing, fallen or Wall tile."
 trait.shroud.name,Mây che,Cloud Shroud
-trait.shroud.desc,"Mây che ô nó đứng: báo trúng bị ẩn, trừ khi nó bị Ghim hoặc đang niệm.","Cloud covers its tile: hit forecast hidden, unless it is pinned or casting."
+trait.shroud.desc,"Mây che ô nó đứng: báo trúng bị ẩn, trừ khi nó bị Đóng Băng hoặc đang niệm.","Cloud covers its tile: hit forecast hidden, unless it is Frozen or channeling."
 trait.island_drop.name,Đảo rơi,Island Drop
 trait.island_drop.desc,"Định kỳ làm rơi một đảo bên bạn trong vài giây, không bao giờ đảo cuối cùng còn đứng được.","Now and then an island on your side falls for a few seconds, never the last one left standing."
 achievement.reach_floor_4.name,Tới tầng 4,Reach Floor 4
-achievement.reach_floor_4.desc,Tới tầng 4 trong một run,Reach floor 4 in a run
+achievement.reach_floor_4.desc,Tới tầng 4 trong một chuyến leo,Reach floor 4 in a climb
 achievement.reach_floor_5.name,Tới tầng 5,Reach Floor 5
-achievement.reach_floor_5.desc,Tới tầng 5 trong một run,Reach floor 5 in a run
+achievement.reach_floor_5.desc,Tới tầng 5 trong một chuyến leo,Reach floor 5 in a climb
 piece.odd.name,Khối Lạ,Odd Block
-ui.hud.odd_hint,"%s: hình mới, to và mạnh, niệm lâu hơn","%s: a new shape, big and strong, slower to cast"
+ui.hud.odd_hint,"%s: hình mới, to và mạnh, niệm lâu hơn","%s: a new shape, big and strong, slower to channel"
 ui.piece_deck.odd_rule,"%s: khoảng %d%% khối rơi, %d–%d ô tùy sân (không học, không quên)","%s: about %d%% of drops, %d–%d cells by arena (never learned, never forgotten)"
 ui.piece_deck.odd_none,Không có %s,No %s

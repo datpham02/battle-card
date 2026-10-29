@@ -64,6 +64,11 @@ const GLYPH_WIDTH: float = 5.0
 const MARK_WIDTH: float = 6.0
 const CONNECTOR_WIDTH: float = 3.0
 const TITLE_FONT_SIZE: int = 44
+## Story 042: the title shrinks step by step from TITLE_FONT_SIZE to fit the free span between the "Block set"
+## button and the gold coin, not below this size (draw_string clips past that).
+const TITLE_MIN_FONT_SIZE: int = 22
+## Story 042: clear gap (px) kept between the title and the button / coin on each side.
+const TITLE_SIDE_GAP: float = 16.0
 const COLUMN_FONT_SIZE: int = 26
 const HEADER_FONT_SIZE: int = 22
 ## Story 023: the chapter intro line (intro_key) shown in the header strip while the run is still at
@@ -275,7 +280,6 @@ func _draw() -> void:
 # Title band (back button, chapter name, "Cột x/y") and the header strip (hero · HP · deck · tokens · luck).
 func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int) -> void:
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
-	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, _title_text(), TITLE_FONT_SIZE, TITLE_COLOR)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	var back_text: String = tr(TEXT_BACK)
 	UiButtons.draw_button(self, back, back_text, UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(back)), true, _back_font_size(back_text, back.size.x), OUTLINE_WIDTH)
@@ -287,7 +291,14 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 	draw_string(ThemeDB.fallback_font, Vector2(column_rect.position.x, column_rect.get_center().y + COLUMN_FONT_SIZE * 0.35), column_text, HORIZONTAL_ALIGNMENT_RIGHT, column_rect.size.x, COLUMN_FONT_SIZE, HEADER_COLOR)
 	# Story 033: the gold count (code-drawn coin + number) left of the column label.
 	var column_width: float = ThemeDB.fallback_font.get_string_size(column_text, HORIZONTAL_ALIGNMENT_LEFT, -1, COLUMN_FONT_SIZE).x
-	ShopView.draw_gold(self, column_rect.end.x - column_width - GOLD_GAP, column_rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
+	var coin_left: float = ShopView.draw_gold(self, column_rect.end.x - column_width - GOLD_GAP, column_rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
+	# Story 042: the title is centred in the free span between the "Block set" button and the gold coin
+	# (never under either), shrunk until it fits that span.
+	var title_text: String = _title_text()
+	var span_left: float = deck_button.end.x + TITLE_SIDE_GAP
+	var span: Rect2 = Rect2(span_left, title.position.y, maxf(coin_left - TITLE_SIDE_GAP - span_left, 0.0), title.size.y)
+	var title_size: int = _title_font_size(title_text, span.size.x)
+	_text(span, span.get_center().y + title_size * 0.35, title_text, title_size, TITLE_COLOR)
 	var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 	var max_hp: float = _max_hp(run)
 	var hp: float = max_hp if run.hp < 0.0 else minf(run.hp, max_hp)
@@ -485,6 +496,16 @@ func _pulse_alpha() -> float:
 # Centred single-line text at baseline [param y] over the width of [param rect].
 func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+
+
+# Story 042: the title's font, shrunk one step at a time from TITLE_FONT_SIZE until [param text] fits
+# [param width]; never below TITLE_MIN_FONT_SIZE (draw_string clips the rest).
+func _title_font_size(text: String, width: float) -> int:
+	var font: Font = ThemeDB.fallback_font
+	var size: int = TITLE_FONT_SIZE
+	while size > TITLE_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > width:
+		size -= 1
+	return size
 
 
 # Story 031: the back button's font, shrunk until [param text] fits [param width] minus a small inset

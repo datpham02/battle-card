@@ -13,6 +13,7 @@
 | **Hình Gốc** / The Primal Form | Hình đầu tiên đã nặn ra mọi vùng đất. Vỡ trong Biến Cố, mỗi mảnh nằm trong tay một kẻ gác vùng |
 | **Tâm Lưới** / The Lattice Heart | Trận cuối, trên đỉnh núi, nơi Biến Cố bắt đầu và mạng lưới ô vuông lan ra. Thay "Ấn Đài" |
 | **Người Giữ Tâm Lưới** / Heart Keeper | Boss trận cuối, người ghi lại mọi lựa chọn. Thay "Người Giữ Ấn Đài" |
+| **Bệ Tâm Lưới** / Lattice Dais | Tên sân trận cuối (bậc đài đá trên đỉnh). Thay "Bệ Ấn / Seal Dais" (người dùng chốt 2026-10-29) |
 | **Kẻ Gác** / Warden | Boss cuối mỗi vùng, giữ một mảnh Hình Gốc |
 | **Mạng lưới** / Lattice | Lưới ô vuông phủ mọi vùng đất. Lý do mọi trận đấu diễn ra trên hai nửa lưới |
 
@@ -43,7 +44,7 @@
 | 15 | Tuyệt kỹ / Signature | **Thức Tỉnh** / **Awakening** | Kỹ năng riêng của mỗi nhân vật, mở khi Bản Khắc đầy |
 | 16 | Nội tại / Passive | **Nội tại** (giữ) / **Passive** | Hiệu ứng luôn bật của nhân vật |
 | 17 | Tập trung / Focus | **Tập trung** (giữ) / **Focus** | Dừng hoặc làm chậm thời gian khi đặt khối |
-| 18 | Niệm, Phá phép / Broken | **Niệm**, **Phá phép** (giữ) | Thời gian niệm, và việc hủy đòn đang niệm |
+| 18 | Niệm, Phá phép / Broken | **Niệm**, **Phá phép** (giữ) / **Channel**, **Interrupt** (biểu ngữ "INTERRUPT!"; người dùng chốt 2026-10-29) | Thời gian niệm, và việc hủy đòn đang niệm |
 | 19 | Kết giới / Seal | **Tường** / **Wall** | Tường khối, không bước vào được |
 | 20 | Trận gai / Thorns | **Bãi Gai** / **Thorns** | Bước vào được nhưng mất máu hoặc dính Rạn |
 

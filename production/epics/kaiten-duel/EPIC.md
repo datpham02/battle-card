@@ -116,3 +116,4 @@ Sáu mục MVP của brief v3. Ngoài phạm vi: Parry/Posture, Guard/giáp, th�
 | 039 | Vùng Thành Hỏa Ngục và Không Đảo — mạch dung nham, sân tách đảo, ô rơi; pool vùng lên 7 | Integration | Complete | — |
 | 040 | Cân bằng lại cả run v6 bằng mô phỏng — 5 tầng + Ấn Đài, bảo vật, vàng, bộ mảnh, Tha/Giết, Kiếp; chỉ chỉnh dữ liệu | Config/Data | Complete | — |
 | 041 | Khối Lạ — khối hình ngẫu nhiên (≥ 5 ô, không trùng thư viện) rơi xen kẽ khối hình học, cỡ theo số ô của sân, cả hai bên | Integration | Complete | — |
+| 042 | Thuật ngữ Tessera — đổi chữ hiển thị nhóm 1–4 của glossary (vi + en, tiếng Anh làm chính), đổi theo kéo, lore "Ấn Đài" viết lại | UI | Complete | — |

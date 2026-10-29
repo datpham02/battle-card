@@ -45,14 +45,14 @@ func _initialize() -> void:
 		for spec: String in FORMATS[key]:
 			var ok: bool = str(row.get("vi", "")).contains(spec) and str(row.get("en", "")).contains(spec)
 			_check(ok, "%s carries %s in vi and en" % [key, spec])
-	_check(str(csv.get("ui.piece_deck.fallback", {}).get("vi", "")) == "Bộ mảnh không vừa sân này — dùng mảnh gốc", "fallback vi text has diacritics")
+	_check(str(csv.get("ui.piece_deck.fallback", {}).get("vi", "")) == "Bộ khối không vừa sân này — dùng khối gốc", "fallback vi text has diacritics")
 	# The formatted strings the view builds.
 	TranslationServer.set_locale("vi")
-	_check(TranslationServer.translate("ui.piece_deck.remove") % 2 == "Xóa hình (còn 2 token)", "vi remove button = %s" % (TranslationServer.translate("ui.piece_deck.remove") % 2))
+	_check(TranslationServer.translate("ui.piece_deck.remove") % 2 == "Quên hình (còn 2 lượt)", "vi remove button = %s" % (TranslationServer.translate("ui.piece_deck.remove") % 2))
 	_check(TranslationServer.translate("ui.piece_deck.percent") % "12,5" == "Rơi 12,5%", "vi percent = %s" % (TranslationServer.translate("ui.piece_deck.percent") % "12,5"))
 	TranslationServer.set_locale("en")
-	_check(TranslationServer.translate("ui.piece_deck.title") == "PIECE DECK", "en title = %s" % TranslationServer.translate("ui.piece_deck.title"))
-	_check(TranslationServer.translate("piece_deck.reason.min_shapes") % 5 == "Your deck needs at least 5 shapes", "en min_shapes reason")
+	_check(TranslationServer.translate("ui.piece_deck.title") == "BLOCK SET", "en title = %s" % TranslationServer.translate("ui.piece_deck.title"))
+	_check(TranslationServer.translate("piece_deck.reason.min_shapes") % 5 == "Your block set needs at least 5 shapes", "en min_shapes reason")
 	TranslationServer.set_locale("vi")
 	print("FAILS=%d" % _fails)
 	quit(1 if _fails > 0 else 0)

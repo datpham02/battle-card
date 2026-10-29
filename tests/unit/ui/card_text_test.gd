@@ -78,7 +78,7 @@ func _fixture_numbers() -> void:
 	var seal: String = CardText.describe("ket_gioi", 1, skills, combat)
 	_check(seal.contains("3.5 s") and not seal.contains("4 s"), "en card seal_sec wins over combat zones: %s" % seal)
 	var frost: String = CardText.describe("han_khi", 1, skills, combat)
-	_check(frost.contains("3 Frost") and frost.contains("At 5 stacks") and frost.contains("bursts for 31"), "en frost stacks + combat burst numbers: %s" % frost)
+	_check(frost.contains("3 Chill") and frost.contains("At 5 stacks") and frost.contains("bursts for 31"), "en frost stacks + combat burst numbers: %s" % frost)
 	var fragile: String = CardText.describe("ran_kich", 1, skills, combat)
 	_check(fragile.contains("×1.75"), "en Ran multiplier from combat: %s" % fragile)
 	var execute: String = CardText.describe("tu_kiem", 1, skills, combat)
