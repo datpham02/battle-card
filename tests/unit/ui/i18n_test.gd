@@ -52,12 +52,12 @@ func _initialize() -> void:
 	_check(TranslationServer.translate("ui.hud.cast") == "Thi triển", "vi ui.hud.cast")
 	# ProgressState locale round trip.
 	var state := ProgressState.new()
-	_check(state.get_locale() == "vi", "default locale vi")
-	state.set_locale("en")
+	_check(state.get_locale() == "en", "default locale en")
+	state.set_locale("vi")
 	var back: ProgressState = ProgressState.from_json(state.to_json())
-	_check(back.get_locale() == "en", "locale round-trips through JSON")
+	_check(back.get_locale() == "vi", "locale round-trips through JSON")
 	var v1: ProgressState = ProgressState.from_json('{"version":1,"cleared":["ch1/f1"],"in_progress":null}')
-	_check(v1.get_locale() == "vi" and not v1.has_run(), "v1 save without locale loads with vi (v1 floor data ignored since 019)")
+	_check(v1.get_locale() == "en" and not v1.has_run(), "v1 save without locale loads with en (v1 floor data ignored since 019)")
 	# Deck hands differ by seed (the --drops-seed capture args).
 	var skills: SkillConfig = SkillConfig.load_from_file()
 	var hand1: Array = Deck.new(skills.default_deck.duplicate(), 1).draw(skills.hand_size)

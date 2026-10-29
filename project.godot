@@ -10,7 +10,7 @@ config/quit_on_go_back=false
 [internationalization]
 
 locale/translations=PackedStringArray("res://assets/i18n/strings.en.translation", "res://assets/i18n/strings.vi.translation")
-locale/fallback="vi"
+locale/fallback="en"
 
 [display]
 

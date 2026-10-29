@@ -12,7 +12,7 @@ const VERSION: int = 8
 ## Story 038: highest Kiep level (cap of `kiep_unlocked`, the levels in assets/data/kiep_levels.json are 1..10).
 const KIEP_MAX: int = 10
 ## Locale saved when none is in the file (v1 saves have no `locale`).
-const DEFAULT_LOCALE: String = "vi"
+const DEFAULT_LOCALE: String = "en"
 ## Highest value [method record_floor] stores: floors 1..5 plus the final match (Story 031). A
 ## structural bound of the run layout, not a tuning value.
 const BEST_FLOOR_MAX: int = 6

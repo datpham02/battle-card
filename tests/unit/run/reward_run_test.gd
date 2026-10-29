@@ -146,7 +146,7 @@ func _initialize() -> void:
 	var v1: ProgressState = ProgressState.from_json("{\"version\":1,\"locale\":\"en\",\"cleared\":[\"ch1/f1\"],\"in_progress\":{\"floor\":\"ch1/f1\",\"match_index\":1,\"hp_at_match_start\":50,\"floor_seed\":3}}", cfg)
 	check(v1.get_locale() == "en" and not v1.has_run() and v1.get_regions_boss_beaten().is_empty(), "v1 loads, locale kept, no run")
 	var corrupt: ProgressState = ProgressState.from_json("{{nope", cfg)
-	check(corrupt.get_locale() == "vi" and not corrupt.has_run(), "corrupt -> empty")
+	check(corrupt.get_locale() == ProgressState.DEFAULT_LOCALE and not corrupt.has_run(), "corrupt -> empty")
 	var badrun: String = "{\"version\":2,\"locale\":\"vi\",\"cleared_chapters\":[\"zz\"],\"run_in_progress\":{\"character\":\"kiem_si\",\"chapter\":\"zz\",\"floor\":\"f1\",\"match_index\":0,\"hp\":-1,\"deck\":[\"kiem_khi\"],\"run_seed\":1,\"elapsed\":0,\"pending_reward\":[],\"revives\":0}}"
 	var br: ProgressState = ProgressState.from_json(badrun, cfg)
 	check(br.has_run() and bool(br.get_run_dict().get("needs_restart", false)) and br.has_region_boss_beaten("zz"), "pre-v5 run with an unknown chapter -> needs_restart (Story 031: every old run restarts); region ids kept as saved")

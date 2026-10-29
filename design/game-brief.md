@@ -16,7 +16,7 @@
 - Tên nhân vật, lá, chương, boss, vùng đất là **dữ liệu** (`characters.json`, `cards.json`, `chapters.json`) dưới dạng **khóa dịch** (`name_key`); chữ hiển thị nằm trong `assets/i18n/strings.csv`.
 
 ## Đa ngôn ngữ (2026-10-22, từ Story 017)
-- Hệ dịch của Godot: `assets/i18n/strings.csv` (`keys,vi,en`), code gọi `tr(khóa)`; mọi `TEXT_*` trong mã là khóa, JSON chỉ giữ `name_key`. Hai ngôn ngữ ngay từ đầu: **vi** (mặc định, fallback) và **en**. Nút VI/EN ở title, lưu trong `progress.json`. Ngôn ngữ thứ ba = thêm một cột CSV. Thiếu khóa thì hiện khóa thô để lộ lỗi; một test quét khóa trong mã và JSON đối chiếu CSV.
+- Hệ dịch của Godot: `assets/i18n/strings.csv` (`keys,vi,en`), code gọi `tr(khóa)`; mọi `TEXT_*` trong mã là khóa, JSON chỉ giữ `name_key`. Hai ngôn ngữ ngay từ đầu: **en** (mặc định, fallback; người dùng đổi 2026-10-29: tiếng Anh là ngôn ngữ chủ đạo) và **vi**. Nút EN/VI ở title, lưu trong `progress.json`. Ngôn ngữ thứ ba = thêm một cột CSV. Thiếu khóa thì hiện khóa thô để lộ lỗi; một test quét khóa trong mã và JSON đối chiếu CSV.
 
 ## Core loop (v5 — mảnh ấn, Story 024–027)
 

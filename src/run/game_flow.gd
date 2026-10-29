@@ -294,7 +294,7 @@ const DEV_WALK_GUARD: int = 200
 ## DEV-ONLY: player HP the --run=*reward / --run=runwon captures end the match with (70 % of 300).
 const DEV_FLOW_HP: float = 210.0
 ## Locales the CSV ships (Story 017); the title button cycles through them in this order.
-const SUPPORTED_LOCALES: Array[String] = ["vi", "en"]
+const SUPPORTED_LOCALES: Array[String] = ["en", "vi"]
 ## DEV-ONLY: disables the auto-pause on focus loss (windowed scratch tests run unfocused).
 const NO_AUTOPAUSE_ARG: String = "--no-autopause"
 ## Platforms without a Quit button (Apple rules): [method can_show_quit] is false there.
@@ -1104,7 +1104,7 @@ func quit_requested() -> void:
 	get_tree().quit()
 
 
-## Locale in use ("vi" / "en").
+## Locale in use ("en" / "vi").
 func get_locale() -> String:
 	return _locale
 
@@ -1120,7 +1120,7 @@ func next_locale() -> String:
 ## RunController.floor_label is cached per node entry (the title is the only place that switches).
 func set_locale(code: String) -> void:
 	if not SUPPORTED_LOCALES.has(code):
-		push_warning("GameFlow: unsupported locale '%s' (vi|en)" % code)
+		push_warning("GameFlow: unsupported locale '%s' (en|vi)" % code)
 		return
 	_apply_locale(code)
 	_progress.set_locale(code)
