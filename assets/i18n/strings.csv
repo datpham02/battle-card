@@ -121,59 +121,59 @@ arena.ring.name,Vòng,Ring
 arena.islands_bridge.name,Hai đảo,Twin Isles
 arena.staircase.name,Bậc thang,Staircase
 arena.diamond.name,Kim cương,Diamond
-trait.row_burner.name,Hỏa tức,Fire Breath
-trait.rotten_thrower.name,Mảnh nguyền,Cursed Piece
+trait.row_burner.name,Hàng Lửa,Flame Row
+trait.rotten_thrower.name,Ném Đồ Hỏng,Rotten Toss
 character.kiem_si.name,Kiếm sĩ,Swordsman
 character.kiem_si.desc,Cân bằng và bền bỉ: nhiều máu và bộ bài vững.,Balanced and sturdy: plenty of health and a solid deck.
 character.phap_su.name,Pháp sư,Mage
 character.phap_su.desc,Mong manh nhưng thạo trận pháp diện rộng; tập trung được lâu.,Frail but a master of wide spells; can focus for longer.
 character.sat_thu.name,Sát thủ,Assassin
 character.sat_thu.desc,Nhanh nhẹn và chí mạng với những đường chém nhỏ.,Nimble and deadly with short cuts.
-passive.second_wind.name,Hơi thở thứ hai,Second Wind
+passive.second_wind.name,Lấy Lại Sức,Second Wind
 passive.second_wind.desc,Hồi thêm 20 máu sau mỗi trận thắng.,Recover 20 extra HP after every won match.
-passive.wide_caster.name,Pháp trận rộng,Wide Caster
+passive.wide_caster.name,Tay Vững,Steady Hands
 passive.wide_caster.desc,Phép từ 4 ô trở lên niệm nhanh hơn 25%.,Spells covering 4 or more cells channel 25% faster.
-passive.quick_blade.name,Lưỡi kiếm nhanh,Quick Blade
+passive.quick_blade.name,Nhát Gọn,Clean Cuts
 passive.quick_blade.desc,Phép tối đa 4 ô gây thêm 40% sát thương.,Spells covering 4 cells or fewer deal 40% more damage.
-card.kiem_khi.name,Kiếm khí,Sword Qi
+card.kiem_khi.name,Rạch nhẹ,Nick
 card.kiem_khi.desc,Sát thương theo số ô.,Damage per cell.
-card.chan_phong.name,Chấn phong,Gale Burst
+card.chan_phong.name,Hích nhẹ,Nudge
 card.chan_phong.desc,"Đẩy lùi {push_cells} ô, sát thương nhẹ.","Pushes {push_cells} cell, light damage."
-card.kiem_vu.name,Kiếm vũ,Blade Dance
+card.kiem_vu.name,Xé toạc,Gash
 card.kiem_vu.desc,Sát thương mạnh theo số ô.,Heavy damage per cell.
-card.thiet_kiem.name,Thiết kiếm,Iron Blade
+card.thiet_kiem.name,Lia ngang,Cleave
 card.thiet_kiem.desc,"Nhát chém chắc tay, hồi nhanh.",A steady slash with a short recovery.
-card.dai_dao.name,Đại đao,Broadsword
+card.dai_dao.name,Bổ nặng,Broad Stroke
 card.dai_dao.desc,"Cần nhiều ô, đổi lại một nhát nặng tay.",Needs many cells for one heavy blow.
-card.xung_kich.name,Xung kích,Shockwave
+card.xung_kich.name,Xô lùi,Shove
 card.xung_kich.desc,"Đẩy lùi {push_cells} ô, sát thương vừa.","Pushes {push_cells} cells, moderate damage."
-card.hoa_tinh.name,Hỏa tinh,Ember
+card.hoa_tinh.name,Tro hồng,Cinder
 card.hoa_tinh.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
-card.hoa_xa.name,Hỏa xà,Fire Serpent
+card.hoa_xa.name,Tia lửa,Spark
 card.hoa_xa.desc,Đốt nhanh trên ít ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,A quick burn over few cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
-card.suong_mong.name,Sương mỏng,Thin Mist
+card.suong_mong.name,Men băng,Glaze
 card.suong_mong.desc,Đóng Băng {pin_sec} s: địch không bước được.,Applies Frozen for {pin_sec} s: the foe cannot step.
-card.bang_chau.name,Băng châu,Frost Pearl
+card.bang_chau.name,Mưa đá,Hailstone
 card.bang_chau.desc,Đóng Băng {pin_sec} s trên ít ô: địch không bước được.,Applies Frozen for {pin_sec} s over few cells: the foe cannot step.
-card.hoa_tran.name,Hỏa trận,Fire Sigil
+card.hoa_tran.name,Lò than,Brazier
 card.hoa_tran.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
-card.bang_phong.name,Băng phong,Frost Seal
+card.bang_phong.name,Lặng yên,Stillness
 card.bang_phong.desc,Đóng Băng {pin_sec} s: địch không bước được.,Applies Frozen for {pin_sec} s: the foe cannot step.
-card.cuong_phong.name,Cuồng phong,Gale Storm
+card.cuong_phong.name,Cú húc,Ram
 card.cuong_phong.desc,"Đẩy lùi {push_cells} ô, sát thương vừa.","Pushes {push_cells} cell, moderate damage."
-card.liet_hoa.name,Liệt hỏa,Blaze
+card.liet_hoa.name,Lửa rừng,Wildfire
 card.liet_hoa.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
-card.kiem_than.name,Kiếm thần,Divine Blade
+card.kiem_than.name,Lưỡi sắc,Keen Edge
 card.kiem_than.desc,"Nhát chém sắc, hồi nhanh.",A keen slash with a short recovery.
-card.song_kiem.name,Song kiếm,Twin Blades
+card.song_kiem.name,Nêm sắt,Wedge
 card.song_kiem.desc,Cần {min_cells} ô. Địch đang Rạn ăn thêm ×{fragile_bonus}.,{min_cells} cells. A Fragile foe takes ×{fragile_bonus}.
-card.thien_lang.name,Thiên lãng,Heaven Wave
+card.thien_lang.name,Sạt lở,Landslide
 card.thien_lang.desc,"Đẩy lùi {push_cells} ô, sát thương khá.","Pushes {push_cells} cells, solid damage."
-card.han_bang.name,Hàn băng,Deep Frost
+card.han_bang.name,Tảng băng,Glacier
 card.han_bang.desc,Đóng Băng {pin_sec} s và gieo Rạn {fragile_stacks} tầng: đòn kế tiếp ăn ×{fragile_mult} mỗi tầng.,Applies Frozen for {pin_sec} s and applies {fragile_stacks} Fragile: the next hits take ×{fragile_mult} per stack.
-card.thien_hoa.name,Thiên hỏa,Heaven Fire
+card.thien_hoa.name,Giàn thiêu,Pyre
 card.thien_hoa.desc,"Đốt các ô trong {burn_sec} s, cháy dữ dội. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.",Burns the cells fiercely for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
-card.tu_kiem.name,Tuyệt kiếm,Peerless Blade
+card.tu_kiem.name,Nhát cuối,Last Verdict
 card.tu_kiem.desc,"Hành quyết: một nhát duy nhất, ×{execute_mult} khi địch dưới {execute_pct} % máu.","Execute: one single stroke, ×{execute_mult} when the foe is below {execute_pct} % HP."
 ui.card.level_suffix,+%d,+%d
 ui.reward.upgrade_to,Nâng cấp → +%d,Upgrade → +%d
@@ -191,11 +191,11 @@ ui.hud.formation_count,Bản Khắc %d/%d,Engraving %d/%d
 ui.hud.formation_complete,Bản Khắc hoàn thành: %s,Engraving complete: %s
 ui.hud.signature_cooldown,Hồi %d s,Cooldown %d s
 ui.character_select.signature,Thức Tỉnh: %s,Awakening: %s
-signature.tram.name,Trảm,Slash Fury
+signature.tram.name,Vung Hết Sức,Full Swing
 signature.tram.desc,3 giây: mọi phép tính gấp đôi số ô và hồi 20% sát thương gây ra.,3 seconds: every spell counts double its cells and heals 20% of the damage dealt.
-signature.thien_hoa.name,Thiên Hỏa,Heaven's Fire
+signature.thien_hoa.name,Bùng Nổ,Flashpoint
 signature.thien_hoa.desc,"Kích nổ lửa đang cháy gấp đôi, làm mới phép đốt, rồi đốt cả Bản Khắc sáng.","Detonate burns for double, reset burn spells, then set the lit Engraving ablaze."
-signature.anh_bo.name,Ảnh Bộ,Shadow Step
+signature.anh_bo.name,Bóng Lướt,Afterimage
 signature.anh_bo.desc,"2 giây: bước không cooldown; mọi phép ≤ 3 ô gây ×1,75.",2 s: free steps; every spell of 3 cells or fewer deals ×1.75.
 node.battle.name,Trận,Battle
 node.danger.name,Hiểm địa,Danger
@@ -258,22 +258,22 @@ chapter.ch2.intro,Cánh cổng ngục khép lại sau lưng. Tiếng xích kéo 
 chapter.ch2.end,"Quỷ Khổng Lồ gục xuống, ngục tối im lặng. Phía trên, mạng lưới hiện rõ hơn.","The Giant Ogre falls and the dungeon goes silent. Above, the lattice shows more clearly."
 chapter.ch3.intro,"Tháp Sương mọc lên từ biển mây, mỗi bậc thang lạnh hơn bậc trước.","The Mist Tower rises from a sea of cloud, each step colder than the last."
 chapter.ch3.end,"Chúa Tể Sương tan thành hơi. Đỉnh tháp sáng lên, và chuyến leo vẫn tiếp tục.","The Mist Lord dissolves into vapor. The tower's summit glows, and the climb goes on."
-trait.step_reactor.name,Phản xạ,Reflex
-trait.fuse_cannon.name,Pháo ngòi,Fuse Cannon
-trait.slam.name,Giáng nứt,Slam
-trait.frost_aura.name,Hào quang sương,Frost Aura
-trait.phase_shift.name,Đổi pha,Phase Shift
-card.ran_kich.name,Rạn kích,Fracture Strike
+trait.step_reactor.name,Dây Vướng,Tripwire
+trait.fuse_cannon.name,Ngòi Nổ,Lit Fuse
+trait.slam.name,Nứt Đất,Fissure
+trait.frost_aura.name,Sương Nặng,Heavy Mist
+trait.phase_shift.name,Cùng Đường,Cornered
+card.ran_kich.name,Nứt chân chim,Hairline
 card.ran_kich.desc,Gieo Rạn {fragile_stacks} tầng: đòn kế tiếp ăn ×{fragile_mult}.,Applies {fragile_stacks} Fragile: the next hit takes ×{fragile_mult}.
-card.ran_van.name,Rạn vân,Fracture Veins
+card.ran_van.name,Đứt gãy,Fault Line
 card.ran_van.desc,"Ít ô, gieo Rạn {fragile_stacks} tầng: {fragile_stacks} đòn kế tiếp ăn ×{fragile_mult}.","Few cells, applies {fragile_stacks} Fragile: the next {fragile_stacks} hits take ×{fragile_mult}."
-card.han_khi.name,Hàn khí,Frost Breath
+card.han_khi.name,Rùng mình,Shiver
 card.han_khi.desc,Gieo Giá Lạnh {frost_stacks} tầng. Đủ {frost_burst_stacks} tầng: nổ {frost_burst_damage} sát thương xuyên giáp.,"Applies {frost_stacks} Chill. At {frost_burst_stacks} stacks: bursts for {frost_burst_damage}, ignoring defense."
-card.han_phong.name,Hàn phong,Frost Gale
+card.han_phong.name,Bão trắng,Whiteout
 card.han_phong.desc,"Diện rộng, gieo Giá Lạnh {frost_stacks} tầng. Đủ {frost_burst_stacks} tầng: nổ {frost_burst_damage} sát thương xuyên giáp.","Wide area, applies {frost_stacks} Chill. At {frost_burst_stacks} stacks: bursts for {frost_burst_damage}, ignoring defense."
-card.han_kiem.name,Hàn kiếm,Frost Blade
+card.han_kiem.name,Rét cắt,Rime Edge
 card.han_kiem.desc,Sát thương theo số ô và gieo Giá Lạnh {frost_stacks} tầng.,Damage per cell and applies {frost_stacks} Chill.
-card.han_tran.name,Hàn trận,Frost Sigil
+card.han_tran.name,Tuyết rơi,Snowfall
 card.han_tran.desc,"{min_cells} ô, sát thương nhẹ và gieo Giá Lạnh {frost_stacks} tầng.","{min_cells} cells, light damage and applies {frost_stacks} Chill."
 ui.hud.fragile_stacks,Rạn ×%d,Fragile ×%d
 ui.hud.frost_stacks,Giá Lạnh ×%d,Chill ×%d
@@ -287,7 +287,7 @@ trait.frost_aura.desc,Khối rơi chậm hơn khi nó còn trên nửa máu.,Blo
 trait.phase_shift.desc,"Ở nửa máu nó đổi sang thế hung hãn, nhanh hơn và thêm đòn mới.","At half health it turns aggressive, moves faster and gains a new attack."
 ui.hud.reactor_charges,Phản ứng %d/%d,Reaction %d/%d
 ui.hud.fuse,Ngòi %.1f s,Fuse %.1f s
-ui.hud.frost_aura,Khí sương,Frost aura
+ui.hud.frost_aura,Sương Nặng,Heavy Mist
 ui.hud.phase_banner,PHA %d,PHASE %d
 keyword.pierce,Xuyên giáp,Pierce
 keyword.vs_fragile,×%s khi Rạn,×%s vs Fragile
@@ -319,19 +319,19 @@ ui.hud.featured_corner,Hình Cộng Hưởng,Resonant shape
 ui.hud.featured_label,Hình Cộng Hưởng ×%s,Resonant shape ×%s
 ui.hud.join_cap,Quá nhiều ô (tối đa %d),Too many cells (max %d)
 keyword.burn,Cháy,Burn
-card.ket_gioi.name,Kết giới,Seal Ward
+card.ket_gioi.name,Rào chắn,Barricade
 card.ket_gioi.desc,Dựng Tường trên các ô trúng: không bước vào được trong {seal_sec} giây. Trúng hay trượt đều có Tường.,Builds Walls on the cut cells: they cannot be stepped into for {seal_sec} s. Walls form on a hit or a miss.
-card.long_an.name,Lồng ấn,Seal Cage
+card.long_an.name,Lồng đá,Slab Cage
 card.long_an.desc,Dựng Tường trên các ô trúng trong {seal_sec} giây và gây sát thương nhẹ nếu trúng.,Builds Walls on the cut cells for {seal_sec} s and deals light damage on a hit.
-card.tran_gai.name,Trận gai,Thorn Field
+card.tran_gai.name,Bụi rậm,Briar Patch
 card.tran_gai.desc,Rải gai lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.,Covers the cut cells in thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile.
-card.gai_nguyen.name,Gai nguyền,Cursed Thorns
-card.gai_nguyen.desc,Rải gai nguyền lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.,Covers the cut cells in cursed thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile.
+card.gai_nguyen.name,Dây úa,Witherbriar
+card.gai_nguyen.desc,Rải gai úa lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.,Covers the cut cells in withered thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile.
 keyword.seal,Tường,Wall
 keyword.thorns,Bãi Gai,Thorns
-trait.seal_caster.name,Ấn phong tỏa,Sealbinder
+trait.seal_caster.name,Chặn Lối,Boxed In
 trait.seal_caster.desc,"Trước một đòn lớn, nó dựng Tường chặn đường thoát của bạn; luôn chừa một lối ra.",Before a big swing it builds Walls on your escape path; one way out is always left.
-trait.thorn_field.name,Trận gai,Thorn Field
+trait.thorn_field.name,Gai Níu Chân,Bramble Trail
 trait.thorn_field.desc,"Khi vung đòn từ 4 ô trở lên, nó rải gai lên đường thoát của bạn; bước vào gai mất máu và bị Rạn.",When it swings 4 or more cells it lays thorns on your escape path; stepping in costs HP and adds Fragile.
 ui.world.title,Tầng %d/%d · Chọn vùng,Floor %d/%d · Choose a region
 ui.world.strip_floor,Tầng %d,Floor %d
@@ -371,41 +371,41 @@ ui.relic.empty,Chưa có bảo vật,No relics yet
 ui.relic.tap_close,Chạm ra ngoài để đóng,Tap outside to close
 ui.relic.cards_row,CHỌN MỘT LÁ,CHOOSE A CARD
 ui.relic.relics_row,HOẶC MỘT BẢO VẬT,OR A RELIC
-relic.an_don.name,Ấn Đơn,Lone Seal
+relic.an_don.name,Sỏi Lẻ,Lone Pebble
 relic.an_don.desc,"Đòn chỉ gồm 1 khối Ô đơn: sát thương ×1,75.",A cast of just 1 Single block deals ×1.75 damage.
 relic.chi_khau.name,Chỉ Khâu,Stitch Thread
 relic.chi_khau.desc,Mỗi đòn ghép khối hồi 3 máu (tối đa 15 mỗi trận).,Every joined cast heals 3 HP (up to 15 per match).
-relic.phong_an.name,Phong Ấn Dài,Long Seal
+relic.phong_an.name,Vữa Thợ Xây,Mason's Mortar
 relic.phong_an.desc,Tường của bạn kéo dài thêm 1 giây.,Your Walls last 1 s longer.
-relic.gai_ran.name,Gai Rạn,Crack Thorn
+relic.gai_ran.name,Đinh Cong,Bent Nails
 relic.gai_ran.desc,Địch bước vào ô gai của bạn nhận thêm 1 tầng Rạn.,Foes stepping into your thorn cells get 1 more Fragile stack.
-relic.manh_tuoi.name,Mảnh Tươi,Fresh Shard
+relic.manh_tuoi.name,Muối Ướp,Curing Salt
 relic.manh_tuoi.desc,Khối trên sân tươi lâu hơn 4 giây.,Blocks on the field stay fresh 4 s longer.
-relic.dinh_tam.name,Định Tâm,Steady Mind
+relic.dinh_tam.name,Đá Tĩnh Tâm,Worry Stone
 relic.dinh_tam.desc,Tập trung kéo dài thêm 1 giây.,Focus lasts 1 s longer.
-relic.la_ban.name,La Bàn Trận Đồ,Sigil Compass
+relic.la_ban.name,Phấn Đánh Dấu,Surveyor's Chalk
 relic.la_ban.desc,Ô Bản Khắc phai chậm hơn 30 %.,Engraving cells fade 30 % slower.
-relic.tam_huong.name,Tâm Hương,Heart Incense
+relic.tam_huong.name,Nhang Trầm,Cedar Incense
 relic.tam_huong.desc,Thức Tỉnh hồi nhanh hơn 20 %.,Your Awakening recharges 20 % faster.
 relic.tui_rong.name,Túi Rộng,Wide Pouch
 relic.tui_rong.desc,Túi khối có thêm 1 ô.,The block bag gets 1 more slot.
-relic.dau_than.name,Dầu Thần,Divine Oil
+relic.dau_than.name,Bình Nhựa Thông,Pitch Flask
 relic.dau_than.desc,Cháy chồng thêm 1 tầng.,Burn stacks 1 level higher.
-relic.khoi_the.name,Khởi Thế,Opening Stance
+relic.khoi_the.name,Cò Nhạy,Hair Trigger
 relic.khoi_the.desc,Phép đầu tiên mỗi trận không có thời gian niệm.,The first spell of each match has no channeling time.
-relic.phan_don.name,Phản Đòn,Riposte
+relic.phan_don.name,Dao Gạt Đòn,Parrying Dagger
 relic.phan_don.desc,Phá phép boss: nhận ngay 1 khối Ô đơn vào túi (nếu còn chỗ).,Interrupt a boss spell: gain 1 Single block in your bag at once (if there is room).
-relic.han_ky.name,Hàn Khí,Frost Vapor
+relic.han_ky.name,Băng Giòn,Brittle Icicle
 relic.han_ky.desc,"Giá Lạnh nổ ngay ở 2 tầng, nhưng nổ yếu hơn 33 %.","Chill bursts at 2 stacks, but the burst is 33 % weaker."
-relic.huyet_an.name,Huyết Ấn,Blood Seal
+relic.huyet_an.name,Xu Đánh Cược,Gambler's Coin
 relic.huyet_an.desc,"Đòn từ 5 ô trở lên +30 % sát thương; nếu đòn đó trượt, bạn mất 2 máu.","Casts of 5 or more cells deal +30 % damage; if such a cast misses, you lose 2 HP."
-relic.an_chu.name,Ấn Chủ,Master Seal
+relic.an_chu.name,Âm Thoa,Tuning Fork
 relic.an_chu.desc,"Thưởng Hình Cộng Hưởng ×2 thay vì ×1,5.",The Resonant-shape bonus is ×2 instead of ×1.5.
-relic.tam_hop.name,Tam Hợp,Triple Join
+relic.tam_hop.name,Xích Ba Mắt,Three-Link Chain
 relic.tam_hop.desc,"Được ghép khối thứ ba vào đòn (+1,5 s chọn lá nữa).",You may join a third block into a cast (+1.5 s more to pick a card).
 card.ganh_nang.name,Gánh Nặng,Dead Weight
 card.ganh_nang.desc,"Lá nguyền: chỉ chiếm một chỗ trong menu phép và bị khóa, không dùng được. Bỏ bằng lượt bỏ lá, cửa hàng hoặc sự kiện.","Curse: only takes a slot in the card menu and stays locked, it cannot be used. Remove it with a card removal, the shop or an event."
-card.oan_hon.name,Oán Hồn,Vengeful Spirit
+card.oan_hon.name,Mối Hận,Lingering Grudge
 card.oan_hon.desc,"Lá nguyền: chiếm một chỗ trong menu phép và bị khóa. Mỗi lần được rút vào menu, bạn mất {draw_damage} máu. Bỏ bằng lượt bỏ lá, cửa hàng hoặc sự kiện.","Curse: takes a slot in the card menu and stays locked. Each time it is drawn into the menu you lose {draw_damage} HP. Remove it with a card removal, the shop or an event."
 ui.hud.curse_locked,Lá nguyền,Cursed
 ui.event.leave,Rời đi,Leave
@@ -497,9 +497,9 @@ event.ke_lang_thang.swap.result,"Lão cười, cầm bảo vật của bạn và
 event.mo_hoang.title,Mộ hoang,Lonely Grave
 event.mo_hoang.body,"Một ngôi mộ cũ, đất còn mới bị xới. Có thể bên dưới còn vàng, cũng có thể còn thứ không nên đánh thức.","An old grave, the earth freshly disturbed. There may be gold beneath, or something better left asleep."
 event.mo_hoang.dig.label,Đào mộ,Dig
-event.mo_hoang.dig.cost,40% nhận lá nguyền Oán Hồn,40% to gain the curse Vengeful Spirit
+event.mo_hoang.dig.cost,40% nhận lá nguyền Mối Hận,40% to gain the curse Lingering Grudge
 event.mo_hoang.dig.gold,Dưới đất có một túi vàng cũ.,An old pouch of gold lies in the dirt.
-event.mo_hoang.dig.curse,Một tiếng thì thầm trồi lên từ huyệt mộ. Oán Hồn bám theo bạn.,A whisper rises from the grave. The Vengeful Spirit follows you.
+event.mo_hoang.dig.curse,Một tiếng thì thầm trồi lên từ huyệt mộ. Mối Hận bám theo bạn.,A whisper rises from the grave. The Lingering Grudge follows you.
 event.loi_the.title,Lời thề,The Vow
 event.loi_the.body,"Một thầy tu già đưa bạn bát nước: ""Thề bước chậm lại trong hai trận, ta ban cho một lần buông bỏ và chút vàng."" Lời thề này ràng buộc cả đôi chân.","An old monk offers you a bowl of water: ""Vow to move slower for two matches and I grant you a release and some gold."" The vow binds your very feet."
 event.loi_the.swear.label,Tuyên thệ,Swear the vow
@@ -645,13 +645,13 @@ ui.hud.hop,NHẢY,HOP
 ui.hud.riposte,PHẢN ĐÒN,RIPOSTE
 ui.hud.surface,TRỒI LÊN,SURFACING
 ui.hud.burrowed,ĐANG LẶN,BURROWED
-card.gai_doc.name,Gai độc,Venom Thorns
+card.gai_doc.name,Bẫy chông,Caltrops
 card.gai_doc.desc,Rải gai lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng. Trúng thì gây thêm sát thương nhẹ.,Covers the cut cells in thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile. Also deals light damage on a hit.
-card.luoi_san.name,Lưới săn,Hunting Net
+card.luoi_san.name,Hàng cọc,Palisade
 card.luoi_san.desc,Dựng Tường trên các ô trúng trong {seal_sec} giây. Trúng boss thì gieo Rạn {fragile_stacks} tầng.,Builds Walls on the cut cells for {seal_sec} s. A hit on the boss applies {fragile_stacks} Fragile.
-card.thanh_thuy.name,Thánh thủy,Holy Water
+card.thanh_thuy.name,Sương bạc,Silver Dew
 card.thanh_thuy.desc,"Gieo Giá Lạnh {frost_stacks} tầng. Hồi {heal_self} máu cho người niệm khi đòn tới nơi, trúng hay trượt.","Applies {frost_stacks} Chill. Heals the caster {heal_self} HP when the cut lands, hit or miss."
-card.bang_tam.name,Băng tâm,Frost Heart
+card.bang_tam.name,Buốt xương,Winter's Bite
 card.bang_tam.desc,Sát thương theo số ô và gieo Giá Lạnh {frost_stacks} tầng.,Damage per cell and applies {frost_stacks} Chill.
 piece.w5.name,Bậc thang,Staircase
 piece.n5.name,Chữ N,N
@@ -704,13 +704,13 @@ character.tho_san.name,Thợ săn,Hunter
 character.tho_san.desc,Giăng bẫy và Tường để boss lộ sơ hở; Thức Tỉnh kéo dài vùng.,Sets traps and Walls to leave the boss open; its Awakening stretches zones.
 character.giao_si.name,Giáo sĩ,Priest
 character.giao_si.desc,"Bền bỉ, xây bộ Giá Lạnh; mỗi lần Giá Lạnh nổ lại hồi máu.","Sturdy, builds on Chill; every Chill burst heals."
-passive.hunter_mark.name,Dấu săn,Hunter's Mark
+passive.hunter_mark.name,Dấu Con Mồi,Marked Prey
 passive.hunter_mark.desc,"Boss bước vào gai của bạn, hoặc đứng kề Tường vừa lập, nhận 1 tầng Rạn (chờ 3 giây).","A boss that steps onto your thorns, or stands next to a fresh Wall, gains 1 Fragile (3 s cooldown)."
-passive.prayer.name,Lời nguyện,Prayer
+passive.prayer.name,Lời Cầu Được Đáp,Answered Prayer
 passive.prayer.desc,"Mỗi lần Giá Lạnh nổ trên boss, hồi 8 máu.",Every Chill burst on the boss heals 8 HP.
-signature.vay_bat.name,Vây Bắt,Snare
+signature.vay_bat.name,Bẫy Sập,Deadfall
 signature.vay_bat.desc,"4 giây: vùng bạn tạo kéo dài ×1,5; mỗi tầng Rạn bị tiêu nhân ×2 thay vì ×1,5.",4 s: zones you form last ×1.5 longer; each Fragile stack spent deals ×2 instead of ×1.5.
-signature.thanh_an.name,Thánh Ấn,Holy Seal
+signature.thanh_an.name,Ban Phước,Benediction
 signature.thanh_an.desc,"4 giây: mỗi đòn trúng boss thêm 1 tầng Giá Lạnh; Giá Lạnh nổ gây ×1,5.",4 s: every hit on the boss adds 1 Chill; Chill bursts deal ×1.5.
 ui.hud.heal_number,+%d,+%d
 title.achievements,Thành tựu,Achievements
@@ -816,17 +816,17 @@ match.inferno_lord.desc,"Cứ 10 giây lại cho 2 mạch dung nham bên bạn c
 match.gale_bird.desc,Cứ 6 giây lại thổi bạn đi 1 ô theo mũi tên cảnh báo: đừng đứng sát mép đảo.,Every 6 s a gust shoves you 1 tile along the warned arrow: do not stand at an island edge.
 match.cloud_veil.desc,"Mây che ô nó đứng: báo trúng bị tắt, trừ lúc nó bị Đóng Băng hoặc đang niệm.","Cloud covers its tile: the hit forecast is hidden, except while it is Frozen or channeling."
 match.storm_dragon.desc,"Cứ 11 giây lại làm rơi một đảo bên bạn, kèm gió nhẹ: luôn giữ đường sang đảo khác.","Every 11 s an island on your side falls, with a light gust: always keep a way to another island."
-trait.burn_eater.name,Nuốt lửa,Fire Eater
+trait.burn_eater.name,Ăn Lửa,Ember Feast
 trait.burn_eater.desc,Đốt và ô cháy hồi máu cho nó thay vì gây sát thương.,Burn and fire heal it instead of dealing damage.
-trait.rebirth.name,Tái sinh,Rebirth
+trait.rebirth.name,Sống Lại,Rise Again
 trait.rebirth.desc,"Lần đầu về 0 máu nó hồi sinh với 40% máu sau 1,5 giây, trừ khi đang chịu Giá Lạnh.","The first time it reaches 0 health it revives at 40% after 1.5 s, unless it carries Chill."
-trait.vent_surge.name,Mạch phun trào,Vent Surge
+trait.vent_surge.name,Mạch Phun Đôi,Twin Eruption
 trait.vent_surge.desc,"Cứ 10 giây cho 2 mạch dung nham bên bạn cùng phun, ưu tiên mạch chứa ô bạn đứng.","Every 10 s two lava vents on your side erupt together, the one under you first."
-trait.gust.name,Gió đẩy,Gust
+trait.gust.name,Gió Tạt,Crosswind
 trait.gust.desc,"Định kỳ đẩy bạn 1 ô theo mũi tên cảnh báo; không đẩy vào ô thiếu, ô rơi hay ô Tường.","Now and then it shoves you 1 tile along the warned arrow; never into a missing, fallen or Wall tile."
-trait.shroud.name,Mây che,Cloud Shroud
+trait.shroud.name,Che Tầm Ngắm,Clouded Aim
 trait.shroud.desc,"Mây che ô nó đứng: báo trúng bị ẩn, trừ khi nó bị Đóng Băng hoặc đang niệm.","Cloud covers its tile: hit forecast hidden, unless it is Frozen or channeling."
-trait.island_drop.name,Đảo rơi,Island Drop
+trait.island_drop.name,Đảo Rơi,Island Drop
 trait.island_drop.desc,"Định kỳ làm rơi một đảo bên bạn trong vài giây, không bao giờ đảo cuối cùng còn đứng được.","Now and then an island on your side falls for a few seconds, never the last one left standing."
 achievement.reach_floor_4.name,Tới tầng 4,Reach Floor 4
 achievement.reach_floor_4.desc,Tới tầng 4 trong một chuyến leo,Reach floor 4 in a climb

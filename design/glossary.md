@@ -78,11 +78,108 @@ Những chữ dưới đây phải đổi cùng lúc với các thuật ngữ tr
 - Gợi ý vào trận "Nhặt mảnh · đặt lên đất địch · Thi triển" thành **"Nhặt khối · đặt lên đất địch · Tung phép"**.
 - Thành tựu và mô tả bảo vật, lá có nhắc mảnh, trận đồ, hình chủ đạo, kết giới, Ghim, Hàn: đổi theo bảng.
 
-## Nhóm 5: Tên riêng, làm sau art bible
+## Nhóm 5: Tên riêng (chốt 2026-10-29, Story 043)
 
-Chưa chốt. Hướng đã thống nhất: đặt tên theo hiệu ứng, bằng tiếng Việt dễ hiểu, hợp fantasy phương Tây.
-- **Lá (khoảng 40).** Không đặt tên lá trùng từ khóa: lá đóng băng không được tên đúng "Đóng Băng".
-- **Năm Thức Tỉnh:** Trảm, Thiên Hỏa, Ảnh Bộ, Vây Bắt, Thánh Ấn.
-- **16 bảo vật:** nhiều tên có chữ "Ấn".
-- **Đặc tính boss:** Hỏa tức, Ấn phong tỏa…
-- **Tên nhân vật** (Kiếm sĩ, Pháp sư, Sát thủ, Thợ săn, Giáo sĩ): giữ, có thể thêm tên riêng sau.
+Người dùng duyệt từng nhóm. Đặt theo hiệu ứng, tiếng Anh là chính, không trùng từ khóa nhóm 1–4. Tên nhân vật, quái, Kẻ Gác, vùng, sân giữ nguyên. Khóa trong `assets/i18n/strings.csv` là `<khóa>.name`.
+
+### Lá phép (36)
+
+| Khóa | vi | en |
+|---|---|---|
+| `card.kiem_khi` | Rạch nhẹ | Nick |
+| `card.kiem_vu` | Xé toạc | Gash |
+| `card.thiet_kiem` | Lia ngang | Cleave |
+| `card.dai_dao` | Bổ nặng | Broad Stroke |
+| `card.kiem_than` | Lưỡi sắc | Keen Edge |
+| `card.song_kiem` | Nêm sắt | Wedge |
+| `card.tu_kiem` | Nhát cuối | Last Verdict |
+| `card.han_kiem` | Rét cắt | Rime Edge |
+| `card.han_tran` | Tuyết rơi | Snowfall |
+| `card.bang_tam` | Buốt xương | Winter's Bite |
+| `card.chan_phong` | Hích nhẹ | Nudge |
+| `card.xung_kich` | Xô lùi | Shove |
+| `card.cuong_phong` | Cú húc | Ram |
+| `card.thien_lang` | Sạt lở | Landslide |
+| `card.hoa_xa` | Tia lửa | Spark |
+| `card.hoa_tinh` | Tro hồng | Cinder |
+| `card.hoa_tran` | Lò than | Brazier |
+| `card.liet_hoa` | Lửa rừng | Wildfire |
+| `card.thien_hoa` | Giàn thiêu | Pyre |
+| `card.bang_chau` | Mưa đá | Hailstone |
+| `card.suong_mong` | Men băng | Glaze |
+| `card.bang_phong` | Lặng yên | Stillness |
+| `card.han_bang` | Tảng băng | Glacier |
+| `card.han_khi` | Rùng mình | Shiver |
+| `card.han_phong` | Bão trắng | Whiteout |
+| `card.thanh_thuy` | Sương bạc | Silver Dew |
+| `card.ran_kich` | Nứt chân chim | Hairline |
+| `card.ran_van` | Đứt gãy | Fault Line |
+| `card.ket_gioi` | Rào chắn | Barricade |
+| `card.long_an` | Lồng đá | Slab Cage |
+| `card.luoi_san` | Hàng cọc | Palisade |
+| `card.tran_gai` | Bụi rậm | Briar Patch |
+| `card.gai_nguyen` | Dây úa | Witherbriar |
+| `card.gai_doc` | Bẫy chông | Caltrops |
+| `card.ganh_nang` | Gánh Nặng | Dead Weight |
+| `card.oan_hon` | Mối Hận | Lingering Grudge |
+
+### Thức Tỉnh (5)
+
+| Khóa | vi | en |
+|---|---|---|
+| `signature.tram` | Vung Hết Sức | Full Swing |
+| `signature.thien_hoa` | Bùng Nổ | Flashpoint |
+| `signature.anh_bo` | Bóng Lướt | Afterimage |
+| `signature.vay_bat` | Bẫy Sập | Deadfall |
+| `signature.thanh_an` | Ban Phước | Benediction |
+
+### Bảo vật (16)
+
+| Khóa | vi | en |
+|---|---|---|
+| `relic.an_don` | Sỏi Lẻ | Lone Pebble |
+| `relic.chi_khau` | Chỉ Khâu | Stitch Thread |
+| `relic.phong_an` | Vữa Thợ Xây | Mason's Mortar |
+| `relic.gai_ran` | Đinh Cong | Bent Nails |
+| `relic.manh_tuoi` | Muối Ướp | Curing Salt |
+| `relic.dinh_tam` | Đá Tĩnh Tâm | Worry Stone |
+| `relic.la_ban` | Phấn Đánh Dấu | Surveyor's Chalk |
+| `relic.tam_huong` | Nhang Trầm | Cedar Incense |
+| `relic.tui_rong` | Túi Rộng | Wide Pouch |
+| `relic.dau_than` | Bình Nhựa Thông | Pitch Flask |
+| `relic.khoi_the` | Cò Nhạy | Hair Trigger |
+| `relic.phan_don` | Dao Gạt Đòn | Parrying Dagger |
+| `relic.han_ky` | Băng Giòn | Brittle Icicle |
+| `relic.huyet_an` | Xu Đánh Cược | Gambler's Coin |
+| `relic.an_chu` | Âm Thoa | Tuning Fork |
+| `relic.tam_hop` | Xích Ba Mắt | Three-Link Chain |
+
+### Đặc tính boss (15)
+
+| Khóa | vi | en |
+|---|---|---|
+| `trait.row_burner` | Hàng Lửa | Flame Row |
+| `trait.rotten_thrower` | Ném Đồ Hỏng | Rotten Toss |
+| `trait.step_reactor` | Dây Vướng | Tripwire |
+| `trait.fuse_cannon` | Ngòi Nổ | Lit Fuse |
+| `trait.slam` | Nứt Đất | Fissure |
+| `trait.frost_aura` | Sương Nặng | Heavy Mist |
+| `trait.phase_shift` | Cùng Đường | Cornered |
+| `trait.seal_caster` | Chặn Lối | Boxed In |
+| `trait.thorn_field` | Gai Níu Chân | Bramble Trail |
+| `trait.burn_eater` | Ăn Lửa | Ember Feast |
+| `trait.rebirth` | Sống Lại | Rise Again |
+| `trait.vent_surge` | Mạch Phun Đôi | Twin Eruption |
+| `trait.gust` | Gió Tạt | Crosswind |
+| `trait.shroud` | Che Tầm Ngắm | Clouded Aim |
+| `trait.island_drop` | Đảo Rơi | Island Drop |
+
+### Nội tại (5)
+
+| Khóa | vi | en |
+|---|---|---|
+| `passive.second_wind` | Lấy Lại Sức | Second Wind |
+| `passive.wide_caster` | Tay Vững | Steady Hands |
+| `passive.quick_blade` | Nhát Gọn | Clean Cuts |
+| `passive.hunter_mark` | Dấu Con Mồi | Marked Prey |
+| `passive.prayer` | Lời Cầu Được Đáp | Answered Prayer |

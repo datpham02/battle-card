@@ -147,13 +147,13 @@ Mỗi vùng là một kiểu **mạng lưới** khác nhau sau Biến Cố: lư�
 
 Mỗi nhân vật phải có **bản sắc riêng ngay từ trận đầu**: dáng hình, màu và cả **chất liệu khối** của họ. Lý do là thao tác chính của game là nhặt và đặt khối, nên khối của mỗi người phải trông khác nhau. Họ đều từng dùng sức mạnh theo cách cũ trước Biến Cố, nên có thể kể ngắn cách mỗi người thích nghi. Không có "lớp": lá nào cũng dùng chung, nhân vật chỉ nghiêng về một hướng qua bộ khởi đầu và Thức Tỉnh.
 
-| Nhân vật | Lối chơi (theo dữ liệu) | Thức Tỉnh (tên cũ, đổi ở đợt sau) | Hình ảnh [Khởi điểm] | Chất liệu khối [Khởi điểm] |
+| Nhân vật | Lối chơi (theo dữ liệu) | Thức Tỉnh | Hình ảnh [Khởi điểm] | Chất liệu khối [Khởi điểm] |
 |---|---|---|---|---|
-| **Kiếm sĩ** | Bền, 200 máu, đòn sát thương cao, hồi 20 máu sau trận thắng | Trảm: trong 3 s mọi phép tính gấp đôi số ô, hút 20 % sát thương | Hiệp sĩ giáp thép, kiếm lớn, dáng vững | **Thép**: khối như phiến kim loại, in xuống thành vết chém sáng |
-| **Pháp sư** | 210 máu, phép diện rộng, Cháy | Thiên Hỏa: kích nổ lửa đang cháy, đốt cả nửa lưới đã khắc | Pháp sư áo nâu than nhấn hổ phách, sách hoặc gậy, dáng gầy | **Than lửa**: khối thân tối nứt hổ phách, để lại tàn lửa |
-| **Sát thủ** | Nhanh, 180 máu, đòn nhỏ (≤ 4 ô) mạnh hơn 40 %, Đóng Băng | Ảnh Bộ: trong 2 s bước không chờ, đòn ≤ 3 ô ×1,75 | Kẻ cắp hoặc sát thủ đôi dao, áo đen | **Băng sắc**: khối nhỏ, trong, cạnh nhọn |
-| **Thợ săn** | 200 máu, Tường, Bãi Gai, làm boss **Rạn**. Mở khóa khi đã **giết** 3 Kẻ Gác | Vây Bắt: vùng kéo dài ×1,5, tiêu Rạn ×2 | Ranger áo da, nỏ, móc bẫy | **Gỗ và dây**: khối như khung bẫy |
-| **Giáo sĩ** | Bền, 210 máu, xây bộ **Giá Lạnh**; mỗi lần Giá Lạnh nổ trên boss thì hồi 8 máu. Mở khóa khi đã **tha** 3 Kẻ Gác | Thánh Ấn: mỗi đòn trúng thêm 1 tầng Giá Lạnh, nổ ×1,5 | Cleric áo trắng bạc, biểu tượng thánh trước ngực | **Kính thánh**: khối như kính màu phát sáng |
+| **Kiếm sĩ** | Bền, 200 máu, đòn sát thương cao, hồi 20 máu sau trận thắng | Vung Hết Sức: trong 3 s mọi phép tính gấp đôi số ô, hút 20 % sát thương | Hiệp sĩ giáp thép, kiếm lớn, dáng vững | **Thép**: khối như phiến kim loại, in xuống thành vết chém sáng |
+| **Pháp sư** | 210 máu, phép diện rộng, Cháy | Bùng Nổ: kích nổ lửa đang cháy, đốt cả nửa lưới đã khắc | Pháp sư áo nâu than nhấn hổ phách, sách hoặc gậy, dáng gầy | **Than lửa**: khối thân tối nứt hổ phách, để lại tàn lửa |
+| **Sát thủ** | Nhanh, 180 máu, đòn nhỏ (≤ 4 ô) mạnh hơn 40 %, Đóng Băng | Bóng Lướt: trong 2 s bước không chờ, đòn ≤ 3 ô ×1,75 | Kẻ cắp hoặc sát thủ đôi dao, áo đen | **Băng sắc**: khối nhỏ, trong, cạnh nhọn |
+| **Thợ săn** | 200 máu, Tường, Bãi Gai, làm boss **Rạn**. Mở khóa khi đã **giết** 3 Kẻ Gác | Bẫy Sập: vùng kéo dài ×1,5, tiêu Rạn ×2 | Ranger áo da, nỏ, móc bẫy | **Gỗ và dây**: khối như khung bẫy |
+| **Giáo sĩ** | Bền, 210 máu, xây bộ **Giá Lạnh**; mỗi lần Giá Lạnh nổ trên boss thì hồi 8 máu. Mở khóa khi đã **tha** 3 Kẻ Gác | Ban Phước: mỗi đòn trúng thêm 1 tầng Giá Lạnh, nổ ×1,5 | Cleric áo trắng bạc, biểu tượng thánh trước ngực | **Kính thánh**: khối như kính màu phát sáng |
 
 **Gợi ý lý do lên đường** (để viết chữ sau, không bắt buộc cho asset):
 - **Kiếm sĩ:** mất khả năng vung kiếm tự do sau Biến Cố, muốn tìm lại nó.
@@ -237,7 +237,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
 
 1. **Phong cách hình:** **Đã chốt** (2026-10-28): pixel art kiểu One Step From Eden, chỉ lấy góc nhìn của OSFE: lưới phẳng, đơn vị đứng thẳng cao ~40 px (khung 32×48), nền nhìn ngang có chân trời; chiến trường 640×360. Xem `design/art/art-bible.md`.
 2. **Áp thuật ngữ vào game:** đổi chữ trong `strings.csv` theo `design/glossary.md` (nhóm 1–4). Cần một story riêng.
-3. **Tên riêng, nhóm 5 của glossary:** lá, Thức Tỉnh, bảo vật, đặc tính boss. Làm sau art bible.
+3. **Tên riêng, nhóm 5 của glossary:** **Đã chốt** (2026-10-29, Story 043): lá, Thức Tỉnh, bảo vật, đặc tính boss, nội tại. Xem `design/glossary.md` nhóm 5.
 4. **Chữ cần viết lại theo lore:**
    - Lời vào và lời kết của Tâm Lưới (đang "(Tạm)").
    - Lời vào và lời kết của Rừng Sương (chưa có).

@@ -261,12 +261,12 @@ Giảm thiểu:
 
 | Loại | Lá | Hình | Chuyển động | Thời lượng |
 |---|---|---|---|---|
-| Chém | Nhóm Chém (Kiếm khí … Băng tâm) | Một vệt bậc thang ô vuông chéo qua mỗi ô đích | Quét một lượt từ trái sang phải, tắt | ≤ 0,25 s |
-| Đẩy | Chấn phong, Xung kích, Cuồng phong, Thiên lãng | Cột ô vuông ở mép trái mỗi ô | Trượt sang phải nửa ô, mỏng dần | ≤ 0,3 s |
-| Cháy | Hỏa xà, Hỏa tinh, Hỏa trận, Liệt hỏa, Thiên hỏa | Cột ô vuông bậc thang mọc từ đáy ô | Mọc 2 bậc rồi hạ; ô cháy (màu Cháy, sọc ngang) hiện ngay sau | ≤ 0,35 s |
-| Băng | Đóng Băng (Sương mỏng … Hàn băng), Giá Lạnh (Hàn khí, Hàn phong, Thánh thủy) | Mảnh 1–2 px rơi | Đông thành viền vuông quanh ô (Đóng Băng) hoặc dấu cộng giữa ô (Giá Lạnh), tắt | ≤ 0,35 s |
-| Rạn | Rạn kích, Rạn vân | Đường nứt bậc thang 1 px | Lan từ ô đầu đến ô cuối, tắt | ≤ 0,3 s |
-| Dựng | Tường (Kết giới, Lồng ấn, Lưới săn), Bãi Gai (Trận gai, Gai nguyền, Gai độc) | Ô vuông trồi từ mép trước phiến | Trồi lên, nhường chỗ Tường hoặc Bãi Gai (hình ở "Môi trường") | ≤ 0,3 s |
+| Chém | Nhóm Chém (Rạch nhẹ … Buốt xương) | Một vệt bậc thang ô vuông chéo qua mỗi ô đích | Quét một lượt từ trái sang phải, tắt | ≤ 0,25 s |
+| Đẩy | Hích nhẹ, Xô lùi, Cú húc, Sạt lở | Cột ô vuông ở mép trái mỗi ô | Trượt sang phải nửa ô, mỏng dần | ≤ 0,3 s |
+| Cháy | Tia lửa, Tro hồng, Lò than, Lửa rừng, Giàn thiêu | Cột ô vuông bậc thang mọc từ đáy ô | Mọc 2 bậc rồi hạ; ô cháy (màu Cháy, sọc ngang) hiện ngay sau | ≤ 0,35 s |
+| Băng | Đóng Băng (Men băng … Tảng băng), Giá Lạnh (Rùng mình, Bão trắng, Sương bạc) | Mảnh 1–2 px rơi | Đông thành viền vuông quanh ô (Đóng Băng) hoặc dấu cộng giữa ô (Giá Lạnh), tắt | ≤ 0,35 s |
+| Rạn | Nứt chân chim, Đứt gãy | Đường nứt bậc thang 1 px | Lan từ ô đầu đến ô cuối, tắt | ≤ 0,3 s |
+| Dựng | Tường (Rào chắn, Lồng đá, Hàng cọc), Bãi Gai (Bụi rậm, Dây úa, Bẫy chông) | Ô vuông trồi từ mép trước phiến | Trồi lên, nhường chỗ Tường hoặc Bãi Gai (hình ở "Môi trường") | ≤ 0,3 s |
 
 §3 không có lá hồi máu hay khiên nên không có loại đó. Có lá như vậy thì thêm loại thứ 7.
 
@@ -475,11 +475,11 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 
 | Anh hùng | Idle (2 khung) | Cử chỉ niệm: A (0,08 s) → B (0,12 s), tầm vai, không quá đầu | Thức Tỉnh (2 khung lặp) |
 |---|---|---|---|
-| Kiếm sĩ | Ngực lên 1 px, đuôi choàng lệch 1 px; đứng dạng chân | A: kiếm rút ngang vai, mũi chỉ ra sau. B: chém ngang tới x = 30. Hết cử chỉ kiếm về lưng (không thêm khung) | Trảm: hai tay cầm kiếm ngang ngực, thủ rồi chém; choàng bay |
-| Pháp sư | Chóp mũ và chùm bông đung 1 px, bàn tay rảnh co duỗi | A: hai tay co sát ngực. B: hai lòng bàn tay đẩy ra trước | Thiên Hỏa: hai tay dang ngang vai, mũ ngả sau |
-| Sát thủ | Cả người tụt 1 px, mũi dao nhích ±1 px luân phiên | A: hai dao chéo trước ngực. B: hai tay hất ra, dao hướng phải | Ảnh Bộ: lao người; 2 bản sao tối hơn phía sau cách 4 px (code) |
-| Thợ săn | Vành mũ nghiêng 1 px, lông vũ rung, dồn trọng lượng | A: nỏ hạ ngang hông. B: nỏ giương ngang vai, mũi chĩa ra | Vây Bắt: quỳ một gối, nỏ chống đất phía trước |
-| Giáo sĩ | Voan và gấu áo lệch 1 px, đầu cúi 1 px | A: gậy dựng thẳng. B: gậy nghiêng, đầu gậy chĩa ra ngang đầu | Thánh Ấn: hai tay giữ gậy cắm xuống, cúi đầu |
+| Kiếm sĩ | Ngực lên 1 px, đuôi choàng lệch 1 px; đứng dạng chân | A: kiếm rút ngang vai, mũi chỉ ra sau. B: chém ngang tới x = 30. Hết cử chỉ kiếm về lưng (không thêm khung) | Vung Hết Sức: hai tay cầm kiếm ngang ngực, thủ rồi chém; choàng bay |
+| Pháp sư | Chóp mũ và chùm bông đung 1 px, bàn tay rảnh co duỗi | A: hai tay co sát ngực. B: hai lòng bàn tay đẩy ra trước | Bùng Nổ: hai tay dang ngang vai, mũ ngả sau |
+| Sát thủ | Cả người tụt 1 px, mũi dao nhích ±1 px luân phiên | A: hai dao chéo trước ngực. B: hai tay hất ra, dao hướng phải | Bóng Lướt: lao người; 2 bản sao tối hơn phía sau cách 4 px (code) |
+| Thợ săn | Vành mũ nghiêng 1 px, lông vũ rung, dồn trọng lượng | A: nỏ hạ ngang hông. B: nỏ giương ngang vai, mũi chĩa ra | Bẫy Sập: quỳ một gối, nỏ chống đất phía trước |
+| Giáo sĩ | Voan và gấu áo lệch 1 px, đầu cúi 1 px | A: gậy dựng thẳng. B: gậy nghiêng, đầu gậy chĩa ra ngang đầu | Ban Phước: hai tay giữ gậy cắm xuống, cúi đầu |
 
 - **Lấy từ `04-lineup-01`:** kiếm lưng, giáp vai (Kiếm sĩ); mũ chùm bông, viền gấu áo (Pháp sư); mũ trùm, dao cầm ngược (Sát thủ); vành rộng, lông, nỏ vai, dây (Thợ săn); voan, gậy ô vuông (Giáo sĩ).
 - **Bỏ:** tóc trắng-vàng cả năm người (mất khác biệt); viền vàng (trùng Ánh Lưới); choàng lam hoàng gia (gần Giá Lạnh); sách Pháp sư; khăn lam-ngọc Sát thủ (va dây ngọc Thợ săn); tím bão hòa; mắt to có lòng trắng (vỡ ở 40 px).

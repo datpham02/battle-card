@@ -76,48 +76,12 @@ const OLD_TERMS: Array[Dictionary] = [
 
 ## Allowed remaining old terms: "key|lang|term" -> true, one-line reason each.
 const EXCEPTIONS: Dictionary = {
-	"trait.rotten_thrower.name|vi|mảnh": true,  # boss trait proper name (group 5, renamed in a later story)
-	"trait.rotten_thrower.name|en|piece": true,  # boss trait proper name (group 5, renamed in a later story)
-	"card.bang_chau.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
-	"card.bang_phong.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
-	"card.bang_phong.name|en|Seal": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_bang.name|vi|Hàn": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_bang.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
 	"boss.frost_sprite.name|en|Frost": true,  # enemy proper name using 'Frost' as an ordinary adjective
 	"boss.frost_mage.name|en|Frost": true,  # enemy proper name using 'Frost' as an ordinary adjective
-	"trait.frost_aura.name|en|Frost": true,  # boss trait proper name (group 5, renamed in a later story)
-	"card.han_khi.name|vi|Hàn": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_khi.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_phong.name|vi|Hàn": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_phong.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_kiem.name|vi|Hàn": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_kiem.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_tran.name|vi|Hàn": true,  # card proper name (group 5, renamed in a later story)
-	"card.han_tran.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
-	"ui.hud.frost_aura|en|Frost": true,  # HUD label showing the boss trait name 'Frost aura' (group 5, later story)
-	"card.ket_gioi.name|vi|kết giới": true,  # card proper name (group 5, renamed in a later story)
-	"card.ket_gioi.name|en|Seal": true,  # card proper name (group 5, renamed in a later story)
-	"card.long_an.name|en|Seal": true,  # card proper name (group 5, renamed in a later story)
-	"card.tran_gai.name|vi|trận gai": true,  # card proper name (group 5, renamed in a later story)
-	"card.tran_gai.name|en|thorn field": true,  # card proper name (group 5, renamed in a later story)
-	"trait.thorn_field.name|vi|trận gai": true,  # boss trait proper name (group 5, renamed in a later story)
-	"trait.thorn_field.name|en|thorn field": true,  # boss trait proper name (group 5, renamed in a later story)
-	"relic.an_don.name|en|Seal": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.phong_an.name|vi|Phong ấn": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.phong_an.name|en|Seal": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.manh_tuoi.name|vi|mảnh": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.la_ban.name|vi|trận đồ": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.han_ky.name|vi|Hàn": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.han_ky.name|en|Frost": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.huyet_an.name|en|Seal": true,  # relic proper name (group 5, renamed in a later story)
-	"relic.an_chu.name|en|Seal": true,  # relic proper name (group 5, renamed in a later story)
 	"event.ban_tho_mau.title|en|Altar": true,  # 'altar' = roadside Blood Altar event, unrelated to the old Seal Altar
 	"event.ban_tho_mau.body|en|Altar": true,  # 'altar' = roadside Blood Altar event, unrelated to the old Seal Altar
 	"event.ban_tho_mau.give.result|en|Altar": true,  # 'altar' = roadside Blood Altar event, unrelated to the old Seal Altar
 	"arena.an_dai_dais.name|en|Dais": true,  # 'Lattice Dais' is the NEW arena name (user, 2026-10-29); only 'Seal Dais' was old
-	"card.bang_tam.name|en|Frost": true,  # card proper name (group 5, renamed in a later story)
-	"signature.thanh_an.name|en|Seal": true,  # Awakening proper name (group 5, renamed in a later story)
-	"trait.rebirth.name|en|Rebirth": true,  # boss trait proper name (group 5, renamed in a later story)
 }
 
 var _fails: int = 0

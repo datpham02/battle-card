@@ -39,7 +39,7 @@ func _initialize() -> void:
 	# Locale switch.
 	TranslationServer.set_locale("en")
 	_check(TranslationServer.translate("title.name") == "TESSERA", "en title.name = %s" % TranslationServer.translate("title.name"))
-	_check(TranslationServer.translate("card.kiem_khi.name") == "Sword Qi", "en card name = %s" % TranslationServer.translate("card.kiem_khi.name"))
+	_check(TranslationServer.translate("card.kiem_khi.name") == "Nick", "en card name = %s" % TranslationServer.translate("card.kiem_khi.name"))
 	_check(TranslationServer.translate("ui.hud.cast") == "Cast", "en ui.hud.cast = %s" % TranslationServer.translate("ui.hud.cast"))
 	var config: ChaptersConfig = ChaptersConfig.load_from_file()
 	_check(config.chapter_name(0) == "Misty Forest", "en chapter_name = %s" % config.chapter_name(0))
