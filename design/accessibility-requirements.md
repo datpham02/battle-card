@@ -28,7 +28,7 @@
 |---|---|
 | Chữ đọc được, không chỉ bằng màu, không chớp sáng nguy hiểm | Đã có trong `design/ux/hud.md` |
 | Cỡ chữ chỉnh được | 100 / 115 / 130 % |
-| Ít nhất một chế độ mù màu | Bảng màu báo trúng xanh dương – cam, cùng dấu ✓/✗, sọc và hình biểu tượng |
+| Ít nhất một chế độ mù màu | **Nội dung cần định lại** (2026-10-29): bóng khối đã đổi sang màu khối của nhân vật, trúng/trượt đọc bằng ✓/✗ và viền; sọc và hình biểu tượng giữ nguyên. Xem Open Questions |
 | Âm lượng nhạc và hiệu ứng riêng | Khi game có âm thanh (hiện chưa có) |
 | Không thao tác tính giờ nào không nới hoặc tắt được | Thời gian chọn lá: 3 s / 6 s / không giới hạn. Né đòn boss theo thời gian thực là bản chất game (Known Intentional Limitations) |
 | Remap điều khiển | Không áp dụng (chỉ cảm ứng). Thay bằng thuận tay trái, cỡ điều khiển 90–110 %, chạm thay cho kéo |
@@ -58,13 +58,13 @@
 | Feature | Target Tier | Scope | Status | Implementation Notes |
 |---|---|---|---|---|
 | Cỡ chữ tối thiểu, menu | Standard | Mọi màn menu | Specified | ≥ 24 px ở 720p |
-| Cỡ chữ tối thiểu, HUD | Standard | HUD trận | Specified | Chữ đọc khi chiến đấu ≥ 18 px; số liệu chính (đếm ngược, số ô, sát thương) ≥ 24 px |
+| Cỡ chữ tối thiểu, HUD | Standard | HUD trận | Specified | Chữ cần hành động (đếm ngược, số ô, sát thương, nhãn lá, SẴN SÀNG, SẮP PHUN) ≥ 24 px; chữ phụ ≥ 18 px (`design/art/art-bible.md` 7.3) |
 | Tương phản chữ | Standard | Mọi chữ | Specified | ≥ 4,5 : 1 chữ thường, ≥ 3 : 1 chữ lớn (≥ 18 px đậm). Nhãn đếm ngược, sát thương có viền để đọc được trên mọi địa hình. Đo bằng công cụ trên màu cuối cùng |
-| Chế độ mù màu | Standard | Mọi thứ mã hóa bằng màu | Specified | Một chế độ: bảng màu báo trúng **xanh dương – cam** thay xanh lá – đỏ (Protanopia/Deuteranopia). Mọi tín hiệu còn lại đã có dấu không phụ thuộc màu (bảng kiểm bên dưới), nên Tritanopia được che bằng hình và chữ |
+| Chế độ mù màu | Standard | Mọi thứ mã hóa bằng màu | Specified | **Chờ quyết định** (2026-10-29): bảng màu báo trúng xanh dương – cam không còn cần, vì bóng khối đã bỏ xanh lá – đỏ. Mọi tín hiệu còn lại đã có dấu không phụ thuộc màu (bảng kiểm bên dưới), nên Tritanopia được che bằng hình và chữ |
 | Kiểm màu-là-tín-hiệu-duy-nhất | Basic | Toàn bộ | Specified | Bảng bên dưới |
 | Cỡ chữ chỉnh được | Standard | Menu + HUD | Specified | 100 / 115 / 130 %. Không giảm dưới 100 % để giữ mức tối thiểu. Nhãn trên lưới tự thu nhỏ cho vừa ô |
 | Cỡ điều khiển | Standard (điều chỉnh) | Pad, túi khối | Specified | 90 / 100 / 110 %, thay cho "UI scaling" của mẫu |
-| Giảm chuyển động | Standard | Hiệu ứng HUD, rung biểu ngữ | Specified | Tắt nhấp nháy máu thấp, nhịp đập Thức Tỉnh, rung màn hình, lắc biểu ngữ; thay bằng dấu tĩnh. Có tùy chọn rung màn hình 0 / 50 / 100 % |
+| Giảm chuyển động | Standard | Hiệu ứng HUD, rung biểu ngữ | Specified | Tắt nhấp nháy máu thấp, nhịp đập Thức Tỉnh, rung màn hình, lắc biểu ngữ; thay bằng dấu tĩnh. Ô đích đang niệm giữ 70 % cố định; VFX phép chỉ hiện khung cuối. Có tùy chọn rung màn hình 0 / 50 / 100 % |
 | Cảnh báo chớp sáng | Basic | Toàn game | Not Started | (1) Thông báo nhạy cảm ánh sáng **một lần ở lần mở game đầu tiên**. (2) Không chớp > 3 lần/giây; nhấp nháy HUD ≤ 1 Hz; không có chớp toàn màn hình. (3) Kiểm lại mọi hiệu ứng khi có art |
 | Chế độ tương phản cao | Comprehensive | — | **Ngoài phạm vi** | Xem Known Intentional Limitations |
 | Điều chỉnh độ sáng / gamma | Basic | Toàn game | **Ngoài phạm vi** | Dùng độ sáng của hệ điều hành điện thoại (xem Known Intentional Limitations) |
@@ -76,21 +76,22 @@ Mỗi mục phải có kênh không-màu hoạt động được trong cả ba d
 
 | Location | Color Signal | What It Communicates | Non-Color Backup | Status |
 |---|---|---|---|---|
-| Bóng khối khi kéo | Xanh = trúng, đỏ = trượt | Khối có trúng ô boss không | Nhãn "Sẽ trúng ✓" / "Sẽ trượt ✗" + bảng màu xanh dương – cam | Specified |
+| Bóng khối khi kéo (ô sàn đất địch đổi màu) | Màu khối của nhân vật: đậm = trúng, mờ = trượt (không dùng đỏ) | Khối có trúng ô boss không | Nhãn "Sẽ trúng ✓" / "Sẽ trượt ✗" + viền liền / nét đứt | Specified |
+| Ô đích đang niệm | Màu chất liệu khối anh hùng, sáng dần | Đòn của bạn rơi vào đâu, sắp rơi chưa | Dấu chất liệu + mép nổi trên ô; độ sáng tăng (không phải đổi màu) | Specified |
 | Ô đỏ báo đòn boss | Đỏ | Ô nào sắp bị đánh | Sọc chéo + viền đậm + nhãn đếm ngược kèm tên đòn | Specified |
-| Thanh máu | Đỏ khi thấp | Sắp chết | Số "170/200", biểu tượng "!", viền nhấp nháy (hoặc viền nét đứt khi giảm chuyển động) | Specified |
-| Độ tươi khối trên sân | Xanh → vàng → đỏ | Khối sắp tan | Chiều dài thanh co lại; dưới 2 s khối nháy (hoặc viền nét đứt) | Specified |
-| Từ khóa trên đơn vị | Cam, xanh nhạt, hổ phách, lam | Cháy, Đóng Băng, Rạn, Giá Lạnh | Biểu tượng **khác hình** (ngọn lửa, khối băng, vết nứt, bông tuyết) + số tầng/giây | Specified |
-| Tường và Bãi Gai | Tím, khác màu | Đi qua được hay không | Hình khác hẳn: khối dựng nổi và gạch chéo với gai nhọn trên nền thưa | Specified |
+| Thanh máu | Xanh lá; khi thấp **không đổi sang đỏ** (đỏ chỉ dành cho báo đòn, `design/art/art-bible.md` Mục 4) | Sắp chết | Số "170/200", biểu tượng "!", viền Ngà nhấp nháy (hoặc viền đặc 3 art-px, tĩnh, khi giảm chuyển động) | Specified |
+| Độ tươi khối trên sân | Không mã màu (chỉ chiều dài) | Khối sắp tan | Chiều dài thanh co lại; dưới 2 s khối nháy (hoặc viền nét đứt) | Specified |
+| Từ khóa trên đơn vị | Cam, băng nhạt, Ngà + vết nứt, lam đậm | Cháy, Đóng Băng, Rạn, Giá Lạnh | Biểu tượng **khác hình** (ngọn lửa, khối băng, vết nứt, bông tuyết) + số tầng/giây | Specified |
+| Tường và Bãi Gai | Lam-xám / xương-gỉ (không dùng tím: trùng Khối Lạ) | Đi qua được hay không | Hình khác hẳn: khối dựng nổi và gạch chéo với gai nhọn trên nền thưa | Specified |
 | Hạng hiếm của lá và bảo vật | Viền màu | Thường / Hiếm / Sử thi / Boss | Tên hạng bằng chữ trên thẻ | Specified |
 | Khối Lạ | Tím hồng | Khối ngẫu nhiên, khác bộ khối | Dấu sao + viền ngoài của cả hình | Specified |
 | Thức Tỉnh sẵn sàng | Sáng lên | Dùng được | Chữ "SẴN SÀNG" + nhịp đập (hoặc viền tĩnh khi giảm chuyển động) | Specified |
-| Cảnh báo địa hình | Màu cam / đỏ | Sắp có mạch phun, ô rơi | Sọc hoặc viền nét đứt + nhãn chữ ("SẮP PHUN"...) | Specified |
+| Cảnh báo địa hình | Cam-vàng, không đỏ | Sắp có mạch phun, ô rơi | Sọc hoặc viền nét đứt + nhãn chữ ("SẮP PHUN"...) | Specified |
 | Nút Tung phép (xanh lá), Hủy (nâu) | Màu | Xác nhận hay hủy | Nhãn chữ trên nút; Tung phép to hơn Hủy | Specified |
-| Hai nửa lưới | Xám (bạn) và cam hồng (địch) | Đất của ai | Vị trí trái/phải + đường phân chia giữa | Specified |
+| Hai nửa lưới | **Không tô màu hai nửa** (`design/art/art-bible.md` Mục 1) | Đất của ai | Vị trí trái/phải + đường phân chia giữa | Specified |
 | Lá chưa đủ ô | Mờ | Không dùng được | Chữ "cần N ô" | Specified |
 
-**Quan sát:** bảng màu báo trúng xanh dương – cam không phù hợp với Tritanopia (rất hiếm, khoảng 0,001 %), nhưng tín hiệu không bao giờ chỉ dựa vào màu nên vẫn dùng được.
+**Quan sát (cũ, trước 2026-10-29):** bảng màu báo trúng xanh dương – cam không phù hợp với Tritanopia (rất hiếm, khoảng 0,001 %), nhưng tín hiệu không bao giờ chỉ dựa vào màu nên vẫn dùng được.
 
 ---
 
@@ -286,3 +287,4 @@ Mỗi mục là một rủi ro. Người dùng duyệt 2026-10-28.
 | Khi game có âm thanh: bus Nhạc/Hiệu ứng, thanh trượt trong Cài đặt và Tạm dừng | audio-director | Trước khi phát hành âm thanh | Mở |
 | Thông báo nhạy cảm ánh sáng lần mở đầu: hiện ở màn nào? | ux-designer | Trước phát hành | Mở |
 | API rung của Godot cho di động | ui-programmer | Khi làm rung | Mở |
+| Chế độ mù màu còn đổi gì, sau khi bóng khối bỏ xanh lá – đỏ (2026-10-29)? Giữ (bảng tương phản cao cho đỏ báo đòn và màu trạng thái) hay ghi lý do bỏ | accessibility-specialist | Trước story Cài đặt | Mở |

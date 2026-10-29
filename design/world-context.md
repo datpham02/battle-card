@@ -90,7 +90,7 @@ Mỗi vùng là một kiểu **mạng lưới** khác nhau sau Biến Cố: lư�
 - **Địa hình:** tường.
 - **Quái:** bộ xương lính, xác sống, đàn dơi, nhầy ngục, tín đồ tà giáo, lính gác Chuột Vương, bóng ma, Kẻ Phản Ứng, Cai Ngục.
 - **Kẻ Gác:** **Quỷ Khổng Lồ**.
-- **Màu [Khởi điểm]:** xám đá, xanh rêu ẩm, ánh đuốc cam.
+- **Màu [Khởi điểm]:** xám đá, xanh rêu ẩm, đuốc là mảng ochre đục không phát sáng (chỉ Khối phát sáng).
 
 ### Tháp Sương (The Mist Tower)
 - **Không khí:** *"Tháp Sương mọc lên từ biển mây, mỗi bậc thang lạnh hơn bậc trước."*
@@ -122,7 +122,7 @@ Mỗi vùng là một kiểu **mạng lưới** khác nhau sau Biến Cố: lư�
 - **Địa hình:** **mạch dung nham** (cảnh báo rồi phun cả hàng hoặc cột), ô cháy.
 - **Quái:** tiểu quỷ, chó than hồng, khôi tro, tín đồ lửa, sên dung nham, hiệp sĩ địa ngục, quỷ nuốt lửa, phượng tro.
 - **Kẻ Gác:** **Chúa Quỷ Lửa**.
-- **Màu [Khởi điểm]:** đen than, đỏ dung nham, cam lửa.
+- **Màu [Khởi điểm]:** đen than, cam-vàng dung nham, cam lửa (không dùng đỏ: đỏ dành cho báo đòn, xem `design/art/art-bible.md`).
 
 ### Không Đảo (The Sky Isles)
 - **Không khí:** *"Những hòn đảo trôi giữa gió lộng, nối nhau bằng những nhịp cầu mong manh. Đứng lâu một chỗ, đất sẽ rơi."*
@@ -150,7 +150,7 @@ Mỗi nhân vật phải có **bản sắc riêng ngay từ trận đầu**: dá
 | Nhân vật | Lối chơi (theo dữ liệu) | Thức Tỉnh (tên cũ, đổi ở đợt sau) | Hình ảnh [Khởi điểm] | Chất liệu khối [Khởi điểm] |
 |---|---|---|---|---|
 | **Kiếm sĩ** | Bền, 200 máu, đòn sát thương cao, hồi 20 máu sau trận thắng | Trảm: trong 3 s mọi phép tính gấp đôi số ô, hút 20 % sát thương | Hiệp sĩ giáp thép, kiếm lớn, dáng vững | **Thép**: khối như phiến kim loại, in xuống thành vết chém sáng |
-| **Pháp sư** | 210 máu, phép diện rộng, Cháy | Thiên Hỏa: kích nổ lửa đang cháy, đốt cả nửa lưới đã khắc | Pháp sư áo đỏ cam, sách hoặc gậy, dáng gầy | **Than lửa**: khối nứt đỏ, để lại tàn lửa |
+| **Pháp sư** | 210 máu, phép diện rộng, Cháy | Thiên Hỏa: kích nổ lửa đang cháy, đốt cả nửa lưới đã khắc | Pháp sư áo nâu than nhấn hổ phách, sách hoặc gậy, dáng gầy | **Than lửa**: khối thân tối nứt hổ phách, để lại tàn lửa |
 | **Sát thủ** | Nhanh, 180 máu, đòn nhỏ (≤ 4 ô) mạnh hơn 40 %, Đóng Băng | Ảnh Bộ: trong 2 s bước không chờ, đòn ≤ 3 ô ×1,75 | Kẻ cắp hoặc sát thủ đôi dao, áo đen | **Băng sắc**: khối nhỏ, trong, cạnh nhọn |
 | **Thợ săn** | 200 máu, Tường, Bãi Gai, làm boss **Rạn**. Mở khóa khi đã **giết** 3 Kẻ Gác | Vây Bắt: vùng kéo dài ×1,5, tiêu Rạn ×2 | Ranger áo da, nỏ, móc bẫy | **Gỗ và dây**: khối như khung bẫy |
 | **Giáo sĩ** | Bền, 210 máu, xây bộ **Giá Lạnh**; mỗi lần Giá Lạnh nổ trên boss thì hồi 8 máu. Mở khóa khi đã **tha** 3 Kẻ Gác | Thánh Ấn: mỗi đòn trúng thêm 1 tầng Giá Lạnh, nổ ×1,5 | Cleric áo trắng bạc, biểu tượng thánh trước ngực | **Kính thánh**: khối như kính màu phát sáng |
@@ -170,7 +170,7 @@ Mỗi nhân vật phải có **bản sắc riêng ngay từ trận đầu**: dá
 |---|---|---|
 | **Cháy** | Ô cháy, đứng trong mất máu dần | Cam lửa |
 | **Đóng Băng** | Đứng im 1,2 s | Xanh băng nhạt |
-| **Rạn** | Vết nứt, đòn kế tiếp ăn ×1,5 | Hổ phách, có đường nứt |
+| **Rạn** | Vết nứt, đòn kế tiếp ăn ×1,5 | Ngà, có đường nứt màu Mực |
 | **Giá Lạnh** | Tích tầng lạnh rồi nổ | Lam đậm |
 | **Tường** | Tường khối, không bước vào được | Phải **khác hình hẳn** với gai |
 | **Bãi Gai** | Bước vào được nhưng mất máu hoặc dính Rạn | Phải **khác hình hẳn** với tường |
@@ -190,7 +190,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
 **Animation nhân vật**
 - Đứng chờ (idle).
 - **Bước một ô:** rất nhanh, 0,18–0,6 s mỗi bước.
-- **Niệm:** **nhân vật vẫn đi được khi đang niệm**, nên niệm là hào quang hoặc lớp phủ, không khóa tư thế. Thời gian niệm 0,2 s + 0,25 s mỗi ô.
+- **Niệm:** **nhân vật vẫn đi được khi đang niệm**, nên niệm không khóa tư thế: một cử chỉ ngắn ~0,2 s rồi đi lại tự do; trạng thái niệm hiện ở ô đích trên đất địch (`design/art/art-bible.md` Mục 3). Thời gian niệm 0,2 s + 0,25 s mỗi ô.
 - Bị trúng đòn. **Bị phá phép**: khối vỡ.
 - Bị đẩy lùi, bị Đóng Băng, bị Cháy.
 - **Rơi khỏi đảo** (Không Đảo).
@@ -211,7 +211,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
   - **Rơi** xuống lưới.
   - **Nằm** trên đất (thu nhỏ, không có chữ).
   - **Trong túi khối** (tối đa 3).
-  - **Bóng khối khi kéo:** xanh nếu trúng ô boss, đỏ nếu trượt.
+  - **Ô sáng khi kéo:** màu khối của nhân vật; trúng = viền liền + ✓, trượt = viền nét đứt + ✗ (`design/art/art-bible.md` Mục 3).
   - **In lên đất địch.**
   - **Vỡ** khi bị phá phép.
   - **Tan** khi hết hạn.
@@ -223,7 +223,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
 - Ô cháy, ô lầy, ô cát lấp, mạch dung nham (cảnh báo rồi phun), ô nứt rồi rơi.
 - Tường, Bãi Gai.
 
-**Hiện trạng:** toàn bộ hình trong game vẫn là **ô màu và hình tròn tạm**. Chưa có art bible, chưa chốt phong cách.
+**Hiện trạng:** toàn bộ hình trong game vẫn là **ô màu và hình tròn tạm**. Phong cách đã chốt trong `design/art/art-bible.md` (mục 1–4, 2026-10-28): pixel art theo tinh thần One Step From Eden.
 
 ---
 
@@ -235,7 +235,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
 
 ## 10. Còn mở
 
-1. **Phong cách hình:** pixel hay vẽ tay 2D, tỉ lệ chibi hay tỉ lệ thật. Gợi ý: **2D vẽ tay, tỉ lệ hơi chibi**. Chốt ở `/art-bible`.
+1. **Phong cách hình:** **Đã chốt** (2026-10-28): pixel art kiểu One Step From Eden, chỉ lấy góc nhìn của OSFE: lưới phẳng, đơn vị đứng thẳng cao ~40 px (khung 32×48), nền nhìn ngang có chân trời; chiến trường 640×360. Xem `design/art/art-bible.md`.
 2. **Áp thuật ngữ vào game:** đổi chữ trong `strings.csv` theo `design/glossary.md` (nhóm 1–4). Cần một story riêng.
 3. **Tên riêng, nhóm 5 của glossary:** lá, Thức Tỉnh, bảo vật, đặc tính boss. Làm sau art bible.
 4. **Chữ cần viết lại theo lore:**
