@@ -358,6 +358,7 @@ UI đứng ngoài thang này và giữ trung tính.
 **Ngân sách 64 màu** (nâng từ 48, người dùng chốt 2026-10-29: 48 chưa tính da, tóc, da thuộc, vải của 5 anh hùng và ~22 thân quái)
 - Dùng chung khoảng 26 màu: 7 màu chính + ~11 tín hiệu + ~8 màu khối anh hùng.
 - ~16 màu cho da, tóc, da thuộc, vải (anh hùng và quái dùng chung ramp).
+  - Đã đề xuất khi làm spec Kiếm sĩ (2026-10-29, `design/assets/specs/swordsman-assets.md`): giáp tối #5F6F82, áo choàng #4F5864, tóc vàng nhạt #E8D9A8, da #E3B99A.
 - Còn ~22 màu cho 8 vùng: **mỗi vùng tối đa 3 màu riêng**; còn lại dùng chung ramp Đá và Sương.
 - Muốn vượt 64 thì hỏi người dùng.
 
