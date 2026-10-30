@@ -468,7 +468,7 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 
 | Anh hùng | Dáng · vật đặc trưng (nửa trên) | Chính · nhấn | Mặt, tóc ở 40 px |
 |---|---|---|---|
-| Kiếm sĩ | Chữ nhật, vai vuông; kiếm lớn chéo lưng, chuôi vượt đầu ≥ 4 px | Giáp thép #8FA3B8, choàng Sương tối (không lam #3A5CF0), viền Ngà · nhấn #EEF4FA | Tóc vàng nhạt dựng 3 chùm; mắt mở, chân mày 1 px thẳng |
+| Kiếm sĩ | Chữ nhật, HAI vai vuông to đối xứng; kiếm thẳng hai lưỡi hẹp (2 px) trong vỏ tối đeo chéo lưng, chỉ chuôi + **chắn tay chữ thập** rộng ~6 px + núm tròn nhô trên đầu ≥ 4 px (dấu nhận dạng là chữ thập, không phải lưỡi bản rộng) | Giáp thép #8FA3B8 tấm đối xứng, viền Ngà ngang ngực; choàng ngắn ngang hông Sương tối #4F5864 cài hai vai (không lam #3A5CF0) · nhấn #EEF4FA | Tóc vàng nhạt cắt ngắn, mái bằng, 3 chùm nhỏ chỉ ở đỉnh, băng đầu Ngà 1 px; mắt mở 2×2, chân mày 1 px thẳng. *Sửa 2026-10-31: bản v1 (tóc dựng cao, đại kiếm bản rộng, choàng dài) đọc ra Cloud FF7 nên bỏ.* |
 | Pháp sư | Tam giác cao gầy; mũ chóp gập có chùm bông. **Không sách** (cử chỉ cần hai tay trống) | **Áo nâu than #3A2A26** · nhấn hổ phách #F0A030 ở dải mũ, gấu áo, thắt lưng (người dùng chốt 2026-10-29) | Tóc bạc lòa xòa 3 px dưới vành; mắt 2×1 |
 | Sát thủ | Thoi dẹt, khom; cao ~34–36 px (thấp nhất nhóm); mũ trùm nhọn, hai dao ngang ngực | Vải xám than #3A3744 · ngọc-trắng #BFF3EC ở lưỡi dao, mép mũ | Khăn che mặt; chỉ khe mắt Ngà 3×1 |
 | Thợ săn | Chữ T; nỏ vắt vai, mũ rộng vành + 1 lông ngà | Da nâu #8A5A33, choàng xám-ô-liu S ≤ 35 % · dây ngọc #46D6A4 (≤ 6 px) | Tóc nâu; mắt 2×1 trong bóng vành |

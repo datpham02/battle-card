@@ -42,6 +42,10 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   (leather dark #4A3C2E vs Stone #4A4640, both V 29 %), so the body read as a
   dark blob at 1x. Lifted one step (#856B50 / #66523F) and re-run: `04-*` and
   `05-*` show the body separating from the slab; #3 still passes.
+- 2026-10-31 later: the Swordsman was redesigned (v1 read as Cloud from FF7).
+  `06-pair-5x5-swordsman-v2.png` and `07-blackout-swordsman-v2.png` re-run #1
+  with the v2 anchor: silhouette = round head, T-shaped hilt above it, boxy
+  pauldrons; still clearly not the goblin.
 - The 38x27 slab with a 48 px sprite behaves as §1 expects: a unit covers the
   lower half of the one on the row behind; identity stays in the upper 20 px.
 - Technique notes for the SubViewport story: `Image.load_from_file` +
