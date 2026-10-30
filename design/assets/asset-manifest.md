@@ -1,26 +1,28 @@
 # Asset Manifest
 
-> Last updated: 2026-10-31
+> Last updated: 2026-10-31 (ASSET-001 and ASSET-003 moved to In Progress after the first PixelLab pass)
 > Vertical slice 1: all 17 inventory rows marked Slice = 1 are specced (ASSET-001..015; UI frames are one asset with four files).
 
 ## Progress Summary
 
 | Total | Needed | In Progress | Done | Approved |
 |-------|--------|-------------|------|----------|
-| 15 | 15 | 0 | 0 | 0 |
+| 15 | 13 | 2 | 0 | 0 |
+
+**In Progress** means: the idle A/B frames exist as candidates under `design/assets/candidates/<entity>/`, passed art bible §8.9 #1, #3, #7 (measured), #9 in `prototypes/art-check`, and the generation log lives in the spec. Still missing for Done: the remaining clips (hero 12 frames, goblin 6), the Aseprite source and the exported sheet + JSON under `assets/art/units/`.
 
 ## Assets by Context
 
 ### Character: Swordsman
 | Asset ID | Name | Category | Status | Spec File |
 |----------|------|----------|--------|-----------|
-| ASSET-001 | Swordsman sprite sheet | Sprite / 2D art | Needed | design/assets/specs/swordsman-assets.md |
+| ASSET-001 | Swordsman sprite sheet | Sprite / 2D art | In Progress (idle A/B: `design/assets/candidates/swordsman/ASSET-001-idle-A-32x48.png`, `-B`) | design/assets/specs/swordsman-assets.md |
 | ASSET-002 | Swordsman portrait | Sprite / 2D art | Needed | design/assets/specs/swordsman-assets.md |
 
 ### Character: Goblin Scout
 | Asset ID | Name | Category | Status | Spec File |
 |----------|------|----------|--------|-----------|
-| ASSET-003 | Goblin small body sprite sheet (base: Goblin Scout) | Sprite / 2D art | Needed | design/assets/specs/goblin-scout-assets.md |
+| ASSET-003 | Goblin small body sprite sheet (base: Goblin Scout) | Sprite / 2D art | In Progress (idle A/B: `design/assets/candidates/goblin-scout/ASSET-003-idle-A-32x48.png`, `-B`; leather palette revised, see spec) | design/assets/specs/goblin-scout-assets.md |
 
 ### Level: Misty Forest
 | Asset ID | Name | Category | Status | Spec File |
