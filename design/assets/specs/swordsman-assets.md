@@ -62,9 +62,20 @@ Pixel art character sprite, tiny chibi knight facing right, standing upright, 32
 Negative: red, orange, gold glow, bright blue cape, text, realistic proportions, painterly shading, soft edges, background scenery, weapon held in front.
 ```
 Animation prompt for `cast_gesture`: "draws sword to shoulder height, then swings it horizontally toward the right, then returns to idle".
-Not verified: PixelLab canvas sizes. If only square canvases are allowed, generate 48x48 and crop to 32x48 keeping the feet on the same pixel row.
+Verified 2026-10-31: 32x48 is a native Pro Flash preset (`get_pro_flash_capabilities`), so no square-then-crop step is needed for the single image. The 8-direction rotation pads to a 48x48 square; crop back to 32x48 keeping the feet on the same pixel row.
 
-**Status:** Needed
+**Generation log (PixelLab):**
+
+| # | Date | Tool | Params | Cost | Result | Verdict |
+|---|---|---|---|---|---|---|
+| cand-01 | 2026-10-31 | `create_image_pro_flash` | 32x48, seed 0, palette locked to the 8 hex above, max_colors 8, no_background; prompt = the one above plus "seen from the side, facing right, feet apart, feet on the bottom edge, light from top-left" | 5 gen | job `a767e4a3-ed2c-45dd-b891-a5e9bf061c76`, gallery `a6363d0f-98c8-57f6-8d88-3a402661837c`, file `design/assets/candidates/swordsman/ASSET-001-cand-01-proflash-seed0.png` | Palette 7/8 (all in spec, #EEF4FA unused), sword on back, 3 hair tufts, 2x2 eyes, ~38 px tall, ~25 px wide, transparent bg. FAIL §5.1 facing: drawn front/3-4 toward the viewer, not right; hilt not >= 4 px above the head. Kept as identity anchor. |
+| rot-01 | 2026-10-31 | `create_character_pro_flash` | source_image_id = cand-01, palette locked, view low top-down, 8 directions | 1 gen | character `7b1bbf5f-5cbd-42dc-8982-1f0e039fc83c` (48x48 canvas); saved `east`, `south-east`, `south` under `design/assets/candidates/swordsman/ASSET-001-rot-01-*-48.png` | All 7 colours in spec, alpha 0/255. **south-east chosen** as the facing-right base (3/4 per §5.1): face, 2x2 eye, 3 tufts, cloak, sword behind. `east` rejected: blade covers the body, hair hides the eye. Hilt still level with the hair. |
+| fix-01 | 2026-10-31 | `pixelart_workbench edit` (free) | on south-east: pommel moved up 5 px (copy_region), grip extended, 3 ink pixels close the right outline; lint 0 errors / 0 warnings | 0 | workbench image `fdea9dce-67f3-4b6e-a2e4-1277627721d8`, file `ASSET-001-rot-01-south-east-48-hiltfix.png` | Hilt top 4 px above the hair mass (y=2 vs y=6). |
+| crop-01 | 2026-10-31 | local `crop_frame.py` (scratchpad, pure Python) | 48x48 to 32x48, dx -8, dy +1 (feet on row 47) | 0 | **`design/assets/candidates/swordsman/ASSET-001-idle-A-32x48.png`** | bbox x 5-26 (22 wide), y 3-47 (45 tall incl. hilt and tufts; hair mass to feet = 42), 7 colours, alpha 0/255, no opaque pixel lost. Candidate for clip `idle` frame A. |
+| check-01 | 2026-10-31 | `prototypes/art-check` (free) | 5x5 + 5x5 board, 38x27 art-px slabs (Stone #4A4640, lip #2C2925), 640x360 shown at 2x, Nearest, feet 3 px above the lip, y-sorted | 0 | `production/qa/evidence/asset-slice1-art-check/01-pair-5x5.png`, `02-blackout.png` | §8.9 #1 PASS for the pair: the Ink silhouette keeps the spiky hair and the sword hilt and cannot be mistaken for the goblin. #9 PASS (retained). Head and hilt reach one row up into the row behind, as §1 intends. Upper-half identity reads at 1x. Still open: #1 with all 5 heroes. |
+| anim-01 | 2026-10-31 | `animate_image_pixminimax` | first frame = idle-A (base64), 4 frames, seed 1, view low top-down, direction south-east, motion "chest rises 1 px, cloak tail sways 1 px, feet planted" | 1 gen | job `5475b18e-c797-40fb-a582-aed7a0bf3aa9`, gallery `3470b808-8c8d-5189-bf16-9753d5c50ba6`; raw frames `design/assets/candidates/swordsman/idle-clip-raw/f1-f5.png`; **idle B = f5** saved as `ASSET-001-idle-B-32x48.png` | All 5 frames: feet row 47 and feet x 11-22 unchanged, 7 colours unchanged, alpha 0/255, lint 0 errors, score 96. f2-f3 move the head 1 px; f4-f5 lift the body 1 px (bbox top y3 -> y2), matching the spec's "chest up 1 px". Clip `idle` = A (idle-A) / B (f5), 0.4 s each. §8.9 #7 PASS on the measurements; eye check pending in the art-check scene. |
+
+**Status:** In Progress
 
 ## ASSET-002 — Swordsman portrait
 

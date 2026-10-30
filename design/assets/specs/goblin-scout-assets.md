@@ -38,8 +38,8 @@ Small goblin about 30 px tall facing left, low centre of gravity, long ears stic
 | Outline 1 px | #1B1722 (Ink) | Art Bible §4 |
 | Skin mid | #7D8B5A | proposal (desaturated olive, S ~35 %, far from the hit-green #58D468) |
 | Skin dark | #59643F | proposal |
-| Leather | #6B5640 | proposal |
-| Leather dark | #4A3C2E | proposal |
+| Leather | #856B50 (was #6B5640) | proposal; lifted one step 2026-10-31 after the art-check (V 52 %, slab Stone is V 29 %) |
+| Leather dark | #66523F (was #4A3C2E) | proposal; lifted one step 2026-10-31 (V 40 %) |
 | Eyes / teeth / blade | #EFE6D2 (Ivory) | Art Bible §4 |
 | Hood cloth | #5E6B55 (Misty Forest moss grey) | Art Bible §4 region colour |
 
@@ -57,6 +57,17 @@ Pixel art enemy sprite, small goblin scout facing left, 32x48 canvas, about 30 p
 Negative: red, gold, bright green, magenta, text, holding a block, arms raised, realistic proportions, soft edges, background.
 ```
 Wind-up prompt: "same goblin, hunched, right arm pulled back as if about to throw, left arm forward, empty hands, facing left".
-Not verified: PixelLab canvas sizes (generate 48x48 and crop to 32x48 if needed).
+Verified 2026-10-31: 32x48 is a native Pro Flash preset. Pro Flash ignores "facing left" and draws a front view; the facing-left frame comes from the 8-direction rotation (`south-west`, mirror of the hero's `south-east`), as done for the Swordsman.
 
-**Status:** Needed
+**Generation log (PixelLab):**
+
+| # | Date | Tool | Params | Cost | Result | Verdict |
+|---|---|---|---|---|---|---|
+| cand-01 | 2026-10-31 | `create_image_pro_flash` | 32x48, seed 0, palette locked to the 7 hex above, max_colors 7, no_background; style_image = Swordsman `ASSET-001-idle-A-32x48.png` (base64, style_options colour off, outline/detail/shading on); prompt = the one above reworded as front view, ~30 px tall, ears straight out sideways | 5 gen | job `d2fba081-c414-4306-8518-a4c80074b5e6`, gallery `32fecc31-dcaf-5bd9-9f9a-fd36c44735fc`, file `design/assets/candidates/goblin-scout/ASSET-003-cand-01-proflash-seed0.png` | bbox 24x28 (x 4-27, y 20-47), feet on row 47, 6 colours all in spec (#59643F unused), alpha 0/255, lint 0 errors. Ears sideways in the upper half, hood flap, dark face with pale eyes, knife at belt, arms down. Front view: needs rotation for facing left. Style density matches the Swordsman. |
+| rot-01 | 2026-10-31 | `create_character_pro_flash` | source_image_id = cand-01, palette locked, view low top-down, 8 directions | 1 gen | character `12574376-b113-460f-b07a-e75d265832db` (48x48 canvas); saved `south-west`, `west`, `south` under `design/assets/candidates/goblin-scout/ASSET-003-rot-01-*-48.png` | 6 colours in spec, alpha 0/255, lint 0 errors. **south-west chosen** (3/4 facing left, mirror of the hero's south-east): ears and hood readable, dark face with pale eye, knife at belt, 21x29 bbox. `west` rejected: face hidden, reads as a blob. |
+| crop-01 | 2026-10-31 | local `crop_frame.py` (free) | 48x48 to 32x48, dx -10, dy 0 (feet already on row 47) | 0 | **`design/assets/candidates/goblin-scout/ASSET-003-idle-A-32x48.png`** | bbox x 5-25 (21 wide), y 19-47 (29 tall, spec <= 34), 6 colours, alpha 0/255. Candidate for clip `idle` frame A. Hood reads as a wide pointed cap rather than a flap over one ear (spec text), acceptable as the scout's accessory, note for the archer/shaman variants. |
+| check-01 | 2026-10-31 | `prototypes/art-check` (free) | 5x5 + 5x5 board, 38x27 art-px slabs (Stone #4A4640, lip #2C2925), 640x360 shown at 2x, Nearest, feet 3 px above the lip, y-sorted | 0 | `production/qa/evidence/asset-slice1-art-check/01-pair-5x5.png`, `02-blackout.png`, `03-three-goblins-rows.png` | §8.9 #1 PASS: Ink silhouette = pointed hood plus the side ear, clearly smaller and rounder than the hero. #3 PASS: three scouts in one column on adjacent rows count as three (each hood top shows above the one in front) and the species reads. #9 PASS (retained). **CONCERN, contrast on the slab:** leather dark #4A3C2E has the same V (29 %) as Stone #4A4640 and leather mid #6B5640 is only 13 points lighter; at 1x the body reads as a dark blob held together by the outline, only the skin (V 55 %) and hood pop. Proposal before any animation: lift the two leather tones one step (about V 40 % / 52 %) or let more skin show; decide with the art-director (solo mode: user). |
+| fix-01 | 2026-10-31 | `pixelart_workbench edit` map_colors (free) | #6B5640 -> #856B50, #4A3C2E -> #66523F on idle-A (135 px), user-approved | 0 | workbench image `3dcf997f-7e17-4027-9348-253c4a8998ee`; **`ASSET-003-idle-A-32x48.png` replaced** (old frame kept as `ASSET-003-idle-A-32x48-v1-darkleather.png`); art-check re-run: `04-pair-5x5-leather-v2.png`, `05-three-goblins-rows-leather-v2.png` | Body now separates from the slab at 1x (leather V 52/40 % vs Stone 29 %); hood and skin still read; #3 still passes. Contrast concern closed. Note: the PixelLab character `12574376` keeps the old palette, so future clips come from this local frame (`animate_image*`), not from `animate_character`. |
+| anim-01 | 2026-10-31 | `animate_image_pixminimax` | first frame = idle-A v2 (base64), 4 frames, seed 1, view low top-down, direction south-west, motion "ears twitch 1 px, body bobs 1 px, knees bent, hands down" | 1 gen | job `fe933c11-5aef-47f4-bac2-b94d4c9bb856`, gallery `f3b1d2cf-61a9-5085-bdda-4eb0eba85262`; raw frames `design/assets/candidates/goblin-scout/idle-clip-raw/f1-f5.png`; **idle B = f3** saved as `ASSET-003-idle-B-32x48.png` | All 5 frames: feet row 47 and feet x 7-20 unchanged, 6 colours (new leather) unchanged, alpha 0/255, lint 0 errors, score 96.7. Only f3 moves (191 px, body up 1 px, bbox top y19 -> y18); f2/f4/f5 are within 2-38 px of f1, so the clip is effectively 2 poses. Clip `idle` = A / B (f3), 0.4 s each. §8.9 #7 PASS on the measurements; eye check pending. |
+
+**Status:** In Progress
