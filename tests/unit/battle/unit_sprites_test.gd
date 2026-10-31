@@ -184,7 +184,7 @@ func test_battle_kiem_si_vs_goblin_scout() -> void:
 	_check("test_ids_resolve_kiem_si_vs_goblin_scout_got_%s_%s" % [units.get_unit_id(PLAYER), units.get_unit_id(ENEMY)], units.get_unit_id(PLAYER) == HERO and units.get_unit_id(ENEMY) == BOSS)
 	_check("test_both_sheets_loaded", units.get_sheet(PLAYER) != null and units.get_sheet(ENEMY) != null)
 	_check("test_both_textures_loaded_no_placeholder", not units.is_placeholder(PLAYER) and not units.is_placeholder(ENEMY))
-	_check("test_frame_sizes_96x70_and_32x48", units.get_sheet(PLAYER).frame_size() == Vector2i(96, 70) and units.get_sheet(ENEMY).frame_size() == Vector2i(32, 48))
+	_check("test_frame_sizes_96x70_and_64x52", units.get_sheet(PLAYER).frame_size() == Vector2i(96, 70) and units.get_sheet(ENEMY).frame_size() == Vector2i(64, 52))
 	_check("test_clips_idle_after_setup", units.get_current_clip(PLAYER) == UnitLayer.CLIP_IDLE and units.get_current_clip(ENEMY) == UnitLayer.CLIP_IDLE)
 	_check("test_animators_play_idle", units.get_animator(PLAYER).current_clip() == UnitLayer.CLIP_IDLE and units.get_animator(ENEMY).current_clip() == UnitLayer.CLIP_IDLE)
 	_check("test_reduce_motion_from_settings_off", not units.is_reduce_motion() and not units.get_animator(PLAYER).is_reduce_motion())

@@ -1,0 +1,84 @@
+[
+ {
+  "name": "idle",
+  "frames": [
+   "idle/0.png",
+   "idle/1.png",
+   "idle/2.png",
+   "idle/3.png"
+  ],
+  "ms": [
+   250,
+   250,
+   250,
+   250
+  ],
+  "loop": "loop"
+ },
+ {
+  "name": "step",
+  "frames": [
+   "step/0.png",
+   "step/1.png",
+   "step/2.png",
+   "step/3.png"
+  ],
+  "ms": [
+   100,
+   100,
+   100,
+   100
+  ],
+  "loop": "loop"
+ },
+ {
+  "name": "windup",
+  "frames": [
+   "windup/0.png",
+   "windup/1.png"
+  ],
+  "ms": [
+   100,
+   0
+  ],
+  "loop": "hold_last"
+ },
+ {
+  "name": "hit",
+  "frames": [
+   "hit/0.png",
+   "hit/1.png",
+   "hit/2.png"
+  ],
+  "ms": [
+   40,
+   40,
+   40
+  ],
+  "loop": "once"
+ },
+ {
+  "name": "down",
+  "frames": [
+   "down/0.png",
+   "down/1.png",
+   "down/2.png",
+   "down/3.png",
+   "down/4.png",
+   "down/5.png",
+   "down/6.png",
+   "down/7.png"
+  ],
+  "ms": [
+   100,
+   100,
+   100,
+   100,
+   100,
+   100,
+   100,
+   100
+  ],
+  "loop": "hold_last"
+ }
+]

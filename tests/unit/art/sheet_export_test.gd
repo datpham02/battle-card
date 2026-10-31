@@ -30,14 +30,15 @@ const UNITS := {
 		],
 	},
 	"goblin_scout": {
-		"frame": Vector2i(32, 48), "sheet": Vector2i(65, 244), "facing": "left",
-		"candidate": "goblin-scout/ASSET-003-%s-32x48.png",
+		# 2026-10-31: v3 OSFE-scale anchor (PixelLab 3b9516c8...), PixMiniMax south-west clips cleaned to 64x52.
+		"frame": Vector2i(64, 52), "sheet": Vector2i(519, 264), "facing": "left",
+		"candidate": "goblin-scout/v3/clean-64x52/%s.png",
 		"clips": [
-			["idle", ["idle-A", "idle-B"], [400, 400], "loop"],
-			["step", ["step-A", "step-B"], [300, 300], "loop"],
-			["windup", ["windup"], [0], "hold"],
-			["hit", ["hit"], [120], "once"],
-			["down", ["down-A", "down-B"], [150, 150], "hold_last"],
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
+			["windup", ["windup/0", "windup/1"], [100, 0], "hold_last"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["down", ["down/0", "down/1", "down/2", "down/3", "down/4", "down/5", "down/6", "down/7"], [100, 100, 100, 100, 100, 100, 100, 100], "hold_last"],
 		],
 	},
 }

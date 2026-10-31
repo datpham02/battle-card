@@ -22,7 +22,7 @@ const FIXTURE_FRAME := Vector2i(40, 48)
 ## unit id -> [clips in frameTags order, frame size, facing]
 const REAL_SHEETS: Dictionary = {
 	"kiem_si": [["idle", "step", "cast_gesture", "hit", "victory", "defeat", "fall", "awaken"], Vector2i(96, 70), "right"],
-	"goblin_scout": [["idle", "step", "windup", "hit", "down"], Vector2i(32, 48), "left"],
+	"goblin_scout": [["idle", "step", "windup", "hit", "down"], Vector2i(64, 52), "left"],
 }
 
 var fails: int = 0
@@ -150,7 +150,7 @@ func test_real_sheets_match_story_045_table() -> void:
 	var gs := SpriteSheetScript.load_unit("goblin_scout")
 	if gs != null:
 		var windup: Dictionary = gs.clip("windup")
-		check("goblin_scout windup is [0] hold", (windup["durations_ms"] as Array[int]) == [0] and String(windup["loop"]) == "hold")
+		check("goblin_scout windup is [100, 0] hold_last (the 0 ms frame holds until the telegraph ends)", (windup["durations_ms"] as Array[int]) == [100, 0] and String(windup["loop"]) == "hold_last")
 		check("goblin_scout down is hold_last", String(gs.clip("down")["loop"]) == "hold_last")
 	# clear_cache drops the instances.
 	SpriteSheetScript.clear_cache()

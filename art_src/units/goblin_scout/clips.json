@@ -1,16 +1,14 @@
 {
   "id": "goblin_scout",
   "asset": "ASSET-003",
-  "frame": {"w": 32, "h": 48},
+  "frame": {"w": 64, "h": 52},
   "facing": "left",
-  "source": "design/assets/candidates/goblin-scout/ASSET-003-<clip>-<A|B>-32x48.png (copied byte-identical, 2026-10-31)",
+  "source": "PixelLab character 3b9516c8-2be0-43e2-b505-c58ba6e254c8 (v3 OSFE-scale anchor, approved 2026-10-31), PixMiniMax south-west clips in design/assets/candidates/goblin-scout/v3/anim/<clip>/<n>.png, cleaned (palette snap, red spray removed from hit, specks removed, down lifted 4 px) into design/assets/candidates/goblin-scout/v3/clean-64x52/ (canvas x 2..65, rows 6..57, feet on the bottom row, feet x = 32)",
   "clips": [
-    {"name": "idle",   "frames": ["idle/0.png", "idle/1.png"], "ms": [400, 400], "loop": "loop"},
-    {"name": "step",   "frames": ["step/0.png", "step/1.png"], "ms": [300, 300], "loop": "loop",
-     "note": "nominal; the game paces step by the step cooldown"},
-    {"name": "windup", "frames": ["windup/0.png"],             "ms": [0],        "loop": "hold",
-     "note": "held until the telegraph ends"},
-    {"name": "hit",    "frames": ["hit/0.png"],                "ms": [120],      "loop": "once"},
-    {"name": "down",   "frames": ["down/0.png", "down/1.png"], "ms": [150, 150], "loop": "hold_last"}
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop"},
+    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "nominal; the game paces step by the step cooldown"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png"], "ms": [100, 0], "loop": "hold_last", "note": "frame 1 is 0 ms: held until the telegraph ends"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png", "down/6.png", "down/7.png"], "ms": [100, 100, 100, 100, 100, 100, 100, 100], "loop": "hold_last"}
   ]
 }

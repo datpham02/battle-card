@@ -5,108 +5,218 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
-      "duration": 400
+      "duration": 250
     },
     {
       "filename": "goblin_scout_idle_1",
       "frame": {
-        "x": 33,
+        "x": 65,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
-      "duration": 400
+      "duration": 250
+    },
+    {
+      "filename": "goblin_scout_idle_2",
+      "frame": {
+        "x": 130,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 250
+    },
+    {
+      "filename": "goblin_scout_idle_3",
+      "frame": {
+        "x": 195,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 250
     },
     {
       "filename": "goblin_scout_step_0",
       "frame": {
         "x": 0,
-        "y": 49,
-        "w": 32,
-        "h": 48
+        "y": 53,
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
-      "duration": 300
+      "duration": 100
     },
     {
       "filename": "goblin_scout_step_1",
       "frame": {
-        "x": 33,
-        "y": 49,
-        "w": 32,
-        "h": 48
+        "x": 65,
+        "y": 53,
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
-      "duration": 300
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_step_2",
+      "frame": {
+        "x": 130,
+        "y": 53,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_step_3",
+      "frame": {
+        "x": 195,
+        "y": 53,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
     },
     {
       "filename": "goblin_scout_windup_0",
       "frame": {
         "x": 0,
-        "y": 98,
-        "w": 32,
-        "h": 48
+        "y": 106,
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_windup_1",
+      "frame": {
+        "x": 65,
+        "y": 106,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
       },
       "duration": 0
     },
@@ -114,67 +224,243 @@
       "filename": "goblin_scout_hit_0",
       "frame": {
         "x": 0,
-        "y": 147,
-        "w": 32,
-        "h": 48
+        "y": 159,
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
-      "duration": 120
+      "duration": 40
+    },
+    {
+      "filename": "goblin_scout_hit_1",
+      "frame": {
+        "x": 65,
+        "y": 159,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 40
+    },
+    {
+      "filename": "goblin_scout_hit_2",
+      "frame": {
+        "x": 130,
+        "y": 159,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 40
     },
     {
       "filename": "goblin_scout_down_0",
       "frame": {
         "x": 0,
-        "y": 196,
-        "w": 32,
-        "h": 48
+        "y": 212,
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
-      "duration": 150
+      "duration": 100
     },
     {
       "filename": "goblin_scout_down_1",
       "frame": {
-        "x": 33,
-        "y": 196,
-        "w": 32,
-        "h": 48
+        "x": 65,
+        "y": 212,
+        "w": 64,
+        "h": 52
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
-      "duration": 150
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_down_2",
+      "frame": {
+        "x": 130,
+        "y": 212,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_down_3",
+      "frame": {
+        "x": 195,
+        "y": 212,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_down_4",
+      "frame": {
+        "x": 260,
+        "y": 212,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_down_5",
+      "frame": {
+        "x": 325,
+        "y": 212,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_down_6",
+      "frame": {
+        "x": 390,
+        "y": 212,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_scout_down_7",
+      "frame": {
+        "x": 455,
+        "y": 212,
+        "w": 64,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 52
+      },
+      "duration": 100
     }
   ],
   "meta": {
@@ -183,39 +469,39 @@
     "image": "unit_goblin_scout_sheet.png",
     "format": "RGBA8888",
     "size": {
-      "w": 65,
-      "h": 244
+      "w": 519,
+      "h": 264
     },
     "scale": "1",
     "frameTags": [
       {
         "name": "idle",
         "from": 0,
-        "to": 1,
-        "direction": "forward"
-      },
-      {
-        "name": "step",
-        "from": 2,
         "to": 3,
         "direction": "forward"
       },
       {
-        "name": "windup",
+        "name": "step",
         "from": 4,
-        "to": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 9,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 5,
-        "to": 5,
+        "from": 10,
+        "to": 12,
         "direction": "forward"
       },
       {
         "name": "down",
-        "from": 6,
-        "to": 7,
+        "from": 13,
+        "to": 20,
         "direction": "forward"
       }
     ],
@@ -232,20 +518,21 @@
       "asset": "ASSET-003",
       "facing": "left",
       "frame": {
-        "w": 32,
-        "h": 48
+        "w": 64,
+        "h": 52
       },
       "gutter": 1,
-      "columns": 2,
+      "columns": 8,
       "loop": {
         "idle": "loop",
         "step": "loop",
-        "windup": "hold",
+        "windup": "hold_last",
         "hit": "once",
         "down": "hold_last"
       },
       "palette": [
         "#1B1722",
+        "#59643F",
         "#66523F",
         "#7D8B5A",
         "#8FA070",

@@ -804,7 +804,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 | Loại | Khung (art-px) | Ghi chú |
 |---|---|---|
 | Anh hùng | **96×70** (sửa lần 2, 2026-10-31: mẫu Kiếm sĩ v3 cao kiểu One Step From Eden, người dùng duyệt; khung rộng để chứa đường chém ngang ở clip niệm; chân ở hàng cuối, tâm chân x = 48). Trước đó 40×48 | cao ~66; thân rộng ~31; ~1,4 ô trên sân 3x3, ~2,1 ô trên sân 5x5; vật cầm/vung nằm trong khung |
-| Quái, Tinh Anh | 32×48 (Mục 1, 3, 5) | cao ≤ 34 / ≤ 40; thân rộng ≤ 30 |
+| Quái, Tinh Anh | **64×52** cho Goblin Scout v3 (sửa 2026-10-31, mẫu tỉ lệ OSFE người dùng duyệt: cao ~46, khoảng 70 % Kiếm sĩ; chân ở hàng cuối, tâm chân x = 32). Trước đó 32×48 | cao ~46 (quái thường, ≈ 70 % anh hùng); Tinh Anh cao hơn; vật vung nằm trong khung |
 | Kẻ Gác, Người Giữ Tâm Lưới | 48×64; thân ≤ 52×40 (Mục 5) | Mảnh Gốc **không vẽ trong sheet**: code dựng, 2 px/ô |
 | Phiến | 9-slice nguồn 16×16, lề 3 trái-phải-trên, mép trước 2–3 dưới; + 6 stamp (Mục 6.3) | ô thật 38×27 … 64×46 |
 | Tường / Bãi Gai | 40×40 / 40×12, neo giữa đáy | Tường vẽ ~30 px, rộng ≤ 36 |
