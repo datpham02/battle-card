@@ -74,6 +74,11 @@ extends Node2D
 ##                    drawn by code — deck 6 px around the slabs (the divider gap shows deck stone
 ##                    with a thin line), front face 12 px below the last row with a light top edge,
 ##                    4 px shadow on the ground. Rectangular only; shaped arenas need edge pieces
+##   --mist-bottom=N  art-px row where the --bg near layer's bottom sits (default BG_MIST_BOTTOM 47;
+##                    the v2 backdrop uses 70, inside the 20 % scenery strip)
+##   --tele-k=K       telegraph intensity 0..1 (user 2026-10-31: no countdown label; the enemy's
+##                    damage tiles start faint and darken until full, then the hit lands): stripes
+##                    at alpha 0.5→1, flat red fill 0→0.45, frame 0.3→1
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
@@ -154,6 +159,7 @@ var _skin: String = ""
 ## --floor: "" = slabs (art or placeholder), "osfe" = flat tiles style test.
 var _floor: String = ""
 var _platform: bool = false
+var _tele_k: float = 1.0
 const DECK_MARGIN := 6
 const FACE_H := 12
 ## Platform colours = the slab v2 palette: deck one tone under the slab face, face = lip tone.
@@ -188,6 +194,7 @@ const UI_GOLD := Color("FFD45C")
 const UI_GREEN := Color("58D468")
 var _arena_bottom: float = ARENA_BOTTOM_RATIO
 var _band_top_ratio: float = -1.0
+var _mist_bottom: int = BG_MIST_BOTTOM
 ## Where the v2 controls start (the thumb zones); the board band may run below it when its
 ## lower rows are narrow enough to pass between the thumbs (--arena-bottom).
 var _controls_top: float = 0.64
@@ -379,6 +386,8 @@ func _parse_args() -> void:
 			_floor = arg.trim_prefix("--floor=")
 		elif arg == "--platform":
 			_platform = true
+		elif arg.begins_with("--tele-k="):
+			_tele_k = clampf(arg.trim_prefix("--tele-k=").to_float(), 0.0, 1.0)
 		elif arg.begins_with("--icons="):
 			var ip: String = arg.trim_prefix("--icons=")
 			var img: Image = Image.load_from_file(ProjectSettings.globalize_path(ip))
@@ -396,6 +405,8 @@ func _parse_args() -> void:
 	if _layout == "v2":
 		_arena_bottom = _controls_top
 	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--mist-bottom="):
+			_mist_bottom = arg.trim_prefix("--mist-bottom=").to_int()
 		if arg.begins_with("--band-top="):
 			_band_top_ratio = clampf(arg.trim_prefix("--band-top=").to_float(), 0.05, 0.6)
 		if arg.begins_with("--arena-bottom="):
@@ -540,7 +551,7 @@ func _draw_board(board: Node2D) -> void:
 		# Mist band: its bottom sits BG_MIST_BOTTOM (horizon row + 2) so it lies on the feet of the
 		# far scene over the sky, above the board; drawn once, no drift in a still capture.
 		var off: int = (ART_SIZE.x - _bg_near.get_width()) / 2
-		var y: int = BG_MIST_BOTTOM - _bg_near.get_height()
+		var y: int = _mist_bottom - _bg_near.get_height()
 		board.draw_texture(_bg_near, Vector2(off, y))
 
 
@@ -1059,9 +1070,16 @@ func _draw_fx_floor(n: Node2D) -> void:
 	var cells: Dictionary = _fx_cells()
 	var in_seq: bool = not _seq.is_empty()
 	if not in_seq:
+		# telegraph at intensity k: a flat red fill grows 0 → 0.45, the stripe texture 0.5 → 1,
+		# the frame 0.3 → 1; everything on the floor layer (user 2026-10-31: nothing on a tile
+		# may cover the unit standing on it; no countdown label, the darkening IS the timer)
+		var k: float = _tele_k
 		for c: Vector2i in cells["tele"]:
 			var face: Rect2 = _face_rect(0, c.x, c.y)
-			n.draw_texture_rect(_fx_tex["stripe"], face, true)
+			n.draw_rect(face, Color(TELEGRAPH_RED, lerpf(0.0, 0.45, k)))
+			n.draw_texture_rect(_fx_tex["stripe"], face, true, Color(1, 1, 1, lerpf(0.5, 1.0, k)))
+			_frame_px(n, face.grow(1), 1, Color(INK, lerpf(0.3, 1.0, k)))
+			_frame_px(n, face, 2, Color(TELEGRAPH_RED, lerpf(0.3, 1.0, k)))
 	var intensity: Array = [0.7, 1.0]
 	var i: int = 0
 	for c: Vector2i in cells["target"]:
@@ -1103,11 +1121,6 @@ func _draw_fx_floor(n: Node2D) -> void:
 func _draw_fx_overlay(n: Node2D) -> void:
 	var cells: Dictionary = _fx_cells()
 	var in_seq: bool = not _seq.is_empty()
-	if not in_seq:
-		for c: Vector2i in cells["tele"]:
-			var face: Rect2 = _face_rect(0, c.x, c.y)
-			_frame_px(n, face.grow(1), 1, INK)
-			_frame_px(n, face, 2, TELEGRAPH_RED)
 	var sheet_key: String = _seq if in_seq and _fx_tex.has(_seq) else "slash"
 	var vf: int = int(_seq_state["vf"]) if in_seq else 2
 	var meta: Dictionary = _fx_meta.get(sheet_key, {})
@@ -1118,16 +1131,8 @@ func _draw_fx_overlay(n: Node2D) -> void:
 		fw = int(meta["frame"][0])
 		fh = int(meta["frame"][1])
 		gut = int(meta.get("gutter", 1))
-	# falling domino (drawn BEFORE the VFX so the strike lands on top of the block): two 16x16 steel tiles side by side, Ink halo; in the demo 40 px above the
-	# last target tile, in a sequence at the keyframe's dy (hidden below -999)
-	var dy: float = float(_seq_state["dy"]) if in_seq else -40.0
-	if dy >= -999.0:
-		var last: Vector2i = cells["target"][cells["target"].size() - 1]
-		var tface: Rect2 = _face_rect(1, last.x, last.y)
-		var fpos: Vector2 = (tface.get_center() - Vector2(16, 8) + Vector2(0, dy)).floor()
-		n.draw_rect(Rect2(fpos - Vector2(1, 1), Vector2(34, 18)), INK)
-		for k: int in 2:
-			n.draw_texture_rect_region(_fx_tex["tiles16"], Rect2(fpos + Vector2(16 * k, 0), Vector2(16, 16)), Rect2(0, 0, 16, 16))
+	# user 2026-10-31: when a piece is dragged or cast, only the tiles light up; no block sprite
+	# travels onto the board (the falling domino of the first demo is gone)
 	if vf >= 0:
 		for c: Vector2i in cells["target"]:
 			var face: Rect2 = _face_rect(1, c.x, c.y)
@@ -1155,13 +1160,11 @@ func _build_seq() -> void:
 		_step(300, "idle-B", "idle-B", 0.6, -1000.0, -1, false),
 		_step(80, "cast-A", "idle-A", 1.0, -1000.0, -1, false),
 		_step(120, "cast-B", "idle-A", 1.0, -1000.0, -1, false),
-		_step(60, "idle-A", "idle-A", 1.0, -40.0, -1, false),
-		_step(60, "idle-A", "idle-A", 1.0, -24.0, -1, false),
-		_step(60, "idle-A", "idle-A", 1.0, -10.0, -1, false),
+		_step(120, "idle-A", "idle-A", 1.0, -1000.0, -1, false),
 	]
 	for i: int in vfx_ms.size():
 		var gob: String = "hit" if i >= 1 and i <= 2 else "idle-A"
-		_seq_steps.append(_step(vfx_ms[i], "idle-A", gob, 1.0, 0.0, i, i == 1))
+		_seq_steps.append(_step(vfx_ms[i], "idle-A", gob, 1.0, -1000.0, i, i == 1))
 	_seq_steps.append(_step(400, "idle-A", "idle-B", 0.0, -1000.0, -1, false))
 	_seq_steps.append(_step(300, "idle-B", "idle-B", 0.0, -1000.0, -1, false))
 
@@ -1365,17 +1368,12 @@ func _draw_hud_osfe(hud: Node2D, font: Font, margin: float) -> void:
 		_panel(hud, pr, [6, 6, 6, 6], Color(UI_NAVY, 0.92), UI_LINE)
 		hud.draw_rect(Rect2(pr.position + Vector2(12, 11), Vector2(5, 18)), UI_TEXT)
 		hud.draw_rect(Rect2(pr.position + Vector2(23, 11), Vector2(5, 18)), UI_TEXT)
-	# --- HP plates under the units (OSFE: number on a dark plate at the feet)
-	for side: int in 2:
-		var cell: Vector2i = _default_cell(side)
-		var a: Vector2 = _screen_origin + Vector2(_anchor(side, cell.x, cell.y)) * _scale
-		var plate := Rect2(a + Vector2(-26, 8), Vector2(52, 18))
-		_panel(hud, plate, [4, 4, 4, 4], Color(UI_OUTLINE, 0.85), Color(UI_OUTLINE, 0.0))
-		_text(hud, bold, plate.position + Vector2(0, 14), "170" if side == 0 else "60", 14, UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x)
-		if side == 1:
-			# two keyword chips (§7.4: max 2 on a 5x5) at half the tile size, right of the plate
-			_skin_icon("burn", plate.position + Vector2(plate.size.x + 4, -6), 0.5)
-			_skin_icon("fragile", plate.position + Vector2(plate.size.x + 34, -6), 0.5)
+	# --- keyword chips under the enemy's feet (§7.4: max 2 on a 5x5), centred, nothing on the body.
+	# HP plates dropped (user 2026-10-31: they covered the unit and the tile; the HUD bars carry HP)
+	var gcell: Vector2i = _default_cell(1)
+	var ga: Vector2 = _screen_origin + Vector2(_anchor(1, gcell.x, gcell.y)) * _scale
+	_skin_icon("burn", ga + Vector2(-30, 4), 0.5)
+	_skin_icon("fragile", ga + Vector2(2, 4), 0.5)
 	# --- Z3: joystick in navy
 	var base_r: float = 80.0
 	var center := Vector2(margin + 150.0, vp.y * 0.80)

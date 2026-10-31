@@ -234,7 +234,15 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   bottom-exposed cell, `57-platform-slabv2-crystal6x6.png`), the slab 9-slice
   was redrawn as v2 (cooler, three face tones, lip with a light line;
   `56-platform-slabv2-5x5.png`) and the sharp-UI skin uses Đá Đêm #1E1B24 /
-  Sương #7D8896 instead of OSFE's navy.
+  Sương #7D8896 instead of OSFE's navy. `--mist-bottom=N` places the near
+  layer for the v2 backdrop (70); `58-bg-v2-5x5.png` and
+  `59-bg-v2-crystal6x6.png` are the ASSET-005 v2 layers in place. After the
+  user's remark that overlays covered the units: the telegraph frame is drawn
+  on the floor layer, the HP plates are gone, chips sit under the feet, and no
+  block sprite appears on the board during a cast (`60-units-on-tiles-zoom-x3.png`,
+  `anim/seq-slash-v2.gif`). `--tele-k=K` shows the telegraph at an intensity
+  (`61-telegraph-ramp-0-50-100.png`): the user replaced the countdown label
+  with a tile that darkens from faint to full over the enemy's cast time.
 - The 38x27 slab with a 48 px sprite behaves as §1 expects: a unit covers the
   lower half of the one on the row behind; identity stays in the upper 20 px.
 - Technique notes for the SubViewport story: `Image.load_from_file` +
