@@ -9,7 +9,9 @@ sys.path.insert(0, __file__.rsplit('\\', 1)[0].rsplit('/', 1)[0])
 from crop_frame import write_png
 
 def c(h): return (int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16), 255)
-INK, LIGHT, STONE, CRACK, LIP = c('#1B1722'), c('#5A5650'), c('#4A4640'), c('#3E3B36'), c('#2C2925')
+# v2 2026-10-31 (user: bolder slabs, cooler than the earth backdrop): face 3 tones (light edge,
+# face, dark inner edge), lip darker with a 1 px light line on top; v1 was #5A5650 / #4A4640 / #2C2925
+INK, LIGHT, STONE, DARK, CRACK, LIP, LIP_TOP = c('#1B1722'), c('#6A6B62'), c('#4C4D47'), c('#3A3B37'), c('#3E3F3A'), c('#262521'), c('#5A5B54')
 MOSS, MOSS_D = c('#5E6B55'), c('#4A5545')
 T = (0, 0, 0, 0)
 
@@ -21,6 +23,8 @@ def put(img, pts, col):
 s = blank(16, 16, STONE)
 put(s, [(x, 15) for x in range(16)] + [(15, y) for y in range(16)], INK)        # gap right + bottom
 put(s, [(x, y) for y in (12, 13, 14) for x in range(15)], LIP)                   # front lip 3 px
+put(s, [(x, 12) for x in range(1, 14)], LIP_TOP)                                 # light line on the lip's top edge
+put(s, [(x, 11) for x in range(1, 15)] + [(14, y) for y in range(1, 12)], DARK)  # dark inner edge right + bottom
 put(s, [(x, 0) for x in range(15)] + [(0, y) for y in range(12)], LIGHT)         # light edge top-left
 
 # --- stamps: six 16x8 cells, 3 columns x 2 rows ---
@@ -58,8 +62,9 @@ meta = {
         {"name": "leaves", "rect": [32, 8, 10, 6], "anchor": "any", "kind": "cover"},
     ],
     "rules": {"max_cracks_per_slab": 2, "max_cover_face_ratio": 0.25, "placed_by": "cell seed"},
-    "palette": {"stone": "#4A4640", "light_edge": "#5A5650", "crack": "#3E3B36", "lip": "#2C2925",
-                "ink": "#1B1722", "moss": "#5E6B55", "moss_dark": "#4A5545"},
+    "palette": {"stone": "#4C4D47", "light_edge": "#6A6B62", "dark_edge": "#3A3B37", "crack": "#3E3F3A", "lip": "#262521",
+                "lip_top": "#5A5B54", "ink": "#1B1722", "moss": "#5E6B55", "moss_dark": "#4A5545"},
+    "version": "v2 2026-10-31",
     "nine_slice": {"size": [16, 16], "margins": {"left": 3, "right": 3, "top": 3, "bottom": 4}},
 }
 

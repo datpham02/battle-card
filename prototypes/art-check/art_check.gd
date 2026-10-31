@@ -53,6 +53,27 @@ extends Node2D
 ##                    target tile, the VFX sheet plays on both tiles, the goblin takes the hit frame
 ##                    with a flash, rest. With --shot one PNG per keyframe (<shot>-<i>.png) and
 ##                    <shot>.json with the durations in centiseconds for tools/make_gif.py
+##   --skin=osfe      STYLE TEST (2026-10-31): the HUD drawn sharp at 1280x720 in the UI language of
+##                    One Step From Eden instead of the pixel 9-slices: navy panels with 45-degree
+##                    chamfers, diamond badges for numbers, segmented Engraving bar, white sans text
+##                    with a dark outline, HP plates under the units, slot cards with cost badges.
+##                    Layout v2 geometry is kept; --ui is ignored while the skin is on
+##   --floor=tessera  the same construction in the Misty Forest palette (art bible §4/§6: moss-grey
+##                    face S<=30 V<=55, lighter moss line, dark lip; NO side colours, the divider
+##                    tells the halves apart)
+##   --floor=osfe     STYLE TEST: flat dark tiles in OSFE's language instead of the stone slabs:
+##                    navy face, 1 px inner line (cool on the player half, warm on the enemy half,
+##                    both low saturation), 1 px top highlight, 2 px Ink gap; the backdrop stays
+##   --font=<semibold.ttf>[,<bold.ttf>]  system font files for the --skin text (art bible §7.3:
+##                    names SemiBold, numbers Bold); without it Godot's fallback font is used
+##   --icons=<png>    icon sheet for the --skin HUD (JSON index beside it, cells drawn 1:1): the
+##                    pause button, an info button, status chips under the goblin, the Awaken glyph
+##   --band-top=R     top of the board band as a ratio of the height (default = the HUD band of
+##                    ScreenLayout, 0.03 + 20 % of the arena); 0.20 leaves the top fifth to the scenery
+##   --platform       STYLE TEST (option B, 2026-10-31): the board sits on a raised stone platform
+##                    drawn by code — deck 6 px around the slabs (the divider gap shows deck stone
+##                    with a thin line), front face 12 px below the last row with a light top edge,
+##                    4 px shadow on the ground. Rectangular only; shaped arenas need edge pieces
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
@@ -128,7 +149,45 @@ var _hud: bool = false
 ## "v1" = the shipped ScreenLayout (arena to 55 %, fixed d-pad, straight slots);
 ## "v2" = the user's 2026-10-31 sketch (arena to 64 %, floating 4-way joystick, slots on an arc).
 var _layout: String = "v1"
+## --skin: "" = the pixel 9-slice HUD (or flat placeholders), "osfe" = the sharp-UI style test.
+var _skin: String = ""
+## --floor: "" = slabs (art or placeholder), "osfe" = flat tiles style test.
+var _floor: String = ""
+var _platform: bool = false
+const DECK_MARGIN := 6
+const FACE_H := 12
+## Platform colours = the slab v2 palette: deck one tone under the slab face, face = lip tone.
+const DECK := Color("3A3B37")
+const DECK_LIGHT := Color("5A5B54")
+const DECK_LIP := Color("262521")
+var _font_semi: Font
+var _font_bold: Font
+var _skin_icons: ImageTexture
+var _skin_icon_index: Dictionary = {}
+const TILE_FACE := Color("1B2130")
+const TILE_FACE_ENEMY := Color("231F2C")
+const TILE_LINE_PLAYER := Color("3E5578")
+const TILE_LINE_ENEMY := Color("6E4A52")
+const TILE_TOP := Color("4A5B7A")
+const TILE_TOP_ENEMY := Color("7A5A60")
+const TILE_LIP := Color("0E1320")
+const MF_FACE := Color("30352F")
+const MF_LINE := Color("4B5648")
+const MF_TOP := Color("5E6B55")
+const MF_LIP := Color("1B1F1A")
+const TILE_LIP_ENEMY := Color("150F18")
+## Top-left of the 2x art canvas on the window, for HUD elements that follow a unit.
+var _screen_origin: Vector2 = Vector2.ZERO
+const UI_NAVY := Color("1E1B24")   # Đá Đêm (art bible §4), was OSFE navy 1C2233
+const UI_NAVY_LIGHT := Color("2B2735")
+const UI_NAVY_DEEP := Color("15131A")
+const UI_LINE := Color("7D8896")   # Sương, the §7.4 frame colour
+const UI_TEXT := Color("F4F6FA")
+const UI_OUTLINE := Color("0F1219")
+const UI_GOLD := Color("FFD45C")
+const UI_GREEN := Color("58D468")
 var _arena_bottom: float = ARENA_BOTTOM_RATIO
+var _band_top_ratio: float = -1.0
 ## Where the v2 controls start (the thumb zones); the board band may run below it when its
 ## lower rows are narrow enough to pass between the thumbs (--arena-bottom).
 var _controls_top: float = 0.64
@@ -236,6 +295,7 @@ func _ready() -> void:
 	screen.scale = Vector2(_scale, _scale)
 	var shown: Vector2 = Vector2(ART_SIZE) * _scale
 	screen.position = ((get_viewport_rect().size - shown) * 0.5).floor()
+	_screen_origin = screen.position
 	add_child(screen)
 	board.queue_redraw()
 
@@ -313,9 +373,31 @@ func _parse_args() -> void:
 				_anim = ""
 		elif arg.begins_with("--layout="):
 			_layout = arg.trim_prefix("--layout=")
+		elif arg.begins_with("--skin="):
+			_skin = arg.trim_prefix("--skin=")
+		elif arg.begins_with("--floor="):
+			_floor = arg.trim_prefix("--floor=")
+		elif arg == "--platform":
+			_platform = true
+		elif arg.begins_with("--icons="):
+			var ip: String = arg.trim_prefix("--icons=")
+			var img: Image = Image.load_from_file(ProjectSettings.globalize_path(ip))
+			if img != null:
+				_skin_icons = ImageTexture.create_from_image(img)
+			var jf := FileAccess.open(ip.get_basename() + ".json", FileAccess.READ)
+			if jf != null:
+				var data: Variant = JSON.parse_string(jf.get_as_text())
+				if data is Dictionary and data.has("icons"):
+					_skin_icon_index = data["icons"]
+		elif arg.begins_with("--font="):
+			var fp: PackedStringArray = arg.trim_prefix("--font=").split(",")
+			_font_semi = _load_font(fp[0])
+			_font_bold = _load_font(fp[1]) if fp.size() > 1 else _font_semi
 	if _layout == "v2":
 		_arena_bottom = _controls_top
 	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--band-top="):
+			_band_top_ratio = clampf(arg.trim_prefix("--band-top=").to_float(), 0.05, 0.6)
 		if arg.begins_with("--arena-bottom="):
 			# Board band bottom as a ratio of the height; the v2 controls keep starting at 64 %.
 			_arena_bottom = clampf(arg.trim_prefix("--arena-bottom=").to_float(), 0.3, 0.95)
@@ -367,6 +449,8 @@ func _auto_cell() -> Vector2i:
 
 
 func _band_top() -> float:
+	if _band_top_ratio > 0.0:
+		return ART_SIZE.y * _band_top_ratio
 	var arena_top: float = ART_SIZE.y * ARENA_TOP_RATIO
 	var arena_bottom: float = ART_SIZE.y * _arena_bottom
 	return arena_top + (arena_bottom - arena_top) * HUD_HEIGHT_RATIO
@@ -433,6 +517,8 @@ func _draw_board(board: Node2D) -> void:
 	else:
 		board.draw_rect(Rect2(Vector2.ZERO, Vector2(ART_SIZE)), GROUND)
 		board.draw_rect(Rect2(0, 0, ART_SIZE.x, int(ART_SIZE.y * SKY_RATIO)), SKY)
+	if _platform:
+		_draw_platform(board)
 	# Ink only under the real slabs (plus their 1 px gap), so missing cells show the ground.
 	for side: int in 2:
 		for col: int in _board.x:
@@ -444,7 +530,9 @@ func _draw_board(board: Node2D) -> void:
 		for col: int in _board.x:
 			for row: int in _board.y:
 				if _is_real(side, col, row):
-					if _slab_tex != null:
+					if _floor == "osfe" or _floor == "tessera":
+						_draw_tile_osfe(board, _cell_origin(side, col, row), side)
+					elif _slab_tex != null:
 						_draw_slab_art(board, _cell_origin(side, col, row), side, col, row)
 					else:
 						_draw_slab(board, _cell_origin(side, col, row))
@@ -645,9 +733,12 @@ func _draw_hud(hud: Node2D) -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	var font: Font = ThemeDB.fallback_font
 	var margin: float = vp.x * MARGIN_RATIO
+	if _skin == "osfe":
+		_draw_hud_osfe(hud, _font_semi if _font_semi != null else font, margin)
+		return
 	# Z1: everything inside 3–8 % of the height (hud.md), 8–14 % left free for the back-row heads.
 	var z1_top: float = vp.y * 0.03
-	var bar_h: float = 16.0 if _has_ui() else 14.0
+	var bar_h: float = 12.0 if _has_ui() else 14.0
 	var bar_w: float = vp.x * 0.34
 	var bar_y: float = z1_top + 8.0
 	if _has_ui():
@@ -839,12 +930,14 @@ func _draw_icon(hud: Node2D, icon_name: String, pos: Vector2, k: int = 2) -> voi
 	hud.draw_texture_rect_region(_ui_tex["icons"], Rect2(pos, Vector2(12 * k, 12 * k)), Rect2(r[0], r[1], r[2], r[3]))
 
 
-## ASSET-014 on the ASSET-013 bar frame (16x8, ends 2, border 1, drawn x2): fill from the left
-## inside the groove, a trail behind it, and for the boss the Ivory half-life notch (2 px wide,
-## sticking out 3 px above and below).
+## ASSET-014 on the ASSET-013 bar frame (16x6, ends 2, border 1, drawn x2 = 12 px tall, §7.5):
+## fill from the left inside the 8 px groove at screen pixels (§7.4: bars are drawn sharp at
+## 1280x720), a trail behind it, and for the boss the Ivory half-life notch (2 px wide, sticking
+## out 3 px above and below).
 func _draw_bar(hud: Node2D, rect: Rect2, ratio: float, fill: Color, trail: float, boss: bool) -> void:
 	var r := Rect2(rect.position.floor(), rect.size.floor())
-	_draw_nine(hud, _ui_tex["bar"], Rect2(0, 0, 16, 8), r, [2, 1, 2, 1], 2)
+	var tex: Texture2D = _ui_tex["bar"]
+	_draw_nine(hud, tex, Rect2(0, 0, tex.get_width(), tex.get_height()), r, [2, 1, 2, 1], 2)
 	var inner := Rect2(r.position + Vector2(2, 2), r.size - Vector2(4, 4))
 	if trail > ratio:
 		hud.draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * trail), inner.size.y)), HP_TRAIL)
@@ -1128,3 +1221,301 @@ void fragment() { vec4 t = texture(TEXTURE, UV); COLOR = vec4(0.937, 0.902, 0.82
 		_flash_mat = ShaderMaterial.new()
 		_flash_mat.shader = sh
 	return _flash_mat
+
+
+# ---------------------------------------------------------------------------------------------
+# --skin=osfe: style test. Everything below is drawn with vector calls at screen resolution.
+# ---------------------------------------------------------------------------------------------
+
+## Rectangle with 45-degree chamfers; `cuts` = [top-left, top-right, bottom-right, bottom-left] px.
+func _chamfer(r: Rect2, cuts: Array) -> PackedVector2Array:
+	var tl: float = cuts[0]
+	var tr: float = cuts[1]
+	var br: float = cuts[2]
+	var bl: float = cuts[3]
+	var p := PackedVector2Array()
+	p.append(r.position + Vector2(tl, 0))
+	p.append(r.position + Vector2(r.size.x - tr, 0))
+	if tr > 0.0:
+		p.append(r.position + Vector2(r.size.x, tr))
+	p.append(r.position + Vector2(r.size.x, r.size.y - br))
+	if br > 0.0:
+		p.append(r.position + Vector2(r.size.x - br, r.size.y))
+	p.append(r.position + Vector2(bl, r.size.y))
+	if bl > 0.0:
+		p.append(r.position + Vector2(0, r.size.y - bl))
+	p.append(r.position + Vector2(0, tl))
+	return p
+
+
+func _panel(n: Node2D, r: Rect2, cuts: Array, fill: Color, line: Color, width: float = 1.0) -> void:
+	var poly: PackedVector2Array = _chamfer(r, cuts)
+	n.draw_colored_polygon(poly, fill)
+	var closed: PackedVector2Array = poly.duplicate()
+	closed.append(poly[0])
+	n.draw_polyline(closed, line, width, false)
+
+
+func _diamond(n: Node2D, c: Vector2, r: float, fill: Color, line: Color, width: float = 2.0) -> void:
+	var p := PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)])
+	n.draw_colored_polygon(p, fill)
+	var closed: PackedVector2Array = p.duplicate()
+	closed.append(p[0])
+	n.draw_polyline(closed, line, width, false)
+
+
+func _text(n: Node2D, font: Font, pos: Vector2, text: String, size: int, col: Color = UI_TEXT, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, width: float = -1.0) -> void:
+	n.draw_string_outline(font, pos, text, align, width, size, 3, UI_OUTLINE)
+	n.draw_string(font, pos, text, align, width, size, col)
+
+
+## Segmented bar: `total` segments, `filled` lit, 2 px gaps, light end cap.
+func _segments(n: Node2D, r: Rect2, total: int, filled: int, lit: Color) -> void:
+	n.draw_rect(r.grow(1), UI_OUTLINE)
+	n.draw_rect(r, UI_NAVY_DEEP)
+	var gap: float = 2.0
+	var w: float = (r.size.x - gap * (total - 1)) / total
+	for i: int in total:
+		var seg := Rect2(r.position + Vector2(i * (w + gap), 0), Vector2(w, r.size.y))
+		n.draw_rect(seg, lit if i < filled else UI_NAVY_LIGHT)
+	n.draw_rect(Rect2(r.position + Vector2(r.size.x - 3, 0), Vector2(3, r.size.y)), UI_LINE)
+
+
+## HP bar with groove, fill, trail and optional boss notch; numbers drawn beside by the caller.
+func _hp_bar(n: Node2D, r: Rect2, ratio: float, trail: float, fill: Color, notch: bool) -> void:
+	n.draw_rect(r.grow(1), UI_OUTLINE)
+	n.draw_rect(r, UI_NAVY_DEEP)
+	if trail > ratio:
+		n.draw_rect(Rect2(r.position, Vector2(floorf(r.size.x * trail), r.size.y)), HP_TRAIL)
+	n.draw_rect(Rect2(r.position, Vector2(floorf(r.size.x * ratio), r.size.y)), fill)
+	# a 1 px lighter top line gives the fill a bevel without a gradient
+	n.draw_rect(Rect2(r.position, Vector2(floorf(r.size.x * ratio), 1)), fill.lightened(0.35))
+	if notch:
+		var nx: float = floorf(r.position.x + r.size.x * 0.5)
+		n.draw_rect(Rect2(nx - 1, r.position.y - 3, 2, r.size.y + 6), IVORY)
+
+
+## A steel block preview inside a slot card: `cells` in block units, `k` px per cell.
+func _block_preview(n: Node2D, origin: Vector2, cells: Array, k: float) -> void:
+	for c: Vector2i in cells:
+		var r := Rect2(origin + Vector2(c) * k, Vector2(k, k))
+		n.draw_rect(r.grow(1), UI_OUTLINE)
+	for c: Vector2i in cells:
+		var r := Rect2(origin + Vector2(c) * k, Vector2(k, k))
+		n.draw_rect(r, STEEL)
+		n.draw_rect(Rect2(r.position, Vector2(r.size.x, 2)), STEEL_HI)
+		n.draw_rect(Rect2(r.position, Vector2(2, r.size.y)), STEEL_HI)
+		n.draw_rect(Rect2(r.position + Vector2(0, r.size.y - 2), Vector2(r.size.x, 2)), STEEL_LO)
+		n.draw_rect(Rect2(r.position + Vector2(r.size.x - 2, 0), Vector2(2, r.size.y)), STEEL_LO)
+
+
+## Slot card in the OSFE language: navy card, chamfered top-right, light frame, cost badge
+## bottom-left (white square, dark number), content centred; `selected` = white 3 px frame.
+func _slot_card(n: Node2D, font: Font, r: Rect2, cost: String, content: String, selected: bool) -> void:
+	_panel(n, r.grow(3), [0, 14, 0, 0], UI_OUTLINE, UI_OUTLINE)
+	_panel(n, r, [0, 12, 0, 0], UI_NAVY, UI_TEXT if selected else UI_LINE, 3.0 if selected else 1.5)
+	# a lighter band at the top third stands in for OSFE's dark gradient
+	n.draw_rect(Rect2(r.position + Vector2(2, 2), Vector2(r.size.x - 16, r.size.y * 0.33)), Color(UI_NAVY_LIGHT, 0.6))
+	match content:
+		"T":
+			_block_preview(n, r.get_center() - Vector2(27, 18), [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(1, 1)], 18.0)
+		"I":
+			_block_preview(n, r.get_center() - Vector2(9, 27), [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)], 18.0)
+		_:
+			_text(n, font, Vector2(r.position.x, r.get_center().y + 10), "+", 30, UI_LINE, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	if not cost.is_empty():
+		var badge := Rect2(r.position + Vector2(-4, r.size.y - 26), Vector2(30, 30))
+		n.draw_rect(badge.grow(2), UI_OUTLINE)
+		n.draw_rect(badge, UI_TEXT)
+		n.draw_string(_font_bold if _font_bold != null else font, badge.position + Vector2(0, 22), cost, HORIZONTAL_ALIGNMENT_CENTER, badge.size.x, 18, UI_OUTLINE)
+
+
+func _draw_hud_osfe(hud: Node2D, font: Font, margin: float) -> void:
+	var vp: Vector2 = get_viewport_rect().size
+	var bold: Font = _font_bold if _font_bold != null else font
+	# --- Z1 left: hero header panel, chamfered bottom-right; name, HP bar + numbers, Engraving bar
+	var hp_w: float = 300.0
+	var head := Rect2(margin, 20, 430, 60)
+	_panel(hud, head, [0, 0, 18, 0], Color(UI_NAVY, 0.92), UI_LINE)
+	_text(hud, font, head.position + Vector2(12, 26), "KIẾM SĨ", 24)
+	_text(hud, font, head.position + Vector2(118, 26), "Lv. 1", 14, Color("B8C2D0"))
+	var bar := Rect2(head.position + Vector2(12, 32), Vector2(hp_w, 12))
+	_hp_bar(hud, bar, 0.85, 0.93, UI_GREEN, false)
+	_text(hud, bold, bar.position + Vector2(hp_w + 10, 13), "170/200", 20)
+	var eng := Rect2(head.position + Vector2(12, 48), Vector2(hp_w, 6))
+	_segments(hud, eng, 7, 2, UI_GOLD)
+	_text(hud, bold, eng.position + Vector2(hp_w + 10, 9), "6/21", 14, UI_GOLD)
+	# --- Z1 right: boss header, mirrored
+	var bhead := Rect2(vp.x - margin - 430, 20, 430, 60)
+	_panel(hud, bhead, [0, 0, 0, 18], Color(UI_NAVY, 0.92), UI_LINE)
+	_text(hud, font, bhead.position + Vector2(12, 26), "GOBLIN SCOUT", 24, UI_TEXT, HORIZONTAL_ALIGNMENT_RIGHT, bhead.size.x - 24)
+	var bbar := Rect2(bhead.position + Vector2(bhead.size.x - 12 - hp_w, 32), Vector2(hp_w, 12))
+	_hp_bar(hud, bbar, 1.0, 1.0, IVORY, true)
+	_text(hud, bold, bbar.position + Vector2(-90, 13), "60/60", 20, UI_TEXT, HORIZONTAL_ALIGNMENT_RIGHT, 80)
+	# boss block preview: three small navy squares under the bar (Z1b)
+	for i: int in 3:
+		var bq := Rect2(bbar.position + Vector2(hp_w - 26 - i * 30, 18), Vector2(22, 14))
+		hud.draw_rect(bq.grow(1), UI_OUTLINE)
+		hud.draw_rect(bq, UI_NAVY_LIGHT if i > 0 else Color("CFC6B4"))
+	# --- pause: small chamfered square, centre top
+	if _skin_icon("pause", Vector2(vp.x * 0.5 - 27, 16)):
+		_skin_icon("info", Vector2(vp.x * 0.5 + 34, 16))
+	else:
+		var pr := Rect2(vp.x * 0.5 - 20, 22, 40, 40)
+		_panel(hud, pr, [6, 6, 6, 6], Color(UI_NAVY, 0.92), UI_LINE)
+		hud.draw_rect(Rect2(pr.position + Vector2(12, 11), Vector2(5, 18)), UI_TEXT)
+		hud.draw_rect(Rect2(pr.position + Vector2(23, 11), Vector2(5, 18)), UI_TEXT)
+	# --- HP plates under the units (OSFE: number on a dark plate at the feet)
+	for side: int in 2:
+		var cell: Vector2i = _default_cell(side)
+		var a: Vector2 = _screen_origin + Vector2(_anchor(side, cell.x, cell.y)) * _scale
+		var plate := Rect2(a + Vector2(-26, 8), Vector2(52, 18))
+		_panel(hud, plate, [4, 4, 4, 4], Color(UI_OUTLINE, 0.85), Color(UI_OUTLINE, 0.0))
+		_text(hud, bold, plate.position + Vector2(0, 14), "170" if side == 0 else "60", 14, UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x)
+		if side == 1:
+			# two keyword chips (§7.4: max 2 on a 5x5) at half the tile size, right of the plate
+			_skin_icon("burn", plate.position + Vector2(plate.size.x + 4, -6), 0.5)
+			_skin_icon("fragile", plate.position + Vector2(plate.size.x + 34, -6), 0.5)
+	# --- Z3: joystick in navy
+	var base_r: float = 80.0
+	var center := Vector2(margin + 150.0, vp.y * 0.80)
+	hud.draw_circle(center, base_r, Color(UI_NAVY, 0.55))
+	hud.draw_arc(center, base_r, 0.0, TAU, 64, UI_LINE, 1.5)
+	for d: Vector2 in [Vector2(0, -1), Vector2(0, 1), Vector2(-1, 0), Vector2(1, 0)]:
+		var tip: Vector2 = center + d * (base_r - 10.0)
+		var side_v: Vector2 = Vector2(-d.y, d.x) * 6.0
+		hud.draw_colored_polygon(PackedVector2Array([tip, tip - d * 8.0 + side_v, tip - d * 8.0 - side_v]), UI_LINE)
+	var knob := center + Vector2(base_r * 0.55, 0)
+	hud.draw_circle(knob, 44.0, Color(UI_NAVY_LIGHT, 0.95))
+	hud.draw_arc(knob, 44.0, 0.0, TAU, 48, UI_TEXT, 2.0)
+	# --- Z5: slot cards on the v2 arc
+	var sh: float = vp.y * 0.18
+	var sw: float = sh / 1.4
+	var pivot := Vector2(vp.x - margin * 0.5, vp.y + sh * 0.35)
+	var radius: float = sh * 2.0
+	var contents: Array = ["T", "", "I"]
+	var costs: Array = ["4", "", "3"]
+	var i: int = 0
+	for deg: float in [100.0, 128.0, 156.0]:
+		var c: Vector2 = pivot + Vector2(cos(deg_to_rad(deg)), -sin(deg_to_rad(deg))) * radius
+		var r := Rect2((c - Vector2(sw, sh) * 0.5).floor(), Vector2(sw, sh).floor())
+		_slot_card(hud, font, r, costs[i], contents[i], i == 0)
+		i += 1
+	# bag counter plate under the arc, like OSFE's deck count
+	var bagp := Rect2(vp.x - margin - sw - 84, vp.y - 30, 64, 22)
+	_panel(hud, bagp, [0, 0, 0, 8], Color(UI_NAVY, 0.92), UI_LINE)
+	_text(hud, font, bagp.position + Vector2(0, 16), "5 / 9", 13, UI_TEXT, HORIZONTAL_ALIGNMENT_CENTER, bagp.size.x)
+	# --- Z4: Awaken as a diamond button, gold frame, counter inside, label under
+	var sig: float = vp.y * 0.16
+	var sc := Vector2(vp.x * 0.5, vp.y - margin * 0.5 - sig * 0.5 - 6)
+	_diamond(hud, sc, sig * 0.5 + 3, UI_OUTLINE, UI_OUTLINE, 1.0)
+	_diamond(hud, sc, sig * 0.5, UI_NAVY, UI_GOLD, 3.0)
+	_diamond(hud, sc, sig * 0.22, Color(UI_GOLD, 0.15), Color(UI_GOLD, 0.6), 1.0)
+	if _skin_icons != null:
+		_skin_icon("awakening", sc + Vector2(-27, -40), 1.0)
+		_text(hud, bold, Vector2(sc.x - 60, sc.y + 34), "6/21", 20, UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER, 120)
+	else:
+		_text(hud, bold, Vector2(sc.x - 60, sc.y + 8), "6/21", 22, UI_GOLD, HORIZONTAL_ALIGNMENT_CENTER, 120)
+	_text(hud, font, Vector2(sc.x - 80, sc.y - sig * 0.5 - 10), "THỨC TỈNH", 13, Color("B8C2D0"), HORIZONTAL_ALIGNMENT_CENTER, 160)
+
+
+## --floor=osfe: OSFE's LOOK on Tessera's STRUCTURE (user, 2026-10-31: "phong cách của nó, cấu tạo
+## hình dạng của game mình"): the face is a flat navy plane with a 1 px inner line (cool on the
+## player half, warm on the enemy half) and a 1 px top highlight, but the slab keeps its front lip
+## (LIP art-px, darker) and the 1 px Ink gap, so rows still stack like stone and missing cells
+## still cut the arena shapes.
+func _draw_tile_osfe(board: Node2D, o: Vector2i, side: int) -> void:
+	var w: int = _cell.x - GAP
+	var h: int = _cell.y - GAP
+	var face := Rect2(o.x, o.y, w, h - LIP)
+	var lip := Rect2(o.x, o.y + h - LIP, w, LIP)
+	var mf: bool = _floor == "tessera"
+	board.draw_rect(face, MF_FACE if mf else (TILE_FACE if side == 0 else TILE_FACE_ENEMY))
+	board.draw_rect(lip, MF_LIP if mf else (TILE_LIP if side == 0 else TILE_LIP_ENEMY))
+	var line: Color = MF_LINE if mf else (TILE_LINE_PLAYER if side == 0 else TILE_LINE_ENEMY)
+	var inner := face.grow(-1)
+	board.draw_rect(Rect2(inner.position, Vector2(inner.size.x, 1)), line)
+	board.draw_rect(Rect2(inner.position + Vector2(0, inner.size.y - 1), Vector2(inner.size.x, 1)), line)
+	board.draw_rect(Rect2(inner.position, Vector2(1, inner.size.y)), line)
+	board.draw_rect(Rect2(inner.position + Vector2(inner.size.x - 1, 0), Vector2(1, inner.size.y)), line)
+	board.draw_rect(Rect2(face.position, Vector2(face.size.x, 1)), MF_TOP if mf else (TILE_TOP if side == 0 else TILE_TOP_ENEMY))
+
+
+
+func _load_font(path: String) -> Font:
+	var f := FontFile.new()
+	var err: Error = f.load_dynamic_font(path)
+	if err != OK:
+		push_error("art_check: cannot load font %s (%s)" % [path, error_string(err)])
+		return null
+	return f
+
+
+## One tile of the --icons sheet at `k` times its size (1.0 = 1:1); false when there is no sheet.
+func _skin_icon(icon_name: String, pos: Vector2, k: float = 1.0) -> bool:
+	if _skin_icons == null or not _skin_icon_index.has(icon_name):
+		return false
+	var hud: Node2D = get_node_or_null("Hud")
+	if hud == null:
+		return false
+	var r: Array = _skin_icon_index[icon_name]
+	hud.draw_texture_rect_region(_skin_icons, Rect2(pos.floor(), Vector2(r[2] * k, r[3] * k)), Rect2(r[0], r[1], r[2], r[3]))
+	return true
+
+
+## --platform: raised stone deck drawn PER REAL CELL (grown by DECK_MARGIN), so the deck follows
+## shaped arenas; a front face under every cell with no real cell below it, light edges where a
+## top or left neighbour is missing, a shadow under the faces. Light from the top-left like the slabs.
+func _draw_platform(board: Node2D) -> void:
+	var m: int = DECK_MARGIN
+	var faces: Array[Rect2] = []
+	# pass 1: shadows + faces (under the deck so the deck covers their top)
+	for side: int in 2:
+		for col: int in _board.x:
+			for row: int in _board.y:
+				if not _is_real(side, col, row):
+					continue
+				if not _is_real(side, col, row + 1):
+					var o: Vector2i = _cell_origin(side, col, row)
+					var left_edge: int = o.x - m if not _is_real(side, col - 1, row) else o.x
+					var right_edge: int = o.x + _cell.x - GAP + m if not _is_real(side, col + 1, row) else o.x + _cell.x
+					var face := Rect2(left_edge, o.y + _cell.y - GAP + m - 1, right_edge - left_edge, FACE_H)
+					faces.append(face)
+	for f: Rect2 in faces:
+		board.draw_rect(Rect2(f.position.x + 2, f.end.y, f.size.x - 4, 4), Color(INK, 0.5))
+	for f: Rect2 in faces:
+		board.draw_rect(f, DECK_LIP)
+		board.draw_rect(Rect2(f.position + Vector2(0, f.size.y - 2), Vector2(f.size.x, 2)), INK)
+		var jx: int = int(f.position.x) + 17
+		while jx < int(f.end.x) - 4:
+			board.draw_rect(Rect2(jx, f.position.y + 2, 1, f.size.y - 4), INK)
+			jx += 40
+	# pass 2: deck under every real cell, grown toward missing neighbours (the divider gap is deck)
+	for side: int in 2:
+		for col: int in _board.x:
+			for row: int in _board.y:
+				if not _is_real(side, col, row):
+					continue
+				var o: Vector2i = _cell_origin(side, col, row)
+				var r := Rect2(o.x - m, o.y - m, _cell.x + m * 2, _cell.y + m * 2)
+				board.draw_rect(r, DECK)
+	# pass 3: light edge on top / left where no real neighbour, dark on right where none, lip top line
+	for side: int in 2:
+		for col: int in _board.x:
+			for row: int in _board.y:
+				if not _is_real(side, col, row):
+					continue
+				var o: Vector2i = _cell_origin(side, col, row)
+				var r := Rect2(o.x - m, o.y - m, _cell.x + m * 2, _cell.y + m * 2)
+				if not _is_real(side, col, row - 1):
+					board.draw_rect(Rect2(r.position, Vector2(r.size.x, 1)), DECK_LIGHT)
+				if not _is_real(side, col - 1, row) and not (side == 1 and col == 0):
+					board.draw_rect(Rect2(r.position, Vector2(1, r.size.y)), DECK_LIGHT)
+				if not _is_real(side, col + 1, row) and not (side == 0 and col == _board.x - 1):
+					board.draw_rect(Rect2(r.position + Vector2(r.size.x - 1, 0), Vector2(1, r.size.y)), DECK_LIP)
+	for f: Rect2 in faces:
+		board.draw_rect(Rect2(f.position, Vector2(f.size.x, 1)), DECK_LIGHT)
+	# divider: a thin line in the gap between the halves
+	var o0: Vector2i = _board_origin()
+	var dx: int = o0.x + _board.x * _cell.x + DIVIDER_GAP / 2 - 1
+	board.draw_rect(Rect2(dx, o0.y - 2, 1, _board.y * _cell.y + 2), DECK_LIP)

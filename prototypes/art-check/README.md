@@ -54,6 +54,16 @@ for ASSET-010), rest; with `--shot` every keyframe is saved as
 `tools/make_gif.py OUT.gif X0 Y0 X1 Y1 @<shot>.json SCALE <frames…>` turns
 them into a GIF with per-frame delays (`tools/` holds the pure-Python GIF
 encoder and PNG reader that used to live in the session scratchpad),
+`--skin=osfe` is the 2026-10-31 style test: the HUD drawn sharp at 1280x720
+in the UI language of One Step From Eden (navy chamfered panels, diamond
+badges, segmented Engraving bar, white sans text with a dark outline, HP
+plates under the units, slot cards with cost badges) on the same layout v2;
+it replaces `--ui` while on; `--floor=osfe` swaps the stone slabs for flat
+navy tiles with a thin cool (player) / warm (enemy) inner line and a 2 px
+gap, and `--font=<semibold.ttf>[,<bold.ttf>]` loads system fonts for the
+skin's text at the §7.3 sizes (names 24 SemiBold, numbers Bold), and
+`--icons=<png>` draws a generated icon sheet (JSON beside it) on the skin: pause,
+info, two status chips, the Awakening glyph (`46-skin-osfe-icons.png`),
 `--shot=<png>` saves the window after 30 frames and quits.
 `make_gif.py` in the session scratchpad turned those frames into the looping
 GIFs under `production/qa/evidence/asset-slice1-art-check/anim/` (pure Python,
@@ -157,7 +167,8 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   the #1E1B24 fill it is one value step and invisible — logged as a deviation in
   the ASSET-013 spec). Icons at 24 px are fine on the pause panel and the slots;
   on 97–115 px buttons the glyph is drawn x4 (48 px). Open: §7.5 "28 px arrows"
-  vs the 12 px grid; the 16 px bar vs §7.5 "12 px".
+  vs the 12 px grid. The bar was 16 px (16x8 source) and is 12 px since the
+  16x6 source (evidence 35–37 re-captured).
 - 2026-10-31, floor and VFX candidates on the board (`38-fx-layout-v2-5x5.png`,
   `39-fx-zoom-x3.png`; `--fx`): the telegraph (stripe texture tiled on the floor
   layer, 2 px red frame + 1 px Ink edge on the overlay) stays readable with the
@@ -177,6 +188,53 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   modulate-based flash turns the Ink outline purple, so the flash is a real
   colour-replace shader. Not covered: the block's dissolve or engraving after
   the hit, the real channel time.
+- 2026-10-31, style test after the user judged the pixel HUD crude
+  (`40-skin-osfe-layout-v2.png`, `41-hud-compare-pixel-vs-osfe.png`;
+  `--skin=osfe`): the same layout drawn sharp at screen resolution in OSFE's
+  language reads as "designed" where the x2 pixel 9-slices read as a
+  wireframe. What does the work: UI off the pixel grid (1 px lines, smooth
+  sans), chamfered navy panels, diamonds for the numbers that matter,
+  segmented bars, numbers on plates at the units' feet, cards with a cost
+  badge. Not in this pass: icon art with glow (needs generation), fonts
+  from §7.3, the real card content. Decision pending: amend art bible §7
+  (UI sharp at 720p, chamfers and diamonds allowed, glow on HUD icons only).
+  Follow-up the same day on "cái sàn đấu chưa có được update theo"
+  (`42-skin-osfe-floor-osfe.png`, `43-skin-osfe-floor-font.png`): flat navy
+  tiles with muted side-tinted lines (`--floor=osfe`) and Segoe UI
+  Semibold/Bold (`--font`, a stand-in for Noto Sans, which is not installed)
+  bring the whole frame into one language; the misty backdrop and the
+  sprites hold up against it. Decision still pending — this also means
+  giving up the stone slab (ASSET-004) and the "no side colours on tiles"
+  rule if adopted. Later the same day: `--floor=tessera` (the same flat
+  construction in the Misty Forest moss greys, no side colours; `47-…`) after
+  the user objected to the navy, and two generated full-frame backdrops behind
+  it (`48-bg-osfe-dir-seed07.png`, `49-bg-osfe-dir-seed23.png`): depth from
+  several mist layers is what the old three-flat-layer backdrop was missing.
+  Open: a dark band under the controls, the generated scene's palette lock.
+  Then rejected by the user: those two scenes are side-view (Terraria-like)
+  and the game looks slightly down on slabs with a scenery band above, as
+  the ChatGPT concepts in `design/art/reference/` show (reference only, not
+  to be traced). `--band-top=R` was added to give the scenery a band; the
+  user chose 20 % (`50-mock-concept-composition.png` at 36 % for the
+  composition idea, `51-farband-seed03-band20.png` and
+  `52-farband-seed19-band20.png` with two generated 640x96 far bands).
+  `--floor=osfe|tessera` stay as records of the flat-tile test; the slab
+  construction is the game's.
+- 2026-10-31, full-frame backdrop and the raised platform
+  (`53-fullframe-seed05-band20.png`, `54-fullframe-seed05-vignette.png`,
+  `55-platform-seed05.png`): one generated 640x360 scene drawn for the game's
+  view (constraints written before the single generation) is the first frame
+  that reads as one picture; a stepped darkening of the lower third by script
+  gives the controls a base. `--platform` (option B from the user's "làm như
+  ảnh 07-forest-01": the look of a raised stone stage without perspective
+  cells) draws a deck, a 12 px front face with joints and a shadow around the
+  rectangular board; shaped arenas would need edge pieces that follow the
+  missing cells. The user chose B: `--platform` now draws the deck per real
+  cell (so the 6x6 crystal gets a stepped deck with a face under every
+  bottom-exposed cell, `57-platform-slabv2-crystal6x6.png`), the slab 9-slice
+  was redrawn as v2 (cooler, three face tones, lip with a light line;
+  `56-platform-slabv2-5x5.png`) and the sharp-UI skin uses Đá Đêm #1E1B24 /
+  Sương #7D8896 instead of OSFE's navy.
 - The 38x27 slab with a 48 px sprite behaves as §1 expects: a unit covers the
   lower half of the one on the row behind; identity stays in the upper 20 px.
 - Technique notes for the SubViewport story: `Image.load_from_file` +

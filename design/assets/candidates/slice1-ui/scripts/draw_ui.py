@@ -5,7 +5,7 @@ Frames (art-px, drawn x2 on the 1280x720 HUD layer):
   ui_frame_panel_9slice.png   16x16  margins 4/4/4/6, notched corners, Mist border (rows 0..13), fill #1E1B24 @90 %, 2 px Ink lip below the frame
   ui_frame_button_9slice.png  48x16  three 16x16 states in a row: default (lip), pressed (no lip), disabled (dim)
   ui_frame_slot_9slice.png    16x16  margin 3, recessed (Ink top-left, #4A4652 bottom-right), Mist outer border
-  ui_frame_bar_3slice.png     16x8   ends 2, border 1, Ink groove @90 %
+  ui_frame_bar_3slice.png     16x6   ends 2, border 1, Ink groove @90 % (12 px tall at x2, §7.5)
 Icons: ui_icons_12.png, 21 icons of 12x12 in a 7x3 grid with 1 px gutters (90x38) + ui_icons_12.json.
 Only squares and 45-degree steps, 2 px strokes, one flat colour + one Ivory highlight pixel top-left.
 """
@@ -60,10 +60,11 @@ rect(slot, 1, 1, 14, 1, INK); rect(slot, 1, 1, 1, 14, INK)                  # to
 rect(slot, 2, 14, 14, 14, RECESS_LIGHT); rect(slot, 14, 2, 14, 14, RECESS_LIGHT)  # bottom-right inner edge
 frame(slot, 0, 0, 15, 15, MIST)
 
-# --- bar 16x8: border 1, groove inside, ends 2 (the end columns are the frame + 1 px) ---
-bar = blank(16, 8)
-rect(bar, 1, 1, 14, 6, GROOVE)
-frame(bar, 0, 0, 15, 7, MIST)
+# --- bar 16x6: border 1, groove 4 rows, ends 2 (the end columns are the frame + 1 px). 6 art-px
+# so the bar is 12 px tall at x2 (art bible §7.5 "thanh máu 12 px"); v1 was 16x8 = 16 px ---
+bar = blank(16, 6)
+rect(bar, 1, 1, 14, 4, GROOVE)
+frame(bar, 0, 0, 15, 5, MIST)
 
 # --- icons ---
 S = 12
@@ -138,14 +139,14 @@ out = sys.argv[1]
 write_png(f'{out}/ASSET-013-ui_frame_panel_9slice.png', 16, 16, panel())
 write_png(f'{out}/ASSET-013-ui_frame_button_9slice.png', 48, 16, btn)
 write_png(f'{out}/ASSET-013-ui_frame_slot_9slice.png', 16, 16, slot)
-write_png(f'{out}/ASSET-013-ui_frame_bar_3slice.png', 16, 8, bar)
+write_png(f'{out}/ASSET-013-ui_frame_bar_3slice.png', 16, 6, bar)
 write_png(f'{out}/ASSET-015-ui_icons_12.png', W, H, sheet)
 json.dump({"cell": S, "gutter": gut, "icons": index,
-           "nine_slice": {"panel": [4, 4, 4, 6], "button": [4, 4, 4, 6], "slot": [3, 3, 3, 3], "bar_ends": 2}},
+           "nine_slice": {"panel": [4, 4, 4, 6], "button": [4, 4, 4, 6], "slot": [3, 3, 3, 3], "bar_ends": 2, "bar_source": [16, 6]}},
           open(f'{out}/ASSET-015-ui_icons_12.json', 'w'), indent=2)
 # previews x8 on a mid background
 k = 8; bg = (74, 70, 64, 255)
-for name, img, w, h in (('panel', panel(), 16, 16), ('button', btn, 48, 16), ('slot', slot, 16, 16), ('bar', bar, 16, 8), ('icons', sheet, W, H)):
+for name, img, w, h in (('panel', panel(), 16, 16), ('button', btn, 48, 16), ('slot', slot, 16, 16), ('bar', bar, 16, 6), ('icons', sheet, W, H)):
     big = [[(img[y // k][x // k] if img[y // k][x // k][3] else bg) for x in range(w * k)] for y in range(h * k)]
     write_png(f'{out}/preview-{name}-x8.png', w * k, h * k, big)
 print(f'ui written: icons {len(icons)} sheet {W}x{H}')

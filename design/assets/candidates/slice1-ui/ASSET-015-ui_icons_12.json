@@ -148,6 +148,10 @@
       3,
       3
     ],
-    "bar_ends": 2
+    "bar_ends": 2,
+    "bar_source": [
+      16,
+      6
+    ]
   }
 }
