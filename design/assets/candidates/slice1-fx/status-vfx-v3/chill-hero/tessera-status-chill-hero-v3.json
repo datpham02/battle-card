@@ -1,0 +1,443 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-status-chill-hero-v3 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 1.png",
+   "frame": {
+    "x": 95,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 2.png",
+   "frame": {
+    "x": 190,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 3.png",
+   "frame": {
+    "x": 285,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 4.png",
+   "frame": {
+    "x": 0,
+    "y": 103,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 5.png",
+   "frame": {
+    "x": 95,
+    "y": 103,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 6.png",
+   "frame": {
+    "x": 190,
+    "y": 103,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 7.png",
+   "frame": {
+    "x": 285,
+    "y": 103,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 8.png",
+   "frame": {
+    "x": 0,
+    "y": 206,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 9.png",
+   "frame": {
+    "x": 95,
+    "y": 206,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 10.png",
+   "frame": {
+    "x": 190,
+    "y": 206,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 11.png",
+   "frame": {
+    "x": 285,
+    "y": 206,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 12.png",
+   "frame": {
+    "x": 0,
+    "y": 309,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 13.png",
+   "frame": {
+    "x": 95,
+    "y": 309,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 14.png",
+   "frame": {
+    "x": 190,
+    "y": 309,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-hero-v3 15.png",
+   "frame": {
+    "x": 285,
+    "y": 309,
+    "w": 95,
+    "h": 103
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 95,
+    "h": 103
+   },
+   "sourceSize": {
+    "w": 95,
+    "h": 103
+   },
+   "pivot": {
+    "x": 0.5263157894736842,
+    "y": 0.8155339805825242
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-status-chill-hero-v3.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 380,
+   "h": 412
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 50,
+   "y": 84
+  },
+  "frameTags": [
+   {
+    "name": "tessera-status-chill-hero-v3",
+    "from": 0,
+    "to": 15,
+    "direction": "forward"
+   }
+  ]
+ }
+}

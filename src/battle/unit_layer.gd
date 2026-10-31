@@ -72,7 +72,7 @@ const DEAD_CROSS_ART: float = 3.0
 const STATUS_BURN: String = "burn"
 const STATUS_FROZEN: String = "frozen"
 const STATUS_CHILL: String = "chill"
-## Unit frame kinds of the status packs: the hero packs were made on the v1 40x48 frame (the v3 hero is 96x70, body about 31x66), the boss packs on the v1 goblin 32x48 frame (the v3 goblin is 64x52, body about 26x46).
+## Unit frame kinds of the status packs: the hero packs are built around the v3 Swordsman (body about 31x66), the goblin packs around the v3 Goblin Scout (body about 26x46); rebuilt 2026-10-31 with the PixelLab VFX workbench, anchored on the feet.
 const FRAME_KIND_HERO: String = "hero"
 const FRAME_KIND_GOBLIN: String = "goblin"
 ## Pack clips drawn under and over the unit (art bible 8.6).

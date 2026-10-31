@@ -240,6 +240,8 @@ Pixel art icon sheet, 21 icons of 12x12 pixels each on transparent background, b
 
 ## ASSET-017 — Status overlay: Burning · ASSET-018 — Frozen · ASSET-019 — Fragile · ASSET-020 — Chill
 
+> **Rebuilt 2026-10-31 for the v3 bodies (user: "Hiệu ứng trạng thái mới"):** the six game packs (burn / frozen / chill × hero / goblin) were remade with the free PixelLab VFX workbench around the v3 Swordsman (`character:2d093318…:south-east`) and the v3 Goblin Scout (`character:3b9516c8…:south-west`): `on_fire` size 1.6 / amount 1.8 on the hero (flames to the waist, licks to the chest) and 1.15 / 1.8 on the goblin; `freeze_status` 1.7 / 2.5 and 1.2 / 2.0 (ice crystals round the feet, frost sparkles on the body); `snowfall` 0.6 / 1.6 and 0.45 / 1.4 (kept within about one cell). Saved in My effects as "Tessera status - <Kind> (<hero|goblin> v3)"; candidates `design/assets/candidates/slice1-fx/status-vfx-v3/<kind>-<frame>/` (zips not committed); game copies in `assets/art/vfx/status/<kind>_<frame>/`. The sprite tint the workbench previews is not used in game (the game draws its own sprite). In-match shots `production/qa/evidence/status-v3/`. 0 generations.
+
 | Field | Value |
 |-------|-------|
 | Category | VFX (status overlay on the unit; art bible §5.4 "không vẽ khung", §4 status colours) |

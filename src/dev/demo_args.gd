@@ -459,7 +459,7 @@ func _ready() -> void:
 			_join_demo(combat, grid)
 		"odd_field", "odd_bag", "odd_place", "odd_boss", "odd_hint":
 			_odd_demo(combat, grid)
-		"anim_step", "anim_cast", "anim_windup", "anim_hit", "anim_down", "anim_defeat", "status_burn", "status_frozen", "reduce_motion":
+		"anim_step", "anim_cast", "anim_windup", "anim_hit", "anim_down", "anim_defeat", "status_burn", "status_frozen", "status_swap", "reduce_motion":
 			# Deferred: BattleCanvas binds its layers (and the UnitLayer connects the match signals) in a deferred
 			# call queued by its own _ready, which ran before this one.
 			_art_demo.call_deferred()
@@ -529,6 +529,12 @@ func _art_demo() -> void:
 		"status_frozen":
 			status.pin(player, ART_DEMO_STATUS_SEC)
 			status.apply_frost(enemy, ART_DEMO_FROST_STACKS)
+			advance_sec = ART_DEMO_STATUS_ADVANCE_SEC
+		"status_swap":
+			# 2026-10-31: the pack pairings the two demos above leave out: the hero burning and chilled, the boss frozen.
+			status.ignite([state.player_cell] as Array[Vector2i], ART_DEMO_STATUS_SEC, HAZARD_DEMO_BURN_TICK_SEC, HAZARD_DEMO_BURN_DAMAGE)
+			status.apply_frost(player, ART_DEMO_FROST_STACKS)
+			status.pin(enemy, ART_DEMO_STATUS_SEC)
 			advance_sec = ART_DEMO_STATUS_ADVANCE_SEC
 	# The first update starts the clip / overlay the event asked for (as the next frame would); the second moves into it.
 	units.advance(0.0)

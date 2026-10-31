@@ -1,18 +1,18 @@
 {
  "app": "PixelLab VFX Creator",
- "name": "Tessera status - Frozen (hero)",
+ "name": "Tessera status - Frozen (hero v3)",
  "fps": 10,
  "frame_ms": 100,
  "frames": 12,
  "loop": true,
  "canvas": {
-  "w": 33,
-  "h": 54
+  "w": 60,
+  "h": 83
  },
  "anchor": {
   "kind": "feet",
-  "x": 16,
-  "y": 46
+  "x": 28,
+  "y": 69
  },
  "clips": [
   {
@@ -23,8 +23,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 26,
-    "h": 23
+    "w": 54,
+    "h": 73
    },
    "sheets": [
     {
@@ -36,8 +36,8 @@
     }
    ],
    "offset": {
-    "x": -12,
-    "y": -18
+    "x": -25,
+    "y": -62
    }
   },
   {
@@ -48,8 +48,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 27,
-    "h": 48
+    "w": 54,
+    "h": 77
    },
    "sheets": [
     {
@@ -61,8 +61,8 @@
     }
    ],
    "offset": {
-    "x": -13,
-    "y": -43
+    "x": -25,
+    "y": -66
    }
   },
   {
@@ -73,8 +73,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 8,
-    "h": 11
+    "w": 39,
+    "h": 21
    },
    "sheets": [
     {
@@ -86,8 +86,8 @@
     }
    ],
    "offset": {
-    "x": 1,
-    "y": -8
+    "x": -25,
+    "y": -13
    }
   },
   {
@@ -98,8 +98,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 26,
-    "h": 23
+    "w": 54,
+    "h": 73
    },
    "sheets": [
     {
@@ -111,8 +111,8 @@
     }
    ],
    "offset": {
-    "x": -12,
-    "y": -18
+    "x": -25,
+    "y": -62
    }
   },
   {
@@ -124,8 +124,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 26,
-    "h": 23
+    "w": 54,
+    "h": 73
    },
    "sheets": [
     {
@@ -137,8 +137,8 @@
     }
    ],
    "offset": {
-    "x": -12,
-    "y": -18
+    "x": -25,
+    "y": -62
    }
   }
  ]

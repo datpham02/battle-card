@@ -8,7 +8,8 @@ const VfxPackScript := preload("res://src/art/vfx_pack.gd")
 const StatusPacksScript := preload("res://src/art/status_packs.gd")
 
 const FIXTURE := "res://tests/fixtures/art/vfx_manifest_fixture.json"
-const CANDIDATES := "res://design/assets/candidates/slice1-fx/status-vfx"
+## 2026-10-31: the packs were rebuilt for the v3 Swordsman / Goblin bodies; candidates in status-vfx-v3/<kind>-<frame>/pack.
+const CANDIDATES := "res://design/assets/candidates/slice1-fx/status-vfx-v3"
 const KINDS: Array[String] = ["burn", "frozen", "chill"]
 const FRAME_KINDS: Array[String] = ["hero", "goblin"]
 const COPIED_FILES: Array[String] = ["manifest.json", "behind.png", "front.png", "whole.png"]
@@ -156,7 +157,7 @@ func test_real_packs_load_and_match_candidates() -> void:
 				if image != null:
 					var last: Rect2i = regions[regions.size() - 1]
 					check("%s: %s regions fit the sheet" % [tag, clip_name], last.end.x <= image.get_width() and last.end.y <= image.get_height())
-			var candidate_dir := "%s/pack-tessera-status-%s-%s" % [CANDIDATES, kind, frame_kind]
+			var candidate_dir := "%s/%s-%s/pack" % [CANDIDATES, kind, frame_kind]
 			for file_name in COPIED_FILES:
 				var copy := pack_dir.path_join(file_name)
 				var source := candidate_dir.path_join(file_name)

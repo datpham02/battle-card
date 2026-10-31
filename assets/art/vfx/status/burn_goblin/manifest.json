@@ -1,18 +1,18 @@
 {
  "app": "PixelLab VFX Creator",
- "name": "Tessera status - Burn (goblin)",
+ "name": "Tessera status - Burn (goblin v3)",
  "fps": 12,
  "frame_ms": 83,
  "frames": 12,
  "loop": true,
  "canvas": {
-  "w": 27,
-  "h": 38
+  "w": 35,
+  "h": 65
  },
  "anchor": {
   "kind": "feet",
-  "x": 13,
-  "y": 32
+  "x": 18,
+  "y": 58
  },
  "clips": [
   {
@@ -23,8 +23,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 16,
-    "h": 28
+    "w": 29,
+    "h": 59
    },
    "sheets": [
     {
@@ -36,8 +36,8 @@
     }
    ],
    "offset": {
-    "x": -8,
-    "y": -25
+    "x": -15,
+    "y": -55
    }
   },
   {
@@ -48,8 +48,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 21,
-    "h": 32
+    "w": 29,
+    "h": 59
    },
    "sheets": [
     {
@@ -61,8 +61,8 @@
     }
    ],
    "offset": {
-    "x": -10,
-    "y": -29
+    "x": -15,
+    "y": -55
    }
   },
   {
@@ -73,8 +73,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 16,
-    "h": 28
+    "w": 29,
+    "h": 49
    },
    "sheets": [
     {
@@ -86,8 +86,8 @@
     }
    ],
    "offset": {
-    "x": -8,
-    "y": -25
+    "x": -15,
+    "y": -45
    }
   },
   {
@@ -98,8 +98,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 14,
-    "h": 28
+    "w": 28,
+    "h": 57
    },
    "sheets": [
     {
@@ -111,8 +111,8 @@
     }
    ],
    "offset": {
-    "x": -7,
-    "y": -25
+    "x": -14,
+    "y": -55
    }
   },
   {
@@ -124,8 +124,8 @@
    "start_frame": 0,
    "frames": 12,
    "frame": {
-    "w": 16,
-    "h": 28
+    "w": 29,
+    "h": 59
    },
    "sheets": [
     {
@@ -137,8 +137,8 @@
     }
    ],
    "offset": {
-    "x": -8,
-    "y": -25
+    "x": -15,
+    "y": -55
    }
   }
  ]

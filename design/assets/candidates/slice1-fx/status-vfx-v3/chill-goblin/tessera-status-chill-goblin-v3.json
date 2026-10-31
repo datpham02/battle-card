@@ -1,0 +1,443 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-status-chill-goblin-v3 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 1.png",
+   "frame": {
+    "x": 50,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 2.png",
+   "frame": {
+    "x": 100,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 3.png",
+   "frame": {
+    "x": 150,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 4.png",
+   "frame": {
+    "x": 0,
+    "y": 53,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 5.png",
+   "frame": {
+    "x": 50,
+    "y": 53,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 6.png",
+   "frame": {
+    "x": 100,
+    "y": 53,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 7.png",
+   "frame": {
+    "x": 150,
+    "y": 53,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 8.png",
+   "frame": {
+    "x": 0,
+    "y": 106,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 9.png",
+   "frame": {
+    "x": 50,
+    "y": 106,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 10.png",
+   "frame": {
+    "x": 100,
+    "y": 106,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 11.png",
+   "frame": {
+    "x": 150,
+    "y": 106,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 12.png",
+   "frame": {
+    "x": 0,
+    "y": 159,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 13.png",
+   "frame": {
+    "x": 50,
+    "y": 159,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 14.png",
+   "frame": {
+    "x": 100,
+    "y": 159,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-chill-goblin-v3 15.png",
+   "frame": {
+    "x": 150,
+    "y": 159,
+    "w": 50,
+    "h": 53
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 53
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 53
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9245283018867925
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-status-chill-goblin-v3.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 200,
+   "h": 212
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 25,
+   "y": 49
+  },
+  "frameTags": [
+   {
+    "name": "tessera-status-chill-goblin-v3",
+    "from": 0,
+    "to": 15,
+    "direction": "forward"
+   }
+  ]
+ }
+}
