@@ -74,12 +74,12 @@
 | **Rạn** | Đòn kế tiếp ăn ×1,5 | Tối đa 3 tầng |
 | **Giá Lạnh** | Tích tầng, đủ thì nổ | 3 tầng nổ, gây 24 sát thương |
 | **Đẩy** | Đẩy lùi 1 ô kèm sát thương nhẹ | — |
-| **Tường** | Ô của khối không bước vào được | 1,2 s |
+| **Ô rớt** (chỉ boss, thay Tường từ 2026-10-31) | Ô nứt 0,8 s rồi thành hố không bước vào được; ai còn đứng trên lúc rơi thì rơi chết | nứt 0,8 s, hố 1,2 s |
 | **Bãi Gai** | Bước vào được nhưng mất máu và dính Rạn | 3 s, 6 sát thương, +1 Rạn |
 | **Hành quyết** | Sát thương nhân thêm khi địch dưới 25 % máu | — |
 | **Xuyên giáp** | Bỏ qua giáp của địch | — |
 
-Luật cứng cho Tường và Bãi Gai: luôn chừa ít nhất 1 ô bước được cho bên bị nhốt.
+Luật công bằng cho Ô rớt (`design/quick-specs/o-rot-thay-tuong-2026-10-31.md`): lúc bắt đầu nứt luôn còn ít nhất 1 ô kề an toàn; ô của người chơi chỉ được chọn khi người chơi bước kịp (hồi bước còn ≤ 0,6 s, không Đóng Băng, không bị trói); Đóng Băng giữa chừng thì ô dưới chân không rơi; Tập trung dừng đồng hồ nứt. Bãi Gai vẫn bước được nên không cần luật này.
 
 ### 2.7 Địa hình vùng
 
@@ -96,7 +96,7 @@ Luật cứng cho Tường và Bãi Gai: luôn chừa ít nhất 1 ô bước đ
 - **Địch đứng yên khi đang niệm.** Đây là **cửa sổ phản công**: đánh trúng lúc này để phá đòn của nó.
 - **Đặc tính** làm mỗi trận khác nhau, hiện có khoảng 20:
   - **Thời gian:** Pháo ngòi (ngòi cháy hết thì nổ cả hàng), Phản xạ (mỗi bước của bạn nạp một phát), Đổi pha (nửa máu thì hung hãn hơn).
-  - **Sân:** Giáng nứt (đập nứt ô bên bạn), Hỏa tức (thở lửa quét một hàng), Mảnh nguyền (ném khối độc vào túi bạn), Ấn phong tỏa (dựng Tường chặn đường thoát), Trận gai (rải Bãi Gai).
+  - **Sân:** Giáng nứt (đập nứt ô bên bạn), Hỏa tức (thở lửa quét một hàng), Mảnh nguyền (ném khối độc vào túi bạn), Ấn phong tỏa (làm nứt rồi rơi 2–3 ô bên bạn, có thể gồm ô bạn đứng), Trận gai (rải Bãi Gai).
   - **Hồi sinh và hồi máu:** Hào quang sương (khối rơi chậm hơn), Nuốt lửa (Cháy hồi máu cho nó), Tái sinh (hồi sinh một lần trừ khi đang dính Giá Lạnh).
   - **Theo vùng:** Mạch phun trào, Gió đẩy, Mây che (giấu báo trúng), Đảo rơi, và các chiêu lặn, nhảy, phản đòn của Sa Mạc và Đầm Lầy.
 - **Thắng:** địch về 0 máu. **Thua:** bạn về 0 máu, chuyến leo kết thúc.
@@ -118,7 +118,7 @@ Luật cứng cho Tường và Bãi Gai: luôn chừa ít nhất 1 ô bước đ
 | **Đóng Băng** | Sương mỏng, Băng châu, Băng phong, Hàn băng |
 | **Rạn** | Rạn kích, Rạn vân |
 | **Giá Lạnh** | Hàn khí, Hàn phong, Thánh thủy |
-| **Tường** | Kết giới, Lồng ấn, Lưới săn |
+| **Ô rớt** | chỉ boss (trait `seal_caster`); Kết giới, Lồng ấn, Lưới săn rời bộ lá người chơi từ 2026-10-31 |
 | **Bãi Gai** | Trận gai, Gai nguyền, Gai độc |
 | **Lá nguyền** | Gánh Nặng, Oán Hồn: chiếm chỗ trong 4 lá rút, nhưng luôn còn ít nhất 1 lá thường |
 
@@ -135,7 +135,7 @@ Mỗi nhân vật có máu, tốc độ bước, thời gian Tập trung, **nộ
 | **Kiếm sĩ** | 200 | Hơi thở thứ hai: +20 máu sau mỗi trận thắng | **Trảm**: 3 s, mọi đòn tính gấp đôi số ô, hút 20 % sát thương | Kiếm khí, Kiếm vũ ×2, Thiết kiếm ×2, Chấn phong | Có sẵn |
 | **Pháp sư** | 210 | Pháp trận rộng: đòn ≥ 4 ô niệm nhanh hơn 25 %; Tập trung 5 s | **Thiên Hỏa**: kích nổ lửa đang cháy ×2, làm mới Cháy, đốt cả Bản Khắc đang sáng | Kiếm khí, Hỏa xà, Hỏa tinh ×2, Hỏa trận, Băng phong | Có sẵn |
 | **Sát thủ** | 180 | Lưỡi kiếm nhanh: đòn ≤ 4 ô +40 %; bước nhanh hơn 10 % | **Ảnh Bộ**: 2 s, bước không chờ, đòn ≤ 3 ô ×1,75 | Kiếm khí ×2, Kiếm vũ, Thiết kiếm, Băng châu, Hàn kiếm | Có sẵn |
-| **Thợ săn** | 200 | Dấu săn: địch bước vào gai của bạn hoặc đứng kề tường vừa dựng thì nhận 1 Rạn (chờ 3 s) | **Vây Bắt**: 4 s, Tường và Bãi Gai kéo dài ×1,5, tiêu Rạn ×2 | Kiếm khí ×2, Kết giới ×2, Trận gai, Rạn kích | **Giết** tổng cộng 3 Kẻ Gác |
+| **Thợ săn** | 200 | Dấu săn: địch bước vào gai của bạn hoặc đứng kề gai vừa rải thì nhận 1 Rạn (chờ 3 s) | **Vây Bắt**: 4 s, Bãi Gai kéo dài ×1,5 và rải thêm 1 ô, tiêu Rạn ×2 | Kiếm khí ×2, Trận gai ×2, Gai độc, Rạn kích | **Giết** tổng cộng 3 Kẻ Gác |
 | **Giáo sĩ** | 210 | Lời nguyện: mỗi lần Giá Lạnh nổ trên địch thì hồi 8 máu; Tập trung 4,5 s | **Thánh Ấn**: 4 s, mỗi đòn trúng thêm 1 Giá Lạnh, nổ ×1,5 | Kiếm khí ×2, Hàn khí ×2, Hàn kiếm ×2 | **Tha** tổng cộng 3 Kẻ Gác |
 
 ---
@@ -212,7 +212,7 @@ Bảo vật là đồ bị động **đổi luật**, không chỉ cộng số. 
 
 | Hạng | Bảo vật |
 |---|---|
-| **Thường** | Ấn Đơn (đòn chỉ gồm 1 khối ô đơn ×1,75), Chỉ Khâu (mỗi đòn ghép hồi 3 máu, tối đa 15 mỗi trận), Phong Ấn Dài (Tường +1 s), Gai Rạn (địch bước vào gai của bạn thêm 1 Rạn), Mảnh Tươi (khối tươi thêm 4 s), Định Tâm (Tập trung +1 s) |
+| **Thường** | Ấn Đơn (đòn chỉ gồm 1 khối ô đơn ×1,75), Chỉ Khâu (mỗi đòn ghép hồi 3 máu, tối đa 15 mỗi trận), Gai Dai (Bãi Gai +1 s; thay Phong Ấn Dài 2026-10-31), Gai Rạn (địch bước vào gai của bạn thêm 1 Rạn), Mảnh Tươi (khối tươi thêm 4 s), Định Tâm (Tập trung +1 s) |
 | **Hiếm** | La Bàn Trận Đồ (Bản Khắc phai chậm hơn 30 %), Tâm Hương (Thức Tỉnh hồi nhanh hơn 20 %), Túi Rộng (túi khối +1 ô), Dầu Thần (Cháy chồng thêm 1 tầng), Khởi Thế (đòn đầu mỗi trận không niệm), Phản Đòn (phá đòn địch thì nhận 1 khối ô đơn) |
 | **Sử thi** | Hàn Khí (Giá Lạnh nổ ở 2 tầng nhưng yếu hơn 33 %), Huyết Ấn (đòn ≥ 5 ô +30 %; trượt thì mất 2 máu) |
 | **Mảnh Gốc** (từ Kẻ Gác) | Ấn Chủ (Hình Cộng Hưởng ×2 thay vì ×1,5), Tam Hợp (ghép được khối thứ 3) |
