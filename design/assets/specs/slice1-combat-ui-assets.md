@@ -139,7 +139,7 @@ Pixel art sheet of 5 square tile marks, 16x16 each, on transparent background, w
 | Field | Value |
 |-------|-------|
 | Category | UI |
-| Dimensions | Panel and Button: 9-slice source 16x16, margins 4/4/4/6. Button: 3 states (default with 2 art-px bottom lip, pressed without lip, disabled). Slot: 9-slice 16x16, margin 3, recessed. Bar: 3-slice 16x8, ends 2, border 1. Drawn at x2 art-px on the 1280x720 HUD layer |
+| Dimensions | Panel and Button: 9-slice source 16x16, margins 4/4/4/6. Button: 3 states (default with 2 art-px bottom lip, pressed without lip, disabled). Slot: 9-slice 16x16, margin 3, recessed. Bar: 3-slice **16x6** (was 16x8; changed 2026-10-31 so the bar is 12 px tall at x2, §7.5), ends 2, border 1. Drawn at x2 art-px on the 1280x720 HUD layer |
 | Format | `.png` RGBA 8-bit, Lossless, Nearest; integer art-px stretch only |
 | Naming | `assets/art/ui/ui_frame_panel_9slice.png`, `ui_frame_button_9slice.png` (3 states in a row), `ui_frame_slot_9slice.png`, `ui_frame_bar_3slice.png` |
 | Slice | 1 |
@@ -159,6 +159,7 @@ Pixel art UI kit, four small frames on transparent background: 1) a dark panel 1
 |---|---|---|---|---|
 | script-01 | 2026-10-31 | Panel 16x16: Mist #7D8896 frame with 1 px notched corners, fill #1E1B24 at 90 % (alpha 230), **2 art-px Ink lip hanging below the frame** (frame rows 0–13, lip rows 14–15 inset 1 px). Button 48x16 = default (lip), pressed (no lip), disabled (fill alpha 150, frame #4A4652). Slot 16x16: Mist outer frame, recessed inner edge (Ink top-left, #4A4652 bottom-right), fill #15131A. Bar 16x8: Mist frame 1, Ink groove at 90 %, ends 2. Margins in `ASSET-015-ui_icons_12.json` → `nine_slice` (panel / button 4,4,4,6; slot 3; bar ends 2) | 0 | Kept: `candidates/slice1-ui/ASSET-013-ui_frame_{panel,button,slot}_9slice.png`, `ui_frame_bar_3slice.png`; previews `preview-{panel,button,slot,bar}-x8.png` |
 | check-01 | 2026-10-31 | art-check `--ui` draws the frames with a 9-slice at x2 on the HUD layer: 130x93 arc slots and 97 px pad / 115 px Awaken buttons, 32x32 pause panel, 435x16 bars (evidence `35-ui-layout-v2-5x5.png`, `36-ui-layout-v1-5x5.png`, zoom `37-ui-frames-zoom-x3.png`) | 0 | Corners keep the notch, edges stay 2 px, no seams at any size. **Deviation from the spec wording**: the first draft put the Ink lip inside the fill (spec: "bottom lip ink") and it vanished — Ink #1B1722 on #1E1B24 is one value step; moved below the Mist border, where it reads as a raised edge against the backdrop. Proposed art bible §7.4 wording: "mép dưới Mực 2 art-px nhô dưới viền" |
+| script-02 | 2026-10-31 | Bar source 16x8 → **16x6** (border 1, groove 4 art-px, ends 2) so the bar is 12 px tall at x2 as §7.5 asks; the fills stay code at screen pixels inside the 8 px groove (§7.4: bars are drawn sharp at 1280x720). `ASSET-015-ui_icons_12.json` → `nine_slice.bar_source` [16, 6] | 0 | Replaces the bar file; evidence 35/36/37 re-captured. The §7.5 vs spec "16x8" mismatch is closed in favour of §7.5; this spec's Dimensions row should read "Bar: 3-slice 16x6" |
 
 **Status:** In Progress (candidate; art-director to confirm the lip placement)
 
@@ -176,7 +177,7 @@ Pixel art UI kit, four small frames on transparent background: 1) a dark panel 1
 
 **Art Bible Anchors:** §4 UI palette (no red health bars), §7.5 health bar.
 
-**Note (2026-10-31):** no drawn art. The art-check `--ui` mock draws the fills in code on the ASSET-013 bar (player #4CBF59 at 85 % with a #B8B0A0 trail to 93 %, boss Ivory with the 2 px Ivory half-life notch sticking out 3 px) — evidence 35/36. Open: the 3-slice source is 8 art-px, so the bar is 16 px tall at x2 while §7.5 says 12 px; either a 6 art-px bar source or a 1x draw of a 12 px source settles it (UI story).
+**Note (2026-10-31):** no drawn art. The art-check `--ui` mock draws the fills in code on the ASSET-013 bar (player #4CBF59 at 85 % with a #B8B0A0 trail to 93 %, boss Ivory with the 2 px Ivory half-life notch sticking out 3 px) — evidence 35/36. Closed 2026-10-31: the bar source is now 6 art-px (ASSET-013 script-02), so the frame is 12 px tall at x2 and the fills draw at screen pixels inside the 8 px groove.
 
 **Status:** Needed (code)
 
@@ -207,8 +208,10 @@ Pixel art icon sheet, 21 icons of 12x12 pixels each on transparent background, b
 |---|---|---|---|---|
 | script-01 | 2026-10-31 | 21 icons in a 7x3 grid, 1 px gutter (90x38) + `ASSET-015-ui_icons_12.json` (name → rect). 2 px strokes, squares and 45° steps only, one flat colour + one Ivory highlight pixel (top-left-most opaque pixel), 1 px Ink outline only on check and cross. Colours: Ivory glyphs; armor #8FA3B8; burn #FF7A1F; chill #3A5CF0; frozen #A6EEFF with a #3A5CF0 edge; cloud and plus Mist #7D8896; odd #E04CD0; awakening = three Mist squares + one gold #FFD45C; coin #FFD45C with an Ink slot. Rotate redrawn once (v1 unreadable): a 2 px ring open at the top-left, capped by a stepped arrowhead | 0 | Kept: `candidates/slice1-ui/ASSET-015-ui_icons_12.png` + `.json`; preview `preview-icons-x8.png` |
 | check-01 | 2026-10-31 | preview x8 and art-check `--ui` (pause on the panel, plus in the slots, awakening x4 on the Awaken button, the four arrows x4 on the v1 pads; evidence 35–37) | 0 | Every status icon has its own shape (flame / cracked tile / plus-snowflake / ice cube); the gold square of the awakening icon reads at 24 and 48 px. Open: §7.5 asks for 28 px pad arrows, the 12x12 grid gives 24 or 48 px (48 used on the 97 px pads); the §7.4 blackout test of the sheet is not done |
+| gen-01 | 2026-10-31 | **Direction change** (user: the pixel set is "thô", wants One Step From Eden's design language). Pixen 256x256, no background, "4x4 grid of 16 icons on dark navy rounded tiles, thick dark outline, soft inner glow, one saturated colour per glyph", seeds 11 and 42 | 2 | Seed 11 (job f78b137b) kept: navy tiles 55x55 at a 61 px pitch, 21 colours, every glyph readable; the cross was missing (a second rotate) so it is drawn by script on a copy of the pause tile. Seed 42 (job 43cadc3a) rejected: white tiles. Assembled as `candidates/slice1-ui/osfe-icons/ASSET-015-osfe-icons_55.png` (4x4, 1 px gutter) + `.json`; raw sheets kept beside it |
+| check-02 | 2026-10-31 | art-check `--skin=osfe --icons=…` (evidence `46-skin-osfe-icons.png`): pause + info at 1:1 (55 px) top centre, Cháy/Rạn chips at 0.5 beside the goblin's HP plate, the Awakening glyph inside the diamond | 0 | Reads as one family with the sharp-UI skin; the glow and tile make the glyphs sit on any backdrop. Open: chips at 0.5 lose pixels (a 28 px chip variant needs its own gen or a 1:1 chip), icons not yet palette-locked, the 12x12 pixel set stays as the placeholder for the pixel-layer path |
 
-**Status:** In Progress (candidate)
+**Status:** In Progress (two candidate sets: 12x12 pixel-grid set and the 55 px OSFE-style set; direction decision pending)
 
 ## ASSET-016 — Spell VFX: Push
 

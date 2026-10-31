@@ -82,7 +82,9 @@ Góc nhìn đã đối chiếu với ảnh chụp thật (2026-10-28). Các dòn
 | Nền nhìn ngang có chân trời, chi tiết nhưng trầm | Bảng màu neon, cyber-anime, súng và máy móc |
 | Sprite pixel nhỏ, dáng rõ, viền tối | Bão hạt, rung màn hình, chớp sáng (lời chê "hỗn loạn" của OSFE) |
 | Phép sáng, tươi, ít màu, nổi trên nền tối | Phép dạng đạn bay |
-| Khung UI dạng tấm pixel 9-slice | — |
+| **Ngôn ngữ UI** (người dùng chốt 2026-10-31): HUD vẽ sắc ở độ phân giải gốc, panel phẳng vát góc 45°, kim cương cho số quan trọng, thanh chia đốt, chữ sans trắng viền tối, số máu trên tấm tối dưới chân đơn vị | Màu UI của OSFE (navy, viền ô lam/đỏ theo phe); Tessera dùng Đá Đêm #1E1B24 và viền Sương |
+| Bố cục khung hình: sân là một bệ đá nổi giữa cảnh, nền là **một bức** theo góc nhìn của sân | Nền kiểu nhìn ngang (platformer) có thân cây đứng trước sân |
+| Icon HUD bão hòa, có glow nhẹ trong ô tối | Glow ở bất kỳ đâu trên sân (P1: chỉ Khối sáng) |
 
 ### Không làm
 - Kiếm hiệp, tiên hiệp: mây cuộn, sơn mài đỏ-vàng, hoa văn Hán.
@@ -584,6 +586,8 @@ Nguồn: ảnh concept tạm `design/art/reference/07-*-01`, `09-world-map-01`. 
   - Phần giữa tô phẳng tông A nên giãn được. Mép trước 2–3 px và khe 1–2 px cố định, không giãn.
   - Stamp đặt theo seed ô nên ổn định giữa các lần vẽ.
   - Chi phí ~2–3 h/vùng, nằm trong 10–14 h/vùng của Mục 1.
+- **Bệ nổi (người dùng chốt 2026-10-31, phương án B):** lưới ô vẫn chữ nhật; cảm giác "bệ đá nhìn chếch" đến từ khung vẽ bằng code quanh sân, không từ ô hình thang: mặt bệ 6 art-px quanh mọi ô thật (khe giữa hai nửa cũng là đá bệ, một vạch mảnh ở giữa), **mặt trước 12 art-px** dưới mọi ô không có ô thật bên dưới (cạnh trên sáng 1 px, 2 px Mực ở đáy, mạch đá dọc), bóng 4 px Mực 50 % xuống đất. Vẽ theo từng ô nên sân khuyết ô vẫn đúng hình. Màu = bảng phiến v2 của vùng: mặt bệ tối hơn mặt phiến một bậc, mặt trước = màu mép. Mẫu: `prototypes/art-check --platform`, ảnh 56–57.
+- **Phiến v2 (2026-10-31):** mặt 3 tông (cạnh sáng trên-trái, mặt, cạnh tối phải-dưới), mép trước tối với 1 px sáng ở cạnh trên; Rừng Sương: #6A6B62 / #4C4D47 / #3A3B37, mép #262521, vạch #5A5B54. Lý do: phiến v1 lẫn vào đất của nền.
 - **Lỗ:** không vẽ phiến; tô đáy tối nhất của vùng (đất, bùn, mây); mép trước phiến trên kéo xuống 3 px thành vách.
 - **Đảo, sân vòng/kim cương:** mép bao 2–3 px tối hơn 1 tông; ô khuyết giữ ô vuông. Không Đảo thêm chân đá thon bậc thang dưới hàng cuối (code).
 - **Tường / Bãi Gai:** dựng trên phiến thường; Tường 30 px đặc, gạch chéo; Bãi Gai ≤ 6 px, gai thưa.
@@ -594,12 +598,13 @@ Nguồn: ảnh concept tạm `design/art/reference/07-*-01`, `09-world-map-01`. 
 - **Ô sắp rơi:** nứt + viền nét đứt; mọc lại bằng phiến trồi bậc thang từ dưới.
 
 ### 6.4 Nền nhìn ngang
-- 800×360, chân trời 32–47 px, ≤ 3 lớp (trời, xa, gần), dưới chân trời tối dần 2–3 bậc.
-- **Ảnh `07-*` sai chung:** cảnh xa cao tới ~40 % màn, trong khi Z2 đè 14–55 % và HUD phủ phần dưới. Chỉ còn thấy dải trên 14 % và hai lề. Lấy ý tàn tích/vòm/cầu, nén vào 32–47 px và hai lề.
+- 800×360, ≤ 3 lớp (trời, xa, gần). **Dải cảnh xa chiếm 20 % chiều cao** (người dùng chốt 2026-10-31; trước đó chân trời 32–47 px ≈ 12 %): sân bắt đầu ở 20 %, nên cảnh xa có 72 art-px và hai lề 80 px mỗi bên. Dưới chân trời tối dần 2–3 bậc.
+- **Nền là một bức, không phải dải + màu lấp** (sửa 2026-10-31 sau ảnh 51/52): vẽ cả tấm theo góc nhìn của sân (nhìn hơi chếch từ trên): cảnh xa trên, mép chuyển tiếp (bụi, đá, rễ) ngay dưới chân trời, khoảng đất trống nơi bệ đặt, hai lề có cột hoặc thân cây đóng khung, đáy 36 % tối dần theo bậc để vùng điều khiển có nền. Không thân cây đứng trước sân, không chân trời cắt bằng một đường thẳng.
+- Ảnh `07-*` và `05-battle-*` là tham khảo bố cục và không khí, **không vẽ lại từ ảnh**. Lỗi của chúng (cảnh xa cao ~40 %, sprite to gấp đôi) không mang theo; ý tàn tích / vòm / cầu nén vào dải 20 % và hai lề.
 
 | Vùng | Công thức (trời / xa / gần) | `07-*` đúng / sai |
 |---|---|---|
-| Rừng Sương | Sương #7D8896 phẳng / đồi cây + 3–4 tàn tích ≤ 25 px, V ≤ 45 / rễ và cột gãy ở lề; sương thấp trôi | Đúng: sương nhiều lớp, vòm cổng. Sai: cầu vòm xa cao |
+| Rừng Sương | Sương #7D8896 phẳng / đồi cây + 3–4 tàn tích ≤ 25 px, V ≤ 45 / rễ và cột gãy ở lề; sương thấp trôi. Ứng viên cả tấm: `bg-explorations/fullframe-seed05` (2026-10-31) | Đúng: sương nhiều lớp, vòm cổng. Sai: cầu vòm xa cao |
 | Hầm Ngục | Không trời; tường vòm + 4–5 cột, chân tường = chân trời; xích treo; đuốc = mảng ochre tĩnh | Đúng: cột, vòm, cờ ô lồng ô. Sai: lửa đuốc sáng; hố sập vẽ trong nền |
 | Tháp Sương | Lam-tím #8E95B8 / biển mây + 2–3 tháp xa thưa / lan can, cột băng thấp ở lề | Đúng: biển mây, tháp xa, sân tròn. Sai: tinh thể cyan (va Đóng Băng) |
 | Đầm Lầy | Ô-liu xám / tàn tích thấp trong sương, nước phẳng / cột chìm, lau sậy, nấm #6A5868 | Đúng: nước phẳng, nấm. Sai: ô-liu quá tươi |
@@ -676,14 +681,17 @@ Soạn: art-director (hình ảnh) + ux-designer (kiểm dùng được trên đ
 - **Cỡ chữ HUD 115 / 130 %:** nhân T2, T4–T6; T1 chặn 52 px. Nhãn trên lưới tự thu nhỏ cho vừa ô nhưng không dưới 18 px, ưu tiên rút gọn chữ. Tên lá cho phép 2 dòng. Z1 ở 130 %: số tối đa 26 px để vừa dải 36 px; tên cắt "…", tên đầy đủ có ở Tạm dừng.
 
 ### 7.4 Hệ khung, tương phản, cỡ chạm
-- **4 loại khung** (art-px; ×2 ở 720p; chỉ màu của Mục 4):
+- **HUD vẽ sắc ở 1280×720** (người dùng chốt 2026-10-31 sau style test OSFE, ảnh 40–57): panel, nút, thanh, chữ, số dùng đường 1 px và font ở độ phân giải gốc, không ép vào lưới art-pixel. Chỉ thứ nằm trên thế giới (icon trên đơn vị, ✓/✗, khối thu nhỏ) là pixel art ×2.
+- **Hình khung:** nền Đá Đêm #1E1B24 ≥ 90 %, viền Sương #7D8896 1 px; **vát góc 45°** 12–18 px ở một hoặc hai góc thay cho khuyết 1 art-px; **kim cương** cho số quan trọng (Thức Tỉnh, giá ô, sát thương); thanh Bản Khắc **chia đốt**; thẻ ô túi có huy hiệu giá ở góc dưới; số máu trên tấm tối 52×18 dưới chân đơn vị. Nổi = có mép dưới 2 px Mực nhô dưới viền; nhấn = mất mép, tụt 2 px.
+- **4 loại khung pixel 9-slice** (art-px; ×2 ở 720p; chỉ màu của Mục 4) — **dự phòng cho đường pixel**, không phải HUD chính nữa:
   - **Panel** 9-slice, lề 4 / 4 / 4 / 6. Nền #1E1B24 90 %, **viền Sương #7D8896** 1 art-px (≥ 3:1 trên nền; #4A4652 chỉ ~1,9:1 nên không dùng làm viền chính), góc vuông khuyết 1, mép dưới Mực.
   - **Button**: như Panel, nổi (có mép dưới). Nổi = bấm được.
   - **Slot** (túi, Hình Cộng Hưởng): lề 3, **lõm** (trên-trái Mực, dưới-phải #4A4652), viền ngoài Sương. Lõm = chứa đồ.
   - **Bar**: 3-slice ngang, đầu 2, viền 1; rãnh Mực 90 %.
   - Dải điều khiển dưới: nền đặc 100 %. Bề mặt có chữ hoặc icon không được trong hơn 85 %.
 - **Trạng thái:** mặc định; nhấn = mất mép, tụt 2 art-px, tức thì, nhả 0,06 s (**vùng chạm không dịch theo**); tắt = nội dung 50 %, mất mép, kèm chữ lý do ("cần 3 ô"); chọn = viền Ngà 2 art-px; sẵn sàng (Thức Tỉnh) = viền Ánh Lưới 3 art-px; focus chỉ có ở bản dev desktop.
-- **Icon 12×12 art-px** (24 px): thân nét 2 art-px, tô phẳng một màu tín hiệu + 1 điểm sáng Ngà góc trên-trái; chỉ khối vuông và bậc thang 45°, không cong, không glow; viền Mực 1 art-px chỉ cho icon đứng trên thế giới. Test tô đen vẫn nhận ra.
+- **Icon HUD 55×55 px** (ứng viên 2026-10-31, gen từ mô tả, `candidates/slice1-ui/osfe-icons/`): ký hiệu một màu bão hòa trên ô Đá Đêm bo nhẹ, viền tối dày, glow nhẹ **chỉ trong ô icon**. Chip từ khóa trên đơn vị vẫn là icon pixel 12×12 (24 px), không thu icon 55 xuống.
+- **Icon 12×12 art-px** (24 px, đường pixel và chip trên đơn vị): thân nét 2 art-px, tô phẳng một màu tín hiệu + 1 điểm sáng Ngà góc trên-trái; chỉ khối vuông và bậc thang 45°, không cong, không glow; viền Mực 1 art-px chỉ cho icon đứng trên thế giới. Test tô đen vẫn nhận ra.
   - Danh sách: tạm dừng, "!" máu thấp, ✓, ✗, Xoay, Giáp, 4 từ khóa (Cháy, Rạn, Giá Lạnh, Đóng Băng), mây (E-28), sao Khối Lạ, "+" ô túi trống, ⓘ, Bản Khắc/Thức Tỉnh (2×2 ô, một ô sáng), 4 mũi pad.
   - **Hủy chỉ có chữ**, vì ✗ đã mang nghĩa "trượt". **Khối hỏng ghi chữ "HỎNG"** + giây, không dùng dấu X.
 - **Tương phản (sửa theo kiểm UX, cần đo lại bằng công cụ):**
@@ -888,7 +896,7 @@ Người dùng duyệt 2026-10-29 (giữ cả 5 nguồn). Mục 1–8 luôn th�
 
 | # | Nguồn | Xem ở đâu | Lấy | Không lấy |
 |---|---|---|---|---|
-| 1 | **One Step From Eden** (Thomas Moon Kang, 2020) | Một trận bất kỳ ở thế giới đầu | **Chỉ góc nhìn** (Mục 1): lưới phẳng nhìn thẳng, đơn vị đứng thẳng lấn lên hàng sau, nền nhìn ngang có chân trời | Mọi thứ trong cột "Không lấy" ở Mục 1: ô viền trơn tô xanh/đỏ, neon, bão hạt, rung màn hình, đạn bay |
+| 1 | **One Step From Eden** (Thomas Moon Kang, 2020) | 6 ảnh Steam (store app 960690), xem 2026-10-31 | **Góc nhìn** (Mục 1) + **ngôn ngữ UI**: UI sắc trên thế giới pixel, panel vát góc, kim cương, thanh đốt, chữ sans viền tối, icon có glow | Màu navy, viền ô lam/đỏ theo phe, neon, bão hạt, rung màn hình, đạn bay |
 | 2 | **Into the Breach** (Subset Games, 2018) | Một lượt bất kỳ sau khi Vek đã báo đòn, đảo đầu | **Đòn báo vẽ lên ô đất, không vẽ lên quái.** Đơn vị nhỏ nhận ra nhờ dáng + một mảng màu. Panel UI tối, viền mảnh, góc vuông | Phép chiếu isometric, mech khoa học viễn tưởng, khung chữ dày đặc. Màu báo nguy của nó cũng không lấy (cần kiểm), vì Tessera đã quy định đỏ + sọc chéo |
 | 3 | **Fez** (Polytron, 2012) | Cảnh nhặt đủ 8 cube bit, các mảnh tụ thành khối vàng | **Sức mạnh là hạt vuông tụ lại, khớp thành khối, rồi tan về hạt vuông**; không tia, không vòng tròn. Mẫu chuyển động cho Khối rơi/tan, hạt ngà ở tay địch, 6 loại VFX | Xoay phối cảnh 3D, pastel tươi phủ cả thế giới, chữ tetromino khắc trên tường (Tessera cấm chữ và rune) |
 | 4 | **Caspar David Friedrich**: *The Abbey in the Oakwood* (1809–10, Alte Nationalgalerie Berlin), *Wanderer above the Sea of Fog* (1818, Hamburger Kunsthalle) | Hai bức tranh | **Chân trời thấp, sương xếp lớp theo bậc giá trị**: càng xa càng nhạt, xám, ít tương phản; tàn tích chỉ là bóng phẳng. Áp vào trời và dải xa (Mục 6.4), màn tiêu đề, bản đồ (người đứng quay lưng) | Chuyển màu sơn dầu mượt (Tessera dùng bậc phẳng), thập giá và đám tang, cành vẽ từng nét |
@@ -901,5 +909,6 @@ Người dùng duyệt 2026-10-29 (giữ cả 5 nguồn). Mục 1–8 luôn th�
   - Không làm chuẩn cho: glow mềm và viền từng ô của Khối Lạ (chuẩn: một viền bao ngoài, Mục 3); mảnh vỡ xoay góc lẻ; nơ trang trí của Gỗ và dây (ở 5 px chỉ còn khung + 1 dây).
 - **`03-key-art-01`**: mood cho màn tiêu đề và bản đồ (lưới vàng lộ dần về đỉnh, người đứng quay lưng). Không làm chuẩn cho trận: phối cảnh, khối vàng lớn phát sáng, glow dày.
 - `04-lineup-01`, `05-battle-02…06`, `07-*`, `08-*`, `09-world-map-01`: dùng theo danh sách Lấy/Bỏ ở Mục 5, 6, 7.
+- `05-battle-02…06`, `07-forest-01` (2026-10-31): **chuẩn bố cục khung hình** (dải cảnh xa, bệ đá, đáy tối), không phải chuẩn vẽ; không vẽ lại hay img2img từ ảnh.
 
 **Cách dùng:** gom ảnh chụp từng nguồn vào `design/art/reference/external/`, mỗi ảnh kèm một dòng "lấy gì". Chỉ để đối chiếu nguyên lý: không trace, không đưa ảnh ngoài vào prompt AI.
