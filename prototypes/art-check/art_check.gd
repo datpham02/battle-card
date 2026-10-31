@@ -33,6 +33,8 @@ extends Node2D
 ##   --slabs=<9slice.png>,<stamps.png>  real slab art: the 16x16 nine-slice is stretched to the
 ##                    cell (corners and edges keep their pixels), stamps from the sheet (JSON
 ##                    beside it) are placed per cell seed; without it the flat placeholder is drawn
+##   --bg=<far.png>[,<near.png>]  800x360 backdrop layers (ASSET-005): far under everything,
+##                    near = mist band over the horizon strip; replaces the flat sky/ground fill
 ##   --props=<wall.png>,<thorns.png>  place the Wall one cell ahead of the hero (unit layer, a
 ##                    second unit behind it shows the overlap) and the Thorns on the floor beside
 ##                    the goblin
@@ -65,6 +67,8 @@ const MARGIN_RATIO := 0.03
 const SKY_RATIO := 0.12
 const SHOT_FRAME := 30
 const ARENAS_PATH := "res://assets/data/arenas.json"
+## Where the ASSET-005 mist band's bottom row sits on the art canvas (horizon 44 + 2).
+const BG_MIST_BOTTOM := 47
 
 const INK := Color("1B1722")
 const GROUND := Color("3A3F36")
@@ -116,6 +120,10 @@ var _stick_zone_w: float = 0.25
 var _shot: String = ""
 var _frames: int = 0
 var _units: Node2D
+## --bg: "<far.png>,<near.png>" 800x360 backdrop layers (far drawn under everything, centred so the
+## 640 play area shows; near = mist band drawn over the slabs' top rows at the horizon).
+var _bg_far: ImageTexture
+var _bg_near: ImageTexture
 ## --props: "<wall.png>,<thorns.png>"; the wall stands on the player's cell one column toward the
 ## divider (unit layer, y-sorted like a unit), the thorns lie on the goblin's neighbour cell (floor).
 var _wall_png: String = ""
@@ -212,6 +220,16 @@ func _parse_args() -> void:
 			_arena_id = "custom"
 		elif arg == "--hud":
 			_hud = true
+		elif arg.begins_with("--bg="):
+			var bp: PackedStringArray = arg.trim_prefix("--bg=").split(",")
+			if bp.size() >= 1:
+				var far: Image = Image.load_from_file(ProjectSettings.globalize_path(bp[0]))
+				if far != null:
+					_bg_far = ImageTexture.create_from_image(far)
+			if bp.size() >= 2 and not bp[1].is_empty():
+				var near: Image = Image.load_from_file(ProjectSettings.globalize_path(bp[1]))
+				if near != null:
+					_bg_near = ImageTexture.create_from_image(near)
 		elif arg.begins_with("--props="):
 			var pp: PackedStringArray = arg.trim_prefix("--props=").split(",")
 			if pp.size() == 2:
@@ -342,8 +360,13 @@ func _default_cell(side: int) -> Vector2i:
 
 
 func _draw_board(board: Node2D) -> void:
-	board.draw_rect(Rect2(Vector2.ZERO, Vector2(ART_SIZE)), GROUND)
-	board.draw_rect(Rect2(0, 0, ART_SIZE.x, int(ART_SIZE.y * SKY_RATIO)), SKY)
+	if _bg_far != null:
+		# 800-wide layer centred on the 640 canvas: the outer 80 px are the wide-screen margins.
+		var off: int = (ART_SIZE.x - _bg_far.get_width()) / 2
+		board.draw_texture(_bg_far, Vector2(off, 0))
+	else:
+		board.draw_rect(Rect2(Vector2.ZERO, Vector2(ART_SIZE)), GROUND)
+		board.draw_rect(Rect2(0, 0, ART_SIZE.x, int(ART_SIZE.y * SKY_RATIO)), SKY)
 	# Ink only under the real slabs (plus their 1 px gap), so missing cells show the ground.
 	for side: int in 2:
 		for col: int in _board.x:
@@ -359,6 +382,12 @@ func _draw_board(board: Node2D) -> void:
 						_draw_slab_art(board, _cell_origin(side, col, row), side, col, row)
 					else:
 						_draw_slab(board, _cell_origin(side, col, row))
+	if _bg_near != null:
+		# Mist band: its bottom sits BG_MIST_BOTTOM (horizon row + 2) so it lies on the feet of the
+		# far scene over the sky, above the board; drawn once, no drift in a still capture.
+		var off: int = (ART_SIZE.x - _bg_near.get_width()) / 2
+		var y: int = BG_MIST_BOTTOM - _bg_near.get_height()
+		board.draw_texture(_bg_near, Vector2(off, y))
 
 
 func _load_slabs(nine_path: String, stamps_path: String) -> void:
@@ -550,9 +579,11 @@ func _draw_hud(hud: Node2D) -> void:
 	var bar_y: float = z1_top + 8.0
 	hud.draw_rect(Rect2(margin, bar_y, bar_w, bar_h), INK)
 	hud.draw_rect(Rect2(margin + 1, bar_y + 1, (bar_w - 2) * 0.85, bar_h - 2), HP_PLAYER)
+	hud.draw_string_outline(font, Vector2(margin, bar_y + bar_h + 16), "YOU 170/200", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(margin, bar_y + bar_h + 16), "YOU 170/200", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 	hud.draw_rect(Rect2(vp.x - margin - bar_w, bar_y, bar_w, bar_h), INK)
 	hud.draw_rect(Rect2(vp.x - margin - bar_w + 1, bar_y + 1, bar_w - 2, bar_h - 2), HP_BOSS)
+	hud.draw_string_outline(font, Vector2(vp.x - margin - bar_w, bar_y + bar_h + 16), "GOBLIN SCOUT 60/60", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(vp.x - margin - bar_w, bar_y + bar_h + 16), "GOBLIN SCOUT 60/60", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 	hud.draw_rect(Rect2(vp.x * 0.5 - 16, z1_top + 2, 32, 32), INK, false, 2.0)  # pause, 32 px (7.7)
 	if _layout == "v2":
@@ -565,12 +596,14 @@ func _draw_hud(hud: Node2D) -> void:
 	var label: String = "Z2 board band"
 	if not _arena_id.is_empty():
 		label += "  arena=%s %dx%d  cell %dx%d" % [_arena_id, _board.x, _board.y, _cell.x, _cell.y]
+	hud.draw_string_outline(font, Vector2(margin, z2_top - 4), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
 	hud.draw_string(font, Vector2(margin, z2_top - 4), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
 	var z2_bottom: float = vp.y * _arena_bottom
 	hud.draw_dashed_line(Vector2(margin, z2_bottom), Vector2(vp.x - margin, z2_bottom), HUD_FRAME, 1.0, 8.0)
 	if _layout == "v2" and _arena_bottom > _controls_top + 0.001:
 		var ct: float = vp.y * _controls_top
 		hud.draw_dashed_line(Vector2(margin, ct), Vector2(vp.x - margin, ct), Color(HUD_FRAME, 0.5), 1.0, 4.0)
+		hud.draw_string_outline(font, Vector2(vp.x * 0.42, ct - 4), "controls top 64 %%  /  board band to %d %%" % int(round(_arena_bottom * 100.0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
 		hud.draw_string(font, Vector2(vp.x * 0.42, ct - 4), "controls top 64 %%  /  board band to %d %%" % int(round(_arena_bottom * 100.0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
 
 
@@ -586,6 +619,7 @@ func _draw_controls_v1(hud: Node2D, vp: Vector2, font: Font, margin: float) -> v
 	for d: Vector2 in [Vector2(0, -1), Vector2(0, 1), Vector2(-1, 0), Vector2(1, 0)]:
 		var p := Vector2(cx, band_mid) + d * (b + g) - Vector2(b, b) * 0.5
 		_touch_target(hud, Rect2(p, Vector2(b, b)))
+	hud.draw_string_outline(font, Vector2(cx - 24, band_mid + 6), "Z3", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(cx - 24, band_mid + 6), "Z3", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 	# Z5: three hold slots, SLOT_HEIGHT_RATIO 0.22, aspect 1.4, gap 0.02.
 	var sh: float = vp.y * 0.22
@@ -594,10 +628,12 @@ func _draw_controls_v1(hud: Node2D, vp: Vector2, font: Font, margin: float) -> v
 	var sx: float = vp.x - margin - (sw * 3 + sg * 2)
 	for i: int in 3:
 		_touch_target(hud, Rect2(sx + i * (sw + sg), band_mid - sh * 0.5, sw, sh))
+	hud.draw_string_outline(font, Vector2(sx, band_mid - sh * 0.5 - 8), "Z5 bag", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(sx, band_mid - sh * 0.5 - 8), "Z5 bag", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 	# Z4: the signature button (2x2 cells), centred.
 	var sig: float = vp.y * 0.16
 	_touch_target(hud, Rect2(vp.x * 0.5 - sig * 0.5, band_mid - sig * 0.5, sig, sig))
+	hud.draw_string_outline(font, Vector2(vp.x * 0.5 - 50, band_mid + sig * 0.5 + 20), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(vp.x * 0.5 - 50, band_mid + sig * 0.5 + 20), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 
 
@@ -609,6 +645,7 @@ func _draw_controls_v2(hud: Node2D, vp: Vector2, font: Font, margin: float) -> v
 	# (dashed, invisible in game). It never reaches the board's full-width rows.
 	var zone := Rect2(0, vp.y * _controls_top, vp.x * _stick_zone_w, vp.y * (1.0 - _controls_top))
 	hud.draw_dashed_line(Vector2(zone.end.x, zone.position.y), zone.end, HUD_FRAME, 1.0, 8.0)
+	hud.draw_string_outline(font, Vector2(margin, zone.position.y + 18), "Z3 joystick zone", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
 	hud.draw_string(font, Vector2(margin, zone.position.y + 18), "Z3 joystick zone", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
 	# Floating stick where a resting thumb lands: base 160 px, knob 88 px, pushed right (a step).
 	var base_r: float = 80.0
@@ -635,11 +672,13 @@ func _draw_controls_v2(hud: Node2D, vp: Vector2, font: Font, margin: float) -> v
 		_touch_target(hud, r)
 		hud.draw_string(font, r.position + Vector2(8, 22), "T%d" % (i + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 		i += 1
+	hud.draw_string_outline(font, Vector2(vp.x * 0.78, vp.y * _controls_top + 18), "Z5 bag (arc)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
 	hud.draw_string(font, Vector2(vp.x * 0.78, vp.y * _controls_top + 18), "Z5 bag (arc)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
 	# Z4: Awaken button 115 px, low centre.
 	var sig: float = vp.y * 0.16
 	var sig_rect := Rect2(vp.x * 0.5 - sig * 0.5, vp.y - margin * 0.5 - sig, sig, sig)
 	_touch_target(hud, sig_rect)
+	hud.draw_string_outline(font, Vector2(sig_rect.position.x - 4, sig_rect.position.y - 8), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(sig_rect.position.x - 4, sig_rect.position.y - 8), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 
 

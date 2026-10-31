@@ -61,7 +61,26 @@ Pixel art side-view game background, 800x360, misty forest with old stone ruins,
 Negative: bright green, sunlight, god rays, vivid colours, tall foreground trees in the middle, perspective grid.
 ```
 
-**Status:** Needed
+**Production log (2026-10-31, user approved "Pixen 640x360 up to 3 seeds + mist, <= 5 gen"):**
+
+| # | Tool | Cost | Result | Verdict |
+|---|---|---|---|---|
+| scene-1..3 | `create_image_pixen` 640x360, seeds 1–3, the prompt above | 3 gen | `bg-explorations/ASSET-005-scene-pixen-seed{1,2,3}-*.png` | Seed 1: god rays, horizon at 50 %, rejected. Seed 2: best drawing but trees fill 70 % and arches are 70 px, kept as reference. Seed 3: right mood, horizon 45 %, kept as reference. None compresses the scene into the 32–47 px strip §6.4 asks for; whole-scene prompts do not obey "12 % horizon". |
+| mist-1 | `create_image_pixen` 640x48, no_background | 1 gen | `bg-explorations/ASSET-005-mist-pixen-seed1-opaque-rejected.png` | Came back fully opaque and noisy; rejected. |
+| treeline | `create_image_pixen` 640x32, no_background, "low line of small trees + three small arches resting on the bottom edge" | 1 gen | job `f854535c-725a-4ed5-b285-d65a92e55370` | Transparent, trees 28 px, arches 10–14 px, 42 colours. |
+| quantise | `reduce_colors` to a 6-colour palette image (moss #5E6B55, #4A5545, #3A4538; stone #5A5650, #4A4640; #2C2925) | 0.1 gen | **`ASSET-005-treeline-640x32.png`** | 6 colours, all V <= 45 except the light stone edge (V 35). |
+| compose | `compose_bg.py` (scratchpad, free) | 0 | **`ASSET-005-bg_forest_sky.png`** 800x200 flat #7D8896; **`ASSET-005-bg_forest_far.png`** 800x360 (sky, tree line standing on row 44 = 12.2 %, ground steps #3A3F36 / #30342D / #262923 at rows 44/150/250, outer 80 px per side mirrored from the play area); **`ASSET-005-bg_forest_near.png`** 800x48 mist band (#8E99A6, three wispy bands with gaps, 2x2 checker on the edge rows only, periodic in x so it tiles) | Far layer 10 colours, S <= 25 %. |
+| check-01 | `prototypes/art-check --bg` (free) | 0 | `production/qa/evidence/asset-slice1-art-check/28-forest-full-5x5.png`, `29-forest-full-3x3.png`, `30-forest-full-5x5-nohud.png`, `31-forest-horizon-colour-vs-bw.png` | Horizon strip shows between Z1 and the board at 15 %; trees and arches read at 1x in colour and greyscale; ground steps sit under the board. **§6.6 legibility measured on the slab face (V 29):** Swordsman 57 % of upper-half pixels at dV >= 25 (PASS); Goblin Scout 6 % (FAIL) because hood, leather and skin all sit at V 40–55; both pass against the tree line (V 41) and the sky (V 58). This is a goblin palette issue, not a backdrop issue; options scored in the goblin spec. Mist band reads as mist but shows the dark ground through its checker; could be lightened one step. |
+
+| prop-01 | `create_image_pro_flash` 64x64, palette locked to 5 stone/moss hex, lineless | 5 gen | job `1afb88ca-8896-4c85-ac8b-7773f6cd980b`, **`ASSET-005-prop-pillar-64x64.png`** | Broken square-block pillar 29x54 with roots over the base and a moss patch, 4 colours, no outline, alpha 0/255. |
+| compose-2 | `compose_bg.py` v2 (kept in `candidates/misty-forest/scripts/`) | 0 | far: left pillar at layer x 86 (canvas 6–69, left of the board), right pillar mirrored at layer x 652 cropped to the visible edge, square-cut broken Primal Form stone 12x10 at layer x 596 y 46 in the horizon strip; near: mist band now drawn with its bottom at horizon + 2 so it lies on the trees' feet over the sky | User asked why the margins and the bottom were empty: the bottom is under the control zone by design, the margins were an omission (spec asks for pillars and roots there). Props sit on ground step 0 (base row 92); the first placement put them in the hidden 80 px wide-screen margins and was corrected. |
+| check-02 | `prototypes/art-check --bg` (free) | 0 | evidence `28-forest-full-5x5.png`, `29-forest-full-3x3.png`, `30-forest-full-5x5-nohud.png` re-captured | Pillars visible beside the board on both 5x5 and 3x3 without touching it, the stone reads in the horizon strip, the mist no longer shows dark checker. Still open: the wide-screen 80 px margins stay mirrored tree line; a second prop variant would avoid the exact mirror of the right pillar. |
+
+| mist-2 | `compose_bg.py` v3 (free) | 0 | near band redrawn: two thin wisps in the bottom 8 rows of the 48 px band (half thickness 1–2 px), mostly 2x2 checker with a solid core only at the thickest points, gaps along x, bottom drawn at horizon + 3 | The user caught the previous band cutting straight across the trunks (three solid stripes at rows 28–46); now the mist sits at the trees' feet and the tree line stays whole. Mock HUD labels got the 2 px Ink outline §7.1 prescribes, which removes the "text on trees" look; the bars still overlap the tree tops (4.7 % vs Z1 3–8 %), open question below. |
+
+**Open (art-director):** tree tops reach 4.7 % of the screen, inside the Z1 band, while §6.4's own numbers (horizon <= 47, scene <= 25 px) also land the tops at 6–10 %. Either accept the glass-HUD overlap or regenerate a tree line <= 14 px tall with the horizon at 47 (1 gen) so the scene stays under 8 %.
+
+**Status:** In Progress (three layers drawn with margin props; export with Story 045's pipeline; scripts under `candidates/misty-forest/scripts/` move to `tools/asset-pipeline/` with that story)
 
 ## ASSET-006 — Wall (Misty Forest)
 
