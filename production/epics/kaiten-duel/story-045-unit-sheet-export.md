@@ -1,7 +1,7 @@
 # Story 045: Xuất sprite sheet đơn vị slice 1 — nguồn PNG, exporter Python, JSON kiểu Aseprite
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Presentation (asset pipeline)
 > **Type**: Config/Data + Visual
 > **Estimate**: —
@@ -31,8 +31,8 @@
 
 **Phần A — Nguồn vẽ (`art_src/`)**
 
-- [ ] `art_src/.gdignore` tồn tại. Cấu trúc `art_src/units/<id>/<clip>/<n>.png` với `<id>` là id dữ liệu (`kiem_si`, `goblin_scout`), `<n>` từ `0`. Khung chép từ candidates, **không đổi pixel** (kiểm bằng hash trong test).
-- [ ] `art_src/units/<id>/clips.json` ghi thứ tự clip, danh sách khung, thời lượng ms mỗi khung và kiểu lặp theo §8.6:
+- [x] `art_src/.gdignore` tồn tại. Cấu trúc `art_src/units/<id>/<clip>/<n>.png` với `<id>` là id dữ liệu (`kiem_si`, `goblin_scout`), `<n>` từ `0`. Khung chép từ candidates, **không đổi pixel** (kiểm bằng hash trong test).
+- [x] `art_src/units/<id>/clips.json` ghi thứ tự clip, danh sách khung, thời lượng ms mỗi khung và kiểu lặp theo §8.6:
 
   | Đơn vị | Clip theo thứ tự hàng | Khung | ms | Lặp |
   |---|---|---|---|---|
@@ -50,27 +50,27 @@
   | | `hit` | hit | 120 | once |
   | | `down` | down-A, down-B | 150, 150 | hold last |
 
-- [ ] Bảng màu nguồn: `art_src/palette/tessera_master.gpl` chứa đúng các hex đang dùng (8 của Kiếm sĩ, 7 của Goblin với nâu đã sửa #856B50 / #66523F); exporter đối chiếu, pixel ngoài bảng là lỗi.
+- [x] Bảng màu nguồn: `art_src/palette/tessera_master.gpl` chứa đúng các hex đang dùng (8 của Kiếm sĩ, 7 của Goblin với nâu đã sửa #856B50 / #66523F); exporter đối chiếu, pixel ngoài bảng là lỗi.
 
 **Phần B — Exporter (`tools/asset-pipeline/export_sheets.py`)**
 
-- [ ] Python 3 thuần (`-I`, không Pillow): đọc `clips.json`, dựng sheet **mỗi hàng một clip, ô cố định theo khung đơn vị, đệm 1 px trong suốt giữa ô và quanh mép**; ghi `assets/art/units/unit_<id>_sheet.png` RGBA 8-bit, alpha chỉ 0/255.
-- [ ] Kích thước: `unit_kiem_si_sheet.png` 81x391 (2 cột 40 px + 1 đệm; 8 hàng 48 px + 7 đệm); `unit_goblin_scout_sheet.png` 65x244 (2 cột 32 px; 5 hàng).
-- [ ] `unit_<id>_sheet.json` theo định dạng Aseprite **array**: `frames[]` với `filename` = `<id>_<clip>_<n>`, `frame {x,y,w,h}`, `rotated false`, `trimmed false`, `spriteSourceSize`, `sourceSize`, `duration`; `meta.frameTags[]` với `name`, `from`, `to`, `direction` (`forward`), và một trường mở rộng `meta.tessera.loop` cho mỗi tag (`loop | once | hold_last | hold`), `meta.image`, `meta.size`, `meta.scale "1"`.
-- [ ] Chạy lại cho ra byte giống hệt (deterministic); thêm `--check` để CI so sánh file đã commit với kết quả mới và báo lỗi khi lệch.
-- [ ] `tools/asset-pipeline/README.md`: cách chạy, cách thêm đơn vị, quy ước tên; ghi rõ đây là đường thay thế `.aseprite` theo §8.1.
+- [x] Python 3 thuần (`-I`, không Pillow): đọc `clips.json`, dựng sheet **mỗi hàng một clip, ô cố định theo khung đơn vị, đệm 1 px trong suốt giữa ô và quanh mép**; ghi `assets/art/units/unit_<id>_sheet.png` RGBA 8-bit, alpha chỉ 0/255.
+- [x] Kích thước: `unit_kiem_si_sheet.png` 81x391 (2 cột 40 px + 1 đệm; 8 hàng 48 px + 7 đệm); `unit_goblin_scout_sheet.png` 65x244 (2 cột 32 px; 5 hàng).
+- [x] `unit_<id>_sheet.json` theo định dạng Aseprite **array**: `frames[]` với `filename` = `<id>_<clip>_<n>`, `frame {x,y,w,h}`, `rotated false`, `trimmed false`, `spriteSourceSize`, `sourceSize`, `duration`; `meta.frameTags[]` với `name`, `from`, `to`, `direction` (`forward`), và một trường mở rộng `meta.tessera.loop` cho mỗi tag (`loop | once | hold_last | hold`), `meta.image`, `meta.size`, `meta.scale "1"`.
+- [x] Chạy lại cho ra byte giống hệt (deterministic); thêm `--check` để CI so sánh file đã commit với kết quả mới và báo lỗi khi lệch.
+- [x] `tools/asset-pipeline/README.md`: cách chạy, cách thêm đơn vị, quy ước tên; ghi rõ đây là đường thay thế `.aseprite` theo §8.1.
 
 **Phần C — Import Godot**
 
-- [ ] Mở project một lần (hoặc `godot --headless --import`) để sinh `.import` cho hai sheet; sửa và commit với `compress/mode=0` (Lossless), `mipmaps/generate=false`, `process/fix_alpha_border=true`, `process/premult_alpha=false`. Một test đọc hai file `.import` và khẳng định bốn cờ này.
-- [ ] Không có `.import` nào sinh ra trong `art_src/` hay `design/assets/candidates/` (cả hai có `.gdignore`).
+- [x] Mở project một lần (hoặc `godot --headless --import`) để sinh `.import` cho hai sheet; sửa và commit với `compress/mode=0` (Lossless), `mipmaps/generate=false`, `process/fix_alpha_border=true`, `process/premult_alpha=false`. Một test đọc hai file `.import` và khẳng định bốn cờ này.
+- [x] Không có `.import` nào sinh ra trong `art_src/` hay `design/assets/candidates/` (cả hai có `.gdignore`).
 
 **Phần D — Test và nghiệm thu**
 
-- [ ] `tests/unit/art/sheet_export_test.gd` (hoặc Python test chạy trong CI nếu đọc PNG dễ hơn): kích thước sheet; mỗi ô trong JSON cắt ra **giống pixel** với khung nguồn tương ứng; alpha chỉ 0/255; số màu ≤ 8 mỗi đơn vị và thuộc bảng; tag và duration đúng bảng ở Phần A; đệm 1 px trong suốt.
-- [ ] Ảnh bằng chứng `production/qa/evidence/unit-sheet-export/`: hai sheet phóng 4x, và một lần nạp thử trong `prototypes/art-check` bằng `--sheet` (đọc sheet + JSON thay vì PNG rời) chạy clip `cast` và `down`, để chứng minh JSON đủ cho engine.
-- [ ] `design/assets/asset-manifest.md`: ASSET-001 và ASSET-003 → **Done** (sheet + JSON có trong `assets/art/units/`), chờ chữ ký art-director (solo: người dùng) để lên Approved.
-- [ ] Thêm hai sheet vào danh sách kiểm của `/asset-audit` (tên, cỡ, định dạng) nếu skill đó có cấu hình; nếu không thì ghi chú trong README của pipeline.
+- [x] `tests/unit/art/sheet_export_test.gd` (hoặc Python test chạy trong CI nếu đọc PNG dễ hơn): kích thước sheet; mỗi ô trong JSON cắt ra **giống pixel** với khung nguồn tương ứng; alpha chỉ 0/255; số màu ≤ 8 mỗi đơn vị và thuộc bảng; tag và duration đúng bảng ở Phần A; đệm 1 px trong suốt.
+- [x] Ảnh bằng chứng `production/qa/evidence/unit-sheet-export/`: hai sheet phóng 4x, và một lần nạp thử trong `prototypes/art-check` bằng `--sheet` (đọc sheet + JSON thay vì PNG rời) chạy clip `cast` và `down`, để chứng minh JSON đủ cho engine.
+- [x] `design/assets/asset-manifest.md`: ASSET-001 và ASSET-003 → **Done** (sheet + JSON có trong `assets/art/units/`), chờ chữ ký art-director (solo: người dùng) để lên Approved.
+- [x] Thêm hai sheet vào danh sách kiểm của `/asset-audit` (tên, cỡ, định dạng) nếu skill đó có cấu hình; nếu không thì ghi chú trong README của pipeline.
 
 ---
 
@@ -91,3 +91,12 @@ Implemented on branch `claude/vigilant-chebyshev-4d039b` (side session of the St
 - **Import:** the four §8.7 flags were already Godot's defaults for these PNGs; `detect_3d/compress_to` was set to 0 on top so a 3D use can never switch the sheet to VRAM compression. The test asserts all five.
 - **`/asset-audit`** has no configurable asset list, so the exported-sheet register is the table in `tools/asset-pipeline/README.md`.
 - **Hold-frame durations:** `fall` and `windup` carry `duration: 0` (held by code); art-check shows them for 0.4 s.
+
+## Completion Notes
+**Completed**: 2026-10-31 (closed from the main session after the branch merge `4ddd779`)
+**Criteria**: 14/14 passing. Verified on disk: `art_src/.gdignore` + 22 frames + `clips.json` ×2 + `tessera_master.gpl`; `tools/asset-pipeline/export_sheets.py --check` exits 0; `unit_kiem_si_sheet.png` 81×391, `unit_goblin_scout_sheet.png` 65×244; `.import` flags Lossless / no mipmaps / fix_alpha_border / no premult (+ `detect_3d/compress_to=0`); no `.import` under `art_src/` or `design/assets/candidates/`; manifest ASSET-001 / ASSET-003 Done; `tests/unit/art/sheet_export_test.gd` 158 checks FAILS=0 (also in the 2026-10-31 full sweep).
+**Deviations** (advisory): Goblin leather uses the fix-02 colours `#9A7D5E` / `#66523F` instead of the story's `#856B50` (superseded the same day); `meta.tessera.facing` added beyond the story (kiem_si right, goblin_scout left) for Story 047; the sheet's bottom edge is not transparent on purpose (feet on the last row, §8.3); `/asset-audit` has no asset list, so the sheet register lives in `tools/asset-pipeline/README.md`; the test reads the real PNG/JSON files (needed to compare pixels).
+**Test Evidence**: Config/Data half — exporter `--check` + unit suite (smoke report not required at qa.level minimal); Visual half — retained `production/qa/evidence/unit-sheet-export/01–04` (sheets at 4x and the art-check `--sheet` load of `cast` / `down`). Consumed in game by Story 047 (`production/qa/evidence/battle-canvas-art/`).
+**Code Review**: Skipped (solo mode)
+**Commit**: `638ff3a` on branch `claude/vigilant-chebyshev-4d039b`, merged into main as `4ddd779` (pushed).
+
