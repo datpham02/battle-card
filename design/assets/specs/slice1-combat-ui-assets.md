@@ -3,7 +3,7 @@
 > **Source**: design/assets/entity-inventory.md (Slice 1 rows: Steel block, Spell VFX: Slash, Hit flash, Cast target tile, Telegraph tile, UI frames, Health bar skins, Icon set), design/ux/hud.md
 > **Art Bible**: design/art/art-bible.md (§3, §4, §7, §8)
 > **Generated**: 2026-10-29
-> **Status**: 11 assets specced / 0 approved / 7 in production (008, 009, 011, 012, 013, 015, 016 as script-drawn candidates, 2026-10-31) / 0 done — 010 and 014 are code, no drawn art
+> **Status**: 15 assets specced / 0 approved / 11 in production (008, 009, 011, 012, 013, 015, 016 script-drawn; 017, 018, 020 VFX-workbench loops; 019 script) / 0 done — 010 and 014 are code, no drawn art
 > **Mode**: solo — art-director and technical-artist skipped; technical constraints not validated.
 
 ## ASSET-008 — Steel block tiles
@@ -237,6 +237,27 @@ Pixel art icon sheet, 21 icons of 12x12 pixels each on transparent background, b
 | check-01 | 2026-10-31 | art-check `--seq=push`: the full cast sequence on the board (`anim/seq-push.gif`, `.sheet.png`), push frames tinted steel on both target tiles, drawn above the landed block | 0 | Reads as a shove from left to right across the tile and thins out as §3 asks; distinct from the slash by shape and direction alone (same colour). Passes the look check |
 
 **Status:** In Progress (candidate)
+
+## ASSET-017 — Status overlay: Burning · ASSET-018 — Frozen · ASSET-019 — Fragile · ASSET-020 — Chill
+
+| Field | Value |
+|-------|-------|
+| Category | VFX (status overlay on the unit; art bible §5.4 "không vẽ khung", §4 status colours) |
+| Dimensions | Drawn around the unit canvas (32x48 monsters, 40x48 heroes); loops |
+| Format | Spritesheet PNG + Aseprite-format JSON per effect, or the game-pack pieces (behind / in front of the sprite) |
+| Naming | `assets/art/vfx/fx_status_burn_sheet.png`, `fx_status_frozen_sheet.png`, `fx_status_fragile_<W>x48.png`, `fx_status_chill_sheet.png` |
+| Slice | 1 (user 2026-10-31: "làm thêm một số animation cho hiệu ứng đó gắn rồi apply vào char") |
+
+**Production log:**
+
+| # | Date | What | Gen | Result |
+|---|---|---|---|---|
+| script-01 | 2026-10-31 | `scripts/draw_status.py`: burn 2 frames of stacked 2x2 squares (two sizes), frozen 2 px shell with icicles, fragile 3 stepped Ink cracks with Ivory beside, chill 8x8 plus snowflake; art-check `--status` and `--seq=status` (evidence `65-status-overlays-and-chips.png`, `66-status-zoom.png`, `anim/status-overlays.gif`) | 0 | Functional but crude (user: use PixelLab where the hand version is weak). Kept as the fallback; fragile stays script (no workbench part for cracks on ivory) |
+| vfx-01 | 2026-10-31 | PixelLab **VFX workbench** (free) around the goblin idle frame: `on_fire` (colours #FF7A1F / #FFB21F / Ivory, size 0.6, amount 0.6), `freeze_status` (#A6EEFF / #3A5CF0 / #FFFFFF, size 0.7, amount 0.7), `snowfall` at the head (#3A5CF0 / #A6EEFF, size 0.5, amount 0.5) | 0 | Exported to the user's My effects: Burn `7dda0f74…` (27x38, 12 f @ 12 fps), Frozen `d34834ba…` (28x40, 12 f @ 10 fps), Chill `1d53478e…` (51x60, 16 f @ 12 fps); files in `candidates/slice1-fx/status-vfx/` (GIF + sheet + JSON each). The sheets include the goblin; the effect alone comes from a `--game-pack` export (behind / front pieces) once the look is approved. Open: the hero size (40x48) needs the same effects around the Swordsman frame; palette check against §4 (the parts add a few intermediate tones); reduce-motion = hold frame 1 |
+
+| vfx-02 | 2026-10-31 | User approved the look. **Game-pack exports** (effect alone: `behind.png`, `front.png`, `whole.png`, `part-*.png`, `manifest.json` with frame size, columns, offset from the feet anchor, frame_ms) for the goblin set (replacing effects 7dda0f74 / d34834ba / 1d53478e) and a **hero set** built around the Swordsman 40x48 frame with the same parts and colours (Burn `6e0c80cb…` 33x52 @ 12 fps, Frozen `f98b7179…` 33x54 @ 10 fps, Chill `d6085e0b…` 51x74 @ 12 fps). Folders `status-vfx/pack-tessera-status-<burn|frozen|chill>-<goblin|hero>/` | 0 | Pieces are palette-clean: alpha 255 only, 2–3 colours each (burn #FF7A1F / #FFB21F / Ivory; frozen #A6EEFF / #FFFFFF; chill #3A5CF0 / #A6EEFF). **The cold tint and the hot rim are not in the pieces** — they are sprite recolours the workbench did on its preview; in the game they come from `unit_fx` (art bible §8.5), the pieces give the flames, crystals and flakes. art-check `--status-pack` draws `behind` under the unit and `front` over it by the manifest (evidence `67-status-pack-burn-chill.png`, `68-status-pack-frozen.png`, `69-status-pack-zoom-x4.png`) |
+
+**Status:** In Progress (candidates approved by the user for look; export to `assets/art/vfx/` and the `unit_fx` tint are the UI/VFX story's work)
 
 ## Inventory rows covered here
 Steel block (ASSET-008), Spell VFX: Slash (ASSET-009), Spell VFX: Push (ASSET-016, slice 1 since 2026-10-31), Hit flash (ASSET-010), Cast target tile (ASSET-011), Telegraph tile (ASSET-012), UI frame: Panel/Button/Slot/Bar (ASSET-013, one asset with four files), Health bar skins (ASSET-014), Icon set 12x12 (ASSET-015).

@@ -124,10 +124,10 @@
 | 114 | Spell VFX: Ice | VFX / Particles | falling shards freezing into a square frame (Frozen) or a plus (Chill), <= 0.35 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed |  |
 | 115 | Spell VFX: Crack | VFX / Particles | stepped 1 px crack spreading across tiles, <= 0.3 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed |  |
 | 116 | Spell VFX: Build | VFX / Particles | squares rising from the slab front (Wall/Thorns), <= 0.3 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed |  |
-| 117 | Frozen overlay | VFX / Particles | square ice shell around the sprite, 2 sizes | art-bible §3/§4/§8 | Needed |  |
-| 118 | Burning overlay | VFX / Particles | stepped flame 2 frames + horizontal stripe, 2 sizes | art-bible §3/§4/§8 | Needed |  |
-| 119 | Fragile crack overlay | VFX / Particles | ink cracks over ivory | art-bible §3/§4/§8 | Needed |  |
-| 120 | Chill overlay | VFX / Particles | plus-shaped snowflake + stack count | art-bible §3/§4/§8 | Needed |  |
+| 117 | Frozen overlay | VFX / Particles | square ice shell around the sprite, 2 sizes | art-bible §3/§4/§8 | In Progress (ASSET-018 candidate, 2026-10-31) | 1 |
+| 118 | Burning overlay | VFX / Particles | stepped flame 2 frames + horizontal stripe, 2 sizes | art-bible §3/§4/§8 | In Progress (ASSET-017 candidate, 2026-10-31) | 1 |
+| 119 | Fragile crack overlay | VFX / Particles | ink cracks over ivory | art-bible §3/§4/§8 | In Progress (ASSET-019 candidate, 2026-10-31) | 1 |
+| 120 | Chill overlay | VFX / Particles | plus-shaped snowflake + stack count | art-bible §3/§4/§8 | In Progress (ASSET-020 candidate, 2026-10-31) | 1 |
 | 121 | Hit flash | VFX / Particles | 1 frame, palette flash to ivory (shader), no red | art-bible §3/§4/§8 | Needed | 1 |
 | 122 | Primal Shard | VFX / Particles | polyomino of lattice-gold tiles, 2 px per tile, one shape per Warden (code-built) | art-bible §3/§4/§8 | Needed |  |
 | 123 | Engraving cell | VFX / Particles | recessed gold square, 1 px inner outline, fades 100 -> 0 % | art-bible §3/§4/§8 | Needed |  |

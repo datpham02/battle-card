@@ -818,7 +818,9 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 - Khung 32/48 chẵn để tâm trúng pixel; ô cao lẻ (27) nên ô snap bội 2.
 
 ### 8.4 Bảng màu và biến thể
-- **Master** `palette/tessera_master.gpl` + `tessera_master_lut.png` (dải 1×N): **tối đa 64 màu** (Mục 4). Tập con vùng `tessera_region_<id>.gpl` = màu chung + ≤ 3 màu riêng.
+- **Master** `palette/tessera_master.gpl` + `tessera_master_lut.png` (dải 1×N): **tối đa 64 màu** (Mục 4) cho mọi thứ **đứng trên sân và trong HUD pixel**: đơn vị, Kẻ Gác, phiến + stamp, bệ, Tường/Bãi Gai, Khối, VFX, icon pixel, khung 9-slice. Tập con vùng `tessera_region_<id>.gpl` = màu chung + ≤ 3 màu riêng.
+- **Nền tính riêng** (người dùng chốt 2026-10-31 theo kiểm kê: thế giới slice 1 = 66 màu, riêng nền v2 Rừng Sương 38): mỗi vùng một tấm vẽ, **≤ 40 màu mỗi vùng**, không nằm trong master và không được dùng màu tín hiệu (Đỏ Báo Đòn, Ánh Lưới, màu khối của năm anh hùng, bốn màu trạng thái). Luật Mục 6.4 (S, V, bậc phẳng, dither chỉ ở sương) vẫn áp cho nền. Lý do: nền không chia pixel nào với sprite nên gộp chung một con số không mua được gì, còn ép nền xuống 30 màu làm mất các lớp sương.
+- **HUD vẽ sắc** (Mục 7.4) dùng bảng UI của Mục 4 (Đá Đêm, Sương, Ngà, chữ, tín hiệu), không đếm vào 64; icon HUD 55 px ≤ 24 màu một sheet.
 - **Biến thể quái: xuất sẵn sheet riêng bằng script** (Aseprite/Python) từ bản gốc (người dùng chốt 2026-10-29): đổi 2–3 màu theo bảng, ghép phụ kiện. Chi phí chạy bằng 0, màu chắc chắn trong bảng, ~74 KB mỗi biến thể. Không dùng LUT lúc chạy. Anh hùng không đổi màu.
 - **Thêm màu:** chỉ art-director; nêu lý do và tín hiệu nào không thay được; đối chiếu ngân sách và bảng mù màu Mục 4; ghi vào đầu `.gpl` và changelog; quantise lại asset bị ảnh hưởng. Muốn vượt 64 thì hỏi người dùng.
 
