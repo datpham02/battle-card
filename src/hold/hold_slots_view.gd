@@ -11,7 +11,10 @@ extends Node2D
 ## outline (HoldSlots refuses to select it) and a small "x.x" countdown at the slot's bottom:
 ## the seconds (FieldPoint.rot_in_hand_sec) until it leaves the hand on its own.
 ## Story 041: an Odd Block in a slot is drawn in the PieceDraw odd look with a small sparkle mark in the corner.
-## Placeholder art. Implements: Story 002, Story 007, Story 014, Story 041.
+## Story 046 Part B: the sharp skin (art bible §7.4): every slot is a Đá Đêm card chamfered top-right, a
+## 1.5 px Sương frame (Ivory 3 px when selected, the gold FULL frame kept), the cell count in a white badge
+## at the bottom-left. Hit rects (ScreenLayout.slot_rects) are unchanged.
+## Placeholder art. Implements: Story 002, Story 007, Story 014, Story 041, Story 046.
 
 const SLOT_FILL_EMPTY: Color = Color(0.106, 0.09, 0.133, 0.85)
 const SLOT_FILL_OCCUPIED: Color = Color(0.106, 0.09, 0.133, 0.85)
@@ -59,6 +62,14 @@ const PIECE_FILL: Color = Color(0.3, 0.65, 0.95)
 const PIECE_SELECTED_FILL: Color = Color(1.0, 0.85, 0.25)
 const TEXT_CELLS: String = "ui.hud.cells"
 const TEXT_FULL: String = "ui.hud.full"
+## Story 046: top-right chamfer of a slot card, selected frame width, cell-count badge (side, inset from
+## the card's bottom-left corner, font size), px.
+const SLOT_CUT: float = 12.0
+const OUTLINE_WIDTH_SKIN_SELECTED: float = 3.0
+const BADGE_SIZE: float = 30.0
+const BADGE_INSET: float = 4.0
+const BADGE_FONT_SIZE: int = 18
+const BADGE_FILL: Color = Color(1.0, 1.0, 1.0)
 ## Story 041: radius of the odd sparkle mark in a slot's top-right corner (share of slot width).
 const ODD_MARK_RADIUS_RATIO: float = 0.1
 
@@ -100,8 +111,8 @@ func _draw() -> void:
 		var rect: Rect2 = rects[i]
 		var point: FieldPoint = _slots.get_point(i)
 		if point == null:
-			draw_rect(rect, SLOT_FILL_EMPTY)
-			draw_rect(rect, OUTLINE_FULL if full else OUTLINE_EMPTY, false, OUTLINE_WIDTH)
+			_draw_card(rect, OUTLINE_FULL if full else HudSkin.MIST,
+				OUTLINE_WIDTH_STRONG if full else HudSkin.PANEL_LINE_WIDTH)
 			_draw_plus(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.18, OUTLINE_EMPTY)
 			continue
 		if point.rotten:
@@ -111,14 +122,9 @@ func _draw() -> void:
 			_draw_piece_slot(rect, point, full, _slots.is_selected(i))
 			continue
 		var tint: Color = SIDE_COLORS.get(point.label.substr(0, 1), DEFAULT_SIDE_COLOR)
-		draw_rect(rect, SLOT_FILL_OCCUPIED)
+		_draw_card(rect, Color(0, 0, 0, 0), 0.0)
 		draw_rect(rect.grow(-OUTLINE_WIDTH_SELECTED), Color(tint, 0.55))
-		var color: Color = OUTLINE_FULL if full else OUTLINE_OCCUPIED
-		var width: float = OUTLINE_WIDTH_STRONG if full else OUTLINE_WIDTH
-		if _slots.is_selected(i):
-			color = OUTLINE_SELECTED
-			width = OUTLINE_WIDTH_SELECTED
-		draw_rect(rect, color, false, width)
+		_draw_card_frame(rect, full, _slots.is_selected(i))
 		var font_size: int = int(rect.size.x * LABEL_FONT_RATIO)
 		draw_string(
 			ThemeDB.fallback_font,
@@ -127,11 +133,8 @@ func _draw() -> void:
 		)
 	if full and not rects.is_empty():
 		var side: Rect2 = ScreenLayout.slot_side_left_rect(get_viewport_rect().size, _slots.get_slot_count())
-		draw_string(
-			ThemeDB.fallback_font,
-			Vector2(side.position.x, side.get_center().y + FULL_FONT_SIZE * 0.35),
-			tr(TEXT_FULL), HORIZONTAL_ALIGNMENT_LEFT, side.size.x, FULL_FONT_SIZE, OUTLINE_FULL
-		)
+		HudSkin.text(self, Vector2(side.position.x, side.get_center().y + FULL_FONT_SIZE * 0.35),
+			tr(TEXT_FULL), FULL_FONT_SIZE, OUTLINE_FULL, HORIZONTAL_ALIGNMENT_LEFT, side.size.x, true)
 
 
 # --- Public API ---------------------------------------------------------------
@@ -190,8 +193,7 @@ func _slot_rects() -> Array[Rect2]:
 
 # Grey slot with a dark X, grey label and the rot countdown; no selection look ever.
 func _draw_rotten_slot(rect: Rect2, point: FieldPoint) -> void:
-	draw_rect(rect, ROTTEN_FILL)
-	draw_rect(rect, ROTTEN_OUTLINE, false, OUTLINE_WIDTH)
+	HudSkin.panel(self, rect, [0.0, SLOT_CUT, 0.0, 0.0], ROTTEN_FILL, ROTTEN_OUTLINE, OUTLINE_WIDTH)
 	var x_rect: Rect2 = rect.grow(-rect.size.x * ROTTEN_X_INSET_RATIO)
 	draw_line(x_rect.position, x_rect.end, ROTTEN_X_COLOR, ROTTEN_X_WIDTH)
 	draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), ROTTEN_X_COLOR, ROTTEN_X_WIDTH)
@@ -213,13 +215,7 @@ func _draw_rotten_slot(rect: Rect2, point: FieldPoint) -> void:
 # A bag slot holding a piece: the piece as a mini shape in its current rotation, its cell count under
 # it; selected = thick white outline and a gold shape. A full bag keeps the gold outline like before.
 func _draw_piece_slot(rect: Rect2, point: FieldPoint, full: bool, selected: bool) -> void:
-	draw_rect(rect, SLOT_FILL_OCCUPIED)
-	var color: Color = OUTLINE_FULL if full else OUTLINE_OCCUPIED
-	var width: float = OUTLINE_WIDTH_STRONG if full else OUTLINE_WIDTH
-	if selected:
-		color = OUTLINE_SELECTED
-		width = OUTLINE_WIDTH_SELECTED
-	draw_rect(rect, color, false, width)
+	_draw_card_frame(rect, full, selected)
 	var area := Rect2(
 		rect.position + Vector2(rect.size.x * PIECE_SHAPE_PAD_RATIO, rect.size.y * PIECE_SHAPE_PAD_RATIO),
 		Vector2(rect.size.x * (1.0 - PIECE_SHAPE_PAD_RATIO * 2.0), rect.size.y * PIECE_SHAPE_HEIGHT_RATIO)
@@ -232,12 +228,33 @@ func _draw_piece_slot(rect: Rect2, point: FieldPoint, full: bool, selected: bool
 		PieceDraw.draw_odd_mark(self, Vector2(rect.end.x - mark_r * 1.5, rect.position.y + mark_r * 1.5), mark_r)
 	else:
 		PieceDraw.draw_shape(self, point.piece, area, PIECE_SELECTED_FILL if selected else PIECE_FILL, Color(0.1, 0.1, 0.12, 0.7), rect.size.x * PIECE_MAX_UNIT_RATIO)
-	var font_size: int = int(rect.size.x * PIECE_COUNT_FONT_RATIO)
-	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(rect.position.x, rect.end.y - rect.size.x * PIECE_COUNT_BOTTOM_RATIO),
-		tr(TEXT_CELLS) % point.piece.cell_count(), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, LABEL_COLOR
-	)
+	_draw_count_badge(rect, point.piece.cell_count())
+
+
+# Story 046: the slot card (Đá Đêm, chamfered top-right) with a [param line] frame ([param width] <= 0 = none).
+func _draw_card(rect: Rect2, line: Color, width: float) -> void:
+	HudSkin.panel(self, rect, [0.0, SLOT_CUT, 0.0, 0.0], HudSkin.NIGHT_STONE, line, maxf(width, 0.0))
+
+
+# Story 046: a filled slot's card and frame: Ivory 3 px when selected, gold FULL frame, else Sương 1.5 px.
+func _draw_card_frame(rect: Rect2, full: bool, selected: bool) -> void:
+	var color: Color = HudSkin.MIST
+	var width: float = HudSkin.PANEL_LINE_WIDTH
+	if selected:
+		color = HudSkin.IVORY
+		width = OUTLINE_WIDTH_SKIN_SELECTED
+	elif full:
+		color = OUTLINE_FULL
+		width = OUTLINE_WIDTH_STRONG
+	_draw_card(rect, color, width)
+
+
+# Story 046: the white 30 px badge at the card's bottom-left with the piece's cell count (Bold, dark).
+func _draw_count_badge(rect: Rect2, cells: int) -> void:
+	var badge := Rect2(rect.position.x + BADGE_INSET, rect.end.y - BADGE_INSET - BADGE_SIZE, BADGE_SIZE, BADGE_SIZE)
+	draw_rect(badge, BADGE_FILL)
+	draw_string(HudSkin.font_bold(), Vector2(badge.position.x, badge.get_center().y + BADGE_FONT_SIZE * 0.35),
+		str(cells), HORIZONTAL_ALIGNMENT_CENTER, badge.size.x, BADGE_FONT_SIZE, HudSkin.NIGHT_STONE)
 
 
 func _draw_plus(center: Vector2, arm: float, color: Color) -> void:

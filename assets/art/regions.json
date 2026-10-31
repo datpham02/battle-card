@@ -11,6 +11,8 @@
     "an_dai": "lattice_heart"
   },
   "default": "forest",
+  "_doc_half_tints": "2026-10-31 (user: the player's and the enemy's halves must differ in colour). Multiply tints FloorLayer lays on each half's slabs and stamps (a region.json `half_tints` overrides these). Player cool blue; enemy a darker, gloomier plum (user: \"sân của địch thì sẽ có màu u ám hơn đặc trưng của quái vật\"): red is the telegraph's colour and orange is Burn (art bible P3), so neither half may be red or orange.",
+  "half_tints": {"player": "#B8CCE8", "enemy": "#9A84A4"},
   "fallback_bands": {
     "forest": {"sky": "#7D8896", "ground": "#4A5257"},
     "dungeon": {"sky": "#4A4440", "ground": "#2C2826"},

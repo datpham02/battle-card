@@ -588,6 +588,7 @@ Nguồn: ảnh concept tạm `design/art/reference/07-*-01`, `09-world-map-01`. 
   - Chi phí ~2–3 h/vùng, nằm trong 10–14 h/vùng của Mục 1.
 - **Bệ nổi (người dùng chốt 2026-10-31, phương án B):** lưới ô vẫn chữ nhật; cảm giác "bệ đá nhìn chếch" đến từ khung vẽ bằng code quanh sân, không từ ô hình thang: mặt bệ 6 art-px quanh mọi ô thật (khe giữa hai nửa cũng là đá bệ, một vạch mảnh ở giữa), **mặt trước 12 art-px** dưới mọi ô không có ô thật bên dưới (cạnh trên sáng 1 px, 2 px Mực ở đáy, mạch đá dọc), bóng 4 px Mực 50 % xuống đất. Vẽ theo từng ô nên sân khuyết ô vẫn đúng hình. Màu = bảng phiến v2 của vùng: mặt bệ tối hơn mặt phiến một bậc, mặt trước = màu mép. Mẫu: `prototypes/art-check --platform`, ảnh 56–57.
 - **Phiến v2 (2026-10-31):** mặt 3 tông (cạnh sáng trên-trái, mặt, cạnh tối phải-dưới), mép trước tối với 1 px sáng ở cạnh trên; Rừng Sương: #6A6B62 / #4C4D47 / #3A3B37, mép #262521, vạch #5A5B54. Lý do: phiến v1 lẫn vào đất của nền.
+- **Hai nửa sân khác màu (người dùng chốt 2026-10-31):** phiến và stamp mỗi nửa nhân một sắc màu (`assets/art/regions.json` → `half_tints`; vùng có thể ghi đè trong `region.json`). Nửa người chơi xanh xám lạnh #B8CCE8; nửa địch tím than tối, u ám, đặc trưng phe quái #9A84A4. Không dùng đỏ (ô báo đòn, P3) hay cam (Cháy).
 - **Lỗ:** không vẽ phiến; tô đáy tối nhất của vùng (đất, bùn, mây); mép trước phiến trên kéo xuống 3 px thành vách.
 - **Đảo, sân vòng/kim cương:** mép bao 2–3 px tối hơn 1 tông; ô khuyết giữ ô vuông. Không Đảo thêm chân đá thon bậc thang dưới hàng cuối (code).
 - **Tường / Bãi Gai:** dựng trên phiến thường; Tường 30 px đặc, gạch chéo; Bãi Gai ≤ 6 px, gai thưa.
@@ -802,7 +803,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 ### 8.3 Khung, neo, đệm
 | Loại | Khung (art-px) | Ghi chú |
 |---|---|---|
-| Anh hùng | **40×48** (sửa 2026-10-31: 32×48 không chứa nổi vũ khí rút ra ở khung niệm và Thức Tỉnh; thân vẫn ≤ 30, chỉ khung rộng thêm 4 px mỗi bên) | cao 38–42; thân rộng ≤ 30; vật cầm/vung nằm trong khung |
+| Anh hùng | **96×70** (sửa lần 2, 2026-10-31: mẫu Kiếm sĩ v3 cao kiểu One Step From Eden, người dùng duyệt; khung rộng để chứa đường chém ngang ở clip niệm; chân ở hàng cuối, tâm chân x = 48). Trước đó 40×48 | cao ~66; thân rộng ~31; ~1,4 ô trên sân 3x3, ~2,1 ô trên sân 5x5; vật cầm/vung nằm trong khung |
 | Quái, Tinh Anh | 32×48 (Mục 1, 3, 5) | cao ≤ 34 / ≤ 40; thân rộng ≤ 30 |
 | Kẻ Gác, Người Giữ Tâm Lưới | 48×64; thân ≤ 52×40 (Mục 5) | Mảnh Gốc **không vẽ trong sheet**: code dựng, 2 px/ô |
 | Phiến | 9-slice nguồn 16×16, lề 3 trái-phải-trên, mép trước 2–3 dưới; + 6 stamp (Mục 6.3) | ô thật 38×27 … 64×46 |

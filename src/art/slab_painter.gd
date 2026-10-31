@@ -160,19 +160,21 @@ static func pick_stamps(rect_size: Vector2i, seed: int, meta: Dictionary) -> Arr
 ## most), then the stamps `pick_stamps` chooses for `seed`. `nine == null` paints a flat stone
 ## rect instead; `stamps == null` skips the stamps. Fallback drawing for a missing region belongs
 ## to the layer, this only keeps the cell visible.
-static func paint_cell(canvas: CanvasItem, rect: Rect2i, seed: int, nine: Texture2D, stamps: Texture2D, meta: Dictionary) -> void:
+## [param tint] multiplies the slab and its stamps (2026-10-31: the player's and the enemy's halves differ,
+## ArtAssets.half_tints); white leaves the art unchanged.
+static func paint_cell(canvas: CanvasItem, rect: Rect2i, seed: int, nine: Texture2D, stamps: Texture2D, meta: Dictionary, tint: Color = Color.WHITE) -> void:
 	if rect.size.x <= 0 or rect.size.y <= 0:
 		return
 	if nine == null:
 		var stone: Color = _palette_color(meta.get("palette", {}), "stone", FALLBACK_STONE)
-		canvas.draw_rect(_r2(slab_rect(rect.size).position + rect.position, slab_rect(rect.size).size), stone)
+		canvas.draw_rect(_r2(slab_rect(rect.size).position + rect.position, slab_rect(rect.size).size), stone * tint)
 		return
-	_draw_nine_slice(canvas, rect, nine, margins(meta))
+	_draw_nine_slice(canvas, rect, nine, margins(meta), tint)
 	if stamps == null:
 		return
 	for s: Dictionary in pick_stamps(rect.size, seed, meta):
 		var src: Rect2i = s["src"]
-		canvas.draw_texture_rect_region(stamps, _r2(rect.position + (s["pos"] as Vector2i), src.size), _r2(src.position, src.size))
+		canvas.draw_texture_rect_region(stamps, _r2(rect.position + (s["pos"] as Vector2i), src.size), _r2(src.position, src.size), tint)
 
 
 # --- platform --------------------------------------------------------------------------------
@@ -289,7 +291,7 @@ static func paint_thorns(canvas: CanvasItem, rect: Rect2i, tile: Texture2D) -> v
 # --- internals -------------------------------------------------------------------------------
 
 
-static func _draw_nine_slice(canvas: CanvasItem, rect: Rect2i, nine: Texture2D, m: Dictionary) -> void:
+static func _draw_nine_slice(canvas: CanvasItem, rect: Rect2i, nine: Texture2D, m: Dictionary, tint: Color = Color.WHITE) -> void:
 	var l: int = int(m["left"])
 	var r: int = int(m["right"])
 	var t: int = int(m["top"])
@@ -307,7 +309,7 @@ static func _draw_nine_slice(canvas: CanvasItem, rect: Rect2i, nine: Texture2D, 
 				continue
 			var src := Rect2i(int(col[0]), int(row[0]), int(col[1]), int(row[1]))
 			var dst := Rect2i(rect.position.x + int(col[2]), rect.position.y + int(row[2]), int(col[3]), int(row[3]))
-			canvas.draw_texture_rect_region(nine, _r2(dst.position, dst.size), _r2(src.position, src.size))
+			canvas.draw_texture_rect_region(nine, _r2(dst.position, dst.size), _r2(src.position, src.size), tint)
 
 
 static func _fits(stamp: Dictionary, container: Rect2i) -> bool:

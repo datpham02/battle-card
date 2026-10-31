@@ -1,7 +1,7 @@
 # Story 046: HUD v3 — dải cảnh xa 20 %, giao diện vẽ sắc, ô báo đòn đậm dần
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: —
@@ -74,3 +74,27 @@
 - Bộ 9-slice pixel 16×16 (ASSET-013) và icon 12×12 (ASSET-015) giữ làm dự phòng cho đường pixel; story này không dùng chúng.
 - Tải Noto Sans (OFL) là hành động cần người dùng duyệt; story có thể hoàn thành với font dự phòng và ghi rõ trong bằng chứng.
 - Playtest sau story: người chơi có còn đọc được "đòn còn bao lâu" chỉ qua độ đậm không; nếu không, bước lùi là thêm thanh co dần mảnh ở mép trên cụm ô (không chữ), không quay lại nhãn.
+
+## Implementation Notes (2026-10-31, /dev-story)
+
+Làm theo thứ tự C → C2 (sọc Cháy) → B1 (HudSkin + header) → B2 (thẻ túi, Thức Tỉnh, chip, căn nút tạm dừng) → D. Phần A đã làm ở Story 047.
+
+**Đã làm:**
+- `CutActor.get_progress()` (tính cả override và hệ số Story 018/032) + `debug_set_progress(k)`; khối `telegraph` trong `combat.json` (fill 0→0,45, sọc 0,5→1, viền 0,3→1, sọc hàng chờ 0,35, 3 bậc khi giảm chuyển động) đọc qua `CombatConfig`.
+- `TelegraphPainter` + `BurnPainter` vẽ trong `FloorDynamicLayer` (con của `FloorLayer`, dưới `UnitLayer`), chỉ vẽ lại khi có đòn đang niệm / ô đang cháy; sàn tĩnh không vẽ lại mỗi khung. `CutHudView` bỏ nhãn đếm ngược, tên đòn, số ô, tô đỏ và sọc Cháy; dấu sao Khối Lạ vẫn ở lớp trên.
+- Tên đòn và số ô hiện trên bảng Tạm dừng (khóa `TEXT_*` mới, vi + en).
+- `src/ui/hud_skin.gd` (panel vát góc, kim cương, thanh chia đốt, chữ viền 3 px, thanh máu có rãnh / vết / nấc nửa máu, icon 55 px); font Noto Sans SemiBold + Bold trong `assets/fonts/` (OFL, tải với sự đồng ý của người dùng 2026-10-31); icon `assets/art/ui/ui_icons_55.png` + `.json`.
+- Header Z1 vẽ sắc; vết mất máu `hud.hp_trail_sec` 0,4 s (data-driven), tức thì khi giảm chuyển động. Nút tạm dừng là ô icon thẳng hàng với panel.
+- Thẻ túi vát góc + huy hiệu số ô; nút Thức Tỉnh là kim cương; chip từ khóa dưới chân (tối đa 2/đơn vị, ưu tiên Đóng Băng > Cháy > Giá Lạnh > Rạn > Giáp, thanh thời gian 2 px) thay nhãn "FROZEN 10.0 s" / "Burn ×1"; ô Hình Cộng Hưởng trên nền Đá Đêm; nhãn trận, nhãn bộ bài, cột số ô / sát thương dùng chữ sáng có viền.
+
+**Lệch so với tiêu chí:**
+- Panel header cao 60 px nên Z1 chiếm 3–11 % chứ không 3–8 % (khớp mock 58 người dùng đã duyệt; hai panel ở hai mép, không che sân hay đầu đơn vị). `design/ux/hud.md` đã sửa câu đó.
+- Thanh Bản Khắc lấy tổng là số ô địch thật (9 trên 3x3, 25 trên 5x5), không cố định 21; 7 đốt chia theo tỉ lệ.
+- Ở 1280 px nhãn "Resonant shape" / "Hình Cộng Hưởng" không đủ chỗ giữa panel trái và nút tạm dừng nên chỉ hiện icon; ở 1600 px nhãn hiện đủ.
+- Không có nút thông tin (info) trong code nên không thêm.
+- Sọc Cháy chuyển xuống sàn dù tiêu chí Phần C chỉ nói ô báo đòn (cùng lỗi che sprite thấy ở Story 047).
+
+**Chạy:** 128 suite headless + 6 suite click `FAILS=0`, 0 SCRIPT ERROR (2026-10-31). Ảnh `production/qa/evidence/hud-v3/01–12`, đã mở từng ảnh; ba lỗi tìm ra khi xem (ô Hình Cộng Hưởng đè số máu, cột đặt khối chữ tối, nhãn bộ bài tối) và một lỗi co chữ ("4 cell") đã sửa, chụp lại.
+
+**Chưa kiểm:** cảm giác đọc nhịp đòn chỉ qua độ đậm (playtest, xem Notes); điện thoại thật.
+

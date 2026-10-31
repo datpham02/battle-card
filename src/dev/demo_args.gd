@@ -143,6 +143,10 @@ extends Node
 ##                                          ART_DEMO_ADVANCE_SEC in (frame 1); the swing never resolves (time frozen)
 ##   godot --path . -- --demo=anim_windup   the boss's CutActor swings on the player's cell (is_swinging, the HUD telegraph on
 ##                                          the player's half): `windup` held
+##   godot --path . -- --demo=anim_windup --telegraph-k=<0..1>   DEV-ONLY (Story 046 Part C): after the boss swing starts,
+##                                          CutActor.debug_set_progress(k) puts it k of the way through its windup (time left
+##                                          (1-k) x duration), time frozen: the floor telegraph at that strength (0 faint,
+##                                          1 = the moment the hit lands). Ignored by every other mode
 ##   godot --path . -- --demo=anim_hit      the boss hit for ART_DEMO_HIT (CombatState.damage_enemy -> damaged): `hit`
 ##                                          ART_DEMO_HIT_ADVANCE_SEC in
 ##   godot --path . -- --demo=anim_down     the boss hit to 0 HP (ART_DEMO_OVERKILL): `down` ART_DEMO_HOLD_ADVANCE_SEC in = its
@@ -167,6 +171,9 @@ extends Node
 
 const DEMO_PREFIX: String = "--demo="
 const GRID_PREFIX: String = "--grid="
+## `--player-cell=c,r` (--demo=board): the player starts on that cell of its half, e.g. the back row of a
+## 5x5 to check the v3 hero's head against the header (2026-10-31).
+const PLAYER_CELL_PREFIX: String = "--player-cell="
 const BOSS_PREFIX: String = "--boss="
 const DEBUG_ARG: String = "--debug"
 const DECK_PREFIX: String = "--deck="
@@ -295,6 +302,8 @@ const ART_DEMO_STATUS_SEC: float = 10.0
 const ART_DEMO_FROST_STACKS: int = 2
 const ART_DEMO_END_DELAY_SEC: float = 600.0
 const ART_REGION_PREFIX: String = "--art-region="
+## Story 046 Part C: `--telegraph-k=<0..1>` for --demo=anim_windup (see the header).
+const TELEGRAPH_K_PREFIX: String = "--telegraph-k="
 const DRAW_CALLS_ARG: String = "--draw-calls"
 const DRAW_CALLS_FRAMES: int = 2
 const DRAW_CALLS_LATE_FRAMES: int = 110
@@ -349,7 +358,9 @@ func _ready() -> void:
 	var grid: BoardGrid = combat.get_grid()
 	match _mode:
 		"board":
-			pass
+			var start: Vector2i = _parse_player_cell()
+			if start != BoardGrid.NO_CELL and not combat.get_state().set_player_cell(start):
+				push_warning("DemoArgs: --player-cell %s is not a player cell" % start)
 		"relic_bag4":
 			# Story 032: the 4-slot bag (tui_rong) as CombatView sizes it; intro skipped for the capture.
 			var view := get_node(hold_slots_view_path) as HoldSlotsView
@@ -493,8 +504,13 @@ func _art_demo() -> void:
 			if not combat.get_cut_actor().begin_swing([state.enemy_cell] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, true):
 				push_warning("DemoArgs: the player swing did not start for demo '%s'" % _mode)
 		"anim_windup":
-			if not combat.get_boss().get_actor().begin_swing([state.player_cell] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, false):
+			var boss_actor: CutActor = combat.get_boss().get_actor()
+			if not boss_actor.begin_swing([state.player_cell] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, false):
 				push_warning("DemoArgs: the boss swing did not start for demo '%s'" % _mode)
+			var k: float = _parse_telegraph_k()
+			if k >= 0.0:
+				boss_actor.debug_set_progress(k)
+				print("DemoArgs: telegraph k=%.2f progress=%.2f" % [k, boss_actor.get_progress()])
 		"anim_hit":
 			state.damage_enemy(ART_DEMO_HIT)
 			advance_sec = ART_DEMO_HIT_ADVANCE_SEC
@@ -551,6 +567,17 @@ func _apply_art_region() -> void:
 		push_warning("DemoArgs: no BattleCanvas bound, --art-region ignored")
 		return
 	canvas.set_region_id(_parse_art_region())
+
+
+# --telegraph-k=<0..1> clamped; -1 when absent or not a number.
+func _parse_telegraph_k() -> float:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(TELEGRAPH_K_PREFIX):
+			var raw: String = arg.substr(TELEGRAPH_K_PREFIX.length())
+			if raw.is_valid_float():
+				return clampf(raw.to_float(), 0.0, 1.0)
+			push_warning("DemoArgs: --telegraph-k needs a number 0..1, got '%s'" % raw)
+	return -1.0
 
 
 func _parse_art_region() -> String:
@@ -1428,6 +1455,13 @@ func _final_boss_demo() -> void:
 
 
 func _skip_intro() -> void:
+	# Deferred (2026-10-31): called from _enter_tree, before RunController has stored the spawned battle and
+	# disabled it for the intro; skipping then left the battle disabled in PLAYING (no _process, no canvas
+	# bind, relic strip never laid out). One frame later _begin_playing re-enables it.
+	call_deferred("_skip_intro_now")
+
+
+func _skip_intro_now() -> void:
 	var node: Node = get_parent()
 	while node != null and not node is RunController:
 		node = node.get_parent()
@@ -1527,6 +1561,15 @@ func _parse_grid() -> BoardGrid:
 
 
 # Story 028: --arena=<shape id>, "" when absent.
+func _parse_player_cell() -> Vector2i:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(PLAYER_CELL_PREFIX):
+			var parts: PackedStringArray = arg.substr(PLAYER_CELL_PREFIX.length()).split(",")
+			if parts.size() == 2 and parts[0].is_valid_int() and parts[1].is_valid_int():
+				return Vector2i(parts[0].to_int(), parts[1].to_int())
+	return BoardGrid.NO_CELL
+
+
 func _parse_arena() -> String:
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with(ARENA_PREFIX):

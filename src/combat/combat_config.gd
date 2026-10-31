@@ -75,6 +75,25 @@ var thorn_damage: float = 6.0
 var thorn_fragile_stacks: int = 1
 ## Story 036 tile hazards (combat.json `hazards` block), kept as a dictionary (see [method hazards]).
 var _hazards: Dictionary = TileHazards.DEFAULTS.duplicate()
+## Story 046 Part C telegraph tiles (combat.json `telegraph` block; design/art/art-bible.md 4, design/ux/hud.md E-17).
+## Each pair is [alpha at progress 0, alpha at progress 1] of one layer of the boss's red tiles, lerped by
+## [method telegraph_fill_alpha] / [method telegraph_stripe_alpha] / [method telegraph_edge_alpha]. These are the ONLY
+## built-in fallbacks (used when combat.json omits or invalidates a key).
+var telegraph_fill: Vector2 = Vector2(0.0, 0.45)
+var telegraph_stripe: Vector2 = Vector2(0.5, 1.0)
+var telegraph_edge: Vector2 = Vector2(0.3, 1.0)
+## Stripe alpha of a QUEUED boss swing (Story 013): drawn at progress 0, no fill, sparser than a running swing's.
+var telegraph_queued_stripe_alpha: float = 0.35
+## Progress levels the telegraph snaps to under reduce motion (>= 2 values, each 0..1, non-decreasing).
+var telegraph_reduce_motion_steps: Array[float] = [0.0, 0.5, 1.0]
+## Story 046 Part B (combat.json `hud.hp_trail_sec`, art bible 7.5): seconds the damage trail behind an HP fill
+## takes to shrink to the new HP (0 = no trail).
+var hud_hp_trail_sec: float = 0.4
+## 2026-10-31 (user: "khi chiến đấu thì hiện số máu dưới chân còn ẩn cái thanh máu ở trên"): combat.json
+## `hud.corner_panels`. False (shipped) = no HP panels in the top corners during a battle; each unit shows its HP
+## on a plate under its feet (CutHudView._draw_hp_plates) and the boss's held points float in the top-right
+## corner. True = the corner panels of 2026-10-31 (ScreenLayout.hud_panel_rect).
+var hud_corner_panels: bool = false
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -129,6 +148,8 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	var hazard_block: Variant = data.get("hazards")
 	if typeof(hazard_block) == TYPE_DICTIONARY:
 		config._hazards = TileHazards.clean(hazard_block as Dictionary)
+	config._parse_telegraph(data)
+	config._parse_hud(data)
 	return config
 
 
@@ -175,6 +196,95 @@ func zone_numbers() -> Dictionary:
 ## its default (warning); a match may override each key by the same name (TileHazards.configure).
 func hazards() -> Dictionary:
 	return _hazards.duplicate()
+
+
+## Story 046 Part C: red fill alpha of a telegraph tile at progress [param k] (0..1, clamped):
+## `lerp(telegraph_fill.x, telegraph_fill.y, k)`; 0 -> 0.0, 1 -> 0.45 with the shipped numbers.
+func telegraph_fill_alpha(k: float) -> float:
+	return lerpf(telegraph_fill.x, telegraph_fill.y, clampf(k, 0.0, 1.0))
+
+
+## Story 046 Part C: diagonal stripe alpha at progress [param k]; 0.5 -> 1.0 with the shipped numbers.
+func telegraph_stripe_alpha(k: float) -> float:
+	return lerpf(telegraph_stripe.x, telegraph_stripe.y, clampf(k, 0.0, 1.0))
+
+
+## Story 046 Part C: edge alpha (2 px red edge and the 1 px Ink edge outside it) at progress [param k];
+## 0.3 -> 1.0 with the shipped numbers.
+func telegraph_edge_alpha(k: float) -> float:
+	return lerpf(telegraph_edge.x, telegraph_edge.y, clampf(k, 0.0, 1.0))
+
+
+## Story 046 Part C: the progress the telegraph is drawn at. Continuous ([param k] clamped to 0..1) when
+## [param reduce_motion] is false; otherwise snapped to [member telegraph_reduce_motion_steps] (0 / 0.5 / 1 shipped):
+## n steps, step i covers [i/n, (i+1)/n), the last one includes 1.0 (thresholds at 1/3 and 2/3 for three).
+func quantize_progress(k: float, reduce_motion: bool) -> float:
+	var clamped: float = clampf(k, 0.0, 1.0)
+	if not reduce_motion:
+		return clamped
+	var count: int = telegraph_reduce_motion_steps.size()
+	var index: int = mini(floori(clamped * float(count)), count - 1)
+	return telegraph_reduce_motion_steps[index]
+
+
+# Story 046 Part C: the `telegraph` block; one invalid value -> the whole block falls back to the defaults (warning).
+func _parse_telegraph(data: Dictionary) -> void:
+	var raw: Variant = data.get("telegraph")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var block: Dictionary = raw as Dictionary
+	var fill: Vector2 = _parse_alpha_pair(block.get("fill"), telegraph_fill)
+	var stripe: Vector2 = _parse_alpha_pair(block.get("stripe"), telegraph_stripe)
+	var edge: Vector2 = _parse_alpha_pair(block.get("edge"), telegraph_edge)
+	var queued: float = float(block.get("queued_stripe_alpha", telegraph_queued_stripe_alpha))
+	var steps: Array[float] = []
+	var steps_ok: bool = true
+	var raw_steps: Variant = block.get("reduce_motion_steps", telegraph_reduce_motion_steps)
+	if typeof(raw_steps) == TYPE_ARRAY and (raw_steps as Array).size() >= 2:
+		for item: Variant in raw_steps as Array:
+			var level: float = float(item)
+			if level < 0.0 or level > 1.0 or (not steps.is_empty() and level < steps[steps.size() - 1]):
+				steps_ok = false
+			steps.append(level)
+	else:
+		steps_ok = false
+	if fill.x >= 0.0 and stripe.x >= 0.0 and edge.x >= 0.0 and queued >= 0.0 and queued <= 1.0 and steps_ok:
+		telegraph_fill = fill
+		telegraph_stripe = stripe
+		telegraph_edge = edge
+		telegraph_queued_stripe_alpha = queued
+		telegraph_reduce_motion_steps = steps
+	else:
+		push_warning("CombatConfig: invalid telegraph values (fill / stripe / edge = [from, to] alphas 0..1, queued_stripe_alpha 0..1, reduce_motion_steps >= 2 non-decreasing levels 0..1), using defaults")
+
+
+# Story 046 Part B: the `hud` block; an invalid hp_trail_sec (not a number, or < 0) keeps the default (warning).
+func _parse_hud(data: Dictionary) -> void:
+	var raw: Variant = data.get("hud")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var value: Variant = (raw as Dictionary).get("hp_trail_sec", hud_hp_trail_sec)
+	if (typeof(value) == TYPE_FLOAT or typeof(value) == TYPE_INT) and float(value) >= 0.0:
+		hud_hp_trail_sec = float(value)
+	else:
+		push_warning("CombatConfig: hud.hp_trail_sec must be a number >= 0, using %s" % hud_hp_trail_sec)
+	var panels: Variant = (raw as Dictionary).get("corner_panels", hud_corner_panels)
+	if typeof(panels) == TYPE_BOOL:
+		hud_corner_panels = bool(panels)
+	else:
+		push_warning("CombatConfig: hud.corner_panels must be true or false, using %s" % hud_corner_panels)
+
+
+# A [from, to] pair of alphas, each clamped-checked to 0..1; (-1, -1) marks it invalid.
+static func _parse_alpha_pair(raw: Variant, fallback: Vector2) -> Vector2:
+	if raw == null:
+		return fallback
+	if typeof(raw) == TYPE_ARRAY and (raw as Array).size() == 2:
+		var from: float = float((raw as Array)[0])
+		var to: float = float((raw as Array)[1])
+		if from >= 0.0 and from <= 1.0 and to >= 0.0 and to <= 1.0:
+			return Vector2(from, to)
+	return Vector2(-1.0, -1.0)
 
 
 # Story 027: the `zones` block; one invalid value -> all four fall back to the defaults (warning).

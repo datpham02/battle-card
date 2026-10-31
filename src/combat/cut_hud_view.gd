@@ -55,6 +55,10 @@ const FEATURED_BACK: Color = Color(0.1, 0.09, 0.08, 0.8)
 const FEATURED_GLOW_HZ: float = 2.0
 const FEATURED_FONT_SIZE: int = 15
 const FEATURED_ICON_PAD: float = 4.0
+## Story 046: the featured tile's padding left of the label, its chamfer and the label's widest width, px.
+const FEATURED_TILE_PAD: float = 10.0
+const FEATURED_TILE_CUT: float = 8.0
+const FEATURED_LABEL_MAX_W: float = 320.0
 const FEATURED_LABEL_GAP: float = 8.0
 const DETACH_MARK_RADIUS: float = 11.0
 const DETACH_MARK_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
@@ -121,27 +125,29 @@ const LABEL_SMALL_RATIO: float = 0.2
 const LABEL_PAD: float = 6.0
 const LABEL_LINE_SPACING: float = 1.15
 
-## Burning cells (Đốt, Story 010): orange fire tint with dark diagonal hatching, a flame glyph
-## (two stacked triangles) and a thin shrinking time bar along the cell's bottom. Hue and
-## hatching keep it apart from the red swing overlay and the red HIT tint.
-const BURN_TINT: Color = Color(1.0, 0.45, 0.0, 0.4)
-const BURN_OUTLINE: Color = Color(1.0, 0.4, 0.0, 0.95)
-const BURN_HATCH: Color = Color(0.25, 0.08, 0.0, 0.5)
-const BURN_FLAME_OUTER: Color = Color(1.0, 0.78, 0.12, 0.95)
-const BURN_FLAME_INNER: Color = Color(0.95, 0.25, 0.0, 0.95)
-const BURN_BAR_BACK: Color = Color(0.25, 0.08, 0.0, 0.75)
-const BURN_BAR_FILL: Color = Color(1.0, 0.6, 0.05)
-## Hatch spacing (share of cell height) and line width.
-const BURN_HATCH_STEP_RATIO: float = 0.22
-const BURN_HATCH_WIDTH: float = 2.0
-## Flame glyph size (shares of cell width / height); inner flame as a share of the outer.
-const BURN_FLAME_WIDTH_RATIO: float = 0.3
-const BURN_FLAME_HEIGHT_RATIO: float = 0.42
-const BURN_FLAME_INNER_RATIO: float = 0.55
-## Time bar: height and side inset (shares of cell height), bottom gap.
-const BURN_BAR_HEIGHT_RATIO: float = 0.06
-const BURN_BAR_INSET_RATIO: float = 0.08
+## Burning cells (Story 010) are painted on the floor by BurnPainter (Story 046 Part C); its BURN_FLAME_*
+## constants also size the flame glyph of the rebirth icon here.
+
 ## Pin (Ghim): a thick grey ring with 4 short spokes around the pinned unit, "GHIM x.x s" above.
+## Story 046 keyword chips: tile side, chamfer, gap, gap under the feet, time-bar height (px), icon
+## scale (55 px icons) and how many chips a unit shows at most.
+const CHIP_SIZE: float = 32.0
+const CHIP_CUT: float = 6.0
+const CHIP_GAP: float = 4.0
+const CHIP_FEET_GAP: float = 4.0
+const CHIP_BAR_HEIGHT: float = 2.0
+const CHIP_ICON_SCALE: float = 0.5
+const CHIP_MAX: int = 2
+## 2026-10-31 (user, OSFE reference): HP plate under each unit's feet while the corner HP panels are off
+## (combat.json hud.corner_panels): the current HP in HP_PLATE_FONT bold (light text player / Ivory boss) with
+## HudSkin's ink outline only, centred in a HP_PLATE_HEIGHT-tall slot HP_PLATE_GAP px under the feet. No plate,
+## border or bar (user 2026-10-31: "ko thích vạch % máu, xài con số như bên osfe"; "chỉ cần con số không, ko cần
+## border"). The keyword chips sit under the slot.
+const HP_PLATE_GAP: float = 2.0
+const HP_PLATE_HEIGHT: float = 20.0
+const HP_PLATE_MIN_W: float = 36.0
+const HP_PLATE_PAD_X: float = 6.0
+const HP_PLATE_FONT: int = 16
 const PIN_RING_COLOR: Color = Color(0.58, 0.58, 0.62, 0.95)
 const PIN_RING_DARK: Color = Color(0.2, 0.2, 0.22, 0.95)
 const PIN_TEXT_COLOR: Color = Color(0.25, 0.25, 0.28)
@@ -218,20 +224,6 @@ const TEXT_PIN: String = "ui.hud.pin"
 const TEXT_FEINT: String = "ui.hud.feint"
 const TEXT_FEINT_NOTE: String = "ui.hud.feint_note"
 const TEXT_LEARNING: String = "ui.hud.learning"
-## Skill id whose config carries the burn duration (bar ratio).
-const BURN_SKILL_ID: String = "hoa_tran"
-
-## Boss combo (Story 013): the QUEUED second swing while the first runs, on the player's half.
-## Lighter red than the running swing with thin red hatching, so the two read as two layers;
-## a cell covered by both keeps the running swing's solid look (it is skipped here). One small
-## "2: +g s" box (g = the gap after swing 1's impact) sits at the bottom-right of the queued
-## cells' bounding box, away from swing 1's countdown box which is centred on its own cells.
-const COMBO_TINT: Color = Color(0.95, 0.12, 0.08, 0.18)
-const COMBO_OUTLINE: Color = Color(0.95, 0.35, 0.3, 0.9)
-const COMBO_HATCH: Color = Color(0.95, 0.12, 0.08, 0.55)
-const COMBO_HATCH_STEP_RATIO: float = 0.18
-const COMBO_HATCH_WIDTH: float = 2.0
-const TEXT_COMBO_QUEUED: String = "ui.hud.combo_queued"
 
 ## Row burner warning (Story 014): while RowBurnerTrait announces a row, its cells get a faint
 ## amber tint, an amber outline that blinks between full and dim alpha (phase from a REAL-time
@@ -254,7 +246,6 @@ const TEXT_ROW_WARNING: String = "ui.hud.row_warning"
 ## Trait param that holds the warning length (read from the trait, never a local number).
 const WARN_SEC_PARAM: String = "warn_sec"
 
-const TEXT_BOSS_SWING: String = "ui.hud.boss_swing"
 const TEXT_INTERRUPT: String = "ui.hud.interrupt"
 const TEXT_INTERRUPT_BOSS: String = "ui.hud.interrupt_boss"
 const TEXT_INTERRUPT_PLAYER: String = "ui.hud.interrupt_player"
@@ -301,6 +292,10 @@ const SIGNATURE_MIN_FONT_SIZE: int = 12
 const SIGNATURE_PULSE_HZ: float = 1.6
 const SIGNATURE_PULSE_ALPHA: float = 0.35
 const SIGNATURE_TEXT_PAD: float = 6.0
+## Story 046: Awaken diamond half-diagonal, its line width and how much it shrinks while pressed, px.
+const SIGNATURE_DIAMOND_R: float = 57.0
+const SIGNATURE_DIAMOND_LINE: float = 3.0
+const SIGNATURE_PRESS_SHRINK: float = 3.0
 const SIGNATURE_COLORS: Dictionary = {
 	"tram": Color(0.95, 0.15, 0.1),
 	"thien_hoa": Color(1.0, 0.55, 0.1),
@@ -611,6 +606,8 @@ var _heal_state: CombatState = null
 var _combat: CombatView
 ## Real seconds since this view started: phase source of the row-warning blink.
 var _blink_time: float = 0.0
+## Story 046: longest pin time left seen per side during the current pin (the frozen chip's bar ratio).
+var _pin_max: Dictionary = {}
 ## Story 041: seconds left of the first-pickup Odd Block hint and whether this match's hint was already started.
 var _odd_hint_left: float = 0.0
 var _odd_hint_started: bool = false
@@ -881,9 +878,11 @@ func _draw_formation(vp: Vector2) -> void:
 		return
 	var grid: BoardGrid = _combat.get_grid()
 	var flash: float = _combat.get_formation_flash()
-	if flash > 0.0:
+	if flash > 0.0 and not _vfx_ok("engraving_complete"):
 		for cell: Vector2i in grid.enemy_cells():
 			draw_rect(ScreenLayout.cell_rect(grid, vp, cell), Color(1.0, 1.0, 1.0, FORMATION_FLASH_ALPHA * flash))
+	if _vfx_ok("engraving_lit"):
+		return  # Story 048 F2: FloorDynamicLayer draws the lit engraving under the units
 	var warn: float = _combat.get_config().formation_fade_warn_ratio
 	var blink_on: bool = fmod(_blink_time * FORMATION_BLINK_HZ, 1.0) < 0.5
 	for cell: Vector2i in formation.lit_cells():
@@ -962,9 +961,11 @@ func _draw_board_banner(vp: Vector2, text: String, color: Color, left: float) ->
 	_draw_centered(band, text, size, Color(color.lightened(0.35), alpha))
 
 
-# The button: dimmed with a charge bar and "%" while charging, PRIMARY and pulsing when ready,
-# a countdown bar while the skill runs; also dimmed whenever it cannot be pressed (menu / Focus / pause).
-# Status line (Story 029 Phần D): ACTIVE > READY > "Hồi N s" while the cooldown runs > "Trận đồ N/M".
+# Story 046 Part B: the Awaken button is a Đá Đêm diamond (radius SIGNATURE_DIAMOND_R, Ánh Lưới 3 px line)
+# centred in ScreenLayout.signature_rect with the "awakening" icon, and the status line under it: "n/N"
+# (TEXT_DIM while charging, Ánh Lưới when ready), "Hồi N s" during the cooldown, READY / ACTIVE. Ready and
+# usable = a pulsing light fill; active = the signature colour fill with the time left as a thin bar under
+# the text; dimmed whenever it cannot be pressed (menu / Focus / pause). Rect and hit test are unchanged.
 func _draw_signature_button(vp: Vector2) -> void:
 	if not _has_signature():
 		return
@@ -972,44 +973,50 @@ func _draw_signature_button(vp: Vector2) -> void:
 	var active: bool = _sig.is_signature_active()
 	var is_ready: bool = _sig.is_signature_ready()
 	var usable: bool = _sig.can_activate_signature()
-	var name_text: String = _sig.get_signature_name()
-	var style: int = UiButtons.Style.PRIMARY if (is_ready or active) else UiButtons.Style.SECONDARY
-	if active:
-		style = UiButtons.Style.DANGER
 	var pressed: bool = usable and UiButtons.is_pressed_at(self, rect)
-	UiButtons.draw_button(self, rect, "", style, pressed, is_ready or active)
+	var alpha: float = 1.0 if (usable or active) else UiButtons.DIM_ALPHA + 0.2
+	var center: Vector2 = rect.get_center()
+	var r: float = SIGNATURE_DIAMOND_R - (SIGNATURE_PRESS_SHRINK if pressed else 0.0)
+	var fill: Color = HudSkin.NIGHT_STONE
+	if active:
+		fill = HudSkin.NIGHT_STONE.lerp(SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR), 0.45)
+	HudSkin.diamond(self, center, r, Color(fill, alpha), Color(HudSkin.GRID_LIGHT, alpha), SIGNATURE_DIAMOND_LINE)
 	if is_ready and usable and not active:
 		var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * SIGNATURE_PULSE_HZ)
-		draw_rect(rect, Color(1.0, 1.0, 1.0, SIGNATURE_PULSE_ALPHA * pulse))
-	if is_ready and not usable and not active:
-		draw_rect(rect, Color(0.0, 0.0, 0.0, 1.0 - UiButtons.DIM_ALPHA))
-	var charge_rect: Rect2 = ScreenLayout.signature_charge_rect(vp)
-	var ratio: float = _sig.get_signature_charge()
-	var fill_color: Color = SIGNATURE_CHARGE_FILL
-	if active:
-		var duration: float = _sig.get_signature_duration()
-		ratio = 0.0 if duration <= 0.0 else clampf(_sig.get_signature_time_left() / duration, 0.0, 1.0)
-		fill_color = SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR)
-	draw_rect(charge_rect, SIGNATURE_CHARGE_BACK)
-	draw_rect(Rect2(charge_rect.position, Vector2(charge_rect.size.x * ratio, charge_rect.size.y)), fill_color)
-	var text_alpha: float = 1.0 if (usable or active) else UiButtons.DIM_ALPHA + 0.2
-	var inner := Rect2(rect.position + Vector2(SIGNATURE_TEXT_PAD, 0.0), Vector2(maxf(rect.size.x - SIGNATURE_TEXT_PAD * 2.0, 0.0), rect.size.y - charge_rect.size.y))
-	var name_size: int = _fit_signature_font(name_text, inner.size.x, SIGNATURE_FONT_SIZE)
-	var top_line := Rect2(inner.position, Vector2(inner.size.x, inner.size.y * 0.5))
-	_draw_centered(top_line, name_text, name_size, Color(TEXT_LIGHT, text_alpha))
+		HudSkin.diamond(self, center, r - SIGNATURE_DIAMOND_LINE, Color(HudSkin.GRID_LIGHT, SIGNATURE_PULSE_ALPHA * pulse), Color(0, 0, 0, 0), 0.0)
+	HudSkin.icon(self, "awakening", center, 1.0, Color(1.0, 1.0, 1.0, alpha))
 	var formation: FormationMap = _combat.get_formation()
 	var status: String = ""
+	var color: Color = HudSkin.TEXT_DIM
 	var cooldown_left: float = _sig.get_signature_cooldown_left() if _sig.has_method("get_signature_cooldown_left") else 0.0
 	if cooldown_left > 0.0:
 		status = tr(TEXT_SIGNATURE_COOLDOWN) % ceili(cooldown_left)
 	elif formation != null:
-		status = tr(TEXT_SIGNATURE_CHARGE) % [formation.lit_count(), formation.total()]
+		status = "%d/%d" % [formation.lit_count(), formation.total()]
 	if active:
 		status = tr(TEXT_SIGNATURE_ACTIVE)
+		color = HudSkin.TEXT
 	elif is_ready:
 		status = tr(TEXT_SIGNATURE_READY)
-	var bottom_line := Rect2(inner.position + Vector2(0.0, inner.size.y * 0.5), Vector2(inner.size.x, inner.size.y * 0.5))
-	_draw_centered(bottom_line, status, _fit_signature_font(status, inner.size.x, SIGNATURE_SMALL_FONT_SIZE), Color(TEXT_LIGHT, text_alpha))
+		color = HudSkin.GRID_LIGHT
+	var text_w: float = SIGNATURE_DIAMOND_R * 2.0 + SIGNATURE_TEXT_PAD * 4.0
+	var base_y: float = center.y + SIGNATURE_DIAMOND_R + SIGNATURE_SMALL_FONT_SIZE * 0.5
+	HudSkin.text(self, Vector2(center.x - text_w * 0.5, base_y), status,
+		_fit_skin_font(status, text_w, SIGNATURE_SMALL_FONT_SIZE), Color(color, alpha), HORIZONTAL_ALIGNMENT_CENTER, text_w, true)
+	if active:
+		var duration: float = _sig.get_signature_duration()
+		var ratio: float = 0.0 if duration <= 0.0 else clampf(_sig.get_signature_time_left() / duration, 0.0, 1.0)
+		var bar := Rect2(center.x - SIGNATURE_DIAMOND_R * 0.6, base_y + 4.0, SIGNATURE_DIAMOND_R * 1.2, 3.0)
+		draw_rect(bar, SIGNATURE_CHARGE_BACK)
+		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR))
+
+
+# Story 046: as _fit_signature_font, measured in the HudSkin Bold font.
+func _fit_skin_font(text: String, width: float, size: int) -> int:
+	var fitted: int = size
+	while fitted > SIGNATURE_MIN_FONT_SIZE and HudSkin.text_width(text, fitted, true) > width:
+		fitted -= 1
+	return fitted
 
 
 # Largest font size <= [param size] (never below SIGNATURE_MIN_FONT_SIZE) at which [param text] fits [param width].
@@ -1047,10 +1054,10 @@ func _draw() -> void:
 	_draw_row_warning(vp)
 	_draw_trait_cells(vp)
 	_draw_hazard_traits(vp)
-	_draw_burning(vp)
 	_draw_vent_eruptions(vp)
 	_draw_interrupt(vp)
 	_draw_feint(vp)
+	_draw_hp_plates(vp)
 	_draw_pins(vp)
 	_draw_confirm(vp)
 	_draw_cancel(vp)
@@ -1236,6 +1243,15 @@ func _draw_cells(vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Colo
 
 
 # Centred single-line text; [param size] is the font size.
+# Story 046: the largest size <= [param size] (floor SIGNATURE_MIN_FONT_SIZE) at which [param text] fits
+# [param width] in the HudSkin font that will draw it (the fallback font measures narrower than Noto Bold).
+func _fit_hud_font(text: String, width: float, size: int, bold: bool) -> int:
+	var fitted: int = size
+	while fitted > SIGNATURE_MIN_FONT_SIZE and HudSkin.text_width(text, fitted, bold) > width:
+		fitted -= 1
+	return fitted
+
+
 func _draw_centered(rect: Rect2, text: String, size: int, color: Color) -> void:
 	draw_string(
 		ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + size * 0.35),
@@ -1292,8 +1308,11 @@ func _draw_preview(vp: Vector2) -> void:
 	# Story 044: the column between Awaken and Cancel is ~75 px at 1280x720, so both lines shrink to fit it.
 	var cells_text: String = tr(TEXT_CELLS) % cells.size()
 	var damage_text: String = tr(TEXT_DAMAGE) % damage
-	_draw_centered(top, cells_text, _fit_signature_font(cells_text, top.size.x, BIG_FONT_SIZE), TEXT_DARK)
-	_draw_centered(bottom, damage_text, _fit_signature_font(damage_text, bottom.size.x, FONT_SIZE), TEXT_DARK)
+	# Story 046: light outlined text, the column now sits on the dark backdrop instead of the old beige.
+	var cells_size: int = _fit_hud_font(cells_text, top.size.x, BIG_FONT_SIZE, true)
+	var damage_size: int = _fit_hud_font(damage_text, bottom.size.x, FONT_SIZE, false)
+	HudSkin.text(self, Vector2(top.position.x, top.get_center().y + cells_size * 0.35), cells_text, cells_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, top.size.x, true)
+	HudSkin.text(self, Vector2(bottom.position.x, bottom.get_center().y + damage_size * 0.35), damage_text, damage_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, bottom.size.x)
 	if _combat.is_dragging():
 		_draw_finger(_combat.get_drag_point())
 
@@ -1510,7 +1529,19 @@ func _draw_featured_icon(vp: Vector2) -> void:
 	var glow: bool = _featured_glowing()
 	var rect: Rect2 = ScreenLayout.featured_icon_rect(vp)
 	var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * FEATURED_GLOW_HZ)
-	draw_rect(rect, FEATURED_BACK)
+	# Story 046: label + icon share one Đá Đêm chamfered tile ending at the icon's right edge, readable on
+	# the canopy; the icon keeps its rect (left of the pause tile) and its size.
+	var text: String = _featured_label_text(featured["bonus"] as Dictionary) if glow else tr(TEXT_FEATURED_CORNER)
+	var text_w: float = minf(HudSkin.text_width(text, FEATURED_FONT_SIZE, true), FEATURED_LABEL_MAX_W)
+	var label := Rect2(rect.position.x - FEATURED_LABEL_GAP - text_w, rect.position.y, text_w, rect.size.y)
+	var tile := Rect2(label.position.x - FEATURED_TILE_PAD, rect.position.y, rect.end.x - label.position.x + FEATURED_TILE_PAD, rect.size.y)
+	# The label must not run into the player's header panel (at 1280x720 "Resonant shape" / "Hình Cộng Hưởng"
+	# would cover the "hp/max" number): when it does not fit, the tile keeps the icon only.
+	var panel_end: float = ScreenLayout.hud_panel_rect(vp, 0).end.x
+	var show_label: bool = tile.position.x >= panel_end + FEATURED_LABEL_GAP
+	if not show_label:
+		tile = rect.grow(FEATURED_TILE_PAD)
+	HudSkin.panel(self, tile, [FEATURED_TILE_CUT, 0.0, 0.0, FEATURED_TILE_CUT], HudSkin.NIGHT_STONE, HudSkin.MIST)
 	var cells: Array[Vector2i] = featured["cells"]
 	var box := Vector2i.ZERO
 	for cell: Vector2i in cells:
@@ -1522,50 +1553,45 @@ func _draw_featured_icon(vp: Vector2) -> void:
 	for cell: Vector2i in cells:
 		draw_rect(Rect2(origin + Vector2(cell) * unit, Vector2(unit, unit)).grow(-0.75), fill)
 	draw_rect(rect, FEATURED_GOLD if glow else FEATURED_GOLD_DARK, false, 4.0 if glow else 2.0)
-	var text: String = _featured_label_text(featured["bonus"] as Dictionary) if glow else tr(TEXT_FEATURED_CORNER)
-	var label := Rect2(rect.position.x - 320.0 - FEATURED_LABEL_GAP, rect.position.y, 320.0, rect.size.y)
-	draw_string(ThemeDB.fallback_font, Vector2(label.position.x, label.get_center().y + FEATURED_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_RIGHT, label.size.x, FEATURED_FONT_SIZE, TEXT_DARK if glow else FEATURED_GOLD_DARK)
+	if show_label:
+		HudSkin.text(self, Vector2(label.position.x, label.get_center().y + FEATURED_FONT_SIZE * 0.35), text,
+			FEATURED_FONT_SIZE, HudSkin.GRID_LIGHT if glow else HudSkin.TEXT, HORIZONTAL_ALIGNMENT_RIGHT, label.size.x, true)
 
 
 func _draw_swing(vp: Vector2) -> void:
 	var actor: CutActor = _combat.get_cut_actor()
 	if not actor.is_swinging():
 		return
-	_draw_cells(vp, actor.get_cells(), SWING_TINT, SWING_OUTLINE)
+	# Story 048 F5: with the cast_target pack the floor shows the swing cells (no tint, no countdown label here).
+	var vfx_swing: bool = _vfx_ok("cast_target")
+	if not vfx_swing:
+		_draw_cells(vp, actor.get_cells(), SWING_TINT, SWING_OUTLINE)
 	if PieceDraw.any_odd_id(_combat.get_cast_piece_ids()):
 		_draw_odd_corner_mark(vp, actor.get_cells())  # Story 041: the cast holds an Odd Block
+	if vfx_swing:
+		return
 	var info: Rect2 = ScreenLayout.cut_swing_info_rect(vp)
 	var text: String = tr(TEXT_SWING) % [_skill_name(actor.get_skill_id()), actor.get_time_left()]
 	_draw_centered(info, text, BIG_FONT_SIZE, SWING_OUTLINE)
 
 
-# Boss swing on the PLAYER's half: red cells, countdown + labels/skill centred on their bounding box.
+# Boss swing on the PLAYER's half. Story 046 Part C: the red cells (fill, stripes, edge, fading in with the
+# swing's progress) are painted under the units by TelegraphPainter in the BattleCanvas floor; there is no
+# countdown, move-name or cell-count text on the board any more (the pause panel names the move and its cells).
+# What stays here, above the units: the Story 041 Odd Block sparkle on a cell corner.
 func _draw_boss_swing(vp: Vector2) -> void:
 	var boss: BossController = _combat.get_boss()
 	var actor: CutActor = boss.get_actor()
 	if not actor.is_swinging():
 		return
-	var cells: Array[Vector2i] = actor.get_cells()
-	_draw_cells(vp, cells, SWING_TINT, SWING_OUTLINE)
 	# Story 041: the boss's red telegraph of a cast holding an Odd Block carries the sparkle mark.
 	if PieceDraw.any_odd_id(_boss_swing_labels(boss, actor)):
-		_draw_odd_corner_mark(vp, cells)
-	# Story 025: the cast's labels are shape ids ("bar2", "l3"): show the cell count, never the raw ids.
-	var joined: String = tr(TEXT_CELLS) % cells.size()
-	var line2: String = tr(TEXT_BOSS_SWING) % [joined, _skill_name(actor.get_skill_id())]
-	var avoid: Array[Rect2] = []
-	for cell: Vector2i in cells:
-		if _cell_occupied(CombatState.Side.PLAYER, cell):
-			avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
-	_draw_cells_label(vp, cells, ("%.1f s" % actor.get_time_left()), line2, SWING_OUTLINE, 1.0, avoid)
+		_draw_odd_corner_mark(vp, actor.get_cells())
 
 
-# Boss's queued combo swing (Story 013), drawn BEFORE _draw_boss_swing so the running swing's
-# solid cells and countdown box stay on top: hatched lighter red on the queued cells the running
-# swing does not cover, plus a one-line "2: +g s" box (g = queued windup = the combo gap) at the
-# bottom-right of the queued cells' bounding box. No double-draw: when swing 1 resolves,
-# CutActor.tick clears the queue before starting swing 2, so has_queued() is false in the same
-# frame the running path (above) takes over.
+# Boss's queued combo swing (Story 013). Story 046 Part C: its cells are painted on the floor at progress 0 with
+# sparser stripes (TelegraphPainter) and the "2: +g s" box is gone with the other board countdowns; only the
+# Story 041 Odd Block sparkle stays here.
 func _draw_boss_queued_swing(vp: Vector2) -> void:
 	var actor: CutActor = _combat.get_boss().get_actor()
 	if not actor.is_swinging():
@@ -1573,17 +1599,7 @@ func _draw_boss_queued_swing(vp: Vector2) -> void:
 	var queued: Dictionary = _combat.get_boss_queued_swing()
 	if queued.is_empty():
 		return
-	var running: Array[Vector2i] = actor.get_cells()
 	var cells: Array[Vector2i] = queued["cells"]
-	var grid: BoardGrid = _combat.get_grid()
-	for cell: Vector2i in cells:
-		if running.has(cell):
-			continue
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-		draw_rect(rect, COMBO_TINT)
-		_draw_hatching(rect, rect.size.y * COMBO_HATCH_STEP_RATIO, COMBO_HATCH, COMBO_HATCH_WIDTH)
-		draw_rect(rect.grow(-2.0), COMBO_OUTLINE, false, CELL_OUTLINE_WIDTH)
-	_draw_corner_label(vp, cells, tr(TEXT_COMBO_QUEUED) % float(queued["duration"]), COMBO_OUTLINE)
 	var last: Dictionary = _combat.get_boss().get_last_cut()
 	if last.has("combo") and PieceDraw.any_odd_id((last["combo"] as Dictionary).get("labels", []) as Array):
 		_draw_odd_corner_mark(vp, cells)  # Story 041
@@ -1642,6 +1658,10 @@ func _draw_interrupt(vp: Vector2) -> void:
 	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
 	var cells: Array[Vector2i] = flash["cells"]
 	var grid: BoardGrid = _combat.get_grid()
+	if _vfx_ok("interrupt"):
+		# Story 048 F8: the interrupt one-shot over the units replaces the tint and the X; a short NGẮT stays.
+		_draw_cells_label(vp, cells, tr(TEXT_INTERRUPT), "", INTERRUPT_COLOR, fade)
+		return
 	_draw_cells(vp, cells, Color(INTERRUPT_TINT, INTERRUPT_TINT.a * fade), Color(INTERRUPT_COLOR, fade))
 	for cell: Vector2i in cells:
 		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell).grow(-rect_inset(vp))
@@ -1651,15 +1671,20 @@ func _draw_interrupt(vp: Vector2) -> void:
 	_draw_cells_label(vp, cells, tr(TEXT_INTERRUPT), tr(TEXT_INTERRUPT_BOSS) if boss_victim else tr(TEXT_INTERRUPT_PLAYER), INTERRUPT_COLOR, fade)
 
 
+# Story 048: true when the floor-VFX pack [param id] is drawable, so its old code drawing here is skipped
+# (a missing / un-imported pack keeps the old drawing).
+func _vfx_ok(id: String) -> bool:
+	return _combat != null and _combat.get_floor_vfx().has_pack(id)
+
+
 func rect_inset(vp: Vector2) -> float:
 	return ScreenLayout.cell_size(_combat.get_grid(), vp).y * INTERRUPT_X_INSET_RATIO
 
 
 # Two lines (big, small) on a white backing, centred on the bounding box of [param cells] and
-# clamped inside the board, so it never reaches the strip under the arena.
-# TD-023: when the centred box would cover a rect in [param avoid] (a unit / field piece under the cast), it
-# moves above or below the cells' bounding box, whichever covers less.
-func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2: String, color: Color, alpha: float = 1.0, avoid: Array[Rect2] = []) -> void:
+# clamped inside the board, so it never reaches the strip under the arena. (Story 046 Part C removed the boss
+# countdown, the only caller of TD-023's avoid-the-units placement, so that placement went with it.)
+func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2: String, color: Color, alpha: float = 1.0) -> void:
 	if cells.is_empty():
 		return
 	var grid: BoardGrid = _combat.get_grid()
@@ -1672,29 +1697,14 @@ func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2
 	var width: float = maxf(font.get_string_size(line1, HORIZONTAL_ALIGNMENT_LEFT, -1, big).x, font.get_string_size(line2, HORIZONTAL_ALIGNMENT_LEFT, -1, small).x) + LABEL_PAD * 2.0
 	var height: float = (big + small) * LABEL_LINE_SPACING + LABEL_PAD * 2.0
 	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
-	var pos: Vector2 = box.get_center() - Vector2(width, height) * 0.5
-	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
-	pos.y = clampf(pos.y, board.position.y, maxf(board.end.y - height, board.position.y))
-	var back := Rect2(pos, Vector2(width, height))
-	if _overlap_area(back, avoid) > 0.0:
-		for y: float in [box.position.y - height - 2.0, box.end.y + 2.0]:
-			var moved := Rect2(Vector2(pos.x, clampf(y, board.position.y, maxf(board.end.y - height, board.position.y))), back.size)
-			if _overlap_area(moved, avoid) < _overlap_area(back, avoid):
-				back = moved
-		pos = back.position
-	draw_rect(back, Color(TEXT_OUTLINE_LIGHT, TEXT_OUTLINE_LIGHT.a * alpha))
-	draw_rect(back, Color(color, alpha), false, CELL_OUTLINE_WIDTH)
-	draw_string(font, pos + Vector2(0.0, LABEL_PAD + big * 0.85), line1, HORIZONTAL_ALIGNMENT_CENTER, width, big, Color(color, alpha))
-	draw_string(font, pos + Vector2(0.0, LABEL_PAD + big * LABEL_LINE_SPACING + small * 0.85), line2, HORIZONTAL_ALIGNMENT_CENTER, width, small, Color(TEXT_DARK, alpha))
-
-
-# Summed overlap area of [param rect] with each rect in [param others].
-func _overlap_area(rect: Rect2, others: Array[Rect2]) -> float:
-	var total: float = 0.0
-	for other: Rect2 in others:
-		var hit: Rect2 = rect.intersection(other)
-		total += hit.size.x * hit.size.y
-	return total
+	# Story 048: outlined text floating just above the cells, no white backing (nothing on a cell may cover a unit).
+	var x: float = clampf(box.get_center().x - width * 0.5, board.position.x, maxf(board.end.x - width, board.position.x))
+	var base: float = box.position.y - 2.0
+	if line2 != "":
+		HudSkin.text(self, Vector2(x, base), line2, small, Color(HudSkin.TEXT, alpha), HORIZONTAL_ALIGNMENT_CENTER, width)
+		base -= small * LABEL_LINE_SPACING
+	HudSkin.text(self, Vector2(x, base), line1, big, Color(color, alpha), HORIZONTAL_ALIGNMENT_CENTER, width, true)
+	var _unused_height: float = height
 
 
 func _draw_feedback(vp: Vector2) -> void:
@@ -1706,22 +1716,25 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 		return
 	var hit: bool = bool(fb["hit"])
 	var cells: Array[Vector2i] = fb["cells"]
-	_draw_cells(vp, cells, HIT_TINT if hit else MISS_TINT, HIT_TEXT if hit else MISS_TEXT)
+	if not _vfx_ok("hit_impact" if hit else "miss_dust"):  # Story 048 F6 / F7 replace the tint
+		_draw_cells(vp, cells, HIT_TINT if hit else MISS_TINT, HIT_TEXT if hit else MISS_TEXT)
 	var grid: BoardGrid = _combat.get_grid()
 	var cell_rect: Rect2 = ScreenLayout.cell_rect(grid, vp, fb["cell"])
 	var size: int = int(cell_rect.size.y * FEEDBACK_FONT_RATIO)
-	var color: Color = HIT_TEXT if hit else MISS_TEXT
+	# Story 048: outlined text floating above the cell (no white backing over the unit); Ivory / dim, never red
+	# (art bible P3: red is the telegraph only).
+	var color: Color = HudSkin.TEXT if hit else HudSkin.TEXT_DIM
 	# Burn / pin hits deal no direct damage: no "-0" line.
 	var show_damage: bool = hit and float(fb["damage"]) > 0.0
-	var back := Rect2(cell_rect.position, Vector2(cell_rect.size.x, size * 2.0 if show_damage else size * 1.3))
-	draw_rect(back, TEXT_OUTLINE_LIGHT)
-	var line1 := Rect2(back.position, Vector2(back.size.x, size * 1.2))
-	_draw_centered(line1, tr(TEXT_HIT) if hit else tr(TEXT_MISS), size, color)
+	var label_box: Rect2 = cell_rect.grow_individual(cell_rect.size.x * 0.25, 0.0, cell_rect.size.x * 0.25, 0.0)
+	var base: float = cell_rect.position.y - 2.0
 	if show_damage:
-		var line2 := Rect2(back.position + Vector2(0.0, size * 0.9), Vector2(back.size.x, size * 1.2))
 		# Story 020: a hit multiplied by Ghim shows its number in the pin blue.
 		var damage_color: Color = PIN_BONUS_TEXT if bool(fb.get("pin_bonus", false)) else color
-		_draw_centered(line2, tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), size, damage_color)
+		HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), size, damage_color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
+		base -= size * 1.0
+	HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_HIT) if hit else tr(TEXT_MISS), size, color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
+	var back := Rect2(label_box.position.x, base - size * 2.6, label_box.size.x, size * 1.3)  # the featured pill sits above the text
 	if hit and bool(fb.get("featured", false)):
 		# Story 028: a featured-shape hit names its bonus under the HIT box.
 		var bonus_text: String = _featured_label_text({"damage_mult": fb.get("featured_mult", 1.0), "effect": fb.get("featured_effect", "")})
@@ -1740,7 +1753,7 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 
 # The row RowBurnerTrait is announcing (nothing when the match has no row_burner or no warning
 # runs): faint amber tint, blinking amber outline, shrinking top bar, "SẮP CHÁY" tag. Once the
-# row ignites the trait clears its warning and _draw_burning takes over.
+# row ignites the trait clears its warning and the floor's BurnPainter takes over.
 func _draw_row_warning(vp: Vector2) -> void:
 	var host: TraitHost = _combat.get_trait_host()
 	if host == null:
@@ -1771,34 +1784,9 @@ func _draw_row_warning(vp: Vector2) -> void:
 # --- Story 010: burning cells, pins, feint, learning debug ----------------------
 
 
-# Every burning cell on either half: fire tint + dark hatching + flame glyph + time bar.
-func _draw_burning(vp: Vector2) -> void:
-	var status: StatusEffects = _combat.get_status()
-	if status == null:
-		return
-	var cells: Array[Vector2i] = status.burning_cells()
-	if cells.is_empty():
-		return
-	var grid: BoardGrid = _combat.get_grid()
-	var duration: float = float(_combat.get_skill_config().get_skill(BURN_SKILL_ID).get("burn_duration_sec", 0.0))
-	for cell: Vector2i in cells:
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-		draw_rect(rect, BURN_TINT)
-		_draw_hatching(rect, rect.size.y * BURN_HATCH_STEP_RATIO)
-		draw_rect(rect.grow(-2.0), BURN_OUTLINE, false, CELL_OUTLINE_WIDTH)
-		_draw_flame(rect.get_center(), rect.size)
-		# Shrinking bar along the bottom: full at ignition, empty when it burns out.
-		var ratio: float = 0.0 if duration <= 0.0 else clampf(status.get_burn_left(cell) / duration, 0.0, 1.0)
-		var inset: float = rect.size.y * BURN_BAR_INSET_RATIO
-		var bar_h: float = rect.size.y * BURN_BAR_HEIGHT_RATIO
-		var bar := Rect2(Vector2(rect.position.x + inset, rect.end.y - inset - bar_h), Vector2(rect.size.x - inset * 2.0, bar_h))
-		draw_rect(bar, BURN_BAR_BACK)
-		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), BURN_BAR_FILL)
-
-
 # Diagonal hatch lines (x + y = t) clipped to [param rect], [param step] apart, in [param color]
-# and [param width] (burn hatching by default; the combo layer passes its own).
-func _draw_hatching(rect: Rect2, step: float, color: Color = BURN_HATCH, width: float = BURN_HATCH_WIDTH) -> void:
+# and [param width] (the combo layer's hatching).
+func _draw_hatching(rect: Rect2, step: float, color: Color, width: float) -> void:
 	if step <= 0.0:
 		return
 	var w: float = rect.size.x
@@ -1813,58 +1801,109 @@ func _draw_hatching(rect: Rect2, step: float, color: Color = BURN_HATCH, width: 
 
 # Flame glyph: an outer and an inner triangle, the inner one shifted toward the base.
 func _draw_flame(center: Vector2, cell: Vector2) -> void:
-	var w: float = cell.x * BURN_FLAME_WIDTH_RATIO
-	var h: float = cell.y * BURN_FLAME_HEIGHT_RATIO
+	var w: float = cell.x * BurnPainter.BURN_FLAME_WIDTH_RATIO
+	var h: float = cell.y * BurnPainter.BURN_FLAME_HEIGHT_RATIO
 	var outer: PackedVector2Array = PackedVector2Array([
 		center + Vector2(-w * 0.5, h * 0.5), center + Vector2(0.0, -h * 0.5), center + Vector2(w * 0.5, h * 0.5),
 	])
-	draw_colored_polygon(outer, BURN_FLAME_OUTER)
-	var iw: float = w * BURN_FLAME_INNER_RATIO
-	var ih: float = h * BURN_FLAME_INNER_RATIO
+	draw_colored_polygon(outer, BurnPainter.BURN_FLAME_OUTER)
+	var iw: float = w * BurnPainter.BURN_FLAME_INNER_RATIO
+	var ih: float = h * BurnPainter.BURN_FLAME_INNER_RATIO
 	var base: Vector2 = center + Vector2(0.0, h * 0.5)
 	var inner: PackedVector2Array = PackedVector2Array([
 		base + Vector2(-iw * 0.5, 0.0), base + Vector2(0.0, -ih), base + Vector2(iw * 0.5, 0.0),
 	])
-	draw_colored_polygon(inner, BURN_FLAME_INNER)
+	draw_colored_polygon(inner, BurnPainter.BURN_FLAME_INNER)
 
 
-# Chain ring + "GHIM x.x s" over every pinned unit (player and boss).
+# Story 046 Part B (I-23): keyword chips under each unit's feet replace the old FROZEN ring + tag and the
+# boss's keyword text. Per side, the active keywords (priority frozen > burn > chill > fragile > armor, at
+# most CHIP_MAX) as HudSkin icons at CHIP_ICON_SCALE on a Đá Đêm chamfered tile, centred CHIP_FEET_GAP px
+# under the feet (UnitLayer.unit_feet_art); a frozen chip carries its time left as a 2 px bar, no text.
+# Armor has no per-unit state since Story 007 (CombatState), so its chip never shows today.
 func _draw_pins(vp: Vector2) -> void:
 	var status: StatusEffects = _combat.get_status()
 	if status == null:
 		return
 	var state: CombatState = _combat.get_state()
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
-		if not status.is_pinned(side):
+		if side == CombatState.Side.ENEMY and state.is_enemy_dead():
 			continue
-		_draw_pin_at(vp, state.cell_of(side), status.get_pin_left(side))
+		var chips: Array = []
+		if status.is_pinned(side):
+			var left: float = status.get_pin_left(side)
+			_pin_max[side] = maxf(float(_pin_max.get(side, 0.0)), left)
+			chips.append(["frozen", clampf(left / maxf(float(_pin_max[side]), 0.001), 0.0, 1.0)])
+		else:
+			_pin_max.erase(side)
+		if side == CombatState.Side.ENEMY and _combat.get_burn_stacks() > 0:
+			chips.append(["burn", -1.0])
+		if status.get_frost_stacks(side) > 0:
+			chips.append(["chill", -1.0])
+		if status.get_fragile_stacks(side) > 0:
+			chips.append(["fragile", -1.0])
+		if chips.is_empty():
+			continue
+		var feet: Vector2 = _unit_feet_screen(vp, side, state)
+		if _hp_plates_on():
+			feet.y += HP_PLATE_GAP + HP_PLATE_HEIGHT
+		_draw_keyword_chips(feet, chips.slice(0, CHIP_MAX))
 
 
-func _draw_pin_at(vp: Vector2, cell: Vector2i, left: float) -> void:
-	var grid: BoardGrid = _combat.get_grid()
-	var cell_size: Vector2 = ScreenLayout.cell_size(grid, vp)
-	var c: Vector2 = ScreenLayout.cell_center(grid, vp, cell)
-	var radius: float = cell_size.y * PIN_RING_RADIUS_RATIO
-	draw_arc(c, radius, 0.0, TAU, PIN_RING_POINTS, PIN_RING_COLOR, PIN_RING_WIDTH)
-	draw_arc(c, radius, 0.0, TAU, PIN_RING_POINTS, PIN_RING_DARK, 2.0)
-	var spoke: float = cell_size.y * PIN_SPOKE_LENGTH_RATIO
-	for i: int in 4:
-		var dir: Vector2 = Vector2.RIGHT.rotated(TAU * i / 4.0)
-		draw_line(c + dir * radius, c + dir * (radius + spoke), PIN_RING_DARK, PIN_SPOKE_WIDTH)
-	# Label above the ring, clamped inside the board.
-	var font: Font = ThemeDB.fallback_font
-	var size: int = maxi(int(cell_size.y * PIN_FONT_RATIO), 8)
-	var text: String = tr(TEXT_PIN) % left
-	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x + LABEL_PAD * 2.0
-	var height: float = size * LABEL_LINE_SPACING + LABEL_PAD
-	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
-	var pos := Vector2(c.x - width * 0.5, c.y - radius - spoke - cell_size.y * PIN_TEXT_GAP_RATIO - height)
-	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
-	pos.y = maxf(pos.y, board.position.y)
-	var back := Rect2(pos, Vector2(width, height))
-	draw_rect(back, TEXT_OUTLINE_LIGHT)
-	draw_rect(back, PIN_RING_DARK, false, 2.0)
-	draw_string(font, pos + Vector2(0.0, LABEL_PAD * 0.5 + size * 0.85), text, HORIZONTAL_ALIGNMENT_CENTER, width, size, PIN_TEXT_COLOR)
+# True when the units carry HP plates (combat.json hud.corner_panels is false).
+func _hp_plates_on() -> bool:
+	var config: CombatConfig = _combat.get_config()
+	return config == null or not config.hud_corner_panels
+
+
+# 2026-10-31 (user, OSFE reference): the current HP of each living unit on a small plate under its feet,
+# while the corner HP panels are off. The number only (no bar).
+func _draw_hp_plates(vp: Vector2) -> void:
+	if not _hp_plates_on():
+		return
+	var state: CombatState = _combat.get_state()
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		var hp: float = state.player_hp if side == CombatState.Side.PLAYER else state.enemy_hp
+		if hp <= 0.0:
+			continue
+		var text: String = str(ceili(hp))
+		var rect: Rect2 = hp_plate_rect(_unit_feet_screen(vp, side, state), HudSkin.text_width(text, HP_PLATE_FONT, true))
+		var is_player: bool = side == CombatState.Side.PLAYER
+		HudSkin.text(self, Vector2(rect.position.x, floorf(rect.get_center().y + HP_PLATE_FONT * 0.36)), text, HP_PLATE_FONT, HudSkin.TEXT if is_player else HudSkin.IVORY, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true)
+
+
+## Screen rect of an HP plate for feet at [param feet] and a number [param text_w] px wide: centred on the
+## feet, HP_PLATE_GAP px below them, HP_PLATE_HEIGHT tall, the text plus HP_PLATE_PAD_X each side (at least
+## HP_PLATE_MIN_W), whole pixels.
+static func hp_plate_rect(feet: Vector2, text_w: float) -> Rect2:
+	var w: float = ceilf(maxf(text_w + HP_PLATE_PAD_X * 2.0, HP_PLATE_MIN_W))
+	return Rect2(floorf(feet.x - w * 0.5), floorf(feet.y + HP_PLATE_GAP), w, HP_PLATE_HEIGHT)
+
+
+# Screen position of the feet of [param side]'s unit (the battle canvas's anchor; the bottom-centre of
+# its board cell when the canvas is missing).
+func _unit_feet_screen(vp: Vector2, side: int, state: CombatState) -> Vector2:
+	var canvas: BattleCanvas = _combat.get_battle_canvas()
+	if canvas != null and canvas.get_unit_layer() != null:
+		var art: Vector2i = canvas.get_unit_layer().unit_feet_art(side)
+		if art.x >= 0:
+			return ScreenLayout.from_art(vp, Vector2(art))
+	var rect: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, state.cell_of(side))
+	return Vector2(rect.get_center().x, rect.end.y)
+
+
+# A row of [icon_name, bar_ratio] chips centred on [param feet].x, CHIP_FEET_GAP px under it; bar_ratio
+# < 0 = no time bar.
+func _draw_keyword_chips(feet: Vector2, chips: Array) -> void:
+	var total: float = CHIP_SIZE * chips.size() + CHIP_GAP * (chips.size() - 1)
+	var x: float = feet.x - total * 0.5
+	var y: float = feet.y + CHIP_FEET_GAP
+	for chip: Array in chips:
+		var rect := Rect2(x, y, CHIP_SIZE, CHIP_SIZE)
+		HudSkin.panel(self, rect, [0.0, CHIP_CUT, 0.0, CHIP_CUT], HudSkin.NIGHT_STONE, HudSkin.MIST, HudSkin.PANEL_LINE_WIDTH)
+		HudSkin.icon(self, str(chip[0]), rect.get_center(), CHIP_ICON_SCALE)
+		# Story 048 (user 2026-10-31): no time bar under the chip; chip[1] is ignored.
+		x += CHIP_SIZE + CHIP_GAP
 
 
 # Feint flash on the player's half: dashed grey outlines (no red, no X) and a fading label.
@@ -1911,28 +1950,19 @@ func _draw_learning_debug(vp: Vector2) -> void:
 	draw_string(ThemeDB.fallback_font, pos, text, HORIZONTAL_ALIGNMENT_RIGHT, width, LEARNING_FONT_SIZE, LEARNING_COLOR)
 
 
-# Story 020 / 023: "Cháy ×N" (orange) while the boss's half has burning cells, "Ghim" (blue) while
-# the boss is pinned, then "Rạn ×N" (purple) and "Hàn ×N" (ice blue) for its keyword stacks; one
+# Story 020 / 023, Story 046: the keywords (burn, pin, fragile, frost) moved to the chips under the
+# boss's feet (_draw_pins); only the shroud trait text stays, one
 # line left-aligned under the boss HP bar (clear of the right-aligned learning line), font shrunk
 # to fit. Nothing while the boss is dead or nothing applies.
 func _draw_boss_status(vp: Vector2) -> void:
 	if _combat.get_state().is_enemy_dead():
 		return
+	# Story 046: burn / pin / fragile / frost are keyword chips under the boss's feet (_draw_pins); only
+	# the shroud trait stays a text here.
 	var parts: Array = []
-	var stacks: int = _combat.get_burn_stacks()
-	if stacks > 0:
-		parts.append([tr(TEXT_BURN_STACKS) % stacks, BURN_STACKS_COLOR])
-	if _combat.is_boss_pinned():
-		parts.append([tr(TEXT_PINNED), PINNED_COLOR])
 	var status_host: TraitHost = _combat.get_trait_host()
 	if status_host != null and _is_shrouding(status_host):
 		parts.append([tr(TEXT_SHROUD), CLOUD_TEXT])
-	var fragile: int = _combat.get_fragile_stacks()
-	if fragile > 0:
-		parts.append([tr(TEXT_FRAGILE_STACKS) % fragile, FRAGILE_COLOR])
-	var frost: int = _combat.get_frost_stacks()
-	if frost > 0:
-		parts.append([tr(TEXT_FROST_STACKS) % frost, FROST_COLOR])
 	if parts.is_empty():
 		return
 	var boss_strip: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
@@ -2405,15 +2435,9 @@ func _draw_zones(vp: Vector2) -> void:
 	if status == null:
 		return
 	var grid: BoardGrid = _combat.get_grid()
-	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
-		for cell: Vector2i in status.thorn_cells(side):
-			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-			_draw_zone_bar(rect, status.thorn_left(side, cell), status.thorn_total_sec(side, cell),
-				THORN_BAR_BACK, THORN_BAR_FILL, minf(rect.size.x, rect.size.y) * THORN_DEPTH_RATIO)
-		for cell: Vector2i in status.sealed_cells(side):
-			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-			_draw_zone_bar(rect, status.seal_left(side, cell), status.seal_total_sec(side, cell),
-				SEAL_BAR_BACK, SEAL_BAR_FILL, SEAL_BORDER_INSET + SEAL_BORDER_WIDTH)
+	# Story 048 (user 2026-10-31): no remaining-time bars on thorn / seal cells; players learn the durations.
+	if _vfx_ok("thorn_spikes"):
+		return  # Story 048 F9: thorn entry = the thorn_spikes one-shot on the floor
 	for cell: Vector2i in _thorn_flashes.keys():
 		var alpha: float = clampf(float(_thorn_flashes[cell]) / THORN_FLASH_SEC, 0.0, 1.0)
 		draw_rect(ScreenLayout.cell_rect(grid, vp, cell), Color(THORN_FLASH, THORN_FLASH.a * alpha))
@@ -2633,10 +2657,11 @@ func _draw_trait_cells(vp: Vector2) -> void:
 	var warned: Array[Vector2i] = []
 	var slam: SlamTrait = host.get_trait(SlamTrait.ID) as SlamTrait
 	if slam != null:
-		for cell: Vector2i in slam.get_cracked_cells():
-			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-			draw_rect(rect, CRACK_TINT)
-			_draw_crack(rect)
+		if not _vfx_ok("cracked_cell"):  # Story 048 F4: else the floor draws the crack
+			for cell: Vector2i in slam.get_cracked_cells():
+				var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+				draw_rect(rect, CRACK_TINT)
+				_draw_crack(rect)
 		warned.append_array(slam.get_warning_cells())
 	var fuse: FuseCannonTrait = host.get_trait(FuseCannonTrait.ID) as FuseCannonTrait
 	if fuse != null:

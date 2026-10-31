@@ -6,13 +6,15 @@ extends Node2D
 ## (SlabPainter.paint_platform over every real cell of both halves, a front face under cells with no
 ## real cell below, the deck filling the gap between the halves with its 1 px divider line), the
 ## 9-slice slab of every real cell with stamps seeded by SlabPainter.cell_seed, the thorn tile on
-## thorn cells, the seal overlay on sealed cells, then the [method add_painter] hooks (Story 046
-## Part C's telegraph cells, the drag target cell). Units draw above all of it in UnitLayer.
-## Redraws on [method setup], on a screen size change and on [method mark_dirty] (CombatView calls it
-## when a zone is applied or expires), never per frame (art bible 8.6).
+## thorn cells, the seal overlay on sealed cells. Then its child FloorDynamicLayer (Story 046 Part C) draws the
+## boss's telegraph (TelegraphPainter) and the [method add_painter] hooks (the drag target cell). Units draw above
+## all of it in UnitLayer.
+## The static floor redraws on [method setup], on a screen size change and on [method mark_dirty] (CombatView calls
+## it when a zone is applied or expires), never per frame (art bible 8.6); only the dynamic child redraws while a
+## boss swing runs.
 ## A region without slab art falls back to SlabPainter's flat stone and the default platform palette;
 ## thorn cells without a tile get a flat thorn colour. Nothing here crashes on missing art.
-## Implements: Story 047 Part B.
+## Implements: Story 047 Part B, Story 046 Part C (dynamic sub-layer).
 
 var _combat: CombatView = null
 var _painters: Array[Callable] = []
@@ -22,7 +24,17 @@ var _stamps_tex: Texture2D = null
 var _stamps_meta: Dictionary = {}
 var _thorn_tile: Texture2D = null
 var _platform_palette: Dictionary = {}
+## Multiply tints of the two halves ({"player": Color, "enemy": Color}, ArtAssets.half_tints).
+var _half_tints: Dictionary = {}
 var _redraws: int = 0
+var _dynamic: FloorDynamicLayer = null
+
+
+func _init() -> void:
+	_dynamic = FloorDynamicLayer.new()
+	_dynamic.name = "FloorDynamicLayer"
+	_dynamic.setup(self)
+	add_child(_dynamic)
 
 
 ## Binds the layer to the battle's CombatView (grid, zones and screen size come from it), resolves
@@ -47,7 +59,13 @@ func set_region_id(id: String) -> void:
 	_thorn_tile = ArtAssets.region_texture(id, "thorn_tile")
 	var palette: Variant = ArtAssets.region(id).get("platform", {})
 	_platform_palette = palette if palette is Dictionary else {}
+	_half_tints = ArtAssets.half_tints(id)
 	mark_dirty()
+
+
+## The multiply tint of the slabs of [param side]'s half (white when the region names none).
+func half_tint(side: int) -> Color:
+	return _half_tints.get("player" if side == CombatState.Side.PLAYER else "enemy", Color.WHITE)
 
 
 ## The art region drawn right now (`forest`, ...).
@@ -55,14 +73,46 @@ func get_region_id() -> String:
 	return _region_id
 
 
-## Asks for one redraw (the board, a zone or a cell state changed). Cheap to call repeatedly.
+## Asks for one redraw (the board, a zone or a cell state changed) of the floor and its dynamic layer. Cheap to
+## call repeatedly.
 func mark_dirty() -> void:
 	queue_redraw()
+	if _dynamic != null:
+		_dynamic.queue_redraw()
 
 
 ## Number of times `_draw` ran (tests: redraws happen on setup, resize and mark_dirty only).
 func get_redraw_count() -> int:
 	return _redraws
+
+
+## Story 046 Part C: number of times the dynamic sub-layer (telegraph + painters) drew (tests).
+func get_dynamic_redraw_count() -> int:
+	return _dynamic.get_redraw_count() if _dynamic != null else 0
+
+
+## Story 046 Part C: the dynamic sub-layer drawn after the static floor (telegraph, painters).
+func get_dynamic_layer() -> FloorDynamicLayer:
+	return _dynamic
+
+
+## Story 046 Part C: the boss telegraph to draw now (TelegraphPainter.state_for on the boss's CutActor, the
+## combat config and SettingsStore reduce motion); {} when unbound or the boss is not swinging.
+func telegraph_state() -> Dictionary:
+	if _combat == null or not is_instance_valid(_combat) or _combat.get_boss() == null:
+		return {}
+	return TelegraphPainter.state_for(_combat.get_boss().get_actor(), _combat.get_config(), SettingsStore.shared().get_reduce_motion())
+
+
+## Story 046 Part C: what the dynamic sub-layer draws on [param canvas]: the telegraph [param state], then every
+## [method add_painter] hook as `fn(canvas, self)`.
+func paint_dynamic(canvas: Node2D, state: Dictionary) -> void:
+	if _combat == null or not is_instance_valid(_combat) or _combat.get_grid() == null:
+		return
+	TelegraphPainter.paint(canvas, self, state, _combat.get_config())
+	for painter: Callable in _painters:
+		if painter.is_valid():
+			painter.call(canvas, self)
 
 
 ## Rectangle of board cell [param cell] in art px: ScreenLayout.cell_rect converted with
@@ -74,8 +124,8 @@ func cell_art_rect(cell: Vector2i) -> Rect2i:
 	return ScreenLayout.to_art_rect(vp, ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
 
 
-## Registers [param fn] (`fn(canvas: Node2D, floor: FloorLayer)`), run after the cells and before the
-## units on every redraw. A painter added twice runs once.
+## Registers [param fn] (`fn(canvas: Node2D, floor: FloorLayer)`), run by the dynamic sub-layer after the
+## cells and the telegraph and before the units ([param canvas] is that sub-layer). A painter added twice runs once.
 func add_painter(fn: Callable) -> void:
 	if not _painters.has(fn):
 		_painters.append(fn)
@@ -110,11 +160,8 @@ func _draw() -> void:
 	SlabPainter.paint_platform(self, rects, has_cell_below, _platform_palette, divider_x)
 	for i: int in cells.size():
 		var side: int = CombatState.Side.PLAYER if grid.is_player_cell(cells[i]) else CombatState.Side.ENEMY
-		SlabPainter.paint_cell(self, rects[i], SlabPainter.cell_seed(side, cells[i].x, cells[i].y), _nine, _stamps_tex, _stamps_meta)
+		SlabPainter.paint_cell(self, rects[i], SlabPainter.cell_seed(side, cells[i].x, cells[i].y), _nine, _stamps_tex, _stamps_meta, half_tint(side))
 	_draw_zones(grid)
-	for painter: Callable in _painters:
-		if painter.is_valid():
-			painter.call(self, self)
 
 
 # Thorn cells (tile over the whole slab) and sealed cells of both halves, read from StatusEffects

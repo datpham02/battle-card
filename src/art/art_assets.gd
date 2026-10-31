@@ -121,6 +121,20 @@ static func fallback_bands(region_id: String) -> Dictionary:
 	}
 
 
+## 2026-10-31 (user: "sân của ta và địch có màu khác nhau để phân biệt"): the multiply tints FloorLayer lays on
+## the slabs of each half, `{"player": Color, "enemy": Color}`: the region's own `half_tints` (region.json),
+## else REGIONS_FILE's `half_tints`, else white (no tint).
+static func half_tints(region_id: String) -> Dictionary:
+	var shared: Variant = _load_regions_map().get("half_tints", {})
+	var own: Variant = region(region_id).get("half_tints", {})
+	var s: Dictionary = shared if shared is Dictionary else {}
+	var o: Dictionary = own if own is Dictionary else {}
+	return {
+		"player": _html_color(o.get("player", s.get("player", null)), Color.WHITE),
+		"enemy": _html_color(o.get("enemy", s.get("enemy", null)), Color.WHITE),
+	}
+
+
 ## A cached texture by full `res://` path; `null` (one warning) when it cannot be loaded.
 static func texture(path: String) -> Texture2D:
 	if _textures.has(path):

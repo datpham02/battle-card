@@ -56,5 +56,17 @@
 		"crumble_warn_sec": 0.6,
 		"fall_sec": 4.0,
 		"fall_damage": 8.0
+	},
+	"telegraph": {
+		"fill": [0.0, 0.45],
+		"stripe": [0.5, 1.0],
+		"edge": [0.3, 1.0],
+		"queued_stripe_alpha": 0.35,
+		"reduce_motion_steps": [0.0, 0.5, 1.0]
+	}
+,
+	"hud": {
+		"hp_trail_sec": 0.4,
+		"corner_panels": false
 	}
 }

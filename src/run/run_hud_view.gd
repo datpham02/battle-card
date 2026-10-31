@@ -65,8 +65,18 @@ const OUTLINE_WIDTH: float = 4.0
 const PAUSE_BAR_WIDTH_RATIO: float = 0.14
 const PAUSE_BAR_HEIGHT_RATIO: float = 0.46
 const PAUSE_BAR_GAP_RATIO: float = 0.14
+## Story 046 Part B: the pause icon tile (art bible 7.4: 55 px icons at 720p, scaled by height / 720).
+const PAUSE_ICON_NAME: String = "pause"
+const PAUSE_ICON_SIZE: float = 55.0
+const PAUSE_REF_HEIGHT: float = 720.0
+const PAUSE_TILE_CUT: float = 6.0
+const PAUSE_PRESS_DROP: float = 2.0
 
 const LABEL_FONT_SIZE: int = 16
+## 2026-10-31: the gold number in the top-right corner (720p px, scaled by height / 720).
+const GOLD_FONT_SIZE: int = 18
+## Story 046: smallest size the match label shrinks to so it fits its rect.
+const MATCH_LABEL_MIN_FONT_SIZE: int = 14
 const BAND_TITLE_FONT_SIZE: int = 64
 const BAND_NAME_FONT_SIZE: int = 36
 const BAND_HINT_FONT_SIZE: int = 24
@@ -127,6 +137,10 @@ const TEXT_CLEARED: String = "ui.run_hud.cleared"
 const TEXT_RESTART: String = "ui.run_hud.restart"
 ## Story 016 pause overlay; Story 019: the second button leaves the run (it stays saved).
 const TEXT_PAUSE_TITLE: String = "ui.run_hud.pause_title"
+## Story 046 Part C: "<move name> · <N> cells" of the boss swing winding up, under the pause title (the board no
+## longer shows the move name or the cell count); the cell count uses the HUD's "%d cells" key.
+const TEXT_PAUSE_BOSS_SWING: String = "ui.run_hud.pause_boss_swing"
+const TEXT_PAUSE_BOSS_CELLS: String = "ui.hud.cells"
 const TEXT_RESUME: String = "ui.run_hud.resume"
 const TEXT_LEAVE_RUN: String = "ui.run_hud.leave_run"
 ## Story 044: the pause panel button that flips controls.movement; its label names the CURRENT mode.
@@ -368,6 +382,7 @@ func _draw() -> void:
 		RunState.Phase.PLAYING:
 			_draw_match_label(vp)
 			_draw_deck_label(vp)
+			_draw_gold(vp)
 			_draw_pause_button(vp)
 			if _controller.is_paused():
 				_draw_paused(vp)
@@ -384,7 +399,7 @@ func _draw() -> void:
 # Centred single-line text at baseline [param y] over the width of [param rect].
 # Largest font size <= [param size] (never below MIN_FIT_FONT_SIZE) at which [param text] fits [param width].
 func _fit_line_font(text: String, width: float, size: int) -> int:
-	var font: Font = ThemeDB.fallback_font
+	var font: Font = HudSkin.font_semibold()
 	var fitted: int = size
 	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
 		fitted -= 1
@@ -392,7 +407,7 @@ func _fit_line_font(text: String, width: float, size: int) -> int:
 
 
 func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+	draw_string(HudSkin.font_semibold(), Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
 
 
 # Translated opponent name of match [param index] (name_key, or a legacy literal display_name).
@@ -422,17 +437,40 @@ func _draw_match_label(vp: Vector2) -> void:
 	var arena: String = _arena_name()
 	if not arena.is_empty():
 		text = tr(TEXT_MATCH_LABEL_ARENA) % [text, arena]
+	# Story 046 Part B: HudSkin outlined text (TEXT, 16 px, down to 14 px to fit) so it reads over the backdrop.
 	var rect: Rect2 = ScreenLayout.run_match_label_rect(vp)
-	_text(rect, rect.get_center().y + LABEL_FONT_SIZE * 0.35, text, LABEL_FONT_SIZE, LABEL_COLOR)
+	var size: int = LABEL_FONT_SIZE
+	while size > MATCH_LABEL_MIN_FONT_SIZE and HudSkin.text_width(text, size) > rect.size.x:
+		size -= 1
+	HudSkin.text(self, Vector2(rect.position.x, rect.get_center().y + size * 0.35), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
 
 
-# Story 019: "Bộ: N lá", right-aligned in the top margin; nothing outside a run.
+# 2026-10-31 (user: "tiền góc phải", OSFE top row): the run's gold in the top-right corner, on the top HUD row
+# (ScreenLayout.hud_top_row_rect): ShopView's coin left of the number, HudSkin outlined text so it reads over
+# the canopy. Nothing outside a run.
+func _draw_gold(vp: Vector2) -> void:
+	if _flow == null or _flow.get_run() == null:
+		return
+	var s: float = vp.y / ScreenLayout.HUD_CORNER_PANEL_REF_HEIGHT
+	var row: Rect2 = ScreenLayout.hud_top_row_rect(vp)
+	var size: int = roundi(GOLD_FONT_SIZE * s)
+	var text: String = str(_flow.get_gold())
+	var right: float = vp.x - ScreenLayout.HUD_TOP_ROW_INSET_PX * s
+	var width: float = HudSkin.text_width(text, size, true)
+	HudSkin.text(self, Vector2(right - width, floorf(row.get_center().y + size * 0.36)), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
+	var radius: float = size * ShopView.COIN_RADIUS_RATIO
+	ShopView.draw_coin(self, Vector2(right - width - ShopView.COIN_GAP - radius, row.get_center().y), radius)
+
+
+# Story 019: "Bộ: N lá", right of the pause tile (ScreenLayout.run_deck_label_rect); nothing outside a run.
 func _draw_deck_label(vp: Vector2) -> void:
 	if _flow == null or _flow.get_run() == null:
 		return
 	var rect: Rect2 = ScreenLayout.run_deck_label_rect(vp)
 	var text: String = tr(TEXT_DECK_LABEL) % _flow.get_run().deck_ids.size()
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + LABEL_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x, LABEL_FONT_SIZE, LABEL_COLOR)
+	# Story 046: outlined light text, readable on the battle backdrop. 2026-10-31: right of the pause tile
+	# (the boss's corner panel owns the top-right corner), left-aligned.
+	HudSkin.text(self, Vector2(rect.position.x, rect.get_center().y + LABEL_FONT_SIZE * 0.35), text, LABEL_FONT_SIZE, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x)
 
 
 # Display name of the current battle's arena (+ variant marker); "" when the battle has none
@@ -662,7 +700,7 @@ func _deck_line(run: RunSession, max_width: float, font_size: int) -> String:
 		if level > 1:
 			name += LEVEL_SEPARATOR + tr(TEXT_LEVEL_SUFFIX) % level
 		parts.append(name)
-	var font: Font = ThemeDB.fallback_font
+	var font: Font = HudSkin.font_semibold()
 	var line: String = DECK_LINE_SEPARATOR.join(parts)
 	while parts.size() > 1 and font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x > max_width:
 		parts.pop_back()
@@ -677,19 +715,26 @@ func _elapsed_text(seconds: float) -> String:
 	return "%d:%02d" % [minutes, total - minutes * 60]
 
 
-# Story 016: the pause button in the HUD band — a neutral button with a "||" glyph, dimmed
-# while the controller cannot pause (skill menu open, swing lockout, already paused).
+# Story 016: the pause button in the HUD band, dimmed while the controller cannot pause (skill menu open,
+# swing lockout, already paused). Story 046 Part B: a PAUSE_ICON_SIZE Night Stone tile with the 55 px "pause"
+# icon (HudSkin), centred in ScreenLayout.pause_button_rect, which stays the hit area (>= the tile); pressed
+# = the tile drops PAUSE_PRESS_DROP px. Without the icon sheet the old two-bar glyph is drawn instead.
 func _draw_pause_button(vp: Vector2) -> void:
 	var rect: Rect2 = ScreenLayout.pause_button_rect(vp)
 	var enabled: bool = _controller.can_pause()
-	UiButtons.draw_button(self, rect, "", UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, rect), enabled)
-	var side: float = rect.size.y
+	var s: float = vp.y / PAUSE_REF_HEIGHT
+	var side: float = minf(floorf(PAUSE_ICON_SIZE * s), rect.size.y)
+	var center: Vector2 = rect.get_center().floor()
+	if enabled and UiButtons.is_pressed_at(self, rect):
+		center.y += PAUSE_PRESS_DROP
+	var tile := Rect2(center - Vector2(side, side) * 0.5, Vector2(side, side))
+	var alpha: float = 1.0 if enabled else UiButtons.DIM_ALPHA
+	HudSkin.panel(self, tile, [PAUSE_TILE_CUT * s, PAUSE_TILE_CUT * s, PAUSE_TILE_CUT * s, PAUSE_TILE_CUT * s], Color(HudSkin.NIGHT_STONE, alpha), Color(HudSkin.MIST, alpha))
+	if HudSkin.icon(self, PAUSE_ICON_NAME, center, side / PAUSE_ICON_SIZE, Color(1.0, 1.0, 1.0, alpha)):
+		return
 	var bar := Vector2(side * PAUSE_BAR_WIDTH_RATIO, side * PAUSE_BAR_HEIGHT_RATIO)
 	var gap: float = side * PAUSE_BAR_GAP_RATIO
-	var color: Color = TEXT_WHITE
-	if not enabled:
-		color.a *= UiButtons.DIM_ALPHA
-	var center: Vector2 = rect.get_center()
+	var color := Color(HudSkin.TEXT, alpha)
 	draw_rect(Rect2(center - Vector2(gap * 0.5 + bar.x, bar.y * 0.5), bar), color)
 	draw_rect(Rect2(center - Vector2(-gap * 0.5, bar.y * 0.5), bar), color)
 
@@ -698,10 +743,29 @@ func _draw_pause_button(vp: Vector2) -> void:
 func _draw_paused(vp: Vector2) -> void:
 	var panel: Rect2 = _draw_panel(vp)
 	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_PAUSE_TITLE), TITLE_FONT_SIZE, TEXT_LIGHT)
+	var swing: String = boss_swing_line()
+	if not swing.is_empty():
+		_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, swing, _fit_line_font(swing, panel.size.x, SMALL_FONT_SIZE), TEXT_LIGHT)
 	_draw_buttons(vp)
 	var movement_rect: Rect2 = movement_button_rect(vp, _button_labels().size())
 	var label: String = TEXT_MOVEMENT_PAD if SettingsStore.shared().is_pad() else TEXT_MOVEMENT_JOYSTICK
 	UiButtons.draw_button(self, movement_rect, tr(label), UiButtons.Style.SECONDARY, UiButtons.is_pressed_at(self, movement_rect), true, BUTTON_PAIR_FONT_SIZE)
+
+
+## Story 046 Part C: the pause panel's boss swing line, "<move name> · <N> cells" of the swing the boss is winding
+## up (its queued combo swing only exists while that one runs); "" when no battle or no boss swing.
+func boss_swing_line() -> String:
+	if not _has_controller() or _controller.get_battle() == null:
+		return ""
+	var view := _controller.get_battle().get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
+	if view == null or view.get_boss() == null or view.get_skill_config() == null:
+		return ""
+	var actor: CutActor = view.get_boss().get_actor()
+	if not actor.is_swinging():
+		return ""
+	var id: String = actor.get_skill_id()
+	var move: String = tr(str(view.get_skill_config().get_skill(id).get("name_key", id)))
+	return tr(TEXT_PAUSE_BOSS_SWING) % [move, tr(TEXT_PAUSE_BOSS_CELLS) % actor.get_cells().size()]
 
 
 ## Story 044: the pause panel button that flips controls.movement (joystick / pad): one full-width

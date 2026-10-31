@@ -62,6 +62,8 @@ func _init() -> void:
 	test_art_scale_and_rect_1024x768()
 	test_to_art_from_art_round_trip(grids)
 	test_board_band_top_20_percent()
+	test_corner_hp_panels()
+	test_top_row_relics_left_gold_right()
 	print("FAILS=%d" % fails)
 	quit(fails)
 
@@ -439,3 +441,40 @@ func test_board_band_top_20_percent() -> void:
 		check("test_hud_rect_%s_is_3_to_8_percent_got_%s_%s" % [vp, hud.position.y, hud.end.y], _near(hud.position.y, vp.y * 0.03, EPS) and _near(hud.end.y, vp.y * (0.03 + 0.61 * 0.2), EPS))
 		check("test_hud_rect_%s_ends_above_the_board_band" % vp, hud.end.y <= area.position.y + EPS)
 	check("test_board_band_top_144_px_at_720p", _near(ScreenLayout.board_area_rect(Vector2(1280, 720)).position.y, 144.0, EPS))
+
+
+# 2026-10-31 (user, OSFE reference): the HP panels sit flush in the top corners, 52 px tall at 720p (above a
+# v3 hero's head on a 5x5 back row), at most 28 % of the width; the match label spans the gap between them and
+# the deck label sits right of the pause tile, left of the boss panel.
+func test_corner_hp_panels() -> void:
+	for vp: Vector2 in [Vector2(1280, 720), Vector2(1600, 720), Vector2(1024, 768)]:
+		var s: float = vp.y / 720.0
+		var left: Rect2 = ScreenLayout.hud_panel_rect(vp, 0)
+		var right: Rect2 = ScreenLayout.hud_panel_rect(vp, 1)
+		check("test_corner_panel_%s_left_flush_top_left" % vp, left.position == Vector2.ZERO)
+		check("test_corner_panel_%s_right_flush_top_right" % vp, _near(right.end.x, vp.x, EPS) and _near(right.position.y, 0.0, EPS))
+		check("test_corner_panel_%s_height_52_at_720p_got_%s" % [vp, left.size.y], _near(left.size.y, floorf(52.0 * s), EPS) and _near(right.size.y, left.size.y, EPS))
+		check("test_corner_panel_%s_width_at_most_28_percent_got_%s" % [vp, left.size.x], left.size.x <= vp.x * 0.28 + EPS and _near(right.size.x, left.size.x, EPS))
+		check("test_corner_panel_%s_ends_above_the_board_band" % vp, left.end.y < ScreenLayout.board_area_rect(vp).position.y)
+		var title: Rect2 = ScreenLayout.run_match_label_rect(vp)
+		check("test_match_label_%s_between_the_panels" % vp, title.position.x >= left.end.x and title.end.x <= right.position.x and title.size.x > 0.0)
+		var deck: Rect2 = ScreenLayout.run_deck_label_rect(vp)
+		var pause: Rect2 = ScreenLayout.pause_button_rect(vp)
+		check("test_deck_label_%s_right_of_the_pause_centre_left_of_the_boss_panel" % vp, deck.position.x > pause.get_center().x and deck.end.x <= right.position.x and deck.size.x > 0.0)
+	# User 2026-10-31: a short OSFE-like bar, 260 px panel at 720p.
+	check("test_corner_panel_1280x720_is_260x52", ScreenLayout.hud_panel_rect(Vector2(1280, 720), 0).size == Vector2(260, 52))
+
+
+# 2026-10-31 (user: "debuff hay buff thì hiện ở góc trái, tiền góc phải"): the relic row starts at the top-left
+# corner, on the top HUD row (under the match label, above the board band), and ends before the Resonant-shape
+# tile; the top row is the same band the gold and the boss's held points use.
+func test_top_row_relics_left_gold_right() -> void:
+	for vp: Vector2 in [Vector2(1280, 720), Vector2(1600, 720), Vector2(1024, 768)]:
+		var s: float = vp.y / 720.0
+		var relics: Rect2 = ScreenLayout.hud_relic_strip_rect(vp)
+		var row: Rect2 = ScreenLayout.hud_top_row_rect(vp)
+		check("test_relic_row_%s_starts_at_the_left_corner" % vp, _near(relics.position.x, floorf(ScreenLayout.HUD_TOP_ROW_INSET_PX * s), EPS))
+		check("test_relic_row_%s_on_the_top_row" % vp, _near(relics.position.y, row.position.y, EPS) and _near(relics.size.y, row.size.y, EPS))
+		check("test_relic_row_%s_below_the_match_label" % vp, relics.position.y >= ScreenLayout.run_match_label_rect(vp).end.y - EPS)
+		check("test_relic_row_%s_above_the_board_band" % vp, row.end.y < ScreenLayout.board_area_rect(vp).position.y)
+		check("test_relic_row_%s_ends_before_the_featured_tile" % vp, relics.end.x < ScreenLayout.featured_icon_rect(vp).position.x and relics.size.x > 0.0)

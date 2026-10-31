@@ -119,6 +119,15 @@ Combat start values, timing caps and the board shape (Stories 003, 007). The boa
 | `zones.thorn_sec` | number > 0 | s | How long a thorn cell lasts | 3.0 |
 | `zones.thorn_damage` | number >= 0 | HP | Damage each time a unit CHANGES cell into a thorn cell (walk, push, teleport); standing in it when it forms does not trigger | 6 |
 | `zones.thorn_fragile_stacks` | int >= 0 | stacks | Ran stacks added per entry into a thorn cell | 1 |
+| `telegraph` | object | - | Story 046 Part C: the boss's red telegraph tiles on the player's half fade in with the swing's progress k = 1 - time_left / windup (no countdown label; full strength exactly when the hit lands; art bible 4, hud.md E-17). Keys below, validated together in `CombatConfig._parse_telegraph` (one invalid -> all fall back with a warning) | defaults below |
+| `telegraph.fill` | [from, to], each 0..1 | alpha | Flat red #E5293B fill alpha at k = 0 and k = 1 (lerped) | [0.0, 0.45] |
+| `telegraph.stripe` | [from, to], each 0..1 | alpha | 45-degree stripe texture (`fx_telegraph_stripe_8.png`) alpha at k = 0 and k = 1 | [0.5, 1.0] |
+| `telegraph.edge` | [from, to], each 0..1 | alpha | 2 px red edge + 1 px Ink outer edge alpha at k = 0 and k = 1 | [0.3, 1.0] |
+| `telegraph.queued_stripe_alpha` | number 0..1 | alpha | Stripe alpha of a QUEUED boss combo swing (Story 013), drawn at k = 0 with no fill | 0.35 |
+| `telegraph.reduce_motion_steps` | array of >= 2 numbers 0..1, non-decreasing | k | With reduce motion on, k snaps to these levels (n levels: level i covers [i/n, (i+1)/n)) | [0.0, 0.5, 1.0] |
+| `hud` | object | - | Story 046 Part B: timing of the sharp Z1 header (`CombatView._draw_hud`, art bible 7.5). Parsed in `CombatConfig._parse_hud`; an invalid value falls back with a warning | defaults below |
+| `hud.hp_trail_sec` | number >= 0 | seconds | The #B8B0A0 damage trail behind an HP fill shrinks linearly to the new HP over this time (0 = no trail) | 0.4 |
+| `hud.corner_panels` | bool | - | 2026-10-31 (user): `false` hides the HP panels in the top corners during a battle; each unit shows its HP number (number only, no bar) on a plate under its feet and the boss's held points float in the top-right corner. `true` draws the corner panels (name, HP bar, Engraving / boss number) | false |
 
 All five Story 023 keys are validated together in `CombatConfig._parse_keywords` (one invalid -> all five fall back) and passed to `StatusEffects.configure_keywords` by `configure_status`.
 | `player_step_cooldown_sec` | number >= 0 | seconds | DEPRECATED, not shipped: if present it overrides the computed value on every board (warning) | absent |

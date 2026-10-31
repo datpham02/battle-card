@@ -43,6 +43,7 @@ func _init() -> void:
 	test_hashes()
 	test_region_for_chapter()
 	test_fallback_bands()
+	test_half_tints()
 	print("FAILS=%d" % fails)
 	quit(fails)
 
@@ -143,3 +144,17 @@ func test_fallback_bands() -> void:
 	var unknown: Dictionary = Assets.fallback_bands("nowhere")
 	check("fallback_bands of an unknown region falls back to the default bands (no crash)", unknown.get("sky") is Color and unknown["sky"] == Color.html(String(Assets.DEFAULT_BANDS["sky"])))
 	check("fallback_bands never returns the old beige (MainScreen.BG_COLOR) for forest", forest["sky"] != MainScreen.BG_COLOR and forest["ground"] != MainScreen.BG_COLOR)
+
+
+# 2026-10-31 (user): the two halves differ in colour; the enemy's is the gloomier one. Shared tints in
+# regions.json; a region without its own uses them; neither is red-dominant (red = telegraph, art bible P3).
+func test_half_tints() -> void:
+	var t: Dictionary = Assets.half_tints("forest")
+	check("half_tints forest player is #B8CCE8", t["player"] == Color("B8CCE8"))
+	check("half_tints forest enemy is #9A84A4", t["enemy"] == Color("9A84A4"))
+	check("half_tints unknown region uses the shared tints", Assets.half_tints("no_such_region")["enemy"] == Color("9A84A4"))
+	var e: Color = t["enemy"]
+	var pl: Color = t["player"]
+	check("enemy half darker than the player half", e.get_luminance() < pl.get_luminance())
+	check("enemy tint is not red-dominant (red is the telegraph)", e.r <= maxf(e.g, e.b) + 0.05)
+	check("player tint is not red-dominant", pl.r <= maxf(pl.g, pl.b))

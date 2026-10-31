@@ -10,6 +10,9 @@ const IDLE_FRAMES: int = 4
 const THORN_SEC: float = 3.0
 const SEAL_SEC: float = 2.0
 const BOGUS_REGION: String = "nowhere_047"
+const BURN_SEC: float = 1.0
+const BURN_STEP_SEC: float = 0.1
+const BURN_STEPS: int = 4
 
 var fails: int = 0
 
@@ -53,6 +56,8 @@ func _initialize() -> void:
 	await test_region_id_is_forest_for_ch1(canvas, combat)
 	test_draws_with_the_forest_textures_present(canvas)
 	await test_no_redraw_while_nothing_changes(canvas)
+	await test_boss_swing_redraws_only_the_dynamic_layer(canvas, combat)
+	await test_burning_cell_redraws_the_dynamic_layer_until_it_burns_out(canvas, combat)
 	await test_zone_apply_marks_the_floor_dirty(canvas, combat)
 	await test_zone_expiry_marks_the_floor_dirty(canvas, combat)
 	test_cut_hud_no_longer_draws_thorn_or_seal_cells(battle)
@@ -115,6 +120,86 @@ func test_no_redraw_while_nothing_changes(canvas: BattleCanvas) -> void:
 	_check("test_backdrop_redraw_count_unchanged_over_%d_idle_frames" % IDLE_FRAMES, canvas.get_backdrop_layer().get_redraw_count() == backdrop_before)
 
 
+# Story 046 Part C: the telegraph lives in the FloorDynamicLayer; a boss swing redraws that child while its progress
+# moves and once more when it ends, never the static floor (art bible 8.6).
+func test_boss_swing_redraws_only_the_dynamic_layer(canvas: BattleCanvas, combat: CombatView) -> void:
+	# Arrange: time frozen so only the test moves the swing.
+	var floor_layer: FloorLayer = canvas.get_floor_layer()
+	var actor: CutActor = combat.get_boss().get_actor()
+	combat.freeze_time = true
+	actor.cancel()
+	await _settle()
+	var floor_before: int = floor_layer.get_redraw_count()
+	var dyn_idle: int = floor_layer.get_dynamic_redraw_count()
+	await _settle()
+	_check("test_dynamic_layer_idle_without_swing", floor_layer.get_dynamic_redraw_count() == dyn_idle)
+	# Act: a swing at three progress values, a frozen stretch, then the swing ends.
+	actor.begin_swing([combat.get_state().player_cell] as Array[Vector2i], "kiem_khi", false)
+	for k: float in [0.0, 0.5, 1.0]:
+		actor.debug_set_progress(k)
+		await process_frame
+		await process_frame
+	var dyn_running: int = floor_layer.get_dynamic_redraw_count()
+	await _settle()
+	var dyn_frozen: int = floor_layer.get_dynamic_redraw_count()
+	actor.cancel()
+	await _settle()
+	var dyn_ended: int = floor_layer.get_dynamic_redraw_count()
+	await _settle()
+	# Assert
+	_check("test_dynamic_layer_redraws_as_progress_moves_got_%d" % (dyn_running - dyn_idle), dyn_running - dyn_idle >= 3)
+	_check("test_dynamic_layer_still_while_progress_frozen", dyn_frozen == dyn_running)
+	_check("test_dynamic_layer_redraws_once_to_clear_got_%d" % (dyn_ended - dyn_frozen), dyn_ended == dyn_frozen + 1)
+	_check("test_dynamic_layer_idle_after_the_swing", floor_layer.get_dynamic_redraw_count() == dyn_ended)
+	_check("test_static_floor_not_redrawn_by_the_swing", floor_layer.get_redraw_count() == floor_before)
+	_check("test_telegraph_state_empty_after_the_swing", floor_layer.telegraph_state().is_empty())
+	combat.freeze_time = false
+
+
+# Story 046 Part C follow-up: burning cells live in the FloorDynamicLayer (BurnPainter); it redraws while the time
+# bar shrinks, once more when the last burn ends, then stays idle; the static floor is untouched.
+func test_burning_cell_redraws_the_dynamic_layer_until_it_burns_out(canvas: BattleCanvas, combat: CombatView) -> void:
+	# Arrange: time frozen so only the test ticks the burn; a cell nobody stands on (no damage, no death).
+	var floor_layer: FloorLayer = canvas.get_floor_layer()
+	var status: StatusEffects = combat.get_status()
+	var state: CombatState = combat.get_state()
+	combat.freeze_time = true
+	combat.get_boss().get_actor().cancel()
+	var cell: Vector2i = Vector2i(-1, -1)
+	for c: Vector2i in combat.get_grid().enemy_cells():
+		if c != state.enemy_cell and c != state.player_cell:
+			cell = c
+			break
+	_check("test_burn_found_an_empty_cell", cell != Vector2i(-1, -1))
+	await _settle()
+	var floor_before: int = floor_layer.get_redraw_count()
+	var dyn_idle: int = floor_layer.get_dynamic_redraw_count()
+	# Act: ignite, then shrink the burn a step per frame.
+	status.ignite([cell] as Array[Vector2i], BURN_SEC, BURN_SEC, 0.0)
+	await process_frame
+	await process_frame
+	_check("test_burn_state_has_the_cell", floor_layer.get_dynamic_layer().burn_state().size() == 1)
+	for _i: int in BURN_STEPS:
+		status.tick(BURN_STEP_SEC, state)
+		await process_frame
+		await process_frame
+	var dyn_burning: int = floor_layer.get_dynamic_redraw_count()
+	await _settle()
+	var dyn_frozen: int = floor_layer.get_dynamic_redraw_count()
+	status.tick(BURN_SEC, state)
+	await _settle()
+	var dyn_out: int = floor_layer.get_dynamic_redraw_count()
+	await _settle()
+	# Assert
+	_check("test_burn_redraws_while_it_burns_got_%d" % (dyn_burning - dyn_idle), dyn_burning - dyn_idle >= BURN_STEPS + 1)
+	_check("test_burn_still_while_time_frozen", dyn_frozen == dyn_burning)
+	_check("test_burn_redraws_once_when_it_burns_out_got_%d" % (dyn_out - dyn_frozen), dyn_out == dyn_frozen + 1)
+	_check("test_burn_idle_after_burning_out", floor_layer.get_dynamic_redraw_count() == dyn_out)
+	_check("test_burn_state_empty_after_burning_out", floor_layer.get_dynamic_layer().burn_state().is_empty())
+	_check("test_static_floor_not_redrawn_by_the_burn", floor_layer.get_redraw_count() == floor_before)
+	combat.freeze_time = false
+
+
 func test_zone_apply_marks_the_floor_dirty(canvas: BattleCanvas, combat: CombatView) -> void:
 	# Arrange
 	var status: StatusEffects = combat.get_status()
@@ -158,6 +243,7 @@ func test_cut_hud_no_longer_draws_thorn_or_seal_cells(battle: Node) -> void:
 	var hud: Node = huds[0]
 	_check("test_cut_hud_has_no__draw_thorn_cell", not hud.has_method("_draw_thorn_cell"))
 	_check("test_cut_hud_has_no__draw_seal_cell", not hud.has_method("_draw_seal_cell"))
+	_check("test_cut_hud_has_no__draw_burning", not hud.has_method("_draw_burning"))
 	_check("test_cut_hud_keeps__draw_zones_for_the_timer_bars", hud.has_method("_draw_zones") and hud.has_method("_draw_zone_bar"))
 
 

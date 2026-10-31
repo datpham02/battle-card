@@ -177,6 +177,26 @@ func get_duration() -> float:
 	return _duration if _swinging else 0.0
 
 
+## Story 046 Part C: how far the running swing's windup has gone, `1 - time_left / duration`, clamped to 0..1
+## (0 when idle). The duration is the one [method begin_swing] stored AFTER every override and multiplier
+## ([member duration_mult], [member duration_modifier], `duration_override`, [member cast_time_modifier]), so
+## the value always reaches 1 exactly when the swing resolves. A 0 s windup (a relic floored it) reads 1.
+## The boss's telegraph tiles fade in with it (CombatConfig.telegraph_*_alpha).
+func get_progress() -> float:
+	if not _swinging:
+		return 0.0
+	if _duration <= 0.0:
+		return 1.0
+	return clampf(1.0 - maxf(_time_left, 0.0) / _duration, 0.0, 1.0)
+
+
+## DEV-ONLY (DemoArgs `--telegraph-k`): moves the running swing to progress [param k] (0..1) by setting its time
+## left to `(1 - k) * duration`. No-op when idle. Never used by gameplay.
+func debug_set_progress(k: float) -> void:
+	if _swinging:
+		_time_left = (1.0 - clampf(k, 0.0, 1.0)) * _duration
+
+
 ## Cells of the current swing (empty when idle).
 func get_cells() -> Array[Vector2i]:
 	return _cells.duplicate()

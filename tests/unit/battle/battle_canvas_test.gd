@@ -133,15 +133,22 @@ func test_unit_feet_inside_the_cell(canvas: BattleCanvas, combat: CombatView) ->
 		var rect: Rect2i = floor_layer.cell_art_rect(cell)
 		var feet: Vector2i = units.unit_feet_art(side)
 		_check("test_unit_feet_side_%d_inside_its_cell_got_%s_in_%s" % [side, feet, rect], rect.has_point(feet))
-		_check("test_unit_feet_side_%d_three_art_px_above_the_front_edge" % side, feet.y == rect.end.y - UnitLayer.FEET_INSET_ART)
+		var want_y: int = mini(rect.position.y + roundi(rect.size.y * UnitLayer.FEET_DEPTH_RATIO), rect.end.y - UnitLayer.FEET_INSET_ART)
+		_check("test_unit_feet_side_%d_at_the_osfe_depth_of_the_cell" % side, feet.y == want_y)
 		@warning_ignore("integer_division")
 		var centre_x: int = rect.position.x + rect.size.x / 2
 		_check("test_unit_feet_side_%d_at_the_cell_centre_x" % side, feet.x == centre_x)
 		# The rings in CombatView sit where they used to: the cell centre (within one art px of rounding).
 		var vp: Vector2 = combat.get_viewport_rect().size
 		var centre: Vector2 = ScreenLayout.cell_center(combat.get_grid(), vp, cell)
-		var via_feet: Vector2 = ScreenLayout.from_art(vp, Vector2(feet)) - Vector2(0.0, ScreenLayout.cell_size(combat.get_grid(), vp).y * 0.5 - UnitLayer.FEET_INSET_ART * ScreenLayout.art_scale(vp))
-		_check("test_ring_centre_side_%d_within_one_art_px_of_the_cell_centre" % side, centre.distance_to(via_feet) <= float(ScreenLayout.art_scale(vp)) + 0.01)
+		var ring: Vector2 = combat.call("_unit_center", vp, side)
+		_check("test_ring_centre_side_%d_is_the_cell_centre" % side, centre.distance_to(ring) <= 0.01)
+		# Story 048 / OSFE stance: the ground shadow rows stay inside the cell.
+		var rows: Array[Rect2i] = UnitLayer.shadow_rows(rect.size, feet)
+		var inside: bool = not rows.is_empty()
+		for row: Rect2i in rows:
+			inside = inside and rect.encloses(row)
+		_check("test_shadow_side_%d_inside_its_cell" % side, inside)
 
 
 func test_painters_add_remove(canvas: BattleCanvas) -> void:

@@ -62,6 +62,46 @@ const HAND_PIECE_PAD: float = 2.0
 const HAND_PIECE_MAX_UNIT: float = 13.0
 const HAND_ROTTEN_GREY: Color = Color(0.55, 0.55, 0.55)
 const HAND_ROTTEN_X: Color = Color(0.2, 0.2, 0.22, 0.9)
+## Story 046 Part B: the sharp Z1 header (art bible 7.4 / 7.5, mock asset-slice1-art-check/58). Numbers in px at
+## 720p, scaled by height / HUD_REF_HEIGHT; the trail timing is data (combat.json hud.hp_trail_sec).
+## 2026-10-31 (user, OSFE reference): the two panels moved flush into the top corners and shrank to 52 px tall
+## (ScreenLayout.hud_panel_rect), three rows: name (+ number / boss hand), HP bar, Engraving / boss number.
+const HUD_REF_HEIGHT: float = 720.0
+## 45-degree cut of the panel corner nearest the screen centre (bottom-right / bottom-left).
+const HUD_PANEL_CUT: float = 20.0
+const HUD_PANEL_ALPHA: float = 0.92
+## Left / right inner padding of a header panel.
+const HUD_INSET: float = 12.0
+const HUD_NAME_FONT: int = 20
+const HUD_NUMBER_FONT: int = 18
+const HUD_SMALL_FONT: int = 14
+## Row 1 baseline (name, player number), HP bar top and height, Engraving bar top and height, row 3 baseline
+## (Engraving count, boss number), all below the panel top.
+const HUD_NAME_BASELINE: float = 20.0
+const HUD_BAR_TOP: float = 26.0
+const HUD_BAR_HEIGHT: float = 10.0
+const HUD_ENGRAVING_TOP: float = 41.0
+const HUD_ENGRAVING_HEIGHT: float = 5.0
+const HUD_ENGRAVING_SEGMENTS: int = 7
+const HUD_ROW3_BASELINE: float = 49.0
+## Room kept right of the Engraving bar for its "lit/total" count (and clear of the panel's cut corner).
+const HUD_ENGRAVING_COUNT_ROOM: float = 64.0
+## Gap between a number and the text or bar beside it.
+const HUD_NUMBER_GAP: float = 8.0
+## Smallest name font (720p px) a long name shrinks to before it is clipped.
+const HUD_NAME_MIN_FONT: int = 14
+## "current/max" of the HP numbers and the Engraving count (digits only, no words to translate).
+const HUD_NUMBER_FORMAT: String = "%d/%d"
+## Boss hand tiles (art bible 7.5 Z1b), left of the boss name on row 1 of the boss panel.
+const HUD_TILE_SIZE: Vector2 = Vector2(22.0, 17.0)
+const HUD_TILE_TOP: float = 5.0
+const HUD_TILE_GAP: float = 6.0
+const HUD_TILE_CUT: float = 5.0
+const HUD_TILE_FONT: int = 13
+const HUD_TILE_TEXT_LIFT: float = 4.0
+const HUD_TILE_EMPTY_ALPHA: float = 0.5
+## Enemy blocks: flat #CFC6B4 with an Ink edge (art bible 4).
+const HUD_ENEMY_BLOCK: Color = Color("CFC6B4")
 ## Seed for the field drops RNG; negative = random. Dev/capture only (DemoArgs sets it).
 const RANDOM_SEED: int = -1
 ## Story 041 DEV-ONLY user arg prefix: `--odd-chance=X` overrides the odd block chance of both sides.
@@ -134,6 +174,8 @@ var _arbiter: SwingArbiter
 var _boss_feedback: Dictionary = {}
 ## Last interrupt flash {side (victim), cells, time_left}; empty = none.
 var _interrupt_flash: Dictionary = {}
+## Story 048: the floor-VFX clock and one-shot queue (created on first use; see [method get_floor_vfx]).
+var _floor_vfx: FloorVfx = null
 ## Last feint flash {cells, time_left}; empty = none.
 var _feint_flash: Dictionary = {}
 var _status: StatusEffects
@@ -230,6 +272,12 @@ var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_cas
 	"frost_bursts": 0, "boss_thorn_steps": 0}
 ## Story 037: the last passive heal ({amount, time_left}) for the HUD "+N" flash; {} when none.
 var _heal_flash: Dictionary = {}
+## Story 046 Part B: damage trails of the Z1 HP bars, [player, boss]: shrink from / to ratio and seconds
+## since the last drop (to < 0 = not started). Presentation state only.
+var _hp_trail_from: Array[float] = [1.0, 1.0]
+var _hp_trail_to: Array[float] = [-1.0, -1.0]
+var _hp_trail_t: Array[float] = [0.0, 0.0]
+var _hp_trail_sec: float = 0.0
 
 
 func _ready() -> void:
@@ -373,6 +421,7 @@ func _on_status_frost_burst(side: int, damage: float) -> void:
 
 
 func _on_status_thorn_entered(side: int, cell: Vector2i, _damage: float) -> void:
+	get_floor_vfx().play("thorn_spikes", cell, side)  # Story 048 F9
 	if side != CombatState.Side.ENEMY:
 		return
 	_stats["boss_thorn_steps"] = int(_stats["boss_thorn_steps"]) + 1
@@ -748,6 +797,8 @@ func _check_signature_ready() -> void:
 		return
 	_signature_ready_flag = true
 	_formation_flash_left = _config.formation_flash_sec
+	for cell: Vector2i in _formation.lit_cells():
+		get_floor_vfx().play("engraving_complete", cell, CombatState.Side.ENEMY)  # Story 048 F3
 	formation_completed.emit()
 
 
@@ -1141,6 +1192,9 @@ func get_match_label() -> String:
 
 
 func _process(delta: float) -> void:
+	# Story 048: the floor effects run on the combat's scaled time (Focus / pause freeze them).
+	get_floor_vfx().tick(scaled_delta(delta))
+	_tick_hp_trail(delta)
 	_tick_end(delta)
 	_hook_hold()
 	_check_odd_hint()
@@ -1861,6 +1915,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		"featured_mult": float(result.get("featured_mult", 1.0)),
 		"featured_effect": str(result.get("featured_effect", "")),
 	}
+	_play_cut_vfx(side, feedback)
 	if side == CombatState.Side.PLAYER:
 		_feedback = feedback
 		_count_cast(_cast_info)
@@ -1883,6 +1938,8 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 
 func _on_swing_interrupted(victim_side: int, cells: Array[Vector2i], _skill_id: String) -> void:
 	_interrupt_flash = {"side": victim_side, "cells": cells, "time_left": FEEDBACK_SEC}
+	for cell: Vector2i in cells:
+		get_floor_vfx().play("interrupt", cell, victim_side)  # Story 048 F8
 	if victim_side == CombatState.Side.ENEMY:
 		_learning.on_player_interrupted_boss()
 		for relic: BaseRelic in _relics:
@@ -2134,74 +2191,169 @@ func _draw() -> void:
 # centre routed through the anchor, so the rings follow the unit when Part C moves the anchor. The cell
 # centre itself when no canvas is bound.
 func _unit_center(vp: Vector2, side: int) -> Vector2:
+	# The rings sit on the cell centre; the feet moved to FEET_DEPTH_RATIO of the cell (OSFE stance, 2026-10-31),
+	# so they are no longer derived from the feet anchor.
 	var cell: Vector2i = _state.player_cell if side == CombatState.Side.PLAYER else _state.enemy_cell
-	if _canvas == null or _canvas.get_unit_layer() == null or _canvas.get_combat_view() != self:
-		return ScreenLayout.cell_center(_grid, vp, cell)
-	var n: float = float(ScreenLayout.art_scale(vp))
-	var feet: Vector2 = ScreenLayout.from_art(vp, Vector2(_canvas.get_unit_layer().unit_feet_art(side)))
-	var lift: float = ScreenLayout.cell_size(_grid, vp).y * 0.5 - UnitLayer.FEET_INSET_ART * n
-	return feet - Vector2(0.0, lift)
+	return ScreenLayout.cell_center(_grid, vp, cell)
 
 
-# Top band: player HP bar on the left half, boss HP bar on the right half.
+# Story 046 Part B: the sharp Z1 header, drawn at screen resolution with HudSkin (never through the art
+# canvas). 2026-10-31 (user, OSFE reference): both panels sit flush in the top corners
+# (ScreenLayout.hud_panel_rect, 52 px at 720p). Player, top-left, cut bottom-right: row 1 name + "hp/max"
+# right-aligned, row 2 the HP bar with the damage trail, row 3 the segmented Engraving bar + "lit/total".
+# Boss, top-right, cut bottom-left: row 1 its held points as small tiles + name right-aligned, row 2 the Ivory
+# HP bar with the half-HP notch, row 3 "hp/max" right-aligned. Sizes are 720p numbers times S = height / 720.
 func _draw_hud(vp: Vector2) -> void:
-	var hud: Rect2 = ScreenLayout.hud_rect(vp)
-	var gap: float = hud.size.x * HUD_GAP_RATIO
-	var half_w: float = (hud.size.x - gap) * 0.5 - PAD * 2.0
-	var text_y: float = hud.position.y + PAD + FONT_SIZE
-	var bar_y: float = text_y + 8.0
-	var left_x: float = hud.position.x + PAD
-	var right_x: float = hud.position.x + PAD + half_w + PAD * 2.0 + gap
-	var hp_text: String = tr(TEXT_UNIT_HP) % [get_player_name(), ceili(_state.player_hp), ceili(_state.player_max_hp)]
-	_draw_text(hp_text, Vector2(left_x, text_y), half_w, HORIZONTAL_ALIGNMENT_LEFT)
-	_draw_bar(Rect2(Vector2(left_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.player_hp / _state.player_max_hp, PLAYER_HP_COLOR)
-	var enemy_text: String = tr(TEXT_UNIT_DEAD) % get_boss_name()
-	if not _state.is_enemy_dead():
-		enemy_text = tr(TEXT_UNIT_HP) % [get_boss_name(), ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
-	_draw_text(enemy_text, Vector2(right_x, text_y), half_w, HORIZONTAL_ALIGNMENT_RIGHT)
-	_draw_bar(Rect2(Vector2(right_x, bar_y), Vector2(half_w, BAR_HEIGHT)), _state.enemy_hp / _state.enemy_max_hp, HP_COLOR)
-	_draw_boss_hand(Vector2(right_x, text_y), half_w)
+	var s: float = vp.y / HUD_REF_HEIGHT
+	if _config == null or not _config.hud_corner_panels:
+		_draw_floating_boss_hand(vp, s)
+		return
+	var cut: float = HUD_PANEL_CUT * s
+	var left: Rect2 = ScreenLayout.hud_panel_rect(vp, 0)
+	var right: Rect2 = ScreenLayout.hud_panel_rect(vp, 1)
+	HudSkin.panel(self, left, [0.0, 0.0, cut, 0.0], Color(HudSkin.NIGHT_STONE, HUD_PANEL_ALPHA), HudSkin.MIST)
+	HudSkin.panel(self, right, [0.0, 0.0, 0.0, cut], Color(HudSkin.NIGHT_STONE, HUD_PANEL_ALPHA), HudSkin.MIST)
+	var inset: float = HUD_INSET * s
+	var gap: float = HUD_NUMBER_GAP * s
+	var name_size: int = roundi(HUD_NAME_FONT * s)
+	var number_size: int = roundi(HUD_NUMBER_FONT * s)
+	var small_size: int = roundi(HUD_SMALL_FONT * s)
+	var name_y: float = left.position.y + HUD_NAME_BASELINE * s
+	var row3_y: float = left.position.y + HUD_ROW3_BASELINE * s
+	var bar_h: float = maxf(roundf(HUD_BAR_HEIGHT * s), 1.0)
+	var bar_y: float = floorf(left.position.y + HUD_BAR_TOP * s)
+	# --- player
+	var bar := Rect2(Vector2(left.position.x + inset, bar_y), Vector2(floorf(left.size.x - inset * 2.0), bar_h))
+	var hp_text: String = HUD_NUMBER_FORMAT % [ceili(_state.player_hp), ceili(_state.player_max_hp)]
+	var hp_w: float = HudSkin.text_width(hp_text, number_size, true)
+	HudSkin.text(self, Vector2(bar.end.x - hp_w, name_y), hp_text, number_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
+	var player_room: float = maxf(bar.size.x - hp_w - gap, 0.0)
+	var player_name: String = get_player_name()
+	HudSkin.text(self, Vector2(bar.position.x, name_y), player_name, _fit_font(player_name, name_size, roundi(HUD_NAME_MIN_FONT * s), player_room), HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, player_room)
+	HudSkin.hp_bar(self, bar, _hp_ratio(0), _hp_trail_shown(0), HudSkin.HP_FILL, false)
+	var engraving := Rect2(Vector2(bar.position.x, floorf(left.position.y + HUD_ENGRAVING_TOP * s)), Vector2(maxf(floorf(bar.size.x - HUD_ENGRAVING_COUNT_ROOM * s), 1.0), maxf(roundf(HUD_ENGRAVING_HEIGHT * s), 1.0)))
+	_draw_engraving(engraving, small_size, s, row3_y)
+	# --- boss
+	var bbar := Rect2(Vector2(right.position.x + inset, bar_y), Vector2(floorf(right.size.x - inset * 2.0), bar_h))
+	var boss_name: String = tr(TEXT_UNIT_DEAD) % get_boss_name() if _state.is_enemy_dead() else get_boss_name()
+	var tiles_w: float = _draw_boss_hand(Vector2(bbar.position.x, right.position.y + HUD_TILE_TOP * s), s)
+	var name_room: float = maxf(bbar.size.x - tiles_w - gap, 0.0)
+	HudSkin.text(self, Vector2(bbar.end.x - name_room, name_y), boss_name, _fit_font(boss_name, name_size, roundi(HUD_NAME_MIN_FONT * s), name_room), HudSkin.TEXT, HORIZONTAL_ALIGNMENT_RIGHT, name_room)
+	HudSkin.hp_bar(self, bbar, _hp_ratio(1), _hp_trail_shown(1), HudSkin.BOSS_HP_FILL, true)
+	var boss_hp: String = HUD_NUMBER_FORMAT % [ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
+	HudSkin.text(self, Vector2(bbar.position.x, row3_y), boss_hp, small_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_RIGHT, bbar.size.x, true)
 
 
-# The boss's held points as small tags in the HUD band, in the text row above its HP bar,
-# left-aligned at [param origin].x (its HP text is right-aligned, so they do not collide as
-# long as hand_size * (tag + gap) fits the left of the text). Empty slots are faint outlines.
-func _draw_boss_hand(origin: Vector2, width: float) -> void:
+# 2026-10-31 (combat.json hud.corner_panels = false): no corner panels; the boss's held points float on the
+# top HUD row (ScreenLayout.hud_top_row_rect), right-aligned just left of the run's gold in the top-right corner
+# (RunHudView), centred on the row; the HP lives on the numbers under the units' feet (CutHudView._draw_hp_plates).
+func _draw_floating_boss_hand(vp: Vector2, s: float) -> void:
+	if _boss == null or _boss.get_hand() == null:
+		return
+	var count: int = _boss.get_hand().get_slot_count()
+	var tile: Vector2 = (HUD_TILE_SIZE * s).floor()
+	var width: float = maxf(count * (tile.x + HUD_TILE_GAP * s) - HUD_TILE_GAP * s, 0.0)
+	var row: Rect2 = ScreenLayout.hud_top_row_rect(vp)
+	var right: float = vp.x - (ScreenLayout.HUD_TOP_ROW_INSET_PX + ScreenLayout.HUD_GOLD_RESERVE_PX) * s
+	_draw_boss_hand(Vector2(floorf(right - width), floorf(row.get_center().y - tile.y * 0.5)), s)
+
+
+# The largest font size from [param size] down to [param min_size] at which [param content] fits [param room]
+# px (HudSkin SemiBold); min_size when nothing fits (the draw then clips at the room).
+static func _fit_font(content: String, size: int, min_size: int, room: float) -> int:
+	var fit: int = size
+	while fit > min_size and HudSkin.text_width(content, fit) > room:
+		fit -= 1
+	return fit
+
+
+# Story 046 Part B: the Engraving bar under the player's HP bar: HUD_ENGRAVING_SEGMENTS gold segments lit in
+# proportion to the formation map's lit cells (all lit once the signature is ready) and "lit/total" right of
+# it: the same source and total as CutHudView's "Engraving n/N" (FormationMap.lit_count / total). Nothing
+# without a formation map (no signature this match).
+func _draw_engraving(rect: Rect2, font_size: int, s: float, baseline: float) -> void:
+	if _formation == null:
+		return
+	var total: int = maxi(_formation.total(), 1)
+	var lit: int = _formation.lit_count()
+	var filled: int = HUD_ENGRAVING_SEGMENTS if is_signature_ready() else floori(float(lit * HUD_ENGRAVING_SEGMENTS) / total)
+	HudSkin.segments(self, rect, HUD_ENGRAVING_SEGMENTS, filled, HudSkin.GRID_LIGHT)
+	var pos := Vector2(rect.end.x + HUD_NUMBER_GAP * s, baseline)
+	HudSkin.text(self, pos, HUD_NUMBER_FORMAT % [lit, _formation.total()], font_size, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
+
+
+# Story 046 Part B: the boss's held points as small chamfered tiles (HUD_TILE_SIZE at 720p), left to right
+# from [param origin]; empty slots are faint frames, a point without a piece shows its label. Returns the
+# row's width.
+func _draw_boss_hand(origin: Vector2, s: float) -> float:
 	var hand: HoldSlots = _boss.get_hand()
 	var count: int = hand.get_slot_count()
-	var tag_w: float = HAND_TAG_WIDTH
-	var top: float = origin.y - FONT_SIZE + HAND_TAG_TOP_OFFSET
-	var room: float = width - HAND_TEXT_RESERVE
-	if count * (tag_w + HAND_TAG_GAP) > room:
-		tag_w = maxf(room / count - HAND_TAG_GAP, 12.0)
+	var tile: Vector2 = (HUD_TILE_SIZE * s).floor()
+	var gap: float = HUD_TILE_GAP * s
+	var cuts: Array = [0.0, HUD_TILE_CUT * s, 0.0, 0.0]
 	for i: int in count:
-		var rect := Rect2(Vector2(origin.x + i * (tag_w + HAND_TAG_GAP), top), Vector2(tag_w, HAND_TAG_HEIGHT))
+		var rect := Rect2(Vector2(floorf(origin.x + i * (tile.x + gap)), floorf(origin.y)), tile)
 		var point: FieldPoint = hand.get_point(i)
 		if point == null:
-			draw_rect(rect, HAND_EMPTY_COLOR, false, 2.0)
+			HudSkin.panel(self, rect, cuts, Color(HudSkin.NIGHT_STONE, HUD_TILE_EMPTY_ALPHA), Color(HudSkin.MIST, HUD_TILE_EMPTY_ALPHA), 1.0)
 			continue
-		draw_rect(rect, HAND_TAG_BACK)
-		draw_rect(rect, HP_COLOR, false, 2.0)
+		HudSkin.panel(self, rect, cuts, HudSkin.NIGHT_STONE_LIGHT, HudSkin.MIST, 1.0)
 		if point.piece != null:
 			_draw_boss_hand_piece(point.piece, rect)
 			continue
-		draw_string(ThemeDB.fallback_font, rect.position + Vector2(0.0, HAND_TAG_HEIGHT * 0.5 + HAND_FONT_SIZE * 0.35), point.label, HORIZONTAL_ALIGNMENT_CENTER, tag_w, HAND_FONT_SIZE, TEXT_COLOR)
+		HudSkin.text(self, Vector2(rect.position.x, rect.end.y - HUD_TILE_TEXT_LIFT * s), point.label, roundi(HUD_TILE_FONT * s), HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
+	return maxf(count * (tile.x + gap) - gap, 0.0)
 
 
-# Story 025: a held piece as a mini shape inside its slot box; a rotten one is grey with a dark X.
+# Story 025: a held piece as a mini shape inside its slot tile; a rotten one is grey with a dark X.
 func _draw_boss_hand_piece(piece: Piece, rect: Rect2) -> void:
 	var area: Rect2 = rect.grow(-HAND_PIECE_PAD)
 	if piece.is_rotten():
 		PieceDraw.draw_shape(self, piece, area, Color(HAND_ROTTEN_GREY, 0.85), Color(0.0, 0.0, 0.0, 0.0), HAND_PIECE_MAX_UNIT)
 		var x_rect: Rect2 = PieceDraw.shape_rect(piece, area, HAND_PIECE_MAX_UNIT).grow(HAND_PIECE_PAD)
-		draw_line(x_rect.position, x_rect.end, HAND_ROTTEN_X, 3.0)
-		draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), HAND_ROTTEN_X, 3.0)
+		draw_line(x_rect.position, x_rect.end, HAND_ROTTEN_X, 2.0)
+		draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), HAND_ROTTEN_X, 2.0)
 		return
 	if piece.is_odd():
-		# Story 041: an Odd Block in the boss's hand row: odd fill and edge (the tag is too small for the mark).
-		PieceDraw.draw_odd_shape(self, piece, area, PieceDraw.ODD_FILL, HAND_PIECE_MAX_UNIT, 2.0)
+		# Story 041: an Odd Block in the boss's hand row: odd fill and edge (the tile is too small for the mark).
+		PieceDraw.draw_odd_shape(self, piece, area, PieceDraw.ODD_FILL, HAND_PIECE_MAX_UNIT, 1.0)
 		return
-	PieceDraw.draw_shape(self, piece, area, ENEMY_COLOR, Color(TEXT_COLOR, 0.7), HAND_PIECE_MAX_UNIT)
+	PieceDraw.draw_shape(self, piece, area, HUD_ENEMY_BLOCK, HudSkin.TEXT_OUTLINE, HAND_PIECE_MAX_UNIT)
+
+
+# HP ratio 0..1 of index 0 (player) or 1 (boss).
+func _hp_ratio(index: int) -> float:
+	if index == 0:
+		return clampf(_state.player_hp / maxf(_state.player_max_hp, 1.0), 0.0, 1.0)
+	return clampf(_state.enemy_hp / maxf(_state.enemy_max_hp, 1.0), 0.0, 1.0)
+
+
+# Story 046 Part B: advances the two damage trails by [param real_step] (real seconds). A drop restarts the
+# shrink from where the trail is drawn now to the new ratio over hud.hp_trail_sec (0 under reduce motion:
+# art bible 7.6, the trail is instant); a heal moves the trail with the fill. Presentation only.
+func _tick_hp_trail(real_step: float) -> void:
+	if _state == null or _config == null:
+		return
+	for i: int in 2:
+		var ratio: float = _hp_ratio(i)
+		if _hp_trail_to[i] < 0.0 or ratio > _hp_trail_to[i]:
+			_hp_trail_from[i] = ratio
+			_hp_trail_to[i] = ratio
+			_hp_trail_t[i] = 0.0
+		elif ratio < _hp_trail_to[i]:
+			_hp_trail_from[i] = _hp_trail_shown(i)
+			_hp_trail_to[i] = ratio
+			_hp_trail_t[i] = 0.0
+		else:
+			_hp_trail_t[i] += real_step
+	_hp_trail_sec = 0.0 if SettingsStore.shared().get_reduce_motion() else _config.hud_hp_trail_sec
+
+
+# The trail ratio drawn this frame for index [param index] (the fill ratio before the first tick).
+func _hp_trail_shown(index: int) -> float:
+	if _hp_trail_to[index] < 0.0:
+		return _hp_ratio(index)
+	return HudSkin.trail_ratio(_hp_trail_from[index], _hp_trail_to[index], _hp_trail_t[index], _hp_trail_sec)
 
 
 # Ring around the player's feet: full right after a step, shrinks to nothing; hidden when ready.
@@ -2232,20 +2384,39 @@ func _draw_boss_ring(vp: Vector2) -> void:
 	draw_arc(c, radius, -PI * 0.5, -PI * 0.5 + TAU * fraction, RING_POINTS, HP_COLOR, BOSS_RING_WIDTH)
 
 
-func _draw_bar(rect: Rect2, ratio: float, color: Color) -> void:
-	draw_rect(rect, BAR_BACK)
-	var fill := Vector2(rect.size.x * clampf(ratio, 0.0, 1.0), rect.size.y)
-	draw_rect(Rect2(rect.position, fill), color)
-	draw_rect(rect, TEXT_COLOR, false, 2.0)
-
-
-func _draw_text(text: String, pos: Vector2, width: float, align: HorizontalAlignment) -> void:
-	draw_string(ThemeDB.fallback_font, pos, text, align, width, FONT_SIZE, TEXT_COLOR)
-
-
 ## Story 047 Part D: match seconds this frame's [param delta] advances the simulation by, the same step
 ## _process feeds StatusEffects.tick (capped at max_tick_sec, scaled by the skill menu / Focus): 0 while
 ## freeze_time or at Focus's full stop. Pure; the art layers run their status clocks on it.
+## Story 048: the battle's floor-VFX state (pack index, effects clock, one-shot queue); never null.
+func get_floor_vfx() -> FloorVfx:
+	if _floor_vfx == null:
+		_floor_vfx = FloorVfx.new()
+	return _floor_vfx
+
+
+# Story 048: the one-shots of a resolved cut by [param side]: F6 hit_impact (overlay) on the cut's cells where the
+# target unit stands (the feedback cell when none does), F7 miss_dust (floor) on every cell of a miss.
+func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
+	var vfx: FloorVfx = get_floor_vfx()
+	var target_side: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
+	var cells: Array = feedback.get("cells", [])
+	if not bool(feedback.get("hit", false)):
+		for cell: Vector2i in cells:
+			vfx.play("miss_dust", cell, target_side)
+		return
+	var state: CombatState = get_state()
+	if state == null:
+		return
+	var target: Vector2i = state.enemy_cell if side == CombatState.Side.PLAYER else state.player_cell
+	var struck: bool = false
+	for cell: Vector2i in cells:
+		if cell == target:
+			vfx.play("hit_impact", cell, target_side)
+			struck = true
+	if not struck:
+		vfx.play("hit_impact", feedback.get("cell", target), target_side)
+
+
 func scaled_delta(delta: float) -> float:
 	if freeze_time or _config == null:
 		return 0.0

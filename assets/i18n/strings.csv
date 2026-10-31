@@ -26,9 +26,7 @@ ui.hud.pin,ĐÓNG BĂNG %.1f s,FROZEN %.1f s
 ui.hud.feint,ĐÒN GIẢ!,FEINT!
 ui.hud.feint_note,boss vung rồi tự hủy,the boss cancelled its own cast
 ui.hud.learning,né: %d | ngắt: %d | giả: %d%%,dodge: %d | interrupt: %d | feint: %d%%
-ui.hud.combo_queued,2: +%.1f s,2: +%.1f s
 ui.hud.row_warning,SẮP CHÁY,BURNING SOON
-ui.hud.boss_swing,BOSS %s %s,BOSS %s %s
 ui.hud.interrupt,NGẮT!,INTERRUPT!
 ui.hud.interrupt_boss,boss bị hủy đòn,the boss's cast was interrupted
 ui.hud.interrupt_player,đòn của bạn bị hủy,your cast was interrupted
@@ -69,6 +67,7 @@ ui.run_hud.time,Thời gian %s,Time %s
 ui.run_hud.cleared,Trận thắng %d/%d,Matches won %d/%d
 ui.run_hud.restart,Chơi lại,Play again
 ui.run_hud.pause_title,TẠM DỪNG,PAUSED
+ui.run_hud.pause_boss_swing,%s · %s,%s · %s
 ui.run_hud.resume,Tiếp tục,Resume
 ui.run_hud.leave_run,Thoát chuyến leo (đã lưu),Leave climb (saved)
 ui.run_hud.movement_joystick,Di chuyển: Joystick,Movement: Joystick

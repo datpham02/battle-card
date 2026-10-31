@@ -9,7 +9,7 @@ extends Node2D
 ## (units move; CombatView ticks the match).
 ##
 ## Part C (art bible 8.3, 8.6): a unit whose data id has a sheet (`SpriteSheet.load_unit`: Kiem si
-## `kiem_si` 40x48, Goblin Scout `goblin_scout` 32x48) is drawn from it with one [UnitAnimator] per side,
+## `kiem_si` 96x70 (v3 tall anchor, 2026-10-31), Goblin Scout `goblin_scout` 32x48) is drawn from it with one [UnitAnimator] per side,
 ## ticked with the match's scaled delta. The unit ids come from `CombatView.match_params`: the player's
 ## is `character.id`, the boss's is the match `id` (chapters.json / run fixture). The clip follows the
 ## story table through [method clip_for], a pure priority over booleans (highest first): defeat / down
@@ -39,8 +39,18 @@ const TEXT_COLOR: Color = Color(0.15, 0.12, 0.1)
 const PLAYER_COLOR: Color = Color(0.25, 0.6, 0.9)
 const DOWNED_COLOR: Color = Color(0.55, 0.32, 0.32, 0.55)
 const INVULNERABLE_OUTLINE: Color = Color(0.95, 0.95, 1.0, 0.95)
-## Feet anchor: art px above the cell's front (bottom) edge (art bible 8.3).
+## Feet anchor: art px above the cell's front (bottom) edge (art bible 8.3). Kept for the fallback when a
+## cell is too short for FEET_DEPTH_RATIO.
 const FEET_INSET_ART: int = 3
+## OSFE-style stance (user 2026-10-31, reference image): the feet stand about two thirds down the slab face,
+## not on its front lip, so the body rises out of the tile and its own shadow sits on the face.
+const FEET_DEPTH_RATIO: float = 0.72
+## Ground shadow under every unit: an Ink ellipse on the slab (a floor overlay, so alpha blending is allowed,
+## art bible 8.5), width / height as shares of the cell, and its alpha.
+const SHADOW_WIDTH_RATIO: float = 0.56
+const SHADOW_HEIGHT_RATIO: float = 0.17
+const SHADOW_MIN_HEIGHT: int = 4
+const SHADOW_COLOR: Color = Color(0.106, 0.090, 0.133, 0.5)
 ## Player marker: radius as a share of the cell height, label font size as a share of the radius, the
 ## smallest label font (art px; the fallback font at 1x) and how much of the diameter the label may fill.
 const MARKER_RADIUS_RATIO: float = 0.33
@@ -62,7 +72,7 @@ const DEAD_CROSS_ART: float = 3.0
 const STATUS_BURN: String = "burn"
 const STATUS_FROZEN: String = "frozen"
 const STATUS_CHILL: String = "chill"
-## Unit frame kinds of the status packs: the player's 40x48 frame, the boss's 32x48 frame.
+## Unit frame kinds of the status packs: the hero packs were made on the v1 40x48 frame (the v3 hero is 96x70, body about 31x66), the boss packs on its 32x48 frame.
 const FRAME_KIND_HERO: String = "hero"
 const FRAME_KIND_GOBLIN: String = "goblin"
 ## Pack clips drawn under and over the unit (art bible 8.6).
@@ -455,7 +465,34 @@ func _update_clip(side: int, step: float) -> void:
 func _feet_of_cell(cell: Vector2i) -> Vector2i:
 	var rect: Rect2i = _cell_art_rect(cell)
 	@warning_ignore("integer_division")
-	return Vector2i(rect.position.x + rect.size.x / 2, rect.end.y - FEET_INSET_ART)
+	var x: int = rect.position.x + rect.size.x / 2
+	var y: int = mini(rect.position.y + roundi(rect.size.y * FEET_DEPTH_RATIO), rect.end.y - FEET_INSET_ART)
+	return Vector2i(x, y)
+
+
+## The ground shadow of a unit standing on [param cell] (art px): a stepped Ink ellipse centred on the feet, one
+## 1 px row per draw_rect so the edge stays on whole pixels. Pure geometry in [method shadow_rows].
+func _draw_shadow(cell: Vector2i, feet: Vector2i) -> void:
+	for row: Rect2i in shadow_rows(_cell_art_rect(cell).size, feet):
+		draw_rect(Rect2(row), SHADOW_COLOR)
+
+
+## Rows of the ground shadow for a cell of [param cell_size] with the feet at [param feet]: one Rect2i per
+## pixel row, widest at the feet row, integer art px.
+static func shadow_rows(cell_size: Vector2i, feet: Vector2i) -> Array[Rect2i]:
+	var rows: Array[Rect2i] = []
+	var half_w: float = cell_size.x * SHADOW_WIDTH_RATIO * 0.5
+	var h: int = maxi(SHADOW_MIN_HEIGHT, roundi(cell_size.y * SHADOW_HEIGHT_RATIO))
+	var half_h: float = h * 0.5
+	for i: int in h:
+		var dy: float = (i + 0.5) - half_h
+		var t: float = clampf(1.0 - (dy * dy) / (half_h * half_h), 0.0, 1.0)
+		var w: int = roundi(half_w * sqrt(t)) * 2
+		if w <= 0:
+			continue
+		@warning_ignore("integer_division")
+		rows.append(Rect2i(feet.x - w / 2, feet.y - roundi(half_h) + i, w, 1))
+	return rows
 
 
 func _cell_art_rect(cell: Vector2i) -> Rect2i:
@@ -516,6 +553,7 @@ func _draw() -> void:
 		var cell: Vector2i = unit["cell"]
 		var kinds: Array[String] = get_active_status_kinds(side)
 		var feet: Vector2i = _feet_of_cell(cell)
+		_draw_shadow(cell, feet)
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
 		if not _draw_sprite(side, feet):
 			if side == CombatState.Side.PLAYER:

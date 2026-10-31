@@ -139,9 +139,27 @@ const REWARD_REMOVE_ROW_GAP_RATIO: float = 0.03
 ## Boss status readouts (Story 020): the gap CombatView._draw_hud leaves between the HP text
 ## baseline and its bar (mirrors the inline 8 px there; the bar itself is CombatView.BAR_HEIGHT).
 const HUD_BAR_TEXT_GAP: float = 8.0
-## Run HUD (Story 019): left edge (share of width) of the deck label strip in the top margin;
-## the centred match label (~450 px at 16 px) ends well before 0.72 * 1280 = 922 px.
-const RUN_DECK_LABEL_LEFT_RATIO: float = 0.72
+## Corner HP panels (2026-10-31, user: "đưa thanh máu về góc như này giống osfe"): flush to the top
+## corners of the screen, HUD_CORNER_PANEL_PX at 720p (scaled by height / 720), never wider than
+## HUD_CORNER_PANEL_MAX_WIDTH_RATIO of the width. 52 px tall at 720p keeps the panel above the head of a
+## v3 hero on a 5x5 back row (head top ~57 px).
+## User 2026-10-31: "thanh máu có thể ko cần dài quá như osfe": 260 px wide (HP bar ~236 px).
+const HUD_CORNER_PANEL_PX: Vector2 = Vector2(260.0, 52.0)
+const HUD_CORNER_PANEL_REF_HEIGHT: float = 720.0
+const HUD_CORNER_PANEL_MAX_WIDTH_RATIO: float = 0.28
+## Gap (720p px) between a corner panel and the labels placed beside it (match label, deck label).
+const HUD_CORNER_GAP_PX: float = 8.0
+## 2026-10-31 top HUD row (no corner panels in battle): inset of the relic row from the left edge and of the
+## gold from the right edge (720p px), and the width kept for the gold left of which the boss's held points sit.
+const HUD_TOP_ROW_INSET_PX: float = 12.0
+const HUD_GOLD_RESERVE_PX: float = 84.0
+
+
+## 2026-10-31: the top HUD row's vertical band (the relic row's top and height), shared by the gold and the
+## boss's held points so the three line up.
+static func hud_top_row_rect(viewport_size: Vector2) -> Rect2:
+	var hud: Rect2 = hud_rect(viewport_size)
+	return Rect2(0.0, hud.position.y + HUD_RELIC_TOP_PAD, viewport_size.x, HUD_RELIC_ICON)
 ## Title screen (Story 016), shares of the viewport: the name band (top .. bottom: game name,
 ## knife motif, tagline), the button column's top, one button's size (0.3 * 1280 = 384 px wide,
 ## 0.11 * 720 = 79 px tall >= 72 px) and the gap between buttons (share of height). Three
@@ -164,6 +182,9 @@ const TITLE_LANG_BUTTON_HEIGHT_RATIO: float = 0.09
 ## HUD_GAP_RATIO plus CombatView's paddings). The top margin above holds the match label and is
 ## too thin for a touch target; both band halves end in right/left-aligned HP text.
 const PAUSE_BUTTON_RATIO: float = 0.09
+## Story 046: the visible pause tile's side at PAUSE_TILE_REF_HEIGHT (RunHudView.PAUSE_ICON_SIZE).
+const PAUSE_TILE_PX: float = 55.0
+const PAUSE_TILE_REF_HEIGHT: float = 720.0
 ## Back button of the floor select (Story 016): width (share of width) and height (0.09 * 720 =
 ## 65 px >= 64 px, share of height); sits on the left screen margin, centred in the title band
 ## (the "CHỌN TẦNG" text is centred and clear of it).
@@ -660,10 +681,24 @@ static func focus_bar_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(Vector2(confirm.position.x, confirm.position.y - gap - height), Vector2(confirm.size.x, height))
 
 
-## Run UI (Story 011). Match label: the thin margin above the arena (clear of the HP bars
-## and the boss hand tags, which live inside the HUD band), full width, for centred text.
+## Run UI (Story 011). Match label: the thin margin above the arena, for centred text. Since the corner
+## HP panels (2026-10-31) it spans only the gap between the two panels.
 static func run_match_label_rect(viewport_size: Vector2) -> Rect2:
-	return Rect2(0.0, 0.0, viewport_size.x, viewport_size.y * ARENA_TOP_RATIO)
+	var gap: float = HUD_CORNER_GAP_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT
+	var left: float = hud_panel_rect(viewport_size, 0).end.x + gap
+	var right: float = hud_panel_rect(viewport_size, 1).position.x - gap
+	return Rect2(left, 0.0, maxf(right - left, 0.0), viewport_size.y * ARENA_TOP_RATIO)
+
+
+## Corner HP panel of [param side] (0 = player, top-left; 1 = boss, top-right), flush to the screen
+## corner (OSFE-style, user 2026-10-31): HUD_CORNER_PANEL_PX scaled by height / 720, at most
+## HUD_CORNER_PANEL_MAX_WIDTH_RATIO of the width, whole pixels.
+static func hud_panel_rect(viewport_size: Vector2, side: int) -> Rect2:
+	var s: float = viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT
+	var w: float = floorf(minf(HUD_CORNER_PANEL_PX.x * s, viewport_size.x * HUD_CORNER_PANEL_MAX_WIDTH_RATIO))
+	var h: float = floorf(HUD_CORNER_PANEL_PX.y * s)
+	var x: float = 0.0 if side == 0 else viewport_size.x - w
+	return Rect2(x, 0.0, w, h)
 
 
 ## Run UI: intro band across the full width, centred on the arena (board stays visible around it).
@@ -804,13 +839,17 @@ static func reward_skip_button_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(Vector2((viewport_size.x - size.x) * 0.5, viewport_size.y * REWARD_SKIP_TOP_RATIO), size)
 
 
-## Run HUD (Story 019): the deck label strip — the right part of the top margin (same height as
-## [method run_match_label_rect], from [constant RUN_DECK_LABEL_LEFT_RATIO] to the right screen
-## margin), for right-aligned text; above the HUD band, so clear of the pause button.
+## Run HUD (Story 019): the deck label strip. Since the corner HP panels (2026-10-31) the boss panel owns
+## the top-right corner, so the label sits right of the visible pause tile, as tall as the tile, up to the
+## boss panel: left-aligned text, mirroring the Resonant-shape tile left of the pause tile.
 static func run_deck_label_rect(viewport_size: Vector2) -> Rect2:
-	var left: float = viewport_size.x * RUN_DECK_LABEL_LEFT_RATIO
-	var right: float = viewport_size.x * (1.0 - MARGIN_RATIO)
-	return Rect2(left, 0.0, right - left, viewport_size.y * ARENA_TOP_RATIO)
+	var pause: Rect2 = pause_button_rect(viewport_size)
+	var tile: float = minf(floorf(PAUSE_TILE_PX * viewport_size.y / PAUSE_TILE_REF_HEIGHT), pause.size.x)
+	var gap: float = HUD_CORNER_GAP_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT
+	var left: float = pause.get_center().x + tile * 0.5 + gap
+	var right: float = hud_panel_rect(viewport_size, 1).position.x - gap
+	var top: float = floorf(hud_rect(viewport_size).position.y)
+	return Rect2(left, top, maxf(right - left, 0.0), tile)
 
 
 ## Boss status readouts (Story 020): the strip right under the boss HP bar (the right half of the
@@ -891,11 +930,16 @@ static func title_lang_button_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(Vector2(viewport_size.x - margin - size.x, viewport_size.y - margin - size.y), size)
 
 
-## Pause button (Story 016): a square centred in the HUD band, between the two HP bars.
+## Pause button (Story 016): the square hit area (PAUSE_BUTTON_RATIO of the height), centred
+## horizontally in the HUD band between the two header panels. Story 046 Part B: placed so the visible
+## PAUSE_TILE_PX tile (RunHudView draws it centred in this rect, scaled with the height) has its top on
+## the header panels' top (floor of hud_rect's top, as CombatView._draw_hud).
 static func pause_button_rect(viewport_size: Vector2) -> Rect2:
 	var hud: Rect2 = hud_rect(viewport_size)
-	var side := Vector2.ONE * viewport_size.y * PAUSE_BUTTON_RATIO
-	return Rect2(hud.get_center() - side * 0.5, side)
+	var side: float = viewport_size.y * PAUSE_BUTTON_RATIO
+	var tile: float = minf(floorf(PAUSE_TILE_PX * viewport_size.y / PAUSE_TILE_REF_HEIGHT), side)
+	var top: float = floorf(hud.position.y) + tile * 0.5 - side * 0.5
+	return Rect2(Vector2(hud.get_center().x - side * 0.5, top), Vector2(side, side))
 
 
 ## Floor select (Story 016): the "Về" (back to title) button, on the left margin inside the
@@ -1132,6 +1176,7 @@ const REWARD_DUAL_BUTTON_TOP_RATIO: float = 0.885
 const REWARD_DUAL_BUTTON_WIDTH_RATIO: float = 0.18
 ## In-match relic strip (display only): in the HUD band between the player's name (left share) and the
 ## featured-shape label (room left of the featured icon, share of width); icon edge and top pad in px.
+## Unused since 2026-10-31 (the relic row starts at the top-left corner, HUD_TOP_ROW_INSET_PX); kept for reference.
 const HUD_RELIC_LEFT_RATIO: float = 0.225
 const HUD_RELIC_LABEL_ROOM_RATIO: float = 0.1
 const HUD_RELIC_ICON: float = 26.0
@@ -1146,9 +1191,11 @@ static func relic_strip_rect(viewport_size: Vector2) -> Rect2:
 
 
 ## Story 032: the in-match display-only relic strip (top edge, HUD band, far from the d-pad and the bag).
+## 2026-10-31 (user: "debuff hay buff thì hiện ở góc trái, tiền góc phải", OSFE top row): it starts at the
+## top-left corner (HUD_TOP_ROW_INSET_PX from the left edge), on the top HUD row under the match label.
 static func hud_relic_strip_rect(viewport_size: Vector2) -> Rect2:
 	var hud: Rect2 = hud_rect(viewport_size)
-	var left: float = viewport_size.x * HUD_RELIC_LEFT_RATIO
+	var left: float = floorf(HUD_TOP_ROW_INSET_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT)
 	var right: float = featured_icon_rect(viewport_size).position.x - viewport_size.x * HUD_RELIC_LABEL_ROOM_RATIO
 	return Rect2(left, hud.position.y + HUD_RELIC_TOP_PAD, maxf(right - left, 0.0), HUD_RELIC_ICON)
 
