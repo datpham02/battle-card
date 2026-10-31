@@ -26,7 +26,13 @@ arena to 64 %, floating 4-way joystick, slots on an arc),
 missing cells, mirrored onto the enemy half like BoardGrid; units stand on
 BoardGrid's default cells), `--cell=auto` (largest 1.4-aspect slab between
 38x27 and 64x46 that fits the band and the width),
-`--shot=<png>` saves the window after 30 frames and quits. The board sits in
+`--anim=<clip>` (idle, step, hit, defeat, victory, fall, cast, awaken; both
+units cycle their candidate frames at the spec hold, and with `--shot` one PNG
+per frame index is written as `<shot>-<i>.png`),
+`--shot=<png>` saves the window after 30 frames and quits.
+`make_gif.py` in the session scratchpad turned those frames into the looping
+GIFs under `production/qa/evidence/asset-slice1-art-check/anim/` (pure Python,
+no Pillow). The board sits in
 the ScreenLayout band (below the 3–13 % HUD band, above the 55 % control band).
 Since 2026-10-31 the hero frame is 40x48 (`ASSET-001-*-40x48.png`). Sprites
 are read from `design/assets/candidates/` with `Image.load_from_file`, so new
@@ -112,6 +118,13 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   Costs of the 76 % band: ScreenLayout needs a non-rectangular safe area (full
   width to 64 %, 330–980 px below), and a 6-row board's bottom row sits 100 px
   from the Awaken button.
+- 2026-10-31, clips played in the scene (`anim/<clip>.gif` + `<clip>.strip.png`,
+  layout v2, 5x5 at 48x34, 2x crop of the two units): all 8 hero clips and the
+  goblin's idle/step/hit/down/windup cycle without foot drift or outline
+  jitter (anchor fixed by the shared canvas); cast B's blade points at the
+  enemy half, awaken's cape reads at 1x, defeat/down settle on the slab. Art
+  bible §8.9 #7 passes by eye for the candidate set. Not covered: real hold
+  times per frame (one hold per clip here) and the hit flash shader.
 - The 38x27 slab with a 48 px sprite behaves as §1 expects: a unit covers the
   lower half of the one on the row behind; identity stays in the upper 20 px.
 - Technique notes for the SubViewport story: `Image.load_from_file` +

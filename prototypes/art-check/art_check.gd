@@ -30,6 +30,9 @@ extends Node2D
 ##   --layout=v1|v2   v1 = the shipped ScreenLayout (arena to 55 %, fixed d-pad, straight
 ##                    slots); v2 = the 2026-10-31 sketch (arena to 64 %, floating joystick,
 ##                    slots on an arc)
+##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
+##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
+##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
 ##   --shot=<path>    save a PNG of the window after SHOT_FRAME frames, then quit
 
 const ART_SIZE := Vector2i(640, 360)
@@ -69,8 +72,22 @@ const HP_PLAYER := Color("4CBF59")
 const HP_BOSS := Color("EFE6D2")
 const IVORY := Color("EFE6D2")
 
+const HERO_DIR := "res://design/assets/candidates/swordsman/ASSET-001-%s-40x48.png"
+const GOBLIN_DIR := "res://design/assets/candidates/goblin-scout/ASSET-003-%s-32x48.png"
 const HERO_PNG := "res://design/assets/candidates/swordsman/ASSET-001-idle-A-40x48.png"
 const GOBLIN_PNG := "res://design/assets/candidates/goblin-scout/ASSET-003-idle-A-32x48.png"
+## --anim clips: hero frame names and the goblin clip played beside them (spec hold 0.4 s,
+## except where the spec says otherwise; one hold for the whole clip here, it is a look test).
+const CLIPS := {
+	"idle": {"hero": ["idle-A", "idle-B"], "goblin": ["idle-A", "idle-B"], "hold": 0.4},
+	"step": {"hero": ["step-A", "step-B"], "goblin": ["step-A", "step-B"], "hold": 0.3},
+	"hit": {"hero": ["idle-A", "hit", "idle-A"], "goblin": ["idle-A", "hit", "idle-A"], "hold": 0.4},
+	"defeat": {"hero": ["idle-A", "defeat-A", "defeat-B"], "goblin": ["idle-A", "down-A", "down-B"], "hold": 0.4},
+	"victory": {"hero": ["victory-A", "victory-B"], "goblin": ["idle-A", "idle-B"], "hold": 0.4},
+	"fall": {"hero": ["idle-A", "fall"], "goblin": ["idle-A", "idle-B"], "hold": 0.4},
+	"cast": {"hero": ["idle-A", "cast-A", "cast-B", "idle-A"], "goblin": ["idle-A", "windup", "windup", "idle-A"], "hold": 0.4},
+	"awaken": {"hero": ["awaken-A", "awaken-B"], "goblin": ["idle-A", "windup"], "hold": 0.4},
+}
 
 var _mode: String = "normal"
 var _cell: Vector2i = DEFAULT_CELL
@@ -93,6 +110,14 @@ var _stick_zone_w: float = 0.25
 var _shot: String = ""
 var _frames: int = 0
 var _units: Node2D
+## --anim state: clip name, per-sprite texture lists, current index, time in the current frame.
+var _anim: String = ""
+var _anim_sprites: Array[Sprite2D] = []
+var _anim_textures: Array = []
+var _anim_index: int = 0
+var _anim_time: float = 0.0
+var _anim_shots_left: int = 0
+var _capturing: bool = false
 
 
 func _ready() -> void:
@@ -172,6 +197,11 @@ func _parse_args() -> void:
 			_arena_id = "custom"
 		elif arg == "--hud":
 			_hud = true
+		elif arg.begins_with("--anim="):
+			_anim = arg.trim_prefix("--anim=")
+			if not CLIPS.has(_anim):
+				push_error("art_check: unknown clip '%s'" % _anim)
+				_anim = ""
 		elif arg.begins_with("--layout="):
 			_layout = arg.trim_prefix("--layout=")
 	if _layout == "v2":
@@ -316,6 +346,12 @@ func _draw_slab(board: Node2D, o: Vector2i) -> void:
 func _place_units() -> void:
 	var hero: Vector2i = _default_cell(0)
 	var goblin: Vector2i = _default_cell(1)
+	if not _anim.is_empty():
+		var clip: Dictionary = CLIPS[_anim]
+		_add_anim_unit(HERO_DIR, clip["hero"], 0, hero.x, hero.y)
+		_add_anim_unit(GOBLIN_DIR, clip["goblin"], 1, goblin.x, goblin.y)
+		_anim_shots_left = (clip["hero"] as Array).size() if not _shot.is_empty() else 0
+		return
 	_add_unit(HERO_PNG, 0, hero.x, hero.y)
 	match _mode:
 		"rows":
@@ -346,6 +382,28 @@ func _add_unit(path: String, side: int, col: int, row: int) -> void:
 	sprite.offset = Vector2(-image.get_width() / 2, -image.get_height())
 	sprite.position = Vector2(_anchor(side, col, row))
 	_units.add_child(sprite)
+
+
+## A unit that cycles through [param names] (frame files of one candidate folder). All frames of a
+## unit share one canvas size, so the bottom-centre anchor never moves between frames.
+func _add_anim_unit(pattern: String, names: Array, side: int, col: int, row: int) -> void:
+	var textures: Array = []
+	for n: String in names:
+		var image: Image = Image.load_from_file(ProjectSettings.globalize_path(pattern % n))
+		if image == null:
+			push_error("art_check: cannot load %s" % (pattern % n))
+			return
+		textures.append(ImageTexture.create_from_image(image))
+	var first: Image = (textures[0] as ImageTexture).get_image()
+	var sprite := Sprite2D.new()
+	sprite.texture = textures[0]
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.centered = false
+	sprite.offset = Vector2(-first.get_width() / 2, -first.get_height())
+	sprite.position = Vector2(_anchor(side, col, row))
+	_units.add_child(sprite)
+	_anim_sprites.append(sprite)
+	_anim_textures.append(textures)
 
 
 ## Flat placeholder HUD at screen resolution: the zones of design/ux/hud.md with the sizes of
@@ -465,17 +523,48 @@ func _draw() -> void:
 	draw_rect(get_viewport_rect(), INK)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if not _anim.is_empty():
+		_tick_anim(delta)
+		return
 	if _shot.is_empty():
 		return
 	_frames += 1
 	if _frames == SHOT_FRAME:
-		_capture()
+		_capture(_shot)
 
 
-func _capture() -> void:
+## Advance every animated unit together; with --shot, save one picture per frame index
+## (shot path with "-<index>" before the extension) and quit after a full cycle.
+func _tick_anim(delta: float) -> void:
+	_frames += 1
+	if _frames < SHOT_FRAME or _capturing:
+		return
+	var hold: float = CLIPS[_anim]["hold"]
+	_anim_time += delta
+	var first_frame: bool = _frames == SHOT_FRAME
+	if not first_frame and _anim_time < hold:
+		return
+	if not first_frame:
+		_anim_time = 0.0
+		_anim_index += 1
+		for i: int in _anim_sprites.size():
+			var textures: Array = _anim_textures[i]
+			_anim_sprites[i].texture = textures[_anim_index % textures.size()]
+	if _anim_shots_left > 0:
+		_capturing = true
+		var path: String = _shot.get_basename() + ("-%d." % _anim_index) + _shot.get_extension()
+		await _capture(path, false)
+		_anim_shots_left -= 1
+		_capturing = false
+		if _anim_shots_left == 0:
+			get_tree().quit()
+
+
+func _capture(path: String, quit: bool = true) -> void:
 	await RenderingServer.frame_post_draw
 	var image: Image = get_viewport().get_texture().get_image()
-	var err: Error = image.save_png(_shot)
-	print("art_check: mode=%s arena=%s board=%s cell=%s scale=%d hud=%s layout=%s shot=%s (%s)" % [_mode, _arena_id, _board, _cell, _scale, _hud, _layout, _shot, error_string(err)])
-	get_tree().quit()
+	var err: Error = image.save_png(path)
+	print("art_check: mode=%s anim=%s arena=%s board=%s cell=%s scale=%d hud=%s layout=%s shot=%s (%s)" % [_mode, _anim, _arena_id, _board, _cell, _scale, _hud, _layout, path, error_string(err)])
+	if quit:
+		get_tree().quit()
