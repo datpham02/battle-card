@@ -1,0 +1,26 @@
+GIMP Palette
+Name: Tessera master (slice 1 units)
+Columns: 8
+# Source colours of the slice-1 unit sprites (art bible §4, §8.4; specs
+# design/assets/specs/swordsman-assets.md and goblin-scout-assets.md).
+# tools/asset-pipeline/export_sheets.py refuses any opaque pixel outside
+# this list. Adding a colour is the art-director's call (art bible §8.4):
+# note the reason here and in the changelog.
+# 2026-10-31: 13 entries, 8 Swordsman + 7 Goblin Scout, Ink and Ivory shared.
+#
+# Shared
+ 27  23  34	Ink #1B1722 (outline)
+239 230 210	Ivory #EFE6D2 (trim, eyes, teeth)
+# Swordsman (ASSET-001)
+143 163 184	Armour mid #8FA3B8
+238 244 250	Armour light #EEF4FA
+ 95 111 130	Armour dark #5F6F82
+ 79  88 100	Cloak dark Mist #4F5864
+232 217 168	Hair pale blond #E8D9A8
+227 185 154	Skin #E3B99A
+# Goblin Scout (ASSET-003), leather lifted 2026-10-31 (#9A7D5E / #66523F)
+125 139  90	Goblin skin mid #7D8B5A
+ 89 100  63	Goblin skin dark #59643F (spec; unused by the current frames)
+154 125  94	Leather #9A7D5E
+102  82  63	Leather dark #66523F
+143 160 112	Hood pale moss #8FA070

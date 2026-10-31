@@ -19,3 +19,11 @@
 # .gitattributes governs the INDEX. It does not retro-fix a working tree that
 # predates the rule -- run `git add --renormalize .` for that.
 .claude/**/*.md text eol=lf
+
+# Exporter outputs and inputs are compared byte-for-byte by
+# `tools/asset-pipeline/export_sheets.py --check` (Story 045), which always
+# writes LF. Same reason as *.tsv above: a CRLF checkout would make the sheet
+# JSON differ on every line and fail the check on a fresh clone.
+assets/art/**/*.json text eol=lf
+art_src/**/clips.json text eol=lf
+art_src/**/*.gpl text eol=lf
