@@ -3,20 +3,27 @@ extends Node2D
 ## Renders the hand row (bottom-right corner) and owns the [HoldSlots] logic instance.
 ## Each slot shows its point LABEL (A1...), tinted by the side letter. States are shown by
 ## shape as well as colour: empty = dim fill + "+" mark, occupied = outline + label,
-## selected = thick bright outline, full = gold outlines and a "FULL" label left of the row.
+## selected = thick bright outline, full = gold outlines and a "FULL" label in the tag zone above the
+## Cancel button (left-aligned; the focus tag takes its right end).
+## Story 044 Part C: portrait cards on the thumb arc (ScreenLayout.slot_rects); every slot sits on its own
+## dark fill (Ink #1B1722 at 85 %) with a 2 px frame (art bible 7.2), there is no band behind the row.
 ## Story 014: a ROTTEN point's slot is grey with a dark X, a grey label, never the selection
 ## outline (HoldSlots refuses to select it) and a small "x.x" countdown at the slot's bottom:
 ## the seconds (FieldPoint.rot_in_hand_sec) until it leaves the hand on its own.
 ## Story 041: an Odd Block in a slot is drawn in the PieceDraw odd look with a small sparkle mark in the corner.
 ## Placeholder art. Implements: Story 002, Story 007, Story 014, Story 041.
 
-const SLOT_FILL_EMPTY: Color = Color(0.2, 0.17, 0.15, 0.35)
-const SLOT_FILL_OCCUPIED: Color = Color(0.2, 0.17, 0.15, 0.7)
+const SLOT_FILL_EMPTY: Color = Color(0.106, 0.09, 0.133, 0.85)
+const SLOT_FILL_OCCUPIED: Color = Color(0.106, 0.09, 0.133, 0.85)
 const OUTLINE_EMPTY: Color = Color(0.45, 0.4, 0.35, 0.8)
 const OUTLINE_OCCUPIED: Color = Color(0.2, 0.55, 0.9)
 const OUTLINE_FULL: Color = Color(0.95, 0.7, 0.1)
 const OUTLINE_SELECTED: Color = Color(1.0, 1.0, 1.0)
-const OUTLINE_WIDTH: float = 3.0
+## Frame of an empty / occupied slot (art bible 7.2: 2 px); FULL and selected keep their thicker outlines
+## (state shown by shape as well as colour).
+const OUTLINE_WIDTH: float = 2.0
+## Stroke of the "+" mark of an empty slot.
+const PLUS_WIDTH: float = 3.0
 const OUTLINE_WIDTH_STRONG: float = 6.0
 const OUTLINE_WIDTH_SELECTED: float = 9.0
 const LABEL_COLOR: Color = Color(1.0, 1.0, 1.0)
@@ -51,6 +58,7 @@ const PIECE_COUNT_BOTTOM_RATIO: float = 0.08
 const PIECE_FILL: Color = Color(0.3, 0.65, 0.95)
 const PIECE_SELECTED_FILL: Color = Color(1.0, 0.85, 0.25)
 const TEXT_CELLS: String = "ui.hud.cells"
+const TEXT_FULL: String = "ui.hud.full"
 ## Story 041: radius of the odd sparkle mark in a slot's top-right corner (share of slot width).
 const ODD_MARK_RADIUS_RATIO: float = 0.1
 
@@ -122,7 +130,7 @@ func _draw() -> void:
 		draw_string(
 			ThemeDB.fallback_font,
 			Vector2(side.position.x, side.get_center().y + FULL_FONT_SIZE * 0.35),
-			tr("ui.hud.full"), HORIZONTAL_ALIGNMENT_RIGHT, side.size.x, FULL_FONT_SIZE, OUTLINE_FULL
+			tr(TEXT_FULL), HORIZONTAL_ALIGNMENT_LEFT, side.size.x, FULL_FONT_SIZE, OUTLINE_FULL
 		)
 
 
@@ -233,5 +241,5 @@ func _draw_piece_slot(rect: Rect2, point: FieldPoint, full: bool, selected: bool
 
 
 func _draw_plus(center: Vector2, arm: float, color: Color) -> void:
-	draw_line(center - Vector2(arm, 0.0), center + Vector2(arm, 0.0), color, OUTLINE_WIDTH)
-	draw_line(center - Vector2(0.0, arm), center + Vector2(0.0, arm), color, OUTLINE_WIDTH)
+	draw_line(center - Vector2(arm, 0.0), center + Vector2(arm, 0.0), color, PLUS_WIDTH)
+	draw_line(center - Vector2(0.0, arm), center + Vector2(0.0, arm), color, PLUS_WIDTH)

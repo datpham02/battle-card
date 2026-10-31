@@ -58,7 +58,11 @@ const FEATURED_ICON_PAD: float = 4.0
 const FEATURED_LABEL_GAP: float = 8.0
 const DETACH_MARK_RADIUS: float = 11.0
 const DETACH_MARK_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
-const TEXT_PLACE_HINT: String = "ui.hud.place_hint"
+const TEXT_PLACE_HINT: String = "ui.hud.place_hint_short"
+## Story 044 Part C: placement hint font (shrinks to fit two lines of the hint band, never below the minimum).
+const PLACE_HINT_FONT_SIZE: int = 18
+const PLACE_HINT_MIN_FONT_SIZE: int = 12
+const PLACE_HINT_MAX_LINES: int = 2
 ## TD-016: one line on the card menu countdown bar while another piece can still join the cast.
 const TEXT_JOIN_HINT: String = "ui.hud.join_hint"
 ## Overlays that cover the battle (paths under the main scene); the relic strip hides while one is shown.
@@ -86,10 +90,13 @@ const MISS_TEXT: Color = Color(0.1, 0.6, 0.2)
 const TEXT_DARK: Color = Color(0.15, 0.12, 0.1)
 const TEXT_LIGHT: Color = Color(0.95, 0.9, 0.78)
 const TEXT_OUTLINE_LIGHT: Color = Color(1.0, 1.0, 1.0, 0.9)
-const BUTTON_BACK: Color = Color(0.2, 0.17, 0.15, 0.9)
+## Story 044 Part C (art bible 7.2): no dark control band; dark fill (Ink #1B1722 at 85 %) and a 2 px frame only
+## under each button and the card menu.
+const BUTTON_BACK: Color = Color(0.106, 0.09, 0.133, 0.85)
+const BUTTON_FRAME_WIDTH: float = 2.0
 const BUTTON_READY_BACK: Color = Color(0.25, 0.5, 0.3, 0.95)
 const BUTTON_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const PANEL_BACK: Color = Color(0.1, 0.09, 0.08, 0.85)
+const PANEL_BACK: Color = Color(0.106, 0.09, 0.133, 0.85)
 const BAR_BACK: Color = Color(0.3, 0.27, 0.24, 0.9)
 const BAR_FILL: Color = Color(0.95, 0.6, 0.1)
 ## Alpha multiplier of a locked / dimmed button.
@@ -191,12 +198,13 @@ const FOCUS_FONT_SIZE: int = 18
 ## The countdown fill turns orange when this share of the Focus time (or less) is left
 ## (a quarter: the last 1 s of a 4 s Focus).
 const FOCUS_LOW_RATIO: float = 0.25
-## "DỪNG" tag on the hand row (in the FULL-label reserve zone, top-aligned so it never touches
-## the vertically centred FULL text): size, pause glyph bar size and gap, inner padding.
+## "DỪNG" tag in the tag zone above the Cancel button (ScreenLayout.slot_side_left_rect), right-aligned
+## (the FULL label is left-aligned in the same zone): size, pause glyph bar size and gap, inner padding.
 const FOCUS_TAG_WIDTH: float = 78.0
 const FOCUS_TAG_HEIGHT: float = 26.0
-## Drop of the tag below the hand row's top, so it does not touch the signature button above it.
-const FOCUS_TAG_TOP_OFFSET: float = 8.0
+## Story 044 Part C: the tag keeps this gap to the zone's top and bottom (it shrinks to fit a short zone,
+## so it never reaches the Cancel button below).
+const FOCUS_TAG_V_GAP: float = 2.0
 const FOCUS_TAG_GLYPH_WIDTH: float = 4.0
 const FOCUS_TAG_GLYPH_HEIGHT: float = 12.0
 const FOCUS_TAG_GLYPH_GAP: float = 3.0
@@ -1192,14 +1200,13 @@ func _draw_focus_bar(vp: Vector2) -> void:
 		draw_circle(Vector2(bar.position.x + FOCUS_READY_DOT_RADIUS, bar.get_center().y), FOCUS_READY_DOT_RADIUS, FOCUS_READY_DOT)
 
 
-# "DỪNG" tag with a pause glyph on the hand row while Focus is ACTIVE: top-right of the zone
-# reserved for the FULL label (left of the first slot), so the eye gets it near the thumb too.
+# "DỪNG" tag with a pause glyph while Focus is ACTIVE: right end of the tag zone above the Cancel button
+# (the FULL label takes the left end), next to slot T3, so the eye gets it near the thumb too.
 func _draw_focus_tag(vp: Vector2) -> void:
 	var focus: FocusController = _combat.get_focus()
 	if focus == null or not focus.is_active():
 		return
-	var side: Rect2 = ScreenLayout.slot_side_left_rect(vp, HoldSlots.MAX_SLOTS)
-	var tag := Rect2(Vector2(side.end.x - FOCUS_TAG_WIDTH, side.position.y + FOCUS_TAG_TOP_OFFSET), Vector2(FOCUS_TAG_WIDTH, FOCUS_TAG_HEIGHT))
+	var tag: Rect2 = focus_tag_rect(vp)
 	draw_rect(tag, FOCUS_BAR_FILL)
 	draw_rect(tag, FOCUS_BAR_OUTLINE, false, 2.0)
 	var glyph_top: float = tag.get_center().y - FOCUS_TAG_GLYPH_HEIGHT * 0.5
@@ -1209,6 +1216,15 @@ func _draw_focus_tag(vp: Vector2) -> void:
 	var text_left: float = glyph_x + FOCUS_TAG_GLYPH_WIDTH * 2.0 + FOCUS_TAG_GLYPH_GAP + FOCUS_TAG_PAD
 	var text_rect := Rect2(text_left, tag.position.y, maxf(tag.end.x - text_left, 0.0), tag.size.y)
 	_draw_centered(text_rect, tr(TEXT_FOCUS_PAUSED_TAG), FOCUS_FONT_SIZE, TEXT_LIGHT)
+
+
+## Story 044 Part C: rectangle of the "DỪNG" focus tag: right-aligned in the tag zone
+## (ScreenLayout.slot_side_left_rect), vertically centred, never taller than the zone minus FOCUS_TAG_V_GAP each side.
+static func focus_tag_rect(vp: Vector2) -> Rect2:
+	var side: Rect2 = ScreenLayout.slot_side_left_rect(vp, HoldSlots.MAX_SLOTS)
+	var height: float = maxf(minf(FOCUS_TAG_HEIGHT, side.size.y - FOCUS_TAG_V_GAP * 2.0), 0.0)
+	var width: float = minf(FOCUS_TAG_WIDTH, side.size.x)
+	return Rect2(Vector2(side.end.x - width, side.get_center().y - height * 0.5), Vector2(width, height))
 
 
 func _draw_cells(vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:
@@ -1240,11 +1256,6 @@ func _draw_preview(vp: Vector2) -> void:
 	var info: Rect2 = ScreenLayout.cut_preview_info_rect(vp)
 	var top := Rect2(info.position, Vector2(info.size.x, info.size.y * 0.5))
 	var bottom := Rect2(info.position + Vector2(0.0, info.size.y * 0.5), Vector2(info.size.x, info.size.y * 0.35))
-	var hint: Rect2 = ScreenLayout.place_hint_rect(vp)
-	draw_multiline_string(
-		ThemeDB.fallback_font, hint.position + Vector2(0.0, hint.size.y * 0.35), tr(TEXT_PLACE_HINT),
-		HORIZONTAL_ALIGNMENT_CENTER, hint.size.x, SMALL_FONT_SIZE, 3, TEXT_DARK
-	)
 	if cells.is_empty():
 		var off_text: String = tr(TEXT_PLACE_OFF)
 		_draw_centered(Rect2(info.position, Vector2(info.size.x, info.size.y * 0.7)), off_text, _fit_signature_font(off_text, info.size.x, FONT_SIZE), TEXT_DARK)
@@ -1278,8 +1289,11 @@ func _draw_preview(vp: Vector2) -> void:
 	var forecast: String = tr(TEXT_FORECAST_HIDDEN) if blocked else (tr(TEXT_PLACE_HIT) if hit else tr(TEXT_PLACE_MISS))
 	var label: String = "%s · %s · %s" % [forecast, tr(TEXT_CELLS) % cells.size(), tr(TEXT_DAMAGE_NUMBER) % damage]
 	_draw_corner_label(vp, cells, label, ghost_outline, true)
-	_draw_centered(top, tr(TEXT_CELLS) % cells.size(), BIG_FONT_SIZE, TEXT_DARK)
-	_draw_centered(bottom, tr(TEXT_DAMAGE) % damage, FONT_SIZE, TEXT_DARK)
+	# Story 044: the column between Awaken and Cancel is ~75 px at 1280x720, so both lines shrink to fit it.
+	var cells_text: String = tr(TEXT_CELLS) % cells.size()
+	var damage_text: String = tr(TEXT_DAMAGE) % damage
+	_draw_centered(top, cells_text, _fit_signature_font(cells_text, top.size.x, BIG_FONT_SIZE), TEXT_DARK)
+	_draw_centered(bottom, damage_text, _fit_signature_font(damage_text, bottom.size.x, FONT_SIZE), TEXT_DARK)
 	if _combat.is_dragging():
 		_draw_finger(_combat.get_drag_point())
 
@@ -2694,7 +2708,7 @@ func _draw_confirm(vp: Vector2) -> void:
 	var swinging: bool = actor.is_swinging()
 	var alpha: float = DIM_ALPHA if (swinging or not _combat.can_confirm_placement()) else 1.0
 	draw_rect(rect, Color(BUTTON_READY_BACK, BUTTON_READY_BACK.a * alpha))
-	draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
+	draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, BUTTON_FRAME_WIDTH)
 	var text: String = tr(TEXT_CONFIRM)
 	if swinging:
 		text = tr(TEXT_COOLDOWN) % actor.get_time_left()
@@ -2714,7 +2728,7 @@ func _draw_rotate(vp: Vector2) -> void:
 		return
 	var rect: Rect2 = ScreenLayout.rotate_button_rect(vp)
 	draw_rect(rect, ROTATE_BACK)
-	draw_rect(rect, BUTTON_OUTLINE, false, OUTLINE_WIDTH)
+	draw_rect(rect, BUTTON_OUTLINE, false, BUTTON_FRAME_WIDTH)
 	var c: Vector2 = rect.get_center() - Vector2(0.0, rect.size.y * ROTATE_GLYPH_UP_RATIO)
 	var radius: float = minf(rect.size.x, rect.size.y) * ROTATE_GLYPH_RADIUS_RATIO
 	var end_angle: float = TAU * 0.8
@@ -2726,6 +2740,30 @@ func _draw_rotate(vp: Vector2) -> void:
 	draw_colored_polygon(PackedVector2Array([tip + tangent * head, tip + normal * head * 0.7, tip - normal * head * 0.7]), TEXT_LIGHT)
 	var label_rect := Rect2(rect.position + Vector2(0.0, rect.size.y * ROTATE_LABEL_TOP_RATIO), Vector2(rect.size.x, rect.size.y * (1.0 - ROTATE_LABEL_TOP_RATIO)))
 	_draw_centered(label_rect, tr(TEXT_ROTATE), ROTATE_FONT_SIZE, TEXT_LIGHT)
+	_draw_place_hint(vp)
+
+
+# Story 044 Part C: the placement hint in its band at the top of the Rotate button (ScreenLayout.place_hint_rect),
+# drawn after the button. The font shrinks until the text fits PLACE_HINT_MAX_LINES lines of the band; the
+# line count is capped so nothing spills over the glyph or any other control.
+func _draw_place_hint(vp: Vector2) -> void:
+	var hint: Rect2 = ScreenLayout.place_hint_rect(vp)
+	var pad: float = BUTTON_FRAME_WIDTH * 3.0
+	var width: float = maxf(hint.size.x - pad * 2.0, 0.0)
+	var text: String = tr(TEXT_PLACE_HINT)
+	var font: Font = ThemeDB.fallback_font
+	var size: int = PLACE_HINT_FONT_SIZE
+	while size > PLACE_HINT_MIN_FONT_SIZE:
+		var block: Vector2 = font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, width, size, PLACE_HINT_MAX_LINES)
+		var full_lines: float = font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, width, size).y
+		if block.y <= hint.size.y - pad and full_lines <= block.y + 0.5:
+			break
+		size -= 1
+	var lines: int = clampi(int((hint.size.y - pad) / font.get_height(size)), 1, PLACE_HINT_MAX_LINES)
+	draw_multiline_string(
+		font, Vector2(hint.position.x + pad, hint.position.y + pad * 0.5 + font.get_ascent(size)), text,
+		HORIZONTAL_ALIGNMENT_CENTER, width, size, lines, TEXT_LIGHT
+	)
 
 
 # Story 024: the "Hủy" button while PLACING or while the card menu is open.
@@ -2734,7 +2772,7 @@ func _draw_cancel(vp: Vector2) -> void:
 		return
 	var rect: Rect2 = ScreenLayout.cancel_button_rect(vp)
 	draw_rect(rect, BUTTON_BACK)
-	draw_rect(rect, BUTTON_OUTLINE, false, OUTLINE_WIDTH)
+	draw_rect(rect, BUTTON_OUTLINE, false, BUTTON_FRAME_WIDTH)
 	_draw_centered(rect, tr(TEXT_CANCEL), BUTTON_FONT_SIZE, TEXT_LIGHT)
 
 
@@ -2744,6 +2782,7 @@ func _draw_menu(vp: Vector2) -> void:
 		return
 	var panel: Rect2 = ScreenLayout.skill_menu_panel_rect(vp)
 	draw_rect(panel, PANEL_BACK)
+	draw_rect(panel, BUTTON_OUTLINE, false, BUTTON_FRAME_WIDTH)
 	var bar: Rect2 = ScreenLayout.skill_menu_bar_rect(vp)
 	var ratio: float = 0.0 if flow.get_duration() <= 0.0 else flow.get_time_left() / flow.get_duration()
 	draw_rect(bar, BAR_BACK)

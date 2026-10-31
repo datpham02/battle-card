@@ -3,43 +3,82 @@ extends RefCounted
 ## Landscape screen layout (phone held sideways). Pure geometry (no nodes): every function
 ## takes the viewport size and returns rectangles in viewport (canvas) pixels. Ratios are
 ## layout constants, not tuning. Reference viewport is 1280x720 (see project.godot).
-## Vertical partition (shares of height): arena (HUD band + board) 0.03-0.55, then the
-## bottom zone: d-pad at the bottom-left, hold-slot row at the bottom-right.
+## Control layout v2 (Story 044, design/quick-specs/control-layout-v2.md): the arena (HUD band
+## + board) runs 0.03-0.64 of the height for wide board rows and down to 0.76 for rows that sit
+## inside the thumb gap; the left thumb owns the stick zone (x 0-25 %, y 64-100 %), the right
+## thumb the three hold slots on an arc around the bottom-right corner, the Awaken button sits
+## bottom-centre.
 ## The board size and shape come from a BoardGrid, passed as the first parameter of every
 ## board function; nothing here knows how many cells there are.
 
 ## Horizontal screen margin as a share of viewport width.
 const MARGIN_RATIO: float = 0.03
-## Gap between the bottom of the screen and the d-pad / hand row, as a share of viewport height.
-const BOTTOM_MARGIN_RATIO: float = 0.02
-## Arena: top and bottom edges as a share of viewport height.
+## Arena: top edge as a share of viewport height.
 const ARENA_TOP_RATIO: float = 0.03
-const ARENA_BOTTOM_RATIO: float = 0.55
-## Hand slot height as a share of viewport height; width = height / SLOT_ASPECT.
-const SLOT_HEIGHT_RATIO: float = 0.22
+## Quick spec section 4 (tuning knobs). Lowest edge of a board row that extends outside the thumb
+## gap (and of the arena / board area), and of a row that sits fully inside it, as shares of the height.
+const ARENA_BOTTOM_WIDE_RATIO: float = 0.64
+const ARENA_BOTTOM_NARROW_RATIO: float = 0.76
+## Thumb gap: the horizontal span (shares of the width) between the stick zone and the first hold
+## slot; a board row fully inside it may reach ARENA_BOTTOM_NARROW_RATIO.
+const THUMB_GAP_LEFT_RATIO: float = 0.25
+const THUMB_GAP_RIGHT_RATIO: float = 0.764
+## Stick zone (Z3): width as a share of the viewport width; it spans from the wide arena bottom
+## to the bottom of the screen.
+const STICK_ZONE_WIDTH_RATIO: float = 0.25
+## Hold slot (Z5): the slot's long side (its height, portrait card) as a share of the viewport height
+## (0.18 * 720 = 130 px); the short side is that divided by SLOT_ASPECT (93 px).
+const SLOT_HEIGHT_RATIO: float = 0.18
 const SLOT_ASPECT: float = 1.4
-## Gap between hand slots, as a share of viewport width.
-const SLOT_GAP_RATIO: float = 0.02
-## Gap between the hand row and the area on its left (hosts the FULL label), share of width.
+## Slot arc: angles (degrees, from +x counter-clockwise; slot 0 = T1 high-right ... T3 low-left),
+## radius as a multiple of the slot height, and the pivot (the right thumb's rest point): half a
+## margin in from the right edge, SLOT_ARC_PIVOT_DROP slot heights below the bottom edge.
+## Story 044 Part C: the quick spec's 100/128/156 degrees at radius 2.0 overlapped T2/T3 (about 15x31
+## px) and pushed T3 4.8 px below the screen; 96/126/156 at 2.25 keeps all three apart and on screen.
+const SLOT_ARC_ANGLES_DEG: Array[float] = [96.0, 126.0, 156.0]
+const SLOT_ARC_RADIUS_RATIO: float = 2.25
+const SLOT_ARC_PIVOT_DROP_RATIO: float = 0.35
+## Fourth slot (a relic bag of four). Four portrait cards do not fit on one arc around the pivot
+## without reaching left over the Cancel button or up into the arena, so slot 3 sits on an inner ring
+## under the thumb's rest point, right of T2 and below T1: this angle (degrees) and radius (multiple
+## of the slot height). Fallback geometry, pending a UX decision (Story 044 report).
+const SLOT_INNER_ANGLE_DEG: float = 122.0
+const SLOT_INNER_RADIUS_RATIO: float = 1.05
+## Awaken button (Z4): a square of this share of the height, centred, half a margin above the bottom.
+const AWAKEN_BUTTON_RATIO: float = 0.16
+## Gap between the stick zone / the Awaken button and the controls beside them, share of the width.
 const SLOT_SIDE_GAP_RATIO: float = 0.02
-## D-pad button edge as a share of viewport height (0.135 * 720 = 97 px, thumb size) and
+## Gap between the centre controls and the first hold slot (T3), share of the width: keeps the
+## skill menu (and the cancel button) at x <= 0.75 * width, clear of T3.
+const CENTER_RIGHT_GAP_RATIO: float = 0.015
+## Cancel button width as a share of the viewport width (0.11 * 1280 = 141 px).
+const CANCEL_WIDTH_RATIO: float = 0.11
+## Gap between the skill menu panel and the cancel button, share of the width.
+const MENU_CANCEL_GAP_RATIO: float = 0.01
+## Pad mode (optional controls.movement = pad): button edge in px (the accessibility touch minimum;
+## shrinks to a third of the stick zone's height when that is smaller: 259 / 3 = 86 px at 720p) and
 ## the gap between buttons.
-const DPAD_BUTTON_RATIO: float = 0.135
-const DPAD_GAP_RATIO: float = 0.008
+const PAD_BUTTON_PX: float = 88.0
+const PAD_GAP_PX: float = 0.0
+## Board cell (quick spec 2.1), in art pixels of the 640x360 battle canvas: smallest and largest
+## cell, the canvas height the screen height is scaled from, and the gap the prototype leaves between
+## the two halves (reserved in the width budget; the halves themselves touch on screen).
+const CELL_MIN_ART: Vector2i = Vector2i(38, 27)
+const CELL_MAX_ART: Vector2i = Vector2i(64, 46)
+const ART_CANVAS_HEIGHT: float = 360.0
+const ART_DIVIDER_GAP: float = 6.0
 ## HUD band at the top of the arena (HP bars) as a share of arena height; the board fills the rest.
 const HUD_HEIGHT_RATIO: float = 0.2
-## Vertical padding above and below the board inside the board area, as a share of its height.
-const BOARD_PAD_RATIO: float = 0.04
-## Preferred cell width divided by cell height (shrinks if the board would not fit the width).
+## Preferred cell width divided by cell height.
 const CELL_ASPECT: float = 1.4
+## Float slack (px) for the row-placement comparisons.
+const LAYOUT_EPSILON: float = 0.01
+## Cached cell sizes kept at most (one per board and viewport).
+const CELL_CACHE_MAX: int = 32
 ## Returned by cell_at() when the point is outside the board's bounding rectangle.
 const NO_CELL: Vector2i = BoardGrid.NO_CELL
-## Cut UI (Story 008). The confirm button fills the gap between the d-pad and the hand row,
-## minus a strip at the row's left reserved for the "FULL" label (share of width).
-const CONFIRM_FULL_RESERVE_RATIO: float = 0.09
-## Left edge of the strip between the arena and the hand row (share of width); clear of the d-pad.
-const STRIP_LEFT_RATIO: float = 0.28
-## Vertical gap around the strip, and inner padding of the skill panel (shares of height).
+## Cut UI (Story 008, v2 geometry): the centre controls sit between the stick zone and T3, below the
+## lowest narrow board row. Vertical gap around the strip, and inner padding of the skill panel (shares of height).
 const STRIP_GAP_RATIO: float = 0.012
 const MENU_PAD_RATIO: float = 0.012
 ## Countdown bar height (share of height) and gap between skill buttons (share of width).
@@ -132,11 +171,9 @@ const CHARACTER_CARD_MAX_WIDTH_RATIO: float = 0.3
 ## Floor select (Story 018): the "Nhân vật: …" label on the right margin inside the title band
 ## (width as a share of the viewport width, same height as the back button).
 const FLOOR_HERO_LABEL_WIDTH_RATIO: float = 0.3
-## Signature skill UI (Story 021): button height (0.12 * 720 = 86 px >= 64 px, share of height),
-## the charge bar inside its bottom edge (share of height), the active-timer bar along the top of
-## the player's half (share of the board height) and the banner's height (share of the board height).
-## The button's width is whatever is free between the Focus bar and the FULL-label zone's right edge.
-const SIGNATURE_BUTTON_HEIGHT_RATIO: float = 0.12
+## Signature skill UI (Story 021): the charge bar inside the Awaken button's bottom edge (share of height),
+## the active-timer bar along the top of the player's half (share of the board height) and the banner's
+## height (share of the board height). The button itself is [method signature_rect] (Story 044).
 const SIGNATURE_CHARGE_HEIGHT_RATIO: float = 0.025
 const SIGNATURE_TIMER_HEIGHT_RATIO: float = 0.035
 const SIGNATURE_BANNER_HEIGHT_RATIO: float = 0.3
@@ -184,50 +221,94 @@ const WORLD_ENTER_BOTTOM_RATIO: float = 0.855
 const WORLD_ENTER_WIDTH_RATIO: float = 0.3
 
 
-## Rectangle of the arena area (HUD band + board).
+## Rectangle of the arena area (HUD band + board), down to the wide-row bottom (64 % of the height).
 static func arena_rect(viewport_size: Vector2) -> Rect2:
 	var margin: float = viewport_size.x * MARGIN_RATIO
 	var top: float = viewport_size.y * ARENA_TOP_RATIO
-	var bottom: float = viewport_size.y * ARENA_BOTTOM_RATIO
+	var bottom: float = viewport_size.y * ARENA_BOTTOM_WIDE_RATIO
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, bottom - top)
 
 
-## Size of one hold slot.
+## Bottom edge of the controls: half a margin above the bottom of the screen (the Awaken button's
+## bottom edge; the stick zone runs to the very bottom).
+static func controls_bottom(viewport_size: Vector2) -> float:
+	return viewport_size.y - viewport_size.x * MARGIN_RATIO * 0.5
+
+
+## Stick zone (Z3): x 0-25 % of the width, from the wide-row arena bottom (64 %) to the bottom of
+## the screen (320 x 259 px at 1280x720). The floating joystick appears where a touch lands in it;
+## while a piece is placed it hosts the big ROTATE button; in pad mode it hosts the 3x3 pad.
+static func stick_zone_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * ARENA_BOTTOM_WIDE_RATIO
+	return Rect2(0.0, top, viewport_size.x * STICK_ZONE_WIDTH_RATIO, viewport_size.y - top)
+
+
+## Size of one hold slot: a portrait card, SLOT_HEIGHT_RATIO of the height tall (130 px) and that
+## divided by SLOT_ASPECT wide (93 px at 1280x720).
 static func slot_size(viewport_size: Vector2) -> Vector2:
 	var height: float = viewport_size.y * SLOT_HEIGHT_RATIO
 	return Vector2(height / SLOT_ASPECT, height)
 
 
-## Slot rectangles, left to right, flush with the bottom-right corner.
+## Pivot of the slot arc (the right thumb's rest point), 1261,765 at 1280x720.
+static func slot_arc_pivot(viewport_size: Vector2) -> Vector2:
+	var slot_h: float = viewport_size.y * SLOT_HEIGHT_RATIO
+	return Vector2(
+		viewport_size.x - viewport_size.x * MARGIN_RATIO * 0.5,
+		viewport_size.y + slot_h * SLOT_ARC_PIVOT_DROP_RATIO
+	)
+
+
+## Rectangle of hold slot [param index] (0 = T1 high-right, 1 = T2, 2 = T3 low-left) on the arc around
+## [method slot_arc_pivot] (centres about (1230,475), (1089,529), (994,647) at 1280x720; T3 spans
+## x 948-1041, y 582-712). Index 3 (a relic bag of four) sits on the inner ring, see
+## SLOT_INNER_ANGLE_DEG; higher indices are clamped to it. Every slot is kept inside the viewport.
+static func slot_rect(viewport_size: Vector2, index: int) -> Rect2:
+	var size: Vector2 = slot_size(viewport_size)
+	var slot_h: float = viewport_size.y * SLOT_HEIGHT_RATIO
+	var arc_count: int = SLOT_ARC_ANGLES_DEG.size()
+	var radius: float = slot_h * SLOT_ARC_RADIUS_RATIO
+	var angle_deg: float = SLOT_ARC_ANGLES_DEG[clampi(index, 0, arc_count - 1)]
+	if index >= arc_count:
+		radius = slot_h * SLOT_INNER_RADIUS_RATIO
+		angle_deg = SLOT_INNER_ANGLE_DEG
+	var angle: float = deg_to_rad(angle_deg)
+	var center: Vector2 = slot_arc_pivot(viewport_size) + Vector2(cos(angle), -sin(angle)) * radius
+	var pos: Vector2 = center - size * 0.5
+	pos.x = clampf(pos.x, 0.0, maxf(viewport_size.x - size.x, 0.0))
+	pos.y = clampf(pos.y, 0.0, maxf(viewport_size.y - size.y, 0.0))
+	return Rect2(pos, size)
+
+
+## Slot rectangles for slots 0..count-1 in bag order (T1 first), see [method slot_rect].
 static func slot_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
-	if count <= 0:
-		return rects
-	var size: Vector2 = slot_size(viewport_size)
-	var gap: float = viewport_size.x * SLOT_GAP_RATIO
-	var total: float = size.x * count + gap * (count - 1)
-	var left: float = viewport_size.x - viewport_size.x * MARGIN_RATIO - total
-	var top: float = viewport_size.y * (1.0 - BOTTOM_MARGIN_RATIO) - size.y
-	for i: int in count:
-		rects.append(Rect2(left + (size.x + gap) * i, top, size.x, size.y))
+	for i: int in maxi(count, 0):
+		rects.append(slot_rect(viewport_size, i))
 	return rects
 
 
-## Bounding rectangle of the d-pad (plus layout, bottom-left corner).
+## Bounding rectangle of the optional pad (controls.movement = pad): a 3x3 block of PAD_BUTTON_PX
+## buttons (smaller if the stick zone is not tall enough for three) flush with the bottom of the
+## screen, one margin in from the left edge, inside [method stick_zone_rect].
 static func dpad_bounds(viewport_size: Vector2) -> Rect2:
-	var button: float = viewport_size.y * DPAD_BUTTON_RATIO
-	var gap: float = viewport_size.y * DPAD_GAP_RATIO
-	var side: float = button * 3.0 + gap * 2.0
-	var left: float = viewport_size.x * MARGIN_RATIO
-	var top: float = viewport_size.y * (1.0 - BOTTOM_MARGIN_RATIO) - side
-	return Rect2(left, top, side, side)
+	var zone: Rect2 = stick_zone_rect(viewport_size)
+	var button: float = _pad_button(viewport_size)
+	var side: float = button * 3.0 + PAD_GAP_PX * 2.0
+	var left: float = minf(viewport_size.x * MARGIN_RATIO, maxf(zone.size.x - side, 0.0))
+	return Rect2(left, zone.end.y - side, side, side)
 
 
-## D-pad button rectangles keyed by direction (Vector2i.UP/DOWN/LEFT/RIGHT), plus layout.
+# Pad button edge: PAD_BUTTON_PX, or a third of the stick zone's height (minus gaps) if smaller.
+static func _pad_button(viewport_size: Vector2) -> float:
+	var zone: Rect2 = stick_zone_rect(viewport_size)
+	return minf(PAD_BUTTON_PX, (zone.size.y - PAD_GAP_PX * 2.0) / 3.0)
+
+
+## Pad button rectangles keyed by direction (Vector2i.UP/DOWN/LEFT/RIGHT), plus layout.
 static func dpad_rects(viewport_size: Vector2) -> Dictionary:
-	var button: float = viewport_size.y * DPAD_BUTTON_RATIO
-	var gap: float = viewport_size.y * DPAD_GAP_RATIO
-	var step: float = button + gap
+	var button: float = _pad_button(viewport_size)
+	var step: float = button + PAD_GAP_PX
 	var bounds: Rect2 = dpad_bounds(viewport_size)
 	var size := Vector2(button, button)
 	var o: Vector2 = bounds.position
@@ -252,20 +333,113 @@ static func board_area_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(arena.position.x, arena.position.y + hud_h, arena.size.x, arena.size.y - hud_h)
 
 
-## Size of one board cell: height fits the rows, width is CELL_ASPECT times that, shrunk so
-## all columns of [param grid] fit the arena width (big grids get smaller cells).
+## Board cells cached per (grid, viewport): cell_size() is called by every draw helper.
+static var _cell_cache: Dictionary = {}
+
+
+## Size of one board cell. The largest cell of aspect CELL_ASPECT between CELL_MIN_ART and
+## CELL_MAX_ART (whole art px of the 640x360 canvas, scaled by height / 360) such that: each half is
+## at most (arena width - ART_DIVIDER_GAP) / 2 wide, a board row that extends outside the thumb gap
+## ends at or above ARENA_BOTTOM_WIDE_RATIO, and a row fully inside it at or above
+## ARENA_BOTTOM_NARROW_RATIO (see [method board_rect] for the vertical placement), and no real cell
+## overlaps a hold slot (all HoldSlots.MAX_SLOTS of them; Story 044 Part C: wide 6-column boards such
+## as ring would otherwise reach slot T1). A board too big even for the smallest cell shrinks
+## continuously to fit the board area instead.
 static func cell_size(grid: BoardGrid, viewport_size: Vector2) -> Vector2:
+	var key: int = grid.get_instance_id()
+	var cached: Variant = _cell_cache.get(key)
+	if cached != null and cached["grid"] == grid and cached["vp"] == viewport_size:
+		return cached["size"]
+	var size: Vector2 = _compute_cell_size(grid, viewport_size)
+	if _cell_cache.size() >= CELL_CACHE_MAX:
+		_cell_cache.clear()
+	_cell_cache[key] = {"grid": grid, "vp": viewport_size, "size": size}
+	return size
+
+
+static func _compute_cell_size(grid: BoardGrid, viewport_size: Vector2) -> Vector2:
+	var scale: float = viewport_size.y / ART_CANVAS_HEIGHT
+	var arena: Rect2 = arena_rect(viewport_size)
+	var half_max_art: float = (arena.size.x / scale - ART_DIVIDER_GAP) * 0.5
+	var first_cols: Array[int] = _row_first_cols(grid)
+	var slots: Array[Rect2] = slot_rects(viewport_size, HoldSlots.MAX_SLOTS)
+	for h_art: int in range(CELL_MAX_ART.y, CELL_MIN_ART.y - 1, -1):
+		var w_art: int = clampi(roundi(h_art * CELL_ASPECT), CELL_MIN_ART.x, CELL_MAX_ART.x)
+		if grid.side_cols * w_art > half_max_art + LAYOUT_EPSILON:
+			continue
+		var cell := Vector2(w_art, h_art) * scale
+		if _rows_fit(grid, viewport_size, cell, first_cols) and _clear_of_slots(grid, viewport_size, cell, slots):
+			return cell
 	var area: Rect2 = board_area_rect(viewport_size)
-	var h: float = area.size.y * (1.0 - BOARD_PAD_RATIO * 2.0) / grid.rows
-	var w: float = minf(h * CELL_ASPECT, area.size.x / grid.total_cols)
-	return Vector2(w, h)
+	var h: float = area.size.y / grid.rows
+	return Vector2(minf(h * CELL_ASPECT, area.size.x / grid.total_cols), h)
 
 
-## Bounding rectangle of the whole board, centred in the board area.
+# For each board row, the first real column of the player's half (the board's left extent in that row), -1 if none.
+static func _row_first_cols(grid: BoardGrid) -> Array[int]:
+	var cols: Array[int] = []
+	for row: int in grid.rows:
+		var first: int = -1
+		for col: int in grid.side_cols:
+			if grid.is_in_board(Vector2i(col, row)):
+				first = col
+				break
+		cols.append(first)
+	return cols
+
+
+# Top edge of a board of [param rows] rows of [param cell_h] px: centred in the board area, but never above it
+# (a tall board overflows downwards).
+static func _board_top(viewport_size: Vector2, rows: int, cell_h: float) -> float:
+	var area: Rect2 = board_area_rect(viewport_size)
+	return area.position.y + maxf((area.size.y - cell_h * rows) * 0.5, 0.0)
+
+
+# True if every row of the board, laid out with [param cell], ends above its limit: the wide bottom for a row that
+# reaches outside the thumb gap, the narrow bottom for a row fully inside it.
+static func _rows_fit(grid: BoardGrid, viewport_size: Vector2, cell: Vector2, first_cols: Array[int]) -> bool:
+	var top: float = _board_top(viewport_size, grid.rows, cell.y)
+	var left: float = (viewport_size.x - cell.x * grid.total_cols) * 0.5
+	var gap_left: float = viewport_size.x * THUMB_GAP_LEFT_RATIO
+	var gap_right: float = viewport_size.x * THUMB_GAP_RIGHT_RATIO
+	var wide: float = viewport_size.y * ARENA_BOTTOM_WIDE_RATIO
+	var narrow: float = viewport_size.y * ARENA_BOTTOM_NARROW_RATIO
+	for row: int in grid.rows:
+		var first: int = first_cols[row]
+		var inside: bool = first < 0
+		if not inside:
+			var row_left: float = left + first * cell.x
+			var row_right: float = left + (grid.total_cols - first) * cell.x
+			inside = row_left >= gap_left - LAYOUT_EPSILON and row_right <= gap_right + LAYOUT_EPSILON
+		var bottom: float = top + (row + 1) * cell.y
+		if bottom > (narrow if inside else wide) + LAYOUT_EPSILON:
+			return false
+	return true
+
+
+# True if no real cell of the board, laid out with [param cell] (as [method board_rect] places it), overlaps any of
+# [param slots] (shared edges allowed).
+static func _clear_of_slots(grid: BoardGrid, viewport_size: Vector2, cell: Vector2, slots: Array[Rect2]) -> bool:
+	var origin := Vector2((viewport_size.x - cell.x * grid.total_cols) * 0.5, _board_top(viewport_size, grid.rows, cell.y))
+	var board := Rect2(origin, cell * Vector2(grid.total_cols, grid.rows))
+	for slot: Rect2 in slots:
+		if not board.intersects(slot):
+			continue
+		for row: int in grid.rows:
+			for col: int in grid.total_cols:
+				if grid.is_in_board(Vector2i(col, row)) and Rect2(origin + cell * Vector2(col, row), cell).intersects(slot):
+					return false
+	return true
+
+
+## Bounding rectangle of the whole board: centred horizontally, centred vertically in the board area
+## (from 3 % + HUD band down to the wide-row bottom) and, when taller than it, overflowing downwards
+## where [method cell_size]'s row rule allows.
 static func board_rect(grid: BoardGrid, viewport_size: Vector2) -> Rect2:
+	var cell: Vector2 = cell_size(grid, viewport_size)
+	var size: Vector2 = cell * Vector2(grid.total_cols, grid.rows)
 	var area: Rect2 = board_area_rect(viewport_size)
-	var size: Vector2 = cell_size(grid, viewport_size) * Vector2(grid.total_cols, grid.rows)
-	return Rect2(area.get_center() - size * 0.5, size)
+	return Rect2(Vector2(area.get_center().x - size.x * 0.5, _board_top(viewport_size, grid.rows, cell.y)), size)
 
 
 ## Rectangle of board cell [param cell] (its position in the bounding grid; the cell should
@@ -301,63 +475,75 @@ static func divider_x(grid: BoardGrid, viewport_size: Vector2) -> float:
 	return board_rect(grid, viewport_size).position.x + cell_size(grid, viewport_size).x * grid.side_cols
 
 
-## Free area left of the hand row (same vertical extent as the slots), from the d-pad's right
-## edge plus the side gap to the row minus the side gap. Hosts the "FULL" label.
+## Left edge of the centre controls (Confirm button, skill menu, focus bar): the stick zone's right
+## edge plus the side gap.
+static func center_left(viewport_size: Vector2) -> float:
+	return viewport_size.x * (STICK_ZONE_WIDTH_RATIO + SLOT_SIDE_GAP_RATIO)
+
+
+## Right edge of the centre controls (Cancel button, skill menu): a gap left of slot T3 (about x 959 at
+## 1280 wide).
+static func center_right(viewport_size: Vector2) -> float:
+	return slot_rect(viewport_size, SLOT_ARC_ANGLES_DEG.size() - 1).position.x - viewport_size.x * CENTER_RIGHT_GAP_RATIO
+
+
+## Top edge of the centre controls: one strip gap under the lowest narrow board row (76 % of the height).
+static func center_top(viewport_size: Vector2) -> float:
+	return viewport_size.y * (ARENA_BOTTOM_NARROW_RATIO + STRIP_GAP_RATIO)
+
+
+## Tag zone above the Cancel button and right of the Awaken button (from the strip's top down to the
+## buttons' top, 30 px tall at 720p): hosts the "FULL" label and the focus tag. [param count] is
+## the hold slot count (an empty zone for none).
 static func slot_side_left_rect(viewport_size: Vector2, count: int) -> Rect2:
-	var rects: Array[Rect2] = slot_rects(viewport_size, count)
-	if rects.is_empty():
+	if count <= 0:
 		return Rect2()
-	var gap: float = viewport_size.x * SLOT_SIDE_GAP_RATIO
-	var left: float = dpad_bounds(viewport_size).end.x + gap
-	var first: Rect2 = rects[0]
-	return Rect2(left, first.position.y, maxf(first.position.x - gap - left, 0.0), first.size.y)
+	var awaken: Rect2 = signature_rect(viewport_size)
+	var left: float = awaken.end.x + viewport_size.x * SLOT_SIDE_GAP_RATIO
+	var top: float = center_top(viewport_size)
+	return Rect2(left, top, maxf(center_right(viewport_size) - left, 0.0), maxf(awaken.position.y - top, 0.0))
 
 
-## CONFIRM ("Chốt") button: the free area between the d-pad and the hand row, same vertical
-## extent as the slots, leaving room for the "FULL" label. Laid out for the widest hand so it
-## never overlaps a slot whatever the slot count.
+## CONFIRM ("Chot") button: left of the Awaken button, same vertical extent, from the centre controls' left
+## edge (211 x 115 px at 1280x720).
 static func confirm_button_rect(viewport_size: Vector2) -> Rect2:
-	var side: Rect2 = slot_side_left_rect(viewport_size, HoldSlots.MAX_SLOTS)
-	var reserve: float = viewport_size.x * CONFIRM_FULL_RESERVE_RATIO
-	return Rect2(side.position, Vector2(maxf(side.size.x - reserve, 0.0), side.size.y))
+	var awaken: Rect2 = signature_rect(viewport_size)
+	var left: float = center_left(viewport_size)
+	var right: float = awaken.position.x - viewport_size.x * SLOT_SIDE_GAP_RATIO
+	return Rect2(left, awaken.position.y, maxf(right - left, 0.0), awaken.size.y)
 
 
-## Story 024: inset of the ROTATE ("Xoay") button from the d-pad's bounding square, in px.
+## Story 024: inset of the ROTATE ("Xoay") button from the stick zone's edge, in px.
 const ROTATE_BUTTON_INSET: float = 6.0
-## Story 024: while PLACING the d-pad is locked, so its whole square becomes one big ROTATE button
-## the left thumb can hold while the right finger drags.
+## Story 024 / 044: while PLACING the joystick is off and the whole stick zone (inset) becomes one big
+## ROTATE button the left thumb can hold while the right finger drags.
 static func rotate_button_rect(viewport_size: Vector2) -> Rect2:
-	return dpad_bounds(viewport_size).grow(-ROTATE_BUTTON_INSET)
+	return stick_zone_rect(viewport_size).grow(-ROTATE_BUTTON_INSET)
 
 
-## Story 024: top of the CANCEL button as a share of the slot height, measured from the hand row's
-## top (clear of the "DỪNG" tag, which is 26 px high on the same zone).
-const CANCEL_TOP_RATIO: float = 0.3
-## Story 024: CANCEL button ("Hủy", PLACING and the card menu): the FULL-label reserve zone right of
-## the CONFIRM button, below the focus tag, down to the hand row's bottom.
+## CANCEL button ("Huy", PLACING and the card menu): right of the Awaken button against the centre controls'
+## right edge, same vertical extent as the Awaken button (141 x 115 px at 1280x720).
 static func cancel_button_rect(viewport_size: Vector2) -> Rect2:
-	var side: Rect2 = slot_side_left_rect(viewport_size, HoldSlots.MAX_SLOTS)
-	var confirm: Rect2 = confirm_button_rect(viewport_size)
-	var gap: float = viewport_size.x * SLOT_SIDE_GAP_RATIO * 0.5
-	var left: float = confirm.end.x + gap
-	var top: float = side.position.y + side.size.y * CANCEL_TOP_RATIO
-	return Rect2(left, top, maxf(side.end.x - left, 0.0), maxf(side.end.y - top, 0.0))
+	var awaken: Rect2 = signature_rect(viewport_size)
+	var right: float = center_right(viewport_size)
+	var width: float = viewport_size.x * CANCEL_WIDTH_RATIO
+	return Rect2(right - width, awaken.position.y, width, awaken.size.y)
 
 
-## Strip between the arena bottom and the hand row, right of the d-pad column. Hosts the
-## skill panel, and (split in halves) the preview and swing text.
+## Centre strip under the lowest narrow board row, between the stick zone and T3 (x 346-959, y 556-701 at
+## 1280x720). Hosts the Confirm / Awaken / Cancel buttons, the preview text and the skill panel.
 static func cut_strip_rect(viewport_size: Vector2) -> Rect2:
-	var gap: float = viewport_size.y * STRIP_GAP_RATIO
-	var top: float = arena_rect(viewport_size).end.y + gap
-	var hand_top: float = viewport_size.y * (1.0 - BOTTOM_MARGIN_RATIO) - slot_size(viewport_size).y
-	var left: float = viewport_size.x * STRIP_LEFT_RATIO
-	var right: float = viewport_size.x * (1.0 - MARGIN_RATIO)
-	return Rect2(left, top, right - left, maxf(hand_top - gap - top, 0.0))
+	var top: float = center_top(viewport_size)
+	var left: float = center_left(viewport_size)
+	return Rect2(left, top, maxf(center_right(viewport_size) - left, 0.0), maxf(controls_bottom(viewport_size) - top, 0.0))
 
 
-## Skill menu panel (the whole strip).
+## Skill menu panel: the strip up to a gap left of the Cancel button, so it covers the Confirm and Awaken
+## buttons while open but never T3, the Cancel button or the stick zone (x 346-806 at 1280x720).
 static func skill_menu_panel_rect(viewport_size: Vector2) -> Rect2:
-	return cut_strip_rect(viewport_size)
+	var strip: Rect2 = cut_strip_rect(viewport_size)
+	var right: float = cancel_button_rect(viewport_size).position.x - viewport_size.x * MENU_CANCEL_GAP_RATIO
+	return Rect2(strip.position, Vector2(maxf(right - strip.position.x, 0.0), strip.size.y))
 
 
 ## Countdown bar across the top of the skill panel.
@@ -384,36 +570,37 @@ static func skill_menu_rects(viewport_size: Vector2, count: int) -> Array[Rect2]
 	return rects
 
 
-## Share of the strip's free width (right of the signature button) taken by the cell-count /
-## damage readout; the rotate hint gets the rest (Story 024).
-const PREVIEW_INFO_SHARE: float = 0.42
-
-
-## Cell count and expected damage of the piece being placed: the strip right of the signature
-## button (it used to start at the strip's left edge, under that button).
+## Cell count and expected damage of the piece being placed: the column between the Awaken and the Cancel
+## buttons (104 x 115 px at 1280x720).
 static func cut_preview_info_rect(viewport_size: Vector2) -> Rect2:
-	var strip: Rect2 = cut_strip_rect(viewport_size)
+	var awaken: Rect2 = signature_rect(viewport_size)
 	var gap: float = viewport_size.y * STRIP_GAP_RATIO
-	var left: float = signature_button_rect(viewport_size).end.x + gap
-	return Rect2(left, strip.position.y, maxf(strip.end.x - left, 0.0) * PREVIEW_INFO_SHARE, strip.size.y)
+	var left: float = awaken.end.x + gap
+	var right: float = cancel_button_rect(viewport_size).position.x - gap
+	return Rect2(left, awaken.position.y, maxf(right - left, 0.0), awaken.size.y)
 
 
-## Story 024: the rotate hint, right of the readout in the same strip.
+## Story 044 Part C: share of the Rotate button's height its top hint band takes (39 px at 720p; the
+## rotate glyph starts below it).
+const PLACE_HINT_HEIGHT_RATIO: float = 0.16
+## Story 024 / 044: the placement hint, a band across the top of the ROTATE button (the control that
+## exists only while placing; the 30 px tag zone above Cancel is left to the FULL label and the focus
+## tag). Text drawn here must be clipped to it.
 static func place_hint_rect(viewport_size: Vector2) -> Rect2:
-	var info: Rect2 = cut_preview_info_rect(viewport_size)
-	var strip: Rect2 = cut_strip_rect(viewport_size)
-	return Rect2(info.end.x, strip.position.y, maxf(strip.end.x - info.end.x, 0.0), strip.size.y)
+	var rotate: Rect2 = rotate_button_rect(viewport_size)
+	return Rect2(rotate.position, Vector2(rotate.size.x, rotate.size.y * PLACE_HINT_HEIGHT_RATIO))
 
 
-## Right half of the strip: skill name and countdown of the running swing.
+## Skill name and countdown of the running swing: the strip right of the Awaken button (the Cancel button
+## is not shown while a swing runs).
 static func cut_swing_info_rect(viewport_size: Vector2) -> Rect2:
 	var strip: Rect2 = cut_strip_rect(viewport_size)
-	return Rect2(strip.position + Vector2(strip.size.x * 0.5, 0.0), Vector2(strip.size.x * 0.5, strip.size.y))
+	var left: float = signature_rect(viewport_size).end.x + viewport_size.x * SLOT_SIDE_GAP_RATIO
+	return Rect2(left, strip.position.y, maxf(strip.end.x - left, 0.0), strip.size.y)
 
 
-## Focus UI (Story 012): the "TẬP TRUNG" countdown (or cooldown) bar. As wide as the CONFIRM
-## button and right above it, one strip gap up, inside the bottom band of the strip (the
-## preview's cell count and damage text sit in the upper 85% of the strip, so they stay clear).
+## Focus UI (Story 012): the focus countdown (or cooldown) bar. As wide as the CONFIRM button and
+## right above it, one strip gap up (554-577 px at 720p, below the lowest narrow board row).
 static func focus_bar_rect(viewport_size: Vector2) -> Rect2:
 	var confirm: Rect2 = confirm_button_rect(viewport_size)
 	var gap: float = viewport_size.y * STRIP_GAP_RATIO
@@ -584,8 +771,7 @@ static func hud_boss_status_rect(viewport_size: Vector2) -> Rect2:
 	var half_w: float = (hud.size.x - gap) * 0.5 - CombatView.PAD * 2.0
 	var right_x: float = hud.position.x + CombatView.PAD + half_w + CombatView.PAD * 2.0 + gap
 	var bar_bottom: float = hud.position.y + CombatView.PAD + CombatView.FONT_SIZE + HUD_BAR_TEXT_GAP + CombatView.BAR_HEIGHT
-	var area: Rect2 = board_area_rect(viewport_size)
-	var cells_top: float = area.position.y + area.size.y * BOARD_PAD_RATIO
+	var cells_top: float = board_area_rect(viewport_size).position.y
 	return Rect2(right_x, bar_bottom, half_w, maxf(cells_top - bar_bottom, 0.0))
 
 
@@ -695,16 +881,16 @@ static func floor_hero_label_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(Vector2(viewport_size.x * (1.0 - MARGIN_RATIO) - size.x, title.get_center().y - size.y * 0.5), size)
 
 
-## Signature button (Story 021): in the strip above the hand row, right of the Focus bar and
-## ending at the right edge of the FULL-label zone (so it sits over the hand row's left end,
-## clear of the slots, the CONFIRM button and the d-pad); its bottom is the Focus bar's bottom.
+## Awaken button rectangle (Z4): a square of AWAKEN_BUTTON_RATIO of the height (115 px at 720p), centred
+## horizontally, half a margin above the bottom of the screen.
+static func signature_rect(viewport_size: Vector2) -> Rect2:
+	var side: float = viewport_size.y * AWAKEN_BUTTON_RATIO
+	return Rect2((viewport_size.x - side) * 0.5, controls_bottom(viewport_size) - side, side, side)
+
+
+## Signature button (Story 021): the Awaken button, see [method signature_rect].
 static func signature_button_rect(viewport_size: Vector2) -> Rect2:
-	var bar: Rect2 = focus_bar_rect(viewport_size)
-	var side: Rect2 = slot_side_left_rect(viewport_size, HoldSlots.MAX_SLOTS)
-	var gap: float = viewport_size.y * STRIP_GAP_RATIO
-	var left: float = bar.end.x + gap
-	var height: float = viewport_size.y * SIGNATURE_BUTTON_HEIGHT_RATIO
-	return Rect2(left, bar.end.y - height, maxf(side.end.x - left, 0.0), height)
+	return signature_rect(viewport_size)
 
 
 ## Charge bar along the bottom edge of the signature button (inside it).

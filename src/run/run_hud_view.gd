@@ -129,6 +129,9 @@ const TEXT_RESTART: String = "ui.run_hud.restart"
 const TEXT_PAUSE_TITLE: String = "ui.run_hud.pause_title"
 const TEXT_RESUME: String = "ui.run_hud.resume"
 const TEXT_LEAVE_RUN: String = "ui.run_hud.leave_run"
+## Story 044: the pause panel button that flips controls.movement; its label names the CURRENT mode.
+const TEXT_MOVEMENT_JOYSTICK: String = "ui.run_hud.movement_joystick"
+const TEXT_MOVEMENT_PAD: String = "ui.run_hud.movement_pad"
 ## Story 019: "Bộ: %d lá" in the top margin while a run is live.
 const TEXT_DECK_LABEL: String = "ui.run_hud.deck_label"
 ## Story 019 result screens.
@@ -253,7 +256,11 @@ func _input_paused(event: InputEvent) -> void:
 	var pos: Vector2 = _press_position(event)
 	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
-	var rects: Array[Rect2] = ScreenLayout.run_button_rects(get_viewport_rect().size, _button_labels().size())
+	var vp: Vector2 = get_viewport_rect().size
+	if movement_button_rect(vp, _button_labels().size()).has_point(pos):
+		SettingsStore.shared().toggle_movement()
+		return
+	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, _button_labels().size())
 	for i: int in rects.size():
 		if rects[i].has_point(pos):
 			_activate(i)
@@ -692,6 +699,21 @@ func _draw_paused(vp: Vector2) -> void:
 	var panel: Rect2 = _draw_panel(vp)
 	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_PAUSE_TITLE), TITLE_FONT_SIZE, TEXT_LIGHT)
 	_draw_buttons(vp)
+	var movement_rect: Rect2 = movement_button_rect(vp, _button_labels().size())
+	var label: String = TEXT_MOVEMENT_PAD if SettingsStore.shared().is_pad() else TEXT_MOVEMENT_JOYSTICK
+	UiButtons.draw_button(self, movement_rect, tr(label), UiButtons.Style.SECONDARY, UiButtons.is_pressed_at(self, movement_rect), true, BUTTON_PAIR_FONT_SIZE)
+
+
+## Story 044: the pause panel button that flips controls.movement (joystick / pad): one full-width
+## button in the panel, a gap above the row of [param button_count] action buttons. Pure geometry,
+## local to this panel (ScreenLayout has no slot for it).
+static func movement_button_rect(viewport_size: Vector2, button_count: int) -> Rect2:
+	var rects: Array[Rect2] = ScreenLayout.run_button_rects(viewport_size, button_count)
+	if rects.is_empty():
+		return Rect2()
+	var row := Rect2(rects[0].position, rects[0].size).merge(rects[rects.size() - 1])
+	var gap: float = viewport_size.y * ScreenLayout.RUN_PANEL_INSET_RATIO
+	return Rect2(row.position.x, row.position.y - row.size.y - gap, row.size.x, row.size.y)
 
 
 # Dim overlay over the whole screen plus the centred panel; returns the panel rect.

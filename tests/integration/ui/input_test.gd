@@ -113,6 +113,8 @@ func _open_cell(drops: FieldDrops, grid: BoardGrid, cell: Vector2i, piece: Piece
 
 
 func _initialize() -> void:
+	# Story 044: these suites click the 3x3 pad; the default control is the floating joystick.
+	SettingsStore.set_movement_override(SettingsStore.MOVEMENT_PAD)
 	var main: Node = load("res://src/main.tscn").instantiate()
 	var flow := main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())

@@ -103,11 +103,11 @@ Người dùng duyệt 2026-10-28. **Specified** = đã quyết ở mức thiế
 |---|---|---|---|---|
 | Remap điều khiển | Standard | — | **Không áp dụng** | Chỉ cảm ứng, không có phím hay nút vật lý. Thay bằng thuận tay trái và cỡ điều khiển (bên dưới) |
 | Chuyển đổi phương thức nhập | Standard | — | **Không áp dụng** | Chỉ cảm ứng. Bản dev trên desktop dùng chuột/phím chỉ để test |
-| **Đường một ngón** | Standard (điều chỉnh) | Mọi thao tác trong trận | Specified | **Không thao tác nào bắt buộc hai ngón cùng lúc.** Mọi thứ làm được bằng một ngón tuần tự: bấm pad để đi, chạm khối trong túi, chạm ô đích, chạm lá. Hai ngón chỉ là cách nhanh hơn. Cần xác nhận "chạm khối rồi chạm ô" hoạt động trọn vẹn trong build |
+| **Đường một ngón** | Standard (điều chỉnh) | Mọi thao tác trong trận | Specified | **Không thao tác nào bắt buộc hai ngón cùng lúc.** Mọi thứ làm được bằng một ngón tuần tự: đi (joystick nổi, hoặc **`controls.movement = pad`: pad 3x3 nhìn thấy sẵn, nút vẽ 86 px, vùng chạm 88 px, cho người cần nút cố định**, đổi ở bảng Tạm dừng, lưu `user://settings.json`), chạm khối trong túi, chạm ô đích, chạm lá. Hai ngón chỉ là cách nhanh hơn. Cần xác nhận "chạm khối rồi chạm ô" hoạt động trọn vẹn trong build (Story 044, 2026-10-31) |
 | **Thuận tay trái** | Standard (điều chỉnh) | Pad ↔ túi khối | Specified | Đảo vùng Z3 và Z5 |
 | Cỡ điều khiển | Standard (điều chỉnh) | Pad, túi khối | Specified | 90 / 100 / 110 % |
 | Thay thế cho thao tác giữ | Standard | Mọi thao tác giữ | Not Started | Các thao tác giữ trong game: (1) **giữ 0,6 s để xác nhận Giết** → tùy chọn "chạm hai lần để xác nhận"; (2) **giữ để xem chi tiết** lá/bảo vật → thêm biểu tượng ⓘ chạm một lần |
-| Thay thế cho thao tác dồn dập | Standard | Pad | Not Started | **Giữ nút pad để lặp bước** theo nhịp hồi bước. Hiện pad không lặp khi giữ (cần mã mới) |
+| Thay thế cho thao tác dồn dập | Standard | Pad | Not Started | **Giữ nút pad để lặp bước** theo nhịp hồi bước. Joystick nổi (mặc định từ Story 044) đã lặp khi giữ; chế độ `pad` vẫn không lặp (cần mã mới) |
 | Điều chỉnh thời gian thao tác | Standard | Mọi thao tác tính giờ | Specified | Chỉ **thời gian chọn lá** (menu 3 s) chỉnh được: 3 s / 6 s / không giới hạn. Các thao tác tính giờ khác: Tập trung (4–5 s), cửa sổ ghép (+1,5 s), giữ Giết (0,6 s) đã nêu ở trên. Né đòn boss là bản chất game (Known Intentional Limitations) |
 | Hỗ trợ ngắm | Standard | — | **Không áp dụng** | Không có ngắm; báo trúng hiện sẵn |
 | Chạy tự động, hỗ trợ nền tảng | Standard | — | **Không áp dụng** | Không có |

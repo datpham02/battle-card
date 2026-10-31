@@ -31,8 +31,8 @@ Mọi số dưới đây tính ở 1280x720; canvas chiến trường 640x360 ar
 |---|---|---|
 | 3x3 | 64x46 | 64x46 (trần) |
 | 4x4 cross | 60x43 | 60x43 |
-| 5x5 | 38x27 | **48x34** |
-| 6x5 ring | 38x27 | 49x35 |
+| 5x5 | 38x27 | **49x35** (đo lại khi làm Story 044; bản nháp ghi 48x34) |
+| 6x5 ring | 38x27 | **45x32** (Story 044: ô thu nhỏ để không ô sân nào chạm T1; xem 2.3) |
 | 6x6 tinh thể | không vừa | **49x35** (nhờ dải 76 %) |
 | 7x6 tinh thể | không vừa | 42x30 (chiều rộng khóa) |
 
@@ -45,15 +45,19 @@ Quy tắc nhớ: từ 6 cột trở lên chiều rộng quyết định cỡ ô,
 - **Đọc hướng:** vùng chết 16 px (20 % bán kính đế). Ngoài vùng chết, snap vào 4 hướng theo góc 90° (chéo chia theo trục gần hơn). Không có hướng chéo vì lưới đi 4 hướng.
 - **Nhịp bước:** vào vùng một hướng = một bước ngay (nếu hết cooldown). Giữ hướng = bước lại mỗi khi cooldown hết (cùng cooldown đang có trong `UnitMover`, không thêm số mới). Đổi hướng = bước ngay theo hướng mới nếu hết cooldown. Thả = dừng.
 - **Khi đặt khối:** vùng Z3 đổi thành nút Xoay lớn như hiện tại (I-12), joystick tắt.
-- **Tùy chọn Settings `controls.movement`:** `joystick` (mặc định) | `pad`. `pad` vẽ lại pad 3x3 cũ với nút 88 px trong cùng vùng, cho người cần nút nhìn thấy; đây là trả lời cho câu hỏi mở "một ngón" trong `design/accessibility-requirements.md` (vẫn mở phần còn lại).
+- **Tùy chọn `controls.movement`:** `joystick` (mặc định) | `pad`. Chưa có màn Settings nên nút đổi nằm trên bảng Tạm dừng; giá trị lưu ở `user://settings.json`. `pad` vẽ lại pad 3x3 cũ trong cùng vùng (nút vẽ 86 px vì vùng cao 259 px không chứa 3 nút 88 px; vùng chạm mỗi nút nới ra ngoài thành 88 px), cho người cần nút nhìn thấy; đây là trả lời cho câu hỏi mở "một ngón" trong `design/accessibility-requirements.md` (vẫn mở phần còn lại).
 - **Bàn phím/chuột trên desktop:** không đổi (phím mũi tên, test click dùng pad qua tùy chọn `pad`).
 
 ### 2.3 Z5 — túi khối vòng cung (I-07)
 
-- 3 ô, mỗi ô **130x93 px** (18 % chiều cao, tỉ lệ 1,4; cũ 158x113).
-- Tâm cung: điểm xoay ngón cái phải `(W − 0,5·lề, H + 0,35·cao ô)` = (1261, 765). Bán kính 2 × cao ô = 259 px. Góc 100° (T1), 128° (T2), 156° (T3) tính từ trục +x ngược chiều kim đồng hồ; T1 cao bên phải, T3 thấp bên trái, cách nhau 28° nên không chạm.
+- 3 ô, mỗi ô dọc **93x130 px** (cao 18 % chiều cao, rộng = cao / 1,4; cũ 113x158).
+- Tâm cung: điểm xoay ngón cái phải `(W − 0,5·lề, H + 0,35·cao ô)` = (1261, 765). Bán kính **2,25 × cao ô = 292 px**. Góc **96° (T1), 126° (T2), 156° (T3)** tính từ trục +x ngược chiều kim đồng hồ; T1 cao bên phải, T3 thấp bên trái.
+- Ở 1280x720: T1 tại (1184, 411), T2 tại (1043, 465), T3 tại (948, 582), mỗi ô 93x130; khe hẹp nhất 2,4 px (T2–T3 theo x); đáy T3 ở 712. `slot_rect` kẹp mọi ô vào trong màn hình. Ở 1600x720 cả cụm dời phải 315 px.
+- **Sửa khi làm Story 044 (2026-10-31):** số trong bản nháp (bán kính 2 × cao ô, góc 100/128/156) sai: T2 và T3 đè nhau khoảng 15x31 px và T3 lòi ra ngoài 4,8 px. Bán kính và góc ở trên là bản đã sửa, có test.
+- **Ô sân không chạm ô túi:** `cell_size()` còn đòi không ô sân thật nào đè lên ô túi nào. Ở 1280 sân ring thu từ 49x35 xuống 45x32 (**người dùng duyệt 2026-10-31**, ảnh `03-ring-arena.png`) và forge từ 59x42 xuống 57x41; các sân khác và mọi sân ở 1600 không đổi. T1 vẫn ló vào góc phải dưới của khung sân (y 411–460), chỗ không có ô sân.
+- **Túi 4 ô (Túi Rộng):** 4 ô trên một cung là không thể (mọi cung thử từ 2,0–4,0 × cao ô, góc 80–178° đều đè nút Hủy hoặc trèo vào sân). Ô thứ 4 nằm trên vòng trong dưới chỗ nghỉ ngón cái: góc 122°, bán kính 1,05 × cao ô, tại (1142, 585), cách T2 6,7 px, không chạm nút nào. **Người dùng duyệt 2026-10-31** (ảnh `production/qa/evidence/control-layout-v2/08-bag4-inner-ring.png`).
 - Thứ tự T1→T3 là thứ tự túi hiện tại (ô 0→2). Kéo thả, đếm số ô, thanh độ tươi, hẹn giờ khối hỏng giữ nguyên hành vi.
-- Mép trái ô T3 (x ≈ 978) là mốc phải của khe ngón cái ở 2.1.
+- Mép trái ô T3 (x ≈ 948) là mốc phải của các nút giữa; nút Hủy tính từ mép này nên dời theo (x 788–929). Cột số ô / sát thương giữa Thức Tỉnh và Hủy chỉ còn ~75 px nên chữ trong đó tự thu nhỏ cho vừa.
 
 ### 2.4 Z4 — Thức Tỉnh và menu lá
 
@@ -85,8 +89,8 @@ Khung bao 6x6 mỗi nửa, cắt góc xa theo bậc 3/2/1/1/2/3. Tọa độ n�
 | `layout.stick_base_px` / `stick_knob_px` | 160 / 88 | |
 | `layout.stick_deadzone_ratio` | 0,20 | của bán kính đế |
 | `layout.slot_height_ratio` | 0,18 | cũ 0,22 |
-| `layout.slot_arc_angles_deg` | [100, 128, 156] | |
-| `layout.slot_arc_radius_ratio` | 2,0 | nhân cao ô |
+| `layout.slot_arc_angles_deg` | [96, 126, 156] | bản nháp [100, 128, 156] đè nhau |
+| `layout.slot_arc_radius_ratio` | 2,25 | nhân cao ô; bản nháp 2,0 |
 | `controls.movement` | joystick | joystick \| pad |
 
 ## 5. Tiêu chí nghiệm thu

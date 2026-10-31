@@ -71,6 +71,8 @@ ui.run_hud.restart,Chơi lại,Play again
 ui.run_hud.pause_title,TẠM DỪNG,PAUSED
 ui.run_hud.resume,Tiếp tục,Resume
 ui.run_hud.leave_run,Thoát chuyến leo (đã lưu),Leave climb (saved)
+ui.run_hud.movement_joystick,Di chuyển: Joystick,Movement: Joystick
+ui.run_hud.movement_pad,Di chuyển: Nút,Movement: Buttons
 ui.run_hud.deck_label,Bộ: %d lá,Deck: %d
 ui.run_hud.run_over_title,CHUYẾN LEO KẾT THÚC,CLIMB OVER
 ui.run_hud.run_won_title,CHUYẾN LEO THẮNG,CLIMB WON
@@ -836,3 +838,4 @@ piece.odd.name,Khối Lạ,Odd Block
 ui.hud.odd_hint,"%s: hình mới, to và mạnh, niệm lâu hơn","%s: a new shape, big and strong, slower to channel"
 ui.piece_deck.odd_rule,"%s: khoảng %d%% khối rơi, %d–%d ô tùy sân (không học, không quên)","%s: about %d%% of drops, %d–%d cells by arena (never learned, never forgotten)"
 ui.piece_deck.odd_none,Không có %s,No %s
+ui.hud.place_hint_short,Kéo khối lên đất địch rồi thả,"Drag the block onto the enemy's side, let go"
