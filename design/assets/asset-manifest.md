@@ -1,13 +1,13 @@
 # Asset Manifest
 
-> Last updated: 2026-10-31 (every slice-1 asset with drawn art now has a candidate: units, Misty Forest set, UI frames + icons, floor tiles, slash + push VFX; ASSET-016 added)
+> Last updated: 2026-10-31 (Story 045: ASSET-001 and ASSET-003 exported to `assets/art/units/` and set to Done; earlier the same day every slice-1 asset with drawn art got a candidate: units, Misty Forest set, UI frames + icons, floor tiles, slash + push VFX; ASSET-016 added)
 > Vertical slice 1: all 18 inventory rows marked Slice = 1 are specced (ASSET-001..016; UI frames are one asset with four files; inventory row 112 Push joined slice 1 on 2026-10-31 because Chấn phong is in the Swordsman starter deck).
 
 ## Progress Summary
 
 | Total | Needed | In Progress | Done | Approved |
 |-------|--------|-------------|------|----------|
-| 16 | 3 | 12 (+1 superseded) | 0 | 0 |
+| 16 | 3 | 10 (+1 superseded) | 2 | 0 |
 
 **In Progress** means: the frames or files exist as candidates under `design/assets/candidates/<group>/`, were rendered through `prototypes/art-check` with retained evidence (`production/qa/evidence/asset-slice1-art-check/`), and the production log lives in the spec. Still missing for Done: the art-director's sign-off on the open points listed in each spec, and the export into `assets/art/...` (units via Story 045's exporter; UI, floor and VFX files are already at their final pixel size and only need copying + import settings). **Needed** rows are code, not drawn art (ASSET-010 shader, ASSET-014 fills), plus the portrait.
 
@@ -16,13 +16,13 @@
 ### Character: Swordsman
 | Asset ID | Name | Category | Status | Spec File |
 |----------|------|----------|--------|-----------|
-| ASSET-001 | Swordsman sprite sheet | Sprite / 2D art | In Progress (v2 design, all 14 frames at 40x48 in `design/assets/candidates/swordsman/`, every clip eye-checked as GIF; sheet export waits for Story 045) | design/assets/specs/swordsman-assets.md |
+| ASSET-001 | Swordsman sprite sheet | Sprite / 2D art | Done (Story 045, 2026-10-31: `assets/art/units/unit_kiem_si_sheet.png` 81x391 + `.json`, 8 clips / 14 frames, facing right, exported by `tools/asset-pipeline/export_sheets.py` from `art_src/units/kiem_si/`; evidence `production/qa/evidence/unit-sheet-export/`; awaiting the art-director's sign-off for Approved) | design/assets/specs/swordsman-assets.md |
 | ASSET-002 | Swordsman portrait | Sprite / 2D art | Needed | design/assets/specs/swordsman-assets.md |
 
 ### Character: Goblin Scout
 | Asset ID | Name | Category | Status | Spec File |
 |----------|------|----------|--------|-----------|
-| ASSET-003 | Goblin small body sprite sheet (base: Goblin Scout) | Sprite / 2D art | In Progress (all 8 frames at 32x48 in `design/assets/candidates/goblin-scout/`, v3 palette for §6.6 legibility; open: outline counting rule, see spec) | design/assets/specs/goblin-scout-assets.md |
+| ASSET-003 | Goblin small body sprite sheet (base: Goblin Scout) | Sprite / 2D art | Done (Story 045, 2026-10-31: `assets/art/units/unit_goblin_scout_sheet.png` 65x244 + `.json`, 5 clips / 8 frames, facing left, exported from `art_src/units/goblin_scout/`; evidence `production/qa/evidence/unit-sheet-export/`; awaiting the art-director's sign-off for Approved; open from the spec: outline counting rule) | design/assets/specs/goblin-scout-assets.md |
 
 ### Level: Misty Forest
 | Asset ID | Name | Category | Status | Spec File |

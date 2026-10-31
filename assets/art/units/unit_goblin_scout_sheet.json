@@ -1,0 +1,257 @@
+{
+  "frames": [
+    {
+      "filename": "goblin_scout_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 400
+    },
+    {
+      "filename": "goblin_scout_idle_1",
+      "frame": {
+        "x": 33,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 400
+    },
+    {
+      "filename": "goblin_scout_step_0",
+      "frame": {
+        "x": 0,
+        "y": 49,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 300
+    },
+    {
+      "filename": "goblin_scout_step_1",
+      "frame": {
+        "x": 33,
+        "y": 49,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 300
+    },
+    {
+      "filename": "goblin_scout_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 98,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 0
+    },
+    {
+      "filename": "goblin_scout_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 147,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 120
+    },
+    {
+      "filename": "goblin_scout_down_0",
+      "frame": {
+        "x": 0,
+        "y": 196,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 150
+    },
+    {
+      "filename": "goblin_scout_down_1",
+      "frame": {
+        "x": 33,
+        "y": 196,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_goblin_scout_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 65,
+      "h": 244
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 1,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 2,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 4,
+        "to": 4,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 5,
+        "to": 5,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 6,
+        "to": 7,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "goblin_scout",
+      "asset": "ASSET-003",
+      "facing": "left",
+      "frame": {
+        "w": 32,
+        "h": 48
+      },
+      "gutter": 1,
+      "columns": 2,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#66523F",
+        "#7D8B5A",
+        "#8FA070",
+        "#9A7D5E",
+        "#EFE6D2"
+      ]
+    }
+  }
+}

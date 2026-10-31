@@ -64,6 +64,12 @@ gap, and `--font=<semibold.ttf>[,<bold.ttf>]` loads system fonts for the
 skin's text at the §7.3 sizes (names 24 SemiBold, numbers Bold), and
 `--icons=<png>` draws a generated icon sheet (JSON beside it) on the skin: pause,
 info, two status chips, the Awakening glyph (`46-skin-osfe-icons.png`),
+`--sheet=<res dir>` (with `--anim`) reads both units from the exported
+sheets of Story 045 in that folder (`unit_kiem_si_sheet.png/.json`,
+`unit_goblin_scout_sheet.png/.json`) through the importer instead of the
+candidate PNGs: frames from `meta.frameTags`, cells from `frames[].frame`,
+holds from each frame's `duration`; evidence
+`production/qa/evidence/unit-sheet-export/03-*`, `04-*`,
 `--shot=<png>` saves the window after 30 frames and quits.
 `make_gif.py` in the session scratchpad turned those frames into the looping
 GIFs under `production/qa/evidence/asset-slice1-art-check/anim/` (pure Python,

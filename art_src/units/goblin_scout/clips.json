@@ -1,0 +1,16 @@
+{
+  "id": "goblin_scout",
+  "asset": "ASSET-003",
+  "frame": {"w": 32, "h": 48},
+  "facing": "left",
+  "source": "design/assets/candidates/goblin-scout/ASSET-003-<clip>-<A|B>-32x48.png (copied byte-identical, 2026-10-31)",
+  "clips": [
+    {"name": "idle",   "frames": ["idle/0.png", "idle/1.png"], "ms": [400, 400], "loop": "loop"},
+    {"name": "step",   "frames": ["step/0.png", "step/1.png"], "ms": [300, 300], "loop": "loop",
+     "note": "nominal; the game paces step by the step cooldown"},
+    {"name": "windup", "frames": ["windup/0.png"],             "ms": [0],        "loop": "hold",
+     "note": "held until the telegraph ends"},
+    {"name": "hit",    "frames": ["hit/0.png"],                "ms": [120],      "loop": "once"},
+    {"name": "down",   "frames": ["down/0.png", "down/1.png"], "ms": [150, 150], "loop": "hold_last"}
+  ]
+}

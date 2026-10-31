@@ -105,6 +105,12 @@ extends Node2D
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
+##   --sheet=<dir>    with --anim: read both units from the exported sheets in that res:// folder
+##                    (unit_kiem_si_sheet.png/.json, unit_goblin_scout_sheet.png/.json, Story 045)
+##                    instead of the candidate PNGs: the clip's frames come from meta.frameTags,
+##                    the cells from frames[].frame, each frame's hold from its duration (0 ms
+##                    = 0.4 s here so a held frame shows). The hero's tag is the clip name
+##                    (cast -> cast_gesture); the goblin plays SHEET_TAGS[clip]["goblin"]
 ##   --shot=<path>    save a PNG of the window after SHOT_FRAME frames, then quit
 
 const ART_SIZE := Vector2i(640, 360)
@@ -164,6 +170,19 @@ const CLIPS := {
 	"cast": {"hero": ["idle-A", "cast-A", "cast-B", "idle-A"], "goblin": ["idle-A", "windup", "windup", "idle-A"], "hold": 0.4},
 	"awaken": {"hero": ["awaken-A", "awaken-B"], "goblin": ["idle-A", "windup"], "hold": 0.4},
 }
+
+## --sheet: the tag each unit plays for an --anim clip when read from the exported sheets.
+const SHEET_TAGS := {
+	"idle": {"hero": "idle", "goblin": "idle"},
+	"step": {"hero": "step", "goblin": "step"},
+	"hit": {"hero": "hit", "goblin": "hit"},
+	"defeat": {"hero": "defeat", "goblin": "down"},
+	"victory": {"hero": "victory", "goblin": "idle"},
+	"fall": {"hero": "fall", "goblin": "idle"},
+	"cast": {"hero": "cast_gesture", "goblin": "windup"},
+	"awaken": {"hero": "awaken", "goblin": "windup"},
+}
+const SHEET_HOLD_FALLBACK := 0.4
 
 var _mode: String = "normal"
 var _cell: Vector2i = DEFAULT_CELL
@@ -308,6 +327,10 @@ var _anim_index: int = 0
 var _anim_time: float = 0.0
 var _anim_shots_left: int = 0
 var _capturing: bool = false
+## --sheet state: the res:// folder of the exported sheets, and per-sprite hold seconds per frame
+## (from the JSON durations) that replace CLIPS[clip]["hold"] while a sheet is in use.
+var _sheet_dir: String = ""
+var _anim_holds: Array = []
 
 
 func _ready() -> void:
@@ -436,6 +459,8 @@ func _parse_args() -> void:
 			if not CLIPS.has(_anim):
 				push_error("art_check: unknown clip '%s'" % _anim)
 				_anim = ""
+		elif arg.begins_with("--sheet="):
+			_sheet_dir = arg.trim_prefix("--sheet=").rstrip("/")
 		elif arg.begins_with("--layout="):
 			_layout = arg.trim_prefix("--layout=")
 		elif arg.begins_with("--skin="):
@@ -768,6 +793,12 @@ func _place_units() -> void:
 		_build_seq()
 		return
 	if not _anim.is_empty():
+		if not _sheet_dir.is_empty():
+			var tags: Dictionary = SHEET_TAGS[_anim]
+			_add_sheet_unit(_sheet_dir + "/unit_kiem_si_sheet", tags["hero"], 0, hero.x, hero.y)
+			_add_sheet_unit(_sheet_dir + "/unit_goblin_scout_sheet", tags["goblin"], 1, goblin.x, goblin.y)
+			_anim_shots_left = (_anim_textures[0] as Array).size() if not _shot.is_empty() and not _anim_textures.is_empty() else 0
+			return
 		var clip: Dictionary = CLIPS[_anim]
 		_add_anim_unit(HERO_DIR, clip["hero"], 0, hero.x, hero.y)
 		_add_anim_unit(GOBLIN_DIR, clip["goblin"], 1, goblin.x, goblin.y)
@@ -871,6 +902,56 @@ func _add_anim_unit(pattern: String, names: Array, side: int, col: int, row: int
 	_units.add_child(sprite)
 	_anim_sprites.append(sprite)
 	_anim_textures.append(textures)
+
+
+## --sheet: a unit built from an exported sheet + JSON (Story 045). [param base] is the res://
+## path without extension; [param tag] a meta.frameTags name. The sheet is loaded through the
+## importer (`load()`, so the .import flags are what the game would get); each frame is an
+## AtlasTexture over frames[i].frame, and its hold comes from frames[i].duration.
+func _add_sheet_unit(base: String, tag: String, side: int, col: int, row: int) -> void:
+	var text: String = FileAccess.get_file_as_string(ProjectSettings.globalize_path(base + ".json"))
+	var doc: Variant = JSON.parse_string(text)
+	if doc == null or not (doc is Dictionary):
+		push_error("art_check: cannot read %s.json" % base)
+		return
+	var sheet: Texture2D = load(base + ".png") as Texture2D
+	if sheet == null:
+		var image: Image = Image.load_from_file(ProjectSettings.globalize_path(base + ".png"))
+		if image == null:
+			push_error("art_check: cannot load %s.png" % base)
+			return
+		sheet = ImageTexture.create_from_image(image)
+	var found: Dictionary = {}
+	for t: Dictionary in (doc as Dictionary)["meta"]["frameTags"]:
+		if t["name"] == tag:
+			found = t
+	if found.is_empty():
+		push_error("art_check: tag '%s' not in %s.json" % [tag, base])
+		return
+	var frames: Array = (doc as Dictionary)["frames"]
+	var textures: Array = []
+	var holds: Array = []
+	var size := Vector2i.ZERO
+	for i: int in range(int(found["from"]), int(found["to"]) + 1):
+		var f: Dictionary = frames[i]["frame"]
+		var atlas := AtlasTexture.new()
+		atlas.atlas = sheet
+		atlas.region = Rect2(f["x"], f["y"], f["w"], f["h"])
+		textures.append(atlas)
+		var ms: int = int(frames[i]["duration"])
+		holds.append(ms / 1000.0 if ms > 0 else SHEET_HOLD_FALLBACK)
+		size = Vector2i(int(f["w"]), int(f["h"]))
+	var sprite := Sprite2D.new()
+	sprite.texture = textures[0]
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.centered = false
+	sprite.offset = Vector2(-size.x / 2, -size.y)
+	sprite.position = Vector2(_anchor(side, col, row))
+	_units.add_child(sprite)
+	_anim_sprites.append(sprite)
+	_anim_textures.append(textures)
+	_anim_holds.append(holds)
+	print("art_check: sheet %s tag %s frames %d..%d facing %s" % [base.get_file(), tag, int(found["from"]), int(found["to"]), (doc as Dictionary)["meta"].get("tessera", {}).get("facing", "?")])
 
 
 ## Flat placeholder HUD at screen resolution: the zones of design/ux/hud.md with the sizes of
@@ -1126,6 +1207,10 @@ func _tick_anim(delta: float) -> void:
 	if _frames < SHOT_FRAME or _capturing:
 		return
 	var hold: float = CLIPS[_anim]["hold"]
+	if not _anim_holds.is_empty():
+		# --sheet: the hero's JSON duration for the frame on screen paces both units.
+		var hero_holds: Array = _anim_holds[0]
+		hold = hero_holds[_anim_index % hero_holds.size()]
 	_anim_time += delta
 	var first_frame: bool = _frames == SHOT_FRAME
 	if not first_frame and _anim_time < hold:

@@ -1,7 +1,7 @@
 # Story 045: Xuất sprite sheet đơn vị slice 1 — nguồn PNG, exporter Python, JSON kiểu Aseprite
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Presentation (asset pipeline)
 > **Type**: Config/Data + Visual
 > **Estimate**: —
@@ -79,3 +79,15 @@
 - `art_src/` và `assets/art/` chưa tồn tại; story này tạo cả hai cùng `.gdignore` cho `art_src/`.
 - Atlas chung và atlas vùng (§8.1, script của technical-artist) ngoài phạm vi: mới có 2 đơn vị, chưa cần gộp.
 - Nối sprite vào `combat_view.gd` (thay vòng tròn YOU và ô đỏ) thuộc story SubViewport 640x360, sau story này.
+
+## Implementation Notes (2026-10-31)
+
+Implemented on branch `claude/vigilant-chebyshev-4d039b` (side session of the Story 047 session), uncommitted.
+
+- **Files:** `art_src/.gdignore`, `art_src/palette/tessera_master.gpl`, `art_src/units/{kiem_si,goblin_scout}/clips.json` + 22 frames (byte-identical copies of the candidates), `tools/asset-pipeline/export_sheets.py` + `README.md`, `assets/art/units/unit_{kiem_si,goblin_scout}_sheet.{png,json,png.import}`, `tests/unit/art/sheet_export_test.gd` (158 checks, FAILS=0), `prototypes/art-check/art_check.gd` (`--sheet=<dir>`), evidence `production/qa/evidence/unit-sheet-export/01–04`.
+- **Facing recorded** in `meta.tessera.facing`: `kiem_si` = `right`, `goblin_scout` = `left` (the 3/4 south-east / south-west rotations of the specs; checked on the frames). Story 047 flips the unit whose side needs the other direction.
+- **Gutter and edge:** the 81x391 / 65x244 sizes fix a 1 px gutter *between* cells only; the "around the edge" margin is the frame's own transparent margin (§8.3), which the exporter enforces on the left, right and top edges. The bottom row is exempt: feet touch the last pixel row by §8.3, so the sheet's bottom edge is not transparent.
+- **Palette:** `tessera_master.gpl` lists the 8 Swordsman + 7 Goblin Scout spec colours (13 unique; Ink and Ivory shared). Goblin leather is the lifted `#9A7D5E` / `#66523F` of fix-02 (the story's `#856B50` was superseded the same day); `#59643F` (skin dark) is in the spec but unused by the current frames.
+- **Import:** the four §8.7 flags were already Godot's defaults for these PNGs; `detect_3d/compress_to` was set to 0 on top so a 3D use can never switch the sheet to VRAM compression. The test asserts all five.
+- **`/asset-audit`** has no configurable asset list, so the exported-sheet register is the table in `tools/asset-pipeline/README.md`.
+- **Hold-frame durations:** `fall` and `windup` carry `duration: 0` (held by code); art-check shows them for 0.4 s.
