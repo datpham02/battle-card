@@ -42,7 +42,7 @@ Không có GDD với mục UI Requirements (ở tầng `minimal`, `game-brief.md
 | I-03 | Nút tạm dừng | điều khiển | **M** (nhỏ, ngoài vùng ngón cái) |
 | I-04 | Dòng bối cảnh trận (tầng, vùng, chặng, địch, sân) | chuyến leo | **C**: hiện ở màn giới thiệu trận, rồi thu gọn còn tên địch |
 | I-05 | Số lá trong bộ | bộ bài | **D** |
-| I-06 | Pad 4 hướng | di chuyển | **M** |
+| I-06 | Joystick nổi 4 hướng (tùy chọn: pad 4 hướng) | di chuyển | **M** |
 | I-07 | Túi khối (3 ô, số ô mỗi khối) | khối | **M** |
 | I-08 | Nút Thức Tỉnh + Bản Khắc ("0/21") + trạng thái hồi/sẵn sàng/đang chạy | Thức Tỉnh | **M** |
 | I-09 | Thanh Tập trung (đếm ngược, hồi) | Tập trung | **C**: khi đang đặt khối; chưa dùng được thì chỉ có dấu nhỏ |
@@ -118,10 +118,10 @@ Màn ngang 1280×720 (tham chiếu), tỉ lệ lấy từ `src/layout/screen_lay
 |---|---|---|---|
 | **Z1** Dải trên | ≈ 3–14 % cao. **Mọi yếu tố gom vào 3–8 %**; 8–14 % để trống cho đầu đơn vị hàng sau cùng (đơn vị đứng cao kiểu OSFE, `design/art/art-bible.md` mục 1 và 3; người dùng chốt 2026-10-28) | Hai thanh máu (I-01, I-02), tạm dừng (I-03), biểu tượng Hình Cộng Hưởng (I-15, khi cầm khối) | Ngoài vùng ngón cái, không che lưới |
 | **Z1b** | sát dưới thanh máu boss, vẫn trong dải 3–8 % | Hàng khối boss đang giữ (I-18) | Thu gọn cho vừa dải |
-| **Z2** Lưới | ≈ 14–55 % cao | Hai lưới; ô đỏ báo đòn và đếm ngược (I-16, I-17); từ khóa gắn trên đơn vị (I-23); địa hình (I-24, I-25); số sát thương và hồi máu (I-21, I-22); biểu ngữ và thông báo (I-19, I-20, I-26–I-28) | Mọi thông báo chuyển động nằm trên lớp này |
-| **Z3** Trái dưới | góc trái | Pad 4 hướng (I-06); khi đặt khối chuyển thành nút Xoay lớn (I-12) | Ngón cái trái: **đi** |
+| **Z2** Lưới | ≈ 15–64 % cao cho hàng rộng; hàng hẹp nằm gọn trong khe ngón cái (x 25–76 %) được xuống tới 76 % (bố cục v2, `design/quick-specs/control-layout-v2.md`, người dùng chốt 2026-10-31; trước đó 14–55 %) | Hai lưới; ô đỏ báo đòn và đếm ngược (I-16, I-17); từ khóa gắn trên đơn vị (I-23); địa hình (I-24, I-25); số sát thương và hồi máu (I-21, I-22); biểu ngữ và thông báo (I-19, I-20, I-26–I-28) | Mọi thông báo chuyển động nằm trên lớp này |
+| **Z3** Trái dưới | vùng x 0–25 %, y 64–100 % | Joystick nổi 4 hướng (I-06, đế 160 px, núm 88 px, xuất hiện tại chỗ chạm; Settings `controls.movement = pad` vẽ pad 3x3 nút 88 px thay thế); khi đặt khối chuyển thành nút Xoay lớn (I-12) | Ngón cái trái: **đi**. Bố cục v2 2026-10-31, trước đó pad 4 hướng cố định |
 | **Z4** Dải giữa | giữa dưới | Thức Tỉnh + Bản Khắc (I-08); khi đặt khối: số ô, sát thương (I-11), Tung phép, Hủy (I-12), Tập trung (I-09); khi chọn lá: menu 4 lá (I-13) | Ngón nào rảnh thì bấm |
-| **Z5** Phải dưới | góc phải | Túi khối, 3 ô (I-07) | Ngón cái phải: **kéo khối** lên lưới địch |
+| **Z5** Phải dưới | góc phải, 3 ô 130x93 px xếp vòng cung quanh điểm xoay ngón cái (góc 100/128/156°, bán kính 2× cao ô) | Túi khối, 3 ô (I-07) | Ngón cái phải: **kéo khối** lên lưới địch. Bố cục v2 2026-10-31, trước đó 3 ô 158x113 thẳng hàng |
 
 **Lý do:** ngón trái đi, ngón phải đặt khối, ở giữa là trạng thái và nút xác nhận. Vùng điều khiển **đổi nội dung theo ngữ cảnh** (pad thành Xoay, Thức Tỉnh thành Tung phép) nên không thêm yếu tố mới, đúng triết lý mục A.
 

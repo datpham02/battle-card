@@ -17,14 +17,27 @@ story is not done), so this scene stands in for it. Nothing in `src/` uses it.
 godot --path . --windowed --resolution 1280x720 res://prototypes/art-check/art_check.tscn -- --mode=normal --shot=C:/abs/out.png
 ```
 
-`--mode=normal|blackout|rows`, `--cell=WxH` (default 38x27), `--scale=N`
-(default 2), `--shot=<png>` saves the window after 30 frames and quits. Sprites
+`--mode=normal|blackout|rows`, `--board=CxR` (cells per half, default 5x5),
+`--cell=WxH` (default 38x27), `--scale=N` (default 2), `--hud` (flat
+placeholder zones Z1–Z5 of `design/ux/hud.md` drawn at 1280x720 on top),
+`--layout=v1|v2` (v1 = shipped ScreenLayout; v2 = the 2026-10-31 sketch:
+arena to 64 %, floating 4-way joystick, slots on an arc),
+`--arena=<id>` (a shape of `assets/data/arenas.json`: bounding grid plus
+missing cells, mirrored onto the enemy half like BoardGrid; units stand on
+BoardGrid's default cells), `--cell=auto` (largest 1.4-aspect slab between
+38x27 and 64x46 that fits the band and the width),
+`--shot=<png>` saves the window after 30 frames and quits. The board sits in
+the ScreenLayout band (below the 3–13 % HUD band, above the 55 % control band).
+Since 2026-10-31 the hero frame is 40x48 (`ASSET-001-*-40x48.png`). Sprites
 are read from `design/assets/candidates/` with `Image.load_from_file`, so new
 candidates need no import.
 
 ## Status
 
-concluded (2026-10-31) — kept for re-runs when a new candidate lands.
+concluded (2026-10-31) — kept for re-runs when a new candidate lands. The
+layout findings became `design/quick-specs/control-layout-v2.md` and
+Story 044 (`production/epics/kaiten-duel/story-044-control-layout-v2.md`);
+the user chose the 6x6 crystal with the band to 76 % as the largest board.
 
 ## Findings
 
@@ -46,6 +59,59 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   `06-pair-5x5-swordsman-v2.png` and `07-blackout-swordsman-v2.png` re-run #1
   with the v2 anchor: silhouette = round head, T-shaped hilt above it, boxy
   pauldrons; still clearly not the goblin.
+- 2026-10-31, scale check with the placeholder HUD (`08-hud-5x5-cell38x27.png`,
+  `09-hud-3x3-cell64x46.png`, `10-hud-5x5-rows.png`; dark fills only on the
+  touch targets per art bible §7.2): at 1280x720 the hero is 86 px tall (12 %
+  of the screen), the goblin 58 px; a 5x5 cell is 76x54 screen px, a 3x3 cell
+  128x92. The board band Z2 (14–55 % of the height) is 295 px, so a 5x5 board
+  is never taller than ~270 px whatever the sprites do: the "small arena"
+  feeling comes from the thumb layout (controls own 45 % of the height, slots
+  22 % tall, pad buttons 13.5 %), not from the sprite size. Hero : cell ratio
+  matches the OSFE reference (about one cell tall on 3x3, 1.6 on 5x5). Levers
+  if it must be bigger: lower ARENA_BOTTOM_RATIO (0.55) and shrink Z4/Z5 while
+  keeping 88 px touch targets; a 3x canvas (427x240) would not fit 5x5 in the
+  band. That is a UX decision (`design/ux/hud.md`), sprites would not change.
+- 2026-10-31, layout v2 mock from the user's sketch (`11-layout-v2-5x5-cell48x34.png`,
+  `12-layout-v2-3x3-cell64x46.png`, `13-layout-v2-5x5-rows.png`): arena bottom
+  55 % -> 64 % (board band 295 -> 360 px), floating 4-way joystick in a
+  0–30 % x 64–100 % home zone (base 160 px, knob 88 px; the zone starts at the
+  arena bottom so a touch on the board's last row is never a stick), three
+  130x93 px slots on an arc (radius 2x slot height around the right thumb
+  pivot, 100/128/156 degrees, 28 degrees apart so they never touch), Awaken
+  115 px low centre, no solid control band. 5x5 slabs grow
+  from 38x27 to 48x34 art-px (+26 %), 3x3 stays at the 64x46 ceiling. The board
+  (972 px wide at 5x5) stays clear of both thumb zones. Pending: the user's
+  verdict, then `design/quick-specs/control-layout-v2.md`, `hud.md` Z3/Z5
+  and a UI story (ScreenLayout, joystick input, Settings fallback to the pad).
+- 2026-10-31, real arena shapes in layout v2 with `--cell=auto`
+  (`14-layout-v2-arena-ring.png` 6x5 -> 49x35 slabs, `15-…-three-isles.png`
+  7x2 -> 42x30, `16-…-cross.png` 4x4 -> 60x43, `17-…-islands-bridge.png`
+  6x3 -> 49x35): every one of the 19 shapes of `arenas.json` fits (bounding
+  box <= 7x6 per half); wide shapes are limited by the half width (298 art-px),
+  tall ones by the band (176 art-px). Missing cells show the ground, so the
+  slab 9-slice needs edge pieces on all four sides plus inner corners (ASSET-004,
+  art bible §6.3). Units stand on BoardGrid's default cells.
+- 2026-10-31, "crystal" ad-hoc shape at the v2 ceiling (`18-layout-v2-arena-crystal-7x6.png`,
+  `19-…-rows.png`; `--board=7x6 --missing=0,0;1,0;2,0;0,1;1,1;0,2;0,3;0,4;1,4;0,5;1,5;2,5`):
+  a 7x6 bounding box per half with the far corners cut in steps (3/2/1/1/2/3),
+  30 real cells per half, slabs 40x29 art-px (80x58 on screen). This is the
+  biggest board v2 can hold: 1206 px of the 1280 width, 348 of the 360 px band.
+  The hero (86 px) is 1.5 cells tall, the goblin one cell; three goblins in a
+  column still count as three. Not in `arenas.json`; gameplay (step paths,
+  block placement on 30 cells) is a design question before it becomes a shape.
+- 2026-10-31, "can the board grow into the free space?" (`20-layout-v2b-crystal-6x6-band76.png`,
+  `21-layout-v2b-crystal-7x6-band76.png`; `--arena-bottom=0.76`, controls still
+  start at 64 %, joystick zone narrowed to 25 % of the width): the side space
+  the user circled is the crystal's own cut corners plus the 3 % margin, nothing
+  to gain there. The gap under the board between the thumbs (x 330–980, y
+  460–580) can take the board's narrow bottom rows: with the band to 76 % a
+  6x6 crystal grows from 40x29 to 49x35 slabs (+20 %), while the 7x6 crystal
+  stays at 42x30 because seven columns are already width-bound (298 art-px per
+  half / 7 / 1.4 = 30 px tall). Rule of thumb: width binds at >= 6 columns,
+  height binds at <= 5 columns; a taller band only helps shapes up to 6 wide.
+  Costs of the 76 % band: ScreenLayout needs a non-rectangular safe area (full
+  width to 64 %, 330–980 px below), and a 6-row board's bottom row sits 100 px
+  from the Awaken button.
 - The 38x27 slab with a 48 px sprite behaves as §1 expects: a unit covers the
   lower half of the one on the row behind; identity stays in the upper 20 px.
 - Technique notes for the SubViewport story: `Image.load_from_file` +

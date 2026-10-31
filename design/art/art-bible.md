@@ -794,7 +794,8 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 ### 8.3 Khung, neo, đệm
 | Loại | Khung (art-px) | Ghi chú |
 |---|---|---|
-| Anh hùng, quái, Tinh Anh | 32×48 (Mục 1, 3, 5) | cao 38–42 / ≤ 34 / ≤ 40; thân rộng ≤ 30 |
+| Anh hùng | **40×48** (sửa 2026-10-31: 32×48 không chứa nổi vũ khí rút ra ở khung niệm và Thức Tỉnh; thân vẫn ≤ 30, chỉ khung rộng thêm 4 px mỗi bên) | cao 38–42; thân rộng ≤ 30; vật cầm/vung nằm trong khung |
+| Quái, Tinh Anh | 32×48 (Mục 1, 3, 5) | cao ≤ 34 / ≤ 40; thân rộng ≤ 30 |
 | Kẻ Gác, Người Giữ Tâm Lưới | 48×64; thân ≤ 52×40 (Mục 5) | Mảnh Gốc **không vẽ trong sheet**: code dựng, 2 px/ô |
 | Phiến | 9-slice nguồn 16×16, lề 3 trái-phải-trên, mép trước 2–3 dưới; + 6 stamp (Mục 6.3) | ô thật 38×27 … 64×46 |
 | Tường / Bãi Gai | 40×40 / 40×12, neo giữa đáy | Tường vẽ ~30 px, rộng ≤ 36 |
