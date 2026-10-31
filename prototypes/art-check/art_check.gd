@@ -33,6 +33,9 @@ extends Node2D
 ##   --slabs=<9slice.png>,<stamps.png>  real slab art: the 16x16 nine-slice is stretched to the
 ##                    cell (corners and edges keep their pixels), stamps from the sheet (JSON
 ##                    beside it) are placed per cell seed; without it the flat placeholder is drawn
+##   --props=<wall.png>,<thorns.png>  place the Wall one cell ahead of the hero (unit layer, a
+##                    second unit behind it shows the overlap) and the Thorns on the floor beside
+##                    the goblin
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
@@ -113,6 +116,10 @@ var _stick_zone_w: float = 0.25
 var _shot: String = ""
 var _frames: int = 0
 var _units: Node2D
+## --props: "<wall.png>,<thorns.png>"; the wall stands on the player's cell one column toward the
+## divider (unit layer, y-sorted like a unit), the thorns lie on the goblin's neighbour cell (floor).
+var _wall_png: String = ""
+var _thorns_png: String = ""
 ## --slabs: real slab art (9-slice + stamps) instead of the flat placeholder slab.
 var _slab_tex: ImageTexture
 var _stamp_tex: ImageTexture
@@ -205,6 +212,11 @@ func _parse_args() -> void:
 			_arena_id = "custom"
 		elif arg == "--hud":
 			_hud = true
+		elif arg.begins_with("--props="):
+			var pp: PackedStringArray = arg.trim_prefix("--props=").split(",")
+			if pp.size() == 2:
+				_wall_png = pp[0]
+				_thorns_png = pp[1]
 		elif arg.begins_with("--slabs="):
 			# "<9slice.png>,<stamps.png>" (res:// paths); the stamps JSON sits beside the stamps PNG.
 			var parts: PackedStringArray = arg.trim_prefix("--slabs=").split(",")
@@ -436,6 +448,19 @@ func _place_units() -> void:
 		_anim_shots_left = (clip["hero"] as Array).size() if not _shot.is_empty() else 0
 		return
 	_add_unit(HERO_PNG, 0, hero.x, hero.y)
+	if not _wall_png.is_empty():
+		# Wall one cell ahead of the hero (toward the divider) and one row up, so it overlaps a
+		# unit behind it; thorns on the floor beside the goblin.
+		var wall_col: int = mini(hero.x + 1, _board.x - 1)
+		var wall_row: int = maxi(hero.y - 1, 0)
+		if _is_real(0, wall_col, wall_row):
+			_add_unit(_wall_png, 0, wall_col, wall_row)
+		# A second hero-side unit behind the wall to show the overlap: the goblin sprite stands in.
+		if _is_real(0, wall_col, wall_row - 1):
+			_add_unit(GOBLIN_PNG, 0, wall_col, wall_row - 1)
+		var th_col: int = maxi(goblin.x - 1, 0)
+		if _is_real(1, th_col, goblin.y):
+			_add_floor_prop(_thorns_png, 1, th_col, goblin.y)
 	match _mode:
 		"rows":
 			# Three adjacent real rows in the goblin's column, as close to its row as possible.
@@ -465,6 +490,28 @@ func _add_unit(path: String, side: int, col: int, row: int) -> void:
 	sprite.offset = Vector2(-image.get_width() / 2, -image.get_height())
 	sprite.position = Vector2(_anchor(side, col, row))
 	_units.add_child(sprite)
+
+
+## A floor decal (thorns): drawn under the units, bottom-centre anchored like a unit.
+func _add_floor_prop(path: String, side: int, col: int, row: int) -> void:
+	var image: Image = Image.load_from_file(ProjectSettings.globalize_path(path))
+	if image == null:
+		push_error("art_check: cannot load %s" % path)
+		return
+	var sprite := Sprite2D.new()
+	sprite.texture = ImageTexture.create_from_image(image)
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.centered = false
+	sprite.offset = Vector2(-image.get_width() / 2, -image.get_height())
+	sprite.position = Vector2(_anchor(side, col, row))
+	# Floor layer: a sibling drawn before Units.
+	var floor_layer: Node = _units.get_parent().get_node_or_null("Floor")
+	if floor_layer == null:
+		floor_layer = Node2D.new()
+		floor_layer.name = "Floor"
+		_units.get_parent().add_child(floor_layer)
+		_units.get_parent().move_child(floor_layer, _units.get_index())
+	floor_layer.add_child(sprite)
 
 
 ## A unit that cycles through [param names] (frame files of one candidate folder). All frames of a

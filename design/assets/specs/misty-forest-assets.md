@@ -3,7 +3,7 @@
 > **Source**: design/assets/entity-inventory.md (Misty Forest set, Wall, Thorns patch), design/world-context.md §5
 > **Art Bible**: design/art/art-bible.md (§2, §3, §4, §6, §8)
 > **Generated**: 2026-10-29
-> **Status**: 4 assets specced / 0 approved / 0 in production / 0 done
+> **Status**: 4 assets specced / 0 approved / 3 in progress (004, 006, 007 as checked candidates) / 0 done
 > **Mode**: solo — art-director and technical-artist skipped; technical constraints not validated.
 
 ## ASSET-004 — Slab set: Misty Forest
@@ -84,7 +84,17 @@ Negative: bright green, sunlight, god rays, vivid colours, tall foreground trees
 Pixel art game prop, a short solid stone barricade made of stacked square blocks, 40x40 canvas, about 30 pixels tall, blue-grey stone (#6E7A88) with diagonal hatching on the front face, closed 1-pixel dark outline, flat shading, crisp pixels, transparent background, no text.
 ```
 
-**Status:** Needed
+**Palette steps fixed 2026-10-31:** light #8A96A4, dark #525C68 (mortar, under-block shadow), outline #1B1722.
+
+**Production log:**
+
+| # | Date | Tool | Params | Cost | Result | Verdict |
+|---|---|---|---|---|---|---|
+| cand-01 | 2026-10-31 | `create_image_pro_flash` | 40x40, seed 1, palette locked to the 4 hex, max_colors 4, no_background; prompt = the one above plus "three flat tones, two or three rows, standing on the bottom edge, no moss, no ground shadow" | 5 gen | job `3ca869c2-66a6-478b-a83e-dddd6ea462c3`, gallery `67dcb4d0-3f75-5eea-a55c-6afb06313112`, `design/assets/candidates/misty-forest/ASSET-006-env_wall_forest-cand-01.png` | 4 colours in spec, closed outline, diagonal hatch, two courses of blocks, 33 px wide. Too short (22 px) and floating 3 px above the canvas bottom. |
+| fix-01 | 2026-10-31 | local script (free) | shifted down 3 px (base on row 39) and a third course added on top by copying the upper course (rows 15–25 → 7–17) | 0 | **`ASSET-006-env_wall_forest-40x40.png`** | bbox x4-36 (33 wide), y7-39 (33 tall), 4 colours, alpha 0/255, lint 0 errors. Courses stack aligned (no stagger between courses 2 and 3); reads as a stacked-block barricade. |
+| check-01 | 2026-10-31 | `prototypes/art-check --props` (free) | wall one cell ahead of the hero, a unit on the row behind it; 5x5 at 48x34 and at 38x27, real slabs | 0 | `production/qa/evidence/asset-slice1-art-check/25-props-forest-5x5.png`, `26-props-forest-5x5-cell38x27.png`, `27-props-forest-colour-vs-bw.png` | Reads as a solid rectangular block, clearly not thorns in colour and in greyscale (§3 four pairs). **Open for the art-director:** a 33 px wall on a 34 px cell does not cover a unit standing one row behind it (the row offset is already 34 px); it covers 6–7 px at 38x27. "Hides the lower half of the unit behind" from §3 would need a wall of ~55 px, taller than the hero. Recommend keeping 33 px and dropping that sentence, since the wall is a gameplay blocker, not an occluder. |
+
+**Status:** In Progress (candidate drawn and checked; export with Story 045's pipeline; §3 occlusion sentence to be decided)
 
 ## ASSET-007 — Thorns patch (Misty Forest)
 
@@ -98,6 +108,13 @@ Pixel art game prop, a short solid stone barricade made of stacked square blocks
 
 **Visual Description:** Sparse low triangular spikes on a normal slab, the slab face visible between them; open (no enclosing outline), never confused with a Wall.
 
+**Production log (decision 2026-10-31: drawn by script, not generated; spikes <= 6 px are below what AI draws well):**
+
+| # | Date | Tool | Result | Verdict |
+|---|---|---|---|---|
+| draw-01 | 2026-10-31 | `draw_thorns.py` (session scratchpad, free) | **`design/assets/candidates/misty-forest/ASSET-007-env_thorn_forest.png`** 40x12: seven triangular spikes 3–6 px tall, two leaning, bases 2–5 px apart, light side #B89A6A, shadow side #8A7350, Ink tip; 75 opaque px (15 % of the canvas) | 3 colours in spec, alpha 0/255, no enclosing outline, slab face visible between spikes. |
+| check-01 | 2026-10-31 | `prototypes/art-check --props` (free) | evidence `25-props-forest-5x5.png`, `26-…-cell38x27.png`, `27-props-forest-colour-vs-bw.png` | Reads as a low open spiky patch beside the goblin, floor layer under units; distinct from the wall in colour and greyscale (low/sparse/triangular/open vs tall/solid/rectangular/closed). At 38x27 the patch spans most of the cell width (40 of 38 px cell: 1 px overhang each side, acceptable on the floor layer, or scale the patch to 36 px for small cells). |
+
 **Palette:** Thorns #B89A6A (Art Bible §4) with one dark step, ink tips.
 
 **Art Bible Anchors:** §3 environment (Thorns low, sparse, triangular, open), §4 (Thorns #B89A6A), §6.3.
@@ -107,4 +124,4 @@ Pixel art game prop, a short solid stone barricade made of stacked square blocks
 Pixel art floor hazard decal, sparse low triangular thorns scattered across a square, 40x12 canvas, spikes at most 6 pixels tall, bone-rust colour (#B89A6A) with darker tips, gaps showing the floor between spikes, no enclosing outline, crisp pixels, transparent background, no text.
 ```
 
-**Status:** Needed
+**Status:** In Progress (candidate drawn and checked; export with Story 045's pipeline)

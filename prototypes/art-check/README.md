@@ -33,6 +33,9 @@ per frame index is written as `<shot>-<i>.png`),
 16x16 nine-slice stretched per cell with `draw_texture_rect_region`, stamps
 from the sheet placed by cell seed; JSON beside the stamps PNG gives rects,
 anchors and margins) instead of the flat placeholder slab,
+`--props=<wall.png>,<thorns.png>` places the Wall one cell ahead of the hero
+(unit layer, with a stand-in unit on the row behind it) and the Thorns on the
+floor layer beside the goblin,
 `--shot=<png>` saves the window after 30 frames and quits.
 `make_gif.py` in the session scratchpad turned those frames into the looping
 GIFs under `production/qa/evidence/asset-slice1-art-check/anim/` (pure Python,
