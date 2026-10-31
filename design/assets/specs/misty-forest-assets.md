@@ -46,7 +46,7 @@ Stamps prompt: "pixel art sprite sheet of 6 small floor decals on transparent ba
 | Field | Value |
 |-------|-------|
 | Category | Environment (background) |
-| Dimensions | 3 layers, each 800x360 art-px (sky may be <= 800x200); horizon at 9–13 % height (32–47 art-px) |
+| Dimensions | ≤ 3 layers, each 800x360 art-px (sky may be <= 800x200); **scenery band = top 20 % of the height** (art bible §6.4, 2026-10-31; was horizon at 9–13 %). v2 uses 2 layers: far (opaque to the top edge) + near mist 800x48 |
 | Format | `.png` RGBA 8-bit, Lossless, Nearest; mist layer tiles seamlessly horizontally and drifts <= 1 art-px/s (static with Reduced motion) |
 | Naming | `assets/art/env/forest/bg_forest_sky.png`, `bg_forest_far.png`, `bg_forest_near.png` |
 | Slice | 1 |
@@ -89,6 +89,13 @@ Negative: bright green, sunlight, god rays, vivid colours, tall foreground trees
 **User verdict on the far bands (evidence 51/52): not OK** — a detailed strip over 80 % of flat fill reads as two unrelated pictures (hard cut at 20 %, dead ground, no framing, no base for the controls). The backdrop has to be ONE designed frame in the game's view.
 
 **Full frame v1, 2026-10-31**: after the user's warning to verify before spending, the layout constraints were written down first (scenery 0–20 %, board 102–538 x 72–227 art-px must be an empty clearing, controls 64–100 % need a dark quiet base, side margins free for framing). Pixen 640x360, **1 generation first** (job 43c6b39f seed 5), prompt from §6.4 + those constraints. Result `bg-explorations/fullframe-seed05-640x360.png` (38 colours): far valley with arches above a horizon at ~36 %, tree trunks and roots framing both sides, an earth clearing with scattered paving stones below. Margins mirrored to 800 (`-far-800x360.png`) and a stepped darkening of the lower third by script (`-far-vignette-800x360.png`: factors 1 → 0.78 → 0.6 → 0.48 → 0.42 in flat steps, side margins one step darker). Evidence `53-fullframe-seed05-band20.png`, `54-fullframe-seed05-vignette.png`: the first frame that reads as one picture with the board in it. Still open: paving stones under the controls are busy even darkened (a solid control band or more darkening), the horizon sits at 36 % not 20 % (the framing trees fill the band, acceptable), palette lock, the drifting mist layer, and ASSET-004 slabs now blend into the earth (restyle pending). Second seed not spent; the user decides whether this base is kept.
+
+**v2 layers 2026-10-31 (user: "Hoàn thiện nền seed 5")**, `scripts/compose_bg_v2.py`, 0 generations:
+- `ASSET-005-bg_forest_far.png` 800x360: the seed-5 scene with the outer 80 px per side mirrored from the play area; the lower third darkened in four flat steps (rows 215 / 245 / 285 / 325 → ×0.78 / 0.6 / 0.48 / 0.42, margins under the horizon ×0.85) **by remapping every darkened pixel to the nearest colour of the scene's own 38**, so the layer keeps 38 colours (a plain multiply gave 272 and broke the flat-step rule).
+- `ASSET-005-bg_forest_near.png` 800x48: three seamless wisp bands (functions of 2πx/800) in the valley's own light tones #B9BCB5 / #ADB0A8, 2×2 checker edges only, **masked to the valley light** (drawn only where the far pixel underneath has V ≥ 120/255), so the mist never cuts across trunks (v1 remark). The engine draws it with its bottom at art-px row 70 (`--mist-bottom=70`), inside the 20 % strip; 4 244 opaque px.
+- No sky layer: the scene is opaque to the top edge; 2 of the allowed 3 layers used.
+- v1 layers (composed three-layer backdrop, tree line, pillar prop) moved to `pre-osfe-v1/` with `git mv`; v1 scripts stay in `scripts/`.
+- Evidence `58-bg-v2-5x5.png`, `59-bg-v2-crystal6x6.png` (platform B, slab v2, sharp HUD, band 20 %). Open: palette lock to a master `.gpl` once it exists (38 colours now), stone blocks on the platform face, the 28 px chips; the paving stones under the controls are quiet at the 0.42 step but a solid control band remains an option (§7.4).
 
 **Status:** In Progress (three layers drawn with margin props; export with Story 045's pipeline; scripts under `candidates/misty-forest/scripts/` move to `tools/asset-pipeline/` with that story)
 

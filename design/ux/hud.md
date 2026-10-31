@@ -53,7 +53,7 @@ Không có GDD với mục UI Requirements (ở tầng `minimal`, `game-brief.md
 | I-14 | Gợi ý ghép khối thứ hai | ghép | **C** |
 | I-15 | Biểu tượng Hình Cộng Hưởng của sân | ghép | **C**: khi đang cầm khối |
 | I-16 | Ô đỏ báo đòn trên đất người chơi | boss | **M** (khi có đòn) |
-| I-17 | Đếm ngược + tên đòn + số ô ("BOSS 7 ô · 1,6 s") | boss | **M** (khi có đòn) |
+| I-17 | Ô báo đòn đậm dần (người dùng chốt 2026-10-31: **không nhãn đếm ngược**; độ đậm của ô đỏ là đồng hồ, đầy = đòn rơi) | boss | **M** (khi có đòn) |
 | I-18 | Hàng khối boss đang giữ | boss | **M** |
 | I-19 | NGẮT! (đòn bị phá) | phá phép | **C** |
 | I-20 | ĐÒN GIẢ! (boss tự hủy) | boss | **C** |
@@ -208,7 +208,7 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 | ID | Yếu tố | Hình dạng | Cập nhật | Hiệu ứng |
 |---|---|---|---|---|
 | E-16 | Ô đỏ báo đòn (M khi có đòn) | Ô đỏ có **sọc chéo** + viền đậm | Theo đòn | Cường độ tăng khi gần hết giờ |
-| E-17 | Đếm ngược + tên đòn (M khi có đòn) | Nhãn gần ô đỏ: "BOSS 7 ô · Kiếm khí · 1,6 s" + thanh co dần. Nhãn không che ô người chơi đang đứng | Liên tục | — |
+| E-17 | Ô báo đòn đậm dần (M khi có đòn) | Không còn nhãn chữ (sửa 2026-10-31). Các ô đỏ hiện mờ ngay khi địch bắt đầu niệm rồi đậm dần đều tới đầy đúng lúc đòn rơi: sọc chéo ≥ 50 % từ đầu, phần tô 0 → 45 %, viền 30 → 100 %; tất cả ở lớp sàn, dưới chân đơn vị. Giảm chuyển động: 3 bậc rời (mờ, vừa, đậm). Tên đòn và số ô chỉ hiện ở màn tạm dừng / thông tin | Liên tục | — |
 | E-19 | NGẮT! (C) | Biểu ngữ giữa lưới 0,6 s + dòng nhỏ ("boss bị hủy đòn" hoặc "đòn của bạn bị hủy") | Sự kiện | Lắc nhẹ 0,15 s |
 | E-20 | ĐÒN GIẢ! (C) | Biểu ngữ nhỏ phía trên boss 0,8 s | Sự kiện | — |
 

@@ -28,7 +28,7 @@
 | Asset ID | Name | Category | Status | Spec File |
 |----------|------|----------|--------|-----------|
 | ASSET-004 | Slab set: Misty Forest | Environment | In Progress (16x16 nine-slice + 6 stamps drawn by script, `design/assets/candidates/misty-forest/`) | design/assets/specs/misty-forest-assets.md |
-| ASSET-005 | Backdrop: Misty Forest | Environment | In Progress (sky / far / near layers 800 wide, generated tree line + scripted ground, mist, margin props; open: tree tops under Z1) | design/assets/specs/misty-forest-assets.md |
+| ASSET-005 | Backdrop: Misty Forest | Environment | In Progress (v2 2026-10-31: far + near from the generated full-frame scene, 20 % scenery band, mist masked to the valley; v1 three-layer set parked in `pre-osfe-v1/`; open: palette lock, control band) | design/assets/specs/misty-forest-assets.md |
 | ASSET-006 | Wall (Misty Forest) | Environment | In Progress (40x40 candidate; open: §3 occlusion sentence) | design/assets/specs/misty-forest-assets.md |
 | ASSET-007 | Thorns patch (Misty Forest) | Environment | In Progress (scripted candidate) | design/assets/specs/misty-forest-assets.md |
 

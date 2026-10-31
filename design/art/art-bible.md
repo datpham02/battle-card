@@ -107,11 +107,11 @@ Góc nhìn đã đối chiếu với ảnh chụp thật (2026-10-28). Các dòn
   - đổi tọa độ chạm sang tọa độ gốc;
   - sửa `src/layout/screen_layout.gd` cho ô snap bội số 2;
   - neo sprite ở giữa đáy khung, đặt 3 art-px trên mép trước của phiến; vẽ theo hàng (hàng sau trước). Tường xếp chung với đơn vị;
-  - tách báo đòn làm hai lớp: tô và sọc ở lớp sàn, dưới đơn vị; viền 2 px ở lớp phủ, trên mọi đơn vị. Nhãn đếm ngược là chữ nên đã ở lớp HUD 1280×720;
+  - báo đòn nằm **trọn ở lớp sàn, dưới đơn vị** (sửa 2026-10-31; trước đó viền 2 px ở lớp phủ): tô, sọc và viền 2 px + mép Mực đều dưới chân. Không nhãn đếm ngược: ô đậm dần từ lúc địch niệm tới lúc đòn rơi (sọc ≥ 50 % từ đầu, tô 0 → 45 %, viền 30 → 100 %); độ đậm là đồng hồ;
   - lớp phủ trên đơn vị cũng chứa: viền bóng khối và ✓/✗, VFX phép, Khối đang rơi, Khối trên đất và thanh độ tươi (thứ bậc #1–2 không bị đầu đơn vị che). Ô đích đang niệm nằm ở lớp sàn, dưới đơn vị, như phần tô của báo đòn;
   - chạm và thả khối tính theo ô sàn, không theo sprite;
   - mỗi vùng một nền nhìn ngang 800×360, nằm sau lưới.
-- **Đơn vị đứng trước ô đỏ không làm trong suốt** (người dùng chốt 2026-10-28). Viền và nhãn đếm đã ở trên đơn vị; sọc vẫn lộ ở phần trên ô và hai bên thân. Kiểm ở vertical slice.
+- **Không gì trên ô được che đơn vị đứng trên ô** (người dùng chốt 2026-10-31, thay cho luật 2026-10-28 "viền và nhãn đếm ở trên đơn vị"): tô, sọc, viền ô đỏ và ô đích đều ở lớp sàn; không tấm số máu dưới chân; chip từ khóa đặt dưới chân, không đè thân. Chỉ VFX trúng đòn (≤ 0,35 s) được vẽ trên đơn vị. Sọc vẫn lộ ở phần trên ô và hai bên thân (kiểm ảnh 58/60).
 - Các vùng Z1–Z5 của `design/ux/hud.md` không đổi vị trí. Ở sân 5×5, đầu đơn vị hàng sau cùng ló vào dải Z1 (anh hùng 19 art-px, quái 13, Kẻ Gác 31). **Người dùng chốt 2026-10-28: dồn Z1 lên 3–8 % chiều cao**, nửa dưới Z1 để trống cho đầu đơn vị (đã ghi vào `design/ux/hud.md`). Kẻ Gác đứng hàng sau, dưới thanh máu boss: Mảnh Gốc dời sang ngang vai.
 - Màn điện thoại 20:9 không chia hết theo chiều ngang. Dự án đang để `window/stretch/aspect="expand"`, nên chỉ dư khoảng trống hai bên.
 
@@ -380,7 +380,7 @@ UI đứng ngoài thang này và giữ trung tính.
 
 | Tín hiệu | Màu | Hình bắt buộc |
 |---|---|---|
-| Báo đòn | Đỏ #E5293B | Sọc chéo 45° + viền 2 px + nhãn đếm ngược |
+| Báo đòn | Đỏ #E5293B | Sọc chéo 45° + viền 2 px, **đậm dần** từ mờ tới đầy theo thời gian niệm của địch (không nhãn đếm ngược, sửa 2026-10-31) |
 | Ô sáng khi kéo (trúng / trượt) | Tô: màu khối của nhân vật (đậm / mờ 50 %). Viền và ✓/✗: Ngà, mép Mực | Trúng: viền liền, ✓ trên ô địch. Trượt: viền nét đứt, ✗. Không cần bảng màu thay thế: trúng/trượt đọc bằng hình |
 | Bản Khắc | Ánh Lưới, phai 100 → 0 % | Ô lõm vuông, viền trong 1 px |
 | Ô đích đang niệm | Màu chất liệu khối anh hùng (không thêm màu); dấu và mép tăng 35 → 100 % | Dấu chất liệu cỡ ô + mép nổi. Khác Bản Khắc (lõm, viền trong, vàng, phai xuống) và báo đòn (đỏ, sọc chéo, đất bạn); không ✓/✗ |

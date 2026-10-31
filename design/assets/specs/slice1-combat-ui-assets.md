@@ -108,6 +108,7 @@ Pixel art sheet of 5 square tile marks, 16x16 each, on transparent background, w
 |---|---|---|---|---|
 | script-01 | 2026-10-31 | 5 white masks 16x16 in `fx_material_marks_16.png` (80x16): **bevel** (top + left alpha 255, bottom + right alpha 128 — two levels so the shader can tint highlight / shadow), **crack** (1 px stepped diagonal with a kink and two 1 px splinters), **clipped** (1 px frame, top-right and bottom-left corners cut 3 px at 45°), **rope** (1 px frame + 1 px line on row 8 with four knot pixels), **lead** (2 px cross splitting the tile 2x2, no frame). `ASSET-011-fx_material_marks_16.json` gives each mark's rect and how it scales to the cell: `nine_slice` with margins (bevel 1, clipped 4, rope 1/7, lead 7) or `center` (crack — a stretched diagonal would break its steps) | 0 | Kept: `candidates/slice1-fx/ASSET-011-fx_material_marks_16.png` + `.json`; preview `preview-marks-x8.png` |
 | check-01 | 2026-10-31 | art-check `--fx`: steel body #8FA3B8 at 60 % on two target tiles, raised edge (highlight top-left, shadow bottom-right) by code, bevel mask nine-sliced to the face minus 2 px, tinted #EEF4FA; intensity 70 % under the goblin, 100 % on the tile below (evidence 38/39) | 0 | Reads as a raised steel tile, distinct from the red telegraph; the slab stays visible through the 60 % fill. Only steel is checked in-game (slice 1 has one hero); the four other masks are checked on the x8 preview only |
+| check-02 | 2026-10-31 | **User rule: when a piece is dragged or cast, only the tiles light up; no block sprite travels onto the board.** The falling domino was removed from the fx demo and from the `--seq` cast sequence (now: tiles ramp → cast A/B → VFX → hit), `anim/seq-slash-v2.gif` | 0 | Matches art bible §3 "không vẽ khối lên sân" for the drag; the "Khối rơi" state of ASSET-008 remains for blocks lying on the floor to pick up, not for casts |
 
 **Status:** In Progress (candidate; shader `floor_fx` is code)
 
@@ -121,7 +122,7 @@ Pixel art sheet of 5 square tile marks, 16x16 each, on transparent background, w
 | Naming | `assets/art/vfx/fx_telegraph_stripe_8.png` |
 | Slice | 1 |
 
-**Description:** Incoming-attack cell on the player's half: red #E5293B fill with 45° diagonal stripes on the floor layer (under units), a 2 px red outline with a 1 art-px ink edge outside drawn on the overlay layer above units, countdown label on an ink plate in the HUD layer. Red is used nowhere else.
+**Description:** Incoming-attack cell on the player's half: red #E5293B fill with 45° diagonal stripes, a 2 px red outline with a 1 art-px ink edge outside — **all on the floor layer, under units** (changed 2026-10-31; the outline was on the overlay). **No countdown label**: the tile carries an `intensity` 0 → 1 over the enemy's cast time and the hit lands at 1 — stripes alpha 0.5 → 1, flat fill 0 → 0.45, outline 0.3 → 1 (art-check `--tele-k`, evidence `61-telegraph-ramp-0-50-100.png`); Reduced motion: three discrete steps. Red is used nowhere else.
 
 **Art Bible Anchors:** §1 P3 (red reserved), §4 (telegraph signal row), §7.4 (ink edge, label on ink plate), §8.6 (layer order).
 
@@ -131,6 +132,7 @@ Pixel art sheet of 5 square tile marks, 16x16 each, on transparent background, w
 |---|---|---|---|---|
 | script-01 | 2026-10-31 | 8x8 tile: pixels with (x + y) mod 4 < 2 are #E5293B at alpha 255, the rest #E5293B at alpha 110, so one texture gives fill + 45° stripes and tiles seamlessly (period 4 divides 8) | 0 | Kept: `candidates/slice1-fx/ASSET-012-fx_telegraph_stripe_8.png`; preview `preview-stripe-x8.png` |
 | check-01 | 2026-10-31 | art-check `--fx`: tiled over the hero's slab face and the one below (floor layer), 2 px red frame with a 1 px Ink edge outside on the overlay layer above the units (evidence 38/39) | 0 | Reads from across the board; with the Swordsman standing on the cell the stripes stay visible above and on both sides of the body (art bible §1 note, passes for this hero). Countdown label on an Ink plate not mocked |
+| check-02 | 2026-10-31 | **User rule: nothing on a tile may cover the unit standing on it.** The 2 px red frame + Ink edge moved from the overlay layer to the floor layer (under units) in art-check; the HP plates under the feet were dropped (the HUD bars carry HP); keyword chips sit centred under the feet. Evidence `58-bg-v2-5x5.png`, zoom `60-units-on-tiles-zoom-x3.png` | 0 | The hero stands clear on the red tile. This reverses the art bible §1 "hệ quả kỹ thuật" line that put the frame above units (2026-10-28) — wording change proposed, see active.md. The countdown label stays on the HUD layer above everything |
 
 **Status:** In Progress (candidate; shader stripes are code, this is the fallback texture)
 
