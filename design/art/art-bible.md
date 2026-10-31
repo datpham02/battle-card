@@ -760,7 +760,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 ### 8.1 Định dạng, thư mục, tên
 | Thứ | Định dạng | Ở đâu | Chủ |
 |---|---|---|---|
-| Nguồn vẽ | `.aseprite`, 1 file/đơn vị, tag = clip, thời lượng khung ghi trong tag | `art_src/` ở gốc repo, có `.gdignore` | art |
+| Nguồn vẽ | `.aseprite`, 1 file/đơn vị, tag = clip, thời lượng khung ghi trong tag. **Tạm chấp nhận (người dùng chốt 2026-10-31, Story 045):** thư mục PNG rời `art_src/units/<id>/<clip>/<n>.png` + `clips.json` (thứ tự, ms, lặp) khi chưa có họa sĩ làm trong Aseprite; exporter Python xuất cùng định dạng JSON nên engine không phân biệt | `art_src/` ở gốc repo, có `.gdignore` | art |
 | Xuất đơn vị | sheet `.png` (mỗi hàng 1 clip, ô cố định, đệm 1 px trong suốt giữa ô) + `.json` Aseprite | `assets/art/...` | art xuất |
 | Atlas trận | script gộp sheet thành **atlas chung** (5 anh hùng, VFX, lớp phủ trạng thái, icon, khung UI, chất liệu Khối) + **atlas vùng** (quái, Kẻ Gác, phiến, vật trang trí của vùng) | sinh tự động | technical-artist viết script; sửa một đơn vị thì chạy lại script |
 | Khác | `.png` rời: nền, chân dung | `assets/art/...` | art |
