@@ -1,7 +1,7 @@
 # Story 048: Hiệu ứng trên mặt ô bằng PixelLab — thay hình vẽ code của ô cháy, Bản Khắc, ô nứt, ô phép, trúng/trượt, NGẮT, gai đâm
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: Visual/Feel
 > **Estimate**: —
@@ -41,21 +41,34 @@ Ngoài slice 1 (làm cùng asset của vùng, story sau): ô lầy (`bubbles_ris
 ## Acceptance Criteria
 
 **Phần A — Gói hiệu ứng**
-- [ ] 9 gói F1–F9 làm bằng `vfx_workbench` (không gọi công cụ trả phí), xuất `--game-pack`, lưu `design/assets/candidates/floor-vfx/pack-<id>/` (+ GIF xem trước), rồi sao chép vào `assets/art/vfx/floor/<id>/` (manifest + PNG, import Lossless, không mipmap, không `.zip`).
-- [ ] Mỗi gói: khung vừa ô 5x5 (43×31) — phần trên mặt đất không tràn quá mép phiến hơn 4 art-px; màu trong bảng ở trên; alpha 0/255; không chữ; hạt là ô vuông (art bible P1).
-- [ ] `assets/art/vfx/floor/index.json` liệt kê id → thư mục, lớp (floor / overlay), lặp hay một lần.
+- [x] 9 gói F1–F9 làm bằng `vfx_workbench` (không gọi công cụ trả phí), xuất `--game-pack`, lưu `design/assets/candidates/floor-vfx/pack-<id>/` (+ GIF xem trước), rồi sao chép vào `assets/art/vfx/floor/<id>/` (manifest + PNG, import Lossless, không mipmap, không `.zip`).
+- [x] Mỗi gói: khung vừa ô 5x5 (43×31) — phần trên mặt đất không tràn quá mép phiến hơn 4 art-px; màu trong bảng ở trên; alpha 0/255; không chữ; hạt là ô vuông (art bible P1). *(Đóng 2026-10-31: gói `fill` làm trên ô 64×46 và cắt theo ô theo ý người dùng; nét nứt F4 dùng #1B0404, không phải Mực; F3/F6/F8 không phủ kín ô, F7 chiếm ~2/3 ô.)*
+- [x] `assets/art/vfx/floor/index.json` liệt kê id → thư mục, lớp (floor / overlay), lặp hay một lần.
 
 **Phần B — Nối vào game**
-- [ ] `FloorVfx` (pure + vẽ) phát gói trên ô theo bảng: loop cho trạng thái, một lần cho sự kiện (hàng đợi sự kiện có thời điểm bắt đầu, xóa khi xong); đồng hồ theo delta trận (dừng khi Focus / Pause), giảm chuyển động = khung đại diện tĩnh.
-- [ ] F1, F2, F4, F5, F7, F9 vẽ trong `FloorDynamicLayer` (dưới đơn vị); F6, F8 vẽ trong `OverlayLayer` (trên đơn vị, ≤ 0,35 s).
-- [ ] Bỏ phần vẽ code tương ứng (`BurnPainter` phần tô/sọc/glyph — giữ thanh thời gian 2 px; `_draw_formation` ô sáng; `_draw_trait_cells` ô nứt (giữ cảnh báo); `_draw_swing` tô ô + nhãn "Nick 0.5"; tô ô của `_draw_feedback` / `_draw_boss_feedback` (giữ số sát thương "-N"); `_draw_interrupt` tô + X (giữ chữ NGẮT ngắn); chớp gai). Thiếu gói → giữ đường vẽ cũ, không crash.
-- [ ] Không gì trên mặt ô che đơn vị ngoài F6 / F8 (chớp ≤ 0,35 s).
+- [x] `FloorVfx` (pure + vẽ) phát gói trên ô theo bảng: loop cho trạng thái, một lần cho sự kiện (hàng đợi sự kiện có thời điểm bắt đầu, xóa khi xong); đồng hồ theo delta trận (dừng khi Focus / Pause), giảm chuyển động = khung đại diện tĩnh.
+- [x] F1, F2, F4, F5, F7, F9 vẽ trong `FloorDynamicLayer` (dưới đơn vị); F6, F8 vẽ trong `OverlayLayer` (trên đơn vị, ≤ 0,35 s).
+- [x] Bỏ phần vẽ code tương ứng (`BurnPainter` phần tô/sọc/glyph — giữ thanh thời gian 2 px; `_draw_formation` ô sáng; `_draw_trait_cells` ô nứt (giữ cảnh báo); `_draw_swing` tô ô + nhãn "Nick 0.5"; tô ô của `_draw_feedback` / `_draw_boss_feedback` (giữ số sát thương "-N"); `_draw_interrupt` tô + X (giữ chữ NGẮT ngắn); chớp gai). Thiếu gói → giữ đường vẽ cũ, không crash. *(Đóng 2026-10-31: người dùng bảo bỏ mọi thanh thời gian, kể cả thanh 2 px của BurnPainter.)*
+- [x] Không gì trên mặt ô che đơn vị ngoài F6 / F8 (chớp ≤ 0,35 s).
 
 **Phần C — Test và bằng chứng**
-- [ ] Test đơn vị: chọn gói theo trạng thái ô; hàng đợi một lần hết hạn đúng; reduce motion; thiếu gói → null.
-- [ ] Toàn bộ suite `FAILS=0`.
-- [ ] Ảnh `production/qa/evidence/floor-vfx/`: mỗi hiệu ứng một ảnh trong trận + một ảnh tổng hợp các gói phóng 4×; evidence doc có chữ ký (Visual/Feel).
+- [x] Test đơn vị: chọn gói theo trạng thái ô; hàng đợi một lần hết hạn đúng; reduce motion; thiếu gói → null.
+- [x] Toàn bộ suite `FAILS=0`.
+- [x] Ảnh `production/qa/evidence/floor-vfx/`: mỗi hiệu ứng một ảnh trong trận + một ảnh tổng hợp các gói phóng 4×; evidence doc có chữ ký (Visual/Feel).
 
 ## Notes
 - VFX workbench miễn phí; không dùng công cụ tạo ảnh trả phí trong story này. Nếu một gói cần ảnh nguồn trả phí, hỏi người dùng trước.
 - Ô báo đòn giữ phẳng theo P3; nếu playtest muốn "sống" hơn, chỉ thêm chuyển động nhẹ cho sọc, không đổi màu hay hình.
+
+## Completion Notes
+**Completed**: 2026-10-31
+**Criteria**: 10/10 verified (A 3, B 4, C 3); 2 khác câu chữ gốc (xem Deviations). Hoãn: cảm giác thời lượng và độ đậm của hiệu ứng khi chơi (playtest).
+**Deviations** (ADVISORY, người dùng chấp nhận khi đóng):
+- Nét nứt F4 (`cracked_cell`) có viền đỏ rất tối #1B0404, không phải Mực #1B1722 trong bảng màu; đỏ dành cho ô báo đòn (art bible P3). Sửa nhỏ: đổi màu trong `whole.png` và `front.png`.
+- Chưa phủ kín ô: F3, F6, F8 là tia nhỏ giữa ô; F7 chiếm khoảng hai phần ba ô ở lúc to nhất. F1, F2, F4, F5, F9 là gói `fill` (cắt theo ô).
+- Thanh thời gian 2 px bị bỏ theo người dùng; AC gốc ghi "giữ thanh 2 px".
+- Ảnh F3, F4, F7 (08–11) chụp bằng probe tạm gọi `FloorVfx.play` / `SlamTrait` thật, không qua một trận chơi; ảnh 01–07 chụp trước đợt chỉnh màn hình trận `1b91b90`.
+- Candidates nằm ở `design/assets/candidates/floor-vfx/f<n>-<id>/` (không phải `pack-<id>/`); file zip để ngoài git.
+- Hiệu ứng vùng (lầy, miệng phun, bão, cát) để story asset vùng; ô Ấn / hố là story Ô rớt.
+**Test Evidence**: Visual/Feel: evidence doc `production/qa/evidence/floor-vfx-evidence.md` ký `[x] Approved` (DatPT, solo, 2026-10-31); ảnh `production/qa/evidence/floor-vfx/01–12`; test `tests/unit/art/floor_vfx_test.gd`; 129 headless + 6 windowed FAILS=0.
+**Code Review**: Skipped (solo mode)

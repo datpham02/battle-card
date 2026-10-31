@@ -1,7 +1,7 @@
 # Story 046: HUD v3 — dải cảnh xa 20 %, giao diện vẽ sắc, ô báo đòn đậm dần
 
 > **Epic**: Kaiten Duel (v6)
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: —
@@ -40,30 +40,30 @@
 
 **Phần B — Chữ và khung (`src/ui/hud_skin.gd` mới, dùng bởi `CombatView` và `CutHudView`)**
 
-- [ ] `HudSkin` là một file tĩnh cung cấp: `panel(canvas, rect, cuts, fill, line)` (vát góc 45°, cạnh `cuts` theo px), `diamond(canvas, center, r, fill, line, width)`, `segments(canvas, rect, total, filled, lit)`, `text(canvas, pos, str, size, color, align, width)` (viền 3 px #0F1219 + chữ), `hp_bar(canvas, rect, ratio, trail, fill, notch)`, `slot_card(...)`, `icon(canvas, name, pos, scale)`; màu là hằng số đặt tên theo art bible §4 / §7.4 (Đá Đêm, Sương, Ngà, Ánh Lưới, xanh máu #58D468, vết #B8B0A0).
-- [ ] **Font**: `HudSkin.font_semibold()` / `font_bold()` nạp từ `assets/fonts/` (Noto Sans SemiBold + Bold, OFL, tập con Latin + Vietnamese; **việc tải file cần người dùng duyệt**, tới lúc đó dùng `ThemeDB.fallback_font` qua cùng hàm, không gọi `fallback_font` rải rác). Cỡ theo §7.3: tên 24 SemiBold, số máu 20–24 Bold, nhãn phụ 13–18. Chuỗi kiểm "Tiếng Việt ẳ ẵ ặ ế ộ ử ữ ự Đ đ Ơ ơ Ư ư" hiện đủ dấu.
-- [ ] **Z1**: header trái 430×60 px vát góc dưới-phải: tên + cấp, thanh máu 300×12 (rãnh #15131A, tô #58D468, vết #B8B0A0 co 0,4 s, số "170/200" bên phải), thanh Bản Khắc 300×6 chia 7 đốt vàng + "n/21"; header phải đối xứng cho địch: thanh Ngà, nấc nửa máu Ngà 2 px nhô 3 px, 3 ô khối boss; pause và info là icon 55 px giữa trên. Thanh và số vẽ sắc ở pixel màn hình (không nhân 2).
-- [ ] **Z4/Z5**: ô túi = thẻ Đá Đêm vát góc trên-phải, viền Sương 1,5 px (Ngà 3 px khi chọn), huy hiệu trắng 30×30 góc dưới-trái ghi số ô, khối xem trước vẽ bằng ô thép 18 px có bevel; nút Thức Tỉnh = kim cương bán kính 57 px viền Ánh Lưới 3 px với icon 55 px và "n/21"; bộ đếm túi "5 / 9" trên tấm nhỏ. Kích thước chạm theo Story 044 không đổi.
-- [ ] **Chip từ khóa** (I-23): icon 55 px vẽ ở tỉ lệ 0,5 **tạm**, đặt **dưới chân** đơn vị, căn giữa, tối đa 2 trên sân 5x5; không tấm số máu dưới chân (số máu chỉ ở Z1).
-- [ ] Icon đọc từ `assets/art/ui/ui_icons_55.png` + `.json` (sao chép từ ứng viên `design/assets/candidates/slice1-ui/osfe-icons/`, import Lossless, không mipmap); khi thiếu file, vẽ hình dự phòng bằng code như hiện tại, không crash.
+- [x] `HudSkin` là một file tĩnh cung cấp: `panel(canvas, rect, cuts, fill, line)` (vát góc 45°, cạnh `cuts` theo px), `diamond(canvas, center, r, fill, line, width)`, `segments(canvas, rect, total, filled, lit)`, `text(canvas, pos, str, size, color, align, width)` (viền 3 px #0F1219 + chữ), `hp_bar(canvas, rect, ratio, trail, fill, notch)`, `slot_card(...)`, `icon(canvas, name, pos, scale)`; màu là hằng số đặt tên theo art bible §4 / §7.4 (Đá Đêm, Sương, Ngà, Ánh Lưới, xanh máu #58D468, vết #B8B0A0). *(Đóng 2026-10-31: không có `slot_card` trong HudSkin; thẻ túi vẽ trong `hold_slots_view.gd`.)*
+- [x] **Font**: `HudSkin.font_semibold()` / `font_bold()` nạp từ `assets/fonts/` (Noto Sans SemiBold + Bold, OFL, tập con Latin + Vietnamese; **việc tải file cần người dùng duyệt**, tới lúc đó dùng `ThemeDB.fallback_font` qua cùng hàm, không gọi `fallback_font` rải rác). Cỡ theo §7.3: tên 24 SemiBold, số máu 20–24 Bold, nhãn phụ 13–18. Chuỗi kiểm "Tiếng Việt ẳ ẵ ặ ế ộ ử ữ ự Đ đ Ơ ơ Ư ư" hiện đủ dấu.
+- [x] **Z1**: header trái 430×60 px vát góc dưới-phải: tên + cấp, thanh máu 300×12 (rãnh #15131A, tô #58D468, vết #B8B0A0 co 0,4 s, số "170/200" bên phải), thanh Bản Khắc 300×6 chia 7 đốt vàng + "n/21"; header phải đối xứng cho địch: thanh Ngà, nấc nửa máu Ngà 2 px nhô 3 px, 3 ô khối boss; pause và info là icon 55 px giữa trên. Thanh và số vẽ sắc ở pixel màn hình (không nhân 2). *(Đóng 2026-10-31: người dùng sau đó chốt ẩn panel máu trên cùng trong trận (`combat.json` `hud.corner_panels` = false); mã panel còn lại sau cờ, 260×52. Số máu hiện dưới chân. Xem Completion Notes.)*
+- [x] **Z4/Z5**: ô túi = thẻ Đá Đêm vát góc trên-phải, viền Sương 1,5 px (Ngà 3 px khi chọn), huy hiệu trắng 30×30 góc dưới-trái ghi số ô, khối xem trước vẽ bằng ô thép 18 px có bevel; nút Thức Tỉnh = kim cương bán kính 57 px viền Ánh Lưới 3 px với icon 55 px và "n/21"; bộ đếm túi "5 / 9" trên tấm nhỏ. Kích thước chạm theo Story 044 không đổi.
+- [x] **Chip từ khóa** (I-23): icon 55 px vẽ ở tỉ lệ 0,5 **tạm**, đặt **dưới chân** đơn vị, căn giữa, tối đa 2 trên sân 5x5; không tấm số máu dưới chân (số máu chỉ ở Z1). *(Đóng 2026-10-31: người dùng đảo quyết định: số máu hiện dưới chân; thanh thời gian 2 px dưới chip đã bỏ ở Story 048.)*
+- [x] Icon đọc từ `assets/art/ui/ui_icons_55.png` + `.json` (sao chép từ ứng viên `design/assets/candidates/slice1-ui/osfe-icons/`, import Lossless, không mipmap); khi thiếu file, vẽ hình dự phòng bằng code như hiện tại, không crash.
 
 **Phần C — Ô báo đòn đậm dần (`src/combat/cut_hud_view.gd`, `src/combat/cut_actor.gd`)**
 
-- [ ] `CutActor.get_progress() -> float` = `1 − time_left / duration` của đòn đang niệm (duration lưu lúc `begin_swing`, kể cả override và các hệ số Story 018/032); 0 khi không niệm.
-- [ ] `_draw_boss_swing` **không vẽ nhãn đếm ngược, tên đòn hay số ô** nữa; thay bằng: với `k = get_progress()`, mỗi ô vẽ tô đỏ #E5293B alpha `lerp(0, 0,45, k)`, sọc chéo 45° (texture 8×8 `fx_telegraph_stripe_8.png` lặp, hoặc vẽ bằng code) alpha `lerp(0,5, 1, k)`, viền 2 px đỏ + mép Mực 1 px ngoài alpha `lerp(0,3, 1, k)`. Hằng số ba cặp này đặt tên và nằm trong `CombatConfig` (data-driven).
-- [ ] Toàn bộ ô báo đòn (tô, sọc, viền) vẽ **dưới đơn vị**: chuyển sang lớp của `CombatView` trước khi vẽ đơn vị, hoặc tách `FloorLayer` vẽ trước `CombatView`. `CutHudView` chỉ còn vẽ trên đơn vị những thứ art bible cho phép (VFX trúng ≤ 0,35 s, biểu ngữ, menu).
-- [ ] Đòn trong hàng chờ (Story 013) vẽ ở `k = 0` với sọc thưa hơn (giữ phân biệt "sắp" và "đang"); đòn giữ Khối Lạ vẫn mang dấu sao góc (Story 041).
-- [ ] **Giảm chuyển động** (`accessibility.reduce_motion`): `k` lượng tử hoá thành 3 bậc 0 / 0,5 / 1 thay vì liên tục. Không nhấp nháy ở bất kỳ bậc nào.
-- [ ] Màn tạm dừng / thông tin đòn vẫn hiện tên đòn và số ô (chữ bỏ khỏi sân không mất khỏi game).
+- [x] `CutActor.get_progress() -> float` = `1 − time_left / duration` của đòn đang niệm (duration lưu lúc `begin_swing`, kể cả override và các hệ số Story 018/032); 0 khi không niệm.
+- [x] `_draw_boss_swing` **không vẽ nhãn đếm ngược, tên đòn hay số ô** nữa; thay bằng: với `k = get_progress()`, mỗi ô vẽ tô đỏ #E5293B alpha `lerp(0, 0,45, k)`, sọc chéo 45° (texture 8×8 `fx_telegraph_stripe_8.png` lặp, hoặc vẽ bằng code) alpha `lerp(0,5, 1, k)`, viền 2 px đỏ + mép Mực 1 px ngoài alpha `lerp(0,3, 1, k)`. Hằng số ba cặp này đặt tên và nằm trong `CombatConfig` (data-driven).
+- [x] Toàn bộ ô báo đòn (tô, sọc, viền) vẽ **dưới đơn vị**: chuyển sang lớp của `CombatView` trước khi vẽ đơn vị, hoặc tách `FloorLayer` vẽ trước `CombatView`. `CutHudView` chỉ còn vẽ trên đơn vị những thứ art bible cho phép (VFX trúng ≤ 0,35 s, biểu ngữ, menu).
+- [x] Đòn trong hàng chờ (Story 013) vẽ ở `k = 0` với sọc thưa hơn (giữ phân biệt "sắp" và "đang"); đòn giữ Khối Lạ vẫn mang dấu sao góc (Story 041).
+- [x] **Giảm chuyển động** (`accessibility.reduce_motion`): `k` lượng tử hoá thành 3 bậc 0 / 0,5 / 1 thay vì liên tục. Không nhấp nháy ở bất kỳ bậc nào.
+- [x] Màn tạm dừng / thông tin đòn vẫn hiện tên đòn và số ô (chữ bỏ khỏi sân không mất khỏi game).
 
 **Phần D — Test và bằng chứng**
 
-- [ ] Test đơn vị `tests/unit/layout/`: `board_area_rect` bắt đầu ở 20 %; bảng cỡ ô mới (3x3, 5x5, pha lê 6x6); không chồng lấn nút.
-- [ ] Test đơn vị `tests/unit/combat/`: `get_progress()` ở 0 %, 50 %, 100 % và sau khi đòn kết thúc; ba công thức alpha ở `k` = 0 / 0,5 / 1 (hàm thuần trong `CombatConfig` hoặc `HudSkin`, không cần node); lượng tử hoá 3 bậc khi reduce motion.
-- [ ] Test đơn vị `HudSkin`: đa giác vát góc đúng số đỉnh; `segments` chia đúng số đốt; `text` không vỡ với chuỗi tiếng Việt (độ rộng > 0).
-- [ ] Các suite click windowed cập nhật toạ độ theo dải 20 %; toàn bộ test `FAILS=0`.
-- [ ] Ảnh 1280×720 lưu `production/qa/evidence/hud-v3/`: 5x5 đầu trận; đòn địch ở `k ≈ 0`, `0,5`, `1` với Kiếm sĩ đứng trên ô đỏ (chứng minh không che người); thẻ túi có khối, một thẻ chọn, một thẻ trống; Thức Tỉnh sẵn sàng; chip từ khóa trên goblin; chuỗi tiếng Việt; một ảnh 1600×720 kiểm lề; một ảnh với reduce motion. Đối chiếu bằng mắt với `asset-slice1-art-check/58`, `60`, `61`.
-- [ ] `design/ux/hud.md` ghi lại số liệu đã đo (cỡ ô, vị trí) nếu lệch so với spec.
+- [x] Test đơn vị `tests/unit/layout/`: `board_area_rect` bắt đầu ở 20 %; bảng cỡ ô mới (3x3, 5x5, pha lê 6x6); không chồng lấn nút.
+- [x] Test đơn vị `tests/unit/combat/`: `get_progress()` ở 0 %, 50 %, 100 % và sau khi đòn kết thúc; ba công thức alpha ở `k` = 0 / 0,5 / 1 (hàm thuần trong `CombatConfig` hoặc `HudSkin`, không cần node); lượng tử hoá 3 bậc khi reduce motion.
+- [x] Test đơn vị `HudSkin`: đa giác vát góc đúng số đỉnh; `segments` chia đúng số đốt; `text` không vỡ với chuỗi tiếng Việt (độ rộng > 0).
+- [x] Các suite click windowed cập nhật toạ độ theo dải 20 %; toàn bộ test `FAILS=0`.
+- [x] Ảnh 1280×720 lưu `production/qa/evidence/hud-v3/`: 5x5 đầu trận; đòn địch ở `k ≈ 0`, `0,5`, `1` với Kiếm sĩ đứng trên ô đỏ (chứng minh không che người); thẻ túi có khối, một thẻ chọn, một thẻ trống; Thức Tỉnh sẵn sàng; chip từ khóa trên goblin; chuỗi tiếng Việt; một ảnh 1600×720 kiểm lề; một ảnh với reduce motion. Đối chiếu bằng mắt với `asset-slice1-art-check/58`, `60`, `61`.
+- [x] `design/ux/hud.md` ghi lại số liệu đã đo (cỡ ô, vị trí) nếu lệch so với spec.
 
 ---
 
@@ -98,3 +98,15 @@ Làm theo thứ tự C → C2 (sọc Cháy) → B1 (HudSkin + header) → B2 (th
 
 **Chưa kiểm:** cảm giác đọc nhịp đòn chỉ qua độ đậm (playtest, xem Notes); điện thoại thật.
 
+## Completion Notes
+**Completed**: 2026-10-31
+**Criteria**: 21/21 verified (Phần A 3 đã chuyển sang Story 047; B 6; C 6; D 6). 3 tiêu chí khác câu chữ gốc vì quyết định sau của người dùng hoặc vị trí code (xem Deviations). Hoãn sang playtest: có đọc được nhịp đòn chỉ qua độ đậm của ô hay không (Notes của story); chưa thử trên điện thoại thật.
+**Deviations** (ADVISORY, người dùng chấp nhận khi đóng):
+- Panel máu ở góc trên không còn trong trận (người dùng 2026-10-31: "ẩn cái thanh máu ở trên", "chỉ cần con số không, ko cần border"): số máu hiện tại là chữ có viền mực dưới chân mỗi đơn vị, hàng khối boss nổi ở hàng trên cùng, vàng góc trên phải, bảo vật góc trên trái. Cờ `combat.json` `hud.corner_panels` bật lại panel (260×52). Story gốc ghi "không số máu dưới chân" và header 430×60; `design/ux/hud.md` đã cập nhật.
+- Thanh thời gian 2 px dưới chip từ khóa đã bỏ (Story 048, người dùng).
+- `HudSkin` không có hàm `slot_card`; thẻ túi vẽ trong `hold_slots_view.gd`.
+- Ảnh `hud-v3/01–12` chụp trước các thay đổi trên (còn header cũ, Kiếm sĩ v1); ảnh hiện hành ở `production/qa/evidence/hud-corner-osfe/` và `swordsman-v3/`. Ảnh `13-pause-panel-boss-swing-line.png` chụp 2026-10-31 lúc đóng.
+- Lỗi nhỏ thấy ở ảnh 13, chưa sửa: "1 cells" không có dạng số ít; nút "Leave climb (save" bị cắt chữ ở bản tiếng Anh (nút Tạm dừng không thuộc story này).
+- Ngoài phạm vi, cùng commit `1b91b90`: tư thế đứng OSFE (`unit_layer`), hai màu sân (`floor_layer`, `slab_painter`, `art_assets`, `regions.json`), vàng và bảo vật hàng trên (`run_hud_view`, `screen_layout`), cờ demo `--player-cell`. Do người dùng yêu cầu sau khi viết story.
+**Test Evidence**: UI: ảnh giữ lại `production/qa/evidence/hud-v3/01–13` + `hud-corner-osfe/01–07`; test `cut_actor_progress_test`, `telegraph_alpha_test`, `combat_config_hud_test`, `burn_painter_test`, `hud_skin_test`, `screen_layout_v2_test`; 129 suite headless + 6 windowed FAILS=0 (commit `1b91b90`).
+**Code Review**: Skipped (solo mode)
