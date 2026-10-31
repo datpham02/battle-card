@@ -21,7 +21,7 @@ const FIXTURE_FACTS: Dictionary = {
 const FIXTURE_FRAME := Vector2i(40, 48)
 ## unit id -> [clips in frameTags order, frame size, facing]
 const REAL_SHEETS: Dictionary = {
-	"kiem_si": [["idle", "step", "cast_gesture", "hit", "victory", "defeat", "fall", "awaken"], Vector2i(40, 48), "right"],
+	"kiem_si": [["idle", "step", "cast_gesture", "hit", "victory", "defeat", "fall", "awaken"], Vector2i(96, 70), "right"],
 	"goblin_scout": [["idle", "step", "windup", "hit", "down"], Vector2i(32, 48), "left"],
 }
 
@@ -145,7 +145,7 @@ func test_real_sheets_match_story_045_table() -> void:
 	var ks := SpriteSheetScript.load_unit("kiem_si")
 	if ks != null:
 		var cast: Dictionary = ks.clip("cast_gesture")
-		check("kiem_si cast_gesture is [80, 120] once", (cast["durations_ms"] as Array[int]) == [80, 120] and String(cast["loop"]) == "once")
+		check("kiem_si cast_gesture is the v3 7-frame once clip", (cast["durations_ms"] as Array[int]) == [50, 40, 40, 50, 50, 60, 80] and String(cast["loop"]) == "once")
 		check("kiem_si defeat is hold_last", String(ks.clip("defeat")["loop"]) == "hold_last")
 	var gs := SpriteSheetScript.load_unit("goblin_scout")
 	if gs != null:

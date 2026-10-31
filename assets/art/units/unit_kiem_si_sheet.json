@@ -5,306 +5,900 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 400
+      "duration": 250
     },
     {
       "filename": "kiem_si_idle_1",
       "frame": {
-        "x": 41,
+        "x": 97,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 400
+      "duration": 250
+    },
+    {
+      "filename": "kiem_si_idle_2",
+      "frame": {
+        "x": 194,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 250
+    },
+    {
+      "filename": "kiem_si_idle_3",
+      "frame": {
+        "x": 291,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 250
     },
     {
       "filename": "kiem_si_step_0",
       "frame": {
         "x": 0,
-        "y": 49,
-        "w": 40,
-        "h": 48
+        "y": 71,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 300
+      "duration": 100
     },
     {
       "filename": "kiem_si_step_1",
       "frame": {
-        "x": 41,
-        "y": 49,
-        "w": 40,
-        "h": 48
+        "x": 97,
+        "y": 71,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 300
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_step_2",
+      "frame": {
+        "x": 194,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_step_3",
+      "frame": {
+        "x": 291,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
     },
     {
       "filename": "kiem_si_cast_gesture_0",
       "frame": {
         "x": 0,
-        "y": 98,
-        "w": 40,
-        "h": 48
+        "y": 142,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 80
+      "duration": 50
     },
     {
       "filename": "kiem_si_cast_gesture_1",
       "frame": {
-        "x": 41,
-        "y": 98,
-        "w": 40,
-        "h": 48
+        "x": 97,
+        "y": 142,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 120
+      "duration": 40
+    },
+    {
+      "filename": "kiem_si_cast_gesture_2",
+      "frame": {
+        "x": 194,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 40
+    },
+    {
+      "filename": "kiem_si_cast_gesture_3",
+      "frame": {
+        "x": 291,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "kiem_si_cast_gesture_4",
+      "frame": {
+        "x": 388,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "kiem_si_cast_gesture_5",
+      "frame": {
+        "x": 485,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 60
+    },
+    {
+      "filename": "kiem_si_cast_gesture_6",
+      "frame": {
+        "x": 582,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
     },
     {
       "filename": "kiem_si_hit_0",
       "frame": {
         "x": 0,
-        "y": 147,
-        "w": 40,
-        "h": 48
+        "y": 213,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 120
+      "duration": 40
+    },
+    {
+      "filename": "kiem_si_hit_1",
+      "frame": {
+        "x": 97,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 40
+    },
+    {
+      "filename": "kiem_si_hit_2",
+      "frame": {
+        "x": 194,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 40
     },
     {
       "filename": "kiem_si_victory_0",
       "frame": {
         "x": 0,
-        "y": 196,
-        "w": 40,
-        "h": 48
+        "y": 284,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 400
+      "duration": 100
     },
     {
       "filename": "kiem_si_victory_1",
       "frame": {
-        "x": 41,
-        "y": 196,
-        "w": 40,
-        "h": 48
+        "x": 97,
+        "y": 284,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 400
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_victory_2",
+      "frame": {
+        "x": 194,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_victory_3",
+      "frame": {
+        "x": 291,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_victory_4",
+      "frame": {
+        "x": 388,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
     },
     {
       "filename": "kiem_si_defeat_0",
       "frame": {
         "x": 0,
-        "y": 245,
-        "w": 40,
-        "h": 48
+        "y": 355,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 150
+      "duration": 100
     },
     {
       "filename": "kiem_si_defeat_1",
       "frame": {
-        "x": 41,
-        "y": 245,
-        "w": 40,
-        "h": 48
+        "x": 97,
+        "y": 355,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 150
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_defeat_2",
+      "frame": {
+        "x": 194,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_defeat_3",
+      "frame": {
+        "x": 291,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_defeat_4",
+      "frame": {
+        "x": 388,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_defeat_5",
+      "frame": {
+        "x": 485,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_defeat_6",
+      "frame": {
+        "x": 582,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_defeat_7",
+      "frame": {
+        "x": 679,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
     },
     {
       "filename": "kiem_si_fall_0",
       "frame": {
         "x": 0,
-        "y": 294,
-        "w": 40,
-        "h": 48
+        "y": 426,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
-      "duration": 0
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_fall_1",
+      "frame": {
+        "x": 97,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_fall_2",
+      "frame": {
+        "x": 194,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_fall_3",
+      "frame": {
+        "x": 291,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
     },
     {
       "filename": "kiem_si_awaken_0",
       "frame": {
         "x": 0,
-        "y": 343,
-        "w": 40,
-        "h": 48
+        "y": 497,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "duration": 120
     },
     {
       "filename": "kiem_si_awaken_1",
       "frame": {
-        "x": 41,
-        "y": 343,
-        "w": 40,
-        "h": 48
+        "x": 97,
+        "y": 497,
+        "w": 96,
+        "h": 70
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "sourceSize": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "kiem_si_awaken_2",
+      "frame": {
+        "x": 194,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "kiem_si_awaken_3",
+      "frame": {
+        "x": 291,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "kiem_si_awaken_4",
+      "frame": {
+        "x": 388,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "kiem_si_awaken_5",
+      "frame": {
+        "x": 485,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
       },
       "duration": 120
     }
@@ -315,57 +909,57 @@
     "image": "unit_kiem_si_sheet.png",
     "format": "RGBA8888",
     "size": {
-      "w": 81,
-      "h": 391
+      "w": 775,
+      "h": 567
     },
     "scale": "1",
     "frameTags": [
       {
         "name": "idle",
         "from": 0,
-        "to": 1,
-        "direction": "forward"
-      },
-      {
-        "name": "step",
-        "from": 2,
         "to": 3,
         "direction": "forward"
       },
       {
-        "name": "cast_gesture",
+        "name": "step",
         "from": 4,
-        "to": 5,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "cast_gesture",
+        "from": 8,
+        "to": 14,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 6,
-        "to": 6,
+        "from": 15,
+        "to": 17,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 7,
-        "to": 8,
+        "from": 18,
+        "to": 22,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 9,
-        "to": 10,
+        "from": 23,
+        "to": 30,
         "direction": "forward"
       },
       {
         "name": "fall",
-        "from": 11,
-        "to": 11,
+        "from": 31,
+        "to": 34,
         "direction": "forward"
       },
       {
         "name": "awaken",
-        "from": 12,
-        "to": 13,
+        "from": 35,
+        "to": 40,
         "direction": "forward"
       }
     ],
@@ -382,30 +976,30 @@
       "asset": "ASSET-001",
       "facing": "right",
       "frame": {
-        "w": 40,
-        "h": 48
+        "w": 96,
+        "h": 70
       },
       "gutter": 1,
-      "columns": 2,
+      "columns": 8,
       "loop": {
         "idle": "loop",
         "step": "loop",
         "cast_gesture": "once",
         "hit": "once",
-        "victory": "loop",
+        "victory": "hold_last",
         "defeat": "hold_last",
-        "fall": "hold",
+        "fall": "hold_last",
         "awaken": "loop"
       },
       "palette": [
         "#1B1722",
-        "#4F5864",
+        "#34406E",
         "#5F6F82",
         "#8FA3B8",
+        "#B8893A",
+        "#D8CDB0",
         "#E3B99A",
-        "#E8D9A8",
-        "#EEF4FA",
-        "#EFE6D2"
+        "#EEF4FA"
       ]
     }
   }

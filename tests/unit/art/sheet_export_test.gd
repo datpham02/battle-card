@@ -15,17 +15,18 @@ const MAX_COLOURS := 8
 ## (name, frame count, ms per frame, loop kind), in row order.
 const UNITS := {
 	"kiem_si": {
-		"frame": Vector2i(40, 48), "sheet": Vector2i(81, 391), "facing": "right",
-		"candidate": "swordsman/ASSET-001-%s-40x48.png",
+		# 2026-10-31: v3 tall anchor (PixelLab 2d093318...), PixMiniMax south-east clips cleaned to 96x70.
+		"frame": Vector2i(96, 70), "sheet": Vector2i(775, 567), "facing": "right",
+		"candidate": "swordsman/v3-tall/clean-96x70/%s.png",
 		"clips": [
-			["idle", ["idle-A", "idle-B"], [400, 400], "loop"],
-			["step", ["step-A", "step-B"], [300, 300], "loop"],
-			["cast_gesture", ["cast-A", "cast-B"], [80, 120], "once"],
-			["hit", ["hit"], [120], "once"],
-			["victory", ["victory-A", "victory-B"], [400, 400], "loop"],
-			["defeat", ["defeat-A", "defeat-B"], [150, 150], "hold_last"],
-			["fall", ["fall"], [0], "hold"],
-			["awaken", ["awaken-A", "awaken-B"], [120, 120], "loop"],
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
+			["cast_gesture", ["cast_gesture/0", "cast_gesture/1", "cast_gesture/2", "cast_gesture/3", "cast_gesture/4", "cast_gesture/5", "cast_gesture/6"], [50, 40, 40, 50, 50, 60, 80], "once"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["victory", ["victory/0", "victory/1", "victory/2", "victory/3", "victory/4"], [100, 100, 100, 100, 100], "hold_last"],
+			["defeat", ["defeat/0", "defeat/1", "defeat/2", "defeat/3", "defeat/4", "defeat/5", "defeat/6", "defeat/7"], [100, 100, 100, 100, 100, 100, 100, 100], "hold_last"],
+			["fall", ["fall/0", "fall/1", "fall/2", "fall/3"], [100, 100, 100, 100], "hold_last"],
+			["awaken", ["awaken/0", "awaken/1", "awaken/2", "awaken/3", "awaken/4", "awaken/5"], [120, 120, 120, 120, 120, 120], "loop"],
 		],
 	},
 	"goblin_scout": {

@@ -6,12 +6,17 @@ Columns: 8
 # tools/asset-pipeline/export_sheets.py refuses any opaque pixel outside
 # this list. Adding a colour is the art-director's call (art bible §8.4):
 # note the reason here and in the changelog.
-# 2026-10-31: 13 entries, 8 Swordsman + 7 Goblin Scout, Ink and Ivory shared.
+# 2026-10-31: 16 entries (13 + 3 for the v3 Swordsman), Ink and Ivory shared.
 #
 # Shared
  27  23  34	Ink #1B1722 (outline)
 239 230 210	Ivory #EFE6D2 (trim, eyes, teeth)
 # Swordsman (ASSET-001)
+# 2026-10-31 v3 tall anchor (user-approved): navy tabard, gold trim and ash-blond hair added; the
+# v1 cloak #4F5864 and hair #E8D9A8 stay listed (old candidates) but no current frame uses them.
+ 52  64 110	Tabard navy #34406E (v3)
+184 137  58	Trim gold #B8893A (v3)
+216 205 176	Hair ash blond #D8CDB0 (v3)
 143 163 184	Armour mid #8FA3B8
 238 244 250	Armour light #EEF4FA
  95 111 130	Armour dark #5F6F82

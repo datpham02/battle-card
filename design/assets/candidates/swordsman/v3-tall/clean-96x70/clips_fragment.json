@@ -1,0 +1,148 @@
+[
+ {
+  "name": "idle",
+  "frames": [
+   "idle/0.png",
+   "idle/1.png",
+   "idle/2.png",
+   "idle/3.png"
+  ],
+  "ms": [
+   250,
+   250,
+   250,
+   250
+  ],
+  "loop": "loop"
+ },
+ {
+  "name": "step",
+  "frames": [
+   "step/0.png",
+   "step/1.png",
+   "step/2.png",
+   "step/3.png"
+  ],
+  "ms": [
+   100,
+   100,
+   100,
+   100
+  ],
+  "loop": "loop"
+ },
+ {
+  "name": "cast_gesture",
+  "frames": [
+   "cast_gesture/0.png",
+   "cast_gesture/1.png",
+   "cast_gesture/2.png",
+   "cast_gesture/3.png",
+   "cast_gesture/4.png",
+   "cast_gesture/5.png",
+   "cast_gesture/6.png"
+  ],
+  "ms": [
+   50,
+   40,
+   40,
+   50,
+   50,
+   60,
+   80
+  ],
+  "loop": "once"
+ },
+ {
+  "name": "hit",
+  "frames": [
+   "hit/0.png",
+   "hit/1.png",
+   "hit/2.png"
+  ],
+  "ms": [
+   40,
+   40,
+   40
+  ],
+  "loop": "once"
+ },
+ {
+  "name": "victory",
+  "frames": [
+   "victory/0.png",
+   "victory/1.png",
+   "victory/2.png",
+   "victory/3.png",
+   "victory/4.png"
+  ],
+  "ms": [
+   100,
+   100,
+   100,
+   100,
+   100
+  ],
+  "loop": "hold_last"
+ },
+ {
+  "name": "defeat",
+  "frames": [
+   "defeat/0.png",
+   "defeat/1.png",
+   "defeat/2.png",
+   "defeat/3.png",
+   "defeat/4.png",
+   "defeat/5.png",
+   "defeat/6.png",
+   "defeat/7.png"
+  ],
+  "ms": [
+   100,
+   100,
+   100,
+   100,
+   100,
+   100,
+   100,
+   100
+  ],
+  "loop": "hold_last"
+ },
+ {
+  "name": "fall",
+  "frames": [
+   "fall/0.png",
+   "fall/1.png",
+   "fall/2.png",
+   "fall/3.png"
+  ],
+  "ms": [
+   100,
+   100,
+   100,
+   100
+  ],
+  "loop": "hold_last"
+ },
+ {
+  "name": "awaken",
+  "frames": [
+   "awaken/0.png",
+   "awaken/1.png",
+   "awaken/2.png",
+   "awaken/3.png",
+   "awaken/4.png",
+   "awaken/5.png"
+  ],
+  "ms": [
+   120,
+   120,
+   120,
+   120,
+   120,
+   120
+  ],
+  "loop": "loop"
+ }
+]

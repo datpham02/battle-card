@@ -41,7 +41,7 @@ Current sheets (slice 1):
 
 | Unit | Frame | Sheet | Clips |
 |---|---|---|---|
-| `kiem_si` (ASSET-001) | 40x48 | `unit_kiem_si_sheet.png` 81x391 | idle, step, cast_gesture, hit, victory, defeat, fall, awaken |
+| `kiem_si` (ASSET-001, v3 tall) | 96x70 | `unit_kiem_si_sheet.png` 775x567 | idle (4), step (4), cast_gesture (7), hit (3), victory (5), defeat (8), fall (4), awaken (6) |
 | `goblin_scout` (ASSET-003) | 32x48 | `unit_goblin_scout_sheet.png` 65x244 | idle, step, windup, hit, down |
 
 `/asset-audit` has no configurable asset list in this project, so this table
