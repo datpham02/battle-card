@@ -7,7 +7,7 @@
 
 | Total | Needed | In Progress | Done | Approved |
 |-------|--------|-------------|------|----------|
-| 16 | 3 | 13 | 0 | 0 |
+| 16 | 3 | 12 (+1 superseded) | 0 | 0 |
 
 **In Progress** means: the frames or files exist as candidates under `design/assets/candidates/<group>/`, were rendered through `prototypes/art-check` with retained evidence (`production/qa/evidence/asset-slice1-art-check/`), and the production log lives in the spec. Still missing for Done: the art-director's sign-off on the open points listed in each spec, and the export into `assets/art/...` (units via Story 045's exporter; UI, floor and VFX files are already at their final pixel size and only need copying + import settings). **Needed** rows are code, not drawn art (ASSET-010 shader, ASSET-014 fills), plus the portrait.
 
@@ -27,9 +27,9 @@
 ### Level: Misty Forest
 | Asset ID | Name | Category | Status | Spec File |
 |----------|------|----------|--------|-----------|
-| ASSET-004 | Slab set: Misty Forest | Environment | In Progress (16x16 nine-slice + 6 stamps drawn by script, `design/assets/candidates/misty-forest/`) | design/assets/specs/misty-forest-assets.md |
+| ASSET-004 | Slab set: Misty Forest | Environment | In Progress (v4 2026-10-31: nine-slice with notched corners + 18 stamps incl. edge chips, dark tone approved by the user; light variant parked in `slab-explorations/`) | design/assets/specs/misty-forest-assets.md |
 | ASSET-005 | Backdrop: Misty Forest | Environment | In Progress (v2 2026-10-31: far + near from the generated full-frame scene, 20 % scenery band, mist masked to the valley; v1 three-layer set parked in `pre-osfe-v1/`; open: palette lock, control band) | design/assets/specs/misty-forest-assets.md |
-| ASSET-006 | Wall (Misty Forest) | Environment | In Progress (40x40 candidate; open: §3 occlusion sentence) | design/assets/specs/misty-forest-assets.md |
+| ASSET-006 | Wall (Misty Forest) | Environment | Superseded 2026-10-31 — the Wall cards drop the tile out (code effect on the slab art, no drawn asset); v1/v2 files kept as history | design/assets/specs/misty-forest-assets.md |
 | ASSET-007 | Thorns patch (Misty Forest) | Environment | In Progress (scripted candidate) | design/assets/specs/misty-forest-assets.md |
 
 ### System: Slice 1 combat visuals and UI
