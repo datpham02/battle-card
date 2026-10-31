@@ -58,6 +58,8 @@ extends Node2D
 ##                    chamfers, diamond badges for numbers, segmented Engraving bar, white sans text
 ##                    with a dark outline, HP plates under the units, slot cards with cost badges.
 ##                    Layout v2 geometry is kept; --ui is ignored while the skin is on
+##   --slab-cell=<png>  TEST: a generated slab drawn 1:1 per cell (cropped to the cell size from the
+##                    texture's top-left, no stretching) instead of the 9-slice; for judging an AI slab
 ##   --floor=tessera  the same construction in the Misty Forest palette (art bible §4/§6: moss-grey
 ##                    face S<=30 V<=55, lighter moss line, dark lip; NO side colours, the divider
 ##                    tells the halves apart)
@@ -88,6 +90,18 @@ extends Node2D
 ##                    (comma list; "all"). Burn alternates its 2 frames every 150 ms and chill bobs 1 px
 ##                    every 300 ms; with --shot the capture happens at frame SHOT_FRAME as usual, and
 ##                    --seq=status plays 6 keyframes (burn A/B, chill up/down) for a GIF
+##   --shatter-pack=<dir>  a PixelLab VFX game pack (manifest.json + whole.png) of the slab shatter;
+##                    with --hole the shatter phase plays its frames at the cell (feet anchor = the
+##                    slab's bottom-centre) instead of the code-drawn quadrant shards
+##   --hole           user 2026-10-31: no wall block at all — the tile at the wall's position DROPS
+##                    OUT instead. The cell is drawn as a pit (dark bottom, the far inner wall of the
+##                    platform lit 3 px, a 1 px rim); --seq=hole plays the drop: intact → cracked →
+##                    sinks 2 / 6 / 12 px darkening → gone (art bible §6.3 "Lỗ", "Ô sắp rơi")
+##   --wall-block     Wall v3 (user 2026-10-31: "góc nhìn như phần gai"): instead of the upright
+##                    40x40 sprite, the wall is a tile-bound block drawn by code like the platform —
+##                    a stone TOP face filling the cell (big block joints, light edge) and a 12 px
+##                    FRONT face of stone courses hanging over the back of the row in front, with a
+##                    2 px shadow; drawn on the floor layer above the slabs, below the units
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
@@ -167,6 +181,7 @@ var _layout: String = "v1"
 var _skin: String = ""
 ## --floor: "" = slabs (art or placeholder), "osfe" = flat tiles style test.
 var _floor: String = ""
+var _slab_cell_tex: ImageTexture
 var _platform: bool = false
 var _tele_k: float = 1.0
 var _status: Array[String] = []
@@ -229,6 +244,30 @@ var _bg_near: ImageTexture
 ## divider (unit layer, y-sorted like a unit), the thorns lie on the goblin's neighbour cell (floor).
 var _wall_png: String = ""
 var _thorns_png: String = ""
+## ASSET-007 v2: a 16x16 tileable thorn patch repeated over the whole cell face (enemy cell).
+var _thorn_tile_tex: ImageTexture
+var _wall_block: bool = false
+var _hole: bool = false
+var _hole_cell: Vector2i = Vector2i(-1, -1)
+## -1 = the slab is gone (pit only); 0 = intact; > 0 = sinking by that many px
+var _hole_dy: int = -1
+var _hole_crack: bool = false
+## v2 (user 2026-10-31: "nứt từ từ rồi bể ra … mọc lại từ từ trắng xong đậm lên"):
+## phase intact | crack | shatter | pit | regrow, with t = progress 0..1 inside the phase
+var _hole_phase: String = "pit"
+var _shatter: Dictionary = {}
+var _hole_t: float = 1.0
+const RUBBLE := Color("3A3B37")
+const DUST := Color("6A6B62")
+var _board_node: Node2D
+const PIT := Color("15171A")
+const PIT_WALL := Color("3A3B37")
+const PIT_RIM := Color("5A5B54")
+var _wall_cell: Vector2i = Vector2i(-1, -1)
+const WALL_TOP := Color("6A6B62")
+const WALL_TOP_LIGHT := Color("8A8B80")
+const WALL_TOP_JOINT := Color("4C4D47")
+var _thorn_tile_cell: Vector2i = Vector2i(-1, -1)
 ## --ui=<dir>: ASSET-013 frames and the ASSET-015 icon sheet, drawn x2 on the HUD layer instead of
 ## the flat placeholder rects (slots, pad, Awaken, pause, bars).
 var _ui_dir: String = ""
@@ -291,6 +330,7 @@ func _ready() -> void:
 	var board := Node2D.new()
 	board.name = "Board"
 	board.draw.connect(_draw_board.bind(board))
+	_board_node = board
 	viewport.add_child(board)
 
 	_units = Node2D.new()
@@ -402,8 +442,18 @@ func _parse_args() -> void:
 			_skin = arg.trim_prefix("--skin=")
 		elif arg.begins_with("--floor="):
 			_floor = arg.trim_prefix("--floor=")
+		elif arg.begins_with("--slab-cell="):
+			var ci: Image = Image.load_from_file(ProjectSettings.globalize_path(arg.trim_prefix("--slab-cell=")))
+			if ci != null:
+				_slab_cell_tex = ImageTexture.create_from_image(ci)
 		elif arg == "--platform":
 			_platform = true
+		elif arg == "--wall-block":
+			_wall_block = true
+		elif arg == "--hole":
+			_hole = true
+		elif arg.begins_with("--shatter-pack="):
+			_load_shatter(arg.trim_prefix("--shatter-pack="))
 		elif arg.begins_with("--status-pack="):
 			_pack_dir = arg.trim_prefix("--status-pack=")
 		elif arg.begins_with("--status="):
@@ -562,17 +612,34 @@ func _draw_board(board: Node2D) -> void:
 			for row: int in _board.y:
 				if _is_real(side, col, row):
 					var o: Vector2i = _cell_origin(side, col, row)
+					if _hole and side == 0 and Vector2i(col, row) == _hole_cell and (_hole_phase == "pit" or _hole_phase == "shatter"):
+						continue
 					board.draw_rect(Rect2(o.x - GAP, o.y - GAP, _cell.x + GAP, _cell.y + GAP), INK)
 	for side: int in 2:
 		for col: int in _board.x:
 			for row: int in _board.y:
 				if _is_real(side, col, row):
-					if _floor == "osfe" or _floor == "tessera":
+					if _hole and side == 0 and Vector2i(col, row) == _hole_cell:
+						_draw_hole_cell(board, _cell_origin(side, col, row), side, col, row)
+						continue
+					if _slab_cell_tex != null:
+						var oc: Vector2i = _cell_origin(side, col, row)
+						var cw: int = mini(_cell.x - GAP, _slab_cell_tex.get_width())
+						var chh: int = mini(_cell.y - GAP, _slab_cell_tex.get_height())
+						board.draw_texture_rect_region(_slab_cell_tex, Rect2(oc.x, oc.y, cw, chh), Rect2(0, 0, cw, chh))
+					elif _floor == "osfe" or _floor == "tessera":
 						_draw_tile_osfe(board, _cell_origin(side, col, row), side)
 					elif _slab_tex != null:
 						_draw_slab_art(board, _cell_origin(side, col, row), side, col, row)
 					else:
 						_draw_slab(board, _cell_origin(side, col, row))
+	if _wall_block and _wall_cell.x >= 0:
+		_draw_wall_block(board, _wall_cell)
+	if _thorn_tile_tex != null and _thorn_tile_cell.x >= 0:
+		# thorn tile: repeated over the slab face, inset 1 px from the light edge, above the lip
+		var o: Vector2i = _cell_origin(1, _thorn_tile_cell.x, _thorn_tile_cell.y)
+		var face := Rect2(o.x + 1, o.y + 1, _cell.x - GAP - 2, _cell.y - GAP - LIP - 1)
+		board.draw_texture_rect(_thorn_tile_tex, face, true)
 	if _bg_near != null:
 		# Mist band: its bottom sits BG_MIST_BOTTOM (horizon row + 2) so it lies on the feet of the
 		# far scene over the sky, above the board; drawn once, no drift in a still capture.
@@ -624,12 +691,26 @@ func _draw_slab_art(board: Node2D, o: Vector2i, side: int, col: int, row: int) -
 	var seed_v: int = (side * 7919 + col * 104729 + row * 1299709) % 1000
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_v
-	var covers: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "cover")
-	var cracks: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "crack")
-	if rng.randf() < 0.45 and not covers.is_empty():
+	# v3: only stamps that fit the face; speckles (sparse 2 px clusters) on most slabs, a cover on
+	# some, a crack on fewer — all by the cell seed so the board is stable
+	var fits: Callable = func(s: Dictionary) -> bool: return int(s["rect"][2]) <= face.size.x - 2 and int(s["rect"][3]) <= face.size.y - 2
+	var covers: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "cover" and fits.call(s))
+	var cracks: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "crack" and fits.call(s))
+	var speckles: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "speckle" and fits.call(s))
+	if rng.randf() < 0.75 and not speckles.is_empty():
+		_draw_stamp(board, speckles[rng.randi() % speckles.size()], face, rng)
+	if rng.randf() < 0.4 and not covers.is_empty():
 		_draw_stamp(board, covers[rng.randi() % covers.size()], face, rng)
-	if rng.randf() < 0.35 and not cracks.is_empty():
+	if rng.randf() < 0.3 and not cracks.is_empty():
 		_draw_stamp(board, cracks[rng.randi() % cracks.size()], face, rng)
+	# v4 worn edges: chips bite the slab's OUTER edge (they are anchored to the slab rect, not the
+	# inner face), one on most slabs, a second on some
+	var chips: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "chip")
+	var slab := Rect2i(o.x, o.y, w - R + 2, h - B + LIP + 1)
+	if rng.randf() < 0.7 and not chips.is_empty():
+		_draw_stamp(board, chips[rng.randi() % chips.size()], slab, rng)
+	if rng.randf() < 0.35 and not chips.is_empty():
+		_draw_stamp(board, chips[rng.randi() % chips.size()], slab, rng)
 
 
 func _draw_stamp(board: Node2D, stamp: Dictionary, face: Rect2i, rng: RandomNumberGenerator) -> void:
@@ -643,6 +724,19 @@ func _draw_stamp(board: Node2D, stamp: Dictionary, face: Rect2i, rng: RandomNumb
 			pos = face.end - Vector2i(int(r[2]), int(r[3]))
 		"bottom_left":
 			pos = Vector2i(face.position.x, face.end.y - int(r[3]))
+		"top_right":
+			pos = Vector2i(face.end.x - int(r[2]), face.position.y)
+		"bottom_left_face":
+			# the face's bottom (above the lip): the slab rect's bottom minus the lip rows
+			pos = Vector2i(face.position.x, face.end.y - LIP - 1 - int(r[3]))
+		"bottom_right_face":
+			pos = Vector2i(face.end.x - int(r[2]), face.end.y - LIP - 1 - int(r[3]))
+		"top_edge":
+			pos = Vector2i(face.position.x + rng.randi_range(3, maxi(face.size.x - int(r[2]) - 3, 3)), face.position.y)
+		"left_edge":
+			pos = Vector2i(face.position.x, face.position.y + rng.randi_range(3, maxi(face.size.y - int(r[3]) - 6, 3)))
+		"lip_bottom":
+			pos = Vector2i(face.position.x + rng.randi_range(3, maxi(face.size.x - int(r[2]) - 3, 3)), face.end.y - int(r[3]))
 		_:
 			pos = face.position + Vector2i(rng.randi_range(1, maxi(face.size.x - int(r[2]) - 1, 1)), rng.randi_range(1, maxi(face.size.y - int(r[3]) - 1, 1)))
 	board.draw_texture_rect_region(_stamp_tex, Rect2(Vector2(pos), src.size), src)
@@ -662,6 +756,11 @@ func _place_units() -> void:
 	var hero: Vector2i = _default_cell(0)
 	var goblin: Vector2i = _default_cell(1)
 	if not _seq.is_empty():
+		if _hole:
+			# the sequence branch returns early, so the hole cell (the wall's spot) is set here too
+			_hole_cell = Vector2i(mini(hero.x + 1, _board.x - 1), maxi(hero.y - 1, 0))
+			_hole_phase = "intact"
+			_hole_t = 0.0
 		_add_anim_unit(HERO_DIR, SEQ_HERO_FRAMES, 0, hero.x, hero.y)
 		_seq_hero = _anim_sprites[_anim_sprites.size() - 1]
 		_add_anim_unit(GOBLIN_DIR, SEQ_GOBLIN_FRAMES, 1, goblin.x, goblin.y)
@@ -681,13 +780,24 @@ func _place_units() -> void:
 		var wall_col: int = mini(hero.x + 1, _board.x - 1)
 		var wall_row: int = maxi(hero.y - 1, 0)
 		if _is_real(0, wall_col, wall_row):
-			_add_unit(_wall_png, 0, wall_col, wall_row)
+			if _hole:
+				_hole_cell = Vector2i(wall_col, wall_row)
+			elif _wall_block:
+				_wall_cell = Vector2i(wall_col, wall_row)
+			else:
+				_add_unit(_wall_png, 0, wall_col, wall_row)
 		# A second hero-side unit behind the wall to show the overlap: the goblin sprite stands in.
 		if _is_real(0, wall_col, wall_row - 1):
 			_add_unit(GOBLIN_PNG, 0, wall_col, wall_row - 1)
 		var th_col: int = maxi(goblin.x - 1, 0)
 		if _is_real(1, th_col, goblin.y):
-			_add_floor_prop(_thorns_png, 1, th_col, goblin.y)
+			if _thorns_png.ends_with("_tile16.png"):
+				_thorn_tile_cell = Vector2i(th_col, goblin.y)
+				var timg: Image = Image.load_from_file(ProjectSettings.globalize_path(_thorns_png))
+				if timg != null:
+					_thorn_tile_tex = ImageTexture.create_from_image(timg)
+			else:
+				_add_floor_prop(_thorns_png, 1, th_col, goblin.y)
 	match _mode:
 		"rows":
 			# Three adjacent real rows in the goblin's column, as close to its row as possible.
@@ -1225,6 +1335,17 @@ func _step(ms: int, hero: String, gob: String, k: float, dy: float, vf: int, fla
 ## block falls (3 keyframes) → VFX frames at the sheet's own timings while the goblin takes the
 ## hit (flash on the first VFX frame) → rest. One cycle = ~2.1 s.
 func _build_seq() -> void:
+	if _seq == "hole":
+		_seq_steps = []
+		var plan: Array = [[400, "intact", 0.0], [150, "crack", 0.33], [150, "crack", 0.66], [150, "crack", 1.0],
+			[80, "shatter", 0.0], [80, "shatter", 0.2], [80, "shatter", 0.4], [80, "shatter", 0.6], [80, "shatter", 0.8], [80, "shatter", 1.0], [500, "pit", 1.0],
+			[120, "regrow", 0.0], [120, "regrow", 0.3], [120, "regrow", 0.6], [120, "regrow", 0.85], [400, "intact", 0.0]]
+		for spec: Array in plan:
+			var st: Dictionary = _step(int(spec[0]), "idle-A", "idle-A", 0.0, -1000.0, -1, false)
+			st["hole_phase"] = String(spec[1])
+			st["hole_t"] = float(spec[2])
+			_seq_steps.append(st)
+		return
 	if _seq == "status":
 		_seq_steps = []
 		for i: int in 6:
@@ -1261,6 +1382,11 @@ func _apply_seq_step(i: int) -> void:
 	# shader here; the game's unit_fx shader does the same inside the palette)
 	_seq_goblin.material = _flash_material() if bool(st["flash"]) else null
 	_seq_state = {"k": st["k"], "dy": st["dy"], "vf": st["vf"], "flash": st["flash"], "burn_frame": st.get("burn_frame", 0), "bob": st.get("bob", 0)}
+	if st.has("hole_phase"):
+		_hole_phase = String(st["hole_phase"])
+		_hole_t = float(st["hole_t"])
+		if _board_node != null:
+			_board_node.queue_redraw()
 	if _fx_floor != null:
 		_fx_floor.queue_redraw()
 	if _fx_over != null:
@@ -1669,3 +1795,200 @@ func _draw_pack_clip(n: Node2D, status_name: String, clip_name: String, feet: Ve
 	var src := Rect2((idx % cols) * int(c["w"]), (idx / cols) * int(c["h"]), int(c["w"]), int(c["h"]))
 	var pos: Vector2 = (feet + Vector2(int(c["ox"]), int(c["oy"]))).floor()
 	n.draw_texture_rect_region(c["tex"], Rect2(pos, Vector2(int(c["w"]), int(c["h"]))), src)
+
+
+## Wall v3: a raised stone block bound to its cell. Top face = the cell face in a lighter stone with
+## 1 px joints splitting it into 2x2 big blocks and a light edge top-left; front face = FACE_H px of
+## stone courses (same drawing as the platform face) hanging below the cell's front edge, over the
+## back of the row in front; 2 px Ink shadow under it. Units on the row in front stand at their
+## front edge, so the face covers slab, not feet.
+func _draw_wall_block(board: Node2D, cell: Vector2i) -> void:
+	var o: Vector2i = _cell_origin(0, cell.x, cell.y)
+	var face := Rect2(o.x, o.y, _cell.x - GAP, _cell.y - GAP - LIP)
+	board.draw_rect(face, WALL_TOP)
+	var mx: float = floorf(face.position.x + face.size.x * 0.5)
+	var my: float = floorf(face.position.y + face.size.y * 0.5)
+	board.draw_rect(Rect2(mx, face.position.y, 1, face.size.y), WALL_TOP_JOINT)
+	board.draw_rect(Rect2(face.position.x, my, face.size.x, 1), WALL_TOP_JOINT)
+	board.draw_rect(Rect2(face.position, Vector2(face.size.x, 1)), WALL_TOP_LIGHT)
+	board.draw_rect(Rect2(face.position, Vector2(1, face.size.y)), WALL_TOP_LIGHT)
+	board.draw_rect(Rect2(face.position + Vector2(face.size.x - 1, 0), Vector2(1, face.size.y)), WALL_TOP_JOINT)
+	board.draw_rect(Rect2(face.position + Vector2(0, face.size.y - 1), Vector2(face.size.x, 1)), WALL_TOP_JOINT)
+	# front face: hangs from the cell's front edge (over the slab lip and the next row's back)
+	var f := Rect2(o.x, o.y + _cell.y - GAP - LIP, _cell.x - GAP, FACE_H)
+	board.draw_rect(Rect2(f.position.x + 1, f.end.y, f.size.x - 2, 2), Color(INK, 0.6))
+	board.draw_rect(f, DECK_LIP)
+	var x: int = int(f.position.x)
+	var bi: int = 2
+	var alt: bool = true
+	while x < int(f.end.x):
+		var bw: int = mini(FACE_BLOCKS[bi], int(f.end.x) - x)
+		if bw < 6:
+			bw = int(f.end.x) - x
+		board.draw_rect(Rect2(x, f.position.y + 1, bw, f.size.y - 3), DECK_LIP_ALT if alt else DECK_LIP)
+		x += bw
+		if x < int(f.end.x):
+			board.draw_rect(Rect2(x, f.position.y + 1, 1, f.size.y - 3), INK)
+			x += 1
+		bi = (bi + 1) % FACE_BLOCKS.size()
+		alt = not alt
+	board.draw_rect(Rect2(f.position, Vector2(f.size.x, 1)), DECK_LIGHT)
+	board.draw_rect(Rect2(f.position + Vector2(0, f.size.y - 2), Vector2(f.size.x, 2)), INK)
+
+
+## The dropped-out cell, by phase. intact: the slab. crack (t 0..1): the slab with three stepped
+## Ink cracks revealed in order, the stamp cracks from t >= 0.6. shatter (t): pit under, the slab
+## split into four quadrants that fall at different speeds and darken, 2x2 dust squares rising
+## from the rim (art bible P1: particles are squares). pit: bottom near Ink, inner walls on the
+## far and both side faces, three rubble stones. regrow (t): the slab under a white veil that
+## thins from 0.95 to 0 ("từ trắng đậm lên thành màu").
+func _draw_hole_cell(board: Node2D, o: Vector2i, side: int, col: int, row: int) -> void:
+	var w: int = _cell.x - GAP
+	var h: int = _cell.y - GAP
+	match _hole_phase:
+		"intact":
+			_draw_slab_any(board, o, side, col, row)
+		"crack":
+			_draw_slab_any(board, o, side, col, row)
+			_draw_cracks(board, o, w, h, _hole_t)
+		"shatter":
+			_draw_pit(board, o, w, h)
+			if not _shatter.is_empty():
+				var n: int = int(_shatter["frames"])
+				var idx: int = clampi(int(round(_hole_t * float(n - 1))), 0, n - 1)
+				var cols: int = int(_shatter["cols"])
+				var fw: int = int(_shatter["w"])
+				var fh: int = int(_shatter["h"])
+				var feet: Vector2 = Vector2(o.x + w / 2, o.y + h)
+				var pos: Vector2 = (feet + Vector2(int(_shatter["ox"]), int(_shatter["oy"]))).floor()
+				board.draw_texture_rect_region(_shatter["tex"], Rect2(pos, Vector2(fw, fh)), Rect2((idx % cols) * fw, (idx / cols) * fh, fw, fh))
+				return
+			var quads: Array = [Rect2(0, 0, w / 2, h / 2), Rect2(w / 2, 0, w - w / 2, h / 2), Rect2(0, h / 2, w / 2, h - h / 2), Rect2(w / 2, h / 2, w - w / 2, h - h / 2)]
+			var speeds: Array = [0.7, 1.2, 1.0, 1.5]
+			for q: int in 4:
+				var dy: int = int(round(_hole_t * 16.0 * float(speeds[q])))
+				var clip: Rect2 = quads[q]
+				_draw_slab_clipped(board, o, side, col, row, Rect2(clip.position + Vector2(o), clip.size), dy)
+				board.draw_rect(Rect2(Vector2(o) + clip.position + Vector2(0, dy), clip.size), Color(INK, clampf(_hole_t * 0.7, 0.0, 0.7)))
+			# dust: 2x2 stone-dust squares leaving the rim, rising and thinning with t
+			var rng := RandomNumberGenerator.new()
+			rng.seed = 11
+			for i: int in 7:
+				var dx: float = rng.randf_range(2.0, float(w - 4))
+				var rise: float = _hole_t * rng.randf_range(6.0, 14.0)
+				var px: Vector2 = Vector2(o) + Vector2(dx, -2.0 - rise).floor()
+				board.draw_rect(Rect2(px, Vector2(2, 2)), Color(DUST, clampf(1.0 - _hole_t, 0.2, 1.0)))
+		"pit":
+			_draw_pit(board, o, w, h)
+		"regrow":
+			_draw_slab_any(board, o, side, col, row)
+			board.draw_rect(Rect2(Vector2(o), Vector2(w, h)), Color(1, 1, 1, clampf(0.95 * (1.0 - _hole_t), 0.0, 0.95)))
+
+
+func _draw_slab_any(board: Node2D, o: Vector2i, side: int, col: int, row: int) -> void:
+	if _slab_tex != null:
+		_draw_slab_art(board, o, side, col, row)
+	else:
+		_draw_slab(board, o)
+
+
+## Pit: Ink gap ring, near-Ink bottom, lit far wall 3 px, dim side walls 2 px, rubble stones.
+func _draw_pit(board: Node2D, o: Vector2i, w: int, h: int) -> void:
+	var r := Rect2(o.x - GAP, o.y - GAP, w + GAP, h + GAP)
+	board.draw_rect(r, PIT)
+	board.draw_rect(Rect2(r.position, Vector2(r.size.x, 3)), PIT_WALL)
+	board.draw_rect(Rect2(r.position, Vector2(r.size.x, 1)), PIT_RIM)
+	board.draw_rect(Rect2(r.position + Vector2(0, 3), Vector2(2, r.size.y - 3)), Color(PIT_WALL, 0.7))
+	board.draw_rect(Rect2(r.position + Vector2(r.size.x - 2, 3), Vector2(2, r.size.y - 3)), Color(PIT_WALL, 0.35))
+	var bx: float = r.position.x
+	var by: float = r.end.y
+	board.draw_rect(Rect2(bx + 6, by - 6, 5, 2), RUBBLE)
+	board.draw_rect(Rect2(bx + r.size.x * 0.5 - 2, by - 5, 3, 2), RUBBLE)
+	board.draw_rect(Rect2(bx + r.size.x - 12, by - 7, 4, 3), RUBBLE)
+	board.draw_rect(Rect2(bx + r.size.x - 11, by - 7, 2, 1), Color(PIT_WALL, 1.0))
+
+
+## Three stepped cracks across the face, revealed in order as t grows; the stamp cracks on top
+## once t >= 0.6. Points are fractions of the face so any cell size works.
+func _draw_cracks(board: Node2D, o: Vector2i, w: int, h: int, t: float) -> void:
+	var paths: Array = [
+		[Vector2(0.15, 0.1), Vector2(0.3, 0.3), Vector2(0.45, 0.35), Vector2(0.5, 0.5), Vector2(0.62, 0.55), Vector2(0.7, 0.75), Vector2(0.85, 0.9)],
+		[Vector2(0.5, 0.5), Vector2(0.4, 0.62), Vector2(0.3, 0.7), Vector2(0.2, 0.92)],
+		[Vector2(0.5, 0.5), Vector2(0.65, 0.4), Vector2(0.8, 0.3), Vector2(0.95, 0.15)],
+	]
+	var total: int = 0
+	for path: Array in paths:
+		total += path.size() - 1
+	var shown: int = int(ceil(t * float(total)))
+	var drawn: int = 0
+	for path: Array in paths:
+		for i: int in path.size() - 1:
+			if drawn >= shown:
+				break
+			var a: Vector2 = Vector2(o) + Vector2(path[i].x * w, path[i].y * h)
+			var b: Vector2 = Vector2(o) + Vector2(path[i + 1].x * w, path[i + 1].y * h)
+			# stepped 1 px line: walk the longer axis
+			var steps: int = int(maxf(absf(b.x - a.x), absf(b.y - a.y)))
+			for k: int in steps + 1:
+				var pnt: Vector2 = (a + (b - a) * (float(k) / maxf(float(steps), 1.0))).floor()
+				board.draw_rect(Rect2(pnt, Vector2(1, 1)), INK)
+			drawn += 1
+	if t >= 0.6 and _stamp_tex != null and not _stamps.is_empty():
+		var face := Rect2i(o.x + 2, o.y + 2, w - 5, h - 7)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 7
+		for st: Dictionary in _stamps:
+			if st["kind"] == "crack":
+				_draw_stamp(board, st, face, rng)
+
+
+## The slab 9-slice drawn only inside [param clip] (canvas coords), shifted down by [param dy]:
+## every piece's destination is intersected with the clip and its source cut proportionally.
+func _draw_slab_clipped(board: Node2D, o: Vector2i, side: int, col: int, row: int, clip: Rect2, dy: int) -> void:
+	if _slab_tex == null:
+		var r: Rect2 = clip
+		board.draw_rect(Rect2(r.position + Vector2(0, dy), r.size), STONE)
+		return
+	var w: int = _cell.x
+	var h: int = _cell.y
+	var L: int = int(_slab_margins["left"])
+	var R: int = int(_slab_margins["right"])
+	var Tm: int = int(_slab_margins["top"])
+	var B: int = int(_slab_margins["bottom"])
+	var tw: int = _slab_tex.get_width()
+	var th: int = _slab_tex.get_height()
+	var xs: Array = [[0, L, 0, L], [L, tw - L - R, L, w - L - R], [tw - R, R, w - R, R]]
+	var ys: Array = [[0, Tm, 0, Tm], [Tm, th - Tm - B, Tm, h - Tm - B], [th - B, B, h - B, B]]
+	for yy: Array in ys:
+		for xx: Array in xs:
+			var src := Rect2(xx[0], yy[0], xx[1], yy[1])
+			var dst := Rect2(o.x + xx[2], o.y + yy[2], xx[3], yy[3])
+			var cut: Rect2 = dst.intersection(clip)
+			if cut.size.x <= 0.0 or cut.size.y <= 0.0:
+				continue
+			var sx: float = src.size.x / maxf(dst.size.x, 1.0)
+			var sy: float = src.size.y / maxf(dst.size.y, 1.0)
+			var src_cut := Rect2(src.position.x + (cut.position.x - dst.position.x) * sx, src.position.y + (cut.position.y - dst.position.y) * sy, cut.size.x * sx, cut.size.y * sy)
+			board.draw_texture_rect_region(_slab_tex, Rect2(cut.position + Vector2(0, dy), cut.size), src_cut)
+
+
+## The slab-shatter game pack: its "whole" clip (sheet + frame size + columns + feet offset).
+func _load_shatter(dir: String) -> void:
+	var f := FileAccess.open(dir + "/manifest.json", FileAccess.READ)
+	if f == null:
+		push_error("art_check: no manifest in " + dir)
+		return
+	var m: Variant = JSON.parse_string(f.get_as_text())
+	if not (m is Dictionary):
+		return
+	for clip: Variant in m.get("clips", []):
+		var c: Dictionary = clip
+		if String(c["name"]) != "whole":
+			continue
+		var sheet: Dictionary = (c["sheets"] as Array)[0]
+		var img: Image = Image.load_from_file(ProjectSettings.globalize_path(dir + "/" + String(sheet["file"])))
+		if img == null:
+			return
+		_shatter = {"tex": ImageTexture.create_from_image(img), "w": int(c["frame"]["w"]), "h": int(c["frame"]["h"]),
+			"cols": int(sheet["columns"]), "frames": int(c["frames"]), "ox": int(c["offset"]["x"]), "oy": int(c["offset"]["y"])}
+		print("art_check: shatter pack loaded (%d frames %dx%d)" % [_shatter["frames"], _shatter["w"], _shatter["h"]])

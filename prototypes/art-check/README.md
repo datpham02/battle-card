@@ -260,6 +260,32 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   untinted, so frozen reads weaker than in the workbench preview. Fragile
   keeps the script cracks. Status chips sit under the HP bars (hero row, boss
   row) as 12x12 icons at x2.
+- 2026-10-31, wall and thorns on slab v2 (`70-wall-thorns-on-slab-v2.png`,
+  `71-wall-thorns-zoom-x3.png`, `72-thorns-tile-full-cell.png`,
+  `73-thorns-tile-zoom-x4.png`): the blue-grey wall read as a stack of steel
+  blocks and was remapped to the stone ramp; the thorns became a tileable
+  16x16 patch that `--props` repeats over the whole cell when the file name
+  ends in `_tile16.png` (the user wanted the thorn tile to read as thorny
+  edge to edge). `--wall-block` then drew the wall the same way (`74`, `75`):
+  a stone top face filling the cell and a 12 px front face hanging over the
+  row in front — the three tile-bound things (platform, thorns, wall) now
+  share one construction and one view. Then the user dropped the wall as a
+  thing altogether: `--hole` draws the cell as a pit and `--seq=hole` plays
+  the slab cracking, shattering into four falling quadrants with square dust,
+  the pit, and the regrow from white (`76`, `77`, `78`, `anim/hole-drop.gif`,
+  13 keyframes); the Wall cards' visual is now a dropped-out tile. v3:
+  `--shatter-pack=<dir>` plays a PixelLab VFX game pack (pixel_shatter built on
+  the real 43x31 slab cell) in the shatter phase instead of the quadrant
+  shards (`79-hole-drop-v3-keyframes-x3.png`, `anim/hole-drop-v3.gif`, 16
+  keyframes); the cracks and the regrow-from-white stay code.
+- 2026-10-31, slab v3 / v4 (`82`–`88`): a Pro Flash slab test (5 gen) was not
+  adopted (same crack on every cell, dithered face); its crack, moss and
+  speckle idea became stamps on the flat v2 face (v3), then notched corners
+  and edge chips/nicks placed by seed (v4) answer the user's "viền đừng vuông
+  quá". `--slab-cell=<png>` draws a generated slab 1:1 per cell for such
+  tests; `_draw_stamp` gained edge/corner anchors and a fit check. A `-light`
+  variant (face family one ramp step up) is rendered beside the dark one for
+  the tone decision.
 - Palette inventory of every candidate (opaque pixels, 2026-10-31): hero 8,
   goblin 6, slab v2 9, wall + thorns 6, backdrop v2 38, blocks/marks/VFX 6,
   UI 9-slices 3, icons 12x12 9, icons 55 px 20. World union (no UI/icons) =

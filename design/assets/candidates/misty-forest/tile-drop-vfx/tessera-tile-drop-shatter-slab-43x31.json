@@ -1,0 +1,391 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 1.png",
+   "frame": {
+    "x": 90,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 2.png",
+   "frame": {
+    "x": 180,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 3.png",
+   "frame": {
+    "x": 270,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 4.png",
+   "frame": {
+    "x": 0,
+    "y": 52,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 5.png",
+   "frame": {
+    "x": 90,
+    "y": 52,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 6.png",
+   "frame": {
+    "x": 180,
+    "y": 52,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 7.png",
+   "frame": {
+    "x": 270,
+    "y": 52,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 8.png",
+   "frame": {
+    "x": 0,
+    "y": 104,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 9.png",
+   "frame": {
+    "x": 90,
+    "y": 104,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 10.png",
+   "frame": {
+    "x": 180,
+    "y": 104,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 11.png",
+   "frame": {
+    "x": 270,
+    "y": 104,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 12.png",
+   "frame": {
+    "x": 0,
+    "y": 156,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-tile-drop-shatter-slab-43x31 13.png",
+   "frame": {
+    "x": 90,
+    "y": 156,
+    "w": 90,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 90,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 90,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.45555555555555555,
+    "y": 0.8269230769230769
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-tile-drop-shatter-slab-43x31.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 360,
+   "h": 208
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 41,
+   "y": 43
+  },
+  "frameTags": [
+   {
+    "name": "tessera-tile-drop-shatter-slab-43x31",
+    "from": 0,
+    "to": 13,
+    "direction": "forward"
+   }
+  ]
+ }
+}
