@@ -30,6 +30,9 @@ extends Node2D
 ##   --layout=v1|v2   v1 = the shipped ScreenLayout (arena to 55 %, fixed d-pad, straight
 ##                    slots); v2 = the 2026-10-31 sketch (arena to 64 %, floating joystick,
 ##                    slots on an arc)
+##   --slabs=<9slice.png>,<stamps.png>  real slab art: the 16x16 nine-slice is stretched to the
+##                    cell (corners and edges keep their pixels), stamps from the sheet (JSON
+##                    beside it) are placed per cell seed; without it the flat placeholder is drawn
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
@@ -110,6 +113,11 @@ var _stick_zone_w: float = 0.25
 var _shot: String = ""
 var _frames: int = 0
 var _units: Node2D
+## --slabs: real slab art (9-slice + stamps) instead of the flat placeholder slab.
+var _slab_tex: ImageTexture
+var _stamp_tex: ImageTexture
+var _stamps: Array = []
+var _slab_margins := {"left": 3, "right": 3, "top": 3, "bottom": 4}
 ## --anim state: clip name, per-sprite texture lists, current index, time in the current frame.
 var _anim: String = ""
 var _anim_sprites: Array[Sprite2D] = []
@@ -197,6 +205,11 @@ func _parse_args() -> void:
 			_arena_id = "custom"
 		elif arg == "--hud":
 			_hud = true
+		elif arg.begins_with("--slabs="):
+			# "<9slice.png>,<stamps.png>" (res:// paths); the stamps JSON sits beside the stamps PNG.
+			var parts: PackedStringArray = arg.trim_prefix("--slabs=").split(",")
+			if parts.size() == 2:
+				_load_slabs(parts[0], parts[1])
 		elif arg.begins_with("--anim="):
 			_anim = arg.trim_prefix("--anim=")
 			if not CLIPS.has(_anim):
@@ -330,7 +343,77 @@ func _draw_board(board: Node2D) -> void:
 		for col: int in _board.x:
 			for row: int in _board.y:
 				if _is_real(side, col, row):
-					_draw_slab(board, _cell_origin(side, col, row))
+					if _slab_tex != null:
+						_draw_slab_art(board, _cell_origin(side, col, row), side, col, row)
+					else:
+						_draw_slab(board, _cell_origin(side, col, row))
+
+
+func _load_slabs(nine_path: String, stamps_path: String) -> void:
+	var nine: Image = Image.load_from_file(ProjectSettings.globalize_path(nine_path))
+	var stamps: Image = Image.load_from_file(ProjectSettings.globalize_path(stamps_path))
+	if nine == null or stamps == null:
+		push_error("art_check: cannot load slabs %s / %s" % [nine_path, stamps_path])
+		return
+	_slab_tex = ImageTexture.create_from_image(nine)
+	_stamp_tex = ImageTexture.create_from_image(stamps)
+	var meta_path: String = stamps_path.get_basename() + ".json"
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(meta_path))
+	if typeof(data) == TYPE_DICTIONARY:
+		_stamps = (data as Dictionary).get("stamps", [])
+		var m: Dictionary = ((data as Dictionary).get("nine_slice", {}) as Dictionary).get("margins", _slab_margins)
+		_slab_margins = m
+	print("art_check: slabs %s (%dx%d), %d stamps" % [nine_path, nine.get_width(), nine.get_height(), _stamps.size()])
+
+
+## One slab, the whole cell (the 9-slice carries its own gap on the right and bottom): corners
+## and edges keep their pixels, the flat centre stretches. Then up to one cover stamp and one
+## crack per slab, chosen by the cell's seed so the board is stable between redraws.
+func _draw_slab_art(board: Node2D, o: Vector2i, side: int, col: int, row: int) -> void:
+	var w: int = _cell.x
+	var h: int = _cell.y
+	var L: int = int(_slab_margins["left"])
+	var R: int = int(_slab_margins["right"])
+	var Tm: int = int(_slab_margins["top"])
+	var B: int = int(_slab_margins["bottom"])
+	var tw: int = _slab_tex.get_width()
+	var th: int = _slab_tex.get_height()
+	var xs: Array = [[0, L, 0, L], [L, tw - L - R, L, w - L - R], [tw - R, R, w - R, R]]
+	var ys: Array = [[0, Tm, 0, Tm], [Tm, th - Tm - B, Tm, h - Tm - B], [th - B, B, h - B, B]]
+	for yy: Array in ys:
+		for xx: Array in xs:
+			var src := Rect2(xx[0], yy[0], xx[1], yy[1])
+			var dst := Rect2(o.x + xx[2], o.y + yy[2], xx[3], yy[3])
+			board.draw_texture_rect_region(_slab_tex, dst, src)
+	if _stamps.is_empty():
+		return
+	# Face rectangle the stamps may touch: inside the light edge, above the lip, left of the gap.
+	var face := Rect2i(o.x + 1, o.y + 1, w - 1 - R, h - Tm - B + 2)
+	var seed_v: int = (side * 7919 + col * 104729 + row * 1299709) % 1000
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_v
+	var covers: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "cover")
+	var cracks: Array = _stamps.filter(func(s: Dictionary) -> bool: return s["kind"] == "crack")
+	if rng.randf() < 0.45 and not covers.is_empty():
+		_draw_stamp(board, covers[rng.randi() % covers.size()], face, rng)
+	if rng.randf() < 0.35 and not cracks.is_empty():
+		_draw_stamp(board, cracks[rng.randi() % cracks.size()], face, rng)
+
+
+func _draw_stamp(board: Node2D, stamp: Dictionary, face: Rect2i, rng: RandomNumberGenerator) -> void:
+	var r: Array = stamp["rect"]
+	var src := Rect2(r[0], r[1], r[2], r[3])
+	var pos := Vector2i(face.position)
+	match String(stamp["anchor"]):
+		"top_left":
+			pos = face.position
+		"bottom_right":
+			pos = face.end - Vector2i(int(r[2]), int(r[3]))
+		"bottom_left":
+			pos = Vector2i(face.position.x, face.end.y - int(r[3]))
+		_:
+			pos = face.position + Vector2i(rng.randi_range(1, maxi(face.size.x - int(r[2]) - 1, 1)), rng.randi_range(1, maxi(face.size.y - int(r[3]) - 1, 1)))
+	board.draw_texture_rect_region(_stamp_tex, Rect2(Vector2(pos), src.size), src)
 
 
 ## One slab: stone face, a 1 px light edge top-left, a LIP-px front lip, an Ink gap right and below.

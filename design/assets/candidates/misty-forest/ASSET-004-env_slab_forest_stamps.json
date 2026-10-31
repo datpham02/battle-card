@@ -1,0 +1,100 @@
+{
+  "cell": [
+    16,
+    8
+  ],
+  "stamps": [
+    {
+      "name": "crack_a",
+      "rect": [
+        0,
+        0,
+        11,
+        7
+      ],
+      "anchor": "any",
+      "kind": "crack"
+    },
+    {
+      "name": "crack_b",
+      "rect": [
+        16,
+        0,
+        12,
+        7
+      ],
+      "anchor": "any",
+      "kind": "crack"
+    },
+    {
+      "name": "moss_tl",
+      "rect": [
+        32,
+        0,
+        6,
+        5
+      ],
+      "anchor": "top_left",
+      "kind": "cover"
+    },
+    {
+      "name": "moss_br",
+      "rect": [
+        9,
+        12,
+        7,
+        4
+      ],
+      "anchor": "bottom_right",
+      "kind": "cover"
+    },
+    {
+      "name": "root_bl",
+      "rect": [
+        16,
+        10,
+        12,
+        6
+      ],
+      "anchor": "bottom_left",
+      "kind": "cover"
+    },
+    {
+      "name": "leaves",
+      "rect": [
+        32,
+        8,
+        10,
+        6
+      ],
+      "anchor": "any",
+      "kind": "cover"
+    }
+  ],
+  "rules": {
+    "max_cracks_per_slab": 2,
+    "max_cover_face_ratio": 0.25,
+    "placed_by": "cell seed"
+  },
+  "palette": {
+    "stone": "#4A4640",
+    "light_edge": "#5A5650",
+    "crack": "#3E3B36",
+    "lip": "#2C2925",
+    "ink": "#1B1722",
+    "moss": "#5E6B55",
+    "moss_dark": "#4A5545"
+  },
+  "nine_slice": {
+    "size": [
+      16,
+      16
+    ],
+    "margins": {
+      "left": 3,
+      "right": 3,
+      "top": 3,
+      "bottom": 4
+    }
+  }
+}

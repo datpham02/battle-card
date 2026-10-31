@@ -29,6 +29,10 @@ BoardGrid's default cells), `--cell=auto` (largest 1.4-aspect slab between
 `--anim=<clip>` (idle, step, hit, defeat, victory, fall, cast, awaken; both
 units cycle their candidate frames at the spec hold, and with `--shot` one PNG
 per frame index is written as `<shot>-<i>.png`),
+`--slabs=<9slice.png>,<stamps.png>` draws the real ASSET-004 slab art (the
+16x16 nine-slice stretched per cell with `draw_texture_rect_region`, stamps
+from the sheet placed by cell seed; JSON beside the stamps PNG gives rects,
+anchors and margins) instead of the flat placeholder slab,
 `--shot=<png>` saves the window after 30 frames and quits.
 `make_gif.py` in the session scratchpad turned those frames into the looping
 GIFs under `production/qa/evidence/asset-slice1-art-check/anim/` (pure Python,

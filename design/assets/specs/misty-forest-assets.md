@@ -28,7 +28,16 @@ Pixel art game tile, top-front view of a single square dark stone floor slab, 16
 ```
 Stamps prompt: "pixel art sprite sheet of 6 small floor decals on transparent background: two thin stepped cracks, two small moss patches, a tree root cut square, a few fallen leaves; muted moss grey palette; 8 to 16 pixels wide; crisp pixels, no outline".
 
-**Status:** Needed
+**Decision 2026-10-31 (user):** not generated with AI. The slab is fully determined by the spec and the stamps are 8–16 px decals below the size AI handles, so both were drawn by script (`draw_slabs.py`, session scratchpad, pure Python) at 0 generations. The prompts above stay as reference for later regions if an artist prefers a generated starting point.
+
+**Production log:**
+
+| # | Date | Tool | Result | Verdict |
+|---|---|---|---|---|
+| draw-01 | 2026-10-31 | script (free) | `design/assets/candidates/misty-forest/ASSET-004-env_slab_forest_9slice.png` 16x16: margins L3 R3 T3 B4 (1 px light edge #5A5650 top-left, face #4A4640, lip 3 px #2C2925, 1 px Ink gap right and bottom; centre flat so it stretches); `ASSET-004-env_slab_forest_stamps.png` 48x16, six 16x8 cells (crack_a 11x7, crack_b 12x7 in #3E3B36; moss_tl 6x5 and moss_br 7x4 in #5E6B55 + #4A5545; root_bl 12x6 in lip + crack tones; leaves 10x6) with `…stamps.json` (rects, anchors, kinds, rules, palette, nine-slice margins) | 7 colours total, all from the spec table; the two "one step" colours are now fixed: light edge #5A5650, crack #3E3B36, moss dark #4A5545. Lint 0 errors / 0 warnings on both sheets. |
+| check-01 | 2026-10-31 | `prototypes/art-check --slabs` (free) | `production/qa/evidence/asset-slice1-art-check/22-slabs-forest-5x5-cell48x34.png`, `23-slabs-forest-3x3-cell64x46.png`, `24-slabs-forest-ring.png` | 9-slice stretches cleanly to 48x34, 64x46 and 49x35 (no seams, light edge and lip stay 1 px / 3 px); stamps placed per cell seed (45 % cover, 35 % crack) read at 1x: moss corners and cracks clear, root reads as a dark corner mark, leaves as a cluster. Units sit on the lip as before. Open: the root stamp is the weakest at 1x; the hole / island edge pieces of §6.3 (2–3 px darker rim, 3 px cliff) are not drawn yet. |
+
+**Status:** In Progress (candidate drawn and checked; export to `assets/art/env/forest/` with Story 045's pipeline)
 
 ## ASSET-005 — Backdrop: Misty Forest
 
