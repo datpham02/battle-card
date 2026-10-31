@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-status-frozen-hero 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 1.png",
+   "frame": {
+    "x": 33,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 2.png",
+   "frame": {
+    "x": 66,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 3.png",
+   "frame": {
+    "x": 99,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 4.png",
+   "frame": {
+    "x": 0,
+    "y": 54,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 5.png",
+   "frame": {
+    "x": 33,
+    "y": 54,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 6.png",
+   "frame": {
+    "x": 66,
+    "y": 54,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 7.png",
+   "frame": {
+    "x": 99,
+    "y": 54,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 8.png",
+   "frame": {
+    "x": 0,
+    "y": 108,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 9.png",
+   "frame": {
+    "x": 33,
+    "y": 108,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 10.png",
+   "frame": {
+    "x": 66,
+    "y": 108,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-hero 11.png",
+   "frame": {
+    "x": 99,
+    "y": 108,
+    "w": 33,
+    "h": 54
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 54
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 54
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8518518518518519
+   },
+   "duration": 100
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-status-frozen-hero.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 132,
+   "h": 162
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 16,
+   "y": 46
+  },
+  "frameTags": [
+   {
+    "name": "tessera-status-frozen-hero",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

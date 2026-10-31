@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-status-burn-goblin 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 1.png",
+   "frame": {
+    "x": 27,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 2.png",
+   "frame": {
+    "x": 54,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 3.png",
+   "frame": {
+    "x": 81,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 4.png",
+   "frame": {
+    "x": 0,
+    "y": 38,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 5.png",
+   "frame": {
+    "x": 27,
+    "y": 38,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 6.png",
+   "frame": {
+    "x": 54,
+    "y": 38,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 7.png",
+   "frame": {
+    "x": 81,
+    "y": 38,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 8.png",
+   "frame": {
+    "x": 0,
+    "y": 76,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 9.png",
+   "frame": {
+    "x": 27,
+    "y": 76,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 10.png",
+   "frame": {
+    "x": 54,
+    "y": 76,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-goblin 11.png",
+   "frame": {
+    "x": 81,
+    "y": 76,
+    "w": 27,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 27,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 27,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.48148148148148145,
+    "y": 0.8421052631578947
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-status-burn-goblin.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 108,
+   "h": 114
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 13,
+   "y": 32
+  },
+  "frameTags": [
+   {
+    "name": "tessera-status-burn-goblin",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

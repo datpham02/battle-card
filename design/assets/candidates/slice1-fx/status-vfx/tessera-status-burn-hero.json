@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-status-burn-hero 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 1.png",
+   "frame": {
+    "x": 33,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 2.png",
+   "frame": {
+    "x": 66,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 3.png",
+   "frame": {
+    "x": 99,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 4.png",
+   "frame": {
+    "x": 0,
+    "y": 52,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 5.png",
+   "frame": {
+    "x": 33,
+    "y": 52,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 6.png",
+   "frame": {
+    "x": 66,
+    "y": 52,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 7.png",
+   "frame": {
+    "x": 99,
+    "y": 52,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 8.png",
+   "frame": {
+    "x": 0,
+    "y": 104,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 9.png",
+   "frame": {
+    "x": 33,
+    "y": 104,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 10.png",
+   "frame": {
+    "x": 66,
+    "y": 104,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-status-burn-hero 11.png",
+   "frame": {
+    "x": 99,
+    "y": 104,
+    "w": 33,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 33,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 33,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.48484848484848486,
+    "y": 0.8846153846153846
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-status-burn-hero.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 132,
+   "h": 156
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 16,
+   "y": 46
+  },
+  "frameTags": [
+   {
+    "name": "tessera-status-burn-hero",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

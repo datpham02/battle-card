@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-status-frozen-goblin 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 1.png",
+   "frame": {
+    "x": 28,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 2.png",
+   "frame": {
+    "x": 56,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 3.png",
+   "frame": {
+    "x": 84,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 4.png",
+   "frame": {
+    "x": 0,
+    "y": 40,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 5.png",
+   "frame": {
+    "x": 28,
+    "y": 40,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 6.png",
+   "frame": {
+    "x": 56,
+    "y": 40,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 7.png",
+   "frame": {
+    "x": 84,
+    "y": 40,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 8.png",
+   "frame": {
+    "x": 0,
+    "y": 80,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 9.png",
+   "frame": {
+    "x": 28,
+    "y": 80,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 10.png",
+   "frame": {
+    "x": 56,
+    "y": 80,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  },
+  {
+   "filename": "tessera-status-frozen-goblin 11.png",
+   "frame": {
+    "x": 84,
+    "y": 80,
+    "w": 28,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 28,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 28,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.8
+   },
+   "duration": 100
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-status-frozen-goblin.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 112,
+   "h": 120
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 14,
+   "y": 32
+  },
+  "frameTags": [
+   {
+    "name": "tessera-status-frozen-goblin",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

@@ -1,0 +1,32 @@
+{
+  "anchor": "same canvas as the unit frame, bottom-centre; draw at the unit's position",
+  "burn": {
+    "frames": 2,
+    "hold_ms": 150,
+    "sizes": [
+      32,
+      40
+    ]
+  },
+  "frozen": {
+    "frames": 1,
+    "sizes": [
+      32,
+      40
+    ],
+    "code": "shell static; optional cool modulate on the unit"
+  },
+  "fragile": {
+    "frames": 1,
+    "sizes": [
+      32,
+      40
+    ],
+    "code": "static; the unit's palette may lean to Ivory via unit_fx"
+  },
+  "chill": {
+    "frames": 1,
+    "size": 8,
+    "code": "drawn 2 px above the head, bobs 1 px every 300 ms; stack count text beside it"
+  }
+}

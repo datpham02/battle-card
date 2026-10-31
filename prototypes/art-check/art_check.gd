@@ -79,6 +79,15 @@ extends Node2D
 ##   --tele-k=K       telegraph intensity 0..1 (user 2026-10-31: no countdown label; the enemy's
 ##                    damage tiles start faint and darken until full, then the hit lands): stripes
 ##                    at alpha 0.5→1, flat red fill 0→0.45, frame 0.3→1
+##   --status-pack=<dir>  PixelLab VFX game packs (status-vfx/pack-tessera-status-<name>-<unit>/
+##                    manifest.json): for every status in --status the "behind" clip is drawn under
+##                    the unit and the "front" clip over it, frame by the manifest's frame_ms, the
+##                    clip's offset applied to the unit's feet anchor. Replaces the script overlays
+##                    for burn / frozen / chill; fragile stays the script overlay
+##   --status=<list>  status overlays on the goblin from --fx's folder: burn, frozen, fragile, chill
+##                    (comma list; "all"). Burn alternates its 2 frames every 150 ms and chill bobs 1 px
+##                    every 300 ms; with --shot the capture happens at frame SHOT_FRAME as usual, and
+##                    --seq=status plays 6 keyframes (burn A/B, chill up/down) for a GIF
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
@@ -160,12 +169,21 @@ var _skin: String = ""
 var _floor: String = ""
 var _platform: bool = false
 var _tele_k: float = 1.0
+var _status: Array[String] = []
+var _status_tex: Dictionary = {}
+var _status_time: float = 0.0
+var _pack_dir: String = ""
+## name -> {"behind": {tex, frame, cols, offset}, "front": {...}, "frames": n, "ms": n}
+var _packs: Dictionary = {}
 const DECK_MARGIN := 6
 const FACE_H := 12
 ## Platform colours = the slab v2 palette: deck one tone under the slab face, face = lip tone.
 const DECK := Color("3A3B37")
 const DECK_LIGHT := Color("5A5B54")
 const DECK_LIP := Color("262521")
+const DECK_LIP_ALT := Color("2E2C27")
+## Stone block widths of the platform face, cycled per face from a seed (art-px).
+const FACE_BLOCKS: Array[int] = [14, 22, 18, 26, 20, 16]
 var _font_semi: Font
 var _font_bold: Font
 var _skin_icons: ImageTexture
@@ -386,6 +404,11 @@ func _parse_args() -> void:
 			_floor = arg.trim_prefix("--floor=")
 		elif arg == "--platform":
 			_platform = true
+		elif arg.begins_with("--status-pack="):
+			_pack_dir = arg.trim_prefix("--status-pack=")
+		elif arg.begins_with("--status="):
+			var v: String = arg.trim_prefix("--status=")
+			_status.assign(["burn", "frozen", "fragile", "chill"] if v == "all" else v.split(",", false))
 		elif arg.begins_with("--tele-k="):
 			_tele_k = clampf(arg.trim_prefix("--tele-k=").to_float(), 0.0, 1.0)
 		elif arg.begins_with("--icons="):
@@ -404,6 +427,9 @@ func _parse_args() -> void:
 			_font_bold = _load_font(fp[1]) if fp.size() > 1 else _font_semi
 	if _layout == "v2":
 		_arena_bottom = _controls_top
+	if not _pack_dir.is_empty():
+		for nm: String in _status:
+			_load_pack(nm, "goblin")
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--mist-bottom="):
 			_mist_bottom = arg.trim_prefix("--mist-bottom=").to_int()
@@ -970,6 +996,12 @@ func _process(delta: float) -> void:
 	if not _anim.is_empty():
 		_tick_anim(delta)
 		return
+	if not _status.is_empty():
+		_status_time += delta
+		if _fx_over != null:
+			_fx_over.queue_redraw()
+		if _fx_floor != null and not _packs.is_empty():
+			_fx_floor.queue_redraw()
 	if _shot.is_empty():
 		return
 	_frames += 1
@@ -1032,6 +1064,15 @@ func _load_fx() -> void:
 			var data: Variant = JSON.parse_string(f.get_as_text())
 			if data is Dictionary:
 				_fx_meta[key] = data
+	for key: String in ["burn_32", "burn_40", "frozen_32", "frozen_40", "fragile_32", "fragile_40"]:
+		var parts: PackedStringArray = key.split("_")
+		var ids: Dictionary = {"burn": "017", "frozen": "018", "fragile": "019"}
+		var img2: Image = Image.load_from_file(ProjectSettings.globalize_path("%s/ASSET-%s-fx_%s_%sx48.png" % [_fx_dir, ids[parts[0]], parts[0], parts[1]]))
+		if img2 != null:
+			_status_tex[key] = ImageTexture.create_from_image(img2)
+	var chill: Image = Image.load_from_file(ProjectSettings.globalize_path(_fx_dir + "/ASSET-020-fx_chill_8.png"))
+	if chill != null:
+		_status_tex["chill"] = ImageTexture.create_from_image(chill)
 	if not _has_fx():
 		push_error("art_check: --fx folder incomplete: " + _fx_dir)
 
@@ -1102,6 +1143,12 @@ func _draw_fx_floor(n: Node2D) -> void:
 		i += 1
 	# lying T block: four 5x5 steel tiles, 1 px Ink halo around the whole shape, hovering 2 px over
 	# a square shadow; centred on the face
+	# status packs: the "behind" clips sit under the unit (this layer is drawn before Units)
+	if not _packs.is_empty():
+		var g: Vector2i = _default_cell(1)
+		var ga: Vector2 = Vector2(_anchor(1, g.x, g.y))
+		for nm: String in _packs:
+			_draw_pack_clip(n, nm, "behind", ga)
 	var lying: Vector2i = cells["lying"]
 	if _is_real(0, lying.x, lying.y) and not in_seq:
 		var face: Rect2 = _face_rect(0, lying.x, lying.y)
@@ -1138,6 +1185,35 @@ func _draw_fx_overlay(n: Node2D) -> void:
 			var face: Rect2 = _face_rect(1, c.x, c.y)
 			var pos: Vector2 = (face.get_center() - Vector2(fw, fh) * 0.5).floor()
 			n.draw_texture_rect_region(_fx_tex[sheet_key], Rect2(pos, Vector2(fw, fh)), Rect2(vf * (fw + gut), 0, fw, fh), STEEL_HI)
+	_draw_status_overlays(n)
+
+
+## Status overlays on the goblin (32x48 canvas, bottom-centre at its anchor): frozen shell and
+## fragile cracks static, burn frame by time (150 ms), chill snowflake 2 px above the head bobbing
+## 1 px every 300 ms with the stack count. In a --seq=status run the keyframe sets the phase.
+func _draw_status_overlays(n: Node2D) -> void:
+	if _status.is_empty():
+		return
+	var g: Vector2i = _default_cell(1)
+	var a: Vector2 = Vector2(_anchor(1, g.x, g.y))
+	var top_left: Vector2 = a - Vector2(16, 48)
+	var phase: int = int(_status_time / 0.15) % 2
+	var bob: int = int(_status_time / 0.3) % 2
+	if not _seq.is_empty():
+		phase = int(_seq_state.get("burn_frame", 0))
+		bob = int(_seq_state.get("bob", 0))
+	if "frozen" in _status and _status_tex.has("frozen_32") and not _packs.has("frozen"):
+		n.draw_texture(_status_tex["frozen_32"], top_left)
+	if "fragile" in _status and _status_tex.has("fragile_32"):
+		n.draw_texture(_status_tex["fragile_32"], top_left)
+	if "burn" in _status and _status_tex.has("burn_32") and not _packs.has("burn"):
+		n.draw_texture_rect_region(_status_tex["burn_32"], Rect2(top_left, Vector2(32, 48)), Rect2(phase * 33, 0, 32, 48))
+	for nm: String in _packs:
+		_draw_pack_clip(n, nm, "front", a)
+	if "chill" in _status and _status_tex.has("chill") and not _packs.has("chill"):
+		var pos: Vector2 = top_left + Vector2(12, 4 - bob)
+		n.draw_texture(_status_tex["chill"], pos)
+		n.draw_string(ThemeDB.fallback_font, pos + Vector2(10, 8), "x2", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, IVORY)
 
 
 ## One keyframe of the cast sequence.
@@ -1149,6 +1225,14 @@ func _step(ms: int, hero: String, gob: String, k: float, dy: float, vf: int, fla
 ## block falls (3 keyframes) → VFX frames at the sheet's own timings while the goblin takes the
 ## hit (flash on the first VFX frame) → rest. One cycle = ~2.1 s.
 func _build_seq() -> void:
+	if _seq == "status":
+		_seq_steps = []
+		for i: int in 6:
+			var st: Dictionary = _step(150, "idle-A" if i % 4 < 2 else "idle-B", "idle-A" if i % 4 < 2 else "idle-B", 0.0, -1000.0, -1, false)
+			st["burn_frame"] = i % 2
+			st["bob"] = (i / 2) % 2
+			_seq_steps.append(st)
+		return
 	var meta: Dictionary = _fx_meta.get(_seq, _fx_meta.get("slash", {}))
 	var vfx_ms: Array = []
 	for f: Variant in meta.get("frames", []):
@@ -1176,7 +1260,7 @@ func _apply_seq_step(i: int) -> void:
 	# hit flash = ASSET-010: every opaque texel drawn as Ivory for one VFX frame (a 2-line canvas
 	# shader here; the game's unit_fx shader does the same inside the palette)
 	_seq_goblin.material = _flash_material() if bool(st["flash"]) else null
-	_seq_state = {"k": st["k"], "dy": st["dy"], "vf": st["vf"], "flash": st["flash"]}
+	_seq_state = {"k": st["k"], "dy": st["dy"], "vf": st["vf"], "flash": st["flash"], "burn_frame": st.get("burn_frame", 0), "bob": st.get("bob", 0)}
 	if _fx_floor != null:
 		_fx_floor.queue_redraw()
 	if _fx_over != null:
@@ -1338,7 +1422,7 @@ func _draw_hud_osfe(hud: Node2D, font: Font, margin: float) -> void:
 	var bold: Font = _font_bold if _font_bold != null else font
 	# --- Z1 left: hero header panel, chamfered bottom-right; name, HP bar + numbers, Engraving bar
 	var hp_w: float = 300.0
-	var head := Rect2(margin, 20, 430, 60)
+	var head := Rect2(margin, 20, 430, 86)
 	_panel(hud, head, [0, 0, 18, 0], Color(UI_NAVY, 0.92), UI_LINE)
 	_text(hud, font, head.position + Vector2(12, 26), "KIẾM SĨ", 24)
 	_text(hud, font, head.position + Vector2(118, 26), "Lv. 1", 14, Color("B8C2D0"))
@@ -1349,7 +1433,7 @@ func _draw_hud_osfe(hud: Node2D, font: Font, margin: float) -> void:
 	_segments(hud, eng, 7, 2, UI_GOLD)
 	_text(hud, bold, eng.position + Vector2(hp_w + 10, 9), "6/21", 14, UI_GOLD)
 	# --- Z1 right: boss header, mirrored
-	var bhead := Rect2(vp.x - margin - 430, 20, 430, 60)
+	var bhead := Rect2(vp.x - margin - 430, 20, 430, 86)
 	_panel(hud, bhead, [0, 0, 0, 18], Color(UI_NAVY, 0.92), UI_LINE)
 	_text(hud, font, bhead.position + Vector2(12, 26), "GOBLIN SCOUT", 24, UI_TEXT, HORIZONTAL_ALIGNMENT_RIGHT, bhead.size.x - 24)
 	var bbar := Rect2(bhead.position + Vector2(bhead.size.x - 12 - hp_w, 32), Vector2(hp_w, 12))
@@ -1370,10 +1454,23 @@ func _draw_hud_osfe(hud: Node2D, font: Font, margin: float) -> void:
 		hud.draw_rect(Rect2(pr.position + Vector2(23, 11), Vector2(5, 18)), UI_TEXT)
 	# --- keyword chips under the enemy's feet (§7.4: max 2 on a 5x5), centred, nothing on the body.
 	# HP plates dropped (user 2026-10-31: they covered the unit and the tile; the HUD bars carry HP)
-	var gcell: Vector2i = _default_cell(1)
-	var ga: Vector2 = _screen_origin + Vector2(_anchor(1, gcell.x, gcell.y)) * _scale
-	_skin_icon("burn", ga + Vector2(-30, 4), 0.5)
-	_skin_icon("fragile", ga + Vector2(2, 4), 0.5)
+	# user 2026-10-31: status chips live under the HP bars, not under the unit. Hero row under the
+	# Engraving bar, boss row under its bar; 24 px pixel icons (12x12 x2) with the stack count.
+	var hero_chips: Array = ["chill"] if "chill" in _status or _status.is_empty() else []
+	var boss_chips: Array = []
+	for nm: String in ["burn", "fragile", "frozen"]:
+		if nm in _status or _status.is_empty():
+			boss_chips.append(nm)
+	if _ui_tex.has("icons") and not _ui_icons.is_empty():
+		var cx: float = head.position.x + 12
+		for nm: String in hero_chips:
+			_draw_icon(hud, nm, Vector2(cx, head.position.y + 58), 2)
+			_text(hud, bold, Vector2(cx + 26, head.position.y + 76), "x2", 13, UI_TEXT)
+			cx += 52
+		var bx: float = bhead.position.x + bhead.size.x - 12 - 24
+		for nm: String in boss_chips:
+			_draw_icon(hud, nm, Vector2(bx, bhead.position.y + 58), 2)
+			bx -= 32
 	# --- Z3: joystick in navy
 	var base_r: float = 80.0
 	var center := Vector2(margin + 150.0, vp.y * 0.80)
@@ -1481,13 +1578,27 @@ func _draw_platform(board: Node2D) -> void:
 					faces.append(face)
 	for f: Rect2 in faces:
 		board.draw_rect(Rect2(f.position.x + 2, f.end.y, f.size.x - 4, 4), Color(INK, 0.5))
+	# face = one course of stone blocks: widths cycled from FACE_BLOCKS starting at a seeded
+	# offset, alternating two lip tones, 1 px Ink joints, 2 px Ink at the bottom, 1 px light cap
+	var fi: int = 0
 	for f: Rect2 in faces:
 		board.draw_rect(f, DECK_LIP)
+		var x: int = int(f.position.x)
+		var bi: int = (fi * 3 + int(f.position.x / 7.0)) % FACE_BLOCKS.size()
+		var alt: bool = fi % 2 == 0
+		while x < int(f.end.x):
+			var bw: int = mini(FACE_BLOCKS[bi], int(f.end.x) - x)
+			if bw < 6:
+				bw = int(f.end.x) - x
+			board.draw_rect(Rect2(x, f.position.y + 1, bw, f.size.y - 3), DECK_LIP_ALT if alt else DECK_LIP)
+			x += bw
+			if x < int(f.end.x):
+				board.draw_rect(Rect2(x, f.position.y + 1, 1, f.size.y - 3), INK)
+				x += 1
+			bi = (bi + 1) % FACE_BLOCKS.size()
+			alt = not alt
 		board.draw_rect(Rect2(f.position + Vector2(0, f.size.y - 2), Vector2(f.size.x, 2)), INK)
-		var jx: int = int(f.position.x) + 17
-		while jx < int(f.end.x) - 4:
-			board.draw_rect(Rect2(jx, f.position.y + 2, 1, f.size.y - 4), INK)
-			jx += 40
+		fi += 1
 	# pass 2: deck under every real cell, grown toward missing neighbours (the divider gap is deck)
 	for side: int in 2:
 		for col: int in _board.x:
@@ -1517,3 +1628,44 @@ func _draw_platform(board: Node2D) -> void:
 	var o0: Vector2i = _board_origin()
 	var dx: int = o0.x + _board.x * _cell.x + DIVIDER_GAP / 2 - 1
 	board.draw_rect(Rect2(dx, o0.y - 2, 1, _board.y * _cell.y + 2), DECK_LIP)
+
+
+## One PixelLab VFX game pack: manifest.json + the behind / front sheets of one status effect.
+func _load_pack(status_name: String, unit: String) -> void:
+	var dir: String = "%s/pack-tessera-status-%s-%s" % [_pack_dir, status_name, unit]
+	var f := FileAccess.open(dir + "/manifest.json", FileAccess.READ)
+	if f == null:
+		return
+	var m: Variant = JSON.parse_string(f.get_as_text())
+	if not (m is Dictionary):
+		return
+	var pack: Dictionary = {"frames": int(m.get("frames", 1)), "ms": int(m.get("frame_ms", 83))}
+	for clip: Variant in m.get("clips", []):
+		var c: Dictionary = clip
+		if String(c["name"]) != "behind" and String(c["name"]) != "front":
+			continue
+		var sheet: Dictionary = (c["sheets"] as Array)[0]
+		var img: Image = Image.load_from_file(ProjectSettings.globalize_path(dir + "/" + String(sheet["file"])))
+		if img == null:
+			continue
+		pack[String(c["name"])] = {"tex": ImageTexture.create_from_image(img), "w": int(c["frame"]["w"]), "h": int(c["frame"]["h"]),
+			"cols": int(sheet["columns"]), "ox": int(c["offset"]["x"]), "oy": int(c["offset"]["y"])}
+	if pack.has("behind") or pack.has("front"):
+		_packs[status_name] = pack
+		print("art_check: status pack %s loaded (%d frames @ %d ms)" % [status_name, pack["frames"], pack["ms"]])
+
+
+## Draw one clip of a loaded pack at the unit's feet anchor, frame by the clock (or the sequence).
+func _draw_pack_clip(n: Node2D, status_name: String, clip_name: String, feet: Vector2) -> void:
+	var pack: Dictionary = _packs[status_name]
+	if not pack.has(clip_name):
+		return
+	var c: Dictionary = pack[clip_name]
+	var frames: int = int(pack["frames"])
+	var idx: int = int(_status_time * 1000.0 / float(pack["ms"])) % frames
+	if not _seq.is_empty():
+		idx = int(_seq_state.get("pack_frame", 0)) % frames
+	var cols: int = int(c["cols"])
+	var src := Rect2((idx % cols) * int(c["w"]), (idx / cols) * int(c["h"]), int(c["w"]), int(c["h"]))
+	var pos: Vector2 = (feet + Vector2(int(c["ox"]), int(c["oy"]))).floor()
+	n.draw_texture_rect_region(c["tex"], Rect2(pos, Vector2(int(c["w"]), int(c["h"]))), src)

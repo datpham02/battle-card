@@ -1,0 +1,145 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "Tessera status - Burn (hero)",
+ "fps": 12,
+ "frame_ms": 83,
+ "frames": 12,
+ "loop": true,
+ "canvas": {
+  "w": 33,
+  "h": 52
+ },
+ "anchor": {
+  "kind": "feet",
+  "x": 16,
+  "y": 46
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 18,
+    "h": 33
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -9,
+    "y": -30
+   }
+  },
+  {
+   "name": "whole-with-sprite",
+   "title": "the whole effect with the sprite in it",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 27,
+    "h": 46
+   },
+   "sheets": [
+    {
+     "file": "whole-with-sprite.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -13,
+    "y": -43
+   }
+  },
+  {
+   "name": "behind",
+   "title": "everything behind the sprite",
+   "depth": "behind",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 18,
+    "h": 30
+   },
+   "sheets": [
+    {
+     "file": "behind.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -9,
+    "y": -27
+   }
+  },
+  {
+   "name": "front",
+   "title": "everything in front of the sprite",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 16,
+    "h": 33
+   },
+   "sheets": [
+    {
+     "file": "front.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -8,
+    "y": -30
+   }
+  },
+  {
+   "name": "part-on_fire",
+   "title": "the on fire part",
+   "part": "on_fire",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 18,
+    "h": 33
+   },
+   "sheets": [
+    {
+     "file": "part-on_fire.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -9,
+    "y": -30
+   }
+  }
+ ]
+}

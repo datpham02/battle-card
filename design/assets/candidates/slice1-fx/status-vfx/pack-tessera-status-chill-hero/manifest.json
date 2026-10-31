@@ -1,0 +1,145 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "Tessera status - Chill (hero)",
+ "fps": 12,
+ "frame_ms": 83,
+ "frames": 16,
+ "loop": true,
+ "canvas": {
+  "w": 51,
+  "h": 74
+ },
+ "anchor": {
+  "kind": "feet",
+  "x": 26,
+  "y": 71
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 16,
+   "frame": {
+    "w": 45,
+    "h": 51
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 16,
+     "columns": 4,
+     "rows": 4
+    }
+   ],
+   "offset": {
+    "x": -23,
+    "y": -68
+   }
+  },
+  {
+   "name": "whole-with-sprite",
+   "title": "the whole effect with the sprite in it",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 16,
+   "frame": {
+    "w": 45,
+    "h": 68
+   },
+   "sheets": [
+    {
+     "file": "whole-with-sprite.png",
+     "first_frame": 0,
+     "frames": 16,
+     "columns": 4,
+     "rows": 4
+    }
+   ],
+   "offset": {
+    "x": -23,
+    "y": -68
+   }
+  },
+  {
+   "name": "behind",
+   "title": "everything behind the sprite",
+   "depth": "behind",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 16,
+   "frame": {
+    "w": 45,
+    "h": 23
+   },
+   "sheets": [
+    {
+     "file": "behind.png",
+     "first_frame": 0,
+     "frames": 16,
+     "columns": 4,
+     "rows": 4
+    }
+   ],
+   "offset": {
+    "x": -23,
+    "y": -64
+   }
+  },
+  {
+   "name": "front",
+   "title": "everything in front of the sprite",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 16,
+   "frame": {
+    "w": 35,
+    "h": 51
+   },
+   "sheets": [
+    {
+     "file": "front.png",
+     "first_frame": 0,
+     "frames": 16,
+     "columns": 4,
+     "rows": 4
+    }
+   ],
+   "offset": {
+    "x": -20,
+    "y": -68
+   }
+  },
+  {
+   "name": "part-snowfall",
+   "title": "the snowfall part",
+   "part": "snowfall",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 16,
+   "frame": {
+    "w": 45,
+    "h": 51
+   },
+   "sheets": [
+    {
+     "file": "part-snowfall.png",
+     "first_frame": 0,
+     "frames": 16,
+     "columns": 4,
+     "rows": 4
+    }
+   ],
+   "offset": {
+    "x": -23,
+    "y": -68
+   }
+  }
+ ]
+}

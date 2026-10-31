@@ -243,6 +243,29 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   `anim/seq-slash-v2.gif`). `--tele-k=K` shows the telegraph at an intensity
   (`61-telegraph-ramp-0-50-100.png`): the user replaced the countdown label
   with a tile that darkens from faint to full over the enemy's cast time.
+- 2026-10-31, platform face and chips (`62-platform-blocks-5x5.png`,
+  `63-platform-blocks-crystal6x6.png`, `64-platform-face-and-chips-zoom-x3.png`):
+  the face is one course of stone blocks (widths cycled from a seeded list,
+  two lip tones, 1 px Ink joints) and reads as masonry at 2x; keyword chips
+  under the units use the 12x12 pixel icons at x2 (24 px) when `--ui` is
+  loaded, which is the §7.4 rule, instead of the 55 px tiles halved.
+- 2026-10-31, status effects: the script overlays (`--status`, `65`, `66`,
+  `anim/status-overlays.gif`) were judged crude; the PixelLab VFX workbench
+  (free, procedural) built burn / frozen / chill around the goblin and the
+  Swordsman frames, exported as game packs. `--status-pack=<dir>` draws each
+  pack's `behind` clip under the unit and `front` over it from the manifest
+  (`67-status-pack-burn-chill.png`, `68-status-pack-frozen.png`,
+  `69-status-pack-zoom-x4.png`). The sprite tint (cold / hot rim) is not in
+  the packs: in the game it is the `unit_fx` shader; here the goblin stays
+  untinted, so frozen reads weaker than in the workbench preview. Fragile
+  keeps the script cracks. Status chips sit under the HP bars (hero row, boss
+  row) as 12x12 icons at x2.
+- Palette inventory of every candidate (opaque pixels, 2026-10-31): hero 8,
+  goblin 6, slab v2 9, wall + thorns 6, backdrop v2 38, blocks/marks/VFX 6,
+  UI 9-slices 3, icons 12x12 9, icons 55 px 20. World union (no UI/icons) =
+  66, everything = 92. The art bible's 64-colour master is therefore not
+  reachable without cutting the backdrop to ~30 colours; a decision for the
+  master-palette task.
 - The 38x27 slab with a 48 px sprite behaves as §1 expects: a unit covers the
   lower half of the one on the row behind; identity stays in the upper 20 px.
 - Technique notes for the SubViewport story: `Image.load_from_file` +
