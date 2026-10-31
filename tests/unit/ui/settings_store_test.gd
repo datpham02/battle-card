@@ -1,5 +1,5 @@
 extends SceneTree
-## Story 044 Part B: SettingsStore (controls.movement, show_control_hints). Every file access goes
+## Story 044 Part B: SettingsStore (controls.movement, show_control_hints); Story 047 Part D: reduce_motion. Every file access goes
 ## through a temp path under user://, never the real user://settings.json; the static override is
 ## reset around each case.
 
@@ -33,6 +33,8 @@ func _initialize() -> void:
 	test_set_with_override_does_not_write_the_file()
 	test_invalid_set_is_ignored()
 	test_hints_round_trip()
+	test_reduce_motion_defaults_off()
+	test_reduce_motion_round_trip()
 	_clean()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
@@ -129,3 +131,24 @@ func test_hints_round_trip() -> void:
 	store.set_show_control_hints(true)
 	_check("hints persisted", SettingsStore.new(TEMP_PATH).get_show_control_hints())
 	_check("movement default kept", SettingsStore.new(TEMP_PATH).get_movement() == "joystick")
+
+
+func test_reduce_motion_defaults_off() -> void:
+	_clean()
+	_check("reduce_motion defaults to false", not SettingsStore.new(TEMP_PATH).get_reduce_motion())
+	var file := FileAccess.open(TEMP_PATH, FileAccess.WRITE)
+	file.store_string('{"reduce_motion": "yes"}')
+	file.close()
+	_check("non-bool reduce_motion -> false", not SettingsStore.new(TEMP_PATH).get_reduce_motion())
+
+
+func test_reduce_motion_round_trip() -> void:
+	_clean()
+	var store := SettingsStore.new(TEMP_PATH)
+	store.set_reduce_motion(true)
+	_check("reduce_motion persisted", SettingsStore.new(TEMP_PATH).get_reduce_motion())
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(TEMP_PATH))
+	_check("file has reduce_motion true", parsed is Dictionary and (parsed as Dictionary).get("reduce_motion", false) == true)
+	_check("movement and hints defaults kept", SettingsStore.new(TEMP_PATH).get_movement() == "joystick" and not SettingsStore.new(TEMP_PATH).get_show_control_hints())
+	store.set_reduce_motion(false)
+	_check("reduce_motion off again persisted", not SettingsStore.new(TEMP_PATH).get_reduce_motion())

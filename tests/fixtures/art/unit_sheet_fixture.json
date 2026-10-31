@@ -1,0 +1,46 @@
+{
+  "frames": [
+    { "filename": "fixture_idle_0", "frame": { "x": 0, "y": 0, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 400 },
+    { "filename": "fixture_idle_1", "frame": { "x": 41, "y": 0, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 400 },
+    { "filename": "fixture_step_0", "frame": { "x": 0, "y": 49, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 300 },
+    { "filename": "fixture_step_1", "frame": { "x": 41, "y": 49, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 300 },
+    { "filename": "fixture_cast_gesture_0", "frame": { "x": 0, "y": 98, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 80 },
+    { "filename": "fixture_cast_gesture_1", "frame": { "x": 41, "y": 98, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 120 },
+    { "filename": "fixture_hit_0", "frame": { "x": 0, "y": 147, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 120 },
+    { "filename": "fixture_defeat_0", "frame": { "x": 0, "y": 196, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 150 },
+    { "filename": "fixture_defeat_1", "frame": { "x": 41, "y": 196, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 150 },
+    { "filename": "fixture_fall_0", "frame": { "x": 0, "y": 245, "w": 40, "h": 48 }, "rotated": false, "trimmed": false, "duration": 0 }
+  ],
+  "meta": {
+    "app": "tests/fixtures/art (trimmed copy of unit_kiem_si_sheet.json, Story 047 Part C)",
+    "version": "1.0",
+    "image": "unit_fixture_sheet.png",
+    "format": "RGBA8888",
+    "size": { "w": 81, "h": 293 },
+    "scale": "1",
+    "frameTags": [
+      { "name": "idle", "from": 0, "to": 1, "direction": "forward" },
+      { "name": "step", "from": 2, "to": 3, "direction": "forward" },
+      { "name": "cast_gesture", "from": 4, "to": 5, "direction": "forward" },
+      { "name": "hit", "from": 6, "to": 6, "direction": "forward" },
+      { "name": "defeat", "from": 7, "to": 8, "direction": "forward" },
+      { "name": "fall", "from": 9, "to": 9, "direction": "forward" }
+    ],
+    "tessera": {
+      "unit": "fixture",
+      "asset": "TEST",
+      "facing": "right",
+      "frame": { "w": 40, "h": 48 },
+      "gutter": 1,
+      "columns": 2,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "cast_gesture": "once",
+        "hit": "once",
+        "defeat": "hold_last",
+        "fall": "hold"
+      }
+    }
+  }
+}

@@ -133,6 +133,33 @@ extends Node
 ##                                        BossController._do_cut: the red telegraph on the player's half with the odd mark
 ##   godot --path . -- --demo=odd_hint    CombatView.odd_hint_enabled forced on and an odd piece put in the bag: the first-pickup hint line
 ##                                        under the HP bars (CutHudView.debug_odd_hint_hold keeps it up for the capture)
+##   Story 047 art demos (they also skip the intro). Each one fires the real event, then advances the BattleCanvas UnitLayer
+##   clock explicitly (UnitLayer.advance: once with 0 so the event starts its clip / overlay, then by the demo's seconds) and
+##   freezes, so the sprite frame and the status overlay frame are fixed. They run deferred (after BattleCanvas binds its
+##   layers, which happens after this node's _ready). Headless, the SubViewport never draws, so capture windowed:
+##   godot --path . -- --demo=anim_step     the player stepped through try_step_player (cell_changed): `step` ART_DEMO_STEP_RATIO of
+##                                          the way through its cooldown-long run (frame 2 of 4 on Kiem si at 0.45 s)
+##   godot --path . -- --demo=anim_cast     the player's real CutActor swing on the boss's cell (swing_started): `cast_gesture`
+##                                          ART_DEMO_ADVANCE_SEC in (frame 1); the swing never resolves (time frozen)
+##   godot --path . -- --demo=anim_windup   the boss's CutActor swings on the player's cell (is_swinging, the HUD telegraph on
+##                                          the player's half): `windup` held
+##   godot --path . -- --demo=anim_hit      the boss hit for ART_DEMO_HIT (CombatState.damage_enemy -> damaged): `hit`
+##                                          ART_DEMO_HIT_ADVANCE_SEC in
+##   godot --path . -- --demo=anim_down     the boss hit to 0 HP (ART_DEMO_OVERKILL): `down` ART_DEMO_HOLD_ADVANCE_SEC in = its
+##                                          last frame held; match_params.end_delay_sec is set to ART_DEMO_END_DELAY_SEC in
+##                                          _enter_tree so the match stays on screen (CombatView._tick_end runs on real time)
+##   godot --path . -- --demo=anim_defeat   the player hit to 0 HP: `defeat` held; same long end delay
+##   godot --path . -- --demo=status_burn   the boss's cell ignited (StatusEffects.ignite, ART_DEMO_STATUS_SEC) and the player
+##                                          pinned (StatusEffects.pin): Chay on the boss, Dong Bang on the player,
+##                                          ART_DEMO_STATUS_ADVANCE_SEC into the packs (frame 3 at 83 ms)
+##   godot --path . -- --demo=status_frozen the player pinned and the boss with ART_DEMO_FROST_STACKS frost stacks: Dong Bang on
+##                                          the player, Gia Lanh on the boss
+##   godot --path . -- --demo=reduce_motion status_burn with UnitLayer.set_reduce_motion(true): overlays and idle on frame 0
+##   godot --path . -- --art-region=<id>    DEV-ONLY art region of the canvas (BattleCanvas.set_region_id, e.g. forest) for any
+##                                          boot; named apart from GameFlow's --region=<id> (a fresh run in a world region)
+##   godot --path . -- --draw-calls         DEV-ONLY: prints Performance RENDER_TOTAL_DRAW_CALLS_IN_FRAME and the unit ids
+##                                          after DRAW_CALLS_FRAMES frames and again after DRAW_CALLS_LATE_FRAMES (intro gone);
+##                                          with or without --demo
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
 ## seeds the drop RNG. No argument = normal game, this node does nothing. State is set in
 ## _ready, before the first frame (the seed and the grid in _enter_tree, before
@@ -254,6 +281,23 @@ const JOIN_PIECE_1: String = "l3"
 const JOIN_PIECE_2: String = "bar2"
 ## Slot of the second piece in the join demos' bag.
 const JOIN_SLOT_2: int = 1
+## Story 047 art demos (they also skip the intro; see the header): the UnitLayer seconds advanced after the event (a once
+## clip mid-way, a held clip past its end, a status overlay a few frames in), the hit size, the overkill of the death demos,
+## the status duration and frost stacks, the end delay that keeps a finished match on screen, and the dev flags.
+const ART_DEMO_ADVANCE_SEC: float = 0.1
+const ART_DEMO_STEP_RATIO: float = 0.5
+const ART_DEMO_HIT_ADVANCE_SEC: float = 0.05
+const ART_DEMO_HOLD_ADVANCE_SEC: float = 0.5
+const ART_DEMO_STATUS_ADVANCE_SEC: float = 0.3
+const ART_DEMO_HIT: float = 5.0
+const ART_DEMO_OVERKILL: float = 9999.0
+const ART_DEMO_STATUS_SEC: float = 10.0
+const ART_DEMO_FROST_STACKS: int = 2
+const ART_DEMO_END_DELAY_SEC: float = 600.0
+const ART_REGION_PREFIX: String = "--art-region="
+const DRAW_CALLS_ARG: String = "--draw-calls"
+const DRAW_CALLS_FRAMES: int = 2
+const DRAW_CALLS_LATE_FRAMES: int = 110
 
 @export var hold_slots_view_path: NodePath = NodePath("../HoldSlotsView")
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -277,6 +321,9 @@ func _enter_tree() -> void:
 	if _mode == "boss_downed":
 		# Story 035: downing needs a region boss match; forced so the demo also works on a --match= boot.
 		_combat().match_params[CombatView.PARAM_BOSS_CAN_DOWN] = true
+	if _mode == "anim_down" or _mode == "anim_defeat":
+		# Story 047: the match end timer runs on real time even while frozen; keep the dead unit on screen.
+		_combat().match_params["end_delay_sec"] = ART_DEMO_END_DELAY_SEC
 	_combat().grid_override = _parse_grid()
 	_combat().boss_set_override = _parse_boss_set()
 	_combat().debug_overlay = OS.get_cmdline_user_args().has(DEBUG_ARG)
@@ -289,6 +336,10 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	if OS.get_cmdline_user_args().has(DRAW_CALLS_ARG):
+		_print_draw_calls()
+	if not _parse_art_region().is_empty():
+		_apply_art_region.call_deferred()
 	if _mode == "":
 		return
 	var combat: CombatView = _combat()
@@ -397,6 +448,10 @@ func _ready() -> void:
 			_join_demo(combat, grid)
 		"odd_field", "odd_bag", "odd_place", "odd_boss", "odd_hint":
 			_odd_demo(combat, grid)
+		"anim_step", "anim_cast", "anim_windup", "anim_hit", "anim_down", "anim_defeat", "status_burn", "status_frozen", "reduce_motion":
+			# Deferred: BattleCanvas binds its layers (and the UnitLayer connects the match signals) in a deferred
+			# call queued by its own _ready, which ran before this one.
+			_art_demo.call_deferred()
 		"rotten_piece":
 			var lib2: PieceLibrary = PieceLibrary.load_from_file()
 			var rotten_cell2: Vector2i = _other_player_cell(grid, combat.get_state().player_cell)
@@ -407,6 +462,102 @@ func _ready() -> void:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
 	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode) or ODD_DEMOS.has(_mode):
 		_skip_intro.call_deferred()
+
+
+# Story 047 art demos (see the header): the real event, then the UnitLayer advanced by hand (0 to start what the event
+# asked for, then the demo's seconds) with time frozen; prints the clips and overlays reached so a capture log shows them.
+func _art_demo() -> void:
+	_skip_intro()
+	var combat: CombatView = _combat()
+	var canvas: BattleCanvas = combat.get_battle_canvas()
+	var units: UnitLayer = canvas.get_unit_layer() if canvas != null else null
+	if units == null:
+		push_warning("DemoArgs: no BattleCanvas / UnitLayer bound for demo '%s'" % _mode)
+		return
+	var grid: BoardGrid = combat.get_grid()
+	var state: CombatState = combat.get_state()
+	var status: StatusEffects = combat.get_status()
+	var player: int = CombatState.Side.PLAYER
+	var enemy: int = CombatState.Side.ENEMY
+	var advance_sec: float = ART_DEMO_ADVANCE_SEC
+	match _mode:
+		"anim_step":
+			var stepped: bool = false
+			for dir: Vector2i in ZONE_DEMO_STEPS:
+				if grid.is_player_cell(state.player_cell + dir) and combat.try_step_player(dir):
+					stepped = true
+					break
+			if not stepped:
+				push_warning("DemoArgs: the player could not step for demo '%s'" % _mode)
+		"anim_cast":
+			if not combat.get_cut_actor().begin_swing([state.enemy_cell] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, true):
+				push_warning("DemoArgs: the player swing did not start for demo '%s'" % _mode)
+		"anim_windup":
+			if not combat.get_boss().get_actor().begin_swing([state.player_cell] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, false):
+				push_warning("DemoArgs: the boss swing did not start for demo '%s'" % _mode)
+		"anim_hit":
+			state.damage_enemy(ART_DEMO_HIT)
+			advance_sec = ART_DEMO_HIT_ADVANCE_SEC
+		"anim_down":
+			state.damage_enemy(ART_DEMO_OVERKILL)
+			advance_sec = ART_DEMO_HOLD_ADVANCE_SEC
+		"anim_defeat":
+			state.damage_player(ART_DEMO_OVERKILL)
+			advance_sec = ART_DEMO_HOLD_ADVANCE_SEC
+		"status_burn", "reduce_motion":
+			status.ignite([state.enemy_cell] as Array[Vector2i], ART_DEMO_STATUS_SEC, HAZARD_DEMO_BURN_TICK_SEC, HAZARD_DEMO_BURN_DAMAGE)
+			status.pin(player, ART_DEMO_STATUS_SEC)
+			advance_sec = ART_DEMO_STATUS_ADVANCE_SEC
+			if _mode == "reduce_motion":
+				units.set_reduce_motion(true)
+		"status_frozen":
+			status.pin(player, ART_DEMO_STATUS_SEC)
+			status.apply_frost(enemy, ART_DEMO_FROST_STACKS)
+			advance_sec = ART_DEMO_STATUS_ADVANCE_SEC
+	# The first update starts the clip / overlay the event asked for (as the next frame would); the second moves into it.
+	units.advance(0.0)
+	if _mode == "anim_step":
+		# The step clip spans the step cooldown the layer just read: go to its middle.
+		advance_sec = units.get_step_left(player) * ART_DEMO_STEP_RATIO
+	units.advance(advance_sec)
+	combat.freeze_time = true
+	var line: String = "DemoArgs: %s" % _mode
+	for side: int in [player, enemy]:
+		var anim: UnitAnimator = units.get_animator(side)
+		line += " | %s %s clip=%s frame=%d status=%s" % ["player" if side == player else "boss", units.get_unit_id(side),
+			anim.current_clip() if anim != null else units.get_current_clip(side), anim.frame_index() if anim != null else 0,
+			str(units.get_active_status_kinds(side))]
+	print(line)
+
+
+# --draw-calls: RENDER_TOTAL_DRAW_CALLS_IN_FRAME after DRAW_CALLS_FRAMES frames and after DRAW_CALLS_LATE_FRAMES (the intro
+# banner gone by then), with the unit ids of the match; the game keeps running (quit with --quit-after).
+func _print_draw_calls() -> void:
+	var frames: int = 0
+	for target: int in [DRAW_CALLS_FRAMES, DRAW_CALLS_LATE_FRAMES]:
+		while frames < target:
+			await get_tree().process_frame
+			frames += 1
+		var ids: Dictionary = UnitLayer.unit_ids_for(_combat().match_params)
+		print("DemoArgs: draw_calls frame=%d total=%d units=%s vs %s" % [frames,
+			int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
+			ids[CombatState.Side.PLAYER], ids[CombatState.Side.ENEMY]])
+
+
+# --art-region=<id>: switches the canvas region once BattleCanvas is bound (deferred after its own bind).
+func _apply_art_region() -> void:
+	var canvas: BattleCanvas = _combat().get_battle_canvas()
+	if canvas == null:
+		push_warning("DemoArgs: no BattleCanvas bound, --art-region ignored")
+		return
+	canvas.set_region_id(_parse_art_region())
+
+
+func _parse_art_region() -> String:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(ART_REGION_PREFIX):
+			return arg.substr(ART_REGION_PREFIX.length())
+	return ""
 
 
 # Story 041 odd demos (see the header), through the real paths: debug_place_piece for the field, the bag's points, begin_drag /

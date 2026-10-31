@@ -67,8 +67,18 @@ const CELL_MIN_ART: Vector2i = Vector2i(38, 27)
 const CELL_MAX_ART: Vector2i = Vector2i(64, 46)
 const ART_CANVAS_HEIGHT: float = 360.0
 const ART_DIVIDER_GAP: float = 6.0
+## Story 047 Part A (art bible 8.2): the battle art canvas is a SubViewport of ART_CANVAS_WIDTH x
+## ART_CANVAS_HEIGHT art px shown at the integer scale [method art_scale]; its central
+## PLAY_WIDTH_ART x ART_CANVAS_HEIGHT art px (the 16:9 play area) always fit the screen, the rest is
+## bleed for wider screens. The remainder outside [method art_rect] is Ink (BattleCanvas).
+const ART_CANVAS_WIDTH: float = 800.0
+const PLAY_WIDTH_ART: float = 640.0
 ## HUD band at the top of the arena (HP bars) as a share of arena height; the board fills the rest.
 const HUD_HEIGHT_RATIO: float = 0.2
+## Story 047 Part A: top of the board band as a share of the height (144 px at 720p). The arena's
+## 3-8 % stay the Z1 HUD band ([method hud_rect]); 8-20 % is the far-scenery strip of the backdrop
+## (art bible 6.4) and holds no element; the board area starts here.
+const BOARD_BAND_TOP_RATIO: float = 0.20
 ## Preferred cell width divided by cell height.
 const CELL_ASPECT: float = 1.4
 ## Float slack (px) for the row-placement comparisons.
@@ -326,11 +336,52 @@ static func hud_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(arena.position, Vector2(arena.size.x, arena.size.y * HUD_HEIGHT_RATIO))
 
 
-## Area below the HUD band that the board shares.
+## Area the board shares: from BOARD_BAND_TOP_RATIO (20 % of the height, Story 047) down to the
+## arena's wide-row bottom, as wide as the arena.
 static func board_area_rect(viewport_size: Vector2) -> Rect2:
 	var arena: Rect2 = arena_rect(viewport_size)
-	var hud_h: float = arena.size.y * HUD_HEIGHT_RATIO
-	return Rect2(arena.position.x, arena.position.y + hud_h, arena.size.x, arena.size.y - hud_h)
+	var top: float = viewport_size.y * BOARD_BAND_TOP_RATIO
+	return Rect2(arena.position.x, top, arena.size.x, maxf(arena.end.y - top, 0.0))
+
+
+## Story 047 Part A: integer scale of the battle art canvas, n = max(1, floor(min(W / 640, H / 360)))
+## (2 at 1280x720 and 1600x720, 3 at 2400x1080, 1 at 1024x768).
+static func art_scale(viewport_size: Vector2) -> int:
+	return maxi(1, floori(minf(viewport_size.x / PLAY_WIDTH_ART, viewport_size.y / ART_CANVAS_HEIGHT)))
+
+
+## Story 047 Part A: screen rectangle the 800x360 art canvas is shown in: 800n x 360n px centred
+## ((-160, 0, 1600, 720) at 1280x720: the bleed hangs off both sides; (112, 204, 800, 360) at 1024x768).
+static func art_rect(viewport_size: Vector2) -> Rect2:
+	var n: float = float(art_scale(viewport_size))
+	var size := Vector2(ART_CANVAS_WIDTH, ART_CANVAS_HEIGHT) * n
+	return Rect2((viewport_size - size) * 0.5, size)
+
+
+## Story 047 Part A: the central 640n x 360n px of [method art_rect] (the 16:9 play area, always on screen).
+static func play_rect(viewport_size: Vector2) -> Rect2:
+	var art: Rect2 = art_rect(viewport_size)
+	var size := Vector2(PLAY_WIDTH_ART, ART_CANVAS_HEIGHT) * float(art_scale(viewport_size))
+	return Rect2(Vector2(art.get_center().x - size.x * 0.5, art.position.y), size)
+
+
+## Story 047 Part A: screen px -> whole art px of the canvas (floor; the art px that contains the point).
+static func to_art(viewport_size: Vector2, px: Vector2) -> Vector2i:
+	var local: Vector2 = (px - art_rect(viewport_size).position) / float(art_scale(viewport_size))
+	return Vector2i(floori(local.x), floori(local.y))
+
+
+## Story 047 Part A: art px of the canvas -> screen px (the top-left corner of that art px); the inverse
+## of [method to_art] for whole art px.
+static func from_art(viewport_size: Vector2, art: Vector2) -> Vector2:
+	return art_rect(viewport_size).position + art * float(art_scale(viewport_size))
+
+
+## Story 047 Part A: a screen rectangle -> art px (both corners through [method to_art], so adjacent cells
+## keep sharing an edge).
+static func to_art_rect(viewport_size: Vector2, r: Rect2) -> Rect2i:
+	var pos: Vector2i = to_art(viewport_size, r.position)
+	return Rect2i(pos, to_art(viewport_size, r.end) - pos)
 
 
 ## Board cells cached per (grid, viewport): cell_size() is called by every draw helper.
@@ -338,7 +389,7 @@ static var _cell_cache: Dictionary = {}
 
 
 ## Size of one board cell. The largest cell of aspect CELL_ASPECT between CELL_MIN_ART and
-## CELL_MAX_ART (whole art px of the 640x360 canvas, scaled by height / 360) such that: each half is
+## CELL_MAX_ART (whole art px of the battle canvas, times [method art_scale]) such that: each half is
 ## at most (arena width - ART_DIVIDER_GAP) / 2 wide, a board row that extends outside the thumb gap
 ## ends at or above ARENA_BOTTOM_WIDE_RATIO, and a row fully inside it at or above
 ## ARENA_BOTTOM_NARROW_RATIO (see [method board_rect] for the vertical placement), and no real cell
@@ -358,7 +409,8 @@ static func cell_size(grid: BoardGrid, viewport_size: Vector2) -> Vector2:
 
 
 static func _compute_cell_size(grid: BoardGrid, viewport_size: Vector2) -> Vector2:
-	var scale: float = viewport_size.y / ART_CANVAS_HEIGHT
+	# Story 047: whole art px at the canvas's integer scale (2 at 720p, as viewport.y / 360 was).
+	var scale: float = float(art_scale(viewport_size))
 	var arena: Rect2 = arena_rect(viewport_size)
 	var half_max_art: float = (arena.size.x / scale - ART_DIVIDER_GAP) * 0.5
 	var first_cols: Array[int] = _row_first_cols(grid)
@@ -433,7 +485,7 @@ static func _clear_of_slots(grid: BoardGrid, viewport_size: Vector2, cell: Vecto
 
 
 ## Bounding rectangle of the whole board: centred horizontally, centred vertically in the board area
-## (from 3 % + HUD band down to the wide-row bottom) and, when taller than it, overflowing downwards
+## (from BOARD_BAND_TOP_RATIO down to the wide-row bottom) and, when taller than it, overflowing downwards
 ## where [method cell_size]'s row rule allows.
 static func board_rect(grid: BoardGrid, viewport_size: Vector2) -> Rect2:
 	var cell: Vector2 = cell_size(grid, viewport_size)

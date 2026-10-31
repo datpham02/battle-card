@@ -1,5 +1,7 @@
 extends SceneTree
 ## Story 044 Part A: control layout v2 geometry (ScreenLayout). Headless suite, deterministic, no I/O.
+## Story 047 Part A: the board band starts at 20 % (BOARD_BAND_TOP_RATIO), cells scale by the integer
+## art_scale, and the art canvas rect / play rect / to_art / from_art conversions are checked here.
 ## Run: godot --headless --path . -s res://tests/unit/layout/screen_layout_v2_test.gd
 
 const VIEWPORTS: Array[Vector2] = [Vector2(1280, 720), Vector2(1600, 720)]
@@ -54,12 +56,18 @@ func _init() -> void:
 	test_menu_reaches_at_most_x960()
 	test_pad_inside_stick_zone()
 	test_huge_board_falls_back_inside_area()
+	test_art_scale_and_rect_1280x720()
+	test_art_scale_and_rect_1600x720()
+	test_art_scale_and_rect_2400x1080()
+	test_art_scale_and_rect_1024x768()
+	test_to_art_from_art_round_trip(grids)
+	test_board_band_top_20_percent()
 	print("FAILS=%d" % fails)
 	quit(fails)
 
 
 func _art(grid: BoardGrid, vp: Vector2) -> Vector2:
-	return ScreenLayout.cell_size(grid, vp) / (vp.y / 360.0)
+	return ScreenLayout.cell_size(grid, vp) / float(ScreenLayout.art_scale(vp))
 
 
 func _near(a: float, b: float, tol: float) -> bool:
@@ -68,11 +76,13 @@ func _near(a: float, b: float, tol: float) -> bool:
 
 func test_cell_table_matches_quick_spec(grids: Dictionary) -> void:
 	var vp := Vector2(1280, 720)
-	# Quick spec 2.1: 3x3 64x46, 5x5 48x34 (+-1), 6x6 crystal 49x35, 7x6 crystal 42x30, cross 60x43.
-	# Ring: the spec's 49x35 reached slot T1 (Story 044 Part C); the slot-clearance rule shrinks it to 45x32.
+	# Story 047 Part A: the board band starts at 20 % (was 15.2 %), so it is 316.8 px tall at 720p and a 5-row
+	# board gets at most 31 art px per row: 3x3 64x46 (unchanged), 5x5 43x31, 4x4 cross 55x39, ring 43x31 (clear
+	# of every slot), 6x6 crystal 43x31 (its row 4 starts left of the thumb gap, so it is a wide row and must end
+	# at 64 %), 7x6 crystal 42x30 (half-width bound, unchanged). The quick spec's 48x34 / 49x35 are no longer reachable.
 	var table: Dictionary = {
-		"3x3": Vector2(64, 46), "5x5": Vector2(48, 34), "cross4x4": Vector2(60, 43),
-		"ring6x5": Vector2(45, 32), "crystal6x6": Vector2(49, 35), "crystal7x6": Vector2(42, 30),
+		"3x3": Vector2(64, 46), "5x5": Vector2(43, 31), "cross4x4": Vector2(55, 39),
+		"ring6x5": Vector2(43, 31), "crystal6x6": Vector2(43, 31), "crystal7x6": Vector2(42, 30),
 	}
 	for id: String in table:
 		var art: Vector2 = _art(grids[id], vp)
@@ -118,7 +128,7 @@ func test_row_rule_wide_and_narrow(grids: Dictionary) -> void:
 			check("test_row_rule_%s_at_%s_every_row_ends_within_its_limit" % [id, vp], ok_all)
 			var board: Rect2 = ScreenLayout.board_rect(g, vp)
 			check("test_board_%s_at_%s_centred_horizontally" % [id, vp], _near(board.get_center().x, vp.x * 0.5, 0.5))
-			check("test_board_%s_at_%s_top_not_above_15_2_percent" % [id, vp], board.position.y >= vp.y * 0.152 - EPS)
+			check("test_board_%s_at_%s_top_not_above_20_percent" % [id, vp], board.position.y >= vp.y * 0.20 - EPS)
 	var vp := Vector2(1280, 720)
 	var five: Rect2 = ScreenLayout.board_rect(grids["5x5"], vp)
 	check("test_row_rule_5x5_wide_rows_end_at_or_above_64_percent", five.end.y <= vp.y * 0.64 + EPS)
@@ -126,7 +136,7 @@ func test_row_rule_wide_and_narrow(grids: Dictionary) -> void:
 	var crystal_board: Rect2 = ScreenLayout.board_rect(crystal, vp)
 	check("test_row_rule_crystal_overflows_below_64_percent_for_its_narrow_bottom_row", crystal_board.end.y > vp.y * 0.64 + EPS and crystal_board.end.y <= vp.y * 0.76 + EPS)
 	var three: Rect2 = ScreenLayout.board_rect(grids["3x3"], vp)
-	check("test_board_3x3_centred_in_band_below_64_percent", three.end.y <= vp.y * 0.64 and three.position.y > vp.y * 0.152)
+	check("test_board_3x3_centred_in_band_below_64_percent", three.end.y <= vp.y * 0.64 and three.position.y > vp.y * 0.20)
 
 
 func _controls(vp: Vector2) -> Dictionary:
@@ -201,7 +211,7 @@ func test_stick_zone_numbers() -> void:
 	var arena: Rect2 = ScreenLayout.arena_rect(Vector2(1280, 720))
 	check("test_arena_rect_ends_where_the_stick_zone_starts", _near(arena.end.y, z.position.y, EPS) and _near(arena.position.y, 21.6, EPS))
 	var area: Rect2 = ScreenLayout.board_area_rect(Vector2(1280, 720))
-	check("test_board_area_top_is_15_2_percent", _near(area.position.y, 720.0 * 0.152, EPS))
+	check("test_board_area_top_is_20_percent", _near(area.position.y, 720.0 * 0.20, EPS))
 
 
 func test_slot_rects_arc() -> void:
@@ -352,3 +362,80 @@ func test_huge_board_falls_back_inside_area() -> void:
 		var area: Rect2 = ScreenLayout.board_area_rect(vp)
 		var board: Rect2 = ScreenLayout.board_rect(g, vp)
 		check("test_fallback_10x10_at_%s_board_inside_board_area" % vp, area.grow(EPS).encloses(board))
+
+
+# Story 047 Part A: art_scale / art_rect / play_rect at one viewport.
+func _check_art_rects(vp: Vector2, n: int, art: Rect2, play: Rect2) -> void:
+	check("test_art_scale_%s_is_%d_got_%d" % [vp, n, ScreenLayout.art_scale(vp)], ScreenLayout.art_scale(vp) == n)
+	var got_art: Rect2 = ScreenLayout.art_rect(vp)
+	check("test_art_rect_%s_is_%s_got_%s" % [vp, art, got_art], got_art.is_equal_approx(art))
+	var got_play: Rect2 = ScreenLayout.play_rect(vp)
+	check("test_play_rect_%s_is_%s_got_%s" % [vp, play, got_play], got_play.is_equal_approx(play))
+	check("test_play_rect_%s_centred_in_art_rect" % vp, _near(got_play.get_center().x, got_art.get_center().x, EPS) and _near(got_play.position.y, got_art.position.y, EPS))
+	check("test_art_rect_%s_centred_on_screen" % vp, got_art.get_center().is_equal_approx(vp * 0.5))
+
+
+func test_art_scale_and_rect_1280x720() -> void:
+	_check_art_rects(Vector2(1280, 720), 2, Rect2(-160, 0, 1600, 720), Rect2(0, 0, 1280, 720))
+
+
+func test_art_scale_and_rect_1600x720() -> void:
+	_check_art_rects(Vector2(1600, 720), 2, Rect2(0, 0, 1600, 720), Rect2(160, 0, 1280, 720))
+
+
+func test_art_scale_and_rect_2400x1080() -> void:
+	_check_art_rects(Vector2(2400, 1080), 3, Rect2(0, 0, 2400, 1080), Rect2(240, 0, 1920, 1080))
+
+
+func test_art_scale_and_rect_1024x768() -> void:
+	_check_art_rects(Vector2(1024, 768), 1, Rect2(112, 204, 800, 360), Rect2(192, 204, 640, 360))
+
+
+# Story 047 Part A: to_art(from_art(a)) == a for whole art px (and for any point inside that art px), one art px
+# is n screen px, to_art_rect keeps adjacent cells edge to edge and every cell inside the play rect at 720p.
+func test_to_art_from_art_round_trip(grids: Dictionary) -> void:
+	for vp: Vector2 in [Vector2(1280, 720), Vector2(1600, 720), Vector2(2400, 1080), Vector2(1024, 768)]:
+		var n: int = ScreenLayout.art_scale(vp)
+		var ok_all: bool = true
+		for a: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(399, 179), Vector2i(640, 359), Vector2i(799, 359)]:
+			if ScreenLayout.to_art(vp, ScreenLayout.from_art(vp, Vector2(a))) != a:
+				ok_all = false
+			if ScreenLayout.to_art(vp, ScreenLayout.from_art(vp, Vector2(a)) + Vector2(n - 0.01, n - 0.01)) != a:
+				ok_all = false
+		check("test_to_art_from_art_%s_round_trips_whole_art_px" % vp, ok_all)
+		check("test_from_art_%s_origin_is_art_rect_position" % vp, ScreenLayout.from_art(vp, Vector2.ZERO) == ScreenLayout.art_rect(vp).position)
+		check("test_from_art_%s_one_art_px_is_n_screen_px" % vp, ScreenLayout.from_art(vp, Vector2(1, 1)) - ScreenLayout.from_art(vp, Vector2.ZERO) == Vector2(n, n))
+	var vp720 := Vector2(1280, 720)
+	check("test_to_art_1280_screen_px_640_360_is_art_400_180", ScreenLayout.to_art(vp720, Vector2(640, 360)) == Vector2i(400, 180))
+	check("test_to_art_1280_screen_origin_is_art_80_0", ScreenLayout.to_art(vp720, Vector2.ZERO) == Vector2i(80, 0))
+	var play := Rect2i(ScreenLayout.to_art_rect(vp720, ScreenLayout.play_rect(vp720)))
+	check("test_play_rect_1280_in_art_px_is_80_0_640_360_got_%s" % play, play == Rect2i(80, 0, 640, 360))
+	for id: String in ["3x3", "5x5", "ring6x5"]:
+		var g: BoardGrid = grids[id]
+		var edges_ok: bool = true
+		var inside_play: bool = true
+		for cell: Vector2i in g.player_cells() + g.enemy_cells():
+			var r: Rect2i = ScreenLayout.to_art_rect(vp720, ScreenLayout.cell_rect(g, vp720, cell))
+			if not play.encloses(r):
+				inside_play = false
+			var right: Vector2i = cell + Vector2i(1, 0)
+			if g.is_in_board(right) and ScreenLayout.to_art_rect(vp720, ScreenLayout.cell_rect(g, vp720, right)).position.x != r.end.x:
+				edges_ok = false
+			var below: Vector2i = cell + Vector2i(0, 1)
+			if g.is_in_board(below) and ScreenLayout.to_art_rect(vp720, ScreenLayout.cell_rect(g, vp720, below)).position.y != r.end.y:
+				edges_ok = false
+		check("test_to_art_rect_%s_adjacent_cells_share_edges" % id, edges_ok)
+		check("test_to_art_rect_%s_every_cell_inside_the_play_rect" % id, inside_play)
+
+
+# Story 047 Part A: the board band starts at 20 % of the height; the Z1 HUD band keeps 3-8 %.
+func test_board_band_top_20_percent() -> void:
+	check("test_board_band_top_ratio_is_0_20", is_equal_approx(ScreenLayout.BOARD_BAND_TOP_RATIO, 0.20))
+	for vp: Vector2 in VIEWPORTS:
+		var area: Rect2 = ScreenLayout.board_area_rect(vp)
+		check("test_board_area_%s_starts_at_20_percent_got_%s" % [vp, area.position.y], _near(area.position.y, vp.y * 0.20, EPS))
+		check("test_board_area_%s_ends_at_the_wide_arena_bottom" % vp, _near(area.end.y, vp.y * 0.64, EPS))
+		var hud: Rect2 = ScreenLayout.hud_rect(vp)
+		check("test_hud_rect_%s_is_3_to_8_percent_got_%s_%s" % [vp, hud.position.y, hud.end.y], _near(hud.position.y, vp.y * 0.03, EPS) and _near(hud.end.y, vp.y * (0.03 + 0.61 * 0.2), EPS))
+		check("test_hud_rect_%s_ends_above_the_board_band" % vp, hud.end.y <= area.position.y + EPS)
+	check("test_board_band_top_144_px_at_720p", _near(ScreenLayout.board_area_rect(Vector2(1280, 720)).position.y, 144.0, EPS))

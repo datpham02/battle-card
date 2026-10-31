@@ -1,0 +1,24 @@
+{
+  "_doc": "Story 047 Part B. chapters: chapters.json id -> art region folder under assets/art/env/ (art bible 8.1). default: region when a chapter is unmapped or the id is empty. fallback_bands: flat sky / ground drawn by BackdropLayer when a region has no backdrop art; sky rows above the 20 % board band, ground below. Hex values from art bible 6.4 where it gives one (forest mist, ice_tower, lattice_heart); the others are PLACEHOLDERS named after the table's words, for art-director to confirm.",
+  "chapters": {
+    "ch1": "forest",
+    "ch2": "dungeon",
+    "ch3": "ice_tower",
+    "swamp": "swamp",
+    "desert": "sands",
+    "hellfire": "hellfire",
+    "sky_isles": "sky_isles",
+    "an_dai": "lattice_heart"
+  },
+  "default": "forest",
+  "fallback_bands": {
+    "forest": {"sky": "#7D8896", "ground": "#4A5257"},
+    "dungeon": {"sky": "#4A4440", "ground": "#2C2826"},
+    "ice_tower": {"sky": "#8E95B8", "ground": "#4C5069"},
+    "swamp": {"sky": "#6B705A", "ground": "#353A2C"},
+    "sands": {"sky": "#B8A888", "ground": "#6E6248"},
+    "hellfire": {"sky": "#3A3236", "ground": "#1F1B1D"},
+    "sky_isles": {"sky": "#B9BFC8", "ground": "#6A7080"},
+    "lattice_heart": {"sky": "#15142A", "ground": "#0E0D1C"}
+  }
+}

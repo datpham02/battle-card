@@ -1,9 +1,11 @@
 class_name CombatView
 extends Node2D
-## Draws the arena and owns the combat logic objects (CombatState, the player's UnitMover,
-## the player half's FieldDrops), ticking them from _process with one shared (capped) delta.
+## Owns the combat logic objects (CombatState, the player's UnitMover, the player half's FieldDrops),
+## ticking them from _process with one shared (capped) delta, and draws the HUD band and the step rings.
 ## Layout (landscape): a thin HUD band (player HP left, boss HP right), then the board (size
 ## and shape from CombatConfig.grid): player's half left of a divider, boss's half right.
+## Story 047: the board and both units are drawn by the BattleCanvas layers (FloorLayer / UnitLayer),
+## which read this view; [method get_battle_canvas] is null when the view runs alone (unit suites).
 ## The boss walks, picks up points and cuts (BossController); swings resolve via SwingArbiter.
 ## A cooldown ring under the player's feet shows the step cooldown. Placeholder art.
 ## Stepping onto a cell with a field point picks it up into the hand (HoldSlots).
@@ -18,16 +20,10 @@ extends Node2D
 ## Implements: Story 003, Story 005, Story 006, Story 007, Story 014, Story 016, Story 041.
 
 const ENEMY_COLOR: Color = Color(0.7, 0.3, 0.3)
-const ENEMY_DEAD_COLOR: Color = Color(0.45, 0.45, 0.45)
 const BAR_BACK: Color = Color(0.2, 0.17, 0.15, 0.8)
 const HP_COLOR: Color = Color(0.85, 0.2, 0.2)
 const PLAYER_HP_COLOR: Color = Color(0.3, 0.75, 0.35)
 const TEXT_COLOR: Color = Color(0.15, 0.12, 0.1)
-const GRID_LINE_COLOR: Color = Color(0.15, 0.12, 0.1, 0.35)
-const PLAYER_HALF_TINT: Color = Color(0.3, 0.55, 0.95, 0.12)
-const ENEMY_HALF_TINT: Color = Color(0.85, 0.25, 0.25, 0.12)
-const DIVIDER_COLOR: Color = Color(0.15, 0.12, 0.1, 0.9)
-const PLAYER_COLOR: Color = Color(0.25, 0.6, 0.9)
 const DEFEAT_COLOR: Color = Color(0.9, 0.1, 0.1)
 const VICTORY_COLOR: Color = Color(0.1, 0.5, 0.2)
 const RING_COLOR: Color = Color(0.95, 0.6, 0.1)
@@ -36,18 +32,9 @@ const PAD: float = 10.0
 const BAR_HEIGHT: float = 22.0
 const FONT_SIZE: int = 24
 const BIG_FONT_SIZE: int = 72
-## In-cell elements scale from the cell size: player marker radius (of cell height),
-## enemy body width / height (of cell width / height).
+## Player marker radius as a share of the cell height: the cooldown ring sits this far (plus RING_GAP_RATIO)
+## from the unit's body centre. The marker itself is drawn by UnitLayer since Story 047 (same ratio there).
 const MARKER_RADIUS_RATIO: float = 0.33
-## Marker label font size as a share of the marker radius (so it shrinks with the grid).
-const MARKER_FONT_RATIO: float = 0.6
-## Player marker text fit (Story 018: the character name replaces "BẠN"): the font shrinks from
-## MARKER_FONT_RATIO down to this size until the text fits MARKER_TEXT_FILL of the diameter; if it
-## still does not fit, only the first word is drawn.
-const MARKER_MIN_FONT_SIZE: int = 10
-const MARKER_TEXT_FILL: float = 0.92
-const ENEMY_BODY_WIDTH_RATIO: float = 0.6
-const ENEMY_BODY_HEIGHT_RATIO: float = 0.8
 ## Cooldown ring: gap outside the marker (of cell height), line width, arc point count.
 const RING_GAP_RATIO: float = 0.06
 const RING_WIDTH: float = 6.0
@@ -234,12 +221,10 @@ var _end_emitted: bool = false
 ## a miniboss, a normal match or the final match). Such a boss is DOWNED at 0 HP instead of dying (see
 ## [method is_boss_downed]); absent/false keeps the plain dead-boss behaviour.
 const PARAM_BOSS_CAN_DOWN: String = "boss_can_down"
-## Story 035 downed look: body height ratio of the kneeling boss and its dim color.
-const DOWNED_BODY_HEIGHT_RATIO: float = 0.5
-const DOWNED_COLOR: Color = Color(0.55, 0.32, 0.32, 0.55)
-## Story 035 phase shift look: outline of the invulnerable boss.
-const INVULNERABLE_OUTLINE: Color = Color(0.95, 0.95, 1.0, 0.95)
 var _downed: bool = false
+## Story 047: the battle art canvas that draws the board and the units (set by BattleCanvas when it binds;
+## null when a CombatView runs alone, as the unit suites do, and the rings fall back to the cell centre).
+var _canvas: BattleCanvas = null
 ## Story 035 match stats (see [method get_match_stats]); counted from the existing hooks only.
 var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_casts": 0, "signatures_used": 0,
 	"frost_bursts": 0, "boss_thorn_steps": 0}
@@ -376,6 +361,7 @@ func _wire_status_hooks() -> void:
 	_status.frost_burst.connect(_on_status_frost_burst)
 	_status.thorn_entered.connect(_on_status_thorn_entered)
 	_status.zone_applied.connect(_on_status_zone_applied)
+	_status.zone_expired.connect(_on_status_zone_expired)
 
 
 func _on_status_frost_burst(side: int, damage: float) -> void:
@@ -395,8 +381,21 @@ func _on_status_thorn_entered(side: int, cell: Vector2i, _damage: float) -> void
 
 
 func _on_status_zone_applied(kind: String, side: int, cells: Array[Vector2i]) -> void:
+	_mark_floor_dirty()
 	if side == CombatState.Side.ENEMY and _passive != null:
 		_passive.on_player_zone_formed(kind, cells)
+
+
+# Story 047 Part B: a seal / thorn cell expired (or was cleared): the floor redraws without it.
+func _on_status_zone_expired(_kind: String, _side: int, _cell: Vector2i) -> void:
+	_mark_floor_dirty()
+
+
+# Story 047 Part B: the FloorLayer draws thorns and seals and redraws only on request (art bible 8.6);
+# this is the one place the zone events reach it. No-op when the view runs without a canvas.
+func _mark_floor_dirty() -> void:
+	if _canvas != null and _canvas.get_floor_layer() != null:
+		_canvas.get_floor_layer().mark_dirty()
 
 
 # Story 037: the passive's heal (prayer): heals the player, clamped to max HP, and starts the "+N" HUD flash
@@ -2107,32 +2106,41 @@ func _on_cell_changed(side: int, _old_cell: Vector2i, new_cell: Vector2i) -> voi
 		hold.place_in_first_free(point)
 
 
+## Story 047: the BattleCanvas bound to this view, or null (a CombatView running alone). Named get_battle_canvas:
+## CanvasItem already owns get_canvas() -> RID, which a script may not override.
+func get_battle_canvas() -> BattleCanvas:
+	return _canvas
+
+
+## Story 047: called by BattleCanvas once its layers are bound to this view.
+func set_canvas(canvas: BattleCanvas) -> void:
+	_canvas = canvas
+	queue_redraw()
+
+
+# Story 047: the board, the player and the boss are drawn by the BattleCanvas layers (Floor / Unit); this
+# view keeps the HUD band and the two step rings (Story 046 and the VFX story move them later).
 func _draw() -> void:
 	if _state == null:
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	_draw_board(vp)
 	_draw_hud(vp)
-	_draw_enemy(vp)
 	_draw_boss_ring(vp)
 	_draw_cooldown_ring(vp)
-	_draw_player_marker(vp)
 
 
-func _draw_board(vp: Vector2) -> void:
-	var board: Rect2 = ScreenLayout.board_rect(_grid, vp)
-	# Cell by cell; missing cells are simply not drawn (the board looks cut out there).
-	for cell: Vector2i in _grid.player_cells():
-		_draw_cell(ScreenLayout.cell_rect(_grid, vp, cell), PLAYER_HALF_TINT)
-	for cell: Vector2i in _grid.enemy_cells():
-		_draw_cell(ScreenLayout.cell_rect(_grid, vp, cell), ENEMY_HALF_TINT)
-	var dx: float = ScreenLayout.divider_x(_grid, vp)
-	draw_line(Vector2(dx, board.position.y - 6.0), Vector2(dx, board.end.y + 6.0), DIVIDER_COLOR, 6.0)
-
-
-func _draw_cell(rect: Rect2, tint: Color) -> void:
-	draw_rect(rect, tint)
-	draw_rect(rect, GRID_LINE_COLOR, false, 2.0)
+# Story 047: screen-px centre of the unit of [param side]'s body: the UnitLayer's feet anchor (bottom-centre,
+# FEET_INSET_ART art px above the cell's front edge) raised by half a cell minus that inset, i.e. the cell
+# centre routed through the anchor, so the rings follow the unit when Part C moves the anchor. The cell
+# centre itself when no canvas is bound.
+func _unit_center(vp: Vector2, side: int) -> Vector2:
+	var cell: Vector2i = _state.player_cell if side == CombatState.Side.PLAYER else _state.enemy_cell
+	if _canvas == null or _canvas.get_unit_layer() == null or _canvas.get_combat_view() != self:
+		return ScreenLayout.cell_center(_grid, vp, cell)
+	var n: float = float(ScreenLayout.art_scale(vp))
+	var feet: Vector2 = ScreenLayout.from_art(vp, Vector2(_canvas.get_unit_layer().unit_feet_art(side)))
+	var lift: float = ScreenLayout.cell_size(_grid, vp).y * 0.5 - UnitLayer.FEET_INSET_ART * n
+	return feet - Vector2(0.0, lift)
 
 
 # Top band: player HP bar on the left half, boss HP bar on the right half.
@@ -2196,34 +2204,13 @@ func _draw_boss_hand_piece(piece: Piece, rect: Rect2) -> void:
 	PieceDraw.draw_shape(self, piece, area, ENEMY_COLOR, Color(TEXT_COLOR, 0.7), HAND_PIECE_MAX_UNIT)
 
 
-func _draw_enemy(vp: Vector2) -> void:
-	var dead: bool = _state.is_enemy_dead()
-	var cell: Vector2 = ScreenLayout.cell_size(_grid, vp)
-	var body_size := Vector2(cell.x * ENEMY_BODY_WIDTH_RATIO, cell.y * ENEMY_BODY_HEIGHT_RATIO)
-	var body := Rect2(ScreenLayout.cell_center(_grid, vp, _state.enemy_cell) - body_size * 0.5, body_size)
-	if _downed:
-		# Story 035: kneeling (a lower, wider-looking body resting on the cell's bottom), dimmed, no cross.
-		var kneel_h: float = body_size.y * DOWNED_BODY_HEIGHT_RATIO
-		var kneel := Rect2(Vector2(body.position.x, body.end.y - kneel_h), Vector2(body_size.x, kneel_h))
-		draw_rect(kneel, DOWNED_COLOR)
-		draw_rect(kneel, Color(TEXT_COLOR, 0.6), false, 3.0)
-		return
-	draw_rect(body, ENEMY_DEAD_COLOR if dead else ENEMY_COLOR)
-	draw_rect(body, TEXT_COLOR, false, 3.0)
-	if not dead and _state.enemy_invulnerable_left > 0.0:
-		draw_rect(body.grow(4.0), INVULNERABLE_OUTLINE, false, 4.0)
-	if dead:
-		draw_line(body.position, body.end, TEXT_COLOR, 6.0)
-		draw_line(Vector2(body.end.x, body.position.y), Vector2(body.position.x, body.end.y), TEXT_COLOR, 6.0)
-
-
 # Ring around the player's feet: full right after a step, shrinks to nothing; hidden when ready.
 func _draw_cooldown_ring(vp: Vector2) -> void:
 	var fraction: float = _mover.get_cooldown_fraction()
 	if fraction <= 0.0:
 		return
-	var c: Vector2 = ScreenLayout.cell_center(_grid, vp, _state.player_cell)
-	var radius: float = _marker_radius(vp) + ScreenLayout.cell_size(_grid, vp).y * RING_GAP_RATIO
+	var c: Vector2 = _unit_center(vp, CombatState.Side.PLAYER)
+	var radius: float = ScreenLayout.cell_size(_grid, vp).y * (MARKER_RADIUS_RATIO + RING_GAP_RATIO)
 	draw_arc(c, radius, 0.0, TAU, RING_POINTS, RING_BACK_COLOR, RING_WIDTH)
 	draw_arc(c, radius, -PI * 0.5, -PI * 0.5 + TAU * fraction, RING_POINTS, RING_COLOR, RING_WIDTH)
 
@@ -2232,7 +2219,7 @@ func _draw_cooldown_ring(vp: Vector2) -> void:
 func _draw_boss_ring(vp: Vector2) -> void:
 	if _state.is_enemy_dead():
 		return
-	var c: Vector2 = ScreenLayout.cell_center(_grid, vp, _state.enemy_cell)
+	var c: Vector2 = _unit_center(vp, CombatState.Side.ENEMY)
 	var radius: float = ScreenLayout.cell_size(_grid, vp).y * BOSS_RING_RADIUS_RATIO
 	# Story 025: rooted by its own swing = one solid steel-blue ring (the same ring, a different state).
 	if _boss.is_step_locked():
@@ -2245,32 +2232,6 @@ func _draw_boss_ring(vp: Vector2) -> void:
 	draw_arc(c, radius, -PI * 0.5, -PI * 0.5 + TAU * fraction, RING_POINTS, HP_COLOR, BOSS_RING_WIDTH)
 
 
-func _draw_player_marker(vp: Vector2) -> void:
-	var c: Vector2 = ScreenLayout.cell_center(_grid, vp, _state.player_cell)
-	var radius: float = _marker_radius(vp)
-	var color: Color = ENEMY_DEAD_COLOR if _state.is_player_dead() else PLAYER_COLOR
-	draw_circle(c, radius, color)
-	draw_arc(c, radius, 0.0, TAU, 32, TEXT_COLOR, 3.0)
-	var font_size: int = maxi(int(radius * MARKER_FONT_RATIO), 8)
-	var text: String = get_player_name()
-	var max_width: float = radius * 2.0 * MARKER_TEXT_FILL
-	# Auto-fit (Story 018): shrink the font to MARKER_MIN_FONT_SIZE, then fall back to the first word.
-	while font_size > MARKER_MIN_FONT_SIZE and _text_width(text, font_size) > max_width:
-		font_size -= 1
-	if _text_width(text, font_size) > max_width and text.contains(" "):
-		text = text.get_slice(" ", 0)
-	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, font_size * 0.4), text, HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
-
-
-func _marker_radius(vp: Vector2) -> float:
-	return ScreenLayout.cell_size(_grid, vp).y * MARKER_RADIUS_RATIO
-
-
-# Pixel width of [param text] in the fallback font at [param font_size].
-func _text_width(text: String, font_size: int) -> float:
-	return ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x
-
-
 func _draw_bar(rect: Rect2, ratio: float, color: Color) -> void:
 	draw_rect(rect, BAR_BACK)
 	var fill := Vector2(rect.size.x * clampf(ratio, 0.0, 1.0), rect.size.y)
@@ -2280,3 +2241,12 @@ func _draw_bar(rect: Rect2, ratio: float, color: Color) -> void:
 
 func _draw_text(text: String, pos: Vector2, width: float, align: HorizontalAlignment) -> void:
 	draw_string(ThemeDB.fallback_font, pos, text, align, width, FONT_SIZE, TEXT_COLOR)
+
+
+## Story 047 Part D: match seconds this frame's [param delta] advances the simulation by, the same step
+## _process feeds StatusEffects.tick (capped at max_tick_sec, scaled by the skill menu / Focus): 0 while
+## freeze_time or at Focus's full stop. Pure; the art layers run their status clocks on it.
+func scaled_delta(delta: float) -> float:
+	if freeze_time or _config == null:
+		return 0.0
+	return maxf(minf(delta, _config.max_tick_sec) * _sim_scale(), 0.0)

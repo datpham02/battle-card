@@ -793,10 +793,10 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 
 ### 8.2 Render và màn hình
 - Chiến trường vẽ trong **SubViewport 800×360** (vùng chơi 640 ở giữa, 80 px mỗi bên chỉ là nền). Texture filter Nearest, MSAA 2D tắt, HDR 2D tắt.
-- **Snap pixel đặt trên SubViewport**, không đặt toàn project (để HUD 1280×720 không bị snap). Tên cài đặt ở 4.6: cần kiểm.
+- **Snap pixel đặt trên SubViewport**, không đặt toàn project (để HUD 1280×720 không bị snap). Tên cài đặt ở 4.6 (đã kiểm trên 4.6.3, Story 047): `Viewport.snap_2d_transforms_to_pixel`, `snap_2d_vertices_to_pixel`, `canvas_item_default_texture_filter = NEAREST`, `msaa_2d = DISABLED`, `use_hdr_2d = false`; đặt trong `BattleCanvas._ready`.
 - Hiển thị bằng một Node2D vẽ texture của viewport (dự án không dùng Control), `texture_filter = NEAREST`; HUD vẽ sau, ở độ phân giải gốc.
 - **Hệ số phóng nguyên** n = max(1, floor(min(W/640, H/360))); rect đích 800n×360n căn giữa, cắt hai bên nếu thiếu. **Phần dư tô Mực** (người dùng chốt 2026-10-29). Ví dụ: 2400×1080 khớp n = 3; iPhone Pro Max dư ~16 % chiều dọc; iPad 4:3 dư ~30 %.
-- `ScreenLayout` thêm `art_rect()` làm gốc cho Z1–Z5; tọa độ chạm đổi về art-px; input xử lý ở root (cần kiểm).
+- `ScreenLayout` có `art_scale()`, `art_rect()`, `play_rect()`, `to_art()`, `from_art()` (Story 047). **Quyết định 2026-10-31:** input và HUD vẫn ở độ phân giải gốc; chỉ tầng art đổi đơn vị, vì ở 1280×720 hệ số 2 làm hai hệ trùng nhau. Khi cần màn n = 1 hoặc 3 thật sự thì chỉ `ScreenLayout` đổi.
 - Vị trí đơn vị, hạt, VFX làm tròn về art-px nguyên **trong code**; tốc độ tính theo art-px/s có bộ cộng dồn; không tween vị trí lẻ.
 
 ### 8.3 Khung, neo, đệm
@@ -881,7 +881,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 | 6 | Pixel | alpha chỉ 0/255; không khử răng cưa; không pixel lẻ loi; một cỡ pixel |
 | 7 | Animation | chân không lệch, không vượt khung, viền không rung giữa khung |
 | 8 | Màu cấm | không đỏ #E5293B, không gradient mượt |
-| 9 | Ghép trong game | chụp trong trận, lưu ở `production/qa/evidence/` |
+| 9 | Ghép trong game | chụp trong trận, lưu ở `production/qa/evidence/`. Đạt 2026-10-31 (Story 047, `production/qa/evidence/battle-canvas-art/`): ASSET-001, 003, 004, 005, 007, 017, 018, 020 |
 
 - Duyệt: art-director đối chiếu bảng với ảnh chụp trong game; người dùng ký cuối. Hỏng #1–3 thì sửa dáng, không thêm chi tiết (P2).
 

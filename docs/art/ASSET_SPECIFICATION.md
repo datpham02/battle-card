@@ -12,7 +12,7 @@ or *to verify* carry those labels from the art bible.
 | Battlefield canvas | SubViewport 800×360 art-px; 640 play area centred, 80 px margins per side are backdrop only |
 | Display | integer scale n = max(1, floor(min(W/640, H/360))), centred, leftover filled Ink #1B1722 |
 | Filtering | Nearest on the viewport texture and every art node; MSAA 2D off, HDR 2D off |
-| Pixel snap | on the SubViewport only (not project-wide, so the HUD stays unsnapped); setting name on 4.6 *to verify* |
+| Pixel snap | on the SubViewport only (not project-wide, so the HUD stays unsnapped); verified on 4.6.3 (Story 047): `Viewport.snap_2d_transforms_to_pixel`, `snap_2d_vertices_to_pixel`, set in `src/battle/battle_canvas.gd` |
 | HUD | drawn at native 1280×720 on top; text and bars sharp; UI language under review (2026-10-31 style test: sharp panels, chamfers, diamonds — not yet in the art bible) |
 | Layers in the viewport | FloorLayer → UnitLayer (back row first, same row by x) → OverlayLayer; no Y-sort, no CanvasLayer |
 

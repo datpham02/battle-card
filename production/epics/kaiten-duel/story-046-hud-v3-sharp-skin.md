@@ -17,7 +17,7 @@
   1. **Dải cảnh xa 20 %**: sân bắt đầu ở 20 % chiều cao (hàng rộng kết thúc ≤ 64 %, hàng hẹp ≤ 76 % theo Story 044); 0–20 % chỉ có HUD Z1 (3–8 %) và nền.
   2. **HUD vẽ sắc ở độ phân giải gốc**: panel header hai bên vát góc 45°, thanh máu 12 px có rãnh, vết mất máu, số và tên; thanh Bản Khắc chia đốt; pause và info là ô icon; ô túi là thẻ có huy hiệu giá; Thức Tỉnh là kim cương; chip từ khóa dưới chân đơn vị; **không tấm số máu dưới chân**; màu Đá Đêm #1E1B24 / viền Sương #7D8896 / chữ #F4F6FA viền #0F1219; font sans thật thay `fallback_font`.
   3. **Ô báo đòn đậm dần**: bỏ nhãn đếm ngược; các ô đỏ hiện mờ khi địch bắt đầu niệm và đậm dần đều tới đầy đúng lúc đòn rơi; tô, sọc chéo và viền đều **dưới chân đơn vị**.
-- **Không thuộc story này:** sprite, SubViewport 640×360 và phiến/bệ vẽ bằng texture (story kỹ thuật riêng), joystick và vòng cung túi (Story 044), xuất sheet (Story 045), nền v2 thật (hiện là ứng viên).
+- **Không thuộc story này:** sprite, SubViewport 800×360 và phiến/bệ vẽ bằng texture (**Story 047**, làm trước story này; ô báo đòn ở Phần C vẽ qua `FloorLayer.add_painter` của 047), joystick và vòng cung túi (Story 044), xuất sheet (Story 045), nền v2 thật (hiện là ứng viên).
 
 **ADR Governing Implementation**: N/A (minimal — no ADRs)
 **ADR Decision Summary**: N/A (minimal — no ADRs)
@@ -32,11 +32,11 @@
 
 ## Acceptance Criteria
 
-**Phần A — Hình học (`src/layout/screen_layout.gd`)**
+**Phần A — Hình học (`src/layout/screen_layout.gd`) — CHUYỂN SANG STORY 047 Phần A (2026-10-31: nền đã vẽ cho dải 20 % nên tầng art cần số này trước); giữ lại đây để đối chiếu, không làm lại**
 
-- [ ] Hằng số `BOARD_BAND_TOP_RATIO = 0.20` thay cho công thức `ARENA_TOP_RATIO + HUD_HEIGHT_RATIO × arena`; `board_area_rect()` bắt đầu ở 20 %. Z1 giữ 3–8 %; 8–20 % không chứa yếu tố nào.
-- [ ] Bảng cỡ ô cập nhật và kiểm ±1 px: 5x5 → 43×31 art-px (86×62 px) với đáy 64 %; 3x3 → 64×46 (trần); pha lê 6x6 với đáy 76 % → 46×33. Số cũ (49×35 cho 5x5) không còn được tham chiếu.
-- [ ] Mọi hàm chạm (`cell_at`, túi, Thức Tỉnh, joystick/pad) đúng với dải mới; không ô nào nằm dưới nút.
+- [x] (047) Hằng số `BOARD_BAND_TOP_RATIO = 0.20` thay cho công thức `ARENA_TOP_RATIO + HUD_HEIGHT_RATIO × arena`; `board_area_rect()` bắt đầu ở 20 %. Z1 giữ 3–8 %; 8–20 % không chứa yếu tố nào.
+- [x] (047) Bảng cỡ ô cập nhật và kiểm ±1 px: 5x5 → 43×31 art-px (86×62 px) với đáy 64 %; 3x3 → 64×46 (trần); pha lê 6x6 với đáy 76 % → 46×33. Số cũ (49×35 cho 5x5) không còn được tham chiếu.
+- [x] (047) Mọi hàm chạm (`cell_at`, túi, Thức Tỉnh, joystick/pad) đúng với dải mới; không ô nào nằm dưới nút.
 
 **Phần B — Chữ và khung (`src/ui/hud_skin.gd` mới, dùng bởi `CombatView` và `CutHudView`)**
 
@@ -69,7 +69,7 @@
 
 ## Notes
 
-- Thứ tự làm đề xuất: A (hình học) → C (báo đòn, vì đổi luật chơi và lớp vẽ) → B (skin) → D. A và C có thể chạy song song với B nếu `HudSkin` được dựng trước với font dự phòng.
+- Thứ tự làm đề xuất: C (báo đòn, vẽ vào `FloorLayer` của Story 047) → B (skin) → D. Phần A đã sang Story 047.
 - Prototype `prototypes/art-check/art_check.gd` chứa bản vẽ tham khảo của mọi hình (`_draw_hud_osfe`, `_chamfer`, `_diamond`, `_segments`, `_hp_bar`, `_slot_card`, `--tele-k`); **viết lại theo chuẩn production, không copy** (`.claude/rules/prototype-code.md`).
 - Bộ 9-slice pixel 16×16 (ASSET-013) và icon 12×12 (ASSET-015) giữ làm dự phòng cho đường pixel; story này không dùng chúng.
 - Tải Noto Sans (OFL) là hành động cần người dùng duyệt; story có thể hoàn thành với font dự phòng và ghi rõ trong bằng chứng.

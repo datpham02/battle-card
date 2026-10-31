@@ -19,6 +19,10 @@ signal player_died
 signal enemy_healed(amount: float)
 ## Emitted when a unit actually changes cell. [param side] is a [enum Side] value.
 signal cell_changed(side: int, old_cell: Vector2i, new_cell: Vector2i)
+## Story 047: emitted when the unit of [param side] (a [enum Side] value) actually lost HP, with the HP it lost
+## (after the floor / hook clamps; never 0). Not emitted for ignored damage (dead, invulnerable, non-positive).
+## The UnitLayer plays the `hit` clip from it.
+signal damaged(side: int, amount: float)
 
 var player_max_hp: float
 var player_hp: float
@@ -94,6 +98,7 @@ func damage_enemy(amount: float) -> void:
 	if enemy_hp >= before:
 		return
 	enemy_damage_taken += before - enemy_hp
+	damaged.emit(Side.ENEMY, before - enemy_hp)
 	changed.emit()
 	if is_enemy_dead():
 		enemy_died.emit()
@@ -174,6 +179,7 @@ func damage_player(amount: float) -> void:
 	var before: float = player_hp
 	player_hp = maxf(player_hp - amount, 0.0)
 	player_damage_taken += before - player_hp
+	damaged.emit(Side.PLAYER, before - player_hp)
 	changed.emit()
 	if is_player_dead():
 		player_died.emit()

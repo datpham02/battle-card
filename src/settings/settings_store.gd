@@ -2,8 +2,10 @@ class_name SettingsStore
 extends RefCounted
 ## Story 044 Part B: the player's persisted options (there is no Settings screen; the pause panel
 ## flips [code]controls.movement[/code]). JSON file, default [constant DEFAULT_PATH]:
-## [code]{"controls": {"movement": "joystick" | "pad"}, "show_control_hints": false}[/code].
-## Unknown or missing values fall back to the defaults (joystick, hints off).
+## [code]{"controls": {"movement": "joystick" | "pad"}, "show_control_hints": false, "reduce_motion": false}[/code].
+## Unknown or missing values fall back to the defaults (joystick, hints off, reduce motion off).
+## Story 047 Part D adds [code]reduce_motion[/code] (accessibility "Giam chuyen dong",
+## design/accessibility-requirements.md): animated overlays hold their first frame.
 ##
 ## Two ways to use it. The game reads the shared instance ([method shared]), loaded lazily from
 ## the real file. Tests build their own instance on a temp path ([code]SettingsStore.new(path)[/code])
@@ -30,6 +32,7 @@ static var _override_from_cli_checked: bool = false
 var _path: String
 var _movement: String = MOVEMENT_JOYSTICK
 var _show_control_hints: bool = false
+var _reduce_motion: bool = false
 
 
 ## Builds a store on [param path] and loads it (missing or broken file = defaults).
@@ -119,11 +122,24 @@ func set_show_control_hints(on: bool) -> void:
 	save_file()
 
 
+## True when reduce motion is on (settings.reduce_motion): status overlays and other looping effects
+## hold frame 0. Defaults to false; no OS setting is read (accessibility requirements, open question).
+func get_reduce_motion() -> bool:
+	return _reduce_motion
+
+
+## Sets reduce_motion and saves.
+func set_reduce_motion(on: bool) -> void:
+	_reduce_motion = on
+	save_file()
+
+
 ## Reads the file; anything missing or malformed leaves the defaults. Returns true when a file
 ## was parsed.
 func load_file() -> bool:
 	_movement = MOVEMENT_JOYSTICK
 	_show_control_hints = false
+	_reduce_motion = false
 	if not FileAccess.file_exists(_path):
 		return false
 	var file: FileAccess = FileAccess.open(_path, FileAccess.READ)
@@ -139,6 +155,8 @@ func load_file() -> bool:
 		if mode is String and _is_valid(mode):
 			_movement = mode
 	_show_control_hints = data.get("show_control_hints", false) == true
+	var reduce: Variant = data.get("reduce_motion", false)
+	_reduce_motion = reduce is bool and bool(reduce)
 	return true
 
 
@@ -150,6 +168,7 @@ func save_file() -> bool:
 	var data: Dictionary = {
 		"controls": {"movement": _movement},
 		"show_control_hints": _show_control_hints,
+		"reduce_motion": _reduce_motion,
 	}
 	file.store_string(JSON.stringify(data, "\t"))
 	return true

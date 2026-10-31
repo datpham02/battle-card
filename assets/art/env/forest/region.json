@@ -1,0 +1,23 @@
+{
+  "id": "forest",
+  "backdrop": {
+    "far": "bg_forest_far.png",
+    "near": "bg_forest_near.png",
+    "near_bottom_row": 70
+  },
+  "slab": {
+    "nine_slice": "env_slab_forest_9slice.png",
+    "stamps": "env_slab_forest_stamps.png",
+    "stamps_meta": "env_slab_forest_stamps.json"
+  },
+  "thorn_tile": "env_thorn_forest_tile16.png",
+  "platform": {
+    "deck": "#3A3B37",
+    "face": "#262521",
+    "face_top": "#5A5B54",
+    "mortar": "#1B1722",
+    "shadow": "#1B1722",
+    "shadow_alpha": 0.5,
+    "divider": "#262521"
+  }
+}

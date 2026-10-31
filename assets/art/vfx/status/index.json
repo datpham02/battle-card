@@ -1,0 +1,5 @@
+{
+ "burn": {"hero": "burn_hero", "goblin": "burn_goblin"},
+ "frozen": {"hero": "frozen_hero", "goblin": "frozen_goblin"},
+ "chill": {"hero": "chill_hero", "goblin": "chill_goblin"}
+}

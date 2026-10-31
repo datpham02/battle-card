@@ -2397,7 +2397,9 @@ func _draw_boss_heals(vp: Vector2) -> void:
 # --- Story 027: seal and thorn zones ------------------------------------------
 
 
-# Seals and thorns of BOTH halves (cells are board cells, so ScreenLayout maps them like burning cells).
+# Remaining-time bars of the seals and thorns of BOTH halves and the thorn-entry flashes (cells are
+# board cells, so ScreenLayout maps them like burning cells). Story 047 Part B: the thorn tiles and
+# the seal overlay themselves are drawn by FloorLayer (under the units), not here.
 func _draw_zones(vp: Vector2) -> void:
 	var status: StatusEffects = _combat.get_status()
 	if status == null:
@@ -2406,12 +2408,10 @@ func _draw_zones(vp: Vector2) -> void:
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
 		for cell: Vector2i in status.thorn_cells(side):
 			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-			_draw_thorn_cell(rect)
 			_draw_zone_bar(rect, status.thorn_left(side, cell), status.thorn_total_sec(side, cell),
 				THORN_BAR_BACK, THORN_BAR_FILL, minf(rect.size.x, rect.size.y) * THORN_DEPTH_RATIO)
 		for cell: Vector2i in status.sealed_cells(side):
 			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-			_draw_seal_cell(rect, _cell_occupied(side, cell))
 			_draw_zone_bar(rect, status.seal_left(side, cell), status.seal_total_sec(side, cell),
 				SEAL_BAR_BACK, SEAL_BAR_FILL, SEAL_BORDER_INSET + SEAL_BORDER_WIDTH)
 	for cell: Vector2i in _thorn_flashes.keys():
@@ -2426,46 +2426,6 @@ func _cell_occupied(side: int, cell: Vector2i) -> bool:
 		return true
 	var drops: FieldDrops = _combat.get_drops() if side == CombatState.Side.PLAYER else _combat.get_boss().get_drops()
 	return drops != null and not drops.is_cell_free(cell)
-
-
-# Seal block: solid fill (see-through when [param occupied]), soft outer glow, bright border, barrier glyph.
-func _draw_seal_cell(rect: Rect2, occupied: bool) -> void:
-	draw_rect(rect, SEAL_FILL_OCCUPIED if occupied else SEAL_FILL)
-	var inner: Rect2 = rect.grow(-SEAL_BORDER_INSET)
-	for i: int in range(SEAL_GLOW_STEPS, 0, -1):
-		var glow := Color(SEAL_GLOW, SEAL_GLOW.a / float(i))
-		draw_rect(inner, glow, false, SEAL_BORDER_WIDTH + SEAL_GLOW_STEP_WIDTH * float(i) * 2.0)
-	draw_rect(inner, SEAL_BORDER, false, SEAL_BORDER_WIDTH)
-	if occupied:
-		return
-	var c: Vector2 = rect.get_center()
-	var half_w: float = rect.size.x * SEAL_GLYPH_WIDTH_RATIO * 0.5
-	var gap: float = rect.size.y * SEAL_GLYPH_GAP_RATIO * 0.5
-	for dy: float in [-gap, gap]:
-		draw_line(c + Vector2(-half_w, dy), c + Vector2(half_w, dy), SEAL_GLYPH, SEAL_GLYPH_THICKNESS)
-
-
-# Thorn cell: light tint, then THORN_TEETH inward spikes on each edge and a light zigzag edge line.
-func _draw_thorn_cell(rect: Rect2) -> void:
-	draw_rect(rect, THORN_TINT)
-	var r: Rect2 = rect.grow(-THORN_INSET)
-	var depth: float = minf(r.size.x, r.size.y) * THORN_DEPTH_RATIO
-	var corners: Array[Vector2] = [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
-	var edge := PackedVector2Array()
-	for e: int in 4:
-		var a: Vector2 = corners[e]
-		var b: Vector2 = corners[(e + 1) % 4]
-		# The corners run clockwise on screen (y down), so the inward normal is the edge turned +90 degrees.
-		var inward: Vector2 = (b - a).normalized().rotated(PI * 0.5)
-		for t: int in THORN_TEETH:
-			var p0: Vector2 = a.lerp(b, float(t) / float(THORN_TEETH))
-			var p1: Vector2 = a.lerp(b, float(t + 1) / float(THORN_TEETH))
-			var tip: Vector2 = (p0 + p1) * 0.5 + inward * depth
-			draw_colored_polygon(PackedVector2Array([p0, tip, p1]), THORN_SPIKE)
-			edge.append(p0)
-			edge.append(tip)
-	edge.append(corners[0])
-	draw_polyline(edge, THORN_EDGE, THORN_EDGE_WIDTH)
 
 
 # --- Story 036: tile hazards (mire, sand, wind) and the region traits' cues ----------------------------
