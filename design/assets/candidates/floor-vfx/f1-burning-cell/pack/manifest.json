@@ -1,0 +1,172 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "Tessera floor F1 - Burning cell",
+ "fps": 10,
+ "frame_ms": 100,
+ "frames": 12,
+ "loop": true,
+ "canvas": {
+  "w": 49,
+  "h": 39
+ },
+ "anchor": {
+  "kind": "feet",
+  "x": 24,
+  "y": 36
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 29,
+    "h": 26
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -15,
+    "y": -33
+   }
+  },
+  {
+   "name": "whole-with-sprite",
+   "title": "the whole effect with the sprite in it",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 43,
+    "h": 33
+   },
+   "sheets": [
+    {
+     "file": "whole-with-sprite.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -21,
+    "y": -33
+   }
+  },
+  {
+   "name": "front",
+   "title": "everything in front of the sprite",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 29,
+    "h": 26
+   },
+   "sheets": [
+    {
+     "file": "front.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -15,
+    "y": -33
+   }
+  },
+  {
+   "name": "part-scorch_mark",
+   "title": "the scorch mark part",
+   "part": "scorch_mark",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 29,
+    "h": 13
+   },
+   "sheets": [
+    {
+     "file": "part-scorch_mark.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -15,
+    "y": -22
+   }
+  },
+  {
+   "name": "part-ember_rise",
+   "title": "the ember rise part",
+   "part": "ember_rise",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 21,
+    "h": 20
+   },
+   "sheets": [
+    {
+     "file": "part-ember_rise.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -8,
+    "y": -33
+   }
+  },
+  {
+   "name": "part-campfire",
+   "title": "the campfire part",
+   "part": "campfire",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 17,
+    "h": 18
+   },
+   "sheets": [
+    {
+     "file": "part-campfire.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -8,
+    "y": -25
+   }
+  }
+ ]
+}

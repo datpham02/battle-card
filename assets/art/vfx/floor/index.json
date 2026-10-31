@@ -1,0 +1,109 @@
+{
+ "_doc": "Story 048: floor VFX packs made with PixelLab vfx_workbench (free). anchor = the cell bottom-centre (the slab feet the pack was made on); clip offsets in each manifest are relative to it. layer floor = FloorDynamicLayer (under units), overlay = OverlayLayer (above units, <= 0.35 s). play: loop | once | once_hold (hold hold_frame after playing). fill = made on the largest cell (ref_cell 64x46) to cover the whole face: drawn with its face centre on the cell centre and cropped to the cell (Story 048, user 2026-10-31).",
+ "packs": {
+  "burning_cell": {
+   "dir": "burning_cell",
+   "layer": "floor",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 12,
+   "frame_ms": 100,
+   "fill": true,
+   "ref_cell": [
+    64,
+    46
+   ]
+  },
+  "engraving_lit": {
+   "dir": "engraving_lit",
+   "layer": "floor",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 24,
+   "frame_ms": 125,
+   "fill": true,
+   "ref_cell": [
+    64,
+    46
+   ]
+  },
+  "engraving_complete": {
+   "dir": "engraving_complete",
+   "layer": "floor",
+   "play": "once",
+   "clip": "whole",
+   "frames": 9,
+   "frame_ms": 67
+  },
+  "cracked_cell": {
+   "dir": "cracked_cell",
+   "layer": "floor",
+   "play": "once_hold",
+   "clip": "whole",
+   "frames": 8,
+   "frame_ms": 83,
+   "hold_frame": 7,
+   "fill": true,
+   "ref_cell": [
+    64,
+    46
+   ]
+  },
+  "cast_target": {
+   "dir": "cast_target",
+   "layer": "floor",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 16,
+   "frame_ms": 100,
+   "tint": "hero_block",
+   "fill": true,
+   "ref_cell": [
+    64,
+    46
+   ]
+  },
+  "hit_impact": {
+   "dir": "hit_impact",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 5,
+   "frame_ms": 56
+  },
+  "miss_dust": {
+   "dir": "miss_dust",
+   "layer": "floor",
+   "play": "once",
+   "clip": "whole",
+   "frames": 9,
+   "frame_ms": 83,
+   "fill": true,
+   "ref_cell": [
+    64,
+    46
+   ]
+  },
+  "interrupt": {
+   "dir": "interrupt",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 6,
+   "frame_ms": 56
+  },
+  "thorn_spikes": {
+   "dir": "thorn_spikes",
+   "layer": "floor",
+   "play": "once",
+   "clip": "whole",
+   "frames": 8,
+   "frame_ms": 63,
+   "fill": true,
+   "ref_cell": [
+    64,
+    46
+   ]
+  }
+ }
+}

@@ -1,0 +1,339 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-floor-f4-cracked-cell 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 1.png",
+   "frame": {
+    "x": 83,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 2.png",
+   "frame": {
+    "x": 166,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 3.png",
+   "frame": {
+    "x": 249,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 4.png",
+   "frame": {
+    "x": 0,
+    "y": 52,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 5.png",
+   "frame": {
+    "x": 83,
+    "y": 52,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 6.png",
+   "frame": {
+    "x": 166,
+    "y": 52,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 7.png",
+   "frame": {
+    "x": 249,
+    "y": 52,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 8.png",
+   "frame": {
+    "x": 0,
+    "y": 104,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 9.png",
+   "frame": {
+    "x": 83,
+    "y": 104,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 10.png",
+   "frame": {
+    "x": 166,
+    "y": 104,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-floor-f4-cracked-cell 11.png",
+   "frame": {
+    "x": 249,
+    "y": 104,
+    "w": 83,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 83,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 83,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.4939759036144578,
+    "y": 0.9423076923076923
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-floor-f4-cracked-cell.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 332,
+   "h": 156
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 41,
+   "y": 49
+  },
+  "frameTags": [
+   {
+    "name": "tessera-floor-f4-cracked-cell",
+    "from": 0,
+    "to": 11,
+    "direction": "forward"
+   }
+  ]
+ }
+}

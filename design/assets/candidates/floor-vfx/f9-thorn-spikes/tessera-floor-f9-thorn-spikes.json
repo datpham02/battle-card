@@ -1,0 +1,235 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  },
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 1.png",
+   "frame": {
+    "x": 49,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  },
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 2.png",
+   "frame": {
+    "x": 98,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  },
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 3.png",
+   "frame": {
+    "x": 0,
+    "y": 38,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  },
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 4.png",
+   "frame": {
+    "x": 49,
+    "y": 38,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  },
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 5.png",
+   "frame": {
+    "x": 98,
+    "y": 38,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  },
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 6.png",
+   "frame": {
+    "x": 0,
+    "y": 76,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  },
+  {
+   "filename": "tessera-floor-f9-thorn-spikes 7.png",
+   "frame": {
+    "x": 49,
+    "y": 76,
+    "w": 49,
+    "h": 38
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 38
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 38
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8947368421052632
+   },
+   "duration": 63
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-floor-f9-thorn-spikes.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 147,
+   "h": 114
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 24,
+   "y": 34
+  },
+  "frameTags": [
+   {
+    "name": "tessera-floor-f9-thorn-spikes",
+    "from": 0,
+    "to": 7,
+    "direction": "forward"
+   }
+  ]
+ }
+}

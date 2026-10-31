@@ -1,0 +1,183 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-floor-f8-interrupt-shards 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 46
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8043478260869565
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f8-interrupt-shards 1.png",
+   "frame": {
+    "x": 49,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 46
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8043478260869565
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f8-interrupt-shards 2.png",
+   "frame": {
+    "x": 98,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 46
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8043478260869565
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f8-interrupt-shards 3.png",
+   "frame": {
+    "x": 0,
+    "y": 46,
+    "w": 49,
+    "h": 46
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 46
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8043478260869565
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f8-interrupt-shards 4.png",
+   "frame": {
+    "x": 49,
+    "y": 46,
+    "w": 49,
+    "h": 46
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 46
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8043478260869565
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f8-interrupt-shards 5.png",
+   "frame": {
+    "x": 98,
+    "y": 46,
+    "w": 49,
+    "h": 46
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 46
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 46
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.8043478260869565
+   },
+   "duration": 56
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-floor-f8-interrupt-shards.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 147,
+   "h": 92
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 24,
+   "y": 37
+  },
+  "frameTags": [
+   {
+    "name": "tessera-floor-f8-interrupt-shards",
+    "from": 0,
+    "to": 5,
+    "direction": "forward"
+   }
+  ]
+ }
+}

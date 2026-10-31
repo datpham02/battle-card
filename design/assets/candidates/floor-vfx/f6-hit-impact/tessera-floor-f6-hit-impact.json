@@ -1,0 +1,183 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-floor-f6-hit-impact 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.925
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f6-hit-impact 1.png",
+   "frame": {
+    "x": 49,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.925
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f6-hit-impact 2.png",
+   "frame": {
+    "x": 98,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.925
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f6-hit-impact 3.png",
+   "frame": {
+    "x": 0,
+    "y": 40,
+    "w": 49,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.925
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f6-hit-impact 4.png",
+   "frame": {
+    "x": 49,
+    "y": 40,
+    "w": 49,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.925
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-floor-f6-hit-impact 5.png",
+   "frame": {
+    "x": 98,
+    "y": 40,
+    "w": 49,
+    "h": 40
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 40
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 40
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.925
+   },
+   "duration": 56
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-floor-f6-hit-impact.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 147,
+   "h": 80
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 24,
+   "y": 37
+  },
+  "frameTags": [
+   {
+    "name": "tessera-floor-f6-hit-impact",
+    "from": 0,
+    "to": 5,
+    "direction": "forward"
+   }
+  ]
+ }
+}

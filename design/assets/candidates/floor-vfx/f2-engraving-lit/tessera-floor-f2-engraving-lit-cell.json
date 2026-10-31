@@ -1,0 +1,651 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 1.png",
+   "frame": {
+    "x": 49,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 2.png",
+   "frame": {
+    "x": 98,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 3.png",
+   "frame": {
+    "x": 147,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 4.png",
+   "frame": {
+    "x": 196,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 5.png",
+   "frame": {
+    "x": 0,
+    "y": 37,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 6.png",
+   "frame": {
+    "x": 49,
+    "y": 37,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 7.png",
+   "frame": {
+    "x": 98,
+    "y": 37,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 8.png",
+   "frame": {
+    "x": 147,
+    "y": 37,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 9.png",
+   "frame": {
+    "x": 196,
+    "y": 37,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 10.png",
+   "frame": {
+    "x": 0,
+    "y": 74,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 11.png",
+   "frame": {
+    "x": 49,
+    "y": 74,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 12.png",
+   "frame": {
+    "x": 98,
+    "y": 74,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 13.png",
+   "frame": {
+    "x": 147,
+    "y": 74,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 14.png",
+   "frame": {
+    "x": 196,
+    "y": 74,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 15.png",
+   "frame": {
+    "x": 0,
+    "y": 111,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 16.png",
+   "frame": {
+    "x": 49,
+    "y": 111,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 17.png",
+   "frame": {
+    "x": 98,
+    "y": 111,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 18.png",
+   "frame": {
+    "x": 147,
+    "y": 111,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 19.png",
+   "frame": {
+    "x": 196,
+    "y": 111,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 20.png",
+   "frame": {
+    "x": 0,
+    "y": 148,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 21.png",
+   "frame": {
+    "x": 49,
+    "y": 148,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 22.png",
+   "frame": {
+    "x": 98,
+    "y": 148,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  },
+  {
+   "filename": "tessera-floor-f2-engraving-lit-cell 23.png",
+   "frame": {
+    "x": 147,
+    "y": 148,
+    "w": 49,
+    "h": 37
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 49,
+    "h": 37
+   },
+   "sourceSize": {
+    "w": 49,
+    "h": 37
+   },
+   "pivot": {
+    "x": 0.4897959183673469,
+    "y": 0.918918918918919
+   },
+   "duration": 125
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-floor-f2-engraving-lit-cell.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 245,
+   "h": 185
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 24,
+   "y": 34
+  },
+  "frameTags": [
+   {
+    "name": "tessera-floor-f2-engraving-lit-cell",
+    "from": 0,
+    "to": 23,
+    "direction": "forward"
+   }
+  ]
+ }
+}

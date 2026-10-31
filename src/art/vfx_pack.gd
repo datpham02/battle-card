@@ -144,8 +144,8 @@ static func frame_at(clip_data: Dictionary, elapsed_sec: float, frame_ms_value: 
 
 ## Draws frame `frame` of `clip_name` with its top-left at `feet + offset` (whole art px, no
 ## scaling). False, and nothing drawn, when the clip or its texture is unavailable; an
-## out-of-range frame is clamped.
-func draw_clip(canvas: CanvasItem, clip_name: String, feet: Vector2i, frame: int) -> bool:
+## out-of-range frame is clamped. [param modulate] tints the frame (Story 048: the hero-block cast target).
+func draw_clip(canvas: CanvasItem, clip_name: String, feet: Vector2i, frame: int, modulate: Color = Color.WHITE, clip_rect: Rect2i = Rect2i()) -> bool:
 	var c := clip(clip_name)
 	if c.is_empty():
 		return false
@@ -158,7 +158,17 @@ func draw_clip(canvas: CanvasItem, clip_name: String, feet: Vector2i, frame: int
 	var index: int = clampi(frame, 0, regions.size() - 1)
 	var position: Vector2i = feet + (c["offset"] as Vector2i)
 	var size: Vector2i = c["frame_size"]
-	canvas.draw_texture_rect_region(texture, Rect2(Vector2(position), Vector2(size)), Rect2(regions[index]))
+	var dst := Rect2i(position, size)
+	var src: Rect2i = regions[index]
+	# Story 048: [param clip_rect] (when it has an area) crops the frame to it, so a full-cell effect made on the
+	# largest cell fits a smaller cell without scaling (art bible 8.10: no non-integer scaling).
+	if clip_rect.has_area():
+		var cut: Rect2i = dst.intersection(clip_rect)
+		if not cut.has_area():
+			return true
+		src = Rect2i(src.position + (cut.position - dst.position), cut.size)
+		dst = cut
+	canvas.draw_texture_rect_region(texture, Rect2(dst), Rect2(src), modulate)
 	return true
 
 
