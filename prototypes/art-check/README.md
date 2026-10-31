@@ -39,6 +39,21 @@ floor layer beside the goblin,
 `--bg=<far.png>[,<near.png>]` draws the ASSET-005 backdrop layers (far
 centred under everything, the 800-wide layer's outer 80 px hidden on a 640
 canvas; near = mist band with its bottom on canvas row 46, the horizon + 2),
+`--ui=<dir>` draws the ASSET-013 frames (9-slice at x2: slots, pad and Awaken
+buttons, pause panel, bars with the ASSET-014 fills in code) and ASSET-015
+icons from that folder in place of the flat HUD rects, and hides the zone
+labels; `--fx=<dir>` puts the slice-1 floor/VFX candidates on the board
+(ASSET-012 telegraph on the hero's cell and the one below, ASSET-011 steel
+target tiles under the goblin, ASSET-008 lying T block and falling domino,
+ASSET-009 slash frame 3 tinted steel on the target tiles),
+`--seq=slash|push` (needs `--fx`) plays the cast sequence as keyframes: target
+ramp, cast A/B, the steel domino falling, the VFX sheet at its own timings
+with the goblin's hit frame and an Ivory flash (a 2-line shader standing in
+for ASSET-010), rest; with `--shot` every keyframe is saved as
+`<shot>-NN.png` plus `<shot>.json` (durations in cs), and
+`tools/make_gif.py OUT.gif X0 Y0 X1 Y1 @<shot>.json SCALE <frames…>` turns
+them into a GIF with per-frame delays (`tools/` holds the pure-Python GIF
+encoder and PNG reader that used to live in the session scratchpad),
 `--shot=<png>` saves the window after 30 frames and quits.
 `make_gif.py` in the session scratchpad turned those frames into the looping
 GIFs under `production/qa/evidence/asset-slice1-art-check/anim/` (pure Python,
@@ -135,6 +150,33 @@ asset specs (`design/assets/specs/*-assets.md`, generation log tables).
   enemy half, awaken's cape reads at 1x, defeat/down settle on the slab. Art
   bible §8.9 #7 passes by eye for the candidate set. Not covered: real hold
   times per frame (one hold per clip here) and the hit flash shader.
+- 2026-10-31, HUD with the real frames and icons (`35-ui-layout-v2-5x5.png`,
+  `36-ui-layout-v1-5x5.png`, `37-ui-frames-zoom-x3.png`; `--ui`): the 16x16
+  9-slices stretch to every control size without seams, the notched corners
+  survive x2, the Ink lip only reads once it hangs below the Mist border (inside
+  the #1E1B24 fill it is one value step and invisible — logged as a deviation in
+  the ASSET-013 spec). Icons at 24 px are fine on the pause panel and the slots;
+  on 97–115 px buttons the glyph is drawn x4 (48 px). Open: §7.5 "28 px arrows"
+  vs the 12 px grid; the 16 px bar vs §7.5 "12 px".
+- 2026-10-31, floor and VFX candidates on the board (`38-fx-layout-v2-5x5.png`,
+  `39-fx-zoom-x3.png`; `--fx`): the telegraph (stripe texture tiled on the floor
+  layer, 2 px red frame + 1 px Ink edge on the overlay) stays readable with the
+  hero standing on it; the steel target tile (60 % body, raised edge, bevel mark
+  nine-sliced) is clearly not the telegraph and not the slab; the lying 5x5 T
+  block and the falling 16x16 domino read with their 1 px halo. The first slash
+  (2x2 squares, 4 px on screen) was thin; redrawn the same day as a solid 3 px
+  stepped band (3x3 squares overlapping), which reads as one cut at 2x — the
+  §3 "2x2" wording is the open point, logged in the ASSET-009 spec.
+- 2026-10-31, cast sequence (`anim/seq-slash.gif`, `anim/seq-push.gif`, their
+  `.sheet.png` contact sheets; `--seq`): 13 keyframes, ~2.1 s per cycle. The
+  order the user described — choose tiles, choose the card, cast gesture, the
+  block drops on the chosen tiles, the card's VFX in each tile, the enemy
+  reacts — holds with the existing frames; the slash and the push differ by
+  shape and direction with the same tint. Found and fixed on the way: the
+  VFX must draw above the landed block (first pass drew it underneath), and a
+  modulate-based flash turns the Ink outline purple, so the flash is a real
+  colour-replace shader. Not covered: the block's dissolve or engraving after
+  the hit, the real channel time.
 - The 38x27 slab with a 48 px sprite behaves as §1 expects: a unit covers the
   lower half of the one on the row behind; identity stays in the upper 20 px.
 - Technique notes for the SubViewport story: `Image.load_from_file` +

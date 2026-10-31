@@ -1,0 +1,16 @@
+{
+  "columns": [
+    "steel",
+    "ember",
+    "ice",
+    "wood",
+    "glass",
+    "odd",
+    "enemy"
+  ],
+  "cell_16": 16,
+  "cell_5": 5,
+  "filled": [
+    "steel"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "frame": [
+    38,
+    27
+  ],
+  "gutter": 1,
+  "frames": [
+    {
+      "i": 0,
+      "ms": 60
+    },
+    {
+      "i": 1,
+      "ms": 80
+    },
+    {
+      "i": 2,
+      "ms": 80
+    },
+    {
+      "i": 3,
+      "ms": 80
+    }
+  ],
+  "greys": {
+    "light": "#FFFFFF",
+    "body": "#9A9A9A",
+    "ink": "#1B1722"
+  },
+  "tint": "modulate = hero block highlight colour",
+  "reduced_motion": "frame 3 held 150 ms"
+}

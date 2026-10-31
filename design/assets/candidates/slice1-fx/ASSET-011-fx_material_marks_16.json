@@ -1,0 +1,79 @@
+{
+  "cell": 16,
+  "marks": {
+    "bevel": {
+      "rect": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "scale": "nine_slice",
+      "nine_slice": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "crack": {
+      "rect": [
+        16,
+        0,
+        16,
+        16
+      ],
+      "scale": "center",
+      "nine_slice": null
+    },
+    "clipped": {
+      "rect": [
+        32,
+        0,
+        16,
+        16
+      ],
+      "scale": "nine_slice",
+      "nine_slice": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    "rope": {
+      "rect": [
+        48,
+        0,
+        16,
+        16
+      ],
+      "scale": "nine_slice",
+      "nine_slice": [
+        1,
+        7,
+        1,
+        7
+      ]
+    },
+    "lead": {
+      "rect": [
+        64,
+        0,
+        16,
+        16
+      ],
+      "scale": "nine_slice",
+      "nine_slice": [
+        7,
+        7,
+        7,
+        7
+      ]
+    }
+  },
+  "alpha_levels": {
+    "255": "highlight edge / line",
+    "128": "shadow edge (bevel only)"
+  }
+}

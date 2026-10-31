@@ -38,6 +38,21 @@ extends Node2D
 ##   --props=<wall.png>,<thorns.png>  place the Wall one cell ahead of the hero (unit layer, a
 ##                    second unit behind it shows the overlap) and the Thorns on the floor beside
 ##                    the goblin
+##   --ui=<dir>       ASSET-013 frames + ASSET-015 icon sheet (res:// folder): the HUD placeholder
+##                    rects become the real 9-slice slots / button / bars / pause drawn at 2x, with
+##                    icons; the zone labels and dashed markers are hidden so the HUD can be judged
+##   --fx=<dir>       ASSET-008 steel tiles, ASSET-011 marks, ASSET-012 stripe and ASSET-009 slash
+##                    sheet (res:// folder) shown on the board: telegraph on the hero's cell and the
+##                    cell below (stripes on the floor, red frame + Ink edge on the overlay), cast
+##                    target tiles under the goblin (70 %) and below it (100 %) with the steel mark and
+##                    raised edge, a lying T block of 5x5 tiles beside the hero (hover 2 px + shadow),
+##                    a falling 16x16 domino over the enemy half, slash frame 3 tinted steel on the
+##                    target tiles
+##   --seq=slash|push the cast sequence as keyframes on top of --fx: hero idle while the target
+##                    tiles ramp 35 → 100 %, cast gesture A/B, the steel domino falls onto the lower
+##                    target tile, the VFX sheet plays on both tiles, the goblin takes the hit frame
+##                    with a flash, rest. With --shot one PNG per keyframe (<shot>-<i>.png) and
+##                    <shot>.json with the durations in centiseconds for tools/make_gif.py
 ##   --anim=<clip>    play a clip on both units (idle, step, hit, defeat, victory, fall, cast,
 ##                    awaken; the goblin plays its matching clip); with --shot, one PNG per
 ##                    frame index is saved as <shot>-<i>.png and the run quits after one cycle
@@ -80,6 +95,8 @@ const HUD_DARK := Color("2B2730")
 const HUD_FRAME := Color("8E8A96")
 const HP_PLAYER := Color("4CBF59")
 const HP_BOSS := Color("EFE6D2")
+## ASSET-014: the damage trail behind the fill (no red).
+const HP_TRAIL := Color("B8B0A0")
 const IVORY := Color("EFE6D2")
 
 const HERO_DIR := "res://design/assets/candidates/swordsman/ASSET-001-%s-40x48.png"
@@ -128,6 +145,33 @@ var _bg_near: ImageTexture
 ## divider (unit layer, y-sorted like a unit), the thorns lie on the goblin's neighbour cell (floor).
 var _wall_png: String = ""
 var _thorns_png: String = ""
+## --ui=<dir>: ASSET-013 frames and the ASSET-015 icon sheet, drawn x2 on the HUD layer instead of
+## the flat placeholder rects (slots, pad, Awaken, pause, bars).
+var _ui_dir: String = ""
+var _ui_tex: Dictionary = {}
+var _ui_icons: Dictionary = {}
+## --fx=<dir>: slice-1 floor/VFX candidates (see the header) drawn on a floor layer under the
+## units and an overlay layer above them, so the §8.6 layer order can be judged.
+var _fx_dir: String = ""
+var _fx_tex: Dictionary = {}
+var _fx_meta: Dictionary = {}
+var _fx_floor: Node2D
+var _fx_over: Node2D
+## --seq state: keyframes (see _build_seq), the current one, the two sequence units and the
+## values the fx layers read while a sequence runs.
+const SEQ_HERO_FRAMES: Array[String] = ["idle-A", "idle-B", "cast-A", "cast-B"]
+const SEQ_GOBLIN_FRAMES: Array[String] = ["idle-A", "idle-B", "hit"]
+var _seq: String = ""
+var _seq_steps: Array = []
+var _seq_i: int = -1
+var _seq_time: float = 0.0
+var _seq_hero: Sprite2D
+var _seq_goblin: Sprite2D
+var _seq_state: Dictionary = {"k": 0.0, "dy": -1000.0, "vf": -1, "flash": false}
+const STEEL := Color("8FA3B8")
+const STEEL_HI := Color("EEF4FA")
+const STEEL_LO := Color("5F6F82")
+const TELEGRAPH_RED := Color("E5293B")
 ## --slabs: real slab art (9-slice + stamps) instead of the flat placeholder slab.
 var _slab_tex: ImageTexture
 var _stamp_tex: ImageTexture
@@ -170,6 +214,19 @@ func _ready() -> void:
 	_units.y_sort_enabled = true
 	viewport.add_child(_units)
 	_place_units()
+	if _has_fx():
+		_fx_floor = Node2D.new()
+		_fx_floor.name = "FxFloor"
+		_fx_floor.draw.connect(_draw_fx_floor.bind(_fx_floor))
+		viewport.add_child(_fx_floor)
+		viewport.move_child(_fx_floor, _units.get_index())
+		_fx_over = Node2D.new()
+		_fx_over.name = "FxOverlay"
+		_fx_over.draw.connect(_draw_fx_overlay.bind(_fx_over))
+		viewport.add_child(_fx_over)
+	if not _seq.is_empty() and not _has_fx():
+		push_error("art_check: --seq needs --fx")
+		_seq = ""
 
 	var screen := Sprite2D.new()
 	screen.name = "Screen"
@@ -185,6 +242,7 @@ func _ready() -> void:
 	if _hud:
 		var hud := Node2D.new()
 		hud.name = "Hud"
+		hud.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		hud.draw.connect(_draw_hud.bind(hud))
 		add_child(hud)
 		hud.queue_redraw()
@@ -230,6 +288,14 @@ func _parse_args() -> void:
 				var near: Image = Image.load_from_file(ProjectSettings.globalize_path(bp[1]))
 				if near != null:
 					_bg_near = ImageTexture.create_from_image(near)
+		elif arg.begins_with("--ui="):
+			_ui_dir = arg.trim_prefix("--ui=")
+			_load_ui()
+		elif arg.begins_with("--fx="):
+			_fx_dir = arg.trim_prefix("--fx=")
+			_load_fx()
+		elif arg.begins_with("--seq="):
+			_seq = arg.trim_prefix("--seq=")
 		elif arg.begins_with("--props="):
 			var pp: PackedStringArray = arg.trim_prefix("--props=").split(",")
 			if pp.size() == 2:
@@ -470,6 +536,13 @@ func _draw_slab(board: Node2D, o: Vector2i) -> void:
 func _place_units() -> void:
 	var hero: Vector2i = _default_cell(0)
 	var goblin: Vector2i = _default_cell(1)
+	if not _seq.is_empty():
+		_add_anim_unit(HERO_DIR, SEQ_HERO_FRAMES, 0, hero.x, hero.y)
+		_seq_hero = _anim_sprites[_anim_sprites.size() - 1]
+		_add_anim_unit(GOBLIN_DIR, SEQ_GOBLIN_FRAMES, 1, goblin.x, goblin.y)
+		_seq_goblin = _anim_sprites[_anim_sprites.size() - 1]
+		_build_seq()
+		return
 	if not _anim.is_empty():
 		var clip: Dictionary = CLIPS[_anim]
 		_add_anim_unit(HERO_DIR, clip["hero"], 0, hero.x, hero.y)
@@ -574,23 +647,33 @@ func _draw_hud(hud: Node2D) -> void:
 	var margin: float = vp.x * MARGIN_RATIO
 	# Z1: everything inside 3–8 % of the height (hud.md), 8–14 % left free for the back-row heads.
 	var z1_top: float = vp.y * 0.03
-	var bar_h: float = 14.0
+	var bar_h: float = 16.0 if _has_ui() else 14.0
 	var bar_w: float = vp.x * 0.34
 	var bar_y: float = z1_top + 8.0
-	hud.draw_rect(Rect2(margin, bar_y, bar_w, bar_h), INK)
-	hud.draw_rect(Rect2(margin + 1, bar_y + 1, (bar_w - 2) * 0.85, bar_h - 2), HP_PLAYER)
+	if _has_ui():
+		# ASSET-013 bar frame + ASSET-014 fills: player green with a grey trail, boss Ivory with
+		# the half-life notch; pause = panel 32x32 with the pause icon.
+		_draw_bar(hud, Rect2(margin, bar_y, bar_w, bar_h), 0.85, HP_PLAYER, 0.93, false)
+		_draw_bar(hud, Rect2(vp.x - margin - bar_w, bar_y, bar_w, bar_h), 1.0, HP_BOSS, 1.0, true)
+		_draw_nine(hud, _ui_tex["panel"], Rect2(0, 0, 16, 16), Rect2(vp.x * 0.5 - 16, z1_top + 2, 32, 32), [4, 4, 4, 6], 2)
+		_draw_icon(hud, "pause", Vector2(vp.x * 0.5 - 12, z1_top + 5))
+	else:
+		hud.draw_rect(Rect2(margin, bar_y, bar_w, bar_h), INK)
+		hud.draw_rect(Rect2(margin + 1, bar_y + 1, (bar_w - 2) * 0.85, bar_h - 2), HP_PLAYER)
+		hud.draw_rect(Rect2(vp.x - margin - bar_w, bar_y, bar_w, bar_h), INK)
+		hud.draw_rect(Rect2(vp.x - margin - bar_w + 1, bar_y + 1, bar_w - 2, bar_h - 2), HP_BOSS)
+		hud.draw_rect(Rect2(vp.x * 0.5 - 16, z1_top + 2, 32, 32), INK, false, 2.0)  # pause, 32 px (7.7)
 	hud.draw_string_outline(font, Vector2(margin, bar_y + bar_h + 16), "YOU 170/200", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(margin, bar_y + bar_h + 16), "YOU 170/200", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
-	hud.draw_rect(Rect2(vp.x - margin - bar_w, bar_y, bar_w, bar_h), INK)
-	hud.draw_rect(Rect2(vp.x - margin - bar_w + 1, bar_y + 1, bar_w - 2, bar_h - 2), HP_BOSS)
 	hud.draw_string_outline(font, Vector2(vp.x - margin - bar_w, bar_y + bar_h + 16), "GOBLIN SCOUT 60/60", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
 	hud.draw_string(font, Vector2(vp.x - margin - bar_w, bar_y + bar_h + 16), "GOBLIN SCOUT 60/60", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
-	hud.draw_rect(Rect2(vp.x * 0.5 - 16, z1_top + 2, 32, 32), INK, false, 2.0)  # pause, 32 px (7.7)
 	if _layout == "v2":
 		_draw_controls_v2(hud, vp, font, margin)
 	else:
 		_draw_controls_v1(hud, vp, font, margin)
-	# Z2 band markers: top (under Z1) and bottom (arena bottom).
+	# Z2 band markers: top (under Z1) and bottom (arena bottom). Debug only, hidden with --ui.
+	if _has_ui():
+		return
 	var z2_top: float = vp.y * (ARENA_TOP_RATIO + (_arena_bottom - ARENA_TOP_RATIO) * HUD_HEIGHT_RATIO)
 	hud.draw_dashed_line(Vector2(margin, z2_top), Vector2(vp.x - margin, z2_top), HUD_FRAME, 1.0, 8.0)
 	var label: String = "Z2 board band"
@@ -616,25 +699,29 @@ func _draw_controls_v1(hud: Node2D, vp: Vector2, font: Font, margin: float) -> v
 	var b: float = vp.y * 0.135
 	var g: float = vp.y * 0.008
 	var cx: float = margin + b * 1.5 + g
-	for d: Vector2 in [Vector2(0, -1), Vector2(0, 1), Vector2(-1, 0), Vector2(1, 0)]:
-		var p := Vector2(cx, band_mid) + d * (b + g) - Vector2(b, b) * 0.5
-		_touch_target(hud, Rect2(p, Vector2(b, b)))
-	hud.draw_string_outline(font, Vector2(cx - 24, band_mid + 6), "Z3", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
-	hud.draw_string(font, Vector2(cx - 24, band_mid + 6), "Z3", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
+	var pad: Dictionary = {"arrow_up": Vector2(0, -1), "arrow_down": Vector2(0, 1), "arrow_left": Vector2(-1, 0), "arrow_right": Vector2(1, 0)}
+	for icon_name: String in pad:
+		var dir: Vector2 = pad[icon_name]
+		var p := Vector2(cx, band_mid) + dir * (b + g) - Vector2(b, b) * 0.5
+		_touch_target(hud, Rect2(p, Vector2(b, b)), icon_name)
+	if not _has_ui():
+		hud.draw_string_outline(font, Vector2(cx - 24, band_mid + 6), "Z3", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
+		hud.draw_string(font, Vector2(cx - 24, band_mid + 6), "Z3", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 	# Z5: three hold slots, SLOT_HEIGHT_RATIO 0.22, aspect 1.4, gap 0.02.
 	var sh: float = vp.y * 0.22
 	var sw: float = sh / 1.4
 	var sg: float = vp.y * 0.02
 	var sx: float = vp.x - margin - (sw * 3 + sg * 2)
 	for i: int in 3:
-		_touch_target(hud, Rect2(sx + i * (sw + sg), band_mid - sh * 0.5, sw, sh))
-	hud.draw_string_outline(font, Vector2(sx, band_mid - sh * 0.5 - 8), "Z5 bag", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
-	hud.draw_string(font, Vector2(sx, band_mid - sh * 0.5 - 8), "Z5 bag", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
+		_touch_target(hud, Rect2(sx + i * (sw + sg), band_mid - sh * 0.5, sw, sh), "slot")
 	# Z4: the signature button (2x2 cells), centred.
 	var sig: float = vp.y * 0.16
-	_touch_target(hud, Rect2(vp.x * 0.5 - sig * 0.5, band_mid - sig * 0.5, sig, sig))
-	hud.draw_string_outline(font, Vector2(vp.x * 0.5 - 50, band_mid + sig * 0.5 + 20), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
-	hud.draw_string(font, Vector2(vp.x * 0.5 - 50, band_mid + sig * 0.5 + 20), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
+	_touch_target(hud, Rect2(vp.x * 0.5 - sig * 0.5, band_mid - sig * 0.5, sig, sig), "awakening")
+	if not _has_ui():
+		hud.draw_string_outline(font, Vector2(sx, band_mid - sh * 0.5 - 8), "Z5 bag", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
+		hud.draw_string(font, Vector2(sx, band_mid - sh * 0.5 - 8), "Z5 bag", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
+		hud.draw_string_outline(font, Vector2(vp.x * 0.5 - 50, band_mid + sig * 0.5 + 20), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
+		hud.draw_string(font, Vector2(vp.x * 0.5 - 50, band_mid + sig * 0.5 + 20), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 
 
 ## The 2026-10-31 sketch: a floating 4-way joystick in the left thumb zone (drawn here as if the
@@ -644,9 +731,10 @@ func _draw_controls_v2(hud: Node2D, vp: Vector2, font: Font, margin: float) -> v
 	# Z3 home zone: 0–25 % of the width, from the controls top (64 %) to the screen bottom
 	# (dashed, invisible in game). It never reaches the board's full-width rows.
 	var zone := Rect2(0, vp.y * _controls_top, vp.x * _stick_zone_w, vp.y * (1.0 - _controls_top))
-	hud.draw_dashed_line(Vector2(zone.end.x, zone.position.y), zone.end, HUD_FRAME, 1.0, 8.0)
-	hud.draw_string_outline(font, Vector2(margin, zone.position.y + 18), "Z3 joystick zone", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
-	hud.draw_string(font, Vector2(margin, zone.position.y + 18), "Z3 joystick zone", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
+	if not _has_ui():
+		hud.draw_dashed_line(Vector2(zone.end.x, zone.position.y), zone.end, HUD_FRAME, 1.0, 8.0)
+		hud.draw_string_outline(font, Vector2(margin, zone.position.y + 18), "Z3 joystick zone", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
+		hud.draw_string(font, Vector2(margin, zone.position.y + 18), "Z3 joystick zone", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
 	# Floating stick where a resting thumb lands: base 160 px, knob 88 px, pushed right (a step).
 	var base_r: float = 80.0
 	var knob_r: float = 44.0
@@ -669,23 +757,102 @@ func _draw_controls_v2(hud: Node2D, vp: Vector2, font: Font, margin: float) -> v
 	for deg: float in [100.0, 128.0, 156.0]:
 		var c: Vector2 = pivot + Vector2(cos(deg_to_rad(deg)), -sin(deg_to_rad(deg))) * radius
 		var r := Rect2(c - Vector2(sw, sh) * 0.5, Vector2(sw, sh))
-		_touch_target(hud, r)
-		hud.draw_string(font, r.position + Vector2(8, 22), "T%d" % (i + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
+		_touch_target(hud, r, "slot")
+		if not _has_ui():
+			hud.draw_string(font, r.position + Vector2(8, 22), "T%d" % (i + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 		i += 1
-	hud.draw_string_outline(font, Vector2(vp.x * 0.78, vp.y * _controls_top + 18), "Z5 bag (arc)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
-	hud.draw_string(font, Vector2(vp.x * 0.78, vp.y * _controls_top + 18), "Z5 bag (arc)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
 	# Z4: Awaken button 115 px, low centre.
 	var sig: float = vp.y * 0.16
 	var sig_rect := Rect2(vp.x * 0.5 - sig * 0.5, vp.y - margin * 0.5 - sig, sig, sig)
-	_touch_target(hud, sig_rect)
-	hud.draw_string_outline(font, Vector2(sig_rect.position.x - 4, sig_rect.position.y - 8), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
-	hud.draw_string(font, Vector2(sig_rect.position.x - 4, sig_rect.position.y - 8), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
+	_touch_target(hud, sig_rect, "awakening")
+	if not _has_ui():
+		hud.draw_string_outline(font, Vector2(vp.x * 0.78, vp.y * _controls_top + 18), "Z5 bag (arc)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, INK)
+		hud.draw_string(font, Vector2(vp.x * 0.78, vp.y * _controls_top + 18), "Z5 bag (arc)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, HUD_FRAME)
+		hud.draw_string_outline(font, Vector2(sig_rect.position.x - 4, sig_rect.position.y - 8), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 2, INK)
+		hud.draw_string(font, Vector2(sig_rect.position.x - 4, sig_rect.position.y - 8), "Z4 Awaken", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, IVORY)
 
 
-## A touch target per §7.2: dark fill only under the button, 1 px frame.
-func _touch_target(hud: Node2D, rect: Rect2) -> void:
-	hud.draw_rect(rect, Color(HUD_DARK, 0.85))
-	hud.draw_rect(rect, HUD_FRAME, false, 2.0)
+## A touch target per §7.2: dark fill only under the button, 1 px frame. With --ui, `kind` picks
+## the ASSET-013 frame ("slot" = the recessed slot with the plus icon; anything else = the button
+## in its default state with that icon name from ASSET-015, the Awaken icon at x4).
+func _touch_target(hud: Node2D, rect: Rect2, kind: String = "") -> void:
+	if not _has_ui():
+		hud.draw_rect(rect, Color(HUD_DARK, 0.85))
+		hud.draw_rect(rect, HUD_FRAME, false, 2.0)
+		return
+	var r := Rect2(rect.position.floor(), rect.size.floor())
+	if kind == "slot":
+		_draw_nine(hud, _ui_tex["slot"], Rect2(0, 0, 16, 16), r, [3, 3, 3, 3], 2)
+		_draw_icon(hud, "plus", (r.get_center() - Vector2(12, 12)).floor())
+	else:
+		_draw_nine(hud, _ui_tex["button"], Rect2(0, 0, 16, 16), r, [4, 4, 4, 6], 2)
+		# §7.4 icons are 12x12 (24 px); on buttons of 88 px and more the glyph is drawn x4 (48 px)
+		var k: int = 4 if minf(r.size.x, r.size.y) >= 88.0 else 2
+		# centred in the face above the 2 art-px lip
+		_draw_icon(hud, kind, (r.get_center() - Vector2(6 * k, 6 * k + 2)).floor(), k)
+
+
+func _has_ui() -> bool:
+	return _ui_tex.has("slot") and _ui_tex.has("button") and _ui_tex.has("bar") and _ui_tex.has("panel") and _ui_tex.has("icons")
+
+
+## --ui: the four ASSET-013 frames and the ASSET-015 sheet + JSON index from one folder.
+func _load_ui() -> void:
+	for frame_name: String in ["panel", "button", "slot", "bar"]:
+		var suffix: String = "3slice" if frame_name == "bar" else "9slice"
+		var img: Image = Image.load_from_file(ProjectSettings.globalize_path("%s/ASSET-013-ui_frame_%s_%s.png" % [_ui_dir, frame_name, suffix]))
+		if img != null:
+			_ui_tex[frame_name] = ImageTexture.create_from_image(img)
+	var icons: Image = Image.load_from_file(ProjectSettings.globalize_path(_ui_dir + "/ASSET-015-ui_icons_12.png"))
+	if icons != null:
+		_ui_tex["icons"] = ImageTexture.create_from_image(icons)
+	var f := FileAccess.open(_ui_dir + "/ASSET-015-ui_icons_12.json", FileAccess.READ)
+	if f != null:
+		var data: Variant = JSON.parse_string(f.get_as_text())
+		if data is Dictionary and data.has("icons"):
+			_ui_icons = data["icons"]
+	if not _has_ui():
+		push_error("art_check: --ui folder incomplete: " + _ui_dir)
+
+
+## Nine-slice at integer scale k: corners keep their pixels, edges stretch along one axis, the
+## centre fills the rest (edges and centre are flat colours, so the stretch is exact).
+## `m` = margins left/top/right/bottom in art-px; `src` = the source rect inside the texture.
+func _draw_nine(hud: Node2D, tex: Texture2D, src: Rect2, dst: Rect2, m: Array, k: int, tint: Color = Color.WHITE) -> void:
+	var xs: Array = [0.0, float(m[0]), src.size.x - float(m[2]), src.size.x]
+	var ys: Array = [0.0, float(m[1]), src.size.y - float(m[3]), src.size.y]
+	var dxs: Array = [0.0, float(m[0]) * k, dst.size.x - float(m[2]) * k, dst.size.x]
+	var dys: Array = [0.0, float(m[1]) * k, dst.size.y - float(m[3]) * k, dst.size.y]
+	for j: int in 3:
+		for i: int in 3:
+			var s := Rect2(src.position + Vector2(xs[i], ys[j]), Vector2(xs[i + 1] - xs[i], ys[j + 1] - ys[j]))
+			var d := Rect2(dst.position + Vector2(dxs[i], dys[j]), Vector2(dxs[i + 1] - dxs[i], dys[j + 1] - dys[j]))
+			if s.size.x > 0.0 and s.size.y > 0.0 and d.size.x > 0.0 and d.size.y > 0.0:
+				hud.draw_texture_rect_region(tex, d, s, tint)
+
+
+## One ASSET-015 icon (12x12 art-px) at integer scale k, top-left at pos.
+func _draw_icon(hud: Node2D, icon_name: String, pos: Vector2, k: int = 2) -> void:
+	if not _ui_icons.has(icon_name):
+		return
+	var r: Array = _ui_icons[icon_name]
+	hud.draw_texture_rect_region(_ui_tex["icons"], Rect2(pos, Vector2(12 * k, 12 * k)), Rect2(r[0], r[1], r[2], r[3]))
+
+
+## ASSET-014 on the ASSET-013 bar frame (16x8, ends 2, border 1, drawn x2): fill from the left
+## inside the groove, a trail behind it, and for the boss the Ivory half-life notch (2 px wide,
+## sticking out 3 px above and below).
+func _draw_bar(hud: Node2D, rect: Rect2, ratio: float, fill: Color, trail: float, boss: bool) -> void:
+	var r := Rect2(rect.position.floor(), rect.size.floor())
+	_draw_nine(hud, _ui_tex["bar"], Rect2(0, 0, 16, 8), r, [2, 1, 2, 1], 2)
+	var inner := Rect2(r.position + Vector2(2, 2), r.size - Vector2(4, 4))
+	if trail > ratio:
+		hud.draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * trail), inner.size.y)), HP_TRAIL)
+	hud.draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * ratio), inner.size.y)), fill)
+	if boss:
+		var nx: float = floorf(inner.position.x + inner.size.x * 0.5) - 1.0
+		hud.draw_rect(Rect2(nx - 1.0, r.position.y - 4.0, 4.0, r.size.y + 8.0), INK)
+		hud.draw_rect(Rect2(nx, r.position.y - 3.0, 2.0, r.size.y + 6.0), IVORY)
 
 
 func _draw() -> void:
@@ -693,6 +860,9 @@ func _draw() -> void:
 
 
 func _process(delta: float) -> void:
+	if not _seq.is_empty():
+		_tick_seq(delta)
+		return
 	if not _anim.is_empty():
 		_tick_anim(delta)
 		return
@@ -737,3 +907,224 @@ func _capture(path: String, quit: bool = true) -> void:
 	print("art_check: mode=%s anim=%s arena=%s board=%s cell=%s scale=%d hud=%s layout=%s shot=%s (%s)" % [_mode, _anim, _arena_id, _board, _cell, _scale, _hud, _layout, path, error_string(err)])
 	if quit:
 		get_tree().quit()
+
+
+func _has_fx() -> bool:
+	return _fx_tex.has("tiles16") and _fx_tex.has("tiles5") and _fx_tex.has("marks") and _fx_tex.has("stripe") and _fx_tex.has("slash")
+
+
+## --fx: the slice-1 floor and VFX candidates from one folder (PNG + JSON index where there is one).
+func _load_fx() -> void:
+	var files: Dictionary = {"tiles16": "ASSET-008-block_tiles_16.png", "tiles5": "ASSET-008-block_tiles_5.png",
+		"marks": "ASSET-011-fx_material_marks_16.png", "stripe": "ASSET-012-fx_telegraph_stripe_8.png",
+		"slash": "ASSET-009-vfx_slash_sheet.png", "push": "ASSET-016-vfx_push_sheet.png"}
+	for key: String in files:
+		var img: Image = Image.load_from_file(ProjectSettings.globalize_path(_fx_dir + "/" + files[key]))
+		if img != null:
+			_fx_tex[key] = ImageTexture.create_from_image(img)
+	for key: String in ["marks", "slash", "push"]:
+		var f := FileAccess.open(_fx_dir + "/" + String(files[key]).get_basename() + ".json", FileAccess.READ)
+		if f != null:
+			var data: Variant = JSON.parse_string(f.get_as_text())
+			if data is Dictionary:
+				_fx_meta[key] = data
+	if not _has_fx():
+		push_error("art_check: --fx folder incomplete: " + _fx_dir)
+
+
+## The slab face a floor overlay may cover: the cell minus the Ink gap and the front lip.
+func _face_rect(side: int, col: int, row: int) -> Rect2:
+	var o: Vector2i = _cell_origin(side, col, row)
+	return Rect2(o.x, o.y, _cell.x - GAP, _cell.y - GAP - LIP)
+
+
+## Pixel-exact frame of [param t] px drawn INSIDE [param r].
+func _frame_px(n: Node2D, r: Rect2, t: float, col: Color) -> void:
+	n.draw_rect(Rect2(r.position, Vector2(r.size.x, t)), col)
+	n.draw_rect(Rect2(r.position + Vector2(0, r.size.y - t), Vector2(r.size.x, t)), col)
+	n.draw_rect(Rect2(r.position, Vector2(t, r.size.y)), col)
+	n.draw_rect(Rect2(r.position + Vector2(r.size.x - t, 0), Vector2(t, r.size.y)), col)
+
+
+## Cells the --fx demo uses: [telegraph cells (player)], [target cells (enemy)], lying-block cell.
+func _fx_cells() -> Dictionary:
+	var hero: Vector2i = _default_cell(0)
+	var goblin: Vector2i = _default_cell(1)
+	var tele: Array = [Vector2i(hero.x, hero.y)]
+	if _is_real(0, hero.x, hero.y + 1):
+		tele.append(Vector2i(hero.x, hero.y + 1))
+	var target: Array = [Vector2i(goblin.x, goblin.y)]
+	if _is_real(1, goblin.x, goblin.y + 1):
+		target.append(Vector2i(goblin.x, goblin.y + 1))
+	var lying := Vector2i(maxi(hero.x - 1, 0), hero.y)
+	return {"tele": tele, "target": target, "lying": lying}
+
+
+## Floor layer (under the units): telegraph fill + stripes, cast target fill + mark + raised edge,
+## the lying block with its shadow.
+func _draw_fx_floor(n: Node2D) -> void:
+	var cells: Dictionary = _fx_cells()
+	var in_seq: bool = not _seq.is_empty()
+	if not in_seq:
+		for c: Vector2i in cells["tele"]:
+			var face: Rect2 = _face_rect(0, c.x, c.y)
+			n.draw_texture_rect(_fx_tex["stripe"], face, true)
+	var intensity: Array = [0.7, 1.0]
+	var i: int = 0
+	for c: Vector2i in cells["target"]:
+		var face: Rect2 = _face_rect(1, c.x, c.y)
+		var k: float = float(_seq_state["k"]) if in_seq else float(intensity[mini(i, 1)])
+		if k <= 0.0:
+			continue
+		n.draw_rect(face, Color(STEEL, 0.6))
+		# raised edge in the highlight colour (top-left) and the shadow (bottom-right), ramped by k
+		n.draw_rect(Rect2(face.position, Vector2(face.size.x, 1)), Color(STEEL_HI, k))
+		n.draw_rect(Rect2(face.position, Vector2(1, face.size.y)), Color(STEEL_HI, k))
+		n.draw_rect(Rect2(face.position + Vector2(0, face.size.y - 1), Vector2(face.size.x, 1)), Color(STEEL_LO, k))
+		n.draw_rect(Rect2(face.position + Vector2(face.size.x - 1, 0), Vector2(1, face.size.y)), Color(STEEL_LO, k))
+		# the material mark, stretched to the face (steel = bevel, margins 1): tinted highlight
+		var mark: Dictionary = (_fx_meta.get("marks", {}) as Dictionary).get("marks", {}).get("bevel", {})
+		if not mark.is_empty():
+			var r: Array = mark["rect"]
+			var m: Array = mark["nine_slice"]
+			_draw_nine(n, _fx_tex["marks"], Rect2(r[0], r[1], r[2], r[3]), face.grow(-2), m, 1, Color(STEEL_HI, k))
+		i += 1
+	# lying T block: four 5x5 steel tiles, 1 px Ink halo around the whole shape, hovering 2 px over
+	# a square shadow; centred on the face
+	var lying: Vector2i = cells["lying"]
+	if _is_real(0, lying.x, lying.y) and not in_seq:
+		var face: Rect2 = _face_rect(0, lying.x, lying.y)
+		var shape: Array = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(1, 1)]
+		var base: Vector2 = (face.get_center() - Vector2(7.5, 5)).floor()
+		for sc: Vector2i in shape:
+			n.draw_rect(Rect2(base + Vector2(sc) * 5 + Vector2(0, 2), Vector2(5, 5)), Color(INK, 0.5))
+		var top: Vector2 = base - Vector2(0, 2)
+		for sc: Vector2i in shape:
+			n.draw_rect(Rect2(top + Vector2(sc) * 5 - Vector2(1, 1), Vector2(7, 7)), INK)
+		for sc: Vector2i in shape:
+			n.draw_texture_rect_region(_fx_tex["tiles5"], Rect2(top + Vector2(sc) * 5, Vector2(5, 5)), Rect2(0, 0, 5, 5))
+
+
+## Overlay layer (above the units): the telegraph frame with its Ink edge, slash frame 3 on the
+## target tiles (tinted with the steel highlight), a falling 16x16 domino.
+func _draw_fx_overlay(n: Node2D) -> void:
+	var cells: Dictionary = _fx_cells()
+	var in_seq: bool = not _seq.is_empty()
+	if not in_seq:
+		for c: Vector2i in cells["tele"]:
+			var face: Rect2 = _face_rect(0, c.x, c.y)
+			_frame_px(n, face.grow(1), 1, INK)
+			_frame_px(n, face, 2, TELEGRAPH_RED)
+	var sheet_key: String = _seq if in_seq and _fx_tex.has(_seq) else "slash"
+	var vf: int = int(_seq_state["vf"]) if in_seq else 2
+	var meta: Dictionary = _fx_meta.get(sheet_key, {})
+	var fw: int = 38
+	var fh: int = 27
+	var gut: int = 1
+	if meta.has("frame"):
+		fw = int(meta["frame"][0])
+		fh = int(meta["frame"][1])
+		gut = int(meta.get("gutter", 1))
+	# falling domino (drawn BEFORE the VFX so the strike lands on top of the block): two 16x16 steel tiles side by side, Ink halo; in the demo 40 px above the
+	# last target tile, in a sequence at the keyframe's dy (hidden below -999)
+	var dy: float = float(_seq_state["dy"]) if in_seq else -40.0
+	if dy >= -999.0:
+		var last: Vector2i = cells["target"][cells["target"].size() - 1]
+		var tface: Rect2 = _face_rect(1, last.x, last.y)
+		var fpos: Vector2 = (tface.get_center() - Vector2(16, 8) + Vector2(0, dy)).floor()
+		n.draw_rect(Rect2(fpos - Vector2(1, 1), Vector2(34, 18)), INK)
+		for k: int in 2:
+			n.draw_texture_rect_region(_fx_tex["tiles16"], Rect2(fpos + Vector2(16 * k, 0), Vector2(16, 16)), Rect2(0, 0, 16, 16))
+	if vf >= 0:
+		for c: Vector2i in cells["target"]:
+			var face: Rect2 = _face_rect(1, c.x, c.y)
+			var pos: Vector2 = (face.get_center() - Vector2(fw, fh) * 0.5).floor()
+			n.draw_texture_rect_region(_fx_tex[sheet_key], Rect2(pos, Vector2(fw, fh)), Rect2(vf * (fw + gut), 0, fw, fh), STEEL_HI)
+
+
+## One keyframe of the cast sequence.
+func _step(ms: int, hero: String, gob: String, k: float, dy: float, vf: int, flash: bool) -> Dictionary:
+	return {"ms": ms, "hero": hero, "gob": gob, "k": k, "dy": dy, "vf": vf, "flash": flash}
+
+
+## The cast sequence: choose tiles (ramp) → cast gesture (art bible §3: A 0.08 s, B 0.12 s) → the
+## block falls (3 keyframes) → VFX frames at the sheet's own timings while the goblin takes the
+## hit (flash on the first VFX frame) → rest. One cycle = ~2.1 s.
+func _build_seq() -> void:
+	var meta: Dictionary = _fx_meta.get(_seq, _fx_meta.get("slash", {}))
+	var vfx_ms: Array = []
+	for f: Variant in meta.get("frames", []):
+		vfx_ms.append(int((f as Dictionary).get("ms", 60)))
+	if vfx_ms.is_empty():
+		vfx_ms = [50, 60, 60, 60]
+	_seq_steps = [
+		_step(300, "idle-A", "idle-A", 0.35, -1000.0, -1, false),
+		_step(300, "idle-B", "idle-B", 0.6, -1000.0, -1, false),
+		_step(80, "cast-A", "idle-A", 1.0, -1000.0, -1, false),
+		_step(120, "cast-B", "idle-A", 1.0, -1000.0, -1, false),
+		_step(60, "idle-A", "idle-A", 1.0, -40.0, -1, false),
+		_step(60, "idle-A", "idle-A", 1.0, -24.0, -1, false),
+		_step(60, "idle-A", "idle-A", 1.0, -10.0, -1, false),
+	]
+	for i: int in vfx_ms.size():
+		var gob: String = "hit" if i >= 1 and i <= 2 else "idle-A"
+		_seq_steps.append(_step(vfx_ms[i], "idle-A", gob, 1.0, 0.0, i, i == 1))
+	_seq_steps.append(_step(400, "idle-A", "idle-B", 0.0, -1000.0, -1, false))
+	_seq_steps.append(_step(300, "idle-B", "idle-B", 0.0, -1000.0, -1, false))
+
+
+func _apply_seq_step(i: int) -> void:
+	var st: Dictionary = _seq_steps[i]
+	_seq_hero.texture = _anim_textures[0][SEQ_HERO_FRAMES.find(st["hero"])]
+	_seq_goblin.texture = _anim_textures[1][SEQ_GOBLIN_FRAMES.find(st["gob"])]
+	# hit flash = ASSET-010: every opaque texel drawn as Ivory for one VFX frame (a 2-line canvas
+	# shader here; the game's unit_fx shader does the same inside the palette)
+	_seq_goblin.material = _flash_material() if bool(st["flash"]) else null
+	_seq_state = {"k": st["k"], "dy": st["dy"], "vf": st["vf"], "flash": st["flash"]}
+	if _fx_floor != null:
+		_fx_floor.queue_redraw()
+	if _fx_over != null:
+		_fx_over.queue_redraw()
+
+
+## Keyframe clock; with --shot every keyframe is saved once and the run quits after one cycle,
+## writing <shot>.json = the durations in centiseconds (GIF units).
+func _tick_seq(delta: float) -> void:
+	_frames += 1
+	if _frames < SHOT_FRAME or _capturing:
+		return
+	if _seq_i >= 0:
+		_seq_time += delta
+		if _seq_time < float(_seq_steps[_seq_i]["ms"]) / 1000.0:
+			return
+	_seq_time = 0.0
+	_seq_i += 1
+	if _seq_i >= _seq_steps.size():
+		if _shot.is_empty():
+			_seq_i = 0
+		else:
+			var cs: Array = []
+			for st: Dictionary in _seq_steps:
+				cs.append(int(st["ms"]) / 10)
+			var f := FileAccess.open(_shot.get_basename() + ".json", FileAccess.WRITE)
+			if f != null:
+				f.store_string(JSON.stringify(cs))
+			get_tree().quit()
+			return
+	_apply_seq_step(_seq_i)
+	if not _shot.is_empty():
+		_capturing = true
+		var path: String = _shot.get_basename() + ("-%02d." % _seq_i) + _shot.get_extension()
+		await _capture(path, false)
+		_capturing = false
+
+
+var _flash_mat: ShaderMaterial
+func _flash_material() -> ShaderMaterial:
+	if _flash_mat == null:
+		var sh := Shader.new()
+		sh.code = "shader_type canvas_item;
+void fragment() { vec4 t = texture(TEXTURE, UV); COLOR = vec4(0.937, 0.902, 0.823, t.a); }"
+		_flash_mat = ShaderMaterial.new()
+		_flash_mat.shader = sh
+	return _flash_mat

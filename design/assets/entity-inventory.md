@@ -119,7 +119,7 @@
 | 109 | Odd Block (magenta, one outline + sparkle) | Item / Prop | block tiles 16x16 (falling, bag) and 5x5 (on ground); autotile masks; states: falling, lying, shatter, dissolve | art-bible §3 | Needed |  |
 | 110 | Enemy block (ivory stone, flat) | Item / Prop | block tiles 16x16 (falling, bag) and 5x5 (on ground); autotile masks; states: falling, lying, shatter, dissolve | art-bible §3 | Needed |  |
 | 111 | Spell VFX: Slash | VFX / Particles | stepped diagonal streak across each target tile, <= 0.25 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed | 1 |
-| 112 | Spell VFX: Push | VFX / Particles | column of squares sliding right half a tile, <= 0.3 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed |  |
+| 112 | Spell VFX: Push | VFX / Particles | column of squares sliding right half a tile, <= 0.3 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | In Progress (ASSET-016 candidate, 2026-10-31) | 1 |
 | 113 | Spell VFX: Burn | VFX / Particles | stepped flame column rising 2 steps, <= 0.35 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed |  |
 | 114 | Spell VFX: Ice | VFX / Particles | falling shards freezing into a square frame (Frozen) or a plus (Chill), <= 0.35 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed |  |
 | 115 | Spell VFX: Crack | VFX / Particles | stepped 1 px crack spreading across tiles, <= 0.3 s; 3 grey values, tinted in code | art-bible §3 (VFX table) | Needed |  |
