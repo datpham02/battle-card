@@ -46,7 +46,7 @@ func set_status(status: StatusEffects) -> void:
 func try_step(direction: Vector2i) -> bool:
 	if _remaining > 0.0 or is_step_locked():
 		return false
-	if _status != null and _status.is_pinned(_side):
+	if _status != null and (_status.is_pinned(_side) or _status.is_rooted(_side)):
 		return false
 	if absi(direction.x) + absi(direction.y) != 1:
 		return false
@@ -64,6 +64,9 @@ func try_step(direction: Vector2i) -> bool:
 		# free step (scale 0.0, Anh Bo) stays free.
 		if scale > 0.0 and step_cost_fn.is_valid():
 			scale *= maxf(float(step_cost_fn.call(from_cell)), 0.0)
+		# Phase 2 D4 Slow: x step_mult of the side's Slow (1.0 when none).
+		if scale > 0.0 and _status != null:
+			scale *= _status.step_mult(_side)
 		_remaining = _cooldown_sec * scale
 	return moved
 

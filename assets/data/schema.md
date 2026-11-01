@@ -963,3 +963,58 @@ Model API (`TileHazards`): signals `vent_warned/vent_erupted(side, vent_index, c
 `ArenaValidator.bridge_cells(grid, player_half)` = real cells with exactly two real neighbours on opposite sides whose removal splits the half (a one-cell-wide straight corridor); `ArenaValidator.island_cells(grid, player_half)` = the 4-connected components of the half without its bridge cells (an arena without a bridge has one island: the whole half); `components_of(cells)` is the shared helper. New shapes: `forge` (5x3, row vents 0 and 1 per half, burn), `caldera` (5x5, side cells (3,1) (3,2) (3,3) missing, column vents 1 and 4, burn), `twin_isles` (6x3, bridge (2,1): islands of 4 and 9 cells, crumble, pin), `three_isles` (7x2, bridges (2,1) and (5,1): islands of 4, 4 and 2 cells, crumble, pin).
 
 **Condition type `best_floor`** (`achievements.json`): `params {min}` (positive int): `ProgressState.get_best_floor() >= min`; evaluated on every event like `milestone`; `UnlockRules.progress_of` = `min(best floor, min) / min`. New achievements, appended after `small_deck`: `reach_floor_4` (`best_floor` 4 -> region `hellfire`) and `reach_floor_5` (`best_floor` 5 -> region `sky_isles`), name / desc keys `achievement.<id>.name|desc`. The table above ("22 achievements") is now 24.
+
+## Phase 2 (P2.2): `enemy_skills.json` and the pattern brain (`chapters.json` `brain` / `enemy` / `pattern_tempo_mult`)
+
+Spec: `design/quick-specs/phase2-misty-forest-2026-11-01.md`; ADR-0001. Read by `src/combat/enemy_skills_config.gd`
+(class EnemySkillsConfig, pure: `load_from_file` / `from_dictionary`). Bad data never crashes: a broken skill or enemy is
+dropped and the reason goes to `EnemySkillsConfig.problems` (the shipped file must load with `problems == []`, checked by
+`tests/integration/run/pattern_dodge_test.gd`). Missing blocks / keys use the code defaults listed here.
+
+Top level: `{ "version": 1, "fairness": {...}, "ai": {...}, "defaults": {...}, "statuses": {...}, "skills": {...}, "enemies": {...} }`.
+
+| Block | Key | Type / unit | Meaning | Default |
+|---|---|---|---|---|
+| `fairness` | `reaction_margin_sec` | sec | Margin added to the hero's escape time (F1, `FairnessCheck.t_need`) | 0.25 |
+| | `max_red_ratio` | 0..1 | Red (warned) cells at once / usable player cells, trait warnings included (F2) | 0.5 |
+| | `cc_grace_sec` | sec | No new root / slow until this long after the hero's last step lock ended (F4, `StatusEffects.since_lock_ended`) | 1.0 |
+| | `min_gap_between_warnings_sec` | sec | Minimum time between two warnings (F5) | 0.4 |
+| | `followup_min_warning_sec` | sec | A followup warning below this drops the skill (problem) | 0.75 |
+| | `heavy_recovery_sec` | sec | Recovery at or above this counts as heavy for the gap (F5) | 1.2 |
+| `ai` | `punish_standing_still` | mult | Weight on skills covering a hero who stood still `standing_still_sec` | 1.2 |
+| | `standing_still_sec` | sec | | 1.5 |
+| | `avoid_repeat_last_skill` | mult | Weight of the last skill used | 0.45 |
+| | `favor_phase_mechanic` | mult | Weight of the phase's `mechanic` skill | 1.25 |
+| | `noise` | 0..1 | Seeded random spread on the weights | 0.1 |
+| | `cancel_cooldown_ratio` | 0..1 | Share of the cooldown applied when a skill is interrupted | 0.5 |
+| `defaults` | `windup_sec`, `recovery_sec`, `weight`, `interruptible`, `phase_transition_sec`, `marker_life_sec`, `marker_break_min_cells` | | Per-skill / per-phase fallbacks | 0.5, 0.6, 1.0, true, 1.5, 12.0, 1 |
+| `statuses` | `root {sec}`, `slow {sec, step_mult}`, `guard {amount, sec}`, `fragile {stacks}`, `frost {stacks}` | | Numbers a skill's `effects.status` / `guard` falls back to | 0.7; 1.5, 1.3; 3, 3; 1; 1 |
+
+**`skills.<id>`**: `id`, `owner` (enemy id, doc only), `kind` (`attack` | `self` | `marker`, default `attack`),
+`pattern {offsets: [[dx,dy]...], anchor, rotations: [0|90|180|270...], must_cover_player, clip, min_cells, start, count}`
+(anchor one of `EnemySkillsConfig.ANCHORS`: `on_player`, `near_player`, `row_of_player`, `column_of_player`, `row_of_anchor`,
+`fixed`, `self_cell`, `enemy_half_empty`, ...; `must_cover_player` defaults to true for on_player / row / column anchors),
+`windup_sec` (enemy stands still, scaled by tempo), `warning_sec` (red cells shown; NEVER scaled by tempo), `delivery`
+(`{type, origin, travel, impact}` of `SkillDelivery`), `effects {damage, status {id, sec|stacks}, zone {id: thorns|drop, ...},
+guard {amount, sec, while_markers}, marker {life_sec, break_min_cells}}`, `followup {offsets, rotations, relative_to:
+first_cells|first_end|first_center|player, warning_sec, show_with_first, requires_anchor, effects}`, `recovery_sec`,
+`cooldown_sec`, `weight`, `interruptible`, `conditions {requires_anchor, ...}`, `counter_key`.
+
+**`enemies.<id>`**: `tier` (`normal` | `elite` | `warden`, ...), `ai` (overrides of the `ai` block), and EITHER
+`skills: [ids]` (one phase) OR `phases: [{id, enter_hp_ratio, skills, mechanic, every_nth {skill, n}, transition {sec,
+on_enter: [{skill}]}, overrides {skill id: {key: value}}}]` (any number of phases and skills, A4).
+`"dev": true` marks a DEV-ONLY fixture enemy (today `dev_pattern_dummy` with skills `dev_prick` / `dev_bar`): no
+chapters.json match may name it (checked by `pattern_dodge_test.gd`); reach it with `--pattern=dev_pattern_dummy`
+(`src/dev/demo_args.gd`).
+
+**`chapters.json` match keys** (read by `RunConfig._apply_brain`; carried ONLY when the match has `brain`, so a match
+without it keeps exactly the keys it had before Phase 2):
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `brain` | `"block"` \| `"pattern"` | Which enemy brain plays the match. Unknown value -> `"block"` + warning; `"pattern"` without `enemy` -> `"block"` + warning | absent = block brain |
+| `enemy` | string | `enemies` id of enemy_skills.json (pattern brain only). An id missing from the file warns in CombatView and the match keeps only the BossBrain's movement | — |
+| `pattern_tempo_mult` | number > 0 | Scales windup / cooldown / recovery of the pattern skills (never `warning_sec`). `RunConfig.from_node` multiplies the authored value by the region's `region_normalize.step_mult` and the floor's `floor_scaling.step_mult` | 1.0 |
+
+A pattern match picks up no field pieces on the enemy half (no boss piece hand); the BossBrain still moves the enemy
+between skills and the mover holds it still while a skill runs (`PatternController.is_busy`).

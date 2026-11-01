@@ -130,7 +130,7 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level,
 		player_cells_modifier if is_player else Callable(),
 		player_signature_modifier if is_player else Callable(),
-		{"target_defense": boss_defense, "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
+		{"target_defense": boss_defense + (_status.guard_amount(CombatState.Side.ENEMY) if _status != null else 0.0), "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
 			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
 			"relic_modifier": player_relic_modifier if is_player else Callable(),
 			"zone_overrides": player_zone_overrides if is_player else {},

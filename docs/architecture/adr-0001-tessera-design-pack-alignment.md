@@ -116,6 +116,10 @@ achievements; 139 headless/windowed test files, all FAILS=0 on 2026-11-01.
   timing, collision (units on a falling cell, moving in and out during the warning) and every case that would leave
   the player no way to react (frozen, rooted, step cooldown, no safe neighbour, Focus).
 - **A6 — Beat:** 0.5 s default, configurable in data, never hard-coded.
+- **A7 — Boss size and occupancy (2026-11-01, Phase 2 decision D13):** Wardens are drawn 2–3× the hero's size and
+  may occupy several cells instead of one (pack `01`/`03`/`04` say one logical tile; the pack allows multi-tile
+  occupancy once approved — approved here). The footprint is data per enemy; a hit counts once per resolution however
+  many footprint cells it covers. Footprint shape and boss arena size: see design/quick-specs/phase2-misty-forest-2026-11-01.md.
 - **Process:** Phase 1 runs task by task; each task is finished and tested before the next starts. Later phases are
   not started without the user.
 

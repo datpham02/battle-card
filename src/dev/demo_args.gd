@@ -191,6 +191,12 @@ extends Node
 ##   godot --path . -- --draw-calls         DEV-ONLY: prints Performance RENDER_TOTAL_DRAW_CALLS_IN_FRAME and the unit ids
 ##                                          after DRAW_CALLS_FRAMES frames and again after DRAW_CALLS_LATE_FRAMES (intro gone);
 ##                                          with or without --demo
+##   godot --path . -- --pattern=<enemy_id> DEV-ONLY Phase 2 (P2.2): the run's first match is played by the pattern brain:
+##                                          match_params `brain` = "pattern" and `enemy` = <enemy_id> of enemy_skills.json
+##                                          (e.g. dev_pattern_dummy), set in _enter_tree before CombatView._ready. Time is NOT
+##                                          frozen and the boss stays active (a live match, not a demo); pattern_tempo_mult is
+##                                          the match's own (1.0 when absent). GameFlow treats it as a dev run arg (a run starts).
+##                                          Combine with --seed=<n> and --no-autopause for a reproducible capture
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
 ## seeds the drop RNG. No argument = normal game, this node does nothing. State is set in
 ## _ready, before the first frame (the seed and the grid in _enter_tree, before
@@ -207,6 +213,8 @@ const DECK_PREFIX: String = "--deck="
 const DROPS_SEED_PREFIX: String = "--drops-seed="
 const PIECE_PREFIX: String = "--piece="
 const ARENA_PREFIX: String = "--arena="
+## Phase 2 (P2.2): `--pattern=<enemy_id>` runs the match on the pattern brain (see the header).
+const PATTERN_PREFIX: String = "--pattern="
 ## `--return-ratio=k` (--demo=crumble only): freeze the fallen cell k of the way through its return fade
 ## (TileHazards.return_fade_sec; ADR-0001 Phase 1, 2026-11-01).
 const RETURN_RATIO_PREFIX: String = "--return-ratio="
@@ -374,6 +382,10 @@ func _enter_tree() -> void:
 	var arena_id: String = _parse_arena()
 	if not arena_id.is_empty():
 		_combat().match_params["arena"] = {"shape": arena_id}
+	var pattern_enemy: String = _parse_pattern()
+	if not pattern_enemy.is_empty():
+		_combat().match_params["brain"] = RunConfig.BRAIN_PATTERN
+		_combat().match_params["enemy"] = pattern_enemy
 	if _mode != "":
 		_combat().drops_seed = DEMO_SEED
 	if _mode == "boss_downed":
@@ -1714,6 +1726,14 @@ func _parse_arena() -> String:
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with(ARENA_PREFIX):
 			return arg.substr(ARENA_PREFIX.length())
+	return ""
+
+
+# Phase 2 (P2.2): --pattern=<enemy id>, "" when absent.
+func _parse_pattern() -> String:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(PATTERN_PREFIX):
+			return arg.substr(PATTERN_PREFIX.length()).strip_edges()
 	return ""
 
 

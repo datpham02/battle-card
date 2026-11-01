@@ -1,0 +1,58 @@
+{
+	"version": 1,
+	"fairness": {
+		"reaction_margin_sec": 0.25,
+		"max_red_ratio": 0.5,
+		"cc_grace_sec": 1.0,
+		"min_gap_between_warnings_sec": 0.4,
+		"followup_min_warning_sec": 0.75,
+		"heavy_recovery_sec": 1.2
+	},
+	"ai": {
+		"punish_standing_still": 1.2,
+		"standing_still_sec": 1.5,
+		"avoid_repeat_last_skill": 0.45,
+		"favor_phase_mechanic": 1.25,
+		"noise": 0.1,
+		"cancel_cooldown_ratio": 0.5
+	},
+	"defaults": {
+		"windup_sec": 0.5,
+		"recovery_sec": 0.6,
+		"weight": 1.0,
+		"interruptible": true,
+		"phase_transition_sec": 1.5,
+		"marker_life_sec": 12.0,
+		"marker_break_min_cells": 1
+	},
+	"statuses": {
+		"root": {"sec": 0.7},
+		"slow": {"sec": 1.5, "step_mult": 1.3},
+		"guard": {"amount": 3.0, "sec": 3.0},
+		"fragile": {"stacks": 1},
+		"frost": {"stacks": 1}
+	},
+	"skills": {
+		"dev_prick": {
+			"id": "dev_prick", "owner": "dev_pattern_dummy", "kind": "attack",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"effects": {"damage": 8}, "recovery_sec": 0.6, "cooldown_sec": 2.4
+		},
+		"dev_bar": {
+			"id": "dev_bar", "owner": "dev_pattern_dummy", "kind": "attack",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 10}, "recovery_sec": 0.6, "cooldown_sec": 2.8
+		}
+	},
+	"enemies": {
+		"dev_pattern_dummy": {
+			"dev": true,
+			"tier": "normal",
+			"skills": ["dev_prick", "dev_bar"]
+		}
+	}
+}

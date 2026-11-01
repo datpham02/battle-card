@@ -194,6 +194,8 @@ var _status: StatusEffects
 var _learning: BossLearning
 ## The boss traits of this match (Story 014); built in _ready, torn down in _exit_tree.
 var _trait_host: TraitHost
+## Phase 2: the pattern brain's skill lifecycle (match key `brain` == "pattern"); null for every block-brain match.
+var _pattern: PatternController = null
 ## Story 036: the tile hazard model (mire, sand, wind); null before setup.
 var _hazards: TileHazards
 ## The character passive of this match (Story 018); null without a character or with an unknown id.
@@ -373,10 +375,12 @@ func _ready() -> void:
 		drops_seed + 1 if drops_seed >= 0 else -1
 	)
 	# Story 025: the boss plays pieces too (placement checked on the player's half).
-	_boss.enable_pieces(
-		PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), drops_seed + 2 if drops_seed >= 0 else -1,
-		_config.max_pieces_per_cast
-	)
+	# Phase 2 (spec 3.7): a pattern-brain enemy picks up no pieces, so nothing drops on its half.
+	if not is_pattern_brain():
+		_boss.enable_pieces(
+			PieceLibrary.load_from_file(), str(match_params.get("chapter_id", "")), drops_seed + 2 if drops_seed >= 0 else -1,
+			_config.max_pieces_per_cast
+		)
 	_boss.set_player_step_cooldown(_player_step_cooldown)
 	_boss.get_brain().cards = _boss_card_ids()
 	_boss.get_actor().duration_mult = maxf(float(match_params.get("swing_speed_mult", 1.0)), 0.01)
@@ -412,6 +416,7 @@ func _ready() -> void:
 	_boss.get_drops().point_spawned.connect(_on_point_spawned.bind(CombatState.Side.ENEMY))
 	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
 	_trait_host.on_match_start()
+	_setup_pattern_brain(brain_config)
 	_setup_passive(character)
 	_setup_signature(character)
 	_wire_status_hooks()
@@ -1273,6 +1278,8 @@ func _process(delta: float) -> void:
 		_drops.tick(step, _state.player_cell, held)
 		_cooldowns.tick(step)
 		_boss.tick(step, _cut_actor)
+		if _pattern != null:
+			_pattern.tick(step)
 		_arbiter.tick(step)
 		if hold != null:
 			hold.tick_rot(step)
@@ -1970,6 +1977,11 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		_cover_formation(cast_cells)
 		if _signature != null and bool(result["hit"]):
 			_signature.on_hit(str(result.get("skill_id", "")), float(result["damage"]))
+		if _pattern != null:
+			# Phase 2: every player cast may break markers; a hit interrupts an interruptible windup / warning (D9).
+			_pattern.on_player_cast(cast_cells)
+			if bool(result["hit"]):
+				_pattern.on_enemy_hit()
 		_trait_host.on_player_swing_resolved(result)
 		_trait_host.on_boss_damaged(float(result["damage"]))
 	else:
@@ -2077,6 +2089,53 @@ func get_feint_flash() -> Dictionary:
 ## The boss agent (hand, drops, mover, actor, brain).
 func get_boss() -> BossController:
 	return _boss
+
+
+## Phase 2: true when this match runs the pattern brain (match_params `brain` == "pattern" with an `enemy` id).
+func is_pattern_brain() -> bool:
+	return str(match_params.get("brain", "")) == RunConfig.BRAIN_PATTERN and not str(match_params.get("enemy", "")).is_empty()
+
+
+## Phase 2: the pattern brain's controller, or null for a block-brain match.
+func get_pattern_controller() -> PatternController:
+	return _pattern
+
+
+## Phase 2: cells the TRAITS are warning about on the player's half right now (traits exposing get_warning_cells:
+## row_burner, slam, fuse_cannon). The pattern brain counts them for the red ceiling (F2) and as unsafe (F1, spec 3.9).
+## Board coordinates (the same as CombatState.player_cell); only cells of the player's half are returned.
+func trait_warning_cells() -> Array:
+	var out: Array = []
+	if _trait_host == null or _grid == null:
+		return out
+	for t: BossTrait in _trait_host.get_traits():
+		if t != null and t.has_method("get_warning_cells"):
+			for cell: Vector2i in t.call("get_warning_cells") as Array:
+				if _grid.is_player_cell(cell) and not out.has(cell):
+					out.append(cell)
+	return out
+
+
+# Phase 2: builds the PatternController for a `brain: "pattern"` match (spec 3.1, 3.7, 3.9): the enemy from
+# enemy_skills.json, the match's think interval, the player's step cooldown and step-left clock, the floor tempo
+# (`pattern_tempo_mult`), the trait warnings as external red, and the boss's mover held still while a skill runs.
+# Movement between skills stays the BossBrain's. An unknown enemy id warns and leaves the match on the block brain's
+# movement only (no skills).
+func _setup_pattern_brain(brain_config: BossBrainConfig) -> void:
+	if not is_pattern_brain():
+		return
+	var enemy_id: String = str(match_params["enemy"])
+	var skills_config: EnemySkillsConfig = EnemySkillsConfig.load_from_file()
+	if skills_config.get_enemy(enemy_id).is_empty():
+		push_warning("CombatView: pattern enemy '%s' not in enemy_skills.json" % enemy_id)
+	_pattern = PatternController.new(_state, _grid, skills_config, enemy_id, _status, drops_seed + 4 if drops_seed >= 0 else -1)
+	_pattern.think_interval_sec = maxf(brain_config.think_interval_sec, 0.05)
+	_pattern.tempo_mult = maxf(float(match_params.get("pattern_tempo_mult", 1.0)), 0.01)
+	_pattern.player_step_cd = _player_step_cooldown
+	_pattern.player_step_left_fn = Callable(_mover, "get_cooldown_remaining")
+	_pattern.external_red_fn = Callable(self, "trait_warning_cells")
+	_boss.extra_step_lock_fn = Callable(_pattern, "is_busy")
+	_pattern.markers_changed.connect(_mark_floor_dirty)
 
 
 ## Story 025: true while the boss is rooted by its own swing (see BossController.is_step_locked).
@@ -2330,6 +2389,8 @@ func _draw_engraving(rect: Rect2, font_size: int, s: float, baseline: float) -> 
 # from [param origin]; empty slots are faint frames, a point without a piece shows its label. Returns the
 # row's width.
 func _draw_boss_hand(origin: Vector2, s: float) -> float:
+	if _pattern != null:
+		return 0.0  # Phase 2 spec 3.7: a pattern-brain enemy holds no blocks, its slots are hidden.
 	var hand: HoldSlots = _boss.get_hand()
 	var count: int = hand.get_slot_count()
 	var tile: Vector2 = (HUD_TILE_SIZE * s).floor()

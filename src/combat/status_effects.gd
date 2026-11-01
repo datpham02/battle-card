@@ -111,6 +111,13 @@ var step_locked_fn: Callable = Callable()
 var hole_blocked_fn: Callable = Callable()
 # Drop tiles: Side -> {Vector2i -> {phase, left, warn, total, held}} (see apply_drop).
 var _holes: Dictionary = {}
+# Phase 2 (design/quick-specs/phase2-misty-forest-2026-11-01.md section 6, D2/D4/D5): Root (side -> sec left), Slow
+# (side -> {left, mult}) and Guard (side -> {left, amount}).
+var _roots: Dictionary = {}
+var _slows: Dictionary = {}
+var _guards: Dictionary = {}
+## side -> seconds since that side's last step lock (Frozen pin or Root) ended (F4 cc grace; absent = never locked).
+var _since_unlock: Dictionary = {}
 # Drop tiles: Side -> {Vector2i -> seconds of the return fade left} (presentation only).
 var _hole_fade: Dictionary = {}
 
@@ -318,14 +325,18 @@ func tick(delta: float, state: CombatState) -> void:
 		else:
 			entry["left"] = left
 			entry["tick_acc"] = acc
+	for side: int in _since_unlock.keys():
+		_since_unlock[side] = float(_since_unlock[side]) + delta
 	for side: int in _pins.keys():
 		var pin_left: float = float(_pins[side]) - delta
 		if pin_left <= _EPS:
 			_pins.erase(side)
+			_mark_unlocked(side, pin_left)
 			pin_ended.emit(side)
 		else:
 			_pins[side] = pin_left
 	_tick_zones(_thorns, KIND_THORNS, delta)
+	_tick_phase2_statuses(delta)
 	_tick_holes(delta, state)
 
 
@@ -385,6 +396,10 @@ func get_pin_left(side: int) -> float:
 func clear() -> void:
 	_burning.clear()
 	_pins.clear()
+	_roots.clear()
+	_since_unlock.clear()
+	_slows.clear()
+	_guards.clear()
 	_fragile.clear()
 	_frost.clear()
 	_thorns.clear()
@@ -631,9 +646,9 @@ func _hole_cells_in(side: int, phase: String) -> Array[Vector2i]:
 	return out
 
 
-# True when the unit of [param side] cannot step at all: Frozen (pinned) or rooted (step_locked_fn).
+# True when the unit of [param side] cannot step at all: Frozen (pinned), Root or rooted (step_locked_fn).
 func _unit_stuck(side: int) -> bool:
-	return is_pinned(side) or (step_locked_fn.is_valid() and bool(step_locked_fn.call(side)))
+	return is_pinned(side) or is_rooted(side) or (step_locked_fn.is_valid() and bool(step_locked_fn.call(side)))
 
 
 func _is_dead(side: int, state: CombatState) -> bool:
@@ -831,3 +846,114 @@ func _units_on(cell: Vector2i, state: CombatState) -> Array[int]:
 	if not state.is_enemy_dead() and state.enemy_cell == cell:
 		out.append(CombatState.Side.ENEMY)
 	return out
+
+
+# --- Phase 2 statuses: Root (D2), Slow (D4), Guard (D5) ------------------------------------------------------------
+
+## D2 Root (Troi): the unit of [param side] cannot step for [param duration] seconds (casting stays allowed). It is the
+## same lock family as Frozen (pin): a Root never lands while the unit is Frozen or already Rooted (no stacking, spec F4;
+## the cc grace window is the caller's rule, FairnessCheck.cc_allowed). Returns true when it landed. Own visual id
+## [constant STATUS_ROOT] (the HUD chip / unit overlay).
+func root(side: int, duration: float) -> bool:
+	if duration <= 0.0 or is_pinned(side) or is_rooted(side):
+		return false
+	_roots[side] = duration
+	return true
+
+
+## Visual / status id of Root (D2).
+const STATUS_ROOT: String = "root"
+## Status id of Slow (D4).
+const STATUS_SLOW: String = "slow"
+## Status id of Guard (D5).
+const STATUS_GUARD: String = "guard"
+
+
+## True while the unit of [param side] is Rooted.
+func is_rooted(side: int) -> bool:
+	return _roots.has(side)
+
+
+## Seconds of Root left for [param side]; 0 when not rooted.
+func get_root_left(side: int) -> float:
+	return float(_roots.get(side, 0.0))
+
+
+## Seconds the unit of [param side] stays step-locked by a status (max of Frozen and Root); 0 = free.
+func lock_left(side: int) -> float:
+	return maxf(get_pin_left(side), get_root_left(side))
+
+
+## Seconds since the last step lock (Frozen or Root) of [param side] ended, counted by this class's own clock so a lock
+## that starts and ends between two reads still counts (F4 cc grace). INF when the side was never locked; 0 while locked.
+func since_lock_ended(side: int) -> float:
+	if lock_left(side) > _EPS:
+		return 0.0
+	return float(_since_unlock.get(side, INF))
+
+
+# A lock of [param side] ended this tick; [param left] (<= 0) is how far into the tick it ended.
+func _mark_unlocked(side: int, left: float) -> void:
+	if lock_left(side) > _EPS:
+		return
+	_since_unlock[side] = maxf(-left, 0.0)
+
+
+## D4 Slow: the steps of [param side] cost [param step_mult] x their cooldown for [param duration] seconds
+## (enemy_skills.json `statuses.slow`). Re-applying refreshes the time and keeps the larger multiplier.
+func slow(side: int, duration: float, step_mult: float) -> void:
+	if duration <= 0.0 or step_mult <= 0.0:
+		return
+	var prev: Dictionary = _slows.get(side, {}) as Dictionary
+	_slows[side] = {"left": maxf(duration, float(prev.get("left", 0.0))), "mult": maxf(step_mult, float(prev.get("mult", 0.0)))}
+
+
+## Step cooldown multiplier of [param side] from Slow (1.0 when not slowed). UnitMover folds it into every step.
+func step_mult(side: int) -> float:
+	return float((_slows[side] as Dictionary)["mult"]) if _slows.has(side) else 1.0
+
+
+## Seconds of Slow left for [param side].
+func get_slow_left(side: int) -> float:
+	return float((_slows[side] as Dictionary)["left"]) if _slows.has(side) else 0.0
+
+
+## D5 Guard: [param amount] temporary flat armor on the unit of [param side] for [param duration] seconds, added to the
+## match's boss_defense by SwingArbiter; Pierce (`pierce_defense` cards) ignores ALL of it. Re-applying keeps the larger
+## amount and refreshes the time; [method clear_guard] ends it early (the marker that fed it broke).
+func guard(side: int, amount: float, duration: float) -> void:
+	if amount <= 0.0 or duration <= 0.0:
+		return
+	var prev: Dictionary = _guards.get(side, {}) as Dictionary
+	_guards[side] = {"left": maxf(duration, float(prev.get("left", 0.0))), "amount": maxf(amount, float(prev.get("amount", 0.0)))}
+
+
+## Guard armor of [param side] right now (0 when none).
+func guard_amount(side: int) -> float:
+	return float((_guards[side] as Dictionary)["amount"]) if _guards.has(side) else 0.0
+
+
+## Seconds of Guard left for [param side].
+func get_guard_left(side: int) -> float:
+	return float((_guards[side] as Dictionary)["left"]) if _guards.has(side) else 0.0
+
+
+## Ends the Guard of [param side] now.
+func clear_guard(side: int) -> void:
+	_guards.erase(side)
+
+
+func _tick_phase2_statuses(delta: float) -> void:
+	for side: int in _roots.keys():
+		var left: float = float(_roots[side]) - delta
+		if left <= _EPS:
+			_roots.erase(side)
+			_mark_unlocked(side, left)
+		else:
+			_roots[side] = left
+	for book: Dictionary in [_slows, _guards]:
+		for side: int in book.keys():
+			var entry: Dictionary = book[side] as Dictionary
+			entry["left"] = float(entry["left"]) - delta
+			if float(entry["left"]) <= _EPS:
+				book.erase(side)

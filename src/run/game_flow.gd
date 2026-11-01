@@ -322,7 +322,7 @@ const DEV_V4_HP: float = 150.0
 ## DEV-ONLY: share of max HP the region boss of --run=floorclear ends with (banner shows a real heal).
 const DEV_FLOORCLEAR_HP_RATIO: float = 0.6
 ## Dev args that put the game into a capture state; they always get a memory store.
-const DEV_RUN_ARGS: Array[String] = ["--match=", "--run=", "--demo=", "--arena="]
+const DEV_RUN_ARGS: Array[String] = ["--match=", "--run=", "--demo=", "--arena=", "--pattern="]
 const CONTROLLER_NODE: String = "RunController"
 ## DEV-ONLY (--progress=demo): the saved demo run (0-based floor DEMO_RUN_FLOOR, this many columns of
 ## its region cleared, never the boss column).

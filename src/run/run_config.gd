@@ -23,6 +23,10 @@ const HAZARD_OVERRIDE_KEYS: Array[String] = [
 	"vent_interval_sec", "vent_warn_sec", "vent_sec", "vent_tick_sec", "vent_tick_damage",
 	"crumble_after_sec", "crumble_warn_sec", "fall_sec", "fall_damage",
 ]
+## Phase 2 (design/quick-specs/phase2-misty-forest-2026-11-01.md 3.1): match key `brain` values. Absent = the block
+## brain (every match before Phase 2, unchanged); "pattern" = PatternController with `enemy` from enemy_skills.json.
+const BRAIN_BLOCK: String = "block"
+const BRAIN_PATTERN: String = "pattern"
 ## Story 035: trait id a match's `phases` key turns into (see [method _apply_phases]).
 const BOSS_PHASES_TRAIT_ID: String = "boss_phases"
 
@@ -162,6 +166,11 @@ static func _apply_scaling(raw: Dictionary, normalize: Dictionary, scaling: Dict
 		# Deprecated absolute cooldown: scaled the same way so old data keeps its relative pace.
 		raw["boss_step_cooldown_sec"] = float(raw["boss_step_cooldown_sec"]) \
 				* float(normalize.get("step_mult", 1.0)) * float(scaling.get("step_mult", 1.0))
+	if str(raw.get("brain", "")) == BRAIN_PATTERN:
+		# Phase 2 spec 3.6: the pattern brain's floor tempo (region x floor step_mult) scales windup / cooldown /
+		# recovery, never warning_sec (PatternController.tempo_mult).
+		raw["pattern_tempo_mult"] = float(raw.get("pattern_tempo_mult", 1.0)) \
+				* float(normalize.get("step_mult", 1.0)) * float(scaling.get("step_mult", 1.0))
 
 
 ## Number of matches (>= 1).
@@ -279,7 +288,26 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		# Deprecated absolute value: carried (and used by CombatView) only for old data.
 		push_warning("RunConfig: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")
 		m["boss_step_cooldown_sec"] = maxf(float(raw["boss_step_cooldown_sec"]), 0.0)
+	_apply_brain(m, raw)
 	return m
+
+
+# Phase 2: `brain` / `enemy` / `pattern_tempo_mult` carried ONLY when the data has `brain` (a match without it keeps
+# exactly today's keys). "pattern" without an `enemy` id falls back to the block brain with a warning.
+static func _apply_brain(m: Dictionary, raw: Dictionary) -> void:
+	if not raw.has("brain"):
+		return
+	var brain: String = str(raw["brain"])
+	if brain != BRAIN_BLOCK and brain != BRAIN_PATTERN:
+		push_warning("RunConfig: brain '%s' of match %s is unknown, using the block brain" % [brain, m["id"]])
+		brain = BRAIN_BLOCK
+	if brain == BRAIN_PATTERN and str(raw.get("enemy", "")).is_empty():
+		push_warning("RunConfig: match %s has brain 'pattern' but no enemy, using the block brain" % m["id"])
+		brain = BRAIN_BLOCK
+	m["brain"] = brain
+	if brain == BRAIN_PATTERN:
+		m["enemy"] = str(raw["enemy"])
+		m["pattern_tempo_mult"] = _positive(raw, "pattern_tempo_mult", 1.0)
 
 
 ## Story 035: a match key `phases` (non-empty array of phase objects, see schema.md) becomes the ONE trait

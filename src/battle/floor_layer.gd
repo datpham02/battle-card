@@ -106,8 +106,27 @@ func get_dynamic_layer() -> FloorDynamicLayer:
 func telegraph_state() -> Dictionary:
 	if _combat == null or not is_instance_valid(_combat) or _combat.get_boss() == null:
 		return {}
+	var pattern: PatternController = _combat.get_pattern_controller()
+	if pattern != null:
+		return pattern_telegraph_state(pattern, _combat.get_config(), SettingsStore.shared().get_reduce_motion())
 	return TelegraphPainter.state_for(_combat.get_boss().get_actor(), _combat.get_config(), SettingsStore.shared().get_reduce_motion(),
 		_combat.get_status())
+
+
+## Phase 2 (spec 3.6, F6, F7): the pattern brain's warning in TelegraphPainter's shape: `cells` = the snapshotted red
+## cells minus locked ones (exactly the cells that will be hit), `queued` = the second lane's sparser stripe, `k` =
+## the warning's progress (reduce motion quantized, never hidden). {} when no warning is showing.
+static func pattern_telegraph_state(pattern: PatternController, config: CombatConfig, reduce_motion: bool) -> Dictionary:
+	if pattern == null or config == null:
+		return {}
+	var cells: Array[Vector2i] = pattern.telegraph_cells()
+	var queued: Array[Vector2i] = []
+	for cell: Vector2i in pattern.queued_cells():
+		if not cells.has(cell):
+			queued.append(cell)
+	if cells.is_empty() and queued.is_empty():
+		return {}
+	return {"cells": cells, "k": config.quantize_progress(pattern.warning_progress(), reduce_motion), "queued": queued}
 
 
 ## Story 046 Part C: what the dynamic sub-layer draws on [param canvas]: the telegraph [param state], then every

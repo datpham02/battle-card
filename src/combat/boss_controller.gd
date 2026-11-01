@@ -54,6 +54,9 @@ var _active: bool = true
 var _removing: bool = false
 var _hold_config: HoldSlotsConfig
 var _max_pieces: int = 2
+## Phase 2 (pattern brain): Callable() -> bool; true = the boss stands still (PatternController.is_busy: windup,
+## warning, recovery, phase transition). Invalid (default, every block-brain match) = no extra lock.
+var extra_step_lock_fn: Callable = Callable()
 
 
 ## [param seed_value] below 0 = random; otherwise drops and brain noise are deterministic.
@@ -99,6 +102,8 @@ func enable_pieces(library: PieceLibrary, chapter_id: String, rng_seed: int, max
 ## swings (or has a combo swing queued). The boss's [UnitMover] refuses to step meanwhile; an
 ## interrupt, feint cancel or resolve unlocks at once.
 func is_step_locked() -> bool:
+	if extra_step_lock_fn.is_valid() and bool(extra_step_lock_fn.call()):
+		return true
 	return _brain_config.root_while_swinging and (_actor.is_swinging() or _actor.has_queued())
 
 
