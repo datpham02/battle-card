@@ -1,11 +1,12 @@
 extends SceneTree
 ## Story 028 (join up to 2 pieces per cast + featured shape): drives the real battle with touch / mouse
 ## events (local coords). Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
-## Intents: drag piece 1 onto the boss -> card menu; drag piece 2 while the menu is open (ghost avoids
-## piece 1, Xoay by a second finger mid-drag, release attaches: union cells, +join_extra_sec, "needs N
-## cells" locks recomputed); overlap never attaches; tap piece 2 on the board detaches it; choose a card
-## -> swing = union, both pieces spent; Huy returns BOTH pieces; featured join -> glow + x mult + effect
-## applied once; non-featured / single piece never gets the bonus; max_cast_cells refuses (in-memory
+## Intents (2026-11-01 flow, quick spec menu-la-giua-man-hinh): drag piece 1 onto the boss -> the place window
+## (NO card menu); drag piece 2 before Tung phép (ghost avoids piece 1, Xoay by a second finger mid-drag, release
+## attaches: union cells, no time added); overlap never attaches; tap piece 2 on the board detaches it; tap
+## Tung phép -> the menu ("needs N cells" locks on the placed cells; no piece joins while it is open); choose a card
+## -> swing = union, both pieces spent; Huy returns BOTH pieces (place window and menu); featured join -> glow +
+## x mult + effect applied once; non-featured / single piece never gets the bonus; max_cast_cells refuses (in-memory
 ## config change only). The match's featured shape is replaced by a known 3x2 block (test seam).
 
 var fails: int = 0
@@ -98,7 +99,7 @@ func _mouse_drag_piece(slot: int, cell: Vector2i, release: bool) -> void:
 
 
 func _fill_bag() -> void:
-	if flow.is_menu_open() or combat.is_placing():
+	if flow.is_menu_open() or combat.is_placing() or combat.is_placed():
 		combat.cancel_placement()
 		combat.cancel_placement()
 	for i: int in hold.get_slot_count():
@@ -174,6 +175,7 @@ func _initialize() -> void:
 	var skill_cfg: SkillConfig = combat.get_skill_config()
 	var rot_c: Vector2 = ScreenLayout.rotate_button_rect(VP).get_center()
 	var cancel_c: Vector2 = ScreenLayout.cancel_button_rect(VP).get_center()
+	var cast_c: Vector2 = ScreenLayout.confirm_button_rect(VP).get_center()
 	var sc: int = combat.get_grid().side_cols
 	var cell_a := Vector2i(sc + 1, 1)  # bar3 across the boss row (the enemy half is 3 wide)
 	var cell_b := Vector2i(sc, 2)      # bar2 under the left end of bar3
@@ -194,58 +196,68 @@ func _initialize() -> void:
 	_fill_bag()
 	await process_frame
 
-	# --- Piece 1 (finger 0): release on the boss row opens the menu with its cells.
+	# --- Piece 1 (finger 0): release on the boss row commits it: the place window starts, NO card menu.
 	await _touch_drag_piece(0, 0, cell_a, true)
-	_check("piece 1 release opens the menu", flow.is_menu_open() and plan.piece_count() == 1)
-	_check("menu cells == piece 1 (bar3 across row 1)", _sorted(flow.get_cells()) == [Vector2i(sc, 1), Vector2i(sc + 1, 1), Vector2i(sc + 2, 1)], str(flow.get_cells()))
+	_check("piece 1 release commits it: place window, no card menu", combat.is_placed() and not flow.is_menu_open() and plan.piece_count() == 1 and flow.get_hand().is_empty())
+	_check("placed cells == piece 1 (bar3 across row 1)", _sorted(plan.cells()) == [Vector2i(sc, 1), Vector2i(sc + 1, 1), Vector2i(sc + 2, 1)], str(plan.cells()))
 	_check("slot 0 spent, bag still live", hold.get_piece(0) == null and _shape(1) == "bar2" and combat.can_join_piece())
-	await _tap(0, _card_center("dai_dao"))
-	_check("card needing 5 cells is locked with 3 cells (menu stays)", flow.is_menu_open() and not actor.is_swinging())
+	_check("Tung phép button shown", combat.is_confirm_visible() and combat.can_cast())
 
-	# --- Piece 2 (finger 0) dragged while the menu is open; finger 1 taps Xoay mid-drag.
-	var t_before: float = flow.get_time_left()
+	# --- Piece 2 (finger 0) dragged in the place window; finger 1 taps Xoay mid-drag.
 	await _touch_drag_piece(0, 1, cell_a, false)
-	_check("piece 2 drag started with the menu open", combat.is_dragging() and combat.is_placing())
+	_check("piece 2 drag started in the place window", combat.is_dragging() and combat.is_placing())
 	var ghost: Array[Vector2i] = combat.get_placement().get_cells()
-	_check("lifted ghost (finger over piece 1) avoids piece 1 cells", ghost.size() == 2 and _disjoint(ghost, flow.get_cells()), str(ghost))
+	_check("lifted ghost (finger over piece 1) avoids piece 1 cells", ghost.size() == 2 and _disjoint(ghost, plan.cells()), str(ghost))
 	var size0: Vector2i = combat.get_placing_piece().size()
 	await _tap(1, rot_c)
 	_check("Xoay by finger 1 rotated the dragged piece, drag alive", combat.is_dragging() and combat.get_placing_piece().size() == Vector2i(size0.y, size0.x) and size0.x != size0.y, "%s -> %s" % [size0, combat.get_placing_piece().size()])
 	await _tap(1, rot_c)
 	await _touch_drag(0, combat.drag_point_for_cell(cell_b))
 	_check("ghost on the block spot reports featured while dragging", combat.joined_is_featured(combat.get_placement().get_cells()), str(combat.get_placement().get_cells()))
-	var t_pre: float = flow.get_time_left()
+	var t_pre: float = combat.get_place_time_left()
 	await _touch(0, combat.drag_point_for_cell(cell_b), false)
-	var t_post: float = flow.get_time_left()
-	_check("release attaches piece 2: 2 pieces, union 5 cells", plan.piece_count() == 2 and flow.get_cells().size() == 5 and not combat.is_placing(), str(flow.get_cells()))
-	_check("menu cells == union of both pieces", _sorted(flow.get_cells()) == _sorted(plan.cells()))
-	_check("remaining time grew by join_extra_sec", t_post - t_pre > cfg.join_extra_sec - 0.3, "pre=%.2f post=%.2f (first=%.2f)" % [t_pre, t_post, t_before])
+	var t_post: float = combat.get_place_time_left()
+	_check("release attaches piece 2: 2 pieces, union 5 cells, still no menu", plan.piece_count() == 2 and plan.cells().size() == 5 and not combat.is_placing() and not flow.is_menu_open(), str(plan.cells()))
+	_check("a join adds no time (the +1.5 s rule is gone)", t_post <= t_pre + 0.001 and t_post > 0.0, "pre=%.2f post=%.2f" % [t_pre, t_post])
 	_check("slot 1 spent", hold.get_piece(1) == null)
 	_check("glow state: plan is featured (block)", combat.is_plan_featured())
 
-	# --- Tap piece 2 on the board: detached to its slot, cells shrink, menu stays open.
+	# --- Tap piece 2 on the board: detached to its slot, cells shrink, still in the place window.
 	var p2cell: Vector2i = plan.piece_cells(1)[0]
 	await _tap(0, ScreenLayout.cell_center(combat.get_grid(), VP, p2cell))
-	_check("tap on piece 2 detaches it back to its slot", plan.piece_count() == 1 and flow.get_cells().size() == 3 and _shape(1) == "bar2" and flow.is_menu_open(), str(flow.get_cells()))
+	_check("tap on piece 2 detaches it back to its slot", plan.piece_count() == 1 and plan.cells().size() == 3 and _shape(1) == "bar2" and combat.is_placed(), str(plan.cells()))
 	_check("glow off after detach", not combat.is_plan_featured())
 
 	# --- Overlap: dropping piece 2 on piece 1's cell never overlaps (snaps beside it or is refused).
 	await _touch_drag_piece(0, 1, cell_a, true)
 	if plan.piece_count() == 2:
-		var cells2: Array[Vector2i] = flow.get_cells()
+		var cells2: Array[Vector2i] = plan.cells()
 		_check("drop on piece 1: union has no overlap", cells2.size() == 5 and _sorted(cells2).size() == 5 and _disjoint(plan.piece_cells(0), plan.piece_cells(1)), str(cells2))
 		await _tap(0, ScreenLayout.cell_center(combat.get_grid(), VP, plan.piece_cells(1)[0]))
 	else:
-		_check("drop on piece 1 refused: piece back in its slot", _shape(1) == "bar2" and flow.get_cells().size() == 3)
+		_check("drop on piece 1 refused: piece back in its slot", _shape(1) == "bar2" and plan.cells().size() == 3)
 	var probe: CastPlan = CastPlan.new().init(2, 0)
 	probe.add_piece(0, lib.make_piece("bar3"), plan.piece_cells(0))
 	var clash: Array[Vector2i] = [plan.piece_cells(0)[0], plan.piece_cells(0)[0] + Vector2i(0, 1)]
 	_check("CastPlan refuses a second piece overlapping the first", not probe.add_piece(1, lib.make_piece("bar2"), clash) and probe.piece_count() == 1)
 
-	# --- Non-featured 2-piece join (mirror of the block): choose dai_dao, swing = union, no bonus.
+	# --- Tung phép with piece 1 alone: the menu opens; a 5-cell card is locked; no join while it is open.
+	await _tap(0, cast_c)
+	_check("tap Tung phép opens the card menu on the 3 placed cells", flow.is_menu_open() and flow.get_cells().size() == 3 and not combat.is_placed())
+	await _tap(0, _card_center("dai_dao"))
+	_check("card needing 5 cells is locked with 3 cells (menu stays)", flow.is_menu_open() and not actor.is_swinging())
+	await _touch_drag_piece(0, 1, cell_b, true)
+	_check("no join while the menu is open: piece 2 stays in the bag", plan.piece_count() == 1 and _shape(1) == "bar2" and not combat.is_placing() and flow.is_menu_open())
+	await _tap(0, cancel_c)
+	_check("Huy in the menu returns piece 1", not flow.is_menu_open() and _shape(0) == "bar3" and plan.piece_count() == 0)
+
+	# --- Non-featured 2-piece join (mirror of the block) before Tung phép: dai_dao, swing = union, no bonus.
+	await _touch_drag_piece(0, 0, cell_a, true)
 	await _touch_drag_piece(0, 1, cell_far, true)
-	_check("non-featured join attached (5 cells, no glow)", plan.piece_count() == 2 and flow.get_cells().size() == 5 and not combat.is_plan_featured(), str(flow.get_cells()))
-	var union: Array[Vector2i] = flow.get_cells()
+	_check("non-featured join attached (5 cells, no glow)", plan.piece_count() == 2 and plan.cells().size() == 5 and not combat.is_plan_featured(), str(plan.cells()))
+	var union: Array[Vector2i] = plan.cells()
+	await _tap(0, cast_c)
+	_check("Tung phép: menu on the union", flow.is_menu_open() and _sorted(flow.get_cells()) == _sorted(union))
 	await _tap(0, _card_center("dai_dao"))
 	_check("card needing 5 cells unlocks on the union (swing started)", not flow.is_menu_open() and actor.is_swinging() and actor.get_skill_id() == "dai_dao")
 	_check("swing cells == union exactly", _sorted(actor.get_cells()) == _sorted(union), str(actor.get_cells()))
@@ -259,28 +271,38 @@ func _initialize() -> void:
 	var plain_damage: float = float(fb.get("damage", 0.0))
 	_check("plain damage = per-cell x 5 cells", is_equal_approx(plain_damage, per_cell * 5.0), "%.2f vs %.2f" % [plain_damage, per_cell * 5.0])
 
-	# --- Huy in the menu returns BOTH pieces.
+	# --- Huy in the place window returns BOTH pieces.
 	_fill_bag()
 	await _touch_drag_piece(0, 0, cell_a, true)
 	await _touch_drag_piece(0, 1, cell_b, true)
 	_check("two pieces joined before Huy", plan.piece_count() == 2 and hold.get_piece(0) == null and hold.get_piece(1) == null)
 	await _tap(0, cancel_c)
-	_check("Huy closes the menu and returns BOTH pieces", not flow.is_menu_open() and _shape(0) == "bar3" and _shape(1) == "bar2" and plan.piece_count() == 0 and not actor.is_swinging())
+	_check("Huy in the place window returns BOTH pieces", not combat.is_placed() and not flow.is_menu_open() and _shape(0) == "bar3" and _shape(1) == "bar2" and plan.piece_count() == 0 and not actor.is_swinging())
+
+	# --- Huy in the menu returns BOTH pieces.
+	await _touch_drag_piece(0, 0, cell_a, true)
+	await _touch_drag_piece(0, 1, cell_b, true)
+	await _tap(0, cast_c)
+	_check("two pieces joined, menu open", flow.is_menu_open() and plan.piece_count() == 2)
+	await _tap(0, cancel_c)
+	_check("Huy in the menu returns BOTH pieces", not flow.is_menu_open() and _shape(0) == "bar3" and _shape(1) == "bar2" and plan.piece_count() == 0)
 
 	# --- Huy while piece 2 is still in the finger returns piece 1 and ends the drag.
 	await _touch_drag_piece(0, 0, cell_a, true)
 	await _touch_drag_piece(0, 1, cell_b, false)
 	await _tap(1, cancel_c)
-	_check("Huy (finger 1) mid-drag: piece 1 back, drag over", not flow.is_menu_open() and not combat.is_placing() and _shape(0) == "bar3" and _shape(1) == "bar2")
+	_check("Huy (finger 1) mid-drag: piece 1 back, drag over", not combat.is_placed() and not combat.is_placing() and _shape(0) == "bar3" and _shape(1) == "bar2")
 	await _touch(0, combat.drag_point_for_cell(cell_b), false)
-	_check("late release after Huy does nothing", not flow.is_menu_open() and _shape(1) == "bar2")
+	_check("late release after Huy does nothing", not combat.is_placed() and not flow.is_menu_open() and _shape(1) == "bar2")
 
-	# --- Featured join (block): glow, kiem_khi swing x1.5, effect applied once.
+	# --- Featured join (block) before Tung phép: glow, kiem_khi swing x1.5, effect applied once.
 	_fill_bag()
 	state.set_enemy_cell(BOSS_CELL)
 	await _touch_drag_piece(0, 0, cell_a, true)
 	await _touch_drag_piece(0, 1, cell_b, true)
-	_check("featured join: glow on, union is the block", combat.is_plan_featured() and plan.piece_count() == 2, str(flow.get_cells()))
+	_check("featured join: glow on, union is the block", combat.is_plan_featured() and plan.piece_count() == 2, str(plan.cells()))
+	await _tap(0, cast_c)
+	_check("featured: glow kept with the menu open", flow.is_menu_open() and combat.is_plan_featured())
 	await _tap(0, _card_center("kiem_khi"))
 	_check("featured swing started with the bonus", actor.is_swinging() and float(actor.get_featured_bonus().get("damage_mult", 0.0)) == 1.5, str(actor.get_featured_bonus()))
 	state.enemy_hp = state.enemy_max_hp
@@ -305,6 +327,7 @@ func _initialize() -> void:
 	hold.place(plus, 2)
 	state.set_enemy_cell(BOSS_CELL)
 	await _touch_drag_piece(0, 2, BOSS_CELL, true)
+	await _tap(0, cast_c)
 	_check("single plus5 (== featured shape) in the menu, no glow", flow.is_menu_open() and plan.piece_count() == 1 and flow.get_cells().size() == 5 and not combat.is_plan_featured(), str(flow.get_cells()))
 	await _tap(0, _card_center("kiem_khi"))
 	_check("single-piece swing has no featured bonus", actor.is_swinging() and actor.get_featured_bonus().is_empty())
@@ -314,11 +337,18 @@ func _initialize() -> void:
 	_check("single piece hit: featured false, mult 1, no new stack", bool(fb.get("hit", false)) and not bool(fb.get("featured", true)) and float(fb.get("featured_mult", 0.0)) == 1.0 and combat.get_fragile_stacks() == 0, str(fb))
 	combat._featured = {"cells": block, "bonus": bonus}
 
-	# --- Desktop extras (mouse): drag both pieces with the mouse, Esc returns both.
+	# --- Desktop extras (mouse): drag both pieces with the mouse, Esc returns both (place window and menu).
 	_fill_bag()
 	await _mouse_drag_piece(0, cell_a, true)
 	await _mouse_drag_piece(1, cell_b, true)
-	_check("mouse: two pieces joined", flow.is_menu_open() and plan.piece_count() == 2 and flow.get_cells().size() == 5, str(flow.get_cells()))
+	_check("mouse: two pieces joined", combat.is_placed() and plan.piece_count() == 2 and plan.cells().size() == 5, str(plan.cells()))
+	await _key(KEY_ESCAPE)
+	_check("Esc in the place window returns BOTH pieces", not combat.is_placed() and _shape(0) == "bar3" and _shape(1) == "bar2" and plan.piece_count() == 0)
+	await _mouse_drag_piece(0, cell_a, true)
+	await _mouse_drag_piece(1, cell_b, true)
+	await _mouse_button(cast_c, true)
+	await _mouse_button(cast_c, false)
+	_check("mouse: click on Tung phép opens the menu", flow.is_menu_open() and plan.piece_count() == 2)
 	await _key(KEY_ESCAPE)
 	_check("Esc in the menu returns BOTH pieces", not flow.is_menu_open() and _shape(0) == "bar3" and _shape(1) == "bar2" and plan.piece_count() == 0)
 
@@ -326,17 +356,17 @@ func _initialize() -> void:
 	cfg.max_cast_cells = 4
 	_fill_bag()
 	await _touch_drag_piece(0, 0, cell_a, true)
-	_check("cap 4: a 3-cell first piece is fine", flow.is_menu_open() and plan.piece_count() == 1)
-	var t_cap: float = flow.get_time_left()
+	_check("cap 4: a 3-cell first piece is fine", combat.is_placed() and plan.piece_count() == 1)
+	var t_cap: float = combat.get_place_time_left()
 	await _touch_drag_piece(0, 1, cell_b, true)
-	_check("cap 4: 3 + 2 cells refused, piece back in its slot", plan.piece_count() == 1 and _shape(1) == "bar2" and flow.get_cells().size() == 3 and flow.is_menu_open(), str(flow.get_cells()))
+	_check("cap 4: 3 + 2 cells refused, piece back in its slot", plan.piece_count() == 1 and _shape(1) == "bar2" and plan.cells().size() == 3 and combat.is_placed(), str(plan.cells()))
 	_check("cap refusal recorded for the red ghost + note", not combat.get_join_refusal().is_empty(), str(combat.get_join_refusal()))
-	_check("refused join did not add time", flow.get_time_left() <= t_cap + 0.05)
+	_check("refused join did not add time", combat.get_place_time_left() <= t_cap + 0.001)
 	await _touch_drag_piece(0, 2, Vector2i(sc, 2), true)
-	_check("cap 4: 3 + 1 cells fits", plan.piece_count() == 2 and flow.get_cells().size() == 4, str(flow.get_cells()))
+	_check("cap 4: 3 + 1 cells fits", plan.piece_count() == 2 and plan.cells().size() == 4, str(plan.cells()))
 	cfg.max_cast_cells = 0
 	await _tap(0, cancel_c)
-	_check("Huy returns both after the cap test", not flow.is_menu_open() and _shape(0) == "bar3" and _shape(2) == "mono")
+	_check("Huy returns both after the cap test", not combat.is_placed() and _shape(0) == "bar3" and _shape(2) == "mono")
 
 	print("FAILS=%d" % fails)
 	print("VERDICT %s" % ("PASS" if fails == 0 else "FAIL"))

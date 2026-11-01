@@ -513,7 +513,7 @@ func _crumble_tests() -> void:
 	mv.add_blocker(func(cell: Vector2i) -> bool: return hz.is_fallen(P, cell))
 	hz.extra_blocked_fn = func(side: int, cell: Vector2i) -> bool: return mv.is_cell_blocked(cell) if side == P else false
 	var box: Dictionary = {"crumbling": 0, "fell": 0, "pushed": false, "restored": 0}
-	# The boss on the enemy half crumbles its own cell at the same time: count the player side only.
+	# Count the player side only (the enemy half never crumbles).
 	hz.cell_crumbling.connect(func(s: int, _c: Vector2i) -> void:
 		if s == P:
 			box["crumbling"] += 1)
@@ -539,7 +539,7 @@ func _crumble_tests() -> void:
 	ck("crumble: the push lands on a neighbour of the fallen cell", dist == 1 and BoardGrid.new(3, 3).is_player_cell(st.player_cell))
 	ck("crumble: a fallen cell blocks the step and lists a time bar", mv.is_cell_blocked(Vector2i(1, 1)) and hz.fallen_cells(P) == cells([Vector2i(1, 1)]) and absf(hz.fall_total_sec(P, Vector2i(1, 1)) - 4.0) < EPS and hz.fallen_left(P, Vector2i(1, 1)) > 3.0)
 	var stats: Dictionary = hz.stats()
-	ck("crumble: stats count the pushes (player and boss) and fall_damage", int(stats["pushes"]) == 2 and absf(float(stats["fall_damage_total"]) - 16.0) < EPS and absf(hz.config_value("fall_damage") - 8.0) < EPS)
+	ck("crumble: stats count the pushes (player only, the boss half never crumbles) and fall_damage", int(stats["pushes"]) == 1 and absf(float(stats["fall_damage_total"]) - 8.0) < EPS and absf(hz.config_value("fall_damage") - 8.0) < EPS)
 	# Sky Isles return fade (ADR-0001 Phase 1, 2026-11-01): sampled inside cell_restored, i.e. the very moment (1,1) returns.
 	hz.return_fade_sec = 0.5
 	var back: Dictionary = {}
@@ -568,12 +568,13 @@ func _crumble_tests() -> void:
 	var hz3: TileHazards = hz_new(st3, 3)
 	run(hz3, st3, 10.0)
 	ck("crumble: off by default, a long stand changes nothing", hz3.fallen_cells(P).is_empty() and not hz3.crumble_enabled())
-	# The enemy unit crumbles its own half too.
+	# Only the player's half crumbles (user 2026-11-01): the boss standing still never cracks its own cell.
 	var st4: CombatState = mk()
 	var hz4: TileHazards = hz_new(st4, 3)
 	hz4.enable_crumble(true)
 	run(hz4, st4, 3.2)
-	ck("crumble: the enemy side crumbles under the boss as well", hz4.fallen_cells(E) == cells([Vector2i(4, 1)]) and st4.enemy_cell != Vector2i(4, 1))
+	ck("crumble: the enemy side never crumbles under the boss", hz4.fallen_cells(E).is_empty() and not hz4.is_crumble_warning(E, Vector2i(4, 1)) and st4.enemy_cell == Vector2i(4, 1))
+	ck("crumble: crumbles_side is player only", hz4.crumbles_side(P) and not hz4.crumbles_side(E))
 
 	_island_tests()
 

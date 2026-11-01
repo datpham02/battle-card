@@ -47,10 +47,11 @@
    - Nếu chưa, trận **chậm còn 0,2×**.
 2. **Bóng khối** đi theo ngón tay và hít vào lưới đất địch. Chỉ đặt được khi **mọi ô** của khối nằm trên ô thật. **Xoay 90°** bằng cách chạm lại vào khối; không lật được.
 3. **Báo trúng:** bóng khối **xanh** nếu ô địch đang đứng nằm trong khối, **đỏ** nếu không. Số ô và sát thương dự kiến hiện cạnh bóng.
-4. Thả khối thì **menu lá phép** mở ra:
-   - Rút **4 lá** từ bộ bài theo túi xáo, có **3 giây** để chọn, trận chậm 0,2×.
+4. Thả khối thì **chưa hiện lá nào**; nút **Tung phép** hiện ra. Từ lúc thả khối đầu có **3 giây** (`cuts.json` `place_window_sec`) để ghép thêm khối (mục 2.4) và bấm Tung phép; hết giờ thì tự Tung phép.
+   - Bấm Tung phép: **lớp xám nhẹ nhìn xuyên được** phủ cả màn hình, **4 lá** rút từ bộ bài theo túi xáo hiện **ở giữa màn hình**; có **3 giây** để chọn, trận chậm 0,2×.
    - Hết giờ thì tự dùng đòn chém cơ bản.
-   - Lá chưa đủ số ô hiện "cần N ô".
+   - Lá chưa đủ số ô hiện "cần N ô". Lá đang hồi chiêu tối đi, có quạt đen quay theo kim đồng hồ và số giây, không chọn được.
+   - Lá vừa dùng có hồi chiêu: icon vào **cột mép trái màn hình** với quạt đen quay theo kim đồng hồ (kiểu Liên Minh Huyền Thoại); hồi xong thì rời cột. Spec: `design/quick-specs/menu-la-giua-man-hinh-2026-11-01.md`.
 5. **Tung phép.** Đòn bắt đầu **niệm**:
    - **Thời gian niệm** = 0,2 s + 0,25 s × tổng số ô.
    - **Đang niệm vẫn đi được.** Mỗi bên chỉ có một đòn đang niệm.
@@ -58,7 +59,7 @@
 6. **Phá phép:** đòn nào chạm ô đối thủ trước thì **hủy đòn đang niệm của đối thủ**, và khối của bên bị hủy mất luôn.
 
 ### 2.4 Ghép khối và Hình Cộng Hưởng
-- Trong lúc menu lá mở, kéo thêm **một khối** nữa lên đất địch để **ghép** vào cùng đòn (+1,5 giây chọn lá). Hai khối không được chồng ô; chạm cạnh hay rời nhau đều được. Tối đa 2 khối mỗi đòn, 3 khối nếu có bảo vật Xích Ba Mắt.
+- **Trước khi bấm Tung phép**, kéo thêm **một khối** nữa lên đất địch để **ghép** vào cùng đòn. Khi 4 lá đã hiện thì không ghép thêm được nữa. Hai khối không được chồng ô; chạm cạnh hay rời nhau đều được. Tối đa 2 khối mỗi đòn, 3 khối nếu có bảo vật Xích Ba Mắt.
 - Mỗi sân có một **Hình Cộng Hưởng** 5–7 ô gợi dáng sân, hiện nhỏ trên HUD. Đòn **2 khối** có tổng ô trùng hình này (xoay được, không lật) được **×1,5 sát thương** cộng **một hiệu ứng theo chủ đề sân**: Rạn, Đóng Băng, Cháy hoặc Giá Lạnh.
 
 ### 2.5 Bản Khắc và Thức Tỉnh
@@ -93,7 +94,7 @@ Mỗi ô một hiệu ứng (`design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.m
 | Đầm Lầy Độc | **Ô lầy**: bước chậm ×1,6, mất 0,5 máu mỗi 0,5 s |
 | Sa Mạc Cát Vùi | **Cát lấp**: mỗi 6 s có 2 ô bị lấp trong 3 s, có cảnh báo 0,8 s. **Gió** đổi hướng mỗi 8 s, đẩy khối trôi lệch |
 | Thành Hỏa Ngục | **Mạch dung nham**: mỗi 7 s, cảnh báo 1 s rồi phun cả hàng hoặc cột trong 2 s, đốt 2 máu mỗi 0,5 s và cháy khối trên đó |
-| Không Đảo | **Ô nứt**: đứng lâu 2 s thì nứt, cảnh báo 0,6 s, rồi rơi trong 4 s. Ai đứng trên ô rơi bị đẩy sang ô kề và mất 8 máu. Luôn chừa đường ra khỏi đảo |
+| Không Đảo | **Ô nứt** (chỉ nửa sân người chơi, người dùng chốt 2026-11-01; nửa sân boss không sụp): đứng lâu 2 s thì nứt, cảnh báo 0,6 s, rồi rơi trong 4 s. Ai đứng trên ô rơi bị đẩy sang ô kề và mất 8 máu. Luôn chừa đường ra khỏi đảo |
 
 ### 2.8 Địch và boss
 - Địch dùng **cùng hệ khối**: nhặt và đặt khối lên đất bạn. Bộ não của địch chấm điểm khối, vị trí và hướng xoay theo đường thoát của bạn.

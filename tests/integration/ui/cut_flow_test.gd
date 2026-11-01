@@ -1,9 +1,10 @@
 extends SceneTree
 ## Story 024 (piece flow): drives the real cut flow with mouse / touch events (local coords).
 ## Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
-## Intents: select a piece (tap / drag), drag with lift onto the boss, release -> card menu with the
-## piece cells -> card -> swing with exactly those cells; locked card ignored; Huy returns the piece;
-## release off the board returns it; Xoay by a second finger mid-drag; tap-step fallback; menu
+## Intents (2026-11-01 flow, quick spec menu-la-giua-man-hinh): select a piece (tap / drag), drag with lift onto
+## the boss, release -> the place window (no cards) -> Tung phép -> card menu with the piece cells -> card -> swing
+## with exactly those cells; locked card ignored; Huy returns the piece; release off the board returns it; Xoay by
+## a second finger mid-drag; tap-step fallback; the place window runs out -> Tung phép pressed automatically; menu
 ## timeout picks the default card; confirm during a swing does nothing.
 
 var fails: int = 0
@@ -118,6 +119,7 @@ func _initialize() -> void:
 	var skill_cfg: SkillConfig = combat.get_skill_config()
 	var lib: PieceLibrary = PieceLibrary.load_from_file()
 	var cancel_c: Vector2 = ScreenLayout.cancel_button_rect(VP).get_center()
+	var cast_c: Vector2 = ScreenLayout.confirm_button_rect(VP).get_center()
 	var rot_c: Vector2 = ScreenLayout.rotate_button_rect(VP).get_center()
 	var off_board: Vector2 = Vector2(40, 400)
 
@@ -152,8 +154,8 @@ func _initialize() -> void:
 	_check("ghost on the boss cell, 2 cells", ghost.size() == 2 and ghost.has(BOSS_CELL), str(ghost))
 	_check("ghost aims above the finger (lift)", combat.get_drag_lift_px() > 0.0 and ScreenLayout.cell_at(combat.get_grid(), VP, boss_finger) != BOSS_CELL)
 	await _mouse_button(boss_finger, false)
-	_check("release on board opened the menu", flow.is_menu_open())
-	_check("menu cells == ghost cells", _sorted(flow.get_cells()) == _sorted(ghost), str(flow.get_cells()))
+	_check("release on board commits the piece: place window, NO card menu", combat.is_placed() and not flow.is_menu_open() and flow.get_hand().is_empty())
+	_check("placed cells == ghost cells", _sorted(combat.get_cast_plan().cells()) == _sorted(ghost), str(combat.get_cast_plan().cells()))
 	_check("piece left the bag, others kept", hold.get_piece(1) == null and _shape(hold, 0) == "plus5" and _shape(hold, 2) == "mono")
 	_check("no swing before a card is chosen", not actor.is_swinging())
 
@@ -162,7 +164,10 @@ func _initialize() -> void:
 	await _wait_real(1.0)
 	var real_s: float = float(Time.get_ticks_msec() - t0) / 1000.0
 	var lost: float = 5.0 - fp.freshness_left
-	_check("menu slows the sim (freshness lost << real time)", lost < real_s * 0.5 and lost > 0.0, "real=%.2f lost=%.2f" % [real_s, lost])
+	_check("place window slows the sim (freshness lost << real time)", lost < real_s * 0.5 and lost > 0.0, "real=%.2f lost=%.2f" % [real_s, lost])
+	_check("still no menu 1 s into the place window", combat.is_placed() and not flow.is_menu_open())
+	await _click(cast_c)
+	_check("tap Tung phép opens the menu with the piece cells", flow.is_menu_open() and _sorted(flow.get_cells()) == _sorted(ghost), str(flow.get_cells()))
 
 	var order: Array[String] = combat.get_hand()
 	_check("hand holds the 4-card deck", order.size() == 4 and combat.get_deck().size() == 4, str(order))
@@ -176,7 +181,9 @@ func _initialize() -> void:
 	await _mouse_drag(slot0, boss_finger)
 	ghost = combat.get_placement().get_cells().duplicate()
 	await _mouse_button(boss_finger, false)
-	_check("plus5 placed: menu open with 5 cells", flow.is_menu_open() and flow.get_cells().size() == 5, str(flow.get_cells()))
+	_check("plus5 placed: place window, no menu yet", combat.is_placed() and not flow.is_menu_open())
+	await _click(cast_c)
+	_check("plus5 placed + Tung phép: menu open with 5 cells", flow.is_menu_open() and flow.get_cells().size() == 5, str(flow.get_cells()))
 	order = combat.get_hand()
 	rects = ScreenLayout.skill_menu_rects(VP, order.size())
 	await _click(rects[order.find("chan_phong")].get_center())
@@ -189,7 +196,9 @@ func _initialize() -> void:
 	await _click(slot1)
 	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
 	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
-	_check("confirm during swing does nothing", not flow.is_menu_open() and _shape(hold, 1) == "bar2" and actor.is_swinging())
+	_check("confirm during swing does nothing", not flow.is_menu_open() and not combat.is_placed() and _shape(hold, 1) == "bar2" and actor.is_swinging())
+	await _click(cast_c)
+	_check("Tung phép during a swing does nothing", not flow.is_menu_open() and not combat.is_placed() and actor.is_swinging())
 	await _click(cancel_c)
 
 	var guard: int = 0
@@ -222,10 +231,13 @@ func _initialize() -> void:
 	_check("drag not cancelled by Xoay", combat.is_dragging())
 	await _touch_drag(0, boss_finger + Vector2(2, 0))
 	await _touch(0, boss_finger + Vector2(2, 0), false)
+	_check("touch release committed the piece (no menu yet)", combat.is_placed() and not flow.is_menu_open())
+	await _touch(0, cast_c, true)
+	await _touch(0, cast_c, false)
 	var xs: Dictionary = {}
 	for c: Vector2i in flow.get_cells():
 		xs[c.x] = true
-	_check("touch release opened menu with the rotated (vertical) bar", flow.is_menu_open() and flow.get_cells().size() == 2 and xs.size() == 1 and flow.get_cells().has(BOSS_CELL), str(flow.get_cells()))
+	_check("touch tap on Tung phép opened the menu with the rotated (vertical) bar", flow.is_menu_open() and flow.get_cells().size() == 2 and xs.size() == 1 and flow.get_cells().has(BOSS_CELL), str(flow.get_cells()))
 	order = combat.get_hand()
 	rects = ScreenLayout.skill_menu_rects(VP, order.size())
 	await _touch(0, rects[order.find("kiem_khi")].get_center(), true)
@@ -247,7 +259,13 @@ func _initialize() -> void:
 	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
 	_check("tap-step: re-aim onto the boss reports a hit", combat.get_placement().get_cells() == [BOSS_CELL] and combat.get_placement().hits(state.enemy_cell) and not flow.is_menu_open())
 	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
-	_check("tap-step: tap ghost confirms -> menu", flow.is_menu_open() and flow.get_cells() == [BOSS_CELL], str(flow.get_cells()))
+	_check("tap-step: tap ghost commits it -> place window, no menu", combat.is_placed() and not flow.is_menu_open() and combat.get_cast_plan().cells() == [BOSS_CELL], str(combat.get_cast_plan().cells()))
+	var t_place: int = Time.get_ticks_msec()
+	while combat.is_placed() and Time.get_ticks_msec() - t_place < int((combat.get_place_duration() + 1.0) * 1000.0):
+		await process_frame
+	var waited_place: float = float(Time.get_ticks_msec() - t_place) / 1000.0
+	_check("place window ran out: Tung phép pressed automatically", flow.is_menu_open() and flow.get_cells() == [BOSS_CELL], str(flow.get_cells()))
+	_check("place window closed after ~place_window_sec", absf(waited_place - combat.get_cut_config().place_window_sec) < 0.6, "%.2f" % waited_place)
 	var t_menu: int = Time.get_ticks_msec()
 	while flow.is_menu_open() and Time.get_ticks_msec() - t_menu < int((skill_cfg.menu_choose_sec + 1.0) * 1000.0):
 		await process_frame

@@ -29,8 +29,8 @@ const BUTTON_FONT_SIZE: int = 28
 ## Layout as shares of the viewport.
 const HEADER_BOTTOM_RATIO: float = 0.13
 const ROWS_TOP_RATIO: float = 0.18
-const ROW_HEIGHT_RATIO: float = 0.13
-const ROW_GAP_RATIO: float = 0.025
+const ROW_HEIGHT_RATIO: float = 0.115
+const ROW_GAP_RATIO: float = 0.02
 const ROWS_LEFT_RATIO: float = 0.12
 const ROWS_WIDTH_RATIO: float = 0.76
 const VALUE_WIDTH_RATIO: float = 0.24
@@ -54,8 +54,13 @@ const TEXT_ON: String = "ui.settings.on"
 const TEXT_OFF: String = "ui.settings.off"
 const TEXT_LANG_NAME_VI: String = "ui.settings.lang_vi"
 const TEXT_LANG_NAME_EN: String = "ui.settings.lang_en"
+## Accessibility "Thời gian chọn lá" (2026-11-01): label, hint and one value key per SettingsStore.CARD_TIMES entry.
+const TEXT_CARD_TIME: String = "ui.settings.card_time"
+const TEXT_CARD_TIME_HINT: String = "ui.settings.card_time_hint"
+const TEXT_CARD_TIME_VALUES: Dictionary = {"normal": "ui.settings.card_time_normal", "long": "ui.settings.card_time_long",
+	"unlimited": "ui.settings.card_time_unlimited"}
 ## Row ids, top to bottom.
-const ROWS: Array[String] = ["movement", "hints", "motion", "language"]
+const ROWS: Array[String] = ["movement", "hints", "motion", "card_time", "language"]
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -147,6 +152,8 @@ func toggle(row_id: String) -> void:
 			store.set_show_control_hints(not store.get_show_control_hints())
 		"motion":
 			store.set_reduce_motion(not store.get_reduce_motion())
+		"card_time":
+			store.cycle_card_time()
 		"language":
 			_flow.toggle_locale()
 
@@ -161,6 +168,8 @@ func value_key(row_id: String) -> String:
 			return TEXT_ON if store.get_show_control_hints() else TEXT_OFF
 		"motion":
 			return TEXT_ON if store.get_reduce_motion() else TEXT_OFF
+		"card_time":
+			return str(TEXT_CARD_TIME_VALUES.get(store.get_card_time(), TEXT_CARD_TIME_VALUES["normal"]))
 		"language":
 			return TEXT_LANG_NAME_EN if TranslationServer.get_locale().begins_with("en") else TEXT_LANG_NAME_VI
 	return ""
@@ -177,7 +186,8 @@ func _draw() -> void:
 	MenuFont.text(self, Vector2(0.0, vp.y * HEADER_BOTTOM_RATIO * 0.68), tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR,
 		HORIZONTAL_ALIGNMENT_CENTER, vp.x)
 	var labels: Dictionary = {"movement": [TEXT_MOVEMENT, TEXT_MOVEMENT_HINT], "hints": [TEXT_HINTS, TEXT_HINTS_HINT],
-		"motion": [TEXT_MOTION, TEXT_MOTION_HINT], "language": [TEXT_LANGUAGE, TEXT_LANGUAGE_HINT]}
+		"motion": [TEXT_MOTION, TEXT_MOTION_HINT], "card_time": [TEXT_CARD_TIME, TEXT_CARD_TIME_HINT],
+		"language": [TEXT_LANGUAGE, TEXT_LANGUAGE_HINT]}
 	var rows: Array[Rect2] = row_rects(vp)
 	var pad: float = vp.y * PAD_RATIO
 	for i: int in rows.size():

@@ -49,7 +49,7 @@ Không có GDD với mục UI Requirements (ở tầng `minimal`, `game-brief.md
 | I-10 | Bóng khối + báo trúng/trượt (xanh/đỏ) | đặt khối | **C** |
 | I-11 | Số ô và sát thương dự kiến | đặt khối | **C** |
 | I-12 | Nút Xoay, Tung phép, Hủy | đặt khối | **C** |
-| I-13 | Menu 4 lá phép (đếm 3 giây, lá khóa "cần N ô", hồi chiêu) | lá phép | **C** |
+| I-13 | Menu 4 lá phép (đếm 3 giây, lá khóa "cần N ô", hồi chiêu), mở khi bấm Tung phép (2026-11-01) | lá phép | **C** |
 | I-14 | Gợi ý ghép khối thứ hai | ghép | **C** |
 | I-15 | Biểu tượng Hình Cộng Hưởng của sân | ghép | **C**: khi đang cầm khối |
 | I-16 | Ô đỏ báo đòn trên đất người chơi | boss | **M** (khi có đòn) |
@@ -120,7 +120,7 @@ Màn ngang 1280×720 (tham chiếu), tỉ lệ lấy từ `src/layout/screen_lay
 | **Z1b** | trong panel boss, hàng trên, bên trái tên (sửa 2026-10-31) | Hàng khối boss đang giữ (I-18), ô 22×17 px | Thu gọn cho vừa hàng |
 | **Z2** Lưới | ≈ 20–64 % cao cho hàng rộng (sửa 2026-10-31: sân bắt đầu ở 20 % để nền có dải cảnh xa; trước đó 15 %); hàng hẹp nằm gọn trong khe ngón cái (x 25–76 %) được xuống tới 76 % (bố cục v2, `design/quick-specs/control-layout-v2.md`, người dùng chốt 2026-10-31; trước đó 14–55 %) | Hai lưới; ô đỏ báo đòn và đếm ngược (I-16, I-17); từ khóa gắn trên đơn vị (I-23); địa hình (I-24, I-25); số sát thương và hồi máu (I-21, I-22); biểu ngữ và thông báo (I-19, I-20, I-26–I-28) | Mọi thông báo chuyển động nằm trên lớp này |
 | **Z3** Trái dưới | vùng x 0–25 %, y 64–100 % | Joystick nổi 4 hướng (I-06, đế 160 px, núm 88 px, xuất hiện tại chỗ chạm; Settings `controls.movement = pad` vẽ pad 3x3 nút 88 px thay thế); khi đặt khối chuyển thành nút Xoay lớn (I-12) | Ngón cái trái: **đi**. Bố cục v2 2026-10-31, trước đó pad 4 hướng cố định |
-| **Z4** Dải giữa | giữa dưới | Thức Tỉnh + Bản Khắc (I-08); khi đặt khối: số ô, sát thương (I-11), Tung phép, Hủy (I-12), Tập trung (I-09); khi chọn lá: menu 4 lá (I-13) | Ngón nào rảnh thì bấm |
+| **Z4** Dải giữa | giữa dưới | Thức Tỉnh + Bản Khắc (I-08); khi đặt khối: số ô, sát thương (I-11), Tung phép, Hủy (I-12), Tập trung (I-09); khi chọn lá: lớp xám nhìn xuyên được + menu 4 lá **ở giữa màn hình** (I-13, 2026-11-01) | Ngón nào rảnh thì bấm |
 | **Z5** Phải dưới | góc phải, 3 ô 130x93 px xếp vòng cung quanh điểm xoay ngón cái (góc 100/128/156°, bán kính 2× cao ô) | Túi khối, 3 ô (I-07) | Ngón cái phải: **kéo khối** lên lưới địch. Bố cục v2 2026-10-31, trước đó 3 ô 158x113 thẳng hàng |
 
 **Lý do:** ngón trái đi, ngón phải đặt khối, ở giữa là trạng thái và nút xác nhận. Vùng điều khiển **đổi nội dung theo ngữ cảnh** (pad thành Xoay, Thức Tỉnh thành Tung phép) nên không thêm yếu tố mới, đúng triết lý mục A.
@@ -200,8 +200,9 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 | E-10 | Bóng khối + báo trúng (C) | Ô sàn đất địch trùng hình khối đổi màu, không vẽ khối lên sân: **trọn ô, màu khối của nhân vật**: trúng tô đậm, viền liền / trượt tô mờ, viền nét đứt, kèm nhãn "Sẽ trúng ✓" / "Sẽ trượt ✗" | Theo ngón tay | Hít vào ô trong 0,05 s, chỉ đổi màu, không animation. Khối nhỏ nâng lên 56 px trên ngón tay |
 | E-11 | Số ô và sát thương (C) | Chữ lớn "7 ô" + "Sát thương 42" ở dải giữa | Theo xoay hoặc ghép | — |
 | E-12 | Xoay, Tung phép, Hủy (C) | Xoay: nút lớn thay pad. Tung phép: nút xanh lá ở giữa. Hủy: nút nhỏ | Sự kiện | Xoay: khối quay 90° trong 0,1 s |
-| E-13 | Menu 4 lá (C) | 4 thẻ ngang: tên, số ô tối thiểu, hồi chiêu, sát thương/ô; thanh đếm 3 s phía trên | Liên tục | Lá chưa đủ ô: mờ + "cần N ô". Hết giờ: tự chọn nhát chém cơ bản |
-| E-14 | Gợi ý ghép (C) | Một dòng nhỏ: "Kéo thêm khối để ghép · +1,5 s" | Mỗi lần mở menu | Hiện suốt thời gian menu 4 lá mở, theo **thời gian chọn lá** (3 s / 6 s / không giới hạn); không xếp hàng với các dòng nhắc một lần. Ẩn hẳn sau khi người chơi đã ghép ít nhất một lần (cờ trong tiến trình). **Đề xuất mới.** |
+| E-13 | Menu 4 lá (C) | **Từ 2026-11-01** (`design/quick-specs/menu-la-giua-man-hinh-2026-11-01.md`): mở khi bấm Tung phép, không mở khi thả khối. Lớp xám nhẹ nhìn xuyên được phủ cả màn hình; 4 mặt lá `CardFace` (176×256) ở giữa màn hình; thanh đếm 3 s phía trên. Lá đang hồi: tối, quạt đen quay theo kim đồng hồ + số giây, không chọn được | Liên tục | Lá chưa đủ ô: mờ + "cần N ô". Hết giờ: tự chọn nhát chém cơ bản |
+| E-14 | Gợi ý ghép (C) | **Bỏ 2026-11-01**: ghép làm trước khi bấm Tung phép, không còn ghép trong menu (+1,5 s). Dòng cũ: "Kéo thêm khối để ghép · +1,5 s" | Mỗi lần mở menu | Hiện suốt thời gian menu 4 lá mở, theo **thời gian chọn lá** (3 s / 6 s / không giới hạn); không xếp hàng với các dòng nhắc một lần. Ẩn hẳn sau khi người chơi đã ghép ít nhất một lần (cờ trong tiến trình). **Đề xuất mới.** |
+| E-42 | Cột hồi chiêu (C, 2026-11-01) | Mép trái màn hình, giữa hàng bảo vật và cần điều khiển: icon mỗi lá đang hồi, quạt đen mờ quay theo chiều kim đồng hồ từ 12 giờ, số giây còn lại ở giữa (kiểu Liên Minh Huyền Thoại) | Khi có lá đang hồi | Hồi xong thì icon rời cột; xếp từ trên xuống theo thứ tự dùng |
 
 ### Đọc đòn boss (trên lưới)
 
@@ -290,7 +291,7 @@ Game không có thế giới thăm dò hay đối thoại. Ánh xạ: **thăm d�
 | **Giới thiệu trận** (2 s) | Hai thanh máu, dải bối cảnh (E-04), điều khiển hiện nhưng mờ | Mọi thông báo |
 | **Chiến đấu: nhàn rỗi / di chuyển** | 9 yếu tố luôn hiện (E-01, 02, 03, 06, 07, 08, 16*, 17*, 18) + thông báo theo ngữ cảnh khi xảy ra | Nút Xoay, Tung phép, Hủy, Tập trung, menu lá |
 | **Chiến đấu: đang đặt khối** | Pad thành nút Xoay (E-12); dải giữa có số ô + sát thương (E-11), Tung phép, Hủy, Tập trung (E-09); bóng khối + báo trúng (E-10); hình Cộng Hưởng (E-15) | Pad bị khóa; Thức Tỉnh vẫn hiện nhưng mờ |
-| **Chiến đấu: chọn lá** | Menu 4 lá (E-13) chiếm dải giữa, thanh đếm 3 s, gợi ý ghép (E-14) | Số ô và Tung phép |
+| **Chiến đấu: chọn lá** | Lớp xám nhìn xuyên được + menu 4 lá (E-13) ở giữa màn hình, thanh đếm 3 s (gợi ý ghép E-14 đã bỏ) | Số ô và Tung phép |
 | **Chiến đấu: đòn đang niệm** | Ô đỏ của boss (E-16, E-17) và ô đích đòn của bạn trên đất địch: màu chất liệu khối, sáng dần tới lúc phép rơi; hình trên ô, không nhãn (`design/art/art-bible.md` Mục 3) | Tung phép |
 | **Chiến đấu: Thức Tỉnh đang chạy** | E-08 "ĐANG DÙNG", dải thời gian (E-36) | — |
 | **Chiến đấu: pha 2 của boss** | Biểu ngữ pha (E-27) 1,5 s, rồi trở lại như bình thường | — |

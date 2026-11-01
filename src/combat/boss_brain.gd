@@ -284,7 +284,14 @@ func decide(ctx: Dictionary) -> Dictionary:
 	var best_cut: Dictionary = _best_cut(
 		state, hand, actor, cooldowns, player_actor, incoming, player_blocked, player_step_cooldown
 	)
-	var best_move: Dictionary = _plan_move(state, hand, drops, incoming, own_blocked, urgency, mover.is_ready())
+	# P2.2b (D13): a multi-cell enemy plans its moves in ANCHOR space (see _anchor_space); a 1-cell enemy is unchanged.
+	var move_incoming: Array[Vector2i] = incoming
+	var move_blocked: Array[Vector2i] = own_blocked
+	if state.enemy_footprint_size() > 1:
+		var spaced: Dictionary = _anchor_space(state, incoming, own_blocked)
+		move_incoming = spaced["incoming"]
+		move_blocked = spaced["blocked"]
+	var best_move: Dictionary = _plan_move(state, hand, drops, move_incoming, move_blocked, urgency, mover.is_ready())
 
 	var choice: Dictionary = {"type": "wait", "score": idle_score, "breakdown": {"idle_bias": idle_score}}
 	if not best_move.is_empty() and float(best_move["score"]) >= float(choice["score"]):
@@ -718,6 +725,37 @@ func _noise() -> float:
 
 
 # ---------------------------------------------------------------- movement
+
+
+# P2.2b (D13 / ADR-0001 A7): the movement planner reasons about ONE cell per position. For a multi-cell enemy every
+# cell of the enemy half is read as an ANCHOR: it is incoming when any cell of the footprint there is incoming, blocked
+# when any is blocked or the footprint does not fit there (so the BFS / dodge only ever pick fitting anchors), and its
+# thorn / mire cost is the sum over the footprint. Rewrites _thorn_pen / _mire_pen in place; returns {incoming, blocked}.
+func _anchor_space(state: CombatState, incoming: Array[Vector2i], blocked: Array[Vector2i]) -> Dictionary:
+	var out_in: Array[Vector2i] = []
+	var out_blocked: Array[Vector2i] = []
+	var thorn: Dictionary = {}
+	var mire: Dictionary = {}
+	for anchor: Vector2i in _grid.enemy_cells():
+		if not state.enemy_fits(anchor):
+			out_blocked.append(anchor)
+			continue
+		var t: float = 0.0
+		var m: float = 0.0
+		for cell: Vector2i in state.footprint_cells_at(anchor):
+			if incoming.has(cell) and not out_in.has(anchor):
+				out_in.append(anchor)
+			if blocked.has(cell) and not out_blocked.has(anchor):
+				out_blocked.append(anchor)
+			t += float(_thorn_pen.get(cell, 0.0))
+			m += float(_mire_pen.get(cell, 0.0))
+		if t > 0.0:
+			thorn[anchor] = t
+		if m > 0.0:
+			mire[anchor] = m
+	_thorn_pen = thorn
+	_mire_pen = mire
+	return {"incoming": out_in, "blocked": out_blocked}
 
 
 # Maintains the destination (every think, so invalidation never waits for the step cooldown)
@@ -1202,7 +1240,8 @@ func _hz_flag(method: String, side: int, cell: Vector2i) -> bool:
 # crack is no more than the time to walk two steps (+ one think). Merges the components into _hazard_debug.crumble.
 func _apply_crumble(here: Vector2i) -> void:
 	var enemy: int = CombatState.Side.ENEMY
-	var on: bool = _hazards.has_method("crumble_enabled") and bool(_hazards.call("crumble_enabled"))
+	# Only the player's half crumbles (TileHazards.crumbles_side); a hazards stub without it keeps crumble_enabled.
+	var on: bool = bool(_hazards.call("crumbles_side", enemy)) if _hazards.has_method("crumbles_side") 			else _hazards.has_method("crumble_enabled") and bool(_hazards.call("crumble_enabled"))
 	var weight: float = float(_weights.get("crumble_avoid", 0.0))
 	var cfg: Dictionary = _hazards.get_debug().get("cfg", {}) as Dictionary
 	var after: float = maxf(float(cfg.get("crumble_after_sec", float(TileHazards.DEFAULTS.get("crumble_after_sec", 2.0)))), 0.001)

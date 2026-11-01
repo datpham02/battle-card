@@ -110,7 +110,9 @@ func vfx_state() -> Array[Dictionary]:
 	# F10 (playtest 2026-11-01): the foot-lock seal under the enemy while its own swing roots it (replaces the ring).
 	if combat.is_boss_step_locked() and not combat.get_state().is_enemy_dead() and vfx.has_pack("root_seal"):
 		var frame: int = FloorVfx.frame_for(vfx.entry("root_seal"), clock, reduce)
-		out.append(_item("root_seal", combat.get_state().cell_of(CombatState.Side.ENEMY), frame))
+		# P2.2b: one seal under every footprint cell of a multi-cell enemy.
+		for seal_cell: Vector2i in combat.get_state().enemy_footprint_cells():
+			out.append(_item("root_seal", seal_cell, frame))
 	# F3 / F7 / F9: floor one-shots.
 	for ev: Dictionary in vfx.active_events(FloorVfx.LAYER_FLOOR):
 		var frame: int = FloorVfx.frame_for(vfx.entry(str(ev["id"])), float(ev["age"]), reduce)
@@ -164,11 +166,11 @@ func charge_state() -> Array[Dictionary]:
 	var step: int = CastFloorFx.charge_step(actor.get_progress(), steps)
 	if SettingsStore.shared().get_reduce_motion():
 		step = steps - 1
-	var foe: Vector2i = combat.get_state().enemy_cell
+	var state: CombatState = combat.get_state()
 	for cell: Vector2i in actor.get_cells():
 		if combat.is_cell_locked(cell):
 			continue
-		out.append({"cell": cell, "step": step, "steps": steps, "check": cell == foe})
+		out.append({"cell": cell, "step": step, "steps": steps, "check": state.is_enemy_at(cell)})
 	return out
 
 

@@ -2,7 +2,8 @@ class_name SettingsStore
 extends RefCounted
 ## Story 044 Part B: the player's persisted options (there is no Settings screen; the pause panel
 ## flips [code]controls.movement[/code]). JSON file, default [constant DEFAULT_PATH]:
-## [code]{"controls": {"movement": "joystick" | "pad"}, "show_control_hints": false, "reduce_motion": false}[/code].
+## [code]{"controls": {"movement": "joystick" | "pad"}, "show_control_hints": false, "reduce_motion": false,
+## "card_time": "normal" | "long" | "unlimited"}[/code] (card_time 2026-11-01, accessibility "Thời gian chọn lá").
 ## Unknown or missing values fall back to the defaults (joystick, hints off, reduce motion off).
 ## Story 047 Part D adds [code]reduce_motion[/code] (accessibility "Giam chuyen dong",
 ## design/accessibility-requirements.md): animated overlays hold their first frame.
@@ -24,6 +25,15 @@ const MOVEMENT_PAD: String = "pad"
 const DEFAULT_PATH: String = "user://settings.json"
 ## Command line switch (the value after '=' is a movement mode).
 const MOVEMENT_ARG: String = "--movement="
+## Accessibility "Thời gian chọn lá" (design/ux/hud.md): the card menu's choose time and the place window
+## (cuts.json place_window_sec) run x1 ("3 s"), x2 ("6 s") or without a limit (no auto pick / auto cast).
+const CARD_TIME_NORMAL: String = "normal"
+const CARD_TIME_LONG: String = "long"
+const CARD_TIME_UNLIMITED: String = "unlimited"
+## The values in the order the settings row cycles them.
+const CARD_TIMES: Array[String] = [CARD_TIME_NORMAL, CARD_TIME_LONG, CARD_TIME_UNLIMITED]
+## Time multiplier per card time value (0 = no limit).
+const CARD_TIME_MULTS: Dictionary = {CARD_TIME_NORMAL: 1.0, CARD_TIME_LONG: 2.0, CARD_TIME_UNLIMITED: 0.0}
 
 static var _shared: SettingsStore = null
 static var _override: String = ""
@@ -33,6 +43,7 @@ var _path: String
 var _movement: String = MOVEMENT_JOYSTICK
 var _show_control_hints: bool = false
 var _reduce_motion: bool = false
+var _card_time: String = CARD_TIME_NORMAL
 
 
 ## Builds a store on [param path] and loads it (missing or broken file = defaults).
@@ -134,12 +145,37 @@ func set_reduce_motion(on: bool) -> void:
 	save_file()
 
 
+## The "Thời gian chọn lá" value (one of [constant CARD_TIMES]; default [constant CARD_TIME_NORMAL]).
+func get_card_time() -> String:
+	return _card_time
+
+
+## Sets the card time value and saves; an unknown value is ignored.
+func set_card_time(value: String) -> void:
+	if not CARD_TIMES.has(value):
+		return
+	_card_time = value
+	save_file()
+
+
+## Moves the card time to the next value of [constant CARD_TIMES] (wrapping) and returns it.
+func cycle_card_time() -> String:
+	set_card_time(CARD_TIMES[(CARD_TIMES.find(_card_time) + 1) % CARD_TIMES.size()])
+	return _card_time
+
+
+## Pure: the time multiplier of card time [param value] (1 for an unknown value; 0 = no limit).
+static func card_time_mult(value: String) -> float:
+	return float(CARD_TIME_MULTS.get(value, 1.0))
+
+
 ## Reads the file; anything missing or malformed leaves the defaults. Returns true when a file
 ## was parsed.
 func load_file() -> bool:
 	_movement = MOVEMENT_JOYSTICK
 	_show_control_hints = false
 	_reduce_motion = false
+	_card_time = CARD_TIME_NORMAL
 	if not FileAccess.file_exists(_path):
 		return false
 	var file: FileAccess = FileAccess.open(_path, FileAccess.READ)
@@ -157,6 +193,9 @@ func load_file() -> bool:
 	_show_control_hints = data.get("show_control_hints", false) == true
 	var reduce: Variant = data.get("reduce_motion", false)
 	_reduce_motion = reduce is bool and bool(reduce)
+	var card_time: Variant = data.get("card_time", CARD_TIME_NORMAL)
+	if card_time is String and CARD_TIMES.has(card_time):
+		_card_time = card_time
 	return true
 
 
@@ -169,6 +208,7 @@ func save_file() -> bool:
 		"controls": {"movement": _movement},
 		"show_control_hints": _show_control_hints,
 		"reduce_motion": _reduce_motion,
+		"card_time": _card_time,
 	}
 	file.store_string(JSON.stringify(data, "\t"))
 	return true

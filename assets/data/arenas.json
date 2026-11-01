@@ -205,6 +205,17 @@
 			"crumble": true,
 			"featured_shape": [[0,0],[1,0],[0,1],[1,1],[2,1]],
 			"featured_bonus": { "damage_mult": 1.5, "effect": "pin", "stacks": 0, "sec": 1.2 }
+		},
+		{
+			"id": "boss_hall",
+			"name_key": "arena.boss_hall.name",
+			"side_cols": 6,
+			"side_rows": 4,
+			"missing_cells": [],
+			"difficulty": 5,
+			"boss_only": true,
+			"featured_shape": [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1]],
+			"featured_bonus": { "damage_mult": 1.5, "effect": "pin", "stacks": 0, "sec": 1.2 }
 		}
 	]
 }

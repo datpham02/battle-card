@@ -53,6 +53,13 @@
 			"dev": true,
 			"tier": "normal",
 			"skills": ["dev_prick", "dev_bar"]
+		},
+		"dev_pattern_boss": {
+			"dev": true,
+			"tier": "boss",
+			"footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+			"arena": "boss_hall",
+			"skills": ["dev_prick", "dev_bar"]
 		}
 	}
 }

@@ -42,6 +42,10 @@ class StubHazards extends TileHazards:
 	func crumble_enabled() -> bool:
 		return crumble_on
 
+	# The stub lets the boss half crumble so the crumble_avoid scoring stays tested; the real TileHazards never does.
+	func crumbles_side(_side: int) -> bool:
+		return crumble_on
+
 	func crumble_progress(_side: int, _cell: Vector2i) -> float:
 		return progress
 
@@ -501,26 +505,19 @@ func _test_idle_crumble_stub_identical_to_null() -> void:
 	_check("idle stub hazards = null hazards decisions (RNG draws)", str(runs[0]) == str(runs[1]), str(runs[0]))
 
 
-# With the real TileHazards (when the Story 039 API has landed): standing on a crumble arena builds crumble_progress
-# and the brain's cost follows it.
+# With the real TileHazards: only the player's half crumbles (user 2026-11-01), so a boss standing still on a
+# crumble arena builds no progress, the brain sees crumble off for its half and never pays a crumble cost.
 func _test_real_tile_hazards_crumble() -> void:
 	var w: Dictionary = _world(_config_crumble(1.0), CENTER, BoardGrid.NO_CELL)
 	var hazards: TileHazards = w["hazards"]
-	if not (hazards.has_method("enable_crumble") and hazards.has_method("crumble_progress") and hazards.has_method("is_fallen")):
-		print("SKIP real TileHazards crumble (API not present yet)")
-		return
 	hazards.call("enable_crumble", true)
 	(w["brain"] as BossBrain).set_hazards(hazards)
 	var state: CombatState = w["state"]
-	# The player stands elsewhere; the boss does not move for 1.2 s of model time (crumble_after_sec 2.0).
-	for i: int in 12:
+	# The player stands elsewhere; the boss does not move for 3.2 s of model time (crumble_after_sec 2.0).
+	for i: int in 32:
 		hazards.tick(0.1, state)
-	var progress: float = float(hazards.call("crumble_progress", ENEMY, CENTER))
-	_check("real hazards: standing builds crumble_progress", progress > 0.0, str(progress))
+	_check("real hazards: the boss half builds no crumble_progress", float(hazards.call("crumble_progress", ENEMY, CENTER)) == 0.0)
 	_decide(w)
 	var dbg: Dictionary = _crumble_debug(w)
-	_check("real hazards: brain cost follows progress", float(dbg.get("fraction", 0.0)) >= progress - 0.0001 and float(dbg.get("cost", 0.0)) > 0.0, str(dbg))
-	for i: int in 20:
-		hazards.tick(0.1, state)
-	_check("real hazards: the cell fell or cracks after long standing", bool(hazards.call("is_fallen", ENEMY, CENTER)) \
-			or bool(hazards.call("is_crumble_warning", ENEMY, CENTER)) or float(hazards.call("crumble_progress", ENEMY, CENTER)) >= 1.0)
+	_check("real hazards: the brain sees crumble off for its half, no cost", not bool(dbg.get("on", true)) and float(dbg.get("cost", 1.0)) == 0.0, str(dbg))
+	_check("real hazards: the boss cell never cracks or falls", not bool(hazards.call("is_fallen", ENEMY, CENTER)) 			and not bool(hazards.call("is_crumble_warning", ENEMY, CENTER)))

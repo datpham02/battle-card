@@ -206,7 +206,7 @@ static func shake_offset(left: float, px: int) -> Vector2i:
 func unit_feet_art(side: int) -> Vector2i:
 	if _combat == null or _combat.get_state() == null:
 		return Vector2i(-1, -1)
-	return _feet_of_cell(_cell_of(side))
+	return _feet_of_unit(side)
 
 
 ## Feet anchor for any board cell (the rule of [method unit_feet_art]).
@@ -219,7 +219,7 @@ func feet_art_of_cell(cell: Vector2i) -> Vector2i:
 func get_active_status_kinds(side: int) -> Array[String]:
 	if _combat == null or _combat.get_state() == null:
 		return []
-	return status_kinds_for(_combat.get_status(), side, _cell_of(side), _is_alive(side))
+	return status_kinds_for(_combat.get_status(), side, _status_cell(side), _is_alive(side))
 
 
 ## Match seconds the overlay [param kind] of [param side] has been running (0 when it is not active).
@@ -566,10 +566,10 @@ func _feet_of_cell(cell: Vector2i) -> Vector2i:
 	return Vector2i(x, y)
 
 
-## The ground shadow of a unit standing on [param cell] (art px): a stepped Ink ellipse centred on the feet, one
+## The ground shadow of a unit standing in a rect of [param rect_size] (its cell, or a multi-cell footprint, P2.2b) (art px): a stepped Ink ellipse centred on the feet, one
 ## 1 px row per draw_rect so the edge stays on whole pixels. Pure geometry in [method shadow_rows].
-func _draw_shadow(cell: Vector2i, feet: Vector2i) -> void:
-	for row: Rect2i in shadow_rows(_cell_art_rect(cell).size, feet):
+func _draw_shadow(rect_size: Vector2i, feet: Vector2i) -> void:
+	for row: Rect2i in shadow_rows(rect_size, feet):
 		draw_rect(Rect2(row), SHADOW_COLOR)
 
 
@@ -599,6 +599,43 @@ func _cell_art_rect(cell: Vector2i) -> Rect2i:
 func _cell_of(side: int) -> Vector2i:
 	var state: CombatState = _combat.get_state()
 	return state.player_cell if side == CombatState.Side.PLAYER else state.enemy_cell
+
+
+# P2.2b (D13): the art rect a unit stands in: its cell, or the bounding rect of a multi-cell enemy's footprint.
+func _unit_art_rect(side: int) -> Rect2i:
+	var state: CombatState = _combat.get_state()
+	if side == CombatState.Side.PLAYER or state.enemy_footprint_size() <= 1:
+		return _cell_art_rect(_cell_of(side))
+	var out: Rect2i = Rect2i()
+	var first: bool = true
+	for cell: Vector2i in state.enemy_footprint_cells():
+		var r: Rect2i = _cell_art_rect(cell)
+		out = r if first else out.merge(r)
+		first = false
+	return out
+
+
+# P2.2b: the feet anchor of [param side]: [method _feet_of_cell] of its cell; for a multi-cell enemy x = the centre of
+# the footprint's bounding rect and y = the feet row of the footprint's FRONT (bottom) row, so the body stands on the
+# footprint the way a 1-cell unit stands on its cell.
+func _feet_of_unit(side: int) -> Vector2i:
+	var state: CombatState = _combat.get_state()
+	if side == CombatState.Side.PLAYER or state.enemy_footprint_size() <= 1:
+		return _feet_of_cell(_cell_of(side))
+	var rect: Rect2i = _unit_art_rect(side)
+	var bottom: Vector2i = state.enemy_cell + Vector2i(0, state.footprint_extent().y - 1)
+	@warning_ignore("integer_division")
+	return Vector2i(rect.position.x + rect.size.x / 2, _feet_of_cell(bottom).y)
+
+
+# P2.2b: the cell the status overlays read (burn): a burning footprint cell when any burns, else the unit's cell.
+func _status_cell(side: int) -> Vector2i:
+	var state: CombatState = _combat.get_state()
+	if side == CombatState.Side.ENEMY and state.enemy_footprint_size() > 1 and _combat.get_status() != null:
+		for cell: Vector2i in state.enemy_footprint_cells():
+			if _combat.get_status().is_burning(cell):
+				return cell
+	return _cell_of(side)
 
 
 # Alive for the overlays: the player while not dead; the boss while not dead OR downed (Story 035: downed
@@ -634,7 +671,7 @@ func _draw() -> void:
 	# Draw order (art bible 8.6): back row first, then left to right; the player before the boss on a tie.
 	var units: Array[Dictionary] = [
 		{"side": CombatState.Side.PLAYER, "cell": _cell_of(CombatState.Side.PLAYER)},
-		{"side": CombatState.Side.ENEMY, "cell": _cell_of(CombatState.Side.ENEMY)},
+		{"side": CombatState.Side.ENEMY, "cell": _cell_of(CombatState.Side.ENEMY) + Vector2i(0, _combat.get_state().footprint_extent().y - 1)},
 	]
 	units.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var ca: Vector2i = a["cell"]
@@ -646,17 +683,17 @@ func _draw() -> void:
 		return int(a["side"]) < int(b["side"]))
 	for unit: Dictionary in units:
 		var side: int = int(unit["side"])
-		var cell: Vector2i = unit["cell"]
+		var cell: Vector2i = _cell_of(side)
 		var kinds: Array[String] = get_active_status_kinds(side)
-		var ground: Vector2i = _feet_of_cell(cell)
-		_draw_shadow(cell, ground)
+		var ground: Vector2i = _feet_of_unit(side)
+		_draw_shadow(_unit_art_rect(side).size, ground)
 		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
 		if not _draw_sprite(side, feet):
 			if side == CombatState.Side.PLAYER:
 				_draw_player_marker(cell)
 			else:
-				_draw_enemy(cell)
+				_draw_enemy(_unit_art_rect(side))
 		_draw_status_overlays(side, kinds, feet, CLIP_FRONT)
 
 
@@ -688,7 +725,7 @@ func _draw_flash() -> void:
 		var src: Rect2i = anim.frame_rect()
 		if src.size.x <= 0 or src.size.y <= 0:
 			continue
-		var feet: Vector2i = _feet_of_cell(_cell_of(side)) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
+		var feet: Vector2i = _feet_of_unit(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
 		var dest: Rect2 = sprite_dest_rect(feet, src.size, sheet.facing() != facing_for(side))
 		var alpha: float = float(_feel.get("flash_alpha", 0.75)) * clampf(left / total, 0.0, 1.0)
 		_flash.draw_texture_rect_region(sheet.texture(), dest, Rect2(src), Color(1.0, 1.0, 1.0, alpha))
@@ -748,12 +785,13 @@ func _draw_player_marker(cell: Vector2i) -> void:
 	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, floorf(font_size * 0.4)), text, HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
 
 
-# The boss's placeholder: a square body centred in the cell; Story 035 kneeling when downed, an
+# The boss's placeholder: a square body centred in [param area] (its cell, or the bounding rect of a multi-cell
+# footprint, P2.2b: the body fills the footprint with the same margins); Story 035 kneeling when downed, an
 # outline while invulnerable, grey with a cross when dead.
-func _draw_enemy(cell: Vector2i) -> void:
+func _draw_enemy(area: Rect2i) -> void:
 	var state: CombatState = _combat.get_state()
 	var dead: bool = state.is_enemy_dead()
-	var rect := Rect2(_cell_art_rect(cell))
+	var rect := Rect2(area)
 	var body_size := Vector2(floorf(rect.size.x * ENEMY_BODY_WIDTH_RATIO), floorf(rect.size.y * ENEMY_BODY_HEIGHT_RATIO))
 	var body := Rect2((rect.get_center() - body_size * 0.5).floor(), body_size)
 	if _combat.is_boss_downed():

@@ -59,18 +59,28 @@ func get_shape(id: String) -> Dictionary:
 	return {}
 
 
-## Ids of the valid shapes, in file order.
-func shape_ids() -> Array[String]:
+## Ids of the valid shapes, in file order. P2.2b: `boss_only` shapes (boss_hall, the multi-cell Warden arenas) are
+## left out unless [param include_boss_only], so no normal pool or scan built from this list ever picks one; they are
+## reached only by naming them ([method get_shape], an `arena` block, `--arena=`, an enemy's `arena` hint).
+func shape_ids(include_boss_only: bool = false) -> Array[String]:
 	var ids: Array[String] = []
 	for shape: Dictionary in _shapes:
-		ids.append(str(shape["id"]))
+		if include_boss_only or not bool(shape.get("boss_only", false)):
+			ids.append(str(shape["id"]))
 	return ids
 
 
-## Copies of the valid shapes with difficulty <= [param max_difficulty].
+## True when the shape [param id] exists and is `boss_only` (P2.2b).
+func is_boss_only(id: String) -> bool:
+	return bool(get_shape(id).get("boss_only", false))
+
+
+## Copies of the valid shapes with difficulty <= [param max_difficulty] (boss_only shapes never included).
 func shapes_with_difficulty(max_difficulty: int) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for shape: Dictionary in _shapes:
+		if bool(shape.get("boss_only", false)):
+			continue
 		if int(shape["difficulty"]) <= max_difficulty:
 			result.append(shape.duplicate(true))
 	return result
@@ -314,6 +324,9 @@ func _add_checked(entry: Variant) -> void:
 		"missing_cells": (raw.get("missing_cells", []) as Array).duplicate(true) if typeof(raw.get("missing_cells", [])) == TYPE_ARRAY else [],
 		"difficulty": clampi(int(raw.get("difficulty", 1)), 1, 5),
 	}
+	# P2.2b: a boss-only arena (multi-cell Warden) never enters shape_ids() / shapes_with_difficulty().
+	if bool(raw.get("boss_only", false)):
+		shape["boss_only"] = true
 	# Story 036: tile hazards of the arena (checked by ArenaValidator together with the rest of the shape).
 	if raw.has("hazards"):
 		shape["hazards"] = (raw["hazards"] as Dictionary).duplicate(true) if typeof(raw["hazards"]) == TYPE_DICTIONARY else raw["hazards"]

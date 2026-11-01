@@ -5,15 +5,19 @@ extends Node2D
 ## (1) PREVIEW of the cast being placed on the target half: the piece ghost over the cells it covers
 ## (green = covers the boss's cell, red = misses, grey = off the board), a corner label with the
 ## forecast, cell count and expected damage, and (Story 028) the joined second piece and the total;
-## (2) CONFIRM button ("Chốt"), dimmed with the swing countdown while a swing runs;
-## (3) SKILL MENU panel: countdown bar + one button per skill with its lock reason;
+## (2) CONFIRM button ("Tung phép"), dimmed with the swing countdown while a swing runs, and (2026-11-01) the place
+## window bar above it while pieces are placed;
+## (3) CARD MENU (2026-11-01, quick spec menu-la-giua-man-hinh): opened by Tung phép, a light grey see-through overlay
+## over the whole battle and the drawn cards as CardFace faces centred on the screen under the countdown bar; a card
+## that cannot be picked is dimmed with its reason (cooldown: the LoL pie over its picture);
+## (3b) the COOLDOWN COLUMN at the left screen edge: one icon per card cooling down, a clockwise pie and the seconds;
 ## (4) SWING overlay: covered cells red with the countdown; (5) HIT / MISS marker after a swing;
 ## (6) the boss's QUEUED combo swing (Story 013) as a hatched lighter-red layer under its running swing;
 ## (7) Story 023: Rạn / Hàn stacks in the boss status strip, trait readouts under the player HP bar
 ## (reactor charges, fuse bar, frost aura), cracked / warned cells on the board and the phase banner;
 ## (8) Story 027: thorn zones (inward sawtooth, light tint) on both halves with a remaining-time bar, plus a short
 ## flash when a unit enters thorns (the seal zone was deleted 2026-11-01, ADR-0001 Phase 1 cleanup).
-## It owns no game state: it reads CombatView and calls confirm_selection() / CutFlow.choose().
+## It owns no game state: it reads CombatView and calls press_cast() / confirm_placement() / CutFlow.choose().
 ##
 ## Input is read in _input (like DPadView) and consumed, so HandInputController never sees a
 ## press on the confirm button or the menu panel. Dedup: with emulate_mouse_from_touch a touch
@@ -67,7 +71,6 @@ const PLACE_HINT_FONT_SIZE: int = 18
 const PLACE_HINT_MIN_FONT_SIZE: int = 12
 const PLACE_HINT_MAX_LINES: int = 2
 ## TD-016: one line on the card menu countdown bar while another piece can still join the cast.
-const TEXT_JOIN_HINT: String = "ui.hud.join_hint"
 ## Overlays that cover the battle (paths under the main scene); the relic strip hides while one is shown.
 const OVERLAY_PATHS: Array[String] = ["RewardView", "GameFlow/FateView", "GameFlow/EndingView"]
 const TEXT_CANCEL: String = "ui.hud.cancel"
@@ -104,6 +107,18 @@ const BAR_BACK: Color = HudSkin.HP_GROOVE
 const BAR_FILL: Color = Color(0.72, 0.56, 0.2)
 ## Alpha multiplier of a locked / dimmed button.
 const DIM_ALPHA: float = 0.4
+## 2026-11-01 card menu: the light grey see-through overlay over the whole screen while the cards are shown (the
+## board and the placed ghost stay readable through it; spec range 0.3..0.6), the cooldown icon frame, and the
+## reason plate on a card that cannot be picked ("cần N ô", cursed, not yet).
+const MENU_OVERLAY_ALPHA: float = 0.45
+const MENU_OVERLAY_COLOR: Color = Color(0.78, 0.78, 0.82, MENU_OVERLAY_ALPHA)
+const COOLDOWN_ICON_FRAME: Color = Color(0.05, 0.04, 0.06, 0.95)
+const COOLDOWN_ICON_FRAME_WIDTH: float = 2.0
+const MENU_REASON_BACK: Color = Color(0.08, 0.07, 0.1, 0.9)
+const MENU_DIM_BACKING: Color = Color("1F1D2A")
+const MENU_DIM_BACKING_INSET: float = 3.0
+const MENU_REASON_HEIGHT_RATIO: float = 0.16
+const MENU_REASON_TOP_RATIO: float = 0.66
 const OUTLINE_WIDTH: float = 4.0
 const CELL_OUTLINE_WIDTH: float = 3.0
 const LINE_WIDTH: float = 4.0
@@ -855,14 +870,24 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-# Piece keys (Story 024): 1..3 select a bag slot, R rotates, Esc cancels placing / the card menu.
+# Piece keys (Story 024): 1..3 select a bag slot, R rotates, Esc cancels placing / the place window / the card
+# menu. 2026-11-01 desktop extras: Enter presses Tung phép; with the card menu open 1..4 pick the card in that place.
 # Returns true when the key was used (consumed, so Esc does not also pause the run).
 func _piece_key(code: Key) -> bool:
 	if code == KEY_ESCAPE:
 		return _combat.cancel_placement()
 	if code == KEY_R:
 		return _combat.rotate_piece()
+	if code == KEY_ENTER or code == KEY_KP_ENTER:
+		return _combat.is_confirm_visible() and _combat.press_cast()
 	var index: int = int(code) - int(KEY_1)
+	var flow: CutFlow = _combat.get_cut_flow()
+	if flow.is_menu_open():
+		var hand: Array[String] = flow.get_hand()
+		if index >= 0 and index < hand.size():
+			flow.choose(hand[index])
+			return true
+		return false
 	if index >= 0 and index < 9:
 		return _combat.select_piece(index, false)
 	return false
@@ -879,21 +904,12 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 		if not emulated:
 			_combat.rotate_piece()
 		return true
-	if (flow.is_menu_open() or _combat.is_placing()) and ScreenLayout.cancel_button_rect(vp).has_point(pos):
+	if (flow.is_menu_open() or _combat.is_placing() or _combat.is_placed()) and ScreenLayout.cancel_button_rect(vp).has_point(pos):
 		if not emulated:
 			_combat.cancel_placement()
 		return true
-	if flow.is_menu_open() and not _combat.is_placing():
-		# Story 028: a tap on the attached second piece takes it off the cast (back to its bag slot).
-		var tapped: Vector2i = ScreenLayout.cell_at(_combat.get_grid(), vp, pos)
-		if tapped != BoardGrid.NO_CELL and _combat.get_cast_plan().piece_cells(1).has(tapped):
-			if not emulated:
-				_combat.detach_second_piece()
-			return true
 	if flow.is_menu_open():
-		if not ScreenLayout.skill_menu_panel_rect(vp).has_point(pos):
-			# Story 028: tap-fallback for the second piece (select its slot, tap the board / the ghost).
-			return _board_press(pos, emulated)
+		# 2026-11-01: the centred cards; the overlay takes every other press (nothing under it reacts).
 		if not emulated:
 			var order: Array[String] = flow.get_hand()
 			var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
@@ -902,13 +918,21 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 					flow.choose(order[i])
 					break
 		return true
+	if _combat.is_placed() and not _combat.is_placing():
+		# Story 028: in the place window a tap on the last joined piece takes it off the cast (back to its bag slot).
+		var plan: CastPlan = _combat.get_cast_plan()
+		var tapped: Vector2i = ScreenLayout.cell_at(_combat.get_grid(), vp, pos)
+		if tapped != BoardGrid.NO_CELL and plan.piece_count() >= 2 and plan.piece_cells(plan.piece_count() - 1).has(tapped):
+			if not emulated:
+				_combat.detach_second_piece()
+			return true
 	if _has_signature() and ScreenLayout.signature_button_rect(vp).has_point(pos):
 		if not emulated:
 			_try_activate_signature()
 		return true
 	if _combat.is_confirm_visible() and ScreenLayout.confirm_button_rect(vp).has_point(pos):
 		if not emulated:
-			_combat.confirm_placement()
+			_combat.press_cast()
 		return true
 	return _board_press(pos, emulated)
 
@@ -1151,13 +1175,17 @@ func _draw() -> void:
 	_draw_pins(vp)
 	_draw_dot_pops(vp)
 	_draw_confirm(vp)
-	_draw_cancel(vp)
+	_draw_place_bar(vp)
+	if not _combat.get_cut_flow().is_menu_open():
+		_draw_cancel(vp)
 	_draw_rotate(vp)
 	_draw_focus_bar(vp)
 	_draw_focus_tag(vp)
 	_draw_signature_effect(vp)
 	_draw_signature_button(vp)
 	_draw_menu(vp)
+	# Above the menu overlay: the cooldowns stay crisp while the cards are picked.
+	_draw_cooldown_column(vp)
 	_draw_signature_banner(vp)
 	_draw_phase_banner(vp)
 	if _combat.debug_overlay:
@@ -1269,10 +1297,11 @@ func _draw_focus_overlay(vp: Vector2) -> void:
 
 # Above the CONFIRM button: ACTIVE = "TẬP TRUNG x.x s" countdown (orange in the last quarter);
 # COOLDOWN = greyed bar filling up with "Tập trung còn N s"; READY with nothing selected = a
-# faint dot at the bar's left. Hidden while the skill menu covers the strip.
+# faint dot at the bar's left. Hidden while the card menu is open or the place window bar is shown.
 func _draw_focus_bar(vp: Vector2) -> void:
 	var focus: FocusController = _combat.get_focus()
-	if focus == null or _combat.get_cut_flow().is_menu_open():
+	if focus == null or _combat.get_cut_flow().is_menu_open() or _combat.is_placed():
+		# The place window bar takes this strip while pieces are placed (the card menu covers everything).
 		return
 	var bar: Rect2 = ScreenLayout.focus_bar_rect(vp)
 	if focus.is_active():
@@ -1362,9 +1391,9 @@ func _skin_bar(rect: Rect2, ratio: float, fill: Color, groove: Color = HudSkin.H
 
 func _draw_preview(vp: Vector2) -> void:
 	var flow: CutFlow = _combat.get_cut_flow()
-	var enemy_cell: Vector2i = _combat.get_state().enemy_cell
-	if flow.is_menu_open():
-		_draw_plan_preview(vp, flow, enemy_cell)
+	var state: CombatState = _combat.get_state()
+	if flow.is_menu_open() or _combat.is_placed():
+		_draw_plan_preview(vp, flow, state)
 		return
 	if not _combat.is_placing():
 		return
@@ -1388,7 +1417,8 @@ func _draw_preview(vp: Vector2) -> void:
 				PieceDraw.draw_shape(self, piece, Rect2(at - size * 0.5, size), GHOST_OFF_FILL, GHOST_OFF_OUTLINE)
 			_draw_finger(_combat.get_drag_point())
 		return
-	var hit: bool = placement.hits(enemy_cell)
+	# P2.2b: green when the ghost covers ANY cell of the boss's footprint (one hit however many it covers).
+	var hit: bool = placement.can_confirm() and state.enemy_in(cells)
 	# Story 039 (shroud): the forecast is blocked: a grey shadow with a cloud icon says why there is no green / red.
 	var blocked: bool = _forecast_blocked()
 	var ghost_outline: Color = GHOST_BLOCKED_OUTLINE if blocked else (GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
@@ -1418,16 +1448,16 @@ func _draw_preview(vp: Vector2) -> void:
 		_draw_finger(_combat.get_drag_point())
 
 
-# Story 028: the cast under the open card menu: its pieces (green / red by the boss's cell over the UNION
-# with the second ghost), the second ghost lifted above the finger, a total readout, the featured glow.
-func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> void:
+# Story 028: the placed cast (place window, and under the open card menu): its pieces (green / red by the boss's
+# cell over the UNION with the next ghost), the next ghost lifted above the finger, a total readout, the featured glow.
+func _draw_plan_preview(vp: Vector2, _flow: CutFlow, state: CombatState) -> void:
 	var plan: CastPlan = _combat.get_cast_plan()
 	var placement: PlacementController = _combat.get_placement()
 	var ghost: Array[Vector2i] = placement.get_cells() if _combat.is_placing() else _no_cells()
-	var union: Array[Vector2i] = flow.get_cells()
+	var union: Array[Vector2i] = plan.cells()
 	for cell: Vector2i in ghost:
 		union.append(cell)
-	var hit: bool = union.has(enemy_cell)
+	var hit: bool = state.enemy_in(union)
 	var blocked: bool = _forecast_blocked()
 	var tint: Color = GHOST_BLOCKED_TINT if blocked else (GHOST_HIT_TINT if hit else GHOST_MISS_TINT)
 	var outline: Color = GHOST_BLOCKED_OUTLINE if blocked else (GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
@@ -1442,8 +1472,8 @@ func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> voi
 			_draw_odd_corner_mark(vp, plan.piece_cells(i))
 	if blocked:
 		_draw_cloud_over_cells(vp, union)
-	if plan.piece_count() >= 2:
-		_draw_detach_mark(vp, plan.piece_cells(1))
+	if plan.piece_count() >= 2 and _combat.is_placed():
+		_draw_detach_mark(vp, plan.piece_cells(plan.piece_count() - 1))
 	var refusal: Dictionary = _combat.get_join_refusal()
 	var refused: bool = false
 	if not ghost.is_empty():
@@ -1477,7 +1507,7 @@ func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> voi
 		_draw_featured_glow(vp, union)
 	# The readout counts the COMMITTED cast only (what card readiness counts); a piece still being dragged
 	# shows as an addition "(+n)".
-	var committed: int = flow.get_cells().size()
+	var committed: int = plan.total_cells()
 	var damage: float = _combat.get_cut_config().slash_damage(committed)
 	if _combat.is_plan_featured():
 		damage *= float((_combat.get_featured()["bonus"] as Dictionary).get("damage_mult", 1.0))
@@ -1490,8 +1520,8 @@ func _draw_plan_preview(vp: Vector2, flow: CutFlow, enemy_cell: Vector2i) -> voi
 	var avoid: Array[Rect2] = []
 	for cell: Vector2i in union:
 		avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
-	if plan.piece_count() >= 2:
-		avoid.append(_detach_mark_rect(vp, plan.piece_cells(1)))
+	if plan.piece_count() >= 2 and _combat.is_placed():
+		avoid.append(_detach_mark_rect(vp, plan.piece_cells(plan.piece_count() - 1)))
 	var total_rect: Rect2 = _place_label(vp, union, total, avoid)
 	_draw_label_box(total_rect, total, GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE, vp)
 	if featured:
@@ -2321,7 +2351,7 @@ func _draw_hazard_traits_039(vp: Vector2) -> void:
 			var from: Vector2i = _combat.get_state().player_cell
 			_draw_gust_arrow(vp, grid, from, dir, warn, gust.param_float(WARN_SEC_PARAM, GUST_WARN_FALLBACK_SEC))
 	if _is_shrouding(host) and not _combat.get_state().is_enemy_dead():
-		var boss_rect: Rect2 = ScreenLayout.cell_rect(grid, vp, _combat.get_state().enemy_cell)
+		var boss_rect: Rect2 = ScreenLayout.cells_rect(grid, vp, _combat.get_state().enemy_footprint_cells())
 		var width: float = minf(boss_rect.size.x, boss_rect.size.y) * 0.9
 		_draw_cloud(Vector2(boss_rect.get_center().x, boss_rect.position.y + boss_rect.size.y * 0.22), width, CLOUD_COVER_ALPHA)
 
@@ -2465,7 +2495,7 @@ func _draw_rebirth(vp: Vector2) -> void:
 	var ratio: float = 1.0 - (0.0 if total <= 0.0 else clampf(left / total, 0.0, 1.0))
 	var bar := Rect2(Vector2(text_x - STATUS_GAP - FUSE_BAR_WIDTH, rect.get_center().y - FUSE_BAR_HEIGHT * 0.5), Vector2(FUSE_BAR_WIDTH, FUSE_BAR_HEIGHT))
 	_skin_bar(bar, ratio, REBIRTH_COLOR)
-	var cell: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, _combat.get_state().enemy_cell)
+	var cell: Rect2 = ScreenLayout.cells_rect(_combat.get_grid(), vp, _combat.get_state().enemy_footprint_cells())
 	var radius: float = minf(cell.size.x, cell.size.y) * REVIVE_RING_RATIO
 	draw_arc(cell.get_center(), radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, RING_POINTS, REBIRTH_COLOR, RING_WIDTH * 1.5)
 
@@ -2538,7 +2568,7 @@ func _draw_zones(vp: Vector2) -> void:
 # True when a unit or a field piece lies on [param cell] of [param side]'s half (drawn under this view).
 func _cell_occupied(side: int, cell: Vector2i) -> bool:
 	var state: CombatState = _combat.get_state()
-	if state.player_cell == cell or state.enemy_cell == cell:
+	if state.player_cell == cell or state.is_enemy_at(cell):
 		return true
 	var drops: FieldDrops = _combat.get_drops() if side == CombatState.Side.PLAYER else _combat.get_boss().get_drops()
 	return drops != null and not drops.is_cell_free(cell)
@@ -2794,7 +2824,7 @@ func _draw_confirm(vp: Vector2) -> void:
 	var rect: Rect2 = ScreenLayout.confirm_button_rect(vp)
 	var actor: CutActor = _combat.get_cut_actor()
 	var swinging: bool = actor.is_swinging()
-	var enabled: bool = not (swinging or not _combat.can_confirm_placement())
+	var enabled: bool = not swinging and _combat.can_cast()
 	var text: String = tr(TEXT_CONFIRM)
 	if swinging:
 		text = tr(TEXT_COOLDOWN) % actor.get_time_left()
@@ -2852,53 +2882,100 @@ func _draw_place_hint(vp: Vector2) -> void:
 	draw_multiline_string(font, hint_pos, text, HORIZONTAL_ALIGNMENT_CENTER, width, size, lines, HudSkin.TEXT_DIM)
 
 
-# Story 024: the "Hủy" button while PLACING or while the card menu is open.
+# Story 024: the "Hủy" button while PLACING, in the place window or while the card menu is open (then drawn above
+# the menu overlay by _draw_menu).
 func _draw_cancel(vp: Vector2) -> void:
-	if not (_combat.is_placing() or _combat.get_cut_flow().is_menu_open()):
+	if not (_combat.is_placing() or _combat.is_placed() or _combat.get_cut_flow().is_menu_open()):
 		return
 	var rect: Rect2 = ScreenLayout.cancel_button_rect(vp)
 	# 2026-10-31: the game skin's NEUTRAL button.
 	HudSkin.button(self, rect, tr(TEXT_CANCEL), 3, UiButtons.is_pressed_at(self, rect), true, BUTTON_FONT_SIZE)
 
 
+# 2026-11-01: the place window bar (where the old card-menu bar was) while pieces are placed and Tung phép is not
+# pressed yet; it drains to the automatic press. Nothing with the window unlimited.
+func _draw_place_bar(vp: Vector2) -> void:
+	if not _combat.is_placed() or _combat.get_cut_flow().is_menu_open():
+		return
+	var duration: float = _combat.get_place_duration()
+	if duration <= 0.0:
+		return
+	_skin_bar(ScreenLayout.place_window_bar_rect(vp), _combat.get_place_time_left() / duration, BAR_FILL, BAR_BACK)
+
+
+# 2026-11-01 card menu (quick spec menu-la-giua-man-hinh): the light grey see-through overlay over the whole screen,
+# the countdown bar and the drawn cards as CardFace faces in the centre, then the Cancel button above the overlay.
 func _draw_menu(vp: Vector2) -> void:
 	var flow: CutFlow = _combat.get_cut_flow()
 	if not flow.is_menu_open():
 		return
-	var panel: Rect2 = ScreenLayout.skill_menu_panel_rect(vp)
-	# 2026-10-31: Đá Đêm frame; the menu timer is a skin bar (dark gold) under the join hint.
-	_skin_panel(panel)
-	var bar: Rect2 = ScreenLayout.skill_menu_bar_rect(vp)
-	var ratio: float = 0.0 if flow.get_duration() <= 0.0 else flow.get_time_left() / flow.get_duration()
-	_skin_bar(bar, ratio, BAR_FILL, BAR_BACK)
-	# TD-016: the panel covers the place hint strip, so the bar says another piece can still be dragged in.
-	if _combat.can_join_piece():
-		var hint_size: int = maxi(mini(SMALL_FONT_SIZE, int(bar.size.y * 0.9)), 12)
-		var hint_pos: Vector2 = bar.position + Vector2(0.0, bar.size.y * 0.5 + hint_size * 0.35)
-		HudSkin.text(self, hint_pos, tr(TEXT_JOIN_HINT), hint_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, bar.size.x, true)
-	var config: SkillConfig = _combat.get_skill_config()
+	draw_rect(Rect2(Vector2.ZERO, vp), MENU_OVERLAY_COLOR)
 	var order: Array[String] = flow.get_hand()
+	if not flow.is_unlimited():
+		var ratio: float = 0.0 if flow.get_duration() <= 0.0 else flow.get_time_left() / flow.get_duration()
+		_skin_bar(ScreenLayout.skill_menu_bar_rect(vp, order.size()), ratio, BAR_FILL, BAR_BACK)
 	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
 	var cell_count: int = flow.get_cells().size()
 	for i: int in rects.size():
+		_draw_menu_card(vp, rects[i], order[i], cell_count)
+	_draw_cancel(vp)
+
+
+# One card of the menu: the CardFace face (no cooldown text in battle), dimmed when it cannot be picked; a card on
+# cooldown gets the pie and the seconds over its picture, any other lock its reason on a plate (and the padlock for
+# a curse).
+func _draw_menu_card(vp: Vector2, rect: Rect2, id: String, cell_count: int) -> void:
+	var config: SkillConfig = _combat.get_skill_config()
+	var level: int = _combat.get_card_level(id)
+	var skill: Dictionary = config.resolved(id, level)
+	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count, level)
+	var available: bool = bool(check["available"])
+	var tag: String = (tr(TEXT_LEVEL_SUFFIX) % level) if level > 1 else ""
+	if not available:
+		# The dimmed face is see-through: an opaque backing keeps it a card over the overlay and the board.
+		draw_rect(rect.grow(-MENU_DIM_BACKING_INSET), MENU_DIM_BACKING)
+	CardFace.draw_skill(self, rect, skill, _skill_name(id), tag, CardText.describe_resolved(skill), false,
+		available and UiButtons.is_pressed_at(self, rect), not available, [], id, false)
+	if available:
+		return
+	var reason: String = str(check["reason"])
+	if reason == "cooldown":
+		var cooldowns: SkillCooldowns = _combat.get_skill_cooldowns()
+		CooldownPie.draw(self, CardFace.picture_rect(rect, vp.y), cooldowns.recovered_fraction(id), cooldowns.remaining(id))
+		return
+	if reason == "curse":
+		_draw_lock_glyph(rect)
+	var plate := Rect2(rect.position.x, rect.position.y + rect.size.y * MENU_REASON_TOP_RATIO, rect.size.x, rect.size.y * MENU_REASON_HEIGHT_RATIO)
+	draw_rect(plate, MENU_REASON_BACK)
+	var text: String = str(_skill_status(id, cell_count)["text"])
+	_draw_centered(plate, text, _fit_font_size(text, plate.size.x - MENU_NAME_PAD * 2.0, BUTTON_FONT_SIZE), HudSkin.TEXT)
+
+
+# 2026-11-01 LoL-style cooldown column (ScreenLayout.cooldown_column_rect): one icon per card cooling down, top-down
+# in the order the cards were used, the dark pie revealing it clockwise and the seconds left; a ready card leaves.
+func _draw_cooldown_column(vp: Vector2) -> void:
+	if _overlay_shown():
+		return
+	var cooldowns: SkillCooldowns = _combat.get_skill_cooldowns()
+	if cooldowns == null:
+		return
+	var ids: Array[String] = cooldowns.running_ids()
+	var rects: Array[Rect2] = ScreenLayout.cooldown_icon_rects(vp, ids.size())
+	var config: SkillConfig = _combat.get_skill_config()
+	for i: int in rects.size():
+		var id: String = ids[i]
 		var rect: Rect2 = rects[i]
-		var id: String = order[i]
-		var status: Dictionary = _skill_status(id, cell_count)
-		var available: bool = bool(status["available"])
-		var alpha: float = 1.0 if available else DIM_ALPHA
-		var cursed: bool = config.is_curse(id)
-		if cursed:
-			_skin_panel(rect, CURSE_OUTLINE, 1.0, CURSE_BACK, 0.9)
-			_draw_lock_glyph(rect)
-		else:
-			# 2026-10-31: ready = PRIMARY skin button, not ready = NEUTRAL dimmed (name and status drawn below).
-			HudSkin.button(self, rect, "", 0 if available else 3, available and UiButtons.is_pressed_at(self, rect), available)
-		var name_rect := Rect2(rect.position, Vector2(rect.size.x, rect.size.y * 0.6))
-		var note_rect := Rect2(rect.position + Vector2(0.0, rect.size.y * 0.5), Vector2(rect.size.x, rect.size.y * 0.45))
-		var menu_name: String = _menu_skill_name(id)
-		var name_size: int = _fit_font_size(menu_name, name_rect.size.x - MENU_NAME_PAD * 2.0, BUTTON_FONT_SIZE)
-		_draw_centered(name_rect.grow_individual(-MENU_NAME_PAD, 0.0, -MENU_NAME_PAD, 0.0), menu_name, name_size, Color(HudSkin.TEXT, alpha))
-		_draw_centered(note_rect.grow_individual(-MENU_NAME_PAD, 0.0, -MENU_NAME_PAD, 0.0), str(status["text"]), SMALL_FONT_SIZE, Color(HudSkin.GRID_LIGHT if available else HudSkin.TEXT_DIM, alpha))
+		draw_rect(rect.grow(COOLDOWN_ICON_FRAME_WIDTH), COOLDOWN_ICON_FRAME)
+		CardFace.draw_picture(self, rect, config.resolved(id, _combat.get_card_level(id)), id)
+		CooldownPie.draw(self, rect, cooldowns.recovered_fraction(id), cooldowns.remaining(id))
+
+
+## 2026-11-01: the card ids the cooldown column shows now, top-down (tests / captures).
+func get_cooldown_column_ids() -> Array[String]:
+	if _combat == null or _combat.get_skill_cooldowns() == null:
+		return []
+	var ids: Array[String] = _combat.get_skill_cooldowns().running_ids()
+	return ids.slice(0, ScreenLayout.cooldown_icon_rects(get_viewport_rect().size, ids.size()).size())
 
 
 # Story 033: a code-drawn padlock (body + shackle) in the top-right corner of a locked menu card.

@@ -129,7 +129,11 @@ static func apply(
 		state.set_player_hp(hp_before + heal_self)
 		result["healed"] = state.player_hp - hp_before
 	# Story 036: options.target_untargetable (burrowed boss) = the cast misses the unit; zones still form (Story 027).
-	var inside: bool = cells.has(target_cell) and not bool(options.get("target_untargetable", false))
+	# P2.2b (D13 / ADR-0001 A7): the target is inside when ANY of its cells is cast on (a multi-cell boss's footprint); this
+	# is one boolean, so one swing hits once and the damage below never multiplies by the footprint cells it covers.
+	var inside: bool = state.unit_in(target_side, cells) and not bool(options.get("target_untargetable", false))
+	if inside and target_side == CombatState.Side.ENEMY:
+		result["cell"] = state.enemy_hit_cell(cells)
 	result["zone_kind"] = ""
 	result["zone_cells"] = [] as Array[Vector2i]
 	if effect == "thorns":
@@ -253,7 +257,8 @@ static func _form_zone(
 
 ## Vay Bat (quick spec o-rot-thay-tuong 2026-10-31, "rai them 1 o"): up to [param count] extra thorn cells
 ## for a thorn cast on [param cells]. Candidates: cells of [param target_side]'s half 4-adjacent to a cast
-## cell that are not a cast cell, not the target unit's own cell (thorns formed under a unit never trigger),
+## cell that are not a cast cell, not the target unit's own cell (any footprint cell of a multi-cell boss, P2.2b;
+## thorns formed under a unit never trigger),
 ## not already thorned and not blocked for the target ([param blocked_fn]: hole / crack / sand...). The pick is
 ## RANDOM among those candidates (user 2026-11-01: no "nearest the boss" rule), drawn from [param rng] (the match's
 ## seeded zone RNG, SwingArbiter.zone_rng; inject a seeded one in tests). A null [param rng] uses a fresh randomized
@@ -266,12 +271,12 @@ static func extra_thorn_cells(
 	if count <= 0 or grid == null or state == null:
 		return out
 	var candidates: Array[Vector2i] = []
-	var target: Vector2i = state.enemy_cell if target_side == CombatState.Side.ENEMY else state.player_cell
 	for cell: Vector2i in cells:
 		for dir: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var n: Vector2i = cell + dir
 			var on_half: bool = grid.is_enemy_cell(n) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(n)
-			if not on_half or n == target or cells.has(n) or candidates.has(n):
+			# P2.2b: every cell of a multi-cell boss is "the target unit's own cell".
+			if not on_half or state.unit_at(target_side, n) or cells.has(n) or candidates.has(n):
 				continue
 			if status != null and not status.thorns_at(target_side, n).is_empty():
 				continue

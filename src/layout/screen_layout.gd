@@ -81,6 +81,10 @@ const HUD_HEIGHT_RATIO: float = 0.2
 const BOARD_BAND_TOP_RATIO: float = 0.20
 ## Preferred cell width divided by cell height.
 const CELL_ASPECT: float = 1.4
+## Narrowest cell width / height for a board whose width is the limit (wide 5-7 column halves such as boss_hall):
+## such a cell keeps its width and grows taller into the free band under the board, as far as the row rules allow
+## (user 2026-11-01: 90x64 -> about 90x80 on the 6x4 boss arena at 720p).
+const CELL_ASPECT_MIN_WIDE: float = 1.125
 ## Float slack (px) for the row-placement comparisons.
 const LAYOUT_EPSILON: float = 0.01
 ## Cached cell sizes kept at most (one per board and viewport).
@@ -91,9 +95,20 @@ const NO_CELL: Vector2i = BoardGrid.NO_CELL
 ## lowest narrow board row. Vertical gap around the strip, and inner padding of the skill panel (shares of height).
 const STRIP_GAP_RATIO: float = 0.012
 const MENU_PAD_RATIO: float = 0.012
-## Countdown bar height (share of height) and gap between skill buttons (share of width).
+## Place-window bar height (share of height; the old card-menu bar's size and place).
 const MENU_BAR_HEIGHT_RATIO: float = 0.02
-const MENU_BUTTON_GAP_RATIO: float = 0.008
+## Quick spec menu-la-giua-man-hinh-2026-11-01: the card menu is four CardFace cards (card_face_size, 176x256 at 720p)
+## centred on the screen: the row's vertical centre (share of height), the gap between cards (share of width, as the
+## reward row), the countdown bar above them (height and gap to the cards, shares of height).
+const MENU_CARDS_CENTER_Y_RATIO: float = 0.5
+const MENU_CARD_GAP_RATIO: float = 0.02
+const MENU_TIMER_HEIGHT_RATIO: float = 0.025
+const MENU_TIMER_GAP_RATIO: float = 0.018
+## LoL-style cooldown column at the LEFT screen edge (px at 720p, scaled by height / 720): icon edge, gap between
+## icons, and the gap kept to the relic row above and the stick zone below. The left inset is the relic row's.
+const COOLDOWN_ICON_PX: float = 52.0
+const COOLDOWN_ICON_GAP_PX: float = 8.0
+const COOLDOWN_COLUMN_GAP_PX: float = 8.0
 ## Run UI (Story 011), shares of the viewport: intro band height; panel size; panel inner
 ## inset; action button height (0.14 * 720 = 101 px >= 96 px) and its width as a share of the panel.
 const RUN_INTRO_HEIGHT_RATIO: float = 0.3
@@ -452,10 +467,34 @@ static func _compute_cell_size(grid: BoardGrid, viewport_size: Vector2) -> Vecto
 			continue
 		var cell := Vector2(w_art, h_art) * scale
 		if _rows_fit(grid, viewport_size, cell, first_cols) and _clear_of_slots(grid, viewport_size, cell, slots):
-			return cell
+			return _taller_if_width_bound(grid, viewport_size, Vector2i(w_art, h_art), scale, half_max_art, first_cols, slots)
 	var area: Rect2 = board_area_rect(viewport_size)
 	var h: float = area.size.y / grid.rows
 	return Vector2(minf(h * CELL_ASPECT, area.size.x / grid.total_cols), h)
+
+
+# A cell [param art] picked at CELL_ASPECT: when one more art px of width would not fit ([method _width_bound]), the tallest height up to CELL_MAX_ART.y and down to aspect CELL_ASPECT_MIN_WIDE whose rows and slots still
+# fit; otherwise [param art] unchanged. Narrow boards that reach CELL_MAX_ART or are height-bound keep their cell.
+static func _taller_if_width_bound(grid: BoardGrid, viewport_size: Vector2, art: Vector2i, scale: float,
+		half_max_art: float, first_cols: Array[int], slots: Array[Rect2]) -> Vector2:
+	if art.x >= CELL_MAX_ART.x or not _width_bound(grid, viewport_size, art, scale, half_max_art, first_cols, slots):
+		return Vector2(art) * scale
+	var tallest: int = mini(floori(art.x / CELL_ASPECT_MIN_WIDE + LAYOUT_EPSILON), CELL_MAX_ART.y)
+	for h_art: int in range(tallest, art.y, -1):
+		var cell := Vector2(art.x, h_art) * scale
+		if _rows_fit(grid, viewport_size, cell, first_cols) and _clear_of_slots(grid, viewport_size, cell, slots):
+			return cell
+	return Vector2(art) * scale
+
+
+# True when a cell one art px wider than [param art] (same height) would break the half width, the row rules or the
+# hold slots: the width, not the height, limits the board.
+static func _width_bound(grid: BoardGrid, viewport_size: Vector2, art: Vector2i, scale: float, half_max_art: float,
+		first_cols: Array[int], slots: Array[Rect2]) -> bool:
+	if grid.side_cols * (art.x + 1) > half_max_art + LAYOUT_EPSILON:
+		return true
+	var wider := Vector2(art.x + 1, art.y) * scale
+	return not (_rows_fit(grid, viewport_size, wider, first_cols) and _clear_of_slots(grid, viewport_size, wider, slots))
 
 
 # For each board row, the first real column of the player's half (the board's left extent in that row), -1 if none.
@@ -531,6 +570,17 @@ static func cell_rect(grid: BoardGrid, viewport_size: Vector2, cell: Vector2i) -
 	var size: Vector2 = cell_size(grid, viewport_size)
 	var origin: Vector2 = board_rect(grid, viewport_size).position
 	return Rect2(origin + size * Vector2(cell), size)
+
+
+## P2.2b: bounding rectangle of the board cells [param cells] (a multi-cell boss's footprint); the cell's own rect for
+## one cell; an empty Rect2 for none.
+static func cells_rect(grid: BoardGrid, viewport_size: Vector2, cells: Array[Vector2i]) -> Rect2:
+	if cells.is_empty():
+		return Rect2()
+	var out: Rect2 = cell_rect(grid, viewport_size, cells[0])
+	for i: int in range(1, cells.size()):
+		out = out.merge(cell_rect(grid, viewport_size, cells[i]))
+	return out
 
 
 ## Centre of board cell [param cell].
@@ -621,35 +671,68 @@ static func cut_strip_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(left, top, maxf(center_right(viewport_size) - left, 0.0), maxf(controls_bottom(viewport_size) - top, 0.0))
 
 
-## Skill menu panel: the strip up to a gap left of the Cancel button, so it covers the Confirm and Awaken
-## buttons while open but never T3, the Cancel button or the stick zone (x 346-806 at 1280x720).
-static func skill_menu_panel_rect(viewport_size: Vector2) -> Rect2:
+## Place-window bar (2026-11-01: where the old card-menu timer bar was): across the top of the centre strip, above
+## the Tung phép and Awaken buttons, from the Tung phép button's left edge to the Awaken button's right edge (one
+## strip pad below the strip's top; 346-697 x 565-579 px at 1280x720).
+static func place_window_bar_rect(viewport_size: Vector2) -> Rect2:
 	var strip: Rect2 = cut_strip_rect(viewport_size)
-	var right: float = cancel_button_rect(viewport_size).position.x - viewport_size.x * MENU_CANCEL_GAP_RATIO
-	return Rect2(strip.position, Vector2(maxf(right - strip.position.x, 0.0), strip.size.y))
-
-
-## Countdown bar across the top of the skill panel.
-static func skill_menu_bar_rect(viewport_size: Vector2) -> Rect2:
-	var panel: Rect2 = skill_menu_panel_rect(viewport_size)
 	var pad: float = viewport_size.y * MENU_PAD_RATIO
-	return Rect2(panel.position + Vector2(pad, pad), Vector2(maxf(panel.size.x - pad * 2.0, 0.0), viewport_size.y * MENU_BAR_HEIGHT_RATIO))
+	var left: float = confirm_button_rect(viewport_size).position.x
+	var right: float = signature_rect(viewport_size).end.x
+	return Rect2(left, strip.position.y + pad, maxf(right - left, 0.0), viewport_size.y * MENU_BAR_HEIGHT_RATIO)
 
 
-## One button rectangle per skill, left to right, under the countdown bar inside the panel.
+## Card menu (2026-11-01): one CardFace rectangle per drawn card, left to right, the row centred on the screen
+## (4 cards: 249-1030 x 232-488 px at 1280x720). Every card is a tap target of the full card size.
 static func skill_menu_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var panel: Rect2 = skill_menu_panel_rect(viewport_size)
-	var bar: Rect2 = skill_menu_bar_rect(viewport_size)
-	var pad: float = viewport_size.y * MENU_PAD_RATIO
-	var gap: float = viewport_size.x * MENU_BUTTON_GAP_RATIO
-	var top: float = bar.end.y + pad
-	var height: float = maxf(panel.end.y - pad - top, 0.0)
-	var width: float = maxf((panel.size.x - pad * 2.0 - gap * (count - 1)) / count, 0.0)
+	var size: Vector2 = card_face_size(viewport_size)
+	var gap: float = roundf(viewport_size.x * MENU_CARD_GAP_RATIO)
+	var left: float = roundf((viewport_size.x - (size.x * count + gap * (count - 1))) * 0.5)
+	var top: float = roundf(viewport_size.y * MENU_CARDS_CENTER_Y_RATIO - size.y * 0.5)
 	for i: int in count:
-		rects.append(Rect2(panel.position.x + pad + (width + gap) * i, top, width, height))
+		rects.append(Rect2(left + (size.x + gap) * i, top, size.x, size.y))
+	return rects
+
+
+## Card menu countdown bar: above the centred card row ([param count] cards), as wide as the row.
+static func skill_menu_bar_rect(viewport_size: Vector2, count: int = 4) -> Rect2:
+	var rects: Array[Rect2] = skill_menu_rects(viewport_size, maxi(count, 1))
+	var height: float = roundf(viewport_size.y * MENU_TIMER_HEIGHT_RATIO)
+	var top: float = rects[0].position.y - roundf(viewport_size.y * MENU_TIMER_GAP_RATIO) - height
+	return Rect2(rects[0].position.x, top, rects[-1].end.x - rects[0].position.x, height)
+
+
+## Card menu area (the countdown bar and the card row, one strip pad around them).
+static func skill_menu_panel_rect(viewport_size: Vector2, count: int = 4) -> Rect2:
+	var rects: Array[Rect2] = skill_menu_rects(viewport_size, maxi(count, 1))
+	var area: Rect2 = skill_menu_bar_rect(viewport_size, count).merge(rects[0]).merge(rects[-1])
+	return area.grow(viewport_size.y * MENU_PAD_RATIO)
+
+
+## 2026-11-01 LoL-style cooldown column at the LEFT screen edge, between the relic row (top-left) and the stick
+## zone (bottom-left): the relic row's left inset, one icon wide (12-64 x 62-453 px at 1280x720).
+static func cooldown_column_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT
+	var left: float = floorf(HUD_TOP_ROW_INSET_PX * s)
+	var top: float = ceilf(hud_relic_strip_rect(viewport_size).end.y + COOLDOWN_COLUMN_GAP_PX * s)
+	var bottom: float = floorf(stick_zone_rect(viewport_size).position.y - COOLDOWN_COLUMN_GAP_PX * s)
+	return Rect2(left, top, roundf(COOLDOWN_ICON_PX * s), maxf(bottom - top, 0.0))
+
+
+## The icons of the cooldown column, top-down (the earliest use first): at most as many of [param count] as fit.
+static func cooldown_icon_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	var column: Rect2 = cooldown_column_rect(viewport_size)
+	var edge: float = column.size.x
+	var gap: float = roundf(COOLDOWN_ICON_GAP_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT)
+	for i: int in count:
+		var r := Rect2(column.position.x, column.position.y + (edge + gap) * i, edge, edge)
+		if r.end.y > column.end.y:
+			break
+		rects.append(r)
 	return rects
 
 

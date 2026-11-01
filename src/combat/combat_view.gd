@@ -161,6 +161,15 @@ var _featured: Dictionary = {}
 var _join_points: Array[FieldPoint] = []
 var _join_slots: Array[int] = []
 var _join_refusal: Dictionary = {}
+## Quick spec menu-la-giua-man-hinh-2026-11-01: true from the first piece committed on the enemy half until the card
+## menu opens (Tung phép pressed or the place window ran out): the PLACED stage, where more pieces may join the cast.
+## _place_left is the REAL seconds left of the place window (ignored while the window is unlimited).
+var _placed: bool = false
+var _place_left: float = 0.0
+## Accessibility "Thời gian chọn lá" for this match (SettingsStore.CARD_TIMES value); "" = read
+## SettingsStore.shared() in _ready. Tests set it before _ready or call [method set_card_time].
+var card_time_mode: String = ""
+var _time_mult: float = 1.0
 ## True while the pending piece is being taken out of the bag, so the slot-cleared hook does not
 ## auto-pick a piece lying under the player into the slot that must stay free for a cancel.
 var _consuming: bool = false
@@ -363,6 +372,7 @@ func _ready() -> void:
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.level_of = Callable(self, "get_card_level")
+	set_card_time(card_time_mode if not card_time_mode.is_empty() else SettingsStore.shared().get_card_time())
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
 	_apply_brain_params(brain_config)
@@ -769,7 +779,7 @@ func can_activate_signature() -> bool:
 		return false
 	if _state.is_player_dead() or _state.is_enemy_dead():
 		return false
-	if _cut_flow.is_menu_open():
+	if _cut_flow.is_menu_open() or _placed:
 		return false
 	if is_movement_locked():
 		return false
@@ -1246,6 +1256,8 @@ func _process(delta: float) -> void:
 		var real_step: float = minf(delta, _config.max_tick_sec)
 		# The menu countdown runs on REAL time; it may close the menu this frame.
 		_cut_flow.tick_real(real_step)
+		# The place window (real time too) may press Tung phép this frame.
+		_tick_place_window(real_step)
 		_age_refusal(real_step)
 		# Simulation time is scaled down while the skill menu is open (slow motion); the boss
 		# lives in the same scaled time.
@@ -1306,7 +1318,8 @@ func _update_focus(real_step: float) -> void:
 	var selected: bool = hold != null and not hold.get_selected_indices().is_empty()
 	if _focus.is_active() and not selected:
 		_focus.end(FocusController.REASON_DESELECTED)
-	elif selected and _focus.is_ready() and not _cut_flow.is_menu_open():
+	elif selected and _focus.is_ready() and not _cut_flow.is_menu_open() and not _placed:
+		# Focus keeps its own rules: it starts for the FIRST piece only (a joined piece is placed slowed, as before).
 		_focus.try_start()
 
 
@@ -1316,6 +1329,9 @@ func _sim_scale() -> float:
 		return _skill_config.menu_time_scale
 	if _focus.is_active():
 		return _focus.get_time_scale()
+	if _placed:
+		# The place window: the match runs slowed like the card menu.
+		return _skill_config.menu_time_scale
 	if _placement != null and _placement.is_placing():
 		# Story 024: PLACING without Focus (on cooldown) still slows the match.
 		return _skill_config.menu_time_scale
@@ -1344,13 +1360,13 @@ func _age_flash(flash: Dictionary, step: float) -> void:
 const FEEDBACK_SEC: float = 0.8
 
 
-## Story 016: true when the run may be paused now: not while the skill menu is open and not
-## while the player's or the boss's swing has [member CombatConfig.pause_lockout_sec] or less
+## Story 016: true when the run may be paused now: not while the skill menu is open (nor in the place window
+## before it, 2026-11-01: both run on real time) and not while the player's or the boss's swing has [member CombatConfig.pause_lockout_sec] or less
 ## left. No state change.
 func can_pause() -> bool:
 	if _cut_flow == null or _boss == null:
 		return false
-	if _cut_flow.is_menu_open():
+	if _cut_flow.is_menu_open() or _placed:
 		return false
 	var lockout: float = _config.pause_lockout_sec if _config != null else 0.0
 	for actor: CutActor in [_cut_actor, _boss.get_actor()]:
@@ -1477,22 +1493,68 @@ func get_placing_piece() -> Piece:
 	return _placement.get_piece() if is_placing() else null
 
 
-## True when the CONFIRM button should be on screen: a piece is being placed, no menu open and
-## nobody dead. (It is dimmed when the ghost is off the enemy half or while a swing runs.)
+## True when the CONFIRM ("Tung phép") button should be on screen: a piece is being placed or pieces are placed
+## (the place window runs), the card menu is closed and nobody is dead. (It is dimmed while [method can_cast] is false.)
 func is_confirm_visible() -> bool:
 	if _placement == null or _state == null or _cut_flow.is_menu_open():
 		return false
 	if _state.is_player_dead() or _state.is_enemy_dead():
 		return false
-	return _placement.is_placing()
+	return _placement.is_placing() or _placed
 
 
-## True when confirming would open the card menu now: placing, ghost on a valid placement, no own
-## swing running.
+## True when [method confirm_placement] would commit the ghost now: the first piece (ghost on a valid placement, no
+## own swing running) or, in the place window, a joined piece (room in the cast, cell cap). Never while the card
+## menu is open.
 func can_confirm_placement() -> bool:
-	if _cut_flow.is_menu_open():
-		return can_join_piece() and is_placing() and _placement.can_confirm() and _fits_cap(_placement.get_cells())
+	if _cut_flow.is_menu_open() or not is_placing():
+		return false
+	if _placed:
+		return can_join_piece() and _placement.can_confirm() and _fits_cap(_placement.get_cells())
 	return is_confirm_visible() and _placement.can_confirm() and not _cut_actor.is_swinging()
+
+
+## True when pressing Tung phép ([method press_cast]) would open the card menu now: pieces are placed, or the first
+## piece's ghost sits on a valid placement; no own swing running.
+func can_cast() -> bool:
+	if not is_confirm_visible() or _cut_actor.is_swinging():
+		return false
+	return _placed or can_confirm_placement()
+
+
+## True in the place window: at least one piece committed on the enemy half, the card menu not open yet.
+func is_placed() -> bool:
+	return _placed
+
+
+## REAL seconds left of the place window (0 outside it; 0 too while it has no limit).
+func get_place_time_left() -> float:
+	return maxf(_place_left, 0.0) if _placed and not is_place_unlimited() else 0.0
+
+
+## Dev/capture only: sets the REAL seconds left of the running place window (no effect outside it).
+func debug_set_place_time_left(sec: float) -> void:
+	if _placed:
+		_place_left = maxf(sec, 0.0)
+
+
+## Length of the place window: cuts.json place_window_sec x the card time setting (0 = no limit).
+func get_place_duration() -> float:
+	return 0.0 if is_place_unlimited() or _cut_config == null else _cut_config.place_window_sec * _time_mult
+
+
+## True while the place window never runs out (card time "không giới hạn").
+func is_place_unlimited() -> bool:
+	return _time_mult <= 0.0
+
+
+## Applies the "Thời gian chọn lá" value [param mode] (SettingsStore.CARD_TIMES) to this match: the card menu's
+## choose time and the place window both use its multiplier (0 = no limit). Unknown values count as normal.
+func set_card_time(mode: String) -> void:
+	card_time_mode = mode
+	_time_mult = SettingsStore.card_time_mult(mode)
+	if _cut_flow != null:
+		_cut_flow.time_mult = _time_mult
 
 
 ## Story 024: selects the piece in bag slot [param index] and enters PLACING (the selection set of the
@@ -1501,8 +1563,11 @@ func can_confirm_placement() -> bool:
 ## Returns false (nothing changes) for an empty / rotten slot, an open menu or a dead unit.
 func select_piece(index: int, rotate_if_selected: bool = true) -> bool:
 	var hold: HoldSlots = _get_hold()
-	var joining: bool = _cut_flow.is_menu_open()
+	var joining: bool = _placed
 	if hold == null or _state.is_player_dead() or _state.is_enemy_dead():
+		return false
+	# 2026-11-01: no piece is taken from the bag while the card menu is open (joins happen before Tung phép).
+	if _cut_flow.is_menu_open():
 		return false
 	if joining and not can_join_piece():
 		return false
@@ -1575,8 +1640,9 @@ func drag_to(pos: Vector2) -> bool:
 	return aim_at_position(pos, get_drag_lift_px())
 
 
-## Finger lifted at [param pos]: when the ghost sits on the enemy half the placement is confirmed (the
-## card menu opens, returns true); anywhere else the piece goes back (PLACING ends, returns false).
+## Finger lifted at [param pos]: when the ghost sits on the enemy half the piece is committed (the first one
+## starts the place window, a later one joins the cast; the card menu does NOT open, returns true); anywhere else
+## the piece goes back (PLACING ends, returns false).
 func end_drag(pos: Vector2) -> bool:
 	if not _dragging:
 		return false
@@ -1584,7 +1650,7 @@ func end_drag(pos: Vector2) -> bool:
 	_dragging = false
 	if can_confirm_placement() and confirm_placement():
 		return true
-	if _cut_flow.is_menu_open():
+	if _placed:
 		_note_refusal()
 	_drop_placement()
 	return false
@@ -1606,13 +1672,15 @@ func drag_point_for_cell(cell: Vector2i) -> Vector2:
 	return ScreenLayout.cell_center(_grid, get_viewport_rect().size, cell) + Vector2(0.0, get_drag_lift_px())
 
 
-## Confirms the placement: the piece leaves the bag, the card menu opens with its cells (0.2x, 3 s,
-## default card on timeout). Returns false (nothing changes) unless [method can_confirm_placement].
+## Commits the ghost (quick spec menu-la-giua-man-hinh-2026-11-01): the FIRST piece leaves the bag and starts the
+## place window (cuts.json place_window_sec, real time, the match slowed); in the place window a later piece joins
+## the cast (Story 028/032 join rules, no time added). The card menu does NOT open here: see [method press_cast].
+## Returns false (nothing changes) unless [method can_confirm_placement].
 func confirm_placement() -> bool:
 	var hold: HoldSlots = _get_hold()
 	if hold == null or not can_confirm_placement():
 		return false
-	if _cut_flow.is_menu_open():
+	if _placed:
 		return _attach_piece(hold)
 	var slot: int = _placement.get_slot()
 	var piece: Piece = _placement.get_piece()
@@ -1625,18 +1693,58 @@ func confirm_placement() -> bool:
 	_pending_slot = slot
 	_pending_piece = hold.remove(slot)
 	_consuming = false
-	var labels: Array[String] = [piece.shape_id]
+	hold.clear_selection()
 	_plan.init(get_max_join_pieces(), _config.max_cast_cells)
 	_plan.add_piece(slot, piece, cells)
 	_join_points.clear()
 	_join_slots.clear()
 	_join_refusal = {}
+	_placed = true
+	_place_left = get_place_duration()
+	return true
+
+
+## Tung phép: commits a valid ghost still being placed (the first piece, or a join in the place window; an invalid
+## join ghost goes back to the bag), then opens the card menu on the placed cast: 4 cards drawn, menu_choose_sec of
+## real time (x the card time setting), the match slowed, the basic slash on timeout. Returns false (nothing changes)
+## unless [method can_cast].
+func press_cast() -> bool:
+	if not can_cast():
+		return false
+	if is_placing():
+		if can_confirm_placement():
+			confirm_placement()
+		else:
+			_drop_placement()
+	if not _placed:
+		return false
+	return _open_card_menu()
+
+
+# Opens the card menu on the placed cast (the place window ends): any piece still being placed goes back to the bag.
+func _open_card_menu() -> bool:
+	_drop_placement()
+	_placed = false
+	_place_left = 0.0
 	# Story 033: the menu hand keeps at least one non-curse card while the deck has one; a drawn curse
 	# with draw_damage (oan_hon) hurts the player once per draw.
 	var hand: Array[String] = _deck.draw_menu(_skill_config.hand_size, Callable(_skill_config, "is_curse"))
-	_cut_flow.open_menu(labels, cells, hand)
+	if not _cut_flow.open_menu(_plan_labels(), _plan.cells(), hand):
+		return false
 	_apply_curse_draw_damage(hand)
 	return true
+
+
+# Counts the place window down on REAL time; at zero Tung phép is pressed for the player (a piece still being dragged
+# goes back to the bag). Never with the window unlimited, and not once a unit is dead.
+func _tick_place_window(real_step: float) -> void:
+	if not _placed or is_place_unlimited() or _state == null:
+		return
+	if _state.is_player_dead() or _state.is_enemy_dead():
+		return
+	_place_left -= real_step
+	if _place_left <= 0.0:
+		_open_card_menu()
 
 
 # Story 033: each curse in [param hand] with draw_damage > 0 costs the player that much HP now
@@ -1649,17 +1757,18 @@ func _apply_curse_draw_damage(hand: Array[String]) -> void:
 			curse_drawn.emit(id, dmg)
 
 
-## Story 028: true while the open card menu still has room for another piece (max_pieces_per_cast):
-## the bag stays live and a piece dragged from it is placed as the cast's next piece.
+## Story 028: true while the placed cast still has room for another piece (max_pieces_per_cast; Story 032 tam_hop:
+## 3): in the place window (before Tung phép) the bag stays live and a piece dragged from it joins the cast. Never
+## while the card menu is open (2026-11-01).
 func can_join_piece() -> bool:
-	if _cut_flow == null or _plan == null or not _cut_flow.is_menu_open():
+	if _cut_flow == null or _plan == null or not _placed or _cut_flow.is_menu_open():
 		return false
 	if _state.is_player_dead() or _state.is_enemy_dead():
 		return false
 	return _plan.piece_count() >= 1 and not _plan.is_full()
 
 
-## Story 028: the cast being built (empty outside the card menu).
+## Story 028: the cast being built (from the first piece placed until the card is chosen; empty otherwise).
 func get_cast_plan() -> CastPlan:
 	return _plan
 
@@ -1669,9 +1778,10 @@ func get_featured() -> Dictionary:
 	return _featured
 
 
-## Story 028: true when the open menu's plan is a two-piece cast whose union equals the featured shape.
+## Story 028: true when the placed plan (place window or open menu) is a two-piece cast whose union equals the
+## featured shape.
 func is_plan_featured() -> bool:
-	return _cut_flow != null and _cut_flow.is_menu_open() and not _featured.is_empty() \
+	return _cut_flow != null and (_placed or _cut_flow.is_menu_open()) and not _featured.is_empty() \
 			and _plan.is_featured(_featured["cells"] as Array[Vector2i])
 
 
@@ -1698,10 +1808,10 @@ func get_join_refusal() -> Dictionary:
 
 
 ## Story 028: takes the LAST joined piece off the cast (the second; Story 032 tam_hop: the third first) and
-## puts it back into its bag slot; the menu's cells shrink (the time already added stays). False when the
-## cast has a single piece.
+## puts it back into its bag slot (place window only, the place timer keeps running). False when the cast has a
+## single piece or the card menu is open.
 func detach_second_piece() -> bool:
-	if not _cut_flow.is_menu_open() or _plan.piece_count() < 2:
+	if not _placed or _cut_flow.is_menu_open() or _plan.piece_count() < 2:
 		return false
 	_plan.remove_piece(_plan.piece_count() - 1)
 	var point: FieldPoint = _join_points.pop_back() if not _join_points.is_empty() else null
@@ -1709,12 +1819,11 @@ func detach_second_piece() -> bool:
 	var hold: HoldSlots = _get_hold()
 	if point != null and hold != null and hold.place(point, slot) < 0:
 		hold.place_in_first_free(point)
-	_cut_flow.update_cut(_plan_labels(), _plan.cells())
 	return true
 
 
-# Attaches the piece being placed as the cast's next piece (menu open; Story 032: up to get_max_join_pieces). The piece leaves the bag; the
-# menu gets the union of the cells and join_extra_sec more time. A refused plan keeps the piece in the bag.
+# Attaches the piece being placed as the cast's next piece (place window; Story 032: up to get_max_join_pieces). The
+# piece leaves the bag; the cast is the union of the cells (no time is added). A refused plan keeps the piece in the bag.
 func _attach_piece(hold: HoldSlots) -> bool:
 	var slot: int = _placement.get_slot()
 	var piece: Piece = _placement.get_piece()
@@ -1730,7 +1839,6 @@ func _attach_piece(hold: HoldSlots) -> bool:
 	_join_points.append(hold.remove(slot))
 	_consuming = false
 	hold.clear_selection()
-	_cut_flow.update_cut(_plan_labels(), _plan.cells(), _config.join_extra_sec)
 	if not _relics.is_empty():
 		var info: Dictionary = _make_cast_info("", _plan.cells(), _plan_labels(), true, is_plan_featured())
 		for relic: BaseRelic in _relics:
@@ -1769,10 +1877,19 @@ func confirm_selection() -> bool:
 	return confirm_placement()
 
 
-## Esc / cancel button. While PLACING: leaves the mode (piece stays in its slot). While the card
-## menu is open: closes it and puts the piece back into its slot (or the first free one).
+## Esc / cancel button. While PLACING the first piece: leaves the mode (piece stays in its slot). In the place
+## window or while the card menu is open: every placed piece goes back into its slot (or the first free one), a
+## piece still being placed too, and the menu closes (its cards go back to the front of the bag).
 ## Returns true when something was cancelled.
 func cancel_placement() -> bool:
+	if _placed and not _cut_flow.is_menu_open():
+		_drop_placement()
+		_placed = false
+		_place_left = 0.0
+		_return_join_piece()
+		_return_pending_piece()
+		_plan.clear()
+		return true
 	if _cut_flow.is_menu_open():
 		# Story 028: Cancel returns BOTH pieces (and ends a second piece still being dragged).
 		_drop_placement()
@@ -2296,8 +2413,10 @@ func _draw() -> void:
 func _unit_center(vp: Vector2, side: int) -> Vector2:
 	# The rings sit on the cell centre; the feet moved to FEET_DEPTH_RATIO of the cell (OSFE stance, 2026-10-31),
 	# so they are no longer derived from the feet anchor.
-	var cell: Vector2i = _state.player_cell if side == CombatState.Side.PLAYER else _state.enemy_cell
-	return ScreenLayout.cell_center(_grid, vp, cell)
+	if side == CombatState.Side.PLAYER:
+		return ScreenLayout.cell_center(_grid, vp, _state.player_cell)
+	# P2.2b: the centre of the footprint's bounding rect (the cell centre for a 1-cell enemy).
+	return ScreenLayout.cells_rect(_grid, vp, _state.enemy_footprint_cells()).get_center()
 
 
 # Story 046 Part B: the sharp Z1 header, drawn at screen resolution with HudSkin (never through the art
@@ -2516,7 +2635,7 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 	var state: CombatState = get_state()
 	var caster: Vector2i = Vector2i(-1, -1)
 	if state != null:
-		caster = state.player_cell if side == CombatState.Side.PLAYER else state.enemy_cell
+		caster = state.cast_origin(side)
 	var delivery: Dictionary = delivery_for(str(feedback.get("skill_id", "")))
 	var delays: Dictionary = SkillDelivery.arrival_times(delivery, cells, caster, delivery_timing()) if not cells.is_empty() else {}
 	_play_delivery_travel(delivery, cells, caster, target_side)
@@ -2537,7 +2656,8 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 		return
 	if state == null:
 		return
-	var target: Vector2i = state.enemy_cell if side == CombatState.Side.PLAYER else state.player_cell
+	# P2.2b: a hit on a multi-cell boss lands on the covered footprint cell nearest its centre (CombatState.enemy_hit_cell).
+	var target: Vector2i = state.enemy_hit_cell(cells) if side == CombatState.Side.PLAYER else state.player_cell
 	var impact: String = CastVfx.impact_pack(str(delivery.get("impact", "")))
 	var peak: float = 0.0
 	if _hero_wave(side, delivery) and not cells.is_empty():
@@ -2642,7 +2762,7 @@ func cast_travel_now(tail: float = 0.3, side: int = CombatState.Side.PLAYER) -> 
 		return {}
 	var boss: bool = side != CombatState.Side.PLAYER
 	var actor: CutActor = get_cut_actor() if not boss else (_boss.get_actor() if _boss != null else null)
-	var caster: Vector2i = state.enemy_cell if boss else state.player_cell
+	var caster: Vector2i = state.cast_origin(CombatState.Side.ENEMY if boss else CombatState.Side.PLAYER)
 	if actor != null and actor.is_swinging() and not actor.get_cells().is_empty():
 		var cells: Array = []
 		cells.assign(actor.get_cells())

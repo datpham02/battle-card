@@ -1,6 +1,8 @@
 class_name CutFlow
 extends RefCounted
-## Card-menu flow of the player's cut: IDLE or MENU. Pure logic (no nodes); the menu
+## Card-menu flow of the player's cut: IDLE or MENU. Since 2026-11-01 (quick spec menu-la-giua-man-hinh) the menu
+## opens when the player presses Tung phép (or the place window runs out) on the pieces already placed; pieces
+## are never joined while it is open. Pure logic (no nodes); the menu
 ## countdown advances only through [method tick_real] with a REAL (unscaled) delta.
 ## Opening the menu stores the consumed cut (labels + covered cells) and the drawn hand;
 ## choosing an available card OF THE HAND, or the countdown running out (the basic default
@@ -19,6 +21,9 @@ var _cells: Array[Vector2i] = []
 var _hand: Array[String] = []
 ## Story 020: Callable(id: String) -> int giving the player's card level; invalid = level 1.
 var level_of: Callable = Callable()
+## Accessibility "Thời gian chọn lá" (SettingsStore.card_time_mult): the choose time is menu_choose_sec x this;
+## 0 = no limit (the menu waits for a card; the match stays slowed).
+var time_mult: float = 1.0
 
 
 func _init(skill_config: SkillConfig, cooldowns: SkillCooldowns) -> void:
@@ -37,14 +42,14 @@ func open_menu(labels: Array[String], cells: Array[Vector2i], hand: Array[String
 	_hand = hand.duplicate()
 	if _hand.is_empty():
 		_hand = [_config.default_card]
-	_time_left = _config.menu_choose_sec
+	_time_left = get_duration()
 	return true
 
 
 ## Advances the choose countdown by [param delta] REAL seconds; at zero the default card
 ## (kiem_khi, no cell minimum) is chosen whether or not the hand holds it.
 func tick_real(delta: float) -> void:
-	if not _open:
+	if not _open or is_unlimited():
 		return
 	_time_left -= delta
 	if _time_left > 0.0:
@@ -92,19 +97,6 @@ func cancel_menu() -> Array[Vector2i]:
 	return cells
 
 
-## Story 028: replaces the pending cut with [param cells] / [param labels] (a piece was joined or taken
-## off) and adds [param extra_sec] REAL seconds to the choose countdown (the total never exceeds
-## menu_choose_sec plus every join bonus; a negative value is ignored). Returns false when the
-## menu is closed or [param cells] is empty. The drawn hand does not change.
-func update_cut(labels: Array[String], cells: Array[Vector2i], extra_sec: float = 0.0) -> bool:
-	if not _open or cells.is_empty():
-		return false
-	_labels = labels.duplicate()
-	_cells = cells.duplicate()
-	_time_left += maxf(extra_sec, 0.0)
-	return true
-
-
 ## Level used for [param skill_id] (1 without a [member level_of] callable).
 func card_level(skill_id: String) -> int:
 	if level_of.is_valid():
@@ -127,9 +119,14 @@ func get_time_left() -> float:
 	return maxf(_time_left, 0.0) if _open else 0.0
 
 
-## Total choose time (cards.json menu_choose_sec).
+## Total choose time: cards.json menu_choose_sec x [member time_mult] (0 = no limit).
 func get_duration() -> float:
-	return _config.menu_choose_sec
+	return 0.0 if is_unlimited() else _config.menu_choose_sec * time_mult
+
+
+## True when the menu has no time limit ([member time_mult] 0, the "không giới hạn" setting).
+func is_unlimited() -> bool:
+	return time_mult <= 0.0
 
 
 ## Cells of the pending cut (empty when closed).

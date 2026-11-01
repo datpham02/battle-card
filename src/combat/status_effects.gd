@@ -120,6 +120,9 @@ var _guards: Dictionary = {}
 var _since_unlock: Dictionary = {}
 # Drop tiles: Side -> {Vector2i -> seconds of the return fade left} (presentation only).
 var _hole_fade: Dictionary = {}
+# P2.2b: id of the last ignite() call; every burning cell remembers the call (its "zone") that lit it last, so a
+# multi-cell boss over several cells of one fire takes ONE tick per tick (see _burn_lead_cells).
+var _burn_zone_seq: int = 0
 
 
 ## Ignites every cell in [param cells] for [param duration] seconds. A unit standing on a
@@ -138,6 +141,7 @@ func ignite(
 	var lit: Array[Vector2i] = []
 	if duration <= 0.0:
 		return lit
+	_burn_zone_seq += 1
 	for cell: Vector2i in cells:
 		if not terrain and not _claim_zone_cell(cell, KIND_BURN):
 			continue
@@ -156,7 +160,7 @@ func ignite(
 		var damage: float = base + _burn_tick_bonus * float(stacks - 1)
 		_burning[cell] = {
 			"left": left, "tick_acc": acc, "stacks": stacks, "base": base,
-			"tick_sec": maxf(tick_sec, _EPS), "damage": damage, "zone": zone,
+			"tick_sec": maxf(tick_sec, _EPS), "damage": damage, "zone": zone, "zone_id": _burn_zone_seq,
 		}
 		lit.append(cell)
 		cell_ignited.emit(cell)
@@ -298,12 +302,13 @@ func tick(delta: float, state: CombatState) -> void:
 	_check_thorn_entries(state)
 	if delta <= 0.0:
 		return
+	var leads: Dictionary = _burn_lead_cells(state)
 	for cell: Vector2i in _burning.keys():
 		var entry: Dictionary = _burning[cell] as Dictionary
 		var active: float = minf(delta, float(entry["left"]))
 		var tick_sec: float = float(entry["tick_sec"])
 		var acc: float = float(entry["tick_acc"])
-		var victims: Array[int] = _units_on(cell, state)
+		var victims: Array[int] = _units_on(cell, state, leads)
 		if victims.is_empty():
 			acc = 0.0
 		else:
@@ -671,14 +676,16 @@ func _tick_holes(delta: float, state: CombatState) -> void:
 			_hole_fade.erase(side)
 	for side: int in _holes.keys():
 		var book: Dictionary = _holes[side] as Dictionary
-		var unit_cell: Vector2i = state.cell_of(side)
 		var alive: bool = not _is_dead(side, state)
+		# P2.2b: a unit falls at most once per tick (a multi-cell boss over several cracks of one drop).
+		var fell: bool = false
 		for cell: Vector2i in _sorted_cells(book):
 			if not book.has(cell):
 				continue
 			var entry: Dictionary = book[cell] as Dictionary
 			if str(entry["phase"]) == HOLE_PHASE_CRACK:
-				var on_cell: bool = alive and unit_cell == cell
+				# P2.2b: "on the cell" = any footprint cell of a multi-cell boss (the cell itself for 1 cell).
+				var on_cell: bool = alive and state.unit_at(side, cell)
 				# Held while the unit stands here and was Frozen / rooted at some point since it stepped on; leaving clears it.
 				entry["held"] = on_cell and (bool(entry["held"]) or _unit_stuck(side))
 				entry["left"] = float(entry["left"]) - delta
@@ -687,7 +694,7 @@ func _tick_holes(delta: float, state: CombatState) -> void:
 				if bool(entry["held"]):
 					entry["left"] = 0.0
 					continue
-				_fall_hole(side, cell, -float(entry["left"]), state)
+				fell = _fall_hole(side, cell, -float(entry["left"]), state, fell) or fell
 			else:
 				entry["left"] = float(entry["left"]) - delta
 				if float(entry["left"]) <= _EPS:
@@ -701,16 +708,21 @@ func _tick_holes(delta: float, state: CombatState) -> void:
 # The crack of [param cell] ran out: it becomes a hole for its total minus the overshoot [param carry]. A unit standing
 # there falls: HP 0 (hole_fall_lethal), else it is pushed to an open neighbour and loses hole_fall_damage; with no
 # landing cell the non-lethal fall is cancelled (the cell returns at once), as a Sky Isles crumble does.
-func _fall_hole(side: int, cell: Vector2i, carry: float, state: CombatState) -> void:
+# P2.2b: a multi-cell boss is "standing there" when any footprint cell is [param cell]; it lands on a neighbouring
+# anchor whose whole footprint is open; [param already_fell] true = it fell this tick already (no second fall or
+# damage). Returns true when a unit fell here.
+func _fall_hole(side: int, cell: Vector2i, carry: float, state: CombatState, already_fell: bool = false) -> bool:
 	var book: Dictionary = _holes[side] as Dictionary
 	var entry: Dictionary = book[cell] as Dictionary
-	var victim: bool = not _is_dead(side, state) and state.cell_of(side) == cell
+	var victim: bool = not already_fell and not _is_dead(side, state) and state.unit_at(side, cell)
 	if victim and not hole_fall_lethal:
 		var target: Vector2i = _landing_cell(side, cell, state.grid)
+		if side == CombatState.Side.ENEMY and state.enemy_footprint_size() > 1:
+			target = _landing_anchor(state)
 		if target == BoardGrid.NO_CELL:
 			book.erase(cell)
 			hole_restored.emit(side, cell)
-			return
+			return false
 		if side == CombatState.Side.PLAYER:
 			state.set_player_cell(target)
 		else:
@@ -726,6 +738,23 @@ func _fall_hole(side: int, cell: Vector2i, carry: float, state: CombatState) -> 
 		else:
 			state.damage(side, hole_fall_damage)
 	hole_fell.emit(side, cell, victim)
+	return victim
+
+
+# P2.2b, non-lethal fall of a multi-cell boss: the neighbouring anchor (up, right, down, left of the current one; ties by
+# x then y) whose whole footprint fits, with no cracking / hole cell and nothing refused by hole_blocked_fn.
+func _landing_anchor(state: CombatState) -> Vector2i:
+	var best: Vector2i = BoardGrid.NO_CELL
+	var e: int = CombatState.Side.ENEMY
+	var blocked: Callable = func(c: Vector2i) -> bool:
+		return _hole_phase(e, c) != "" or (hole_blocked_fn.is_valid() and bool(hole_blocked_fn.call(e, c)))
+	for dir: Vector2i in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
+		var anchor: Vector2i = state.enemy_cell + dir
+		if not state.enemy_fits(anchor, blocked):
+			continue
+		if best == BoardGrid.NO_CELL or anchor.x < best.x or (anchor.x == best.x and anchor.y < best.y):
+			best = anchor
+	return best
 
 
 # Non-lethal fall: the 4-neighbour of [param from] on the same half the unit lands on: not cracking, not a hole, not
@@ -805,6 +834,10 @@ func _check_thorn_entries(state: CombatState) -> void:
 		_last_cell[side] = cell
 		if not had or last == cell:
 			continue
+		if side == CombatState.Side.ENEMY and state.enemy_footprint_size() > 1:
+			cell = _entered_cell(state, last)
+			if cell == BoardGrid.NO_CELL:
+				continue
 		_burn_entry(side, cell, state)
 		var thorn: Dictionary = thorns_at(side, cell)
 		if thorn.is_empty():
@@ -816,6 +849,26 @@ func _check_thorn_entries(state: CombatState) -> void:
 		state.damage(side, damage)
 		apply_fragile(side, int(thorn["fragile_stacks"]))
 		thorn_entered.emit(side, cell, damage)
+
+
+# P2.2b: a multi-cell enemy that moved from the anchor [param last_anchor] pays ONE entry toll per step: the cell
+# returned is the first footprint cell it newly covers (footprint order) that holds thorns, else the first new one
+# that burns, else the first new one (nothing to pay there); NO_CELL when it covers no new cell.
+func _entered_cell(state: CombatState, last_anchor: Vector2i) -> Vector2i:
+	var before: Array[Vector2i] = state.footprint_cells_at(last_anchor)
+	var fresh: Array[Vector2i] = []
+	for c: Vector2i in state.enemy_footprint_cells():
+		if not before.has(c):
+			fresh.append(c)
+	if fresh.is_empty():
+		return BoardGrid.NO_CELL
+	for c: Vector2i in fresh:
+		if not thorns_at(CombatState.Side.ENEMY, c).is_empty():
+			return c
+	for c: Vector2i in fresh:
+		if _burning.has(c):
+			return c
+	return fresh[0]
 
 
 # 2026-10-31: the entry toll of a burning [param cell] for the unit of [param side] that just stepped onto it: one tick
@@ -838,14 +891,35 @@ func _burn_entry(side: int, cell: Vector2i, state: CombatState) -> void:
 	burn_hurt.emit(side, cell, damage)
 
 
-# Sides of the living units standing on [param cell].
-func _units_on(cell: Vector2i, state: CombatState) -> Array[int]:
+# Sides of the living units standing on [param cell]. P2.2b: a multi-cell enemy counts only on the LEAD cell of each
+# fire zone under it ([param leads], from _burn_lead_cells), so one zone ticks it once per tick however many of its
+# cells the footprint covers; a 1-cell enemy is checked exactly as before.
+func _units_on(cell: Vector2i, state: CombatState, leads: Dictionary = {}) -> Array[int]:
 	var out: Array[int] = []
 	if not state.is_player_dead() and state.player_cell == cell:
 		out.append(CombatState.Side.PLAYER)
-	if not state.is_enemy_dead() and state.enemy_cell == cell:
-		out.append(CombatState.Side.ENEMY)
+	if not state.is_enemy_dead():
+		if state.enemy_footprint_size() <= 1:
+			if state.enemy_cell == cell:
+				out.append(CombatState.Side.ENEMY)
+		elif leads.values().has(cell):
+			out.append(CombatState.Side.ENEMY)
 	return out
+
+
+# P2.2b: zone id -> the one burning cell under a multi-cell enemy's footprint that ticks it (the first in footprint
+# order: top row first, left to right). Empty for a 1-cell or dead enemy.
+func _burn_lead_cells(state: CombatState) -> Dictionary:
+	var leads: Dictionary = {}
+	if state.enemy_footprint_size() <= 1 or state.is_enemy_dead():
+		return leads
+	for cell: Vector2i in state.enemy_footprint_cells():
+		if not _burning.has(cell):
+			continue
+		var zone_id: int = int((_burning[cell] as Dictionary).get("zone_id", 0))
+		if not leads.has(zone_id):
+			leads[zone_id] = cell
+	return leads
 
 
 # --- Phase 2 statuses: Root (D2), Slow (D4), Guard (D5) ------------------------------------------------------------

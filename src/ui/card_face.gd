@@ -223,10 +223,15 @@ static func window_rect(rect: Rect2, s: float, with_text: bool, with_foot: bool)
 ## Draws a skill card face. [param skill] is the resolved card (SkillConfig.resolved), [param title] its shown
 ## name (with the level suffix), [param tag] the upgrade tag ("" = none), [param desc] the effect text.
 ## The cooldown ends the effect text ("… (hồi 8 s)"); [param foot] ([text, colour, size]) is an optional line at
-## the foot (the shop's price).
+## the foot (the shop's price). [param show_cooldown] false leaves the cooldown out (the in-battle card menu, where
+## the cooldown column and the pie over the picture show it instead, quick spec menu-la-giua-man-hinh-2026-11-01).
 static func draw_skill(canvas: CanvasItem, rect: Rect2, skill: Dictionary, title: String, tag: String, desc: String,
-		selected: bool = false, pressed: bool = false, dim: bool = false, foot: Array = [], card_id: String = "") -> void:
+		selected: bool = false, pressed: bool = false, dim: bool = false, foot: Array = [], card_id: String = "",
+		show_cooldown: bool = true) -> void:
 	_read_style()
+	if not show_cooldown and float(skill.get("cooldown_sec", 0.0)) > 0.0:
+		skill = skill.duplicate()
+		skill["cooldown_sec"] = 0.0
 	if style == "ancient":
 		_draw_skill_ancient(canvas, rect, skill, title, tag, desc, selected, pressed, dim, foot, card_id)
 		return
@@ -486,6 +491,35 @@ static func _draw_text_box(canvas: CanvasItem, box: Rect2, text: String, alpha: 
 	var lines: int = maxi(int(box.size.y / font.get_height(size)), 1)
 	canvas.draw_multiline_string(font, Vector2(box.position.x, box.position.y + font.get_ascent(size)), text, HORIZONTAL_ALIGNMENT_CENTER,
 		box.size.x, size, lines, Color(BODY_COLOR, alpha))
+
+
+## Pure: the picture area of a skill face at [param rect] on a [param viewport_height] screen in the current
+## [member style] (the ancient slot's picture, else the art window): where the battle menu lays its cooldown pie.
+static func picture_rect(rect: Rect2, viewport_height: float) -> Rect2:
+	_read_style()
+	var s: float = float(PixelFrame.scale_for(viewport_height))
+	if style == "ancient":
+		var o: Vector2 = rect.position.round()
+		var slot := Rect2(o + ANCIENT_SLOT.position * s, ANCIENT_SLOT.size * s)
+		return Rect2((slot.get_center() - Vector2.ONE * ANCIENT_PICTURE_PX * s * 0.5).round(), Vector2.ONE * ANCIENT_PICTURE_PX * s)
+	if style == "slim":
+		var edge: float = ART_PX * s
+		var r := Rect2(rect.position.round(), rect.size.round())
+		return Rect2(roundf(r.get_center().x - edge * 0.5), r.position.y + roundf(r.size.y * SLIM_WINDOW_TOP_H), edge, edge)
+	return window_rect(rect, s, shows_text(rect, viewport_height), false)
+
+
+## Draws card [param card_id]'s picture alone into the square [param rect] (the battle's cooldown column icon): the
+## card's art when it has one, else the code-drawn effect window (effect colour + icon-sheet glyph), as on the face.
+static func draw_picture(canvas: CanvasItem, rect: Rect2, skill: Dictionary, card_id: String, alpha: float = 1.0) -> void:
+	var art: Texture2D = card_art(card_id)
+	if art != null:
+		canvas.draw_rect(rect.grow(2.0), Color(WINDOW_EDGE, alpha))
+		var src_edge: float = minf(ANCIENT_PICTURE_PX, minf(art.get_width(), art.get_height()))
+		var src := Rect2((Vector2(art.get_size()) - Vector2.ONE * src_edge) * 0.5, Vector2.ONE * src_edge)
+		canvas.draw_texture_rect_region(art, rect, src, Color(1, 1, 1, alpha))
+	else:
+		_draw_window_art(canvas, rect, skill, str(skill.get("effect", "damage")), alpha)
 
 
 ## The picture of card [param card_id] (null when it has none yet).

@@ -1,8 +1,8 @@
 extends SceneTree
 ## TD-015 (Story 018 / 021 / 028 / 030 / 037): the character passives (second_wind, wide_caster,
 ## quick_blade, hunter_mark, prayer) and signatures (tram, thien_hoa, anh_bo, vay_bat, thanh_an) apply
-## through the REAL piece cast path - bag slot -> select_piece -> aim_at_cell -> confirm_placement (card
-## menu opens) -> [second piece: select / aim / confirm while the menu is open = the Story 028 JOIN] ->
+## through the REAL piece cast path - bag slot -> select_piece -> aim_at_cell -> confirm_placement (the place
+## window) -> [second piece: select / aim / confirm before Tung phép = the Story 028 JOIN] -> press_cast (card menu) ->
 ## CutFlow.choose(card) -> CombatView._on_skill_chosen -> swing -> SwingArbiter resolves - and never
 ## only through _begin_cut. A joined cast counts its UNION cells (wide_caster, quick_blade, Anh Bo, Tram,
 ## the formation charge) and is ONE hit (Thanh An adds one Han, not one per piece).
@@ -106,12 +106,12 @@ func _activate(v: CombatView) -> bool:
 	return ok
 
 
-# The real cast: puts [param pieces] ([shape_id, anchor cell] each) into bag slots 0.., places the first
-# (menu opens), joins the rest while the menu is open, chooses [param card] and resolves the swing.
+# The real cast: puts [param pieces] ([shape_id, anchor cell] each) into bag slots 0.., places the first (the place
+# window), joins the rest before Tung phép, presses it (menu opens), chooses [param card] and resolves the swing.
 # Returns {result, cells (menu cells), swing_cells, duration, pieces}; {} when a step was refused.
 func _piece_cast(v: CombatView, pieces: Array, card: String = "kiem_khi") -> Dictionary:
 	var hold: HoldSlots = v.get_hold()
-	if v.get_cut_flow().is_menu_open() or v.is_placing():
+	if v.get_cut_flow().is_menu_open() or v.is_placing() or v.is_placed():
 		v.cancel_placement()
 		v.cancel_placement()
 	for i: int in hold.get_slot_count():
@@ -134,6 +134,10 @@ func _piece_cast(v: CombatView, pieces: Array, card: String = "kiem_khi") -> Dic
 			return {}
 	var plan: CastPlan = v.get_cast_plan()
 	var piece_count: int = plan.piece_count()
+	if not v.press_cast():
+		_check("Tung phép opens the card menu", false)
+		v.cancel_placement()
+		return {}
 	var cells: Array[Vector2i] = v.get_cut_flow().get_cells()
 	var got: Array[Dictionary] = [{}]
 	var cb: Callable = func(side: int, result: Dictionary) -> void:
@@ -343,7 +347,7 @@ func _test_hunter_mark() -> void:
 	p.label = "mono"
 	hold.place(p, 0)
 	v._deck = Deck.from_array(["tran_gai", "tran_gai", "tran_gai", "tran_gai"], 1)
-	var opened: bool = v.select_piece(0, false) and v.aim_at_cell(_ec(v, 2, 2)) and v.confirm_placement()
+	var opened: bool = v.select_piece(0, false) and v.aim_at_cell(_ec(v, 2, 2)) and v.confirm_placement() and v.press_cast()
 	_check("hunter_mark: a single mono cannot choose tran_gai (min_cells 3)", opened and not v.get_cut_flow().choose("tran_gai") and v.get_cut_flow().is_menu_open())
 	v.cancel_placement()
 	var r: Dictionary = _piece_cast(v, [_bar2_low(v), ["mono", _ec(v, 2, 0)]], "tran_gai")

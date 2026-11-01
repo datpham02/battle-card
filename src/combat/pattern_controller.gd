@@ -82,6 +82,11 @@ func _init(state: CombatState, grid: BoardGrid, config: EnemySkillsConfig, enemy
 	_enemy = config.get_enemy(enemy_id)
 	if _enemy.is_empty():
 		push_warning("PatternController: unknown enemy '%s'" % enemy_id)
+	# P2.2b (D13 / ADR-0001 A7): the enemy's footprint is its data; CombatState validates every move / spawn against it.
+	if not _enemy.is_empty():
+		var footprint: Array[Vector2i] = []
+		footprint.assign(_enemy.get("footprint", [Vector2i.ZERO]) as Array)
+		_state.set_enemy_footprint(footprint)
 	_brain = PatternBrain.new(_enemy.get("ai", config.ai) as Dictionary, seed_value)
 	if seed_value >= 0:
 		_rng.seed = seed_value + 101
@@ -338,6 +343,7 @@ func _plan_ctx() -> Dictionary:
 	var status: StatusEffects = _status
 	return {
 		"grid": _grid, "player_cell": _state.player_cell, "enemy_cell": _state.enemy_cell, "markers": marker_cells(),
+		"enemy_cells": _state.enemy_footprint_cells(),
 		"cell_ok_fn": (func(c: Vector2i) -> bool: return not status.is_locked(c)) if status != null else Callable(),
 	}
 

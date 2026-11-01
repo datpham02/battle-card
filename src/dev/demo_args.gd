@@ -39,13 +39,20 @@ extends Node
 ##   godot --path . -- --demo=placing_center a single-cell piece (default mono) on the centre cell of the boss's half
 ##   godot --path . -- --demo=placing_drag   mid-drag: a simulated finger holds the piece, the ghost floats drag_lift_px above it
 ##                                           over the boss's cell (green), the "Xoay" button fills the d-pad area
-##   godot --path . -- --demo=pieces_menu    the piece placed and confirmed: card menu open (piece consumed from the bag)
+##   godot --path . -- --demo=pieces_menu    the piece placed and Tung phép pressed: card menu open (piece consumed from the bag)
 ##   godot --path . -- --demo=rotten_piece   a ROTTEN piece on the player's half and in the bag (grey, X, countdown)
 ##   godot --path . -- --piece=<id>          DEV-ONLY: the shape (pieces.json id) the placing / menu demos use
 ##   Story 028 join demos (the cast of two pieces; the boss stays still):
-##   godot --path . -- --demo=join_menu      card menu open, piece 1 placed, piece 2 mid-drag (ghost lifted, Xoay shown)
+##   godot --path . -- --demo=join_menu      place window: piece 1 placed, piece 2 mid-drag (ghost lifted, Xoay shown; no cards yet)
 ##   godot --path . -- --demo=join_featured  two pieces joined into the match's featured shape (needs --arena=<shape>): glow + label
-##   godot --path . -- --demo=join_split     two separate pieces attached, the menu shows the total cells
+##   godot --path . -- --demo=join_split     two separate pieces attached in the place window, the total cells shown
+##   2026-11-01 card pick demos (quick spec menu-la-giua-man-hinh; real path: drop, join, Tung phép):
+##   godot --path . -- --demo=card_placing   two pieces placed (place window, its bar ~60 % left), Tung phép shown, no cards
+##   godot --path . -- --demo=card_pick      as card_placing, then Tung phép pressed: grey overlay, 4 cards in the centre
+##   godot --path . -- --demo=card_cooldown  as card_pick with three cards on cooldown (started through SkillCooldowns.start and
+##                                           ticked apart, one of them in the hand): the left cooldown column with its pies
+##                                           and the dimmed hand card with the same pie
+##   godot --path . -- --demo=card_cooldown_column  the same three cooldowns with the menu closed (column only, no overlay)
 ##   godot --path . -- --arena=<shape>       DEV-ONLY arena shape id of arenas.json (cross, u_shape, ring, ...): sets
 ##       match_params["arena"] before _ready, so the board and the featured-shape icon follow it. Works with or without --demo.
 ##   Story 025 boss piece demos (the boss casts puzzle pieces on the player's half and is rooted while it swings):
@@ -248,7 +255,7 @@ const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
 const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
 const ROTTEN_PIECE_SLOT: int = 1
 ## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
-const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit", "thorns_on_boss", "boss_through_thorns", "trait_seal", "trait_thorns", "reward_zone_cards"]
+const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "card_placing", "card_pick", "card_cooldown", "card_cooldown_column", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit", "thorns_on_boss", "boss_through_thorns", "trait_seal", "trait_thorns", "reward_zone_cards"]
 ## Story 025 boss piece demos: the boss's hand (shape ids), how many of them each demo casts, the piece the counter-cast
 ## uses, the boss's field pieces as [shape id, rotation] with their freshness (s), and the share of the step cooldown
 ## still left in "boss_ring_normal".
@@ -345,6 +352,10 @@ const JOIN_PIECE_1: String = "l3"
 const JOIN_PIECE_2: String = "bar2"
 ## Slot of the second piece in the join demos' bag.
 const JOIN_SLOT_2: int = 1
+## 2026-11-01 card pick demos: the share of the place window left in the capture, the fallback cooldown of each demo
+## the seconds ticked after each cooldown start (three cards; the first started recovers most).
+const CARD_DEMO_PLACE_LEFT_RATIO: float = 0.6
+const CARD_DEMO_COOLDOWN_TICKS: Array[float] = [2.0, 1.5, 1.0]
 ## Story 047 art demos (they also skip the intro; see the header): the UnitLayer seconds advanced after the event (a once
 ## clip mid-way, a held clip past its end, a status overlay a few frames in), the hit size, the overkill of the death demos,
 ## the status duration and frost stacks, the end delay that keeps a finished match on screen, and the dev flags.
@@ -386,6 +397,7 @@ func _enter_tree() -> void:
 	if not pattern_enemy.is_empty():
 		_combat().match_params["brain"] = RunConfig.BRAIN_PATTERN
 		_combat().match_params["enemy"] = pattern_enemy
+		_apply_pattern_hints(pattern_enemy, arena_id.is_empty())
 	if _mode != "":
 		_combat().drops_seed = DEMO_SEED
 	if _mode == "boss_downed":
@@ -523,6 +535,8 @@ func _ready() -> void:
 			_placing_demo(combat, grid)
 		"join_menu", "join_featured", "join_split":
 			_join_demo(combat, grid)
+		"card_placing", "card_pick", "card_cooldown", "card_cooldown_column":
+			_card_pick_demo(combat, grid)
 		"odd_field", "odd_bag", "odd_place", "odd_boss", "odd_hint":
 			_odd_demo(combat, grid)
 		"anim_step", "anim_cast", "anim_windup", "anim_hit", "anim_down", "anim_defeat", "status_burn", "status_frozen", "status_swap", "reduce_motion":
@@ -843,8 +857,8 @@ func _boss_piece_demo(combat: CombatView, grid: BoardGrid) -> void:
 				push_warning("DemoArgs: select_piece failed for demo '%s'" % _mode)
 				return
 			_aim_hitting(combat, grid, combat.get_state().enemy_cell)
-			if not combat.confirm_placement():
-				push_warning("DemoArgs: confirm_placement failed for demo '%s'" % _mode)
+			if not combat.press_cast():
+				push_warning("DemoArgs: press_cast failed for demo '%s'" % _mode)
 				return
 			if not combat.get_cut_flow().choose(SkillConfig.FALLBACK_SKILL):
 				push_warning("DemoArgs: skill not available for demo '%s'" % _mode)
@@ -1504,8 +1518,8 @@ func _anh_bo_demo(combat: CombatView, grid: BoardGrid) -> void:
 		push_warning("DemoArgs: select_piece failed for demo '%s'" % _mode)
 		return
 	_aim_hitting(combat, grid, combat.get_state().enemy_cell)
-	if not combat.confirm_placement():
-		push_warning("DemoArgs: confirm_placement failed for demo '%s'" % _mode)
+	if not combat.press_cast():
+		push_warning("DemoArgs: press_cast failed for demo '%s'" % _mode)
 		return
 	var flow: CutFlow = combat.get_cut_flow()
 	if not flow.choose(SkillConfig.FALLBACK_SKILL):
@@ -1729,6 +1743,21 @@ func _parse_arena() -> String:
 	return ""
 
 
+# P2.2b: the pattern enemy's own data drives the dev launch: its `arena` hint (enemy_skills.json, e.g. dev_pattern_boss ->
+# boss_hall) becomes the match arena unless --arena= named one ([param use_arena_hint] false), and a MULTI-CELL enemy
+# draws as itself (match `id` = the enemy id: no 1-cell sheet of the run's first match stretched over a 2x2 footprint;
+# an enemy without a sheet keeps the placeholder). A 1-cell enemy (dev_pattern_dummy) keeps the old launch exactly.
+func _apply_pattern_hints(enemy_id: String, use_arena_hint: bool) -> void:
+	var enemy: Dictionary = EnemySkillsConfig.load_from_file().get_enemy(enemy_id)
+	if enemy.is_empty():
+		return
+	var hint: String = str(enemy.get("arena", ""))
+	if use_arena_hint and not hint.is_empty():
+		_combat().match_params["arena"] = {"shape": hint}
+	if (enemy.get("footprint", []) as Array).size() > 1:
+		_combat().match_params["id"] = enemy_id
+
+
 # Phase 2 (P2.2): --pattern=<enemy id>, "" when absent.
 func _parse_pattern() -> String:
 	for arg: String in OS.get_cmdline_user_args():
@@ -1788,7 +1817,7 @@ func _piece_id(fallback: String) -> String:
 
 # Story 024 placing demos, through the real player path: the bag, select_piece (slot 0), Focus started
 # (time is frozen so _update_focus does not run), the ghost aimed with aim_at_cell, rotate_piece for
-# "placing_rotated", confirm_placement for "pieces_menu".
+# "placing_rotated", press_cast (commit + Tung phép) for "pieces_menu".
 func _placing_demo(combat: CombatView, grid: BoardGrid) -> void:
 	var lib: PieceLibrary = PieceLibrary.load_from_file()
 	_fill_bag(lib, -1)
@@ -1836,8 +1865,9 @@ func _placing_demo(combat: CombatView, grid: BoardGrid) -> void:
 	if placement.hits(boss_cell) != want_hit:
 		push_warning("DemoArgs: no ghost position gives hit=%s for demo '%s'" % [want_hit, _mode])
 	if _mode == "pieces_menu":
-		if not combat.confirm_placement():
-			push_warning("DemoArgs: confirm_placement failed for demo '%s'" % _mode)
+		# 2026-11-01: the piece is committed and Tung phép pressed (the card menu opens on the press).
+		if not combat.press_cast():
+			push_warning("DemoArgs: press_cast failed for demo '%s'" % _mode)
 
 
 # Centre of bag slot [param index] in viewport pixels (where a finger would pick the piece up).
@@ -1911,6 +1941,54 @@ func _join_demo(combat: CombatView, grid: BoardGrid) -> void:
 				break
 	if not combat.confirm_placement():
 		push_warning("DemoArgs: attaching the second piece failed for demo '%s'" % _mode)
+
+
+# 2026-11-01 card pick demos (see the header) through the real player path: piece 1 dropped over the boss, piece 2
+# joined apart from it (the join_split path), then Tung phép pressed for card_pick / card_cooldown. card_cooldown
+# starts three cooldowns through SkillCooldowns.start, ticked apart so the pies differ; the last of them is the drawn
+# hand's card with the longest cooldown (its dimmed face shows the same pie).
+func _card_pick_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var real_mode: String = _mode
+	_mode = "join_split"
+	_join_demo(combat, grid)
+	_mode = real_mode
+	if not combat.is_placed():
+		push_warning("DemoArgs: the pieces were not placed for demo '%s'" % _mode)
+		return
+	combat.debug_set_place_time_left(combat.get_place_duration() * CARD_DEMO_PLACE_LEFT_RATIO)
+	if _mode == "card_placing":
+		return
+	if _mode != "card_cooldown_column" and not combat.press_cast():
+		push_warning("DemoArgs: press_cast failed for demo '%s'" % _mode)
+		return
+	if _mode == "card_pick":
+		return
+	var cooldowns: SkillCooldowns = combat.get_skill_cooldowns()
+	var config: SkillConfig = combat.get_skill_config()
+	# The hand card with the longest cooldown is used LAST (it is still mostly covered in the capture).
+	var hand_card: String = ""
+	for id: String in combat.get_hand():
+		if _demo_cooldown(combat, id) > _demo_cooldown(combat, hand_card):
+			hand_card = id
+	var ids: Array[String] = []
+	for id: String in config.card_order:
+		if ids.size() >= CARD_DEMO_COOLDOWN_TICKS.size() - (0 if hand_card.is_empty() else 1):
+			break
+		if _demo_cooldown(combat, id) > 0.0 and not config.is_curse(id) and not combat.get_hand().has(id):
+			ids.append(id)
+	if not hand_card.is_empty():
+		ids.append(hand_card)
+	for i: int in ids.size():
+		cooldowns.start(ids[i], _demo_cooldown(combat, ids[i]))
+		cooldowns.tick(CARD_DEMO_COOLDOWN_TICKS[i])
+	print("DemoArgs %s: hand=%s cooldowns=%s" % [_mode, str(combat.get_hand()), str(cooldowns.running_ids())])
+
+
+# The cooldown of card [param id] at the player's level (0 for "" or a card without one).
+func _demo_cooldown(combat: CombatView, id: String) -> float:
+	if id.is_empty():
+		return 0.0
+	return float(combat.get_skill_config().resolved(id, combat.get_card_level(id)).get("cooldown_sec", 0.0))
 
 
 # Aims the selected piece's ghost until its anchor is [param anchor] (walks the enemy cells).

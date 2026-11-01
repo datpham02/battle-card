@@ -84,7 +84,8 @@ static func cast_drop(
 	for cell: Vector2i in zone_cells:
 		if wanted.has(cell) or status.is_cracking(side, cell) or status.is_hole(side, cell):
 			continue
-		if cell == standing and not unit_cell_ok:
+		# P2.2b: every footprint cell of a multi-cell boss is "the unit's own cell".
+		if state.unit_at(side, cell) and not unit_cell_ok:
 			continue
 		var on_half: bool = grid.is_player_cell(cell) if side == CombatState.Side.PLAYER else grid.is_enemy_cell(cell)
 		if on_half:

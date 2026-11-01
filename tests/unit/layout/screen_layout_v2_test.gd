@@ -148,7 +148,7 @@ func _controls(vp: Vector2) -> Dictionary:
 		"confirm": ScreenLayout.confirm_button_rect(vp),
 		"cancel": ScreenLayout.cancel_button_rect(vp),
 		"focus_bar": ScreenLayout.focus_bar_rect(vp),
-		"menu": ScreenLayout.skill_menu_panel_rect(vp),
+		"place_bar": ScreenLayout.place_window_bar_rect(vp),
 	}
 
 
@@ -303,7 +303,7 @@ func test_center_controls_clear_of_slots_and_stick() -> void:
 			var r: Rect2 = controls[name]
 			check("test_%s_at_%s_at_least_88_px_each_side" % [name, vp], r.size.x >= 88.0 and r.size.y >= 88.0)
 		check("test_confirm_awaken_cancel_at_%s_do_not_overlap_each_other" % vp, not controls["confirm"].intersects(controls["awaken"]) and not controls["cancel"].intersects(controls["awaken"]) and not controls["confirm"].intersects(controls["cancel"]))
-		check("test_menu_at_%s_does_not_cover_the_cancel_button" % vp, not controls["menu"].intersects(controls["cancel"]))
+		check("test_place_bar_at_%s_does_not_cover_the_cancel_button" % vp, not controls["place_bar"].intersects(controls["cancel"]))
 		check("test_focus_bar_at_%s_clear_of_confirm_and_below_76_percent" % vp, not controls["focus_bar"].intersects(controls["confirm"]) and controls["focus_bar"].position.y >= vp.y * 0.76)
 		check("test_rotate_button_at_%s_inside_the_stick_zone" % vp, stick.encloses(ScreenLayout.rotate_button_rect(vp)) and ScreenLayout.rotate_button_rect(vp).size.x >= 88.0)
 
@@ -315,7 +315,7 @@ func test_place_hint_and_tag_zone() -> void:
 		var hint: Rect2 = ScreenLayout.place_hint_rect(vp)
 		var rotate: Rect2 = ScreenLayout.rotate_button_rect(vp)
 		check("test_place_hint_at_%s_inside_the_rotate_button_top_band" % vp, rotate.encloses(hint) and _near(hint.position.y, rotate.position.y, EPS) and hint.size.y >= 30.0 and hint.size.y <= rotate.size.y * 0.2)
-		for name: String in ["confirm", "cancel", "awaken", "menu", "focus_bar"]:
+		for name: String in ["confirm", "cancel", "awaken", "place_bar", "focus_bar"]:
 			check("test_place_hint_at_%s_clear_of_%s" % [vp, name], not hint.intersects(_controls(vp)[name]))
 		for s: Rect2 in ScreenLayout.slot_rects(vp, 4):
 			check("test_place_hint_at_%s_clear_of_slot_%s" % [vp, s.position], not hint.intersects(s))
@@ -329,18 +329,20 @@ func test_place_hint_and_tag_zone() -> void:
 			check("test_full_label_%s_at_%s_left_of_the_focus_tag" % [word, vp], zone.position.x + width < tag.position.x)
 
 
+# 2026-11-01 (quick spec menu-la-giua-man-hinh): the card menu left the strip (it is centred over the board, see
+# tests/unit/layout/card_pick_layout_test.gd); the strip keeps the place window bar where the old menu bar was:
+# below the lowest narrow row, above the Tung phép and Awaken buttons, clear of Cancel and the slots, x <= 960.
 func test_menu_reaches_at_most_x960() -> void:
 	var vp := Vector2(1280, 720)
-	var menu: Rect2 = ScreenLayout.skill_menu_panel_rect(vp)
-	check("test_menu_panel_1280_right_edge_at_most_960_got_%s" % menu.end.x, menu.end.x <= 960.0)
-	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, 4)
-	var ok_all: bool = rects.size() == 4
-	for r: Rect2 in rects:
-		ok_all = ok_all and r.size.x >= 88.0 and r.size.y >= 88.0 and menu.encloses(r)
-	check("test_skill_menu_four_cards_1280_each_at_least_88_px_inside_the_panel_got_%s" % [rects], ok_all)
-	var bar: Rect2 = ScreenLayout.skill_menu_bar_rect(vp)
-	check("test_skill_menu_bar_inside_the_panel", menu.encloses(bar))
-	check("test_skill_menu_panel_below_the_lowest_narrow_row_76_percent", menu.position.y >= vp.y * 0.76)
+	var bar: Rect2 = ScreenLayout.place_window_bar_rect(vp)
+	check("test_place_bar_1280_right_edge_at_most_960_got_%s" % bar.end.x, bar.end.x <= 960.0)
+	check("test_place_bar_below_the_lowest_narrow_row_76_percent", bar.position.y >= vp.y * 0.76)
+	var confirm: Rect2 = ScreenLayout.confirm_button_rect(vp)
+	var awaken: Rect2 = ScreenLayout.signature_rect(vp)
+	check("test_place_bar_above_tung_phep_and_awaken", bar.end.y <= confirm.position.y and bar.end.y <= awaken.position.y
+		and _near(bar.position.x, confirm.position.x, EPS) and _near(bar.end.x, awaken.end.x, EPS))
+	check("test_place_bar_clear_of_cancel_and_slots", not bar.intersects(ScreenLayout.cancel_button_rect(vp))
+		and ScreenLayout.slot_rects(vp, 4).all(func(r: Rect2) -> bool: return not r.intersects(bar)))
 
 
 func test_pad_inside_stick_zone() -> void:

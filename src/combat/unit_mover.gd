@@ -50,8 +50,11 @@ func try_step(direction: Vector2i) -> bool:
 		return false
 	if absi(direction.x) + absi(direction.y) != 1:
 		return false
-	if is_cell_blocked(_state.cell_of(_side) + direction):
-		return false
+	# P2.2b: a multi-cell enemy steps only when EVERY cell of its footprint at the destination is free of blockers (holes,
+	# sand...); CombatState.set_enemy_cell then checks the footprint fits the half. 1 cell: the destination cell only.
+	for dest: Vector2i in _dest_cells(_state.cell_of(_side) + direction):
+		if is_cell_blocked(dest):
+			return false
 	var from_cell: Vector2i = _state.cell_of(_side)
 	var moved: bool
 	if _side == CombatState.Side.PLAYER:
@@ -93,6 +96,14 @@ func is_cell_blocked(cell: Vector2i) -> bool:
 		if fn.is_valid() and bool(fn.call(cell)):
 			return true
 	return false
+
+
+# Cells the unit would cover with its cell / anchor on [param anchor] (the enemy's footprint; the cell itself otherwise).
+func _dest_cells(anchor: Vector2i) -> Array[Vector2i]:
+	if _side == CombatState.Side.ENEMY:
+		return _state.footprint_cells_at(anchor)
+	var one: Array[Vector2i] = [anchor]
+	return one
 
 
 ## Current cooldown multiplier (>= 0).

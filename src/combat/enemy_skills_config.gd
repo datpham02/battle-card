@@ -298,7 +298,25 @@ func _normalize_enemy(id: String, raw: Variant) -> Dictionary:
 		problems.append("enemy %s: no usable phase, refused" % id)
 		return {}
 	# `dev: true` = a dev / test fixture enemy (the --pattern= capture, integration tests); never named by a chapters.json match.
-	return {"id": id, "tier": str(d.get("tier", "normal")), "ai": enemy_ai, "phases": phases, "dev": bool(d.get("dev", false))}
+	# P2.2b (D13 / ADR-0001 A7): `footprint` = board-space [dx, dy] offsets (dx, dy >= 0) from the anchor (top-left cell);
+	# absent = [[0, 0]], a 1-cell enemy. A bad footprint is refused back to 1 cell with a problem line (never a guess).
+	var footprint: Array[Vector2i] = [Vector2i.ZERO]
+	if d.has("footprint"):
+		var fp_errors: Array[String] = []
+		var parsed: Array[Vector2i] = _parse_offsets(d["footprint"], fp_errors, "enemy %s footprint" % id)
+		for cell: Vector2i in parsed:
+			if cell.x < 0 or cell.y < 0:
+				fp_errors.append("enemy %s footprint offset %s is negative" % [id, cell])
+		if not parsed.has(Vector2i.ZERO):
+			fp_errors.append("enemy %s footprint must contain [0, 0] (the anchor, its top-left cell)" % id)
+		if fp_errors.is_empty():
+			footprint = CombatState.normalize_footprint(parsed)
+		else:
+			for e: String in fp_errors:
+				problems.append(e + ", 1 cell used")
+	# P2.2b: `arena` = an arenas.json shape id the dev launcher (--pattern=) starts this enemy on; "" = the match's own.
+	return {"id": id, "tier": str(d.get("tier", "normal")), "ai": enemy_ai, "phases": phases, "dev": bool(d.get("dev", false)),
+		"footprint": footprint, "arena": str(d.get("arena", ""))}
 
 
 static func _merge_numbers(base: Dictionary, raw: Variant, where: String, out_problems: Array[String]) -> Dictionary:

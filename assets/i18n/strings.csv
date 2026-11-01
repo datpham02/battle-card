@@ -599,7 +599,6 @@ ui.stats.fates,Tha / Giết,Spared / Executed
 ui.stats.fates_value,%d / %d,%d / %d
 ui.run_hud.fell_at,Gục ở tầng %d · %s,Fell on floor %d · %s
 ui.run_hud.killed_by,Kẻ hạ bạn: %s,Defeated by: %s
-ui.hud.join_hint,Kéo thêm khối vào để ghép,Drag another block in to join
 chapter.swamp.name,Đầm Lầy Độc,The Poison Swamp
 chapter.swamp.intro,Hơi độc bốc lên từ bùn đen. Mỗi bước chân chìm sâu hơn bước trước.,Poison vapor rises from the black mud. Every step sinks deeper than the last.
 chapter.swamp.end,"Cóc Chúa lặn xuống bùn, đầm lầy lặng tiếng. Con đường lại hiện ra.",The Toad Matriarch sinks into the mud and the swamp falls quiet. The road shows itself again.
@@ -786,6 +785,7 @@ arena.forge.name,Lò rèn,Forge
 arena.caldera.name,Miệng núi lửa,Caldera
 arena.twin_isles.name,Song đảo,Twin Isles
 arena.three_isles.name,Tam đảo,Three Isles
+arena.boss_hall.name,Sảnh Kẻ Gác,Warden Hall
 boss.imp.name,Tiểu Quỷ,Imp
 boss.ember_hound.name,Chó Than Hồng,Ember Hound
 boss.ash_golem.name,Khôi Tro,Ash Golem
@@ -848,3 +848,8 @@ ui.settings.on,Bật,On
 ui.settings.off,Tắt,Off
 ui.settings.lang_vi,Tiếng Việt,Tiếng Việt
 ui.settings.lang_en,English,English
+ui.settings.card_time,Thời gian chọn lá,Card pick time
+ui.settings.card_time_hint,Thời gian đặt khối và chọn lá trong trận,Time to place blocks and pick a card in battle
+ui.settings.card_time_normal,3 s,3 s
+ui.settings.card_time_long,6 s,6 s
+ui.settings.card_time_unlimited,Không giới hạn,No limit

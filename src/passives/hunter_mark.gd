@@ -35,12 +35,13 @@ func on_player_zone_formed(kind: String, cells: Array[Vector2i]) -> void:
 	var state: CombatState = _ctx.get("state") as CombatState
 	if state == null:
 		return
-	var boss: Vector2i = state.enemy_cell
-	for cell: Vector2i in cells:
-		# 0 = laid on the boss's own cell, 1 = beside it; both mark (same internal cooldown).
-		if absi(cell.x - boss.x) + absi(cell.y - boss.y) <= 1:
-			_try_mark()
-			return
+	# P2.2b: every footprint cell of a multi-cell boss counts; one zone marks once (return after the first match).
+	for boss: Vector2i in state.enemy_footprint_cells():
+		for cell: Vector2i in cells:
+			# 0 = laid on the boss's own cell, 1 = beside it; both mark (same internal cooldown).
+			if absi(cell.x - boss.x) + absi(cell.y - boss.y) <= 1:
+				_try_mark()
+				return
 
 
 ## How many times the boss was marked this match (tests / HUD).

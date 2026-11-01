@@ -82,7 +82,7 @@ func _cond_mover_busy() -> bool:
 
 
 func _cond_busy_cut() -> bool:
-	return combat.get_cut_actor().is_swinging() or combat.get_cut_flow().is_menu_open()
+	return combat.get_cut_actor().is_swinging() or combat.get_cut_flow().is_menu_open() or combat.is_placed()
 
 
 func _wait_while(cond: Callable, limit_sec: float) -> float:
@@ -215,7 +215,7 @@ func _initialize() -> void:
 	await _mouse_move(finger)
 	_check("drag on cooldown: no focus", combat.is_dragging() and not focus.is_active())
 	await _mouse_button(finger, false)
-	_check("placing works on cooldown (menu open)", cut_flow.is_menu_open())
+	_check("placing works on cooldown (piece committed: place window)", combat.is_placed() and not cut_flow.is_menu_open())
 	await _wait_while(_cond_focus_not_ready, 9.0)
 	var cd_total: float = float(Time.get_ticks_msec() - cd_start) / 1000.0
 	_check("ready ~8 s after timeout", absf(cd_total - 8.0) < 0.7 and focus.is_ready(), str(cd_total))
@@ -242,7 +242,9 @@ func _initialize() -> void:
 	await process_frame
 	_check("drag start -> focus active (full stop)", combat.is_dragging() and focus.is_active() and focus.get_time_scale() == 0.0)
 	await _mouse_button(finger, false)
-	_check("release confirms: focus ended (confirmed) + cooldown", cut_flow.is_menu_open() and not focus.is_active() and reasons == ["confirmed"] and focus.is_on_cooldown(), str(reasons))
+	_check("release confirms: focus ended (confirmed) + cooldown", combat.is_placed() and not focus.is_active() and reasons == ["confirmed"] and focus.is_on_cooldown(), str(reasons))
+	await _click(ScreenLayout.confirm_button_rect(VP).get_center())
+	_check("Tung phép after the confirm: menu open, Focus not restarted", cut_flow.is_menu_open() and not focus.is_active() and reasons == ["confirmed"], str(reasons))
 	await _click(cancel_c)
 	_check("Huy in menu returns the piece", not cut_flow.is_menu_open() and hold.get_piece(1) != null)
 	await _wait_while(_cond_focus_not_ready, 9.0)

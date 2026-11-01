@@ -364,7 +364,7 @@ func _tick_mire(delta: float) -> void:
 			_stand_cell[side] = cell
 			_standing[side] = 0.0
 			_next_tick[side] = grace
-		if _immune[side] or not _mire[side].has(cell):
+		if _immune[side] or not _unit_over(side, func(c: Vector2i) -> bool: return _mire[side].has(c)):
 			_standing[side] = 0.0
 			_next_tick[side] = grace
 			continue
@@ -410,7 +410,7 @@ func _tick_sand(delta: float) -> void:
 	for side: int in _SIDES:
 		var candidates: Array[Vector2i] = []
 		for cell: Vector2i in _side_cells(side):
-			if not _sand[side].has(cell) and cell != _unit_cell(side) and not _crumble[side].has(cell):
+			if not _sand[side].has(cell) and not _unit_on(side, cell) and not _crumble[side].has(cell):
 				candidates.append(cell)
 		var picked: Array[Vector2i] = []
 		while picked.size() < count and not candidates.is_empty():
@@ -425,7 +425,7 @@ func _tick_sand(delta: float) -> void:
 func _schedule(side: int, cells: Array[Vector2i], total: float, warn: float) -> Array[Vector2i]:
 	var wanted: Array[Vector2i] = []
 	for cell: Vector2i in cells:
-		if _is_half_cell(side, cell) and not _sand[side].has(cell) and cell != _unit_cell(side) and not wanted.has(cell):
+		if _is_half_cell(side, cell) and not _sand[side].has(cell) and not _unit_on(side, cell) and not wanted.has(cell):
 			wanted.append(cell)
 	var kept: Array[Vector2i] = ZoneRules.fit_cells(_grid, side, _unit_cell(side), wanted, _blocked_fn(side, []))
 	for cell: Vector2i in kept:
@@ -452,7 +452,7 @@ func _resolve_fills(side: int) -> void:
 		return
 	var candidates: Array[Vector2i] = []
 	for cell: Vector2i in expired:
-		if cell != _unit_cell(side):
+		if not _unit_on(side, cell):
 			candidates.append(cell)
 	var kept: Array[Vector2i] = ZoneRules.fit_cells(_grid, side, _unit_cell(side), candidates, _blocked_fn(side, expired))
 	for cell: Vector2i in expired:
@@ -728,7 +728,7 @@ func _tick_vent_burn(delta: float) -> void:
 		return
 	var tick_sec: float = float(_cfg["vent_tick_sec"])
 	for side: int in _SIDES:
-		if _is_dead(side) or not is_venting(side, _state.cell_of(side)):
+		if _is_dead(side) or not _unit_over(side, func(c: Vector2i) -> bool: return is_venting(side, c)):
 			_vent_standing[side] = 0.0
 			continue
 		_vent_standing[side] += delta
@@ -740,7 +740,7 @@ func _tick_vent_burn(delta: float) -> void:
 
 # --- crumble (Story 039) -------------------------------------------------------------------------------------
 
-## Switches the crumbling cells on/off: a unit standing on one cell for crumble_after_sec makes it crack
+## Switches the crumbling cells on/off: the player standing on one cell for crumble_after_sec makes it crack
 ## (crumble_warn_sec), then it falls for fall_sec (blocked; a unit on it is pushed to a steppable neighbour and takes
 ## fall_damage from the caller). Cells already cracking / fallen are not affected by switching off.
 func enable_crumble(on: bool) -> void:
@@ -753,6 +753,12 @@ func enable_crumble(on: bool) -> void:
 ## True when crumbling cells are on.
 func crumble_enabled() -> bool:
 	return _crumble_on
+
+
+## True when standing still cracks the cells of [param side]: only the player's half crumbles (user 2026-11-01,
+## "phía map đảo trời thì cũng chỉ có bên người chơi có hiệu ứng sụp thôi"); the boss's half never crumbles.
+func crumbles_side(side: int) -> bool:
+	return _crumble_on and side == CombatState.Side.PLAYER
 
 
 ## Trait island_drop: [param cells] of [param side] crack for [param warn_sec] (< 0 = crumble_warn_sec) then fall for
@@ -895,7 +901,7 @@ func _tick_crumble(delta: float) -> void:
 		return
 	var after: float = float(_cfg["crumble_after_sec"])
 	for side: int in _SIDES:
-		if _is_dead(side):
+		if _is_dead(side) or not crumbles_side(side):
 			continue
 		var cell: Vector2i = _state.cell_of(side)
 		if cell != _cr_cell[side]:
@@ -1004,3 +1010,19 @@ func _is_half_cell(side: int, cell: Vector2i) -> bool:
 
 func _unit_cell(side: int) -> Vector2i:
 	return BoardGrid.NO_CELL if _state == null else _state.cell_of(side)
+
+
+# P2.2b: true when the unit of [param side] covers [param cell] (any footprint cell of a multi-cell boss).
+func _unit_on(side: int, cell: Vector2i) -> bool:
+	return _state != null and _state.unit_at(side, cell)
+
+
+# P2.2b: true when [param test] (Callable(cell) -> bool) holds on any cell the unit of [param side] covers; one answer, so
+# a hazard tick hurts a multi-cell boss once however many of its cells are in the hazard.
+func _unit_over(side: int, test: Callable) -> bool:
+	if _state == null:
+		return false
+	for cell: Vector2i in _state.unit_cells(side):
+		if bool(test.call(cell)):
+			return true
+	return false

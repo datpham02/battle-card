@@ -12,6 +12,7 @@ const _NEIGHBOURS: Array[Vector2i] = [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(
 
 
 ## Plans of [param skill] (EnemySkillsConfig normalized skill). [param ctx]: grid (BoardGrid), player_cell, enemy_cell,
+## optional enemy_cells (P2.2b: the footprint cells; self_cell plans cover them all, markers never land under them),
 ## markers (Array[Vector2i], enemy-half marker cells, newest LAST), cell_ok_fn (Callable(cell) -> bool; invalid = all ok).
 ## Each plan: {cells: Array[Vector2i], anchor: Vector2i, rotation: int}; distinct cell sets, deterministic order.
 static func plans(skill: Dictionary, ctx: Dictionary) -> Array[Dictionary]:
@@ -23,12 +24,13 @@ static func plans(skill: Dictionary, ctx: Dictionary) -> Array[Dictionary]:
 	match anchor:
 		"self_cell":
 			var own: Array[Vector2i] = []
-			own.append(ctx["enemy_cell"] as Vector2i)
+			own.assign(_enemy_cells(ctx))
 			out.append({"cells": own, "anchor": ctx["enemy_cell"], "rotation": 0})
 			return out
 		"enemy_half_empty":
+			var body: Array[Vector2i] = _enemy_cells(ctx)
 			for cell: Vector2i in grid.enemy_cells():
-				if cell == ctx["enemy_cell"] or (ctx.get("markers", []) as Array).has(cell) or not _ok(ctx, cell):
+				if body.has(cell) or (ctx.get("markers", []) as Array).has(cell) or not _ok(ctx, cell):
 					continue
 				var one: Array[Vector2i] = []
 				one.append(cell)
@@ -130,6 +132,16 @@ static func _center_cell(cells: Array[Vector2i], fallback: Vector2i) -> Vector2i
 		if Vector2(c).distance_squared_to(centre) < Vector2(best).distance_squared_to(centre) - 0.0001:
 			best = c
 	return best
+
+
+# P2.2b: every cell the enemy covers (ctx.enemy_cells, the footprint), else just ctx.enemy_cell (a 1-cell enemy).
+static func _enemy_cells(ctx: Dictionary) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if typeof(ctx.get("enemy_cells")) == TYPE_ARRAY and not (ctx["enemy_cells"] as Array).is_empty():
+		out.assign(ctx["enemy_cells"] as Array)
+	else:
+		out.append(ctx["enemy_cell"] as Vector2i)
+	return out
 
 
 static func _ok(ctx: Dictionary, cell: Vector2i) -> bool:

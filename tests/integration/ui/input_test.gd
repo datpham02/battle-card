@@ -218,15 +218,40 @@ func _initialize() -> void:
 	await _key(KEY_3)
 	_check("key 3 on empty slot keeps slot 0", combat.is_placing() and hold.is_selected(0))
 
-	# --- Esc in the card menu returns the piece.
+	# --- Esc in the card menu returns the piece (2026-11-01: tap ghost commits it, Tung phép opens the menu).
 	state.set_enemy_cell(BOSS_CELL)
 	await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
-	if not cut_flow.is_menu_open():
+	if not combat.is_placed():
 		await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
-	_check("tap ghost opened the menu", cut_flow.is_menu_open() and hold.get_piece(0) == null)
+	_check("tap ghost committed the piece (place window, no menu)", combat.is_placed() and not cut_flow.is_menu_open() and hold.get_piece(0) == null)
+	await _click(ScreenLayout.confirm_button_rect(VP).get_center())
+	_check("click on Tung phép opened the menu", cut_flow.is_menu_open() and hold.get_piece(0) == null)
 	await _key(KEY_ESCAPE)
 	_check("Esc closes the menu and returns the piece", not cut_flow.is_menu_open() and _shape(hold, 0) == "l3" and not combat.get_cut_actor().is_swinging())
 	_check("not placing after Esc in menu", not combat.is_placing())
+
+	# --- 2026-11-01 desktop extras: Enter presses Tung phép, key 1..4 picks the card in that place.
+	await _key(KEY_1)
+	await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
+	if not combat.is_placed():
+		await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
+	await _key(KEY_ENTER)
+	_check("Enter presses Tung phép (menu open)", cut_flow.is_menu_open())
+	var picked: int = -1
+	var hand_now: Array[String] = cut_flow.get_hand()
+	for i: int in hand_now.size():
+		if bool(SkillAvailability.check(combat.get_skill_config(), combat.get_skill_cooldowns(), hand_now[i], cut_flow.get_cells().size())["available"]):
+			picked = i
+			break
+	_check("an available card in the hand", picked >= 0, str(hand_now))
+	await _key((KEY_1 + picked) as Key)
+	_check("key %d picks that card (swing started)" % (picked + 1), not cut_flow.is_menu_open() and combat.get_cut_actor().is_swinging() 		and combat.get_cut_actor().get_skill_id() == hand_now[picked], combat.get_cut_actor().get_skill_id())
+	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.01)
+	var l3 := FieldPoint.new()
+	l3.uid = -203
+	l3.piece = lib.make_piece("l3", 0)
+	l3.label = "l3"
+	hold.place(l3, 0)
 
 	# --- Rotten piece: never selectable (tap or key).
 	var rot := FieldPoint.new()

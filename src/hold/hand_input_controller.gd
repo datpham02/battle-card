@@ -3,10 +3,10 @@ extends Node2D
 ## Pointer input on the player's piece bag (Story 024, touch-first).
 ## DRAG (main gesture): press a piece in the bag and move past hold_slots.json tap_threshold_px; the
 ## piece is picked up, the ghost floats drag_lift_px above the finger and snaps to the enemy half;
-## RELEASING with the ghost on the enemy half confirms (the card menu opens), releasing anywhere else
-## puts the piece back. TAP (fallback): tapping a slot selects it (PLACING) and tapping the selected
+## RELEASING with the ghost on the enemy half commits the piece (the place window starts; the card menu opens on
+## Tung phép), releasing anywhere else puts the piece back. TAP (fallback): tapping a slot selects it (PLACING) and tapping the selected
 ## slot again rotates it; tapping an enemy cell / the ghost / the confirm button is CutHudView's job.
-## Story 028: with the card menu open the same drag places the cast's SECOND piece (CombatView joins it).
+## Story 028: in the place window (before Tung phép) the same drag places the cast's SECOND piece (CombatView joins it).
 ## Multi-touch: every pointer is tracked by id (the touch index; -1 for the mouse), and ONLY the
 ## pointer that started the drag moves or releases it, so the left thumb can press the ROTATE button
 ## (another touch index) while the right finger keeps dragging. A real mouse and a real touch both
@@ -38,9 +38,10 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _combat != null and _combat.get_cut_flow() != null and _combat.get_cut_flow().is_menu_open() 			and not _combat.can_join_piece():
-		# Story 028: while the card menu is open the bag stays live for the cast's second piece; with the
-		# cast full (or no room) the bag is ignored as before.
+	if _combat != null and _combat.get_cut_flow() != null and (_combat.get_cut_flow().is_menu_open()
+			or (_combat.is_placed() and not _combat.can_join_piece())):
+		# 2026-11-01: the bag is ignored while the card menu is open; in the place window (pieces placed, Tung phép
+		# not pressed yet) it stays live for the cast's next piece until the cast is full.
 		_reset()
 		return
 	if event is InputEventScreenTouch:

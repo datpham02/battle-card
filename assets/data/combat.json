@@ -29,7 +29,6 @@
 	"frost_burst_damage": 24,
 	"execute_ratio": 0.25,
 	"max_pieces_per_cast": 2,
-	"join_extra_sec": 1.5,
 	"max_cast_cells": 0,
 	"zones": {
 		"seal_sec": 1.2,

@@ -24,6 +24,7 @@ const NAMES: Dictionary = {
 	"caldera": "arena.caldera.name",
 	"twin_isles": "arena.twin_isles.name",
 	"three_isles": "arena.three_isles.name",
+	"boss_hall": "arena.boss_hall.name",  # P2.2b: boss-only 6x4 arena (multi-cell Wardens)
 }
 ## Key shown for a floor whose arena is drawn from a pool (translate with tr()).
 const TEXT_RANDOM: String = "ui.arena.random"
