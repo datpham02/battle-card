@@ -30,7 +30,7 @@ func _check_match(index: int, spec: Dictionary) -> void:
 	var v: CombatView = _view()
 	_check("m%d boss hp" % (index + 1), is_equal_approx(v.get_state().enemy_max_hp, float(spec["boss_max_hp"])))
 	_check("m%d brain set" % (index + 1), v.get_boss().get_brain().get_set_name() == str(spec["brain_set"]), v.get_boss().get_brain().get_set_name())
-	_check("m%d name" % (index + 1), v.get_boss_name() == str(spec["display_name"]))
+	_check("m%d name" % (index + 1), v.get_boss_name() == TranslationServer.translate(str(spec["name_key"])), v.get_boss_name())
 
 
 func _initialize() -> void:

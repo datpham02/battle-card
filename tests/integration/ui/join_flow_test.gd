@@ -154,6 +154,8 @@ func _initialize() -> void:
 	game_flow.set_store_for_test(ProgressStore.memory_store())
 	root.add_child(main)
 	await process_frame
+	# The shipped hero, so the window shows the real sprite (not the character-less placeholder).
+	game_flow.set_character("kiem_si")
 	var rc: RunController = game_flow.enter_test_floor(RunConfig.load_from_file("res://tests/fixtures/fast_run.json"))
 	await process_frame
 	await process_frame

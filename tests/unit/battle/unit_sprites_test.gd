@@ -2,7 +2,7 @@ extends SceneTree
 ## Story 047 Part C: unit sprites of UnitLayer (headless). Pure part: UnitLayer.clip_for (the whole
 ## priority table), unit_ids_for, sprite_dest_rect (feet anchor, odd widths, the mirrored rect),
 ## facing_for. Scene part: the real battle (main.tscn, as battle_canvas_test) twice: the fast_run
-## fixture without a character (ids "" / "intern" -> both placeholders, clip idle, no crash), then
+## fixture without a character and with a sheetless match id (ids "" / "test_no_sheet" -> both placeholders, clip idle, no crash), then
 ## kiem_si vs goblin_scout (the fast_run timings with the first match id swapped) where both sheets
 ## resolve and the clips follow the match: hit for HIT_SEC after damage, step for the step cooldown,
 ## cast_gesture once on swing_started, down / victory when the boss dies, defeat when the player dies.
@@ -17,7 +17,8 @@ const ENEMY: int = CombatState.Side.ENEMY
 const HERO: String = "kiem_si"
 const BOSS: String = "goblin_scout"
 const FIXTURE_RUN: String = "res://tests/fixtures/fast_run.json"
-const FIXTURE_BOSS_ID: String = "intern"
+## A match id with no unit sheet: the placeholder path (the shared fixture now uses real, drawn enemies).
+const FIXTURE_BOSS_ID: String = "test_no_sheet"
 const HIT: float = 5.0
 const OVERKILL: float = 10000.0
 const CAST_SEC: float = 0.5
@@ -147,7 +148,9 @@ func _enter_battle(flow_in: GameFlow, main_in: Node, config: RunConfig, characte
 
 
 func test_battle_without_a_character_uses_placeholders() -> void:
-	var b: Dictionary = await _enter_battle(null, null, RunConfig.load_from_file(FIXTURE_RUN), "")
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE_RUN))
+	(data["matches"][0] as Dictionary)["id"] = FIXTURE_BOSS_ID
+	var b: Dictionary = await _enter_battle(null, null, RunConfig.from_dictionary(data), "")
 	if b.is_empty():
 		return
 	var units: UnitLayer = b["units"]
