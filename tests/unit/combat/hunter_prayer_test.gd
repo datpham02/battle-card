@@ -80,7 +80,7 @@ func _test_hunter_mark_rules() -> void:
 	# Case 1: the boss steps onto a player thorn cell.
 	p.on_boss_thorn_step(boss)
 	_check("hunter_mark: boss on a player thorn -> 1 Ran", st.fragile_stacks(enemy) == 1, str(st.fragile_stacks(enemy)))
-	# Case 2: a seal forms next to the boss (fresh passive: no cooldown running).
+	# Case 2 (quick spec o-rot-thay-tuong 2026-10-31): thorns laid next to the boss (fresh passive: no cooldown).
 	r = _rig("hunter_mark", "tho_san")
 	p = r["passive"]
 	st = r["status"]
@@ -94,18 +94,18 @@ func _test_hunter_mark_rules() -> void:
 		if dist >= 2 and far.x < 0:
 			far = cell
 	_check("rig has a neighbour and a far cell", near.x >= 0 and far.x >= 0)
-	p.on_player_zone_formed(StatusEffects.KIND_SEAL, [far] as Array[Vector2i])
-	_check("hunter_mark: seal NOT next to the boss -> nothing", st.fragile_stacks(enemy) == 0)
-	p.on_player_zone_formed(StatusEffects.KIND_THORNS, [near] as Array[Vector2i])
-	_check("hunter_mark: a THORNS zone next to the boss -> nothing (only seals count)", st.fragile_stacks(enemy) == 0)
-	p.on_player_zone_formed(StatusEffects.KIND_SEAL, [far, near] as Array[Vector2i])
-	_check("hunter_mark: seal with a cell next to the boss -> 1 Ran", st.fragile_stacks(enemy) == 1 and (p as HunterMarkPassive).marks_given() == 1)
-	# The boss standing INSIDE the seal (not adjacent) does not count.
+	p.on_player_zone_formed(StatusEffects.KIND_THORNS, [far] as Array[Vector2i])
+	_check("hunter_mark: thorns NOT next to the boss -> nothing", st.fragile_stacks(enemy) == 0)
+	p.on_player_zone_formed(StatusEffects.KIND_THORNS, [far, near] as Array[Vector2i])
+	_check("hunter_mark: thorns with a cell next to the boss -> 1 Ran", st.fragile_stacks(enemy) == 1 and (p as HunterMarkPassive).marks_given() == 1)
+	# User 2026-11-01: thorns laid ON the boss's own cell mark too (same cooldown as the adjacent case).
 	r = _rig("hunter_mark", "tho_san")
 	p = r["passive"]
 	st = r["status"]
-	p.on_player_zone_formed(StatusEffects.KIND_SEAL, [r["boss"]] as Array[Vector2i])
-	_check("hunter_mark: boss only INSIDE the seal (no neighbour cell) -> nothing", st.fragile_stacks(enemy) == 0)
+	p.on_player_zone_formed(StatusEffects.KIND_THORNS, [r["boss"]] as Array[Vector2i])
+	_check("hunter_mark: thorns laid ON the boss's cell -> 1 Ran", st.fragile_stacks(enemy) == 1 and (p as HunterMarkPassive).marks_given() == 1)
+	p.on_player_zone_formed(StatusEffects.KIND_THORNS, [r["boss"]] as Array[Vector2i])
+	_check("hunter_mark: a second on-cell lay inside the cooldown -> still 1 Ran", st.fragile_stacks(enemy) == 1)
 	# No stack param / no status: safe.
 	var bare: HunterMarkPassive = PassiveRegistry.create("hunter_mark") as HunterMarkPassive
 	bare.setup({}, {})
@@ -126,7 +126,7 @@ func _test_hunter_mark_icd() -> void:
 	p.on_boss_thorn_step(boss)
 	_check("icd: still inside the 3 s window at 1 s", st.fragile_stacks(enemy) == 1)
 	p.tick(1.9)
-	p.on_player_zone_formed(StatusEffects.KIND_SEAL, [r["grid"].enemy_cells()[1]] as Array[Vector2i])
+	p.on_player_zone_formed(StatusEffects.KIND_THORNS, [r["grid"].enemy_cells()[1]] as Array[Vector2i])
 	_check("icd: still inside at 2.9 s (either source shares the cooldown)", st.fragile_stacks(enemy) == 1)
 	p.tick(0.1)
 	p.on_boss_thorn_step(boss)
@@ -212,7 +212,7 @@ func _test_view_wiring_hunter() -> void:
 	# A thorn zone the boss walks onto on the PLAYER half is not a step onto the player's thorns.
 	st.apply_thorns(CombatState.Side.PLAYER, [state.player_cell] as Array[Vector2i], 5.0, 1.0, 0)
 	_check("view: the player's own thorn entry is not counted", int(v.get_match_stats()["boss_thorn_steps"]) == 2)
-	# A seal formed next to the boss through a real card cast.
+	# Thorns laid next to the boss through a real card cast (tran_gai, the Hunter's starter thorn card).
 	passive.tick(10.0)
 	var st_before: int = st.fragile_stacks(enemy)
 	var neighbour: Vector2i = Vector2i(-1, -1)
@@ -225,10 +225,10 @@ func _test_view_wiring_hunter() -> void:
 		if side == CombatState.Side.PLAYER:
 			got[0] = result
 	v.get_arbiter().swing_resolved.connect(cb)
-	v._begin_cut("ket_gioi", [neighbour] as Array[Vector2i])
+	v._begin_cut("tran_gai", [neighbour] as Array[Vector2i])
 	v.get_arbiter().tick(v.get_cut_actor().get_time_left() + 0.01)
 	v.get_arbiter().swing_resolved.disconnect(cb)
-	_check("view: a real ket_gioi cast next to the boss -> hunter_mark Ran", not (got[0].get("zone_cells", []) as Array).is_empty() and st.fragile_stacks(enemy) == st_before + 1, "before %d after %d" % [st_before, st.fragile_stacks(enemy)])
+	_check("view: a real tran_gai cast next to the boss -> hunter_mark Ran", not (got[0].get("zone_cells", []) as Array).is_empty() and st.fragile_stacks(enemy) == st_before + 1, "before %d after %d" % [st_before, st.fragile_stacks(enemy)])
 	_drop(v)
 	# A character without the passive: same events, no mark, stats still count.
 	var v2: CombatView = await _view(_cc.get_character("kiem_si"))

@@ -69,7 +69,7 @@ Khi phân vân: nếu nền tranh mắt với Khối, giảm độ tươi và đ
   | Gỗ và dây | Khung buộc dây |
   | Kính thánh | Chia ô bằng chì |
 
-- **Test:** chuyển ảnh sang đen trắng hoặc giả lập mù màu. Đạt khi phân biệt được ô đỏ, 5 chất liệu Khối, và Tường / Bãi Gai / ô cháy.
+- **Test:** chuyển ảnh sang đen trắng hoặc giả lập mù màu. Đạt khi phân biệt được ô đỏ, 5 chất liệu Khối, và Ô rớt (nứt, hố) / Bãi Gai / ô cháy.
 
 ### Từ One Step From Eden: lấy và không lấy
 
@@ -106,7 +106,7 @@ Góc nhìn đã đối chiếu với ảnh chụp thật (2026-10-28). Các dòn
   - dựng SubViewport;
   - đổi tọa độ chạm sang tọa độ gốc;
   - sửa `src/layout/screen_layout.gd` cho ô snap bội số 2;
-  - neo sprite ở giữa đáy khung, đặt 3 art-px trên mép trước của phiến; vẽ theo hàng (hàng sau trước). Tường xếp chung với đơn vị;
+  - neo sprite ở giữa đáy khung, đặt 3 art-px trên mép trước của phiến; vẽ theo hàng (hàng sau trước). Không còn khối Tường xếp chung với đơn vị (thay bằng Ô rớt từ 2026-10-31);
   - báo đòn nằm **trọn ở lớp sàn, dưới đơn vị** (sửa 2026-10-31; trước đó viền 2 px ở lớp phủ): tô, sọc và viền 2 px + mép Mực đều dưới chân. Không nhãn đếm ngược: ô đậm dần từ lúc địch niệm tới lúc đòn rơi (sọc ≥ 50 % từ đầu, tô 0 → 45 %, viền 30 → 100 %); độ đậm là đồng hồ;
   - lớp phủ trên đơn vị cũng chứa: viền bóng khối và ✓/✗, VFX phép, Khối đang rơi, Khối trên đất và thanh độ tươi (thứ bậc #1–2 không bị đầu đơn vị che). Ô đích đang niệm nằm ở lớp sàn, dưới đơn vị, như phần tô của báo đòn;
   - chạm và thả khối tính theo ô sàn, không theo sprite;
@@ -268,7 +268,9 @@ Giảm thiểu:
 | Cháy | Tia lửa, Tro hồng, Lò than, Lửa rừng, Giàn thiêu | Cột ô vuông bậc thang mọc từ đáy ô | Mọc 2 bậc rồi hạ; ô cháy (màu Cháy, sọc ngang) hiện ngay sau | ≤ 0,35 s |
 | Băng | Đóng Băng (Men băng … Tảng băng), Giá Lạnh (Rùng mình, Bão trắng, Sương bạc) | Mảnh 1–2 px rơi | Đông thành viền vuông quanh ô (Đóng Băng) hoặc dấu cộng giữa ô (Giá Lạnh), tắt | ≤ 0,35 s |
 | Rạn | Nứt chân chim, Đứt gãy | Đường nứt bậc thang 1 px | Lan từ ô đầu đến ô cuối, tắt | ≤ 0,3 s |
-| Dựng | Tường (Rào chắn, Lồng đá, Hàng cọc), Bãi Gai (Bụi rậm, Dây úa, Bẫy chông) | Ô vuông trồi từ mép trước phiến | Trồi lên, nhường chỗ Tường hoặc Bãi Gai (hình ở "Môi trường") | ≤ 0,3 s |
+| Dựng | Bãi Gai (Bụi rậm, Dây úa, Bẫy chông) | Ô vuông trồi từ mép trước phiến | Trồi lên, nhường chỗ Bãi Gai (hình ở "Môi trường") | ≤ 0,3 s |
+
+Lá Tường (Rào chắn, Lồng đá, Hàng cọc) rời bộ lá người chơi từ 2026-10-31; Tường thành **Ô rớt** của boss, là hình sàn chứ không phải VFX lá (xem "Môi trường").
 
 §3 không có lá hồi máu hay khiên nên không có loại đó. Có lá như vậy thì thêm loại thứ 7.
 
@@ -296,13 +298,13 @@ Giảm thiểu:
 - **Lỗ:** mất phiến, lộ đáy vùng (tối, bùn hoặc trời); mép ô bên cạnh lộ ra.
 - **Đảo:** cụm phiến có mép bao quanh. Riêng Không Đảo thêm chân đá thon nhọn bên dưới.
 - **Sân vòng hoặc kim cương:** ô vẫn vuông, chỉ khuyết ô.
-- **Tường và Bãi Gai đối lập ở bốn cặp** (cao/thấp, đặc/thưa, chữ nhật/tam giác, kín/hở):
-  - Tường: khối dựng ~30 px (thấp hơn anh hùng), đặc, chữ nhật, viền kín, gạch chéo; vẽ theo hàng như đơn vị, che nửa dưới đơn vị phía sau.
-  - Bãi Gai: thấp ≤ 6 px, gai tam giác thưa, lộ mặt phiến giữa các gai.
+- **Ô rớt thay Tường** (người dùng chốt 2026-10-31, `design/quick-specs/o-rot-thay-tuong-2026-10-31.md`): không còn khối Tường đứng trên ô.
+  - Ô rớt (chỉ boss): ô **nứt** dần trong 0,8 s (vết nứt lan, đỏ đậm dần như ô báo đòn, không chữ), rồi **vỡ thành hố** (vẽ như Lỗ ở trên) trong lúc hố mở; hết hạn ô **hiện lại từ trắng đậm dần**. Không có khối dựng, không che đơn vị.
+  - Bãi Gai (ASSET-007 v2, 2026-10-31): gai **phủ kín cả ô** — một mảng 16×16 lặp lại trên mặt phiến (lùi vào 1 px), gai thấp 3–5 px trên hai hàng so le cùng thân bụi gai nằm sát đất; "thưa" nghĩa là thưa trong mảng, mặt phiến vẫn lộ giữa các gai. Không còn dải gai ở mép trước.
 - **Ô cháy:** lửa bậc thang bằng ô vuông + **sọc ngang**. Sọc chéo chỉ dành cho báo đòn.
 - **Dung nham:** chỉ trong khe giữa các ô.
 - **Lầy, cát lấp:** hình hữu cơ, thấp.
-- **Ô sắp rơi:** vết nứt + viền nét đứt.
+- **Ô sắp rơi:** vết nứt + viền nét đứt; ô rơi rồi quay lại **hiện từ trắng đậm dần** như Ô rớt.
 - **Nền (nhìn ngang):**
   - mỗi vùng một tấm 800×360 (phủ màn 20:9 khi `expand`), dùng chung cho mọi cỡ sân của vùng; lưới đặt giữa;
   - tối đa 3 lớp: trời, dải đất xa, dải gần sát chân trời. Mảng khối lớn, không viền;
@@ -390,7 +392,7 @@ UI đứng ngoài thang này và giữ trung tính.
 | Rạn | Ngà + vết nứt màu Mực | Vết nứt vắt qua sprite; icon vết nứt |
 | Ô lầy (độc) | #A8C83A trên #4E4A2A | Bọt, ô sẫm, mép phiến chìm |
 | Mạch dung nham | #FFB21F trên nền than | Chỉ trong khe. Sắp phun: khe sáng + nét đứt + chữ "SẮP PHUN" |
-| Tường / Bãi Gai | #6E7A88 / #B89A6A | Khác hình hoàn toàn (Mục 3) |
+| Ô rớt / Bãi Gai | Đỏ Báo Đòn đậm dần khi nứt, hố = đáy tối nhất của vùng (Mục 6.3) / #B89A6A | Khác hình hoàn toàn (Mục 3): ô nứt rồi thành hố / gai tam giác thấp. Màu Tường cũ #6E7A88 bỏ 2026-10-31 |
 | Khối Lạ | Tím Lạ | Viền bao ngoài cả hình + sao |
 | Hồi máu / Giáp | #58D468 / #C8CED6 | Chữ "+8" / biểu tượng khiên |
 
@@ -450,7 +452,7 @@ Khối của địch: #CFC6B4 phẳng, viền Mực.
 | Ô niệm – ô sáng khi kéo (cùng màu khối) | — | — | — | Ô niệm: dấu chất liệu + mép nổi, không ✓/✗. Ô kéo: viền liền/nét đứt + ✓/✗. Chỉ gặp khi kéo khối mới lúc đòn cũ đang niệm |
 | Ô niệm Thợ săn (gỗ) – Bãi Gai | lẫn | lẫn | lẫn | Khung + dây, mép nổi / gai tam giác thưa |
 | Ô niệm Kiếm sĩ (thép) – Giá Lạnh, Đóng Băng | gần | gần | lẫn | Vát cạnh trên ô đất / bông tuyết, vỏ băng trên đơn vị |
-| Ô niệm Kiếm sĩ – Tường | lẫn | lẫn | lẫn | Phẳng trên ô / khối dựng 30 px, gạch chéo |
+| Ô niệm Kiếm sĩ – Tường (bỏ 2026-10-31) | — | — | — | Tường không còn. Ô rớt chỉ nằm trên đất người chơi, ô niệm trên đất địch, nên hai thứ không gặp nhau |
 
 **Lưu ý mù màu**
 - **Cụm cam (Cháy, dung nham, Than lửa) không tách được bằng màu, kể cả với mắt thường.** Chỉ dựa vào hình. Phải kiểm ở vertical slice Hỏa Ngục + Pháp sư.
@@ -506,7 +508,7 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 |---|---|---|
 | Phù thủy rừng | Gầy; mặt nạ mỏ chim có sừng hươu (12 px trên), áo choàng lá rách, gậy cầm sát người, thấp hơn sừng | Lấy: sừng, mỏ, áo lá, tóc ngà. Bỏ: gậy cao quá đầu, hoa nhỏ, lá thò ra > 40 px |
 | Quỷ Khổng Lồ | Đá xám, vai rộng 40, đầu nhỏ 12 px, vương miện + râu ngà, xích gỉ ochre #8A6A40 vắt ngực và cổ tay | Lấy: xích, vương miện, râu, giáp vai. Bỏ: vòng cột đá lơ lửng (tranh Mảnh Gốc) |
-| Chúa Tể Sương | Cao hẹp, áo xanh đêm rũ, cổ lông Ngà, vương miện gai băng, mũ không mặt; gai băng chỉ ở một vai | Lấy: cổ lông, vương miện, mũ trống. Bỏ: băng xanh sáng (va Đóng Băng, khối Sát thủ), khói áo > 40 px |
+| Chúa Tể Băng Giá (Frost Lord; trước 2026-11-01 là Chúa Tể Sương) | Cao hẹp, áo xanh đêm rũ, cổ lông Ngà, vương miện gai băng, mũ không mặt; gai băng chỉ ở một vai | Lấy: cổ lông, vương miện, mũ trống. Bỏ: băng xanh sáng (va Đóng Băng, khối Sát thủ), khói áo > 40 px |
 | Cóc Chúa | Tròn, rộng 40, thấp; 3–4 nấm xám-tím #6A5868 trên đầu, rêu nhỏ giọt; tay sau kéo | Lấy: dáng tròn, nấm, bụng sáng. Bỏ: dây chuyền ô vuông ngà (đọc như Khối), nấm kem to |
 | Nhân Sư Cát | **Ngồi thẳng**; đầu người đội sừng, đai ochre + ngọc #4F8A80, hai cánh phiến đá gập sau vai, đuôi vòng | Lấy: mũ sừng, cánh phiến. Bỏ: dáng nằm ngang (> 70 px), trang sức vàng (Ánh Lưới), gạch lơ lửng |
 | Chúa Quỷ Lửa | Giáp phiến than, hai sừng cong đồng, ngực nứt bằng ochre tối, áo choàng cháy xém | Lấy: sừng, giáp phiến, áo rách. **Bỏ vân dung nham cam sáng khắp thân và mắt cam** (chỉ Khối phát sáng; cam = Cháy/mạch), gai lơ lửng |
@@ -591,12 +593,13 @@ Nguồn: ảnh concept tạm `design/art/reference/07-*-01`, `09-world-map-01`. 
 - **Hai nửa sân khác màu (người dùng chốt 2026-10-31):** phiến và stamp mỗi nửa nhân một sắc màu (`assets/art/regions.json` → `half_tints`; vùng có thể ghi đè trong `region.json`). Nửa người chơi xanh xám lạnh #B8CCE8; nửa địch tím than tối, u ám, đặc trưng phe quái #9A84A4. Không dùng đỏ (ô báo đòn, P3) hay cam (Cháy).
 - **Lỗ:** không vẽ phiến; tô đáy tối nhất của vùng (đất, bùn, mây); mép trước phiến trên kéo xuống 3 px thành vách.
 - **Đảo, sân vòng/kim cương:** mép bao 2–3 px tối hơn 1 tông; ô khuyết giữ ô vuông. Không Đảo thêm chân đá thon bậc thang dưới hàng cuối (code).
-- **Tường / Bãi Gai:** dựng trên phiến thường; Tường 30 px đặc, gạch chéo; Bãi Gai ≤ 6 px, gai thưa.
+- **Ô rớt (thay Tường từ 2026-10-31):** không vẽ khối Tường. Ô nứt dần (vết nứt Mực lan từ giữa ô, đỏ báo đòn đậm dần) → phiến vỡ → hố vẽ như **Lỗ** ở trên → hết hạn ô hiện lại dưới lớp trắng mỏng dần. Mẫu: `prototypes/art-check --hole` / `--seq=hole`, `design/assets/specs/misty-forest-assets.md` ASSET-006 (Superseded).
+- **Bãi Gai (ASSET-007 v2):** dựng trên phiến thường và **phủ cả ô**: mảng `_tile16` 16×16 lặp trên mặt phiến, lùi vào 1 px; gai 3–5 px, thưa trong mảng, lộ mặt phiến giữa các gai (`design/assets/specs/misty-forest-assets.md` ASSET-007 v2).
 - **Ô cháy:** mặt tối thêm 1 bậc + lửa bậc thang + sọc ngang.
 - **Ô lầy:** phiến chìm 2 px, mặt #4E4A2A + bọt #A8C83A ≤ 8 px.
 - **Ô cát lấp:** sóng cát hữu cơ phủ 100 %, mép gợn.
 - **Mạch dung nham (ngoại lệ Hỏa Ngục, người dùng chốt 2026-10-29):** khe 3 px = 1 Mực + 2 px #FFB21F.
-- **Ô sắp rơi:** nứt + viền nét đứt; mọc lại bằng phiến trồi bậc thang từ dưới.
+- **Ô sắp rơi (Không Đảo):** nứt + viền nét đứt → rơi thành hố (vẽ như **Lỗ**) → hết hạn ô **hiện lại dưới lớp trắng mỏng dần**, cùng cách vẽ và cùng thời lượng với Ô rớt (người dùng chốt 2026-11-01; thay cho "mọc lại bằng phiến trồi bậc thang").
 
 ### 6.4 Nền nhìn ngang
 - 800×360, ≤ 3 lớp (trời, xa, gần). **Dải cảnh xa chiếm 20 % chiều cao** (người dùng chốt 2026-10-31; trước đó chân trời 32–47 px ≈ 12 %): sân bắt đầu ở 20 %, nên cảnh xa có 72 art-px và hai lề 80 px mỗi bên. Dưới chân trời tối dần 2–3 bậc.
@@ -784,7 +787,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 | Quái, biến thể | `units/unit_goblin_scout_sheet.png`, `unit_goblin_scout_alt_sheet.png` |
 | Kẻ Gác | `wardens/warden_forest_sheet.png` (48×64) |
 | Phiến | `env/hellfire/env_slab_hellfire_9slice.png` + `env_slab_hellfire_stamps.png` |
-| Tường / Bãi Gai | `env/forest/env_wall_forest.png`, `env_thorn_forest.png` |
+| Bãi Gai | `env/forest/env_thorn_forest.png`. Tường `env_wall_forest.png` **bỏ 2026-10-31**, thay bằng Ô rớt (ASSET-006 Superseded, `design/assets/specs/misty-forest-assets.md`) |
 | Nền | `env/sands/bg_sands_sky.png`, `bg_sands_far.png`, `bg_sands_near.png` |
 | Ô khối | `blocks/block_tiles_16.png`, `block_tiles_5.png` |
 | VFX | `vfx/vfx_slash_sheet.png` (6 loại: `slash, push, burn, ice, crack, build`) |
@@ -807,7 +810,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 | Quái, Tinh Anh | **64×52** cho Goblin Scout v3 (sửa 2026-10-31, mẫu tỉ lệ OSFE người dùng duyệt: cao ~46, khoảng 70 % Kiếm sĩ; chân ở hàng cuối, tâm chân x = 32). Trước đó 32×48 | cao ~46 (quái thường, ≈ 70 % anh hùng); Tinh Anh cao hơn; vật vung nằm trong khung |
 | Kẻ Gác, Người Giữ Tâm Lưới | 48×64; thân ≤ 52×40 (Mục 5) | Mảnh Gốc **không vẽ trong sheet**: code dựng, 2 px/ô |
 | Phiến | 9-slice nguồn 16×16, lề 3 trái-phải-trên, mép trước 2–3 dưới; + 6 stamp (Mục 6.3) | ô thật 38×27 … 64×46 |
-| Tường / Bãi Gai | 40×40 / 40×12, neo giữa đáy | Tường vẽ ~30 px, rộng ≤ 36 |
+| Bãi Gai | v2: mảng `_tile16` 16×16 lặp phủ mặt phiến (lùi 1 px); dải 40×12 neo giữa đáy (v1) chỉ còn cho dải nhặt nếu dùng | Khung Tường 40×40 **bỏ 2026-10-31**, thay bằng Ô rớt (ASSET-006 Superseded) |
 | Nền | 800×360 mỗi lớp (≤ 3: trời, xa, gần); lớp trời có thể ≤ 800×200 | lớp mây trôi: lặp ngang liền mạch (hai quad lệch 800 px) |
 | Ô khối | 16×16 (rơi, túi) và 5×5 (trên đất) | 7 cột: 5 chất liệu, Lạ, địch |
 | VFX | khung 38×27, 3 giá trị xám cố định (sáng / thân / Mực), code tô màu | ô lớn: đặt giữa, không phóng |
@@ -819,7 +822,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 - Khung 32/48 chẵn để tâm trúng pixel; ô cao lẻ (27) nên ô snap bội 2.
 
 ### 8.4 Bảng màu và biến thể
-- **Master** `palette/tessera_master.gpl` + `tessera_master_lut.png` (dải 1×N): **tối đa 64 màu** (Mục 4) cho mọi thứ **đứng trên sân và trong HUD pixel**: đơn vị, Kẻ Gác, phiến + stamp, bệ, Tường/Bãi Gai, Khối, VFX, icon pixel, khung 9-slice. Tập con vùng `tessera_region_<id>.gpl` = màu chung + ≤ 3 màu riêng.
+- **Master** `palette/tessera_master.gpl` + `tessera_master_lut.png` (dải 1×N): **tối đa 64 màu** (Mục 4) cho mọi thứ **đứng trên sân và trong HUD pixel**: đơn vị, Kẻ Gác, phiến + stamp, bệ, Ô rớt/Bãi Gai, Khối, VFX, icon pixel, khung 9-slice. Tập con vùng `tessera_region_<id>.gpl` = màu chung + ≤ 3 màu riêng.
 - **Nền tính riêng** (người dùng chốt 2026-10-31 theo kiểm kê: thế giới slice 1 = 66 màu, riêng nền v2 Rừng Sương 38): mỗi vùng một tấm vẽ, **≤ 40 màu mỗi vùng**, không nằm trong master và không được dùng màu tín hiệu (Đỏ Báo Đòn, Ánh Lưới, màu khối của năm anh hùng, bốn màu trạng thái). Luật Mục 6.4 (S, V, bậc phẳng, dither chỉ ở sương) vẫn áp cho nền. Lý do: nền không chia pixel nào với sprite nên gộp chung một con số không mua được gì, còn ép nền xuống 30 màu làm mất các lớp sương.
 - **HUD vẽ sắc** (Mục 7.4) dùng bảng UI của Mục 4 (Đá Đêm, Sương, Ngà, chữ, tín hiệu), không đếm vào 64; icon HUD 55 px ≤ 24 màu một sheet.
 - **Biến thể quái: xuất sẵn sheet riêng bằng script** (Aseprite/Python) từ bản gốc (người dùng chốt 2026-10-29): đổi 2–3 màu theo bảng, ghép phụ kiện. Chi phí chạy bằng 0, màu chắc chắn trong bảng, ~74 KB mỗi biến thể. Không dùng LUT lúc chạy. Anh hùng không đổi màu.
@@ -848,7 +851,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 | `awaken` | anh hùng | 0,12 s/khung |
 
 - Lớp phủ, không vẽ khung: nháy trúng, Đóng Băng, Cháy, Rạn, ô đích đang niệm, hạt ngà ở tay địch khi `windup`, Mảnh Gốc.
-- **Thứ tự vẽ** (ba Node2D anh em trong SubViewport): `FloorLayer` (ô, tô báo đòn, ô đích, Bản Khắc) → `UnitLayer` (đơn vị và Tường, hàng sau trước, cùng hàng theo x) → `OverlayLayer` (viền 2 px, ✓/✗, VFX, Khối, thanh độ tươi). Không cần Y-sort, z_index hay CanvasLayer. `FloorLayer` và nền chỉ vẽ lại khi đổi trạng thái; lớp mây vẽ lại ~1 lần/giây.
+- **Thứ tự vẽ** (ba Node2D anh em trong SubViewport): `FloorLayer` (ô, tô báo đòn, ô đích, Bản Khắc) → `UnitLayer` (đơn vị, hàng sau trước, cùng hàng theo x; Tường bỏ 2026-10-31) → `OverlayLayer` (viền 2 px, ✓/✗, VFX, Khối, thanh độ tươi). Không cần Y-sort, z_index hay CanvasLayer. `FloorLayer` và nền chỉ vẽ lại khi đổi trạng thái; lớp mây vẽ lại ~1 lần/giây.
 
 ### 8.7 Import và bộ nhớ
 - **Import mọi ảnh art:** Compress = **Lossless** (nén VRAM làm vỡ pixel art), Mipmaps tắt, `fix_alpha_border` bật, Premult Alpha tắt. Lọc đặt NEAREST trên node. Cờ ETC2/ASTC khi export có thể vẫn phải bật (cần kiểm).

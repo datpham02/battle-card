@@ -33,6 +33,20 @@ const HP_GROOVE: Color = Color("15131A")
 const BOSS_HP_FILL: Color = IVORY
 ## The enemy HP red CombatView used before Story 046 (the boss bar is Ivory now; kept for the boss step ring).
 const ENEMY_RED: Color = Color(0.85, 0.2, 0.2)
+## 2026-10-31 (user: "chưa apply hud cho toàn bộ màn"): the whole-game skin. Screen background (every menu screen),
+## card face, and the button styles (UiButtons.Style order: PRIMARY, SECONDARY, DANGER, NEUTRAL) as fill + line.
+const SCREEN_BG: Color = Color("17151D")
+const SCREEN_BAND: Color = Color("1E1B24")
+const CARD_FILL: Color = Color("242030")
+const CARD_LINE: Color = MIST
+const BUTTON_FILLS: Array[Color] = [Color("2F4A36"), Color("2B2735"), Color("4A2A24"), Color("231F2B")]
+const BUTTON_LINES: Array[Color] = [Color("FFD45C"), Color("7D8896"), Color("C7714A"), Color("7D8896")]
+const BUTTON_PRESSED_LIGHTEN: float = 0.15
+const BUTTON_PRESSED_LINE: Color = IVORY
+const BUTTON_DIM_ALPHA: float = 0.4
+## Chamfer of a button / card corner: this share of the shorter side, capped at BUTTON_CUT_MAX px.
+const BUTTON_CUT_RATIO: float = 0.18
+const BUTTON_CUT_MAX: float = 12.0
 
 ## Outline width of HUD text, px.
 const TEXT_OUTLINE_PX: int = 3
@@ -205,6 +219,56 @@ static func text(canvas: CanvasItem, pos: Vector2, content: String, size: int, c
 ## Width in px of [param content] at [param size] in the SemiBold (or Bold) font, without the outline.
 static func text_width(content: String, size: int, bold: bool = false) -> float:
 	return font(bold).get_string_size(content, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x
+
+
+## 2026-10-31: the menu-screen background: a flat SCREEN_BG field with a SCREEN_BAND strip over the top
+## [param band_ratio] of the height (where the screen titles sit).
+static func screen_background(canvas: CanvasItem, rect: Rect2, band_ratio: float = 0.16) -> void:
+	canvas.draw_rect(rect, SCREEN_BG)
+	if band_ratio > 0.0:
+		canvas.draw_rect(Rect2(rect.position, Vector2(rect.size.x, floorf(rect.size.y * band_ratio))), SCREEN_BAND)
+
+
+## 2026-10-31: the chamfer (px) of a button or card of [param rect].
+static func button_cut(rect: Rect2) -> float:
+	return floorf(minf(minf(rect.size.x, rect.size.y) * BUTTON_CUT_RATIO, BUTTON_CUT_MAX))
+
+
+## 2026-10-31: one button in the game skin: a panel cut top-right and bottom-left in the fill / line of [param style]
+## (0 PRIMARY, 1 SECONDARY, 2 DANGER, 3 NEUTRAL; out of range = PRIMARY), lighter with an Ivory line when
+## [param pressed], dimmed when not [param enabled], and [param label] centred in outlined bold text (skipped when
+## empty). [param line_width] <= 0 uses PANEL_LINE_WIDTH (primary buttons draw it one px thicker).
+static func button(canvas: CanvasItem, rect: Rect2, label: String, style: int, pressed: bool, enabled: bool = true, font_size: int = 32, line_width: float = 0.0) -> void:
+	var i: int = style if style >= 0 and style < BUTTON_FILLS.size() else 0
+	var fill: Color = BUTTON_FILLS[i]
+	var line: Color = BUTTON_LINES[i]
+	var width: float = line_width if line_width > 0.0 else PANEL_LINE_WIDTH + (1.0 if i == 0 else 0.0)
+	if enabled and pressed:
+		fill = fill.lightened(BUTTON_PRESSED_LIGHTEN)
+		line = BUTTON_PRESSED_LINE
+	var text_color: Color = TEXT
+	if not enabled:
+		fill.a *= BUTTON_DIM_ALPHA
+		line.a *= BUTTON_DIM_ALPHA
+		text_color.a *= BUTTON_DIM_ALPHA
+	var cut: float = button_cut(rect)
+	panel(canvas, rect, [0.0, cut, 0.0, cut], fill, line, width)
+	if not label.is_empty():
+		var size: int = font_size
+		while size > 10 and text_width(label, size, true) > rect.size.x - cut * 2.0:
+			size -= 1
+		text(canvas, Vector2(rect.position.x, floorf(rect.get_center().y + size * 0.36)), label, size, text_color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true)
+
+
+## 2026-10-31: a card face in the game skin (reward / shop / deck cards, map nodes): CARD_FILL panel cut top-right
+## with a [param line] edge (GRID_LIGHT and 3 px when [param selected]); [param dim] fades it (locked / taken).
+static func card(canvas: CanvasItem, rect: Rect2, line: Color = CARD_LINE, selected: bool = false, dim: bool = false) -> void:
+	var fill: Color = CARD_FILL
+	var edge: Color = GRID_LIGHT if selected else line
+	if dim:
+		fill.a *= BUTTON_DIM_ALPHA
+		edge.a *= BUTTON_DIM_ALPHA
+	panel(canvas, rect, [0.0, button_cut(rect), 0.0, 0.0], fill, edge, 3.0 if selected else PANEL_LINE_WIDTH)
 
 
 ## HP bar (art bible §7.5): outlined groove, the trail up to [param trail_ratio] behind the [param fill]

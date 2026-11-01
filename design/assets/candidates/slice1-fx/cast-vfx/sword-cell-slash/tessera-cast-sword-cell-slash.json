@@ -1,0 +1,157 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-cast-sword-cell-slash 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9423076923076923
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-cast-sword-cell-slash 1.png",
+   "frame": {
+    "x": 74,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9423076923076923
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-cast-sword-cell-slash 2.png",
+   "frame": {
+    "x": 148,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9423076923076923
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-cast-sword-cell-slash 3.png",
+   "frame": {
+    "x": 0,
+    "y": 52,
+    "w": 74,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9423076923076923
+   },
+   "duration": 56
+  },
+  {
+   "filename": "tessera-cast-sword-cell-slash 4.png",
+   "frame": {
+    "x": 74,
+    "y": 52,
+    "w": 74,
+    "h": 52
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 74,
+    "h": 52
+   },
+   "sourceSize": {
+    "w": 74,
+    "h": 52
+   },
+   "pivot": {
+    "x": 0.5,
+    "y": 0.9423076923076923
+   },
+   "duration": 56
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-cast-sword-cell-slash.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 222,
+   "h": 104
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "feet",
+   "x": 37,
+   "y": 49
+  },
+  "frameTags": [
+   {
+    "name": "tessera-cast-sword-cell-slash",
+    "from": 0,
+    "to": 4,
+    "direction": "forward"
+   }
+  ]
+ }
+}

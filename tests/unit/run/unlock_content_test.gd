@@ -1,12 +1,14 @@
 extends SceneTree
-## Story 037 W2: the four locked cards (gai_doc, luoi_san, thanh_thuy with `heal_self`, bang_tam), the three
+## Story 037 W2: the four locked cards (gai_doc, gai_nguyen, thanh_thuy with `heal_self`, bang_tam), the three
 ## locked 5-cell shapes (w5, n5, v5) and the `unlock_by` keys on cards / shapes / relics.
+## gai_nguyen took the `boss_dungeon` slot of the Wall card luoi_san (quick spec 2026-10-31; luoi_san deleted
+## 2026-11-01, ADR-0001 Phase 1).
 ## Run: godot --headless --path . -s res://tests/unit/run/unlock_content_test.gd   (ends with FAILS=N)
 
 const P: int = CombatState.Side.PLAYER
 const E: int = CombatState.Side.ENEMY
 const HP: float = 1000.0
-const NEW_CARDS: Array[String] = ["gai_doc", "luoi_san", "thanh_thuy", "bang_tam"]
+const NEW_CARDS: Array[String] = ["gai_doc", "gai_nguyen", "thanh_thuy", "bang_tam"]
 const NEW_SHAPES: Array[String] = ["w5", "n5", "v5"]
 const WEIGHT_SETS: Array[String] = ["default", "ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"]
 ## Story 039: sky_isles is left out on purpose: its arenas are 2-3 rows tall, so a 5-cell shape that is 4 long (n5) cannot be placed there (such a shape is simply never placed, Story 024).
@@ -51,15 +53,17 @@ func _cells(list: Array) -> Array[Vector2i]:
 func _card_data() -> void:
 	var sc: SkillConfig = SkillConfig.load_from_file()
 	for id: String in NEW_CARDS:
-		ck("%s: loaded, implemented, in card_order" % id, sc.has_skill(id) and bool(sc.get_skill(id)["implemented"]) and sc.card_order.has(id))
+		ck("%s: loaded, implemented, in card_order" % id, sc.has_skill(id) and bool(sc.get_skill(id)["implemented"])
+			and sc.card_order.has(id) and sc.is_player_card(id))
+	ck("the deleted Wall card luoi_san is gone", not sc.has_skill("luoi_san"))
 	var d: Dictionary = sc.get_skill("gai_doc")
 	ck("gai_doc: common thorns 3 cells, 2 dmg/cell, 1 Ran per entry, cd 6",
 		d["rarity"] == "common" and d["effect"] == "thorns" and d["min_cells"] == 3 and is_equal_approx(float(d["damage_per_cell"]), 2.0)
 		and int(d["thorn_fragile_stacks"]) == 1 and is_equal_approx(float(d["cooldown_sec"]), 6.0))
-	d = sc.get_skill("luoi_san")
-	ck("luoi_san: rare seal 2 cells, 2 s, 1 Ran, cd 7",
-		d["rarity"] == "rare" and d["effect"] == "seal" and d["min_cells"] == 2 and is_equal_approx(float(d["seal_sec"]), 2.0)
-		and int(d["fragile_stacks"]) == 1 and is_equal_approx(float(d["cooldown_sec"]), 7.0) and is_equal_approx(float(d["damage_per_cell"]), 0.0))
+	d = sc.get_skill("gai_nguyen")
+	ck("gai_nguyen: rare thorns 4 cells, 0 dmg/cell, 2 Ran per entry, cd 8",
+		d["rarity"] == "rare" and d["effect"] == "thorns" and d["min_cells"] == 4 and is_equal_approx(float(d["damage_per_cell"]), 0.0)
+		and int(d["thorn_fragile_stacks"]) == 2 and is_equal_approx(float(d["cooldown_sec"]), 8.0))
 	d = sc.get_skill("thanh_thuy")
 	ck("thanh_thuy: common frost 3 cells, 1 Han, heal_self 4, cd 6",
 		d["rarity"] == "common" and d["effect"] == "frost" and d["min_cells"] == 3 and int(d["frost_stacks"]) == 1
@@ -69,8 +73,8 @@ func _card_data() -> void:
 		d["rarity"] == "rare" and d["effect"] == "damage" and d["min_cells"] == 4 and is_equal_approx(float(d["damage_per_cell"]), 5.0)
 		and int(d["frost_stacks"]) == 2 and is_equal_approx(float(d["cooldown_sec"]), 6.0))
 	ck("only thanh_thuy heals (heal_self defaults to 0)", is_equal_approx(float(sc.get_skill("kiem_khi")["heal_self"]), 0.0) and is_equal_approx(float(sc.get_skill("bang_tam")["heal_self"]), 0.0))
-	ck("gai_doc and luoi_san are zone cards (kept out of the boss list)", sc.is_zone_card("gai_doc") and sc.is_zone_card("luoi_san")
-		and not sc.boss_card_order().has("gai_doc") and not sc.boss_card_order().has("luoi_san")
+	ck("gai_doc and gai_nguyen are zone cards (kept out of the boss list)", sc.is_zone_card("gai_doc") and sc.is_zone_card("gai_nguyen")
+		and not sc.boss_card_order().has("gai_doc") and not sc.boss_card_order().has("gai_nguyen")
 		and sc.boss_card_order().has("thanh_thuy") and sc.boss_card_order().has("bang_tam"))
 	var rows: Dictionary = _csv_rows()
 	var strings_ok: bool = true
@@ -117,19 +121,19 @@ func _card_behaviour() -> void:
 	var boss_hp: float = st4.enemy_hp
 	CutEffects.apply(st4, st4.grid, E, _cells([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 1)]), "thanh_thuy", cc, sc, _fx())
 	ck("a boss casting thanh_thuy heals nobody", is_equal_approx(st4.enemy_hp, boss_hp) and is_equal_approx(st4.player_hp, 500.0 - 0.0))
-	# luoi_san: seal forms on the boss half; a hit on the boss applies 1 Ran, a miss does not.
+	# gai_nguyen: thorns form on the boss half on a hit (no damage, 2 Ran per entry) and on a miss.
 	var st5: CombatState = _state()
 	var fx5: StatusEffects = _fx()
-	var seal_cells: Array[Vector2i] = _cells([Vector2i(4, 1), Vector2i(4, 0)])
+	var zone_cells: Array[Vector2i] = _cells([Vector2i(4, 1), Vector2i(4, 0), Vector2i(3, 1), Vector2i(3, 0)])
 	var opts: Dictionary = {"zones": {"seal_sec": 1.2, "thorn_sec": 3.0, "thorn_damage": 6.0, "thorn_fragile_stacks": 1}}
-	var hit: Dictionary = CutEffects.apply(st5, st5.grid, P, seal_cells, "luoi_san", cc, sc, fx5, Callable(), 1, Callable(), Callable(), opts)
-	ck("luoi_san hit: seal formed (own 2.0 s) and 1 Ran on the boss, no damage",
-		hit["hit"] and hit["zone_kind"] == "seal" and not (hit["zone_cells"] as Array).is_empty() and fx5.fragile_stacks(E) == 1
-		and is_equal_approx(st5.enemy_hp, HP) and is_equal_approx(fx5.seal_total_sec(E, (hit["zone_cells"] as Array)[0] as Vector2i), 2.0))
+	var hit: Dictionary = CutEffects.apply(st5, st5.grid, P, zone_cells, "gai_nguyen", cc, sc, fx5, Callable(), 1, Callable(), Callable(), opts)
+	ck("gai_nguyen hit: thorns formed (2 Ran per entry), no damage",
+		hit["hit"] and hit["zone_kind"] == "thorns" and not (hit["zone_cells"] as Array).is_empty()
+		and int(fx5.thorns_at(E, Vector2i(3, 0)).get("fragile_stacks", -1)) == 2 and is_equal_approx(st5.enemy_hp, HP))
 	var st6: CombatState = _state()
 	var fx6: StatusEffects = _fx()
-	var mmiss: Dictionary = CutEffects.apply(st6, st6.grid, P, _cells([Vector2i(5, 0), Vector2i(5, 2)]), "luoi_san", cc, sc, fx6, Callable(), 1, Callable(), Callable(), opts)
-	ck("luoi_san miss: seal forms, no Ran", not mmiss["hit"] and mmiss["zone_kind"] == "seal" and fx6.fragile_stacks(E) == 0)
+	var mmiss: Dictionary = CutEffects.apply(st6, st6.grid, P, _cells([Vector2i(5, 0), Vector2i(5, 1), Vector2i(5, 2), Vector2i(3, 2)]), "gai_nguyen", cc, sc, fx6, Callable(), 1, Callable(), Callable(), opts)
+	ck("gai_nguyen miss: thorns still form", not mmiss["hit"] and mmiss["zone_kind"] == "thorns" and fx6.thorn_cells(E).size() == 4)
 	# gai_doc: thorns form (hit or miss), 2 dmg per cell on a hit (3 cells = 6).
 	var st7: CombatState = _state()
 	var fx7: StatusEffects = _fx()
@@ -215,11 +219,11 @@ func _collect_arenas(node: Variant, found: Array) -> void:
 
 func _unlock_by_keys() -> void:
 	var cards: Dictionary = (JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/cards.json")) as Dictionary)["cards"] as Dictionary
-	var want_cards: Dictionary = {"gai_doc": "first_region_boss", "luoi_san": "boss_dungeon", "thanh_thuy": "boss_frost", "bang_tam": "ending_middle"}
+	var want_cards: Dictionary = {"gai_doc": "first_region_boss", "gai_nguyen": "boss_dungeon", "thanh_thuy": "boss_frost", "bang_tam": "ending_middle"}
 	var cards_ok: bool = true
 	for id: String in want_cards.keys():
 		cards_ok = cards_ok and str((cards[id] as Dictionary).get("unlock_by", "")) == str(want_cards[id])
-	ck("the 4 cards carry unlock_by", cards_ok)
+	ck("the 4 cards carry unlock_by (gai_nguyen replaces luoi_san, quick spec 2026-10-31)", cards_ok and not cards.has("luoi_san"))
 	var shapes: Array = (JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/pieces.json")) as Dictionary)["shapes"] as Array
 	var want_shapes: Dictionary = {"w5": "reach_an_dai", "n5": "zone_trap", "v5": "boss_forest"}
 	var found: int = 0

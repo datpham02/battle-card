@@ -22,27 +22,32 @@ extends Node2D
 ## copies — device == InputEvent.DEVICE_ID_EMULATION — are consumed but never act). Placeholder art
 ## drawn in code; all strings are TEXT_* keys through tr().
 
-const BACK_COLOR: Color = Color(0.9, 0.86, 0.78)
-const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const HEADER_COLOR: Color = Color(0.4, 0.35, 0.3)
-const BOX_BACK: Color = Color(1.0, 0.97, 0.9)
-const BOX_OUTLINE: Color = Color(0.6, 0.52, 0.4)
-const BODY_COLOR: Color = Color(0.2, 0.16, 0.12)
-const CHOICE_BACK: Color = Color(0.24, 0.22, 0.26)
-const CHOICE_ARMED_BACK: Color = Color(0.55, 0.12, 0.1)
-const CHOICE_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const CHOICE_ARMED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
-const CHOICE_TEXT: Color = Color(1.0, 0.97, 0.9)
-const COST_COLOR: Color = Color(1.0, 0.42, 0.38)
+## 2026-10-31 (user: "chưa apply hud cho toàn bộ màn"): the dark HudSkin palette; meaning colours (cost, loss,
+## gain) kept but lightened to read on the dark fills.
+const BACK_COLOR: Color = HudSkin.SCREEN_BG
+const TITLE_COLOR: Color = HudSkin.IVORY
+const HEADER_COLOR: Color = HudSkin.TEXT
+const BOX_BACK: Color = HudSkin.CARD_FILL
+const BOX_OUTLINE: Color = HudSkin.MIST
+const BODY_COLOR: Color = HudSkin.TEXT
+const CHOICE_BACK: Color = HudSkin.NIGHT_STONE_LIGHT
+## The armed choice: the DANGER button fill of the skin (HudSkin.BUTTON_FILLS[2]).
+const CHOICE_ARMED_BACK: Color = Color("4A2A24")
+const CHOICE_OUTLINE: Color = HudSkin.MIST
+const CHOICE_ARMED_OUTLINE: Color = HudSkin.GRID_LIGHT
+const CHOICE_TEXT: Color = HudSkin.TEXT
+const COST_COLOR: Color = Color(1.0, 0.55, 0.5)
 const REASON_COLOR: Color = Color(1.0, 0.78, 0.45)
-const GAIN_COLOR: Color = Color(0.15, 0.5, 0.2)
-const LOSS_COLOR: Color = Color(0.75, 0.12, 0.1)
-const NEUTRAL_COLOR: Color = Color(0.3, 0.26, 0.22)
-const MESSAGE_BAD_COLOR: Color = Color(0.8, 0.15, 0.1)
-const LABEL_COLOR: Color = Color(0.45, 0.38, 0.3)
+const GAIN_COLOR: Color = HudSkin.HP_FILL
+const LOSS_COLOR: Color = Color(1.0, 0.55, 0.5)
+const NEUTRAL_COLOR: Color = HudSkin.TEXT_DIM
+const MESSAGE_BAD_COLOR: Color = Color(1.0, 0.55, 0.5)
+const LABEL_COLOR: Color = HudSkin.TEXT_DIM
+## Curse lines: ShopView.CURSE_COLOR lightened by this share to read on the dark box.
+const CURSE_TEXT_LIGHTEN: float = 0.25
 
-const OUTLINE_WIDTH: float = 3.0
-const ARMED_OUTLINE_WIDTH: float = 6.0
+const OUTLINE_WIDTH: float = HudSkin.PANEL_LINE_WIDTH
+const ARMED_OUTLINE_WIDTH: float = 3.0
 const TITLE_FONT_SIZE: int = 44
 const HEADER_FONT_SIZE: int = 24
 const GOLD_FONT_SIZE: int = 30
@@ -113,6 +118,8 @@ var _done_lines: Array[String] = []
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 
 
@@ -304,7 +311,7 @@ func _draw() -> void:
 	if not _is_active():
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, vp), BACK_COLOR)
+	HudSkin.screen_background(self, Rect2(Vector2.ZERO, vp))
 	var view: Dictionary = _flow.get_event_view()
 	_draw_header(vp, tr(str(view.get("title_key", ""))))
 	var result: Dictionary = _result()
@@ -336,24 +343,23 @@ func _draw() -> void:
 
 func _draw_header(vp: Vector2, title: String) -> void:
 	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
-	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.45, TITLE_FONT_SIZE), TITLE_COLOR)
+	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.45, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
 	var right: float = vp.x * (1.0 - ScreenLayout.MARGIN_RATIO)
 	var coin_left: float = ShopView.draw_gold(self, right, band.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
 	var run: RunSession = _flow.get_run()
 	var max_hp: float = float(_flow.get_characters().get_character(run.character_id).get("max_hp", 1.0))
 	var hp: float = max_hp if run.hp < 0.0 else minf(run.hp, max_hp)
 	var text: String = tr(TEXT_HP) % [ceili(hp), ceili(max_hp)]
-	var width: float = ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, HEADER_FONT_SIZE).x
-	draw_string(ThemeDB.fallback_font, Vector2(coin_left - ShopView.COIN_GAP * 4.0 - width, band.get_center().y + HEADER_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, HEADER_FONT_SIZE, HEADER_COLOR)
+	var width: float = HudSkin.text_width(text, HEADER_FONT_SIZE)
+	MenuFont.text(self, Vector2(coin_left - ShopView.COIN_GAP * 4.0 - width, band.get_center().y + HEADER_FONT_SIZE * 0.35), text, HEADER_FONT_SIZE, HEADER_COLOR)
 
 
 # The parchment box: wrapped [param body], then [param lines] ([text, colour] pairs) one per line.
 func _draw_box(rect: Rect2, body: String, lines: Array) -> void:
-	draw_rect(rect, BOX_BACK)
-	draw_rect(rect, BOX_OUTLINE, false, OUTLINE_WIDTH)
+	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], BOX_BACK, BOX_OUTLINE, OUTLINE_WIDTH)
 	var pad: float = rect.size.x * BOX_PAD_RATIO
 	var width: float = rect.size.x - pad * 2.0
-	var font: Font = ThemeDB.fallback_font
+	var font: Font = HudSkin.font()
 	var room: int = maxi(int((rect.size.y - pad * 2.0) / (BODY_FONT_SIZE * LINE_SPACING)) - lines.size(), 1)
 	var max_lines: int = mini(BODY_MAX_LINES, room)
 	var y: float = rect.position.y + pad + BODY_FONT_SIZE
@@ -362,20 +368,20 @@ func _draw_box(rect: Rect2, body: String, lines: Array) -> void:
 	y += font.get_height(BODY_FONT_SIZE) * used + EFFECT_FONT_SIZE * 0.5
 	for line: Variant in lines:
 		var pair: Array = line as Array
-		draw_string(font, Vector2(rect.position.x + pad, y), str(pair[0]), HORIZONTAL_ALIGNMENT_LEFT, width, _fit(str(pair[0]), width, EFFECT_FONT_SIZE), pair[1] as Color)
+		MenuFont.text(self, Vector2(rect.position.x + pad, y), str(pair[0]), _fit(str(pair[0]), width, EFFECT_FONT_SIZE), pair[1] as Color, HORIZONTAL_ALIGNMENT_LEFT, width)
 		y += EFFECT_FONT_SIZE * LINE_SPACING
 
 
 func _draw_choices(vp: Vector2, choices: Array) -> void:
 	var rects: Array[Rect2] = ScreenLayout.event_choice_rects(vp, choices.size())
-	var font: Font = ThemeDB.fallback_font
 	for i: int in rects.size():
 		var rect: Rect2 = rects[i]
 		var choice: Dictionary = choices[i] as Dictionary
 		var enabled: bool = bool(choice.get("enabled", true))
 		var armed: bool = i == _armed
-		var back: Color = CHOICE_ARMED_BACK if armed else (UiButtons.PRESSED_BACK if enabled and UiButtons.is_pressed_at(self, rect) else CHOICE_BACK)
-		var outline: Color = CHOICE_ARMED_OUTLINE if armed else CHOICE_OUTLINE
+		var pressed: bool = enabled and not armed and UiButtons.is_pressed_at(self, rect)
+		var back: Color = CHOICE_ARMED_BACK if armed else (CHOICE_BACK.lightened(HudSkin.BUTTON_PRESSED_LIGHTEN) if pressed else CHOICE_BACK)
+		var outline: Color = CHOICE_ARMED_OUTLINE if armed or pressed else CHOICE_OUTLINE
 		var text: Color = CHOICE_TEXT
 		var cost_color: Color = COST_COLOR
 		var reason_color: Color = REASON_COLOR
@@ -384,8 +390,8 @@ func _draw_choices(vp: Vector2, choices: Array) -> void:
 			outline.a *= UiButtons.DIM_ALPHA
 			text.a *= UiButtons.DIM_ALPHA
 			cost_color.a *= UiButtons.DIM_ALPHA
-		draw_rect(rect, back)
-		draw_rect(rect, outline, false, ARMED_OUTLINE_WIDTH if armed else OUTLINE_WIDTH)
+		var cut: float = HudSkin.button_cut(rect)
+		HudSkin.panel(self, rect, [0.0, cut, 0.0, cut], back, outline, ARMED_OUTLINE_WIDTH if armed or pressed else OUTLINE_WIDTH)
 		var inset: float = rect.size.x * CHOICE_INSET_RATIO
 		var inner: float = rect.size.x - inset * 2.0
 		var label_width: float = inner * CHOICE_LABEL_SHARE
@@ -395,14 +401,14 @@ func _draw_choices(vp: Vector2, choices: Array) -> void:
 			var args: Array = choice.get("reason_args", [])
 			reason = tr(str(choice["reason_key"])) % args if not args.is_empty() else tr(str(choice["reason_key"]))
 		var label_y: float = rect.position.y + rect.size.y * (CHOICE_LABEL_BASELINE if not reason.is_empty() else CHOICE_BASELINE)
-		draw_string(font, Vector2(rect.position.x + inset, label_y), label, HORIZONTAL_ALIGNMENT_LEFT, label_width if not armed else inner, _fit(label, label_width if not armed else inner, CHOICE_FONT_SIZE), text)
+		MenuFont.text(self, Vector2(rect.position.x + inset, label_y), label, _fit(label, label_width if not armed else inner, CHOICE_FONT_SIZE, true), text, HORIZONTAL_ALIGNMENT_LEFT, label_width if not armed else inner, true)
 		if not reason.is_empty():
-			draw_string(font, Vector2(rect.position.x + inset, rect.position.y + rect.size.y * CHOICE_REASON_BASELINE), reason, HORIZONTAL_ALIGNMENT_LEFT, inner, _fit(reason, inner, REASON_FONT_SIZE), reason_color)
+			MenuFont.text(self, Vector2(rect.position.x + inset, rect.position.y + rect.size.y * CHOICE_REASON_BASELINE), reason, _fit(reason, inner, REASON_FONT_SIZE), reason_color, HORIZONTAL_ALIGNMENT_LEFT, inner)
 		var cost_key: String = str(choice.get("cost_key", ""))
 		if not cost_key.is_empty() and not armed:
 			var cost: String = tr(cost_key)
 			var cost_width: float = inner - label_width
-			draw_string(font, Vector2(rect.end.x - inset - cost_width, label_y), cost, HORIZONTAL_ALIGNMENT_RIGHT, cost_width, _fit(cost, cost_width, COST_FONT_SIZE), cost_color)
+			MenuFont.text(self, Vector2(rect.end.x - inset - cost_width, label_y), cost, _fit(cost, cost_width, COST_FONT_SIZE), cost_color, HORIZONTAL_ALIGNMENT_RIGHT, cost_width)
 
 
 # Effects of the result as [text, colour] lines (picks and fights show elsewhere).
@@ -428,7 +434,7 @@ func _effect_lines(result: Dictionary) -> Array:
 				if not relic.is_empty():
 					lines.append([tr(TEXT_RELIC) % _relic_name(relic), GAIN_COLOR])
 			"curse":
-				lines.append([tr(TEXT_CURSE) % tr(str(_flow.get_cards().get_skill(str(effect.get("id", ""))).get("name_key", ""))), ShopView.CURSE_COLOR])
+				lines.append([tr(TEXT_CURSE) % tr(str(_flow.get_cards().get_skill(str(effect.get("id", ""))).get("name_key", ""))), ShopView.CURSE_COLOR.lightened(CURSE_TEXT_LIGHTEN)])
 			"swap_relic":
 				if not str(effect.get("lost", "")).is_empty():
 					lines.append([tr(TEXT_SWAP) % [_relic_name(str(effect["lost"])), _relic_name(str(effect.get("gained", "")))], NEUTRAL_COLOR])
@@ -450,14 +456,13 @@ func _relic_name(id: String) -> String:
 # One offered card of a card_offer pick: rarity border, name, rarity, stats, the effect text.
 func _draw_offer_card(rect: Rect2, id: String) -> void:
 	var skill: Dictionary = _flow.get_cards().resolved(id, 1)
-	draw_rect(rect, BOX_BACK)
 	var pressed: bool = UiButtons.is_pressed_at(self, rect)
-	draw_rect(rect, ShopView.PRESSED_OUTLINE if pressed else RelicStrip.rarity_color(str(skill.get("rarity", "common"))), false, ShopView.RARITY_BORDER)
+	HudSkin.card(self, rect, RelicStrip.rarity_color(str(skill.get("rarity", "common"))), pressed)
 	var inner: float = rect.size.x * 0.88
 	var name: String = tr(str(skill.get("name_key", id)))
-	_text(rect, rect.position.y + rect.size.y * 0.14, name, _fit(name, inner, 30), BODY_COLOR)
+	_text(rect, rect.position.y + rect.size.y * 0.14, name, _fit(name, inner, 30, true), TITLE_COLOR, true)
 	_text(rect, rect.position.y + rect.size.y * 0.25, tr(ShopView.RARITY_KEY_FORMAT % str(skill.get("rarity", "common"))), 20, NEUTRAL_COLOR)
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + rect.size.x * 0.06, rect.position.y + rect.size.y * 0.38), CardText.describe_resolved(skill), HORIZONTAL_ALIGNMENT_CENTER, inner, 20, 6, NEUTRAL_COLOR)
+	draw_multiline_string(HudSkin.font(), Vector2(rect.position.x + rect.size.x * 0.06, rect.position.y + rect.size.y * 0.38), CardText.describe_resolved(skill), HORIZONTAL_ALIGNMENT_CENTER, inner, 20, 6, NEUTRAL_COLOR)
 
 
 func _draw_picker(vp: Vector2, type: String) -> void:
@@ -465,7 +470,7 @@ func _draw_picker(vp: Vector2, type: String) -> void:
 	var cards: SkillConfig = _flow.get_cards()
 	var title: Rect2 = ScreenLayout.reward_subtitle_rect(vp)
 	var title_text: String = tr(TEXT_PICK_UPGRADE if type == PICK_UPGRADE else TEXT_PICK_REMOVE)
-	_text(title, title.get_center().y + LABEL_FONT_SIZE * 0.6, title_text, LABEL_FONT_SIZE + 4, TITLE_COLOR)
+	_text(title, title.get_center().y + LABEL_FONT_SIZE * 0.6, title_text, _fit(title_text, title.size.x, LABEL_FONT_SIZE + 4, true), TITLE_COLOR, true)
 	var rects: Array[Rect2] = _picker.tile_rects(vp, entries.size())
 	for i: int in rects.size():
 		if rects[i].end.x < 0.0 or rects[i].position.x > vp.x:
@@ -490,13 +495,14 @@ func _draw_message(vp: Vector2) -> void:
 	_text(rect, rect.get_center().y + LABEL_FONT_SIZE * 0.35, _message, _fit(_message, rect.size.x, LABEL_FONT_SIZE), MESSAGE_BAD_COLOR)
 
 
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# HudSkin outlined text centred over [param rect] at baseline [param y] (Bold when [param bold]).
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
-func _fit(text: String, width: float, size: int) -> int:
-	var font: Font = ThemeDB.fallback_font
+# Largest size <= [param size] (floor MIN_FIT_FONT_SIZE) at which [param text] fits [param width] in the HudSkin font.
+func _fit(text: String, width: float, size: int, bold: bool = false) -> int:
 	var fitted: int = size
-	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+	while fitted > MIN_FIT_FONT_SIZE and HudSkin.text_width(text, fitted, bold) > width:
 		fitted -= 1
 	return fitted

@@ -12,12 +12,19 @@ extends Node2D
 ## defeat panel of RunHudView. Child of GameFlow (reads it through [member flow_path]); owns no run state.
 ## Input dedup as in PieceDeckView. Every string is a key through tr(); presentation constants only.
 
-const BACK_COLOR: Color = Color(0.08, 0.07, 0.1)
-const TITLE_COLOR: Color = Color(1.0, 0.75, 0.2)
-const LINE_COLOR: Color = Color(0.95, 0.9, 0.78)
-const STATS_LABEL_COLOR: Color = Color(0.75, 0.72, 0.65)
-const STATS_VALUE_COLOR: Color = Color(1.0, 1.0, 1.0)
-const STATS_RULE_COLOR: Color = Color(1.0, 1.0, 1.0, 0.15)
+## 2026-10-31 (user: "chưa apply hud cho toàn bộ màn"): the dark game skin (HudSkin) — screen background, outlined
+## text (Bold gold title), the stats block on a chamfered Night Stone panel, Mist row rules.
+const BACK_COLOR: Color = HudSkin.SCREEN_BG
+const TITLE_COLOR: Color = HudSkin.GRID_LIGHT
+const LINE_COLOR: Color = HudSkin.IVORY
+const STATS_LABEL_COLOR: Color = HudSkin.TEXT_DIM
+const STATS_VALUE_COLOR: Color = HudSkin.TEXT
+const STATS_RULE_COLOR: Color = Color(HudSkin.MIST, 0.35)
+## The stats block's panel: grown this many px around ScreenLayout.ending_stats_rect, chamfer px (top-right and
+## bottom-left), fill alpha.
+const STATS_PANEL_GROW: float = 10.0
+const STATS_PANEL_CUT: float = 12.0
+const STATS_PANEL_ALPHA: float = 0.95
 
 const TITLE_FONT_SIZE: int = 52
 const LINE_FONT_SIZE: int = 28
@@ -62,7 +69,7 @@ const TEXT_STAT_FATES: String = "ui.stats.fates"
 const TEXT_STAT_KIEP: String = "ui.stats.kiep"
 const TEXT_KIEP_UNLOCKED: String = "ui.ending.kiep_unlocked"
 const KIEP_UNLOCK_FONT_SIZE: int = 22
-const KIEP_UNLOCK_COLOR: Color = Color(1.0, 0.85, 0.3)
+const KIEP_UNLOCK_COLOR: Color = HudSkin.GRID_LIGHT
 ## "%d / %d" (spared / executed).
 const TEXT_STAT_FATES_VALUE: String = "ui.stats.fates_value"
 
@@ -79,6 +86,8 @@ var _page: int = 0
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 	z_index = DRAW_Z_INDEX
 
@@ -221,10 +230,9 @@ static func page_count(rect: Rect2, row_count: int, font_size: int) -> int:
 ## Story 035 D: draws the stats block into [param rect]: the path line across the top, then page
 ## [param page] of [param rows] in two columns (label left, value right-aligned) at [param font_size].
 static func draw_stats(canvas: CanvasItem, rect: Rect2, path: String, rows: Array, page: int, font_size: int) -> void:
-	var font: Font = ThemeDB.fallback_font
 	var row_h: float = font_size * STATS_ROW_HEIGHT
 	var baseline: float = row_h * 0.5 + font_size * 0.35
-	canvas.draw_string(font, Vector2(rect.position.x, rect.position.y + baseline), _cut(path, rect.size.x, font_size), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, STATS_VALUE_COLOR)
+	MenuFont.text(canvas, Vector2(rect.position.x, rect.position.y + baseline), _cut(path, rect.size.x, font_size), font_size, STATS_VALUE_COLOR, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
 	var gap: float = rect.size.x * STATS_COLUMN_GAP_RATIO
 	var column_w: float = (rect.size.x - gap) * 0.5
 	var per_column: int = rows_per_column(rect, font_size)
@@ -237,17 +245,16 @@ static func draw_stats(canvas: CanvasItem, rect: Rect2, path: String, rows: Arra
 		var row: Array = rows[i]
 		var label_w: float = column_w * STATS_LABEL_SHARE
 		canvas.draw_line(Vector2(x, y + row_h), Vector2(x + column_w, y + row_h), STATS_RULE_COLOR, STATS_RULE_WIDTH)
-		canvas.draw_string(font, Vector2(x, y + baseline), _cut(str(row[0]), label_w, font_size), HORIZONTAL_ALIGNMENT_LEFT, label_w, font_size, STATS_LABEL_COLOR)
-		canvas.draw_string(font, Vector2(x + label_w, y + baseline), _cut(str(row[1]), column_w - label_w, font_size), HORIZONTAL_ALIGNMENT_RIGHT, column_w - label_w, font_size, STATS_VALUE_COLOR)
+		MenuFont.text(canvas, Vector2(x, y + baseline), _cut(str(row[0]), label_w, font_size), font_size, STATS_LABEL_COLOR, HORIZONTAL_ALIGNMENT_LEFT, label_w)
+		MenuFont.text(canvas, Vector2(x + label_w, y + baseline), _cut(str(row[1]), column_w - label_w, font_size), font_size, STATS_VALUE_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, column_w - label_w)
 
 
 # [param text] cut with an ellipsis to fit [param width] at [param size] (the font never shrinks).
 static func _cut(text: String, width: float, size: int) -> String:
-	var font: Font = ThemeDB.fallback_font
-	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x <= width:
+	if HudSkin.text_width(text, size) <= width:
 		return text
 	var cut: String = text
-	while cut.length() > 1 and font.get_string_size(cut + ELLIPSIS, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > width:
+	while cut.length() > 1 and HudSkin.text_width(cut + ELLIPSIS, size) > width:
 		cut = cut.left(cut.length() - 1)
 	return cut + ELLIPSIS
 
@@ -305,10 +312,10 @@ func _draw() -> void:
 		return
 	var vp: Vector2 = get_viewport_rect().size
 	var ending: Dictionary = _ending()
-	draw_rect(Rect2(Vector2.ZERO, vp), BACK_COLOR)
 	var band: Rect2 = ScreenLayout.ending_title_rect(vp)
+	HudSkin.screen_background(self, Rect2(Vector2.ZERO, vp), clampf(band.end.y / vp.y, 0.0, 1.0) if vp.y > 0.0 else 0.0)
 	var title: String = tr(str(ending.get("title_key", "")))
-	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.9, TITLE_FONT_SIZE), TITLE_COLOR)
+	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.9, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
 	var keys: Array = ending.get("line_keys", [])
 	for i: int in mini(get_visible_lines(), keys.size()):
 		var line_rect: Rect2 = ScreenLayout.ending_line_rect(vp, i)
@@ -320,6 +327,7 @@ func _draw() -> void:
 	var rows: Array = stat_rows(self, stats, _flow)
 	var block: Rect2 = ScreenLayout.ending_stats_rect(vp)
 	var pages: int = page_count(block, rows.size(), STATS_FONT_SIZE)
+	HudSkin.panel(self, block.grow(STATS_PANEL_GROW), [0.0, STATS_PANEL_CUT, 0.0, STATS_PANEL_CUT], Color(HudSkin.NIGHT_STONE, STATS_PANEL_ALPHA), HudSkin.MIST)
 	draw_stats(self, block, path_text(self, stats, _flow), rows, mini(_page, pages - 1), STATS_FONT_SIZE)
 	var leave: Rect2 = ScreenLayout.ending_leave_rect(vp)
 	var leave_text: String = tr(TEXT_LEAVE)
@@ -344,14 +352,15 @@ func _draw_kiep_unlock(vp: Vector2) -> void:
 	_text(gap, gap.get_center().y + KIEP_UNLOCK_FONT_SIZE * 0.35, text, _fit(text, gap.size.x, KIEP_UNLOCK_FONT_SIZE), KIEP_UNLOCK_COLOR)
 
 
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# Centred HudSkin outlined text over [param rect]'s width at baseline [param y] (Bold when [param bold]).
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
-# Largest font size <= [param size] (not below MIN_FIT_FONT_SIZE) at which [param text] fits [param width].
-func _fit(text: String, width: float, size: int) -> int:
-	var font: Font = ThemeDB.fallback_font
+# Largest font size <= [param size] (not below MIN_FIT_FONT_SIZE) at which [param text] fits [param width]
+# in the HudSkin font (Bold when [param bold]).
+func _fit(text: String, width: float, size: int, bold: bool = false) -> int:
 	var fitted: int = size
-	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+	while fitted > MIN_FIT_FONT_SIZE and HudSkin.text_width(text, fitted, bold) > width:
 		fitted -= 1
 	return fitted

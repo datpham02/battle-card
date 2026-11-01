@@ -2,9 +2,14 @@ class_name StatusEffects
 extends RefCounted
 ## Timed board effects: burning cells (area denial, damage per unit standing on them) and
 ## per-side pins (the unit cannot step). Pure logic, time is injected through tick().
-## Story 027 adds per-side zones: seal (cells a unit cannot step INTO) and thorns (cells that cost
-## damage + Ran each time a unit enters them).
-## Implements: Story 010 (Burn and Pin), Story 027 (Seal and Thorns zones).
+## Story 027 adds per-side thorn zones (cells that cost damage + Ran each time a unit enters them). The
+## Story 027 seal zone (Wall) was removed with the Wall cards on 2026-11-01 (ADR-0001 Phase 1 cleanup).
+## Drop tiles (Ô rớt, the boss trait seal_caster): crack warning -> hole -> return, see [method apply_drop].
+## Implements: Story 010 (Burn and Pin), Story 027 (Thorns zones),
+## design/quick-specs/o-rot-thay-tuong-2026-10-31.md (drop tiles, rules 3-6),
+## design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md (one zone effect per cell, locked cells): THIS class is the single
+## rule point: [method unlocked_cells] is the gate every hit resolution calls, [method _claim_zone_cell] the gate every
+## zone placement passes (ignite, apply_thorns, apply_drop).
 
 ## A cell started burning (also emitted when a burning cell is re-ignited).
 signal cell_ignited(cell: Vector2i)
@@ -23,27 +28,44 @@ signal frost_burst(side: int, damage: float)
 ## Story 039 (burn_eater): a burning cell healed the unit of [param side] by [param amount] instead of hurting it.
 signal burn_healed(side: int, amount: float)
 
-## Story 027: a zone formed or was refreshed. [param kind] is "seal" or "thorns", [param side] the side
+## Story 027: a zone formed or was refreshed. [param kind] is "thorns", [param side] the side
 ## whose half holds the cells.
 signal zone_applied(kind: String, side: int, cells: Array[Vector2i])
-## Story 027: a zone cell expired (or was cleared by clear_zones). [param kind] is "seal" or "thorns".
+## Story 027: a zone cell expired (or was cleared by clear_zones). [param kind] is "thorns".
 signal zone_expired(kind: String, side: int, cell: Vector2i)
 ## Story 027: the unit of [param side] stepped into a thorn cell and took [param damage].
 signal thorn_entered(side: int, cell: Vector2i, damage: float)
+## 2026-10-31: a burning cell hurt the unit of [param side] standing on [param cell] by [param damage] (a tick, or the
+## entry toll of [member burn_on_entry]); not emitted when the tick heals a burn_eater boss. The HUD pops the number.
+signal burn_hurt(side: int, cell: Vector2i, damage: float)
+
+## Drop tile (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md): [param cells] of [param side]'s half
+## started cracking (warning phase; still enterable and leavable).
+signal hole_cracked(side: int, cells: Array[Vector2i])
+## Drop tile: the cracking [param cell] fell and is a hole now (cannot be entered). [param victim] is true when the
+## unit of [param side] stood on it and fell (HP to 0 with hole_fall_lethal, else pushed off for hole_fall_damage).
+signal hole_fell(side: int, cell: Vector2i, victim: bool)
+## Drop tile: [param cell] is a normal cell again (the hole closed, the fall was cancelled, or clear_zones ran).
+signal hole_restored(side: int, cell: Vector2i)
 
 ## Zone kind names (also the zone_applied / zone_expired payload).
-const KIND_SEAL: String = "seal"
 const KIND_THORNS: String = "thorns"
+## Drop tile phases (see [method apply_drop]).
+const HOLE_PHASE_CRACK: String = "crack"
+const HOLE_PHASE_HOLE: String = "hole"
+## One-zone-per-cell kinds (quick spec 2026-11-01, [method zone_kinds_at]). Thorns use [constant KIND_THORNS].
+const KIND_BURN: String = "burn"
+const KIND_DROP: String = "drop"
 
 ## Tolerance for float accumulation when comparing against a tick boundary.
 const _EPS: float = 0.000001
 
-# Vector2i -> {left: float, tick_acc: float, tick_sec: float, damage: float, stacks: int}
+# Vector2i -> {left: float, tick_acc: float, tick_sec: float, damage: float, stacks: int, zone: bool}
+# (zone false = fire left by region terrain, a lava vent: not a zone effect, quick spec 2026-11-01)
 var _burning: Dictionary = {}
 # CombatState.Side -> seconds left
 var _pins: Dictionary = {}
-# Story 027 zones: Side -> {Vector2i -> {left, total}} (seal) / {left, total, damage, fragile} (thorns).
-var _seals: Dictionary = {}
+# Story 027 zones: Side -> {Vector2i -> {left, total, damage, fragile}} (thorns).
 var _thorns: Dictionary = {}
 # Side -> the cell the unit stood on at the previous tick (thorn entry detection).
 var _last_cell: Dictionary = {}
@@ -67,6 +89,30 @@ var frost_burst_mult_fn: Callable = Callable()
 ## Story 039 (burn_eater): Callable() -> float, asked at the ONE place a burning cell ticks on the BOSS (ENEMY side):
 ## 0 (or invalid) = the tick hurts as usual, r > 0 = the tick HEALS the boss by damage x r instead (TraitHost.burn_heal_ratio).
 var burn_heal_ratio_fn: Callable = Callable()
+## 2026-10-31 (user: "đi qua vùng có debuff mà ko bị gì"): when true, a unit that steps ONTO a burning cell pays one
+## tick of its damage at once (like a thorn toll) and the tick clock restarts there, so crossing a burning row in
+## less than tick_sec still hurts. Default false (inert for the old tests); CombatConfig sets it from combat.json
+## `burn_on_entry`.
+var burn_on_entry: bool = false
+## Drop tile (2026-10-31 spec rule 5): true = a unit on a cell when it falls drops to HP 0 (combat.json
+## `zones.hole_fall_lethal`); false = it is pushed to an open neighbour and loses [member hole_fall_damage] (the Sky
+## Isles crumble fallback). CombatConfig.configure_status sets both.
+var hole_fall_lethal: bool = true
+## Drop tile, hole_fall_lethal false only: HP lost by a unit that falls (combat.json `hazards.fall_damage`).
+var hole_fall_damage: float = 0.0
+## Drop tile (presentation only): seconds a closed hole keeps its "fades back in from white" timer
+## (combat.json `zones.hole_return_fade_sec`). The cell is steppable as soon as the hole closes.
+var hole_return_fade_sec: float = 0.0
+## Drop tile (spec rule 6): Callable(side: int) -> bool, true while the unit of that side is rooted (cannot step:
+## UnitMover.is_step_locked). Frozen (Dong Bang) is this class's own pin. Invalid = never rooted.
+var step_locked_fn: Callable = Callable()
+## Drop tile, non-lethal fall: Callable(side: int, cell: Vector2i) -> bool, true when the unit of that side cannot
+## land on [param cell] (the mover's blockers). Cracking cells and holes are refused here anyway. Invalid = none.
+var hole_blocked_fn: Callable = Callable()
+# Drop tiles: Side -> {Vector2i -> {phase, left, warn, total, held}} (see apply_drop).
+var _holes: Dictionary = {}
+# Drop tiles: Side -> {Vector2i -> seconds of the return fade left} (presentation only).
+var _hole_fade: Dictionary = {}
 
 
 ## Ignites every cell in [param cells] for [param duration] seconds. A unit standing on a
@@ -75,10 +121,20 @@ var burn_heal_ratio_fn: Callable = Callable()
 ## damage = max(old base, new) + tick_bonus * (stacks - 1), flat per stack (the base never includes a
 ## bonus, so stacks go 2, 3, 4 and not 2, 3, 5). With the default (unconfigured) values
 ## extend = 0, bonus = 0, max stacks = 1 this is the old "reset to the full duration".
-func ignite(cells: Array[Vector2i], duration: float, tick_sec: float, damage_per_tick: float) -> void:
+## Quick spec 2026-11-01 (one zone per cell): a skill's fire is a zone effect, so a locked cell (cracking / hole) is
+## skipped and another zone on the cell (thorns) is removed first ([method _claim_zone_cell]). [param terrain] true =
+## the fire of region terrain (a lava vent): not a zone effect, it keeps its old behaviour (no lock, no replacement).
+## Returns the cells that burn now.
+func ignite(
+	cells: Array[Vector2i], duration: float, tick_sec: float, damage_per_tick: float, terrain: bool = false
+) -> Array[Vector2i]:
+	var lit: Array[Vector2i] = []
 	if duration <= 0.0:
-		return
+		return lit
 	for cell: Vector2i in cells:
+		if not terrain and not _claim_zone_cell(cell, KIND_BURN):
+			continue
+		var zone: bool = not terrain
 		var acc: float = 0.0
 		var left: float = duration
 		var stacks: int = 1
@@ -89,12 +145,15 @@ func ignite(cells: Array[Vector2i], duration: float, tick_sec: float, damage_per
 			left = maxf(float(old["left"]), duration) + _burn_extend_sec
 			stacks = mini(int(old["stacks"]) + 1, _burn_max_stacks)
 			base = maxf(float(old.get("base", old["damage"])), base)
+			zone = zone or bool(old.get("zone", true))
 		var damage: float = base + _burn_tick_bonus * float(stacks - 1)
 		_burning[cell] = {
 			"left": left, "tick_acc": acc, "stacks": stacks, "base": base,
-			"tick_sec": maxf(tick_sec, _EPS), "damage": damage,
+			"tick_sec": maxf(tick_sec, _EPS), "damage": damage, "zone": zone,
 		}
+		lit.append(cell)
 		cell_ignited.emit(cell)
+	return lit
 
 
 ## Story 020: sets the keyword numbers (from combat.json, validated by CombatConfig).
@@ -251,6 +310,7 @@ func tick(delta: float, state: CombatState) -> void:
 						burn_healed.emit(side, gained)
 					else:
 						state.damage(side, float(entry["damage"]))
+						burn_hurt.emit(side, cell, float(entry["damage"]))
 		var left: float = float(entry["left"]) - delta
 		if left <= _EPS:
 			_burning.erase(cell)
@@ -265,8 +325,8 @@ func tick(delta: float, state: CombatState) -> void:
 			pin_ended.emit(side)
 		else:
 			_pins[side] = pin_left
-	_tick_zones(_seals, KIND_SEAL, delta)
 	_tick_zones(_thorns, KIND_THORNS, delta)
+	_tick_holes(delta, state)
 
 
 ## True while [param cell] is burning.
@@ -327,21 +387,10 @@ func clear() -> void:
 	_pins.clear()
 	_fragile.clear()
 	_frost.clear()
-	_seals.clear()
 	_thorns.clear()
+	_holes.clear()
+	_hole_fade.clear()
 	_last_cell.clear()
-
-
-## Story 027 Seal (Ket gioi): the [param cells] (cells of [param side]'s half) cannot be stepped INTO for
-## [param duration] seconds. A unit already standing inside is not moved, but cannot re-enter after
-## leaving. Re-applying a cell refreshes its time. Pure state, no damage.
-func apply_seal(side: int, cells: Array[Vector2i], duration: float) -> void:
-	if duration <= 0.0 or cells.is_empty():
-		return
-	var zone: Dictionary = _zone_of(_seals, side)
-	for cell: Vector2i in cells:
-		zone[cell] = {"left": duration, "total": duration}
-	zone_applied.emit(KIND_SEAL, side, cells)
 
 
 ## Story 027 Thorns (Tran gai): the [param cells] (cells of [param side]'s half) stay steppable, but every
@@ -349,21 +398,25 @@ func apply_seal(side: int, cells: Array[Vector2i], duration: float) -> void:
 ## [param fragile_stacks] Ran, for [param duration] seconds. Re-applying a cell refreshes its time and numbers.
 ## Standing in a thorn cell when it forms does not trigger; leaving and re-entering does. Entries are
 ## detected in [method tick] (the first tick only records where each unit stands).
-func apply_thorns(side: int, cells: Array[Vector2i], duration: float, damage: float, fragile_stacks: int) -> void:
+## Quick spec 2026-11-01: locked cells are skipped and another zone on a cell (a skill's fire) is removed first
+## ([method _claim_zone_cell]). Returns the cells that hold thorns now (zone_applied carries the same list).
+func apply_thorns(
+	side: int, cells: Array[Vector2i], duration: float, damage: float, fragile_stacks: int
+) -> Array[Vector2i]:
+	var placed: Array[Vector2i] = []
 	if duration <= 0.0 or cells.is_empty():
-		return
-	var zone: Dictionary = _zone_of(_thorns, side)
+		return placed
 	for cell: Vector2i in cells:
-		zone[cell] = {
+		if placed.has(cell) or not _claim_zone_cell(cell, KIND_THORNS):
+			continue
+		_zone_of(_thorns, side)[cell] = {
 			"left": duration, "total": duration,
 			"damage": maxf(damage, 0.0), "fragile": maxi(fragile_stacks, 0),
 		}
-	zone_applied.emit(KIND_THORNS, side, cells)
-
-
-## True while [param cell] of [param side]'s half is sealed (cannot be stepped into).
-func is_sealed(side: int, cell: Vector2i) -> bool:
-	return (_seals.get(side, {}) as Dictionary).has(cell)
+		placed.append(cell)
+	if not placed.is_empty():
+		zone_applied.emit(KIND_THORNS, side, placed)
+	return placed
 
 
 ## The thorn on [param cell] of [param side]'s half: {left, damage, fragile_stacks}, {} when none.
@@ -375,19 +428,9 @@ func thorns_at(side: int, cell: Vector2i) -> Dictionary:
 	return {"left": float(entry["left"]), "damage": float(entry["damage"]), "fragile_stacks": int(entry["fragile"])}
 
 
-## Sealed cells of [param side], sorted by x then y.
-func sealed_cells(side: int) -> Array[Vector2i]:
-	return _sorted_cells(_seals.get(side, {}) as Dictionary)
-
-
 ## Thorn cells of [param side], sorted by x then y.
 func thorn_cells(side: int) -> Array[Vector2i]:
 	return _sorted_cells(_thorns.get(side, {}) as Dictionary)
-
-
-## Seconds of seal left on [param cell] (0 when not sealed).
-func seal_left(side: int, cell: Vector2i) -> float:
-	return _zone_value(_seals, side, cell, "left")
 
 
 ## Seconds of thorns left on [param cell] (0 when none).
@@ -395,27 +438,301 @@ func thorn_left(side: int, cell: Vector2i) -> float:
 	return _zone_value(_thorns, side, cell, "left")
 
 
-## Full duration the seal on [param cell] was set with (remaining-time bar denominator; 0 when none).
-func seal_total_sec(side: int, cell: Vector2i) -> float:
-	return _zone_value(_seals, side, cell, "total")
-
-
 ## Full duration the thorns on [param cell] were set with (0 when none).
 func thorn_total_sec(side: int, cell: Vector2i) -> float:
 	return _zone_value(_thorns, side, cell, "total")
 
 
-## Removes the seals and thorns of [param side] (both sides when -1), emitting zone_expired per cell.
+## Removes the thorns of [param side] (both sides when -1), emitting zone_expired per cell.
 func clear_zones(side: int = -1) -> void:
-	for kind: String in [KIND_SEAL, KIND_THORNS]:
-		var book: Dictionary = _seals if kind == KIND_SEAL else _thorns
-		for s: int in book.keys():
-			if side != -1 and s != side:
+	for s: int in _thorns.keys():
+		if side != -1 and s != side:
+			continue
+		var thorn_cells_of: Array[Vector2i] = _sorted_cells(_thorns[s] as Dictionary)
+		_thorns.erase(s)
+		for cell: Vector2i in thorn_cells_of:
+			zone_expired.emit(KIND_THORNS, s, cell)
+	# Drop tiles of that side close too (a dead boss leaves no crack that could still kill the player).
+	for s: int in _holes.keys():
+		if side != -1 and s != side:
+			continue
+		var cells: Array[Vector2i] = _sorted_cells(_holes[s] as Dictionary)
+		_holes.erase(s)
+		for cell: Vector2i in cells:
+			hole_restored.emit(s, cell)
+
+
+# --- one zone per cell, locked cells (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md) ----------------------
+
+## Rule 3: true while [param cell] is LOCKED: it cracks or is an open hole (drop tile) on either half. A locked cell
+## takes nothing from any skill (no damage, no status, no new zone) until it returns.
+func is_locked(cell: Vector2i) -> bool:
+	for side: int in _holes.keys():
+		if (_holes[side] as Dictionary).has(cell):
+			return true
+	return false
+
+
+## THE gate of every hit (rule 3): [param cells] without the locked cells, input order kept. CutEffects.apply resolves
+## a cast over this list only (SkillDelivery.damage_cells gives the mask, this removes the locked cells from it), the
+## boss traits that hit cells go through [method BossTrait.hittable_cells], and the enemy warnings are drawn over the
+## same list (rule 4: a warning shows exactly the cells that will be hit).
+func unlocked_cells(cells: Array) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in cells:
+		if not is_locked(cell):
+			out.append(cell)
+	return out
+
+
+## Rule 1: the zone effect on [param cell] (either half): "" none, [constant KIND_BURN] (a skill's fire; a lava vent's
+## terrain fire does not count), [constant KIND_THORNS] or [constant KIND_DROP] (cracking or hole).
+func zone_kind_at(cell: Vector2i) -> String:
+	var kinds: Array[String] = zone_kinds_at(cell)
+	return kinds[0] if not kinds.is_empty() else ""
+
+
+## Every zone effect on [param cell]; rule 1 keeps this at most one long (tests assert it).
+func zone_kinds_at(cell: Vector2i) -> Array[String]:
+	var out: Array[String] = []
+	if _burning.has(cell) and bool((_burning[cell] as Dictionary).get("zone", true)):
+		out.append(KIND_BURN)
+	for side: int in _thorns.keys():
+		if (_thorns[side] as Dictionary).has(cell):
+			out.append(KIND_THORNS)
+	if is_locked(cell):
+		out.append(KIND_DROP)
+	return out
+
+
+# THE placement gate (rules 1-3, 5): may a zone of [param kind] go on [param cell]? A locked cell refuses every zone.
+# Otherwise a zone of another kind is removed at once (cell_burned_out / zone_expired, so the HUD drops it) and true is
+# returned; the caller then places its zone with its full duration (same kind = the caller's own refresh rule).
+func _claim_zone_cell(cell: Vector2i, kind: String) -> bool:
+	if is_locked(cell):
+		return false
+	if kind != KIND_BURN and _burning.has(cell) and bool((_burning[cell] as Dictionary).get("zone", true)):
+		_burning.erase(cell)
+		cell_burned_out.emit(cell)
+	if kind != KIND_THORNS:
+		for side: int in _thorns.keys():
+			var zone: Dictionary = _thorns[side] as Dictionary
+			if not zone.has(cell):
 				continue
-			var cells: Array[Vector2i] = _sorted_cells(book[s] as Dictionary)
-			book.erase(s)
-			for cell: Vector2i in cells:
-				zone_expired.emit(kind, s, cell)
+			zone.erase(cell)
+			if zone.is_empty():
+				_thorns.erase(side)
+			zone_expired.emit(KIND_THORNS, side, cell)
+	return true
+
+
+# --- drop tiles (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md) ---------------------------------------
+
+## Drop tile (spec rules 3-4): [param cells] of [param side]'s half crack for [param warn_sec] (combat.json
+## `zones.hole_warn_sec`; still enterable and leavable), then fall and stay a hole for [param hole_sec]
+## (`zones.seal_sec`; cannot be entered), then return. Cells already cracking or open (locked) are skipped; another
+## zone on a chosen cell (thorns, a skill's fire) is replaced by the crack (quick spec 2026-11-01 rule 5, through
+## [method _claim_zone_cell]). The fairness rules are NOT checked here: callers go through [method ZoneRules.cast_drop],
+## the single drop rule point. Returns the cells that started cracking.
+func apply_drop(side: int, cells: Array[Vector2i], warn_sec: float, hole_sec: float) -> Array[Vector2i]:
+	var started: Array[Vector2i] = []
+	if hole_sec <= 0.0:
+		return started
+	var book: Dictionary = _zone_of(_holes, side)
+	for cell: Vector2i in cells:
+		if started.has(cell) or not _claim_zone_cell(cell, KIND_DROP):
+			continue
+		book[cell] = {"phase": HOLE_PHASE_CRACK, "left": maxf(warn_sec, 0.0), "warn": maxf(warn_sec, 0.0),
+			"total": hole_sec, "held": false}
+		started.append(cell)
+	if book.is_empty():
+		_holes.erase(side)
+	if not started.is_empty():
+		hole_cracked.emit(side, started)
+	return started
+
+
+## True while [param cell] of [param side] cracks (warning phase: enterable).
+func is_cracking(side: int, cell: Vector2i) -> bool:
+	return _hole_phase(side, cell) == HOLE_PHASE_CRACK
+
+
+## True while [param cell] of [param side] is an open hole (cannot be entered).
+func is_hole(side: int, cell: Vector2i) -> bool:
+	return _hole_phase(side, cell) == HOLE_PHASE_HOLE
+
+
+## Cracking cells of [param side], sorted by x then y.
+func crack_cells(side: int) -> Array[Vector2i]:
+	return _hole_cells_in(side, HOLE_PHASE_CRACK)
+
+
+## Open holes of [param side], sorted by x then y.
+func hole_cells(side: int) -> Array[Vector2i]:
+	return _hole_cells_in(side, HOLE_PHASE_HOLE)
+
+
+## Seconds of crack warning left on [param cell] (0 when it does not crack, or when its fall is held).
+func crack_left(side: int, cell: Vector2i) -> float:
+	return maxf(_zone_value(_holes, side, cell, "left"), 0.0) if is_cracking(side, cell) else 0.0
+
+
+## 0..1 how far the crack warning of [param cell] has run (1 = due / held); 0 when it does not crack.
+func crack_progress(side: int, cell: Vector2i) -> float:
+	if not is_cracking(side, cell):
+		return 0.0
+	var warn: float = _zone_value(_holes, side, cell, "warn")
+	if warn <= 0.0:
+		return 1.0
+	return clampf(1.0 - crack_left(side, cell) / warn, 0.0, 1.0)
+
+
+## True while the crack under a Frozen or rooted unit is held (spec rule 6: it keeps cracking and does not fall until
+## the unit leaves the cell).
+func is_crack_held(side: int, cell: Vector2i) -> bool:
+	return is_cracking(side, cell) and bool((_holes[side][cell] as Dictionary)["held"])
+
+
+## Seconds the hole on [param cell] stays open (0 when it is not a hole).
+func hole_left(side: int, cell: Vector2i) -> float:
+	return maxf(_zone_value(_holes, side, cell, "left"), 0.0) if is_hole(side, cell) else 0.0
+
+
+## Full seconds the hole on [param cell] was set with (cracking or open; 0 when neither).
+func hole_total_sec(side: int, cell: Vector2i) -> float:
+	return _zone_value(_holes, side, cell, "total")
+
+
+## Cells of [param side] that closed less than hole_return_fade_sec ago (presentation: they fade in from white).
+func returning_cells(side: int) -> Array[Vector2i]:
+	return _sorted_cells(_hole_fade.get(side, {}) as Dictionary)
+
+
+## 1 = the cell has just come back (full white), 0 = the fade is over. 0 for a cell that is not returning.
+func hole_return_fraction(side: int, cell: Vector2i) -> float:
+	var fades: Dictionary = _hole_fade.get(side, {}) as Dictionary
+	if not fades.has(cell) or hole_return_fade_sec <= 0.0:
+		return 0.0
+	return clampf(float(fades[cell]) / hole_return_fade_sec, 0.0, 1.0)
+
+
+func _hole_phase(side: int, cell: Vector2i) -> String:
+	var book: Dictionary = _holes.get(side, {}) as Dictionary
+	if not book.has(cell):
+		return ""
+	return str((book[cell] as Dictionary)["phase"])
+
+
+func _hole_cells_in(side: int, phase: String) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in _sorted_cells(_holes.get(side, {}) as Dictionary):
+		if _hole_phase(side, cell) == phase:
+			out.append(cell)
+	return out
+
+
+# True when the unit of [param side] cannot step at all: Frozen (pinned) or rooted (step_locked_fn).
+func _unit_stuck(side: int) -> bool:
+	return is_pinned(side) or (step_locked_fn.is_valid() and bool(step_locked_fn.call(side)))
+
+
+func _is_dead(side: int, state: CombatState) -> bool:
+	return state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+
+
+# Drop tiles: runs the crack clocks (a crack under a Frozen / rooted unit is held, spec rule 6), turns due cracks into
+# holes (the unit standing there falls, rule 5), closes holes and runs the return fades. Called by tick() only, so the
+# clock runs on the match's scaled time: Focus (time scale 0) stops it.
+func _tick_holes(delta: float, state: CombatState) -> void:
+	for side: int in _hole_fade.keys():
+		var fades: Dictionary = _hole_fade[side] as Dictionary
+		for cell: Vector2i in _sorted_cells(fades):
+			var left: float = float(fades[cell]) - delta
+			if left <= _EPS:
+				fades.erase(cell)
+			else:
+				fades[cell] = left
+		if fades.is_empty():
+			_hole_fade.erase(side)
+	for side: int in _holes.keys():
+		var book: Dictionary = _holes[side] as Dictionary
+		var unit_cell: Vector2i = state.cell_of(side)
+		var alive: bool = not _is_dead(side, state)
+		for cell: Vector2i in _sorted_cells(book):
+			if not book.has(cell):
+				continue
+			var entry: Dictionary = book[cell] as Dictionary
+			if str(entry["phase"]) == HOLE_PHASE_CRACK:
+				var on_cell: bool = alive and unit_cell == cell
+				# Held while the unit stands here and was Frozen / rooted at some point since it stepped on; leaving clears it.
+				entry["held"] = on_cell and (bool(entry["held"]) or _unit_stuck(side))
+				entry["left"] = float(entry["left"]) - delta
+				if float(entry["left"]) > _EPS:
+					continue
+				if bool(entry["held"]):
+					entry["left"] = 0.0
+					continue
+				_fall_hole(side, cell, -float(entry["left"]), state)
+			else:
+				entry["left"] = float(entry["left"]) - delta
+				if float(entry["left"]) <= _EPS:
+					book.erase(cell)
+					_start_return_fade(side, cell)
+					hole_restored.emit(side, cell)
+		if book.is_empty():
+			_holes.erase(side)
+
+
+# The crack of [param cell] ran out: it becomes a hole for its total minus the overshoot [param carry]. A unit standing
+# there falls: HP 0 (hole_fall_lethal), else it is pushed to an open neighbour and loses hole_fall_damage; with no
+# landing cell the non-lethal fall is cancelled (the cell returns at once), as a Sky Isles crumble does.
+func _fall_hole(side: int, cell: Vector2i, carry: float, state: CombatState) -> void:
+	var book: Dictionary = _holes[side] as Dictionary
+	var entry: Dictionary = book[cell] as Dictionary
+	var victim: bool = not _is_dead(side, state) and state.cell_of(side) == cell
+	if victim and not hole_fall_lethal:
+		var target: Vector2i = _landing_cell(side, cell, state.grid)
+		if target == BoardGrid.NO_CELL:
+			book.erase(cell)
+			hole_restored.emit(side, cell)
+			return
+		if side == CombatState.Side.PLAYER:
+			state.set_player_cell(target)
+		else:
+			state.set_enemy_cell(target)
+		_last_cell[side] = target
+	entry["phase"] = HOLE_PHASE_HOLE
+	entry["held"] = false
+	entry["left"] = maxf(float(entry["total"]) - carry, _EPS)
+	if victim:
+		if hole_fall_lethal:
+			var hp: float = state.player_hp if side == CombatState.Side.PLAYER else state.enemy_hp
+			state.damage(side, hp)
+		else:
+			state.damage(side, hole_fall_damage)
+	hole_fell.emit(side, cell, victim)
+
+
+# Non-lethal fall: the 4-neighbour of [param from] on the same half the unit lands on: not cracking, not a hole, not
+# refused by hole_blocked_fn; ties broken by x then y. NO_CELL when none.
+func _landing_cell(side: int, from: Vector2i, grid: BoardGrid) -> Vector2i:
+	var best: Vector2i = BoardGrid.NO_CELL
+	for dir: Vector2i in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
+		var cell: Vector2i = from + dir
+		var on_half: bool = grid.is_player_cell(cell) if side == CombatState.Side.PLAYER else grid.is_enemy_cell(cell)
+		if not on_half or _hole_phase(side, cell) != "":
+			continue
+		if hole_blocked_fn.is_valid() and bool(hole_blocked_fn.call(side, cell)):
+			continue
+		if best == BoardGrid.NO_CELL or cell.x < best.x or (cell.x == best.x and cell.y < best.y):
+			best = cell
+	return best
+
+
+func _start_return_fade(side: int, cell: Vector2i) -> void:
+	if hole_return_fade_sec <= 0.0:
+		return
+	_zone_of(_hole_fade, side)[cell] = hole_return_fade_sec
 
 
 # Zone dictionary of [param side] inside [param book], created on demand.
@@ -463,7 +780,8 @@ func _burn_heal_ratio(side: int) -> float:
 	return maxf(float(burn_heal_ratio_fn.call()), 0.0)
 
 
-# A unit that CHANGED cell since the last tick and now stands on a thorn cell pays the toll once.
+# A unit that CHANGED cell since the last tick and now stands on a thorn cell pays the toll once; with
+# [member burn_on_entry], one that stepped onto a burning cell pays one burn tick at once (2026-10-31).
 func _check_thorn_entries(state: CombatState) -> void:
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
 		var cell: Vector2i = state.cell_of(side)
@@ -472,6 +790,7 @@ func _check_thorn_entries(state: CombatState) -> void:
 		_last_cell[side] = cell
 		if not had or last == cell:
 			continue
+		_burn_entry(side, cell, state)
 		var thorn: Dictionary = thorns_at(side, cell)
 		if thorn.is_empty():
 			continue
@@ -482,6 +801,26 @@ func _check_thorn_entries(state: CombatState) -> void:
 		state.damage(side, damage)
 		apply_fragile(side, int(thorn["fragile_stacks"]))
 		thorn_entered.emit(side, cell, damage)
+
+
+# 2026-10-31: the entry toll of a burning [param cell] for the unit of [param side] that just stepped onto it: one tick
+# of the cell's damage now (healing a burn_eater boss instead, as a tick does) and the cell's tick clock restarted, so
+# the next tick lands a full tick_sec later.
+func _burn_entry(side: int, cell: Vector2i, state: CombatState) -> void:
+	if not burn_on_entry or not _burning.has(cell):
+		return
+	var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+	if dead:
+		return
+	var entry: Dictionary = _burning[cell] as Dictionary
+	entry["tick_acc"] = 0.0
+	var damage: float = float(entry["damage"])
+	var ratio: float = _burn_heal_ratio(side)
+	if ratio > 0.0:
+		burn_healed.emit(side, state.heal_enemy(damage * ratio))
+		return
+	state.damage(side, damage)
+	burn_hurt.emit(side, cell, damage)
 
 
 # Sides of the living units standing on [param cell].

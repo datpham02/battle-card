@@ -168,6 +168,14 @@ func get_context() -> Dictionary:
 	return _ctx
 
 
+## Quick spec 2026-11-01 rule 3 (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md): [param cells] a trait's hit or
+## warning may cover, without the locked cells (cracking / hole) through StatusEffects.unlocked_cells, the single rule
+## point. No `status` in the context = unchanged.
+func hittable_cells(cells: Array[Vector2i]) -> Array[Vector2i]:
+	var status: StatusEffects = _ctx.get("status") as StatusEffects
+	return cells.duplicate() if status == null else status.unlocked_cells(cells)
+
+
 ## The params given at setup (a deep copy; empty after teardown).
 func get_params() -> Dictionary:
 	return _params

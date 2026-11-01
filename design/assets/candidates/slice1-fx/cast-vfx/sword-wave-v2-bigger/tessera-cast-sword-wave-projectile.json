@@ -1,0 +1,131 @@
+{
+ "frames": [
+  {
+   "filename": "tessera-cast-sword-wave-projectile 0.png",
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 48
+   },
+   "pivot": {
+    "x": 0.74,
+    "y": 0.7083333333333334
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-cast-sword-wave-projectile 1.png",
+   "frame": {
+    "x": 50,
+    "y": 0,
+    "w": 50,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 48
+   },
+   "pivot": {
+    "x": 0.74,
+    "y": 0.7083333333333334
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-cast-sword-wave-projectile 2.png",
+   "frame": {
+    "x": 0,
+    "y": 48,
+    "w": 50,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 48
+   },
+   "pivot": {
+    "x": 0.74,
+    "y": 0.7083333333333334
+   },
+   "duration": 83
+  },
+  {
+   "filename": "tessera-cast-sword-wave-projectile 3.png",
+   "frame": {
+    "x": 50,
+    "y": 48,
+    "w": 50,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 50,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 50,
+    "h": 48
+   },
+   "pivot": {
+    "x": 0.74,
+    "y": 0.7083333333333334
+   },
+   "duration": 83
+  }
+ ],
+ "meta": {
+  "app": "PixelLab VFX Creator",
+  "image": "tessera-cast-sword-wave-projectile.png",
+  "format": "RGBA8888",
+  "size": {
+   "w": 100,
+   "h": 96
+  },
+  "scale": "1",
+  "anchor": {
+   "kind": "origin",
+   "x": 37,
+   "y": 34
+  },
+  "frameTags": [
+   {
+    "name": "tessera-cast-sword-wave-projectile",
+    "from": 0,
+    "to": 3,
+    "direction": "forward"
+   }
+  ]
+ }
+}

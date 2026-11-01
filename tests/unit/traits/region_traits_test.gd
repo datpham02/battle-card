@@ -114,18 +114,21 @@ func _test_spore_burst_icd() -> void:
 	t.teardown()
 
 
-# Boss steps (3,1)->(3,0)->(3,1) with hop_every 2; (4,1) sealed: the only hop is over the seal to (5,1).
+# Boss steps (3,1)->(3,0)->(3,1) with hop_every 2; (4,1) is an open drop-tile hole: the only hop is over it to (5,1).
 func _test_hop_over_seal() -> void:
 	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(3, 1))
 	var t: HopSkipTrait = _make("hop_skip", w, {"hop_every": 2, "hop_warn_sec": 0.4}) as HopSkipTrait
 	var state: CombatState = w["state"]
-	(w["status"] as StatusEffects).apply_seal(CombatState.Side.ENEMY, [Vector2i(4, 1)] as Array[Vector2i], 30.0)
+	var hop_status: StatusEffects = w["status"]
+	hop_status.apply_drop(CombatState.Side.ENEMY, [Vector2i(4, 1)] as Array[Vector2i], 0.0, 30.0)
+	hop_status.tick(STEP, state)
+	_check("hop: (4,1) is an open hole", hop_status.is_hole(CombatState.Side.ENEMY, Vector2i(4, 1)))
 	state.set_enemy_cell(Vector2i(3, 0))
 	t.on_tick(STEP)
 	_check("hop: no hop before hop_every steps", t.get_hop_target() == Vector2i(-1, -1))
 	state.set_enemy_cell(Vector2i(3, 1))
 	t.on_tick(STEP)
-	_check("hop: shadow on (5,1) over the seal", t.get_hop_target() == Vector2i(5, 1), str(t.get_hop_target()))
+	_check("hop: shadow on (5,1) over the hole", t.get_hop_target() == Vector2i(5, 1), str(t.get_hop_target()))
 	_check("hop: warn time = hop_warn_sec", absf(t.get_hop_warn_left() - 0.4) < EPS, str(t.get_hop_warn_left()))
 	var mover: UnitMover = (w["boss"] as BossController).get_mover()
 	_check("hop: boss steps locked during the shadow", not mover.try_step(Vector2i(0, -1)))
@@ -192,8 +195,8 @@ func _test_burrow_cadence_and_surface() -> void:
 	t.teardown()
 
 
-# The real damage path: TraitHost wires SwingArbiter.enemy_untargetable_fn; a long_an (seal + damage) cast over the
-# burrowed boss's row misses it but its seal forms; after surfacing a slash on its cell hits.
+# The real damage path: TraitHost wires SwingArbiter.enemy_untargetable_fn; a gai_doc (thorns + damage) cast over the
+# burrowed boss's row misses it but its thorns form; after surfacing a slash on its cell hits.
 func _test_burrow_untargetable_cast_misses_zone_lands() -> void:
 	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
 	var state: CombatState = w["state"]
@@ -211,11 +214,11 @@ func _test_burrow_untargetable_cast_misses_zone_lands() -> void:
 	_check("untargetable: host reports the burrow", host.is_boss_untargetable())
 	var hp_before: float = state.enemy_hp
 	var row: Array[Vector2i] = [Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1)]
-	player_actor.begin_swing(row, "long_an", true, 1, 0.2)
+	player_actor.begin_swing(row, "gai_doc", true, 1, 0.2)
 	arbiter.tick(0.3)
 	_check("untargetable: landing cast misses (no damage)", absf(state.enemy_hp - hp_before) < EPS, str(state.enemy_hp))
-	_check("untargetable: its seal still forms", not status.sealed_cells(CombatState.Side.ENEMY).is_empty(),
-		str(status.sealed_cells(CombatState.Side.ENEMY)))
+	_check("untargetable: its thorns still form", not status.thorn_cells(CombatState.Side.ENEMY).is_empty(),
+		str(status.thorn_cells(CombatState.Side.ENEMY)))
 	for i: int in 15:
 		host.on_tick(STEP)
 	_check("untargetable: surfaced", not host.is_boss_untargetable())
@@ -397,19 +400,22 @@ func _test_vent_surge_timing() -> void:
 	inert.teardown()
 
 
-# All four neighbours forbidden (seal, sand): every gust is cancelled and the player stays.
+# All four neighbours forbidden (drop-tile hole, sand): every gust is cancelled and the player stays.
 func _test_gust_cancels_into_forbidden_cells() -> void:
 	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
 	var state: CombatState = w["state"]
 	var hz: TileHazards = w["hazards"]
 	var status: StatusEffects = w["status"]
 	var t: GustTrait = _make("gust", w, {"interval_sec": 6.0, "warn_sec": 0.6}) as GustTrait
-	var sealed: Array[Vector2i] = [Vector2i(1, 0), Vector2i(1, 2)]
-	status.apply_seal(CombatState.Side.PLAYER, sealed, 60.0)
+	var holes: Array[Vector2i] = [Vector2i(1, 0), Vector2i(1, 2)]
+	status.apply_drop(CombatState.Side.PLAYER, holes, 0.0, 60.0)
+	status.tick(STEP, state)
+	_check("gust: (1,0) and (1,2) are open holes", status.is_hole(CombatState.Side.PLAYER, Vector2i(1, 0)) and status.is_hole(CombatState.Side.PLAYER, Vector2i(1, 2)),
+		str(status.hole_cells(CombatState.Side.PLAYER)))
 	var sand: Array[Vector2i] = [Vector2i(0, 1), Vector2i(2, 1)]
 	hz.add_sand(CombatState.Side.PLAYER, sand, 60.0, 0.0)
 	hz.tick(STEP, state)
-	_check("gust: sealed and sand cells are no push targets", not t.can_push_to(Vector2i(1, 0)) and not t.can_push_to(Vector2i(0, 1))
+	_check("gust: hole and sand cells are no push targets", not t.can_push_to(Vector2i(1, 0)) and not t.can_push_to(Vector2i(0, 1))
 		and not t.can_push_to(Vector2i(2, 1)) and not t.can_push_to(Vector2i(1, 2)))
 	_check("gust: outside the half is refused, a free cell is allowed", not t.can_push_to(Vector2i(3, 1))
 		and not t.can_push_to(Vector2i(-1, 1)) and t.can_push_to(Vector2i(0, 0)))

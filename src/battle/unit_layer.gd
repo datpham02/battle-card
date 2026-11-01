@@ -79,7 +79,7 @@ const FRAME_KIND_GOBLIN: String = "goblin"
 const CLIP_BEHIND: String = "behind"
 const CLIP_FRONT: String = "front"
 
-## Sheet clips (the frameTags of Story 045's sheets; `fall` is unused until the falling-cell story).
+## Sheet clips (the frameTags of Story 045's sheets; `fall` plays when a unit dies by falling into a hole, ADR-0001 Task 5).
 const CLIP_IDLE: String = "idle"
 const CLIP_STEP: String = "step"
 const CLIP_CAST: String = "cast_gesture"
@@ -89,6 +89,7 @@ const CLIP_VICTORY: String = "victory"
 const CLIP_DEFEAT: String = "defeat"
 const CLIP_DOWN: String = "down"
 const CLIP_AWAKEN: String = "awaken"
+const CLIP_FALL: String = "fall"
 ## Seconds the `hit` clip outranks step / windup after a damage event (story table, Part C).
 const HIT_SEC: float = 0.12
 ## Facing each side must show: towards the divider (art bible 8.6).
@@ -97,6 +98,8 @@ const FACING_ENEMY: String = "left"
 ## Keys of the context [method clip_for] reads (all booleans but `side`).
 const CTX_SIDE: String = "side"
 const CTX_DEAD: String = "dead"
+## True when the unit died by falling into a drop-tile hole (CombatView.died_by_fall).
+const CTX_FELL: String = "fell"
 const CTX_DOWNED: String = "downed"
 const CTX_OPPONENT_DEAD: String = "opponent_dead"
 const CTX_HIT: String = "hit"
@@ -106,6 +109,8 @@ const CTX_AWAKEN: String = "awaken"
 const CTX_STEPPING: String = "stepping"
 ## The two sides, in the order the per-side tables are walked.
 const SIDES: Array[int] = [CombatState.Side.PLAYER, CombatState.Side.ENEMY]
+## OSFE hit feel: the shake flips side every this many seconds.
+const SHAKE_STEP_SEC: float = 0.03
 
 var _combat: CombatView = null
 ## Status clocks: CombatState.Side -> {kind: String -> elapsed match seconds since the kind started}.
@@ -130,6 +135,14 @@ var _cast_pending: bool = false
 ## What the signals are connected to (null until the match is bound).
 var _bound_state: CombatState = null
 var _bound_actor: CutActor = null
+## OSFE hit feel (CastVfx.hit_feel, user 2026-11-01): seconds of white flash and of shake left per side, the feel
+## values, and the add-blend child the flash is drawn on.
+var _flash_left: Dictionary = {}
+var _shake_left: Dictionary = {}
+var _feel: Dictionary = {}
+var _flash: Node2D = null
+## A damage event whose flash has not started: CombatState.Side -> seconds still to wait (-1 = delay not read yet).
+var _flash_wait: Dictionary = {}
 
 
 ## Binds the layer to the battle's CombatView (state, grid, names and screen size come from it).
@@ -142,6 +155,8 @@ func setup(combat: CombatView, settings: SettingsStore = null) -> void:
 	var store: SettingsStore = settings if settings != null else SettingsStore.shared()
 	_reduce_motion = store != null and store.get_reduce_motion()
 	set_process(combat != null)
+	_feel = CastVfx.hit_feel()
+	_ensure_flash_layer()
 	_bind_match()
 	queue_redraw()
 
@@ -150,6 +165,8 @@ func _process(delta: float) -> void:
 	if _combat != null:
 		advance(_combat.scaled_delta(delta))
 	queue_redraw()
+	if _flash != null:
+		_flash.queue_redraw()
 
 
 func _exit_tree() -> void:
@@ -166,6 +183,22 @@ func advance(step: float) -> void:
 	_advance_status_clocks(step)
 	for side: int in SIDES:
 		_update_clip(side, maxf(step, 0.0))
+		_flash_left[side] = maxf(float(_flash_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
+		_shake_left[side] = maxf(float(_shake_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
+		_tick_flash_wait(side, maxf(step, 0.0))
+
+
+## Seconds of white hit flash left on [param side] (0 when none).
+func get_flash_left(side: int) -> float:
+	return float(_flash_left.get(side, 0.0))
+
+
+## Pure: the shake offset (art px) of a unit with [param left] seconds of shake: [param px] to one side, then the
+## other, flipping every SHAKE_STEP_SEC; zero when none is left.
+static func shake_offset(left: float, px: int) -> Vector2i:
+	if left <= 0.0 or px <= 0:
+		return Vector2i.ZERO
+	return Vector2i(px if int(left / SHAKE_STEP_SEC) % 2 == 0 else -px, 0)
 
 
 ## Bottom-centre anchor of the unit of [param side] (CombatState.Side) in whole art px: x = the cell's
@@ -253,12 +286,16 @@ func clip_context(side: int) -> Dictionary:
 	var state: CombatState = _combat.get_state()
 	var player: bool = side == CombatState.Side.PLAYER
 	var anim: UnitAnimator = get_animator(side)
-	var casting: bool = _cast_pending or (anim != null and anim.current_clip() == CLIP_CAST and not anim.is_finished())
+	# 2026-10-31: the cast_gesture shows for the player's whole swing (held on its first frame until the projectile is
+	# due, CastVfx), not only for the clip's length.
+	var actor: CutActor = _combat.get_cut_actor() if player else null
+	var casting: bool = _cast_pending or (actor != null and actor.is_swinging()) or (anim != null and anim.current_clip() == CLIP_CAST and not anim.is_finished())
 	var boss_actor: CutActor = _combat.get_boss().get_actor() if _combat.get_boss() != null else null
 	return {
 		CTX_SIDE: side,
 		CTX_DEAD: state.is_player_dead() if player else state.is_enemy_dead(),
 		CTX_DOWNED: (not player) and _combat.is_boss_downed(),
+		CTX_FELL: _combat.died_by_fall(side),
 		CTX_OPPONENT_DEAD: state.is_enemy_dead() if player else state.is_player_dead(),
 		CTX_HIT: get_hit_left(side) > 0.0,
 		CTX_CASTING: player and casting,
@@ -268,14 +305,48 @@ func clip_context(side: int) -> Dictionary:
 	}
 
 
+## 2026-10-31: true while the player's cast_gesture should wait on its first frame: its swing still has more than
+## CastVfx.gesture_due_left of the hero's projectile to go (so the slash frame meets the launch). False for the boss,
+## with no swing, or no cast pack.
+func cast_hold(side: int) -> bool:
+	if side != CombatState.Side.PLAYER or _combat == null:
+		return false
+	var actor: CutActor = _combat.get_cut_actor()
+	if actor == null or not actor.is_swinging():
+		return false
+	var entry: Dictionary = CastVfx.entry_for(String(_unit_id.get(side, "")))
+	if entry.is_empty():
+		return false
+	return actor.get_time_left() > CastVfx.gesture_due_left(entry)
+
+
+# 2026-11-01 (v4 wind-up): the cast clip plays from the swing start and stops on its coil frame (the cast index's
+# gesture_hold_frame) while the telegraph runs; when the launch is due it jumps to the slash frame after the coil.
+# An entry without a hold frame keeps the old behaviour (held on frame 0 until due).
+func _drive_cast_hold(side: int, anim: UnitAnimator) -> void:
+	var hold: int = CastVfx.gesture_hold_frame(CastVfx.entry_for(String(_unit_id.get(side, ""))))
+	if hold < 0:
+		anim.set_paused(cast_hold(side))
+		return
+	if cast_hold(side):
+		anim.set_paused(anim.frame_index() >= hold)
+		return
+	if anim.frame_index() <= hold:
+		anim.seek(hold + 1)
+	anim.set_paused(false)
+
+
 ## The clip for a unit's state, pure (Story 047 Part C table). [param ctx] keys: `side`
 ## (CombatState.Side, default PLAYER) and the booleans `dead`, `downed`, `opponent_dead`, `hit`,
 ## `casting`, `swinging`, `awaken`, `stepping` (absent = false). Priority, highest first:
+## dead by a fall (`fell`) -> `fall` (Task 5; [method _update_clip] keeps `defeat` / `down` for a sheet without it);
 ## dead or downed -> `defeat` (player) / `down` (boss); player with the boss dead -> `victory`;
 ## hit -> `hit`; player casting -> `cast_gesture`; boss swinging -> `windup`; player with the signature
 ## running -> `awaken`; stepping -> `step`; else `idle`.
 static func clip_for(ctx: Dictionary) -> String:
 	var player: bool = int(ctx.get(CTX_SIDE, CombatState.Side.PLAYER)) == CombatState.Side.PLAYER
+	if bool(ctx.get(CTX_DEAD, false)) and bool(ctx.get(CTX_FELL, false)):
+		return CLIP_FALL
 	if bool(ctx.get(CTX_DEAD, false)) or bool(ctx.get(CTX_DOWNED, false)):
 		return CLIP_DEFEAT if player else CLIP_DOWN
 	if player and bool(ctx.get(CTX_OPPONENT_DEAD, false)):
@@ -407,6 +478,27 @@ func _on_damaged(side: int, amount: float) -> void:
 		return
 	_hit_left[side] = HIT_SEC
 	_hit_restart[side] = true
+	# The flash waits for the cell blast that hits this unit (CombatView.take_hit_delay, read on the next update,
+	# after the cut's blasts were queued).
+	_flash_wait[side] = -1.0
+
+
+# Starts the hit flash and shake of [param side] once its wait (see _on_damaged) has run out.
+func _tick_flash_wait(side: int, step: float) -> void:
+	if not _flash_wait.has(side):
+		return
+	var wait: float = float(_flash_wait[side])
+	if wait < 0.0:
+		wait = _combat.take_hit_delay(side) if _combat != null else 0.0
+	else:
+		wait -= step
+	if wait > 0.0:
+		_flash_wait[side] = wait
+		return
+	_flash_wait.erase(side)
+	_flash_left[side] = float(_feel.get("flash_sec", 0.0))
+	if not _reduce_motion:
+		_shake_left[side] = float(_feel.get("shake_sec", 0.0))
 
 
 func _on_cell_changed(side: int, _old_cell: Vector2i, _new_cell: Vector2i) -> void:
@@ -439,6 +531,9 @@ func _update_clip(side: int, step: float) -> void:
 	if anim != null:
 		anim.tick(step)
 	var want: String = clip_for(clip_context(side))
+	# Task 5 item 6: a unit whose sheet has no `fall` clip keeps its normal death.
+	if want == CLIP_FALL and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_FALL)):
+		want = CLIP_DEFEAT if side == CombatState.Side.PLAYER else CLIP_DOWN
 	_logical_clip[side] = want
 	if anim == null:
 		return
@@ -455,6 +550,7 @@ func _update_clip(side: int, step: float) -> void:
 				anim.play(CLIP_CAST, true)
 			else:
 				anim.play(CLIP_CAST)
+			_drive_cast_hold(side, anim)
 		CLIP_STEP:
 			if anim.current_clip() != CLIP_STEP or anim.is_finished():
 				anim.play_timed(CLIP_STEP, float(_step_left[side]), UnitAnimator.ONCE)
@@ -552,8 +648,9 @@ func _draw() -> void:
 		var side: int = int(unit["side"])
 		var cell: Vector2i = unit["cell"]
 		var kinds: Array[String] = get_active_status_kinds(side)
-		var feet: Vector2i = _feet_of_cell(cell)
-		_draw_shadow(cell, feet)
+		var ground: Vector2i = _feet_of_cell(cell)
+		_draw_shadow(cell, ground)
+		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
 		if not _draw_sprite(side, feet):
 			if side == CombatState.Side.PLAYER:
@@ -561,6 +658,40 @@ func _draw() -> void:
 			else:
 				_draw_enemy(cell)
 		_draw_status_overlays(side, kinds, feet, CLIP_FRONT)
+
+
+# The add-blend child the hit flash draws on (created once; children draw over the units).
+func _ensure_flash_layer() -> void:
+	if _flash != null:
+		return
+	_flash = Node2D.new()
+	_flash.name = "HitFlash"
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_flash.material = mat
+	add_child(_flash)
+	_flash.draw.connect(_draw_flash)
+
+
+# OSFE hit feel: the current frame of each unit with flash left, added over itself in white (fading out), so the
+# body flashes bright for flash_sec.
+func _draw_flash() -> void:
+	if _combat == null or _combat.get_state() == null:
+		return
+	var total: float = maxf(float(_feel.get("flash_sec", 0.0)), 0.001)
+	for side: int in SIDES:
+		var left: float = float(_flash_left.get(side, 0.0))
+		var sheet: SpriteSheet = get_sheet(side)
+		var anim: UnitAnimator = get_animator(side)
+		if left <= 0.0 or sheet == null or anim == null or sheet.texture() == null:
+			continue
+		var src: Rect2i = anim.frame_rect()
+		if src.size.x <= 0 or src.size.y <= 0:
+			continue
+		var feet: Vector2i = _feet_of_cell(_cell_of(side)) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
+		var dest: Rect2 = sprite_dest_rect(feet, src.size, sheet.facing() != facing_for(side))
+		var alpha: float = float(_feel.get("flash_alpha", 0.75)) * clampf(left / total, 0.0, 1.0)
+		_flash.draw_texture_rect_region(sheet.texture(), dest, Rect2(src), Color(1.0, 1.0, 1.0, alpha))
 
 
 # The sprite of [param side] at the feet anchor: the animator's frame from the sheet texture, mirrored

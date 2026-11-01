@@ -24,6 +24,10 @@ var _drawn: Dictionary = {}
 var _drawn_burn: Array[Dictionary] = []
 ## The floor VFX items drawn last ([] = none); compared by value each frame.
 var _drawn_vfx: Array[Dictionary] = []
+## The drop tiles drawn last ([] = none); compared by value each frame.
+var _drawn_holes: Array[Dictionary] = []
+## The charging target cells drawn last ([] = none); compared by value each frame.
+var _drawn_charge: Array[Dictionary] = []
 var _redraws: int = 0
 
 
@@ -102,12 +106,11 @@ func vfx_state() -> Array[Dictionary]:
 		var frame: int = FloorVfx.frame_for(vfx.entry("burning_cell"), clock, reduce)
 		for entry: Dictionary in burn_state():
 			out.append(_item("burning_cell", entry["cell"], frame))
-	# F5: the player's swing cells, in the hero's block colour.
-	var actor: CutActor = combat.get_cut_actor()
-	if actor != null and actor.is_swinging() and vfx.has_pack("cast_target"):
-		var frame: int = FloorVfx.frame_for(vfx.entry("cast_target"), clock, reduce)
-		for cell: Vector2i in actor.get_cells():
-			out.append(_item("cast_target", cell, frame, HERO_BLOCK_TINT))
+	# F5 (cast_target pack) is replaced by the code-drawn charge (ADR-0001 Task 5: charge_state / _draw_charge).
+	# F10 (playtest 2026-11-01): the foot-lock seal under the enemy while its own swing roots it (replaces the ring).
+	if combat.is_boss_step_locked() and not combat.get_state().is_enemy_dead() and vfx.has_pack("root_seal"):
+		var frame: int = FloorVfx.frame_for(vfx.entry("root_seal"), clock, reduce)
+		out.append(_item("root_seal", combat.get_state().cell_of(CombatState.Side.ENEMY), frame))
 	# F3 / F7 / F9: floor one-shots.
 	for ev: Dictionary in vfx.active_events(FloorVfx.LAYER_FLOOR):
 		var frame: int = FloorVfx.frame_for(vfx.entry(str(ev["id"])), float(ev["age"]), reduce)
@@ -116,16 +119,76 @@ func vfx_state() -> Array[Dictionary]:
 	return out
 
 
+## Drop tiles (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md rules 3-4) to draw now, both halves:
+## `{cell, phase: "crack", k}` (k = crack progress 0..1, snapped to HOLE_K_STEPS and to the telegraph's reduce-motion
+## steps), `{cell, phase: "hole"}`, `{cell, phase: "return", k}` (k = 1 just returned .. 0 fade over; also restored crumble cells). [] when unbound.
+func hole_state() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = combat_of(_floor)
+	if combat == null or combat.get_status() == null or combat.get_config() == null:
+		return out
+	var status: StatusEffects = combat.get_status()
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		for cell: Vector2i in status.crack_cells(side):
+			var k: float = combat.get_config().quantize_progress(status.crack_progress(side, cell), reduce)
+			out.append({"cell": cell, "phase": "crack", "k": roundf(k * ALPHA_STEPS) / ALPHA_STEPS})
+		for cell: Vector2i in status.hole_cells(side):
+			out.append({"cell": cell, "phase": "hole", "k": 1.0})
+		for cell: Vector2i in status.returning_cells(side):
+			var fade: float = 0.0 if reduce else status.hole_return_fraction(side, cell)
+			out.append({"cell": cell, "phase": "return", "k": roundf(fade * ALPHA_STEPS) / ALPHA_STEPS})
+		# Sky Isles crumble / island_drop cells come back the same way (TileHazards.return_fade_sec, the same
+		# zones.hole_return_fade_sec; ADR-0001 Phase 1, 2026-11-01).
+		var hazards: TileHazards = combat.get_hazards()
+		if hazards != null:
+			for cell: Vector2i in hazards.returning_cells(side):
+				var back: float = 0.0 if reduce else hazards.return_fraction(side, cell)
+				out.append({"cell": cell, "phase": "return", "k": roundf(back * ALPHA_STEPS) / ALPHA_STEPS})
+	return out
+
+
+## ADR-0001 Task 5 item 1 (pack 01 §3 steps 2-3): the player's charging target cells: one {cell, step, steps, check}
+## per unlocked swing cell (check = the foe's cell gets the tick; step = CastFloorFx.charge_step of the swing progress).
+## Locked cells (cracking / hole) are left out (item 5). [] when the player is not swinging.
+func charge_state() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = combat_of(_floor)
+	if combat == null or combat.get_state() == null:
+		return out
+	var actor: CutActor = combat.get_cut_actor()
+	if actor == null or not actor.is_swinging():
+		return out
+	var style: Dictionary = CastVfx.travel_style("charge")
+	var steps: int = int(style.get("steps", CastFloorFx.DEFAULT_CHARGE_STEPS))
+	var step: int = CastFloorFx.charge_step(actor.get_progress(), steps)
+	if SettingsStore.shared().get_reduce_motion():
+		step = steps - 1
+	var foe: Vector2i = combat.get_state().enemy_cell
+	for cell: Vector2i in actor.get_cells():
+		if combat.is_cell_locked(cell):
+			continue
+		out.append({"cell": cell, "step": step, "steps": steps, "check": cell == foe})
+	return out
+
+
 func _process(_delta: float) -> void:
+	var combat_now: CombatView = combat_of(_floor) if _floor != null else null
+	if combat_now != null and not combat_now.get_cast_flood().is_empty():
+		queue_redraw()
 	if _floor == null:
 		return
 	var state: Dictionary = _floor.telegraph_state()
 	var burn: Array[Dictionary] = burn_state()
 	var vfx: Array[Dictionary] = vfx_state()
-	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx:
+	var holes: Array[Dictionary] = hole_state()
+	var charge: Array[Dictionary] = charge_state()
+	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx or holes != _drawn_holes or charge != _drawn_charge:
+		_drawn_charge = charge
 		_drawn = state
 		_drawn_burn = burn
 		_drawn_vfx = vfx
+		_drawn_holes = holes
 		queue_redraw()
 
 
@@ -136,15 +199,152 @@ func _draw() -> void:
 	# The states are re-read here so a redraw asked by mark_dirty shows the current effects, burn and swing too.
 	_drawn_vfx = vfx_state()
 	_drawn_burn = burn_state()
+	_drawn_holes = hole_state()
 	_drawn = _floor.telegraph_state()
+	_drawn_charge = charge_state()
 	var combat: CombatView = combat_of(_floor)
 	var vfx: FloorVfx = null if combat == null else combat.get_floor_vfx()
+	if combat != null:
+		_draw_holes(combat, vfx)
 	if vfx != null:
 		for item: Dictionary in _drawn_vfx:
 			var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
 			vfx.draw(self, str(item["id"]), FloorVfx.feet_for(cell_rect), int(item["frame"]), item["tint"], cell_rect)
 	BurnPainter.paint(self, _floor, _drawn_burn, vfx != null and vfx.has_pack("burning_cell"))
+	if combat != null:
+		_draw_charge(combat)
 	_floor.paint_dynamic(self, _drawn)
+	if combat != null:
+		_draw_flood(combat.get_cast_flood())
+
+
+# User 2026-11-01 (reference board): the cast explodes on the first cell and lights the area cell by cell: each cell
+# wipes in from the neighbour it was reached from (bright leading edge), flashes, then glows gold with a gold outline
+# and cracks until every cell is lit, and all fade together (floor overlay: alpha allowed, art bible 8.5).
+func _draw_flood(flood: Dictionary) -> void:
+	# flood.tiles false (user 2026-11-01): only the bursts and shards show, no lit cells.
+	if flood.is_empty() or not bool(flood["style"].get("tiles", true)):
+		return
+	var style: Dictionary = flood["style"]
+	var fill: Color = style["fill"]
+	var edge: Color = style["edge"]
+	var edge_px: int = int(style["edge_px"])
+	for item: Dictionary in flood["cells"]:
+		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
+		var r: Rect2i = CastVfx.flood_rect(cell_rect, float(item["reveal"]), item["dir"])
+		if not r.has_area():
+			continue
+		var f: float = float(item["fade"])
+		var flash: float = 1.0 - clampf(float(item["since"]) / 0.15, 0.0, 1.0)
+		draw_rect(Rect2(r), Color(fill, (float(style["alpha"]) + 0.4 * flash) * f))
+		if float(item["reveal"]) >= 1.0:
+			draw_rect(Rect2(cell_rect.grow(-1)), Color(fill, f), false, edge_px)
+			for pts: Array in CastVfx.crack_lines(item["cell"], cell_rect):
+				for k: int in range(1, pts.size()):
+					draw_line(Vector2(pts[k - 1]), Vector2(pts[k]), Color(style["crack"], f), 1.0)
+		if float(item["reveal"]) < 1.0:
+			var dir: Vector2i = item["dir"]
+			if dir == Vector2i.ZERO:
+				draw_rect(Rect2(r), Color(edge, f), false, edge_px)
+			elif dir.x != 0:
+				var ex: int = r.end.x - edge_px if dir.x > 0 else r.position.x
+				draw_rect(Rect2(ex, r.position.y, edge_px, r.size.y), Color(edge, f))
+			else:
+				var ey: int = r.end.y - edge_px if dir.y > 0 else r.position.y
+				draw_rect(Rect2(r.position.x, ey, r.size.x, edge_px), Color(edge, f))
+
+
+# Task 5 item 1: the charging target cells: a full-cell fill in the hero's block colour, a 2 px outline (both one
+# palette step brighter per charge step), and a pixel tick on the foe's cell. Flat colours, whole px, no glow.
+func _draw_charge(combat: CombatView) -> void:
+	if _drawn_charge.is_empty():
+		return
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var block: Array[Color] = CastVfx.block_colours(hero_id)
+	var style: Dictionary = CastVfx.travel_style("charge")
+	var alpha: Variant = style.get("fill_alpha", [0.35, 0.75])
+	var ok: bool = alpha is Array and (alpha as Array).size() == 2
+	var lo: float = float(alpha[0]) if ok else 0.35
+	var hi: float = float(alpha[1]) if ok else 0.75
+	var px: int = int(style.get("outline_px", 2))
+	var check_px: int = int(style.get("check_px", 2))
+	for item: Dictionary in _drawn_charge:
+		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
+		var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
+		slab.position += cell_rect.position
+		var c: Dictionary = CastFloorFx.charge_colours(block[0], block[1], int(item["step"]), int(item["steps"]), lo, hi)
+		draw_rect(Rect2(slab), c["fill"])
+		_outline(slab, px, c["outline"])
+		if bool(item["check"]):
+			var ticks: Array[Rect2i] = CastFloorFx.check_rects(slab, check_px)
+			for r: Rect2i in ticks:
+				draw_rect(Rect2(r.grow(1)), SlabPainter.INK)
+			for r: Rect2i in ticks:
+				draw_rect(Rect2(r), block[1])
+
+
+# Whole-px outline of [param r], [param px] wide, inside the rect.
+func _outline(r: Rect2i, px: int, color: Color) -> void:
+	draw_rect(Rect2(r.position.x, r.position.y, r.size.x, px), color)
+	draw_rect(Rect2(r.position.x, r.end.y - px, r.size.x, px), color)
+	draw_rect(Rect2(r.position.x, r.position.y + px, px, r.size.y - px * 2), color)
+	draw_rect(Rect2(r.end.x - px, r.position.y + px, px, r.size.y - px * 2), color)
+
+
+# Task 5 item 4 (user: "o rot co trang tri giong o trong, khong den xi"): the drop-tile pit in the region's own floor
+# palette, darker: deep floor, lit back wall and a middle step (stepped bands, no gradient), a broken lighter rim on the
+# top / sides and a few rubble squares. [param opening] {"rim", "wall"} = which parts show (all for an open hole; the
+# crack -> hole transition opens the rim first, then the wall).
+func _draw_pit(cell: Vector2i, slab: Rect2i, opening: Dictionary) -> void:
+	var pal: Dictionary = _floor.get_platform_palette()
+	var cols: Dictionary = CastFloorFx.pit_colours(_pal(pal, "deck", Color("3A3B37")), _pal(pal, "face", Color("262521")),
+		_pal(pal, "face_top", Color("5A5B54")), CastVfx.travel_style("pit"))
+	var lay: Dictionary = CastFloorFx.pit_layout(slab, hash(cell) * 7 + 3)
+	if bool(opening.get("wall", false)):
+		draw_rect(Rect2(lay["deep"]), cols["deep"])
+		draw_rect(Rect2(lay["bands"][0]), cols["wall"])
+		draw_rect(Rect2(lay["bands"][1]), cols["mid"])
+		for r: Rect2i in lay["rubble"]:
+			draw_rect(Rect2(r), cols["rubble"])
+	if bool(opening.get("rim", false)):
+		for r: Rect2i in lay["rim"]:
+			draw_rect(Rect2(r), cols["rim"])
+
+
+static func _pal(palette: Dictionary, key: String, fallback: Color) -> Color:
+	var v: Variant = palette.get(key, null)
+	if v is Color:
+		return v
+	if v is String and not (v as String).is_empty():
+		return Color(v as String)
+	return fallback
+
+
+# Drop tiles (rules 3-4), no text: a CRACK deepens like a boss telegraph (red #E5293B fill on the slab at the
+# telegraph's fill alpha for progress k, plus the F4 cracked_cell pack stepped through its frames by k so the crack
+# spreads); a HOLE is a dark empty slab (Ink); a RETURNING cell fades back in from white.
+func _draw_holes(combat: CombatView, vfx: FloorVfx) -> void:
+	var has_crack_art: bool = vfx != null and vfx.has_pack("cracked_cell")
+	for item: Dictionary in _drawn_holes:
+		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
+		var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
+		slab.position += cell_rect.position
+		var k: float = float(item["k"])
+		match str(item["phase"]):
+			"crack":
+				draw_rect(Rect2(slab), Color(TelegraphPainter.RED, combat.get_config().telegraph_fill_alpha(k)))
+				if has_crack_art:
+					var hold: int = int(vfx.entry("cracked_cell").get("hold_frame", 0))
+					vfx.draw(self, "cracked_cell", FloorVfx.feet_for(cell_rect), roundi(k * float(hold)), Color.WHITE, cell_rect)
+				# Task 5 item 4: on the last steps the crack lines widen to the pit's broken rim, then the wall opens.
+				var opening: Dictionary = CastFloorFx.crack_opening(k)
+				if bool(opening["rim"]):
+					_draw_pit(item["cell"], slab, opening)
+			"hole":
+				_draw_pit(item["cell"], slab, {"rim": true, "wall": true})
+			"return":
+				if k > 0.0:
+					draw_rect(Rect2(slab), Color(1.0, 1.0, 1.0, k))
 
 
 static func _item(id: String, cell: Vector2i, frame: int, tint: Color = Color.WHITE) -> Dictionary:

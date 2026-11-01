@@ -14,15 +14,16 @@ extends Node2D
 ## DEV-ONLY user arg `--screen=unlock_toast` shows a sample list on the first eligible frame (captures).
 
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
-const PANEL_BACK: Color = Color(1.0, 0.97, 0.9)
-const PANEL_OUTLINE: Color = Color(0.85, 0.62, 0.1)
-const TITLE_COLOR: Color = Color(0.62, 0.42, 0.05)
-const NAME_COLOR: Color = Color(0.15, 0.12, 0.1)
-const KIND_COLOR: Color = Color(0.3, 0.26, 0.22)
-const HINT_COLOR: Color = Color(0.4, 0.35, 0.3)
-const ROW_BACK: Color = Color(0.94, 0.9, 0.8)
-const GLYPH_COLOR: Color = Color(0.62, 0.42, 0.05)
-const OUTLINE_WIDTH: float = 4.0
+## 2026-10-31 dark skin: a Night Stone panel framed in Grid Light, card-face rows, HudSkin outlined text.
+const PANEL_BACK: Color = HudSkin.NIGHT_STONE
+const PANEL_OUTLINE: Color = HudSkin.GRID_LIGHT
+const TITLE_COLOR: Color = HudSkin.GRID_LIGHT
+const NAME_COLOR: Color = HudSkin.TEXT
+const KIND_COLOR: Color = HudSkin.TEXT_DIM
+const HINT_COLOR: Color = HudSkin.TEXT_DIM
+const ROW_BACK: Color = HudSkin.CARD_FILL
+const GLYPH_COLOR: Color = HudSkin.GRID_LIGHT
+const OUTLINE_WIDTH: float = 3.0
 
 const TITLE_FONT_SIZE: int = 44
 const NAME_FONT_SIZE: int = 30
@@ -60,6 +61,8 @@ var _dev_sample: bool = false
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 	_dev_sample = OS.get_cmdline_user_args().has(DEV_ARG)
 
@@ -176,10 +179,9 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
 	var shown: int = mini(_rows.size(), MAX_ROWS)
 	var panel: Rect2 = panel_rect(vp, shown + (1 if _rows.size() > MAX_ROWS else 0))
-	draw_rect(panel, PANEL_BACK)
-	draw_rect(panel, PANEL_OUTLINE, false, OUTLINE_WIDTH)
-	var font: Font = ThemeDB.fallback_font
-	draw_string(font, Vector2(panel.position.x, panel.position.y + panel.size.y * TITLE_BAND_RATIO * 0.78), tr(TEXT_TITLE), HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, TITLE_FONT_SIZE, TITLE_COLOR)
+	var cut: float = HudSkin.button_cut(panel)
+	HudSkin.panel(self, panel, [0.0, cut, 0.0, cut], PANEL_BACK, PANEL_OUTLINE, OUTLINE_WIDTH)
+	MenuFont.text(self, Vector2(panel.position.x, panel.position.y + panel.size.y * TITLE_BAND_RATIO * 0.78), tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR, HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, true)
 	var pad: float = panel.size.x * 0.05
 	var y: float = panel.position.y + panel.size.y * TITLE_BAND_RATIO
 	for i: int in shown:
@@ -187,12 +189,12 @@ func _draw() -> void:
 		_draw_row(row, _rows[i])
 		y += ROW_HEIGHT_PX + ROW_GAP_PX
 	if _rows.size() > MAX_ROWS:
-		draw_string(font, Vector2(panel.position.x, y + KIND_FONT_SIZE), tr(TEXT_MORE) % (_rows.size() - MAX_ROWS), HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, KIND_FONT_SIZE, KIND_COLOR)
-	draw_string(font, Vector2(panel.position.x, panel.end.y - panel.size.y * HINT_BAND_RATIO * 0.35), tr(TEXT_TAP), HORIZONTAL_ALIGNMENT_CENTER, panel.size.x, HINT_FONT_SIZE, HINT_COLOR)
+		MenuFont.text(self, Vector2(panel.position.x, y + KIND_FONT_SIZE), tr(TEXT_MORE) % (_rows.size() - MAX_ROWS), KIND_FONT_SIZE, KIND_COLOR, HORIZONTAL_ALIGNMENT_CENTER, panel.size.x)
+	MenuFont.text(self, Vector2(panel.position.x, panel.end.y - panel.size.y * HINT_BAND_RATIO * 0.35), tr(TEXT_TAP), HINT_FONT_SIZE, HINT_COLOR, HORIZONTAL_ALIGNMENT_CENTER, panel.size.x)
 
 
 func _draw_row(rect: Rect2, row: Dictionary) -> void:
-	draw_rect(rect, ROW_BACK)
+	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], ROW_BACK, HudSkin.CARD_LINE)
 	var kind: String = str(row.get("kind", ""))
 	var glyph := Rect2(rect.position + Vector2(10.0, 10.0), Vector2.ONE * (rect.size.y - 20.0))
 	if kind == "achievement":
@@ -203,7 +205,6 @@ func _draw_row(rect: Rect2, row: Dictionary) -> void:
 	var kind_text: String = tr(KIND_LABEL_FORMAT % kind)
 	var text_x: float = glyph.end.x + 14.0
 	var width: float = rect.end.x - 10.0 - text_x
-	var font: Font = ThemeDB.fallback_font
-	var kind_w: float = font.get_string_size(kind_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, KIND_FONT_SIZE).x
-	draw_string(font, Vector2(text_x, rect.get_center().y + NAME_FONT_SIZE * 0.35), name_text, HORIZONTAL_ALIGNMENT_LEFT, maxf(width - kind_w - 12.0, 40.0), NAME_FONT_SIZE, NAME_COLOR)
-	draw_string(font, Vector2(rect.end.x - 10.0 - kind_w, rect.get_center().y + KIND_FONT_SIZE * 0.35), kind_text, HORIZONTAL_ALIGNMENT_LEFT, kind_w + 2.0, KIND_FONT_SIZE, KIND_COLOR)
+	var kind_w: float = HudSkin.text_width(kind_text, KIND_FONT_SIZE)
+	MenuFont.text(self, Vector2(text_x, rect.get_center().y + NAME_FONT_SIZE * 0.35), name_text, NAME_FONT_SIZE, NAME_COLOR, HORIZONTAL_ALIGNMENT_LEFT, maxf(width - kind_w - 12.0, 40.0), true)
+	MenuFont.text(self, Vector2(rect.end.x - 10.0 - kind_w, rect.get_center().y + KIND_FONT_SIZE * 0.35), kind_text, KIND_FONT_SIZE, KIND_COLOR, HORIZONTAL_ALIGNMENT_LEFT, kind_w + 2.0)

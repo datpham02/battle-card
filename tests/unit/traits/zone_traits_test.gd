@@ -1,5 +1,6 @@
 extends SceneTree
-## Story 027 Phan C: boss traits `seal_caster` and `thorn_field`. seal_caster places a 2-3 cell seal on the
+## Story 027 Phan C: boss traits `seal_caster` and `thorn_field`. seal_caster (drop tile since 2026-10-31: cells CRACK,
+## see tests/unit/combat/drop_tile_rules_test.gd) starts a 2-3 cell drop tile on the
 ## PLAYER's half at its rhythm, only when an armed boss swing of >= min_swing_cells has lead_sec or less
 ## left, on escape cells (never a swing cell, never the player's cell) and obeying the leave-a-path rule
 ## (a cornered player keeps an exit, also with a crack blocking the other neighbour). thorn_field lays
@@ -93,7 +94,7 @@ func _open_neighbours(w: Dictionary) -> Array[Vector2i]:
 	var p: Vector2i = (w["state"] as CombatState).player_cell
 	for dir: Vector2i in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
 		var c: Vector2i = p + dir
-		if grid.is_player_cell(c) and not (w["status"] as StatusEffects).is_sealed(CombatState.Side.PLAYER, c) \
+		if grid.is_player_cell(c) and not (w["status"] as StatusEffects).is_cracking(CombatState.Side.PLAYER, c) \
 				and not (w["mover"] as UnitMover).is_cell_blocked(c):
 			out.append(c)
 	return out
@@ -114,20 +115,20 @@ func _test_seal_rhythm_and_lead() -> void:
 	_run(w, t, 1.0)
 	_swing(w, _row(1))
 	_run(w, t, 1.5)
-	_check("seal: no seal before the first interval", t.get_seal_count() == 0 and status.sealed_cells(CombatState.Side.PLAYER).is_empty())
+	_check("seal: no seal before the first interval", t.get_seal_count() == 0 and status.crack_cells(CombatState.Side.PLAYER).is_empty())
 	_run(w, t, 2.0) # t = 4.5: armed
 	_check("seal: armed after interval_sec", t.is_armed())
 	_swing(w, _row(1))
 	_run(w, t, 0.3) # 0.7 s left > lead 0.5
 	_check("seal: not placed while the swing has more than lead_sec left", t.get_seal_count() == 0)
 	_run(w, t, 0.3) # 0.4 s left
-	var sealed: Array[Vector2i] = status.sealed_cells(CombatState.Side.PLAYER)
+	var sealed: Array[Vector2i] = status.crack_cells(CombatState.Side.PLAYER)
 	_check("seal: placed once the swing is within lead_sec", t.get_seal_count() == 1, str(sealed))
 	_check("seal: 2-3 cells", sealed.size() >= 2 and sealed.size() <= 3, str(sealed))
 	var ok: bool = true
 	for c: Vector2i in sealed:
-		ok = ok and (w["grid"] as BoardGrid).is_player_cell(c) and not _row(1).has(c) and c != Vector2i(1, 1)
-	_check("seal: player half, outside the swing, never the player's cell", ok, str(sealed))
+		ok = ok and (w["grid"] as BoardGrid).is_player_cell(c) and (not _row(1).has(c) or c == Vector2i(1, 1))
+	_check("drop: player half, outside the swing or the player's own cell (2026-10-31 spec rule 2)", ok, str(sealed))
 	_check("seal: the player keeps an open neighbour", not _open_neighbours(w).is_empty())
 	_run(w, t, 1.0)
 	_swing(w, _row(1))
@@ -158,7 +159,7 @@ func _test_seal_corner_keeps_exit() -> void:
 	var t: SealCasterTrait = _make("seal_caster", w, params) as SealCasterTrait
 	_swing(w, _row(0))
 	_run(w, t, 0.6)
-	var sealed: Array[Vector2i] = (w["status"] as StatusEffects).sealed_cells(CombatState.Side.PLAYER)
+	var sealed: Array[Vector2i] = (w["status"] as StatusEffects).crack_cells(CombatState.Side.PLAYER)
 	_check("corner: a seal was placed", t.get_seal_count() == 1, str(sealed))
 	_check("corner: the player keeps an open neighbour", not _open_neighbours(w).is_empty(), str(sealed))
 	var blocked: Array[Vector2i] = sealed.duplicate()
@@ -176,8 +177,8 @@ func _test_seal_corner_with_crack_keeps_exit() -> void:
 	_swing(w, swing)
 	_run(w, t, 0.6)
 	_check("corner + crack: the only exit (0,1) is never sealed",
-		not (w["status"] as StatusEffects).is_sealed(CombatState.Side.PLAYER, Vector2i(0, 1)),
-		str((w["status"] as StatusEffects).sealed_cells(CombatState.Side.PLAYER)))
+		not (w["status"] as StatusEffects).is_cracking(CombatState.Side.PLAYER, Vector2i(0, 1)),
+		str((w["status"] as StatusEffects).crack_cells(CombatState.Side.PLAYER)))
 	_check("corner + crack: open neighbour left", not _open_neighbours(w).is_empty())
 
 

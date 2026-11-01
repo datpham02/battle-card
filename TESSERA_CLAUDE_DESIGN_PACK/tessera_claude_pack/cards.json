@@ -1,0 +1,2707 @@
+{
+  "game": "Tessera",
+  "version": "design-proposal-v0.1",
+  "count": 180,
+  "cards": [
+    {
+      "id": "atk_001",
+      "name": "First Cut",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "slash",
+        "starter"
+      ],
+      "effect_vi": "Gây 1 đòn vào các ô được chọn; +25% lên mục tiêu chưa bị đánh trong chuỗi hiện tại.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_002",
+      "name": "Second Cut",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "slash",
+        "combo"
+      ],
+      "effect_vi": "Đòn sau trúng cùng mục tiêu trong vòng 2 beat gây thêm 1 sát thương và không tự tạo echo.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_003",
+      "name": "Steel Sweep",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "bar",
+      "tags": [
+        "slash",
+        "row"
+      ],
+      "effect_vi": "Đánh vào dãy ngang đã chọn, thêm sát thương nếu bao phủ đủ 3 ô hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_004",
+      "name": "Iron Column",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "bar",
+      "tags": [
+        "stamp",
+        "guardbreak"
+      ],
+      "effect_vi": "Đóng dấu theo cột, phá một tầng Guard.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_005",
+      "name": "Cross Cleave",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "cross",
+      "tags": [
+        "slash",
+        "area"
+      ],
+      "effect_vi": "Đánh trên các ô dạng chữ thập, mỗi mục tiêu chịu 1 lần sát thương.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_006",
+      "name": "Lancer's Step",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "move",
+        "slash"
+      ],
+      "effect_vi": "Sau khi đổi vị trí một ô hợp lệ, đòn đánh kế tiếp có cộng sát thương.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_007",
+      "name": "Slab Breaker",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "shatter",
+        "guardbreak"
+      ],
+      "effect_vi": "Đòn phá Guard gây thêm một mảnh vuông choáng ngắn trên ô mục tiêu.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_008",
+      "name": "Hammer Down",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "heavy",
+        "stamp"
+      ],
+      "effect_vi": "Charge lâu hơn, gây đòn mạnh lên tối đa 4 ô hợp lệ của Block.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_009",
+      "name": "Armor Pierce",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "pierce",
+        "slash"
+      ],
+      "effect_vi": "Bỏ qua một phần Guard, nhưng hồi phục lâu hơn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_010",
+      "name": "Retaliation Stamp",
+      "group": "ATK",
+      "affinity": "Knight",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "counter",
+        "stamp"
+      ],
+      "effect_vi": "Nếu vừa đỡ được một đòn, dập lại hình Block đã dùng trước đó với nửa sức mạnh.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_011",
+      "name": "Amber Flicker",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "attack"
+      ],
+      "effect_vi": "Gây một điểm Burn trên mỗi ô đánh trúng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_012",
+      "name": "Cinder L",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "L3",
+      "tags": [
+        "burn",
+        "burst"
+      ],
+      "effect_vi": "Đòn lửa dạng L-3; nạn nhân đang Burn chịu thêm sát thương.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_013",
+      "name": "Furnace Bar",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "bar4",
+      "tags": [
+        "burn",
+        "row"
+      ],
+      "effect_vi": "Dập 4 ô hàng thẳng, gây bonus lên ô đã bị Burn ở lượt trước.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_014",
+      "name": "Coal Split",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "domino",
+      "tags": [
+        "burn",
+        "chain"
+      ],
+      "effect_vi": "Dập hai ô liền kề rồi thêm một hit phụ vào ô đã đánh dấu gần đó.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_015",
+      "name": "Ash Stamp",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "convert"
+      ],
+      "effect_vi": "Gây sát thương nhẹ và xóa một tầng Burn để tạo hit vuông thêm trên cùng ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_016",
+      "name": "Thermal Fracture",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "frost",
+        "shatter"
+      ],
+      "effect_vi": "Mục tiêu đang Freeze nhận thêm Shatter khi bị Block này đánh trúng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_017",
+      "name": "Heat Cycle",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "repeat"
+      ],
+      "effect_vi": "Đòn đánh ở ô lặp lại có sát thương tăng nhưng đặt thêm một nhịp hồi phục.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_018",
+      "name": "Volcanic Ledge",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "chain",
+        "burst"
+      ],
+      "effect_vi": "Đòn nổ vuông lan từ ô đầu đến các ô khác của cùng Block theo từng beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_019",
+      "name": "Flame Quilt",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "adjacent"
+      ],
+      "effect_vi": "Mỗi ô đang Burn liền kề một ô trúng sẽ kích hoạt thêm 1 hit nhẹ; giới hạn 2 lần.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_020",
+      "name": "Cinder Wake",
+      "group": "ATK",
+      "affinity": "Mage",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "delayed"
+      ],
+      "effect_vi": "Để lại một dấu than tạm trên đúng ô vừa trúng, nổ vuông sau 1 beat và báo trước.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_021",
+      "name": "Twin Dagger Mark",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "mark",
+        "slash"
+      ],
+      "effect_vi": "Đòn đầu gây Mark và đòn thứ hai trên cùng Block tiêu thụ Mark để tăng damage.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_022",
+      "name": "Silent L",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "L3",
+      "tags": [
+        "speed",
+        "L"
+      ],
+      "effect_vi": "Đánh 3 ô dạng L với ít thời gian charge hơn, sát thương cơ bản thấp.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_023",
+      "name": "Shadow Stitch",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "dodge",
+        "mark"
+      ],
+      "effect_vi": "Sau khi né thành công, đòn kế gây thêm hit lên ô mục tiêu đã Mark.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_024",
+      "name": "Rear Tile",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "edge",
+        "slash"
+      ],
+      "effect_vi": "Đòn đánh lên mục tiêu ở rìa grid gây bonus; không dịch chuyển vào grid địch.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_025",
+      "name": "Quick Cut",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "1-2",
+      "tags": [
+        "speed",
+        "slash"
+      ],
+      "effect_vi": "Charge gần như tức thời trên tối đa 2 ô, hồi chiêu dài hơn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_026",
+      "name": "Fang Pattern",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "domino",
+      "tags": [
+        "multi",
+        "combo"
+      ],
+      "effect_vi": "Khi hai ô chọn kề nhau đều trúng mục tiêu khác nhau, gây thêm 1 hit lên mỗi mục tiêu.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_027",
+      "name": "Sap Strike",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "fragile",
+        "slash"
+      ],
+      "effect_vi": "Một đòn nhẹ + Fragile ngắn trên ô mục tiêu.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_028",
+      "name": "Echo Knife",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "echo",
+        "mark"
+      ],
+      "effect_vi": "Nếu ô mục tiêu đang Mark, lặp một hit 50%; hit phụ không tạo proc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_029",
+      "name": "Trap Reversal",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "trap",
+        "burst"
+      ],
+      "effect_vi": "Kích nổ vuông những trap của chính mình nằm trong Block thay vì đặt trap mới.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_030",
+      "name": "Cross Ambush",
+      "group": "ATK",
+      "affinity": "Rogue",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "cross",
+      "tags": [
+        "cross",
+        "ambush"
+      ],
+      "effect_vi": "Chọn hình chữ thập, sát thương cao lên mục tiêu chưa cảnh giác, hiệu quả thấp khi lặp.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_031",
+      "name": "Briar Bolt",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "root",
+        "stamp"
+      ],
+      "effect_vi": "Trên ô chọn, gây damage và dựng dấu Root ngắn; không có đạn bay.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_032",
+      "name": "Longshot Bar",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "bar",
+      "tags": [
+        "bar",
+        "damage"
+      ],
+      "effect_vi": "Sát thương tăng theo độ dài Block thẳng liên tục, tối đa 4 ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_033",
+      "name": "Crosshair Stamp",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "mark",
+        "precision"
+      ],
+      "effect_vi": "Đòn dấu tại ô có Mark được cộng sát thương, chỉ một check trên ô có địch.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_034",
+      "name": "Wooden Fork",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "L3",
+      "tags": [
+        "trap",
+        "area"
+      ],
+      "effect_vi": "3-cell T/L tạo bẫy nhỏ một beat trên ô không có địch.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_035",
+      "name": "Snare Breaker",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "root",
+        "damage"
+      ],
+      "effect_vi": "Gây thêm sát thương lên đối tượng đang Root hoặc Slow.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_036",
+      "name": "Split Trigger",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "multi",
+        "chain"
+      ],
+      "effect_vi": "Hai vùng tấn công khác ô sẽ tăng công nếu đều chạm các đơn vị khác nhau.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_037",
+      "name": "Rain of Squares",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "sequential",
+        "stamp"
+      ],
+      "effect_vi": "Block dập theo thứ tự từng ô, mỗi ô có hiệu ứng vuông nhỏ, không tạo mưa mũi tên.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_038",
+      "name": "Lattice Lance",
+      "group": "ATK",
+      "affinity": "Ranger",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "bar4",
+      "tags": [
+        "bar",
+        "guardbreak"
+      ],
+      "effect_vi": "Dập thẳng 4 ô và làm vỡ một phần Guard, không bắn tia.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_039",
+      "name": "Consecrated Stamp",
+      "group": "ATK",
+      "affinity": "Cleric",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "guard",
+        "holy"
+      ],
+      "effect_vi": "Gây sát thương ivory nhẹ, tăng Guard cho mình nếu đánh trúng đơn vị đã Mark.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "atk_040",
+      "name": "Judgment Cross",
+      "group": "ATK",
+      "affinity": "Cleric",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "cross",
+      "tags": [
+        "cross",
+        "retaliation"
+      ],
+      "effect_vi": "Đòn chữ thập gây thêm damage trên kẻ đã gây sát thương trong beat trước.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_001",
+      "name": "Quarter Turn",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "rotate",
+        "utility"
+      ],
+      "effect_vi": "Xoay một Block 90 độ ngay trước khi chọn ô; giảm một chút thời gian charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_002",
+      "name": "Half Turn",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "rotate",
+        "guard"
+      ],
+      "effect_vi": "Xoay 180 độ; lần đặt kế tiếp lên đúng đường cảnh báo được cộng Guard.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_003",
+      "name": "Counter Turn",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "rotate",
+        "sequential"
+      ],
+      "effect_vi": "Đảo chiều thứ tự các ô khi một kỹ năng đánh theo chuỗi.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_004",
+      "name": "Lattice Mirror",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "reflect",
+        "shape"
+      ],
+      "effect_vi": "Cho phép phản chiếu hình Block theo trục dọc trong lần này; giữ liên thông.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_005",
+      "name": "Small Split",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "4+",
+      "tags": [
+        "split",
+        "shape"
+      ],
+      "effect_vi": "Tách Block 4+ thành hai mảnh liên thông, tổng số ô không đổi.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_006",
+      "name": "Twin Fragments",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "3+",
+      "tags": [
+        "split",
+        "echo"
+      ],
+      "effect_vi": "Tách Block 3+ để dùng hai lần, mỗi hit giảm sức mạnh; một phần không được rỗng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_007",
+      "name": "Square Weld",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "two tokens",
+      "tags": [
+        "merge",
+        "shape"
+      ],
+      "effect_vi": "Ghép 2 Token có cạnh chạm nhau; chỉ cho phép kết quả 1–7 ô liên thông.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_008",
+      "name": "Extra Stud",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "1-6",
+      "tags": [
+        "grow",
+        "shape"
+      ],
+      "effect_vi": "Thêm 1 ô cạnh bên nếu chưa đủ 7; kỹ năng kế tốn thêm charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_009",
+      "name": "Trim Edge",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "2+",
+      "tags": [
+        "shrink",
+        "speed"
+      ],
+      "effect_vi": "Bỏ 1 ô ở đầu mút mà vẫn giữ Block liên thông; đổi lấy giảm thời gian charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_010",
+      "name": "Cross Forge",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "size5",
+      "tags": [
+        "reshape",
+        "cross"
+      ],
+      "effect_vi": "Biến một Block 5 ô thành chữ thập nếu có đủ 5 ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_011",
+      "name": "U Forge",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "size5",
+      "tags": [
+        "reshape",
+        "U"
+      ],
+      "effect_vi": "Đúc Block 5 ô thành dạng U; giảm tác dụng trên ô giữa không có thật.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_012",
+      "name": "T Forge",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "size4",
+      "tags": [
+        "reshape",
+        "T"
+      ],
+      "effect_vi": "Đúc Block 4 ô thành dạng T, giữ nguyên material.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_013",
+      "name": "S Forge",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "size4",
+      "tags": [
+        "reshape",
+        "S"
+      ],
+      "effect_vi": "Đúc Block 4 ô thành dạng S, giữ nguyên material.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_014",
+      "name": "L Forge",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "size3-4",
+      "tags": [
+        "reshape",
+        "L"
+      ],
+      "effect_vi": "Đúc Block 3 hoặc 4 ô thành L cùng size.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_015",
+      "name": "Bar Forge",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "size2-5",
+      "tags": [
+        "reshape",
+        "bar"
+      ],
+      "effect_vi": "Biến Block thành thanh liên tục nếu shape vừa kích thước grid.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_016",
+      "name": "Stagger Rotate",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "rotate",
+        "combo"
+      ],
+      "effect_vi": "Hai lần cast liên tiếp được xoay hình trước khi dập mà không tốn chi phí quay.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_017",
+      "name": "Shape Bank",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "bank",
+        "shape"
+      ],
+      "effect_vi": "Lưu một shape đã đặt để sử dụng lại một lần, không lưu mục tiêu.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_018",
+      "name": "Block Reroll",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "reroll",
+        "shape"
+      ],
+      "effect_vi": "Thay Token kế bằng shape khác cùng size từ danh mục hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_019",
+      "name": "Material Swap",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "material",
+        "utility"
+      ],
+      "effect_vi": "Đổi diện mạo material của Token kế; không tự tạo hiệu ứng status.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_020",
+      "name": "Edge Snap",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "placement",
+        "assist"
+      ],
+      "effect_vi": "Tự đưa hình đặt sát biên hợp lệ gần nhất nếu vị trí mong muốn sai.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_021",
+      "name": "Anchor Lock",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "rotation",
+        "consistency"
+      ],
+      "effect_vi": "Cố định góc xoay của Token trong hai lần dập kế, nhận giảm charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_022",
+      "name": "Ghost Preview",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "preview",
+        "utility"
+      ],
+      "effect_vi": "Hiện preview ô hợp lệ của hai góc xoay trước khi commit; không gây damage.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_023",
+      "name": "Twin Offset",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "translate",
+        "shape"
+      ],
+      "effect_vi": "Lựa chọn dời Block đúng 1 ô trước khi dập mà không đổi hướng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_024",
+      "name": "Odd Stabilizer",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 1,
+      "target_shape_rule": "6-7",
+      "tags": [
+        "odd",
+        "utility"
+      ],
+      "effect_vi": "Block 6–7 ô tốn ít charge hơn, nhưng không được split ở cast đó.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_025",
+      "name": "Mosaic Stitch",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "two fragments",
+      "tags": [
+        "merge",
+        "combo"
+      ],
+      "effect_vi": "Nếu đã lưu 2 mảnh liên thông, ráp thành shape mới tối đa 7 ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_026",
+      "name": "Spare Corner",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "2+",
+      "tags": [
+        "reshape",
+        "flex"
+      ],
+      "effect_vi": "Cho phép thay một đầu mút bằng một ô ở góc liền kề, vẫn liên thông.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_027",
+      "name": "Diagonal Echo",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "echo",
+        "translate"
+      ],
+      "effect_vi": "Lặp shape ở vị trí dời ngang một ô sau 1 beat; vị trí mới phải hợp lệ, hit 50%.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_028",
+      "name": "Shape Exchange",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "two tokens",
+      "tags": [
+        "economy",
+        "shape"
+      ],
+      "effect_vi": "Đổi chỗ hai Block token trong thanh chờ, không thêm hoặc mất ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_029",
+      "name": "Pocket Square",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "bank",
+        "token"
+      ],
+      "effect_vi": "Dự trữ một ô rời làm Token đơn cho lần sau, không ghép vào shape đang dùng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_030",
+      "name": "Conserve Form",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "5+",
+      "tags": [
+        "resource",
+        "shape"
+      ],
+      "effect_vi": "Sau khi dập Block 5+ ô, xác suất giữ lại Token tăng (đề xuất 30%).",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_031",
+      "name": "Shape Refund",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "economy",
+        "miss"
+      ],
+      "effect_vi": "Nếu kỹ năng không đánh trúng mục tiêu, hoàn lại một phần năng lượng Block.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_032",
+      "name": "First Tile Priority",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "sequence",
+        "control"
+      ],
+      "effect_vi": "Chọn ô bắt đầu cho kỹ năng chuỗi trong các ô Block đã chạm.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_033",
+      "name": "Last Tile Focus",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "sequence",
+        "damage"
+      ],
+      "effect_vi": "Đòn cuối của chuỗi Block có bonus nếu kẻ địch vẫn ở ô đó.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_034",
+      "name": "Grid Fit",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "pit",
+        "utility"
+      ],
+      "effect_vi": "Cho phép chọn nhanh góc xoay tối ưu để tránh hố; không dịch chuyển đối tượng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "block_035",
+      "name": "Lattice Rewrite",
+      "group": "BLOCK",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "reshape",
+        "rare"
+      ],
+      "effect_vi": "Một lần mỗi trận đổi shape Token bất kỳ thành shape khác cùng kích cỡ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_001",
+      "name": "Burn Seed",
+      "group": "STATUS",
+      "affinity": "Mage",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "status"
+      ],
+      "effect_vi": "Dập tạo 1 Burn ở mỗi ô đánh trúng, sát thương ban đầu thấp.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_002",
+      "name": "Ash Debt",
+      "group": "STATUS",
+      "affinity": "Mage",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "convert"
+      ],
+      "effect_vi": "Mỗi 3 stack Burn trên kẻ địch chuyển thành thêm một hit vuông 1 lần rồi giảm 1 stack.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_003",
+      "name": "Lingering Ember",
+      "group": "STATUS",
+      "affinity": "Mage",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "duration"
+      ],
+      "effect_vi": "Burn kéo dài thêm 1 beat nhưng sát thương mỗi tick không tăng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_004",
+      "name": "Furnace Pressure",
+      "group": "STATUS",
+      "affinity": "Mage",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "fragile"
+      ],
+      "effect_vi": "Đòn trúng mục tiêu đã Burn thêm 1 Fragile ngắn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_005",
+      "name": "Flare Clock",
+      "group": "STATUS",
+      "affinity": "Mage",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "delayed"
+      ],
+      "effect_vi": "Sau 2 beat, các ô từng trúng Burn của cast này nhận thêm một dấu cảnh báo rồi nổ vuông.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_006",
+      "name": "Poison Seed",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "poison",
+        "status"
+      ],
+      "effect_vi": "Gây Poison 1 lên kẻ trúng, chỉ một proc cho mỗi cast.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_007",
+      "name": "Venom Bloom",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "poison",
+        "spread"
+      ],
+      "effect_vi": "Đòn trên mục tiêu đủ 3 Poison tạo thêm 1 Poison cho kẻ ở ô kề hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_008",
+      "name": "Toxic Memory",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "poison",
+        "mark"
+      ],
+      "effect_vi": "Khi Poison tick, đánh dấu ô hiện tại làm vị trí mục tiêu ưu tiên của skill kế.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_009",
+      "name": "Rotting Edge",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "poison",
+        "guardbreak"
+      ],
+      "effect_vi": "Poison giảm 1 tầng Guard trước khi tick damage, tối đa một lần mỗi beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_010",
+      "name": "Venom Harvest",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "poison",
+        "economy"
+      ],
+      "effect_vi": "Hạ gục kẻ Poison hồi một ít năng lượng, giới hạn một lần mỗi trận.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_011",
+      "name": "Frost Mark",
+      "group": "STATUS",
+      "affinity": "Cleric",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "frost",
+        "slow"
+      ],
+      "effect_vi": "Đặt 1 stack Slow trên ô đánh trúng bằng hiệu ứng vuông jade-white.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_012",
+      "name": "Ice Chain",
+      "group": "STATUS",
+      "affinity": "Cleric",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "frost",
+        "freeze"
+      ],
+      "effect_vi": "Nếu mục tiêu đã Slow, cast này chuyển một Slow thành Freeze ngắn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_013",
+      "name": "Cold Shatter",
+      "group": "STATUS",
+      "affinity": "Cleric",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "frost",
+        "shatter"
+      ],
+      "effect_vi": "Gây thêm damage lên đối tượng Freeze rồi gỡ Freeze để chống khóa vô hạn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_014",
+      "name": "Crystal Guard",
+      "group": "STATUS",
+      "affinity": "Cleric",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "frost",
+        "guard"
+      ],
+      "effect_vi": "Khi chịu hit trong lúc đang Guard, kẻ đánh nhận Slow nhẹ, có hồi chiêu.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_015",
+      "name": "Pale Stillness",
+      "group": "STATUS",
+      "affinity": "Cleric",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "frost",
+        "debuff"
+      ],
+      "effect_vi": "Giảm tốc hồi chiêu của kẻ đã trúng băng trong thời gian ngắn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_016",
+      "name": "Root Point",
+      "group": "STATUS",
+      "affinity": "Ranger",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "root",
+        "trap"
+      ],
+      "effect_vi": "Đòn đánh áp Root 0.6s, nhưng không thể lặp lên cùng kẻ trong 2 beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_017",
+      "name": "Briar Lock",
+      "group": "STATUS",
+      "affinity": "Ranger",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "root",
+        "combo"
+      ],
+      "effect_vi": "Trap trúng kẻ Root tăng 1 sát thương và giải Root ngay sau hit.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_018",
+      "name": "Mud Step",
+      "group": "STATUS",
+      "affinity": "Ranger",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "slow",
+        "terrain"
+      ],
+      "effect_vi": "Các ô chọn trống thành Slow hazard trong 2 beat, không phải pit.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_019",
+      "name": "Snare Relay",
+      "group": "STATUS",
+      "affinity": "Ranger",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "trap",
+        "chain"
+      ],
+      "effect_vi": "Nếu một bẫy tự kích nổ, tạo dấu bẫy mới ở ô kề hợp lệ, giới hạn 1.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_020",
+      "name": "Bark Hold",
+      "group": "STATUS",
+      "affinity": "Ranger",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "root",
+        "guard"
+      ],
+      "effect_vi": "Cấp Guard nhỏ cho mình và Root lên kẻ trên ô mục tiêu nếu đánh trúng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_021",
+      "name": "Mark Target",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "mark",
+        "status"
+      ],
+      "effect_vi": "Dấu Mark tồn tại 2 beat; hit đầu từ skill khác tiêu thụ để nhận bonus.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_022",
+      "name": "Double Mark",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "mark",
+        "multi"
+      ],
+      "effect_vi": "Mark trên tối đa hai kẻ khác nhau trong cùng Block; không tăng stack trên một kẻ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_023",
+      "name": "Expose Armor",
+      "group": "STATUS",
+      "affinity": "Knight",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "fragile",
+        "guardbreak"
+      ],
+      "effect_vi": "Gây Fragile trong một beat nếu hit phá được Guard.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_024",
+      "name": "Weak Spot",
+      "group": "STATUS",
+      "affinity": "Rogue",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "mark",
+        "combo"
+      ],
+      "effect_vi": "Nếu có Mark, đòn kế có thêm hit nhưng không dùng lại Mark để kích Echo.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_025",
+      "name": "Stagger Stamp",
+      "group": "STATUS",
+      "affinity": "Knight",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "interrupt",
+        "control"
+      ],
+      "effect_vi": "Hit trên mục tiêu đang charge kéo dài charge một nhịp nếu có thể interrupt.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_026",
+      "name": "Purifying Square",
+      "group": "STATUS",
+      "affinity": "Cleric",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "cleanse",
+        "heal"
+      ],
+      "effect_vi": "Xóa một stack Poison/Burn của bản thân khi đánh trúng mục tiêu.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_027",
+      "name": "Status Recycle",
+      "group": "STATUS",
+      "affinity": "Cleric",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "cleanse",
+        "guard"
+      ],
+      "effect_vi": "Khi xóa debuff, nhận 1 Guard nhỏ; giới hạn 1/beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_028",
+      "name": "Fragile Echo",
+      "group": "STATUS",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "fragile",
+        "echo"
+      ],
+      "effect_vi": "Tấn công lên Fragile cho thêm 1 square shard hit 50%, không tự proc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_029",
+      "name": "Burden Shift",
+      "group": "STATUS",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "convert",
+        "mark"
+      ],
+      "effect_vi": "Chuyển một Slow bản thân thành Mark lên một kẻ trên ô đã chọn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "status_030",
+      "name": "Clean Slate",
+      "group": "STATUS",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "cleanse",
+        "purge"
+      ],
+      "effect_vi": "Xóa 1 debuff của bản thân và 1 buff của địch trên cùng nhịp; không gây hit.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_001",
+      "name": "Steel Guard",
+      "group": "DEF",
+      "affinity": "Knight",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "defense"
+      ],
+      "effect_vi": "Nhận một lượng Guard nhỏ trong 2 beat; giảm tốc chạy 0.3s.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_002",
+      "name": "Shield Corner",
+      "group": "DEF",
+      "affinity": "Knight",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "position"
+      ],
+      "effect_vi": "Nếu đứng sát góc hợp lệ, Guard tăng một chút nhưng không chặn mọi hướng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_003",
+      "name": "Bastion Step",
+      "group": "DEF",
+      "affinity": "Knight",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "move",
+        "guard"
+      ],
+      "effect_vi": "Bước sang một ô an toàn trước khi Guard xuất hiện; không qua hố.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_004",
+      "name": "Guard Counter",
+      "group": "DEF",
+      "affinity": "Knight",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "counter",
+        "guard"
+      ],
+      "effect_vi": "Sau khi đỡ đúng lúc, skill tiếp theo có 1 hit vuông bonus, giới hạn một proc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_005",
+      "name": "Brace Line",
+      "group": "DEF",
+      "affinity": "Knight",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "row"
+      ],
+      "effect_vi": "Nếu warning là thanh thẳng, nhận Guard tăng, chỉ dùng mỗi 4 beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_006",
+      "name": "Quiet Dodge",
+      "group": "DEF",
+      "affinity": "Rogue",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "dodge",
+        "move"
+      ],
+      "effect_vi": "Bước nhanh một ô hợp lệ, không phải teleport, hồi chiêu ngắn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_007",
+      "name": "Afterimage Square",
+      "group": "DEF",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "dodge",
+        "mark"
+      ],
+      "effect_vi": "Né đúng trước hit đặt dấu Mark ở kẻ gần nhất, không tạo clone nhân vật.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_008",
+      "name": "Side Slip",
+      "group": "DEF",
+      "affinity": "Rogue",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "move",
+        "speed"
+      ],
+      "effect_vi": "Chỉ dịch ngang một ô hợp lệ; cast tiếp giảm charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_009",
+      "name": "Corner Escape",
+      "group": "DEF",
+      "affinity": "Rogue",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "move",
+        "edge"
+      ],
+      "effect_vi": "Nếu đang ở rìa board, có thể chọn dịch theo trục còn lại an toàn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_010",
+      "name": "Hidden Footing",
+      "group": "DEF",
+      "affinity": "Rogue",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "dodge",
+        "trap"
+      ],
+      "effect_vi": "Trong một nhịp sau né, bẫy tự đặt không mất token.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_011",
+      "name": "Rooted Stance",
+      "group": "DEF",
+      "affinity": "Ranger",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "anchor"
+      ],
+      "effect_vi": "Đổi một bước di chuyển thành Guard để chống knockback, không chặn status.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_012",
+      "name": "Forest Cover",
+      "group": "DEF",
+      "affinity": "Ranger",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "position"
+      ],
+      "effect_vi": "Guard bổ sung khi đứng trên ô không có enemy warning ở cuối charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_013",
+      "name": "Bridge Sense",
+      "group": "DEF",
+      "affinity": "Ranger",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "pit",
+        "preview"
+      ],
+      "effect_vi": "Hiện ô sắp biến thành pit thêm 1 beat; không đổi logic map.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_014",
+      "name": "Rapid Retreat",
+      "group": "DEF",
+      "affinity": "Ranger",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "move",
+        "postcast"
+      ],
+      "effect_vi": "Lùi một ô hợp lệ sau khi đặt Block, không đi vào vùng đang warning.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_015",
+      "name": "Snare Evade",
+      "group": "DEF",
+      "affinity": "Ranger",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "move",
+        "trap"
+      ],
+      "effect_vi": "Khi né thành công tạo một trap tại ô đã rời (nếu hợp lệ).",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_016",
+      "name": "Ivory Ward",
+      "group": "DEF",
+      "affinity": "Cleric",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "block"
+      ],
+      "effect_vi": "Cấp Guard dựa trên số ô của Block đang dùng, tối đa 5 ô tính.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_017",
+      "name": "Square Sanctuary",
+      "group": "DEF",
+      "affinity": "Cleric",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "terrain"
+      ],
+      "effect_vi": "Tạo một ô hỗ trợ trên phe mình giúp giảm một hit tiếp theo.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_018",
+      "name": "Healing Lattice",
+      "group": "DEF",
+      "affinity": "Cleric",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "heal",
+        "position"
+      ],
+      "effect_vi": "Hồi HP nhỏ nếu đứng trên một ô an toàn khi cast kết thúc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_019",
+      "name": "Silver Exchange",
+      "group": "DEF",
+      "affinity": "Cleric",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "heal",
+        "guard"
+      ],
+      "effect_vi": "Đổi 1 Guard hiện có thành hồi máu tức thời, giới hạn 1/lượt charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_020",
+      "name": "Last Shelter",
+      "group": "DEF",
+      "affinity": "Cleric",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "emergency",
+        "guard"
+      ],
+      "effect_vi": "Khi sắp về 0 HP, tự tạo một Guard bảo hiểm 1 lần mỗi trận.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_021",
+      "name": "Ice Footing",
+      "group": "DEF",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "resist",
+        "move"
+      ],
+      "effect_vi": "Không bị Slow từ một hazard trong 2 beat, không miễn hoàn toàn Freeze.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_022",
+      "name": "Stone Pivot",
+      "group": "DEF",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "move",
+        "shape"
+      ],
+      "effect_vi": "Đổi vị trí trong một hàng hoặc cột 1 ô trước khi hiệu ứng Block kết thúc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_023",
+      "name": "Emergency Tile",
+      "group": "DEF",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "self",
+      "tags": [
+        "terrain",
+        "restore"
+      ],
+      "effect_vi": "Khôi phục một ô pit đã đánh dấu từ trước thành ô tạm 2 beat; không tạo đường không hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_024",
+      "name": "Shatter Shield",
+      "group": "DEF",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "guard",
+        "shatter"
+      ],
+      "effect_vi": "Đỡ một hit rồi tạo tối đa 2 mảnh vuông ở ô đang đứng, không gây sát thương địch.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "def_025",
+      "name": "Safe Passage",
+      "group": "DEF",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "self",
+      "tags": [
+        "dodge",
+        "resist"
+      ],
+      "effect_vi": "Sau khi né một warning, lần di chuyển kế bỏ qua một Slow hazard, không đi qua pit.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_001",
+      "name": "First Spark",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "economy",
+        "opening"
+      ],
+      "effect_vi": "Skill đầu mỗi trận được giảm 1 năng lượng nếu có ít nhất 1 token hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_002",
+      "name": "Second Wind",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "combo",
+        "economy"
+      ],
+      "effect_vi": "Sau 2 cast liên tiếp trúng, hồi 1 năng lượng, có cooldown nội bộ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_003",
+      "name": "Three Stamp Rhythm",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "combo",
+        "echo"
+      ],
+      "effect_vi": "Đòn thứ ba liên tiếp thành công gây thêm một hit 50% lên ô cuối, không đẻ proc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_004",
+      "name": "Tile Accountant",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "economy",
+        "area"
+      ],
+      "effect_vi": "Mỗi ô riêng biệt trúng trong cast cộng 1 điểm charge, giới hạn 4.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_005",
+      "name": "Empty-Slot Dividend",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "economy",
+        "slots"
+      ],
+      "effect_vi": "Nếu có HUD slot Block trống, kỹ năng kế giảm thời gian charge.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_006",
+      "name": "Guard Dividend",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "guard",
+        "economy"
+      ],
+      "effect_vi": "Mỗi lần Guard hấp thụ hit nhận 1 năng lượng, tối đa một mỗi beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_007",
+      "name": "Status Bank",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "status",
+        "bank"
+      ],
+      "effect_vi": "Lưu lại một stack debuff đã tiêu thụ cho skill khác, giới hạn 2.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_008",
+      "name": "Chain Ledger",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "chain",
+        "scaling"
+      ],
+      "effect_vi": "Mỗi chain hit trong cast tăng hit cuối 10%, cap 3 stacks.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_009",
+      "name": "Combo Reset",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "combo",
+        "guard"
+      ],
+      "effect_vi": "Chủ động xóa combo count để hồi một chút Guard, một lần mỗi 4 beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_010",
+      "name": "Card Sifter",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "draw",
+        "economy"
+      ],
+      "effect_vi": "Đổi một Skill Card chờ thành card khác cùng rarity từ deck, tốn 1 năng lượng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_011",
+      "name": "Block Sifter",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "token",
+        "economy"
+      ],
+      "effect_vi": "Đổi Block Token chờ sang token khác cùng size và shape hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_012",
+      "name": "Pocket Cache",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "bank",
+        "token"
+      ],
+      "effect_vi": "Giữ một token đã dùng vào bộ nhớ một lần trong encounter, không giữ toàn hand.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_013",
+      "name": "Precise Timing",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "timing",
+        "guard"
+      ],
+      "effect_vi": "Dập trong 0.2s trước enemy impact được bonus guard ngắn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_014",
+      "name": "Clockwork Charge",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "charge",
+        "economy"
+      ],
+      "effect_vi": "Không dùng skill trong 2 beat, skill kế giảm 1 năng lượng; reset khi đánh.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_015",
+      "name": "Echo Reserve",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "echo",
+        "resource"
+      ],
+      "effect_vi": "Tích 2 điểm combo để cấp một lần repeat 50% không tái kích proc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_016",
+      "name": "Skilled Rotation",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "rotate",
+        "mark"
+      ],
+      "effect_vi": "Sau mỗi lần xoay đúng 90 độ thành công, cast tiếp thêm 1 Mark nhẹ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_017",
+      "name": "Pity Token",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "bar",
+        "accessibility"
+      ],
+      "effect_vi": "Nếu ba token gần nhất không đặt được, lần tiếp theo bảo đảm token 1–3 ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_018",
+      "name": "Merchant's Edge",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 0,
+      "target_shape_rule": "meta",
+      "tags": [
+        "shop",
+        "economy"
+      ],
+      "effect_vi": "Lần mua skill đầu mỗi shop giảm giá nhỏ, không thêm sức mạnh trong trận.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_019",
+      "name": "Scrap Recovery",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 0,
+      "target_shape_rule": "meta",
+      "tags": [
+        "shop",
+        "remove"
+      ],
+      "effect_vi": "Gỡ một card yếu ngoài combat nhận coins và đổi lấy one-use token.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_020",
+      "name": "Deep Pockets",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 0,
+      "target_shape_rule": "meta",
+      "tags": [
+        "slots",
+        "economy"
+      ],
+      "effect_vi": "Tăng số token lưu trữ +1 nhưng làm chậm tốc xuất hiện ban đầu.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_021",
+      "name": "Rare Momentum",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "rarity",
+        "combo"
+      ],
+      "effect_vi": "Khi dùng rare card, skill common kế tăng guard/tốc charge thay vì damage thô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_022",
+      "name": "Fragile Engine",
+      "group": "COMBO",
+      "affinity": "Neutral",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "fragile",
+        "resource"
+      ],
+      "effect_vi": "Khi hạ kẻ có Fragile, nhận một token đơn 1 ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_023",
+      "name": "Burn Cycle",
+      "group": "COMBO",
+      "affinity": "Mage",
+      "rarity": "uncommon",
+      "proposed_cost": 2,
+      "target_shape_rule": "any",
+      "tags": [
+        "burn",
+        "engine"
+      ],
+      "effect_vi": "Burn bị tiêu thụ hồi một phần charge; không kích chuỗi vô hạn.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_024",
+      "name": "Poison Cycle",
+      "group": "COMBO",
+      "affinity": "Rogue",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "poison",
+        "engine"
+      ],
+      "effect_vi": "Poison kết liễu mục tiêu hồi một lượt Mark, giới hạn 1 per enemy.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "combo_025",
+      "name": "Support Cycle",
+      "group": "COMBO",
+      "affinity": "Cleric",
+      "rarity": "common",
+      "proposed_cost": 1,
+      "target_shape_rule": "any",
+      "tags": [
+        "heal",
+        "economy"
+      ],
+      "effect_vi": "Mỗi khi hồi máu thật sự, skill gây Guard kế tiếp giảm chi phí; giới hạn 1/beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_001",
+      "name": "Odd Hexa",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6",
+      "tags": [
+        "odd",
+        "6tile"
+      ],
+      "effect_vi": "Dùng một shape liên thông bất quy tắc đúng 6 ô, mỗi ô hit 1 lần rồi mất token.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_002",
+      "name": "Odd Hepta",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "size7",
+      "tags": [
+        "odd",
+        "7tile"
+      ],
+      "effect_vi": "Dùng shape bất quy tắc đúng 7 ô, tốn charge dài và giới hạn một lần encounter.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_003",
+      "name": "Magenta Relay",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "chain"
+      ],
+      "effect_vi": "Từ ô đầu của Odd, các ô kế trong shape resolve theo chuỗi 0.25s/ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_004",
+      "name": "Odd Mirror",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "reflect"
+      ],
+      "effect_vi": "Cho phép phản chiếu một shape Odd trước khi đặt; final pattern luôn preview đầy đủ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_005",
+      "name": "Odd Twin",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "split"
+      ],
+      "effect_vi": "Tách một Odd thành hai shape liên thông cùng tổng ô, mỗi fragment cast 50%.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_006",
+      "name": "Odd Anchor",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "trap"
+      ],
+      "effect_vi": "Giữ lại ô trung tâm của Odd thành trap một beat sau khi stamp.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_007",
+      "name": "Odd Refund",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "economy"
+      ],
+      "effect_vi": "Nếu Odd không đánh trúng, lấy lại một nửa năng lượng, không phục hồi token.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_008",
+      "name": "Odd Crown",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "mark"
+      ],
+      "effect_vi": "Đòn cuối của Odd được thêm Mark, không cộng thêm tile.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_009",
+      "name": "Odd Stitch",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "merge"
+      ],
+      "effect_vi": "Ghép một Block 4 ô với Block 2 hoặc 3 ô nếu liên thông, tối đa 7 ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_010",
+      "name": "Odd Chime",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "size6-7",
+      "tags": [
+        "odd",
+        "root"
+      ],
+      "effect_vi": "Một Odd vừa stamp trúng kẻ đang Root giải Root và gây hit 50%.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_011",
+      "name": "Golden Afterstamp",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "echo"
+      ],
+      "effect_vi": "Trong một lần cast, lặp *cùng* shape sau 1 beat ở 50% damage; không tự proc.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_012",
+      "name": "Primal Fracture",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "shatter"
+      ],
+      "effect_vi": "Bắn mảnh vuông trên các ô đã đánh trúng, mỗi ô thêm 1 hit nhỏ; không có projectile.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_013",
+      "name": "Lattice Bridge",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "legendary",
+        "terrain"
+      ],
+      "effect_vi": "Khôi phục tối đa 2 pit đã đánh dấu trên grid của mình trong 2 beat.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_014",
+      "name": "Form Crown",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "size"
+      ],
+      "effect_vi": "Giảm 1 charge nếu shape >=5 ô, tăng hồi chiêu nếu <=2 ô.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_015",
+      "name": "Echo Labyrinth",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "3+",
+      "tags": [
+        "legendary",
+        "echo"
+      ],
+      "effect_vi": "Trên target thuộc ít nhất 3 ô liên thông, lặp ô đầu và cuối ở 40%, 1 lần.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_016",
+      "name": "Time Fold",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "time"
+      ],
+      "effect_vi": "Đổi thứ tự resolve của hai skill kế tiếp, không hủy warning enemy.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_017",
+      "name": "Broken Symmetry",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "shape"
+      ],
+      "effect_vi": "Được xoay và phản chiếu ngay trước cast, nếu chọn được shape hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_018",
+      "name": "Status Loom",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "status"
+      ],
+      "effect_vi": "Gộp một Burn và một Poison thành Fragile cộng một hit nhỏ, tiêu thụ cả hai.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_019",
+      "name": "Ivory Reversal",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "counter"
+      ],
+      "effect_vi": "Khi Guard chặn hit, tạo mục tiêu phản công trên 1 ô kẻ tấn công đang đứng.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_020",
+      "name": "Chrysalis Block",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "3-5",
+      "tags": [
+        "legendary",
+        "reshape"
+      ],
+      "effect_vi": "Token 3–5 ô thay đổi shape cùng size sau lần đầu miss, chỉ một lần.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_021",
+      "name": "Royal Split",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "size7",
+      "tags": [
+        "legendary",
+        "split"
+      ],
+      "effect_vi": "Một token 7 ô chia thành 3 mảnh liên thông (min 1 ô), cast mỗi mảnh ở 30%.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_022",
+      "name": "Primal Memory",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "bank"
+      ],
+      "effect_vi": "Ghi nhớ một shape đã dùng; lần sau dùng lại nếu đang có token cùng size.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_023",
+      "name": "Silent Cascade",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "chain"
+      ],
+      "effect_vi": "Đòn giết một mục tiêu có Mark lặp 1 ô stamp lên kẻ tiếp theo nếu hợp lệ.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_024",
+      "name": "Heart Temper",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "legendary",
+      "proposed_cost": 3,
+      "target_shape_rule": "self",
+      "tags": [
+        "legendary",
+        "survival"
+      ],
+      "effect_vi": "Trong trận boss, lần đầu dưới 30% HP nhận một lớp Guard và giảm 1 Slow.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "odd_025",
+      "name": "Last Pattern",
+      "group": "ODD",
+      "affinity": "Neutral",
+      "rarity": "rare",
+      "proposed_cost": 3,
+      "target_shape_rule": "any",
+      "tags": [
+        "legendary",
+        "buildaround"
+      ],
+      "effect_vi": "Sau 4 shape khác nhau được dùng, shape thứ năm tạo thêm 1 hit vuông 50% trên ô cuối.",
+      "status": "PROPOSED"
+    }
+  ]
+}

@@ -23,38 +23,36 @@ extends Node2D
 ## Input dedup as in RunHudView (emulated copies — device == InputEvent.DEVICE_ID_EMULATION — are
 ## consumed but never act). Placeholder art drawn in code; all strings are TEXT_* keys through tr().
 
-const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const HEADER_COLOR: Color = Color(0.4, 0.35, 0.3)
-## Progress strip segments: passed floor, current floor, later floor, the final match.
-const STRIP_PAST_BACK: Color = Color(0.82, 0.9, 0.8)
-const STRIP_PAST_OUTLINE: Color = Color(0.2, 0.65, 0.3)
-const STRIP_CURRENT_BACK: Color = Color(1.0, 0.93, 0.7)
-const STRIP_CURRENT_OUTLINE: Color = Color(0.95, 0.72, 0.15)
-const STRIP_FUTURE_BACK: Color = Color(0.8, 0.78, 0.74)
-const STRIP_FUTURE_OUTLINE: Color = Color(0.58, 0.56, 0.52)
-const STRIP_FINAL_BACK: Color = Color(0.45, 0.14, 0.12)
-const STRIP_FINAL_OUTLINE: Color = Color(0.75, 0.15, 0.12)
-const STRIP_TEXT: Color = Color(0.15, 0.12, 0.1)
-const STRIP_DIM_TEXT: Color = Color(0.5, 0.48, 0.45)
-const STRIP_FINAL_TEXT: Color = Color(1.0, 0.85, 0.6)
-## Region cards: body, outline (rest / pressed / selected), the shadow left under a raised card,
-## the header band colours (by card position, left first) and the text colours.
-const CARD_BACK: Color = Color(1.0, 0.97, 0.9)
-const CARD_OUTLINE: Color = Color(0.6, 0.52, 0.4)
-const CARD_PRESSED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
-const CARD_SELECTED_OUTLINE: Color = Color(0.95, 0.72, 0.15)
-const CARD_SHADOW: Color = Color(0.0, 0.0, 0.0, 0.25)
-const CARD_ACCENTS: Array[Color] = [Color(0.18, 0.42, 0.36), Color(0.5, 0.2, 0.2), Color(0.3, 0.28, 0.5)]
-const CARD_NAME_TEXT: Color = Color(1.0, 0.97, 0.9)
-const CARD_TEXT: Color = Color(0.15, 0.12, 0.1)
-const CARD_DESC_TEXT: Color = Color(0.35, 0.3, 0.25)
-const CARD_BOSS_TEXT: Color = Color(0.7, 0.15, 0.12)
-const CARD_HINT_TEXT: Color = Color(0.5, 0.42, 0.3)
-const CARD_HINT_SELECTED_TEXT: Color = Color(0.75, 0.5, 0.05)
-const NOTICE_BACK: Color = Color(0.1, 0.09, 0.08, 0.96)
-const NOTICE_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const NOTICE_TEXT: Color = Color(0.95, 0.9, 0.78)
-const NOTICE_SUB_TEXT: Color = Color(0.75, 0.72, 0.65)
+## 2026-10-31 (whole-game HUD skin): colours for the dark screen background (HudSkin.SCREEN_BG); strip
+## segments and region cards are HudSkin.card faces (GRID_LIGHT 3 px edge when current / selected).
+const TITLE_COLOR: Color = HudSkin.IVORY
+const HEADER_COLOR: Color = HudSkin.TEXT
+## Progress strip segments: passed floor (green edge), current floor, later floor (faded), the final match.
+const STRIP_PAST_OUTLINE: Color = Color("58D468")
+const STRIP_FUTURE_OUTLINE: Color = HudSkin.CARD_LINE
+const STRIP_FINAL_BACK: Color = Color("3D1F2A")
+const STRIP_FINAL_OUTLINE: Color = Color("C7714A")
+const STRIP_TEXT: Color = HudSkin.TEXT
+const STRIP_DIM_TEXT: Color = HudSkin.TEXT_DIM
+const STRIP_FINAL_TEXT: Color = HudSkin.GRID_LIGHT
+## Region cards: outline (rest / pressed), the shadow left under a raised card, the header band colours
+## (by card position, left first) and the text colours.
+const CARD_OUTLINE: Color = HudSkin.CARD_LINE
+const CARD_PRESSED_OUTLINE: Color = HudSkin.IVORY
+const CARD_SHADOW: Color = Color(0.0, 0.0, 0.0, 0.45)
+const CARD_ACCENTS: Array[Color] = [Color("24473F"), Color("4A2A2C"), Color("35315A")]
+const CARD_NAME_TEXT: Color = HudSkin.IVORY
+const CARD_TEXT: Color = HudSkin.TEXT
+const CARD_DESC_TEXT: Color = HudSkin.TEXT_DIM
+## The boss line is gold, not red (red is kept for enemy telegraphs).
+const CARD_BOSS_TEXT: Color = HudSkin.GRID_LIGHT
+const CARD_HINT_TEXT: Color = HudSkin.TEXT_DIM
+const CARD_HINT_SELECTED_TEXT: Color = HudSkin.GRID_LIGHT
+const NOTICE_BACK: Color = Color(0.118, 0.106, 0.141, 0.97)
+const NOTICE_OUTLINE: Color = HudSkin.IVORY
+const NOTICE_TEXT: Color = HudSkin.IVORY
+const NOTICE_SUB_TEXT: Color = HudSkin.TEXT_DIM
+const CLEAR: Color = Color(0.0, 0.0, 0.0, 0.0)
 
 const OUTLINE_WIDTH: float = 3.0
 const SELECTED_OUTLINE_WIDTH: float = 8.0
@@ -156,6 +154,8 @@ var _notice_args: Array = []
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 	_strip = RelicStrip.new()
 	add_child(_strip)
@@ -330,10 +330,10 @@ func _draw_header(vp: Vector2) -> void:
 	var hp: float = max_hp if run.hp < 0.0 else minf(run.hp, max_hp)
 	var label: String = tr(str(character.get("name_key", run.character_id))) + SEPARATOR + tr(TEXT_HP) % [ceili(hp), ceili(max_hp)]
 	var rect: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + HEADER_FONT_SIZE * 0.35), label, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x, HEADER_FONT_SIZE, HEADER_COLOR)
+	MenuFont.text(self, Vector2(rect.position.x, rect.get_center().y + HEADER_FONT_SIZE * 0.35), label, HEADER_FONT_SIZE, HEADER_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x)
 	# Story 033: the gold count (code-drawn coin + number) left of the hero label.
-	var label_width: float = ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, HEADER_FONT_SIZE).x
-	var coin_left: float = ShopView.draw_gold(self, rect.end.x - label_width - GOLD_GAP, rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
+	var label_width: float = HudSkin.text_width(label, HEADER_FONT_SIZE)
+	var coin_left: float = ShopView.draw_gold(self, rect.end.x - label_width - GOLD_GAP, rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, HudSkin.GRID_LIGHT)
 	# Story 042: the floor title is centred in the free span between the "Block set" button and the
 	# gold coin (never under either), shrunk until it fits that span.
 	var count: int = _flow.get_floor_count()
@@ -343,15 +343,14 @@ func _draw_header(vp: Vector2) -> void:
 	var span_left: float = deck_button.end.x + TITLE_SIDE_GAP
 	var span: Rect2 = Rect2(span_left, title.position.y, maxf(coin_left - TITLE_SIDE_GAP - span_left, 0.0), title.size.y)
 	var size: int = _title_font_size(text, span.size.x)
-	_text(span, span.get_center().y + size * 0.35, text, size, TITLE_COLOR)
+	_text(span, span.get_center().y + size * 0.35, text, size, TITLE_COLOR, true)
 
 
 # Story 042: the floor title's font, shrunk one step at a time from TITLE_FONT_SIZE until
 # [param text] fits [param width]; never below TITLE_MIN_FONT_SIZE (draw_string clips the rest).
 func _title_font_size(text: String, width: float) -> int:
-	var font: Font = ThemeDB.fallback_font
 	var size: int = TITLE_FONT_SIZE
-	while size > TITLE_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > width:
+	while size > TITLE_MIN_FONT_SIZE and HudSkin.text_width(text, size, true) > width:
 		size -= 1
 	return size
 
@@ -364,34 +363,31 @@ func _draw_strip(vp: Vector2) -> void:
 	var segments: Array[Rect2] = ScreenLayout.world_strip_segment_rects(vp, count + 1)
 	for i: int in segments.size():
 		var rect: Rect2 = segments[i]
-		var back: Color = STRIP_FUTURE_BACK
-		var outline: Color = STRIP_FUTURE_OUTLINE
 		var width: float = OUTLINE_WIDTH
 		var color: Color = STRIP_DIM_TEXT
 		var label: String = tr(TEXT_STRIP_FLOOR) % (i + 1)
 		var region: String = ""
+		var cuts: Array = [0.0, HudSkin.button_cut(rect), 0.0, 0.0]
 		if i == count:
-			back = STRIP_FINAL_BACK
-			outline = STRIP_CURRENT_OUTLINE if floor_index >= count else STRIP_FINAL_OUTLINE
-			width = SELECTED_OUTLINE_WIDTH if floor_index >= count else OUTLINE_WIDTH
+			var current_final: bool = floor_index >= count
+			width = SELECTED_OUTLINE_WIDTH if current_final else OUTLINE_WIDTH
+			HudSkin.panel(self, rect, cuts, STRIP_FINAL_BACK, HudSkin.GRID_LIGHT if current_final else STRIP_FINAL_OUTLINE, 3.0 if current_final else HudSkin.PANEL_LINE_WIDTH)
 			color = STRIP_FINAL_TEXT
 			label = tr(TEXT_FINAL_NAME)
 		elif i < floor_index:
-			back = STRIP_PAST_BACK
-			outline = STRIP_PAST_OUTLINE
+			HudSkin.card(self, rect, STRIP_PAST_OUTLINE)
 			color = STRIP_TEXT
 		elif i == floor_index:
-			back = STRIP_CURRENT_BACK
-			outline = STRIP_CURRENT_OUTLINE
 			width = SELECTED_OUTLINE_WIDTH
+			HudSkin.card(self, rect, STRIP_FUTURE_OUTLINE, true)
 			color = STRIP_TEXT
 			region = tr(TEXT_CHOOSING)
+		else:
+			HudSkin.card(self, rect, STRIP_FUTURE_OUTLINE, false, true)
 		if i < count and i < path.size():
 			region = _flow.region_name(path[i])
-		draw_rect(rect, back)
-		draw_rect(rect, outline, false, width)
 		var inner: float = rect.size.x - width * 2.0
-		_text(rect, rect.position.y + rect.size.y * STRIP_FLOOR_BASELINE, label, _fit(label, inner, STRIP_FLOOR_FONT_SIZE), color)
+		_text(rect, rect.position.y + rect.size.y * STRIP_FLOOR_BASELINE, label, _fit(label, inner, STRIP_FLOOR_FONT_SIZE, true), color, true)
 		if not region.is_empty():
 			_text(rect, rect.position.y + rect.size.y * STRIP_REGION_BASELINE, region, _fit(region, inner, STRIP_REGION_FONT_SIZE), color)
 
@@ -401,29 +397,31 @@ func _draw_card(vp: Vector2, base: Rect2, region_id: String, index: int) -> void
 	var selected: bool = region_id == _selected
 	var rect: Rect2 = base
 	var outline: Color = CARD_OUTLINE
-	var width: float = OUTLINE_WIDTH
 	if selected:
-		draw_rect(Rect2(base.position + SHADOW_OFFSET, base.size), CARD_SHADOW)
+		HudSkin.panel(self, Rect2(base.position + SHADOW_OFFSET, base.size), [0.0, HudSkin.button_cut(base), 0.0, 0.0], CARD_SHADOW, CLEAR, 0.0)
 		rect.position.y -= ScreenLayout.world_card_raise(vp)
-		outline = CARD_SELECTED_OUTLINE
-		width = SELECTED_OUTLINE_WIDTH
 	elif UiButtons.is_pressed_at(self, ScreenLayout.world_card_touch_rect(vp, base)):
 		outline = CARD_PRESSED_OUTLINE
-		width = SELECTED_OUTLINE_WIDTH
 	var preview: Dictionary = _flow.region_preview(region_id)
-	draw_rect(rect, CARD_BACK)
-	draw_rect(Rect2(rect.position, Vector2(rect.size.x, rect.size.y * CARD_BAND_RATIO)), CARD_ACCENTS[index % CARD_ACCENTS.size()])
-	draw_rect(rect, outline, false, width)
+	# 2026-10-31: card face, the accent header band inside its chamfer, then the edge again on top of the band.
+	var cut: float = HudSkin.button_cut(rect)
+	HudSkin.card(self, rect, outline, selected)
+	var band: Rect2 = Rect2(rect.position, Vector2(rect.size.x, rect.size.y * CARD_BAND_RATIO))
+	HudSkin.panel(self, band, [0.0, cut, 0.0, 0.0], CARD_ACCENTS[index % CARD_ACCENTS.size()], CLEAR, 0.0)
+	HudSkin.panel(self, rect, [0.0, cut, 0.0, 0.0], CLEAR, HudSkin.GRID_LIGHT if selected else outline, 3.0 if (selected or outline == CARD_PRESSED_OUTLINE) else HudSkin.PANEL_LINE_WIDTH)
 	var inner: float = rect.size.x * (1.0 - CARD_INSET_RATIO * 2.0)
 	var region_name: String = str(preview.get("name", _flow.region_name(region_id)))
-	_card_line(rect, CARD_NAME_BASELINE, region_name, CARD_NAME_FONT_SIZE, CARD_NAME_TEXT, inner)
+	_card_line(rect, CARD_NAME_BASELINE, region_name, CARD_NAME_FONT_SIZE, CARD_NAME_TEXT, inner, true)
 	var desc: String = _preview_desc(preview)
 	if not desc.is_empty():
 		var top: float = rect.position.y + rect.size.y * CARD_DESC_TOP + CARD_DESC_FONT_SIZE
-		draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + rect.size.x * CARD_INSET_RATIO, top), desc, HORIZONTAL_ALIGNMENT_CENTER, inner, CARD_DESC_FONT_SIZE, CARD_DESC_MAX_LINES, CARD_DESC_TEXT)
+		var desc_pos := Vector2(rect.position.x + rect.size.x * CARD_INSET_RATIO, top)
+		var desc_font: Font = HudSkin.font()
+		draw_multiline_string_outline(desc_font, desc_pos, desc, HORIZONTAL_ALIGNMENT_CENTER, inner, CARD_DESC_FONT_SIZE, CARD_DESC_MAX_LINES, HudSkin.TEXT_OUTLINE_PX, HudSkin.TEXT_OUTLINE)
+		draw_multiline_string(desc_font, desc_pos, desc, HORIZONTAL_ALIGNMENT_CENTER, inner, CARD_DESC_FONT_SIZE, CARD_DESC_MAX_LINES, CARD_DESC_TEXT)
 	var boss: String = str(preview.get("boss_name", ""))
 	if not boss.is_empty():
-		_card_line(rect, CARD_BOSS_BASELINE, tr(TEXT_BOSS) % tr(boss), CARD_LINE_FONT_SIZE, CARD_BOSS_TEXT, inner)
+		_card_line(rect, CARD_BOSS_BASELINE, tr(TEXT_BOSS) % tr(boss), CARD_LINE_FONT_SIZE, CARD_BOSS_TEXT, inner, true)
 	var scaling: Dictionary = preview.get("floor_scaling", {})
 	var floor_number: int = _flow.get_floor() + 1
 	_card_line(rect, CARD_DIFFICULTY_BASELINE, tr(TEXT_DIFFICULTY) % [floor_number, _decimal(float(scaling.get("hp_mult", 1.0)))], CARD_LINE_FONT_SIZE, CARD_TEXT, inner)
@@ -465,38 +463,36 @@ func _decimal(value: float) -> String:
 
 func _draw_notice(vp: Vector2) -> void:
 	var band: Rect2 = ScreenLayout.map_notice_rect(vp)
-	draw_rect(band, NOTICE_BACK)
-	draw_rect(band, NOTICE_OUTLINE, false, OUTLINE_WIDTH)
+	HudSkin.panel(self, band, [0.0, HudSkin.BUTTON_CUT_MAX, 0.0, HudSkin.BUTTON_CUT_MAX], NOTICE_BACK, NOTICE_OUTLINE, OUTLINE_WIDTH)
 	var text: String = tr(_notice_key) % _notice_args if not _notice_args.is_empty() else tr(_notice_key)
-	_text(band, band.position.y + band.size.y * NOTICE_BASELINE, text, _fit(text, band.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0, NOTICE_FONT_SIZE), NOTICE_TEXT)
+	_text(band, band.position.y + band.size.y * NOTICE_BASELINE, text, _fit(text, band.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0, NOTICE_FONT_SIZE, true), NOTICE_TEXT, true)
 	_text(band, band.position.y + band.size.y * NOTICE_SUB_BASELINE, tr(TEXT_NOTICE_DISMISS), NOTICE_SUB_FONT_SIZE, NOTICE_SUB_TEXT)
 
 
 # A centred card line at baseline share [param share] of [param rect], shrunk to fit [param width].
-func _card_line(rect: Rect2, share: float, text: String, size: int, color: Color, width: float) -> void:
-	_text(rect, rect.position.y + rect.size.y * share, text, _fit(text, width, size), color)
+func _card_line(rect: Rect2, share: float, text: String, size: int, color: Color, width: float, bold: bool = false) -> void:
+	_text(rect, rect.position.y + rect.size.y * share, text, _fit(text, width, size, bold), color, bold)
 
 
-# Largest font size <= [param size] (never below MIN_FIT_FONT_SIZE) at which [param text] fits [param width].
-func _fit(text: String, width: float, size: int) -> int:
-	var font: Font = ThemeDB.fallback_font
+# Largest font size <= [param size] (never below MIN_FIT_FONT_SIZE) at which [param text] fits [param width]
+# in the HudSkin font ([param bold] picks Bold).
+func _fit(text: String, width: float, size: int, bold: bool = false) -> int:
 	var fitted: int = size
-	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+	while fitted > MIN_FIT_FONT_SIZE and HudSkin.text_width(text, fitted, bold) > width:
 		fitted -= 1
 	return fitted
 
 
-# Centred single-line text at baseline [param y] over the width of [param rect].
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# Centred single-line outlined HUD text at baseline [param y] over the width of [param rect] (Bold when [param bold]).
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
 # Story 031: the back button's font, shrunk until [param text] fits [param width] minus a small inset
 # ("Back to title" is wider than the 128 px button at BUTTON_FONT_SIZE).
 func _back_font_size(text: String, width: float) -> int:
-	var font: Font = ThemeDB.fallback_font
 	var size: int = BUTTON_FONT_SIZE
-	while size > BACK_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > width - BACK_TEXT_INSET * 2.0:
+	while size > BACK_MIN_FONT_SIZE and HudSkin.text_width(text, size, true) > width - BACK_TEXT_INSET * 2.0:
 		size -= 1
 	return size
 

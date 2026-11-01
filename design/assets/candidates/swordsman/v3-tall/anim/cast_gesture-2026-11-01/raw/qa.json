@@ -1,0 +1,179 @@
+{
+ "frames": [
+  "1.png",
+  "2.png",
+  "3.png",
+  "4.png",
+  "5.png",
+  "6.png",
+  "7.png",
+  "8.png"
+ ],
+ "checks": [
+  {
+   "check": "frame_count",
+   "status": "ok",
+   "value": 8,
+   "threshold": 8,
+   "detail": null
+  },
+  {
+   "check": "frame_size",
+   "status": "ok",
+   "value": "96x96",
+   "threshold": "96x96",
+   "detail": null
+  },
+  {
+   "check": "background_partial_alpha",
+   "status": "ok",
+   "value": 0,
+   "threshold": 0,
+   "detail": null
+  },
+  {
+   "check": "background_opaque_corners",
+   "status": "ok",
+   "value": 0,
+   "threshold": 0,
+   "detail": "frames whose four corners are opaque"
+  },
+  {
+   "check": "palette",
+   "status": "CROSSED",
+   "value": 0.1378,
+   "threshold": 0.005,
+   "detail": "1735 of 12595 opaque px off-palette, 85 distinct colours"
+  },
+  {
+   "check": "palette_far",
+   "status": "ok",
+   "value": 0.0028,
+   "threshold": 0.005,
+   "detail": "35 px farther than RGB distance 48 from every palette colour (a new colour family)"
+  },
+  {
+   "check": "identity",
+   "status": "ok",
+   "value": [
+    0.888,
+    0.884,
+    0.926,
+    0.936,
+    0.907,
+    0.772,
+    0.864,
+    0.847
+   ],
+   "threshold": "warn<0.65 error<0.45",
+   "detail": "worst frame 5 = 0.772"
+  },
+  {
+   "check": "size_drift",
+   "status": "CROSSED",
+   "value": [
+    1.079,
+    1.171,
+    1.051,
+    1.036,
+    1.038,
+    1.341,
+    1.011,
+    1.045
+   ],
+   "threshold": "0.72-1.32",
+   "detail": "frames out of range: [5]"
+  },
+  {
+   "check": "outlier_frame",
+   "status": "ok",
+   "value": [],
+   "threshold": "0.35x-2.75x median",
+   "detail": null
+  },
+  {
+   "check": "edge_clipping",
+   "status": "ok",
+   "value": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "threshold": 24,
+   "detail": "opaque px within 2 px of the left, right or top edge"
+  },
+  {
+   "check": "foot_row",
+   "status": "ok",
+   "value": [
+    79,
+    79,
+    79,
+    79,
+    79,
+    79,
+    79,
+    79
+   ],
+   "threshold": "row 79 +/- 9.6",
+   "detail": null
+  },
+  {
+   "check": "foot_x_planted",
+   "status": "NOT RUN: clip not marked --planted (steps / jumps move the feet on purpose)",
+   "value": null,
+   "threshold": null,
+   "detail": null
+  },
+  {
+   "check": "jitter",
+   "status": "ok",
+   "value": [
+    3.73,
+    3.99,
+    3.42,
+    0.55,
+    3.13,
+    3.25,
+    4.91
+   ],
+   "threshold": ">3.0x mean and >2.0 px",
+   "detail": null
+  },
+  {
+   "check": "near_duplicates",
+   "status": "ok",
+   "value": [
+    99.21,
+    68.42,
+    30.96,
+    52.99,
+    112.17,
+    98.41,
+    91.88
+   ],
+   "threshold": "<= 1.5",
+   "detail": null
+  },
+  {
+   "check": "loop_seam",
+   "status": "NOT RUN: clip not marked --loop (one-shot)",
+   "value": null,
+   "threshold": null,
+   "detail": null
+  }
+ ],
+ "crossed": [
+  "palette",
+  "size_drift"
+ ],
+ "not_run": [
+  "foot_x_planted",
+  "loop_seam"
+ ]
+}

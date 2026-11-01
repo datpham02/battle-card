@@ -12,7 +12,7 @@ const DIRECTION: Dictionary = {
 	"kiem_si": ["kiem_vu", "thiet_kiem", "kiem_than", "dai_dao", "song_kiem", "tu_kiem"],
 	"phap_su": ["hoa_xa", "hoa_tinh", "hoa_tran", "liet_hoa", "thien_hoa"],
 	"sat_thu": ["bang_chau", "suong_mong", "bang_phong", "kiem_vu", "thiet_kiem", "han_kiem", "han_bang"],
-	"tho_san": ["ket_gioi", "long_an", "tran_gai", "gai_nguyen", "ran_kich", "ran_van", "luoi_san", "gai_doc"],
+	"tho_san": ["tran_gai", "gai_nguyen", "ran_kich", "ran_van", "gai_doc"],
 	"giao_si": ["han_khi", "han_phong", "han_tran", "han_kiem", "thanh_thuy", "bang_tam"],
 }
 

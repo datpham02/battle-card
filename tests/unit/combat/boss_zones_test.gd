@@ -1,6 +1,6 @@
 extends SceneTree
-## Story 027 Phan B: the boss brain understands zones on its own half. A sealed cell is a blocked cell
-## for every path / dodge search (never entered, and a boss standing in one can still leave); a thorn
+## Story 027 Phan B: the boss brain understands zones on its own half. An open drop-tile hole is a blocked cell
+## for every path / dodge search (never entered; a boss standing on a cracking cell can still leave); a thorn
 ## cell costs thorn_avoid x its damage: the boss dodges THROUGH a thorn when the incoming swing would hurt
 ## more than the thorn cost and it cannot get around in time, goes around when the thorns cost more, and
 ## always goes around when the detour arrives in time. Pure brain world, headless; FAILS=N.
@@ -28,8 +28,8 @@ func _check(name: String, ok: bool, extra: String = "") -> void:
 
 func _initialize() -> void:
 	_test_grid_layout()
-	_test_seal_blocks_dodge_path()
-	_test_boss_leaves_seal_it_stands_in()
+	_test_hole_blocks_dodge_path()
+	_test_boss_leaves_crack_it_stands_in()
 	_test_thorn_cheaper_than_swing_goes_through()
 	_test_thorn_dearer_than_swing_goes_around()
 	_test_thorn_detour_in_time_goes_around()
@@ -118,29 +118,34 @@ func _test_grid_layout() -> void:
 		and not grid.is_enemy_cell(Vector2i(2, 0)))
 
 
-func _test_seal_blocks_dodge_path() -> void:
+func _test_hole_blocks_dodge_path() -> void:
 	var w: Dictionary = _world(1.0, Vector2i(4, 1), _swing_all_but_front(), LONG_TIME_LEFT)
-	var sealed: Array[Vector2i] = [Vector2i(3, 1)]
-	(w["status"] as StatusEffects).apply_seal(CombatState.Side.ENEMY, sealed, 10.0)
+	var status: StatusEffects = w["status"]
+	var hole: Array[Vector2i] = [Vector2i(3, 1)]
+	status.apply_drop(CombatState.Side.ENEMY, hole, 0.0, 10.0)
+	status.tick(0.01, w["state"])
+	_check("hole: (3,1) is an open drop-tile hole", status.is_hole(CombatState.Side.ENEMY, Vector2i(3, 1)), str(status.hole_cells(CombatState.Side.ENEMY)))
 	var visited: Array[Vector2i] = _walk(w, 4)
 	var end: Vector2i = (w["state"] as CombatState).enemy_cell
-	_check("seal: the boss never enters the sealed cell", not visited.has(Vector2i(3, 1)), str(visited))
-	_check("seal: the boss still dodges out of the swing (around the seal)", end.x == 3 and end != Vector2i(3, 1), str(visited))
+	_check("hole: the boss never enters the hole", not visited.has(Vector2i(3, 1)), str(visited))
+	_check("hole: the boss still dodges out of the swing (around the hole)", end.x == 3 and end != Vector2i(3, 1), str(visited))
 	var plan: Dictionary = (w["brain"] as BossBrain).last_debug().get("dodge_plan", {})
-	# Without the seal the nearest safe cell would be the sealed one (1 step).
+	# Without the hole the nearest safe cell would be the hole (1 step).
 	var w2: Dictionary = _world(1.0, Vector2i(4, 1), _swing_all_but_front(), LONG_TIME_LEFT)
 	var free_action: Dictionary = _decide(w2)
-	_check("control: without the seal the boss steps straight to (3,1)", free_action.get("direction") == Vector2i(-1, 0), str(free_action))
-	_check("seal: dodge plan never aims at the sealed cell", plan.is_empty() or plan.get("cell") != Vector2i(3, 1), str(plan))
+	_check("control: without the hole the boss steps straight to (3,1)", free_action.get("direction") == Vector2i(-1, 0), str(free_action))
+	_check("hole: dodge plan never aims at the hole", plan.is_empty() or plan.get("cell") != Vector2i(3, 1), str(plan))
 
 
-func _test_boss_leaves_seal_it_stands_in() -> void:
+func _test_boss_leaves_crack_it_stands_in() -> void:
 	var swing: Array[Vector2i] = [Vector2i(3, 0), Vector2i(3, 1), Vector2i(3, 2)]
 	var w: Dictionary = _world(1.0, Vector2i(3, 1), swing, LONG_TIME_LEFT)
-	var sealed: Array[Vector2i] = [Vector2i(3, 1)]
-	(w["status"] as StatusEffects).apply_seal(CombatState.Side.ENEMY, sealed, 10.0)
+	var status: StatusEffects = w["status"]
+	var crack: Array[Vector2i] = [Vector2i(3, 1)]
+	status.apply_drop(CombatState.Side.ENEMY, crack, 10.0, 10.0)
+	_check("crack under the boss: (3,1) cracks", status.is_cracking(CombatState.Side.ENEMY, Vector2i(3, 1)))
 	var action: Dictionary = _decide(w)
-	_check("seal under the boss: it still steps out of the swing", action.get("direction") == Vector2i(1, 0), str(action))
+	_check("crack under the boss: it still steps out of the swing", action.get("direction") == Vector2i(1, 0), str(action))
 
 
 func _test_thorn_cheaper_than_swing_goes_through() -> void:
@@ -191,8 +196,8 @@ func _test_non_dodge_path_avoids_thorn() -> void:
 	brain.decide(w["ctx"]) # builds the thorn costs
 	var dir: Vector2i = brain._step_toward(Vector2i(3, 1), Vector2i(5, 1), BossBrain.STYLE_SHORTEST, [] as Array[Vector2i])
 	_check("path search: a thorn on the straight line is walked around", dir == Vector2i(0, -1) or dir == Vector2i(0, 1), str(dir))
-	var sealed: Array[Vector2i] = [Vector2i(3, 0), Vector2i(3, 2)]
-	var dir2: Vector2i = brain._step_toward(Vector2i(3, 1), Vector2i(5, 1), BossBrain.STYLE_SHORTEST, sealed)
+	var blocked: Array[Vector2i] = [Vector2i(3, 0), Vector2i(3, 2)]
+	var dir2: Vector2i = brain._step_toward(Vector2i(3, 1), Vector2i(5, 1), BossBrain.STYLE_SHORTEST, blocked)
 	_check("path search: when the only way is through the thorn, it is taken", dir2 == Vector2i(1, 0), str(dir2))
 
 

@@ -8,7 +8,7 @@ const FloorVfxScript := preload("res://src/art/floor_vfx.gd")
 
 const PACK_IDS: Array[String] = [
 	"burning_cell", "engraving_lit", "engraving_complete", "cracked_cell", "cast_target",
-	"hit_impact", "miss_dust", "interrupt", "thorn_spikes",
+	"hit_impact", "miss_dust", "interrupt", "thorn_spikes", "root_seal", "cell_slash", "big_burst", "small_burst",
 ]
 ## Fixture entries (factory data; the frame counts / times are the point of the boundary checks).
 const LOOP_ENTRY: Dictionary = {"play": "loop", "frames": 4, "frame_ms": 100}
@@ -109,7 +109,13 @@ func test_hold_ages() -> void:
 
 func test_all_packs_load() -> void:
 	var vfx: FloorVfx = FloorVfxScript.new()
-	check("index_has_9_entries_got_%d" % vfx.ids().size(), vfx.ids().size() == PACK_IDS.size())
+	check("index_has_%d_entries_got_%d" % [PACK_IDS.size(), vfx.ids().size()], vfx.ids().size() == PACK_IDS.size())
+	# User 2026-11-01: every floor effect sits in the middle of its cell; a centre-anchored frame's middle is the cell's.
+	var cell := Rect2i(10, 20, 64, 46)
+	var at: Vector2i = FloorVfxScript.centre_anchor(cell, Vector2i(-32, -28), Vector2i(64, 30))
+	check("centre_anchor_frame_middle_on_cell_centre", at + Vector2i(-32, -28) + Vector2i(32, 15) == Vector2i(42, 43))
+	check("root_seal_is_centred_loop", str(vfx.entry("root_seal").get("anchor", "")) == "center"
+		and str(vfx.entry("root_seal").get("play", "")) == "loop")
 	for id: String in PACK_IDS:
 		var pack: VfxPack = vfx.pack(id)
 		check("pack_loads_%s" % id, pack != null)

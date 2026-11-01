@@ -82,6 +82,12 @@ var _vent_standing: Array[float] = [0.0, 0.0]
 # Story 039 crumble: per side cell -> {phase: int (1 crack, 2 fallen), left, total (fall seconds), kind: "crumble" | "drop"}.
 var _crumble: Array[Dictionary] = [{}, {}]
 var _crumble_on: bool = false
+## Presentation only (no rule / timing change): seconds a restored crumble / island_drop cell fades back in from
+## white, like a drop tile's return. CombatView sets it from combat.json `zones.hole_return_fade_sec`
+## (CombatConfig.hole_return_fade_sec); 0 = no fade (ADR-0001 Phase 1, 2026-11-01).
+var return_fade_sec: float = 0.0
+# Per side: restored cell -> fade seconds left.
+var _return_fade: Array[Dictionary] = [{}, {}]
 var _cr_cell: Array[Vector2i] = [BoardGrid.NO_CELL, BoardGrid.NO_CELL]
 var _cr_stand: Array[float] = [0.0, 0.0]
 var _stats: Dictionary = {"pushes": 0, "vent_ticks": 0, "fall_damage_total": 0.0, "vent_damage_total": 0.0}
@@ -793,6 +799,22 @@ func islands(side: int) -> Array:
 	return out
 
 
+## Restored crumble cells of [param side] still fading back in (presentation, [member return_fade_sec]); sorted.
+func returning_cells(side: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in _return_fade[side]:
+		out.append(cell)
+	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return _before(a, b))
+	return out
+
+
+## 1 = [param cell] of [param side] has just come back (full white), 0 = the fade is over / not returning.
+func return_fraction(side: int, cell: Vector2i) -> float:
+	if return_fade_sec <= 0.0 or not _return_fade[side].has(cell):
+		return 0.0
+	return clampf(float(_return_fade[side][cell]) / return_fade_sec, 0.0, 1.0)
+
+
 ## True when [param cell] of [param side] is fallen (blocked).
 func is_fallen(side: int, cell: Vector2i) -> bool:
 	return _crumble[side].has(cell) and int((_crumble[side][cell] as Dictionary)["phase"]) == _ACTIVE
@@ -843,6 +865,12 @@ func crumble_warn_left(side: int, cell: Vector2i) -> float:
 
 func _tick_crumble(delta: float) -> void:
 	for side: int in _SIDES:
+		var fades: Dictionary = _return_fade[side]
+		for cell: Variant in fades.keys():
+			fades[cell] = float(fades[cell]) - delta
+			if float(fades[cell]) <= 0.0:
+				fades.erase(cell)
+	for side: int in _SIDES:
 		var table: Dictionary = _crumble[side]
 		if table.is_empty():
 			continue
@@ -860,6 +888,8 @@ func _tick_crumble(delta: float) -> void:
 				_fall(side, cell, -float(entry["left"]))
 			else:
 				table.erase(cell)
+				if return_fade_sec > 0.0:
+					_return_fade[side][cell] = return_fade_sec
 				cell_restored.emit(side, cell)
 	if not _crumble_on or _state == null:
 		return

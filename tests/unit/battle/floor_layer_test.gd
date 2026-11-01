@@ -8,7 +8,8 @@ extends SceneTree
 const MAX_FRAMES: int = 600
 const IDLE_FRAMES: int = 4
 const THORN_SEC: float = 3.0
-const SEAL_SEC: float = 2.0
+const DROP_WARN_SEC: float = 0.5
+const DROP_HOLE_SEC: float = 1.5
 const BOGUS_REGION: String = "nowhere_047"
 const BURN_SEC: float = 1.0
 const BURN_STEP_SEC: float = 0.1
@@ -207,31 +208,36 @@ func test_zone_apply_marks_the_floor_dirty(canvas: BattleCanvas, combat: CombatV
 	var floor_layer: FloorLayer = canvas.get_floor_layer()
 	var before: int = floor_layer.get_redraw_count()
 	var thorn_cell: Vector2i = grid.player_cells()[0]
-	var seal_cell: Vector2i = grid.enemy_cells()[0]
+	var drop_cell: Vector2i = grid.enemy_cells()[0]
 	# Act
 	status.apply_thorns(CombatState.Side.PLAYER, [thorn_cell] as Array[Vector2i], THORN_SEC, 1.0, 0)
 	await _settle()
 	var after_thorns: int = floor_layer.get_redraw_count()
-	status.apply_seal(CombatState.Side.ENEMY, [seal_cell] as Array[Vector2i], SEAL_SEC)
+	status.apply_drop(CombatState.Side.ENEMY, [drop_cell] as Array[Vector2i], DROP_WARN_SEC, DROP_HOLE_SEC)
 	await _settle()
-	var after_seal: int = floor_layer.get_redraw_count()
+	var after_drop: int = floor_layer.get_redraw_count()
 	# Assert: one redraw per zone event, not more.
 	_check("test_thorn_apply_redraws_the_floor_once_got_%d" % (after_thorns - before), after_thorns == before + 1)
-	_check("test_seal_apply_redraws_the_floor_once_got_%d" % (after_seal - after_thorns), after_seal == after_thorns + 1)
+	_check("test_drop_crack_redraws_the_floor_once_got_%d" % (after_drop - after_thorns), after_drop == after_thorns + 1)
 	_check("test_thorn_cell_is_registered", status.thorn_cells(CombatState.Side.PLAYER).has(thorn_cell))
-	_check("test_seal_cell_is_registered", status.is_sealed(CombatState.Side.ENEMY, seal_cell))
+	_check("test_drop_cell_is_cracking", status.is_cracking(CombatState.Side.ENEMY, drop_cell))
 
 
 func test_zone_expiry_marks_the_floor_dirty(canvas: BattleCanvas, combat: CombatView) -> void:
 	# Arrange: both zones from the previous test are live.
 	var status: StatusEffects = combat.get_status()
 	var floor_layer: FloorLayer = canvas.get_floor_layer()
+	# The crack falls first (its own redraw), so the next tick ends both the thorns and the hole.
+	status.tick(DROP_WARN_SEC + 0.1, combat.get_state())
+	await _settle()
+	_check("test_drop_cell_fell_into_a_hole", status.hole_cells(CombatState.Side.ENEMY).size() == 1)
 	var before: int = floor_layer.get_redraw_count()
-	# Act: tick past both durations (two zone_expired signals in one tick: one redraw).
-	status.tick(maxf(THORN_SEC, SEAL_SEC) + 1.0, combat.get_state())
+	# Act: tick past both durations (thorn expiry + hole return in one tick: one redraw).
+	status.tick(maxf(THORN_SEC, DROP_HOLE_SEC) + 1.0, combat.get_state())
 	await _settle()
 	# Assert
-	_check("test_zones_expired", status.thorn_cells(CombatState.Side.PLAYER).is_empty() and status.sealed_cells(CombatState.Side.ENEMY).is_empty())
+	_check("test_zones_expired", status.thorn_cells(CombatState.Side.PLAYER).is_empty() and status.hole_cells(CombatState.Side.ENEMY).is_empty()
+		and status.crack_cells(CombatState.Side.ENEMY).is_empty())
 	_check("test_zone_expiry_redraws_the_floor_got_%d" % (floor_layer.get_redraw_count() - before), floor_layer.get_redraw_count() == before + 1)
 
 

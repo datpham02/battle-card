@@ -22,20 +22,17 @@ extends RefCounted
 ## place_sec per drag, join_sec per joined piece, choose_sec per card pick.
 ## A driver object (hit_probe) may replace the bot: it gets probe_tick(core) every loop step.
 ##
-## Story 027 zones: the match gets CombatView._wire_zones's wiring (seal blocker on both movers, each side's
+## Story 027 zones: the match gets CombatView._wire_zones's wiring (hole blocker on both movers, each side's
 ## UnitMover.is_cell_blocked as the arbiter's leave-a-path test, CombatConfig.zone_numbers on the arbiter)
 ## and the boss never gets zone cards (SkillConfig.boss_card_order). Zone-card rule of the bot
 ## ([method _zone_choice]): in the card menu, with the cast cells already placed, it picks
-## - a SEAL card when the boss has at most ZONE_SEAL_MAX_EXITS open exits (enemy-half neighbours it may
-##   step into) and the cast covers all of them but one (at least one): the seal closes the escape cells
-##   and the leave-a-path rule leaves at most one open;
-## - else a THORNS card when the cast covers at least ZONE_THORN_MIN_COVER open exits (the boss's dodge
-##   cells);
+## - a THORNS card when the cast covers at least ZONE_THORN_MIN_COVER open exits (enemy-half neighbours
+##   the boss may step into: its dodge cells);
 ## - never when an available damage card in the hand would kill the boss, and never as the follow-up.
 ## After a zone forms the bot follows up at once (no gap, no strike wait, aimed at the boss) while the zone
-## lasts, and its placement scores only OPEN neighbours of the boss (sealed ones 0, thorned ones half), so
-## the follow-up covers the boss cell and the exit still open. On its own half it treats sealed cells as
-## blocked and walks around thorns (dodges into them only when nothing else is free).
+## lasts, and its placement scores only OPEN neighbours of the boss (blocked ones 0, thorned ones half), so
+## the follow-up covers the boss cell and the exit still open. On its own half it treats holes (the boss's
+## drop tiles) as blocked and walks around thorns (dodges into them only when nothing else is free).
 ## --no-zone-cards drops the zone cards from the match decks (deck_sim also drops them from the reward pool).
 
 const PLAYER: int = CombatState.Side.PLAYER
@@ -120,12 +117,9 @@ const AVG_CELLS: float = 3.5
 const PIN_FOLLOWUP: float = 1.0
 const PIN_CELLS: int = 5
 
-## Story 027 zone-card rule (see [method _zone_choice]): seal only when the boss has at most this many open
-## exits; thorns only when the cast covers at least this many open exits; a cast started at most
-## POST_SEAL_SEC after a seal formed counts as a post-seal cast (ps_res / ps_hits).
-const ZONE_SEAL_MAX_EXITS: int = 3
+## Story 027 zone-card rule (see [method _zone_choice]): thorns only when the cast covers at least this
+## many open exits of the boss.
 const ZONE_THORN_MIN_COVER: int = 2
-const POST_SEAL_SEC: float = 2.0
 ## Neighbour score share of a thorned neighbour (the boss avoids thorns but may cross them).
 const THORN_NEIGHBOUR_SHARE: float = 0.5
 
@@ -152,7 +146,7 @@ var progress_mode: String = "all"
 ## {kind: Array[String]} of the ids locked in the NEXT run (character, card, piece, relic, region), the
 ## RunSession.locked form. deck_sim filters its pools through it; sim_core filters the player's piece drops.
 var locked: Dictionary = {}
-## Story 037 bot rules: set when a player zone (seal / thorns) formed, cleared when Vay Bat fires or the zone follow-up ends.
+## Story 037 bot rules: set when a player zone (thorns) formed, cleared when Vay Bat fires or the zone follow-up ends.
 var _zone_formed_pending: bool = false
 ## Story 033: the run modifiers' override table of the NEXT match (RunSession.run_modifier_overrides, the
 ## form RunController puts in match_params["run_modifiers"]); deck_sim sets it per match. Key in use:
@@ -273,10 +267,9 @@ var _next_cast: float = 0.0
 var _dodge_at: float = -1.0
 var _force_aim: bool = false
 var _wait_since: float = -1.0
-# Story 027 zone state: follow-up after a zone (until sim time), last seal time, the running cast's start
-# time and whether it is a zone card.
+# Story 027 zone state: follow-up after a zone (until sim time), the running cast's start time and whether
+# it is a zone card.
 var _zone_follow_until: float = -1.0
-var _last_seal_at: float = -1.0
 var _cast_t: float = -1.0
 var _cast_zone: bool = false
 
@@ -556,7 +549,7 @@ func apply_args(args: PackedStringArray) -> PackedStringArray:
 		elif arg == "--no-zone-cards":
 			ov["no_zone_cards"] = true
 		elif arg.begins_with("--card-set="):
-			# id.key:value,... e.g. --card-set=ket_gioi.cooldown_sec:8,tran_gai.min_cells:4
+			# id.key:value,... e.g. --card-set=tran_gai.cooldown_sec:8,gai_doc.min_cells:4
 			for kv: String in v.split(","):
 				if kv.contains(":") and kv.get_slice(":", 0).contains("."):
 					var path: String = kv.get_slice(":", 0).strip_edges()
@@ -920,7 +913,6 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_stand_cell = state.player_cell
 	_stand_since = 0.0
 	_visit_t = {}
-	_last_seal_at = -1.0
 	_zone_formed_pending = false
 	_cast_t = -1.0
 	_cast_zone = false
@@ -931,10 +923,10 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		"joins": 0, "featured": 0, "cells": 0,
 		# Story 033: curse cards dealt into the card menu, and the HP their draw_damage took.
 		"curse_draws": 0, "curse_dmg": 0.0,
-		# Story 027: zone casts, seals / thorns that formed and their cells, boss / player thorn entries and
-		# damage, hit counts of non-zone casts started <= POST_SEAL_SEC after a seal (ps_) and of the others (o_).
-		"zone_casts": 0, "seals": 0, "seal_cells": 0, "thorns": 0, "thorn_cells": 0, "bthorn": 0, "bthorn_dmg": 0.0,
-		"pthorn": 0, "pthorn_dmg": 0.0, "ps_res": 0, "ps_hits": 0, "o_res": 0, "o_hits": 0,
+		# Story 027: zone casts, thorns that formed and their cells, boss / player thorn entries and damage,
+		# resolved / hit counts of the non-zone casts (o_).
+		"zone_casts": 0, "thorns": 0, "thorn_cells": 0, "bthorn": 0, "bthorn_dmg": 0.0,
+		"pthorn": 0, "pthorn_dmg": 0.0, "o_res": 0, "o_hits": 0,
 		# Story 032: relic `triggered` signals by relic id.
 		"relic_trig": {},
 		# Story 034: player casts resolved / hit by cast size (cells), interrupts the player SUFFERED (the
@@ -1004,15 +996,15 @@ func _apply_brain_params(bc: BossBrainConfig, m: Dictionary, base_cd: float) -> 
 		bc.override_movement(bc.active_set, movement_override as Dictionary)
 
 
-# Mirrors CombatView._wire_zones (Story 027): seals block stepping for both movers (OR-ed via add_blocker),
-# the arbiter gets each side's blocked test (seal leave-a-path rule) and the zone numbers.
+# Mirrors CombatView._wire_zones (Story 027): holes (boss drop tiles) block stepping for both movers (OR-ed
+# via add_blocker), the arbiter gets each side's blocked test (leave-a-path rule) and the zone numbers.
 func _wire_zones() -> void:
 	var st: StatusEffects = status
 	var movers: Dictionary = {PLAYER: mover, ENEMY: boss.get_mover()}
 	for side: int in movers:
 		var mv: UnitMover = movers[side] as UnitMover
-		var seal_side: int = side
-		mv.add_blocker(func(cell: Vector2i) -> bool: return st.is_sealed(seal_side, cell))
+		var hole_side: int = side
+		mv.add_blocker(func(cell: Vector2i) -> bool: return st.is_hole(hole_side, cell))
 		arbiter.blocked_cell_fns[side] = Callable(mv, "is_cell_blocked")
 	arbiter.zone_numbers = combat.zone_numbers()
 
@@ -1101,7 +1093,7 @@ func _relic_value(base_value: float, key: String) -> float:
 # status keys (burn_max_stacks, han_stacks -> frost_stacks_to_burst, han_damage -> frost_burst_damage) into
 # this match's CombatConfig copy BEFORE configure_status. The other keys are applied where their object is
 # built, as CombatView does: piece_* / start_pieces (_apply_drop_overrides), hold_slots (bag), focus_sec
-# (FocusController), formation_fade (FormationMap), signature_cooldown (_sig_cd_sec); seal_sec / thorn_ran
+# (FocusController), formation_fade (FormationMap), signature_cooldown (_sig_cd_sec); thorn_sec / thorn_ran
 # reach CutEffects through arbiter.player_zone_overrides (after the card's own value).
 func _relic_config_overrides() -> void:
 	relics = []
@@ -1401,7 +1393,7 @@ func _bot_signature() -> void:
 			elif _dodge_at >= 0.0:
 				_activate_signature("dodge")
 		"vay_bat":
-			# Story 037: right after a player zone (seal / thorns) formed, so the follow-up casts of that zone
+			# Story 037: right after a player zone (thorns) formed, so the follow-up casts of that zone
 			# and the zones cast in the next seconds are in the window. The flag lapses with the zone.
 			if _zone_formed_pending:
 				if t <= _zone_follow_until:
@@ -1491,21 +1483,14 @@ func _count_zone_result(result: Dictionary) -> void:
 	var kind: String = str(result.get("zone_kind", ""))
 	var placed: Array = result.get("zone_cells", []) as Array
 	if kind.is_empty() and not _cast_zone:
-		var post: bool = _last_seal_at >= 0.0 and _cast_t >= _last_seal_at and _cast_t - _last_seal_at <= POST_SEAL_SEC
-		var pre: String = "ps_" if post else "o_"
-		ms[pre + "res"] = int(ms[pre + "res"]) + 1
+		ms["o_res"] = int(ms["o_res"]) + 1
 		if hit:
-			ms[pre + "hits"] = int(ms[pre + "hits"]) + 1
+			ms["o_hits"] = int(ms["o_hits"]) + 1
 		return
 	if placed.is_empty():
 		return
 	var first: Vector2i = placed[0]
-	if kind == StatusEffects.KIND_SEAL:
-		ms["seals"] = int(ms["seals"]) + 1
-		ms["seal_cells"] = int(ms["seal_cells"]) + placed.size()
-		_last_seal_at = t
-		_zone_follow_until = t + status.seal_left(ENEMY, first)
-	elif kind == StatusEffects.KIND_THORNS:
+	if kind == StatusEffects.KIND_THORNS:
 		ms["thorns"] = int(ms["thorns"]) + 1
 		ms["thorn_cells"] = int(ms["thorn_cells"]) + placed.size()
 		_zone_follow_until = t + status.thorn_left(ENEMY, first)
@@ -2062,7 +2047,7 @@ func _choose_card() -> void:
 		_phase = Phase.MENU_WAIT
 
 
-# Enemy-half neighbours of the boss's cell it may step into now (its mover's blockers: seals...).
+# Enemy-half neighbours of the boss's cell it may step into now (its mover's blockers: holes...).
 func _boss_open_exits() -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	var b_mover: UnitMover = boss.get_mover()
@@ -2078,9 +2063,7 @@ func _boss_open_exits() -> Array[Vector2i]:
 func _zone_choice(count: int) -> String:
 	if _zone_follow_until > t:
 		return ""
-	var seal: String = ""
 	var thorn: String = ""
-	var seal_key: float = -1.0
 	var thorn_key: float = -1.0
 	var kill_hp: float = -INF
 	for id: String in flow.get_hand():
@@ -2092,13 +2075,10 @@ func _zone_choice(count: int) -> String:
 			continue
 		var c: Dictionary = cards.resolved(id, level)
 		var key: float = float(c.get("damage_per_cell", 0.0)) + float(c.get("thorn_fragile_stacks", 0))
-		if str(c["effect"]) == "seal" and key > seal_key:
-			seal = id
-			seal_key = key
-		elif str(c["effect"]) == "thorns" and key > thorn_key:
+		if str(c["effect"]) == "thorns" and key > thorn_key:
 			thorn = id
 			thorn_key = key
-	if (seal.is_empty() and thorn.is_empty()) or kill_hp >= state.enemy_hp:
+	if thorn.is_empty() or kill_hp >= state.enemy_hp:
 		return ""
 	var exits: Array[Vector2i] = _boss_open_exits()
 	var cells: Array[Vector2i] = plan.cells()
@@ -2106,9 +2086,6 @@ func _zone_choice(count: int) -> String:
 	for c: Vector2i in exits:
 		if cells.has(c):
 			covered += 1
-	if not seal.is_empty() and not exits.is_empty() and exits.size() <= ZONE_SEAL_MAX_EXITS and covered >= maxi(1, exits.size() - 1):
-		_tr("PLAYER zone rule: seal %s exits=%s covered=%d" % [seal, str(exits), covered])
-		return seal
 	if not thorn.is_empty() and covered >= ZONE_THORN_MIN_COVER:
 		_tr("PLAYER zone rule: thorns %s exits=%s covered=%d" % [thorn, str(exits), covered])
 		return thorn
@@ -2147,7 +2124,7 @@ func _score(cells: Array[Vector2i], target: Vector2i, budget: float, pair: bool)
 		s += SCORE_TARGET
 	for d: Vector2i in DIRS:
 		var nb: Vector2i = target + d
-		if cells.has(nb) and not status.is_sealed(ENEMY, nb):
+		if cells.has(nb):
 			s += SCORE_NEIGHBOUR * (1.0 if status.thorns_at(ENEMY, nb).is_empty() else THORN_NEIGHBOUR_SHARE)
 	var over: float = _swing_sec(cells.size()) - maxf(budget, 0.0)
 	if over > 0.0:
@@ -2394,7 +2371,7 @@ func _setup_hazards(m: Dictionary, match_seed: int) -> void:
 		if h.has_method("is_fallen"):
 			mv.add_blocker(func(cell: Vector2i) -> bool: return bool(h.call("is_fallen", hazard_side, cell)))
 	hazards.extra_blocked_fn = func(side: int, cell: Vector2i) -> bool:
-		return st.is_sealed(side, cell) or (movers[side] as UnitMover).is_cell_blocked(cell)
+		return (movers[side] as UnitMover).is_cell_blocked(cell)
 	hazards.set_mire_immune(ENEMY, bool(m.get("mire_immune", false)))
 	var arena: Dictionary = ArenaLibrary.hazards_for_match(m, grid)
 	var mire_player: Array[Vector2i] = []

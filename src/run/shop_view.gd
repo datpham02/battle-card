@@ -30,41 +30,45 @@ extends Node2D
 ## GameFlow getters (not the rows' token-aware can_remove).
 
 ## Background, panels, outlines.
-const BACK_COLOR: Color = Color(0.93, 0.89, 0.8)
-const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const HEADER_COLOR: Color = Color(0.4, 0.35, 0.3)
-const LABEL_COLOR: Color = Color(0.45, 0.38, 0.3)
-const CARD_BACK: Color = Color(1.0, 0.97, 0.9)
-const NAME_COLOR: Color = Color(0.15, 0.12, 0.1)
-const BODY_COLOR: Color = Color(0.3, 0.26, 0.22)
-const STAT_COLOR: Color = Color(0.2, 0.4, 0.55)
-const UPGRADE_COLOR: Color = Color(0.72, 0.5, 0.05)
-const PRICE_COLOR: Color = Color(0.55, 0.4, 0.05)
-const PRICE_SHORT_COLOR: Color = Color(0.85, 0.12, 0.1)
-const SELECTED_OUTLINE: Color = Color(0.95, 0.72, 0.15)
-const PRESSED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
+const BACK_COLOR: Color = HudSkin.SCREEN_BG
+const TITLE_COLOR: Color = HudSkin.IVORY
+const HEADER_COLOR: Color = HudSkin.TEXT
+const LABEL_COLOR: Color = HudSkin.TEXT_DIM
+const CARD_BACK: Color = HudSkin.CARD_FILL
+const NAME_COLOR: Color = HudSkin.IVORY
+const BODY_COLOR: Color = HudSkin.TEXT_DIM
+const STAT_COLOR: Color = HudSkin.TEXT
+const UPGRADE_COLOR: Color = HudSkin.GRID_LIGHT
+const PRICE_COLOR: Color = HudSkin.GRID_LIGHT
+const PRICE_SHORT_COLOR: Color = Color(1.0, 0.45, 0.4)
+const SELECTED_OUTLINE: Color = HudSkin.GRID_LIGHT
+const PRESSED_OUTLINE: Color = HudSkin.GRID_LIGHT
 const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.25)
-const SOLD_COLOR: Color = Color(0.45, 0.42, 0.38)
-const MESSAGE_COLOR: Color = Color(0.25, 0.2, 0.15)
-const MESSAGE_BAD_COLOR: Color = Color(0.8, 0.15, 0.1)
-const SERVICE_REMOVE_BACK: Color = Color(0.42, 0.22, 0.2)
-const SERVICE_HEAL_BACK: Color = Color(0.16, 0.42, 0.3)
-const SERVICE_TEXT: Color = Color(1.0, 0.97, 0.9)
+const SOLD_COLOR: Color = HudSkin.TEXT_DIM
+const MESSAGE_COLOR: Color = HudSkin.TEXT
+const MESSAGE_BAD_COLOR: Color = Color(1.0, 0.45, 0.4)
+const SERVICE_REMOVE_BACK: Color = Color(0.29, 0.17, 0.15)
+const SERVICE_HEAL_BACK: Color = Color(0.15, 0.29, 0.21)
+const SERVICE_TEXT: Color = HudSkin.TEXT
 const SERVICE_PRICE: Color = Color(1.0, 0.85, 0.35)
 const SERVICE_PRICE_SHORT: Color = Color(1.0, 0.45, 0.4)
 const DETAIL_DIM: Color = Color(0.0, 0.0, 0.0, 0.55)
-const DETAIL_BACK: Color = Color(0.12, 0.1, 0.09, 0.97)
-const DETAIL_TEXT: Color = Color(0.95, 0.9, 0.78)
-const DETAIL_SUB_TEXT: Color = Color(0.75, 0.72, 0.65)
+const DETAIL_BACK: Color = Color(0.118, 0.106, 0.141, 0.98)
+const DETAIL_TEXT: Color = HudSkin.TEXT
+const DETAIL_SUB_TEXT: Color = HudSkin.TEXT_DIM
 ## Deck picker tiles: curse border / tag, marked outline.
-const CURSE_COLOR: Color = Color(0.55, 0.2, 0.75)
-const CURSE_BACK: Color = Color(0.93, 0.86, 0.97)
+const CURSE_COLOR: Color = Color(0.7, 0.45, 0.9)
+const CURSE_BACK: Color = Color(0.2, 0.14, 0.26)
 const MARKED_OUTLINE: Color = Color(0.85, 0.15, 0.1)
 ## Coin icon: rim and face (an old square-holed coin).
 const COIN_RIM: Color = Color(0.6, 0.42, 0.05)
 const COIN_FACE: Color = Color(1.0, 0.82, 0.25)
 
 const OUTLINE_WIDTH: float = 3.0
+## 2026-10-31: frame width of a selected / marked tile, a selected service and the detail panel (HudSkin card look).
+const MARKED_LINE_WIDTH: float = 3.0
+## 2026-10-31: rarity text is the rarity colour lightened by this share to read on the dark card face.
+const RARITY_TEXT_LIGHTEN: float = 0.25
 const RARITY_BORDER: float = 6.0
 const SELECTED_BORDER: float = 9.0
 const TILE_BORDER: float = 5.0
@@ -105,6 +109,8 @@ const CARD_RARITY_BASELINE: float = 0.22
 const CARD_STATS_BASELINE: float = 0.33
 const CARD_DESC_TOP: float = 0.38
 const PRICE_BASELINE: float = 0.93
+## 2026-11-01 (OSFE cards): nominal size of the price at the foot of a card face.
+const PRICE_FOOT_FONT_SIZE: int = 22
 const RELIC_ICON_SIZE_RATIO: float = 0.36
 const RELIC_DESC_TOP: float = 0.5
 ## Service button baselines (name, description, price) as shares of its height.
@@ -125,14 +131,14 @@ const SERVICE_REMOVE: String = "remove_card"
 const SERVICE_HEAL: String = "heal"
 ## Story 034: the shape-removal service (ShopLogic.SERVICE_REMOVE_SHAPE), its button colour and strings.
 const SERVICE_REMOVE_SHAPE: String = "remove_shape"
-const SERVICE_REMOVE_SHAPE_BACK: Color = Color(0.22, 0.3, 0.5)
+const SERVICE_REMOVE_SHAPE_BACK: Color = Color(0.16, 0.2, 0.32)
 const TEXT_SERVICE_REMOVE_SHAPE_NAME: String = "ui.shop.service.remove_shape.name"
 const TEXT_SERVICE_REMOVE_SHAPE_DESC: String = "ui.shop.service.remove_shape.desc"
 const TEXT_PICK_REMOVE_SHAPE: String = "ui.piece_deck.pick_remove"
 const TEXT_CONFIRM_REMOVE_SHAPE: String = "ui.shop.confirm_remove_shape"
 const TEXT_REMOVED_SHAPE: String = "ui.piece_deck.removed_msg"
 ## Colour of a refused shape's reason line on its tile.
-const SHAPE_REASON_COLOR: Color = Color(0.8, 0.15, 0.1)
+const SHAPE_REASON_COLOR: Color = Color(1.0, 0.45, 0.4)
 const CFG_MIN_DECK: String = "min_deck_size"
 
 const TEXT_TITLE: String = "ui.shop.title"
@@ -295,9 +301,12 @@ var _picking: bool = false
 ## Story 034: shape picker of the remove_shape service (open while [member _shape_picking]); marked = row index.
 var _shape_picker: DeckPicker = DeckPicker.new()
 var _shape_picking: bool = false
+var _dev_pick_done: bool = false
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 
 
@@ -306,6 +315,16 @@ func _process(_delta: float) -> void:
 		_reset()
 		queue_redraw()  # clear the last frame (see TitleView)
 		return
+	if not _dev_pick_done:
+		_dev_pick_done = true
+		# DEV-only user arg for captures: `--pick=N` selects shop card N (`--pick=rN`: relic N).
+		for arg: String in OS.get_cmdline_user_args():
+			if arg.begins_with("--pick="):
+				var value: String = arg.trim_prefix("--pick=")
+				var entries: Array = _flow.get_shop().get("relics" if value.begins_with("r") else "cards", [])
+				var index: int = int(value.trim_prefix("r"))
+				if index < entries.size():
+					_select({"kind": KIND_RELIC if value.begins_with("r") else KIND_CARD, "id": str((entries[index] as Dictionary).get("id", ""))})
 	if not _press_item.is_empty() and not _press_held and _detail.is_empty():
 		if Time.get_ticks_msec() - _press_msec >= int(LONG_PRESS_SEC * 1000.0):
 			_detail = _press_item.duplicate()
@@ -337,10 +356,9 @@ func select_item(kind: String, id: String) -> void:
 ## on [param center_y], with a code-drawn coin in front of it. Returns the left x of the coin. Shared by
 ## the map views, the reward screen and the event screen.
 static func draw_gold(canvas: CanvasItem, right_x: float, center_y: float, gold: int, font_size: int, color: Color) -> float:
-	var font: Font = ThemeDB.fallback_font
 	var text: String = str(gold)
-	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	canvas.draw_string(font, Vector2(right_x - width, center_y + font_size * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	var width: float = HudSkin.text_width(text, font_size, true)
+	MenuFont.text(canvas, Vector2(right_x - width, center_y + font_size * 0.35), text, font_size, color, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
 	var radius: float = font_size * COIN_RADIUS_RATIO
 	var center := Vector2(right_x - width - COIN_GAP - radius, center_y)
 	draw_coin(canvas, center, radius)
@@ -373,15 +391,15 @@ static func draw_deck_tile(canvas: CanvasItem, rect: Rect2, id: String, level: i
 		back.a *= UiButtons.DIM_ALPHA
 		border.a *= UiButtons.DIM_ALPHA
 		text.a *= UiButtons.DIM_ALPHA
-	canvas.draw_rect(r, back)
-	canvas.draw_rect(r, border, false, SELECTED_BORDER if marked else TILE_BORDER)
+	HudSkin.panel(canvas, r, [0.0, HudSkin.button_cut(r), 0.0, 0.0], back, border, MARKED_LINE_WIDTH if marked else HudSkin.PANEL_LINE_WIDTH)
 	var inner: float = r.size.x * (1.0 - PAD_RATIO * 2.0)
 	var name: String = canvas.tr(str(skill.get("name_key", id)))
-	_centred(canvas, r, r.position.y + r.size.y * TILE_NAME_BASELINE, name, _fit(name, inner, TILE_NAME_FONT_SIZE), text)
+	_centred(canvas, r, r.position.y + r.size.y * TILE_NAME_BASELINE, name, _fit(name, inner, TILE_NAME_FONT_SIZE, true), text, true)
 	if not curse:
-		_centred(canvas, r, r.position.y + r.size.y * TILE_LEVEL_BASELINE, canvas.tr(TEXT_LEVEL_SUFFIX) % level, TILE_FONT_SIZE, text)
+		var sub: Color = Color(HudSkin.TEXT_DIM, text.a)
+		_centred(canvas, r, r.position.y + r.size.y * TILE_LEVEL_BASELINE, canvas.tr(TEXT_LEVEL_SUFFIX) % level, TILE_FONT_SIZE, Color(HudSkin.TEXT, text.a))
 		var rarity: String = canvas.tr(RARITY_KEY_FORMAT % str(skill.get("rarity", "common")))
-		_centred(canvas, r, r.position.y + r.size.y * TILE_RARITY_BASELINE, rarity, _fit(rarity, inner, TILE_FONT_SIZE), text)
+		_centred(canvas, r, r.position.y + r.size.y * TILE_RARITY_BASELINE, rarity, _fit(rarity, inner, TILE_FONT_SIZE), sub)
 	else:
 		var tag_color: Color = CURSE_COLOR
 		if disabled:
@@ -466,6 +484,10 @@ func _on_press(pos: Vector2, vp: Vector2) -> void:
 		return
 	if not _selected.is_empty() and ScreenLayout.shop_buy_rect(vp).has_point(pos):
 		_buy()
+		return
+	if _selected_panel_rect(vp).has_point(pos):
+		_selected = {}
+		_message = ""
 		return
 	var ids: Array[String] = _service_ids()
 	var services: Array[Rect2] = ScreenLayout.shop_service_column_rects(vp, ids.size())
@@ -683,7 +705,7 @@ func _draw() -> void:
 	if not _is_active():
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, vp), BACK_COLOR)
+	HudSkin.screen_background(self, Rect2(Vector2.ZERO, vp))
 	if _picking:
 		_draw_picker(vp)
 		return
@@ -693,7 +715,7 @@ func _draw() -> void:
 	_draw_header(vp, tr(TEXT_TITLE))
 	var shop: Dictionary = _flow.get_shop()
 	var card_label: Rect2 = ScreenLayout.shop_row_label_rect(vp, false)
-	_text(card_label, card_label.get_center().y + LABEL_FONT_SIZE * 0.35, tr(TEXT_CARDS) + SEPARATOR + tr(TEXT_HOLD_HINT), LABEL_FONT_SIZE, LABEL_COLOR)
+	_text(card_label, card_label.get_center().y + LABEL_FONT_SIZE * 0.35, tr(TEXT_CARDS), LABEL_FONT_SIZE, LABEL_COLOR)
 	var relic_label: Rect2 = ScreenLayout.shop_row_label_rect(vp, true)
 	_text(relic_label, relic_label.get_center().y + LABEL_FONT_SIZE * 0.35, tr(TEXT_RELICS), LABEL_FONT_SIZE, LABEL_COLOR)
 	var services_label: Rect2 = ScreenLayout.shop_services_label_rect(vp)
@@ -720,19 +742,65 @@ func _draw() -> void:
 		var label: String = tr(TEXT_BUY) % _price(kind, id)
 		UiButtons.draw_button(self, buy, label, UiButtons.Style.PRIMARY, ok and UiButtons.is_pressed_at(self, buy), ok, _fit(label, buy.size.x * 0.9, BUTTON_FONT_SIZE))
 	_draw_message(vp)
+	_draw_selected_panel(vp)
 	if not _detail.is_empty():
 		_draw_detail(vp)
+
+
+# 2026-11-01 (OSFE cards): the rest rect of the selected card / relic (zero for none or a service).
+func _selected_item_rect(vp: Vector2) -> Rect2:
+	var kind: String = str(_selected.get("kind", ""))
+	if kind != KIND_CARD and kind != KIND_RELIC:
+		return Rect2()
+	var entries: Array = _flow.get_shop().get("cards" if kind == KIND_CARD else "relics", [])
+	var rects: Array[Rect2] = ScreenLayout.shop_card_rects(vp, entries.size()) if kind == KIND_CARD else ScreenLayout.shop_relic_rects(vp, entries.size())
+	for i: int in mini(entries.size(), rects.size()):
+		if str((entries[i] as Dictionary).get("id", "")) == str(_selected.get("id", "")):
+			var rect: Rect2 = rects[i]
+			rect.position.y -= ScreenLayout.shop_item_raise(vp)
+			return rect
+	return Rect2()
+
+
+# 2026-11-01 (OSFE cards): the detail panel of the selected item ([method CardFace.detail_rect]; zero when none).
+func _selected_panel_rect(vp: Vector2) -> Rect2:
+	var item: Rect2 = _selected_item_rect(vp)
+	return CardFace.detail_rect(item, vp) if item.has_area() and not CardFace.shows_text(item, vp.y) else Rect2()
+
+
+# 2026-11-01 (OSFE cards): name, rarity (or upgrade) line, stats and the whole text of the selected item.
+func _draw_selected_panel(vp: Vector2) -> void:
+	var rect: Rect2 = _selected_panel_rect(vp)
+	if not rect.has_area():
+		return
+	var kind: String = str(_selected.get("kind", ""))
+	var id: String = str(_selected.get("id", ""))
+	if kind == KIND_RELIC:
+		var info: Dictionary = RelicRegistry.shared_config().get_relic(id)
+		CardFace.draw_detail(self, rect, _item_name(kind, id), [[RelicStrip.rarity_line(info), RelicStrip.rarity_color(str(info.get("rarity", ""))).lightened(RARITY_TEXT_LIGHTEN)]],
+			tr(str(info.get("desc_key", ""))), "")
+		return
+	var current: int = int(_flow.get_deck_levels().get(id, 0))
+	var shown: int = current + 1 if current > 0 else 1
+	var skill: Dictionary = _flow.get_cards().resolved(id, shown)
+	var rarity: String = str(skill.get("rarity", "common"))
+	var line: String = tr(RARITY_KEY_FORMAT % rarity)
+	var line_color: Color = RelicStrip.rarity_color(rarity).lightened(RARITY_TEXT_LIGHTEN)
+	if current > 0:
+		line = tr(TEXT_UPGRADE_TO) % shown
+		line_color = UPGRADE_COLOR
+	CardFace.draw_detail(self, rect, _item_name(kind, id), [[line + SEPARATOR + _stats_line(skill), line_color]], CardText.describe_resolved(skill), "")
 
 
 # Title band: [param title] centred; HP and the gold count at the right.
 func _draw_header(vp: Vector2, title: String) -> void:
 	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
-	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.4, TITLE_FONT_SIZE), TITLE_COLOR)
+	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.4, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
 	var right: float = vp.x * (1.0 - ScreenLayout.MARGIN_RATIO)
 	var coin_left: float = draw_gold(self, right, band.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
 	var hp: String = tr(TEXT_HP) % [ceili(_hp()), ceili(_max_hp())]
-	var width: float = ThemeDB.fallback_font.get_string_size(hp, HORIZONTAL_ALIGNMENT_LEFT, -1, HEADER_FONT_SIZE).x
-	draw_string(ThemeDB.fallback_font, Vector2(coin_left - COIN_GAP * 4.0 - width, band.get_center().y + HEADER_FONT_SIZE * 0.35), hp, HORIZONTAL_ALIGNMENT_LEFT, -1, HEADER_FONT_SIZE, HEADER_COLOR)
+	var width: float = HudSkin.text_width(hp, HEADER_FONT_SIZE)
+	MenuFont.text(self, Vector2(coin_left - COIN_GAP * 4.0 - width, band.get_center().y + HEADER_FONT_SIZE * 0.35), hp, HEADER_FONT_SIZE, HEADER_COLOR)
 
 
 # One card / relic at rest rect [param base]: raised when selected, dimmed and stamped when sold.
@@ -744,31 +812,23 @@ func _draw_item(vp: Vector2, base: Rect2, kind: String, entry: Dictionary) -> vo
 	if selected:
 		draw_rect(Rect2(base.position + Vector2(6.0, 6.0), base.size), SHADOW_COLOR)
 		rect.position.y -= ScreenLayout.shop_item_raise(vp)
-	var rarity: String = _item_rarity(kind, id)
-	var back: Color = CARD_BACK
-	var border: Color = RelicStrip.rarity_color(rarity)
-	var width: float = RARITY_BORDER
-	if selected:
-		border = SELECTED_OUTLINE
-		width = SELECTED_BORDER
-	elif not sold and str(_press_item.get("id", "")) == id and str(_press_item.get("kind", "")) == kind:
-		border = PRESSED_OUTLINE
-		width = SELECTED_BORDER
-	if sold:
-		back.a *= UiButtons.DIM_ALPHA
-		border.a *= UiButtons.DIM_ALPHA
-	draw_rect(rect, back)
-	draw_rect(rect, border, false, width)
+	var pressed: bool = not sold and str(_press_item.get("id", "")) == id and str(_press_item.get("kind", "")) == kind
+	# 2026-11-01 (OSFE cards): the CardFace faces with the price at their foot (gold, red when short); a short
+	# face's full text is in the detail panel the selection opens.
+	var foot: Array = [] if sold else [tr(TEXT_PRICE) % int(entry.get("price", 0)), PRICE_SHORT_COLOR if _short(kind, id) else PRICE_COLOR, PRICE_FOOT_FONT_SIZE]
+	if kind == KIND_CARD:
+		var current: int = int(_flow.get_deck_levels().get(id, 0))
+		var shown: int = current + 1 if current > 0 else 1
+		var skill: Dictionary = _flow.get_cards().resolved(id, shown)
+		var title: String = tr(str(skill.get("name_key", id)))
+		var tag: String = (tr(TEXT_LEVEL_SUFFIX) % shown) if current > 0 else ""
+		CardFace.draw_skill(self, rect, skill, title, tag, CardText.describe_resolved(skill), selected, pressed, sold, foot, id)
+	else:
+		var info: Dictionary = RelicRegistry.shared_config().get_relic(id)
+		CardFace.draw_relic(self, rect, id, tr(str(info.get("name_key", id))), RelicStrip.rarity_line(info), str(info.get("rarity", "")),
+			RelicStrip.is_negative(info), tr(str(info.get("desc_key", ""))), selected, pressed, sold, foot)
 	if sold:
 		_text(rect, rect.get_center().y + SOLD_FONT_SIZE * 0.35, tr(TEXT_SOLD), SOLD_FONT_SIZE, SOLD_COLOR)
-		return
-	if kind == KIND_CARD:
-		_draw_card_body(rect, id)
-	else:
-		_draw_relic_body(rect, id)
-	var price: String = tr(TEXT_PRICE) % int(entry.get("price", 0))
-	var short: bool = _short(kind, id)
-	_text(rect, rect.position.y + rect.size.y * PRICE_BASELINE, price, PRICE_FONT_SIZE, PRICE_SHORT_COLOR if short else PRICE_COLOR)
 
 
 func _draw_card_body(rect: Rect2, id: String) -> void:
@@ -778,9 +838,9 @@ func _draw_card_body(rect: Rect2, id: String) -> void:
 	var skill: Dictionary = _flow.get_cards().resolved(id, shown)
 	var inner: float = rect.size.x * (1.0 - PAD_RATIO * 2.0)
 	var name: String = tr(str(skill.get("name_key", id)))
-	_text(rect, rect.position.y + rect.size.y * CARD_NAME_BASELINE, name, _fit(name, inner, NAME_FONT_SIZE), NAME_COLOR)
+	_text(rect, rect.position.y + rect.size.y * CARD_NAME_BASELINE, name, _fit(name, inner, NAME_FONT_SIZE, true), NAME_COLOR, true)
 	var line: String = tr(RARITY_KEY_FORMAT % str(skill.get("rarity", "common")))
-	var line_color: Color = BODY_COLOR
+	var line_color: Color = RelicStrip.rarity_color(str(skill.get("rarity", "common"))).lightened(RARITY_TEXT_LIGHTEN)
 	if current > 0:
 		line = tr(TEXT_UPGRADE_TO) % shown
 		line_color = UPGRADE_COLOR
@@ -788,7 +848,7 @@ func _draw_card_body(rect: Rect2, id: String) -> void:
 	var stats: String = _stats_line(skill)
 	_text(rect, rect.position.y + rect.size.y * CARD_STATS_BASELINE, stats, _fit(stats, inner, STAT_FONT_SIZE), STAT_COLOR)
 	var desc: String = CardText.describe_resolved(skill)
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x + rect.size.x * PAD_RATIO, rect.position.y + rect.size.y * CARD_DESC_TOP + DESC_FONT_SIZE), desc, HORIZONTAL_ALIGNMENT_CENTER, inner, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
+	draw_multiline_string(HudSkin.font(), Vector2(rect.position.x + rect.size.x * PAD_RATIO, rect.position.y + rect.size.y * CARD_DESC_TOP + DESC_FONT_SIZE), desc, HORIZONTAL_ALIGNMENT_CENTER, inner, DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
 
 
 func _draw_relic_body(rect: Rect2, id: String) -> void:
@@ -799,10 +859,10 @@ func _draw_relic_body(rect: Rect2, id: String) -> void:
 	var text_left: float = rect.position.x + pad * 2.0 + icon
 	var text_width: float = rect.end.x - pad - text_left
 	var name: String = tr(str(info.get("name_key", id)))
-	var font: Font = ThemeDB.fallback_font
-	draw_string(font, Vector2(text_left, rect.position.y + pad + icon * 0.45), name, HORIZONTAL_ALIGNMENT_LEFT, text_width, _fit(name, text_width, NAME_FONT_SIZE - 2), NAME_COLOR)
+	var font: Font = HudSkin.font()
+	MenuFont.text(self, Vector2(text_left, rect.position.y + pad + icon * 0.45), name, _fit(name, text_width, NAME_FONT_SIZE - 2, true), NAME_COLOR, HORIZONTAL_ALIGNMENT_LEFT, text_width, true)
 	var rarity: String = RelicStrip.rarity_line(info)
-	draw_string(font, Vector2(text_left, rect.position.y + pad + icon * 0.9), rarity, HORIZONTAL_ALIGNMENT_LEFT, text_width, _fit(rarity, text_width, RARITY_FONT_SIZE), BODY_COLOR)
+	MenuFont.text(self, Vector2(text_left, rect.position.y + pad + icon * 0.9), rarity, _fit(rarity, text_width, RARITY_FONT_SIZE), RelicStrip.rarity_color(str(info.get("rarity", ""))).lightened(RARITY_TEXT_LIGHTEN), HORIZONTAL_ALIGNMENT_LEFT, text_width)
 	var desc: String = tr(str(info.get("desc_key", "")))
 	draw_multiline_string(font, Vector2(rect.position.x + pad, rect.position.y + rect.size.y * RELIC_DESC_TOP + DESC_FONT_SIZE), desc, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - pad * 2.0, DESC_FONT_SIZE, RELIC_DESC_MAX_LINES, BODY_COLOR)
 
@@ -812,15 +872,15 @@ func _draw_service(rect: Rect2, id: String, back: Color) -> void:
 	var entry: Dictionary = _entry(KIND_SERVICE, id)
 	var used: bool = bool(entry.get("used", false))
 	var selected: bool = str(_selected.get("kind", "")) == KIND_SERVICE and str(_selected.get("id", "")) == id
-	var fill: Color = UiButtons.PRESSED_BACK if (not used and UiButtons.is_pressed_at(self, rect)) else back
-	var outline: Color = SELECTED_OUTLINE if selected else UiButtons.OUTLINE
+	var fill: Color = back.lightened(HudSkin.BUTTON_PRESSED_LIGHTEN) if (not used and UiButtons.is_pressed_at(self, rect)) else back
+	var outline: Color = SELECTED_OUTLINE if selected else HudSkin.MIST
 	var text: Color = SERVICE_TEXT
 	if used:
 		fill.a *= UiButtons.DIM_ALPHA
 		outline.a *= UiButtons.DIM_ALPHA
 		text.a *= UiButtons.DIM_ALPHA
-	draw_rect(rect, fill)
-	draw_rect(rect, outline, false, SELECTED_BORDER if selected else UiButtons.OUTLINE_WIDTH)
+	var cut: float = HudSkin.button_cut(rect)
+	HudSkin.panel(self, rect, [0.0, cut, 0.0, cut], fill, outline, MARKED_LINE_WIDTH if selected else HudSkin.PANEL_LINE_WIDTH)
 	var inner: float = rect.size.x * (1.0 - PAD_RATIO * 2.0)
 	var name: String
 	var desc: String
@@ -834,11 +894,11 @@ func _draw_service(rect: Rect2, id: String, back: Color) -> void:
 		_:
 			name = tr(TEXT_SERVICE_HEAL_NAME)
 			desc = tr(TEXT_SERVICE_HEAL_DESC) % roundi(float(_flow.get_shop().get("heal_ratio", 0.0)) * 100.0)
-	_text(rect, rect.position.y + rect.size.y * SERVICE_NAME_BASELINE, name, _fit(name, inner, SERVICE_NAME_FONT_SIZE), text)
+	_text(rect, rect.position.y + rect.size.y * SERVICE_NAME_BASELINE, name, _fit(name, inner, SERVICE_NAME_FONT_SIZE, true), text, true)
 	_text(rect, rect.position.y + rect.size.y * SERVICE_DESC_BASELINE, desc, _fit(desc, inner, SERVICE_DESC_FONT_SIZE), text)
 	var price: String = tr(TEXT_USED) if used else tr(TEXT_PRICE) % int(entry.get("price", 0))
 	var price_color: Color = text if used else (SERVICE_PRICE_SHORT if _short(KIND_SERVICE, id) else SERVICE_PRICE)
-	_text(rect, rect.position.y + rect.size.y * SERVICE_PRICE_BASELINE, price, SERVICE_PRICE_FONT_SIZE, price_color)
+	_text(rect, rect.position.y + rect.size.y * SERVICE_PRICE_BASELINE, price, SERVICE_PRICE_FONT_SIZE, price_color, true)
 
 
 func _draw_message(vp: Vector2) -> void:
@@ -854,12 +914,11 @@ func _draw_detail(vp: Vector2) -> void:
 	var panel: Rect2 = ScreenLayout.shop_detail_rect(vp)
 	var kind: String = str(_detail.get("kind", ""))
 	var id: String = str(_detail.get("id", ""))
-	draw_rect(panel, DETAIL_BACK)
-	draw_rect(panel, RelicStrip.rarity_color(_item_rarity(kind, id)), false, RARITY_BORDER)
+	HudSkin.panel(self, panel, [0.0, HudSkin.BUTTON_CUT_MAX, 0.0, HudSkin.BUTTON_CUT_MAX], DETAIL_BACK, RelicStrip.rarity_color(_item_rarity(kind, id)), MARKED_LINE_WIDTH)
 	var inner: float = panel.size.x * (1.0 - PAD_RATIO * 2.0)
 	var y: float = panel.position.y + DETAIL_NAME_FONT_SIZE * 1.5
 	var name: String = _item_name(kind, id)
-	_text(panel, y, name, _fit(name, inner, DETAIL_NAME_FONT_SIZE), DETAIL_TEXT)
+	_text(panel, y, name, _fit(name, inner, DETAIL_NAME_FONT_SIZE, true), HudSkin.IVORY, true)
 	var sub: String
 	var desc: String
 	if kind == KIND_RELIC:
@@ -874,7 +933,7 @@ func _draw_detail(vp: Vector2) -> void:
 	y += DETAIL_FONT_SIZE * 1.8
 	_text(panel, y, sub, _fit(sub, inner, DETAIL_FONT_SIZE), DETAIL_SUB_TEXT)
 	y += DETAIL_FONT_SIZE * 1.8
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(panel.position.x + panel.size.x * PAD_RATIO, y), desc, HORIZONTAL_ALIGNMENT_LEFT, inner, DETAIL_FONT_SIZE, DETAIL_MAX_LINES, DETAIL_TEXT)
+	draw_multiline_string(HudSkin.font(), Vector2(panel.position.x + panel.size.x * PAD_RATIO, y), desc, HORIZONTAL_ALIGNMENT_LEFT, inner, DETAIL_FONT_SIZE, DETAIL_MAX_LINES, DETAIL_TEXT)
 	_text(panel, panel.end.y - DETAIL_FONT_SIZE, tr(TEXT_DISMISS), DETAIL_FONT_SIZE, DETAIL_SUB_TEXT)
 
 
@@ -1037,18 +1096,18 @@ func _stats_line(skill: Dictionary) -> String:
 	return SEPARATOR.join(parts)
 
 
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	_centred(self, rect, y, text, size, color)
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	_centred(self, rect, y, text, size, color, bold)
 
 
-static func _centred(canvas: CanvasItem, rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	canvas.draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# 2026-10-31: HudSkin outlined text centred over [param rect] at baseline [param y].
+static func _centred(canvas: CanvasItem, rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(canvas, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
 ## Largest font size <= [param size] (not below MIN_FIT_FONT_SIZE) at which [param text] fits [param width].
-static func _fit(text: String, width: float, size: int) -> int:
-	var font: Font = ThemeDB.fallback_font
+static func _fit(text: String, width: float, size: int, bold: bool = false) -> int:
 	var fitted: int = size
-	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+	while fitted > MIN_FIT_FONT_SIZE and HudSkin.text_width(text, fitted, bold) > width:
 		fitted -= 1
 	return fitted

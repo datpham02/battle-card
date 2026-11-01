@@ -1,0 +1,43 @@
+{
+ "app": "PixelLab (create_image_pro_flash + animate_image)",
+ "name": "Tessera cast - small burst (TEMP: big burst halved)",
+ "frame_ms": 45,
+ "frames": 9,
+ "loop": false,
+ "canvas": {
+  "w": 32,
+  "h": 48
+ },
+ "anchor": {
+  "kind": "feet",
+  "x": 16,
+  "y": 43
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "both",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 9,
+   "frame": {
+    "w": 32,
+    "h": 48
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 9,
+     "columns": 9,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -16,
+    "y": -43
+   }
+  }
+ ]
+}

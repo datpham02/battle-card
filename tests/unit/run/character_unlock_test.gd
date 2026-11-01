@@ -66,7 +66,7 @@ func _initialize() -> void:
 	_check("tho_san passive hunter_mark {1, 3.0}", tho["passive"]["id"] == "hunter_mark" and int(tho["passive"]["params"]["fragile_stacks"]) == 1 and float(tho["passive"]["params"]["icd_sec"]) == 3.0)
 	var vb: Dictionary = tho["signature"]
 	_check("tho_san signature vay_bat {20 s, 4 s, x1.5, x2.0}", vb["id"] == "vay_bat" and float(vb["cooldown_sec"]) == 20.0 and float(vb["params"]["duration_sec"]) == 4.0 and float(vb["params"]["zone_sec_mult"]) == 1.5 and float(vb["params"]["fragile_mult"]) == 2.0)
-	_check("tho_san deck", cc.deck_of("tho_san") == (["kiem_khi", "kiem_khi", "ket_gioi", "ket_gioi", "tran_gai", "ran_kich"] as Array[String]), str(cc.deck_of("tho_san")))
+	_check("tho_san deck", cc.deck_of("tho_san") == (["kiem_khi", "kiem_khi", "tran_gai", "tran_gai", "gai_doc", "ran_kich"] as Array[String]), str(cc.deck_of("tho_san")))
 	var giao: Dictionary = cc.get_character("giao_si")
 	_check("giao_si stats 210 / 1.05 / 4.5", int(giao["max_hp"]) == 210 and is_equal_approx(float(giao["step_cooldown_mult"]), 1.05) and float(giao["focus_max_sec"]) == 4.5)
 	_check("giao_si passive prayer {8}", giao["passive"]["id"] == "prayer" and float(giao["passive"]["params"]["heal_per_burst"]) == 8.0)

@@ -136,7 +136,8 @@ func teardown() -> void:
 # Cells just cracked: a player standing on one takes the slam damage once.
 func _on_cracked(cells: Array[Vector2i]) -> void:
 	var state: CombatState = get_context().get("state") as CombatState
-	var damaged: bool = state != null and cells.has(state.player_cell)
+	# Quick spec 2026-11-01 rule 3: a locked cell (cracking / hole) takes no slam damage.
+	var damaged: bool = state != null and hittable_cells(cells).has(state.player_cell)
 	if damaged:
 		state.damage_player(_slam_damage)
 	slam_landed.emit(cells, damaged)

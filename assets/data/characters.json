@@ -51,8 +51,8 @@
 			"passive": {"id": "hunter_mark", "params": {"fragile_stacks": 1, "icd_sec": 3.0}},
 			"passive_name_key": "passive.hunter_mark.name",
 			"passive_desc_key": "passive.hunter_mark.desc",
-			"signature": {"id": "vay_bat", "name_key": "signature.vay_bat.name", "desc_key": "signature.vay_bat.desc", "cooldown_sec": 20.0, "params": {"duration_sec": 4.0, "zone_sec_mult": 1.5, "fragile_mult": 2.0}},
-			"starter_deck": ["kiem_khi", "kiem_khi", "ket_gioi", "ket_gioi", "tran_gai", "ran_kich"]
+			"signature": {"id": "vay_bat", "name_key": "signature.vay_bat.name", "desc_key": "signature.vay_bat.desc", "cooldown_sec": 20.0, "params": {"duration_sec": 4.0, "zone_sec_mult": 1.5, "extra_thorn_cells": 1, "fragile_mult": 2.0}},
+			"starter_deck": ["kiem_khi", "kiem_khi", "tran_gai", "tran_gai", "gai_doc", "ran_kich"]
 		},
 		{
 			"id": "giao_si",

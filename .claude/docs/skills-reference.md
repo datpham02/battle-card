@@ -1,6 +1,6 @@
 # Available Skills (Slash Commands)
 
-74 slash commands organized by phase. Type `/` in Claude Code to access any of them.
+75 slash commands organized by phase. Type `/` in Claude Code to access any of them.
 
 ## Onboarding & Navigation
 
@@ -31,6 +31,7 @@
 | `/art-bible` | Guided, section-by-section Art Bible authoring — creates visual identity spec before asset production begins |
 | `/asset-spec` | Generate per-asset visual specifications and AI generation prompts from GDDs, level docs, or character profiles |
 | `/asset-audit` | Audit assets for naming conventions, file size budgets, and pipeline compliance |
+| `/pixellab-animation-engineer` | 2D animation director + PixelLab prompt engineer: key poses, frame timing, prompts, approved MCP runs, frame QA (engine-agnostic) |
 
 ## UX & Interface Design
 

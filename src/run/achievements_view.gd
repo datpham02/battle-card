@@ -14,25 +14,30 @@ extends Node2D
 ## but never act). Placeholder art; every string is a TEXT_* key drawn through tr().
 ## DEV-ONLY user arg `--screen=achievements_detail=<id>` opens that detail on entry (captures).
 
-const BG_COLOR: Color = Color(0.96, 0.9, 0.78)
-const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const CELL_BACK: Color = Color(1.0, 0.97, 0.9)
-const CELL_BACK_LOCKED: Color = Color(0.86, 0.83, 0.78)
-const CELL_OUTLINE: Color = Color(0.6, 0.52, 0.4)
-const CELL_OUTLINE_EARNED: Color = Color(0.85, 0.62, 0.1)
-const NAME_COLOR: Color = Color(0.15, 0.12, 0.1)
-const NAME_COLOR_LOCKED: Color = Color(0.36, 0.34, 0.31)
-const STATE_COLOR: Color = Color(0.3, 0.26, 0.22)
-const EARNED_COLOR: Color = Color(0.13, 0.45, 0.22)
-const PROGRESS_BACK: Color = Color(0.72, 0.68, 0.6)
-const PROGRESS_FILL: Color = Color(0.2, 0.4, 0.55)
+## 2026-10-31 dark skin (HudSkin): screen background with the header band, earned cells as Grid Light-edged card
+## faces, locked cells as Night Stone panels, outlined text; meaning colours (earned green, progress blue, medal
+## gold) lightened to read on the dark field.
+const BG_COLOR: Color = HudSkin.SCREEN_BG
+const TITLE_COLOR: Color = HudSkin.IVORY
+const CELL_BACK: Color = HudSkin.CARD_FILL
+const CELL_BACK_LOCKED: Color = HudSkin.NIGHT_STONE
+const CELL_OUTLINE: Color = HudSkin.MIST
+const CELL_OUTLINE_EARNED: Color = HudSkin.GRID_LIGHT
+const NAME_COLOR: Color = HudSkin.TEXT
+const NAME_COLOR_LOCKED: Color = HudSkin.TEXT_DIM
+const STATE_COLOR: Color = HudSkin.TEXT_DIM
+const EARNED_COLOR: Color = HudSkin.HP_FILL
+const PROGRESS_BACK: Color = HudSkin.HP_GROOVE
+const PROGRESS_FILL: Color = Color("6FA8D6")
 const MEDAL_EARNED: Color = Color(0.95, 0.75, 0.2)
-const MEDAL_LOCKED: Color = Color(0.62, 0.6, 0.56)
-const GLYPH_COLOR: Color = Color(0.38, 0.3, 0.22)
-const GLYPH_EARNED_COLOR: Color = Color(0.62, 0.42, 0.05)
+const MEDAL_LOCKED: Color = HudSkin.NIGHT_STONE_LIGHT
+## The padlock / "?" mark of a locked medallion.
+const MEDAL_MARK_LOCKED: Color = HudSkin.TEXT_DIM
+const GLYPH_COLOR: Color = HudSkin.TEXT_DIM
+const GLYPH_EARNED_COLOR: Color = HudSkin.GRID_LIGHT
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.55)
-const PANEL_BACK: Color = Color(1.0, 0.97, 0.9)
-const PANEL_OUTLINE: Color = Color(0.85, 0.62, 0.1)
+const PANEL_BACK: Color = HudSkin.NIGHT_STONE
+const PANEL_OUTLINE: Color = HudSkin.GRID_LIGHT
 const OUTLINE_WIDTH: float = 3.0
 
 const TITLE_FONT_SIZE: int = 44
@@ -101,6 +106,8 @@ var _was_active: bool = false
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node(flow_path) as GameFlow
 	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with(DEV_DETAIL_ARG):
@@ -329,7 +336,7 @@ func _draw() -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	var cfg: AchievementsConfig = _config()
 	var progress: ProgressState = _progress()
-	draw_rect(Rect2(Vector2.ZERO, vp), BG_COLOR)
+	HudSkin.screen_background(self, Rect2(Vector2.ZERO, vp), HEADER_BOTTOM_RATIO)
 	var ids: Array[String] = cfg.ids()
 	var view: Rect2 = grid_rect(vp)
 	for i: int in ids.size():
@@ -339,12 +346,12 @@ func _draw() -> void:
 			continue
 		_draw_cell(rect, ids[i], cfg, progress)
 	# Bands over the cells that scrolled past the grid edges.
-	draw_rect(Rect2(0.0, 0.0, vp.x, view.position.y), BG_COLOR)
+	draw_rect(Rect2(0.0, 0.0, vp.x, view.position.y), HudSkin.SCREEN_BAND)
 	draw_rect(Rect2(0.0, view.end.y, vp.x, vp.y - view.end.y), BG_COLOR)
 	var title := Rect2(0.0, 0.0, vp.x, view.position.y)
-	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR, HORIZONTAL_ALIGNMENT_CENTER)
+	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR, HORIZONTAL_ALIGNMENT_CENTER, true)
 	var counter := Rect2(vp.x * 0.7, 0.0, vp.x * (1.0 - ScreenLayout.MARGIN_RATIO) - vp.x * 0.7, view.position.y)
-	_text(counter, counter.get_center().y + COUNTER_FONT_SIZE * 0.35, tr(TEXT_COUNTER) % [earned_count(), ids.size()], COUNTER_FONT_SIZE, EARNED_COLOR, HORIZONTAL_ALIGNMENT_RIGHT)
+	_text(counter, counter.get_center().y + COUNTER_FONT_SIZE * 0.35, tr(TEXT_COUNTER) % [earned_count(), ids.size()], COUNTER_FONT_SIZE, EARNED_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, true)
 	_draw_scroll_bar(vp, view)
 	var back: Rect2 = back_rect(vp)
 	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
@@ -376,8 +383,7 @@ func _draw_cell(rect: Rect2, id: String, cfg: AchievementsConfig, progress: Prog
 	var def: Dictionary = cfg.get_def(id)
 	var earned: bool = progress.has_achievement(id)
 	var hidden: bool = bool(def.get("hidden", false)) and not earned
-	draw_rect(rect, CELL_BACK if earned else CELL_BACK_LOCKED)
-	draw_rect(rect, CELL_OUTLINE_EARNED if earned else CELL_OUTLINE, false, OUTLINE_WIDTH)
+	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], CELL_BACK if earned else CELL_BACK_LOCKED, CELL_OUTLINE_EARNED if earned else CELL_OUTLINE, 2.0 if earned else HudSkin.PANEL_LINE_WIDTH)
 	var pad: float = rect.size.x * PAD_RATIO
 	var medal_edge: float = minf(rect.size.y * MEDAL_SIZE_RATIO * 1.4, rect.size.x * MEDAL_SIZE_RATIO * 0.6)
 	var medal := Rect2(rect.position + Vector2(pad, pad), Vector2(medal_edge, medal_edge))
@@ -386,7 +392,7 @@ func _draw_cell(rect: Rect2, id: String, cfg: AchievementsConfig, progress: Prog
 	var text_w: float = rect.end.x - pad - text_x
 	var name_text: String = tr(TEXT_HIDDEN) if hidden else tr(str(def.get("name_key", id)))
 	var name_size: int = NAME_FONT_SIZE
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(text_x, rect.position.y + pad + name_size), name_text, HORIZONTAL_ALIGNMENT_LEFT, text_w, name_size, 2, NAME_COLOR if earned else NAME_COLOR_LOCKED)
+	_multiline(Vector2(text_x, rect.position.y + pad + name_size), name_text, HORIZONTAL_ALIGNMENT_LEFT, text_w, name_size, 2, NAME_COLOR if earned else NAME_COLOR_LOCKED, true)
 	var bar_h: float = rect.size.y * BAR_HEIGHT_RATIO
 	var state_y: float = rect.end.y - pad - bar_h - 6.0
 	if earned:
@@ -429,15 +435,15 @@ func _draw_detail(vp: Vector2, cfg: AchievementsConfig, progress: ProgressState)
 	var hidden: bool = bool(def.get("hidden", false)) and not earned
 	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
 	var panel: Rect2 = panel_rect(vp)
-	draw_rect(panel, PANEL_BACK)
-	draw_rect(panel, PANEL_OUTLINE, false, OUTLINE_WIDTH * 1.5)
+	var cut: float = HudSkin.button_cut(panel)
+	HudSkin.panel(self, panel, [0.0, cut, 0.0, cut], PANEL_BACK, PANEL_OUTLINE, OUTLINE_WIDTH)
 	var pad: float = panel.size.x * 0.04
 	var medal := Rect2(panel.position + Vector2(pad, pad), Vector2.ONE * panel.size.y * 0.16)
 	draw_medal(self, medal, earned, hidden)
 	var text_x: float = medal.end.x + pad
 	var text_w: float = panel.end.x - pad - text_x
 	var title_text: String = tr(TEXT_HIDDEN) if hidden else tr(str(def.get("name_key", id)))
-	_text(Rect2(text_x, 0.0, text_w, 0.0), medal.position.y + DETAIL_TITLE_FONT_SIZE, title_text, _fit_font_size(title_text, text_w, DETAIL_TITLE_FONT_SIZE, 20), NAME_COLOR, HORIZONTAL_ALIGNMENT_LEFT)
+	_text(Rect2(text_x, 0.0, text_w, 0.0), medal.position.y + DETAIL_TITLE_FONT_SIZE, title_text, _fit_font_size(title_text, text_w, DETAIL_TITLE_FONT_SIZE, 20, true), HudSkin.IVORY, HORIZONTAL_ALIGNMENT_LEFT, true)
 	var info: Dictionary = UnlockRules.progress_of(cfg, id, progress)
 	var cur: int = int(info.get("current", 0))
 	var target: int = maxi(int(info.get("target", 1)), 1)
@@ -447,12 +453,12 @@ func _draw_detail(vp: Vector2, cfg: AchievementsConfig, progress: ProgressState)
 	_text(Rect2(text_x, 0.0, text_w, 0.0), medal.end.y - 6.0, state_text, DETAIL_BODY_FONT_SIZE, EARNED_COLOR if earned else STATE_COLOR, HORIZONTAL_ALIGNMENT_LEFT)
 	var inner_w: float = panel.size.x - pad * 2.0
 	var y: float = medal.end.y + pad * 1.6
-	_text(Rect2(panel.position.x + pad, 0.0, inner_w, 0.0), y, tr(TEXT_DETAIL_CONDITION), DETAIL_HEAD_FONT_SIZE, PROGRESS_FILL, HORIZONTAL_ALIGNMENT_LEFT)
+	_text(Rect2(panel.position.x + pad, 0.0, inner_w, 0.0), y, tr(TEXT_DETAIL_CONDITION), DETAIL_HEAD_FONT_SIZE, PROGRESS_FILL, HORIZONTAL_ALIGNMENT_LEFT, true)
 	y += DETAIL_BODY_FONT_SIZE + 6.0
 	var condition: String = tr(TEXT_HIDDEN_DESC) if hidden else tr(str(def.get("desc_key", "")))
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(panel.position.x + pad, y), condition, HORIZONTAL_ALIGNMENT_LEFT, inner_w, DETAIL_BODY_FONT_SIZE, 3, STATE_COLOR)
+	_multiline(Vector2(panel.position.x + pad, y), condition, HORIZONTAL_ALIGNMENT_LEFT, inner_w, DETAIL_BODY_FONT_SIZE, 3, HudSkin.TEXT)
 	y += (DETAIL_BODY_FONT_SIZE + 6.0) * 3.0 + pad * 0.6
-	_text(Rect2(panel.position.x + pad, 0.0, inner_w, 0.0), y, tr(TEXT_DETAIL_REWARDS), DETAIL_HEAD_FONT_SIZE, PROGRESS_FILL, HORIZONTAL_ALIGNMENT_LEFT)
+	_text(Rect2(panel.position.x + pad, 0.0, inner_w, 0.0), y, tr(TEXT_DETAIL_REWARDS), DETAIL_HEAD_FONT_SIZE, PROGRESS_FILL, HORIZONTAL_ALIGNMENT_LEFT, true)
 	y += DETAIL_BODY_FONT_SIZE + 10.0
 	var rewards: Array = def.get("rewards", []) as Array
 	if rewards.is_empty():
@@ -497,7 +503,7 @@ static func draw_medal(canvas: CanvasItem, rect: Rect2, earned: bool, hidden: bo
 	var center: Vector2 = rect.get_center()
 	var radius: float = minf(rect.size.x, rect.size.y) * 0.5
 	canvas.draw_circle(center, radius, MEDAL_EARNED if earned else MEDAL_LOCKED)
-	canvas.draw_arc(center, radius, 0.0, TAU, 32, CELL_OUTLINE_EARNED if earned else CELL_OUTLINE, OUTLINE_WIDTH)
+	canvas.draw_arc(center, radius, 0.0, TAU, 32, CELL_OUTLINE_EARNED if earned else CELL_OUTLINE, 2.0)
 	if earned:
 		var points := PackedVector2Array()
 		for i: int in 10:
@@ -507,11 +513,11 @@ static func draw_medal(canvas: CanvasItem, rect: Rect2, earned: bool, hidden: bo
 		canvas.draw_colored_polygon(points, Color(1.0, 0.97, 0.85))
 	elif hidden:
 		var size: int = roundi(radius * 1.3)
-		canvas.draw_string(ThemeDB.fallback_font, Vector2(center.x - radius, center.y + size * 0.35), "?", HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, size, Color(0.3, 0.28, 0.25))
+		MenuFont.text(canvas, Vector2(center.x - radius, center.y + size * 0.35), "?", size, MEDAL_MARK_LOCKED, HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, true)
 	else:
 		var body := Rect2(center + Vector2(-radius * 0.34, -radius * 0.02), Vector2(radius * 0.68, radius * 0.5))
-		canvas.draw_rect(body, Color(0.3, 0.28, 0.25))
-		canvas.draw_arc(Vector2(center.x, body.position.y), radius * 0.24, PI, TAU, 12, Color(0.3, 0.28, 0.25), 4.0)
+		canvas.draw_rect(body, MEDAL_MARK_LOCKED)
+		canvas.draw_arc(Vector2(center.x, body.position.y), radius * 0.24, PI, TAU, 12, MEDAL_MARK_LOCKED, 4.0)
 
 
 ## Code-drawn glyph of a reward [param kind] inside [param rect]: card (a tall rounded rectangle), piece
@@ -542,14 +548,24 @@ static func draw_reward_glyph(canvas: CanvasItem, rect: Rect2, kind: String, col
 			canvas.draw_circle(c, s * 0.3, color)
 
 
-# Largest font size from [param base] down to [param minimum] whose one-line [param text] fits [param width].
-func _fit_font_size(text: String, width: float, base: int, minimum: int = 12) -> int:
+# Largest font size from [param base] down to [param minimum] whose one-line [param text] fits [param width]
+# (measured in the HudSkin font, Bold when [param bold]).
+func _fit_font_size(text: String, width: float, base: int, minimum: int = 12, bold: bool = false) -> int:
 	var size: int = base
-	while size > minimum and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x > width:
+	while size > minimum and HudSkin.text_width(text, size, bold) > width:
 		size -= 1
 	return size
 
 
-# Single-line text at baseline [param y] aligned inside the width of [param rect].
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color, align: HorizontalAlignment) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, align, rect.size.x, size, color)
+# Single-line outlined text (HudSkin) at baseline [param y] aligned inside the width of [param rect].
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, align: HorizontalAlignment, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, align, rect.size.x, bold)
+
+
+# Word-wrapped outlined text in the HudSkin font (the multi-line twin of HudSkin.text).
+func _multiline(pos: Vector2, text: String, align: HorizontalAlignment, width: float, size: int, max_lines: int, color: Color, bold: bool = false) -> void:
+	if text.is_empty():
+		return
+	var f: Font = HudSkin.font(bold)
+	draw_multiline_string_outline(f, pos, text, align, width, size, max_lines, HudSkin.TEXT_OUTLINE_PX, Color(HudSkin.TEXT_OUTLINE, color.a))
+	draw_multiline_string(f, pos, text, align, width, size, max_lines, color)

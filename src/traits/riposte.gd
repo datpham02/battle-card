@@ -109,7 +109,8 @@ func _land() -> void:
 	_cell = BoardGrid.NO_CELL
 	_warn_left = 0.0
 	var state: CombatState = get_context().get("state") as CombatState
-	var hit: bool = state != null and state.player_cell == cell and not state.is_player_dead()
+	# Quick spec 2026-11-01 rule 3: a locked cell (cracking / hole) takes nothing.
+	var hit: bool = state != null and state.player_cell == cell and not state.is_player_dead() 		and not hittable_cells([cell] as Array[Vector2i]).is_empty()
 	if hit:
 		state.damage_player(_damage)
 		_hit_count += 1

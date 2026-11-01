@@ -14,12 +14,13 @@ extends Node2D
 const COLOR_FRESH: Color = Color(0.2, 0.75, 0.3)
 const COLOR_WARN: Color = Color(0.95, 0.8, 0.1)
 const COLOR_ROTTEN: Color = Color(0.9, 0.2, 0.15)
-const TAG_BACK: Color = Color(1.0, 1.0, 1.0, 0.92)
-const TEXT_COLOR: Color = Color(0.15, 0.12, 0.1)
+## 2026-10-31: game skin (HudSkin) tag colours: Night Stone tags with light outlined text.
+const TAG_BACK: Color = Color("1E1B24", 0.92)
+const TEXT_COLOR: Color = Color("F4F6FA")
 const FULL_BACK: Color = Color(0.95, 0.7, 0.1)
 ## Rotten point (Story 014): grey marker / tag / bar and the dark X across the marker.
 const ROTTEN_GREY: Color = Color(0.55, 0.55, 0.55)
-const ROTTEN_TAG_BACK: Color = Color(0.8, 0.8, 0.8, 0.92)
+const ROTTEN_TAG_BACK: Color = Color("2B2735", 0.92)
 const ROTTEN_X_COLOR: Color = Color(0.2, 0.2, 0.22, 0.9)
 const ROTTEN_X_WIDTH: float = 5.0
 ## Inset of the X from the cell's edges (share of cell height).
@@ -129,18 +130,17 @@ func _draw() -> void:
 		draw_rect(tag, Color(ROTTEN_TAG_BACK if point.rotten else TAG_BACK, alpha))
 		draw_rect(tag, color, false, OUTLINE_WIDTH)
 		var font_size: int = int(cell.y * LABEL_FONT_RATIO)
-		draw_string(ThemeDB.fallback_font, tag.position + Vector2(0.0, tag.size.y * 0.5 + font_size * 0.35), point.label, HORIZONTAL_ALIGNMENT_CENTER, tag.size.x, font_size, Color(TEXT_COLOR, alpha))
+		HudSkin.text(self, tag.position + Vector2(0.0, tag.size.y * 0.5 + font_size * 0.35), point.label, font_size, Color(TEXT_COLOR, alpha), HORIZONTAL_ALIGNMENT_CENTER, tag.size.x, true)
 		var bar_w: float = cell.x * BAR_WIDTH_RATIO
 		var bar := Rect2(Vector2(rect.get_center().x - bar_w * 0.5, rect.end.y - cell.y * (BAR_BOTTOM_RATIO + BAR_HEIGHT_RATIO)), Vector2(bar_w, cell.y * BAR_HEIGHT_RATIO))
-		draw_rect(bar, Color(TEXT_COLOR, 0.3))
+		draw_rect(bar, HudSkin.HP_GROOVE)
 		draw_rect(Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), ROTTEN_X_COLOR if point.rotten else color)
 		if hand_full and point.cell == stand:
 			var full_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * FULL_TAG_HEIGHT_RATIO)
 			var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO - full_size.y - 2.0), full_size) # top edge, above the label tag, clear of the marker
 			var full_font: int = int(cell.y * FULL_FONT_RATIO)
-			draw_rect(full_tag, FULL_BACK)
-			draw_rect(full_tag, TEXT_COLOR, false, OUTLINE_WIDTH)
-			draw_string(ThemeDB.fallback_font, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, full_font, TEXT_COLOR)
+			HudSkin.panel(self, full_tag, [0.0, 4.0, 0.0, 4.0], HudSkin.NIGHT_STONE, HudSkin.GRID_LIGHT, 2.0)
+			HudSkin.text(self, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), full_font, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, true)
 
 
 	# Story 036: a wind streak on every point the next drift will move, drawn above all points.
@@ -211,15 +211,14 @@ func _draw_piece_point(point: FieldPoint, rect: Rect2, cell: Vector2, color: Col
 		var mark_r: float = cell.y * ODD_MARK_RADIUS_RATIO
 		PieceDraw.draw_odd_mark(self, Vector2(rect.end.x - mark_r * 1.6, rect.position.y + mark_r * 1.6), mark_r)
 	else:
-		PieceDraw.draw_shape(self, point.piece, area, Color(color, 0.85 * alpha), Color(TEXT_COLOR, 0.6 * alpha), unit_max)
+		PieceDraw.draw_shape(self, point.piece, area, Color(color, 0.85 * alpha), Color(HudSkin.TEXT_OUTLINE, 0.6 * alpha), unit_max)
 	var bar_w: float = cell.x * BAR_WIDTH_RATIO
 	var bar := Rect2(Vector2(rect.get_center().x - bar_w * 0.5, rect.end.y - cell.y * (BAR_BOTTOM_RATIO + BAR_HEIGHT_RATIO)), Vector2(bar_w, cell.y * BAR_HEIGHT_RATIO))
-	draw_rect(bar, Color(TEXT_COLOR, 0.3))
+	draw_rect(bar, HudSkin.HP_GROOVE)
 	draw_rect(Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), ROTTEN_X_COLOR if point.rotten else color)
 	if show_full:
 		var full_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * FULL_TAG_HEIGHT_RATIO)
 		var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO), full_size)
 		var full_font: int = int(cell.y * FULL_FONT_RATIO)
-		draw_rect(full_tag, FULL_BACK)
-		draw_rect(full_tag, TEXT_COLOR, false, OUTLINE_WIDTH)
-		draw_string(ThemeDB.fallback_font, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, full_font, TEXT_COLOR)
+		HudSkin.panel(self, full_tag, [0.0, 4.0, 0.0, 4.0], HudSkin.NIGHT_STONE, HudSkin.GRID_LIGHT, 2.0)
+		HudSkin.text(self, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), full_font, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, true)

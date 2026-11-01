@@ -476,10 +476,10 @@ func _test_vay_bat() -> void:
 	for cell: Vector2i in v.get_grid().enemy_cells():
 		if cell != state.enemy_cell and far.size() < 2:
 			far.append(cell)
-	var seal_sec: float = float(v.get_skill_config().get_skill("ket_gioi")["seal_sec"])
-	_cast_cells(v, far, "ket_gioi")
-	var sealed: Array[Vector2i] = status.sealed_cells(enemy)
-	_check("vay_bat inactive: seal lasts the card's seal_sec", not sealed.is_empty() and _near(status.seal_total_sec(enemy, sealed[0]), seal_sec))
+	var thorn_sec: float = float(CombatConfig.load_from_file().zone_numbers()["thorn_sec"])
+	_cast_cells(v, far, "tran_gai")
+	_check("vay_bat inactive: thorns last the config thorn_sec", _near(status.thorn_total_sec(enemy, far[0]), thorn_sec), str(status.thorn_total_sec(enemy, far[0])))
+	_check("vay_bat inactive: no extra thorn cell", status.thorn_cells(enemy).size() == far.size(), str(status.thorn_cells(enemy)))
 	_check("vay_bat inactive: hooks neutral", sig.zone_sec_mult() == 1.0 and sig.fragile_mult_override() == 0.0)
 	status.clear_zones()
 	status.apply_fragile(enemy, 1)
@@ -487,12 +487,14 @@ func _test_vay_bat() -> void:
 	# Active.
 	sig.activate()
 	_check("vay_bat active: zone x1.5, Ran override 2.0", _near(sig.zone_sec_mult(), 1.5) and _near(sig.fragile_mult_override(), 2.0))
-	_cast_cells(v, far, "ket_gioi")
-	sealed = status.sealed_cells(enemy)
-	_check("vay_bat active: seal lasts 1.5x", not sealed.is_empty() and _near(status.seal_total_sec(enemy, sealed[0]), seal_sec * 1.5))
-	var thorn_sec: float = float(CombatConfig.load_from_file().zone_numbers()["thorn_sec"])
+	# The boss's own drop tiles on its half are not the player's zones: Vay Bat never lengthens them.
+	var drop_cell: Array[Vector2i] = [far[0]]
+	status.apply_drop(enemy, drop_cell, 0.5, 2.0)
+	_check("vay_bat active: a drop tile is NOT lengthened (Wall part removed, quick spec 2026-10-31)", _near(status.hole_total_sec(enemy, far[0]), 2.0), str(status.hole_total_sec(enemy, far[0])))
+	status.clear_zones()
 	_cast_cells(v, far, "tran_gai")
 	_check("vay_bat active: thorns last 1.5x", _near(status.thorn_total_sec(enemy, far[0]), thorn_sec * 1.5), str(status.thorn_total_sec(enemy, far[0])))
+	_check("vay_bat active: the thorn cast lays 1 extra cell", status.thorn_cells(enemy).size() == far.size() + 1, str(status.thorn_cells(enemy)))
 	status.apply_fragile(enemy, 2)
 	_check("vay_bat active: each Ran stack spent is x2.0 (then x2.0 again)", _near(status.consume_fragile(enemy), 2.0) and _near(status.fragile_mult_against(enemy), 2.0))
 	status.consume_fragile(enemy)
@@ -508,9 +510,9 @@ func _test_vay_bat() -> void:
 	# Expired.
 	sig.tick(4.5)
 	_check("vay_bat expired: neutral hooks again", not sig.is_active() and sig.zone_sec_mult() == 1.0 and sig.fragile_mult_override() == 0.0)
-	_cast_cells(v, far, "ket_gioi")
-	sealed = status.sealed_cells(enemy)
-	_check("vay_bat expired: seal back to seal_sec", not sealed.is_empty() and _near(status.seal_total_sec(enemy, sealed[0]), seal_sec))
+	status.clear_zones()
+	_cast_cells(v, far, "tran_gai")
+	_check("vay_bat expired: thorns back to thorn_sec, no extra cell", _near(status.thorn_total_sec(enemy, far[0]), thorn_sec) and status.thorn_cells(enemy).size() == far.size(), str(status.thorn_total_sec(enemy, far[0])))
 	status.apply_fragile(enemy, 1)
 	_check("vay_bat expired: Ran back to config", _near(status.consume_fragile(enemy), cfg_mult))
 	_drop(v)

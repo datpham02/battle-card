@@ -1,7 +1,8 @@
 class_name HunterMarkPassive
 extends BasePassive
-## Tho san - Dau san (Story 037): when the boss steps onto one of the player's thorn cells, or the player forms
-## a seal zone while the boss stands next to (4-neighbour, not inside) one of its cells, the boss gets
+## Tho san - Dau san (Story 037, trigger changed by design/quick-specs/o-rot-thay-tuong-2026-10-31.md): when the
+## boss steps onto one of the player's thorn cells, or the player lays thorns ON the boss's current cell or next to
+## it (4-neighbour; user 2026-11-01 added "on the boss's cell"), the boss gets
 ## `fragile_stacks` Ran stack(s). After a mark it waits `icd_sec` SIMULATION seconds (the internal cooldown,
 ## advanced by [method tick]) before it can mark again. Params: fragile_stacks (int), icd_sec (float).
 ## Implements: Story 037.
@@ -29,14 +30,15 @@ func on_boss_thorn_step(_cell: Vector2i) -> void:
 
 
 func on_player_zone_formed(kind: String, cells: Array[Vector2i]) -> void:
-	if kind != StatusEffects.KIND_SEAL:
+	if kind != StatusEffects.KIND_THORNS:
 		return
 	var state: CombatState = _ctx.get("state") as CombatState
 	if state == null:
 		return
 	var boss: Vector2i = state.enemy_cell
 	for cell: Vector2i in cells:
-		if absi(cell.x - boss.x) + absi(cell.y - boss.y) == 1:
+		# 0 = laid on the boss's own cell, 1 = beside it; both mark (same internal cooldown).
+		if absi(cell.x - boss.x) + absi(cell.y - boss.y) <= 1:
 			_try_mark()
 			return
 

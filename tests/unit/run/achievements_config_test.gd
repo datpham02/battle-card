@@ -49,13 +49,13 @@ func _init() -> void:
 	_check("is_unlocked: open content true, locked false", cfg.is_unlocked("card", "kiem_khi", p) and not cfg.is_unlocked("card", "gai_doc", p) and not cfg.is_unlocked("character", "tho_san", p))
 	_check("is_unlocked with null progress: locked stays locked", not cfg.is_unlocked("card", "gai_doc", null) and cfg.is_unlocked("card", "kiem_khi", null))
 	p.add_achievement("first_region_boss")
-	_check("is_unlocked after the owner is earned", cfg.is_unlocked("card", "gai_doc", p) and not cfg.is_unlocked("card", "luoi_san", p))
+	_check("is_unlocked after the owner is earned", cfg.is_unlocked("card", "gai_doc", p) and not cfg.is_unlocked("card", "gai_nguyen", p))
 
 	# --- locked_content
 	var empty := ProgressState.new()
 	var locked: Dictionary = cfg.locked_content(empty)
 	_check("locked_content kinds = card, piece, relic, character, region (Story 039: hellfire, sky_isles)", locked.keys().size() == 5 and (locked.get("region", []) as Array) == ["hellfire", "sky_isles"], str(locked))
-	_check("locked cards", (locked["card"] as Array) == ["gai_doc", "bang_tam", "luoi_san", "thanh_thuy"], str(locked["card"]))
+	_check("locked cards", (locked["card"] as Array) == ["gai_doc", "bang_tam", "gai_nguyen", "thanh_thuy"], str(locked["card"]))
 	_check("locked pieces", (locked["piece"] as Array) == ["w5", "v5", "n5"], str(locked["piece"]))
 	_check("locked relics", (locked["relic"] as Array) == ["tui_rong", "phong_an", "gai_ran", "han_ky"], str(locked["relic"]))
 	_check("locked characters", (locked["character"] as Array) == ["tho_san", "giao_si"], str(locked["character"]))

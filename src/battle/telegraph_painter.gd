@@ -32,13 +32,23 @@ static var _fallback_stripe: Texture2D = null
 ## Pure: what to draw for the boss's [param actor] right now, `{cells, k, queued}` (running cells, the progress
 ## quantized with [param reduce_motion] by [param config], the queued combo cells the running swing does not cover);
 ## `{}` when the actor is not swinging (a queued swing only exists while one runs).
-static func state_for(actor: CutActor, config: CombatConfig, reduce_motion: bool) -> Dictionary:
+## Quick spec 2026-11-01 rule 4 (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md): with [param status], locked
+## cells (cracking / hole; StatusEffects.unlocked_cells, the same gate CutEffects resolves through) are left out, so
+## a cell that starts cracking under the telegraph loses its red at once and the red is exactly the cells hit.
+static func state_for(
+	actor: CutActor, config: CombatConfig, reduce_motion: bool, status: StatusEffects = null
+) -> Dictionary:
 	if actor == null or config == null or not actor.is_swinging():
 		return {}
 	var running: Array[Vector2i] = actor.get_cells()
+	if status != null:
+		running = status.unlocked_cells(running)
 	var queued: Array[Vector2i] = []
 	if actor.has_queued():
-		for cell: Vector2i in actor.get_queued_cells():
+		var queued_cells: Array[Vector2i] = actor.get_queued_cells()
+		if status != null:
+			queued_cells = status.unlocked_cells(queued_cells)
+		for cell: Vector2i in queued_cells:
 			if not running.has(cell):
 				queued.append(cell)
 	return {"cells": running, "k": config.quantize_progress(actor.get_progress(), reduce_motion), "queued": queued}

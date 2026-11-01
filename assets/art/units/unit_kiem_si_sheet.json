@@ -196,7 +196,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 50
+      "duration": 83
     },
     {
       "filename": "kiem_si_cast_gesture_1",
@@ -218,7 +218,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 40
+      "duration": 83
     },
     {
       "filename": "kiem_si_cast_gesture_2",
@@ -240,7 +240,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 40
+      "duration": 83
     },
     {
       "filename": "kiem_si_cast_gesture_3",
@@ -262,7 +262,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 50
+      "duration": 83
     },
     {
       "filename": "kiem_si_cast_gesture_4",
@@ -284,7 +284,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 50
+      "duration": 200
     },
     {
       "filename": "kiem_si_cast_gesture_5",
@@ -306,7 +306,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 60
+      "duration": 50
     },
     {
       "filename": "kiem_si_cast_gesture_6",
@@ -328,7 +328,51 @@
         "w": 96,
         "h": 70
       },
-      "duration": 80
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_gesture_7",
+      "frame": {
+        "x": 679,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_cast_gesture_8",
+      "frame": {
+        "x": 776,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 133
     },
     {
       "filename": "kiem_si_hit_0",
@@ -909,7 +953,7 @@
     "image": "unit_kiem_si_sheet.png",
     "format": "RGBA8888",
     "size": {
-      "w": 775,
+      "w": 872,
       "h": 567
     },
     "scale": "1",
@@ -929,37 +973,37 @@
       {
         "name": "cast_gesture",
         "from": 8,
-        "to": 14,
+        "to": 16,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 15,
-        "to": 17,
+        "from": 17,
+        "to": 19,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 18,
-        "to": 22,
+        "from": 20,
+        "to": 24,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 23,
-        "to": 30,
+        "from": 25,
+        "to": 32,
         "direction": "forward"
       },
       {
         "name": "fall",
-        "from": 31,
-        "to": 34,
+        "from": 33,
+        "to": 36,
         "direction": "forward"
       },
       {
         "name": "awaken",
-        "from": 35,
-        "to": 40,
+        "from": 37,
+        "to": 42,
         "direction": "forward"
       }
     ],
@@ -980,7 +1024,7 @@
         "h": 70
       },
       "gutter": 1,
-      "columns": 8,
+      "columns": 9,
       "loop": {
         "idle": "loop",
         "step": "loop",

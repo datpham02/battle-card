@@ -569,6 +569,7 @@
 						{
 							"id": "seal_caster",
 							"params": {
+								"may_target_player_cell": true,
 								"interval_sec": 9.0,
 								"first_delay_sec": 6.0,
 								"cells_min": 2,
@@ -939,7 +940,7 @@
 					"phases": [
 						{
 							"traits": [
-								{"id": "seal_caster", "params": {}}
+								{"id": "seal_caster", "params": {"may_target_player_cell": true}}
 							],
 							"brain_set": "balanced",
 							"boss_step_cooldown_mult": 1.0,
@@ -951,7 +952,7 @@
 							"phase_shift_sec": 1.0,
 							"name_key": "phase.an_dai_keeper.2",
 							"traits": [
-								{"id": "seal_caster", "params": {}},
+								{"id": "seal_caster", "params": {"may_target_player_cell": true}},
 								{"id": "row_burner", "params": {}}
 							],
 							"brain_set": "aggressive",
@@ -1167,6 +1168,7 @@
 						{
 							"id": "seal_caster",
 							"params": {
+								"may_target_player_cell": true,
 								"interval_sec": 12.0,
 								"first_delay_sec": 8.0,
 								"cells_min": 2,

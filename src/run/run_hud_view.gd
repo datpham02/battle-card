@@ -48,16 +48,21 @@ extends Node2D
 ## boss node keeps "TRẬN BOSS") since a node is a one-match config. Floors outside a run keep the
 ## Story 015 labels.
 
+## 2026-10-31 (user: "chưa apply hud cho toàn bộ màn"): the intro / between bands, the pause panel and the run
+## result panels in the dark game skin (HudSkin): Night Stone chamfered panels (cut top-right and bottom-left) with
+## a Mist line, outlined text (Bold titles), Ivory / gold text colours. Rects and hit areas are unchanged.
 const DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.6)
-const BAND_COLOR: Color = Color(0.08, 0.07, 0.06, 0.78)
-const PANEL_BACK: Color = Color(0.1, 0.09, 0.08, 0.96)
-const PANEL_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const TEXT_LIGHT: Color = Color(0.95, 0.9, 0.78)
-const TEXT_WHITE: Color = Color(1.0, 1.0, 1.0)
-const TEXT_DIM: Color = Color(0.75, 0.72, 0.65)
+const BAND_COLOR: Color = Color(HudSkin.NIGHT_STONE, 0.92)
+const PANEL_BACK: Color = Color(HudSkin.NIGHT_STONE, 0.95)
+const PANEL_OUTLINE: Color = HudSkin.MIST
+## Chamfer of the bands and panels, px (top-right and bottom-left corners).
+const PANEL_CUT: float = 12.0
+const TEXT_LIGHT: Color = HudSkin.IVORY
+const TEXT_WHITE: Color = HudSkin.TEXT
+const TEXT_DIM: Color = HudSkin.TEXT_DIM
 const TEXT_WIN: Color = Color(0.45, 0.9, 0.5)
 const TEXT_LOSE: Color = Color(1.0, 0.4, 0.35)
-const TEXT_BOSS: Color = Color(1.0, 0.75, 0.2)
+const TEXT_BOSS: Color = HudSkin.GRID_LIGHT
 const LABEL_COLOR: Color = Color(0.15, 0.12, 0.1)
 const OUTLINE_WIDTH: float = 4.0
 ## Pause glyph ("||"): bar width, bar height and the gap between the bars, as shares of the
@@ -194,6 +199,8 @@ var _strip: RelicStrip = null
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_strip = RelicStrip.new()
 	add_child(_strip)
 	_flow = get_node_or_null(flow_path) as GameFlow
@@ -406,8 +413,9 @@ func _fit_line_font(text: String, width: float, size: int) -> int:
 	return fitted
 
 
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(HudSkin.font_semibold(), Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# 2026-10-31: HudSkin outlined text (Bold when [param bold]: the band and panel titles).
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
 # Translated opponent name of match [param index] (name_key, or a legacy literal display_name).
@@ -442,7 +450,7 @@ func _draw_match_label(vp: Vector2) -> void:
 	var size: int = LABEL_FONT_SIZE
 	while size > MATCH_LABEL_MIN_FONT_SIZE and HudSkin.text_width(text, size) > rect.size.x:
 		size -= 1
-	HudSkin.text(self, Vector2(rect.position.x, rect.get_center().y + size * 0.35), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
+	MenuFont.text(self, Vector2(rect.position.x, rect.get_center().y + size * 0.35), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
 
 
 # 2026-10-31 (user: "tiền góc phải", OSFE top row): the run's gold in the top-right corner, on the top HUD row
@@ -457,7 +465,7 @@ func _draw_gold(vp: Vector2) -> void:
 	var text: String = str(_flow.get_gold())
 	var right: float = vp.x - ScreenLayout.HUD_TOP_ROW_INSET_PX * s
 	var width: float = HudSkin.text_width(text, size, true)
-	HudSkin.text(self, Vector2(right - width, floorf(row.get_center().y + size * 0.36)), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
+	MenuFont.text(self, Vector2(right - width, floorf(row.get_center().y + size * 0.36)), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
 	var radius: float = size * ShopView.COIN_RADIUS_RATIO
 	ShopView.draw_coin(self, Vector2(right - width - ShopView.COIN_GAP - radius, row.get_center().y), radius)
 
@@ -470,7 +478,7 @@ func _draw_deck_label(vp: Vector2) -> void:
 	var text: String = tr(TEXT_DECK_LABEL) % _flow.get_run().deck_ids.size()
 	# Story 046: outlined light text, readable on the battle backdrop. 2026-10-31: right of the pause tile
 	# (the boss's corner panel owns the top-right corner), left-aligned.
-	HudSkin.text(self, Vector2(rect.position.x, rect.get_center().y + LABEL_FONT_SIZE * 0.35), text, LABEL_FONT_SIZE, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x)
+	MenuFont.text(self, Vector2(rect.position.x, rect.get_center().y + LABEL_FONT_SIZE * 0.35), text, LABEL_FONT_SIZE, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x)
 
 
 # Display name of the current battle's arena (+ variant marker); "" when the battle has none
@@ -495,7 +503,7 @@ func _arena_name() -> String:
 func _draw_intro(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var band: Rect2 = ScreenLayout.run_intro_band_rect(vp)
-	draw_rect(band, BAND_COLOR)
+	HudSkin.panel(self, band, [0.0, PANEL_CUT, 0.0, PANEL_CUT], BAND_COLOR, PANEL_OUTLINE)
 	var boss: bool = state.is_boss_match()
 	var title: String = tr(TEXT_INTRO_TITLE_BOSS) if boss else tr(TEXT_INTRO_TITLE) % [state.get_match_index() + 1, state.get_match_count()]
 	var run: RunSession = _flow.get_run() if _flow != null else null
@@ -505,7 +513,7 @@ func _draw_intro(vp: Vector2) -> void:
 		var kind: String = str(_run_node_position(run)[1])
 		boss = kind == ChapterMapView.KIND_BOSS or kind == ChapterMapView.KIND_MINIBOSS
 		title = tr(TEXT_INTRO_TITLE_BOSS) if kind == ChapterMapView.KIND_BOSS else ChapterMapView.kind_name(kind).to_upper()
-	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if boss else TEXT_WHITE)
+	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if boss else TEXT_WHITE, true)
 	_text(band, band.position.y + band.size.y * BAND_NAME_BASELINE, _match_name(state.get_match_index()), BAND_NAME_FONT_SIZE, TEXT_LIGHT)
 	# Story 023: the match's one-line description (desc_key) under the name, shrunk to the band width.
 	var desc_key: String = str(_controller.get_config().matches[state.get_match_index()].get("desc_key", ""))
@@ -521,7 +529,7 @@ func _draw_between(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var config: RunConfig = _controller.get_config()
 	var panel: Rect2 = _draw_panel(vp)
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_BETWEEN_TITLE), TITLE_FONT_SIZE, TEXT_WIN)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_BETWEEN_TITLE), TITLE_FONT_SIZE, TEXT_WIN, true)
 	var max_hp: float = _controller.get_player_max_hp()
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, tr(TEXT_HEAL) % roundi(config.heal_between_matches), LINE_FONT_SIZE, TEXT_LIGHT)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_HP) % [ceili(state.get_carried_hp()), ceili(max_hp)], LINE_FONT_SIZE, TEXT_WHITE)
@@ -547,7 +555,7 @@ func _draw_won(vp: Vector2) -> void:
 		else:
 			title = tr(TEXT_FLOOR_CLEAR_TITLE)
 			line = _flow.get_config().chapter_name(pos.x)
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, title, TITLE_FONT_SIZE, TEXT_WIN)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, title, TITLE_FONT_SIZE, TEXT_WIN, true)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, line, LINE_FONT_SIZE, TEXT_BOSS)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_TIME) % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE3_BASELINE, tr(TEXT_CLEARED) % [state.get_match_count(), state.get_match_count()], LINE_FONT_SIZE, TEXT_LIGHT)
@@ -558,7 +566,7 @@ func _draw_won(vp: Vector2) -> void:
 func _draw_lost(vp: Vector2) -> void:
 	var state: RunState = _controller.get_state()
 	var panel: Rect2 = _draw_panel(vp)
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_LOSE_TITLE), TITLE_FONT_SIZE, TEXT_LOSE)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_LOSE_TITLE), TITLE_FONT_SIZE, TEXT_LOSE, true)
 	var line: String = tr(TEXT_LOSE_LINE) % [state.get_match_index() + 1, state.get_match_count(), _match_name(state.get_match_index())]
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, line, LINE_FONT_SIZE, TEXT_LIGHT)
 	_text(panel, panel.position.y + panel.size.y * PANEL_LINE2_BASELINE, tr(TEXT_TIME) % state.get_elapsed_text(), LINE_FONT_SIZE, TEXT_WHITE)
@@ -600,7 +608,7 @@ func _draw_run_result(vp: Vector2) -> void:
 			]
 			colors = [TEXT_BOSS, TEXT_LIGHT, TEXT_LIGHT, TEXT_DIM, TEXT_WHITE]
 			sizes = [LINE_FONT_SIZE, LINE_FONT_SIZE, LINE_FONT_SIZE, SMALL_FONT_SIZE, LINE_FONT_SIZE]
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_RUN_WON_TITLE if won else TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_WIN if won else TEXT_LOSE)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_RUN_WON_TITLE if won else TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_WIN if won else TEXT_LOSE, true)
 	for i: int in mini(lines.size(), RESULT_LINE_BASELINES.size()):
 		_text(panel, panel.position.y + panel.size.y * RESULT_LINE_BASELINES[i], lines[i], _fit_line_font(lines[i], inner_width, sizes[i]), colors[i])
 	_draw_buttons(vp)
@@ -640,12 +648,11 @@ func _fate_or_ending() -> bool:
 func _draw_defeat(vp: Vector2) -> void:
 	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
 	var panel: Rect2 = ScreenLayout.defeat_panel_rect(vp)
-	draw_rect(panel, PANEL_BACK)
-	draw_rect(panel, PANEL_OUTLINE, false, OUTLINE_WIDTH)
+	HudSkin.panel(self, panel, [0.0, PANEL_CUT, 0.0, PANEL_CUT], PANEL_BACK, PANEL_OUTLINE, HudSkin.PANEL_LINE_WIDTH + 0.5)
 	var summary: Dictionary = _flow.get_defeat_summary()
 	var death: Dictionary = summary.get("death", {})
 	var inner_width: float = panel.size.x - vp.y * ScreenLayout.RUN_PANEL_INSET_RATIO * 2.0
-	_text(panel, vp.y * DEFEAT_TITLE_BASELINE_RATIO, tr(TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_LOSE)
+	_text(panel, vp.y * DEFEAT_TITLE_BASELINE_RATIO, tr(TEXT_RUN_OVER_TITLE), TITLE_FONT_SIZE, TEXT_LOSE, true)
 	var region_id: String = str(death.get("region_id", summary.get("region_id", _flow.get_current_region())))
 	var floor_number: int = int(summary.get("floor_reached", _flow.get_floor() + 1))
 	var fell: String = EndingView.format_text(tr(TEXT_FELL_AT), [floor_number, _flow.region_name(region_id)])
@@ -742,7 +749,7 @@ func _draw_pause_button(vp: Vector2) -> void:
 # Story 016: the pause overlay — dim, panel, "TẠM DỪNG" and the resume / leave buttons.
 func _draw_paused(vp: Vector2) -> void:
 	var panel: Rect2 = _draw_panel(vp)
-	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_PAUSE_TITLE), TITLE_FONT_SIZE, TEXT_LIGHT)
+	_text(panel, panel.position.y + panel.size.y * PANEL_TITLE_BASELINE, tr(TEXT_PAUSE_TITLE), TITLE_FONT_SIZE, TEXT_LIGHT, true)
 	var swing: String = boss_swing_line()
 	if not swing.is_empty():
 		_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, swing, _fit_line_font(swing, panel.size.x, SMALL_FONT_SIZE), TEXT_LIGHT)
@@ -784,8 +791,7 @@ static func movement_button_rect(viewport_size: Vector2, button_count: int) -> R
 func _draw_panel(vp: Vector2) -> Rect2:
 	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
 	var panel: Rect2 = ScreenLayout.run_panel_rect(vp)
-	draw_rect(panel, PANEL_BACK)
-	draw_rect(panel, PANEL_OUTLINE, false, OUTLINE_WIDTH)
+	HudSkin.panel(self, panel, [0.0, PANEL_CUT, 0.0, PANEL_CUT], PANEL_BACK, PANEL_OUTLINE, HudSkin.PANEL_LINE_WIDTH + 0.5)
 	return panel
 
 

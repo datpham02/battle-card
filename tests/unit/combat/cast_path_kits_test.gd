@@ -331,16 +331,10 @@ func _test_second_wind() -> void:
 func _test_hunter_mark() -> void:
 	var ch: Dictionary = _cc.get_character("tho_san")
 	var stacks: int = int(ch["passive"]["params"]["fragile_stacks"])
-	# Control: a joined seal of two monos NOT beside the boss gives no mark.
-	var hc: Node = await _match(ch)
-	var c: CombatView = _cv(hc)
-	var r: Dictionary = _piece_cast(c, [["mono", _ec(c, 2, 2)], ["mono", _ec(c, 0, 2)]], "ket_gioi")
-	_check("hunter_mark control: joined ket_gioi away from the boss seals 2 cells", r.get("pieces", 0) == 2 and c.get_status().sealed_cells(CombatState.Side.ENEMY).size() == 2, str(c.get_status().sealed_cells(CombatState.Side.ENEMY)))
-	_check("hunter_mark control: no Ran without a sealed cell beside the boss", c.get_fragile_stacks() == 0)
-	_drop(hc)
+	# Quick spec 2026-10-31: the mark comes from THORNS laid beside the boss (Walls left the player's kit).
 	var h: Node = await _match(ch)
 	var v: CombatView = _cv(h)
-	# ket_gioi needs 2 cells: one mono alone keeps it locked; the join unlocks it.
+	# tran_gai needs 3 cells: one mono alone keeps it locked; the join unlocks it.
 	var hold: HoldSlots = v.get_hold()
 	var p := FieldPoint.new()
 	p.uid = -300
@@ -348,13 +342,13 @@ func _test_hunter_mark() -> void:
 	p.piece = _lib.make_piece("mono", 0)
 	p.label = "mono"
 	hold.place(p, 0)
-	v._deck = Deck.from_array(["ket_gioi", "ket_gioi", "ket_gioi", "ket_gioi"], 1)
+	v._deck = Deck.from_array(["tran_gai", "tran_gai", "tran_gai", "tran_gai"], 1)
 	var opened: bool = v.select_piece(0, false) and v.aim_at_cell(_ec(v, 2, 2)) and v.confirm_placement()
-	_check("hunter_mark: a single mono cannot choose ket_gioi (min_cells 2)", opened and not v.get_cut_flow().choose("ket_gioi") and v.get_cut_flow().is_menu_open())
+	_check("hunter_mark: a single mono cannot choose tran_gai (min_cells 3)", opened and not v.get_cut_flow().choose("tran_gai") and v.get_cut_flow().is_menu_open())
 	v.cancel_placement()
-	r = _piece_cast(v, [["mono", _ec(v, 2, 2)], ["mono", _ec(v, 1, 0)]], "ket_gioi")
-	_check("hunter_mark: JOINED mono+mono ket_gioi (one beside the boss) seals the union", r.get("pieces", 0) == 2 and v.get_status().sealed_cells(CombatState.Side.ENEMY).size() == 2, str(v.get_status().sealed_cells(CombatState.Side.ENEMY)))
-	_check("hunter_mark: the seal beside the boss gives fragile_stacks Ran", v.get_fragile_stacks() == stacks, "%d vs %d" % [v.get_fragile_stacks(), stacks])
+	var r: Dictionary = _piece_cast(v, [_bar2_low(v), ["mono", _ec(v, 2, 0)]], "tran_gai")
+	_check("hunter_mark: JOINED bar2+mono tran_gai (one cell beside the boss) lays 3 thorns", r.get("pieces", 0) == 2 and v.get_status().thorn_cells(CombatState.Side.ENEMY).size() == 3, str(v.get_status().thorn_cells(CombatState.Side.ENEMY)))
+	_check("hunter_mark: thorns laid beside the boss give fragile_stacks Ran", v.get_fragile_stacks() == stacks, "%d vs %d" % [v.get_fragile_stacks(), stacks])
 	_drop(h)
 
 
@@ -368,18 +362,20 @@ func _test_vay_bat() -> void:
 	var v: CombatView = _cv(h)
 	var status: StatusEffects = v.get_status()
 	var enemy: int = CombatState.Side.ENEMY
-	var seal_sec: float = float(v.get_skill_config().resolved("ket_gioi", 1)["seal_sec"])
-	var r: Dictionary = _piece_cast(v, [["mono", _ec(v, 2, 2)], ["mono", _ec(v, 0, 2)]], "ket_gioi")
-	var sealed: Array[Vector2i] = status.sealed_cells(enemy)
-	_check("vay_bat inactive: joined ket_gioi seal lasts seal_sec", r.get("pieces", 0) == 2 and sealed.size() == 2 and _near(status.seal_total_sec(enemy, sealed[0]), seal_sec), str(sealed))
+	# Quick spec 2026-10-31: Vay Bat stretches THORNS x zone_sec_mult and lays extra_thorn_cells more (no Wall part).
+	var extra: int = int(ch["signature"]["params"]["extra_thorn_cells"])
+	var r: Dictionary = _piece_cast(v, [_bar2_low(v), ["mono", _ec(v, 2, 0)]], "tran_gai")
+	var thorned: Array[Vector2i] = status.thorn_cells(enemy)
+	var base_sec: float = 0.0 if thorned.is_empty() else status.thorn_total_sec(enemy, thorned[0])
+	_check("vay_bat inactive: joined tran_gai lays exactly its 3 cells", r.get("pieces", 0) == 2 and thorned.size() == 3 and base_sec > 0.0, str(thorned))
 	status.clear_zones()
 	_check("vay_bat: activated", _activate(v) and v.is_signature_active())
-	r = _piece_cast(v, [["mono", _ec(v, 2, 2)], ["mono", _ec(v, 0, 2)]], "ket_gioi")
-	sealed = status.sealed_cells(enemy)
-	var all_long: bool = sealed.size() == 2
-	for cell: Vector2i in sealed:
-		all_long = all_long and _near(status.seal_total_sec(enemy, cell), seal_sec * zone_mult)
-	_check("vay_bat active: joined ket_gioi seals last seal_sec x zone_sec_mult", r.get("pieces", 0) == 2 and all_long, "" if sealed.is_empty() else str(status.seal_total_sec(enemy, sealed[0])))
+	r = _piece_cast(v, [_bar2_low(v), ["mono", _ec(v, 2, 0)]], "tran_gai")
+	thorned = status.thorn_cells(enemy)
+	var all_long: bool = thorned.size() == 3 + extra
+	for cell: Vector2i in thorned:
+		all_long = all_long and _near(status.thorn_total_sec(enemy, cell), base_sec * zone_mult)
+	_check("vay_bat active: joined tran_gai lays 3 + extra_thorn_cells thorns, all x zone_sec_mult", extra == 1 and r.get("pieces", 0) == 2 and all_long, str(thorned))
 	status.clear_zones()
 	status.apply_fragile(enemy, 1)
 	var per: float = _per_cell(v)

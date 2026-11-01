@@ -25,27 +25,30 @@ extends Node2D
 ## (min_cells .. largest weighted size up to size_max), "not learned, not forgotten"; or "no Odd Blocks" when the
 ## chance is 0 / no size has weight. The screen opens outside a match, so it states the rule, not a per-arena value.
 
-const BACK_COLOR: Color = Color(0.93, 0.89, 0.8)
-const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const HEADER_COLOR: Color = Color(0.4, 0.35, 0.3)
-const TILE_BACK: Color = Color(1.0, 0.97, 0.9)
-const TILE_BORDER_COLOR: Color = Color(0.55, 0.48, 0.4)
-const SELECTED_OUTLINE: Color = Color(0.95, 0.72, 0.15)
-const PRESSED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
-const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.25)
-const NAME_COLOR: Color = Color(0.15, 0.12, 0.1)
-const PERCENT_COLOR: Color = Color(0.2, 0.4, 0.55)
-const REMOVED_TEXT_COLOR: Color = Color(0.55, 0.15, 0.1)
+## 2026-10-31 (user: "chưa apply hud cho toàn bộ màn"): the dark game skin (HudSkin) — screen background, card
+## tiles, outlined text. Light text colours for the dark field; no red (red = enemy telegraph): refusals and the
+## removed strike use the skin's ember orange.
+const BACK_COLOR: Color = HudSkin.SCREEN_BG
+const TITLE_COLOR: Color = HudSkin.IVORY
+const HEADER_COLOR: Color = HudSkin.TEXT_DIM
+const TILE_BACK: Color = HudSkin.CARD_FILL
+const TILE_BORDER_COLOR: Color = HudSkin.CARD_LINE
+const SELECTED_OUTLINE: Color = HudSkin.GRID_LIGHT
+const PRESSED_OUTLINE: Color = HudSkin.IVORY
+const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.45)
+const NAME_COLOR: Color = HudSkin.TEXT
+const PERCENT_COLOR: Color = Color("8FC3E8")
+const REMOVED_TEXT_COLOR: Color = Color("E08A4E")
 ## Shape squares: default-pool shapes and run-only shapes.
-const SHAPE_FILL: Color = Color(0.25, 0.45, 0.7)
-const RUN_ONLY_FILL: Color = Color(0.78, 0.52, 0.1)
-const SHAPE_OUTLINE: Color = Color(0.1, 0.12, 0.2, 0.6)
-const RUN_ONLY_TAG_COLOR: Color = Color(0.7, 0.42, 0.02)
-const STRIKE_COLOR: Color = Color(0.8, 0.12, 0.1)
-const DOT_ON: Color = Color(0.72, 0.5, 0.05)
-const DOT_OFF: Color = Color(0.72, 0.66, 0.58)
-const MESSAGE_COLOR: Color = Color(0.25, 0.2, 0.15)
-const MESSAGE_BAD_COLOR: Color = Color(0.8, 0.15, 0.1)
+const SHAPE_FILL: Color = Color(0.32, 0.55, 0.85)
+const RUN_ONLY_FILL: Color = Color(0.85, 0.6, 0.15)
+const SHAPE_OUTLINE: Color = Color(0.04, 0.05, 0.08, 0.85)
+const RUN_ONLY_TAG_COLOR: Color = HudSkin.GRID_LIGHT
+const STRIKE_COLOR: Color = Color("E08A4E")
+const DOT_ON: Color = HudSkin.GRID_LIGHT
+const DOT_OFF: Color = Color("4A4458")
+const MESSAGE_COLOR: Color = HudSkin.TEXT
+const MESSAGE_BAD_COLOR: Color = Color("E08A4E")
 
 const TILE_BORDER: float = 4.0
 const SELECTED_BORDER: float = 8.0
@@ -95,7 +98,7 @@ const TEXT_DECIMAL_POINT: String = "ui.world.decimal_point"
 const TEXT_ODD_RULE: String = "ui.piece_deck.odd_rule"
 const TEXT_ODD_NONE: String = "ui.piece_deck.odd_none"
 const ODD_NAME_KEY: String = "piece.odd.name"
-const ODD_RULE_COLOR: Color = Color(0.52, 0.08, 0.48)
+const ODD_RULE_COLOR: Color = Color("D99AD2")
 const ODD_RULE_FONT_SIZE: int = 20
 ## Odd sparkle mark before the line (radius px) and the gap between the line and the refusal line (share of width).
 const ODD_RULE_MARK_RADIUS: float = 8.0
@@ -120,6 +123,8 @@ var _odd_config: OddBlockConfig = null
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 
 
@@ -306,7 +311,8 @@ func _draw() -> void:
 	if not _is_active():
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, vp), BACK_COLOR)
+	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
+	HudSkin.screen_background(self, Rect2(Vector2.ZERO, vp), clampf(band.end.y / vp.y, 0.0, 1.0) if vp.y > 0.0 else 0.0)
 	_draw_header(vp)
 	var rows: Array[Dictionary] = _flow.get_piece_deck_rows()
 	var rects: Array[Rect2] = ScreenLayout.piece_deck_tile_rects(vp, rows.size())
@@ -343,17 +349,17 @@ func _draw_odd_rule(vp: Vector2) -> void:
 	var size: int = _fit(text, right - text_left, ODD_RULE_FONT_SIZE)
 	var y: float = reason.get_center().y
 	PieceDraw.draw_odd_mark(self, Vector2(left + ODD_RULE_MARK_RADIUS, y), ODD_RULE_MARK_RADIUS)
-	draw_string(ThemeDB.fallback_font, Vector2(text_left, y + size * 0.35), text, HORIZONTAL_ALIGNMENT_LEFT, right - text_left, size, ODD_RULE_COLOR)
+	MenuFont.text(self, Vector2(text_left, y + size * 0.35), text, size, ODD_RULE_COLOR, HORIZONTAL_ALIGNMENT_LEFT, right - text_left)
 
 
 # Title band: "BỘ MẢNH" centred, the shape-removal tokens at the right.
 func _draw_header(vp: Vector2) -> void:
 	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
 	var title: String = tr(TEXT_TITLE)
-	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.4, TITLE_FONT_SIZE), TITLE_COLOR)
+	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.4, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
 	var label: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
 	var tokens: String = tr(TEXT_TOKENS) % _flow.get_shape_removals()
-	draw_string(ThemeDB.fallback_font, Vector2(label.position.x, label.get_center().y + HEADER_FONT_SIZE * 0.35), tokens, HORIZONTAL_ALIGNMENT_RIGHT, label.size.x, _fit(tokens, label.size.x, HEADER_FONT_SIZE), HEADER_COLOR)
+	MenuFont.text(self, Vector2(label.position.x, label.get_center().y + HEADER_FONT_SIZE * 0.35), tokens, _fit(tokens, label.size.x, HEADER_FONT_SIZE), HEADER_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, label.size.x)
 
 
 # One shape tile at rest rect [param base]: raised with a gold outline when selected, dimmed and struck
@@ -369,13 +375,13 @@ func _draw_tile(vp: Vector2, base: Rect2, row: Dictionary, selected: bool, press
 		rect.position.y -= ScreenLayout.piece_deck_tile_raise(vp)
 	var back: Color = TILE_BACK
 	var border: Color = TILE_BORDER_COLOR
-	var width: float = TILE_BORDER
+	var width: float = HudSkin.PANEL_LINE_WIDTH
 	if selected:
 		border = SELECTED_OUTLINE
-		width = SELECTED_BORDER
+		width = TILE_BORDER
 	elif pressed:
 		border = PRESSED_OUTLINE
-		width = SELECTED_BORDER
+		width = TILE_BORDER
 	var fill: Color = RUN_ONLY_FILL if run_only else SHAPE_FILL
 	var outline: Color = SHAPE_OUTLINE
 	var name_color: Color = NAME_COLOR
@@ -386,8 +392,8 @@ func _draw_tile(vp: Vector2, base: Rect2, row: Dictionary, selected: bool, press
 		name_color.a *= UiButtons.DIM_ALPHA
 		if not selected:
 			border.a *= UiButtons.DIM_ALPHA
-	draw_rect(rect, back)
-	draw_rect(rect, border, false, width)
+	# 2026-10-31: a HudSkin card face (CARD_FILL, cut top-right) instead of the beige tile.
+	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], back, border, width)
 	var pad: float = rect.size.x * PAD_RATIO
 	var inner: float = rect.size.x - pad * 2.0
 	if run_only:
@@ -447,7 +453,7 @@ func _draw_remove_button(vp: Vector2, row: Dictionary) -> void:
 	if reason.is_empty():
 		return
 	var line: Rect2 = ScreenLayout.piece_deck_reason_rect(vp)
-	draw_string(ThemeDB.fallback_font, Vector2(line.position.x, line.get_center().y + MESSAGE_FONT_SIZE * 0.35), reason, HORIZONTAL_ALIGNMENT_RIGHT, line.size.x, _fit(reason, line.size.x, MESSAGE_FONT_SIZE), MESSAGE_BAD_COLOR)
+	MenuFont.text(self, Vector2(line.position.x, line.get_center().y + MESSAGE_FONT_SIZE * 0.35), reason, _fit(reason, line.size.x, MESSAGE_FONT_SIZE), MESSAGE_BAD_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, line.size.x)
 
 
 # The line between the bottom buttons: the last result, else the hint while nothing is selected.
@@ -472,14 +478,15 @@ func _cells(row: Dictionary) -> Array[Vector2i]:
 	return cells
 
 
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# Centred HudSkin outlined text over [param rect]'s width at baseline [param y] (Bold when [param bold]).
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
-# Largest font size <= [param size] (not below MIN_FIT_FONT_SIZE) at which [param text] fits [param width].
-func _fit(text: String, width: float, size: int) -> int:
-	var font: Font = ThemeDB.fallback_font
+# Largest font size <= [param size] (not below MIN_FIT_FONT_SIZE) at which [param text] fits [param width]
+# in the HudSkin font (Bold when [param bold]).
+func _fit(text: String, width: float, size: int, bold: bool = false) -> int:
 	var fitted: int = size
-	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+	while fitted > MIN_FIT_FONT_SIZE and HudSkin.text_width(text, fitted, bold) > width:
 		fitted -= 1
 	return fitted

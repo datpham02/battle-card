@@ -175,7 +175,7 @@ func _is_free(cell: Vector2i) -> bool:
 	if grid == null or not grid.is_enemy_cell(cell):
 		return false
 	var status: StatusEffects = get_context().get("status") as StatusEffects
-	if status != null and status.is_sealed(CombatState.Side.ENEMY, cell):
+	if status != null and status.is_hole(CombatState.Side.ENEMY, cell):
 		return false
 	var hazards: TileHazards = get_context().get("hazards") as TileHazards
 	if hazards != null and (hazards.is_sanded(CombatState.Side.ENEMY, cell) or hazards.is_sand_warning(CombatState.Side.ENEMY, cell)):

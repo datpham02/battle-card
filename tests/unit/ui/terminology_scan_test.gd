@@ -78,6 +78,8 @@ const OLD_TERMS: Array[Dictionary] = [
 const EXCEPTIONS: Dictionary = {
 	"boss.frost_sprite.name|en|Frost": true,  # enemy proper name using 'Frost' as an ordinary adjective
 	"boss.frost_mage.name|en|Frost": true,  # enemy proper name using 'Frost' as an ordinary adjective
+	"boss.mist_lord.name|en|Frost": true,  # Warden proper name "Frost Lord" (design pack canon, ADR-0001 phase 1 task 3)
+	"chapter.ch3.end|en|Frost": true,  # names the Warden "the Frost Lord" (same proper name)
 	"event.ban_tho_mau.title|en|Altar": true,  # 'altar' = roadside Blood Altar event, unrelated to the old Seal Altar
 	"event.ban_tho_mau.body|en|Altar": true,  # 'altar' = roadside Blood Altar event, unrelated to the old Seal Altar
 	"event.ban_tho_mau.give.result|en|Altar": true,  # 'altar' = roadside Blood Altar event, unrelated to the old Seal Altar

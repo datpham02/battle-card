@@ -26,34 +26,34 @@ extends Node2D
 ## RunHudView (emulated copies — device == InputEvent.DEVICE_ID_EMULATION — are consumed but never
 ## act). Placeholder art; all strings are TEXT_* keys drawn through tr().
 
-const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const HEADER_COLOR: Color = Color(0.4, 0.35, 0.3)
-const TILE_BACK: Color = Color(1.0, 0.97, 0.9)
-const TILE_OUTLINE: Color = Color(0.6, 0.52, 0.4)
-const TILE_TEXT: Color = Color(0.15, 0.12, 0.1)
-const TILE_LOCKED_BACK: Color = Color(0.8, 0.78, 0.74)
-const TILE_LOCKED_OUTLINE: Color = Color(0.58, 0.56, 0.52)
-const TILE_LOCKED_TEXT: Color = Color(0.5, 0.48, 0.45)
-const TILE_CLEARED_BACK: Color = Color(0.82, 0.9, 0.8)
-const CLEARED_COLOR: Color = Color(0.2, 0.65, 0.3)
-const CURRENT_OUTLINE: Color = Color(0.95, 0.72, 0.15)
-const PRESSED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
-const CONNECTOR_COLOR: Color = Color(0.5, 0.45, 0.4, 0.7)
-const CONNECTOR_CURRENT_COLOR: Color = Color(0.95, 0.72, 0.15, 0.9)
-const NOTICE_BACK: Color = Color(0.1, 0.09, 0.08, 0.96)
-const NOTICE_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const NOTICE_TEXT: Color = Color(0.95, 0.9, 0.78)
-const NOTICE_SUB_TEXT: Color = Color(0.75, 0.72, 0.65)
-## Glyph colours by kind (locked tiles multiply the alpha by UiButtons.DIM_ALPHA, except the boss).
-const GLYPH_BATTLE: Color = Color(0.3, 0.3, 0.38)
-const GLYPH_DANGER: Color = Color(0.85, 0.35, 0.15)
-const GLYPH_TREASURE: Color = Color(0.72, 0.5, 0.05)
-const GLYPH_REST: Color = Color(0.9, 0.45, 0.1)
-const GLYPH_MINIBOSS: Color = Color(0.45, 0.2, 0.5)
-const GLYPH_BOSS: Color = Color(0.75, 0.15, 0.12)
+## 2026-10-31 (whole-game HUD skin): colours for the dark screen background (HudSkin.SCREEN_BG); tiles are
+## HudSkin.card faces (CARD_FILL, MIST edge, GRID_LIGHT edge on the current column, faded when locked / passed).
+const TITLE_COLOR: Color = HudSkin.IVORY
+const HEADER_COLOR: Color = HudSkin.TEXT
+const COLUMN_COLOR: Color = HudSkin.TEXT_DIM
+const TILE_OUTLINE: Color = HudSkin.CARD_LINE
+const TILE_TEXT: Color = HudSkin.TEXT
+const TILE_LOCKED_TEXT: Color = HudSkin.TEXT_DIM
+const CLEARED_COLOR: Color = Color("58D468")
+const CURRENT_OUTLINE: Color = HudSkin.GRID_LIGHT
+const PRESSED_OUTLINE: Color = HudSkin.IVORY
+const CONNECTOR_COLOR: Color = HudSkin.MIST
+const CONNECTOR_CURRENT_COLOR: Color = Color(1.0, 0.831, 0.361, 0.9)
+const NOTICE_BACK: Color = Color(0.118, 0.106, 0.141, 0.97)
+const NOTICE_OUTLINE: Color = HudSkin.IVORY
+const NOTICE_TEXT: Color = HudSkin.IVORY
+const NOTICE_SUB_TEXT: Color = HudSkin.TEXT_DIM
+## Glyph colours by kind, light enough for the dark card (locked tiles multiply the alpha by
+## UiButtons.DIM_ALPHA, except the boss). The boss crown is gold: red is kept for enemy telegraphs.
+const GLYPH_BATTLE: Color = HudSkin.IVORY
+const GLYPH_DANGER: Color = Color("F08A4B")
+const GLYPH_TREASURE: Color = Color("E8B04A")
+const GLYPH_REST: Color = Color("FFB070")
+const GLYPH_MINIBOSS: Color = Color("C495E0")
+const GLYPH_BOSS: Color = HudSkin.GRID_LIGHT
 ## Story 033: shop (green purse, gold coin) and event (blue scroll).
-const GLYPH_SHOP: Color = Color(0.1, 0.5, 0.33)
-const GLYPH_EVENT: Color = Color(0.2, 0.32, 0.72)
+const GLYPH_SHOP: Color = Color("6FD39A")
+const GLYPH_EVENT: Color = Color("86A8F2")
 ## Story 033: the gold count in the title band (font size; gap to the column label in px).
 const GOLD_FONT_SIZE: int = 28
 const GOLD_GAP: float = 24.0
@@ -75,7 +75,7 @@ const HEADER_FONT_SIZE: int = 22
 ## column 0; the summary line moves to the strip's top row to make room.
 const INTRO_FONT_SIZE: int = 20
 const INTRO_MIN_FONT_SIZE: int = 14
-const INTRO_COLOR: Color = Color(0.5, 0.42, 0.3)
+const INTRO_COLOR: Color = HudSkin.TEXT_DIM
 const HEADER_TOP_BASELINE: float = 0.4
 const HEADER_INTRO_BASELINE: float = 0.88
 const TILE_FONT_SIZE: int = 20
@@ -142,6 +142,8 @@ var _notice: String = ""
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 	_strip = RelicStrip.new()
 	add_child(_strip)
@@ -288,17 +290,17 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 	UiButtons.draw_button(self, deck_button, deck_text, UiButtons.Style.SECONDARY, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(deck_button)), true, _back_font_size(deck_text, deck_button.size.x), OUTLINE_WIDTH)
 	var column_rect: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
 	var column_text: String = tr(TEXT_COLUMN) % [mini(current + 1, column_count), column_count]
-	draw_string(ThemeDB.fallback_font, Vector2(column_rect.position.x, column_rect.get_center().y + COLUMN_FONT_SIZE * 0.35), column_text, HORIZONTAL_ALIGNMENT_RIGHT, column_rect.size.x, COLUMN_FONT_SIZE, HEADER_COLOR)
+	MenuFont.text(self, Vector2(column_rect.position.x, column_rect.get_center().y + COLUMN_FONT_SIZE * 0.35), column_text, COLUMN_FONT_SIZE, COLUMN_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, column_rect.size.x)
 	# Story 033: the gold count (code-drawn coin + number) left of the column label.
-	var column_width: float = ThemeDB.fallback_font.get_string_size(column_text, HORIZONTAL_ALIGNMENT_LEFT, -1, COLUMN_FONT_SIZE).x
-	var coin_left: float = ShopView.draw_gold(self, column_rect.end.x - column_width - GOLD_GAP, column_rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
+	var column_width: float = HudSkin.text_width(column_text, COLUMN_FONT_SIZE)
+	var coin_left: float = ShopView.draw_gold(self, column_rect.end.x - column_width - GOLD_GAP, column_rect.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, HudSkin.GRID_LIGHT)
 	# Story 042: the title is centred in the free span between the "Block set" button and the gold coin
 	# (never under either), shrunk until it fits that span.
 	var title_text: String = _title_text()
 	var span_left: float = deck_button.end.x + TITLE_SIDE_GAP
 	var span: Rect2 = Rect2(span_left, title.position.y, maxf(coin_left - TITLE_SIDE_GAP - span_left, 0.0), title.size.y)
 	var title_size: int = _title_font_size(title_text, span.size.x)
-	_text(span, span.get_center().y + title_size * 0.35, title_text, title_size, TITLE_COLOR)
+	_text(span, span.get_center().y + title_size * 0.35, title_text, title_size, TITLE_COLOR, true)
 	var character: Dictionary = _flow.get_characters().get_character(run.character_id)
 	var max_hp: float = _max_hp(run)
 	var hp: float = max_hp if run.hp < 0.0 else minf(run.hp, max_hp)
@@ -318,9 +320,8 @@ func _draw_header(vp: Vector2, run: RunSession, column_count: int, current: int)
 	_text(header, header.position.y + header.size.y * HEADER_TOP_BASELINE, HEADER_SEPARATOR.join(parts), HEADER_FONT_SIZE, HEADER_COLOR)
 	var intro: String = tr(intro_key)
 	var intro_width: float = header.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0
-	var font: Font = ThemeDB.fallback_font
 	var size: int = INTRO_FONT_SIZE
-	while size > INTRO_MIN_FONT_SIZE and font.get_string_size(intro, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > intro_width:
+	while size > INTRO_MIN_FONT_SIZE and HudSkin.text_width(intro, size) > intro_width:
 		size -= 1
 	_text(header, header.position.y + header.size.y * HEADER_INTRO_BASELINE, intro, size, INTRO_COLOR)
 
@@ -356,31 +357,28 @@ func _draw_connectors(columns: Array[Rect2], map: Array[Dictionary], current: in
 
 # One node tile: back + outline by state, the kind glyph, the kind name, a check when cleared.
 # A passed column's untaken nodes draw like locked ones (dim, not tappable).
+# 2026-10-31: a HudSkin.card face; the current column's GRID_LIGHT edge pulses over the MIST edge, a
+# cleared node keeps a green edge, every other node is faded (dim card).
 func _draw_tile(rect: Rect2, kind: String, column: int, current: int, cleared: bool, pulse: float) -> void:
 	var is_current: bool = column == current
-	var back: Color = TILE_BACK
-	var outline: Color = TILE_OUTLINE
-	var width: float = OUTLINE_WIDTH
 	var text_color: Color = TILE_TEXT
 	var glyph: Color = _glyph_color(kind)
+	var cuts: Array = [0.0, HudSkin.button_cut(rect), 0.0, 0.0]
 	if cleared:
-		back = TILE_CLEARED_BACK
-		outline = CLEARED_COLOR
-		width = STATE_OUTLINE_WIDTH
+		HudSkin.card(self, rect, CLEARED_COLOR)
+		HudSkin.panel(self, rect, cuts, Color(0.0, 0.0, 0.0, 0.0), CLEARED_COLOR, OUTLINE_WIDTH)
 	elif is_current:
-		outline = PRESSED_OUTLINE if UiButtons.is_pressed_at(self, rect) else CURRENT_OUTLINE
+		HudSkin.card(self, rect, TILE_OUTLINE)
+		var outline: Color = PRESSED_OUTLINE if UiButtons.is_pressed_at(self, rect) else CURRENT_OUTLINE
 		outline.a = pulse
-		width = STATE_OUTLINE_WIDTH
+		HudSkin.panel(self, rect, cuts, Color(0.0, 0.0, 0.0, 0.0), outline, OUTLINE_WIDTH)
 	else:
-		back = TILE_LOCKED_BACK
-		outline = TILE_LOCKED_OUTLINE
+		HudSkin.card(self, rect, TILE_OUTLINE, false, true)
 		text_color = TILE_LOCKED_TEXT
 		if kind != KIND_BOSS:
 			glyph.a *= UiButtons.DIM_ALPHA
-	draw_rect(rect, back)
-	draw_rect(rect, outline, false, width)
 	_draw_glyph(rect, kind, glyph)
-	_text(rect, rect.position.y + rect.size.y * NAME_BASELINE, kind_name(kind), TILE_FONT_SIZE, text_color)
+	_text(rect, rect.position.y + rect.size.y * NAME_BASELINE, kind_name(kind), TILE_FONT_SIZE, text_color, true)
 	if cleared:
 		var points := PackedVector2Array()
 		for p: Vector2 in CHECK_POINTS:
@@ -443,7 +441,7 @@ func _draw_glyph(rect: Rect2, kind: String, color: Color) -> void:
 			draw_rect(Rect2(c + Vector2(-h * 0.65, -h * 0.8), Vector2(h * 1.3, h * 1.6)), color, false, GLYPH_WIDTH)
 			draw_line(c + Vector2(-h * 0.9, -h * 0.8), c + Vector2(h * 0.9, -h * 0.8), color, GLYPH_WIDTH * 2.0)
 			draw_line(c + Vector2(-h * 0.9, h * 0.8), c + Vector2(h * 0.9, h * 0.8), color, GLYPH_WIDTH * 2.0)
-			draw_string(ThemeDB.fallback_font, Vector2(c.x - h, c.y + h * 0.45), "?", HORIZONTAL_ALIGNMENT_CENTER, h * 2.0, int(h * 1.3), color)
+			MenuFont.text(self, Vector2(c.x - h, c.y + h * 0.45), "?", int(h * 1.3), color, HORIZONTAL_ALIGNMENT_CENTER, h * 2.0, true)
 		_:
 			draw_circle(c, h * 0.5, color)
 
@@ -462,9 +460,8 @@ func _flame(c: Vector2, h: float) -> PackedVector2Array:
 
 func _draw_notice(vp: Vector2) -> void:
 	var band: Rect2 = ScreenLayout.map_notice_rect(vp)
-	draw_rect(band, NOTICE_BACK)
-	draw_rect(band, NOTICE_OUTLINE, false, OUTLINE_WIDTH)
-	_text(band, band.position.y + band.size.y * NOTICE_BASELINE, tr(_notice), NOTICE_FONT_SIZE, NOTICE_TEXT)
+	HudSkin.panel(self, band, [0.0, HudSkin.BUTTON_CUT_MAX, 0.0, HudSkin.BUTTON_CUT_MAX], NOTICE_BACK, NOTICE_OUTLINE, OUTLINE_WIDTH)
+	_text(band, band.position.y + band.size.y * NOTICE_BASELINE, tr(_notice), NOTICE_FONT_SIZE, NOTICE_TEXT, true)
 	_text(band, band.position.y + band.size.y * NOTICE_SUB_BASELINE, tr(TEXT_NOTICE_DISMISS), NOTICE_SUB_FONT_SIZE, NOTICE_SUB_TEXT)
 
 
@@ -493,17 +490,16 @@ func _pulse_alpha() -> float:
 	return lerpf(PULSE_MIN_ALPHA, 1.0, 0.5 + 0.5 * sin(t * TAU))
 
 
-# Centred single-line text at baseline [param y] over the width of [param rect].
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# Centred single-line outlined HUD text at baseline [param y] over the width of [param rect] (Bold when [param bold]).
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
 # Story 042: the title's font, shrunk one step at a time from TITLE_FONT_SIZE until [param text] fits
 # [param width]; never below TITLE_MIN_FONT_SIZE (draw_string clips the rest).
 func _title_font_size(text: String, width: float) -> int:
-	var font: Font = ThemeDB.fallback_font
 	var size: int = TITLE_FONT_SIZE
-	while size > TITLE_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > width:
+	while size > TITLE_MIN_FONT_SIZE and HudSkin.text_width(text, size, true) > width:
 		size -= 1
 	return size
 
@@ -511,9 +507,8 @@ func _title_font_size(text: String, width: float) -> int:
 # Story 031: the back button's font, shrunk until [param text] fits [param width] minus a small inset
 # ("Back to title" is wider than the 128 px button at BUTTON_FONT_SIZE).
 func _back_font_size(text: String, width: float) -> int:
-	var font: Font = ThemeDB.fallback_font
 	var size: int = BUTTON_FONT_SIZE
-	while size > BACK_MIN_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x > width - BACK_TEXT_INSET * 2.0:
+	while size > BACK_MIN_FONT_SIZE and HudSkin.text_width(text, size, true) > width - BACK_TEXT_INSET * 2.0:
 		size -= 1
 	return size
 

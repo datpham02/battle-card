@@ -38,6 +38,8 @@ var _loop: String = LOOP
 var _index: int = 0
 var _elapsed_ms: float = 0.0
 var _finished: bool = false
+## 2026-10-31: the clock is held (set_paused).
+var _paused: bool = false
 var _reduce_motion: bool = false
 
 
@@ -73,9 +75,30 @@ func play_timed(clip_name: String, total_sec: float, loop_kind: String = "") -> 
 	return _play(clip_name, true, timed, loop_kind)
 
 
+## 2026-10-31: holds the current frame while true (the player's cast_gesture waits on its first frame until the
+## projectile is due); every play / play_timed clears it.
+func set_paused(on: bool) -> void:
+	_paused = on
+
+
+## 2026-11-01: jumps to frame [param frame] of the playing clip (clamped) with a fresh clock; the cast wind-up uses
+## it to leave its held coil for the slash when the launch is due.
+func seek(frame: int) -> void:
+	if _frames.is_empty():
+		return
+	_index = clampi(frame, 0, _frames.size() - 1)
+	_elapsed_ms = 0.0
+	_finished = false
+
+
+## Whether the clock is held ([method set_paused]).
+func is_paused() -> bool:
+	return _paused
+
+
 ## Advances the clock by `delta` seconds (battle time, not wall time).
 func tick(delta: float) -> void:
-	if _frames.is_empty() or _finished or delta <= 0.0:
+	if _frames.is_empty() or _finished or delta <= 0.0 or _paused:
 		return
 	if _reduce_motion and _clip_name == IDLE_CLIP:
 		_index = 0
@@ -160,6 +183,7 @@ func _play(clip_name: String, restart: bool, timed_ms: Array[float], loop_overri
 
 
 func _start(clip_name: String, timed_ms: Array[float], loop_override: String) -> void:
+	_paused = false
 	var c: Dictionary = _sheet.clip(clip_name)
 	_clip_name = clip_name
 	_frames = c["frames"]

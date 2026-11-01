@@ -26,8 +26,8 @@ extends Node
 ##                                           THIEN_HOA_BURNING_DEMO_SEC (StatusEffects.tick): the sea of fire still burning, its DoT on the boss
 ##   godot --path . --character=sat_thu -- --demo=anh_bo_hit  Story 030: Anh Bo active (blue border, banner) and a 2-cell piece cast resolved on
 ##                                           the boss: HIT and the doubled "-N"
-##   godot --path . -- --character=tho_san --demo=vay_bat   Story 037: Vay Bat active (border, banner) and a real ket_gioi cast beside the boss:
-##                                           the seal lasts 1.5x (zone bars), hunter_mark put a Ran on the boss; skips the intro
+##   godot --path . -- --character=tho_san --demo=vay_bat   Story 037: Vay Bat active (border, banner) and a real tran_gai cast beside the boss:
+##                                           the thorns last 1.5x (zone bars) plus 1 extra thorn cell, hunter_mark put a Ran on the boss; skips the intro
 ##   godot --path . -- --character=giao_si --demo=thanh_an  Story 037: Thanh An active (border, banner), the boss at 2 Han, the player hurt; a real
 ##                                           hit adds the 3rd Han: the x1.5 burst damages the boss and Prayer heals ("+8" over the player); skips the intro
 ##   Story 024 piece demos (the player has a piece bag):
@@ -56,11 +56,9 @@ extends Node
 ##   godot --path . -- --demo=boss_counter   the boss's swing running, the player casts a piece over the boss through the real path:
 ##                                           the player's swing resolves first: HIT "-N" on the boss and NGAT on the boss's cast
 ##   godot --path . -- --demo=boss_rotten    the boss's rotten_thrower (the real trait path) just threw a rotten piece onto the player's half
-##   Story 027 zone demos (StatusEffects.apply_seal / apply_thorns called directly with the combat.json "zones" numbers,
-##   then ZONE_DEMO_ELAPSED_RATIO of each zone's time ticked through StatusEffects.tick so the time bars show draining):
-##   godot --path . -- --demo=seal_on_boss   the boss moved to the far top corner of its half, every neighbour of it
-##                                           (8-neighbourhood) sealed except ONE orthogonal exit, and a pending player
-##                                           swing (CutActor.begin_swing) over the exit and the boss's cell
+##   Story 027 zone demos (StatusEffects.apply_thorns called directly with the combat.json "zones" numbers, then
+##   ZONE_DEMO_ELAPSED_RATIO of each zone's time ticked through StatusEffects.tick). The seal demos seal_on_boss /
+##   boss_seal were deleted with the seal effect (2026-11-01):
 ##   godot --path . -- --demo=thorns_on_boss thorns on every orthogonal neighbour of the boss (boss half)
 ##   Story 036 hazard demos (the match's TileHazards, CombatView.get_hazards(), driven through its real calls and ticked in
 ##   TRAIT_STEP_SEC steps; trait demos use the match's own trait or one built with the region match's chapters.json params;
@@ -81,6 +79,9 @@ extends Node
 ##                                        half, one in the WARNING on the player's half, the rest idle dark-red streaks
 ##   godot --path . -- --demo=crumble     crumble on (enable_crumble when the arena lacks it): a fallen cell (void + time bar), the boss's cell in
 ##                                        the crack warning, the player's cell with a half-grown crack
+##   godot --path . -- --arena=twin_isles --demo=crumble --return-ratio=<0..1>   then crumble standing is switched off and
+##                                        time runs until the fallen cell comes back, plus k x return_fade_sec: frozen mid
+##                                        return fade (0 = full white, the moment it returns; 1 = fade over). Ignored elsewhere
 ##   godot --path . -- --demo=burn_eater  burn_eater (fire_eater): the boss at 60 % HP on a burning cell ticked once: it heals, green "+N" over it
 ##   godot --path . -- --demo=rebirth     rebirth (ash_phoenix): a lethal hit on the boss, which revives: the timer bar and ring (rebirth_life = the
 ##                                        "one life left" badge before the kill)
@@ -90,14 +91,40 @@ extends Node
 ##   godot --path . -- --demo=boss_through_thorns  thorns on the boss's divider-side neighbour (and the cell beside it),
 ##                                           a player swing on the boss's cell, the boss steps into the thorns through its
 ##                                           real mover (dodge): thorn_entered fires (damage, Ran +1, entry flash)
-##   godot --path . -- --demo=boss_seal      a seal on the player's half (every orthogonal neighbour of the player except
-##                                           one exit), with a boss swing (its CutActor) telegraphed over the player and the exit
 ##   godot --path . -- --demo=trait_seal     the REAL SealCasterTrait: the match's own (a jailer node, e.g. --node=chX/cC/nN
 ##                                           landing on the ch2 miniboss) or, on any other match, one built through
 ##                                           TraitRegistry with the jailer's chapters.json params (warning). It is made
 ##                                           ready at once (ticked past its delay), the boss swings a 3-cell row that ends on
-##                                           the player (label off the player), then swing + trait are ticked until seal_cast
-##   godot --path . -- --demo=trait_thorns   the REAL ThornFieldTrait (frost_mage's, or built with its chapters.json params):
+##                                           the player (label off the player), then swing + trait are ticked until seal_cast:
+##                                           the chosen cells (the player's own one included when rule 6 allows it) have
+##                                           JUST started cracking (drop tile, crack at its first frame, faint red); the
+##                                           drop_* demos below show the later moments
+##   Drop tile demos (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md; they also skip the intro). The numbers are
+##   the seal_caster trait's (the match's own, or built with the jailer's chapters.json params as trait_seal does:
+##   get_drop_numbers()); the crack starts through the REAL ZoneRules.cast_drop on the player's half, then
+##   StatusEffects.tick runs the given time (time frozen afterwards). Cracked cells = the player's orthogonal neighbours
+##   (up to DROP_DEMO_CELLS; cast_drop keeps one safe neighbour open):
+##   godot --path . -- --demo=drop_crack     DROP_DEMO_CRACK_RATIO of hole_warn_sec ticked: the crack half spread, red fill mid-way
+##   godot --path . -- --demo=drop_on_player the player's own cell (allowed through SealCasterTrait.player_cell_droppable) and one
+##                                           neighbour cracking, DROP_DEMO_CRACK_RATIO of the warning ticked: crack under the hero
+##   godot --path . -- --demo=drop_hole      the warning ticked out (the cells fell, nobody on them) plus DROP_DEMO_HOLE_RATIO of
+##                                           seal_sec: open holes
+##   godot --path . -- --demo=drop_return    the warning and seal_sec ticked out (the holes closed), then DROP_DEMO_RETURN_RATIO of
+##                                           zones.hole_return_fade_sec: the cells fading back in from white
+##   godot --path . -- --demo=drop_fall      ADR-0001 Task 5: as drop_on_player, the warning ticked out: the hero falls with its
+##                                           cell (hole_fall_lethal) and time runs again, so the `fall` clip plays
+##   godot --path . -- --demo=cast_live --cast-card=<card id> [--cast-cells=N]   ADR-0001 Task 5: the player's real
+##                                           CutActor swing of that card over the boss's cell and up to N-1 of its
+##                                           neighbours (default 3 cells), time RUNNING (boss inactive): capture a
+##                                           frame sequence to see the charge, the delivery's travel and the impacts
+##   godot --path . -- --demo=cast_live ... --cast-lock   the same, one non-foe target cell cracking first (locked: no
+##                                           charge fill / check / impact drawn on it; Task 5 item 5)
+##   godot --path . -- --demo=boss_cast_live --cast-card=<card id> [--cast-cells=N]   Task 5 item 4: the BOSS's real
+##                                           CutActor swing of that card over the player's cell (+ neighbours), time
+##                                           running: its travel squares / impacts in the enemy block colours
+##   add --drop-on-mire (e.g. with --arena=bog, the swamp board) to lay timed mire under the drop cells first: the drop
+##   tile must stay readable on mire (ADR-0001 Phase 1, 2026-11-01)
+##   godot --path . -- --demo=trait_thorns  the REAL ThornFieldTrait (frost_mage's, or built with its chapters.json params):
 ##                                           the boss swings a 2x2 block (4 cells) beside the player; the trait lays thorns
 ##                                           through BossController's swing_started -> TraitHost path
 ##   godot --path . -- --demo=reward_zone_cards  the card offer forced to ZONE_REWARD_CARDS (GameFlow's run pending reward +
@@ -180,6 +207,9 @@ const DECK_PREFIX: String = "--deck="
 const DROPS_SEED_PREFIX: String = "--drops-seed="
 const PIECE_PREFIX: String = "--piece="
 const ARENA_PREFIX: String = "--arena="
+## `--return-ratio=k` (--demo=crumble only): freeze the fallen cell k of the way through its return fade
+## (TileHazards.return_fade_sec; ADR-0001 Phase 1, 2026-11-01).
+const RETURN_RATIO_PREFIX: String = "--return-ratio="
 const DEMO_SEED: int = 7
 ## Uid base of the boss's synthetic hand pieces.
 const BOSS_UID_BASE: int = -100
@@ -210,7 +240,7 @@ const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
 const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
 const ROTTEN_PIECE_SLOT: int = 1
 ## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
-const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit", "seal_on_boss", "thorns_on_boss", "boss_through_thorns", "boss_seal", "trait_seal", "trait_thorns", "reward_zone_cards"]
+const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit", "thorns_on_boss", "boss_through_thorns", "trait_seal", "trait_thorns", "reward_zone_cards"]
 ## Story 025 boss piece demos: the boss's hand (shape ids), how many of them each demo casts, the piece the counter-cast
 ## uses, the boss's field pieces as [shape id, rotation] with their freshness (s), and the share of the step cooldown
 ## still left in "boss_ring_normal".
@@ -243,7 +273,26 @@ const ZONE_DEMO_STEPS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.DOWN, Vector2i
 const CHAPTERS_PATH: String = "res://assets/data/chapters.json"
 const SEAL_TRAIT_MATCH: String = "jailer"
 const THORN_TRAIT_MATCH: String = "frost_mage"
-const ZONE_REWARD_CARDS: Array[String] = ["ket_gioi", "tran_gai", "gai_nguyen"]
+## Quick spec 2026-10-31: the Wall cards are boss-only now, so the zone offer is thorn cards only.
+const ZONE_REWARD_CARDS: Array[String] = ["tran_gai", "gai_doc", "gai_nguyen"]
+## Drop tile demos (quick spec 2026-10-31, they also skip the intro): the most player neighbours cracked, the share of
+## the crack warning ticked in drop_crack / drop_on_player, of the hole time in drop_hole, of the return fade in drop_return.
+const DROP_DEMOS: Array[String] = ["drop_crack", "drop_on_player", "drop_hole", "drop_return", "drop_fall"]
+## ADR-0001 Task 5 cast_live demo args.
+const CAST_CARD_PREFIX: String = "--cast-card="
+const CAST_CELLS_PREFIX: String = "--cast-cells="
+const CAST_DEMO_CELLS: int = 3
+## Task 5 item 5 evidence: `--cast-lock` cracks the first non-foe cell of the cast_live mask (StatusEffects.apply_drop
+## on the enemy half) before the swing, so the cast runs over a locked cell.
+const CAST_LOCK_ARG: String = "--cast-lock"
+const CAST_LOCK_WARN_SEC: float = 5.0
+const DROP_DEMO_CELLS: int = 3
+## Dev flag for the drop demos: timed mire under the drop cells (seconds of mire long enough to outlast the demo).
+const DROP_ON_MIRE_ARG: String = "--drop-on-mire"
+const DROP_ON_MIRE_SEC: float = 600.0
+const DROP_DEMO_CRACK_RATIO: float = 0.5
+const DROP_DEMO_HOLE_RATIO: float = 0.3
+const DROP_DEMO_RETURN_RATIO: float = 0.5
 ## Story 036 hazard demos (they also skip the intro), the trait each needs as [trait id, chapters.json match whose
 ## params build it when the booted match lacks it], the mire / sand cells staged per half, the share of the warning /
 ## sand / storm time already elapsed at capture, the cells of the riposte demo's cast and the boss-hit wait bound.
@@ -427,10 +476,15 @@ func _ready() -> void:
 			_vay_bat_demo(combat, grid)
 		"thanh_an":
 			_thanh_an_demo(combat, grid)
-		"seal_on_boss", "thorns_on_boss", "boss_through_thorns", "boss_seal":
+		"thorns_on_boss", "boss_through_thorns":
 			_zone_demo(combat, grid)
 		"trait_seal":
 			_trait_seal_demo(combat, grid)
+		"drop_crack", "drop_on_player", "drop_hole", "drop_return", "drop_fall":
+			_drop_demo(combat, grid)
+		"cast_live", "boss_cast_live":
+			_skip_intro()
+			_cast_live_demo.call_deferred()
 		"trait_thorns":
 			_trait_thorns_demo(combat, grid)
 		"mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm", \
@@ -471,7 +525,8 @@ func _ready() -> void:
 			_fill_bag(lib2, ROTTEN_PIECE_SLOT)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
-	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode) or ODD_DEMOS.has(_mode):
+	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode) or ODD_DEMOS.has(_mode) \
+			or DROP_DEMOS.has(_mode):
 		_skip_intro.call_deferred()
 
 
@@ -503,6 +558,11 @@ func _art_demo() -> void:
 		"anim_cast":
 			if not combat.get_cut_actor().begin_swing([state.enemy_cell] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, true):
 				push_warning("DemoArgs: the player swing did not start for demo '%s'" % _mode)
+			# 2026-10-31: --telegraph-k=<0..1> also sets the player's swing progress (the cast projectile mid-flight).
+			var cast_k: float = _parse_telegraph_k()
+			if cast_k >= 0.0:
+				combat.get_cut_actor().debug_set_progress(cast_k)
+				print("DemoArgs: cast k=%.2f time_left=%.3f" % [cast_k, combat.get_cut_actor().get_time_left()])
 		"anim_windup":
 			var boss_actor: CutActor = combat.get_boss().get_actor()
 			if not boss_actor.begin_swing([state.player_cell] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, false):
@@ -573,6 +633,38 @@ func _apply_art_region() -> void:
 		push_warning("DemoArgs: no BattleCanvas bound, --art-region ignored")
 		return
 	canvas.set_region_id(_parse_art_region())
+
+
+# ADR-0001 Task 5: the player's real swing of --cast-card over the boss's cell (+ neighbours), time running; with
+# boss_cast_live the boss's swing over the player's cell instead (item 4).
+func _cast_live_demo() -> void:
+	var combat: CombatView = _combat()
+	var grid: BoardGrid = combat.get_grid()
+	var card: String = SkillConfig.FALLBACK_SKILL
+	var n: int = CAST_DEMO_CELLS
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(CAST_CARD_PREFIX):
+			card = arg.substr(CAST_CARD_PREFIX.length())
+		elif arg.begins_with(CAST_CELLS_PREFIX):
+			n = maxi(arg.substr(CAST_CELLS_PREFIX.length()).to_int(), 1)
+	var boss: bool = _mode == "boss_cast_live"
+	var foe: Vector2i = combat.get_state().player_cell if boss else combat.get_state().enemy_cell
+	var cells: Array[Vector2i] = [foe]
+	for d: Vector2i in [Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN, Vector2i.RIGHT]:
+		var on_half: bool = grid.is_player_cell(foe + d) if boss else grid.is_enemy_cell(foe + d)
+		if cells.size() < n and on_half:
+			cells.append(foe + d)
+	if OS.get_cmdline_user_args().has(CAST_LOCK_ARG) and cells.size() > 1 and combat.get_status() != null:
+		var side: int = CombatState.Side.PLAYER if boss else CombatState.Side.ENEMY
+		combat.get_status().apply_drop(side, [cells[1]] as Array[Vector2i], CAST_LOCK_WARN_SEC, CAST_LOCK_WARN_SEC)
+		print("DemoArgs: cast_live locked %s" % str(cells[1]))
+	var actor: CutActor = combat.get_boss().get_actor() if boss else combat.get_cut_actor()
+	if not actor.begin_swing(cells, card, not boss):
+		push_warning("DemoArgs: the swing did not start for demo '%s'" % _mode)
+		return
+	combat.freeze_time = false
+	print("DemoArgs: %s card=%s cells=%s duration=%.3f delivery=%s" % [_mode, card, str(cells),
+		actor.get_time_left(), str(combat.delivery_for(card))])
 
 
 # --telegraph-k=<0..1> clamped; -1 when absent or not a number.
@@ -768,23 +860,6 @@ func _zone_demo(combat: CombatView, grid: BoardGrid) -> void:
 	var boss: BossController = combat.get_boss()
 	var enemy: int = CombatState.Side.ENEMY
 	match _mode:
-		"seal_on_boss":
-			var corner: Vector2i = state.enemy_cell
-			for cell: Vector2i in grid.enemy_cells():
-				if cell.x > corner.x or (cell.x == corner.x and cell.y < corner.y):
-					corner = cell
-			if not state.set_enemy_cell(corner):
-				push_warning("DemoArgs: could not move the boss to %s" % str(corner))
-			var exits: Array[Vector2i] = _zone_neighbours(grid, corner, true, false)
-			if exits.is_empty():
-				push_warning("DemoArgs: no exit around the boss for demo '%s'" % _mode)
-				return
-			var seals: Array[Vector2i] = _zone_neighbours(grid, corner, true, true)
-			seals.erase(exits[0])
-			status.apply_seal(enemy, seals, cfg.seal_sec)
-			status.tick(cfg.seal_sec * ZONE_DEMO_ELAPSED_RATIO, state)
-			if not combat.get_cut_actor().begin_swing([exits[0], corner] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, true):
-				push_warning("DemoArgs: the player swing did not start for demo '%s'" % _mode)
 		"thorns_on_boss":
 			var around: Array[Vector2i] = _zone_neighbours(grid, state.enemy_cell, true, false)
 			status.apply_thorns(enemy, around, cfg.thorn_sec, cfg.thorn_damage, cfg.thorn_fragile_stacks)
@@ -808,18 +883,6 @@ func _zone_demo(combat: CombatView, grid: BoardGrid) -> void:
 			if not boss.get_mover().try_step(target - from):
 				push_warning("DemoArgs: the boss could not step into the thorns for demo '%s'" % _mode)
 			status.tick(cfg.thorn_sec * ZONE_DEMO_ELAPSED_RATIO, state)
-		"boss_seal":
-			var here: Vector2i = state.player_cell
-			var around3: Array[Vector2i] = _zone_neighbours(grid, here, false, false)
-			if around3.size() < 2:
-				push_warning("DemoArgs: not enough cells around the player for demo '%s'" % _mode)
-				return
-			var exit: Vector2i = around3[around3.size() - 1]
-			around3.erase(exit)
-			status.apply_seal(CombatState.Side.PLAYER, around3, cfg.seal_sec)
-			status.tick(cfg.seal_sec * ZONE_DEMO_ELAPSED_RATIO, state)
-			if not boss.get_actor().begin_swing([here, exit] as Array[Vector2i], SkillConfig.FALLBACK_SKILL, false):
-				push_warning("DemoArgs: the boss swing did not start for demo '%s'" % _mode)
 
 
 # Story 027: the real seal_caster on the boss's swing (see the header).
@@ -859,6 +922,57 @@ func _trait_seal_demo(combat: CombatView, grid: BoardGrid) -> void:
 		push_warning("DemoArgs: seal_caster never cast for demo '%s'" % _mode)
 	else:
 		print("DemoArgs: seal_cast ", seal.get_last_cells())
+
+
+# Drop tile demos (see the header): the crack starts through the real ZoneRules.cast_drop with the seal_caster trait's
+# numbers, then the real StatusEffects.tick runs the demo's time, phase by phase (time is frozen afterwards).
+func _drop_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var status: StatusEffects = combat.get_status()
+	var state: CombatState = combat.get_state()
+	var cfg: CombatConfig = combat.get_config()
+	var player: int = CombatState.Side.PLAYER
+	var warn_sec: float = cfg.hole_warn_sec
+	var hole_sec: float = cfg.seal_sec
+	var seal: SealCasterTrait = _zone_trait(combat, SealCasterTrait.ID, SEAL_TRAIT_MATCH) as SealCasterTrait
+	if seal != null:
+		var numbers: Dictionary = seal.get_drop_numbers()
+		warn_sec = float(numbers["warn_sec"])
+		hole_sec = float(numbers["hole_sec"])
+	var here: Vector2i = state.player_cell
+	var cells: Array[Vector2i] = []
+	var own_ok: bool = false
+	if _mode == "drop_on_player" or _mode == "drop_fall":
+		own_ok = seal != null and seal.player_cell_droppable()
+		if not own_ok:
+			push_warning("DemoArgs: the player's cell may not crack now (rule 6) for demo '%s'" % _mode)
+		cells.append(here)
+	for cell: Vector2i in _zone_neighbours(grid, here, false, false):
+		if cells.size() < (2 if _mode == "drop_on_player" or _mode == "drop_fall" else DROP_DEMO_CELLS):
+			cells.append(cell)
+	if OS.get_cmdline_user_args().has(DROP_ON_MIRE_ARG) and combat.get_hazards() != null:
+		combat.get_hazards().add_mire(player, cells, DROP_ON_MIRE_SEC)
+	var mover: UnitMover = combat.make_trait_ctx().get("player_mover") as UnitMover
+	var blocked: Callable = Callable(mover, "is_cell_blocked") if mover != null else Callable()
+	var cracked: Array[Vector2i] = ZoneRules.cast_drop(state, grid, status, player, cells, warn_sec, hole_sec, own_ok, blocked)
+	if cracked.is_empty():
+		push_warning("DemoArgs: nothing started cracking for demo '%s'" % _mode)
+		return
+	match _mode:
+		"drop_crack", "drop_on_player":
+			status.tick(warn_sec * DROP_DEMO_CRACK_RATIO, state)
+		"drop_fall":
+			status.tick(warn_sec + 0.001, state)
+			combat.freeze_time = false
+		"drop_hole":
+			status.tick(warn_sec, state)
+			status.tick(hole_sec * DROP_DEMO_HOLE_RATIO, state)
+		"drop_return":
+			status.tick(warn_sec, state)
+			status.tick(hole_sec, state)
+			status.tick(status.hole_return_fade_sec * DROP_DEMO_RETURN_RATIO, state)
+	print("DemoArgs: %s cells=%s crack=%s holes=%s returning=%s player=%s hp=%.1f" % [_mode, str(cracked),
+		str(status.crack_cells(player)), str(status.hole_cells(player)), str(status.returning_cells(player)), str(here),
+		state.player_hp])
 
 
 # Story 027: the real thorn_field on a 4-cell boss swing beside the player (see the header).
@@ -1044,6 +1158,25 @@ func _crumble_demo(hazards: TileHazards, grid: BoardGrid, state: CombatState) ->
 			break
 	# The boss has stood since the start: it is half way through its crack warning, the player (moved) is part way to one.
 	_tick_hazards(hazards, null, state, after + warn * 0.5 - elapsed)
+	var ratio: float = _parse_return_ratio()
+	var fallen: Array[Vector2i] = hazards.fallen_cells(player)
+	if ratio < 0.0 or fallen.is_empty():
+		return
+	# --return-ratio: no new crumbles, run to the fallen cell's return, then k of the fade (time stays frozen there).
+	var back_cell: Vector2i = fallen[0]
+	hazards.enable_crumble(false)
+	_tick_hazards(hazards, null, state, hazards.fallen_left(player, back_cell) + 0.0001)
+	if hazards.return_fade_sec > 0.0:
+		_tick_hazards(hazards, null, state, hazards.return_fade_sec * ratio)
+	print("DemoArgs: crumble return cell %s fraction %.2f (fade %.2f s)" % [back_cell, hazards.return_fraction(player, back_cell), hazards.return_fade_sec])
+
+
+# Parses --return-ratio=k (0..1); -1 when absent.
+func _parse_return_ratio() -> float:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(RETURN_RATIO_PREFIX):
+			return clampf(float(arg.substr(RETURN_RATIO_PREFIX.length())), 0.0, 1.0)
+	return -1.0
 
 
 # Story 039 "burn_eater": the boss hurt to HAZARD_DEMO_BOSS_HP_RATIO, its own cell burning, one burn tick: it heals (the HUD's
@@ -1369,9 +1502,10 @@ func _anh_bo_demo(combat: CombatView, grid: BoardGrid) -> void:
 	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
 
 
-# Story 037 "vay_bat" (needs --character=tho_san): Vay Bat activated, then the real ket_gioi cast (the dev
-# CombatView._begin_cut path) over the cells around the boss except one exit (the leave-a-path rule keeps it open): the
-# seal lasts zone_sec_mult x longer, hunter_mark marks the boss (Ran) because the seal formed beside it.
+# Story 037 "vay_bat" (needs --character=tho_san): Vay Bat activated, then the real tran_gai cast (the dev
+# CombatView._begin_cut path) over the cells around the boss except one (Vay Bat lays its extra thorn cell there or
+# next to it): the thorns last zone_sec_mult x longer, hunter_mark marks the boss (Ran) because thorns were laid
+# beside it (quick spec o-rot-thay-tuong 2026-10-31; the Wall card is boss-only now).
 func _vay_bat_demo(combat: CombatView, grid: BoardGrid) -> void:
 	if not combat.get_signature() is VayBatSignature:
 		push_warning("DemoArgs: demo '%s' needs --character=tho_san (Vay Bat signature)" % _mode)
@@ -1381,14 +1515,14 @@ func _vay_bat_demo(combat: CombatView, grid: BoardGrid) -> void:
 	var cells: Array[Vector2i] = _zone_neighbours(grid, state.enemy_cell, true, true)
 	if cells.size() > 1:
 		cells.pop_back()
-	combat._begin_cut("ket_gioi", cells)
+	combat._begin_cut("tran_gai", cells)
 	combat.get_arbiter().tick(combat.get_cut_actor().get_time_left() + 0.001)
 	var status: StatusEffects = combat.get_status()
-	var sealed: Array[Vector2i] = status.sealed_cells(CombatState.Side.ENEMY)
-	if sealed.is_empty():
-		push_warning("DemoArgs: no seal formed for demo '%s'" % _mode)
+	var thorned: Array[Vector2i] = status.thorn_cells(CombatState.Side.ENEMY)
+	if thorned.is_empty():
+		push_warning("DemoArgs: no thorns formed for demo '%s'" % _mode)
 		return
-	status.tick(status.seal_total_sec(CombatState.Side.ENEMY, sealed[0]) * VAY_BAT_DEMO_ZONE_ELAPSED_RATIO, state)
+	status.tick(status.thorn_total_sec(CombatState.Side.ENEMY, thorned[0]) * VAY_BAT_DEMO_ZONE_ELAPSED_RATIO, state)
 
 
 # Story 037 "thanh_an" (needs --character=giao_si): the player hurt (so the heal shows), the boss at

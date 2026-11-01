@@ -1,20 +1,26 @@
 class_name SealCasterTrait
 extends BossTrait
-## Trait `seal_caster` (Story 027 Phan C): every `interval_sec` the boss gets ARMED; the next boss swing
-## of at least `min_swing_cells` cells then places a Ket gioi (seal) of `cells_min`..`cells_max` cells
-## (seeded count) on the PLAYER's half when that swing has `lead_sec` or less left (at once for a shorter
-## swing), so the seal is up when the blow lands. The cells are the player's escape cells: cells the
-## player could reach within `escape_steps` steps that the swing does NOT cover (never the player's own
-## cell), nearest first (seeded order among equally near cells). At least one escape cell is always left
-## open (cells are dropped from the pick until one remains), and the seal goes through
-## ZoneRules.cast_seal, the single code point that applies the "leave a path" rule (fit_cells), so the
-## player is never trapped. Seal duration: `seal_sec`, default CombatConfig.zone_numbers().seal_sec
-## (combat.json `zones`). No escape cell to seal = nothing placed, the trait stays armed for the next swing.
-## Params (chapters.json, fallbacks in the constants below): `interval_sec`, `first_delay_sec` (default =
-## the interval), `cells_min`, `cells_max`, `lead_sec`, `min_swing_cells`, `escape_steps`, `seal_sec`.
-## Implements: Story 027 (Phan C), design/game-brief.md v5 "Vung: Ket gioi va Tran gai".
+## Trait `seal_caster` (Ấn phong tỏa), drop tile version (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md,
+## ADR-0001 A5). Rhythm as Story 027 Phan C: every `interval_sec` the boss gets ARMED; the next boss swing of at least
+## `min_swing_cells` cells, once it has `lead_sec` or less left (at once for a shorter swing), makes `cells_min`..
+## `cells_max` cells (seeded count) of the PLAYER's half CRACK (rule 3: `hole_warn_sec` warning, still enterable and
+## leavable), then FALL and stay a hole for `seal_sec` (rule 4), then return. A unit on a cell when it falls drops to
+## HP 0 (rule 5, StatusEffects; the player's death is the existing match loss).
+## Cell choice (rule 2): the player's escape cells (reachable within `escape_steps` steps, outside the swing), nearest
+## first, seeded order among equally near cells, AND the player's own cell (nearest of all) when
+## `may_target_player_cell` is true and the player can step off in time (rule 6: ZoneRules.unit_cell_droppable: step
+## cooldown left <= hole_warn_sec - hole_reaction_margin_sec, not Frozen, not rooted). At least one escape cell outside
+## the swing is left open (picks are dropped until one remains), then ZoneRules.cast_drop applies the single fairness
+## point (a safe, non-cracking, non-hole neighbour stays open; no safe neighbour = no cast).
+## `may_target_player_cell` false = the old choice (escape cells only, never the player's cell).
+## Nothing to crack = nothing placed, the trait stays armed for the next swing.
+## Params (chapters.json, fallbacks in the constants below / combat.json `zones`): `interval_sec`, `first_delay_sec`
+## (default = the interval), `cells_min`, `cells_max`, `lead_sec`, `min_swing_cells`, `escape_steps`, `seal_sec`
+## (hole seconds, default zones.seal_sec), `hole_warn_sec` (default zones.hole_warn_sec),
+## `hole_reaction_margin_sec` (default zones.hole_reaction_margin_sec), `may_target_player_cell` (default true).
+## Implements: Story 027 (Phan C), design/quick-specs/o-rot-thay-tuong-2026-10-31.md rules 1-6.
 
-## A seal was placed on the player's half: the cells actually sealed (after the leave-a-path rule).
+## A drop tile started on the player's half: the cells that began cracking (after the fairness rules).
 signal seal_cast(cells: Array[Vector2i])
 
 const ID: String = "seal_caster"
@@ -24,6 +30,7 @@ const DEFAULT_CELLS_MAX: int = 3
 const DEFAULT_LEAD_SEC: float = 0.6
 const DEFAULT_MIN_SWING_CELLS: int = 3
 const DEFAULT_ESCAPE_STEPS: int = 2
+const DEFAULT_MAY_TARGET_PLAYER_CELL: bool = true
 const _SEED_OFFSET: int = 7919
 
 var _interval_sec: float = DEFAULT_INTERVAL_SEC
@@ -34,6 +41,9 @@ var _lead_sec: float = DEFAULT_LEAD_SEC
 var _min_swing_cells: int = DEFAULT_MIN_SWING_CELLS
 var _escape_steps: int = DEFAULT_ESCAPE_STEPS
 var _seal_sec: float = 0.0
+var _warn_sec: float = 0.0
+var _margin_sec: float = 0.0
+var _may_target_player_cell: bool = DEFAULT_MAY_TARGET_PLAYER_CELL
 ## Seconds until the trait is armed again (<= 0 = armed).
 var _timer: float = DEFAULT_INTERVAL_SEC
 ## True once the current boss swing has been handled (one try per swing).
@@ -61,6 +71,14 @@ func setup(ctx: Dictionary, params: Dictionary, seed_value: int) -> void:
 	_min_swing_cells = maxi(param_int("min_swing_cells", DEFAULT_MIN_SWING_CELLS), 1)
 	_escape_steps = maxi(param_int("escape_steps", DEFAULT_ESCAPE_STEPS), 1)
 	_seal_sec = maxf(param_float("seal_sec", float(zones["seal_sec"])), 0.0)
+	_warn_sec = maxf(param_float("hole_warn_sec", float(zones["hole_warn_sec"])), 0.0)
+	_margin_sec = clampf(param_float("hole_reaction_margin_sec", float(zones["hole_reaction_margin_sec"])), 0.0, _warn_sec)
+	var raw_may: Variant = params.get("may_target_player_cell", DEFAULT_MAY_TARGET_PLAYER_CELL)
+	if typeof(raw_may) == TYPE_BOOL:
+		_may_target_player_cell = bool(raw_may)
+	else:
+		push_warning("SealCasterTrait: may_target_player_cell must be true or false, using %s" % DEFAULT_MAY_TARGET_PLAYER_CELL)
+		_may_target_player_cell = DEFAULT_MAY_TARGET_PLAYER_CELL
 	_timer = _first_delay_sec
 
 
@@ -104,7 +122,7 @@ func on_tick(step: float) -> void:
 	seal_cast.emit(placed)
 
 
-## True while the next qualifying boss swing will place a seal.
+## True while the next qualifying boss swing will start a drop tile.
 func is_armed() -> bool:
 	return _timer <= 0.0
 
@@ -114,14 +132,20 @@ func get_next_seal_left() -> float:
 	return maxf(_timer, 0.0)
 
 
-## Seals placed so far this match.
+## Drop tiles started so far this match.
 func get_seal_count() -> int:
 	return _seal_count
 
 
-## Cells of the last seal placed (empty before the first).
+## Cells of the last drop tile started (empty before the first).
 func get_last_cells() -> Array[Vector2i]:
 	return _last_cells.duplicate()
+
+
+## The resolved knobs (tests / debug): {warn_sec, hole_sec, margin_sec, may_target_player_cell}.
+func get_drop_numbers() -> Dictionary:
+	return {"warn_sec": _warn_sec, "hole_sec": _seal_sec, "margin_sec": _margin_sec,
+		"may_target_player_cell": _may_target_player_cell}
 
 
 func get_debug() -> Dictionary:
@@ -133,7 +157,20 @@ func teardown() -> void:
 	super()
 
 
-# Picks the escape cells to seal around [param swing] and forms the seal; returns the cells sealed.
+## Rule 6 (through ZoneRules.unit_cell_droppable): may the player's own cell be chosen right now? Always false with
+## `may_target_player_cell` off.
+func player_cell_droppable() -> bool:
+	if not _may_target_player_cell:
+		return false
+	var status: StatusEffects = get_context().get("status") as StatusEffects
+	var mover: UnitMover = get_context().get("player_mover") as UnitMover
+	var frozen: bool = status != null and status.is_pinned(CombatState.Side.PLAYER)
+	var rooted: bool = mover != null and mover.is_step_locked()
+	var cooldown: float = mover.get_cooldown_remaining() if mover != null else 0.0
+	return ZoneRules.unit_cell_droppable(cooldown, _warn_sec, _margin_sec, frozen, rooted)
+
+
+# Picks the cells to crack around [param swing] and starts the drop tile; returns the cells that started cracking.
 func _cast(swing: Array[Vector2i]) -> Array[Vector2i]:
 	var none: Array[Vector2i] = []
 	var grid: BoardGrid = get_context().get("grid") as BoardGrid
@@ -146,13 +183,21 @@ func _cast(swing: Array[Vector2i]) -> Array[Vector2i]:
 	if mover != null:
 		extra_blocked = Callable(mover, "is_cell_blocked")
 	var blocked: Array[Vector2i] = blocked_player_cells(grid, status, mover)
+	# A cell already cracking will be a hole soon: never an escape cell (and never cracked twice).
+	for cell: Vector2i in status.crack_cells(CombatState.Side.PLAYER):
+		if not blocked.has(cell):
+			blocked.append(cell)
 	var player_cell: Vector2i = state.player_cell
 	var escape: Array[Vector2i] = EscapeAnalysis.escape_cells(grid, player_cell, _escape_steps, true, swing, blocked)
 	escape.erase(player_cell)
-	if escape.size() < 2:
+	var own_ok: bool = player_cell_droppable() and not status.is_cracking(CombatState.Side.PLAYER, player_cell)
+	var pool: int = escape.size() + (1 if own_ok else 0)
+	if pool < 2:
 		return none
-	# Nearest first; a seeded rank breaks ties between equally near cells.
+	# Nearest first (the player's own cell is distance 0); a seeded rank breaks ties between equally near cells.
 	var ranked: Array[Dictionary] = []
+	if own_ok:
+		ranked.append({"cell": player_cell, "near": 0, "roll": 0})
 	for cell: Vector2i in escape:
 		var near: int = absi(cell.x - player_cell.x) + absi(cell.y - player_cell.y)
 		ranked.append({"cell": cell, "near": near, "roll": rng.randi()})
@@ -160,29 +205,33 @@ func _cast(swing: Array[Vector2i]) -> Array[Vector2i]:
 		if int(a["near"]) != int(b["near"]):
 			return int(a["near"]) < int(b["near"])
 		return int(a["roll"]) < int(b["roll"]))
-	var count: int = mini(rng.randi_range(_cells_min, _cells_max), escape.size() - 1)
+	var count: int = mini(rng.randi_range(_cells_min, _cells_max), pool - 1)
 	var picked: Array[Vector2i] = []
 	for i: int in count:
 		picked.append(ranked[i]["cell"] as Vector2i)
-	# Leave the player at least one escape cell outside the swing.
+	# Leave the player at least one escape cell outside the swing (the player's own cell is the start, not a step).
 	while not picked.is_empty():
-		var with_seal: Array[Vector2i] = blocked.duplicate()
-		with_seal.append_array(picked)
-		var left: Array[Vector2i] = EscapeAnalysis.escape_cells(grid, player_cell, _escape_steps, true, swing, with_seal)
+		var with_drop: Array[Vector2i] = blocked.duplicate()
+		for cell: Vector2i in picked:
+			if cell != player_cell:
+				with_drop.append(cell)
+		var left: Array[Vector2i] = EscapeAnalysis.escape_cells(grid, player_cell, _escape_steps, true, swing, with_drop)
 		left.erase(player_cell)
 		if not left.is_empty():
 			break
 		picked.pop_back()
 	if picked.is_empty():
 		return none
-	return ZoneRules.cast_seal(state, grid, status, CombatState.Side.PLAYER, picked, _seal_sec, extra_blocked)
+	return ZoneRules.cast_drop(state, grid, status, CombatState.Side.PLAYER, picked, _warn_sec, _seal_sec, own_ok, extra_blocked)
 
 
-## Cells of the player's half the player cannot step into now: sealed cells plus whatever
-## [param mover] (the player's UnitMover, may be null) refuses (cracks...). Shared with ThornFieldTrait.
+## Cells of the player's half the player cannot step into now: sealed cells plus whatever [param mover] (the player's
+## UnitMover, may be null) refuses (slam cracks, sand, drop-tile holes...), and the open holes even without a mover.
+## Shared with ThornFieldTrait. Cracking cells are still steppable, so they are not listed here.
 static func blocked_player_cells(grid: BoardGrid, status: StatusEffects, mover: UnitMover) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	for cell: Vector2i in grid.player_cells():
-		if status.is_sealed(CombatState.Side.PLAYER, cell) or (mover != null and mover.is_cell_blocked(cell)):
+		if status.is_hole(CombatState.Side.PLAYER, cell) \
+				or (mover != null and mover.is_cell_blocked(cell)):
 			out.append(cell)
 	return out

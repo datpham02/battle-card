@@ -42,7 +42,7 @@
 |---|---|---|---|
 | Kiếm khí | bất kỳ | không | sát thương × số ô |
 | Chấn phong | ≥ 3 ô | 6 s | đẩy lùi 1 ô + sát thương nhẹ |
-| Hỏa trận | ≥ 5 ô | 8 s | tập ô cháy 3 s, đứng trong mất máu dần; chặn đường |
+| Hỏa trận | ≥ 5 ô | 8 s | tập ô cháy 3 s, đứng trong mất máu dần, bước vào là mất ngay một nhịp (2026-10-31); chặn đường |
 | Băng phong | ≥ 4 ô (v4: 7) | 10 s | đóng băng 1,2 s |
 
 ### Ghép mảnh và hình chủ đạo (Story 028, chốt 2026-10-25)

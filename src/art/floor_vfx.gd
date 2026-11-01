@@ -19,6 +19,10 @@ const LAYER_OVERLAY: String = "overlay"
 const PLAY_LOOP: String = "loop"
 const PLAY_ONCE: String = "once"
 const PLAY_ONCE_HOLD: String = "once_hold"
+## Index `anchor` value: the clip's frame is centred on the cell (non-fill packs; fill packs are centred already).
+const ANCHOR_CENTER: String = "center"
+## Index `anchor` value: the pack's feet (its ground point) on the cell centre, for bursts rising out of the cell.
+const ANCHOR_GROUND_CENTER: String = "ground_center"
 
 ## Loaded once per index path: path -> {"entries": {id: entry}, "packs": {id: VfxPack or null}}.
 static var _cache: Dictionary = {}
@@ -113,16 +117,19 @@ func tick(delta: float) -> void:
 
 ## Queues one-shot [param id] on [param cell] of [param side]. Ignored when the pack is not drawable (the caller's
 ## old drawing stays in that case).
-func play(id: String, cell: Vector2i, side: int = 0) -> void:
+## [param delay] seconds hold it back (OSFE staggered blasts): it is not drawn until then.
+func play(id: String, cell: Vector2i, side: int = 0, delay: float = 0.0) -> void:
 	if not has_pack(id):
 		return
-	_events.append({"id": id, "cell": cell, "side": side, "age": 0.0})
+	_events.append({"id": id, "cell": cell, "side": side, "age": -maxf(delay, 0.0)})
 
 
-## The running one-shots (copies), optionally only those of [param layer].
+## The running one-shots (copies), optionally only those of [param layer]; a delayed one only once its delay ran out.
 func active_events(layer: String = "") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for ev: Dictionary in _events:
+		if float(ev["age"]) < 0.0:
+			continue
 		if layer.is_empty() or str(entry(str(ev["id"])).get("layer", LAYER_FLOOR)) == layer:
 			out.append(ev.duplicate())
 	return out
@@ -159,12 +166,26 @@ func draw(canvas: CanvasItem, id: String, feet: Vector2i, frame: int, tint: Colo
 	var e: Dictionary = entry(id)
 	var crop := Rect2i()
 	var at: Vector2i = feet
+	var clip_name: String = str(e.get("clip", DEFAULT_CLIP))
 	if bool(e.get("fill", false)) and clip_rect.has_area():
 		crop = clip_rect
 		var ref_h: int = int((e.get("ref_cell", [64, 46]) as Array)[1])
 		var c: Vector2i = clip_rect.position + clip_rect.size / 2
 		at = Vector2i(c.x, c.y + ref_h / 2)
-	return p.draw_clip(canvas, str(e.get("clip", DEFAULT_CLIP)), at, frame, tint, crop)
+	elif str(e.get("anchor", "")) == ANCHOR_GROUND_CENTER and clip_rect.has_area():
+		at = clip_rect.position + clip_rect.size / 2
+	elif str(e.get("anchor", "")) == ANCHOR_CENTER and clip_rect.has_area():
+		var data: Dictionary = p.clip(clip_name)
+		if not data.is_empty():
+			at = centre_anchor(clip_rect, data["offset"], data["frame_size"])
+	return p.draw_clip(canvas, clip_name, at, frame, tint, crop)
+
+
+## Pure: the feet point that puts the middle of a clip frame ([param offset] from the feet, [param frame_size]) on
+## the centre of [param cell_rect]: every floor effect sits in the middle of its cell (user 2026-11-01).
+static func centre_anchor(cell_rect: Rect2i, offset: Vector2i, frame_size: Vector2i) -> Vector2i:
+	var c: Vector2i = cell_rect.position + cell_rect.size / 2
+	return c - offset - frame_size / 2
 
 
 static func _load(index_path: String) -> Dictionary:

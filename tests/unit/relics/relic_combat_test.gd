@@ -344,27 +344,36 @@ func _test_status_relics() -> void:
 func _test_zone_overrides() -> void:
 	var grid := BoardGrid.new(3, 3)
 	var sc := SkillConfig.from_dictionary({"cards": {
-		"seal_own": {"effect": "seal", "seal_sec": 2.0, "implemented": true, "upgrade": {}},
-		"seal_cfg": {"effect": "seal", "implemented": true, "upgrade": {}},
-		"thorn": {"effect": "thorns", "thorn_sec": 3.0, "thorn_damage": 6.0, "thorn_fragile_stacks": 1, "implemented": true, "upgrade": {}}}})
+		"thorn": {"effect": "thorns", "thorn_sec": 3.0, "thorn_damage": 6.0, "thorn_fragile_stacks": 1, "implemented": true, "upgrade": {}},
+		"thorn_cfg": {"effect": "thorns", "implemented": true, "upgrade": {}}}})
 	var zones: Dictionary = CombatConfig.new().zone_numbers()
 	var cell: Array[Vector2i] = [Vector2i(5, 0)]
-	for case: Array in [["phong_an", "seal_own", 2.0], ["phong_an", "seal_cfg", float(zones["seal_sec"])]]:
-		var merged: Dictionary = RelicRegistry.merge_overrides([RelicRegistry.instantiate(str(case[0]))])
+	# Quick spec 2026-10-31: phong_an is Gai Dai, thorns +thorn_sec add (was Walls +seal_sec).
+	var gai_dai: Dictionary = RelicRegistry.merge_overrides([RelicRegistry.instantiate("phong_an")])
+	var add_sec: float = float(_entry("phong_an", "thorn_sec")["add"])
+	for case: Array in [["thorn", 3.0], ["thorn_cfg", float(zones["thorn_sec"])]]:
 		var state := CombatState.new(grid, 1000.0, 1000.0, Vector2i(1, 1), Vector2i(4, 1))
 		var status := StatusEffects.new()
-		CutEffects.apply(state, grid, P, cell, str(case[1]), CutConfig.new(), sc, status, Callable(), 1, Callable(), Callable(),
-			{"zones": zones, "zone_overrides": merged})
-		_check("phong_an: %s seal = its own seconds + add" % case[1],
-			_near(status.seal_total_sec(E, cell[0]), float(case[2]) + float(_entry("phong_an", "seal_sec")["add"])), str(status.seal_total_sec(E, cell[0])))
+		CutEffects.apply(state, grid, P, cell, str(case[0]), CutConfig.new(), sc, status, Callable(), 1, Callable(), Callable(),
+			{"zones": zones, "zone_overrides": gai_dai})
+		_check("phong_an (Gai Dai): %s thorns = its own seconds + add" % case[0],
+			add_sec > 0.0 and _near(status.thorn_total_sec(E, cell[0]), float(case[1]) + add_sec), str(status.thorn_total_sec(E, cell[0])))
+	# Gai Dai lengthens the player's thorns only: a boss drop tile on the same status keeps its own seconds.
+	var s_state := CombatState.new(grid, 1000.0, 1000.0, Vector2i(1, 1), Vector2i(4, 1))
+	var s_status := StatusEffects.new()
+	CutEffects.apply(s_state, grid, P, cell, "thorn", CutConfig.new(), sc, s_status, Callable(), 1, Callable(), Callable(),
+		{"zones": zones, "zone_overrides": gai_dai})
+	var drop_cell: Array[Vector2i] = [Vector2i(0, 0)]
+	s_status.apply_drop(P, drop_cell, 0.5, 2.0)
+	_check("phong_an (Gai Dai): a drop tile keeps its own seconds (no Wall bonus any more)", _near(s_status.hole_total_sec(P, drop_cell[0]), 2.0), str(s_status.hole_total_sec(P, drop_cell[0])))
 	var g_state := CombatState.new(grid, 1000.0, 1000.0, Vector2i(1, 1), Vector2i(4, 1))
 	var g_status := StatusEffects.new()
 	CutEffects.apply(g_state, grid, P, cell, "thorn", CutConfig.new(), sc, g_status, Callable(), 1, Callable(), Callable(),
 		{"zones": zones, "zone_overrides": RelicRegistry.merge_overrides([RelicRegistry.instantiate("gai_ran")])})
 	_check("gai_ran: thorn Ran per entry + add", int(g_status.thorns_at(E, cell[0]).get("fragile_stacks", -1)) == 1 + int(_entry("gai_ran", "thorn_ran")["add"]))
 	var b_status := StatusEffects.new()
-	CutEffects.apply(g_state, grid, P, cell, "seal_own", CutConfig.new(), sc, b_status, Callable(), 1, Callable(), Callable(), {"zones": zones})
-	_check("zones: no override = the card's own seal_sec", _near(b_status.seal_total_sec(E, cell[0]), 2.0))
+	CutEffects.apply(g_state, grid, P, cell, "thorn", CutConfig.new(), sc, b_status, Callable(), 1, Callable(), Callable(), {"zones": zones})
+	_check("zones: no override = the card's own thorn_sec", _near(b_status.thorn_total_sec(E, cell[0]), 3.0), str(b_status.thorn_total_sec(E, cell[0])))
 
 
 # an_chu: the featured multiplier is the relic's, through the real _on_skill_chosen path.

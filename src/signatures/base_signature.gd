@@ -67,10 +67,16 @@ func step_cooldown_scale() -> float:
 	return 1.0
 
 
-## Story 037: multiplier of the duration of every zone (seal / thorns) the PLAYER forms (1.0 = unchanged).
-## Read by CutEffects at the moment a zone card's swing arrives.
+## Story 037: multiplier of the duration of the thorns the PLAYER forms (1.0 = unchanged; seals are no
+## longer lengthened, quick spec 2026-10-31). Read by CutEffects at the moment a zone card's swing arrives.
 func zone_sec_mult() -> float:
 	return 1.0
+
+
+## Quick spec 2026-10-31: extra thorn cells each PLAYER thorn card lays (0 = none). Read by CutEffects
+## (CutEffects.extra_thorn_cells picks the cells) at the moment the swing arrives.
+func extra_thorn_cells() -> int:
+	return 0
 
 
 ## Story 037: damage multiplier ONE consumed Ran stack of the boss gives instead of the config's fragile_mult

@@ -1,0 +1,414 @@
+{
+  "status": "PROPOSED",
+  "count": 8,
+  "bosses": [
+    {
+      "id": "warden_1",
+      "name_and_land": "Forest Witch — Warden of Misty Forest Ruins",
+      "land_index": 1,
+      "skills": [
+        {
+          "name": "Root Nail (C)",
+          "warning_and_timing": "1 occupied/current tile; 1 beat",
+          "effect": "Low hit + Root for 1 short beat",
+          "counterplay": "Sidestep before first stamp"
+        },
+        {
+          "name": "Branch Lattice (C)",
+          "warning_and_timing": "3-cell L; next beat another 1-cell branch",
+          "effect": "First hit + 1 delayed secondary square",
+          "counterplay": "Follow red floor warnings, never guess direction"
+        },
+        {
+          "name": "Entangled Row (H)",
+          "warning_and_timing": "3 contiguous cells in a row, 1.5 beats",
+          "effect": "Medium damage and mild Slow",
+          "counterplay": "Move to another row"
+        },
+        {
+          "name": "Moss Guard (utility)",
+          "warning_and_timing": "Self tile in muted ivory outline, no red",
+          "effect": "Gains barrier until root anchor destroyed",
+          "counterplay": "Focus one of clearly marked anchors"
+        },
+        {
+          "name": "Root Anchor (mechanic)",
+          "warning_and_timing": "Spawns 1–2 visible non-glowing root anchor markers on valid empty tiles",
+          "effect": "Next attacks extend toward those tiles",
+          "counterplay": "Break anchor via any block target; not hidden RNG"
+        },
+        {
+          "name": "Withered Crown (P2)",
+          "warning_and_timing": "Alternate 2-cell bars, second follows first after 1 beat",
+          "effect": "Pressure while allowing move-between gaps",
+          "counterplay": "Exit first lane, do not run into next warning"
+        },
+        {
+          "name": "Forest's Last Knot (P3 finisher)",
+          "warning_and_timing": "4-cell T area then one center repeat, sequential",
+          "effect": "High threat, never full-board unavoidable",
+          "counterplay": "Clear anchor first or move to shown safe tile"
+        }
+      ],
+      "phase_rules": "`>65%` teach anchors; `65–30%` 2 anchors + branch; `<30%` sequential T finisher every third cast. At phase transition boss spends one no-damage telegraph beat showing darkened roots. Builds that break anchors or exploit cooldowns feel good; a 1-cell starter Block must always be able to break one anchor.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "warden_2",
+      "name_and_land": "Ogre King — Warden of Dark Dungeon",
+      "land_index": 2,
+      "skills": [
+        {
+          "name": "Chain Snare (C)",
+          "warning_and_timing": "1 tile, 1 beat",
+          "effect": "Slow/Root after visible chain squares land",
+          "counterplay": "Step out before hit"
+        },
+        {
+          "name": "Iron Cell (C)",
+          "warning_and_timing": "2-cell line and one adjacent locked tile",
+          "effect": "Temporary unavailable cell for one beat",
+          "counterplay": "Choose parallel escape lane"
+        },
+        {
+          "name": "Hammer Column (H)",
+          "warning_and_timing": "3–4 valid cells in a column, 1.7 beats",
+          "effect": "Heavy stamp and knock 1 legal square",
+          "counterplay": "Move sideways; no push into pit by default"
+        },
+        {
+          "name": "Rust Guard (utility)",
+          "warning_and_timing": "Self tile",
+          "effect": "Guard rises after he takes a hit",
+          "counterplay": "Shatter with second hit, poison bypass optional"
+        },
+        {
+          "name": "Broken Chain (C)",
+          "warning_and_timing": "3-cell L on opponent side, strikes after 2 beats",
+          "effect": "Medium hit, marks location for echo",
+          "counterplay": "Remember shape and move in time"
+        },
+        {
+          "name": "Dungeon Collapse (P2)",
+          "warning_and_timing": "Clearly marked empty slab turns into pit after next beat",
+          "effect": "Board shrinks temporarily; NO instant pit under a player",
+          "counterplay": "Plan a new escape route; tile restores after 2 beats"
+        },
+        {
+          "name": "King's Sentence (P3)",
+          "warning_and_timing": "Two **separate** 2-cell bars in sequence",
+          "effect": "High damage if both hit; 1 beat between",
+          "counterplay": "Use the safe middle tile; guard last strike"
+        }
+      ],
+      "phase_rules": "`>70%` single chain + slam; `70–35%` temporary pit and recovery; `<35%` sentence combo. Always reserve two reachable non-pit tiles when building an obstacle pattern.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "warden_3",
+      "name_and_land": "Frost Lord — Warden of Mist Tower",
+      "land_index": 3,
+      "skills": [
+        {
+          "name": "Cold Stamp (C)",
+          "warning_and_timing": "1 tile, 1 beat",
+          "effect": "Frost stack 1",
+          "counterplay": "Shift before landing"
+        },
+        {
+          "name": "Ice Fork (C)",
+          "warning_and_timing": "3-cell L, 1.2 beats",
+          "effect": "Slow + light damage",
+          "counterplay": "Exit the L foot"
+        },
+        {
+          "name": "Glass Column (H)",
+          "warning_and_timing": "3-cell vertical line, slow windup",
+          "effect": "Freeze if already slowed",
+          "counterplay": "Change columns early"
+        },
+        {
+          "name": "Shard Mirror (mechanic)",
+          "warning_and_timing": "Records last player-targeted Block shape, shows ghost preview then red tile warning",
+          "effect": "Repeats **valid** version on player tiles after 1 beat",
+          "counterplay": "Watch final mask, rotate your next action for safety"
+        },
+        {
+          "name": "Bell of Snow (C)",
+          "warning_and_timing": "Warn 3 distinct single cells sequentially",
+          "effect": "Small hits and stacked frost if stationary",
+          "counterplay": "Move after each stamp"
+        },
+        {
+          "name": "Frostbreak (P2)",
+          "warning_and_timing": "One tile frozen gray, cracks in 2 beats; if hit, applies Fragile",
+          "effect": "Temporary terrain hazard, no instant pit",
+          "counterplay": "Stay off cracked tile until resolved"
+        },
+        {
+          "name": "Last Winter (P3)",
+          "warning_and_timing": "First cross then a *different* 3-cell L, sequential; not whole board at once",
+          "effect": "Medium area hit on two beats",
+          "counterplay": "Escape to the shown safe edge; defense answers overlap"
+        }
+      ],
+      "phase_rules": "`>65%` Slow teach; `65–30%` recorded mirror; `<30%` rotating delayed patterns. Freeze should not disable both movement and cast simultaneously without counter.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "warden_4",
+      "name_and_land": "Toad Matriarch — Warden of Poison Swamp",
+      "land_index": 4,
+      "skills": [
+        {
+          "name": "Mud Swat (C)",
+          "warning_and_timing": "2 adjacent cells, 1 beat",
+          "effect": "Low damage + safe one-cell push",
+          "counterplay": "Avoid edge/pit adjacency"
+        },
+        {
+          "name": "Spore L (C)",
+          "warning_and_timing": "3-cell L, 1.25 beats",
+          "effect": "Poison stack",
+          "counterplay": "Exit before stamp"
+        },
+        {
+          "name": "Sticky Cushion (utility)",
+          "warning_and_timing": "1 visible dull olive hazard tile",
+          "effect": "Slows move/cast while occupied, expires 2 beats",
+          "counterplay": "Break/cancel hazard or route around"
+        },
+        {
+          "name": "Bog Choir (H)",
+          "warning_and_timing": "3 separated single tiles; second beat expands each by one if valid",
+          "effect": "Delayed poison squares",
+          "counterplay": "Move to area outside expansion; red previews expansion ahead of hit"
+        },
+        {
+          "name": "Toad Belly Guard (defense)",
+          "warning_and_timing": "Self tile outlined ivory (not enemy warning)",
+          "effect": "Absorbs first Block hit",
+          "counterplay": "Multi-hit or shred then punish recovery"
+        },
+        {
+          "name": "Mycelial Wave (P2)",
+          "warning_and_timing": "2-cell row repeats once on same locations",
+          "effect": "Poison stack on repeated hit",
+          "counterplay": "Don't return early"
+        },
+        {
+          "name": "Mother of Spores (P3)",
+          "warning_and_timing": "T-shape strike then one post-hit hazard tile",
+          "effect": "Burst + poison zone",
+          "counterplay": "Dodge T and avoid lingering hazard; cleanse after"
+        }
+      ],
+      "phase_rules": "`>70%` single poison attacks; `70–35%` growth/repeats; `<35%` T finisher. Teach the exact growth mechanic using Sporecap enemies before boss.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "warden_5",
+      "name_and_land": "Sand Sphinx — Warden of Buried Sands",
+      "land_index": 5,
+      "skills": [
+        {
+          "name": "Sand Paw (C)",
+          "warning_and_timing": "Single tile, 1 beat",
+          "effect": "Small blunt hit",
+          "counterplay": "One-cell dodge"
+        },
+        {
+          "name": "Ancient Column (H)",
+          "warning_and_timing": "Up to 4 valid cells of a column, 1.6 beats",
+          "effect": "Large hit",
+          "counterplay": "Exit column"
+        },
+        {
+          "name": "Sand Clock (C)",
+          "warning_and_timing": "1 cell now + same tile after exactly 2 beats",
+          "effect": "Two small hits",
+          "counterplay": "Memorize the marker; don't return prematurely"
+        },
+        {
+          "name": "Buried Arch (mechanic)",
+          "warning_and_timing": "One empty slab gets a non-glowing sand mound, temporary impassable, 2 beats",
+          "effect": "Paths constrict; does not trap player alone",
+          "counterplay": "Choose route before column hit"
+        },
+        {
+          "name": "Shifting Sphinx (C)",
+          "warning_and_timing": "Two light-grey candidates displayed; only 1 turns red with 0.8s warning before hit",
+          "effect": "Single hit; fake markers are never red",
+          "counterplay": "React to final red warning"
+        },
+        {
+          "name": "Wings of Dust (P2)",
+          "warning_and_timing": "Alternating 2-cell bar, then rotated 2-cell bar",
+          "effect": "Medium hit in 2 beats",
+          "counterplay": "Move across first shape rather than chasing boss"
+        },
+        {
+          "name": "Last Riddle (P3)",
+          "warning_and_timing": "Sequence `1 cell -> 3-cell L -> 2×2`, each shown before resolution",
+          "effect": "Large temporal puzzle",
+          "counterplay": "Step through safe tile each beat, or guard last"
+        }
+      ],
+      "phase_rules": "`>65%` slow memory attacks; `65–30%` introduce grey candidate markers; `<30%` Last Riddle. Nothing ever inflicts damage from false hint alone.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "warden_6",
+      "name_and_land": "Inferno Demon Lord — Warden of Hellfire Citadel",
+      "land_index": 6,
+      "skills": [
+        {
+          "name": "Ember Press (C)",
+          "warning_and_timing": "One tile, 1 beat",
+          "effect": "Burn 1",
+          "counterplay": "One-cell dodge"
+        },
+        {
+          "name": "Furnace Line (C)",
+          "warning_and_timing": "3-cell row, 1.1 beats",
+          "effect": "Medium hit + Burn",
+          "counterplay": "Exit row"
+        },
+        {
+          "name": "Cracked Cross (H)",
+          "warning_and_timing": "5-cell cross where valid, 1.5 beats",
+          "effect": "Burst + Fragile, no round explosion",
+          "counterplay": "Stand in a clearly safe diagonal cell"
+        },
+        {
+          "name": "Scorched Memory (mechanic)",
+          "warning_and_timing": "Re-warns one valid location hit previously, after 2 beats",
+          "effect": "Repeat attack at known tile",
+          "counterplay": "Recall the last stamp, don't reoccupy"
+        },
+        {
+          "name": "Broken Hearth (P2)",
+          "warning_and_timing": "Mark one **empty** slab with orange fissure (not glow), then clear warning before it becomes a pit",
+          "effect": "Temporary pit for 2 beats",
+          "counterplay": "Plan path, cannot directly open under occupied actor"
+        },
+        {
+          "name": "Ashen Guard (utility)",
+          "warning_and_timing": "Self tile",
+          "effect": "Guard on next two attacks",
+          "counterplay": "Multi-hit, pierce or focus after guard duration"
+        },
+        {
+          "name": "Citadel Verdict (P3)",
+          "warning_and_timing": "Alternating 3-cell line then 3-cell L after short pause",
+          "effect": "High delayed burn pressure",
+          "counterplay": "Exit first line to a tile not in upcoming L; block/cleanse next"
+        }
+      ],
+      "phase_rules": "`>65%` line attacks; `65–30%` delayed pits; `<30%` two-stage verdict. Enemy-tile warning red is still allowed, but no **red** lava/clothing/character VFX.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "warden_7",
+      "name_and_land": "Storm Dragon — Warden of Sky Isles",
+      "land_index": 7,
+      "skills": [
+        {
+          "name": "Talon Stamp (C)",
+          "warning_and_timing": "2 adjacent cells, 1 beat",
+          "effect": "Medium hit",
+          "counterplay": "Step sideways"
+        },
+        {
+          "name": "Wind Fork (C)",
+          "warning_and_timing": "3-cell L, 1.2 beats",
+          "effect": "Push one legal tile, no forced cliff fall",
+          "counterplay": "Dodge toward safe edge"
+        },
+        {
+          "name": "Cloud Step (mechanic)",
+          "warning_and_timing": "Boss shows destination square then moves after one beat",
+          "effect": "Relocates logical origin",
+          "counterplay": "Target future square"
+        },
+        {
+          "name": "Bridge Fracture (H)",
+          "warning_and_timing": "Announce one empty bridge tile; pit appears after two beats",
+          "effect": "Temporary unavailable floor for 2 beats",
+          "counterplay": "Cross before break or choose other bridge"
+        },
+        {
+          "name": "Storm Sequence (C)",
+          "warning_and_timing": "3 one-tile stamps in traveling sequence, red warning per beat",
+          "effect": "Sustained pressure",
+          "counterplay": "Move perpendicular to advancing line"
+        },
+        {
+          "name": "Gale Ring (P2)",
+          "warning_and_timing": "4-cell perimeter subset, not full-board",
+          "effect": "Moderate damage to designated ring tiles",
+          "counterplay": "Stand on interior gap or guard"
+        },
+        {
+          "name": "Skyfall Pattern (P3)",
+          "warning_and_timing": "4-cell T then delayed 2-cell bar on different row",
+          "effect": "High pressure",
+          "counterplay": "Hold safe exit; don't jump into cracked bridge"
+        }
+      ],
+      "phase_rules": "`>70%` teach gusts; `70–35%` one temporary broken bridge; `<35%` skyfall mix. If island grid is split into two sections, maintain at least one available traversable route or guaranteed in-place defensive answer.",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "warden_8",
+      "name_and_land": "Heart Keeper — Final Warden of the Lattice Heart",
+      "land_index": 8,
+      "skills": [
+        {
+          "name": "First Square (C)",
+          "warning_and_timing": "1 tile, 1 beat",
+          "effect": "Minimal hit; establishes rhythm",
+          "counterplay": "Dodge/guard"
+        },
+        {
+          "name": "Memory L (C)",
+          "warning_and_timing": "Copies last player-targeted connected L or bar into a legal warned area",
+          "effect": "Medium hit, same cell count capped to 4",
+          "counterplay": "Read final floor mask, move to unmarked tile"
+        },
+        {
+          "name": "Quarter Turn (mechanic)",
+          "warning_and_timing": "Previews existing 3-cell L then visibly rotates 90°, final red mask has full warning",
+          "effect": "Hits rotated final mask only",
+          "counterplay": "Act on **final** red, not preview"
+        },
+        {
+          "name": "Broken Unity (C)",
+          "warning_and_timing": "2×2 target then square shard particles on each cell",
+          "effect": "Medium area hit",
+          "counterplay": "Move outside square"
+        },
+        {
+          "name": "Twin Stamp (P2)",
+          "warning_and_timing": "2 separate small patterns, one beat apart",
+          "effect": "Medium combo",
+          "counterplay": "Save mobility/guard for second"
+        },
+        {
+          "name": "Lattice Repair (utility)",
+          "warning_and_timing": "Restores one previously pit tile; self barrier for one beat",
+          "effect": "Shifts safe path and gains guard",
+          "counterplay": "Exploit newly safe floor, remove guard"
+        },
+        {
+          "name": "Form Dissolution (P3)",
+          "warning_and_timing": "5-cell cross then 1-cell repeated center, each clearly warned",
+          "effect": "Large finale, always with safe path or shield answer",
+          "counterplay": "Use previous lessons: remember, move, block"
+        }
+      ],
+      "phase_rules": "`>70%` show simple primary shapes, `70–35%` shape rotation and twin stamps, `<35%` bigger form. On defeat the gold cube becomes steady and quiet rather than a violent non-square blast. Reward closes run.",
+      "status": "PROPOSED"
+    }
+  ]
+}

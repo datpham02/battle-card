@@ -68,6 +68,11 @@ func half_tint(side: int) -> Color:
 	return _half_tints.get("player" if side == CombatState.Side.PLAYER else "enemy", Color.WHITE)
 
 
+## ADR-0001 Task 5: the region's `platform` palette block (hex strings; {} = SlabPainter defaults), for the pit colours.
+func get_platform_palette() -> Dictionary:
+	return _platform_palette
+
+
 ## The art region drawn right now (`forest`, ...).
 func get_region_id() -> String:
 	return _region_id
@@ -101,7 +106,8 @@ func get_dynamic_layer() -> FloorDynamicLayer:
 func telegraph_state() -> Dictionary:
 	if _combat == null or not is_instance_valid(_combat) or _combat.get_boss() == null:
 		return {}
-	return TelegraphPainter.state_for(_combat.get_boss().get_actor(), _combat.get_config(), SettingsStore.shared().get_reduce_motion())
+	return TelegraphPainter.state_for(_combat.get_boss().get_actor(), _combat.get_config(), SettingsStore.shared().get_reduce_motion(),
+		_combat.get_status())
 
 
 ## Story 046 Part C: what the dynamic sub-layer draws on [param canvas]: the telegraph [param state], then every
@@ -174,9 +180,6 @@ func _draw_zones(grid: BoardGrid) -> void:
 		for cell: Vector2i in status.thorn_cells(side):
 			if grid.is_in_board(cell):
 				_draw_thorn_cell(cell_art_rect(cell))
-		for cell: Vector2i in status.sealed_cells(side):
-			if grid.is_in_board(cell):
-				_draw_seal_cell(cell_art_rect(cell))
 
 
 # The 16x16 thorn tile repeated over the slab (art bible 6.3: thorns fill the cell); a region without
@@ -189,11 +192,3 @@ func _draw_thorn_cell(rect: Rect2i) -> void:
 	else:
 		draw_rect(Rect2(Vector2(slab.position), Vector2(slab.size)), CutHudView.THORN_SPIKE)
 
-
-# Seal: today's CutHudView seal colour as a flat overlay on the slab's face (inside the 9-slice
-# margins, above the lip). The real look (the sealed hole / barrier art of art bible 6.3) is a later
-# story; drawing it here already puts it under the units instead of over them.
-func _draw_seal_cell(rect: Rect2i) -> void:
-	var face: Rect2i = SlabPainter.face_rect(rect.size, _stamps_meta)
-	face.position += rect.position
-	draw_rect(Rect2(Vector2(face.position), Vector2(face.size)), CutHudView.SEAL_FILL)

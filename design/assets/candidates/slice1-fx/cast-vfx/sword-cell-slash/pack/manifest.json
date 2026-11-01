@@ -1,0 +1,94 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "Tessera cast - sword cell slash",
+ "fps": 18,
+ "frame_ms": 56,
+ "frames": 5,
+ "loop": false,
+ "canvas": {
+  "w": 74,
+  "h": 52
+ },
+ "anchor": {
+  "kind": "feet",
+  "x": 37,
+  "y": 49
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 4,
+   "frame": {
+    "w": 51,
+    "h": 37
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 4,
+     "columns": 2,
+     "rows": 2
+    }
+   ],
+   "offset": {
+    "x": -25,
+    "y": -41
+   }
+  },
+  {
+   "name": "whole-with-sprite",
+   "title": "the whole effect with the sprite in it",
+   "depth": "both",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 5,
+   "frame": {
+    "w": 64,
+    "h": 46
+   },
+   "sheets": [
+    {
+     "file": "whole-with-sprite.png",
+     "first_frame": 0,
+     "frames": 5,
+     "columns": 3,
+     "rows": 2
+    }
+   ],
+   "offset": {
+    "x": -32,
+    "y": -46
+   }
+  },
+  {
+   "name": "front",
+   "title": "everything in front of the sprite",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 4,
+   "frame": {
+    "w": 51,
+    "h": 37
+   },
+   "sheets": [
+    {
+     "file": "front.png",
+     "first_frame": 0,
+     "frames": 4,
+     "columns": 2,
+     "rows": 2
+    }
+   ],
+   "offset": {
+    "x": -25,
+    "y": -41
+   }
+  }
+ ]
+}

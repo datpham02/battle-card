@@ -512,3 +512,10 @@ QA kiểm được mà không cần đọc tài liệu khác. Người dùng duy
 14. **Chế độ mù màu còn đổi gì?** Trước đây nó đổi bóng khối xanh lá – đỏ sang lam – cam. Từ 2026-10-29 bóng khối dùng màu khối của nhân vật và đọc trúng/trượt bằng hình, nên không còn cặp màu nào bắt buộc phải đổi. Tầng Standard trong `design/accessibility-requirements.md` vẫn cam kết "ít nhất một chế độ mù màu". Cần chốt: giữ chế độ (ví dụ đổi đỏ báo đòn và các màu trạng thái sang bảng tương phản cao) hay ghi lý do bỏ.
 15. **Dải giữa Z4 ngoài tầm ngón cái trên máy 20:9** (kiểm UX 2026-10-29: tâm cách mép ~69 mm, ngón với tới ~50 mm). Tung phép, Xoay, Thức Tỉnh là nút hay bấm nhất. Cần chốt: neo Z4 về phía tay rảnh hay chia nút sang Z3/Z5. Kiểm trên máy thật.
 16. **Vùng vuốt Back của Android** (~55 px từ mép) có thể trùng pad sát mép trái. Đẩy pad vào ≥ 56 px hoặc xin loại trừ cử chỉ (chưa kiểm trong Godot 4.6).
+
+## Thay đổi sau buổi chơi thử 2026-10-31 (người dùng)
+
+- **Không còn vòng hồi bước** quanh người chơi và boss sau mỗi bước (`combat.json` `hud.step_rings: false`); vòng thép liền "boss bị khóa chân khi đang niệm" vẫn giữ.
+- **Số sát thương từ sàn**: ô cháy, ô gai và lầy hiện "-N" bay lên trên đầu đơn vị (cam Cháy, nâu Gai, xám xanh Lầy), 0,7 s; số "TRÚNG -N" của đòn đánh giữ nguyên. Đi kèm luật mới `burn_on_entry`: bước vào ô đang cháy mất ngay một nhịp sát thương (trước đây đi ngang qua không mất gì).
+- **Chiêu bay ra từ nhân vật**: khi người chơi niệm, nhân vật giữ tư thế giơ kiếm; khi còn `travel_sec + gesture_lead_sec` (0,27 s) clip chém chạy và lưỡi kiếm khí (gói PixelLab `assets/art/vfx/cast/sword_wave`) phóng từ tay tới các ô đích, chạm đúng lúc đòn rơi (`assets/art/vfx/cast/index.json`).
+- **Skin cho toàn bộ màn**: nền tối `HudSkin.SCREEN_BG`, nút vát góc `HudSkin.button` (chính: viền vàng Ánh Lưới), thẻ `HudSkin.card`; vị trí và vùng chạm không đổi.

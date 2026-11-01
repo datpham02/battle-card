@@ -50,18 +50,22 @@ const FEATURED_BURN_DAMAGE_PER_TICK: float = 1.5
 ## `fragile` / `frost` x stacks (Ran / Han on the boss, a Han burst damages directly), `burn` ignites the cast
 ## cells `stacks` times, `pin` pins the boss for `sec`. A miss applies nothing; boss swings never apply it.
 ## The result gains featured (bool), featured_mult, featured_effect, featured_stacks, featured_sec.
-## Story 027 zones: effect `seal` / `thorns` forms the zone ONCE on the target's half over [param cells]
-## when the swing arrives, HIT OR MISS (seals through ZoneRules.cast_seal, which keeps a path open). hit =
-## the target stands inside (like burn). A seal card with damage_per_cell > 0 then deals the normal damage
-## path on a hit; without it a hit only applies the card's keywords. options: zones (Dictionary, see
-## CombatConfig.zone_numbers; a card's own seal_sec / thorn_sec / thorn_damage / thorn_fragile_stacks win),
-## target_blocked_fn (Callable(cell) -> bool, the target mover's blockers, used by the leave-a-path rule).
-## The result gains zone_kind ("" / "seal" / "thorns") and zone_cells (the cells actually placed).
+## Story 027 zones: effect `thorns` forms the zone ONCE on the target's half over [param cells] when the
+## swing arrives, HIT OR MISS. hit = the target stands inside (like burn); a thorn card with
+## damage_per_cell > 0 then deals the normal damage path on a hit, without it a hit only applies the card's
+## keywords. (The `seal` effect and its Wall cards were deleted 2026-11-01, ADR-0001 Phase 1 cleanup.)
+## options: zones (Dictionary, see CombatConfig.zone_numbers; a card's own thorn_sec / thorn_damage /
+## thorn_fragile_stacks win), target_blocked_fn (Callable(cell) -> bool, the target mover's blockers, used to
+## skip blocked extra thorn cells), zone_rng (RandomNumberGenerator, picks the Vay Bat extra thorn cells).
+## The result gains zone_kind ("" / "thorns") and zone_cells (the cells actually placed).
 ## Story 032 relics (player swings only, through SwingArbiter): options.relic_modifier Callable(cells: int,
 ## damage: float) -> float is the ONE relic damage point, right after the featured multiplier: FULL order =
 ## card damage x conditions -> Ghim -> Ran -> featured -> RELICS (capped product) -> execute -> passive ->
 ## signature -> flat defense. options.zone_overrides (RelicRegistry.merge_overrides form) changes the
-## player's seal seconds (`seal_sec`) and thorn Ran stacks per entry (`thorn_ran`) AFTER the card's own number.
+## player's thorn seconds (`thorn_sec`, relic Gai Dai) and thorn Ran stacks per
+## entry (`thorn_ran`) AFTER the card's own number. options.zone_sec_mult (Vay Bat) multiplies the THORN
+## seconds only (the Wall part was removed by the 2026-10-31 quick spec) and options.extra_thorn_cells (int,
+## Vay Bat) lays that many extra thorn cells next to the cast, see [method extra_thorn_cells].
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -95,6 +99,19 @@ static func apply(
 	result["featured_effect"] = ""
 	result["featured_stacks"] = 0
 	result["featured_sec"] = 0.0
+	# Quick spec 2026-11-01 rule 3 (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md): a cracking cell or a hole is
+	# LOCKED: it leaves the cast's cells before anything resolves (no damage, no status, no zone for a unit there; the
+	# other cells resolve normally and the damage counts the cells left). The rule lives in StatusEffects.unlocked_cells.
+	result["locked_cells"] = [] as Array[Vector2i]
+	if status != null:
+		var open_cells: Array[Vector2i] = status.unlocked_cells(cells)
+		if open_cells.size() != cells.size():
+			var locked: Array[Vector2i] = []
+			for cell: Vector2i in cells:
+				if not open_cells.has(cell):
+					locked.append(cell)
+			result["locked_cells"] = locked
+			cells = open_cells
 	var featured: Dictionary = {}
 	if side == CombatState.Side.PLAYER and typeof(options.get("featured_bonus")) == TYPE_DICTIONARY:
 		featured = options["featured_bonus"] as Dictionary
@@ -115,7 +132,7 @@ static func apply(
 	var inside: bool = cells.has(target_cell) and not bool(options.get("target_untargetable", false))
 	result["zone_kind"] = ""
 	result["zone_cells"] = [] as Array[Vector2i]
-	if effect == "seal" or effect == "thorns":
+	if effect == "thorns":
 		if status == null:
 			if not _warned_no_status:
 				_warned_no_status = true
@@ -129,7 +146,7 @@ static func apply(
 			_apply_keywords(state, status, target_side, skill, result)
 			_apply_featured_effect(state, status, target_side, cells, featured, result)
 			return result
-		# A seal card with damage_per_cell > 0 (Long an) falls through to the normal damage path.
+		# A thorn card with damage_per_cell > 0 falls through to the normal damage path.
 	if effect == "burn" or effect == "pin" or effect == "fragile" or effect == "frost":
 		if status == null:
 			if not _warned_no_status:
@@ -205,9 +222,8 @@ static func apply(
 
 
 # Story 027: forms the card's zone ONCE when the swing arrives, hit or miss, on the TARGET side's half
-# over the cut cells. Numbers: the card's own seal_sec / thorn_sec / thorn_damage / thorn_fragile_stacks,
-# else options.zones (CombatConfig.zone_numbers()), else the CombatConfig built-in fallbacks. Seals go
-# through ZoneRules.cast_seal (leave-a-path rule; options.target_blocked_fn adds cracks etc.).
+# over the cut cells. Numbers: the card's own thorn_sec / thorn_damage / thorn_fragile_stacks, else
+# options.zones (CombatConfig.zone_numbers()), else the CombatConfig built-in fallbacks.
 static func _form_zone(
 	state: CombatState, grid: BoardGrid, status: StatusEffects, target_side: int, cells: Array[Vector2i],
 	effect: String, skill: Dictionary, options: Dictionary, result: Dictionary
@@ -216,23 +232,60 @@ static func _form_zone(
 	var overrides: Dictionary = {}
 	if typeof(options.get("zone_overrides")) == TYPE_DICTIONARY:
 		overrides = options["zone_overrides"] as Dictionary
-	# Story 037: the player's signature may lengthen the zones it forms (1.0 = unchanged).
+	# Story 037 / quick spec 2026-10-31: the player's signature (Vay Bat) lengthens the THORNS it forms
+	# (1.0 = unchanged) and may lay extra thorn cells.
 	var sec_mult: float = maxf(float(options.get("zone_sec_mult", 1.0)), 0.0)
-	var placed: Array[Vector2i] = []
-	if effect == "seal":
-		var blocked: Callable = options.get("target_blocked_fn", Callable()) as Callable
-		placed = ZoneRules.cast_seal(
-			state, grid, status, target_side, cells,
-			maxf(RelicRegistry.apply_override(float(skill.get("seal_sec", numbers["seal_sec"])), overrides, "seal_sec"), 0.0) * sec_mult,
-			blocked)
-	else:
-		placed = ZoneRules.cast_thorns(
-			status, target_side, cells, float(skill.get("thorn_sec", numbers["thorn_sec"])) * sec_mult,
-			float(skill.get("thorn_damage", numbers["thorn_damage"])),
-			maxi(roundi(RelicRegistry.apply_override(
-				float(skill.get("thorn_fragile_stacks", numbers["thorn_fragile_stacks"])), overrides, "thorn_ran")), 0))
+	var blocked: Callable = options.get("target_blocked_fn", Callable()) as Callable
+	var thorn_cells: Array[Vector2i] = cells.duplicate()
+	var extra: int = maxi(int(options.get("extra_thorn_cells", 0)), 0)
+	if extra > 0:
+		var rng: RandomNumberGenerator = options.get("zone_rng") as RandomNumberGenerator
+		thorn_cells.append_array(extra_thorn_cells(state, grid, status, target_side, cells, extra, blocked, rng))
+	var placed: Array[Vector2i] = ZoneRules.cast_thorns(
+		status, target_side, thorn_cells,
+		maxf(RelicRegistry.apply_override(float(skill.get("thorn_sec", numbers["thorn_sec"])), overrides, "thorn_sec"), 0.0) * sec_mult,
+		float(skill.get("thorn_damage", numbers["thorn_damage"])),
+		maxi(roundi(RelicRegistry.apply_override(
+			float(skill.get("thorn_fragile_stacks", numbers["thorn_fragile_stacks"])), overrides, "thorn_ran")), 0))
 	result["zone_kind"] = effect
 	result["zone_cells"] = placed
+
+
+## Vay Bat (quick spec o-rot-thay-tuong 2026-10-31, "rai them 1 o"): up to [param count] extra thorn cells
+## for a thorn cast on [param cells]. Candidates: cells of [param target_side]'s half 4-adjacent to a cast
+## cell that are not a cast cell, not the target unit's own cell (thorns formed under a unit never trigger),
+## not already thorned and not blocked for the target ([param blocked_fn]: hole / crack / sand...). The pick is
+## RANDOM among those candidates (user 2026-11-01: no "nearest the boss" rule), drawn from [param rng] (the match's
+## seeded zone RNG, SwingArbiter.zone_rng; inject a seeded one in tests). A null [param rng] uses a fresh randomized
+## one. None left = fewer cells.
+static func extra_thorn_cells(
+	state: CombatState, grid: BoardGrid, status: StatusEffects, target_side: int, cells: Array[Vector2i],
+	count: int, blocked_fn: Callable = Callable(), rng: RandomNumberGenerator = null
+) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if count <= 0 or grid == null or state == null:
+		return out
+	var candidates: Array[Vector2i] = []
+	var target: Vector2i = state.enemy_cell if target_side == CombatState.Side.ENEMY else state.player_cell
+	for cell: Vector2i in cells:
+		for dir: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = cell + dir
+			var on_half: bool = grid.is_enemy_cell(n) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(n)
+			if not on_half or n == target or cells.has(n) or candidates.has(n):
+				continue
+			if status != null and not status.thorns_at(target_side, n).is_empty():
+				continue
+			if blocked_fn.is_valid() and bool(blocked_fn.call(n)):
+				continue
+			candidates.append(n)
+	# Sorted first so a given seed always gives the same pick whatever the order of the cast cells.
+	candidates.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x or (a.x == b.x and a.y < b.y))
+	if rng == null:
+		rng = RandomNumberGenerator.new()
+		rng.randomize()
+	while out.size() < count and not candidates.is_empty():
+		out.append(candidates.pop_at(rng.randi_range(0, candidates.size() - 1)))
+	return out
 
 
 # options.zones when it is a dictionary, else the CombatConfig fallbacks (built once).

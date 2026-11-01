@@ -14,14 +14,16 @@ extends Node2D
 ## Drawn on top of the battle (z_index). Every string is a TEXT_* key through tr(); presentation constants
 ## only — the hold time comes from data (world.fate.fate_hold_sec through GameFlow).
 
-const VEIL_COLOR: Color = Color(0.0, 0.0, 0.0, 0.55)
-const TITLE_COLOR: Color = Color(1.0, 0.75, 0.2)
-const QUESTION_COLOR: Color = Color(0.95, 0.9, 0.78)
-const LINE_COLOR: Color = Color(0.95, 0.9, 0.78)
-const HINT_COLOR: Color = Color(0.85, 0.82, 0.75)
+## 2026-10-31 (user: "chưa apply hud cho toàn bộ màn"): the dark game skin (HudSkin) — Night Stone veil, outlined
+## text, gold (Ánh Lưới) title / ring / key selection, a chamfered key-selection frame.
+const VEIL_COLOR: Color = Color(HudSkin.SCREEN_BG, 0.72)
+const TITLE_COLOR: Color = HudSkin.GRID_LIGHT
+const QUESTION_COLOR: Color = HudSkin.IVORY
+const LINE_COLOR: Color = HudSkin.TEXT
+const HINT_COLOR: Color = HudSkin.TEXT_DIM
 const RING_TRACK_COLOR: Color = Color(1.0, 1.0, 1.0, 0.25)
-const RING_COLOR: Color = Color(1.0, 0.85, 0.2)
-const KEY_SELECT_COLOR: Color = Color(1.0, 0.85, 0.2)
+const RING_COLOR: Color = HudSkin.GRID_LIGHT
+const KEY_SELECT_COLOR: Color = HudSkin.GRID_LIGHT
 
 const TITLE_FONT_SIZE: int = 52
 const QUESTION_FONT_SIZE: int = 32
@@ -67,6 +69,8 @@ var _key_choice: int = -1
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node_or_null(flow_path) as GameFlow
 	z_index = DRAW_Z_INDEX
 
@@ -211,7 +215,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, vp), VEIL_COLOR)
 	var band: Rect2 = ScreenLayout.fate_title_rect(vp)
 	var title: String = EndingView.format_text(tr(TEXT_TITLE), [tr(str(view.get("boss_name", "")))])
-	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.9, TITLE_FONT_SIZE), TITLE_COLOR)
+	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.9, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
 	var question: Rect2 = ScreenLayout.fate_question_rect(vp)
 	_text(question, question.get_center().y + QUESTION_FONT_SIZE * 0.35, tr(TEXT_QUESTION), QUESTION_FONT_SIZE, QUESTION_COLOR)
 	var hint: Rect2 = ScreenLayout.fate_hint_rect(vp)
@@ -223,8 +227,10 @@ func _draw() -> void:
 	for i: int in rects.size():
 		var rect: Rect2 = rects[i]
 		if i == _key_choice and _hold < 0:
-			draw_rect(rect.grow(KEY_SELECT_GROW), KEY_SELECT_COLOR, false, KEY_SELECT_WIDTH)
-		UiButtons.draw_button(self, rect, labels[i], styles[i], i == _hold, true, _fit(labels[i], rect.size.y * RING_RADIUS_RATIO * LABEL_RING_SHARE, BUTTON_FONT_SIZE))
+			var frame: Rect2 = rect.grow(KEY_SELECT_GROW)
+			var cut: float = HudSkin.button_cut(frame)
+			HudSkin.panel(self, frame, [0.0, cut, 0.0, cut], Color(0.0, 0.0, 0.0, 0.0), KEY_SELECT_COLOR, KEY_SELECT_WIDTH)
+		UiButtons.draw_button(self, rect, labels[i], styles[i], i == _hold, true, _fit(labels[i], rect.size.y * RING_RADIUS_RATIO * LABEL_RING_SHARE, BUTTON_FONT_SIZE, true))
 		_draw_ring(rect, get_hold_progress() if i == _hold else 0.0)
 		var line: Rect2 = ScreenLayout.fate_line_rect(vp, rect)
 		_text(line, line.get_center().y + LINE_FONT_SIZE * 0.35, lines[i], _fit(lines[i], line.size.x, LINE_FONT_SIZE), LINE_COLOR)
@@ -239,14 +245,15 @@ func _draw_ring(rect: Rect2, progress: float) -> void:
 		draw_arc(center, radius, -PI * 0.5, -PI * 0.5 + TAU * progress, RING_POINTS, RING_COLOR, RING_WIDTH, true)
 
 
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# Centred HudSkin outlined text over [param rect]'s width at baseline [param y] (Bold when [param bold]).
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
-# Largest font size <= [param size] (not below MIN_FIT_FONT_SIZE) at which [param text] fits [param width].
-func _fit(text: String, width: float, size: int) -> int:
-	var font: Font = ThemeDB.fallback_font
+# Largest font size <= [param size] (not below MIN_FIT_FONT_SIZE) at which [param text] fits [param width]
+# in the HudSkin font (Bold when [param bold]).
+func _fit(text: String, width: float, size: int, bold: bool = false) -> int:
 	var fitted: int = size
-	while fitted > MIN_FIT_FONT_SIZE and font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, fitted).x > width:
+	while fitted > MIN_FIT_FONT_SIZE and HudSkin.text_width(text, fitted, bold) > width:
 		fitted -= 1
 	return fitted

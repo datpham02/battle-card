@@ -22,6 +22,7 @@
 	"burn_stack_extend_sec": 2.0,
 	"burn_stack_tick_bonus": 1.0,
 	"burn_max_stacks": 3,
+	"burn_on_entry": true,
 	"fragile_mult": 1.5,
 	"fragile_max_stacks": 3,
 	"frost_stacks_to_burst": 3,
@@ -34,7 +35,11 @@
 		"seal_sec": 1.2,
 		"thorn_sec": 3.0,
 		"thorn_damage": 6.0,
-		"thorn_fragile_stacks": 1
+		"thorn_fragile_stacks": 1,
+		"hole_warn_sec": 0.8,
+		"hole_reaction_margin_sec": 0.2,
+		"hole_fall_lethal": true,
+		"hole_return_fade_sec": 0.3
 	},
 	"hazards": {
 		"mire_step_mult": 1.6,
@@ -65,8 +70,19 @@
 		"reduce_motion_steps": [0.0, 0.5, 1.0]
 	}
 ,
+	"timing": {
+		"beat_sec": 0.5,
+		"delivery": {
+			"CASTER_TO_TARGET": {"spread_step_sec": 0.08, "first_hold_sec": 0.13},
+			"SKY_TO_TARGET": {"fall_sec": 0.12, "stagger_sec": 0.03},
+			"GROUND_PROPAGATION": {"step_sec": 0.06},
+			"DIRECT_MANIFESTATION": {"appear_sec": 0.0},
+			"SEQUENTIAL_CHAIN": {"step_sec": 0.1}
+		}
+	},
 	"hud": {
 		"hp_trail_sec": 0.4,
-		"corner_panels": false
+		"corner_panels": false,
+		"step_rings": false
 	}
 }

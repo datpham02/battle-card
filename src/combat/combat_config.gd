@@ -54,6 +54,8 @@ var pinned_damage_mult: float = 1.0
 var burn_stack_extend_sec: float = 2.0
 var burn_stack_tick_bonus: float = 1.0
 var burn_max_stacks: int = 3
+## 2026-10-31: combat.json `burn_on_entry` -> StatusEffects.burn_on_entry (stepping onto a burning cell costs one tick).
+var burn_on_entry: bool = true
 ## Story 023: Ran (fragile) damage multiplier (>= 1) and stack cap (>= 1); Han (frost) stacks that
 ## trigger the burst (>= 1) and its damage (>= 0, ignores defense and Ran); default execute threshold
 ## (share of max HP, 0..1) for cards with `execute: true`. Ghim is control only: its multiplier is 1.0.
@@ -73,6 +75,15 @@ var seal_sec: float = 1.2
 var thorn_sec: float = 3.0
 var thorn_damage: float = 6.0
 var thorn_fragile_stacks: int = 1
+## Drop tiles (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md, combat.json `zones`): seconds a chosen cell
+## cracks before it falls (the hole then stays open seal_sec), the reaction share taken off that warning when judging
+## whether the player can step off in time (cell eligible when step cooldown left <= warn - margin), and whether a
+## fall is lethal (false = lose hazards.fall_damage, the Sky Isles crumble fallback). hole_return_fade_sec is
+## presentation only (the white fade-in after the hole closes; the cell is steppable at once).
+var hole_warn_sec: float = 0.8
+var hole_reaction_margin_sec: float = 0.2
+var hole_fall_lethal: bool = true
+var hole_return_fade_sec: float = 0.3
 ## Story 036 tile hazards (combat.json `hazards` block), kept as a dictionary (see [method hazards]).
 var _hazards: Dictionary = TileHazards.DEFAULTS.duplicate()
 ## Story 046 Part C telegraph tiles (combat.json `telegraph` block; design/art/art-bible.md 4, design/ux/hud.md E-17).
@@ -94,6 +105,15 @@ var hud_hp_trail_sec: float = 0.4
 ## on a plate under its feet (CutHudView._draw_hp_plates) and the boss's held points float in the top-right
 ## corner. True = the corner panels of 2026-10-31 (ScreenLayout.hud_panel_rect).
 var hud_corner_panels: bool = false
+## 2026-10-31 (user: "ko cần cái vòng cd mỗi lần di chuyển"): combat.json `hud.step_rings`. False (shipped) = no
+## step-cooldown ring around the player or the boss after a step; the boss's solid "rooted by its swing" ring stays.
+var hud_step_rings: bool = false
+## ADR-0001 A6 (combat.json `timing.beat_sec`): seconds in one pack "beat" (> 0). Pack timings authored in beats
+## convert through [method beats_to_sec]; nothing hard-codes the number.
+var beat_sec: float = 0.5
+## ADR-0001 A1 (combat.json `timing.delivery`): per delivery type the seconds that time its per-cell arrivals
+## (SkillDelivery.normalize_timing form; defaults = SkillDelivery.DEFAULT_TIMING).
+var delivery_timing: Dictionary = SkillDelivery.DEFAULT_TIMING.duplicate(true)
 
 
 ## Loads from a JSON file. Returns null (and pushes an error) on failure.
@@ -145,12 +165,44 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	var cap: int = int(data.get("max_cast_cells", config.max_cast_cells))
 	config.max_cast_cells = 0 if cap <= 0 else cap
 	config._parse_zones(data)
+	var entry: Variant = data.get("burn_on_entry", config.burn_on_entry)
+	if typeof(entry) == TYPE_BOOL:
+		config.burn_on_entry = bool(entry)
+	else:
+		push_warning("CombatConfig: burn_on_entry must be true or false, using %s" % config.burn_on_entry)
 	var hazard_block: Variant = data.get("hazards")
 	if typeof(hazard_block) == TYPE_DICTIONARY:
 		config._hazards = TileHazards.clean(hazard_block as Dictionary)
 	config._parse_telegraph(data)
 	config._parse_hud(data)
+	config._parse_timing(data)
 	return config
+
+
+## ADR-0001 A6: seconds of [param beats] pack beats ([member beat_sec] each).
+func beats_to_sec(beats: float) -> float:
+	return beats * beat_sec
+
+
+# ADR-0001 A6 / A1: the `timing` block: beat_sec (> 0, else the default + warning) and the delivery timings.
+func _parse_timing(data: Dictionary) -> void:
+	var raw: Variant = data.get("timing")
+	if raw == null:
+		return
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("CombatConfig: timing must be an object, using defaults")
+		return
+	var block: Dictionary = raw as Dictionary
+	if block.has("beat_sec"):
+		var v: Variant = block["beat_sec"]
+		if (typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT) and float(v) > 0.0:
+			beat_sec = float(v)
+		else:
+			push_warning("CombatConfig: timing.beat_sec must be a number > 0, using %s" % beat_sec)
+	var t: Dictionary = SkillDelivery.normalize_timing(block.get("delivery"))
+	for p: String in t["problems"]:
+		push_warning("CombatConfig: %s" % p)
+	delivery_timing = t["timing"]
 
 
 ## Seconds between steps on [param board]: the computed, board-scaled value (or the deprecated
@@ -181,11 +233,14 @@ func use_grid(new_grid: BoardGrid) -> void:
 
 
 ## Story 027: the zone numbers as a dictionary {seal_sec, thorn_sec, thorn_damage, thorn_fragile_stacks}
-## (what CutEffects takes as options.zones and a card may override).
+## (what CutEffects takes as options.zones and a card may override), plus the drop tile numbers hole_warn_sec,
+## hole_reaction_margin_sec, hole_fall_lethal (read by the seal_caster trait; cards ignore them).
 func zone_numbers() -> Dictionary:
 	return {
 		"seal_sec": seal_sec, "thorn_sec": thorn_sec,
 		"thorn_damage": thorn_damage, "thorn_fragile_stacks": thorn_fragile_stacks,
+		"hole_warn_sec": hole_warn_sec, "hole_reaction_margin_sec": hole_reaction_margin_sec,
+		"hole_fall_lethal": hole_fall_lethal,
 	}
 
 
@@ -268,6 +323,11 @@ func _parse_hud(data: Dictionary) -> void:
 		hud_hp_trail_sec = float(value)
 	else:
 		push_warning("CombatConfig: hud.hp_trail_sec must be a number >= 0, using %s" % hud_hp_trail_sec)
+	var rings: Variant = (raw as Dictionary).get("step_rings", hud_step_rings)
+	if typeof(rings) == TYPE_BOOL:
+		hud_step_rings = bool(rings)
+	else:
+		push_warning("CombatConfig: hud.step_rings must be true or false, using %s" % hud_step_rings)
 	var panels: Variant = (raw as Dictionary).get("corner_panels", hud_corner_panels)
 	if typeof(panels) == TYPE_BOOL:
 		hud_corner_panels = bool(panels)
@@ -304,6 +364,32 @@ func _parse_zones(data: Dictionary) -> void:
 		thorn_fragile_stacks = stacks
 	else:
 		push_warning("CombatConfig: invalid zones values (seal_sec>0, thorn_sec>0, thorn_damage>=0, thorn_fragile_stacks>=0), using defaults")
+	_parse_holes(zones)
+
+
+# Drop tiles: the hole_* keys of the `zones` block, checked on their own (a bad one keeps its default, warning):
+# hole_warn_sec > 0, 0 <= hole_reaction_margin_sec <= hole_warn_sec, hole_fall_lethal a bool, hole_return_fade_sec >= 0.
+func _parse_holes(zones: Dictionary) -> void:
+	var warn: float = float(zones.get("hole_warn_sec", hole_warn_sec))
+	if warn > 0.0:
+		hole_warn_sec = warn
+	else:
+		push_warning("CombatConfig: zones.hole_warn_sec must be > 0, keeping %s" % hole_warn_sec)
+	var margin: float = float(zones.get("hole_reaction_margin_sec", hole_reaction_margin_sec))
+	if margin >= 0.0 and margin <= hole_warn_sec:
+		hole_reaction_margin_sec = margin
+	else:
+		push_warning("CombatConfig: zones.hole_reaction_margin_sec must be 0..hole_warn_sec, keeping %s" % hole_reaction_margin_sec)
+	if zones.has("hole_fall_lethal"):
+		if typeof(zones["hole_fall_lethal"]) == TYPE_BOOL:
+			hole_fall_lethal = bool(zones["hole_fall_lethal"])
+		else:
+			push_warning("CombatConfig: zones.hole_fall_lethal must be true or false, keeping %s" % hole_fall_lethal)
+	var fade: float = float(zones.get("hole_return_fade_sec", hole_return_fade_sec))
+	if fade >= 0.0:
+		hole_return_fade_sec = fade
+	else:
+		push_warning("CombatConfig: zones.hole_return_fade_sec must be >= 0, keeping %s" % hole_return_fade_sec)
 
 
 func _parse_keywords(data: Dictionary) -> void:
@@ -337,6 +423,12 @@ func _parse_keywords(data: Dictionary) -> void:
 func configure_status(status: StatusEffects) -> void:
 	status.configure(burn_stack_extend_sec, burn_stack_tick_bonus, burn_max_stacks, pinned_damage_mult)
 	status.configure_keywords(fragile_mult, fragile_max_stacks, frost_stacks_to_burst, frost_burst_damage)
+	status.burn_on_entry = burn_on_entry
+	# Drop tiles: lethal or not, the non-lethal fall damage (hazards.fall_damage; CombatView re-reads it with the
+	# match overrides) and the return fade.
+	status.hole_fall_lethal = hole_fall_lethal
+	status.hole_fall_damage = float(_hazards.get("fall_damage", 0.0))
+	status.hole_return_fade_sec = hole_return_fade_sec
 
 
 func _parse_step_cooldown(data: Dictionary) -> void:

@@ -176,6 +176,18 @@ var _boss_feedback: Dictionary = {}
 var _interrupt_flash: Dictionary = {}
 ## Story 048: the floor-VFX clock and one-shot queue (created on first use; see [method get_floor_vfx]).
 var _floor_vfx: FloorVfx = null
+## OSFE hit feel: CombatState.Side -> seconds the side's hit flash waits (take_hit_delay).
+var _hit_delay: Dictionary = {}
+## The hero's wave flowing through the last cut's cells (user 2026-11-01): {"plan": CastVfx.flow_plan, "start":
+## FloorVfx clock at the resolve, "pack": cast pack id}; {} when none runs.
+var _cast_flow: Dictionary = {}
+## ADR-0001 Task 5: the player's last resolved cast for the code-drawn travel ({} = none): {cells, delivery, caster,
+## arrive, start (FloorVfx clock at the resolve)}.
+var _cast_travel: Dictionary = {}
+## Task 5 item 4: the boss's last resolved cast, same form as _cast_travel.
+var _boss_travel: Dictionary = {}
+## ADR-0001 Task 5 item 6: side -> true once that unit died by falling into a hole (UnitLayer plays its `fall` clip).
+var _fell: Dictionary = {}
 ## Last feint flash {cells, time_left}; empty = none.
 var _feint_flash: Dictionary = {}
 var _status: StatusEffects
@@ -384,6 +396,12 @@ func _ready() -> void:
 	# Story 023: flat boss defense (match key boss_defense), default execute threshold, brain min runes.
 	_arbiter.boss_defense = maxf(float(match_params.get("boss_defense", 0.0)), 0.0)
 	_arbiter.execute_ratio = _config.execute_ratio
+	# User 2026-11-01: the Vay Bat extra thorn cell is random, from the match's seed (drops_seed + 3; random when < 0).
+	_arbiter.zone_rng = RandomNumberGenerator.new()
+	if drops_seed >= 0:
+		_arbiter.zone_rng.seed = drops_seed + 3
+	else:
+		_arbiter.zone_rng.randomize()
 	_boss.get_brain().min_runes = maxi(int(match_params.get("boss_min_runes", 0)), 0)
 	_wire_zones()
 	_setup_hazards()
@@ -475,9 +493,20 @@ func _wire_zones() -> void:
 	for side: int in movers:
 		var mover: UnitMover = movers[side] as UnitMover
 		var seal_side: int = side
-		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_sealed(seal_side, cell))
+		# Drop tiles (Ô rớt rule 4): an open hole cannot be entered; a cracking cell stays enterable (rule 3).
+		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_hole(seal_side, cell))
 		_arbiter.blocked_cell_fns[side] = Callable(mover, "is_cell_blocked")
 	_arbiter.zone_numbers = _config.zone_numbers()
+	# Drop tiles (rule 6): a rooted unit holds the crack under it like a Frozen one; a non-lethal fall lands on a cell
+	# its mover accepts.
+	status.step_locked_fn = func(side: int) -> bool: return (movers[side] as UnitMover).is_step_locked()
+	status.hole_blocked_fn = func(side: int, cell: Vector2i) -> bool: return (movers[side] as UnitMover).is_cell_blocked(cell)
+	status.hole_cracked.connect(func(_side: int, _cells: Array[Vector2i]) -> void: _mark_floor_dirty())
+	status.hole_fell.connect(func(side: int, _cell: Vector2i, victim: bool) -> void:
+		if victim and _state != null and (_state.is_player_dead() if side == CombatState.Side.PLAYER else _state.is_enemy_dead()):
+			_fell[side] = true
+		_mark_floor_dirty())
+	status.hole_restored.connect(func(_side: int, _cell: Vector2i) -> void: _mark_floor_dirty())
 
 
 # Story 036 Part A: builds the TileHazards of this match. Numbers = combat.json `hazards` overlaid by the match
@@ -492,7 +521,10 @@ func _setup_hazards() -> void:
 			merged[key] = match_params[key]
 	_hazards = TileHazards.new(_grid, drops_seed)
 	_hazards.configure(merged)
+	_hazards.return_fade_sec = _config.hole_return_fade_sec
 	_hazards.bind_state(_state)
+	# Drop tiles with zones.hole_fall_lethal false lose fall_damage, match overrides included.
+	_status.hole_fall_damage = _hazards.config_value("fall_damage")
 	# Story 036 (W4): the boss brain prices mire, treats sand as blocked and leads drifting pieces.
 	if _boss != null and _boss.has_method("set_hazards"):
 		_boss.set_hazards(_hazards)
@@ -509,7 +541,7 @@ func _setup_hazards() -> void:
 		mover.step_cost_fn = func(from_cell: Vector2i) -> float: return hazards.step_cost_mult(hazard_side, from_cell)
 	# Leave-a-path sees seals and cracks through the movers' own blocked test.
 	_hazards.extra_blocked_fn = func(side: int, cell: Vector2i) -> bool:
-		return status.is_sealed(side, cell) or (movers[side] as UnitMover).is_cell_blocked(cell)
+		return (movers[side] as UnitMover).is_cell_blocked(cell)
 	_hazards.set_mire_immune(CombatState.Side.ENEMY, bool(match_params.get("mire_immune", false)))
 	var arena: Dictionary = ArenaLibrary.hazards_for_match(match_params, _grid)
 	var mire_player: Array[Vector2i] = []
@@ -543,8 +575,9 @@ func _on_mire_damage(side: int, amount: float) -> void:
 # standing there take the tick damage, the boss brain's burn handling already avoids them) and the field pieces lying
 # there are burnt (lost).
 func _on_vent_erupted(side: int, _vent_index: int, cells: Array[Vector2i]) -> void:
+	# Quick spec 2026-11-01: a vent is region terrain, not a zone effect (terrain = true: no lock, no replacement).
 	_status.ignite(cells, _hazards.config_value("vent_sec"), _hazards.config_value("vent_tick_sec"),
-		_hazards.config_value("vent_tick_damage"))
+		_hazards.config_value("vent_tick_damage"), true)
 	_drops_of(side).bury_cells(cells)
 
 
@@ -604,6 +637,10 @@ func _exit_tree() -> void:
 		# Story 036: extra_blocked_fn holds the movers and the movers' sand blocker / step cost hold the hazards;
 		# break that RefCounted cycle so a finished match does not leak its TileHazards.
 		_hazards.extra_blocked_fn = Callable()
+	if _status != null:
+		# Drop tiles: the status hooks hold the movers; break that cycle too.
+		_status.step_locked_fn = Callable()
+		_status.hole_blocked_fn = Callable()
 		for mover: UnitMover in [_mover, _boss.get_mover() if _boss != null else null]:
 			if mover != null:
 				mover.step_cost_fn = Callable()
@@ -651,6 +688,7 @@ func _setup_signature(character: Dictionary) -> void:
 	_mover.cooldown_scale = Callable(_signature, "step_cooldown_scale")
 	# Story 037: the three hooks of the zone / Ran / Han signatures (the base returns the neutral value).
 	_arbiter.player_zone_sec_mult_fn = Callable(_signature, "zone_sec_mult")
+	_arbiter.player_extra_thorn_cells_fn = Callable(_signature, "extra_thorn_cells")
 	_status.fragile_mult_fn = Callable(_signature, "fragile_mult_override")
 	_status.frost_burst_mult_fn = Callable(_signature, "frost_burst_mult")
 
@@ -1281,9 +1319,14 @@ func _no_cells() -> Array[Vector2i]:
 	return []
 
 
-# Counts a feedback dictionary's time_left down; clears it in place when over.
+# Counts a feedback dictionary's time_left down; clears it in place when over. A "wait" (seconds) is spent first:
+# the HIT marker of a wave cast waits for the wave to reach the target (user 2026-11-01).
 func _age_flash(flash: Dictionary, step: float) -> void:
 	if flash.is_empty():
+		return
+	var wait: float = float(flash.get("wait", 0.0))
+	if wait > 0.0:
+		flash["wait"] = wait - step
 		return
 	flash["time_left"] = float(flash["time_left"]) - step
 	if float(flash["time_left"]) <= 0.0:
@@ -1914,6 +1957,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		"featured": bool(result.get("featured", false)),
 		"featured_mult": float(result.get("featured_mult", 1.0)),
 		"featured_effect": str(result.get("featured_effect", "")),
+		"skill_id": str(result.get("skill_id", "")),
 	}
 	_play_cut_vfx(side, feedback)
 	if side == CombatState.Side.PLAYER:
@@ -2358,6 +2402,8 @@ func _hp_trail_shown(index: int) -> float:
 
 # Ring around the player's feet: full right after a step, shrinks to nothing; hidden when ready.
 func _draw_cooldown_ring(vp: Vector2) -> void:
+	if _config == null or not _config.hud_step_rings:
+		return  # 2026-10-31: no step-cooldown ring (combat.json hud.step_rings)
 	var fraction: float = _mover.get_cooldown_fraction()
 	if fraction <= 0.0:
 		return
@@ -2375,8 +2421,12 @@ func _draw_boss_ring(vp: Vector2) -> void:
 	var radius: float = ScreenLayout.cell_size(_grid, vp).y * BOSS_RING_RADIUS_RATIO
 	# Story 025: rooted by its own swing = one solid steel-blue ring (the same ring, a different state).
 	if _boss.is_step_locked():
-		draw_arc(c, radius, 0.0, TAU, RING_POINTS, BOSS_RING_LOCKED_COLOR, BOSS_RING_LOCKED_WIDTH)
+		# Playtest 2026-11-01: the floor layer draws the F10 foot-lock seal instead; the ring is only the fallback.
+		if not get_floor_vfx().has_pack("root_seal"):
+			draw_arc(c, radius, 0.0, TAU, RING_POINTS, BOSS_RING_LOCKED_COLOR, BOSS_RING_LOCKED_WIDTH)
 		return
+	if _config == null or not _config.hud_step_rings:
+		return  # 2026-10-31: no step-cooldown ring (combat.json hud.step_rings); the rooted ring above stays
 	var fraction: float = _boss.get_mover().get_cooldown_fraction()
 	if fraction <= 0.0:
 		return
@@ -2394,27 +2444,192 @@ func get_floor_vfx() -> FloorVfx:
 	return _floor_vfx
 
 
-# Story 048: the one-shots of a resolved cut by [param side]: F6 hit_impact (overlay) on the cut's cells where the
-# target unit stands (the feedback cell when none does), F7 miss_dust (floor) on every cell of a miss.
+# Story 048: the one-shots of a resolved cut by [param side]: F6 hit_impact (overlay) on the target's cell, F7
+# miss_dust (floor) on every cell of a miss. ADR-0001 A1: every cell's effect waits for the card's delivery to reach
+# it (SkillDelivery.arrival_times); the impact per cell is the delivery's impact (CastVfx.impact_pack); the travel
+# cells only get the travel's visual. Presentation only: the damage was already applied to the mask by CutEffects.
 func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 	var vfx: FloorVfx = get_floor_vfx()
 	var target_side: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
 	var cells: Array = feedback.get("cells", [])
-	if not bool(feedback.get("hit", false)):
-		for cell: Vector2i in cells:
-			vfx.play("miss_dust", cell, target_side)
-		return
 	var state: CombatState = get_state()
+	var caster: Vector2i = Vector2i(-1, -1)
+	if state != null:
+		caster = state.player_cell if side == CombatState.Side.PLAYER else state.enemy_cell
+	var delivery: Dictionary = delivery_for(str(feedback.get("skill_id", "")))
+	var delays: Dictionary = SkillDelivery.arrival_times(delivery, cells, caster, delivery_timing()) if not cells.is_empty() else {}
+	_play_delivery_travel(delivery, cells, caster, target_side)
+	# Task 5 item 5 (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md): a locked cell (cracking / hole) takes nothing,
+	# so it shows no impact either. Presentation only: the damage path (CutEffects over unlocked_cells) is untouched.
+	var shown: Array = unlocked_for_vfx(cells)
+	if not cells.is_empty():
+		# Task 5 item 4: the boss's casts are recorded too (its travel squares / impacts drawn on the cells it hits).
+		var rec: Dictionary = {"cells": shown, "delivery": delivery, "caster": caster, "arrive": delays,
+			"start": vfx.elapsed(), "hit": bool(feedback.get("hit", false))}
+		if side == CombatState.Side.PLAYER:
+			_cast_travel = rec
+		else:
+			_boss_travel = rec
+	if not bool(feedback.get("hit", false)):
+		for cell: Vector2i in shown:
+			vfx.play("miss_dust", cell, target_side, float(delays.get(cell, 0.0)))
+		return
 	if state == null:
 		return
 	var target: Vector2i = state.enemy_cell if side == CombatState.Side.PLAYER else state.player_cell
-	var struck: bool = false
-	for cell: Vector2i in cells:
-		if cell == target:
-			vfx.play("hit_impact", cell, target_side)
-			struck = true
-	if not struck:
+	var impact: String = CastVfx.impact_pack(str(delivery.get("impact", "")))
+	var peak: float = 0.0
+	if _hero_wave(side, delivery) and not cells.is_empty():
+		peak = _play_hero_wave(cells, caster, delays, impact, shown)
+	elif not impact.is_empty():
+		for cell: Vector2i in shown:
+			if not (impact == "hit_impact" and cell == target):
+				vfx.play(impact, cell, target_side, float(delays.get(cell, 0.0)))
+	var wait: float = float(delays.get(target, 0.0))
+	# The hit flash / HIT marker show when the delivery reaches the target's cell, not at the resolve.
+	if float(feedback.get("damage", 0.0)) > 0.0:
+		_hit_delay[target_side] = wait + peak
+	feedback["wait"] = wait
+	if is_cell_locked(target):
+		return
+	if cells.has(target):
+		vfx.play("hit_impact", target, target_side, wait)
+	else:
 		vfx.play("hit_impact", feedback.get("cell", target), target_side)
+
+
+## ADR-0001 A1: the normalized delivery of card [param skill_id] (SkillDelivery form); the fallback when unknown.
+func delivery_for(skill_id: String) -> Dictionary:
+	if _skill_config == null:
+		return SkillDelivery.FALLBACK.duplicate(true)
+	var d: Variant = _skill_config.get_skill(skill_id).get("delivery", null)
+	return d as Dictionary if d is Dictionary else SkillDelivery.FALLBACK.duplicate(true)
+
+
+## ADR-0001 A1: the delivery timing table (combat.json timing.delivery; built-in defaults without a config).
+func delivery_timing() -> Dictionary:
+	return _config.delivery_timing if _config != null else SkillDelivery.DEFAULT_TIMING
+
+
+# The hero's cast pack draws a CASTER_TO_TARGET delivery with travel hero_pack (the sword wave, user 2026-11-01).
+func _hero_wave(side: int, delivery: Dictionary) -> bool:
+	return side == CombatState.Side.PLAYER and str(delivery.get("type", "")) == SkillDelivery.CASTER_TO_TARGET 		and str(delivery.get("travel", "")) == "hero_pack"
+
+
+# The sword wave: the pack's landing impact on the first cell, the delivery's impact on every other cell as the spread
+# reaches it, and the flood shards. Returns the blast peak the hit flash adds.
+func _play_hero_wave(cells: Array, caster: Vector2i, delays: Dictionary, impact: String, shown: Array) -> float:
+	var hero_id: String = str(UnitLayer.unit_ids_for(match_params).get(CombatState.Side.PLAYER, ""))
+	var entry: Dictionary = CastVfx.entry_for(hero_id)
+	if entry.is_empty():
+		return 0.0
+	var first: Vector2i = SkillDelivery.nearest_cell(cells, caster)
+	var t: Dictionary = delivery_timing().get(SkillDelivery.CASTER_TO_TARGET, {})
+	var step: float = maxf(float(t.get("spread_step_sec", CastVfx.DEFAULT_FLOW_STEP_SEC)), 0.01)
+	var plan: Dictionary = CastVfx.flow_plan(cells, first, step,
+		float(entry.get("flow_tail_sec", CastVfx.DEFAULT_FLOW_TAIL_SEC)), float(t.get("first_hold_sec", 0.0)))
+	_cast_flow = {"plan": plan, "start": get_floor_vfx().elapsed(), "pack": str(entry.get("id", ""))}
+	var landing: String = str(entry.get("impact", ""))
+	if not landing.is_empty() and shown.has(first):
+		get_floor_vfx().play(landing, first, CombatState.Side.ENEMY)
+	var burst: String = impact if not impact.is_empty() else str(entry.get("cell_burst", ""))
+	if not burst.is_empty():
+		for cell: Vector2i in shown:
+			if cell != first:
+				get_floor_vfx().play(burst, cell, CombatState.Side.ENEMY, float(delays.get(cell, 0.0)))
+	return CastVfx.blast_peak_sec(entry)
+
+
+# The travel's visual on the floor cells it crosses outside the mask (animation only; no effect on them).
+func _play_delivery_travel(delivery: Dictionary, cells: Array, caster: Vector2i, target_side: int) -> void:
+	var pack: String = CastVfx.travel_pack(str(delivery.get("travel", "")))
+	if pack.is_empty() or cells.is_empty():
+		return
+	var ground: bool = str(delivery.get("type", "")) == SkillDelivery.GROUND_PROPAGATION
+	for cell: Vector2i in SkillDelivery.travel_cells(delivery, cells, caster):
+		var at: float = SkillDelivery.ground_time(delivery, cells, caster, cell, delivery_timing()) if ground else 0.0
+		get_floor_vfx().play(pack, cell, target_side, at)
+
+
+## Task 5 item 5: true while [param cell] is locked (cracking or an open hole, StatusEffects.is_locked).
+func is_cell_locked(cell: Vector2i) -> bool:
+	return _status != null and _status.is_locked(cell)
+
+
+## Task 5 item 5: [param cells] without the locked ones (the cells a cast's visuals may be drawn on), order kept.
+func unlocked_for_vfx(cells: Array) -> Array:
+	var out: Array = []
+	for c: Vector2i in cells:
+		if not is_cell_locked(c):
+			out.append(c)
+	return out
+
+
+## Task 5 item 6: true once [param side]'s unit died by falling into a hole.
+func died_by_fall(side: int) -> bool:
+	return bool(_fell.get(side, false))
+
+
+## ADR-0001 Task 5: [param side]'s cast travel to draw now (the player by default; Task 5 item 4: the boss too), timed on
+## the resolve: {"rel" (seconds after the resolve; negative while the swing still runs), "cells" (the mask minus locked
+## cells), "delivery", "caster", "arrive" (cell -> seconds after the resolve, SkillDelivery.arrival_times), "swinging",
+## "hit" (after the resolve: the cut hit)}. While the side swings it is computed from its CutActor; after the resolve
+## from the recorded cast until [param tail] s past the last arrival. {} when none.
+func cast_travel_now(tail: float = 0.3, side: int = CombatState.Side.PLAYER) -> Dictionary:
+	var state: CombatState = get_state()
+	if state == null:
+		return {}
+	var boss: bool = side != CombatState.Side.PLAYER
+	var actor: CutActor = get_cut_actor() if not boss else (_boss.get_actor() if _boss != null else null)
+	var caster: Vector2i = state.enemy_cell if boss else state.player_cell
+	if actor != null and actor.is_swinging() and not actor.get_cells().is_empty():
+		var cells: Array = []
+		cells.assign(actor.get_cells())
+		var delivery: Dictionary = delivery_for(actor.get_skill_id())
+		return {"rel": -actor.get_time_left(), "cells": unlocked_for_vfx(cells), "delivery": delivery,
+			"caster": caster, "swinging": true, "hit": false,
+			"arrive": SkillDelivery.arrival_times(delivery, cells, caster, delivery_timing())}
+	var rec: Dictionary = _boss_travel if boss else _cast_travel
+	if rec.is_empty():
+		return {}
+	var rel: float = get_floor_vfx().elapsed() - float(rec["start"])
+	var last: float = 0.0
+	for c: Vector2i in rec["arrive"]:
+		last = maxf(last, float(rec["arrive"][c]))
+	if rel > last + tail:
+		if boss:
+			_boss_travel = {}
+		else:
+			_cast_travel = {}
+		return {}
+	var out: Dictionary = rec.duplicate()
+	out["rel"] = rel
+	out["swinging"] = false
+	return out
+
+
+## The stain flooding the last cut's area now: {"cells": CastVfx.flood_cells, "style": CastVfx.flood_style};
+## {} when none is showing (user 2026-11-01: it explodes on the first cell, then one stain floods back over the area).
+func get_cast_flood() -> Dictionary:
+	if _cast_flow.is_empty():
+		return {}
+	var entry: Dictionary = CastVfx.pack_entry(str(_cast_flow["pack"]))
+	var style: Dictionary = CastVfx.flood_style(entry)
+	var step: float = CastVfx.flow_step_sec(entry)
+	var plan: Dictionary = _cast_flow["plan"]
+	var age: float = get_floor_vfx().elapsed() - float(_cast_flow["start"])
+	if age > CastVfx.flood_end(plan, step, float(style["hold_sec"]), float(style["fade_sec"])):
+		_cast_flow = {}
+		return {}
+	return {"cells": CastVfx.flood_cells(plan, age, step, float(style["hold_sec"]), float(style["fade_sec"])), "style": style}
+
+
+## OSFE hit feel: seconds the hit flash of [param side] should wait (its own cell's blast delay plus the blast
+## peak), then 0 again: the UnitLayer takes it once, on the damage it flashes for. 0 when no blast was played.
+func take_hit_delay(side: int) -> float:
+	var d: float = float(_hit_delay.get(side, 0.0))
+	_hit_delay[side] = 0.0
+	return d
 
 
 func scaled_delta(delta: float) -> float:

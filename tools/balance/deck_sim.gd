@@ -10,8 +10,8 @@ extends SceneTree
 ## card; else the deck's keyword). Node policy: treasure > rest (heal below REST_HEAL_BELOW of max HP,
 ## else forge) > miniboss at >= MINIBOSS_MIN_HP > battle > danger (danger first with >= DANGER_BURN_CARDS
 ## burn cards) > miniboss / boss when alone.
-## Story 027: the build policy takes an offered zone card (seal / thorns) right after an upgrade pick, at
-## most ZONE_PER_EFFECT per effect in the deck (seal before thorns, higher damage_per_cell first);
+## Story 027: the build policy takes an offered zone card (thorns) right after an upgrade pick, at
+## most ZONE_PER_EFFECT per effect in the deck (higher damage_per_cell / thorn_fragile_stacks first);
 ## --no-zone-cards drops the zone cards from the reward pool and the decks (the "before" measurement).
 ## Story 031 --world: a run = `world.floors` floors (pick 1 of the WorldMapGen offer per floor, bot pick
 ## --region-pick=random|first, seeded) of short region maps (ChaptersConfig.generate_region_map), then the
@@ -72,7 +72,7 @@ const KIND_ORDER: Array[String] = ["battle", "danger", "miniboss", "boss", "trea
 ## build policy: deck size above which a reward without an upgrade pick removes the weakest card.
 const REMOVE_OVER: int = 7
 const NEW_CARD_MAX_MIN_CELLS: int = 4
-## build policy (Story 027): zone cards of one effect (seal / thorns) the deck may hold.
+## build policy (Story 027): zone cards of one effect (thorns) the deck may hold.
 const ZONE_PER_EFFECT: int = 1
 ## Largest min_cells the bot can reach with one cast (two pieces of up to 5 cells; the rune bot used 5).
 const CELLS_MAX: int = 5
@@ -175,14 +175,14 @@ const METRICS: Array[String] = [
 	"win", "cols", "hits_won", "hits_all", "dmg_hit_pct", "hp_win", "rest_heal", "rest_forge", "treasure",
 	"tokens", "size", "levels", "sec", "timeouts", "matches", "taken", "dealt", "sig_acts", "bswings",
 	"casts", "resolved", "phits", "focus", "joins", "featured", "counters", "interrupts",
-	"zpicks", "zdeck", "zone_casts", "seals", "seal_cells", "thorns", "thorn_cells", "bthorn", "bthorn_dmg", "pthorn",
-	"ps_res", "ps_hits", "o_res", "o_hits",
+	"zpicks", "zdeck", "zone_casts", "thorns", "thorn_cells", "bthorn", "bthorn_dmg", "pthorn",
+	"o_res", "o_hits",
 ]
 const RUN_SUMS: Array[String] = [
 	"rest_heal", "rest_forge", "treasure", "tokens", "size", "levels", "sec", "timeouts", "matches", "taken",
 	"dealt", "sig_acts", "bswings", "casts", "resolved", "phits", "focus", "joins", "featured", "counters", "interrupts",
-	"zpicks", "zdeck", "zone_casts", "seals", "seal_cells", "thorns", "thorn_cells", "bthorn", "bthorn_dmg", "pthorn",
-	"ps_res", "ps_hits", "o_res", "o_hits",
+	"zpicks", "zdeck", "zone_casts", "thorns", "thorn_cells", "bthorn", "bthorn_dmg", "pthorn",
+	"o_res", "o_hits",
 ]
 
 var _core: SimCore
@@ -584,19 +584,17 @@ func _run_chapter(ci: int, seeds: int) -> bool:
 				_mean(a["casts"]) / mm, 100.0 * _mean(a["phits"]) / maxf(_mean(a["resolved"]), 1.0), _mean(a["focus"]) / mm, _mean(a["joins"]) / mm,
 				_mean(a["featured"]) / mm, _mean(a["counters"]) / mm, _mean(a["interrupts"]) / mm])
 	print("")
-	print("CH%d ZONES: | character | policy | zone cards picked / run | zone cards in final deck | zone casts / match | seals formed / match | seal cells / seal | thorns formed / match | thorn cells / thorns | boss thorn entries / match | thorn dmg to boss / match | player thorn entries / match | hit %% <= %.0fs after a seal (n) | hit %% other non-zone casts (n) | player hit %% (all) |" % [ci + 1, SimCore.POST_SEAL_SEC])
-	print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+	print("CH%d ZONES: | character | policy | zone cards picked / run | zone cards in final deck | zone casts / match | thorns formed / match | thorn cells / thorns | boss thorn entries / match | thorn dmg to boss / match | player thorn entries / match | hit %% non-zone casts (n) | player hit %% (all) |" % (ci + 1))
+	print("|---|---|---|---|---|---|---|---|---|---|---|---|")
 	for label: String in labels:
 		for p: String in pols:
 			var a: Dictionary = agg[label][p]
 			var mm: float = maxf(_mean(a["matches"]), 1.0)
-			var ps_n: float = _sum(a["ps_res"])
 			var o_n: float = _sum(a["o_res"])
-			print("| %s | %s | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %.1f | %.2f | %s | %s | %.1f |" % [
-				label, p, _mean(a["zpicks"]), _mean(a["zdeck"]), _mean(a["zone_casts"]) / mm, _mean(a["seals"]) / mm,
-				_sum(a["seal_cells"]) / maxf(_sum(a["seals"]), 1.0), _mean(a["thorns"]) / mm, _sum(a["thorn_cells"]) / maxf(_sum(a["thorns"]), 1.0),
+			print("| %s | %s | %.2f | %.2f | %.2f | %.2f | %.2f | %.2f | %.1f | %.2f | %s | %.1f |" % [
+				label, p, _mean(a["zpicks"]), _mean(a["zdeck"]), _mean(a["zone_casts"]) / mm,
+				_mean(a["thorns"]) / mm, _sum(a["thorn_cells"]) / maxf(_sum(a["thorns"]), 1.0),
 				_mean(a["bthorn"]) / mm, _mean(a["bthorn_dmg"]) / mm, _mean(a["pthorn"]) / mm,
-				("%.1f (n=%d)" % [100.0 * _sum(a["ps_hits"]) / ps_n, int(ps_n)]) if ps_n > 0.0 else "- (n=0)",
 				("%.1f (n=%d)" % [100.0 * _sum(a["o_hits"]) / o_n, int(o_n)]) if o_n > 0.0 else "- (n=0)",
 				100.0 * _mean(a["phits"]) / maxf(_mean(a["resolved"]), 1.0)])
 	print("")
@@ -745,9 +743,9 @@ func _run(seed_value: int, char_id: String, policy: String, cleared_bosses: int,
 		for pair: Array in [["taken", "taken"], ["dealt", "dealt"], ["sec", "sec"], ["sig_acts", "sig_acts"], ["bswings", "bswings"],
 				["casts", "casts"], ["resolved", "resolved"], ["phits", "hits"], ["focus", "focus_uses"], ["joins", "joins"],
 				["featured", "featured"], ["counters", "counters"], ["interrupts", "interrupts"],
-				["zone_casts", "zone_casts"], ["seals", "seals"], ["seal_cells", "seal_cells"], ["thorns", "thorns"],
+				["zone_casts", "zone_casts"], ["thorns", "thorns"],
 				["thorn_cells", "thorn_cells"], ["bthorn", "bthorn"], ["bthorn_dmg", "bthorn_dmg"], ["pthorn", "pthorn"],
-				["ps_res", "ps_res"], ["ps_hits", "ps_hits"], ["o_res", "o_res"], ["o_hits", "o_hits"]]:
+				["o_res", "o_res"], ["o_hits", "o_hits"]]:
 			out[pair[0]] = float(out[pair[0]]) + float(r[pair[1]])
 		if bool(r["timeout"]):
 			out["timeouts"] = float(out["timeouts"]) + 1.0
@@ -902,8 +900,8 @@ func _pick_upgrade(offer: Array[String], levels: Dictionary) -> String:
 	return best
 
 
-# Story 027: an offered zone card whose effect the deck holds fewer than ZONE_PER_EFFECT of; seal before
-# thorns, then the higher damage_per_cell / thorn_fragile_stacks. "" with --no-zone-cards.
+# Story 027: an offered zone card whose effect the deck holds fewer than ZONE_PER_EFFECT of; the higher
+# damage_per_cell / thorn_fragile_stacks wins. "" with --no-zone-cards.
 func _pick_zone(offer: Array[String], session) -> String:
 	if bool(_core.ov["no_zone_cards"]):
 		return ""
@@ -916,7 +914,7 @@ func _pick_zone(offer: Array[String], session) -> String:
 		var effect: String = str(c["effect"])
 		if _count_effect(session, effect) >= ZONE_PER_EFFECT or int(c["min_cells"]) > CELLS_MAX:
 			continue
-		var key: float = (100.0 if effect == "seal" else 0.0) + float(c.get("damage_per_cell", 0.0)) + float(c.get("thorn_fragile_stacks", 0))
+		var key: float = float(c.get("damage_per_cell", 0.0)) + float(c.get("thorn_fragile_stacks", 0))
 		if key > best_key:
 			best_key = key
 			best = id

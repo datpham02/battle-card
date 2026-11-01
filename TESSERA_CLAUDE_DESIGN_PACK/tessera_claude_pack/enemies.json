@@ -1,0 +1,493 @@
+{
+  "status": "PROPOSED",
+  "count": 39,
+  "lands": [
+    {
+      "id": "misty_forest_ruins_forest_witch",
+      "number": 1,
+      "name": "Misty Forest Ruins (Forest Witch)",
+      "normal_count": 3,
+      "elite_count": 2
+    },
+    {
+      "id": "dark_dungeon_ogre_king",
+      "number": 2,
+      "name": "Dark Dungeon (Ogre King)",
+      "normal_count": 3,
+      "elite_count": 2
+    },
+    {
+      "id": "mist_tower_ice_tower_frost_lord",
+      "number": 3,
+      "name": "Mist Tower / Ice Tower (Frost Lord)",
+      "normal_count": 3,
+      "elite_count": 2
+    },
+    {
+      "id": "poison_swamp_toad_matriarch",
+      "number": 4,
+      "name": "Poison Swamp (Toad Matriarch)",
+      "normal_count": 3,
+      "elite_count": 2
+    },
+    {
+      "id": "buried_sands_sand_sphinx",
+      "number": 5,
+      "name": "Buried Sands (Sand Sphinx)",
+      "normal_count": 3,
+      "elite_count": 2
+    },
+    {
+      "id": "hellfire_citadel_inferno_demon_lord",
+      "number": 6,
+      "name": "Hellfire Citadel (Inferno Demon Lord)",
+      "normal_count": 3,
+      "elite_count": 2
+    },
+    {
+      "id": "sky_isles_storm_dragon",
+      "number": 7,
+      "name": "Sky Isles (Storm Dragon)",
+      "normal_count": 3,
+      "elite_count": 2
+    },
+    {
+      "id": "lattice_heart_summit_heart_keeper",
+      "number": 8,
+      "name": "Lattice Heart Summit (Heart Keeper)",
+      "normal_count": 2,
+      "elite_count": 2
+    }
+  ],
+  "enemies": [
+    {
+      "id": "land1_normal_01",
+      "name": "Rootling",
+      "tier": "normal",
+      "land": "Misty Forest Ruins (Forest Witch)",
+      "land_index": 1,
+      "silhouette_and_role": "Small walking knot of roots; quick skirmisher",
+      "skills_and_telegraphs": "`Root Prick`: warns one adjacent tile, low damage + Root 0.7s; `Creep`: shifts one safe tile sideways after 1.2s",
+      "counterplay": "Don't stand still; hit before second windup",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land1_normal_02",
+      "name": "Mossbound Sentry",
+      "tier": "normal",
+      "land": "Misty Forest Ruins (Forest Witch)",
+      "land_index": 1,
+      "silhouette_and_role": "Short stone sentry with moss shoulder",
+      "skills_and_telegraphs": "`Slab Tap`: warns 2-cell bar; `Brace`: guard on own occupied tile after a visible crouch",
+      "counterplay": "Move perpendicular to bar; flank with L Block",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land1_normal_03",
+      "name": "Greycap Sporeling",
+      "tier": "normal",
+      "land": "Misty Forest Ruins (Forest Witch)",
+      "land_index": 1,
+      "silhouette_and_role": "Dull purple-gray mushroom cluster",
+      "skills_and_telegraphs": "`Spore Squares`: warns 3-cell L, mild Poison; `Seedbed`: sets one dark green temporary hazard tile",
+      "counterplay": "Avoid clustered corners; clear marked source early",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land1_elite_01",
+      "name": "Ancient Root Sentinel",
+      "tier": "elite",
+      "land": "Misty Forest Ruins (Forest Witch)",
+      "land_index": 1,
+      "silhouette_and_role": "Long trunk, blocky crown; roots link two distant floor tiles",
+      "skills_and_telegraphs": "`Branch Net`: warns a line of 3 and Roots only if the first tile hits; `Bark Shift`: creates one temporary non-pit barrier",
+      "counterplay": "Break its amber-tipped root anchor with a 2+ tile Block before follow-up; rewards Guard/Root relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land1_elite_02",
+      "name": "Mistbriar Matron",
+      "tier": "elite",
+      "land": "Misty Forest Ruins (Forest Witch)",
+      "land_index": 1,
+      "silhouette_and_role": "Hooded bark effigy with a dangling dry-vine arm",
+      "skills_and_telegraphs": "`Thorn Fork`: one warned tile branches into two orthogonal cells on next beat; `Wreath Guard`: guards at 50% HP",
+      "counterplay": "Track first tile then exit branch; shatter anchor, rewards delayed-chain artifact",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land2_normal_01",
+      "name": "Chain Rat",
+      "tier": "normal",
+      "land": "Dark Dungeon (Ogre King)",
+      "land_index": 2,
+      "silhouette_and_role": "Low crawling rodent dragging square chain-link",
+      "skills_and_telegraphs": "`Snag`: 1-cell warning, mild slow; `Chain Skip`: appears at an adjacent valid tile after telling blink",
+      "counterplay": "Move diagonally once; avoid putting both feet next to pit",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land2_normal_02",
+      "name": "Stonebound Prisoner",
+      "tier": "normal",
+      "land": "Dark Dungeon (Ogre King)",
+      "land_index": 2,
+      "silhouette_and_role": "Bent revenant with slab arms",
+      "skills_and_telegraphs": "`Cell Slam`: 2-cell vertical line, high delayed damage; `Shale Guard`: one-hit barrier",
+      "counterplay": "Move one column; shatter guard with single-hit setup",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land2_normal_03",
+      "name": "Gaol Bell",
+      "tier": "normal",
+      "land": "Dark Dungeon (Ogre King)",
+      "land_index": 2,
+      "silhouette_and_role": "Suspended iron-cage mimic, logical one-tile enemy",
+      "skills_and_telegraphs": "`Clang`: cross-shaped telegraph around itself (clipped to arena), stagger; `Echo Ring`: repeats 1-center tile 1 beat later",
+      "counterplay": "Leave center immediately, return only after second beat",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land2_elite_01",
+      "name": "Chain Jailer",
+      "tier": "elite",
+      "land": "Dark Dungeon (Ogre King)",
+      "land_index": 2,
+      "silhouette_and_role": "Tall plated jailor, chain winding around arm",
+      "skills_and_telegraphs": "`Lockstep`: temporarily blocks one adjacent tile before 3-cell bar strike; `Dragback`: pulls actor one safe square if struck",
+      "counterplay": "Break the chain anchor or escape along perpendicular row; reward displacement/guard artifacts",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land2_elite_02",
+      "name": "Gatebreaker Golem",
+      "tier": "elite",
+      "land": "Dark Dungeon (Ogre King)",
+      "land_index": 2,
+      "silhouette_and_role": "Broad torso, one huge stone fist",
+      "skills_and_telegraphs": "`Broken Gate`: warns 2×2 then cracks one non-occupied slab into a future pit (after additional warning); `Crush Line`: a slow 3-cell bar",
+      "counterplay": "Move off cracking slab in advance; exploit long recovery; reward pit-control relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land3_normal_01",
+      "name": "Frost Wisp",
+      "tier": "normal",
+      "land": "Mist Tower / Ice Tower (Frost Lord)",
+      "land_index": 3,
+      "silhouette_and_role": "One square-faced pale mist spirit",
+      "skills_and_telegraphs": "`Cold Point`: 1 tile, slow for 1 cast; `Glide`: shift to neighboring safe tile",
+      "counterplay": "Target its destination; avoid stacking slow",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land3_normal_02",
+      "name": "Rime Gargoyle",
+      "tier": "normal",
+      "land": "Mist Tower / Ice Tower (Frost Lord)",
+      "land_index": 3,
+      "silhouette_and_role": "Icicle-edged slab knight",
+      "skills_and_telegraphs": "`Ice Fang`: short 3-cell L, applies Freeze if already slowed; `Stone Skin`: 1 hit armor",
+      "counterplay": "Clear Slow first, choose safe corner of L",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land3_normal_03",
+      "name": "Snowglass Crow",
+      "tier": "normal",
+      "land": "Mist Tower / Ice Tower (Frost Lord)",
+      "land_index": 3,
+      "silhouette_and_role": "Small bird with angular icy wings",
+      "skills_and_telegraphs": "`Perch Mark`: marks 2 separated cells; `Drop Frost`: strikes those two after fixed delay",
+      "counterplay": "Move after second warning; hit during perched recovery",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land3_elite_01",
+      "name": "Broken Ice Knight",
+      "tier": "elite",
+      "land": "Mist Tower / Ice Tower (Frost Lord)",
+      "land_index": 3,
+      "silhouette_and_role": "Split blue-silver helm, tall spear-shaped gauntlet",
+      "skills_and_telegraphs": "`Mirror Freeze`: telegraphs one column and the adjacent column next beat; `Ice Guard`: freezes after taking a Block hit when armored",
+      "counterplay": "Use short Block to bait armor, then move to already resolved column; reward freeze/shatter artifact",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land3_elite_02",
+      "name": "Bell of White Mist",
+      "tier": "elite",
+      "land": "Mist Tower / Ice Tower (Frost Lord)",
+      "land_index": 3,
+      "silhouette_and_role": "Silent bell golem with floating ice shards (no glow)",
+      "skills_and_telegraphs": "`Hush`: delays hero's next Skill Card activation; `Ice Clock`: warns 3 successive single tiles",
+      "counterplay": "Observe timing; save quick block/guard for delay window; reward charge/cooldown relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land4_normal_01",
+      "name": "Muck Leech",
+      "tier": "normal",
+      "land": "Poison Swamp (Toad Matriarch)",
+      "land_index": 4,
+      "silhouette_and_role": "Low pale-gray leech with square jaw",
+      "skills_and_telegraphs": "`Siphon`: warns 1 tile, drains tiny amount of HP/guard; `Crawl`: moves to near safe tile",
+      "counterplay": "Strike before close approach; don't stack drain",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land4_normal_02",
+      "name": "Sporecap Drifter",
+      "tier": "normal",
+      "land": "Poison Swamp (Toad Matriarch)",
+      "land_index": 4,
+      "silhouette_and_role": "Thin mushroom stalk with dull lilac cap",
+      "skills_and_telegraphs": "`Spores`: 3-cell L, applies 1 Poison; `Bloom`: leaves a 1-tile hazard for 2 beats",
+      "counterplay": "Avoid same hazard repeatedly; safe route outside L",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land4_normal_03",
+      "name": "Bog Toadlet",
+      "tier": "normal",
+      "land": "Poison Swamp (Toad Matriarch)",
+      "land_index": 4,
+      "silhouette_and_role": "Tiny squat toad, broad head",
+      "skills_and_telegraphs": "`Mud Belly`: 2 adjacent cells, pushes one safe tile; `Croak Windup`: signals next 1-cell poison slap",
+      "counterplay": "Stay away from pit/border, avoid push",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land4_elite_01",
+      "name": "Mycelium Abbess",
+      "tier": "elite",
+      "land": "Poison Swamp (Toad Matriarch)",
+      "land_index": 4,
+      "silhouette_and_role": "Tall mushroom-veiled swamp matron",
+      "skills_and_telegraphs": "`Bloom Web`: connects two poisoned tiles; strike repeats if player stands on either 1 beat later; `Spore Veil`: guard until one hazard destroyed",
+      "counterplay": "Destroy one spore anchor with a Block, then dodge followup; reward Poison-proc relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land4_elite_02",
+      "name": "Bog Resin Harvester",
+      "tier": "elite",
+      "land": "Poison Swamp (Toad Matriarch)",
+      "land_index": 4,
+      "silhouette_and_role": "Hunched collector with square pitch bucket",
+      "skills_and_telegraphs": "`Sticky Patch`: changes 2 tiles to slowing mud; `Resin Press`: warns T-shape and adds Fragile",
+      "counterplay": "Leave slow mud immediately, avoid T center; reward field-control relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land5_normal_01",
+      "name": "Dune Scarab",
+      "tier": "normal",
+      "land": "Buried Sands (Sand Sphinx)",
+      "land_index": 5,
+      "silhouette_and_role": "Angular low beetle, dusty carapace",
+      "skills_and_telegraphs": "`Sand Nip`: 1-cell mark then hit; `Burrow Shift`: moves to an *announced* adjacent tile",
+      "counterplay": "Follow emergence shadow, not motion blur",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land5_normal_02",
+      "name": "Buried Sentinel",
+      "tier": "normal",
+      "land": "Buried Sands (Sand Sphinx)",
+      "land_index": 5,
+      "silhouette_and_role": "Cracked standing statue, flat square face",
+      "skills_and_telegraphs": "`Column Stamp`: entire valid column after slow windup; `Sand Guard`: one-use barrier",
+      "counterplay": "Move across a column, guard against forced trap",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land5_normal_03",
+      "name": "Dustshade",
+      "tier": "normal",
+      "land": "Buried Sands (Sand Sphinx)",
+      "land_index": 5,
+      "silhouette_and_role": "Hooded sand shade with frayed hem",
+      "skills_and_telegraphs": "`False Step`: previews 2 candidate cells, one becomes active red warning in time to dodge; `Sift`: switches its own tile",
+      "counterplay": "Only dodge on final red warning; never give fake-red warnings",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land5_elite_01",
+      "name": "Lesser Sand Sphinx",
+      "tier": "elite",
+      "land": "Buried Sands (Sand Sphinx)",
+      "land_index": 5,
+      "silhouette_and_role": "Miniature lion-stone beast with cracked mask",
+      "skills_and_telegraphs": "`Riddle Steps`: 3 sequential 1-tile strikes travel left-to-right; `Stone Wing`: guards while standing on marked central tile",
+      "counterplay": "Predict sweep, break guard with side approach; reward sequential-hit relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land5_elite_02",
+      "name": "Hourglass Custodian",
+      "tier": "elite",
+      "land": "Buried Sands (Sand Sphinx)",
+      "land_index": 5,
+      "silhouette_and_role": "Stone gaoler with sand-filled square vessel",
+      "skills_and_telegraphs": "`Time Debt`: marks tile now, repeats the same target 2 beats later; `Delay Snare`: slows card activation",
+      "counterplay": "Watch repeating mark, hold dodge/guard; reward time/echo modifier",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land6_normal_01",
+      "name": "Ash Walker",
+      "tier": "normal",
+      "land": "Hellfire Citadel (Inferno Demon Lord)",
+      "land_index": 6,
+      "silhouette_and_role": "Compact gray humanoid with a dim amber chest fissure",
+      "skills_and_telegraphs": "`Cinder Press`: warns one tile then deals Burn; `Ash Drift`: hops to pre-marked safe tile",
+      "counterplay": "Target landing point, don't stay on heated square",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land6_normal_02",
+      "name": "Ember Imp",
+      "tier": "normal",
+      "land": "Hellfire Citadel (Inferno Demon Lord)",
+      "land_index": 6,
+      "silhouette_and_role": "Small horned dark sprite, no flame aura",
+      "skills_and_telegraphs": "`Crack Line`: warns 2-cell bar, Burn 1; `Coal Leap`: moves one tile if threatened",
+      "counterplay": "Side-step perpendicular to line",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land6_normal_03",
+      "name": "Furnace Chainling",
+      "tier": "normal",
+      "land": "Hellfire Citadel (Inferno Demon Lord)",
+      "land_index": 6,
+      "silhouette_and_role": "Chain link animated around a compact core",
+      "skills_and_telegraphs": "`Link Tap`: warns one cell, Fragile; `Chain Heat`: next 2 cells in row warned after first resolves",
+      "counterplay": "Watch chain propagation, exit row",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land6_elite_01",
+      "name": "Cinder Magistrate",
+      "tier": "elite",
+      "land": "Hellfire Citadel (Inferno Demon Lord)",
+      "land_index": 6,
+      "silhouette_and_role": "Crowned charcoal statue with long angular gauntlet",
+      "skills_and_telegraphs": "`Sentence`: 3-tile line with delayed second stamp; `Hot Verdict`: tiles previously hit in fight get marked for repeat",
+      "counterplay": "Track recent marks; break its square armor during recovery; reward burn/echo relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land6_elite_02",
+      "name": "Coal Colossus",
+      "tier": "elite",
+      "land": "Hellfire Citadel (Inferno Demon Lord)",
+      "land_index": 6,
+      "silhouette_and_role": "Enormous squared shoulders, molten seams, logical 1 tile",
+      "skills_and_telegraphs": "`Crucible`: 2×2 warned area, one of those tiles cracks and becomes a pit *after another warning*; `Fist Stamp`: 3-cell T",
+      "counterplay": "Respect gap and safe route; punish long recovery; reward terrain-change relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land7_normal_01",
+      "name": "Cloud Hatchling",
+      "tier": "normal",
+      "land": "Sky Isles (Storm Dragon)",
+      "land_index": 7,
+      "silhouette_and_role": "Small horned drake, muted gray scales",
+      "skills_and_telegraphs": "`Sky Stamp`: 2-cell line, shock slow; `Wing Shuffle`: steps to announced neighboring tile",
+      "counterplay": "Move perpendicular, anticipate landing",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land7_normal_02",
+      "name": "Floating Slabling",
+      "tier": "normal",
+      "land": "Sky Isles (Storm Dragon)",
+      "land_index": 7,
+      "silhouette_and_role": "Small levitating chunk of plain stone",
+      "skills_and_telegraphs": "`Loose Edge`: warns a tile that becomes unavailable for 1 beat; `Stone Press`: a 1-cell hit after wait",
+      "counterplay": "Keep one escape tile, plan beyond edge",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land7_normal_03",
+      "name": "Gale Feather",
+      "tier": "normal",
+      "land": "Sky Isles (Storm Dragon)",
+      "land_index": 7,
+      "silhouette_and_role": "Birdlike wind sprite with stiff square feathers",
+      "skills_and_telegraphs": "`Gust Fork`: 3-cell L, pushes one valid tile; `Perch`: holds position for one beat",
+      "counterplay": "Avoid pushes toward pits, use root/guard",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land7_elite_01",
+      "name": "Thunderbound Knight",
+      "tier": "elite",
+      "land": "Sky Isles (Storm Dragon)",
+      "land_index": 7,
+      "silhouette_and_role": "Broad stone mail, muted brass bolt crest",
+      "skills_and_telegraphs": "`Bridge Claim`: warns bridge row, blocks one edge square for 1 beat; `Three-Step Thunder`: 3 distinct single strikes at increasing tempo",
+      "counterplay": "Exit claimed line early; reward mobility/charge relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land7_elite_02",
+      "name": "Bridge Keeper",
+      "tier": "elite",
+      "land": "Sky Isles (Storm Dragon)",
+      "land_index": 7,
+      "silhouette_and_role": "Long-limbed stone golem gripping floating slab, logical 1 tile",
+      "skills_and_telegraphs": "`Missing Span`: removes 1 announced non-occupied tile for 2 beats; `Bridge Rebuild`: restores one tile and strikes a different warned tile",
+      "counterplay": "Pathfind with pit-safe tiles; reward restore/terrain relic",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land8_normal_01",
+      "name": "Lattice Sentinel",
+      "tier": "normal",
+      "land": "Lattice Heart Summit (Heart Keeper)",
+      "land_index": 8,
+      "silhouette_and_role": "Ivory square-stone guardian, small segmented crest",
+      "skills_and_telegraphs": "`Pattern Copy`: repeats opponent's last 2-cell target shape, red-warned; `Stillguard`: guard after one resolved hit",
+      "counterplay": "Change tile after own cast, break guard using two-phase skill",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land8_normal_02",
+      "name": "Broken Echo",
+      "tier": "normal",
+      "land": "Lattice Heart Summit (Heart Keeper)",
+      "land_index": 8,
+      "silhouette_and_role": "Jagged gray tile apparition, chipped shoulders",
+      "skills_and_telegraphs": "`Echo Stamp`: 1 tile now + same tile after beat; `Fragment Move`: shifts one safe tile",
+      "counterplay": "Remember previous impact, punish echo cooldown",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land8_elite_01",
+      "name": "Mirror-Slab Keeper",
+      "tier": "elite",
+      "land": "Lattice Heart Summit (Heart Keeper)",
+      "land_index": 8,
+      "silhouette_and_role": "Split mirrored mask on pale stone",
+      "skills_and_telegraphs": "`Reflection`: next marked pattern reappears rotated 90 degrees (final warning shown), `Fracture`: 2×2 damage",
+      "counterplay": "Watch displayed final rotation, never trust only initial shape; reward rotation artifact",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "land8_elite_02",
+      "name": "Primal Archive Construct",
+      "tier": "elite",
+      "land": "Lattice Heart Summit (Heart Keeper)",
+      "land_index": 8,
+      "silhouette_and_role": "Rigid robe of square stone slabs, bright gold shard overhead",
+      "skills_and_telegraphs": "`Memory Line`: recalls last two warned lines, one after the other; `Seal`: disables repeated card for one beat",
+      "counterplay": "Use different Skill Card and rotate off recalled lines; reward artifact + Heart Shard fragment",
+      "status": "PROPOSED"
+    }
+  ]
+}

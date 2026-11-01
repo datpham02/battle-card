@@ -75,8 +75,9 @@ func _fixture_numbers() -> void:
 	_check(burn.contains("7.5 s"), "en burn seconds from the card: %s" % burn)
 	var thorns: String = CardText.describe("tran_gai", 1, skills, combat)
 	_check(thorns.contains("9 s") and thorns.contains("11 HP") and thorns.contains("4 Fragile"), "en thorn numbers from combat zones: %s" % thorns)
-	var seal: String = CardText.describe("ket_gioi", 1, skills, combat)
-	_check(seal.contains("3.5 s") and not seal.contains("4 s"), "en card seal_sec wins over combat zones: %s" % seal)
+	var own: String = CardText.describe("gai_nguyen", 1, skills, combat)
+	_check(own.contains("6.5 s") and not own.contains("9 s") and own.contains("2 Fragile") and not own.contains("4 Fragile"),
+		"en card zone numbers win over combat zones: %s" % own)
 	var frost: String = CardText.describe("han_khi", 1, skills, combat)
 	_check(frost.contains("3 Chill") and frost.contains("At 5 stacks") and frost.contains("bursts for 31"), "en frost stacks + combat burst numbers: %s" % frost)
 	var fragile: String = CardText.describe("ran_kich", 1, skills, combat)
@@ -135,7 +136,7 @@ func _fixture_cards() -> Dictionary:
 		"cards": {
 			"hoa_tinh": _card("burn", {"burn_duration_sec": 7.5, "burn_tick_sec": 0.5, "burn_damage_per_tick": 1.0}),
 			"tran_gai": _card("thorns", {}),
-			"ket_gioi": _card("seal", {"seal_sec": 3.5}),
+			"gai_nguyen": _card("thorns", {"thorn_sec": 6.5, "thorn_fragile_stacks": 2}),
 			"han_khi": _card("frost", {"frost_stacks": 3}),
 			"ran_kich": _card("fragile", {"fragile_stacks": 1}),
 			"tu_kiem": _card("damage", {"damage_per_cell": 8.0, "execute": true}),

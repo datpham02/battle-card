@@ -145,7 +145,7 @@ func test_real_sheets_match_story_045_table() -> void:
 	var ks := SpriteSheetScript.load_unit("kiem_si")
 	if ks != null:
 		var cast: Dictionary = ks.clip("cast_gesture")
-		check("kiem_si cast_gesture is the v3 7-frame once clip", (cast["durations_ms"] as Array[int]) == [50, 40, 40, 50, 50, 60, 80] and String(cast["loop"]) == "once")
+		check("kiem_si cast_gesture is the v4 9-frame wind-up once clip", (cast["durations_ms"] as Array[int]) == [83, 83, 83, 83, 200, 50, 83, 100, 133] and String(cast["loop"]) == "once")
 		check("kiem_si defeat is hold_last", String(ks.clip("defeat")["loop"]) == "hold_last")
 	var gs := SpriteSheetScript.load_unit("goblin_scout")
 	if gs != null:

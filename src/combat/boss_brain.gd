@@ -33,9 +33,9 @@ extends RefCounted
 ## profile (commitment 1, noise 0, row_first, juke 0, no wander) therefore moves identically
 ## whatever the seed. Best of cut / move / wait wins.
 ##
-## ZONES (Story 027): a sealed cell of the boss's half (StatusEffects.is_sealed, side ENEMY) is a blocked
-## cell for every path / step / dodge / juke search, exactly like a burning cell; a sealed cell of the
-## PLAYER's half is blocked for the player's reach when cuts are scored (escape cells). A thorn cell of the
+## ZONES (Story 027; player seals removed 2026-11-01, ADR-0001 Phase 1): an open drop-tile hole of the boss's half
+## (StatusEffects.hole_cells, side ENEMY) is a blocked cell for every path / step / dodge / juke search, exactly like
+## a burning cell (its mover refuses it too, CombatView._wire_zones); a cracking cell stays enterable. A thorn cell of the
 ## boss's half stays steppable but costs `thorn_avoid` x its thorn damage (HP-weighted, see thorns_at):
 ## paths (one step = 1) go around a thorn while the detour is cheaper than that cost, a non-dodge step
 ## into a thorn adds the negative `thorn` term to the move score, and a DODGE picks the cell with the
@@ -252,16 +252,17 @@ func decide(ctx: Dictionary) -> Dictionary:
 	_think_clock = 0.0
 
 	var incoming: Array[Vector2i] = _visible_incoming(player_actor)
-	# Story 027: own_blocked = burning + sealed cells of the boss's half (never entered); player_blocked =
-	# burning + sealed cells of the player's half (the player cannot escape into them).
+	# Story 027: own_blocked = burning cells + open holes of the boss's half (never entered); player_blocked =
+	# burning cells (the player cannot escape into them).
 	var own_blocked: Array[Vector2i] = []
 	var player_blocked: Array[Vector2i] = []
 	_thorn_pen = {}
 	if _status != null:
 		own_blocked = _status.burning_cells()
 		player_blocked = own_blocked.duplicate()
-		own_blocked.append_array(_status.sealed_cells(CombatState.Side.ENEMY))
-		player_blocked.append_array(_status.sealed_cells(CombatState.Side.PLAYER))
+		for cell: Vector2i in _status.hole_cells(CombatState.Side.ENEMY):
+			if not own_blocked.has(cell):
+				own_blocked.append(cell)
 		var thorn_avoid: float = float(_weights.get("thorn_avoid", 0.0))
 		for cell: Vector2i in _status.thorn_cells(CombatState.Side.ENEMY):
 			_thorn_pen[cell] = thorn_avoid * float(_status.thorns_at(CombatState.Side.ENEMY, cell).get("damage", 0.0))

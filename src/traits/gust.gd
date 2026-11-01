@@ -111,7 +111,7 @@ func can_push_to(cell: Vector2i) -> bool:
 	if grid == null or not grid.is_player_cell(cell):
 		return false
 	var status: StatusEffects = get_context().get("status") as StatusEffects
-	if status != null and status.is_sealed(CombatState.Side.PLAYER, cell):
+	if status != null and status.is_hole(CombatState.Side.PLAYER, cell):
 		return false
 	var hazards: TileHazards = get_context().get("hazards") as TileHazards
 	if hazards != null:

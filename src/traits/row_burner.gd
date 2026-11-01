@@ -95,8 +95,9 @@ func on_tick(step: float) -> void:
 
 
 ## Cells of the row being announced (empty when no warning runs).
+## Quick spec 2026-11-01 rule 4: locked cells (cracking / hole) are left out, as the fire skips them.
 func get_warning_cells() -> Array[Vector2i]:
-	return _warning_cells.duplicate()
+	return hittable_cells(_warning_cells)
 
 
 ## Seconds until the announced row ignites (0 when no warning runs).
@@ -138,7 +139,8 @@ func _ignite() -> void:
 	_warning_cells = []
 	_warn_left = 0.0
 	if status != null:
-		status.ignite(cells, _burn_sec, _tick_sec, _damage_per_tick)
+		# Quick spec 2026-11-01: ignite skips locked cells and replaces another zone (StatusEffects._claim_zone_cell).
+		cells = status.ignite(cells, _burn_sec, _tick_sec, _damage_per_tick)
 	_last_burned_cells = cells.duplicate()
 	_burn_count += 1
 	row_burned.emit(cells)

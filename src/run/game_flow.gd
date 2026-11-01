@@ -155,7 +155,8 @@ signal run_changed()
 ## FATE (Story 035): Tha / Giết after a downed REGION boss, then (Giết) its artifact offer; ENDING (Story 035):
 ## the ending screen after the final match.
 ## ACHIEVEMENTS (Story 037): the achievements screen opened from the title ([method open_achievements]).
-enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, ACHIEVEMENTS, IN_FLOOR = IN_NODE }
+## SETTINGS (Main Menu pass, user 2026-11-01): the settings screen opened from the title ([method open_settings]).
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, ACHIEVEMENTS, SETTINGS, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -213,6 +214,8 @@ const SCREEN_ARG: String = "--screen="
 const SCREEN_ACHIEVEMENTS: String = "achievements"
 const SCREEN_ACHIEVEMENTS_DEMO: String = "achievements_demo"
 const SCREEN_ACHIEVEMENTS_DETAIL: String = "achievements_detail="
+## DEV-ONLY: --screen=settings opens the settings screen (captures).
+const SCREEN_SETTINGS: String = "settings"
 ## Milestones the demo seeds, as {key: count}; the achievements they earn come from UnlockRules.
 const DEV_ACHIEVEMENTS_DEMO_MILESTONES: Dictionary = {"region_boss:ch1": 1, "kills_total": 2, "spares_total": 1, "runs_won": 1}
 ## DEV-ONLY (Story 019 / 022): --run=<kind> values handled HERE (the others belong to RunController).
@@ -546,6 +549,8 @@ func _ready() -> void:
 	_phase = Phase.TITLE
 	if select_mode == SELECT_CHARACTER or (not progress_mode.is_empty() and not force_title and progress_mode != PROGRESS_V4SAVE):
 		_phase = Phase.CHARACTER_SELECT
+	if screen_mode == SCREEN_SETTINGS:
+		_phase = Phase.SETTINGS
 	if screen_mode.begins_with(SCREEN_ACHIEVEMENTS):
 		_phase = Phase.ACHIEVEMENTS
 		if screen_mode == SCREEN_ACHIEVEMENTS_DEMO:
@@ -1046,6 +1051,20 @@ func close_achievements() -> void:
 	_set_phase(Phase.TITLE)
 
 
+## Main Menu pass (user 2026-11-01): title "Cài đặt": TITLE -> SETTINGS. Ignored in other phases.
+func open_settings() -> void:
+	if _phase != Phase.TITLE:
+		return
+	_set_phase(Phase.SETTINGS)
+
+
+## The settings screen's "Về": SETTINGS -> TITLE. Ignored in other phases.
+func close_settings() -> void:
+	if _phase != Phase.SETTINGS:
+		return
+	_set_phase(Phase.TITLE)
+
+
 ## Story 037 (reward / relic offer cards): marks the unlock [param kind] / [param id] seen (the "Mới" badge
 ## goes away for good) and saves the progress.
 func mark_unlock_seen(kind: String, id: String) -> void:
@@ -1156,6 +1175,8 @@ func go_back() -> void:
 			show_title()
 		Phase.ACHIEVEMENTS:
 			close_achievements()
+		Phase.SETTINGS:
+			close_settings()
 		Phase.TITLE:
 			if can_show_quit():
 				quit_requested()

@@ -1,8 +1,9 @@
 # Cơ chế game Tessera
 
-> **2026-10-27.** Mô tả cơ chế **đang chạy trong game** sau 40 story, viết bằng thuật ngữ của `design/glossary.md`. Bối cảnh thế giới: `design/world-context.md`.
+> **2026-10-27, cập nhật tên 2026-11-01.** Mô tả cơ chế **đang chạy trong game** sau 40 story, viết bằng thuật ngữ của `design/glossary.md`. Bối cảnh thế giới: `design/world-context.md`.
 > Đây là bản tóm tắt dễ đọc. Luật chi tiết và lịch sử quyết định nằm ở `design/game-brief.md`; mọi con số nằm trong `assets/data/*.json` và là **số khởi điểm**, chỉnh lại được sau buổi chơi thử.
-> Chữ trong game hiện vẫn dùng tên cũ (mảnh, trận đồ, tuyệt kỹ, Kiếp, Ấn Đài…) cho tới khi story đổi thuật ngữ chạy. Tên riêng của lá, Thức Tỉnh và bảo vật dưới đây là **tên hiện tại**, sẽ đổi trong đợt đặt tên sau art bible.
+> Tên riêng của lá, Thức Tỉnh, bảo vật, nội tại và đặc tính boss dưới đây là **tên trong game** (`assets/i18n/strings.csv`, cột `vi`; bảng đối chiếu vi/en ở `design/glossary.md` nhóm 5).
+> **Kế hoạch, chưa có trong game:** bản đồ v2, địch có đòn đặc trưng, Kẻ Gác 3 pha và hệ lá v2 lấy nguồn từ `docs/architecture/adr-0001-tessera-design-pack-alignment.md` và bộ thiết kế `TESSERA_CLAUDE_DESIGN_PACK/tessera_claude_pack`. Tài liệu này chỉ tả bản đang chạy; mục nào đổi thì cập nhật khi pha tương ứng xong.
 
 ---
 
@@ -57,7 +58,7 @@
 6. **Phá phép:** đòn nào chạm ô đối thủ trước thì **hủy đòn đang niệm của đối thủ**, và khối của bên bị hủy mất luôn.
 
 ### 2.4 Ghép khối và Hình Cộng Hưởng
-- Trong lúc menu lá mở, kéo thêm **một khối** nữa lên đất địch để **ghép** vào cùng đòn (+1,5 giây chọn lá). Hai khối không được chồng ô; chạm cạnh hay rời nhau đều được. Tối đa 2 khối mỗi đòn, 3 khối nếu có bảo vật Tam Hợp.
+- Trong lúc menu lá mở, kéo thêm **một khối** nữa lên đất địch để **ghép** vào cùng đòn (+1,5 giây chọn lá). Hai khối không được chồng ô; chạm cạnh hay rời nhau đều được. Tối đa 2 khối mỗi đòn, 3 khối nếu có bảo vật Xích Ba Mắt.
 - Mỗi sân có một **Hình Cộng Hưởng** 5–7 ô gợi dáng sân, hiện nhỏ trên HUD. Đòn **2 khối** có tổng ô trùng hình này (xoay được, không lật) được **×1,5 sát thương** cộng **một hiệu ứng theo chủ đề sân**: Rạn, Đóng Băng, Cháy hoặc Giá Lạnh.
 
 ### 2.5 Bản Khắc và Thức Tỉnh
@@ -81,6 +82,10 @@
 
 Luật công bằng cho Ô rớt (`design/quick-specs/o-rot-thay-tuong-2026-10-31.md`): lúc bắt đầu nứt luôn còn ít nhất 1 ô kề an toàn; ô của người chơi chỉ được chọn khi người chơi bước kịp (hồi bước còn ≤ 0,6 s, không Đóng Băng, không bị trói); Đóng Băng giữa chừng thì ô dưới chân không rơi; Tập trung dừng đồng hồ nứt. Bãi Gai vẫn bước được nên không cần luật này.
 
+Mỗi ô một hiệu ứng (`design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md`):
+- Một ô chỉ giữ 1 hiệu ứng vùng (Cháy, Bãi Gai, Ô rớt); phép mới thay cái cũ với thời lượng đầy đủ, cùng loại thì làm mới. Địa hình của vùng và trạng thái trên người không tính.
+- Ô đang nứt hoặc đã là hố là ô khóa: không phép nào tác dụng lên ô đó (không sát thương, trạng thái hay hiệu ứng vùng) cho tới khi ô hiện lại; ô vừa nứt thì mất màu cảnh báo đỏ ngay.
+
 ### 2.7 Địa hình vùng
 
 | Vùng | Địa hình |
@@ -95,10 +100,10 @@ Luật công bằng cho Ô rớt (`design/quick-specs/o-rot-thay-tuong-2026-10-3
 - **Cảnh báo:** ô sắp bị đánh hiện **đỏ** trên đất bạn kèm thời gian niệm. Né ra khỏi vùng đỏ là thoát.
 - **Địch đứng yên khi đang niệm.** Đây là **cửa sổ phản công**: đánh trúng lúc này để phá đòn của nó.
 - **Đặc tính** làm mỗi trận khác nhau, hiện có khoảng 20:
-  - **Thời gian:** Pháo ngòi (ngòi cháy hết thì nổ cả hàng), Phản xạ (mỗi bước của bạn nạp một phát), Đổi pha (nửa máu thì hung hãn hơn).
-  - **Sân:** Giáng nứt (đập nứt ô bên bạn), Hỏa tức (thở lửa quét một hàng), Mảnh nguyền (ném khối độc vào túi bạn), Ấn phong tỏa (làm nứt rồi rơi 2–3 ô bên bạn, có thể gồm ô bạn đứng), Trận gai (rải Bãi Gai).
-  - **Hồi sinh và hồi máu:** Hào quang sương (khối rơi chậm hơn), Nuốt lửa (Cháy hồi máu cho nó), Tái sinh (hồi sinh một lần trừ khi đang dính Giá Lạnh).
-  - **Theo vùng:** Mạch phun trào, Gió đẩy, Mây che (giấu báo trúng), Đảo rơi, và các chiêu lặn, nhảy, phản đòn của Sa Mạc và Đầm Lầy.
+  - **Thời gian:** Ngòi Nổ (ngòi cháy hết thì nổ cả hàng), Dây Vướng (mỗi bước của bạn nạp một phát), Cùng Đường (nửa máu thì hung hãn hơn).
+  - **Sân:** Nứt Đất (đập nứt ô bên bạn), Hàng Lửa (thở lửa quét một hàng), Ném Đồ Hỏng (ném khối độc vào túi bạn), Chặn Lối (làm nứt rồi rơi 2–3 ô bên bạn thành hố, có thể gồm ô bạn đứng), Gai Níu Chân (rải Bãi Gai).
+  - **Hồi sinh và hồi máu:** Sương Nặng (khối rơi chậm hơn), Ăn Lửa (Cháy hồi máu cho nó), Sống Lại (hồi sinh một lần trừ khi đang dính Giá Lạnh).
+  - **Theo vùng:** Mạch Phun Đôi, Gió Tạt, Che Tầm Ngắm (giấu báo trúng), Đảo Rơi, và các chiêu lặn, nhảy, phản đòn của Sa Mạc và Đầm Lầy.
 - **Thắng:** địch về 0 máu. **Thua:** bạn về 0 máu, chuyến leo kết thúc.
 
 ---
@@ -108,21 +113,21 @@ Luật công bằng cho Ô rớt (`design/quick-specs/o-rot-thay-tuong-2026-10-3
 - **Bộ bài** là danh sách lá, khởi đầu 6 lá, tối thiểu 4. Lá trùng được phép và làm lá đó ra thường hơn.
 - **Không có "lớp":** lá nào cũng nằm trong pool chung.
 - Mỗi lá có: **số ô tối thiểu**, **thời gian hồi**, **sát thương mỗi ô**, **độ hiếm** (Thường / Hiếm / Sử thi) và **3 cấp nâng**.
-- **36 lá:** 34 lá thường và 2 lá nguyền. Gom theo hiệu ứng (tên hiện tại):
+- **36 lá trong dữ liệu:** 34 lá thường và 2 lá nguyền; 3 lá Tường không còn tới tay người chơi (xem dòng Ô rớt). Gom theo hiệu ứng:
 
 | Hiệu ứng | Lá |
 |---|---|
-| **Chém** (sát thương thuần) | Kiếm khí (cơ bản, bất kỳ ô, không hồi), Kiếm vũ, Thiết kiếm, Đại đao, Kiếm thần, Song kiếm, Tuyệt kiếm (Hành quyết), Hàn kiếm, Hàn trận, Băng tâm |
-| **Đẩy** | Chấn phong, Xung kích, Cuồng phong, Thiên lãng |
-| **Cháy** | Hỏa xà, Hỏa tinh, Hỏa trận, Liệt hỏa, Thiên hỏa |
-| **Đóng Băng** | Sương mỏng, Băng châu, Băng phong, Hàn băng |
-| **Rạn** | Rạn kích, Rạn vân |
-| **Giá Lạnh** | Hàn khí, Hàn phong, Thánh thủy |
-| **Ô rớt** | chỉ boss (trait `seal_caster`); Kết giới, Lồng ấn, Lưới săn rời bộ lá người chơi từ 2026-10-31 |
-| **Bãi Gai** | Trận gai, Gai nguyền, Gai độc |
-| **Lá nguyền** | Gánh Nặng, Oán Hồn: chiếm chỗ trong 4 lá rút, nhưng luôn còn ít nhất 1 lá thường |
+| **Chém** (sát thương thuần) | Rạch nhẹ (cơ bản, bất kỳ ô, không hồi), Xé toạc, Lia ngang, Bổ nặng, Lưỡi sắc, Nêm sắt, Nhát cuối (Hành quyết), Rét cắt, Tuyết rơi, Buốt xương |
+| **Đẩy** | Hích nhẹ, Xô lùi, Cú húc, Sạt lở |
+| **Cháy** | Tia lửa, Tro hồng, Lò than, Lửa rừng, Giàn thiêu |
+| **Đóng Băng** | Men băng, Mưa đá, Lặng yên, Tảng băng |
+| **Rạn** | Nứt chân chim, Đứt gãy |
+| **Giá Lạnh** | Rùng mình, Bão trắng, Sương bạc |
+| **Ô rớt** | chỉ boss (đặc tính Chặn Lối); ba lá Tường Rào chắn, Lồng đá, Hàng cọc rời bộ lá người chơi từ 2026-10-31 |
+| **Bãi Gai** | Bụi rậm, Dây úa, Bẫy chông |
+| **Lá nguyền** | Gánh Nặng, Mối Hận: chiếm chỗ trong 4 lá rút, nhưng luôn còn ít nhất 1 lá thường |
 
-Vài lá mở khóa qua thành tựu: Gai độc, Lưới săn, Thánh thủy, Băng tâm.
+Vài lá mở khóa qua thành tựu: Bẫy chông, Dây úa (thay Hàng cọc từ 2026-10-31), Sương bạc, Buốt xương.
 
 ---
 
@@ -130,13 +135,13 @@ Vài lá mở khóa qua thành tựu: Gai độc, Lưới săn, Thánh thủy, B
 
 Mỗi nhân vật có máu, tốc độ bước, thời gian Tập trung, **nội tại**, **Thức Tỉnh** và **bộ khởi đầu** nghiêng về một hướng riêng.
 
-| Nhân vật | Máu | Nội tại | Thức Tỉnh (tên hiện tại) | Bộ khởi đầu | Mở khóa |
+| Nhân vật | Máu | Nội tại | Thức Tỉnh | Bộ khởi đầu | Mở khóa |
 |---|---|---|---|---|---|
-| **Kiếm sĩ** | 200 | Hơi thở thứ hai: +20 máu sau mỗi trận thắng | **Trảm**: 3 s, mọi đòn tính gấp đôi số ô, hút 20 % sát thương | Kiếm khí, Kiếm vũ ×2, Thiết kiếm ×2, Chấn phong | Có sẵn |
-| **Pháp sư** | 210 | Pháp trận rộng: đòn ≥ 4 ô niệm nhanh hơn 25 %; Tập trung 5 s | **Thiên Hỏa**: kích nổ lửa đang cháy ×2, làm mới Cháy, đốt cả Bản Khắc đang sáng | Kiếm khí, Hỏa xà, Hỏa tinh ×2, Hỏa trận, Băng phong | Có sẵn |
-| **Sát thủ** | 180 | Lưỡi kiếm nhanh: đòn ≤ 4 ô +40 %; bước nhanh hơn 10 % | **Ảnh Bộ**: 2 s, bước không chờ, đòn ≤ 3 ô ×1,75 | Kiếm khí ×2, Kiếm vũ, Thiết kiếm, Băng châu, Hàn kiếm | Có sẵn |
-| **Thợ săn** | 200 | Dấu săn: địch bước vào gai của bạn hoặc đứng kề gai vừa rải thì nhận 1 Rạn (chờ 3 s) | **Vây Bắt**: 4 s, Bãi Gai kéo dài ×1,5 và rải thêm 1 ô, tiêu Rạn ×2 | Kiếm khí ×2, Trận gai ×2, Gai độc, Rạn kích | **Giết** tổng cộng 3 Kẻ Gác |
-| **Giáo sĩ** | 210 | Lời nguyện: mỗi lần Giá Lạnh nổ trên địch thì hồi 8 máu; Tập trung 4,5 s | **Thánh Ấn**: 4 s, mỗi đòn trúng thêm 1 Giá Lạnh, nổ ×1,5 | Kiếm khí ×2, Hàn khí ×2, Hàn kiếm ×2 | **Tha** tổng cộng 3 Kẻ Gác |
+| **Kiếm sĩ** | 200 | Lấy Lại Sức: +20 máu sau mỗi trận thắng | **Vung Hết Sức**: 3 s, mọi đòn tính gấp đôi số ô, hút 20 % sát thương | Rạch nhẹ, Xé toạc ×2, Lia ngang ×2, Hích nhẹ | Có sẵn |
+| **Pháp sư** | 210 | Tay Vững: đòn ≥ 4 ô niệm nhanh hơn 25 %; Tập trung 5 s | **Bùng Nổ**: kích nổ lửa đang cháy ×2, làm mới Cháy, đốt cả Bản Khắc đang sáng | Rạch nhẹ, Tia lửa, Tro hồng ×2, Lò than, Lặng yên | Có sẵn |
+| **Sát thủ** | 180 | Nhát Gọn: đòn ≤ 4 ô +40 %; bước nhanh hơn 10 % | **Bóng Lướt**: 2 s, bước không chờ, đòn ≤ 3 ô ×1,75 | Rạch nhẹ ×2, Xé toạc, Lia ngang, Mưa đá, Rét cắt | Có sẵn |
+| **Thợ săn** | 200 | Dấu Con Mồi: địch bước vào gai của bạn hoặc đứng kề gai vừa rải thì nhận 1 Rạn (chờ 3 s) | **Bẫy Sập**: 4 s, Bãi Gai kéo dài ×1,5 và rải thêm 1 ô, tiêu Rạn ×2 | Rạch nhẹ ×2, Bụi rậm ×2, Bẫy chông, Nứt chân chim | **Giết** tổng cộng 3 Kẻ Gác |
+| **Giáo sĩ** | 210 | Lời Cầu Được Đáp: mỗi lần Giá Lạnh nổ trên địch thì hồi 8 máu; Tập trung 4,5 s | **Ban Phước**: 4 s, mỗi đòn trúng thêm 1 Giá Lạnh, nổ ×1,5 | Rạch nhẹ ×2, Rùng mình ×2, Rét cắt ×2 | **Tha** tổng cộng 3 Kẻ Gác |
 
 ---
 
@@ -208,14 +213,14 @@ Mỗi nhân vật có máu, tốc độ bước, thời gian Tập trung, **nộ
   - **Lời thề:** bước chậm 2 trận để nhận thưởng.
 
 ### 5.6 Bảo vật
-Bảo vật là đồ bị động **đổi luật**, không chỉ cộng số. Mỗi bảo vật chỉ có một chiếc. Có **16 bảo vật** (tên hiện tại):
+Bảo vật là đồ bị động **đổi luật**, không chỉ cộng số. Mỗi bảo vật chỉ có một chiếc. Có **16 bảo vật**:
 
 | Hạng | Bảo vật |
 |---|---|
-| **Thường** | Ấn Đơn (đòn chỉ gồm 1 khối ô đơn ×1,75), Chỉ Khâu (mỗi đòn ghép hồi 3 máu, tối đa 15 mỗi trận), Gai Dai (Bãi Gai +1 s; thay Phong Ấn Dài 2026-10-31), Gai Rạn (địch bước vào gai của bạn thêm 1 Rạn), Mảnh Tươi (khối tươi thêm 4 s), Định Tâm (Tập trung +1 s) |
-| **Hiếm** | La Bàn Trận Đồ (Bản Khắc phai chậm hơn 30 %), Tâm Hương (Thức Tỉnh hồi nhanh hơn 20 %), Túi Rộng (túi khối +1 ô), Dầu Thần (Cháy chồng thêm 1 tầng), Khởi Thế (đòn đầu mỗi trận không niệm), Phản Đòn (phá đòn địch thì nhận 1 khối ô đơn) |
-| **Sử thi** | Hàn Khí (Giá Lạnh nổ ở 2 tầng nhưng yếu hơn 33 %), Huyết Ấn (đòn ≥ 5 ô +30 %; trượt thì mất 2 máu) |
-| **Mảnh Gốc** (từ Kẻ Gác) | Ấn Chủ (Hình Cộng Hưởng ×2 thay vì ×1,5), Tam Hợp (ghép được khối thứ 3) |
+| **Thường** | Sỏi Lẻ (đòn chỉ gồm 1 khối ô đơn ×1,75), Chỉ Khâu (mỗi đòn ghép hồi 3 máu, tối đa 15 mỗi trận), Gai Dai (Bãi Gai +1 s, mở khóa qua thành tựu kết thúc Lòng Tha Thứ; thay bảo vật Tường cũ từ 2026-10-31), Đinh Cong (địch bước vào gai của bạn thêm 1 Rạn), Muối Ướp (khối tươi thêm 4 s), Đá Tĩnh Tâm (Tập trung +1 s) |
+| **Hiếm** | Phấn Đánh Dấu (Bản Khắc phai chậm hơn 30 %), Nhang Trầm (Thức Tỉnh hồi nhanh hơn 20 %), Túi Rộng (túi khối +1 ô), Bình Nhựa Thông (Cháy chồng thêm 1 tầng), Cò Nhạy (đòn đầu mỗi trận không niệm), Dao Gạt Đòn (phá đòn địch thì nhận 1 khối ô đơn) |
+| **Sử thi** | Băng Giòn (Giá Lạnh nổ ở 2 tầng nhưng yếu hơn 33 %), Xu Đánh Cược (đòn ≥ 5 ô +30 %; trượt thì mất 2 máu) |
+| **Mảnh Gốc** (từ Kẻ Gác) | Âm Thoa (Hình Cộng Hưởng ×2 thay vì ×1,5), Xích Ba Mắt (ghép được khối thứ 3) |
 
 ---
 
@@ -265,7 +270,7 @@ Việc còn mở: thang Giao Kèo cần chỉnh lại (TD-036), chính sách mua
 | Muốn chỉnh | File |
 |---|---|
 | Thời gian niệm, sát thương cơ bản | `assets/data/cuts.json` |
-| Hồi bước, từ khóa, Bản Khắc, Tường, Bãi Gai, địa hình | `assets/data/combat.json` |
+| Hồi bước, từ khóa, Bản Khắc, Ô rớt, Bãi Gai, địa hình | `assets/data/combat.json` |
 | Khối rơi, túi khối | `assets/data/field_drops.json`, `hold_slots.json`, `pieces.json` |
 | Lá phép | `assets/data/cards.json` |
 | Nhân vật | `assets/data/characters.json` |

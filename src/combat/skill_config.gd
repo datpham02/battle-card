@@ -14,19 +14,19 @@ const RARITIES: Array[String] = ["common", "rare", "epic"]
 const CURSE_RARITY: String = "curse"
 ## Highest card level (levels are 1..MAX_LEVEL; Story 020).
 const MAX_LEVEL: int = 3
-const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "seal", "thorns"]
+const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "thorns"]
 ## Keys an `upgrade` table may change (additive deltas), with the floor each is clamped to.
 const UPGRADE_FLOORS: Dictionary = {
 	"damage_per_cell": 0.0, "min_cells": 1.0, "cooldown_sec": 0.0, "burn_damage_per_tick": 0.0,
 	"burn_duration_sec": 0.0, "pin_duration_sec": 0.0, "push_cells": 0.0,
 	"fragile_stacks": 0.0, "frost_stacks": 0.0,
-	"seal_sec": 0.0, "thorn_sec": 0.0, "thorn_damage": 0.0, "thorn_fragile_stacks": 0.0,
+	"thorn_sec": 0.0, "thorn_damage": 0.0, "thorn_fragile_stacks": 0.0,
 }
 
 ## Story 027: the optional per-card zone number keys.
-const ZONE_KEYS: Array[String] = ["seal_sec", "thorn_sec", "thorn_damage", "thorn_fragile_stacks"]
+const ZONE_KEYS: Array[String] = ["thorn_sec", "thorn_damage", "thorn_fragile_stacks"]
 ## Story 027: card effects that form a zone (kept out of the boss's card list).
-const ZONE_EFFECTS: Array[String] = ["seal", "thorns"]
+const ZONE_EFFECTS: Array[String] = ["thorns"]
 
 ## Simulation speed factor while the card menu is open (0..1). Applied by the view.
 var menu_time_scale: float = 0.2
@@ -46,15 +46,17 @@ var focus_max_sec: float = 4.0
 var focus_cooldown_sec: float = 8.0
 ## Focus: true = the player cannot step while Focus is active.
 var focus_locks_movement: bool = true
-## Stable display order of the known NON-curse card ids (also the boss's default card list and the
-## reward / shop pool: Story 033 curse cards are never in it, whatever cards.json lists).
+## Stable display order of the known NON-curse PLAYER card ids (also the boss's default card list and the
+## reward / shop pool: Story 033 curse cards and `player_pool: false` cards (the boss-only Wall cards, quick
+## spec o-rot-thay-tuong 2026-10-31) are never in it, whatever cards.json lists).
 var card_order: Array[String] = [FALLBACK_SKILL]
 ## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_per_cell, push_cells,
 ## burn_*, pin_duration_sec, fragile_stacks, frost_stacks, pierce_defense, execute, execute_ratio,
-## bonus_vs_fragile_mult, rarity, draw_damage, upgrade, implemented} (level 1 values; see [method resolved]).
+## bonus_vs_fragile_mult, rarity, draw_damage, upgrade, implemented, player_pool, delivery} (level 1 values; see
+## [method resolved]). `delivery` = SkillDelivery.parse of the card's `delivery` object (ADR-0001 D7 / A1).
 ## Story 033: rarity `curse` cards (ganh_nang, oan_hon) carry `draw_damage` (HP the player loses each
 ## time the card is drawn into the card menu; 0 = none).
-## Story 027 zone cards (effect seal / thorns) may also carry the optional per-card overrides seal_sec,
+## Story 027 zone cards (effect thorns) may also carry the optional per-card overrides
 ## thorn_sec, thorn_damage, thorn_fragile_stacks; a key the card omits is absent here and combat.json
 ## `zones` supplies the number.
 var cards: Dictionary = {}
@@ -62,6 +64,7 @@ var cards: Dictionary = {}
 
 func _init() -> void:
 	cards[FALLBACK_SKILL] = {
+		"delivery": SkillDelivery.parse({"type": SkillDelivery.CASTER_TO_TARGET, "origin": "caster", "travel": "hero_pack", "impact": "burst"}),
 		"effect": "damage", "burn_duration_sec": 0.0, "burn_tick_sec": 0.5,
 		"burn_damage_per_tick": 0.0, "pin_duration_sec": 0.0,
 		"name_key": "card.kiem_khi.name", "desc_key": "card.kiem_khi.desc", "min_cells": 1, "cooldown_sec": 0.0,
@@ -111,13 +114,13 @@ static func from_dictionary(data: Dictionary) -> SkillConfig:
 	var raw_order: Variant = data.get("card_order")
 	if typeof(raw_order) == TYPE_ARRAY:
 		for id: Variant in raw_order as Array:
-			if config.cards.has(str(id)) and not config.card_order.has(str(id)) and not config.is_curse(str(id)):
+			if config.is_player_card(str(id)) and not config.card_order.has(str(id)):
 				config.card_order.append(str(id))
 	for id: Variant in config.cards.keys():
-		if not config.card_order.has(str(id)) and not config.is_curse(str(id)):
+		if not config.card_order.has(str(id)) and config.is_player_card(str(id)):
 			config.card_order.append(str(id))
 	var wanted: String = str(data.get("default_card", FALLBACK_SKILL))
-	if config.cards.has(wanted) and not config.is_curse(wanted):
+	if config.is_player_card(wanted):
 		config.default_card = wanted
 	else:
 		push_warning("SkillConfig: default_card %s unknown, using the first card" % wanted)
@@ -126,10 +129,12 @@ static func from_dictionary(data: Dictionary) -> SkillConfig:
 	var raw_deck: Variant = data.get("default_deck")
 	if typeof(raw_deck) == TYPE_ARRAY:
 		for id: Variant in raw_deck as Array:
-			if config.cards.has(str(id)) and not config.is_curse(str(id)):
+			if config.is_player_card(str(id)):
 				config.default_deck.append(str(id))
 			elif config.is_curse(str(id)):
 				push_warning("SkillConfig: default_deck card %s is a curse, dropped" % str(id))
+			elif config.cards.has(str(id)):
+				push_warning("SkillConfig: default_deck card %s is not a player card (player_pool false), dropped" % str(id))
 			else:
 				push_warning("SkillConfig: default_deck card %s unknown, dropped" % str(id))
 	if config.default_deck.is_empty():
@@ -147,6 +152,14 @@ func get_skill(id: String) -> Dictionary:
 	if cards.has(id):
 		return cards[id] as Dictionary
 	return {}
+
+
+## True when the player may hold [param id]: a known, non-curse card whose `player_pool` is not false.
+## `player_pool: false` keeps a card out of every player source (starter deck, reward, shop, event, achievement,
+## Kiep); quick spec 2026-10-31. Its only users, the Wall cards (ket_gioi, long_an, luoi_san), were deleted on
+## 2026-11-01 with the seal effect; the flag is kept (harmless, no card sets it today) for future boss-only cards.
+func is_player_card(id: String) -> bool:
+	return cards.has(id) and not is_curse(id) and bool((cards[id] as Dictionary).get("player_pool", true))
 
 
 ## Story 027: true when [param id] is a zone card (effect in [constant ZONE_EFFECTS]). The boss never
@@ -295,6 +308,10 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"draw_damage": maxf(float(raw.get("draw_damage", 0.0)), 0.0) if rarity == CURSE_RARITY else 0.0,
 		"upgrade": upgrade,
 		"implemented": bool(raw.get("implemented", false)),
+		"player_pool": bool(raw.get("player_pool", true)),
+		# ADR-0001 D7 / A1: the card's delivery (origin, travel, impact, cell mask = the block shape); presentation
+		# only - CutEffects never reads it (SkillDelivery).
+		"delivery": SkillDelivery.parse(raw.get("delivery"), "card %s" % id),
 	}
 	# Story 027: optional per-card zone numbers (absent = the combat.json `zones` block decides).
 	for key: String in ZONE_KEYS:

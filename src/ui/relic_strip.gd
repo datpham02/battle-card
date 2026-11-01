@@ -17,21 +17,23 @@ extends Node2D
 ## owner keeps its "swallow everything" rule) and sets [member area] / [method set_relics] each frame.
 ## Reads relic data through RelicRegistry.info; all strings via tr().
 
-const BACK_COLOR: Color = Color(0.16, 0.14, 0.13, 0.92)
-const GLYPH_COLOR: Color = Color(0.97, 0.93, 0.84)
-const RARITY_COMMON_COLOR: Color = Color(0.62, 0.62, 0.66)
-const RARITY_RARE_COLOR: Color = Color(0.3, 0.55, 0.98)
-const RARITY_EPIC_COLOR: Color = Color(0.95, 0.72, 0.15)
-const RARITY_BOSS_COLOR: Color = Color(0.72, 0.22, 0.42)
+## 2026-10-31 (whole-game HUD skin): icons sit on the dark skin (NIGHT_STONE_LIGHT face, outlined TEXT letter);
+## the rarity / negative borders keep their meaning colours, lifted a little to read on HudSkin.SCREEN_BG.
+const BACK_COLOR: Color = HudSkin.NIGHT_STONE_LIGHT
+const GLYPH_COLOR: Color = HudSkin.TEXT
+const RARITY_COMMON_COLOR: Color = Color(0.66, 0.68, 0.72)
+const RARITY_RARE_COLOR: Color = Color(0.38, 0.62, 1.0)
+const RARITY_EPIC_COLOR: Color = HudSkin.GRID_LIGHT
+const RARITY_BOSS_COLOR: Color = Color(0.86, 0.36, 0.58)
 const NEGATIVE_COLOR: Color = Color(0.9, 0.12, 0.1)
-const OPEN_OUTLINE: Color = Color(1.0, 1.0, 1.0)
+const OPEN_OUTLINE: Color = HudSkin.IVORY
 const FLASH_COLOR: Color = Color(1.0, 0.95, 0.6)
-const EMPTY_TEXT_COLOR: Color = Color(0.5, 0.44, 0.36)
-const TIP_BACK: Color = Color(0.12, 0.11, 0.1, 0.97)
-const TIP_NAME_COLOR: Color = Color(0.98, 0.94, 0.85)
-const TIP_DESC_COLOR: Color = Color(0.88, 0.84, 0.76)
-const TIP_HINT_COLOR: Color = Color(0.62, 0.58, 0.52)
-const MORE_COLOR: Color = Color(0.3, 0.26, 0.22)
+const EMPTY_TEXT_COLOR: Color = HudSkin.TEXT_DIM
+const TIP_BACK: Color = Color(0.118, 0.106, 0.141, 0.97)
+const TIP_NAME_COLOR: Color = HudSkin.IVORY
+const TIP_DESC_COLOR: Color = HudSkin.TEXT
+const TIP_HINT_COLOR: Color = HudSkin.TEXT_DIM
+const MORE_COLOR: Color = HudSkin.TEXT_DIM
 
 ## Smallest interactive icon edge (48 dp ~ 64 px at the current logical resolution).
 const MIN_TOUCH_ICON: float = 64.0
@@ -242,8 +244,8 @@ func _draw() -> void:
 		return
 	if _ids.is_empty():
 		if interactive and show_empty_text:
-			draw_string(ThemeDB.fallback_font, Vector2(area.position.x, area.get_center().y + EMPTY_FONT * 0.35),
-				tr(TEXT_EMPTY), HORIZONTAL_ALIGNMENT_LEFT, area.size.x, EMPTY_FONT, EMPTY_TEXT_COLOR)
+			HudSkin.text(self, Vector2(area.position.x, area.get_center().y + EMPTY_FONT * 0.35),
+				tr(TEXT_EMPTY), EMPTY_FONT, EMPTY_TEXT_COLOR, HORIZONTAL_ALIGNMENT_LEFT, area.size.x)
 		return
 	if interactive:
 		_draw_interactive()
@@ -280,8 +282,8 @@ func _draw_display() -> void:
 	if shown < _ids.size():
 		var rect: Rect2 = icon_rect(shown)
 		var font: int = int(size * MORE_FONT_RATIO)
-		draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + font * 0.35),
-			MORE_FORMAT % (_ids.size() - shown), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font, MORE_COLOR)
+		HudSkin.text(self, Vector2(rect.position.x, rect.get_center().y + font * 0.35),
+			MORE_FORMAT % (_ids.size() - shown), font, MORE_COLOR, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true)
 
 
 func _chevron(tip: Vector2, dir: float, size: float) -> void:
@@ -307,8 +309,8 @@ static func draw_icon(canvas: CanvasItem, rect: Rect2, relic_id: String, border:
 	var font: int = maxi(int(rect.size.y * GLYPH_FONT_RATIO), 8)
 	var name: String = TranslationServer.translate(str(info.get("name_key", relic_id)))
 	var glyph: String = name.substr(0, 1).to_upper() if not name.is_empty() else "?"
-	canvas.draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, rect.get_center().y + font * 0.35),
-		glyph, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font, GLYPH_COLOR)
+	HudSkin.text(canvas, Vector2(rect.position.x, rect.get_center().y + font * 0.35),
+		glyph, font, GLYPH_COLOR, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true)
 
 
 ## Border colour of a relic rarity id (common for anything unknown).
@@ -358,17 +360,17 @@ func _tooltip_rect() -> Rect2:
 func _draw_tooltip(index: int) -> void:
 	var info: Dictionary = RelicRegistry.info(_ids[index])
 	var rect: Rect2 = _tooltip_rect()
-	var font: Font = ThemeDB.fallback_font
+	var font: Font = HudSkin.font()
 	var border: Color = NEGATIVE_COLOR if is_negative(info) else rarity_color(str(info.get("rarity", "")))
-	draw_rect(rect, TIP_BACK)
-	draw_rect(rect, border, false, TIP_BORDER)
+	HudSkin.panel(self, rect, [0.0, HudSkin.BUTTON_CUT_MAX, 0.0, HudSkin.BUTTON_CUT_MAX], TIP_BACK, border, TIP_BORDER)
 	var x: float = rect.position.x + TIP_PAD
 	var inner: float = rect.size.x - TIP_PAD * 2.0
 	var y: float = rect.position.y + TIP_PAD + TIP_NAME_FONT
-	draw_string(font, Vector2(x, y), tr(str(info.get("name_key", _ids[index]))), HORIZONTAL_ALIGNMENT_LEFT, inner, TIP_NAME_FONT, TIP_NAME_COLOR)
+	HudSkin.text(self, Vector2(x, y), tr(str(info.get("name_key", _ids[index]))), TIP_NAME_FONT, TIP_NAME_COLOR, HORIZONTAL_ALIGNMENT_LEFT, inner, true)
 	y += TIP_RARITY_FONT * 1.5
-	draw_string(font, Vector2(x, y), rarity_line(info), HORIZONTAL_ALIGNMENT_LEFT, inner, TIP_RARITY_FONT, border.lightened(0.15))
+	HudSkin.text(self, Vector2(x, y), rarity_line(info), TIP_RARITY_FONT, border.lightened(0.15), HORIZONTAL_ALIGNMENT_LEFT, inner)
 	y += TIP_DESC_FONT * 1.4
 	var desc: String = tr(str(info.get("desc_key", "")))
+	draw_multiline_string_outline(font, Vector2(x, y), desc, HORIZONTAL_ALIGNMENT_LEFT, inner, TIP_DESC_FONT, TIP_DESC_LINES, HudSkin.TEXT_OUTLINE_PX, HudSkin.TEXT_OUTLINE)
 	draw_multiline_string(font, Vector2(x, y), desc, HORIZONTAL_ALIGNMENT_LEFT, inner, TIP_DESC_FONT, TIP_DESC_LINES, TIP_DESC_COLOR)
-	draw_string(font, Vector2(x, rect.end.y - TIP_PAD * 0.8), tr(TEXT_TAP_CLOSE), HORIZONTAL_ALIGNMENT_RIGHT, inner, TIP_HINT_FONT, TIP_HINT_COLOR)
+	HudSkin.text(self, Vector2(x, rect.end.y - TIP_PAD * 0.8), tr(TEXT_TAP_CLOSE), TIP_HINT_FONT, TIP_HINT_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, inner)

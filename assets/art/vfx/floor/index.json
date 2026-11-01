@@ -1,5 +1,5 @@
 {
- "_doc": "Story 048: floor VFX packs made with PixelLab vfx_workbench (free). anchor = the cell bottom-centre (the slab feet the pack was made on); clip offsets in each manifest are relative to it. layer floor = FloorDynamicLayer (under units), overlay = OverlayLayer (above units, <= 0.35 s). play: loop | once | once_hold (hold hold_frame after playing). fill = made on the largest cell (ref_cell 64x46) to cover the whole face: drawn with its face centre on the cell centre and cropped to the cell (Story 048, user 2026-10-31).",
+ "_doc": "Story 048: floor VFX packs made with PixelLab vfx_workbench (free). anchor = the cell bottom-centre (the slab feet the pack was made on); clip offsets in each manifest are relative to it. layer floor = FloorDynamicLayer (under units), overlay = OverlayLayer (above units, <= 0.35 s). play: loop | once | once_hold (hold hold_frame after playing). fill = made on the largest cell (ref_cell 64x46) to cover the whole face: drawn with its face centre on the cell centre and cropped to the cell (Story 048, user 2026-10-31). anchor center = a non-fill pack's frame is centred on the cell (user 2026-11-01: every floor effect sits in the middle of its cell). F10 root_seal = the enemy's foot-lock seal while its own swing roots it (replaces the steel-blue ring). cell_slash = the sword cast's per-cell blast (CastVfx cell_blast), overlay, centred; PixelLab-generated (Pro Flash key + animate_image, user 2026-11-01). anchor ground_center = the pack's feet (its ground glow) on the cell centre (a burst rising out of the middle of the cell). big_burst = the sword cast's big explosion on the first cell, PixelLab-generated (Pro Flash 64x96 + animate_image 8 frames, 6 gen, user-approved 2026-11-01). small_burst = the cast's smaller bursts on the spread cells (TEMP 2026-11-01: the big burst halved 2:1, to be replaced by a generated one).",
  "packs": {
   "burning_cell": {
    "dir": "burning_cell",
@@ -33,7 +33,8 @@
    "play": "once",
    "clip": "whole",
    "frames": 9,
-   "frame_ms": 67
+   "frame_ms": 67,
+   "anchor": "center"
   },
   "cracked_cell": {
    "dir": "cracked_cell",
@@ -104,6 +105,42 @@
     64,
     46
    ]
+  },
+  "root_seal": {
+   "dir": "root_seal",
+   "layer": "floor",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 12,
+   "frame_ms": 100,
+   "anchor": "center"
+  },
+  "cell_slash": {
+   "dir": "cell_slash",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 45,
+   "anchor": "center"
+  },
+  "big_burst": {
+   "dir": "big_burst",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 9,
+   "frame_ms": 50,
+   "anchor": "ground_center"
+  },
+  "small_burst": {
+   "dir": "small_burst",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 9,
+   "frame_ms": 45,
+   "anchor": "ground_center"
   }
  }
 }

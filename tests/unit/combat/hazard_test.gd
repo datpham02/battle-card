@@ -540,8 +540,20 @@ func _crumble_tests() -> void:
 	ck("crumble: a fallen cell blocks the step and lists a time bar", mv.is_cell_blocked(Vector2i(1, 1)) and hz.fallen_cells(P) == cells([Vector2i(1, 1)]) and absf(hz.fall_total_sec(P, Vector2i(1, 1)) - 4.0) < EPS and hz.fallen_left(P, Vector2i(1, 1)) > 3.0)
 	var stats: Dictionary = hz.stats()
 	ck("crumble: stats count the pushes (player and boss) and fall_damage", int(stats["pushes"]) == 2 and absf(float(stats["fall_damage_total"]) - 16.0) < EPS and absf(hz.config_value("fall_damage") - 8.0) < EPS)
+	# Sky Isles return fade (ADR-0001 Phase 1, 2026-11-01): sampled inside cell_restored, i.e. the very moment (1,1) returns.
+	hz.return_fade_sec = 0.5
+	var back: Dictionary = {}
+	hz.cell_restored.connect(func(s: int, c: Vector2i) -> void:
+		if s == P and c == Vector2i(1, 1) and back.is_empty():
+			back["fraction"] = hz.return_fraction(P, c)
+			back["returning"] = hz.returning_cells(P).has(c)
+			back["steppable"] = not mv.is_cell_blocked(c) and not hz.is_fallen(P, c))
 	run(hz, st, 4.2)
 	ck("crumble: the cell is restored after fall_sec", box["restored"] >= 1 and not hz.is_fallen(P, Vector2i(1, 1)) and not mv.is_cell_blocked(Vector2i(1, 1)))
+	ck("crumble return: the fade starts at 1.0 (full white) the moment the cell returns", not back.is_empty() and absf(float(back["fraction"]) - 1.0) < EPS and bool(back["returning"]))
+	ck("crumble return: the returning cell is steppable at once (the fade is presentation only)", bool(back.get("steppable", false)))
+	run(hz, st, 0.6)
+	ck("crumble return: the fade is over after return_fade_sec", hz.return_fraction(P, Vector2i(1, 1)) == 0.0 and not hz.returning_cells(P).has(Vector2i(1, 1)))
 
 	# A unit that moves on before crumble_after_sec never crumbles the cell (the timer restarts per cell).
 	var st2: CombatState = mk()

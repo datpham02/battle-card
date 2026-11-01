@@ -107,8 +107,9 @@ func get_fuse_sec() -> float:
 
 
 ## Cells of the announced row (empty when no warning runs).
+## Quick spec 2026-11-01 rule 4: locked cells (cracking / hole) are left out, as the blast skips them.
 func get_warning_cells() -> Array[Vector2i]:
-	return _warning_cells.duplicate()
+	return hittable_cells(_warning_cells)
 
 
 ## Seconds until the announced blast resolves (0 when none).
@@ -144,7 +145,8 @@ func _resolve() -> void:
 	_warning_cells = []
 	_warn_left = 0.0
 	_fuse_left = _fuse_sec
-	var hit: bool = state != null and cells.has(state.player_cell)
+	# Quick spec 2026-11-01 rule 3: a locked cell (cracking / hole) takes nothing.
+	var hit: bool = state != null and hittable_cells(cells).has(state.player_cell)
 	if hit:
 		state.damage_player(_fuse_damage)
 	_blast_count += 1

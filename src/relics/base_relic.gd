@@ -78,7 +78,7 @@ func on_interrupt_by_player() -> void:
 
 
 ## Named config changes of this relic, key -> `{mul: x}` / `{add: x}` / `{add: a, mul: m}` / `{set: v}`.
-## Canonical keys: seal_sec, thorn_ran, piece_freshness_sec, start_pieces, focus_sec, formation_fade,
+## Canonical keys: thorn_sec, thorn_ran, piece_freshness_sec, start_pieces, focus_sec, formation_fade,
 ## signature_cooldown, hold_slots, piece_spawn_interval, burn_max_stacks, han_stacks, han_damage.
 ## Pure function of the params (no ctx needed). Default: none.
 func config_overrides() -> Dictionary:

@@ -40,12 +40,18 @@ var player_signature_modifier: Callable = Callable()
 ## Story 032: the relics' ONE damage hook for the PLAYER only: Callable(cells: int, damage: float) -> float
 ## (CombatView folds RelicRegistry.fold_damage, product capped), applied by CutEffects right after the
 ## featured multiplier; invalid = none. And the relics' merged config overrides for the PLAYER's zone cards
-## (seal_sec / thorn_ran, applied after the card's own number; RelicRegistry.merge_overrides form).
+## (thorn_sec / thorn_ran, applied after the card's own number; RelicRegistry.merge_overrides form).
 var player_relic_modifier: Callable = Callable()
 var player_zone_overrides: Dictionary = {}
 ## Story 037: Callable() -> float, the factor the PLAYER's zone cards multiply their seal / thorn seconds by
 ## (the character signature Vay Bat); invalid = 1.0.
 var player_zone_sec_mult_fn: Callable = Callable()
+## Quick spec 2026-10-31: Callable() -> int, extra thorn cells the PLAYER's thorn cards lay (the signature
+## Vay Bat, CutEffects.extra_thorn_cells); invalid = 0.
+var player_extra_thorn_cells_fn: Callable = Callable()
+## User 2026-11-01: the match's seeded RNG for the RANDOM extra thorn cells of Vay Bat (CutEffects.extra_thorn_cells,
+## options.zone_rng). CombatView seeds it from the match seed; null = CutEffects uses a randomized one.
+var zone_rng: RandomNumberGenerator = null
 ## Story 023: flat defense of the BOSS (match key boss_defense, subtracted from the player's damage/push
 ## hits last, minimum 1; `pierce_defense` cards skip it) and the default execute threshold (combat.json
 ## execute_ratio). 0 = none; set by CombatView.
@@ -129,6 +135,8 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 			"relic_modifier": player_relic_modifier if is_player else Callable(),
 			"zone_overrides": player_zone_overrides if is_player else {},
 			"zone_sec_mult": float(player_zone_sec_mult_fn.call()) if (is_player and player_zone_sec_mult_fn.is_valid()) else 1.0,
+			"extra_thorn_cells": int(player_extra_thorn_cells_fn.call()) if (is_player and player_extra_thorn_cells_fn.is_valid()) else 0,
+			"zone_rng": zone_rng,
 			"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call())})
 	result["cells"] = cells
 	result["skill_id"] = skill_id

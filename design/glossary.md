@@ -1,7 +1,7 @@
 # Bảng thuật ngữ Tessera
 
 > **Chốt với người dùng 2026-10-27.** Đây là nguồn chuẩn cho mọi chữ người chơi thấy: `assets/i18n/strings.csv`, tài liệu thiết kế, brief cho artist. Bối cảnh: `design/world-context.md`.
-> **Chưa áp vào game.** Chữ trong `strings.csv` vẫn là tên cũ cho tới khi một story đổi chữ chạy. Tên nội bộ trong mã và dữ liệu (`kiep_*`, `piece`, `formation`, `signature`, `seal`…) **giữ nguyên**: chỉ chữ hiển thị đổi.
+> **Đã áp vào game.** Kiểm 2026-11-01: chữ hiển thị trong `strings.csv` (vi và en) không còn tên cũ của nhóm 1–4. Tên nội bộ trong mã và dữ liệu (`kiep_*`, `piece`, `formation`, `signature`, `seal`…) **giữ nguyên**: chỉ chữ hiển thị đổi.
 > Quy tắc đặt tên: fantasy phương Tây, tiếng Việt dễ hiểu; tránh lối Hán-Việt kiếm hiệp và lối "Đại X"; không để hai thứ khác nhau trùng tên.
 
 ## Lore
@@ -45,7 +45,7 @@
 | 16 | Nội tại / Passive | **Nội tại** (giữ) / **Passive** | Hiệu ứng luôn bật của nhân vật |
 | 17 | Tập trung / Focus | **Tập trung** (giữ) / **Focus** | Dừng hoặc làm chậm thời gian khi đặt khối |
 | 18 | Niệm, Phá phép / Broken | **Niệm**, **Phá phép** (giữ) / **Channel**, **Interrupt** (biểu ngữ "INTERRUPT!"; người dùng chốt 2026-10-29) | Thời gian niệm, và việc hủy đòn đang niệm |
-| 19 | Kết giới / Seal | **Tường** / **Wall** | Tường khối, không bước vào được |
+| 19 | Kết giới / Seal | **Tường** / **Wall** | Từ 2026-10-31 không còn khối Tường: chỉ boss dùng, thành **Ô rớt** (ô nứt 0,8 s rồi rơi thành hố, không bước vào được; đứng trên lúc rơi là rơi chết). Xem `design/quick-specs/o-rot-thay-tuong-2026-10-31.md` |
 | 20 | Trận gai / Thorns | **Bãi Gai** / **Thorns** | Bước vào được nhưng mất máu hoặc dính Rạn |
 
 ## Nhóm 3: Từ khóa trạng thái
@@ -114,9 +114,9 @@ Người dùng duyệt từng nhóm. Đặt theo hiệu ứng, tiếng Anh là c
 | `card.thanh_thuy` | Sương bạc | Silver Dew |
 | `card.ran_kich` | Nứt chân chim | Hairline |
 | `card.ran_van` | Đứt gãy | Fault Line |
-| `card.ket_gioi` | Rào chắn | Barricade |
-| `card.long_an` | Lồng đá | Slab Cage |
-| `card.luoi_san` | Hàng cọc | Palisade |
+| `card.ket_gioi` | Rào chắn | Barricade (removed 2026-11-01, ADR-0001 Phase 1) |
+| `card.long_an` | Lồng đá | Slab Cage (removed 2026-11-01, ADR-0001 Phase 1) |
+| `card.luoi_san` | Hàng cọc | Palisade (removed 2026-11-01, ADR-0001 Phase 1) |
 | `card.tran_gai` | Bụi rậm | Briar Patch |
 | `card.gai_nguyen` | Dây úa | Witherbriar |
 | `card.gai_doc` | Bẫy chông | Caltrops |

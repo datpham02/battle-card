@@ -18,7 +18,8 @@ func _ready() -> void:
 
 func _draw() -> void:
 	var size: Vector2 = get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, size), BG_COLOR)
+	# 2026-10-31: the game skin's dark screen background (HudSkin) instead of the old beige BG_COLOR.
+	HudSkin.screen_background(self, Rect2(Vector2.ZERO, size))
 	var flow := get_node_or_null("GameFlow") as GameFlow
 	if flow != null and flow.get_phase() != GameFlow.Phase.IN_FLOOR:
 		return

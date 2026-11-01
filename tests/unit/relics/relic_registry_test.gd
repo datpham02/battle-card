@@ -51,7 +51,7 @@ func _registry() -> void:
 	_check(relic is AnDon and relic.get_id() == "an_don", "instantiate an_don")
 	var mod: BaseRelic = RelicRegistry.instantiate("phong_an")
 	_check(mod is ConfigModRelic and mod.get_id() == "phong_an", "config-type instance carries its relic id")
-	_check(mod.config_overrides().has("seal_sec"), "instantiate pre-sets params so config_overrides works without ctx")
+	_check(mod.config_overrides().has("thorn_sec"), "instantiate pre-sets params so config_overrides works without ctx")
 	# Every shipped relic instantiates and its script id is registered.
 	var all_ok: bool = true
 	for id: String in ids:
@@ -95,7 +95,7 @@ func _config_mod() -> void:
 	var mul: BaseRelic = RelicRegistry.instantiate("la_ban")
 	_check(_near(float(mul.config_overrides()["formation_fade"]["mul"]), 1.3), "la_ban mul 1.3 maps to the override")
 	var add: BaseRelic = RelicRegistry.instantiate("phong_an")
-	_check(_near(float(add.config_overrides()["seal_sec"]["add"]), 1.0), "phong_an add 1.0")
+	_check(_near(float(add.config_overrides()["thorn_sec"]["add"]), 1.0), "phong_an (Gai Dai) thorn_sec add 1.0")
 	var two: BaseRelic = RelicRegistry.instantiate("tui_rong")
 	var o: Dictionary = two.config_overrides()
 	_check(_near(float(o["hold_slots"]["add"]), 1.0) and not o.has("piece_spawn_interval"), "tui_rong: one slot more, no slower drop (Story 032 tuning)")
@@ -106,8 +106,8 @@ func _config_mod() -> void:
 	odd.setup({}, {"seal_sec": "x", "focus_sec": {"add": 2}})
 	_check(odd.config_overrides().size() == 1 and odd.config_overrides().has("focus_sec"), "a bad param is ignored")
 	var copy: Dictionary = add.config_overrides()
-	copy["seal_sec"]["add"] = 99.0
-	_check(_near(float(add.config_overrides()["seal_sec"]["add"]), 1.0), "config_overrides returns a copy")
+	copy["thorn_sec"]["add"] = 99.0
+	_check(_near(float(add.config_overrides()["thorn_sec"]["add"]), 1.0), "config_overrides returns a copy")
 	add.teardown()
 	_check(add.config_overrides().is_empty(), "teardown clears the table")
 	var every_key_known: bool = true

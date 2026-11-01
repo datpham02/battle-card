@@ -81,8 +81,8 @@ In-memory data overrides:
 | `--hp-ids=id,id,...` + `--hp-ids-mult=X` | `boss_max_hp` × X only for the listed match ids (e.g. the chapter's miniboss and boss). |
 | `--passive-set=key:value,...` | Sets a passive param on the played character when its passive has that key, e.g. `--passive-set=min_cells:4` (Mage `wide_caster`). |
 | `--match-set=key:value,...` | Sets any RunConfig match key on every match, e.g. `--match-set=boss_defense:2,swing_speed_mult:1.1`. |
-| `--no-zone-cards` | Story 027 "before" measurement: drops the zone cards (`SkillConfig.is_zone_card`: effect `seal` / `thorns`) from every match deck, and deck_sim also drops them from the reward pool (`RewardRoller.roll` exclude list). Same tool, same seeds as the "after" run. Boss zone traits (`seal_caster`, `thorn_field`) are NOT affected. |
-| `--card-set=id.key:value,...` | Sets a key of a cards.json card in memory, e.g. `--card-set=ket_gioi.cooldown_sec:8,tran_gai.min_cells:4,long_an.rarity:epic`. Level-1 values; the card's `upgrade` deltas still apply on top. |
+| `--no-zone-cards` | Story 027 "before" measurement: drops the zone cards (`SkillConfig.is_zone_card`: effect `thorns`) from every match deck, and deck_sim also drops them from the reward pool (`RewardRoller.roll` exclude list). Same tool, same seeds as the "after" run. Boss zone traits (`seal_caster`, `thorn_field`) are NOT affected. |
+| `--card-set=id.key:value,...` | Sets a key of a cards.json card in memory, e.g. `--card-set=tran_gai.cooldown_sec:8,gai_doc.min_cells:4,gai_nguyen.rarity:epic`. Level-1 values; the card's `upgrade` deltas still apply on top. |
 | `--relics=id,...` | Story 032. The player owns these relics (relics.json ids; unknown ids are dropped with a message) in every match. In deck_sim, the run starts with them. In hit_probe, every probe match has them. |
 | `--relic-set=id.param:value,...` | Story 032. Sets a relic param in memory (relics.json is never written). A config-type relic takes a nested path: `--relic-set=an_don.mult:1.6,la_ban.formation_fade.mul:1.15,tui_rong.piece_spawn_interval.mul:1.4`. |
 
@@ -95,7 +95,7 @@ built:
 
 | Key | Where it goes |
 |---|---|
-| `seal_sec`, `thorn_ran` | `arbiter.player_zone_overrides` = the merged overrides. CutEffects applies them after the card's own value, for the player's zone casts only. |
+| `thorn_sec`, `thorn_ran` | `arbiter.player_zone_overrides` = the merged overrides. CutEffects applies them after the card's own value, for the player's zone casts only. |
 | `burn_max_stacks`, `han_stacks`, `han_damage` | `combat.burn_max_stacks`, `frost_stacks_to_burst`, `frost_burst_damage` (then `configure_status`). |
 | `piece_spawn_interval`, `piece_freshness_sec`, `start_pieces` | The player's `FieldDropsConfig` copy, applied after `--drop-mult`. |
 | `hold_slots` | Bag size, clamped to `HoldSlots.MAX_SLOTS`. |
@@ -116,7 +116,7 @@ Each match counts its relic `triggered` signals (`relic_trig`). When CombatView'
 
 ### Zone cards (Story 027)
 
-The match gets `CombatView._wire_zones`'s wiring: a seal blocker on both movers (`UnitMover.add_blocker`),
+The match gets `CombatView._wire_zones`'s wiring: a hole blocker (the boss's drop tiles) on both movers (`UnitMover.add_blocker`),
 each side's `UnitMover.is_cell_blocked` as the arbiter's leave-a-path test (`blocked_cell_fns`), and
 `CombatConfig.zone_numbers()` on the arbiter. The boss's card list skips zone cards
 (`SkillConfig.boss_card_order`), as in the game. Without this wiring zone cards would do nothing in the sim.
@@ -125,23 +125,23 @@ Bot rule (`SimCore._zone_choice`, decided in the card menu once the cast cells a
 sees its hand after placing, like a player):
 
 1. Never when an available damage card in the hand would kill the boss, and never as the follow-up cast.
-2. **Seal** when the boss has at most `ZONE_SEAL_MAX_EXITS` (3) open exits (enemy-half neighbours its
-   mover may step into) and the cast covers all of them but one (at least one). The leave-a-path rule then
-   leaves the boss one exit at most.
-3. Else **thorns** when the cast covers at least `ZONE_THORN_MIN_COVER` (2) open exits (its dodge cells).
-4. After a zone forms, the bot follows up at once while the zone lasts: no gap, no strike wait, aimed at
-   the boss. The placement planner scores only open neighbours (sealed 0, thorned half), so the follow-up
+2. **Thorns** when the cast covers at least `ZONE_THORN_MIN_COVER` (2) open exits of the boss
+   (enemy-half neighbours its mover may step into: its dodge cells).
+3. After a zone forms, the bot follows up at once while the zone lasts: no gap, no strike wait, aimed at
+   the boss. The placement planner scores only open neighbours (blocked 0, thorned half), so the follow-up
    covers the boss cell and the exit still open.
 
-On its own half the bot treats sealed cells as blocked (mover blockers), walks around thorns, and dodges
-into thorns only when no other cell is free. deck_sim's build policy takes an offered zone card right after
-an upgrade pick, at most `ZONE_PER_EFFECT` (1) per effect in the deck (seal before thorns).
+On its own half the bot treats holes (the boss's drop tiles) as blocked (mover blockers), walks around
+thorns, and dodges into thorns only when no other cell is free. deck_sim's build policy takes an offered
+zone card right after an upgrade pick, at most `ZONE_PER_EFFECT` (1) per effect in the deck (higher
+`damage_per_cell` / `thorn_fragile_stacks` first).
 
-Match counters (`play_match` result): `zone_casts`, `seals` / `seal_cells`, `thorns` / `thorn_cells`
-(zones that formed and their cells after the leave-a-path rule), `bthorn` / `bthorn_dmg` (boss thorn
-entries, damage counted in `dealt`), `pthorn` / `pthorn_dmg` (player entries, counted in `taken`), and
-`ps_res` / `ps_hits` (non-zone casts started at most `POST_SEAL_SEC` = 2 s after a seal formed) against
-`o_res` / `o_hits` (the other non-zone casts).
+Match counters (`play_match` result): `zone_casts`, `thorns` / `thorn_cells` (zones that formed and
+their cells), `bthorn` / `bthorn_dmg` (boss thorn entries, damage counted in `dealt`), `pthorn` /
+`pthorn_dmg` (player entries, counted in `taken`), and `o_res` / `o_hits` (resolved / hit non-zone casts).
+
+The player Wall cards and their seal zone were deleted on 2026-11-01 (the boss uses drop tiles instead);
+the seal rule, the `seals` / `seal_cells` / `ps_*` counters and `POST_SEAL_SEC` went with them.
 
 The header line `bot: ... | overrides: ...` prints every value in use. Paste it next to any number
 you report.
@@ -166,10 +166,9 @@ Output for each chapter, in the same order as the rune-era sim (`deck_sim.s023.f
    acts per run. v5 columns are appended at the end: casts / match, player hit % (of resolved swings),
    Focus / match, joins / match, featured / match, counters / match, and interrupts / match (boss
    swings the bot interrupted).
-2. **`CHn ZONES`** (Story 027): zone cards picked per run and held in the final deck, zone casts, seals
-   and thorns formed per match with their mean cells, boss and player thorn entries per match, thorn
-   damage to the boss, the hit % of non-zone casts started at most 2 s after a seal (with n) against the
-   other non-zone casts, and the overall player hit %. With `--no-zone-cards` the zone columns are 0.
+2. **`CHn ZONES`** (Story 027): zone cards picked per run and held in the final deck, zone casts,
+   thorns formed per match with their mean cells, boss and player thorn entries per match, thorn damage
+   to the boss, the hit % of non-zone casts (with n), and the overall player hit %. With `--no-zone-cards` the zone columns are 0.
 3. **`NODE KIND BREAKDOWN`** and **`PER-MATCH`**: win %, hits, damage and deaths by node kind and by
    boss. These show which boss breaks the curve.
 4. **`VERDICT chN char/build`**: win % against the Story 023/026 targets (ch1 40–60, ch2 25–45,
@@ -569,7 +568,7 @@ The bot activates once the signature is ready (formation map covered, cooldown o
 
 | Signature | Rule (`SimCore._bot_signature`) |
 |---|---|
-| `vay_bat` (Thợ săn) | Right after a player zone (seal or thorns) formed: the tick after a zone cast resolved, while that zone's follow-up window is still open (`_zone_follow_until`). It covers the bot's follow-up casts of that zone (Ran stacks consumed at `fragile_mult`) and any zone cast in the next `duration_sec`; the zone that just formed is not lengthened. |
+| `vay_bat` (Thợ săn) | Right after a player zone (thorns) formed: the tick after a zone cast resolved, while that zone's follow-up window is still open (`_zone_follow_until`). It covers the bot's follow-up casts of that zone (Ran stacks consumed at `fragile_mult`) and any zone cast in the next `duration_sec`; the zone that just formed is not lengthened. |
 | `thanh_an` (Giáo sĩ) | When the boss has at least `sig_thanh_an_min_stacks` (1) Han stack (`StatusEffects.frost_stacks(ENEMY)`). |
 
 `--sig=ready` fires both as soon as they are usable; `--sig=off` never. `sim_core` also ports the Story 037 combat wiring of

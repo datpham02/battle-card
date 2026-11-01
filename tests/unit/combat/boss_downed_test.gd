@@ -1,6 +1,6 @@
 extends SceneTree
 ## Story 035 Part A bullet 1 + "Match stats": a REGION boss (match_params boss_can_down) at 0 HP is DOWNED in
-## CombatView: it stays on the board, stops deciding, its field pieces are removed and its seals / thorns / burns
+## CombatView: it stays on the board, stops deciding, its field pieces are removed and its drop tiles / thorns / burns
 ## on the player's half clear; match_ended still fires after end_delay_sec. A miniboss / normal match (no key) and
 ## the final match (boss_phases, no key) keep today's dead-boss behaviour. get_match_stats counts damage dealt /
 ## taken, hits taken, casts, joins, featured casts and signatures from the existing hooks. Headless; FAILS=N.
@@ -62,12 +62,14 @@ func _drop(holder: Node) -> void:
 	holder.free()
 
 
-# The boss's seal + thorns + a burning cell on the player's half, and one boss piece lying on its half.
+# The boss's drop tile (cracking) + thorns + a burning cell on the player's half, and one boss piece lying on its
+# half. The litter cells avoid the player's own cell.
 func _litter(v: CombatView) -> void:
 	var grid: BoardGrid = v.get_grid()
 	var player_cells: Array[Vector2i] = grid.player_cells()
+	player_cells.erase(v.get_state().player_cell)
 	var status: StatusEffects = v.get_status()
-	status.apply_seal(CombatState.Side.PLAYER, [player_cells[0]] as Array[Vector2i], ZONE_SEC)
+	status.apply_drop(CombatState.Side.PLAYER, [player_cells[0]] as Array[Vector2i], ZONE_SEC, ZONE_SEC)
 	status.apply_thorns(CombatState.Side.PLAYER, [player_cells[1]] as Array[Vector2i], ZONE_SEC, 1.0, 0)
 	status.ignite([player_cells[2]] as Array[Vector2i], ZONE_SEC, 1.0, 1.0)
 	var enemy_cells: Array[Vector2i] = grid.enemy_cells()
@@ -77,7 +79,8 @@ func _litter(v: CombatView) -> void:
 
 func _player_litter_count(v: CombatView) -> int:
 	var status: StatusEffects = v.get_status()
-	var count: int = status.sealed_cells(CombatState.Side.PLAYER).size() + status.thorn_cells(CombatState.Side.PLAYER).size()
+	var side: int = CombatState.Side.PLAYER
+	var count: int = status.crack_cells(side).size() + status.hole_cells(side).size() + status.thorn_cells(side).size()
 	for cell: Vector2i in status.burning_cells():
 		if v.get_grid().is_player_cell(cell):
 			count += 1
@@ -111,7 +114,7 @@ func _test_region_boss_downed() -> void:
 	_check("region: boss stays on its cell", v.get_state().enemy_cell == cell)
 	_check("region: boss stops deciding / moving", not v.get_boss().is_active() and not v.get_boss().get_actor().is_swinging())
 	_check("region: its field pieces are gone", v.get_boss().get_drops().get_points().is_empty())
-	_check("region: seals, thorns, burns on the player's half cleared", _player_litter_count(v) == 0, str(_player_litter_count(v)))
+	_check("region: drop tiles, thorns, burns on the player's half cleared", _player_litter_count(v) == 0, str(_player_litter_count(v)))
 	await _await_end(v, ended)
 	_check("region: match_ended still fires (won)", ended == [true], str(ended))
 	_drop(holder)

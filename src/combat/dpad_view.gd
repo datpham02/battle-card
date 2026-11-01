@@ -26,9 +26,10 @@ extends Node2D
 ## DEV convenience: arrow keys and WASD also step (physical keycodes, no InputMap edits).
 ## Implements: Story 007, Story 044 (Part B).
 
-const BUTTON_COLOR: Color = Color(0.2, 0.17, 0.15, 0.85)
-const BUTTON_OUTLINE: Color = Color(0.95, 0.9, 0.78)
-const ARROW_COLOR: Color = Color(0.95, 0.9, 0.78)
+## 2026-10-31: game skin colours (HudSkin): Night Stone fill, Mist line, Ivory arrows / knob.
+const BUTTON_COLOR: Color = Color("1E1B24", 0.85)
+const BUTTON_OUTLINE: Color = Color("7D8896")
+const ARROW_COLOR: Color = Color("EFE6D2")
 ## Alpha multiplier of a button right after a step (cooldown fraction 1), 1 when ready.
 const DIM_ALPHA: float = 0.4
 ## Locked while Focus pauses the match (Story 012): a stronger dim than the step cooldown plus
@@ -56,7 +57,7 @@ const HINT_CENTER_Y_RATIO: float = 0.8
 ## Stick look: base fill alpha factor, outline width, knob fill, and the direction ticks on the base.
 const STICK_BASE_ALPHA: float = 0.45
 const STICK_OUTLINE_WIDTH: float = 3.0
-const STICK_KNOB_COLOR: Color = Color(0.95, 0.9, 0.78, 0.9)
+const STICK_KNOB_COLOR: Color = Color("EFE6D2", 0.9)
 const STICK_TICK_RATIO: float = 0.72
 const STICK_TICK_SIZE_PX: float = 9.0
 const STICK_TICK_ACTIVE_ALPHA: float = 1.0
@@ -278,10 +279,10 @@ func _draw_pad(alpha: float, locked: bool) -> void:
 	var rects: Dictionary = ScreenLayout.dpad_rects(get_viewport_rect().size)
 	for direction: Vector2i in rects:
 		var rect: Rect2 = rects[direction]
-		draw_rect(rect, Color(BUTTON_COLOR, BUTTON_COLOR.a * alpha))
+		var cut: float = HudSkin.button_cut(rect)
+		HudSkin.panel(self, rect, [0.0, cut, 0.0, cut], Color(BUTTON_COLOR, BUTTON_COLOR.a * alpha), Color(BUTTON_OUTLINE, alpha), 2.0)
 		if locked:
 			draw_rect(rect, LOCKED_TINT)
-		draw_rect(rect, Color(BUTTON_OUTLINE, alpha), false, OUTLINE_WIDTH)
 		var c: Vector2 = rect.get_center()
 		var r: float = rect.size.x * ARROW_RATIO
 		var d := Vector2(direction)

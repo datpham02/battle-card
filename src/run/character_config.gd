@@ -126,8 +126,10 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 	var raw_deck: Variant = raw.get("starter_deck", [])
 	if typeof(raw_deck) == TYPE_ARRAY:
 		for card: Variant in raw_deck as Array:
-			if skills.has_skill(str(card)):
+			if skills.is_player_card(str(card)):
 				deck.append(str(card))
+			elif skills.has_skill(str(card)):
+				push_warning("CharacterConfig: %s starter_deck card '%s' is not a player card, dropped" % [id, str(card)])
 			else:
 				push_warning("CharacterConfig: %s starter_deck card '%s' unknown, dropped" % [id, str(card)])
 	if deck.is_empty():

@@ -24,19 +24,22 @@ extends Node2D
 ## unfocused unlocked card focuses it (GameFlow.set_character; the level resets to its unlocked one); tapping the focused
 ## card starts the run at the bar's level. DEV `--screen=kiep_hint` shows the locked-level hint on entry.
 
-const TITLE_COLOR: Color = Color(0.15, 0.12, 0.1)
-const CARD_OPEN_BACK: Color = Color(1.0, 0.97, 0.9)
-const CARD_OPEN_OUTLINE: Color = Color(0.6, 0.52, 0.4)
-const CARD_LOCKED_BACK: Color = Color(0.72, 0.7, 0.66)
-const CARD_LOCKED_OUTLINE: Color = Color(0.5, 0.48, 0.44)
-const CARD_PRESSED_OUTLINE: Color = Color(1.0, 0.85, 0.2)
-const NAME_COLOR: Color = Color(0.15, 0.12, 0.1)
-const HP_COLOR: Color = Color(0.7, 0.2, 0.15)
-const BODY_COLOR: Color = Color(0.3, 0.26, 0.22)
-const PASSIVE_COLOR: Color = Color(0.2, 0.4, 0.55)
-const DIVIDER_COLOR: Color = Color(0.6, 0.52, 0.4, 0.5)
-const LOCKED_TEXT: Color = Color(0.4, 0.38, 0.35)
-const PADLOCK_COLOR: Color = Color(0.45, 0.43, 0.4)
+## 2026-10-31 dark skin (HudSkin): card faces (CARD_FILL, Mist edge; the focused card Grid Light 3 px; a pressed /
+## picked card an Ivory edge), Night Stone panels, outlined text. HP reads in the player-HP green (red is reserved for
+## enemy telegraphs); the passive blue and the signature accent are lightened to read on the dark field.
+const TITLE_COLOR: Color = HudSkin.IVORY
+const CARD_OPEN_BACK: Color = HudSkin.CARD_FILL
+const CARD_OPEN_OUTLINE: Color = HudSkin.CARD_LINE
+const CARD_LOCKED_BACK: Color = HudSkin.NIGHT_STONE
+const CARD_LOCKED_OUTLINE: Color = Color("7D889699")
+const CARD_PRESSED_OUTLINE: Color = HudSkin.IVORY
+const NAME_COLOR: Color = HudSkin.IVORY
+const HP_COLOR: Color = HudSkin.HP_FILL
+const BODY_COLOR: Color = HudSkin.TEXT_DIM
+const PASSIVE_COLOR: Color = Color("7FB8E0")
+const DIVIDER_COLOR: Color = Color("7D889680")
+const LOCKED_TEXT: Color = HudSkin.MIST
+const PADLOCK_COLOR: Color = HudSkin.MIST
 const OUTLINE_WIDTH: float = 3.0
 const PRESSED_OUTLINE_WIDTH: float = 6.0
 const DIVIDER_WIDTH: float = 2.0
@@ -62,7 +65,7 @@ const KIEP_HINT_FONT_SIZE: int = 18
 const KIEP_RULES_FONT_SIZE: int = 16
 const KIEP_RULES_LINE_HEIGHT: float = 20.0
 const KIEP_RULES_HEADER_HEIGHT: float = 18.0
-const SIGNATURE_COLOR: Color = Color(0.6, 0.25, 0.1)
+const SIGNATURE_COLOR: Color = HudSkin.GRID_LIGHT
 ## Line limits of the wrapped blocks (draw_multiline_string max_lines).
 const DESC_MAX_LINES: int = 3
 const PASSIVE_DESC_MAX_LINES: int = 4
@@ -129,8 +132,8 @@ const RULES_BOTTOM: float = 0.985
 const STRIP_TOP: float = 0.93
 const STRIP_BOTTOM: float = 0.985
 const STRIP_FONT_SIZE: int = 22
-const STRIP_BACK: Color = Color(1.0, 0.97, 0.9)
-const STRIP_TEXT_COLOR: Color = Color(0.4, 0.2, 0.12)
+const STRIP_BACK: Color = HudSkin.NIGHT_STONE
+const STRIP_TEXT_COLOR: Color = HudSkin.GRID_LIGHT
 const DEV_KIEP_HINT_ARG: String = "--screen=kiep_hint"
 ## Story 038 strings: the badge "Kiếp %d" (best won), the bar caption, the locked-level hint "Thắng Kiếp %d để mở",
 ## the rules list title and its numbered line, the level-0 line, the "tap again" hint.
@@ -142,13 +145,13 @@ const TEXT_KIEP_RULE_LINE: String = "ui.character_select.kiep_rule_line"
 const TEXT_KIEP_NONE: String = "ui.character_select.kiep_none"
 const TEXT_TAP_TO_START: String = "ui.character_select.tap_to_start"
 const KIEP_BADGE_BACK: Color = Color(0.45, 0.2, 0.55)
-const KIEP_BADGE_TEXT: Color = Color(1.0, 1.0, 1.0)
-const KIEP_FOCUS_OUTLINE: Color = Color(0.25, 0.45, 0.85)
-const KIEP_RULES_BACK: Color = Color(1.0, 0.97, 0.9, 0.85)
-const KIEP_RULE_COLOR: Color = Color(0.3, 0.26, 0.22)
-const KIEP_NEWEST_COLOR: Color = Color(0.75, 0.2, 0.1)
-const KIEP_HINT_COLOR: Color = Color(0.75, 0.2, 0.1)
-const KIEP_NUMBER_COLOR: Color = Color(0.15, 0.12, 0.1)
+const KIEP_BADGE_TEXT: Color = HudSkin.TEXT
+const KIEP_FOCUS_OUTLINE: Color = HudSkin.GRID_LIGHT
+const KIEP_RULES_BACK: Color = HudSkin.NIGHT_STONE
+const KIEP_RULE_COLOR: Color = HudSkin.TEXT_DIM
+const KIEP_NEWEST_COLOR: Color = HudSkin.GRID_LIGHT
+const KIEP_HINT_COLOR: Color = Color("E89A6E")
+const KIEP_NUMBER_COLOR: Color = HudSkin.IVORY
 const FOCUS_OUTLINE_WIDTH: float = 6.0
 
 ## Path to the GameFlow (the parent by default).
@@ -169,6 +172,8 @@ var _drag_active: bool = false
 
 
 func _ready() -> void:
+	# 2026-11-01: crisp pixel frames (PixelFrame) and the menu font (MenuFont) on every menu screen.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_flow = get_node(flow_path) as GameFlow
 	_skills = SkillConfig.load_from_file()
 	for arg: String in OS.get_cmdline_user_args():
@@ -364,7 +369,7 @@ func _draw() -> void:
 		return
 	var vp: Vector2 = get_viewport_rect().size
 	var title: Rect2 = ScreenLayout.floor_title_rect(vp)
-	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR)
+	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR, true)
 	var back: Rect2 = ScreenLayout.back_button_rect(vp)
 	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
 	var ids: Array[String] = _flow.get_characters().ids()
@@ -380,12 +385,11 @@ func _draw() -> void:
 # Story 037: the unlock condition of the tapped locked card (or the hint to tap one).
 func _draw_strip(vp: Vector2) -> void:
 	var strip: Rect2 = strip_rect(vp)
-	draw_rect(strip, STRIP_BACK)
-	draw_rect(strip, CARD_LOCKED_OUTLINE, false, OUTLINE_WIDTH)
+	HudSkin.panel(self, strip, [0.0, HudSkin.button_cut(strip), 0.0, 0.0], STRIP_BACK, HudSkin.MIST)
 	var text: String = locked_text(_hint_id) if not _hint_id.is_empty() else tr(TEXT_LOCKED_HINT)
 	var pad: float = strip.size.x * 0.02
 	var size: int = _fit(text, strip.size.x - pad * 2.0, STRIP_FONT_SIZE)
-	draw_string(ThemeDB.fallback_font, Vector2(strip.position.x + pad, strip.get_center().y + size * 0.35), text, HORIZONTAL_ALIGNMENT_CENTER, strip.size.x - pad * 2.0, size, STRIP_TEXT_COLOR if not _hint_id.is_empty() else LOCKED_TEXT)
+	MenuFont.text(self, Vector2(strip.position.x + pad, strip.get_center().y + size * 0.35), text, size, STRIP_TEXT_COLOR if not _hint_id.is_empty() else HudSkin.TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER, strip.size.x - pad * 2.0)
 
 
 func _draw_card(rect: Rect2, id: String) -> void:
@@ -394,13 +398,14 @@ func _draw_card(rect: Rect2, id: String) -> void:
 	var pressed: bool = not locked and UiButtons.is_pressed_at(self, rect)
 	var picked: bool = locked and id == _hint_id
 	var focused: bool = not locked and id == focus_id()
-	draw_rect(rect, CARD_LOCKED_BACK if locked else CARD_OPEN_BACK)
+	var cut: float = HudSkin.button_cut(rect)
+	var back: Color = CARD_LOCKED_BACK if locked else CARD_OPEN_BACK
 	if pressed or picked:
-		draw_rect(rect, CARD_PRESSED_OUTLINE, false, PRESSED_OUTLINE_WIDTH)
+		HudSkin.panel(self, rect, [0.0, cut, 0.0, 0.0], back.lightened(HudSkin.BUTTON_PRESSED_LIGHTEN) if pressed else back, CARD_PRESSED_OUTLINE, 3.0)
 	elif focused:
-		draw_rect(rect, KIEP_FOCUS_OUTLINE, false, FOCUS_OUTLINE_WIDTH)
+		HudSkin.card(self, rect, CARD_OPEN_OUTLINE, true)
 	else:
-		draw_rect(rect, CARD_LOCKED_OUTLINE if locked else CARD_OPEN_OUTLINE, false, OUTLINE_WIDTH)
+		HudSkin.panel(self, rect, [0.0, cut, 0.0, 0.0], back, CARD_LOCKED_OUTLINE if locked else CARD_OPEN_OUTLINE)
 	var scale: float = MIN_FONT_SCALE
 	var pad: float = rect.size.x * CARD_PAD_RATIO
 	var inner := Rect2(rect.position.x + pad, rect.position.y, rect.size.x - pad * 2.0, rect.size.y)
@@ -409,24 +414,24 @@ func _draw_card(rect: Rect2, id: String) -> void:
 	var body_color: Color = LOCKED_TEXT if locked else BODY_COLOR
 	var passive_color: Color = LOCKED_TEXT if locked else PASSIVE_COLOR
 	var name_text: String = tr(str(character.get("name_key", id)))
-	_text(inner, _y(rect, NAME_BASELINE), name_text, _fit(name_text, inner.size.x, _fs(NAME_FONT_SIZE, scale)), name_color)
+	_text(inner, _y(rect, NAME_BASELINE), name_text, _fit(name_text, inner.size.x, _fs(NAME_FONT_SIZE, scale), true), name_color, true)
 	_text(inner, _y(rect, HP_BASELINE), tr(TEXT_HP) % int(float(character.get("max_hp", 0.0))), _fs(HP_FONT_SIZE, scale), hp_color)
 	if not locked:
 		_draw_kiep_badge(rect, id)
 	_wrapped(inner, _y(rect, DESC_BASELINE), tr(str(character.get("desc_key", ""))), _fs(DESC_FONT_SIZE, scale), DESC_MAX_LINES, body_color)
 	_divider(inner, _y(rect, DIVIDER_1))
 	var passive_name: String = tr(str(character.get("passive_name_key", "")))
-	_text(inner, _y(rect, PASSIVE_NAME_BASELINE), passive_name, _fit(passive_name, inner.size.x, _fs(PASSIVE_NAME_FONT_SIZE, scale)), passive_color)
+	_text(inner, _y(rect, PASSIVE_NAME_BASELINE), passive_name, _fit(passive_name, inner.size.x, _fs(PASSIVE_NAME_FONT_SIZE, scale), true), passive_color, true)
 	_wrapped(inner, _y(rect, PASSIVE_DESC_BASELINE), tr(str(character.get("passive_desc_key", ""))), _fs(PASSIVE_DESC_FONT_SIZE, scale), PASSIVE_DESC_MAX_LINES, body_color)
 	_divider(inner, _y(rect, DIVIDER_2))
-	_text(inner, _y(rect, DECK_HEADER_BASELINE), tr(TEXT_DECK), _fs(DECK_HEADER_FONT_SIZE, scale), name_color)
+	_text(inner, _y(rect, DECK_HEADER_BASELINE), tr(TEXT_DECK), _fs(DECK_HEADER_FONT_SIZE, scale), name_color, true)
 	_wrapped(inner, _y(rect, DECK_BASELINE), _deck_summary(id), _fs(DECK_FONT_SIZE, scale), DECK_MAX_LINES, body_color)
 	var signature_id: String = _signature_id(character)
 	if not locked and not signature_id.is_empty():
 		_divider(inner, _y(rect, DIVIDER_3))
 		var key_base: String = SIGNATURE_KEY_PREFIX + signature_id
 		var sig_text: String = tr(TEXT_SIGNATURE) % tr(key_base + SIGNATURE_NAME_SUFFIX)
-		_text(inner, _y(rect, SIGNATURE_NAME_BASELINE), sig_text, _fit(sig_text, inner.size.x, _fs(SIGNATURE_NAME_FONT_SIZE, scale)), SIGNATURE_COLOR)
+		_text(inner, _y(rect, SIGNATURE_NAME_BASELINE), sig_text, _fit(sig_text, inner.size.x, _fs(SIGNATURE_NAME_FONT_SIZE, scale), true), SIGNATURE_COLOR, true)
 		_wrapped(inner, _y(rect, SIGNATURE_DESC_BASELINE), tr(key_base + SIGNATURE_DESC_SUFFIX), _fs(SIGNATURE_DESC_FONT_SIZE, scale), SIGNATURE_DESC_MAX_LINES, body_color)
 	if locked:
 		_draw_padlock(rect)
@@ -438,11 +443,10 @@ func _draw_kiep_badge(rect: Rect2, id: String) -> void:
 	if best < 0:
 		return
 	var text: String = tr(TEXT_KIEP_BADGE) % best
-	var font: Font = ThemeDB.fallback_font
-	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, KIEP_BADGE_FONT_SIZE).x + 8.0
+	var width: float = HudSkin.text_width(text, KIEP_BADGE_FONT_SIZE, true) + 8.0
 	var badge := Rect2(rect.end.x - width - 4.0, _y(rect, HP_BASELINE) - KIEP_BADGE_FONT_SIZE - 3.0, width, KIEP_BADGE_FONT_SIZE + 8.0)
-	draw_rect(badge, KIEP_BADGE_BACK)
-	draw_string(font, Vector2(badge.position.x, badge.get_center().y + KIEP_BADGE_FONT_SIZE * 0.35), text, HORIZONTAL_ALIGNMENT_CENTER, badge.size.x, KIEP_BADGE_FONT_SIZE, KIEP_BADGE_TEXT)
+	HudSkin.panel(self, badge, [0.0, 3.0, 0.0, 3.0], KIEP_BADGE_BACK, HudSkin.IVORY, 1.0)
+	MenuFont.text(self, Vector2(badge.position.x, badge.get_center().y + KIEP_BADGE_FONT_SIZE * 0.35), text, KIEP_BADGE_FONT_SIZE, KIEP_BADGE_TEXT, HORIZONTAL_ALIGNMENT_CENTER, badge.size.x, true)
 
 
 # Story 038: the level bar of the focused card: "-" | caption, the big level, a hint line | "+".
@@ -462,7 +466,7 @@ func _draw_kiep_bar(vp: Vector2) -> void:
 	var name_text: String = tr(str(_flow.get_characters().get_character(id).get("name_key", id)))
 	var caption: String = name_text + " · " + tr(TEXT_KIEP_LABEL)
 	_text(middle, middle.position.y + KIEP_CAPTION_FONT_SIZE + 2.0, caption, _fit(caption, middle.size.x, KIEP_CAPTION_FONT_SIZE), BODY_COLOR)
-	_text(middle, middle.position.y + middle.size.y * 0.72, str(level), KIEP_NUMBER_FONT_SIZE, KIEP_NUMBER_COLOR)
+	_text(middle, middle.position.y + middle.size.y * 0.72, str(level), KIEP_NUMBER_FONT_SIZE, KIEP_NUMBER_COLOR, true)
 	var hint: String = tr(TEXT_KIEP_LOCKED_HINT) % unlocked if _kiep_hint else tr(TEXT_TAP_TO_START)
 	var hint_color: Color = KIEP_HINT_COLOR if _kiep_hint else LOCKED_TEXT
 	_text(middle, middle.end.y - 5.0, hint, _fit(hint, middle.size.x, KIEP_HINT_FONT_SIZE), hint_color)
@@ -495,13 +499,11 @@ func _rules_scroll_snapped(vp: Vector2) -> float:
 # Story 038: the title row and the rules of levels 1..k (the newest highlighted); the list starts scrolled to its end.
 func _draw_kiep_rules(vp: Vector2) -> void:
 	var rect: Rect2 = rules_rect(vp)
-	draw_rect(rect, KIEP_RULES_BACK)
-	draw_rect(rect, CARD_LOCKED_OUTLINE, false, DIVIDER_WIDTH)
-	var font: Font = ThemeDB.fallback_font
+	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], KIEP_RULES_BACK, HudSkin.MIST)
 	var pad: float = 12.0
 	var lines: Array[String] = _rules_lines()
 	var title: String = tr(TEXT_KIEP_RULES_TITLE) if not lines.is_empty() else tr(TEXT_KIEP_NONE)
-	draw_string(font, Vector2(rect.position.x + pad, rect.position.y + KIEP_RULES_FONT_SIZE + 1.0), title, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - pad * 2.0, KIEP_RULES_FONT_SIZE, PASSIVE_COLOR)
+	MenuFont.text(self, Vector2(rect.position.x + pad, rect.position.y + KIEP_RULES_FONT_SIZE + 1.0), title, KIEP_RULES_FONT_SIZE, PASSIVE_COLOR, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - pad * 2.0, true)
 	if lines.is_empty():
 		return
 	var level: int = _flow.get_kiep_level()
@@ -517,7 +519,7 @@ func _draw_kiep_rules(vp: Vector2) -> void:
 		if y - KIEP_RULES_LINE_HEIGHT < view.position.y - 1.0 or y > view.end.y + 1.0:
 			continue
 		var color: Color = KIEP_NEWEST_COLOR if i == lines.size() - 1 else KIEP_RULE_COLOR
-		draw_string(font, Vector2(rect.position.x + pad, y - 5.0), lines[i], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - pad * 2.0, KIEP_RULES_FONT_SIZE, color)
+		MenuFont.text(self, Vector2(rect.position.x + pad, y - 5.0), lines[i], KIEP_RULES_FONT_SIZE, color, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - pad * 2.0)
 
 
 # Font size [param base] scaled by [param scale], never below MIN_FONT_SIZE.
@@ -525,9 +527,10 @@ func _fs(base: int, scale: float) -> int:
 	return maxi(roundi(base * scale), MIN_FONT_SIZE)
 
 
-# The largest size from [param size] down to MIN_FONT_SIZE whose one-line [param text] fits [param width].
-func _fit(text: String, width: float, size: int) -> int:
-	while size > MIN_FONT_SIZE and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x > width:
+# The largest size from [param size] down to MIN_FONT_SIZE whose one-line [param text] fits [param width] (measured in
+# the HudSkin font, Bold when [param bold]).
+func _fit(text: String, width: float, size: int, bold: bool = false) -> int:
+	while size > MIN_FONT_SIZE and HudSkin.text_width(text, size, bold) > width:
 		size -= 1
 	return size
 
@@ -574,14 +577,20 @@ func _divider(inner: Rect2, y: float) -> void:
 	draw_line(Vector2(inner.position.x, y), Vector2(inner.end.x, y), DIVIDER_COLOR, DIVIDER_WIDTH)
 
 
-# Centred single-line text at baseline [param y] over the width of [param rect].
-func _text(rect: Rect2, y: float, text: String, size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, color)
+# Centred single-line outlined text (HudSkin) at baseline [param y] over the width of [param rect]; Bold when [param bold].
+func _text(rect: Rect2, y: float, text: String, size: int, color: Color, bold: bool = false) -> void:
+	MenuFont.text(self, Vector2(rect.position.x, y), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, bold)
 
 
-# Centred word-wrapped text from baseline [param y], at most [param max_lines] lines, over the width of [param rect].
+# Centred word-wrapped outlined text (HudSkin font) from baseline [param y], at most [param max_lines] lines, over the
+# width of [param rect].
 func _wrapped(rect: Rect2, y: float, text: String, size: int, max_lines: int, color: Color) -> void:
-	draw_multiline_string(ThemeDB.fallback_font, Vector2(rect.position.x, y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, max_lines, color)
+	if text.is_empty():
+		return
+	var f: Font = HudSkin.font()
+	var pos := Vector2(rect.position.x, y)
+	draw_multiline_string_outline(f, pos, text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, max_lines, HudSkin.TEXT_OUTLINE_PX, Color(HudSkin.TEXT_OUTLINE, color.a))
+	draw_multiline_string(f, pos, text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, max_lines, color)
 
 
 # The character's signature id (characters.json signature.id); "" when it has none.

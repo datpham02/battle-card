@@ -22,6 +22,7 @@ func _initialize() -> void:
 	test_zero_is_allowed()
 	test_corner_panels_flag()
 	test_hp_plate_rect()
+	test_step_rings_flag()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
 
@@ -76,3 +77,11 @@ func test_hp_plate_rect() -> void:
 	_check("hp slot under the feet", is_equal_approx(r.position.y, 300.0 + CutHudView.HP_PLATE_GAP) and is_equal_approx(r.size.y, CutHudView.HP_PLATE_HEIGHT), str(r))
 	var wide: Rect2 = CutHudView.hp_plate_rect(Vector2(401.0, 300.5), 41.3)
 	_check("hp slot grows with the text, whole px", wide.size.x == ceilf(41.3 + CutHudView.HP_PLATE_PAD_X * 2.0) and wide.position == wide.position.floor(), str(wide))
+
+
+# 2026-10-31 (user): hud.step_rings, shipped false (no step-cooldown ring after a step).
+func test_step_rings_flag() -> void:
+	var shipped: CombatConfig = CombatConfig.load_from_file()
+	_check("shipped step_rings = false", shipped != null and shipped.hud_step_rings == false)
+	_check("explicit step_rings true", CombatConfig.from_dictionary({"hud": {"step_rings": true}}).hud_step_rings == true)
+	_check("non-bool step_rings keeps false", CombatConfig.from_dictionary({"hud": {"step_rings": "yes"}}).hud_step_rings == false)

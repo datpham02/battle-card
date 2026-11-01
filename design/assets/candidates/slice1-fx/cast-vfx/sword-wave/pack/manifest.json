@@ -1,0 +1,94 @@
+{
+ "app": "PixelLab VFX Creator",
+ "name": "Tessera cast - Sword wave (projectile)",
+ "fps": 12,
+ "frame_ms": 83,
+ "frames": 4,
+ "loop": true,
+ "canvas": {
+  "w": 40,
+  "h": 44
+ },
+ "anchor": {
+  "kind": "origin",
+  "x": 20,
+  "y": 22
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect, no sprite",
+   "depth": "both",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 4,
+   "frame": {
+    "w": 31,
+    "h": 30
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 4,
+     "columns": 2,
+     "rows": 2
+    }
+   ],
+   "offset": {
+    "x": -17,
+    "y": -15
+   }
+  },
+  {
+   "name": "behind",
+   "title": "everything behind the sprite",
+   "depth": "behind",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 4,
+   "frame": {
+    "w": 18,
+    "h": 15
+   },
+   "sheets": [
+    {
+     "file": "behind.png",
+     "first_frame": 0,
+     "frames": 4,
+     "columns": 2,
+     "rows": 2
+    }
+   ],
+   "offset": {
+    "x": -17,
+    "y": -3
+   }
+  },
+  {
+   "name": "front",
+   "title": "everything in front of the sprite",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 4,
+   "frame": {
+    "w": 14,
+    "h": 30
+   },
+   "sheets": [
+    {
+     "file": "front.png",
+     "first_frame": 0,
+     "frames": 4,
+     "columns": 2,
+     "rows": 2
+    }
+   ],
+   "offset": {
+    "x": 0,
+    "y": -15
+   }
+  }
+ ]
+}

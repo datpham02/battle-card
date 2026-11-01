@@ -1,0 +1,43 @@
+{
+ "app": "PixelLab (create_image_pro_flash + animate_image)",
+ "name": "Tessera cast - sword cell slash (PixelLab gen)",
+ "frame_ms": 45,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 64,
+  "h": 64
+ },
+ "anchor": {
+  "kind": "feet",
+  "x": 32,
+  "y": 64
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "both",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 64,
+    "h": 64
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 7,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -32,
+    "y": -64
+   }
+  }
+ ]
+}

@@ -123,9 +123,10 @@ const CHAPTER_TILE_GAP_RATIO: float = 0.02
 ## three cards share min(384, 346) = 346 px >= 300 px) and the skip button's top (its height is
 ## BACK_BUTTON_HEIGHT_RATIO: 0.86 + 0.09 = 0.95 of the height).
 const REWARD_CARDS_TOP_RATIO: float = 0.17
-const REWARD_CARDS_BOTTOM_RATIO: float = 0.82
+## 2026-11-01 (OSFE cards): portrait cards (about 3:4) that print their effect text.
+const REWARD_CARDS_BOTTOM_RATIO: float = 0.72
 const REWARD_CARD_GAP_RATIO: float = 0.02
-const REWARD_CARD_MAX_WIDTH_RATIO: float = 0.27
+const REWARD_CARD_MAX_WIDTH_RATIO: float = 0.22
 const REWARD_SKIP_TOP_RATIO: float = 0.86
 ## Reward screen (Story 020): the "Bỏ 1 lá" slot's width (0.16 * 1280 = 205 px, a narrower fourth
 ## card right of the offer); with it the three cards share (1203 - 205 - 3 * 25.6) / 3 = 307 px
@@ -164,16 +165,25 @@ static func hud_top_row_rect(viewport_size: Vector2) -> Rect2:
 ## knife motif, tagline), the button column's top, one button's size (0.3 * 1280 = 384 px wide,
 ## 0.11 * 720 = 79 px tall >= 72 px) and the gap between buttons (share of height). Three
 ## buttons end at 0.47 + 3 * 0.11 + 2 * 0.025 = 0.85 of the height.
-const TITLE_TOP_RATIO: float = 0.08
-const TITLE_BOTTOM_RATIO: float = 0.42
-const TITLE_BUTTONS_TOP_RATIO: float = 0.47
+## Main Menu pass (user 2026-11-01, OSFE-style): the name band and the button column sit on the LEFT
+## (TITLE_LEFT_RATIO from the edge, left thumb reach); the right side shows the key-art scene.
+const TITLE_TOP_RATIO: float = 0.06
+const TITLE_BOTTOM_RATIO: float = 0.36
+const TITLE_LEFT_RATIO: float = 0.06
+const TITLE_BAND_WIDTH_RATIO: float = 0.42
+const TITLE_BUTTONS_TOP_RATIO: float = 0.41
 const TITLE_BUTTON_WIDTH_RATIO: float = 0.3
-const TITLE_BUTTON_HEIGHT_RATIO: float = 0.11
-const TITLE_BUTTON_GAP_RATIO: float = 0.025
+const TITLE_BUTTON_HEIGHT_RATIO: float = 0.1
+const TITLE_BUTTON_GAP_RATIO: float = 0.022
 ## Story 037: the lowest the title button column may reach (share of the height).
 const TITLE_BUTTONS_BOTTOM_RATIO: float = 0.95
-## Story 037: the full column (Continue, Play, Achievements, Quit); the continue summary strip sits under its first button.
-const TITLE_BUTTON_COLUMN_COUNT: int = 4
+## The full column (Continue, Play, Achievements, Settings, Quit): 5 buttons of 65 px at 720p (>= 64 px); the
+## continue summary strip sits under its first button.
+const TITLE_BUTTON_COLUMN_COUNT: int = 5
+## Key-art menu (user 2026-11-01): the button column on the right (the art's hero stands bottom-left), the name
+## band stays top-left; false puts the column on the left (the art is then mirrored). The language button takes the
+## free bottom corner.
+static var title_menu_right: bool = true
 ## Title screen language button (Story 017): width / height as shares of the viewport.
 const TITLE_LANG_BUTTON_WIDTH_RATIO: float = 0.1
 const TITLE_LANG_BUTTON_HEIGHT_RATIO: float = 0.09
@@ -772,19 +782,34 @@ static func chapter_tile_rects(viewport_size: Vector2, count: int) -> Array[Rect
 ## Story 020: with [param with_remove] the row also reserves the "Bỏ 1 lá" slot
 ## ([method reward_remove_slot_rect]) right of the last card, and the cards get narrower.
 static func reward_card_rects(viewport_size: Vector2, count: int, with_remove: bool = false) -> Array[Rect2]:
+	return _card_row(viewport_size, count, REWARD_CARD_ROW_TOP_RATIO, viewport_size.x * 0.5, with_remove)
+
+
+## 2026-11-01 (user: "sao mỗi ảnh một kiểu format thẻ … OSFE hài hòa, nhỏ gọn, cân đối"): every card face has
+## this one size (px at 720p, scaled with the viewport height) on every screen — reward, treasure, shop.
+const CARD_FACE_SIZE: Vector2 = Vector2(176.0, 256.0)
+## 2026-11-01: top of the plain reward screen's card row — the compact cards sit midway between the title and "Bỏ qua".
+const REWARD_CARD_ROW_TOP_RATIO: float = 0.3
+
+
+## 2026-11-01: the one card face size for [param viewport_size] ([constant CARD_FACE_SIZE]).
+static func card_face_size(viewport_size: Vector2) -> Vector2:
+	return (CARD_FACE_SIZE * viewport_size.y / 720.0).round()
+
+
+# 2026-11-01: [param count] card faces of the one size side by side from [param top_ratio], centred on
+# [param center_x]; [param with_remove] keeps room for one more card-sized slot on the right.
+static func _card_row(viewport_size: Vector2, count: int, top_ratio: float, center_x: float, with_remove: bool) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var size: Vector2 = card_face_size(viewport_size)
 	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
-	var extra: float = viewport_size.x * REWARD_REMOVE_SLOT_WIDTH_RATIO + gap if with_remove else 0.0
-	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1) - extra) / count
-	var width: float = maxf(minf(shared, viewport_size.x * REWARD_CARD_MAX_WIDTH_RATIO), 0.0)
-	var top: float = viewport_size.y * REWARD_CARDS_TOP_RATIO
-	var height: float = viewport_size.y * REWARD_CARDS_BOTTOM_RATIO - top
-	var left: float = (viewport_size.x - (width * count + gap * (count - 1) + extra)) * 0.5
+	var slots: int = count + (1 if with_remove else 0)
+	var left: float = roundf(center_x - (size.x * slots + gap * (slots - 1)) * 0.5)
+	var top: float = roundf(viewport_size.y * top_ratio)
 	for i: int in count:
-		rects.append(Rect2(left + (width + gap) * i, top, width, height))
+		rects.append(Rect2(left + (size.x + gap) * i, top, size.x, size.y))
 	return rects
 
 
@@ -792,12 +817,11 @@ static func reward_card_rects(viewport_size: Vector2, count: int, with_remove: b
 ## [param count] offer cards (same top / height), centred alone when the offer is empty.
 static func reward_remove_slot_rect(viewport_size: Vector2, count: int) -> Rect2:
 	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
-	var width: float = viewport_size.x * REWARD_REMOVE_SLOT_WIDTH_RATIO
-	var top: float = viewport_size.y * REWARD_CARDS_TOP_RATIO
-	var height: float = viewport_size.y * REWARD_CARDS_BOTTOM_RATIO - top
+	var size: Vector2 = card_face_size(viewport_size)
+	var top: float = roundf(viewport_size.y * REWARD_CARD_ROW_TOP_RATIO)
 	var cards: Array[Rect2] = reward_card_rects(viewport_size, count, true)
-	var left: float = (viewport_size.x - width) * 0.5 if cards.is_empty() else cards[cards.size() - 1].end.x + gap
-	return Rect2(left, top, width, height)
+	var left: float = (viewport_size.x - size.x) * 0.5 if cards.is_empty() else cards[cards.size() - 1].end.x + gap
+	return Rect2(left, top, size.x, size.y)
 
 
 ## Reward screen (Story 020), remove list: one tile per deck entry in deck order, rows of
@@ -895,10 +919,10 @@ static func featured_icon_rect(viewport_size: Vector2) -> Rect2:
 ## and the tagline.
 static func title_rect(viewport_size: Vector2) -> Rect2:
 	var top: float = viewport_size.y * TITLE_TOP_RATIO
-	return Rect2(0.0, top, viewport_size.x, viewport_size.y * TITLE_BOTTOM_RATIO - top)
+	return Rect2(viewport_size.x * TITLE_LEFT_RATIO, top, viewport_size.x * TITLE_BAND_WIDTH_RATIO, viewport_size.y * TITLE_BOTTOM_RATIO - top)
 
 
-## Title screen: [param count] buttons in one centred column under the title band, top to
+## Title screen: [param count] buttons in one left column under the title band, top to
 ## bottom (the first is the main action). Empty for count <= 0.
 static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
@@ -906,7 +930,9 @@ static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect
 		return rects
 	var size := Vector2(viewport_size.x * TITLE_BUTTON_WIDTH_RATIO, viewport_size.y * TITLE_BUTTON_HEIGHT_RATIO)
 	var gap: float = viewport_size.y * TITLE_BUTTON_GAP_RATIO
-	var left: float = (viewport_size.x - size.x) * 0.5
+	var left: float = viewport_size.x * TITLE_LEFT_RATIO
+	if title_menu_right:
+		left = viewport_size.x * (1.0 - TITLE_LEFT_RATIO) - size.x
 	var top: float = viewport_size.y * TITLE_BUTTONS_TOP_RATIO
 	# Story 037: four buttons (Continue, Play, Achievements, Quit) shrink to end by TITLE_BUTTONS_BOTTOM_RATIO.
 	size.y = minf(size.y, (viewport_size.y * TITLE_BUTTONS_BOTTOM_RATIO - top - gap * (count - 1)) / count)
@@ -927,7 +953,8 @@ static func title_continue_summary_rect(viewport_size: Vector2) -> Rect2:
 static func title_lang_button_rect(viewport_size: Vector2) -> Rect2:
 	var size := Vector2(viewport_size.x * TITLE_LANG_BUTTON_WIDTH_RATIO, viewport_size.y * TITLE_LANG_BUTTON_HEIGHT_RATIO)
 	var margin: float = viewport_size.y * MARGIN_RATIO
-	return Rect2(Vector2(viewport_size.x - margin - size.x, viewport_size.y - margin - size.y), size)
+	var x: float = margin if title_menu_right else viewport_size.x - margin - size.x
+	return Rect2(Vector2(x, viewport_size.y - margin - size.y), size)
 
 
 ## Pause button (Story 016): the square hit area (PAUSE_BUTTON_RATIO of the height), centred
@@ -1237,8 +1264,7 @@ static func reward_dual_relics_label_rect(viewport_size: Vector2) -> Rect2:
 
 ## Story 032: the card row of the treasure screen with a relic row (plus room for the "Bỏ 1 lá" slot).
 static func reward_dual_card_rects(viewport_size: Vector2, count: int, with_remove: bool = false) -> Array[Rect2]:
-	return _reward_row(viewport_size, count, REWARD_DUAL_CARDS_TOP_RATIO, REWARD_DUAL_CARDS_BOTTOM_RATIO,
-		REWARD_REMOVE_SLOT_WIDTH_RATIO if with_remove else 0.0)
+	return _card_row(viewport_size, count, REWARD_DUAL_CARDS_TOP_RATIO, viewport_size.x * 0.5, with_remove)
 
 
 ## Story 032: the 3 large relic cards of the treasure screen, centred.
@@ -1275,13 +1301,14 @@ const SHOP_CARD_LABEL_TOP_RATIO: float = 0.135
 const SHOP_LABEL_HEIGHT_RATIO: float = 0.045
 const SHOP_CARDS_TOP_RATIO: float = 0.185
 const SHOP_CARDS_BOTTOM_RATIO: float = 0.5
-const SHOP_RELIC_LABEL_TOP_RATIO: float = 0.515
-const SHOP_RELICS_TOP_RATIO: float = 0.565
+const SHOP_RELIC_LABEL_TOP_RATIO: float = 0.545
+const SHOP_RELICS_TOP_RATIO: float = 0.595
 const SHOP_RELICS_BOTTOM_RATIO: float = 0.81
 const SHOP_ITEM_GAP_RATIO: float = 0.02
 const SHOP_ITEM_MAX_WIDTH_RATIO: float = 0.2
 ## How far a selected item rises (share of the height).
-const SHOP_ITEM_RAISE_RATIO: float = 0.025
+## 2026-11-01: 0 — a selected card rose into the row label (user); the gold ring marks the selection now.
+const SHOP_ITEM_RAISE_RATIO: float = 0.0
 const SHOP_SERVICE_LEFT_RATIO: float = 0.765
 const SHOP_SERVICE_GAP_RATIO: float = 0.03
 ## Bottom band: "Rời cửa hàng" bottom-left, "Mua (N vàng)" bottom-right (right thumb), a message between.
@@ -1338,7 +1365,7 @@ static func shop_rows_area_rect(viewport_size: Vector2) -> Rect2:
 
 ## Story 033: the card row of the shop.
 static func shop_card_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
-	return _shop_row(viewport_size, count, SHOP_CARDS_TOP_RATIO, SHOP_CARDS_BOTTOM_RATIO)
+	return _card_row(viewport_size, count, SHOP_CARDS_TOP_RATIO, shop_rows_area_rect(viewport_size).get_center().x, false)
 
 
 ## Story 033: the relic row of the shop.
@@ -1455,9 +1482,10 @@ static func event_offer_rects(viewport_size: Vector2, count: int) -> Array[Rect2
 ## cards), the ink label band starts at 0.545 and the ink row fills 0.595 .. 0.835 (173 px). The centred
 ## skip button keeps its place at REWARD_SKIP_TOP_RATIO (0.86): nothing is pushed out of the thumb zone.
 const REWARD_INK_CARDS_BOTTOM_RATIO: float = 0.53
-const REWARD_INK_LABEL_TOP_RATIO: float = 0.545
-const REWARD_INK_ROW_TOP_RATIO: float = 0.595
-const REWARD_INK_ROW_BOTTOM_RATIO: float = 0.835
+## 2026-11-01: the ink row is a step of its own (before the card choice), so it sits under the title.
+const REWARD_INK_LABEL_TOP_RATIO: float = 0.2
+const REWARD_INK_ROW_TOP_RATIO: float = 0.26
+const REWARD_INK_ROW_BOTTOM_RATIO: float = 0.5
 ## Treasure screen with a relic row AND an ink row: cards 0.175 .. 0.39 (155 px), relic label 0.398,
 ## relics 0.445 .. 0.645 (144 px), ink label 0.653, ink row 0.7 .. 0.87 (122 px); "Bỏ qua" / "Xác nhận"
 ## keep REWARD_DUAL_BUTTON_TOP_RATIO (0.885).

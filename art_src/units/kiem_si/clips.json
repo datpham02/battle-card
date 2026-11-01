@@ -7,7 +7,7 @@
   "clips": [
     {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop"},
     {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "nominal; the game paces step by the step cooldown"},
-    {"name": "cast_gesture", "frames": ["cast_gesture/0.png", "cast_gesture/1.png", "cast_gesture/2.png", "cast_gesture/3.png", "cast_gesture/4.png", "cast_gesture/5.png", "cast_gesture/6.png"], "ms": [50, 40, 40, 50, 50, 60, 80], "loop": "once"},
+    {"name": "cast_gesture", "frames": ["cast_gesture/0.png", "cast_gesture/1.png", "cast_gesture/2.png", "cast_gesture/3.png", "cast_gesture/4.png", "cast_gesture/5.png", "cast_gesture/6.png", "cast_gesture/7.png", "cast_gesture/8.png"], "ms": [83, 83, 83, 83, 200, 50, 83, 100, 133], "loop": "once", "note": "v4 2026-11-01 (wind-up, design/art/animation-sheets/kiem_si-cast_gesture.md): draw, crouch, coil (frame 4, held during the swing telegraph by UnitLayer via the cast index gesture_hold_frame), lunge + slash (5, the sword-qi wave leaves), follow-through, sheathe (8 = the v3 sheathed frame). 60 Hz ticks 5,5,5,5,12,3,5,6,8"},
     {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once"},
     {"name": "victory", "frames": ["victory/0.png", "victory/1.png", "victory/2.png", "victory/3.png", "victory/4.png"], "ms": [100, 100, 100, 100, 100], "loop": "hold_last"},
     {"name": "defeat", "frames": ["defeat/0.png", "defeat/1.png", "defeat/2.png", "defeat/3.png", "defeat/4.png", "defeat/5.png", "defeat/6.png", "defeat/7.png"], "ms": [100, 100, 100, 100, 100, 100, 100, 100], "loop": "hold_last"},

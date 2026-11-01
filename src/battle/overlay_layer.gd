@@ -4,6 +4,14 @@ extends Node2D
 ## art px of the 800x360 SubViewport. Story 048 Part B: the overlay one-shots of FloorVfx (layer "overlay",
 ## each <= 0.35 s): F6 hit_impact on a hit cut's cells where a unit stands, F8 interrupt on interrupted swing cells.
 ## Redraws only while it has events (and once more when the last one ends, to clear it).
+## 2026-10-31: also the hero's cast projectile (CastVfx): from the hero's hand to the target cells over the last
+## travel_sec of the player's swing, landing as it resolves. ADR-0001 A1: only for a card whose delivery origin is
+## `caster` (SkillDelivery); the per-cell impacts after the landing are CombatView's.
+## ADR-0001 Phase 1 Task 5 (pack 01 §1A / §3 step 4): the code-drawn square travels (CastFloorFx, index.json
+## travel_style): the caster's streak (a pack with travel_draw square_streak draws stepped squares instead of its art,
+## same timing), falling_squares landing on each cell at its arrival, chain_spark hopping link to link, floor_run along
+## the floor; plus the square impact flash on each reached cell. Locked cells get no landing / flash (item 5). All in
+## the hero's block colours over a 1 px Ink edge; animation only, never the gameplay Block.
 ## Implements: Story 047 Part A, Story 048 Part B.
 
 var _floor: FloorLayer = null
@@ -42,9 +50,74 @@ func _process(_delta: float) -> void:
 	if _floor == null and get_parent() != null:
 		_floor = get_parent().get_node_or_null("FloorLayer") as FloorLayer
 	var state: Array[Dictionary] = vfx_state()
+	var shot: Dictionary = projectile_state()
+	if not shot.is_empty():
+		state.append(shot)
+	var combat_now: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat_now != null and not combat_now.get_cast_flood().is_empty():
+		state.append({"flood": combat_now.get_floor_vfx().elapsed()})
+	var travel: Array[Dictionary] = travel_items()
+	if not travel.is_empty():
+		state.append({"travel": travel})
 	if state != _drawn:
 		_drawn = state
 		queue_redraw()
+
+
+## 2026-10-31: the hero's cast projectile now: {"projectile": pack id, "pos": Vector2i art px, "frame": int}; {} when the
+## player is not in the last travel_sec of a swing, or there is no cast pack / canvas binding.
+func projectile_state() -> Dictionary:
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or combat.get_cut_actor() == null or combat.get_battle_canvas() == null:
+		return {}
+	var actor: CutActor = combat.get_cut_actor()
+	if not actor.is_swinging():
+		return {}
+	var units: UnitLayer = combat.get_battle_canvas().get_unit_layer()
+	if units == null:
+		return {}
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var entry: Dictionary = CastVfx.entry_for(hero_id)
+	if entry.is_empty():
+		return {}
+	var from: Vector2i = CastVfx.hand_point(entry, units.unit_feet_art(CombatState.Side.PLAYER))
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	# OSFE beat 1: the charge glint at the hand over the last charge_sec before the launch.
+	var charged: float = CastVfx.charge_elapsed(entry, actor.get_time_left())
+	if charged >= 0.0:
+		var charge: Dictionary = CastVfx.charge_entry(entry)
+		var charge_pack: VfxPack = CastVfx.pack_for(charge)
+		if charge_pack == null:
+			return {}
+		var clip: String = str(charge.get("clip", CastVfx.DEFAULT_CLIP))
+		var cframe: int = 0 if reduce else VfxPack.frame_at(charge_pack.clip(clip), charged, charge_pack.frame_ms(), charge_pack.is_loop())
+		return {"projectile": str(charge["id"]), "pos": from, "frame": cframe, "clip": clip, "hero": hero_id, "charge": true}
+	var t: float = CastVfx.flight_t(entry, actor.get_time_left())
+	if t < 0.0:
+		return {}
+	# ADR-0001 A1: only a delivery that leaves the caster flies from the hand (sky / ground / in-place / a chain that
+	# starts on its first cell do not); the projectile is square-based art, never the gameplay Block.
+	var delivery: Dictionary = combat.delivery_for(actor.get_skill_id())
+	if str(delivery.get("origin", "")) != "caster":
+		return {}
+	var targets: Array[Vector2i] = []
+	for cell: Vector2i in actor.get_cells():
+		targets.append(units.feet_art_of_cell(cell))
+	# OSFE beat 2: a straight shot; on the first_cell path to the cell the delivery lands on first (the nearest cell,
+	# or a chain's first link), where the spread starts.
+	var to: Vector2i = CastVfx.flight_to(entry, from, targets)
+	if str(entry.get("path", "")) == CastVfx.PATH_FIRST_CELL and not actor.get_cells().is_empty():
+		var first: Vector2i = SkillDelivery.first_link(delivery, actor.get_cells(), combat.get_state().player_cell)
+		to = CastVfx.aim_point(entry, [units.feet_art_of_cell(first)] as Array[Vector2i])
+	var pos: Vector2i = CastVfx.flight_pos(from, to, t)
+	# Task 5 item 3: the crescent wave is not square-based (pack 01 §1A): the pack's art stays on disk, unused.
+	if str(entry.get("travel_draw", "")) == "square_streak":
+		return {"streak": str(entry["id"]), "from": from, "to": to, "t": t, "hero": hero_id}
+	var pack: VfxPack = CastVfx.pack_for(entry)
+	var frame: int = 0
+	if pack != null and not reduce:
+		frame = VfxPack.frame_at(pack.clip(str(entry.get("clip", CastVfx.DEFAULT_CLIP))), CastVfx.travel_sec(entry) * t, pack.frame_ms(), pack.is_loop())
+	return {"projectile": str(entry["id"]), "pos": pos, "frame": frame, "clip": str(entry.get("clip", CastVfx.DEFAULT_CLIP)), "hero": hero_id}
 
 
 func _draw() -> void:
@@ -55,4 +128,154 @@ func _draw() -> void:
 	_drawn = vfx_state()
 	var vfx: FloorVfx = combat.get_floor_vfx()
 	for item: Dictionary in _drawn:
-		vfx.draw(self, str(item["id"]), FloorVfx.feet_for(_floor.cell_art_rect(item["cell"])), int(item["frame"]))
+		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
+		# The cell rect lets a centre-anchored pack (cell_slash) sit in the middle of its cell.
+		vfx.draw(self, str(item["id"]), FloorVfx.feet_for(cell_rect), int(item["frame"]), Color.WHITE, cell_rect)
+	var shot: Dictionary = projectile_state()
+	if not shot.is_empty():
+		_drawn.append(shot)
+		if shot.has("projectile"):
+			var pack: VfxPack = CastVfx.pack_for(CastVfx.pack_entry(str(shot["projectile"])))
+			if pack != null:
+				pack.draw_clip(self, str(shot["clip"]), shot["pos"], int(shot["frame"]))
+	_draw_shards(combat.get_cast_flood())
+	_draw_travel(combat, travel_items())
+
+
+## Task 5: the code-drawn travel, flash and impact squares to draw now: one {"rect": Rect2i, "col": Color, "fill": bool,
+## "width": int, "edge": bool (1 px Ink edge under it)} each; [] when unbound or nothing runs. Both sides (item 4: the
+## boss's casts in the enemy block colours `_enemy`, only on the cells it hits, locked cells skipped).
+func travel_items() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or _floor == null:
+		return out
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var shot: Dictionary = projectile_state()
+	if shot.has("streak"):
+		_streak(out, shot["from"], shot["to"], float(shot["t"]), CastVfx.block_colours(hero_id))
+	_side_items(out, combat, CombatState.Side.PLAYER, hero_id)
+	_side_items(out, combat, CombatState.Side.ENEMY, ENEMY_BLOCK)
+	return out
+
+
+## The block colours key of the boss's casts (index.json block_colours `_enemy`, #CFC6B4 flat).
+const ENEMY_BLOCK: String = "_enemy"
+## Seconds the recorded cast stays drawn past its last arrival (covers the longest impact_style sec).
+const TRAVEL_TAIL_SEC: float = 0.4
+
+
+func _streak(out: Array[Dictionary], from: Vector2i, to: Vector2i, t: float, block: Array[Color]) -> void:
+	var st: Dictionary = CastVfx.travel_style("square_streak")
+	var rects: Array[Rect2i] = CastFloorFx.streak_rects(from, to, t, int(st.get("count", 4)), int(st.get("size", 5)), float(st.get("spacing", 6)))
+	for i: int in rects.size():
+		out.append(_sq(rects[i], block[1] if i == 0 else block[0]))
+
+
+func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_id: String) -> void:
+	var tr: Dictionary = combat.cast_travel_now(TRAVEL_TAIL_SEC, side)
+	if tr.is_empty():
+		return
+	var block: Array[Color] = CastVfx.block_colours(caster_id)
+	var delivery: Dictionary = tr["delivery"]
+	var rel: float = float(tr["rel"])
+	var arrive: Dictionary = tr["arrive"]
+	var shown: Array = tr["cells"]
+	# The boss's straight shot from its hand to the first cell (the player's comes from projectile_state).
+	if side != CombatState.Side.PLAYER and bool(tr.get("swinging", false)) and str(delivery.get("origin", "")) == "caster" and not shown.is_empty():
+		var units: UnitLayer = combat.get_battle_canvas().get_unit_layer() if combat.get_battle_canvas() != null else null
+		var entry: Dictionary = CastVfx.entry_for("")
+		var t: float = CastVfx.flight_t(entry, -rel)
+		if units != null and t >= 0.0:
+			var hand: Array = entry.get("hand", [14, -34]) as Array
+			var from: Vector2i = units.unit_feet_art(side) + Vector2i(-int(hand[0]), int(hand[1]))
+			var first: Vector2i = SkillDelivery.first_link(delivery, shown, tr["caster"])
+			_streak(out, from, _centre(first), t, block)
+	match str(delivery.get("travel", "")):
+		"falling_squares":
+			var fs: Dictionary = CastVfx.travel_style("falling_squares")
+			for c: Vector2i in shown:
+				var rects: Array[Rect2i] = CastFloorFx.fall_rects(_floor.cell_art_rect(c), float(arrive.get(c, 0.0)) - rel,
+					float(fs.get("drop_sec", 0.2)), int(fs.get("height", 70)), int(fs.get("count", 3)), int(fs.get("size", 4)), hash(c))
+				for i: int in rects.size():
+					out.append(_sq(rects[i], block[1] if i == 0 else block[0]))
+		"chain_spark":
+			var cs: Dictionary = CastVfx.travel_style("chain_spark")
+			var links: Array = arrive.keys()
+			links.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return float(arrive[a]) < float(arrive[b]))
+			for k: int in range(links.size() - 1):
+				var t0: float = float(arrive[links[k]])
+				var t1: float = float(arrive[links[k + 1]])
+				if rel >= t0 and rel < t1:
+					var p: Vector2i = CastFloorFx.hop_point(_centre(links[k]), _centre(links[k + 1]), (rel - t0) / maxf(t1 - t0, 0.001), int(cs.get("lift", 12)))
+					out.append(_sq(CastFloorFx.square_rect(p, int(cs.get("size", 4))), block[1]))
+		"floor_run":
+			var fr: Dictionary = CastVfx.travel_style("floor_run")
+			var o: Vector2i = SkillDelivery.origin_cell(delivery, arrive.keys(), tr["caster"])
+			for c: Vector2i in shown:
+				var rects: Array[Rect2i] = CastFloorFx.run_rects(_centre(o), _centre(c), rel, float(arrive.get(c, 0.0)),
+					int(fr.get("count", 3)), int(fr.get("size", 4)), float(fr.get("trail_sec", 0.025)))
+				for i: int in rects.size():
+					out.append(_sq(rects[i], block[1] if i == 0 else block[0]))
+	if bool(tr.get("swinging", false)):
+		return
+	# The square impact flash on every reached (unlocked) cell, then (item 2) the impact's square shards on a hit.
+	var sec: float = float(CastVfx.travel_style("flash").get("sec", 0.12))
+	var impact: String = str(delivery.get("impact", ""))
+	var style: Dictionary = CastVfx.impact_style(impact)
+	var cols: Array[Color] = CastVfx.impact_colours(impact, caster_id)
+	var dir: int = 1 if side == CombatState.Side.PLAYER else -1
+	for c: Vector2i in shown:
+		var age: float = rel - float(arrive.get(c, 0.0))
+		for f: Dictionary in CastFloorFx.flash_rects(_floor.cell_art_rect(c), age, sec):
+			out.append({"rect": f["rect"], "col": Color(block[1], 0.85) if bool(f["fill"]) else block[1], "fill": bool(f["fill"]),
+				"width": int(f["width"]), "edge": false})
+		if bool(tr.get("hit", false)) and not style.is_empty():
+			for it: Dictionary in CastFloorFx.impact_rects(impact, _floor.cell_art_rect(c), age, float(style.get("sec", 0.24)), hash(c) + 11, dir):
+				var r: Rect2i = it["rect"]
+				out.append({"rect": r, "col": cols[1] if bool(it["light"]) else cols[0], "fill": true, "width": 0,
+					"edge": mini(r.size.x, r.size.y) >= 3})
+
+
+func _sq(r: Rect2i, col: Color) -> Dictionary:
+	return {"rect": r, "col": col, "fill": true, "width": 0, "edge": true}
+
+
+# The floor point of [param cell] the square travels run between (the cell's centre, whole px).
+func _centre(cell: Vector2i) -> Vector2i:
+	var r: Rect2i = _floor.cell_art_rect(cell)
+	@warning_ignore("integer_division")
+	return r.position + r.size / 2
+
+
+func _draw_travel(_combat: CombatView, items: Array[Dictionary]) -> void:
+	if items.is_empty():
+		return
+	for it: Dictionary in items:
+		if bool(it["edge"]):
+			draw_rect(Rect2(it["rect"].grow(1)), SlabPainter.INK)
+	for it: Dictionary in items:
+		var col: Color = it["col"]
+		var r: Rect2i = it["rect"]
+		if bool(it["fill"]):
+			draw_rect(Rect2(r), col)
+		else:
+			var w: int = int(it["width"])
+			draw_rect(Rect2(r.position.x, r.position.y, r.size.x, w), col)
+			draw_rect(Rect2(r.position.x, r.end.y - w, r.size.x, w), col)
+			draw_rect(Rect2(r.position.x, r.position.y + w, w, r.size.y - w * 2), col)
+			draw_rect(Rect2(r.end.x - w, r.position.y + w, w, r.size.y - w * 2), col)
+
+
+# User 2026-11-01 (reference board): square tessera shards rise from every lit cell and fade with the flood.
+func _draw_shards(flood: Dictionary) -> void:
+	if flood.is_empty():
+		return
+	var style: Dictionary = flood["style"]
+	for item: Dictionary in flood["cells"]:
+		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
+		var since: float = float(item["since"])
+		var life: float = 1.0 - clampf(since / 0.5, 0.0, 1.0)
+		for sq: Rect2i in CastVfx.shard_rects(item["cell"], cell_rect, since, int(style["squares"])):
+			draw_rect(Rect2(sq), Color(style["edge"], float(item["fade"]) * (0.4 + 0.6 * life)), false, 1.0)
+

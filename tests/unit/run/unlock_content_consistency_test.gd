@@ -9,11 +9,13 @@ var fails: int = 0
 ## Content that existed before Story 037 and is open from the start (ids in HEAD before the story).
 const OPEN_CARDS: Array[String] = ["kiem_khi", "chan_phong", "kiem_vu", "thiet_kiem", "dai_dao", "xung_kich", "hoa_tinh", "hoa_xa", "suong_mong",
 	"bang_chau", "hoa_tran", "bang_phong", "cuong_phong", "liet_hoa", "kiem_than", "song_kiem", "thien_lang", "han_bang", "thien_hoa", "tu_kiem",
-	"ran_kich", "ran_van", "han_khi", "han_phong", "han_tran", "han_kiem", "ket_gioi", "long_an", "tran_gai", "gai_nguyen", "ganh_nang", "oan_hon"]
+	"ran_kich", "ran_van", "han_khi", "han_phong", "han_tran", "han_kiem", "tran_gai", "ganh_nang", "oan_hon"]
+## Quick spec o-rot-thay-tuong 2026-10-31: `boss_dungeon` rewards gai_nguyen (was luoi_san), so gai_nguyen left the
+## open list. The Wall cards (ket_gioi, long_an, luoi_san) were deleted 2026-11-01 (ADR-0001 Phase 1).
 const OPEN_SHAPES: Array[String] = ["mono", "bar2", "bar3", "l3", "square", "t4", "l4", "s4", "bar4", "plus5", "u5", "p5", "bar5", "z4", "j4", "y5"]
 const OPEN_RELICS: Array[String] = ["an_don", "chi_khau", "manh_tuoi", "dinh_tam", "la_ban", "tam_huong", "dau_than", "khoi_the", "phan_don", "huyet_an", "an_chu", "tam_hop"]
 const OPEN_CHARACTERS: Array[String] = ["kiem_si", "phap_su", "sat_thu"]
-const LOCKED_CARDS: Array[String] = ["gai_doc", "luoi_san", "thanh_thuy", "bang_tam"]
+const LOCKED_CARDS: Array[String] = ["gai_doc", "gai_nguyen", "thanh_thuy", "bang_tam"]
 const LOCKED_SHAPES: Array[String] = ["w5", "n5", "v5"]
 const LOCKED_RELICS: Array[String] = ["tui_rong", "phong_an", "gai_ran", "han_ky"]
 const LOCKED_CHARACTERS: Array[String] = ["tho_san", "giao_si"]
@@ -101,7 +103,7 @@ func _init() -> void:
 				absent.append(id)
 		_check("%s: pre-existing ids still present in the file" % kind, absent.is_empty(), str(absent))
 
-	_check("card count: 32 pre-existing ids open", OPEN_CARDS.size() == 32)
+	_check("card count: 29 pre-existing ids open (gai_nguyen became the boss_dungeon unlock; Wall cards deleted 2026-11-01)", OPEN_CARDS.size() == 29)
 	_check("relics: 16 pre-existing, 4 locked, 12 open", OPEN_RELICS.size() + LOCKED_RELICS.size() == 16)
 	var locked: Dictionary = cfg.locked_content(ProgressState.new())
 	_check("locked content = 4 cards, 3 shapes, 4 relics, 2 characters, 2 regions (Story 039), nothing else",

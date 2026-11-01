@@ -12,7 +12,7 @@ extends RefCounted
 
 ## Canonical config keys a relic may override.
 const CONFIG_KEYS: Array[String] = [
-	"seal_sec", "thorn_ran", "piece_freshness_sec", "start_pieces", "focus_sec", "formation_fade",
+	"thorn_sec", "thorn_ran", "piece_freshness_sec", "start_pieces", "focus_sec", "formation_fade",
 	"signature_cooldown", "hold_slots", "piece_spawn_interval", "burn_max_stacks", "han_stacks",
 	"han_damage",
 ]

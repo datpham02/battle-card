@@ -8,7 +8,7 @@
 >
 > Tài liệu này là đầu vào cho asset nhân vật, animation, world và map, và cho `/art-bible`. Nó **không đổi cơ chế**: luật chơi vẫn theo `design/game-brief.md` và `assets/data/*.json`.
 > Mục ghi **[Khởi điểm]** là gợi ý hình ảnh, chốt lại ở art bible.
-> Chữ trong game hiện vẫn dùng tên cũ (Ấn Đài, Kiếp, mảnh, trận đồ…) cho tới khi story đổi chữ chạy.
+> Chữ trong game đã dùng thuật ngữ mới của `design/glossary.md` (kiểm `assets/i18n/strings.csv` 2026-11-01: không còn Ấn Đài, Kiếp, mảnh, trận đồ…).
 
 ---
 
@@ -32,7 +32,7 @@ Người chơi là một trong năm nhà thám hiểm, leo qua năm tầng đấ
 | Hai lưới đối diện | Sau Biến Cố mọi vùng đất nằm trên **mạng lưới** ô vuông. Sức mạnh chỉ bám được vào lưới, nên mọi trận đấu diễn ra trên hai nửa lưới đối diện. |
 | **Hình Cộng Hưởng**: ghép hai khối trùng hình của sân thì ×1,5 | Mỗi vùng mang dư âm một mảnh Hình Gốc. Ghép đúng hình đó thì đất cộng hưởng. |
 | **Bản Khắc**: ô bị đánh sáng lên rồi phai | Đất ghi nhớ những khối đã in lên nó. Khi cả nửa lưới cùng sáng, sức mạnh riêng của nhân vật **Thức Tỉnh**. |
-| **Tường** và **Bãi Gai** | Khối cũng dựng được thành tường chắn hoặc bãi gai. |
+| **Bãi Gai** và **Ô rớt** | Khối cũng rải được thành bãi gai. Riêng boss còn làm nứt ô lưới bên người chơi cho rơi thành hố (Ô rớt, thay Tường từ 2026-10-31). |
 | Boss cũng nhặt và đặt khối | Biến Cố trói tất cả, kể cả Kẻ Gác. |
 | **Bảo vật** | Vật cổ dùng để uốn luật khối. Thứ quý nhất là **Mảnh Gốc** của Kẻ Gác. |
 | **Bộ khối**: Học hình, Quên hình | Mỗi người tự chọn những hình mình thạo. Bộ khối là tay nghề của họ. |
@@ -87,7 +87,7 @@ Mỗi vùng là một kiểu **mạng lưới** khác nhau sau Biến Cố: lư�
 ### Hầm Ngục (The Dungeon)
 - **Không khí:** *"Cánh cổng ngục khép lại sau lưng. Tiếng xích kéo lê trong bóng tối."*
 - **Mạng lưới:** sàn ngục xếp ô đá, có hố sập (lỗ trên sân) và khu bị tách đôi (hai đảo).
-- **Địa hình:** tường.
+- **Địa hình:** ô rớt (boss làm nứt ô rồi rơi thành hố).
 - **Quái:** bộ xương lính, xác sống, đàn dơi, nhầy ngục, tín đồ tà giáo, lính gác Chuột Vương, bóng ma, Kẻ Phản Ứng, Cai Ngục.
 - **Kẻ Gác:** **Quỷ Khổng Lồ**.
 - **Màu [Khởi điểm]:** xám đá, xanh rêu ẩm, đuốc là mảng ochre đục không phát sáng (chỉ Khối phát sáng).
@@ -97,7 +97,7 @@ Mỗi vùng là một kiểu **mạng lưới** khác nhau sau Biến Cố: lư�
 - **Mạng lưới:** sàn tháp lát phiến băng, sân hình vòng, hình kim cương.
 - **Địa hình:** bãi gai.
 - **Quái:** tiên sương, ma trơi, lính canh đá, sói tuyết, cung thủ sương giá, người băng, Pháo Ngòi, Pháp Sư Sương.
-- **Kẻ Gác:** **Chúa Tể Sương**.
+- **Kẻ Gác:** **Chúa Tể Băng Giá** (Frost Lord; trước 2026-11-01 là Chúa Tể Sương).
 - **Màu [Khởi điểm]:** trắng băng, lam nhạt, tím lạnh.
 
 ### Đầm Lầy Độc (The Poison Swamp)
@@ -152,7 +152,7 @@ Mỗi nhân vật phải có **bản sắc riêng ngay từ trận đầu**: dá
 | **Kiếm sĩ** | Bền, 200 máu, đòn sát thương cao, hồi 20 máu sau trận thắng | Vung Hết Sức: trong 3 s mọi phép tính gấp đôi số ô, hút 20 % sát thương | Hiệp sĩ giáp thép, kiếm lớn, dáng vững | **Thép**: khối như phiến kim loại, in xuống thành vết chém sáng |
 | **Pháp sư** | 210 máu, phép diện rộng, Cháy | Bùng Nổ: kích nổ lửa đang cháy, đốt cả nửa lưới đã khắc | Pháp sư áo nâu than nhấn hổ phách, sách hoặc gậy, dáng gầy | **Than lửa**: khối thân tối nứt hổ phách, để lại tàn lửa |
 | **Sát thủ** | Nhanh, 180 máu, đòn nhỏ (≤ 4 ô) mạnh hơn 40 %, Đóng Băng | Bóng Lướt: trong 2 s bước không chờ, đòn ≤ 3 ô ×1,75 | Kẻ cắp hoặc sát thủ đôi dao, áo đen | **Băng sắc**: khối nhỏ, trong, cạnh nhọn |
-| **Thợ săn** | 200 máu, Tường, Bãi Gai, làm boss **Rạn**. Mở khóa khi đã **giết** 3 Kẻ Gác | Bẫy Sập: vùng kéo dài ×1,5, tiêu Rạn ×2 | Ranger áo da, nỏ, móc bẫy | **Gỗ và dây**: khối như khung bẫy |
+| **Thợ săn** | 200 máu, rải Bãi Gai và bẫy chông, làm boss **Rạn**. Mở khóa khi đã **giết** 3 Kẻ Gác | Bẫy Sập: Bãi Gai kéo dài ×1,5 và rải thêm 1 ô, tiêu Rạn ×2 | Ranger áo da, nỏ, móc bẫy | **Gỗ và dây**: khối như khung bẫy |
 | **Giáo sĩ** | Bền, 210 máu, xây bộ **Giá Lạnh**; mỗi lần Giá Lạnh nổ trên boss thì hồi 8 máu. Mở khóa khi đã **tha** 3 Kẻ Gác | Ban Phước: mỗi đòn trúng thêm 1 tầng Giá Lạnh, nổ ×1,5 | Cleric áo trắng bạc, biểu tượng thánh trước ngực | **Kính thánh**: khối như kính màu phát sáng |
 
 **Gợi ý lý do lên đường** (để viết chữ sau, không bắt buộc cho asset):
@@ -172,8 +172,8 @@ Mỗi nhân vật phải có **bản sắc riêng ngay từ trận đầu**: dá
 | **Đóng Băng** | Đứng im 1,2 s | Xanh băng nhạt |
 | **Rạn** | Vết nứt, đòn kế tiếp ăn ×1,5 | Ngà, có đường nứt màu Mực |
 | **Giá Lạnh** | Tích tầng lạnh rồi nổ | Lam đậm |
-| **Tường** | Tường khối, không bước vào được | Phải **khác hình hẳn** với gai |
-| **Bãi Gai** | Bước vào được nhưng mất máu hoặc dính Rạn | Phải **khác hình hẳn** với tường |
+| **Ô rớt** (chỉ boss) | Ô nứt 0,8 s rồi rơi thành hố không bước vào được; ai còn đứng trên lúc rơi thì rơi chết; hết hạn ô hiện lại | Vết nứt lan + đỏ đậm dần như ô báo đòn; hố tối; ô hiện lại từ trắng |
+| **Bãi Gai** | Bước vào được nhưng mất máu hoặc dính Rạn | Phải **khác hình hẳn** với ô rớt |
 
 Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng thái luôn nổi bật.
 
@@ -193,7 +193,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
 - **Niệm:** **nhân vật vẫn đi được khi đang niệm**, nên niệm không khóa tư thế: một cử chỉ ngắn ~0,2 s rồi đi lại tự do; trạng thái niệm hiện ở ô đích trên đất địch (`design/art/art-bible.md` Mục 3). Thời gian niệm 0,2 s + 0,25 s mỗi ô.
 - Bị trúng đòn. **Bị phá phép**: khối vỡ.
 - Bị đẩy lùi, bị Đóng Băng, bị Cháy.
-- **Rơi khỏi đảo** (Không Đảo).
+- **Rơi khỏi đảo** (Không Đảo), và rơi xuống hố của Ô rớt.
 - **Thức Tỉnh:** mỗi nhân vật một kiểu riêng.
 - Thắng và thua cuối trận.
 
@@ -221,7 +221,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
 - **Bản Khắc:** ô sáng rồi phai.
 - **Hình Cộng Hưởng** của sân (5–7 ô): hiện nhỏ trên HUD, cộng hưởng khi ghép đúng.
 - Ô cháy, ô lầy, ô cát lấp, mạch dung nham (cảnh báo rồi phun), ô nứt rồi rơi.
-- Tường, Bãi Gai.
+- Ô rớt (nứt, thành hố, hiện lại), Bãi Gai.
 
 **Hiện trạng:** toàn bộ hình trong game vẫn là **ô màu và hình tròn tạm**. Phong cách đã chốt trong `design/art/art-bible.md` (mục 1–4, 2026-10-28): pixel art theo tinh thần One Step From Eden.
 
@@ -236,7 +236,7 @@ Màu nhân vật và màu vùng nên tránh trùng các màu này, để trạng
 ## 10. Còn mở
 
 1. **Phong cách hình:** **Đã chốt** (2026-10-28): pixel art kiểu One Step From Eden, chỉ lấy góc nhìn của OSFE: lưới phẳng, đơn vị đứng thẳng cao ~40 px (khung 32×48), nền nhìn ngang có chân trời; chiến trường 640×360. Xem `design/art/art-bible.md`.
-2. **Áp thuật ngữ vào game:** đổi chữ trong `strings.csv` theo `design/glossary.md` (nhóm 1–4). Cần một story riêng.
+2. **Áp thuật ngữ vào game:** **Đã xong** (kiểm 2026-11-01): chữ trong `strings.csv` theo `design/glossary.md` (nhóm 1–4).
 3. **Tên riêng, nhóm 5 của glossary:** **Đã chốt** (2026-10-29, Story 043): lá, Thức Tỉnh, bảo vật, đặc tính boss, nội tại. Xem `design/glossary.md` nhóm 5.
 4. **Chữ cần viết lại theo lore:**
    - Lời vào và lời kết của Tâm Lưới (đang "(Tạm)").
