@@ -365,10 +365,11 @@ static func draw_gold(canvas: CanvasItem, right_x: float, center_y: float, gold:
 	return center.x - radius
 
 
-## Story 033: a code-drawn coin (rim, face, square hole) of [param radius] at [param center].
+## Story 033: a code-drawn coin (rim, face, square hole) of [param radius] at [param center]; a flat-topped hexagon
+## like the run HUD's gold glyph (no circles in the UI).
 static func draw_coin(canvas: CanvasItem, center: Vector2, radius: float) -> void:
-	canvas.draw_circle(center, radius, COIN_RIM)
-	canvas.draw_circle(center, radius * 0.8, COIN_FACE)
+	canvas.draw_colored_polygon(HudSkin.regular_points(center, radius, 6, 0.0), COIN_RIM)
+	canvas.draw_colored_polygon(HudSkin.regular_points(center, radius * 0.8, 6, 0.0), COIN_FACE)
 	var hole: float = radius * 0.32
 	canvas.draw_rect(Rect2(center - Vector2(hole, hole), Vector2(hole, hole) * 2.0), COIN_RIM, false, maxf(radius * 0.14, 1.5))
 

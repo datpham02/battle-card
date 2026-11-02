@@ -71,6 +71,13 @@ static func fit_size(content: String, size_px: int, max_width: float) -> int:
 ## is "noto" or missing). [param size] is the nominal (Noto) size; it is scaled by [method size].
 static func text(canvas: CanvasItem, pos: Vector2, content: String, size_px: int, color: Color,
 		align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, width: float = -1.0, _bold: bool = true) -> void:
+	text_outlined(canvas, pos, content, size_px, color, HudSkin.TEXT_OUTLINE, align, width)
+
+
+## As [method text] with the outline in [param outline] (2026-11-02: dark labels on the gold buttons take a light
+## outline instead of the ink one).
+static func text_outlined(canvas: CanvasItem, pos: Vector2, content: String, size_px: int, color: Color, outline: Color,
+		align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, width: float = -1.0) -> void:
 	if content.is_empty():
 		return
 	var f: Font = font()
@@ -78,5 +85,5 @@ static func text(canvas: CanvasItem, pos: Vector2, content: String, size_px: int
 		HudSkin.text(canvas, pos, content, size_px, color, align, width, true)
 		return
 	var s: int = size(size_px)
-	canvas.draw_string_outline(f, pos, content, align, width, s, OUTLINE_PX, Color(HudSkin.TEXT_OUTLINE, color.a))
+	canvas.draw_string_outline(f, pos, content, align, width, s, OUTLINE_PX, Color(outline, outline.a * color.a))
 	canvas.draw_string(f, pos, content, align, width, s, color)

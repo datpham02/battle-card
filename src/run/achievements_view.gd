@@ -502,8 +502,10 @@ static func reward_name(flow: GameFlow, kind: String, id: String) -> String:
 static func draw_medal(canvas: CanvasItem, rect: Rect2, earned: bool, hidden: bool) -> void:
 	var center: Vector2 = rect.get_center()
 	var radius: float = minf(rect.size.x, rect.size.y) * 0.5
-	canvas.draw_circle(center, radius, MEDAL_EARNED if earned else MEDAL_LOCKED)
-	canvas.draw_arc(center, radius, 0.0, TAU, 32, CELL_OUTLINE_EARNED if earned else CELL_OUTLINE, 2.0)
+	# A flat-topped octagon (no circles in the UI).
+	var rim: PackedVector2Array = HudSkin.regular_points(center, radius, 8, -PI * 0.5 + PI / 8.0)
+	canvas.draw_colored_polygon(rim, MEDAL_EARNED if earned else MEDAL_LOCKED)
+	canvas.draw_polyline(HudSkin.perimeter_trace(rim, 1.0), CELL_OUTLINE_EARNED if earned else CELL_OUTLINE, 2.0)
 	if earned:
 		var points := PackedVector2Array()
 		for i: int in 10:
@@ -517,11 +519,11 @@ static func draw_medal(canvas: CanvasItem, rect: Rect2, earned: bool, hidden: bo
 	else:
 		var body := Rect2(center + Vector2(-radius * 0.34, -radius * 0.02), Vector2(radius * 0.68, radius * 0.5))
 		canvas.draw_rect(body, MEDAL_MARK_LOCKED)
-		canvas.draw_arc(Vector2(center.x, body.position.y), radius * 0.24, PI, TAU, 12, MEDAL_MARK_LOCKED, 4.0)
+		canvas.draw_polyline(HudSkin.shackle_points(center.x, body.position.y, radius * 0.24), MEDAL_MARK_LOCKED, 4.0)
 
 
-## Code-drawn glyph of a reward [param kind] inside [param rect]: card (a tall rounded rectangle), piece
-## (an L of squares), relic (a diamond), character (head and shoulders), region (two peaks and a flag).
+## Code-drawn glyph of a reward [param kind] inside [param rect]: card (a tall rectangle), piece (an L of squares),
+## relic (a diamond), character (a hexagon head over chamfered shoulders), region (two peaks and a flag); all angular.
 static func draw_reward_glyph(canvas: CanvasItem, rect: Rect2, kind: String, color: Color) -> void:
 	var c: Vector2 = rect.get_center()
 	var s: float = minf(rect.size.x, rect.size.y)
@@ -538,14 +540,15 @@ static func draw_reward_glyph(canvas: CanvasItem, rect: Rect2, kind: String, col
 		"relic":
 			canvas.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -s * 0.5), c + Vector2(s * 0.4, 0), c + Vector2(0, s * 0.5), c + Vector2(-s * 0.4, 0)]), color)
 		"character":
-			canvas.draw_circle(c + Vector2(0, -s * 0.22), s * 0.2, color)
-			canvas.draw_arc(c + Vector2(0, s * 0.5), s * 0.42, PI, TAU, 14, color, maxf(s * 0.16, 3.0))
+			canvas.draw_colored_polygon(HudSkin.regular_points(c + Vector2(0, -s * 0.22), s * 0.2, 6), color)
+			canvas.draw_colored_polygon(PackedVector2Array([c + Vector2(-s * 0.42, s * 0.5), c + Vector2(-s * 0.42, s * 0.3),
+				c + Vector2(-s * 0.22, s * 0.1), c + Vector2(s * 0.22, s * 0.1), c + Vector2(s * 0.42, s * 0.3), c + Vector2(s * 0.42, s * 0.5)]), color)
 		"region":
 			canvas.draw_colored_polygon(PackedVector2Array([c + Vector2(-s * 0.5, s * 0.4), c + Vector2(-s * 0.15, -s * 0.2), c + Vector2(s * 0.1, s * 0.4)]), color)
 			canvas.draw_colored_polygon(PackedVector2Array([c + Vector2(-s * 0.05, s * 0.4), c + Vector2(s * 0.25, -s * 0.05), c + Vector2(s * 0.5, s * 0.4)]), color.darkened(0.2))
 			canvas.draw_line(c + Vector2(s * 0.25, -s * 0.05), c + Vector2(s * 0.25, -s * 0.5), color, maxf(s * 0.07, 2.0))
 		_:
-			canvas.draw_circle(c, s * 0.3, color)
+			HudSkin.diamond(canvas, c, s * 0.35, color, Color.TRANSPARENT, 0.0)
 
 
 # Largest font size from [param base] down to [param minimum] whose one-line [param text] fits [param width]

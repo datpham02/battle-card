@@ -16,12 +16,8 @@ extends Node2D
 ## device == InputEvent.DEVICE_ID_EMULATION — are consumed but never act). Every string is a TEXT_* key.
 
 const TITLE_COLOR: Color = HudSkin.IVORY
-## Main Menu pass: the PixelLab stone frames of the title (PixelFrame), labels in the menu's ivory / gold.
+## Labels in the menu ivory; the rows, values and Back are UiButtons ancient plates (2026-11-02).
 const LABEL_COLOR: Color = Color("F8F8D0")
-const VALUE_ON_COLOR: Color = Color("F8E080")
-const ON_TINT: Color = Color(1.12, 1.08, 1.0)
-const OFF_TINT: Color = Color(0.8, 0.8, 0.85)
-const PRESSED_TINT: Color = Color(0.75, 0.75, 0.8)
 const HINT_COLOR: Color = HudSkin.TEXT_DIM
 const TITLE_FONT_SIZE: int = 44
 const LABEL_FONT_SIZE: int = 30
@@ -187,8 +183,9 @@ func _draw() -> void:
 	for i: int in rows.size():
 		var row: Rect2 = rows[i]
 		var id: String = ROWS[i]
-		PixelFrame.draw(self, PixelFrame.BUTTON_FRAME, row, PixelFrame.BUTTON_MARGIN, PixelFrame.scale_for(vp.y),
-			PRESSED_TINT if UiButtons.is_pressed_at(self, row) else Color.WHITE)
+		# 2026-11-02: the ancient plate (navy) instead of the riveted stone frame, which stays on cards only.
+		var row_pressed: bool = UiButtons.is_pressed_at(self, row)
+		UiButtons.draw_plate(self, row, UiButtons.look(UiButtons.Style.SECONDARY, row_pressed), UiButtons.ui_scale(self), row_pressed)
 		var text_w: float = row.size.x - vp.x * VALUE_WIDTH_RATIO - pad * 3.0
 		MenuFont.text(self, Vector2(row.position.x + pad * 1.5, row.position.y + row.size.y * 0.45), tr(labels[id][0]),
 			LABEL_FONT_SIZE, LABEL_COLOR, HORIZONTAL_ALIGNMENT_LEFT, text_w)
@@ -196,13 +193,9 @@ func _draw() -> void:
 			HINT_FONT_SIZE, HINT_COLOR, HORIZONTAL_ALIGNMENT_LEFT, text_w)
 		var value: Rect2 = value_rect(row, vp)
 		var on: bool = value_key(id) != TEXT_OFF
-		PixelFrame.draw(self, PixelFrame.BUTTON_FRAME, value, PixelFrame.BUTTON_MARGIN, PixelFrame.scale_for(vp.y),
-			ON_TINT if on else OFF_TINT)
-		MenuFont.text(self, Vector2(value.position.x, value.get_center().y + VALUE_FONT_SIZE * 0.36), tr(value_key(id)),
-			VALUE_FONT_SIZE, VALUE_ON_COLOR if on else LABEL_COLOR, HORIZONTAL_ALIGNMENT_CENTER, value.size.x)
+		var value_look: Dictionary = UiButtons.look(UiButtons.Style.SECONDARY, false, true, on)
+		var value_body: Rect2 = UiButtons.draw_plate(self, value, value_look, UiButtons.ui_scale(self), false)
+		MenuFont.text_outlined(self, Vector2(value_body.position.x, value_body.get_center().y + VALUE_FONT_SIZE * 0.36), tr(value_key(id)),
+			VALUE_FONT_SIZE, value_look["text"], value_look["text_outline"], HORIZONTAL_ALIGNMENT_CENTER, value_body.size.x)
 	var back: Rect2 = back_rect(vp)
-	var back_pressed: bool = UiButtons.is_pressed_at(self, back)
-	PixelFrame.draw(self, PixelFrame.BUTTON_FRAME, back, PixelFrame.BUTTON_MARGIN, PixelFrame.scale_for(vp.y),
-		PRESSED_TINT if back_pressed else Color.WHITE)
-	MenuFont.text(self, Vector2(back.position.x, back.get_center().y + BUTTON_FONT_SIZE * 0.36 + (2.0 if back_pressed else 0.0)),
-		tr(TEXT_BACK), BUTTON_FONT_SIZE, LABEL_COLOR, HORIZONTAL_ALIGNMENT_CENTER, back.size.x)
+	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.SECONDARY, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE)

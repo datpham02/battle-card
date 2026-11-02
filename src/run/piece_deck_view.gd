@@ -78,6 +78,8 @@ const SHAPE_MAX_UNIT_RATIO: float = 0.2
 const DOT_RADIUS_RATIO: float = 0.035
 const DOT_MAX_RADIUS: float = 7.0
 const DOT_GAP_RADII: float = 1.2
+## Half-diagonal of a mult diamond in dot radii (a diamond reads smaller than a disc of the same radius).
+const DOT_DIAMOND_RATIO: float = 1.2
 
 const TEXT_TITLE: String = "ui.piece_deck.title"
 ## "Token Xóa hình: %d".
@@ -424,7 +426,8 @@ func _draw_tile(vp: Vector2, base: Rect2, row: Dictionary, selected: bool, press
 	_draw_dots(rect, dots, dot_count, dim)
 
 
-# The mult as a row of [param total] dots, [param filled] of them lit, centred under the chance line.
+# The mult as a row of [param total] small diamonds (no circles in the UI), [param filled] of them lit, centred under the
+# chance line.
 func _draw_dots(rect: Rect2, filled: int, total: int, dim: bool) -> void:
 	var count: int = maxi(total, filled)
 	if count <= 0:
@@ -437,7 +440,7 @@ func _draw_dots(rect: Rect2, filled: int, total: int, dim: bool) -> void:
 		var color: Color = DOT_ON if i < filled else DOT_OFF
 		if dim:
 			color.a *= UiButtons.DIM_ALPHA
-		draw_circle(Vector2(left + step * i, y), radius, color)
+		HudSkin.diamond(self, Vector2(left + step * i, y), radius * DOT_DIAMOND_RATIO, color, Color.TRANSPARENT, 0.0)
 
 
 # Bottom-right "Xóa hình (còn N token)": DANGER when the selected row can go, dimmed with its reason

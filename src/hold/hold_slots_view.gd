@@ -181,15 +181,17 @@ func _hit_rects() -> Array[Rect2]:
 	return ScreenLayout.slot_hit_rects(get_viewport_rect().size, _slots.get_slot_count())
 
 
-# Controls v3: the stone socket (the menus' pixel stone frame at their whole-number density) tinted by [param tint].
+# 2026-11-02: the ancient plate of the buttons (the riveted stone frame stays on cards only): navy, gold while
+# [param tint] is SELECTED_TINT, grey while ROTTEN_TINT, navy at EMPTY_TINT alpha while empty.
 func _draw_socket(rect: Rect2, tint: Color) -> void:
-	PixelFrame.draw(self, PixelFrame.BUTTON_FRAME, rect, PixelFrame.BUTTON_MARGIN, PixelFrame.scale_for(get_viewport_rect().size.y), tint)
+	var lk: Dictionary = UiButtons.look(UiButtons.Style.SECONDARY, false, tint != ROTTEN_TINT, tint == SELECTED_TINT)
+	UiButtons.draw_plate(self, rect, lk, UiButtons.ui_scale(self), false, Color(1.0, 1.0, 1.0, EMPTY_TINT.a) if tint == EMPTY_TINT else Color.WHITE)
 
 
 # The socket's inside, where the piece shape sits (just within the frame's gold line).
 func _inner(rect: Rect2) -> Rect2:
-	var pad: float = PixelFrame.frame_pad(PixelFrame.scale_for(get_viewport_rect().size.y)) + INNER_EXTRA_PAD
-	return rect.grow(-pad)
+	var s: float = UiButtons.ui_scale(self)
+	return UiButtons.body_rect(rect, s, false).grow(-(UiButtons.plate_inset(s) + INNER_EXTRA_PAD))
 
 
 # Grey socket with a dark X over the grey piece (or label) and the rot countdown above it; no selection look ever.

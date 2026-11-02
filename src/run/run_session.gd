@@ -310,15 +310,17 @@ func current_column() -> Dictionary:
 
 
 ## Nodes of the current column not yet cleared, each a copy with an added "node_index" (its index
-## in the column, the argument of [method choose_node]).
+## in the column, the argument of [method choose_node]). 2026-11-03: only the nodes LINKED from the node cleared in the
+## previous column ([method linked_indices]).
 func available_nodes() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var col: Dictionary = current_column()
 	if col.is_empty():
 		return out
 	var nodes: Array = col.get("nodes", [])
+	var linked: Array[int] = linked_indices()
 	for i: int in nodes.size():
-		if _is_cleared(column, i):
+		if _is_cleared(column, i) or not linked.has(i):
 			continue
 		var n: Dictionary = (nodes[i] as Dictionary).duplicate()
 		n["node_index"] = i
@@ -331,10 +333,34 @@ func available_nodes() -> Array[Dictionary]:
 func choose_node(i: int) -> bool:
 	if node_index != -1 or current_column().is_empty():
 		return false
-	if i < 0 or i >= (current_column().get("nodes", []) as Array).size() or _is_cleared(column, i):
+	if i < 0 or i >= (current_column().get("nodes", []) as Array).size() or _is_cleared(column, i) or not linked_indices().has(i):
 		return false
 	node_index = i
 	return true
+
+
+## 2026-11-03: indices of the current column's nodes reachable now: the `next` links of the node cleared in the
+## previous column (ChapterMapGen.link_columns). Every node of the column at column 0, when the previous column has no
+## cleared node, or when that node carries no `next` (a map saved before the links existed).
+func linked_indices() -> Array[int]:
+	var out: Array[int] = []
+	var count: int = (current_column().get("nodes", []) as Array).size()
+	var from: int = -1
+	for c: Variant in cleared_nodes:
+		if int((c as Dictionary).get("column", -1)) == column - 1:
+			from = int((c as Dictionary).get("node_index", -1))
+	var links: Variant = null
+	if column > 0 and column - 1 < map.size() and from >= 0 and from < (map[column - 1].get("nodes", []) as Array).size():
+		links = ((map[column - 1]["nodes"] as Array)[from] as Dictionary).get("next")
+	if typeof(links) != TYPE_ARRAY:
+		for i: int in count:
+			out.append(i)
+		return out
+	for v: Variant in links as Array:
+		var i: int = int(v)
+		if i >= 0 and i < count and not out.has(i):
+			out.append(i)
+	return out
 
 
 ## The chosen node ({"kind","match_id"}); {} when none is chosen.
@@ -1039,7 +1065,7 @@ func _is_cleared(col: int, idx: int) -> bool:
 	return false
 
 
-# Map from saved JSON (numbers come back as floats): {index, tier, nodes [{kind, match_id}]}; [] if malformed.
+# Map from saved JSON (numbers come back as floats): {index, tier, nodes [{kind, match_id, next?}]}; [] if malformed.
 static func _clean_map(raw: Variant) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if typeof(raw) != TYPE_ARRAY:
@@ -1051,7 +1077,15 @@ static func _clean_map(raw: Variant) -> Array[Dictionary]:
 		for n: Variant in (c as Dictionary)["nodes"] as Array:
 			if typeof(n) != TYPE_DICTIONARY:
 				return [] as Array[Dictionary]
-			nodes.append({"kind": str((n as Dictionary).get("kind", "")), "match_id": str((n as Dictionary).get("match_id", ""))})
+			var clean: Dictionary = {"kind": str((n as Dictionary).get("kind", "")), "match_id": str((n as Dictionary).get("match_id", ""))}
+			# 2026-11-03: the node's links into the next column (absent in saves from before them: every node stays open).
+			if typeof((n as Dictionary).get("next")) == TYPE_ARRAY:
+				var next: Array = []
+				for v: Variant in (n as Dictionary)["next"] as Array:
+					if typeof(v) == TYPE_INT or typeof(v) == TYPE_FLOAT:
+						next.append(int(v))
+				clean["next"] = next
+			nodes.append(clean)
 		if nodes.is_empty():
 			return [] as Array[Dictionary]
 		out.append({"index": int((c as Dictionary).get("index", out.size())), "tier": int((c as Dictionary).get("tier", 0)), "nodes": nodes})

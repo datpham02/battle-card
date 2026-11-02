@@ -72,8 +72,6 @@ const OUTLINE_WIDTH: float = 4.0
 const PAUSE_BAR_WIDTH_RATIO: float = 0.14
 const PAUSE_BAR_HEIGHT_RATIO: float = 0.46
 const PAUSE_BAR_GAP_RATIO: float = 0.14
-## Pause tile pressed: how far it drops (px). Controls v3: its size and place are ScreenLayout.pause_tile_rect.
-const PAUSE_PRESS_DROP: float = 2.0
 ## Battle HUD pass 2026-11-01: dark rim around each pause bar, px.
 const PAUSE_BAR_RIM: float = 2.0
 
@@ -809,23 +807,18 @@ func _elapsed_text(seconds: float) -> String:
 
 
 # Story 016: the pause button, dimmed while the controller cannot pause (skill menu open, swing lockout, already
-# paused). Controls v3: the stone tile sits against the top-right corner (ScreenLayout.pause_tile_rect) with the two
-# bars drawn on it; the larger corner square ScreenLayout.pause_button_rect is the hit area; pressed = the tile drops
-# PAUSE_PRESS_DROP px.
+# paused). Controls v3: the tile sits against the top-right corner (ScreenLayout.pause_tile_rect) with the two
+# bars drawn on it; the larger corner square ScreenLayout.pause_button_rect is the hit area; pressed = the plate sinks
+# onto its lip.
 func _draw_pause_button(vp: Vector2) -> void:
 	var tile: Rect2 = ScreenLayout.pause_tile_rect(vp)
 	var enabled: bool = _controller.can_pause()
 	var pressed: bool = enabled and UiButtons.is_pressed_at(self, ScreenLayout.pause_button_rect(vp))
-	if pressed:
-		tile.position.y += PAUSE_PRESS_DROP
 	var side: float = tile.size.x
-	var center: Vector2 = tile.get_center().floor()
 	var alpha: float = 1.0 if enabled else UiButtons.DIM_ALPHA
-	# Battle HUD pass 2026-11-01: the menus' pixel stone frame (PixelFrame, whole-number scale) instead of the vector tile.
-	var tint: Color = UiButtons.PIXEL_DISABLED_TINT if not enabled else (UiButtons.PIXEL_PRESSED_TINT if pressed else Color.WHITE)
-	PixelFrame.draw(self, PixelFrame.BUTTON_FRAME, tile, PixelFrame.BUTTON_MARGIN, PixelFrame.scale_for(vp.y), tint)
-	# The icon sheet's "pause" carries its own vector tile, so on the stone frame the two bars are drawn here: menu
-	# ivory with a dark rim, whole pixels.
+	# 2026-11-02: the ancient icon plate (UiButtons.draw_icon_button, sinks while pressed) instead of the riveted stone
+	# frame, which stays on cards only. The two bars are drawn here: menu ivory with a dark rim, whole pixels.
+	var center: Vector2 = UiButtons.draw_icon_button(self, tile, pressed, enabled).get_center().floor()
 	var bar := Vector2(roundf(side * PAUSE_BAR_WIDTH_RATIO), roundf(side * PAUSE_BAR_HEIGHT_RATIO))
 	var gap: float = roundf(side * PAUSE_BAR_GAP_RATIO)
 	var color := Color(UiButtons.PIXEL_LABEL, alpha)

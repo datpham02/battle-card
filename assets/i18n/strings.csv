@@ -907,3 +907,13 @@ ui.status.guard.name,Giáp tạm,Guard
 ui.status.guard.desc,Giáp tạm thời giảm sát thương nhận vào; đòn xuyên giáp bỏ qua nó.,Temporary armour lowers the damage taken; piercing hits ignore it.
 ui.hud.resonance_label,Cộng hưởng ×%s · %d ô · −%d,Resonance ×%s · %d cells · −%d
 ui.run_hud.intro_resonance,Cộng hưởng,Resonance
+node.battle.desc,Một trận đấu. Thắng để chọn lá mới.,A fight. Win it to pick a new card.
+node.danger.desc,Trận khó hơn với bẫy trên sân.,A harder fight with hazards on the field.
+node.treasure.desc,Một rương thưởng. Không phải đánh.,A chest with a reward. No fight.
+node.rest.desc,Nghỉ để hồi máu hoặc rèn một lá.,Rest to heal or forge a card.
+node.miniboss.desc,Một Tinh Anh mạnh hơn trận thường. Thưởng lớn hơn.,An elite foe stronger than a battle. A bigger reward.
+node.boss.desc,Kẻ Gác của vùng đất này.,The Warden of this land.
+node.shop.desc,Tiêu vàng mua lá và bảo vật.,Spend gold on cards and relics.
+node.event.desc,Có chuyện xảy ra. Chọn cách ứng phó.,Something happens. Choose how to answer.
+ui.map.enter,Vào,Enter
+ui.map.cleared,Đã qua,Cleared

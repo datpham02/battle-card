@@ -107,6 +107,39 @@ static func draw_small(canvas: CanvasItem, rect: Rect2, modulate: Color = Color.
 	draw(canvas, BUTTON_FRAME, rect, BUTTON_MARGIN, small_scale_for(canvas.get_viewport_rect().size.y), modulate)
 
 
+## 2026-11-02 ancient plates: [param texture] as a nine-slice over [param rect] whose corners ([param margins] =
+## [left, top, right, bottom] art px) are drawn once at whole-number [param scale] while the edges and the middle are
+## TILED ([method draw_tiled]), so the plate's speckle keeps its pixel density at any size. A rect smaller than two
+## corners squeezes them (as [method draw_margins]).
+static func draw_nine_tiled(canvas: CanvasItem, texture: Texture2D, rect: Rect2, margins: Array, scale: int, modulate: Color = Color.WHITE) -> void:
+	if texture == null or margins.size() < 4:
+		return
+	var tex := Vector2(texture.get_size())
+	var l: float = float(margins[0])
+	var t: float = float(margins[1])
+	var rm: float = float(margins[2])
+	var b: float = float(margins[3])
+	var r := Rect2(rect.position.round(), rect.size.round())
+	if r.size.x < (l + rm) * scale or r.size.y < (t + b) * scale:
+		draw_margins(canvas, texture, r, margins, scale, modulate)
+		return
+	var xs_src: Array[float] = [0.0, l, tex.x - rm, tex.x]
+	var ys_src: Array[float] = [0.0, t, tex.y - b, tex.y]
+	var xs_dst: Array[float] = [r.position.x, r.position.x + l * scale, r.end.x - rm * scale, r.end.x]
+	var ys_dst: Array[float] = [r.position.y, r.position.y + t * scale, r.end.y - b * scale, r.end.y]
+	var pixel: Texture2D = nearest(texture)
+	for j: int in 3:
+		for i: int in 3:
+			var src := Rect2(xs_src[i], ys_src[j], xs_src[i + 1] - xs_src[i], ys_src[j + 1] - ys_src[j])
+			var dst := Rect2(xs_dst[i], ys_dst[j], xs_dst[i + 1] - xs_dst[i], ys_dst[j + 1] - ys_dst[j])
+			if not src.has_area() or not dst.has_area():
+				continue
+			if i != 1 and j != 1:
+				canvas.draw_texture_rect_region(pixel, dst, src, modulate)
+			else:
+				draw_tiled(canvas, texture, src, dst, scale, modulate)
+
+
 ## Draws [param src] (texture px) of [param texture] repeated at whole-number [param scale] over [param dst]
 ## (screen px), the last row / column cropped: a tiled nine-slice middle keeps the art's pixel density where a
 ## stretch would smear its texture. [param flip_x] mirrors every tile.

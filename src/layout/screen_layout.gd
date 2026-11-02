@@ -1793,3 +1793,170 @@ static func defeat_stats_rect(viewport_size: Vector2) -> Rect2:
 	var top: float = viewport_size.y * DEFEAT_STATS_TOP_RATIO
 	var bottom: float = run_button_rect(viewport_size).position.y - viewport_size.y * DEFEAT_STATS_GAP_RATIO
 	return Rect2(panel.position.x + inset * 2.0, top, panel.size.x - inset * 4.0, bottom - top)
+
+
+# --- 2026-11-02 map screen v5 (user-approved mockup, OSFE-style route in Tessera's look) ---------------------------
+
+## Map v5, px at 720p (times [method controls_scale]): the HP corner panel, the top-right icon buttons (block set,
+## pause) and their gap, a route node's icon side and the selected one's growth, the gap between nodes of a column
+## (capped by the route height) and the Enter button.
+## Map HUD bar (2026-11-02 reference): the hero pennant, the hero block (name, HP, bar), the two stat groups' widths
+## and height, and the gaps between the bar's parts.
+const MAP_PENNANT_PX: Vector2 = Vector2(48.0, 68.0)
+const MAP_HERO_SIZE_PX: Vector2 = Vector2(400.0, 56.0)
+const MAP_STAT_GROUP_WIDTHS_PX: Array[float] = [250.0, 230.0]
+const MAP_STAT_GROUP_HEIGHT_PX: float = 56.0
+const MAP_BAR_GAP_PX: float = 16.0
+const MAP_ICON_BUTTON_PX: float = 60.0
+const MAP_ICON_BUTTON_GAP_PX: float = 12.0
+const MAP_EDGE_INSET_PX: float = 10.0
+const MAP_NODE_ICON_PX: float = 80.0
+const MAP_NODE_SELECTED_SCALE: float = 1.2
+const MAP_NODE_STEP_PX: float = 116.0
+const MAP_ENTER_SIZE_PX: Vector2 = Vector2(210.0, 70.0)
+## Map v6 (2026-11-02 reference): the floor / region banner (size, top inset), the legend row (height, bottom inset).
+const MAP_BANNER_SIZE_PX: Vector2 = Vector2(440.0, 50.0)
+const MAP_LEGEND_HEIGHT_PX: float = 40.0
+const MAP_LEGEND_BOTTOM_PX: float = 14.0
+## Map v5, shares of the viewport: the route area (top, bottom, side margin), the info band (top, bottom, left,
+## right end before the Enter button).
+const MAP_ROUTE_TOP_RATIO: float = 0.2
+const MAP_ROUTE_BOTTOM_RATIO: float = 0.66
+const MAP_ROUTE_SIDE_RATIO: float = 0.16
+const MAP_INFO_TOP_RATIO: float = 0.7
+const MAP_INFO_BOTTOM_RATIO: float = 0.8
+const MAP_INFO_LEFT_RATIO: float = 0.16
+const MAP_INFO_RIGHT_RATIO: float = 0.66
+## Map v6: the relic strip's left end (it keeps the bottom-right corner; the legend owns the bottom-left).
+const MAP_RELIC_STRIP_LEFT_RATIO: float = 0.7
+
+
+## The part of the viewport clear of notches, rounded corners and system bars (DisplayServer's safe area mapped
+## into the viewport); the whole viewport where the platform reports none (desktop) or the window is not known.
+static func safe_rect(viewport_size: Vector2) -> Rect2:
+	var full := Rect2(Vector2.ZERO, viewport_size)
+	var win_size := Vector2(DisplayServer.window_get_size())
+	if win_size.x <= 0.0 or win_size.y <= 0.0:
+		return full
+	var win := Rect2(Vector2(DisplayServer.window_get_position()), win_size)
+	var safe: Rect2 = Rect2(DisplayServer.get_display_safe_area()).intersection(win)
+	if not safe.has_area():
+		return full
+	var to_vp: Vector2 = viewport_size / win_size
+	return Rect2((safe.position - win.position) * to_vp, safe.size * to_vp).intersection(full)
+
+
+## Map HUD bar: the hero pennant in the top-left of the safe area.
+static func map_pennant_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var safe: Rect2 = safe_rect(viewport_size)
+	var inset: float = roundf(MAP_EDGE_INSET_PX * s)
+	return Rect2(safe.position + Vector2(inset, inset * 0.5), (MAP_PENNANT_PX * s).round()).abs()
+
+
+## Map HUD bar: the hero block right of the pennant (name and "HP hp/max" over the HP bar).
+static func map_hp_panel_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var pennant: Rect2 = map_pennant_rect(viewport_size)
+	var pause: Rect2 = map_pause_button_rect(viewport_size)
+	return Rect2(Vector2(pennant.end.x + roundf(MAP_BAR_GAP_PX * s * 0.75), pause.position.y), (MAP_HERO_SIZE_PX * s).round())
+
+
+## Map HUD bar: stat group [param index] (0: deck | block set, 1: gold | card removals) right of the hero block, as
+## tall as the pause button.
+static func map_stat_group_rect(viewport_size: Vector2, index: int) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var x: float = map_hp_panel_rect(viewport_size).end.x + roundf(MAP_BAR_GAP_PX * s * 1.5)
+	for i: int in index:
+		x += roundf(MAP_STAT_GROUP_WIDTHS_PX[i] * s) + roundf(MAP_BAR_GAP_PX * s)
+	var pause: Rect2 = map_pause_button_rect(viewport_size)
+	var w: float = roundf(MAP_STAT_GROUP_WIDTHS_PX[clampi(index, 0, MAP_STAT_GROUP_WIDTHS_PX.size() - 1)] * s)
+	return Rect2(x, pause.position.y, w, roundf(MAP_STAT_GROUP_HEIGHT_PX * s))
+
+
+## Map v5: the pause icon button in the top-right corner of the safe area (hit-test it on [method touch_rect]).
+static func map_pause_button_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var safe: Rect2 = safe_rect(viewport_size)
+	var side: float = roundf(MAP_ICON_BUTTON_PX * s)
+	var inset: float = roundf(MAP_EDGE_INSET_PX * s)
+	return Rect2(safe.end.x - inset - side, safe.position.y + inset, side, side)
+
+
+## Map HUD bar: the block-set chip (the right half of stat group 0); a tap opens the block set.
+static func map_block_set_button_rect(viewport_size: Vector2) -> Rect2:
+	var group: Rect2 = map_stat_group_rect(viewport_size, 0)
+	return Rect2(group.position + Vector2(group.size.x * 0.5, 0.0), Vector2(group.size.x * 0.5, group.size.y))
+
+
+## Map v5: the route area. Its left edge is where the run enters the floor (the start marker), column
+## [param column] of [param count] sits at (column + 1) / count of its width, so the last (the warden) is on its right.
+static func map_route_rect(viewport_size: Vector2) -> Rect2:
+	var side: float = viewport_size.x * MAP_ROUTE_SIDE_RATIO
+	var top: float = viewport_size.y * MAP_ROUTE_TOP_RATIO
+	return Rect2(side, top, viewport_size.x - side * 2.0, viewport_size.y * MAP_ROUTE_BOTTOM_RATIO - top)
+
+
+## Map v5: the start marker's point (left middle of the route).
+static func map_route_start(viewport_size: Vector2) -> Vector2:
+	var route: Rect2 = map_route_rect(viewport_size)
+	return Vector2(route.position.x, route.get_center().y).round()
+
+
+## Map v5: centre of node [param index] of the [param node_count] nodes of column [param column] of
+## [param column_count]: columns spread left to right, a column's nodes stacked top to bottom around the middle,
+## MAP_NODE_STEP_PX apart (less when the route is too short for them).
+static func map_route_node_center(viewport_size: Vector2, column: int, column_count: int, index: int, node_count: int) -> Vector2:
+	var route: Rect2 = map_route_rect(viewport_size)
+	var x: float = route.position.x + route.size.x * float(column + 1) / float(maxi(column_count, 1))
+	var step: float = minf(MAP_NODE_STEP_PX * controls_scale(viewport_size), route.size.y / float(maxi(node_count, 1)))
+	var y: float = route.get_center().y + (float(index) - float(node_count - 1) * 0.5) * step
+	return Vector2(x, y).round()
+
+
+## Map v5: the tap area of a route node at [param center] (the icon grown to at least [constant MIN_TOUCH_SIDE]).
+static func map_route_node_hit_rect(viewport_size: Vector2, center: Vector2) -> Rect2:
+	var side: float = roundf(MAP_NODE_ICON_PX * controls_scale(viewport_size))
+	return touch_rect(Rect2(center - Vector2(side, side) * 0.5, Vector2(side, side)))
+
+
+## Map v5: the borderless info band under the route (the selected node's name and what it holds).
+static func map_info_rect(viewport_size: Vector2) -> Rect2:
+	var top: float = viewport_size.y * MAP_INFO_TOP_RATIO
+	var left: float = viewport_size.x * MAP_INFO_LEFT_RATIO
+	return Rect2(left, top, viewport_size.x * MAP_INFO_RIGHT_RATIO - left, viewport_size.y * MAP_INFO_BOTTOM_RATIO - top)
+
+
+## Map v5: the Enter button, right of the info band and centred on it.
+static func map_enter_button_rect(viewport_size: Vector2) -> Rect2:
+	var info: Rect2 = map_info_rect(viewport_size)
+	var size: Vector2 = (MAP_ENTER_SIZE_PX * controls_scale(viewport_size)).round()
+	var gap: float = roundf(MAP_ICON_BUTTON_GAP_PX * 2.0 * controls_scale(viewport_size))
+	return Rect2(Vector2(info.end.x + gap, info.get_center().y - size.y * 0.5).round(), size)
+
+
+
+## Map v6: the relic strip, the bottom-right part of [method relic_strip_rect] (the legend owns the bottom-left).
+static func map_relic_strip_rect(viewport_size: Vector2) -> Rect2:
+	var full: Rect2 = relic_strip_rect(viewport_size)
+	var left: float = viewport_size.x * MAP_RELIC_STRIP_LEFT_RATIO
+	return Rect2(Vector2(left, full.position.y), Vector2(full.end.x - left, full.size.y))
+
+
+## Map v6: the floor / region banner, under the HUD bar against the right edge of the safe area.
+static func map_floor_banner_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var safe: Rect2 = safe_rect(viewport_size)
+	var size: Vector2 = (MAP_BANNER_SIZE_PX * s).round()
+	var top: float = map_pennant_rect(viewport_size).end.y + MAP_EDGE_INSET_PX * s
+	return Rect2(Vector2(safe.end.x - MAP_EDGE_INSET_PX * s - size.x, top).round(), size)
+
+
+## Map v6: the legend row along the bottom-left of the safe area (up to the relic strip).
+static func map_legend_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var safe: Rect2 = safe_rect(viewport_size)
+	var h: float = roundf(MAP_LEGEND_HEIGHT_PX * s)
+	var left: float = safe.position.x + viewport_size.x * MARGIN_RATIO
+	var top: float = safe.end.y - roundf(MAP_LEGEND_BOTTOM_PX * s) - h
+	return Rect2(left, top, viewport_size.x * MAP_RELIC_STRIP_LEFT_RATIO - left, h)

@@ -150,6 +150,57 @@ static func chamfer_points(rect: Rect2, cuts: Array) -> PackedVector2Array:
 	return p
 
 
+## Corners of a regular [param sides]-gon of circumradius [param r] round [param center], clockwise, the first at
+## [param start_angle] (default straight up). The angular stand-in for a circle (2026-11-02 rule: no circles in the
+## UI but the movement joystick). Empty for sides < 3 or r <= 0.
+static func regular_points(center: Vector2, r: float, sides: int, start_angle: float = -PI * 0.5) -> PackedVector2Array:
+	var p := PackedVector2Array()
+	if sides < 3 or r <= 0.0:
+		return p
+	for i: int in sides:
+		var a: float = start_angle + TAU * float(i) / float(sides)
+		p.append(center + Vector2(cos(a), sin(a)) * r)
+	return p
+
+
+## The first [param ratio] (0..1) of the closed outline through [param corners], clockwise from corners[0], as an
+## open polyline: the angular radial timer. Empty when ratio <= 0 or fewer than 2 corners; the whole closed outline
+## at ratio >= 1.
+static func perimeter_trace(corners: PackedVector2Array, ratio: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var n: int = corners.size()
+	if n < 2 or ratio <= 0.0:
+		return out
+	var span: float = clampf(ratio, 0.0, 1.0) * float(n)
+	out.append(corners[0])
+	for i: int in n:
+		if span <= float(i):
+			break
+		var next: Vector2 = corners[(i + 1) % n]
+		if span >= float(i + 1):
+			out.append(next)
+		else:
+			out.append(corners[i].lerp(next, span - float(i)))
+			break
+	return out
+
+
+## Faceted flame glyph (tip up) of half-height [param h] round [param c], as a closed polyline: the tip, two
+## shoulders and a flat two-corner base (replaces the round-bottomed teardrop).
+static func flame_points(c: Vector2, h: float) -> PackedVector2Array:
+	var p := PackedVector2Array([c + Vector2(0.0, -h), c + Vector2(h * 0.7, h * 0.4), c + Vector2(h * 0.35, h),
+		c + Vector2(-h * 0.35, h), c + Vector2(-h * 0.7, h * 0.4)])
+	p.append(p[0])
+	return p
+
+
+## Padlock shackle over a lock body whose top edge is at [param top_y], centred on [param cx], half-width
+## [param r]: an open polyline with chamfered top corners (the angular version of the half-ring).
+static func shackle_points(cx: float, top_y: float, r: float) -> PackedVector2Array:
+	return PackedVector2Array([Vector2(cx - r, top_y), Vector2(cx - r, top_y - r * 0.6), Vector2(cx - r * 0.6, top_y - r),
+		Vector2(cx + r * 0.6, top_y - r), Vector2(cx + r, top_y - r * 0.6), Vector2(cx + r, top_y)])
+
+
 ## The [param total] segment rects of a segmented bar across [param rect], [param gap] px apart; edges
 ## rounded to whole px (widths differ by at most 1 px), the last one ends on rect's right edge. Empty
 ## for total <= 0.

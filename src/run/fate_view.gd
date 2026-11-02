@@ -34,7 +34,8 @@ const MIN_FIT_FONT_SIZE: int = 12
 ## Progress ring: radius as a share of the button height, line width, arc points.
 const RING_RADIUS_RATIO: float = 0.4
 const RING_WIDTH: float = 10.0
-const RING_POINTS: int = 48
+## Corners of the hold ring (an octagon, pointy top).
+const RING_SIDES: int = 8
 ## The button label fits inside the ring: its width at most this many ring radii.
 const LABEL_RING_SHARE: float = 1.5
 const KEY_SELECT_WIDTH: float = 6.0
@@ -236,13 +237,13 @@ func _draw() -> void:
 		_text(line, line.get_center().y + LINE_FONT_SIZE * 0.35, lines[i], _fit(lines[i], line.size.x, LINE_FONT_SIZE), LINE_COLOR)
 
 
-# The progress ring around a button's label: a faint full track, the held share drawn clockwise from the top.
+# The progress ring around a button's label, an octagon (no circles in the UI): a faint full track, the held share
+# traced clockwise from the top corner.
 func _draw_ring(rect: Rect2, progress: float) -> void:
-	var radius: float = rect.size.y * RING_RADIUS_RATIO
-	var center: Vector2 = rect.get_center()
-	draw_arc(center, radius, 0.0, TAU, RING_POINTS, RING_TRACK_COLOR, RING_WIDTH, true)
+	var corners: PackedVector2Array = HudSkin.regular_points(rect.get_center(), rect.size.y * RING_RADIUS_RATIO, RING_SIDES)
+	draw_polyline(HudSkin.perimeter_trace(corners, 1.0), RING_TRACK_COLOR, RING_WIDTH)
 	if progress > 0.0:
-		draw_arc(center, radius, -PI * 0.5, -PI * 0.5 + TAU * progress, RING_POINTS, RING_COLOR, RING_WIDTH, true)
+		draw_polyline(HudSkin.perimeter_trace(corners, progress), RING_COLOR, RING_WIDTH)
 
 
 # Centred HudSkin outlined text over [param rect]'s width at baseline [param y] (Bold when [param bold]).

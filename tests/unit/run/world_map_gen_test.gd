@@ -144,37 +144,42 @@ func _initialize() -> void:
 	var boss_ok: bool = true
 	var treasure_n: int = 0
 	var rest_n: int = 0
+	# 2026-11-03 (design/quick-specs/osfe-floor-length-2026-11-03.md): 7 columns like one OSFE world.
 	for rid: String in cfg.region_ids():
 		for f: int in 5:
 			for s: int in 30:
 				var map: Array[Dictionary] = cfg.generate_region_map(rid, s, f, 2)
-				if map.size() != 3 or _count(map[0], "battle") != 1 or (map[0]["nodes"] as Array).size() != 1:
+				if map.size() != 7 or _count(map[0], "battle") != 1 or (map[0]["nodes"] as Array).size() != 1:
 					frame_ok = false
 					continue
-				var mid: int = (map[1]["nodes"] as Array).size()
-				if mid < 2 or mid > 3:
-					frame_ok = false
-				var rt: int = _count(map[1], "rest") + _count(map[1], "treasure")
-				if rt != 1:
+				for ci: int in [1, 4]:
+					if (map[ci]["nodes"] as Array).size() != 3:
+						frame_ok = false
+				for ci: int in [2, 3, 5]:
+					var mid: int = (map[ci]["nodes"] as Array).size()
+					if mid < 2 or mid > 3:
+						frame_ok = false
+				if _count(map[4], "rest") != 1:
 					rest_or_treasure_ok = false
-				treasure_n += _count(map[1], "treasure")
-				rest_n += _count(map[1], "rest")
+				for ci: int in map.size():
+					treasure_n += _count(map[ci], "treasure")
+					rest_n += _count(map[ci], "rest")
 				if f == 0:
-					mini_floor1 += _count(map[1], "miniboss")
-				else:
-					mini_later += _count(map[1], "miniboss")
-				if (map[2]["nodes"] as Array).size() != 1 or _count(map[2], "boss") != 1:
+					mini_floor1 += _count(map[3], "miniboss")
+				elif _count(map[3], "miniboss") == 1:
+					mini_later += 1
+				if (map[6]["nodes"] as Array).size() != 1 or _count(map[6], "boss") != 1:
 					boss_ok = false
 				else:
-					var bid: String = str((map[2]["nodes"] as Array)[0]["match_id"])
+					var bid: String = str((map[6]["nodes"] as Array)[0]["match_id"])
 					if not (cfg.get_map_spec(cfg.region_index(rid))["pools"]["boss"] as Dictionary).values().any(func(l: Array) -> bool: return l.has(bid)):
 						boss_ok = false
-	check(frame_ok, "region map: 3 columns, col 0 one battle, col 1 two or three nodes")
-	check(rest_or_treasure_ok, "region map: col 1 has exactly one rest or treasure")
-	check(treasure_n > 100 and rest_n > 100, "region map: rest / treasure drawn about 50/50 (%d / %d)" % [rest_n, treasure_n])
-	check(boss_ok, "region map: col 2 is one boss from the region's boss pool")
+	check(frame_ok, "region map: 7 columns, col 0 one battle, cols 1 and 4 three nodes, cols 2 / 3 / 5 two or three")
+	check(rest_or_treasure_ok, "region map: col 4 has exactly one rest (OSFE campsite column)")
+	check(treasure_n > 100 and rest_n > 100, "region map: treasures and rests drawn (%d rest / %d treasure)" % [rest_n, treasure_n])
+	check(boss_ok, "region map: the last column is one boss from the region's boss pool")
 	check(mini_floor1 == 0, "region map: no miniboss on floor 1 (min_floor 2)")
-	check(mini_later > 0, "region map: miniboss appears from floor 2 (%d)" % mini_later)
+	check(mini_later == 7 * 4 * 30, "region map: col 3 holds one miniboss on every map from floor 2 (%d of %d)" % [mini_later, 7 * 4 * 30])
 
 	# Determinism and variation.
 	check(cfg.generate_region_map("ch1", 7, 2, 1) == cfg.generate_region_map("ch1", 7, 2, 1), "same seed + region + floor -> same map")

@@ -3,6 +3,9 @@ extends SceneTree
 ## `world.special_nodes`, ChapterMapGen._apply_special_nodes, WorldMapGen.shop_floors): at most 1 shop and
 ## 1 event per region, at least 2 shops per run on two different floors (200 seeds), old maps unchanged.
 
+## 2026-11-03: the shop / event column of the 7-column floor (chapters.json world.special_nodes.column).
+const SPECIAL_COLUMN: int = 5
+
 var fails: int = 0
 var passes: int = 0
 
@@ -66,8 +69,9 @@ func _initialize() -> void:
 				shop_floors[f] = true
 			if plan.has(f) and n_shop != 1:
 				plan_ok = false
-			var mid: Array = map[1]["nodes"]
-			if map.size() != 3 or mid.size() < 2 or mid.size() > 3:
+			# 2026-11-03: 7-column floors; the shop / event column is world.special_nodes.column (5).
+			var mid: Array = map[SPECIAL_COLUMN]["nodes"] if map.size() == 7 else []
+			if map.size() != 7 or mid.size() < 2 or mid.size() > 3:
 				frame_ok = false
 			var fights: int = 0
 			for node: Dictionary in mid:
@@ -84,7 +88,7 @@ func _initialize() -> void:
 	check(plan_ok, "the shop plan holds 2 different floors and each of them has its shop")
 	check(empty_match_ok, "shop / event nodes have an empty match_id")
 	check(fight_kept_ok, "outside a planned shop floor the middle column keeps at least one fight")
-	check(frame_ok, "the region frame keeps 3 columns and 2..3 middle nodes")
+	check(frame_ok, "the region frame keeps 7 columns and 2..3 nodes in the shop / event column")
 	check(events > regions / 10 and shops > regions * 2 / 5, "shops and events actually appear (%d shops, %d events / %d regions)" % [shops, events, regions])
 	check(cfg.shop_floors(42) == cfg.shop_floors(42), "the shop plan is deterministic")
 	var min_floor_ok: bool = true

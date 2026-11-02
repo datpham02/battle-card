@@ -93,7 +93,6 @@ const LOCK_BODY_W: float = 0.14
 const LOCK_BODY_H: float = 0.05
 const LOCK_CENTER_Y: float = 0.9
 const LOCK_SHACKLE_R: float = 0.05
-const ARC_POINTS: int = 12
 ## Joins the deck entries ("Kiếm khí ×2 · Chấn phong ×2"); punctuation, same glyph as the match labels.
 const DECK_SEPARATOR: String = " · "
 
@@ -556,16 +555,14 @@ func _card_name(card: String) -> String:
 	return tr(str(skill.get("name_key", card)))
 
 
-# Padlock: a filled body with a half-circle shackle above it (the FloorSelectView look).
+# Padlock: a filled body with an angular shackle above it (HudSkin.shackle_points; no circles in the UI).
 func _draw_padlock(rect: Rect2) -> void:
 	var body_size := Vector2(rect.size.x * LOCK_BODY_W, rect.size.y * LOCK_BODY_H)
 	var center := Vector2(rect.get_center().x, rect.position.y + rect.size.y * LOCK_CENTER_Y)
 	var body := Rect2(center - body_size * 0.5, body_size)
 	draw_rect(body, PADLOCK_COLOR)
 	var radius: float = rect.size.x * LOCK_SHACKLE_R
-	draw_arc(Vector2(center.x, body.position.y), radius, PI, TAU, ARC_POINTS, PADLOCK_COLOR, MARK_WIDTH)
-	draw_line(Vector2(center.x - radius, body.position.y), Vector2(center.x - radius, body.position.y - radius * 0.3), PADLOCK_COLOR, MARK_WIDTH)
-	draw_line(Vector2(center.x + radius, body.position.y), Vector2(center.x + radius, body.position.y - radius * 0.3), PADLOCK_COLOR, MARK_WIDTH)
+	draw_polyline(HudSkin.shackle_points(center.x, body.position.y, radius), PADLOCK_COLOR, MARK_WIDTH)
 
 
 # Baseline y for a share of the card height.

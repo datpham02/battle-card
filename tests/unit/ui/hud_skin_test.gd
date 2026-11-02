@@ -26,6 +26,9 @@ func _initialize() -> void:
 	test_missing_icon_returns_false()
 	test_missing_sheet_returns_false()
 	test_trail_ratio_interpolates_then_lands()
+	test_regular_points_sit_on_the_circumradius()
+	test_perimeter_trace_follows_the_outline()
+	test_flame_and_shackle_are_straight_segments()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
 
@@ -129,3 +132,35 @@ func test_trail_ratio_interpolates_then_lands() -> void:
 	_check("half way", is_equal_approx(HudSkin.trail_ratio(1.0, 0.5, 0.2, 0.4), 0.75))
 	_check("over: to", is_equal_approx(HudSkin.trail_ratio(1.0, 0.5, 0.5, 0.4), 0.5))
 	_check("zero duration: to", is_equal_approx(HudSkin.trail_ratio(1.0, 0.5, 0.0, 0.0), 0.5))
+
+
+# 2026-11-02 (no circles in the UI but the joystick): the angular stand-ins.
+func test_regular_points_sit_on_the_circumradius() -> void:
+	var c := Vector2(10.0, 20.0)
+	var oct: PackedVector2Array = HudSkin.regular_points(c, 8.0, 8)
+	var on_radius: bool = oct.size() == 8
+	for p: Vector2 in oct:
+		on_radius = on_radius and is_equal_approx(p.distance_to(c), 8.0)
+	_check("test_regular_points_octagon_has_8_corners_on_the_radius", on_radius)
+	_check("test_regular_points_first_corner_straight_up", oct.size() > 0 and oct[0].is_equal_approx(c + Vector2(0.0, -8.0)))
+	_check("test_regular_points_under_3_sides_is_empty", HudSkin.regular_points(c, 8.0, 2).is_empty())
+	_check("test_regular_points_zero_radius_is_empty", HudSkin.regular_points(c, 0.0, 6).is_empty())
+
+
+func test_perimeter_trace_follows_the_outline() -> void:
+	var square := PackedVector2Array([Vector2(0, 0), Vector2(4, 0), Vector2(4, 4), Vector2(0, 4)])
+	var full: PackedVector2Array = HudSkin.perimeter_trace(square, 1.0)
+	_check("test_trace_full_closes_back_on_the_first_corner", full.size() == 5 and full[4] == square[0])
+	var half: PackedVector2Array = HudSkin.perimeter_trace(square, 0.5)
+	_check("test_trace_half_ends_on_the_opposite_corner", half.size() == 3 and half[2] == Vector2(4, 4))
+	var eighth: PackedVector2Array = HudSkin.perimeter_trace(square, 0.125)
+	_check("test_trace_eighth_stops_mid_edge", eighth.size() == 2 and eighth[1].is_equal_approx(Vector2(2, 0)))
+	_check("test_trace_zero_is_empty", HudSkin.perimeter_trace(square, 0.0).is_empty())
+
+
+func test_flame_and_shackle_are_straight_segments() -> void:
+	var flame: PackedVector2Array = HudSkin.flame_points(Vector2.ZERO, 10.0)
+	_check("test_flame_is_five_corners_closed", flame.size() == 6 and flame[0] == flame[5])
+	_check("test_flame_tip_up_base_at_h", flame[0] == Vector2(0.0, -10.0) and is_equal_approx(flame[2].y, 10.0))
+	var shackle: PackedVector2Array = HudSkin.shackle_points(0.0, 0.0, 5.0)
+	_check("test_shackle_is_six_points_from_body_to_body", shackle.size() == 6 and shackle[0].y == 0.0 and shackle[5].y == 0.0)

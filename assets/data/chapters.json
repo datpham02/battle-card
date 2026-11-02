@@ -108,9 +108,14 @@
 		"floors": 5,
 		"choices_per_floor": 2,
 		"region_pool": ["ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"],
+		"_doc_region_columns": "2026-11-03 (design/quick-specs/osfe-floor-length-2026-11-03.md): one floor = one OSFE world, 7 columns: a battle; 3 nodes; 2-3 with a treasure or battle; 2-3 with an elite from floor 2; 3 with a rest and a treasure or battle; 2-3 (the shop / event column); the warden. ChapterMapGen links the columns OSFE's way (each node 1-2 ways on).",
 		"region_columns": [
 			{"tier": 0, "kinds": ["battle"], "pick": [1, 1], "required": []},
-			{"tier": 1, "kinds": ["battle", "danger", {"kind": "miniboss", "min_floor": 2}], "pick": [2, 3], "required": [["rest", "treasure"]]},
+			{"tier": 1, "kinds": ["battle", "danger"], "pick": [3, 3], "required": []},
+			{"tier": 1, "kinds": ["battle", "danger"], "pick": [2, 3], "required": [["treasure", "battle"]]},
+			{"tier": 1, "kinds": ["battle", "danger"], "pick": [2, 3], "required": [{"kind": "miniboss", "min_floor": 2}]},
+			{"tier": 1, "kinds": ["battle", "danger"], "pick": [3, 3], "required": ["rest", ["treasure", "battle"]]},
+			{"tier": 1, "kinds": ["battle", "danger"], "pick": [2, 3], "required": []},
 			{"tier": 2, "kinds": [], "pick": [1, 1], "required": ["boss"]}
 		],
 		"floor_scaling": {
@@ -129,7 +134,7 @@
 			"5": [1, 2, 2]
 		},
 		"special_nodes": {
-			"column": 1,
+			"column": 5,
 			"shop_weight": 0.0,
 			"event_weight": 0.6,
 			"guaranteed_shops": 3,

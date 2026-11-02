@@ -24,10 +24,6 @@ const STROKE_WIDTH: float = 12.0
 const NAME_FONT_SIZE: int = 96
 const BUTTON_FONT_SIZE: int = 32
 ## Pixel buttons (Main Menu pass): label colours from the background's light ivory and gold, frame tints.
-const LABEL_COLOR: Color = Color("F8F8D0")
-const LABEL_PRIMARY: Color = Color("F8E080")
-const PRIMARY_TINT: Color = Color(1.12, 1.08, 1.0)
-const PRESSED_TINT: Color = Color(0.75, 0.75, 0.8)
 ## Baseline of the name as a share of the title band height (no tagline: user 2026-11-01).
 const NAME_BASELINE: float = 0.62
 ## Knife strokes behind the name: (from, to) pairs as shares of the title band size.
@@ -214,20 +210,11 @@ func _draw() -> void:
 	var labels: Array[String] = _button_labels()
 	var rects: Array[Rect2] = ScreenLayout.title_button_rects(vp, labels.size())
 	for i: int in rects.size():
-		_draw_pixel_button(rects[i], tr(labels[i]), i == 0, UiButtons.is_pressed_at(self, rects[i]), BUTTON_FONT_SIZE, vp)
+		UiButtons.draw_button(self, rects[i], tr(labels[i]), UiButtons.Style.PRIMARY if i == 0 else UiButtons.Style.SECONDARY,
+			UiButtons.is_pressed_at(self, rects[i]), true, BUTTON_FONT_SIZE)
 	var lang: Rect2 = ScreenLayout.title_lang_button_rect(vp)
-	_draw_pixel_button(lang, tr(_lang_label(_flow.next_locale())), false, UiButtons.is_pressed_at(self, lang), LANG_FONT_SIZE, vp)
-
-
-# Main Menu pass (user 2026-11-01: the buttons looked too modern over the pixel background): a button as the
-# PixelLab stone frame (PixelFrame, nine-sliced at the background's density) with an outlined label; the main
-# action's label is gold and its frame a touch brighter; a pressed button darkens and its label sinks 2 px.
-func _draw_pixel_button(rect: Rect2, label: String, primary: bool, pressed: bool, font_size: int, vp: Vector2) -> void:
-	var tint: Color = PRESSED_TINT if pressed else (PRIMARY_TINT if primary else Color.WHITE)
-	PixelFrame.draw(self, PixelFrame.BUTTON_FRAME, rect, PixelFrame.BUTTON_MARGIN, PixelFrame.scale_for(vp.y), tint)
-	var y: float = rect.get_center().y + font_size * 0.36 + (2.0 if pressed else 0.0)
-	MenuFont.text(self, Vector2(rect.position.x, y), label, font_size, LABEL_PRIMARY if primary else LABEL_COLOR,
-		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
+	UiButtons.draw_button(self, lang, tr(_lang_label(_flow.next_locale())), UiButtons.Style.SECONDARY,
+		UiButtons.is_pressed_at(self, lang), true, LANG_FONT_SIZE)
 
 
 # The key art covering the screen (mirrored when the menu is on the left, so the hero stays clear of it), then
@@ -254,7 +241,7 @@ func _draw_scene(vp: Vector2, t: float) -> void:
 	var cube := Vector2(vp.x - cube_art.x, cube_art.y) if mirrored else cube_art
 	var pulse: float = 0.5 + 0.5 * sin(t * GLOW_PULSE_SPEED)
 	for i: int in 4:
-		draw_circle(cube, GLOW_RADIUS * k * (1.0 - i * 0.2), Color(GLOW, (0.03 + 0.02 * pulse) * (i + 1)))
+		draw_colored_polygon(HudSkin.regular_points(cube, GLOW_RADIUS * k * (1.0 - i * 0.2), 8, -PI * 0.5 + PI / 8.0), Color(GLOW, (0.03 + 0.02 * pulse) * (i + 1)))
 	for i: int in SPARK_COUNT:
 		var phase: float = float(i) / float(SPARK_COUNT)
 		var rise: float = fposmod(t * SPARK_SPEED + phase * 90.0, 90.0) * k

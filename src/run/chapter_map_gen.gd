@@ -20,6 +20,10 @@ extends RefCounted
 ## fallback draws use their own rng stream (hash([run_seed, chapter id, "teach"])), so the main stream is the same
 ## as without the gate and a chapter without `teach_after` is generated exactly as before. The shop / event pass
 ## never replaces a node of a column that teaches a drawn elite, so the guarantee holds on every path.
+## 2026-11-03 (design/quick-specs/osfe-floor-length-2026-11-03.md): every node also gets `next`, the indices of the
+## nodes it links to in the next column ([method link_columns], OSFE's WorldBar order); RunSession only offers the
+## nodes linked from the node cleared before. The links draw from their own stream (hash([run_seed, id, "links"])), so
+## the nodes are the same as before the links existed.
 ## Design: design/game-brief.md "Run", design/reference/osfe-reference.md section 9.3.
 
 const KIND_BATTLE: String = "battle"
@@ -92,7 +96,63 @@ static func generate(chapter: Dictionary, run_seed: int, cleared_bosses: int) ->
 	if not lists.is_empty():
 		teachers = _teach_gated(map, chapter, run_seed, lists)
 	_apply_special_nodes(map, chapter, run_seed, teachers)
+	link_columns(map, run_seed, str(chapter.get("id", "")))
 	return map
+
+
+## Adds `next` (Array of node indices of the next column, ascending) to every node of [param map] the way OSFE 1.6.2
+## links a world's zones (`WorldBar.GenerateWorldBar`), from column A to column B: A's first node -> B's first, A's
+## last -> B's last; B larger: every B node without a link in gets one from a random A node; same size: A's nodes
+## without a link out pair with B's without a link in, from the bottom; B smaller: every A node without a link out goes
+## to a random B node. From column 3 to 4 B's middle node is also linked (from A's first node, else A's last). The
+## last column links nothing. Seeded by ([param run_seed], [param id], "links"): same map -> same links.
+static func link_columns(map: Array[Dictionary], run_seed: int, id: String) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([run_seed, id, "links"]) & SEED_MASK
+	for ci: int in map.size():
+		for node: Variant in map[ci].get("nodes", []):
+			(node as Dictionary)["next"] = []
+	for ci: int in map.size() - 1:
+		var a: Array = map[ci].get("nodes", [])
+		var b: Array = map[ci + 1].get("nodes", [])
+		if a.is_empty() or b.is_empty():
+			continue
+		var into: Array[int] = []
+		into.resize(b.size())
+		into.fill(0)
+		var add := func(from: int, to: int) -> void:
+			var nexts: Array = (a[from] as Dictionary)["next"]
+			if not nexts.has(to):
+				nexts.append(to)
+				into[to] += 1
+		add.call(0, 0)
+		add.call(a.size() - 1, b.size() - 1)
+		if b.size() > a.size():
+			for to: int in range(b.size() - 1, -1, -1):
+				if into[to] < 1:
+					add.call(rng.randi_range(0, a.size() - 1), to)
+		elif b.size() == a.size():
+			var outs: Array[int] = []
+			for i: int in a.size():
+				if ((a[i] as Dictionary)["next"] as Array).is_empty():
+					outs.append(i)
+			var ins: Array[int] = []
+			for i: int in b.size():
+				if into[i] < 1:
+					ins.append(i)
+			while not outs.is_empty() and not ins.is_empty():
+				add.call(outs.pop_back(), ins.pop_back())
+		else:
+			for from: int in range(a.size() - 1, -1, -1):
+				if ((a[from] as Dictionary)["next"] as Array).is_empty():
+					add.call(from, rng.randi_range(0, b.size() - 1))
+		if ci == 3 and b.size() > 1:
+			if not ((a[0] as Dictionary)["next"] as Array).has(1):
+				add.call(0, 1)
+			elif not ((a[a.size() - 1] as Dictionary)["next"] as Array).has(1):
+				add.call(a.size() - 1, 1)
+		for node: Variant in a:
+			((node as Dictionary)["next"] as Array).sort()
 
 
 ## P2.3: true when [param id] may be drawn after the columns already in [param map]: no `teach_after` list for it in

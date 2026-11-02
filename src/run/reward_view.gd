@@ -891,7 +891,7 @@ static func draw_shape_tile(canvas: CanvasItem, rect: Rect2, piece: Piece, name:
 	var x0: float = text_area.get_center().x - step * (count - 1) * 0.5
 	var dot_y: float = text_area.position.y + text_area.size.y * 0.55
 	for i: int in count:
-		canvas.draw_circle(Vector2(x0 + step * i, dot_y), radius, on if i < dots else off)
+		HudSkin.diamond(canvas, Vector2(x0 + step * i, dot_y), radius * PieceDeckView.DOT_DIAMOND_RATIO, on if i < dots else off, Color.TRANSPARENT, 0.0)
 	if not tag.is_empty():
 		MenuFont.text(canvas, Vector2(text_area.position.x, text_area.position.y + text_area.size.y * 0.88), tag, _fit_static(tag, text_area.size.x, SHAPE_TAG_FONT_SIZE), tag_color, HORIZONTAL_ALIGNMENT_CENTER, text_area.size.x)
 

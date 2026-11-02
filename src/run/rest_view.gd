@@ -34,7 +34,6 @@ const BORDER_WIDTH: float = 2.0
 const PRESSED_BORDER_WIDTH: float = 3.0
 const TILE_BORDER_WIDTH: float = 3.0
 const GLYPH_WIDTH: float = 6.0
-const ARC_POINTS: int = 16
 
 const TITLE_FONT_SIZE: int = 48
 const NAME_FONT_SIZE: int = 48
@@ -208,9 +207,9 @@ func _draw_card(rect: Rect2, name: String, line: String, outline: Color, heal: b
 	var c := Vector2(rect.get_center().x, rect.position.y + rect.size.y * GLYPH_CENTER_Y)
 	var h: float = rect.size.x * GLYPH_HALF
 	if heal:
-		# A flame: a lower half-circle closed by two lines to the tip, twice.
-		draw_polyline(_flame(c, h), GLYPH_COLOR, GLYPH_WIDTH)
-		draw_polyline(_flame(c + Vector2(0.0, h * 0.35), h * 0.45), GLYPH_COLOR, GLYPH_WIDTH)
+		# A faceted flame (HudSkin.flame_points), twice.
+		draw_polyline(HudSkin.flame_points(c, h), GLYPH_COLOR, GLYPH_WIDTH)
+		draw_polyline(HudSkin.flame_points(c + Vector2(0.0, h * 0.35), h * 0.45), GLYPH_COLOR, GLYPH_WIDTH)
 	else:
 		# An anvil: a wide top, a narrow neck, a base.
 		draw_rect(Rect2(c + Vector2(-h, -h * 0.6), Vector2(h * 2.0, h * 0.5)), GLYPH_COLOR)
@@ -218,17 +217,6 @@ func _draw_card(rect: Rect2, name: String, line: String, outline: Color, heal: b
 		draw_rect(Rect2(c + Vector2(-h * 0.8, h * 0.4), Vector2(h * 1.6, h * 0.3)), GLYPH_COLOR)
 	_text(rect, rect.position.y + rect.size.y * NAME_BASELINE, name, NAME_FONT_SIZE, NAME_COLOR, true)
 	_text(rect, rect.position.y + rect.size.y * LINE_BASELINE, line, LINE_FONT_SIZE, BODY_COLOR)
-
-
-# Teardrop outline of half-height [param h] around [param c] (tip up).
-func _flame(c: Vector2, h: float) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for i: int in ARC_POINTS + 1:
-		var a: float = PI * i / float(ARC_POINTS)
-		points.append(c + Vector2(-cos(a) * h * 0.7, h * 0.4 + sin(a) * h * 0.6))
-	points.append(c + Vector2(0.0, -h))
-	points.append(points[0])
-	return points
 
 
 # The forge list — title, one tile per deck entry (name + level, rarity border; dimmed at the level
