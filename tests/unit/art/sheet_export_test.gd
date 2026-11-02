@@ -16,13 +16,20 @@ const MAX_COLOURS := 8
 const UNITS := {
 	"kiem_si": {
 		# 2026-10-31: v3 tall anchor (PixelLab 2d093318...), PixMiniMax south-east clips cleaned to 96x70.
-		"frame": Vector2i(96, 70), "sheet": Vector2i(872, 567), "facing": "right",
+		# 2026-11-02: guard stance (user: the knight holds the sword ready the whole battle): idle, hit and the four
+		# directional dashes come from the guard_* candidates, the match-start draw from draw_to_guard.
+		"frame": Vector2i(96, 70), "sheet": Vector2i(872, 922), "facing": "right",
 		"candidate": "swordsman/v3-tall/clean-96x70/%s.png",
 		"clips": [
-			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["idle", ["guard_idle/0", "guard_idle/1", "guard_idle/2", "guard_idle/3"], [250, 250, 250, 250], "loop"],
+			["draw", ["draw_to_guard/0", "draw_to_guard/1", "draw_to_guard/2", "draw_to_guard/3", "draw_to_guard/4", "draw_to_guard/5", "draw_to_guard/6", "draw_to_guard/7"], [60, 60, 80, 80, 80, 80, 80, 120], "once"],
 			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
-			["cast_gesture", ["cast_gesture/0", "cast_gesture/1", "cast_gesture/2", "cast_gesture/3", "cast_gesture/4", "cast_gesture/5", "cast_gesture/6", "cast_gesture/7", "cast_gesture/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
-			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["step_forward", ["guard_step_forward/0", "guard_step_forward/1", "guard_step_forward/2", "guard_step_forward/3", "guard_step_forward/4", "guard_step_forward/5", "guard_step_forward/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_back", ["guard_step_back/0", "guard_step_back/1", "guard_step_back/2", "guard_step_back/3", "guard_step_back/4", "guard_step_back/5", "guard_step_back/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_up", ["guard_step_up/0", "guard_step_up/1", "guard_step_up/2", "guard_step_up/3", "guard_step_up/4", "guard_step_up/5", "guard_step_up/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_down", ["guard_step_down/0", "guard_step_down/1", "guard_step_down/2", "guard_step_down/3", "guard_step_down/4", "guard_step_down/5", "guard_step_down/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["cast_gesture", ["guard_cast/0", "guard_cast/1", "guard_cast/2", "guard_cast/3", "guard_cast/4", "guard_cast/5", "guard_cast/6", "guard_cast/7", "guard_cast/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
+			["hit", ["guard_hit/0", "guard_hit/1", "guard_hit/2"], [40, 40, 40], "once"],
 			["victory", ["victory/0", "victory/1", "victory/2", "victory/3", "victory/4"], [100, 100, 100, 100, 100], "hold_last"],
 			["defeat", ["defeat/0", "defeat/1", "defeat/2", "defeat/3", "defeat/4", "defeat/5", "defeat/6", "defeat/7"], [100, 100, 100, 100, 100, 100, 100, 100], "hold_last"],
 			["fall", ["fall/0", "fall/1", "fall/2", "fall/3"], [100, 100, 100, 100], "hold_last"],

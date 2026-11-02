@@ -82,6 +82,14 @@ const CLIP_FRONT: String = "front"
 ## Sheet clips (the frameTags of Story 045's sheets; `fall` plays when a unit dies by falling into a hole, ADR-0001 Task 5).
 const CLIP_IDLE: String = "idle"
 const CLIP_STEP: String = "step"
+## 2026-11-02 (user: "tiến có animation tiến, lùi có animation lùi, lên xuống cũng vậy", OSFE dashes): the step clip
+## per direction, relative to the way the unit faces; a sheet without one plays CLIP_STEP.
+const CLIP_STEP_FORWARD: String = "step_forward"
+const CLIP_STEP_BACK: String = "step_back"
+const CLIP_STEP_UP: String = "step_up"
+const CLIP_STEP_DOWN: String = "step_down"
+## 2026-11-02 guard stance: played once when the match binds (the hero draws the sword into the guard), then idle.
+const CLIP_DRAW: String = "draw"
 const CLIP_CAST: String = "cast_gesture"
 const CLIP_HIT: String = "hit"
 const CLIP_WINDUP: String = "windup"
@@ -111,6 +119,12 @@ const CTX_STEPPING: String = "stepping"
 const SIDES: Array[int] = [CombatState.Side.PLAYER, CombatState.Side.ENEMY]
 ## OSFE hit feel: the shake flips side every this many seconds.
 const SHAKE_STEP_SEC: float = 0.03
+## Step dust (2026-11-02): square grains (art px) left on the old cell, their colour (slab light edge) and how far
+## they drift sideways / rise over the dust's life.
+const DUST_GRAIN_ART: int = 2
+const DUST_COLOR: Color = Color("5A5650")
+const DUST_SPREAD_ART: int = 6
+const DUST_RISE_ART: int = 3
 
 var _combat: CombatView = null
 ## Status clocks: CombatState.Side -> {kind: String -> elapsed match seconds since the kind started}.
@@ -143,6 +157,16 @@ var _feel: Dictionary = {}
 var _flash: Node2D = null
 ## A damage event whose flash has not started: CombatState.Side -> seconds still to wait (-1 = delay not read yet).
 var _flash_wait: Dictionary = {}
+## Step glide (2026-11-02, OSFE dash feel): per side, the cell and ground (drawn feet) seen on the last advance, the
+## glide {from: Vector2i ground, left, total} and the dust {at: Vector2i, left, total}.
+var _last_cell: Dictionary = {}
+var _last_ground: Dictionary = {}
+var _slide: Dictionary = {}
+## The directional step clip of the last step per side (step_clip_for).
+var _step_clip: Dictionary = {}
+## A new step started since the clip was last chosen (a second dash the same way restarts the clip).
+var _step_restart: Dictionary = {}
+var _dust: Dictionary = {}
 
 
 ## Binds the layer to the battle's CombatView (state, grid, names and screen size come from it).
@@ -182,6 +206,7 @@ func advance(step: float) -> void:
 	_bind_match()
 	_advance_status_clocks(step)
 	for side: int in SIDES:
+		_track_step(side, maxf(step, 0.0))
 		_update_clip(side, maxf(step, 0.0))
 		_flash_left[side] = maxf(float(_flash_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
 		_shake_left[side] = maxf(float(_shake_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
@@ -206,7 +231,88 @@ static func shake_offset(left: float, px: int) -> Vector2i:
 func unit_feet_art(side: int) -> Vector2i:
 	if _combat == null or _combat.get_state() == null:
 		return Vector2i(-1, -1)
-	return _feet_of_unit(side)
+	return _ground_of(side)
+
+
+## Pure: the directional step clip for a move from [param from] to [param to] (board cells) by a unit that faces
+## right when [param faces_right]: along its facing = forward, against it = back, a row up (toward the back of the
+## board) = up, a row down = down; a diagonal or no move counts by its column first.
+static func step_clip_for(from: Vector2i, to: Vector2i, faces_right: bool) -> String:
+	var d: Vector2i = to - from
+	if d.x != 0:
+		return CLIP_STEP_FORWARD if (d.x > 0) == faces_right else CLIP_STEP_BACK
+	if d.y < 0:
+		return CLIP_STEP_UP
+	if d.y > 0:
+		return CLIP_STEP_DOWN
+	return CLIP_STEP
+
+
+## Pure: the offset (art px) of a gliding unit from its target feet: the whole [param from] - [param to] gap when
+## [param left] == [param total], shrinking with an ease-out (fast start, soft landing) to zero when [param left] is 0.
+static func slide_offset(from: Vector2i, to: Vector2i, left: float, total: float) -> Vector2i:
+	if total <= 0.0 or left <= 0.0:
+		return Vector2i.ZERO
+	var t: float = 1.0 - clampf(left / total, 0.0, 1.0)
+	var remain: float = pow(1.0 - t, 3.0)
+	return Vector2i(roundi((from.x - to.x) * remain), roundi((from.y - to.y) * remain))
+
+
+## Seconds of step glide left on [param side] (0 when it stands on its cell).
+func get_slide_left(side: int) -> float:
+	return float((_slide.get(side, {}) as Dictionary).get("left", 0.0))
+
+
+# The drawn feet of [param side]: its cell's feet plus the glide offset while it is stepping.
+func _ground_of(side: int) -> Vector2i:
+	var to: Vector2i = _feet_of_unit(side)
+	var slide: Dictionary = _slide.get(side, {})
+	if slide.is_empty():
+		return to
+	return to + slide_offset(slide["from"] as Vector2i, to, float(slide["left"]), float(slide["total"]))
+
+
+# Starts a glide (and dust) when [param side]'s cell changed since the last advance, from where it was drawn then;
+# runs the glide and dust clocks down by [param step]. Reduce motion: no glide, no dust (the unit snaps as before).
+func _track_step(side: int, step: float) -> void:
+	var cell: Vector2i = _cell_of(side)
+	if _reduce_motion:
+		_slide.erase(side)
+		_dust.erase(side)
+	if _last_cell.has(side) and _last_cell[side] != cell and not _reduce_motion:
+		var slide_sec: float = float(_feel.get("step_slide_sec", 0.0))
+		var dust_sec: float = float(_feel.get("step_dust_sec", 0.0))
+		var from: Vector2i = _last_ground[side]
+		_step_clip[side] = step_clip_for(_last_cell[side], cell, facing_for(side) == FACING_PLAYER)
+		_step_restart[side] = true
+		if slide_sec > 0.0:
+			_slide[side] = {"from": from, "left": slide_sec, "total": slide_sec}
+		if dust_sec > 0.0:
+			_dust[side] = {"at": from, "left": dust_sec, "total": dust_sec}
+	else:
+		for table: Dictionary in [_slide, _dust]:
+			var entry: Dictionary = table.get(side, {})
+			if not entry.is_empty():
+				entry["left"] = maxf(float(entry["left"]) - step, 0.0)
+				if float(entry["left"]) <= 0.0:
+					table.erase(side)
+	_last_cell[side] = cell
+	_last_ground[side] = _ground_of(side)
+
+
+# Square dust on the cell a unit just left: four grains drifting out and up, fading over the dust's life.
+func _draw_dust(side: int) -> void:
+	var dust: Dictionary = _dust.get(side, {})
+	if dust.is_empty():
+		return
+	var t: float = 1.0 - clampf(float(dust["left"]) / maxf(float(dust["total"]), 0.001), 0.0, 1.0)
+	var at: Vector2i = dust["at"]
+	var spread: int = roundi(DUST_SPREAD_ART * t)
+	var rise: int = roundi(DUST_RISE_ART * t)
+	var color := Color(DUST_COLOR, 1.0 - t)
+	for dir: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(-1, -1), Vector2i(1, -1)]:
+		var p := Vector2i(at.x + dir.x * (spread + 2) - DUST_GRAIN_ART / 2, at.y - DUST_GRAIN_ART + dir.y * rise - rise)
+		draw_rect(Rect2(Vector2(p), Vector2(DUST_GRAIN_ART, DUST_GRAIN_ART)), color)
 
 
 ## Feet anchor for any board cell (the rule of [method unit_feet_art]).
@@ -452,7 +558,8 @@ func _bind_match() -> void:
 		_sheet[side] = SpriteSheet.load_unit(unit_id) if not unit_id.is_empty() else null
 		var anim := UnitAnimator.new(_sheet[side])
 		anim.set_reduce_motion(_reduce_motion)
-		anim.play(CLIP_IDLE)
+		var sheet: SpriteSheet = _sheet[side]
+		anim.play(CLIP_DRAW if sheet != null and sheet.has_clip(CLIP_DRAW) and not _reduce_motion else CLIP_IDLE)
 		_anim[side] = anim
 		_logical_clip[side] = CLIP_IDLE
 		_hit_left[side] = 0.0
@@ -552,9 +659,21 @@ func _update_clip(side: int, step: float) -> void:
 				anim.play(CLIP_CAST)
 			_drive_cast_hold(side, anim)
 		CLIP_STEP:
-			if anim.current_clip() != CLIP_STEP or anim.is_finished():
-				anim.play_timed(CLIP_STEP, float(_step_left[side]), UnitAnimator.ONCE)
+			var step_clip: String = String(_step_clip.get(side, CLIP_STEP))
+			if get_sheet(side) == null or not get_sheet(side).has_clip(step_clip):
+				step_clip = CLIP_STEP
+			if step_clip == CLIP_STEP:
+				if anim.current_clip() != step_clip or anim.is_finished():
+					anim.play_timed(step_clip, float(_step_left[side]), UnitAnimator.ONCE)
+			elif anim.current_clip() != step_clip or bool(_step_restart.get(side, false)):
+				_step_restart[side] = false
+				# A directional dash keeps its own frame times (50 ms), so its lean meets the glide instead of being
+				# stretched over the whole step cooldown; it holds its last (settled) frame until the step ends.
+				anim.play(step_clip, true)
 		_:
+			# The match-start draw runs to its end before the idle (any other clip cuts in at once).
+			if want == CLIP_IDLE and anim.current_clip() == CLIP_DRAW and not anim.is_finished():
+				return
 			anim.play(want)
 
 
@@ -710,11 +829,13 @@ func _draw() -> void:
 		if ca.x != cb.x:
 			return ca.x < cb.x
 		return int(a["side"]) < int(b["side"]))
+	for side: int in SIDES:
+		_draw_dust(side)
 	for unit: Dictionary in units:
 		var side: int = int(unit["side"])
 		var cell: Vector2i = _cell_of(side)
 		var kinds: Array[String] = get_active_status_kinds(side)
-		var ground: Vector2i = _feet_of_unit(side)
+		var ground: Vector2i = _ground_of(side)
 		_draw_shadow(_unit_art_rect(side).size, ground)
 		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)

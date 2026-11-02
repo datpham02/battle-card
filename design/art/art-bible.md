@@ -480,7 +480,7 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 
 | Anh hùng | Idle (2 khung) | Cử chỉ niệm: A (0,08 s) → B (0,12 s), tầm vai, không quá đầu | Thức Tỉnh (2 khung lặp) |
 |---|---|---|---|
-| Kiếm sĩ | Ngực lên 1 px, đuôi choàng lệch 1 px; đứng dạng chân | A: kiếm rút ngang vai, mũi chỉ ra sau. B: chém ngang tới x = 30. Hết cử chỉ kiếm về lưng (không thêm khung) | Vung Hết Sức: hai tay cầm kiếm ngang ngực, thủ rồi chém; choàng bay |
+| Kiếm sĩ | Ngực lên 1 px, đuôi choàng lệch 1 px; đứng dạng chân | A: kiếm rút ngang vai, mũi chỉ ra sau. B: chém ngang tới x = 30. Hết cử chỉ về **thế thủ** (sửa 2026-11-02, người dùng: suốt trận cầm kiếm vào thế; trận mở bằng clip `draw` rút kiếm vào thế; kiếm về lưng chỉ ở màn thắng) | Vung Hết Sức: hai tay cầm kiếm ngang ngực, thủ rồi chém; choàng bay |
 | Pháp sư | Chóp mũ và chùm bông đung 1 px, bàn tay rảnh co duỗi | A: hai tay co sát ngực. B: hai lòng bàn tay đẩy ra trước | Bùng Nổ: hai tay dang ngang vai, mũ ngả sau |
 | Sát thủ | Cả người tụt 1 px, mũi dao nhích ±1 px luân phiên | A: hai dao chéo trước ngực. B: hai tay hất ra, dao hướng phải | Bóng Lướt: lao người; 2 bản sao tối hơn phía sau cách 4 px (code) |
 | Thợ săn | Vành mũ nghiêng 1 px, lông vũ rung, dồn trọng lượng | A: nỏ hạ ngang hông. B: nỏ giương ngang vai, mũi chĩa ra | Bẫy Sập: quỳ một gối, nỏ chống đất phía trước |

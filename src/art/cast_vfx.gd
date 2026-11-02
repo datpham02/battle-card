@@ -21,7 +21,10 @@ const DEFAULT_FLOW_TAIL_SEC: float = 0.08
 const FLOW_NEIGHBOURS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(-1, 0)]
 const DEFAULT_CHARGE_SEC: float = 0.15
 const DEFAULT_STAGGER_SEC: float = 0.04
-const DEFAULT_HIT_FEEL: Dictionary = {"flash_sec": 0.1, "flash_alpha": 0.75, "shake_px": 2, "shake_sec": 0.12}
+## step_slide_sec / step_dust_sec (2026-11-02, user: "animation move ... hơi cứng", OSFE dash): a unit glides from its
+## old feet to the new ones over step_slide_sec (ease-out) and leaves square dust on the old cell for step_dust_sec.
+const DEFAULT_HIT_FEEL: Dictionary = {"flash_sec": 0.1, "flash_alpha": 0.75, "shake_px": 2, "shake_sec": 0.12,
+	"step_slide_sec": 0.15, "step_dust_sec": 0.25}
 
 static var _index: Dictionary = {}
 static var _loaded: bool = false

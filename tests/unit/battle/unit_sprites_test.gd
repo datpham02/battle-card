@@ -189,7 +189,8 @@ func test_battle_kiem_si_vs_goblin_scout() -> void:
 	_check("test_both_textures_loaded_no_placeholder", not units.is_placeholder(PLAYER) and not units.is_placeholder(ENEMY))
 	_check("test_frame_sizes_96x70_and_64x52", units.get_sheet(PLAYER).frame_size() == Vector2i(96, 70) and units.get_sheet(ENEMY).frame_size() == Vector2i(64, 52))
 	_check("test_clips_idle_after_setup", units.get_current_clip(PLAYER) == UnitLayer.CLIP_IDLE and units.get_current_clip(ENEMY) == UnitLayer.CLIP_IDLE)
-	_check("test_animators_play_idle", units.get_animator(PLAYER).current_clip() == UnitLayer.CLIP_IDLE and units.get_animator(ENEMY).current_clip() == UnitLayer.CLIP_IDLE)
+	# 2026-11-02 guard stance: the hero opens the match with its `draw` clip (sword into the guard), then idles.
+	_check("test_animators_play_draw_then_idle", units.get_animator(PLAYER).current_clip() in [UnitLayer.CLIP_DRAW, UnitLayer.CLIP_IDLE] and units.get_animator(ENEMY).current_clip() == UnitLayer.CLIP_IDLE, units.get_animator(PLAYER).current_clip())
 	_check("test_reduce_motion_from_settings_off", not units.is_reduce_motion() and not units.get_animator(PLAYER).is_reduce_motion())
 	# The frame clock adds 0 from here: the test drives advance() itself.
 	combat.freeze_time = true
@@ -206,6 +207,7 @@ func test_battle_kiem_si_vs_goblin_scout() -> void:
 	# Step: the clip lasts the step cooldown the mover just started.
 	var mover: UnitMover = combat.get_mover()
 	var stepped: bool = false
+	var from_cell: Vector2i = state.player_cell
 	for dir: Vector2i in DIRECTIONS:
 		if mover.try_step(dir):
 			stepped = true
@@ -215,14 +217,17 @@ func test_battle_kiem_si_vs_goblin_scout() -> void:
 		var cooldown: float = mover.get_cooldown_remaining()
 		_check("test_step_cooldown_positive_got_%.3f" % cooldown, cooldown > 0.0)
 		units.advance(0.0)
-		_check("test_player_step_after_cell_changed", units.get_current_clip(PLAYER) == UnitLayer.CLIP_STEP and units.get_animator(PLAYER).current_clip() == UnitLayer.CLIP_STEP)
+		# 2026-11-02 OSFE dashes: the logical clip is `step`; the hero's animator plays the directional dash of that step.
+		var dash: String = UnitLayer.step_clip_for(from_cell, state.player_cell, true)
+		_check("test_player_step_after_cell_changed", units.get_current_clip(PLAYER) == UnitLayer.CLIP_STEP and units.get_animator(PLAYER).current_clip() == dash, units.get_animator(PLAYER).current_clip())
 		_check("test_step_length_is_the_cooldown", is_equal_approx(units.get_step_left(PLAYER), cooldown))
 		_check("test_step_runs_once_not_the_sheet_loop", units.get_animator(PLAYER).loop_kind() == UnitAnimator.ONCE)
 		units.advance(cooldown * 0.5)
 		_check("test_player_still_step_at_half_cooldown", units.get_current_clip(PLAYER) == UnitLayer.CLIP_STEP)
 		var anim: UnitAnimator = units.get_animator(PLAYER)
 		@warning_ignore("integer_division")
-		_check("test_step_frames_spread_over_the_cooldown_middle_frame_at_half", anim.frame_index() == anim.frame_count() / 2, "%d of %d" % [anim.frame_index(), anim.frame_count()])
+		# The dash keeps its own 50 ms frames (its lean meets the glide): by half the cooldown it is past its middle frame.
+		_check("test_dash_frames_run_at_their_own_pace", anim.frame_index() >= anim.frame_count() / 2, "%d of %d" % [anim.frame_index(), anim.frame_count()])
 		units.advance(cooldown * 0.5 + EPS)
 		_check("test_player_idle_after_the_cooldown", units.get_current_clip(PLAYER) == UnitLayer.CLIP_IDLE and anim.current_clip() == UnitLayer.CLIP_IDLE)
 	# Cast gesture: once, on the player's swing_started.
