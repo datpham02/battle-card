@@ -2,9 +2,15 @@ extends SceneTree
 ## Story 047 Part A: the battle art canvas in the real main scene (headless; the SubViewport renders
 ## nothing headless, only the tree, the flags and the geometry are checked). The battle is reached the
 ## way the click suites reach it (main.tscn, GameFlow.enter_test_floor with the fast_run fixture).
+## ADR-0002: the Story 047 flat-layout checks pin the board flat (floor_perspective_override = 0, the
+## `--floor-perspective=0` path); the perspective counterparts (the shipped default, 0.82) run after them: the floor in
+## its own viewport behind the FloorWarp sprite, the feet = the flat feet through BoardGeometry.warp_art_px, the rings
+## on the drawn cell centre, the shadow inside the drawn cell polygon.
 ## Run: godot --headless --path . -s res://tests/unit/battle/battle_canvas_test.gd
 
 const MAX_FRAMES: int = 600
+## The shipped back ratio (combat.json floor.perspective.back_ratio).
+const PERSPECTIVE_RATIO: float = 0.82
 
 var fails: int = 0
 
@@ -44,12 +50,23 @@ func _initialize() -> void:
 		_finish()
 		return
 	test_sub_viewport_flags(canvas)
+	# Story 047 flat layout: pinned flat.
+	combat.floor_perspective_override = 0.0
+	canvas.apply_floor_perspective()
+	await process_frame
 	test_four_layers_in_order(canvas)
 	test_bound_to_combat_view(canvas, combat)
 	test_cell_art_rect_matches_to_art_rect(canvas, combat)
 	test_unit_feet_inside_the_cell(canvas, combat)
 	test_painters_add_remove(canvas)
 	test_combat_view_no_longer_draws_the_board(combat)
+	# ADR-0002 counterparts: the shipped perspective floor.
+	combat.floor_perspective_override = PERSPECTIVE_RATIO
+	canvas.apply_floor_perspective()
+	await process_frame
+	test_perspective_layers_in_order(canvas)
+	test_cell_art_rect_matches_to_art_rect(canvas, combat)
+	test_unit_feet_on_the_drawn_cell(canvas, combat)
 	_finish()
 
 
@@ -94,6 +111,55 @@ func test_four_layers_in_order(canvas: BattleCanvas) -> void:
 	_check("test_layer_order_backdrop_floor_unit_overlay_got_%s" % [names], names == want)
 	_check("test_layer_classes", vp.get_child(0) is BackdropLayer and vp.get_child(1) is FloorLayer and vp.get_child(2) is UnitLayer and vp.get_child(3) is OverlayLayer)
 	_check("test_layer_getters_return_the_children", canvas.get_backdrop_layer() == vp.get_child(0) and canvas.get_floor_layer() == vp.get_child(1) and canvas.get_unit_layer() == vp.get_child(2) and canvas.get_overlay_layer() == vp.get_child(3))
+
+
+# ADR-0002: the art viewport holds BackdropLayer, FloorWarp, UnitLayer, OverlayLayer (and the FloorViewport that
+# renders first); the floor layer lives in the FloorViewport; the getters still return the layers.
+func test_perspective_layers_in_order(canvas: BattleCanvas) -> void:
+	var vp: SubViewport = canvas.get_art_viewport()
+	var names: Array[String] = []
+	for child: Node in vp.get_children():
+		names.append(child.name)
+	var want: Array[String] = ["BackdropLayer", "FloorWarp", "UnitLayer", "OverlayLayer", "FloorViewport"]
+	_check("test_perspective_layer_order_got_%s" % [names], names == want)
+	_check("test_perspective_layer_classes", vp.get_child(0) is BackdropLayer and vp.get_child(1) is Sprite2D and vp.get_child(2) is UnitLayer
+		and vp.get_child(3) is OverlayLayer and vp.get_child(4) is SubViewport)
+	_check("test_perspective_floor_layer_in_the_floor_viewport", canvas.get_floor_layer().get_parent() == canvas.get_floor_viewport())
+	_check("test_perspective_layer_getters", canvas.get_backdrop_layer() == vp.get_child(0) and canvas.get_unit_layer() == vp.get_child(2)
+		and canvas.get_overlay_layer() == vp.get_child(3))
+
+
+# ADR-0002: the feet are the flat OSFE feet moved by the board map, inside the drawn cell polygon; the rings sit on
+# the drawn cell centre; the shadow rows stay inside the drawn cell polygon.
+func test_unit_feet_on_the_drawn_cell(canvas: BattleCanvas, combat: CombatView) -> void:
+	var units: UnitLayer = canvas.get_unit_layer()
+	var floor_layer: FloorLayer = canvas.get_floor_layer()
+	var state: CombatState = combat.get_state()
+	var geo: BoardGeometry = combat.board_geometry()
+	_check("test_perspective_geometry_is_warped", geo.is_warped())
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		var cell: Vector2i = state.player_cell if side == CombatState.Side.PLAYER else state.enemy_cell
+		var rect: Rect2i = floor_layer.cell_art_rect(cell)
+		var feet: Vector2i = units.unit_feet_art(side)
+		var want_y: int = mini(rect.position.y + roundi(rect.size.y * UnitLayer.FEET_DEPTH_RATIO), rect.end.y - UnitLayer.FEET_INSET_ART)
+		@warning_ignore("integer_division")
+		var flat_feet := Vector2i(rect.position.x + rect.size.x / 2, want_y)
+		if side == CombatState.Side.PLAYER or state.enemy_footprint_size() <= 1:
+			_check("test_perspective_feet_side_%d_is_the_flat_feet_warped" % side, feet == geo.warp_art_px(flat_feet))
+		var poly: PackedVector2Array = geo.cell_art_polygon(cell + Vector2i(0, state.footprint_extent().y - 1) if side == CombatState.Side.ENEMY else cell)
+		_check("test_perspective_feet_side_%d_inside_the_drawn_cell_got_%s" % [side, feet], Geometry2D.is_point_in_polygon(Vector2(feet) + Vector2(0.5, 0.5), poly))
+		var vp: Vector2 = combat.get_viewport_rect().size
+		var ring: Vector2 = combat.call("_unit_center", vp, side)
+		var centre: Vector2 = geo.cell_center(cell) if side == CombatState.Side.PLAYER else geo.cells_center(state.enemy_footprint_cells())
+		_check("test_perspective_ring_centre_side_%d_is_the_drawn_cell_centre" % side, centre.distance_to(ring) <= 0.01)
+		var foot_cell: Vector2i = state.player_cell if side == CombatState.Side.PLAYER else state.enemy_cell + Vector2i(0, state.footprint_extent().y - 1)
+		var foot_poly: PackedVector2Array = geo.cell_art_polygon(foot_cell)
+		var rows: Array[Rect2i] = UnitLayer.shadow_rows(units.shadow_size(rect.size, feet), feet)
+		var inside: bool = not rows.is_empty()
+		for row: Rect2i in rows:
+			inside = inside and Geometry2D.is_point_in_polygon(Vector2(row.position) + Vector2(0.5, 0.5), foot_poly) \
+				and Geometry2D.is_point_in_polygon(Vector2(row.end) - Vector2(0.5, 0.5), foot_poly)
+		_check("test_perspective_shadow_side_%d_inside_the_drawn_cell" % side, inside)
 
 
 func test_bound_to_combat_view(canvas: BattleCanvas, combat: CombatView) -> void:

@@ -117,7 +117,7 @@ var freeze_time: bool = false
 var drops_seed: int = RANDOM_SEED
 ## Dev/capture only: replaces the board from combat.json (DemoArgs --grid). Set before _ready.
 var grid_override: BoardGrid = null
-## PROTOTYPE floor-perspective (DemoArgs `--floor-perspective=<r>`): overrides combat.json `floor.perspective.back_ratio`
+## ADR-0002 floor perspective (DemoArgs `--floor-perspective=<r>`): overrides combat.json `floor.perspective.back_ratio`
 ## when >= 0 (0 = force flat); negative = not set. Read by [method floor_back_ratio].
 var floor_perspective_override: float = -1.0
 ## DEV overlay flag (Story 016): the HUD draws its debug text (boss learning line) only when true.
@@ -1404,7 +1404,7 @@ func get_config() -> CombatConfig:
 	return _config
 
 
-## PROTOTYPE floor-perspective: the back ratio of the trapezoid board this match draws with ([member
+## ADR-0002: the back ratio of the trapezoid board this match draws with ([member
 ## floor_perspective_override] when set, else combat.json's); FloorPerspective.OFF = flat. See FloorPerspective.of.
 func floor_back_ratio() -> float:
 	if floor_perspective_override >= 0.0:
@@ -1616,17 +1616,22 @@ func aim_at_cell(cell: Vector2i) -> bool:
 func aim_at_position(pos: Vector2, lift: float = 0.0) -> bool:
 	if not is_placing():
 		return false
-	var vp: Vector2 = get_viewport_rect().size
-	var point := Vector2(pos.x, pos.y - lift)
-	# PROTOTYPE floor-perspective: the finger is on the warped board; aim on the flat one.
-	var persp: FloorPerspective = FloorPerspective.of(self)
-	if persp != null:
-		pos = persp.unwarp_screen(pos)
-		point = persp.unwarp_screen(point)
-	var board: Rect2 = ScreenLayout.board_rect(_grid, vp)
-	if lift > 0.0 and board.has_point(pos) and point.y < board.position.y:
+	# ADR-0002: the finger is on the drawn board; BoardGeometry maps it back to the model (flat) board to aim.
+	var geo: BoardGeometry = board_geometry()
+	var model_pos: Vector2 = geo.to_model(pos)
+	var point: Vector2 = geo.to_model(Vector2(pos.x, pos.y - lift))
+	var board: Rect2 = geo.flat_board_rect()
+	if lift > 0.0 and board.has_point(model_pos) and point.y < board.position.y:
 		point.y = board.position.y + 1.0
-	return _placement.move_to(ScreenLayout.cell_at(_grid, vp, point))
+	return _placement.move_to(geo.cell_at_model(point))
+
+
+## ADR-0002: the board geometry this battle draws with (BoardGeometry.of; flat when outside the tree).
+func board_geometry() -> BoardGeometry:
+	var geo: BoardGeometry = BoardGeometry.of(self)
+	if geo == null:
+		geo = BoardGeometry.make(_grid, get_viewport_rect().size, floor_back_ratio())
+	return geo
 
 
 ## Pixels the dragged ghost floats above the finger (hold_slots.json drag_lift_px).
@@ -1685,7 +1690,7 @@ func get_drag_point() -> Vector2:
 ## Viewport point where a finger must be for the lifted ghost to aim at board cell [param cell]
 ## (the cell's centre, drag_lift_px lower). For tests and dev demos emulating a drag.
 func drag_point_for_cell(cell: Vector2i) -> Vector2:
-	return ScreenLayout.cell_center(_grid, get_viewport_rect().size, cell) + Vector2(0.0, get_drag_lift_px())
+	return board_geometry().cell_center(cell) + Vector2(0.0, get_drag_lift_px())
 
 
 ## Commits the ghost (quick spec menu-la-giua-man-hinh-2026-11-01): the FIRST piece leaves the bag and starts the
@@ -2439,13 +2444,14 @@ func _draw() -> void:
 # FEET_INSET_ART art px above the cell's front edge) raised by half a cell minus that inset, i.e. the cell
 # centre routed through the anchor, so the rings follow the unit when Part C moves the anchor. The cell
 # centre itself when no canvas is bound.
-func _unit_center(vp: Vector2, side: int) -> Vector2:
+func _unit_center(_vp: Vector2, side: int) -> Vector2:
 	# The rings sit on the cell centre; the feet moved to FEET_DEPTH_RATIO of the cell (OSFE stance, 2026-10-31),
 	# so they are no longer derived from the feet anchor.
+	# ADR-0002: the drawn centres (BoardGeometry).
 	if side == CombatState.Side.PLAYER:
-		return ScreenLayout.cell_center(_grid, vp, _state.player_cell)
+		return board_geometry().cell_center(_state.player_cell)
 	# P2.2b: the centre of the footprint's bounding rect (the cell centre for a 1-cell enemy).
-	return ScreenLayout.cells_rect(_grid, vp, _state.enemy_footprint_cells()).get_center()
+	return board_geometry().cells_center(_state.enemy_footprint_cells())
 
 
 # Story 046 Part B: the sharp Z1 header, drawn at screen resolution with HudSkin (never through the art

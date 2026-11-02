@@ -8,6 +8,8 @@ extends SceneTree
 ## 2026-11-01: the pad mode was removed (joystick only); the steps that clicked the pad arrows are stick flicks
 ## (press in the stick zone, push toward a direction, release) on their own touch index.
 
+const RealMouseGuard = preload("res://tests/integration/ui/real_mouse_guard.gd")
+
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
 const BOSS_CELL: Vector2i = Vector2i(4, 1)
@@ -25,6 +27,7 @@ func _check(name: String, ok: bool, extra: String = "") -> void:
 func _click(p: Vector2) -> void:
 	for pressed: bool in [true, false]:
 		var ev := InputEventMouseButton.new()
+		ev.device = RealMouseGuard.TEST_DEVICE
 		ev.button_index = MOUSE_BUTTON_LEFT
 		ev.pressed = pressed
 		ev.position = p
@@ -35,6 +38,7 @@ func _click(p: Vector2) -> void:
 
 func _hover(p: Vector2) -> void:
 	var ev := InputEventMouseMotion.new()
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.position = p
 	ev.global_position = p
 	ev.relative = Vector2(5, 5)
@@ -130,6 +134,7 @@ func _initialize() -> void:
 	var flow := main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())
 	root.add_child(main)
+	root.add_child(RealMouseGuard.new())
 	await process_frame
 	# The shipped hero, so the window shows the real sprite (not the character-less placeholder).
 	flow.set_character("kiem_si")
@@ -215,11 +220,11 @@ func _initialize() -> void:
 		if not combat.get_placement().get_cells().has(cand) and combat.get_placement().get_target() != cand:
 			aim = cand
 			break
-	await _click(ScreenLayout.cell_center(grid, VP, aim))
+	await _click(combat.board_geometry().cell_center(aim))
 	var target: Vector2i = combat.get_placement().get_target()
 	_check("tap on a board cell aims the ghost", target == aim and not cut_flow.is_menu_open(), "%s aim=%s" % [target, aim])
-	await _hover(ScreenLayout.cell_center(grid, VP, Vector2i(3, 1)))
-	await _hover(ScreenLayout.cell_center(grid, VP, Vector2i(5, 1)))
+	await _hover(combat.board_geometry().cell_center(Vector2i(3, 1)))
+	await _hover(combat.board_geometry().cell_center(Vector2i(5, 1)))
 	_check("hover does not move the ghost", combat.get_placement().get_target() == target and not cut_flow.is_menu_open(), str(combat.get_placement().get_target()))
 
 	# --- Keys: Esc cancels placing, 1-3 select, R rotates.
@@ -237,9 +242,9 @@ func _initialize() -> void:
 
 	# --- Esc in the card menu returns the piece (2026-11-01: tap ghost commits it, Tung phép opens the menu).
 	state.set_enemy_cell(BOSS_CELL)
-	await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
+	await _click(combat.board_geometry().cell_center(BOSS_CELL))
 	if not combat.is_placed():
-		await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
+		await _click(combat.board_geometry().cell_center(BOSS_CELL))
 	_check("tap ghost committed the piece (place window, no menu)", combat.is_placed() and not cut_flow.is_menu_open() and hold.get_piece(0) == null)
 	await _click(ScreenLayout.confirm_button_rect(VP).get_center())
 	_check("click on Tung phép opened the menu", cut_flow.is_menu_open() and hold.get_piece(0) == null)
@@ -249,9 +254,9 @@ func _initialize() -> void:
 
 	# --- 2026-11-01 desktop extras: Enter presses Tung phép, key 1..4 picks the card in that place.
 	await _key(KEY_1)
-	await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
+	await _click(combat.board_geometry().cell_center(BOSS_CELL))
 	if not combat.is_placed():
-		await _click(ScreenLayout.cell_center(grid, VP, BOSS_CELL))
+		await _click(combat.board_geometry().cell_center(BOSS_CELL))
 	await _key(KEY_ENTER)
 	_check("Enter presses Tung phép (menu open)", cut_flow.is_menu_open())
 	var picked: int = -1

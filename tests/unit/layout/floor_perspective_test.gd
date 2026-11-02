@@ -1,5 +1,5 @@
 extends SceneTree
-## PROTOTYPE floor-perspective (2026-11-02): the pure homography of FloorPerspective. Headless, deterministic, no I/O
+## Floor perspective (ADR-0002): the pure homography of FloorPerspective. Headless, deterministic, no I/O
 ## beyond arenas.json (every shipped shape's cell centres must round-trip through warp / cell_at_warped).
 ## Run: godot --headless --path . -s res://tests/unit/layout/floor_perspective_test.gd
 

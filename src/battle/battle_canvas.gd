@@ -12,9 +12,10 @@ extends Node2D
 
 ## Ink (art bible 1): the colour outside the art rect.
 const INK: Color = Color("1B1722")
-## PROTOTYPE floor-perspective (2026-11-02): the inverse-homography resampler (see [method apply_floor_perspective]).
+## ADR-0002 floor perspective: the inverse-homography resampler (see [method apply_floor_perspective]).
 const PERSPECTIVE_SHADER: String = "res://src/battle/canvas_floor_perspective.gdshader"
-## PROTOTYPE look (user: player half teal-green, enemy half purple), multiplied over the region's own half tints.
+## The perspective floor's half tints (user 2026-11-02: player half teal-green, enemy half purple), multiplied over the
+## region's own half tints.
 const PERSPECTIVE_TINT_PLAYER: Color = Color(0.78, 1.0, 0.90)
 const PERSPECTIVE_TINT_ENEMY: Color = Color(0.98, 0.82, 1.0)
 
@@ -27,7 +28,7 @@ var _floor: FloorLayer = null
 var _units: UnitLayer = null
 var _overlay: OverlayLayer = null
 var _combat: CombatView = null
-## PROTOTYPE floor-perspective: the floor's own SubViewport (a child of the art viewport, so it renders first) and
+## ADR-0002: the floor's own SubViewport (a child of the art viewport, so it renders first) and
 ## the Sprite2D that draws its texture warped into the art viewport; null while the flag is off.
 var _floor_viewport: SubViewport = null
 var _floor_warp: Sprite2D = null
@@ -73,11 +74,13 @@ func _bind() -> void:
 	_backdrop.setup(combat)
 	_floor.setup(combat)
 	_units.setup(combat)
+	# ADR-0002: bound explicitly; its sibling lookup fails once the floor moves into the FloorViewport.
+	_overlay.setup(_floor)
 	apply_floor_perspective()
 	queue_redraw()
 
 
-## PROTOTYPE floor-perspective: (re)builds the warped floor path from CombatView.floor_back_ratio(). On: FloorLayer
+## ADR-0002: (re)builds the warped floor path from CombatView.floor_back_ratio(). On: FloorLayer
 ## (with its FloorDynamicLayer) moves into its own transparent 800x360 SubViewport and a Sprite2D drawing that texture
 ## through PERSPECTIVE_SHADER (inverse homography per fragment, nearest) takes its place between BackdropLayer and
 ## UnitLayer; FloorLayer itself keeps drawing flat. Off: FloorLayer sits in the art viewport as before (the default
@@ -125,7 +128,7 @@ func apply_floor_perspective() -> void:
 	_update_perspective_uniforms()
 
 
-# PROTOTYPE floor-perspective: pushes the current homography (the board moves with the screen size) and the half
+# ADR-0002: pushes the current homography (the board moves with the screen size) and the half
 # tints to the warp shader.
 func _update_perspective_uniforms() -> void:
 	if _floor_warp == null:
@@ -140,13 +143,13 @@ func _update_perspective_uniforms() -> void:
 	material.set_shader_parameter("tint_enemy", PERSPECTIVE_TINT_ENEMY)
 
 
-## PROTOTYPE floor-perspective: the mapping the layers and views follow right now (FloorPerspective.of the bound
+## ADR-0002: the homography the warp shader follows right now (FloorPerspective.of the bound
 ## CombatView), null while flat.
 func get_floor_perspective() -> FloorPerspective:
 	return FloorPerspective.of(_combat)
 
 
-## PROTOTYPE floor-perspective: the floor's own SubViewport while the flag is on (tests), null while flat.
+## ADR-0002: the floor's own SubViewport while the perspective is on (tests), null while flat.
 func get_floor_viewport() -> SubViewport:
 	return _floor_viewport
 

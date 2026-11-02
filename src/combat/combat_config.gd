@@ -96,8 +96,9 @@ var telegraph_edge: Vector2 = Vector2(0.3, 1.0)
 var telegraph_queued_stripe_alpha: float = 0.35
 ## Progress levels the telegraph snaps to under reduce motion (>= 2 values, each 0..1, non-decreasing).
 var telegraph_reduce_motion_steps: Array[float] = [0.0, 0.5, 1.0]
-## PROTOTYPE floor-perspective (2026-11-02, combat.json `floor.perspective.back_ratio`): back-row width over front-row
-## width of the trapezoid board (FloorPerspective); 0 / absent = the flat board. `--floor-perspective=<r>` overrides it.
+## Floor perspective (ADR-0002, combat.json `floor.perspective.back_ratio`, shipped 0.82): back-row width over
+## front-row width of the trapezoid board (FloorPerspective via BoardGeometry); 0 / absent = the flat board.
+## `--floor-perspective=<r>` overrides it.
 var floor_perspective_back_ratio: float = FloorPerspective.OFF
 ## Story 046 Part B (combat.json `hud.hp_trail_sec`, art bible 7.5): seconds the damage trail behind an HP fill
 ## takes to shrink to the new HP (0 = no trail).
@@ -181,7 +182,7 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	return config
 
 
-# PROTOTYPE floor-perspective: `floor.perspective.back_ratio` (number; anything else or out of range = off, warning).
+# ADR-0002: `floor.perspective.back_ratio` (number; anything else or out of range = off, warning).
 func _parse_floor(data: Dictionary) -> void:
 	var floor_block: Variant = data.get("floor")
 	if typeof(floor_block) != TYPE_DICTIONARY:

@@ -566,19 +566,39 @@ func _feet_of_cell(cell: Vector2i) -> Vector2i:
 	return _warp_feet(Vector2i(x, y))
 
 
-# PROTOTYPE floor-perspective: the flat feet anchor moved onto the warped board (the sprite itself is never scaled).
+# ADR-0002: the flat feet anchor moved onto the drawn board (BoardGeometry.warp_art_px; the sprite is never scaled).
 func _warp_feet(feet: Vector2i) -> Vector2i:
-	var persp: FloorPerspective = FloorPerspective.of(_combat)
-	if persp == null:
-		return feet
-	return Vector2i(persp.warp(Vector2(feet) + Vector2(0.5, 0.5)).floor())
+	return _bg().warp_art_px(feet)
+
+
+## ADR-0002: the board geometry the layer draws with (BoardGeometry.of the bound CombatView; flat when unbound).
+func board_geometry() -> BoardGeometry:
+	return _bg()
+
+
+func _bg() -> BoardGeometry:
+	var geo: BoardGeometry = BoardGeometry.of(_combat)
+	if geo == null:
+		geo = BoardGeometry.make(_combat.get_grid(), _combat.get_viewport_rect().size)
+	return geo
 
 
 ## The ground shadow of a unit standing in a rect of [param rect_size] (its cell, or a multi-cell footprint, P2.2b) (art px): a stepped Ink ellipse centred on the feet, one
-## 1 px row per draw_rect so the edge stays on whole pixels. Pure geometry in [method shadow_rows].
+## 1 px row per draw_rect so the edge stays on whole pixels. Pure geometry in [method shadow_rows]. ADR-0002: on the
+## perspective board the ellipse is sized by the floor's local scale at the feet ([method shadow_size]), still flat-stepped.
 func _draw_shadow(rect_size: Vector2i, feet: Vector2i) -> void:
-	for row: Rect2i in shadow_rows(rect_size, feet):
+	for row: Rect2i in shadow_rows(shadow_size(rect_size, feet), feet):
 		draw_rect(Rect2(row), SHADOW_COLOR)
+
+
+## ADR-0002: the rect size the ground shadow at drawn feet [param feet] is computed for: [param rect_size] (the flat
+## cell / footprint) times the floor's local scale there (rows at the back are narrower and shorter); unchanged flat.
+func shadow_size(rect_size: Vector2i, feet: Vector2i) -> Vector2i:
+	var geo: BoardGeometry = _bg()
+	if not geo.is_warped():
+		return rect_size
+	var k: Vector2 = geo.art_local_scale(geo.unwarp_art(Vector2(feet) + Vector2(0.5, 0.5)))
+	return Vector2i(roundi(rect_size.x * k.x), roundi(rect_size.y * k.y))
 
 
 ## Rows of the ground shadow for a cell of [param cell_size] with the feet at [param feet]: one Rect2i per
@@ -600,8 +620,7 @@ static func shadow_rows(cell_size: Vector2i, feet: Vector2i) -> Array[Rect2i]:
 
 
 func _cell_art_rect(cell: Vector2i) -> Rect2i:
-	var vp: Vector2 = _combat.get_viewport_rect().size
-	return ScreenLayout.to_art_rect(vp, ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
+	return _bg().cell_art_rect(cell)
 
 
 func _cell_of(side: int) -> Vector2i:
@@ -779,8 +798,11 @@ func _draw_status_overlays(side: int, kinds: Array[String], feet: Vector2i, clip
 func _draw_player_marker(cell: Vector2i) -> void:
 	var state: CombatState = _combat.get_state()
 	var rect := Rect2(_cell_art_rect(cell))
-	var c: Vector2 = rect.get_center().floor()
-	var radius: float = floorf(rect.size.y * MARKER_RADIUS_RATIO)
+	# ADR-0002: centred on the drawn cell centre, sized by the floor's local scale there.
+	var geo: BoardGeometry = _bg()
+	var c: Vector2 = geo.warp_art(rect.get_center()).floor()
+	var k: Vector2 = geo.art_local_scale(rect.get_center())
+	var radius: float = floorf(rect.size.y * MARKER_RADIUS_RATIO * minf(k.x, k.y))
 	var color: Color = ENEMY_DEAD_COLOR if state.is_player_dead() else PLAYER_COLOR
 	draw_circle(c, radius, color)
 	draw_arc(c, radius, 0.0, TAU, MARKER_ARC_POINTS, TEXT_COLOR, MARKER_OUTLINE_ART)
@@ -795,28 +817,59 @@ func _draw_player_marker(cell: Vector2i) -> void:
 	draw_string(ThemeDB.fallback_font, c + Vector2(-radius, floorf(font_size * 0.4)), text, HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, font_size, Color.WHITE)
 
 
-# The boss's placeholder: a square body centred in [param area] (its cell, or the bounding rect of a multi-cell
-# footprint, P2.2b: the body fills the footprint with the same margins); Story 035 kneeling when downed, an
-# outline while invulnerable, grey with a cross when dead.
+# The boss's placeholder body in flat art px: a rect centred in [param area] (its cell, or the bounding rect of a
+# multi-cell footprint, P2.2b: the body fills the footprint with the same margins).
+static func enemy_body_rect(area: Rect2i) -> Rect2:
+	var rect := Rect2(area)
+	var body_size := Vector2(floorf(rect.size.x * ENEMY_BODY_WIDTH_RATIO), floorf(rect.size.y * ENEMY_BODY_HEIGHT_RATIO))
+	return Rect2((rect.get_center() - body_size * 0.5).floor(), body_size)
+
+
+## ADR-0002: the drawn polygon of the boss placeholder (art px): its footprint's body rect (an inset of the footprint,
+## [method enemy_body_rect]) through BoardGeometry.art_quad, so on the perspective board it is the warped footprint
+## polygon inset; the plain body rect's corners while flat. Empty when unbound.
+func enemy_placeholder_polygon() -> PackedVector2Array:
+	if _combat == null or _combat.get_state() == null:
+		return PackedVector2Array()
+	return _bg().art_quad(enemy_body_rect(_unit_art_rect(CombatState.Side.ENEMY)))
+
+
+# The boss's placeholder: the body ([method enemy_body_rect] of [param area]) drawn as the mapped quad of the floor
+# (ADR-0002); Story 035 kneeling when downed, an outline while invulnerable, grey with a cross when dead.
 func _draw_enemy(area: Rect2i) -> void:
 	var state: CombatState = _combat.get_state()
 	var dead: bool = state.is_enemy_dead()
-	var rect := Rect2(area)
-	var body_size := Vector2(floorf(rect.size.x * ENEMY_BODY_WIDTH_RATIO), floorf(rect.size.y * ENEMY_BODY_HEIGHT_RATIO))
-	var body := Rect2((rect.get_center() - body_size * 0.5).floor(), body_size)
+	var geo: BoardGeometry = _bg()
+	var body: Rect2 = enemy_body_rect(area)
 	if _combat.is_boss_downed():
-		var kneel_h: float = floorf(body_size.y * DOWNED_BODY_HEIGHT_RATIO)
-		var kneel := Rect2(Vector2(body.position.x, body.end.y - kneel_h), Vector2(body_size.x, kneel_h))
-		draw_rect(kneel, DOWNED_COLOR)
-		draw_rect(kneel, Color(TEXT_COLOR, 0.6), false, BODY_OUTLINE_ART)
+		var kneel_h: float = floorf(body.size.y * DOWNED_BODY_HEIGHT_RATIO)
+		var kneel := Rect2(Vector2(body.position.x, body.end.y - kneel_h), Vector2(body.size.x, kneel_h))
+		_fill_art(geo, kneel, DOWNED_COLOR)
+		_outline_art(geo, kneel, Color(TEXT_COLOR, 0.6), BODY_OUTLINE_ART)
 		return
-	draw_rect(body, ENEMY_DEAD_COLOR if dead else ENEMY_COLOR)
-	draw_rect(body, TEXT_COLOR, false, BODY_OUTLINE_ART)
+	_fill_art(geo, body, ENEMY_DEAD_COLOR if dead else ENEMY_COLOR)
+	_outline_art(geo, body, TEXT_COLOR, BODY_OUTLINE_ART)
 	if not dead and state.enemy_invulnerable_left > 0.0:
-		draw_rect(body.grow(INVULNERABLE_GROW_ART), INVULNERABLE_OUTLINE, false, BODY_OUTLINE_ART)
+		_outline_art(geo, body.grow(INVULNERABLE_GROW_ART), INVULNERABLE_OUTLINE, BODY_OUTLINE_ART)
 	if dead:
-		draw_line(body.position, body.end, TEXT_COLOR, DEAD_CROSS_ART)
-		draw_line(Vector2(body.end.x, body.position.y), Vector2(body.position.x, body.end.y), TEXT_COLOR, DEAD_CROSS_ART)
+		draw_line(geo.warp_art(body.position), geo.warp_art(body.end), TEXT_COLOR, DEAD_CROSS_ART)
+		draw_line(geo.warp_art(Vector2(body.end.x, body.position.y)), geo.warp_art(Vector2(body.position.x, body.end.y)), TEXT_COLOR, DEAD_CROSS_ART)
+
+
+# ADR-0002: flat art rect [param rect] filled as its drawn quad (draw_rect while flat).
+func _fill_art(geo: BoardGeometry, rect: Rect2, color: Color) -> void:
+	if not geo.is_warped():
+		draw_rect(rect, color)
+		return
+	draw_colored_polygon(geo.art_quad(rect), color)
+
+
+# ADR-0002: flat art rect [param rect] outlined as its drawn quad (draw_rect unfilled while flat).
+func _outline_art(geo: BoardGeometry, rect: Rect2, color: Color, width: float) -> void:
+	if not geo.is_warped():
+		draw_rect(rect, color, false, width)
+		return
+	BoardGeometry.draw_polygon_outline(self, geo.art_quad(rect), color, width)
 
 
 # Width of [param text] in the fallback font at [param font_size] (art px).

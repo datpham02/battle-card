@@ -127,17 +127,16 @@ func _draw() -> void:
 		return
 	_drawn = vfx_state()
 	var vfx: FloorVfx = combat.get_floor_vfx()
-	var persp: FloorPerspective = FloorPerspective.of(combat)
+	var geo: BoardGeometry = _bg()
 	for item: Dictionary in _drawn:
 		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
 		# The cell rect lets a centre-anchored pack (cell_slash) sit in the middle of its cell.
 		var feet: Vector2i = FloorVfx.feet_for(cell_rect)
-		if persp != null:
-			# PROTOTYPE floor-perspective: the anchor follows the warp; the pack's frames are never scaled, so the cell
-			# rect handed to a centre-anchored pack is shifted with it rather than warped.
-			var warped: Vector2i = Vector2i(persp.warp(Vector2(feet) + Vector2(0.5, 0.5)).floor())
-			cell_rect.position += warped - feet
-			feet = warped
+		# ADR-0002: the anchor follows the board map (BoardGeometry.warp_art_px); the pack's frames are never scaled, so
+		# the cell rect handed to a centre-anchored pack is shifted with it rather than warped.
+		var warped: Vector2i = geo.warp_art_px(feet)
+		cell_rect.position += warped - feet
+		feet = warped
 		vfx.draw(self, str(item["id"]), feet, int(item["frame"]), Color.WHITE, cell_rect)
 	var shot: Dictionary = projectile_state()
 	if not shot.is_empty():
@@ -196,7 +195,10 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 		var t: float = CastVfx.flight_t(entry, -rel)
 		if units != null and t >= 0.0:
 			var hand: Array = entry.get("hand", [14, -34]) as Array
-			var from: Vector2i = units.unit_feet_art(side) + Vector2i(-int(hand[0]), int(hand[1]))
+			# ADR-0002: travel squares are composed on the FLAT floor (drawn through the map in _draw_travel), so the
+			# hand point (from the drawn feet) goes back to the flat floor first.
+			var hand_at: Vector2i = units.unit_feet_art(side) + Vector2i(-int(hand[0]), int(hand[1]))
+			var from: Vector2i = Vector2i(_bg().unwarp_art(Vector2(hand_at) + Vector2(0.5, 0.5)).floor())
 			var first: Vector2i = SkillDelivery.first_link(delivery, shown, tr["caster"])
 			_streak(out, from, _centre(first), t, block)
 	match str(delivery.get("travel", "")):
@@ -249,27 +251,50 @@ func _sq(r: Rect2i, col: Color) -> Dictionary:
 	return {"rect": r, "col": col, "fill": true, "width": 0, "edge": true}
 
 
-# The floor point of [param cell] the square travels run between (the cell's centre, whole px).
+# The FLAT floor point of [param cell] the square travels run between (the cell's centre, whole px). ADR-0002: every
+# travel / flash / impact rect is composed on the flat floor and drawn through the board map ([method _draw_travel]).
 func _centre(cell: Vector2i) -> Vector2i:
 	var r: Rect2i = _floor.cell_art_rect(cell)
 	@warning_ignore("integer_division")
-	var flat: Vector2i = r.position + r.size / 2
-	# PROTOTYPE floor-perspective: the travel / flash / impact squares run between warped cell centres.
-	var persp: FloorPerspective = FloorPerspective.of(FloorDynamicLayer.combat_of(_floor))
-	if persp == null:
-		return flat
-	return Vector2i(persp.warp(Vector2(flat) + Vector2(0.5, 0.5)).floor())
+	return r.position + r.size / 2
+
+
+## ADR-0002: the board geometry the overlay draws with (BoardGeometry.of the floor's CombatView; flat when unbound).
+func _bg() -> BoardGeometry:
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	var geo: BoardGeometry = BoardGeometry.of(combat)
+	if geo == null and combat != null:
+		geo = BoardGeometry.make(combat.get_grid(), combat.get_viewport_rect().size)
+	return geo
+
+
+## ADR-0002: the drawn art polygon of a FLAT travel / flash / impact rect [param r] (the mapped quad; the rect's corners
+## while flat). Tests compare it with the board's cell polygons.
+func travel_polygon(r: Rect2i) -> PackedVector2Array:
+	return _bg().art_quad(Rect2(r))
 
 
 func _draw_travel(_combat: CombatView, items: Array[Dictionary]) -> void:
 	if items.is_empty():
 		return
+	var geo: BoardGeometry = _bg()
+	var warped: bool = geo != null and geo.is_warped()
 	for it: Dictionary in items:
 		if bool(it["edge"]):
-			draw_rect(Rect2(it["rect"].grow(1)), SlabPainter.INK)
+			if warped:
+				draw_colored_polygon(geo.art_quad(Rect2(it["rect"].grow(1))), SlabPainter.INK)
+			else:
+				draw_rect(Rect2(it["rect"].grow(1)), SlabPainter.INK)
 	for it: Dictionary in items:
 		var col: Color = it["col"]
 		var r: Rect2i = it["rect"]
+		if warped:
+			if bool(it["fill"]):
+				draw_colored_polygon(geo.art_quad(Rect2(r)), col)
+			else:
+				var w: float = float(it["width"])
+				BoardGeometry.draw_polygon_outline(self, geo.art_quad(Rect2(r).grow(-w * 0.5)), col, w)
+			continue
 		if bool(it["fill"]):
 			draw_rect(Rect2(r), col)
 		else:
@@ -284,11 +309,18 @@ func _draw_travel(_combat: CombatView, items: Array[Dictionary]) -> void:
 func _draw_shards(flood: Dictionary) -> void:
 	if flood.is_empty():
 		return
+	var geo: BoardGeometry = _bg()
+	if geo == null:
+		return
 	var style: Dictionary = flood["style"]
 	for item: Dictionary in flood["cells"]:
 		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
 		var since: float = float(item["since"])
 		var life: float = 1.0 - clampf(since / 0.5, 0.0, 1.0)
+		# ADR-0002: the shards rise from the drawn cell: composed on the flat cell, each (tiny, pixel-art) square moved
+		# whole onto the drawn floor (BoardGeometry.warp_art_px of its corner, like every VFX anchor; never scaled). A
+		# mapped quad per shard cost ~25-60 ms a frame on a full flood, so it is not used here.
+		var col := Color(style["edge"], float(item["fade"]) * (0.4 + 0.6 * life))
 		for sq: Rect2i in CastVfx.shard_rects(item["cell"], cell_rect, since, int(style["squares"])):
-			draw_rect(Rect2(sq), Color(style["edge"], float(item["fade"]) * (0.4 + 0.6 * life)), false, 1.0)
+			draw_rect(Rect2(Rect2i(geo.warp_art_px(sq.position), sq.size)), col, false, 1.0)
 

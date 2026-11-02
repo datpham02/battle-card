@@ -8,6 +8,8 @@ extends SceneTree
 ## at scroll 0 again; desktop extra: a mouse click on a cell opens its detail. Memory progress store (no
 ## save touched). Prints PASS/FAIL lines and FAILS=n.
 
+const RealMouseGuard = preload("res://tests/integration/ui/real_mouse_guard.gd")
+
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
 
@@ -46,6 +48,7 @@ func _tap(pos: Vector2) -> void:
 
 func _mouse_button(p: Vector2, pressed: bool) -> void:
 	var ev := InputEventMouseButton.new()
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.button_index = MOUSE_BUTTON_LEFT
 	ev.pressed = pressed
 	ev.position = p
@@ -71,6 +74,7 @@ func _initialize() -> void:
 	flow = main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())
 	root.add_child(main)
+	root.add_child(RealMouseGuard.new())
 	await _frames(3)
 	view = flow.get_node("AchievementsView") as AchievementsView
 	title = flow.get_node("TitleView") as TitleView

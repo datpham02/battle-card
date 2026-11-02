@@ -7,6 +7,8 @@ extends SceneTree
 ## a second finger mid-drag; tap-step fallback; the place window runs out -> Tung phép pressed automatically; menu
 ## timeout picks the default card; confirm during a swing does nothing.
 
+const RealMouseGuard = preload("res://tests/integration/ui/real_mouse_guard.gd")
+
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
 const BOSS_CELL: Vector2i = Vector2i(4, 1)
@@ -21,6 +23,7 @@ func _check(name: String, ok: bool, extra: String = "") -> void:
 func _mouse_button(p: Vector2, pressed: bool) -> void:
 	var ev := InputEventMouseButton.new()
 	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.pressed = pressed
 	ev.position = p
 	ev.global_position = p
@@ -30,6 +33,7 @@ func _mouse_button(p: Vector2, pressed: bool) -> void:
 
 func _mouse_move(p: Vector2) -> void:
 	var ev := InputEventMouseMotion.new()
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.position = p
 	ev.global_position = p
 	ev.button_mask = MOUSE_BUTTON_MASK_LEFT
@@ -97,6 +101,8 @@ func _initialize() -> void:
 	var game_flow := main.get_node("GameFlow") as GameFlow
 	game_flow.set_store_for_test(ProgressStore.memory_store())
 	root.add_child(main)
+	var mouse_guard: Node = RealMouseGuard.new()
+	root.add_child(mouse_guard)
 	await process_frame
 	# The shipped hero, so the window shows the real sprite (not the character-less placeholder).
 	game_flow.set_character("kiem_si")
@@ -140,6 +146,10 @@ func _initialize() -> void:
 	var slot1: Vector2 = sv.get_slot_rect(1).get_center()
 	var slot2: Vector2 = sv.get_slot_rect(2).get_center()
 	var boss_finger: Vector2 = combat.drag_point_for_cell(BOSS_CELL)
+	# ADR-0002: the shipped board is drawn in perspective, so every drag / tap below goes through the inverse map.
+	_check("perspective board on (touches use the inverse map)", combat.board_geometry().is_warped())
+	_check("drag point aims back at the boss cell through the inverse map",
+		combat.board_geometry().cell_at(boss_finger - Vector2(0.0, combat.get_drag_lift_px())) == BOSS_CELL)
 	_check("not placing / confirm hidden with nothing selected", not combat.is_placing() and not combat.is_confirm_visible())
 
 	# --- Tap selects; tapping another slot switches; Huy leaves PLACING with the piece kept.
@@ -156,7 +166,7 @@ func _initialize() -> void:
 	_check("drag started (mouse)", combat.is_dragging())
 	var ghost: Array[Vector2i] = combat.get_placement().get_cells().duplicate()
 	_check("ghost on the boss cell, 2 cells", ghost.size() == 2 and ghost.has(BOSS_CELL), str(ghost))
-	_check("ghost aims above the finger (lift)", combat.get_drag_lift_px() > 0.0 and ScreenLayout.cell_at(combat.get_grid(), VP, boss_finger) != BOSS_CELL)
+	_check("ghost aims above the finger (lift)", combat.get_drag_lift_px() > 0.0 and combat.board_geometry().cell_at(boss_finger) != BOSS_CELL)
 	await _mouse_button(boss_finger, false)
 	_check("release on board commits the piece: place window, NO card menu", combat.is_placed() and not flow.is_menu_open() and flow.get_hand().is_empty())
 	_check("placed cells == ghost cells", _sorted(combat.get_cast_plan().cells()) == _sorted(ghost), str(combat.get_cast_plan().cells()))
@@ -198,8 +208,8 @@ func _initialize() -> void:
 
 	# --- Confirm during a swing does nothing (tap-step: select, aim, tap ghost).
 	await _click(slot1)
-	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
-	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
+	await _click(combat.board_geometry().cell_center(BOSS_CELL))
+	await _click(combat.board_geometry().cell_center(BOSS_CELL))
 	_check("confirm during swing does nothing", not flow.is_menu_open() and not combat.is_placed() and _shape(hold, 1) == "bar2" and actor.is_swinging())
 	await _click(cast_c)
 	_check("Tung phép during a swing does nothing", not flow.is_menu_open() and not combat.is_placed() and actor.is_swinging())
@@ -254,15 +264,27 @@ func _initialize() -> void:
 
 	# --- Tap-step fallback with mono, then menu timeout auto-picks the default card.
 	state.set_enemy_cell(BOSS_CELL)
-	await _click(slot2)
-	_check("tap-step: mono selected", combat.is_placing() and not combat.is_dragging())
+	# A real cursor resting on the test window moves between the pushed press and release (the 2026-11-02 flake):
+	# RealMouseGuard swallows it, so the tap still selects instead of turning into a drag.
+	await _mouse_button(slot2, true)
+	var real_move := InputEventMouseMotion.new()
+	real_move.position = Vector2(640, 360)
+	real_move.global_position = real_move.position
+	var swallowed_before: int = mouse_guard.swallowed
+	root.push_input(real_move, true)
+	await process_frame
+	await _mouse_button(slot2, false)
+	_check("real mouse move mid-tap swallowed by the test guard", mouse_guard.swallowed > swallowed_before, str(mouse_guard.swallowed))
+	var mono: Piece = hold.get_piece(2)
+	_check("tap-step: mono selected", combat.is_placing() and not combat.is_dragging(),
+		"placing=%s dragging=%s placed=%s menu=%s swinging=%s piece=%s placeable=%s hp=%.0f/%.0f" % [combat.is_placing(), combat.is_dragging(), combat.is_placed(), flow.is_menu_open(), actor.is_swinging(), _shape(hold, 2), mono != null and mono.placeable(), state.player_hp, state.enemy_hp])
 	var aim: Vector2i = BOSS_CELL + Vector2i(1, 0)
-	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, aim))
+	await _click(combat.board_geometry().cell_center(aim))
 	_check("tap-step: tap cell aims the ghost, no menu", combat.get_placement().get_cells() == [aim] and not flow.is_menu_open(), str(combat.get_placement().get_cells()))
 	_check("ghost off the boss reports a miss", not combat.get_placement().hits(state.enemy_cell))
-	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
+	await _click(combat.board_geometry().cell_center(BOSS_CELL))
 	_check("tap-step: re-aim onto the boss reports a hit", combat.get_placement().get_cells() == [BOSS_CELL] and combat.get_placement().hits(state.enemy_cell) and not flow.is_menu_open())
-	await _click(ScreenLayout.cell_center(combat.get_grid(), VP, BOSS_CELL))
+	await _click(combat.board_geometry().cell_center(BOSS_CELL))
 	_check("tap-step: tap ghost commits it -> place window, no menu", combat.is_placed() and not flow.is_menu_open() and combat.get_cast_plan().cells() == [BOSS_CELL], str(combat.get_cast_plan().cells()))
 	var t_place: int = Time.get_ticks_msec()
 	while combat.is_placed() and Time.get_ticks_msec() - t_place < int((combat.get_place_duration() + 1.0) * 1000.0):

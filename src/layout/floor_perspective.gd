@@ -1,8 +1,9 @@
 class_name FloorPerspective
 extends RefCounted
-## PROTOTYPE (floor-perspective, 2026-11-02): the projective map that turns the flat board into a "real 3/4"
-## trapezoid, so the user can judge screenshots before a full spec. Opt-in: `--floor-perspective=<back_ratio>`
-## (DemoArgs) or combat.json `floor.perspective.back_ratio`; 0 / absent = off and nothing here is built.
+## The battle floor's perspective (ADR-0002, on by default since 2026-11-02): the projective map that turns the flat
+## board into a "real 3/4" trapezoid. combat.json `floor.perspective.back_ratio` (0.82 shipped) or
+## `--floor-perspective=<back_ratio>` (DemoArgs; 0 forces the flat board, and then nothing here is built). Consumers do
+## not use this class directly: they ask BoardGeometry, which wraps it (and is the identity while flat).
 ##
 ## The map is a homography H (3x3, homogeneous) defined by the flat board rect B = (x0, y0, w, h) in ART px and
 ## the back ratio r (0 < r <= 1). In board-normalised coordinates u = (x - x0) / w, v = (y - y0) / h (v = 0 is
@@ -26,7 +27,7 @@ extends RefCounted
 
 ## Default when combat.json / the flag name nothing: off.
 const OFF: float = 0.0
-## Back ratios outside (MIN_RATIO, 1] are treated as off (the prototype reference is 0.82).
+## Back ratios outside (MIN_RATIO, 1] are treated as off (the shipped value is 0.82).
 const MIN_RATIO: float = 0.3
 
 ## Back-row width over front-row width (0 < r <= 1).

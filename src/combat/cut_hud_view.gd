@@ -630,6 +630,8 @@ var _label_ages: Dictionary = {}
 var _label_seen: Dictionary = {}
 ## The effect label ids of the last completed _draw (tests / captures).
 var _labels_drawn: Array[String] = []
+## ADR-0002: the board geometry of the current draw (BoardGeometry.of the bound CombatView; refreshed by _draw).
+var _geo: BoardGeometry = null
 
 
 func _ready() -> void:
@@ -922,13 +924,63 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 	return _board_press(pos, emulated)
 
 
-# PROTOTYPE floor-perspective: the board cell under screen point [param pos] (ScreenLayout.cell_at on the flat
-# board, FloorPerspective.cell_at_warped_screen on the trapezoid).
-func _cell_at_screen(vp: Vector2, pos: Vector2) -> Vector2i:
-	var persp: FloorPerspective = FloorPerspective.of(_combat)
-	if persp != null:
-		return persp.cell_at_warped_screen(_combat.get_grid(), pos)
-	return ScreenLayout.cell_at(_combat.get_grid(), vp, pos)
+# ADR-0002: the board cell under screen point [param pos] (BoardGeometry.cell_at: the inverse map on the perspective
+# board, the flat layout otherwise).
+func _cell_at_screen(_vp: Vector2, pos: Vector2) -> Vector2i:
+	return _bg().cell_at(pos)
+
+
+# ADR-0002: the board geometry to draw / hit-test with: the one of this draw, else a fresh BoardGeometry.of.
+func _bg() -> BoardGeometry:
+	if _geo != null and _geo.grid == _combat.get_grid() and _geo.viewport_size == get_viewport_rect().size:
+		return _geo
+	_geo = BoardGeometry.of(_combat)
+	if _geo == null:
+		_geo = BoardGeometry.make(_combat.get_grid(), get_viewport_rect().size)
+	return _geo
+
+
+# ADR-0002 drawing helpers: MODEL-space (flat board px) shapes drawn through the board map, so every decoration on a
+# cell follows the perspective floor (and is the plain draw call while the board is flat).
+func _fill(rect: Rect2, color: Color) -> void:
+	_bg().fill(self, rect, color)
+
+
+func _frame(rect: Rect2, color: Color, width: float) -> void:
+	_bg().outline(self, rect, color, width)
+
+
+func _line(a: Vector2, b: Vector2, color: Color, width: float) -> void:
+	_bg().line(self, a, b, color, width)
+
+
+func _polyline(points: PackedVector2Array, color: Color, width: float) -> void:
+	draw_polyline(_map_points(points), color, width)
+
+
+func _poly(points: PackedVector2Array, color: Color) -> void:
+	draw_colored_polygon(_map_points(points), color)
+
+
+# A model point on screen.
+func _pt(p: Vector2) -> Vector2:
+	return _bg().to_screen(p)
+
+
+# The local scale of the board map at model point [param p] (sizes of icons / rings drawn there; ONE flat).
+func _scale_at(p: Vector2) -> float:
+	var s: Vector2 = _bg().local_scale(p)
+	return minf(s.x, s.y)
+
+
+func _map_points(points: PackedVector2Array) -> PackedVector2Array:
+	var geo: BoardGeometry = _bg()
+	if not geo.is_warped():
+		return points
+	var out := PackedVector2Array()
+	for p: Vector2 in points:
+		out.append(geo.to_screen(p))
+	return out
 
 
 # Story 024: a left press on the board while PLACING. On the ghost (or on the cell it is already
@@ -1041,7 +1093,7 @@ func _on_formation_completed() -> void:
 
 
 # Story 029: lit cells of the enemy half (under every other marker) and the completion flash.
-func _draw_formation(vp: Vector2) -> void:
+func _draw_formation(_vp: Vector2) -> void:
 	var formation: FormationMap = _combat.get_formation() if _combat.has_method("get_formation") else null
 	if formation == null:
 		return
@@ -1049,7 +1101,7 @@ func _draw_formation(vp: Vector2) -> void:
 	var flash: float = _combat.get_formation_flash()
 	if flash > 0.0 and not _vfx_ok("engraving_complete"):
 		for cell: Vector2i in grid.enemy_cells():
-			draw_rect(ScreenLayout.cell_rect(grid, vp, cell), Color(1.0, 1.0, 1.0, FORMATION_FLASH_ALPHA * flash))
+			_fill(_bg().flat_cell_rect(cell), Color(1.0, 1.0, 1.0, FORMATION_FLASH_ALPHA * flash))
 	if _vfx_ok("engraving_lit"):
 		return  # Story 048 F2: FloorDynamicLayer draws the lit engraving under the units
 	var warn: float = _combat.get_config().formation_fade_warn_ratio
@@ -1061,16 +1113,16 @@ func _draw_formation(vp: Vector2) -> void:
 		if warning:
 			# Flat and low (never the bright fresh look) so a still frame reads as "about to fade".
 			strength = FORMATION_WARN_HIGH if blink_on else FORMATION_WARN_LOW
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell).grow(-FORMATION_INSET)
-		draw_rect(rect, Color(FORMATION_FILL, FORMATION_FILL.a * strength))
+		var rect: Rect2 = _bg().flat_cell_rect(cell).grow(-FORMATION_INSET)
+		_fill(rect, Color(FORMATION_FILL, FORMATION_FILL.a * strength))
 		var border := Color(FORMATION_BORDER, strength)
 		if warning:
 			_draw_dashed_formation_rect(rect, border)
 		else:
-			draw_rect(rect, border, false, FORMATION_BORDER_WIDTH)
+			_frame(rect, border, FORMATION_BORDER_WIDTH)
 
 
-# Dashed rectangle in the formation colour (the feint dashes are grey and thinner).
+# Dashed rectangle in the formation colour (the feint dashes are grey and thinner); [param rect] in model space.
 func _draw_dashed_formation_rect(rect: Rect2, color: Color) -> void:
 	var corners: Array[Vector2] = [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
 	for i: int in corners.size():
@@ -1080,7 +1132,7 @@ func _draw_dashed_formation_rect(rect: Rect2, color: Color) -> void:
 		var dir: Vector2 = (b - a).normalized()
 		var d: float = 0.0
 		while d < length:
-			draw_line(a + dir * d, a + dir * minf(d + FORMATION_DASH_LENGTH, length), color, FORMATION_BORDER_WIDTH)
+			_line(a + dir * d, a + dir * minf(d + FORMATION_DASH_LENGTH, length), color, FORMATION_BORDER_WIDTH)
 			d += FORMATION_DASH_LENGTH * 2.0
 
 
@@ -1090,18 +1142,17 @@ func _try_activate_signature() -> void:
 
 
 # Coloured border + thin timer bar on the player's half while a signature runs.
-func _draw_signature_effect(vp: Vector2) -> void:
+func _draw_signature_effect(_vp: Vector2) -> void:
 	if not _has_signature() or not _sig.is_signature_active():
 		return
 	var color: Color = SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR)
-	var grid: BoardGrid = _combat.get_grid()
-	var half: Rect2 = ScreenLayout.player_half_rect(grid, vp)
-	draw_rect(half.grow(-SIGNATURE_BORDER_WIDTH * 0.5), color, false, SIGNATURE_BORDER_WIDTH)
+	_frame(_bg().flat_half_rect(false).grow(-SIGNATURE_BORDER_WIDTH * 0.5), color, SIGNATURE_BORDER_WIDTH)
 	var duration: float = _sig.get_signature_duration()
 	var ratio: float = 0.0 if duration <= 0.0 else clampf(_sig.get_signature_time_left() / duration, 0.0, 1.0)
-	var bar: Rect2 = ScreenLayout.signature_timer_rect(grid, vp)
-	draw_rect(bar, SIGNATURE_TIMER_BACK)
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), color)
+	var half: Rect2 = _bg().flat_half_rect(false)
+	var bar := Rect2(half.position, Vector2(half.size.x, half.size.y * ScreenLayout.SIGNATURE_TIMER_HEIGHT_RATIO))
+	_fill(bar, SIGNATURE_TIMER_BACK)
+	_fill(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), color)
 
 
 # The signature name, large in the middle of the board, for SIGNATURE_BANNER_SEC with a short fade.
@@ -1229,6 +1280,8 @@ func _draw() -> void:
 		return
 	var vp: Vector2 = get_viewport_rect().size
 	_labels_drawn.clear()
+	_geo = null
+	_bg()
 	# Focus overlay first: the preview, markers and buttons stay fully readable above it.
 	_draw_focus_overlay(vp)
 	_draw_formation(vp)
@@ -1303,26 +1356,27 @@ func _draw_odd_hint(vp: Vector2) -> void:
 
 # Story 041: the odd edge along the outer border of board [param cells] (call it BEFORE drawing their green / red
 # cells, so the tint and outline stay on top inside and the magenta shows around them).
-func _draw_odd_edge_cells(vp: Vector2, cells: Array[Vector2i]) -> void:
+func _draw_odd_edge_cells(_vp: Vector2, cells: Array[Vector2i]) -> void:
 	if cells.is_empty():
 		return
-	var grid: BoardGrid = _combat.get_grid()
-	PieceDraw.draw_odd_edge(self, cells, ScreenLayout.cell_rect(grid, vp, Vector2i.ZERO).position, ScreenLayout.cell_size(grid, vp), ODD_GHOST_EDGE_WIDTH)
+	var geo: BoardGeometry = _bg()
+	var origin: Rect2 = geo.flat_cell_rect(Vector2i.ZERO)
+	PieceDraw.draw_odd_edge(self, cells, origin.position, origin.size, ODD_GHOST_EDGE_WIDTH, geo)
 
 
 # Story 041: the odd sparkle mark inside the top-left corner of the top-most (then left-most) cell of board [param cells],
 # so it always sits on the shape itself.
-func _draw_odd_corner_mark(vp: Vector2, cells: Array[Vector2i]) -> void:
+func _draw_odd_corner_mark(_vp: Vector2, cells: Array[Vector2i]) -> void:
 	if cells.is_empty():
 		return
-	var grid: BoardGrid = _combat.get_grid()
 	var first: Vector2i = cells[0]
 	for cell: Vector2i in cells:
 		if cell.y < first.y or (cell.y == first.y and cell.x < first.x):
 			first = cell
-	var unit: Vector2 = ScreenLayout.cell_size(grid, vp)
+	var unit: Vector2 = _bg().cell_size()
 	var radius: float = minf(unit.x, unit.y) * ODD_CAST_MARK_RATIO
-	PieceDraw.draw_odd_mark(self, ScreenLayout.cell_rect(grid, vp, first).position + Vector2(radius, radius) * 1.3, radius)
+	var at: Vector2 = _bg().flat_cell_rect(first).position + Vector2(radius, radius) * 1.3
+	PieceDraw.draw_odd_mark(self, _pt(at), radius * _scale_at(at))
 
 
 # Story 041: the shape ids of the boss's RUNNING swing (its combo labels while the combo swing runs).
@@ -1414,33 +1468,13 @@ func _fuse_cut(vp: Vector2) -> float:
 	return float(3 * PixelFrame.scale_for(vp.y))
 
 
-func _draw_cells(vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:
-	var grid: BoardGrid = _combat.get_grid()
-	var persp: FloorPerspective = FloorPerspective.of(_combat)
+func _draw_cells(_vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:
+	# ADR-0002: each ghost cell is its BoardGeometry cell (the warped slab quad on the perspective board): fill + an inset
+	# outline.
 	for cell: Vector2i in cells:
-		if persp != null:
-			# PROTOTYPE floor-perspective: the ghost cell is the warped slab quad (fill + an inset outline).
-			var poly: PackedVector2Array = persp.warped_cell_polygon_screen(grid, cell)
-			draw_colored_polygon(poly, tint)
-			var inset: PackedVector2Array = _inset_polygon(poly, 2.0)
-			inset.append(inset[0])
-			draw_polyline(inset, outline, CELL_OUTLINE_WIDTH)
-			continue
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-		draw_rect(rect, tint)
-		draw_rect(rect.grow(-2.0), outline, false, CELL_OUTLINE_WIDTH)
-
-
-# PROTOTYPE floor-perspective: [param poly] pulled [param px] towards its centroid (the warped form of Rect2.grow(-px)).
-static func _inset_polygon(poly: PackedVector2Array, px: float) -> PackedVector2Array:
-	var centre: Vector2 = Vector2.ZERO
-	for p: Vector2 in poly:
-		centre += p
-	centre /= float(maxi(poly.size(), 1))
-	var out: PackedVector2Array = PackedVector2Array()
-	for p: Vector2 in poly:
-		out.append(p + (centre - p).normalized() * px)
-	return out
+		var rect: Rect2 = _bg().flat_cell_rect(cell)
+		_fill(rect, tint)
+		_frame(rect.grow(-2.0), outline, CELL_OUTLINE_WIDTH)
 
 
 # Centred single-line text; [param size] is the font size.
@@ -1540,7 +1574,7 @@ func _draw_preview(vp: Vector2) -> void:
 	var label: String = "%s · %s · %s" % [forecast, tr(TEXT_CELLS) % cells.size(), tr(TEXT_DAMAGE_NUMBER) % damage]
 	var avoid: Array[Rect2] = []
 	for cell: Vector2i in cells:
-		avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
+		avoid.append(_bg().cell_bounds(cell))
 	_draw_board_effect(vp, "forecast", cells, label, EffectText.NEUTRAL if blocked else (EffectText.HIT if hit else EffectText.MISS), avoid)
 	if _combat.is_dragging():
 		_draw_finger(_combat.get_drag_point())
@@ -1626,7 +1660,7 @@ func _draw_plan_preview(vp: Vector2, _flow: CutFlow, state: CombatState) -> void
 	# The label keeps off the shape's cells and the x badge.
 	var avoid: Array[Rect2] = []
 	for cell: Vector2i in union:
-		avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
+		avoid.append(_bg().cell_bounds(cell))
 	if plan.piece_count() >= 2 and _combat.is_placed():
 		avoid.append(_detach_mark_rect(vp, plan.piece_cells(plan.piece_count() - 1)))
 	_draw_board_effect(vp, "resonance" if featured else "total", union, label, color, avoid)
@@ -1675,14 +1709,11 @@ func _label_age(id: String) -> float:
 
 # Picks the label rect of [param size] around the bounding box of [param cells] (above / below / beside it, clamped to
 # the enemy half of the board) that overlaps the [param avoid] rects least; the first of equal candidates wins.
-func _place_label(vp: Vector2, cells: Array[Vector2i], size: Vector2, avoid: Array[Rect2]) -> Rect2:
-	var grid: BoardGrid = _combat.get_grid()
-	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
-	for cell: Vector2i in cells:
-		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
-	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
-	var half_w: float = ScreenLayout.cell_size(grid, vp).x * grid.side_cols
-	var bounds := Rect2(board.position.x + half_w, board.position.y, board.size.x - half_w, board.size.y)
+func _place_label(_vp: Vector2, cells: Array[Vector2i], size: Vector2, avoid: Array[Rect2]) -> Rect2:
+	# ADR-0002: the label sits by the cells as drawn (screen bounding boxes of the BoardGeometry cells), inside the
+	# drawn enemy half.
+	var box: Rect2 = _bg().cells_bounds(cells)
+	var bounds: Rect2 = _bg().half_bounds(true)
 	var gap: float = 2.0
 	var spots: Array[Vector2] = [
 		Vector2(box.end.x - size.x, box.position.y - size.y - gap),
@@ -1714,10 +1745,10 @@ func _no_cells() -> Array[Vector2i]:
 
 
 # Square around the x badge (centred on the second piece's first cell), a bit larger than the drawn diamond.
-func _detach_mark_rect(vp: Vector2, cells: Array[Vector2i]) -> Rect2:
+func _detach_mark_rect(_vp: Vector2, cells: Array[Vector2i]) -> Rect2:
 	if cells.is_empty():
 		return Rect2()
-	var centre: Vector2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, cells[0]).get_center()
+	var centre: Vector2 = _bg().cell_center(cells[0])
 	var half: float = DETACH_MARK_RADIUS + 4.0
 	return Rect2(centre - Vector2(half, half), Vector2(half, half) * 2.0)
 
@@ -1735,13 +1766,13 @@ func _draw_detach_mark(vp: Vector2, cells: Array[Vector2i]) -> void:
 
 
 # Pulsing gold frame on every cell of a resonant join (over the gold ghost).
-func _draw_featured_glow(vp: Vector2, cells: Array[Vector2i]) -> void:
+func _draw_featured_glow(_vp: Vector2, cells: Array[Vector2i]) -> void:
 	var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * FEATURED_GLOW_HZ)
 	if SettingsStore.shared().get_reduce_motion():
 		pulse = 0.5
 	for cell: Vector2i in cells:
-		var rect: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, cell)
-		draw_rect(rect.grow(-1.0), Color(FEATURED_GOLD, 0.7 + 0.3 * pulse), false, CELL_OUTLINE_WIDTH + 2.0)
+		var rect: Rect2 = _bg().flat_cell_rect(cell)
+		_frame(rect.grow(-1.0), Color(FEATURED_GOLD, 0.7 + 0.3 * pulse), CELL_OUTLINE_WIDTH + 2.0)
 
 
 # "Hinh chu dao x1,5 . Ghim" (the multiplier uses the locale's decimal mark).
@@ -1824,15 +1855,12 @@ func _draw_boss_queued_swing(vp: Vector2) -> void:
 func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color: Color, top_right: bool = false) -> void:
 	if cells.is_empty():
 		return
-	var grid: BoardGrid = _combat.get_grid()
-	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
-	for cell: Vector2i in cells:
-		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
+	var box: Rect2 = _bg().cells_bounds(cells)
 	var s: float = ScreenLayout.controls_scale(vp)
 	var size: int = _effect_font_size(vp)
 	var width: float = EffectText.width(text, size, s)
 	var height: float = roundf(size * 1.3)
-	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
+	var board: Rect2 = _bg().board_bounds()
 	var pos: Vector2 = box.end - Vector2(width, height)
 	if top_right:
 		pos.y = box.position.y
@@ -1843,13 +1871,14 @@ func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color
 
 
 # Story 037: "+N" over the player's cell while CombatView.get_heal_flash() runs: rises a little and fades out.
-func _draw_heal_flash(vp: Vector2) -> void:
+func _draw_heal_flash(_vp: Vector2) -> void:
 	var flash: Dictionary = _combat.get_heal_flash()
 	if flash.is_empty():
 		return
 	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
-	var cell: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, _combat.get_state().player_cell)
-	var size: int = int(cell.size.y * FEEDBACK_FONT_RATIO * 1.3)
+	var flat: Rect2 = _bg().flat_cell_rect(_combat.get_state().player_cell)
+	var cell: Rect2 = _bg().fit_rect(flat)
+	var size: int = int(flat.size.y * FEEDBACK_FONT_RATIO * 1.3)
 	var rise: float = cell.size.y * HEAL_RISE_RATIO * (1.0 - fade)
 	var back := Rect2(cell.position + Vector2(0.0, -size * 1.4 - rise), Vector2(cell.size.x, size * 1.4))
 	_draw_centered(back, tr(TEXT_HEAL_NUMBER) % roundi(float(flash["amount"])), size, Color(HEAL_TEXT, fade))
@@ -1867,16 +1896,15 @@ func _draw_interrupt(vp: Vector2) -> void:
 		return
 	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
 	var cells: Array[Vector2i] = flash["cells"]
-	var grid: BoardGrid = _combat.get_grid()
 	if _vfx_ok("interrupt"):
 		# Story 048 F8: the interrupt one-shot over the units replaces the tint and the X; a short NGẮT stays.
 		_draw_cells_label(vp, cells, tr(TEXT_INTERRUPT), "", INTERRUPT_COLOR, fade)
 		return
 	_draw_cells(vp, cells, Color(INTERRUPT_TINT, INTERRUPT_TINT.a * fade), Color(INTERRUPT_COLOR, fade))
 	for cell: Vector2i in cells:
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell).grow(-rect_inset(vp))
-		draw_line(rect.position, rect.end, Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
-		draw_line(Vector2(rect.end.x, rect.position.y), Vector2(rect.position.x, rect.end.y), Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
+		var rect: Rect2 = _bg().flat_cell_rect(cell).grow(-rect_inset(vp))
+		_line(rect.position, rect.end, Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
+		_line(Vector2(rect.end.x, rect.position.y), Vector2(rect.position.x, rect.end.y), Color(INTERRUPT_COLOR, fade), INTERRUPT_X_WIDTH)
 	var boss_victim: bool = int(flash["side"]) == CombatState.Side.ENEMY
 	_draw_cells_label(vp, cells, tr(TEXT_INTERRUPT), tr(TEXT_INTERRUPT_BOSS) if boss_victim else tr(TEXT_INTERRUPT_PLAYER), INTERRUPT_COLOR, fade)
 
@@ -1894,25 +1922,20 @@ func rect_inset(vp: Vector2) -> float:
 # Two lines (big, small) on a white backing, centred on the bounding box of [param cells] and
 # clamped inside the board, so it never reaches the strip under the arena. (Story 046 Part C removed the boss
 # countdown, the only caller of TD-023's avoid-the-units placement, so that placement went with it.)
-func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2: String, color: Color, alpha: float = 1.0) -> void:
+func _draw_cells_label(_vp: Vector2, cells: Array[Vector2i], line1: String, line2: String, color: Color, alpha: float = 1.0) -> void:
 	if cells.is_empty():
 		return
-	var grid: BoardGrid = _combat.get_grid()
-	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
-	for cell: Vector2i in cells:
-		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
+	var geo: BoardGeometry = _bg()
+	var box: Rect2 = geo.flat_cells_rect(cells)
 	var font: Font = ThemeDB.fallback_font
-	var big: int = int(ScreenLayout.cell_size(grid, vp).y * LABEL_BIG_RATIO)
-	var small: int = int(ScreenLayout.cell_size(grid, vp).y * LABEL_SMALL_RATIO)
+	var big: int = int(geo.cell_size().y * LABEL_BIG_RATIO)
+	var small: int = int(geo.cell_size().y * LABEL_SMALL_RATIO)
 	var width: float = maxf(font.get_string_size(line1, HORIZONTAL_ALIGNMENT_LEFT, -1, big).x, font.get_string_size(line2, HORIZONTAL_ALIGNMENT_LEFT, -1, small).x) + LABEL_PAD * 2.0
 	var height: float = (big + small) * LABEL_LINE_SPACING + LABEL_PAD * 2.0
-	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
+	var board: Rect2 = geo.board_bounds()
 	# Story 048: outlined text floating just above the cells, no white backing (nothing on a cell may cover a unit).
-	# PROTOTYPE floor-perspective: the label hangs over the warped top-centre of the cells.
-	var anchor: Vector2 = Vector2(box.get_center().x, box.position.y)
-	var persp: FloorPerspective = FloorPerspective.of(_combat)
-	if persp != null:
-		anchor = persp.warp_screen(anchor)
+	# ADR-0002: the label hangs over the drawn top-centre of the cells (BoardGeometry maps the model top-centre).
+	var anchor: Vector2 = geo.to_screen(Vector2(box.get_center().x, box.position.y))
 	var x: float = clampf(anchor.x - width * 0.5, board.position.x, maxf(board.end.x - width, board.position.x))
 	var base: float = anchor.y - 2.0
 	if line2 != "":
@@ -1933,9 +1956,12 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	var cells: Array[Vector2i] = fb["cells"]
 	if not _vfx_ok("hit_impact" if hit else "miss_dust"):  # Story 048 F6 / F7 replace the tint
 		_draw_cells(vp, cells, HIT_TINT if hit else MISS_TINT, HIT_TEXT if hit else MISS_TEXT)
-	var grid: BoardGrid = _combat.get_grid()
-	var cell_rect: Rect2 = ScreenLayout.cell_rect(grid, vp, fb["cell"])
-	var size: int = int(cell_rect.size.y * FEEDBACK_FONT_RATIO)
+	var flat_cell: Rect2 = _bg().flat_cell_rect(fb["cell"])
+	# ADR-0002: the HIT / MISS text stands on the drawn cell (its fit rect, top edge = the drawn top-centre), sized by
+	# the flat cell.
+	var cell_rect: Rect2 = _bg().fit_rect(flat_cell)
+	cell_rect.position.y = _bg().to_screen(Vector2(flat_cell.get_center().x, flat_cell.position.y)).y
+	var size: int = int(flat_cell.size.y * FEEDBACK_FONT_RATIO)
 	# Story 048: outlined text floating above the cell (no white backing over the unit); Ivory / dim, never red
 	# (art bible P3: red is the telegraph only).
 	var color: Color = HudSkin.TEXT if hit else HudSkin.TEXT_DIM
@@ -1957,7 +1983,7 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 		var s: float = ScreenLayout.controls_scale(vp)
 		var small: int = EffectText.size_for(FEATURED_FONT_SIZE + 3)
 		var wide: float = EffectText.width(bonus_text, small, s)
-		var board: Rect2 = ScreenLayout.board_rect(grid, vp)
+		var board: Rect2 = _bg().board_bounds()
 		var left: float = clampf(cell_rect.get_center().x - wide * 0.5, board.position.x, maxf(board.end.x - wide, board.position.x))
 		EffectText.draw(self, Vector2(roundf(left), roundf(back.end.y + small)), bonus_text, small, EffectText.GOOD, HORIZONTAL_ALIGNMENT_CENTER, wide, s)
 
@@ -1982,16 +2008,15 @@ func _draw_row_warning(vp: Vector2) -> void:
 	var ratio: float = 0.0 if warn_sec <= 0.0 else clampf(burner.get_warn_left() / warn_sec, 0.0, 1.0)
 	var bright: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
 	var outline := Color(WARN_OUTLINE, WARN_OUTLINE.a * (1.0 if bright else WARN_BLINK_DIM_ALPHA))
-	var grid: BoardGrid = _combat.get_grid()
 	for cell: Vector2i in cells:
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-		draw_rect(rect, WARN_TINT)
-		draw_rect(rect.grow(-WARN_OUTLINE_INSET), outline, false, WARN_OUTLINE_WIDTH)
+		var rect: Rect2 = _bg().flat_cell_rect(cell)
+		_fill(rect, WARN_TINT)
+		_frame(rect.grow(-WARN_OUTLINE_INSET), outline, WARN_OUTLINE_WIDTH)
 		var inset: float = rect.size.y * WARN_BAR_INSET_RATIO
 		var bar_h: float = rect.size.y * WARN_BAR_HEIGHT_RATIO
 		var bar := Rect2(Vector2(rect.position.x + inset, rect.position.y + inset), Vector2(rect.size.x - inset * 2.0, bar_h))
-		draw_rect(bar, WARN_BAR_BACK)
-		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), WARN_BAR_FILL)
+		_fill(bar, WARN_BAR_BACK)
+		_fill(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), WARN_BAR_FILL)
 	_draw_corner_label(vp, cells, tr(TEXT_ROW_WARNING), WARN_OUTLINE, true)
 
 
@@ -2103,8 +2128,7 @@ func _unit_feet_screen(vp: Vector2, side: int, state: CombatState) -> Vector2:
 		var art: Vector2i = canvas.get_unit_layer().unit_feet_art(side)
 		if art.x >= 0:
 			return ScreenLayout.from_art(vp, Vector2(art))
-	var rect: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, state.cell_of(side))
-	return Vector2(rect.get_center().x, rect.end.y)
+	return _bg().cell_point(state.cell_of(side), Vector2(0.5, 1.0))
 
 
 # A row of [icon_name, bar_ratio] chips centred on [param feet].x, CHIP_FEET_GAP px under it; bar_ratio
@@ -2128,10 +2152,9 @@ func _draw_feint(vp: Vector2) -> void:
 		return
 	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
 	var cells: Array[Vector2i] = flash["cells"]
-	var grid: BoardGrid = _combat.get_grid()
 	for cell: Vector2i in cells:
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-		draw_rect(rect, Color(FEINT_TINT, FEINT_TINT.a * fade))
+		var rect: Rect2 = _bg().flat_cell_rect(cell)
+		_fill(rect, Color(FEINT_TINT, FEINT_TINT.a * fade))
 		_draw_dashed_rect(rect.grow(-FEINT_INSET), Color(FEINT_COLOR, fade))
 	_draw_cells_label(vp, cells, tr(TEXT_FEINT), tr(TEXT_FEINT_NOTE), FEINT_COLOR, fade)
 
@@ -2147,7 +2170,7 @@ func _draw_dashed_rect(rect: Rect2, color: Color) -> void:
 		var d: float = 0.0
 		while d < length:
 			var e: float = minf(d + FEINT_DASH_LENGTH, length)
-			draw_line(a + dir * d, a + dir * e, color, FEINT_DASH_WIDTH)
+			_line(a + dir * d, a + dir * e, color, FEINT_DASH_WIDTH)
 			d += FEINT_DASH_LENGTH * 2.0
 
 
@@ -2294,7 +2317,7 @@ func _draw_hazards_039(vp: Vector2, hazards: TileHazards, grid: BoardGrid, blink
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
 		var warned: Array[Vector2i] = []
 		for cell: Vector2i in _hz_cells(hazards, "vent_cells", side):
-			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			var rect: Rect2 = _bg().flat_cell_rect(cell)
 			if _hz_flag(hazards, "is_venting", side, cell):
 				_draw_vent_cell(rect, 2, 1.0, blink_on)
 			elif _hz_flag(hazards, "is_vent_warning", side, cell):
@@ -2310,34 +2333,33 @@ func _draw_hazards_039(vp: Vector2, hazards: TileHazards, grid: BoardGrid, blink
 				var warning: bool = _hz_flag(hazards, "is_crumble_warning", side, cell)
 				var progress: float = 1.0 if warning else _hz_num(hazards, "crumble_progress", side, cell)
 				if progress > 0.0:
-					_draw_crumble_cell(ScreenLayout.cell_rect(grid, vp, cell), progress, warning, blink_on)
+					_draw_crumble_cell(_bg().flat_cell_rect(cell), progress, warning, blink_on)
 				if warning:
 					cracking.append(cell)
 		for cell: Vector2i in _hz_cells(hazards, "fallen_cells", side):
-			_draw_fallen_cell(ScreenLayout.cell_rect(grid, vp, cell), _hz_num(hazards, "fallen_left", side, cell), _hz_num(hazards, "fall_total_sec", side, cell))
+			_draw_fallen_cell(_bg().flat_cell_rect(cell), _hz_num(hazards, "fallen_left", side, cell), _hz_num(hazards, "fall_total_sec", side, cell))
 		_draw_corner_label(vp, cracking, tr(TEXT_CRUMBLE), CRUMBLE_WARN_BORDER)
 
 
 # Erupting vent cells again ABOVE the burning layer: a pale double border and a bright ember streak, so a vent
 # stays different from the player's own burning cell (hatched orange with a flame and a bottom bar).
-func _draw_vent_eruptions(vp: Vector2) -> void:
+func _draw_vent_eruptions(_vp: Vector2) -> void:
 	var hazards: TileHazards = _combat.get_hazards()
 	if hazards == null or not hazards.has_method("vent_cells"):
 		return
-	var grid: BoardGrid = _combat.get_grid()
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
 		for cell: Vector2i in _hz_cells(hazards, "vent_cells", side):
 			if not _hz_flag(hazards, "is_venting", side, cell):
 				continue
-			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-			draw_rect(rect.grow(-WARN_OUTLINE_INSET), VENT_ERUPT_BORDER, false, VENT_BORDER_WIDTH)
-			draw_rect(rect.grow(-WARN_OUTLINE_INSET - VENT_BORDER_WIDTH - 1.0), VENT_WARN_BORDER, false, VENT_BORDER_WIDTH * 0.5)
+			var rect: Rect2 = _bg().flat_cell_rect(cell)
+			_frame(rect.grow(-WARN_OUTLINE_INSET), VENT_ERUPT_BORDER, VENT_BORDER_WIDTH)
+			_frame(rect.grow(-WARN_OUTLINE_INSET - VENT_BORDER_WIDTH - 1.0), VENT_WARN_BORDER, VENT_BORDER_WIDTH * 0.5)
 			var amp: float = rect.size.y * VENT_STREAK_AMP_RATIO
 			var points := PackedVector2Array()
 			for k: int in VENT_STREAK_POINTS:
 				var t: float = float(k) / float(VENT_STREAK_POINTS - 1)
 				points.append(Vector2(rect.position.x + rect.size.x * (0.08 + 0.84 * t), rect.get_center().y + rect.size.y * 0.3 + (amp if k % 2 == 0 else -amp)))
-			draw_polyline(points, VENT_ERUPT_BORDER, VENT_STREAK_WIDTH + 1.0)
+			_polyline(points, VENT_ERUPT_BORDER, VENT_STREAK_WIDTH + 1.0)
 
 
 # One vent cell. [param phase]: 0 idle (dark red streak), 1 warning ([param heat] 0..1 brightens it, border blinks),
@@ -2351,26 +2373,26 @@ func _draw_vent_cell(rect: Rect2, phase: int, heat: float, blink_on: bool) -> vo
 	elif phase == 2:
 		fill = VENT_ERUPT_FILL
 		streak = VENT_HEAT_STREAK
-	draw_rect(rect, fill)
+	_fill(rect, fill)
 	var amp: float = rect.size.y * VENT_STREAK_AMP_RATIO
 	var points := PackedVector2Array()
 	for k: int in VENT_STREAK_POINTS:
 		var t: float = float(k) / float(VENT_STREAK_POINTS - 1)
 		points.append(Vector2(rect.position.x + rect.size.x * (0.08 + 0.84 * t), rect.get_center().y + (amp if k % 2 == 0 else -amp)))
-	draw_polyline(points, streak, VENT_STREAK_WIDTH)
+	_polyline(points, streak, VENT_STREAK_WIDTH)
 	if phase == 1:
-		draw_rect(rect.grow(-WARN_OUTLINE_INSET), Color(VENT_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), false, VENT_BORDER_WIDTH)
+		_frame(rect.grow(-WARN_OUTLINE_INSET), Color(VENT_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), VENT_BORDER_WIDTH)
 	elif phase == 2:
-		draw_rect(rect.grow(-WARN_OUTLINE_INSET), VENT_ERUPT_BORDER, false, VENT_BORDER_WIDTH)
+		_frame(rect.grow(-WARN_OUTLINE_INSET), VENT_ERUPT_BORDER, VENT_BORDER_WIDTH)
 
 
 # A cell being stood on: a crack growing with [param progress] (0..1); in the warning ([param warning]) a big
 # full crack, a tint and a blinking amber border.
 func _draw_crumble_cell(rect: Rect2, progress: float, warning: bool, blink_on: bool) -> void:
-	draw_rect(rect, CRUMBLE_WARN_TINT if warning else Color(CRUMBLE_TINT, CRUMBLE_TINT.a * progress))
+	_fill(rect, CRUMBLE_WARN_TINT if warning else Color(CRUMBLE_TINT, CRUMBLE_TINT.a * progress))
 	_draw_crack_partial(rect, progress, CRUMBLE_CRACK, CRUMBLE_BIG_CRACK_WIDTH if warning else CRUMBLE_CRACK_WIDTH)
 	if warning:
-		draw_rect(rect.grow(-WARN_OUTLINE_INSET), Color(CRUMBLE_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), false, WARN_OUTLINE_WIDTH)
+		_frame(rect.grow(-WARN_OUTLINE_INSET), Color(CRUMBLE_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), WARN_OUTLINE_WIDTH)
 
 
 # CRACK_POINTS then CRACK_BRANCH scaled into [param rect], drawn only as far as [param ratio] (0..1) of their length.
@@ -2390,15 +2412,15 @@ func _draw_crack_partial(rect: Rect2, ratio: float, color: Color, width: float) 
 			points.append(rect.position + shape[i - 1].lerp(shape[i], share) * rect.size)
 			budget -= seg
 		if points.size() >= 2:
-			draw_polyline(points, color, width)
+			_polyline(points, color, width)
 
 
 # A fallen cell: a dark void, bluish depth bands, a torn rock edge and a time bar (full when it fell, empty when it
 # is back): nothing like the plain missing cell, which is not drawn at all.
 func _draw_fallen_cell(rect: Rect2, left: float, total: float) -> void:
-	draw_rect(rect, FALLEN_VOID)
-	draw_rect(rect.grow(-rect.size.y * 0.18), FALLEN_DEPTH)
-	draw_rect(rect.grow(-rect.size.y * 0.32), FALLEN_VOID)
+	_fill(rect, FALLEN_VOID)
+	_fill(rect.grow(-rect.size.y * 0.18), FALLEN_DEPTH)
+	_fill(rect.grow(-rect.size.y * 0.32), FALLEN_VOID)
 	var corners: Array[Vector2] = [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
 	var depth: float = minf(rect.size.x, rect.size.y) * FALLEN_EDGE_DEPTH_RATIO
 	var edge := PackedVector2Array()
@@ -2410,7 +2432,7 @@ func _draw_fallen_cell(rect: Rect2, left: float, total: float) -> void:
 			var t: float = float(k) / float(FALLEN_EDGE_STEPS)
 			edge.append(a.lerp(b, t) + inward * (depth if k % 2 == 1 else 0.0))
 	edge.append(edge[0])
-	draw_polyline(edge, FALLEN_EDGE, FALLEN_EDGE_WIDTH)
+	_polyline(edge, FALLEN_EDGE, FALLEN_EDGE_WIDTH)
 	_draw_zone_bar(rect, left, total, FALLEN_BAR_BACK, FALLEN_BAR_FILL, FALLEN_EDGE_WIDTH + 1.0)
 
 
@@ -2435,9 +2457,10 @@ func _draw_hazard_traits_039(vp: Vector2) -> void:
 			var from: Vector2i = _combat.get_state().player_cell
 			_draw_gust_arrow(vp, grid, from, dir, warn, gust.param_float(WARN_SEC_PARAM, GUST_WARN_FALLBACK_SEC))
 	if _is_shrouding(host) and not _combat.get_state().is_enemy_dead():
-		var boss_rect: Rect2 = ScreenLayout.cells_rect(grid, vp, _combat.get_state().enemy_footprint_cells())
-		var width: float = minf(boss_rect.size.x, boss_rect.size.y) * 0.9
-		_draw_cloud(Vector2(boss_rect.get_center().x, boss_rect.position.y + boss_rect.size.y * 0.22), width, CLOUD_COVER_ALPHA)
+		var boss_rect: Rect2 = _bg().flat_cells_rect(_combat.get_state().enemy_footprint_cells())
+		var at := Vector2(boss_rect.get_center().x, boss_rect.position.y + boss_rect.size.y * 0.22)
+		var width: float = minf(boss_rect.size.x, boss_rect.size.y) * 0.9 * _scale_at(at)
+		_draw_cloud(_pt(at), width, CLOUD_COVER_ALPHA)
 
 
 # The island about to fall: a tint, a blinking border along its outer edge, a draining bar and a label.
@@ -2445,24 +2468,24 @@ func _draw_island_warning(vp: Vector2, grid: BoardGrid, cells: Array[Vector2i], 
 	var on: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
 	var color := Color(ISLAND_BORDER, 1.0 if on else WARN_BLINK_DIM_ALPHA)
 	for cell: Vector2i in cells:
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell).grow(-WARN_OUTLINE_INSET)
-		draw_rect(rect, ISLAND_TINT)
+		var rect: Rect2 = _bg().flat_cell_rect(cell).grow(-WARN_OUTLINE_INSET)
+		_fill(rect, ISLAND_TINT)
 		var corners: Array[Vector2] = [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
 		var steps: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 		for i: int in 4:
 			if not cells.has(cell + steps[i]):
-				draw_line(corners[i], corners[(i + 1) % 4], color, ISLAND_BORDER_WIDTH)
-	_draw_zone_bar(ScreenLayout.cell_rect(grid, vp, cells[0]), left, total, ISLAND_BAR_BACK, ISLAND_BORDER, WARN_OUTLINE_INSET + ISLAND_BORDER_WIDTH)
+				_line(corners[i], corners[(i + 1) % 4], color, ISLAND_BORDER_WIDTH)
+	_draw_zone_bar(_bg().flat_cell_rect(cells[0]), left, total, ISLAND_BAR_BACK, ISLAND_BORDER, WARN_OUTLINE_INSET + ISLAND_BORDER_WIDTH)
 	_draw_corner_label(vp, cells, tr(TEXT_ISLAND_DROP), ISLAND_BORDER)
 
 
 # Gust warning: a big arrow on the unit's cell [param from] along [param dir] (grid +y = screen down), the cell it
 # would push to tinted when it is a board cell, and a draining bar.
 func _draw_gust_arrow(vp: Vector2, grid: BoardGrid, from: Vector2i, dir: Vector2i, left: float, total: float) -> void:
-	var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, from)
+	var rect: Rect2 = _bg().flat_cell_rect(from)
 	var target: Vector2i = from + dir
 	if grid.is_player_cell(target):
-		draw_rect(ScreenLayout.cell_rect(grid, vp, target), GUST_TINT)
+		_fill(_bg().flat_cell_rect(target), GUST_TINT)
 	var d := Vector2(dir)
 	var side_len: float = minf(rect.size.x, rect.size.y)
 	var c: Vector2 = rect.get_center()
@@ -2471,10 +2494,10 @@ func _draw_gust_arrow(vp: Vector2, grid: BoardGrid, from: Vector2i, dir: Vector2
 	var head: float = side_len * GUST_HEAD_RATIO
 	var normal := Vector2(-d.y, d.x)
 	var head_pts := PackedVector2Array([tip + d * head * 0.4, tip - d * head * 0.6 + normal * head * 0.7, tip - d * head * 0.6 - normal * head * 0.7])
-	draw_line(tail, tip - d * head * 0.3, GUST_OUTLINE, GUST_ARROW_WIDTH + 4.0)
-	draw_colored_polygon(PackedVector2Array([head_pts[0] + d * 3.0, head_pts[1] + normal * 3.0, head_pts[2] - normal * 3.0]), GUST_OUTLINE)
-	draw_line(tail, tip - d * head * 0.3, GUST_ARROW, GUST_ARROW_WIDTH)
-	draw_colored_polygon(head_pts, GUST_ARROW)
+	_line(tail, tip - d * head * 0.3, GUST_OUTLINE, GUST_ARROW_WIDTH + 4.0)
+	_poly(PackedVector2Array([head_pts[0] + d * 3.0, head_pts[1] + normal * 3.0, head_pts[2] - normal * 3.0]), GUST_OUTLINE)
+	_line(tail, tip - d * head * 0.3, GUST_ARROW, GUST_ARROW_WIDTH)
+	_poly(head_pts, GUST_ARROW)
 	_draw_zone_bar(rect, left, total, GUST_BAR_BACK, GUST_ARROW, WARN_OUTLINE_INSET)
 	_draw_corner_label(vp, [from] as Array[Vector2i], tr(TEXT_GUST), GUST_OUTLINE)
 
@@ -2506,15 +2529,12 @@ func _forecast_blocked() -> bool:
 
 
 # A cloud icon over the middle of the bounding box of [param cells] (the grey hit shadow's "why").
-func _draw_cloud_over_cells(vp: Vector2, cells: Array[Vector2i]) -> void:
+func _draw_cloud_over_cells(_vp: Vector2, cells: Array[Vector2i]) -> void:
 	if cells.is_empty():
 		return
-	var grid: BoardGrid = _combat.get_grid()
-	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
-	for cell: Vector2i in cells:
-		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
-	var unit: Vector2 = ScreenLayout.cell_size(grid, vp)
-	_draw_cloud(box.get_center(), minf(unit.x, unit.y) * 0.8, 1.0)
+	var box: Rect2 = _bg().flat_cells_rect(cells)
+	var unit: Vector2 = _bg().cell_size()
+	_draw_cloud(_pt(box.get_center()), minf(unit.x, unit.y) * 0.8 * _scale_at(box.get_center()), 1.0)
 
 
 # --- Story 039: rebirth badge under the boss HP bar, revive ring, burn_eater heal numbers ----
@@ -2579,9 +2599,9 @@ func _draw_rebirth(vp: Vector2) -> void:
 	var ratio: float = 1.0 - (0.0 if total <= 0.0 else clampf(left / total, 0.0, 1.0))
 	var bar := Rect2(Vector2(text_x - STATUS_GAP - FUSE_BAR_WIDTH, rect.get_center().y - FUSE_BAR_HEIGHT * 0.5), Vector2(FUSE_BAR_WIDTH, FUSE_BAR_HEIGHT))
 	_skin_bar(bar, ratio, REBIRTH_COLOR)
-	var cell: Rect2 = ScreenLayout.cells_rect(_combat.get_grid(), vp, _combat.get_state().enemy_footprint_cells())
-	var radius: float = minf(cell.size.x, cell.size.y) * REVIVE_RING_RATIO
-	draw_arc(cell.get_center(), radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, RING_POINTS, REBIRTH_COLOR, RING_WIDTH * 1.5)
+	var cell: Rect2 = _bg().flat_cells_rect(_combat.get_state().enemy_footprint_cells())
+	var radius: float = minf(cell.size.x, cell.size.y) * REVIVE_RING_RATIO * _scale_at(cell.get_center())
+	draw_arc(_pt(cell.get_center()), radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, RING_POINTS, REBIRTH_COLOR, RING_WIDTH * 1.5)
 
 
 # Connects CombatState.enemy_healed (W3: every heal of the boss, burn_eater's burn heals included) once the state exists.
@@ -2619,11 +2639,12 @@ func _tick_boss_heals(delta: float) -> void:
 
 
 # The burn_eater heal numbers: green "+N" over the boss's cell, rising and fading in the last BOSS_HEAL_SEC.
-func _draw_boss_heals(vp: Vector2) -> void:
+func _draw_boss_heals(_vp: Vector2) -> void:
 	if _boss_heals.is_empty():
 		return
-	var cell: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, _combat.get_state().enemy_cell)
-	var size: int = int(cell.size.y * FEEDBACK_FONT_RATIO * 1.3)
+	var flat: Rect2 = _bg().flat_cell_rect(_combat.get_state().enemy_cell)
+	var cell: Rect2 = _bg().fit_rect(flat)
+	var size: int = int(flat.size.y * FEEDBACK_FONT_RATIO * 1.3)
 	for entry: Array in _boss_heals:
 		var fade: float = clampf(float(entry[1]) / BOSS_HEAL_SEC, 0.0, 1.0)
 		var rise: float = cell.size.y * BOSS_HEAL_RISE_RATIO * (1.0 - fade)
@@ -2636,17 +2657,16 @@ func _draw_boss_heals(vp: Vector2) -> void:
 
 # The thorn-entry flashes of BOTH halves (cells are board cells, so ScreenLayout maps them like burning cells).
 # Story 047 Part B: the thorn tiles themselves are drawn by FloorLayer (under the units), not here.
-func _draw_zones(vp: Vector2) -> void:
+func _draw_zones(_vp: Vector2) -> void:
 	var status: StatusEffects = _combat.get_status()
 	if status == null:
 		return
-	var grid: BoardGrid = _combat.get_grid()
 	# Story 048 (user 2026-10-31): no remaining-time bars on thorn cells; players learn the durations.
 	if _vfx_ok("thorn_spikes"):
 		return  # Story 048 F9: thorn entry = the thorn_spikes one-shot on the floor
 	for cell: Vector2i in _thorn_flashes.keys():
 		var alpha: float = clampf(float(_thorn_flashes[cell]) / THORN_FLASH_SEC, 0.0, 1.0)
-		draw_rect(ScreenLayout.cell_rect(grid, vp, cell), Color(THORN_FLASH, THORN_FLASH.a * alpha))
+		_fill(_bg().flat_cell_rect(cell), Color(THORN_FLASH, THORN_FLASH.a * alpha))
 
 
 # True when a unit or a field piece lies on [param cell] of [param side]'s half (drawn under this view).
@@ -2670,19 +2690,19 @@ func _draw_hazards(vp: Vector2) -> void:
 	var blink_on: bool = int(_blink_time * SAND_WARN_BLINK_HZ * 2.0) % 2 == 0
 	if _storm_fraction() >= 0.0:
 		for cell: Vector2i in grid.player_cells():
-			draw_rect(ScreenLayout.cell_rect(grid, vp, cell), STORM_HAZE)
+			_fill(_bg().flat_cell_rect(cell), STORM_HAZE)
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
 		for cell: Vector2i in hazards.mire_cells(side):
 			if _is_drop_tile(side, cell):
 				continue
-			_draw_mire_cell(ScreenLayout.cell_rect(grid, vp, cell), _cell_occupied(side, cell))
+			_draw_mire_cell(_bg().flat_cell_rect(cell), _cell_occupied(side, cell))
 		for cell: Vector2i in hazards.sand_cells(side):
-			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			var rect: Rect2 = _bg().flat_cell_rect(cell)
 			_draw_sand_cell(rect)
 			_draw_zone_bar(rect, hazards.sand_left(side, cell), hazards.sand_total_sec(side, cell),
 				SAND_BAR_BACK, SAND_BAR_FILL, SAND_EDGE_WIDTH)
 		for cell: Vector2i in hazards.sand_warning_cells(side):
-			_draw_sand_warning(ScreenLayout.cell_rect(grid, vp, cell), blink_on)
+			_draw_sand_warning(_bg().flat_cell_rect(cell), blink_on)
 	_draw_hazards_039(vp, hazards, grid, blink_on)
 
 
@@ -2697,7 +2717,7 @@ func _is_drop_tile(side: int, cell: Vector2i) -> bool:
 
 # Mire cell: dark peat fill (see-through when [param occupied]) and bubble rings that rise and fade in a loop.
 func _draw_mire_cell(rect: Rect2, occupied: bool) -> void:
-	draw_rect(rect, MIRE_FILL_OCCUPIED if occupied else MIRE_FILL)
+	_fill(rect, MIRE_FILL_OCCUPIED if occupied else MIRE_FILL)
 	var side_len: float = minf(rect.size.x, rect.size.y)
 	for i: int in MIRE_BUBBLES.size():
 		var b: Vector3 = MIRE_BUBBLES[i]
@@ -2705,13 +2725,14 @@ func _draw_mire_cell(rect: Rect2, occupied: bool) -> void:
 		var center := rect.position + Vector2(rect.size.x * b.x, rect.size.y * b.y - side_len * MIRE_BUBBLE_RISE_RATIO * phase)
 		var radius: float = side_len * b.z * (0.7 + 0.3 * phase)
 		var color := Color(MIRE_BUBBLE, MIRE_BUBBLE.a * (1.0 - phase * 0.6))
-		draw_arc(center, radius, 0.0, TAU, MIRE_BUBBLE_POINTS, color, MIRE_BUBBLE_WIDTH)
-		draw_circle(center - Vector2(radius, radius) * 0.35, radius * 0.25, color)
+		var k: float = _scale_at(center)
+		draw_arc(_pt(center), radius * k, 0.0, TAU, MIRE_BUBBLE_POINTS, color, MIRE_BUBBLE_WIDTH)
+		draw_circle(_pt(center - Vector2(radius, radius) * 0.35), radius * 0.25 * k, color)
 
 
 # Filled sand: opaque sand block, SAND_RIPPLES wavy dune lines below the time bar, darker edge.
 func _draw_sand_cell(rect: Rect2) -> void:
-	draw_rect(rect, SAND_FILL)
+	_fill(rect, SAND_FILL)
 	var amp: float = rect.size.y * SAND_RIPPLE_AMP_RATIO
 	for r: int in SAND_RIPPLES:
 		var y: float = rect.position.y + rect.size.y * (SAND_RIPPLE_TOP_RATIO + (1.0 - SAND_RIPPLE_TOP_RATIO) * float(r) / float(SAND_RIPPLES))
@@ -2719,14 +2740,14 @@ func _draw_sand_cell(rect: Rect2) -> void:
 		for k: int in SAND_RIPPLE_POINTS:
 			var t: float = float(k) / float(SAND_RIPPLE_POINTS - 1)
 			points.append(Vector2(rect.position.x + rect.size.x * (0.1 + 0.8 * t), y + sin(t * TAU) * amp))
-		draw_polyline(points, SAND_RIPPLE, SAND_RIPPLE_WIDTH)
-	draw_rect(rect.grow(-SAND_EDGE_WIDTH * 0.5), SAND_RIPPLE, false, SAND_EDGE_WIDTH)
+		_polyline(points, SAND_RIPPLE, SAND_RIPPLE_WIDTH)
+	_frame(rect.grow(-SAND_EDGE_WIDTH * 0.5), SAND_RIPPLE, SAND_EDGE_WIDTH)
 
 
 # Sand about to fall: sand tint and a thick sand border, both dimmed on the off phase of the blink.
 func _draw_sand_warning(rect: Rect2, blink_on: bool) -> void:
-	draw_rect(rect, Color(SAND_WARN_TINT, SAND_WARN_TINT.a * (1.0 if blink_on else 0.5)))
-	draw_rect(rect.grow(-SAND_WARN_INSET), Color(SAND_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), false, SAND_WARN_WIDTH)
+	_fill(rect, Color(SAND_WARN_TINT, SAND_WARN_TINT.a * (1.0 if blink_on else 0.5)))
+	_frame(rect.grow(-SAND_WARN_INSET), Color(SAND_WARN_BORDER, 1.0 if blink_on else WARN_BLINK_DIM_ALPHA), SAND_WARN_WIDTH)
 
 
 # Share (0..1) of the running sandstorm left, or -1.0 when no storm blows (or the trait is absent).
@@ -2785,7 +2806,7 @@ func _draw_hazard_traits(vp: Vector2) -> void:
 	if hop != null and hop.has_method("get_hop_target"):
 		var target: Vector2i = hop.call("get_hop_target")
 		if grid.is_enemy_cell(target):
-			var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, target)
+			var rect: Rect2 = _bg().flat_cell_rect(target)
 			_draw_hop_shadow(rect, _warn_ratio(hop, "get_hop_warn_left", "hop_warn_sec", HOP_WARN_FALLBACK_SEC))
 			_draw_corner_label(vp, [target] as Array[Vector2i], tr(TEXT_HOP), HOP_COLOR)
 	var riposte: BossTrait = host.get_trait(RIPOSTE_TRAIT_ID)
@@ -2795,7 +2816,7 @@ func _draw_hazard_traits(vp: Vector2) -> void:
 		# Quick spec 2026-11-01 rule 4: a locked cell (cracking / hole) is not hit, so it shows no warning.
 		var locked: bool = _combat.get_status() != null and _combat.get_status().is_locked(cell)
 		if grid.is_player_cell(cell) and left > 0.0 and not locked:
-			var rect2: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+			var rect2: Rect2 = _bg().flat_cell_rect(cell)
 			_draw_riposte_cell(rect2)
 			_draw_zone_bar(rect2, left, riposte.param_float("warn_sec", RIPOSTE_WARN_FALLBACK_SEC), RIPOSTE_BAR_BACK, RIPOSTE_COLOR, WARN_OUTLINE_INSET + WARN_OUTLINE_WIDTH)
 			_draw_corner_label(vp, [cell] as Array[Vector2i], tr(TEXT_RIPOSTE), RIPOSTE_COLOR)
@@ -2804,7 +2825,7 @@ func _draw_hazard_traits(vp: Vector2) -> void:
 		var surface: Vector2i = burrow.call("get_surface_cell")
 		var warn: float = float(burrow.call("get_surface_warn_left")) if burrow.has_method("get_surface_warn_left") else 0.0
 		if grid.is_enemy_cell(surface) and warn > 0.0:
-			_draw_surface_circle(ScreenLayout.cell_rect(grid, vp, surface), _warn_ratio(burrow, "get_surface_warn_left", "surface_warn_sec", SURFACE_WARN_FALLBACK_SEC))
+			_draw_surface_circle(_bg().flat_cell_rect(surface), _warn_ratio(burrow, "get_surface_warn_left", "surface_warn_sec", SURFACE_WARN_FALLBACK_SEC))
 			_draw_corner_label(vp, [surface] as Array[Vector2i], tr(TEXT_SURFACE), SURFACE_COLOR)
 	_draw_hazard_traits_039(vp)
 
@@ -2826,27 +2847,27 @@ func _draw_hop_shadow(rect: Rect2, ratio: float) -> void:
 	for i: int in RING_POINTS:
 		var a: float = TAU * float(i) / float(RING_POINTS)
 		points.append(c + Vector2(cos(a) * rx, sin(a) * ry))
-	draw_colored_polygon(points, HOP_SHADOW)
+	_poly(points, HOP_SHADOW)
 	var side_len: float = minf(rect.size.x, rect.size.y)
-	draw_arc(rect.get_center(), side_len * HOP_RING_RATIO * maxf(ratio, SURFACE_INNER_MIN), 0.0, TAU, RING_POINTS, HOP_RING, RING_WIDTH)
+	draw_arc(_pt(rect.get_center()), side_len * HOP_RING_RATIO * maxf(ratio, SURFACE_INNER_MIN) * _scale_at(rect.get_center()), 0.0, TAU, RING_POINTS, HOP_RING, RING_WIDTH)
 
 
 # Riposte target: crimson tint, blinking crimson outline and a crosshair.
 func _draw_riposte_cell(rect: Rect2) -> void:
 	var on: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
-	draw_rect(rect, RIPOSTE_TINT)
-	draw_rect(rect.grow(-WARN_OUTLINE_INSET), Color(RIPOSTE_COLOR, 1.0 if on else WARN_BLINK_DIM_ALPHA), false, WARN_OUTLINE_WIDTH)
+	_fill(rect, RIPOSTE_TINT)
+	_frame(rect.grow(-WARN_OUTLINE_INSET), Color(RIPOSTE_COLOR, 1.0 if on else WARN_BLINK_DIM_ALPHA), WARN_OUTLINE_WIDTH)
 	var c: Vector2 = rect.get_center()
 	var arm: float = minf(rect.size.x, rect.size.y) * RIPOSTE_CROSS_RATIO
-	draw_line(c - Vector2(arm, 0.0), c + Vector2(arm, 0.0), RIPOSTE_COLOR, RING_WIDTH)
-	draw_line(c - Vector2(0.0, arm), c + Vector2(0.0, arm), RIPOSTE_COLOR, RING_WIDTH)
-	draw_arc(c, arm * 0.6, 0.0, TAU, RING_POINTS, RIPOSTE_COLOR, RING_WIDTH * 0.5)
+	_line(c - Vector2(arm, 0.0), c + Vector2(arm, 0.0), RIPOSTE_COLOR, RING_WIDTH)
+	_line(c - Vector2(0.0, arm), c + Vector2(0.0, arm), RIPOSTE_COLOR, RING_WIDTH)
+	draw_arc(_pt(c), arm * 0.6 * _scale_at(c), 0.0, TAU, RING_POINTS, RIPOSTE_COLOR, RING_WIDTH * 0.5)
 
 
 # Burrow surfacing cell: sand tint, a fixed outer sand ring and an inner ring closing in as [param ratio] runs out.
 func _draw_surface_circle(rect: Rect2, ratio: float) -> void:
-	var c: Vector2 = rect.get_center()
-	var r: float = minf(rect.size.x, rect.size.y) * SURFACE_RING_RATIO
+	var c: Vector2 = _pt(rect.get_center())
+	var r: float = minf(rect.size.x, rect.size.y) * SURFACE_RING_RATIO * _scale_at(rect.get_center())
 	draw_circle(c, r, SURFACE_TINT)
 	draw_arc(c, r, 0.0, TAU, RING_POINTS, SURFACE_COLOR, RING_WIDTH)
 	draw_arc(c, r * maxf(ratio, SURFACE_INNER_MIN), 0.0, TAU, RING_POINTS, SURFACE_COLOR, RING_WIDTH * 0.75)
@@ -2859,25 +2880,24 @@ func _draw_zone_bar(rect: Rect2, left: float, total: float, back: Color, fill: C
 	var inset: float = rect.size.y * ZONE_BAR_INSET_RATIO
 	var bar_h: float = rect.size.y * ZONE_BAR_HEIGHT_RATIO
 	var bar := Rect2(Vector2(rect.position.x + inset, rect.position.y + top_pad + inset * 0.5), Vector2(rect.size.x - inset * 2.0, bar_h))
-	draw_rect(bar, back)
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), fill)
+	_fill(bar, back)
+	_fill(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), fill)
 
 
 # Cracked cells (slam) as a dark fill with a crack polyline; the cells a slam or the fuse blast
 # announces with a faint orange tint and a blinking orange outline (same blink clock as the row
 # warning). Drawn under the burning layer so a burning cracked cell still shows its flame.
-func _draw_trait_cells(vp: Vector2) -> void:
+func _draw_trait_cells(_vp: Vector2) -> void:
 	var host: TraitHost = _combat.get_trait_host()
 	if host == null:
 		return
-	var grid: BoardGrid = _combat.get_grid()
 	var warned: Array[Vector2i] = []
 	var slam: SlamTrait = host.get_trait(SlamTrait.ID) as SlamTrait
 	if slam != null:
 		if not _vfx_ok("cracked_cell"):  # Story 048 F4: else the floor draws the crack
 			for cell: Vector2i in slam.get_cracked_cells():
-				var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-				draw_rect(rect, CRACK_TINT)
+				var rect: Rect2 = _bg().flat_cell_rect(cell)
+				_fill(rect, CRACK_TINT)
 				_draw_crack(rect)
 		warned.append_array(slam.get_warning_cells())
 	var fuse: FuseCannonTrait = host.get_trait(FuseCannonTrait.ID) as FuseCannonTrait
@@ -2888,9 +2908,9 @@ func _draw_trait_cells(vp: Vector2) -> void:
 	var bright: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0
 	var outline := Color(TRAIT_WARN_OUTLINE, TRAIT_WARN_OUTLINE.a * (1.0 if bright else WARN_BLINK_DIM_ALPHA))
 	for cell: Vector2i in warned:
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-		draw_rect(rect, TRAIT_WARN_TINT)
-		draw_rect(rect.grow(-WARN_OUTLINE_INSET), outline, false, WARN_OUTLINE_WIDTH)
+		var rect: Rect2 = _bg().flat_cell_rect(cell)
+		_fill(rect, TRAIT_WARN_TINT)
+		_frame(rect.grow(-WARN_OUTLINE_INSET), outline, WARN_OUTLINE_WIDTH)
 
 
 # Crack glyph: CRACK_POINTS and CRACK_BRANCH scaled into [param rect].
@@ -2899,7 +2919,7 @@ func _draw_crack(rect: Rect2) -> void:
 		var points := PackedVector2Array()
 		for p: Vector2 in shape:
 			points.append(rect.position + p * rect.size)
-		draw_polyline(points, CRACK_LINE, CRACK_LINE_WIDTH)
+		_polyline(points, CRACK_LINE, CRACK_LINE_WIDTH)
 
 
 # Controls v3: Tung phép, bottom-left corner (ScreenLayout.confirm_button_rect, 100 x 64 at 720p), the pixel stone

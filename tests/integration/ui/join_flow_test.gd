@@ -9,6 +9,8 @@ extends SceneTree
 ## x mult + effect applied once; non-featured / single piece never gets the bonus; max_cast_cells refuses (in-memory
 ## config change only). The match's featured shape is replaced by a known 3x2 block (test seam).
 
+const RealMouseGuard = preload("res://tests/integration/ui/real_mouse_guard.gd")
+
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
 const BOSS_CELL: Vector2i = Vector2i(4, 1)
@@ -52,6 +54,7 @@ func _tap(index: int, pos: Vector2) -> void:
 
 func _mouse_button(p: Vector2, pressed: bool) -> void:
 	var ev := InputEventMouseButton.new()
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.button_index = MOUSE_BUTTON_LEFT
 	ev.pressed = pressed
 	ev.position = p
@@ -62,6 +65,7 @@ func _mouse_button(p: Vector2, pressed: bool) -> void:
 
 func _mouse_move(p: Vector2) -> void:
 	var ev := InputEventMouseMotion.new()
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.position = p
 	ev.global_position = p
 	ev.button_mask = MOUSE_BUTTON_MASK_LEFT
@@ -154,6 +158,7 @@ func _initialize() -> void:
 	var game_flow := main.get_node("GameFlow") as GameFlow
 	game_flow.set_store_for_test(ProgressStore.memory_store())
 	root.add_child(main)
+	root.add_child(RealMouseGuard.new())
 	await process_frame
 	# The shipped hero, so the window shows the real sprite (not the character-less placeholder).
 	game_flow.set_character("kiem_si")
@@ -240,7 +245,7 @@ func _initialize() -> void:
 
 	# --- Tap piece 2 on the board: detached to its slot, cells shrink, still in the place window.
 	var p2cell: Vector2i = plan.piece_cells(1)[0]
-	await _tap(0, ScreenLayout.cell_center(combat.get_grid(), VP, p2cell))
+	await _tap(0, combat.board_geometry().cell_center(p2cell))
 	_check("tap on piece 2 detaches it back to its slot", plan.piece_count() == 1 and plan.cells().size() == 3 and _shape(1) == "bar2" and combat.is_placed(), str(plan.cells()))
 	_check("glow off after detach", not combat.is_plan_featured())
 	await process_frame
@@ -252,7 +257,7 @@ func _initialize() -> void:
 	if plan.piece_count() == 2:
 		var cells2: Array[Vector2i] = plan.cells()
 		_check("drop on piece 1: union has no overlap", cells2.size() == 5 and _sorted(cells2).size() == 5 and _disjoint(plan.piece_cells(0), plan.piece_cells(1)), str(cells2))
-		await _tap(0, ScreenLayout.cell_center(combat.get_grid(), VP, plan.piece_cells(1)[0]))
+		await _tap(0, combat.board_geometry().cell_center(plan.piece_cells(1)[0]))
 	else:
 		_check("drop on piece 1 refused: piece back in its slot", _shape(1) == "bar2" and plan.cells().size() == 3)
 	var probe: CastPlan = CastPlan.new().init(2, 0)

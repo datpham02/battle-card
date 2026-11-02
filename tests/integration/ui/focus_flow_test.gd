@@ -13,6 +13,8 @@ extends SceneTree
 ## max_tick_sec, the game then deliberately advances only max_tick_sec (hitch cap), so Focus lasted "4 s" of
 ## game time but more than 4.5 s of wall time, and the 8 s cooldown likewise overran its 0.7 s tolerance.
 
+const RealMouseGuard = preload("res://tests/integration/ui/real_mouse_guard.gd")
+
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
 const BOSS_CELL: Vector2i = Vector2i(4, 1)
@@ -80,6 +82,7 @@ func _on_ended(r: String) -> void:
 
 func _mouse_button(p: Vector2, pressed: bool) -> void:
 	var ev := InputEventMouseButton.new()
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.button_index = MOUSE_BUTTON_LEFT
 	ev.pressed = pressed
 	ev.position = p
@@ -90,6 +93,7 @@ func _mouse_button(p: Vector2, pressed: bool) -> void:
 
 func _mouse_move(p: Vector2) -> void:
 	var ev := InputEventMouseMotion.new()
+	ev.device = RealMouseGuard.TEST_DEVICE
 	ev.position = p
 	ev.global_position = p
 	ev.button_mask = MOUSE_BUTTON_MASK_LEFT
@@ -167,6 +171,7 @@ func _initialize() -> void:
 	var flow := main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())
 	root.add_child(main)
+	root.add_child(RealMouseGuard.new())
 	await process_frame
 	# The shipped hero, so the window shows the real sprite (not the character-less placeholder).
 	flow.set_character("kiem_si")

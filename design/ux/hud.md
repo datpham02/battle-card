@@ -187,6 +187,10 @@ Không nút chạm nào nằm trong phần lề này.
 
 **Phương án đã bỏ:** túi khối ở giữa, Thức Tỉnh bên phải. Ngón kéo khối sẽ che đường giữa hai lưới, là nơi cần nhìn nhất.
 
+### Sân phối cảnh (2026-11-02, ADR-0002)
+
+Sân trận vẽ thành hình thang phối cảnh, tỉ lệ hàng sau / hàng trước **0,82** (`combat.json` `floor.perspective.back_ratio`; `--floor-perspective=0` ép phẳng). Mọi yếu tố HUD **nằm trên ô** đi theo đa giác ô đã nắn qua `BoardGeometry`: bóng ma khối (xanh / đỏ / vàng cộng hưởng) và viền khối lạ, nhãn dự báo / tổng / cộng hưởng (đặt cạnh khung bao của ô đã nắn, trong nửa địch đã nắn), chữ TRÚNG / TRƯỢT, NGẮT, nhãn góc cảnh báo, thẻ địa hình (lầy, cát, lỗ thông hơi, nứt, rơi, đảo, gió), vòng hồi sinh, mây che, ô rơi trên sân và thanh độ tươi. Chạm và kéo khối đổi điểm chạm ngược về sân phẳng (`BoardGeometry.cell_at`). Chữ giữ cỡ phẳng cho dễ đọc; khung, vạch, vòng co theo tỉ lệ cục bộ. Các yếu tố **không** nằm trên sân (túi khối, nút, cột hồi chiêu, dải trên, băng tên phép) giữ bố cục màn hình.
+
 ### Kích thước ô và hệ quả cho art
 
 Ước tính từ hằng số bố cục (chưa đo trên máy thật):

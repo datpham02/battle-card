@@ -237,8 +237,8 @@ const PATTERN_HP_PREFIX: String = "--pattern-hp="
 ## `--return-ratio=k` (--demo=crumble only): freeze the fallen cell k of the way through its return fade
 ## (TileHazards.return_fade_sec; ADR-0001 Phase 1, 2026-11-01).
 const RETURN_RATIO_PREFIX: String = "--return-ratio="
-## PROTOTYPE floor-perspective (2026-11-02): `--floor-perspective=<back_ratio>` draws the board as a trapezoid
-## (FloorPerspective; 0.82 = the reference, 0 = force flat, absent = combat.json `floor.perspective.back_ratio`).
+## ADR-0002: `--floor-perspective=<back_ratio>` overrides the board's perspective (FloorPerspective; 0 = force flat,
+## absent = combat.json `floor.perspective.back_ratio`, shipped 0.82).
 const FLOOR_PERSPECTIVE_PREFIX: String = "--floor-perspective="
 const DEMO_SEED: int = 7
 ## Uid base of the boss's synthetic hand pieces.

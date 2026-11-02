@@ -24,9 +24,10 @@ static func shape_rect(piece: Piece, area: Rect2, max_unit: float) -> Rect2:
 
 
 ## Draws the squares of [param piece] fitted and centred in [param area]; every square is filled
-## with [param fill] and outlined with [param outline] (alpha 0 = no outline).
+## with [param fill] and outlined with [param outline] (alpha 0 = no outline). ADR-0002: with the board's [param geo]
+## ([param area] in its MODEL space, a mini shape lying on a board cell) every square is the mapped quad.
 static func draw_shape(
-	canvas: CanvasItem, piece: Piece, area: Rect2, fill: Color, outline: Color, max_unit: float = 1000000.0
+	canvas: CanvasItem, piece: Piece, area: Rect2, fill: Color, outline: Color, max_unit: float = 1000000.0, geo: BoardGeometry = null
 ) -> void:
 	if piece == null or area.size.x <= 0.0 or area.size.y <= 0.0:
 		return
@@ -35,6 +36,11 @@ static func draw_shape(
 	var gap: float = unit * GAP_RATIO
 	for cell: Vector2i in piece.relative_cells():
 		var rect := Rect2(origin + Vector2(cell) * unit, Vector2(unit, unit)).grow(-gap * 0.5)
+		if geo != null:
+			geo.fill(canvas, rect, fill)
+			if outline.a > 0.0:
+				geo.outline(canvas, rect, outline, 2.0)
+			continue
 		canvas.draw_rect(rect, fill)
 		if outline.a > 0.0:
 			canvas.draw_rect(rect, outline, false, 2.0)
@@ -76,22 +82,24 @@ static func any_odd_id(shape_ids: Array) -> bool:
 
 ## Story 041: [param piece] fitted in [param area] like [method draw_shape] (fill [param fill], thin dark square
 ## outlines) plus the odd magenta edge around the whole shape. Used for an Odd Block in the bag, on the field
-## and in the boss hand row.
+## and in the boss hand row. ADR-0002: [param geo] as in [method draw_shape].
 static func draw_odd_shape(
-	canvas: CanvasItem, piece: Piece, area: Rect2, fill: Color, max_unit: float = 1000000.0, edge_width: float = ODD_EDGE_WIDTH
+	canvas: CanvasItem, piece: Piece, area: Rect2, fill: Color, max_unit: float = 1000000.0, edge_width: float = ODD_EDGE_WIDTH, geo: BoardGeometry = null
 ) -> void:
 	if piece == null or area.size.x <= 0.0 or area.size.y <= 0.0:
 		return
-	draw_shape(canvas, piece, area, fill, Color(ODD_EDGE_DARK, 0.55), max_unit)
+	draw_shape(canvas, piece, area, fill, Color(ODD_EDGE_DARK, 0.55), max_unit, geo)
 	var unit: float = unit_for(piece, area, max_unit)
 	# A small shape (big odd blocks in a bag slot) gets a thinner edge so its squares stay readable.
 	var width: float = clampf(unit * ODD_EDGE_UNIT_RATIO, ODD_EDGE_MIN_WIDTH, edge_width)
-	draw_odd_edge(canvas, piece.relative_cells(), shape_rect(piece, area, max_unit).position, Vector2(unit, unit), width)
+	draw_odd_edge(canvas, piece.relative_cells(), shape_rect(piece, area, max_unit).position, Vector2(unit, unit), width, geo)
 
 
 ## Story 041: the odd edge (dark under-stroke, then bright magenta) along the OUTER border of [param cells] laid on
 ## a uniform grid: cell c covers Rect2(origin + unit * c, unit). Inner edges between two cells of the set are skipped.
-static func draw_odd_edge(canvas: CanvasItem, cells: Array[Vector2i], origin: Vector2, unit: Vector2, width: float = ODD_EDGE_WIDTH) -> void:
+## ADR-0002: on the battle board pass the board's [param geo] (origin / unit in its MODEL space): every corner goes
+## through BoardGeometry.to_screen, so the frame is the outline of the drawn (perspective) polygon; null = as given.
+static func draw_odd_edge(canvas: CanvasItem, cells: Array[Vector2i], origin: Vector2, unit: Vector2, width: float = ODD_EDGE_WIDTH, geo: BoardGeometry = null) -> void:
 	for pass_index: int in 2:
 		var color: Color = ODD_EDGE_DARK if pass_index == 0 else ODD_EDGE
 		var w: float = width + minf(ODD_EDGE_UNDER_EXTRA, width) if pass_index == 0 else width
@@ -100,6 +108,11 @@ static func draw_odd_edge(canvas: CanvasItem, cells: Array[Vector2i], origin: Ve
 			var tr_: Vector2 = tl + Vector2(unit.x, 0.0)
 			var bl: Vector2 = tl + Vector2(0.0, unit.y)
 			var br: Vector2 = tl + unit
+			if geo != null:
+				tl = geo.to_screen(tl)
+				tr_ = geo.to_screen(tr_)
+				bl = geo.to_screen(bl)
+				br = geo.to_screen(br)
 			if not cells.has(cell + Vector2i.UP):
 				canvas.draw_line(tl, tr_, color, w)
 			if not cells.has(cell + Vector2i.DOWN):

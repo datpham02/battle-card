@@ -72,6 +72,8 @@ const STREAK_CHEVRON_RATIO: float = 0.12
 @export var boss_side: bool = false
 var _combat: CombatView
 var _hold_view: HoldSlotsView
+## ADR-0002: the board geometry of the current draw (CombatView.board_geometry, set at the top of _draw).
+var _geo: BoardGeometry = null
 
 
 # The FieldDrops this view draws (null before the combat view is ready).
@@ -102,14 +104,16 @@ static func freshness_color(ratio: float) -> Color:
 func _draw() -> void:
 	if _combat == null or _source() == null:
 		return
-	var vp: Vector2 = get_viewport_rect().size
 	var grid: BoardGrid = _combat.get_grid()
-	var cell: Vector2 = ScreenLayout.cell_size(grid, vp)
+	# ADR-0002: every drop is composed on its MODEL cell rect and drawn through the board geometry (tiles, mini shapes,
+	# tags and bars are the mapped quads on the perspective floor; the plain rects while flat).
+	var geo: BoardGeometry = _combat.board_geometry()
+	_geo = geo
+	var cell: Vector2 = geo.cell_size()
 	var hand_full: bool = not boss_side and _hold_view != null and _hold_view.get_slots() != null and _hold_view.get_slots().is_full()
 	var stand: Vector2i = _combat.get_state().player_cell
-	var persp: FloorPerspective = FloorPerspective.of(_combat)
 	for point: FieldPoint in _source().get_points():
-		var rect: Rect2 = _point_rect(persp, grid, vp, point.cell)
+		var rect: Rect2 = geo.flat_cell_rect(point.cell)
 		var total_sec: float = _combat.get_drops_config().piece_freshness_sec if point.piece != null else _combat.get_drops_config().freshness_sec
 		var ratio: float = clampf(point.freshness_left / total_sec, 0.0, 1.0)
 		var color: Color = ROTTEN_GREY if point.rotten else freshness_color(ratio)
@@ -120,25 +124,27 @@ func _draw() -> void:
 		if point.piece != null:
 			_draw_piece_point(point, rect, cell, color, alpha, ratio, hand_full and point.cell == stand)
 			continue
-		draw_rect(rect.grow(-3.0), Color(color, 0.18 * alpha))
-		draw_rect(rect.grow(-3.0), color, false, OUTLINE_WIDTH)
+		geo.fill(self, rect.grow(-3.0), Color(color, 0.18 * alpha))
+		geo.outline(self, rect.grow(-3.0), color, OUTLINE_WIDTH)
 		if point.rotten:
 			var x_rect: Rect2 = rect.grow(-cell.y * ROTTEN_X_INSET_RATIO)
-			draw_line(x_rect.position, x_rect.end, Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
-			draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
+			geo.line(self, x_rect.position, x_rect.end, Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
+			geo.line(self, Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
 		var tag_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * TAG_HEIGHT_RATIO)
 		var tag := Rect2(Vector2(rect.get_center().x - tag_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO), tag_size)
-		draw_rect(tag, Color(ROTTEN_TAG_BACK if point.rotten else TAG_BACK, alpha))
-		draw_rect(tag, color, false, OUTLINE_WIDTH)
+		geo.fill(self, tag, Color(ROTTEN_TAG_BACK if point.rotten else TAG_BACK, alpha))
+		geo.outline(self, tag, color, OUTLINE_WIDTH)
 		var font_size: int = int(cell.y * LABEL_FONT_RATIO)
-		HudSkin.text(self, tag.position + Vector2(0.0, tag.size.y * 0.5 + font_size * 0.35), point.label, font_size, Color(TEXT_COLOR, alpha), HORIZONTAL_ALIGNMENT_CENTER, tag.size.x, true)
+		var tag_on: Rect2 = geo.fit_rect(tag)
+		HudSkin.text(self, tag_on.position + Vector2(0.0, tag_on.size.y * 0.5 + font_size * 0.35), point.label, font_size, Color(TEXT_COLOR, alpha), HORIZONTAL_ALIGNMENT_CENTER, tag_on.size.x, true)
 		var bar_w: float = cell.x * BAR_WIDTH_RATIO
 		var bar := Rect2(Vector2(rect.get_center().x - bar_w * 0.5, rect.end.y - cell.y * (BAR_BOTTOM_RATIO + BAR_HEIGHT_RATIO)), Vector2(bar_w, cell.y * BAR_HEIGHT_RATIO))
-		draw_rect(bar, HudSkin.HP_GROOVE)
-		draw_rect(Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), ROTTEN_X_COLOR if point.rotten else color)
+		geo.fill(self, bar, HudSkin.HP_GROOVE)
+		geo.fill(self, Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), ROTTEN_X_COLOR if point.rotten else color)
 		if hand_full and point.cell == stand:
 			var full_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * FULL_TAG_HEIGHT_RATIO)
 			var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO - full_size.y - 2.0), full_size) # top edge, above the label tag, clear of the marker
+			full_tag = geo.fit_rect(full_tag)
 			var full_font: int = int(cell.y * FULL_FONT_RATIO)
 			HudSkin.panel(self, full_tag, [0.0, 4.0, 0.0, 4.0], HudSkin.NIGHT_STONE, HudSkin.GRID_LIGHT, 2.0)
 			HudSkin.text(self, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), full_font, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, true)
@@ -146,17 +152,14 @@ func _draw() -> void:
 
 	# Story 036: a wind streak on every point the next drift will move, drawn above all points.
 	for point: FieldPoint in drifting_points(_source().get_points(), grid):
-		_draw_drift_streak(_point_rect(persp, grid, vp, point.cell), _combat.get_hazards().wind_dir())
+		_draw_drift_streak(geo.flat_cell_rect(point.cell), _combat.get_hazards().wind_dir())
 
 
-# PROTOTYPE floor-perspective: the cell rect a drop is drawn in, moved so its centre sits on the warped cell centre
-# (same size: the mini shapes and tags are not scaled); the flat cell rect when [param persp] is null.
-static func _point_rect(persp: FloorPerspective, grid: BoardGrid, vp: Vector2, cell: Vector2i) -> Rect2:
-	var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
-	if persp == null:
-		return rect
-	var centre: Vector2 = rect.get_center()
-	return Rect2(rect.position + (persp.warp_screen(centre) - centre).round(), rect.size)
+## ADR-0002: the screen polygon a drop tile of board cell [param cell] is drawn as (its BoardGeometry cell inset 3 px
+## in model space, the mapped quad); tests compare it with the board's own cell polygon.
+func tile_polygon(cell: Vector2i) -> PackedVector2Array:
+	var geo: BoardGeometry = _combat.board_geometry()
+	return geo.quad(geo.flat_cell_rect(cell).grow(-3.0))
 
 
 ## Story 036: the points of [param points] that the next wind drift moves, by the rule of FieldDrops.drift_pieces:
@@ -193,43 +196,47 @@ func _draw_drift_streak(rect: Rect2, dir_cell: Vector2i) -> void:
 	for i: int in STREAK_LINES:
 		var offset: float = spread * STREAK_SPREAD_RATIO * (float(i) - float(STREAK_LINES - 1) * 0.5)
 		var start: Vector2 = c - dir * reach * STREAK_BACK_RATIO + normal * offset
-		draw_line(start, start + dir * reach * STREAK_LENGTH_RATIO, STREAK_COLOR, STREAK_WIDTH)
+		_geo.line(self, start, start + dir * reach * STREAK_LENGTH_RATIO, STREAK_COLOR, STREAK_WIDTH)
 	var tip: Vector2 = c + dir * reach * STREAK_TIP_RATIO
 	var arm: float = minf(rect.size.x, rect.size.y) * STREAK_CHEVRON_RATIO
-	draw_polyline(PackedVector2Array([tip - dir * arm + normal * arm, tip, tip - dir * arm - normal * arm]), STREAK_COLOR, STREAK_WIDTH)
+	draw_polyline(PackedVector2Array([_geo.to_screen(tip - dir * arm + normal * arm), _geo.to_screen(tip), _geo.to_screen(tip - dir * arm - normal * arm)]), STREAK_COLOR, STREAK_WIDTH)
 
 
 # Story 024: a piece lying on the player's half: a mini shape of the piece in its rotation (no text
 # tag), a thin cell outline, the freshness bar and, when the bag is full and the player stands on it,
 # the "FULL" tag. A rotten piece is grey with a dark X (never the green-yellow-red ramp).
 func _draw_piece_point(point: FieldPoint, rect: Rect2, cell: Vector2, color: Color, alpha: float, ratio: float, show_full: bool) -> void:
-	draw_rect(rect.grow(-3.0), Color(color, 0.12 * alpha))
-	draw_rect(rect.grow(-3.0), color, false, OUTLINE_WIDTH)
+	var geo: BoardGeometry = _geo
+	geo.fill(self, rect.grow(-3.0), Color(color, 0.12 * alpha))
+	geo.outline(self, rect.grow(-3.0), color, OUTLINE_WIDTH)
 	var area := Rect2(
 		rect.position + Vector2(cell.x * PIECE_PAD_RATIO, cell.y * PIECE_TOP_RATIO),
 		Vector2(cell.x * (1.0 - PIECE_PAD_RATIO * 2.0), cell.y * (1.0 - PIECE_TOP_RATIO - PIECE_BOTTOM_RATIO))
 	)
 	var unit_max: float = cell.y * PIECE_MAX_UNIT_RATIO
 	if point.rotten:
-		PieceDraw.draw_shape(self, point.piece, area, Color(ROTTEN_GREY, 0.8 * alpha), Color(ROTTEN_X_COLOR, 0.0), unit_max)
+		PieceDraw.draw_shape(self, point.piece, area, Color(ROTTEN_GREY, 0.8 * alpha), Color(ROTTEN_X_COLOR, 0.0), unit_max, geo)
 		var x_rect: Rect2 = PieceDraw.shape_rect(point.piece, area, unit_max).grow(-cell.y * ROTTEN_X_INSET_RATIO * 0.4)
-		draw_line(x_rect.position, x_rect.end, Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
-		draw_line(Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
+		geo.line(self, x_rect.position, x_rect.end, Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
+		geo.line(self, Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
 	elif point.piece.is_odd():
 		# Story 041: an Odd Block keeps the freshness colour on its cell outline and bar; its shape is violet-magenta
 		# with the odd edge, and the sparkle mark sits in the cell's top-right corner.
-		PieceDraw.draw_odd_shape(self, point.piece, area, Color(PieceDraw.ODD_FILL, 0.9 * alpha), unit_max)
+		PieceDraw.draw_odd_shape(self, point.piece, area, Color(PieceDraw.ODD_FILL, 0.9 * alpha), unit_max, PieceDraw.ODD_EDGE_WIDTH, geo)
 		var mark_r: float = cell.y * ODD_MARK_RADIUS_RATIO
-		PieceDraw.draw_odd_mark(self, Vector2(rect.end.x - mark_r * 1.6, rect.position.y + mark_r * 1.6), mark_r)
+		var mark_at := Vector2(rect.end.x - mark_r * 1.6, rect.position.y + mark_r * 1.6)
+		var k: Vector2 = geo.local_scale(mark_at)
+		PieceDraw.draw_odd_mark(self, geo.to_screen(mark_at), mark_r * minf(k.x, k.y))
 	else:
-		PieceDraw.draw_shape(self, point.piece, area, Color(color, 0.85 * alpha), Color(HudSkin.TEXT_OUTLINE, 0.6 * alpha), unit_max)
+		PieceDraw.draw_shape(self, point.piece, area, Color(color, 0.85 * alpha), Color(HudSkin.TEXT_OUTLINE, 0.6 * alpha), unit_max, geo)
 	var bar_w: float = cell.x * BAR_WIDTH_RATIO
 	var bar := Rect2(Vector2(rect.get_center().x - bar_w * 0.5, rect.end.y - cell.y * (BAR_BOTTOM_RATIO + BAR_HEIGHT_RATIO)), Vector2(bar_w, cell.y * BAR_HEIGHT_RATIO))
-	draw_rect(bar, HudSkin.HP_GROOVE)
-	draw_rect(Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), ROTTEN_X_COLOR if point.rotten else color)
+	geo.fill(self, bar, HudSkin.HP_GROOVE)
+	geo.fill(self, Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), ROTTEN_X_COLOR if point.rotten else color)
 	if show_full:
 		var full_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * FULL_TAG_HEIGHT_RATIO)
 		var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO), full_size)
+		full_tag = geo.fit_rect(full_tag)
 		var full_font: int = int(cell.y * FULL_FONT_RATIO)
 		HudSkin.panel(self, full_tag, [0.0, 4.0, 0.0, 4.0], HudSkin.NIGHT_STONE, HudSkin.GRID_LIGHT, 2.0)
 		HudSkin.text(self, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), full_font, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, true)
