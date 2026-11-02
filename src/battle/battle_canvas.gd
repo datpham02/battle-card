@@ -8,6 +8,10 @@ extends Node2D
 ## and every other battle view. Pixel snapping is set on this SubViewport only, not project-wide.
 ## Binds to the sibling CombatView ([member combat_view_path]) one frame after _ready (CombatView
 ## builds its grid and state in its own _ready); the layers read everything from it.
+## 2026-11-02 (field pieces over tall heads): UnitLayer and OverlayLayer render on UNIT_VISIBILITY_LAYER only. The art
+## viewport culls that layer; a second, transparent UnitViewport shares its World2D and renders only that layer, and
+## BattleUnitView (after the field-point views in battle.tscn) draws it. So the units sit above the field pieces: a
+## head rising into the cell behind covers a piece lying there instead of being covered by it.
 ## Implements: Story 047 Part A.
 
 ## Ink (art bible 1): the colour outside the art rect.
@@ -18,6 +22,9 @@ const PERSPECTIVE_SHADER: String = "res://src/battle/canvas_floor_perspective.gd
 ## region's own half tints.
 const PERSPECTIVE_TINT_PLAYER: Color = Color(0.78, 1.0, 0.90)
 const PERSPECTIVE_TINT_ENEMY: Color = Color(0.98, 0.82, 1.0)
+## The visibility layer (bit) UnitLayer and OverlayLayer render on: culled by the art viewport, the only one the
+## UnitViewport renders.
+const UNIT_VISIBILITY_LAYER: int = 1 << 1
 
 ## Path to the CombatView the layers read (grid, state, names, screen size).
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -32,6 +39,8 @@ var _combat: CombatView = null
 ## the Sprite2D that draws its texture warped into the art viewport; null while the flag is off.
 var _floor_viewport: SubViewport = null
 var _floor_warp: Sprite2D = null
+## The units' pass: shares the art viewport's World2D, renders UNIT_VISIBILITY_LAYER only, transparent.
+var _unit_viewport: SubViewport = null
 
 
 func _ready() -> void:
@@ -57,6 +66,22 @@ func _ready() -> void:
 	_overlay.name = "OverlayLayer"
 	for layer: Node2D in [_backdrop, _floor, _units, _overlay]:
 		_viewport.add_child(layer)
+	_viewport.canvas_cull_mask = _viewport.canvas_cull_mask & ~UNIT_VISIBILITY_LAYER
+	_unit_viewport = SubViewport.new()
+	_unit_viewport.name = "UnitViewport"
+	_unit_viewport.size = _viewport.size
+	_unit_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	_unit_viewport.msaa_2d = Viewport.MSAA_DISABLED
+	_unit_viewport.use_hdr_2d = false
+	_unit_viewport.snap_2d_transforms_to_pixel = true
+	_unit_viewport.snap_2d_vertices_to_pixel = true
+	_unit_viewport.transparent_bg = true
+	_unit_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(_unit_viewport)
+	_unit_viewport.world_2d = _viewport.world_2d
+	_unit_viewport.canvas_cull_mask = UNIT_VISIBILITY_LAYER
+	_put_on_unit_layer(_units)
+	_put_on_unit_layer(_overlay)
 	get_viewport().size_changed.connect(queue_redraw)
 	call_deferred("_bind")
 
@@ -76,8 +101,19 @@ func _bind() -> void:
 	_units.setup(combat)
 	# ADR-0002: bound explicitly; its sibling lookup fails once the floor moves into the FloorViewport.
 	_overlay.setup(_floor)
+	# setup may add children (the units' hit-flash layer); a viewport draws an item only when its parents share the layer.
+	_put_on_unit_layer(_units)
+	_put_on_unit_layer(_overlay)
 	apply_floor_perspective()
 	queue_redraw()
+
+
+# [param item] and every CanvasItem under it render on UNIT_VISIBILITY_LAYER only.
+static func _put_on_unit_layer(item: Node) -> void:
+	if item is CanvasItem:
+		(item as CanvasItem).visibility_layer = UNIT_VISIBILITY_LAYER
+	for child: Node in item.get_children():
+		_put_on_unit_layer(child)
 
 
 ## ADR-0002: (re)builds the warped floor path from CombatView.floor_back_ratio(). On: FloorLayer
@@ -165,6 +201,11 @@ func _draw() -> void:
 ## The SubViewport the layers draw into.
 func get_art_viewport() -> SubViewport:
 	return _viewport
+
+
+## The transparent SubViewport rendering only the units and the overlay (BattleUnitView draws it).
+func get_unit_viewport() -> SubViewport:
+	return _unit_viewport
 
 
 ## The CombatView the layers are bound to (null until the deferred bind ran or when none is found).
