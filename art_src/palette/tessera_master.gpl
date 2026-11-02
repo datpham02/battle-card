@@ -49,3 +49,13 @@ Columns: 8
  74  58  42	Bramble bark #4A3A2A
 138 115  80	Thorn shadow #8A7350
  58  69  56	Moss deepest #3A4538
+# 2026-11-02 Misty Forest roster (ASSET-022..025, user-approved anchors, palettes locked at generation): the Greycap
+# caps (dull grey-violet, art bible's swamp-mushroom family) and the slab stone ramp already used by the floor slabs and
+# the wall (ASSET-004 / ASSET-006) for the Mossbound Sentry and the Mistbriar Matron's bark. 26 -> 33 entries.
+ 74  62  74	Cap dark #4A3E4A
+ 106  88 104	Cap grey-violet #6A5868
+ 142 130 150	Cap light #8E8296
+ 44  41  37	Slab edge #2C2925
+ 74  70  64	Slab face #4A4640
+ 90  86  80	Slab light #5A5650
+ 106 107  98	Stone pale #6A6B62

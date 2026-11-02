@@ -1,0 +1,14 @@
+{
+  "id": "rootling",
+  "asset": "ASSET-021",
+  "frame": {"w": 64, "h": 52},
+  "facing": "left",
+  "source": "PixelLab character ee8c6435-d08c-425c-86da-823d604d9e0f (approved 2026-11-02), PixMiniMax south-west clips in design/assets/candidates/rootling/anim/<clip>/<n>.png, cleaned (palette snap to the 8 locked colours, specks removed, feet on the bottom row at x 32) into design/assets/candidates/rootling/clean-64x52/",
+  "clips": [
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop"},
+    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "nominal; the game paces step by the step cooldown"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png", "windup/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last", "note": "the roots dig in; the last frame is held until the telegraph ends"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src frames 3-5 (frame 2 had a baked yellow burst)"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png"], "ms": [100, 120, 150, 150, 150, 150], "loop": "hold_last", "note": "the model drew the collapse red; the palette snap turned it into the root bark colours (red is the telegraph only)"}
+  ]
+}

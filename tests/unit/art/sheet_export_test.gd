@@ -54,6 +54,69 @@ const UNITS := {
 			["down", ["down/0", "down/1", "down/2", "down/3", "down/4", "down/5"], [100, 100, 120, 120, 150, 150], "hold_last"],
 		],
 	},
+	"rootling": {
+		# 2026-11-02: ASSET-021, Pro Flash character ee8c6435 + PixMiniMax south-west clips cleaned to 64x52.
+		"frame": Vector2i(64, 52), "sheet": Vector2i(389, 264), "facing": "left",
+		"candidate": "rootling/clean-64x52/%s.png",
+		"clips": [
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
+			["windup", ["windup/0", "windup/1", "windup/2", "windup/3"], [100, 100, 100, 0], "hold_last"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["down", ["down/0", "down/1", "down/2", "down/3", "down/4", "down/5"], [100, 120, 150, 150, 150, 150], "hold_last"],
+		],
+	},
+	"greycap_sporeling": {
+		# 2026-11-02: ASSET-022, PixMiniMax south-west clips cleaned to 64x52.
+		"frame": Vector2i(64, 52), "sheet": Vector2i(389, 264), "facing": "left",
+		"candidate": "greycap/clean-64x52/%s.png",
+		"clips": [
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
+			["windup", ["windup/0", "windup/1", "windup/2", "windup/3"], [100, 100, 100, 0], "hold_last"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["down", ["down/0", "down/1", "down/2", "down/3", "down/4", "down/5"], [100, 120, 150, 150, 150, 150], "hold_last"],
+		],
+	},
+	"mossbound_sentry": {
+		# 2026-11-02: ASSET-023, PixMiniMax south-west clips cleaned to 64x52.
+		"frame": Vector2i(64, 52), "sheet": Vector2i(389, 317), "facing": "left",
+		"candidate": "mossbound-sentry/clean-64x52/%s.png",
+		"clips": [
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
+			["windup", ["windup/0", "windup/1", "windup/2", "windup/3"], [100, 100, 100, 0], "hold_last"],
+			["brace", ["brace/0", "brace/1", "brace/2", "brace/3"], [100, 100, 100, 0], "hold_last"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["down", ["down/0", "down/1", "down/2", "down/3", "down/4", "down/5"], [100, 120, 150, 150, 150, 150], "hold_last"],
+		],
+	},
+	"ancient_root_sentinel": {
+		# 2026-11-02: ASSET-024 v2 (elite size), PixMiniMax south-west clips cleaned to 80x80.
+		"frame": Vector2i(80, 80), "sheet": Vector2i(485, 485), "facing": "left",
+		"candidate": "root-sentinel/clean-80x80/%s.png",
+		"clips": [
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
+			["windup", ["windup/0", "windup/1", "windup/2", "windup/3"], [100, 100, 100, 0], "hold_last"],
+			["stunned", ["stunned/0", "stunned/1", "stunned/2", "stunned/3"], [200, 200, 200, 200], "loop"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["down", ["down/0", "down/1", "down/2", "down/3", "down/4", "down/5"], [100, 120, 150, 150, 150, 150], "hold_last"],
+		],
+	},
+	"mistbriar_matron": {
+		# 2026-11-02: ASSET-025 v2 (elite size), PixMiniMax south-west clips cleaned to 80x80.
+		"frame": Vector2i(80, 80), "sheet": Vector2i(323, 485), "facing": "left",
+		"candidate": "mistbriar-matron/clean-80x80/%s.png",
+		"clips": [
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [250, 250, 250, 250], "loop"],
+			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
+			["windup", ["windup/0", "windup/1", "windup/2", "windup/3"], [100, 100, 100, 0], "hold_last"],
+			["guard", ["guard/0", "guard/1", "guard/2", "guard/3"], [100, 100, 100, 0], "hold_last"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["down", ["down/0", "down/1", "down/2", "down/3"], [100, 120, 150, 150], "hold_last"],
+		],
+	},
 	"goblin_scout": {
 		# 2026-10-31: v3 OSFE-scale anchor (PixelLab 3b9516c8...), PixMiniMax south-west clips cleaned to 64x52.
 		"frame": Vector2i(64, 52), "sheet": Vector2i(519, 264), "facing": "left",

@@ -24,6 +24,13 @@ const REAL_SHEETS: Dictionary = {
 	# 2026-11-02: + draw (match start) and the four directional dashes (guard stance, OSFE).
 	"kiem_si": [["idle", "draw", "step", "step_forward", "step_back", "step_up", "step_down", "cast_gesture", "hit", "victory", "defeat", "fall", "awaken"], Vector2i(96, 70), "right"],
 	"goblin_scout": [["idle", "step", "windup", "hit", "down"], Vector2i(64, 52), "left"],
+	# 2026-11-02: Rootling (ASSET-021), the first Misty Forest normal.
+	"rootling": [["idle", "step", "windup", "hit", "down"], Vector2i(64, 52), "left"],
+	# 2026-11-02: the rest of the Misty Forest roster (ASSET-022..025).
+	"greycap_sporeling": [["idle", "step", "windup", "hit", "down"], Vector2i(64, 52), "left"],
+	"mossbound_sentry": [["idle", "step", "windup", "brace", "hit", "down"], Vector2i(64, 52), "left"],
+	"ancient_root_sentinel": [["idle", "step", "windup", "stunned", "hit", "down"], Vector2i(80, 80), "left"],
+	"mistbriar_matron": [["idle", "step", "windup", "guard", "hit", "down"], Vector2i(80, 80), "left"],
 	# 2026-11-02: Forest Witch (ASSET-020), pattern-brain boss on a 2x2 footprint.
 	"forest_witch": [["idle", "step_forward", "step_back", "step_up", "step_down", "windup", "windup_heavy", "phase_shift", "hit", "down"], Vector2i(160, 130), "left"],
 }

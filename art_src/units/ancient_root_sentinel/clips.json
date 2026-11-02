@@ -1,0 +1,15 @@
+{
+  "id": "ancient_root_sentinel",
+  "asset": "ASSET-024",
+  "frame": {"w": 80, "h": 80},
+  "facing": "left",
+  "source": "PixelLab character fd080ea7-32d9-40e8-b1cc-64416bb1de38 (v2, elite size, approved 2026-11-02), PixMiniMax south-west clips in design/assets/candidates/root-sentinel/anim-v2/<clip>/<n>.png, cleaned (palette snap to the 8 locked colours, specks removed, feet on the bottom row, body centred at x 40) into design/assets/candidates/root-sentinel/clean-80x80/",
+  "clips": [
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop"},
+    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "nominal; the game paces step by the step cooldown"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png", "windup/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last"},
+    {"name": "stunned", "frames": ["stunned/0.png", "stunned/1.png", "stunned/2.png", "stunned/3.png"], "ms": [200, 200, 200, 200], "loop": "loop", "note": "src 4-7 (slumped; 1-3 had baked yellow stars)"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src 5-7 (1-4 had baked bursts)"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png"], "ms": [100, 120, 150, 150, 150, 150], "loop": "hold_last"}
+  ]
+}

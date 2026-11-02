@@ -108,6 +108,11 @@ const CLIP_WINDUP: String = "windup"
 ## 2026-11-02 Forest Witch (pattern brain): an uninterruptible skill winding up / warning, and a phase transition.
 const CLIP_WINDUP_HEAVY: String = "windup_heavy"
 const CLIP_PHASE_SHIFT: String = "phase_shift"
+## 2026-11-02 Misty Forest roster: a pattern skill with a Guard effect winds up as `brace` (Mossbound Sentry) or
+## `guard` (Mistbriar Matron), whichever the sheet has; a stunned pattern enemy plays `stunned` (Ancient Root Sentinel).
+const CLIP_BRACE: String = "brace"
+const CLIP_GUARD: String = "guard"
+const CLIP_STUNNED: String = "stunned"
 const CLIP_VICTORY: String = "victory"
 const CLIP_DEFEAT: String = "defeat"
 const CLIP_DOWN: String = "down"
@@ -133,6 +138,9 @@ const CTX_STEPPING: String = "stepping"
 ## Pattern-brain enemy: an uninterruptible skill is winding up / warning (`heavy`), a phase transition runs (`phase`).
 const CTX_HEAVY: String = "heavy"
 const CTX_PHASE: String = "phase"
+## Pattern-brain enemy: the skill winding up has a Guard effect (`guarding`); the brain is stunned (`stunned`).
+const CTX_GUARDING: String = "guarding"
+const CTX_STUNNED: String = "stunned"
 ## The two sides, in the order the per-side tables are walked.
 const SIDES: Array[int] = [CombatState.Side.PLAYER, CombatState.Side.ENEMY]
 ## OSFE hit feel: the shake flips side every this many seconds.
@@ -434,6 +442,8 @@ func clip_context(side: int) -> Dictionary:
 		CTX_SWINGING: (not player) and ((boss_actor != null and boss_actor.is_swinging()) or pattern_cast),
 		CTX_HEAVY: pattern != null and pattern.uninterruptible_tell(),
 		CTX_PHASE: stage == PatternController.Stage.TRANSITION,
+		CTX_GUARDING: pattern_cast and pattern != null and (pattern.get_current_skill().get("effects", {}) as Dictionary).has("guard"),
+		CTX_STUNNED: stage == PatternController.Stage.STUNNED,
 		CTX_AWAKEN: player and _combat.is_signature_active(),
 		CTX_STEPPING: get_step_left(side) > 0.0,
 	}
@@ -472,11 +482,12 @@ func _drive_cast_hold(side: int, anim: UnitAnimator) -> void:
 
 ## The clip for a unit's state, pure (Story 047 Part C table). [param ctx] keys: `side`
 ## (CombatState.Side, default PLAYER) and the booleans `dead`, `downed`, `opponent_dead`, `hit`,
-## `casting`, `swinging`, `heavy`, `phase`, `awaken`, `stepping` (absent = false). Priority, highest first:
+## `casting`, `swinging`, `heavy`, `phase`, `guarding`, `stunned`, `awaken`, `stepping` (absent = false). Priority, highest first:
 ## dead by a fall (`fell`) -> `fall` (Task 5; [method _update_clip] keeps `defeat` / `down` for a sheet without it);
 ## dead or downed -> `defeat` (player) / `down` (boss); player with the boss dead -> `victory`;
-## hit -> `hit`; player casting -> `cast_gesture`; pattern enemy in a phase transition -> `phase_shift`; its
-## uninterruptible skill winding up / warning -> `windup_heavy`; boss swinging -> `windup`; player with the signature
+## hit -> `hit`; player casting -> `cast_gesture`; pattern enemy in a phase transition -> `phase_shift`, stunned ->
+## `stunned`, winding up a Guard skill -> `guard` (or `brace`); its uninterruptible skill winding up / warning ->
+## `windup_heavy`; boss swinging -> `windup`; player with the signature
 ## running -> `awaken`; stepping -> `step`; else `idle`.
 static func clip_for(ctx: Dictionary) -> String:
 	var player: bool = int(ctx.get(CTX_SIDE, CombatState.Side.PLAYER)) == CombatState.Side.PLAYER
@@ -492,6 +503,10 @@ static func clip_for(ctx: Dictionary) -> String:
 		return CLIP_CAST
 	if not player and bool(ctx.get(CTX_PHASE, false)):
 		return CLIP_PHASE_SHIFT
+	if not player and bool(ctx.get(CTX_STUNNED, false)):
+		return CLIP_STUNNED
+	if not player and bool(ctx.get(CTX_GUARDING, false)):
+		return CLIP_GUARD
 	if not player and bool(ctx.get(CTX_HEAVY, false)):
 		return CLIP_WINDUP_HEAVY
 	if not player and bool(ctx.get(CTX_SWINGING, false)):
@@ -679,6 +694,11 @@ func _update_clip(side: int, step: float) -> void:
 		want = CLIP_WINDUP
 	if want == CLIP_PHASE_SHIFT and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_PHASE_SHIFT)):
 		want = CLIP_IDLE
+	if want == CLIP_STUNNED and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_STUNNED)):
+		want = CLIP_IDLE
+	if want == CLIP_GUARD:
+		var sheet_g: SpriteSheet = get_sheet(side)
+		want = CLIP_GUARD if sheet_g != null and sheet_g.has_clip(CLIP_GUARD) else (CLIP_BRACE if sheet_g != null and sheet_g.has_clip(CLIP_BRACE) else CLIP_WINDUP)
 	_logical_clip[side] = want
 	if anim == null:
 		return
