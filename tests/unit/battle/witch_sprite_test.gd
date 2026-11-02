@@ -61,6 +61,14 @@ func _initialize() -> void:
 	_check("test_witch_phase_shift_in_transition",
 		combat.get_pattern_controller().get_stage() == PatternController.Stage.TRANSITION and units.get_current_clip(ENEMY) == UnitLayer.CLIP_PHASE_SHIFT,
 		"stage %d clip %s" % [combat.get_pattern_controller().get_stage(), units.get_current_clip(ENEMY)])
+	# 2026-11-02 (user: the outline round her big frame read as a selection box): invulnerable in the transition, she
+	# blinks white on her body; the blink is on, then off, then on; reduce motion holds a steady glow.
+	_check("test_witch_invulnerable_in_transition", state.enemy_invulnerable_left > 0.0)
+	_check("test_invulnerable_blink_on_off", UnitLayer.invulnerable_flash_alpha(0.0, false) > 0.0
+		and UnitLayer.invulnerable_flash_alpha(UnitLayer.INVULN_BLINK_SEC * 1.5, false) == 0.0
+		and UnitLayer.invulnerable_flash_alpha(UnitLayer.INVULN_BLINK_SEC * 2.5, false) > 0.0)
+	_check("test_invulnerable_reduce_motion_steady", UnitLayer.invulnerable_flash_alpha(0.0, true) == UnitLayer.invulnerable_flash_alpha(UnitLayer.INVULN_BLINK_SEC * 1.5, true)
+		and UnitLayer.invulnerable_flash_alpha(0.0, true) > 0.0)
 	_finish()
 
 

@@ -19,8 +19,8 @@ extends Node2D
 ## cooldown after `cell_changed`) > idle. The sprite's bottom-centre sits on the feet anchor in whole
 ## art px; a unit faces the divider (player right, boss left) and a sheet drawn the other way is
 ## mirrored with a negative destination width (no rotation, no scaling). Story 035 on a sprite: the
-## downed boss is `down`'s last frame tinted DOWNED_COLOR, the invulnerable boss keeps its outline
-## around the frame rect.
+## downed boss is `down`'s last frame tinted DOWNED_COLOR, the invulnerable boss blinks white on its body (2026-11-02;
+## was an outline round the frame rect).
 ##
 ## Part D (art bible 8.5): a unit that is burning (Chay: its cell burns), frozen (Dong Bang: pinned,
 ## glossary #22) or chilled (Gia Lanh: frost stacks without the pin, glossary #23) wears the PixelLab
@@ -72,6 +72,12 @@ const DOWNED_BODY_HEIGHT_RATIO: float = 0.5
 ## Outline widths and the dead cross, art px (CombatView drew 3 / 4 / 6 screen px at 720p).
 const BODY_OUTLINE_ART: float = 2.0
 const INVULNERABLE_GROW_ART: float = 2.0
+## 2026-11-02 (user: the outline round the Witch's big frame read as a selection box): a sprite boss that is
+## invulnerable blinks white on its body instead (the hit-flash layer): on for INVULN_BLINK_SEC, off for as long, at
+## INVULN_FLASH_ALPHA; with reduce motion a steady INVULN_FLASH_STEADY_ALPHA. The placeholder quad keeps its outline.
+const INVULN_BLINK_SEC: float = 0.12
+const INVULN_FLASH_ALPHA: float = 0.5
+const INVULN_FLASH_STEADY_ALPHA: float = 0.25
 const DEAD_CROSS_ART: float = 3.0
 
 ## Status overlay kinds (the keys of assets/art/vfx/status/index.json) and the order they are drawn in.
@@ -169,6 +175,8 @@ var _feel: Dictionary = {}
 var _flash: Node2D = null
 ## A damage event whose flash has not started: CombatState.Side -> seconds still to wait (-1 = delay not read yet).
 var _flash_wait: Dictionary = {}
+## Seconds the boss has been invulnerable without a break (0 when it is not): drives the blink.
+var _invuln_time: float = 0.0
 ## Step glide (2026-11-02, OSFE dash feel): per side, the cell and ground (drawn feet) seen on the last advance, the
 ## glide {from: Vector2i ground, left, total} and the dust {at: Vector2i, left, total}.
 var _last_cell: Dictionary = {}
@@ -217,6 +225,8 @@ func advance(step: float) -> void:
 		return
 	_bind_match()
 	_advance_status_clocks(step)
+	var state: CombatState = _combat.get_state()
+	_invuln_time = _invuln_time + maxf(step, 0.0) if state.enemy_invulnerable_left > 0.0 and not state.is_enemy_dead() else 0.0
 	for side: int in SIDES:
 		_track_step(side, maxf(step, 0.0))
 		_update_clip(side, maxf(step, 0.0))
@@ -903,9 +913,13 @@ func _draw_flash() -> void:
 	var total: float = maxf(float(_feel.get("flash_sec", 0.0)), 0.001)
 	for side: int in SIDES:
 		var left: float = float(_flash_left.get(side, 0.0))
+		var alpha: float = float(_feel.get("flash_alpha", 0.75)) * clampf(left / total, 0.0, 1.0)
+		var state: CombatState = _combat.get_state()
+		if side == CombatState.Side.ENEMY and state.enemy_invulnerable_left > 0.0 and not state.is_enemy_dead():
+			alpha = maxf(alpha, invulnerable_flash_alpha(_invuln_time, _reduce_motion))
 		var sheet: SpriteSheet = get_sheet(side)
 		var anim: UnitAnimator = get_animator(side)
-		if left <= 0.0 or sheet == null or anim == null or sheet.texture() == null:
+		if alpha <= 0.0 or sheet == null or anim == null or sheet.texture() == null:
 			continue
 		var src: Rect2i = anim.frame_rect()
 		if src.size.x <= 0 or src.size.y <= 0:
@@ -913,13 +927,21 @@ func _draw_flash() -> void:
 		# The flash sits on the drawn (gliding) feet, like the sprite it whitens.
 		var feet: Vector2i = _ground_of(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
 		var dest: Rect2 = sprite_dest_rect(feet, src.size, sheet.facing() != facing_for(side))
-		var alpha: float = float(_feel.get("flash_alpha", 0.75)) * clampf(left / total, 0.0, 1.0)
 		_flash.draw_texture_rect_region(sheet.texture(), dest, Rect2(src), Color(1.0, 1.0, 1.0, alpha))
 
 
+## Pure: the white added over an invulnerable sprite boss [param time] seconds into its invulnerability: INVULN_FLASH_ALPHA
+## for INVULN_BLINK_SEC, then nothing for as long (blinking); with [param reduce_motion] a steady
+## INVULN_FLASH_STEADY_ALPHA.
+static func invulnerable_flash_alpha(time: float, reduce_motion: bool) -> float:
+	if reduce_motion:
+		return INVULN_FLASH_STEADY_ALPHA
+	return INVULN_FLASH_ALPHA if int(maxf(time, 0.0) / INVULN_BLINK_SEC) % 2 == 0 else 0.0
+
+
 # The sprite of [param side] at the feet anchor: the animator's frame from the sheet texture, mirrored
-# when the sheet faces away from the divider; the downed boss tinted DOWNED_COLOR, the invulnerable
-# boss outlined around the frame. False (nothing drawn) for a placeholder unit.
+# when the sheet faces away from the divider; the downed boss tinted DOWNED_COLOR (an invulnerable boss blinks white
+# on the flash layer, _draw_flash). False (nothing drawn) for a placeholder unit.
 func _draw_sprite(side: int, feet: Vector2i) -> bool:
 	var sheet: SpriteSheet = get_sheet(side)
 	var anim: UnitAnimator = get_animator(side)
@@ -935,8 +957,6 @@ func _draw_sprite(side: int, feet: Vector2i) -> bool:
 	if side == CombatState.Side.ENEMY and _combat.is_boss_downed():
 		tint = DOWNED_COLOR
 	draw_texture_rect_region(texture, dest, Rect2(src), tint)
-	if side == CombatState.Side.ENEMY and not state.is_enemy_dead() and state.enemy_invulnerable_left > 0.0:
-		draw_rect(dest.abs().grow(INVULNERABLE_GROW_ART), INVULNERABLE_OUTLINE, false, BODY_OUTLINE_ART)
 	return true
 
 
