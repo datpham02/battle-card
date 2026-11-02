@@ -184,6 +184,12 @@ func on_player_aim(cells: Array[Vector2i]) -> void:
 		_since_aim = 0.0
 
 
+## P2.4 (spec 3.6, D9): true while a skill that CANNOT be interrupted winds up or warns; FloorLayer frames the enemy's
+## cells in ivory then (the "hitting it will not break this" tell).
+func uninterruptible_tell() -> bool:
+	return not _skill.is_empty() and (_stage == Stage.WINDUP or _stage == Stage.WARNING) and not bool(_skill["interruptible"])
+
+
 ## Cooldown left of [param skill_id].
 func cooldown_left(skill_id: String) -> float:
 	return float(_cooldowns.get(skill_id, 0.0))
@@ -359,9 +365,14 @@ func _valid_plans(skill: Dictionary, warning_sec: float) -> Array[Dictionary]:
 	if str(skill["kind"]) != "attack":
 		return all
 	var out: Array[Dictionary] = []
+	var most_rows: int = 1
 	for plan: Dictionary in all:
 		if _fair(plan["cells"] as Array, warning_sec):
 			out.append(plan)
+			most_rows = maxi(most_rows, int(plan.get("rows", 1)))
+	if most_rows > 1:
+		# P2.4 (entangled_row, phases 2-3): two rows when a two-row plan passes F1 / F2, else one.
+		return out.filter(func(p: Dictionary) -> bool: return int(p.get("rows", 1)) == most_rows)
 	return out
 
 
@@ -427,7 +438,7 @@ func _after_windup() -> void:
 	if not plans.is_empty():
 		chosen = _brain.pick_plan(plans, _state.player_cell)
 		if not followup.is_empty() and bool(followup["show_with_first"]):
-			var lanes: Array[Dictionary] = _fair_followups(followup, chosen["cells"] as Array[Vector2i], float(_skill["warning_sec"]), chosen["cells"] as Array)
+			var lanes: Array[Dictionary] = _fair_followups(followup, chosen["cells"] as Array[Vector2i], float(_skill["warning_sec"]), chosen["cells"] as Array, int(chosen.get("rotation", 0)))
 			if not lanes.is_empty():
 				queued = lanes[0]["cells"] as Array[Vector2i]
 	if chosen.is_empty() or not FairnessCheck.gap_ok(_since_warning, float(_config.fairness["min_gap_between_warnings_sec"])):
@@ -479,7 +490,7 @@ func _start_followup() -> void:
 		if _fair(_queued_cells, float(followup["warning_sec"])):
 			next = _queued_cells.duplicate()
 	else:
-		var lanes: Array[Dictionary] = _fair_followups(followup, _first_cells, float(followup["warning_sec"]), [])
+		var lanes: Array[Dictionary] = _fair_followups(followup, _first_cells, float(followup["warning_sec"]), [], int(_plan.get("rotation", 0)))
 		if not lanes.is_empty():
 			next = _brain.pick_plan(lanes, _state.player_cell)["cells"] as Array[Vector2i]
 	if next.is_empty():
@@ -489,9 +500,9 @@ func _start_followup() -> void:
 	_start_warning(next, [] as Array[Vector2i], float(followup["warning_sec"]))
 
 
-func _fair_followups(followup: Dictionary, first: Array[Vector2i], warning_sec: float, extra_red: Array) -> Array[Dictionary]:
+func _fair_followups(followup: Dictionary, first: Array[Vector2i], warning_sec: float, extra_red: Array, first_rotation: int = 0) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	for lane: Dictionary in PatternPlanner.followup_candidates(followup, first, _state.player_cell, _plan_ctx()):
+	for lane: Dictionary in PatternPlanner.followup_candidates(followup, first, _state.player_cell, _plan_ctx(), first_rotation):
 		if _fair(lane["cells"] as Array, warning_sec, extra_red):
 			out.append(lane)
 	return out
@@ -503,6 +514,8 @@ func _resolve_cells(cells: Array[Vector2i], effects: Dictionary) -> Dictionary:
 	var hit: bool = open.has(_state.player_cell)
 	var result: Dictionary = {"skill_id": str(_skill["id"]), "cells": open, "hit": hit, "damage": 0.0, "status": "", "zone_cells": [] as Array[Vector2i], "followup": false}
 	var damage: float = float(effects.get("damage", 0.0))
+	if effects.has("damage_no_markers") and _markers.is_empty():
+		damage = float(effects["damage_no_markers"])  # P2.4: forest_last_knot without an anchor
 	if hit and damage > 0.0:
 		var before: float = _state.player_hp
 		_state.damage_player(damage)
@@ -573,11 +586,19 @@ func _resolve_self_or_marker() -> void:
 	if str(_skill["kind"]) == "marker":
 		var plans: Array[Dictionary] = PatternPlanner.plans(_skill, _plan_ctx())
 		var marker: Dictionary = effects.get("marker", {"life_sec": float(_config.defaults["marker_life_sec"]), "break_min_cells": int(_config.defaults["marker_break_min_cells"])}) as Dictionary
+		var placed_rows: Array[int] = []
 		for i: int in int((_skill["pattern"] as Dictionary)["count"]):
 			if plans.is_empty():
 				break
-			var plan: Dictionary = plans.pop_at(_rng.randi_range(0, plans.size() - 1))
+			# P2.4: several markers in one cast go to different rows when they can (Witch root_anchor x2 feeds the
+			# two-row entangled_row); one marker per cast picks exactly as before.
+			var pool: Array[Dictionary] = plans.filter(func(p: Dictionary) -> bool: return not placed_rows.has((p["anchor"] as Vector2i).y))
+			if pool.is_empty():
+				pool = plans
+			var plan: Dictionary = pool[_rng.randi_range(0, pool.size() - 1)]
+			plans.erase(plan)
 			var cell: Vector2i = (plan["cells"] as Array[Vector2i])[0]
+			placed_rows.append(cell.y)
 			_markers.append({"cell": cell, "left": float(marker["life_sec"]), "break_min_cells": int(marker["break_min_cells"]),
 				"kind": str(marker.get("kind", "anchor")), "break_stun_sec": float(marker.get("break_stun_sec", 0.0))})
 			(result["cells"] as Array[Vector2i]).append(cell)

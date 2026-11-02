@@ -125,7 +125,19 @@ func test_data() -> void:
 	var grid: BoardGrid = ArenaLibrary.grid_for_spec({"shape": "boss_hall"}, lib, 1)
 	_check("boss_hall builds a 6x4 board", grid != null and grid.side_cols == 6 and grid.side_rows == 4 and grid.enemy_cells().size() == 24)
 	var chapters: String = FileAccess.get_file_as_string("res://assets/data/chapters.json")
-	_check("no chapters.json match or pool names boss_hall / dev_pattern_boss", not chapters.contains("boss_hall") and not chapters.contains("dev_pattern_boss"))
+	_check("no chapters.json match or pool names dev_pattern_boss", not chapters.contains("dev_pattern_boss"))
+	# P2.4 (D13): boss_hall is the multi-cell Warden arena; only a pattern match whose enemy stands on several cells uses it.
+	var halls: Array[String] = []
+	var parsed: Dictionary = JSON.parse_string(chapters) as Dictionary
+	for chapter: Variant in parsed["chapters"]:
+		var matches: Dictionary = (chapter as Dictionary).get("matches", {}) as Dictionary
+		for id: Variant in matches:
+			var m: Dictionary = matches[id] as Dictionary
+			if str((m.get("arena", {}) as Dictionary).get("shape", "")) == "boss_hall":
+				var foot: Array = cfg.get_enemy(str(m.get("enemy", ""))).get("footprint", []) as Array
+				if str(m.get("brain", "")) != "pattern" or foot.size() < 2:
+					halls.append(str(id))
+	_check("boss_hall only on multi-cell pattern matches (P2.4 Forest Witch)", halls.is_empty() and chapters.contains("boss_hall"), str(halls))
 	var w: Dictionary = Fx.world(grid, cfg, "dev_pattern_boss", 1)
 	var st: CombatState = w["state"]
 	_check("PatternController applies the footprint from data", st.enemy_footprint_size() == 4 and st.enemy_cell == HALL_ANCHOR, str(st.enemy_cell))

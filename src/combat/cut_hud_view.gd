@@ -3020,7 +3020,7 @@ func _draw_menu_card(vp: Vector2, rect: Rect2, id: String, cell_count: int) -> v
 	var tag: String = (tr(TEXT_LEVEL_SUFFIX) % level) if level > 1 else ""
 	if not available:
 		# The dimmed face is see-through: an opaque backing keeps it a card over the overlay and the board.
-		draw_rect(rect.grow(-MENU_DIM_BACKING_INSET), MENU_DIM_BACKING)
+		draw_rect(CardFace.face_border(rect, vp.y, MENU_DIM_BACKING_INSET), MENU_DIM_BACKING)
 	CardFace.draw_skill(self, rect, skill, _skill_name(id), tag, CardText.describe_resolved(skill), false,
 		available and UiButtons.is_pressed_at(self, rect), not available, [], id, false)
 	if available:

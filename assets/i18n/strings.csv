@@ -874,6 +874,20 @@ enemy_skill.thorn_fork.name,Gai Rẽ Nhánh,Thorn Fork
 enemy_skill.thorn_fork.counter,"Rời ô đầu, chờ ô đỏ thứ hai rồi chạy theo trục còn lại.","Leave the first cell, wait for the second red, then move along the other axis."
 enemy_skill.wreath_guard.name,Vòng Hoa Che Chắn,Wreath Guard
 enemy_skill.wreath_guard.counter,"Đập vòng hoa để phá giáp, hoặc dùng đòn xuyên giáp.","Break the wreath to drop its guard, or use a piercing strike."
+enemy_skill.root_nail.name,Đinh Rễ,Root Nail
+enemy_skill.root_nail.counter,Bước sang ô bên cạnh trước khi ô đỏ trúng.,Step to a neighbouring cell before the red cell lands.
+enemy_skill.branch_lattice.name,Mạng Cành,Branch Lattice
+enemy_skill.branch_lattice.counter,"Rời chữ L, rồi nhìn ô đỏ mới mọc từ đầu nhánh về phía hàng của mốc.","Leave the L, then watch the new red cell that grows from its end toward the anchor's row."
+enemy_skill.entangled_row.name,Hàng Rễ Quấn,Entangled Row
+enemy_skill.entangled_row.counter,Sang hàng khác; phá mốc để đổi hàng bị nhắm. Không phá phép được.,Move to another row; break the anchor to change the targeted row. Cannot be interrupted.
+enemy_skill.moss_guard.name,Giáp Rêu,Moss Guard
+enemy_skill.moss_guard.counter,"Đập mốc rễ để phá giáp, hoặc dùng đòn xuyên giáp.","Break the root anchor to drop the guard, or use a piercing strike."
+enemy_skill.root_anchor.name,Mốc Rễ,Root Anchor
+enemy_skill.root_anchor.counter,Đập mốc bằng bất kỳ khối nào; mốc chỉ hàng bên bạn sắp bị rễ đánh.,Hit the anchor with any block; it marks the row on your side the roots will strike.
+enemy_skill.withered_crown.name,Vương Miện Héo,Withered Crown
+enemy_skill.withered_crown.counter,Ra khỏi làn đỏ về phía không có làn sọc chờ. Không phá phép được.,Leave the red lane toward the side without the striped lane. Cannot be interrupted.
+enemy_skill.forest_last_knot.name,Nút Thắt Cuối Rừng,Forest's Last Knot
+enemy_skill.forest_last_knot.counter,"Phá mốc trước để đòn yếu đi và mất đòn nối, hoặc đứng ô an toàn đã thấy. Không phá phép được.","Break the anchors first to weaken it and drop its second strike, or stand on the safe cell you saw. Cannot be interrupted."
 ui.status.frozen.desc,Không bước được cho tới khi tan băng; vẫn tung phép được.,You cannot step until it thaws; you can still cast.
 ui.status.root.name,Trói,Rooted
 ui.status.root.desc,Rễ giữ chân: không bước được; vẫn tung phép được.,Roots hold your feet: you cannot step; you can still cast.

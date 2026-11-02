@@ -18,7 +18,12 @@ const ROTATIONS: Array[int] = [0, 90, 180, 270]
 ## empty one in the player's current row when there is one (else any), so the Sentinel's anchor lines up with the player.
 const ANCHOR_ROWS: Array[String] = ["any", "player"]
 ## P2.3: `same_cells` = the followup strikes exactly the first strike's cells again (Sentinel branch_net repeat).
-const RELATIVE_TO: Array[String] = ["first_cells", "first_end", "first_center", "player", "same_cells"]
+## P2.4: `first_shift` = every first cell moved by the offset, the offset turned with the FIRST plan's rotation too
+## (Withered Crown's second lane: the same bar one row / column over, parallel and adjacent).
+const RELATIVE_TO: Array[String] = ["first_cells", "first_end", "first_center", "player", "same_cells", "first_shift"]
+## P2.4: `followup.prefer`: `anchor_row` keeps the candidates that move toward the newest marker's row when any does
+## (Witch branch_lattice: the extra cell grows from the L's end toward the anchor's row); none / no marker = all kept.
+const FOLLOWUP_PREFER: Array[String] = ["none", "anchor_row"]
 ## P2.3: `effects.move.to` values of a self skill that moves the enemy (Rootling creep): one cell up or down.
 const MOVE_TO: Array[String] = ["adjacent_row"]
 ## Status ids a skill may apply: existing pin (Frozen), fragile (Ran), frost (Han) + Phase 2 root (D2) / slow (D4).
@@ -189,6 +194,9 @@ func _normalize_pattern(raw: Variant, kind: String, errors: Array[String]) -> Di
 		"clip": bool(d.get("clip", false)), "min_cells": maxi(int(d.get("min_cells", offsets.size())), 1),
 		"start": str(d.get("start", "any")), "count": maxi(int(d.get("count", 1)), 1),
 		"exclude_player": bool(d.get("exclude_player", false)), "row": row,
+		# P2.4: a row_of_anchor skill strikes up to this many rows at once, one per distinct row holding a live marker
+		# (newest first, same window in each); the controller keeps the most rows that pass the fairness check (F2).
+		"anchor_rows": maxi(int(d.get("anchor_rows", 1)), 1),
 	}
 
 
@@ -201,6 +209,9 @@ func _normalize_followup(raw: Variant, errors: Array[String]) -> Dictionary:
 	if not RELATIVE_TO.has(rel):
 		errors.append("followup.relative_to '%s' unknown" % rel)
 	var warn: float = float(d.get("warning_sec", 0.0))
+	var prefer: String = str(d.get("prefer", "none"))
+	if not FOLLOWUP_PREFER.has(prefer):
+		errors.append("followup.prefer '%s' unknown (known: %s)" % [prefer, ", ".join(FOLLOWUP_PREFER)])
 	if warn + _EPS < float(fairness["followup_min_warning_sec"]):
 		errors.append("followup warning %.2f s below fairness.followup_min_warning_sec %.2f s" % [warn, float(fairness["followup_min_warning_sec"])])
 	return {
@@ -212,6 +223,9 @@ func _normalize_followup(raw: Variant, errors: Array[String]) -> Dictionary:
 		# P2.3: seconds after the first strike resolves before the followup's warning starts (the enemy stands still);
 		# the cells are chosen and fairness-checked when that warning starts. 0 = at once (the P2.2 rule).
 		"delay_sec": maxf(float(d.get("delay_sec", 0.0)), 0.0),
+		# P2.4: drop candidates that touch a first-strike cell (the followup is a NEW cell joined to the first strike).
+		"exclude_first": bool(d.get("exclude_first", false)),
+		"prefer": prefer,
 	}
 
 
@@ -221,6 +235,9 @@ func _normalize_effects(raw: Variant, errors: Array[String], where: String) -> D
 		return {}
 	var d: Dictionary = raw as Dictionary
 	var out: Dictionary = {"damage": maxf(float(d.get("damage", 0.0)), 0.0)}
+	# P2.4: the damage when NO marker is alive at resolve time (Witch forest_last_knot: 22 with an anchor, 11 without).
+	if d.has("damage_no_markers"):
+		out["damage_no_markers"] = maxf(float(d["damage_no_markers"]), 0.0)
 	if typeof(d.get("status")) == TYPE_DICTIONARY:
 		var st: Dictionary = d["status"] as Dictionary
 		var sid: String = str(st.get("id", ""))

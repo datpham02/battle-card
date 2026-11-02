@@ -321,7 +321,9 @@
 				"forest_witch": {
 					"id": "forest_witch",
 					"name_key": "boss.forest_witch.name",
-					"boss_max_hp": 162,
+					"boss_max_hp": 1210,
+					"brain": "pattern",
+					"enemy": "forest_witch",
 					"brain_set": "aggressive",
 					"boss_step_cooldown_mult": 1.11,
 					"swing_speed_mult": 0.8,
@@ -329,8 +331,7 @@
 					"boss_reaction_sec": 0.3,
 					"boss_drop_interval_mult": 0.9,
 					"arena": {
-						"shape": "cross",
-						"variant": true
+						"shape": "boss_hall"
 					}
 				},
 				"rootling": {

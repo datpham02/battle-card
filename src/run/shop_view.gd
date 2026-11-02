@@ -765,7 +765,29 @@ func _selected_item_rect(vp: Vector2) -> Rect2:
 # 2026-11-01 (OSFE cards): the detail panel of the selected item ([method CardFace.detail_rect]; zero when none).
 func _selected_panel_rect(vp: Vector2) -> Rect2:
 	var item: Rect2 = _selected_item_rect(vp)
-	return CardFace.detail_rect(item, vp) if item.has_area() and not CardFace.shows_text(item, vp.y) else Rect2()
+	if not item.has_area():
+		return Rect2()
+	if str(_selected.get("kind", "")) == KIND_CARD:
+		# Card layout v2: a card face whose text is cut ("…") opens the panel too.
+		var id: String = str(_selected.get("id", ""))
+		var skill: Dictionary = _card_skill(id)
+		var complete: bool = CardFace.face_text_complete(skill, CardText.describe_resolved(skill), _item_foot(KIND_CARD, _entry(KIND_CARD, id)), item, vp.y)
+		return Rect2() if complete else CardFace.detail_rect(item, vp)
+	return CardFace.detail_rect(item, vp) if not CardFace.shows_text(item, vp.y) else Rect2()
+
+
+# Shop card [param id] resolved at the level a purchase gives (one above the deck's, or 1).
+func _card_skill(id: String) -> Dictionary:
+	var current: int = int(_flow.get_deck_levels().get(id, 0))
+	return _flow.get_cards().resolved(id, current + 1 if current > 0 else 1)
+
+
+# The foot line of an item's face: its price (gold, red when short); none once sold.
+func _item_foot(kind: String, entry: Dictionary) -> Array:
+	if bool(entry.get("sold", false)):
+		return []
+	var id: String = str(entry.get("id", ""))
+	return [tr(TEXT_PRICE) % int(entry.get("price", 0)), PRICE_SHORT_COLOR if _short(kind, id) else PRICE_COLOR, PRICE_FOOT_FONT_SIZE]
 
 
 # 2026-11-01 (OSFE cards): name, rarity (or upgrade) line, stats and the whole text of the selected item.
@@ -815,11 +837,11 @@ func _draw_item(vp: Vector2, base: Rect2, kind: String, entry: Dictionary) -> vo
 	var pressed: bool = not sold and str(_press_item.get("id", "")) == id and str(_press_item.get("kind", "")) == kind
 	# 2026-11-01 (OSFE cards): the CardFace faces with the price at their foot (gold, red when short); a short
 	# face's full text is in the detail panel the selection opens.
-	var foot: Array = [] if sold else [tr(TEXT_PRICE) % int(entry.get("price", 0)), PRICE_SHORT_COLOR if _short(kind, id) else PRICE_COLOR, PRICE_FOOT_FONT_SIZE]
+	var foot: Array = _item_foot(kind, entry)
 	if kind == KIND_CARD:
 		var current: int = int(_flow.get_deck_levels().get(id, 0))
 		var shown: int = current + 1 if current > 0 else 1
-		var skill: Dictionary = _flow.get_cards().resolved(id, shown)
+		var skill: Dictionary = _card_skill(id)
 		var title: String = tr(str(skill.get("name_key", id)))
 		var tag: String = (tr(TEXT_LEVEL_SUFFIX) % shown) if current > 0 else ""
 		CardFace.draw_skill(self, rect, skill, title, tag, CardText.describe_resolved(skill), selected, pressed, sold, foot, id)

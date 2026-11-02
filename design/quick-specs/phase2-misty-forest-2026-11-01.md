@@ -274,7 +274,9 @@ Công thức:
 | `mistbriar_matron` (tinh anh) | 1,8 × 140 | 252 | **400** | — (tinh anh từ tầng 2) | 255 | 345 |
 | `ancient_root_sentinel` (tinh anh) | 1,9 × 140 | 266 | **420** | — (tinh anh từ tầng 2) | 268 | 362 |
 
-Quái thường hiện có (86–130 viết, 45–68 ở tầng 1, 74–112 ở tầng 5) **không đổi**; Phù thủy Rừng thuộc P2.4 (mục 7). Đây là số khởi đầu, chơi thử rồi chỉnh (chỉ sửa `boss_max_hp` trong `chapters.json`).
+Quái thường hiện có (86–130 viết, 45–68 ở tầng 1, 74–112 ở tầng 5) **không đổi**; Phù thủy Rừng thuộc P2.4 (mục 7).
+
+**Phù thủy Rừng (P2.4, D8, 2026-11-02):** boss = 4–7 × một quái thường (quái thường gốc 140 máu thật ở tầng 3). Chọn **5,5 × 140 = 770** máu thật tầng 3 → máu viết 770 / 0,6375 = 1208 → làm tròn **1210** (`boss_max_hp`). Tầng 1 (×0,525) 635, tầng 3 (×0,6375) 771, tầng 5 (×0,8625) 1044. Số khởi đầu, chơi thử rồi chỉnh. Đây là số khởi đầu, chơi thử rồi chỉnh (chỉ sửa `boss_max_hp` trong `chapters.json`).
 
 ~~Bảng cũ (đã thay bằng chốt D8 ở trên): spec **neo theo đội hình đang có** chứ không theo máu anh hùng (180–210).~~
 
@@ -397,6 +399,15 @@ Không tự chế hệ mới. Mỗi mục là một **quyết định của ngư
 ## 7. Phù thủy Rừng (`forest_witch`)
 
 Sân `cross` biến thể (12 ô mỗi nửa, step_cd 0,33 s). Máu viết **300** [D8]. Logic 1 ô. `brain_set` `aggressive` cho phần di chuyển. **Bỏ trait `rotten_thrower`** khỏi Phù thủy (ném khối hỏng thuộc về Jailer và Reed Witch, không thuộc chủ đề rễ) [D12].
+
+> **Ghi chú triển khai P2.4 (2026-11-02) — các chốt D8/D9/D13/D14 thay chữ cũ trong mục 7:** sân **`boss_hall` 6×4 mỗi bên** (D13; không còn `cross` / "logic 1 ô"), Phù thủy đứng **2×2 ô** (`footprint`), máu viết **1210** (D8, công thức ở 5.1), **bất tử 1,5 s** mỗi lần chuyển pha (D14, `transition.sec` 1,5 → `enemy_invulnerable_left`; máu vẫn kẹp ở ngưỡng nên một đòn không nhảy hai pha), `entangled_row` dùng **Làm chậm** (D4: hồi bước ×1,3 trong 1,5 s) thay Giá Lạnh. Các chỗ phải diễn giải:
+> - Mốc rễ đặt trên ô trống bất kỳ của nửa Phù thủy (`row: any`), không dưới 4 ô của nó; khi một lần đặt 2 mốc (pha 2–3) thì 2 mốc ở **2 hàng khác nhau** nếu được, để `entangled_row` có hai hàng. Phù thủy không bước lên mốc (BossBrain coi ô mốc như hố, mover từ chối).
+> - `entangled_row`: cửa sổ 3 ô liền bất kỳ trên hàng của mốc (không ép bắt đầu ở cột trước — sân 6 cột thì cột sau sẽ luôn an toàn), `clip` tối thiểu 2 ô; pha 2–3 `anchor_rows: 2` = cùng cửa sổ trên 2 hàng mốc mới nhất, giữ 2 hàng nếu qua F1/F2, không thì 1 hàng.
+> - `branch_lattice`: L = `[[0,0],[0,1],[1,1]]`, followup 1 ô mới **kề ô cuối của L** (không trùng L), ưu tiên ô làm gần hàng mốc mới nhất; không mốc (hoặc đã nằm trên hàng mốc) thì AI chọn trong các ô kề.
+> - `withered_crown`: làn 2 = thanh của làn 1 dời 1 hàng/cột vuông góc (`relative_to: first_shift`, xoay theo làn 1), hiện sọc chờ từ đầu, đỏ đầy khi làn 1 trúng, trúng sau 0,75 s.
+> - `forest_last_knot`: `weight` 0 nên **chỉ** ra ở lần thứ 3, 6… của pha 3 (`every_nth` 3); "còn mốc" xét lúc RESOLVE (đập mốc trong lúc cảnh báo làm đòn còn 11 và bỏ followup).
+> - Viền Ngà quanh 4 ô của Phù thủy hiện suốt windup **và** cảnh báo của 3 chiêu nặng (lúc Phá phép có tác dụng), không chỉ windup.
+> - Chuyển pha: không có hạt vuông "rễ sẫm lại" riêng (hình thuộc P2.5); hiện tại thấy được bằng đỏ tắt + đứng yên 1,5 s.
 
 ### 7.1 Mốc rễ (cơ chế của pha)
 

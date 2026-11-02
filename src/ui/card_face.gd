@@ -40,30 +40,84 @@ const FOOT_RIGHT: float = 24.0
 const CARD_ART_PATH: String = "res://assets/art/cards/%s.png"
 static var _art_cache: Dictionary = {}
 ## Card style. "ancient" (default, user 2026-11-01: "vẫn giữ phong cách cổ, chỉ lấy layout", "đừng làm border to
-## quá"): the PixelLab ancient card frame drawn in the measured layout (design/references/osfe-card-layout.md) — a
-## 1 px bronze border, a dark weathered panel, the gems in the corners, the picture slot at the top. "slim": the same
-## layout drawn in code (flat panel, line diamonds). "stone": the first PixelLab frame (thick stone, carved gems).
+## quá"): the PixelLab ancient card frame in the measured OSFE layout (design/references/osfe-card-layout.md) — a
+## 1 px bronze border, a dark weathered panel — in the card layout v2 below (2026-11-02). "slim": the same layout drawn
+## in code (flat panel, line diamonds). "stone": the first PixelLab frame (thick stone, carved gems).
 ## DEV user arg `--card-style=ancient|slim|stone` for A/B.
 static var style: String = "ancient"
 const STYLE_ARG: String = "--card-style="
-## The ancient frame (PixelLab Pro Flash 88x128, job 3ac0f855, 6 gen) and its geometry in art px, drawn at the
-## menu's density (x2 at 720p = the 176x256 card face).
+## The ancient frame (PixelLab Pro Flash 88x128, job 3ac0f855, 6 gen), drawn at the menu's density (x2 at 720p = the
+## 176x256 card face). Its small blue gem's centre (art px) is the block cards' count gem.
 const ANCIENT_FRAME: Texture2D = preload("res://assets/art/ui/cards/card_frame_ancient.png")
 const ANCIENT_COST_CENTER: Vector2 = Vector2(8.5, 9.0)
-const ANCIENT_DAMAGE_CENTER: Vector2 = Vector2(77.0, 116.0)
-## The picture slot's inside (a 32 px picture shows its centre 28 px there).
-const ANCIENT_SLOT: Rect2 = Rect2(29.0, 14.0, 29.0, 30.0)
+## The share of a 32 px picture the battle's cooldown column icon shows (its centre 28 px).
 const ANCIENT_PICTURE_PX: float = 28.0
-## Name line: from x 16 to 6 px before the right edge, baseline at y 11.5.
-const ANCIENT_NAME_LEFT: float = 16.0
-const ANCIENT_NAME_RIGHT: float = 6.0
-const ANCIENT_NAME_BASELINE: float = 11.5
-const ANCIENT_NAME_FONT_SIZE: int = 13
-## Text box under the slot, and the foot line (price) at the bottom-left.
-const ANCIENT_TEXT_BOX: Rect2 = Rect2(8.0, 48.0, 72.0, 58.0)
-const ANCIENT_FOOT_BASELINE: float = 120.0
-const ANCIENT_FOOT_WIDTH: float = 58.0
 static var _style_read: bool = false
+
+# --- Card layout v2 (user 2026-11-02: "đang trống quá nhiều làm card hơi xấu … không bị trống những diện tích
+# không cần thiết") -----------------------------------------------------------------------------------------------
+## The ancient face is rebuilt as a tiled nine-slice of ANCIENT_FRAME's plain parts (no carved slot, no small gems),
+## so it holds at any size, and the content follows design/references/osfe-card-layout.md: a big cost gem in the
+## top-left corner, the name beside it, a picture window about half the card wide right under, the rule text (keywords
+## in colour) filling the middle, a big damage gem in the bottom-right corner and a small foot line (rarity / price,
+## cooldown) bottom-left. All geometry in art px of ANCIENT_FRAME, drawn at the menu's density (x2 at 720p).
+## Gem diamond edge (art px) — 22 art = 44 px at 720p = 0.25 W; its box sits on the visible border's corner.
+const V2_GEM_ART: int = 22
+## Transparent rim of ANCIENT_FRAME around its visible border [left, top, right, bottom], art px, as measured on the art
+## (BLOCK_CLEAR's right value is 1; the art's right rim is 3, so the face uses its own).
+const V2_CLEAR: Array[float] = [3.0, 3.0, 3.0, 4.0]
+## The picture: at least V2_PICTURE_MIN_W of the card width, integer-scaled (the 32 px art cropped as little as that
+## allows, by whole art px on each side).
+const V2_PICTURE_MIN_W: float = 0.5
+## Top of the picture frame below the card's top (art px), and the frame's thickness (dark outline + gold line).
+const V2_PICTURE_TOP_ART: float = 21.0
+const V2_PICTURE_FRAME_ART: float = 2.0
+## Gaps (art px): picture frame -> text, text -> damage gem, text -> foot line; inner padding of the text block.
+const V2_TEXT_GAP_ART: float = 2.0
+const V2_GEM_GAP_ART: float = 2.0
+const V2_FOOT_GAP_ART: float = 0.0
+const V2_PAD_ART: float = 5.0
+## Name line: beside the cost gem, ends this far before the border (art px).
+const V2_NAME_RIGHT_ART: float = 3.0
+## Foot line baseline above the visible border's bottom (art px).
+const V2_FOOT_BASELINE_ART: float = 7.0
+## Font sizes (nominal): name, gem numbers, foot line; the body starts at V2_BODY_FONT_SIZE and shrinks to
+## BODY_MIN_FONT_SIZE only when the text does not fit.
+const V2_NAME_FONT_SIZE: int = 16
+const V2_NUMBER_FONT_SIZE: int = 21
+const V2_FOOT_FONT_SIZE: int = 13
+const V2_FOOT_MIN_FONT_SIZE: int = 11
+const V2_PRICE_FONT_SIZE: int = 17
+const V2_BODY_FONT_SIZE: int = 15
+## Gem palettes (sampled from ANCIENT_FRAME's own gems): [outline, rim light, rim dark, inner line, top facet,
+## left facet, right facet, bottom facet, highlight].
+const GEM_BLUE: Array[Color] = [Color("081327"), Color("f5be3e"), Color("df942f"), Color("0c1b42"), Color("60c4fe"),
+	Color("38a3fb"), Color("3381e8"), Color("1d5aca"), Color("baf0ff")]
+const GEM_RED: Array[Color] = [Color("081327"), Color("f5be3e"), Color("df942f"), Color("621321"), Color("ed7e80"),
+	Color("de545f"), Color("ce2e3d"), Color("af1727"), Color("f5aaa4")]
+## The damage gem of a card without damage: an empty socket.
+const GEM_DULL: Array[Color] = [Color("081327"), Color("8a7346"), Color("6e5a38"), Color("0e0c14"), Color("3a3750"),
+	Color("33304a"), Color("2b2940"), Color("232136"), Color("4a4766")]
+## The picture frame: outline and gold line (ANCIENT_FRAME's).
+const PICTURE_OUTLINE: Color = Color("081327")
+const PICTURE_GOLD: Color = Color("e3a334")
+## Keyword colours in the rule text: [translation key, colour]. The status colours are StatusRow's (frozen, burn) and
+## the reward keyword line's (Rạn, Giá Lạnh, Xuyên giáp, Hành quyết, Bãi Gai), so a keyword reads the same everywhere.
+const KEYWORD_COLORS: Array = [
+	["keyword.burn", Color("FF7A1F")],
+	["ui.hud.pinned", Color("7FD4FF")],
+	["keyword.fragile", Color(0.77, 0.59, 0.93)],
+	["keyword.frost", Color(0.44, 0.74, 0.96)],
+	["keyword.pierce", Color(0.67, 0.7, 0.75)],
+	["keyword.execute", Color(0.84, 0.43, 0.43)],
+	["keyword.thorns", Color(0.51, 0.79, 0.48)],
+]
+## Rarity names for the foot line ("ui.rarity.<rarity>").
+const RARITY_KEY: String = "ui.rarity.%s"
+const FOOT_SEPARATOR: String = " · "
+const ELLIPSIS: String = "…"
+static var _layout_cache: Dictionary = {}
+const LAYOUT_CACHE_MAX: int = 96
 ## Slim style: Tessera's own colours on a layout measured as proportions of the card
 ## (design/references/osfe-card-layout.md): flat panel with cut corners, a 1 px rarity edge, big diamonds whose
 ## outer corners the card edge cuts off, the picture square in the upper half, the text under it.
@@ -280,44 +334,429 @@ static func _read_style() -> void:
 static func _draw_skill_ancient(canvas: CanvasItem, rect: Rect2, skill: Dictionary, title: String, tag: String, desc: String,
 		selected: bool, pressed: bool, dim: bool, foot: Array, card_id: String) -> void:
 	var vp_h: float = canvas.get_viewport_rect().size.y
-	var s: float = float(PixelFrame.scale_for(vp_h))
+	var lay: Dictionary = ancient_layout(rect, vp_h)
+	var s: int = int(lay["scale"])
 	var alpha: float = 0.55 if dim else 1.0
-	var o: Vector2 = rect.position.round()
-	canvas.draw_texture_rect(PixelFrame.nearest(ANCIENT_FRAME), Rect2(o, Vector2(ANCIENT_FRAME.get_size()) * s), false,
-		frame_tint(str(skill.get("rarity", "common")), selected, pressed, dim))
+	var gem_tint: Color = DIM_TINT if dim else (PRESSED_TINT if pressed else Color.WHITE)
+	var full: Rect2 = lay["rect"]
+	_draw_ancient_tiled(canvas, full, s, frame_tint(str(skill.get("rarity", "common")), selected, pressed, dim), true, V2_CLEAR)
 	if selected and not dim:
-		canvas.draw_rect(Rect2(o, Vector2(ANCIENT_FRAME.get_size()) * s).grow(SELECTED_RING_PX), SELECTED_RING, false, SELECTED_RING_PX)
-	# Name (gold with the upgrade level) on the top line, right of the blue gem.
+		canvas.draw_rect(lay["border"].grow(SELECTED_RING_PX), SELECTED_RING, false, SELECTED_RING_PX)
+	# Name (gold with the upgrade level) on the top line, right of the cost gem, on the gem's centre line.
+	var name_box: Rect2 = lay["name"]
 	var text: String = title if tag.is_empty() else title + " " + tag
-	var left: float = o.x + ANCIENT_NAME_LEFT * s
-	var w: float = maxf(rect.size.x - (ANCIENT_NAME_LEFT + ANCIENT_NAME_RIGHT) * s, 1.0)
-	MenuFont.text(canvas, Vector2(left, o.y + ANCIENT_NAME_BASELINE * s), text, MenuFont.fit_size(text, ANCIENT_NAME_FONT_SIZE, w),
-		Color(TAG_COLOR if not tag.is_empty() else NAME_COLOR, alpha), HORIZONTAL_ALIGNMENT_CENTER, w)
-	# The picture in the slot: the centre 28 px of a 32 px picture, or the code-drawn effect window.
-	var slot := Rect2(o + ANCIENT_SLOT.position * s, ANCIENT_SLOT.size * s)
-	var pic := Rect2((slot.get_center() - Vector2.ONE * ANCIENT_PICTURE_PX * s * 0.5).round(), Vector2.ONE * ANCIENT_PICTURE_PX * s)
+	var name_size: int = MenuFont.fit_size(text, V2_NAME_FONT_SIZE, name_box.size.x)
+	MenuFont.text(canvas, Vector2(name_box.position.x, roundf((lay["cost"] as Rect2).get_center().y + MenuFont.size(name_size) * 0.33)), text, name_size,
+		Color(TAG_COLOR if not tag.is_empty() else NAME_COLOR, alpha), HORIZONTAL_ALIGNMENT_CENTER, name_box.size.x)
+	# The picture window: the card's art integer-scaled (NEAREST), or the code-drawn effect window.
+	var pic: Rect2 = lay["picture"]
+	_draw_picture_frame(canvas, pic, s, alpha)
 	var art: Texture2D = card_art(card_id)
 	if art != null:
-		var src_edge: float = minf(ANCIENT_PICTURE_PX, minf(art.get_width(), art.get_height()))
-		var src := Rect2((Vector2(art.get_size()) - Vector2.ONE * src_edge) * 0.5, Vector2.ONE * src_edge)
+		var src_edge: float = minf(float(lay["picture_src"]), minf(art.get_width(), art.get_height()))
+		var src := Rect2(((Vector2(art.get_size()) - Vector2.ONE * src_edge) * 0.5).floor(), Vector2.ONE * src_edge)
 		canvas.draw_texture_rect_region(PixelFrame.nearest(art), pic, src, Color(1, 1, 1, alpha))
 	else:
 		_draw_window_art(canvas, pic, skill, str(skill.get("effect", "damage")), alpha)
-	# Effect text (with the cooldown), one size on every card.
-	var box := Rect2(o + ANCIENT_TEXT_BOX.position * s, ANCIENT_TEXT_BOX.size * s)
-	_draw_text_box(canvas, box, describe_with_cooldown(desc, skill), alpha, SLIM_BODY_FONT_SIZE)
-	if foot.size() >= 2:
-		var nominal: int = int(foot[2]) if foot.size() > 2 else SUB_FONT_SIZE
-		var fw: float = ANCIENT_FOOT_WIDTH * s
-		MenuFont.text(canvas, Vector2(o.x + ANCIENT_TEXT_BOX.position.x * s, o.y + ANCIENT_FOOT_BASELINE * s), str(foot[0]),
-			MenuFont.fit_size(str(foot[0]), nominal, fw), Color(foot[1], alpha), HORIZONTAL_ALIGNMENT_LEFT, fw)
-	# Numbers on the gems: cells on the blue one, damage on the red one (dimmed without damage).
-	_draw_gem_number(canvas, o + ANCIENT_COST_CENTER * s, s, str(maxi(int(skill.get("min_cells", 1)), 1)), alpha)
+	# Rule text (keywords in colour) in the middle; a short face leaves it to the detail panel.
+	if shows_text(rect, vp_h):
+		var foot_line: Dictionary = foot_layout(skill, foot, rect, vp_h)
+		var body: String = describe_with_cooldown(desc, skill) if bool(foot_line["cooldown_in_text"]) else desc
+		_draw_rich_lines(canvas, text_layout(body, rect, vp_h), alpha)
+		_draw_foot_v2(canvas, lay, foot_line["parts"], alpha)
+	# Gems: cells on the blue one, damage on the red one (an empty socket without damage).
+	var cost: Rect2 = lay["cost"]
+	_draw_pixel_gem(canvas, cost, s, GEM_BLUE, gem_tint)
+	_draw_gem_number_v2(canvas, cost, str(maxi(int(skill.get("min_cells", 1)), 1)), alpha)
 	var damage: int = roundi(float(skill.get("damage_per_cell", 0.0)))
+	var dmg_box: Rect2 = lay["damage"]
+	_draw_pixel_gem(canvas, dmg_box, s, GEM_RED if damage > 0 else GEM_DULL, gem_tint)
 	if damage > 0:
-		_draw_gem_number(canvas, o + ANCIENT_DAMAGE_CENTER * s, s, str(damage), alpha)
+		_draw_gem_number_v2(canvas, dmg_box, str(damage), alpha)
+
+
+## Pure: the v2 ancient face geometry of a card at [param rect] on a [param viewport_height] screen (screen px):
+## "scale" (int), "rect" (the drawn frame), "border" (its visible border), "cost" / "damage" (gem boxes), "name",
+## "picture" (the art window, a square), "picture_frame" (with its frame), "picture_src" (art px shown per edge),
+## "text" (the text band: full width down to "text_full_bottom", then left of the damage gem down to its end, right
+## edge "text_narrow_right"), "foot" (the foot line: left, baseline, width as a Rect2 whose position.y is the
+## baseline).
+static func ancient_layout(rect: Rect2, viewport_height: float) -> Dictionary:
+	var s: int = PixelFrame.scale_for(viewport_height)
+	var sf: float = float(s)
+	var r := Rect2(rect.position.round(), rect.size.round())
+	var border: Rect2 = r.grow_individual(-V2_CLEAR[0] * sf, -V2_CLEAR[1] * sf, -V2_CLEAR[2] * sf, -V2_CLEAR[3] * sf)
+	var gem := Vector2.ONE * V2_GEM_ART * sf
+	var cost := Rect2(border.position, gem)
+	var damage := Rect2(border.end - gem, gem)
+	var name_left: float = cost.end.x + sf
+	# Picture: k x (an even crop of the 32 px art); k the smallest whole scale reaching V2_PICTURE_MIN_W, the crop the
+	# smallest even one that still reaches it.
+	var min_edge: float = r.size.x * V2_PICTURE_MIN_W
+	var k: int = maxi(1, ceili(min_edge / ART_PX))
+	var src: int = mini(int(ART_PX), ceili(min_edge / k / 2.0) * 2)
+	var edge: float = float(src * k)
+	var frame_px: float = V2_PICTURE_FRAME_ART * sf
+	var pic := Rect2(roundf(border.get_center().x - edge * 0.5), r.position.y + V2_PICTURE_TOP_ART * sf + frame_px, edge, edge)
+	var pic_frame: Rect2 = pic.grow(frame_px)
+	# Name line: right of the cost gem, above the picture frame (the name is drawn on the gem's centre line).
+	var name_top: float = border.position.y + sf
+	var name := Rect2(name_left, name_top, maxf(border.end.x - V2_NAME_RIGHT_ART * sf - name_left, 1.0), maxf(pic_frame.position.y - name_top, 1.0))
+	var pad: float = V2_PAD_ART * sf
+	var foot_baseline: float = border.end.y - V2_FOOT_BASELINE_ART * sf
+	var foot_size: int = MenuFont.size(V2_FOOT_FONT_SIZE)
+	var foot_top: float = foot_baseline - roundf(foot_size * 0.75)
+	var text_top: float = pic_frame.end.y + V2_TEXT_GAP_ART * sf
+	var text := Rect2(border.position.x + pad, text_top, border.size.x - pad * 2.0, maxf(foot_top - V2_FOOT_GAP_ART * sf - text_top, 0.0))
+	var full_bottom: float = damage.position.y - V2_GEM_GAP_ART * sf
+	var narrow_right: float = damage.position.x - V2_GEM_GAP_ART * sf
+	var foot := Rect2(border.position.x + pad, foot_baseline, maxf(narrow_right - border.position.x - pad, 1.0), foot_size)
+	return {
+		"scale": s, "rect": r, "border": border, "cost": cost, "damage": damage, "name": name, "picture": pic,
+		"picture_frame": pic_frame, "picture_src": src, "text": text, "text_full_bottom": full_bottom,
+		"text_narrow_right": narrow_right, "foot": foot,
+	}
+
+
+## Pure: the rule text of a face at [param rect] laid out (v2 ancient face): an Array of lines, each
+## {"rect": Rect2 (screen px, the line's box), "baseline": float, "x": float (left of the first word), "size": int (font px),
+## "segments": [[text, colour or null for the body colour], ...]}. The text starts at V2_BODY_FONT_SIZE and shrinks
+## (never below BODY_MIN_FONT_SIZE) until it fits the band; a block that stays above the damage gem is centred in that
+## part of the band; a text still too long at the smallest size is cut with "…".
+static func text_layout(desc: String, rect: Rect2, viewport_height: float) -> Array:
+	if desc.is_empty():
+		return []
+	var lay: Dictionary = ancient_layout(rect, viewport_height)
+	var key: String = "%s|%s|%s|%s" % [desc, rect, viewport_height, TranslationServer.get_locale()]
+	if _layout_cache.has(key):
+		return _layout_cache[key]
+	var band: Rect2 = lay["text"]
+	var full_bottom: float = float(lay["text_full_bottom"])
+	var narrow_right: float = float(lay["text_narrow_right"])
+	var font: Font = _font()
+	var words: Array = _rich_words(desc)
+	var lines: Array = []
+	var nominal: int = V2_BODY_FONT_SIZE
+	while true:
+		var size: int = MenuFont.size(nominal)
+		lines = _wrap_words(words, font, size, band, full_bottom, narrow_right)
+		var fits: bool = not lines.is_empty() and (lines[-1]["rect"] as Rect2).end.y <= band.end.y + 0.5
+		if fits or nominal <= BODY_MIN_FONT_SIZE:
+			if not fits:
+				lines = _cut_lines(lines, font, size, band)
+			break
+		nominal -= 1
+	# Centre a block that stays in the full-width part between the picture and the damage gem.
+	if not lines.is_empty() and (lines[-1]["rect"] as Rect2).end.y <= full_bottom + 0.5:
+		var shift: float = floorf((full_bottom - (lines[-1]["rect"] as Rect2).end.y) * 0.5)
+		for line: Dictionary in lines:
+			line["rect"] = (line["rect"] as Rect2).grow_individual(0.0, -shift, 0.0, shift)
+			line["baseline"] = float(line["baseline"]) + shift
+	if _layout_cache.size() >= LAYOUT_CACHE_MAX:
+		_layout_cache.clear()
+	_layout_cache[key] = lines
+	return lines
+
+
+# Words of [param text] split at spaces, each as [[segment, colour or null], ...]: a keyword (KEYWORD_COLORS,
+# translated, any case, at a word start, coloured to the end of its word) in its colour, the rest null.
+static func _rich_words(text: String) -> Array:
+	var colours: Array = []
+	colours.resize(text.length())
+	var lower: String = text.to_lower()
+	for entry: Array in KEYWORD_COLORS:
+		var word: String = TranslationServer.translate(str(entry[0])).to_lower()
+		if word.is_empty() or word == str(entry[0]).to_lower():
+			continue
+		var at: int = lower.find(word)
+		while at >= 0:
+			if at == 0 or not _is_letter(text[at - 1]):
+				var end: int = at + word.length()
+				while end < text.length() and _is_letter(text[end]):
+					end += 1
+				for i: int in range(at, end):
+					if colours[i] == null:
+						colours[i] = entry[1]
+			at = lower.find(word, at + 1)
+	var words: Array = []
+	var segments: Array = []
+	var current: String = ""
+	var current_colour: Variant = null
+	for i: int in text.length() + 1:
+		var c: String = text[i] if i < text.length() else " "
+		if c == " ":
+			if not current.is_empty():
+				segments.append([current, current_colour])
+			if not segments.is_empty():
+				words.append(segments)
+			segments = []
+			current = ""
+			current_colour = null
+			continue
+		if not current.is_empty() and colours[i] != current_colour:
+			segments.append([current, current_colour])
+			current = ""
+		current += c
+		current_colour = colours[i]
+	# A one-letter word ("5 s", "3 ô", "×2 s)") stays on the line of the word before it: no lone unit on a line.
+	var glued: Array = []
+	for word: Array in words:
+		var letters: int = 0
+		for seg: Array in word:
+			for ch: String in str(seg[0]):
+				letters += 1 if _is_letter(ch) or ch.is_valid_int() else 0
+		if letters <= 1 and not glued.is_empty():
+			var prev: Array = glued[-1]
+			prev.append([" ", null])
+			prev.append_array(word)
+		else:
+			glued.append(word)
+	return glued
+
+
+static func _is_letter(c: String) -> bool:
+	return c.to_lower() != c.to_upper()
+
+
+static func _word_width(word: Array, font: Font, size: int) -> float:
+	var w: float = 0.0
+	for seg: Array in word:
+		w += font.get_string_size(str(seg[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	return w
+
+
+# Greedy wrap of [param words] from the top of [param band]: a line is full width while it ends above
+# [param full_bottom], else it stops at [param narrow_right] (left of the damage gem). Lines are centred in their width.
+static func _wrap_words(words: Array, font: Font, size: int, band: Rect2, full_bottom: float, narrow_right: float) -> Array:
+	var line_h: float = font.get_height(size)
+	var space: float = font.get_string_size(" ", HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var lines: Array = []
+	var y: float = band.position.y
+	var cur: Array = []
+	var cur_w: float = 0.0
+	var i: int = 0
+	while i < words.size():
+		var right: float = band.end.x if y + line_h <= full_bottom + 0.5 else narrow_right
+		var max_w: float = right - band.position.x
+		var w: float = _word_width(words[i], font, size)
+		if cur.is_empty() or cur_w + space + w <= max_w:
+			cur_w = w if cur.is_empty() else cur_w + space + w
+			cur.append(words[i])
+			i += 1
+			continue
+		lines.append(_make_line(cur, cur_w, band.position.x, right, y, line_h, font, size))
+		y += line_h
+		cur = []
+		cur_w = 0.0
+	if not cur.is_empty():
+		var right_last: float = band.end.x if y + line_h <= full_bottom + 0.5 else narrow_right
+		lines.append(_make_line(cur, cur_w, band.position.x, right_last, y, line_h, font, size))
+	return lines
+
+
+static func _make_line(words: Array, width: float, left: float, right: float, y: float, line_h: float, font: Font, size: int) -> Dictionary:
+	var segments: Array = []
+	for wi: int in words.size():
+		if wi > 0:
+			segments.append([" ", null])
+		segments.append_array(words[wi])
+	var x: float = roundf((left + right - width) * 0.5)
+	return {"rect": Rect2(x, y, width, line_h), "baseline": roundf(y + font.get_ascent(size)), "x": x, "size": size, "segments": segments}
+
+
+# Keeps the lines that end inside [param band]; the last one kept ends with "…" (words dropped until it fits).
+static func _cut_lines(lines: Array, font: Font, size: int, band: Rect2) -> Array:
+	var kept: Array = []
+	for line: Dictionary in lines:
+		if (line["rect"] as Rect2).end.y <= band.end.y + 0.5:
+			kept.append(line)
+	if kept.is_empty() or kept.size() == lines.size():
+		return kept
+	var last: Dictionary = kept[-1]
+	var segs: Array = (last["segments"] as Array).duplicate()
+	var limit: float = (last["rect"] as Rect2).size.x
+	var r: Rect2 = last["rect"]
+	limit = maxf(limit, band.size.x * 0.5)
+	while not segs.is_empty() and _word_width(segs + [[ELLIPSIS, null]], font, size) > limit:
+		segs.pop_back()
+	while not segs.is_empty() and str(segs[-1][0]) == " ":
+		segs.pop_back()
+	# "burn.…" reads as a typo: the cut word loses its closing punctuation.
+	if not segs.is_empty():
+		var tail: String = str(segs[-1][0]).rstrip(".,;:")
+		if tail.is_empty():
+			segs.pop_back()
+		else:
+			segs[-1] = [tail, segs[-1][1]]
+	segs.append([ELLIPSIS, null])
+	var w: float = _word_width(segs, font, size)
+	var x: float = roundf(r.get_center().x - w * 0.5)
+	last["segments"] = segs
+	last["x"] = x
+	last["rect"] = Rect2(x, r.position.y, w, r.size.y)
+	last["cut"] = true
+	return kept
+
+
+## Pure: true when the face of [param skill] at [param rect] prints its whole rule text ([param desc], plus the
+## cooldown when the foot line has no room for it); false for a short face ([method shows_text]) or a text cut with
+## "…" — the screen then opens the detail panel on selection. [param foot] as for [method draw_skill]; the slim and
+## stone faces always print it.
+static func face_text_complete(skill: Dictionary, desc: String, foot: Array, rect: Rect2, viewport_height: float) -> bool:
+	if not shows_text(rect, viewport_height):
+		return false
+	_read_style()
+	if style != "ancient":
+		return true
+	var foot_line: Dictionary = foot_layout(skill, foot, rect, viewport_height)
+	var body: String = describe_with_cooldown(desc, skill) if bool(foot_line["cooldown_in_text"]) else desc
+	var lines: Array = text_layout(body, rect, viewport_height)
+	return lines.is_empty() or not bool((lines[-1] as Dictionary).get("cut", false))
+
+
+# Draws laid-out lines ([method text_layout]) segment by segment in the body / keyword colours.
+static func _draw_rich_lines(canvas: CanvasItem, lines: Array, alpha: float) -> void:
+	var font: Font = _font()
+	for line: Dictionary in lines:
+		var x: float = float(line["x"])
+		var size: int = int(line["size"])
+		for seg: Array in line["segments"]:
+			var t: String = str(seg[0])
+			var c: Color = BODY_COLOR if seg[1] == null else seg[1] as Color
+			canvas.draw_string(font, Vector2(x, float(line["baseline"])), t, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(c, alpha))
+			x += font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+
+
+## Pure: the foot line of a face (v2 ancient, bottom-left before the damage gem) as {"parts": [[text, colour, nominal
+## size], ...] (a part after the first starts with FOOT_SEPARATOR), "cooldown_in_text": bool}. What it holds, by
+## priority: [param foot]'s text (the shop's price, at most V2_PRICE_FONT_SIZE) or the card's rarity, then the cooldown
+## ("hồi 8 s") when [param skill] has one. Everything shrinks together down to V2_FOOT_MIN_FONT_SIZE; when it still does
+## not fit, the rarity is dropped, or (beside a price) the cooldown goes back to the end of the rule text.
+static func foot_layout(skill: Dictionary, foot: Array, rect: Rect2, viewport_height: float) -> Dictionary:
+	var box: Rect2 = ancient_layout(rect, viewport_height)["foot"]
+	var lead: Array = []
+	var is_price: bool = foot.size() >= 2 and not str(foot[0]).is_empty()
+	if is_price:
+		var nominal: int = mini(int(foot[2]) if foot.size() > 2 else V2_FOOT_FONT_SIZE, V2_PRICE_FONT_SIZE)
+		lead = [str(foot[0]), Color(foot[1]), nominal]
 	else:
-		_cover_gem(canvas, o + ANCIENT_DAMAGE_CENTER * s, s)
+		var rarity: String = str(skill.get("rarity", "common"))
+		var label: String = TranslationServer.translate(RARITY_KEY % rarity)
+		if label != RARITY_KEY % rarity:
+			lead = [label, RelicStrip.rarity_color(rarity).lightened(0.25), V2_FOOT_FONT_SIZE]
+	var cooldown: float = float(skill.get("cooldown_sec", 0.0))
+	var cd: Array = []
+	if cooldown > 0.0:
+		cd = [TranslationServer.translate(TEXT_COOLDOWN) % roundi(cooldown), SUB_COLOR, V2_FOOT_FONT_SIZE]
+	var parts: Array = []
+	if not lead.is_empty():
+		parts.append(lead)
+	if not cd.is_empty():
+		parts.append([(FOOT_SEPARATOR if not lead.is_empty() else "") + str(cd[0]), cd[1], cd[2]])
+	var fitted: Array = _fit_parts(parts, box.size.x)
+	if not fitted.is_empty() or parts.size() < 2:
+		return {"parts": fitted if not fitted.is_empty() else _fit_parts(parts, box.size.x, true), "cooldown_in_text": false}
+	if is_price:
+		return {"parts": _fit_parts([lead], box.size.x, true), "cooldown_in_text": true}
+	return {"parts": _fit_parts([[str(cd[0]), cd[1], cd[2]]], box.size.x, true), "cooldown_in_text": false}
+
+
+# [param parts] ([text, colour, nominal]) shrunk together, one nominal step at a time, until their row fits
+# [param width]; [] when it does not fit at V2_FOOT_MIN_FONT_SIZE (unless [param force]: then at the smallest size).
+static func _fit_parts(parts: Array, width: float, force: bool = false) -> Array:
+	if parts.is_empty():
+		return []
+	var font: Font = _font()
+	var step: int = 0
+	while true:
+		var out: Array = []
+		var total: float = 0.0
+		var smallest: int = 999
+		for part: Array in parts:
+			var n: int = maxi(int(part[2]) - step, 1)
+			smallest = mini(smallest, n)
+			total += font.get_string_size(str(part[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, MenuFont.size(n)).x
+			out.append([part[0], part[1], n])
+		if total <= width:
+			return out
+		if smallest <= V2_FOOT_MIN_FONT_SIZE:
+			return out if force else []
+		step += 1
+	return []
+
+
+# Draws the foot line ([method foot_layout]) at the layout's foot baseline.
+static func _draw_foot_v2(canvas: CanvasItem, lay: Dictionary, parts: Array, alpha: float) -> void:
+	var box: Rect2 = lay["foot"]
+	var font: Font = _font()
+	var x: float = box.position.x
+	for part: Array in parts:
+		var t: String = str(part[0])
+		MenuFont.text(canvas, Vector2(x, box.position.y), t, int(part[2]), Color(part[1] as Color, alpha))
+		x += font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuFont.size(int(part[2]))).x
+
+
+# The picture window's frame: a 1-art-px dark outline and a 1-art-px gold line, corners cut by one art px.
+static func _draw_picture_frame(canvas: CanvasItem, pic: Rect2, s: int, alpha: float) -> void:
+	var sf: float = float(s)
+	var outer: Rect2 = pic.grow(sf * 2.0)
+	var gold: Rect2 = pic.grow(sf)
+	canvas.draw_rect(outer.grow_individual(-sf, 0.0, -sf, 0.0), Color(PICTURE_OUTLINE, alpha))
+	canvas.draw_rect(outer.grow_individual(0.0, -sf, 0.0, -sf), Color(PICTURE_OUTLINE, alpha))
+	canvas.draw_rect(gold, Color(PICTURE_GOLD, alpha))
+	canvas.draw_rect(pic, Color(WINDOW_EDGE, alpha))
+
+
+# A gem diamond filling the square [param box] drawn in whole art px of [param s] screen px (pixel art, no smoothing):
+# a 1-art-px outline, a 2-art-px gold rim (light upper-left, dark lower-right), a dark inner line, four facets and a
+# highlight.
+# [param pal] = GEM_BLUE / GEM_RED / GEM_DULL; [param tint] multiplies it.
+static func _draw_pixel_gem(canvas: CanvasItem, box: Rect2, s: int, pal: Array, tint: Color) -> void:
+	var n: int = roundi(box.size.x / s)
+	@warning_ignore("integer_division")
+	var half: int = n / 2
+	var sf: float = float(s)
+	for j: int in n:
+		var cj: int = half - 1 - j if j < half else j - half
+		var run_start: int = -1
+		var run_colour := Color()
+		for i: int in n + 1:
+			var colour: Variant = null
+			if i < n:
+				var ci: int = half - 1 - i if i < half else i - half
+				var d: int = half - 1 - (ci + cj)
+				if d >= 0:
+					var up: bool = j < half
+					var left: bool = i < half
+					if d == 0:
+						colour = pal[0]
+					elif d <= 2:
+						colour = pal[1] if (up and left) or (up != left and (cj >= ci) == up) else pal[2]
+					elif d == 3:
+						colour = pal[3]
+					elif cj >= ci:
+						colour = pal[4] if up else pal[7]
+					else:
+						colour = pal[5] if left else pal[6]
+					if d >= 5 and up and left and cj >= 1 and absi(ci - cj) <= 1 and ci + cj >= half - 7 and ci + cj <= half - 5:
+						colour = pal[8]
+			if run_start >= 0 and (colour == null or colour != run_colour):
+				canvas.draw_rect(Rect2(box.position.x + run_start * sf, box.position.y + j * sf, (i - run_start) * sf, sf), run_colour * tint)
+				run_start = -1
+			if colour != null and run_start < 0:
+				run_start = i
+				run_colour = colour
+
+
+# A number centred on a v2 gem [param box]: white, outlined, sized to the gem's inner diamond.
+static func _draw_gem_number_v2(canvas: CanvasItem, box: Rect2, text: String, alpha: float) -> void:
+	var font: Font = _font()
+	var w: float = box.size.x * 0.62
+	var size: int = MenuFont.size(MenuFont.fit_size(text, V2_NUMBER_FONT_SIZE, w))
+	var c: Vector2 = box.get_center()
+	var pos := Vector2(roundf(c.x - box.size.x * 0.5), roundf(c.y + size * 0.36))
+	canvas.draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER, box.size.x, size, NUMBER_OUTLINE_PX + 1, Color(OUTLINE, alpha))
+	canvas.draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER, box.size.x, size, Color(NUMBER_COLOR, alpha))
 
 
 # The slim face (see [member style]): every position is a share of the card, so it holds at any size.
@@ -493,15 +932,23 @@ static func _draw_text_box(canvas: CanvasItem, box: Rect2, text: String, alpha: 
 		box.size.x, size, lines, Color(BODY_COLOR, alpha))
 
 
+## Pure: the visible outline of a skill face at [param rect] on a [param viewport_height] screen (the ancient frame's
+## border inside its transparent rim; other styles: [param rect] shrunk by [param inset]) — where an opaque backing
+## behind a dimmed face goes.
+static func face_border(rect: Rect2, viewport_height: float, inset: float) -> Rect2:
+	_read_style()
+	if style == "ancient":
+		return ancient_layout(rect, viewport_height)["border"]
+	return rect.grow(-inset)
+
+
 ## Pure: the picture area of a skill face at [param rect] on a [param viewport_height] screen in the current
 ## [member style] (the ancient slot's picture, else the art window): where the battle menu lays its cooldown pie.
 static func picture_rect(rect: Rect2, viewport_height: float) -> Rect2:
 	_read_style()
 	var s: float = float(PixelFrame.scale_for(viewport_height))
 	if style == "ancient":
-		var o: Vector2 = rect.position.round()
-		var slot := Rect2(o + ANCIENT_SLOT.position * s, ANCIENT_SLOT.size * s)
-		return Rect2((slot.get_center() - Vector2.ONE * ANCIENT_PICTURE_PX * s * 0.5).round(), Vector2.ONE * ANCIENT_PICTURE_PX * s)
+		return ancient_layout(rect, viewport_height)["picture"]
 	if style == "slim":
 		var edge: float = ART_PX * s
 		var r := Rect2(rect.position.round(), rect.size.round())
@@ -628,7 +1075,14 @@ static func draw_detail(canvas: CanvasItem, rect: Rect2, title: String, lines: A
 	var hint_h: float = 0.0 if hint.is_empty() else body_size * 1.2
 	var body_top: float = y + body_size * 1.25
 	var lines_fit: int = clampi(int((rect.end.y - pad * 0.4 - hint_h - body_top + body_size * 0.8) / font.get_height(body_size)), 1, DETAIL_BODY_LINES)
-	canvas.draw_multiline_string(font, Vector2(x, body_top), body, HORIZONTAL_ALIGNMENT_LEFT, w, body_size, lines_fit, DETAIL_BODY_COLOR)
+	# Card layout v2: the body's keywords in their colours, as on the face (left-aligned here).
+	var top: float = body_top - font.get_ascent(body_size)
+	var body_lines: Array = _wrap_words(_rich_words(body), font, body_size, Rect2(x, top, w, INF), INF, x + w)
+	if body_lines.size() > lines_fit:
+		body_lines = _cut_lines(body_lines, font, body_size, Rect2(x, top, w, font.get_height(body_size) * lines_fit))
+	for body_line: Dictionary in body_lines:
+		body_line["x"] = x
+	_draw_rich_lines(canvas, body_lines, 1.0)
 	if not hint.is_empty():
 		MenuFont.text(canvas, Vector2(x, rect.end.y - pad * 0.7), hint, MenuFont.fit_size(hint, DETAIL_LINE_FONT_SIZE, w), DETAIL_HINT_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, w)
 
@@ -786,24 +1240,7 @@ static func draw_block_card(canvas: CanvasItem, rect: Rect2, count: int, tint: C
 	var slot := Rect2(rect.position.round(), rect.size.round())
 	# The art has a transparent rim (BLOCK_CLEAR): the frame is drawn that much larger so its visible border is the slot.
 	var r: Rect2 = slot.grow_individual(BLOCK_CLEAR[0] * s, BLOCK_CLEAR[1] * s, BLOCK_CLEAR[2] * s, BLOCK_CLEAR[3] * s)
-	var tex: Texture2D = PixelFrame.nearest(ANCIENT_FRAME)
-	var l: float = BLOCK_TL.size.x * s
-	var t: float = BLOCK_TL.size.y * s
-	var rr: float = BLOCK_TR.size.x * s
-	var b: float = BLOCK_BL.size.y * s
-	var mid_w: float = r.size.x - l - rr
-	var mid_h: float = r.size.y - t - b
-	canvas.draw_texture_rect_region(tex, Rect2(r.position, BLOCK_TL.size * s), BLOCK_TL, tint)
-	canvas.draw_texture_rect_region(tex, Rect2(Vector2(r.end.x - rr, r.position.y), BLOCK_TR.size * s), BLOCK_TR, tint)
-	canvas.draw_texture_rect_region(tex, Rect2(Vector2(r.position.x, r.end.y - b), BLOCK_BL.size * s), BLOCK_BL, tint)
-	# The mirrored corner's clear rim is BLOCK_CLEAR[0] wide, the right edge's BLOCK_CLEAR[2]: shift it to line up.
-	var shift: float = (BLOCK_CLEAR[0] - BLOCK_CLEAR[2]) * s
-	PixelFrame.draw_tiled(canvas, tex, BLOCK_BL, Rect2(r.end.x - l + shift, r.end.y - b, l, b), s, tint, true)
-	PixelFrame.draw_tiled(canvas, tex, BLOCK_TOP, Rect2(r.position.x + l, r.position.y, mid_w, t), s, tint)
-	PixelFrame.draw_tiled(canvas, tex, BLOCK_BOTTOM, Rect2(r.position.x + l, r.end.y - b, r.size.x - l * 2.0 + shift, b), s, tint)
-	PixelFrame.draw_tiled(canvas, tex, BLOCK_LEFT, Rect2(r.position.x, r.position.y + t, l, mid_h), s, tint)
-	PixelFrame.draw_tiled(canvas, tex, BLOCK_RIGHT, Rect2(r.end.x - rr, r.position.y + t, rr, mid_h), s, tint)
-	PixelFrame.draw_tiled(canvas, tex, BLOCK_CENTER, Rect2(r.position.x + l, r.position.y + t, mid_w, mid_h), s, tint)
+	_draw_ancient_tiled(canvas, r, s, tint, false, BLOCK_CLEAR)
 	if selected:
 		canvas.draw_rect(slot.grow(SELECTED_RING_PX), SELECTED_RING, false, SELECTED_RING_PX)
 	var gem: Vector2 = r.position + ANCIENT_COST_CENTER * s
@@ -811,6 +1248,35 @@ static func draw_block_card(canvas: CanvasItem, rect: Rect2, count: int, tint: C
 		_draw_gem_number(canvas, gem, s, str(count), tint.a)
 	else:
 		_cover_gem(canvas, gem, s)
+
+
+# ANCIENT_FRAME rebuilt over [param r] (the full art rect, transparent rim included) at whole scale [param s]: corners
+# as they are, the middles tiled from plain parts (no picture slot, no red gem; the bottom-right corner is the
+# bottom-left one mirrored). [param plain_tl]: the top-left corner is the top-right one mirrored too (no small blue
+# gem: the v2 card face draws its own big gem there); else the art's corner with its gem (block cards). [param clear]:
+# the rim [left, top, right, bottom] the mirrored corners are lined up with.
+static func _draw_ancient_tiled(canvas: CanvasItem, r: Rect2, s: int, tint: Color, plain_tl: bool, clear: Array[float]) -> void:
+	var tex: Texture2D = PixelFrame.nearest(ANCIENT_FRAME)
+	var l: float = BLOCK_TL.size.x * s
+	var t: float = BLOCK_TL.size.y * s
+	var rr: float = BLOCK_TR.size.x * s
+	var b: float = BLOCK_BL.size.y * s
+	var mid_w: float = r.size.x - l - rr
+	var mid_h: float = r.size.y - t - b
+	# The mirrored corner's clear rim is clear[0] wide, the right edge's clear[2]: shift it to line up.
+	var shift: float = (clear[0] - clear[2]) * s
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_TOP, Rect2(r.position.x + l, r.position.y, mid_w, t), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_BOTTOM, Rect2(r.position.x + l, r.end.y - b, r.size.x - l * 2.0 + shift, b), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_LEFT, Rect2(r.position.x, r.position.y + t, l, mid_h), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_RIGHT, Rect2(r.end.x - rr, r.position.y + t, rr, mid_h), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_CENTER, Rect2(r.position.x + l, r.position.y + t, mid_w, mid_h), s, tint)
+	if plain_tl:
+		PixelFrame.draw_tiled(canvas, tex, BLOCK_TR, Rect2(r.position.x - shift, r.position.y, rr, t), s, tint, true)
+	else:
+		canvas.draw_texture_rect_region(tex, Rect2(r.position, BLOCK_TL.size * s), BLOCK_TL, tint)
+	canvas.draw_texture_rect_region(tex, Rect2(Vector2(r.end.x - rr, r.position.y), BLOCK_TR.size * s), BLOCK_TR, tint)
+	canvas.draw_texture_rect_region(tex, Rect2(Vector2(r.position.x, r.end.y - b), BLOCK_BL.size * s), BLOCK_BL, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_BL, Rect2(r.end.x - l + shift, r.end.y - b, l, b), s, tint, true)
 
 
 ## Pure: where a block card at [param rect] draws its block glyph (inside the frame, below the gem row).

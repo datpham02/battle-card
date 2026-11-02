@@ -211,6 +211,8 @@ extends Node
 ##                                          frozen and the boss stays active (a live match, not a demo); pattern_tempo_mult is
 ##                                          the match's own (1.0 when absent). GameFlow treats it as a dev run arg (a run starts).
 ##                                          Combine with --seed=<n> and --no-autopause for a reproducible capture
+##   godot --path . -- --pattern=<id> --pattern-hp=<ratio> DEV-ONLY P2.4: the pattern enemy starts at ratio x max HP
+##                                          (phase floor ignored) so a phased boss changes phase at once (0.6 / 0.25)
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
 ## seeds the drop RNG. No argument = normal game, this node does nothing. State is set in
 ## _ready, before the first frame (the seed and the grid in _enter_tree, before
@@ -229,6 +231,9 @@ const PIECE_PREFIX: String = "--piece="
 const ARENA_PREFIX: String = "--arena="
 ## Phase 2 (P2.2): `--pattern=<enemy_id>` runs the match on the pattern brain (see the header).
 const PATTERN_PREFIX: String = "--pattern="
+## P2.4: `--pattern-hp=<ratio>` (with --pattern=) starts the enemy at this share of its max HP, ignoring the phase floor,
+## so a phased enemy changes phase on its first tick (0.6 = Forest Witch phase 2, 0.25 = phase 3 after two transitions).
+const PATTERN_HP_PREFIX: String = "--pattern-hp="
 ## `--return-ratio=k` (--demo=crumble only): freeze the fallen cell k of the way through its return fade
 ## (TileHazards.return_fade_sec; ADR-0001 Phase 1, 2026-11-01).
 const RETURN_RATIO_PREFIX: String = "--return-ratio="
@@ -465,6 +470,7 @@ func _ready() -> void:
 			if wh.size() == 2:
 				get_window().size = Vector2i(int(wh[0]), int(wh[1]))
 	set_process(not _shot_path.is_empty())
+	_apply_pattern_hp()
 	if OS.get_cmdline_user_args().has(DRAW_CALLS_ARG):
 		_print_draw_calls()
 	if not _parse_art_region().is_empty():
@@ -1806,6 +1812,16 @@ func _apply_pattern_hints(enemy_id: String, use_arena_hint: bool) -> void:
 	# P2.3: a roster (non-dev) enemy also draws as itself (its own sheet, or the placeholder until P2.5 art).
 	if (enemy.get("footprint", []) as Array).size() > 1 or not bool(enemy.get("dev", false)):
 		_combat().match_params["id"] = enemy_id
+
+
+# P2.4: --pattern-hp=<ratio> (see PATTERN_HP_PREFIX); only with --pattern= on a pattern match.
+func _apply_pattern_hp() -> void:
+	if _parse_pattern().is_empty() or _combat().get_pattern_controller() == null:
+		return
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(PATTERN_HP_PREFIX):
+			var state: CombatState = _combat().get_state()
+			state.enemy_hp = clampf(float(arg.substr(PATTERN_HP_PREFIX.length())), 0.01, 1.0) * state.enemy_max_hp
 
 
 # Phase 2 (P2.2): --pattern=<enemy id>, "" when absent.

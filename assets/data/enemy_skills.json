@@ -131,6 +131,67 @@
 			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
 			"effects": {"marker": {"kind": "wreath", "life_sec": 8.0, "break_min_cells": 1}, "guard": {"amount": 5, "sec": 8.0, "while_markers": true}},
 			"conditions": {"once": true, "hp_below": 0.5}, "cooldown_sec": 0.0
+		},
+		"root_nail": {
+			"id": "root_nail", "owner": "forest_witch", "kind": "attack", "name_key": "enemy_skill.root_nail.name", "counter_key": "enemy_skill.root_nail.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"effects": {"damage": 8, "status": {"id": "root", "sec": 0.6}},
+			"recovery_sec": 0.6, "cooldown_sec": 3.0
+		},
+		"branch_lattice": {
+			"id": "branch_lattice", "owner": "forest_witch", "kind": "attack", "name_key": "enemy_skill.branch_lattice.name", "counter_key": "enemy_skill.branch_lattice.counter",
+			"pattern": {"offsets": [[0, 0], [0, 1], [1, 1]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
+			"windup_sec": 0.5, "warning_sec": 1.2,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "first_cell", "travel": "floor_run", "impact": "thorns"},
+			"effects": {"damage": 12},
+			"followup": {"offsets": [[1, 0]], "rotations": [0, 90, 180, 270], "relative_to": "first_end", "exclude_first": true, "prefer": "anchor_row",
+				"warning_sec": 0.75, "effects": {"damage": 8}},
+			"recovery_sec": 0.8, "cooldown_sec": 4.0
+		},
+		"entangled_row": {
+			"id": "entangled_row", "owner": "forest_witch", "kind": "attack", "name_key": "enemy_skill.entangled_row.name", "counter_key": "enemy_skill.entangled_row.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_anchor", "clip": true, "min_cells": 2, "anchor_rows": 1},
+			"windup_sec": 0.8, "warning_sec": 1.5,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "first_cell", "travel": "floor_run", "impact": "thorns"},
+			"effects": {"damage": 18, "status": {"id": "slow", "sec": 1.5, "step_mult": 1.3}},
+			"recovery_sec": 1.2, "cooldown_sec": 6.0, "interruptible": false
+		},
+		"moss_guard": {
+			"id": "moss_guard", "owner": "forest_witch", "kind": "self", "name_key": "enemy_skill.moss_guard.name", "counter_key": "enemy_skill.moss_guard.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"guard": {"amount": 6, "sec": 10.0, "while_markers": true}},
+			"conditions": {"requires_anchor": 1}, "recovery_sec": 0.6, "cooldown_sec": 12.0
+		},
+		"root_anchor": {
+			"id": "root_anchor", "owner": "forest_witch", "kind": "marker", "name_key": "enemy_skill.root_anchor.name", "counter_key": "enemy_skill.root_anchor.counter",
+			"pattern": {"anchor": "enemy_half_empty", "count": 1},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"effects": {"marker": {"kind": "anchor", "life_sec": 12.0, "break_min_cells": 1}},
+			"recovery_sec": 0.6, "cooldown_sec": 8.0
+		},
+		"withered_crown": {
+			"id": "withered_crown", "owner": "forest_witch", "kind": "attack", "name_key": "enemy_skill.withered_crown.name", "counter_key": "enemy_skill.withered_crown.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "on_player", "rotations": [0, 90]},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 12},
+			"followup": {"offsets": [[0, 1]], "rotations": [0, 180], "relative_to": "first_shift", "show_with_first": true,
+				"warning_sec": 0.75, "effects": {"damage": 12}},
+			"recovery_sec": 1.2, "cooldown_sec": 5.0, "interruptible": false
+		},
+		"forest_last_knot": {
+			"id": "forest_last_knot", "owner": "forest_witch", "kind": "attack", "name_key": "enemy_skill.forest_last_knot.name", "counter_key": "enemy_skill.forest_last_knot.counter",
+			"pattern": {"offsets": [[-1, 0], [0, 0], [1, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.9, "warning_sec": 1.6,
+			"delivery": {"type": "SEQUENTIAL_CHAIN", "origin": "caster", "travel": "chain_spark", "impact": "burst", "chain_order": "authored"},
+			"effects": {"damage": 22, "damage_no_markers": 11},
+			"followup": {"offsets": [[0, 0]], "relative_to": "first_center", "requires_anchor": 1, "warning_sec": 0.75, "effects": {"damage": 14}},
+			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
 		}
 	},
 	"enemies": {
@@ -151,6 +212,22 @@
 		"greycap_sporeling": {"tier": "normal", "arena": "u_shape", "skills": ["spore_squares", "seedbed"]},
 		"ancient_root_sentinel": {"tier": "elite", "arena": "rect",
 			"phases": [{"id": "main", "skills": ["sentinel_anchor", "branch_net", "bark_shift"], "mechanic": "sentinel_anchor"}]},
-		"mistbriar_matron": {"tier": "elite", "arena": "cross", "skills": ["thorn_fork", "wreath_guard"]}
+		"mistbriar_matron": {"tier": "elite", "arena": "cross", "skills": ["thorn_fork", "wreath_guard"]},
+		"forest_witch": {
+			"tier": "warden",
+			"footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+			"arena": "boss_hall",
+			"phases": [
+				{"id": "p1", "enter_hp_ratio": 1.0, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row"],
+					"mechanic": "root_anchor", "overrides": {"root_anchor": {"count": 1}}},
+				{"id": "p2", "enter_hp_ratio": 0.65, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown"],
+					"mechanic": "withered_crown", "overrides": {"root_anchor": {"count": 2}, "entangled_row": {"pattern": {"anchor_rows": 2}}},
+					"transition": {"sec": 1.5, "on_enter": [{"skill": "root_anchor"}]}},
+				{"id": "p3", "enter_hp_ratio": 0.30, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown", "forest_last_knot"],
+					"mechanic": "forest_last_knot", "every_nth": {"skill": "forest_last_knot", "n": 3},
+					"overrides": {"root_anchor": {"count": 2}, "entangled_row": {"pattern": {"anchor_rows": 2}}},
+					"transition": {"sec": 1.5}}
+			]
+		}
 	}
 }

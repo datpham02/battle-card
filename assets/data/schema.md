@@ -1073,7 +1073,38 @@ New optional skill keys (P2.3, read by `EnemySkillsConfig`; unknown values refus
 `greycap_sporeling`; battle 2 + `greycap_sporeling`, `mossbound_sentry`; danger 1 + `greycap_sporeling`; danger 2 +
 `mossbound_sentry`; miniboss 1 + `ancient_root_sentinel`; miniboss 2 + `ancient_root_sentinel`, `mistbriar_matron`; boss
 1 = `goblin_warlock`, boss 2 = `forest_witch` only (D11). The Forest Witch lost its `rotten_thrower` trait (D12; the trait
-itself stays for the Jailer and the other matches that use it); its rework is P2.4.
+itself stays for the Jailer and the other matches that use it); its rework is P2.4 (below).
+
+### Phase 2 P2.4: the Forest Witch (`enemy_skills.json` `forest_witch` + `chapters.json` `ch1.forest_witch`)
+
+Spec: `design/quick-specs/phase2-misty-forest-2026-11-01.md` 7 (with its P2.4 implementation note) and D8 / D9 / D13 /
+D14. Enemy `forest_witch`: tier `warden`, footprint 2x2, arena hint `boss_hall`, three phases: `p1` (1.0) root_nail,
+branch_lattice, root_anchor (1 anchor), entangled_row, mechanic root_anchor; `p2` (0.65) + moss_guard, withered_crown,
+mechanic withered_crown, 2 anchors per cast and `entangled_row` on 2 anchor rows, transition 1.5 s then `root_anchor`;
+`p3` (0.30) + forest_last_knot, mechanic forest_last_knot, `every_nth` {forest_last_knot, 3}, transition 1.5 s. The
+three heavy skills (`entangled_row`, `withered_crown`, `forest_last_knot`, recovery >= 1.2 s) have `interruptible: false`
+(D9): while they wind up / warn FloorLayer frames her four cells in ivory (`PatternController.uninterruptible_tell`).
+A phase transition clears the red and makes her invulnerable for `transition.sec` (D14, 1.5 s).
+Match `forest_witch`: `boss_max_hp` **1210**, `brain: pattern`, `enemy: forest_witch`, `arena {shape: boss_hall}`,
+`brain_set` aggressive (movement), no traits. HP (D8 "pack budget"): a boss = 4-7 x a normal; 5.5 x 140 = 770 effective
+at floor 3 -> 770 / 0.6375 = 1208 -> written 1210 (floor 1 635, floor 3 771, floor 5 1044).
+
+New optional keys (P2.4, read by `EnemySkillsConfig`; an unknown enum value refuses the skill with a problem line):
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `pattern.anchor_rows` | int >= 1 | A `row_of_anchor` skill also offers the same window on every distinct row holding a live marker (newest first, up to this many), each row keeping >= `min_cells`; the controller keeps the plans with the MOST rows that pass F1 / F2, so it falls back to one row when two would break the red ceiling. Witch `entangled_row`: 1, overridden to 2 in phases 2-3 | 1 |
+| `followup.relative_to: "first_shift"` | enum value | The followup = every first-strike cell moved by each `offsets` entry, turned by the first plan's rotation plus each followup rotation (Withered Crown: `[[0, 1]]`, rotations `[0, 180]` = the same bar one row / column over on either side) | — |
+| `followup.exclude_first` | bool | Drop followup candidates that touch a first-strike cell (Branch Lattice's extra cell is NEW) | false |
+| `followup.prefer` | `"none"` \| `"anchor_row"` | `anchor_row`: keep the candidates nearer the newest marker's row than the followup's origin when any is (Branch Lattice grows toward the anchor's row); no marker or none nearer = all kept | `none` |
+| `effects.damage_no_markers` | number >= 0 | Damage of the strike when NO marker is alive at resolve time (Forest's Last Knot: 22 -> 11; its followup has `requires_anchor: 1`) | absent = `damage` |
+| `weight: 0` | number | A skill with weight 0 is never picked by the weighted choice, only when forced (`every_nth` / `on_enter`): Forest's Last Knot | — |
+
+Also P2.4 (code, no key): a marker skill placing several markers in one cast puts them in different rows when it can
+(one marker per cast picks exactly as before); the boss never steps onto its own markers (`BossBrain.extra_own_blocked_fn`
++ a blocker on the boss's mover, wired in `CombatView._setup_pattern_brain`; applies to every pattern enemy with markers).
+Dev arg: `--pattern=<id> --pattern-hp=<ratio>` starts the pattern enemy at ratio x max HP so a phased boss changes phase at
+once (0.6 = Witch phase 2, 0.25 = phase 3), for captures.
 
 Fairness change in P2.3 (`FairnessCheck.escape_path`, stricter than spec 4.1): the escape path never walks THROUGH a
 hazard (Thorns, burning) or a cracking cell, so a plan that can only be escaped across Thorns is not fair and the

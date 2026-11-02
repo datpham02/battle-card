@@ -138,7 +138,7 @@ func _initialize() -> void:
 	check(runnable == total, "RunConfig.from_node runnable for every match x kind (%d/%d)" % [runnable, total])
 	check(RunConfig.from_node(cfg, 0, "goblin_scout", "battle", 5).matches[0]["arena_seed"] == RunConfig.from_node(cfg, 0, "goblin_scout", "battle", 5).matches[0]["arena_seed"], "from_node arena_seed deterministic")
 	check(RunConfig.from_node(cfg, 0, "goblin_scout", "battle", 5).matches[0]["arena_seed"] != RunConfig.from_node(cfg, 0, "goblin_scout", "battle", 6).matches[0]["arena_seed"], "arena_seed follows run_seed")
-	check(float(cfg.get_match_def(0, "forest_witch")["boss_max_hp"]) == 162.0 and cfg.get_match_def(0, "wolf")["brain_set"] == "balanced", "ch1 matches kept (wolf balanced since the 022 tuning; boss HP x1.08 in Story 026)")
+	check(float(cfg.get_match_def(0, "forest_witch")["boss_max_hp"]) == 1210.0 and cfg.get_match_def(0, "wolf")["brain_set"] == "balanced", "ch1 matches kept (wolf balanced since the 022 tuning; Forest Witch 1210 written since P2.4, D8 pack budget)")
 	check(cfg.get_match_def(0, "wolf_alpha").has("arena") and cfg.get_match_def(0, "nope").is_empty(), "get_match_def has arena; unknown empty")
 	check(ChapterMapGen.generate({}, 1, 0).size() == 7 and ChapterMapGen.generate({"columns": 5}, 1, 0).is_empty() and ChapterMapGen.generate({"columns": [{}]}, 1, 0).size() == 1, "bad spec tolerated (empty -> fallback skeleton, non-array -> [])")
 	var dflt: ChaptersConfig = ChaptersConfig.from_dictionary({})

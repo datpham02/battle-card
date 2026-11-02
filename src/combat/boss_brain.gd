@@ -91,6 +91,9 @@ var _debug: Dictionary = {}
 var _anchor_cache: Dictionary = {}
 var _cut_candidates: Array[Dictionary] = []
 var _status: StatusEffects = null
+## P2.4: Callable() -> Array of enemy-half cells the boss must never step onto (the pattern brain's root anchors: the
+## Forest Witch never walks onto her own anchors, spec 7.1); invalid = none. Read every think, blocked like a hole.
+var extra_own_blocked_fn: Callable = Callable()
 var _learning: BossLearning = null
 ## Current destination: {cell, purpose, path_style_in_use, target_uid (pickup), from_cell and
 ## juke (dodge)}; empty when the boss has nowhere to go.
@@ -266,6 +269,10 @@ func decide(ctx: Dictionary) -> Dictionary:
 		var thorn_avoid: float = float(_weights.get("thorn_avoid", 0.0))
 		for cell: Vector2i in _status.thorn_cells(CombatState.Side.ENEMY):
 			_thorn_pen[cell] = thorn_avoid * float(_status.thorns_at(CombatState.Side.ENEMY, cell).get("damage", 0.0))
+	if extra_own_blocked_fn.is_valid():
+		for cell: Variant in extra_own_blocked_fn.call() as Array:
+			if not own_blocked.has(cell as Vector2i):
+				own_blocked.append(cell as Vector2i)
 	_mire_pen = {}
 	_hazard_debug = {}
 	_crumble_cost = 0.0

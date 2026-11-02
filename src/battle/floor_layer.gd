@@ -139,7 +139,7 @@ static func pattern_telegraph_state(pattern: PatternController, config: CombatCo
 ## P2.3 (spec section 8 "drawn by code"): what the pattern brain shows besides red, for the dynamic layer:
 ## `markers` = [{cell, kind}] (root anchor / wreath on the enemy half: a dark wood / moss square, no red, no glow),
 ## `outline` = cells framed in ivory (the Rootling creep's destination while it winds up; the enemy's cells while its
-## Guard holds). {} when nothing shows. Drawn UNDER the red (F6).
+## Guard holds, or (P2.4) while an uninterruptible skill winds up / warns). {} when nothing shows. Drawn UNDER the red (F6).
 static func pattern_extras_state(pattern: PatternController, status: StatusEffects, state: CombatState) -> Dictionary:
 	if pattern == null:
 		return {}
@@ -150,7 +150,9 @@ static func pattern_extras_state(pattern: PatternController, status: StatusEffec
 	var target: Vector2i = pattern.move_target_cell()
 	if target != BoardGrid.NO_CELL:
 		outline.append(target)
-	if status != null and state != null and status.get_guard_left(CombatState.Side.ENEMY) > 0.0 and not state.is_enemy_dead():
+	# P2.4 (spec 3.6, D9): an uninterruptible skill winding up / warning frames the enemy in ivory too (same frame as Guard).
+	var framed: bool = pattern.uninterruptible_tell() or (status != null and status.get_guard_left(CombatState.Side.ENEMY) > 0.0)
+	if state != null and framed and not state.is_enemy_dead():
 		for cell: Vector2i in state.enemy_footprint_cells():
 			if not outline.has(cell):
 				outline.append(cell)

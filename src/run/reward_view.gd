@@ -709,8 +709,11 @@ func _detail_panel_rect(vp: Vector2) -> Rect2:
 		var offer: Array[String] = _flow.get_pending_reward()
 		var i: int = offer.find(_selected_card)
 		var rects: Array[Rect2] = _card_rects(vp, offer.size(), _dual())
-		if i >= 0 and i < rects.size() and not CardFace.shows_text(rects[i], vp.y):
-			return CardFace.detail_rect(rects[i], vp)
+		# Card layout v2: a face whose text is cut ("…") opens the panel too.
+		if i >= 0 and i < rects.size():
+			var skill: Dictionary = _offer_skill(_selected_card)
+			if not CardFace.face_text_complete(skill, CardText.describe_resolved(skill), [], rects[i], vp.y):
+				return CardFace.detail_rect(rects[i], vp)
 	elif _detail_kind == DETAIL_RELIC:
 		var relics: Array[String] = _relic_choices()
 		var i: int = relics.find(_selected_relic)
@@ -923,14 +926,20 @@ func _draw_card_compact(rect: Rect2, id: String, levels: Dictionary) -> void:
 # detail panel a first tap opens ([method _draw_detail_panel]).
 func _draw_card(rect: Rect2, id: String, levels: Dictionary) -> void:
 	var upgrade: bool = RewardRoller.is_upgrade(id, levels, _max_level())
-	var current: int = int(levels.get(id, 0))
-	var shown_level: int = current + 1 if upgrade else 1
+	var shown_level: int = int(levels.get(id, 0)) + 1 if upgrade else 1
 	var skill: Dictionary = _flow.get_cards().resolved(id, shown_level)
 	# An upgrade shows the level the pick gives ("Lia ngang +2", gold).
 	var title: String = tr(str(skill.get("name_key", id)))
 	var tag: String = (tr(TEXT_LEVEL_SUFFIX) % shown_level) if upgrade else ""
 	CardFace.draw_skill(self, rect, skill, title, tag, CardText.describe_resolved(skill), id == _selected_card, UiButtons.is_pressed_at(self, rect), false, [], id)
 	_draw_new_badge(rect, UNLOCK_KIND_CARD, id)
+
+
+# Offer card [param id] resolved at the level the pick gives (as [method _draw_card] shows it).
+func _offer_skill(id: String) -> Dictionary:
+	var levels: Dictionary = _flow.get_deck_levels()
+	var upgrade: bool = RewardRoller.is_upgrade(id, levels, _max_level())
+	return _flow.get_cards().resolved(id, int(levels.get(id, 0)) + 1 if upgrade else 1)
 
 
 # Story 037: a small "Mới" tab on the top edge of the card at [param rect] when [param kind] / [param id] was

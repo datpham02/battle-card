@@ -2278,6 +2278,10 @@ func _setup_pattern_brain(brain_config: BossBrainConfig) -> void:
 	_pattern.external_red_fn = Callable(self, "trait_warning_cells")
 	_boss.extra_step_lock_fn = Callable(_pattern, "is_busy")
 	_pattern.markers_changed.connect(_mark_floor_dirty)
+	# P2.4 (spec 7.1): the boss never steps onto its own markers: the brain plans around them and the mover refuses them.
+	var pattern: PatternController = _pattern
+	_boss.get_brain().extra_own_blocked_fn = Callable(pattern, "marker_cells")
+	_boss.get_mover().add_blocker(func(cell: Vector2i) -> bool: return pattern.marker_cells().has(cell))
 
 
 ## Story 025: true while the boss is rooted by its own swing (see BossController.is_step_locked).
