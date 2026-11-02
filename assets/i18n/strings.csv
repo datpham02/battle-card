@@ -70,8 +70,6 @@ ui.run_hud.pause_title,TẠM DỪNG,PAUSED
 ui.run_hud.pause_boss_swing,%s · %s,%s · %s
 ui.run_hud.resume,Tiếp tục,Resume
 ui.run_hud.leave_run,Thoát chuyến leo (đã lưu),Leave climb (saved)
-ui.run_hud.movement_joystick,Di chuyển: Joystick,Movement: Joystick
-ui.run_hud.movement_pad,Di chuyển: Nút,Movement: Buttons
 ui.run_hud.deck_label,Bộ: %d lá,Deck: %d
 ui.run_hud.run_over_title,CHUYẾN LEO KẾT THÚC,CLIMB OVER
 ui.run_hud.run_won_title,CHUYẾN LEO THẮNG,CLIMB WON
@@ -834,10 +832,6 @@ ui.hud.place_hint_short,Kéo khối lên đất địch rồi thả,"Drag the bl
 ui.title.settings,Cài đặt,Settings
 ui.settings.title,CÀI ĐẶT,SETTINGS
 ui.settings.back,Về,Back
-ui.settings.movement,Di chuyển,Movement
-ui.settings.movement_hint,Cần gạt ảo hoặc bàn phím mũi tên trên màn hình,Virtual joystick or an on-screen arrow pad
-ui.settings.joystick,Cần gạt,Joystick
-ui.settings.pad,Mũi tên,Arrow pad
 ui.settings.hints,Gợi ý điều khiển,Control hints
 ui.settings.hints_hint,Hiện chữ hướng dẫn cạnh các nút trong trận,Show help labels next to the battle buttons
 ui.settings.reduce_motion,Giảm chuyển động,Reduce motion
@@ -853,3 +847,42 @@ ui.settings.card_time_hint,Thời gian đặt khối và chọn lá trong trận
 ui.settings.card_time_normal,3 s,3 s
 ui.settings.card_time_long,6 s,6 s
 ui.settings.card_time_unlimited,Không giới hạn,No limit
+boss.rootling.name,Rễ Con,Rootling
+boss.mossbound_sentry.name,Lính Gác Rêu,Mossbound Sentry
+boss.greycap_sporeling.name,Nấm Mũ Xám,Greycap Sporeling
+boss.ancient_root_sentinel.name,Vệ Binh Rễ Cổ,Ancient Root Sentinel
+boss.mistbriar_matron.name,Mẹ Gai Sương,Mistbriar Matron
+enemy_skill.root_prick.name,Rễ Đâm,Root Prick
+enemy_skill.root_prick.counter,Bước sang ô khác trước khi rễ trồi lên.,Step off the cell before the root breaks through.
+enemy_skill.creep.name,Bò Rễ,Creep
+enemy_skill.creep.counter,Đánh vào ô viền ngà mà nó sắp bò tới.,Hit the ivory-framed cell it is creeping to.
+enemy_skill.slab_tap.name,Gõ Phiến Đá,Slab Tap
+enemy_skill.slab_tap.counter,"Bước vuông góc với thanh đỏ, đừng bước dọc theo nó.","Step across the red bar, not along it."
+enemy_skill.brace.name,Gồng Mình,Brace
+enemy_skill.brace.counter,"Đánh trước khi nó gồng xong, dùng đòn xuyên giáp, hoặc chờ 3 giây.","Strike before it finishes bracing, use a piercing strike, or wait 3 s."
+enemy_skill.spore_squares.name,Mưa Bào Tử,Spore Squares
+enemy_skill.spore_squares.counter,Rời góc: bước ra phía mở của chữ L.,Leave the corner: step out through the open side of the L.
+enemy_skill.seedbed.name,Luống Gai,Seedbed
+enemy_skill.seedbed.counter,Đừng bước vào Bãi Gai; luôn còn một lối ra.,Do not step into the Thorns; one way out always stays open.
+enemy_skill.sentinel_anchor.name,Mốc Rễ,Root Anchor
+enemy_skill.sentinel_anchor.counter,Đánh khối từ 2 ô trở lên trúng mốc: nó bị choáng 1 giây.,Hit the anchor with a block of 2 or more cells: it is stunned for 1 s.
+enemy_skill.branch_net.name,Lưới Cành,Branch Net
+enemy_skill.branch_net.counter,Rời hàng của mốc; phá mốc trước lần đánh lặp lại.,Leave the anchor's row; break the anchor before the repeat.
+enemy_skill.bark_shift.name,Vỏ Sụp,Bark Shift
+enemy_skill.bark_shift.counter,Ô đỏ sẽ nứt rồi rớt: đừng đứng lên đó.,The red cell will crack and drop: do not stand on it.
+enemy_skill.thorn_fork.name,Gai Rẽ Nhánh,Thorn Fork
+enemy_skill.thorn_fork.counter,"Rời ô đầu, chờ ô đỏ thứ hai rồi chạy theo trục còn lại.","Leave the first cell, wait for the second red, then move along the other axis."
+enemy_skill.wreath_guard.name,Vòng Hoa Che Chắn,Wreath Guard
+enemy_skill.wreath_guard.counter,"Đập vòng hoa để phá giáp, hoặc dùng đòn xuyên giáp.","Break the wreath to drop its guard, or use a piercing strike."
+ui.status.frozen.desc,Không bước được cho tới khi tan băng; vẫn tung phép được.,You cannot step until it thaws; you can still cast.
+ui.status.root.name,Trói,Rooted
+ui.status.root.desc,Rễ giữ chân: không bước được; vẫn tung phép được.,Roots hold your feet: you cannot step; you can still cast.
+ui.status.slow.name,Chậm,Slowed
+ui.status.slow.desc,Mỗi bước hồi lâu hơn.,Each step takes longer to recover.
+ui.status.burn.desc,Ô bạn đứng đang cháy: mất máu mỗi nhịp. Bước ra khỏi lửa.,The cell you stand on is burning: you lose HP every tick. Step out of the fire.
+ui.status.fragile.desc,Đòn kế tiếp trúng bạn mạnh hơn; mỗi đòn tiêu một tầng.,The next hit on you deals more damage; each hit uses one stack.
+ui.status.chill.desc,Đủ tầng Giá Lạnh sẽ vỡ băng và gây sát thương.,Enough Chill stacks shatter for damage.
+ui.status.guard.name,Giáp tạm,Guard
+ui.status.guard.desc,Giáp tạm thời giảm sát thương nhận vào; đòn xuyên giáp bỏ qua nó.,Temporary armour lowers the damage taken; piercing hits ignore it.
+ui.hud.resonance_label,Cộng hưởng ×%s · %d ô · −%d,Resonance ×%s · %d cells · −%d
+ui.run_hud.intro_resonance,Cộng hưởng,Resonance

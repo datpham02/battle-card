@@ -15,6 +15,7 @@ const BOSS_CELL: Vector2i = Vector2i(4, 1)
 
 var combat: CombatView
 var sv: HoldSlotsView
+var hud: CutHudView
 var hold: HoldSlots
 var flow: CutFlow
 var lib: PieceLibrary
@@ -165,7 +166,10 @@ func _initialize() -> void:
 		await process_frame
 	var battle: Node = rc.get_battle()
 	combat = battle.get_node("CombatView") as CombatView
+	# The user's real settings file may hold another card time: pin the normal one (the place window is timed).
+	combat.set_card_time(SettingsStore.CARD_TIME_NORMAL)
 	sv = battle.get_node("HoldSlotsView") as HoldSlotsView
+	hud = battle.get_node("CutHudView") as CutHudView
 	hold = sv.get_slots()
 	state = combat.get_state()
 	flow = combat.get_cut_flow()
@@ -176,7 +180,6 @@ func _initialize() -> void:
 	var plan: CastPlan = combat.get_cast_plan()
 	var skill_cfg: SkillConfig = combat.get_skill_config()
 	var rot_c: Vector2 = ScreenLayout.rotate_button_rect(VP).get_center()
-	var cancel_c: Vector2 = ScreenLayout.cancel_button_rect(VP).get_center()
 	var cast_c: Vector2 = ScreenLayout.confirm_button_rect(VP).get_center()
 	var sc: int = combat.get_grid().side_cols
 	var cell_a := Vector2i(sc + 1, 1)  # bar3 across the boss row (the enemy half is 3 wide)
@@ -210,12 +213,20 @@ func _initialize() -> void:
 	_check("piece 2 drag started in the place window", combat.is_dragging() and combat.is_placing())
 	var ghost: Array[Vector2i] = combat.get_placement().get_cells()
 	_check("lifted ghost (finger over piece 1) avoids piece 1 cells", ghost.size() == 2 and _disjoint(ghost, plan.cells()), str(ghost))
+	# Controls v3: no resonance while the pieces do not tile the featured shape (the plain total reads instead).
+	await process_frame
+	await process_frame
+	_check("controls v3: no resonance label before a match", not hud.get_board_labels().has("resonance") and hud.get_board_labels().has("total"), str(hud.get_board_labels()))
 	var size0: Vector2i = combat.get_placing_piece().size()
 	await _tap(1, rot_c)
 	_check("Xoay by finger 1 rotated the dragged piece, drag alive", combat.is_dragging() and combat.get_placing_piece().size() == Vector2i(size0.y, size0.x) and size0.x != size0.y, "%s -> %s" % [size0, combat.get_placing_piece().size()])
 	await _tap(1, rot_c)
 	await _touch_drag(0, combat.drag_point_for_cell(cell_b))
 	_check("ghost on the block spot reports featured while dragging", combat.joined_is_featured(combat.get_placement().get_cells()), str(combat.get_placement().get_cells()))
+	await process_frame
+	await process_frame
+	_check("controls v3: resonance label (gold, no total) while the ghost completes the shape", hud.get_board_labels().has("resonance") and not hud.get_board_labels().has("total"), str(hud.get_board_labels()))
+	_check("controls v3: resonance text names the multiplier, cells and damage", hud.resonance_label_text(1.5, 5, 45).contains("5") and hud.resonance_label_text(1.5, 5, 45).contains("45"), hud.resonance_label_text(1.5, 5, 45))
 	var t_pre: float = combat.get_place_time_left()
 	await _touch(0, combat.drag_point_for_cell(cell_b), false)
 	var t_post: float = combat.get_place_time_left()
@@ -223,12 +234,18 @@ func _initialize() -> void:
 	_check("a join adds no time (the +1.5 s rule is gone)", t_post <= t_pre + 0.001 and t_post > 0.0, "pre=%.2f post=%.2f" % [t_pre, t_post])
 	_check("slot 1 spent", hold.get_piece(1) == null)
 	_check("glow state: plan is featured (block)", combat.is_plan_featured())
+	await process_frame
+	await process_frame
+	_check("controls v3: resonance label kept in the place window", hud.get_board_labels().has("resonance"), str(hud.get_board_labels()))
 
 	# --- Tap piece 2 on the board: detached to its slot, cells shrink, still in the place window.
 	var p2cell: Vector2i = plan.piece_cells(1)[0]
 	await _tap(0, ScreenLayout.cell_center(combat.get_grid(), VP, p2cell))
 	_check("tap on piece 2 detaches it back to its slot", plan.piece_count() == 1 and plan.cells().size() == 3 and _shape(1) == "bar2" and combat.is_placed(), str(plan.cells()))
 	_check("glow off after detach", not combat.is_plan_featured())
+	await process_frame
+	await process_frame
+	_check("controls v3: resonance label gone after the detach", not hud.get_board_labels().has("resonance"), str(hud.get_board_labels()))
 
 	# --- Overlap: dropping piece 2 on piece 1's cell never overlaps (snaps beside it or is refused).
 	await _touch_drag_piece(0, 1, cell_a, true)
@@ -250,7 +267,7 @@ func _initialize() -> void:
 	_check("card needing 5 cells is locked with 3 cells (menu stays)", flow.is_menu_open() and not actor.is_swinging())
 	await _touch_drag_piece(0, 1, cell_b, true)
 	_check("no join while the menu is open: piece 2 stays in the bag", plan.piece_count() == 1 and _shape(1) == "bar2" and not combat.is_placing() and flow.is_menu_open())
-	await _tap(0, cancel_c)
+	await _tap(0, ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 	_check("Huy in the menu returns piece 1", not flow.is_menu_open() and _shape(0) == "bar3" and plan.piece_count() == 0)
 
 	# --- Non-featured 2-piece join (mirror of the block) before Tung phép: dai_dao, swing = union, no bonus.
@@ -278,7 +295,7 @@ func _initialize() -> void:
 	await _touch_drag_piece(0, 0, cell_a, true)
 	await _touch_drag_piece(0, 1, cell_b, true)
 	_check("two pieces joined before Huy", plan.piece_count() == 2 and hold.get_piece(0) == null and hold.get_piece(1) == null)
-	await _tap(0, cancel_c)
+	await _tap(0, ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 	_check("Huy in the place window returns BOTH pieces", not combat.is_placed() and not flow.is_menu_open() and _shape(0) == "bar3" and _shape(1) == "bar2" and plan.piece_count() == 0 and not actor.is_swinging())
 
 	# --- Huy in the menu returns BOTH pieces.
@@ -286,13 +303,13 @@ func _initialize() -> void:
 	await _touch_drag_piece(0, 1, cell_b, true)
 	await _tap(0, cast_c)
 	_check("two pieces joined, menu open", flow.is_menu_open() and plan.piece_count() == 2)
-	await _tap(0, cancel_c)
+	await _tap(0, ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 	_check("Huy in the menu returns BOTH pieces", not flow.is_menu_open() and _shape(0) == "bar3" and _shape(1) == "bar2" and plan.piece_count() == 0)
 
 	# --- Huy while piece 2 is still in the finger returns piece 1 and ends the drag.
 	await _touch_drag_piece(0, 0, cell_a, true)
 	await _touch_drag_piece(0, 1, cell_b, false)
-	await _tap(1, cancel_c)
+	await _tap(1, ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 	_check("Huy (finger 1) mid-drag: piece 1 back, drag over", not combat.is_placed() and not combat.is_placing() and _shape(0) == "bar3" and _shape(1) == "bar2")
 	await _touch(0, combat.drag_point_for_cell(cell_b), false)
 	_check("late release after Huy does nothing", not combat.is_placed() and not flow.is_menu_open() and _shape(1) == "bar2")
@@ -367,7 +384,7 @@ func _initialize() -> void:
 	await _touch_drag_piece(0, 2, Vector2i(sc, 2), true)
 	_check("cap 4: 3 + 1 cells fits", plan.piece_count() == 2 and plan.cells().size() == 4, str(plan.cells()))
 	cfg.max_cast_cells = 0
-	await _tap(0, cancel_c)
+	await _tap(0, ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 	_check("Huy returns both after the cap test", not combat.is_placed() and _shape(0) == "bar3" and _shape(2) == "mono")
 
 	print("FAILS=%d" % fails)

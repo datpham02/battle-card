@@ -1,5 +1,5 @@
 extends SceneTree
-## Story 044 Part B: the floating joystick in the real main scene (default control mode).
+## Story 044 Part B: the floating joystick in the real main scene (the only movement control since 2026-11-01).
 ## Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
 ## Intents: a touch in the stick zone steps once on entering a direction and again each time the
 ## UnitMover cooldown ends while held; release stops; a second finger outside the zone (the bag
@@ -61,7 +61,7 @@ func _wait_ready(mover: UnitMover) -> void:
 
 
 func _initialize() -> void:
-	SettingsStore.set_movement_override(SettingsStore.MOVEMENT_JOYSTICK)
+	SettingsStore.reset_shared()
 	var main: Node = load("res://src/main.tscn").instantiate()
 	var flow := main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())
@@ -87,7 +87,7 @@ func _initialize() -> void:
 	for cell: Vector2i in combat.get_grid().player_cells():
 		drops.pick_up_at(cell, true)
 	drops.set_blocked_cells(combat.get_grid().player_cells())
-	_check("joystick mode is active", dpad.is_joystick_mode())
+	_check("the stick is idle at the start", not reader.is_active())
 	_check("start cell (1,1)", state.player_cell == Vector2i(1, 1), str(state.player_cell))
 
 	# --- Press outside the zone does not start the stick.

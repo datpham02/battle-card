@@ -3,9 +3,15 @@ extends SceneTree
 ## Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
 ## Intents: selecting a piece (tap or drag) with Focus ready = full stop (boss, drops, boss step
 ## cooldown frozen) for ~4 s real, then 8 s cooldown; PLACING on cooldown = 0.2x (menu_time_scale),
-## no Focus; d-pad locked while placing (the d-pad area is the Xoay button then: a press rotates,
-## never steps), d-pad live again when not placing; Focus ends on timeout / cancel (deselected) /
+## no Focus; movement locked while placing (the stick zone is the Xoay button then: a press rotates,
+## never steps), the joystick steps again when not placing; Focus ends on timeout / cancel (deselected) /
 ## confirm / death.
+## 2026-11-01: the pad mode was removed (joystick only): steps are driven with a stick flick in the stick zone.
+## Timing is measured on the GAME clock ([member clock]: the sum of min(frame delta, combat.json max_tick_sec)),
+## the same clock the Focus timers and the place window run on. The old wall-clock (Time.get_ticks_msec)
+## measures failed intermittently in full-suite runs (FAILS=2): under load a frame can take longer than
+## max_tick_sec, the game then deliberately advances only max_tick_sec (hitch cap), so Focus lasted "4 s" of
+## game time but more than 4.5 s of wall time, and the 8 s cooldown likewise overran its 0.7 s tolerance.
 
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
@@ -17,12 +23,55 @@ var hold: HoldSlots
 var focus: FocusController
 var mover: UnitMover
 var lib: PieceLibrary
+## Game clock: seconds of capped frame time (see the header), advanced by [method _process] every frame.
+var clock: float = 0.0
+var max_tick: float = CombatConfig.load_from_file().max_tick_sec
+const ZONE_POINT: Vector2 = Vector2(150, 600)
+const FLICK_PX: float = 55.0
 
 
 func _check(name: String, ok: bool, extra: String = "") -> void:
 	print(("PASS " if ok else "FAIL ") + name + " " + extra)
 	if not ok:
 		fails += 1
+
+
+# MainLoop hook: runs once per frame (before the scene's nodes), the same capped step CombatView takes.
+func _process(delta: float) -> bool:
+	clock += minf(delta, max_tick)
+	return false
+
+
+func _touch(index: int, p: Vector2, pressed: bool) -> void:
+	var ev := InputEventScreenTouch.new()
+	ev.index = index
+	ev.pressed = pressed
+	ev.position = p
+	root.push_input(ev, true)
+	await process_frame
+
+
+func _touch_drag(index: int, p: Vector2) -> void:
+	var ev := InputEventScreenDrag.new()
+	ev.index = index
+	ev.position = p
+	root.push_input(ev, true)
+	await process_frame
+
+
+# One joystick flick: press in the stick zone, push FLICK_PX toward [param dir], release.
+func _stick_flick(dir: Vector2i) -> void:
+	await _touch(7, ZONE_POINT, true)
+	await _touch_drag(7, ZONE_POINT + Vector2(dir) * FLICK_PX)
+	await _touch(7, ZONE_POINT + Vector2(dir) * FLICK_PX, false)
+
+
+# Diagnostics for the Focus-start checks (an intermittent full-suite miss of "active for death test" could not be
+# reproduced in 10 instrumented runs): what the tap left behind.
+func _focus_diag() -> String:
+	return "placing=%s placed=%s menu=%s sel=%s ready=%s cooldown=%s reasons=%s clock=%.2f" % [combat.is_placing(),
+		combat.is_placed(), combat.get_cut_flow().is_menu_open(), hold.get_selected_indices(), focus.is_ready(),
+		focus.is_on_cooldown(), reasons, clock]
 
 
 func _on_ended(r: String) -> void:
@@ -63,9 +112,10 @@ func _key(code: Key) -> void:
 		await process_frame
 
 
+# Waits [param sec] of game clock.
 func _wait_real(sec: float) -> void:
-	var end: int = Time.get_ticks_msec() + int(sec * 1000.0)
-	while Time.get_ticks_msec() < end:
+	var end: float = clock + sec
+	while clock < end:
 		await process_frame
 
 
@@ -86,10 +136,10 @@ func _cond_busy_cut() -> bool:
 
 
 func _wait_while(cond: Callable, limit_sec: float) -> float:
-	var t0: int = Time.get_ticks_msec()
-	while cond.call() and float(Time.get_ticks_msec() - t0) < limit_sec * 1000.0:
+	var t0: float = clock
+	while cond.call() and clock - t0 < limit_sec:
 		await process_frame
-	return float(Time.get_ticks_msec() - t0) / 1000.0
+	return clock - t0
 
 
 # Fills every free bag slot with a bar2 piece (not square, so a rotation is visible).
@@ -112,8 +162,7 @@ func _fresh(drops: FieldDrops) -> float:
 
 
 func _initialize() -> void:
-	# Story 044: these suites click the 3x3 pad; the default control is the floating joystick.
-	SettingsStore.set_movement_override(SettingsStore.MOVEMENT_PAD)
+	SettingsStore.reset_shared()
 	var main: Node = load("res://src/main.tscn").instantiate()
 	var flow := main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())
@@ -130,6 +179,9 @@ func _initialize() -> void:
 		await process_frame
 	var battle: Node = rc.get_battle()
 	combat = battle.get_node("CombatView") as CombatView
+	# The timings below are the normal card time (3 s place window); the player's real user://settings.json may hold
+	# "6 s" or "no limit", so the match is pinned to normal whatever the file says.
+	combat.set_card_time(SettingsStore.CARD_TIME_NORMAL)
 	sv = battle.get_node("HoldSlotsView") as HoldSlotsView
 	hold = sv.get_slots()
 	focus = combat.get_focus()
@@ -141,20 +193,19 @@ func _initialize() -> void:
 	var boss: BossController = combat.get_boss()
 	var cut_flow: CutFlow = combat.get_cut_flow()
 	var skill_cfg: SkillConfig = combat.get_skill_config()
-	var rects: Dictionary = ScreenLayout.dpad_rects(VP)
-	var cancel_c: Vector2 = ScreenLayout.cancel_button_rect(VP).get_center()
 	var rot_rect: Rect2 = ScreenLayout.rotate_button_rect(VP)
 	boss.set_active(true)
 	_check("focus ready at start", focus.is_ready())
 	_check("Xoay hidden / not placing at start", not combat.is_placing())
-	_check("rotate button covers the d-pad buttons", rot_rect.has_point(rects[Vector2i.LEFT].get_center()) and rot_rect.has_point(rects[Vector2i.DOWN].get_center()))
+	# Controls v3: Xoay is a 64 px square in the bottom-left row, inside the stick zone (the stick is off while placing).
+	_check("rotate button sits in the stick zone, apart from the stick press point", ScreenLayout.stick_zone_rect(VP).encloses(rot_rect) and not ScreenLayout.rotate_hit_rect(VP).has_point(ZONE_POINT) and ScreenLayout.stick_zone_rect(VP).has_point(ZONE_POINT))
 	_fill()
 	var tracked: FieldPoint = drops.debug_place("B2", Vector2i(2, 0), 30.0)
 	await _wait_while(_cond_mover_busy, 3.0)
 
 	# --- Tap with Focus ready: full stop.
 	var cell0: Vector2i = state.player_cell
-	var t_start: int = Time.get_ticks_msec()
+	var t_start: float = clock
 	await _click(sv.get_slot_rect(0).get_center())
 	await process_frame
 	_check("tap piece -> PLACING + focus active", combat.is_placing() and focus.is_active())
@@ -169,46 +220,48 @@ func _initialize() -> void:
 	_check("boss drops frozen", absf(_fresh(boss.get_drops()) - boss_fresh0) < 0.0001)
 	_check("boss step cooldown frozen", absf(boss.get_mover().get_cooldown_remaining() - boss_cd) < 0.0001)
 	var size0: Vector2i = combat.get_placing_piece().size()
-	await _click(rects[Vector2i.LEFT].get_center())
-	_check("d-pad press while placing = Xoay (rotates, no step)", combat.get_placing_piece().size() == Vector2i(size0.y, size0.x) and state.player_cell == cell0, "%s %s" % [combat.get_placing_piece().size(), state.player_cell])
+	await _click(ZONE_POINT)
+	_check("stick zone press off the buttons while placing: no step, no rotation", combat.get_placing_piece().size() == size0 and state.player_cell == cell0 and combat.is_placing(), "%s %s" % [combat.get_placing_piece().size(), state.player_cell])
+	await _click(rot_rect.get_center())
+	_check("Xoay press while placing rotates (no step)", combat.get_placing_piece().size() == Vector2i(size0.y, size0.x) and state.player_cell == cell0, "%s %s" % [combat.get_placing_piece().size(), state.player_cell])
 	await _key(KEY_DOWN)
 	_check("arrow key ignored while placing", state.player_cell == cell0 and mover.is_ready(), str(state.player_cell))
 	_check("movement locked / try_step_player false", combat.is_movement_locked() and not combat.try_step_player(Vector2i.LEFT))
 	await _wait_while(_cond_focus_active, 6.0)
-	var total: float = float(Time.get_ticks_msec() - t_start) / 1000.0
-	_check("timeout after ~4 s real", absf(total - 4.0) < 0.5 and reasons == ["timeout"], "%f %s" % [total, str(reasons)])
-	var cd_start: int = Time.get_ticks_msec()
+	var total: float = clock - t_start
+	_check("timeout after ~4 s (game clock)", absf(total - 4.0) < 0.5 and reasons == ["timeout"], "%f %s" % [total, str(reasons)])
+	var cd_start: float = clock
 	_check("still placing after timeout (selection kept)", combat.is_placing() and hold.is_selected(0))
 	_check("cooldown running", focus.is_on_cooldown())
-	_check("d-pad still locked while placing on cooldown", combat.is_movement_locked())
+	_check("movement still locked while placing on cooldown", combat.is_movement_locked())
 	boss.set_active(false)
 
 	# --- PLACING on cooldown runs at menu_time_scale (0.2x); not placing = full speed.
 	var f1: float = tracked.freshness_left
-	var t1: int = Time.get_ticks_msec()
+	var t1: float = clock
 	await _wait_real(1.0)
-	var rate_placing: float = (f1 - tracked.freshness_left) / (float(Time.get_ticks_msec() - t1) / 1000.0)
+	var rate_placing: float = (f1 - tracked.freshness_left) / (clock - t1)
 	_check("placing on cooldown slows to ~0.2x", absf(rate_placing - skill_cfg.menu_time_scale) < 0.08, "rate=%.3f" % rate_placing)
-	await _click(cancel_c)
+	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
 	await process_frame
 	_check("Huy: not placing, Xoay gone", not combat.is_placing() and not combat.is_movement_locked())
 	var f2: float = tracked.freshness_left
-	var t2: int = Time.get_ticks_msec()
+	var t2: float = clock
 	await _wait_real(0.5)
-	var rate_free: float = (f2 - tracked.freshness_left) / (float(Time.get_ticks_msec() - t2) / 1000.0)
+	var rate_free: float = (f2 - tracked.freshness_left) / (clock - t2)
 	_check("not placing: full speed", rate_free > 0.8, "rate=%.3f" % rate_free)
 	var cell1: Vector2i = state.player_cell
 	var expect: Vector2i = cell1 + Vector2i.LEFT if cell1.x > 0 else cell1 + Vector2i.RIGHT
 	var dir: Vector2i = Vector2i.LEFT if cell1.x > 0 else Vector2i.RIGHT
-	await _click(rects[dir].get_center())
-	_check("d-pad steps again when not placing", state.player_cell == expect, "%s -> %s" % [cell1, state.player_cell])
+	await _stick_flick(dir)
+	_check("joystick steps again when not placing", state.player_cell == expect, "%s -> %s" % [cell1, state.player_cell])
 	await _wait_while(_cond_mover_busy, 3.0)
 
 	# --- Reselect on cooldown: no Focus; a piece can still be placed (drag -> menu).
 	await _click(sv.get_slot_rect(1).get_center())
 	await process_frame
 	_check("selected on cooldown: placing, no focus", combat.is_placing() and not focus.is_active())
-	await _click(cancel_c)
+	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
 	state.set_enemy_cell(BOSS_CELL)
 	var slot1: Vector2 = sv.get_slot_rect(1).get_center()
 	var finger: Vector2 = combat.drag_point_for_cell(BOSS_CELL)
@@ -219,7 +272,7 @@ func _initialize() -> void:
 	await _mouse_button(finger, false)
 	_check("placing works on cooldown (piece committed: place window)", combat.is_placed() and not cut_flow.is_menu_open())
 	await _wait_while(_cond_focus_not_ready, 9.0)
-	var cd_total: float = float(Time.get_ticks_msec() - cd_start) / 1000.0
+	var cd_total: float = clock - cd_start
 	_check("ready ~8 s after timeout", absf(cd_total - 8.0) < 0.7 and focus.is_ready(), str(cd_total))
 
 	# --- Cancel (Huy) ends it: reason deselected.
@@ -228,8 +281,8 @@ func _initialize() -> void:
 	reasons.clear()
 	await _click(sv.get_slot_rect(1).get_center())
 	await process_frame
-	_check("active again (tap)", focus.is_active())
-	await _click(cancel_c)
+	_check("active again (tap)", focus.is_active(), _focus_diag())
+	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
 	await process_frame
 	_check("Huy ends it (deselected) + cooldown", not focus.is_active() and reasons == ["deselected"] and focus.is_on_cooldown(), str(reasons))
 	await _wait_while(_cond_focus_not_ready, 9.0)
@@ -247,7 +300,7 @@ func _initialize() -> void:
 	_check("release confirms: focus ended (confirmed) + cooldown", combat.is_placed() and not focus.is_active() and reasons == ["confirmed"] and focus.is_on_cooldown(), str(reasons))
 	await _click(ScreenLayout.confirm_button_rect(VP).get_center())
 	_check("Tung phép after the confirm: menu open, Focus not restarted", cut_flow.is_menu_open() and not focus.is_active() and reasons == ["confirmed"], str(reasons))
-	await _click(cancel_c)
+	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
 	_check("Huy in menu returns the piece", not cut_flow.is_menu_open() and hold.get_piece(1) != null)
 	await _wait_while(_cond_focus_not_ready, 9.0)
 
@@ -256,7 +309,7 @@ func _initialize() -> void:
 	reasons.clear()
 	await _click(sv.get_slot_rect(2).get_center())
 	await process_frame
-	_check("active for death test", focus.is_active())
+	_check("active for death test", focus.is_active(), _focus_diag())
 	state.damage(CombatState.Side.PLAYER, 99999.0)
 	await process_frame
 	await process_frame

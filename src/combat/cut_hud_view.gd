@@ -17,6 +17,12 @@ extends Node2D
 ## (reactor charges, fuse bar, frost aura), cracked / warned cells on the board and the phase banner;
 ## (8) Story 027: thorn zones (inward sawtooth, light tint) on both halves with a remaining-time bar, plus a short
 ## flash when a unit enters thorns (the seal zone was deleted 2026-11-01, ADR-0001 Phase 1 cleanup).
+## Controls v3 (design/quick-specs/bo-cuc-dieu-khien-v3-2026-11-02.md): Tung phép / Xoay / Hủy are the bottom-left row
+## (ScreenLayout.confirm_button_rect ...; taps on the larger *_hit_rect), the place window and Focus burn as a gold
+## fuse round Tung phép (HudFuse, [method cast_fuse]), the menu's 3 s as a fuse round the frame of its cards, the menu's
+## Hủy sits in Tung phép's place; the forecast / total / resonance labels on the board are bare EffectText (the ghost
+## turns gold on a resonant join); the player's buffs / debuffs are the top-left row (StatusRow, tap = tooltip) under the
+## relics, the cooldown column under them; the Awaken button hides while a block is placed or the menu is open.
 ## It owns no game state: it reads CombatView and calls press_cast() / confirm_placement() / CutFlow.choose().
 ##
 ## Input is read in _input (like DPadView) and consumed, so HandInputController never sees a
@@ -35,14 +41,21 @@ const GHOST_HIT_OUTLINE: Color = Color(0.1, 0.65, 0.2, 0.95)
 const GHOST_MISS_TINT: Color = Color(0.9, 0.2, 0.15, 0.4)
 const GHOST_MISS_OUTLINE: Color = Color(0.85, 0.1, 0.1, 0.95)
 const GHOST_OFF_FILL: Color = Color(0.7, 0.7, 0.75, 0.35)
+## Controls v3: the ghost of a resonant join (the placed pieces match the featured shape) turns gold.
+const GHOST_RESONANT_TINT: Color = Color(1.0, 0.82, 0.15, 0.45)
+const GHOST_RESONANT_OUTLINE: Color = Color(1.0, 0.86, 0.3, 1.0)
+const TEXT_RESONANCE_LABEL: String = "ui.hud.resonance_label"
+## Controls v3: the Tung phep label size (nominal; MenuFont fits it to the 100 px button), the chamfer of the card
+## menu's fuse frame and the smallest plain size board effect text is scaled from (720p px).
+const CAST_FONT_SIZE: int = 30
+const MENU_FRAME_CUT_PX: float = 12.0
+const EFFECT_BASE_FONT_PX: float = 16.0
 const GHOST_OFF_OUTLINE: Color = Color(0.3, 0.3, 0.35, 0.5)
 const TEXT_PLACE_HIT: String = "ui.hud.place_hit"
 const TEXT_PLACE_MISS: String = "ui.hud.place_miss"
-const TEXT_PLACE_OFF: String = "ui.hud.place_off"
 ## Story 028: join + featured shape.
 const TEXT_CAST_TOTAL: String = "ui.hud.cast_total"
 const TEXT_CAST_TOTAL_PREVIEW: String = "ui.hud.cast_total_preview"
-const TEXT_FEATURED_CORNER: String = "ui.hud.featured_corner"
 const TEXT_FEATURED_LABEL: String = "ui.hud.featured_label"
 const TEXT_JOIN_CAP: String = "ui.hud.join_cap"
 const TEXT_EFFECT_PIN: String = "ui.hud.pinned"
@@ -52,37 +65,24 @@ const TEXT_EFFECT_FROST: String = "keyword.frost"
 ## Story 027 zone effect names (effect id = StatusEffects.KIND_THORNS).
 const TEXT_EFFECT_THORNS: String = "keyword.thorns"
 const FEATURED_GOLD: Color = Color(1.0, 0.82, 0.15)
-const FEATURED_GOLD_DARK: Color = Color(0.55, 0.42, 0.08)
-const FEATURED_IDLE_FILL: Color = Color(0.62, 0.5, 0.2, 0.9)
-const FEATURED_BACK: Color = Color(0.1, 0.09, 0.08, 0.8)
 const FEATURED_GLOW_HZ: float = 2.0
 const FEATURED_FONT_SIZE: int = 15
-const FEATURED_ICON_PAD: float = 4.0
-## Story 046: the featured tile's padding left of the label, its chamfer and the label's widest width, px.
-const FEATURED_TILE_PAD: float = 10.0
-const FEATURED_TILE_CUT: float = 8.0
-const FEATURED_LABEL_MAX_W: float = 320.0
-const FEATURED_LABEL_GAP: float = 8.0
 const DETACH_MARK_RADIUS: float = 11.0
 const DETACH_MARK_BACK: Color = Color(0.118, 0.106, 0.141, 0.95)
 const TEXT_PLACE_HINT: String = "ui.hud.place_hint_short"
-## Story 044 Part C: placement hint font (shrinks to fit two lines of the hint band, never below the minimum).
+## Controls v3: placement hint font (720p px; shrinks to fit its rect, never below the minimum).
 const PLACE_HINT_FONT_SIZE: int = 18
 const PLACE_HINT_MIN_FONT_SIZE: int = 12
-const PLACE_HINT_MAX_LINES: int = 2
 ## TD-016: one line on the card menu countdown bar while another piece can still join the cast.
 ## Overlays that cover the battle (paths under the main scene); the relic strip hides while one is shown.
 const OVERLAY_PATHS: Array[String] = ["RewardView", "GameFlow/FateView", "GameFlow/EndingView"]
 const TEXT_CANCEL: String = "ui.hud.cancel"
-const TEXT_ROTATE: String = "ui.hud.rotate"
-## Rotate button (Story 024): fill, glyph radius (share of the button's short side), how far the glyph
-## sits above the centre (share of height), glyph line width, the label's top (share) and font size.
-const ROTATE_BACK: Color = Color("2B2735", 0.95)
-const ROTATE_GLYPH_RADIUS_RATIO: float = 0.2
-const ROTATE_GLYPH_UP_RATIO: float = 0.14
-const ROTATE_GLYPH_WIDTH: float = 9.0
-const ROTATE_LABEL_TOP_RATIO: float = 0.62
-const ROTATE_FONT_SIZE: int = 56
+## Rotate button (controls v3: a 64 px square, glyph only): the angular arrow's half size (share of the button
+## height) and its line width (720p px).
+const ROTATE_GLYPH_RADIUS_RATIO: float = 0.22
+const ROTATE_GLYPH_WIDTH: float = 5.0
+## Battle HUD pass 2026-11-01: dark rim around the rotate arrow (px each side).
+const ROTATE_GLYPH_RIM: float = 2.0
 ## Ring under the dragging finger.
 const FINGER_RADIUS: float = 26.0
 const FINGER_FILL: Color = Color(1.0, 1.0, 1.0, 0.18)
@@ -99,21 +99,16 @@ const TEXT_OUTLINE_LIGHT: Color = Color(1.0, 1.0, 1.0, 0.9)
 ## Story 044 Part C (art bible 7.2): no dark control band; dark fill (Ink #1B1722 at 85 %) and a 2 px frame only
 ## under each button and the card menu.
 const BUTTON_BACK: Color = Color(0.106, 0.09, 0.133, 0.85)
-const BUTTON_FRAME_WIDTH: float = 2.0
 const BUTTON_READY_BACK: Color = Color(0.25, 0.5, 0.3, 0.95)
 const BUTTON_OUTLINE: Color = Color(0.95, 0.9, 0.78)
 const PANEL_BACK: Color = Color(0.106, 0.09, 0.133, 0.85)
-const BAR_BACK: Color = HudSkin.HP_GROOVE
-const BAR_FILL: Color = Color(0.72, 0.56, 0.2)
 ## Alpha multiplier of a locked / dimmed button.
 const DIM_ALPHA: float = 0.4
 ## 2026-11-01 card menu: the light grey see-through overlay over the whole screen while the cards are shown (the
-## board and the placed ghost stay readable through it; spec range 0.3..0.6), the cooldown icon frame, and the
+## board and the placed ghost stay readable through it; spec range 0.3..0.6) and the
 ## reason plate on a card that cannot be picked ("cần N ô", cursed, not yet).
 const MENU_OVERLAY_ALPHA: float = 0.45
 const MENU_OVERLAY_COLOR: Color = Color(0.78, 0.78, 0.82, MENU_OVERLAY_ALPHA)
-const COOLDOWN_ICON_FRAME: Color = Color(0.05, 0.04, 0.06, 0.95)
-const COOLDOWN_ICON_FRAME_WIDTH: float = 2.0
 const MENU_REASON_BACK: Color = Color(0.08, 0.07, 0.1, 0.9)
 const MENU_DIM_BACKING: Color = Color("1F1D2A")
 const MENU_DIM_BACKING_INSET: float = 3.0
@@ -212,11 +207,10 @@ const PIN_BONUS_TEXT: Color = Color(0.2, 0.4, 0.95)
 const LEVEL_SEPARATOR: String = " "
 
 ## Focus (Story 012). While the match is paused: a cool blue-grey tint over the board area (both
-## halves), a soft vignette of a few bands plus a thin frame around the viewport, and the
-## "TẬP TRUNG" countdown bar above the CONFIRM button. On cooldown the same place shows a greyed
-## bar that fills up as the cooldown recovers; when READY and nothing is selected, a faint dot.
+## halves), a soft vignette of a few bands plus a thin frame around the viewport. Controls v3: its time left is the
+## gold fuse round Tung phep (no bar, no tag); its cooldown is not shown.
 ## 2026-10-31 (whole-game skin): Focus keeps a cool identity but in skin colours: an Ink dim over the board, a
-## steel (#8FA3B8) frame and bar, the low-time end in Lattice gold (orange is Burn).
+## steel (#8FA3B8) frame.
 const FOCUS_BOARD_TINT: Color = Color("1B1722", 0.35)
 const FOCUS_FRAME_COLOR: Color = Color("8FA3B8", 0.9)
 const FOCUS_FRAME_WIDTH: float = 6.0
@@ -224,34 +218,6 @@ const FOCUS_FRAME_WIDTH: float = 6.0
 const FOCUS_VIGNETTE_BANDS: int = 3
 const FOCUS_VIGNETTE_BAND_WIDTH: float = 10.0
 const FOCUS_VIGNETTE_ALPHA: float = 0.3
-const FOCUS_BAR_BACK: Color = HudSkin.HP_GROOVE
-const FOCUS_BAR_FILL: Color = Color("8FA3B8")
-const FOCUS_BAR_LOW_FILL: Color = Color("FFD45C")
-const FOCUS_BAR_OUTLINE: Color = HudSkin.MIST
-const FOCUS_COOLDOWN_BACK: Color = HudSkin.HP_GROOVE
-const FOCUS_COOLDOWN_FILL: Color = Color(0.5, 0.5, 0.53, 0.9)
-const FOCUS_COOLDOWN_TEXT: Color = HudSkin.TEXT_DIM
-const FOCUS_READY_DOT: Color = Color("8FA3B8", 0.7)
-const FOCUS_READY_DOT_RADIUS: float = 6.0
-const FOCUS_FONT_SIZE: int = 18
-## The countdown fill turns orange when this share of the Focus time (or less) is left
-## (a quarter: the last 1 s of a 4 s Focus).
-const FOCUS_LOW_RATIO: float = 0.25
-## "DỪNG" tag in the tag zone above the Cancel button (ScreenLayout.slot_side_left_rect), right-aligned
-## (the FULL label is left-aligned in the same zone): size, pause glyph bar size and gap, inner padding.
-const FOCUS_TAG_WIDTH: float = 78.0
-const FOCUS_TAG_HEIGHT: float = 26.0
-## Story 044 Part C: the tag keeps this gap to the zone's top and bottom (it shrinks to fit a short zone,
-## so it never reaches the Cancel button below).
-const FOCUS_TAG_V_GAP: float = 2.0
-const FOCUS_TAG_GLYPH_WIDTH: float = 4.0
-const FOCUS_TAG_GLYPH_HEIGHT: float = 12.0
-const FOCUS_TAG_GLYPH_GAP: float = 3.0
-const FOCUS_TAG_PAD: float = 6.0
-
-const TEXT_FOCUS: String = "ui.hud.focus"
-const TEXT_FOCUS_COOLDOWN: String = "ui.hud.focus_cooldown"
-const TEXT_FOCUS_PAUSED_TAG: String = "ui.hud.focus_paused_tag"
 
 const TEXT_PIN: String = "ui.hud.pin"
 const TEXT_FEINT: String = "ui.hud.feint"
@@ -655,6 +621,15 @@ var _pop_hazards: TileHazards = null
 ## Story 032: the in-match relic strip (display only) and demo-only relic ids used when CombatView has none.
 var _relic_strip: RelicStrip = null
 var _debug_relics: Array[String] = []
+## Controls v3: the status whose tooltip is open and its seconds left (real time).
+var _status_tip_id: String = ""
+var _status_tip_left: float = 0.0
+## Controls v3: effect labels on screen, label id -> seconds since it appeared (its pop), and the ids drawn since the
+## last _process (a label not drawn for a frame is forgotten, so it pops again when it comes back).
+var _label_ages: Dictionary = {}
+var _label_seen: Dictionary = {}
+## The effect label ids of the last completed _draw (tests / captures).
+var _labels_drawn: Array[String] = []
 
 
 func _ready() -> void:
@@ -691,6 +666,13 @@ func _process(delta: float) -> void:
 		_odd_hint_started = true
 		_odd_hint_left = ODD_HINT_SEC
 	_tick_dot_pops(delta)
+	_status_tip_left = maxf(_status_tip_left - delta, 0.0)
+	for id: Variant in _label_ages.keys():
+		if _label_seen.has(id):
+			_label_ages[id] = float(_label_ages[id]) + delta
+		else:
+			_label_ages.erase(id)
+	_label_seen.clear()
 	for cell: Vector2i in _thorn_flashes.keys():
 		var left: float = float(_thorn_flashes[cell]) - delta
 		if left <= 0.0:
@@ -898,13 +880,16 @@ func _piece_key(code: Key) -> bool:
 func _press_at(pos: Vector2, emulated: bool) -> bool:
 	var vp: Vector2 = get_viewport_rect().size
 	var flow: CutFlow = _combat.get_cut_flow()
-	if _combat.is_placing() and ScreenLayout.rotate_button_rect(vp).has_point(pos):
+	# Controls v3: a tap on a buff / debuff frame opens (or closes) its tooltip; any other press closes it.
+	if not flow.is_menu_open() and _status_press(vp, pos, emulated):
+		return true
+	if _combat.is_placing() and ScreenLayout.rotate_hit_rect(vp).has_point(pos):
 		# Real touches only act (the emulated mouse copy of the first finger is swallowed). Any finger
 		# may press it, including the left thumb while the right finger drags.
 		if not emulated:
 			_combat.rotate_piece()
 		return true
-	if (flow.is_menu_open() or _combat.is_placing() or _combat.is_placed()) and ScreenLayout.cancel_button_rect(vp).has_point(pos):
+	if (flow.is_menu_open() or _combat.is_placing() or _combat.is_placed()) and ScreenLayout.cancel_hit_rect(vp, flow.is_menu_open()).has_point(pos):
 		if not emulated:
 			_combat.cancel_placement()
 		return true
@@ -926,11 +911,11 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 			if not emulated:
 				_combat.detach_second_piece()
 			return true
-	if _has_signature() and ScreenLayout.signature_button_rect(vp).has_point(pos):
+	if _signature_shown() and ScreenLayout.signature_button_rect(vp).has_point(pos):
 		if not emulated:
 			_try_activate_signature()
 		return true
-	if _combat.is_confirm_visible() and ScreenLayout.confirm_button_rect(vp).has_point(pos):
+	if _combat.is_confirm_visible() and ScreenLayout.confirm_hit_rect(vp).has_point(pos):
 		if not emulated:
 			_combat.press_cast()
 		return true
@@ -963,6 +948,67 @@ func _board_press(pos: Vector2, emulated: bool) -> bool:
 # True when CombatView exposes the signature interface and the character has a signature.
 func _has_signature() -> bool:
 	return _sig != null and _sig.has_method("get_signature") and _sig.get_signature() != null
+
+
+## Controls v3: true while the Awaken button is on screen: the character has a signature and no block is being
+## placed, no cast waits in the place window and the card menu is closed (it hides while placing).
+func _signature_shown() -> bool:
+	return _has_signature() and not _combat.is_confirm_visible() and not _combat.get_cut_flow().is_menu_open()
+
+
+# --- Controls v3: the buff / debuff row (top-left, under the relics) --------------------------------------------
+
+
+## The player's active statuses (StatusEffects.active_statuses for the player's side and cell); [] without a match.
+func get_player_statuses() -> Array[Dictionary]:
+	if _combat == null or _combat.get_status() == null or _combat.get_state() == null:
+		return []
+	return _combat.get_status().active_statuses(CombatState.Side.PLAYER, _combat.get_state().player_cell)
+
+
+## DEV-ONLY (DemoArgs controls_statuses): opens the tooltip of status [param id] as a tap on its frame would.
+func debug_open_status_tooltip(id: String) -> void:
+	_status_tip_id = id
+	_status_tip_left = StatusRow.TIP_SEC
+
+
+## The status id whose tooltip is open ("" = none).
+func get_status_tooltip() -> String:
+	return _status_tip_id if _status_tip_left > 0.0 else ""
+
+
+# A press at [param pos]: on a status frame (grown by half the gap) it toggles that status's tooltip and is consumed;
+# anywhere else it closes an open tooltip and is NOT consumed (the press still reaches the control under it).
+func _status_press(vp: Vector2, pos: Vector2, emulated: bool) -> bool:
+	var entries: Array[Dictionary] = get_player_statuses()
+	var rects: Array[Rect2] = ScreenLayout.status_icon_rects(vp, entries.size())
+	var half_gap: float = roundf(ScreenLayout.STATUS_ICON_GAP_PX * ScreenLayout.controls_scale(vp) * 0.5)
+	for i: int in rects.size():
+		if rects[i].grow(half_gap).has_point(pos):
+			if not emulated:
+				var id: String = str(entries[i]["id"])
+				var open: bool = get_status_tooltip() == id
+				_status_tip_id = "" if open else id
+				_status_tip_left = 0.0 if open else StatusRow.TIP_SEC
+			return true
+	if not emulated:
+		_status_tip_left = 0.0
+	return false
+
+
+# The buff / debuff row and the open tooltip (hidden under a reward / fate / ending overlay).
+func _draw_status_row(vp: Vector2) -> void:
+	if _overlay_shown():
+		return
+	var s: float = ScreenLayout.controls_scale(vp)
+	var entries: Array[Dictionary] = get_player_statuses()
+	var rects: Array[Rect2] = ScreenLayout.status_icon_rects(vp, entries.size())
+	var tip: String = get_status_tooltip()
+	for i: int in rects.size():
+		StatusRow.draw_entry(self, rects[i], entries[i], s)
+		if str(entries[i]["id"]) == tip:
+			var keys: Array[String] = StatusRow.text_keys(tip)
+			StatusRow.draw_tooltip(self, StatusRow.tooltip_rect(vp, rects[i], s), tip, tr(keys[0]), tr(keys[1]), s)
 
 
 func _signature_id() -> String:
@@ -1082,7 +1128,7 @@ func _draw_board_banner(vp: Vector2, text: String, color: Color, left: float) ->
 # usable = a pulsing light fill; active = the signature colour fill with the time left as a thin bar under
 # the text; dimmed whenever it cannot be pressed (menu / Focus / pause). Rect and hit test are unchanged.
 func _draw_signature_button(vp: Vector2) -> void:
-	if not _has_signature():
+	if not _signature_shown():
 		return
 	var rect: Rect2 = ScreenLayout.signature_button_rect(vp)
 	var active: bool = _sig.is_signature_active()
@@ -1095,11 +1141,10 @@ func _draw_signature_button(vp: Vector2) -> void:
 	var fill: Color = HudSkin.NIGHT_STONE
 	if active:
 		fill = HudSkin.NIGHT_STONE.lerp(SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR), 0.45)
-	HudSkin.diamond(self, center, r, Color(fill, alpha), Color(HudSkin.GRID_LIGHT, alpha), SIGNATURE_DIAMOND_LINE)
+	var pulse: float = 0.0
 	if is_ready and usable and not active:
-		var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * SIGNATURE_PULSE_HZ)
-		HudSkin.diamond(self, center, r - SIGNATURE_DIAMOND_LINE, Color(HudSkin.GRID_LIGHT, SIGNATURE_PULSE_ALPHA * pulse), Color(0, 0, 0, 0), 0.0)
-	HudSkin.icon(self, "awakening", center, 1.0, Color(1.0, 1.0, 1.0, alpha))
+		pulse = 0.5 + 0.5 * sin(_blink_time * TAU * SIGNATURE_PULSE_HZ)
+	_draw_signature_emblem(center, r, fill, alpha, pulse)
 	var formation: FormationMap = _combat.get_formation()
 	var status: String = ""
 	var color: Color = HudSkin.TEXT_DIM
@@ -1126,6 +1171,31 @@ func _draw_signature_button(vp: Vector2) -> void:
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), SIGNATURE_COLORS.get(_signature_id(), SIGNATURE_DEFAULT_COLOR))
 
 
+## Battle HUD pass 2026-11-01: the Awaken emblem's texture. null (now) = the vector diamond; once the pixel diamond is
+## generated (PixelLab, waiting for the user's approval) assign it here and [method _draw_signature_emblem] draws it
+## instead, centred, at the menu's whole-number density.
+static var signature_emblem_texture: Texture2D = null
+
+
+# The Awaken emblem at [param center] with half-diagonal [param r]: [param fill] (the active colour mix or Night
+# Stone), [param alpha] for the unusable dim, [param pulse] 0..1 the ready glow. The ONE place that draws it, so the
+# vector diamond can be swapped for [member signature_emblem_texture] without touching the button logic.
+func _draw_signature_emblem(center: Vector2, r: float, fill: Color, alpha: float, pulse: float) -> void:
+	if signature_emblem_texture != null:
+		var s: float = float(PixelFrame.scale_for(get_viewport_rect().size.y))
+		var size: Vector2 = Vector2(signature_emblem_texture.get_size()) * s
+		var at := Rect2((center - size * 0.5).round(), size)
+		var tex: Texture2D = PixelFrame.nearest(signature_emblem_texture)
+		draw_texture_rect(tex, at, false, Color(Color.WHITE.lerp(fill.lightened(0.4), 0.0 if fill == HudSkin.NIGHT_STONE else 0.35), alpha))
+		if pulse > 0.0:
+			draw_texture_rect(tex, at, false, Color(HudSkin.GRID_LIGHT, SIGNATURE_PULSE_ALPHA * pulse))
+		return
+	HudSkin.diamond(self, center, r, Color(fill, alpha), Color(HudSkin.GRID_LIGHT, alpha), SIGNATURE_DIAMOND_LINE)
+	if pulse > 0.0:
+		HudSkin.diamond(self, center, r - SIGNATURE_DIAMOND_LINE, Color(HudSkin.GRID_LIGHT, SIGNATURE_PULSE_ALPHA * pulse), Color(0, 0, 0, 0), 0.0)
+	HudSkin.icon(self, "awakening", center, 1.0, Color(1.0, 1.0, 1.0, alpha))
+
+
 # Story 046: as _fit_signature_font, measured in the HudSkin Bold font.
 func _fit_skin_font(text: String, width: float, size: int) -> int:
 	var fitted: int = size
@@ -1149,6 +1219,7 @@ func _draw() -> void:
 	if _combat == null or _combat.get_cut_flow() == null or _combat.get_state() == null:
 		return
 	var vp: Vector2 = get_viewport_rect().size
+	_labels_drawn.clear()
 	# Focus overlay first: the preview, markers and buttons stay fully readable above it.
 	_draw_focus_overlay(vp)
 	_draw_formation(vp)
@@ -1156,7 +1227,6 @@ func _draw() -> void:
 	_draw_hazards(vp)
 	# Story 027: zones under every telegraph / label / marker below, so a swing over a zone stays readable.
 	_draw_zones(vp)
-	_draw_featured_icon(vp)
 	_draw_preview(vp)
 	_draw_swing(vp)
 	_draw_boss_queued_swing(vp)
@@ -1175,17 +1245,15 @@ func _draw() -> void:
 	_draw_pins(vp)
 	_draw_dot_pops(vp)
 	_draw_confirm(vp)
-	_draw_place_bar(vp)
 	if not _combat.get_cut_flow().is_menu_open():
 		_draw_cancel(vp)
 	_draw_rotate(vp)
-	_draw_focus_bar(vp)
-	_draw_focus_tag(vp)
 	_draw_signature_effect(vp)
 	_draw_signature_button(vp)
 	_draw_menu(vp)
-	# Above the menu overlay: the cooldowns stay crisp while the cards are picked.
+	# Above the menu overlay: the cooldowns and the buffs / debuffs stay crisp while the cards are picked.
 	_draw_cooldown_column(vp)
+	_draw_status_row(vp)
 	_draw_signature_banner(vp)
 	_draw_phase_banner(vp)
 	if _combat.debug_overlay:
@@ -1295,59 +1363,46 @@ func _draw_focus_overlay(vp: Vector2) -> void:
 	draw_rect(frame.grow(-FOCUS_FRAME_WIDTH * 0.5), FOCUS_FRAME_COLOR, false, FOCUS_FRAME_WIDTH)
 
 
-# Above the CONFIRM button: ACTIVE = "TẬP TRUNG x.x s" countdown (orange in the last quarter);
-# COOLDOWN = greyed bar filling up with "Tập trung còn N s"; READY with nothing selected = a
-# faint dot at the bar's left. Hidden while the card menu is open or the place window bar is shown.
-func _draw_focus_bar(vp: Vector2) -> void:
+# Controls v3: Focus has no bar of its own any more: while it runs, its time is the gold fuse round Tung phép
+# ([method cast_fuse]); the board tint, vignette and frame above say the match is paused.
+
+
+## Controls v3 (pure): which time the Tung phép fuse shows, as Vector2(left, total) seconds; Vector2.ZERO = none.
+## The place window ([param place_left] of [param place_total]) and Focus ([param focus_left] of [param focus_total])
+## both burn round the same button; when both run, the one that ENDS FIRST is shown: it is the deadline that acts
+## next (the automatic cast, or the match starting again), so the fuse never shows a time the player could miss.
+## A clock with no length (unlimited card time, Focus not running) is ignored.
+static func pick_fuse(place_left: float, place_total: float, focus_left: float, focus_total: float) -> Vector2:
+	var place_on: bool = place_total > 0.0 and place_left > 0.0
+	var focus_on: bool = focus_total > 0.0 and focus_left > 0.0
+	if place_on and (not focus_on or place_left <= focus_left):
+		return Vector2(place_left, place_total)
+	if focus_on:
+		return Vector2(focus_left, focus_total)
+	return Vector2.ZERO
+
+
+## Controls v3: the Tung phép fuse now, Vector2(left, total) seconds (see [method pick_fuse]); Vector2.ZERO = none.
+func cast_fuse() -> Vector2:
+	if _combat == null or not _combat.is_confirm_visible():
+		return Vector2.ZERO
+	var place_left: float = 0.0
+	var place_total: float = 0.0
+	if _combat.is_placed():
+		place_left = _combat.get_place_time_left()
+		place_total = _combat.get_place_duration()
 	var focus: FocusController = _combat.get_focus()
-	if focus == null or _combat.get_cut_flow().is_menu_open() or _combat.is_placed():
-		# The place window bar takes this strip while pieces are placed (the card menu covers everything).
-		return
-	var bar: Rect2 = ScreenLayout.focus_bar_rect(vp)
-	if focus.is_active():
-		var max_sec: float = focus.get_max_sec()
-		var ratio: float = 0.0 if max_sec <= 0.0 else clampf(focus.get_time_left() / max_sec, 0.0, 1.0)
-		var fill: Color = FOCUS_BAR_LOW_FILL if ratio <= FOCUS_LOW_RATIO else FOCUS_BAR_FILL
-		_skin_bar(bar, ratio, fill, FOCUS_BAR_BACK)
-		draw_rect(bar, FOCUS_BAR_OUTLINE, false, 1.5)
-		_draw_centered(bar, tr(TEXT_FOCUS) % focus.get_time_left(), FOCUS_FONT_SIZE, HudSkin.TEXT)
-	elif focus.is_on_cooldown():
-		var total: float = focus.get_cooldown_sec()
-		var recovered: float = 1.0 if total <= 0.0 else clampf(1.0 - focus.get_cooldown_left() / total, 0.0, 1.0)
-		_skin_bar(bar, recovered, FOCUS_COOLDOWN_FILL, FOCUS_COOLDOWN_BACK)
-		draw_rect(bar, FOCUS_BAR_OUTLINE, false, 1.5)
-		_draw_centered(bar, tr(TEXT_FOCUS_COOLDOWN) % ceili(focus.get_cooldown_left()), FOCUS_FONT_SIZE, FOCUS_COOLDOWN_TEXT)
-	elif not _combat.is_confirm_visible():
-		var state: CombatState = _combat.get_state()
-		if state.is_player_dead() or state.is_enemy_dead():
-			return
-		draw_circle(Vector2(bar.position.x + FOCUS_READY_DOT_RADIUS, bar.get_center().y), FOCUS_READY_DOT_RADIUS, FOCUS_READY_DOT)
+	var focus_left: float = 0.0
+	var focus_total: float = 0.0
+	if focus != null and focus.is_active():
+		focus_left = focus.get_time_left()
+		focus_total = focus.get_max_sec()
+	return pick_fuse(place_left, place_total, focus_left, focus_total)
 
 
-# "DỪNG" tag with a pause glyph while Focus is ACTIVE: right end of the tag zone above the Cancel button
-# (the FULL label takes the left end), next to slot T3, so the eye gets it near the thumb too.
-func _draw_focus_tag(vp: Vector2) -> void:
-	var focus: FocusController = _combat.get_focus()
-	if focus == null or not focus.is_active():
-		return
-	var tag: Rect2 = focus_tag_rect(vp)
-	_skin_panel(tag, FOCUS_BAR_FILL)
-	var glyph_top: float = tag.get_center().y - FOCUS_TAG_GLYPH_HEIGHT * 0.5
-	var glyph_x: float = tag.position.x + FOCUS_TAG_PAD
-	draw_rect(Rect2(glyph_x, glyph_top, FOCUS_TAG_GLYPH_WIDTH, FOCUS_TAG_GLYPH_HEIGHT), FOCUS_BAR_FILL)
-	draw_rect(Rect2(glyph_x + FOCUS_TAG_GLYPH_WIDTH + FOCUS_TAG_GLYPH_GAP, glyph_top, FOCUS_TAG_GLYPH_WIDTH, FOCUS_TAG_GLYPH_HEIGHT), FOCUS_BAR_FILL)
-	var text_left: float = glyph_x + FOCUS_TAG_GLYPH_WIDTH * 2.0 + FOCUS_TAG_GLYPH_GAP + FOCUS_TAG_PAD
-	var text_rect := Rect2(text_left, tag.position.y, maxf(tag.end.x - text_left, 0.0), tag.size.y)
-	_draw_centered(text_rect, tr(TEXT_FOCUS_PAUSED_TAG), FOCUS_FONT_SIZE, HudSkin.TEXT)
-
-
-## Story 044 Part C: rectangle of the "DỪNG" focus tag: right-aligned in the tag zone
-## (ScreenLayout.slot_side_left_rect), vertically centred, never taller than the zone minus FOCUS_TAG_V_GAP each side.
-static func focus_tag_rect(vp: Vector2) -> Rect2:
-	var side: Rect2 = ScreenLayout.slot_side_left_rect(vp, HoldSlots.MAX_SLOTS)
-	var height: float = maxf(minf(FOCUS_TAG_HEIGHT, side.size.y - FOCUS_TAG_V_GAP * 2.0), 0.0)
-	var width: float = minf(FOCUS_TAG_WIDTH, side.size.x)
-	return Rect2(Vector2(side.end.x - width, side.get_center().y - height * 0.5), Vector2(width, height))
+# Chamfer of a fuse frame round the stone button [param rect]: its corner studs (3 art px at the menu density).
+func _fuse_cut(vp: Vector2) -> float:
+	return float(3 * PixelFrame.scale_for(vp.y))
 
 
 func _draw_cells(vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:
@@ -1372,6 +1427,26 @@ func _fit_hud_font(text: String, width: float, size: int, bold: bool) -> int:
 func _draw_centered(rect: Rect2, text: String, size: int, color: Color) -> void:
 	var fitted: int = _fit_hud_font(text, rect.size.x, size, true)
 	HudSkin.text(self, Vector2(rect.position.x, rect.get_center().y + fitted * 0.35), text, fitted, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true)
+
+
+# Battle HUD pass 2026-11-01: centred single-line Handjet text (MenuFont, the menus' outline), shrunk to fit the
+# rect's width; [param size] is the nominal (Noto) size MenuFont scales.
+func _draw_menu_centered(rect: Rect2, text: String, size: int, color: Color) -> void:
+	# MenuFont.fit_size stops at 60 % of the size; a long Vietnamese line ("Sát thương 24" in the ~75 px forecast
+	# column) keeps shrinking down to SIGNATURE_MIN_FONT_SIZE so nothing is clipped.
+	var fitted: int = MenuFont.fit_size(text, size, rect.size.x)
+	while fitted > SIGNATURE_MIN_FONT_SIZE and _menu_text_width(text, fitted) > rect.size.x:
+		fitted -= 1
+	MenuFont.text(self, Vector2(rect.position.x, roundf(rect.get_center().y + MenuFont.size(fitted) * 0.33)), text, fitted, color,
+		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
+
+
+# Width of [param text] in the menu font at nominal [param size] (HudSkin Bold when the menu font is off).
+func _menu_text_width(text: String, size: int) -> float:
+	var font: Font = MenuFont.font()
+	if font == null:
+		return HudSkin.text_width(text, size, true)
+	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuFont.size(size)).x
 
 
 # 2026-10-31: a Đá Đêm panel (cut top-right / bottom-left) with a [param line] frame, [param alpha] fading both.
@@ -1399,12 +1474,9 @@ func _draw_preview(vp: Vector2) -> void:
 		return
 	var placement: PlacementController = _combat.get_placement()
 	var cells: Array[Vector2i] = placement.get_cells()
-	var info: Rect2 = ScreenLayout.cut_preview_info_rect(vp)
-	var top := Rect2(info.position, Vector2(info.size.x, info.size.y * 0.5))
-	var bottom := Rect2(info.position + Vector2(0.0, info.size.y * 0.5), Vector2(info.size.x, info.size.y * 0.35))
 	if cells.is_empty():
-		var off_text: String = tr(TEXT_PLACE_OFF)
-		_draw_centered(Rect2(info.position, Vector2(info.size.x, info.size.y * 0.7)), off_text, _fit_signature_font(off_text, info.size.x, FONT_SIZE), HudSkin.TEXT_DIM)
+		# Controls v3: the "place it on the enemy's side" hint is bare text just above the bottom-left row.
+		_draw_place_hint(vp)
 		if _combat.is_dragging():
 			# Dim ghost lifted above the finger: releasing here puts the piece back.
 			var unit: Vector2 = ScreenLayout.cell_size(_combat.get_grid(), vp)
@@ -1431,19 +1503,15 @@ func _draw_preview(vp: Vector2) -> void:
 		_draw_odd_corner_mark(vp, cells)
 	if blocked:
 		_draw_cloud_over_cells(vp, cells)
-	# The label rides on the ghost's top-right corner (above a lifted finger, never under it).
+	# Controls v3: the forecast, cell count and damage only on the board beside the ghost, as bare effect text (the
+	# "N ô / sát thương" column under the board is gone).
 	var damage: int = roundi(_combat.get_cut_config().slash_damage(cells.size()))
 	var forecast: String = tr(TEXT_FORECAST_HIDDEN) if blocked else (tr(TEXT_PLACE_HIT) if hit else tr(TEXT_PLACE_MISS))
 	var label: String = "%s · %s · %s" % [forecast, tr(TEXT_CELLS) % cells.size(), tr(TEXT_DAMAGE_NUMBER) % damage]
-	_draw_corner_label(vp, cells, label, ghost_outline, true)
-	# Story 044: the column between Awaken and Cancel is ~75 px at 1280x720, so both lines shrink to fit it.
-	var cells_text: String = tr(TEXT_CELLS) % cells.size()
-	var damage_text: String = tr(TEXT_DAMAGE) % damage
-	# Story 046: light outlined text, the column now sits on the dark backdrop instead of the old beige.
-	var cells_size: int = _fit_hud_font(cells_text, top.size.x, BIG_FONT_SIZE, true)
-	var damage_size: int = _fit_hud_font(damage_text, bottom.size.x, FONT_SIZE, false)
-	HudSkin.text(self, Vector2(top.position.x, top.get_center().y + cells_size * 0.35), cells_text, cells_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, top.size.x, true)
-	HudSkin.text(self, Vector2(bottom.position.x, bottom.get_center().y + damage_size * 0.35), damage_text, damage_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, bottom.size.x)
+	var avoid: Array[Rect2] = []
+	for cell: Vector2i in cells:
+		avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
+	_draw_board_effect(vp, "forecast", cells, label, EffectText.NEUTRAL if blocked else (EffectText.HIT if hit else EffectText.MISS), avoid)
 	if _combat.is_dragging():
 		_draw_finger(_combat.get_drag_point())
 
@@ -1461,6 +1529,11 @@ func _draw_plan_preview(vp: Vector2, _flow: CutFlow, state: CombatState) -> void
 	var blocked: bool = _forecast_blocked()
 	var tint: Color = GHOST_BLOCKED_TINT if blocked else (GHOST_HIT_TINT if hit else GHOST_MISS_TINT)
 	var outline: Color = GHOST_BLOCKED_OUTLINE if blocked else (GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE)
+	# Controls v3: the placed pieces match the featured shape (resonance, computed automatically): the ghost turns gold.
+	var featured: bool = _combat.joined_is_featured(ghost)
+	if featured:
+		tint = GHOST_RESONANT_TINT
+		outline = GHOST_RESONANT_OUTLINE
 	var plan_pieces: Array[Piece] = plan.pieces()
 	for i: int in plan.piece_count():
 		# Story 041: a committed odd piece keeps its magenta edge and sparkle mark under the open card menu.
@@ -1499,52 +1572,84 @@ func _draw_plan_preview(vp: Vector2, _flow: CutFlow, state: CombatState) -> void
 		var refused_cells: Array[Vector2i] = []
 		refused_cells.assign(refusal["cells"])
 		_draw_cells(vp, refused_cells, GHOST_MISS_TINT, GHOST_MISS_OUTLINE)
-		_draw_corner_label(vp, refused_cells, tr(TEXT_JOIN_CAP) % _combat.get_config().max_cast_cells, GHOST_MISS_OUTLINE, true)
+		_draw_board_effect(vp, "join_cap", refused_cells, tr(TEXT_JOIN_CAP) % _combat.get_config().max_cast_cells, EffectText.MISS)
 	elif refused and not ghost.is_empty():
-		_draw_corner_label(vp, ghost, tr(TEXT_JOIN_CAP) % _combat.get_config().max_cast_cells, GHOST_MISS_OUTLINE, true)
-	var featured: bool = _combat.joined_is_featured(ghost)
+		_draw_board_effect(vp, "join_cap", ghost, tr(TEXT_JOIN_CAP) % _combat.get_config().max_cast_cells, EffectText.MISS)
 	if featured:
 		_draw_featured_glow(vp, union)
 	# The readout counts the COMMITTED cast only (what card readiness counts); a piece still being dragged
-	# shows as an addition "(+n)".
+	# shows as an addition "(+n)". A resonant join reads "Cộng hưởng ×1,5 · N ô · −X" in gold instead.
 	var committed: int = plan.total_cells()
 	var damage: float = _combat.get_cut_config().slash_damage(committed)
-	if _combat.is_plan_featured():
-		damage *= float((_combat.get_featured()["bonus"] as Dictionary).get("damage_mult", 1.0))
-	var total: String
-	if ghost.is_empty():
-		total = tr(TEXT_CAST_TOTAL) % [committed, roundi(damage)]
+	var label: String
+	var color: Color = EffectText.NEUTRAL if blocked else (EffectText.HIT if hit else EffectText.MISS)
+	if featured:
+		var bonus: Dictionary = _combat.get_featured()["bonus"] as Dictionary
+		var mult: float = float(bonus.get("damage_mult", 1.0))
+		var cells_now: int = union.size()
+		label = resonance_label_text(mult, cells_now, roundi(_combat.get_cut_config().slash_damage(cells_now) * mult))
+		color = EffectText.GOOD
+	elif ghost.is_empty():
+		label = tr(TEXT_CAST_TOTAL) % [committed, roundi(damage)]
 	else:
-		total = tr(TEXT_CAST_TOTAL_PREVIEW) % [committed, ghost.size(), roundi(damage)]
-	# Labels keep off the shape's cells, the x badge and each other.
+		label = tr(TEXT_CAST_TOTAL_PREVIEW) % [committed, ghost.size(), roundi(damage)]
+	# The label keeps off the shape's cells and the x badge.
 	var avoid: Array[Rect2] = []
 	for cell: Vector2i in union:
 		avoid.append(ScreenLayout.cell_rect(_combat.get_grid(), vp, cell))
 	if plan.piece_count() >= 2 and _combat.is_placed():
 		avoid.append(_detach_mark_rect(vp, plan.piece_cells(plan.piece_count() - 1)))
-	var total_rect: Rect2 = _place_label(vp, union, total, avoid)
-	_draw_label_box(total_rect, total, GHOST_HIT_OUTLINE if hit else GHOST_MISS_OUTLINE, vp)
-	if featured:
-		avoid.append(total_rect)
-		var featured_text: String = _featured_label_text(_combat.get_featured()["bonus"] as Dictionary)
-		_draw_label_box(_place_label(vp, union, featured_text, avoid), featured_text, FEATURED_GOLD_DARK, vp)
+	_draw_board_effect(vp, "resonance" if featured else "total", union, label, color, avoid)
 
 
-# Size of a one-line board label (same metrics as _draw_corner_label).
-func _label_size(vp: Vector2, text: String) -> Vector2:
-	var small: int = int(ScreenLayout.cell_size(_combat.get_grid(), vp).y * LABEL_SMALL_RATIO)
-	var width: float = HudSkin.text_width(text, small, true) + LABEL_PAD * 2.0
-	return Vector2(width, small * LABEL_LINE_SPACING + LABEL_PAD * 2.0)
+## Controls v3: the resonance label, "Cộng hưởng ×1,5 · N ô · −X" ([param mult] in the locale's decimal mark).
+func resonance_label_text(mult: float, cells: int, damage: int) -> String:
+	return tr(TEXT_RESONANCE_LABEL) % [_mult_text(mult), cells, damage]
 
 
-# Picks the label rect around the bounding box of [param cells] (above / below / beside it, clamped to the
-# enemy half of the board) that overlaps the [param avoid] rects least; the first of equal candidates wins.
-func _place_label(vp: Vector2, cells: Array[Vector2i], text: String, avoid: Array[Rect2]) -> Rect2:
+## Controls v3: the ids of the effect labels drawn in the last frame ("forecast", "total", "resonance", "join_cap");
+## tests / captures.
+func get_board_labels() -> Array[String]:
+	return _labels_drawn.duplicate()
+
+
+# Controls v3: bare effect text [param text] in [param color] beside the bounding box of [param cells] (clamped to the
+# enemy half, the spot overlapping [param avoid] least), popping when label [param id] appears.
+func _draw_board_effect(vp: Vector2, id: String, cells: Array[Vector2i], text: String, color: Color, avoid: Array[Rect2] = []) -> void:
+	if cells.is_empty():
+		return
+	var s: float = ScreenLayout.controls_scale(vp)
+	var size: int = _effect_font_size(vp)
+	var box := Vector2(EffectText.width(text, size, s), roundf(size * 1.3))
+	var rect: Rect2 = _place_label(vp, cells, box, avoid)
+	var pop: float = EffectText.pop_scale(_label_age(id), SettingsStore.shared().get_reduce_motion())
+	EffectText.draw(self, Vector2(rect.position.x, roundf(rect.position.y + size * 1.0)), text, size, color, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, s, pop)
+
+
+# Font size of board effect text: EffectText.EFFECT_SCALE x the plain label size (a share of the cell height, at least
+# EFFECT_BASE_FONT_PX at 720p).
+func _effect_font_size(vp: Vector2) -> int:
+	var plain: int = maxi(int(ScreenLayout.cell_size(_combat.get_grid(), vp).y * LABEL_SMALL_RATIO), roundi(EFFECT_BASE_FONT_PX * ScreenLayout.controls_scale(vp)))
+	return EffectText.size_for(plain)
+
+
+# Seconds since effect label [param id] appeared (0 on its first frame); marks it drawn this frame.
+func _label_age(id: String) -> float:
+	if not _label_ages.has(id):
+		_label_ages[id] = 0.0
+	_label_seen[id] = true
+	if not _labels_drawn.has(id):
+		_labels_drawn.append(id)
+	return float(_label_ages[id])
+
+
+# Picks the label rect of [param size] around the bounding box of [param cells] (above / below / beside it, clamped to
+# the enemy half of the board) that overlaps the [param avoid] rects least; the first of equal candidates wins.
+func _place_label(vp: Vector2, cells: Array[Vector2i], size: Vector2, avoid: Array[Rect2]) -> Rect2:
 	var grid: BoardGrid = _combat.get_grid()
 	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
 	for cell: Vector2i in cells:
 		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
-	var size: Vector2 = _label_size(vp, text)
 	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
 	var half_w: float = ScreenLayout.cell_size(grid, vp).x * grid.side_cols
 	var bounds := Rect2(board.position.x + half_w, board.position.y, board.size.x - half_w, board.size.y)
@@ -1563,7 +1668,7 @@ func _place_label(vp: Vector2, cells: Array[Vector2i], text: String, avoid: Arra
 		var pos := Vector2(
 			clampf(spot.x, bounds.position.x, maxf(bounds.end.x - size.x, bounds.position.x)),
 			clampf(spot.y, bounds.position.y, maxf(bounds.end.y - size.y, bounds.position.y)))
-		var rect := Rect2(pos, size)
+		var rect := Rect2(pos.round(), size)
 		var score: float = 0.0
 		for other: Rect2 in avoid:
 			var hit: Rect2 = rect.intersection(other)
@@ -1574,16 +1679,11 @@ func _place_label(vp: Vector2, cells: Array[Vector2i], text: String, avoid: Arra
 	return best
 
 
-func _draw_label_box(back: Rect2, text: String, color: Color, vp: Vector2) -> void:
-	var small: int = int(ScreenLayout.cell_size(_combat.get_grid(), vp).y * LABEL_SMALL_RATIO)
-	_draw_skin_label(back, text, small, color)
-
-
 func _no_cells() -> Array[Vector2i]:
 	return []
 
 
-# Square around the x badge (centred on the second piece's first cell), a bit larger than the drawn disc.
+# Square around the x badge (centred on the second piece's first cell), a bit larger than the drawn diamond.
 func _detach_mark_rect(vp: Vector2, cells: Array[Vector2i]) -> Rect2:
 	if cells.is_empty():
 		return Rect2()
@@ -1592,24 +1692,25 @@ func _detach_mark_rect(vp: Vector2, cells: Array[Vector2i]) -> Rect2:
 	return Rect2(centre - Vector2(half, half), Vector2(half, half) * 2.0)
 
 
-# A small "x" badge on the first cell of the attached second piece: tapping the piece takes it off.
+# A small "x" badge on the first cell of the attached second piece: tapping the piece takes it off. Controls v3: an
+# angular diamond badge (no circles in the HUD).
 func _draw_detach_mark(vp: Vector2, cells: Array[Vector2i]) -> void:
 	if cells.is_empty():
 		return
-	var c: Vector2 = _detach_mark_rect(vp, cells).get_center()
-	draw_circle(c, DETACH_MARK_RADIUS, DETACH_MARK_BACK)
-	draw_arc(c, DETACH_MARK_RADIUS, 0.0, TAU, 24, HudSkin.MIST, 1.5, true)
-	var d: float = DETACH_MARK_RADIUS * 0.5
+	var c: Vector2 = _detach_mark_rect(vp, cells).get_center().round()
+	HudSkin.diamond(self, c, DETACH_MARK_RADIUS + 2.0, DETACH_MARK_BACK, HudSkin.MIST, 1.5)
+	var d: float = DETACH_MARK_RADIUS * 0.45
 	draw_line(c + Vector2(-d, -d), c + Vector2(d, d), HudSkin.IVORY, 3.0)
 	draw_line(c + Vector2(-d, d), c + Vector2(d, -d), HudSkin.IVORY, 3.0)
 
 
-# Pulsing gold frame on every cell of a featured join (the ghosts and the corner icon glow together).
+# Pulsing gold frame on every cell of a resonant join (over the gold ghost).
 func _draw_featured_glow(vp: Vector2, cells: Array[Vector2i]) -> void:
 	var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * FEATURED_GLOW_HZ)
+	if SettingsStore.shared().get_reduce_motion():
+		pulse = 0.5
 	for cell: Vector2i in cells:
 		var rect: Rect2 = ScreenLayout.cell_rect(_combat.get_grid(), vp, cell)
-		draw_rect(rect, Color(FEATURED_GOLD, 0.18 + 0.22 * pulse))
 		draw_rect(rect.grow(-1.0), Color(FEATURED_GOLD, 0.7 + 0.3 * pulse), false, CELL_OUTLINE_WIDTH + 2.0)
 
 
@@ -1640,52 +1741,6 @@ func _featured_effect_name(effect: String) -> String:
 	return ""
 
 
-# True while the cast (or the plan plus the dragged second ghost) is a featured join.
-func _featured_glowing() -> bool:
-	if _combat.get_featured().is_empty() or not _combat.get_cut_flow().is_menu_open():
-		return false
-	var ghost: Array[Vector2i] = _combat.get_placement().get_cells() if _combat.is_placing() else _no_cells()
-	return _combat.joined_is_featured(ghost)
-
-
-# Story 028: the match's featured shape drawn small at the right end of the player's HP text row, with a
-# tiny label to its left; both light up in gold while the cast being built matches it.
-func _draw_featured_icon(vp: Vector2) -> void:
-	var featured: Dictionary = _combat.get_featured()
-	if featured.is_empty():
-		return
-	var glow: bool = _featured_glowing()
-	var rect: Rect2 = ScreenLayout.featured_icon_rect(vp)
-	var pulse: float = 0.5 + 0.5 * sin(_blink_time * TAU * FEATURED_GLOW_HZ)
-	# Story 046: label + icon share one Đá Đêm chamfered tile ending at the icon's right edge, readable on
-	# the canopy; the icon keeps its rect (left of the pause tile) and its size.
-	var text: String = _featured_label_text(featured["bonus"] as Dictionary) if glow else tr(TEXT_FEATURED_CORNER)
-	var text_w: float = minf(HudSkin.text_width(text, FEATURED_FONT_SIZE, true), FEATURED_LABEL_MAX_W)
-	var label := Rect2(rect.position.x - FEATURED_LABEL_GAP - text_w, rect.position.y, text_w, rect.size.y)
-	var tile := Rect2(label.position.x - FEATURED_TILE_PAD, rect.position.y, rect.end.x - label.position.x + FEATURED_TILE_PAD, rect.size.y)
-	# The label must not run into the player's header panel (at 1280x720 "Resonant shape" / "Hình Cộng Hưởng"
-	# would cover the "hp/max" number): when it does not fit, the tile keeps the icon only.
-	var panel_end: float = ScreenLayout.hud_panel_rect(vp, 0).end.x
-	var show_label: bool = tile.position.x >= panel_end + FEATURED_LABEL_GAP
-	if not show_label:
-		tile = rect.grow(FEATURED_TILE_PAD)
-	HudSkin.panel(self, tile, [FEATURED_TILE_CUT, 0.0, 0.0, FEATURED_TILE_CUT], HudSkin.NIGHT_STONE, HudSkin.MIST)
-	var cells: Array[Vector2i] = featured["cells"]
-	var box := Vector2i.ZERO
-	for cell: Vector2i in cells:
-		box = Vector2i(maxi(box.x, cell.x + 1), maxi(box.y, cell.y + 1))
-	var inner: Rect2 = rect.grow(-FEATURED_ICON_PAD)
-	var unit: float = minf(inner.size.x / float(box.x), inner.size.y / float(box.y))
-	var origin: Vector2 = inner.get_center() - Vector2(box) * unit * 0.5
-	var fill: Color = Color(FEATURED_GOLD, 0.8 + 0.2 * pulse) if glow else FEATURED_IDLE_FILL
-	for cell: Vector2i in cells:
-		draw_rect(Rect2(origin + Vector2(cell) * unit, Vector2(unit, unit)).grow(-0.75), fill)
-	draw_rect(rect, FEATURED_GOLD if glow else FEATURED_GOLD_DARK, false, 4.0 if glow else 2.0)
-	if show_label:
-		HudSkin.text(self, Vector2(label.position.x, label.get_center().y + FEATURED_FONT_SIZE * 0.35), text,
-			FEATURED_FONT_SIZE, HudSkin.GRID_LIGHT if glow else HudSkin.TEXT, HORIZONTAL_ALIGNMENT_RIGHT, label.size.x, true)
-
-
 func _draw_swing(vp: Vector2) -> void:
 	var actor: CutActor = _combat.get_cut_actor()
 	if not actor.is_swinging():
@@ -1698,9 +1753,9 @@ func _draw_swing(vp: Vector2) -> void:
 		_draw_odd_corner_mark(vp, actor.get_cells())  # Story 041: the cast holds an Odd Block
 	if vfx_swing:
 		return
-	var info: Rect2 = ScreenLayout.cut_swing_info_rect(vp)
+	# Controls v3: the skill name and countdown as bare effect text on the board by the swing (the centre strip is gone).
 	var text: String = tr(TEXT_SWING) % [_skill_name(actor.get_skill_id()), actor.get_time_left()]
-	_draw_centered(info, text, BIG_FONT_SIZE, SWING_OUTLINE)
+	_draw_corner_label(vp, actor.get_cells(), text, SWING_OUTLINE, true)
 
 
 # Boss swing on the PLAYER's half. Story 046 Part C: the red cells (fill, stripes, edge, fading in with the
@@ -1733,9 +1788,9 @@ func _draw_boss_queued_swing(vp: Vector2) -> void:
 		_draw_odd_corner_mark(vp, cells)  # Story 041
 
 
-# One small line on a white backing, anchored to the bottom-right corner (or, with
-# [param top_right], the top-right corner) of the bounding box of [param cells] and clamped
-# inside the board.
+# One line of bare effect text (controls v3: no box), anchored to the bottom-right corner (or, with
+# [param top_right], the top-right corner) of the bounding box of [param cells] and clamped inside the board. The
+# text takes a light tint of [param color] (the warning's hue), with the ink outline and the shadow of EffectText.
 func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color: Color, top_right: bool = false) -> void:
 	if cells.is_empty():
 		return
@@ -1743,25 +1798,18 @@ func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color
 	var box: Rect2 = ScreenLayout.cell_rect(grid, vp, cells[0])
 	for cell: Vector2i in cells:
 		box = box.merge(ScreenLayout.cell_rect(grid, vp, cell))
-	var small: int = int(ScreenLayout.cell_size(grid, vp).y * LABEL_SMALL_RATIO)
-	var width: float = HudSkin.text_width(text, small, true) + LABEL_PAD * 2.0
-	var height: float = small * LABEL_LINE_SPACING + LABEL_PAD * 2.0
+	var s: float = ScreenLayout.controls_scale(vp)
+	var size: int = _effect_font_size(vp)
+	var width: float = EffectText.width(text, size, s)
+	var height: float = roundf(size * 1.3)
 	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
 	var pos: Vector2 = box.end - Vector2(width, height)
 	if top_right:
 		pos.y = box.position.y
 	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
 	pos.y = clampf(pos.y, board.position.y, maxf(board.end.y - height, board.position.y))
-	var back := Rect2(pos, Vector2(width, height))
-	_draw_skin_label(back, text, small, color)
-
-
-# 2026-10-31: a board tag in the skin: Đá Đêm panel framed in [param color] (green hit / red miss / gold featured),
-# the text in a light tint of that colour, outlined Bold.
-func _draw_skin_label(back: Rect2, text: String, small: int, color: Color) -> void:
-	_skin_panel(back, Color(color, 1.0))
-	HudSkin.text(self, back.position + Vector2(0.0, LABEL_PAD + small * 0.85), text, small, Color(color.lightened(0.55), 1.0),
-		HORIZONTAL_ALIGNMENT_CENTER, back.size.x, true)
+	EffectText.draw(self, Vector2(roundf(pos.x), roundf(pos.y + size)), text, size, Color(color.lightened(0.35), 1.0),
+		HORIZONTAL_ALIGNMENT_CENTER, width, s)
 
 
 # Story 037: "+N" over the player's cell while CombatView.get_heal_flash() runs: rises a little and fades out.
@@ -1870,13 +1918,13 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	if hit and bool(fb.get("featured", false)):
 		# Story 028: a featured-shape hit names its bonus under the HIT box.
 		var bonus_text: String = _featured_label_text({"damage_mult": fb.get("featured_mult", 1.0), "effect": fb.get("featured_effect", "")})
-		var small: int = FEATURED_FONT_SIZE + 3
-		var wide: float = HudSkin.text_width(bonus_text, small, true) + LABEL_PAD * 2.0
+		# Controls v3: bare gold effect text (no pill).
+		var s: float = ScreenLayout.controls_scale(vp)
+		var small: int = EffectText.size_for(FEATURED_FONT_SIZE + 3)
+		var wide: float = EffectText.width(bonus_text, small, s)
 		var board: Rect2 = ScreenLayout.board_rect(grid, vp)
 		var left: float = clampf(cell_rect.get_center().x - wide * 0.5, board.position.x, maxf(board.end.x - wide, board.position.x))
-		var pill := Rect2(left, back.end.y, wide, small * 1.5)
-		_skin_panel(pill, HudSkin.GRID_LIGHT)
-		HudSkin.text(self, pill.position + Vector2(0.0, small * 1.1), bonus_text, small, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, wide, true)
+		EffectText.draw(self, Vector2(roundf(left), roundf(back.end.y + small)), bonus_text, small, EffectText.GOOD, HORIZONTAL_ALIGNMENT_CENTER, wide, s)
 
 
 # --- Story 014: row burner warning ---------------------------------------------
@@ -1957,7 +2005,8 @@ func _draw_pins(vp: Vector2) -> void:
 	if status == null:
 		return
 	var state: CombatState = _combat.get_state()
-	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+	# Controls v3: the player's statuses live in the buff / debuff row (top-left); only the enemy keeps its chips.
+	for side: int in [CombatState.Side.ENEMY]:
 		if side == CombatState.Side.ENEMY and state.is_enemy_dead():
 			continue
 		var chips: Array = []
@@ -2818,6 +2867,9 @@ func _draw_crack(rect: Rect2) -> void:
 		draw_polyline(points, CRACK_LINE, CRACK_LINE_WIDTH)
 
 
+# Controls v3: Tung phép, bottom-left corner (ScreenLayout.confirm_button_rect, 100 x 64 at 720p), the pixel stone
+# PRIMARY button with its gold label, dimmed while it cannot cast, shown only while a block is placed. The place
+# window / Focus time burns round its border as the gold fuse ([method cast_fuse]).
 func _draw_confirm(vp: Vector2) -> void:
 	if not _combat.is_confirm_visible():
 		return
@@ -2828,97 +2880,97 @@ func _draw_confirm(vp: Vector2) -> void:
 	var text: String = tr(TEXT_CONFIRM)
 	if swinging:
 		text = tr(TEXT_COOLDOWN) % actor.get_time_left()
-	# 2026-10-31: the game skin's PRIMARY button (gold line), dimmed while it cannot cast.
-	HudSkin.button(self, rect, text, 0, enabled and UiButtons.is_pressed_at(self, rect), enabled, BIG_FONT_SIZE)
+	UiButtons.draw_button(self, rect, text, UiButtons.Style.PRIMARY, enabled and UiButtons.is_pressed_at(self, rect), enabled, CAST_FONT_SIZE)
+	var fuse: Vector2 = cast_fuse()
+	if fuse.y > 0.0:
+		HudFuse.draw(self, rect, _fuse_cut(vp), HudFuse.burnt_fraction(fuse.x, fuse.y), ScreenLayout.controls_scale(vp))
 
 
-# Story 024: a soft ring under the dragging finger, so the lifted ghost reads as "held from here".
+# Story 024: a soft marker under the dragging finger, so the lifted ghost reads as "held from here". Controls v3: an
+# angular diamond (no circles in the HUD).
 func _draw_finger(at: Vector2) -> void:
-	draw_circle(at, FINGER_RADIUS, FINGER_FILL)
-	draw_arc(at, FINGER_RADIUS, 0.0, TAU, 32, FINGER_OUTLINE, 3.0)
+	HudSkin.diamond(self, at.round(), FINGER_RADIUS, FINGER_FILL, FINGER_OUTLINE, 3.0)
 
 
-# Story 024: the big "Xoay" button over the (locked) d-pad area while PLACING: a clockwise arrow glyph
-# and the label. Any finger may press it, also while another one drags.
+# Controls v3: Xoay, a 64 px square between Tung phép and Hủy while PLACING, the pixel stone NEUTRAL button with an
+# angular clockwise arrow in the menu gold (ink rim). Any finger may press it, also while another one drags.
 func _draw_rotate(vp: Vector2) -> void:
 	if not _combat.is_placing():
 		return
 	var rect: Rect2 = ScreenLayout.rotate_button_rect(vp)
-	# 2026-10-31: the game skin's SECONDARY button (Sương line); glyph and label in Ngà.
-	HudSkin.button(self, rect, "", 1, UiButtons.is_pressed_at(self, rect))
-	var c: Vector2 = rect.get_center() - Vector2(0.0, rect.size.y * ROTATE_GLYPH_UP_RATIO)
-	var radius: float = minf(rect.size.x, rect.size.y) * ROTATE_GLYPH_RADIUS_RATIO
-	var end_angle: float = TAU * 0.8
-	draw_arc(c, radius, 0.0, end_angle, 40, HudSkin.IVORY, ROTATE_GLYPH_WIDTH)
-	var tip: Vector2 = c + Vector2(cos(end_angle), sin(end_angle)) * radius
-	var tangent := Vector2(-sin(end_angle), cos(end_angle))
-	var normal := Vector2(cos(end_angle), sin(end_angle))
-	var head: float = ROTATE_GLYPH_WIDTH * 2.2
-	draw_colored_polygon(PackedVector2Array([tip + tangent * head, tip + normal * head * 0.7, tip - normal * head * 0.7]), HudSkin.IVORY)
-	var label_rect := Rect2(rect.position + Vector2(0.0, rect.size.y * ROTATE_LABEL_TOP_RATIO), Vector2(rect.size.x, rect.size.y * (1.0 - ROTATE_LABEL_TOP_RATIO)))
-	_draw_centered(label_rect, tr(TEXT_ROTATE), ROTATE_FONT_SIZE, HudSkin.IVORY)
-	_draw_place_hint(vp)
+	var pressed: bool = UiButtons.is_pressed_at(self, rect)
+	UiButtons.draw_button(self, rect, "", UiButtons.Style.NEUTRAL, pressed)
+	var sink := Vector2(0.0, 2.0 if pressed else 0.0)
+	var r: float = roundf(rect.size.y * ROTATE_GLYPH_RADIUS_RATIO)
+	var c: Vector2 = (rect.get_center() + sink).round()
+	var w: float = maxf(roundf(ROTATE_GLYPH_WIDTH * ScreenLayout.controls_scale(vp)), 2.0)
+	# Three sides of a square, clockwise from the bottom-left, the head pointing down at the bottom-right.
+	var path := PackedVector2Array([c + Vector2(-r, r * 0.6), c + Vector2(-r, -r), c + Vector2(r, -r), c + Vector2(r, r * 0.15)])
+	var head := PackedVector2Array([c + Vector2(r - w * 1.6, r * 0.15), c + Vector2(r + w * 1.6, r * 0.15), c + Vector2(r, r * 0.15 + w * 1.9)])
+	var rim: Color = HudSkin.TEXT_OUTLINE
+	draw_polyline(path, rim, w + ROTATE_GLYPH_RIM * 2.0)
+	var rim_head := PackedVector2Array([head[0] + Vector2(-ROTATE_GLYPH_RIM * 1.5, -ROTATE_GLYPH_RIM), head[1] + Vector2(ROTATE_GLYPH_RIM * 1.5, -ROTATE_GLYPH_RIM),
+		head[2] + Vector2(0.0, ROTATE_GLYPH_RIM * 1.8)])
+	draw_colored_polygon(rim_head, rim)
+	draw_polyline(path, UiButtons.PIXEL_LABEL_PRIMARY, w)
+	draw_colored_polygon(head, UiButtons.PIXEL_LABEL_PRIMARY)
 
 
-# Story 044 Part C: the placement hint in its band at the top of the Rotate button (ScreenLayout.place_hint_rect),
-# drawn after the button. The font shrinks until the text fits PLACE_HINT_MAX_LINES lines of the band; the
-# line count is capped so nothing spills over the glyph or any other control.
+# Controls v3: the placing hint (TEXT_PLACE_HINT) as bare dim text above the bottom-left row (ScreenLayout.place_hint_rect)
+# while the block is off the enemy's side, shrunk to fit the rect's width.
 func _draw_place_hint(vp: Vector2) -> void:
 	var hint: Rect2 = ScreenLayout.place_hint_rect(vp)
-	var pad: float = BUTTON_FRAME_WIDTH * 3.0
-	var width: float = maxf(hint.size.x - pad * 2.0, 0.0)
 	var text: String = tr(TEXT_PLACE_HINT)
-	var font: Font = HudSkin.font_semibold()
-	var size: int = PLACE_HINT_FONT_SIZE
-	while size > PLACE_HINT_MIN_FONT_SIZE:
-		var block: Vector2 = font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, width, size, PLACE_HINT_MAX_LINES)
-		var full_lines: float = font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, width, size).y
-		if block.y <= hint.size.y - pad and full_lines <= block.y + 0.5:
-			break
+	var s: float = ScreenLayout.controls_scale(vp)
+	var size: int = roundi(PLACE_HINT_FONT_SIZE * s)
+	while size > PLACE_HINT_MIN_FONT_SIZE and EffectText.width(text, size, s) > hint.size.x:
 		size -= 1
-	var lines: int = clampi(int((hint.size.y - pad) / font.get_height(size)), 1, PLACE_HINT_MAX_LINES)
-	var hint_pos := Vector2(hint.position.x + pad, hint.position.y + pad * 0.5 + font.get_ascent(size))
-	draw_multiline_string_outline(font, hint_pos, text, HORIZONTAL_ALIGNMENT_CENTER, width, size, lines, HudSkin.TEXT_OUTLINE_PX, HudSkin.TEXT_OUTLINE)
-	draw_multiline_string(font, hint_pos, text, HORIZONTAL_ALIGNMENT_CENTER, width, size, lines, HudSkin.TEXT_DIM)
+	EffectText.draw(self, Vector2(hint.position.x, roundf(hint.position.y + hint.size.y * 0.5 + size * 0.36)), text, size, EffectText.NEUTRAL,
+		HORIZONTAL_ALIGNMENT_LEFT, hint.size.x, s)
 
 
-# Story 024: the "Hủy" button while PLACING, in the place window or while the card menu is open (then drawn above
-# the menu overlay by _draw_menu).
+# Controls v3: the "Hủy" button: right of Xoay while PLACING / in the place window, in the corner place of Tung phép while
+# the card menu is open (then drawn above the menu overlay by _draw_menu).
 func _draw_cancel(vp: Vector2) -> void:
-	if not (_combat.is_placing() or _combat.is_placed() or _combat.get_cut_flow().is_menu_open()):
+	var menu: bool = _combat.get_cut_flow().is_menu_open()
+	if not (_combat.is_placing() or _combat.is_placed() or menu):
 		return
-	var rect: Rect2 = ScreenLayout.cancel_button_rect(vp)
-	# 2026-10-31: the game skin's NEUTRAL button.
-	HudSkin.button(self, rect, tr(TEXT_CANCEL), 3, UiButtons.is_pressed_at(self, rect), true, BUTTON_FONT_SIZE)
+	var rect: Rect2 = ScreenLayout.cancel_button_rect(vp, menu)
+	# Battle HUD pass 2026-11-01: the menus' pixel stone NEUTRAL button (it returns the pieces, nothing is lost).
+	UiButtons.draw_button(self, rect, tr(TEXT_CANCEL), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, rect), true, BUTTON_FONT_SIZE)
 
 
-# 2026-11-01: the place window bar (where the old card-menu bar was) while pieces are placed and Tung phép is not
-# pressed yet; it drains to the automatic press. Nothing with the window unlimited.
-func _draw_place_bar(vp: Vector2) -> void:
-	if not _combat.is_placed() or _combat.get_cut_flow().is_menu_open():
-		return
-	var duration: float = _combat.get_place_duration()
-	if duration <= 0.0:
-		return
-	_skin_bar(ScreenLayout.place_window_bar_rect(vp), _combat.get_place_time_left() / duration, BAR_FILL, BAR_BACK)
-
-
-# 2026-11-01 card menu (quick spec menu-la-giua-man-hinh): the light grey see-through overlay over the whole screen,
-# the countdown bar and the drawn cards as CardFace faces in the centre, then the Cancel button above the overlay.
+# 2026-11-01 card menu (quick spec menu-la-giua-man-hinh): the light grey see-through overlay over the whole screen and
+# the drawn cards as CardFace faces in the centre. Controls v3: the 3 s pick time is the gold fuse burning clockwise
+# round the angular frame enclosing the cards (ScreenLayout.skill_menu_frame_rect; just the dark frame when the time is
+# unlimited); Hủy sits bottom-left above the overlay.
 func _draw_menu(vp: Vector2) -> void:
 	var flow: CutFlow = _combat.get_cut_flow()
 	if not flow.is_menu_open():
 		return
 	draw_rect(Rect2(Vector2.ZERO, vp), MENU_OVERLAY_COLOR)
 	var order: Array[String] = flow.get_hand()
-	if not flow.is_unlimited():
-		var ratio: float = 0.0 if flow.get_duration() <= 0.0 else flow.get_time_left() / flow.get_duration()
-		_skin_bar(ScreenLayout.skill_menu_bar_rect(vp, order.size()), ratio, BAR_FILL, BAR_BACK)
+	var frame: Rect2 = ScreenLayout.skill_menu_frame_rect(vp, order.size())
+	var s: float = ScreenLayout.controls_scale(vp)
+	var cut: float = roundf(MENU_FRAME_CUT_PX * s)
+	if flow.is_unlimited():
+		HudFuse.draw(self, frame, cut, 1.0, s)
+	else:
+		HudFuse.draw(self, frame, cut, menu_fuse_fraction(), s)
 	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
 	var cell_count: int = flow.get_cells().size()
 	for i: int in rects.size():
 		_draw_menu_card(vp, rects[i], order[i], cell_count)
 	_draw_cancel(vp)
+
+
+## Controls v3: share of the card menu's pick-time fuse already burnt (0 when it opens, 1 at the automatic pick; 1 with
+## no time limit or no menu).
+func menu_fuse_fraction() -> float:
+	var flow: CutFlow = _combat.get_cut_flow() if _combat != null else null
+	if flow == null or not flow.is_menu_open() or flow.is_unlimited():
+		return 1.0
+	return HudFuse.burnt_fraction(flow.get_time_left(), flow.get_duration())
 
 
 # One card of the menu: the CardFace face (no cooldown text in battle), dimmed when it cannot be picked; a card on
@@ -2959,23 +3011,68 @@ func _draw_cooldown_column(vp: Vector2) -> void:
 	var cooldowns: SkillCooldowns = _combat.get_skill_cooldowns()
 	if cooldowns == null:
 		return
-	var ids: Array[String] = cooldowns.running_ids()
-	var rects: Array[Rect2] = ScreenLayout.cooldown_icon_rects(vp, ids.size())
+	var entries: Array[String] = get_cooldown_column_entries()
+	var rects: Array[Rect2] = ScreenLayout.cooldown_icon_rects(vp, entries.size())
 	var config: SkillConfig = _combat.get_skill_config()
 	for i: int in rects.size():
-		var id: String = ids[i]
+		var id: String = entries[i]
 		var rect: Rect2 = rects[i]
-		draw_rect(rect.grow(COOLDOWN_ICON_FRAME_WIDTH), COOLDOWN_ICON_FRAME)
+		# Battle HUD pass 2026-11-01: each icon sits in the small stone frame (its border just outside the icon).
+		PixelFrame.draw_small(self, rect.grow(PixelFrame.frame_pad(PixelFrame.small_scale_for(vp.y))))
+		if id == COOLDOWN_FOCUS_ID:
+			# Controls v3 (user 2026-11-02, "làm cái icon cooldown như card"): the Focus recharge sits in the same
+			# column as the card cooldowns, first, with the same clockwise pie and seconds.
+			var focus: FocusController = _combat.get_focus()
+			_draw_focus_glyph(rect)
+			var total: float = focus.get_cooldown_sec()
+			var fraction: float = 1.0 if total <= 0.0 else clampf(1.0 - focus.get_cooldown_left() / total, 0.0, 1.0)
+			CooldownPie.draw(self, rect, fraction, focus.get_cooldown_left())
+			continue
 		CardFace.draw_picture(self, rect, config.resolved(id, _combat.get_card_level(id)), id)
 		CooldownPie.draw(self, rect, cooldowns.recovered_fraction(id), cooldowns.remaining(id))
 
 
-## 2026-11-01: the card ids the cooldown column shows now, top-down (tests / captures).
-func get_cooldown_column_ids() -> Array[String]:
+## Controls v3: the column entry id of the Focus recharge (not a card id).
+const COOLDOWN_FOCUS_ID: String = "focus"
+## Focus glyph colours (an angular hourglass: two triangles tip to tip, the frame colour of Focus itself).
+const FOCUS_GLYPH_COLOR: Color = Color("8FA3B8")
+const FOCUS_GLYPH_INSET_RATIO: float = 0.22
+
+
+# Controls v3: code-drawn Focus glyph (no sheet icon yet): an hourglass made of two triangles meeting at the
+# centre, inset FOCUS_GLYPH_INSET_RATIO of the icon edge, on the ink backing every column icon has.
+func _draw_focus_glyph(rect: Rect2) -> void:
+	draw_rect(rect, HudSkin.NIGHT_STONE)
+	var inset: float = rect.size.x * FOCUS_GLYPH_INSET_RATIO
+	var left: float = rect.position.x + inset
+	var right: float = rect.end.x - inset
+	var top: float = rect.position.y + inset
+	var bottom: float = rect.end.y - inset
+	var centre: Vector2 = rect.get_center()
+	draw_colored_polygon(PackedVector2Array([Vector2(left, top), Vector2(right, top), centre]), FOCUS_GLYPH_COLOR)
+	draw_colored_polygon(PackedVector2Array([Vector2(left, bottom), Vector2(right, bottom), centre]), FOCUS_GLYPH_COLOR)
+
+
+## Controls v3: everything the cooldown column shows now, top-down: COOLDOWN_FOCUS_ID first while Focus is
+## recharging, then the card ids in use order; cut to the rects the column has room for (tests / captures).
+func get_cooldown_column_entries() -> Array[String]:
 	if _combat == null or _combat.get_skill_cooldowns() == null:
 		return []
-	var ids: Array[String] = _combat.get_skill_cooldowns().running_ids()
-	return ids.slice(0, ScreenLayout.cooldown_icon_rects(get_viewport_rect().size, ids.size()).size())
+	var entries: Array[String] = []
+	var focus: FocusController = _combat.get_focus()
+	if focus != null and focus.is_on_cooldown():
+		entries.append(COOLDOWN_FOCUS_ID)
+	entries.append_array(_combat.get_skill_cooldowns().running_ids())
+	return entries.slice(0, ScreenLayout.cooldown_icon_rects(get_viewport_rect().size, entries.size()).size())
+
+
+## 2026-11-01: the CARD ids the cooldown column shows now, top-down (the Focus entry left out; tests / captures).
+func get_cooldown_column_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for id: String in get_cooldown_column_entries():
+		if id != COOLDOWN_FOCUS_ID:
+			ids.append(id)
+	return ids
 
 
 # Story 033: a code-drawn padlock (body + shackle) in the top-right corner of a locked menu card.

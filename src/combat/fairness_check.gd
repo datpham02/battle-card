@@ -25,7 +25,8 @@ static func lock_left(step_cooldown_left: float, frozen_left: float, root_left: 
 
 ## F1 / F9 (4.1): true when the player standing on [param player_cell] is not in [param cells], or a safe cell at BFS
 ## distance k exists with t_need(k) <= [param warning_sec]. A safe cell: on the player's half, not in [param cells],
-## not in env.unsafe, not blocked, not a hazard. Paths may cross red (not yet hit) cells, never holes.
+## not in env.unsafe, not blocked, not a hazard. Paths may cross red (not yet hit) cells, never holes, and (P2.3)
+## never hazards / cracking cells (stricter than spec 4.1: crossing thorns costs HP, crossing a crack may fall).
 static func can_hero_respond(
 	grid: BoardGrid, player_cell: Vector2i, cells: Array, warning_sec: float, p_lock_left: float, step_cd: float,
 	margin: float, env: Dictionary = {}
@@ -65,6 +66,10 @@ static func escape_path(
 		for d: Vector2i in _DIRS:
 			var n: Vector2i = at + d
 			if dist.has(n) or not grid.is_player_cell(n) or _call(env, "blocked_fn", n):
+				continue
+			# P2.3: the escape never walks THROUGH a hazard (thorns toll on entry, burning, cracking may fall under the
+			# hero): a plan that can only be escaped across one is not fair, so the perfect dodger takes 0 damage.
+			if _call(env, "hazard_fn", n) or _call(env, "lock_fn", n):
 				continue
 			dist[n] = k + 1
 			prev[n] = at

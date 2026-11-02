@@ -1701,6 +1701,7 @@ func confirm_placement() -> bool:
 	_join_refusal = {}
 	_placed = true
 	_place_left = get_place_duration()
+	_notify_pattern_aim()
 	return true
 
 
@@ -1843,7 +1844,15 @@ func _attach_piece(hold: HoldSlots) -> bool:
 		var info: Dictionary = _make_cast_info("", _plan.cells(), _plan_labels(), true, is_plan_featured())
 		for relic: BaseRelic in _relics:
 			relic.on_join(info)
+	_notify_pattern_aim()
 	return true
+
+
+# P2.3: a block was just placed on the enemy half; the pattern brain learns where the cast aims (Rootling creep fires
+# only right after a block was placed over its cell).
+func _notify_pattern_aim() -> void:
+	if _pattern != null:
+		_pattern.on_player_aim(_plan.cells())
 
 
 func _plan_labels() -> Array[String]:
@@ -2467,7 +2476,7 @@ func _draw_hud(vp: Vector2) -> void:
 
 
 # 2026-10-31 (combat.json hud.corner_panels = false): no corner panels; the boss's held points float on the
-# top HUD row (ScreenLayout.hud_top_row_rect), right-aligned just left of the run's gold in the top-right corner
+# top HUD row (ScreenLayout.hud_top_row_rect), right-aligned just left of the run's gold (left of the pause tile)
 # (RunHudView), centred on the row; the HP lives on the numbers under the units' feet (CutHudView._draw_hp_plates).
 func _draw_floating_boss_hand(vp: Vector2, s: float) -> void:
 	if _boss == null or _boss.get_hand() == null:
@@ -2476,7 +2485,8 @@ func _draw_floating_boss_hand(vp: Vector2, s: float) -> void:
 	var tile: Vector2 = (HUD_TILE_SIZE * s).floor()
 	var width: float = maxf(count * (tile.x + HUD_TILE_GAP * s) - HUD_TILE_GAP * s, 0.0)
 	var row: Rect2 = ScreenLayout.hud_top_row_rect(vp)
-	var right: float = vp.x - (ScreenLayout.HUD_TOP_ROW_INSET_PX + ScreenLayout.HUD_GOLD_RESERVE_PX) * s
+	# Controls v3: left of the gold, which sits left of the pause tile in the top-right corner.
+	var right: float = ScreenLayout.hud_gold_rect(vp).position.x - ScreenLayout.TOP_RIGHT_GAP_PX * s
 	_draw_boss_hand(Vector2(floorf(right - width), floorf(row.get_center().y - tile.y * 0.5)), s)
 
 

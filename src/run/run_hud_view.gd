@@ -27,8 +27,10 @@ extends Node2D
 ## chapter, floor · match, deck size, run time) with the one button "Về title" ->
 ## [method GameFlow.leave_run]. The BETWEEN panel and the floor WON / LOST panels remain only for
 ## floors outside a run (test floors, no GameFlow): a run floor never shows them, the flow advances
-## itself after the offer. A small "Bộ: N lá" label (ScreenLayout.run_deck_label_rect) sits in the
-## top margin right of the match label while a run is live. All strings are TEXT_* keys through tr().
+## itself after the offer. All strings are TEXT_* keys through tr().
+## Controls v3 (design/quick-specs/bo-cuc-dieu-khien-v3-2026-11-02.md): no deck label in battle; the pause tile sits
+## in the top-right corner with the gold (an angular glyph) left of it; the "Floor 1/5 · ..." title line is a
+## debug-build aid; the intro band shows the arena name and the featured (resonance) shape once.
 ##
 ## Story 020: the result panels add ONE small line listing the final deck ("Kiếm khí +2 · Hỏa trận
 ## · …": names from SkillConfig.resolved, the level suffix when the level is above 1), cut with an
@@ -66,20 +68,33 @@ const TEXT_BOSS: Color = HudSkin.GRID_LIGHT
 const LABEL_COLOR: Color = Color(0.15, 0.12, 0.1)
 const OUTLINE_WIDTH: float = 4.0
 ## Pause glyph ("||"): bar width, bar height and the gap between the bars, as shares of the
-## button side; drawn in TEXT_WHITE (dimmed with the button when pausing is not allowed).
+## button side; drawn in the menu ivory with a dark rim (dimmed with the button when pausing is not allowed).
 const PAUSE_BAR_WIDTH_RATIO: float = 0.14
 const PAUSE_BAR_HEIGHT_RATIO: float = 0.46
 const PAUSE_BAR_GAP_RATIO: float = 0.14
-## Story 046 Part B: the pause icon tile (art bible 7.4: 55 px icons at 720p, scaled by height / 720).
-const PAUSE_ICON_NAME: String = "pause"
-const PAUSE_ICON_SIZE: float = 55.0
-const PAUSE_REF_HEIGHT: float = 720.0
-const PAUSE_TILE_CUT: float = 6.0
+## Pause tile pressed: how far it drops (px). Controls v3: its size and place are ScreenLayout.pause_tile_rect.
 const PAUSE_PRESS_DROP: float = 2.0
+## Battle HUD pass 2026-11-01: dark rim around each pause bar, px.
+const PAUSE_BAR_RIM: float = 2.0
 
 const LABEL_FONT_SIZE: int = 16
-## 2026-10-31: the gold number in the top-right corner (720p px, scaled by height / 720).
-const GOLD_FONT_SIZE: int = 18
+## 2026-10-31: the gold number in the top-right corner (720p px, scaled by height / 720). Controls v3: the angular
+## gold glyph left of it (its width and the gap, 720p px) and its two golds.
+const GOLD_FONT_SIZE: int = 20
+const GOLD_GLYPH_PX: float = 20.0
+const GOLD_GLYPH_GAP_PX: float = 6.0
+const GOLD_FILL: Color = Color("E8A820")
+const GOLD_FACET: Color = Color("FFE27A")
+## Controls v3 intro band: the arena block at its right end (width, top padding), the featured shape icon's edge
+## (720p px) and its gold, and the resonance word.
+const INTRO_ARENA_WIDTH_PX: float = 280.0
+const INTRO_ARENA_PAD_PX: float = 14.0
+const INTRO_SHAPE_PX: float = 44.0
+const INTRO_SHAPE_GOLD: Color = Color("FFD447")
+const TEXT_INTRO_RESONANCE: String = "ui.run_hud.intro_resonance"
+## Controls v3: the "Floor 1/5 · ..." title line is drawn only in debug builds; a capture may hide it with the user
+## argument --no-dev-title (the release look).
+static var show_dev_title: bool = OS.is_debug_build() and not OS.get_cmdline_user_args().has("--no-dev-title")
 ## Story 046: smallest size the match label shrinks to so it fits its rect.
 const MATCH_LABEL_MIN_FONT_SIZE: int = 14
 const BAND_TITLE_FONT_SIZE: int = 64
@@ -148,11 +163,7 @@ const TEXT_PAUSE_BOSS_SWING: String = "ui.run_hud.pause_boss_swing"
 const TEXT_PAUSE_BOSS_CELLS: String = "ui.hud.cells"
 const TEXT_RESUME: String = "ui.run_hud.resume"
 const TEXT_LEAVE_RUN: String = "ui.run_hud.leave_run"
-## Story 044: the pause panel button that flips controls.movement; its label names the CURRENT mode.
-const TEXT_MOVEMENT_JOYSTICK: String = "ui.run_hud.movement_joystick"
-const TEXT_MOVEMENT_PAD: String = "ui.run_hud.movement_pad"
 ## Story 019: "Bộ: %d lá" in the top margin while a run is live.
-const TEXT_DECK_LABEL: String = "ui.run_hud.deck_label"
 ## Story 019 result screens.
 const TEXT_RUN_OVER_TITLE: String = "ui.run_hud.run_over_title"
 ## Story 035: "Gục ở tầng %d · %s" (floor, region) and "Kẻ hạ bạn: %s" (boss) on the defeat panel.
@@ -278,9 +289,6 @@ func _input_paused(event: InputEvent) -> void:
 	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
 	var vp: Vector2 = get_viewport_rect().size
-	if movement_button_rect(vp, _button_labels().size()).has_point(pos):
-		SettingsStore.shared().toggle_movement()
-		return
 	var rects: Array[Rect2] = ScreenLayout.run_button_rects(vp, _button_labels().size())
 	for i: int in rects.size():
 		if rects[i].has_point(pos):
@@ -379,23 +387,19 @@ func _draw() -> void:
 	var state: RunState = _controller.get_state()
 	if _reward_open():
 		_draw_match_label(vp)
-		_draw_deck_label(vp)
 		return
 	match state.get_phase():
 		RunState.Phase.INTRO:
 			_draw_match_label(vp)
-			_draw_deck_label(vp)
 			_draw_intro(vp)
 		RunState.Phase.PLAYING:
 			_draw_match_label(vp)
-			_draw_deck_label(vp)
 			_draw_gold(vp)
 			_draw_pause_button(vp)
 			if _controller.is_paused():
 				_draw_paused(vp)
 		RunState.Phase.BETWEEN:
 			_draw_match_label(vp)
-			_draw_deck_label(vp)
 			_draw_between(vp)
 		RunState.Phase.WON:
 			_draw_won(vp)
@@ -428,6 +432,9 @@ func _boss_index() -> int:
 
 
 func _draw_match_label(vp: Vector2) -> void:
+	# Controls v3: the "Floor 1/5 · ..." title line is a development aid, drawn only in debug builds.
+	if not show_dev_title:
+		return
 	var state: RunState = _controller.get_state()
 	var opponent: String = _match_name(state.get_match_index())
 	var run: RunSession = _flow.get_run() if _flow != null else null
@@ -453,41 +460,44 @@ func _draw_match_label(vp: Vector2) -> void:
 	MenuFont.text(self, Vector2(rect.position.x, rect.get_center().y + size * 0.35), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x)
 
 
-# 2026-10-31 (user: "tiền góc phải", OSFE top row): the run's gold in the top-right corner, on the top HUD row
-# (ScreenLayout.hud_top_row_rect): ShopView's coin left of the number, HudSkin outlined text so it reads over
-# the canopy. Nothing outside a run.
+# Controls v3: the run's gold in the top-right corner, left of the pause tile (ScreenLayout.hud_gold_rect): an
+# angular gold glyph (a hexagon, no circles in the HUD) left of the number, right-aligned, HudSkin outlined text so it
+# reads over the canopy. Nothing outside a run.
 func _draw_gold(vp: Vector2) -> void:
 	if _flow == null or _flow.get_run() == null:
 		return
-	var s: float = vp.y / ScreenLayout.HUD_CORNER_PANEL_REF_HEIGHT
-	var row: Rect2 = ScreenLayout.hud_top_row_rect(vp)
+	var s: float = ScreenLayout.controls_scale(vp)
+	var rect: Rect2 = ScreenLayout.hud_gold_rect(vp)
 	var size: int = roundi(GOLD_FONT_SIZE * s)
 	var text: String = str(_flow.get_gold())
-	var right: float = vp.x - ScreenLayout.HUD_TOP_ROW_INSET_PX * s
 	var width: float = HudSkin.text_width(text, size, true)
-	MenuFont.text(self, Vector2(right - width, floorf(row.get_center().y + size * 0.36)), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
-	var radius: float = size * ShopView.COIN_RADIUS_RATIO
-	ShopView.draw_coin(self, Vector2(right - width - ShopView.COIN_GAP - radius, row.get_center().y), radius)
+	var cy: float = roundf(rect.get_center().y)
+	MenuFont.text(self, Vector2(rect.end.x - width, floorf(cy + size * 0.36)), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
+	var r: float = roundf(GOLD_GLYPH_PX * s * 0.5)
+	draw_gold_glyph(self, Vector2(roundf(rect.end.x - width - roundf(GOLD_GLYPH_GAP_PX * s) - r), cy), r)
 
 
-# Story 019: "Bộ: N lá", right of the pause tile (ScreenLayout.run_deck_label_rect); nothing outside a run.
-func _draw_deck_label(vp: Vector2) -> void:
-	if _flow == null or _flow.get_run() == null:
-		return
-	var rect: Rect2 = ScreenLayout.run_deck_label_rect(vp)
-	var text: String = tr(TEXT_DECK_LABEL) % _flow.get_run().deck_ids.size()
-	# Story 046: outlined light text, readable on the battle backdrop. 2026-10-31: right of the pause tile
-	# (the boss's corner panel owns the top-right corner), left-aligned.
-	MenuFont.text(self, Vector2(rect.position.x, rect.get_center().y + LABEL_FONT_SIZE * 0.35), text, LABEL_FONT_SIZE, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x)
+## Controls v3: the gold glyph, a flat-topped hexagon of circumradius [param r] at [param center] (gold fill, a lighter
+## top facet, ink rim).
+static func draw_gold_glyph(canvas: CanvasItem, center: Vector2, r: float) -> void:
+	var pts := PackedVector2Array()
+	for i: int in 6:
+		var a: float = TAU * float(i) / 6.0
+		pts.append(center + Vector2(cos(a), sin(a)) * r)
+	var rim := PackedVector2Array(pts)
+	rim.append(pts[0])
+	canvas.draw_polyline(rim, HudSkin.TEXT_OUTLINE, 3.0)
+	canvas.draw_colored_polygon(pts, GOLD_FILL)
+	var inner := PackedVector2Array()
+	for p: Vector2 in pts:
+		inner.append(center + (p - center) * 0.5)
+	canvas.draw_colored_polygon(inner, GOLD_FACET)
 
 
 # Display name of the current battle's arena (+ variant marker); "" when the battle has none
 # (combat.json board) or is not spawned yet.
 func _arena_name() -> String:
-	var battle: Node = _controller.get_battle()
-	if battle == null:
-		return ""
-	var view := battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
+	var view: CombatView = _battle_view()
 	if view == null or view.get_grid() == null:
 		return ""
 	var info: Dictionary = view.get_arena_info()
@@ -498,6 +508,21 @@ func _arena_name() -> String:
 	if bool(info.get("variant", false)):
 		display += tr(TEXT_ARENA_VARIANT)
 	return display
+
+
+# The running battle's CombatView, null when none is spawned.
+func _battle_view() -> CombatView:
+	var battle: Node = _controller.get_battle()
+	if battle == null:
+		return null
+	return battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
+
+
+## Controls v3: the featured (resonance) shape of the running battle, {cells, bonus} as CombatView.get_featured(); {}
+## when the battle has none.
+func featured_shape() -> Dictionary:
+	var view: CombatView = _battle_view()
+	return {} if view == null else view.get_featured()
 
 
 func _draw_intro(vp: Vector2) -> void:
@@ -515,13 +540,74 @@ func _draw_intro(vp: Vector2) -> void:
 		title = tr(TEXT_INTRO_TITLE_BOSS) if kind == ChapterMapView.KIND_BOSS else ChapterMapView.kind_name(kind).to_upper()
 	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if boss else TEXT_WHITE, true)
 	_text(band, band.position.y + band.size.y * BAND_NAME_BASELINE, _match_name(state.get_match_index()), BAND_NAME_FONT_SIZE, TEXT_LIGHT)
-	# Story 023: the match's one-line description (desc_key) under the name, shrunk to the band width.
+	# Controls v3: the arena name and the shape to join for resonance, once, at the band's right end.
+	var block: Rect2 = intro_arena_rect(vp)
+	var shown: bool = _draw_intro_arena(vp, block)
+	# Story 023: the match's one-line description (desc_key) under the name, shrunk to the band width (and, with the
+	# arena block shown, clear of it on both sides since the line is centred).
 	var desc_key: String = str(_controller.get_config().matches[state.get_match_index()].get("desc_key", ""))
 	if not desc_key.is_empty():
 		var desc: String = tr(desc_key)
 		var desc_width: float = band.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0
+		if shown:
+			desc_width = band.size.x - (band.end.x - block.position.x) * 2.0
 		_text(band, band.position.y + band.size.y * BAND_DESC_BASELINE, desc, _fit_line_font(desc, desc_width, BAND_DESC_FONT_SIZE), TEXT_DIM)
 	_text(band, band.position.y + band.size.y * BAND_HINT_BASELINE, tr(TEXT_INTRO_HINT), BAND_HINT_FONT_SIZE, TEXT_DIM)
+
+
+## Controls v3: the intro band's arena block (right end of the band, INTRO_ARENA_WIDTH_PX wide at 720p, from the
+## band's top padding down to just above the description line).
+static func intro_arena_rect(vp: Vector2) -> Rect2:
+	var s: float = ScreenLayout.controls_scale(vp)
+	var band: Rect2 = ScreenLayout.run_intro_band_rect(vp)
+	var w: float = roundf(INTRO_ARENA_WIDTH_PX * s)
+	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var top: float = band.position.y + roundf(INTRO_ARENA_PAD_PX * s)
+	var bottom: float = band.position.y + band.size.y * BAND_DESC_BASELINE - roundf(BAND_DESC_FONT_SIZE * s * 1.2)
+	return Rect2(band.end.x - margin - w, top, w, maxf(bottom - top, 0.0))
+
+
+# The arena name, and under it the featured shape as gold cells with "Cộng hưởng ×1,5" (the bonus multiplier) beside
+# it, centred in [param block]. False (nothing drawn) when the battle has neither an arena name nor a featured shape.
+func _draw_intro_arena(vp: Vector2, block: Rect2) -> bool:
+	var arena: String = _arena_name()
+	var featured: Dictionary = featured_shape()
+	if arena.is_empty() and featured.is_empty():
+		return false
+	var s: float = ScreenLayout.controls_scale(vp)
+	var name_size: int = _fit_line_font(arena, block.size.x, roundi(BAND_HINT_FONT_SIZE * s))
+	var y: float = block.position.y + name_size
+	if not arena.is_empty():
+		MenuFont.text(self, Vector2(block.position.x, y), arena, name_size, TEXT_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, block.size.x)
+	if featured.is_empty():
+		return true
+	var cells: Array[Vector2i] = featured["cells"]
+	var box := Vector2i.ONE
+	for cell: Vector2i in cells:
+		box = Vector2i(maxi(box.x, cell.x + 1), maxi(box.y, cell.y + 1))
+	var icon: float = roundf(INTRO_SHAPE_PX * s)
+	var unit: float = floorf(icon / float(maxi(box.x, box.y)))
+	var label: String = "%s ×%s" % [tr(TEXT_INTRO_RESONANCE), _mult_text(float((featured["bonus"] as Dictionary).get("damage_mult", 1.0)))]
+	var label_size: int = roundi(BAND_HINT_FONT_SIZE * s)
+	var gap: float = roundf(10.0 * s)
+	var label_w: float = HudSkin.text_width(label, label_size, true)
+	var shape_w: float = unit * box.x
+	var left: float = roundf(block.get_center().x - (shape_w + gap + label_w) * 0.5)
+	var top: float = roundf(y + roundf(10.0 * s))
+	var shape_top: float = top + roundf((icon - unit * box.y) * 0.5)
+	for cell: Vector2i in cells:
+		var r := Rect2(Vector2(left, shape_top) + Vector2(cell) * unit, Vector2(unit, unit))
+		draw_rect(r, HudSkin.TEXT_OUTLINE)
+		draw_rect(r.grow(-maxf(roundf(2.0 * s), 1.0)), INTRO_SHAPE_GOLD)
+	EffectText.draw(self, Vector2(left + shape_w + gap, roundf(top + icon * 0.5 + label_size * 0.36)), label, label_size, EffectText.GOOD,
+		HORIZONTAL_ALIGNMENT_LEFT, -1.0, s)
+	return true
+
+
+# The multiplier with the locale's decimal mark ("1,5" in Vietnamese).
+func _mult_text(mult: float) -> String:
+	var text: String = ("%.2f" % mult).rstrip("0").rstrip(".")
+	return text.replace(".", ",") if TranslationServer.get_locale().begins_with("vi") else text
 
 
 # Between-matches panel of a floor outside a run (a run floor shows the reward screen instead).
@@ -722,28 +808,32 @@ func _elapsed_text(seconds: float) -> String:
 	return "%d:%02d" % [minutes, total - minutes * 60]
 
 
-# Story 016: the pause button in the HUD band, dimmed while the controller cannot pause (skill menu open,
-# swing lockout, already paused). Story 046 Part B: a PAUSE_ICON_SIZE Night Stone tile with the 55 px "pause"
-# icon (HudSkin), centred in ScreenLayout.pause_button_rect, which stays the hit area (>= the tile); pressed
-# = the tile drops PAUSE_PRESS_DROP px. Without the icon sheet the old two-bar glyph is drawn instead.
+# Story 016: the pause button, dimmed while the controller cannot pause (skill menu open, swing lockout, already
+# paused). Controls v3: the stone tile sits against the top-right corner (ScreenLayout.pause_tile_rect) with the two
+# bars drawn on it; the larger corner square ScreenLayout.pause_button_rect is the hit area; pressed = the tile drops
+# PAUSE_PRESS_DROP px.
 func _draw_pause_button(vp: Vector2) -> void:
-	var rect: Rect2 = ScreenLayout.pause_button_rect(vp)
+	var tile: Rect2 = ScreenLayout.pause_tile_rect(vp)
 	var enabled: bool = _controller.can_pause()
-	var s: float = vp.y / PAUSE_REF_HEIGHT
-	var side: float = minf(floorf(PAUSE_ICON_SIZE * s), rect.size.y)
-	var center: Vector2 = rect.get_center().floor()
-	if enabled and UiButtons.is_pressed_at(self, rect):
-		center.y += PAUSE_PRESS_DROP
-	var tile := Rect2(center - Vector2(side, side) * 0.5, Vector2(side, side))
+	var pressed: bool = enabled and UiButtons.is_pressed_at(self, ScreenLayout.pause_button_rect(vp))
+	if pressed:
+		tile.position.y += PAUSE_PRESS_DROP
+	var side: float = tile.size.x
+	var center: Vector2 = tile.get_center().floor()
 	var alpha: float = 1.0 if enabled else UiButtons.DIM_ALPHA
-	HudSkin.panel(self, tile, [PAUSE_TILE_CUT * s, PAUSE_TILE_CUT * s, PAUSE_TILE_CUT * s, PAUSE_TILE_CUT * s], Color(HudSkin.NIGHT_STONE, alpha), Color(HudSkin.MIST, alpha))
-	if HudSkin.icon(self, PAUSE_ICON_NAME, center, side / PAUSE_ICON_SIZE, Color(1.0, 1.0, 1.0, alpha)):
-		return
-	var bar := Vector2(side * PAUSE_BAR_WIDTH_RATIO, side * PAUSE_BAR_HEIGHT_RATIO)
-	var gap: float = side * PAUSE_BAR_GAP_RATIO
-	var color := Color(HudSkin.TEXT, alpha)
-	draw_rect(Rect2(center - Vector2(gap * 0.5 + bar.x, bar.y * 0.5), bar), color)
-	draw_rect(Rect2(center - Vector2(-gap * 0.5, bar.y * 0.5), bar), color)
+	# Battle HUD pass 2026-11-01: the menus' pixel stone frame (PixelFrame, whole-number scale) instead of the vector tile.
+	var tint: Color = UiButtons.PIXEL_DISABLED_TINT if not enabled else (UiButtons.PIXEL_PRESSED_TINT if pressed else Color.WHITE)
+	PixelFrame.draw(self, PixelFrame.BUTTON_FRAME, tile, PixelFrame.BUTTON_MARGIN, PixelFrame.scale_for(vp.y), tint)
+	# The icon sheet's "pause" carries its own vector tile, so on the stone frame the two bars are drawn here: menu
+	# ivory with a dark rim, whole pixels.
+	var bar := Vector2(roundf(side * PAUSE_BAR_WIDTH_RATIO), roundf(side * PAUSE_BAR_HEIGHT_RATIO))
+	var gap: float = roundf(side * PAUSE_BAR_GAP_RATIO)
+	var color := Color(UiButtons.PIXEL_LABEL, alpha)
+	var rim := Color(HudSkin.TEXT_OUTLINE, alpha)
+	for left: float in [center.x - gap * 0.5 - bar.x, center.x + gap * 0.5]:
+		var r := Rect2(Vector2(roundf(left), roundf(center.y - bar.y * 0.5)), bar)
+		draw_rect(r.grow(PAUSE_BAR_RIM), rim)
+		draw_rect(r, color)
 
 
 # Story 016: the pause overlay — dim, panel, "TẠM DỪNG" and the resume / leave buttons.
@@ -754,9 +844,6 @@ func _draw_paused(vp: Vector2) -> void:
 	if not swing.is_empty():
 		_text(panel, panel.position.y + panel.size.y * PANEL_LINE1_BASELINE, swing, _fit_line_font(swing, panel.size.x, SMALL_FONT_SIZE), TEXT_LIGHT)
 	_draw_buttons(vp)
-	var movement_rect: Rect2 = movement_button_rect(vp, _button_labels().size())
-	var label: String = TEXT_MOVEMENT_PAD if SettingsStore.shared().is_pad() else TEXT_MOVEMENT_JOYSTICK
-	UiButtons.draw_button(self, movement_rect, tr(label), UiButtons.Style.SECONDARY, UiButtons.is_pressed_at(self, movement_rect), true, BUTTON_PAIR_FONT_SIZE)
 
 
 ## Story 046 Part C: the pause panel's boss swing line, "<move name> · <N> cells" of the swing the boss is winding
@@ -773,18 +860,6 @@ func boss_swing_line() -> String:
 	var id: String = actor.get_skill_id()
 	var move: String = tr(str(view.get_skill_config().get_skill(id).get("name_key", id)))
 	return tr(TEXT_PAUSE_BOSS_SWING) % [move, tr(TEXT_PAUSE_BOSS_CELLS) % actor.get_cells().size()]
-
-
-## Story 044: the pause panel button that flips controls.movement (joystick / pad): one full-width
-## button in the panel, a gap above the row of [param button_count] action buttons. Pure geometry,
-## local to this panel (ScreenLayout has no slot for it).
-static func movement_button_rect(viewport_size: Vector2, button_count: int) -> Rect2:
-	var rects: Array[Rect2] = ScreenLayout.run_button_rects(viewport_size, button_count)
-	if rects.is_empty():
-		return Rect2()
-	var row := Rect2(rects[0].position, rects[0].size).merge(rects[rects.size() - 1])
-	var gap: float = viewport_size.y * ScreenLayout.RUN_PANEL_INSET_RATIO
-	return Rect2(row.position.x, row.position.y - row.size.y - gap, row.size.x, row.size.y)
 
 
 # Dim overlay over the whole screen plus the centred panel; returns the panel rect.

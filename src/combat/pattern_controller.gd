@@ -21,8 +21,12 @@ signal skill_resolved(skill_id: String, result: Dictionary)
 signal phase_started(index: int, phase_id: String)
 ## Markers (root anchors) changed (placed, broken, expired).
 signal markers_changed
+## P2.3: the player broke a marker with a stun (Sentinel's root anchor): the enemy stands still for [param sec], the
+## skill in progress (and its followup) cancelled.
+signal stunned(sec: float)
 
-enum Stage { IDLE, WINDUP, WARNING, RECOVERY, TRANSITION }
+## P2.3 adds FOLLOWUP_WAIT (a followup's `delay_sec` between the first strike and the followup warning) and STUNNED.
+enum Stage { IDLE, WINDUP, WARNING, RECOVERY, TRANSITION, FOLLOWUP_WAIT, STUNNED }
 
 const P: int = CombatState.Side.PLAYER
 const E: int = CombatState.Side.ENEMY
@@ -68,6 +72,9 @@ var _phase_casts: int = 0
 var _forced_queue: Array[String] = []
 var _markers: Array[Dictionary] = []
 var _guard_markers: bool = false
+## P2.3: seconds since the player last placed a block covering the enemy (on_player_aim); the Rootling's creep
+## condition `player_aimed_within_sec` reads it.
+var _since_aim: float = 1000.0
 ## Every resolved strike / event, in order, for tests and the decision log: {t, skill, cells, hit, phase}.
 var event_log: Array[Dictionary] = []
 var _time: float = 0.0
@@ -154,6 +161,29 @@ func marker_cells() -> Array[Vector2i]:
 	return out
 
 
+## P2.3: every marker alive, oldest first: {cell, kind ("anchor" / "wreath"), left (seconds)} (copies, for drawing).
+func markers() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for m: Dictionary in _markers:
+		out.append({"cell": m["cell"], "kind": str(m.get("kind", "anchor")), "left": float(m["left"])})
+	return out
+
+
+## P2.3: the cell a moving self skill (Rootling creep, effects.move) will step to, shown while it winds up (an ivory
+## outline, never red); NO_CELL otherwise.
+func move_target_cell() -> Vector2i:
+	if _stage == Stage.WINDUP and not _skill.is_empty() and _plan.has("move_to"):
+		return _plan["move_to"] as Vector2i
+	return BoardGrid.NO_CELL
+
+
+## P2.3: the player placed a block on [param cells] of the enemy half (CombatView.confirm_placement: the first piece
+## of a cast or a joined one). When it covers the enemy, conditions.player_aimed_within_sec starts counting from now.
+func on_player_aim(cells: Array[Vector2i]) -> void:
+	if _state.enemy_in(cells):
+		_since_aim = 0.0
+
+
 ## Cooldown left of [param skill_id].
 func cooldown_left(skill_id: String) -> float:
 	return float(_cooldowns.get(skill_id, 0.0))
@@ -173,16 +203,36 @@ func on_enemy_hit() -> bool:
 
 
 ## A player cast landed on [param cells] of the enemy half: markers under it break when the cast has at least their
-## break_min_cells cells.
+## break_min_cells cells. P2.3: a broken marker with break_stun_sec stuns the enemy (see [method stun]).
 func on_player_cast(cells: Array[Vector2i]) -> void:
 	var broke: bool = false
+	var stun_sec: float = 0.0
 	for i: int in range(_markers.size() - 1, -1, -1):
 		var m: Dictionary = _markers[i]
 		if cells.has(m["cell"]) and cells.size() >= int(m["break_min_cells"]):
+			stun_sec = maxf(stun_sec, float(m.get("break_stun_sec", 0.0)))
 			_markers.remove_at(i)
 			broke = true
 	if broke:
 		markers_changed.emit()
+	if stun_sec > _EPS:
+		stun(stun_sec)
+
+
+## P2.3: the enemy is stunned for [param sec]: the skill in progress is cancelled at once (red off, its followup
+## dropped, cooldown x ai.cancel_cooldown_ratio like an interrupt), then it stands still and casts nothing (is_busy).
+## Ignored during a phase transition and when dead.
+func stun(sec: float) -> void:
+	if sec <= _EPS or _stage == Stage.TRANSITION or _enemy.is_empty() or _state.is_enemy_dead():
+		return
+	var already: float = _stage_left if _stage == Stage.STUNNED else 0.0
+	if not _skill.is_empty():
+		_cooldowns[str(_skill["id"])] = float(_skill["cooldown_sec"]) * tempo_mult * float(_ai()["cancel_cooldown_ratio"])
+		_end_skill("stunned", false)
+	_stage = Stage.STUNNED
+	_stage_left = maxf(already, sec)
+	event_log.append({"t": _time, "skill": "", "event": "stun", "sec": sec, "phase": _phase})
+	stunned.emit(sec)
 
 
 ## Advances every clock by [param delta] (scaled simulation time: Focus slows / stops it with the match).
@@ -191,6 +241,7 @@ func tick(delta: float) -> void:
 		return
 	_time += delta
 	_since_warning += delta
+	_since_aim += delta
 	for id: String in _cooldowns.keys():
 		_cooldowns[id] = maxf(float(_cooldowns[id]) - delta, 0.0)
 	if _state.player_cell == _last_player_cell:
@@ -221,11 +272,15 @@ func tick(delta: float) -> void:
 			_stage_left -= delta
 			if _stage_left <= _EPS:
 				_resolve_warning()
-		Stage.RECOVERY:
+		Stage.RECOVERY, Stage.STUNNED:
 			_stage_left -= delta
 			if _stage_left <= _EPS:
 				_stage = Stage.IDLE
 				_think_left = 0.0
+		Stage.FOLLOWUP_WAIT:
+			_stage_left -= delta
+			if _stage_left <= _EPS:
+				_start_followup()
 		Stage.IDLE:
 			_think_left -= delta
 			if _think_left <= _EPS:
@@ -287,11 +342,19 @@ func _conditions_ok(skill: Dictionary, phase: Dictionary) -> bool:
 		return false
 	if _still_sec + _EPS < float(c.get("player_still_sec", 0.0)):
 		return false
+	if c.has("player_aimed_within_sec") and _since_aim > float(c["player_aimed_within_sec"]) + _EPS:
+		return false
 	return true
 
 
 # Plans of [param skill] that pass F1 (4.1) and F2 (red ceiling). Self / marker skills only need a plan.
 func _valid_plans(skill: Dictionary, warning_sec: float) -> Array[Dictionary]:
+	if typeof((skill["effects"] as Dictionary).get("move")) == TYPE_DICTIONARY:
+		# P2.3 (Rootling creep): one plan per cell it may step to; none = it cannot cast now.
+		var moves: Array[Dictionary] = []
+		for cell: Vector2i in _move_targets():
+			moves.append({"cells": [cell] as Array[Vector2i], "anchor": cell, "rotation": 0, "move_to": cell})
+		return moves
 	var all: Array[Dictionary] = PatternPlanner.plans(skill, _plan_ctx())
 	if str(skill["kind"]) != "attack":
 		return all
@@ -394,8 +457,23 @@ func _resolve_warning() -> void:
 	if _is_followup or followup.is_empty() or marker_cells().size() < int(followup["requires_anchor"]):
 		_finish_skill()
 		return
-	# Followup (3.5): cells chosen NOW and checked against the player NOW; failing = dropped, never moved silently.
 	_first_cells = _warn_cells.duplicate()
+	if float(followup.get("delay_sec", 0.0)) > _EPS and not bool(followup["show_with_first"]):
+		# P2.3: the enemy holds still delay_sec, then the followup warning starts (cells chosen then).
+		_warn_cells.clear()
+		_stage = Stage.FOLLOWUP_WAIT
+		_stage_left = float(followup["delay_sec"])
+		return
+	_start_followup()
+
+
+# Followup (3.5): cells chosen NOW and checked against the player NOW; failing = dropped, never moved silently.
+# P2.3: also re-checks requires_anchor (a delayed followup needs its anchor alive when it starts).
+func _start_followup() -> void:
+	var followup: Dictionary = _skill["followup"] as Dictionary
+	if marker_cells().size() < int(followup["requires_anchor"]):
+		_finish_skill()
+		return
 	var next: Array[Vector2i] = []
 	if bool(followup["show_with_first"]) and not _queued_cells.is_empty():
 		if _fair(_queued_cells, float(followup["warning_sec"])):
@@ -404,7 +482,6 @@ func _resolve_warning() -> void:
 		var lanes: Array[Dictionary] = _fair_followups(followup, _first_cells, float(followup["warning_sec"]), [])
 		if not lanes.is_empty():
 			next = _brain.pick_plan(lanes, _state.player_cell)["cells"] as Array[Vector2i]
-	result["followup"] = not next.is_empty()
 	if next.is_empty():
 		_finish_skill()
 		return
@@ -501,9 +578,15 @@ func _resolve_self_or_marker() -> void:
 				break
 			var plan: Dictionary = plans.pop_at(_rng.randi_range(0, plans.size() - 1))
 			var cell: Vector2i = (plan["cells"] as Array[Vector2i])[0]
-			_markers.append({"cell": cell, "left": float(marker["life_sec"]), "break_min_cells": int(marker["break_min_cells"])})
+			_markers.append({"cell": cell, "left": float(marker["life_sec"]), "break_min_cells": int(marker["break_min_cells"]),
+				"kind": str(marker.get("kind", "anchor")), "break_stun_sec": float(marker.get("break_stun_sec", 0.0))})
 			(result["cells"] as Array[Vector2i]).append(cell)
 		markers_changed.emit()
+	if typeof(effects.get("move")) == TYPE_DICTIONARY and _plan.has("move_to"):
+		# P2.3 (Rootling creep): steps to the cell shown during the windup when it is still free; else stays.
+		var to: Vector2i = _plan["move_to"] as Vector2i
+		if _can_move_to(to) and _state.set_enemy_cell(to):
+			(result["cells"] as Array[Vector2i]).append(to)
 	if typeof(effects.get("guard")) == TYPE_DICTIONARY and _status != null:
 		var g: Dictionary = effects["guard"] as Dictionary
 		if not bool(g["while_markers"]) or not _markers.is_empty():
@@ -512,6 +595,24 @@ func _resolve_self_or_marker() -> void:
 			result["status"] = "guard"
 	_record(result)
 	skill_resolved.emit(str(_skill["id"]), result)
+
+
+# P2.3: cells a moving self skill may step to: one row up / down on the enemy's half (effects.move.to adjacent_row).
+func _move_targets() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for dy: int in [-1, 1]:
+		var cell: Vector2i = _state.enemy_cell + Vector2i(0, dy)
+		if _can_move_to(cell):
+			out.append(cell)
+	return out
+
+
+# The enemy's footprint fits on [param anchor]: no hole / crack, no marker under it.
+func _can_move_to(anchor: Vector2i) -> bool:
+	var status: StatusEffects = _status
+	var marks: Array[Vector2i] = marker_cells()
+	return _state.enemy_fits(anchor, func(c: Vector2i) -> bool:
+		return marks.has(c) or (status != null and (status.is_hole(E, c) or status.is_cracking(E, c))))
 
 
 func _finish_skill() -> void:

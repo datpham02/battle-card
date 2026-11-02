@@ -3,10 +3,12 @@ extends Node2D
 ## Settings screen (user 2026-11-01, Main Menu pass): opened from the title ("Cài đặt",
 ## [method GameFlow.open_settings]). One row per option, label on the left and a toggle button on the right
 ## that shows the current value and cycles it on tap:
-## - Movement: joystick / d-pad ([method SettingsStore.set_movement]).
 ## - Control hints: on / off ([method SettingsStore.set_show_control_hints]).
 ## - Reduce motion: on / off ([method SettingsStore.set_reduce_motion]).
+## - Card pick time: 3 s / 6 s / no limit ([method SettingsStore.cycle_card_time]).
 ## - Language: VI / EN ([method GameFlow.toggle_locale]).
+## 2026-11-01 (user decision): the Movement row is gone with the pad mode (the joystick is the only movement
+## control), so the four rows get back a comfortable height.
 ## "Về" sits in the bottom-left corner (left thumb reach) and returns to the title. There is no audio in the
 ## game yet, so no volume row. Every change is saved at once by its store.
 ## Child of GameFlow (reads it through [member flow_path]); draws and takes input only in
@@ -29,8 +31,8 @@ const BUTTON_FONT_SIZE: int = 28
 ## Layout as shares of the viewport.
 const HEADER_BOTTOM_RATIO: float = 0.13
 const ROWS_TOP_RATIO: float = 0.18
-const ROW_HEIGHT_RATIO: float = 0.115
-const ROW_GAP_RATIO: float = 0.02
+const ROW_HEIGHT_RATIO: float = 0.13
+const ROW_GAP_RATIO: float = 0.035
 const ROWS_LEFT_RATIO: float = 0.12
 const ROWS_WIDTH_RATIO: float = 0.76
 const VALUE_WIDTH_RATIO: float = 0.24
@@ -40,10 +42,6 @@ const PAD_RATIO: float = 0.02
 
 const TEXT_TITLE: String = "ui.settings.title"
 const TEXT_BACK: String = "ui.settings.back"
-const TEXT_MOVEMENT: String = "ui.settings.movement"
-const TEXT_MOVEMENT_HINT: String = "ui.settings.movement_hint"
-const TEXT_JOYSTICK: String = "ui.settings.joystick"
-const TEXT_PAD: String = "ui.settings.pad"
 const TEXT_HINTS: String = "ui.settings.hints"
 const TEXT_HINTS_HINT: String = "ui.settings.hints_hint"
 const TEXT_MOTION: String = "ui.settings.reduce_motion"
@@ -60,7 +58,7 @@ const TEXT_CARD_TIME_HINT: String = "ui.settings.card_time_hint"
 const TEXT_CARD_TIME_VALUES: Dictionary = {"normal": "ui.settings.card_time_normal", "long": "ui.settings.card_time_long",
 	"unlimited": "ui.settings.card_time_unlimited"}
 ## Row ids, top to bottom.
-const ROWS: Array[String] = ["movement", "hints", "motion", "card_time", "language"]
+const ROWS: Array[String] = ["hints", "motion", "card_time", "language"]
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -146,8 +144,6 @@ func _input(event: InputEvent) -> void:
 func toggle(row_id: String) -> void:
 	var store: SettingsStore = SettingsStore.shared()
 	match row_id:
-		"movement":
-			store.set_movement(SettingsStore.MOVEMENT_PAD if store.get_movement() == SettingsStore.MOVEMENT_JOYSTICK else SettingsStore.MOVEMENT_JOYSTICK)
 		"hints":
 			store.set_show_control_hints(not store.get_show_control_hints())
 		"motion":
@@ -162,8 +158,6 @@ func toggle(row_id: String) -> void:
 func value_key(row_id: String) -> String:
 	var store: SettingsStore = SettingsStore.shared()
 	match row_id:
-		"movement":
-			return TEXT_PAD if store.get_movement() == SettingsStore.MOVEMENT_PAD else TEXT_JOYSTICK
 		"hints":
 			return TEXT_ON if store.get_show_control_hints() else TEXT_OFF
 		"motion":
@@ -185,7 +179,7 @@ func _draw() -> void:
 	HudSkin.screen_background(self, Rect2(Vector2.ZERO, vp), HEADER_BOTTOM_RATIO)
 	MenuFont.text(self, Vector2(0.0, vp.y * HEADER_BOTTOM_RATIO * 0.68), tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR,
 		HORIZONTAL_ALIGNMENT_CENTER, vp.x)
-	var labels: Dictionary = {"movement": [TEXT_MOVEMENT, TEXT_MOVEMENT_HINT], "hints": [TEXT_HINTS, TEXT_HINTS_HINT],
+	var labels: Dictionary = {"hints": [TEXT_HINTS, TEXT_HINTS_HINT],
 		"motion": [TEXT_MOTION, TEXT_MOTION_HINT], "card_time": [TEXT_CARD_TIME, TEXT_CARD_TIME_HINT],
 		"language": [TEXT_LANGUAGE, TEXT_LANGUAGE_HINT]}
 	var rows: Array[Rect2] = row_rects(vp)

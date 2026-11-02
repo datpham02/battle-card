@@ -1,14 +1,19 @@
 extends SceneTree
 ## Story 024 (piece flow): drives the real main scene with pointer / touch / key events (local coords).
 ## Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
-## Intents: d-pad steps (one cell, cooldown, no queue, wall), stepping on a piece picks it into the
+## Intents: joystick flicks step (one cell, cooldown, no queue, wall), stepping on a piece picks it into the
 ## bag (full bag leaves it on the field), slot tap selects / tap again rotates / empty or rotten slot
 ## does nothing (mouse and touch), desktop extras 1-3 / R / Esc (placing and menu), and no hover
 ## dependence (a buttonless mouse motion never moves the ghost or selects).
+## 2026-11-01: the pad mode was removed (joystick only); the steps that clicked the pad arrows are stick flicks
+## (press in the stick zone, push toward a direction, release) on their own touch index.
 
 var fails: int = 0
 const VP: Vector2 = Vector2(1280, 720)
 const BOSS_CELL: Vector2i = Vector2i(4, 1)
+const ZONE_POINT: Vector2 = Vector2(150, 600)
+const FLICK_PX: float = 55.0
+const STICK_TOUCH: int = 6
 
 
 func _check(name: String, ok: bool, extra: String = "") -> void:
@@ -64,6 +69,13 @@ func _touch_drag(index: int, p: Vector2) -> void:
 	await process_frame
 
 
+# One joystick flick: press in the stick zone, push FLICK_PX toward [param dir], release.
+func _stick_flick(dir: Vector2i) -> void:
+	await _touch(STICK_TOUCH, ZONE_POINT, true)
+	await _touch_drag(STICK_TOUCH, ZONE_POINT + Vector2(dir) * FLICK_PX)
+	await _touch(STICK_TOUCH, ZONE_POINT + Vector2(dir) * FLICK_PX, false)
+
+
 func _key(code: Key) -> void:
 	for pressed: bool in [true, false]:
 		var ev := InputEventKey.new()
@@ -113,8 +125,7 @@ func _open_cell(drops: FieldDrops, grid: BoardGrid, cell: Vector2i, piece: Piece
 
 
 func _initialize() -> void:
-	# Story 044: these suites click the 3x3 pad; the default control is the floating joystick.
-	SettingsStore.set_movement_override(SettingsStore.MOVEMENT_PAD)
+	SettingsStore.reset_shared()
 	var main: Node = load("res://src/main.tscn").instantiate()
 	var flow := main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())
@@ -131,6 +142,9 @@ func _initialize() -> void:
 		await process_frame
 	var battle: Node = rc.get_battle()
 	var combat := battle.get_node("CombatView") as CombatView
+	# The timings below are the normal card time (3 s place window); the player's real user://settings.json may hold
+	# "6 s" or "no limit", so the match is pinned to normal whatever the file says.
+	combat.set_card_time(SettingsStore.CARD_TIME_NORMAL)
 	var slots_view := battle.get_node("HoldSlotsView") as HoldSlotsView
 	var state: CombatState = combat.get_state()
 	var mover: UnitMover = combat.get_mover()
@@ -138,33 +152,34 @@ func _initialize() -> void:
 	var hold: HoldSlots = slots_view.get_slots()
 	var cut_flow: CutFlow = combat.get_cut_flow()
 	var lib: PieceLibrary = PieceLibrary.load_from_file()
-	var rects: Dictionary = ScreenLayout.dpad_rects(VP)
 	combat.get_boss().set_active(false)
 	for i: int in hold.get_slot_count():
 		hold.remove(i)
 	_lock_field(drops, combat.get_grid())
 	_check("field locked: no piece on the field, bag empty", drops.get_points().is_empty() and hold.is_empty(), str(drops.get_points().size()))
 
-	# --- D-pad.
+	# --- Joystick flicks.
 	_check("start cell (1,1)", state.player_cell == Vector2i(1, 1), str(state.player_cell))
-	await _click(rects[Vector2i.LEFT].get_center())
-	_check("LEFT press moves exactly one cell", state.player_cell == Vector2i(0, 1), str(state.player_cell))
-	await _click(rects[Vector2i.RIGHT].get_center())
-	_check("press during cooldown ignored", state.player_cell == Vector2i(0, 1), str(state.player_cell))
+	await _stick_flick(Vector2i.LEFT)
+	_check("LEFT flick moves exactly one cell", state.player_cell == Vector2i(0, 1), str(state.player_cell))
+	await _stick_flick(Vector2i.RIGHT)
+	_check("flick during cooldown ignored", state.player_cell == Vector2i(0, 1), str(state.player_cell))
 	await _wait_ready(mover)
-	_check("queued press did NOT fire after cooldown", state.player_cell == Vector2i(0, 1), str(state.player_cell))
-	await _click(rects[Vector2i.RIGHT].get_center())
+	await process_frame
+	await process_frame
+	_check("released flick did NOT fire after cooldown (no queue)", state.player_cell == Vector2i(0, 1), str(state.player_cell))
+	await _stick_flick(Vector2i.RIGHT)
 	_check("RIGHT after cooldown moves one cell", state.player_cell == Vector2i(1, 1), str(state.player_cell))
 	await _wait_ready(mover)
 
 	# --- Stepping on a piece picks it up (the field is locked; only this cell is opened).
 	_open_cell(drops, combat.get_grid(), Vector2i(1, 0), lib.make_piece("l3", 0))
-	await _click(rects[Vector2i.UP].get_center())
+	await _stick_flick(Vector2i.UP)
 	_check("stepping on piece moved player", state.player_cell == Vector2i(1, 0), str(state.player_cell))
 	_check("piece picked into slot 0", _shape(hold, 0) == "l3", _shape(hold, 0))
 	_check("picked piece left the field", not _drop_at(drops, Vector2i(1, 0)))
 	await _wait_ready(mover)
-	await _click(rects[Vector2i.UP].get_center())
+	await _stick_flick(Vector2i.UP)
 	_check("wall step rejected", state.player_cell == Vector2i(1, 0), str(state.player_cell))
 	_check("rejected step starts no cooldown", mover.is_ready())
 	await _key(KEY_DOWN)
@@ -284,7 +299,7 @@ func _initialize() -> void:
 	_check("hand is full (3 slots)", hold.is_full())
 	await _wait_ready(mover)
 	_open_cell(drops, grid, Vector2i(2, 1), lib.make_piece("mono", 0))
-	await _click(rects[Vector2i.RIGHT].get_center())
+	await _stick_flick(Vector2i.RIGHT)
 	_check("stepped onto the piece cell", state.player_cell == Vector2i(2, 1), str(state.player_cell))
 	_check("full bag: piece stays on field", _drop_at(drops, Vector2i(2, 1)))
 	print("FAILS=%d" % fails)

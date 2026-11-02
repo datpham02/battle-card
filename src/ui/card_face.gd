@@ -283,7 +283,7 @@ static func _draw_skill_ancient(canvas: CanvasItem, rect: Rect2, skill: Dictiona
 	var s: float = float(PixelFrame.scale_for(vp_h))
 	var alpha: float = 0.55 if dim else 1.0
 	var o: Vector2 = rect.position.round()
-	canvas.draw_texture_rect(ANCIENT_FRAME, Rect2(o, Vector2(ANCIENT_FRAME.get_size()) * s), false,
+	canvas.draw_texture_rect(PixelFrame.nearest(ANCIENT_FRAME), Rect2(o, Vector2(ANCIENT_FRAME.get_size()) * s), false,
 		frame_tint(str(skill.get("rarity", "common")), selected, pressed, dim))
 	if selected and not dim:
 		canvas.draw_rect(Rect2(o, Vector2(ANCIENT_FRAME.get_size()) * s).grow(SELECTED_RING_PX), SELECTED_RING, false, SELECTED_RING_PX)
@@ -300,7 +300,7 @@ static func _draw_skill_ancient(canvas: CanvasItem, rect: Rect2, skill: Dictiona
 	if art != null:
 		var src_edge: float = minf(ANCIENT_PICTURE_PX, minf(art.get_width(), art.get_height()))
 		var src := Rect2((Vector2(art.get_size()) - Vector2.ONE * src_edge) * 0.5, Vector2.ONE * src_edge)
-		canvas.draw_texture_rect_region(art, pic, src, Color(1, 1, 1, alpha))
+		canvas.draw_texture_rect_region(PixelFrame.nearest(art), pic, src, Color(1, 1, 1, alpha))
 	else:
 		_draw_window_art(canvas, pic, skill, str(skill.get("effect", "damage")), alpha)
 	# Effect text (with the cooldown), one size on every card.
@@ -517,7 +517,7 @@ static func draw_picture(canvas: CanvasItem, rect: Rect2, skill: Dictionary, car
 		canvas.draw_rect(rect.grow(2.0), Color(WINDOW_EDGE, alpha))
 		var src_edge: float = minf(ANCIENT_PICTURE_PX, minf(art.get_width(), art.get_height()))
 		var src := Rect2((Vector2(art.get_size()) - Vector2.ONE * src_edge) * 0.5, Vector2.ONE * src_edge)
-		canvas.draw_texture_rect_region(art, rect, src, Color(1, 1, 1, alpha))
+		canvas.draw_texture_rect_region(PixelFrame.nearest(art), rect, src, Color(1, 1, 1, alpha))
 	else:
 		_draw_window_art(canvas, rect, skill, str(skill.get("effect", "damage")), alpha)
 
@@ -740,3 +740,97 @@ static func _draw_glyph(canvas: CanvasItem, window: Rect2, effect: String, alpha
 		canvas.draw_line((st as Array)[0], (st as Array)[1], Color(OUTLINE, alpha), width + 4.0)
 	for st: Variant in strokes:
 		canvas.draw_line((st as Array)[0], (st as Array)[1], Color(GLYPH_COLOR, alpha), width)
+
+
+# --- Block cards (battle HUD pass 2026-11-01) -----------------------------------------------------------------
+## The hold slots are "block cards": a small member of the ancient card family. The ANCIENT_FRAME is rebuilt at the
+## menu's density (x2 at 720p) as a nine-slice whose middles are TILED from plain parts of the art (the picture slot
+## and the red damage gem are left out): the top-left corner keeps the blue gem, which shows the block's cell count
+## like a card's cost gem; the bottom-right corner is the bottom-left one mirrored. Source rects in art px.
+const BLOCK_TL: Rect2 = Rect2(0.0, 0.0, 18.0, 22.0)
+const BLOCK_TR: Rect2 = Rect2(70.0, 0.0, 18.0, 22.0)
+const BLOCK_BL: Rect2 = Rect2(0.0, 116.0, 18.0, 12.0)
+const BLOCK_TOP: Rect2 = Rect2(62.0, 0.0, 14.0, 22.0)
+const BLOCK_BOTTOM: Rect2 = Rect2(20.0, 116.0, 40.0, 12.0)
+const BLOCK_LEFT: Rect2 = Rect2(0.0, 50.0, 18.0, 50.0)
+const BLOCK_RIGHT: Rect2 = Rect2(70.0, 50.0, 18.0, 50.0)
+const BLOCK_CENTER: Rect2 = Rect2(20.0, 50.0, 40.0, 50.0)
+## Transparent rim of ANCIENT_FRAME around its border [left, top, right, bottom], art px.
+const BLOCK_CLEAR: Array[float] = [3.0, 3.0, 1.0, 4.0]
+## The block glyph's area inside a block card: inset left / right, top (below the gem), bottom, art px.
+const BLOCK_GLYPH_X: float = 7.0
+const BLOCK_GLYPH_TOP: float = 17.0
+const BLOCK_GLYPH_BOTTOM: float = 9.0
+## Engraved socket of an empty block card: edge, art px; fill, shadow (top / left) and light (bottom / right) edges.
+const BLOCK_SOCKET_ART: float = 14.0
+const BLOCK_SOCKET_FILL: Color = Color("0E0C14", 0.9)
+const BLOCK_SOCKET_SHADOW: Color = Color("050408")
+const BLOCK_SOCKET_LIGHT: Color = Color("5A5470")
+
+
+## Pure: the whole-number scale a block card at [param rect] is drawn at on a [param viewport_height] screen (the
+## menu's density; 1 when the rect is too small for the corners at that scale).
+static func block_scale(rect: Rect2, viewport_height: float) -> int:
+	var s: int = PixelFrame.scale_for(viewport_height)
+	var need := Vector2(BLOCK_TL.size.x + BLOCK_TR.size.x, BLOCK_TL.size.y + BLOCK_BL.size.y)
+	while s > 1 and (rect.size.x < need.x * s or rect.size.y < need.y * s):
+		s -= 1
+	return s
+
+
+## Draws a block card frame over [param rect] tinted by [param tint]; [param count] > 0 is printed on the blue gem
+## (0 = the gem is covered: an empty socket). [param selected] adds the card selection ring (as on a selected
+## card face). Whole-number scale, nearest filtering (the canvas's), the middles tiled.
+static func draw_block_card(canvas: CanvasItem, rect: Rect2, count: int, tint: Color = Color.WHITE, selected: bool = false) -> void:
+	var s: int = block_scale(rect, canvas.get_viewport_rect().size.y)
+	var slot := Rect2(rect.position.round(), rect.size.round())
+	# The art has a transparent rim (BLOCK_CLEAR): the frame is drawn that much larger so its visible border is the slot.
+	var r: Rect2 = slot.grow_individual(BLOCK_CLEAR[0] * s, BLOCK_CLEAR[1] * s, BLOCK_CLEAR[2] * s, BLOCK_CLEAR[3] * s)
+	var tex: Texture2D = PixelFrame.nearest(ANCIENT_FRAME)
+	var l: float = BLOCK_TL.size.x * s
+	var t: float = BLOCK_TL.size.y * s
+	var rr: float = BLOCK_TR.size.x * s
+	var b: float = BLOCK_BL.size.y * s
+	var mid_w: float = r.size.x - l - rr
+	var mid_h: float = r.size.y - t - b
+	canvas.draw_texture_rect_region(tex, Rect2(r.position, BLOCK_TL.size * s), BLOCK_TL, tint)
+	canvas.draw_texture_rect_region(tex, Rect2(Vector2(r.end.x - rr, r.position.y), BLOCK_TR.size * s), BLOCK_TR, tint)
+	canvas.draw_texture_rect_region(tex, Rect2(Vector2(r.position.x, r.end.y - b), BLOCK_BL.size * s), BLOCK_BL, tint)
+	# The mirrored corner's clear rim is BLOCK_CLEAR[0] wide, the right edge's BLOCK_CLEAR[2]: shift it to line up.
+	var shift: float = (BLOCK_CLEAR[0] - BLOCK_CLEAR[2]) * s
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_BL, Rect2(r.end.x - l + shift, r.end.y - b, l, b), s, tint, true)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_TOP, Rect2(r.position.x + l, r.position.y, mid_w, t), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_BOTTOM, Rect2(r.position.x + l, r.end.y - b, r.size.x - l * 2.0 + shift, b), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_LEFT, Rect2(r.position.x, r.position.y + t, l, mid_h), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_RIGHT, Rect2(r.end.x - rr, r.position.y + t, rr, mid_h), s, tint)
+	PixelFrame.draw_tiled(canvas, tex, BLOCK_CENTER, Rect2(r.position.x + l, r.position.y + t, mid_w, mid_h), s, tint)
+	if selected:
+		canvas.draw_rect(slot.grow(SELECTED_RING_PX), SELECTED_RING, false, SELECTED_RING_PX)
+	var gem: Vector2 = r.position + ANCIENT_COST_CENTER * s
+	if count > 0:
+		_draw_gem_number(canvas, gem, s, str(count), tint.a)
+	else:
+		_cover_gem(canvas, gem, s)
+
+
+## Pure: where a block card at [param rect] draws its block glyph (inside the frame, below the gem row).
+static func block_glyph_rect(rect: Rect2, viewport_height: float) -> Rect2:
+	var s: float = float(block_scale(rect, viewport_height))
+	return Rect2(rect.position.x + BLOCK_GLYPH_X * s, rect.position.y + BLOCK_GLYPH_TOP * s,
+		rect.size.x - BLOCK_GLYPH_X * s * 2.0, rect.size.y - (BLOCK_GLYPH_TOP + BLOCK_GLYPH_BOTTOM) * s).abs()
+
+
+## The engraved socket of an empty block card: a recessed square centred in the glyph area (dark fill, a 1-art-px
+## shadow on the top / left edges and light on the bottom / right ones), at the card's scale.
+static func draw_block_socket(canvas: CanvasItem, rect: Rect2, alpha: float = 1.0) -> void:
+	var vp_h: float = canvas.get_viewport_rect().size.y
+	var s: float = float(block_scale(rect, vp_h))
+	var area: Rect2 = block_glyph_rect(rect, vp_h)
+	var edge: float = BLOCK_SOCKET_ART * s
+	var sq := Rect2((area.get_center() - Vector2(edge, edge) * 0.5).round(), Vector2(edge, edge))
+	canvas.draw_rect(sq, Color(BLOCK_SOCKET_FILL, BLOCK_SOCKET_FILL.a * alpha))
+	canvas.draw_rect(Rect2(sq.position, Vector2(edge, s)), Color(BLOCK_SOCKET_SHADOW, alpha))
+	canvas.draw_rect(Rect2(sq.position, Vector2(s, edge)), Color(BLOCK_SOCKET_SHADOW, alpha))
+	canvas.draw_rect(Rect2(Vector2(sq.position.x, sq.end.y - s), Vector2(edge, s)), Color(BLOCK_SOCKET_LIGHT, alpha))
+	canvas.draw_rect(Rect2(Vector2(sq.end.x - s, sq.position.y), Vector2(s, edge)), Color(BLOCK_SOCKET_LIGHT, alpha))
+

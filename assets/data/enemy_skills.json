@@ -46,6 +46,91 @@
 			"windup_sec": 0.5, "warning_sec": 1.0,
 			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
 			"effects": {"damage": 10}, "recovery_sec": 0.6, "cooldown_sec": 2.8
+		},
+		"root_prick": {
+			"id": "root_prick", "owner": "rootling", "kind": "attack", "name_key": "enemy_skill.root_prick.name", "counter_key": "enemy_skill.root_prick.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "thorns"},
+			"effects": {"damage": 8, "status": {"id": "root", "sec": 0.7}}, "cooldown_sec": 2.4, "weight": 1.0
+		},
+		"creep": {
+			"id": "creep", "owner": "rootling", "kind": "self", "name_key": "enemy_skill.creep.name", "counter_key": "enemy_skill.creep.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "adjacent_row"}}, "cooldown_sec": 4.0, "weight": 0.5,
+			"conditions": {"player_aimed_within_sec": 1.0}
+		},
+		"slab_tap": {
+			"id": "slab_tap", "owner": "mossbound_sentry", "kind": "attack", "name_key": "enemy_skill.slab_tap.name", "counter_key": "enemy_skill.slab_tap.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 14}, "cooldown_sec": 2.8
+		},
+		"brace": {
+			"id": "brace", "owner": "mossbound_sentry", "kind": "self", "name_key": "enemy_skill.brace.name", "counter_key": "enemy_skill.brace.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"guard": {"amount": 3, "sec": 3}}, "cooldown_sec": 7.0
+		},
+		"spore_squares": {
+			"id": "spore_squares", "owner": "greycap_sporeling", "kind": "attack", "name_key": "enemy_skill.spore_squares.name", "counter_key": "enemy_skill.spore_squares.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
+			"windup_sec": 0.5, "warning_sec": 1.1,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "poison"},
+			"effects": {"damage": 10, "status": {"id": "fragile", "stacks": 1}}, "cooldown_sec": 3.0
+		},
+		"seedbed": {
+			"id": "seedbed", "owner": "greycap_sporeling", "kind": "attack", "name_key": "enemy_skill.seedbed.name", "counter_key": "enemy_skill.seedbed.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "near_player", "exclude_player": true},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"effects": {"damage": 0, "zone": {"id": "thorns", "sec": 3.0, "damage": 6.0, "fragile_stacks": 1}}, "cooldown_sec": 6.0
+		},
+		"sentinel_anchor": {
+			"id": "sentinel_anchor", "owner": "ancient_root_sentinel", "kind": "marker", "name_key": "enemy_skill.sentinel_anchor.name", "counter_key": "enemy_skill.sentinel_anchor.counter",
+			"pattern": {"anchor": "enemy_half_empty", "count": 1, "row": "player"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"effects": {"marker": {"kind": "anchor", "life_sec": 10.0, "break_min_cells": 2, "break_stun_sec": 1.0}}, "cooldown_sec": 9.0
+		},
+		"branch_net": {
+			"id": "branch_net", "owner": "ancient_root_sentinel", "kind": "attack", "name_key": "enemy_skill.branch_net.name", "counter_key": "enemy_skill.branch_net.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_anchor", "start": "front", "clip": true, "min_cells": 2},
+			"windup_sec": 0.7, "warning_sec": 1.4,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "first_cell", "travel": "floor_run", "impact": "thorns"},
+			"effects": {"damage": 16, "status": {"id": "root", "sec": 0.8, "first_cell_only": true}},
+			"followup": {"relative_to": "same_cells", "delay_sec": 1.3, "warning_sec": 1.2, "requires_anchor": 1,
+				"effects": {"damage": 16, "status": {"id": "root", "sec": 0.8, "first_cell_only": true}}},
+			"conditions": {"requires_anchor": 1}, "cooldown_sec": 5.0
+		},
+		"bark_shift": {
+			"id": "bark_shift", "owner": "ancient_root_sentinel", "kind": "attack", "name_key": "enemy_skill.bark_shift.name", "counter_key": "enemy_skill.bark_shift.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "near_player", "exclude_player": true},
+			"windup_sec": 0.5, "warning_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"effects": {"damage": 0, "zone": {"id": "drop", "warn_sec": 0.8, "hole_sec": 1.2}}, "cooldown_sec": 7.0
+		},
+		"thorn_fork": {
+			"id": "thorn_fork", "owner": "mistbriar_matron", "kind": "attack", "name_key": "enemy_skill.thorn_fork.name", "counter_key": "enemy_skill.thorn_fork.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "SEQUENTIAL_CHAIN", "origin": "caster", "travel": "chain_spark", "impact": "thorns"},
+			"effects": {"damage": 12},
+			"followup": {"offsets": [[0, -1], [0, 1]], "rotations": [0, 90], "relative_to": "first_cells", "warning_sec": 0.75,
+				"effects": {"damage": 12}},
+			"cooldown_sec": 4.5
+		},
+		"wreath_guard": {
+			"id": "wreath_guard", "owner": "mistbriar_matron", "kind": "marker", "name_key": "enemy_skill.wreath_guard.name", "counter_key": "enemy_skill.wreath_guard.counter",
+			"pattern": {"anchor": "enemy_half_empty", "count": 1},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"marker": {"kind": "wreath", "life_sec": 8.0, "break_min_cells": 1}, "guard": {"amount": 5, "sec": 8.0, "while_markers": true}},
+			"conditions": {"once": true, "hp_below": 0.5}, "cooldown_sec": 0.0
 		}
 	},
 	"enemies": {
@@ -60,6 +145,12 @@
 			"footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
 			"arena": "boss_hall",
 			"skills": ["dev_prick", "dev_bar"]
-		}
+		},
+		"rootling": {"tier": "normal", "arena": "square", "skills": ["root_prick", "creep"]},
+		"mossbound_sentry": {"tier": "normal", "arena": "rect", "skills": ["slab_tap", "brace"]},
+		"greycap_sporeling": {"tier": "normal", "arena": "u_shape", "skills": ["spore_squares", "seedbed"]},
+		"ancient_root_sentinel": {"tier": "elite", "arena": "rect",
+			"phases": [{"id": "main", "skills": ["sentinel_anchor", "branch_net", "bark_shift"], "mechanic": "sentinel_anchor"}]},
+		"mistbriar_matron": {"tier": "elite", "arena": "cross", "skills": ["thorn_fork", "wreath_guard"]}
 	}
 }

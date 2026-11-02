@@ -328,14 +328,85 @@
 					"boss_think_interval_sec": 0.25,
 					"boss_reaction_sec": 0.3,
 					"boss_drop_interval_mult": 0.9,
-					"traits": [
-						{
-							"id": "rotten_thrower",
-							"params": {
-								"interval_sec": 5.0
-							}
-						}
-					],
+					"arena": {
+						"shape": "cross",
+						"variant": true
+					}
+				},
+				"rootling": {
+					"id": "rootling",
+					"name_key": "boss.rootling.name",
+					"boss_max_hp": 190,
+					"brain": "pattern",
+					"enemy": "rootling",
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"arena": {
+						"shape": "square"
+					}
+				},
+				"mossbound_sentry": {
+					"id": "mossbound_sentry",
+					"name_key": "boss.mossbound_sentry.name",
+					"boss_max_hp": 250,
+					"brain": "pattern",
+					"enemy": "mossbound_sentry",
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"greycap_sporeling": {
+					"id": "greycap_sporeling",
+					"name_key": "boss.greycap_sporeling.name",
+					"boss_max_hp": 220,
+					"brain": "pattern",
+					"enemy": "greycap_sporeling",
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.44,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.4,
+					"boss_reaction_sec": 0.45,
+					"arena": {
+						"shape": "u_shape",
+						"variant": true
+					}
+				},
+				"ancient_root_sentinel": {
+					"id": "ancient_root_sentinel",
+					"name_key": "boss.ancient_root_sentinel.name",
+					"boss_max_hp": 420,
+					"brain": "pattern",
+					"enemy": "ancient_root_sentinel",
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"teach_after": ["rootling", "mossbound_sentry"],
+					"arena": {
+						"shape": "rect"
+					}
+				},
+				"mistbriar_matron": {
+					"id": "mistbriar_matron",
+					"name_key": "boss.mistbriar_matron.name",
+					"boss_max_hp": 400,
+					"brain": "pattern",
+					"enemy": "mistbriar_matron",
+					"brain_set": "balanced",
+					"boss_step_cooldown_mult": 1.22,
+					"swing_speed_mult": 1.0,
+					"boss_think_interval_sec": 0.3,
+					"boss_reaction_sec": 0.35,
+					"teach_after": ["greycap_sporeling", "rootling"],
 					"arena": {
 						"shape": "cross",
 						"variant": true
@@ -346,40 +417,52 @@
 				"battle": {
 					"0": [
 						"goblin_scout",
-						"goblin_warrior"
+						"goblin_warrior",
+						"rootling",
+						"mossbound_sentry"
 					],
 					"1": [
 						"wolf",
 						"dire_wolf",
 						"goblin_archer",
-						"goblin_warrior"
+						"goblin_warrior",
+						"rootling",
+						"mossbound_sentry",
+						"greycap_sporeling"
 					],
 					"2": [
 						"dire_wolf",
 						"goblin_archer",
 						"goblin_brute",
-						"wolf"
+						"wolf",
+						"greycap_sporeling",
+						"mossbound_sentry"
 					]
 				},
 				"danger": {
 					"0": [],
 					"1": [
 						"wolf",
-						"goblin_archer"
+						"goblin_archer",
+						"greycap_sporeling"
 					],
 					"2": [
 						"dire_wolf",
 						"goblin_brute",
-						"goblin_warrior"
+						"goblin_warrior",
+						"mossbound_sentry"
 					]
 				},
 				"miniboss": {
 					"1": [
-						"goblin_chief"
+						"goblin_chief",
+						"ancient_root_sentinel"
 					],
 					"2": [
 						"goblin_shaman",
-						"wolf_alpha"
+						"wolf_alpha",
+						"ancient_root_sentinel",
+						"mistbriar_matron"
 					]
 				},
 				"boss": {
@@ -387,7 +470,6 @@
 						"goblin_warlock"
 					],
 					"2": [
-						"goblin_warlock",
 						"forest_witch"
 					]
 				}

@@ -35,6 +35,15 @@ static func plans(skill: Dictionary, ctx: Dictionary) -> Array[Dictionary]:
 				var one: Array[Vector2i] = []
 				one.append(cell)
 				out.append({"cells": one, "anchor": cell, "rotation": 0})
+			# P2.3 follow-up: `row: player` keeps only the cells of the player's row when there is one (the halves' rows
+			# line up, spec 3.4); the caller still picks one of them at random (seeded).
+			if str(pattern.get("row", "any")) == "player":
+				var in_row: Array[Dictionary] = []
+				for p: Dictionary in out:
+					if (p["anchor"] as Vector2i).y == player.y:
+						in_row.append(p)
+				if not in_row.is_empty():
+					return in_row
 			return out
 		"fixed":
 			var fixed: Array[Vector2i] = []
@@ -93,7 +102,8 @@ static func to_board(off: Vector2i) -> Vector2i:
 
 ## Followup cells of [param followup] after the first strike hit [param first_cells] (spec 3.5), one candidate list per
 ## rotation (ordered as authored). relative_to: first_cells (around every first cell... the FIRST one is the anchor),
-## first_end (last first cell), first_center (the first cell nearest the centroid), player.
+## first_end (last first cell), first_center (the first cell nearest the centroid), player, same_cells (P2.3: the
+## first cells again, all of them or no candidate).
 static func followup_candidates(followup: Dictionary, first_cells: Array[Vector2i], player_cell: Vector2i, ctx: Dictionary) -> Array[Dictionary]:
 	var origin: Vector2i = first_cells[0] if not first_cells.is_empty() else player_cell
 	match str(followup["relative_to"]):
@@ -105,6 +115,16 @@ static func followup_candidates(followup: Dictionary, first_cells: Array[Vector2
 			origin = player_cell
 	var grid: BoardGrid = ctx["grid"] as BoardGrid
 	var out: Array[Dictionary] = []
+	if str(followup["relative_to"]) == "same_cells":
+		# P2.3: the first strike's cells again (offsets ignored); a cell that became invalid drops the followup.
+		var again: Array[Vector2i] = []
+		for cell: Vector2i in first_cells:
+			if not grid.is_player_cell(cell) or not _ok(ctx, cell):
+				return out
+			again.append(cell)
+		if not again.is_empty():
+			out.append({"cells": again, "anchor": again[0], "rotation": 0})
+		return out
 	for rot: int in followup["rotations"]:
 		var cells: Array[Vector2i] = []
 		var valid: bool = true

@@ -14,7 +14,13 @@ const ANCHORS: Array[String] = [
 	"enemy_half_empty",
 ]
 const ROTATIONS: Array[int] = [0, 90, 180, 270]
-const RELATIVE_TO: Array[String] = ["first_cells", "first_end", "first_center", "player"]
+## P2.3 follow-up: `pattern.row` of an `enemy_half_empty` skill: `any` = any empty enemy-half cell, `player` = an
+## empty one in the player's current row when there is one (else any), so the Sentinel's anchor lines up with the player.
+const ANCHOR_ROWS: Array[String] = ["any", "player"]
+## P2.3: `same_cells` = the followup strikes exactly the first strike's cells again (Sentinel branch_net repeat).
+const RELATIVE_TO: Array[String] = ["first_cells", "first_end", "first_center", "player", "same_cells"]
+## P2.3: `effects.move.to` values of a self skill that moves the enemy (Rootling creep): one cell up or down.
+const MOVE_TO: Array[String] = ["adjacent_row"]
 ## Status ids a skill may apply: existing pin (Frozen), fragile (Ran), frost (Han) + Phase 2 root (D2) / slow (D4).
 const STATUS_IDS: Array[String] = ["root", "slow", "pin", "fragile", "frost"]
 const ZONE_IDS: Array[String] = ["thorns", "drop"]
@@ -139,6 +145,7 @@ func _normalize_skill(id: String, raw: Variant) -> Dictionary:
 		"interruptible": bool(d.get("interruptible", defaults["interruptible"])),
 		"conditions": (d["conditions"] as Dictionary).duplicate(true) if typeof(d.get("conditions")) == TYPE_DICTIONARY else {},
 		"counter_key": str(d.get("counter_key", "")),
+		"name_key": str(d.get("name_key", "")),
 		"effects": _normalize_effects(d.get("effects", {}), errors, "effects"),
 		"followup": {},
 	}
@@ -173,12 +180,15 @@ func _normalize_pattern(raw: Variant, kind: String, errors: Array[String]) -> Di
 	var offsets: Array[Vector2i] = _parse_offsets(d.get("offsets", [[0, 0]]), errors, "pattern.offsets")
 	var rotations: Array[int] = _parse_rotations(d.get("rotations", [0]), errors, "pattern.rotations")
 	var covers_by_default: bool = anchor == "on_player" or anchor == "row_of_player" or anchor == "column_of_player"
+	var row: String = str(d.get("row", "any"))
+	if not ANCHOR_ROWS.has(row):
+		errors.append("pattern.row '%s' unknown (known: %s)" % [row, ", ".join(ANCHOR_ROWS)])
 	return {
 		"anchor": anchor, "offsets": offsets, "rotations": rotations,
 		"must_cover_player": bool(d.get("must_cover_player", covers_by_default)),
 		"clip": bool(d.get("clip", false)), "min_cells": maxi(int(d.get("min_cells", offsets.size())), 1),
 		"start": str(d.get("start", "any")), "count": maxi(int(d.get("count", 1)), 1),
-		"exclude_player": bool(d.get("exclude_player", false)),
+		"exclude_player": bool(d.get("exclude_player", false)), "row": row,
 	}
 
 
@@ -199,6 +209,9 @@ func _normalize_followup(raw: Variant, errors: Array[String]) -> Dictionary:
 		"effects": _normalize_effects(d.get("effects", {}), errors, "followup.effects"),
 		"show_with_first": bool(d.get("show_with_first", false)),
 		"requires_anchor": maxi(int(d.get("requires_anchor", 0)), 0),
+		# P2.3: seconds after the first strike resolves before the followup's warning starts (the enemy stands still);
+		# the cells are chosen and fairness-checked when that warning starts. 0 = at once (the P2.2 rule).
+		"delay_sec": maxf(float(d.get("delay_sec", 0.0)), 0.0),
 	}
 
 
@@ -235,7 +248,17 @@ func _normalize_effects(raw: Variant, errors: Array[String], where: String) -> D
 		out["marker"] = {
 			"life_sec": float(m.get("life_sec", defaults["marker_life_sec"])),
 			"break_min_cells": maxi(int(m.get("break_min_cells", defaults["marker_break_min_cells"])), 1),
+			# P2.3: what the marker is (drawing only: "anchor" root anchor, "wreath" Matron's wreath) and the stun the
+			# enemy takes when the player breaks it (Sentinel 1.0 s: it stands still, the skill in progress and its
+			# followup are cancelled). 0 = no stun.
+			"kind": str(m.get("kind", "anchor")),
+			"break_stun_sec": maxf(float(m.get("break_stun_sec", 0.0)), 0.0),
 		}
+	if typeof(d.get("move")) == TYPE_DICTIONARY:
+		var mv: Dictionary = d["move"] as Dictionary
+		if not MOVE_TO.has(str(mv.get("to", ""))):
+			errors.append("%s.move.to '%s' unknown (known: %s)" % [where, str(mv.get("to", "")), ", ".join(MOVE_TO)])
+		out["move"] = {"to": str(mv.get("to", ""))}
 	return out
 
 

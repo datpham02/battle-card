@@ -1030,3 +1030,51 @@ without it keeps exactly the keys it had before Phase 2):
 
 A pattern match picks up no field pieces on the enemy half (no boss piece hand); the BossBrain still moves the enemy
 between skills and the mover holds it still while a skill runs (`PatternController.is_busy`).
+
+### Phase 2 P2.3: the Misty Forest roster (`enemy_skills.json` + `chapters.json` `ch1`)
+
+Spec: `design/quick-specs/phase2-misty-forest-2026-11-01.md` 5.1-5.5 and the user decisions D1-D14 at its end. Five
+`enemies` (all 1 cell, no `dev`): `rootling` (normal: `root_prick`, `creep`), `mossbound_sentry` (normal: `slab_tap`,
+`brace`), `greycap_sporeling` (normal: `spore_squares`, `seedbed`), `ancient_root_sentinel` (elite: `sentinel_anchor`,
+`branch_net`, `bark_shift`; phase `main` with `mechanic` `sentinel_anchor`), `mistbriar_matron` (elite: `thorn_fork`,
+`wreath_guard`). Their `arena` hint is the shape of their own match (square / rect / u_shape / rect / cross).
+Substitutes the decisions fix: Poison is Phase 4 (D3), so `spore_squares` applies 1 Fragile (Rạn) and `seedbed` leaves
+Thorns (Bãi Gai, 3 s, 6 damage, +1 Fragile); the Sentinel's "barrier" `bark_shift` is a DROP TILE (D6: `zone {id: drop,
+warn_sec 0.8, hole_sec 1.2}` through `ZoneRules.cast_drop`, the 31/10 drop-tile rules); Root = step lock (D2, 0.7 s
+Rootling, 0.8 s Sentinel on the net's first cell only); Guard = temporary armor that Pierce ignores (D5: +3 for 3 s
+Sentry, +5 Matron while its wreath stands, max 8 s).
+Authored HP (`chapters.json` `boss_max_hp`, decision D8 "pack budget", spec 5.1): in-game HP = `boss_max_hp` x
+`region_normalize.hp_mult` (0.75 in `ch1`) x `floor_scaling.hp_mult`; reference floor 3 (0.75 x 0.85 = 0.6375); hero
+standard HP 200 (`kiem_si`); a normal = 0.55-0.85 x 200, an elite = 1.5-2.2 x a normal (140). Written: `rootling` 190
+(0.60), `greycap_sporeling` 220 (0.70), `mossbound_sentry` 250 (0.80), `mistbriar_matron` 400 (1.8 x 140),
+`ancient_root_sentinel` 420 (1.9 x 140). The kept matches (goblins, wolves...) keep their numbers.
+
+New optional skill keys (P2.3, read by `EnemySkillsConfig`; unknown values refuse the skill with a problem line):
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `name_key` | string | strings.csv key of the skill's name (`enemy_skill.<id>.name`); `counter_key` = its "how to dodge" line (`enemy_skill.<id>.counter`) | `""` |
+| `effects.marker.kind` | string | What the marker is, for drawing only: `anchor` (root anchor, dark wood square) or `wreath` (dark moss square). FloorLayer draws markers under the red, never red, no glow | `anchor` |
+| `effects.marker.break_stun_sec` | number >= 0 | Breaking this marker (a player cast of >= `break_min_cells` cells over it) stuns the enemy this long: it stands still, casts nothing, and the skill in progress is cancelled at once (red off, its followup dropped, cooldown x `ai.cancel_cooldown_ratio`). Sentinel anchor: 1.0 with `break_min_cells` 2 | 0 (no stun) |
+| `effects.move` | `{to: "adjacent_row"}` | A `self` skill that moves the enemy one row up or down on its half (Rootling `creep`). The target is chosen when the windup starts, shown as an ivory frame (`PatternController.move_target_cell`, never red) and taken when the windup ends if still free (no hole / crack / marker); no free cell = the skill cannot be cast | absent |
+| `followup.delay_sec` | number >= 0 | Seconds the enemy holds still after the first strike before the followup's warning starts; the followup cells are chosen and fairness-checked THEN, and `requires_anchor` is re-checked (Sentinel `branch_net`: 1.3, so the repeat lands 2.5 s after the first strike with its own 1.2 s warning) | 0 (warning at once, P2.2) |
+| `followup.relative_to: "same_cells"` | enum value | The followup strikes exactly the first strike's cells again (offsets ignored); a cell that became invalid drops the followup | — |
+| `pattern.row` | `"any"` \| `"player"` | For an `enemy_half_empty` skill: `player` keeps only the empty enemy-half cells in the player's CURRENT row (read when the marker is placed; the halves' rows line up) when there is at least one, and the controller picks one of them at random (seeded); with none it falls back to any empty cell. Another value refuses the skill. Shipped: `sentinel_anchor` = `player` (so `branch_net`, which strikes the anchor's row, starts on the player's row) | `any` |
+| `conditions.player_aimed_within_sec` | number | The skill may only be chosen within this many seconds after the player placed a block covering the enemy (`PatternController.on_player_aim`, called by `CombatView.confirm_placement` for the first block of a cast and every joined block). Rootling `creep`: 1.0 | absent = no condition |
+
+`chapters.json` match key (P2.3, decision D10):
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `teach_after` | array of match ids | This match may only stand after an EARLIER column of the same map that makes every path fight one of these matches (all that column's nodes are fights with an id in the list, e.g. the 1-node first column). The map generator (`ChapterMapGen`, via `ChaptersConfig.get_map_spec().teach_after`) draws it like any other id of its pool / tier; when it is drawn and nothing earlier teaches it, the generator FORCES the earliest earlier column whose nodes are all `battle` / `danger` and can each take a listed id legal in that node's own pool (its kind at the column's tier, else the nearest lower tier) to such ids (a node already holding one keeps it; two gated elites share a column through the intersection of their lists; a later battle / danger node that then repeats an earlier id is redrawn while its pool allows). Only when no column can teach is the elite replaced by another match of the same pool / tier. The forcing uses its own rng stream, so a chapter without `teach_after` generates exactly as before. The shop / event pass never replaces a node in a column that teaches a drawn elite. Shipped: `ancient_root_sentinel` = `["rootling", "mossbound_sentry"]`, `mistbriar_matron` = `["greycap_sporeling", "rootling"]` | absent = no gate |
+
+`ch1` pools (spec 5.5): battle 0 + `rootling`, `mossbound_sentry`; battle 1 + `rootling`, `mossbound_sentry`,
+`greycap_sporeling`; battle 2 + `greycap_sporeling`, `mossbound_sentry`; danger 1 + `greycap_sporeling`; danger 2 +
+`mossbound_sentry`; miniboss 1 + `ancient_root_sentinel`; miniboss 2 + `ancient_root_sentinel`, `mistbriar_matron`; boss
+1 = `goblin_warlock`, boss 2 = `forest_witch` only (D11). The Forest Witch lost its `rotten_thrower` trait (D12; the trait
+itself stays for the Jailer and the other matches that use it); its rework is P2.4.
+
+Fairness change in P2.3 (`FairnessCheck.escape_path`, stricter than spec 4.1): the escape path never walks THROUGH a
+hazard (Thorns, burning) or a cracking cell, so a plan that can only be escaped across Thorns is not fair and the
+perfect dodger takes 0 damage (tests `tests/unit/combat/pattern_roster_fairness_test.gd`,
+`tests/integration/run/pattern_roster_dodge_test.gd`).

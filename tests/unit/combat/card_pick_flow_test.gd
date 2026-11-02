@@ -274,6 +274,18 @@ func _test_cooldowns_in_hand_and_column() -> void:
 	_check("ready card leaves the column", hud.get_cooldown_column_ids() == (["chan_phong"] as Array[String]), str(hud.get_cooldown_column_ids()))
 	cds.tick(cd_b)
 	_check("column empty once every card is ready", hud.get_cooldown_column_ids().is_empty())
+	# Controls v3 (user 2026-11-02): the Focus recharge sits in the same column, first, and leaves when ready.
+	var focus: FocusController = v.get_focus()
+	while focus.is_on_cooldown():
+		focus.tick_real(1.0)
+	_check("focus ready: no focus entry in the column", not hud.get_cooldown_column_entries().has(CutHudView.COOLDOWN_FOCUS_ID))
+	_check("focus starts from READY", focus.try_start())
+	focus.end("test")
+	_check("focus on cooldown after end", focus.is_on_cooldown() and focus.get_cooldown_sec() > 0.0)
+	_check("focus entry first in the column", hud.get_cooldown_column_entries() == ([CutHudView.COOLDOWN_FOCUS_ID] as Array[String]), str(hud.get_cooldown_column_entries()))
+	_check("card ids leave the focus entry out", hud.get_cooldown_column_ids().is_empty())
+	focus.tick_real(focus.get_cooldown_sec() + 0.01)
+	_check("focus ready again: entry leaves the column", hud.get_cooldown_column_entries().is_empty(), str(hud.get_cooldown_column_entries()))
 	_drop(h)
 
 

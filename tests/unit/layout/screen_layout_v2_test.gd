@@ -2,6 +2,9 @@ extends SceneTree
 ## Story 044 Part A: control layout v2 geometry (ScreenLayout). Headless suite, deterministic, no I/O.
 ## Story 047 Part A: the board band starts at 20 % (BOARD_BAND_TOP_RATIO), cells scale by the integer
 ## art_scale, and the art canvas rect / play rect / to_art / from_art conversions are checked here.
+## Controls v3 (2026-11-02): the bag, the bottom-left row, the corners and their hit rects are checked in
+## tests/unit/layout/controls_v3_layout_test.gd; this suite keeps the board geometry and checks the board against the
+## v3 controls (their hit rects).
 ## Run: godot --headless --path . -s res://tests/unit/layout/screen_layout_v2_test.gd
 
 const VIEWPORTS: Array[Vector2] = [Vector2(1280, 720), Vector2(1600, 720)]
@@ -48,13 +51,7 @@ func _init() -> void:
 	test_every_arena_shape_clear_of_slots(grids)
 	test_cell_at_round_trip(grids)
 	test_stick_zone_numbers()
-	test_slot_rects_arc()
-	test_four_slot_bag()
 	test_signature_rect_bottom_centre()
-	test_center_controls_clear_of_slots_and_stick()
-	test_place_hint_and_tag_zone()
-	test_menu_reaches_at_most_x960()
-	test_pad_inside_stick_zone()
 	test_huge_board_falls_back_inside_area()
 	test_art_scale_and_rect_1280x720()
 	test_art_scale_and_rect_1600x720()
@@ -63,7 +60,6 @@ func _init() -> void:
 	test_to_art_from_art_round_trip(grids)
 	test_board_band_top_20_percent()
 	test_corner_hp_panels()
-	test_top_row_relics_left_gold_right()
 	print("FAILS=%d" % fails)
 	quit(fails)
 
@@ -141,15 +137,20 @@ func test_row_rule_wide_and_narrow(grids: Dictionary) -> void:
 	check("test_board_3x3_centred_in_band_below_64_percent", three.end.y <= vp.y * 0.64 and three.position.y > vp.y * 0.20)
 
 
+# Controls v3: the stick zone, the Awaken button and every hit rect of the bottom rows (the visuals sit inside them).
 func _controls(vp: Vector2) -> Dictionary:
-	return {
+	var out: Dictionary = {
 		"stick_zone": ScreenLayout.stick_zone_rect(vp),
 		"awaken": ScreenLayout.signature_rect(vp),
-		"confirm": ScreenLayout.confirm_button_rect(vp),
-		"cancel": ScreenLayout.cancel_button_rect(vp),
-		"focus_bar": ScreenLayout.focus_bar_rect(vp),
-		"place_bar": ScreenLayout.place_window_bar_rect(vp),
+		"confirm_hit": ScreenLayout.confirm_hit_rect(vp),
+		"rotate_hit": ScreenLayout.rotate_hit_rect(vp),
+		"cancel_hit": ScreenLayout.cancel_hit_rect(vp),
+		"place_hint": ScreenLayout.place_hint_rect(vp),
 	}
+	var slots: Array[Rect2] = ScreenLayout.slot_hit_rects(vp, 4)
+	for i: int in slots.size():
+		out["slot_hit_%d" % i] = slots[i]
+	return out
 
 
 func test_board_never_under_controls(grids: Dictionary) -> void:
@@ -169,7 +170,7 @@ func test_board_never_under_controls(grids: Dictionary) -> void:
 # Name of the first slot (of a bag of four, which includes the three-slot arc) that a real cell of [param g]
 # overlaps at [param vp], "" if none.
 func _slot_hit(g: BoardGrid, vp: Vector2) -> String:
-	var slots: Array[Rect2] = ScreenLayout.slot_rects(vp, 4)
+	var slots: Array[Rect2] = ScreenLayout.slot_hit_rects(vp, 4)
 	for cell: Vector2i in g.player_cells() + g.enemy_cells():
 		var r: Rect2 = ScreenLayout.cell_rect(g, vp, cell)
 		for i: int in slots.size():
@@ -216,60 +217,6 @@ func test_stick_zone_numbers() -> void:
 	check("test_board_area_top_is_20_percent", _near(area.position.y, 720.0 * 0.20, EPS))
 
 
-func test_slot_rects_arc() -> void:
-	for vp: Vector2 in VIEWPORTS:
-		var rects: Array[Rect2] = ScreenLayout.slot_rects(vp, 3)
-		check("test_slot_rects_%s_returns_three" % vp, rects.size() == 3)
-		_check_slots_disjoint_on_screen(rects, vp)
-		check("test_slot_order_T1_high_right_to_T3_low_left_at_%s" % vp, rects[0].position.y < rects[1].position.y and rects[1].position.y < rects[2].position.y and rects[0].position.x > rects[1].position.x and rects[1].position.x > rects[2].position.x)
-		check("test_slot_rects_%s_do_not_overlap_the_stick_zone" % vp, not rects[2].intersects(ScreenLayout.stick_zone_rect(vp)))
-	var vp := Vector2(1280, 720)
-	var size: Vector2 = ScreenLayout.slot_size(vp)
-	check("test_slot_size_1280_is_92.6_by_129.6_got_%s" % size, _near(size.x, 92.57, 0.05) and _near(size.y, 129.6, 0.05))
-	var pivot: Vector2 = ScreenLayout.slot_arc_pivot(vp)
-	check("test_slot_arc_pivot_1280_is_1260.8_765.4_got_%s" % pivot, _near(pivot.x, 1260.8, 0.05) and _near(pivot.y, 765.4, 0.1))
-	var r0: Rect2 = ScreenLayout.slot_rect(vp, 0)
-	var r1: Rect2 = ScreenLayout.slot_rect(vp, 1)
-	var r2: Rect2 = ScreenLayout.slot_rect(vp, 2)
-	# Story 044 Part C arc: 96/126/156 degrees at radius 2.25 x slot height (291.6 px).
-	check("test_slot_T1_centre_at_96_degrees_radius_291.6_got_%s" % r0.get_center(), _near(r0.get_center().x, 1230.3, 0.2) and _near(r0.get_center().y, 475.4, 0.2))
-	check("test_slot_T2_centre_at_126_degrees_got_%s" % r1.get_center(), _near(r1.get_center().x, 1089.4, 0.2) and _near(r1.get_center().y, 529.5, 0.2))
-	check("test_slot_T3_centre_at_156_degrees_got_%s" % r2.get_center(), _near(r2.get_center().x, 994.4, 0.2) and _near(r2.get_center().y, 646.8, 0.2))
-	check("test_slot_T3_left_edge_x_948_bottom_712_got_%s" % r2, _near(r2.position.x, 948.1, 0.2) and _near(r2.end.y, 711.6, 0.2))
-	check("test_slot_rects_zero_count_is_empty", ScreenLayout.slot_rects(vp, 0).is_empty())
-
-
-# Every pair of [param rects] disjoint, each inside the viewport, each at least 88 px on its short side.
-func _check_slots_disjoint_on_screen(rects: Array[Rect2], vp: Vector2) -> void:
-	var n: int = rects.size()
-	for i: int in n:
-		var r: Rect2 = rects[i]
-		check("test_%d_slots_slot_%d_at_%s_at_least_88_px_short_side" % [n, i, vp], minf(r.size.x, r.size.y) >= 88.0)
-		check("test_%d_slots_slot_%d_at_%s_inside_viewport" % [n, i, vp], Rect2(Vector2.ZERO, vp).encloses(r))
-		check("test_%d_slots_slot_rect_%d_equals_slot_rects_entry_at_%s" % [n, i, vp], ScreenLayout.slot_rect(vp, i) == r)
-		for j: int in range(i + 1, n):
-			check("test_%d_slots_%d_%d_at_%s_do_not_overlap" % [n, i, j, vp], not r.intersects(rects[j]))
-
-
-# Story 044 Part C: a relic bag of four. The first three stay on the arc; the fourth (inner-ring fallback) is
-# disjoint from them, on screen, >= 88 px, and clear of every centre control, the stick zone and the menu.
-func test_four_slot_bag() -> void:
-	for vp: Vector2 in VIEWPORTS:
-		var four: Array[Rect2] = ScreenLayout.slot_rects(vp, 4)
-		check("test_slot_rects_%s_four_returns_four" % vp, four.size() == 4)
-		_check_slots_disjoint_on_screen(four, vp)
-		var three: Array[Rect2] = ScreenLayout.slot_rects(vp, 3)
-		check("test_four_slots_%s_first_three_equal_the_three_slot_arc" % vp, four.slice(0, 3) == three)
-		var controls: Dictionary = _controls(vp)
-		controls["preview_info"] = ScreenLayout.cut_preview_info_rect(vp)
-		controls["swing_info"] = ScreenLayout.cut_swing_info_rect(vp)
-		controls["side_tag"] = ScreenLayout.slot_side_left_rect(vp, 4)
-		controls["strip"] = ScreenLayout.cut_strip_rect(vp)
-		controls["place_hint"] = ScreenLayout.place_hint_rect(vp)
-		for name: String in controls:
-			check("test_four_slots_%s_slot_4_clear_of_%s" % [vp, name], not four[3].intersects(controls[name]))
-
-
 func test_signature_rect_bottom_centre() -> void:
 	for vp: Vector2 in VIEWPORTS:
 		var r: Rect2 = ScreenLayout.signature_rect(vp)
@@ -278,86 +225,6 @@ func test_signature_rect_bottom_centre() -> void:
 		check("test_signature_rect_%s_half_a_margin_above_the_bottom" % vp, _near(vp.y - r.end.y, vp.x * 0.03 * 0.5, EPS))
 		check("test_signature_button_rect_%s_delegates_to_signature_rect" % vp, ScreenLayout.signature_button_rect(vp) == r)
 		check("test_signature_charge_%s_inside_the_button" % vp, r.encloses(ScreenLayout.signature_charge_rect(vp)))
-
-
-func test_center_controls_clear_of_slots_and_stick() -> void:
-	for vp: Vector2 in VIEWPORTS:
-		var slots: Array[Rect2] = ScreenLayout.slot_rects(vp, 3)
-		var stick: Rect2 = ScreenLayout.stick_zone_rect(vp)
-		var controls: Dictionary = _controls(vp)
-		controls["preview_info"] = ScreenLayout.cut_preview_info_rect(vp)
-		controls["swing_info"] = ScreenLayout.cut_swing_info_rect(vp)
-		controls["side_tag"] = ScreenLayout.slot_side_left_rect(vp, 3)
-		controls["strip"] = ScreenLayout.cut_strip_rect(vp)
-		controls["focus_tag"] = CutHudView.focus_tag_rect(vp)
-		for name: String in controls:
-			var r: Rect2 = controls[name]
-			if name == "stick_zone":
-				continue
-			check("test_%s_at_%s_not_empty" % [name, vp], r.size.x > 0.0 and r.size.y > 0.0)
-			check("test_%s_at_%s_clear_of_the_stick_zone" % [name, vp], not r.intersects(stick))
-			for i: int in slots.size():
-				check("test_%s_at_%s_clear_of_slot_%d" % [name, vp, i], not r.intersects(slots[i]))
-			check("test_%s_at_%s_inside_the_viewport" % [name, vp], Rect2(Vector2.ZERO, vp).encloses(r))
-		for name: String in ["confirm", "cancel", "awaken"]:
-			var r: Rect2 = controls[name]
-			check("test_%s_at_%s_at_least_88_px_each_side" % [name, vp], r.size.x >= 88.0 and r.size.y >= 88.0)
-		check("test_confirm_awaken_cancel_at_%s_do_not_overlap_each_other" % vp, not controls["confirm"].intersects(controls["awaken"]) and not controls["cancel"].intersects(controls["awaken"]) and not controls["confirm"].intersects(controls["cancel"]))
-		check("test_place_bar_at_%s_does_not_cover_the_cancel_button" % vp, not controls["place_bar"].intersects(controls["cancel"]))
-		check("test_focus_bar_at_%s_clear_of_confirm_and_below_76_percent" % vp, not controls["focus_bar"].intersects(controls["confirm"]) and controls["focus_bar"].position.y >= vp.y * 0.76)
-		check("test_rotate_button_at_%s_inside_the_stick_zone" % vp, stick.encloses(ScreenLayout.rotate_button_rect(vp)) and ScreenLayout.rotate_button_rect(vp).size.x >= 88.0)
-
-
-# Story 044 Part C: the placement hint sits in a band at the top of the Rotate button (it no longer shares the
-# 30 px tag zone); the FULL label (left-aligned) and the focus tag (right-aligned) share the tag zone without overlap.
-func test_place_hint_and_tag_zone() -> void:
-	for vp: Vector2 in VIEWPORTS:
-		var hint: Rect2 = ScreenLayout.place_hint_rect(vp)
-		var rotate: Rect2 = ScreenLayout.rotate_button_rect(vp)
-		check("test_place_hint_at_%s_inside_the_rotate_button_top_band" % vp, rotate.encloses(hint) and _near(hint.position.y, rotate.position.y, EPS) and hint.size.y >= 30.0 and hint.size.y <= rotate.size.y * 0.2)
-		for name: String in ["confirm", "cancel", "awaken", "place_bar", "focus_bar"]:
-			check("test_place_hint_at_%s_clear_of_%s" % [vp, name], not hint.intersects(_controls(vp)[name]))
-		for s: Rect2 in ScreenLayout.slot_rects(vp, 4):
-			check("test_place_hint_at_%s_clear_of_slot_%s" % [vp, s.position], not hint.intersects(s))
-		var zone: Rect2 = ScreenLayout.slot_side_left_rect(vp, 4)
-		var tag: Rect2 = CutHudView.focus_tag_rect(vp)
-		check("test_focus_tag_at_%s_inside_the_tag_zone_got_%s_in_%s" % [vp, tag, zone], zone.encloses(tag) and tag.size.y >= 20.0)
-		check("test_focus_tag_at_%s_right_aligned" % vp, _near(tag.end.x, zone.end.x, EPS))
-		var font: Font = ThemeDB.fallback_font
-		for word: String in ["ĐẦY", "FULL"]:
-			var width: float = font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, HoldSlotsView.FULL_FONT_SIZE).x
-			check("test_full_label_%s_at_%s_left_of_the_focus_tag" % [word, vp], zone.position.x + width < tag.position.x)
-
-
-# 2026-11-01 (quick spec menu-la-giua-man-hinh): the card menu left the strip (it is centred over the board, see
-# tests/unit/layout/card_pick_layout_test.gd); the strip keeps the place window bar where the old menu bar was:
-# below the lowest narrow row, above the Tung phép and Awaken buttons, clear of Cancel and the slots, x <= 960.
-func test_menu_reaches_at_most_x960() -> void:
-	var vp := Vector2(1280, 720)
-	var bar: Rect2 = ScreenLayout.place_window_bar_rect(vp)
-	check("test_place_bar_1280_right_edge_at_most_960_got_%s" % bar.end.x, bar.end.x <= 960.0)
-	check("test_place_bar_below_the_lowest_narrow_row_76_percent", bar.position.y >= vp.y * 0.76)
-	var confirm: Rect2 = ScreenLayout.confirm_button_rect(vp)
-	var awaken: Rect2 = ScreenLayout.signature_rect(vp)
-	check("test_place_bar_above_tung_phep_and_awaken", bar.end.y <= confirm.position.y and bar.end.y <= awaken.position.y
-		and _near(bar.position.x, confirm.position.x, EPS) and _near(bar.end.x, awaken.end.x, EPS))
-	check("test_place_bar_clear_of_cancel_and_slots", not bar.intersects(ScreenLayout.cancel_button_rect(vp))
-		and ScreenLayout.slot_rects(vp, 4).all(func(r: Rect2) -> bool: return not r.intersects(bar)))
-
-
-func test_pad_inside_stick_zone() -> void:
-	for vp: Vector2 in VIEWPORTS:
-		var zone: Rect2 = ScreenLayout.stick_zone_rect(vp)
-		var bounds: Rect2 = ScreenLayout.dpad_bounds(vp)
-		var rects: Dictionary = ScreenLayout.dpad_rects(vp)
-		check("test_pad_bounds_%s_inside_the_stick_zone" % vp, zone.grow(EPS).encloses(bounds))
-		check("test_pad_%s_has_four_directions" % vp, rects.size() == 4)
-		var ok_all: bool = true
-		for dir: Vector2i in rects:
-			var r: Rect2 = rects[dir]
-			ok_all = ok_all and bounds.grow(EPS).encloses(r) and r.size.x >= 86.0
-		check("test_pad_buttons_%s_inside_bounds_and_at_least_86_px" % vp, ok_all)
-		check("test_pad_%s_up_above_down_left_left_of_right" % vp, rects[Vector2i.UP].position.y < rects[Vector2i.DOWN].position.y and rects[Vector2i.LEFT].position.x < rects[Vector2i.RIGHT].position.x)
 
 
 func test_huge_board_falls_back_inside_area() -> void:
@@ -446,8 +313,7 @@ func test_board_band_top_20_percent() -> void:
 
 
 # 2026-10-31 (user, OSFE reference): the HP panels sit flush in the top corners, 52 px tall at 720p (above a
-# v3 hero's head on a 5x5 back row), at most 28 % of the width; the match label spans the gap between them and
-# the deck label sits right of the pause tile, left of the boss panel.
+# v3 hero's head on a 5x5 back row), at most 28 % of the width; the match label spans the gap between them.
 func test_corner_hp_panels() -> void:
 	for vp: Vector2 in [Vector2(1280, 720), Vector2(1600, 720), Vector2(1024, 768)]:
 		var s: float = vp.y / 720.0
@@ -460,23 +326,5 @@ func test_corner_hp_panels() -> void:
 		check("test_corner_panel_%s_ends_above_the_board_band" % vp, left.end.y < ScreenLayout.board_area_rect(vp).position.y)
 		var title: Rect2 = ScreenLayout.run_match_label_rect(vp)
 		check("test_match_label_%s_between_the_panels" % vp, title.position.x >= left.end.x and title.end.x <= right.position.x and title.size.x > 0.0)
-		var deck: Rect2 = ScreenLayout.run_deck_label_rect(vp)
-		var pause: Rect2 = ScreenLayout.pause_button_rect(vp)
-		check("test_deck_label_%s_right_of_the_pause_centre_left_of_the_boss_panel" % vp, deck.position.x > pause.get_center().x and deck.end.x <= right.position.x and deck.size.x > 0.0)
 	# User 2026-10-31: a short OSFE-like bar, 260 px panel at 720p.
 	check("test_corner_panel_1280x720_is_260x52", ScreenLayout.hud_panel_rect(Vector2(1280, 720), 0).size == Vector2(260, 52))
-
-
-# 2026-10-31 (user: "debuff hay buff thì hiện ở góc trái, tiền góc phải"): the relic row starts at the top-left
-# corner, on the top HUD row (under the match label, above the board band), and ends before the Resonant-shape
-# tile; the top row is the same band the gold and the boss's held points use.
-func test_top_row_relics_left_gold_right() -> void:
-	for vp: Vector2 in [Vector2(1280, 720), Vector2(1600, 720), Vector2(1024, 768)]:
-		var s: float = vp.y / 720.0
-		var relics: Rect2 = ScreenLayout.hud_relic_strip_rect(vp)
-		var row: Rect2 = ScreenLayout.hud_top_row_rect(vp)
-		check("test_relic_row_%s_starts_at_the_left_corner" % vp, _near(relics.position.x, floorf(ScreenLayout.HUD_TOP_ROW_INSET_PX * s), EPS))
-		check("test_relic_row_%s_on_the_top_row" % vp, _near(relics.position.y, row.position.y, EPS) and _near(relics.size.y, row.size.y, EPS))
-		check("test_relic_row_%s_below_the_match_label" % vp, relics.position.y >= ScreenLayout.run_match_label_rect(vp).end.y - EPS)
-		check("test_relic_row_%s_above_the_board_band" % vp, row.end.y < ScreenLayout.board_area_rect(vp).position.y)
-		check("test_relic_row_%s_ends_before_the_featured_tile" % vp, relics.end.x < ScreenLayout.featured_icon_rect(vp).position.x and relics.size.x > 0.0)

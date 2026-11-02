@@ -88,7 +88,10 @@ func _initialize() -> void:
 			for key: String in ["boss_defense", "boss_min_runes"]:
 				if raw.has(key) and not (typeof(raw[key]) in [TYPE_INT, TYPE_FLOAT]):
 					bad_num += 1
-			if ci == 0 or NORMALS.has(id):
+			# Phase 2 P2.3 (spec phase2-misty-forest 5.1, decision D8): the five Misty Forest pattern-brain enemies take
+			# their HP from the pack budget, not from this Story 023 chapter ladder, so ch1's mean covers its block-brain
+			# matches only (the ones the ladder was tuned on).
+			if (ci == 0 and str(raw.get("brain", "block")) != "pattern") or NORMALS.has(id):
 				hp_sum += float(raw["boss_max_hp"])
 				hp_n += 1
 			if ci == 0:

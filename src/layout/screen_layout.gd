@@ -5,9 +5,12 @@ extends RefCounted
 ## layout constants, not tuning. Reference viewport is 1280x720 (see project.godot).
 ## Control layout v2 (Story 044, design/quick-specs/control-layout-v2.md): the arena (HUD band
 ## + board) runs 0.03-0.64 of the height for wide board rows and down to 0.76 for rows that sit
-## inside the thumb gap; the left thumb owns the stick zone (x 0-25 %, y 64-100 %), the right
-## thumb the three hold slots on an arc around the bottom-right corner, the Awaken button sits
+## inside the thumb gap; the left thumb owns the stick zone (x 0-25 %, y 64-100 %), the Awaken button sits
 ## bottom-centre.
+## Controls v3 (design/quick-specs/bo-cuc-dieu-khien-v3-2026-11-02.md): the bag is one straight row of three 64 px
+## sockets in the bottom-right corner; while placing, the bottom-left row [Tung phép][Xoay][Hủy] (64 px tall, the
+## same bottom edge) replaces the stick; relics and buffs / debuffs in the top-left corner, gold and pause in the
+## top-right. Every control has a visual rect and an invisible hit rect of up to CONTROL_HIT_PX (720p px).
 ## The board size and shape come from a BoardGrid, passed as the first parameter of every
 ## board function; nothing here knows how many cells there are.
 
@@ -26,40 +29,24 @@ const THUMB_GAP_RIGHT_RATIO: float = 0.764
 ## Stick zone (Z3): width as a share of the viewport width; it spans from the wide arena bottom
 ## to the bottom of the screen.
 const STICK_ZONE_WIDTH_RATIO: float = 0.25
-## Hold slot (Z5): the slot's long side (its height, portrait card) as a share of the viewport height
-## (0.18 * 720 = 130 px); the short side is that divided by SLOT_ASPECT (93 px).
-const SLOT_HEIGHT_RATIO: float = 0.18
-const SLOT_ASPECT: float = 1.4
-## Slot arc: angles (degrees, from +x counter-clockwise; slot 0 = T1 high-right ... T3 low-left),
-## radius as a multiple of the slot height, and the pivot (the right thumb's rest point): half a
-## margin in from the right edge, SLOT_ARC_PIVOT_DROP slot heights below the bottom edge.
-## Story 044 Part C: the quick spec's 100/128/156 degrees at radius 2.0 overlapped T2/T3 (about 15x31
-## px) and pushed T3 4.8 px below the screen; 96/126/156 at 2.25 keeps all three apart and on screen.
-const SLOT_ARC_ANGLES_DEG: Array[float] = [96.0, 126.0, 156.0]
-const SLOT_ARC_RADIUS_RATIO: float = 2.25
-const SLOT_ARC_PIVOT_DROP_RATIO: float = 0.35
-## Fourth slot (a relic bag of four). Four portrait cards do not fit on one arc around the pivot
-## without reaching left over the Cancel button or up into the arena, so slot 3 sits on an inner ring
-## under the thumb's rest point, right of T2 and below T1: this angle (degrees) and radius (multiple
-## of the slot height). Fallback geometry, pending a UX decision (Story 044 report).
-const SLOT_INNER_ANGLE_DEG: float = 122.0
-const SLOT_INNER_RADIUS_RATIO: float = 1.05
+## Controls v3 (design/quick-specs/bo-cuc-dieu-khien-v3-2026-11-02.md): every HUD size below is in px at the
+## 720p reference height (CONTROLS_REF_HEIGHT) and scales with height / 720 like the rest of the battle HUD.
+## Inset of the HUD from the screen edges (top-left relics, top-right pause, both bottom rows).
+const CONTROLS_REF_HEIGHT: float = 720.0
+const HUD_EDGE_INSET_PX: float = 12.0
+## The two thumb rows (bottom-left Tung phép / Xoay / Hủy, bottom-right bag sockets): one height, one bottom edge.
+const BOTTOM_ROW_HEIGHT_PX: float = 64.0
+const BOTTOM_ROW_GAP_PX: float = 10.0
+const CAST_WIDTH_PX: float = 100.0
+const ROTATE_WIDTH_PX: float = 64.0
+const CANCEL_WIDTH_PX: float = 72.0
+## Bag socket (Z5): a square stone socket.
+const SOCKET_PX: float = 64.0
+## Invisible hit rect of a control: grown to this side around its visual (720p px), never into a neighbour's hit
+## rect (the gap between two visuals is split in the middle); the outermost controls reach the screen edge.
+const CONTROL_HIT_PX: float = 96.0
 ## Awaken button (Z4): a square of this share of the height, centred, half a margin above the bottom.
 const AWAKEN_BUTTON_RATIO: float = 0.16
-## Gap between the stick zone / the Awaken button and the controls beside them, share of the width.
-const SLOT_SIDE_GAP_RATIO: float = 0.02
-## Gap between the centre controls and the first hold slot (T3), share of the width: keeps the
-## skill menu (and the cancel button) at x <= 0.75 * width, clear of T3.
-const CENTER_RIGHT_GAP_RATIO: float = 0.015
-## Cancel button width as a share of the viewport width (0.11 * 1280 = 141 px).
-const CANCEL_WIDTH_RATIO: float = 0.11
-## Gap between the skill menu panel and the cancel button, share of the width.
-const MENU_CANCEL_GAP_RATIO: float = 0.01
-## Pad mode (optional controls.movement = pad): button edge in px (the accessibility touch minimum;
-## shrinks to a third of the stick zone's height when that is smaller: 259 / 3 = 86 px at 720p) and
-## the gap between buttons.
-const PAD_BUTTON_PX: float = 88.0
-const PAD_GAP_PX: float = 0.0
 ## Board cell (quick spec 2.1), in art pixels of the 640x360 battle canvas: smallest and largest
 ## cell, the canvas height the screen height is scaled from, and the gap the prototype leaves between
 ## the two halves (reserved in the width budget; the halves themselves touch on screen).
@@ -91,24 +78,34 @@ const LAYOUT_EPSILON: float = 0.01
 const CELL_CACHE_MAX: int = 32
 ## Returned by cell_at() when the point is outside the board's bounding rectangle.
 const NO_CELL: Vector2i = BoardGrid.NO_CELL
-## Cut UI (Story 008, v2 geometry): the centre controls sit between the stick zone and T3, below the
-## lowest narrow board row. Vertical gap around the strip, and inner padding of the skill panel (shares of height).
-const STRIP_GAP_RATIO: float = 0.012
-const MENU_PAD_RATIO: float = 0.012
-## Place-window bar height (share of height; the old card-menu bar's size and place).
-const MENU_BAR_HEIGHT_RATIO: float = 0.02
 ## Quick spec menu-la-giua-man-hinh-2026-11-01: the card menu is four CardFace cards (card_face_size, 176x256 at 720p)
 ## centred on the screen: the row's vertical centre (share of height), the gap between cards (share of width, as the
-## reward row), the countdown bar above them (height and gap to the cards, shares of height).
+## reward row). Controls v3: the 3 s pick time is a gold fuse round an angular frame MENU_FRAME_PAD_PX (720p) outside
+## the cards.
 const MENU_CARDS_CENTER_Y_RATIO: float = 0.5
 const MENU_CARD_GAP_RATIO: float = 0.02
-const MENU_TIMER_HEIGHT_RATIO: float = 0.025
-const MENU_TIMER_GAP_RATIO: float = 0.018
+const MENU_FRAME_PAD_PX: float = 14.0
 ## LoL-style cooldown column at the LEFT screen edge (px at 720p, scaled by height / 720): icon edge, gap between
-## icons, and the gap kept to the relic row above and the stick zone below. The left inset is the relic row's.
+## icons, and the gap kept to the buff / debuff row above and the stick zone below. The left inset is the relic row's.
 const COOLDOWN_ICON_PX: float = 52.0
 const COOLDOWN_ICON_GAP_PX: float = 8.0
 const COOLDOWN_COLUMN_GAP_PX: float = 8.0
+## How far the stone frame round a cooldown icon reaches outside it (720p px; PixelFrame.frame_pad at the small scale).
+const COOLDOWN_FRAME_PAD_PX: float = 5.0
+## Controls v3 top-left corner (720p px): the relic row's height, the buff / debuff row under it (its angular frame
+## edge, the gap between frames and the gap to the relic row).
+const HUD_RELIC_ROW_PX: float = 28.0
+const STATUS_ICON_PX: float = 40.0
+const STATUS_ICON_GAP_PX: float = 6.0
+const STATUS_ROW_GAP_PX: float = 6.0
+## Controls v3 top-right corner (720p px): the visible pause tile, the gap between it and the gold, and the room kept
+## for the gold (glyph + number) left of which the boss's held points sit.
+const PAUSE_TILE_PX: float = 48.0
+const TOP_RIGHT_GAP_PX: float = 10.0
+const HUD_GOLD_RESERVE_PX: float = 84.0
+## The placing hint ("drag the block onto the enemy's side") above the bottom-left row: its height and width (720p px).
+const PLACE_HINT_HEIGHT_PX: float = 26.0
+const PLACE_HINT_WIDTH_PX: float = 380.0
 ## Run UI (Story 011), shares of the viewport: intro band height; panel size; panel inner
 ## inset; action button height (0.14 * 720 = 101 px >= 96 px) and its width as a share of the panel.
 const RUN_INTRO_HEIGHT_RATIO: float = 0.3
@@ -117,9 +114,6 @@ const RUN_PANEL_HEIGHT_RATIO: float = 0.7
 const RUN_PANEL_INSET_RATIO: float = 0.035
 const RUN_BUTTON_HEIGHT_RATIO: float = 0.14
 const RUN_BUTTON_WIDTH_RATIO: float = 0.7
-## Focus UI (Story 012): height of the "TẬP TRUNG" countdown / cooldown bar (share of height).
-## 0.032 * 720 = 23 px: fits under the strip's "Sát thương" line and above the CONFIRM button.
-const FOCUS_BAR_HEIGHT_RATIO: float = 0.032
 ## Run UI (Story 015): gap between two side-by-side panel buttons (share of width).
 const RUN_BUTTON_GAP_RATIO: float = 0.015
 ## Menu screens (Story 015): the title band (top .. bottom) shared by the chapter select, the
@@ -165,17 +159,20 @@ const HUD_CORNER_PANEL_REF_HEIGHT: float = 720.0
 const HUD_CORNER_PANEL_MAX_WIDTH_RATIO: float = 0.28
 ## Gap (720p px) between a corner panel and the labels placed beside it (match label, deck label).
 const HUD_CORNER_GAP_PX: float = 8.0
-## 2026-10-31 top HUD row (no corner panels in battle): inset of the relic row from the left edge and of the
-## gold from the right edge (720p px), and the width kept for the gold left of which the boss's held points sit.
+## 2026-10-31 top HUD row (no corner panels in battle): inset of the relic row from the left edge (720p px).
 const HUD_TOP_ROW_INSET_PX: float = 12.0
-const HUD_GOLD_RESERVE_PX: float = 84.0
 
 
-## 2026-10-31: the top HUD row's vertical band (the relic row's top and height), shared by the gold and the
-## boss's held points so the three line up.
+## Controls v3: the top HUD row's vertical band (the pause tile's top and height), shared by the relic row, the gold
+## and the boss's held points so they line up on its centre.
 static func hud_top_row_rect(viewport_size: Vector2) -> Rect2:
-	var hud: Rect2 = hud_rect(viewport_size)
-	return Rect2(0.0, hud.position.y + HUD_RELIC_TOP_PAD, viewport_size.x, HUD_RELIC_ICON)
+	var s: float = controls_scale(viewport_size)
+	return Rect2(0.0, roundf(HUD_EDGE_INSET_PX * s), viewport_size.x, roundf(PAUSE_TILE_PX * s))
+
+
+## Controls v3: px per 720p px (viewport height / 720).
+static func controls_scale(viewport_size: Vector2) -> float:
+	return viewport_size.y / CONTROLS_REF_HEIGHT
 ## Title screen (Story 016), shares of the viewport: the name band (top .. bottom: game name,
 ## knife motif, tagline), the button column's top, one button's size (0.3 * 1280 = 384 px wide,
 ## 0.11 * 720 = 79 px tall >= 72 px) and the gap between buttons (share of height). Three
@@ -202,14 +199,6 @@ static var title_menu_right: bool = true
 ## Title screen language button (Story 017): width / height as shares of the viewport.
 const TITLE_LANG_BUTTON_WIDTH_RATIO: float = 0.1
 const TITLE_LANG_BUTTON_HEIGHT_RATIO: float = 0.09
-## Pause button (Story 016): a square of 0.09 * 720 = 65 px (>= 64 px touch target) centred in
-## the HUD band, in the free column between the two HP bars (68 px wide at 1280x720: the band's
-## HUD_GAP_RATIO plus CombatView's paddings). The top margin above holds the match label and is
-## too thin for a touch target; both band halves end in right/left-aligned HP text.
-const PAUSE_BUTTON_RATIO: float = 0.09
-## Story 046: the visible pause tile's side at PAUSE_TILE_REF_HEIGHT (RunHudView.PAUSE_ICON_SIZE).
-const PAUSE_TILE_PX: float = 55.0
-const PAUSE_TILE_REF_HEIGHT: float = 720.0
 ## Back button of the floor select (Story 016): width (share of width) and height (0.09 * 720 =
 ## 65 px >= 64 px, share of height); sits on the left screen margin, centred in the title band
 ## (the "CHỌN TẦNG" text is centred and clear of it).
@@ -293,87 +282,85 @@ static func controls_bottom(viewport_size: Vector2) -> float:
 
 ## Stick zone (Z3): x 0-25 % of the width, from the wide-row arena bottom (64 %) to the bottom of
 ## the screen (320 x 259 px at 1280x720). The floating joystick appears where a touch lands in it;
-## while a piece is placed it hosts the big ROTATE button; in pad mode it hosts the 3x3 pad.
+## while a piece is placed it hosts the big ROTATE button.
 static func stick_zone_rect(viewport_size: Vector2) -> Rect2:
 	var top: float = viewport_size.y * ARENA_BOTTOM_WIDE_RATIO
 	return Rect2(0.0, top, viewport_size.x * STICK_ZONE_WIDTH_RATIO, viewport_size.y - top)
 
 
-## Size of one hold slot: a portrait card, SLOT_HEIGHT_RATIO of the height tall (130 px) and that
-## divided by SLOT_ASPECT wide (93 px at 1280x720).
+## Controls v3: the bottom edge of both thumb rows (HUD_EDGE_INSET_PX above the screen's bottom, whole px).
+static func bottom_row_bottom(viewport_size: Vector2) -> float:
+	return roundf(viewport_size.y - HUD_EDGE_INSET_PX * controls_scale(viewport_size))
+
+
+# Controls v3: a visual control of [param width_px] x BOTTOM_ROW_HEIGHT_PX (720p px) whose left edge is [param left]
+# (screen px) on the shared bottom edge, whole px.
+static func _row_rect(viewport_size: Vector2, left: float, width_px: float) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var h: float = roundf(BOTTOM_ROW_HEIGHT_PX * s)
+	return Rect2(roundf(left), bottom_row_bottom(viewport_size) - h, roundf(width_px * s), h)
+
+
+## Size of one bag socket: a SOCKET_PX square (64 x 64 at 720p).
 static func slot_size(viewport_size: Vector2) -> Vector2:
-	var height: float = viewport_size.y * SLOT_HEIGHT_RATIO
-	return Vector2(height / SLOT_ASPECT, height)
+	var side: float = roundf(SOCKET_PX * controls_scale(viewport_size))
+	return Vector2(side, side)
 
 
-## Pivot of the slot arc (the right thumb's rest point), 1261,765 at 1280x720.
-static func slot_arc_pivot(viewport_size: Vector2) -> Vector2:
-	var slot_h: float = viewport_size.y * SLOT_HEIGHT_RATIO
-	return Vector2(
-		viewport_size.x - viewport_size.x * MARGIN_RATIO * 0.5,
-		viewport_size.y + slot_h * SLOT_ARC_PIVOT_DROP_RATIO
-	)
-
-
-## Rectangle of hold slot [param index] (0 = T1 high-right, 1 = T2, 2 = T3 low-left) on the arc around
-## [method slot_arc_pivot] (centres about (1230,475), (1089,529), (994,647) at 1280x720; T3 spans
-## x 948-1041, y 582-712). Index 3 (a relic bag of four) sits on the inner ring, see
-## SLOT_INNER_ANGLE_DEG; higher indices are clamped to it. Every slot is kept inside the viewport.
-static func slot_rect(viewport_size: Vector2, index: int) -> Rect2:
+## Controls v3: rectangle of bag socket [param index] of a bag of [param count] (the bag's order, 0 = left): one
+## straight row of SOCKET_PX squares, BOTTOM_ROW_GAP_PX apart, the last one HUD_EDGE_INSET_PX from the right
+## edge, on the shared bottom edge (1056 / 1130 / 1204 x 644-708 for three sockets at 1280x720).
+static func slot_rect(viewport_size: Vector2, index: int, count: int = 3) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var n: int = maxi(count, 1)
+	var i: int = clampi(index, 0, n - 1)
 	var size: Vector2 = slot_size(viewport_size)
-	var slot_h: float = viewport_size.y * SLOT_HEIGHT_RATIO
-	var arc_count: int = SLOT_ARC_ANGLES_DEG.size()
-	var radius: float = slot_h * SLOT_ARC_RADIUS_RATIO
-	var angle_deg: float = SLOT_ARC_ANGLES_DEG[clampi(index, 0, arc_count - 1)]
-	if index >= arc_count:
-		radius = slot_h * SLOT_INNER_RADIUS_RATIO
-		angle_deg = SLOT_INNER_ANGLE_DEG
-	var angle: float = deg_to_rad(angle_deg)
-	var center: Vector2 = slot_arc_pivot(viewport_size) + Vector2(cos(angle), -sin(angle)) * radius
-	var pos: Vector2 = center - size * 0.5
-	pos.x = clampf(pos.x, 0.0, maxf(viewport_size.x - size.x, 0.0))
-	pos.y = clampf(pos.y, 0.0, maxf(viewport_size.y - size.y, 0.0))
-	return Rect2(pos, size)
+	var gap: float = roundf(BOTTOM_ROW_GAP_PX * s)
+	var right: float = viewport_size.x - roundf(HUD_EDGE_INSET_PX * s)
+	var left: float = right - size.x * n - gap * (n - 1) + (size.x + gap) * i
+	return Rect2(Vector2(left, bottom_row_bottom(viewport_size) - size.y), size)
 
 
-## Slot rectangles for slots 0..count-1 in bag order (T1 first), see [method slot_rect].
+## Socket rectangles for slots 0..count-1 in bag order (left to right), see [method slot_rect].
 static func slot_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
 	for i: int in maxi(count, 0):
-		rects.append(slot_rect(viewport_size, i))
+		rects.append(slot_rect(viewport_size, i, count))
 	return rects
 
 
-## Bounding rectangle of the optional pad (controls.movement = pad): a 3x3 block of PAD_BUTTON_PX
-## buttons (smaller if the stick zone is not tall enough for three) flush with the bottom of the
-## screen, one margin in from the left edge, inside [method stick_zone_rect].
-static func dpad_bounds(viewport_size: Vector2) -> Rect2:
-	var zone: Rect2 = stick_zone_rect(viewport_size)
-	var button: float = _pad_button(viewport_size)
-	var side: float = button * 3.0 + PAD_GAP_PX * 2.0
-	var left: float = minf(viewport_size.x * MARGIN_RATIO, maxf(zone.size.x - side, 0.0))
-	return Rect2(left, zone.end.y - side, side, side)
+## Controls v3: the invisible tap rects of the [param count] sockets, see [method row_hit_rects] (the row reaches the
+## right screen edge).
+static func slot_hit_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	return row_hit_rects(viewport_size, slot_rects(viewport_size, count), false, true)
 
 
-# Pad button edge: PAD_BUTTON_PX, or a third of the stick zone's height (minus gaps) if smaller.
-static func _pad_button(viewport_size: Vector2) -> float:
-	var zone: Rect2 = stick_zone_rect(viewport_size)
-	return minf(PAD_BUTTON_PX, (zone.size.y - PAD_GAP_PX * 2.0) / 3.0)
-
-
-## Pad button rectangles keyed by direction (Vector2i.UP/DOWN/LEFT/RIGHT), plus layout.
-static func dpad_rects(viewport_size: Vector2) -> Dictionary:
-	var button: float = _pad_button(viewport_size)
-	var step: float = button + PAD_GAP_PX
-	var bounds: Rect2 = dpad_bounds(viewport_size)
-	var size := Vector2(button, button)
-	var o: Vector2 = bounds.position
-	return {
-		Vector2i.UP: Rect2(o + Vector2(step, 0.0), size),
-		Vector2i.LEFT: Rect2(o + Vector2(0.0, step), size),
-		Vector2i.RIGHT: Rect2(o + Vector2(step * 2.0, step), size),
-		Vector2i.DOWN: Rect2(o + Vector2(step, step * 2.0), size),
-	}
+## Controls v3: the invisible tap rects of [param visuals] (one row, left to right, on the shared bottom edge): each
+## visual grown to CONTROL_HIT_PX (720p px) around its centre and down to the screen's bottom edge; two neighbours
+## that would overlap split the gap between their visuals in the middle; [param to_left_edge] / [param to_right_edge]
+## stretch the first / last one to that screen edge. Every hit rect encloses its visual and none overlaps another.
+static func row_hit_rects(viewport_size: Vector2, visuals: Array[Rect2], to_left_edge: bool, to_right_edge: bool) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	var target: float = roundf(CONTROL_HIT_PX * controls_scale(viewport_size))
+	var lefts: Array[float] = []
+	var rights: Array[float] = []
+	for v: Rect2 in visuals:
+		var pad: float = maxf((target - v.size.x) * 0.5, 0.0)
+		lefts.append(maxf(v.position.x - pad, 0.0))
+		rights.append(minf(v.end.x + pad, viewport_size.x))
+	for i: int in visuals.size():
+		if i > 0 and lefts[i] < rights[i - 1]:
+			var mid: float = roundf((visuals[i - 1].end.x + visuals[i].position.x) * 0.5)
+			rights[i - 1] = mid
+			lefts[i] = mid
+	if to_left_edge and not visuals.is_empty():
+		lefts[0] = 0.0
+	if to_right_edge and not visuals.is_empty():
+		rights[visuals.size() - 1] = viewport_size.x
+	for i: int in visuals.size():
+		var top: float = minf(visuals[i].position.y, viewport_size.y - target)
+		out.append(Rect2(lefts[i], top, rights[i] - lefts[i], viewport_size.y - top))
+	return out
 
 
 ## HUD band at the top of the arena (HP bars; nothing else draws here).
@@ -439,8 +426,8 @@ static var _cell_cache: Dictionary = {}
 ## at most (arena width - ART_DIVIDER_GAP) / 2 wide, a board row that extends outside the thumb gap
 ## ends at or above ARENA_BOTTOM_WIDE_RATIO, and a row fully inside it at or above
 ## ARENA_BOTTOM_NARROW_RATIO (see [method board_rect] for the vertical placement), and no real cell
-## overlaps a hold slot (all HoldSlots.MAX_SLOTS of them; Story 044 Part C: wide 6-column boards such
-## as ring would otherwise reach slot T1). A board too big even for the smallest cell shrinks
+## overlaps a HUD obstacle ([method hud_obstacle_rects]: the bag's tap rects and, controls v3, the cooldown column at
+## the left edge, which the 7-column halves would otherwise reach). A board too big even for the smallest cell shrinks
 ## continuously to fit the board area instead.
 static func cell_size(grid: BoardGrid, viewport_size: Vector2) -> Vector2:
 	var key: int = grid.get_instance_id()
@@ -460,7 +447,7 @@ static func _compute_cell_size(grid: BoardGrid, viewport_size: Vector2) -> Vecto
 	var arena: Rect2 = arena_rect(viewport_size)
 	var half_max_art: float = (arena.size.x / scale - ART_DIVIDER_GAP) * 0.5
 	var first_cols: Array[int] = _row_first_cols(grid)
-	var slots: Array[Rect2] = slot_rects(viewport_size, HoldSlots.MAX_SLOTS)
+	var slots: Array[Rect2] = hud_obstacle_rects(viewport_size)
 	for h_art: int in range(CELL_MAX_ART.y, CELL_MIN_ART.y - 1, -1):
 		var w_art: int = clampi(roundi(h_art * CELL_ASPECT), CELL_MIN_ART.x, CELL_MAX_ART.x)
 		if grid.side_cols * w_art > half_max_art + LAYOUT_EPSILON:
@@ -495,6 +482,15 @@ static func _width_bound(grid: BoardGrid, viewport_size: Vector2, art: Vector2i,
 		return true
 	var wider := Vector2(art.x + 1, art.y) * scale
 	return not (_rows_fit(grid, viewport_size, wider, first_cols) and _clear_of_slots(grid, viewport_size, wider, slots))
+
+
+## Controls v3: the HUD rects no real board cell may overlap ([method cell_size] shrinks the cell until none does): the
+## tap rects of a bag of HoldSlots.MAX_SLOTS sockets and the cooldown column at the left edge with its stone frames
+## (COOLDOWN_FRAME_PAD_PX outside the icons).
+static func hud_obstacle_rects(viewport_size: Vector2) -> Array[Rect2]:
+	var out: Array[Rect2] = slot_hit_rects(viewport_size, HoldSlots.MAX_SLOTS)
+	out.append(cooldown_column_rect(viewport_size).grow(roundf(COOLDOWN_FRAME_PAD_PX * controls_scale(viewport_size))))
+	return out
 
 
 # For each board row, the first real column of the player's half (the board's left extent in that row), -1 if none.
@@ -608,78 +604,48 @@ static func divider_x(grid: BoardGrid, viewport_size: Vector2) -> float:
 	return board_rect(grid, viewport_size).position.x + cell_size(grid, viewport_size).x * grid.side_cols
 
 
-## Left edge of the centre controls (Confirm button, skill menu, focus bar): the stick zone's right
-## edge plus the side gap.
-static func center_left(viewport_size: Vector2) -> float:
-	return viewport_size.x * (STICK_ZONE_WIDTH_RATIO + SLOT_SIDE_GAP_RATIO)
-
-
-## Right edge of the centre controls (Cancel button, skill menu): a gap left of slot T3 (about x 959 at
-## 1280 wide).
-static func center_right(viewport_size: Vector2) -> float:
-	return slot_rect(viewport_size, SLOT_ARC_ANGLES_DEG.size() - 1).position.x - viewport_size.x * CENTER_RIGHT_GAP_RATIO
-
-
-## Top edge of the centre controls: one strip gap under the lowest narrow board row (76 % of the height).
-static func center_top(viewport_size: Vector2) -> float:
-	return viewport_size.y * (ARENA_BOTTOM_NARROW_RATIO + STRIP_GAP_RATIO)
-
-
-## Tag zone above the Cancel button and right of the Awaken button (from the strip's top down to the
-## buttons' top, 30 px tall at 720p): hosts the "FULL" label and the focus tag. [param count] is
-## the hold slot count (an empty zone for none).
-static func slot_side_left_rect(viewport_size: Vector2, count: int) -> Rect2:
-	if count <= 0:
-		return Rect2()
-	var awaken: Rect2 = signature_rect(viewport_size)
-	var left: float = awaken.end.x + viewport_size.x * SLOT_SIDE_GAP_RATIO
-	var top: float = center_top(viewport_size)
-	return Rect2(left, top, maxf(center_right(viewport_size) - left, 0.0), maxf(awaken.position.y - top, 0.0))
-
-
-## CONFIRM ("Chot") button: left of the Awaken button, same vertical extent, from the centre controls' left
-## edge (211 x 115 px at 1280x720).
+## Controls v3 bottom-left row while placing: Tung phép (CAST_WIDTH_PX wide, against the left inset), Xoay
+## (ROTATE_WIDTH_PX square, the buffer between the two opposite actions), Hủy (CANCEL_WIDTH_PX); BOTTOM_ROW_HEIGHT_PX
+## tall, BOTTOM_ROW_GAP_PX apart, on the shared bottom edge (12-112 / 122-186 / 196-268 x 644-708 at 1280x720).
 static func confirm_button_rect(viewport_size: Vector2) -> Rect2:
-	var awaken: Rect2 = signature_rect(viewport_size)
-	var left: float = center_left(viewport_size)
-	var right: float = awaken.position.x - viewport_size.x * SLOT_SIDE_GAP_RATIO
-	return Rect2(left, awaken.position.y, maxf(right - left, 0.0), awaken.size.y)
+	return _row_rect(viewport_size, HUD_EDGE_INSET_PX * controls_scale(viewport_size), CAST_WIDTH_PX)
 
 
-## Story 024: inset of the ROTATE ("Xoay") button from the stick zone's edge, in px.
-const ROTATE_BUTTON_INSET: float = 6.0
-## Story 024 / 044: while PLACING the joystick is off and the whole stick zone (inset) becomes one big
-## ROTATE button the left thumb can hold while the right finger drags.
+## Controls v3: the Xoay (rotate) square right of Tung phép, see [method confirm_button_rect].
 static func rotate_button_rect(viewport_size: Vector2) -> Rect2:
-	return stick_zone_rect(viewport_size).grow(-ROTATE_BUTTON_INSET)
+	var cast: Rect2 = confirm_button_rect(viewport_size)
+	return _row_rect(viewport_size, cast.end.x + roundf(BOTTOM_ROW_GAP_PX * controls_scale(viewport_size)), ROTATE_WIDTH_PX)
 
 
-## CANCEL button ("Huy", PLACING and the card menu): right of the Awaken button against the centre controls'
-## right edge, same vertical extent as the Awaken button (141 x 115 px at 1280x720).
-static func cancel_button_rect(viewport_size: Vector2) -> Rect2:
-	var awaken: Rect2 = signature_rect(viewport_size)
-	var right: float = center_right(viewport_size)
-	var width: float = viewport_size.x * CANCEL_WIDTH_RATIO
-	return Rect2(right - width, awaken.position.y, width, awaken.size.y)
+## Controls v3: the Hủy (cancel) button. While placing / in the place window it closes the bottom-left row right of
+## Xoay; with the card menu open ([param menu]) it takes the corner place and size of Tung phép instead.
+static func cancel_button_rect(viewport_size: Vector2, menu: bool = false) -> Rect2:
+	if menu:
+		return confirm_button_rect(viewport_size)
+	var rotate: Rect2 = rotate_button_rect(viewport_size)
+	return _row_rect(viewport_size, rotate.end.x + roundf(BOTTOM_ROW_GAP_PX * controls_scale(viewport_size)), CANCEL_WIDTH_PX)
 
 
-## Centre strip under the lowest narrow board row, between the stick zone and T3 (x 346-959, y 556-701 at
-## 1280x720). Hosts the Confirm / Awaken / Cancel buttons, the preview text and the skill panel.
-static func cut_strip_rect(viewport_size: Vector2) -> Rect2:
-	var top: float = center_top(viewport_size)
-	var left: float = center_left(viewport_size)
-	return Rect2(left, top, maxf(center_right(viewport_size) - left, 0.0), maxf(controls_bottom(viewport_size) - top, 0.0))
+## Controls v3: the tap rects of the bottom-left row [Tung phép, Xoay, Hủy] (see [method row_hit_rects]; the row reaches
+## the left screen edge). Tung phép 0-117, Xoay 117-191, Hủy 191-280 x 624-720 at 1280x720.
+static func placing_row_hit_rects(viewport_size: Vector2) -> Array[Rect2]:
+	var visuals: Array[Rect2] = [confirm_button_rect(viewport_size), rotate_button_rect(viewport_size), cancel_button_rect(viewport_size)]
+	return row_hit_rects(viewport_size, visuals, true, false)
 
 
-## Place-window bar (2026-11-01: where the old card-menu timer bar was): across the top of the centre strip, above
-## the Tung phép and Awaken buttons, from the Tung phép button's left edge to the Awaken button's right edge (one
-## strip pad below the strip's top; 346-697 x 565-579 px at 1280x720).
-static func place_window_bar_rect(viewport_size: Vector2) -> Rect2:
-	var strip: Rect2 = cut_strip_rect(viewport_size)
-	var pad: float = viewport_size.y * MENU_PAD_RATIO
-	var left: float = confirm_button_rect(viewport_size).position.x
-	var right: float = signature_rect(viewport_size).end.x
-	return Rect2(left, strip.position.y + pad, maxf(right - left, 0.0), viewport_size.y * MENU_BAR_HEIGHT_RATIO)
+## Controls v3: tap rect of Tung phép (also of the card menu's Hủy, which sits in its place).
+static func confirm_hit_rect(viewport_size: Vector2) -> Rect2:
+	return placing_row_hit_rects(viewport_size)[0]
+
+
+## Controls v3: tap rect of Xoay.
+static func rotate_hit_rect(viewport_size: Vector2) -> Rect2:
+	return placing_row_hit_rects(viewport_size)[1]
+
+
+## Controls v3: tap rect of Hủy ([param menu]: the card menu's Hủy in the place of Tung phép).
+static func cancel_hit_rect(viewport_size: Vector2, menu: bool = false) -> Rect2:
+	return placing_row_hit_rects(viewport_size)[0 if menu else 2]
 
 
 ## Card menu (2026-11-01): one CardFace rectangle per drawn card, left to right, the row centred on the screen
@@ -697,27 +663,47 @@ static func skill_menu_rects(viewport_size: Vector2, count: int) -> Array[Rect2]
 	return rects
 
 
-## Card menu countdown bar: above the centred card row ([param count] cards), as wide as the row.
-static func skill_menu_bar_rect(viewport_size: Vector2, count: int = 4) -> Rect2:
+## Controls v3: the angular frame enclosing the [param count] menu cards (MENU_FRAME_PAD_PX outside them); the
+## pick-time fuse burns clockwise round it from 12 o'clock (235-1044 x 218-502 at 1280x720 for four cards).
+static func skill_menu_frame_rect(viewport_size: Vector2, count: int = 4) -> Rect2:
 	var rects: Array[Rect2] = skill_menu_rects(viewport_size, maxi(count, 1))
-	var height: float = roundf(viewport_size.y * MENU_TIMER_HEIGHT_RATIO)
-	var top: float = rects[0].position.y - roundf(viewport_size.y * MENU_TIMER_GAP_RATIO) - height
-	return Rect2(rects[0].position.x, top, rects[-1].end.x - rects[0].position.x, height)
+	return rects[0].merge(rects[-1]).grow(roundf(MENU_FRAME_PAD_PX * controls_scale(viewport_size)))
 
 
-## Card menu area (the countdown bar and the card row, one strip pad around them).
+## Card menu area (the fuse frame round the card row).
 static func skill_menu_panel_rect(viewport_size: Vector2, count: int = 4) -> Rect2:
-	var rects: Array[Rect2] = skill_menu_rects(viewport_size, maxi(count, 1))
-	var area: Rect2 = skill_menu_bar_rect(viewport_size, count).merge(rects[0]).merge(rects[-1])
-	return area.grow(viewport_size.y * MENU_PAD_RATIO)
+	return skill_menu_frame_rect(viewport_size, count)
 
 
-## 2026-11-01 LoL-style cooldown column at the LEFT screen edge, between the relic row (top-left) and the stick
-## zone (bottom-left): the relic row's left inset, one icon wide (12-64 x 62-453 px at 1280x720).
+## Controls v3 top-left corner, row 2: the player's buffs / debuffs (StatusEffects), one STATUS_ICON_PX angular frame
+## each, under the relic row and as wide as it (12-268 x 54-94 at 1280x720).
+static func hud_status_row_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var relics: Rect2 = hud_relic_strip_rect(viewport_size)
+	var top: float = relics.end.y + roundf(STATUS_ROW_GAP_PX * s)
+	return Rect2(relics.position.x, top, relics.size.x, roundf(STATUS_ICON_PX * s))
+
+
+## Controls v3: the frames of [param count] statuses in the row, left to right (at most as many as fit).
+static func status_icon_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	var row: Rect2 = hud_status_row_rect(viewport_size)
+	var edge: float = row.size.y
+	var gap: float = roundf(STATUS_ICON_GAP_PX * controls_scale(viewport_size))
+	for i: int in count:
+		var r := Rect2(row.position.x + (edge + gap) * i, row.position.y, edge, edge)
+		if r.end.x > row.end.x:
+			break
+		rects.append(r)
+	return rects
+
+
+## 2026-11-01 LoL-style cooldown column at the LEFT screen edge. Controls v3: under the buff / debuff row, down to the
+## stick zone; the relic row's left inset, one icon wide (12-64 x 102-453 px at 1280x720).
 static func cooldown_column_rect(viewport_size: Vector2) -> Rect2:
-	var s: float = viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT
+	var s: float = controls_scale(viewport_size)
 	var left: float = floorf(HUD_TOP_ROW_INSET_PX * s)
-	var top: float = ceilf(hud_relic_strip_rect(viewport_size).end.y + COOLDOWN_COLUMN_GAP_PX * s)
+	var top: float = ceilf(hud_status_row_rect(viewport_size).end.y + COOLDOWN_COLUMN_GAP_PX * s)
 	var bottom: float = floorf(stick_zone_rect(viewport_size).position.y - COOLDOWN_COLUMN_GAP_PX * s)
 	return Rect2(left, top, roundf(COOLDOWN_ICON_PX * s), maxf(bottom - top, 0.0))
 
@@ -727,7 +713,7 @@ static func cooldown_icon_rects(viewport_size: Vector2, count: int) -> Array[Rec
 	var rects: Array[Rect2] = []
 	var column: Rect2 = cooldown_column_rect(viewport_size)
 	var edge: float = column.size.x
-	var gap: float = roundf(COOLDOWN_ICON_GAP_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT)
+	var gap: float = roundf(COOLDOWN_ICON_GAP_PX * controls_scale(viewport_size))
 	for i: int in count:
 		var r := Rect2(column.position.x, column.position.y + (edge + gap) * i, edge, edge)
 		if r.end.y > column.end.y:
@@ -736,42 +722,33 @@ static func cooldown_icon_rects(viewport_size: Vector2, count: int) -> Array[Rec
 	return rects
 
 
-## Cell count and expected damage of the piece being placed: the column between the Awaken and the Cancel
-## buttons (104 x 115 px at 1280x720).
-static func cut_preview_info_rect(viewport_size: Vector2) -> Rect2:
-	var awaken: Rect2 = signature_rect(viewport_size)
-	var gap: float = viewport_size.y * STRIP_GAP_RATIO
-	var left: float = awaken.end.x + gap
-	var right: float = cancel_button_rect(viewport_size).position.x - gap
-	return Rect2(left, awaken.position.y, maxf(right - left, 0.0), awaken.size.y)
-
-
-## Story 044 Part C: share of the Rotate button's height its top hint band takes (39 px at 720p; the
-## rotate glyph starts below it).
-const PLACE_HINT_HEIGHT_RATIO: float = 0.16
-## Story 024 / 044: the placement hint, a band across the top of the ROTATE button (the control that
-## exists only while placing; the 30 px tag zone above Cancel is left to the FULL label and the focus
-## tag). Text drawn here must be clipped to it.
+## Controls v3: the placing hint, bare text just above the bottom-left row (left inset, PLACE_HINT_WIDTH_PX wide), shown
+## while the block is off the enemy's side. Clear of the board (the rows that reach this low sit in the thumb gap).
 static func place_hint_rect(viewport_size: Vector2) -> Rect2:
-	var rotate: Rect2 = rotate_button_rect(viewport_size)
-	return Rect2(rotate.position, Vector2(rotate.size.x, rotate.size.y * PLACE_HINT_HEIGHT_RATIO))
+	var s: float = controls_scale(viewport_size)
+	var row_top: float = confirm_button_rect(viewport_size).position.y
+	var h: float = roundf(PLACE_HINT_HEIGHT_PX * s)
+	var left: float = roundf(HUD_EDGE_INSET_PX * s)
+	return Rect2(left, row_top - roundf(BOTTOM_ROW_GAP_PX * s) - h, roundf(PLACE_HINT_WIDTH_PX * s), h)
 
 
-## Skill name and countdown of the running swing: the strip right of the Awaken button (the Cancel button
-## is not shown while a swing runs).
-static func cut_swing_info_rect(viewport_size: Vector2) -> Rect2:
-	var strip: Rect2 = cut_strip_rect(viewport_size)
-	var left: float = signature_rect(viewport_size).end.x + viewport_size.x * SLOT_SIDE_GAP_RATIO
-	return Rect2(left, strip.position.y, maxf(strip.end.x - left, 0.0), strip.size.y)
+## Controls v3 top-right corner: the visible pause tile (PAUSE_TILE_PX), HUD_EDGE_INSET_PX from the right and top
+## edges (1220-1268 x 12-60 at 1280x720).
+static func pause_tile_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var side: float = roundf(PAUSE_TILE_PX * s)
+	var inset: float = roundf(HUD_EDGE_INSET_PX * s)
+	return Rect2(viewport_size.x - inset - side, inset, side, side)
 
 
-## Focus UI (Story 012): the focus countdown (or cooldown) bar. As wide as the CONFIRM button and
-## right above it, one strip gap up (554-577 px at 720p, below the lowest narrow board row).
-static func focus_bar_rect(viewport_size: Vector2) -> Rect2:
-	var confirm: Rect2 = confirm_button_rect(viewport_size)
-	var gap: float = viewport_size.y * STRIP_GAP_RATIO
-	var height: float = viewport_size.y * FOCUS_BAR_HEIGHT_RATIO
-	return Rect2(Vector2(confirm.position.x, confirm.position.y - gap - height), Vector2(confirm.size.x, height))
+## Controls v3: the gold (angular glyph + number) left of the pause tile, right-aligned TOP_RIGHT_GAP_PX before it,
+## HUD_GOLD_RESERVE_PX wide, on the top row (1126-1210 x 12-60 at 1280x720).
+static func hud_gold_rect(viewport_size: Vector2) -> Rect2:
+	var s: float = controls_scale(viewport_size)
+	var tile: Rect2 = pause_tile_rect(viewport_size)
+	var right: float = tile.position.x - roundf(TOP_RIGHT_GAP_PX * s)
+	var width: float = roundf(HUD_GOLD_RESERVE_PX * s)
+	return Rect2(right - width, tile.position.y, width, tile.size.y)
 
 
 ## Run UI (Story 011). Match label: the thin margin above the arena, for centred text. Since the corner
@@ -946,17 +923,7 @@ static func reward_skip_button_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(Vector2((viewport_size.x - size.x) * 0.5, viewport_size.y * REWARD_SKIP_TOP_RATIO), size)
 
 
-## Run HUD (Story 019): the deck label strip. Since the corner HP panels (2026-10-31) the boss panel owns
-## the top-right corner, so the label sits right of the visible pause tile, as tall as the tile, up to the
-## boss panel: left-aligned text, mirroring the Resonant-shape tile left of the pause tile.
-static func run_deck_label_rect(viewport_size: Vector2) -> Rect2:
-	var pause: Rect2 = pause_button_rect(viewport_size)
-	var tile: float = minf(floorf(PAUSE_TILE_PX * viewport_size.y / PAUSE_TILE_REF_HEIGHT), pause.size.x)
-	var gap: float = HUD_CORNER_GAP_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT
-	var left: float = pause.get_center().x + tile * 0.5 + gap
-	var right: float = hud_panel_rect(viewport_size, 1).position.x - gap
-	var top: float = floorf(hud_rect(viewport_size).position.y)
-	return Rect2(left, top, maxf(right - left, 0.0), tile)
+## Controls v3: the deck label ("Deck: N") was removed from the battle HUD (spec bo-cuc-dieu-khien-v3).
 
 
 ## Boss status readouts (Story 020): the strip right under the boss HP bar (the right half of the
@@ -986,16 +953,7 @@ static func hud_trait_status_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(hud.position.x + CombatView.PAD, boss_strip.position.y, half_w, boss_strip.size.y)
 
 
-## Story 028: the featured-shape icon, a square at the right end of the PLAYER half's HP text row
-## (the HUD band's top padding plus the text row: above the HP bar, clear of the pause button column
-## and of the left-aligned "YOU HP" text; its tiny label is drawn to its left).
-const FEATURED_ICON_SIZE: float = 38.0
-static func featured_icon_rect(viewport_size: Vector2) -> Rect2:
-	var hud: Rect2 = hud_rect(viewport_size)
-	var gap: float = hud.size.x * CombatView.HUD_GAP_RATIO
-	var half_w: float = (hud.size.x - gap) * 0.5 - CombatView.PAD * 2.0
-	var right: float = hud.position.x + CombatView.PAD + half_w
-	return Rect2(right - FEATURED_ICON_SIZE, hud.position.y + 4.0, FEATURED_ICON_SIZE, FEATURED_ICON_SIZE)
+## Controls v3: the featured-shape chip was removed (the match intro band shows the shape; the ghost turns gold).
 
 
 ## Title screen (Story 016): the band across the top that holds the game name, the knife motif
@@ -1040,16 +998,11 @@ static func title_lang_button_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(Vector2(x, viewport_size.y - margin - size.y), size)
 
 
-## Pause button (Story 016): the square hit area (PAUSE_BUTTON_RATIO of the height), centred
-## horizontally in the HUD band between the two header panels. Story 046 Part B: placed so the visible
-## PAUSE_TILE_PX tile (RunHudView draws it centred in this rect, scaled with the height) has its top on
-## the header panels' top (floor of hud_rect's top, as CombatView._draw_hud).
+## Controls v3: the pause hit rect, CONTROL_HIT_PX square in the top-right screen corner, enclosing the visible tile
+## ([method pause_tile_rect]; 1184-1280 x 0-96 at 1280x720).
 static func pause_button_rect(viewport_size: Vector2) -> Rect2:
-	var hud: Rect2 = hud_rect(viewport_size)
-	var side: float = viewport_size.y * PAUSE_BUTTON_RATIO
-	var tile: float = minf(floorf(PAUSE_TILE_PX * viewport_size.y / PAUSE_TILE_REF_HEIGHT), side)
-	var top: float = floorf(hud.position.y) + tile * 0.5 - side * 0.5
-	return Rect2(Vector2(hud.get_center().x - side * 0.5, top), Vector2(side, side))
+	var side: float = roundf(CONTROL_HIT_PX * controls_scale(viewport_size))
+	return Rect2(viewport_size.x - side, 0.0, side, side).merge(pause_tile_rect(viewport_size))
 
 
 ## Floor select (Story 016): the "Về" (back to title) button, on the left margin inside the
@@ -1284,13 +1237,6 @@ const REWARD_DUAL_RELICS_BOTTOM_RATIO: float = 0.865
 const REWARD_DUAL_LABEL_HEIGHT_RATIO: float = 0.045
 const REWARD_DUAL_BUTTON_TOP_RATIO: float = 0.885
 const REWARD_DUAL_BUTTON_WIDTH_RATIO: float = 0.18
-## In-match relic strip (display only): in the HUD band between the player's name (left share) and the
-## featured-shape label (room left of the featured icon, share of width); icon edge and top pad in px.
-## Unused since 2026-10-31 (the relic row starts at the top-left corner, HUD_TOP_ROW_INSET_PX); kept for reference.
-const HUD_RELIC_LEFT_RATIO: float = 0.225
-const HUD_RELIC_LABEL_ROOM_RATIO: float = 0.1
-const HUD_RELIC_ICON: float = 26.0
-const HUD_RELIC_TOP_PAD: float = 6.0
 
 
 ## Story 032: the relic strip band under the chapter map / world map / pause panel, margin to margin.
@@ -1300,14 +1246,17 @@ static func relic_strip_rect(viewport_size: Vector2) -> Rect2:
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, viewport_size.y * RELIC_STRIP_BOTTOM_RATIO - top)
 
 
-## Story 032: the in-match display-only relic strip (top edge, HUD band, far from the d-pad and the bag).
-## 2026-10-31 (user: "debuff hay buff thì hiện ở góc trái, tiền góc phải", OSFE top row): it starts at the
-## top-left corner (HUD_TOP_ROW_INSET_PX from the left edge), on the top HUD row under the match label.
+## Story 032: the in-match display-only relic strip (top edge, far from the stick and the bag).
+## Controls v3: the top-left corner holds only the relics (this row) and the buffs / debuffs under it
+## ([method hud_status_row_rect]): HUD_RELIC_ROW_PX tall, centred on the top row, from the left inset to the right
+## edge of the old player corner panel (where the dev-build title line starts; 12-260 x 22-50 at 1280x720).
 static func hud_relic_strip_rect(viewport_size: Vector2) -> Rect2:
-	var hud: Rect2 = hud_rect(viewport_size)
-	var left: float = floorf(HUD_TOP_ROW_INSET_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT)
-	var right: float = featured_icon_rect(viewport_size).position.x - viewport_size.x * HUD_RELIC_LABEL_ROOM_RATIO
-	return Rect2(left, hud.position.y + HUD_RELIC_TOP_PAD, maxf(right - left, 0.0), HUD_RELIC_ICON)
+	var s: float = controls_scale(viewport_size)
+	var row: Rect2 = hud_top_row_rect(viewport_size)
+	var left: float = floorf(HUD_TOP_ROW_INSET_PX * s)
+	var right: float = hud_panel_rect(viewport_size, 0).end.x
+	var h: float = roundf(HUD_RELIC_ROW_PX * s)
+	return Rect2(left, roundf(row.get_center().y - h * 0.5), maxf(right - left, 0.0), h)
 
 
 ## Story 032, treasure screen with a relic row: "Bỏ qua" at the bottom-left.

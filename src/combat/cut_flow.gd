@@ -119,6 +119,12 @@ func get_time_left() -> float:
 	return maxf(_time_left, 0.0) if _open else 0.0
 
 
+## Dev/capture only: sets the REAL seconds left of the open menu (no effect while closed).
+func debug_set_time_left(sec: float) -> void:
+	if _open:
+		_time_left = maxf(sec, 0.0)
+
+
 ## Total choose time: cards.json menu_choose_sec x [member time_mult] (0 = no limit).
 func get_duration() -> float:
 	return 0.0 if is_unlimited() else _config.menu_choose_sec * time_mult

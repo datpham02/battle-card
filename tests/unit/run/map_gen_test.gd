@@ -117,7 +117,10 @@ func _initialize() -> void:
 	for k: String in ["battle", "danger", "treasure", "rest", "miniboss", "boss"]:
 		check(kinds_seen.has(k), "kind %s generated" % k)
 	var ob: Array[Dictionary] = cfg.generate_map(0, 99, 0)
-	check(ob[3]["nodes"].any(func(n: Dictionary) -> bool: return n["kind"] == "miniboss" and n["match_id"] == "goblin_chief"), "onboarding miniboss is goblin_chief")
+	# P2.3 (spec phase2-misty-forest 5.5): the tier-1 elite pool is goblin_chief + ancient_root_sentinel (the latter only
+	# after a Rootling / Mossbound Sentry column, teach_after; tests/unit/run/map_gen_teach_after_test.gd covers 10 000 seeds).
+	check(ob[3]["nodes"].any(func(n: Dictionary) -> bool: return n["kind"] == "miniboss" and (n["match_id"] == "goblin_chief" 		or (n["match_id"] == "ancient_root_sentinel" and ChapterMapGen.is_taught(cfg.get_map_spec(0), "ancient_root_sentinel", ob.slice(0, 3))))),
+		"onboarding miniboss is a tier-1 elite (goblin_chief, or the Sentinel once taught)")
 	check(ob[6]["nodes"][0]["match_id"] == "goblin_warlock", "onboarding boss is goblin_warlock")
 	check(cfg.node_count(ob) >= 13 and cfg.node_count(ob) <= 17, "node_count %d" % cfg.node_count(ob))
 	var runnable: int = 0

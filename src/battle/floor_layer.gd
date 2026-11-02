@@ -16,6 +16,13 @@ extends Node2D
 ## thorn cells without a tile get a flat thorn colour. Nothing here crashes on missing art.
 ## Implements: Story 047 Part B, Story 046 Part C (dynamic sub-layer).
 
+## P2.3 pattern markers (spec 7.1 / section 8: dark wood-amber root anchor, dark moss wreath; no red, no glow).
+const MARKER_ANCHOR: Color = Color("7A5230")
+const MARKER_WREATH: Color = Color("4F6B3C")
+const MARKER_EDGE: Color = Color("1B1722")
+## P2.3 ivory frame (Rootling creep destination, Guard): never red (F6 keeps red for cells that will be hit).
+const IVORY_OUTLINE: Color = Color("EDE3C8")
+
 var _combat: CombatView = null
 var _painters: Array[Callable] = []
 var _region_id: String = ArtAssets.DEFAULT_REGION
@@ -129,11 +136,69 @@ static func pattern_telegraph_state(pattern: PatternController, config: CombatCo
 	return {"cells": cells, "k": config.quantize_progress(pattern.warning_progress(), reduce_motion), "queued": queued}
 
 
-## Story 046 Part C: what the dynamic sub-layer draws on [param canvas]: the telegraph [param state], then every
-## [method add_painter] hook as `fn(canvas, self)`.
+## P2.3 (spec section 8 "drawn by code"): what the pattern brain shows besides red, for the dynamic layer:
+## `markers` = [{cell, kind}] (root anchor / wreath on the enemy half: a dark wood / moss square, no red, no glow),
+## `outline` = cells framed in ivory (the Rootling creep's destination while it winds up; the enemy's cells while its
+## Guard holds). {} when nothing shows. Drawn UNDER the red (F6).
+static func pattern_extras_state(pattern: PatternController, status: StatusEffects, state: CombatState) -> Dictionary:
+	if pattern == null:
+		return {}
+	var marks: Array[Dictionary] = []
+	for m: Dictionary in pattern.markers():
+		marks.append({"cell": m["cell"], "kind": m["kind"]})
+	var outline: Array[Vector2i] = []
+	var target: Vector2i = pattern.move_target_cell()
+	if target != BoardGrid.NO_CELL:
+		outline.append(target)
+	if status != null and state != null and status.get_guard_left(CombatState.Side.ENEMY) > 0.0 and not state.is_enemy_dead():
+		for cell: Vector2i in state.enemy_footprint_cells():
+			if not outline.has(cell):
+				outline.append(cell)
+	if marks.is_empty() and outline.is_empty():
+		return {}
+	return {"markers": marks, "outline": outline}
+
+
+## The pattern extras to draw now ({} for a block-brain match).
+func pattern_extras() -> Dictionary:
+	if _combat == null or not is_instance_valid(_combat):
+		return {}
+	return pattern_extras_state(_combat.get_pattern_controller(), _combat.get_status(), _combat.get_state())
+
+
+# P2.3: marker squares and ivory outlines (see pattern_extras_state), whole art px, flat colours.
+func _paint_pattern_extras(canvas: Node2D, extras: Dictionary) -> void:
+	for m: Dictionary in extras.get("markers", []) as Array:
+		var slab: Rect2i = _slab_of(m["cell"])
+		if not slab.has_area():
+			continue
+		var side: int = maxi(mini(slab.size.x, slab.size.y) * 2 / 5, 4)
+		var box: Rect2i = Rect2i(slab.position + (slab.size - Vector2i(side, side)) / 2, Vector2i(side, side))
+		var fill: Color = MARKER_WREATH if str(m["kind"]) == "wreath" else MARKER_ANCHOR
+		canvas.draw_rect(Rect2(box), MARKER_EDGE)
+		canvas.draw_rect(Rect2(box.grow(-1)), fill)
+		canvas.draw_rect(Rect2(box.position + Vector2i(2, 2), Vector2i(maxi(side / 4, 1), maxi(side / 4, 1))), fill.lightened(0.25))
+	for cell: Vector2i in extras.get("outline", []) as Array:
+		var slab2: Rect2i = _slab_of(cell)
+		if slab2.has_area():
+			canvas.draw_rect(Rect2(slab2.grow(-1)), IVORY_OUTLINE, false, 2.0)
+
+
+func _slab_of(cell: Vector2i) -> Rect2i:
+	var rect: Rect2i = cell_art_rect(cell)
+	if rect.size.x <= 0 or rect.size.y <= 0:
+		return Rect2i()
+	var slab: Rect2i = SlabPainter.slab_rect(rect.size)
+	slab.position += rect.position
+	return slab
+
+
+## Story 046 Part C: what the dynamic sub-layer draws on [param canvas]: the pattern extras (P2.3, under the red),
+## the telegraph [param state], then every [method add_painter] hook as `fn(canvas, self)`.
 func paint_dynamic(canvas: Node2D, state: Dictionary) -> void:
 	if _combat == null or not is_instance_valid(_combat) or _combat.get_grid() == null:
 		return
+	_paint_pattern_extras(canvas, pattern_extras())
 	TelegraphPainter.paint(canvas, self, state, _combat.get_config())
 	for painter: Callable in _painters:
 		if painter.is_valid():

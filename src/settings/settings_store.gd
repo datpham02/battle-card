@@ -1,30 +1,21 @@
 class_name SettingsStore
 extends RefCounted
-## Story 044 Part B: the player's persisted options (there is no Settings screen; the pause panel
-## flips [code]controls.movement[/code]). JSON file, default [constant DEFAULT_PATH]:
-## [code]{"controls": {"movement": "joystick" | "pad"}, "show_control_hints": false, "reduce_motion": false,
+## Story 044 Part B: the player's persisted options (the Settings screen edits them). JSON file, default
+## [constant DEFAULT_PATH]: [code]{"show_control_hints": false, "reduce_motion": false,
 ## "card_time": "normal" | "long" | "unlimited"}[/code] (card_time 2026-11-01, accessibility "Thời gian chọn lá").
-## Unknown or missing values fall back to the defaults (joystick, hints off, reduce motion off).
+## Unknown or missing values fall back to the defaults (hints off, reduce motion off, normal card time).
 ## Story 047 Part D adds [code]reduce_motion[/code] (accessibility "Giam chuyen dong",
 ## design/accessibility-requirements.md): animated overlays hold their first frame.
+## 2026-11-01 (user decision): the optional "pad" movement mode was removed, the floating joystick is the only
+## movement control. A [code]controls.movement[/code] value left in an older settings.json is ignored on load and
+## dropped on the next save; a [code]--movement=[/code] command line arg is ignored.
 ##
 ## Two ways to use it. The game reads the shared instance ([method shared]), loaded lazily from
 ## the real file. Tests build their own instance on a temp path ([code]SettingsStore.new(path)[/code])
 ## and never touch the real file.
-##
-## Override: the command line [code]--movement=pad|joystick[/code] (user args, after [code]--[/code])
-## or [method set_movement_override] force the movement mode over the file. While an override is
-## active, [method set_movement] changes the override and does NOT write the file, so a scripted run
-## cannot damage the player's settings. Windowed click suites call
-## [code]SettingsStore.set_movement_override(SettingsStore.MOVEMENT_PAD)[/code] before building the scene.
 
-## Movement modes of Z3 (quick spec control-layout-v2 section 2.2).
-const MOVEMENT_JOYSTICK: String = "joystick"
-const MOVEMENT_PAD: String = "pad"
 ## Real settings file (per user).
 const DEFAULT_PATH: String = "user://settings.json"
-## Command line switch (the value after '=' is a movement mode).
-const MOVEMENT_ARG: String = "--movement="
 ## Accessibility "Thời gian chọn lá" (design/ux/hud.md): the card menu's choose time and the place window
 ## (cuts.json place_window_sec) run x1 ("3 s"), x2 ("6 s") or without a limit (no auto pick / auto cast).
 const CARD_TIME_NORMAL: String = "normal"
@@ -36,11 +27,8 @@ const CARD_TIMES: Array[String] = [CARD_TIME_NORMAL, CARD_TIME_LONG, CARD_TIME_U
 const CARD_TIME_MULTS: Dictionary = {CARD_TIME_NORMAL: 1.0, CARD_TIME_LONG: 2.0, CARD_TIME_UNLIMITED: 0.0}
 
 static var _shared: SettingsStore = null
-static var _override: String = ""
-static var _override_from_cli_checked: bool = false
 
 var _path: String
-var _movement: String = MOVEMENT_JOYSTICK
 var _show_control_hints: bool = false
 var _reduce_motion: bool = false
 var _card_time: String = CARD_TIME_NORMAL
@@ -59,67 +47,9 @@ static func shared() -> SettingsStore:
 	return _shared
 
 
-## Drops the shared instance and every override (tests; the CLI switch is read again).
+## Drops the shared instance (tests).
 static func reset_shared() -> void:
 	_shared = null
-	_override = ""
-	_override_from_cli_checked = false
-
-
-## Forces the movement mode regardless of the file; "" clears it. An unknown value is ignored.
-## A programmatic override beats the command line.
-static func set_movement_override(mode: String) -> void:
-	_override_from_cli_checked = true
-	_override = mode if _is_valid(mode) else ""
-
-
-## The active override ("" = none): [method set_movement_override] first, else the CLI switch.
-static func get_movement_override() -> String:
-	if not _override_from_cli_checked:
-		_override_from_cli_checked = true
-		_override = parse_movement_arg(OS.get_cmdline_user_args())
-	return _override
-
-
-## The movement mode given in [param args] as [code]--movement=pad|joystick[/code]; "" when absent
-## or unknown. The last valid occurrence wins.
-static func parse_movement_arg(args: PackedStringArray) -> String:
-	var mode: String = ""
-	for arg: String in args:
-		if arg.begins_with(MOVEMENT_ARG):
-			var value: String = arg.substr(MOVEMENT_ARG.length())
-			if _is_valid(value):
-				mode = value
-	return mode
-
-
-## Effective movement mode: the override when active, else the stored value.
-func get_movement() -> String:
-	var forced: String = get_movement_override()
-	return forced if forced != "" else _movement
-
-
-## True when the effective movement mode is the 3x3 pad.
-func is_pad() -> bool:
-	return get_movement() == MOVEMENT_PAD
-
-
-## Sets the movement mode. With an override active it changes the override only (nothing is
-## written); otherwise it stores the value and saves. An unknown value is ignored.
-func set_movement(mode: String) -> void:
-	if not _is_valid(mode):
-		return
-	if get_movement_override() != "":
-		set_movement_override(mode)
-		return
-	_movement = mode
-	save_file()
-
-
-## Flips joystick <-> pad (the pause panel button) and returns the new mode.
-func toggle_movement() -> String:
-	set_movement(MOVEMENT_JOYSTICK if is_pad() else MOVEMENT_PAD)
-	return get_movement()
 
 
 ## True when the faint stick hint ring stays visible all match (settings.show_control_hints).
@@ -172,7 +102,6 @@ static func card_time_mult(value: String) -> float:
 ## Reads the file; anything missing or malformed leaves the defaults. Returns true when a file
 ## was parsed.
 func load_file() -> bool:
-	_movement = MOVEMENT_JOYSTICK
 	_show_control_hints = false
 	_reduce_motion = false
 	_card_time = CARD_TIME_NORMAL
@@ -185,11 +114,6 @@ func load_file() -> bool:
 	if json.parse(file.get_as_text()) != OK or not (json.data is Dictionary):
 		return false
 	var data: Dictionary = json.data
-	var controls: Variant = data.get("controls", {})
-	if controls is Dictionary:
-		var mode: Variant = (controls as Dictionary).get("movement", MOVEMENT_JOYSTICK)
-		if mode is String and _is_valid(mode):
-			_movement = mode
 	_show_control_hints = data.get("show_control_hints", false) == true
 	var reduce: Variant = data.get("reduce_motion", false)
 	_reduce_motion = reduce is bool and bool(reduce)
@@ -199,13 +123,12 @@ func load_file() -> bool:
 	return true
 
 
-## Writes the stored values (never an override) to the file. Returns false when it cannot write.
+## Writes the stored values to the file. Returns false when it cannot write.
 func save_file() -> bool:
 	var file: FileAccess = FileAccess.open(_path, FileAccess.WRITE)
 	if file == null:
 		return false
 	var data: Dictionary = {
-		"controls": {"movement": _movement},
 		"show_control_hints": _show_control_hints,
 		"reduce_motion": _reduce_motion,
 		"card_time": _card_time,
@@ -213,6 +136,3 @@ func save_file() -> bool:
 	file.store_string(JSON.stringify(data, "\t"))
 	return true
 
-
-static func _is_valid(mode: String) -> bool:
-	return mode == MOVEMENT_JOYSTICK or mode == MOVEMENT_PAD

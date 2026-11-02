@@ -42,7 +42,7 @@ Không có GDD với mục UI Requirements (ở tầng `minimal`, `game-brief.md
 | I-03 | Nút tạm dừng | điều khiển | **M** (nhỏ, ngoài vùng ngón cái) |
 | I-04 | Dòng bối cảnh trận (tầng, vùng, chặng, địch, sân) | chuyến leo | **C**: hiện ở màn giới thiệu trận, rồi thu gọn còn tên địch |
 | I-05 | Số lá trong bộ | bộ bài | **D** |
-| I-06 | Joystick nổi 4 hướng (tùy chọn: pad 4 hướng) | di chuyển | **M** |
+| I-06 | Joystick nổi 4 hướng (chế độ pad đã bỏ 2026-11-01) | di chuyển | **M** |
 | I-07 | Túi khối (3 ô, số ô mỗi khối) | khối | **M** |
 | I-08 | Nút Thức Tỉnh + Bản Khắc ("0/21") + trạng thái hồi/sẵn sàng/đang chạy | Thức Tỉnh | **M** |
 | I-09 | Thanh Tập trung (đếm ngược, hồi) | Tập trung | **C**: khi đang đặt khối; chưa dùng được thì chỉ có dấu nhỏ |
@@ -114,12 +114,46 @@ Màn ngang 1280×720 (tham chiếu), tỉ lệ lấy từ `src/layout/screen_lay
 +------------------------------------------------------------------------+
 ```
 
+### Bố cục điều khiển v3 (2026-11-02, thay các dòng Z1, Z3, Z4, Z5 bên dưới)
+
+Nguồn: `design/quick-specs/bo-cuc-dieu-khien-v3-2026-11-02.md` (người dùng chốt 2026-11-02). Số đo ở 720p, nhân theo cao màn hình / 720 (`ScreenLayout.controls_scale`). Mọi nút có hình nhìn thấy đúng cỡ spec và một **vùng chạm vô hình** riêng (`ScreenLayout.row_hit_rects`): cao 96 px tới mép dưới màn hình, rộng tới 96 px quanh tâm nút; hai nút cạnh nhau chia đôi khe giữa (Xoay chỉ còn 74 px rộng, vẫn ≥ 64 px của spec); nút ngoài cùng kéo tới mép màn hình. Không vùng chạm nào chồng nhau hay chồng lên sân.
+
+```
++------------------------------------------------------------------------+
+| [bảo vật ...]          (dòng tầng: chỉ bản phát triển)  [khối boss] ⬡28 [⏸]|
+| [Trói][Chậm][Rạn][Giáp]  <- buff/debuff, quạt thời gian                |
+| [hồi]                                                                  |
+| [hồi]  +-------- lưới bạn ---------+-------- lưới địch --------+       |
+|        +---------------------------+---------------------------+       |
+|  (joystick)               ◇ Thức Tỉnh                                  |
+| [Tung phép][Xoay][Hủy]    0/12              [ổ][ổ][ổ]                  |
++------------------------------------------------------------------------+
+```
+
+| Vùng | Nội dung v3 |
+|---|---|
+| Trên trái | Hàng bảo vật (12 px từ mép, cao 28 px); dưới nó hàng buff/debuff của nhân vật (E-43); dưới nữa cột hồi chiêu (E-42). Không còn chip "Hình Cộng Hưởng" và "Bộ: N lá" |
+| Trên phải | Nút tạm dừng 48 px sát góc (vùng chạm là ô 96 px ở góc); bên trái là vàng (icon lục giác + số), bên trái nữa là khối boss đang giữ |
+| Dòng tầng | "Tầng 1/5 · …" chỉ vẽ ở bản phát triển (`OS.is_debug_build()`; ảnh chụp có thể tắt bằng `--no-dev-title`) |
+| Dưới trái | Lúc di chuyển: joystick. Lúc đặt khối: hàng `[Tung phép 100][Xoay 64][Hủy 72]` cao 64 px, cách nhau 10 px, sát góc, cùng đáy với túi khối. Tung phép chỉ hiện khi đang đặt hoặc trong cửa sổ đặt; Xoay chỉ khi đang cầm khối. Lúc chọn lá: Hủy nằm chỗ Tung phép |
+| Dưới giữa | Thức Tỉnh (hình thoi) + số Bản Khắc; ẩn khi đặt khối và khi chọn lá |
+| Dưới phải | Túi khối gọn: 3 ổ đá vát góc 64×64 thẳng hàng (túi 4 ô: 4 ổ cùng hàng), cách nhau 10 px, sát góc phải, cùng đáy |
+| Thời gian | Ngòi vàng cháy theo chiều kim đồng hồ từ 12 giờ quanh viền nút Tung phép (cửa sổ đặt 3 s và Tập trung; nếu cả hai chạy thì hiện cái hết trước, vì đó là hạn tác động kế tiếp) và quanh khung bao 4 lá (3 s chọn lá). Đầu ngòi là hình thoi sáng; phần đã cháy là rãnh tối. Bỏ mọi thanh rời |
+| Chữ hiệu ứng | Không khung: màu tự nổi (vàng cho có lợi, xanh lá "sẽ trúng", đỏ nhạt "sẽ trượt"), viền mực dày 6 px, bóng 2 px, to ×1,2, nảy 0,18 s khi hiện (tắt khi bật Giảm chuyển động) |
+| Cộng hưởng | Tự tính như cũ. Khi các khối đặt khớp hình: bóng khối chuyển vàng + chữ "Cộng hưởng ×1,5 · N ô · −X". Hình cần ghép hiện một lần ở băng giới thiệu đầu trận, cạnh tên sân |
+| Hình dạng | Không hình tròn trong HUD trừ joystick: vàng là lục giác, dấu gỡ khối và điểm dưới ngón tay là hình thoi, mũi tên Xoay gãy góc |
+| Sân | Cỡ ô né cả vùng chạm túi khối và cột hồi chiêu (`ScreenLayout.hud_obstacle_rects`): sân 7 cột mỗi nửa thu nhỏ một chút thay vì nằm dưới cột hồi chiêu |
+
+Ảnh: `production/qa/evidence/controls-v3/`.
+
+Các dòng dưới đây là bố cục v2, giữ để tra lịch sử; chỗ nào khác bảng v3 ở trên thì v3 thắng.
+
 | Vùng | Vị trí | Chứa | Ghi chú |
 |---|---|---|---|
 | **Z1** Dải trên | ≈ 3–20 % cao (sửa 2026-10-31: 8–20 % là dải cảnh xa của nền, art bible 6.4; trước đó 3–14 %). **Trong trận không có panel máu** (sửa lần 3, 2026-10-31, người dùng: "khi chiến đấu thì hiện số máu dưới chân còn ẩn cái thanh máu ở trên", "chỉ cần con số không, ko cần border"): số máu hiện tại của mỗi đơn vị là chữ trơn có viền mực ngay dưới chân (người chơi chữ sáng, boss Ngà), chip trạng thái dưới số; hàng trên cùng (dưới dòng tầng, trên dải cảnh xa) theo OSFE (người dùng 2026-10-31: "debuff hay buff thì hiện ở góc trái, tiền góc phải"): bảo vật (buff; bảo vật âm viền đỏ = debuff, nháy khi kích hoạt) bắt đầu từ góc trên trái, vàng của lượt chơi ở góc trên phải, hàng khối boss đang giữ ngay bên trái số vàng; tiến độ Bản Khắc ở dưới ô kim cương Thức Tỉnh. `combat.json hud.corner_panels: true` bật lại hai panel góc. Phương án panel góc (sửa lần 2): **Hai panel máu áp sát hai góc trên, 0–7,2 %** (sửa lần 2, 2026-10-31, người dùng: "đưa thanh máu về góc như này giống osfe": panel 260×52 px ở 720p (thanh máu ngắn kiểu OSFE, người dùng: "ko cần dài quá"), tối đa 28 % bề ngang, vát góc trong phía dưới; người chơi trên trái: tên + "máu/tối đa", thanh máu, thanh Bản Khắc; boss trên phải: ô khối đang giữ + tên, thanh máu, "máu/tối đa". Cao 52 px để đầu Kiếm sĩ v3 ở hàng sau sân 5x5 không bị che. Dòng tầng/trận nằm giữa hai panel; "Bộ: N lá" bên phải nút tạm dừng. Trước đó: 3–11 %, panel 430×60 của Story 046); 8–20 % để trống cho cảnh xa và đầu đơn vị hàng sau cùng (đơn vị đứng cao kiểu OSFE, `design/art/art-bible.md` mục 1 và 3; người dùng chốt 2026-10-28) | Hai thanh máu (I-01, I-02), tạm dừng (I-03), biểu tượng Hình Cộng Hưởng (I-15, khi cầm khối) | Ngoài vùng ngón cái, không che lưới |
 | **Z1b** | trong panel boss, hàng trên, bên trái tên (sửa 2026-10-31) | Hàng khối boss đang giữ (I-18), ô 22×17 px | Thu gọn cho vừa hàng |
 | **Z2** Lưới | ≈ 20–64 % cao cho hàng rộng (sửa 2026-10-31: sân bắt đầu ở 20 % để nền có dải cảnh xa; trước đó 15 %); hàng hẹp nằm gọn trong khe ngón cái (x 25–76 %) được xuống tới 76 % (bố cục v2, `design/quick-specs/control-layout-v2.md`, người dùng chốt 2026-10-31; trước đó 14–55 %) | Hai lưới; ô đỏ báo đòn và đếm ngược (I-16, I-17); từ khóa gắn trên đơn vị (I-23); địa hình (I-24, I-25); số sát thương và hồi máu (I-21, I-22); biểu ngữ và thông báo (I-19, I-20, I-26–I-28) | Mọi thông báo chuyển động nằm trên lớp này |
-| **Z3** Trái dưới | vùng x 0–25 %, y 64–100 % | Joystick nổi 4 hướng (I-06, đế 160 px, núm 88 px, xuất hiện tại chỗ chạm; Settings `controls.movement = pad` vẽ pad 3x3 nút 88 px thay thế); khi đặt khối chuyển thành nút Xoay lớn (I-12) | Ngón cái trái: **đi**. Bố cục v2 2026-10-31, trước đó pad 4 hướng cố định |
+| **Z3** Trái dưới | vùng x 0–25 %, y 64–100 % | Joystick nổi 4 hướng (I-06, đế 160 px, núm 88 px, xuất hiện tại chỗ chạm); là điều khiển di chuyển **duy nhất**: chế độ pad 3x3 (`controls.movement = pad`) đã bỏ theo quyết định người dùng 2026-11-01, giá trị `pad` cũ trong `settings.json` bị bỏ qua. Khi đặt khối chuyển thành nút Xoay lớn (I-12) | Ngón cái trái: **đi**. Bố cục v2 2026-10-31, trước đó pad 4 hướng cố định; 2026-11-01 bỏ pad |
 | **Z4** Dải giữa | giữa dưới | Thức Tỉnh + Bản Khắc (I-08); khi đặt khối: số ô, sát thương (I-11), Tung phép, Hủy (I-12), Tập trung (I-09); khi chọn lá: lớp xám nhìn xuyên được + menu 4 lá **ở giữa màn hình** (I-13, 2026-11-01) | Ngón nào rảnh thì bấm |
 | **Z5** Phải dưới | góc phải, 3 ô 130x93 px xếp vòng cung quanh điểm xoay ngón cái (góc 100/128/156°, bán kính 2× cao ô) | Túi khối, 3 ô (I-07) | Ngón cái phải: **kéo khối** lên lưới địch. Bố cục v2 2026-10-31, trước đó 3 ô 158x113 thẳng hàng |
 
@@ -178,10 +212,10 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 |---|---|---|---|---|---|
 | E-01 | Máu người chơi (M) | Thanh ngang + "200/200" + tên nhân vật | Liên tục, mượt 0,2 s | Luôn | Mất máu: đoạn "vết" nhạt co dần 0,4 s. Dưới 25 %: viền nhấp nháy 1 Hz + biểu tượng "!" |
 | E-02 | Máu boss (M) | Như E-01, kèm vạch nửa máu nếu boss có đổi pha | Liên tục | Luôn | Như E-01; đổi pha thì vạch nháy 0,5 s |
-| E-03 | Tạm dừng (M) | Nút vuông 32 px, giữa trên trong dải Z1; vùng chạm vô hình 88×88 px (`design/art/art-bible.md` 7.7) | Sự kiện | Luôn | Nhấn: dừng ngay, không cần xác nhận |
+| E-03 | Tạm dừng (M) | **v3:** ô đá 48 px sát góc trên phải, vùng chạm ô 96 px ở góc; vàng nằm bên trái. (Cũ: nút vuông 32 px giữa trên, vùng chạm 88×88 px) | Sự kiện | Luôn | Nhấn: dừng ngay, không cần xác nhận |
 | E-04 | Bối cảnh trận (C) | Dải một dòng: "Tầng 1/5 · Rừng Sương · Chặng 1/3" + tên địch, dòng thứ hai là mô tả trận (I-42) | Một lần | 2 giây đầu trận | Trượt vào, mờ dần. Xem lại trong màn Tạm dừng |
 | E-05 | Số lá trong bộ (D) | Chữ trong màn Tạm dừng | Sự kiện | Chỉ khi mở Tạm dừng | — |
-| E-15 | Hình Cộng Hưởng (C) | Hình thu nhỏ 5–7 ô cạnh nút tạm dừng | Sự kiện | Khi trong túi có ≥ 1 khối | Sáng viền khi hai khối đang ghép khớp hình |
+| E-15 | Hình Cộng Hưởng (C) | **v3:** bỏ chip trên dải. Hình hiện một lần ở băng giới thiệu đầu trận cạnh tên sân ("Cộng hưởng ×1,5"); khi ghép khớp: bóng khối vàng + chữ "Cộng hưởng ×1,5 · N ô · −X" không khung | Sự kiện | Băng giới thiệu; lúc ghép khớp | Chữ nảy nhẹ khi hiện |
 | E-18 | Khối boss đang giữ (M) | 3 ô nhỏ dưới thanh máu boss, mỗi ô là hình thu nhỏ (Khối Lạ có dấu sao). **Trống:** khung ô mờ, không chữ | Sự kiện | Luôn | Ô bị dùng xóa mờ 0,2 s |
 
 ### Điều khiển (Z3, Z4, Z5)
@@ -189,20 +223,21 @@ Mỗi yếu tố ghi hình dạng, cách cập nhật, khi nào hiện, hiệu �
 | ID | Yếu tố | Hình dạng | Cập nhật | Hiện khi | Hiệu ứng |
 |---|---|---|---|---|---|
 | E-06 | Pad 4 hướng (M) | Chữ thập 4 nút 97 px | Liên tục | Luôn; khóa khi đang đặt | Nút lún khi bấm. Viền sáng dần theo hồi bước (0,18–0,6 s). Giữ nút: lặp bước theo nhịp hồi bước, không bước thừa |
-| E-07 | Túi khối (M) | 3 ô, mỗi ô hình thu nhỏ + "5 ô" | Sự kiện | Luôn | Nhặt: khối bay vào ô 0,2 s. Đầy: nhãn "ĐẦY". Khối chọn: viền Ngà (vàng là màu Bản Khắc). Khối Lạ: dấu sao. Khối hỏng: xám + chữ "HỎNG" + giây (không dấu X: ✗ là "trượt")|
+| E-07 | Túi khối (M) | **v3:** 3 ổ đá vát góc 64×64 thẳng hàng dưới phải; trong ổ chỉ có hình khối, số ô nhỏ ở góc dưới phải | Sự kiện | Luôn | Nhặt: khối bay vào ô 0,2 s. Đầy: viền hổ phách quanh mọi ổ (v3 bỏ nhãn "ĐẦY"). Khối chọn (v3): viền vàng. Khối chọn: viền Ngà (vàng là màu Bản Khắc). Khối Lạ: dấu sao. Khối hỏng: xám + chữ "HỎNG" + giây (không dấu X: ✗ là "trượt")|
 | E-08 | Thức Tỉnh (M) | Nút lớn: tên + thanh Bản Khắc "0/21" | Liên tục | Luôn | **Đang nạp:** mờ, thanh chạy. **Đang hồi:** mờ + "Hồi 12 s". **Sẵn sàng:** sáng + chữ "SẴN SÀNG", nhịp đập 1 Hz. **Đang chạy:** thanh thời gian + "ĐANG DÙNG" |
 
 ### Đặt khối và tung phép (chỉ khi đang đặt)
 
 | ID | Yếu tố | Hình dạng | Cập nhật | Hiệu ứng |
 |---|---|---|---|---|
-| E-09 | Tập trung (C) | Thanh + "TẬP TRUNG 3,2 s" trên nút Tung phép. Chưa dùng được: tag "Tập trung còn 5 s" | Liên tục | Hết thì trận chậm lại 0,2× |
+| E-09 | Tập trung (C) | **v3:** ngòi vàng quanh viền Tung phép (cùng ngòi với cửa sổ đặt; hiện cái hết trước) + khung xanh thép quanh màn hình. Bỏ thanh, tag "DỪNG" và tag hồi Tập trung | Liên tục | Hết thì trận chậm lại 0,2× |
 | E-10 | Bóng khối + báo trúng (C) | Ô sàn đất địch trùng hình khối đổi màu, không vẽ khối lên sân: **trọn ô, màu khối của nhân vật**: trúng tô đậm, viền liền / trượt tô mờ, viền nét đứt, kèm nhãn "Sẽ trúng ✓" / "Sẽ trượt ✗" | Theo ngón tay | Hít vào ô trong 0,05 s, chỉ đổi màu, không animation. Khối nhỏ nâng lên 56 px trên ngón tay |
-| E-11 | Số ô và sát thương (C) | Chữ lớn "7 ô" + "Sát thương 42" ở dải giữa | Theo xoay hoặc ghép | — |
-| E-12 | Xoay, Tung phép, Hủy (C) | Xoay: nút lớn thay pad. Tung phép: nút xanh lá ở giữa. Hủy: nút nhỏ | Sự kiện | Xoay: khối quay 90° trong 0,1 s |
-| E-13 | Menu 4 lá (C) | **Từ 2026-11-01** (`design/quick-specs/menu-la-giua-man-hinh-2026-11-01.md`): mở khi bấm Tung phép, không mở khi thả khối. Lớp xám nhẹ nhìn xuyên được phủ cả màn hình; 4 mặt lá `CardFace` (176×256) ở giữa màn hình; thanh đếm 3 s phía trên. Lá đang hồi: tối, quạt đen quay theo kim đồng hồ + số giây, không chọn được | Liên tục | Lá chưa đủ ô: mờ + "cần N ô". Hết giờ: tự chọn nhát chém cơ bản |
+| E-11 | Số ô và sát thương (C) | **v3:** chỉ trên sân cạnh bóng khối, chữ không khung ("Sẽ trúng · 7 ô · -42", "Tổng 7 ô · 42 sát thương"); bỏ cột dưới | Theo xoay hoặc ghép | — |
+| E-12 | Xoay, Tung phép, Hủy (C) | **v3:** hàng dưới trái `[Tung phép 100][Xoay 64][Hủy 72]` cao 64 px, chữ Tung phép vàng, Xoay vuông với mũi tên xoay vàng; gợi ý "Kéo khối lên đất địch" là chữ trơn ngay trên hàng khi khối chưa ở đất địch | Sự kiện | Xoay: khối quay 90° trong 0,1 s |
+| E-13 | Menu 4 lá (C) | **Từ 2026-11-01** (`design/quick-specs/menu-la-giua-man-hinh-2026-11-01.md`): mở khi bấm Tung phép, không mở khi thả khối. Lớp xám nhẹ nhìn xuyên được phủ cả màn hình; 4 mặt lá `CardFace` (176×256) ở giữa màn hình; **v3:** 3 s là ngòi vàng chạy quanh khung góc cạnh bao 4 lá (thay thanh đếm), Hủy ở góc dưới trái. Lá đang hồi: tối, quạt đen quay theo kim đồng hồ + số giây, không chọn được | Liên tục | Lá chưa đủ ô: mờ + "cần N ô". Hết giờ: tự chọn nhát chém cơ bản |
 | E-14 | Gợi ý ghép (C) | **Bỏ 2026-11-01**: ghép làm trước khi bấm Tung phép, không còn ghép trong menu (+1,5 s). Dòng cũ: "Kéo thêm khối để ghép · +1,5 s" | Mỗi lần mở menu | Hiện suốt thời gian menu 4 lá mở, theo **thời gian chọn lá** (3 s / 6 s / không giới hạn); không xếp hàng với các dòng nhắc một lần. Ẩn hẳn sau khi người chơi đã ghép ít nhất một lần (cờ trong tiến trình). **Đề xuất mới.** |
-| E-42 | Cột hồi chiêu (C, 2026-11-01) | Mép trái màn hình, giữa hàng bảo vật và cần điều khiển: icon mỗi lá đang hồi, quạt đen mờ quay theo chiều kim đồng hồ từ 12 giờ, số giây còn lại ở giữa (kiểu Liên Minh Huyền Thoại) | Khi có lá đang hồi | Hồi xong thì icon rời cột; xếp từ trên xuống theo thứ tự dùng |
+| E-43 | Buff/debuff nhân vật (C, v3 2026-11-02) | Hàng dưới hàng bảo vật, góc trên trái: mỗi trạng thái đang có (Đóng Băng, Trói, Chậm, Cháy, Rạn, Giá Lạnh, Giáp tạm) một khung bát giác 40 px viền màu trạng thái; phần thời gian còn lại sáng màu trạng thái, phần đã qua phủ tối quay theo kim đồng hồ từ 12 giờ, có kim; trạng thái theo tầng (Rạn, Giá Lạnh) hiện số tầng. Chạm: chú thích nhỏ tên + tác dụng (3 s). Thay chip dưới chân nhân vật (boss giữ chip) | Liên tục | Khi có trạng thái | Trói và Chậm chưa có icon trong bộ icon: tạm vẽ glyph góc cạnh bằng code |
+| E-42 | Cột hồi chiêu (C, 2026-11-01) | **v3:** dưới hàng buff/debuff. Mép trái màn hình, giữa hàng bảo vật và cần điều khiển: icon mỗi lá đang hồi, quạt đen mờ quay theo chiều kim đồng hồ từ 12 giờ, số giây còn lại ở giữa (kiểu Liên Minh Huyền Thoại) | Khi có lá đang hồi | Hồi xong thì icon rời cột; xếp từ trên xuống theo thứ tự dùng |
 
 ### Đọc đòn boss (trên lưới)
 

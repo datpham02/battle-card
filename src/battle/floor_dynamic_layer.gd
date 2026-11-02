@@ -28,6 +28,8 @@ var _drawn_vfx: Array[Dictionary] = []
 var _drawn_holes: Array[Dictionary] = []
 ## The charging target cells drawn last ([] = none); compared by value each frame.
 var _drawn_charge: Array[Dictionary] = []
+## P2.3: the pattern markers / ivory outlines drawn last ({} = none); compared by value each frame.
+var _drawn_extras: Dictionary = {}
 var _redraws: int = 0
 
 
@@ -185,7 +187,9 @@ func _process(_delta: float) -> void:
 	var vfx: Array[Dictionary] = vfx_state()
 	var holes: Array[Dictionary] = hole_state()
 	var charge: Array[Dictionary] = charge_state()
-	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx or holes != _drawn_holes or charge != _drawn_charge:
+	var extras: Dictionary = _floor.pattern_extras()
+	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx or holes != _drawn_holes or charge != _drawn_charge 			or extras != _drawn_extras:
+		_drawn_extras = extras
 		_drawn_charge = charge
 		_drawn = state
 		_drawn_burn = burn
@@ -204,6 +208,7 @@ func _draw() -> void:
 	_drawn_holes = hole_state()
 	_drawn = _floor.telegraph_state()
 	_drawn_charge = charge_state()
+	_drawn_extras = _floor.pattern_extras()
 	var combat: CombatView = combat_of(_floor)
 	var vfx: FloorVfx = null if combat == null else combat.get_floor_vfx()
 	if combat != null:

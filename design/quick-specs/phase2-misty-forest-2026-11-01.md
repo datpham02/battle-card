@@ -39,7 +39,7 @@
 "rootling": {
   "id": "rootling",
   "name_key": "boss.rootling.name",
-  "boss_max_hp": 80,
+  "boss_max_hp": 190,
   "brain": "pattern",
   "enemy": "rootling",
   "brain_set": "balanced",
@@ -121,7 +121,7 @@ Toạ độ trên nửa người chơi: `col` 0 là cột **sát nửa địch**
 | `row_of_anchor` | hàng của mốc rễ còn sống mới nhất (mục 7); không có mốc thì rơi về `row_of_player` |
 | `fixed` | danh sách ô viết sẵn trong `pattern.offsets` (toạ độ tuyệt đối) |
 | `self_cell` | ô của chính địch (Guard, di chuyển) |
-| `enemy_half_empty` | ô trống bên nửa địch, không phải ô của địch, không hố, không có mốc khác |
+| `enemy_half_empty` | ô trống bên nửa địch, không phải ô của địch, không hố, không có mốc khác; với `pattern.row: "player"` chỉ lấy ô trên hàng hiện tại của người chơi nếu hàng đó còn ô trống (cột ngẫu nhiên có seed), không có thì ô trống bất kỳ |
 
 Mặc định "lưới nào" theo ADR: **nửa người chơi** trừ khi chiêu ghi `target_side: "enemy"`/`"self"`.
 
@@ -256,14 +256,34 @@ Hệ quả: cảnh báo ≥ 0,9 s luôn cho đủ **một bước** kể cả kh
 
 ### 5.1 Quy mô máu
 
-Pack nói quái thường 0,55–0,85 × "máu chuẩn của anh hùng". Trong game, máu viết trong `boss_max_hp` rồi nhân `region_normalize.hp_mult` (0,75 ở `ch1`) và `floor_scaling.hp_mult` (0,7–1,15). Spec **neo theo đội hình đang có** chứ không theo máu anh hùng (180–210) **[Quyết định D8]**:
+**Chốt D8 của người dùng (2026-11-01): "Máu theo ngân sách của pack, chơi thử rồi chỉnh".** Năm quái mới lấy máu theo ngân sách pack; quái giữ lại (goblin, sói…) giữ nguyên số.
 
-| Bậc | Máu viết (`boss_max_hp`) | Tầng 1 (×0,525) | Tầng 5 (×0,8625) |
+Công thức:
+
+- Máu chuẩn anh hùng `H` = 200 (`kiem_si`).
+- Máu thật trong trận = `boss_max_hp` × `region_normalize.hp_mult` (0,75 ở `ch1`) × `floor_scaling.hp_mult` (0,7 / 0,8 / 0,85 / 1,05 / 1,15 cho tầng 1–5).
+- Tầng tham chiếu: **tầng 3**, hệ số `k` = 0,75 × 0,85 = **0,6375**.
+- Quái thường: máu thật mục tiêu `T` = `r` × `H`, `r` trong 0,55–0,85. Tinh anh: `T` = `e` × một quái thường, `e` trong 1,5–2,2, quái thường gốc = 140 (Greycap, 0,70 × `H`).
+- Máu viết = `T` / `k`, làm tròn tới số chục gần nhất.
+
+| Quái | Tỉ lệ | Máu thật mục tiêu (tầng 3) | Máu viết (`boss_max_hp`) | Tầng 1 (×0,525) | Tầng 3 (×0,6375) | Tầng 5 (×0,8625) |
+|---|---|---|---|---|---|---|
+| `rootling` | 0,60 × `H` | 120 | **190** | 100 | 121 | 164 |
+| `greycap_sporeling` | 0,70 × `H` | 140 | **220** | 116 | 140 | 190 |
+| `mossbound_sentry` | 0,80 × `H` | 160 | **250** | 131 | 159 | 216 |
+| `mistbriar_matron` (tinh anh) | 1,8 × 140 | 252 | **400** | — (tinh anh từ tầng 2) | 255 | 345 |
+| `ancient_root_sentinel` (tinh anh) | 1,9 × 140 | 266 | **420** | — (tinh anh từ tầng 2) | 268 | 362 |
+
+Quái thường hiện có (86–130 viết, 45–68 ở tầng 1, 74–112 ở tầng 5) **không đổi**; Phù thủy Rừng thuộc P2.4 (mục 7). Đây là số khởi đầu, chơi thử rồi chỉnh (chỉ sửa `boss_max_hp` trong `chapters.json`).
+
+~~Bảng cũ (đã thay bằng chốt D8 ở trên): spec **neo theo đội hình đang có** chứ không theo máu anh hùng (180–210).~~
+
+| ~~Bậc~~ | ~~Máu viết (`boss_max_hp`)~~ | ~~Tầng 1 (×0,525)~~ | ~~Tầng 5 (×0,8625)~~ |
 |---|---|---|---|
-| Quái thường hiện có | 86–130 | 45–68 | 74–112 |
-| Quái thường mới | 80–110 | 42–58 | 69–95 |
-| Tinh anh mới (≈ 1,6 × thường, pack 1,5–2,2) | 155–165 | — (tinh anh từ tầng 2) | 134–142 |
-| Phù thủy Rừng | **300** (đang 162) | — | 259 |
+| ~~Quái thường hiện có~~ | ~~86–130~~ | ~~45–68~~ | ~~74–112~~ |
+| ~~Quái thường mới~~ | ~~80–110~~ | ~~42–58~~ | ~~69–95~~ |
+| ~~Tinh anh mới (≈ 1,6 × thường, pack 1,5–2,2)~~ | ~~155–165~~ | ~~—~~ | ~~134–142~~ |
+| ~~Phù thủy Rừng~~ | ~~**300** (đang 162)~~ | ~~—~~ | ~~259~~ |
 
 Sát thương neo theo đòn khối hiện có: 6 sát thương/ô → đòn 3 ô = 18. Chiêu thường 8–14, tinh anh 14–18, Phù thủy 8–22.
 
@@ -271,7 +291,7 @@ Sát thương neo theo đòn khối hiện có: 6 sát thương/ô → đòn 3 �
 
 Cảnh báo 0,9–1,2 s. Một chiêu chính + một chiêu phụ.
 
-**Rootling** (`rootling`) — 80 máu, sân `square`, `brain_set` `balanced`. Dạy: đừng đứng yên.
+**Rootling** (`rootling`) — 190 máu viết (5.1), sân `square`, `brain_set` `balanced`. Dạy: đừng đứng yên.
 
 | Chiêu | Mẫu / anchor | windup | warning | Delivery | Hiệu ứng | Hồi | Cách né |
 |---|---|---|---|---|---|---|---|
@@ -280,14 +300,14 @@ Cảnh báo 0,9–1,2 s. Một chiêu chính + một chiêu phụ.
 
 `root_prick` weight 1,0; `creep` weight 0,5, chỉ khi người chơi vừa thả khối nhắm vào ô Rootling.
 
-**Mossbound Sentry** (`mossbound_sentry`) — 110 máu, sân `rect`. Dạy: né vuông góc với thanh.
+**Mossbound Sentry** (`mossbound_sentry`) — 250 máu viết (5.1), sân `rect`. Dạy: né vuông góc với thanh.
 
 | Chiêu | Mẫu / anchor | windup | warning | Delivery | Hiệu ứng | Hồi | Cách né |
 |---|---|---|---|---|---|---|---|
 | `slab_tap` | thanh 2 ô `[[0,0],[1,0]]`, `on_player`, xoay 0/90/180/270 | 0,5 | 1,0 | `CASTER_TO_TARGET`, `square_streak`, impact `slash` | 14 | 2,8 | bước vuông góc với thanh |
 | `brace` | `self` | 0,6 (cúi người rõ) | — | — | **Guard** +3 giáp trong 3 s [D5]; ô Sentry viền Ngà | 7,0 | Xuyên giáp, đánh trước khi cúi xong (phá phép), hoặc chờ 3 s |
 
-**Greycap Sporeling** (`greycap_sporeling`) — 90 máu, sân `square` / `u_shape`. Dạy: tránh góc, vùng để lại.
+**Greycap Sporeling** (`greycap_sporeling`) — 220 máu viết (5.1), sân `square` / `u_shape`. Dạy: tránh góc, vùng để lại.
 
 | Chiêu | Mẫu / anchor | windup | warning | Delivery | Hiệu ứng | Hồi | Cách né |
 |---|---|---|---|---|---|---|---|
@@ -298,17 +318,17 @@ Cảnh báo 0,9–1,2 s. Một chiêu chính + một chiêu phụ.
 
 Cảnh báo 1,2–1,8 s cho chiêu phức tạp. Mỗi con **một cơ chế combo**, không nhân đôi sát thương. Mốc rễ dùng chung luật ở mục 7.
 
-**Ancient Root Sentinel** (`ancient_root_sentinel`) — 165 máu, sân `rect`. Combo: mốc rễ → lưới cành theo hàng của mốc → lặp lại nếu mốc còn.
+**Ancient Root Sentinel** (`ancient_root_sentinel`) — 420 máu viết (5.1), sân `rect`. Combo: mốc rễ → lưới cành theo hàng của mốc → lặp lại nếu mốc còn.
 
 | Chiêu | Mẫu / anchor | windup | warning | Delivery | Hiệu ứng | Hồi | Cách né |
 |---|---|---|---|---|---|---|---|
-| `sentinel_anchor` (`marker`) | 1 mốc rễ, `enemy_half_empty` | 0,6 | — (mốc hiện ngay) | `DIRECT_MANIFESTATION` | mốc sống 10 s; **chỉ vỡ với đòn ≥ 2 ô** phủ ô mốc | 9,0 | thả khối ≥ 2 ô lên mốc |
+| `sentinel_anchor` (`marker`) | 1 mốc rễ, `enemy_half_empty`, `row: player` (ô trống trên **hàng hiện tại của người chơi** nếu có, cột ngẫu nhiên có seed; không có thì ô trống bất kỳ như cũ) | 0,6 | — (mốc hiện ngay) | `DIRECT_MANIFESTATION` | mốc sống 10 s; **chỉ vỡ với đòn ≥ 2 ô** phủ ô mốc | 9,0 | thả khối ≥ 2 ô lên mốc |
 | `branch_net` | 3 ô liền trên `row_of_anchor`, bắt đầu từ cột trước, `clip` min 2 | 0,7 | 1,4 | `GROUND_PROPAGATION` từ ô mốc qua ranh giới, `floor_run`, impact `thorns` | 16; **Trói 0,8 s chỉ khi ô đầu (cột trước) trúng** [D2]; followup: lặp lại cùng hàng sau 2,5 s nếu mốc còn (cảnh báo 1,2 s) | 5,0 | rời hàng của mốc; phá mốc trước lần lặp |
 | `bark_shift` | 1 ô, `near_player`, không phải ô người chơi | 0,5 | 1,2 | `DIRECT_MANIFESTATION`, impact `thorns` | vùng **Bãi Gai** 3 s thay cho "rào chắn" [D6] | 7,0 | không bước vào; né sang hướng còn lại |
 
 Phần thưởng khi phá mốc: Sentinel **choáng 1,0 s** (đứng yên, không ra chiêu) và followup bị hủy.
 
-**Mistbriar Matron** (`mistbriar_matron`) — 155 máu, sân `cross` (biến thể). Combo: một ô → hai nhánh vuông góc ở beat sau.
+**Mistbriar Matron** (`mistbriar_matron`) — 400 máu viết (5.1), sân `cross` (biến thể). Combo: một ô → hai nhánh vuông góc ở beat sau.
 
 | Chiêu | Mẫu / anchor | windup | warning | Delivery | Hiệu ứng | Hồi | Cách né |
 |---|---|---|---|---|---|---|---|
@@ -340,6 +360,18 @@ Pool `ch1` đề xuất (thay khối `pools` hiện có):
 | `boss` | — | goblin_warlock | **forest_witch** [D11] |
 
 **Tinh anh chỉ sau quái dạy nó** [D10]: khóa mới trong trận tinh anh `"teach_after": [...]`; bộ sinh bản đồ chỉ chọn tinh anh đó nếu trong chuyến leo đã đánh ít nhất một trận có id trong danh sách, ngược lại chọn tinh anh khác cùng bậc.
+
+**Sửa sau P2.3 (người dùng duyệt, 2026-11-01): tinh anh rút được thì cột trận đầu phải dạy nó.** Bản đầu đổi tinh anh sang con khác khi cột đầu không tình cờ là quái dạy, nên Matron chỉ ở ~1 % bản đồ. Nay bộ sinh rút tinh anh như mọi id khác trong pool; nếu một tinh anh có `teach_after` được rút mà chưa có cột nào trước nó dạy, bộ sinh **ép cột sớm nhất trước nó gồm toàn nút `battle` / `danger`** (mọi nút trong cột, nên mọi đường đều qua một quái dạy) thành quái trong danh sách dạy, **hợp lệ trong pool của nút đó** ở bậc của cột (không có thì bậc thấp hơn gần nhất). Nút đã là quái dạy thì giữ; hai tinh anh trên cùng bản đồ dùng chung cột qua phần giao (Rootling dạy cả hai). Chỉ khi không cột nào dạy được mới đổi tinh anh sang con khác cùng bậc như cũ. Sau khi ép, nút `battle` / `danger` phía sau mà giờ trùng id với nút trước được rút lại trong pool của nó (giữ luật "không lặp khi pool còn"). Phép ép và rút lại dùng luồng rng riêng, nên luồng chính không đổi (khung cột, loại nút, nghỉ / kho báu / boss, tinh anh khác giữ nguyên) và vùng không có `teach_after` sinh y như trước; lượt cửa hàng / sự kiện không bao giờ thay nút của cột dạy.
+
+Tần suất đo trên 100 000 bản đồ `ch1` (20 000 seed × 5 tầng, đã hạ 1 boss):
+
+| | Trước | Sau |
+|---|---|---|
+| Bản đồ có Matron | 1 091 (1,1 %; 8,1 % các nút tinh anh bậc 2) | 3 369 (3,4 %; 24,9 % các nút tinh anh bậc 2) |
+| Bản đồ có Sentinel | 2 236 (2,2 %; tầng 2: 24 % nút tinh anh bậc 1) | 5 584 (5,6 %; tầng 2: 49 % nút tinh anh bậc 1) |
+| Cột đầu là Rootling / Mossbound / Greycap | 18,6 % / 18,6 % / 8,5 % | 25,7 % / 21,0 % / 10,0 % |
+
+Chỉ ~22,5 % bản đồ tầng 2–5 có nút tinh anh (nút `miniboss` là một lựa chọn ngẫu nhiên của cột giữa), nên một tinh anh trong pool bậc 2 có 4 con chạm trần ~5,6 % bản đồ tầng 3–5; Matron nay ở đúng trần đó: 5,6 % bản đồ tầng 3–5 (trước 1,8 %). Muốn nhiều hơn nữa thì phải đổi trọng số pool hoặc tần suất nút `miniboss` (chưa làm).
 
 | Tinh anh | `teach_after` | Lý do |
 |---|---|---|
@@ -499,9 +531,9 @@ Có, sau khi duyệt: `design/game-mechanics.md` §2.6 (Trói, Guard nếu duy�
 | D5 | Guard = giáp tạm thời; Xuyên giáp bỏ qua hoàn toàn |
 | D6 | "Rào chắn" của Ancient Root Sentinel đổi thành **ô rớt** (nứt 0,8 s, theo luật công bằng spec 31/10) — tinh anh này được dùng ô rớt |
 | D7 | Một quái mỗi trận trong Phase 2; nhiều quái cùng lúc làm ở Phase 3 |
-| D8 | Máu theo ngân sách của pack (chơi thử rồi chỉnh) |
+| D8 | Máu theo ngân sách của pack (chơi thử rồi chỉnh) — số và công thức ở 5.1 (máu viết 190 / 220 / 250 / 400 / 420, tham chiếu tầng 3) |
 | D9 | Đồng ý (3 chiêu nặng của Phù thủy không bị phá phép, viền ngà) |
-| D10 | Làm `teach_after` ngay trong Phase 2 |
+| D10 | Làm `teach_after` ngay trong Phase 2 — sửa sau P2.3: tinh anh rút được thì ép cột trận đầu thành quái dạy nó (5.5) |
 | D11 | Đồng ý |
 | D12 | Đồng ý (bỏ `rotten_thrower`) |
 | D13 | **Boss to gấp 2–3 lần nhân vật và đứng trên nhiều ô** (thay luật "1 ô" của pack). Phù thủy rừng chiếm **2×2 ô**, sprite ~192×140; sân boss to hơn sân thường, đề xuất **6×4 mỗi bên** (dữ liệu, kiểm tra độ dễ nhìn trên điện thoại bằng ảnh chụp). Mỗi đòn trúng boss chỉ tính 1 lần dù phủ nhiều ô |

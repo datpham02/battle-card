@@ -4,6 +4,8 @@
 > **Nguồn**: phác thảo của người dùng 2026-10-31; mock trong `prototypes/art-check` (ảnh `production/qa/evidence/asset-slice1-art-check/11-21`)
 > **Người dùng chốt**: 2026-10-31 — joystick nổi 4 hướng; sân lớn nhất là tinh thể 6x6, dải sân tới 76 %
 > **Tài liệu bị ảnh hưởng**: `design/ux/hud.md` (Z2, Z3, Z5, I-06), `src/layout/screen_layout.gd`, `src/combat/dpad_view.gd`, `src/hold/hold_slots_view.gd`, `design/accessibility-requirements.md` (câu hỏi mở "một ngón")
+> **Cập nhật 2026-11-01**: chế độ pad (`controls.movement = pad`) đã bỏ theo quyết định người dùng; joystick nổi là điều khiển di chuyển duy nhất. Hàng "Di chuyển" trong Cài đặt và nút đổi trên bảng Tạm dừng cũng bỏ. Câu hỏi mở "một ngón / nút nhìn thấy" trong `design/accessibility-requirements.md` mở lại.
+> **Đã thay bằng bố cục điều khiển v3 (2026-11-02)**: `design/quick-specs/bo-cuc-dieu-khien-v3-2026-11-02.md` thay phần bố cục của spec này (túi vòng cung thành 3 ổ 64 px thẳng hàng dưới phải, nút Xoay lớn thành hàng Tung phép / Xoay / Hủy dưới trái, dải giữa chỉ còn Thức Tỉnh). Joystick nổi, dải sân và luật hàng rộng / hẹp vẫn giữ. Xem `design/ux/hud.md` mục "Bố cục điều khiển v3".
 > **Không đổi**: sprite, bảng màu, art bible §8 (trừ ghi chú về dải sân), luật đi từng ô và cooldown
 
 ## 1. Vấn đề
@@ -45,8 +47,8 @@ Quy tắc nhớ: từ 6 cột trở lên chiều rộng quyết định cỡ ô,
 - **Đọc hướng:** vùng chết 16 px (20 % bán kính đế). Ngoài vùng chết, snap vào 4 hướng theo góc 90° (chéo chia theo trục gần hơn). Không có hướng chéo vì lưới đi 4 hướng.
 - **Nhịp bước:** vào vùng một hướng = một bước ngay (nếu hết cooldown). Giữ hướng = bước lại mỗi khi cooldown hết (cùng cooldown đang có trong `UnitMover`, không thêm số mới). Đổi hướng = bước ngay theo hướng mới nếu hết cooldown. Thả = dừng.
 - **Khi đặt khối:** vùng Z3 đổi thành nút Xoay lớn như hiện tại (I-12), joystick tắt.
-- **Tùy chọn `controls.movement`:** `joystick` (mặc định) | `pad`. Chưa có màn Settings nên nút đổi nằm trên bảng Tạm dừng; giá trị lưu ở `user://settings.json`. `pad` vẽ lại pad 3x3 cũ trong cùng vùng (nút vẽ 86 px vì vùng cao 259 px không chứa 3 nút 88 px; vùng chạm mỗi nút nới ra ngoài thành 88 px), cho người cần nút nhìn thấy; đây là trả lời cho câu hỏi mở "một ngón" trong `design/accessibility-requirements.md` (vẫn mở phần còn lại).
-- **Bàn phím/chuột trên desktop:** không đổi (phím mũi tên, test click dùng pad qua tùy chọn `pad`).
+- ~~**Tùy chọn `controls.movement`:** `joystick` (mặc định) | `pad`.~~ **Đã bỏ (quyết định người dùng 2026-11-01):** chế độ pad 3x3 không còn; joystick là điều khiển duy nhất. Giá trị `controls.movement` còn trong `user://settings.json` cũ bị bỏ qua khi đọc và mất ở lần lưu sau; `--movement=` không còn tác dụng. Câu hỏi mở "một ngón / nút nhìn thấy" trong `design/accessibility-requirements.md` mở lại.
+- **Bàn phím/chuột trên desktop:** phím mũi tên / WASD vẫn bước (tiện ích dev); test click đi bằng cách kéo joystick (chạm trong vùng Z3, đẩy, thả).
 
 ### 2.3 Z5 — túi khối vòng cung (I-07)
 
@@ -91,14 +93,14 @@ Khung bao 6x6 mỗi nửa, cắt góc xa theo bậc 3/2/1/1/2/3. Tọa độ n�
 | `layout.slot_height_ratio` | 0,18 | cũ 0,22 |
 | `layout.slot_arc_angles_deg` | [96, 126, 156] | bản nháp [100, 128, 156] đè nhau |
 | `layout.slot_arc_radius_ratio` | 2,25 | nhân cao ô; bản nháp 2,0 |
-| `controls.movement` | joystick | joystick \| pad |
+| ~~`controls.movement`~~ | — | đã bỏ 2026-11-01 (chỉ joystick) |
 
 ## 5. Tiêu chí nghiệm thu
 
 - [ ] Ảnh 1280x720 cho 3x3, 5x5, ring, crystal: không ô sân nào nằm dưới nút hay ô túi; ô 5x5 ≥ 48x34, crystal 49x35.
 - [ ] Mọi vùng chạm ≥ 88 px; ba ô túi không chạm nhau; T3 không đè menu lá khi mở.
 - [ ] Joystick: chạm trong vùng là xuất hiện tại chỗ chạm; vùng chết 16 px; 4 hướng; giữ thì bước theo cooldown; thả thì dừng; chuyển sang Xoay khi đặt khối.
-- [ ] Settings đổi được `controls.movement`; `pad` vẽ pad 88 px và test click cũ chạy được với tùy chọn này.
+- [x] ~~Settings đổi được `controls.movement`; `pad` vẽ pad 88 px~~ — bỏ 2026-11-01 (pad mode removed by user decision); các test click đi bằng joystick.
 - [ ] Z1 không đổi; đầu đơn vị hàng sau cùng vẫn ló vào 8–15 %.
 - [ ] Test đơn vị cho hàm chọn ô và luật đặt sân (bảng ở 2.1), và cho phép đọc hướng joystick (vùng chết, snap, giữ/thả).
 

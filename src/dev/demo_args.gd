@@ -53,6 +53,13 @@ extends Node
 ##                                           ticked apart, one of them in the hand): the left cooldown column with its pies
 ##                                           and the dimmed hand card with the same pie
 ##   godot --path . -- --demo=card_cooldown_column  the same three cooldowns with the menu closed (column only, no overlay)
+##   Controls v3 (design/quick-specs/bo-cuc-dieu-khien-v3-2026-11-02.md) demos, intro skipped:
+##   godot --path . -- --demo=controls_idle      the bag filled, nothing selected (moving state)
+##   godot --path . -- --demo=controls_placing   the featured shape's first piece placed, the second being placed over the
+##       rest of it (gold ghost + resonance label), the place window at CARD_DEMO_PLACE_LEFT_RATIO (the fuse round Tung phép)
+##   godot --path . -- --demo=controls_statuses  Root, Slow, Fragile x2 and Guard on the player part-way through (the
+##       buff / debuff row with its pies), two cards cooling down (the column under the row), demo relics, the Slow
+##       tooltip open
 ##   godot --path . -- --arena=<shape>       DEV-ONLY arena shape id of arenas.json (cross, u_shape, ring, ...): sets
 ##       match_params["arena"] before _ready, so the board and the featured-shape icon follow it. Works with or without --demo.
 ##   Story 025 boss piece demos (the boss casts puzzle pieces on the player's half and is rooted while it swings):
@@ -255,7 +262,9 @@ const FIELD_PIECES: Array = [["l3", 0], ["bar2", 1], ["plus5", 0]]
 const FIELD_PIECE_FRESHNESS: Array[float] = [7.0, 4.5, 2.5]
 const ROTTEN_PIECE_SLOT: int = 1
 ## Story 024 demos that also skip the match intro banner (so the board is visible for a capture).
-const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "card_placing", "card_pick", "card_cooldown", "card_cooldown_column", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit", "thorns_on_boss", "boss_through_thorns", "trait_seal", "trait_thorns", "reward_zone_cards"]
+## Share of the Focus cooldown already recovered in the card cooldown demos.
+const CARD_DEMO_FOCUS_RECOVERED: float = 0.35
+const PIECE_DEMOS: Array[String] = ["boss_placing", "boss_ring_normal", "boss_rooted", "boss_counter", "boss_rotten", "pieces_hand", "placing_hit", "placing_miss", "placing_rotated", "placing_center", "placing_drag", "pieces_menu", "rotten_piece", "join_menu", "join_featured", "join_split", "card_placing", "card_pick", "card_cooldown", "card_cooldown_column", "controls_idle", "controls_placing", "controls_statuses", "formation_half", "formation_warn", "formation_complete", "signature_cooldown", "thien_hoa_fire", "thien_hoa_burning", "anh_bo_hit", "thorns_on_boss", "boss_through_thorns", "trait_seal", "trait_thorns", "reward_zone_cards"]
 ## Story 025 boss piece demos: the boss's hand (shape ids), how many of them each demo casts, the piece the counter-cast
 ## uses, the boss's field pieces as [shape id, rotation] with their freshness (s), and the share of the step cooldown
 ## still left in "boss_ring_normal".
@@ -355,6 +364,17 @@ const JOIN_SLOT_2: int = 1
 ## 2026-11-01 card pick demos: the share of the place window left in the capture, the fallback cooldown of each demo
 ## the seconds ticked after each cooldown start (three cards; the first started recovers most).
 const CARD_DEMO_PLACE_LEFT_RATIO: float = 0.6
+## Controls v3 statuses demo: seconds each status is applied for, the seconds ticked after (so the pies are part-way),
+## the Slow step multiplier, the Fragile stacks and the Guard amount, the cards put on cooldown and the relics shown.
+const CONTROLS_ROOT_SEC: float = 4.0
+const CONTROLS_SLOW_SEC: float = 6.0
+const CONTROLS_GUARD_SEC: float = 8.0
+const CONTROLS_TICK_SEC: float = 1.5
+const CONTROLS_SLOW_MULT: float = 1.5
+const CONTROLS_FRAGILE_STACKS: int = 2
+const CONTROLS_GUARD_AMOUNT: float = 4.0
+const CONTROLS_COOLDOWN_TICKS: Array[float] = [1.0, 3.0]
+const CONTROLS_TOOLTIP_ID: String = "slow"
 const CARD_DEMO_COOLDOWN_TICKS: Array[float] = [2.0, 1.5, 1.0]
 ## Story 047 art demos (they also skip the intro; see the header): the UnitLayer seconds advanced after the event (a once
 ## clip mid-way, a held clip past its end, a status overlay a few frames in), the hit size, the overkill of the death demos,
@@ -373,6 +393,17 @@ const ART_REGION_PREFIX: String = "--art-region="
 ## Story 046 Part C: `--telegraph-k=<0..1>` for --demo=anim_windup (see the header).
 const TELEGRAPH_K_PREFIX: String = "--telegraph-k="
 const DRAW_CALLS_ARG: String = "--draw-calls"
+## Controls v3 captures: --shot=<png path> saves the root viewport's image (its real size, whatever the window) after
+## --shot-frame=N frames (default SHOT_DEFAULT_FRAME) and quits. The movie writer records 1280x720 whatever
+## --resolution says, so the 1600x720 / 2400x1080 evidence is taken this way.
+const SHOT_ARG: String = "--shot="
+const SHOT_FRAME_ARG: String = "--shot-frame="
+const SHOT_DEFAULT_FRAME: int = 30
+## --shot-size=WxH resizes the window from script first (the command line clamps --resolution to the monitor).
+const SHOT_SIZE_ARG: String = "--shot-size="
+var _shot_path: String = ""
+var _shot_frame: int = SHOT_DEFAULT_FRAME
+var _shot_count: int = 0
 const DRAW_CALLS_FRAMES: int = 2
 const DRAW_CALLS_LATE_FRAMES: int = 110
 
@@ -418,6 +449,16 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(SHOT_ARG):
+			_shot_path = arg.substr(SHOT_ARG.length())
+		elif arg.begins_with(SHOT_FRAME_ARG):
+			_shot_frame = maxi(int(arg.substr(SHOT_FRAME_ARG.length())), 1)
+		elif arg.begins_with(SHOT_SIZE_ARG):
+			var wh: PackedStringArray = arg.substr(SHOT_SIZE_ARG.length()).split("x")
+			if wh.size() == 2:
+				get_window().size = Vector2i(int(wh[0]), int(wh[1]))
+	set_process(not _shot_path.is_empty())
 	if OS.get_cmdline_user_args().has(DRAW_CALLS_ARG):
 		_print_draw_calls()
 	if not _parse_art_region().is_empty():
@@ -537,6 +578,8 @@ func _ready() -> void:
 			_join_demo(combat, grid)
 		"card_placing", "card_pick", "card_cooldown", "card_cooldown_column":
 			_card_pick_demo(combat, grid)
+		"controls_idle", "controls_placing", "controls_statuses":
+			_controls_demo(combat, grid)
 		"odd_field", "odd_bag", "odd_place", "odd_boss", "odd_hint":
 			_odd_demo(combat, grid)
 		"anim_step", "anim_cast", "anim_windup", "anim_hit", "anim_down", "anim_defeat", "status_burn", "status_frozen", "status_swap", "reduce_motion":
@@ -1754,7 +1797,8 @@ func _apply_pattern_hints(enemy_id: String, use_arena_hint: bool) -> void:
 	var hint: String = str(enemy.get("arena", ""))
 	if use_arena_hint and not hint.is_empty():
 		_combat().match_params["arena"] = {"shape": hint}
-	if (enemy.get("footprint", []) as Array).size() > 1:
+	# P2.3: a roster (non-dev) enemy also draws as itself (its own sheet, or the placeholder until P2.5 art).
+	if (enemy.get("footprint", []) as Array).size() > 1 or not bool(enemy.get("dev", false)):
 		_combat().match_params["id"] = enemy_id
 
 
@@ -1962,6 +2006,8 @@ func _card_pick_demo(combat: CombatView, grid: BoardGrid) -> void:
 		push_warning("DemoArgs: press_cast failed for demo '%s'" % _mode)
 		return
 	if _mode == "card_pick":
+		# Controls v3: the pick-time fuse part-burnt round the card frame.
+		combat.get_cut_flow().debug_set_time_left(combat.get_cut_flow().get_duration() * CARD_DEMO_PLACE_LEFT_RATIO)
 		return
 	var cooldowns: SkillCooldowns = combat.get_skill_cooldowns()
 	var config: SkillConfig = combat.get_skill_config()
@@ -1981,6 +2027,12 @@ func _card_pick_demo(combat: CombatView, grid: BoardGrid) -> void:
 	for i: int in ids.size():
 		cooldowns.start(ids[i], _demo_cooldown(combat, ids[i]))
 		cooldowns.tick(CARD_DEMO_COOLDOWN_TICKS[i])
+	# Controls v3: the column demos also show the Focus recharge, part-way through, above the card icons.
+	if _mode == "card_cooldown_column" or _mode == "card_cooldown":
+		var focus: FocusController = combat.get_focus()
+		if focus.try_start():
+			focus.end("demo")
+			focus.tick_real(focus.get_cooldown_sec() * CARD_DEMO_FOCUS_RECOVERED)
 	print("DemoArgs %s: hand=%s cooldowns=%s" % [_mode, str(combat.get_hand()), str(cooldowns.running_ids())])
 
 
@@ -2063,3 +2115,80 @@ func _min_cell(cells: Array[Vector2i]) -> Vector2i:
 	for cell: Vector2i in cells:
 		out = Vector2i(mini(out.x, cell.x), mini(out.y, cell.y))
 	return out
+
+
+# Controls v3 demos (see the header): the moving state with a full bag, the resonant second piece being placed with the
+# place window's fuse burning, or the player's buff / debuff row with pies, the cooldown column and a tooltip.
+func _controls_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	match _mode:
+		"controls_idle":
+			_fill_bag(lib, -1)
+		"controls_placing":
+			_controls_placing_demo(combat, grid, lib)
+		"controls_statuses":
+			_fill_bag(lib, -1)
+			var status: StatusEffects = combat.get_status()
+			var side: int = CombatState.Side.PLAYER
+			status.root(side, CONTROLS_ROOT_SEC)
+			status.slow(side, CONTROLS_SLOW_SEC, CONTROLS_SLOW_MULT)
+			status.apply_fragile(side, CONTROLS_FRAGILE_STACKS)
+			status.guard(side, CONTROLS_GUARD_AMOUNT, CONTROLS_GUARD_SEC)
+			status.tick(CONTROLS_TICK_SEC, combat.get_state())
+			var cooldowns: SkillCooldowns = combat.get_skill_cooldowns()
+			var started: int = 0
+			for id: String in combat.get_skill_config().card_order:
+				if started >= CONTROLS_COOLDOWN_TICKS.size():
+					break
+				if _demo_cooldown(combat, id) > 0.0 and not combat.get_skill_config().is_curse(id):
+					cooldowns.start(id, _demo_cooldown(combat, id))
+					cooldowns.tick(CONTROLS_COOLDOWN_TICKS[started])
+					started += 1
+			for hud: Node in get_tree().root.find_children("*", "CutHudView", true, false):
+				var cut_hud := hud as CutHudView
+				cut_hud.debug_show_relics(RELIC_FLASH_IDS)
+				cut_hud.debug_open_status_tooltip(CONTROLS_TOOLTIP_ID)
+			print("DemoArgs controls_statuses: %s" % str(combat.get_status().active_statuses(side, combat.get_state().player_cell)))
+
+
+# The match's featured shape tiled by two pieces (as join_featured): the first placed, the second selected and aimed
+# over the rest of the shape but NOT confirmed (placing: the gold ghost and the resonance label), the place window set to
+# CARD_DEMO_PLACE_LEFT_RATIO of its length.
+func _controls_placing_demo(combat: CombatView, grid: BoardGrid, lib: PieceLibrary) -> void:
+	_fill_bag(lib, -1)
+	var featured: Dictionary = combat.get_featured()
+	if featured.is_empty():
+		push_warning("DemoArgs: controls_placing needs a match with a featured shape")
+		return
+	var plan: Dictionary = _featured_tiling(lib, grid, featured["cells"] as Array[Vector2i], combat.get_state().enemy_cell)
+	if plan.is_empty():
+		push_warning("DemoArgs: no two-piece tiling of the featured shape found")
+		return
+	var first: FieldPoint = _hold().get_point(0)
+	first.piece = lib.make_piece(str(plan["id_a"]), int(plan["turns_a"]))
+	first.label = first.piece.shape_id
+	var second: FieldPoint = _hold().get_point(JOIN_SLOT_2)
+	second.piece = lib.make_piece(str(plan["id_b"]), int(plan["turns_b"]))
+	second.label = second.piece.shape_id
+	if not combat.select_piece(0) or not _aim_anchor(combat, plan["anchor_a"]) or not combat.confirm_placement():
+		push_warning("DemoArgs: placing the first piece failed for controls_placing")
+		return
+	if not combat.select_piece(JOIN_SLOT_2) or not _aim_anchor(combat, plan["anchor_b"]):
+		push_warning("DemoArgs: aiming the second piece failed for controls_placing")
+		return
+	combat.debug_set_place_time_left(combat.get_place_duration() * CARD_DEMO_PLACE_LEFT_RATIO)
+	print("DemoArgs controls_placing: placing=%s placed=%s featured=%s" % [combat.is_placing(), combat.is_placed(),
+		combat.joined_is_featured(combat.get_placement().get_cells())])
+
+
+# --shot= capture (see SHOT_ARG): counts frames, then saves the root viewport's image and quits.
+func _process(_delta: float) -> void:
+	_shot_count += 1
+	if _shot_count < _shot_frame:
+		return
+	set_process(false)
+	var image: Image = get_viewport().get_texture().get_image()
+	var err: Error = image.save_png(_shot_path)
+	print("DemoArgs shot %dx%d -> %s (%s)" % [image.get_width(), image.get_height(), _shot_path, error_string(err)])
+	get_tree().quit()
+

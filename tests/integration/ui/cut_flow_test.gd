@@ -109,6 +109,9 @@ func _initialize() -> void:
 		await process_frame
 	var battle: Node = rc.get_battle()
 	var combat := battle.get_node("CombatView") as CombatView
+	# The timings below are the normal card time (3 s place window); the player's real user://settings.json may hold
+	# "6 s" or "no limit", so the match is pinned to normal whatever the file says.
+	combat.set_card_time(SettingsStore.CARD_TIME_NORMAL)
 	var sv := battle.get_node("HoldSlotsView") as HoldSlotsView
 	var hold: HoldSlots = sv.get_slots()
 	var state: CombatState = combat.get_state()
@@ -120,7 +123,6 @@ func _initialize() -> void:
 	var drops: FieldDrops = combat.get_drops()
 	var skill_cfg: SkillConfig = combat.get_skill_config()
 	var lib: PieceLibrary = PieceLibrary.load_from_file()
-	var cancel_c: Vector2 = ScreenLayout.cancel_button_rect(VP).get_center()
 	var cast_c: Vector2 = ScreenLayout.confirm_button_rect(VP).get_center()
 	var rot_c: Vector2 = ScreenLayout.rotate_button_rect(VP).get_center()
 	var off_board: Vector2 = Vector2(40, 400)
@@ -146,7 +148,7 @@ func _initialize() -> void:
 	_check("confirm visible while placing", combat.is_confirm_visible())
 	await _click(slot0)
 	_check("tap other slot switches piece", combat.is_placing() and combat.get_placing_piece().shape_id == "plus5")
-	await _click(cancel_c)
+	await _click(ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 	_check("Huy leaves PLACING, piece stays", not combat.is_placing() and _shape(hold, 0) == "plus5")
 
 	# --- Mouse drag bar2 onto the boss (lift), release -> menu with the piece cells.
@@ -176,7 +178,7 @@ func _initialize() -> void:
 	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(VP, order.size())
 	await _click(rects[order.find("bang_phong")].get_center())
 	_check("locked card (needs >2 cells) ignored, menu stays", flow.is_menu_open() and not actor.is_swinging())
-	await _click(cancel_c)
+	await _click(ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 	_check("Huy in menu returns the piece to its slot", not flow.is_menu_open() and _shape(hold, 1) == "bar2" and not actor.is_swinging())
 
 	# --- Drag plus5 onto the boss, choose push: swing uses exactly the piece cells.
@@ -201,7 +203,7 @@ func _initialize() -> void:
 	_check("confirm during swing does nothing", not flow.is_menu_open() and not combat.is_placed() and _shape(hold, 1) == "bar2" and actor.is_swinging())
 	await _click(cast_c)
 	_check("Tung phép during a swing does nothing", not flow.is_menu_open() and not combat.is_placed() and actor.is_swinging())
-	await _click(cancel_c)
+	await _click(ScreenLayout.cancel_button_rect(VP, flow.is_menu_open()).get_center())
 
 	var guard: int = 0
 	while actor.is_swinging() and guard < 900:

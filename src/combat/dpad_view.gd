@@ -1,9 +1,6 @@
 class_name DPadView
 extends Node2D
-## Z3 movement control. Two modes, from [member SettingsStore] [code]controls.movement[/code]
-## (Story 044 Part B):
-##
-## [b]joystick[/b] (default): a floating 4-way stick. A press inside ScreenLayout.stick_zone_rect
+## Z3 movement control (Story 044 Part B): a floating 4-way stick. A press inside ScreenLayout.stick_zone_rect
 ## spawns the base at the touch point, the knob follows the finger (clamped to the base radius),
 ## [StickReader] decides the steps (step on entering / changing a direction, repeat when the
 ## UnitMover cooldown ends while held, stop on release) and releasing hides it. Nothing is drawn
@@ -12,11 +9,11 @@ extends Node2D
 ## the mouse) and never reacts to another finger, so the bag drag (HandInputController) keeps its
 ## own finger.
 ##
-## [b]pad[/b]: four thumb-size move buttons (plus layout, ScreenLayout.dpad_rects). One press = one
-## step attempt on the player's UnitMover; a press during cooldown does nothing (no queue, no
-## repeat on hold). Dimmed while the mover is on cooldown. Placeholder art.
+## 2026-11-01 (user decision): the optional "pad" mode (four arrow buttons) was removed; the joystick is the only
+## movement control (the node keeps its DPadView name, battle.tscn and the tests refer to it).
 ##
-## Both: while placing, the zone is the ROTATE button (CutHudView) and this view takes no pointer.
+## While placing, the zone holds the Tung phép / Xoay / Hủy row (CutHudView) and this view takes no pointer; in the
+## place window it leaves that row's tap rects to CutHudView, and with the card menu open it takes nothing.
 ## Focus lock (Story 012): no steps, dimmed. Input is read in _input so a press in the zone is
 ## consumed before the hand controller (_unhandled_input) sees it. Dedup: with
 ## emulate_mouse_from_touch a real touch also arrives as a mouse event, and with
@@ -26,19 +23,16 @@ extends Node2D
 ## DEV convenience: arrow keys and WASD also step (physical keycodes, no InputMap edits).
 ## Implements: Story 007, Story 044 (Part B).
 
-## 2026-10-31: game skin colours (HudSkin): Night Stone fill, Mist line, Ivory arrows / knob.
+## 2026-10-31: game skin colours (HudSkin): Night Stone fill, Mist line, Ivory ticks / knob.
 const BUTTON_COLOR: Color = Color("1E1B24", 0.85)
 const BUTTON_OUTLINE: Color = Color("7D8896")
 const ARROW_COLOR: Color = Color("EFE6D2")
-## Alpha multiplier of a button right after a step (cooldown fraction 1), 1 when ready.
+## Alpha multiplier of the stick right after a step (cooldown fraction 1), 1 when ready.
 const DIM_ALPHA: float = 0.4
 ## Locked while Focus pauses the match (Story 012): a stronger dim than the step cooldown plus
 ## a cool blue-grey tint (same family as CutHudView.FOCUS_BOARD_TINT), so it reads as "paused".
 const LOCKED_ALPHA: float = 0.3
 const LOCKED_TINT: Color = Color(0.35, 0.45, 0.65, 0.5)
-const OUTLINE_WIDTH: float = 4.0
-## Arrow half-size as a share of the button edge.
-const ARROW_RATIO: float = 0.25
 ## DEV keys per direction (physical keycodes).
 const KEYS: Dictionary = {
 	KEY_UP: Vector2i.UP, KEY_W: Vector2i.UP,
@@ -63,10 +57,6 @@ const STICK_TICK_SIZE_PX: float = 9.0
 const STICK_TICK_ACTIVE_ALPHA: float = 1.0
 const STICK_TICK_IDLE_ALPHA: float = 0.35
 const ARC_POINTS: int = 48
-## Pad mode: every button's HIT area is at least this big (px), the 88 px minimum touch target of
-## design/accessibility-requirements.md (art bible 7.4: touch area >= visible area). The drawn
-## button may be smaller (Part A draws 86.4 px); the hit area only grows OUTWARD (see [method hit_rect]).
-const PAD_HIT_MIN_PX: float = 88.0
 ## Pointer id of the mouse (HandInputController uses the same value); no pointer = NO_POINTER.
 const MOUSE_POINTER: int = -1
 const NO_POINTER: int = -2
@@ -107,11 +97,6 @@ func _notification(what: int) -> void:
 		_cancel_stick()
 
 
-## True when the joystick (not the 3x3 pad) is the movement control.
-func is_joystick_mode() -> bool:
-	return _settings != null and not _settings.is_pad()
-
-
 ## The stick reader (floating base, knob, direction); exposed for tests and the HUD.
 func get_stick_reader() -> StickReader:
 	return _reader
@@ -127,33 +112,12 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if _combat.is_placing():
-		# Story 024: the d-pad area is the ROTATE button while placing (CutHudView handles it).
+		# Story 024: the stick zone is the ROTATE button while placing (CutHudView handles it).
 		return
-	if is_joystick_mode():
-		_input_stick(event)
-		return
-	var pos: Vector2
-	if event is InputEventMouseButton:
-		var button := event as InputEventMouseButton
-		if button.button_index != MOUSE_BUTTON_LEFT or not button.pressed:
-			return
-		pos = button.position
-	elif event is InputEventScreenTouch:
-		var touch := event as InputEventScreenTouch
-		if not touch.pressed:
-			return
-		pos = touch.position
-	else:
-		return
-	var direction: Vector2i = direction_at(pos)
-	if direction == Vector2i.ZERO:
-		return
-	get_viewport().set_input_as_handled()
-	if event.device != InputEvent.DEVICE_ID_EMULATION and not _is_locked():
-		_combat.try_step_player(direction)
+	_input_stick(event)
 
 
-# Joystick mode: a press in the zone starts a gesture owned by that pointer; only that pointer moves
+# A press in the zone starts a gesture owned by that pointer; only that pointer moves
 # and ends it. Emulated copies are consumed in the zone (so the hand controller never sees them)
 # but never drive the stick.
 func _input_stick(event: InputEvent) -> void:
@@ -184,6 +148,8 @@ func _input_stick(event: InputEvent) -> void:
 func _stick_press(pointer: int, position: Vector2, real: bool) -> void:
 	if not ScreenLayout.stick_zone_rect(get_viewport_rect().size).has_point(position):
 		return
+	if _over_hud_control(position):
+		return  # left to CutHudView (Tung phép / Hủy in the place window, the card menu's overlay and Hủy)
 	if _stick_pointer != NO_POINTER:
 		return  # a second finger in the zone is not ours; it is left to whoever wants it
 	get_viewport().set_input_as_handled()
@@ -191,6 +157,22 @@ func _stick_press(pointer: int, position: Vector2, real: bool) -> void:
 		return
 	_stick_pointer = pointer
 	_reader.press(position)
+
+
+## Controls v3: true when a press at [param position] belongs to a HUD control drawn over the stick zone: with the card
+## menu open every press (its overlay and its Hủy in the bottom-left corner), and while Tung phép is shown (the place
+## window) the bottom-left row's tap rects (ScreenLayout.placing_row_hit_rects).
+func _over_hud_control(position: Vector2) -> bool:
+	if _combat == null or _combat.get_cut_flow() == null:
+		return false
+	if _combat.get_cut_flow().is_menu_open():
+		return true
+	if not _combat.is_confirm_visible():
+		return false
+	for rect: Rect2 in ScreenLayout.placing_row_hit_rects(get_viewport_rect().size):
+		if rect.has_point(position):
+			return true
+	return false
 
 
 func _stick_move(position: Vector2) -> void:
@@ -217,49 +199,12 @@ func _can_step_now() -> bool:
 	return _combat.get_mover().is_ready()
 
 
-# True while Focus pauses the match and locks movement (Story 012): the buttons dim and every
-# press or key on them is swallowed without a step.
+# True while Focus pauses the match and locks movement (Story 012): the stick dims and every
+# drag or key is swallowed without a step.
 func _is_locked() -> bool:
 	if _combat == null:
 		return false
 	return _combat.is_movement_locked()
-
-
-## Direction of the pad button under viewport point [param point], or Vector2i.ZERO if none
-## (always ZERO in joystick mode, which has no buttons).
-func direction_at(point: Vector2) -> Vector2i:
-	if is_joystick_mode():
-		return Vector2i.ZERO
-	var rects: Dictionary = ScreenLayout.dpad_rects(get_viewport_rect().size)
-	for direction: Vector2i in rects:
-		if (rects[direction] as Rect2).has_point(point):
-			return direction
-	# Not on a drawn button: try the grown hit areas (never overlapping a neighbour).
-	for direction: Vector2i in rects:
-		if hit_rect(rects[direction], direction).has_point(point):
-			return direction
-	return Vector2i.ZERO
-
-
-## The touch area of a pad button drawn as [param drawn] for [param direction]: at least
-## [constant PAD_HIT_MIN_PX] square. It grows outward only: along the button's own direction
-## (UP grows up, DOWN down, LEFT left, RIGHT right) by the full deficit, and sideways by half the
-## deficit on each side, so it stays clear of the neighbouring buttons (the pad gap is far larger).
-## A button already that big is returned unchanged.
-static func hit_rect(drawn: Rect2, direction: Vector2i) -> Rect2:
-	var deficit := Vector2(maxf(PAD_HIT_MIN_PX - drawn.size.x, 0.0), maxf(PAD_HIT_MIN_PX - drawn.size.y, 0.0))
-	var rect: Rect2 = drawn
-	if direction.x != 0:
-		rect.size.x += deficit.x
-		if direction.x < 0:
-			rect.position.x -= deficit.x
-		rect = rect.grow_individual(0.0, deficit.y * 0.5, 0.0, deficit.y * 0.5)
-	else:
-		rect.size.y += deficit.y
-		if direction.y < 0:
-			rect.position.y -= deficit.y
-		rect = rect.grow_individual(deficit.x * 0.5, 0.0, deficit.x * 0.5, 0.0)
-	return rect
 
 
 func _draw() -> void:
@@ -269,28 +214,7 @@ func _draw() -> void:
 		return
 	var locked: bool = _is_locked()
 	var alpha: float = LOCKED_ALPHA if locked else lerpf(1.0, DIM_ALPHA, _combat.get_mover().get_cooldown_fraction())
-	if is_joystick_mode():
-		_draw_stick(alpha, locked)
-	else:
-		_draw_pad(alpha, locked)
-
-
-func _draw_pad(alpha: float, locked: bool) -> void:
-	var rects: Dictionary = ScreenLayout.dpad_rects(get_viewport_rect().size)
-	for direction: Vector2i in rects:
-		var rect: Rect2 = rects[direction]
-		var cut: float = HudSkin.button_cut(rect)
-		HudSkin.panel(self, rect, [0.0, cut, 0.0, cut], Color(BUTTON_COLOR, BUTTON_COLOR.a * alpha), Color(BUTTON_OUTLINE, alpha), 2.0)
-		if locked:
-			draw_rect(rect, LOCKED_TINT)
-		var c: Vector2 = rect.get_center()
-		var r: float = rect.size.x * ARROW_RATIO
-		var d := Vector2(direction)
-		var perp := Vector2(-d.y, d.x)
-		draw_colored_polygon(
-			PackedVector2Array([c + d * r, c - d * r + perp * r, c - d * r - perp * r]),
-			Color(ARROW_COLOR, alpha)
-		)
+	_draw_stick(alpha, locked)
 
 
 # Joystick: base + knob only while a finger holds the stick; otherwise the faint hint ring.

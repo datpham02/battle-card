@@ -92,7 +92,9 @@ func chapter_count() -> int:
 
 
 ## Map spec of chapter [param ci] for [method ChapterMapGen.generate]: {id, columns, pools, match_ids,
-## onboarding_tier_cap}. Empty when out of range.
+## onboarding_tier_cap, teach_after}. `teach_after` (P2.3, decision D10) = {match id: [match ids]} of the matches that
+## carry the key: such a match (a new elite) is drawn only after one of the listed matches (see ChapterMapGen).
+## Empty when out of range.
 func get_map_spec(ci: int) -> Dictionary:
 	if ci < 0 or ci >= _chapters.size():
 		return {}
@@ -105,7 +107,23 @@ func get_map_spec(ci: int) -> Dictionary:
 	return {
 		"id": ch["id"], "columns": columns.duplicate(true), "pools": (ch["pools"] as Dictionary).duplicate(true),
 		"match_ids": (ch["match_ids"] as Array).duplicate(), "onboarding_tier_cap": _map_defaults["onboarding_tier_cap"],
+		"teach_after": _teach_after_of(ch["matches"] as Dictionary),
 	}
+
+
+# P2.3: {match id: [teacher match ids]} of every match with a non-empty `teach_after` array (ids kept as written;
+# an id that is not a match of the chapter can never be fought there, so that elite then always falls back).
+static func _teach_after_of(matches: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for mid: Variant in matches:
+		var raw: Variant = (matches[mid] as Dictionary).get("teach_after")
+		if typeof(raw) != TYPE_ARRAY or (raw as Array).is_empty():
+			continue
+		var ids: Array = []
+		for id: Variant in raw as Array:
+			ids.append(str(id))
+		out[str(mid)] = ids
+	return out
 
 
 ## Seeded map of chapter [param ci] (see [method ChapterMapGen.generate]); [] when out of range.

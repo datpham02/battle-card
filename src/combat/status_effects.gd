@@ -120,6 +120,9 @@ var _guards: Dictionary = {}
 var _since_unlock: Dictionary = {}
 # Drop tiles: Side -> {Vector2i -> seconds of the return fade left} (presentation only).
 var _hole_fade: Dictionary = {}
+# Controls v3 (buff / debuff row): "<status id>:<side>" -> the full length of the timed status last applied (the
+# denominator of the HUD's remaining-time pie). Kept after the status ends; only read while it runs.
+var _totals: Dictionary = {}
 # P2.2b: id of the last ignite() call; every burning cell remembers the call (its "zone") that lit it last, so a
 # multi-cell boss over several cells of one fire takes ONE tick per tick (see _burn_lead_cells).
 var _burn_zone_seq: int = 0
@@ -159,7 +162,7 @@ func ignite(
 			zone = zone or bool(old.get("zone", true))
 		var damage: float = base + _burn_tick_bonus * float(stacks - 1)
 		_burning[cell] = {
-			"left": left, "tick_acc": acc, "stacks": stacks, "base": base,
+			"left": left, "total": left, "tick_acc": acc, "stacks": stacks, "base": base,
 			"tick_sec": maxf(tick_sec, _EPS), "damage": damage, "zone": zone, "zone_id": _burn_zone_seq,
 		}
 		lit.append(cell)
@@ -293,6 +296,7 @@ func pin(side: int, duration: float) -> void:
 	if duration <= 0.0:
 		return
 	_pins[side] = duration
+	_totals[_total_key(STATUS_FROZEN, side)] = duration
 	pinned.emit(side)
 
 
@@ -405,6 +409,7 @@ func clear() -> void:
 	_since_unlock.clear()
 	_slows.clear()
 	_guards.clear()
+	_totals.clear()
 	_fragile.clear()
 	_frost.clear()
 	_thorns.clear()
@@ -932,6 +937,7 @@ func root(side: int, duration: float) -> bool:
 	if duration <= 0.0 or is_pinned(side) or is_rooted(side):
 		return false
 	_roots[side] = duration
+	_totals[_total_key(STATUS_ROOT, side)] = duration
 	return true
 
 
@@ -980,6 +986,7 @@ func slow(side: int, duration: float, step_mult: float) -> void:
 		return
 	var prev: Dictionary = _slows.get(side, {}) as Dictionary
 	_slows[side] = {"left": maxf(duration, float(prev.get("left", 0.0))), "mult": maxf(step_mult, float(prev.get("mult", 0.0)))}
+	_totals[_total_key(STATUS_SLOW, side)] = float((_slows[side] as Dictionary)["left"])
 
 
 ## Step cooldown multiplier of [param side] from Slow (1.0 when not slowed). UnitMover folds it into every step.
@@ -1000,6 +1007,7 @@ func guard(side: int, amount: float, duration: float) -> void:
 		return
 	var prev: Dictionary = _guards.get(side, {}) as Dictionary
 	_guards[side] = {"left": maxf(duration, float(prev.get("left", 0.0))), "amount": maxf(amount, float(prev.get("amount", 0.0)))}
+	_totals[_total_key(STATUS_GUARD, side)] = float((_guards[side] as Dictionary)["left"])
 
 
 ## Guard armor of [param side] right now (0 when none).
@@ -1031,3 +1039,64 @@ func _tick_phase2_statuses(delta: float) -> void:
 			entry["left"] = float(entry["left"]) - delta
 			if float(entry["left"]) <= _EPS:
 				book.erase(side)
+
+
+# --- Controls v3: the player's buff / debuff row ------------------------------------------------------------------
+
+## Visual / status id of Frozen (Dong Bang, the pin), Burn (the unit stands on a burning cell), Ran and Han (stacks).
+const STATUS_FROZEN: String = "frozen"
+const STATUS_BURN: String = "burn"
+const STATUS_FRAGILE: String = "fragile"
+const STATUS_CHILL: String = "chill"
+## Order of the HUD row: the step locks first, then the other debuffs, the buff last.
+const STATUS_ORDER: Array[String] = [STATUS_FROZEN, STATUS_ROOT, STATUS_SLOW, STATUS_BURN, STATUS_FRAGILE, STATUS_CHILL, STATUS_GUARD]
+
+
+func _total_key(id: String, side: int) -> String:
+	return "%s:%d" % [id, side]
+
+
+## Controls v3: the statuses on the unit of [param side] standing on [param cell] right now, in STATUS_ORDER, one
+## {id, left, total, stacks, buff} each. A timed status has left / total in seconds (total = the length it was last
+## applied for); a stack status (Ran, Han) has left = total = 0 and its stack count. Burn = [param cell] is burning
+## (its time left, the length it was lit for, its stacks). Only active statuses are listed.
+func active_statuses(side: int, cell: Vector2i) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for id: String in STATUS_ORDER:
+		var left: float = 0.0
+		var stacks: int = 0
+		match id:
+			STATUS_FROZEN:
+				left = get_pin_left(side)
+			STATUS_ROOT:
+				left = get_root_left(side)
+			STATUS_SLOW:
+				left = get_slow_left(side)
+			STATUS_GUARD:
+				left = get_guard_left(side)
+			STATUS_BURN:
+				left = get_burn_left(cell)
+				stacks = stacks_at(cell)
+			STATUS_FRAGILE:
+				stacks = fragile_stacks(side)
+			STATUS_CHILL:
+				stacks = frost_stacks(side)
+		var timed: bool = id != STATUS_FRAGILE and id != STATUS_CHILL
+		if (timed and left <= _EPS) or (not timed and stacks <= 0):
+			continue
+		var total: float = 0.0
+		if id == STATUS_BURN:
+			total = float((_burning[cell] as Dictionary).get("total", left))
+		elif timed:
+			total = float(_totals.get(_total_key(id, side), left))
+		out.append({"id": id, "left": left if timed else 0.0, "total": maxf(total, left) if timed else 0.0,
+			"stacks": stacks, "buff": id == STATUS_GUARD})
+	return out
+
+
+## Controls v3: share of a timed status still left (1 just applied, 0 at its end); 1 for a stack status.
+static func status_left_fraction(entry: Dictionary) -> float:
+	var total: float = float(entry.get("total", 0.0))
+	if total <= 0.0:
+		return 1.0
+	return clampf(float(entry.get("left", 0.0)) / total, 0.0, 1.0)
