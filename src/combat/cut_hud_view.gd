@@ -113,7 +113,6 @@ const MENU_REASON_BACK: Color = Color(0.08, 0.07, 0.1, 0.9)
 const MENU_DIM_BACKING: Color = Color("1F1D2A")
 const MENU_DIM_BACKING_INSET: float = 3.0
 const MENU_REASON_HEIGHT_RATIO: float = 0.16
-const MENU_REASON_TOP_RATIO: float = 0.66
 const OUTLINE_WIDTH: float = 4.0
 const CELL_OUTLINE_WIDTH: float = 3.0
 const LINE_WIDTH: float = 4.0
@@ -158,6 +157,9 @@ const HP_PLATE_GAP: float = 2.0
 const HP_PLATE_HEIGHT: float = 20.0
 const HP_PLATE_MIN_W: float = 36.0
 const HP_PLATE_PAD_X: float = 6.0
+## Corner labels keep off a unit's body: this share of a cell wide and tall, standing on the feet.
+const CORNER_LABEL_BODY_W: float = 0.5
+const CORNER_LABEL_BODY_H: float = 1.1
 const HP_PLATE_FONT: int = 16
 ## 2026-10-31 (user: crossing a debuff zone seemed to do nothing): damage from the floor (burning cells, thorns, mire)
 ## pops a "-N" in the zone's colour above the unit: it rises DOT_POP_RISE px over DOT_POP_SEC and fades in its last
@@ -1849,25 +1851,78 @@ func _draw_boss_queued_swing(vp: Vector2) -> void:
 		_draw_odd_corner_mark(vp, cells)  # Story 041
 
 
-# One line of bare effect text (controls v3: no box), anchored to the bottom-right corner (or, with
-# [param top_right], the top-right corner) of the bounding box of [param cells] and clamped inside the board. The
-# text takes a light tint of [param color] (the warning's hue), with the ink outline and the shadow of EffectText.
+# One line of bare effect text (controls v3: no box) for the cells [param cells]. Preferred spot: the bottom-right
+# corner inside their bounding box (or, with [param top_right], the top-right corner). 2026-11-02: when that spot
+# covers an HP plate, a unit or a field piece (corner_label_blockers), the next free spot is used: the other right
+# corner, then just below and just above the box (one label height outside the board at most). The text takes a
+# light tint of [param color] (the warning's hue), with the ink outline and the shadow of EffectText.
 func _draw_corner_label(vp: Vector2, cells: Array[Vector2i], text: String, color: Color, top_right: bool = false) -> void:
 	if cells.is_empty():
 		return
-	var box: Rect2 = _bg().cells_bounds(cells)
 	var s: float = ScreenLayout.controls_scale(vp)
 	var size: int = _effect_font_size(vp)
-	var width: float = EffectText.width(text, size, s)
-	var height: float = roundf(size * 1.3)
+	var rect: Rect2 = corner_label_rect(vp, cells, EffectText.width(text, size, s), roundf(size * 1.3), top_right)
+	EffectText.draw(self, Vector2(roundf(rect.position.x), roundf(rect.position.y + size)), text, size,
+		Color(color.lightened(0.35), 1.0), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, s)
+
+
+## The screen rect a corner label [param width] x [param height] px for [param cells] is drawn in (see
+## _draw_corner_label): the first candidate spot that meets none of corner_label_blockers(), else the preferred one.
+func corner_label_rect(vp: Vector2, cells: Array[Vector2i], width: float, height: float, top_right: bool = false) -> Rect2:
+	var box: Rect2 = _bg().cells_bounds(cells)
 	var board: Rect2 = _bg().board_bounds()
-	var pos: Vector2 = box.end - Vector2(width, height)
+	var inside_bottom := Vector2(box.end.x - width, box.end.y - height)
+	var inside_top := Vector2(box.end.x - width, box.position.y)
+	var spots: Array[Vector2] = [inside_bottom, inside_top]
 	if top_right:
-		pos.y = box.position.y
-	pos.x = clampf(pos.x, board.position.x, maxf(board.end.x - width, board.position.x))
-	pos.y = clampf(pos.y, board.position.y, maxf(board.end.y - height, board.position.y))
-	EffectText.draw(self, Vector2(roundf(pos.x), roundf(pos.y + size)), text, size, Color(color.lightened(0.35), 1.0),
-		HORIZONTAL_ALIGNMENT_CENTER, width, s)
+		spots.reverse()
+	spots.append(Vector2(box.end.x - width, box.end.y))  # just below the box
+	spots.append(Vector2(box.end.x - width, box.position.y - height))  # just above the box
+	var blockers: Array[Rect2] = corner_label_blockers(vp)
+	var first := Rect2()
+	for i: int in spots.size():
+		# Spots inside the box stay on the board; the outside ones may stand one label height off its edge.
+		var bounds: Rect2 = board if i < 2 else board.grow_individual(0.0, height, 0.0, height)
+		var pos: Vector2 = spots[i]
+		pos.x = clampf(pos.x, bounds.position.x, maxf(bounds.end.x - width, bounds.position.x))
+		pos.y = clampf(pos.y, bounds.position.y, maxf(bounds.end.y - height, bounds.position.y))
+		var candidate := Rect2(pos, Vector2(width, height))
+		if i == 0:
+			first = candidate
+		var free: bool = true
+		for blocker: Rect2 in blockers:
+			if candidate.intersects(blocker):
+				free = false
+				break
+		if free:
+			return candidate
+	return first
+
+
+## Screen rects a corner label must not cover: each living unit's HP plate and body (feet up, CORNER_LABEL_BODY_W x
+## CORNER_LABEL_BODY_H of a cell) and every field piece tile of both halves.
+func corner_label_blockers(vp: Vector2) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	var state: CombatState = _combat.get_state()
+	var geo: BoardGeometry = _bg()
+	var cell_size: Vector2 = geo.cell_size()
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		var hp: float = state.player_hp if side == CombatState.Side.PLAYER else state.enemy_hp
+		if hp <= 0.0:
+			continue
+		var feet: Vector2 = _unit_feet_screen(vp, side, state)
+		if _hp_plates_on():
+			out.append(hp_plate_rect(feet, HudSkin.text_width(str(ceili(hp)), HP_PLATE_FONT, true)))
+		var body := Vector2(cell_size.x * CORNER_LABEL_BODY_W, cell_size.y * CORNER_LABEL_BODY_H)
+		out.append(Rect2(feet - Vector2(body.x * 0.5, body.y), body))
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		var owner: Variant = _combat if side == CombatState.Side.PLAYER else _combat.get_boss()
+		var drops: FieldDrops = owner.get_drops() if owner != null else null
+		if drops == null:
+			continue
+		for point: FieldPoint in drops.get_points():
+			out.append(geo.cell_bounds(point.cell).grow(-3.0))
+	return out
 
 
 # Story 037: "+N" over the player's cell while CombatView.get_heal_flash() runs: rises a little and fades out.
@@ -2601,7 +2656,7 @@ func _draw_rebirth(vp: Vector2) -> void:
 	_skin_bar(bar, ratio, REBIRTH_COLOR)
 	var cell: Rect2 = _bg().flat_cells_rect(_combat.get_state().enemy_footprint_cells())
 	var radius: float = minf(cell.size.x, cell.size.y) * REVIVE_RING_RATIO * _scale_at(cell.get_center())
-	draw_arc(_pt(cell.get_center()), radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, RING_POINTS, REBIRTH_COLOR, RING_WIDTH * 1.5)
+	_draw_octagon_ring(_pt(cell.get_center()), radius, REBIRTH_COLOR, RING_WIDTH * 1.5, ratio)
 
 
 # Connects CombatState.enemy_healed (W3: every heal of the boss, burn_eater's burn heals included) once the state exists.
@@ -2849,7 +2904,7 @@ func _draw_hop_shadow(rect: Rect2, ratio: float) -> void:
 		points.append(c + Vector2(cos(a) * rx, sin(a) * ry))
 	_poly(points, HOP_SHADOW)
 	var side_len: float = minf(rect.size.x, rect.size.y)
-	draw_arc(_pt(rect.get_center()), side_len * HOP_RING_RATIO * maxf(ratio, SURFACE_INNER_MIN) * _scale_at(rect.get_center()), 0.0, TAU, RING_POINTS, HOP_RING, RING_WIDTH)
+	_draw_octagon_ring(_pt(rect.get_center()), side_len * HOP_RING_RATIO * maxf(ratio, SURFACE_INNER_MIN) * _scale_at(rect.get_center()), HOP_RING, RING_WIDTH)
 
 
 # Riposte target: crimson tint, blinking crimson outline and a crosshair.
@@ -2861,16 +2916,44 @@ func _draw_riposte_cell(rect: Rect2) -> void:
 	var arm: float = minf(rect.size.x, rect.size.y) * RIPOSTE_CROSS_RATIO
 	_line(c - Vector2(arm, 0.0), c + Vector2(arm, 0.0), RIPOSTE_COLOR, RING_WIDTH)
 	_line(c - Vector2(0.0, arm), c + Vector2(0.0, arm), RIPOSTE_COLOR, RING_WIDTH)
-	draw_arc(_pt(c), arm * 0.6 * _scale_at(c), 0.0, TAU, RING_POINTS, RIPOSTE_COLOR, RING_WIDTH * 0.5)
+	_draw_octagon_ring(_pt(c), arm * 0.6 * _scale_at(c), RIPOSTE_COLOR, RING_WIDTH * 0.5)
 
 
 # Burrow surfacing cell: sand tint, a fixed outer sand ring and an inner ring closing in as [param ratio] runs out.
 func _draw_surface_circle(rect: Rect2, ratio: float) -> void:
 	var c: Vector2 = _pt(rect.get_center())
 	var r: float = minf(rect.size.x, rect.size.y) * SURFACE_RING_RATIO * _scale_at(rect.get_center())
-	draw_circle(c, r, SURFACE_TINT)
-	draw_arc(c, r, 0.0, TAU, RING_POINTS, SURFACE_COLOR, RING_WIDTH)
-	draw_arc(c, r * maxf(ratio, SURFACE_INNER_MIN), 0.0, TAU, RING_POINTS, SURFACE_COLOR, RING_WIDTH * 0.75)
+	draw_colored_polygon(_octagon(c, r), SURFACE_TINT)
+	_draw_octagon_ring(c, r, SURFACE_COLOR, RING_WIDTH)
+	_draw_octagon_ring(c, r * maxf(ratio, SURFACE_INNER_MIN), SURFACE_COLOR, RING_WIDTH * 0.75)
+
+
+# Octagon (pointy top) of circumradius [param r] round screen point [param c]: the angular stand-in for a circle
+# marker (2026-11-02 rule: no circles in the HUD but the joystick).
+func _octagon(c: Vector2, r: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i: int in 8:
+		var a: float = -PI * 0.5 + TAU * float(i) / 8.0
+		points.append(c + Vector2(cos(a), sin(a)) * r)
+	return points
+
+
+# Octagon outline round screen point [param c]; [param ratio] < 1 traces only that share of the perimeter,
+# clockwise from the top (the angular version of a radial timer).
+func _draw_octagon_ring(c: Vector2, r: float, color: Color, width: float, ratio: float = 1.0) -> void:
+	if r <= 0.0 or ratio <= 0.0:
+		return
+	var corners: PackedVector2Array = _octagon(c, r)
+	corners.append(corners[0])
+	var span: float = clampf(ratio, 0.0, 1.0) * 8.0
+	var points := PackedVector2Array([corners[0]])
+	for i: int in 8:
+		if span >= float(i + 1):
+			points.append(corners[i + 1])
+		else:
+			points.append(corners[i].lerp(corners[i + 1], span - float(i)))
+			break
+	draw_polyline(points, color, width)
 
 
 # Remaining-time bar along the top of [param rect], [param top_pad] px below the cell's top edge (clear of
@@ -3041,7 +3124,8 @@ func _draw_menu_card(vp: Vector2, rect: Rect2, id: String, cell_count: int) -> v
 	if not available:
 		# The dimmed face is see-through: an opaque backing keeps it a card over the overlay and the board.
 		draw_rect(CardFace.face_border(rect, vp.y, MENU_DIM_BACKING_INSET), MENU_DIM_BACKING)
-	CardFace.draw_skill(self, rect, skill, _skill_name(id), tag, CardText.describe_resolved(skill), false,
+	# 2026-11-02: the battle wording (shorter for long rules) so no menu card is cut; reward and shop keep the full text.
+	CardFace.draw_skill(self, rect, skill, _skill_name(id), tag, CardText.describe_battle(skill), false,
 		available and UiButtons.is_pressed_at(self, rect), not available, [], id, false)
 	if available:
 		return
@@ -3050,9 +3134,13 @@ func _draw_menu_card(vp: Vector2, rect: Rect2, id: String, cell_count: int) -> v
 		var cooldowns: SkillCooldowns = _combat.get_skill_cooldowns()
 		CooldownPie.draw(self, CardFace.picture_rect(rect, vp.y), cooldowns.recovered_fraction(id), cooldowns.remaining(id))
 		return
+	# 2026-11-02: the lock (and its reason plate) sit on the picture, so the card's name and rule text stay readable.
+	var picture: Rect2 = CardFace.picture_rect(rect, vp.y)
 	if reason == "curse":
-		_draw_lock_glyph(rect)
-	var plate := Rect2(rect.position.x, rect.position.y + rect.size.y * MENU_REASON_TOP_RATIO, rect.size.x, rect.size.y * MENU_REASON_HEIGHT_RATIO)
+		_draw_lock_glyph(picture)
+	var plate_h: float = rect.size.y * MENU_REASON_HEIGHT_RATIO
+	var border: Rect2 = CardFace.face_border(rect, vp.y, 0.0)
+	var plate := Rect2(border.position.x, picture.end.y - plate_h, border.size.x, plate_h)
 	draw_rect(plate, MENU_REASON_BACK)
 	var text: String = str(_skill_status(id, cell_count)["text"])
 	_draw_centered(plate, text, _fit_font_size(text, plate.size.x - MENU_NAME_PAD * 2.0, BUTTON_FONT_SIZE), HudSkin.TEXT)
@@ -3133,10 +3221,14 @@ func get_cooldown_column_ids() -> Array[String]:
 # Story 033: a code-drawn padlock (body + shackle) in the top-right corner of a locked menu card.
 func _draw_lock_glyph(rect: Rect2) -> void:
 	var edge: float = minf(rect.size.x, rect.size.y) * CURSE_LOCK_SIZE_RATIO
-	var body := Rect2(rect.end.x - edge * 1.15, rect.position.y + edge * 0.45, edge * 0.8, edge * 0.6)
+	# Centred in the top part of [param rect] (the card's picture), clear of the reason plate under it.
+	var body := Rect2(rect.get_center().x - edge * 0.4, rect.position.y + edge * 0.6, edge * 0.8, edge * 0.6)
 	draw_rect(body, CURSE_LOCK_COLOR)
 	var center := Vector2(body.position.x + body.size.x * 0.5, body.position.y)
-	draw_arc(center, body.size.x * 0.28, PI, TAU, 12, CURSE_LOCK_COLOR, maxf(edge * 0.1, 2.0))
+	# Angular shackle (2026-11-02 rule: no round shapes): up, across, down.
+	var half: float = body.size.x * 0.28
+	draw_polyline(PackedVector2Array([center + Vector2(-half, 0.0), center + Vector2(-half, -half * 1.2),
+		center + Vector2(half, -half * 1.2), center + Vector2(half, 0.0)]), CURSE_LOCK_COLOR, maxf(edge * 0.1, 2.0))
 	draw_rect(Rect2(center.x - 1.5, body.position.y + body.size.y * 0.3, 3.0, body.size.y * 0.35), CURSE_BACK)
 
 

@@ -148,6 +148,8 @@ func _normalize_skill(id: String, raw: Variant) -> Dictionary:
 		"cooldown_sec": maxf(float(d.get("cooldown_sec", 0.0)), 0.0),
 		"weight": maxf(float(d.get("weight", defaults["weight"])), 0.0),
 		"interruptible": bool(d.get("interruptible", defaults["interruptible"])),
+		# 2026-11-02: false = the skill does not count toward a phase's every_nth (the Witch's row shift is not a cast).
+		"counts_as_cast": bool(d.get("counts_as_cast", true)),
 		"conditions": (d["conditions"] as Dictionary).duplicate(true) if typeof(d.get("conditions")) == TYPE_DICTIONARY else {},
 		"counter_key": str(d.get("counter_key", "")),
 		"name_key": str(d.get("name_key", "")),

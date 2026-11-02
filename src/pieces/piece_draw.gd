@@ -62,7 +62,7 @@ const ODD_EDGE_UNDER_EXTRA: float = 3.0
 ## Mini shapes: edge width as a share of one square, never under ODD_EDGE_MIN_WIDTH px.
 const ODD_EDGE_UNIT_RATIO: float = 0.16
 const ODD_EDGE_MIN_WIDTH: float = 1.5
-## Sparkle mark: inner radius of the star as a share of its outer radius, and the dark disc as a share of it.
+## Sparkle mark: inner radius of the star as a share of its outer radius, and the dark octagon badge as a share of it.
 const ODD_MARK_INNER_RATIO: float = 0.36
 const ODD_MARK_DISC_RATIO: float = 1.12
 
@@ -128,8 +128,14 @@ static func draw_odd_edge(canvas: CanvasItem, cells: Array[Vector2i], origin: Ve
 static func draw_odd_mark(canvas: CanvasItem, center: Vector2, radius: float) -> void:
 	if radius <= 0.0:
 		return
-	canvas.draw_circle(center, radius * ODD_MARK_DISC_RATIO, ODD_EDGE_DARK)
-	canvas.draw_arc(center, radius * ODD_MARK_DISC_RATIO, 0.0, TAU, 20, ODD_EDGE, maxf(radius * 0.18, 1.5))
+	# Angular badge (2026-11-02 rule: no circles but the joystick): a flat-topped octagon behind the sparkle.
+	var badge := PackedVector2Array()
+	for i: int in 8:
+		var a: float = PI * 0.125 + PI * 0.25 * i
+		badge.append(center + Vector2(cos(a), sin(a)) * radius * ODD_MARK_DISC_RATIO)
+	canvas.draw_colored_polygon(badge, ODD_EDGE_DARK)
+	badge.append(badge[0])
+	canvas.draw_polyline(badge, ODD_EDGE, maxf(radius * 0.18, 1.5))
 	var points := PackedVector2Array()
 	for i: int in 8:
 		var angle: float = -PI * 0.5 + PI * 0.25 * i

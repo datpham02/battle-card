@@ -78,9 +78,12 @@ func _initialize() -> void:
 				last_phase = ph
 			if str(ev.get("event", "")) != "resolve" or bool(ev.get("followup_strike", false)):
 				continue
-			turn += 1
 			var sid: String = str(ev["skill"])
 			cast_by_phase[ph][sid] = int(cast_by_phase[ph].get(sid, 0)) + 1
+			# 2026-11-02: the row shift (counts_as_cast false) is not a cast, so it never moves the every_nth count.
+			if not bool(cfg.skill_for_phase(sid, enemy["phases"][ph]).get("counts_as_cast", true)):
+				continue
+			turn += 1
 			if ph == 2:
 				if turn % 3 == 0:
 					knot_turns[0] += 1

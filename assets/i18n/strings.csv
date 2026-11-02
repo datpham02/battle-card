@@ -150,6 +150,7 @@ card.hoa_tinh.name,Tro hồng,Cinder
 card.hoa_tinh.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
 card.hoa_xa.name,Tia lửa,Spark
 card.hoa_xa.desc,Đốt nhanh trên ít ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,A quick burn over few cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.hoa_xa.desc_battle,"Đốt nhanh trên ít ô trong {burn_sec} s. Đốt lại: cháy lâu, mạnh hơn.","Quick burn on few cells for {burn_sec} s. Re-ignite: longer, stronger burn."
 card.suong_mong.name,Men băng,Glaze
 card.suong_mong.desc,Đóng Băng {pin_sec} s: địch không bước được.,Applies Frozen for {pin_sec} s: the foe cannot step.
 card.bang_chau.name,Mưa đá,Hailstone
@@ -172,6 +173,7 @@ card.han_bang.name,Tảng băng,Glacier
 card.han_bang.desc,Đóng Băng {pin_sec} s và gieo Rạn {fragile_stacks} tầng: đòn kế tiếp ăn ×{fragile_mult} mỗi tầng.,Applies Frozen for {pin_sec} s and applies {fragile_stacks} Fragile: the next hits take ×{fragile_mult} per stack.
 card.thien_hoa.name,Giàn thiêu,Pyre
 card.thien_hoa.desc,"Đốt các ô trong {burn_sec} s, cháy dữ dội. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.",Burns the cells fiercely for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.thien_hoa.desc_battle,"Đốt dữ dội các ô trong {burn_sec} s. Đốt lại: cháy lâu, mạnh hơn.","Fierce burn on the cells for {burn_sec} s. Re-ignite: longer, stronger burn."
 card.tu_kiem.name,Nhát cuối,Last Verdict
 card.tu_kiem.desc,"Hành quyết: một nhát duy nhất, ×{execute_mult} khi địch dưới {execute_pct} % máu.","Execute: one single stroke, ×{execute_mult} when the foe is below {execute_pct} % HP."
 ui.card.level_suffix,+%d,+%d
@@ -399,8 +401,10 @@ relic.tam_hop.name,Xích Ba Mắt,Three-Link Chain
 relic.tam_hop.desc,"Được ghép khối thứ ba vào đòn (+1,5 s chọn lá nữa).",You may join a third block into a cast (+1.5 s more to pick a card).
 card.ganh_nang.name,Gánh Nặng,Dead Weight
 card.ganh_nang.desc,"Lá nguyền: chỉ chiếm một chỗ trong menu phép và bị khóa, không dùng được. Bỏ bằng lượt bỏ lá, cửa hàng hoặc sự kiện.","Curse: only takes a slot in the card menu and stays locked, it cannot be used. Remove it with a card removal, the shop or an event."
+card.ganh_nang.desc_battle,"Lá nguyền: chiếm một chỗ trong menu phép, bị khóa.",Curse: takes a menu slot and stays locked.
 card.oan_hon.name,Mối Hận,Lingering Grudge
 card.oan_hon.desc,"Lá nguyền: chiếm một chỗ trong menu phép và bị khóa. Mỗi lần được rút vào menu, bạn mất {draw_damage} máu. Bỏ bằng lượt bỏ lá, cửa hàng hoặc sự kiện.","Curse: takes a slot in the card menu and stays locked. Each time it is drawn into the menu you lose {draw_damage} HP. Remove it with a card removal, the shop or an event."
+card.oan_hon.desc_battle,"Lá nguyền: bị khóa. Mỗi lần được rút vào menu, bạn mất {draw_damage} máu.",Curse: stays locked. Each time it is drawn you lose {draw_damage} HP.
 ui.hud.curse_locked,Lá nguyền,Cursed
 ui.event.leave,Rời đi,Leave
 ui.event.leave_result,Bạn lặng lẽ rời đi.,You walk away quietly.
@@ -640,6 +644,7 @@ ui.hud.surface,TRỒI LÊN,SURFACING
 ui.hud.burrowed,ĐANG LẶN,BURROWED
 card.gai_doc.name,Bẫy chông,Caltrops
 card.gai_doc.desc,Rải gai lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng. Trúng thì gây thêm sát thương nhẹ.,Covers the cut cells in thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile. Also deals light damage on a hit.
+card.gai_doc.desc_battle,"Gai trên các ô trúng {thorn_sec} giây: bước vào mất {thorn_damage} máu, Rạn {thorn_fragile_stacks}. Trúng gây thêm sát thương nhẹ.",Thorns on the cut cells for {thorn_sec} s: each entry costs {thorn_damage} HP and {thorn_fragile_stacks} Fragile. Light damage on a hit.
 card.thanh_thuy.name,Sương bạc,Silver Dew
 card.thanh_thuy.desc,"Gieo Giá Lạnh {frost_stacks} tầng. Hồi {heal_self} máu cho người niệm khi đòn tới nơi, trúng hay trượt.","Applies {frost_stacks} Chill. Heals the caster {heal_self} HP when the cut lands, hit or miss."
 card.bang_tam.name,Buốt xương,Winter's Bite
@@ -882,6 +887,8 @@ enemy_skill.entangled_row.name,Hàng Rễ Quấn,Entangled Row
 enemy_skill.entangled_row.counter,Sang hàng khác; phá mốc để đổi hàng bị nhắm. Không phá phép được.,Move to another row; break the anchor to change the targeted row. Cannot be interrupted.
 enemy_skill.moss_guard.name,Giáp Rêu,Moss Guard
 enemy_skill.moss_guard.counter,"Đập mốc rễ để phá giáp, hoặc dùng đòn xuyên giáp.","Break the root anchor to drop the guard, or use a piercing strike."
+enemy_skill.witch_shift.name,Dời Rễ,Root Shift
+enemy_skill.witch_shift.counter,Đánh vào khung ngà nơi bà ta sắp dời tới.,Hit the ivory-framed cells she is shifting to.
 enemy_skill.root_anchor.name,Mốc Rễ,Root Anchor
 enemy_skill.root_anchor.counter,Đập mốc bằng bất kỳ khối nào; mốc chỉ hàng bên bạn sắp bị rễ đánh.,Hit the anchor with any block; it marks the row on your side the roots will strike.
 enemy_skill.withered_crown.name,Vương Miện Héo,Withered Crown

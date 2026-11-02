@@ -22,6 +22,8 @@ const COMMA_DECIMAL_LOCALES: Array[String] = ["vi"]
 const MAX_DECIMALS: int = 2
 ## Matches a placeholder left unfilled (tests use it).
 const PLACEHOLDER_PATTERN: String = "\\{[a-z_]+\\}"
+## Key suffix of the shorter battle-menu wording of a card description (`card.<id>.desc_battle`).
+const BATTLE_SUFFIX: String = "_battle"
 
 # CombatConfig from combat.json, loaded once when a caller does not pass one.
 static var _shared_combat: CombatConfig = null
@@ -44,6 +46,19 @@ static func describe_resolved(skill: Dictionary, combat: CombatConfig = null, lo
 	if key.is_empty():
 		return ""
 	var template: String = str(TranslationServer.translate(key))
+	return fill(template, skill, combat, locale)
+
+
+## The text a card shows in the battle card menu (no detail panel there, only the card-choice seconds): the
+## "<desc_key>_battle" string when strings.csv has one (a shorter wording of a long rule), else describe_resolved.
+static func describe_battle(skill: Dictionary, combat: CombatConfig = null, locale: String = "") -> String:
+	var key: String = str(skill.get("desc_key", ""))
+	if key.is_empty():
+		return ""
+	var battle_key: String = key + BATTLE_SUFFIX
+	var template: String = str(TranslationServer.translate(battle_key))
+	if template == battle_key:
+		return describe_resolved(skill, combat, locale)
 	return fill(template, skill, combat, locale)
 
 

@@ -1081,7 +1081,10 @@ Spec: `design/quick-specs/phase2-misty-forest-2026-11-01.md` 7 (with its P2.4 im
 D14. Enemy `forest_witch`: tier `warden`, footprint 2x2, arena hint `boss_hall`, three phases: `p1` (1.0) root_nail,
 branch_lattice, root_anchor (1 anchor), entangled_row, mechanic root_anchor; `p2` (0.65) + moss_guard, withered_crown,
 mechanic withered_crown, 2 anchors per cast and `entangled_row` on 2 anchor rows, transition 1.5 s then `root_anchor`;
-`p3` (0.30) + forest_last_knot, mechanic forest_last_knot, `every_nth` {forest_last_knot, 3}, transition 1.5 s. The
+`p3` (0.30) + forest_last_knot, mechanic forest_last_knot, `every_nth` {forest_last_knot, 3}, transition 1.5 s. Every phase
+also lists `witch_shift` (2026-11-02, user "Thêm chiêu dời hàng"): a self skill that moves her one row (`effects.move`
+`adjacent_row`, windup 0.8 s, recovery 0.4 s, cooldown 8 s, weight 3, `counts_as_cast: false`; ivory frame on the
+destination footprint while it winds up), so she repositions about every 9 s. The
 three heavy skills (`entangled_row`, `withered_crown`, `forest_last_knot`, recovery >= 1.2 s) have `interruptible: false`
 (D9): while they wind up / warn FloorLayer frames her four cells in ivory (`PatternController.uninterruptible_tell`).
 A phase transition clears the red and makes her invulnerable for `transition.sec` (D14, 1.5 s).
@@ -1098,6 +1101,7 @@ New optional keys (P2.4, read by `EnemySkillsConfig`; an unknown enum value refu
 | `followup.exclude_first` | bool | Drop followup candidates that touch a first-strike cell (Branch Lattice's extra cell is NEW) | false |
 | `followup.prefer` | `"none"` \| `"anchor_row"` | `anchor_row`: keep the candidates nearer the newest marker's row than the followup's origin when any is (Branch Lattice grows toward the anchor's row); no marker or none nearer = all kept | `none` |
 | `effects.damage_no_markers` | number >= 0 | Damage of the strike when NO marker is alive at resolve time (Forest's Last Knot: 22 -> 11; its followup has `requires_anchor: 1`) | absent = `damage` |
+| `counts_as_cast` | bool | false = the skill does not count toward the phase's `every_nth` (Witch `witch_shift`: a reposition is not a cast) | true |
 | `weight: 0` | number | A skill with weight 0 is never picked by the weighted choice, only when forced (`every_nth` / `on_enter`): Forest's Last Knot | — |
 
 Also P2.4 (code, no key): a marker skill placing several markers in one cast puts them in different rows when it can

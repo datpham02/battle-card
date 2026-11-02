@@ -642,7 +642,8 @@ func _finish_skill() -> void:
 	if bool((_skill["conditions"] as Dictionary).get("once", false)):
 		_used_once[id] = true
 	_last_skill = id
-	_phase_casts += 1
+	if bool(_skill.get("counts_as_cast", true)):
+		_phase_casts += 1
 	_gap_needed = FairnessCheck.gap_needed(float(_skill["recovery_sec"]), float(_config.fairness["min_gap_between_warnings_sec"]),
 		_player_step_cd(), float(_config.fairness["reaction_margin_sec"]), float(_config.fairness["heavy_recovery_sec"]))
 	var recovery: float = float(_skill["recovery_sec"]) * tempo_mult

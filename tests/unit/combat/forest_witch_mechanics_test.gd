@@ -133,9 +133,9 @@ func test_data_matches_spec_and_decisions() -> void:
 		and (enemy.get("footprint", []) as Array) == SQUARE_2X2 and str(enemy.get("arena", "")) == ARENA)
 	var phases: Array = enemy.get("phases", []) as Array
 	var lists: Array = [
-		["root_nail", "branch_lattice", "root_anchor", "entangled_row"],
-		["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown"],
-		["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown", "forest_last_knot"],
+		["root_nail", "branch_lattice", "root_anchor", "entangled_row", "witch_shift"],
+		["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown", "witch_shift"],
+		["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown", "forest_last_knot", "witch_shift"],
 	]
 	var ratios: Array[float] = [1.0, 0.65, 0.30]
 	var mechanics: Array[String] = ["root_anchor", "withered_crown", "forest_last_knot"]
@@ -144,7 +144,12 @@ func test_data_matches_spec_and_decisions() -> void:
 		var ph: Dictionary = phases[i]
 		phases_ok = phases_ok and ph["skills"] == lists[i] and is_equal_approx(float(ph["enter_hp_ratio"]), ratios[i]) \
 			and str(ph["mechanic"]) == mechanics[i] and (i == 0 or is_equal_approx(float((ph["transition"] as Dictionary)["sec"]), 1.5))
-	_check("phases: 65 % / 30 %, the 4 / 6 / 7 skills, mechanics, 1.5 s transitions", phases_ok)
+	_check("phases: 65 % / 30 %, the 4 / 6 / 7 skills + the row shift, mechanics, 1.5 s transitions", phases_ok)
+	# 2026-11-02 (user: "Thêm chiêu dời hàng"): the row shift moves her one row, every 8 s at most, and is not a cast.
+	var shift: Dictionary = cfg.skill_for_phase("witch_shift", phases[0]) if phases.size() > 0 else {}
+	_check("witch_shift: self skill, adjacent_row move, 8 s cooldown, not counted as a cast",
+		str(shift.get("kind", "")) == "self" and ((shift.get("effects", {}) as Dictionary).get("move", {}) as Dictionary).get("to", "") == "adjacent_row"
+		and is_equal_approx(float(shift.get("cooldown_sec", 0.0)), 8.0) and not bool(shift.get("counts_as_cast", true)), str(shift))
 	_check("phase 3: forest_last_knot every 3rd cast", phases.size() == 3 and (phases[2]["every_nth"] as Dictionary) == {"skill": "forest_last_knot", "n": 3})
 	_check("phase 2 opens with root_anchor; anchors x2 in phases 2-3",
 		phases.size() == 3 and ((phases[1]["transition"] as Dictionary)["on_enter"] as Array) == ["root_anchor"]

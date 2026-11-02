@@ -166,6 +166,14 @@
 			"effects": {"guard": {"amount": 6, "sec": 10.0, "while_markers": true}},
 			"conditions": {"requires_anchor": 1}, "recovery_sec": 0.6, "cooldown_sec": 12.0
 		},
+		"witch_shift": {
+			"id": "witch_shift", "owner": "forest_witch", "kind": "self", "name_key": "enemy_skill.witch_shift.name", "counter_key": "enemy_skill.witch_shift.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "adjacent_row"}},
+			"recovery_sec": 0.4, "cooldown_sec": 8.0, "counts_as_cast": false, "weight": 3.0
+		},
 		"root_anchor": {
 			"id": "root_anchor", "owner": "forest_witch", "kind": "marker", "name_key": "enemy_skill.root_anchor.name", "counter_key": "enemy_skill.root_anchor.counter",
 			"pattern": {"anchor": "enemy_half_empty", "count": 1},
@@ -218,12 +226,12 @@
 			"footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
 			"arena": "boss_hall",
 			"phases": [
-				{"id": "p1", "enter_hp_ratio": 1.0, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row"],
+				{"id": "p1", "enter_hp_ratio": 1.0, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row", "witch_shift"],
 					"mechanic": "root_anchor", "overrides": {"root_anchor": {"count": 1}}},
-				{"id": "p2", "enter_hp_ratio": 0.65, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown"],
+				{"id": "p2", "enter_hp_ratio": 0.65, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown", "witch_shift"],
 					"mechanic": "withered_crown", "overrides": {"root_anchor": {"count": 2}, "entangled_row": {"pattern": {"anchor_rows": 2}}},
 					"transition": {"sec": 1.5, "on_enter": [{"skill": "root_anchor"}]}},
-				{"id": "p3", "enter_hp_ratio": 0.30, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown", "forest_last_knot"],
+				{"id": "p3", "enter_hp_ratio": 0.30, "skills": ["root_nail", "branch_lattice", "root_anchor", "entangled_row", "moss_guard", "withered_crown", "forest_last_knot", "witch_shift"],
 					"mechanic": "forest_last_knot", "every_nth": {"skill": "forest_last_knot", "n": 3},
 					"overrides": {"root_anchor": {"count": 2}, "entangled_row": {"pattern": {"anchor_rows": 2}}},
 					"transition": {"sec": 1.5}}

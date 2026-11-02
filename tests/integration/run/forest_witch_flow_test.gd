@@ -9,6 +9,8 @@ extends SceneTree
 const VIEW_SEED: int = 4
 const VIEW_STEP: float = 0.05
 const VIEW_SEC: float = 75.0
+## Moves expected in VIEW_SEC at least (the row shift's 8 s cooldown allows ~9; 2 before it existed).
+const MIN_MOVES: int = 5
 const PHASE_AT: Array[float] = [25.0, 50.0]
 
 var fails: int = 0
@@ -60,6 +62,7 @@ func _play(params: Dictionary) -> void:
 	var on_anchor: Array[String] = []
 	var anchors_seen: int = 0
 	var moves_with_anchor: int = 0
+	var moves: int = 0
 	var last_cell: Vector2i = state.enemy_cell
 	var t: float = 0.0
 	var next_phase: int = 0
@@ -77,6 +80,7 @@ func _play(params: Dictionary) -> void:
 			if state.enemy_footprint_cells().has(m):
 				on_anchor.append("t %.2f anchor %s body %s" % [t, m, state.enemy_footprint_cells()])
 		if state.enemy_cell != last_cell:
+			moves += 1
 			if not marks.is_empty():
 				moves_with_anchor += 1
 			last_cell = state.enemy_cell
@@ -85,6 +89,8 @@ func _play(params: Dictionary) -> void:
 	_check("the footprint fits her half on every frame", always_fits)
 	_check("anchors were placed (up to %d at once)" % anchors_seen, anchors_seen >= 2)
 	_check("she moved while anchors stood (%d moves)" % moves_with_anchor, moves_with_anchor > 0)
+	# 2026-11-02 (user: "Thêm chiêu dời hàng"): with the row shift she moves about every 10 s, not twice a fight.
+	_check("she repositions often (%d moves in %.0f s)" % [moves, VIEW_SEC], moves >= MIN_MOVES)
 	_check("she never stands on a root anchor", on_anchor.is_empty(), str(on_anchor.slice(0, 3)))
 	root.remove_child(holder)
 	holder.free()

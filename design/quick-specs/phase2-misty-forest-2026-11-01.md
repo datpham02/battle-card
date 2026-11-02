@@ -408,6 +408,7 @@ Sân `cross` biến thể (12 ô mỗi nửa, step_cd 0,33 s). Máu viết **300
 > - `forest_last_knot`: `weight` 0 nên **chỉ** ra ở lần thứ 3, 6… của pha 3 (`every_nth` 3); "còn mốc" xét lúc RESOLVE (đập mốc trong lúc cảnh báo làm đòn còn 11 và bỏ followup).
 > - Viền Ngà quanh 4 ô của Phù thủy hiện suốt windup **và** cảnh báo của 3 chiêu nặng (lúc Phá phép có tác dụng), không chỉ windup.
 > - Chuyển pha: không có hạt vuông "rễ sẫm lại" riêng (hình thuộc P2.5); hiện tại thấy được bằng đỏ tắt + đứng yên 1,5 s.
+> - **Dời Rễ (`witch_shift`, thêm 2026-11-02, người dùng: "Thêm chiêu dời hàng")**: trước đó Phù thủy chỉ đi ~2 lần/75 s vì các chiêu nối nhau liên tục. Chiêu tự thân có ở cả 3 pha: dời lên/xuống **1 hàng** (`effects.move.to: adjacent_row`, như Bò Rễ của Rootling), windup 0,8 s với **khung Ngà quanh 4 ô đích**, hồi 0,4 s, hồi chiêu 8 s, `weight` 3 → đi khoảng mỗi 9 s. Không đi lên mốc / hố / ô nứt. **Không tính là một lần ra đòn** (`counts_as_cast: false`) nên `forest_last_knot` vẫn đúng lần thứ 3, 6… của các đòn thật. Phá phép trong windup thì không dời.
 
 ### 7.1 Mốc rễ (cơ chế của pha)
 

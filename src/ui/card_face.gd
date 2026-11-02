@@ -64,7 +64,7 @@ static var _style_read: bool = false
 ## Gem diamond edge (art px) — 22 art = 44 px at 720p = 0.25 W; its box sits on the visible border's corner.
 const V2_GEM_ART: int = 22
 ## Transparent rim of ANCIENT_FRAME around its visible border [left, top, right, bottom], art px, as measured on the art
-## (BLOCK_CLEAR's right value is 1; the art's right rim is 3, so the face uses its own).
+## (same values as BLOCK_CLEAR).
 const V2_CLEAR: Array[float] = [3.0, 3.0, 3.0, 4.0]
 ## The picture: at least V2_PICTURE_MIN_W of the card width, integer-scaled (the 32 px art cropped as little as that
 ## allows, by whole art px on each side).
@@ -1209,8 +1209,9 @@ const BLOCK_BOTTOM: Rect2 = Rect2(20.0, 116.0, 40.0, 12.0)
 const BLOCK_LEFT: Rect2 = Rect2(0.0, 50.0, 18.0, 50.0)
 const BLOCK_RIGHT: Rect2 = Rect2(70.0, 50.0, 18.0, 50.0)
 const BLOCK_CENTER: Rect2 = Rect2(20.0, 50.0, 40.0, 50.0)
-## Transparent rim of ANCIENT_FRAME around its border [left, top, right, bottom], art px.
-const BLOCK_CLEAR: Array[float] = [3.0, 3.0, 1.0, 4.0]
+## Transparent rim of ANCIENT_FRAME around its border [left, top, right, bottom], art px, as measured on the art
+## (2026-11-02: the right rim is 3, not 1; with 1 the mirrored bottom-right corner jogged 2 art px off the right edge).
+const BLOCK_CLEAR: Array[float] = [3.0, 3.0, 3.0, 4.0]
 ## The block glyph's area inside a block card: inset left / right, top (below the gem), bottom, art px.
 const BLOCK_GLYPH_X: float = 7.0
 const BLOCK_GLYPH_TOP: float = 17.0

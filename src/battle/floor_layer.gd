@@ -138,8 +138,9 @@ static func pattern_telegraph_state(pattern: PatternController, config: CombatCo
 
 ## P2.3 (spec section 8 "drawn by code"): what the pattern brain shows besides red, for the dynamic layer:
 ## `markers` = [{cell, kind}] (root anchor / wreath on the enemy half: a dark wood / moss square, no red, no glow),
-## `outline` = cells framed in ivory (the Rootling creep's destination while it winds up; the enemy's cells while its
-## Guard holds, or (P2.4) while an uninterruptible skill winds up / warns). {} when nothing shows. Drawn UNDER the red (F6).
+## `outline` = cells framed in ivory (a moving self skill's destination footprint while it winds up: Rootling creep,
+## Witch row shift; the enemy's cells while its Guard holds, or (P2.4) while an uninterruptible skill winds up / warns).
+## {} when nothing shows. Drawn UNDER the red (F6).
 static func pattern_extras_state(pattern: PatternController, status: StatusEffects, state: CombatState) -> Dictionary:
 	if pattern == null:
 		return {}
@@ -149,7 +150,11 @@ static func pattern_extras_state(pattern: PatternController, status: StatusEffec
 	var outline: Array[Vector2i] = []
 	var target: Vector2i = pattern.move_target_cell()
 	if target != BoardGrid.NO_CELL:
-		outline.append(target)
+		# 2026-11-02: a wide enemy (the Witch's 2x2 row shift) frames its whole footprint at the destination.
+		if state != null:
+			outline.append_array(state.footprint_cells_at(target))
+		else:
+			outline.append(target)
 	# P2.4 (spec 3.6, D9): an uninterruptible skill winding up / warning frames the enemy in ivory too (same frame as Guard).
 	var framed: bool = pattern.uninterruptible_tell() or (status != null and status.get_guard_left(CombatState.Side.ENEMY) > 0.0)
 	if state != null and framed and not state.is_enemy_dead():
