@@ -563,7 +563,15 @@ func _feet_of_cell(cell: Vector2i) -> Vector2i:
 	@warning_ignore("integer_division")
 	var x: int = rect.position.x + rect.size.x / 2
 	var y: int = mini(rect.position.y + roundi(rect.size.y * FEET_DEPTH_RATIO), rect.end.y - FEET_INSET_ART)
-	return Vector2i(x, y)
+	return _warp_feet(Vector2i(x, y))
+
+
+# PROTOTYPE floor-perspective: the flat feet anchor moved onto the warped board (the sprite itself is never scaled).
+func _warp_feet(feet: Vector2i) -> Vector2i:
+	var persp: FloorPerspective = FloorPerspective.of(_combat)
+	if persp == null:
+		return feet
+	return Vector2i(persp.warp(Vector2(feet) + Vector2(0.5, 0.5)).floor())
 
 
 ## The ground shadow of a unit standing in a rect of [param rect_size] (its cell, or a multi-cell footprint, P2.2b) (art px): a stepped Ink ellipse centred on the feet, one
@@ -624,8 +632,10 @@ func _feet_of_unit(side: int) -> Vector2i:
 		return _feet_of_cell(_cell_of(side))
 	var rect: Rect2i = _unit_art_rect(side)
 	var bottom: Vector2i = state.enemy_cell + Vector2i(0, state.footprint_extent().y - 1)
+	var bottom_rect: Rect2i = _cell_art_rect(bottom)
+	var y: int = mini(bottom_rect.position.y + roundi(bottom_rect.size.y * FEET_DEPTH_RATIO), bottom_rect.end.y - FEET_INSET_ART)
 	@warning_ignore("integer_division")
-	return Vector2i(rect.position.x + rect.size.x / 2, _feet_of_cell(bottom).y)
+	return _warp_feet(Vector2i(rect.position.x + rect.size.x / 2, y))
 
 
 # P2.2b: the cell the status overlays read (burn): a burning footprint cell when any burns, else the unit's cell.

@@ -12,6 +12,11 @@ extends Node2D
 
 ## Ink (art bible 1): the colour outside the art rect.
 const INK: Color = Color("1B1722")
+## PROTOTYPE floor-perspective (2026-11-02): the inverse-homography resampler (see [method apply_floor_perspective]).
+const PERSPECTIVE_SHADER: String = "res://src/battle/canvas_floor_perspective.gdshader"
+## PROTOTYPE look (user: player half teal-green, enemy half purple), multiplied over the region's own half tints.
+const PERSPECTIVE_TINT_PLAYER: Color = Color(0.78, 1.0, 0.90)
+const PERSPECTIVE_TINT_ENEMY: Color = Color(0.98, 0.82, 1.0)
 
 ## Path to the CombatView the layers read (grid, state, names, screen size).
 @export var combat_view_path: NodePath = NodePath("../CombatView")
@@ -22,6 +27,10 @@ var _floor: FloorLayer = null
 var _units: UnitLayer = null
 var _overlay: OverlayLayer = null
 var _combat: CombatView = null
+## PROTOTYPE floor-perspective: the floor's own SubViewport (a child of the art viewport, so it renders first) and
+## the Sprite2D that draws its texture warped into the art viewport; null while the flag is off.
+var _floor_viewport: SubViewport = null
+var _floor_warp: Sprite2D = null
 
 
 func _ready() -> void:
@@ -64,12 +73,88 @@ func _bind() -> void:
 	_backdrop.setup(combat)
 	_floor.setup(combat)
 	_units.setup(combat)
+	apply_floor_perspective()
 	queue_redraw()
+
+
+## PROTOTYPE floor-perspective: (re)builds the warped floor path from CombatView.floor_back_ratio(). On: FloorLayer
+## (with its FloorDynamicLayer) moves into its own transparent 800x360 SubViewport and a Sprite2D drawing that texture
+## through PERSPECTIVE_SHADER (inverse homography per fragment, nearest) takes its place between BackdropLayer and
+## UnitLayer; FloorLayer itself keeps drawing flat. Off: FloorLayer sits in the art viewport as before (the default
+## path is untouched: nothing is created). Safe to call again (tests flip the flag at runtime).
+func apply_floor_perspective() -> void:
+	var on: bool = _combat != null and is_instance_valid(_combat) and FloorPerspective.is_on(_combat.floor_back_ratio())
+	if on and _floor_viewport == null:
+		_floor_viewport = SubViewport.new()
+		_floor_viewport.name = "FloorViewport"
+		_floor_viewport.size = _viewport.size
+		_floor_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+		_floor_viewport.msaa_2d = Viewport.MSAA_DISABLED
+		_floor_viewport.use_hdr_2d = false
+		_floor_viewport.snap_2d_transforms_to_pixel = true
+		_floor_viewport.snap_2d_vertices_to_pixel = true
+		_floor_viewport.transparent_bg = true
+		_floor_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		var index: int = _floor.get_index()
+		_viewport.remove_child(_floor)
+		_floor_viewport.add_child(_floor)
+		_viewport.add_child(_floor_viewport)
+		_floor_warp = Sprite2D.new()
+		_floor_warp.name = "FloorWarp"
+		_floor_warp.centered = false
+		_floor_warp.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		_floor_warp.texture = _floor_viewport.get_texture()
+		var material := ShaderMaterial.new()
+		material.shader = load(PERSPECTIVE_SHADER) as Shader
+		_floor_warp.material = material
+		_viewport.add_child(_floor_warp)
+		_viewport.move_child(_floor_warp, index)
+		_floor.mark_dirty()
+	elif not on and _floor_viewport != null:
+		var index: int = _floor_warp.get_index()
+		_viewport.remove_child(_floor_warp)
+		_floor_warp.queue_free()
+		_floor_warp = null
+		_floor_viewport.remove_child(_floor)
+		_viewport.add_child(_floor)
+		_viewport.move_child(_floor, index)
+		_viewport.remove_child(_floor_viewport)
+		_floor_viewport.queue_free()
+		_floor_viewport = null
+		_floor.mark_dirty()
+	_update_perspective_uniforms()
+
+
+# PROTOTYPE floor-perspective: pushes the current homography (the board moves with the screen size) and the half
+# tints to the warp shader.
+func _update_perspective_uniforms() -> void:
+	if _floor_warp == null:
+		return
+	var persp: FloorPerspective = get_floor_perspective()
+	var material := _floor_warp.material as ShaderMaterial
+	if persp == null or material == null:
+		return
+	material.set_shader_parameter("inv_h", persp.inverse_uv_basis())
+	material.set_shader_parameter("divider_u", persp.divider_u(_combat.get_grid()))
+	material.set_shader_parameter("tint_player", PERSPECTIVE_TINT_PLAYER)
+	material.set_shader_parameter("tint_enemy", PERSPECTIVE_TINT_ENEMY)
+
+
+## PROTOTYPE floor-perspective: the mapping the layers and views follow right now (FloorPerspective.of the bound
+## CombatView), null while flat.
+func get_floor_perspective() -> FloorPerspective:
+	return FloorPerspective.of(_combat)
+
+
+## PROTOTYPE floor-perspective: the floor's own SubViewport while the flag is on (tests), null while flat.
+func get_floor_viewport() -> SubViewport:
+	return _floor_viewport
 
 
 func _draw() -> void:
 	var vp: Vector2 = get_viewport_rect().size
 	draw_rect(Rect2(Vector2.ZERO, vp), INK)
+	_update_perspective_uniforms()
 	if _viewport != null:
 		draw_texture_rect(_viewport.get_texture(), ScreenLayout.art_rect(vp), false)
 

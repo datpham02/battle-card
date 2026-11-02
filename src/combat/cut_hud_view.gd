@@ -906,7 +906,7 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 	if _combat.is_placed() and not _combat.is_placing():
 		# Story 028: in the place window a tap on the last joined piece takes it off the cast (back to its bag slot).
 		var plan: CastPlan = _combat.get_cast_plan()
-		var tapped: Vector2i = ScreenLayout.cell_at(_combat.get_grid(), vp, pos)
+		var tapped: Vector2i = _cell_at_screen(vp, pos)
 		if tapped != BoardGrid.NO_CELL and plan.piece_count() >= 2 and plan.piece_cells(plan.piece_count() - 1).has(tapped):
 			if not emulated:
 				_combat.detach_second_piece()
@@ -922,12 +922,21 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 	return _board_press(pos, emulated)
 
 
+# PROTOTYPE floor-perspective: the board cell under screen point [param pos] (ScreenLayout.cell_at on the flat
+# board, FloorPerspective.cell_at_warped_screen on the trapezoid).
+func _cell_at_screen(vp: Vector2, pos: Vector2) -> Vector2i:
+	var persp: FloorPerspective = FloorPerspective.of(_combat)
+	if persp != null:
+		return persp.cell_at_warped_screen(_combat.get_grid(), pos)
+	return ScreenLayout.cell_at(_combat.get_grid(), vp, pos)
+
+
 # Story 024: a left press on the board while PLACING. On the ghost (or on the cell it is already
 # aimed at) it confirms; elsewhere (a finger tapping a new spot) it aims the ghost there.
 func _board_press(pos: Vector2, emulated: bool) -> bool:
 	if not _combat.is_placing():
 		return false
-	var cell: Vector2i = ScreenLayout.cell_at(_combat.get_grid(), get_viewport_rect().size, pos)
+	var cell: Vector2i = _cell_at_screen(get_viewport_rect().size, pos)
 	if cell == BoardGrid.NO_CELL:
 		return false
 	if emulated or _combat.is_dragging():
@@ -1407,10 +1416,31 @@ func _fuse_cut(vp: Vector2) -> float:
 
 func _draw_cells(vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:
 	var grid: BoardGrid = _combat.get_grid()
+	var persp: FloorPerspective = FloorPerspective.of(_combat)
 	for cell: Vector2i in cells:
+		if persp != null:
+			# PROTOTYPE floor-perspective: the ghost cell is the warped slab quad (fill + an inset outline).
+			var poly: PackedVector2Array = persp.warped_cell_polygon_screen(grid, cell)
+			draw_colored_polygon(poly, tint)
+			var inset: PackedVector2Array = _inset_polygon(poly, 2.0)
+			inset.append(inset[0])
+			draw_polyline(inset, outline, CELL_OUTLINE_WIDTH)
+			continue
 		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
 		draw_rect(rect, tint)
 		draw_rect(rect.grow(-2.0), outline, false, CELL_OUTLINE_WIDTH)
+
+
+# PROTOTYPE floor-perspective: [param poly] pulled [param px] towards its centroid (the warped form of Rect2.grow(-px)).
+static func _inset_polygon(poly: PackedVector2Array, px: float) -> PackedVector2Array:
+	var centre: Vector2 = Vector2.ZERO
+	for p: Vector2 in poly:
+		centre += p
+	centre /= float(maxi(poly.size(), 1))
+	var out: PackedVector2Array = PackedVector2Array()
+	for p: Vector2 in poly:
+		out.append(p + (centre - p).normalized() * px)
+	return out
 
 
 # Centred single-line text; [param size] is the font size.
@@ -1878,8 +1908,13 @@ func _draw_cells_label(vp: Vector2, cells: Array[Vector2i], line1: String, line2
 	var height: float = (big + small) * LABEL_LINE_SPACING + LABEL_PAD * 2.0
 	var board: Rect2 = ScreenLayout.board_rect(grid, vp)
 	# Story 048: outlined text floating just above the cells, no white backing (nothing on a cell may cover a unit).
-	var x: float = clampf(box.get_center().x - width * 0.5, board.position.x, maxf(board.end.x - width, board.position.x))
-	var base: float = box.position.y - 2.0
+	# PROTOTYPE floor-perspective: the label hangs over the warped top-centre of the cells.
+	var anchor: Vector2 = Vector2(box.get_center().x, box.position.y)
+	var persp: FloorPerspective = FloorPerspective.of(_combat)
+	if persp != null:
+		anchor = persp.warp_screen(anchor)
+	var x: float = clampf(anchor.x - width * 0.5, board.position.x, maxf(board.end.x - width, board.position.x))
+	var base: float = anchor.y - 2.0
 	if line2 != "":
 		HudSkin.text(self, Vector2(x, base), line2, small, Color(HudSkin.TEXT, alpha), HORIZONTAL_ALIGNMENT_CENTER, width)
 		base -= small * LABEL_LINE_SPACING

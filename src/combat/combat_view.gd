@@ -117,6 +117,9 @@ var freeze_time: bool = false
 var drops_seed: int = RANDOM_SEED
 ## Dev/capture only: replaces the board from combat.json (DemoArgs --grid). Set before _ready.
 var grid_override: BoardGrid = null
+## PROTOTYPE floor-perspective (DemoArgs `--floor-perspective=<r>`): overrides combat.json `floor.perspective.back_ratio`
+## when >= 0 (0 = force flat); negative = not set. Read by [method floor_back_ratio].
+var floor_perspective_override: float = -1.0
 ## DEV overlay flag (Story 016): the HUD draws its debug text (boss learning line) only when true.
 ## Set by DemoArgs from the --debug user arg.
 var debug_overlay: bool = false
@@ -1401,6 +1404,14 @@ func get_config() -> CombatConfig:
 	return _config
 
 
+## PROTOTYPE floor-perspective: the back ratio of the trapezoid board this match draws with ([member
+## floor_perspective_override] when set, else combat.json's); FloorPerspective.OFF = flat. See FloorPerspective.of.
+func floor_back_ratio() -> float:
+	if floor_perspective_override >= 0.0:
+		return floor_perspective_override
+	return _config.floor_perspective_back_ratio if _config != null else FloorPerspective.OFF
+
+
 func get_focus() -> FocusController:
 	return _focus
 
@@ -1607,6 +1618,11 @@ func aim_at_position(pos: Vector2, lift: float = 0.0) -> bool:
 		return false
 	var vp: Vector2 = get_viewport_rect().size
 	var point := Vector2(pos.x, pos.y - lift)
+	# PROTOTYPE floor-perspective: the finger is on the warped board; aim on the flat one.
+	var persp: FloorPerspective = FloorPerspective.of(self)
+	if persp != null:
+		pos = persp.unwarp_screen(pos)
+		point = persp.unwarp_screen(point)
 	var board: Rect2 = ScreenLayout.board_rect(_grid, vp)
 	if lift > 0.0 and board.has_point(pos) and point.y < board.position.y:
 		point.y = board.position.y + 1.0

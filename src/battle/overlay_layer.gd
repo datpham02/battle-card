@@ -127,10 +127,18 @@ func _draw() -> void:
 		return
 	_drawn = vfx_state()
 	var vfx: FloorVfx = combat.get_floor_vfx()
+	var persp: FloorPerspective = FloorPerspective.of(combat)
 	for item: Dictionary in _drawn:
 		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
 		# The cell rect lets a centre-anchored pack (cell_slash) sit in the middle of its cell.
-		vfx.draw(self, str(item["id"]), FloorVfx.feet_for(cell_rect), int(item["frame"]), Color.WHITE, cell_rect)
+		var feet: Vector2i = FloorVfx.feet_for(cell_rect)
+		if persp != null:
+			# PROTOTYPE floor-perspective: the anchor follows the warp; the pack's frames are never scaled, so the cell
+			# rect handed to a centre-anchored pack is shifted with it rather than warped.
+			var warped: Vector2i = Vector2i(persp.warp(Vector2(feet) + Vector2(0.5, 0.5)).floor())
+			cell_rect.position += warped - feet
+			feet = warped
+		vfx.draw(self, str(item["id"]), feet, int(item["frame"]), Color.WHITE, cell_rect)
 	var shot: Dictionary = projectile_state()
 	if not shot.is_empty():
 		_drawn.append(shot)
@@ -245,7 +253,12 @@ func _sq(r: Rect2i, col: Color) -> Dictionary:
 func _centre(cell: Vector2i) -> Vector2i:
 	var r: Rect2i = _floor.cell_art_rect(cell)
 	@warning_ignore("integer_division")
-	return r.position + r.size / 2
+	var flat: Vector2i = r.position + r.size / 2
+	# PROTOTYPE floor-perspective: the travel / flash / impact squares run between warped cell centres.
+	var persp: FloorPerspective = FloorPerspective.of(FloorDynamicLayer.combat_of(_floor))
+	if persp == null:
+		return flat
+	return Vector2i(persp.warp(Vector2(flat) + Vector2(0.5, 0.5)).floor())
 
 
 func _draw_travel(_combat: CombatView, items: Array[Dictionary]) -> void:

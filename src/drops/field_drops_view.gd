@@ -107,8 +107,9 @@ func _draw() -> void:
 	var cell: Vector2 = ScreenLayout.cell_size(grid, vp)
 	var hand_full: bool = not boss_side and _hold_view != null and _hold_view.get_slots() != null and _hold_view.get_slots().is_full()
 	var stand: Vector2i = _combat.get_state().player_cell
+	var persp: FloorPerspective = FloorPerspective.of(_combat)
 	for point: FieldPoint in _source().get_points():
-		var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, point.cell)
+		var rect: Rect2 = _point_rect(persp, grid, vp, point.cell)
 		var total_sec: float = _combat.get_drops_config().piece_freshness_sec if point.piece != null else _combat.get_drops_config().freshness_sec
 		var ratio: float = clampf(point.freshness_left / total_sec, 0.0, 1.0)
 		var color: Color = ROTTEN_GREY if point.rotten else freshness_color(ratio)
@@ -145,7 +146,17 @@ func _draw() -> void:
 
 	# Story 036: a wind streak on every point the next drift will move, drawn above all points.
 	for point: FieldPoint in drifting_points(_source().get_points(), grid):
-		_draw_drift_streak(ScreenLayout.cell_rect(grid, vp, point.cell), _combat.get_hazards().wind_dir())
+		_draw_drift_streak(_point_rect(persp, grid, vp, point.cell), _combat.get_hazards().wind_dir())
+
+
+# PROTOTYPE floor-perspective: the cell rect a drop is drawn in, moved so its centre sits on the warped cell centre
+# (same size: the mini shapes and tags are not scaled); the flat cell rect when [param persp] is null.
+static func _point_rect(persp: FloorPerspective, grid: BoardGrid, vp: Vector2, cell: Vector2i) -> Rect2:
+	var rect: Rect2 = ScreenLayout.cell_rect(grid, vp, cell)
+	if persp == null:
+		return rect
+	var centre: Vector2 = rect.get_center()
+	return Rect2(rect.position + (persp.warp_screen(centre) - centre).round(), rect.size)
 
 
 ## Story 036: the points of [param points] that the next wind drift moves, by the rule of FieldDrops.drift_pieces:
