@@ -153,11 +153,45 @@ func hold_ages(group: String, keys: Array) -> Dictionary:
 	return out
 
 
+## Prefix of a cell-size variant id: "<id>_c<w>x<h>" (tools/fx-pipeline packs made for another cell size).
+const VARIANT_INFIX: String = "_c"
+
+
+## The id to draw for [param id] on a cell of [param cell_size] (art px): among [param id] and its drawable variants
+## "<id>_c<w>x<h>", the one whose index `cell` [w, h] is nearest the cell (height first, then width). [param id] itself
+## when it has no `cell`, no variant is drawable, or [param cell_size] is empty. Pure on the loaded index; never scales.
+func variant_for(id: String, cell_size: Vector2i) -> String:
+	var base: Variant = entry(id).get("cell", null)
+	if cell_size.x <= 0 or cell_size.y <= 0 or not (base is Array) or (base as Array).size() != 2:
+		return id
+	var best: String = id
+	var best_cost: int = _cell_cost(base as Array, cell_size)
+	for key: Variant in _entries:
+		var k: String = str(key)
+		if not k.begins_with(id + VARIANT_INFIX) or not has_pack(k):
+			continue
+		var c: Variant = entry(k).get("cell", null)
+		if not (c is Array) or (c as Array).size() != 2:
+			continue
+		var cost: int = _cell_cost(c as Array, cell_size)
+		if cost < best_cost:
+			best_cost = cost
+			best = k
+	return best
+
+
+static func _cell_cost(cell: Array, size: Vector2i) -> int:
+	return absi(int(cell[1]) - size.y) * 1000 + absi(int(cell[0]) - size.x)
+
+
 ## Draws [param frame] of [param id]'s clip with its anchor at [param feet] (art px), tinted by [param tint].
-## False when the pack is unavailable or the frame is negative.
+## False when the pack is unavailable or the frame is negative. With a [param clip_rect], a pack that has cell-size
+## variants is drawn in the one made for the nearest cell ([method variant_for]; same frame count by construction).
 func draw(canvas: CanvasItem, id: String, feet: Vector2i, frame: int, tint: Color = Color.WHITE, clip_rect: Rect2i = Rect2i()) -> bool:
 	if frame < 0 or canvas == null:
 		return false
+	if clip_rect.has_area():
+		id = variant_for(id, clip_rect.size)
 	var p: VfxPack = pack(id)
 	if p == null:
 		return false

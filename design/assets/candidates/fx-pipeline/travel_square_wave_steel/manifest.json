@@ -1,0 +1,73 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - travel: sword qi of stepped squares (steel)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 4,
+ "loop": true,
+ "canvas": {
+  "w": 72,
+  "h": 54
+ },
+ "anchor": {
+  "kind": "origin",
+  "x": 64,
+  "y": 28
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 4,
+   "frame": {
+    "w": 72,
+    "h": 54
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 4,
+     "columns": 4,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -64,
+    "y": -28
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "travel_square_wave_steel",
+  "component": "square_wave",
+  "layer": "overlay",
+  "cell": null,
+  "seed": 7,
+  "duration_sec": 0.2,
+  "palette": [
+   "#8FA3B8",
+   "#EEF4FA",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "travel_square_wave_steel",
+   "layer": "overlay",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 4,
+   "frame_ms": 50
+  },
+  "recipe": "kiem_khi",
+  "material": "steel",
+  "delivery": {
+   "type": "CASTER_TO_TARGET",
+   "origin": "caster",
+   "travel": "hero_pack",
+   "impact": "burst"
+  }
+ }
+}

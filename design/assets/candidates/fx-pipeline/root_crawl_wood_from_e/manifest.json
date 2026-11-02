@@ -1,0 +1,79 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - travel: root crawling across the cell [from_e]",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 14,
+ "loop": false,
+ "canvas": {
+  "w": 64,
+  "h": 46
+ },
+ "anchor": {
+  "kind": "center",
+  "x": 32,
+  "y": 23
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "behind",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 14,
+   "frame": {
+    "w": 64,
+    "h": 46
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 14,
+     "columns": 4,
+     "rows": 4
+    }
+   ],
+   "offset": {
+    "x": -32,
+    "y": -23
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "root_crawl_wood_from_e",
+  "component": "root_crawl",
+  "layer": "floor",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 23,
+  "duration_sec": 0.68,
+  "palette": [
+   "#1B1722",
+   "#66523F",
+   "#9A7D5E",
+   "#B89A6A",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "root_crawl_wood_from_e",
+   "layer": "floor",
+   "play": "once",
+   "clip": "whole",
+   "frames": 14,
+   "frame_ms": 50,
+   "anchor": "center"
+  },
+  "recipe": "branch_lattice",
+  "material": "root",
+  "delivery": {
+   "type": "GROUND_PROPAGATION",
+   "origin": "first_cell",
+   "travel": "floor_run",
+   "impact": "thorns"
+  }
+ }
+}

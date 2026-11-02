@@ -2,7 +2,7 @@
  "_doc": "2026-10-31 (user: the skill shows only on the cells, nothing is cast out of the character). Cast projectiles made with the PixelLab VFX workbench (free). units: character id -> pack id (default for any other hero). Per pack: dir under assets/art/vfx/cast/, clip (loop, anchor = the effect's origin), hand = art-px offset from the hero's feet where the projectile leaves (hero facing right), aim_lift = art px above a target cell's feet anchor it flies to, travel_sec = flight time, landing exactly when the swing resolves, gesture_lead_sec = how far into the cast_gesture clip the slash frame comes (the clip starts that much before the launch). OSFE beats (design/references/osfe-spell-anatomy.md, user 2026-11-01): path row = the projectile flies straight along the hero's row to the nearest target column (aim_lift unused); charge = a cast pack looping at the hand for charge_sec before the launch; cell_blast = a FloorVfx overlay one-shot played on every cell of a resolved cut whose card effect is in blast_effects, the nearest column first and each further column stagger_sec later. hit_feel = the white flash (add blend) and shake on a unit that takes damage. blast_peak_sec = how far into a cell's blast its brightest frame comes: the target's hit flash and shake wait for its own cell's blast delay plus this. gesture_hold_frame = the cast_gesture frame (0-based) the hero holds while the swing telegraph runs (the coil of the v4 wind-up, 2026-11-01); the clip plays from the swing start, stops on it, and jumps to the next frame (the slash) gesture_lead_sec before the launch. -1 / absent = the old behaviour (held on frame 0). Wave flow (user 2026-11-01, 'like a sea wave'): path first_cell = the projectile flies straight from the hand to the area cell nearest the hero; for a card effect in blast_effects it does not vanish there but flows on through the area like water, cell to neighbour cell (breadth-first from the first cell), flow_step_sec per step, lingering flow_tail_sec on the last cells; each cell is hit when the wave reaches it. cell_blast \"\" = no separate per-cell effect. Flood (user 2026-11-01 correction: 'chạm ô đầu tiên sau đó nổ ra cái vết tràn về sau'): the projectile explodes on the first cell (impact = a FloorVfx overlay one-shot there) and ONE connected stain floods the area on the floor from that cell, each cell wiped in from the neighbour it was reached from in flow_step_sec, held hold_sec, faded over fade_sec (flood: fill / edge colours, alpha, edge_px). No separate projectiles run through the cells. v2 (user reference board 2026-11-01): flight ~0.25 s, a ground burst on the first cell, then each further cell lights gold (outline + cracks, a burst = cell_burst, square tessera shards rising) one flow_step_sec after its neighbour; all lit cells stay until the last one is lit, then fade together over fade_sec. first_hold_sec = the touch + big explosion on the first cell before the spread starts (reference board 2: 250-300 ms touch, 300-380 ms big burst, then 80 ms per spread step, fade 620-800 ms). flood.tiles false (user 2026-11-01: 'ko cần cái phần tô vàng các ô'): no gold fill / outline / cracks on the cells, only the bursts spreading and the shards.",
  "default": "sword_wave",
  "units": {
-  "kiem_si": "sword_wave"
+  "kiem_si": "square_wave_steel"
  },
  "packs": {
   "sword_wave": {
@@ -47,6 +47,51 @@
   "hand_charge": {
    "dir": "hand_charge",
    "clip": "whole"
+  },
+  "square_wave_steel": {
+   "dir": "travel_square_wave_steel",
+   "clip": "whole",
+   "hand": [
+    14,
+    -34
+   ],
+   "aim_lift": 18,
+   "travel_sec": 0.15,
+   "gesture_lead_sec": 0.03,
+   "path": "first_cell",
+   "charge": "hand_charge",
+   "charge_sec": 0.15,
+   "cell_blast": "",
+   "blast_effects": [
+    "damage"
+   ],
+   "stagger_sec": 0.04,
+   "blast_peak_sec": 0.0,
+   "gesture_hold_frame": 4,
+   "flow_step_sec": 0.08,
+   "impact": "impact_burst_big_steel",
+   "flood": {
+    "fill": "#FFD45C",
+    "edge": "#FFF1C2",
+    "crack": "#FFE9A8",
+    "alpha": 0.18,
+    "edge_px": 2,
+    "hold_sec": 0.05,
+    "fade_sec": 0.18,
+    "squares": 0,
+    "tiles": false
+   },
+   "cell_burst": "impact_burst_small_steel",
+   "first_hold_sec": 0.13,
+   "travel_draw": "",
+   "impact_mark": "mark_stamp_big_steel",
+   "cell_mark": "mark_stamp_small_steel",
+   "release": "release_square_slash_steel",
+   "_doc": "2026-11-02 (user: install the Knight packs, docs/plans/animation-pipeline.md): the sword cast drawn by the tools/fx-pipeline packs (recipe kiem_khi). Same timing as sword_wave. dir = the travel pack (sword qi of squares, flies hand -> first cell); release = a cast pack played once at the hand from gesture_lead_sec before the launch (the horizontal cut); impact / cell_burst = FloorVfx overlay bursts on the first / every other cell; impact_mark / cell_mark = FloorVfx floor squares left on them; these packs replace the code-drawn impact shards (impact_style) for this cast; flood.squares 0 = no code shards either. sword_wave stays as it was (rollback: units.kiem_si -> sword_wave)."
+  },
+  "release_square_slash_steel": {
+   "dir": "release_square_slash_steel",
+   "clip": "whole"
   }
  },
  "_doc_delivery": "ADR-0001 A1 (2026-11-01): a card's delivery (assets/data/cards.json, SkillDelivery) names a semantic impact and travel id; these maps turn them into FloorVfx one-shot packs (assets/art/vfx/floor/index.json, play 'once' packs only). \"\" = nothing drawn for it yet (Task 5 adds art). The hero projectile (the pack above) flies only for a delivery whose origin is 'caster'; the sword-wave visuals (impact on the first cell, flood shards, first_hold) play for CASTER_TO_TARGET with travel 'hero_pack'. Arrival timing lives in assets/data/combat.json timing.delivery, not here: flow_step_sec / first_hold_sec of a pack no longer time the hits (flow_step_sec still paces the flood reveal).",
@@ -76,7 +121,9 @@
   "flash_sec": 0.1,
   "flash_alpha": 0.75,
   "shake_px": 2,
-  "shake_sec": 0.12
+  "shake_sec": 0.12,
+  "step_slide_sec": 0.15,
+  "step_dust_sec": 0.25
  },
  "_doc_task5": "ADR-0001 Phase 1 Task 5 (2026-11-01): code-drawn cast presentation (CastFloorFx). block_colours: character id -> [block body, highlight] (art bible 'Khối của năm anh hùng'; '_enemy' = the enemy block #CFC6B4 / Ngà; 'default' for any other id). travel_style: per code-drawn travel id its square numbers (art px / seconds): square_streak (count, size, spacing), falling_squares (count, size, drop_sec = how long before each cell's arrival the squares start falling, height), chain_spark (size, lift = hop height), floor_run (count, size, trail_sec); flash = the square impact flash on each reached cell (sec); charge = the target cells while the player's swing charges (steps, fill_alpha [lo, hi], outline_px, check_px = the ✓ pixel size on the foe's cell). travel_packs below stay FloorVfx one-shots on the travel cells (floor_run miss_dust); the four square travels are drawn in code on top of them.",
  "block_colours": {

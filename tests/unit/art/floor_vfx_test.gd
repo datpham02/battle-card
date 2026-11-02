@@ -9,6 +9,9 @@ const FloorVfxScript := preload("res://src/art/floor_vfx.gd")
 const PACK_IDS: Array[String] = [
 	"burning_cell", "engraving_lit", "engraving_complete", "cracked_cell", "cast_target",
 	"hit_impact", "miss_dust", "interrupt", "thorn_spikes", "root_seal", "cell_slash", "big_burst", "small_burst",
+	# 2026-11-02 tools/fx-pipeline (recipe kiem_khi) and their 43x31 cell variants
+	"impact_burst_big_steel", "impact_burst_big_steel_c43x31", "impact_burst_small_steel", "impact_burst_small_steel_c43x31",
+	"mark_stamp_big_steel", "mark_stamp_big_steel_c43x31", "mark_stamp_small_steel", "mark_stamp_small_steel_c43x31",
 ]
 ## Fixture entries (factory data; the frame counts / times are the point of the boundary checks).
 const LOOP_ENTRY: Dictionary = {"play": "loop", "frames": 4, "frame_ms": 100}
@@ -37,6 +40,7 @@ func _init() -> void:
 	test_all_packs_load()
 	test_missing_id_is_null()
 	test_feet_for()
+	test_variant_for_picks_the_nearest_cell()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
 
@@ -141,3 +145,18 @@ func test_missing_id_is_null() -> void:
 
 func test_feet_for() -> void:
 	check("feet_bottom_centre", FloorVfxScript.feet_for(Rect2i(10, 20, 40, 30)) == Vector2i(30, 50))
+
+
+# 2026-11-02: a pack made for several cell sizes is drawn in the variant made for the nearest cell (never scaled).
+func test_variant_for_picks_the_nearest_cell() -> void:
+	# Arrange: the shipped index (impact_burst_big_steel made for 64x46, its _c43x31 variant for 43x31)
+	var vfx: FloorVfx = FloorVfxScript.new()
+	var base: String = "impact_burst_big_steel"
+	# Act / Assert
+	check("variant_big_cell_keeps_the_base", vfx.variant_for(base, Vector2i(64, 46)) == base)
+	check("variant_small_cell_takes_c43x31", vfx.variant_for(base, Vector2i(43, 31)) == base + "_c43x31")
+	check("variant_45x32_boss_hall_takes_c43x31", vfx.variant_for(base, Vector2i(45, 32)) == base + "_c43x31")
+	check("variant_58x41_takes_the_base", vfx.variant_for(base, Vector2i(58, 41)) == base)
+	check("variant_empty_size_keeps_the_id", vfx.variant_for(base, Vector2i.ZERO) == base)
+	check("variant_pack_without_cell_keeps_the_id", vfx.variant_for("hit_impact", Vector2i(43, 31)) == "hit_impact")
+	check("variant_same_frame_count", int(vfx.entry(base).get("frames", 0)) == int(vfx.entry(base + "_c43x31").get("frames", -1)))

@@ -1,0 +1,77 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - charge: fire squares gathering on a target cell (charcoal)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 8,
+ "loop": true,
+ "canvas": {
+  "w": 72,
+  "h": 56
+ },
+ "anchor": {
+  "kind": "center",
+  "x": 36,
+  "y": 28
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "behind",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 72,
+    "h": 56
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 8,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -36,
+    "y": -28
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "gather_flame_charcoal",
+  "component": "square_gather",
+  "layer": "floor",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 11,
+  "duration_sec": 0.4,
+  "palette": [
+   "#EFE6D2",
+   "#F0A030",
+   "#FFB21F"
+  ],
+  "index_entry": {
+   "dir": "gather_flame_charcoal",
+   "layer": "floor",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 8,
+   "frame_ms": 50,
+   "anchor": "center"
+  },
+  "recipe": "hoa_tran",
+  "material": "charcoal",
+  "delivery": {
+   "type": "DIRECT_MANIFESTATION",
+   "origin": "target_cells",
+   "travel": "none",
+   "impact": "burn"
+  }
+ }
+}

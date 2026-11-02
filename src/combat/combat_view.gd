@@ -2754,6 +2754,13 @@ func _play_hero_wave(cells: Array, caster: Vector2i, delays: Dictionary, impact:
 		for cell: Vector2i in shown:
 			if cell != first:
 				get_floor_vfx().play(burst, cell, CombatState.Side.ENEMY, float(delays.get(cell, 0.0)))
+	# 2026-11-02 (tools/fx-pipeline): the squares left on the floor of every reached cell (floor layer, under the units).
+	var first_mark: String = str(entry.get("impact_mark", ""))
+	var cell_mark: String = str(entry.get("cell_mark", ""))
+	for cell: Vector2i in shown:
+		var mark: String = first_mark if cell == first else cell_mark
+		if not mark.is_empty():
+			get_floor_vfx().play(mark, cell, CombatState.Side.ENEMY, float(delays.get(cell, 0.0)))
 	return CastVfx.blast_peak_sec(entry)
 
 

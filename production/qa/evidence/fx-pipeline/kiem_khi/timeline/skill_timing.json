@@ -1,0 +1,40 @@
+{
+ "sequence": "player_cast",
+ "t0": "0 = the timeline's action start (pre_sec trimmed)",
+ "events": [
+  {
+   "what": "swing / charge on the target cells",
+   "from": 0.0,
+   "to": 1.2
+  },
+  {
+   "what": "travel hand -> first cell",
+   "from": 1.05,
+   "to": 1.2
+  },
+  {
+   "what": "impact first cell [0, 1]",
+   "at": 1.2
+  },
+  {
+   "what": "impact spread cell [1, 1]",
+   "at": 1.41
+  },
+  {
+   "what": "impact spread cell [2, 1]",
+   "at": 1.49
+  },
+  {
+   "what": "impact spread cell [1, 0]",
+   "at": 1.49
+  }
+ ],
+ "ends": 1.49,
+ "hit": {
+  "unit": "goblin_scout",
+  "at": 1.41,
+  "flash_sec": 0.1,
+  "shake_px": 2,
+  "freeze_sec": 0
+ }
+}

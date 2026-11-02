@@ -1,0 +1,78 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - impact: big square burst, first cell (steel)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 106,
+  "h": 88
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 53,
+  "y": 56
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 106,
+    "h": 88
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 7,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -53,
+    "y": -56
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "impact_burst_big_steel",
+  "component": "square_burst",
+  "layer": "overlay",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 7,
+  "duration_sec": 0.35,
+  "palette": [
+   "#5F6F82",
+   "#8FA3B8",
+   "#EEF4FA",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "impact_burst_big_steel",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 50,
+   "anchor": "ground_center"
+  },
+  "recipe": "kiem_khi",
+  "material": "steel",
+  "delivery": {
+   "type": "CASTER_TO_TARGET",
+   "origin": "caster",
+   "travel": "hero_pack",
+   "impact": "burst"
+  }
+ }
+}

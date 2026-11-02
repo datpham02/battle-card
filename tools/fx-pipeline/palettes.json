@@ -1,0 +1,11 @@
+{
+ "_doc": "Material ramps for fxkit, dark -> bright. Roles by index: 0 ink, 1 dark, 2 body, 3 highlight, 4 core (the 1-2 frame hot moment). Every colour must be in art_src/palette/tessera_master.gpl (checked on load); none may be near the telegraph red #E5293B. Hero block colours follow art bible §4 'Khối của năm anh hùng'.",
+ "ramps": {
+  "steel": ["#1B1722", "#5F6F82", "#8FA3B8", "#EEF4FA", "#EFE6D2"],
+  "charcoal": ["#1B1722", "#3A2A26", "#F0A030", "#FFB21F", "#EFE6D2"],
+  "burn": ["#1B1722", "#3A2A26", "#FF7A1F", "#FFB21F", "#EFE6D2"],
+  "root": ["#1B1722", "#66523F", "#9A7D5E", "#B89A6A", "#EFE6D2"],
+  "moss": ["#1B1722", "#59643F", "#5E6B55", "#8FA070", "#EFE6D2"],
+  "ivory": ["#1B1722", "#9A7D5E", "#D8CDB0", "#EFE6D2", "#EFE6D2"]
+ }
+}

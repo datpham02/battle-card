@@ -1,0 +1,45 @@
+{
+ "sequence": "enemy_skill",
+ "t0": "0 = the timeline's action start (pre_sec trimmed)",
+ "events": [
+  {
+   "what": "windup (holds still, ivory squares at the hand)",
+   "from": 0.0,
+   "to": 0.5
+  },
+  {
+   "what": "warning: red cells darken",
+   "from": 0.5,
+   "to": 1.7
+  },
+  {
+   "what": "root reaches cell [5, 2] from e, spike",
+   "at": 1.7
+  },
+  {
+   "what": "root reaches cell [4, 2] from e, spike",
+   "at": 1.76
+  },
+  {
+   "what": "root reaches cell [4, 1] from s, spike",
+   "at": 1.82
+  },
+  {
+   "what": "followup warning",
+   "from": 1.7,
+   "to": 2.45
+  },
+  {
+   "what": "root reaches cell [3, 1] from e, spike",
+   "at": 2.45
+  }
+ ],
+ "ends": 2.45,
+ "hit": {
+  "unit": "kiem_si",
+  "at": 1.76,
+  "flash_sec": 0.1,
+  "shake_px": 2,
+  "freeze_sec": 0
+ }
+}

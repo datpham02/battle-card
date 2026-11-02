@@ -1,0 +1,79 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - impact: root spikes punching up (thorns)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 84,
+  "h": 84
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 42,
+  "y": 58
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 84,
+    "h": 84
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 7,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -42,
+    "y": -58
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "root_spike_wood",
+  "component": "root_spike",
+  "layer": "overlay",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 23,
+  "duration_sec": 0.35,
+  "palette": [
+   "#1B1722",
+   "#66523F",
+   "#9A7D5E",
+   "#B89A6A",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "root_spike_wood",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 50,
+   "anchor": "ground_center"
+  },
+  "recipe": "branch_lattice",
+  "material": "root",
+  "delivery": {
+   "type": "GROUND_PROPAGATION",
+   "origin": "first_cell",
+   "travel": "floor_run",
+   "impact": "thorns"
+  }
+ }
+}

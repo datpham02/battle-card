@@ -84,6 +84,29 @@ static func charge_elapsed(entry: Dictionary, time_left: float) -> float:
 	return travel + charge - time_left
 
 
+## The release pack entry of [param entry] (played once at the hand as the slash frame comes in: the cut the wave
+## leaves from; tools/fx-pipeline `release_square_slash_*`); {} when it has none.
+static func release_entry(entry: Dictionary) -> Dictionary:
+	return pack_entry(str(entry.get("release", "")))
+
+
+## Seconds into the release with [param time_left] on a swing: it starts gesture_lead_sec before the launch (when the
+## cast_gesture jumps to its slash frame), i.e. at time_left = travel_sec + gesture_lead_sec; -1 before that.
+static func release_elapsed(entry: Dictionary, time_left: float) -> float:
+	if release_entry(entry).is_empty():
+		return -1.0
+	var start: float = gesture_due_left(entry)
+	if time_left > start:
+		return -1.0
+	return start - time_left
+
+
+## True when [param entry] draws its cast's impacts with packs (`impact` set): the code-drawn impact shards
+## (CastFloorFx.impact_rects) are then left out for that cast so the cells are not drawn twice.
+static func packs_replace_shards(entry: Dictionary) -> bool:
+	return not str(entry.get("impact", "")).is_empty()
+
+
 ## Where the projectile flies to from [param from]: on the `row` path straight along the hero's row to the nearest
 ## target column (OSFE straight shot; the hero faces right, so the smallest x), else the aim point of the targets.
 static func flight_to(entry: Dictionary, from: Vector2i, target_feet: Array[Vector2i]) -> Vector2i:

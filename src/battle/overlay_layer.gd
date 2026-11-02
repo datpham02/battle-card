@@ -53,6 +53,9 @@ func _process(_delta: float) -> void:
 	var shot: Dictionary = projectile_state()
 	if not shot.is_empty():
 		state.append(shot)
+	var cut: Dictionary = release_state()
+	if not cut.is_empty():
+		state.append(cut)
 	var combat_now: CombatView = FloorDynamicLayer.combat_of(_floor)
 	if combat_now != null and not combat_now.get_cast_flood().is_empty():
 		state.append({"flood": combat_now.get_floor_vfx().elapsed()})
@@ -120,6 +123,38 @@ func projectile_state() -> Dictionary:
 	return {"projectile": str(entry["id"]), "pos": pos, "frame": frame, "clip": str(entry.get("clip", CastVfx.DEFAULT_CLIP)), "hero": hero_id}
 
 
+## 2026-11-02 (tools/fx-pipeline): the hero's release cut now: {"release": pack id, "pos": the hand (art px), "frame",
+## "clip"}; {} when the hero's cast entry has no `release` pack, the player is not swinging, or the cut is over. It starts
+## when the cast_gesture jumps to its slash frame (CastVfx.release_elapsed) and plays once.
+func release_state() -> Dictionary:
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or combat.get_cut_actor() == null or combat.get_battle_canvas() == null:
+		return {}
+	var actor: CutActor = combat.get_cut_actor()
+	if not actor.is_swinging():
+		return {}
+	var units: UnitLayer = combat.get_battle_canvas().get_unit_layer()
+	if units == null:
+		return {}
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var entry: Dictionary = CastVfx.entry_for(hero_id)
+	var elapsed: float = CastVfx.release_elapsed(entry, actor.get_time_left())
+	if elapsed < 0.0:
+		return {}
+	var rel: Dictionary = CastVfx.release_entry(entry)
+	var pack: VfxPack = CastVfx.pack_for(rel)
+	if pack == null:
+		return {}
+	var clip: String = str(rel.get("clip", CastVfx.DEFAULT_CLIP))
+	var data: Dictionary = pack.clip(clip)
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	var frame: int = VfxPack.frame_at(data, elapsed, pack.frame_ms(), false)
+	if not reduce and elapsed * 1000.0 >= float(int(data.get("frames", 0)) * pack.frame_ms()):
+		return {}
+	return {"release": str(rel["id"]), "pos": CastVfx.hand_point(entry, units.unit_feet_art(CombatState.Side.PLAYER)),
+		"frame": 1 if reduce else frame, "clip": clip}
+
+
 func _draw() -> void:
 	_redraws += 1
 	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
@@ -145,6 +180,12 @@ func _draw() -> void:
 			var pack: VfxPack = CastVfx.pack_for(CastVfx.pack_entry(str(shot["projectile"])))
 			if pack != null:
 				pack.draw_clip(self, str(shot["clip"]), shot["pos"], int(shot["frame"]))
+	var cut: Dictionary = release_state()
+	if not cut.is_empty():
+		_drawn.append(cut)
+		var cut_pack: VfxPack = CastVfx.pack_for(CastVfx.pack_entry(str(cut["release"])))
+		if cut_pack != null:
+			cut_pack.draw_clip(self, str(cut["clip"]), cut["pos"], int(cut["frame"]))
 	_draw_shards(combat.get_cast_flood())
 	_draw_travel(combat, travel_items())
 
@@ -235,6 +276,13 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 	var style: Dictionary = CastVfx.impact_style(impact)
 	var cols: Array[Color] = CastVfx.impact_colours(impact, caster_id)
 	var dir: int = 1 if side == CombatState.Side.PLAYER else -1
+	# 2026-11-02: when the hero's cast entry draws this cast's impacts with packs (CombatView._play_hero_wave), the code
+	# flash and shards would draw a second impact on the same cells (in game the flash's white cell frame read as a UI
+	# selection box over the burst): both are left out for that cast. Every other cast keeps them.
+	var packs_own: bool = side == CombatState.Side.PLAYER and str(delivery.get("type", "")) == SkillDelivery.CASTER_TO_TARGET \
+			and str(delivery.get("travel", "")) == "hero_pack" and CastVfx.packs_replace_shards(CastVfx.entry_for(caster_id))
+	if packs_own:
+		return
 	for c: Vector2i in shown:
 		var age: float = rel - float(arrive.get(c, 0.0))
 		for f: Dictionary in CastFloorFx.flash_rects(_floor.cell_art_rect(c), age, sec):

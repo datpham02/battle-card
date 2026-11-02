@@ -29,3 +29,16 @@ Columns: 8
 154 125  94	Leather #9A7D5E
 102  82  63	Leather dark #66523F
 143 160 112	Hood pale moss #8FA070
+# 2026-11-02 (user decision D4, docs/plans/animation-pipeline.md): VFX signal and block colours from
+# art bible §4 for the code-drawn skill VFX (tools/fx-pipeline). No red: #E5293B stays telegraph-only
+# and is never listed here. 16 -> 22 entries.
+# Mage block (Charcoal): body / amber highlight
+ 58  42  38	Mage block charcoal #3A2A26
+240 160  48	Mage block amber #F0A030
+# Burn status / lava vein
+255 122  31	Burn #FF7A1F
+255 178  31	Lava #FFB21F
+# Thorns field / roots (Bãi Gai)
+184 154 106	Thorns #B89A6A
+# Misty Forest moss (region colour, roots and Witch VFX)
+ 94 107  85	Moss grey #5E6B55

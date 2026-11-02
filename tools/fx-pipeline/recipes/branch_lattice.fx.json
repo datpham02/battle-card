@@ -1,0 +1,47 @@
+{
+ "id": "branch_lattice",
+ "title": "Forest Witch - Root Propagation (prototype 3)",
+ "delivery": {"type": "GROUND_PROPAGATION", "origin": "first_cell", "travel": "floor_run", "impact": "thorns"},
+ "data_delivery": "@enemy_skills:skills.branch_lattice.delivery",
+ "material": "root",
+ "seed": 23,
+ "fps": 20,
+ "ref_cell": [64, 46],
+ "packs": [
+  {"id": "windup_gather_ivory", "component": "square_gather", "layer": "overlay", "material": "ivory",
+   "options": {"layer": "front", "reach_px": 14, "count": 5, "u": 4, "period": 0.4, "core": false},
+   "title": "Tessera fx - enemy wind-up: ivory squares gathering at the back hand"},
+  {"id": "root_crawl_wood", "component": "root_crawl", "layer": "floor", "options": {"crawl": 0.2},
+   "variants": [{"suffix": "_from_e", "options": {"from": "e"}}, {"suffix": "_from_w", "options": {"from": "w"}},
+                {"suffix": "_from_n", "options": {"from": "n"}}, {"suffix": "_from_s", "options": {"from": "s"}}],
+   "cells": [[64, 46], [45, 39]], "title": "Tessera fx - travel: root crawling across the cell"},
+  {"id": "root_spike_wood", "component": "root_spike", "layer": "overlay",
+   "cells": [[64, 46], [45, 39]], "title": "Tessera fx - impact: root spikes punching up (thorns)"}
+ ],
+ "timeline": {
+  "cell": [45, 39],
+  "arena": {"cols": 6, "rows": 4, "gap": 6},
+  "top": 72,
+  "sequence": "enemy_skill",
+  "caster": {"unit": "forest_witch", "side": "enemy", "cell": [1, 1], "footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+             "stand_in": [96, 80], "hand": [22, -52]},
+  "target": {"unit": "kiem_si", "side": "player", "cell": [4, 2]},
+  "mask": [[5, 2], [4, 2], [4, 1]],
+  "followup": {"cells": [[3, 1]], "warning_sec": "@enemy_skills:skills.branch_lattice.followup.warning_sec"},
+  "windup_sec": "@enemy_skills:skills.branch_lattice.windup_sec",
+  "warning_sec": "@enemy_skills:skills.branch_lattice.warning_sec",
+  "timing": "@combat:timing.delivery",
+  "hit_feel": "@cast:hit_feel",
+  "crawl_lead_sec": 0.2,
+  "freeze_sec": 0,
+  "fps": 25,
+  "zoom": 2,
+  "pre_sec": 0.3,
+  "post_sec": 0.8,
+  "packs": {
+   "windup": "windup_gather_ivory",
+   "crawl": "root_crawl_wood_from_{from}",
+   "impact": "root_spike_wood"
+  }
+ }
+}

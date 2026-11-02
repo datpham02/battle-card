@@ -1,0 +1,183 @@
+{
+ "id": "kiem_khi",
+ "title": "Knight - Square Sword Wave (prototype 1)",
+ "delivery": {
+  "type": "CASTER_TO_TARGET",
+  "origin": "caster",
+  "travel": "hero_pack",
+  "impact": "burst"
+ },
+ "data_delivery": "@cards:cards.kiem_khi.delivery",
+ "material": "steel",
+ "seed": 7,
+ "fps": 20,
+ "ref_cell": [
+  64,
+  46
+ ],
+ "packs": [
+  {
+   "id": "release_square_slash_steel",
+   "component": "square_slash",
+   "layer": "overlay",
+   "title": "Tessera fx - release: horizontal square slash at the hand (steel)"
+  },
+  {
+   "id": "travel_square_wave_steel",
+   "component": "square_wave",
+   "layer": "overlay",
+   "title": "Tessera fx - travel: sword qi of stepped squares (steel)"
+  },
+  {
+   "id": "impact_burst_big_steel",
+   "component": "square_burst",
+   "layer": "overlay",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - impact: big square burst, first cell (steel)"
+  },
+  {
+   "id": "impact_burst_small_steel",
+   "component": "square_burst",
+   "layer": "overlay",
+   "options": {
+    "size": "small"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - impact: small square burst, spread cells (steel)"
+  },
+  {
+   "id": "mark_stamp_big_steel",
+   "component": "square_mark",
+   "layer": "floor",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - floor mark: square stamp on the first cell (steel)"
+  },
+  {
+   "id": "mark_stamp_small_steel",
+   "component": "square_mark",
+   "layer": "floor",
+   "options": {
+    "size": "small"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - floor mark: square stamp on spread cells (steel)"
+  }
+ ],
+ "timeline": {
+  "cell": [
+   64,
+   46
+  ],
+  "arena": {
+   "cols": 3,
+   "rows": 3,
+   "gap": 6
+  },
+  "sequence": "player_cast",
+  "caster": {
+   "unit": "kiem_si",
+   "side": "player",
+   "cell": [
+    1,
+    1
+   ],
+   "stand_in": [
+    96,
+    70
+   ],
+   "hand": "@cast:packs.sword_wave.hand"
+  },
+  "target": {
+   "unit": "goblin_scout",
+   "side": "enemy",
+   "cell": [
+    1,
+    1
+   ]
+  },
+  "mask": [
+   [
+    0,
+    1
+   ],
+   [
+    1,
+    1
+   ],
+   [
+    2,
+    1
+   ],
+   [
+    1,
+    0
+   ]
+  ],
+  "swing_base_sec": "@cuts:swing_base_sec",
+  "swing_per_cell_sec": "@cuts:swing_per_cell_sec",
+  "timing": "@combat:timing.delivery",
+  "aim_lift": "@cast:packs.sword_wave.aim_lift",
+  "travel_sec": "@cast:packs.sword_wave.travel_sec",
+  "gesture_lead_sec": "@cast:packs.sword_wave.gesture_lead_sec",
+  "gesture_hold_frame": "@cast:packs.sword_wave.gesture_hold_frame",
+  "charge_sec": "@cast:packs.sword_wave.charge_sec",
+  "charge_pack": "assets/art/vfx/cast/hand_charge",
+  "hit_feel": "@cast:hit_feel",
+  "block_colours": "@cast:block_colours.kiem_si",
+  "freeze_sec": 0,
+  "fps": 25,
+  "zoom": 2,
+  "pre_sec": 0.3,
+  "post_sec": 0.6,
+  "packs": {
+   "release": "release_square_slash_steel",
+   "travel": "travel_square_wave_steel",
+   "first": "impact_burst_big_steel",
+   "spread": "impact_burst_small_steel",
+   "first_mark": "mark_stamp_big_steel",
+   "spread_mark": "mark_stamp_small_steel"
+  }
+ }
+}

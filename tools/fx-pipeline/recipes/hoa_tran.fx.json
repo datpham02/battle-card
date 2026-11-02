@@ -1,0 +1,44 @@
+{
+ "id": "hoa_tran",
+ "title": "Fire Mage - Square Flame Impact (prototype 2)",
+ "delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "burn"},
+ "data_delivery": "@cards:cards.hoa_tran.delivery",
+ "material": "burn",
+ "seed": 11,
+ "fps": 20,
+ "ref_cell": [64, 46],
+ "packs": [
+  {"id": "gather_flame_charcoal", "component": "square_gather", "layer": "floor", "material": "charcoal",
+   "options": {"layer": "behind", "reach": 0.9, "count": 12, "period": 0.4},
+   "cells": [[64, 46], [43, 31]], "title": "Tessera fx - charge: fire squares gathering on a target cell (charcoal)"},
+  {"id": "impact_flame_burn", "component": "flame_burst", "layer": "overlay", "options": {"size": "big"},
+   "cells": [[64, 46], [43, 31]], "title": "Tessera fx - impact: stepped flame of squares (burn)"},
+  {"id": "mark_embers_burn", "component": "square_mark", "layer": "floor", "options": {"size": "small"},
+   "cells": [[64, 46], [43, 31]], "title": "Tessera fx - floor mark: embers left on the cell (burn)"}
+ ],
+ "timeline": {
+  "cell": [64, 46],
+  "arena": {"cols": 3, "rows": 3, "gap": 6},
+  "sequence": "player_cast",
+  "caster": {"unit": "phap_su", "side": "player", "cell": [1, 1], "stand_in": [96, 70], "hand": [12, -32]},
+  "target": {"unit": "goblin_scout", "side": "enemy", "cell": [1, 1]},
+  "mask": [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]],
+  "swing_base_sec": "@cuts:swing_base_sec",
+  "swing_per_cell_sec": "@cuts:swing_per_cell_sec",
+  "timing": "@combat:timing.delivery",
+  "hit_feel": "@cast:hit_feel",
+  "block_colours": "@cast:block_colours.phap_su",
+  "freeze_sec": 0,
+  "fps": 25,
+  "zoom": 2,
+  "pre_sec": 0.3,
+  "post_sec": 0.7,
+  "packs": {
+   "gather": "gather_flame_charcoal",
+   "first": "impact_flame_burn",
+   "spread": "impact_flame_burn",
+   "first_mark": "mark_embers_burn",
+   "spread_mark": "mark_embers_burn"
+  }
+ }
+}

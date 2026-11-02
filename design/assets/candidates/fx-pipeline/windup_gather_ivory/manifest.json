@@ -1,0 +1,73 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - enemy wind-up: ivory squares gathering at the back hand",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 8,
+ "loop": true,
+ "canvas": {
+  "w": 40,
+  "h": 40
+ },
+ "anchor": {
+  "kind": "center",
+  "x": 20,
+  "y": 20
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 8,
+   "frame": {
+    "w": 40,
+    "h": 40
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 8,
+     "columns": 8,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -20,
+    "y": -20
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "windup_gather_ivory",
+  "component": "square_gather",
+  "layer": "overlay",
+  "cell": null,
+  "seed": 23,
+  "duration_sec": 0.4,
+  "palette": [
+   "#D8CDB0",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "windup_gather_ivory",
+   "layer": "overlay",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 8,
+   "frame_ms": 50,
+   "anchor": "center"
+  },
+  "recipe": "branch_lattice",
+  "material": "ivory",
+  "delivery": {
+   "type": "GROUND_PROPAGATION",
+   "origin": "first_cell",
+   "travel": "floor_run",
+   "impact": "thorns"
+  }
+ }
+}

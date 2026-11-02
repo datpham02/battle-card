@@ -16,9 +16,25 @@ func ck(name: String, cond: bool, extra: String = "") -> void:
 func _initialize() -> void:
 	CastVfx.clear_cache()
 	var e: Dictionary = CastVfx.entry_for("kiem_si")
-	ck("index: kiem_si -> sword_wave", str(e.get("id", "")) == "sword_wave", str(e))
+	# 2026-11-02: the Swordsman's cast is drawn by the tools/fx-pipeline packs; sword_wave stays the default (rollback).
+	ck("index: kiem_si -> square_wave_steel", str(e.get("id", "")) == "square_wave_steel", str(e))
 	ck("index: an unmapped hero uses the default", str(CastVfx.entry_for("phap_su").get("id", "")) == "sword_wave")
-	ck("pack: sword_wave loads with its clip", CastVfx.pack_for(e) != null and not CastVfx.pack_for(e).clip("whole").is_empty())
+	ck("pack: square_wave_steel loads with its clip", CastVfx.pack_for(e) != null and not CastVfx.pack_for(e).clip("whole").is_empty())
+	ck("pack: square_wave_steel keeps the sword_wave timing", is_equal_approx(CastVfx.travel_sec(e), CastVfx.travel_sec(CastVfx.pack_entry("sword_wave")))
+		and CastVfx.gesture_hold_frame(e) == CastVfx.gesture_hold_frame(CastVfx.pack_entry("sword_wave")))
+	ck("pack: square_wave_steel draws its art, not the code streak", str(e.get("travel_draw", "")) != "square_streak")
+	# Release cut: plays once at the hand from the slash frame (gesture_lead before the launch).
+	var due: float = CastVfx.gesture_due_left(e)
+	ck("release: the cut pack loads", CastVfx.pack_for(CastVfx.release_entry(e)) != null)
+	ck("release: none before the slash frame", CastVfx.release_elapsed(e, due + 0.01) < 0.0)
+	ck("release: starts at the slash frame", is_zero_approx(CastVfx.release_elapsed(e, due)))
+	ck("release: 0.1 s in, 0.1 s later", is_equal_approx(CastVfx.release_elapsed(e, due - 0.1), 0.1))
+	ck("release: an entry without one never plays", CastVfx.release_elapsed(CastVfx.pack_entry("sword_wave"), 0.0) < 0.0)
+	ck("impacts: packs replace the code shards for square_wave_steel only",
+		CastVfx.packs_replace_shards(e) and not CastVfx.packs_replace_shards(CastVfx.pack_entry("sword_wave")))
+	var fv := FloorVfx.new()
+	for id: String in [str(e.get("impact", "")), str(e.get("cell_burst", "")), str(e.get("impact_mark", "")), str(e.get("cell_mark", ""))]:
+		ck("impacts: floor pack %s is drawable" % id, fv.has_pack(id))
 	var travel: float = CastVfx.travel_sec(e)
 	ck("flight: not launched before travel_sec is left", CastVfx.flight_t(e, travel + 0.01) < 0.0)
 	ck("flight: t = 0 at the launch", is_equal_approx(CastVfx.flight_t(e, travel), 0.0))

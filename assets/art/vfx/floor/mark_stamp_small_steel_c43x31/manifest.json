@@ -1,0 +1,77 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - floor mark: square stamp on spread cells (steel)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 44,
+  "h": 32
+ },
+ "anchor": {
+  "kind": "center",
+  "x": 22,
+  "y": 16
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "behind",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 44,
+    "h": 32
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 7,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -22,
+    "y": -16
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "mark_stamp_small_steel_c43x31",
+  "component": "square_mark",
+  "layer": "floor",
+  "cell": [
+   43,
+   31
+  ],
+  "seed": 7,
+  "duration_sec": 0.35,
+  "palette": [
+   "#8FA3B8",
+   "#EEF4FA",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "mark_stamp_small_steel_c43x31",
+   "layer": "floor",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 50,
+   "anchor": "center"
+  },
+  "recipe": "kiem_khi",
+  "material": "steel",
+  "delivery": {
+   "type": "CASTER_TO_TARGET",
+   "origin": "caster",
+   "travel": "hero_pack",
+   "impact": "burst"
+  }
+ }
+}

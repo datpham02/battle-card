@@ -1,0 +1,78 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - impact: stepped flame of squares (burn)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 62,
+  "h": 80
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 31,
+  "y": 60
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 62,
+    "h": 80
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 7,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -31,
+    "y": -60
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "impact_flame_burn_c43x31",
+  "component": "flame_burst",
+  "layer": "overlay",
+  "cell": [
+   43,
+   31
+  ],
+  "seed": 11,
+  "duration_sec": 0.35,
+  "palette": [
+   "#3A2A26",
+   "#EFE6D2",
+   "#FF7A1F",
+   "#FFB21F"
+  ],
+  "index_entry": {
+   "dir": "impact_flame_burn_c43x31",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 50,
+   "anchor": "ground_center"
+  },
+  "recipe": "hoa_tran",
+  "material": "burn",
+  "delivery": {
+   "type": "DIRECT_MANIFESTATION",
+   "origin": "target_cells",
+   "travel": "none",
+   "impact": "burn"
+  }
+ }
+}
