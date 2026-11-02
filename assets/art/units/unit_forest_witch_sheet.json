@@ -1,0 +1,1284 @@
+{
+  "frames": [
+    {
+      "filename": "forest_witch_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 300
+    },
+    {
+      "filename": "forest_witch_idle_1",
+      "frame": {
+        "x": 161,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 300
+    },
+    {
+      "filename": "forest_witch_idle_2",
+      "frame": {
+        "x": 322,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 300
+    },
+    {
+      "filename": "forest_witch_idle_3",
+      "frame": {
+        "x": 483,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 300
+    },
+    {
+      "filename": "forest_witch_step_forward_0",
+      "frame": {
+        "x": 0,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_forward_1",
+      "frame": {
+        "x": 161,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_forward_2",
+      "frame": {
+        "x": 322,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_forward_3",
+      "frame": {
+        "x": 483,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_forward_4",
+      "frame": {
+        "x": 644,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_forward_5",
+      "frame": {
+        "x": 805,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_forward_6",
+      "frame": {
+        "x": 966,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_back_0",
+      "frame": {
+        "x": 0,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_back_1",
+      "frame": {
+        "x": 161,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_back_2",
+      "frame": {
+        "x": 322,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_back_3",
+      "frame": {
+        "x": 483,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_back_4",
+      "frame": {
+        "x": 644,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_back_5",
+      "frame": {
+        "x": 805,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_back_6",
+      "frame": {
+        "x": 966,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_up_0",
+      "frame": {
+        "x": 0,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_up_1",
+      "frame": {
+        "x": 161,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_up_2",
+      "frame": {
+        "x": 322,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_up_3",
+      "frame": {
+        "x": 483,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_up_4",
+      "frame": {
+        "x": 644,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_down_0",
+      "frame": {
+        "x": 0,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_down_1",
+      "frame": {
+        "x": 161,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_down_2",
+      "frame": {
+        "x": 322,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_down_3",
+      "frame": {
+        "x": 483,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_down_4",
+      "frame": {
+        "x": 644,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_down_5",
+      "frame": {
+        "x": 805,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_step_down_6",
+      "frame": {
+        "x": 966,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 50
+    },
+    {
+      "filename": "forest_witch_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 655,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "forest_witch_windup_1",
+      "frame": {
+        "x": 161,
+        "y": 655,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "forest_witch_windup_2",
+      "frame": {
+        "x": 322,
+        "y": 655,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 0
+    },
+    {
+      "filename": "forest_witch_windup_heavy_0",
+      "frame": {
+        "x": 0,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "forest_witch_windup_heavy_1",
+      "frame": {
+        "x": 161,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "forest_witch_windup_heavy_2",
+      "frame": {
+        "x": 322,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 0
+    },
+    {
+      "filename": "forest_witch_phase_shift_0",
+      "frame": {
+        "x": 0,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "forest_witch_phase_shift_1",
+      "frame": {
+        "x": 161,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "forest_witch_phase_shift_2",
+      "frame": {
+        "x": 322,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "forest_witch_phase_shift_3",
+      "frame": {
+        "x": 483,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "forest_witch_phase_shift_4",
+      "frame": {
+        "x": 644,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    },
+    {
+      "filename": "forest_witch_phase_shift_5",
+      "frame": {
+        "x": 805,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    },
+    {
+      "filename": "forest_witch_phase_shift_6",
+      "frame": {
+        "x": 966,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    },
+    {
+      "filename": "forest_witch_phase_shift_7",
+      "frame": {
+        "x": 1127,
+        "y": 917,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 200
+    },
+    {
+      "filename": "forest_witch_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 1048,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 40
+    },
+    {
+      "filename": "forest_witch_hit_1",
+      "frame": {
+        "x": 161,
+        "y": 1048,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 40
+    },
+    {
+      "filename": "forest_witch_hit_2",
+      "frame": {
+        "x": 322,
+        "y": 1048,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 40
+    },
+    {
+      "filename": "forest_witch_down_0",
+      "frame": {
+        "x": 0,
+        "y": 1179,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "forest_witch_down_1",
+      "frame": {
+        "x": 161,
+        "y": 1179,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "forest_witch_down_2",
+      "frame": {
+        "x": 322,
+        "y": 1179,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "forest_witch_down_3",
+      "frame": {
+        "x": 483,
+        "y": 1179,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "forest_witch_down_4",
+      "frame": {
+        "x": 644,
+        "y": 1179,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    },
+    {
+      "filename": "forest_witch_down_5",
+      "frame": {
+        "x": 805,
+        "y": 1179,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_forest_witch_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1287,
+      "h": 1309
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step_forward",
+        "from": 4,
+        "to": 10,
+        "direction": "forward"
+      },
+      {
+        "name": "step_back",
+        "from": 11,
+        "to": 17,
+        "direction": "forward"
+      },
+      {
+        "name": "step_up",
+        "from": 18,
+        "to": 22,
+        "direction": "forward"
+      },
+      {
+        "name": "step_down",
+        "from": 23,
+        "to": 29,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 30,
+        "to": 32,
+        "direction": "forward"
+      },
+      {
+        "name": "windup_heavy",
+        "from": 33,
+        "to": 35,
+        "direction": "forward"
+      },
+      {
+        "name": "phase_shift",
+        "from": 36,
+        "to": 43,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 44,
+        "to": 46,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 47,
+        "to": 52,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "forest_witch",
+      "asset": "ASSET-020",
+      "facing": "left",
+      "frame": {
+        "w": 160,
+        "h": 130
+      },
+      "gutter": 1,
+      "columns": 8,
+      "loop": {
+        "idle": "loop",
+        "step_forward": "once",
+        "step_back": "once",
+        "step_up": "once",
+        "step_down": "once",
+        "windup": "hold_last",
+        "windup_heavy": "hold_last",
+        "phase_shift": "hold_last",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#3A4538",
+        "#4A3A2A",
+        "#4A5545",
+        "#5E6B55",
+        "#8A7350",
+        "#B89A6A",
+        "#EFE6D2"
+      ]
+    }
+  }
+}

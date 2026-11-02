@@ -24,6 +24,8 @@ const REAL_SHEETS: Dictionary = {
 	# 2026-11-02: + draw (match start) and the four directional dashes (guard stance, OSFE).
 	"kiem_si": [["idle", "draw", "step", "step_forward", "step_back", "step_up", "step_down", "cast_gesture", "hit", "victory", "defeat", "fall", "awaken"], Vector2i(96, 70), "right"],
 	"goblin_scout": [["idle", "step", "windup", "hit", "down"], Vector2i(64, 52), "left"],
+	# 2026-11-02: Forest Witch (ASSET-020), pattern-brain boss on a 2x2 footprint.
+	"forest_witch": [["idle", "step_forward", "step_back", "step_up", "step_down", "windup", "windup_heavy", "phase_shift", "hit", "down"], Vector2i(160, 130), "left"],
 }
 
 var fails: int = 0

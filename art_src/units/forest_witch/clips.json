@@ -1,0 +1,19 @@
+{
+  "id": "forest_witch",
+  "asset": "ASSET-020",
+  "frame": {"w": 160, "h": 130},
+  "facing": "left",
+  "source": "PixelLab Pro Flash wide anchor (job ad5b2658, 160x136, approved 2026-11-02: the 2x2 boss fills her block) + PixMiniMax south-west clips in design/assets/candidates/forest-witch/anim-wide/<clip>/<n>.png, cleaned (palette snap to the 8 locked colours, specks removed, moves and phase_shift recentred on the body, feet on the bottom row) into design/assets/candidates/forest-witch/clean-160x130/",
+  "clips": [
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [300, 300, 300, 300], "loop": "loop"},
+    {"name": "step_forward", "frames": ["step_forward/0.png", "step_forward/1.png", "step_forward/2.png", "step_forward/3.png", "step_forward/4.png", "step_forward/5.png", "step_forward/6.png"], "ms": [50, 50, 50, 50, 50, 50, 50], "loop": "once", "note": "OSFE-style dash toward her front (left); the game glides the unit"},
+    {"name": "step_back", "frames": ["step_back/0.png", "step_back/1.png", "step_back/2.png", "step_back/3.png", "step_back/4.png", "step_back/5.png", "step_back/6.png"], "ms": [50, 50, 50, 50, 50, 50, 50], "loop": "once"},
+    {"name": "step_up", "frames": ["step_up/0.png", "step_up/1.png", "step_up/2.png", "step_up/3.png", "step_up/4.png"], "ms": [50, 50, 50, 50, 50], "loop": "once", "note": "src frames 1, 2, 3, 2, 1: from frame 4 the model turned her back"},
+    {"name": "step_down", "frames": ["step_down/0.png", "step_down/1.png", "step_down/2.png", "step_down/3.png", "step_down/4.png", "step_down/5.png", "step_down/6.png"], "ms": [50, 50, 50, 50, 50, 50, 50], "loop": "once"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png"], "ms": [100, 100, 0], "loop": "hold_last", "note": "common skills: the reaching hand raised to the shoulder, held while the skill winds up and warns"},
+    {"name": "windup_heavy", "frames": ["windup_heavy/0.png", "windup_heavy/1.png", "windup_heavy/2.png"], "ms": [100, 100, 0], "loop": "hold_last", "note": "uninterruptible skills (entangled_row, withered_crown, forest_last_knot): the staff planted with both hands, held"},
+    {"name": "phase_shift", "frames": ["phase_shift/0.png", "phase_shift/1.png", "phase_shift/2.png", "phase_shift/3.png", "phase_shift/4.png", "phase_shift/5.png", "phase_shift/6.png", "phase_shift/7.png"], "ms": [120, 120, 120, 120, 150, 150, 150, 200], "loop": "hold_last", "note": "phase transition (1.5 s): doubles over, straightens taller"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src frames 2-4 (frame 1 had a baked slash smear)"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png"], "ms": [100, 100, 120, 120, 150, 150], "loop": "hold_last", "note": "defeat: sinks to her knees, collapses, the staff falls flat"}
+  ]
+}

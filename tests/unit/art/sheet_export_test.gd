@@ -36,6 +36,24 @@ const UNITS := {
 			["awaken", ["awaken/0", "awaken/1", "awaken/2", "awaken/3", "awaken/4", "awaken/5"], [120, 120, 120, 120, 120, 120], "loop"],
 		],
 	},
+	"forest_witch": {
+		# 2026-11-02: ASSET-020 wide anchor (160x136 Pro Flash, the 2x2 boss fills her block) + PixMiniMax south-west
+		# clips cleaned to 160x130.
+		"frame": Vector2i(160, 130), "sheet": Vector2i(1287, 1309), "facing": "left",
+		"candidate": "forest-witch/clean-160x130/%s.png",
+		"clips": [
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3"], [300, 300, 300, 300], "loop"],
+			["step_forward", ["step_forward/0", "step_forward/1", "step_forward/2", "step_forward/3", "step_forward/4", "step_forward/5", "step_forward/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_back", ["step_back/0", "step_back/1", "step_back/2", "step_back/3", "step_back/4", "step_back/5", "step_back/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_up", ["step_up/0", "step_up/1", "step_up/2", "step_up/3", "step_up/4"], [50, 50, 50, 50, 50], "once"],
+			["step_down", ["step_down/0", "step_down/1", "step_down/2", "step_down/3", "step_down/4", "step_down/5", "step_down/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["windup", ["windup/0", "windup/1", "windup/2"], [100, 100, 0], "hold_last"],
+			["windup_heavy", ["windup_heavy/0", "windup_heavy/1", "windup_heavy/2"], [100, 100, 0], "hold_last"],
+			["phase_shift", ["phase_shift/0", "phase_shift/1", "phase_shift/2", "phase_shift/3", "phase_shift/4", "phase_shift/5", "phase_shift/6", "phase_shift/7"], [120, 120, 120, 120, 150, 150, 150, 200], "hold_last"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
+			["down", ["down/0", "down/1", "down/2", "down/3", "down/4", "down/5"], [100, 100, 120, 120, 150, 150], "hold_last"],
+		],
+	},
 	"goblin_scout": {
 		# 2026-10-31: v3 OSFE-scale anchor (PixelLab 3b9516c8...), PixMiniMax south-west clips cleaned to 64x52.
 		"frame": Vector2i(64, 52), "sheet": Vector2i(519, 264), "facing": "left",

@@ -42,3 +42,10 @@ Columns: 8
 184 154 106	Thorns #B89A6A
 # Misty Forest moss (region colour, roots and Witch VFX)
  94 107  85	Moss grey #5E6B55
+# 2026-11-02 Forest Witch body (ASSET-020, user-approved anchor, palette locked at generation): three Misty Forest
+# region colours already used by the slab stamps (ASSET-004), the thorns (ASSET-007) and the backdrop (ASSET-005,
+# deepest moss). 22 -> 26 entries.
+ 74  85  69	Moss dark #4A5545
+ 74  58  42	Bramble bark #4A3A2A
+138 115  80	Thorn shadow #8A7350
+ 58  69  56	Moss deepest #3A4538

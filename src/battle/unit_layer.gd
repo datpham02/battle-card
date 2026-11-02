@@ -51,6 +51,12 @@ const SHADOW_WIDTH_RATIO: float = 0.56
 const SHADOW_HEIGHT_RATIO: float = 0.17
 const SHADOW_MIN_HEIGHT: int = 4
 const SHADOW_COLOR: Color = Color(0.106, 0.090, 0.133, 0.5)
+## 2026-11-02 (user: the 2x2 Witch did not read as standing on four cells): a footprint more than one row deep stands
+## with its feet this far down its whole rect (the middle of the block, not its front row) and its shadow covers the
+## block (these shares of the footprint rect instead of SHADOW_WIDTH_RATIO / SHADOW_HEIGHT_RATIO).
+const FOOTPRINT_FEET_DEPTH_RATIO: float = 0.6
+const FOOTPRINT_SHADOW_WIDTH_RATIO: float = 0.9
+const FOOTPRINT_SHADOW_HEIGHT_RATIO: float = 0.5
 ## Player marker: radius as a share of the cell height, label font size as a share of the radius, the
 ## smallest label font (art px; the fallback font at 1x) and how much of the diameter the label may fill.
 const MARKER_RADIUS_RATIO: float = 0.33
@@ -93,6 +99,9 @@ const CLIP_DRAW: String = "draw"
 const CLIP_CAST: String = "cast_gesture"
 const CLIP_HIT: String = "hit"
 const CLIP_WINDUP: String = "windup"
+## 2026-11-02 Forest Witch (pattern brain): an uninterruptible skill winding up / warning, and a phase transition.
+const CLIP_WINDUP_HEAVY: String = "windup_heavy"
+const CLIP_PHASE_SHIFT: String = "phase_shift"
 const CLIP_VICTORY: String = "victory"
 const CLIP_DEFEAT: String = "defeat"
 const CLIP_DOWN: String = "down"
@@ -115,6 +124,9 @@ const CTX_CASTING: String = "casting"
 const CTX_SWINGING: String = "swinging"
 const CTX_AWAKEN: String = "awaken"
 const CTX_STEPPING: String = "stepping"
+## Pattern-brain enemy: an uninterruptible skill is winding up / warning (`heavy`), a phase transition runs (`phase`).
+const CTX_HEAVY: String = "heavy"
+const CTX_PHASE: String = "phase"
 ## The two sides, in the order the per-side tables are walked.
 const SIDES: Array[int] = [CombatState.Side.PLAYER, CombatState.Side.ENEMY]
 ## OSFE hit feel: the shake flips side every this many seconds.
@@ -397,6 +409,10 @@ func clip_context(side: int) -> Dictionary:
 	var actor: CutActor = _combat.get_cut_actor() if player else null
 	var casting: bool = _cast_pending or (actor != null and actor.is_swinging()) or (anim != null and anim.current_clip() == CLIP_CAST and not anim.is_finished())
 	var boss_actor: CutActor = _combat.get_boss().get_actor() if _combat.get_boss() != null else null
+	# 2026-11-02: a pattern-brain enemy has no swinging CutActor; its own stages drive the windup / phase clips.
+	var pattern: PatternController = _combat.get_pattern_controller() if not player else null
+	var stage: int = pattern.get_stage() if pattern != null else -1
+	var pattern_cast: bool = stage == PatternController.Stage.WINDUP or stage == PatternController.Stage.WARNING 		or stage == PatternController.Stage.FOLLOWUP_WAIT
 	return {
 		CTX_SIDE: side,
 		CTX_DEAD: state.is_player_dead() if player else state.is_enemy_dead(),
@@ -405,7 +421,9 @@ func clip_context(side: int) -> Dictionary:
 		CTX_OPPONENT_DEAD: state.is_enemy_dead() if player else state.is_player_dead(),
 		CTX_HIT: get_hit_left(side) > 0.0,
 		CTX_CASTING: player and casting,
-		CTX_SWINGING: (not player) and boss_actor != null and boss_actor.is_swinging(),
+		CTX_SWINGING: (not player) and ((boss_actor != null and boss_actor.is_swinging()) or pattern_cast),
+		CTX_HEAVY: pattern != null and pattern.uninterruptible_tell(),
+		CTX_PHASE: stage == PatternController.Stage.TRANSITION,
 		CTX_AWAKEN: player and _combat.is_signature_active(),
 		CTX_STEPPING: get_step_left(side) > 0.0,
 	}
@@ -444,10 +462,11 @@ func _drive_cast_hold(side: int, anim: UnitAnimator) -> void:
 
 ## The clip for a unit's state, pure (Story 047 Part C table). [param ctx] keys: `side`
 ## (CombatState.Side, default PLAYER) and the booleans `dead`, `downed`, `opponent_dead`, `hit`,
-## `casting`, `swinging`, `awaken`, `stepping` (absent = false). Priority, highest first:
+## `casting`, `swinging`, `heavy`, `phase`, `awaken`, `stepping` (absent = false). Priority, highest first:
 ## dead by a fall (`fell`) -> `fall` (Task 5; [method _update_clip] keeps `defeat` / `down` for a sheet without it);
 ## dead or downed -> `defeat` (player) / `down` (boss); player with the boss dead -> `victory`;
-## hit -> `hit`; player casting -> `cast_gesture`; boss swinging -> `windup`; player with the signature
+## hit -> `hit`; player casting -> `cast_gesture`; pattern enemy in a phase transition -> `phase_shift`; its
+## uninterruptible skill winding up / warning -> `windup_heavy`; boss swinging -> `windup`; player with the signature
 ## running -> `awaken`; stepping -> `step`; else `idle`.
 static func clip_for(ctx: Dictionary) -> String:
 	var player: bool = int(ctx.get(CTX_SIDE, CombatState.Side.PLAYER)) == CombatState.Side.PLAYER
@@ -461,6 +480,10 @@ static func clip_for(ctx: Dictionary) -> String:
 		return CLIP_HIT
 	if player and bool(ctx.get(CTX_CASTING, false)):
 		return CLIP_CAST
+	if not player and bool(ctx.get(CTX_PHASE, false)):
+		return CLIP_PHASE_SHIFT
+	if not player and bool(ctx.get(CTX_HEAVY, false)):
+		return CLIP_WINDUP_HEAVY
 	if not player and bool(ctx.get(CTX_SWINGING, false)):
 		return CLIP_WINDUP
 	if player and bool(ctx.get(CTX_AWAKEN, false)):
@@ -641,6 +664,11 @@ func _update_clip(side: int, step: float) -> void:
 	# Task 5 item 6: a unit whose sheet has no `fall` clip keeps its normal death.
 	if want == CLIP_FALL and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_FALL)):
 		want = CLIP_DEFEAT if side == CombatState.Side.PLAYER else CLIP_DOWN
+	# 2026-11-02: a sheet without the heavy windup / phase clip shows the plain windup / idle.
+	if want == CLIP_WINDUP_HEAVY and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_WINDUP_HEAVY)):
+		want = CLIP_WINDUP
+	if want == CLIP_PHASE_SHIFT and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_PHASE_SHIFT)):
+		want = CLIP_IDLE
 	_logical_clip[side] = want
 	if anim == null:
 		return
@@ -705,8 +733,10 @@ func _bg() -> BoardGeometry:
 ## The ground shadow of a unit standing in a rect of [param rect_size] (its cell, or a multi-cell footprint, P2.2b) (art px): a stepped Ink ellipse centred on the feet, one
 ## 1 px row per draw_rect so the edge stays on whole pixels. Pure geometry in [method shadow_rows]. ADR-0002: on the
 ## perspective board the ellipse is sized by the floor's local scale at the feet ([method shadow_size]), still flat-stepped.
-func _draw_shadow(rect_size: Vector2i, feet: Vector2i) -> void:
-	for row: Rect2i in shadow_rows(shadow_size(rect_size, feet), feet):
+func _draw_shadow(rect_size: Vector2i, feet: Vector2i, block: bool = false) -> void:
+	var w_ratio: float = FOOTPRINT_SHADOW_WIDTH_RATIO if block else SHADOW_WIDTH_RATIO
+	var h_ratio: float = FOOTPRINT_SHADOW_HEIGHT_RATIO if block else SHADOW_HEIGHT_RATIO
+	for row: Rect2i in shadow_rows(shadow_size(rect_size, feet), feet, w_ratio, h_ratio):
 		draw_rect(Rect2(row), SHADOW_COLOR)
 
 
@@ -722,10 +752,11 @@ func shadow_size(rect_size: Vector2i, feet: Vector2i) -> Vector2i:
 
 ## Rows of the ground shadow for a cell of [param cell_size] with the feet at [param feet]: one Rect2i per
 ## pixel row, widest at the feet row, integer art px.
-static func shadow_rows(cell_size: Vector2i, feet: Vector2i) -> Array[Rect2i]:
+static func shadow_rows(cell_size: Vector2i, feet: Vector2i, width_ratio: float = SHADOW_WIDTH_RATIO,
+		height_ratio: float = SHADOW_HEIGHT_RATIO) -> Array[Rect2i]:
 	var rows: Array[Rect2i] = []
-	var half_w: float = cell_size.x * SHADOW_WIDTH_RATIO * 0.5
-	var h: int = maxi(SHADOW_MIN_HEIGHT, roundi(cell_size.y * SHADOW_HEIGHT_RATIO))
+	var half_w: float = cell_size.x * width_ratio * 0.5
+	var h: int = maxi(SHADOW_MIN_HEIGHT, roundi(cell_size.y * height_ratio))
 	var half_h: float = h * 0.5
 	for i: int in h:
 		var dy: float = (i + 0.5) - half_h
@@ -769,11 +800,15 @@ func _feet_of_unit(side: int) -> Vector2i:
 	if side == CombatState.Side.PLAYER or state.enemy_footprint_size() <= 1:
 		return _feet_of_cell(_cell_of(side))
 	var rect: Rect2i = _unit_art_rect(side)
+	@warning_ignore("integer_division")
+	var x: int = rect.position.x + rect.size.x / 2
+	if state.footprint_extent().y > 1:
+		# A block two or more rows deep: the feet stand in its middle, so the body covers every cell of it.
+		return _warp_feet(Vector2i(x, rect.position.y + roundi(rect.size.y * FOOTPRINT_FEET_DEPTH_RATIO)))
 	var bottom: Vector2i = state.enemy_cell + Vector2i(0, state.footprint_extent().y - 1)
 	var bottom_rect: Rect2i = _cell_art_rect(bottom)
 	var y: int = mini(bottom_rect.position.y + roundi(bottom_rect.size.y * FEET_DEPTH_RATIO), bottom_rect.end.y - FEET_INSET_ART)
-	@warning_ignore("integer_division")
-	return _warp_feet(Vector2i(rect.position.x + rect.size.x / 2, y))
+	return _warp_feet(Vector2i(x, y))
 
 
 # P2.2b: the cell the status overlays read (burn): a burning footprint cell when any burns, else the unit's cell.
@@ -836,7 +871,7 @@ func _draw() -> void:
 		var cell: Vector2i = _cell_of(side)
 		var kinds: Array[String] = get_active_status_kinds(side)
 		var ground: Vector2i = _ground_of(side)
-		_draw_shadow(_unit_art_rect(side).size, ground)
+		_draw_shadow(_unit_art_rect(side).size, ground, side == CombatState.Side.ENEMY and _combat.get_state().footprint_extent().y > 1)
 		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
 		if not _draw_sprite(side, feet):
@@ -875,7 +910,8 @@ func _draw_flash() -> void:
 		var src: Rect2i = anim.frame_rect()
 		if src.size.x <= 0 or src.size.y <= 0:
 			continue
-		var feet: Vector2i = _feet_of_unit(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
+		# The flash sits on the drawn (gliding) feet, like the sprite it whitens.
+		var feet: Vector2i = _ground_of(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
 		var dest: Rect2 = sprite_dest_rect(feet, src.size, sheet.facing() != facing_for(side))
 		var alpha: float = float(_feel.get("flash_alpha", 0.75)) * clampf(left / total, 0.0, 1.0)
 		_flash.draw_texture_rect_region(sheet.texture(), dest, Rect2(src), Color(1.0, 1.0, 1.0, alpha))
