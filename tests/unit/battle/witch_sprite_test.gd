@@ -43,13 +43,16 @@ func _initialize() -> void:
 	_check("test_witch_unit_id", units.get_unit_id(ENEMY) == "forest_witch", units.get_unit_id(ENEMY))
 	_check("test_witch_sheet_loaded_no_placeholder", units.get_sheet(ENEMY) != null and not units.is_placeholder(ENEMY))
 	_check("test_witch_frame_160x130", units.get_sheet(ENEMY) != null and units.get_sheet(ENEMY).frame_size() == Vector2i(160, 130))
-	# 2026-11-02 (user: the Witch should fill her 2x2 and stand in its middle): her feet sit inside the block, above the
-	# feet line a unit on its front row would have, and below its back row's feet line.
+	# 2026-11-02 (user: the Witch should fill her 2x2 and stand in its middle); 2026-11-03 (user picked 0.8 of the block,
+	# UnitLayer.FOOTPRINT_FEET_DEPTH_RATIO): her feet sit in the block's front row, at or below that row's own feet line
+	# (its centre) and above the block's front edge (half a row further), so her skirt covers the whole block.
 	var st: CombatState = combat.get_state()
 	var feet: Vector2i = units.unit_feet_art(ENEMY)
 	var front: Vector2i = units.feet_art_of_cell(st.enemy_cell + Vector2i(0, st.footprint_extent().y - 1))
 	var back: Vector2i = units.feet_art_of_cell(st.enemy_cell)
-	_check("test_witch_feet_in_the_middle_of_her_block", feet.y < front.y and feet.y > back.y, "feet %s back %s front %s" % [feet, back, front])
+	var half_row: int = (front.y - back.y) / 2
+	_check("test_witch_feet_in_the_front_row_of_her_block", back.y < front.y and feet.y >= front.y and feet.y < front.y + half_row,
+		"feet %s back %s front %s" % [feet, back, front])
 	# Below 65 % the pattern brain enters phase 2 (a 1.5 s transition): her clip is phase_shift.
 	var state: CombatState = combat.get_state()
 	state.player_max_hp = 100000.0

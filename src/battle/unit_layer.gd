@@ -42,9 +42,10 @@ const INVULNERABLE_OUTLINE: Color = Color(0.95, 0.95, 1.0, 0.95)
 ## Feet anchor: art px above the cell's front (bottom) edge (art bible 8.3). Kept for the fallback when a
 ## cell is too short for FEET_DEPTH_RATIO.
 const FEET_INSET_ART: int = 3
-## OSFE-style stance (user 2026-10-31, reference image): the feet stand about two thirds down the slab face,
-## not on its front lip, so the body rises out of the tile and its own shadow sits on the face.
-const FEET_DEPTH_RATIO: float = 0.72
+## OSFE-style stance (user 2026-10-31, reference image): the feet stand on the slab face, not on its front lip.
+## 2026-11-03 (user: characters and monsters do not stand in the middle of their cell): the feet and shadow sit at the
+## cell's centre (was 0.72, two thirds down), like the floor effects.
+const FEET_DEPTH_RATIO: float = 0.5
 ## Ground shadow under every unit: an Ink ellipse on the slab (a floor overlay, so alpha blending is allowed,
 ## art bible 8.5), width / height as shares of the cell, and its alpha.
 const SHADOW_WIDTH_RATIO: float = 0.56
@@ -54,7 +55,9 @@ const SHADOW_COLOR: Color = Color(0.106, 0.090, 0.133, 0.5)
 ## 2026-11-02 (user: the 2x2 Witch did not read as standing on four cells): a footprint more than one row deep stands
 ## with its feet this far down its whole rect (the middle of the block, not its front row) and its shadow covers the
 ## block (these shares of the footprint rect instead of SHADOW_WIDTH_RATIO / SHADOW_HEIGHT_RATIO).
-const FOOTPRINT_FEET_DEPTH_RATIO: float = 0.6
+## 2026-11-03 (user picked it from a 0.5 / 0.6 / 0.7 / 0.8 comparison of the Witch): 0.8 (was 0.6), so a wide body's
+## skirt covers the block's front row and the unit reads as standing on the whole block, not its back half.
+const FOOTPRINT_FEET_DEPTH_RATIO: float = 0.8
 const FOOTPRINT_SHADOW_WIDTH_RATIO: float = 0.9
 const FOOTPRINT_SHADOW_HEIGHT_RATIO: float = 0.5
 ## Player marker: radius as a share of the cell height, label font size as a share of the radius, the
