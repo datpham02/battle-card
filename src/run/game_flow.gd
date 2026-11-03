@@ -2590,15 +2590,35 @@ func _apply_dev_node(text: String) -> void:
 
 # DEV-ONLY: clears the next [param count] columns of the current region with their first available
 # node (no fight, HP untouched), never its boss column, and saves.
-func _dev_clear_columns(count: int) -> void:
+func _dev_clear_columns(count: int, toward_kind: String = "") -> void:
 	var cfg: Dictionary = get_reward_config()
 	for _c: int in count:
 		var nodes: Array[Dictionary] = _run.available_nodes()
 		if nodes.is_empty() or _run.column >= _run.map.size() - 1:
 			break
-		_run.choose_node(int(nodes[0]["node_index"]))
+		var pick: int = int(nodes[0]["node_index"])
+		if not toward_kind.is_empty():
+			for node: Dictionary in nodes:
+				if _dev_reaches_kind(_run.column, int(node["node_index"]), toward_kind):
+					pick = int(node["node_index"])
+					break
+		_run.choose_node(pick)
 		_run.complete_node(_run.hp, _player_max_hp(), "", cfg, 0.0)
 	_save_run()
+
+
+# DEV-ONLY (2026-11-03, linked columns): true when a node of [param kind] lies after node [param index] of
+# column [param col] along its `next` links (a node without `next` reaches the whole next column).
+func _dev_reaches_kind(col: int, index: int, kind: String) -> bool:
+	if col + 1 >= _run.map.size():
+		return false
+	var node: Dictionary = (_run.map[col]["nodes"] as Array)[index]
+	var following: Array = _run.map[col + 1].get("nodes", []) as Array
+	var next: Array = node.get("next", range(following.size())) as Array
+	for i: Variant in next:
+		if str((following[int(i)] as Dictionary).get("kind", "")) == kind or _dev_reaches_kind(col + 1, int(i), kind):
+			return true
+	return false
 
 
 # DEV-ONLY: chooses the first available node of the current column (false when none).
@@ -2618,7 +2638,7 @@ func _dev_advance_to_kind(kind: String) -> bool:
 				return choose_node(int(node["node_index"]))
 		if _run.column >= _run.map.size() - 1:
 			break
-		_dev_clear_columns(1)
+		_dev_clear_columns(1, kind)
 	push_warning("GameFlow: --run=: this region map has no '%s' node (try another --seed / --at-floor)" % kind)
 	return false
 

@@ -76,7 +76,7 @@
 		"delivery": {
 			"CASTER_TO_TARGET": {"spread_step_sec": 0.08, "first_hold_sec": 0.13},
 			"SKY_TO_TARGET": {"fall_sec": 0.12, "stagger_sec": 0.03},
-			"GROUND_PROPAGATION": {"step_sec": 0.06},
+			"GROUND_PROPAGATION": {"step_sec": 0.12},
 			"DIRECT_MANIFESTATION": {"appear_sec": 0.0},
 			"SEQUENTIAL_CHAIN": {"step_sec": 0.1}
 		}

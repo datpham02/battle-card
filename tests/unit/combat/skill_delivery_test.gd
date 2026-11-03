@@ -90,7 +90,7 @@ func _arrivals() -> void:
 	ck("sky: all within (n-1) x stagger", is_equal_approx(hi - lo, 0.03 * 4.0))
 	# GROUND_PROPAGATION: distance from the caster's cell x step; equal distance lands together.
 	var g: Dictionary = SkillDelivery.arrival_times({"type": "GROUND_PROPAGATION", "origin": "origin_cell"}, mask, caster, timing)
-	ck("ground: distance x step", is_equal_approx(float(g[Vector2i(3, 1)]), 2.0 * 0.06) and is_equal_approx(float(g[Vector2i(5, 1)]), 4.0 * 0.06))
+	ck("ground: distance x step", is_equal_approx(float(g[Vector2i(3, 1)]), 2.0 * 0.12) and is_equal_approx(float(g[Vector2i(5, 1)]), 4.0 * 0.12))
 	ck("ground: equal distance together", is_equal_approx(float(g[Vector2i(4, 0)]), float(g[Vector2i(4, 2)])))
 	var gf: Dictionary = SkillDelivery.arrival_times({"type": "GROUND_PROPAGATION", "origin": "first_cell"}, mask, caster, timing)
 	ck("ground: origin first_cell starts at 0 there", is_equal_approx(float(gf[Vector2i(3, 1)]), 0.0))
@@ -225,4 +225,4 @@ func _beat() -> void:
 	ck("beat: <= 0 keeps the default", is_equal_approx(bad.beat_sec, 0.5))
 	ck("beat: absent block keeps the default", is_equal_approx(CombatConfig.from_dictionary({}).beat_sec, 0.5))
 	ck("timing: shipped delivery timing parsed", is_equal_approx(float(shipped.delivery_timing[SkillDelivery.CASTER_TO_TARGET]["spread_step_sec"]), 0.08)
-		and is_equal_approx(float(shipped.delivery_timing[SkillDelivery.GROUND_PROPAGATION]["step_sec"]), 0.06))
+		and is_equal_approx(float(shipped.delivery_timing[SkillDelivery.GROUND_PROPAGATION]["step_sec"]), 0.12))
