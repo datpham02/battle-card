@@ -339,9 +339,13 @@ Phần thưởng khi phá mốc: Sentinel **choáng 1,0 s** (đứng yên, khôn
 
 ### 5.4 Quái giữ lại
 
+> **2026-11-03:** đội hình và pool `ch1` thay bằng `design/quick-specs/doi-hinh-rung-suong-2026-11-03.md` (goblin và sói sang não `pattern`; 5 con não khối ra khỏi pool).
+
 `goblin_scout`, `wolf`, `goblin_warrior`, `dire_wolf`, `goblin_archer`, `goblin_brute`, tinh anh `goblin_chief`, `goblin_shaman`, `wolf_alpha`: **không đổi** (não khối, số như hiện tại). Không thêm chiêu mẫu cho chúng ở Phase 2.
 
 ### 5.5 Pool, độ đe dọa và thứ tự xuất hiện
+
+> **2026-11-03:** đội hình và pool `ch1` thay bằng `design/quick-specs/doi-hinh-rung-suong-2026-11-03.md` (goblin và sói sang não `pattern`; 5 con não khối ra khỏi pool).
 
 Phase 2 giữ **một địch mỗi trận** [D7]. Ngân sách đe dọa của pack `06` §5 đọc theo một địch:
 

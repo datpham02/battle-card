@@ -78,9 +78,10 @@ Mỗi vùng là một kiểu **mạng lưới** khác nhau sau Biến Cố: lư�
 - **Mạng lưới [Khởi điểm]:** phế tích lát đá giữa rừng, rễ cây đội ô lên, rêu lấp kẽ ô.
 - **Sân:** vuông, chữ nhật.
 - **Quái:**
-  - Goblin: trinh sát, chiến binh, cung thủ, pháp sư, lực sĩ, vu sư.
-  - Sói: xám, dữ, đầu đàn.
-  - Thủ lĩnh Goblin.
+  - Rễ, rêu, nấm: Rễ Con, Lính Gác Rêu, Nấm Mũ Xám; tinh anh Vệ Binh Rễ Cổ, Mẹ Gai Sương.
+  - Goblin: trinh sát, cung thủ; **Goblin Vu Sư** (Kẻ Gác tầng 1–2: ném khối 4 ô trộm của lưới).
+  - Sói: sói dữ; tinh anh sói đầu đàn.
+  - (2026-11-03, `design/quick-specs/doi-hinh-rung-suong-2026-11-03.md`.)
 - **Kẻ Gác:** **Phù thủy rừng**.
 - **Màu [Khởi điểm]:** xanh rêu, xám sương, nâu gỗ.
 
