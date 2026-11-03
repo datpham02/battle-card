@@ -1,0 +1,14 @@
+{
+  "id": "goblin_archer",
+  "asset": "ASSET-026",
+  "frame": {"w": 64, "h": 52},
+  "facing": "left",
+  "source": "PixelLab character b580ca70-d8e9-4912-a3e0-ff8e0f79d3b2 (approved 2026-11-03), PixMiniMax south-west clips in design/assets/candidates/goblin-archer/anim/<clip>/<n>.png, cleaned (palette snap to the 8 locked colours, specks removed, feet on the bottom row at x 32, crouch / heap frames lifted onto it) into design/assets/candidates/goblin-archer/clean-64x52/",
+  "clips": [
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop", "note": "src frames 0/2/4/6"},
+    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "nominal; the game paces step by the step cooldown; src 1/3/5/7"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png", "windup/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last", "note": "raises the bow and draws; the last frame is held until the telegraph ends; src 2/4/6/8"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src frames 4-6 (1-3 had a baked yellow burst and a red spray; red is the telegraph only)"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png"], "ms": [100, 120, 150, 150, 150, 150], "loop": "hold_last", "note": "drops the bow and falls face down; src 1/2/3/4/5/8"}
+  ]
+}

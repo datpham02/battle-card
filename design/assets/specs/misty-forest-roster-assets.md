@@ -69,3 +69,18 @@ canvas with "about 68 px tall" in the prompt; same palette, style image and desi
 | Mistbriar Matron | `bad2c798-674b-4f73-b579-41272dabc284` (6 gen) | 66 px tall (v1 50) | idle 0/2/4/6, step 1/3/5/7, windup 1/2/4/6, guard 2/4/6/8 (vines wrapped round the body, held), hit 5/6/7 (1-4 red bursts), down 2/3/4/5 (6-8 drew the heap bright red, the telegraph colour, so the clip stops on the grey heap) — 6 gen (guard / hit / down approved separately: "Duyệt 3 lượt") | 80x80 (`clean-80x80/`); windup drops the trailing vines and shows two pale eyes in the hood | `unit_mistbriar_matron_sheet.png` 323x485 (80x80), **installed** |
 
 Elites v2 total: 12 anchor + 12 clip = 24 gen (roster grand total 58 + 24 = 82). In game: `production/qa/evidence/misty-forest-roster/elites-v2/` (idle and windup for both; each now stands about the Knight's height; v1 for comparison in `live/`). `roster_sprite_test` now checks every elite's idle art is at least 12 px taller than the tallest normal (69 / 66 px vs 47). Matron windup frames show two pale eyes in the hood void; closest look there is a Jawa (Star Wars), flagged to the user.
+
+## ASSET-026 — Goblin Archer (`goblin_archer`, roster v2)
+
+Source design: `design/quick-specs/doi-hinh-rung-suong-2026-11-03.md` §3.2, §7. Normal tier, ~0.7 of the Knight, 64x52 frame.
+
+| Field | Value |
+|---|---|
+| Design | The Goblin Scout's body (art bible §5.6 variant): dark moss-grey hood up between the long sideways ears, short curved wooden bow held low in the near hand, quiver strap across the chest with arrow tips over the shoulder. |
+| Palette (locked) | Ink #1B1722; skin #7D8B5A / #59643F; leather #9A7D5E / #66523F; eyes #EFE6D2; hood #5E6B55; bow wood #8A7350. No red, no glow. |
+| Likeness check | Closest known look: Dart Goblin (Clash Royale). Differentiated: desaturated olive skin, short bow (no blowpipe), no mask, ragged leather, quiver. |
+
+| Step | Date | Tool | Settings | Cost | Output | Result |
+|---|---|---|---|---|---|---|
+| anchor-01 | 2026-11-03 | `create_character_pro_flash` | 64x64, low top-down, 8 directions, seed 1, palette above (max 8), style_image = Goblin v3 south rotation (uploaded, colour off) | 6 gen (approved: "Duyệt, gen 6 gen"; a first call with the style image as base64 was refused by the server, nothing billed) | character `b580ca70-d8e9-4912-a3e0-ff8e0f79d3b2`; `design/assets/candidates/goblin-archer/rot/`, preview `archer-vs-scout-x4.png` | south-west: bbox 38x43 (bow included), 7 colours, no red; bow, quiver and hood read at 1x. **APPROVED by the user 2026-11-03** ("Duyệt, gen 5 clip"). |
+| anim-5clips | 2026-11-03 | `animate_character` pixminimax, south-west, 8 frames each | idle (breathes, ears twitch, bow low), step (low scuttle hop in place), windup (crouches, raises the bow, draws to the cheek, holds), hit (recoils, leans back), down (drops the bow, falls face down) | 5 gen (approved) | groups 134a1167, dcc371e1, 005cb8d3, 4b14210b, b3fe5b11; raw `goblin-archer/anim/<clip>/0-8.png` (72x72), strip `archer-clips-raw-x3.png` | Cleaned to 64x52 (`clean-64x52/`, one shift for the unit: feet on row 51 at x 32; windup / down frames whose lowest pixel sat lower were lifted onto row 51; palette snap; specks < 12 px removed): idle 0/2/4/6, step 1/3/5/7, windup 2/4/6/8 (last held), hit 4/5/6 (**1-3 had a baked yellow burst and a red spray**, dropped: red is the telegraph only), down 1/2/3/4/5/8. Exported `assets/art/units/unit_goblin_archer_sheet.png` (389x264). In game: `production/qa/evidence/misty-forest-roster-v2/goblin_archer-aimed_shot.png` (drawn bow held during the row warning). Total Goblin Archer: 11 gen. |
