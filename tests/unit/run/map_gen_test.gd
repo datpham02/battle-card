@@ -75,6 +75,7 @@ func _initialize() -> void:
 					skeleton_bad += 1
 					continue
 				var used: Array[String] = []
+				var taught: Array[int] = _teaching_columns(map, spec.get("teach_after", {}) as Dictionary)
 				for col: Dictionary in map:
 					var t: int = int(col["tier"])
 					var want: int = tiers[int(col["index"])]
@@ -93,7 +94,9 @@ func _initialize() -> void:
 						else:
 							if mid == "" or cfg.get_match_def(ci, mid).is_empty():
 								empty_draw += 1
-							elif used.has(mid):
+							elif used.has(mid) and not taught.has(int(col["index"])):
+								# 2026-11-03: a column forced to an elite's teachers (teach_after, spec phase2 5.5) may repeat
+								# them when it has more nodes than teachers (Wolf Alpha: 2 teachers, up to 3 nodes).
 								var all_used: bool = true
 								for tier: String in spec["pools"][node["kind"]].keys():
 									for id: String in spec["pools"][node["kind"]][tier]:
@@ -145,3 +148,20 @@ func _initialize() -> void:
 	check(dflt.chapter_count() == 1 and dflt.generate_map(0, 1, 0).size() == 7, "default chapter still generates a map")
 	print("FAILS=%d PASSES=%d" % [fails, passes])
 	quit(fails)
+
+# 2026-11-03: indices of the columns whose every fight is a teacher (teach_after) of an elite standing in a later column.
+func _teaching_columns(map: Array[Dictionary], lists: Dictionary) -> Array[int]:
+	var out: Array[int] = []
+	for c: int in map.size():
+		for later: int in range(c + 1, map.size()):
+			for elite: Dictionary in map[later]["nodes"]:
+				var teach: Array = lists.get(str(elite["match_id"]), []) as Array
+				if teach.is_empty():
+					continue
+				var all_teach: bool = true
+				for node: Dictionary in map[c]["nodes"]:
+					if not teach.has(str(node["match_id"])):
+						all_teach = false
+				if all_teach and not out.has(int(map[c]["index"])):
+					out.append(int(map[c]["index"]))
+	return out

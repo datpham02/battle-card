@@ -150,6 +150,8 @@ func _normalize_skill(id: String, raw: Variant) -> Dictionary:
 		"interruptible": bool(d.get("interruptible", defaults["interruptible"])),
 		# 2026-11-02: false = the skill does not count toward a phase's every_nth (the Witch's row shift is not a cast).
 		"counts_as_cast": bool(d.get("counts_as_cast", true)),
+		# 2026-11-03 (Wolf Alpha's howl): seconds the enemy is stunned when this skill is interrupted (D9); 0 = none.
+		"interrupt_stun_sec": maxf(float(d.get("interrupt_stun_sec", 0.0)), 0.0),
 		"conditions": (d["conditions"] as Dictionary).duplicate(true) if typeof(d.get("conditions")) == TYPE_DICTIONARY else {},
 		"counter_key": str(d.get("counter_key", "")),
 		"name_key": str(d.get("name_key", "")),
@@ -185,13 +187,25 @@ func _normalize_pattern(raw: Variant, kind: String, errors: Array[String]) -> Di
 	if not ANCHORS.has(anchor):
 		errors.append("anchor '%s' unknown (known: %s)" % [anchor, ", ".join(ANCHORS)])
 	var offsets: Array[Vector2i] = _parse_offsets(d.get("offsets", [[0, 0]]), errors, "pattern.offsets")
+	# 2026-11-03 (Goblin Warlock's L / T / S): several cell shapes for one skill; the planner offers every one, so the
+	# seeded plan pick draws among them. offsets = the first variant. Only with on_player / near_player.
+	var variants: Array = []
+	if d.has("variants"):
+		if typeof(d["variants"]) != TYPE_ARRAY or (d["variants"] as Array).is_empty():
+			errors.append("pattern.variants must be a non-empty list of offset lists")
+		elif anchor != "on_player" and anchor != "near_player":
+			errors.append("pattern.variants needs anchor on_player or near_player (got '%s')" % anchor)
+		else:
+			for v: Variant in d["variants"]:
+				variants.append(_parse_offsets(v, errors, "pattern.variants"))
+			offsets = variants[0]
 	var rotations: Array[int] = _parse_rotations(d.get("rotations", [0]), errors, "pattern.rotations")
 	var covers_by_default: bool = anchor == "on_player" or anchor == "row_of_player" or anchor == "column_of_player"
 	var row: String = str(d.get("row", "any"))
 	if not ANCHOR_ROWS.has(row):
 		errors.append("pattern.row '%s' unknown (known: %s)" % [row, ", ".join(ANCHOR_ROWS)])
 	return {
-		"anchor": anchor, "offsets": offsets, "rotations": rotations,
+		"anchor": anchor, "offsets": offsets, "variants": variants, "rotations": rotations,
 		"must_cover_player": bool(d.get("must_cover_player", covers_by_default)),
 		"clip": bool(d.get("clip", false)), "min_cells": maxi(int(d.get("min_cells", offsets.size())), 1),
 		"start": str(d.get("start", "any")), "count": maxi(int(d.get("count", 1)), 1),
@@ -273,6 +287,10 @@ func _normalize_effects(raw: Variant, errors: Array[String], where: String) -> D
 			"kind": str(m.get("kind", "anchor")),
 			"break_stun_sec": maxf(float(m.get("break_stun_sec", 0.0)), 0.0),
 		}
+	if typeof(d.get("haste")) == TYPE_DICTIONARY:
+		# 2026-11-03 (Wolf Alpha): every finished skill's cooldown x cooldown_mult for sec seconds (never warning_sec).
+		var h: Dictionary = d["haste"] as Dictionary
+		out["haste"] = {"cooldown_mult": clampf(float(h.get("cooldown_mult", 1.0)), 0.05, 1.0), "sec": maxf(float(h.get("sec", 0.0)), 0.0)}
 	if typeof(d.get("move")) == TYPE_DICTIONARY:
 		var mv: Dictionary = d["move"] as Dictionary
 		if not MOVE_TO.has(str(mv.get("to", ""))):

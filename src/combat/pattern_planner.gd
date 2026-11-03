@@ -95,12 +95,18 @@ static func plans(skill: Dictionary, ctx: Dictionary) -> Array[Dictionary]:
 				anchors.append(cell)
 	else:
 		anchors.append(player)
+	# 2026-11-03: pattern.variants (several shapes) plans every shape, each plan tagged with its `variant` index.
+	var shapes: Array = pattern.get("variants", []) as Array
+	if shapes.is_empty():
+		shapes = [pattern["offsets"]]
 	for a: Vector2i in anchors:
-		for rot: int in pattern["rotations"]:
-			var cells: Array[Vector2i] = []
-			for off: Vector2i in pattern["offsets"]:
-				cells.append(a + to_board(rotate(off, rot)))
-			_add_plan(out, skill, ctx, cells, a, rot)
+		for v: int in shapes.size():
+			for rot: int in pattern["rotations"]:
+				var cells: Array[Vector2i] = []
+				for off: Vector2i in shapes[v]:
+					cells.append(a + to_board(rotate(off, rot)))
+				if _add_plan(out, skill, ctx, cells, a, rot):
+					out[out.size() - 1]["variant"] = v
 	return out
 
 

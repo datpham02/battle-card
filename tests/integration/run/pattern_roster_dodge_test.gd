@@ -9,7 +9,9 @@ extends SceneTree
 ## Run: godot --headless --path . -s res://tests/integration/run/pattern_roster_dodge_test.gd
 
 const Fx := preload("res://tests/unit/combat/pattern_fixtures.gd")
-const ENEMIES: Array[String] = ["rootling", "mossbound_sentry", "greycap_sporeling", "ancient_root_sentinel", "mistbriar_matron"]
+# 2026-11-03 (doi-hinh-rung-suong spec §3): the goblins and wolves on the pattern brain join the five.
+const ENEMIES: Array[String] = ["rootling", "mossbound_sentry", "greycap_sporeling", "ancient_root_sentinel", "mistbriar_matron",
+	"goblin_scout", "goblin_archer", "dire_wolf", "wolf_alpha"]
 const SEEDS: Array[int] = [1, 2, 3]
 const MATCH_SEC: float = 60.0
 const START_HP: float = 300.0

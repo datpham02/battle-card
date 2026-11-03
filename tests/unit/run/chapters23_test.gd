@@ -40,6 +40,9 @@ func _csv_ok(strings: Dictionary, key: String) -> bool:
 	return row.size() == 3 and row[1] != "" and row[2] != ""
 
 
+const RETIRED_CH1: Array[String] = ["goblin_warrior", "wolf", "goblin_brute", "goblin_chief", "goblin_shaman"]
+
+
 func _initialize() -> void:
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
 	var strings: Dictionary = _csv()
@@ -70,7 +73,15 @@ func _initialize() -> void:
 			if t >= 1 and ((pools["danger"].get(str(t), []) as Array).is_empty() or (pools["miniboss"].get(str(t), []) as Array).is_empty() or (pools["boss"].get(str(t), []) as Array).is_empty()):
 				empty += 1
 		check(empty == 0, "ch%d pools non-empty for used tiers" % (ci + 1))
-		check(in_pool.size() == ids.size(), "ch%d every match is in some pool (%d/%d)" % [ci + 1, in_pool.size(), ids.size()])
+		# 2026-11-03 (design/quick-specs/doi-hinh-rung-suong-2026-11-03.md §5): five block-brain ch1 matches left the pools;
+		# their data stays (dev flags, older tests), so they are the only ids allowed outside every pool.
+		var retired: Array[String] = RETIRED_CH1 if ci == 0 else ([] as Array[String])
+		var outside: Array[String] = []
+		for id: String in ids:
+			if not in_pool.has(id) and not retired.has(id):
+				outside.append(id)
+		check(outside.is_empty() and retired.all(func(r: String) -> bool: return not in_pool.has(r)),
+			"ch%d every match is in some pool except the retired ones (%d/%d, outside %s)" % [ci + 1, in_pool.size(), ids.size(), outside])
 		if ci > 0:
 			check(ids.size() == 10, "ch%d has 10 matches (%d)" % [ci + 1, ids.size()])
 		var ph: int = 0

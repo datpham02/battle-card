@@ -27,8 +27,9 @@ func _initialize() -> void:
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
 	var ci: int = cfg.region_index(REGION)
 	var teach: Dictionary = cfg.get_map_spec(ci).get("teach_after", {}) as Dictionary
-	_check("ch1 map spec carries teach_after for both new elites", teach.get("ancient_root_sentinel", []) == ["rootling", "mossbound_sentry"]
-		and teach.get("mistbriar_matron", []) == ["greycap_sporeling", "rootling"], str(teach))
+	_check("ch1 map spec carries teach_after for the three gated elites", teach.get("ancient_root_sentinel", []) == ["rootling", "mossbound_sentry"]
+		and teach.get("mistbriar_matron", []) == ["greycap_sporeling", "rootling"]
+		and teach.get("wolf_alpha", []) == ["dire_wolf", "goblin_archer"], str(teach))
 	var bad: Array[String] = []
 	var seen: Dictionary = {}
 	var elite_nodes: int = 0
@@ -106,8 +107,10 @@ func _initialize() -> void:
 		int(seen.get("mistbriar_matron", 0)), int(seen.get("goblin_chief", 0)), int(seen.get("goblin_shaman", 0)), int(seen.get("wolf_alpha", 0))]
 	_check("the Sentinel still appears (taught)", int(seen.get("ancient_root_sentinel", 0)) > 0, elites)
 	_check("the Matron still appears (taught)", int(seen.get("mistbriar_matron", 0)) > 0, elites)
-	_check("other tier elites fill in (goblin_chief / shaman / wolf_alpha seen)", int(seen.get("goblin_chief", 0)) > 0
-		and int(seen.get("goblin_shaman", 0)) + int(seen.get("wolf_alpha", 0)) > 0, elites)
+	# 2026-11-03 (doi-hinh-rung-suong spec §5): the goblin chief / shaman left the ch1 pools; the third elite is the
+	# Wolf Alpha, itself gated (taught by the Dire Wolf / Goblin Archer).
+	_check("the Wolf Alpha still appears (taught); the retired goblin elites never do", int(seen.get("wolf_alpha", 0)) > 0
+		and int(seen.get("goblin_chief", 0)) + int(seen.get("goblin_shaman", 0)) == 0, elites)
 	_check("gated elite nodes were generated", elite_nodes > 1000, str(elite_nodes))
 	# Gate is a replacement, not a hole: a map whose first column cannot teach still gets an elite of the same tier.
 	var spec: Dictionary = cfg.region_spec(REGION, 1)

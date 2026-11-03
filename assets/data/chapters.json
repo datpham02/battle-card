@@ -155,7 +155,9 @@
 				"goblin_scout": {
 					"id": "goblin_scout",
 					"name_key": "boss.goblin_scout.name",
-					"boss_max_hp": 86,
+					"boss_max_hp": 170,
+					"brain": "pattern",
+					"enemy": "goblin_scout",
 					"brain_set": "cautious",
 					"boss_step_cooldown_mult": 1.78,
 					"swing_speed_mult": 1.0,
@@ -222,7 +224,9 @@
 				"dire_wolf": {
 					"id": "dire_wolf",
 					"name_key": "boss.dire_wolf.name",
-					"boss_max_hp": 119,
+					"boss_max_hp": 240,
+					"brain": "pattern",
+					"enemy": "dire_wolf",
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.44,
 					"boss_think_interval_sec": 0.4,
@@ -255,27 +259,26 @@
 				"wolf_alpha": {
 					"id": "wolf_alpha",
 					"name_key": "boss.wolf_alpha.name",
-					"boss_max_hp": 151,
+					"boss_max_hp": 440,
+					"brain": "pattern",
+					"enemy": "wolf_alpha",
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.22,
 					"swing_speed_mult": 0.9,
 					"boss_think_interval_sec": 0.3,
 					"boss_reaction_sec": 0.35,
 					"boss_drop_interval_mult": 1.0,
-					"traits": [
-						{
-							"id": "row_burner",
-							"params": {}
-						}
-					],
 					"arena": {
 						"shape": "rect"
-					}
+					},
+					"teach_after": ["dire_wolf", "goblin_archer"]
 				},
 				"goblin_archer": {
 					"id": "goblin_archer",
 					"name_key": "boss.goblin_archer.name",
-					"boss_max_hp": 108,
+					"boss_max_hp": 200,
+					"brain": "pattern",
+					"enemy": "goblin_archer",
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.44,
 					"boss_think_interval_sec": 0.4,
@@ -283,8 +286,7 @@
 					"boss_drop_interval_mult": 1.15,
 					"swing_speed_mult": 1.0,
 					"arena": {
-						"shape": "cross",
-						"variant": true
+						"shape": "rect"
 					}
 				},
 				"goblin_brute": {
@@ -305,22 +307,17 @@
 				"goblin_warlock": {
 					"id": "goblin_warlock",
 					"name_key": "boss.goblin_warlock.name",
-					"boss_max_hp": 146,
+					"boss_max_hp": 880,
+					"brain": "pattern",
+					"enemy": "goblin_warlock",
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.22,
 					"swing_speed_mult": 0.9,
 					"boss_think_interval_sec": 0.3,
 					"boss_reaction_sec": 0.35,
 					"boss_drop_interval_mult": 1.0,
-					"traits": [
-						{
-							"id": "row_burner",
-							"params": {}
-						}
-					],
 					"arena": {
-						"shape": "staircase",
-						"variant": true
+						"shape": "boss_hall"
 					}
 				},
 				"forest_witch": {
@@ -423,52 +420,45 @@
 				"battle": {
 					"0": [
 						"goblin_scout",
-						"goblin_warrior",
 						"rootling",
 						"mossbound_sentry"
 					],
 					"1": [
-						"wolf",
-						"dire_wolf",
-						"goblin_archer",
-						"goblin_warrior",
 						"rootling",
 						"mossbound_sentry",
-						"greycap_sporeling"
+						"greycap_sporeling",
+						"goblin_archer",
+						"dire_wolf"
 					],
 					"2": [
-						"dire_wolf",
-						"goblin_archer",
-						"goblin_brute",
-						"wolf",
 						"greycap_sporeling",
-						"mossbound_sentry"
+						"mossbound_sentry",
+						"goblin_archer",
+						"dire_wolf"
 					]
 				},
 				"danger": {
 					"0": [],
 					"1": [
-						"wolf",
+						"greycap_sporeling",
 						"goblin_archer",
-						"greycap_sporeling"
+						"dire_wolf"
 					],
 					"2": [
-						"dire_wolf",
-						"goblin_brute",
-						"goblin_warrior",
-						"mossbound_sentry"
+						"mossbound_sentry",
+						"goblin_archer",
+						"dire_wolf"
 					]
 				},
 				"miniboss": {
 					"1": [
-						"goblin_chief",
-						"ancient_root_sentinel"
+						"ancient_root_sentinel",
+						"wolf_alpha"
 					],
 					"2": [
-						"goblin_shaman",
-						"wolf_alpha",
 						"ancient_root_sentinel",
-						"mistbriar_matron"
+						"mistbriar_matron",
+						"wolf_alpha"
 					]
 				},
 				"boss": {

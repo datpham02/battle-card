@@ -14,7 +14,9 @@ extends SceneTree
 
 const Fx := preload("res://tests/unit/combat/pattern_fixtures.gd")
 const P: int = CombatState.Side.PLAYER
-const ENEMIES: Array[String] = ["rootling", "mossbound_sentry", "greycap_sporeling", "ancient_root_sentinel", "mistbriar_matron"]
+# 2026-11-03 (doi-hinh-rung-suong spec §3): the goblins and wolves on the pattern brain join the five.
+const ENEMIES: Array[String] = ["rootling", "mossbound_sentry", "greycap_sporeling", "ancient_root_sentinel", "mistbriar_matron",
+	"goblin_scout", "goblin_archer", "dire_wolf", "wolf_alpha"]
 const SHAPES: Array[String] = ["square", "rect", "u_shape", "cross", "staircase"]
 const VARIANTS: int = 200
 const MATCH_SEC: float = 60.0

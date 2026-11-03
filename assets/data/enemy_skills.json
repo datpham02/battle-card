@@ -200,6 +200,114 @@
 			"effects": {"damage": 22, "damage_no_markers": 11},
 			"followup": {"offsets": [[0, 0]], "relative_to": "first_center", "requires_anchor": 1, "warning_sec": 0.75, "effects": {"damage": 14}},
 			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
+		},
+		"scout_stab": {
+			"id": "scout_stab", "owner": "goblin_scout", "kind": "attack", "name_key": "enemy_skill.scout_stab.name", "counter_key": "enemy_skill.scout_stab.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.5, "warning_sec": 1.2,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 8}, "cooldown_sec": 2.6
+		},
+		"scout_hop": {
+			"id": "scout_hop", "owner": "goblin_scout", "kind": "self", "name_key": "enemy_skill.scout_hop.name", "counter_key": "enemy_skill.scout_hop.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "adjacent_row"}},
+			"recovery_sec": 0.3, "cooldown_sec": 5.0, "counts_as_cast": false, "weight": 0.4
+		},
+		"aimed_shot": {
+			"id": "aimed_shot", "owner": "goblin_archer", "kind": "attack", "name_key": "enemy_skill.aimed_shot.name", "counter_key": "enemy_skill.aimed_shot.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0], [3, 0]], "anchor": "row_of_player", "start": "front", "clip": true, "min_cells": 2},
+			"windup_sec": 0.9, "warning_sec": 1.0,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 14}, "cooldown_sec": 3.2
+		},
+		"volley": {
+			"id": "volley", "owner": "goblin_archer", "kind": "attack", "name_key": "enemy_skill.volley.name", "counter_key": "enemy_skill.volley.counter",
+			"pattern": {"offsets": [[0, 0], [1, 1], [2, 2]], "anchor": "on_player", "rotations": [0, 90, 180, 270], "clip": true, "min_cells": 2},
+			"windup_sec": 0.5, "warning_sec": 1.1,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "slash"},
+			"effects": {"damage": 10}, "cooldown_sec": 3.0
+		},
+		"chase_bite": {
+			"id": "chase_bite", "owner": "dire_wolf", "kind": "attack", "name_key": "enemy_skill.chase_bite.name", "counter_key": "enemy_skill.chase_bite.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "slash"},
+			"effects": {"damage": 10},
+			"followup": {"offsets": [[0, 0]], "relative_to": "player", "warning_sec": 0.75, "effects": {"damage": 10}},
+			"cooldown_sec": 3.0
+		},
+		"prowl": {
+			"id": "prowl", "owner": "dire_wolf", "kind": "self", "name_key": "enemy_skill.prowl.name", "counter_key": "enemy_skill.prowl.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "adjacent_row"}},
+			"recovery_sec": 0.2, "cooldown_sec": 4.0, "counts_as_cast": false, "weight": 0.4
+		},
+		"alpha_howl": {
+			"id": "alpha_howl", "owner": "wolf_alpha", "kind": "self", "name_key": "enemy_skill.alpha_howl.name", "counter_key": "enemy_skill.alpha_howl.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 1.4,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"haste": {"cooldown_mult": 0.5, "sec": 6.0}},
+			"recovery_sec": 0.4, "cooldown_sec": 12.0, "interruptible": true, "interrupt_stun_sec": 1.0
+		},
+		"rending_rush": {
+			"id": "rending_rush", "owner": "wolf_alpha", "kind": "attack", "name_key": "enemy_skill.rending_rush.name", "counter_key": "enemy_skill.rending_rush.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "slash"},
+			"effects": {"damage": 16, "status": {"id": "slow", "sec": 1.5, "step_mult": 1.3}}, "recovery_sec": 0.8, "cooldown_sec": 4.5
+		},
+		"alpha_bite": {
+			"id": "alpha_bite", "owner": "wolf_alpha", "kind": "attack", "name_key": "enemy_skill.alpha_bite.name", "counter_key": "enemy_skill.alpha_bite.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "slash"},
+			"effects": {"damage": 12},
+			"followup": {"offsets": [[0, 0]], "relative_to": "player", "warning_sec": 0.75, "effects": {"damage": 12}},
+			"cooldown_sec": 3.0
+		},
+		"hex_bolt": {
+			"id": "hex_bolt", "owner": "goblin_warlock", "kind": "attack", "name_key": "enemy_skill.hex_bolt.name", "counter_key": "enemy_skill.hex_bolt.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "curse"},
+			"effects": {"damage": 8, "status": {"id": "fragile", "stacks": 1}}, "recovery_sec": 0.6, "cooldown_sec": 2.8
+		},
+		"stolen_shape": {
+			"id": "stolen_shape", "owner": "goblin_warlock", "kind": "attack", "name_key": "enemy_skill.stolen_shape.name", "counter_key": "enemy_skill.stolen_shape.counter",
+			"pattern": {"variants": [[[0, 0], [0, 1], [0, 2], [1, 2]], [[0, 0], [1, 0], [2, 0], [1, 1]], [[1, 0], [2, 0], [0, 1], [1, 1]]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.8, "warning_sec": 1.4,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burst"},
+			"effects": {"damage": 16}, "recovery_sec": 1.2, "cooldown_sec": 5.0, "interruptible": false
+		},
+		"curse_lane": {
+			"id": "curse_lane", "owner": "goblin_warlock", "kind": "attack", "name_key": "enemy_skill.curse_lane.name", "counter_key": "enemy_skill.curse_lane.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.7, "warning_sec": 1.3,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "curse"},
+			"effects": {"damage": 12, "status": {"id": "slow", "sec": 1.5, "step_mult": 1.3}}, "recovery_sec": 0.8, "cooldown_sec": 6.0
+		},
+		"warlock_blink": {
+			"id": "warlock_blink", "owner": "goblin_warlock", "kind": "self", "name_key": "enemy_skill.warlock_blink.name", "counter_key": "enemy_skill.warlock_blink.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "adjacent_row"}},
+			"recovery_sec": 0.4, "cooldown_sec": 8.0, "counts_as_cast": false, "weight": 2.0
+		},
+		"twin_shapes": {
+			"id": "twin_shapes", "owner": "goblin_warlock", "kind": "attack", "name_key": "enemy_skill.twin_shapes.name", "counter_key": "enemy_skill.twin_shapes.counter",
+			"pattern": {"variants": [[[0, 0], [0, 1], [0, 2], [1, 2]], [[0, 0], [1, 0], [2, 0], [1, 1]], [[1, 0], [2, 0], [0, 1], [1, 1]]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.9, "warning_sec": 1.5,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burst"},
+			"effects": {"damage": 16},
+			"followup": {"offsets": [[2, 0], [-2, 0], [0, 2], [0, -2], [3, 0], [-3, 0], [0, 3], [0, -3]], "relative_to": "first_shift", "show_with_first": true, "exclude_first": true, "warning_sec": 0.75, "effects": {"damage": 16}},
+			"recovery_sec": 1.5, "cooldown_sec": 7.0, "interruptible": false
 		}
 	},
 	"enemies": {
@@ -221,6 +329,21 @@
 		"ancient_root_sentinel": {"tier": "elite", "arena": "rect",
 			"phases": [{"id": "main", "skills": ["sentinel_anchor", "branch_net", "bark_shift"], "mechanic": "sentinel_anchor"}]},
 		"mistbriar_matron": {"tier": "elite", "arena": "cross", "skills": ["thorn_fork", "wreath_guard"]},
+		"goblin_scout": {"tier": "normal", "arena": "square", "skills": ["scout_stab", "scout_hop"]},
+		"goblin_archer": {"tier": "normal", "arena": "rect", "skills": ["aimed_shot", "volley"]},
+		"dire_wolf": {"tier": "normal", "arena": "rect", "skills": ["chase_bite", "prowl"]},
+		"wolf_alpha": {"tier": "elite", "arena": "rect",
+			"phases": [{"id": "main", "skills": ["alpha_howl", "rending_rush", "alpha_bite"], "mechanic": "alpha_howl"}]},
+		"goblin_warlock": {
+			"tier": "warden",
+			"footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+			"arena": "boss_hall",
+			"phases": [
+				{"id": "p1", "enter_hp_ratio": 1.0, "skills": ["hex_bolt", "stolen_shape", "curse_lane", "warlock_blink"], "mechanic": "stolen_shape"},
+				{"id": "p2", "enter_hp_ratio": 0.5, "skills": ["hex_bolt", "stolen_shape", "curse_lane", "warlock_blink", "twin_shapes"],
+					"mechanic": "twin_shapes", "transition": {"sec": 1.5}}
+			]
+		},
 		"forest_witch": {
 			"tier": "warden",
 			"footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],

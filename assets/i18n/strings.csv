@@ -895,6 +895,34 @@ enemy_skill.withered_crown.name,Vương Miện Héo,Withered Crown
 enemy_skill.withered_crown.counter,Ra khỏi làn đỏ về phía không có làn sọc chờ. Không phá phép được.,Leave the red lane toward the side without the striped lane. Cannot be interrupted.
 enemy_skill.forest_last_knot.name,Nút Thắt Cuối Rừng,Forest's Last Knot
 enemy_skill.forest_last_knot.counter,"Phá mốc trước để đòn yếu đi và mất đòn nối, hoặc đứng ô an toàn đã thấy. Không phá phép được.","Break the anchors first to weaken it and drop its second strike, or stand on the safe cell you saw. Cannot be interrupted."
+enemy_skill.scout_stab.name,Đâm Thăm Dò,Probing Stab
+enemy_skill.scout_stab.counter,Ô đỏ là ô sẽ bị đâm: bước sang ô khác.,The red cell is where it stabs: step to another cell.
+enemy_skill.scout_hop.name,Nhảy Né,Hop Aside
+enemy_skill.scout_hop.counter,Nó nhảy lên hoặc xuống một hàng; ô viền ngà là chỗ nó sẽ đứng.,It hops one row up or down; the ivory cell is where it lands.
+enemy_skill.aimed_shot.name,Bắn Ngắm,Aimed Shot
+enemy_skill.aimed_shot.counter,Nó giương cung nhắm cả hàng của bạn: đổi hàng.,It draws on your whole row: change rows.
+enemy_skill.volley.name,Mưa Tên Chéo,Diagonal Volley
+enemy_skill.volley.counter,Tên rơi theo đường chéo: bước thẳng ngang hoặc dọc là thoát.,Arrows fall along a diagonal: one straight step clears it.
+enemy_skill.chase_bite.name,Vồ Đuổi,Chase Bite
+enemy_skill.chase_bite.counter,"Né lần một xong, ô đỏ thứ hai hiện ngay dưới chân: bước tiếp.",After the first bite a second red cell appears under you: keep moving.
+enemy_skill.prowl.name,Rình Mồi,Prowl
+enemy_skill.prowl.counter,Nó đổi hàng; ô viền ngà là chỗ nó sẽ đứng.,It changes rows; the ivory cell is where it lands.
+enemy_skill.alpha_howl.name,Tiếng Hú Đầu Đàn,Alpha Howl
+enemy_skill.alpha_howl.counter,Đánh trúng nó khi đang hú để ngắt và làm nó choáng; không ngắt thì nó ra đòn dồn dập trong 6 giây.,Hit it while it howls to interrupt and stun it; otherwise it attacks faster for 6 s.
+enemy_skill.rending_rush.name,Lao Xé,Rending Rush
+enemy_skill.rending_rush.counter,Nó lao dọc hàng của bạn và làm chậm bước: đổi hàng.,It rushes along your row and slows your steps: change rows.
+enemy_skill.alpha_bite.name,Cắn Đuổi,Hunting Bite
+enemy_skill.alpha_bite.counter,"Né lần một xong, ô đỏ thứ hai hiện ngay dưới chân: bước tiếp.",After the first bite a second red cell appears under you: keep moving.
+enemy_skill.hex_bolt.name,Tia Nguyền,Hex Bolt
+enemy_skill.hex_bolt.counter,Bước ra khỏi ô đỏ; trúng thì bị Rạn.,Step off the red cell; a hit leaves you Fragile.
+enemy_skill.stolen_shape.name,Khối Trộm,Stolen Shape
+enemy_skill.stolen_shape.counter,"Đọc hình khối 4 ô như khối của bạn, bước ra phía mở. Không phá phép được.",Read the 4-cell shape like one of your own blocks and step out the open side. Cannot be interrupted.
+enemy_skill.curse_lane.name,Làn Nguyền,Curse Lane
+enemy_skill.curse_lane.counter,Làn nguyền chạy dọc hàng của bạn và làm chậm bước: đổi hàng.,The curse sweeps along your row and slows your steps: change rows.
+enemy_skill.warlock_blink.name,Dịch Chuyển,Blink
+enemy_skill.warlock_blink.counter,Nó dời một hàng; khung ngà là chỗ nó sẽ đứng.,It shifts one row; the ivory frame is where it lands.
+enemy_skill.twin_shapes.name,Khối Đôi,Twin Shapes
+enemy_skill.twin_shapes.counter,Hai khối hiện cùng lúc: đứng ở ô ngoài cả hai. Không phá phép được.,Two shapes show at once: stand outside both. Cannot be interrupted.
 ui.status.frozen.desc,Không bước được cho tới khi tan băng; vẫn tung phép được.,You cannot step until it thaws; you can still cast.
 ui.status.root.name,Trói,Rooted
 ui.status.root.desc,Rễ giữ chân: không bước được; vẫn tung phép được.,Roots hold your feet: you cannot step; you can still cast.

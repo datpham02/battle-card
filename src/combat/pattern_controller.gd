@@ -72,6 +72,9 @@ var _phase_casts: int = 0
 var _forced_queue: Array[String] = []
 var _markers: Array[Dictionary] = []
 var _guard_markers: bool = false
+# 2026-11-03 (effects.haste): seconds left and the cooldown multiplier while it lasts.
+var _haste_left: float = 0.0
+var _haste_mult: float = 1.0
 ## P2.3: seconds since the player last placed a block covering the enemy (on_player_aim); the Rootling's creep
 ## condition `player_aimed_within_sec` reads it.
 var _since_aim: float = 1000.0
@@ -195,6 +198,11 @@ func cooldown_left(skill_id: String) -> float:
 	return float(_cooldowns.get(skill_id, 0.0))
 
 
+## 2026-11-03: seconds left of the enemy's haste (effects.haste; 0 = none) - for the view and tests.
+func haste_left() -> float:
+	return _haste_left
+
+
 ## D9 interrupt: the player's cast HIT the enemy. An interruptible skill in WINDUP or WARNING is cancelled (red off at
 ## once) and goes on cooldown x ai.cancel_cooldown_ratio. Returns true when something was cancelled.
 func on_enemy_hit() -> bool:
@@ -203,8 +211,11 @@ func on_enemy_hit() -> bool:
 	if not bool(_skill["interruptible"]):
 		return false
 	var id: String = str(_skill["id"])
+	var stun_sec: float = float(_skill.get("interrupt_stun_sec", 0.0))
 	_cooldowns[id] = float(_skill["cooldown_sec"]) * tempo_mult * float(_ai()["cancel_cooldown_ratio"])
 	_end_skill("interrupted", false)
+	if stun_sec > _EPS:
+		stun(stun_sec)
 	return true
 
 
@@ -250,6 +261,7 @@ func tick(delta: float) -> void:
 	_since_aim += delta
 	for id: String in _cooldowns.keys():
 		_cooldowns[id] = maxf(float(_cooldowns[id]) - delta, 0.0)
+	_haste_left = maxf(_haste_left - delta, 0.0)
 	if _state.player_cell == _last_player_cell:
 		_still_sec += delta
 	else:
@@ -608,6 +620,10 @@ func _resolve_self_or_marker() -> void:
 		var to: Vector2i = _plan["move_to"] as Vector2i
 		if _can_move_to(to) and _state.set_enemy_cell(to):
 			(result["cells"] as Array[Vector2i]).append(to)
+	if typeof(effects.get("haste")) == TYPE_DICTIONARY:
+		_haste_left = float((effects["haste"] as Dictionary)["sec"])
+		_haste_mult = float((effects["haste"] as Dictionary)["cooldown_mult"])
+		result["status"] = "haste"
 	if typeof(effects.get("guard")) == TYPE_DICTIONARY and _status != null:
 		var g: Dictionary = effects["guard"] as Dictionary
 		if not bool(g["while_markers"]) or not _markers.is_empty():
@@ -638,7 +654,9 @@ func _can_move_to(anchor: Vector2i) -> bool:
 
 func _finish_skill() -> void:
 	var id: String = str(_skill["id"])
-	_cooldowns[id] = float(_skill["cooldown_sec"]) * tempo_mult
+	# Haste shortens the other skills' cooldowns, never the cooldown of the skill that grants it.
+	var hasted: bool = _haste_left > _EPS and not (_skill["effects"] as Dictionary).has("haste")
+	_cooldowns[id] = float(_skill["cooldown_sec"]) * tempo_mult * (_haste_mult if hasted else 1.0)
 	if bool((_skill["conditions"] as Dictionary).get("once", false)):
 		_used_once[id] = true
 	_last_skill = id
