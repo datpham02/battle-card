@@ -465,7 +465,7 @@ func _draw_notice(vp: Vector2) -> void:
 	var band: Rect2 = ScreenLayout.map_notice_rect(vp)
 	HudSkin.panel(self, band, [0.0, HudSkin.BUTTON_CUT_MAX, 0.0, HudSkin.BUTTON_CUT_MAX], NOTICE_BACK, NOTICE_OUTLINE, OUTLINE_WIDTH)
 	var text: String = tr(_notice_key) % _notice_args if not _notice_args.is_empty() else tr(_notice_key)
-	_text(band, band.position.y + band.size.y * NOTICE_BASELINE, text, _fit(text, band.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0, NOTICE_FONT_SIZE, true), NOTICE_TEXT, true)
+	_text(band, band.position.y + band.size.y * NOTICE_BASELINE, text, _fit(text, band.size.x - ScreenLayout.side_margin(vp) * 2.0, NOTICE_FONT_SIZE, true), NOTICE_TEXT, true)
 	_text(band, band.position.y + band.size.y * NOTICE_SUB_BASELINE, tr(TEXT_NOTICE_DISMISS), NOTICE_SUB_FONT_SIZE, NOTICE_SUB_TEXT)
 
 

@@ -216,7 +216,7 @@ func focus_id() -> String:
 
 ## Story 038: the level bar rectangle (full width between the margins).
 static func bar_rect(vp: Vector2) -> Rect2:
-	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var margin: float = ScreenLayout.side_margin(vp)
 	return Rect2(margin, vp.y * BAR_TOP, vp.x - margin * 2.0, vp.y * BAR_HEIGHT)
 
 
@@ -235,14 +235,14 @@ static func plus_rect(vp: Vector2) -> Rect2:
 
 ## Story 038: the rules list rectangle (shorter while the locked-character strip is reserved).
 func rules_rect(vp: Vector2) -> Rect2:
-	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var margin: float = ScreenLayout.side_margin(vp)
 	var bottom: float = RULES_BOTTOM_WITH_STRIP if _any_locked(_flow.get_characters().ids()) else RULES_BOTTOM
 	return Rect2(margin, vp.y * RULES_TOP, vp.x - margin * 2.0, vp.y * (bottom - RULES_TOP))
 
 
 ## The strip under the cards (only meaningful while a card is locked).
 static func strip_rect(vp: Vector2) -> Rect2:
-	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var margin: float = ScreenLayout.side_margin(vp)
 	return Rect2(margin, vp.y * STRIP_TOP, vp.x - margin * 2.0, vp.y * (STRIP_BOTTOM - STRIP_TOP))
 
 

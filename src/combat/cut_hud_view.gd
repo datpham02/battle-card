@@ -1911,7 +1911,7 @@ func corner_label_blockers(vp: Vector2) -> Array[Rect2]:
 		if hp <= 0.0:
 			continue
 		var feet: Vector2 = _unit_feet_screen(vp, side, state)
-		if _hp_plates_on():
+		if _hp_plate_on(side):
 			out.append(hp_plate_rect(feet, HudSkin.text_width(str(ceili(hp)), HP_PLATE_FONT, true)))
 		var body := Vector2(cell_size.x * CORNER_LABEL_BODY_W, cell_size.y * CORNER_LABEL_BODY_H)
 		out.append(Rect2(feet - Vector2(body.x * 0.5, body.y), body))
@@ -2140,26 +2140,29 @@ func _draw_pins(vp: Vector2) -> void:
 		if chips.is_empty():
 			continue
 		var feet: Vector2 = _unit_feet_screen(vp, side, state)
-		if _hp_plates_on():
+		if _hp_plate_on(side):
 			feet.y += HP_PLATE_GAP + HP_PLATE_HEIGHT
 		_draw_keyword_chips(feet, chips.slice(0, CHIP_MAX))
 
 
-# True when the units carry HP plates (combat.json hud.corner_panels is false).
-func _hp_plates_on() -> bool:
+# True when the unit of [param side] carries an HP plate: never with the corner panels (combat.json
+# hud.corner_panels); the player not while its own corner panel shows (hud.player_panel, 2026-11-03).
+func _hp_plate_on(side: int) -> bool:
 	var config: CombatConfig = _combat.get_config()
-	return config == null or not config.hud_corner_panels
+	if config == null:
+		return true
+	if config.hud_corner_panels:
+		return false
+	return not (side == CombatState.Side.PLAYER and config.hud_player_panel)
 
 
 # 2026-10-31 (user, OSFE reference): the current HP of each living unit on a small plate under its feet,
 # while the corner HP panels are off. The number only (no bar).
 func _draw_hp_plates(vp: Vector2) -> void:
-	if not _hp_plates_on():
-		return
 	var state: CombatState = _combat.get_state()
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
 		var hp: float = state.player_hp if side == CombatState.Side.PLAYER else state.enemy_hp
-		if hp <= 0.0:
+		if hp <= 0.0 or not _hp_plate_on(side):
 			continue
 		var text: String = str(ceili(hp))
 		var rect: Rect2 = hp_plate_rect(_unit_feet_screen(vp, side, state), HudSkin.text_width(text, HP_PLATE_FONT, true))

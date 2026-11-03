@@ -49,7 +49,8 @@ const MESSAGE_COLOR: Color = HudSkin.TEXT
 const MESSAGE_BAD_COLOR: Color = Color(1.0, 0.45, 0.4)
 const SERVICE_REMOVE_BACK: Color = Color(0.29, 0.17, 0.15)
 const SERVICE_HEAL_BACK: Color = Color(0.15, 0.29, 0.21)
-const SERVICE_TEXT: Color = HudSkin.TEXT
+## 2026-11-03: the ancient plate (UiButtons.PLATES look) of each service while neither selected nor used.
+const SERVICE_PLATES: Dictionary = {"remove_card": "wine", "heal": "moss", "remove_shape": "navy"}
 const SERVICE_PRICE: Color = Color(1.0, 0.85, 0.35)
 const SERVICE_PRICE_SHORT: Color = Color(1.0, 0.45, 0.4)
 const DETAIL_DIM: Color = Color(0.0, 0.0, 0.0, 0.55)
@@ -211,7 +212,7 @@ class DeckPicker extends RefCounted:
 		var row: Rect2 = ScreenLayout.deck_picker_row_rect(vp)
 		var size: Vector2 = ScreenLayout.deck_picker_tile_size(vp)
 		var gap: float = vp.x * ScreenLayout.DECK_PICKER_GAP_RATIO
-		var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+		var margin: float = ScreenLayout.side_margin(vp)
 		var total: float = size.x * count + gap * maxi(count - 1, 0)
 		var left: float = row.position.x + maxf((row.size.x - total) * 0.5, margin) - scroll
 		for i: int in count:
@@ -222,7 +223,7 @@ class DeckPicker extends RefCounted:
 	func max_scroll(vp: Vector2, count: int) -> float:
 		var size: Vector2 = ScreenLayout.deck_picker_tile_size(vp)
 		var gap: float = vp.x * ScreenLayout.DECK_PICKER_GAP_RATIO
-		var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+		var margin: float = ScreenLayout.side_margin(vp)
 		return maxf(size.x * count + gap * maxi(count - 1, 0) + margin * 2.0 - vp.x, 0.0)
 
 	## Feeds one REAL pointer event (the owner drops emulated copies). A press in the row starts a
@@ -819,7 +820,7 @@ func _draw_selected_panel(vp: Vector2) -> void:
 func _draw_header(vp: Vector2, title: String) -> void:
 	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
 	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.4, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
-	var right: float = vp.x * (1.0 - ScreenLayout.MARGIN_RATIO)
+	var right: float = (vp.x - ScreenLayout.side_margin(vp))
 	var coin_left: float = draw_gold(self, right, band.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
 	var hp: String = tr(TEXT_HP) % [ceili(_hp()), ceili(_max_hp())]
 	var width: float = HudSkin.text_width(hp, HEADER_FONT_SIZE)
@@ -892,18 +893,20 @@ func _draw_relic_body(rect: Rect2, id: String) -> void:
 
 # One service button: name, a one-line description, the price (red when short) or "Đã dùng".
 func _draw_service(rect: Rect2, id: String, back: Color) -> void:
+	# 2026-11-03: an ancient plate (UiButtons) like every button: its own colour per service (remove card wine, heal
+	# moss, remove shape navy), gold while selected, grey once used, sinking while pressed. [param back] is kept for
+	# the callers and unused.
+	var _unused_back: Color = back
 	var entry: Dictionary = _entry(KIND_SERVICE, id)
 	var used: bool = bool(entry.get("used", false))
 	var selected: bool = str(_selected.get("kind", "")) == KIND_SERVICE and str(_selected.get("id", "")) == id
-	var fill: Color = back.lightened(HudSkin.BUTTON_PRESSED_LIGHTEN) if (not used and UiButtons.is_pressed_at(self, rect)) else back
-	var outline: Color = SELECTED_OUTLINE if selected else HudSkin.MIST
-	var text: Color = SERVICE_TEXT
-	if used:
-		fill.a *= UiButtons.DIM_ALPHA
-		outline.a *= UiButtons.DIM_ALPHA
-		text.a *= UiButtons.DIM_ALPHA
-	var cut: float = HudSkin.button_cut(rect)
-	HudSkin.panel(self, rect, [0.0, cut, 0.0, cut], fill, outline, MARKED_LINE_WIDTH if selected else HudSkin.PANEL_LINE_WIDTH)
+	var pressed: bool = not used and UiButtons.is_pressed_at(self, rect)
+	var lk: Dictionary = UiButtons.look(UiButtons.Style.SECONDARY, pressed, not used, selected)
+	if not used and not selected:
+		lk["plate"] = SERVICE_PLATES.get(id, "navy")
+	var body: Rect2 = UiButtons.draw_plate(self, rect, lk, UiButtons.ui_scale(self), pressed)
+	var text: Color = lk["text"]
+	rect = body
 	var inner: float = rect.size.x * (1.0 - PAD_RATIO * 2.0)
 	var name: String
 	var desc: String
@@ -920,7 +923,7 @@ func _draw_service(rect: Rect2, id: String, back: Color) -> void:
 	_text(rect, rect.position.y + rect.size.y * SERVICE_NAME_BASELINE, name, _fit(name, inner, SERVICE_NAME_FONT_SIZE, true), text, true)
 	_text(rect, rect.position.y + rect.size.y * SERVICE_DESC_BASELINE, desc, _fit(desc, inner, SERVICE_DESC_FONT_SIZE), text)
 	var price: String = tr(TEXT_USED) if used else tr(TEXT_PRICE) % int(entry.get("price", 0))
-	var price_color: Color = text if used else (SERVICE_PRICE_SHORT if _short(KIND_SERVICE, id) else SERVICE_PRICE)
+	var price_color: Color = text if used or selected else (SERVICE_PRICE_SHORT if _short(KIND_SERVICE, id) else SERVICE_PRICE)
 	_text(rect, rect.position.y + rect.size.y * SERVICE_PRICE_BASELINE, price, SERVICE_PRICE_FONT_SIZE, price_color, true)
 
 

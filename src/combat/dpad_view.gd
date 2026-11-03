@@ -222,7 +222,8 @@ func _draw_stick(alpha: float, locked: bool) -> void:
 	if not _reader.is_active():
 		if _match_time < HINT_SECONDS or _settings.get_show_control_hints():
 			var vp: Vector2 = get_viewport_rect().size
-			var center := Vector2(HINT_CENTER_X_PX, vp.y * HINT_CENTER_Y_RATIO)
+			# 2026-11-03: measured from the left edge of the safe area (a notch on the left moves the hint in).
+			var center := Vector2(ScreenLayout.safe_rect(vp).position.x + HINT_CENTER_X_PX, vp.y * HINT_CENTER_Y_RATIO)
 			draw_arc(center, StickReader.base_radius(), 0.0, TAU, ARC_POINTS, Color(BUTTON_OUTLINE, HINT_ALPHA), HINT_WIDTH, true)
 		return
 	var origin: Vector2 = _reader.get_origin()

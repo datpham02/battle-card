@@ -546,7 +546,7 @@ func _draw_intro(vp: Vector2) -> void:
 	var desc_key: String = str(_controller.get_config().matches[state.get_match_index()].get("desc_key", ""))
 	if not desc_key.is_empty():
 		var desc: String = tr(desc_key)
-		var desc_width: float = band.size.x - vp.x * ScreenLayout.MARGIN_RATIO * 2.0
+		var desc_width: float = band.size.x - ScreenLayout.side_margin(vp) * 2.0
 		if shown:
 			desc_width = band.size.x - (band.end.x - block.position.x) * 2.0
 		_text(band, band.position.y + band.size.y * BAND_DESC_BASELINE, desc, _fit_line_font(desc, desc_width, BAND_DESC_FONT_SIZE), TEXT_DIM)
@@ -559,7 +559,7 @@ static func intro_arena_rect(vp: Vector2) -> Rect2:
 	var s: float = ScreenLayout.controls_scale(vp)
 	var band: Rect2 = ScreenLayout.run_intro_band_rect(vp)
 	var w: float = roundf(INTRO_ARENA_WIDTH_PX * s)
-	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var margin: float = ScreenLayout.side_margin(vp)
 	var top: float = band.position.y + roundf(INTRO_ARENA_PAD_PX * s)
 	var bottom: float = band.position.y + band.size.y * BAND_DESC_BASELINE - roundf(BAND_DESC_FONT_SIZE * s * 1.2)
 	return Rect2(band.end.x - margin - w, top, w, maxf(bottom - top, 0.0))

@@ -55,12 +55,14 @@ static func draw_button(canvas: CanvasItem, rect: Rect2, text: String, style: in
 
 ## 2026-11-02 ancient plates: pixel-art nine-slice sources made by tools/asset-pipeline/make_ui_plates.py (cut
 ## corners, ink outline, gold rim shaded per pixel, thin inner gold line with corner ticks, speckled fill, lip), drawn
-## tiled at the whole-number art scale ([method ui_scale]); keys "<look>_up" / "<look>_down".
+## tiled at the whole-number art scale ([method ui_scale]); keys "<look>_up" / "<look>_down" (moss: a green plate a
+## caller sets as look["plate"], e.g. the shop's heal service).
 const PLATES: Dictionary = {
 	"gold_up": preload("res://assets/art/ui/plates/plate_gold_up.png"), "gold_down": preload("res://assets/art/ui/plates/plate_gold_down.png"),
 	"navy_up": preload("res://assets/art/ui/plates/plate_navy_up.png"), "navy_down": preload("res://assets/art/ui/plates/plate_navy_down.png"),
 	"wine_up": preload("res://assets/art/ui/plates/plate_wine_up.png"), "wine_down": preload("res://assets/art/ui/plates/plate_wine_down.png"),
 	"grey_up": preload("res://assets/art/ui/plates/plate_grey_up.png"), "grey_down": preload("res://assets/art/ui/plates/plate_grey_down.png"),
+	"moss_up": preload("res://assets/art/ui/plates/plate_moss_up.png"), "moss_down": preload("res://assets/art/ui/plates/plate_moss_down.png"),
 }
 const GEM_TEXTURE: Texture2D = preload("res://assets/art/ui/plates/gem.png")
 ## Nine-slice margins of the plate sources (art px: left, top, right, bottom incl. the 2 px lip), the lip, the art px

@@ -2463,6 +2463,8 @@ func _unit_center(_vp: Vector2, side: int) -> Vector2:
 func _draw_hud(vp: Vector2) -> void:
 	var s: float = vp.y / HUD_REF_HEIGHT
 	if _config == null or not _config.hud_corner_panels:
+		if _config != null and _config.hud_player_panel:
+			_draw_player_panel(vp, s)
 		_draw_floating_boss_hand(vp, s)
 		return
 	var cut: float = HUD_PANEL_CUT * s
@@ -2499,6 +2501,28 @@ func _draw_hud(vp: Vector2) -> void:
 	HudSkin.hp_bar(self, bbar, _hp_ratio(1), _hp_trail_shown(1), HudSkin.BOSS_HP_FILL, true)
 	var boss_hp: String = HUD_NUMBER_FORMAT % [ceili(_state.enemy_hp), ceili(_state.enemy_max_hp)]
 	HudSkin.text(self, Vector2(bbar.position.x, row3_y), boss_hp, small_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_RIGHT, bbar.size.x, true)
+
+
+# 2026-11-03 (combat.json hud.player_panel): the player's own corner panel, top-left of the safe area
+# (ScreenLayout.hud_player_panel_rect): row 1 name + "hp/max", row 2 the HP bar with the damage trail. No Engraving
+# row: its count stays on the Awaken button. The boss has no panel (its HP stays on the plate under its feet).
+func _draw_player_panel(vp: Vector2, s: float) -> void:
+	var panel: Rect2 = ScreenLayout.hud_player_panel_rect(vp)
+	HudSkin.panel(self, panel, [0.0, 0.0, HUD_PANEL_CUT * s, 0.0], Color(HudSkin.NIGHT_STONE, HUD_PANEL_ALPHA), HudSkin.MIST)
+	var inset: float = HUD_INSET * s
+	var name_size: int = roundi(HUD_NAME_FONT * s)
+	var number_size: int = roundi(HUD_NUMBER_FONT * s)
+	var name_y: float = panel.position.y + HUD_NAME_BASELINE * s
+	var bar := Rect2(Vector2(panel.position.x + inset, floorf(panel.position.y + HUD_BAR_TOP * s)),
+		Vector2(floorf(panel.size.x - inset * 2.0 - HUD_PANEL_CUT * s * 0.5), maxf(roundf(HUD_BAR_HEIGHT * s), 1.0)))
+	var hp_text: String = HUD_NUMBER_FORMAT % [ceili(_state.player_hp), ceili(_state.player_max_hp)]
+	var hp_w: float = HudSkin.text_width(hp_text, number_size, true)
+	HudSkin.text(self, Vector2(bar.end.x - hp_w, name_y), hp_text, number_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
+	var room: float = maxf(bar.size.x - hp_w - HUD_NUMBER_GAP * s, 0.0)
+	var player_name: String = get_player_name()
+	HudSkin.text(self, Vector2(bar.position.x, name_y), player_name, _fit_font(player_name, name_size, roundi(HUD_NAME_MIN_FONT * s), room), HudSkin.TEXT,
+		HORIZONTAL_ALIGNMENT_LEFT, room)
+	HudSkin.hp_bar(self, bar, _hp_ratio(0), _hp_trail_shown(0), HudSkin.HP_FILL, false)
 
 
 # 2026-10-31 (combat.json hud.corner_panels = false): no corner panels; the boss's held points float on the

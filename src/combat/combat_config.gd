@@ -108,6 +108,11 @@ var hud_hp_trail_sec: float = 0.4
 ## on a plate under its feet (CutHudView._draw_hp_plates) and the boss's held points float in the top-right
 ## corner. True = the corner panels of 2026-10-31 (ScreenLayout.hud_panel_rect).
 var hud_corner_panels: bool = false
+## 2026-11-03 (user: the hero's HP in the top-left panel, monsters keep the number under their feet): combat.json
+## `hud.player_panel`. True (shipped) with corner_panels false = only the player's corner panel (name, HP, bar; the
+## Engraving count stays on the Awaken button) and no plate under the player; the boss keeps its plate and no panel.
+## Ignored while corner_panels is true (both panels, no plates).
+var hud_player_panel: bool = true
 ## 2026-10-31 (user: "ko cần cái vòng cd mỗi lần di chuyển"): combat.json `hud.step_rings`. False (shipped) = no
 ## step-cooldown ring around the player or the boss after a step; the boss's solid "rooted by its swing" ring stays.
 var hud_step_rings: bool = false
@@ -355,6 +360,11 @@ func _parse_hud(data: Dictionary) -> void:
 		hud_corner_panels = bool(panels)
 	else:
 		push_warning("CombatConfig: hud.corner_panels must be true or false, using %s" % hud_corner_panels)
+	var player_panel: Variant = (raw as Dictionary).get("player_panel", hud_player_panel)
+	if typeof(player_panel) == TYPE_BOOL:
+		hud_player_panel = bool(player_panel)
+	else:
+		push_warning("CombatConfig: hud.player_panel must be true or false, using %s" % hud_player_panel)
 
 
 # A [from, to] pair of alphas, each clamped-checked to 0..1; (-1, -1) marks it invalid.

@@ -84,6 +84,7 @@
 	"hud": {
 		"hp_trail_sec": 0.4,
 		"corner_panels": false,
+		"player_panel": true,
 		"step_rings": false
 	}
 }

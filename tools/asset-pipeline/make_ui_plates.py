@@ -1,7 +1,7 @@
 """Generates the ancient UI plate textures (2026-11-02, user reference sheet of the button system).
 
 Pixel art drawn by code, deterministic (seeded noise), into assets/art/ui/plates/:
-  plate_<look>_up.png / plate_<look>_down.png  for look in gold, navy, wine, grey
+  plate_<look>_up.png / plate_<look>_down.png  for look in gold, navy, wine, grey, moss
       a 48x34 art-px nine-slice source (margins left 8, top 8, right 8, bottom 10): 4 px cut corners, a 1 px ink
       outline, a 2 px gold rim shaded per pixel (light top-left, dark bottom-right), a 1 px ink gap, a 1 px thin
       inner gold line with corner ticks, a speckled fill with a light first row; "up" has a 2 px lip under the
@@ -47,6 +47,7 @@ FILLS = {
     "navy": (hexc("262A44"), hexc("1F2238"), hexc("30355A"), hexc("3A4068")),
     "wine": (hexc("5C2430"), hexc("4A1C27"), hexc("6C2C3A"), hexc("7E3A48")),
     "grey": (hexc("34333C"), hexc("2C2B33"), hexc("3C3B45"), hexc("45444F")),
+    "moss": (hexc("2A4A34"), hexc("223D2B"), hexc("335A40"), hexc("3E6A4C")),
 }
 
 
@@ -73,7 +74,7 @@ def plate(look, pressed):
     grey = look == "grey"
     rim_l, rim_m, rim_d, inner = (GREY_RIM_LIGHT, GREY_RIM, GREY_RIM_DARK, GREY_INNER) if grey else (RIM_LIGHT, RIM, RIM_DARK, INNER_GOLD)
     lip = LIP_GREY if grey else LIP_GOLD
-    rand = rng({"gold": 11, "navy": 23, "wine": 37, "grey": 41}[look])
+    rand = rng({"gold": 11, "navy": 23, "wine": 37, "grey": 41, "moss": 47}[look])
     total_h = H + LIP
     px = [[(0, 0, 0, 0)] * W for _ in range(total_h)]
     oy = LIP if pressed else 0

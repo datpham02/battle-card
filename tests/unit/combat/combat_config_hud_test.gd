@@ -66,6 +66,11 @@ func test_corner_panels_flag() -> void:
 	_check("omitted corner_panels = false", CombatConfig.from_dictionary({"hud": {}}).hud_corner_panels == false)
 	_check("explicit corner_panels true", CombatConfig.from_dictionary({"hud": {"corner_panels": true}}).hud_corner_panels == true)
 	_check("non-bool corner_panels keeps false", CombatConfig.from_dictionary({"hud": {"corner_panels": 1}}).hud_corner_panels == false)
+	# 2026-11-03: the player's own panel (monsters keep their HP plates).
+	_check("shipped player_panel = true", shipped != null and shipped.hud_player_panel == true)
+	_check("omitted player_panel = true", CombatConfig.from_dictionary({"hud": {}}).hud_player_panel == true)
+	_check("explicit player_panel false", CombatConfig.from_dictionary({"hud": {"player_panel": false}}).hud_player_panel == false)
+	_check("non-bool player_panel keeps true", CombatConfig.from_dictionary({"hud": {"player_panel": "no"}}).hud_player_panel == true)
 
 
 # The HP number's slot: centred on the feet, HP_PLATE_GAP below them, HP_PLATE_HEIGHT tall, never narrower than

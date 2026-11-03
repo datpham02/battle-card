@@ -176,7 +176,7 @@ static func grid_rect(vp: Vector2) -> Rect2:
 
 ## "Về": the bottom-left corner, in the left thumb's reach.
 static func back_rect(vp: Vector2) -> Rect2:
-	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var margin: float = ScreenLayout.side_margin(vp)
 	var size := Vector2(vp.x * BACK_WIDTH_RATIO, vp.y * BACK_HEIGHT_RATIO)
 	return Rect2(Vector2(margin, vp.y - margin - size.y), size)
 
@@ -189,7 +189,7 @@ static func panel_rect(vp: Vector2) -> Rect2:
 ## Rectangle of cell [param index] (0-based, file order) of the unscrolled grid; add the scroll offset
 ## (subtract it) for its on-screen place. All cells share one size.
 static func cell_rect(vp: Vector2, index: int) -> Rect2:
-	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var margin: float = ScreenLayout.side_margin(vp)
 	var gap: float = vp.x * GAP_RATIO
 	var width: float = (vp.x - margin * 2.0 - gap * (COLUMNS - 1)) / COLUMNS
 	var height: float = vp.y * CELL_HEIGHT_RATIO
@@ -350,7 +350,7 @@ func _draw() -> void:
 	draw_rect(Rect2(0.0, view.end.y, vp.x, vp.y - view.end.y), BG_COLOR)
 	var title := Rect2(0.0, 0.0, vp.x, view.position.y)
 	_text(title, title.get_center().y + TITLE_FONT_SIZE * 0.35, tr(TEXT_TITLE), TITLE_FONT_SIZE, TITLE_COLOR, HORIZONTAL_ALIGNMENT_CENTER, true)
-	var counter := Rect2(vp.x * 0.7, 0.0, vp.x * (1.0 - ScreenLayout.MARGIN_RATIO) - vp.x * 0.7, view.position.y)
+	var counter := Rect2(vp.x * 0.7, 0.0, (vp.x - ScreenLayout.side_margin(vp)) - vp.x * 0.7, view.position.y)
 	_text(counter, counter.get_center().y + COUNTER_FONT_SIZE * 0.35, tr(TEXT_COUNTER) % [earned_count(), ids.size()], COUNTER_FONT_SIZE, EARNED_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, true)
 	_draw_scroll_bar(vp, view)
 	var back: Rect2 = back_rect(vp)

@@ -16,6 +16,8 @@ extends RefCounted
 
 ## Horizontal screen margin as a share of viewport width.
 const MARGIN_RATIO: float = 0.03
+## 2026-11-03: px at 720p kept between a notch / rounded corner (the safe area's edge) and the menus (side_margin).
+const SAFE_EDGE_PAD_PX: float = 8.0
 ## Arena: top edge as a share of viewport height.
 const ARENA_TOP_RATIO: float = 0.03
 ## Quick spec section 4 (tuning knobs). Lowest edge of a board row that extends outside the thumb
@@ -155,6 +157,8 @@ const HUD_BAR_TEXT_GAP: float = 8.0
 ## v3 hero on a 5x5 back row (head top ~57 px).
 ## User 2026-10-31: "thanh máu có thể ko cần dài quá như osfe": 260 px wide (HP bar ~236 px).
 const HUD_CORNER_PANEL_PX: Vector2 = Vector2(260.0, 52.0)
+## 2026-11-03: height at 720p of the player-only panel (name / HP row and the HP bar).
+const HUD_PLAYER_PANEL_PX: float = 42.0
 const HUD_CORNER_PANEL_REF_HEIGHT: float = 720.0
 const HUD_CORNER_PANEL_MAX_WIDTH_RATIO: float = 0.28
 ## Gap (720p px) between a corner panel and the labels placed beside it (match label, deck label).
@@ -167,7 +171,8 @@ const HUD_TOP_ROW_INSET_PX: float = 12.0
 ## and the boss's held points so they line up on its centre.
 static func hud_top_row_rect(viewport_size: Vector2) -> Rect2:
 	var s: float = controls_scale(viewport_size)
-	return Rect2(0.0, roundf(HUD_EDGE_INSET_PX * s), viewport_size.x, roundf(PAUSE_TILE_PX * s))
+	# 2026-11-03: from the top of the safe area (notches, rounded corners), see [method safe_rect].
+	return Rect2(0.0, safe_rect(viewport_size).position.y + roundf(HUD_EDGE_INSET_PX * s), viewport_size.x, roundf(PAUSE_TILE_PX * s))
 
 
 ## Controls v3: px per 720p px (viewport height / 720).
@@ -268,7 +273,7 @@ const WORLD_ENTER_WIDTH_RATIO: float = 0.3
 
 ## Rectangle of the arena area (HUD band + board), down to the wide-row bottom (64 % of the height).
 static func arena_rect(viewport_size: Vector2) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var top: float = viewport_size.y * ARENA_TOP_RATIO
 	var bottom: float = viewport_size.y * ARENA_BOTTOM_WIDE_RATIO
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, bottom - top)
@@ -277,7 +282,7 @@ static func arena_rect(viewport_size: Vector2) -> Rect2:
 ## Bottom edge of the controls: half a margin above the bottom of the screen (the Awaken button's
 ## bottom edge; the stick zone runs to the very bottom).
 static func controls_bottom(viewport_size: Vector2) -> float:
-	return viewport_size.y - viewport_size.x * MARGIN_RATIO * 0.5
+	return safe_rect(viewport_size).end.y - viewport_size.x * MARGIN_RATIO * 0.5
 
 
 ## Stick zone (Z3): x 0-25 % of the width, from the wide-row arena bottom (64 %) to the bottom of
@@ -290,7 +295,8 @@ static func stick_zone_rect(viewport_size: Vector2) -> Rect2:
 
 ## Controls v3: the bottom edge of both thumb rows (HUD_EDGE_INSET_PX above the screen's bottom, whole px).
 static func bottom_row_bottom(viewport_size: Vector2) -> float:
-	return roundf(viewport_size.y - HUD_EDGE_INSET_PX * controls_scale(viewport_size))
+	# 2026-11-03: above the bottom of the safe area.
+	return roundf(safe_rect(viewport_size).end.y - HUD_EDGE_INSET_PX * controls_scale(viewport_size))
 
 
 # Controls v3: a visual control of [param width_px] x BOTTOM_ROW_HEIGHT_PX (720p px) whose left edge is [param left]
@@ -316,7 +322,7 @@ static func slot_rect(viewport_size: Vector2, index: int, count: int = 3) -> Rec
 	var i: int = clampi(index, 0, n - 1)
 	var size: Vector2 = slot_size(viewport_size)
 	var gap: float = roundf(BOTTOM_ROW_GAP_PX * s)
-	var right: float = viewport_size.x - roundf(HUD_EDGE_INSET_PX * s)
+	var right: float = safe_rect(viewport_size).end.x - roundf(HUD_EDGE_INSET_PX * s)
 	var left: float = right - size.x * n - gap * (n - 1) + (size.x + gap) * i
 	return Rect2(Vector2(left, bottom_row_bottom(viewport_size) - size.y), size)
 
@@ -608,7 +614,7 @@ static func divider_x(grid: BoardGrid, viewport_size: Vector2) -> float:
 ## (ROTATE_WIDTH_PX square, the buffer between the two opposite actions), Hủy (CANCEL_WIDTH_PX); BOTTOM_ROW_HEIGHT_PX
 ## tall, BOTTOM_ROW_GAP_PX apart, on the shared bottom edge (12-112 / 122-186 / 196-268 x 644-708 at 1280x720).
 static func confirm_button_rect(viewport_size: Vector2) -> Rect2:
-	return _row_rect(viewport_size, HUD_EDGE_INSET_PX * controls_scale(viewport_size), CAST_WIDTH_PX)
+	return _row_rect(viewport_size, safe_rect(viewport_size).position.x + HUD_EDGE_INSET_PX * controls_scale(viewport_size), CAST_WIDTH_PX)
 
 
 ## Controls v3: the Xoay (rotate) square right of Tung phép, see [method confirm_button_rect].
@@ -702,7 +708,7 @@ static func status_icon_rects(viewport_size: Vector2, count: int) -> Array[Rect2
 ## stick zone; the relic row's left inset, one icon wide (12-64 x 102-453 px at 1280x720).
 static func cooldown_column_rect(viewport_size: Vector2) -> Rect2:
 	var s: float = controls_scale(viewport_size)
-	var left: float = floorf(HUD_TOP_ROW_INSET_PX * s)
+	var left: float = safe_rect(viewport_size).position.x + floorf(HUD_TOP_ROW_INSET_PX * s)
 	var top: float = ceilf(hud_status_row_rect(viewport_size).end.y + COOLDOWN_COLUMN_GAP_PX * s)
 	var bottom: float = floorf(stick_zone_rect(viewport_size).position.y - COOLDOWN_COLUMN_GAP_PX * s)
 	return Rect2(left, top, roundf(COOLDOWN_ICON_PX * s), maxf(bottom - top, 0.0))
@@ -728,17 +734,18 @@ static func place_hint_rect(viewport_size: Vector2) -> Rect2:
 	var s: float = controls_scale(viewport_size)
 	var row_top: float = confirm_button_rect(viewport_size).position.y
 	var h: float = roundf(PLACE_HINT_HEIGHT_PX * s)
-	var left: float = roundf(HUD_EDGE_INSET_PX * s)
+	var left: float = safe_rect(viewport_size).position.x + roundf(HUD_EDGE_INSET_PX * s)
 	return Rect2(left, row_top - roundf(BOTTOM_ROW_GAP_PX * s) - h, roundf(PLACE_HINT_WIDTH_PX * s), h)
 
 
 ## Controls v3 top-right corner: the visible pause tile (PAUSE_TILE_PX), HUD_EDGE_INSET_PX from the right and top
-## edges (1220-1268 x 12-60 at 1280x720).
+## edges of the safe area (1220-1268 x 12-60 at 1280x720 on a screen without notches).
 static func pause_tile_rect(viewport_size: Vector2) -> Rect2:
 	var s: float = controls_scale(viewport_size)
 	var side: float = roundf(PAUSE_TILE_PX * s)
 	var inset: float = roundf(HUD_EDGE_INSET_PX * s)
-	return Rect2(viewport_size.x - inset - side, inset, side, side)
+	var safe: Rect2 = safe_rect(viewport_size)
+	return Rect2(safe.end.x - inset - side, safe.position.y + inset, side, side)
 
 
 ## Controls v3: the gold (angular glyph + number) left of the pause tile, right-aligned TOP_RIGHT_GAP_PX before it,
@@ -763,6 +770,14 @@ static func run_match_label_rect(viewport_size: Vector2) -> Rect2:
 ## Corner HP panel of [param side] (0 = player, top-left; 1 = boss, top-right), flush to the screen
 ## corner (OSFE-style, user 2026-10-31): HUD_CORNER_PANEL_PX scaled by height / 720, at most
 ## HUD_CORNER_PANEL_MAX_WIDTH_RATIO of the width, whole pixels.
+## 2026-11-03: the player's own corner panel (combat.json hud.player_panel): the left corner panel's width, two rows
+## tall (HUD_PLAYER_PANEL_PX), flush with the top-left corner of the safe area.
+static func hud_player_panel_rect(viewport_size: Vector2) -> Rect2:
+	var full: Rect2 = hud_panel_rect(viewport_size, 0)
+	var safe: Rect2 = safe_rect(viewport_size)
+	return Rect2(safe.position, Vector2(full.size.x, floorf(HUD_PLAYER_PANEL_PX * viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT)))
+
+
 static func hud_panel_rect(viewport_size: Vector2, side: int) -> Rect2:
 	var s: float = viewport_size.y / HUD_CORNER_PANEL_REF_HEIGHT
 	var w: float = floorf(minf(HUD_CORNER_PANEL_PX.x * s, viewport_size.x * HUD_CORNER_PANEL_MAX_WIDTH_RATIO))
@@ -892,7 +907,7 @@ static func reward_remove_rects(viewport_size: Vector2, count: int) -> Array[Rec
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
 	var width: float = maxf((viewport_size.x - margin * 2.0 - gap * (REWARD_REMOVE_COLS - 1)) / REWARD_REMOVE_COLS, 0.0)
 	var height: float = viewport_size.y * REWARD_REMOVE_TILE_HEIGHT_RATIO
@@ -1010,7 +1025,7 @@ static func pause_button_rect(viewport_size: Vector2) -> Rect2:
 static func back_button_rect(viewport_size: Vector2) -> Rect2:
 	var title: Rect2 = floor_title_rect(viewport_size)
 	var size := Vector2(viewport_size.x * BACK_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
-	return Rect2(Vector2(viewport_size.x * MARGIN_RATIO, title.get_center().y - size.y * 0.5), size)
+	return Rect2(Vector2(side_margin(viewport_size), title.get_center().y - size.y * 0.5), size)
 
 
 ## Character select (Story 018): [param count] cards side by side under the title band, centred,
@@ -1020,7 +1035,7 @@ static func character_card_rects(viewport_size: Vector2, count: int) -> Array[Re
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var gap: float = viewport_size.x * CHARACTER_CARD_GAP_RATIO
 	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1)) / count
 	var width: float = maxf(minf(shared, viewport_size.x * CHARACTER_CARD_MAX_WIDTH_RATIO), 0.0)
@@ -1037,7 +1052,7 @@ static func character_card_rects(viewport_size: Vector2, count: int) -> Array[Re
 static func floor_hero_label_rect(viewport_size: Vector2) -> Rect2:
 	var title: Rect2 = floor_title_rect(viewport_size)
 	var size := Vector2(viewport_size.x * FLOOR_HERO_LABEL_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
-	return Rect2(Vector2(viewport_size.x * (1.0 - MARGIN_RATIO) - size.x, title.get_center().y - size.y * 0.5), size)
+	return Rect2(Vector2((viewport_size.x - side_margin(viewport_size)) - size.x, title.get_center().y - size.y * 0.5), size)
 
 
 ## Awaken button rectangle (Z4): a square of AWAKEN_BUTTON_RATIO of the height (115 px at 720p), centred
@@ -1091,7 +1106,7 @@ static func map_column_rects(viewport_size: Vector2, count: int) -> Array[Rect2]
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var gap: float = viewport_size.x * MAP_COLUMN_GAP_RATIO
 	var width: float = maxf((viewport_size.x - margin * 2.0 - gap * (count - 1)) / count, 0.0)
 	var top: float = viewport_size.y * MAP_COLUMNS_TOP_RATIO
@@ -1154,7 +1169,7 @@ static func touch_rect(rect: Rect2) -> Rect2:
 
 ## World map (Story 031): the floor progress strip, between the screen margins under the title band.
 static func world_strip_rect(viewport_size: Vector2) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var top: float = viewport_size.y * WORLD_STRIP_TOP_RATIO
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, viewport_size.y * WORLD_STRIP_BOTTOM_RATIO - top)
 
@@ -1180,7 +1195,7 @@ static func world_card_rects(viewport_size: Vector2, count: int) -> Array[Rect2]
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var top: float = viewport_size.y * WORLD_CARDS_TOP_RATIO
 	var height: float = viewport_size.y * WORLD_CARDS_BOTTOM_RATIO - top
 	var width: float = viewport_size.x * WORLD_CARD_WIDTH_RATIO
@@ -1214,7 +1229,7 @@ static func world_card_touch_rect(viewport_size: Vector2, card: Rect2) -> Rect2:
 ## World map (Story 031): the "Vào vùng" button at the bottom edge, centred under [param card]
 ## (the selected card at rest), kept inside the screen margins.
 static func world_enter_button_rect(viewport_size: Vector2, card: Rect2) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var width: float = viewport_size.x * WORLD_ENTER_WIDTH_RATIO
 	var top: float = viewport_size.y * WORLD_ENTER_TOP_RATIO
 	var left: float = clampf(card.get_center().x - width * 0.5, margin, viewport_size.x - margin - width)
@@ -1241,7 +1256,7 @@ const REWARD_DUAL_BUTTON_WIDTH_RATIO: float = 0.18
 
 ## Story 032: the relic strip band under the chapter map / world map / pause panel, margin to margin.
 static func relic_strip_rect(viewport_size: Vector2) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var top: float = viewport_size.y * RELIC_STRIP_TOP_RATIO
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, viewport_size.y * RELIC_STRIP_BOTTOM_RATIO - top)
 
@@ -1252,23 +1267,24 @@ static func relic_strip_rect(viewport_size: Vector2) -> Rect2:
 ## edge of the old player corner panel (where the dev-build title line starts; 12-260 x 22-50 at 1280x720).
 static func hud_relic_strip_rect(viewport_size: Vector2) -> Rect2:
 	var s: float = controls_scale(viewport_size)
-	var row: Rect2 = hud_top_row_rect(viewport_size)
-	var left: float = floorf(HUD_TOP_ROW_INSET_PX * s)
-	var right: float = hud_panel_rect(viewport_size, 0).end.x
+	# 2026-11-03: under the player's corner panel (hud_player_panel_rect), inside the safe area.
+	var panel: Rect2 = hud_player_panel_rect(viewport_size)
+	var left: float = panel.position.x + floorf(HUD_TOP_ROW_INSET_PX * s)
+	var right: float = panel.end.x
 	var h: float = roundf(HUD_RELIC_ROW_PX * s)
-	return Rect2(left, roundf(row.get_center().y - h * 0.5), maxf(right - left, 0.0), h)
+	return Rect2(left, panel.end.y + roundf(STATUS_ROW_GAP_PX * s), maxf(right - left, 0.0), h)
 
 
 ## Story 032, treasure screen with a relic row: "Bỏ qua" at the bottom-left.
 static func reward_dual_skip_rect(viewport_size: Vector2) -> Rect2:
 	var size := Vector2(viewport_size.x * REWARD_DUAL_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
-	return Rect2(Vector2(viewport_size.x * MARGIN_RATIO, viewport_size.y * REWARD_DUAL_BUTTON_TOP_RATIO), size)
+	return Rect2(Vector2(side_margin(viewport_size), viewport_size.y * REWARD_DUAL_BUTTON_TOP_RATIO), size)
 
 
 ## Story 032, treasure screen with a relic row: "Xác nhận" (relic pick) at the bottom-right.
 static func reward_dual_confirm_rect(viewport_size: Vector2) -> Rect2:
 	var size := Vector2(viewport_size.x * REWARD_DUAL_BUTTON_WIDTH_RATIO, viewport_size.y * BACK_BUTTON_HEIGHT_RATIO)
-	return Rect2(Vector2(viewport_size.x * (1.0 - MARGIN_RATIO) - size.x, viewport_size.y * REWARD_DUAL_BUTTON_TOP_RATIO), size)
+	return Rect2(Vector2((viewport_size.x - side_margin(viewport_size)) - size.x, viewport_size.y * REWARD_DUAL_BUTTON_TOP_RATIO), size)
 
 
 ## Story 032: the owned-relic strip of the reward screen. With a relic row ([param dual]) it sits between
@@ -1280,7 +1296,7 @@ static func reward_relic_strip_rect(viewport_size: Vector2, dual: bool) -> Rect2
 		var confirm: Rect2 = reward_dual_confirm_rect(viewport_size)
 		return Rect2(skip.end.x + gap, skip.position.y, maxf(confirm.position.x - gap - skip.end.x - gap, 0.0), skip.size.y)
 	var centred: Rect2 = reward_skip_button_rect(viewport_size)
-	var left: float = viewport_size.x * MARGIN_RATIO
+	var left: float = side_margin(viewport_size)
 	return Rect2(left, centred.position.y, maxf(centred.position.x - gap - left, 0.0), centred.size.y)
 
 
@@ -1310,7 +1326,7 @@ static func _reward_row(viewport_size: Vector2, count: int, top_ratio: float, bo
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var gap: float = viewport_size.x * REWARD_CARD_GAP_RATIO
 	var extra: float = viewport_size.x * extra_ratio + gap if extra_ratio > 0.0 else 0.0
 	var shared: float = (viewport_size.x - margin * 2.0 - gap * (count - 1) - extra) / count
@@ -1391,7 +1407,7 @@ static func _shop_row(viewport_size: Vector2, count: int, top_ratio: float, bott
 
 ## Story 033: the area of the two item rows (left of the services column), full height.
 static func shop_rows_area_rect(viewport_size: Vector2) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	return Rect2(margin, 0.0, viewport_size.x * SHOP_ROWS_RIGHT_RATIO - margin, viewport_size.y)
 
 
@@ -1415,13 +1431,13 @@ static func shop_row_label_rect(viewport_size: Vector2, relics: bool) -> Rect2:
 ## Story 033: label band above the services column ("Dịch vụ").
 static func shop_services_label_rect(viewport_size: Vector2) -> Rect2:
 	var left: float = viewport_size.x * SHOP_SERVICE_LEFT_RATIO
-	return Rect2(left, viewport_size.y * SHOP_CARD_LABEL_TOP_RATIO, viewport_size.x * (1.0 - MARGIN_RATIO) - left, viewport_size.y * SHOP_LABEL_HEIGHT_RATIO)
+	return Rect2(left, viewport_size.y * SHOP_CARD_LABEL_TOP_RATIO, (viewport_size.x - side_margin(viewport_size)) - left, viewport_size.y * SHOP_LABEL_HEIGHT_RATIO)
 
 
 ## Story 033: the two service buttons (remove a card, heal) stacked at the right edge.
 static func shop_service_rects(viewport_size: Vector2) -> Array[Rect2]:
 	var left: float = viewport_size.x * SHOP_SERVICE_LEFT_RATIO
-	var width: float = viewport_size.x * (1.0 - MARGIN_RATIO) - left
+	var width: float = (viewport_size.x - side_margin(viewport_size)) - left
 	var top: float = viewport_size.y * SHOP_CARDS_TOP_RATIO
 	var gap: float = viewport_size.y * SHOP_SERVICE_GAP_RATIO
 	var height: float = (viewport_size.y * SHOP_RELICS_BOTTOM_RATIO - top - gap) * 0.5
@@ -1437,14 +1453,14 @@ static func shop_item_raise(viewport_size: Vector2) -> float:
 ## Story 033: bottom-left button ("Rời cửa hàng", "Thôi").
 static func shop_leave_rect(viewport_size: Vector2) -> Rect2:
 	var top: float = viewport_size.y * SHOP_BUTTON_TOP_RATIO
-	return Rect2(viewport_size.x * MARGIN_RATIO, top, viewport_size.x * SHOP_LEAVE_WIDTH_RATIO, viewport_size.y * SHOP_BUTTON_BOTTOM_RATIO - top)
+	return Rect2(side_margin(viewport_size), top, viewport_size.x * SHOP_LEAVE_WIDTH_RATIO, viewport_size.y * SHOP_BUTTON_BOTTOM_RATIO - top)
 
 
 ## Story 033: bottom-right button ("Mua (N vàng)", confirm, "Tiếp tục") — the right thumb's spot.
 static func shop_buy_rect(viewport_size: Vector2) -> Rect2:
 	var top: float = viewport_size.y * SHOP_BUTTON_TOP_RATIO
 	var width: float = viewport_size.x * SHOP_BUY_WIDTH_RATIO
-	return Rect2(viewport_size.x * (1.0 - MARGIN_RATIO) - width, top, width, viewport_size.y * SHOP_BUTTON_BOTTOM_RATIO - top)
+	return Rect2((viewport_size.x - side_margin(viewport_size)) - width, top, width, viewport_size.y * SHOP_BUTTON_BOTTOM_RATIO - top)
 
 
 ## Story 033: the one-line message between the two bottom buttons (result of a buy, refusal reason).
@@ -1480,7 +1496,7 @@ static func deck_picker_hint_rect(viewport_size: Vector2) -> Rect2:
 
 ## Story 033: the event text box (upper half); [param short] shrinks it above a card-offer row.
 static func event_text_rect(viewport_size: Vector2, short: bool = false) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var top: float = viewport_size.y * EVENT_TEXT_TOP_RATIO
 	var bottom: float = viewport_size.y * (EVENT_RESULT_SHORT_BOTTOM_RATIO if short else EVENT_TEXT_BOTTOM_RATIO)
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, bottom - top)
@@ -1560,7 +1576,7 @@ static func reward_ink_label_rect(viewport_size: Vector2, dual: bool) -> Rect2:
 
 ## Story 034: the whole ink row band, margin to margin.
 static func reward_ink_row_rect(viewport_size: Vector2, dual: bool) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var top: float = viewport_size.y * (REWARD_INK_DUAL_ROW_TOP_RATIO if dual else REWARD_INK_ROW_TOP_RATIO)
 	var bottom: float = viewport_size.y * (REWARD_INK_DUAL_ROW_BOTTOM_RATIO if dual else REWARD_INK_ROW_BOTTOM_RATIO)
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, bottom - top)
@@ -1598,7 +1614,7 @@ static func shop_service_column_rects(viewport_size: Vector2, count: int) -> Arr
 	if count <= 0:
 		return rects
 	var left: float = viewport_size.x * SHOP_SERVICE_LEFT_RATIO
-	var width: float = viewport_size.x * (1.0 - MARGIN_RATIO) - left
+	var width: float = (viewport_size.x - side_margin(viewport_size)) - left
 	var top: float = viewport_size.y * SHOP_CARDS_TOP_RATIO
 	var gap: float = viewport_size.y * SHOP_SERVICE_GAP_RATIO
 	var height: float = (viewport_size.y * SHOP_RELICS_BOTTOM_RATIO - top - gap * (count - 1)) / count
@@ -1636,7 +1652,7 @@ static func piece_deck_tile_rects(viewport_size: Vector2, count: int) -> Array[R
 	var rects: Array[Rect2] = []
 	if count <= 0:
 		return rects
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	var top: float = viewport_size.y * PIECE_DECK_GRID_TOP_RATIO
 	var avail_h: float = viewport_size.y * PIECE_DECK_GRID_BOTTOM_RATIO - top
 	var gap: float = viewport_size.x * PIECE_DECK_GAP_RATIO
@@ -1662,7 +1678,7 @@ static func piece_deck_tile_raise(viewport_size: Vector2) -> float:
 ## Story 034: the refusal line right above the bottom-right button (shop_buy_rect), right-aligned with it.
 static func piece_deck_reason_rect(viewport_size: Vector2) -> Rect2:
 	var button: Rect2 = shop_buy_rect(viewport_size)
-	var width: float = minf(button.size.x * PIECE_DECK_REASON_WIDTH_SCALE, viewport_size.x * (1.0 - MARGIN_RATIO * 2.0))
+	var width: float = minf(button.size.x * PIECE_DECK_REASON_WIDTH_SCALE, (viewport_size.x - side_margin(viewport_size) * 2.0))
 	var top: float = viewport_size.y * PIECE_DECK_REASON_TOP_RATIO
 	return Rect2(button.end.x - width, top, width, viewport_size.y * PIECE_DECK_REASON_BOTTOM_RATIO - top)
 
@@ -1752,13 +1768,13 @@ static func ending_title_rect(viewport_size: Vector2) -> Rect2:
 ## Story 035: story line [param index] (0-based) of the ending, one under the other.
 static func ending_line_rect(viewport_size: Vector2, index: int) -> Rect2:
 	var height: float = viewport_size.y * ENDING_LINE_HEIGHT_RATIO
-	var margin: float = viewport_size.x * MARGIN_RATIO
+	var margin: float = side_margin(viewport_size)
 	return Rect2(margin, viewport_size.y * ENDING_LINES_TOP_RATIO + height * index, viewport_size.x - margin * 2.0, height)
 
 
 ## Story 035: the run stats block of the ending screen (two columns are laid inside it).
 static func ending_stats_rect(viewport_size: Vector2) -> Rect2:
-	var margin: float = viewport_size.x * MARGIN_RATIO * 2.0
+	var margin: float = side_margin(viewport_size) * 2.0
 	var top: float = viewport_size.y * ENDING_STATS_TOP_RATIO
 	return Rect2(margin, top, viewport_size.x - margin * 2.0, viewport_size.y * ENDING_STATS_BOTTOM_RATIO - top)
 
@@ -1775,7 +1791,7 @@ static func ending_leave_rect(viewport_size: Vector2) -> Rect2:
 static func ending_page_rect(viewport_size: Vector2) -> Rect2:
 	var leave: Rect2 = ending_leave_rect(viewport_size)
 	var width: float = viewport_size.x * ENDING_PAGE_WIDTH_RATIO
-	return Rect2(viewport_size.x * (1.0 - MARGIN_RATIO) - width, leave.position.y, width, leave.size.y)
+	return Rect2((viewport_size.x - side_margin(viewport_size)) - width, leave.position.y, width, leave.size.y)
 
 
 ## Story 035: the wide RUN KẾT THÚC panel (it carries the stats block); its bottom matches
@@ -1831,10 +1847,30 @@ const MAP_INFO_RIGHT_RATIO: float = 0.66
 const MAP_RELIC_STRIP_LEFT_RATIO: float = 0.7
 
 
+## Test hook (2026-11-03): when it has an area, [method safe_rect] returns it (clipped to the viewport) instead of
+## asking DisplayServer, so a notched phone can be simulated on a desktop. Reset to Rect2() after use.
+static var safe_rect_override: Rect2 = Rect2()
+
+
+## 2026-11-03: the left / right margin of the menus and edge-anchored controls: MARGIN_RATIO of the width, or the
+## wider of the safe area's left and right insets plus SAFE_EDGE_PAD_PX when a notch or rounded corner takes more
+## ([method safe_rect]). Symmetric, so centred layouts stay centred; the plain margin where the platform reports no
+## safe area (desktop).
+static func side_margin(viewport_size: Vector2) -> float:
+	var safe: Rect2 = safe_rect(viewport_size)
+	var inset: float = maxf(safe.position.x, viewport_size.x - safe.end.x)
+	var margin: float = viewport_size.x * MARGIN_RATIO
+	if inset <= 0.0:
+		return margin
+	return maxf(margin, inset + SAFE_EDGE_PAD_PX * controls_scale(viewport_size))
+
+
 ## The part of the viewport clear of notches, rounded corners and system bars (DisplayServer's safe area mapped
 ## into the viewport); the whole viewport where the platform reports none (desktop) or the window is not known.
 static func safe_rect(viewport_size: Vector2) -> Rect2:
 	var full := Rect2(Vector2.ZERO, viewport_size)
+	if safe_rect_override.has_area():
+		return safe_rect_override.intersection(full)
 	var win_size := Vector2(DisplayServer.window_get_size())
 	if win_size.x <= 0.0 or win_size.y <= 0.0:
 		return full

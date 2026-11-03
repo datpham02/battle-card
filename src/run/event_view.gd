@@ -344,7 +344,7 @@ func _draw() -> void:
 func _draw_header(vp: Vector2, title: String) -> void:
 	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
 	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.45, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
-	var right: float = vp.x * (1.0 - ScreenLayout.MARGIN_RATIO)
+	var right: float = (vp.x - ScreenLayout.side_margin(vp))
 	var coin_left: float = ShopView.draw_gold(self, right, band.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
 	var run: RunSession = _flow.get_run()
 	var max_hp: float = float(_flow.get_characters().get_character(run.character_id).get("max_hp", 1.0))

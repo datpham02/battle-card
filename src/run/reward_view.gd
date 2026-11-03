@@ -1043,7 +1043,7 @@ func _draw_remove_list(vp: Vector2) -> void:
 # Story 033: "+N vàng" (coin + text) at the left of the title band when the node paid gold; the run's
 # gold total at the right.
 func _draw_gold(vp: Vector2, title: Rect2) -> void:
-	var margin: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var margin: float = ScreenLayout.side_margin(vp)
 	ShopView.draw_gold(self, vp.x - margin, title.get_center().y, _flow.get_gold(), GOLD_FONT_SIZE, TITLE_COLOR)
 	var gain: int = _flow.get_last_gold_gain()
 	if gain <= 0:

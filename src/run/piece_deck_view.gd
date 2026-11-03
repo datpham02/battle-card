@@ -342,7 +342,7 @@ func _draw() -> void:
 # with the bottom-right button), a sparkle mark then the text in dark magenta.
 func _draw_odd_rule(vp: Vector2) -> void:
 	var reason: Rect2 = ScreenLayout.piece_deck_reason_rect(vp)
-	var left: float = vp.x * ScreenLayout.MARGIN_RATIO
+	var left: float = ScreenLayout.side_margin(vp)
 	var right: float = reason.position.x - vp.x * ODD_RULE_GAP_RATIO
 	if right - left <= ODD_RULE_MARK_RADIUS * 4.0:
 		return

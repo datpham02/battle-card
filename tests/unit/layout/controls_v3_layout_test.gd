@@ -136,7 +136,10 @@ func test_top_left_relics_statuses_cooldowns(vp: Vector2) -> void:
 	var relics: Rect2 = ScreenLayout.hud_relic_strip_rect(vp)
 	var statuses: Rect2 = ScreenLayout.hud_status_row_rect(vp)
 	var column: Rect2 = ScreenLayout.cooldown_column_rect(vp)
-	check("test_relic_row_in_the_top_left_corner_at_%s" % vp, absf(relics.position.x - floorf(12.0 * s)) <= EPS and relics.position.y >= 0.0 and relics.position.y <= 30.0 * s)
+	# 2026-11-03: the relic row sits under the player's corner panel (hud.player_panel), still in the top-left corner.
+	var panel: Rect2 = ScreenLayout.hud_player_panel_rect(vp)
+	check("test_relic_row_under_the_player_panel_at_%s" % vp, absf(relics.position.x - floorf(12.0 * s)) <= EPS and relics.position.y >= panel.end.y
+		and relics.position.y <= panel.end.y + 12.0 * s)
 	check("test_status_row_under_the_relics_at_%s" % vp, statuses.position.y >= relics.end.y and absf(statuses.position.x - relics.position.x) <= EPS)
 	check("test_status_row_40px_tall_at_%s" % vp, absf(statuses.size.y - 40.0 * s) <= EPS)
 	check("test_cooldown_column_under_the_status_row_at_%s" % vp, column.position.y >= statuses.end.y)
