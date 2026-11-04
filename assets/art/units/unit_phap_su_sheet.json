@@ -922,7 +922,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 60
+      "duration": 83
     },
     {
       "filename": "phap_su_cast_gesture_1",
@@ -944,7 +944,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 80
+      "duration": 83
     },
     {
       "filename": "phap_su_cast_gesture_2",
@@ -966,7 +966,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 200
+      "duration": 83
     },
     {
       "filename": "phap_su_cast_gesture_3",
@@ -988,7 +988,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 80
+      "duration": 83
     },
     {
       "filename": "phap_su_cast_gesture_4",
@@ -1010,7 +1010,95 @@
         "w": 96,
         "h": 70
       },
+      "duration": 200
+    },
+    {
+      "filename": "phap_su_cast_gesture_5",
+      "frame": {
+        "x": 485,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_cast_gesture_6",
+      "frame": {
+        "x": 582,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "phap_su_cast_gesture_7",
+      "frame": {
+        "x": 679,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
       "duration": 100
+    },
+    {
+      "filename": "phap_su_cast_gesture_8",
+      "frame": {
+        "x": 776,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 133
     },
     {
       "filename": "phap_su_hit_0",
@@ -1701,7 +1789,7 @@
     "image": "unit_phap_su_sheet.png",
     "format": "RGBA8888",
     "size": {
-      "w": 775,
+      "w": 872,
       "h": 851
     },
     "scale": "1",
@@ -1745,37 +1833,37 @@
       {
         "name": "cast_gesture",
         "from": 41,
-        "to": 45,
+        "to": 49,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 46,
-        "to": 48,
+        "from": 50,
+        "to": 52,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 49,
-        "to": 56,
+        "from": 53,
+        "to": 60,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 57,
-        "to": 64,
-        "direction": "forward"
-      },
-      {
-        "name": "fall",
-        "from": 65,
+        "from": 61,
         "to": 68,
         "direction": "forward"
       },
       {
-        "name": "awaken",
+        "name": "fall",
         "from": 69,
-        "to": 76,
+        "to": 72,
+        "direction": "forward"
+      },
+      {
+        "name": "awaken",
+        "from": 73,
+        "to": 80,
         "direction": "forward"
       }
     ],
@@ -1796,7 +1884,7 @@
         "h": 70
       },
       "gutter": 1,
-      "columns": 8,
+      "columns": 9,
       "loop": {
         "idle": "loop",
         "draw": "once",

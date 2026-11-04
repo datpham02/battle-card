@@ -476,15 +476,24 @@ func cast_hold(side: int) -> bool:
 # An entry without a hold frame keeps the old behaviour (held on frame 0 until due).
 func _drive_cast_hold(side: int, anim: UnitAnimator) -> void:
 	var hold: int = CastVfx.gesture_hold_frame(CastVfx.entry_for(String(_unit_id.get(side, ""))))
-	if hold < 0:
-		anim.set_paused(cast_hold(side))
-		return
-	if cast_hold(side):
-		anim.set_paused(anim.frame_index() >= hold)
-		return
-	if anim.frame_index() <= hold:
-		anim.seek(hold + 1)
-	anim.set_paused(false)
+	var step: Dictionary = cast_hold_step(anim.frame_index(), anim.frame_count(), hold, cast_hold(side))
+	if int(step["seek"]) >= 0:
+		anim.seek(int(step["seek"]))
+	anim.set_paused(bool(step["paused"]))
+
+
+## What the cast wind-up does to a cast_gesture at [param frame] of [param count] frames, pure: {"seek": frame to
+## jump to or -1, "paused": hold the clock}. [param hold] is the pack's coil frame (-1 = old behaviour: wait on
+## frame 0 while [param holding]). 2026-11-04 fix: the coil is clamped to count - 2 so a slash frame always follows
+## it. Before, a clip whose last frame was the coil (the Mage's 5-frame cast vs sword_wave's coil 4) was seeked back
+## onto that frame every tick, never finished, and kept the hero in cast_gesture: no step clips after a cast.
+static func cast_hold_step(frame: int, count: int, hold: int, holding: bool) -> Dictionary:
+	if hold < 0 or count < 2:
+		return {"seek": -1, "paused": holding}
+	var coil: int = mini(hold, count - 2)
+	if holding:
+		return {"seek": -1, "paused": frame >= coil}
+	return {"seek": coil + 1 if frame <= coil else -1, "paused": false}
 
 
 ## The clip for a unit's state, pure (Story 047 Part C table). [param ctx] keys: `side`

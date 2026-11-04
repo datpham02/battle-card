@@ -6,7 +6,7 @@
   "h": 70
  },
  "facing": "right",
- "source": "PixelLab character 89dc779e (south-east rotation, robe stretched 7 rows) animated with animate_image_pixminimax; frames snapped to the 8-colour palette, specks < 12 px removed, pieces lifted so feet sit on the bottom row. cast_gesture borrows victory frames 5-6 (hand pushed out) between cast frames 2 and 8. See design/assets/specs/mage-assets.md. draw and the dash clips (step_forward / step_back / step_down) are recentred on the head (x 47) because the game glides the unit; step_up was rejected (turns to a back view), the up step plays `step`.",
+ "source": "PixelLab character 89dc779e (south-east rotation, robe stretched 7 rows) animated with animate_image_pixminimax; frames snapped to the 8-colour palette, specks < 12 px removed, pieces lifted so feet sit on the bottom row. cast_gesture (9 frames, the Knight's timings) = cast f2, f4, f6, f7, victory f5 (hand pulled back = the coil, frame 4 = the cast pack's gesture_hold_frame), victory f6 x2 (palm out = the slash, frame 5), victory f5, cast f8. See design/assets/specs/mage-assets.md. draw and the dash clips (step_forward / step_back / step_down) are recentred on the head (x 47) because the game glides the unit; step_up was rejected (turns to a back view), the up step plays `step`.",
  "clips": [
   {
    "name": "idle",
@@ -145,14 +145,22 @@
     "cast_gesture/1.png",
     "cast_gesture/2.png",
     "cast_gesture/3.png",
-    "cast_gesture/4.png"
+    "cast_gesture/4.png",
+    "cast_gesture/5.png",
+    "cast_gesture/6.png",
+    "cast_gesture/7.png",
+    "cast_gesture/8.png"
    ],
    "ms": [
-    60,
-    80,
+    83,
+    83,
+    83,
+    83,
     200,
-    80,
-    100
+    50,
+    83,
+    100,
+    133
    ],
    "loop": "once"
   },
