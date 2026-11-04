@@ -5,7 +5,8 @@ extends RefCounted
 ## from the chapter's `columns` spec (chapters.json): per column `kinds` (random filler kinds),
 ## `pick` ([min, max] node count), `required` (kinds that must appear once; an array entry is a set
 ## of alternatives, one drawn 50/50) and `tier`. Same (chapter, run_seed, cleared_bosses) -> same map.
-## Story 031: an entry of `kinds` / `required` may also be {"kind": String, "min_floor": int}; with a
+## Story 031: an entry of `kinds` / `required` may also be {"kind": String, "min_floor": int} (2026-11-04: and / or
+## "max_floor": int, the last floor it appears on); with a
 ## positive `floor_number` (1-based run floor, set by ChaptersConfig.region_spec) entries whose min_floor is
 ## higher are dropped; without `floor_number` min_floor is ignored (old maps are unchanged).
 ## P2.3 (decision D10, spec phase2-misty-forest 5.5): `teach_after` ({match id: [match ids]}, ChaptersConfig) gates a
@@ -353,6 +354,12 @@ static func _apply_special_nodes(map: Array[Dictionary], chapter: Dictionary, ru
 	var want_shop: bool = bool(chapter.get("guarantee_shop", false)) \
 			or shop_roll < float((special as Dictionary).get("shop_weight", 0.0))
 	var want_event: bool = event_roll < float((special as Dictionary).get("event_weight", 0.0))
+	# 2026-11-04: one event per region map: a map whose columns already hold one (floor 1's event in the elite column)
+	# gets no second one here. The rolls above are still drawn (stable stream).
+	for col: Dictionary in map:
+		for n: Variant in col["nodes"]:
+			if str((n as Dictionary)["kind"]) == KIND_EVENT:
+				want_event = false
 	var nodes: Array = map[column]["nodes"]
 	var fights: Array[int] = []
 	for i: int in nodes.size():
@@ -417,7 +424,7 @@ static func _column_kinds(spec: Dictionary, rng: RandomNumberGenerator, floor_nu
 	return kinds
 
 
-# Kind names of [param entries] (strings or {kind, min_floor}) available at [param floor_number]
+# Kind names of [param entries] (strings or {kind, min_floor, max_floor}) available at [param floor_number]
 # (<= 0 = no floor filtering).
 static func _allowed_kinds(entries: Array, floor_number: int) -> Array[String]:
 	var result: Array[String] = []
@@ -425,6 +432,9 @@ static func _allowed_kinds(entries: Array, floor_number: int) -> Array[String]:
 		if typeof(entry) == TYPE_DICTIONARY:
 			var def: Dictionary = entry as Dictionary
 			if floor_number > 0 and int(def.get("min_floor", 0)) > floor_number:
+				continue
+			# 2026-11-04: max_floor (0 = none) drops the entry past that floor (floor 1's event in the elite column).
+			if floor_number > 0 and int(def.get("max_floor", 0)) > 0 and int(def["max_floor"]) < floor_number:
 				continue
 			result.append(str(def.get("kind", "")))
 		else:

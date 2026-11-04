@@ -94,7 +94,8 @@ func _initialize() -> void:
 	var min_floor_ok: bool = true
 	for s: int in 100:
 		for f: int in cfg.shop_floors(s):
-			if f < int(special["guaranteed_min_floor"]) - 1:
+			# 2026-11-04: first_floor_shop adds floor 0 on purpose (first_floor_map_test).
+			if f < int(special["guaranteed_min_floor"]) - 1 and not (f == 0 and bool(special.get("first_floor_shop", false))):
 				min_floor_ok = false
 	check(min_floor_ok, "no planned shop before guaranteed_min_floor")
 
@@ -117,6 +118,8 @@ func _initialize() -> void:
 						only_replaced = false
 						continue
 					for i: int in a.size():
+						if a[i] == b[i]:
+							continue  # 2026-11-04: an event drawn by the column itself (floor 1) is in both maps.
 						var kb: String = str((b[i] as Dictionary)["kind"])
 						if kb != "shop" and kb != "event" and a[i] != b[i]:
 							only_replaced = false

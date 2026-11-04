@@ -347,10 +347,14 @@ func special_nodes() -> Dictionary:
 
 
 ## Story 033: the run's shop plan (0-based floors whose region map always has a shop), see
-## [method WorldMapGen.shop_floors]; [] when `guaranteed_shops` is 0.
+## [method WorldMapGen.shop_floors]; [] when `guaranteed_shops` is 0. 2026-11-04: `first_floor_shop` adds floor 0
+## (the first floor) to the drawn plan; the draw itself is unchanged, so later floors keep their shops.
 func shop_floors(run_seed: int) -> Array[int]:
 	var special: Dictionary = _world["special_nodes"]
-	return WorldMapGen.shop_floors(run_seed, world_floors(), int(special["guaranteed_shops"]), int(special["guaranteed_min_floor"]))
+	var plan: Array[int] = WorldMapGen.shop_floors(run_seed, world_floors(), int(special["guaranteed_shops"]), int(special["guaranteed_min_floor"]))
+	if bool(special.get("first_floor_shop", false)) and world_floors() > 0 and not plan.has(0):
+		plan.push_front(0)
+	return plan
 
 
 ## Number of columns of chapter [param ci]'s map skeleton (0 when out of range).
@@ -728,7 +732,8 @@ func _clean_world(raw: Variant) -> Dictionary:
 		push_warning("ChaptersConfig: world.final_match must be an object, ignored")
 	world["final_match"] = final
 	world["final_prelude"] = _clean_final_prelude(source.get("final_prelude"))
-	var special: Dictionary = {"column": 1, "shop_weight": 0.0, "event_weight": 0.0, "guaranteed_shops": 0, "guaranteed_min_floor": 1}
+	var special: Dictionary = {"column": 1, "shop_weight": 0.0, "event_weight": 0.0, "guaranteed_shops": 0, "guaranteed_min_floor": 1,
+		"first_floor_shop": false}
 	var raw_special: Variant = source.get("special_nodes")
 	if typeof(raw_special) == TYPE_DICTIONARY:
 		var sp: Dictionary = raw_special as Dictionary
@@ -737,6 +742,8 @@ func _clean_world(raw: Variant) -> Dictionary:
 		special["event_weight"] = clampf(float(sp.get("event_weight", 0.0)), 0.0, 1.0)
 		special["guaranteed_shops"] = maxi(int(sp.get("guaranteed_shops", 0)), 0)
 		special["guaranteed_min_floor"] = maxi(int(sp.get("guaranteed_min_floor", 1)), 1)
+		# 2026-11-04: floor 1 always has a shop too, on top of the guaranteed ones (see shop_floors).
+		special["first_floor_shop"] = bool(sp.get("first_floor_shop", false))
 	elif raw_special != null:
 		push_warning("ChaptersConfig: world.special_nodes must be an object, ignored")
 	world["special_nodes"] = special
