@@ -67,3 +67,20 @@ This spec changes that to:
 
 No GDD at `workflow: minimal`. `assets/data/schema.md` updated (place_window_sec, menu_time_scale, menu_choose_sec,
 focus_cooldown_sec).
+
+## Addendum 2026-11-04: placed pieces stay adjustable
+
+User: "sau khi mà đã đặt mảnh khối xuống rồi thì ko thể điều chỉnh nó nữa ? cần cho người dùng điều chỉnh nó chứ".
+
+In the place window (before the card menu) a press on a placed piece lifts it off the cast back into PLACING, on the
+same cells and in the same rotation (`CombatView.lift_placed_piece`, input in `HandInputController`):
+
+- **Drag** carries it like a bag piece: released on the enemy half it goes back into the cast at the new spot, released
+  anywhere else it stays in the bag.
+- **Tap** lifts it in place: Xoay rotates it, a tapped cell moves it, a tap on the ghost puts it back.
+- Works also when the cast is full (no bag piece may join). The cast clock keeps running.
+- Clock running out: a lifted piece whose ghost sits on a valid spot goes back into the cast as it is, then the random
+  card is cast. A cast whose every piece was left in the bag closes its window (no card drawn).
+- Replaces Story 028's tap-to-detach on the last joined piece (detach = drag it off the enemy half, or Cancel).
+
+Acceptance: `tests/unit/combat/lift_placed_piece_test.gd`; evidence `production/qa/evidence/cast-stop/04-lifted-piece.png`.

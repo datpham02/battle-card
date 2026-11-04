@@ -907,14 +907,8 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 					flow.choose(order[i])
 					break
 		return true
-	if _combat.is_placed() and not _combat.is_placing():
-		# Story 028: in the place window a tap on the last joined piece takes it off the cast (back to its bag slot).
-		var plan: CastPlan = _combat.get_cast_plan()
-		var tapped: Vector2i = _cell_at_screen(vp, pos)
-		if tapped != BoardGrid.NO_CELL and plan.piece_count() >= 2 and plan.piece_cells(plan.piece_count() - 1).has(tapped):
-			if not emulated:
-				_combat.detach_second_piece()
-			return true
+	# 2026-11-04: a press on a placed piece in the place window is NOT taken here: HandInputController lifts it
+	# (tap = lift in place, drag = carry it). This replaced Story 028's tap-to-detach on the last joined piece.
 	if _signature_shown() and ScreenLayout.signature_button_rect(vp).has_point(pos):
 		if not emulated:
 			_try_activate_signature()

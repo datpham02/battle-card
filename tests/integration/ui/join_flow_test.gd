@@ -3,7 +3,8 @@ extends SceneTree
 ## events (local coords). Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
 ## Intents (2026-11-01 flow, quick spec menu-la-giua-man-hinh): drag piece 1 onto the boss -> the place window
 ## (NO card menu); drag piece 2 before Tung phép (ghost avoids piece 1, Xoay by a second finger mid-drag, release
-## attaches: union cells, no time added); overlap never attaches; tap piece 2 on the board detaches it; tap
+## attaches: union cells, no time added); overlap never attaches; tap piece 2 lifts it in place, a tap on its ghost puts it
+## back, dragging it off the enemy half detaches it (2026-11-04); tap
 ## Tung phép -> the menu ("needs N cells" locks on the placed cells; no piece joins while it is open); choose a card
 ## -> swing = union, both pieces spent; Huy returns BOTH pieces (place window and menu); featured join -> glow +
 ## x mult + effect applied once; non-featured / single piece never gets the bonus; max_cast_cells refuses (in-memory
@@ -92,6 +93,17 @@ func _touch_drag_piece(index: int, slot: int, cell: Vector2i, release: bool) -> 
 	await _touch_drag(index, combat.drag_point_for_cell(cell))
 	if release:
 		await _touch(index, combat.drag_point_for_cell(cell), false)
+
+
+# 2026-11-04: presses the placed piece covering [param cell], drags it onto the player's half and releases: the piece
+# leaves the cast and goes back to its bag slot.
+func _drag_off(cell: Vector2i) -> void:
+	var at: Vector2 = combat.board_geometry().cell_center(cell)
+	var off: Vector2 = combat.board_geometry().cell_center(Vector2i(1, 1))
+	await _touch(0, at, true)
+	await _touch_drag(0, at + Vector2(0, -80))
+	await _touch_drag(0, off)
+	await _touch(0, off, false)
 
 
 func _mouse_drag_piece(slot: int, cell: Vector2i, release: bool) -> void:
@@ -243,10 +255,24 @@ func _initialize() -> void:
 	await process_frame
 	_check("controls v3: resonance label kept in the place window", hud.get_board_labels().has("resonance"), str(hud.get_board_labels()))
 
-	# --- Tap piece 2 on the board: detached to its slot, cells shrink, still in the place window.
-	var p2cell: Vector2i = plan.piece_cells(1)[0]
+	# --- 2026-11-04 (quick spec niem-dung-tran addendum): placed pieces stay adjustable. A tap on piece 2 lifts it in
+	# place (ghost on its cells); a tap on the ghost puts it back.
+	var p2cells: Array[Vector2i] = plan.piece_cells(1)
+	var p2cell: Vector2i = p2cells[0]
 	await _tap(0, combat.board_geometry().cell_center(p2cell))
-	_check("tap on piece 2 detaches it back to its slot", plan.piece_count() == 1 and plan.cells().size() == 3 and _shape(1) == "bar2" and combat.is_placed(), str(plan.cells()))
+	var lifted: Array[Vector2i] = combat.get_placement().get_cells()
+	lifted.sort()
+	p2cells.sort()
+	_check("tap on piece 2 lifts it in place", combat.is_placing() and plan.piece_count() == 1 and lifted == p2cells and combat.is_placed(), str(lifted))
+	await _tap(0, combat.board_geometry().cell_center(p2cell))
+	_check("tap on the ghost puts it back", not combat.is_placing() and plan.piece_count() == 2, str(plan.piece_count()))
+	# Drag piece 2 off the enemy half: it goes back to its slot, cells shrink, still in the place window.
+	var off: Vector2 = combat.board_geometry().cell_center(Vector2i(1, 1))
+	await _touch(0, combat.board_geometry().cell_center(p2cell), true)
+	await _touch_drag(0, combat.board_geometry().cell_center(p2cell) + Vector2(0, -80))
+	await _touch_drag(0, off)
+	await _touch(0, off, false)
+	_check("piece 2 dragged off the enemy half goes back to its slot", plan.piece_count() == 1 and plan.cells().size() == 3 and _shape(1) == "bar2" and combat.is_placed(), str(plan.cells()))
 	_check("glow off after detach", not combat.is_plan_featured())
 	await process_frame
 	await process_frame
@@ -257,7 +283,8 @@ func _initialize() -> void:
 	if plan.piece_count() == 2:
 		var cells2: Array[Vector2i] = plan.cells()
 		_check("drop on piece 1: union has no overlap", cells2.size() == 5 and _sorted(cells2).size() == 5 and _disjoint(plan.piece_cells(0), plan.piece_cells(1)), str(cells2))
-		await _tap(0, combat.board_geometry().cell_center(plan.piece_cells(1)[0]))
+		# 2026-11-04: detach = drag piece 2 off the enemy half (a tap now lifts it in place).
+		await _drag_off(plan.piece_cells(1)[0])
 	else:
 		_check("drop on piece 1 refused: piece back in its slot", _shape(1) == "bar2" and plan.cells().size() == 3)
 	var probe: CastPlan = CastPlan.new().init(2, 0)

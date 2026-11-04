@@ -44,6 +44,25 @@ func begin(slot: int, piece: Piece, blocked: Array[Vector2i] = []) -> bool:
 	return true
 
 
+## 2026-11-04 (user: placed blocks must stay adjustable): puts the ghost exactly on [param cells] (a placed piece
+## lifted back into PLACING keeps its spot until moved). False (the ghost stays where it was) when no valid anchor of
+## the piece in its current rotation covers exactly those cells.
+func place_on(cells: Array[Vector2i]) -> bool:
+	if not is_placing() or cells.is_empty():
+		return false
+	var want: Array[Vector2i] = cells.duplicate()
+	want.sort()
+	for anchor: Vector2i in anchors_avoiding(_grid, _piece, _blocked):
+		var at: Array[Vector2i] = _piece.cells_at(anchor)
+		at.sort()
+		if at == want:
+			_anchor = anchor
+			_cells = _piece.cells_at(anchor)
+			_target = cells[0]
+			return true
+	return false
+
+
 ## Leaves PLACING (the piece stays wherever the caller keeps it).
 func cancel() -> void:
 	_state = State.IDLE

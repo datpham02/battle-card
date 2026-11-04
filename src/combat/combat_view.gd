@@ -171,6 +171,8 @@ var _placed: bool = false
 var _place_left: float = 0.0
 # 2026-11-04: REAL seconds left to land the first piece picked up (-1 = not picking); see _tick_pick_window.
 var _pick_left: float = -1.0
+# 2026-11-04: the piece being placed was lifted off the cast (lift_placed_piece); the clock running out puts it back.
+var _lifted: bool = false
 ## Accessibility "Thời gian chọn lá" for this match (SettingsStore.CARD_TIMES value); "" = read
 ## SettingsStore.shared() in _ready. Tests set it before _ready or call [method set_card_time].
 var card_time_mode: String = ""
@@ -1600,6 +1602,7 @@ func select_piece(index: int, rotate_if_selected: bool = true) -> bool:
 	hold.clear_selection()
 	hold.toggle_selected(index)
 	_join_refusal = {}
+	_lifted = false
 	var blocked: Array[Vector2i] = []
 	if joining:
 		blocked = _plan.cells()
@@ -1684,6 +1687,7 @@ func end_drag(pos: Vector2) -> bool:
 	if _placed:
 		_note_refusal()
 	_drop_placement()
+	_close_empty_window()
 	return false
 
 
@@ -1757,6 +1761,10 @@ func press_cast() -> bool:
 # 2026-11-04: one cast clock (place_window_sec) covers placing AND choosing: the menu gets what is left of it.
 func _open_card_menu() -> bool:
 	_drop_placement()
+	if _plan.piece_count() == 0:
+		# 2026-11-04: every piece was lifted off and left in the bag: nothing to cast, no card is drawn.
+		_close_empty_window()
+		return false
 	var left: float = -1.0 if is_place_unlimited() else maxf(_place_left, 0.0)
 	_placed = false
 	_place_left = 0.0
@@ -1780,8 +1788,13 @@ func _tick_place_window(real_step: float) -> void:
 	_place_left -= real_step
 	if _place_left <= 0.0:
 		_place_left = 0.0
+		# A lifted piece (lift_placed_piece) whose ghost still sits on a valid spot goes back into the cast as it is.
+		if _lifted and is_placing() and can_confirm_placement():
+			confirm_placement()
 		if _open_card_menu():
 			_cut_flow.tick_real(0.0)
+		else:
+			_close_empty_window()
 
 
 # 2026-11-04: picking the FIRST piece up stops the match too, so it is capped by the same cast clock (real time): when
@@ -1816,7 +1829,8 @@ func can_join_piece() -> bool:
 		return false
 	if _state.is_player_dead() or _state.is_enemy_dead():
 		return false
-	return _plan.piece_count() >= 1 and not _plan.is_full()
+	# 2026-11-04: a lifted piece may leave the plan empty for a moment; it can still be put back.
+	return not _plan.is_full()
 
 
 ## Story 028: the cast being built (from the first piece placed until the card is chosen; empty otherwise).
@@ -1858,6 +1872,63 @@ func get_join_refusal() -> Dictionary:
 	return _join_refusal
 
 
+## 2026-11-04 (user: "đặt mảnh khối xuống rồi thì ko thể điều chỉnh nó nữa"): index of the placed piece of the cast
+## covering board cell [param cell] in the place window (nothing being placed, menu closed); -1 otherwise.
+func placed_piece_at(cell: Vector2i) -> int:
+	if not _placed or is_placing() or _cut_flow.is_menu_open():
+		return -1
+	for i: int in _plan.piece_count():
+		if _plan.piece_cells(i).has(cell):
+			return i
+	return -1
+
+
+## [method placed_piece_at] for a screen point (BoardGeometry.cell_at, the drawn board).
+func placed_piece_at_screen(pos: Vector2) -> int:
+	return placed_piece_at(board_geometry().cell_at(pos))
+
+
+## 2026-11-04: lifts the placed piece [param index] off the cast back into PLACING, its ghost on the same cells and
+## in the same rotation (the piece goes back to its bag slot as the selected one). Then it moves like any piece being
+## placed: drag / tap a cell to move it, Xoay to rotate, release / tap the ghost to put it back into the cast, release
+## off the enemy half to leave it in the bag. The cast clock keeps running. False (nothing changes) outside the place
+## window or for a bad index.
+func lift_placed_piece(index: int) -> bool:
+	var hold: HoldSlots = _get_hold()
+	if hold == null or not _placed or is_placing() or _cut_flow.is_menu_open() or index < 0 or index >= _plan.piece_count():
+		return false
+	var cells: Array[Vector2i] = _plan.piece_cells(index)
+	var piece: Piece = _plan.pieces()[index]
+	var point: FieldPoint = null
+	var slot: int = -1
+	if index == 0:
+		point = _pending_piece
+		slot = _pending_slot
+		if _join_points.is_empty():
+			_pending_piece = null
+			_pending_slot = -1
+		else:
+			_pending_piece = _join_points.pop_front()
+			_pending_slot = _join_slots.pop_front()
+	elif index - 1 < _join_points.size():
+		point = _join_points[index - 1]
+		slot = _join_slots[index - 1]
+		_join_points.remove_at(index - 1)
+		_join_slots.remove_at(index - 1)
+	_plan.remove_piece(index)
+	if point == null:
+		return false
+	point.piece = piece
+	var at: int = hold.place(point, slot) if slot >= 0 else -1
+	if at < 0:
+		at = hold.place_in_first_free(point)
+	if at < 0 or not select_piece(at, false):
+		return false
+	_placement.place_on(cells)
+	_lifted = true
+	return true
+
+
 ## Story 028: takes the LAST joined piece off the cast (the second; Story 032 tam_hop: the third first) and
 ## puts it back into its bag slot (place window only, the place timer keeps running). False when the cast has a
 ## single piece or the card menu is open.
@@ -1885,6 +1956,7 @@ func _attach_piece(hold: HoldSlots) -> bool:
 		return false
 	_placement.cancel()
 	_dragging = false
+	_lifted = false
 	_consuming = true
 	_join_slots.append(slot)
 	_join_points.append(hold.remove(slot))
@@ -1966,9 +2038,22 @@ func cancel_placement() -> bool:
 	return true
 
 
+# 2026-11-04: ends the place window when every piece of the cast was lifted off and left in the bag (nothing is
+# being placed): the match runs again.
+func _close_empty_window() -> void:
+	if not _placed or is_placing() or _plan.piece_count() > 0:
+		return
+	_placed = false
+	_place_left = 0.0
+	_plan.clear()
+	_return_join_piece()
+	_return_pending_piece()
+
+
 # Leaves PLACING and clears the bag selection (Focus ends through _update_focus: DESELECTED).
 func _drop_placement() -> void:
 	_dragging = false
+	_lifted = false
 	if _placement != null and _placement.is_placing():
 		_placement.cancel()
 	var hold: HoldSlots = _get_hold()
