@@ -4,8 +4,9 @@ extends SceneTree
 ## - dropping piece 1 opens NO card menu: the place window starts, Tung phép shows;
 ## - piece 2 joins before Tung phép (no time added; the Resonant shape bonus still rides on the swing);
 ## - Tung phép opens the menu; no piece can join while it is open; detach / cancel work in the place window;
-## - the place window runs out -> Tung phép is pressed automatically; the menu runs out -> the basic slash;
-## - accessibility "Thời gian chọn lá": 6 s doubles both windows, "không giới hạn" never auto-presses / auto-picks;
+## - 2026-11-04 (quick spec niem-dung-tran): ONE cast clock: the place window running out casts a hand card at once;
+##   Tung phép opens the menu with what is left; no available card on timeout -> the basic slash;
+## - accessibility "Thời gian chọn lá": 6 s doubles the clock, "không giới hạn" never auto-presses / auto-picks;
 ## - cooldowns: SkillCooldowns keeps the use order and the full length, the HUD column lists the cards cooling down
 ##   and drops them when ready; CooldownPie reveals clockwise from 12 o'clock (0 at the use -> 1 when ready); a card
 ##   on cooldown in the hand cannot be picked;
@@ -185,8 +186,11 @@ func _test_place_window_timeout() -> void:
 	v.drag_to(v.drag_point_for_cell(_ec(v, 0, 2)))
 	_check("second piece being dragged", v.is_dragging())
 	v._tick_place_window(0.2)
-	_check("place window ran out: Tung phép pressed, menu open", flow.is_menu_open() and not v.is_placed())
-	_check("the dragged piece went back to the bag", not v.is_placing() and v.get_hold().get_piece(1) != null and v.get_cast_plan().piece_count() == 1)
+	# 2026-11-04 (quick spec niem-dung-tran): at zero the placed piece stays and a card of the hand is cast at once.
+	var actor: CutActor = v.get_cut_actor()
+	_check("place window ran out: a hand card is cast at once", not flow.is_menu_open() and not v.is_placed() and actor.is_swinging() and actor.get_skill_id() == "kiem_khi", actor.get_skill_id())
+	_check("the dragged piece went back to the bag", not v.is_placing() and v.get_hold().get_piece(1) != null)
+	v.get_arbiter().tick(actor.get_time_left() + 0.01)
 	_drop(h)
 
 
@@ -198,12 +202,14 @@ func _test_menu_timeout_basic_slash() -> void:
 	_fill(v, ["dai_dao", "dai_dao", "dai_dao", "dai_dao"] as Array[String])
 	_place(v, 0, _ec(v, 1, 1))
 	v.press_cast()
-	_check("menu duration = cards.json menu_choose_sec", absf(flow.get_duration() - cfg.menu_choose_sec) < EPS)
-	flow.tick_real(cfg.menu_choose_sec - 0.1)
+	# 2026-11-04: the menu gets what is left of the one cast clock (place_window_sec; time is frozen here, so all of it).
+	_check("menu time = what is left of the cast clock", absf(flow.get_time_left() - v.get_cut_config().place_window_sec) < EPS, "%.2f" % flow.get_time_left())
+	flow.tick_real(flow.get_time_left() - 0.1)
 	_check("menu still open just before its end", flow.is_menu_open())
 	flow.tick_real(0.2)
 	var actor: CutActor = v.get_cut_actor()
-	_check("menu timeout plays the basic slash", not flow.is_menu_open() and actor.is_swinging() and actor.get_skill_id() == cfg.default_card, actor.get_skill_id())
+	# dai_dao is above its cell minimum on one piece: no card of the hand is available -> the basic slash.
+	_check("menu timeout with no available card plays the basic slash", not flow.is_menu_open() and actor.is_swinging() and actor.get_skill_id() == cfg.default_card, actor.get_skill_id())
 	v.get_arbiter().tick(actor.get_time_left() + 0.01)
 	_drop(h)
 
@@ -220,12 +226,19 @@ func _test_card_time_setting() -> void:
 	v._tick_place_window(window + 0.1)
 	_check("6 s setting: no auto Tung phép after the normal window", v.is_placed() and not flow.is_menu_open())
 	v._tick_place_window(window)
-	_check("6 s setting: auto Tung phép after the doubled window", flow.is_menu_open())
+	_check("6 s setting: a card is cast after the doubled window", not flow.is_menu_open() and v.get_cut_actor().is_swinging())
 	_check("6 s setting: menu time doubled", absf(flow.get_duration() - choose * 2.0) < EPS)
-	flow.tick_real(choose + 0.1)
-	_check("6 s setting: menu still open after the normal time", flow.is_menu_open())
-	flow.tick_real(choose)
-	_check("6 s setting: basic slash after the doubled time", not flow.is_menu_open() and v.get_cut_actor().is_swinging())
+	v.get_arbiter().tick(v.get_cut_actor().get_time_left() + 0.01)
+	# Tung phép pressed with 1 s of the doubled clock left: the menu gets that 1 s.
+	_fill(v, ["kiem_khi", "kiem_khi", "kiem_khi", "kiem_khi"] as Array[String])
+	_place(v, 0, _ec(v, 1, 1))
+	v._tick_place_window(window * 2.0 - 1.0)
+	v.press_cast()
+	_check("6 s setting: the menu gets what is left (1 s)", flow.is_menu_open() and absf(flow.get_time_left() - 1.0) < EPS, "%.2f" % flow.get_time_left())
+	flow.tick_real(0.9)
+	_check("6 s setting: menu still open before that 1 s", flow.is_menu_open())
+	flow.tick_real(0.2)
+	_check("6 s setting: a card is cast when it runs out", not flow.is_menu_open() and v.get_cut_actor().is_swinging())
 	v.get_arbiter().tick(v.get_cut_actor().get_time_left() + 0.01)
 	# Unlimited: never auto-presses, never auto-picks.
 	v.set_card_time(SettingsStore.CARD_TIME_UNLIMITED)
@@ -281,11 +294,9 @@ func _test_cooldowns_in_hand_and_column() -> void:
 	_check("focus ready: no focus entry in the column", not hud.get_cooldown_column_entries().has(CutHudView.COOLDOWN_FOCUS_ID))
 	_check("focus starts from READY", focus.try_start())
 	focus.end("test")
-	_check("focus on cooldown after end", focus.is_on_cooldown() and focus.get_cooldown_sec() > 0.0)
-	_check("focus entry first in the column", hud.get_cooldown_column_entries() == ([CutHudView.COOLDOWN_FOCUS_ID] as Array[String]), str(hud.get_cooldown_column_entries()))
-	_check("card ids leave the focus entry out", hud.get_cooldown_column_ids().is_empty())
-	focus.tick_real(focus.get_cooldown_sec() + 0.01)
-	_check("focus ready again: entry leaves the column", hud.get_cooldown_column_entries().is_empty(), str(hud.get_cooldown_column_entries()))
+	# 2026-11-04 (quick spec niem-dung-tran): every cast stops the match, Focus has no cooldown and no column entry.
+	_check("focus has no cooldown after end", not focus.is_on_cooldown() and focus.get_cooldown_sec() == 0.0)
+	_check("no focus entry in the column", hud.get_cooldown_column_entries().is_empty(), str(hud.get_cooldown_column_entries()))
 	_drop(h)
 
 

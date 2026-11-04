@@ -178,7 +178,9 @@ func _initialize() -> void:
 	await _wait_real(1.0)
 	var real_s: float = float(Time.get_ticks_msec() - t0) / 1000.0
 	var lost: float = 5.0 - fp.freshness_left
-	_check("place window slows the sim (freshness lost << real time)", lost < real_s * 0.5 and lost > 0.0, "real=%.2f lost=%.2f" % [real_s, lost])
+	# 2026-11-04 (quick spec niem-dung-tran): the place window STOPS the match (menu_time_scale 0) and locks the d-pad.
+	_check("place window stops the sim (no freshness lost)", lost < 0.001 and real_s > 0.5, "real=%.2f lost=%.2f" % [real_s, lost])
+	_check("place window locks the d-pad", combat.is_movement_locked() and not combat.try_step_player(Vector2i.UP))
 	_check("still no menu 1 s into the place window", combat.is_placed() and not flow.is_menu_open())
 	await _click(cast_c)
 	_check("tap Tung phép opens the menu with the piece cells", flow.is_menu_open() and _sorted(flow.get_cells()) == _sorted(ghost), str(flow.get_cells()))
@@ -290,14 +292,11 @@ func _initialize() -> void:
 	while combat.is_placed() and Time.get_ticks_msec() - t_place < int((combat.get_place_duration() + 1.0) * 1000.0):
 		await process_frame
 	var waited_place: float = float(Time.get_ticks_msec() - t_place) / 1000.0
-	_check("place window ran out: Tung phép pressed automatically", flow.is_menu_open() and flow.get_cells() == [BOSS_CELL], str(flow.get_cells()))
-	_check("place window closed after ~place_window_sec", absf(waited_place - combat.get_cut_config().place_window_sec) < 0.6, "%.2f" % waited_place)
-	var t_menu: int = Time.get_ticks_msec()
-	while flow.is_menu_open() and Time.get_ticks_msec() - t_menu < int((skill_cfg.menu_choose_sec + 1.0) * 1000.0):
-		await process_frame
-	var waited: float = float(Time.get_ticks_msec() - t_menu) / 1000.0
-	_check("timeout auto-chose slash on the piece cell", not flow.is_menu_open() and actor.is_swinging() and actor.get_skill_id() == "kiem_khi" and actor.get_cells() == [BOSS_CELL], "%s %s after %.2fs" % [actor.get_skill_id(), str(actor.get_cells()), waited])
-	_check("menu closed by its timeout (~menu_choose_sec)", absf(waited - skill_cfg.menu_choose_sec) < 0.6, "%.2f" % waited)
+	# 2026-11-04 (quick spec niem-dung-tran): one cast clock; at zero a hand card that is available is cast at once on the
+	# placed piece (a 1-cell piece: only a 1-cell card such as kiem_khi qualifies, else the basic slash).
+	var avail_ok: bool = actor.is_swinging() and SkillAvailability.check(skill_cfg, combat.get_skill_cooldowns(), actor.get_skill_id(), 1)["available"]
+	_check("place window ran out: an available card is cast on the piece cell", not combat.is_placed() and not flow.is_menu_open() and avail_ok and actor.get_cells() == [BOSS_CELL], "%s %s" % [actor.get_skill_id(), str(actor.get_cells())])
+	_check("cast after ~place_window_sec", absf(waited_place - combat.get_cut_config().place_window_sec) < 0.6, "%.2f" % waited_place)
 	print("FAILS=%d" % fails)
 	print("VERDICT %s" % ("PASS" if fails == 0 else "FAIL"))
 	quit(fails)

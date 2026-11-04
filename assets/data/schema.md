@@ -153,7 +153,7 @@ Cut numbers (Story 008). A missing or invalid file gives the defaults below with
 | `base_damage_per_cell` | number >= 0 | HP | Slash damage per covered real cell | 6 |
 | `swing_base_sec` | number >= 0 | seconds | Fixed part of the swing windup | 0.2 |
 | `swing_per_cell_sec` | number >= 0 | seconds | Windup added per covered real cell (windup = base + per_cell * cells) | 0.25 |
-| `place_window_sec` | number 0.5..10 (tuning range 1.5..6) | REAL seconds | Quick spec menu-la-giua-man-hinh-2026-11-01: time from the FIRST piece dropped on the enemy half until Tung phép is pressed automatically. Before that the player may join a 2nd piece (3rd with tam_hop) and press Tung phép; the card menu opens only on that press. The bar sits above the Tung phép / Awaken buttons. Scaled by the "Thời gian chọn lá" setting like the card menu (6 s = x2, không giới hạn = no auto press) | 3.0 |
+| `place_window_sec` | number 0.5..10 (tuning range 1.5..6) | REAL seconds | Quick spec menu-la-giua-man-hinh-2026-11-01: time from the FIRST piece dropped on the enemy half until Tung phép is pressed automatically. Before that the player may join a 2nd piece (3rd with tam_hop) and press Tung phép; the card menu opens only on that press. The bar sits above the Tung phép / Awaken buttons. Scaled by the "Thời gian chọn lá" setting like the card menu (x2, không giới hạn = no auto press). **2026-11-04 (quick spec niem-dung-tran): ONE cast clock** for placing AND choosing: the card menu opened by Tung phép gets what is left of it; at zero in the place window the placed pieces stay, a piece being dragged goes back to the bag and a random available card of the drawn hand is cast at once. Picking the first piece up is capped by the same length (the piece goes back to the bag) | 4.0 |
 
 ## cards.json  (read by `src/combat/skill_config.gd`, class SkillConfig)
 
@@ -161,8 +161,8 @@ Card menu timing, hand size, default deck and card definitions (Story 008/010/01
 
 | Key | Type | Unit | Meaning | Default if missing |
 |---|---|---|---|---|
-| `menu_time_scale` | number 0..1 | factor | Simulation speed while the skill menu is open (applied by the view) | 0.2 |
-| `menu_choose_sec` | number >= 0 | REAL seconds | Time to choose before the default skill is auto-picked | 3.0 |
+| `menu_time_scale` | number 0..1 | factor | Simulation speed for the whole cast (applied by the view): a piece picked up, the place window and the open card menu; the d-pad is locked throughout. 2026-11-04: 0 = the match stops (user: nobody moves while casting) | 0.0 |
+| `menu_choose_sec` | number >= 0 | REAL seconds | Choose time of a menu opened on its own (tests, tools). In a match the menu gets what is left of `cuts.json place_window_sec` (2026-11-04). On timeout a random available card of the hand is cast; the default skill only when none is | 3.0 |
 | `hand_size` | integer >= 1 | cards | Cards drawn from the deck into the menu hand per cut | 4 |
 | `default_card` | string | card id | Basic card auto-picked on timeout even when the hand lacks it (a rule, not a hand card); must exist in `cards` | `kiem_khi` |
 | `default_deck` | array of card ids | - | Starting deck, duplicates allowed; unknown ids dropped with a warning; empty = `[default_card]` | `[default_card]` |
@@ -176,7 +176,7 @@ Card menu timing, hand size, default deck and card definitions (Story 008/010/01
 |---|---|---|---|---|
 | `focus_time_scale` | number 0..1 | factor | Simulation speed while Focus is active; 0 = full stop, >0 = slow motion | 0.0 |
 | `focus_max_sec` | number > 0 | REAL seconds | Longest one Focus lasts; on timeout the match resumes and the selection is kept | 4.0 |
-| `focus_cooldown_sec` | number >= 0 | REAL seconds | Cooldown after ANY end (confirm, deselect, timeout, death); selecting points does not pause meanwhile | 8.0 |
+| `focus_cooldown_sec` | number >= 0 | REAL seconds | Cooldown after ANY end (confirm, deselect, timeout, death); selecting points does not pause meanwhile. 2026-11-04: 0, every cast stops the match (menu_time_scale 0) | 0.0 |
 | `focus_locks_movement` | boolean | - | true = step input is ignored (nothing queued) while Focus is active | true |
 
 Card entry keys (20 cards, see `card_order`; the class concept is gone, Story 020; `effect` names stay behaviours):

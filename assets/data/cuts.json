@@ -2,5 +2,5 @@
 	"base_damage_per_cell": 6,
 	"swing_base_sec": 0.2,
 	"swing_per_cell_sec": 0.25,
-	"place_window_sec": 3.0
+	"place_window_sec": 4.0
 }

@@ -169,6 +169,8 @@ var _join_refusal: Dictionary = {}
 ## _place_left is the REAL seconds left of the place window (ignored while the window is unlimited).
 var _placed: bool = false
 var _place_left: float = 0.0
+# 2026-11-04: REAL seconds left to land the first piece picked up (-1 = not picking); see _tick_pick_window.
+var _pick_left: float = -1.0
 ## Accessibility "Thời gian chọn lá" for this match (SettingsStore.CARD_TIMES value); "" = read
 ## SettingsStore.shared() in _ready. Tests set it before _ready or call [method set_card_time].
 var card_time_mode: String = ""
@@ -1261,6 +1263,7 @@ func _process(delta: float) -> void:
 		_cut_flow.tick_real(real_step)
 		# The place window (real time too) may press Tung phép this frame.
 		_tick_place_window(real_step)
+		_tick_pick_window(real_step)
 		_age_refusal(real_step)
 		# Simulation time is scaled down while the skill menu is open (slow motion); the boss
 		# lives in the same scaled time.
@@ -1492,11 +1495,18 @@ func is_placing() -> bool:
 
 
 ## Story 024: true when the d-pad / signature are locked: Focus locks movement while active, and so
-## does PLACING (also when Focus is on cooldown and the match only runs slowed).
+## does PLACING. 2026-11-04 (user: "trong quá trình cast thì ko có nhân vật hay quái nào được di chuyển"): also the
+## place window and the open card menu, so nobody moves from picking a piece up until the card is chosen.
 func is_movement_locked() -> bool:
 	if _focus != null and _focus.is_active() and _focus.locks_movement():
 		return true
-	return is_placing()
+	return is_casting()
+
+
+## 2026-11-04: true from picking a piece up until the card is chosen (PLACING, the place window or the open menu).
+## The match runs at cards.json menu_time_scale (0 = stopped) and the d-pad is locked the whole time.
+func is_casting() -> bool:
+	return is_placing() or _placed or (_cut_flow != null and _cut_flow.is_menu_open())
 
 
 ## Story 024: the piece being placed in its current rotation, null when not placing.
@@ -1744,21 +1754,24 @@ func press_cast() -> bool:
 
 
 # Opens the card menu on the placed cast (the place window ends): any piece still being placed goes back to the bag.
+# 2026-11-04: one cast clock (place_window_sec) covers placing AND choosing: the menu gets what is left of it.
 func _open_card_menu() -> bool:
 	_drop_placement()
+	var left: float = -1.0 if is_place_unlimited() else maxf(_place_left, 0.0)
 	_placed = false
 	_place_left = 0.0
 	# Story 033: the menu hand keeps at least one non-curse card while the deck has one; a drawn curse
 	# with draw_damage (oan_hon) hurts the player once per draw.
 	var hand: Array[String] = _deck.draw_menu(_skill_config.hand_size, Callable(_skill_config, "is_curse"))
-	if not _cut_flow.open_menu(_plan_labels(), _plan.cells(), hand):
+	if not _cut_flow.open_menu(_plan_labels(), _plan.cells(), hand, left):
 		return false
 	_apply_curse_draw_damage(hand)
 	return true
 
 
-# Counts the place window down on REAL time; at zero Tung phép is pressed for the player (a piece still being dragged
-# goes back to the bag). Never with the window unlimited, and not once a unit is dead.
+# Counts the cast clock down on REAL time. At zero in the place window the pieces on the floor stay as they are (a
+# piece still being dragged goes back to the bag) and a random available card of the drawn hand is cast at once
+# (user 2026-11-04). Never with the window unlimited, and not once a unit is dead.
 func _tick_place_window(real_step: float) -> void:
 	if not _placed or is_place_unlimited() or _state == null:
 		return
@@ -1766,7 +1779,23 @@ func _tick_place_window(real_step: float) -> void:
 		return
 	_place_left -= real_step
 	if _place_left <= 0.0:
-		_open_card_menu()
+		_place_left = 0.0
+		if _open_card_menu():
+			_cut_flow.tick_real(0.0)
+
+
+# 2026-11-04: picking the FIRST piece up stops the match too, so it is capped by the same cast clock (real time): when
+# it runs out before the piece lands, the piece goes back to the bag and the match runs again.
+func _tick_pick_window(real_step: float) -> void:
+	if _placed or not is_placing() or is_place_unlimited() or _cut_flow.is_menu_open():
+		_pick_left = -1.0
+		return
+	if _pick_left < 0.0:
+		_pick_left = get_place_duration()
+	_pick_left -= real_step
+	if _pick_left <= 0.0:
+		_pick_left = -1.0
+		_drop_placement()
 
 
 # Story 033: each curse in [param hand] with draw_damage > 0 costs the player that much HP now

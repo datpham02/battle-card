@@ -1,9 +1,10 @@
 extends SceneTree
 ## Story 024 (piece flow) + Story 012 (Focus): drives Focus with real clicks / a mouse drag.
 ## Windowed only: --windowed --resolution 1280x720 ... -- --no-autopause.
-## Intents: selecting a piece (tap or drag) with Focus ready = full stop (boss, drops, boss step
-## cooldown frozen) for ~4 s real, then 8 s cooldown; PLACING on cooldown = 0.2x (menu_time_scale),
-## no Focus; movement locked while placing (the stick zone is the Xoay button then: a press rotates,
+## Intents: selecting a piece (tap or drag) = full stop (boss, drops, boss step cooldown frozen), every time
+## (2026-11-04 quick spec niem-dung-tran: Focus has no cooldown, menu_time_scale 0); picking is capped by the cast
+## clock (place_window_sec), then the piece stays in the bag; the place window and the card menu stay stopped and
+## locked; movement locked while placing (the stick zone is the Xoay button then: a press rotates,
 ## never steps), the joystick steps again when not placing; Focus ends on timeout / cancel (deselected) /
 ## confirm / death.
 ## 2026-11-01: the pad mode was removed (joystick only): steps are driven with a stick flick in the stick zone.
@@ -131,6 +132,10 @@ func _cond_focus_not_ready() -> bool:
 	return not focus.is_ready()
 
 
+func _cond_placing() -> bool:
+	return combat.is_placing()
+
+
 func _cond_mover_busy() -> bool:
 	return not mover.is_ready()
 
@@ -232,24 +237,17 @@ func _initialize() -> void:
 	await _key(KEY_DOWN)
 	_check("arrow key ignored while placing", state.player_cell == cell0 and mover.is_ready(), str(state.player_cell))
 	_check("movement locked / try_step_player false", combat.is_movement_locked() and not combat.try_step_player(Vector2i.LEFT))
-	await _wait_while(_cond_focus_active, 6.0)
+	# 2026-11-04 (quick spec niem-dung-tran): picking a piece up stops the match every time and is capped by the cast
+	# clock (place_window_sec, real time): when it runs out before the piece lands, the piece stays in the bag, Focus ends
+	# with no cooldown and the match runs again.
+	await _wait_while(_cond_placing, 6.0)
 	var total: float = clock - t_start
-	_check("timeout after ~4 s (game clock)", absf(total - 4.0) < 0.5 and reasons == ["timeout"], "%f %s" % [total, str(reasons)])
-	var cd_start: float = clock
-	_check("still placing after timeout (selection kept)", combat.is_placing() and hold.is_selected(0))
-	_check("cooldown running", focus.is_on_cooldown())
-	_check("movement still locked while placing on cooldown", combat.is_movement_locked())
+	var cap: float = combat.get_place_duration()
+	_check("pick cap: not placing after ~place_window_sec (game clock)", absf(total - cap) < 0.5 and not combat.is_placing(), "%f vs %f" % [total, cap])
+	_check("pick cap: the piece stays in the bag", hold.get_piece(0) != null)
+	_check("focus over, no cooldown", not focus.is_active() and not focus.is_on_cooldown() and focus.is_ready(), _focus_diag())
+	_check("d-pad free again", not combat.is_movement_locked())
 	boss.set_active(false)
-
-	# --- PLACING on cooldown runs at menu_time_scale (0.2x); not placing = full speed.
-	var f1: float = tracked.freshness_left
-	var t1: float = clock
-	await _wait_real(1.0)
-	var rate_placing: float = (f1 - tracked.freshness_left) / (clock - t1)
-	_check("placing on cooldown slows to ~0.2x", absf(rate_placing - skill_cfg.menu_time_scale) < 0.08, "rate=%.3f" % rate_placing)
-	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
-	await process_frame
-	_check("Huy: not placing, Xoay gone", not combat.is_placing() and not combat.is_movement_locked())
 	var f2: float = tracked.freshness_left
 	var t2: float = clock
 	await _wait_real(0.5)
@@ -262,52 +260,39 @@ func _initialize() -> void:
 	_check("joystick steps again when not placing", state.player_cell == expect, "%s -> %s" % [cell1, state.player_cell])
 	await _wait_while(_cond_mover_busy, 3.0)
 
-	# --- Reselect on cooldown: no Focus; a piece can still be placed (drag -> menu).
+	# --- Reselect at once: Focus again (no cooldown); Huy ends it (deselected), still no cooldown.
+	reasons.clear()
 	await _click(sv.get_slot_rect(1).get_center())
 	await process_frame
-	_check("selected on cooldown: placing, no focus", combat.is_placing() and not focus.is_active())
+	_check("reselect at once: placing + focus active", combat.is_placing() and focus.is_active(), _focus_diag())
 	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
+	await process_frame
+	_check("Huy ends it (deselected), no cooldown", not focus.is_active() and reasons == ["deselected"] and not focus.is_on_cooldown(), str(reasons))
+
+	# --- Drag = full stop; release on the boss = confirmed; the place window and the menu stay stopped and locked.
+	_fill()
+	reasons.clear()
 	state.set_enemy_cell(BOSS_CELL)
 	var slot1: Vector2 = sv.get_slot_rect(1).get_center()
 	var finger: Vector2 = combat.drag_point_for_cell(BOSS_CELL)
 	await _mouse_button(slot1, true)
 	await _mouse_move(slot1 + Vector2(0, -60))
 	await _mouse_move(finger)
-	_check("drag on cooldown: no focus", combat.is_dragging() and not focus.is_active())
-	await _mouse_button(finger, false)
-	_check("placing works on cooldown (piece committed: place window)", combat.is_placed() and not cut_flow.is_menu_open())
-	await _wait_while(_cond_focus_not_ready, 9.0)
-	var cd_total: float = clock - cd_start
-	_check("ready ~8 s after timeout", absf(cd_total - 8.0) < 0.7 and focus.is_ready(), str(cd_total))
-
-	# --- Cancel (Huy) ends it: reason deselected.
-	await _wait_while(_cond_busy_cut, 6.0)
-	_fill()
-	reasons.clear()
-	await _click(sv.get_slot_rect(1).get_center())
-	await process_frame
-	_check("active again (tap)", focus.is_active(), _focus_diag())
-	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
-	await process_frame
-	_check("Huy ends it (deselected) + cooldown", not focus.is_active() and reasons == ["deselected"] and focus.is_on_cooldown(), str(reasons))
-	await _wait_while(_cond_focus_not_ready, 9.0)
-
-	# --- Drag start with Focus ready = full stop; release on the boss = confirmed.
-	_fill()
-	reasons.clear()
-	state.set_enemy_cell(BOSS_CELL)
-	await _mouse_button(slot1, true)
-	await _mouse_move(slot1 + Vector2(0, -60))
-	await _mouse_move(finger)
 	await process_frame
 	_check("drag start -> focus active (full stop)", combat.is_dragging() and focus.is_active() and focus.get_time_scale() == 0.0)
 	await _mouse_button(finger, false)
-	_check("release confirms: focus ended (confirmed) + cooldown", combat.is_placed() and not focus.is_active() and reasons == ["confirmed"] and focus.is_on_cooldown(), str(reasons))
+	_check("release confirms: focus ended (confirmed), place window", combat.is_placed() and not focus.is_active() and reasons == ["confirmed"], str(reasons))
+	var f3: float = tracked.freshness_left
+	await _wait_real(1.0)
+	_check("place window: match stopped", absf(tracked.freshness_left - f3) < 0.0001 and skill_cfg.menu_time_scale == 0.0, "%f vs %f" % [tracked.freshness_left, f3])
+	_check("place window: d-pad locked", combat.is_movement_locked() and not combat.try_step_player(dir))
 	await _click(ScreenLayout.confirm_button_rect(VP).get_center())
 	_check("Tung phép after the confirm: menu open, Focus not restarted", cut_flow.is_menu_open() and not focus.is_active() and reasons == ["confirmed"], str(reasons))
+	var f4: float = tracked.freshness_left
+	await _wait_real(0.5)
+	_check("card menu: match stopped, d-pad locked", absf(tracked.freshness_left - f4) < 0.0001 and combat.is_movement_locked())
 	await _click(ScreenLayout.cancel_button_rect(VP, combat.get_cut_flow().is_menu_open()).get_center())
 	_check("Huy in menu returns the piece", not cut_flow.is_menu_open() and hold.get_piece(1) != null)
-	await _wait_while(_cond_focus_not_ready, 9.0)
 
 	# --- Death ends it.
 	_fill()

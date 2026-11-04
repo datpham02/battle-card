@@ -5,9 +5,10 @@ extends RefCounted
 ## are never joined while it is open. Pure logic (no nodes); the menu
 ## countdown advances only through [method tick_real] with a REAL (unscaled) delta.
 ## Opening the menu stores the consumed cut (labels + covered cells) and the drawn hand;
-## choosing an available card OF THE HAND, or the countdown running out (the basic default
-## card, even if the hand does not contain it), emits [signal skill_chosen].
-## Implements: Story 008, Story 017 part A.
+## choosing an available card OF THE HAND, or the countdown running out, emits [signal skill_chosen].
+## 2026-11-04 (user: "hết 4s thì ... cast random lá bài thỏa điều kiện"): on timeout a RANDOM card of the hand that is
+## available (cell minimum, cooldown, not a curse) is cast; only when none is, the basic default card.
+## Implements: Story 008, Story 017 part A, design/quick-specs/niem-dung-tran-2026-11-04.md.
 
 ## Emitted once when a card is chosen (by the player or by timeout); the menu is closed.
 signal skill_chosen(skill_id: String, labels: Array[String], cells: Array[Vector2i])
@@ -24,6 +25,8 @@ var level_of: Callable = Callable()
 ## Accessibility "Thời gian chọn lá" (SettingsStore.card_time_mult): the choose time is menu_choose_sec x this;
 ## 0 = no limit (the menu waits for a card; the match stays slowed).
 var time_mult: float = 1.0
+## Picks the timeout card. Randomized at creation; tests seed it for a deterministic pick.
+var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 func _init(skill_config: SkillConfig, cooldowns: SkillCooldowns) -> void:
@@ -32,8 +35,9 @@ func _init(skill_config: SkillConfig, cooldowns: SkillCooldowns) -> void:
 
 
 ## Opens the menu for a cut with the drawn [param hand] (ordered; empty = [default_card]).
-## Returns false if a menu is already open or [param cells] is empty.
-func open_menu(labels: Array[String], cells: Array[Vector2i], hand: Array[String] = []) -> bool:
+## [param time_left] = REAL seconds to choose (2026-11-04: what is left of the shared cast clock); negative = the
+## full [method get_duration]. Ignored while unlimited. Returns false if a menu is already open or [param cells] is empty.
+func open_menu(labels: Array[String], cells: Array[Vector2i], hand: Array[String] = [], time_left: float = -1.0) -> bool:
 	if _open or cells.is_empty():
 		return false
 	_open = true
@@ -42,21 +46,38 @@ func open_menu(labels: Array[String], cells: Array[Vector2i], hand: Array[String
 	_hand = hand.duplicate()
 	if _hand.is_empty():
 		_hand = [_config.default_card]
-	_time_left = get_duration()
+	_time_left = time_left if time_left >= 0.0 else get_duration()
 	return true
 
 
-## Advances the choose countdown by [param delta] REAL seconds; at zero the default card
-## (kiem_khi, no cell minimum) is chosen whether or not the hand holds it.
+## Advances the choose countdown by [param delta] REAL seconds; at zero a random available card of the hand is
+## chosen ([method timeout_choice]); with none available the default card (kiem_khi, no cell minimum) whether or not
+## the hand holds it. A [param delta] of 0 resolves a menu opened with no time left.
 func tick_real(delta: float) -> void:
 	if not _open or is_unlimited():
 		return
 	_time_left -= delta
 	if _time_left > 0.0:
 		return
-	if not _emit_choice(_config.default_card):
-		_emit_choice(SkillConfig.FALLBACK_SKILL)
+	var pick: String = timeout_choice()
+	if pick.is_empty() or not _emit_choice(pick):
+		if not _emit_choice(_config.default_card):
+			_emit_choice(SkillConfig.FALLBACK_SKILL)
 	_open = false
+
+
+## The card the timeout casts: a random one (via [member rng]) among the hand's cards that are available for the
+## open cut (duplicates weigh more); "" when none is or the menu is closed.
+func timeout_choice() -> String:
+	if not _open:
+		return ""
+	var ok: Array[String] = []
+	for id: String in _hand:
+		if bool(SkillAvailability.check(_config, _cooldowns, id, _cells.size(), card_level(id))["available"]):
+			ok.append(id)
+	if ok.is_empty():
+		return ""
+	return ok[rng.randi_range(0, ok.size() - 1)]
 
 
 ## Chooses [param skill_id] if the menu is open, the card is in the hand and it is available

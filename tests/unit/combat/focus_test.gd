@@ -49,6 +49,7 @@ func _initialize() -> void:
 	var none := SkillConfig.from_json_text('{}')
 	_check("missing focus -> defaults", none.focus_max_sec == 4.0)
 	var file := SkillConfig.load_from_file()
-	_check("cards.json focus loaded", file.focus_max_sec == 4.0 and file.focus_cooldown_sec == 8.0)
+	# 2026-11-04 (quick spec niem-dung-tran): every cast stops the match, so Focus has no cooldown.
+	_check("cards.json focus loaded", file.focus_max_sec == 4.0 and file.focus_cooldown_sec == 0.0)
 	print("FAILS=%d" % fails)
 	quit(fails)
