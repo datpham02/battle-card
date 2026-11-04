@@ -1,0 +1,16 @@
+{
+  "id": "goblin_warlock",
+  "asset": "ASSET-029",
+  "frame": {"w": 160, "h": 130},
+  "facing": "left",
+  "source": "Pro Flash image 450b57de (anchor 64f0b5de + skin edit, approved 2026-11-04) snapped to the 8 locked colours, PixMiniMax clips in design/assets/candidates/goblin-warlock/anim/<clip>/<n>.png, cleaned (palette snap, specks removed, body centred at x 80, feet on the bottom row, the heap lifted onto it) into design/assets/candidates/goblin-warlock/clean-160x130/",
+  "clips": [
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop", "note": "src frames 0/2/4/6"},
+    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "the row blink; src 1/3/5/7"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png", "windup/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last", "note": "hex bolt / curse lane; src 2/4/6/8"},
+    {"name": "windup_heavy", "frames": ["windup_heavy/0.png", "windup_heavy/1.png", "windup_heavy/2.png", "windup_heavy/3.png"], "ms": [100, 100, 120, 0], "loop": "hold_last", "note": "heaves a stone tile overhead for stolen_shape / twin_shapes; src 2/3/4/6"},
+    {"name": "phase_shift", "frames": ["phase_shift/0.png", "phase_shift/1.png", "phase_shift/2.png", "phase_shift/3.png"], "ms": [200, 200, 200, 200], "loop": "loop", "note": "src 1/3/5/7"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src frames 5-7 (1-4 had a baked red burst)"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png"], "ms": [120, 150, 150, 150, 150], "loop": "hold_last", "note": "collapses, tiles spill; src 2/3/4/5/8 (6-7 had a red blob, 1-3 a cyan glint, snapped / removed)"}
+  ]
+}

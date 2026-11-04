@@ -1,0 +1,713 @@
+{
+  "frames": [
+    {
+      "filename": "goblin_warlock_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 250
+    },
+    {
+      "filename": "goblin_warlock_idle_1",
+      "frame": {
+        "x": 161,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 250
+    },
+    {
+      "filename": "goblin_warlock_idle_2",
+      "frame": {
+        "x": 322,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 250
+    },
+    {
+      "filename": "goblin_warlock_idle_3",
+      "frame": {
+        "x": 483,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 250
+    },
+    {
+      "filename": "goblin_warlock_step_0",
+      "frame": {
+        "x": 0,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_step_1",
+      "frame": {
+        "x": 161,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_step_2",
+      "frame": {
+        "x": 322,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_step_3",
+      "frame": {
+        "x": 483,
+        "y": 131,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_windup_1",
+      "frame": {
+        "x": 161,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_windup_2",
+      "frame": {
+        "x": 322,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_windup_3",
+      "frame": {
+        "x": 483,
+        "y": 262,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 0
+    },
+    {
+      "filename": "goblin_warlock_windup_heavy_0",
+      "frame": {
+        "x": 0,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_windup_heavy_1",
+      "frame": {
+        "x": 161,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 100
+    },
+    {
+      "filename": "goblin_warlock_windup_heavy_2",
+      "frame": {
+        "x": 322,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "goblin_warlock_windup_heavy_3",
+      "frame": {
+        "x": 483,
+        "y": 393,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 0
+    },
+    {
+      "filename": "goblin_warlock_phase_shift_0",
+      "frame": {
+        "x": 0,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 200
+    },
+    {
+      "filename": "goblin_warlock_phase_shift_1",
+      "frame": {
+        "x": 161,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 200
+    },
+    {
+      "filename": "goblin_warlock_phase_shift_2",
+      "frame": {
+        "x": 322,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 200
+    },
+    {
+      "filename": "goblin_warlock_phase_shift_3",
+      "frame": {
+        "x": 483,
+        "y": 524,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 200
+    },
+    {
+      "filename": "goblin_warlock_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 655,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 40
+    },
+    {
+      "filename": "goblin_warlock_hit_1",
+      "frame": {
+        "x": 161,
+        "y": 655,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 40
+    },
+    {
+      "filename": "goblin_warlock_hit_2",
+      "frame": {
+        "x": 322,
+        "y": 655,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 40
+    },
+    {
+      "filename": "goblin_warlock_down_0",
+      "frame": {
+        "x": 0,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 120
+    },
+    {
+      "filename": "goblin_warlock_down_1",
+      "frame": {
+        "x": 161,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    },
+    {
+      "filename": "goblin_warlock_down_2",
+      "frame": {
+        "x": 322,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    },
+    {
+      "filename": "goblin_warlock_down_3",
+      "frame": {
+        "x": 483,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    },
+    {
+      "filename": "goblin_warlock_down_4",
+      "frame": {
+        "x": 644,
+        "y": 786,
+        "w": 160,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 130
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_goblin_warlock_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 804,
+      "h": 916
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "windup_heavy",
+        "from": 12,
+        "to": 15,
+        "direction": "forward"
+      },
+      {
+        "name": "phase_shift",
+        "from": 16,
+        "to": 19,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 20,
+        "to": 22,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 23,
+        "to": 27,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "goblin_warlock",
+      "asset": "ASSET-029",
+      "facing": "left",
+      "frame": {
+        "w": 160,
+        "h": 130
+      },
+      "gutter": 1,
+      "columns": 5,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold_last",
+        "windup_heavy": "hold_last",
+        "phase_shift": "loop",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#4A4640",
+        "#59643F",
+        "#66523F",
+        "#6A6B62",
+        "#7D8B5A",
+        "#9A7D5E",
+        "#EFE6D2"
+      ]
+    }
+  }
+}
