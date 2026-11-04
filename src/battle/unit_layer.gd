@@ -116,6 +116,8 @@ const CLIP_PHASE_SHIFT: String = "phase_shift"
 const CLIP_BRACE: String = "brace"
 const CLIP_GUARD: String = "guard"
 const CLIP_STUNNED: String = "stunned"
+## 2026-11-04 (Wolf Alpha): a pattern skill with a haste effect (the howl) winds up as `howl` when the sheet has it.
+const CLIP_HOWL: String = "howl"
 const CLIP_VICTORY: String = "victory"
 const CLIP_DEFEAT: String = "defeat"
 const CLIP_DOWN: String = "down"
@@ -143,6 +145,7 @@ const CTX_HEAVY: String = "heavy"
 const CTX_PHASE: String = "phase"
 ## Pattern-brain enemy: the skill winding up has a Guard effect (`guarding`); the brain is stunned (`stunned`).
 const CTX_GUARDING: String = "guarding"
+const CTX_HOWLING: String = "howling"
 const CTX_STUNNED: String = "stunned"
 ## The two sides, in the order the per-side tables are walked.
 const SIDES: Array[int] = [CombatState.Side.PLAYER, CombatState.Side.ENEMY]
@@ -446,6 +449,7 @@ func clip_context(side: int) -> Dictionary:
 		CTX_HEAVY: pattern != null and pattern.uninterruptible_tell(),
 		CTX_PHASE: stage == PatternController.Stage.TRANSITION,
 		CTX_GUARDING: pattern_cast and pattern != null and (pattern.get_current_skill().get("effects", {}) as Dictionary).has("guard"),
+		CTX_HOWLING: pattern_cast and pattern != null and (pattern.get_current_skill().get("effects", {}) as Dictionary).has("haste"),
 		CTX_STUNNED: stage == PatternController.Stage.STUNNED,
 		CTX_AWAKEN: player and _combat.is_signature_active(),
 		CTX_STEPPING: get_step_left(side) > 0.0,
@@ -489,7 +493,7 @@ func _drive_cast_hold(side: int, anim: UnitAnimator) -> void:
 ## dead by a fall (`fell`) -> `fall` (Task 5; [method _update_clip] keeps `defeat` / `down` for a sheet without it);
 ## dead or downed -> `defeat` (player) / `down` (boss); player with the boss dead -> `victory`;
 ## hit -> `hit`; player casting -> `cast_gesture`; pattern enemy in a phase transition -> `phase_shift`, stunned ->
-## `stunned`, winding up a Guard skill -> `guard` (or `brace`); its uninterruptible skill winding up / warning ->
+## `stunned`, winding up a Guard skill -> `guard` (or `brace`), a haste skill -> `howl` (else `windup`); its uninterruptible skill winding up / warning ->
 ## `windup_heavy`; boss swinging -> `windup`; player with the signature
 ## running -> `awaken`; stepping -> `step`; else `idle`.
 static func clip_for(ctx: Dictionary) -> String:
@@ -510,6 +514,8 @@ static func clip_for(ctx: Dictionary) -> String:
 		return CLIP_STUNNED
 	if not player and bool(ctx.get(CTX_GUARDING, false)):
 		return CLIP_GUARD
+	if not player and bool(ctx.get(CTX_HOWLING, false)):
+		return CLIP_HOWL
 	if not player and bool(ctx.get(CTX_HEAVY, false)):
 		return CLIP_WINDUP_HEAVY
 	if not player and bool(ctx.get(CTX_SWINGING, false)):
@@ -699,6 +705,8 @@ func _update_clip(side: int, step: float) -> void:
 		want = CLIP_IDLE
 	if want == CLIP_STUNNED and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_STUNNED)):
 		want = CLIP_IDLE
+	if want == CLIP_HOWL and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_HOWL)):
+		want = CLIP_WINDUP
 	if want == CLIP_GUARD:
 		var sheet_g: SpriteSheet = get_sheet(side)
 		want = CLIP_GUARD if sheet_g != null and sheet_g.has_clip(CLIP_GUARD) else (CLIP_BRACE if sheet_g != null and sheet_g.has_clip(CLIP_BRACE) else CLIP_WINDUP)

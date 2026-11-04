@@ -1,0 +1,15 @@
+{
+  "id": "wolf_alpha",
+  "asset": "ASSET-028",
+  "frame": {"w": 80, "h": 80},
+  "facing": "left",
+  "source": "PixelLab character 76e105ae-6ec5-49b5-ab3b-5bacaf99a17f (approved 2026-11-04), PixMiniMax south-west clips in design/assets/candidates/wolf-alpha/anim/<clip>/<n>.png, cleaned (palette snap to the 8 locked colours, specks removed, body centred at x 40, feet on the bottom row, crouch / heap frames lifted onto it) into design/assets/candidates/wolf-alpha/clean-80x80/",
+  "clips": [
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop", "note": "src frames 0/2/4/6"},
+    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "nominal; the game paces step by the step cooldown; src 1/3/5/7"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png", "windup/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last", "note": "crouches to lunge, held until the telegraph ends; src 2/4/6/8 (the red mouth snapped to the fur greys)"},
+    {"name": "howl", "frames": ["howl/0.png", "howl/1.png", "howl/2.png", "howl/3.png"], "ms": [150, 150, 150, 0], "loop": "hold_last", "note": "sits back and howls at the sky, held for the rest of the 1.4 s wind-up (the interrupt window); src 2/3/5/8"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src frames 3-5 (1-2 had a baked red spray)"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png"], "ms": [100, 120, 150, 150, 150, 150], "loop": "hold_last", "note": "slumps onto its side; src 2/3/4/5/6/8"}
+  ]
+}

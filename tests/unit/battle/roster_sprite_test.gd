@@ -10,7 +10,12 @@ const ENEMY: int = CombatState.Side.ENEMY
 const ROSTER: Dictionary = {
 	"rootling": "", "greycap_sporeling": "", "mossbound_sentry": "brace",
 	"ancient_root_sentinel": "stunned", "mistbriar_matron": "guard",
+	# 2026-11-03/04 roster v2 (ASSET-026..028).
+	"goblin_archer": "", "dire_wolf": "", "wolf_alpha": "howl",
 }
+## 2026-11-04: wolves are low by nature (height follows the creature, user 2026-11-03), so the elite wolf is measured
+## against the normal wolf instead of the upright normals: it must stand clearly taller than the Dire Wolf.
+const WOLF_ELITE_MIN_EXTRA_PX: int = 8
 const NORMALS: Array[String] = ["rootling", "greycap_sporeling", "mossbound_sentry"]
 const ELITES: Array[String] = ["ancient_root_sentinel", "mistbriar_matron"]
 ## How much taller (art px) the shortest elite stands than the tallest normal: v1 elites were only ~6 px taller and read
@@ -53,6 +58,16 @@ func _initialize() -> void:
 	hit[UnitLayer.CTX_HIT] = true
 	_check("test_hit_outranks_stunned", UnitLayer.clip_for(hit) == UnitLayer.CLIP_HIT)
 	_check("test_a_plain_skill_still_winds_up", UnitLayer.clip_for(base) == UnitLayer.CLIP_WINDUP)
+	var howling: Dictionary = base.duplicate()
+	howling[UnitLayer.CTX_HOWLING] = true
+	_check("test_haste_skill_winds_up_as_howl", UnitLayer.clip_for(howling) == UnitLayer.CLIP_HOWL)
+	var howl_hit: Dictionary = howling.duplicate()
+	howl_hit[UnitLayer.CTX_HIT] = true
+	_check("test_hit_outranks_howl", UnitLayer.clip_for(howl_hit) == UnitLayer.CLIP_HIT)
+	var alpha_h: int = _idle_art_height("wolf_alpha")
+	var wolf_h: int = _idle_art_height("dire_wolf")
+	_check("test_wolf_alpha_stands_taller_than_the_dire_wolf", alpha_h >= wolf_h + WOLF_ELITE_MIN_EXTRA_PX,
+		"(alpha %d px, dire wolf %d px)" % [alpha_h, wolf_h])
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
 
