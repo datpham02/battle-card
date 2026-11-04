@@ -22,6 +22,10 @@ const MARKER_WREATH: Color = Color("4F6B3C")
 const MARKER_EDGE: Color = Color("1B1722")
 ## P2.3 ivory frame (Rootling creep destination, Guard): never red (F6 keeps red for cells that will be hit).
 const IVORY_OUTLINE: Color = Color("EDE3C8")
+## 2026-11-04 (user: "Viền Ngà nhấp nháy"): seconds the interrupt-window frame stays on, then off (PatternController
+## interrupt_tell, the Wolf Alpha's howl). Reduce motion: a steady dashed frame instead (INTERRUPT_DASH_PX on / off).
+const INTERRUPT_BLINK_SEC: float = 0.15
+const INTERRUPT_DASH_PX: int = 3
 
 var _combat: CombatView = null
 var _painters: Array[Callable] = []
@@ -141,7 +145,11 @@ static func pattern_telegraph_state(pattern: PatternController, config: CombatCo
 ## `outline` = cells framed in ivory (a moving self skill's destination footprint while it winds up: Rootling creep,
 ## Witch row shift; the enemy's cells while its Guard holds, or (P2.4) while an uninterruptible skill winds up / warns).
 ## {} when nothing shows. Drawn UNDER the red (F6).
-static func pattern_extras_state(pattern: PatternController, status: StatusEffects, state: CombatState) -> Dictionary:
+## `blink` (2026-11-04) = {cells, on, dashed} while an interrupt window is open (PatternController.interrupt_tell): the
+## enemy's cells in a blinking ivory frame at [param time_sec] (on for INTERRUPT_BLINK_SEC, off as long), or with
+## [param reduce_motion] a steady dashed frame; {} otherwise. Those cells never join the solid `outline`.
+static func pattern_extras_state(pattern: PatternController, status: StatusEffects, state: CombatState,
+		time_sec: float = 0.0, reduce_motion: bool = false) -> Dictionary:
 	if pattern == null:
 		return {}
 	var marks: Array[Dictionary] = []
@@ -161,16 +169,25 @@ static func pattern_extras_state(pattern: PatternController, status: StatusEffec
 		for cell: Vector2i in state.enemy_footprint_cells():
 			if not outline.has(cell):
 				outline.append(cell)
-	if marks.is_empty() and outline.is_empty():
+	var blink: Dictionary = {}
+	if state != null and pattern.interrupt_tell() and not state.is_enemy_dead():
+		var cells: Array[Vector2i] = []
+		cells.assign(state.enemy_footprint_cells())
+		var on: bool = reduce_motion or fmod(maxf(time_sec, 0.0), INTERRUPT_BLINK_SEC * 2.0) < INTERRUPT_BLINK_SEC
+		blink = {"cells": cells, "on": on, "dashed": reduce_motion}
+		for c: Vector2i in cells:
+			outline.erase(c)
+	if marks.is_empty() and outline.is_empty() and blink.is_empty():
 		return {}
-	return {"markers": marks, "outline": outline}
+	return {"markers": marks, "outline": outline, "blink": blink}
 
 
 ## The pattern extras to draw now ({} for a block-brain match).
 func pattern_extras() -> Dictionary:
 	if _combat == null or not is_instance_valid(_combat):
 		return {}
-	return pattern_extras_state(_combat.get_pattern_controller(), _combat.get_status(), _combat.get_state())
+	return pattern_extras_state(_combat.get_pattern_controller(), _combat.get_status(), _combat.get_state(),
+		Time.get_ticks_msec() / 1000.0, SettingsStore.shared().get_reduce_motion())
 
 
 # P2.3: marker squares and ivory outlines (see pattern_extras_state), whole art px, flat colours.
@@ -189,6 +206,29 @@ func _paint_pattern_extras(canvas: Node2D, extras: Dictionary) -> void:
 		var slab2: Rect2i = _slab_of(cell)
 		if slab2.has_area():
 			canvas.draw_rect(Rect2(slab2.grow(-1)), IVORY_OUTLINE, false, 2.0)
+	var blink: Dictionary = extras.get("blink", {}) as Dictionary
+	if not blink.is_empty() and bool(blink.get("on", false)):
+		for cell: Vector2i in blink.get("cells", []) as Array:
+			var slab3: Rect2i = _slab_of(cell)
+			if not slab3.has_area():
+				continue
+			if bool(blink.get("dashed", false)):
+				_draw_dashed_rect(canvas, slab3.grow(-1), IVORY_OUTLINE)
+			else:
+				canvas.draw_rect(Rect2(slab3.grow(-1)), IVORY_OUTLINE, false, 2.0)
+
+
+# 2026-11-04: a 2 px dashed frame (INTERRUPT_DASH_PX on, as many off), whole art px - reduce motion's interrupt window.
+func _draw_dashed_rect(canvas: Node2D, r: Rect2i, color: Color) -> void:
+	var step: int = INTERRUPT_DASH_PX * 2
+	for x: int in range(r.position.x, r.end.x, step):
+		var w: int = mini(INTERRUPT_DASH_PX, r.end.x - x)
+		canvas.draw_rect(Rect2(x, r.position.y, w, 2), color)
+		canvas.draw_rect(Rect2(x, r.end.y - 2, w, 2), color)
+	for y: int in range(r.position.y, r.end.y, step):
+		var h: int = mini(INTERRUPT_DASH_PX, r.end.y - y)
+		canvas.draw_rect(Rect2(r.position.x, y, 2, h), color)
+		canvas.draw_rect(Rect2(r.end.x - 2, y, 2, h), color)
 
 
 func _slab_of(cell: Vector2i) -> Rect2i:

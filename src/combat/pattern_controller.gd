@@ -189,6 +189,13 @@ func on_player_aim(cells: Array[Vector2i]) -> void:
 
 ## P2.4 (spec 3.6, D9): true while a skill that CANNOT be interrupted winds up or warns; FloorLayer frames the enemy's
 ## cells in ivory then (the "hitting it will not break this" tell).
+## 2026-11-04: true while an interruptible skill with a designed interrupt window (interrupt_stun_sec > 0: the Wolf
+## Alpha's howl) winds up - the floor blinks its ivory frame ("hit it now"), unlike the solid frame of
+## [method uninterruptible_tell].
+func interrupt_tell() -> bool:
+	return not _skill.is_empty() and _stage == Stage.WINDUP and bool(_skill["interruptible"]) 		and float(_skill.get("interrupt_stun_sec", 0.0)) > _EPS
+
+
 func uninterruptible_tell() -> bool:
 	return not _skill.is_empty() and (_stage == Stage.WINDUP or _stage == Stage.WARNING) and not bool(_skill["interruptible"])
 
