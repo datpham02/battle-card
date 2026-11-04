@@ -2723,9 +2723,13 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 	if _hero_wave(side, delivery) and not cells.is_empty():
 		peak = _play_hero_wave(cells, caster, delays, impact, shown)
 	elif not impact.is_empty():
+		# 2026-11-04: an impact with a floor mark (impact_marks, the Mage's embers) leaves it on each hit cell too.
+		var mark: String = CastVfx.impact_mark(str(delivery.get("impact", "")))
 		for cell: Vector2i in shown:
 			if not (impact == "hit_impact" and cell == target):
 				vfx.play(impact, cell, target_side, float(delays.get(cell, 0.0)))
+				if not mark.is_empty():
+					vfx.play(mark, cell, target_side, float(delays.get(cell, 0.0)))
 	var wait: float = float(delays.get(target, 0.0))
 	# The hit flash / HIT marker show when the delivery reaches the target's cell, not at the resolve.
 	if float(feedback.get("damage", 0.0)) > 0.0:

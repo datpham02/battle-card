@@ -281,7 +281,8 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 	# selection box over the burst): both are left out for that cast. Every other cast keeps them.
 	var packs_own: bool = side == CombatState.Side.PLAYER and str(delivery.get("type", "")) == SkillDelivery.CASTER_TO_TARGET \
 			and str(delivery.get("travel", "")) == "hero_pack" and CastVfx.packs_replace_shards(CastVfx.entry_for(caster_id))
-	if packs_own:
+	# 2026-11-04: an impact drawn by its own FloorVfx pack (impact_packs: the Mage's fire) drops the code flash / shards too.
+	if packs_own or (bool(tr.get("hit", false)) and CastVfx.impact_pack_owns_cells(impact)):
 		return
 	for c: Vector2i in shown:
 		var age: float = rel - float(arrive.get(c, 0.0))

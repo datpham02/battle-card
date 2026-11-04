@@ -149,6 +149,20 @@ static func impact_pack(impact_id: String) -> String:
 	return str((m as Dictionary).get(impact_id, "")) if m is Dictionary else ""
 
 
+## 2026-11-04: the FloorVfx floor pack left on each hit cell after impact [param impact_id]'s burst (index
+## `impact_marks`, the Mage's fire embers); "" when none.
+static func impact_mark(impact_id: String) -> String:
+	_ensure()
+	var m: Variant = _index.get("impact_marks", {})
+	return str((m as Dictionary).get(impact_id, "")) if m is Dictionary else ""
+
+
+## 2026-11-04: true when impact [param impact_id] has a FloorVfx pack (impact_packs): the code flash and square shards
+## are left out for it, like a hero cast pack's own impacts (packs_replace_shards), so the cell is not drawn twice.
+static func impact_pack_owns_cells(impact_id: String) -> bool:
+	return not impact_pack(impact_id).is_empty()
+
+
 ## ADR-0001 A1: the FloorVfx one-shot pack id drawn on the cells a delivery's travel [param travel_id] crosses
 ## (index `travel_packs`); "" when none is mapped (the hero's projectile is drawn by OverlayLayer instead).
 static func travel_pack(travel_id: String) -> String:

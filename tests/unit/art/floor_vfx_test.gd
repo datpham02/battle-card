@@ -12,6 +12,8 @@ const PACK_IDS: Array[String] = [
 	# 2026-11-02 tools/fx-pipeline (recipe kiem_khi) and their 43x31 cell variants
 	"impact_burst_big_steel", "impact_burst_big_steel_c43x31", "impact_burst_small_steel", "impact_burst_small_steel_c43x31",
 	"mark_stamp_big_steel", "mark_stamp_big_steel_c43x31", "mark_stamp_small_steel", "mark_stamp_small_steel_c43x31",
+	# 2026-11-04 (recipe hoa_tran, the Mage's fire)
+	"impact_flame_burn", "impact_flame_burn_c43x31", "mark_embers_burn", "mark_embers_burn_c43x31",
 ]
 ## Fixture entries (factory data; the frame counts / times are the point of the boundary checks).
 const LOOP_ENTRY: Dictionary = {"play": "loop", "frames": 4, "frame_ms": 100}

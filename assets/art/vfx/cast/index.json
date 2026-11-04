@@ -99,7 +99,7 @@
   "slash": "",
   "burst": "",
   "shatter": "",
-  "burn": "",
+  "burn": "impact_flame_burn",
   "freeze": "",
   "poison": "",
   "knockback": "",
@@ -109,6 +109,8 @@
   "curse": "",
   "none": ""
  },
+ "_doc_impact_marks": "2026-11-04 (user: VFX Pháp sư): per delivery impact, a FloorVfx floor pack left on every hit cell after its impact_packs burst (hoa_tran embers); an impact with a pack in impact_packs draws no code flash / shards (CastVfx.impact_pack_owns_cells).",
+ "impact_marks": {"burn": "mark_embers_burn"},
  "travel_packs": {
   "hero_pack": "",
   "square_streak": "",
