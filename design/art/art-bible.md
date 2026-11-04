@@ -473,7 +473,7 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 | Anh hùng | Dáng · vật đặc trưng (nửa trên) | Chính · nhấn | Mặt, tóc ở 40 px |
 |---|---|---|---|
 | Kiếm sĩ | Chữ nhật, HAI vai vuông to đối xứng; kiếm thẳng hai lưỡi hẹp (2 px) trong vỏ tối đeo chéo lưng, chỉ chuôi + **chắn tay chữ thập** rộng ~6 px + núm tròn nhô trên đầu ≥ 4 px (dấu nhận dạng là chữ thập, không phải lưỡi bản rộng) | Giáp thép #8FA3B8 tấm đối xứng, viền Ngà ngang ngực; choàng ngắn ngang hông Sương tối #4F5864 cài hai vai (không lam #3A5CF0) · nhấn #EEF4FA | Tóc vàng nhạt cắt ngắn, mái bằng, 3 chùm nhỏ chỉ ở đỉnh, băng đầu Ngà 1 px; mắt mở 2×2, chân mày 1 px thẳng. *Sửa 2026-10-31: bản v1 (tóc dựng cao, đại kiếm bản rộng, choàng dài) đọc ra Cloud FF7 nên bỏ.* |
-| Pháp sư | Tam giác cao gầy; mũ chóp gập có chùm bông. **Không sách** (cử chỉ cần hai tay trống) | **Áo nâu than #3A2A26** · nhấn hổ phách #F0A030 ở dải mũ, gấu áo, thắt lưng (người dùng chốt 2026-10-29) | Tóc bạc lòa xòa 3 px dưới vành; mắt 2×1 |
+| Pháp sư | Tam giác cao gầy; mũ chóp gập có chùm bông. **Cầm sách mở một tay** (người dùng chốt 2026-11-04, theo ảnh mẫu `04-mage-01`; trước đó "Không sách") | **Áo nâu than #3A2A26** · nhấn hổ phách #F0A030 ở dải mũ, gấu áo, thắt lưng (người dùng chốt 2026-10-29) | Tóc bạc lòa xòa 3 px dưới vành; mắt 2×1 |
 | Sát thủ | Thoi dẹt, khom; cao ~34–36 px (thấp nhất nhóm); mũ trùm nhọn, hai dao ngang ngực | Vải xám than #3A3744 · ngọc-trắng #BFF3EC ở lưỡi dao, mép mũ | Khăn che mặt; chỉ khe mắt Ngà 3×1 |
 | Thợ săn | Chữ T; nỏ vắt vai, mũ rộng vành + 1 lông ngà | Da nâu #8A5A33, choàng xám-ô-liu S ≤ 35 % · dây ngọc #46D6A4 (≤ 6 px) | Tóc nâu; mắt 2×1 trong bóng vành |
 | Giáo sĩ | Chuông đáy rộng; gậy đầu ô vuông lồng ô vuông; voan | Áo Ngà-xám, chì #B8BCC8 · tím nhạt #B9B0DC ở đầu gậy, mép voan | Voan phủ tóc; mắt nhắm 3×1 |
@@ -481,13 +481,13 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 | Anh hùng | Idle (2 khung) | Cử chỉ niệm: A (0,08 s) → B (0,12 s), tầm vai, không quá đầu | Thức Tỉnh (2 khung lặp) |
 |---|---|---|---|
 | Kiếm sĩ | Ngực lên 1 px, đuôi choàng lệch 1 px; đứng dạng chân | A: kiếm rút ngang vai, mũi chỉ ra sau. B: chém ngang tới x = 30. Hết cử chỉ về **thế thủ** (sửa 2026-11-02, người dùng: suốt trận cầm kiếm vào thế; trận mở bằng clip `draw` rút kiếm vào thế; kiếm về lưng chỉ ở màn thắng) | Vung Hết Sức: hai tay cầm kiếm ngang ngực, thủ rồi chém; choàng bay |
-| Pháp sư | Chóp mũ và chùm bông đung 1 px, bàn tay rảnh co duỗi | A: hai tay co sát ngực. B: hai lòng bàn tay đẩy ra trước | Bùng Nổ: hai tay dang ngang vai, mũ ngả sau |
+| Pháp sư | Chóp mũ và chùm bông đung 1 px, bàn tay rảnh co duỗi | Sách giữ một tay (sửa 2026-11-04). A: tay rảnh co về. B: lòng bàn tay rảnh đẩy ra trước | Bùng Nổ: giơ sách cao trước mặt, trang sách bay, tay rảnh dang rộng, áo và mũ bay |
 | Sát thủ | Cả người tụt 1 px, mũi dao nhích ±1 px luân phiên | A: hai dao chéo trước ngực. B: hai tay hất ra, dao hướng phải | Bóng Lướt: lao người; 2 bản sao tối hơn phía sau cách 4 px (code) |
 | Thợ săn | Vành mũ nghiêng 1 px, lông vũ rung, dồn trọng lượng | A: nỏ hạ ngang hông. B: nỏ giương ngang vai, mũi chĩa ra | Bẫy Sập: quỳ một gối, nỏ chống đất phía trước |
 | Giáo sĩ | Voan và gấu áo lệch 1 px, đầu cúi 1 px | A: gậy dựng thẳng. B: gậy nghiêng, đầu gậy chĩa ra ngang đầu | Ban Phước: hai tay giữ gậy cắm xuống, cúi đầu |
 
-- **Lấy từ `04-lineup-01`:** kiếm lưng, giáp vai (Kiếm sĩ); mũ chùm bông, viền gấu áo (Pháp sư); mũ trùm, dao cầm ngược (Sát thủ); vành rộng, lông, nỏ vai, dây (Thợ săn); voan, gậy ô vuông (Giáo sĩ).
-- **Bỏ:** tóc trắng-vàng cả năm người (mất khác biệt); viền vàng (trùng Ánh Lưới); choàng lam hoàng gia (gần Giá Lạnh); sách Pháp sư; khăn lam-ngọc Sát thủ (va dây ngọc Thợ săn); tím bão hòa; mắt to có lòng trắng (vỡ ở 40 px).
+- **Lấy từ `04-lineup-01`:** kiếm lưng, giáp vai (Kiếm sĩ); mũ chùm bông, viền gấu áo, sách mở (Pháp sư, thêm sách 2026-11-04); mũ trùm, dao cầm ngược (Sát thủ); vành rộng, lông, nỏ vai, dây (Thợ săn); voan, gậy ô vuông (Giáo sĩ).
+- **Bỏ:** tóc trắng-vàng cả năm người (mất khác biệt); viền vàng (trùng Ánh Lưới); choàng lam hoàng gia (gần Giá Lạnh); khăn lam-ngọc Sát thủ (va dây ngọc Thợ săn); tím bão hòa; mắt to có lòng trắng (vỡ ở 40 px).
 
 ### 5.2 Kẻ thù
 - Phân biệt địch/ta ở 1× bằng 3 thứ:

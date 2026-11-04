@@ -1,0 +1,1826 @@
+{
+  "frames": [
+    {
+      "filename": "phap_su_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_idle_1",
+      "frame": {
+        "x": 97,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_idle_2",
+      "frame": {
+        "x": 194,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_idle_3",
+      "frame": {
+        "x": 291,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_idle_4",
+      "frame": {
+        "x": 388,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_idle_5",
+      "frame": {
+        "x": 485,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_idle_6",
+      "frame": {
+        "x": 582,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_idle_7",
+      "frame": {
+        "x": 679,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "phap_su_draw_0",
+      "frame": {
+        "x": 0,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 60
+    },
+    {
+      "filename": "phap_su_draw_1",
+      "frame": {
+        "x": 97,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 60
+    },
+    {
+      "filename": "phap_su_draw_2",
+      "frame": {
+        "x": 194,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
+    },
+    {
+      "filename": "phap_su_draw_3",
+      "frame": {
+        "x": 291,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
+    },
+    {
+      "filename": "phap_su_draw_4",
+      "frame": {
+        "x": 388,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
+    },
+    {
+      "filename": "phap_su_draw_5",
+      "frame": {
+        "x": 485,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
+    },
+    {
+      "filename": "phap_su_draw_6",
+      "frame": {
+        "x": 582,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
+    },
+    {
+      "filename": "phap_su_draw_7",
+      "frame": {
+        "x": 679,
+        "y": 71,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_step_0",
+      "frame": {
+        "x": 0,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_step_1",
+      "frame": {
+        "x": 97,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_step_2",
+      "frame": {
+        "x": 194,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_step_3",
+      "frame": {
+        "x": 291,
+        "y": 142,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_step_forward_0",
+      "frame": {
+        "x": 0,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_forward_1",
+      "frame": {
+        "x": 97,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_forward_2",
+      "frame": {
+        "x": 194,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_forward_3",
+      "frame": {
+        "x": 291,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_forward_4",
+      "frame": {
+        "x": 388,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_forward_5",
+      "frame": {
+        "x": 485,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_forward_6",
+      "frame": {
+        "x": 582,
+        "y": 213,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_back_0",
+      "frame": {
+        "x": 0,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_back_1",
+      "frame": {
+        "x": 97,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_back_2",
+      "frame": {
+        "x": 194,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_back_3",
+      "frame": {
+        "x": 291,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_back_4",
+      "frame": {
+        "x": 388,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_back_5",
+      "frame": {
+        "x": 485,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_back_6",
+      "frame": {
+        "x": 582,
+        "y": 284,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_down_0",
+      "frame": {
+        "x": 0,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_down_1",
+      "frame": {
+        "x": 97,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_down_2",
+      "frame": {
+        "x": 194,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_down_3",
+      "frame": {
+        "x": 291,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_down_4",
+      "frame": {
+        "x": 388,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_down_5",
+      "frame": {
+        "x": 485,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_step_down_6",
+      "frame": {
+        "x": 582,
+        "y": 355,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_cast_gesture_0",
+      "frame": {
+        "x": 0,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 60
+    },
+    {
+      "filename": "phap_su_cast_gesture_1",
+      "frame": {
+        "x": 97,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
+    },
+    {
+      "filename": "phap_su_cast_gesture_2",
+      "frame": {
+        "x": 194,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 200
+    },
+    {
+      "filename": "phap_su_cast_gesture_3",
+      "frame": {
+        "x": 291,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 80
+    },
+    {
+      "filename": "phap_su_cast_gesture_4",
+      "frame": {
+        "x": 388,
+        "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 40
+    },
+    {
+      "filename": "phap_su_hit_1",
+      "frame": {
+        "x": 97,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 40
+    },
+    {
+      "filename": "phap_su_hit_2",
+      "frame": {
+        "x": 194,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 40
+    },
+    {
+      "filename": "phap_su_victory_0",
+      "frame": {
+        "x": 0,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_victory_1",
+      "frame": {
+        "x": 97,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_victory_2",
+      "frame": {
+        "x": 194,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_victory_3",
+      "frame": {
+        "x": 291,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_victory_4",
+      "frame": {
+        "x": 388,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_victory_5",
+      "frame": {
+        "x": 485,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_victory_6",
+      "frame": {
+        "x": 582,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_victory_7",
+      "frame": {
+        "x": 679,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_0",
+      "frame": {
+        "x": 0,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_1",
+      "frame": {
+        "x": 97,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_2",
+      "frame": {
+        "x": 194,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_3",
+      "frame": {
+        "x": 291,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_4",
+      "frame": {
+        "x": 388,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_5",
+      "frame": {
+        "x": 485,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_6",
+      "frame": {
+        "x": 582,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_defeat_7",
+      "frame": {
+        "x": 679,
+        "y": 639,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_fall_0",
+      "frame": {
+        "x": 0,
+        "y": 710,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_fall_1",
+      "frame": {
+        "x": 97,
+        "y": 710,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_fall_2",
+      "frame": {
+        "x": 194,
+        "y": 710,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_fall_3",
+      "frame": {
+        "x": 291,
+        "y": 710,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "phap_su_awaken_0",
+      "frame": {
+        "x": 0,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_awaken_1",
+      "frame": {
+        "x": 97,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_awaken_2",
+      "frame": {
+        "x": 194,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_awaken_3",
+      "frame": {
+        "x": 291,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_awaken_4",
+      "frame": {
+        "x": 388,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_awaken_5",
+      "frame": {
+        "x": 485,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_awaken_6",
+      "frame": {
+        "x": 582,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    },
+    {
+      "filename": "phap_su_awaken_7",
+      "frame": {
+        "x": 679,
+        "y": 781,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 120
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_phap_su_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 775,
+      "h": 851
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "draw",
+        "from": 8,
+        "to": 15,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 16,
+        "to": 19,
+        "direction": "forward"
+      },
+      {
+        "name": "step_forward",
+        "from": 20,
+        "to": 26,
+        "direction": "forward"
+      },
+      {
+        "name": "step_back",
+        "from": 27,
+        "to": 33,
+        "direction": "forward"
+      },
+      {
+        "name": "step_down",
+        "from": 34,
+        "to": 40,
+        "direction": "forward"
+      },
+      {
+        "name": "cast_gesture",
+        "from": 41,
+        "to": 45,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 46,
+        "to": 48,
+        "direction": "forward"
+      },
+      {
+        "name": "victory",
+        "from": 49,
+        "to": 56,
+        "direction": "forward"
+      },
+      {
+        "name": "defeat",
+        "from": 57,
+        "to": 64,
+        "direction": "forward"
+      },
+      {
+        "name": "fall",
+        "from": 65,
+        "to": 68,
+        "direction": "forward"
+      },
+      {
+        "name": "awaken",
+        "from": 69,
+        "to": 76,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "phap_su",
+      "asset": "ASSET-030",
+      "facing": "right",
+      "frame": {
+        "w": 96,
+        "h": 70
+      },
+      "gutter": 1,
+      "columns": 8,
+      "loop": {
+        "idle": "loop",
+        "draw": "once",
+        "step": "loop",
+        "step_forward": "once",
+        "step_back": "once",
+        "step_down": "once",
+        "cast_gesture": "once",
+        "hit": "once",
+        "victory": "hold_last",
+        "defeat": "hold_last",
+        "fall": "hold_last",
+        "awaken": "loop"
+      },
+      "palette": [
+        "#1B1722",
+        "#3A2A26",
+        "#4A3A2A",
+        "#66523F",
+        "#D8CDB0",
+        "#E3B99A",
+        "#EFE6D2",
+        "#F0A030"
+      ]
+    }
+  }
+}
