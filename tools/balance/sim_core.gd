@@ -223,6 +223,10 @@ var flow: CutFlow
 var plan: CastPlan
 var featured: Dictionary = {}
 var boss: BossController
+## 2026-11-04: the match's PatternController for a `brain: "pattern"` match (port of CombatView._setup_pattern_brain);
+## null for the block brain. Its warnings feed the bot's dodge like a boss swing, its hits the boss-hit columns.
+var pattern: PatternController = null
+var _skills_config: EnemySkillsConfig = null
 var arbiter: SwingArbiter
 var learning: BossLearning
 var trait_host: TraitHost
@@ -852,7 +856,9 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	var brain_config: BossBrainConfig = BossBrainConfig.from_dictionary(brain_data)
 	_apply_brain_params(brain_config, m, base_cd)
 	boss = BossController.new(state, grid, cut_config, cards, brain_config, boss_drops_config, hold_config, match_seed + 1)
-	boss.enable_pieces(piece_lib, chapter_id, match_seed + 2, combat.max_pieces_per_cast)
+	var pattern_match: bool = str(m.get("brain", "")) == "pattern"
+	if not pattern_match:
+		boss.enable_pieces(piece_lib, chapter_id, match_seed + 2, combat.max_pieces_per_cast)
 	boss.get_drops().point_spawned.connect(_on_odd_point_spawned.bind(ENEMY))
 	boss.set_player_step_cooldown(player_cd)
 	boss.get_brain().cards = _boss_card_ids(m)
@@ -861,6 +867,9 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	combat.configure_status(status)
 	mover.set_status(status)
 	boss.set_status(status)
+	pattern = null
+	if pattern_match:
+		_setup_pattern(m, brain_config, player_cd, match_seed)
 	learning = BossLearning.new(brain_config.learning)
 	boss.set_learning(learning)
 	boss.get_actor().swing_started.connect(_on_boss_swing_started)
@@ -1254,6 +1263,8 @@ func _world_tick(step: float) -> void:
 	drops.tick(step, state.player_cell, bag.get_occupied_count())
 	cooldowns.tick(step)
 	boss.tick(step, actor)
+	if pattern != null:
+		pattern.tick(step)
 	arbiter.tick(step)
 	bag.tick_rot(step)
 	if not (state.is_player_dead() or state.is_enemy_dead()):
@@ -1437,6 +1448,11 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 			signature.on_hit(str(result.get("skill_id", "")), damage)
 			ms["sig_dmg"] = float(ms["sig_dmg"]) + _sig_pending_extra
 		_sig_pending_extra = 0.0
+		if pattern != null:
+			# Mirrors CombatView: every player cast may break markers; a hit interrupts an interruptible wind-up.
+			pattern.on_player_cast(cells)
+			if bool(result["hit"]):
+				pattern.on_enemy_hit()
 		trait_host.on_player_swing_resolved(result)
 		trait_host.on_boss_damaged(damage)
 		_relics_on_cast_landed(result)
@@ -1568,6 +1584,48 @@ func _on_boss_swing_started(cells: Array[Vector2i], skill_id: String, duration: 
 	if not actor.is_swinging() and _phase == Phase.IDLE and rng.randf() < float(bot["counter"]):
 		_force_aim = true
 		_next_cast = minf(_next_cast, t)
+
+
+# 2026-11-04: port of CombatView._setup_pattern_brain (the trait warnings are not fed as external red: no ch1 pattern
+# match carries a trait).
+func _setup_pattern(m: Dictionary, brain_config: BossBrainConfig, player_cd: float, match_seed: int) -> void:
+	if _skills_config == null:
+		_skills_config = EnemySkillsConfig.load_from_file()
+	var enemy_id: String = str(m.get("enemy", ""))
+	if _skills_config.get_enemy(enemy_id).is_empty():
+		push_warning("sim_core: pattern enemy '%s' not in enemy_skills.json" % enemy_id)
+	pattern = PatternController.new(state, grid, _skills_config, enemy_id, status, match_seed + 4)
+	pattern.think_interval_sec = maxf(brain_config.think_interval_sec, 0.05)
+	pattern.tempo_mult = maxf(float(m.get("pattern_tempo_mult", 1.0)), 0.01)
+	pattern.player_step_cd = player_cd
+	pattern.player_step_left_fn = Callable(mover, "get_cooldown_remaining")
+	boss.extra_step_lock_fn = Callable(pattern, "is_busy")
+	var pc: PatternController = pattern
+	boss.get_brain().extra_own_blocked_fn = Callable(pc, "marker_cells")
+	boss.get_mover().add_blocker(func(cell: Vector2i) -> bool: return pc.marker_cells().has(cell))
+	pattern.warning_started.connect(_on_pattern_warning)
+	pattern.skill_resolved.connect(_on_pattern_resolved)
+
+
+# 2026-11-04: a pattern warning on the bot's cell is dodged with the same chance and reaction as a boss swing.
+func _on_pattern_warning(_skill_id: String, cells: Array[Vector2i], queued: Array[Vector2i], _warning_sec: float) -> void:
+	ms["bstarts"] = int(ms["bstarts"]) + 1
+	if _driver != null:
+		return
+	if (cells.has(state.player_cell) or queued.has(state.player_cell)) and rng.randf() < float(bot["dodge"]):
+		_dodge_at = t + float(bot["dodge_reaction"])
+
+
+# 2026-11-04: a pattern strike counts in the boss columns (swings, hits, damage taken) like a boss swing.
+func _on_pattern_resolved(skill_id: String, result: Dictionary) -> void:
+	if str((_skills_config.skills.get(skill_id, {}) as Dictionary).get("kind", "")) != "attack":
+		return
+	var damage: float = float(result.get("damage", 0.0))
+	ms["taken"] = float(ms["taken"]) + damage
+	ms["bswings"] = int(ms["bswings"]) + 1
+	if bool(result.get("hit", false)):
+		ms["bhits"] = int(ms["bhits"]) + 1
+		ms["bdmg"] = float(ms["bdmg"]) + damage
 
 
 func _on_boss_swing_cancelled(_cells: Array[Vector2i], _skill_id: String) -> void:
@@ -1719,6 +1777,10 @@ func _warned_cells() -> Array[Vector2i]:
 		out.append_array(fuse.get_warning_cells())
 	if _haz_vents > 0 or _haz_crumble:
 		out.append_array(_haz_warned())
+	# 2026-11-04: a drop tile cracking under the bot (Sentinel bark_shift lands on its cell) - a player steps off
+	# during the crack; the bot used to stand there and fall.
+	if status != null and status.is_cracking(PLAYER, state.player_cell) and not out.has(state.player_cell):
+		out.append(state.player_cell)
 	return out
 
 
@@ -1794,6 +1856,10 @@ func _step_toward_safe(bad: Array[Vector2i]) -> bool:
 func _step_blocked(c: Vector2i) -> bool:
 	if mover.is_cell_blocked(c):
 		return true
+	# 2026-11-04: a cracking cell (drop tile, Sentinel bark_shift) becomes a lethal hole; a player who sees the crack
+	# never steps on it. Before this the bot walked into it and the Sentinel's win % mostly measured falls.
+	if status != null and status.is_cracking(PLAYER, c):
+		return true
 	var slam: SlamTrait = trait_host.get_trait("slam") as SlamTrait
 	return slam != null and (slam.is_cracked(c) or slam.get_warning_cells().has(c))
 
@@ -1823,12 +1889,16 @@ func _telegraph_dodge() -> void:
 		return
 	var boss_actor: CutActor = boss.get_actor()
 	var here: Vector2i = state.player_cell
-	if not boss_actor.is_swinging() or not boss_actor.get_cells().has(here):
+	# 2026-11-04: a pattern enemy's red (warning + queued) is danger like a boss swing.
+	var danger: Array[Vector2i] = boss_actor.get_cells() if boss_actor.is_swinging() else ([] as Array[Vector2i])
+	if pattern != null:
+		danger.append_array(pattern.telegraph_cells())
+		danger.append_array(pattern.queued_cells())
+	if not danger.has(here):
 		_dodge_at = -1.0
 		return
 	if not mover.is_ready():
 		return
-	var danger: Array[Vector2i] = boss_actor.get_cells()
 	var options: Array[Vector2i] = []
 	var thorned: Array[Vector2i] = []
 	for d: Vector2i in DIRS:
@@ -2014,7 +2084,10 @@ func _join_piece() -> void:
 	var labels: Array[String] = []
 	for p: Piece in plan.pieces():
 		labels.append(p.shape_id)
-	flow.update_cut(labels, plan.cells(), combat.join_extra_sec)
+	# 2026-11-04: CutFlow.update_cut / combat.join_extra_sec were removed from the game 2026-11-01 (pieces join before
+	# the cast, never into the open menu); the stale call errored here on every join. Kept only when present.
+	if flow.has_method("update_cut") and "join_extra_sec" in combat:
+		flow.call("update_cut", labels, plan.cells(), combat.get("join_extra_sec"))
 	ms["joins"] = int(ms["joins"]) + 1
 	if not relics.is_empty():
 		var jinfo: Dictionary = _make_cast_info("", plan.total_cells(), true, not featured.is_empty() and plan.is_featured(featured["cells"] as Array[Vector2i]))

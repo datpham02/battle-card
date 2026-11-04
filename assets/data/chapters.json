@@ -307,7 +307,7 @@
 				"goblin_warlock": {
 					"id": "goblin_warlock",
 					"name_key": "boss.goblin_warlock.name",
-					"boss_max_hp": 880,
+					"boss_max_hp": 760,
 					"brain": "pattern",
 					"enemy": "goblin_warlock",
 					"brain_set": "balanced",

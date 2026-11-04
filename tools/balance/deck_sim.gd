@@ -1002,7 +1002,7 @@ static func _key_less(a: Array, b: Array) -> bool:
 # memory. Keys: heal:X (world.floor_heal_ratio); scale.<row|*>.<axis>:X (floor_scaling row "1".."5" /
 # "final" / * = every row; X sets, xF multiplies); norm.<region>.<axis>:X (region_normalize, X or xF);
 # mid_columns:N (N copies of the middle region column between the first and the boss column);
-# battle_columns:N (N extra copies of the first, battle-only column).
+# battle_columns:N (N extra copies of the first, battle-only column); pool:<id>|<id> (world.region_pool).
 func _chapters_with_overrides(items: Array[String]) -> ChaptersConfig:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(ChaptersConfig.DEFAULT_PATH))
 	if typeof(parsed) != TYPE_DICTIONARY:
@@ -1043,6 +1043,9 @@ func _chapters_with_overrides(items: Array[String]) -> ChaptersConfig:
 		elif key == "final_prelude" and raw_value == "none":
 			# TD-029: no columns before the final boss (the pre-TD-029 one-column final map).
 			world["final_prelude"] = []
+		elif key == "pool":
+			# 2026-11-04: pool:ch1|swamp sets world.region_pool (ids split on "|"), e.g. every floor in one region.
+			world["region_pool"] = Array(raw_value.split("|", false))
 		elif key == "battle_columns":
 			# N extra copies of the first (battle-only) column right after it: more fights per region.
 			var bcols: Array = world.get("region_columns", [])

@@ -221,3 +221,28 @@ R1–R3 không tốn gen và chơi được ngay với hình tạm; R4 làm sau,
 Có, sau khi duyệt:
 - **Đã áp dụng 2026-11-03.** `design/world-context.md` Rừng Sương: danh sách quái thành 6 quái cây/nấm + Goblin Trinh Sát, Goblin Cung Thủ, Goblin Vu Sư (boss tầng 1–2), Sói Dữ, Sói Đầu Đàn; Kẻ Gác vẫn là Phù thủy Rừng.
 - **Đã áp dụng 2026-11-03.** `design/quick-specs/phase2-misty-forest-2026-11-01.md` §5.4–5.5: ghi chú trỏ sang spec này.
+
+## 12. Đợt cân bằng 2026-11-04 (người dùng: "Áp dụng, đo lại")
+
+Đo bằng `tools/balance/deck_sim.gd` (bot né 85 %, chính sách `build`), sau khi bộ mô phỏng chạy được não `pattern` và bot biết tránh / bước khỏi ô đang nứt (trước đó bot đứng trên ô rớt của Vệ Binh Rễ Cổ và chết vì rơi, làm số của Vệ Binh sai hẳn).
+
+| Thay đổi (dữ liệu) | Trước | Sau | Lý do |
+|---|---|---|---|
+| Sói Đầu Đàn `alpha_howl` haste `cooldown_mult` | 0,5 | **0,7** | mất 85–112 máu / trận (6–8 đòn) |
+| Sói Đầu Đàn `alpha_bite` (cả followup) | 12 | **10** | như trên |
+| Sói Đầu Đàn `rending_rush` | 16 | **14** | như trên |
+| Goblin Vu Sư `boss_max_hp` | 880 | **760** (tầng 1 ≈ 400) | Pháp sư chết ở boss tầng 1 16 % số run, còn 25 % máu sau boss |
+| Goblin Vu Sư `stolen_shape` / `twin_shapes` (cả khối 2) | 16 | **14** | như trên |
+
+Vệ Binh Rễ Cổ đã thử giảm (máu 380, Lưới Cành 12) rồi **trả về số cũ** (420 / 16): khi bot không còn đứng trên ô nứt, nó thắng 100 % với cả 3 nhân vật.
+
+Kết quả (Rừng Sương mọi tầng, `--world --seeds=25 --world-set=pool:ch1`):
+
+| Nhân vật | Thắng run trước → sau | Ghi chú |
+|---|---|---|
+| Kiếm sĩ | 0 % → **36 %** | chết nhiều nhất ở trận cuối (8) và boss tầng 4 (5) |
+| Pháp sư | 0 % → **28 %** | chết nhiều nhất ở boss tầng 4–5 (Phù thủy, 11) |
+| Sát thủ | 0 % → **20 %** | 15 / 20 lần chết là trận cuối |
+
+Phần lớn mức 0 % trước đây là bot rơi ô nứt, không phải số quái. Còn mở: trận cuối khó với Sát thủ, Phù thủy Rừng khó với Pháp sư, run thắng dài 45–54 phút (mục tiêu 40–50).
+

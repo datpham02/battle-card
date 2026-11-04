@@ -990,3 +990,14 @@ but the matches still diverge once an odd piece lands (different casts, differen
 the same seeds, not identical runs. Tune only data (`chance`, `size_weights`, `min_cells`); `--odd-chance=X` probes a chance
 without editing the JSON. Smoke (3 seeds, about 10-25 s each): `--run=v6 --seeds=3 --characters=kiem_si --odd=on`
 (then `--odd=off`, `--odd-chance=1`).
+
+## 2026-11-04: pattern-brain matches, cracking cells, `pool:`
+
+- `sim_core.gd` plays `brain: "pattern"` matches like `CombatView._setup_pattern_brain`: a PatternController per match (no
+  boss pieces), the bot dodges a pattern warning (or queued stripe) on its cell with the same `--dodge` chance and
+  reaction as a boss swing, and pattern strikes count in the boss columns (swings, hits, damage taken).
+- The bot treats a cracking cell (drop tile) as blocked and steps off one cracking under it. Before this it stood on the
+  Ancient Root Sentinel's drop tiles and fell (lethal), so older Sentinel / world numbers are too harsh.
+- The stale `CutFlow.update_cut(..., combat.join_extra_sec)` call (removed from the game 2026-11-01) no longer errors.
+- `--world-set=pool:ch1` (or `pool:ch1|swamp`) sets `world.region_pool`, e.g. every floor in one region.
+

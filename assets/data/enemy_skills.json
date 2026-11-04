@@ -252,7 +252,7 @@
 			"pattern": {"anchor": "self_cell"},
 			"windup_sec": 1.4,
 			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
-			"effects": {"haste": {"cooldown_mult": 0.5, "sec": 6.0}},
+			"effects": {"haste": {"cooldown_mult": 0.7, "sec": 6.0}},
 			"recovery_sec": 0.4, "cooldown_sec": 12.0, "interruptible": true, "interrupt_stun_sec": 1.0
 		},
 		"rending_rush": {
@@ -260,15 +260,15 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
 			"windup_sec": 0.6, "warning_sec": 1.2,
 			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "slash"},
-			"effects": {"damage": 16, "status": {"id": "slow", "sec": 1.5, "step_mult": 1.3}}, "recovery_sec": 0.8, "cooldown_sec": 4.5
+			"effects": {"damage": 14, "status": {"id": "slow", "sec": 1.5, "step_mult": 1.3}}, "recovery_sec": 0.8, "cooldown_sec": 4.5
 		},
 		"alpha_bite": {
 			"id": "alpha_bite", "owner": "wolf_alpha", "kind": "attack", "name_key": "enemy_skill.alpha_bite.name", "counter_key": "enemy_skill.alpha_bite.counter",
 			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
 			"windup_sec": 0.4, "warning_sec": 0.9,
 			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "slash"},
-			"effects": {"damage": 12},
-			"followup": {"offsets": [[0, 0]], "relative_to": "player", "warning_sec": 0.75, "effects": {"damage": 12}},
+			"effects": {"damage": 10},
+			"followup": {"offsets": [[0, 0]], "relative_to": "player", "warning_sec": 0.75, "effects": {"damage": 10}},
 			"cooldown_sec": 3.0
 		},
 		"hex_bolt": {
@@ -283,7 +283,7 @@
 			"pattern": {"variants": [[[0, 0], [0, 1], [0, 2], [1, 2]], [[0, 0], [1, 0], [2, 0], [1, 1]], [[1, 0], [2, 0], [0, 1], [1, 1]]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
 			"windup_sec": 0.8, "warning_sec": 1.4,
 			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burst"},
-			"effects": {"damage": 16}, "recovery_sec": 1.2, "cooldown_sec": 5.0, "interruptible": false
+			"effects": {"damage": 14}, "recovery_sec": 1.2, "cooldown_sec": 5.0, "interruptible": false
 		},
 		"curse_lane": {
 			"id": "curse_lane", "owner": "goblin_warlock", "kind": "attack", "name_key": "enemy_skill.curse_lane.name", "counter_key": "enemy_skill.curse_lane.counter",
@@ -305,8 +305,8 @@
 			"pattern": {"variants": [[[0, 0], [0, 1], [0, 2], [1, 2]], [[0, 0], [1, 0], [2, 0], [1, 1]], [[1, 0], [2, 0], [0, 1], [1, 1]]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
 			"windup_sec": 0.9, "warning_sec": 1.5,
 			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burst"},
-			"effects": {"damage": 16},
-			"followup": {"offsets": [[2, 0], [-2, 0], [0, 2], [0, -2], [3, 0], [-3, 0], [0, 3], [0, -3]], "relative_to": "first_shift", "show_with_first": true, "exclude_first": true, "warning_sec": 0.75, "effects": {"damage": 16}},
+			"effects": {"damage": 14},
+			"followup": {"offsets": [[2, 0], [-2, 0], [0, 2], [0, -2], [3, 0], [-3, 0], [0, 3], [0, -3]], "relative_to": "first_shift", "show_with_first": true, "exclude_first": true, "warning_sec": 0.75, "effects": {"damage": 14}},
 			"recovery_sec": 1.5, "cooldown_sec": 7.0, "interruptible": false
 		}
 	},
