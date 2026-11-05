@@ -1,0 +1,1845 @@
+{
+  "frames": [
+    {
+      "filename": "giao_si_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_idle_1",
+      "frame": {
+        "x": 97,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_idle_2",
+      "frame": {
+        "x": 194,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_idle_3",
+      "frame": {
+        "x": 291,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_idle_4",
+      "frame": {
+        "x": 388,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_idle_5",
+      "frame": {
+        "x": 485,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_idle_6",
+      "frame": {
+        "x": 582,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_idle_7",
+      "frame": {
+        "x": 679,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 125
+    },
+    {
+      "filename": "giao_si_draw_0",
+      "frame": {
+        "x": 0,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 60
+    },
+    {
+      "filename": "giao_si_draw_1",
+      "frame": {
+        "x": 97,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 60
+    },
+    {
+      "filename": "giao_si_draw_2",
+      "frame": {
+        "x": 194,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 80
+    },
+    {
+      "filename": "giao_si_draw_3",
+      "frame": {
+        "x": 291,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 80
+    },
+    {
+      "filename": "giao_si_draw_4",
+      "frame": {
+        "x": 388,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 80
+    },
+    {
+      "filename": "giao_si_draw_5",
+      "frame": {
+        "x": 485,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 80
+    },
+    {
+      "filename": "giao_si_draw_6",
+      "frame": {
+        "x": 582,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 80
+    },
+    {
+      "filename": "giao_si_draw_7",
+      "frame": {
+        "x": 679,
+        "y": 73,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 120
+    },
+    {
+      "filename": "giao_si_step_0",
+      "frame": {
+        "x": 0,
+        "y": 146,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_step_1",
+      "frame": {
+        "x": 97,
+        "y": 146,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_step_2",
+      "frame": {
+        "x": 194,
+        "y": 146,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_step_3",
+      "frame": {
+        "x": 291,
+        "y": 146,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_step_forward_0",
+      "frame": {
+        "x": 0,
+        "y": 219,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_forward_1",
+      "frame": {
+        "x": 97,
+        "y": 219,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_forward_2",
+      "frame": {
+        "x": 194,
+        "y": 219,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_forward_3",
+      "frame": {
+        "x": 291,
+        "y": 219,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_forward_4",
+      "frame": {
+        "x": 388,
+        "y": 219,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_forward_5",
+      "frame": {
+        "x": 485,
+        "y": 219,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_forward_6",
+      "frame": {
+        "x": 582,
+        "y": 219,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_back_0",
+      "frame": {
+        "x": 0,
+        "y": 292,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_back_1",
+      "frame": {
+        "x": 97,
+        "y": 292,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_back_2",
+      "frame": {
+        "x": 194,
+        "y": 292,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_back_3",
+      "frame": {
+        "x": 291,
+        "y": 292,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_back_4",
+      "frame": {
+        "x": 388,
+        "y": 292,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_back_5",
+      "frame": {
+        "x": 485,
+        "y": 292,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_back_6",
+      "frame": {
+        "x": 582,
+        "y": 292,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_down_0",
+      "frame": {
+        "x": 0,
+        "y": 365,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_down_1",
+      "frame": {
+        "x": 97,
+        "y": 365,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_down_2",
+      "frame": {
+        "x": 194,
+        "y": 365,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_down_3",
+      "frame": {
+        "x": 291,
+        "y": 365,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_down_4",
+      "frame": {
+        "x": 388,
+        "y": 365,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_down_5",
+      "frame": {
+        "x": 485,
+        "y": 365,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_step_down_6",
+      "frame": {
+        "x": 582,
+        "y": 365,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_cast_gesture_0",
+      "frame": {
+        "x": 0,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_1",
+      "frame": {
+        "x": 97,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_2",
+      "frame": {
+        "x": 194,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_3",
+      "frame": {
+        "x": 291,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_4",
+      "frame": {
+        "x": 388,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 200
+    },
+    {
+      "filename": "giao_si_cast_gesture_5",
+      "frame": {
+        "x": 485,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_cast_gesture_6",
+      "frame": {
+        "x": 582,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_7",
+      "frame": {
+        "x": 679,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_cast_gesture_8",
+      "frame": {
+        "x": 776,
+        "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 133
+    },
+    {
+      "filename": "giao_si_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 40
+    },
+    {
+      "filename": "giao_si_hit_1",
+      "frame": {
+        "x": 97,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 40
+    },
+    {
+      "filename": "giao_si_hit_2",
+      "frame": {
+        "x": 194,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 40
+    },
+    {
+      "filename": "giao_si_victory_0",
+      "frame": {
+        "x": 0,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_victory_1",
+      "frame": {
+        "x": 97,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_victory_2",
+      "frame": {
+        "x": 194,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_victory_3",
+      "frame": {
+        "x": 291,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_victory_4",
+      "frame": {
+        "x": 388,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_victory_5",
+      "frame": {
+        "x": 485,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_victory_6",
+      "frame": {
+        "x": 582,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_victory_7",
+      "frame": {
+        "x": 679,
+        "y": 584,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_0",
+      "frame": {
+        "x": 0,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_1",
+      "frame": {
+        "x": 97,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_2",
+      "frame": {
+        "x": 194,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_3",
+      "frame": {
+        "x": 291,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_4",
+      "frame": {
+        "x": 388,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_5",
+      "frame": {
+        "x": 485,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_6",
+      "frame": {
+        "x": 582,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_defeat_7",
+      "frame": {
+        "x": 679,
+        "y": 657,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_fall_0",
+      "frame": {
+        "x": 0,
+        "y": 730,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_fall_1",
+      "frame": {
+        "x": 97,
+        "y": 730,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_fall_2",
+      "frame": {
+        "x": 194,
+        "y": 730,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_fall_3",
+      "frame": {
+        "x": 291,
+        "y": 730,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 100
+    },
+    {
+      "filename": "giao_si_awaken_0",
+      "frame": {
+        "x": 0,
+        "y": 803,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 120
+    },
+    {
+      "filename": "giao_si_awaken_1",
+      "frame": {
+        "x": 97,
+        "y": 803,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 120
+    },
+    {
+      "filename": "giao_si_awaken_2",
+      "frame": {
+        "x": 194,
+        "y": 803,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 120
+    },
+    {
+      "filename": "giao_si_awaken_3",
+      "frame": {
+        "x": 291,
+        "y": 803,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 120
+    },
+    {
+      "filename": "giao_si_awaken_4",
+      "frame": {
+        "x": 388,
+        "y": 803,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 120
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_giao_si_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 872,
+      "h": 875
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "draw",
+        "from": 8,
+        "to": 15,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 16,
+        "to": 19,
+        "direction": "forward"
+      },
+      {
+        "name": "step_forward",
+        "from": 20,
+        "to": 26,
+        "direction": "forward"
+      },
+      {
+        "name": "step_back",
+        "from": 27,
+        "to": 33,
+        "direction": "forward"
+      },
+      {
+        "name": "step_down",
+        "from": 34,
+        "to": 40,
+        "direction": "forward"
+      },
+      {
+        "name": "cast_gesture",
+        "from": 41,
+        "to": 49,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 50,
+        "to": 52,
+        "direction": "forward"
+      },
+      {
+        "name": "victory",
+        "from": 53,
+        "to": 60,
+        "direction": "forward"
+      },
+      {
+        "name": "defeat",
+        "from": 61,
+        "to": 68,
+        "direction": "forward"
+      },
+      {
+        "name": "fall",
+        "from": 69,
+        "to": 72,
+        "direction": "forward"
+      },
+      {
+        "name": "awaken",
+        "from": 73,
+        "to": 77,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "giao_si",
+      "asset": "ASSET-033",
+      "facing": "right",
+      "frame": {
+        "w": 96,
+        "h": 72
+      },
+      "gutter": 1,
+      "columns": 9,
+      "loop": {
+        "idle": "loop",
+        "draw": "once",
+        "step": "loop",
+        "step_forward": "once",
+        "step_back": "once",
+        "step_down": "once",
+        "cast_gesture": "once",
+        "hit": "once",
+        "victory": "hold_last",
+        "defeat": "hold_last",
+        "fall": "hold_last",
+        "awaken": "loop"
+      },
+      "palette": [
+        "#1B1722",
+        "#6E7282",
+        "#B8BCC8",
+        "#E2E3EA",
+        "#E3B99A"
+      ]
+    }
+  }
+}

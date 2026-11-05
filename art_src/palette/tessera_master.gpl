@@ -74,3 +74,8 @@ Columns: 8
  94  97  80	Hunter cloak #5E6150
 126 128 104	Hunter cloak light #7E8068
  70 214 164	Hunter jade #46D6A4
+# 2026-11-05 Cleric body (ASSET-033, user-approved edit-01 "Duyệt bản này", palette locked at generation): lead /
+# ivory-grey robe ramp of art bible §5.1. The lilac accent (#B9B0DC) is not in the approved sprite. 44 -> 47 entries.
+110 114 130	Cleric robe shadow #6E7282
+184 188 200	Cleric lead grey #B8BCC8
+226 227 234	Cleric ivory-grey #E2E3EA
