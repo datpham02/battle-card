@@ -1,0 +1,260 @@
+{
+ "id": "tho_san",
+ "asset": "ASSET-032",
+ "frame": {
+  "w": 96,
+  "h": 72
+ },
+ "facing": "right",
+ "source": "PixelLab character 02521cd4 (anchor-02, south-east rotation, crossbow held at the hips) animated with animate_image_pixminimax (seed 1); frames snapped to the 8-colour palette, specks < 12 px removed, feet on the bottom row (canvas rows 9..80, 72 rows so the feather tip is kept). cast_gesture (9 frames, the Knight's timings) = raw f0-f8 with first and last frame pinned to the anchor: raise, aim (frame 4 = gesture_hold_frame, crossbow level to the right), fire with recoil (frame 5 = slash), lower. hit = raw f3-f5 (f1 had a red smear, dropped). awaken = the kneel with the crossbow planted, raw f4-f8. fall = raw f5-f8 (arms flung up; the game moves the unit). draw and the dash clips are recentred on the head (x 46); step_back uses raw f2, f4-f7 (f3 was cut at the canvas edge). step_up not made: the up step plays `step`. See design/assets/specs/hunter-assets.md.",
+ "clips": [
+  {
+   "name": "idle",
+   "frames": [
+    "idle/0.png",
+    "idle/1.png",
+    "idle/2.png",
+    "idle/3.png",
+    "idle/4.png",
+    "idle/5.png",
+    "idle/6.png",
+    "idle/7.png"
+   ],
+   "ms": [
+    125,
+    125,
+    125,
+    125,
+    125,
+    125,
+    125,
+    125
+   ],
+   "loop": "loop"
+  },
+  {
+   "name": "draw",
+   "frames": [
+    "draw/0.png",
+    "draw/1.png",
+    "draw/2.png",
+    "draw/3.png",
+    "draw/4.png",
+    "draw/5.png",
+    "draw/6.png",
+    "draw/7.png"
+   ],
+   "ms": [
+    60,
+    60,
+    80,
+    80,
+    80,
+    80,
+    80,
+    120
+   ],
+   "loop": "once"
+  },
+  {
+   "name": "step",
+   "frames": [
+    "step/0.png",
+    "step/1.png",
+    "step/2.png",
+    "step/3.png"
+   ],
+   "ms": [
+    100,
+    100,
+    100,
+    100
+   ],
+   "loop": "loop"
+  },
+  {
+   "name": "step_forward",
+   "frames": [
+    "step_forward/0.png",
+    "step_forward/1.png",
+    "step_forward/2.png",
+    "step_forward/3.png",
+    "step_forward/4.png",
+    "step_forward/5.png",
+    "step_forward/6.png"
+   ],
+   "ms": [
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50
+   ],
+   "loop": "once"
+  },
+  {
+   "name": "step_back",
+   "frames": [
+    "step_back/0.png",
+    "step_back/1.png",
+    "step_back/2.png",
+    "step_back/3.png",
+    "step_back/4.png"
+   ],
+   "ms": [
+    50,
+    50,
+    50,
+    50,
+    50
+   ],
+   "loop": "once"
+  },
+  {
+   "name": "step_down",
+   "frames": [
+    "step_down/0.png",
+    "step_down/1.png",
+    "step_down/2.png",
+    "step_down/3.png",
+    "step_down/4.png",
+    "step_down/5.png",
+    "step_down/6.png"
+   ],
+   "ms": [
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50
+   ],
+   "loop": "once"
+  },
+  {
+   "name": "cast_gesture",
+   "frames": [
+    "cast_gesture/0.png",
+    "cast_gesture/1.png",
+    "cast_gesture/2.png",
+    "cast_gesture/3.png",
+    "cast_gesture/4.png",
+    "cast_gesture/5.png",
+    "cast_gesture/6.png",
+    "cast_gesture/7.png",
+    "cast_gesture/8.png"
+   ],
+   "ms": [
+    83,
+    83,
+    83,
+    83,
+    200,
+    50,
+    83,
+    100,
+    133
+   ],
+   "loop": "once"
+  },
+  {
+   "name": "hit",
+   "frames": [
+    "hit/0.png",
+    "hit/1.png",
+    "hit/2.png"
+   ],
+   "ms": [
+    40,
+    40,
+    40
+   ],
+   "loop": "once"
+  },
+  {
+   "name": "victory",
+   "frames": [
+    "victory/0.png",
+    "victory/1.png",
+    "victory/2.png",
+    "victory/3.png",
+    "victory/4.png",
+    "victory/5.png",
+    "victory/6.png",
+    "victory/7.png"
+   ],
+   "ms": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+   ],
+   "loop": "hold_last"
+  },
+  {
+   "name": "defeat",
+   "frames": [
+    "defeat/0.png",
+    "defeat/1.png",
+    "defeat/2.png",
+    "defeat/3.png",
+    "defeat/4.png",
+    "defeat/5.png",
+    "defeat/6.png",
+    "defeat/7.png"
+   ],
+   "ms": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+   ],
+   "loop": "hold_last"
+  },
+  {
+   "name": "fall",
+   "frames": [
+    "fall/0.png",
+    "fall/1.png",
+    "fall/2.png",
+    "fall/3.png"
+   ],
+   "ms": [
+    100,
+    100,
+    100,
+    100
+   ],
+   "loop": "hold_last"
+  },
+  {
+   "name": "awaken",
+   "frames": [
+    "awaken/0.png",
+    "awaken/1.png",
+    "awaken/2.png",
+    "awaken/3.png",
+    "awaken/4.png"
+   ],
+   "ms": [
+    120,
+    120,
+    120,
+    120,
+    120
+   ],
+   "loop": "loop"
+  }
+ ]
+}

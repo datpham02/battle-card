@@ -67,3 +67,10 @@ Columns: 8
  94  70  54	Assassin leather #5E4636
 138 106  80	Assassin leather light #8A6A50
 191 243 236	Assassin jade-white #BFF3EC
+# 2026-11-05 Hunter body (ASSET-032, user-approved anchor-02 "Duyệt làm gốc", palette locked at generation): leather
+# pair, olive-grey cloak pair (S <= 35 %) and the jade cord / clasp of art bible §5.1. 39 -> 44 entries.
+ 92  58  34	Hunter leather dark #5C3A22
+138  90  51	Hunter leather #8A5A33
+ 94  97  80	Hunter cloak #5E6150
+126 128 104	Hunter cloak light #7E8068
+ 70 214 164	Hunter jade #46D6A4
