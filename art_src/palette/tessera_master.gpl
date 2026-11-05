@@ -59,3 +59,11 @@ Columns: 8
  74  70  64	Slab face #4A4640
  90  86  80	Slab light #5A5650
  106 107  98	Stone pale #6A6B62
+# 2026-11-05 Assassin body (ASSET-031, user-approved anchor "Duyệt làm gốc", palette locked at generation): charcoal
+# cloth ramp, leather pair and the jade-white accent of art bible §5.1 (blades, hood edge). 33 -> 39 entries.
+ 44  42  53	Assassin cloth dark #2C2A35
+ 58  55  68	Assassin cloth #3A3744
+ 85  80 100	Assassin cloth light #555064
+ 94  70  54	Assassin leather #5E4636
+138 106  80	Assassin leather light #8A6A50
+191 243 236	Assassin jade-white #BFF3EC
