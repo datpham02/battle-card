@@ -67,8 +67,6 @@ const TEXT_EFFECT_THORNS: String = "keyword.thorns"
 const FEATURED_GOLD: Color = Color(1.0, 0.82, 0.15)
 const FEATURED_GLOW_HZ: float = 2.0
 const FEATURED_FONT_SIZE: int = 15
-const DETACH_MARK_RADIUS: float = 11.0
-const DETACH_MARK_BACK: Color = Color(0.118, 0.106, 0.141, 0.95)
 const TEXT_PLACE_HINT: String = "ui.hud.place_hint_short"
 ## Controls v3: placement hint font (720p px; shrinks to fit its rect, never below the minimum).
 const PLACE_HINT_FONT_SIZE: int = 18
@@ -1605,8 +1603,8 @@ func _draw_plan_preview(vp: Vector2, _flow: CutFlow, state: CombatState) -> void
 			_draw_odd_corner_mark(vp, plan.piece_cells(i))
 	if blocked:
 		_draw_cloud_over_cells(vp, union)
-	if plan.piece_count() >= 2 and _combat.is_placed():
-		_draw_detach_mark(vp, plan.piece_cells(plan.piece_count() - 1))
+	# 2026-11-04: no "x" detach badge any more: a tap on a placed piece lifts it (HandInputController), it does not
+	# take it off.
 	var refusal: Dictionary = _combat.get_join_refusal()
 	var refused: bool = false
 	if not ghost.is_empty():
@@ -1637,10 +1635,12 @@ func _draw_plan_preview(vp: Vector2, _flow: CutFlow, state: CombatState) -> void
 		_draw_board_effect(vp, "join_cap", ghost, tr(TEXT_JOIN_CAP) % _combat.get_config().max_cast_cells, EffectText.MISS)
 	if featured:
 		_draw_featured_glow(vp, union)
-	# The readout counts the COMMITTED cast only (what card readiness counts); a piece still being dragged
-	# shows as an addition "(+n)". A resonant join reads "Cộng hưởng ×1,5 · N ô · −X" in gold instead.
+	# The cell count shows the COMMITTED cast (what card readiness counts); a piece still being placed shows as an
+	# addition "(+n)". A resonant join reads "Cộng hưởng ×1,5 · N ô · −X" in gold instead. 2026-11-05 (user: "Sửa dòng
+	# sát thương"): the damage counts the held piece too ([method preview_damage_cells]), so lifting the only placed
+	# piece no longer reads "0 damage".
 	var committed: int = plan.total_cells()
-	var damage: float = _combat.get_cut_config().slash_damage(committed)
+	var damage: float = _combat.get_cut_config().slash_damage(preview_damage_cells(committed, ghost.size()))
 	var label: String
 	var color: Color = EffectText.NEUTRAL if blocked else (EffectText.HIT if hit else EffectText.MISS)
 	if featured:
@@ -1653,12 +1653,10 @@ func _draw_plan_preview(vp: Vector2, _flow: CutFlow, state: CombatState) -> void
 		label = tr(TEXT_CAST_TOTAL) % [committed, roundi(damage)]
 	else:
 		label = tr(TEXT_CAST_TOTAL_PREVIEW) % [committed, ghost.size(), roundi(damage)]
-	# The label keeps off the shape's cells and the x badge.
+	# The label keeps off the shape's cells.
 	var avoid: Array[Rect2] = []
 	for cell: Vector2i in union:
 		avoid.append(_bg().cell_bounds(cell))
-	if plan.piece_count() >= 2 and _combat.is_placed():
-		avoid.append(_detach_mark_rect(vp, plan.piece_cells(plan.piece_count() - 1)))
 	_draw_board_effect(vp, "resonance" if featured else "total", union, label, color, avoid)
 
 
@@ -1740,25 +1738,10 @@ func _no_cells() -> Array[Vector2i]:
 	return []
 
 
-# Square around the x badge (centred on the second piece's first cell), a bit larger than the drawn diamond.
-func _detach_mark_rect(_vp: Vector2, cells: Array[Vector2i]) -> Rect2:
-	if cells.is_empty():
-		return Rect2()
-	var centre: Vector2 = _bg().cell_center(cells[0])
-	var half: float = DETACH_MARK_RADIUS + 4.0
-	return Rect2(centre - Vector2(half, half), Vector2(half, half) * 2.0)
-
-
-# A small "x" badge on the first cell of the attached second piece: tapping the piece takes it off. Controls v3: an
-# angular diamond badge (no circles in the HUD).
-func _draw_detach_mark(vp: Vector2, cells: Array[Vector2i]) -> void:
-	if cells.is_empty():
-		return
-	var c: Vector2 = _detach_mark_rect(vp, cells).get_center().round()
-	HudSkin.diamond(self, c, DETACH_MARK_RADIUS + 2.0, DETACH_MARK_BACK, HudSkin.MIST, 1.5)
-	var d: float = DETACH_MARK_RADIUS * 0.45
-	draw_line(c + Vector2(-d, -d), c + Vector2(d, d), HudSkin.IVORY, 3.0)
-	draw_line(c + Vector2(-d, d), c + Vector2(d, -d), HudSkin.IVORY, 3.0)
+## 2026-11-05: cells the board readout's damage is computed on: the committed cast plus the piece being placed
+## (where it would land). Pure.
+static func preview_damage_cells(committed: int, held: int) -> int:
+	return maxi(committed, 0) + maxi(held, 0)
 
 
 # Pulsing gold frame on every cell of a resonant join (over the gold ghost).

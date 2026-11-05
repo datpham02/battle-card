@@ -27,6 +27,7 @@ func _initialize() -> void:
 	await test_two_pieces_bookkeeping()
 	await test_timeout_puts_a_lifted_piece_back()
 	await test_input_tap_and_drag_lift()
+	await test_readout_damage_counts_the_held_piece()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
 
@@ -200,4 +201,20 @@ func test_input_tap_and_drag_lift() -> void:
 	hand.pointer_move(HandInputController.MOUSE_ID, target)
 	hand.pointer_up(HandInputController.MOUSE_ID, target)
 	_check("test_drag_release_puts_it_back_moved", v.get_cast_plan().piece_count() == 2 and not v.is_placing() and _sorted(v.get_cast_plan().piece_cells(1)) != cells1, str(v.get_cast_plan().piece_cells(1)))
+	_drop(h)
+
+
+# 2026-11-05 (user: "Sửa dòng sát thương"): the board readout's damage counts the piece being placed, so lifting the only
+# placed piece no longer reads "0 damage"; with nothing held it is the committed cast alone.
+func test_readout_damage_counts_the_held_piece() -> void:
+	var h: Node = await _match()
+	var v: CombatView = _cv(h)
+	var cut: CutConfig = v.get_cut_config()
+	_place(v, 0, _ec(v, 1, 1))
+	v.lift_placed_piece(0)
+	var held: int = v.get_placement().get_cells().size()
+	var cells: int = CutHudView.preview_damage_cells(v.get_cast_plan().total_cells(), held)
+	_check("test_lifted_only_piece_counts_its_cells", cells == 3 and cut.slash_damage(cells) > 0.0, "%d cells" % cells)
+	_check("test_nothing_held_counts_the_committed_cast", CutHudView.preview_damage_cells(5, 0) == 5)
+	_check("test_committed_plus_held", CutHudView.preview_damage_cells(3, 2) == 5)
 	_drop(h)
