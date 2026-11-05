@@ -21,7 +21,8 @@ const UNITS := {
 		"frame": Vector2i(96, 70), "sheet": Vector2i(872, 922), "facing": "right",
 		"candidate": "swordsman/v3-tall/clean-96x70/%s.png",
 		"clips": [
-			["idle", ["guard_idle/0", "guard_idle/1", "guard_idle/2", "guard_idle/3"], [250, 250, 250, 250], "loop"],
+			# 2026-11-05: idle = anim-idle-v2 (PixMiniMax breathing + cape follow-through, 8 frames @125 ms), cleaned copies in guard_idle_v2.
+			["idle", ["guard_idle_v2/0", "guard_idle_v2/1", "guard_idle_v2/2", "guard_idle_v2/3", "guard_idle_v2/4", "guard_idle_v2/5", "guard_idle_v2/6", "guard_idle_v2/7"], [125, 125, 125, 125, 125, 125, 125, 125], "loop"],
 			["draw", ["draw_to_guard/0", "draw_to_guard/1", "draw_to_guard/2", "draw_to_guard/3", "draw_to_guard/4", "draw_to_guard/5", "draw_to_guard/6", "draw_to_guard/7"], [60, 60, 80, 80, 80, 80, 80, 120], "once"],
 			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
 			["step_forward", ["guard_step_forward/0", "guard_step_forward/1", "guard_step_forward/2", "guard_step_forward/3", "guard_step_forward/4", "guard_step_forward/5", "guard_step_forward/6"], [50, 50, 50, 50, 50, 50, 50], "once"],

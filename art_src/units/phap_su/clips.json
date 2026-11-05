@@ -6,7 +6,7 @@
   "h": 70
  },
  "facing": "right",
- "source": "PixelLab character 89dc779e (south-east rotation, robe stretched 7 rows) animated with animate_image_pixminimax; frames snapped to the 8-colour palette, specks < 12 px removed, pieces lifted so feet sit on the bottom row. cast_gesture (9 frames, the Knight's timings) = cast f2, f4, f6, f7, victory f5 (hand pulled back = the coil, frame 4 = the cast pack's gesture_hold_frame), victory f6 x2 (palm out = the slash, frame 5), victory f5, cast f8. See design/assets/specs/mage-assets.md. draw and the dash clips (step_forward / step_back / step_down) are recentred on the head (x 47) because the game glides the unit; step_up was rejected (turns to a back view), the up step plays `step`.",
+ "source": "PixelLab character 89dc779e (south-east rotation, robe stretched 7 rows) animated with animate_image_pixminimax; frames snapped to the 8-colour palette, specks < 12 px removed, pieces lifted so feet sit on the bottom row. cast_gesture (9 frames, the Knight's timings) = cast f2, f4, f6, f7, victory f5 (hand pulled back = the coil, frame 4 = the cast pack's gesture_hold_frame), victory f6 x2 (palm out = the slash, frame 5), victory f5, cast f8. See design/assets/specs/mage-assets.md. draw and the dash clips (step_forward / step_back / step_down) are recentred on the head (x 47) because the game glides the unit; step_up was rejected (turns to a back view), the up step plays `step`. idle replaced 2026-11-05 by anim03/idle_v3 (PixMiniMax, first and last frame pinned to the anchor, positive breathing prompt; raw f0-f7, f8 = f0 dropped).",
  "clips": [
   {
    "name": "idle",

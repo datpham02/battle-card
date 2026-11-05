@@ -20,7 +20,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 250
+      "duration": 125
     },
     {
       "filename": "kiem_si_idle_1",
@@ -42,7 +42,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 250
+      "duration": 125
     },
     {
       "filename": "kiem_si_idle_2",
@@ -64,7 +64,7 @@
         "w": 96,
         "h": 70
       },
-      "duration": 250
+      "duration": 125
     },
     {
       "filename": "kiem_si_idle_3",
@@ -86,7 +86,95 @@
         "w": 96,
         "h": 70
       },
-      "duration": 250
+      "duration": 125
+    },
+    {
+      "filename": "kiem_si_idle_4",
+      "frame": {
+        "x": 388,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "kiem_si_idle_5",
+      "frame": {
+        "x": 485,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "kiem_si_idle_6",
+      "frame": {
+        "x": 582,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
+    },
+    {
+      "filename": "kiem_si_idle_7",
+      "frame": {
+        "x": 679,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 125
     },
     {
       "filename": "kiem_si_draw_0",
@@ -1753,79 +1841,79 @@
       {
         "name": "idle",
         "from": 0,
-        "to": 3,
+        "to": 7,
         "direction": "forward"
       },
       {
         "name": "draw",
-        "from": 4,
-        "to": 11,
-        "direction": "forward"
-      },
-      {
-        "name": "step",
-        "from": 12,
+        "from": 8,
         "to": 15,
         "direction": "forward"
       },
       {
-        "name": "step_forward",
+        "name": "step",
         "from": 16,
-        "to": 22,
+        "to": 19,
+        "direction": "forward"
+      },
+      {
+        "name": "step_forward",
+        "from": 20,
+        "to": 26,
         "direction": "forward"
       },
       {
         "name": "step_back",
-        "from": 23,
-        "to": 29,
+        "from": 27,
+        "to": 33,
         "direction": "forward"
       },
       {
         "name": "step_up",
-        "from": 30,
-        "to": 36,
+        "from": 34,
+        "to": 40,
         "direction": "forward"
       },
       {
         "name": "step_down",
-        "from": 37,
-        "to": 43,
+        "from": 41,
+        "to": 47,
         "direction": "forward"
       },
       {
         "name": "cast_gesture",
-        "from": 44,
-        "to": 52,
+        "from": 48,
+        "to": 56,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 53,
-        "to": 55,
+        "from": 57,
+        "to": 59,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 56,
-        "to": 60,
+        "from": 60,
+        "to": 64,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 61,
-        "to": 68,
-        "direction": "forward"
-      },
-      {
-        "name": "fall",
-        "from": 69,
+        "from": 65,
         "to": 72,
         "direction": "forward"
       },
       {
-        "name": "awaken",
+        "name": "fall",
         "from": 73,
-        "to": 78,
+        "to": 76,
+        "direction": "forward"
+      },
+      {
+        "name": "awaken",
+        "from": 77,
+        "to": 82,
         "direction": "forward"
       }
     ],

@@ -1,0 +1,28 @@
+{
+ "character": "kiem_si",
+ "clip": "idle",
+ "date": "2026-11-05",
+ "tool": "animate_image_pixminimax (POST /v2/animate-pixminimax via MCP)",
+ "job_id": "9d1adf31-ebdd-498c-8491-5942e5be5fb3",
+ "cost_generations": 1,
+ "source_first_frame": "design/assets/candidates/swordsman/v3-tall/anim/guard_idle/0.png (96x96 RGBA, upload 51e7390e)",
+ "last_frame": "same as first (loop target)",
+ "frame_count": 8,
+ "returned_images": 9,
+ "seed": 1,
+ "view": "low top-down",
+ "direction": "south-east",
+ "no_background": true,
+ "subject_description": "a chibi knight in steel plate armour with square pauldrons, a navy cape and short pale blond hair, holding a narrow sword",
+ "initial_pose": "standing in a guard stance facing right, knees bent, sword held forward and angled down",
+ "description": "Steady guard idle. Slowly inhale: the chest and shoulders rise by one pixel. Exhale: they settle, the knees flexing very slightly. The navy cape behind the shoulders sways softly with a slight delayed follow-through behind the body. The sword stays held forward and angled down in the guard, its tip shifting by at most one pixel with the breath. The short pale hair tips lift and settle. The feet stay planted at exactly the same ground coordinates. Faces right in every frame, the camera stays still, the character keeps the same size, outfit, sword, colours and proportions. Returns to the starting pose.",
+ "prompt_source": "C:/Users/ADMIN/Downloads/tessera_idle_animation_prompts.md section 1, movement part only, negatives rewritten as positive constraints",
+ "loop": "f8 equals f0 (pinned end, loop_seam 0.0), so the loop uses f0-f7; f7 -> f0 checked visually in loop-preview-x3.gif",
+ "qa": "anim_qa.py: palette 0 off-palette px (master palette), identity >= 0.982, size drift <= 3.9 %, feet row 81 every frame, x planted 0, no edge clipping, jitter ok; loop_seam crossed only because f8 = f0",
+ "outputs": {
+  "raw": "raw/f0-f8.png",
+  "sheet": "sheet-x4.png",
+  "loop_preview": "loop-preview-x3.gif (f0-f7, 120 ms)"
+ },
+ "installed": "art_src/units/kiem_si/idle/0-7.png (8 frames @125 ms, was 4 @250), cleaned copies in v3-tall/clean-96x70/guard_idle_v2, sheet re-exported"
+}

@@ -1,0 +1,27 @@
+{
+ "character": "giao_si",
+ "clip": "idle",
+ "date": "2026-11-05",
+ "tool": "animate_image_pixminimax (POST /v2/animate-pixminimax via MCP)",
+ "job_id": "2944bc14-e586-49da-99ce-f13b098c0371",
+ "cost_generations": 1,
+ "source_first_frame": "design/assets/candidates/cleric/edit01/south-east.png (upload 38a9f60e)",
+ "last_frame": "same as first (loop target)",
+ "frame_count": 8,
+ "returned_images": 9,
+ "seed": 1,
+ "view": "low top-down",
+ "direction": "south-east",
+ "no_background": true,
+ "subject_description": "a chibi cleric in a long white veil and an ivory-grey robe with wide sleeves, holding a tall pale staff with a square head",
+ "initial_pose": "standing calm and upright facing right, staff held upright in the right hand at the right side",
+ "prompt_source": "C:/Users/ADMIN/Downloads/tessera_idle_animation_prompts.md, movement part only, negatives rewritten as positive constraints (see the job's description)",
+ "loop": "f8 = f0 (pinned end, loop_seam <= 0.03), so the loop uses f0-f7",
+ "qa": "anim_qa.py: palette: 1 off-palette colour #DEC2A4 (already in the approved edit-01 anchor), snapped to #E3B99A at cleanup; identity >= 0.970; feet row 80, x drift 0.48 px; no edge clipping; loop_seam crossed only because f8 = f0",
+ "installed": "art_src/units/giao_si/idle/0-7.png (8 frames @125 ms), sheet re-exported",
+ "outputs": {
+  "raw": "raw/f0-f8.png",
+  "sheet": "sheet-x4.png",
+  "loop_preview": "loop-preview-x3.gif (f0-f7, 120 ms)"
+ }
+}

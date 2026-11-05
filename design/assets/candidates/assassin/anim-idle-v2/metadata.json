@@ -1,0 +1,27 @@
+{
+ "character": "sat_thu",
+ "clip": "idle",
+ "date": "2026-11-05",
+ "tool": "animate_image_pixminimax (POST /v2/animate-pixminimax via MCP)",
+ "job_id": "8ffc0f97-1b78-4660-b808-6f3ebed25b9a",
+ "cost_generations": 1,
+ "source_first_frame": "design/assets/candidates/assassin/rot/south-east.png (upload 67f1f783)",
+ "last_frame": "same as first (loop target)",
+ "frame_count": 8,
+ "returned_images": 9,
+ "seed": 1,
+ "view": "low top-down",
+ "direction": "south-east",
+ "no_background": true,
+ "subject_description": "a chibi hooded assassin in charcoal cloth with a face mask and two pale jade daggers",
+ "initial_pose": "crouched wide stance facing right, knees bent, two daggers held in reverse grip crossed in front",
+ "prompt_source": "C:/Users/ADMIN/Downloads/tessera_idle_animation_prompts.md, movement part only, negatives rewritten as positive constraints (see the job's description)",
+ "loop": "f8 = f0 (pinned end, loop_seam <= 0.03), so the loop uses f0-f7",
+ "qa": "anim_qa.py: palette 0 off; identity >= 0.986; feet row 80, x planted 0; no edge clipping; loop_seam crossed only because f8 = f0",
+ "installed": "art_src/units/sat_thu/idle/0-7.png (8 frames @125 ms), sheet re-exported",
+ "outputs": {
+  "raw": "raw/f0-f8.png",
+  "sheet": "sheet-x4.png",
+  "loop_preview": "loop-preview-x3.gif (f0-f7, 120 ms)"
+ }
+}
