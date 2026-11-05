@@ -324,7 +324,7 @@
 				"forest_witch": {
 					"id": "forest_witch",
 					"name_key": "boss.forest_witch.name",
-					"boss_max_hp": 1210,
+					"boss_max_hp": 1090,
 					"brain": "pattern",
 					"enemy": "forest_witch",
 					"brain_set": "aggressive",

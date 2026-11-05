@@ -16,7 +16,7 @@ const ENEMY: String = "forest_witch"
 const ARENA: String = "boss_hall"
 const SEEDS: Array[int] = [1, 2, 3]
 const PHASE_SEC: float = 180.0
-## Effective HP at floor 3 (written 1210 x 0.6375, spec 5.1 / D8); only the ratio matters here.
+## Effective HP at floor 3 (written 1210 x 0.6375 at P2.4, spec 5.1 / D8; written is 1090 since 2026-11-05); only the ratio matters here.
 const ENEMY_HP: float = 770.0
 const HUGE_HIT: float = 100000.0
 const STEP: float = 0.05

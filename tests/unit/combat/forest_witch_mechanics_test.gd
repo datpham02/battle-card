@@ -1,7 +1,7 @@
 extends SceneTree
 ## P2.4 Forest Witch mechanics (design/quick-specs/phase2-misty-forest-2026-11-01.md 7.1-7.4 and the user decisions D8,
 ## D9, D11-D14). Each test names its scenario and the expected result:
-## - data: 1210 written HP (= 5.5 x 140 effective at floor 3), pattern brain, boss_hall, 2x2 footprint, 3 phases at
+## - data: 1090 written HP (about 5 x 140 effective at floor 3; was 1210, tuned 2026-11-05), pattern brain, boss_hall, 2x2 footprint, 3 phases at
 ##   65 % / 30 % with the spec's skill lists, mechanics and every_nth, no rotten_thrower, boss pool tiers, strings;
 ## - phase change: 1.5 s invulnerable (hits do nothing), the warning showing is cleared, one hit never skips a phase,
 ##   phase 2 opens by placing 2 root anchors in 2 different rows;
@@ -119,9 +119,10 @@ func test_data_matches_spec_and_decisions() -> void:
 			ch1 = chapter
 	var m: Dictionary = (ch1["matches"] as Dictionary)["forest_witch"]
 	var written: float = float(m["boss_max_hp"])
-	_check("match: 1210 written HP", is_equal_approx(written, 1210.0), str(written))
+	# 2026-11-05 (design/quick-specs/phu-thuy-mau-2026-11-05.md): 1210 -> 1090 written after deck_sim (fights ran ~170 s).
+	_check("match: 1090 written HP", is_equal_approx(written, 1090.0), str(written))
 	var effective: float = written * 0.75 * 0.85
-	_check("D8: 1210 x 0.6375 = %.1f effective at floor 3, within 1 %% of 5.5 x 140 = 770" % effective, absf(effective - 770.0) <= 7.7)
+	_check("D8: 1090 x 0.6375 = %.1f effective at floor 3, inside the 4-7 x 140 boss budget (560-980)" % effective, effective >= 560.0 and effective <= 980.0)
 	_check("match: pattern brain, enemy forest_witch, boss_hall, aggressive movement",
 		str(m.get("brain", "")) == "pattern" and str(m.get("enemy", "")) == "forest_witch"
 		and str((m.get("arena", {}) as Dictionary).get("shape", "")) == ARENA and str(m.get("brain_set", "")) == "aggressive")

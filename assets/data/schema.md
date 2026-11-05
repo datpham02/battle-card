@@ -1088,7 +1088,7 @@ destination footprint while it winds up), so she repositions about every 9 s. Th
 three heavy skills (`entangled_row`, `withered_crown`, `forest_last_knot`, recovery >= 1.2 s) have `interruptible: false`
 (D9): while they wind up / warn FloorLayer frames her four cells in ivory (`PatternController.uninterruptible_tell`).
 A phase transition clears the red and makes her invulnerable for `transition.sec` (D14, 1.5 s).
-Match `forest_witch`: `boss_max_hp` **1210**, `brain: pattern`, `enemy: forest_witch`, `arena {shape: boss_hall}`,
+Match `forest_witch`: `boss_max_hp` **1090** (1210 at P2.4, lowered 2026-11-05 by design/quick-specs/phu-thuy-mau-2026-11-05.md: sim fights ran ~170 s), `brain: pattern`, `enemy: forest_witch`, `arena {shape: boss_hall}`,
 `brain_set` aggressive (movement), no traits. HP (D8 "pack budget"): a boss = 4-7 x a normal; 5.5 x 140 = 770 effective
 at floor 3 -> 770 / 0.6375 = 1208 -> written 1210 (floor 1 635, floor 3 771, floor 5 1044).
 

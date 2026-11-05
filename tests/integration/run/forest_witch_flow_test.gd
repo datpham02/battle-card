@@ -1,6 +1,6 @@
 extends SceneTree
 ## P2.4 Forest Witch in the real match (design/quick-specs/phase2-misty-forest-2026-11-01.md 7.1, 7.4; D13): the run's
-## boss node builds a pattern-brain match on boss_hall with her 2x2 footprint and 1210 written HP (RunConfig.from_node),
+## boss node builds a pattern-brain match on boss_hall with her 2x2 footprint and 1090 written HP (RunConfig.from_node),
 ## and a CombatView match of it (BossBrain moving her between skills in anchor space, three phases driven by HP) keeps,
 ## on EVERY frame: the footprint fitting her half, no root anchor under her (she never steps onto one, spec 7.1: the
 ## brain plans around them and her mover refuses them), and she does move while anchors stand.
@@ -27,7 +27,7 @@ func _initialize() -> void:
 	var params: Dictionary = RunConfig.from_node(chapters, "ch1", "forest_witch", "boss", 7, 3).matches[0]
 	_check("RunConfig: pattern brain, enemy forest_witch, boss_hall", str(params.get("brain", "")) == RunConfig.BRAIN_PATTERN
 		and str(params.get("enemy", "")) == "forest_witch" and str((params.get("arena", {}) as Dictionary).get("shape", "")) == "boss_hall", str(params.get("arena")))
-	_check("RunConfig: HP from 1210 written (%.1f at floor 3)" % float(params["boss_max_hp"]), float(params["boss_max_hp"]) > 700.0)
+	_check("RunConfig: HP from 1090 written (%.1f at floor 3)" % float(params["boss_max_hp"]), float(params["boss_max_hp"]) > 700.0)
 	await _play(params)
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
