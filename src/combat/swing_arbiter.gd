@@ -65,6 +65,12 @@ var blocked_cell_fns: Dictionary = {}
 ## Story 036: Callable() -> bool, true while the BOSS cannot be hit (TraitHost.is_boss_untargetable, burrow; set by
 ## TraitHost). A player cast that lands then is a miss (no damage, no interrupt) but still leaves its zone. Invalid = never.
 var enemy_untargetable_fn: Callable = Callable()
+## Cast rhythm spec 2026-11-05: the hero's ParryGuard; the BOSS's swings pass it to CutEffects (options.player_guard), so
+## a swing landing on the hero while it is open is parried. A parried swing never interrupts the player. Null = none.
+var player_guard: ParryGuard = null
+## Cast rhythm spec 2026-11-05 (fix): the hero's crit multiplier read when its swing STARTS ("cast while the foe is
+## Frozen" crits): a Pin lasts 1.2 s and a 3-6 cell swing 0.95-1.7 s, so reading it at the hit missed almost every crit.
+var _player_crit_at_start: float = 1.0
 
 
 func _init(
@@ -79,6 +85,7 @@ func _init(
 	_actors[CombatState.Side.PLAYER] = player_actor
 	_actors[CombatState.Side.ENEMY] = boss_actor
 	player_actor.swing_resolved.connect(_on_actor_resolved.bind(CombatState.Side.PLAYER))
+	player_actor.swing_started.connect(_on_player_swing_started)
 	boss_actor.swing_resolved.connect(_on_actor_resolved.bind(CombatState.Side.ENEMY))
 	state.player_died.connect(_cancel_all)
 	state.enemy_died.connect(_cancel_all)
@@ -137,12 +144,17 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 			"zone_sec_mult": float(player_zone_sec_mult_fn.call()) if (is_player and player_zone_sec_mult_fn.is_valid()) else 1.0,
 			"extra_thorn_cells": int(player_extra_thorn_cells_fn.call()) if (is_player and player_extra_thorn_cells_fn.is_valid()) else 0,
 			"zone_rng": zone_rng,
+			"player_guard": player_guard if not is_player else null,
+			"crit_mult_at_start": _player_crit_at_start if is_player else 1.0,
 			"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call())})
 	result["cells"] = cells
 	result["skill_id"] = skill_id
 	result["level"] = level
+	# Cast rhythm spec 2026-11-05: a parry card's own hit never cancels the enemy's attack it answers (else a parry could
+	# not land on an interruptible skill); listeners skip PatternController.on_enemy_hit on it too.
+	result["no_interrupt"] = is_player and _skill_config.is_parry_card(skill_id)
 	swing_resolved.emit(side, result)
-	if trade or not bool(result["hit"]):
+	if trade or not bool(result["hit"]) or bool(result.get("parried", false)) or bool(result["no_interrupt"]):
 		return
 	var victim_side: int = _opposite(side)
 	var victim: CutActor = _actors[victim_side] as CutActor
@@ -160,6 +172,12 @@ func _on_actor_resolved(cells: Array[Vector2i], skill_id: String, side: int) -> 
 	if side != CombatState.Side.PLAYER:
 		bonus = {}
 	_pending.append({"side": side, "cells": cells, "skill_id": skill_id, "level": actor.get_level(), "featured_bonus": bonus})
+
+
+# Snapshots the crit condition of the hero's swing as it starts (CritRules on the target as it is now).
+func _on_player_swing_started(_cells: Array[Vector2i], skill_id: String, _duration: float) -> void:
+	_player_crit_at_start = CritRules.mult_for(_skill_config.get_skill(skill_id),
+		{"state": _state, "status": _status, "target_side": CombatState.Side.ENEMY})
 
 
 func _cancel_all() -> void:

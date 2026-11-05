@@ -264,6 +264,22 @@ const TEXT_COOLDOWN: String = "ui.hud.cooldown"
 const TEXT_READY: String = "ui.hud.ready"
 const TEXT_SWING: String = "ui.hud.swing"
 const TEXT_HIT: String = "ui.hud.hit"
+## Cast rhythm spec 2026-11-05: the crit word, the parry word and the menu reason of a parry card with no telegraph.
+const TEXT_CRIT: String = "ui.hud.crit"
+const TEXT_PARRY: String = "ui.hud.parry"
+const TEXT_NO_TELEGRAPH: String = "ui.hud.no_telegraph"
+## A crit's damage number is this much bigger than a plain one ("one step larger").
+const CRIT_NUMBER_SCALE: float = 1.3
+## The hero's parry guard: the thin timer bar under the hero's cell (share of the cell width / height, inset from the
+## cell's bottom edge) and its colours (Ivory fill on an Ink back: the guard is the player's, never red).
+const GUARD_BAR_WIDTH_RATIO: float = 0.7
+const GUARD_BAR_HEIGHT_RATIO: float = 0.06
+const GUARD_BAR_BOTTOM_RATIO: float = 0.1
+const GUARD_BAR_FILL: Color = Color("EFE6D2")
+const GUARD_BAR_BACK: Color = Color(0.05, 0.05, 0.08, 0.75)
+## ĐỠ / PARRY label: font size as a share of the flat cell height, and the white of the parry.
+const PARRY_FONT_RATIO: float = 0.5
+const PARRY_TEXT: Color = Color("FFFFFF")
 const TEXT_MISS: String = "ui.hud.miss"
 const TEXT_DAMAGE_NUMBER: String = "ui.hud.damage_number"
 ## Story 037: "+%d" flash over the player's cell when the Priest's Prayer heals (a green pill that rises and fades).
@@ -1289,6 +1305,8 @@ func _draw() -> void:
 	_draw_boss_swing(vp)
 	_draw_feedback(vp)
 	_draw_boss_feedback(vp)
+	_draw_parry_guard(vp)
+	_draw_parry_flash(vp)
 	_draw_heal_flash(vp)
 	_draw_boss_heals(vp)
 	_draw_row_warning(vp)
@@ -1916,6 +1934,47 @@ func _draw_heal_flash(_vp: Vector2) -> void:
 	_draw_centered(back, tr(TEXT_HEAL_NUMBER) % roundi(float(flash["amount"])), size, Color(HEAL_TEXT, fade))
 
 
+# Cast rhythm spec 2026-11-05 (Knight parry): while the guard is open, a thin Ivory timer bar in the hero's cell, centred
+# (floor-effect rule), shrinking with the window. The guard pose itself is UnitLayer's.
+func _draw_parry_guard(_vp: Vector2) -> void:
+	var guard: ParryGuard = _combat.get_parry_guard()
+	if guard == null or not guard.is_active():
+		return
+	var cell: Rect2 = _bg().fit_rect(_bg().flat_cell_rect(_combat.get_state().player_cell))
+	var w: float = cell.size.x * GUARD_BAR_WIDTH_RATIO
+	var h: float = maxf(cell.size.y * GUARD_BAR_HEIGHT_RATIO, 3.0)
+	var bar := Rect2(cell.get_center().x - w * 0.5, cell.end.y - cell.size.y * GUARD_BAR_BOTTOM_RATIO - h, w, h)
+	_fill(bar.grow(1.0), GUARD_BAR_BACK)
+	_fill(Rect2(bar.position, Vector2(bar.size.x * guard.fraction_left(), bar.size.y)), GUARD_BAR_FILL)
+	_labels_drawn.append("guard_bar")
+
+
+# Cast rhythm spec 2026-11-05: a successful parry: ĐỠ / PARRY as bare white effect text over the enemy (no box, the
+# effect-label rule) and the reflected damage number under it.
+func _draw_parry_flash(vp: Vector2) -> void:
+	var flash: Dictionary = _combat.get_parry_flash()
+	if flash.is_empty():
+		return
+	var fade: float = clampf(float(flash["time_left"]) / CombatView.PARRY_FLASH_SEC, 0.0, 1.0)
+	var flat: Rect2 = _bg().flat_cell_rect(flash["cell"] as Vector2i)
+	var cell: Rect2 = _bg().fit_rect(flat)
+	var s: float = ScreenLayout.controls_scale(vp)
+	var size: int = EffectText.size_for(int(flat.size.y * PARRY_FONT_RATIO))
+	var text: String = tr(TEXT_PARRY)
+	var w: float = EffectText.width(text, size, s)
+	var board: Rect2 = _bg().board_bounds()
+	var left: float = clampf(cell.get_center().x - w * 0.5, board.position.x, maxf(board.end.x - w, board.position.x))
+	var top: float = _bg().to_screen(Vector2(flat.get_center().x, flat.position.y)).y
+	var number_size: int = int(flat.size.y * FEEDBACK_FONT_RATIO * CRIT_NUMBER_SCALE)
+	var reflected: float = float(flash.get("reflected", 0.0))
+	if reflected > 0.0:
+		HudSkin.text(self, Vector2(cell.position.x - cell.size.x * 0.25, top - 2.0), tr(TEXT_DAMAGE_NUMBER) % roundi(reflected),
+			number_size, Color(HudSkin.TEXT, fade), HORIZONTAL_ALIGNMENT_CENTER, cell.size.x * 1.5, true)
+		top -= number_size
+	EffectText.draw(self, Vector2(roundf(left), roundf(top - 2.0)), text, size, Color(PARRY_TEXT, fade), HORIZONTAL_ALIGNMENT_CENTER, w, s)
+	_labels_drawn.append("parry")
+
+
 # Boss HIT / MISS on the player's half (same look as the player's feedback).
 func _draw_boss_feedback(vp: Vector2) -> void:
 	_draw_feedback_for(vp, _combat.get_boss_feedback())
@@ -2001,11 +2060,24 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	var show_damage: bool = hit and float(fb["damage"]) > 0.0
 	var label_box: Rect2 = cell_rect.grow_individual(cell_rect.size.x * 0.25, 0.0, cell_rect.size.x * 0.25, 0.0)
 	var base: float = cell_rect.position.y - 2.0
+	# Cast rhythm spec 2026-11-05 (1.2): a crit shows CHÍ MẠNG as bare gold effect text (no box), its number one step larger.
+	var crit: bool = hit and bool(fb.get("crit", false))
 	if show_damage:
 		# Story 020: a hit multiplied by Ghim shows its number in the pin blue.
 		var damage_color: Color = PIN_BONUS_TEXT if bool(fb.get("pin_bonus", false)) else color
-		HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), size, damage_color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
-		base -= size * 1.0
+		var number_size: int = roundi(size * CRIT_NUMBER_SCALE) if crit else size
+		HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), number_size, damage_color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
+		base -= number_size * 1.0
+	if crit:
+		var s_crit: float = ScreenLayout.controls_scale(vp)
+		var crit_size: int = EffectText.size_for(size)
+		var crit_text: String = tr(TEXT_CRIT)
+		var crit_w: float = EffectText.width(crit_text, crit_size, s_crit)
+		var board_c: Rect2 = _bg().board_bounds()
+		var crit_left: float = clampf(cell_rect.get_center().x - crit_w * 0.5, board_c.position.x, maxf(board_c.end.x - crit_w, board_c.position.x))
+		EffectText.draw(self, Vector2(roundf(crit_left), roundf(base)), crit_text, crit_size, EffectText.GOOD, HORIZONTAL_ALIGNMENT_CENTER, crit_w, s_crit)
+		_labels_drawn.append("crit")
+		return
 	HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_HIT) if hit else tr(TEXT_MISS), size, color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
 	var back := Rect2(label_box.position.x, base - size * 2.6, label_box.size.x, size * 1.3)  # the featured pill sits above the text
 	if hit and bool(fb.get("featured", false)):
@@ -3098,7 +3170,7 @@ func _draw_menu_card(vp: Vector2, rect: Rect2, id: String, cell_count: int) -> v
 	var config: SkillConfig = _combat.get_skill_config()
 	var level: int = _combat.get_card_level(id)
 	var skill: Dictionary = config.resolved(id, level)
-	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count, level)
+	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count, level, _combat.get_availability_context())
 	var available: bool = bool(check["available"])
 	var tag: String = (tr(TEXT_LEVEL_SUFFIX) % level) if level > 1 else ""
 	if not available:
@@ -3216,7 +3288,7 @@ func _draw_lock_glyph(rect: Rect2) -> void:
 # if it is also unimplemented), else "chưa có", else the cooldown seconds, else ready.
 func _skill_status(id: String, cell_count: int) -> Dictionary:
 	var config: SkillConfig = _combat.get_skill_config()
-	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count, _combat.get_card_level(id))
+	var check: Dictionary = SkillAvailability.check(config, _combat.get_skill_cooldowns(), id, cell_count, _combat.get_card_level(id), _combat.get_availability_context())
 	var min_cells: int = int(check["need_cells"])
 	var text: String = tr(TEXT_READY)
 	if str(check["reason"]) == "curse":
@@ -3227,6 +3299,8 @@ func _skill_status(id: String, cell_count: int) -> Dictionary:
 		text = tr(TEXT_NOT_IMPLEMENTED)
 	elif str(check["reason"]) == "cooldown":
 		text = tr(TEXT_COOLDOWN) % float(check["cooldown_left"])
+	elif str(check["reason"]) == "no_telegraph":
+		text = tr(TEXT_NO_TELEGRAPH)
 	return {"available": bool(check["available"]), "text": text}
 
 

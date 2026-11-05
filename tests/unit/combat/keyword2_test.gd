@@ -159,7 +159,10 @@ func _init() -> void:
 		var rar: String = str(c["rarity"])
 		var dpc: float = float(c["damage_per_cell"])
 		if dpc > 0.0:
-			if rar == "common" and (dpc < 6.0 or dpc > 7.0) and id != "chan_phong" and id != "xung_kich" and id != "han_tran" and id != "gai_doc":
+			# Cast rhythm spec 2026-11-05: a mode card (cast_mode not direct, e.g. the parry do_kiem) is tuned through its own
+			# measure, never toward the 6-7 curve.
+			var mode_card: bool = str(c.get("cast_mode", "direct")) != "direct"
+			if rar == "common" and not mode_card and (dpc < 6.0 or dpc > 7.0) and id != "chan_phong" and id != "xung_kich" and id != "han_tran" and id != "gai_doc":
 				over.append(id + ":common")
 			if rar == "rare" and dpc > 8.0:
 				over.append(id + ":rare")

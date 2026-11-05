@@ -55,8 +55,8 @@ func _initialize() -> void:
 		if c.has("damage_multiplier") or c.has("class_tags"):
 			no_mult = false
 	# The Wall cards left the player's cards (quick spec 2026-10-31) and were deleted outright on 2026-11-01
-	# (ADR-0001 Phase 1), so card_order holds 31 cards.
-	check(rar["common"] == 16 and rar["rare"] == 11 and rar["epic"] == 4, "rarity spread (31 player cards, song_kiem epic) %s" % str(rar))
+	# (ADR-0001 Phase 1); the cast rhythm spec 2026-11-05 added the common parry card do_kiem, so card_order holds 32.
+	check(rar["common"] == 17 and rar["rare"] == 11 and rar["epic"] == 4, "rarity spread (32 player cards, song_kiem epic) %s" % str(rar))
 	# Story 027: the boss's default card list never holds a zone card (zones come from its traits only).
 	var boss_ids: Array[String] = cards.boss_card_order()
 	var boss_zone_free: bool = true
@@ -70,8 +70,9 @@ func _initialize() -> void:
 			all_zone = false
 	check(cards.cards.size() == cards.card_order.size() + cards.curse_ids().size(),
 		"every card is a player card or a curse (no boss-only Wall cards left) %d" % cards.cards.size())
-	check(boss_zone_free and all_zone and boss_ids.size() == cards.card_order.size() - zone_ids.size(),
-		"boss card list excludes the 3 player zone cards (%d of %d)" % [boss_ids.size(), cards.card_order.size()])
+	# Cast rhythm spec 2026-11-05: the parry card (do_kiem) answers an enemy telegraph; the boss never holds it either.
+	check(boss_zone_free and all_zone and boss_ids.size() == cards.card_order.size() - zone_ids.size() - 1 and not boss_ids.has("do_kiem"),
+		"boss card list excludes the 3 player zone cards and the parry card (%d of %d)" % [boss_ids.size(), cards.card_order.size()])
 	check(all_ok, "all name/desc keys in CSV vi+en")
 	check(dpc_ok, "every card has float damage_per_cell")
 	check(up_ok, "every card has upgrade table")
@@ -159,11 +160,16 @@ func _initialize() -> void:
 		allmax[id] = 3
 	check(RewardRoller.roll(cards, rcfg, 1, [], allmax).size() == 3, "pool exhausted: maxed cards return")
 	var near: Dictionary = {}
-	var last: int = cards.card_order.size() - 1
-	for id: String in cards.card_order.slice(0, last):
+	# 2026-11-05: hero cards (cards.json `hero`, e.g. do_kiem) never enter the pool, so "last" is the last POOL card.
+	var pool_ids: Array[String] = []
+	for id: String in cards.card_order:
+		if cards.is_pool_card(id):
+			pool_ids.append(id)
+	var last: int = pool_ids.size() - 1
+	for id: String in pool_ids.slice(0, last):
 		near[id] = 3
 	var near_offer: Array[String] = RewardRoller.roll(cards, rcfg, 1, [], near)
-	check(near_offer.size() == 3 and near_offer.has(cards.card_order[last]), "short pool: free card plus maxed fill")
+	check(near_offer.size() == 3 and near_offer.has(pool_ids[last]), "short pool: free card plus maxed fill")
 	check(RewardRoller.is_upgrade("a", {"a": 1}) and RewardRoller.is_upgrade("a", {"a": 2}) and not RewardRoller.is_upgrade("a", {"a": 3}) and not RewardRoller.is_upgrade("a", {}), "is_upgrade")
 
 	# --- RunSession (v4 map model, Story 022)

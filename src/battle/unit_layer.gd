@@ -147,6 +147,11 @@ const CTX_PHASE: String = "phase"
 const CTX_GUARDING: String = "guarding"
 const CTX_HOWLING: String = "howling"
 const CTX_STUNNED: String = "stunned"
+## Cast rhythm spec 2026-11-05: the player's parry guard is open (ParryGuard).
+const CTX_PARRYING: String = "parrying"
+## Logical clip of the parry guard: the sheet's `draw` clip held on its LAST frame (the sword raised in guard; no new
+## art, spec section 3); a sheet without `draw` shows `idle`.
+const CLIP_PARRY_GUARD: String = "parry_guard"
 ## The two sides, in the order the per-side tables are walked.
 const SIDES: Array[int] = [CombatState.Side.PLAYER, CombatState.Side.ENEMY]
 ## OSFE hit feel: the shake flips side every this many seconds.
@@ -453,6 +458,7 @@ func clip_context(side: int) -> Dictionary:
 		CTX_STUNNED: stage == PatternController.Stage.STUNNED,
 		CTX_AWAKEN: player and _combat.is_signature_active(),
 		CTX_STEPPING: get_step_left(side) > 0.0,
+		CTX_PARRYING: player and _combat.get_parry_guard() != null and _combat.get_parry_guard().is_active(),
 	}
 
 
@@ -517,6 +523,8 @@ static func clip_for(ctx: Dictionary) -> String:
 		return CLIP_HIT
 	if player and bool(ctx.get(CTX_CASTING, false)):
 		return CLIP_CAST
+	if player and bool(ctx.get(CTX_PARRYING, false)):
+		return CLIP_PARRY_GUARD
 	if not player and bool(ctx.get(CTX_PHASE, false)):
 		return CLIP_PHASE_SHIFT
 	if not player and bool(ctx.get(CTX_STUNNED, false)):
@@ -722,6 +730,16 @@ func _update_clip(side: int, step: float) -> void:
 	_logical_clip[side] = want
 	if anim == null:
 		return
+	if want == CLIP_PARRY_GUARD:
+		var sheet_p: SpriteSheet = get_sheet(side)
+		if sheet_p == null or not sheet_p.has_clip(CLIP_DRAW):
+			anim.play(CLIP_IDLE)
+			return
+		if anim.current_clip() != CLIP_DRAW:
+			anim.play(CLIP_DRAW, true)
+		anim.seek(anim.frame_count() - 1)
+		anim.set_paused(true)
+		return
 	match want:
 		CLIP_HIT:
 			if bool(_hit_restart.get(side, false)):
@@ -750,7 +768,7 @@ func _update_clip(side: int, step: float) -> void:
 				anim.play(step_clip, true)
 		_:
 			# The match-start draw runs to its end before the idle (any other clip cuts in at once).
-			if want == CLIP_IDLE and anim.current_clip() == CLIP_DRAW and not anim.is_finished():
+			if want == CLIP_IDLE and anim.current_clip() == CLIP_DRAW and not anim.is_finished() and not anim.is_paused():
 				return
 			anim.play(want)
 

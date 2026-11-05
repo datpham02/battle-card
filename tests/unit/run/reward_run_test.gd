@@ -45,7 +45,12 @@ func _initialize() -> void:
 	check(distinct, "3 distinct ids over 4000 rolls")
 	check(int(counts_p.get("liet_hoa", 0)) > 0 and int(counts_k.get("liet_hoa", 0)) == 0, "max-level card never offered while the pool is large (020) (%s vs %s)" % [counts_p.get("liet_hoa", 0), counts_k.get("liet_hoa", 0)])
 	check(int(counts_p.get("han_bang", 0)) < int(counts_p.get("kiem_vu", 0)) and int(counts_p.get("han_bang", 0)) < int(counts_p.get("chan_phong", 0)), "epic rarest")
-	var most: Array[String] = cards.card_order.slice(0, cards.card_order.size() - 2)
+	# 2026-11-05: hero cards (cards.json `hero`, e.g. do_kiem) never enter the pool: leave the last 2 POOL cards open.
+	var pool_ids: Array[String] = []
+	for id: String in cards.card_order:
+		if cards.is_pool_card(id):
+			pool_ids.append(id)
+	var most: Array[String] = pool_ids.slice(0, pool_ids.size() - 2)
 	var small: Array[String] = RewardRoller.roll(cards, rcfg, 1, most)
 	check(small.size() == 2 and not small.has("kiem_khi"), "small pool returns what exists")
 	var excl: Dictionary = rcfg.duplicate()

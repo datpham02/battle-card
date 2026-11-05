@@ -25,6 +25,9 @@ var level_of: Callable = Callable()
 ## Accessibility "Thời gian chọn lá" (SettingsStore.card_time_mult): the choose time is menu_choose_sec x this;
 ## 0 = no limit (the menu waits for a card; the match stays slowed).
 var time_mult: float = 1.0
+## Cast rhythm spec 2026-11-05: Callable() -> Dictionary, the SkillAvailability context of the match now (e.g.
+## {enemy_telegraph: bool} for parry cards; CombatView.get_availability_context). Invalid = {} (parry cards unavailable).
+var availability_context_fn: Callable = Callable()
 ## Picks the timeout card. Randomized at creation; tests seed it for a deterministic pick.
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -73,7 +76,7 @@ func timeout_choice() -> String:
 		return ""
 	var ok: Array[String] = []
 	for id: String in _hand:
-		if bool(SkillAvailability.check(_config, _cooldowns, id, _cells.size(), card_level(id))["available"]):
+		if bool(SkillAvailability.check(_config, _cooldowns, id, _cells.size(), card_level(id), availability_context())["available"]):
 			ok.append(id)
 	if ok.is_empty():
 		return ""
@@ -90,7 +93,7 @@ func choose(skill_id: String) -> bool:
 
 # Availability check + close + emit, without the hand test (the timeout path uses it).
 func _emit_choice(skill_id: String) -> bool:
-	var check: Dictionary = SkillAvailability.check(_config, _cooldowns, skill_id, _cells.size(), card_level(skill_id))
+	var check: Dictionary = SkillAvailability.check(_config, _cooldowns, skill_id, _cells.size(), card_level(skill_id), availability_context())
 	if not bool(check["available"]):
 		return false
 	var labels: Array[String] = _labels
@@ -116,6 +119,13 @@ func cancel_menu() -> Array[Vector2i]:
 	_cells = []
 	_hand = []
 	return cells
+
+
+## The SkillAvailability context now ([member availability_context_fn]; {} without one).
+func availability_context() -> Dictionary:
+	if availability_context_fn.is_valid():
+		return availability_context_fn.call() as Dictionary
+	return {}
 
 
 ## Level used for [param skill_id] (1 without a [member level_of] callable).

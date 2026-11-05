@@ -42,6 +42,9 @@ var player_step_cd: float = 0.45
 var player_step_left_fn: Callable = Callable()
 ## Callable() -> Array: cells of OTHER warnings showing now (traits); they count for F2 and are not safe (F1).
 var external_red_fn: Callable = Callable()
+## Cast rhythm spec 2026-11-05 (Knight parry): the hero's ParryGuard. A strike that hits the hero while it is open is
+## parried in [method _resolve_cells] (0 damage, no status, reflect + pin through the guard). Null = no parry.
+var player_guard: ParryGuard = null
 
 var _state: CombatState
 var _grid: BoardGrid
@@ -198,6 +201,33 @@ func interrupt_tell() -> bool:
 
 func uninterruptible_tell() -> bool:
 	return not _skill.is_empty() and (_stage == Stage.WINDUP or _stage == Stage.WARNING) and not bool(_skill["interruptible"])
+
+
+## Cast rhythm spec 2026-11-05: true while an ATTACK skill winds up or warns (a parry card may be cast now).
+func is_threatening() -> bool:
+	return not _skill.is_empty() and (_stage == Stage.WINDUP or _stage == Stage.WARNING) and str(_skill.get("kind", "")) == "attack"
+
+
+## Cast rhythm spec 2026-11-05: match seconds until the current attack strikes (WARNING: what is left of it; WINDUP:
+## the rest of the windup plus its warning_sec); INF when no attack is coming. The balance bot times its parry with it.
+func strike_time_left() -> float:
+	if not is_threatening():
+		return INF
+	var warning_sec: float = float((_skill["followup"] as Dictionary).get("warning_sec", _skill["warning_sec"])) if _is_followup else float(_skill["warning_sec"])
+	return _stage_left if _stage == Stage.WARNING else _stage_left + warning_sec
+
+
+## Cast rhythm spec 2026-11-05: the cells the current attack will strike when known (the warning's red), else the
+## player's cell during a windup (the plan is made for where the hero stands); [] when no attack is coming.
+func threatened_cells() -> Array[Vector2i]:
+	if not is_threatening():
+		return [] as Array[Vector2i]
+	if _stage == Stage.WARNING:
+		return telegraph_cells()
+	var plan_cells: Array[Vector2i] = []
+	if _plan.has("cells"):
+		plan_cells.assign(_plan["cells"] as Array)
+	return plan_cells
 
 
 ## Cooldown left of [param skill_id].
@@ -535,11 +565,21 @@ func _resolve_cells(cells: Array[Vector2i], effects: Dictionary) -> Dictionary:
 	var damage: float = float(effects.get("damage", 0.0))
 	if effects.has("damage_no_markers") and _markers.is_empty():
 		damage = float(effects["damage_no_markers"])  # P2.4: forest_last_knot without an anchor
+	# Cast rhythm spec 2026-11-05: an open parry guard takes the whole strike (damage and status) and reflects it.
+	var has_status: bool = typeof(effects.get("status")) == TYPE_DICTIONARY
+	result["parried"] = false
+	if hit and (damage > 0.0 or has_status) and player_guard != null and player_guard.is_active():
+		var parry: Dictionary = player_guard.try_parry(_state, _status, damage)
+		result["parried"] = true
+		result["reflected"] = float(parry.get("reflected", 0.0))
+		result["blocked"] = float(parry.get("blocked", 0.0))
+		damage = 0.0
+		has_status = false
 	if hit and damage > 0.0:
 		var before: float = _state.player_hp
 		_state.damage_player(damage)
 		result["damage"] = before - _state.player_hp
-	if hit and _status != null and typeof(effects.get("status")) == TYPE_DICTIONARY:
+	if hit and _status != null and has_status:
 		var st: Dictionary = effects["status"] as Dictionary
 		if not bool(st["first_cell_only"]) or (not open.is_empty() and open[0] == _state.player_cell and cells[0] == open[0]):
 			result["status"] = _apply_status(st)

@@ -93,6 +93,11 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"frost_burst_damage": _num(cc.frost_burst_damage, loc),
 		"execute_pct": _num(float(roundi(execute_ratio * 100.0)), loc),
 		"execute_mult": _num(CutEffects.EXECUTE_MULT, loc),
+		# Cast rhythm spec 2026-11-05: the crit multiplier (1.2) and the parry numbers (1.1).
+		"crit_mult": _num(float((skill.get("crit", {}) as Dictionary).get("mult", 1.0)), loc),
+		"parry_sec": _num(float(skill.get("parry_sec", 0.0)), loc),
+		"reflect_mult": _num(float(skill.get("reflect_mult", 0.0)), loc),
+		"parry_pin_sec": _num(float(skill.get("parry_pin_sec", 0.0)), loc),
 	}
 	for zone_key: String in SkillConfig.ZONE_KEYS:
 		out[zone_key] = _num(float(skill.get(zone_key, zones.get(zone_key, 0.0))), loc)

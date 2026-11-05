@@ -176,13 +176,13 @@ const METRICS: Array[String] = [
 	"tokens", "size", "levels", "sec", "timeouts", "matches", "taken", "dealt", "sig_acts", "bswings",
 	"casts", "resolved", "phits", "focus", "joins", "featured", "counters", "interrupts",
 	"zpicks", "zdeck", "zone_casts", "thorns", "thorn_cells", "bthorn", "bthorn_dmg", "pthorn",
-	"o_res", "o_hits",
+	"o_res", "o_hits", "parry_att", "parries", "crits",
 ]
 const RUN_SUMS: Array[String] = [
 	"rest_heal", "rest_forge", "treasure", "tokens", "size", "levels", "sec", "timeouts", "matches", "taken",
 	"dealt", "sig_acts", "bswings", "casts", "resolved", "phits", "focus", "joins", "featured", "counters", "interrupts",
 	"zpicks", "zdeck", "zone_casts", "thorns", "thorn_cells", "bthorn", "bthorn_dmg", "pthorn",
-	"o_res", "o_hits",
+	"o_res", "o_hits", "parry_att", "parries", "crits",
 ]
 
 var _core: SimCore
@@ -584,6 +584,17 @@ func _run_chapter(ci: int, seeds: int) -> bool:
 				_mean(a["casts"]) / mm, 100.0 * _mean(a["phits"]) / maxf(_mean(a["resolved"]), 1.0), _mean(a["focus"]) / mm, _mean(a["joins"]) / mm,
 				_mean(a["featured"]) / mm, _mean(a["counters"]) / mm, _mean(a["interrupts"]) / mm])
 	print("")
+	# Cast rhythm spec 2026-11-05: each hero's own measure (Knight: parry attempts / parries; crits for every hero).
+	print("CH%d RHYTHM: | character | policy | parry attempts / match | parries / match | parry success %% | crits / match |" % (ci + 1))
+	print("|---|---|---|---|---|---|")
+	for label: String in labels:
+		for p: String in pols:
+			var a: Dictionary = agg[label][p]
+			var mm: float = maxf(_mean(a["matches"]), 1.0)
+			var att: float = _sum(a["parry_att"])
+			print("| %s | %s | %.2f | %.2f | %s | %.2f |" % [label, p, _mean(a["parry_att"]) / mm, _mean(a["parries"]) / mm,
+				("%.1f" % (100.0 * _sum(a["parries"]) / att)) if att > 0.0 else "-", _mean(a["crits"]) / mm])
+	print("")
 	print("CH%d ZONES: | character | policy | zone cards picked / run | zone cards in final deck | zone casts / match | thorns formed / match | thorn cells / thorns | boss thorn entries / match | thorn dmg to boss / match | player thorn entries / match | hit %% non-zone casts (n) | player hit %% (all) |" % (ci + 1))
 	print("|---|---|---|---|---|---|---|---|---|---|---|---|")
 	for label: String in labels:
@@ -745,7 +756,8 @@ func _run(seed_value: int, char_id: String, policy: String, cleared_bosses: int,
 				["featured", "featured"], ["counters", "counters"], ["interrupts", "interrupts"],
 				["zone_casts", "zone_casts"], ["thorns", "thorns"],
 				["thorn_cells", "thorn_cells"], ["bthorn", "bthorn"], ["bthorn_dmg", "bthorn_dmg"], ["pthorn", "pthorn"],
-				["o_res", "o_res"], ["o_hits", "o_hits"]]:
+				["o_res", "o_res"], ["o_hits", "o_hits"],
+				["parry_att", "parry_attempts"], ["parries", "parries"], ["crits", "crits"]]:
 			out[pair[0]] = float(out[pair[0]]) + float(r[pair[1]])
 		if bool(r["timeout"]):
 			out["timeouts"] = float(out["timeouts"]) + 1.0

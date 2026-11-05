@@ -34,6 +34,14 @@ extends RefCounted
 ## the follow-up covers the boss cell and the exit still open. On its own half it treats holes (the boss's
 ## drop tiles) as blocked and walks around thorns (dodges into them only when nothing else is free).
 ## --no-zone-cards drops the zone cards from the match decks (deck_sim also drops them from the reward pool).
+##
+## Cast rhythm spec 2026-11-05 (Knight parry, crit): the match gets CombatView's ParryGuard wiring (arbiter + pattern
+## controller + the availability context of CutFlow / the card pick). Parry rule of the bot: when an enemy attack is
+## telegraphed on its cell and its deck holds a ready `parry` card, it plans to parry with probability bot.parry instead
+## of dodging; it starts the cast when the strike is bot.parry_lead seconds away (forced aim, the cast stop freezes the
+## match while it places and picks) and picks the parry card when the drawn hand has it available. A hand without it:
+## the cast goes on as a normal one and the bot dodges at once. Measures: parry attempts (guards opened), parries
+## (enemy hits taken by the guard) and crits (player hits with result.crit) per match.
 
 const PLAYER: int = CombatState.Side.PLAYER
 const ENEMY: int = CombatState.Side.ENEMY
@@ -98,6 +106,8 @@ const DEFAULT_BOT: Dictionary = {
 	"sig_th_min_cells": 2,
 	"sig_th_hold": 6.0,
 	"sig_thanh_an_min_stacks": 1,  # Story 037: Thanh An fires when the boss has this many Han stacks
+	"parry": 0.85,  # cast rhythm spec 2026-11-05: chance to answer a telegraph on its cell with a ready parry card (as dodge)
+	"parry_lead": 0.4,  # sim seconds before the strike the parry cast is started (inside parry_sec, a human's timing)
 }
 ## Placement score weights (planner): covering the target, each covered neighbour (escape cell), each
 ## cell, a featured two-piece union, Anh Bo small cut, per second of wind-up beyond the strike budget.
@@ -226,6 +236,10 @@ var boss: BossController
 ## 2026-11-04: the match's PatternController for a `brain: "pattern"` match (port of CombatView._setup_pattern_brain);
 ## null for the block brain. Its warnings feed the bot's dodge like a boss swing, its hits the boss-hit columns.
 var pattern: PatternController = null
+## Cast rhythm spec 2026-11-05: the hero's parry guard (CombatView._parry_guard) and the bot's pending parry plan.
+var parry_guard: ParryGuard = null
+var _parry_plan: bool = false
+var _parry_cast: bool = false
 var _skills_config: EnemySkillsConfig = null
 var arbiter: SwingArbiter
 var learning: BossLearning
@@ -852,6 +866,7 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	actor = CutActor.new(cut_config, PLAYER)
 	flow = CutFlow.new(cards, cooldowns)
 	flow.level_of = Callable(self, "card_level")
+	flow.availability_context_fn = Callable(self, "availability_context")
 	flow.skill_chosen.connect(_on_skill_chosen)
 	var brain_config: BossBrainConfig = BossBrainConfig.from_dictionary(brain_data)
 	_apply_brain_params(brain_config, m, base_cd)
@@ -875,6 +890,13 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	boss.get_actor().swing_started.connect(_on_boss_swing_started)
 	boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
 	arbiter = SwingArbiter.new(state, grid, actor, boss.get_actor(), cut_config, cards, status)
+	parry_guard = ParryGuard.new()
+	arbiter.player_guard = parry_guard
+	if pattern != null:
+		pattern.player_guard = parry_guard
+	parry_guard.parried.connect(_on_parried)
+	_parry_plan = false
+	_parry_cast = false
 	arbiter.boss_defense = maxf(float(m.get("boss_defense", 0.0)), 0.0)
 	arbiter.execute_ratio = combat.execute_ratio
 	_boss_defense = arbiter.boss_defense
@@ -950,6 +972,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		"vent_hp": 0.0, "fall_hp": 0.0, "pushed": 0, "bpushed": 0, "vent_erupts": 0, "cell_falls": 0, "boss_heal": 0.0,
 		# Story 037: Han bursts that fired on the boss (CombatView match stat `frost_bursts`).
 		"frost_bursts": 0,
+		# Cast rhythm spec 2026-11-05: parry guards opened, parries landed (damage blocked / reflected), crits.
+		"parry_attempts": 0, "parries": 0, "parry_blocked": 0.0, "parry_reflected": 0.0, "crits": 0,
 	}
 	_tr("match start %s boss_hp=%.0f player_hp=%.0f player=%s boss=%s player_cd=%.2f featured=%s" % [
 		str(m.get("id", "")), boss_max_hp, state.player_hp, str(state.player_cell), str(state.enemy_cell), player_cd, str(not featured.is_empty())])
@@ -1262,6 +1286,7 @@ func _world_tick(step: float) -> void:
 	boss.get_drops().set_danger_cells(actor.get_cells() if actor.is_swinging() else ([] as Array[Vector2i]))
 	drops.tick(step, state.player_cell, bag.get_occupied_count())
 	cooldowns.tick(step)
+	parry_guard.tick(step)
 	boss.tick(step, actor)
 	if pattern != null:
 		pattern.tick(step)
@@ -1271,6 +1296,76 @@ func _world_tick(step: float) -> void:
 		trait_host.on_tick(step)
 	if invulnerable and not state.is_player_dead():
 		state.set_player_hp(state.player_max_hp)
+
+
+## Mirrors CombatView.get_availability_context (parry cards need an enemy attack telegraph).
+func availability_context() -> Dictionary:
+	return {SkillAvailability.CTX_ENEMY_TELEGRAPH: ParryGuard.enemy_telegraph(pattern, boss.get_actor() if boss != null else null)}
+
+
+func _on_parried(blocked: float, reflected: float, _pin_sec: float) -> void:
+	ms["parries"] = int(ms["parries"]) + 1
+	ms["parry_blocked"] = float(ms["parry_blocked"]) + blocked
+	ms["parry_reflected"] = float(ms["parry_reflected"]) + reflected
+	ms["dealt"] = float(ms["dealt"]) + reflected
+	# The foe is Frozen (pinned): a player punishes it at once (the Knight's target_pinned crit cards).
+	_force_aim = true
+	_next_cast = t
+	_tr("PARRY blocked=%.1f reflected=%.1f" % [blocked, reflected])
+
+
+# The bot's parry plan for a telegraph on its cell: its deck holds a parry card that is off cooldown, no guard is open,
+# and the roll (bot.parry) passes. Sets _parry_plan (the dodge is skipped); false = dodge as before.
+func _want_parry() -> bool:
+	if _driver != null or parry_guard.is_active() or _parry_plan:
+		return _parry_plan
+	var ready: bool = false
+	for id: String in deck.to_array():
+		if cards.is_parry_card(id) and cooldowns.is_ready(id):
+			ready = true
+			break
+	if not ready or rng.randf() >= float(bot["parry"]):
+		return false
+	_parry_plan = true
+	return true
+
+
+# Seconds until the attack aimed at the bot's cell lands (pattern strike or boss swing); INF when none is.
+func _strike_on_me_left() -> float:
+	var best: float = INF
+	if pattern != null and pattern.threatened_cells().has(state.player_cell):
+		best = minf(best, pattern.strike_time_left())
+	var b: CutActor = boss.get_actor()
+	if b.is_swinging() and b.get_cells().has(state.player_cell):
+		best = minf(best, b.get_time_left())
+	return best
+
+
+# Runs the parry plan: when the strike is bot.parry_lead away, starts a forced cast (the parry card is picked in
+# _choose_card). The threat gone or no piece to place: the plan drops and the bot dodges. True when it acted.
+func _bot_parry() -> bool:
+	if not _parry_plan:
+		_parry_cast = false
+		return false
+	var left: float = _strike_on_me_left()
+	if left == INF:
+		_parry_plan = false
+		_parry_cast = false
+		return false
+	if left > float(bot["parry_lead"]):
+		return true  # stand and wait for the timing
+	if actor.is_swinging() or not _ready_to_cast():
+		_parry_plan = false
+		_dodge_at = t
+		return false
+	_force_aim = true
+	_parry_cast = true
+	if _try_start_cast():
+		return true
+	_parry_cast = false
+	_parry_plan = false
+	_dodge_at = t
+	return false
 
 
 # Mirrors CombatView._update_focus: the bot "selects" a slot exactly while it is PLACING.
@@ -1451,7 +1546,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		if pattern != null:
 			# Mirrors CombatView: every player cast may break markers; a hit interrupts an interruptible wind-up.
 			pattern.on_player_cast(cells)
-			if bool(result["hit"]):
+			if bool(result["hit"]) and not bool(result.get("no_interrupt", false)):
 				pattern.on_enemy_hit()
 		trait_host.on_player_swing_resolved(result)
 		trait_host.on_boss_damaged(damage)
@@ -1460,6 +1555,8 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		ms["resolved"] = int(ms["resolved"]) + 1
 		var size_res: Dictionary = ms["size_res"]
 		size_res[cells.size()] = int(size_res.get(cells.size(), 0)) + 1
+		if bool(result.get("crit", false)):
+			ms["crits"] = int(ms["crits"]) + 1
 		if bool(result["hit"]):
 			ms["hits"] = int(ms["hits"]) + 1
 			var size_hits: Dictionary = ms["size_hits"]
@@ -1578,6 +1675,8 @@ func _on_boss_swing_started(cells: Array[Vector2i], skill_id: String, duration: 
 	_tr("BOSS swing start %s cells=%s dur=%.2f player=%s rooted=%s" % [skill_id, str(cells), duration, str(state.player_cell), str(boss.is_step_locked())])
 	if _driver != null:
 		return
+	if cells.has(state.player_cell) and _want_parry():
+		return
 	if cells.has(state.player_cell) and rng.randf() < float(bot["dodge"]):
 		_dodge_at = t + float(bot["dodge_reaction"])
 	# Counter: the boss is rooted by its own swing -> cast at its cell now.
@@ -1611,6 +1710,8 @@ func _setup_pattern(m: Dictionary, brain_config: BossBrainConfig, player_cd: flo
 func _on_pattern_warning(_skill_id: String, cells: Array[Vector2i], queued: Array[Vector2i], _warning_sec: float) -> void:
 	ms["bstarts"] = int(ms["bstarts"]) + 1
 	if _driver != null:
+		return
+	if cells.has(state.player_cell) and _want_parry():
 		return
 	if (cells.has(state.player_cell) or queued.has(state.player_cell)) and rng.randf() < float(bot["dodge"]):
 		_dodge_at = t + float(bot["dodge_reaction"])
@@ -1668,6 +1769,10 @@ func _on_bag_slot_cleared(_index: int, _point: FieldPoint) -> void:
 func _on_player_swing_done(_cells: Array[Vector2i], _skill_id: String) -> void:
 	var gap: float = rng.randf_range(float(bot["gap_min"]), float(bot["gap_max"]))
 	_next_cast = t if _zone_follow_until > t else t + gap
+	# Cast rhythm spec 2026-11-05: a Frozen (pinned) foe after a parry is punished at once, no gap.
+	if parry_guard != null and parry_guard.parries > 0 and status.is_pinned(ENEMY):
+		_next_cast = t
+		_force_aim = true
 
 
 # CombatView._on_skill_chosen + _begin_cut: the featured bonus rides only on a featured two-piece cast.
@@ -1685,6 +1790,16 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 	_tr("PLAYER cast %s n=%d cells=%s boss=%s featured=%s" % [skill_id, cells.size(), str(cells), str(state.enemy_cell), str(not bonus.is_empty())])
 	if actor.begin_swing(cells, skill_id, true, level, -1.0, bonus):
 		cooldowns.start(skill_id, float(cards.resolved(skill_id, level).get("cooldown_sec", 0.0)))
+		# Mirrors CombatView._begin_cut: a parry card opens the guard as the match runs again.
+		if cards.is_parry_card(skill_id):
+			parry_guard.open_from_card(cards.resolved(skill_id, level))
+			ms["parry_attempts"] = int(ms["parry_attempts"]) + 1
+			_dodge_at = -1.0
+		elif _parry_cast:
+			# The drawn hand had no parry card: the cast went on as a normal one; the bot dodges now.
+			_dodge_at = t
+		_parry_cast = false
+		_parry_plan = false
 		if signature != null:
 			signature.on_cast(skill_id, cells.size())
 		ms["casts"] = int(ms["casts"]) + 1
@@ -1732,6 +1847,10 @@ func _bot_tick(real_step: float) -> void:
 
 func _bot_idle() -> void:
 	_bot_signature()
+	if _bot_parry():
+		return
+	if parry_guard.is_active() and _strike_on_me_left() != INF:
+		return  # holds its cell while the guard waits for the hit
 	if _fire_dodge():
 		return
 	if _dodge_at >= 0.0:
@@ -2102,15 +2221,21 @@ func _join_piece() -> void:
 # Picks the best available card of the drawn hand; none available = wait for the menu timeout (default card).
 func _choose_card() -> void:
 	var count: int = plan.total_cells()
+	if _parry_cast:
+		for id: String in flow.get_hand():
+			if cards.is_parry_card(id) and flow.choose(id):
+				return
 	var zone: String = _zone_choice(count)
 	if not zone.is_empty() and flow.choose(zone):
 		return
 	var best: String = ""
 	var best_value: float = -INF
 	for id: String in flow.get_hand():
-		if not bool(SkillAvailability.check(cards, cooldowns, id, count, card_level(id))["available"]):
+		if not bool(SkillAvailability.check(cards, cooldowns, id, count, card_level(id), availability_context())["available"]):
 			continue
 		if cards.is_zone_card(id):
+			continue
+		if cards.is_parry_card(id) and not _parry_cast:
 			continue
 		var v: float = cast_value(id, card_level(id), count)
 		if v > best_value:
@@ -2141,7 +2266,7 @@ func _zone_choice(count: int) -> String:
 	var kill_hp: float = -INF
 	for id: String in flow.get_hand():
 		var level: int = card_level(id)
-		if not bool(SkillAvailability.check(cards, cooldowns, id, count, level)["available"]):
+		if not bool(SkillAvailability.check(cards, cooldowns, id, count, level, availability_context())["available"]):
 			continue
 		if not cards.is_zone_card(id):
 			kill_hp = maxf(kill_hp, cast_value(id, level, count))

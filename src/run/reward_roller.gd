@@ -181,6 +181,9 @@ static func _draw(cards: SkillConfig, cfg: Dictionary, weights: Dictionary, floo
 	for id: String in cards.card_order:
 		if exclude_ids.has(id) or not bool(cards.get_skill(id).get("implemented", false)):
 			continue
+		# Cast rhythm spec 2026-11-05: hero cards (cards.json `hero`) never come from rewards, shops or events.
+		if not cards.hero_of(id).is_empty():
+			continue
 		if bool(cfg["pool_excludes_defaults"]) and cards.default_deck.has(id):
 			continue
 		var rarity: String = cards.get_rarity(id)

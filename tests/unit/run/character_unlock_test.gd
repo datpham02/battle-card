@@ -54,7 +54,7 @@ func _initialize() -> void:
 
 	# --- the old three are unchanged
 	var kiem: Dictionary = cc.get_character("kiem_si")
-	_check("kiem_si unchanged", int(kiem["max_hp"]) == 200 and float(kiem["step_cooldown_mult"]) == 1.0 and float(kiem["focus_max_sec"]) == 4.0 and kiem["passive"]["id"] == "second_wind" and kiem["signature"]["id"] == "tram" and cc.deck_of("kiem_si") == (["kiem_khi", "kiem_vu", "kiem_vu", "thiet_kiem", "thiet_kiem", "chan_phong"] as Array[String]))
+	_check("kiem_si unchanged", int(kiem["max_hp"]) == 200 and float(kiem["step_cooldown_mult"]) == 1.0 and float(kiem["focus_max_sec"]) == 4.0 and kiem["passive"]["id"] == "second_wind" and kiem["signature"]["id"] == "tram" and cc.deck_of("kiem_si") == (["do_kiem", "kiem_vu", "kiem_vu", "thiet_kiem", "thiet_kiem", "chan_phong"] as Array[String]))  # cast rhythm spec 2026-11-05: do_kiem replaced one kiem_khi
 	var phap: Dictionary = cc.get_character("phap_su")
 	_check("phap_su unchanged", int(phap["max_hp"]) == 210 and float(phap["focus_max_sec"]) == 5.0 and phap["passive"]["id"] == "wide_caster" and phap["signature"]["id"] == "thien_hoa" and cc.deck_of("phap_su") == (["kiem_khi", "hoa_xa", "hoa_tinh", "hoa_tinh", "hoa_tran", "bang_phong"] as Array[String]))
 	var sat: Dictionary = cc.get_character("sat_thu")

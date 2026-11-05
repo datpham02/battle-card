@@ -21,12 +21,21 @@ const UPGRADE_FLOORS: Dictionary = {
 	"burn_duration_sec": 0.0, "pin_duration_sec": 0.0, "push_cells": 0.0,
 	"fragile_stacks": 0.0, "frost_stacks": 0.0,
 	"thorn_sec": 0.0, "thorn_damage": 0.0, "thorn_fragile_stacks": 0.0,
+	"parry_sec": 0.0, "reflect_mult": 0.0, "parry_pin_sec": 0.0,
 }
 
 ## Story 027: the optional per-card zone number keys.
 const ZONE_KEYS: Array[String] = ["thorn_sec", "thorn_damage", "thorn_fragile_stacks"]
 ## Story 027: card effects that form a zone (kept out of the boss's card list).
 const ZONE_EFFECTS: Array[String] = ["thorns"]
+## Cast rhythm spec 2026-11-05 (design/quick-specs/nhip-ra-chieu-2026-11-05.md 1.1): how a card resolves. Only `direct`
+## (the old behaviour, the default) and `parry` (the Knight's Do Kiem) are implemented; the other modes of the spec are
+## later stories and an unknown mode falls back to `direct` (warning).
+const CAST_MODE_DIRECT: String = "direct"
+const CAST_MODE_PARRY: String = "parry"
+const CAST_MODES: Array[String] = [CAST_MODE_DIRECT, CAST_MODE_PARRY]
+## Parry numbers used when a `parry` card omits its own (cards.json normally carries them).
+const PARRY_DEFAULTS: Dictionary = {"parry_sec": 0.8, "reflect_mult": 1.5, "parry_pin_sec": 1.2}
 
 ## Simulation speed factor while the card menu is open (0..1). Applied by the view.
 var menu_time_scale: float = 0.2
@@ -52,7 +61,8 @@ var focus_locks_movement: bool = true
 var card_order: Array[String] = [FALLBACK_SKILL]
 ## id -> {name_key, desc_key, effect, min_cells, cooldown_sec, damage_per_cell, push_cells,
 ## burn_*, pin_duration_sec, fragile_stacks, frost_stacks, pierce_defense, execute, execute_ratio,
-## bonus_vs_fragile_mult, rarity, draw_damage, upgrade, implemented, player_pool, delivery} (level 1 values; see
+## bonus_vs_fragile_mult, rarity, draw_damage, upgrade, implemented, player_pool, delivery, cast_mode, crit} (level 1
+## values; see
 ## [method resolved]). `delivery` = SkillDelivery.parse of the card's `delivery` object (ADR-0001 D7 / A1).
 ## Story 033: rarity `curse` cards (ganh_nang, oan_hon) carry `draw_damage` (HP the player loses each
 ## time the card is drawn into the card menu; 0 = none).
@@ -168,18 +178,48 @@ func is_zone_card(id: String) -> bool:
 	return ZONE_EFFECTS.has(str(get_skill(id).get("effect", "")))
 
 
-## Story 027: [member card_order] without the zone cards: the boss's default card list.
+## Story 027: [member card_order] without the zone cards: the boss's default card list. Cast rhythm spec 2026-11-05:
+## also without the cards whose cast_mode is not `direct` (a parry answers the ENEMY's telegraph; the boss never has one
+## to answer), see [method is_boss_playable].
 func boss_card_order() -> Array[String]:
 	var out: Array[String] = []
 	for id: String in card_order:
-		if not is_zone_card(id):
+		if is_boss_playable(id):
 			out.append(id)
 	return out
+
+
+## True when the block-brain boss may hold card [param id]: a known card that is not a zone card and casts `direct`.
+func is_boss_playable(id: String) -> bool:
+	return cards.has(id) and not is_zone_card(id) and cast_mode(id) == CAST_MODE_DIRECT
+
+
+## Cast rhythm spec 2026-11-05: the cast_mode of [param id] ("direct" for an unknown card).
+func cast_mode(id: String) -> String:
+	return str(get_skill(id).get("cast_mode", CAST_MODE_DIRECT))
+
+
+## True when [param id] is a `parry` card (available only during an enemy telegraph, opens a guard; SkillAvailability,
+## ParryGuard).
+func is_parry_card(id: String) -> bool:
+	return cast_mode(id) == CAST_MODE_PARRY
 
 
 ## Story 033: true when [param id] is a curse card (rarity `curse`). Curses take a card-menu slot and
 ## are shown locked, never upgrade, never appear in reward / shop pools or the boss deck, and do not
 ## count toward the run's min_deck_size. Unknown id: false.
+## Cast rhythm spec 2026-11-05 (user: "Riêng Kiếm sĩ"): the hero id a hero card belongs to ("" = shared pool).
+## A hero card is a player card (it may sit in that hero's starter deck) but never enters a reward / shop / event
+## pool ([method is_pool_card]).
+func hero_of(id: String) -> String:
+	return str(get_skill(id).get("hero", ""))
+
+
+## True when [param id] may be drawn from the shared pools (RewardRoller): a player card that is not a hero card.
+func is_pool_card(id: String) -> bool:
+	return is_player_card(id) and hero_of(id).is_empty()
+
+
 func is_curse(id: String) -> bool:
 	return str(get_skill(id).get("rarity", "")) == CURSE_RARITY
 
@@ -314,12 +354,28 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"upgrade": upgrade,
 		"implemented": bool(raw.get("implemented", false)),
 		"player_pool": bool(raw.get("player_pool", true)),
+		"hero": str(raw.get("hero", "")),
 		# ADR-0001 D7 / A1: the card's delivery (origin, travel, impact, cell mask = the block shape); presentation
 		# only - CutEffects never reads it (SkillDelivery).
 		"delivery": SkillDelivery.parse(raw.get("delivery"), "card %s" % id),
+		# Cast rhythm spec 2026-11-05 1.1 / 1.2: the cast mode and the optional crit ({} = none, CritRules.normalize).
+		"cast_mode": _cast_mode(id, raw),
+		"crit": CritRules.normalize(raw.get("crit"), "card %s" % id),
 	}
+	if str(out["cast_mode"]) == CAST_MODE_PARRY:
+		for key: String in PARRY_DEFAULTS.keys():
+			out[key] = maxf(float(raw.get(key, PARRY_DEFAULTS[key])), 0.0)
 	# Story 027: optional per-card zone numbers (absent = the combat.json `zones` block decides).
 	for key: String in ZONE_KEYS:
 		if raw.has(key):
 			out[key] = maxi(int(raw[key]), 0) if key == "thorn_fragile_stacks" else maxf(float(raw[key]), 0.0)
 	return out
+
+
+# The card's cast_mode, `direct` when absent; an unknown mode is `direct` (warning).
+static func _cast_mode(id: String, raw: Dictionary) -> String:
+	var mode: String = str(raw.get("cast_mode", CAST_MODE_DIRECT))
+	if not CAST_MODES.has(mode):
+		push_warning("SkillConfig: card %s cast_mode '%s' unknown or not implemented, using direct" % [id, mode])
+		return CAST_MODE_DIRECT
+	return mode

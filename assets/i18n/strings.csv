@@ -137,11 +137,11 @@ passive.quick_blade.desc,Phép tối đa 4 ô gây thêm 40% sát thương.,Spel
 card.kiem_khi.name,Rạch nhẹ,Nick
 card.kiem_khi.desc,Sát thương theo số ô.,Damage per cell.
 card.chan_phong.name,Hích nhẹ,Nudge
-card.chan_phong.desc,"Đẩy lùi {push_cells} ô, sát thương nhẹ.","Pushes {push_cells} cell, light damage."
+card.chan_phong.desc,"Đẩy lùi {push_cells} ô, sát thương nhẹ. Chí mạng x{crit_mult} lên địch Đóng Băng.","Pushes {push_cells} cell, light damage. Crit x{crit_mult} vs Frozen."
 card.kiem_vu.name,Xé toạc,Gash
-card.kiem_vu.desc,Sát thương mạnh theo số ô.,Heavy damage per cell.
+card.kiem_vu.desc,Sát thương mạnh theo số ô. Chí mạng x{crit_mult} lên địch Đóng Băng.,Heavy damage per cell. Crit x{crit_mult} vs Frozen.
 card.thiet_kiem.name,Lia ngang,Cleave
-card.thiet_kiem.desc,"Nhát chém chắc tay, hồi nhanh.",A steady slash with a short recovery.
+card.thiet_kiem.desc,"Nhát chém chắc tay, hồi nhanh. Chí mạng x{crit_mult} lên địch Đóng Băng.",A steady slash with a short recovery. Crit x{crit_mult} vs Frozen.
 card.dai_dao.name,Bổ nặng,Broad Stroke
 card.dai_dao.desc,"Cần nhiều ô, đổi lại một nhát nặng tay.",Needs many cells for one heavy blow.
 card.xung_kich.name,Xô lùi,Shove
@@ -948,3 +948,8 @@ node.shop.desc,Tiêu vàng mua lá và bảo vật.,Spend gold on cards and reli
 node.event.desc,Có chuyện xảy ra. Chọn cách ứng phó.,Something happens. Choose how to answer.
 ui.map.enter,Vào,Enter
 ui.map.cleared,Đã qua,Cleared
+card.do_kiem.name,Đỡ Kiếm,Parry
+card.do_kiem.desc,"Chỉ khi địch ra đòn. Đỡ {parry_sec} s: đòn kế dội lại x{reflect_mult}, địch Đóng Băng {parry_pin_sec} s.","Only while the foe winds up. Guard {parry_sec} s: the next hit bounces back x{reflect_mult}, foe Frozen {parry_pin_sec} s."
+ui.hud.crit,CHÍ MẠNG,CRIT
+ui.hud.parry,ĐỠ,PARRY
+ui.hud.no_telegraph,chờ đòn địch,wait for a tell

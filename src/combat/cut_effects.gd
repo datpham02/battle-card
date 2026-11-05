@@ -66,6 +66,15 @@ const FEATURED_BURN_DAMAGE_PER_TICK: float = 1.5
 ## entry (`thorn_ran`) AFTER the card's own number. options.zone_sec_mult (Vay Bat) multiplies the THORN
 ## seconds only (the Wall part was removed by the 2026-10-31 quick spec) and options.extra_thorn_cells (int,
 ## Vay Bat) lays that many extra thorn cells next to the cast, see [method extra_thorn_cells].
+## Cast rhythm spec 2026-11-05 (design/quick-specs/nhip-ra-chieu-2026-11-05.md 1.2) CRIT: a card with `crit`
+## {when, mult} whose condition holds at the moment of the hit (CritRules.holds, read BEFORE this hit applies anything)
+## multiplies the damage by mult right AFTER Ran (Fragile) and before featured: FULL order = card damage x conditions ->
+## Ghim -> Ran -> CRIT -> featured -> relics -> execute -> passive -> signature -> flat defense. The result gains
+## crit (bool) and crit_mult. PLAYER swings only: the block-brain boss reuses player cards and never crits.
+## 1.1 PARRY (block-brain boss swings): options.player_guard (a ParryGuard, ENEMY swings only, SwingArbiter): when the
+## swing would damage the PLAYER through the damage path while the guard is open, ParryGuard.try_parry takes it: the
+## player loses 0, no keywords / push / featured apply, the boss takes the reflect and is pinned. The result gains
+## parried (bool), reflected and blocked. A swing that only ignites / pins / forms a zone (no damage path) is not parried.
 static func apply(
 	state: CombatState,
 	grid: BoardGrid,
@@ -99,6 +108,9 @@ static func apply(
 	result["featured_effect"] = ""
 	result["featured_stacks"] = 0
 	result["featured_sec"] = 0.0
+	result["crit"] = false
+	result["crit_mult"] = 1.0
+	result["parried"] = false
 	# Quick spec 2026-11-01 rule 3 (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md): a cracking cell or a hole is
 	# LOCKED: it leaves the cast's cells before anything resolves (no damage, no status, no zone for a unit there; the
 	# other cells resolve normally and the damage counts the cells left). The rule lives in StatusEffects.unlocked_cells.
@@ -185,6 +197,13 @@ static func apply(
 	if cells_modifier.is_valid():
 		effective_cells = maxi(int(cells_modifier.call(effective_cells)), 0)
 	var damage: float = per_cell * float(effective_cells)
+	# Cast rhythm spec 1.2: the crit condition is read at the moment of the hit, before Ran is spent or keywords land.
+	# Only the hero's swings crit: the block-brain boss reuses player cards, and its swings never crit.
+	var crit_mult: float = CritRules.mult_for(skill, {"state": state, "status": status, "target_side": target_side}) if side == CombatState.Side.PLAYER else 1.0
+	# Fix 2026-11-05: a swing whose condition held when it STARTED crits too (options.crit_mult_at_start, set by the
+	# arbiter), so "cast while the foe is Frozen" crits even if the Pin ends during the swing.
+	if side == CombatState.Side.PLAYER:
+		crit_mult = maxf(crit_mult, float(options.get("crit_mult_at_start", 1.0)))
 	if status != null:
 		if status.fragile_stacks(target_side) > 0 and float(skill.get("bonus_vs_fragile_mult", 1.0)) > 1.0:
 			damage *= float(skill["bonus_vs_fragile_mult"])
@@ -195,6 +214,10 @@ static func apply(
 		if status.fragile_stacks(target_side) > 0:
 			damage *= status.consume_fragile(target_side)
 			result["fragile_hit"] = true
+	if crit_mult != 1.0:
+		damage *= crit_mult
+		result["crit"] = true
+		result["crit_mult"] = crit_mult
 	if not featured.is_empty():
 		var featured_mult: float = float(featured.get("damage_mult", 1.0))
 		damage *= featured_mult
@@ -219,6 +242,13 @@ static func apply(
 		result["defense_applied"] = damage - after
 		damage = after
 	result["hit"] = true
+	var guard: ParryGuard = options.get("player_guard") as ParryGuard
+	if target_side == CombatState.Side.PLAYER and guard != null and guard.is_active():
+		var parry: Dictionary = guard.try_parry(state, status, damage)
+		result["parried"] = true
+		result["reflected"] = float(parry.get("reflected", 0.0))
+		result["blocked"] = float(parry.get("blocked", 0.0))
+		return result
 	result["damage"] = damage
 	state.damage(target_side, damage)
 	if status != null:

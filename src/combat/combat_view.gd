@@ -302,6 +302,10 @@ var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_cas
 	"frost_bursts": 0, "boss_thorn_steps": 0}
 ## Story 037: the last passive heal ({amount, time_left}) for the HUD "+N" flash; {} when none.
 var _heal_flash: Dictionary = {}
+## Cast rhythm spec 2026-11-05 (Knight parry): the hero's guard (opened by a `parry` card, ticked in match time) and the
+## flash of the last parry ({cell, reflected, time_left}; empty when none shows).
+var _parry_guard: ParryGuard = ParryGuard.new()
+var _parry_flash: Dictionary = {}
 ## Story 046 Part B: damage trails of the Z1 HP bars, [player, boss]: shrink from / to ratio and seconds
 ## since the last drop (to < 0 = not started). Presentation state only.
 var _hp_trail_from: Array[float] = [1.0, 1.0]
@@ -379,6 +383,7 @@ func _ready() -> void:
 	_cut_actor = CutActor.new(_cut_config, CombatState.Side.PLAYER)
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.level_of = Callable(self, "get_card_level")
+	_cut_flow.availability_context_fn = Callable(self, "get_availability_context")
 	set_card_time(card_time_mode if not card_time_mode.is_empty() else SettingsStore.shared().get_card_time())
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
@@ -414,6 +419,8 @@ func _ready() -> void:
 	_boss.get_actor().swing_started.connect(_on_boss_swing_started)
 	_boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
 	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config, _status)
+	_arbiter.player_guard = _parry_guard
+	_parry_guard.parried.connect(_on_parried)
 	# Story 023: flat boss defense (match key boss_defense), default execute threshold, brain min runes.
 	_arbiter.boss_defense = maxf(float(match_params.get("boss_defense", 0.0)), 0.0)
 	_arbiter.execute_ratio = _config.execute_ratio
@@ -1297,6 +1304,7 @@ func _process(delta: float) -> void:
 		_boss.get_drops().set_danger_cells(_cut_actor.get_cells() if _cut_actor.is_swinging() else _no_cells())
 		_drops.tick(step, _state.player_cell, held)
 		_cooldowns.tick(step)
+		_parry_guard.tick(step)
 		_boss.tick(step, _cut_actor)
 		if _pattern != null:
 			_pattern.tick(step)
@@ -1311,6 +1319,7 @@ func _process(delta: float) -> void:
 		_age_flash(_interrupt_flash, step)
 		_age_flash(_feint_flash, step)
 		_age_flash(_heal_flash, step)
+		_age_flash(_parry_flash, step)
 	queue_redraw()
 
 
@@ -1366,6 +1375,8 @@ func _age_flash(flash: Dictionary, step: float) -> void:
 
 ## How long the HIT/MISS marker stays on screen (UI timing, real-ish seconds of sim time).
 const FEEDBACK_SEC: float = 0.8
+## Cast rhythm spec 2026-11-05: match seconds the ĐỠ / PARRY label and the reflected number stay over the enemy.
+const PARRY_FLASH_SEC: float = 0.9
 
 
 ## Story 016: true when the run may be paused now: not while the skill menu is open (nor in the place window
@@ -2168,6 +2179,10 @@ func _begin_cut(skill_id: String, cells: Array[Vector2i], featured_bonus: Dictio
 		skill_id, cells, [] as Array[String], false, not featured_bonus.is_empty())
 	if _cut_actor.begin_swing(cells, skill_id, true, level, -1.0, featured_bonus):
 		_cooldowns.start(skill_id, float(_resolved_card(skill_id, level).get("cooldown_sec", 0.0)))
+		# Cast rhythm spec 2026-11-05: a parry card opens the guard now; the card was chosen at the end of the cast stop,
+		# so its parry_sec runs from the moment the match runs again (the guard ticks on match time only).
+		if _skill_config.is_parry_card(skill_id):
+			_parry_guard.open_from_card(_resolved_card(skill_id, level))
 		if _signature != null:
 			_signature.on_cast(skill_id, cells.size())
 
@@ -2199,6 +2214,29 @@ func get_frost_stacks() -> int:
 	return _status.get_frost_stacks(CombatState.Side.ENEMY)
 
 
+## Cast rhythm spec 2026-11-05: the SkillAvailability context of the match now (CutFlow, the card menu greying, the
+## timeout pick): {enemy_telegraph: true while a pattern enemy winds up / warns an attack or the block-brain boss swings}.
+func get_availability_context() -> Dictionary:
+	return {SkillAvailability.CTX_ENEMY_TELEGRAPH: ParryGuard.enemy_telegraph(_pattern, _boss.get_actor() if _boss != null else null)}
+
+
+## Cast rhythm spec 2026-11-05: the hero's parry guard (never null).
+func get_parry_guard() -> ParryGuard:
+	return _parry_guard
+
+
+## Cast rhythm spec 2026-11-05: the last parry's flash ({cell, reflected, time_left}; empty when none shows).
+func get_parry_flash() -> Dictionary:
+	return _parry_flash
+
+
+# A parry landed: the HUD shows ĐỠ / PARRY and the reflected number over the enemy (its hit flash comes from the
+# reflect damage itself); counted in the match stats.
+func _on_parried(_blocked: float, reflected: float, _pin_sec: float) -> void:
+	_parry_flash = {"cell": _state.enemy_cell, "reflected": reflected, "time_left": PARRY_FLASH_SEC}
+	_stats["parries"] = int(_stats.get("parries", 0)) + 1
+
+
 ## Story 020 HUD hook: true while the boss is pinned (Ghim: player sword hits are multiplied).
 func is_boss_pinned() -> bool:
 	return _status.is_pinned(CombatState.Side.ENEMY)
@@ -2226,6 +2264,7 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		"featured_mult": float(result.get("featured_mult", 1.0)),
 		"featured_effect": str(result.get("featured_effect", "")),
 		"skill_id": str(result.get("skill_id", "")),
+		"crit": bool(result.get("crit", false)),
 	}
 	_play_cut_vfx(side, feedback)
 	if side == CombatState.Side.PLAYER:
@@ -2241,13 +2280,13 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		if _pattern != null:
 			# Phase 2: every player cast may break markers; a hit interrupts an interruptible windup / warning (D9).
 			_pattern.on_player_cast(cast_cells)
-			if bool(result["hit"]):
+			if bool(result["hit"]) and not bool(result.get("no_interrupt", false)):
 				_pattern.on_enemy_hit()
 		_trait_host.on_player_swing_resolved(result)
 		_trait_host.on_boss_damaged(float(result["damage"]))
 	else:
 		_boss_feedback = feedback
-		if bool(result["hit"]):
+		if bool(result["hit"]) and not bool(result.get("parried", false)):
 			_stats["hits_taken"] = int(_stats["hits_taken"]) + 1
 		_learning.on_boss_swing_resolved(bool(result["hit"]))
 		_trait_host.on_boss_swing_resolved(result)
@@ -2395,6 +2434,7 @@ func _setup_pattern_brain(brain_config: BossBrainConfig) -> void:
 	_pattern.player_step_cd = _player_step_cooldown
 	_pattern.player_step_left_fn = Callable(_mover, "get_cooldown_remaining")
 	_pattern.external_red_fn = Callable(self, "trait_warning_cells")
+	_pattern.player_guard = _parry_guard
 	_boss.extra_step_lock_fn = Callable(_pattern, "is_busy")
 	_pattern.markers_changed.connect(_mark_floor_dirty)
 	# P2.4 (spec 7.1): the boss never steps onto its own markers: the brain plans around them and the mover refuses them.

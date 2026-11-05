@@ -3,6 +3,10 @@ extends Node
 ## DEV-ONLY capture hook: puts the screen into a deterministic state for screenshots.
 ## Godot user args go after "--":
 ##   godot --path . -- --demo=board     empty board, d-pad, empty hand (no points; time frozen)
+##   godot --path . -- --character=kiem_si --demo=parry_live   cast rhythm spec 2026-11-05 (Knight parry): a pattern enemy
+##       (goblin_scout unless --pattern=<id>) is ticked to the WARNING of an attack on the hero's cell, the Knight casts
+##       do_kiem through the real CutFlow (guard pose + bar), time runs: the strike is parried (ĐỠ, reflected number,
+##       the enemy Frozen), then kiem_vu is cast on the Frozen enemy (CHÍ MẠNG). Capture with --shot / --shot-frame.
 ##   godot --path . -- --demo=cooldown  player just stepped: cooldown ring visible, d-pad dimmed
 ##   godot --path . -- --demo=learning   BossLearning fed directly (3 early dodges, 2 interrupts): the debug line under
 ##                                      the boss HP bar reads "né: 3 | ngắt: 2 | giả: 15%" (with boss_brain.json numbers)
@@ -231,6 +235,13 @@ const PIECE_PREFIX: String = "--piece="
 const ARENA_PREFIX: String = "--arena="
 ## Phase 2 (P2.2): `--pattern=<enemy_id>` runs the match on the pattern brain (see the header).
 const PATTERN_PREFIX: String = "--pattern="
+## Cast rhythm spec 2026-11-05: the parry_live demo's default enemy, its timing (strike seconds left when do_kiem is
+## cast) and the crit follow-up card.
+const PARRY_DEMO_ENEMY: String = "goblin_scout"
+const PARRY_DEMO_STRIKE_LEFT_SEC: float = 0.45
+const PARRY_DEMO_TICK_SEC: float = 0.05
+const PARRY_DEMO_MAX_TICKS: int = 400
+const PARRY_DEMO_FOLLOWUP_CARD: String = "kiem_vu"
 ## P2.4: `--pattern-hp=<ratio>` (with --pattern=) starts the enemy at this share of its max HP, ignoring the phase floor,
 ## so a phased enemy changes phase on its first tick (0.6 = Forest Witch phase 2, 0.25 = phase 3 after two transitions).
 const PATTERN_HP_PREFIX: String = "--pattern-hp="
@@ -433,6 +444,8 @@ func _enter_tree() -> void:
 	if not arena_id.is_empty():
 		_combat().match_params["arena"] = {"shape": arena_id}
 	var pattern_enemy: String = _parse_pattern()
+	if pattern_enemy.is_empty() and _mode == "parry_live":
+		pattern_enemy = PARRY_DEMO_ENEMY
 	if not pattern_enemy.is_empty():
 		_combat().match_params["brain"] = RunConfig.BRAIN_PATTERN
 		_combat().match_params["enemy"] = pattern_enemy
@@ -562,6 +575,9 @@ func _ready() -> void:
 		"cast_live", "boss_cast_live":
 			_skip_intro()
 			_cast_live_demo.call_deferred()
+		"parry_live":
+			_skip_intro()
+			_parry_live_demo.call_deferred()
 		"trait_thorns":
 			_trait_thorns_demo(combat, grid)
 		"mire", "sand", "wind", "spore", "hop", "burrow", "riposte", "bog_spread", "sandstorm", \
@@ -746,6 +762,57 @@ func _cast_live_demo() -> void:
 	combat.freeze_time = false
 	print("DemoArgs: %s card=%s cells=%s duration=%.3f delivery=%s" % [_mode, card, str(cells),
 		actor.get_time_left(), str(combat.delivery_for(card))])
+
+
+# Cast rhythm spec 2026-11-05 "parry_live": ticks the pattern enemy (time frozen for the view) until an attack warns on
+# the hero's cell with PARRY_DEMO_STRIKE_LEFT_SEC left, casts do_kiem through CutFlow (the real availability + guard
+# path), then lets time run; _parry_live_follow casts the crit follow-up once the parry has landed.
+func _parry_live_demo() -> void:
+	var combat: CombatView = _combat()
+	var pattern: PatternController = combat.get_pattern_controller()
+	if pattern == null:
+		push_warning("DemoArgs: parry_live needs a pattern match")
+		return
+	var state: CombatState = combat.get_state()
+	var ticks: int = 0
+	while ticks < PARRY_DEMO_MAX_TICKS:
+		combat.get_status().tick(PARRY_DEMO_TICK_SEC, state)
+		pattern.tick(PARRY_DEMO_TICK_SEC)
+		ticks += 1
+		if pattern.get_stage() == PatternController.Stage.WARNING and pattern.threatened_cells().has(state.player_cell) \
+				and pattern.strike_time_left() <= PARRY_DEMO_STRIKE_LEFT_SEC:
+			break
+	if pattern.get_stage() != PatternController.Stage.WARNING:
+		push_warning("DemoArgs: parry_live: no attack warned on the hero's cell")
+		return
+	var flow: CutFlow = combat.get_cut_flow()
+	flow.open_menu(["mono"] as Array[String], [state.enemy_cell] as Array[Vector2i], ["do_kiem"] as Array[String], 4.0)
+	if not flow.choose("do_kiem"):
+		push_warning("DemoArgs: parry_live: do_kiem was not available (%s)" % str(combat.get_availability_context()))
+		return
+	print("DemoArgs: parry_live do_kiem cast, strike in %.2f s, guard %.2f s" % [pattern.strike_time_left(), combat.get_parry_guard().get_left()])
+	combat.freeze_time = false
+	get_tree().process_frame.connect(_parry_live_follow)
+
+
+# After the parry: the moment the hero's do_kiem swing is over and the enemy is Frozen, casts the 2-cell follow-up
+# (kiem_vu, crit target_pinned) on it through CutFlow; disconnects itself.
+func _parry_live_follow() -> void:
+	var combat: CombatView = _combat()
+	if combat.get_parry_guard().parries <= 0 or combat.get_cut_actor().is_swinging():
+		return
+	get_tree().process_frame.disconnect(_parry_live_follow)
+	var state: CombatState = combat.get_state()
+	var grid: BoardGrid = combat.get_grid()
+	var cells: Array[Vector2i] = [state.enemy_cell]
+	for d: Vector2i in [Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN]:
+		if cells.size() < 2 and grid.is_enemy_cell(state.enemy_cell + d):
+			cells.append(state.enemy_cell + d)
+	var flow: CutFlow = combat.get_cut_flow()
+	flow.open_menu(["l2"] as Array[String], cells, [PARRY_DEMO_FOLLOWUP_CARD] as Array[String], 4.0)
+	var ok: bool = flow.choose(PARRY_DEMO_FOLLOWUP_CARD)
+	print("DemoArgs: parry_live follow-up %s on %s ok=%s enemy pinned=%s" % [PARRY_DEMO_FOLLOWUP_CARD, str(cells), str(ok),
+		str(combat.get_status().is_pinned(CombatState.Side.ENEMY))])
 
 
 # --telegraph-k=<0..1> clamped; -1 when absent or not a number.

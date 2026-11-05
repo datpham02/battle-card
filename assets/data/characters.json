@@ -12,7 +12,7 @@
 			"passive_name_key": "passive.second_wind.name",
 			"passive_desc_key": "passive.second_wind.desc",
 			"signature": {"id": "tram", "name_key": "signature.tram.name", "desc_key": "signature.tram.desc", "cooldown_sec": 25.0, "params": {"duration_sec": 3.0, "cell_mult": 2.0, "lifesteal": 0.2}},
-			"starter_deck": ["kiem_khi", "kiem_vu", "kiem_vu", "thiet_kiem", "thiet_kiem", "chan_phong"]
+			"starter_deck": ["do_kiem", "kiem_vu", "kiem_vu", "thiet_kiem", "thiet_kiem", "chan_phong"]
 		},
 		{
 			"id": "phap_su",
