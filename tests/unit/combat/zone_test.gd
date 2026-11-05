@@ -153,7 +153,7 @@ func _dispatch_tests() -> void:
 	var tg: Dictionary = CutEffects.apply(st3, st3.grid, P, cells([Vector2i(5, 0), Vector2i(5, 1), Vector2i(5, 2)]), "tran_gai", cc, sc, fx3, Callable(), 1, Callable(), Callable(), opts)
 	ck("dispatch: thorns on miss", not bool(tg["hit"]) and fx3.thorn_cells(E).size() == 3 and float(fx3.thorns_at(E, Vector2i(5, 1))["damage"]) == THORN_DAMAGE)
 	CutEffects.apply(st3, st3.grid, P, cells([Vector2i(3, 0), Vector2i(3, 1), Vector2i(3, 2), Vector2i(4, 0)]), "gai_nguyen", cc, sc, fx3, Callable(), 1, Callable(), Callable(), opts)
-	ck("dispatch: gai_nguyen 2 Ran per entry", int(fx3.thorns_at(E, Vector2i(3, 1))["fragile_stacks"]) == 2 and int(fx3.thorns_at(E, Vector2i(5, 1))["fragile_stacks"]) == 1)
+	ck("dispatch: gai_nguyen 3 Ran per entry (2026-11-05)", int(fx3.thorns_at(E, Vector2i(3, 1))["fragile_stacks"]) == 3 and int(fx3.thorns_at(E, Vector2i(5, 1))["fragile_stacks"]) == 1)
 	# Boss swing places its zone on the PLAYER's half.
 	var bs: Dictionary = CutEffects.apply(st3, st3.grid, E, cells([Vector2i(0, 0)]), "tran_gai", cc, sc, fx3, Callable(), 1, Callable(), Callable(), opts)
 	ck("dispatch: boss zone on player half", fx3.thorn_cells(P).has(Vector2i(0, 0)) and not bool(bs["hit"]))

@@ -57,13 +57,13 @@ func _card_data() -> void:
 			and sc.card_order.has(id) and sc.is_player_card(id))
 	ck("the deleted Wall card luoi_san is gone", not sc.has_skill("luoi_san"))
 	var d: Dictionary = sc.get_skill("gai_doc")
-	ck("gai_doc: common thorns 3 cells, 2 dmg/cell, 1 Ran per entry, cd 6",
+	ck("gai_doc: common thorns 3 cells, 2 dmg/cell, 2 Ran per entry (trap role, 2026-11-05), cd 6",
 		d["rarity"] == "common" and d["effect"] == "thorns" and d["min_cells"] == 3 and is_equal_approx(float(d["damage_per_cell"]), 2.0)
-		and int(d["thorn_fragile_stacks"]) == 1 and is_equal_approx(float(d["cooldown_sec"]), 6.0))
+		and int(d["thorn_fragile_stacks"]) == 2 and is_equal_approx(float(d["cooldown_sec"]), 6.0))
 	d = sc.get_skill("gai_nguyen")
-	ck("gai_nguyen: rare thorns 4 cells, 0 dmg/cell, 2 Ran per entry, cd 8",
+	ck("gai_nguyen: rare thorns 4 cells, 0 dmg/cell, 3 Ran per entry (full Ran, 2026-11-05), cd 8",
 		d["rarity"] == "rare" and d["effect"] == "thorns" and d["min_cells"] == 4 and is_equal_approx(float(d["damage_per_cell"]), 0.0)
-		and int(d["thorn_fragile_stacks"]) == 2 and is_equal_approx(float(d["cooldown_sec"]), 8.0))
+		and int(d["thorn_fragile_stacks"]) == 3 and is_equal_approx(float(d["cooldown_sec"]), 8.0))
 	d = sc.get_skill("thanh_thuy")
 	ck("thanh_thuy: common frost 3 cells, 1 Han, heal_self 4, cd 6",
 		d["rarity"] == "common" and d["effect"] == "frost" and d["min_cells"] == 3 and int(d["frost_stacks"]) == 1
@@ -121,15 +121,15 @@ func _card_behaviour() -> void:
 	var boss_hp: float = st4.enemy_hp
 	CutEffects.apply(st4, st4.grid, E, _cells([Vector2i(1, 1), Vector2i(1, 0), Vector2i(0, 1)]), "thanh_thuy", cc, sc, _fx())
 	ck("a boss casting thanh_thuy heals nobody", is_equal_approx(st4.enemy_hp, boss_hp) and is_equal_approx(st4.player_hp, 500.0 - 0.0))
-	# gai_nguyen: thorns form on the boss half on a hit (no damage, 2 Ran per entry) and on a miss.
+	# gai_nguyen: thorns form on the boss half on a hit (no damage, 3 Ran per entry since 2026-11-05) and on a miss.
 	var st5: CombatState = _state()
 	var fx5: StatusEffects = _fx()
 	var zone_cells: Array[Vector2i] = _cells([Vector2i(4, 1), Vector2i(4, 0), Vector2i(3, 1), Vector2i(3, 0)])
 	var opts: Dictionary = {"zones": {"seal_sec": 1.2, "thorn_sec": 3.0, "thorn_damage": 6.0, "thorn_fragile_stacks": 1}}
 	var hit: Dictionary = CutEffects.apply(st5, st5.grid, P, zone_cells, "gai_nguyen", cc, sc, fx5, Callable(), 1, Callable(), Callable(), opts)
-	ck("gai_nguyen hit: thorns formed (2 Ran per entry), no damage",
+	ck("gai_nguyen hit: thorns formed (3 Ran per entry), no damage",
 		hit["hit"] and hit["zone_kind"] == "thorns" and not (hit["zone_cells"] as Array).is_empty()
-		and int(fx5.thorns_at(E, Vector2i(3, 0)).get("fragile_stacks", -1)) == 2 and is_equal_approx(st5.enemy_hp, HP))
+		and int(fx5.thorns_at(E, Vector2i(3, 0)).get("fragile_stacks", -1)) == 3 and is_equal_approx(st5.enemy_hp, HP))
 	var st6: CombatState = _state()
 	var fx6: StatusEffects = _fx()
 	var mmiss: Dictionary = CutEffects.apply(st6, st6.grid, P, _cells([Vector2i(5, 0), Vector2i(5, 1), Vector2i(5, 2), Vector2i(3, 2)]), "gai_nguyen", cc, sc, fx6, Callable(), 1, Callable(), Callable(), opts)
