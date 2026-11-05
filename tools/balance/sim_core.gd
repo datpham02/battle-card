@@ -2405,7 +2405,15 @@ func cast_value(id: String, level: int, count: int) -> float:
 		return _after_defense(dmg, c) + _frost_value(int(c.get("frost_stacks", 0))) + _fragile_value(int(c.get("fragile_stacks", 0)))
 	if effect == "burn":
 		var v: float = float(c["burn_duration_sec"]) / maxf(float(c["burn_tick_sec"]), 0.01) * float(c["burn_damage_per_tick"]) * BURN_EXPECT
-		return v * (BURN_STACK_MULT if status.is_burning(state.enemy_cell) else 1.0)
+		v *= BURN_STACK_MULT if status.is_burning(state.enemy_cell) else 1.0
+		# 2026-11-05: a burn card with damage_per_cell > 0 also hits (CutEffects burn_hits_too).
+		var impact: float = float(c.get("damage_per_cell", 0.0)) * count
+		if impact > 0.0:
+			impact *= status.damage_mult_against(ENEMY) * status.fragile_mult_against(ENEMY)
+			if passive != null:
+				impact = passive.modify_damage(count, impact)
+			v += _after_defense(impact, c)
+		return v
 	if effect == "pin":
 		var dpc: float = _deck_best_dpc()
 		if dpc <= 0.0:

@@ -280,8 +280,13 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 				push_warning("SkillConfig: card %s upgrade key '%s' invalid, ignored" % [id, str(key)])
 	else:
 		push_warning("SkillConfig: card %s has no upgrade table" % id)
-	# Fallback for a card without damage_per_cell: the global cuts.json base_damage_per_cell.
-	var dpc: float = maxf(float(raw["damage_per_cell"]), 0.0) if raw.has("damage_per_cell") 			else CutConfig.load_from_file().base_damage_per_cell
+	# Fallback for a card without damage_per_cell: the global cuts.json base_damage_per_cell; a burn card without it
+	# has no hit damage (2026-11-05: a burn card's damage_per_cell is now dealt on a hit, CutEffects burn_hits_too).
+	var dpc: float = 0.0
+	if raw.has("damage_per_cell"):
+		dpc = maxf(float(raw["damage_per_cell"]), 0.0)
+	elif effect != "burn":
+		dpc = CutConfig.load_from_file().base_damage_per_cell
 	var out: Dictionary = {
 		"effect": effect,
 		"burn_duration_sec": maxf(float(raw.get("burn_duration_sec", 0.0)), 0.0),

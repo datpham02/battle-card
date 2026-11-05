@@ -147,16 +147,18 @@ card.dai_dao.desc,"Cần nhiều ô, đổi lại một nhát nặng tay.",Needs
 card.xung_kich.name,Xô lùi,Shove
 card.xung_kich.desc,"Đẩy lùi {push_cells} ô, sát thương vừa.","Pushes {push_cells} cells, moderate damage."
 card.hoa_tinh.name,Tro hồng,Cinder
-card.hoa_tinh.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.hoa_tinh.desc,"Trúng gây sát thương theo số ô, rồi đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.","Damage per cell on a hit, then burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn."
+card.hoa_tinh.desc_battle,"Trúng gây sát thương, đốt các ô {burn_sec} s. Đốt lại: cháy lâu, mạnh hơn.","Hit damage, then burns the cells for {burn_sec} s. Re-ignite: longer, stronger burn."
 card.hoa_xa.name,Tia lửa,Spark
-card.hoa_xa.desc,Đốt nhanh trên ít ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,A quick burn over few cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
-card.hoa_xa.desc_battle,"Đốt nhanh trên ít ô trong {burn_sec} s. Đốt lại: cháy lâu, mạnh hơn.","Quick burn on few cells for {burn_sec} s. Re-ignite: longer, stronger burn."
+card.hoa_xa.desc,"Trúng gây sát thương theo số ô, rồi đốt nhanh trên ít ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.","Damage per cell on a hit, then a quick burn over few cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn."
+card.hoa_xa.desc_battle,"Trúng gây sát thương, đốt ít ô trong {burn_sec} s. Đốt lại: cháy lâu, mạnh hơn.","Hit damage, then a quick burn on few cells for {burn_sec} s. Re-ignite: longer, stronger burn."
 card.suong_mong.name,Men băng,Glaze
 card.suong_mong.desc,Đóng Băng {pin_sec} s: địch không bước được.,Applies Frozen for {pin_sec} s: the foe cannot step.
 card.bang_chau.name,Mưa đá,Hailstone
 card.bang_chau.desc,Đóng Băng {pin_sec} s trên ít ô: địch không bước được.,Applies Frozen for {pin_sec} s over few cells: the foe cannot step.
 card.hoa_tran.name,Lò than,Brazier
-card.hoa_tran.desc,Đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.,Burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn.
+card.hoa_tran.desc,"Trúng gây sát thương theo số ô, rồi đốt các ô trong {burn_sec} s. Đốt lại địch đang cháy: cháy lâu và mạnh hơn.","Damage per cell on a hit, then burns the cells for {burn_sec} s. Re-igniting a burning foe lengthens and strengthens the burn."
+card.hoa_tran.desc_battle,"Trúng gây sát thương, đốt các ô {burn_sec} s. Đốt lại: cháy lâu, mạnh hơn.","Hit damage, then burns the cells for {burn_sec} s. Re-ignite: longer, stronger burn."
 card.bang_phong.name,Lặng yên,Stillness
 card.bang_phong.desc,Đóng Băng {pin_sec} s: địch không bước được.,Applies Frozen for {pin_sec} s: the foe cannot step.
 card.cuong_phong.name,Cú húc,Ram

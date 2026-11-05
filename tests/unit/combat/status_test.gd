@@ -89,7 +89,9 @@ func _init() -> void:
 	var sa: CombatState = mk()
 	var fa: StatusEffects = StatusEffects.new()
 	var r: Dictionary = CutEffects.apply(sa, grid, CombatState.Side.ENEMY, nine, "hoa_tran", cc, sc, fa)
-	ck("fx: burn 9 ignite, inside hit, dmg 0", fa.burning_cells().size() == 9 and r["hit"] == true and r["damage"] == 0.0 and r["burning"] == true and sa.player_hp == 1000.0)
+	# 2026-11-05: hoa_tran hits for damage_per_cell x cells (burn_impact_test), then burns.
+	var tran_dmg: float = float(sc.get_skill("hoa_tran")["damage_per_cell"]) * 9.0
+	ck("fx: burn 9 ignite, inside hit, dmg per cell", fa.burning_cells().size() == 9 and r["hit"] == true and is_equal_approx(r["damage"], tran_dmg) and r["burning"] == true and is_equal_approx(sa.player_hp, 1000.0 - tran_dmg))
 	var fb: StatusEffects = StatusEffects.new()
 	var sb: CombatState = mk()
 	sb.set_player_cell(Vector2i(1, 1))
@@ -115,9 +117,10 @@ func _init() -> void:
 	ck("fx: null status pin no crash", r["pinned"] == false)
 	# 5 availability
 	var cd: SkillCooldowns = SkillCooldowns.new()
-	var a: Dictionary = SkillAvailability.check(sc, cd, "hoa_tran", 4)
-	ck("avail: burn 4 cells", a["reason"] == "need_cells" and a["need_cells"] == 5)
-	ck("avail: burn 5", SkillAvailability.check(sc, cd, "hoa_tran", 5)["available"] == true)
+	# 2026-11-05 Mage balance: hoa_tran min_cells 5 -> 4.
+	var a: Dictionary = SkillAvailability.check(sc, cd, "hoa_tran", 3)
+	ck("avail: burn 3 cells", a["reason"] == "need_cells" and a["need_cells"] == 4)
+	ck("avail: burn 4", SkillAvailability.check(sc, cd, "hoa_tran", 4)["available"] == true)
 	# Story 024 Part C: bang_phong min_cells 7 -> 4.
 	ck("avail: pin 3", SkillAvailability.check(sc, cd, "bang_phong", 3)["need_cells"] == 4 and not SkillAvailability.check(sc, cd, "bang_phong", 3)["available"])
 	ck("avail: pin 4", SkillAvailability.check(sc, cd, "bang_phong", 4)["available"] == true)

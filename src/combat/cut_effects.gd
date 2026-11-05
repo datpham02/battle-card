@@ -169,10 +169,14 @@ static func apply(
 			result["hit"] = true
 		elif inside:
 			result["hit"] = true
-		if result["hit"]:
-			_apply_keywords(state, status, target_side, skill, result)
-			_apply_featured_effect(state, status, target_side, cells, featured, result)
-		return result
+		# 2026-11-05 (Mage balance): a burn card with damage_per_cell > 0 also deals the normal damage path on a hit
+		# (the fire lands, then the ground burns), like a thorn card with damage; that path applies the keywords.
+		var burn_hits_too: bool = effect == "burn" and inside and float(skill.get("damage_per_cell", 0.0)) > 0.0
+		if not burn_hits_too:
+			if result["hit"]:
+				_apply_keywords(state, status, target_side, skill, result)
+				_apply_featured_effect(state, status, target_side, cells, featured, result)
+			return result
 	if not inside:
 		return result
 	var push_cells: int = int(skill.get("push_cells", 0))
