@@ -323,7 +323,8 @@ ui.hud.featured_label,Hình Cộng Hưởng ×%s,Resonant shape ×%s
 ui.hud.join_cap,Quá nhiều ô (tối đa %d),Too many cells (max %d)
 keyword.burn,Cháy,Burn
 card.tran_gai.name,Bụi rậm,Briar Patch
-card.tran_gai.desc,Rải gai lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.,Covers the cut cells in thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile.
+card.tran_gai.desc,"Trúng gây sát thương theo số ô, rồi rải gai lên các ô trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.","Damage per cell on a hit, then covers the cut cells in thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile."
+card.tran_gai.desc_battle,"Trúng gây sát thương, rồi gai trên các ô {thorn_sec} giây: bước vào mất {thorn_damage} máu, Rạn {thorn_fragile_stacks}.","Hit damage, then thorns on the cut cells for {thorn_sec} s: each entry costs {thorn_damage} HP and {thorn_fragile_stacks} Fragile."
 card.gai_nguyen.name,Dây úa,Witherbriar
 card.gai_nguyen.desc,Rải gai úa lên các ô trúng trong {thorn_sec} giây: mỗi lần bước vào mất {thorn_damage} máu và nhận Rạn {thorn_fragile_stacks} tầng.,Covers the cut cells in withered thorns for {thorn_sec} s: each entry costs {thorn_damage} HP and applies {thorn_fragile_stacks} Fragile.
 keyword.thorns,Bãi Gai,Thorns
