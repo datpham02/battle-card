@@ -2048,6 +2048,7 @@ func _spawn_match(match_id: String, kind: String) -> void:
 	controller.name = CONTROLLER_NODE
 	controller.floor_label = tr(_node_name_key(kind))
 	controller.chapter_id = _run.region_id
+	controller.art_area = current_art_area(kind)
 	controller.character = _character_dict()
 	controller.deck = _run.deck_ids
 	controller.deck_entries = _run.deck_entries()
@@ -2822,6 +2823,18 @@ func get_current_region() -> String:
 	if _run == null or _run.is_choosing_region():
 		return ""
 	return _run.region_id
+
+
+## 2026-11-06: the art area of the region being walked at the current map column (ArtAssets.area_for), for a node
+## of kind [param kind] ("" = the current column's first node kind); "" without a run or areas.
+func current_art_area(kind: String = "") -> String:
+	if _run == null or _run.region_id.is_empty():
+		return ""
+	var k: String = kind
+	if k.is_empty():
+		var nodes: Array = _run.current_column().get("nodes", [])
+		k = str((nodes[0] as Dictionary).get("kind", "")) if not nodes.is_empty() else ""
+	return ArtAssets.area_for(ArtAssets.region_for_chapter(_run.region_id), _run.column, _run.map.size(), k)
 
 
 ## Story 031: translated display name of region [param region_id] ("" when unknown).

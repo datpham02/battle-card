@@ -108,6 +108,51 @@
     "player": "#E9DBEC",
     "enemy": "#C4C5C4"
   },
-  "_doc_half_tints": "2026-11-06 (user chose the master concept's colour direction): the halves read as one grey-moss stone like the concept, with a faint team tint left (player slightly cool, enemy slightly mauve). These values times the shader's PERSPECTIVE_TINT_* give the measured concept slab colour \u00b15 %.",
-  "_doc_thorn_tile": "2026-11-06: the thorn tile recoloured colour-for-colour (no pixel moved) to pale bone / dark earth (#A89C82 / #6E6452 / #3A3328) so the hazard reads on the grey-moss stone without the old tan / orange glare; the original env_thorn_forest_tile16.png is kept."
+  "_doc_half_tints": "2026-11-06 (user chose the master concept's colour direction): the halves read as one grey-moss stone like the concept, with a faint team tint left (player slightly cool, enemy slightly mauve). These values times the shader's PERSPECTIVE_TINT_* give the measured concept slab colour ±5 %.",
+  "_doc_thorn_tile": "2026-11-06: the thorn tile recoloured colour-for-colour (no pixel moved) to pale bone / dark earth (#A89C82 / #6E6452 / #3A3328) so the hazard reads on the grey-moss stone without the old tan / orange glare; the original env_thorn_forest_tile16.png is kept.",
+  "areas": {
+    "_doc": "2026-11-06 (user: \"Làm thử 3 khu\"): a region is walked from its edge inward. rules pick the area of a map node (ArtAssets.area_for): kinds first (boss -> sanctum), else the node's column progress column/(columns-1) <= until. art.<area> is merged over this file for that area (ArtAssets.region('forest@<area>')). Backdrops (2026-11-06, PixelLab create_image_pro 792x336, 25 gen each, user-approved \"oke gen di\"): edge = bg_forest_far_edge.png (bright forest edge, few ruins), sanctum = bg_forest_far_sanctum.png (root-gripped inner sanctum); ruins keeps v4. Padded to 800x360 like v3 (edge columns x4, 24 px Ink bottom). Candidates: design/assets/candidates/forest-areas/.",
+    "rules": [
+      {
+        "id": "sanctum",
+        "kinds": [
+          "boss"
+        ]
+      },
+      {
+        "id": "edge",
+        "until": 0.34
+      },
+      {
+        "id": "ruins",
+        "until": 1.0
+      }
+    ],
+    "art": {
+      "edge": {
+        "backdrop": {
+          "far": "bg_forest_far_edge.png"
+        },
+        "support": {
+          "pillar_every": 200,
+          "fern_every": 90
+        }
+      },
+      "ruins": {},
+      "sanctum": {
+        "backdrop": {
+          "far": "bg_forest_far_sanctum.png"
+        },
+        "half_tints": {
+          "player": "#D6CCDA",
+          "enemy": "#B4B3B6"
+        },
+        "support": {
+          "wall_modulate": "#8C8994",
+          "pillar_every": 90,
+          "fern_every": 0
+        }
+      }
+    }
+  }
 }

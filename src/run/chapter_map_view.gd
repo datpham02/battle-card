@@ -559,7 +559,8 @@ func _draw_pixel(tex: Texture2D, center: Vector2, scale: int, tint: Color) -> vo
 # battle's bottom rows and blows up into blocks at this scale); a flat background when the region has no art.
 func _draw_backdrop(vp: Vector2) -> void:
 	HudSkin.screen_background(self, Rect2(Vector2.ZERO, vp), 0.0)
-	var region: String = ArtAssets.region_for_chapter(_flow.get_current_region())
+	# 2026-11-06: the map shows the area of the column the player stands at (edge -> ruins -> sanctum).
+	var region: String = ArtAssets.region_for_match({"chapter_id": _flow.get_current_region(), "art_area": _flow.current_art_area()})
 	var drew: bool = false
 	for key: String in ["backdrop.far"]:
 		var tex: Texture2D = ArtAssets.region_texture(region, key)

@@ -58,8 +58,8 @@ func setup(combat: CombatView) -> void:
 	var vp: Viewport = combat.get_viewport() if combat != null and combat.is_inside_tree() else null
 	if vp != null and not vp.size_changed.is_connected(queue_redraw):
 		vp.size_changed.connect(queue_redraw)
-	var chapter: String = str(combat.match_params.get("chapter_id", "")) if combat != null else ""
-	set_region_id(ArtAssets.region_for_chapter(chapter))
+	# 2026-11-06: chapter_id + art_area (the map area of the node) -> `forest` / `forest@sanctum`.
+	set_region_id(ArtAssets.region_for_match(combat.match_params if combat != null else {}))
 
 
 ## Switches to art region [param id] (its `support` block and near mist) and redraws.

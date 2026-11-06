@@ -24,8 +24,8 @@ var _redraws: int = 0
 ## `match_params["chapter_id"]` (ArtAssets.region_for_chapter; "" -> the default region) and redraws.
 func setup(combat: CombatView) -> void:
 	_combat = combat
-	var chapter: String = str(combat.match_params.get("chapter_id", "")) if combat != null else ""
-	set_region_id(ArtAssets.region_for_chapter(chapter))
+	# 2026-11-06: chapter_id + art_area (the map area of the node) -> `forest` / `forest@sanctum`.
+	set_region_id(ArtAssets.region_for_match(combat.match_params if combat != null else {}))
 
 
 ## Switches the backdrop to art region [param id] (loads its textures, or the flat bands) and redraws.
@@ -72,7 +72,10 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, Vector2(canvas.size.x, horizon)), _bands["sky"])
 		draw_rect(Rect2(Vector2(0.0, horizon), Vector2(canvas.size.x, canvas.size.y - horizon)), _bands["ground"])
 	else:
-		draw_texture_rect(_far, Rect2(Vector2.ZERO, _far.get_size()), false)
+		# 2026-11-06: `backdrop.modulate` darkens / cools an area's copy of the same art (forest@sanctum).
+		var bd: Variant = ArtAssets.region(_region_id).get("backdrop", {}) if not _region_id.is_empty() else {}
+		var mod: Color = Color.html(str((bd as Dictionary).get("modulate", "#FFFFFF"))) if bd is Dictionary else Color.WHITE
+		draw_texture_rect(_far, Rect2(Vector2.ZERO, _far.get_size()), false, mod)
 	if _near != null:
 		var y: int = _near_bottom_row - _near.get_height()
 		draw_texture_rect(_near, Rect2(Vector2(0.0, float(y)), _near.get_size()), false)

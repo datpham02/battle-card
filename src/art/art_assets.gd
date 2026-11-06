@@ -35,6 +35,11 @@ const REGION_PATH_KEYS: Array[String] = [
 ## Chapter -> region map (`chapters`, `default`) and the flat backdrop colours per region
 ## (`fallback_bands`), read once by [method region_for_chapter] / [method fallback_bands].
 const REGIONS_FILE := "res://assets/art/regions.json"
+## 2026-11-06 (user: "mỗi chỗ một background khác", walking a region from its edge inward): an AREA of a region is
+## written `<region>@<area>` (`forest@sanctum`). [method region] returns the base region.json deep-merged with its
+## `areas.art.<area>` block (paths in it resolve against the base folder), so every layer that takes a region id
+## draws an area unchanged. ("zone" is taken: the seals / thorns of Story 027.)
+const AREA_SEP := "@"
 ## Region used when REGIONS_FILE is missing or names no `default`.
 const DEFAULT_REGION := "forest"
 ## Sky / ground of the flat fallback backdrop when a region has no `fallback_bands` entry (the forest
@@ -54,6 +59,8 @@ static var _regions_map_loaded: bool = false
 static func region(id: String) -> Dictionary:
 	if _regions.has(id):
 		return _regions[id]
+	if id.contains(AREA_SEP):
+		return _area_region(id)
 	var dir: String = ENV_ROOT + id + "/"
 	var path: String = dir + REGION_FILE
 	var data: Dictionary = {}
@@ -71,6 +78,62 @@ static func region(id: String) -> Dictionary:
 		_warn_once(path, "ArtAssets: no region '%s' (%s missing)" % [id, path])
 	_regions[id] = data
 	return data
+
+
+# `<region>@<area>`: the base region with its `areas.art.<area>` overrides merged in (paths resolved against
+# the base folder); the base region (one warning) when the area is unknown.
+static func _area_region(id: String) -> Dictionary:
+	var base_id: String = base_region(id)
+	var area: String = id.substr(base_id.length() + AREA_SEP.length())
+	var base: Dictionary = region(base_id)
+	var data: Dictionary = base.duplicate(true)
+	var art: Variant = _get_dotted(base, "areas.art." + area)
+	if art is Dictionary:
+		var over: Dictionary = (art as Dictionary).duplicate(true)
+		var dir: String = ENV_ROOT + base_id + "/"
+		for key: String in REGION_PATH_KEYS:
+			var value: Variant = _get_dotted(over, key)
+			if value is String and not (value as String).begins_with("res://"):
+				_set_dotted(over, key, dir + String(value))
+		_deep_merge(data, over)
+	else:
+		_warn_once(id, "ArtAssets: region '%s' has no area '%s'" % [base_id, area])
+	_regions[id] = data
+	return data
+
+
+## The region id without its area (`forest@sanctum` -> `forest`).
+static func base_region(id: String) -> String:
+	var at: int = id.find(AREA_SEP)
+	return id if at < 0 else id.substr(0, at)
+
+
+## Pure: the area of region [param region_id] for a map node at [param column] of [param columns] columns, of node
+## kind [param kind], from the region's `areas.rules` (in order): the first rule whose `kinds` holds [param kind],
+## else the first rule with an `until` >= the node's progress column / (columns - 1). "" when the region has no
+## areas or no rule matches (the base region is drawn).
+static func area_for(region_id: String, column: int, columns: int, kind: String) -> String:
+	var rules: Variant = _get_dotted(region(base_region(region_id)), "areas.rules")
+	if not (rules is Array):
+		return ""
+	for rule: Variant in rules:
+		if rule is Dictionary and ((rule as Dictionary).get("kinds", []) as Array).has(kind):
+			return str((rule as Dictionary).get("id", ""))
+	var progress: float = float(column) / float(maxi(columns - 1, 1))
+	for rule: Variant in rules:
+		if rule is Dictionary and (rule as Dictionary).has("until") and progress <= float(rule["until"]) + 0.0001:
+			return str((rule as Dictionary).get("id", ""))
+	return ""
+
+
+## The art region a battle draws from its match params: the region of `chapter_id` ([method region_for_chapter]),
+## with `@<art_area>` when `art_area` names an area that region defines.
+static func region_for_match(params: Dictionary) -> String:
+	var id: String = region_for_chapter(str(params.get("chapter_id", "")))
+	var area: String = str(params.get("art_area", ""))
+	if not area.is_empty() and _get_dotted(region(id), "areas.art." + area) is Dictionary:
+		return id + AREA_SEP + area
+	return id
 
 
 ## A texture of the region by dotted key (`backdrop.far`, `backdrop.near`, `slab.nine_slice`,
@@ -123,7 +186,7 @@ static func region_for_chapter(chapter_id: String) -> String:
 ## REGIONS_FILE, DEFAULT_BANDS for an unknown region.
 static func fallback_bands(region_id: String) -> Dictionary:
 	var bands: Variant = _load_regions_map().get("fallback_bands", {})
-	var entry: Variant = (bands as Dictionary).get(region_id, {}) if bands is Dictionary else {}
+	var entry: Variant = (bands as Dictionary).get(base_region(region_id), {}) if bands is Dictionary else {}
 	var e: Dictionary = entry if entry is Dictionary else {}
 	return {
 		"sky": _html_color(e.get("sky", null), Color.html(String(DEFAULT_BANDS["sky"]))),
@@ -213,9 +276,20 @@ static func _get_dotted(data: Dictionary, key: String) -> Variant:
 	return node
 
 
+# Recursive merge of [param over] into [param into]: dictionaries merge, anything else replaces.
+static func _deep_merge(into: Dictionary, over: Dictionary) -> void:
+	for key: Variant in over:
+		if into.get(key) is Dictionary and over[key] is Dictionary:
+			_deep_merge(into[key], over[key])
+		else:
+			into[key] = over[key]
+
+
 static func _set_dotted(data: Dictionary, key: String, value: Variant) -> void:
 	var parts: PackedStringArray = key.split(".")
 	var node: Dictionary = data
 	for i: int in parts.size() - 1:
+		if not (node.get(parts[i]) is Dictionary):
+			node[parts[i]] = {}
 		node = node[parts[i]]
 	node[parts[parts.size() - 1]] = value

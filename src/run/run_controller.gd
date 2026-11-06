@@ -59,6 +59,9 @@ const TEXT_FLOOR_MATCH_LABEL: String = "ui.run.floor_match_label"
 @export_file("*.json") var run_config_path: String = ""
 ## Display name of the floor this run plays ("Tầng 2"); shown in the match label. Set by GameFlow.
 @export var floor_label: String = ""
+## 2026-11-06: the art area of the node (ArtAssets.area_for: `edge` / `ruins` / `sanctum` ...); becomes
+## match_params["art_area"]. "" = the region's base art.
+var art_area: String = ""
 ## Story 024: chapters.json id of the run's chapter ("ch1"...); becomes match_params["chapter_id"] (piece drop weights).
 @export var chapter_id: String = ""
 ## Player deck card ids for the battles (Story 019 fills it); empty = the default deck.
@@ -321,6 +324,8 @@ func _spawn_battle() -> void:
 	params["player_hp"] = _state.get_carried_hp()
 	params["floor_label"] = floor_label
 	params["chapter_id"] = chapter_id
+	if not art_area.is_empty():
+		params["art_area"] = art_area
 	if not character.is_empty():
 		params["character"] = character.duplicate(true)
 	var relic_ids: Array[String] = _relic_ids()
