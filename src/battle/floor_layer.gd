@@ -39,6 +39,11 @@ var _platform_palette: Dictionary = {}
 var _half_tints: Dictionary = {}
 var _redraws: int = 0
 var _dynamic: FloorDynamicLayer = null
+## 2026-11-06: the region's generated flagstone sheet and its meta (size, border, weights); null = 9-slice + stamps.
+var _flagstones: Texture2D = null
+var _flagstone_meta: Dictionary = {}
+## 2026-11-06: the region's front face strip (a capstone course of the support wall); null = SlabPainter's coded face.
+var _face_tile: Texture2D = null
 
 
 func _init() -> void:
@@ -68,6 +73,10 @@ func set_region_id(id: String) -> void:
 	_stamps_tex = ArtAssets.region_texture(id, "slab.stamps")
 	_stamps_meta = ArtAssets.region_stamps(id)
 	_thorn_tile = ArtAssets.region_texture(id, "thorn_tile")
+	_flagstones = ArtAssets.region_texture(id, "slab.flagstones")
+	_face_tile = ArtAssets.region_texture(id, "platform.face_tile")
+	var fmeta: Variant = (ArtAssets.region(id).get("slab", {}) as Dictionary).get("flagstone_meta", {})
+	_flagstone_meta = fmeta if fmeta is Dictionary else {}
 	var palette: Variant = ArtAssets.region(id).get("platform", {})
 	_platform_palette = palette if palette is Dictionary else {}
 	_half_tints = ArtAssets.half_tints(id)
@@ -295,9 +304,18 @@ func _draw() -> void:
 	var has_cell_below: Callable = func(i: int) -> bool: return grid.is_in_board(cells[i] + Vector2i.DOWN)
 	var divider_x: int = ScreenLayout.to_art(vp, Vector2(ScreenLayout.divider_x(grid, vp), 0.0)).x
 	SlabPainter.paint_platform(self, rects, has_cell_below, _platform_palette, divider_x)
+	if _face_tile != null:
+		var mod := Color(str(_platform_palette.get("face_tile_modulate", "#FFFFFF")))
+		var edge := Color(str(_platform_palette.get("face_top", "#5A5B54")))
+		SlabPainter.paint_face_strip(self, SlabPainter.merge_row_rects(SlabPainter.platform_front_rects(rects, has_cell_below)), _face_tile, mod, edge)
 	for i: int in cells.size():
 		var side: int = CombatState.Side.PLAYER if grid.is_player_cell(cells[i]) else CombatState.Side.ENEMY
-		SlabPainter.paint_cell(self, rects[i], SlabPainter.cell_seed(side, cells[i].x, cells[i].y), _nine, _stamps_tex, _stamps_meta, half_tint(side))
+		var seed: int = SlabPainter.cell_seed(side, cells[i].x, cells[i].y)
+		if _flagstones != null:
+			SlabPainter.paint_flagstone(self, rects[i], seed, _flagstones, int(_flagstone_meta.get("size", 64)),
+				int(_flagstone_meta.get("border", 6)), _flagstone_meta.get("weights", []), half_tint(side))
+		else:
+			SlabPainter.paint_cell(self, rects[i], seed, _nine, _stamps_tex, _stamps_meta, half_tint(side))
 	_draw_zones(grid)
 
 

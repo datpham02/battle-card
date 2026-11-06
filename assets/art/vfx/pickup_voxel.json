@@ -1,0 +1,47 @@
+{
+	"_doc": "Ground Block pickups as Ancient Stone Sigils: flat polyominoes inlaid on the floor tile, built from one stone square (forest-integration-pickup-plan-2026-11-05 section 4.2, 2026-11-06). Ramps: top = stone face, lit = lighter upper-left edge, dark = darker lower-right edge, seam = engraved motif and pits (weathering, 2026-11-06); ink = thin dark outline and cracks. width_ratio / height_ratio: share of the cell the shape's bounding box may take; edge_min / edge_max clamp one square (art px). No float, bob, shadow, rotation, particles. Read by src/art/voxel_piece.gd; every key has a default there. weather: motif_min = smallest inner face (px) that gets the square-within-a-square engraving, pits / worn_corners 1 = on.",
+	"ink": "2B2620",
+	"ramps": {
+		"normal": {
+			"top": "C9BB9B",
+			"lit": "DCCFB0",
+			"dark": "8F8167",
+			"seam": "A8997B"
+		},
+		"odd": {
+			"top": "A8829F",
+			"lit": "C2A2BA",
+			"dark": "715168",
+			"seam": "8E6C86"
+		},
+		"rotten": {
+			"top": "8A8790",
+			"lit": "A6A4A8",
+			"dark": "5E5C63",
+			"seam": "6E6C72"
+		}
+	},
+	"width_ratio": 0.68,
+	"height_ratio": 0.8,
+	"edge_min": 4,
+	"edge_max": 14,
+	"crack": {
+		"hairline_lines": 2,
+		"deep_lines": 4,
+		"hairline_steps": 3,
+		"deep_steps": 6,
+		"step_cells": 0.22,
+		"hairline_side": 1,
+		"deep_side": 2,
+		"chips": 3,
+		"chip_px": 2
+	},
+	"shatter": {
+		"crumble_sec": 0.4
+	},
+	"weather": {
+		"motif_min": 7,
+		"pits": 1,
+		"worn_corners": 1
+	}
+}

@@ -21,6 +21,16 @@ const REGION_FILE := "region.json"
 ## to a full `res://` path by `region()`.
 const REGION_PATH_KEYS: Array[String] = [
 	"backdrop.far", "backdrop.near", "slab.nine_slice", "slab.stamps", "slab.stamps_meta", "thorn_tile",
+	# 2026-11-06: the board's stone foundation strip (SupportLayer).
+	"support.wall_tile",
+	# 2026-11-06: the generated flagstone sheet (SlabPainter.paint_flagstone).
+	"slab.flagstones",
+	# 2026-11-06: the platform's front face strip (FloorLayer over SlabPainter's coded face).
+	"platform.face_tile",
+	# 2026-11-06: the generated support pillar sprite (SupportLayer).
+	"support.pillar",
+	# 2026-11-06: the generated recessed arch, corner roots and foreground ferns (SupportLayer).
+	"support.arch", "support.roots", "support.ferns",
 ]
 ## Chapter -> region map (`chapters`, `default`) and the flat backdrop colours per region
 ## (`fallback_bands`), read once by [method region_for_chapter] / [method fallback_bands].

@@ -9,6 +9,11 @@ extends Node2D
 ## it never reads as something worth picking up.
 ## Story 041: an Odd Block (Khoi La) lying on either half is drawn in the PieceDraw odd look (violet-magenta shape,
 ## magenta outer edge) with a sparkle mark in the cell's top-right corner; a rotten one stays grey.
+## 2026-11-05 (forest-integration-pickup-plan step 1, user check "no cell tint left for pieces"): a point carrying a
+## PIECE is drawn by PickupLayer inside the art canvas (voxel pickup, cracking freshness, shatter). Here a piece point
+## draws NOTHING on its cell (no tint, outline, mini shape, tag or freshness bar), only the "FULL" tag when the hand is
+## full on the stood point; the wind streak (Story 036) still covers every point. Classic labelled points (no piece)
+## keep the look above.
 ## Implements: Story 007, Story 014, Story 041.
 
 const COLOR_FRESH: Color = Color(0.2, 0.75, 0.3)
@@ -44,14 +49,6 @@ const FULL_TAG_HEIGHT_RATIO: float = 0.24
 const LABEL_FONT_RATIO: float = 0.22
 const FULL_FONT_RATIO: float = 0.18
 const OUTLINE_WIDTH: float = 3.0
-## Piece mini shape (Story 024): side padding, top / bottom reserve (freshness bar) as shares of the
-## cell, and the largest square as a share of cell height (so a single cell stays small).
-const PIECE_PAD_RATIO: float = 0.14
-const PIECE_TOP_RATIO: float = 0.14
-const PIECE_BOTTOM_RATIO: float = 0.22
-const PIECE_MAX_UNIT_RATIO: float = 0.3
-## Story 041: radius of the odd sparkle mark in the cell's top-right corner (share of cell height).
-const ODD_MARK_RADIUS_RATIO: float = 0.085
 
 ## Story 036 wind streak (see _draw_drift_streak): colour, line width, number of speed lines, their spread across
 ## the cell, where they start behind the centre and how long they run (shares of the half cell), the chevron's
@@ -122,7 +119,8 @@ func _draw() -> void:
 			alpha = BLINK_DIM_ALPHA
 		color.a = alpha
 		if point.piece != null:
-			_draw_piece_point(point, rect, cell, color, alpha, ratio, hand_full and point.cell == stand)
+			if hand_full and point.cell == stand:
+				_draw_full_tag(rect, cell)
 			continue
 		geo.fill(self, rect.grow(-3.0), Color(color, 0.18 * alpha))
 		geo.outline(self, rect.grow(-3.0), color, OUTLINE_WIDTH)
@@ -202,41 +200,13 @@ func _draw_drift_streak(rect: Rect2, dir_cell: Vector2i) -> void:
 	draw_polyline(PackedVector2Array([_geo.to_screen(tip - dir * arm + normal * arm), _geo.to_screen(tip), _geo.to_screen(tip - dir * arm - normal * arm)]), STREAK_COLOR, STREAK_WIDTH)
 
 
-# Story 024: a piece lying on the player's half: a mini shape of the piece in its rotation (no text
-# tag), a thin cell outline, the freshness bar and, when the bag is full and the player stands on it,
-# the "FULL" tag. A rotten piece is grey with a dark X (never the green-yellow-red ramp).
-func _draw_piece_point(point: FieldPoint, rect: Rect2, cell: Vector2, color: Color, alpha: float, ratio: float, show_full: bool) -> void:
+# Story 024: the "FULL" tag over a piece point the player stands on while the bag is full (top edge of the cell). The
+# piece itself is PickupLayer's (2026-11-05); nothing else is drawn on the cell.
+func _draw_full_tag(rect: Rect2, cell: Vector2) -> void:
 	var geo: BoardGeometry = _geo
-	geo.fill(self, rect.grow(-3.0), Color(color, 0.12 * alpha))
-	geo.outline(self, rect.grow(-3.0), color, OUTLINE_WIDTH)
-	var area := Rect2(
-		rect.position + Vector2(cell.x * PIECE_PAD_RATIO, cell.y * PIECE_TOP_RATIO),
-		Vector2(cell.x * (1.0 - PIECE_PAD_RATIO * 2.0), cell.y * (1.0 - PIECE_TOP_RATIO - PIECE_BOTTOM_RATIO))
-	)
-	var unit_max: float = cell.y * PIECE_MAX_UNIT_RATIO
-	if point.rotten:
-		PieceDraw.draw_shape(self, point.piece, area, Color(ROTTEN_GREY, 0.8 * alpha), Color(ROTTEN_X_COLOR, 0.0), unit_max, geo)
-		var x_rect: Rect2 = PieceDraw.shape_rect(point.piece, area, unit_max).grow(-cell.y * ROTTEN_X_INSET_RATIO * 0.4)
-		geo.line(self, x_rect.position, x_rect.end, Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
-		geo.line(self, Vector2(x_rect.end.x, x_rect.position.y), Vector2(x_rect.position.x, x_rect.end.y), Color(ROTTEN_X_COLOR, ROTTEN_X_COLOR.a * alpha), ROTTEN_X_WIDTH)
-	elif point.piece.is_odd():
-		# Story 041: an Odd Block keeps the freshness colour on its cell outline and bar; its shape is violet-magenta
-		# with the odd edge, and the sparkle mark sits in the cell's top-right corner.
-		PieceDraw.draw_odd_shape(self, point.piece, area, Color(PieceDraw.ODD_FILL, 0.9 * alpha), unit_max, PieceDraw.ODD_EDGE_WIDTH, geo)
-		var mark_r: float = cell.y * ODD_MARK_RADIUS_RATIO
-		var mark_at := Vector2(rect.end.x - mark_r * 1.6, rect.position.y + mark_r * 1.6)
-		var k: Vector2 = geo.local_scale(mark_at)
-		PieceDraw.draw_odd_mark(self, geo.to_screen(mark_at), mark_r * minf(k.x, k.y))
-	else:
-		PieceDraw.draw_shape(self, point.piece, area, Color(color, 0.85 * alpha), Color(HudSkin.TEXT_OUTLINE, 0.6 * alpha), unit_max, geo)
-	var bar_w: float = cell.x * BAR_WIDTH_RATIO
-	var bar := Rect2(Vector2(rect.get_center().x - bar_w * 0.5, rect.end.y - cell.y * (BAR_BOTTOM_RATIO + BAR_HEIGHT_RATIO)), Vector2(bar_w, cell.y * BAR_HEIGHT_RATIO))
-	geo.fill(self, bar, HudSkin.HP_GROOVE)
-	geo.fill(self, Rect2(bar.position, Vector2(bar_w * ratio, bar.size.y)), ROTTEN_X_COLOR if point.rotten else color)
-	if show_full:
-		var full_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * FULL_TAG_HEIGHT_RATIO)
-		var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO), full_size)
-		full_tag = geo.fit_rect(full_tag)
-		var full_font: int = int(cell.y * FULL_FONT_RATIO)
-		HudSkin.panel(self, full_tag, [0.0, 4.0, 0.0, 4.0], HudSkin.NIGHT_STONE, HudSkin.GRID_LIGHT, 2.0)
-		HudSkin.text(self, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), full_font, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, true)
+	var full_size := Vector2(cell.x * TAG_WIDTH_RATIO, cell.y * FULL_TAG_HEIGHT_RATIO)
+	var full_tag := Rect2(Vector2(rect.get_center().x - full_size.x * 0.5, rect.position.y + cell.y * TAG_TOP_RATIO), full_size)
+	full_tag = geo.fit_rect(full_tag)
+	var full_font: int = int(cell.y * FULL_FONT_RATIO)
+	HudSkin.panel(self, full_tag, [0.0, 4.0, 0.0, 4.0], HudSkin.NIGHT_STONE, HudSkin.GRID_LIGHT, 2.0)
+	HudSkin.text(self, full_tag.position + Vector2(0.0, full_tag.size.y * 0.5 + full_font * 0.35), tr("ui.hud.full"), full_font, HudSkin.GRID_LIGHT, HORIZONTAL_ALIGNMENT_CENTER, full_tag.size.x, true)

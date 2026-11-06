@@ -67,7 +67,9 @@ func test_region_forest() -> void:
 			resolved += 1
 		else:
 			print("  unresolved %s = %s" % [key, str(value)])
-	check("6 paths resolve to res:// files on disk", resolved == 6)
+	# 2026-11-06: + support.wall_tile (the forest's stone foundation strip) = 7.
+	# + slab.flagstones (flagstone sheet) + platform.face_tile (lip strip) = 9.
+	check("13 paths resolve to res:// files on disk (+ support pillar, arch, roots, ferns)", resolved == 13)
 	check("near_bottom_row is read from JSON (70)", int(_dotted(region, "backdrop.near_bottom_row")) == 70)
 	check("platform palette carries deck / face / face_top / mortar / shadow / divider",
 		["deck", "face", "face_top", "mortar", "shadow", "shadow_alpha", "divider"].all(
@@ -150,8 +152,10 @@ func test_fallback_bands() -> void:
 # regions.json; a region without its own uses them; neither is red-dominant (red = telegraph, art bible P3).
 func test_half_tints() -> void:
 	var t: Dictionary = Assets.half_tints("forest")
-	check("half_tints forest player is #B8CCE8", t["player"] == Color("B8CCE8"))
-	check("half_tints forest enemy is #9A84A4", t["enemy"] == Color("9A84A4"))
+	# 2026-11-06 (user: redo the whole floor, the halves read as the same stone): the forest overrides the shared
+	# tints with lighter ones in its region.json; the shared ones stay for the other regions.
+	check("half_tints forest player is #E9DBEC (own, concept grey)", t["player"] == Color("E9DBEC"))
+	check("half_tints forest enemy is #C4C5C4 (own, concept grey)", t["enemy"] == Color("C4C5C4"))
 	check("half_tints unknown region uses the shared tints", Assets.half_tints("no_such_region")["enemy"] == Color("9A84A4"))
 	var e: Color = t["enemy"]
 	var pl: Color = t["player"]

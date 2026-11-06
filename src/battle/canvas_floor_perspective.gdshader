@@ -23,6 +23,9 @@ group_uniforms half_tints;
 // Multiply tints of the two halves (white = none); approved look: player teal-green, enemy purple.
 uniform vec4 tint_player : source_color = vec4(1.0);
 uniform vec4 tint_enemy : source_color = vec4(1.0);
+// 2026-11-06 (user: the lip must blend with the floor and the platform): flat V below which nothing is tinted (the
+// platform's front faces under the last row stay neutral stone, like the support wall). 1.0 = tint everything.
+uniform float tint_max_v : hint_range(0.0, 1.0) = 1.0;
 group_uniforms;
 
 void fragment() {
@@ -35,5 +38,6 @@ void fragment() {
 	}
 	vec4 c = texture(TEXTURE, flat_uv);
 	vec4 tint = mix(tint_player, tint_enemy, step(divider_u, flat_uv.x));
+	tint = mix(tint, vec4(1.0), step(tint_max_v, flat_uv.y));
 	COLOR = vec4(c.rgb * tint.rgb, c.a) * tint.a;
 }

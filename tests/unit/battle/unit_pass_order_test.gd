@@ -45,6 +45,7 @@ func _initialize() -> void:
 	test_unit_view_sits_between_the_field_pieces_and_the_hud(battle, view)
 	test_units_and_overlay_on_the_unit_layer_only(canvas)
 	test_art_viewport_culls_the_units(canvas)
+	test_pickup_layer_between_floor_and_units(canvas)
 	test_unit_viewport_renders_only_the_units(canvas)
 	_check("test_unit_view_draws_this_canvas", view.get_battle_canvas() == canvas)
 	_finish()
@@ -74,6 +75,34 @@ func test_units_and_overlay_on_the_unit_layer_only(canvas: BattleCanvas) -> void
 	_check("test_hit_flash_child_on_the_unit_layer", flash != null and flash.visibility_layer == bit)
 	_check("test_backdrop_not_on_the_unit_layer", canvas.get_backdrop_layer().visibility_layer & bit == 0)
 	_check("test_floor_not_on_the_unit_layer", canvas.get_floor_layer().visibility_layer & bit == 0)
+
+
+# 2026-11-05 (voxel pickups, forest-integration-pickup-plan step 1): the field pieces moved from FieldDropsView into the
+# art canvas. The PickupLayer must render in the ART viewport (not the unit pass) after the floor / its warp and before
+# the units, so the unit pass (BattleUnitView, over the canvas) still covers a piece lying behind a tall head.
+func test_pickup_layer_between_floor_and_units(canvas: BattleCanvas) -> void:
+	var pickups: PickupLayer = canvas.get_pickup_layer()
+	_check("test_canvas_has_a_pickup_layer", pickups != null)
+	if pickups == null:
+		return
+	var art: SubViewport = canvas.get_art_viewport()
+	# 2026-11-06 (user: sigils lie with the stone tilt): with the perspective on, PickupLayer lives in its own flat
+	# PickupViewport and a PickupWarp sprite (floor shader) takes its place between the floor warp and the units.
+	var shown: Node = pickups
+	if canvas.get_pickup_viewport() != null:
+		shown = art.get_node_or_null("PickupWarp")
+		_check("test_pickup_layer_lives_in_the_pickup_viewport", pickups.get_parent() == canvas.get_pickup_viewport()
+			and canvas.get_pickup_viewport().get_parent() == art)
+	_check("test_pickup_shown_in_the_art_viewport", shown != null and shown.get_parent() == art)
+	if shown == null:
+		return
+	_check("test_pickup_layer_not_on_the_unit_layer", pickups.visibility_layer & BattleCanvas.UNIT_VISIBILITY_LAYER == 0
+		and (shown as CanvasItem).visibility_layer & BattleCanvas.UNIT_VISIBILITY_LAYER == 0)
+	_check("test_pickup_layer_before_the_unit_layer", shown.get_index() < canvas.get_unit_layer().get_index())
+	var floor_node: Node = art.get_node_or_null("FloorWarp")
+	if floor_node == null:
+		floor_node = canvas.get_floor_layer()
+	_check("test_pickup_layer_after_the_floor", floor_node.get_parent() == art and floor_node.get_index() < shown.get_index())
 
 
 func test_art_viewport_culls_the_units(canvas: BattleCanvas) -> void:

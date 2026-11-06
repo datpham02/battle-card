@@ -217,6 +217,12 @@ extends Node
 ##                                          Combine with --seed=<n> and --no-autopause for a reproducible capture
 ##   godot --path . -- --pattern=<id> --pattern-hp=<ratio> DEV-ONLY P2.4: the pattern enemy starts at ratio x max HP
 ##                                          (phase floor ignored) so a phased boss changes phase at once (0.6 / 0.25)
+##   godot --path . -- --demo=pickups       ground Block pickups (forest-integration-pickup-plan step 1, flat 2D 2026-11-06): field pieces on spread
+##       player cells (PICKUP_DEMO_SHAPES: L, T, S, I, U, Cross, a 7-cell Odd Block, a rotten piece) and one piece on the
+##       boss's half. --pickup-ratios=1,0.4,0.1 sets each piece's freshness share (cycled; default PICKUP_DEMO_RATIOS),
+##       --pickup-time=<sec> advances the PickupLayer clock, --pickup-shatter=<sec> expires
+##       the first piece through FieldDrops.tick and shows its crumble <sec> in, --pickup-burn ignites the first piece's
+##       cell. Combine with --arena=<shape> and --art-region=forest.
 ## Every demo freezes time (CombatView.freeze_time) so screenshots are deterministic, and
 ## seeds the drop RNG. No argument = normal game, this node does nothing. State is set in
 ## _ready, before the first frame (the seed and the grid in _enter_tree, before
@@ -320,6 +326,15 @@ const THORN_TRAIT_MATCH: String = "frost_mage"
 const ZONE_REWARD_CARDS: Array[String] = ["tran_gai", "gai_doc", "gai_nguyen"]
 ## Drop tile demos (quick spec 2026-10-31, they also skip the intro): the most player neighbours cracked, the share of
 ## the crack warning ticked in drop_crack / drop_on_player, of the hole time in drop_hole, of the return fade in drop_return.
+## Voxel pickup demo (see the header): shapes laid out, default freshness shares, the 7-cell odd fixture and the args.
+const PICKUP_DEMO_SHAPES: Array[String] = ["l4", "t4", "s4", "bar4", "u5", "plus5", "odd", "rotten"]
+const PICKUP_DEMO_RATIOS: Array[float] = [1.0, 0.4, 0.1]
+const PICKUP_DEMO_ODD_CELLS: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 1), Vector2i(2, 2), Vector2i(3, 2), Vector2i(1, 2)]
+const PICKUP_DEMO_BOSS_SHAPE: String = "plus5"
+const PICKUP_RATIOS_PREFIX: String = "--pickup-ratios="
+const PICKUP_TIME_PREFIX: String = "--pickup-time="
+const PICKUP_SHATTER_PREFIX: String = "--pickup-shatter="
+const PICKUP_BURN_ARG: String = "--pickup-burn"
 const DROP_DEMOS: Array[String] = ["drop_crack", "drop_on_player", "drop_hole", "drop_return", "drop_fall"]
 ## ADR-0001 Task 5 cast_live demo args.
 const CAST_CARD_PREFIX: String = "--cast-card="
@@ -614,6 +629,8 @@ func _ready() -> void:
 			# Deferred: BattleCanvas binds its layers (and the UnitLayer connects the match signals) in a deferred
 			# call queued by its own _ready, which ran before this one.
 			_art_demo.call_deferred()
+		"pickups":
+			_pickup_demo(combat, grid)
 		"rotten_piece":
 			var lib2: PieceLibrary = PieceLibrary.load_from_file()
 			var rotten_cell2: Vector2i = _other_player_cell(grid, combat.get_state().player_cell)
@@ -622,9 +639,71 @@ func _ready() -> void:
 			_fill_bag(lib2, ROTTEN_PIECE_SLOT)
 		_:
 			push_warning("DemoArgs: unknown demo mode '%s'" % _mode)
-	if PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode) or ODD_DEMOS.has(_mode) \
+	if _mode == "pickups" or PIECE_DEMOS.has(_mode) or HAZARD_DEMOS.has(_mode) or SIGNATURE_DEMOS_037.has(_mode) or ODD_DEMOS.has(_mode) \
 			or DROP_DEMOS.has(_mode):
 		_skip_intro.call_deferred()
+
+
+# Voxel pickup demo (see the header): real FieldDrops points through debug_place_piece; the layer clock is advanced
+# deferred (after BattleCanvas bound the PickupLayer).
+func _pickup_demo(combat: CombatView, grid: BoardGrid) -> void:
+	var lib: PieceLibrary = PieceLibrary.load_from_file()
+	var ratios: Array[float] = PICKUP_DEMO_RATIOS.duplicate()
+	var burn: bool = false
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(PICKUP_RATIOS_PREFIX):
+			ratios.clear()
+			for part: String in arg.substr(PICKUP_RATIOS_PREFIX.length()).split(","):
+				ratios.append(clampf(float(part), 0.001, 1.0))
+		elif arg == PICKUP_BURN_ARG:
+			burn = true
+	if ratios.is_empty():
+		ratios = PICKUP_DEMO_RATIOS.duplicate()
+	var total: float = combat.get_drops_config().piece_freshness_sec
+	var stand: Vector2i = combat.get_state().player_cell
+	# The match's start pieces would share cells with the demo layout (two pieces drawn on one cell).
+	combat.get_drops().debug_clear()
+	combat.get_boss().get_drops().debug_clear()
+	var spots: Array[Vector2i] = _spread_cells(grid, PICKUP_DEMO_SHAPES.size() + 1)
+	var placed: int = 0
+	var first: Vector2i = ScreenLayout.NO_CELL
+	for cell: Vector2i in spots:
+		if cell == stand or placed >= PICKUP_DEMO_SHAPES.size():
+			continue
+		var id: String = PICKUP_DEMO_SHAPES[placed]
+		var left: float = total * ratios[placed % ratios.size()]
+		if id == "rotten":
+			combat.get_drops().place_rotten_piece(cell, left, ROTTEN_HAND_LEFT_SEC)
+		else:
+			var piece: Piece = Piece.make(Piece.ODD_PREFIX + "demo", PICKUP_DEMO_ODD_CELLS) if id == "odd" else lib.make_piece(id, 0)
+			combat.get_drops().debug_place_piece(piece, cell, left)
+		if first == ScreenLayout.NO_CELL:
+			first = cell
+		placed += 1
+	combat.get_boss().get_drops().debug_place_piece(lib.make_piece(PICKUP_DEMO_BOSS_SHAPE, 0), _free_enemy_cell(grid, combat, 0), total)
+	if burn and first != ScreenLayout.NO_CELL and combat.get_status() != null:
+		combat.get_status().ignite([first] as Array[Vector2i], ART_DEMO_STATUS_SEC, HAZARD_DEMO_BURN_TICK_SEC, HAZARD_DEMO_BURN_DAMAGE)
+	print("DemoArgs: pickups placed %d on %s, first %s" % [placed, str(spots), str(first)])
+	_pickup_demo_clock.call_deferred(first)
+
+
+func _pickup_demo_clock(first: Vector2i) -> void:
+	var combat: CombatView = _combat()
+	var canvas: BattleCanvas = combat.get_battle_canvas()
+	var layer: PickupLayer = canvas.get_pickup_layer() if canvas != null else null
+	if layer == null:
+		push_warning("DemoArgs: no PickupLayer bound for demo 'pickups'")
+		return
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(PICKUP_TIME_PREFIX):
+			layer.advance(maxf(float(arg.substr(PICKUP_TIME_PREFIX.length())), 0.0))
+		elif arg.begins_with(PICKUP_SHATTER_PREFIX):
+			for p: FieldPoint in combat.get_drops().get_points():
+				if p.cell == first:
+					p.freshness_left = 0.001
+			combat.get_drops().tick(0.002, combat.get_state().player_cell, 1)
+			layer.advance(maxf(float(arg.substr(PICKUP_SHATTER_PREFIX.length())), 0.0))
+			print("DemoArgs: pickups shatter %s, %d running" % [str(first), layer.get_shatters().size()])
 
 
 # Story 047 art demos (see the header): the real event, then the UnitLayer advanced by hand (0 to start what the event

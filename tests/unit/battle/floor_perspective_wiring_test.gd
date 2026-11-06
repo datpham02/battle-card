@@ -13,7 +13,9 @@ extends SceneTree
 const MAX_FRAMES: int = 600
 const RATIO: float = 0.82
 const SHAPES: Array[String] = ["square", "rect", "boss_hall"]
-const FLAT_LAYERS: Array[String] = ["BackdropLayer", "FloorLayer", "UnitLayer", "OverlayLayer"]
+## 2026-11-05 (voxel pickups, forest-integration-pickup-plan step 1): PickupLayer sits between the floor and the units.
+## 2026-11-06 (step 2): SupportLayer (stone foundation) sits between the backdrop and the floor.
+const FLAT_LAYERS: Array[String] = ["BackdropLayer", "SupportLayer", "FloorLayer", "PickupLayer", "UnitLayer", "OverlayLayer"]
 ## Tolerance (px) of polygon agreement.
 const EPS_PX: float = 0.01
 
@@ -111,7 +113,18 @@ func test_flag_on_rewires_the_floor(canvas: BattleCanvas, combat: CombatView) ->
 	_check("test_on_floor_layer_keeps_its_dynamic_child", canvas.get_floor_layer().get_dynamic_layer().get_parent() == canvas.get_floor_layer())
 	var names: Array[String] = _layer_names(canvas.get_art_viewport())
 	_check("test_on_warp_sprite_sits_between_backdrop_and_units_got_%s" % [names],
-		names.size() >= 4 and names[0] == "BackdropLayer" and names[1] == "FloorWarp" and names[2] == "UnitLayer" and names[3] == "OverlayLayer")
+		names.size() >= 6 and names[0] == "BackdropLayer" and names[1] == "SupportLayer" and names[2] == "FloorWarp" and names[3] == "PickupWarp" and names[4] == "UnitLayer" and names[5] == "OverlayLayer")
+	# 2026-11-06: the pickups warp through the same shader and homography, with white (no) half tints.
+	var pwarp := canvas.get_art_viewport().get_node_or_null("PickupWarp") as Sprite2D
+	var pmat := pwarp.material as ShaderMaterial if pwarp != null else null
+	var fmat := (canvas.get_art_viewport().get_node_or_null("FloorWarp") as Sprite2D).material as ShaderMaterial
+	_check("test_on_pickup_warp_same_shader_and_homography_no_tints", pmat != null and pmat.shader == fmat.shader
+		and pmat.get_shader_parameter("inv_h") == fmat.get_shader_parameter("inv_h")
+		and pmat.get_shader_parameter("tint_player") == Color.WHITE and pmat.get_shader_parameter("tint_enemy") == Color.WHITE)
+	# 2026-11-06 (user: the lip blends with the floor and the platform): the halves are tinted only above the front
+	# faces (tint_max_v = the lowest deck row), so the lip stays neutral stone like the support wall.
+	var tmv: float = float(fmat.get_shader_parameter("tint_max_v"))
+	_check("test_on_tint_stops_at_the_front_faces", tmv > 0.3 and tmv < 1.0 and is_equal_approx(tmv, canvas.face_top_v()), "v=%.3f" % tmv)
 	var warp := canvas.get_art_viewport().get_node_or_null("FloorWarp") as Sprite2D
 	_check("test_on_warp_sprite_draws_the_floor_viewport_texture_through_the_shader", warp != null and warp.texture is ViewportTexture
 		and warp.material is ShaderMaterial and (warp.material as ShaderMaterial).shader != null

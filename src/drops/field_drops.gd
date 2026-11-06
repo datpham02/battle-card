@@ -308,6 +308,12 @@ func place_rotten_piece(cell: Vector2i, freshness_left: float, rot_in_hand_sec: 
 	)
 
 
+## DEV-ONLY capture hook: removes every point silently (no point_expired, so no shatter), so a demo can lay out
+## its own pieces without landing on the match's start pieces.
+func debug_clear() -> void:
+	_points.clear()
+
+
 ## DEV-ONLY capture hook: puts a piece on the field, bypassing the draw, timer and caps.
 func debug_place_piece(piece: Piece, cell: Vector2i, freshness_left: float) -> FieldPoint:
 	return _add_point(piece.shape_id, cell, freshness_left, piece.is_rotten(), 0.0, piece)

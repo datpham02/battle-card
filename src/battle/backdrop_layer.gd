@@ -33,6 +33,11 @@ func set_region_id(id: String) -> void:
 	_region_id = id
 	_far = ArtAssets.region_texture(id, "backdrop.far")
 	_near = ArtAssets.region_texture(id, "backdrop.near")
+	# 2026-11-06: a far backdrop drawn with its own mist (bg_forest_far_v2) turns the near strip off
+	# (`backdrop.near_enabled` false); the strip, made for the old far, read as white specks over the new canopy.
+	var bd: Variant = ArtAssets.region(id).get("backdrop", {})
+	if bd is Dictionary and not bool((bd as Dictionary).get("near_enabled", true)):
+		_near = null
 	var backdrop: Variant = ArtAssets.region(id).get("backdrop", {})
 	_near_bottom_row = int((backdrop as Dictionary).get("near_bottom_row", 0)) if backdrop is Dictionary else 0
 	_bands = ArtAssets.fallback_bands(id)
@@ -71,3 +76,15 @@ func _draw() -> void:
 	if _near != null:
 		var y: int = _near_bottom_row - _near.get_height()
 		draw_texture_rect(_near, Rect2(Vector2(0.0, float(y)), _near.get_size()), false)
+	# 2026-11-06 (Misty Forest background redesign, free first pass): the painted ground under the board competes
+	# with the arena as a second ground plane; region.json `backdrop.ground_shade` lays stepped Ink bands over it
+	# ({"from_row": int, "band": int, "alphas": [..]}: one band per alpha, the last alpha down to the bottom).
+	var shade: Variant = ArtAssets.region(_region_id).get("backdrop", {}).get("ground_shade", {}) if not _region_id.is_empty() else {}
+	if shade is Dictionary and not (shade as Dictionary).is_empty():
+		var row: int = int(shade.get("from_row", ScreenLayout.ART_CANVAS_HEIGHT))
+		var band: int = maxi(int(shade.get("band", 6)), 1)
+		var alphas: Array = shade.get("alphas", [])
+		for i: int in alphas.size():
+			var h: float = float(band) if i < alphas.size() - 1 else maxf(ScreenLayout.ART_CANVAS_HEIGHT - row, 0.0)
+			draw_rect(Rect2(0.0, float(row), canvas.size.x, h), Color(Color("1B1722"), float(alphas[i])))
+			row += band

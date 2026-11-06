@@ -103,30 +103,37 @@ func test_four_layers_in_order(canvas: BattleCanvas) -> void:
 	var vp: SubViewport = canvas.get_art_viewport()
 	if vp == null:
 		return
-	_check("test_sub_viewport_has_four_children_got_%d" % vp.get_child_count(), vp.get_child_count() == 4)
+	# 2026-11-05 (voxel pickups, forest-integration-pickup-plan step 1): PickupLayer joined between the floor and the units.
+	# 2026-11-06 (step 2): SupportLayer (the stone foundation) joined between the backdrop and the floor.
+	_check("test_sub_viewport_has_six_children_got_%d" % vp.get_child_count(), vp.get_child_count() == 6)
 	var names: Array[String] = []
 	for child: Node in vp.get_children():
 		names.append(child.name)
-	var want: Array[String] = ["BackdropLayer", "FloorLayer", "UnitLayer", "OverlayLayer"]
-	_check("test_layer_order_backdrop_floor_unit_overlay_got_%s" % [names], names == want)
-	_check("test_layer_classes", vp.get_child(0) is BackdropLayer and vp.get_child(1) is FloorLayer and vp.get_child(2) is UnitLayer and vp.get_child(3) is OverlayLayer)
-	_check("test_layer_getters_return_the_children", canvas.get_backdrop_layer() == vp.get_child(0) and canvas.get_floor_layer() == vp.get_child(1) and canvas.get_unit_layer() == vp.get_child(2) and canvas.get_overlay_layer() == vp.get_child(3))
+	var want: Array[String] = ["BackdropLayer", "SupportLayer", "FloorLayer", "PickupLayer", "UnitLayer", "OverlayLayer"]
+	_check("test_layer_order_backdrop_support_floor_pickup_unit_overlay_got_%s" % [names], names == want)
+	_check("test_layer_classes", vp.get_child(0) is BackdropLayer and vp.get_child(1) is SupportLayer and vp.get_child(2) is FloorLayer and vp.get_child(3) is PickupLayer and vp.get_child(4) is UnitLayer and vp.get_child(5) is OverlayLayer)
+	_check("test_layer_getters_return_the_children", canvas.get_backdrop_layer() == vp.get_child(0) and canvas.get_support_layer() == vp.get_child(1) and canvas.get_floor_layer() == vp.get_child(2) and canvas.get_pickup_layer() == vp.get_child(3) and canvas.get_unit_layer() == vp.get_child(4) and canvas.get_overlay_layer() == vp.get_child(5))
 
 
-# ADR-0002: the art viewport holds BackdropLayer, FloorWarp, UnitLayer, OverlayLayer (and the FloorViewport that
+# ADR-0002: the art viewport holds BackdropLayer, FloorWarp, PickupLayer (2026-11-05), UnitLayer, OverlayLayer (and the FloorViewport that
 # renders first); the floor layer lives in the FloorViewport; the getters still return the layers.
 func test_perspective_layers_in_order(canvas: BattleCanvas) -> void:
 	var vp: SubViewport = canvas.get_art_viewport()
 	var names: Array[String] = []
 	for child: Node in vp.get_children():
 		names.append(child.name)
-	var want: Array[String] = ["BackdropLayer", "FloorWarp", "UnitLayer", "OverlayLayer", "FloorViewport"]
+	# 2026-11-06 (user: sigils lie with the stone tilt): with the perspective on, PickupLayer lives in its own flat
+	# PickupViewport and a PickupWarp sprite (floor shader) takes its place between the floor warp and the units.
+	var want: Array[String] = ["BackdropLayer", "SupportLayer", "FloorWarp", "PickupWarp", "UnitLayer", "OverlayLayer", "FloorViewport", "PickupViewport"]
 	_check("test_perspective_layer_order_got_%s" % [names], names == want)
-	_check("test_perspective_layer_classes", vp.get_child(0) is BackdropLayer and vp.get_child(1) is Sprite2D and vp.get_child(2) is UnitLayer
-		and vp.get_child(3) is OverlayLayer and vp.get_child(4) is SubViewport)
+	_check("test_perspective_layer_classes", vp.get_child(0) is BackdropLayer and vp.get_child(1) is SupportLayer and vp.get_child(2) is Sprite2D
+		and vp.get_child(3) is Sprite2D and vp.get_child(4) is UnitLayer and vp.get_child(5) is OverlayLayer and vp.get_child(6) is SubViewport
+		and vp.get_child(7) is SubViewport)
 	_check("test_perspective_floor_layer_in_the_floor_viewport", canvas.get_floor_layer().get_parent() == canvas.get_floor_viewport())
-	_check("test_perspective_layer_getters", canvas.get_backdrop_layer() == vp.get_child(0) and canvas.get_unit_layer() == vp.get_child(2)
-		and canvas.get_overlay_layer() == vp.get_child(3))
+	_check("test_perspective_pickup_layer_in_the_pickup_viewport", canvas.get_pickup_layer().get_parent() == canvas.get_pickup_viewport()
+		and canvas.get_pickup_layer().warped)
+	_check("test_perspective_layer_getters", canvas.get_backdrop_layer() == vp.get_child(0) and canvas.get_support_layer() == vp.get_child(1)
+		and canvas.get_unit_layer() == vp.get_child(4) and canvas.get_overlay_layer() == vp.get_child(5))
 
 
 # ADR-0002: the feet are the flat OSFE feet moved by the board map, inside the drawn cell polygon; the rings sit on

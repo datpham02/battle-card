@@ -1,23 +1,112 @@
 {
   "id": "forest",
   "backdrop": {
-    "far": "bg_forest_far.png",
+    "far": "bg_forest_far_v4.png",
     "near": "bg_forest_near.png",
-    "near_bottom_row": 70
+    "near_bottom_row": 70,
+    "_doc_far": "2026-11-06 v4 = v3 (PixelLab create_image_pro, 25 gen, user's prompt) with rows 0-71, columns 255-632 taken from the approved master concept (forest-master/master-concept-01, user chose its colour direction): the ruined arch just behind the board's back edge. Seams picked where both images match best (left 0, right 575 luminance sum over 72 rows). Older far backdrops kept.",
+    "near_enabled": false
   },
   "slab": {
     "nine_slice": "env_slab_forest_9slice.png",
     "stamps": "env_slab_forest_stamps.png",
-    "stamps_meta": "env_slab_forest_stamps.json"
+    "stamps_meta": "env_slab_forest_stamps.json",
+    "flagstones": "env_slab_forest_flagstones.png",
+    "flagstone_meta": {
+      "_doc": "2026-11-06 PixelLab create_tiles_pro (15 gen, user-approved prompt): 16 top-down weathered flagstones 64x64 in a 4x4 sheet. Each cell draws one, picked by its seed with these weights (7 and 15 carry heavy moss, so rare), nine-cropped: a border px frame kept, the middle a centred window (repeated when the cell is larger), never stretched.",
+      "size": 64,
+      "count": 16,
+      "border": 6,
+      "weights": [
+        5,
+        2,
+        3,
+        2,
+        2,
+        3,
+        2,
+        1,
+        2,
+        2,
+        4,
+        3,
+        2,
+        5,
+        2,
+        1
+      ]
+    }
   },
   "thorn_tile": "env_thorn_forest_tile16.png",
   "platform": {
     "deck": "#3A3B37",
     "face": "#262521",
-    "face_top": "#5A5B54",
+    "face_top": "#7A7B70",
     "mortar": "#1B1722",
     "shadow": "#1B1722",
     "shadow_alpha": 0.5,
-    "divider": "#262521"
-  }
+    "divider": "#2C2D29",
+    "face_tile": "env_platform_forest_face.png",
+    "_doc_face_tile": "2026-11-06 (user: the old flat lip with even vertical joints did not fit): the front face is rows 15-26 (one capstone course, 12 px = FACE_HEIGHT) cut from the PixelLab support wall strip, repeated on an absolute x grid, so lip and wall are the same stone (0 gen).",
+    "face_tile_modulate": "#E6E6E6",
+    "_doc_deck": "2026-11-06 (concept colour direction): neutral grey-moss stone like the concept's joints (#262521 there; one step lighter here so the grid does not read as heavy dark outlines, user 2026-11-06)."
+  },
+  "support": {
+    "_doc": "SupportLayer (forest-integration-pickup-plan step 2): stone retaining wall under the board's front faces, side walls, moss, low mist; same grey-moss stone as the slabs and ruins.",
+    "wall_height": 44,
+    "course_height": 8,
+    "block_widths": [
+      16,
+      20,
+      14,
+      18,
+      22,
+      15
+    ],
+    "stone_top": "#5A5B54",
+    "stone": "#4C4D47",
+    "stone_dark": "#3A3B37",
+    "ground": "#262521",
+    "side": "#2C2D29",
+    "moss": "#4C5A40",
+    "moss_dark": "#36412F",
+    "moss_every": 2,
+    "mist_alpha": 0.0,
+    "foot_shadow": [
+      0.55,
+      0.38,
+      0.22
+    ],
+    "foot_band": 3,
+    "crack_every": 4,
+    "chip_every": 5,
+    "wall_tile": "env_support_forest_wall.png",
+    "wall_modulate": "#A8A8A8",
+    "wall_bottom_shade": [
+      0.25,
+      0.45
+    ],
+    "pillar_every": 120,
+    "pillar_width": 22,
+    "pillar_modulate": "#B4B4B4",
+    "wall_top_shade": [
+      0.55,
+      0.3
+    ],
+    "pillar": "env_support_forest_pillar.png",
+    "arch": "env_support_forest_arch.png",
+    "roots": "env_support_forest_roots.png",
+    "ferns": "env_support_forest_ferns.png",
+    "arch_margin": 4,
+    "fern_every": 150,
+    "fern_sink": 8,
+    "roots_inset": 10,
+    "roots_rise": 2,
+    "_doc_kit": "2026-11-06 PixelLab kit (user-approved): pillar 28x56, arch 72x40, roots 64x64 (keyed off the stone it was drawn on: bark + moss + 1 px outline kept), ferns 96x32. SupportLayer places them per wall span: pillars at both ends and every pillar_every px, an arch in every pillar gap wide enough, ferns about every fern_every px along the foot, roots at the board's outermost wall ends (right mirrored)."
+  },
+  "half_tints": {
+    "player": "#E9DBEC",
+    "enemy": "#C4C5C4"
+  },
+  "_doc_half_tints": "2026-11-06 (user chose the master concept's colour direction): the halves read as one grey-moss stone like the concept, with a faint team tint left (player slightly cool, enemy slightly mauve). These values times the shader's PERSPECTIVE_TINT_* give the measured concept slab colour \u00b15 %."
 }

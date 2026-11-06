@@ -177,7 +177,116 @@ static func paint_cell(canvas: CanvasItem, rect: Rect2i, seed: int, nine: Textur
 		canvas.draw_texture_rect_region(stamps, _r2(rect.position + (s["pos"] as Vector2i), src.size), _r2(src.position, src.size), tint)
 
 
+# --- flagstones (2026-11-06) -----------------------------------------------------------------
+
+
+## Index of the flagstone a cell of [param seed] draws out of [param weights] (one weight per tile of the sheet;
+## empty = all equal). Deterministic: the same cell always draws the same stone.
+static func flagstone_index(seed: int, weights: Array) -> int:
+	var n: int = weights.size()
+	if n == 0:
+		return 0
+	var total: float = 0.0
+	for w: Variant in weights:
+		total += maxf(float(w), 0.0)
+	if total <= 0.0:
+		return posmod(seed, n)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(seed) + 2654435761
+	var pick: float = rng.randf() * total
+	for i: int in n:
+		pick -= maxf(float(weights[i]), 0.0)
+		if pick < 0.0:
+			return i
+	return n - 1
+
+
+## Source spans (start, length) and target spans along one axis of a nine-crop: the [param border] px at both
+## ends kept as they are, the middle a window centred in the source's middle when the target is shorter, the source
+## middle repeated from its start when longer. Returns pairs [[target_start, src_start, length], ...].
+static func nine_crop_spans(target: int, source: int, border: int) -> Array:
+	var out: Array = []
+	var b: int = mini(border, mini(target / 2, source / 2))
+	out.append([0, 0, b])
+	var mid_t: int = target - b * 2
+	var mid_s: int = source - b * 2
+	if mid_t > 0 and mid_s > 0:
+		if mid_t <= mid_s:
+			out.append([b, b + (mid_s - mid_t) / 2, mid_t])
+		else:
+			var t: int = 0
+			while t < mid_t:
+				var l: int = mini(mid_s, mid_t - t)
+				out.append([b + t, b, l])
+				t += l
+	out.append([target - b, source - b, b])
+	return out
+
+
+## 2026-11-06 (user: redo the whole floor; PixelLab flagstones): one generated flagstone over the slab of
+## [param rect] (the cell minus its 1 px gap, see [method slab_rect]): tile [method flagstone_index] of the
+## [param sheet] (square tiles of [param size] px, row-major, sheet width / size per row), nine-cropped with
+## [param border] (never stretched: the pixel density stays the art's at every cell size), multiplied by
+## [param tint].
+static func paint_flagstone(canvas: CanvasItem, rect: Rect2i, seed: int, sheet: Texture2D, size: int, border: int, weights: Array, tint: Color = Color.WHITE) -> void:
+	if sheet == null or size <= 0 or rect.size.x <= 0 or rect.size.y <= 0:
+		return
+	var slab: Rect2i = slab_rect(rect.size)
+	var per_row: int = maxi(sheet.get_width() / size, 1)
+	var idx: int = flagstone_index(seed, weights)
+	var origin := Vector2i((idx % per_row) * size, (idx / per_row) * size)
+	for sx: Array in nine_crop_spans(slab.size.x, size, border):
+		for sy: Array in nine_crop_spans(slab.size.y, size, border):
+			var dst := Rect2i(rect.position + Vector2i(int(sx[0]), int(sy[0])), Vector2i(int(sx[2]), int(sy[2])))
+			var src := Rect2i(origin + Vector2i(int(sx[1]), int(sy[1])), Vector2i(int(sx[2]), int(sy[2])))
+			if dst.size.x > 0 and dst.size.y > 0:
+				canvas.draw_texture_rect_region(sheet, _r2(dst.position, dst.size), _r2(src.position, src.size), tint)
+
+
+## 2026-11-06: the region's front face strip [param tile] over every face of [param faces] (FACE_HEIGHT px tall
+## strips, the merged front rects), repeated on an absolute x grid so faces of different rows line up, clipped to
+## each face and to the tile's height, multiplied by [param modulate]; [param top_edge] (alpha > 0) redraws the top
+## row as the light fold of the slab edge.
+static func paint_face_strip(canvas: CanvasItem, faces: Array[Rect2i], tile: Texture2D, modulate: Color = Color.WHITE, top_edge: Color = Color(0, 0, 0, 0)) -> void:
+	if tile == null:
+		return
+	var tw: int = tile.get_width()
+	var th: int = tile.get_height()
+	if tw <= 0 or th <= 0:
+		return
+	for f: Rect2i in faces:
+		var h: int = mini(f.size.y, th)
+		var x: int = f.position.x - posmod(f.position.x, tw)
+		while x < f.end.x:
+			var a: int = maxi(x, f.position.x)
+			var b: int = mini(x + tw, f.end.x)
+			if b > a:
+				canvas.draw_texture_rect_region(tile, _r2(Vector2i(a, f.position.y), Vector2i(b - a, h)), _r2(Vector2i(a - x, 0), Vector2i(b - a, h)), modulate)
+			x += tw
+		# The slab's fold catching the light: one light row on the face's top edge (the deck's last row).
+		if top_edge.a > 0.0:
+			canvas.draw_rect(_r2(f.position, Vector2i(f.size.x, 1)), top_edge)
+
+
 # --- platform --------------------------------------------------------------------------------
+
+
+## 2026-11-06: the 1 px divider segments (x [param divider_x]) over the decks that cross it, merged where they touch or
+## overlap vertically: a board with no cell at the divider in some rows (cross, u-shape) leaves those rows open.
+static func divider_segments(decks: Array[Rect2i], divider_x: int) -> Array[Rect2i]:
+	var spans: Array[Vector2i] = []
+	for d: Rect2i in decks:
+		if d.position.x <= divider_x and divider_x < d.end.x:
+			spans.append(Vector2i(d.position.y, d.end.y))
+	spans.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x)
+	var out: Array[Rect2i] = []
+	for sp: Vector2i in spans:
+		if not out.is_empty() and sp.x <= out[out.size() - 1].end.y:
+			var last: Rect2i = out[out.size() - 1]
+			out[out.size() - 1] = Rect2i(last.position, Vector2i(1, maxi(last.end.y, sp.y) - last.position.y))
+		else:
+			out.append(Rect2i(divider_x, sp.x, 1, sp.y - sp.x))
+	return out
 
 
 ## The deck under every cell: the cell grown by DECK_MARGIN on all sides (the gap between the
@@ -257,12 +366,10 @@ static func paint_platform(canvas: CanvasItem, cells: Array[Rect2i], has_cell_be
 	for f: Rect2i in faces:
 		canvas.draw_rect(_r2(f.position, Vector2i(f.size.x, 1)), face_top_c)
 	if divider_x >= 0:
-		var top: int = decks[0].position.y
-		var bottom: int = decks[0].end.y
-		for d: Rect2i in decks:
-			top = mini(top, d.position.y)
-			bottom = maxi(bottom, d.end.y)
-		canvas.draw_rect(_r2(Vector2i(divider_x, top), Vector2i(1, bottom - top)), divider_c)
+		# 2026-11-06: one segment per deck the divider crosses, so a cross / u-shaped board's open notch (no cell at the
+		# divider) gets no line through the background (it read as a stray vertical line over the new misty backdrop).
+		for d: Rect2i in divider_segments(decks, divider_x):
+			canvas.draw_rect(_r2(d.position, d.size), divider_c)
 
 
 # --- thorns ----------------------------------------------------------------------------------
