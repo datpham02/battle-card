@@ -749,11 +749,12 @@ fi
 # worth flagging in a shader or a build script too, and this scan greps for a
 # literal marker rather than a numeric pattern, so it does not misfire on
 # serialized asset YAML the way the hardcoded-value scan would.
+# Whole words only (\b): LOCK_SHACKLE_R contains "HACK" and is not a marker.
 SRC_FILES=""
 [ -n "$CODE_ROOT" ] && SRC_FILES=$(echo "$STAGED" | grep -E "^${CODE_ROOT}/")
 if [ -n "$SRC_FILES" ]; then
     UNOWNED=$(printf '%s\n' "$SRC_FILES" | tr '\n' '\0' \
-        | xargs -0 grep -lE '(TODO|FIXME|HACK)[^(]' 2>/dev/null || true)
+        | xargs -0 grep -lE '\b(TODO|FIXME|HACK)\b[^(]' 2>/dev/null || true)
     if [ -n "$UNOWNED" ]; then
         while IFS= read -r file; do
             [ -n "$file" ] && WARNINGS="$WARNINGS\nSTYLE: $file has TODO/FIXME without owner tag. Use TODO(name) format."
