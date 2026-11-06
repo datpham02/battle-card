@@ -356,7 +356,7 @@ func _draw_header(vp: Vector2, title: String) -> void:
 
 # The parchment box: wrapped [param body], then [param lines] ([text, colour] pairs) one per line.
 func _draw_box(rect: Rect2, body: String, lines: Array) -> void:
-	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], BOX_BACK, BOX_OUTLINE, OUTLINE_WIDTH)
+	HudSkin.plate_panel(self, rect, "navy")
 	var pad: float = rect.size.x * BOX_PAD_RATIO
 	var width: float = rect.size.x - pad * 2.0
 	var font: Font = HudSkin.font()
@@ -390,8 +390,9 @@ func _draw_choices(vp: Vector2, choices: Array) -> void:
 			outline.a *= UiButtons.DIM_ALPHA
 			text.a *= UiButtons.DIM_ALPHA
 			cost_color.a *= UiButtons.DIM_ALPHA
-		var cut: float = HudSkin.button_cut(rect)
-		HudSkin.panel(self, rect, [0.0, cut, 0.0, cut], back, outline, ARMED_OUTLINE_WIDTH if armed or pressed else OUTLINE_WIDTH)
+		# 2026-11-07: the ancient plate (navy; grey when locked; the armed choice ringed in gold).
+		var _unused: Array = [back, outline]
+		HudSkin.plate_panel(self, rect, "navy" if enabled else "grey", pressed, 1.0, armed)
 		var inset: float = rect.size.x * CHOICE_INSET_RATIO
 		var inner: float = rect.size.x - inset * 2.0
 		var label_width: float = inner * CHOICE_LABEL_SHARE

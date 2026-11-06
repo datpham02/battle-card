@@ -52,6 +52,9 @@ const BUTTON_CUT_MAX: float = 12.0
 const TEXT_OUTLINE_PX: int = 3
 ## Default frame width of panels, px.
 const PANEL_LINE_WIDTH: float = 1.5
+## plate_panel's selection ring: art px outside the plate, and its corner cut (art px).
+const PLATE_RING_GAP_ART: float = 2.0
+const PLATE_RING_CUT_ART: float = 4.0
 ## Default gap between bar segments, px.
 const SEGMENT_GAP: float = 2.0
 ## Half-HP notch: width and how far it protrudes above and below the bar, px.
@@ -225,6 +228,20 @@ static func trail_ratio(from_ratio: float, to_ratio: float, elapsed: float, sec:
 
 
 # --- Drawing ------------------------------------------------------------------
+
+
+## 2026-11-07 (user: panels of the event / rest / world map / character screens did not match the game): a panel in the
+## game's ancient-plate look (UiButtons' pixel nine-slice: cut corners, gold rim and inner line, speckled fill, lip).
+## [param kind] "navy" | "gold" | "wine" | "grey" | "moss"; [param sunk] = pressed; [param ring] adds the selection
+## ring (GRID_LIGHT, cut corners) just outside. Returns the plate's body (UiButtons.body_rect).
+static func plate_panel(canvas: CanvasItem, rect: Rect2, kind: String = "navy", sunk: bool = false, alpha: float = 1.0, ring: bool = false) -> Rect2:
+	var s: float = UiButtons.ui_scale(canvas)
+	var body: Rect2 = UiButtons.draw_plate(canvas, rect, {"plate": kind}, s, sunk, Color(1.0, 1.0, 1.0, alpha))
+	if ring:
+		var out: Rect2 = rect.grow(s * PLATE_RING_GAP_ART)
+		var c: float = s * PLATE_RING_CUT_ART
+		_outline(canvas, chamfer_points(out, [c, c, c, c]), Color(GRID_LIGHT, alpha), maxf(s, 2.0))
+	return body
 
 
 ## Chamfered panel: [param fill] polygon and a closed [param line] frame [param width] px wide (no frame

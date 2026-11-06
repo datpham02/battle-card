@@ -203,7 +203,9 @@ func _draw() -> void:
 func _draw_card(rect: Rect2, name: String, line: String, outline: Color, heal: bool) -> void:
 	var pressed: bool = UiButtons.is_pressed_at(self, rect)
 	var fill: Color = CARD_BACK.lightened(HudSkin.BUTTON_PRESSED_LIGHTEN) if pressed else CARD_BACK
-	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], fill, CARD_PRESSED_OUTLINE if pressed else outline, PRESSED_BORDER_WIDTH if pressed else BORDER_WIDTH)
+	# 2026-11-07: the ancient plate (rest moss, forge navy), sunk while pressed.
+	var _unused: Array = [fill, outline]
+	HudSkin.plate_panel(self, rect, "moss" if heal else "navy", pressed)
 	var c := Vector2(rect.get_center().x, rect.position.y + rect.size.y * GLYPH_CENTER_Y)
 	var h: float = rect.size.x * GLYPH_HALF
 	if heal:
@@ -243,8 +245,10 @@ func _draw_forge_list(vp: Vector2) -> void:
 			back.a *= UiButtons.DIM_ALPHA
 			border.a *= UiButtons.DIM_ALPHA
 			name_color.a *= UiButtons.DIM_ALPHA
-		HudSkin.panel(self, rects[i], [0.0, HudSkin.button_cut(rects[i]), 0.0, 0.0], back, border, TILE_BORDER_WIDTH if pressed else BORDER_WIDTH)
-		_text(rects[i], rects[i].get_center().y + TILE_FONT_SIZE * 0.35, label, TILE_FONT_SIZE, name_color)
+		# 2026-11-07: the ancient plate; the rarity colours the name instead of the border.
+		var _unused: Color = back
+		HudSkin.plate_panel(self, rects[i], "navy" if enabled else "grey", pressed)
+		_text(rects[i], rects[i].get_center().y + TILE_FONT_SIZE * 0.35, label, TILE_FONT_SIZE, Color(border, name_color.a) if not pressed else name_color)
 	var hint: Rect2 = ScreenLayout.reward_remove_hint_rect(vp)
 	if not any_enabled:
 		_text(hint, hint.get_center().y + HINT_FONT_SIZE * 0.35, tr(TEXT_ALL_MAXED), HINT_FONT_SIZE, HINT_COLOR)

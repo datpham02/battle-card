@@ -3144,7 +3144,7 @@ func _draw_menu(vp: Vector2) -> void:
 	var s: float = ScreenLayout.controls_scale(vp)
 	var cut: float = roundf(MENU_FRAME_CUT_PX * s)
 	if flow.is_unlimited():
-		HudFuse.draw(self, frame, cut, 1.0, s)
+		HudFuse.draw_static(self, frame, cut, s)
 	else:
 		HudFuse.draw(self, frame, cut, menu_fuse_fraction(), s)
 	var rects: Array[Rect2] = ScreenLayout.skill_menu_rects(vp, order.size())
@@ -3190,12 +3190,20 @@ func _draw_menu_card(vp: Vector2, rect: Rect2, id: String, cell_count: int) -> v
 	var picture: Rect2 = CardFace.picture_rect(rect, vp.y)
 	if reason == "curse":
 		_draw_lock_glyph(picture)
-	var plate_h: float = rect.size.y * MENU_REASON_HEIGHT_RATIO
+	# 2026-11-07 (user: the "need 3 cells" box, then the "2/3 cells" text, did not fit; the cell gem already shows it):
+	# too few cells is the plain disabled look with the card's own cell gem in red. Any other reason keeps its word as
+	# bare outlined Ivory text on the picture's lower part (effect labels have no box).
+	var need: int = int(check["need_cells"])
+	if cell_count < need:
+		var lay: Dictionary = CardFace.ancient_layout(rect, vp.y)
+		CardFace._draw_pixel_gem(self, lay["cost"], int(lay["scale"]), CardFace.GEM_RED, Color.WHITE)
+		CardFace._draw_gem_number_v2(self, lay["cost"], str(need), 1.0)
+		return
 	var border: Rect2 = CardFace.face_border(rect, vp.y, 0.0)
-	var plate := Rect2(border.position.x, picture.end.y - plate_h, border.size.x, plate_h)
-	draw_rect(plate, MENU_REASON_BACK)
+	var band := Rect2(border.position.x, picture.end.y - rect.size.y * MENU_REASON_HEIGHT_RATIO, border.size.x, rect.size.y * MENU_REASON_HEIGHT_RATIO)
 	var text: String = str(_skill_status(id, cell_count)["text"])
-	_draw_centered(plate, text, _fit_font_size(text, plate.size.x - MENU_NAME_PAD * 2.0, BUTTON_FONT_SIZE), HudSkin.TEXT)
+	var size: int = _fit_font_size(text, band.size.x - MENU_NAME_PAD * 2.0, BUTTON_FONT_SIZE)
+	HudSkin.text(self, Vector2(band.position.x, band.get_center().y + size * 0.36), text, size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_CENTER, band.size.x, true)
 
 
 # 2026-11-01 LoL-style cooldown column (ScreenLayout.cooldown_column_rect): one icon per card cooling down, top-down

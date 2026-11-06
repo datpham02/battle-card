@@ -81,6 +81,15 @@ static func remaining(points: PackedVector2Array, fraction: float) -> PackedVect
 
 ## Draws the fuse round [param rect] (chamfer [param cut]) with [param fraction] burnt, at [param s] px per 720p px:
 ## the groove along the whole path, the gold still to burn and the head diamond at the burn point.
+## 2026-11-07 (user: the bare black frame of the card menu did not fit the game): the frame of a menu with no time
+## limit: the same path as a whole gold line on its dark rim (no burning, no spark head).
+static func draw_static(canvas: CanvasItem, rect: Rect2, cut: float, s: float, alpha: float = 1.0) -> void:
+	var pts: PackedVector2Array = path(rect, cut)
+	var w: float = maxf(roundf(WIDTH_PX * s), 1.0)
+	canvas.draw_polyline(pts, Color(RIM, alpha), w + 2.0)
+	canvas.draw_polyline(pts, Color(GOLD, alpha), w)
+
+
 static func draw(canvas: CanvasItem, rect: Rect2, cut: float, fraction: float, s: float, alpha: float = 1.0) -> void:
 	var pts: PackedVector2Array = path(rect, cut)
 	var w: float = maxf(roundf(WIDTH_PX * s), 1.0)

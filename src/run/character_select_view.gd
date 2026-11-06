@@ -134,6 +134,8 @@ const STRIP_FONT_SIZE: int = 22
 const STRIP_BACK: Color = HudSkin.NIGHT_STONE
 const STRIP_TEXT_COLOR: Color = HudSkin.GRID_LIGHT
 const DEV_KIEP_HINT_ARG: String = "--screen=kiep_hint"
+## DEV-ONLY (captures): `--screen=character_info=<id>` opens that character's info panel.
+const DEV_INFO_ARG: String = "--screen=character_info="
 ## Story 038 strings: the badge "Kiếp %d" (best won), the bar caption, the locked-level hint "Thắng Kiếp %d để mở",
 ## the rules list title and its numbered line, the level-0 line, the "tap again" hint.
 const TEXT_KIEP_BADGE: String = "ui.character_select.kiep_badge"
@@ -152,6 +154,26 @@ const KIEP_NEWEST_COLOR: Color = HudSkin.GRID_LIGHT
 const KIEP_HINT_COLOR: Color = Color("E89A6E")
 const KIEP_NUMBER_COLOR: Color = HudSkin.IVORY
 const FOCUS_OUTLINE_WIDTH: float = 6.0
+## 2026-11-07 hero cards: the "i" button (share of the card width, touch minimum, inset), the hero sprite area (shares of
+## the card height: top, feet line) and the info panel (shares of the screen).
+const INFO_BUTTON_RATIO: float = 0.2
+const INFO_BUTTON_MIN_PX: float = 44.0
+const INFO_BUTTON_INSET_PX: float = 8.0
+## Px from the card's top-right corner to the info gem's centre (the gem sits on the rim's corner).
+const INFO_GEM_FROM_CORNER_PX: float = 22.0
+const SPRITE_TOP: float = 0.13
+## Px the name and HP lines sit lower than their old baselines (clear of the plate's rim).
+const CARD_TEXT_DROP_PX: float = 14.0
+const SPRITE_FEET: float = 0.95
+const SPRITE_CLIP: String = "idle"
+const LOCKED_SILHOUETTE: Color = Color(0.06, 0.05, 0.09, 0.92)
+const INFO_PANEL_W: float = 0.64
+const INFO_PANEL_TOP: float = 0.13
+const INFO_PANEL_H: float = 0.8
+const INFO_SHADE: Color = Color(0.0, 0.0, 0.0, 0.6)
+const INFO_PAD_PX: float = 28.0
+const INFO_GAP_PX: float = 10.0
+const INFO_GLYPH_COLOR: Color = HudSkin.IVORY
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
@@ -168,6 +190,12 @@ var _rules_scroll: float = -1.0
 ## Story 038: the level the list scroll was last aimed at (a level change re-aims it at the newest rule).
 var _rules_for_level: int = -1
 var _drag_active: bool = false
+## 2026-11-07 (user: show the hero, and a button to read the hero's info): the character whose info panel is open
+## ("" = closed) and the clock (s) of the idle animation the cards play.
+var _info_id: String = ""
+var _anim_time: float = 0.0
+## 2026-11-07 (user: the names were big and small): one font size for every card name, set each draw.
+var _name_size: int = NAME_FONT_SIZE
 
 
 func _ready() -> void:
@@ -180,12 +208,44 @@ func _ready() -> void:
 			_hint_id = arg.trim_prefix(DEV_LOCKED_ARG)
 		elif arg == DEV_KIEP_HINT_ARG:
 			_kiep_hint = true
+		elif arg.begins_with(DEV_INFO_ARG):
+			_info_id = arg.trim_prefix(DEV_INFO_ARG)
 
 
 # Redraws every frame, also while inactive: a CanvasItem keeps its last frame until the next
 # redraw, and a transparent screen drawn later (the chapter map) would show the stale title.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_anim_time += delta
 	queue_redraw()
+
+
+## 2026-11-07: the "i" button of card [param card] (top-right inside the plate's gold line, a touch-size square).
+static func info_button_rect(card: Rect2) -> Rect2:
+	var edge: float = INFO_BUTTON_MIN_PX
+	var c := Vector2(card.end.x - INFO_GEM_FROM_CORNER_PX, card.position.y + INFO_GEM_FROM_CORNER_PX)
+	return Rect2(c - Vector2.ONE * edge * 0.5, Vector2.ONE * edge)
+
+
+## 2026-11-07: the info panel (centred over the cards and the level bar).
+static func info_panel_rect(vp: Vector2) -> Rect2:
+	var w: float = vp.x * INFO_PANEL_W
+	return Rect2((vp.x - w) * 0.5, vp.y * INFO_PANEL_TOP, w, vp.y * INFO_PANEL_H)
+
+
+## 2026-11-07: the info panel's close button (top-right of the panel).
+static func info_close_rect(vp: Vector2) -> Rect2:
+	var panel: Rect2 = info_panel_rect(vp)
+	return Rect2(panel.end.x - INFO_BUTTON_MIN_PX - INFO_BUTTON_INSET_PX * 2.0, panel.position.y + INFO_BUTTON_INSET_PX * 2.0, INFO_BUTTON_MIN_PX, INFO_BUTTON_MIN_PX)
+
+
+## The character whose info panel is open ("" = none).
+func get_info_id() -> String:
+	return _info_id
+
+
+## Opens the info panel of [param id] ("" closes it).
+func show_info(id: String) -> void:
+	_info_id = id
 
 
 ## The id whose unlock condition the strip shows ("" = none yet).
@@ -275,6 +335,11 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey:
 		var key := event as InputEventKey
+		if not _info_id.is_empty():
+			if key.pressed and not key.echo and (key.keycode == KEY_ESCAPE or key.keycode == KEY_ENTER or key.keycode == KEY_SPACE):
+				get_viewport().set_input_as_handled()
+				_info_id = ""
+			return
 		if key.pressed and not key.echo and (key.keycode == KEY_ENTER or key.keycode == KEY_KP_ENTER or key.keycode == KEY_SPACE):
 			get_viewport().set_input_as_handled()
 			var unlocked: Array[String] = _flow.get_characters().unlocked_ids()
@@ -305,6 +370,12 @@ func _input(event: InputEvent) -> void:
 	else:
 		return
 	var vp: Vector2 = get_viewport_rect().size
+	# 2026-11-07: an open info panel takes every tap: the close button or a tap outside the panel closes it.
+	if not _info_id.is_empty():
+		get_viewport().set_input_as_handled()
+		if event.device != InputEvent.DEVICE_ID_EMULATION and (info_close_rect(vp).has_point(pos) or not info_panel_rect(vp).has_point(pos)):
+			_info_id = ""
+		return
 	if ScreenLayout.back_button_rect(vp).has_point(pos):
 		get_viewport().set_input_as_handled()
 		if event.device != InputEvent.DEVICE_ID_EMULATION:
@@ -325,7 +396,9 @@ func _input(event: InputEvent) -> void:
 	for i: int in rects.size():
 		if rects[i].has_point(pos):
 			get_viewport().set_input_as_handled()
-			if real:
+			if real and info_button_rect(rects[i]).has_point(pos):
+				_info_id = ids[i]
+			elif real:
 				if not _is_unlocked(ids[i]):
 					_hint_id = ids[i]
 				elif ids[i] == focus_id():
@@ -373,67 +446,184 @@ func _draw() -> void:
 	UiButtons.draw_button(self, back, tr(TEXT_BACK), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, back), true, BUTTON_FONT_SIZE, OUTLINE_WIDTH)
 	var ids: Array[String] = _flow.get_characters().ids()
 	var rects: Array[Rect2] = card_rects(vp)
+	_name_size = _uniform_name_size(rects, ids)
 	for i: int in rects.size():
 		_draw_card(rects[i], ids[i])
 	_draw_kiep_bar(vp)
 	_draw_kiep_rules(vp)
 	if _any_locked(ids):
 		_draw_strip(vp)
+	if not _info_id.is_empty():
+		_draw_info(vp, _info_id)
 
 
 # Story 037: the unlock condition of the tapped locked card (or the hint to tap one).
 func _draw_strip(vp: Vector2) -> void:
 	var strip: Rect2 = strip_rect(vp)
-	HudSkin.panel(self, strip, [0.0, HudSkin.button_cut(strip), 0.0, 0.0], STRIP_BACK, HudSkin.MIST)
+	HudSkin.plate_panel(self, strip, "navy")
 	var text: String = locked_text(_hint_id) if not _hint_id.is_empty() else tr(TEXT_LOCKED_HINT)
 	var pad: float = strip.size.x * 0.02
 	var size: int = _fit(text, strip.size.x - pad * 2.0, STRIP_FONT_SIZE)
 	MenuFont.text(self, Vector2(strip.position.x + pad, strip.get_center().y + size * 0.35), text, size, STRIP_TEXT_COLOR if not _hint_id.is_empty() else HudSkin.TEXT_DIM, HORIZONTAL_ALIGNMENT_CENTER, strip.size.x - pad * 2.0)
 
 
+# 2026-11-07 (user: show the hero, and a button for the info): an ancient plate (grey when locked, gold ring on the
+# focused card, sunk while pressed) with the name, the HP line, the hero's idle animation (a dark silhouette and a
+# padlock while locked) and the "i" button; the rules text lives in the info panel ([method _draw_info]).
 func _draw_card(rect: Rect2, id: String) -> void:
 	var character: Dictionary = _flow.get_characters().get_character(id)
 	var locked: bool = not bool(character.get("unlocked", false))
-	var pressed: bool = not locked and UiButtons.is_pressed_at(self, rect)
+	var info: Rect2 = info_button_rect(rect)
+	var pressed: bool = not locked and UiButtons.is_pressed_at(self, rect) and not UiButtons.is_pressed_at(self, info)
 	var picked: bool = locked and id == _hint_id
 	var focused: bool = not locked and id == focus_id()
-	var cut: float = HudSkin.button_cut(rect)
-	var back: Color = CARD_LOCKED_BACK if locked else CARD_OPEN_BACK
-	if pressed or picked:
-		HudSkin.panel(self, rect, [0.0, cut, 0.0, 0.0], back.lightened(HudSkin.BUTTON_PRESSED_LIGHTEN) if pressed else back, CARD_PRESSED_OUTLINE, 3.0)
-	elif focused:
-		HudSkin.card(self, rect, CARD_OPEN_OUTLINE, true)
-	else:
-		HudSkin.panel(self, rect, [0.0, cut, 0.0, 0.0], back, CARD_LOCKED_OUTLINE if locked else CARD_OPEN_OUTLINE)
-	var scale: float = MIN_FONT_SCALE
-	var pad: float = rect.size.x * CARD_PAD_RATIO
-	var inner := Rect2(rect.position.x + pad, rect.position.y, rect.size.x - pad * 2.0, rect.size.y)
+	HudSkin.plate_panel(self, rect, "grey" if locked else "navy", pressed, 1.0, focused or picked)
 	var name_color: Color = LOCKED_TEXT if locked else NAME_COLOR
 	var hp_color: Color = LOCKED_TEXT if locked else HP_COLOR
-	var body_color: Color = LOCKED_TEXT if locked else BODY_COLOR
-	var passive_color: Color = LOCKED_TEXT if locked else PASSIVE_COLOR
+	var name_box := Rect2(rect.position.x + info.size.x, rect.position.y, rect.size.x - info.size.x * 2.0, rect.size.y)
 	var name_text: String = tr(str(character.get("name_key", id)))
-	_text(inner, _y(rect, NAME_BASELINE), name_text, _fit(name_text, inner.size.x, _fs(NAME_FONT_SIZE, scale), true), name_color, true)
-	_text(inner, _y(rect, HP_BASELINE), tr(TEXT_HP) % int(float(character.get("max_hp", 0.0))), _fs(HP_FONT_SIZE, scale), hp_color)
+	_text(name_box, _y(rect, NAME_BASELINE) + CARD_TEXT_DROP_PX, name_text, _name_size, name_color, true)
+	# 2026-11-07 (user: no HP on the card): HP is in the info panel only.
+	var _unused_hp: Color = hp_color
 	if not locked:
 		_draw_kiep_badge(rect, id)
-	_wrapped(inner, _y(rect, DESC_BASELINE), tr(str(character.get("desc_key", ""))), _fs(DESC_FONT_SIZE, scale), DESC_MAX_LINES, body_color)
-	_divider(inner, _y(rect, DIVIDER_1))
-	var passive_name: String = tr(str(character.get("passive_name_key", "")))
-	_text(inner, _y(rect, PASSIVE_NAME_BASELINE), passive_name, _fit(passive_name, inner.size.x, _fs(PASSIVE_NAME_FONT_SIZE, scale), true), passive_color, true)
-	_wrapped(inner, _y(rect, PASSIVE_DESC_BASELINE), tr(str(character.get("passive_desc_key", ""))), _fs(PASSIVE_DESC_FONT_SIZE, scale), PASSIVE_DESC_MAX_LINES, body_color)
-	_divider(inner, _y(rect, DIVIDER_2))
-	_text(inner, _y(rect, DECK_HEADER_BASELINE), tr(TEXT_DECK), _fs(DECK_HEADER_FONT_SIZE, scale), name_color, true)
-	_wrapped(inner, _y(rect, DECK_BASELINE), _deck_summary(id), _fs(DECK_FONT_SIZE, scale), DECK_MAX_LINES, body_color)
-	var signature_id: String = _signature_id(character)
-	if not locked and not signature_id.is_empty():
-		_divider(inner, _y(rect, DIVIDER_3))
-		var key_base: String = SIGNATURE_KEY_PREFIX + signature_id
-		var sig_text: String = tr(TEXT_SIGNATURE) % tr(key_base + SIGNATURE_NAME_SUFFIX)
-		_text(inner, _y(rect, SIGNATURE_NAME_BASELINE), sig_text, _fit(sig_text, inner.size.x, _fs(SIGNATURE_NAME_FONT_SIZE, scale), true), SIGNATURE_COLOR, true)
-		_wrapped(inner, _y(rect, SIGNATURE_DESC_BASELINE), tr(key_base + SIGNATURE_DESC_SUFFIX), _fs(SIGNATURE_DESC_FONT_SIZE, scale), SIGNATURE_DESC_MAX_LINES, body_color)
+	var area := Rect2(rect.position.x, _y(rect, SPRITE_TOP), rect.size.x, _y(rect, SPRITE_FEET) - _y(rect, SPRITE_TOP))
+	_draw_hero(area.grow_individual(-INFO_BUTTON_INSET_PX * 2.0, 0.0, -INFO_BUTTON_INSET_PX * 2.0, 0.0), id, locked)
 	if locked:
 		_draw_padlock(rect)
+	_draw_info_button(info, locked)
+
+
+# The largest size (<= NAME_FONT_SIZE) at which EVERY card's name fits its name box, so all names share one size.
+func _uniform_name_size(rects: Array[Rect2], ids: Array[String]) -> int:
+	var size: int = NAME_FONT_SIZE
+	for i: int in rects.size():
+		var info: Rect2 = info_button_rect(rects[i])
+		var width: float = rects[i].size.x - info.size.x * 2.0
+		var name_text: String = tr(str(_flow.get_characters().get_character(ids[i]).get("name_key", ids[i])))
+		size = mini(size, _fit(name_text, width, NAME_FONT_SIZE, true))
+	return size
+
+
+## Pure: the frame of [param clip] to show at [param t] seconds (durations in ms; 0-ms frames count as 100 ms; loops).
+static func clip_frame_at(clip: Dictionary, t: float) -> int:
+	var durations: Array = clip.get("durations_ms", [])
+	var frames: Array = clip.get("frames", [])
+	if frames.is_empty():
+		return -1
+	var total: int = 0
+	for i: int in frames.size():
+		total += _frame_ms(durations, i)
+	var ms: int = int(t * 1000.0) % total
+	for i: int in frames.size():
+		var d: int = _frame_ms(durations, i)
+		if ms < d:
+			return i
+		ms -= d
+	return frames.size() - 1
+
+
+static func _frame_ms(durations: Array, i: int) -> int:
+	var d: int = int(durations[i]) if i < durations.size() else 0
+	return d if d > 0 else 100
+
+
+# The hero's idle clip (SpriteSheet unit_<id>), whole-number scaled to fit [param area], feet on its bottom, centred;
+# a dark silhouette while [param locked]. Nothing when the sheet or its texture is missing.
+func _draw_hero(area: Rect2, id: String, locked: bool) -> void:
+	var sheet: SpriteSheet = SpriteSheet.load_unit(id)
+	if sheet == null or sheet.texture() == null or not sheet.has_clip(SPRITE_CLIP):
+		return
+	var clip: Dictionary = sheet.clip(SPRITE_CLIP)
+	var index: int = clip_frame_at(clip, 0.0 if locked else _anim_time)
+	if index < 0:
+		return
+	var src: Rect2i = (clip["frames"] as Array)[index]
+	# Scaled by the height (the frames carry wide empty sides for weapons and casts); what overflows the card's width
+	# is cropped evenly from both sides, in whole art px.
+	var k: int = maxi(floori(area.size.y / src.size.y), 1)
+	var vis_w: int = mini(src.size.x, floori(area.size.x / k))
+	@warning_ignore("integer_division")
+	var crop := Rect2i(src.position.x + (src.size.x - vis_w) / 2, src.position.y, vis_w, src.size.y)
+	var size := Vector2(crop.size) * k
+	var dst := Rect2(Vector2(roundf(area.get_center().x - size.x * 0.5), roundf(area.end.y - size.y)), size)
+	draw_texture_rect_region(PixelFrame.nearest(sheet.texture()), dst, Rect2(crop), LOCKED_SILHOUETTE if locked else Color.WHITE)
+
+
+# 2026-11-07 (user: the "i" button should feel part of the card): a pixel gem (CardFace's, blue; grey on a locked card)
+# set on the card's top-right rim like the cell gem of a skill card, with an Ivory "i" cut into it; [param rect] is the
+# touch square around it, the gem darkens while pressed.
+func _draw_info_button(rect: Rect2, locked: bool) -> void:
+	var s: int = PixelFrame.scale_for(get_viewport_rect().size.y)
+	var edge: float = float(CardFace.V2_GEM_ART * s)
+	var box := Rect2((rect.get_center() - Vector2.ONE * edge * 0.5).round(), Vector2.ONE * edge)
+	var tint: Color = CardFace.PRESSED_TINT if UiButtons.is_pressed_at(self, rect) else Color.WHITE
+	CardFace._draw_pixel_gem(self, box, s, CardFace.GEM_DULL if locked else CardFace.GEM_BLUE, tint)
+	var c: Vector2 = box.get_center()
+	var w: float = float(s * 2)
+	var ink := Color("081327")
+	for o: Vector2 in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(0, 1)]:
+		draw_rect(Rect2(c.x - w * 0.5 + o.x, c.y - w * 2.5 + o.y, w, w), ink)
+		draw_rect(Rect2(c.x - w * 0.5 + o.x, c.y - w + o.y, w, w * 3.0 + o.y * 0.0), ink)
+	draw_rect(Rect2(c.x - w * 0.5, c.y - w * 2.5, w, w), INFO_GLYPH_COLOR)
+	draw_rect(Rect2(c.x - w * 0.5, c.y - w, w, w * 3.0), INFO_GLYPH_COLOR)
+
+
+# 2026-11-07: the info panel of [param id] over a shade: name, HP, description, passive, starter deck, Awakening (and
+# the unlock condition while locked), top to bottom; the close button top-right.
+func _draw_info(vp: Vector2, id: String) -> void:
+	draw_rect(Rect2(Vector2.ZERO, vp), INFO_SHADE)
+	var panel: Rect2 = info_panel_rect(vp)
+	var body: Rect2 = HudSkin.plate_panel(self, panel, "navy")
+	var close: Rect2 = info_close_rect(vp)
+	var cb: Rect2 = HudSkin.plate_panel(self, close, "navy", UiButtons.is_pressed_at(self, close))
+	var arm: float = cb.size.x * 0.22
+	var cc: Vector2 = cb.get_center()
+	draw_line(cc - Vector2(arm, arm), cc + Vector2(arm, arm), INFO_GLYPH_COLOR, 4.0)
+	draw_line(cc + Vector2(-arm, arm), cc + Vector2(arm, -arm), INFO_GLYPH_COLOR, 4.0)
+	var character: Dictionary = _flow.get_characters().get_character(id)
+	var locked: bool = not bool(character.get("unlocked", false))
+	var inner := Rect2(body.position.x + INFO_PAD_PX, body.position.y, body.size.x - INFO_PAD_PX * 2.0, body.size.y)
+	var y: float = body.position.y + INFO_PAD_PX + NAME_FONT_SIZE
+	var name_text: String = tr(str(character.get("name_key", id)))
+	_text(inner, y, name_text, _fit(name_text, inner.size.x - close.size.x * 2.0, NAME_FONT_SIZE + 6, true), NAME_COLOR, true)
+	y += HP_FONT_SIZE + INFO_GAP_PX
+	_text(inner, y, tr(TEXT_HP) % int(float(character.get("max_hp", 0.0))), HP_FONT_SIZE, HP_COLOR)
+	y = _flow_wrapped(inner, y + INFO_GAP_PX + DESC_FONT_SIZE, tr(str(character.get("desc_key", ""))), DESC_FONT_SIZE, DESC_MAX_LINES, BODY_COLOR)
+	y = _info_divider(inner, y)
+	var passive_name: String = tr(str(character.get("passive_name_key", "")))
+	_text(inner, y + PASSIVE_NAME_FONT_SIZE, passive_name, _fit(passive_name, inner.size.x, PASSIVE_NAME_FONT_SIZE, true), PASSIVE_COLOR, true)
+	y = _flow_wrapped(inner, y + PASSIVE_NAME_FONT_SIZE + INFO_GAP_PX + DESC_FONT_SIZE, tr(str(character.get("passive_desc_key", ""))), DESC_FONT_SIZE, PASSIVE_DESC_MAX_LINES, BODY_COLOR)
+	y = _info_divider(inner, y)
+	_text(inner, y + DECK_HEADER_FONT_SIZE, tr(TEXT_DECK), DECK_HEADER_FONT_SIZE, NAME_COLOR, true)
+	y = _flow_wrapped(inner, y + DECK_HEADER_FONT_SIZE + INFO_GAP_PX + DESC_FONT_SIZE, _deck_summary(id), DESC_FONT_SIZE, DECK_MAX_LINES, BODY_COLOR)
+	var signature_id: String = _signature_id(character)
+	if not signature_id.is_empty():
+		y = _info_divider(inner, y)
+		var key_base: String = SIGNATURE_KEY_PREFIX + signature_id
+		var sig_text: String = tr(TEXT_SIGNATURE) % tr(key_base + SIGNATURE_NAME_SUFFIX)
+		_text(inner, y + SIGNATURE_NAME_FONT_SIZE, sig_text, _fit(sig_text, inner.size.x, SIGNATURE_NAME_FONT_SIZE + 2, true), SIGNATURE_COLOR, true)
+		y = _flow_wrapped(inner, y + SIGNATURE_NAME_FONT_SIZE + INFO_GAP_PX + DESC_FONT_SIZE, tr(key_base + SIGNATURE_DESC_SUFFIX), DESC_FONT_SIZE, SIGNATURE_DESC_MAX_LINES, BODY_COLOR)
+	if locked:
+		var lock_text: String = locked_text(id)
+		_text(inner, body.end.y - INFO_PAD_PX, lock_text, _fit(lock_text, inner.size.x, STRIP_FONT_SIZE), STRIP_TEXT_COLOR)
+
+
+# A divider under the block ending at [param y]; returns the next block's top.
+func _info_divider(inner: Rect2, y: float) -> float:
+	var at: float = y + INFO_GAP_PX
+	_divider(inner, at)
+	return at + INFO_GAP_PX
+
+
+# _wrapped from baseline [param y]; returns the bottom of the drawn block.
+func _flow_wrapped(rect: Rect2, y: float, text: String, size: int, max_lines: int, color: Color) -> float:
+	if text.is_empty():
+		return y - size
+	_wrapped(rect, y, text, size, max_lines, color)
+	var f: Font = HudSkin.font()
+	var lines: int = mini(roundi(f.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, size, max_lines).y / f.get_height(size)), max_lines)
+	return y - size + f.get_height(size) * maxi(lines, 1)
 
 
 # Story 038: the "Kiếp N" badge (N = best level won, hidden at -1) at the right end of the HP line of an unlocked card.
@@ -498,11 +688,11 @@ func _rules_scroll_snapped(vp: Vector2) -> float:
 # Story 038: the title row and the rules of levels 1..k (the newest highlighted); the list starts scrolled to its end.
 func _draw_kiep_rules(vp: Vector2) -> void:
 	var rect: Rect2 = rules_rect(vp)
-	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], KIEP_RULES_BACK, HudSkin.MIST)
-	var pad: float = 12.0
+	HudSkin.plate_panel(self, rect, "navy")
+	var pad: float = 16.0
 	var lines: Array[String] = _rules_lines()
 	var title: String = tr(TEXT_KIEP_RULES_TITLE) if not lines.is_empty() else tr(TEXT_KIEP_NONE)
-	MenuFont.text(self, Vector2(rect.position.x + pad, rect.position.y + KIEP_RULES_FONT_SIZE + 1.0), title, KIEP_RULES_FONT_SIZE, PASSIVE_COLOR, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - pad * 2.0, true)
+	MenuFont.text(self, Vector2(rect.position.x + pad, rect.position.y + KIEP_RULES_FONT_SIZE + 8.0), title, KIEP_RULES_FONT_SIZE, PASSIVE_COLOR, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - pad * 2.0, true)
 	if lines.is_empty():
 		return
 	var level: int = _flow.get_kiep_level()
@@ -510,7 +700,7 @@ func _draw_kiep_rules(vp: Vector2) -> void:
 		_rules_for_level = level
 		_rules_scroll = _rules_max_scroll(vp)
 	_rules_scroll = clampf(_rules_scroll, 0.0, _rules_max_scroll(vp))
-	var view := Rect2(rect.position.x, rect.position.y + KIEP_RULES_HEADER_HEIGHT, rect.size.x, _rules_view_height(vp))
+	var view := Rect2(rect.position.x, rect.position.y + KIEP_RULES_HEADER_HEIGHT + 7.0, rect.size.x, _rules_view_height(vp))
 	var top_y: float = view.position.y - _rules_scroll_snapped(vp)
 	for i: int in lines.size():
 		var y: float = top_y + KIEP_RULES_LINE_HEIGHT * (i + 1)

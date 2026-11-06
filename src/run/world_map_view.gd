@@ -371,19 +371,19 @@ func _draw_strip(vp: Vector2) -> void:
 		if i == count:
 			var current_final: bool = floor_index >= count
 			width = SELECTED_OUTLINE_WIDTH if current_final else OUTLINE_WIDTH
-			HudSkin.panel(self, rect, cuts, STRIP_FINAL_BACK, HudSkin.GRID_LIGHT if current_final else STRIP_FINAL_OUTLINE, 3.0 if current_final else HudSkin.PANEL_LINE_WIDTH)
+			HudSkin.plate_panel(self, rect, "wine", false, 1.0, current_final)
 			color = STRIP_FINAL_TEXT
 			label = tr(TEXT_FINAL_NAME)
 		elif i < floor_index:
-			HudSkin.card(self, rect, STRIP_PAST_OUTLINE)
+			HudSkin.plate_panel(self, rect, "navy")
 			color = STRIP_TEXT
 		elif i == floor_index:
 			width = SELECTED_OUTLINE_WIDTH
-			HudSkin.card(self, rect, STRIP_FUTURE_OUTLINE, true)
+			HudSkin.plate_panel(self, rect, "navy", false, 1.0, true)
 			color = STRIP_TEXT
 			region = tr(TEXT_CHOOSING)
 		else:
-			HudSkin.card(self, rect, STRIP_FUTURE_OUTLINE, false, true)
+			HudSkin.plate_panel(self, rect, "grey")
 		if i < count and i < path.size():
 			region = _flow.region_name(path[i])
 		var inner: float = rect.size.x - width * 2.0
@@ -404,11 +404,13 @@ func _draw_card(vp: Vector2, base: Rect2, region_id: String, index: int) -> void
 		outline = CARD_PRESSED_OUTLINE
 	var preview: Dictionary = _flow.region_preview(region_id)
 	# 2026-10-31: card face, the accent header band inside its chamfer, then the edge again on top of the band.
-	var cut: float = HudSkin.button_cut(rect)
-	HudSkin.card(self, rect, outline, selected)
-	var band: Rect2 = Rect2(rect.position, Vector2(rect.size.x, rect.size.y * CARD_BAND_RATIO))
-	HudSkin.panel(self, band, [0.0, cut, 0.0, 0.0], CARD_ACCENTS[index % CARD_ACCENTS.size()], CLEAR, 0.0)
-	HudSkin.panel(self, rect, [0.0, cut, 0.0, 0.0], CLEAR, HudSkin.GRID_LIGHT if selected else outline, 3.0 if (selected or outline == CARD_PRESSED_OUTLINE) else HudSkin.PANEL_LINE_WIDTH)
+	# 2026-11-07: the ancient plate (sunk while pressed, gold ring when selected), the region's accent band inside its
+	# inner gold line.
+	var body: Rect2 = HudSkin.plate_panel(self, rect, "navy", outline == CARD_PRESSED_OUTLINE, 1.0, selected)
+	var inset: float = UiButtons.plate_inset(UiButtons.ui_scale(self))
+	var inner_body: Rect2 = body.grow(-inset)
+	var band: Rect2 = Rect2(inner_body.position, Vector2(inner_body.size.x, rect.size.y * CARD_BAND_RATIO - inset))
+	draw_rect(band, CARD_ACCENTS[index % CARD_ACCENTS.size()])
 	var inner: float = rect.size.x * (1.0 - CARD_INSET_RATIO * 2.0)
 	var region_name: String = str(preview.get("name", _flow.region_name(region_id)))
 	_card_line(rect, CARD_NAME_BASELINE, region_name, CARD_NAME_FONT_SIZE, CARD_NAME_TEXT, inner, true)
@@ -463,7 +465,7 @@ func _decimal(value: float) -> String:
 
 func _draw_notice(vp: Vector2) -> void:
 	var band: Rect2 = ScreenLayout.map_notice_rect(vp)
-	HudSkin.panel(self, band, [0.0, HudSkin.BUTTON_CUT_MAX, 0.0, HudSkin.BUTTON_CUT_MAX], NOTICE_BACK, NOTICE_OUTLINE, OUTLINE_WIDTH)
+	HudSkin.plate_panel(self, band, "navy")
 	var text: String = tr(_notice_key) % _notice_args if not _notice_args.is_empty() else tr(_notice_key)
 	_text(band, band.position.y + band.size.y * NOTICE_BASELINE, text, _fit(text, band.size.x - ScreenLayout.side_margin(vp) * 2.0, NOTICE_FONT_SIZE, true), NOTICE_TEXT, true)
 	_text(band, band.position.y + band.size.y * NOTICE_SUB_BASELINE, tr(TEXT_NOTICE_DISMISS), NOTICE_SUB_FONT_SIZE, NOTICE_SUB_TEXT)
