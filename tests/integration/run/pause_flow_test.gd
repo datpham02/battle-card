@@ -70,6 +70,9 @@ func _run() -> void:
 	var combat: CombatView = _view(rc)
 	_check(not combat.debug_overlay, "debug_overlay false by default")
 	combat.get_boss().set_active(false)
+	# 2026-11-06: card time set here, never taken from the player's user://settings.json. With "unlimited" there the
+	# menu never times out, and a random hand with no card castable on a 2-cell cut left it open (8 FAILs, flaky).
+	combat.set_card_time(SettingsStore.CARD_TIME_NORMAL)
 	var hold: HoldSlots = (rc.get_battle().get_node("HoldSlotsView") as HoldSlotsView).get_slots()
 	var actor: CutActor = combat.get_cut_actor()
 	var state: CombatState = combat.get_state()
@@ -118,7 +121,10 @@ func _run() -> void:
 	_check(not combat.can_pause() and not rc.can_pause(), "can_pause false while the menu is open")
 	rc.set_paused(true)
 	_check(not rc.is_paused(), "pause refused while the menu is open")
-	_check(flow_cut.choose(flow_cut.get_hand()[0]) or flow_cut.choose("kiem_khi") or true, "attempt a choice")
+	# The first card of the hand castable on this cut; none (an unlucky draw) -> the menu's timeout casts the default.
+	for sid: String in flow_cut.get_hand():
+		if flow_cut.is_menu_open():
+			flow_cut.choose(sid)
 	if flow_cut.is_menu_open():
 		flow_cut.tick_real(10.0)
 	_check(not flow_cut.is_menu_open(), "menu closed (chosen or timed out)")
