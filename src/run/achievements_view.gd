@@ -376,14 +376,16 @@ func _draw_scroll_bar(vp: Vector2, view: Rect2) -> void:
 	var track_h: float = view.size.y
 	var bar_h: float = maxf(track_h * view.size.y / (view.size.y + limit), 40.0)
 	var y: float = view.position.y + (track_h - bar_h) * (_scroll / limit)
-	draw_rect(Rect2(vp.x - 8.0, y, 5.0, bar_h), Color(CELL_OUTLINE, 0.7))
+	draw_rect(Rect2(vp.x - 8.0, y, 5.0, bar_h), Color(HudSkin.GRID_LIGHT, 0.8))
 
 
 func _draw_cell(rect: Rect2, id: String, cfg: AchievementsConfig, progress: ProgressState) -> void:
 	var def: Dictionary = cfg.get_def(id)
 	var earned: bool = progress.has_achievement(id)
 	var hidden: bool = bool(def.get("hidden", false)) and not earned
-	HudSkin.panel(self, rect, [0.0, HudSkin.button_cut(rect), 0.0, 0.0], CELL_BACK if earned else CELL_BACK_LOCKED, CELL_OUTLINE_EARNED if earned else CELL_OUTLINE, 2.0 if earned else HudSkin.PANEL_LINE_WIDTH)
+	# 2026-11-07 (user: the achievement borders did not match the game): the ancient plate, navy when earned (with the
+	# gold ring), grey while locked; the contents sit on the plate's body.
+	rect = HudSkin.plate_panel(self, rect, "navy" if earned else "grey", false, 1.0, earned)
 	var pad: float = rect.size.x * PAD_RATIO
 	var medal_edge: float = minf(rect.size.y * MEDAL_SIZE_RATIO * 1.4, rect.size.x * MEDAL_SIZE_RATIO * 0.6)
 	var medal := Rect2(rect.position + Vector2(pad, pad), Vector2(medal_edge, medal_edge))
@@ -435,8 +437,7 @@ func _draw_detail(vp: Vector2, cfg: AchievementsConfig, progress: ProgressState)
 	var hidden: bool = bool(def.get("hidden", false)) and not earned
 	draw_rect(Rect2(Vector2.ZERO, vp), DIM_COLOR)
 	var panel: Rect2 = panel_rect(vp)
-	var cut: float = HudSkin.button_cut(panel)
-	HudSkin.panel(self, panel, [0.0, cut, 0.0, cut], PANEL_BACK, PANEL_OUTLINE, OUTLINE_WIDTH)
+	panel = HudSkin.plate_panel(self, panel, "navy")
 	var pad: float = panel.size.x * 0.04
 	var medal := Rect2(panel.position + Vector2(pad, pad), Vector2.ONE * panel.size.y * 0.16)
 	draw_medal(self, medal, earned, hidden)

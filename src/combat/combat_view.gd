@@ -384,7 +384,9 @@ func _ready() -> void:
 	_cut_flow = CutFlow.new(_skill_config, _cooldowns)
 	_cut_flow.level_of = Callable(self, "get_card_level")
 	_cut_flow.availability_context_fn = Callable(self, "get_availability_context")
-	set_card_time(card_time_mode if not card_time_mode.is_empty() else SettingsStore.shared().get_card_time())
+	# 2026-11-07 (user: drop the "Thời gian chọn lá" setting, use the default): every match uses the normal card time;
+	# a value saved earlier is ignored. Tests may still set card_time_mode.
+	set_card_time(card_time_mode if not card_time_mode.is_empty() else SettingsStore.CARD_TIME_NORMAL)
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
 	_apply_brain_params(brain_config)

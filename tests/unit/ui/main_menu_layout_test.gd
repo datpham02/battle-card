@@ -32,7 +32,7 @@ func _initialize() -> void:
 		ck("%s: the name band is on the left" % tag, ScreenLayout.title_rect(vp).end.x <= vp.x * 0.5)
 		ck("%s: language button clear of the column" % tag, not ScreenLayout.title_lang_button_rect(vp).intersects(rects[-1]))
 		var rows: Array[Rect2] = SettingsView.row_rects(vp)
-		ck("%s: four settings rows, no movement row (pad mode removed 2026-11-01)" % tag, rows.size() == SettingsView.ROWS.size() and rows.size() == 4 and not SettingsView.ROWS.has("movement"))
+		ck("%s: three settings rows, no movement or card time row (removed 2026-11-01 / 2026-11-07)" % tag, rows.size() == SettingsView.ROWS.size() and rows.size() == 3 and not SettingsView.ROWS.has("movement") and not SettingsView.ROWS.has("card_time"))
 		var rows_ok: bool = true
 		for i: int in rows.size():
 			rows_ok = rows_ok and rows[i].size.y >= MIN_TOUCH_PX * vp.y / 720.0 - 0.5 and rows[i].end.y <= vp.y

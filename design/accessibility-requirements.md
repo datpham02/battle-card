@@ -20,7 +20,7 @@
 
 **Target Tier**: **Standard**, adjusted for a touch-only game (user decision, 2026-10-28).
 
-**Rationale**: Đây là roguelike thời gian thực trên điện thoại, chơi bằng cảm ứng. Rào cản lớn nhất nằm ở vận động và thời gian (kéo khối, hai ngón cùng lúc, đòn boss chạy theo đồng hồ) và ở thị giác (chữ nhỏ trên màn hẹp, cảnh báo dựa vào màu đỏ/xanh). Standard giải quyết cả hai: chỉnh cỡ chữ, chế độ mù màu, nới thời gian chọn lá, kèm các điều chỉnh cho cảm ứng (thuận tay trái, chạm thay cho kéo, cỡ điều khiển). Basic bỏ mất chế độ mù màu và nới thời gian; với game có ô đỏ báo đòn là cơ chế sống còn, như vậy sẽ loại người chơi mù màu đỏ–xanh (khoảng 8 % nam giới). Comprehensive cần dựng lại toàn bộ giao diện (hiện là `Node2D` tự vẽ, không có `Control`) để dùng AccessKit; công sức lớn trong khi giao diện đang chờ art. Cam kết Standard làm kịp bằng phần lớn những gì `design/ux/hud.md` đã quyết.
+**Rationale**: Đây là roguelike thời gian thực trên điện thoại, chơi bằng cảm ứng. Rào cản lớn nhất nằm ở vận động và thời gian (kéo khối, hai ngón cùng lúc, đòn boss chạy theo đồng hồ) và ở thị giác (chữ nhỏ trên màn hẹp, cảnh báo dựa vào màu đỏ/xanh). Standard giải quyết cả hai: chỉnh cỡ chữ, chế độ mù màu, kèm các điều chỉnh cho cảm ứng (thuận tay trái, chạm thay cho kéo, cỡ điều khiển). Basic bỏ mất chế độ mù màu; với game có ô đỏ báo đòn là cơ chế sống còn, như vậy sẽ loại người chơi mù màu đỏ–xanh (khoảng 8 % nam giới). Comprehensive cần dựng lại toàn bộ giao diện (hiện là `Node2D` tự vẽ, không có `Control`) để dùng AccessKit; công sức lớn trong khi giao diện đang chờ art. Cam kết Standard làm kịp bằng phần lớn những gì `design/ux/hud.md` đã quyết.
 
 **Cách áp dụng Standard cho game cảm ứng:**
 
@@ -30,7 +30,7 @@
 | Cỡ chữ chỉnh được | 100 / 115 / 130 % |
 | Ít nhất một chế độ mù màu | **Nội dung cần định lại** (2026-10-29): bóng khối đã đổi sang màu khối của nhân vật, trúng/trượt đọc bằng ✓/✗ và viền; sọc và hình biểu tượng giữ nguyên. Xem Open Questions |
 | Âm lượng nhạc và hiệu ứng riêng | Khi game có âm thanh (hiện chưa có) |
-| Không thao tác tính giờ nào không nới hoặc tắt được | Thời gian chọn lá: 3 s / 6 s / không giới hạn. Né đòn boss theo thời gian thực là bản chất game (Known Intentional Limitations) |
+| Không thao tác tính giờ nào không nới hoặc tắt được | **Chưa đạt (chấp nhận 2026-11-07):** thời gian chọn lá cố định 3 s, người dùng bỏ tùy chọn nới. Né đòn boss theo thời gian thực là bản chất game (Known Intentional Limitations) |
 | Remap điều khiển | Không áp dụng (chỉ cảm ứng). Thay bằng thuận tay trái, cỡ điều khiển 90–110 %, chạm thay cho kéo |
 | Phụ đề | Không áp dụng (không có thoại) |
 
@@ -38,7 +38,7 @@
 - **Giảm chuyển động**: vốn thuộc Comprehensive, nâng lên vì game có nhiều nhấp nháy và rung báo hiệu.
 - **Thuận tay trái**: đảo pad và túi khối, vì điều khiển chia ngón trái/phải.
 - **Rung thay cho âm cảnh báo**: vốn thuộc Exemplary; game chưa có âm thanh, cảnh báo hình là kênh chính, rung là kênh thứ ba.
-- **Nới thời gian chọn lá**: menu 3 giây có tùy chọn 3 s / 6 s / không giới hạn.
+- ~~**Nới thời gian chọn lá**~~: bỏ 2026-11-07 theo quyết định người dùng; menu luôn 3 s (xem Known Intentional Limitations).
 
 **Features explicitly out of scope** (đều nằm trong Known Intentional Limitations):
 - Trình đọc màn hình: giao diện chưa dùng `Control` nên AccessKit không áp dụng được.
@@ -108,7 +108,7 @@ Người dùng duyệt 2026-10-28. **Specified** = đã quyết ở mức thiế
 | Cỡ điều khiển | Standard (điều chỉnh) | Pad, túi khối | Specified | 90 / 100 / 110 % |
 | Thay thế cho thao tác giữ | Standard | Mọi thao tác giữ | Not Started | Các thao tác giữ trong game: (1) **giữ 0,6 s để xác nhận Giết** → tùy chọn "chạm hai lần để xác nhận"; (2) **giữ để xem chi tiết** lá/bảo vật → thêm biểu tượng ⓘ chạm một lần |
 | Thay thế cho thao tác dồn dập | Standard | Pad | Not Started | **Giữ nút pad để lặp bước** theo nhịp hồi bước. Joystick nổi (điều khiển duy nhất từ 2026-11-01) đã lặp khi giữ; chế độ `pad` đã bỏ |
-| Điều chỉnh thời gian thao tác | Standard | Mọi thao tác tính giờ | Specified | Chỉ **thời gian chọn lá** (menu 3 s) chỉnh được: 3 s / 6 s / không giới hạn. Các thao tác tính giờ khác: Tập trung (4–5 s), cửa sổ ghép (+1,5 s), giữ Giết (0,6 s) đã nêu ở trên. Né đòn boss là bản chất game (Known Intentional Limitations) |
+| Điều chỉnh thời gian thao tác | Standard | Mọi thao tác tính giờ | Specified | Không thao tác nào chỉnh được: **thời gian chọn lá** cố định 3 s (tùy chọn 3 s / 6 s / không giới hạn bỏ 2026-11-07). Các thao tác tính giờ khác: Tập trung (4–5 s), cửa sổ ghép (+1,5 s), giữ Giết (0,6 s) đã nêu ở trên. Né đòn boss là bản chất game (Known Intentional Limitations) |
 | Hỗ trợ ngắm | Standard | — | **Không áp dụng** | Không có ngắm; báo trúng hiện sẵn |
 | Chạy tự động, hỗ trợ nền tảng | Standard | — | **Không áp dụng** | Không có |
 | Dời vị trí HUD | Comprehensive | — | **Ngoài phạm vi** | Thay bằng thuận tay trái |
@@ -138,7 +138,7 @@ Người dùng duyệt 2026-10-28.
 | **Dòng nhắc một lần** (Khối Lạ, Bộ khối) | 4 s → **6 s** | Không, nhưng mang nội dung hướng dẫn | Đổi lên 6 s; đọc lại được ở "Xem lại hướng dẫn" |
 | **Màn kết quả trận tự tiếp tục** | 3 s (`between_sec`) | Không | Giữ mặc định 3 s; thêm tùy chọn **tự tiếp tục: 3 s / 8 s / Tắt**; nút Tiếp tục luôn có |
 | Menu 4 lá | 3 s | **Có** | Nới được: 3 s / 6 s / không giới hạn |
-| Gợi ý ghép (E-14) | Bằng thời gian chọn lá | Có (gợi ý cách ghép) | Đi theo menu 4 lá nên nới được cùng lúc; không phải dòng nhắc một lần |
+| Gợi ý ghép (E-14) | Bằng thời gian chọn lá | Có (gợi ý cách ghép) | Đi theo menu 4 lá (3 s cố định); không phải dòng nhắc một lần |
 
 ---
 
@@ -196,7 +196,7 @@ Người dùng duyệt 2026-10-28. Game chỉ phát hành trên điện thoại,
 |---|---|---|---|---|---|---|
 | Di chuyển (pad) | Nút ≥ 96 px, viền hồi bước | Giữ để lặp, thuận tay trái, cỡ 90–110 % | — | — | Một phần | Giữ để lặp chưa có mã |
 | Đặt khối và tung phép | Báo trúng có ✓/✗, bảng màu thay thế | Chạm khối rồi chạm ô, một ngón | Nhãn số ô và sát thương | — | Một phần | Cần xác nhận đường một ngón trong build |
-| Menu chọn lá | Chữ ≥ 24 px, "cần N ô" | Thẻ ≥ 96 px | Thời gian 3 s / 6 s / không giới hạn | — | Có (thiết kế) | Chưa dựng |
+| Menu chọn lá | Chữ ≥ 24 px, "cần N ô" | Thẻ ≥ 96 px | Thời gian 3 s cố định (bỏ tùy chọn 2026-11-07) | — | Có (thiết kế) | Chưa dựng |
 | Đòn và cảnh báo của boss | Sọc + nhãn đếm ngược | — | Cảnh báo không bị che | Rung, âm dự kiến | Có (thiết kế) | Né theo thời gian thực: Known Intentional Limitations |
 | Thức Tỉnh | Chữ "SẴN SÀNG", giảm chuyển động | Nút ≥ 96 px | — | — | Có (thiết kế) | — |
 | Địa hình vùng | Sọc, nét đứt, nhãn | — | Cảnh báo 0,8–1 s | — | Có (thiết kế) | — |
@@ -221,14 +221,14 @@ Người dùng duyệt 2026-10-28.
 | Đường một ngón | Chơi trọn một chuyến leo chỉ bằng một ngón tuần tự | Đi, nhặt, đặt, chọn lá, Thức Tỉnh | Hoàn thành mọi thao tác, không cần hai ngón cùng lúc | qa-tester | Not Started |
 | Thay thế thao tác giữ | Bật chạm hai lần và ⓘ | Xác nhận Giết, xem chi tiết lá và bảo vật | Không thao tác nào cần giữ | qa-tester | Not Started |
 | Giữ để lặp | Giữ nút pad | Đi liên tục qua 5 ô | Lặp đúng nhịp hồi bước; không bước thừa | qa-tester | Not Started |
-| Thời gian chọn lá | Đặt 6 s và không giới hạn | Menu 4 lá, hết giờ, không hết giờ | Hết giờ tự chọn đúng; không giới hạn thì chờ | qa-tester | Not Started |
+| ~~Thời gian chọn lá~~ | Bỏ 2026-11-07 (không còn tùy chọn) | — | — | — | N/A |
 | Giảm chuyển động | Bật rồi chơi một chuyến leo | Máu thấp, Thức Tỉnh sẵn sàng, NGẮT!, đổi pha | Không nhấp nháy, nhịp đập, rung; thay bằng dấu tĩnh | ux-designer | Not Started |
 | Cỡ chữ 130 % | Đặt 130 % | Mọi màn, các sân nhỏ nhất | Không chữ nào bị cắt hay đè lên ô đỏ | ux-designer | Not Started |
 | Cỡ điều khiển và thuận tay trái | Đặt 90 % / 110 % và bật đảo | Pad, túi khối, kéo khối | Vẫn đủ ≥ 96 px (ở 100 %); kéo khối hoạt động | qa-tester | Not Started |
 | Chớp sáng | Phân tích hiệu ứng | Mọi hiệu ứng và biểu ngữ | Không chớp > 3 lần/giây; không chớp toàn màn hình | ux-designer | Not Started |
 | Rung | Thử trên máy thật | Boss bắt đầu đòn, bị trúng | Rung ngắn; tắt được | qa-tester | Not Started |
 | Thử với người dùng: mù màu | Người mù màu đỏ–xanh chơi một buổi | Cả hai bảng màu | Hoàn thành không cần hỏi về màu | producer | Not Started |
-| Thử với người dùng: vận động | Người chơi một tay hoặc có hạn chế vận động | Đường một ngón, thời gian chọn lá, giữ để lặp | Hoàn thành nội dung trong mức chấp nhận được | producer | Not Started |
+| Thử với người dùng: vận động | Người chơi một tay hoặc có hạn chế vận động | Đường một ngón, menu 3 s, giữ để lặp | Hoàn thành nội dung trong mức chấp nhận được | producer | Not Started |
 
 ---
 
@@ -239,7 +239,8 @@ Mỗi mục là một rủi ro. Người dùng duyệt 2026-10-28.
 | Feature | Tier Required | Why Not Included | Risk / Impact | Mitigation |
 |---|---|---|---|---|
 | Trình đọc màn hình (TalkBack, VoiceOver, AccessKit) | Comprehensive | Giao diện là `Node2D` tự vẽ; cần dựng lại menu thành `Control` và chưa xác nhận AccessKit chạy trên di động | **Cao với người mù**; game thời gian thực trên lưới vốn khó dùng cho người mù | Ghi rõ; xem lại nếu dựng lại menu thành `Control` |
-| Né đòn thời gian thực không làm chậm hơn được | Standard | Là bản chất game | Người có phản xạ chậm khó né | Chậm 0,2× khi đặt khối, Tập trung dừng hẳn, cảnh báo có đếm ngược, thời gian chọn lá nới được |
+| Né đòn thời gian thực không làm chậm hơn được | Standard | Là bản chất game | Người có phản xạ chậm khó né | Chậm 0,2× khi đặt khối, Tập trung dừng hẳn, cảnh báo có đếm ngược |
+| Nới thời gian chọn lá (3 s / 6 s / không giới hạn) | Standard | Người dùng bỏ 2026-11-07: giữ nhịp trận thống nhất, Cài đặt gọn hơn | Người chơi một tay hoặc phản xạ chậm có 3 s cố định để chọn lá | Trận chậm 0,2× khi menu mở, hết giờ tự chọn lá; giá trị cũ trong save bị bỏ qua |
 | Chế độ dễ hơn Giao Kèo 0 | Comprehensive | Ảnh hưởng cân bằng; chưa có dữ liệu chơi thử (TD-006) | Người thấy độ khó nền quá cao không có lối thoát | Mở khóa nội dung dần; xem lại sau buổi chơi thử |
 | Chế độ tương phản cao | Comprehensive | Ngoài công sức hiện tại | Người thị lực kém | Tương phản ≥ 4,5 : 1, viền chữ, tín hiệu không chỉ bằng màu, cỡ chữ 130 % |
 | Điều chỉnh độ sáng trong game | Basic | Điện thoại đã có độ sáng hệ điều hành | Thấp | Dùng độ sáng của hệ điều hành |
@@ -282,7 +283,7 @@ Mỗi mục là một rủi ro. Người dùng duyệt 2026-10-28.
 | **Mở lại 2026-11-01:** người chơi cần nút di chuyển nhìn thấy, cố định (một ngón, không kéo) đi bằng gì? Chế độ `controls.movement = pad` từng trả lời câu này nhưng đã bỏ theo quyết định người dùng 2026-11-01 (joystick là điều khiển duy nhất). Phương án: chạm ô kề để bước, hoặc đưa lại pad dưới dạng tùy chọn trợ năng | ux-designer + người dùng | Trước story Cài đặt | Mở |
 | Godot 4.6 có API đọc cài đặt "giảm chuyển động" của hệ điều hành? | ui-programmer | Khi làm màn Cài đặt | Mở |
 | AccessKit chạy trên Android/iOS ở Godot 4.6? Có đáng dựng lại menu bằng `Control`? | technical-director | Trước khi cân nhắc nâng lên Comprehensive | Mở |
-| Thời gian chọn lá "không giới hạn": trận tạm dừng hẳn hay vẫn chậm 0,2×? Ảnh hưởng cân bằng | game-designer | Trước story Cài đặt | Mở |
+| Thời gian chọn lá "không giới hạn": trận tạm dừng hẳn hay vẫn chậm 0,2×? Ảnh hưởng cân bằng | game-designer | Trước story Cài đặt | Đóng 2026-11-07: tùy chọn bị bỏ, menu 3 s cố định |
 | Có thêm chế độ dễ hơn Giao Kèo 0? | game-designer | Sau buổi chơi thử (TD-006) | Mở |
 | Màn Cài đặt chứa mọi tùy chọn: story riêng | producer | Sau story HUD | Mở |
 | Khi game có âm thanh: bus Nhạc/Hiệu ứng, thanh trượt trong Cài đặt và Tạm dừng | audio-director | Trước khi phát hành âm thanh | Mở |

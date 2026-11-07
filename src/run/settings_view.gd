@@ -5,7 +5,7 @@ extends Node2D
 ## that shows the current value and cycles it on tap:
 ## - Control hints: on / off ([method SettingsStore.set_show_control_hints]).
 ## - Reduce motion: on / off ([method SettingsStore.set_reduce_motion]).
-## - Card pick time: 3 s / 6 s / no limit ([method SettingsStore.cycle_card_time]).
+## - (Card pick time removed 2026-11-07: matches always use the normal card time.)
 ## - Language: VI / EN ([method GameFlow.toggle_locale]).
 ## 2026-11-01 (user decision): the Movement row is gone with the pad mode (the joystick is the only movement
 ## control), so the four rows get back a comfortable height.
@@ -54,7 +54,8 @@ const TEXT_CARD_TIME_HINT: String = "ui.settings.card_time_hint"
 const TEXT_CARD_TIME_VALUES: Dictionary = {"normal": "ui.settings.card_time_normal", "long": "ui.settings.card_time_long",
 	"unlimited": "ui.settings.card_time_unlimited"}
 ## Row ids, top to bottom.
-const ROWS: Array[String] = ["hints", "motion", "card_time", "language"]
+## 2026-11-07 (user): the card time row is gone; matches use the normal card time (CombatView).
+const ROWS: Array[String] = ["hints", "motion", "language"]
 
 ## Path to the GameFlow (the parent by default).
 @export var flow_path: NodePath = NodePath("..")
