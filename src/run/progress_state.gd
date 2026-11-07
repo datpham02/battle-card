@@ -55,6 +55,11 @@ var _seen_unlocks: Array[String] = []
 ## ever won (-1 = never won). A missing id reads as 0 / -1.
 var _kiep_unlocked: Dictionary = {}
 var _kiep_best_won: Dictionary = {}
+## Save slots (2026-11-07): seconds of finished / dropped runs (run clocks banked by [method clear_run] and by a new
+## run replacing an old one in [method set_run]) and the unix time of the last save (0 = never). Optional keys
+## `play_time_banked` / `saved_at`, read from any version (no version bump: older builds ignore them).
+var _play_time_banked: float = 0.0
+var _saved_at: int = 0
 
 
 ## True when the boss of region [param region_id] was ever beaten.
@@ -322,13 +327,47 @@ func record_boss_clear() -> void:
 
 
 ## Stores the run in progress (a snapshot: [method RunSession.to_dict]).
+## A different run (other seed or character) replacing the stored one banks the old run's clock first.
 func set_run(session: RunSession) -> void:
-	_run = session.to_dict()
+	var next: Dictionary = session.to_dict()
+	if not _run.is_empty() and (_run.get("run_seed") != next.get("run_seed") or _run.get("character") != next.get("character")):
+		_bank_run_time()
+	_run = next
 
 
-## Forgets the run in progress.
+## Forgets the run in progress (its clock is banked into the play time).
 func clear_run() -> void:
+	_bank_run_time()
 	_run = {}
+
+
+## Save slots: total play time in seconds (banked runs + the clock of the run in progress).
+func get_play_time_sec() -> float:
+	return _play_time_banked + _run_elapsed()
+
+
+## Save slots: adds [param sec] (>= 0) to the banked play time.
+func add_play_time(sec: float) -> void:
+	_play_time_banked += maxf(sec, 0.0)
+
+
+## Save slots: unix time of the last save (0 = never saved).
+func get_saved_at() -> int:
+	return _saved_at
+
+
+## Save slots: stamps the last-save time (ProgressStore.save_state does it on every save).
+func set_saved_at(unix_sec: int) -> void:
+	_saved_at = maxi(unix_sec, 0)
+
+
+func _run_elapsed() -> float:
+	var raw: Variant = _run.get("elapsed", 0.0)
+	return maxf(float(raw), 0.0) if typeof(raw) in [TYPE_INT, TYPE_FLOAT] else 0.0
+
+
+func _bank_run_time() -> void:
+	_play_time_banked += _run_elapsed()
 
 
 ## True when a run is in progress.
@@ -408,6 +447,7 @@ func to_json() -> String:
 		"milestones": _milestones, "achievements": _achievements, "seen_unlocks": _seen_unlocks,
 		"kiep_unlocked": _kiep_unlocked, "kiep_best_won": _kiep_best_won,
 		"run_in_progress": null if _run.is_empty() else _run,
+		"play_time_banked": _play_time_banked, "saved_at": _saved_at,
 	})
 
 
@@ -435,6 +475,8 @@ static func from_json(text: String, config: ChaptersConfig = null) -> ProgressSt
 		push_warning("ProgressState: unsupported save version, starting empty")
 		return state
 	state.set_locale(str(data.get("locale", DEFAULT_LOCALE)))
+	state._play_time_banked = maxf(_to_float(data.get("play_time_banked", 0.0)), 0.0)
+	state._saved_at = maxi(_to_int(data.get("saved_at", 0)), 0)
 	if version == 1:
 		return state
 	if version >= 4:
@@ -536,3 +578,7 @@ static func _clean_ids(raw: Variant) -> Array[String]:
 
 static func _to_int(value: Variant) -> int:
 	return int(value) if typeof(value) in [TYPE_INT, TYPE_FLOAT] else 0
+
+
+static func _to_float(value: Variant) -> float:
+	return float(value) if typeof(value) in [TYPE_INT, TYPE_FLOAT] else 0.0

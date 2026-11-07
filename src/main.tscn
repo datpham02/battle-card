@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://src/main_screen.gd" id="1_main"]
 [ext_resource type="Script" path="res://src/run/game_flow.gd" id="2_flow"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://src/run/achievements_view.gd" id="15_achievements"]
 [ext_resource type="Script" path="res://src/run/unlock_toast_view.gd" id="16_toast"]
 [ext_resource type="Script" path="res://src/run/settings_view.gd" id="17_settings"]
+[ext_resource type="Script" path="res://src/run/save_slots_view.gd" id="18_slots"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -56,6 +57,9 @@ script = ExtResource("15_achievements")
 
 [node name="SettingsView" type="Node2D" parent="GameFlow"]
 script = ExtResource("17_settings")
+
+[node name="SaveSlotsView" type="Node2D" parent="GameFlow"]
+script = ExtResource("18_slots")
 
 [node name="RunHudView" type="Node2D" parent="."]
 script = ExtResource("4_hud")

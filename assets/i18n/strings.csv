@@ -953,3 +953,31 @@ card.do_kiem.desc,"Chỉ khi địch ra đòn. Đỡ {parry_sec} s: đòn kế d
 ui.hud.crit,CHÍ MẠNG,CRIT
 ui.hud.parry,ĐỠ,PARRY
 ui.hud.no_telegraph,chờ đòn địch,wait for a tell
+ui.slots.title,Chọn bản lưu,Load Game
+ui.slots.slot,Ô %d,Slot %d
+ui.slots.active,Đang dùng,In use
+ui.slots.empty,Ô trống,Empty slot
+ui.slots.corrupt,Bản lưu hỏng,Damaged save
+ui.slots.corrupt_hint,Tệp cũ được giữ lại,The old file is kept
+ui.slots.no_run,Chưa có chuyến leo dở,No climb in progress
+ui.slots.floor_region,Tầng %d/%d · %s,Floor %d/%d · %s
+ui.slots.floor,Tầng %d/%d,Floor %d/%d
+ui.slots.best_floor,Tầng cao nhất %d,Best floor %d
+ui.slots.achievements,Thành tựu %d,Achievements %d
+ui.slots.play_time,Thời gian chơi %s,Play time %s
+ui.slots.saved_at,Lưu lúc %s,Saved %s
+ui.slots.continue,Tiếp tục,Continue
+ui.slots.new,Tạo mới,New game
+ui.slots.redo,Làm lại,Start over
+ui.slots.delete,Xóa,Delete
+ui.slots.back,Về,Back
+ui.slots.confirm_title,Xóa ô %d?,Delete slot %d?
+ui.slots.confirm_body,Mọi tiến trình của ô này sẽ mất. Không thể hoàn tác.,All progress in this slot will be lost. This cannot be undone.
+ui.slots.confirm_yes,Xóa,Delete
+ui.slots.confirm_no,Hủy,Cancel
+ui.slots.title_new,Chơi mới,New Game
+ui.slots.play,Chơi,Play
+ui.slots.abandon,Chơi mới,New climb
+ui.slots.abandon_title,Bỏ chuyến leo ở ô %d?,Abandon the climb in slot %d?
+ui.slots.abandon_body,"Chuyến leo đang dở sẽ mất. Mở khóa, Giao Kèo và thành tựu của ô vẫn giữ.","The climb in progress will be lost. The slot keeps its unlocks, Pact levels and achievements."
+ui.slots.abandon_yes,Bỏ chuyến leo,Abandon

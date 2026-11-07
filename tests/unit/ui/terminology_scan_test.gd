@@ -171,7 +171,7 @@ func _parse_csv() -> Dictionary:
 	var text: String = FileAccess.get_file_as_string(CSV_PATH)
 	var rows: Dictionary = {}
 	var lines: PackedStringArray = text.split("\n", false)
-	var header: PackedStringArray = _split_csv(lines[0])
+	var header: PackedStringArray = _split_csv(lines[0].trim_suffix("\r"))
 	for i: int in range(1, lines.size()):
 		var cells: PackedStringArray = _split_csv(lines[i].trim_suffix("\r"))
 		if cells.is_empty():

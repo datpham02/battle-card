@@ -197,6 +197,8 @@ const TITLE_BUTTONS_BOTTOM_RATIO: float = 0.95
 ## The full column (Continue, Play, Achievements, Settings, Quit): 5 buttons of 65 px at 720p (>= 64 px); the
 ## continue summary strip sits under its first button.
 const TITLE_BUTTON_COLUMN_COUNT: int = 5
+## Save slots: the lowest a title button may shrink to (share of the height: 64.8 px at 720p, the touch minimum).
+const TITLE_BUTTON_MIN_HEIGHT_RATIO: float = 0.09
 ## Key-art menu (user 2026-11-01): the button column on the right (the art's hero stands bottom-left), the name
 ## band stays top-left; false puts the column on the left (the art is then mirrored). The language button takes the
 ## free bottom corner.
@@ -992,6 +994,12 @@ static func title_button_rects(viewport_size: Vector2, count: int) -> Array[Rect
 	var top: float = viewport_size.y * TITLE_BUTTONS_TOP_RATIO
 	# Story 037: four buttons (Continue, Play, Achievements, Quit) shrink to end by TITLE_BUTTONS_BOTTOM_RATIO.
 	size.y = minf(size.y, (viewport_size.y * TITLE_BUTTONS_BOTTOM_RATIO - top - gap * (count - 1)) / count)
+	# More than five buttons keep the touch height and start higher instead (the name band is in the other half of
+	# the screen).
+	var min_h: float = viewport_size.y * TITLE_BUTTON_MIN_HEIGHT_RATIO
+	if size.y < min_h:
+		size.y = min_h
+		top = viewport_size.y * TITLE_BUTTONS_BOTTOM_RATIO - min_h * count - gap * (count - 1)
 	for i: int in count:
 		rects.append(Rect2(left, top + (size.y + gap) * i, size.x, size.y))
 	return rects

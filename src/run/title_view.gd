@@ -5,8 +5,9 @@ extends Node2D
 ## a golden Tessera cube floating over the world with small squares orbiting it, golden block pieces drifting
 ## down, and mist bands drifting across. The left side is darkened for the menu: the game name over the
 ## knife-stroke motif (top-left; no tagline and no saved-run summary line, user 2026-11-01), then one column of
-## buttons — "Tiếp tục" (only when the save holds a run in progress; user 2026-11-01: short label), "Chơi" (character select; the main
-## action when there is nothing to continue), "Thành tựu", "Cài đặt" ([method GameFlow.open_settings]) and
+## buttons — "Tiếp tục" (save slots 2026-11-07: shown when any slot has a save; opens the slot screen to pick the save
+## to load, [method GameFlow.title_continue]), "Chơi" (the slot screen to pick where a new run goes,
+## [method GameFlow.title_play]; the main action when there is nothing to continue), "Thành tựu", "Cài đặt" ([method GameFlow.open_settings]) and
 ## "Thoát" (hidden on platforms without a quit button, see [method GameFlow.can_show_quit]). Child of GameFlow
 ## (reads it through [member flow_path]); draws and takes taps only in [constant GameFlow.Phase.TITLE]; owns no
 ## state. Taps are consumed on a button only; input dedup as in RunHudView / DPadView (emulated copies —
@@ -155,7 +156,7 @@ func _input(event: InputEvent) -> void:
 # Label KEYS of the column, top to bottom; the first is the main action (translated when drawn).
 func _button_labels() -> Array[String]:
 	var labels: Array[String] = []
-	if _flow.has_continue():
+	if _flow.has_any_save():
 		labels.append(TEXT_CONTINUE)
 	labels.append(TEXT_PLAY)
 	labels.append(TEXT_ACHIEVEMENTS)
@@ -183,9 +184,9 @@ func _activate(index: int) -> void:
 		return
 	match labels[index]:
 		TEXT_CONTINUE:
-			_flow.continue_requested()
+			_flow.title_continue()
 		TEXT_PLAY:
-			_flow.start_requested()
+			_flow.title_play()
 		TEXT_ACHIEVEMENTS:
 			_flow.open_achievements()
 		TEXT_SETTINGS:

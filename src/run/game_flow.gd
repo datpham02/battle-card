@@ -156,7 +156,8 @@ signal run_changed()
 ## the ending screen after the final match.
 ## ACHIEVEMENTS (Story 037): the achievements screen opened from the title ([method open_achievements]).
 ## SETTINGS (Main Menu pass, user 2026-11-01): the settings screen opened from the title ([method open_settings]).
-enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, ACHIEVEMENTS, SETTINGS, IN_FLOOR = IN_NODE }
+## SAVE_SLOTS (save slots, user 2026-11-07): the save slot screen opened from the title ([method open_save_slots]).
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, ACHIEVEMENTS, SETTINGS, SAVE_SLOTS, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -216,6 +217,33 @@ const SCREEN_ACHIEVEMENTS_DEMO: String = "achievements_demo"
 const SCREEN_ACHIEVEMENTS_DETAIL: String = "achievements_detail="
 ## DEV-ONLY: --screen=settings opens the settings screen (captures).
 const SCREEN_SETTINGS: String = "settings"
+## DEV-ONLY (save slots): --screen=slots opens the save slot screen; --screen=slots_demo also fills the memory slots
+## (slot 1: the --progress=demo run, slot 2: progress without a run, slot 3: empty) for the captures.
+const SCREEN_SLOTS: String = "slots"
+const SCREEN_SLOTS_DEMO: String = "slots_demo"
+## DEV-ONLY: --screen=slots_demo_confirm = slots_demo with the slot 1 delete confirmation open; slots_demo_new = the
+## NEW mode ("Chơi"); slots_demo_abandon = NEW mode with the slot 1 abandon confirmation open.
+const SCREEN_SLOTS_DEMO_CONFIRM: String = "slots_demo_confirm"
+const SCREEN_SLOTS_DEMO_NEW: String = "slots_demo_new"
+const SCREEN_SLOTS_DEMO_ABANDON: String = "slots_demo_abandon"
+## DEV-ONLY: every --screen= value that opens the filled demo slots.
+const SCREEN_SLOTS_DEMOS: Array[String] = ["slots_demo", "slots_demo_confirm", "slots_demo_new", "slots_demo_abandon"]
+## DEV-ONLY (--screen=slots_demo): the fake last-save time, play times and the slot 2 character of the demo slots.
+const DEV_SLOTS_SAVED_AT: int = 1793000000
+const DEV_SLOTS_PLAY_TIME: Array[float] = [5025.0, 12840.0]
+const DEV_SLOTS_SECOND_CHARACTER: String = "phap_su"
+## Save slots: the slot card's primary action by slot state and mode (see [method slot_primary_action]).
+const SLOT_ACTION_CONTINUE: String = "continue"
+const SLOT_ACTION_PLAY: String = "play"
+const SLOT_ACTION_NEW: String = "new"
+const SLOT_ACTION_REDO: String = "redo"
+const SLOT_ACTION_ABANDON: String = "abandon"
+## Save slots: the slot screen's mode — LOAD from the title's "Tiếp tục", NEW from "Chơi".
+const SLOT_MODE_LOAD: String = "load"
+const SLOT_MODE_NEW: String = "new"
+## Save slots: the two confirmations (delete the slot's file / drop the slot's run for a new one).
+const SLOT_CONFIRM_DELETE: String = "delete"
+const SLOT_CONFIRM_ABANDON: String = "abandon"
 ## Milestones the demo seeds, as {key: count}; the achievements they earn come from UnlockRules.
 const DEV_ACHIEVEMENTS_DEMO_MILESTONES: Dictionary = {"region_boss:ch1": 1, "kills_total": 2, "spares_total": 1, "runs_won": 1}
 ## DEV-ONLY (Story 019 / 022): --run=<kind> values handled HERE (the others belong to RunController).
@@ -361,6 +389,14 @@ const SHOP_NODE: String = "node_key"
 var _config: ChaptersConfig
 var _store: ProgressStore = null
 var _progress: ProgressState
+## Save slots (2026-11-07): the slot files, the machine settings (locale, last slot) and the active slot (0-based).
+## Real files only without dev args and test hooks; otherwise memory slots and memory settings.
+var _slots: SaveSlots = null
+var _settings: SettingsStore = null
+var _slot_index: int = 0
+## Save slots: the slot screen's mode and the open confirmation ({} or {index, kind}).
+var _slot_mode: String = SLOT_MODE_LOAD
+var _slot_confirm: Dictionary = {}
 ## Story 037: achievement ids earned since the last [method take_new_unlocks] (the "Moi mo" toast queue).
 var _new_unlocks: Array[String] = []
 ## Story 037: CombatView.get_match_stats() of the match just won (read by [method _complete_match_node]).
@@ -434,6 +470,13 @@ var _piece_deck_return: Phase = Phase.MAP
 ## Test hook: installs the store BEFORE the node enters the tree (wins over --progress args).
 func set_store_for_test(store: ProgressStore) -> void:
 	_store = store
+
+
+## Test hook (save slots): installs the slots (and optionally the settings; memory settings otherwise) BEFORE the
+## node enters the tree; the active slot is the settings' last slot. Wins over --progress args.
+func set_slots_for_test(slots: SaveSlots, settings: SettingsStore = null) -> void:
+	_slots = slots
+	_settings = settings
 
 
 ## Test hook (scratch flow tests): runs an ad-hoc single-floor RunConfig (the flat format read
@@ -535,13 +578,15 @@ func _ready() -> void:
 		push_warning("GameFlow: unknown --select=%s (character), ignored" % select_mode)
 		select_mode = ""
 	var dev_world: bool = dev_run or not node_text.is_empty() or not region_text.is_empty() or at_floor > 0
-	if _store == null:
-		_store = _make_store(progress_mode, dev_world or not select_mode.is_empty() or not screen_mode.is_empty() or _dev_gold >= 0
-			or not _dev_deck_add.is_empty() or _dev_hp > 0.0 or _dev_shape_removals >= 0
-			or not _dev_piece_deck_state.is_empty())
+	var dev_memory: bool = (dev_world or not select_mode.is_empty() or not screen_mode.is_empty() or _dev_gold >= 0
+		or not _dev_deck_add.is_empty() or _dev_hp > 0.0 or _dev_shape_removals >= 0
+		or not _dev_piece_deck_state.is_empty() or not progress_mode.is_empty())
+	_setup_slots(dev_memory)
 	_progress = _load_progress(progress_mode)
+	if SCREEN_SLOTS_DEMOS.has(screen_mode):
+		_dev_fill_demo_slots()
 	# Locale before anything draws or caches a translated name.
-	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _progress.get_locale())
+	_apply_locale(_dev_locale if SUPPORTED_LOCALES.has(_dev_locale) else _settings.get_locale())
 	if not _dev_character.is_empty():
 		set_character(_dev_character)
 	# Start phase: TITLE without dev args (or with --title); --progress alone -> CHARACTER_SELECT;
@@ -551,6 +596,14 @@ func _ready() -> void:
 		_phase = Phase.CHARACTER_SELECT
 	if screen_mode == SCREEN_SETTINGS:
 		_phase = Phase.SETTINGS
+	if screen_mode == SCREEN_SLOTS or SCREEN_SLOTS_DEMOS.has(screen_mode):
+		_phase = Phase.SAVE_SLOTS
+		if screen_mode == SCREEN_SLOTS_DEMO_NEW or screen_mode == SCREEN_SLOTS_DEMO_ABANDON:
+			_slot_mode = SLOT_MODE_NEW
+		if screen_mode == SCREEN_SLOTS_DEMO_CONFIRM:
+			_slot_confirm = {"index": 0, "kind": SLOT_CONFIRM_DELETE}
+		elif screen_mode == SCREEN_SLOTS_DEMO_ABANDON:
+			_slot_confirm = {"index": 0, "kind": SLOT_CONFIRM_ABANDON}
 	if screen_mode.begins_with(SCREEN_ACHIEVEMENTS):
 		_phase = Phase.ACHIEVEMENTS
 		if screen_mode == SCREEN_ACHIEVEMENTS_DEMO:
@@ -1079,6 +1132,193 @@ func _dev_seed_achievements_demo() -> void:
 	UnlockRules.process(AchievementsConfig.shared(), _progress, {"type": "final_reached"})
 
 
+# --- Save slots (user 2026-11-07) ------------------------------------------------
+# User 2026-11-07 (second pass): no separate title button. "Tiếp tục" opens the slot screen in LOAD mode (pick the
+# save to load), "Chơi" opens it in NEW mode (pick where the new run goes). One run in progress per slot; every
+# character shares the slot's progress.
+
+
+## The active save slot (0-based).
+func get_active_slot() -> int:
+	return _slot_index
+
+
+## The slot files (read-only use by the views and tests).
+func get_save_slots() -> SaveSlots:
+	return _slots
+
+
+## The machine settings this flow writes the locale and the last slot to.
+func get_settings() -> SettingsStore:
+	return _settings
+
+
+## True when any slot has a file or the live progress holds a run (the title then shows "Tiếp tục").
+func has_any_save() -> bool:
+	if _progress != null and _progress.has_run():
+		return true
+	for i: int in SaveSlots.SLOT_COUNT:
+		if _slots.has_file(i):
+			return true
+	return false
+
+
+## Title "Tiếp tục": the slot screen in LOAD mode. Ignored outside TITLE.
+func title_continue() -> void:
+	open_save_slots(SLOT_MODE_LOAD)
+
+
+## Title "Chơi": the slot screen in NEW mode. Ignored outside TITLE.
+func title_play() -> void:
+	open_save_slots(SLOT_MODE_NEW)
+
+
+## TITLE -> SAVE_SLOTS in [param mode] (SLOT_MODE_LOAD / SLOT_MODE_NEW; unknown = LOAD). Ignored in other phases.
+func open_save_slots(mode: String = SLOT_MODE_LOAD) -> void:
+	if _phase != Phase.TITLE:
+		return
+	_slot_mode = mode if mode == SLOT_MODE_NEW else SLOT_MODE_LOAD
+	_slot_confirm = {}
+	_set_phase(Phase.SAVE_SLOTS)
+
+
+## The slot screen's mode (SLOT_MODE_LOAD / SLOT_MODE_NEW).
+func get_slot_mode() -> String:
+	return _slot_mode
+
+
+## The slot screen's "Về": SAVE_SLOTS -> TITLE. Ignored in other phases.
+func close_save_slots() -> void:
+	if _phase != Phase.SAVE_SLOTS:
+		return
+	_slot_confirm = {}
+	_set_phase(Phase.TITLE)
+
+
+## The card summary of slot [param index] (SaveSlots.summary) plus `active` (the slot in use) and `action`
+## ([method slot_primary_action]).
+func slot_summary(index: int) -> Dictionary:
+	var out: Dictionary = _slots.summary(index)
+	out["active"] = index == _slot_index
+	out["action"] = _action_of(out)
+	return out
+
+
+## The primary action of slot [param index]'s card in the current mode: SLOT_ACTION_CONTINUE (LOAD, a run in
+## progress), _PLAY (progress without a run: character select in that slot), _NEW (empty slot), _REDO (corrupt
+## file: set aside, then a new game) or _ABANDON (NEW mode on a slot with a run: asks, then drops that run).
+func slot_primary_action(index: int) -> String:
+	return _action_of(_slots.summary(index))
+
+
+func _action_of(info: Dictionary) -> String:
+	match int(info["status"]):
+		SaveSlots.Status.CORRUPT:
+			return SLOT_ACTION_REDO
+		SaveSlots.Status.EMPTY:
+			return SLOT_ACTION_NEW
+	if not bool(info["has_run"]):
+		return SLOT_ACTION_PLAY
+	return SLOT_ACTION_ABANDON if _slot_mode == SLOT_MODE_NEW else SLOT_ACTION_CONTINUE
+
+
+## The card's primary button: makes [param index] the active slot (remembered in the settings), then continues
+## its run (CONTINUE), opens the character select in it (PLAY / NEW / REDO) or asks before dropping its run
+## (ABANDON). Ignored outside SAVE_SLOTS, for a bad index or while a confirmation is open.
+func slot_open(index: int) -> void:
+	if _phase != Phase.SAVE_SLOTS or not SaveSlots.is_valid_index(index) or not _slot_confirm.is_empty():
+		return
+	var action: String = slot_primary_action(index)
+	if action == SLOT_ACTION_ABANDON:
+		_slot_confirm = {"index": index, "kind": SLOT_CONFIRM_ABANDON}
+		return
+	_switch_slot(index, index != _slot_index or action == SLOT_ACTION_REDO)
+	if action == SLOT_ACTION_CONTINUE:
+		_set_phase(Phase.TITLE)
+		continue_requested()
+	else:
+		show_character_select()
+
+
+## The card's "Xóa": asks for the confirmation (the slot screen shows it). Ignored for an empty slot.
+func request_slot_delete(index: int) -> void:
+	if _phase != Phase.SAVE_SLOTS or not _slots.has_file(index) or not _slot_confirm.is_empty():
+		return
+	_slot_confirm = {"index": index, "kind": SLOT_CONFIRM_DELETE}
+
+
+## The open confirmation: {} or {index, kind (SLOT_CONFIRM_DELETE / SLOT_CONFIRM_ABANDON)}.
+func get_slot_confirm() -> Dictionary:
+	return _slot_confirm.duplicate()
+
+
+## The confirmation's red button. DELETE: removes the slot's file (the active progress starts empty when it was the
+## active slot). ABANDON: the slot becomes active, its run is dropped (unlocks, Kiep and achievements stay) and the
+## character select opens.
+func confirm_slot() -> void:
+	if _slot_confirm.is_empty():
+		return
+	var index: int = int(_slot_confirm["index"])
+	var kind: String = str(_slot_confirm["kind"])
+	_slot_confirm = {}
+	if kind == SLOT_CONFIRM_ABANDON:
+		_switch_slot(index, true)
+		_progress.clear_run()
+		_store.save_state(_progress)
+		show_character_select()
+		return
+	if not _slots.delete_slot(index):
+		return
+	if index == _slot_index:
+		_switch_slot(index, true)
+
+
+## The confirmation's "Hủy": nothing changes.
+func cancel_slot_confirm() -> void:
+	_slot_confirm = {}
+
+
+# Makes [param index] the active slot; with [param reload] the live run is dropped (it is already saved) and the
+# slot's progress is loaded (a corrupt file is set aside first).
+func _switch_slot(index: int, reload: bool) -> void:
+	_slot_index = index
+	_settings.set_last_slot(index)
+	if not reload:
+		return
+	_free_controller()
+	_run = null
+	_run_result = RunResult.NONE
+	_reward_blocking = false
+	_pending_node_kind = ""
+	_floor_clear_notice = {}
+	_new_unlocks.clear()
+	_slots.quarantine_if_corrupt(index)
+	_store = _slots.store_for(index)
+	_progress = _store.load_state(_config)
+
+
+# DEV-ONLY (--screen=slots_demo): slot 1 = the --progress=demo run (or the run --progress gave), slot 2 = progress
+# without a run, slot 3 empty; fixed times so the captures do not change.
+func _dev_fill_demo_slots() -> void:
+	var first: ProgressState = _progress if _progress.has_run() else _demo_progress()
+	first.add_play_time(DEV_SLOTS_PLAY_TIME[0])
+	var store: ProgressStore = _slots.store_for(0)
+	store.clock = func() -> int: return DEV_SLOTS_SAVED_AT
+	store.save_state(first)
+	var second := ProgressState.new()
+	second.record_floor(4)
+	second.record_kiep_result(DEV_SLOTS_SECOND_CHARACTER, 0, true)
+	second.add_play_time(DEV_SLOTS_PLAY_TIME[1])
+	var store2: ProgressStore = _slots.store_for(1)
+	store2.clock = func() -> int: return DEV_SLOTS_SAVED_AT - 86400 * 3
+	store2.save_state(second)
+	_slots.delete_slot(2)
+	_slot_index = 0
+	_store = _slots.store_for(0)
+	_store.clock = func() -> int: return DEV_SLOTS_SAVED_AT
+	_progress = _store.load_state(_config)
+
+
 ## True when the save holds a run in progress (Story 019).
 func has_continue() -> bool:
 	return _progress.has_run()
@@ -1134,16 +1374,15 @@ func next_locale() -> String:
 	return SUPPORTED_LOCALES[(index + 1) % SUPPORTED_LOCALES.size()]
 
 
-## Story 017: switches the UI locale (TranslationServer), stores it in the progress and saves through
-## the store. Unknown codes are ignored with a warning. Views draw every frame, so they follow at once;
+## Story 017: switches the UI locale (TranslationServer) and saves it in the machine settings (save slots
+## 2026-11-07: no longer in the progress file). Unknown codes are ignored with a warning. Views draw every frame, so they follow at once;
 ## RunController.floor_label is cached per node entry (the title is the only place that switches).
 func set_locale(code: String) -> void:
 	if not SUPPORTED_LOCALES.has(code):
 		push_warning("GameFlow: unsupported locale '%s' (en|vi)" % code)
 		return
 	_apply_locale(code)
-	_progress.set_locale(code)
-	_store.save_state(_progress)
+	_settings.set_locale(code)
 
 
 ## Title VI / EN button: moves to [method next_locale].
@@ -1177,6 +1416,11 @@ func go_back() -> void:
 			close_achievements()
 		Phase.SETTINGS:
 			close_settings()
+		Phase.SAVE_SLOTS:
+			if not _slot_confirm.is_empty():
+				cancel_slot_confirm()
+			else:
+				close_save_slots()
 		Phase.TITLE:
 			if can_show_quit():
 				quit_requested()
@@ -2412,10 +2656,21 @@ func _apply_locale(code: String) -> void:
 	TranslationServer.set_locale(_locale)
 
 
-func _make_store(progress_mode: String, dev_run: bool) -> ProgressStore:
-	if dev_run or not progress_mode.is_empty():
-		return ProgressStore.memory_store()
-	return ProgressStore.new()
+# Save slots: the settings, the slots and the active slot's store. Real files (user://settings.json, user://saves/,
+# the legacy progress migrated once) only when nothing was injected and [param dev_memory] is false.
+func _setup_slots(dev_memory: bool) -> void:
+	var injected: bool = _store != null or _slots != null
+	var memory_mode: bool = injected or dev_memory
+	if _settings == null:
+		_settings = SettingsStore.memory() if memory_mode else SettingsStore.shared()
+	if _slots == null:
+		_slots = SaveSlots.memory() if memory_mode else SaveSlots.new()
+	if not memory_mode:
+		_slots.migrate_legacy(_settings)
+	_slot_index = clampi(_settings.get_last_slot(), 0, SaveSlots.SLOT_COUNT - 1)
+	if _store == null:
+		_slots.quarantine_if_corrupt(_slot_index)
+		_store = _slots.store_for(_slot_index)
 
 
 func _load_progress(progress_mode: String) -> ProgressState:

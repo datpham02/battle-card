@@ -10,6 +10,10 @@ extends RefCounted
 ## movement control. A [code]controls.movement[/code] value left in an older settings.json is ignored on load and
 ## dropped on the next save; a [code]--movement=[/code] command line arg is ignored.
 ##
+## Save slots (2026-11-07, user decision): the UI [code]locale[/code] ("" = not chosen yet, the game default) and the
+## [code]last_slot[/code] (0-based save slot the title opens) moved here from the progress file: they belong to the
+## machine, not to a slot. [method memory] builds a store that never touches a file (tests, dev args).
+##
 ## Two ways to use it. The game reads the shared instance ([method shared]), loaded lazily from
 ## the real file. Tests build their own instance on a temp path ([code]SettingsStore.new(path)[/code])
 ## and never touch the real file.
@@ -32,12 +36,19 @@ var _path: String
 var _show_control_hints: bool = false
 var _reduce_motion: bool = false
 var _card_time: String = CARD_TIME_NORMAL
+var _locale: String = ""
+var _last_slot: int = 0
 
 
 ## Builds a store on [param path] and loads it (missing or broken file = defaults).
 func _init(path: String = DEFAULT_PATH) -> void:
 	_path = path
 	load_file()
+
+
+## A store with the defaults that never reads or writes a file (path "").
+static func memory() -> SettingsStore:
+	return SettingsStore.new("")
 
 
 ## The shared store of the game, created on first use from [constant DEFAULT_PATH].
@@ -94,6 +105,28 @@ func cycle_card_time() -> String:
 	return _card_time
 
 
+## Save slots: the saved UI locale code ("" = never chosen; the caller validates it).
+func get_locale() -> String:
+	return _locale
+
+
+## Sets the UI locale code and saves.
+func set_locale(code: String) -> void:
+	_locale = code
+	save_file()
+
+
+## Save slots: the 0-based slot the title opens (>= 0; the caller clamps to the slot count).
+func get_last_slot() -> int:
+	return _last_slot
+
+
+## Sets the last used slot (negative = 0) and saves.
+func set_last_slot(index: int) -> void:
+	_last_slot = maxi(index, 0)
+	save_file()
+
+
 ## Pure: the time multiplier of card time [param value] (1 for an unknown value; 0 = no limit).
 static func card_time_mult(value: String) -> float:
 	return float(CARD_TIME_MULTS.get(value, 1.0))
@@ -105,7 +138,9 @@ func load_file() -> bool:
 	_show_control_hints = false
 	_reduce_motion = false
 	_card_time = CARD_TIME_NORMAL
-	if not FileAccess.file_exists(_path):
+	_locale = ""
+	_last_slot = 0
+	if _path.is_empty() or not FileAccess.file_exists(_path):
 		return false
 	var file: FileAccess = FileAccess.open(_path, FileAccess.READ)
 	if file == null:
@@ -120,11 +155,17 @@ func load_file() -> bool:
 	var card_time: Variant = data.get("card_time", CARD_TIME_NORMAL)
 	if card_time is String and CARD_TIMES.has(card_time):
 		_card_time = card_time
+	var locale: Variant = data.get("locale", "")
+	_locale = locale if locale is String else ""
+	var slot: Variant = data.get("last_slot", 0)
+	_last_slot = maxi(int(slot), 0) if typeof(slot) in [TYPE_INT, TYPE_FLOAT] else 0
 	return true
 
 
 ## Writes the stored values to the file. Returns false when it cannot write.
 func save_file() -> bool:
+	if _path.is_empty():
+		return true
 	var file: FileAccess = FileAccess.open(_path, FileAccess.WRITE)
 	if file == null:
 		return false
@@ -132,6 +173,8 @@ func save_file() -> bool:
 		"show_control_hints": _show_control_hints,
 		"reduce_motion": _reduce_motion,
 		"card_time": _card_time,
+		"locale": _locale,
+		"last_slot": _last_slot,
 	}
 	file.store_string(JSON.stringify(data, "\t"))
 	return true
