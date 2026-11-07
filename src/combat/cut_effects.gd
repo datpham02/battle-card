@@ -135,11 +135,9 @@ static func apply(
 	var effect: String = str(skill.get("effect", "damage"))
 	# Story 037: heal_self heals the CASTER (the player) when the swing lands, hit or miss, at this ONE point.
 	result["healed"] = 0.0
-	var heal_self: float = float(skill.get("heal_self", 0.0))
-	if side == CombatState.Side.PLAYER and heal_self > 0.0 and not state.is_player_dead():
-		var hp_before: float = state.player_hp
-		state.set_player_hp(hp_before + heal_self)
-		result["healed"] = state.player_hp - hp_before
+	# Skill v2 B1.5: options.apply_heal false = the arbiter heals once per scheduled cast itself (heal_caster).
+	if bool(options.get("apply_heal", true)):
+		result["healed"] = heal_caster(state, side, skill)
 	# Story 036: options.target_untargetable (burrowed boss) = the cast misses the unit; zones still form (Story 027).
 	# P2.2b (D13 / ADR-0001 A7): the target is inside when ANY of its cells is cast on (a multi-cell boss's footprint); this
 	# is one boolean, so one swing hits once and the damage below never multiplies by the footprint cells it covers.
@@ -193,7 +191,12 @@ static func apply(
 		return result
 	var push_cells: int = int(skill.get("push_cells", 0))
 	var per_cell: float = float(skill.get("damage_per_cell", cut_config.base_damage_per_cell * float(skill.get("damage_multiplier", 1.0))))
-	var effective_cells: int = cells.size()
+	# Skill v2 B1.5 (M02): options.cast_cell_count = the cast's TOTAL cell count when only some of its cells are resolved
+	# in this call (one impact event); -1 / absent = the cells given (every legacy call).
+	var count: int = int(options.get("cast_cell_count", -1))
+	if count < 0:
+		count = cells.size()
+	var effective_cells: int = count
 	if cells_modifier.is_valid():
 		effective_cells = maxi(int(cells_modifier.call(effective_cells)), 0)
 	var damage: float = per_cell * float(effective_cells)
@@ -222,9 +225,13 @@ static func apply(
 		var featured_mult: float = float(featured.get("damage_mult", 1.0))
 		damage *= featured_mult
 		result["featured_mult"] = featured_mult
+	# Skill v2 B1.5: the impact event's multiplier (CastResolver wave_mults); 1.0 for every legacy call.
+	var impact_mult: float = float(options.get("impact_mult", 1.0))
+	if impact_mult != 1.0:
+		damage *= impact_mult
 	var relic_modifier: Variant = options.get("relic_modifier")
 	if typeof(relic_modifier) == TYPE_CALLABLE and (relic_modifier as Callable).is_valid():
-		damage = float((relic_modifier as Callable).call(cells.size(), damage))
+		damage = float((relic_modifier as Callable).call(count, damage))
 	var ratio: float = float(skill.get("execute_ratio", 0.0))
 	if ratio <= 0.0 and bool(skill.get("execute", false)):
 		ratio = float(options.get("execute_ratio", 0.0))
@@ -232,10 +239,10 @@ static func apply(
 		damage *= EXECUTE_MULT
 		result["executed"] = true
 	if damage_modifier.is_valid():
-		damage = float(damage_modifier.call(cells.size(), damage))
+		damage = float(damage_modifier.call(count, damage))
 	if signature_modifier.is_valid():
 		damage = float(signature_modifier.call(
-			skill_id, cells.size(), damage, status != null and status.is_pinned(target_side)))
+			skill_id, count, damage, status != null and status.is_pinned(target_side)))
 	var defense: float = float(options.get("target_defense", 0.0)) if target_side == CombatState.Side.ENEMY else 0.0
 	if defense > 0.0 and not bool(skill.get("pierce_defense", false)) and damage > 0.0:
 		var after: float = maxf(damage - defense, minf(damage, MIN_DAMAGE_AFTER_DEFENSE))
@@ -396,6 +403,25 @@ static func _apply_featured_effect(
 		"pin":
 			status.pin(target_side, sec)
 			result["pinned"] = bool(result["pinned"]) or sec > 0.0
+
+
+## Story 037 heal_self of [param skill] (a level-resolved card) for a PLAYER cast by [param side]: heals the hero once,
+## returns the HP actually healed (0 for the boss, a dead hero or no heal_self). Shared by apply and the arbiter.
+static func heal_caster(state: CombatState, side: int, skill: Dictionary) -> float:
+	var heal_self: float = float(skill.get("heal_self", 0.0))
+	if side != CombatState.Side.PLAYER or heal_self <= 0.0 or state.is_player_dead():
+		return 0.0
+	var hp_before: float = state.player_hp
+	state.set_player_hp(hp_before + heal_self)
+	return state.player_hp - hp_before
+
+
+## The level-resolved card [param skill_id] (the fallback card when unknown / not implemented), as apply uses it.
+static func resolved_skill(skill_config: SkillConfig, skill_id: String, level: int) -> Dictionary:
+	var skill: Dictionary = _resolve(skill_config, skill_id, level)
+	if skill.is_empty() or not bool(skill["implemented"]):
+		skill = _resolve(skill_config, SkillConfig.FALLBACK_SKILL, 1)
+	return skill
 
 
 static func _hp_of(state: CombatState, side: int) -> float:

@@ -41,6 +41,9 @@ const PARRY_DEFAULTS: Dictionary = {"parry_sec": 0.8, "reflect_mult": 1.5, "parr
 var menu_time_scale: float = 0.2
 ## REAL seconds the player has to choose before the default card is auto-picked.
 var menu_choose_sec: float = 3.0
+## Skill v2 B1 fallback safety (docs/skill-v2/02-design-decisions.md §9): REAL seconds the menu waits when no card of
+## the drawn hand is available for the placed cells before the fallback (default_card) is cast.
+var menu_no_option_sec: float = 0.5
 ## Cards drawn into the menu hand per cut (>= 1).
 var hand_size: int = 4
 ## Basic card chosen on timeout (a rule, not a card in the hand); always in [member cards].
@@ -70,6 +73,9 @@ var card_order: Array[String] = [FALLBACK_SKILL]
 ## thorn_sec, thorn_damage, thorn_fragile_stacks; a key the card omits is absent here and combat.json
 ## `zones` supplies the number.
 var cards: Dictionary = {}
+## Skill v2 B1.5: every invalid resolve configuration found while loading (CastResolver.validate messages). Such a card
+## is put back on its legacy `instant` path, and the message is also pushed as an error; never silent.
+var validation_errors: Array[String] = []
 
 
 func _init() -> void:
@@ -105,6 +111,7 @@ static func from_dictionary(data: Dictionary) -> SkillConfig:
 	var config := SkillConfig.new()
 	config.menu_time_scale = clampf(float(data.get("menu_time_scale", config.menu_time_scale)), 0.0, 1.0)
 	config.menu_choose_sec = maxf(float(data.get("menu_choose_sec", config.menu_choose_sec)), 0.0)
+	config.menu_no_option_sec = maxf(float(data.get("menu_no_option_sec", config.menu_no_option_sec)), 0.0)
 	config.hand_size = maxi(int(data.get("hand_size", config.hand_size)), 1)
 	config._read_focus(data.get("focus"))
 	var raw_cards: Variant = data.get("cards")
@@ -116,6 +123,8 @@ static func from_dictionary(data: Dictionary) -> SkillConfig:
 				push_warning("SkillConfig: card %s is not an object, ignored" % str(id))
 				continue
 			config.cards[str(id)] = _normalize(str(id), raw as Dictionary)
+			for e: Variant in config.cards[str(id)].get("resolve_errors", []) as Array:
+				config.validation_errors.append(str(e))
 	else:
 		push_warning("SkillConfig: no cards in data, using the built-in kiem_khi only")
 	if config.cards.is_empty():
@@ -308,6 +317,10 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 	var effect: String = str(raw.get("effect", "damage"))
 	if not EFFECTS.has(effect):
 		push_warning("SkillConfig: card %s effect '%s' unknown" % [id, effect])
+	# Skill v2 B1.5: the resolve fields are validated (unknown modes / bad numbers are reported, the card stays instant).
+	var resolve_check: Dictionary = CastResolver.validate(id, raw, effect, _cast_mode(id, raw))
+	for e: Variant in resolve_check["errors"] as Array:
+		push_error("SkillConfig: " + str(e))
 	var upgrade: Dictionary = {}
 	var raw_up: Variant = raw.get("upgrade")
 	if rarity == CURSE_RARITY:
@@ -361,6 +374,18 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		# Cast rhythm spec 2026-11-05 1.1 / 1.2: the cast mode and the optional crit ({} = none, CritRules.normalize).
 		"cast_mode": _cast_mode(id, raw),
 		"crit": CritRules.normalize(raw.get("crit"), "card %s" % id),
+		# Skill v2 B1 schema (docs/skill-v2/02-mechanics-catalog.md): parsed with defaults that keep today's behaviour
+		# (resolve: instant = one wave at the swing end). B1.5: resolve / hits / max_hits / hit_interval_sec / wave_mults
+		# come from CastResolver.validate; resolve_errors lists what was rejected ([] for a valid card).
+		"resolve": resolve_check["resolve"],
+		"placement": str(raw.get("placement", "enemy")),
+		"hits": resolve_check["hits"],
+		"max_hits": resolve_check["max_hits"],
+		"hit_interval_sec": resolve_check["hit_interval_sec"],
+		"wave_mults": resolve_check["wave_mults"],
+		"resolve_errors": resolve_check["errors"],
+		"shape_clause": (raw.get("shape_clause", {}) as Dictionary).duplicate(true) if raw.get("shape_clause", {}) is Dictionary else {},
+		"tags": (raw.get("tags", []) as Array).duplicate() if raw.get("tags", []) is Array else [],
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:
 		for key: String in PARRY_DEFAULTS.keys():

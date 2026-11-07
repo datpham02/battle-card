@@ -203,7 +203,9 @@ func _test_menu_timeout_basic_slash() -> void:
 	_place(v, 0, _ec(v, 1, 1))
 	v.press_cast()
 	# 2026-11-04: the menu gets what is left of the one cast clock (place_window_sec; time is frozen here, so all of it).
-	_check("menu time = what is left of the cast clock", absf(flow.get_time_left() - v.get_cut_config().place_window_sec) < EPS, "%.2f" % flow.get_time_left())
+	# Skill v2 B1 (docs/skill-v2/02-design-decisions.md §9, approved Q10): with NO available card in the hand the menu
+	# waits only menu_no_option_sec before the basic slash, instead of the whole clock.
+	_check("menu time = the short no-option wait (no card available)", absf(flow.get_time_left() - minf(v.get_cut_config().place_window_sec, cfg.menu_no_option_sec)) < EPS, "%.2f" % flow.get_time_left())
 	flow.tick_real(flow.get_time_left() - 0.1)
 	_check("menu still open just before its end", flow.is_menu_open())
 	flow.tick_real(0.2)

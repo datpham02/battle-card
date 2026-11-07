@@ -8,15 +8,31 @@ extends RefCounted
 ## A swing QUEUED on an actor (the boss's combo second swing, Story 013) is started by CutActor.tick
 ## when its running swing resolves and is ticked from the NEXT slice, never in the one that resolved it.
 ## Implements: Story 009.
+## Skill v2 B1.5 (docs/skill-v2/02-mechanics-catalog.md M02): the arbiter owns the authoritative combat CLOCK
+## ([method clock], advanced only by [method tick]). A resolved swing is turned into an impact plan by CastResolver:
+## an `instant` card (every card today) keeps the pre-v2 path below unchanged; a scheduled card (`waves` / `arrival`)
+## puts its impact EVENTS on the clock. Events fire in (time, schedule order) order inside the same time slicing as the
+## swings (a slice never jumps over an event; at the same instant swings settle first, then due events). Per event:
+## the target is hit when it stands on the event's cells at that moment, at most once per wave and `max_hits` times
+## per cast; damage counts the cast's total cells. The first damaging event interrupts the opponent's running swing
+## (not on a trade at t = 0, never for a parry card). A cast's scheduled events survive the caster being hit; all are
+## cleared when a unit dies ([method clear_scheduled] for the match end). A swing cancelled before it resolves
+## schedules nothing.
 
 ## Emitted after a swing's effects were applied. [param result] is CutEffects' dictionary
 ## {hit, damage, pushed, cell} extended with {cells, skill_id, level, pin_bonus}. [param side] = CombatState.Side.
 ## Story 028: a PLAYER swing started with a featured bonus (CutActor.begin_swing's `featured_bonus`) also
 ## reports result.featured / featured_mult / featured_effect / featured_stacks / featured_sec (CutEffects).
 signal swing_resolved(side: int, result: Dictionary)
+## Skill v2 B1 (M02): one impact wave of a swing resolved: [param wave] {wave, t, cells, kind, mult} and the CutEffects
+## [param result] (carries `cast_context`). Emitted before [signal swing_resolved] (B1: exactly one wave per swing).
+signal wave_resolved(side: int, wave: Dictionary, result: Dictionary)
 ## Emitted when a hit cancelled the opponent's running swing; [param victim_side] is the
 ## side whose swing was cancelled, [param cells] / [param skill_id] that cancelled swing.
 signal swing_interrupted(victim_side: int, cells: Array[Vector2i], skill_id: String)
+## Skill v2 B1.5: one impact event of a SCHEDULED cast fired: [param event] {cast_id, wave, index, t, at, cells, kind,
+## mult}, [param hit] whether it damaged the target. Instant (legacy) casts do not emit it.
+signal impact_resolved(side: int, event: Dictionary, hit: bool)
 
 ## Two swings resolving this close in time count as simultaneous.
 const TIE_EPSILON_SEC: float = 0.0005
@@ -71,6 +87,15 @@ var player_guard: ParryGuard = null
 ## Cast rhythm spec 2026-11-05 (fix): the hero's crit multiplier read when its swing STARTS ("cast while the foe is
 ## Frozen" crits): a Pin lasts 1.2 s and a 3-6 cell swing 0.95-1.7 s, so reading it at the hit missed almost every crit.
 var _player_crit_at_start: float = 1.0
+## Skill v2 B1.5: the delivery timing table the `arrival` resolve reads (CombatConfig.delivery_timing; set by CombatView).
+var delivery_timing: Dictionary = SkillDelivery.DEFAULT_TIMING
+# The authoritative combat clock (seconds ticked), the pending impact events sorted by (at, seq) and the scheduled
+# casts by id.
+var _clock: float = 0.0
+var _events: Array[Dictionary] = []
+var _casts: Dictionary = {}
+var _next_cast_id: int = 1
+var _next_seq: int = 0
 
 
 func _init(
@@ -105,6 +130,8 @@ func tick(delta: float) -> void:
 			var actor: CutActor = _actors[side] as CutActor
 			if actor.is_swinging():
 				slice = minf(slice, actor.get_time_left())
+		if not _events.is_empty():
+			slice = minf(slice, float(_events[0]["at"]) - _clock)
 		slice = minf(maxf(slice, _MIN_SLICE_SEC), remaining)
 		remaining -= slice
 		_step(slice)
@@ -113,8 +140,38 @@ func tick(delta: float) -> void:
 			return
 
 
+## Skill v2 B1.5: the authoritative combat clock, seconds ticked so far.
+func clock() -> float:
+	return _clock
+
+
+## Skill v2 B1.5: the number of impact events still waiting on the clock.
+func scheduled_count() -> int:
+	return _events.size()
+
+
+## Skill v2 B1.5: the number of scheduled casts not finished yet.
+func active_cast_count() -> int:
+	return _casts.size()
+
+
+## Skill v2 B1.5: drops every pending impact event (and its cast) of [param side], or of both sides when -1 (match end,
+## a unit's death). Dropped casts emit nothing more.
+func clear_scheduled(side: int = -1) -> void:
+	var keep: Array[Dictionary] = []
+	for e: Dictionary in _events:
+		var cast: Dictionary = _casts.get(int(e["cast_id"]), {}) as Dictionary
+		if side >= 0 and not cast.is_empty() and int(cast["side"]) != side:
+			keep.append(e)
+	_events = keep
+	for id: Variant in _casts.keys():
+		if side < 0 or int((_casts[id] as Dictionary)["side"]) == side:
+			_casts.erase(id)
+
+
 # Ticks both actors by one slice, then settles the swings that resolved in it.
 func _step(slice: float) -> void:
+	_clock += slice
 	_pending.clear()
 	for side: int in _actors:
 		(_actors[side] as CutActor).tick(slice)
@@ -127,14 +184,28 @@ func _step(slice: float) -> void:
 	_pending.clear()
 	var trade: bool = batch.size() > 1
 	for entry: Dictionary in batch:
-		_settle(int(entry["side"]), entry["cells"] as Array[Vector2i], str(entry["skill_id"]), trade, int(entry["level"]), entry["featured_bonus"] as Dictionary)
+		_settle(int(entry["side"]), entry["cells"] as Array[Vector2i], str(entry["skill_id"]), trade, int(entry["level"]), entry["featured_bonus"] as Dictionary,
+			entry.get("cast_context", {}) as Dictionary)
+	_fire_due()
 
 
-func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int = 1, featured_bonus: Dictionary = {}) -> void:
+func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int = 1, featured_bonus: Dictionary = {},
+		cast_context: Dictionary = {}) -> void:
+	# Skill v2 B1 (docs/skill-v2/02-mechanics-catalog.md M02): the swing becomes an impact plan (CastResolver). An
+	# `instant` card (all cards today) -> one wave of all its cells at t = 0 -> one CutEffects.apply exactly as before
+	# (golden test). A scheduled card puts its events on the clock instead (B1.5).
+	var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(skill_id), cells, cast_context, delivery_timing)
+	if not bool(plan["legacy"]):
+		_schedule_cast(side, cells, skill_id, trade, level, featured_bonus, cast_context, plan)
+		return
+	var waves: Array = plan["waves"] as Array
+	var wave: Dictionary = waves[0] if not waves.is_empty() else {"wave": 0, "t": 0.0, "cells": cells, "kind": "hit", "mult": 1.0}
+	var wave_cells: Array[Vector2i] = []
+	wave_cells.assign(wave["cells"])
 	var modifier: Callable = player_damage_modifier if side == CombatState.Side.PLAYER else Callable()
 	var is_player: bool = side == CombatState.Side.PLAYER
 	var result: Dictionary = CutEffects.apply(
-		_state, _grid, side, cells, skill_id, _cut_config, _skill_config, _status, modifier, level,
+		_state, _grid, side, wave_cells, skill_id, _cut_config, _skill_config, _status, modifier, level,
 		player_cells_modifier if is_player else Callable(),
 		player_signature_modifier if is_player else Callable(),
 		{"target_defense": boss_defense + (_status.guard_amount(CombatState.Side.ENEMY) if _status != null else 0.0), "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
@@ -146,8 +217,11 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 			"zone_rng": zone_rng,
 			"player_guard": player_guard if not is_player else null,
 			"crit_mult_at_start": _player_crit_at_start if is_player else 1.0,
-			"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call())})
+			"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call()),
+			"cast_context": cast_context})
 	result["cells"] = cells
+	result["cast_context"] = cast_context
+	wave_resolved.emit(side, wave, result)
 	result["skill_id"] = skill_id
 	result["level"] = level
 	# Cast rhythm spec 2026-11-05: a parry card's own hit never cancels the enemy's attack it answers (else a parry could
@@ -169,9 +243,12 @@ func _on_actor_resolved(cells: Array[Vector2i], skill_id: String, side: int) -> 
 	var actor: CutActor = _actors[side] as CutActor
 	# Story 028: a swing's featured bonus is consumed here (one-shot); the boss's swings never carry it.
 	var bonus: Dictionary = actor.consume_featured_bonus()
+	# B1.5: the context is frozen here, the cast-time snapshot every wave / event / listener reads.
+	var ctx: Dictionary = CastContext.freeze(actor.consume_cast_context())
 	if side != CombatState.Side.PLAYER:
 		bonus = {}
-	_pending.append({"side": side, "cells": cells, "skill_id": skill_id, "level": actor.get_level(), "featured_bonus": bonus})
+	_pending.append({"side": side, "cells": cells, "skill_id": skill_id, "level": actor.get_level(), "featured_bonus": bonus,
+		"cast_context": ctx})
 
 
 # Snapshots the crit condition of the hero's swing as it starts (CritRules on the target as it is now).
@@ -183,6 +260,141 @@ func _on_player_swing_started(_cells: Array[Vector2i], skill_id: String, _durati
 func _cancel_all() -> void:
 	for side: int in _actors:
 		(_actors[side] as CutActor).cancel()
+	clear_scheduled()
+
+
+# Skill v2 B1.5: records a scheduled cast and puts its events on the clock (at = now + event t). The heal_self of the
+# card happens now, once (the swing landed), as on the legacy path.
+func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int, featured_bonus: Dictionary,
+		cast_context: Dictionary, plan: Dictionary) -> void:
+	var is_player: bool = side == CombatState.Side.PLAYER
+	var count: int = (_status.unlocked_cells(cells) if _status != null else cells).size()
+	var skill: Dictionary = CutEffects.resolved_skill(_skill_config, skill_id, level)
+	var id: int = _next_cast_id
+	_next_cast_id += 1
+	var wave_left: Dictionary = {}
+	for e: Dictionary in plan["events"]:
+		wave_left[int(e["wave"])] = int(wave_left.get(int(e["wave"]), 0)) + 1
+	var waves: Dictionary = {}
+	for w: Dictionary in plan["waves"]:
+		waves[int(w["wave"])] = w
+	_casts[id] = {"id": id, "side": side, "skill_id": skill_id, "level": level, "cells": cells.duplicate(), "trade": trade,
+		"featured_bonus": featured_bonus if is_player else {}, "context": cast_context, "cast_cells": count,
+		"max_hits": int(plan["max_hits"]), "hits": 0, "wave_hit": {}, "wave_left": wave_left, "waves": waves,
+		"events_left": (plan["events"] as Array).size(), "damage": 0.0, "interrupted": false, "last_hit": {},
+		"crit_at_start": _player_crit_at_start if is_player else 1.0,
+		"healed": CutEffects.heal_caster(_state, side, skill)}
+	for e: Dictionary in plan["events"]:
+		var ev: Dictionary = e.duplicate()
+		ev["cast_id"] = id
+		ev["at"] = _clock + float(e["t"])
+		ev["seq"] = _next_seq
+		_next_seq += 1
+		_events.append(ev)
+	_events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if absf(float(a["at"]) - float(b["at"])) > 0.0000001:
+			return float(a["at"]) < float(b["at"])
+		return int(a["seq"]) < int(b["seq"]))
+	if (plan["events"] as Array).is_empty():
+		_finish_cast(id)
+
+
+# Fires every event due by now (at <= clock + tie window), in order. Stops when a unit dies.
+func _fire_due() -> void:
+	while not _events.is_empty() and float(_events[0]["at"]) <= _clock + TIE_EPSILON_SEC:
+		if _state.is_player_dead() or _state.is_enemy_dead():
+			return
+		var ev: Dictionary = _events.pop_front()
+		_fire_event(ev)
+
+
+func _fire_event(ev: Dictionary) -> void:
+	var id: int = int(ev["cast_id"])
+	if not _casts.has(id):
+		return
+	var cast: Dictionary = _casts[id]
+	var side: int = int(cast["side"])
+	var is_player: bool = side == CombatState.Side.PLAYER
+	var wave: int = int(ev["wave"])
+	var ev_cells: Array[Vector2i] = []
+	ev_cells.assign(ev["cells"])
+	var hit: bool = false
+	var can_hit: bool = int(cast["hits"]) < int(cast["max_hits"]) and not (cast["wave_hit"] as Dictionary).has(wave)
+	if can_hit and _state.unit_in(_opposite(side), ev_cells):
+		var skill_id: String = str(cast["skill_id"])
+		var result: Dictionary = CutEffects.apply(
+			_state, _grid, side, ev_cells, skill_id, _cut_config, _skill_config, _status,
+			player_damage_modifier if is_player else Callable(), int(cast["level"]),
+			player_cells_modifier if is_player else Callable(),
+			player_signature_modifier if is_player else Callable(),
+			{"target_defense": boss_defense + (_status.guard_amount(CombatState.Side.ENEMY) if _status != null else 0.0),
+				"execute_ratio": execute_ratio, "featured_bonus": cast["featured_bonus"],
+				"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
+				"relic_modifier": player_relic_modifier if is_player else Callable(),
+				"player_guard": player_guard if not is_player else null,
+				"crit_mult_at_start": float(cast["crit_at_start"]),
+				"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call()),
+				"cast_context": cast["context"], "cast_cell_count": int(cast["cast_cells"]),
+				"impact_mult": float(ev["mult"]), "apply_heal": false})
+		hit = bool(result["hit"])
+		if hit:
+			cast["hits"] = int(cast["hits"]) + 1
+			(cast["wave_hit"] as Dictionary)[wave] = true
+			cast["damage"] = float(cast["damage"]) + float(result.get("damage", 0.0))
+			cast["last_hit"] = result
+			var at_zero: bool = float(ev["t"]) <= TIE_EPSILON_SEC
+			var may_interrupt: bool = not bool(cast["interrupted"]) and not (bool(cast["trade"]) and at_zero)
+			may_interrupt = may_interrupt and not bool(result.get("parried", false))
+			may_interrupt = may_interrupt and not (is_player and _skill_config.is_parry_card(skill_id))
+			if may_interrupt:
+				cast["interrupted"] = true
+				var victim_side: int = _opposite(side)
+				var victim: CutActor = _actors[victim_side] as CutActor
+				if victim.is_swinging():
+					var victim_cells: Array[Vector2i] = victim.get_cells()
+					var victim_skill: String = victim.get_skill_id()
+					victim.cancel()
+					swing_interrupted.emit(victim_side, victim_cells, victim_skill)
+	var public: Dictionary = ev.duplicate()
+	public.erase("seq")
+	impact_resolved.emit(side, public, hit)
+	if not _casts.has(id):
+		return
+	var left: Dictionary = cast["wave_left"]
+	left[wave] = int(left[wave]) - 1
+	if int(left[wave]) <= 0:
+		var w: Dictionary = (cast["waves"] as Dictionary).get(wave, {}) as Dictionary
+		wave_resolved.emit(side, w, {"hit": (cast["wave_hit"] as Dictionary).has(wave), "cast_context": cast["context"],
+			"cells": cast["cells"], "skill_id": cast["skill_id"]})
+	cast["events_left"] = int(cast["events_left"]) - 1
+	if int(cast["events_left"]) <= 0:
+		_finish_cast(id)
+
+
+# The card-level result of a scheduled cast, once its last event fired: swing_resolved with hit = any event damaged
+# the target and damage = their sum (listeners see one outcome per cast, as for an instant card).
+func _finish_cast(id: int) -> void:
+	var cast: Dictionary = _casts.get(id, {}) as Dictionary
+	if cast.is_empty():
+		return
+	_casts.erase(id)
+	var side: int = int(cast["side"])
+	var last: Dictionary = cast["last_hit"] as Dictionary
+	var result: Dictionary = last.duplicate()
+	if last.is_empty():
+		result = {"hit": false, "damage": 0.0, "pushed": false, "cell": _state.cell_of(_opposite(side)),
+			"burning": false, "pinned": false}
+	result["hit"] = int(cast["hits"]) > 0
+	result["damage"] = float(cast["damage"])
+	result["hits"] = int(cast["hits"])
+	result["healed"] = float(cast["healed"])
+	result["scheduled"] = true
+	result["cells"] = cast["cells"]
+	result["cast_context"] = cast["context"]
+	result["skill_id"] = cast["skill_id"]
+	result["level"] = cast["level"]
+	result["no_interrupt"] = side == CombatState.Side.PLAYER and _skill_config.is_parry_card(str(cast["skill_id"]))
+	swing_resolved.emit(side, result)
 
 
 func _opposite(side: int) -> int:

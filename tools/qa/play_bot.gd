@@ -74,6 +74,10 @@ func _initialize() -> void:
 	while t < MAX_SEC and not st.is_player_dead() and not st.is_enemy_dead():
 		await process_frame
 		t += dt
+		# B1.5 (PLACE FAIL sat_thu vs mistbriar_matron t=132.9): a unit can die DURING the awaited frame; the bot then
+		# acted on a finished match (select_piece refuses on a dead unit). Stop here instead.
+		if st.is_player_dead() or st.is_enemy_dead():
+			break
 		if st.enemy_cell != last_e:
 			e_moves += 1
 			last_e = st.enemy_cell
@@ -136,7 +140,7 @@ func _initialize() -> void:
 			if not ok_conf:
 				if int(stats.get("fail_log", 0)) < 6:
 					stats["fail_log"] = int(stats.get("fail_log", 0)) + 1
-					print("PLACE FAIL t=%.1f sel %s aim %s conf %s piece %s placed %s menu %s swing %s e %s" % [t, ok_sel, ok_aim, ok_conf, hold.get_piece(0).shape_id if hold.get_piece(0) else "-", v.is_placed(), v.get_cut_flow().is_menu_open(), v.get_cut_actor().is_swinging(), st.enemy_cell])
+					print("PLACE FAIL t=%.1f sel %s aim %s conf %s piece %s placed %s menu %s swing %s e %s dead %s/%s hp %.0f/%.0f" % [t, ok_sel, ok_aim, ok_conf, hold.get_piece(0).shape_id if hold.get_piece(0) else "-", v.is_placed(), v.get_cut_flow().is_menu_open(), v.get_cut_actor().is_swinging(), st.enemy_cell, st.is_player_dead(), st.is_enemy_dead(), st.player_hp, st.enemy_hp])
 				v.cancel_placement()
 				next_action = t + 0.5
 				continue

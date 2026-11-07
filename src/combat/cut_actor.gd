@@ -44,6 +44,9 @@ var _has_queued: bool = false
 ## swing resolves (like the level) so the arbiter can read it while swing_resolved is emitted;
 ## cleared by [method cancel], by the next swing start and by [method consume_featured_bonus].
 var _featured_bonus: Dictionary = {}
+## Skill v2 B1 (CastContext): the record of the current (or just resolved) swing's cast; {} when none (boss swings,
+## tests, dev paths). Same lifetime as the featured bonus.
+var _cast_context: Dictionary = {}
 var _q_cells: Array[Vector2i] = []
 var _q_skill_id: String = ""
 var _q_target_is_enemy: bool = true
@@ -65,7 +68,7 @@ func can_begin() -> bool:
 ## Story 023: [param duration_override] > 0 fixes the windup (trait swings with their own telegraph).
 ## Story 028: a non-empty [param featured_bonus] ({damage_mult, effect, stacks, sec}) makes this a
 ## FEATURED swing: the bonus is applied once when it resolves with a hit (SwingArbiter, PLAYER side only).
-func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, level: int = 1, duration_override: float = -1.0, featured_bonus: Dictionary = {}) -> bool:
+func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool, level: int = 1, duration_override: float = -1.0, featured_bonus: Dictionary = {}, cast_context: Dictionary = {}) -> bool:
 	if _swinging or cells.is_empty():
 		return false
 	var duration: float = _config.swing_duration(cells.size()) * duration_mult
@@ -76,6 +79,7 @@ func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool
 	if cast_time_modifier.is_valid():
 		duration = maxf(float(cast_time_modifier.call(cells.size(), duration)), 0.0)
 	_featured_bonus = featured_bonus.duplicate(true)
+	_cast_context = cast_context.duplicate(true)
 	_start(cells, skill_id, target_is_enemy, duration, level)
 	return true
 
@@ -146,6 +150,7 @@ func tick(delta: float) -> void:
 		var next_level: int = _q_level
 		clear_queue()
 		_featured_bonus = {}
+		_cast_context = {}
 		_start(next_cells, next_skill, next_target, next_duration, next_level)
 
 
@@ -158,6 +163,7 @@ func cancel() -> void:
 	var skill_id: String = _skill_id
 	_clear()
 	_featured_bonus = {}
+	_cast_context = {}
 	swing_cancelled.emit(cells, skill_id)
 	_drop_queue_with_signal()
 
@@ -216,6 +222,18 @@ func get_level() -> int:
 ## Story 028: the featured bonus the current (or just resolved) swing carries; {} when none.
 func get_featured_bonus() -> Dictionary:
 	return _featured_bonus.duplicate(true)
+
+
+## Skill v2 B1: the cast context of the current (or just resolved) swing; {} when none.
+func get_cast_context() -> Dictionary:
+	return _cast_context.duplicate(true)
+
+
+## Skill v2 B1: returns the carried cast context and clears it (taken once, when the swing resolves).
+func consume_cast_context() -> Dictionary:
+	var ctx: Dictionary = _cast_context
+	_cast_context = {}
+	return ctx
 
 
 ## Story 028: returns the carried featured bonus and clears it, so it is applied at most once.

@@ -1,6 +1,7 @@
 {
 	"menu_time_scale": 0.0,
 	"menu_choose_sec": 3.0,
+	"menu_no_option_sec": 0.5,
 	"focus": {"focus_time_scale": 0.0, "focus_max_sec": 4.0, "focus_cooldown_sec": 0.0, "focus_locks_movement": true},
 	"hand_size": 4,
 	"default_card": "kiem_khi",

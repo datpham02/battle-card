@@ -422,6 +422,8 @@ func _ready() -> void:
 	_boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
 	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config, _status)
 	_arbiter.player_guard = _parry_guard
+	# Skill v2 B1.5: the `arrival` resolve reads the same delivery timing as the cast visuals.
+	_arbiter.delivery_timing = delivery_timing()
 	_parry_guard.parried.connect(_on_parried)
 	# Story 023: flat boss defense (match key boss_defense), default execute threshold, brain min runes.
 	_arbiter.boss_defense = maxf(float(match_params.get("boss_defense", 0.0)), 0.0)
@@ -2167,19 +2169,32 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 		if featured_override > 0.0:
 			bonus["damage_mult"] = featured_override
 	var info: Dictionary = _make_cast_info(skill_id, cells, _plan_labels(), _plan.piece_count() >= 2, not bonus.is_empty())
+	# Skill v2 B1 (CastContext, M01): the pieces, their cells and shape tags, read before the plan is cleared.
+	var piece_cells: Array = []
+	for i: int in _plan.piece_count():
+		piece_cells.append(_plan.piece_cells(i))
+	# B1.5: plus the cast-time snapshot (cast mode, featured bonus details, the damage cell count after the signature's
+	# cell rule, the arbiter clock).
+	var effective: int = cells.size()
+	if _arbiter != null and _arbiter.player_cells_modifier.is_valid():
+		effective = maxi(int(_arbiter.player_cells_modifier.call(cells.size())), 0)
+	var ctx: Dictionary = CastContext.build(skill_id, get_card_level(skill_id), _plan.pieces(), piece_cells,
+		delivery_for(skill_id), not bonus.is_empty(), CombatState.Side.PLAYER, _state.player_cell,
+		{"cast_mode": _skill_config.cast_mode(skill_id), "featured_bonus": bonus, "effective_cells": effective,
+			"t_cast": _arbiter.clock() if _arbiter != null else 0.0})
 	_plan.clear()
 	_drop_placement()
-	_begin_cut(skill_id, cells, bonus, info)
+	_begin_cut(skill_id, cells, bonus, info, ctx)
 	_try_pick_up_under_player()
 
 
 # Story 032: [param cast_info] is the relics' view of the cast (_make_cast_info); empty = a bare cast of
 # [param cells] with no pieces (tests / dev paths). It is kept until the swing resolves.
-func _begin_cut(skill_id: String, cells: Array[Vector2i], featured_bonus: Dictionary = {}, cast_info: Dictionary = {}) -> void:
+func _begin_cut(skill_id: String, cells: Array[Vector2i], featured_bonus: Dictionary = {}, cast_info: Dictionary = {}, cast_context: Dictionary = {}) -> void:
 	var level: int = get_card_level(skill_id)
 	_cast_info = cast_info if not cast_info.is_empty() else _make_cast_info(
 		skill_id, cells, [] as Array[String], false, not featured_bonus.is_empty())
-	if _cut_actor.begin_swing(cells, skill_id, true, level, -1.0, featured_bonus):
+	if _cut_actor.begin_swing(cells, skill_id, true, level, -1.0, featured_bonus, cast_context):
 		_cooldowns.start(skill_id, float(_resolved_card(skill_id, level).get("cooldown_sec", 0.0)))
 		# Cast rhythm spec 2026-11-05: a parry card opens the guard now; the card was chosen at the end of the cast stop,
 		# so its parry_sec runs from the moment the match runs again (the guard ticks on match time only).

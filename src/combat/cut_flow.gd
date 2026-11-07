@@ -50,7 +50,19 @@ func open_menu(labels: Array[String], cells: Array[Vector2i], hand: Array[String
 	if _hand.is_empty():
 		_hand = [_config.default_card]
 	_time_left = time_left if time_left >= 0.0 else get_duration()
+	# Skill v2 B1 fallback safety: no card of the hand can be cast on these cells -> do not hold the player for the
+	# whole choose time; the timeout path (default_card) runs after menu_no_option_sec.
+	if not _any_available():
+		_time_left = minf(_time_left, _config.menu_no_option_sec)
 	return true
+
+
+# True when at least one hand card is available for the open cut (no RNG use, unlike timeout_choice).
+func _any_available() -> bool:
+	for id: String in _hand:
+		if bool(SkillAvailability.check(_config, _cooldowns, id, _cells.size(), card_level(id), availability_context())["available"]):
+			return true
+	return false
 
 
 ## Advances the choose countdown by [param delta] REAL seconds; at zero a random available card of the hand is
