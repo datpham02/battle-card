@@ -80,7 +80,8 @@ func projectile_state() -> Dictionary:
 	if units == null:
 		return {}
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
-	var entry: Dictionary = CastVfx.entry_for(hero_id)
+	var delivery: Dictionary = combat.delivery_for(actor.get_skill_id())
+	var entry: Dictionary = CastVfx.entry_for(hero_id, str(delivery.get("impact", "")))
 	if entry.is_empty():
 		return {}
 	var from: Vector2i = CastVfx.hand_point(entry, units.unit_feet_art(CombatState.Side.PLAYER))
@@ -100,7 +101,6 @@ func projectile_state() -> Dictionary:
 		return {}
 	# ADR-0001 A1: only a delivery that leaves the caster flies from the hand (sky / ground / in-place / a chain that
 	# starts on its first cell do not); the projectile is square-based art, never the gameplay Block.
-	var delivery: Dictionary = combat.delivery_for(actor.get_skill_id())
 	if str(delivery.get("origin", "")) != "caster":
 		return {}
 	var targets: Array[Vector2i] = []
@@ -115,7 +115,7 @@ func projectile_state() -> Dictionary:
 	var pos: Vector2i = CastVfx.flight_pos(from, to, t)
 	# Task 5 item 3: the crescent wave is not square-based (pack 01 §1A): the pack's art stays on disk, unused.
 	if str(entry.get("travel_draw", "")) == "square_streak":
-		return {"streak": str(entry["id"]), "from": from, "to": to, "t": t, "hero": hero_id}
+		return {"streak": str(entry["id"]), "from": from, "to": to, "t": t, "hero": hero_id, "impact": str(delivery.get("impact", ""))}
 	var pack: VfxPack = CastVfx.pack_for(entry)
 	var frame: int = 0
 	if pack != null and not reduce:
@@ -137,7 +137,7 @@ func release_state() -> Dictionary:
 	if units == null:
 		return {}
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
-	var entry: Dictionary = CastVfx.entry_for(hero_id)
+	var entry: Dictionary = CastVfx.entry_for(hero_id, str(combat.delivery_for(actor.get_skill_id()).get("impact", "")))
 	var elapsed: float = CastVfx.release_elapsed(entry, actor.get_time_left())
 	if elapsed < 0.0:
 		return {}
@@ -201,7 +201,8 @@ func travel_items() -> Array[Dictionary]:
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
 	var shot: Dictionary = projectile_state()
 	if shot.has("streak"):
-		_streak(out, shot["from"], shot["to"], float(shot["t"]), CastVfx.block_colours(hero_id))
+		# 2026-11-07: the streak takes the card's impact colours (ice pale blue), else the hero's block colours.
+		_streak(out, shot["from"], shot["to"], float(shot["t"]), CastVfx.impact_colours(str(shot.get("impact", "")), hero_id))
 	_side_items(out, combat, CombatState.Side.PLAYER, hero_id)
 	_side_items(out, combat, CombatState.Side.ENEMY, ENEMY_BLOCK)
 	return out
@@ -226,6 +227,9 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 		return
 	var block: Array[Color] = CastVfx.block_colours(caster_id)
 	var delivery: Dictionary = tr["delivery"]
+	# 2026-11-07 (user: the Mage's falling fire was dark specks): the player's travel squares take the impact's own
+	# colours when its style names them (burn orange, freeze pale blue); the boss keeps its flat enemy colour.
+	var travel_cols: Array[Color] = CastVfx.impact_colours(str(delivery.get("impact", "")), caster_id) if side == CombatState.Side.PLAYER else block
 	var rel: float = float(tr["rel"])
 	var arrive: Dictionary = tr["arrive"]
 	var shown: Array = tr["cells"]
@@ -249,7 +253,7 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 				var rects: Array[Rect2i] = CastFloorFx.fall_rects(_floor.cell_art_rect(c), float(arrive.get(c, 0.0)) - rel,
 					float(fs.get("drop_sec", 0.2)), int(fs.get("height", 70)), int(fs.get("count", 3)), int(fs.get("size", 4)), hash(c))
 				for i: int in rects.size():
-					out.append(_sq(rects[i], block[1] if i == 0 else block[0]))
+					out.append(_sq(rects[i], travel_cols[1] if i == 0 else travel_cols[0]))
 		"chain_spark":
 			var cs: Dictionary = CastVfx.travel_style("chain_spark")
 			var links: Array = arrive.keys()
@@ -259,7 +263,7 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 				var t1: float = float(arrive[links[k + 1]])
 				if rel >= t0 and rel < t1:
 					var p: Vector2i = CastFloorFx.hop_point(_centre(links[k]), _centre(links[k + 1]), (rel - t0) / maxf(t1 - t0, 0.001), int(cs.get("lift", 12)))
-					out.append(_sq(CastFloorFx.square_rect(p, int(cs.get("size", 4))), block[1]))
+					out.append(_sq(CastFloorFx.square_rect(p, int(cs.get("size", 4))), travel_cols[1]))
 		"floor_run":
 			var fr: Dictionary = CastVfx.travel_style("floor_run")
 			var o: Vector2i = SkillDelivery.origin_cell(delivery, arrive.keys(), tr["caster"])
@@ -267,7 +271,7 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 				var rects: Array[Rect2i] = CastFloorFx.run_rects(_centre(o), _centre(c), rel, float(arrive.get(c, 0.0)),
 					int(fr.get("count", 3)), int(fr.get("size", 4)), float(fr.get("trail_sec", 0.025)))
 				for i: int in rects.size():
-					out.append(_sq(rects[i], block[1] if i == 0 else block[0]))
+					out.append(_sq(rects[i], travel_cols[1] if i == 0 else travel_cols[0]))
 	if bool(tr.get("swinging", false)):
 		return
 	# The square impact flash on every reached (unlocked) cell, then (item 2) the impact's square shards on a hit.
@@ -280,7 +284,7 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 	# flash and shards would draw a second impact on the same cells (in game the flash's white cell frame read as a UI
 	# selection box over the burst): both are left out for that cast. Every other cast keeps them.
 	var packs_own: bool = side == CombatState.Side.PLAYER and str(delivery.get("type", "")) == SkillDelivery.CASTER_TO_TARGET \
-			and str(delivery.get("travel", "")) == "hero_pack" and CastVfx.packs_replace_shards(CastVfx.entry_for(caster_id))
+			and str(delivery.get("travel", "")) == "hero_pack" and CastVfx.packs_replace_shards(CastVfx.entry_for(caster_id, impact))
 	# 2026-11-04: an impact drawn by its own FloorVfx pack (impact_packs: the Mage's fire) drops the code flash / shards too.
 	if packs_own or (bool(tr.get("hit", false)) and CastVfx.impact_pack_owns_cells(impact)):
 		return

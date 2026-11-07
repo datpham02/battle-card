@@ -471,17 +471,25 @@ func cast_hold(side: int) -> bool:
 	var actor: CutActor = _combat.get_cut_actor()
 	if actor == null or not actor.is_swinging():
 		return false
-	var entry: Dictionary = CastVfx.entry_for(String(_unit_id.get(side, "")))
+	var entry: Dictionary = CastVfx.entry_for(String(_unit_id.get(side, "")), _cast_impact())
 	if entry.is_empty():
 		return false
 	return actor.get_time_left() > CastVfx.gesture_due_left(entry)
+
+
+# 2026-11-07: the delivery impact of the player's swing now ("" without one), so the cast timings follow the pack the
+# card is drawn with (CastVfx.entry_for).
+func _cast_impact() -> String:
+	if _combat == null or _combat.get_cut_actor() == null:
+		return ""
+	return str(_combat.delivery_for(_combat.get_cut_actor().get_skill_id()).get("impact", ""))
 
 
 # 2026-11-01 (v4 wind-up): the cast clip plays from the swing start and stops on its coil frame (the cast index's
 # gesture_hold_frame) while the telegraph runs; when the launch is due it jumps to the slash frame after the coil.
 # An entry without a hold frame keeps the old behaviour (held on frame 0 until due).
 func _drive_cast_hold(side: int, anim: UnitAnimator) -> void:
-	var hold: int = CastVfx.gesture_hold_frame(CastVfx.entry_for(String(_unit_id.get(side, ""))))
+	var hold: int = CastVfx.gesture_hold_frame(CastVfx.entry_for(String(_unit_id.get(side, "")), _cast_impact()))
 	var step: Dictionary = cast_hold_step(anim.frame_index(), anim.frame_count(), hold, cast_hold(side))
 	if int(step["seek"]) >= 0:
 		anim.seek(int(step["seek"]))

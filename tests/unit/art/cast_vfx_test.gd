@@ -18,7 +18,21 @@ func _initialize() -> void:
 	var e: Dictionary = CastVfx.entry_for("kiem_si")
 	# 2026-11-02: the Swordsman's cast is drawn by the tools/fx-pipeline packs; sword_wave stays the default (rollback).
 	ck("index: kiem_si -> square_wave_steel", str(e.get("id", "")) == "square_wave_steel", str(e))
-	ck("index: an unmapped hero uses the default", str(CastVfx.entry_for("phap_su").get("id", "")) == "sword_wave")
+	ck("index: an unmapped hero uses the default", str(CastVfx.entry_for("no_such_hero").get("id", "")) == "sword_wave")
+	# 2026-11-07 (user: the Mage first): the Mage's cast is the fireball pack, fire charge at the hand, flames on impact.
+	var m: Dictionary = CastVfx.entry_for("phap_su")
+	ck("index: phap_su -> fire_bolt_burn", str(m.get("id", "")) == "fire_bolt_burn", str(m.get("id", "")))
+	ck("mage: fire charge, flame impacts", str(m.get("charge", "")) == "charge_flame_burn" and str(m.get("impact", "")) == "impact_flame_burn" and str(m.get("cell_burst", "")) == "impact_flame_small_burn")
+	ck("mage: the fireball pack loads", CastVfx.pack_for(m) != null and CastVfx.pack_for(CastVfx.charge_entry(m)) != null)
+	# 2026-11-07 (user: every card is shared): the fireball only for strike / fire cards; ice and slash use the default.
+	ck("mage strike card -> fireball", str(CastVfx.entry_for("phap_su", "burst").get("id", "")) == "fire_bolt_burn")
+	ck("mage fire card -> fireball", str(CastVfx.entry_for("phap_su", "burn").get("id", "")) == "fire_bolt_burn")
+	ck("mage ice card -> default pack", str(CastVfx.entry_for("phap_su", "freeze").get("id", "")) == "sword_wave")
+	ck("mage slash card -> default pack", str(CastVfx.entry_for("phap_su", "slash").get("id", "")) == "sword_wave")
+	ck("knight keeps steel for every card", str(CastVfx.entry_for("kiem_si", "freeze").get("id", "")) == "square_wave_steel")
+	ck("ice streak is pale blue", CastVfx.impact_colours("freeze", "phap_su")[0] == Color("A6EEFF"))
+	ck("a burn floor run leaves flames, other runs the dust", CastVfx.travel_pack("floor_run", "burn") == "impact_flame_small_burn" and CastVfx.travel_pack("floor_run", "thorns") == "miss_dust")
+	ck("travel squares of a burn card are fire coloured", CastVfx.impact_colours("burn", "phap_su")[0] == Color("FF7A1F"))
 	ck("pack: square_wave_steel loads with its clip", CastVfx.pack_for(e) != null and not CastVfx.pack_for(e).clip("whole").is_empty())
 	ck("pack: square_wave_steel keeps the sword_wave timing", is_equal_approx(CastVfx.travel_sec(e), CastVfx.travel_sec(CastVfx.pack_entry("sword_wave")))
 		and CastVfx.gesture_hold_frame(e) == CastVfx.gesture_hold_frame(CastVfx.pack_entry("sword_wave")))

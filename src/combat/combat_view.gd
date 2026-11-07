@@ -2877,7 +2877,7 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 	var impact: String = CastVfx.impact_pack(str(delivery.get("impact", "")))
 	var peak: float = 0.0
 	if _hero_wave(side, delivery) and not cells.is_empty():
-		peak = _play_hero_wave(cells, caster, delays, impact, shown)
+		peak = _play_hero_wave(cells, caster, delays, impact, shown, str(delivery.get("impact", "")))
 	elif not impact.is_empty():
 		# 2026-11-04: an impact with a floor mark (impact_marks, the Mage's embers) leaves it on each hit cell too.
 		var mark: String = CastVfx.impact_mark(str(delivery.get("impact", "")))
@@ -2919,9 +2919,11 @@ func _hero_wave(side: int, delivery: Dictionary) -> bool:
 
 # The sword wave: the pack's landing impact on the first cell, the delivery's impact on every other cell as the spread
 # reaches it, and the flood shards. Returns the blast peak the hit flash adds.
-func _play_hero_wave(cells: Array, caster: Vector2i, delays: Dictionary, impact: String, shown: Array) -> float:
+## [param impact_id] = the card's delivery impact (picks the hero's pack for it, CastVfx.entry_for); [param impact] is
+## that impact's FloorVfx pack ("" when none).
+func _play_hero_wave(cells: Array, caster: Vector2i, delays: Dictionary, impact: String, shown: Array, impact_id: String = "") -> float:
 	var hero_id: String = str(UnitLayer.unit_ids_for(match_params).get(CombatState.Side.PLAYER, ""))
-	var entry: Dictionary = CastVfx.entry_for(hero_id)
+	var entry: Dictionary = CastVfx.entry_for(hero_id, impact_id)
 	if entry.is_empty():
 		return 0.0
 	var first: Vector2i = SkillDelivery.nearest_cell(cells, caster)
@@ -2950,7 +2952,7 @@ func _play_hero_wave(cells: Array, caster: Vector2i, delays: Dictionary, impact:
 
 # The travel's visual on the floor cells it crosses outside the mask (animation only; no effect on them).
 func _play_delivery_travel(delivery: Dictionary, cells: Array, caster: Vector2i, target_side: int) -> void:
-	var pack: String = CastVfx.travel_pack(str(delivery.get("travel", "")))
+	var pack: String = CastVfx.travel_pack(str(delivery.get("travel", "")), str(delivery.get("impact", "")))
 	if pack.is_empty() or cells.is_empty():
 		return
 	var ground: bool = str(delivery.get("type", "")) == SkillDelivery.GROUND_PROPAGATION

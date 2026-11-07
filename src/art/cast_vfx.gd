@@ -32,10 +32,17 @@ static var _packs: Dictionary = {}
 
 
 ## The pack entry for the hero [param unit_id] (the index's `default` for an unmapped id); {} when none.
-static func entry_for(unit_id: String) -> Dictionary:
+## 2026-11-07: with [param impact_id] (the card's delivery impact), a hero whose `unit_impacts` list leaves that impact
+## out casts it with the default pack (the Mage's fireball is for strike and fire cards, not ice or slash).
+static func entry_for(unit_id: String, impact_id: String = "") -> Dictionary:
 	_ensure()
 	var units: Dictionary = _index.get("units", {}) if _index.get("units", {}) is Dictionary else {}
 	var pack_id: String = str(units.get(unit_id, _index.get("default", "")))
+	var limits: Variant = _index.get("unit_impacts", {})
+	if not impact_id.is_empty() and limits is Dictionary and (limits as Dictionary).has(unit_id):
+		var allowed: Variant = (limits as Dictionary)[unit_id]
+		if allowed is Array and not (allowed as Array).has(impact_id):
+			pack_id = str(_index.get("default", ""))
 	var packs: Dictionary = _index.get("packs", {}) if _index.get("packs", {}) is Dictionary else {}
 	var e: Variant = packs.get(pack_id, {})
 	if not (e is Dictionary) or (e as Dictionary).is_empty():
@@ -165,8 +172,13 @@ static func impact_pack_owns_cells(impact_id: String) -> bool:
 
 ## ADR-0001 A1: the FloorVfx one-shot pack id drawn on the cells a delivery's travel [param travel_id] crosses
 ## (index `travel_packs`); "" when none is mapped (the hero's projectile is drawn by OverlayLayer instead).
-static func travel_pack(travel_id: String) -> String:
+## 2026-11-07: [param impact_id] picks a `travel_impact_packs` "<travel>:<impact>" override first (a burn card's
+## floor run leaves flames, not dust).
+static func travel_pack(travel_id: String, impact_id: String = "") -> String:
 	_ensure()
+	var by_impact: Variant = _index.get("travel_impact_packs", {})
+	if by_impact is Dictionary and not impact_id.is_empty() and (by_impact as Dictionary).has(travel_id + ":" + impact_id):
+		return str((by_impact as Dictionary)[travel_id + ":" + impact_id])
 	var m: Variant = _index.get("travel_packs", {})
 	return str((m as Dictionary).get(travel_id, "")) if m is Dictionary else ""
 

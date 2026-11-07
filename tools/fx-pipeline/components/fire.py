@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from fxkit.component import Component
 from fxkit.easing import out_cubic
-from fxkit.motion import shard
+from fxkit.motion import cycle, shard
 from fxkit.rng import rng
 
 from .squares import _even, unit
@@ -110,3 +110,69 @@ class FlameBurst(Component):
                             ch * r.range(-0.3, 0.3))
             v = age / life
             p.square(x, y, max(2, u - 2), R[3] if v < 0.5 else R[2])
+
+
+class SquareFireball(Component):
+    """Travel: the Mage's fireball of squares, facing right, looping while the game moves it.
+
+    2026-11-07 (user: the Mage's cast should read as fire, not the shared square streak): a blocky head of u-px
+    squares (no circle: a stepped lozenge three to five squares tall), ivory-hot at the leading column, lava inside,
+    burn at the rim, one row a ramp step darker (the art bible's horizontal stripe); three flame tongues trail behind
+    and flicker every beat; squares tear off the tail and cool. Anchor = the head's leading point.
+    """
+
+    name = "square_fireball"
+    desc = "Fireball: a stepped head of hot squares, three flickering tongues behind, cooling squares shed; loops."
+    loop = True
+    anchor = "origin"
+    defaults = {"u": 5, "shed": 7, "period": 0.2}
+    # head columns from the front: half height in squares
+    HEAD = (1, 2, 2, 2, 1)
+    # tongue length (squares) per row offset and beat
+    TAILS = {-1: (2, 3, 2, 1), 0: (4, 3, 5, 4), 1: (2, 1, 3, 2)}
+
+    def duration(self, o):
+        return o["period"]
+
+    def box(self, o):
+        u = unit(o)
+        back = (len(self.HEAD) + 5 + 5) * u + 8
+        half = 3 * u + 6
+        return _even(back + u + 6), _even(2 * half), _even(back), _even(half)
+
+    def draw(self, P, t, o):
+        R, p, u = o["ramp"], P["front"], unit(o)
+        beat = int((t / o["period"]) * 4) % 4
+        n = len(self.HEAD)
+        # tongues first so the head sits on top
+        for row, lengths in self.TAILS.items():
+            length = lengths[beat]
+            for j in range(length):
+                x = -(n + j) * u
+                c = R[3] if j < length // 2 else R[2]
+                if j == length - 1:
+                    c = R[1] if length > 2 else R[2]
+                p.square(x, row * u, max(2, u - (1 if j >= length - 1 else 0)), c)
+        # the head: a stepped lozenge, hottest at the front, a darker stripe one row below the middle
+        for col, half in enumerate(self.HEAD):
+            for row in range(-half, half + 1):
+                edge = abs(row) == half
+                if col == 0:
+                    c = R[4] if row == 0 else R[3]
+                elif row == 1:
+                    c = R[2]
+                elif edge:
+                    c = R[2]
+                else:
+                    c = R[3] if (col + beat) % 3 else R[4]
+                p.square(-col * u, row * u, u, c)
+
+        # squares torn off the tail drift back and down and cool (seamless: on a cycle of the period)
+        def shed(age, life, r, i):
+            v = age / life
+            row = r.int(-1, 1)
+            x = -(n + 4) * u - v * r.range(2.0, 4.0) * u
+            y = row * u + round(v * r.range(0, u))
+            p.square(x, y, max(2, u - 1 if v < 0.5 else u - 2), R[3] if v < 0.4 else R[2] if v < 0.75 else R[1])
+
+        cycle(t, o["period"], o["shed"], o["seed"], lambda g: g.range(0.14, 0.2), shed)

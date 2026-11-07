@@ -1,0 +1,50 @@
+{
+ "id": "phap_su_hoa_cau",
+ "title": "Mage - Square Fireball (2026-11-07, user: Mage cast and skill effects first)",
+ "delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "hero_pack", "impact": "burst"},
+ "data_delivery": "@cards:cards.kiem_khi.delivery",
+ "material": "burn",
+ "seed": 23,
+ "fps": 20,
+ "ref_cell": [64, 46],
+ "packs": [
+  {"id": "charge_flame_burn", "component": "square_gather", "layer": "overlay",
+   "options": {"layer": "front", "reach_px": 16, "count": 8, "period": 0.3},
+   "title": "Tessera fx - charge: fire squares gathering at the Mage's hand (burn)"},
+  {"id": "travel_fireball_burn", "component": "square_fireball", "layer": "overlay",
+   "title": "Tessera fx - travel: fireball of stepped squares (burn)"},
+  {"id": "impact_flame_small_burn", "component": "flame_burst", "layer": "overlay", "options": {"size": "small"},
+   "cells": [[64, 46], [43, 31]], "title": "Tessera fx - impact: small stepped flame, spread cells and fire trails (burn)"}
+ ],
+ "timeline": {
+  "cell": [64, 46],
+  "arena": {"cols": 3, "rows": 3, "gap": 6},
+  "sequence": "player_cast",
+  "caster": {"unit": "phap_su", "side": "player", "cell": [1, 1], "stand_in": [96, 70], "hand": [12, -32]},
+  "target": {"unit": "goblin_scout", "side": "enemy", "cell": [1, 1]},
+  "mask": [[0, 1], [1, 1], [2, 1], [1, 0]],
+  "swing_base_sec": "@cuts:swing_base_sec",
+  "swing_per_cell_sec": "@cuts:swing_per_cell_sec",
+  "timing": "@combat:timing.delivery",
+  "aim_lift": 18,
+  "travel_sec": 0.2,
+  "gesture_lead_sec": 0.03,
+  "gesture_hold_frame": 4,
+  "charge_sec": 0.3,
+  "charge_pack": "design/assets/candidates/fx-pipeline/charge_flame_burn",
+  "hit_feel": "@cast:hit_feel",
+  "block_colours": "@cast:block_colours.phap_su",
+  "freeze_sec": 0,
+  "fps": 25,
+  "zoom": 2,
+  "pre_sec": 0.3,
+  "post_sec": 0.7,
+  "packs": {
+   "travel": "travel_fireball_burn",
+   "first": "impact_flame_burn",
+   "spread": "impact_flame_small_burn",
+   "first_mark": "mark_embers_burn",
+   "spread_mark": "mark_embers_burn"
+  }
+ }
+}

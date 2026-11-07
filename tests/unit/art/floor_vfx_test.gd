@@ -14,6 +14,7 @@ const PACK_IDS: Array[String] = [
 	"mark_stamp_big_steel", "mark_stamp_big_steel_c43x31", "mark_stamp_small_steel", "mark_stamp_small_steel_c43x31",
 	# 2026-11-04 (recipe hoa_tran, the Mage's fire)
 	"impact_flame_burn", "impact_flame_burn_c43x31", "mark_embers_burn", "mark_embers_burn_c43x31",
+	"impact_flame_small_burn", "impact_flame_small_burn_c43x31",
 ]
 ## Fixture entries (factory data; the frame counts / times are the point of the boundary checks).
 const LOOP_ENTRY: Dictionary = {"play": "loop", "frames": 4, "frame_ms": 100}
