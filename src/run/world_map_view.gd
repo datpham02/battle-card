@@ -102,6 +102,33 @@ const SHADOW_OFFSET: Vector2 = Vector2(6.0, 6.0)
 const NOTICE_BASELINE: float = 0.45
 const NOTICE_SUB_BASELINE: float = 0.8
 const SEPARATOR: String = " · "
+## 2026-11-07 climb map: the dark band behind the header (share of the height), the region card panel beside the
+## selected island (shares of the screen), the island tap margin (px) and the hero's scale on the map.
+const HEADER_BAND: float = 0.17
+## The concept's navy header band and the width (px) of the gold ornament each side of the title.
+const HUD_NAVY: Color = Color("1C1A33")
+const TITLE_ORNAMENT: float = 56.0
+const PANEL_W: float = 0.3
+const PANEL_TOP: float = 0.24
+const PANEL_H: float = 0.45
+const ISLAND_TOUCH_GROW: float = 16.0
+## Art px between a hero frame's bottom and the feet, and the done tick's radius (px).
+const HERO_FEET_FROM_BOTTOM: float = 4.0
+const DONE_TICK_R: float = 9.0
+## Path waypoints (radius px) and their colour ahead of the player.
+const WAYPOINT_R: float = 7.0
+## The climb panel: padding, emblem / icon size, the name / row / description font sizes and the row height (px).
+const PANEL_PAD: float = 22.0
+const PANEL_ICON: float = 26.0
+const PANEL_NAME_SIZE: int = 36
+const PANEL_ROW_SIZE: int = 24
+const PANEL_DESC_SIZE: int = 20
+const PANEL_ROW_H: float = 40.0
+const TEXT_ENEMY_HP: String = "ui.world.enemy_hp"
+const WAYPOINT_DIM: Color = Color("6A5F84")
+## The floor label's baseline below the island rect's bottom, in label font heights.
+const LABEL_DROP: float = 0.6
+const DEV_SELECT_ARG: String = "--screen=climb_selected"
 
 ## "Tầng %d/%d · Chọn vùng": the current floor (1-based) and the floor count.
 const TEXT_TITLE: String = "ui.world.title"
@@ -148,6 +175,10 @@ var _flow: GameFlow = null
 var _strip: RelicStrip = null
 ## Region id of the selected card ("" = none): the first tap selects, the second confirms.
 var _selected: String = ""
+## 2026-11-07: clock (s) of the glow pulse and the hero's idle on the climb map.
+var _time: float = 0.0
+## DEV-ONLY (captures): `--screen=climb_selected` selects the current floor's island once.
+var _dev_select: bool = false
 ## Banner shown until the first tap: a string key ("" = none) and its format args (may be empty).
 var _notice_key: String = ""
 var _notice_args: Array = []
@@ -159,9 +190,14 @@ func _ready() -> void:
 	_flow = get_node_or_null(flow_path) as GameFlow
 	_strip = RelicStrip.new()
 	add_child(_strip)
+	_dev_select = OS.get_cmdline_user_args().has(DEV_SELECT_ARG)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_time += delta
+	if _dev_select and _is_active() and _selected.is_empty() and not _flow.get_region_offer().is_empty():
+		_dev_select = false
+		_selected = _flow.get_region_offer()[0]
 	_sync_strip()
 	if not _is_active():
 		_selected = ""
@@ -255,18 +291,21 @@ func _tap(pos: Vector2) -> void:
 		_flow.open_piece_deck()
 		return
 	var offer: Array[String] = _flow.get_region_offer()
-	var cards: Array[Rect2] = ScreenLayout.world_card_rects(vp, offer.size())
-	var selected_index: int = offer.find(_selected)
-	if selected_index >= 0 and ScreenLayout.world_enter_button_rect(vp, cards[selected_index]).has_point(pos):
-		_confirm()
+	if offer.is_empty():
 		return
-	for i: int in cards.size():
-		if ScreenLayout.world_card_touch_rect(vp, cards[i]).has_point(pos):
-			if offer[i] == _selected:
-				_confirm()
-			else:
-				_selected = offer[i]
+	var floors: int = _flow.get_floor_count()
+	if not _selected.is_empty():
+		var panel: Rect2 = climb_panel_rect(vp, _flow.get_floor(), floors)
+		if ScreenLayout.world_enter_button_rect(vp, panel).has_point(pos):
+			_confirm()
 			return
+	if current_island_rect(vp).has_point(pos):
+		if _selected == offer[0]:
+			_confirm()
+		else:
+			_selected = offer[0]
+		return
+	_selected = ""
 
 
 func _confirm() -> void:
@@ -301,18 +340,254 @@ func _draw() -> void:
 	if not _is_active():
 		return
 	var vp: Vector2 = get_viewport_rect().size
+	_draw_climb(vp)
+	# 2026-11-07 (the concept's navy-and-gold HUD): a navy band, a thin gold rule along its bottom with a dark line under
+	# it, and a small gold diamond at each end of the rule.
+	var band_h: float = floorf(vp.y * HEADER_BAND)
+	draw_rect(Rect2(0.0, 0.0, vp.x, band_h), HUD_NAVY)
+	draw_rect(Rect2(0.0, band_h - 3.0, vp.x, 2.0), Color(HudSkin.GRID_LIGHT, 0.75))
+	draw_rect(Rect2(0.0, band_h - 1.0, vp.x, 2.0), ClimbMap.INK)
+	for x: float in [ScreenLayout.side_margin(vp) * 0.5, vp.x - ScreenLayout.side_margin(vp) * 0.5]:
+		HudSkin.diamond(self, Vector2(roundf(x), band_h - 2.0), 6.0, HudSkin.GRID_LIGHT, ClimbMap.INK, 1.5)
 	_draw_header(vp)
-	_draw_strip(vp)
-	var offer: Array[String] = _flow.get_region_offer()
-	var cards: Array[Rect2] = ScreenLayout.world_card_rects(vp, offer.size())
-	for i: int in cards.size():
-		_draw_card(vp, cards[i], offer[i], i)
-	var selected_index: int = offer.find(_selected)
-	if selected_index >= 0:
-		var button: Rect2 = ScreenLayout.world_enter_button_rect(vp, cards[selected_index])
-		UiButtons.draw_button(self, button, tr(TEXT_ENTER), UiButtons.Style.PRIMARY, UiButtons.is_pressed_at(self, button), true, ENTER_FONT_SIZE)
 	if not _notice_key.is_empty():
 		_draw_notice(vp)
+
+
+# 2026-11-07 (user: climb every region bottom to top; tap the floor's island, it lights up, tap again or press
+# "Vào tầng"): the climb map (ClimbMap) scrolled to the current floor: sky, stairs (lit up to the current floor),
+# the islands (done / current / future), the final cube, the hero on the current island; the selected island glows
+# and its region card (the old WORLD_MAP card) opens beside it with the enter button.
+func _draw_climb(vp: Vector2) -> void:
+	var floors: int = _flow.get_floor_count()
+	var floor: int = _flow.get_floor()
+	var scroll: float = ClimbMap.scroll_for(vp, floor, floors)
+	var off := Vector2(0.0, -scroll)
+	ClimbMap.draw_sky(self, vp, scroll, floors)
+	_draw_cube(vp, off)
+	# 2026-11-07 (user: the stairs did not connect to the land): islands first (far ones, then the current one), then
+	# the stairs over them, so each stair starts ON the lower island's walk surface and climbs over the upper island's
+	# front wall onto its walk surface; then the markers, the hero and the labels on top.
+	# 2026-11-07 (user: the stairs must join the land in harmony): painter's order by depth, far to near: island i + 1,
+	# then the stair from floor i up to it (over its front wall, landing on its walk surface), then island i (whose
+	# ruins hide the stair's start: it leaves from the back corner facing the next island).
+	var rects: Dictionary = {}
+	for i: int in floors:
+		var rr: Rect2 = ClimbMap.island_rect(vp, i, floors, floor)
+		rr.position += off + Vector2(0.0, ClimbMap.island_bob(i, _time) * ClimbMap.map_scale(vp))
+		rects[i] = rr
+	var order: Array[int] = []
+	for i: int in floors:
+		order.append(i)
+	for i: int in range(floors - 1, -1, -1):
+		var r: Rect2 = rects[i]
+		if r.end.y < 0.0 or r.position.y > vp.y:
+			continue
+		var region: String = climb_region(i)
+		var tint: Color = ClimbMap.DONE_TINT if i < floor else (Color.WHITE if i == floor else ClimbMap.LOCKED_TINT)
+		var glow: float = ClimbMap.glow_alpha(_time) if i == floor and not _selected.is_empty() else 0.0
+		ClimbMap.draw_island(self, r, region, ArtAssets.fallback_bands(ArtAssets.region_for_chapter(region)), tint, glow, _time, float(i) * 1.7)
+		ClimbMap.draw_island_fx(self, r, region, _time + float(i) * 0.9, tint)
+	# 2026-11-07 (user: the route must join the middle points): a dashed line from each island's centre marker to the
+	# next island's (the last one to the cube), over the islands, under the markers and the hero.
+	for i: int in floors:
+		var from: Vector2 = ClimbMap.anchor_point(rects[i], ClimbMap.island_info(climb_region(i))["marker"])
+		var to: Vector2 = _summit_landing(vp, off)
+		if i + 1 < floors:
+			to = ClimbMap.anchor_point(rects[i + 1], ClimbMap.island_info(climb_region(i + 1))["marker"])
+		if maxf(from.y, to.y) < 0.0 or minf(from.y, to.y) > vp.y:
+			continue
+		var rtint: Color = HudSkin.GRID_LIGHT if i < floor else (HudSkin.IVORY if i == floor else WAYPOINT_DIM)
+		_draw_route(from, to, rtint)
+	for i: int in order:
+		var r: Rect2 = rects[i]
+		if r.end.y < 0.0 or r.position.y > vp.y:
+			continue
+		var region: String = climb_region(i)
+		var info: Dictionary = ClimbMap.island_info(region)
+		if i < floor:
+			_draw_done_tick(ClimbMap.anchor_point(r, info["marker"]))
+		if i == floor:
+			# The concept's gold node marker on the walk surface in front of the hero, then the hero.
+			HudSkin.diamond(self, (ClimbMap.anchor_point(r, info["marker"])).round(), WAYPOINT_R * 1.2, HudSkin.GRID_LIGHT, ClimbMap.INK, 2.0)
+			_draw_hero(ClimbMap.anchor_point(r, info["feet"]), ClimbMap.map_scale(vp))
+		# Labels only on placeholder islands: a generated island is read by its art (the concept has no map labels).
+		if ClimbMap.island_texture(region) != null:
+			continue
+		var label: String = tr(TEXT_STRIP_FLOOR) % (i + 1)
+		var name: String = _flow.region_name(region) if not region.is_empty() else ""
+		var color: Color = HudSkin.GRID_LIGHT if i == floor else (STRIP_TEXT if i < floor else STRIP_DIM_TEXT)
+		var under := Rect2(r.position.x, r.end.y + STRIP_FLOOR_FONT_SIZE * LABEL_DROP, r.size.x, 0.0)
+		_text(under, under.position.y, label, STRIP_FLOOR_FONT_SIZE, color, true)
+		if not name.is_empty():
+			_text(under, under.position.y + STRIP_FLOOR_FONT_SIZE + 6.0, name, _fit(name, under.size.x, STRIP_REGION_FONT_SIZE + 4), color)
+	# 2026-11-07 (user: one gold point in the middle is enough): no diamonds at the route ends; each island keeps only its
+	# centre marker (the current floor) or its done tick.
+	if not _selected.is_empty() and floor < floors:
+		var panel: Rect2 = climb_panel_rect(vp, floor, floors)
+		_draw_climb_panel(panel, _selected)
+		var button: Rect2 = ScreenLayout.world_enter_button_rect(vp, panel)
+		UiButtons.draw_button(self, button, tr(TEXT_ENTER), UiButtons.Style.PRIMARY, UiButtons.is_pressed_at(self, button), true, ENTER_FONT_SIZE)
+
+
+# 2026-11-07 (the concept's region panel): an ancient plate with the region's name under a small emblem, a gold rule
+# with a diamond, three icon rows (floor, warden, enemy HP) and the region's description under a second rule.
+func _draw_climb_panel(rect: Rect2, region: String) -> void:
+	var body: Rect2 = HudSkin.plate_panel(self, rect, "navy")
+	var pad: float = PANEL_PAD
+	var inner := Rect2(body.position.x + pad, body.position.y + pad, body.size.x - pad * 2.0, body.size.y - pad * 2.0)
+	var preview: Dictionary = _flow.region_preview(region)
+	var name: String = str(preview.get("name", _flow.region_name(region)))
+	var y: float = inner.position.y + PANEL_NAME_SIZE
+	_draw_emblem(Vector2(inner.position.x + PANEL_ICON * 0.5, y - PANEL_NAME_SIZE * 0.35))
+	var name_box := Rect2(inner.position.x + PANEL_ICON + 8.0, y, inner.size.x - PANEL_ICON - 8.0, 0.0)
+	MenuFont.text(self, Vector2(name_box.position.x, y), name, _fit(name, name_box.size.x, PANEL_NAME_SIZE, true), CARD_NAME_TEXT, HORIZONTAL_ALIGNMENT_LEFT, name_box.size.x, true)
+	y = _panel_rule(inner, y + 14.0)
+	var scaling: Dictionary = preview.get("floor_scaling", {})
+	var rows: Array = [
+		["floor", tr(TEXT_STRIP_FLOOR) % int(preview.get("floor_number", _flow.get_floor() + 1)), CARD_TEXT],
+		["warden", tr(TEXT_BOSS) % tr(str(preview.get("boss_name", ""))), CARD_BOSS_TEXT],
+		["hp", tr(TEXT_ENEMY_HP) % _decimal(float(scaling.get("hp_mult", 1.0))), CARD_TEXT],
+	]
+	for row: Array in rows:
+		y += PANEL_ROW_H
+		_draw_row_icon(str(row[0]), Vector2(inner.position.x + PANEL_ICON * 0.5, y - PANEL_ROW_SIZE * 0.35))
+		var tx: float = inner.position.x + PANEL_ICON + 10.0
+		MenuFont.text(self, Vector2(tx, y), str(row[1]), _fit(str(row[1]), inner.end.x - tx, PANEL_ROW_SIZE), row[2] as Color, HORIZONTAL_ALIGNMENT_LEFT, inner.end.x - tx)
+	y = _panel_rule(inner, y + 16.0)
+	var desc: String = _preview_desc(preview)
+	if not desc.is_empty():
+		var f: Font = HudSkin.font()
+		var pos := Vector2(inner.position.x, y + PANEL_DESC_SIZE + 6.0)
+		draw_multiline_string_outline(f, pos, desc, HORIZONTAL_ALIGNMENT_LEFT, inner.size.x, PANEL_DESC_SIZE, 4, HudSkin.TEXT_OUTLINE_PX, HudSkin.TEXT_OUTLINE)
+		draw_multiline_string(f, pos, desc, HORIZONTAL_ALIGNMENT_LEFT, inner.size.x, PANEL_DESC_SIZE, 4, CARD_DESC_TEXT)
+
+
+# A thin gold rule across [param inner] at [param y] with a small diamond in its middle; returns the y under it.
+func _panel_rule(inner: Rect2, y: float) -> float:
+	draw_line(Vector2(inner.position.x, y), Vector2(inner.end.x, y), Color(HudSkin.GRID_LIGHT, 0.7), 2.0)
+	HudSkin.diamond(self, Vector2(inner.get_center().x, y).round(), 5.0, HudSkin.GRID_LIGHT, ClimbMap.INK, 1.0)
+	return y + 6.0
+
+
+# The region emblem left of the name: a gold diamond with an Ink inner diamond (angular, no circle).
+func _draw_emblem(c: Vector2) -> void:
+	HudSkin.diamond(self, c.round(), PANEL_ICON * 0.42, HudSkin.GRID_LIGHT, ClimbMap.INK, 2.0)
+	HudSkin.diamond(self, c.round(), PANEL_ICON * 0.18, ClimbMap.INK, ClimbMap.INK, 1.0)
+
+
+# A code-drawn angular row icon centred at [param c]: "floor" = three stair steps, "warden" = a horned helm,
+# "hp" = two crossed blades.
+func _draw_row_icon(kind: String, c: Vector2) -> void:
+	var u: float = PANEL_ICON / 8.0
+	var col: Color = HudSkin.IVORY
+	match kind:
+		"floor":
+			for i: int in 3:
+				draw_rect(Rect2(c + Vector2(-4.0 * u + i * 2.6 * u, 2.0 * u - i * 2.0 * u), Vector2(2.6 * u, 2.0 * u + i * 2.0 * u)).abs(), col)
+		"warden":
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-3 * u, -1 * u), c + Vector2(3 * u, -1 * u), c + Vector2(2.4 * u, 3 * u),
+				c + Vector2(-2.4 * u, 3 * u)]), col)
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-3 * u, -1 * u), c + Vector2(-4 * u, -4 * u), c + Vector2(-1.6 * u, -1 * u)]), col)
+			draw_colored_polygon(PackedVector2Array([c + Vector2(3 * u, -1 * u), c + Vector2(4 * u, -4 * u), c + Vector2(1.6 * u, -1 * u)]), col)
+			draw_rect(Rect2(c + Vector2(-1.8 * u, 0.4 * u), Vector2(1.2 * u, 0.9 * u)), ClimbMap.INK)
+			draw_rect(Rect2(c + Vector2(0.6 * u, 0.4 * u), Vector2(1.2 * u, 0.9 * u)), ClimbMap.INK)
+		_:
+			draw_line(c + Vector2(-3.5 * u, -3.5 * u), c + Vector2(3.5 * u, 3.5 * u), col, maxf(u, 2.0))
+			draw_line(c + Vector2(3.5 * u, -3.5 * u), c + Vector2(-3.5 * u, 3.5 * u), col, maxf(u, 2.0))
+			draw_line(c + Vector2(-3.5 * u, 1.5 * u), c + Vector2(-1.5 * u, 3.5 * u), col, maxf(u, 2.0))
+			draw_line(c + Vector2(3.5 * u, 1.5 * u), c + Vector2(1.5 * u, 3.5 * u), col, maxf(u, 2.0))
+
+
+# A dashed route between two islands (12 px dashes, 8 px gaps) in [param tint], 3 px wide.
+func _draw_route(from: Vector2, to: Vector2, tint: Color) -> void:
+	var length: float = from.distance_to(to)
+	var dir: Vector2 = (to - from) / maxf(length, 1.0)
+	var at: float = 0.0
+	while at < length:
+		draw_line(from + dir * at, from + dir * minf(at + 12.0, length), Color(tint, 0.7), 3.0)
+		at += 20.0
+
+
+# A path waypoint: a small diamond, gold on the walked / current route, muted violet ahead (the concept's markers).
+func _draw_waypoint(at: Vector2, lit: bool) -> void:
+	HudSkin.diamond(self, at.round(), WAYPOINT_R, HudSkin.GRID_LIGHT if lit else WAYPOINT_DIM, ClimbMap.INK, 2.0)
+
+
+# A done floor's tick: a small gold diamond with an Ink rim at [param at] (angular, no circle).
+func _draw_done_tick(at: Vector2) -> void:
+	HudSkin.diamond(self, at.round(), DONE_TICK_R, HudSkin.GRID_LIGHT, ClimbMap.INK, 2.0)
+
+
+## 2026-11-07: the region of 0-based floor [param index] on the climb map: the one walked (region path), the one
+## offered now, else the fixed climb order (ChaptersConfig.region_order); "" when unknown.
+func climb_region(index: int) -> String:
+	var path: Array[String] = _flow.get_region_path()
+	if index < path.size() and index != _flow.get_floor():
+		return path[index]
+	var offer: Array[String] = _flow.get_region_offer()
+	if index == _flow.get_floor() and not offer.is_empty():
+		return offer[0]
+	if index < path.size():
+		return path[index]
+	var order: Array[String] = _flow.get_config().region_order()
+	return order[index] if index < order.size() else ""
+
+
+## 2026-11-07: the current floor's island on screen (the tap target, a little larger than the drawn island).
+func current_island_rect(vp: Vector2) -> Rect2:
+	var floors: int = _flow.get_floor_count()
+	var floor: int = mini(_flow.get_floor(), floors - 1)
+	var r: Rect2 = ClimbMap.island_rect(vp, floor, floors, floor)
+	r.position.y -= ClimbMap.scroll_for(vp, _flow.get_floor(), floors)
+	return r.grow(ISLAND_TOUCH_GROW)
+
+
+## 2026-11-07: the region card panel beside island [param floor] (the screen half away from the island).
+static func climb_panel_rect(vp: Vector2, floor: int, floors: int) -> Rect2:
+	var left_island: bool = ClimbMap.island_center(vp, floor, floors).x < vp.x * 0.5
+	var w: float = vp.x * PANEL_W
+	var margin: float = ScreenLayout.side_margin(vp)
+	var x: float = vp.x - margin - w if left_island else margin
+	return Rect2(x, vp.y * PANEL_TOP, w, vp.y * PANEL_H)
+
+
+# The final cube: the Lattice Heart cropped from the title art (whole-number scale, nearest).
+func _draw_cube(vp: Vector2, off: Vector2) -> void:
+	# 2026-11-07: the live Lattice Heart summit sprite when present (bobbing heart, pulsing seams); else the title crop.
+	if ClimbMap.draw_summit(self, vp, ClimbMap.cube_center(vp) + off, _time):
+		return
+	var src: Rect2 = ClimbMap.CUBE_SRC
+	var k: float = ClimbMap.map_scale(vp) * ClimbMap.CUBE_SCALE
+	var size: Vector2 = src.size * k
+	var dst := Rect2((ClimbMap.cube_center(vp) + off - size * 0.5).round(), size)
+	if dst.end.y < 0.0:
+		return
+	draw_texture_rect_region(PixelFrame.nearest(TitleView.KEY_ART), dst, src)
+
+
+# Where the route reaches the summit: its platform (ClimbMap.SUMMIT_LANDING), else below the title-crop cube.
+func _summit_landing(vp: Vector2, off: Vector2) -> Vector2:
+	var r: Rect2 = ClimbMap.summit_rect(vp, ClimbMap.cube_center(vp) + off)
+	if r.size == Vector2.ZERO:
+		return ClimbMap.cube_center(vp) + off + Vector2(0.0, vp.y * 0.12)
+	return r.position + ClimbMap.SUMMIT_LANDING * ClimbMap.map_scale(vp)
+
+
+# The hero's idle frame (the real sheet, whole-number [param k] like the islands) with its feet at [param feet].
+func _draw_hero(feet: Vector2, k: float) -> void:
+	var sheet: SpriteSheet = SpriteSheet.load_unit(_flow.get_run().character_id)
+	if sheet == null or sheet.texture() == null or not sheet.has_clip("idle"):
+		return
+	var clip: Dictionary = sheet.clip("idle")
+	var index: int = CharacterSelectView.clip_frame_at(clip, _time)
+	if index < 0:
+		return
+	var src: Rect2i = (clip["frames"] as Array)[index]
+	var size := Vector2(src.size) * k
+	# The sheet's feet sit HERO_FEET_FROM_BOTTOM art px above the frame's bottom (the battle's UnitLayer rule).
+	var pos := Vector2(feet.x - size.x * 0.5, feet.y - size.y + HERO_FEET_FROM_BOTTOM * k)
+	draw_texture_rect_region(PixelFrame.nearest(sheet.texture()), Rect2(pos.round(), size), Rect2(src))
 
 
 # Title band: back button, "Tầng N/5 · Chọn vùng", the hero's HP at the right.
@@ -342,8 +617,16 @@ func _draw_header(vp: Vector2) -> void:
 		text += SEPARATOR + tr(TEXT_KIEP) % _flow.get_run_kiep_level()
 	var span_left: float = deck_button.end.x + TITLE_SIDE_GAP
 	var span: Rect2 = Rect2(span_left, title.position.y, maxf(coin_left - TITLE_SIDE_GAP - span_left, 0.0), title.size.y)
-	var size: int = _title_font_size(text, span.size.x)
+	var size: int = _title_font_size(text, span.size.x - TITLE_ORNAMENT * 2.0)
 	_text(span, span.get_center().y + size * 0.35, text, size, TITLE_COLOR, true)
+	# The concept's title ornaments: a short gold line ending in a diamond on each side of the title.
+	var half: float = HudSkin.text_width(text, size, true) * 0.5 + 14.0
+	var cy: float = roundf(span.get_center().y)
+	for side: float in [-1.0, 1.0]:
+		var inner: float = span.get_center().x + side * half
+		var outer: float = inner + side * (TITLE_ORNAMENT - 18.0)
+		draw_line(Vector2(inner, cy), Vector2(outer, cy), Color(HudSkin.GRID_LIGHT, 0.8), 2.0)
+		HudSkin.diamond(self, Vector2(roundf(inner + side * 6.0), cy), 5.0, HudSkin.GRID_LIGHT, ClimbMap.INK, 1.0)
 
 
 # Story 042: the floor title's font, shrunk one step at a time from TITLE_FONT_SIZE until

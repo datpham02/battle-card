@@ -332,19 +332,20 @@ trait.seal_caster.name,Chặn Lối,Boxed In
 trait.seal_caster.desc,"Làm nứt 2 hoặc 3 ô bên bạn; hết lúc cảnh báo, các ô đó rớt xuống. Còn đứng trên ô khi nó rớt là chết.",Cracks 2 or 3 tiles on your side; after a warning they fall. Standing on one when it falls is fatal.
 trait.thorn_field.name,Gai Níu Chân,Bramble Trail
 trait.thorn_field.desc,"Khi vung đòn từ 4 ô trở lên, nó rải gai lên đường thoát của bạn; bước vào gai mất máu và bị Rạn.",When it swings 4 or more cells it lays thorns on your escape path; stepping in costs HP and adds Fragile.
-ui.world.title,Tầng %d/%d · Chọn vùng,Floor %d/%d · Choose a region
+ui.world.title,Tầng %d/%d · Leo tháp,Floor %d/%d · The Climb
 ui.world.strip_floor,Tầng %d,Floor %d
 ui.world.final_name,Tâm Lưới,The Lattice Heart
 ui.world.choosing,Đang chọn,Choosing
 ui.world.boss,Kẻ Gác: %s,Warden: %s
 ui.world.floor_difficulty,Tầng %d — máu địch ×%s,Floor %d — enemy HP ×%s
+ui.world.enemy_hp,Máu địch ×%s,Enemy HP ×%s
 ui.world.floor_step,nhịp ×%s,tempo ×%s
 ui.world.floor_defense,giáp +%d,armor +%d
 ui.world.floor_size,đòn +%d ô,attacks +%d cells
 ui.world.decimal_point,",",.
 ui.world.tap_to_pick,Chạm để chọn,Tap to pick
 ui.world.tap_again,Chạm lại để vào,Tap again to enter
-ui.world.enter,Vào vùng,Enter region
+ui.world.enter,Vào tầng,Enter floor
 ui.world.floor_clear,Tầng %d — hồi %d máu,Floor %d — healed %d HP
 ui.map.floor_title,Tầng %d/%d · %s,Floor %d/%d · %s
 ui.run_hud.run_floor_position,Tầng %d/%d · %s · chặng %d/%d,Floor %d/%d · %s · stage %d/%d

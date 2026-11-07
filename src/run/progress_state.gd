@@ -13,9 +13,9 @@ const VERSION: int = 8
 const KIEP_MAX: int = 10
 ## Locale saved when none is in the file (v1 saves have no `locale`).
 const DEFAULT_LOCALE: String = "en"
-## Highest value [method record_floor] stores: floors 1..5 plus the final match (Story 031). A
-## structural bound of the run layout, not a tuning value.
-const BEST_FLOOR_MAX: int = 6
+## Highest value [method record_floor] stores: floors 1..7 plus the final match (Story 031; 7 floors since the
+## 2026-11-07 climb). A structural bound of the run layout, not a tuning value.
+const BEST_FLOOR_MAX: int = 8
 ## Story 037 milestone keys ([method get_milestone]); `region_boss:<region_id>`, `runs_won:<character_id>`
 ## and `ending:<ending_id>` are built from these prefixes.
 const MS_REGION_BOSS_PREFIX: String = "region_boss:"

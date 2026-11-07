@@ -105,8 +105,10 @@
 		]
 	},
 	"world": {
-		"floors": 5,
+		"floors": 7,
 		"choices_per_floor": 2,
+		"_doc_region_order": "2026-11-07 (user: the player climbs every region, from the bottom of the climb map to the Lattice Heart at the top): the region of floor 1..7 in order. Empty = the Story 031 offer (choices_per_floor random regions).",
+		"region_order": ["ch1", "hellfire", "desert", "swamp", "ch2", "ch3", "sky_isles"],
 		"region_pool": ["ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"],
 		"_doc_region_columns": "2026-11-03 (design/quick-specs/osfe-floor-length-2026-11-03.md): one floor = one OSFE world, 7 columns: a battle; 3 nodes; 2-3 with a treasure or battle; 2-3 with an elite from floor 2; 3 with a rest and a treasure or battle; 2-3 (the shop / event column); the warden. ChapterMapGen links the columns OSFE's way (each node 1-2 ways on).",
 		"region_columns": [
@@ -118,20 +120,25 @@
 			{"tier": 1, "kinds": ["battle", "danger"], "pick": [2, 3], "required": []},
 			{"tier": 2, "kinds": [], "pick": [1, 1], "required": ["boss"]}
 		],
+		"_doc_floor_scaling": "2026-11-07: the old 5-floor curve (0.7 -> 1.15 hp, 1.0 -> 0.8 step, defense 0 -> 2, size +1 at the last floor) spread over 7 floors.",
 		"floor_scaling": {
 			"1": {"hp_mult": 0.7, "step_mult": 1.0, "defense_add": 0, "size_add": 0},
-			"2": {"hp_mult": 0.8, "step_mult": 0.95, "defense_add": 0, "size_add": 0},
-			"3": {"hp_mult": 0.85, "step_mult": 0.9, "defense_add": 1, "size_add": 0},
-			"4": {"hp_mult": 1.05, "step_mult": 0.85, "defense_add": 1, "size_add": 0},
-			"5": {"hp_mult": 1.15, "step_mult": 0.8, "defense_add": 2, "size_add": 1},
+			"2": {"hp_mult": 0.75, "step_mult": 0.97, "defense_add": 0, "size_add": 0},
+			"3": {"hp_mult": 0.8, "step_mult": 0.95, "defense_add": 0, "size_add": 0},
+			"4": {"hp_mult": 0.85, "step_mult": 0.9, "defense_add": 1, "size_add": 0},
+			"5": {"hp_mult": 0.95, "step_mult": 0.87, "defense_add": 1, "size_add": 0},
+			"6": {"hp_mult": 1.05, "step_mult": 0.84, "defense_add": 1, "size_add": 0},
+			"7": {"hp_mult": 1.15, "step_mult": 0.8, "defense_add": 2, "size_add": 1},
 			"final": {"hp_mult": 1.25, "step_mult": 0.8, "defense_add": 2, "size_add": 1}
 		},
 		"floor_tiers": {
 			"1": [0, 1, 1],
 			"2": [0, 1, 1],
-			"3": [1, 2, 2],
+			"3": [0, 1, 1],
 			"4": [1, 2, 2],
-			"5": [1, 2, 2]
+			"5": [1, 2, 2],
+			"6": [1, 2, 2],
+			"7": [1, 2, 2]
 		},
 		"special_nodes": {
 			"column": 5,

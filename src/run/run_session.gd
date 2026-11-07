@@ -216,6 +216,11 @@ func is_choosing_region() -> bool:
 func roll_offer() -> Array[String]:
 	if _chapters == null or is_final_floor():
 		return [] as Array[String]
+	# 2026-11-07: a fixed climb order (world.region_order) offers that floor's one region (the climb map's island),
+	# region locks aside (WorldMapGen.floor_offer).
+	var order: Array[String] = _chapters.region_order()
+	if not order.is_empty():
+		return WorldMapGen.floor_offer(order, [], run_seed, floor, region_path)
 	var pool: Array[String] = _chapters.region_ids()
 	if pool.is_empty() and _chapters.chapter_count() > 0:
 		pool = [_chapters.chapter_id(0)]

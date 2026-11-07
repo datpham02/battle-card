@@ -1,0 +1,243 @@
+{
+  "_doc": "2026-11-07 Tower Ascent islands (design/art/climb-map-asset-spec-2026-11-07.md). Per region: the sprite (320x192 art px, transparent) and its anchors in art px of the sprite: feet = where the hero's feet stand (the walk surface's centre), stair_in = where the stair from the island below lands, stair_out = where the stair to the next island leaves, marker = the done tick. A region without a sprite falls back to the code-drawn island with the default anchors. 2026-11-07: edge_left / edge_right = the walk surface's left and right front edges; a stair leaves an island by the edge facing the next island and lands on the next island's edge facing back (it never crosses an island). back_left / back_right = the walk surface's back corners: a stair leaves the lower island from the back corner facing the next island (it emerges from behind that island's ruins) and lands on the next island's front edge facing back. ramp_sample = the stone rect (sprite px) whose colours the stairs leaving this island take.",
+  "art_size": [
+    320,
+    192
+  ],
+  "default_anchors": {
+    "feet": [
+      160,
+      104
+    ],
+    "stair_in": [
+      118,
+      100
+    ],
+    "stair_out": [
+      214,
+      96
+    ],
+    "marker": [
+      160,
+      118
+    ],
+    "edge_left": [
+      70,
+      100
+    ],
+    "edge_right": [
+      250,
+      100
+    ],
+    "back_left": [
+      90,
+      72
+    ],
+    "back_right": [
+      230,
+      72
+    ]
+  },
+  "islands": {
+    "ch1": {
+      "sprite": "island_ch1.png",
+      "feet": [
+        168,
+        108
+      ],
+      "stair_in": [
+        120,
+        104
+      ],
+      "stair_out": [
+        212,
+        98
+      ],
+      "marker": [
+        168,
+        114
+      ],
+      "edge_left": [
+        95,
+        108
+      ],
+      "edge_right": [
+        250,
+        104
+      ],
+      "back_left": [
+        110,
+        92
+      ],
+      "back_right": [
+        282,
+        98
+      ],
+      "landing_out": true,
+      "ramp_sample": [
+        258,
+        88,
+        50,
+        22
+      ],
+      "fx": {
+        "kind": "waterfall",
+        "min_y": 112,
+        "speed": 26.0,
+        "band": 9,
+        "lit": 2,
+        "drop_len": 14.0
+      }
+    },
+    "hellfire": {
+      "sprite": "island_hellfire.png",
+      "feet": [
+        160,
+        96
+      ],
+      "stair_in": [
+        98,
+        98
+      ],
+      "stair_out": [
+        120,
+        84
+      ],
+      "marker": [
+        160,
+        103
+      ],
+      "edge_left": [
+        80,
+        102
+      ],
+      "edge_right": [
+        262,
+        92
+      ],
+      "back_left": [
+        96,
+        82
+      ],
+      "back_right": [
+        230,
+        78
+      ],
+      "ramp_sample": [
+        80,
+        84,
+        120,
+        20
+      ],
+      "fx": {
+        "kind": "embers",
+        "count": 24,
+        "rise": 44.0,
+        "period": 2.0
+      }
+    },
+    "desert": {
+      "sprite": "island_desert.png",
+      "feet": [
+        150,
+        92
+      ],
+      "marker": [
+        150,
+        99
+      ]
+    },
+    "swamp": {
+      "sprite": "island_swamp.png",
+      "feet": [
+        165,
+        95
+      ],
+      "marker": [
+        165,
+        102
+      ]
+    },
+    "ch2": {
+      "sprite": "island_ch2.png",
+      "feet": [
+        160,
+        90
+      ],
+      "marker": [
+        160,
+        97
+      ]
+    },
+    "ch3": {
+      "sprite": "island_ch3.png",
+      "feet": [
+        175,
+        90
+      ],
+      "marker": [
+        175,
+        97
+      ],
+      "fx": {
+        "kind": "wind",
+        "count": 20,
+        "speed": 52.0,
+        "min_len": 10,
+        "max_len": 22,
+        "top": -10,
+        "bottom": 150
+      }
+    },
+    "sky_isles": {
+      "sprite": "island_sky_isles.png",
+      "feet": [
+        180,
+        88
+      ],
+      "marker": [
+        180,
+        96
+      ]
+    }
+  },
+  "stair_root": {
+    "sprite": "stair_root.png",
+    "_doc": "ST1 (PixelLab, 2026-11-07): the stair's root piece, drawn on the lower island's departure landing. landing = the sprite point laid on the island's departure anchor; exit = where the stair run leaves the piece (the run continues from there). Drawn only on islands whose entry has landing_out (a departure landing edited into the sprite).",
+    "landing": [
+      12,
+      44
+    ],
+    "exit": [
+      38,
+      2
+    ],
+    "crop": [
+      16,
+      0,
+      80,
+      46
+    ],
+    "enabled": true
+  },
+  "stair_segment": {
+    "sprite": "stair_body.png",
+    "_doc": "B1 (PixelLab, 2026-11-07, option 9 of 16, step-cut by code along its step edges to exactly 3 steps so copies join at a step boundary): the repeating body. Copies are chained by `step` (sprite px, going right; mirrored going left) from the departure anchor, a whole number of them (never stretched); `foot` = the tile point laid on the previous piece's top. `beam` = the continuous foundation drawn under the run: offset of its top edge from the tread line and its depth (sprite px).",
+    "foot": [
+      8,
+      33
+    ],
+    "step": [
+      19,
+      -22
+    ],
+    "beam": {
+      "offset": [
+        26,
+        9
+      ],
+      "depth": 25
+    }
+  },
+  "_fx_doc": "2026-11-07 (user: ice wind, forest waterfall): per-island live effect drawn by code over the sprite. waterfall = bright bands run down the blue fall pixels below min_y (speed px/s, a lit band of `lit` px every `band` px) and droplets fall drop_len px below each fall's foot; wind = `count` frost streaks (min_len..max_len px) blow left to right at speed px/s between rows top..bottom; embers = `count` sparks rise `rise` px from lava pixels over `period` s. All in sprite px."
+}

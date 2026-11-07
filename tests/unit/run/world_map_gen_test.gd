@@ -132,7 +132,7 @@ func _initialize() -> void:
 	# The shipped region frame.
 	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
 	var world: Dictionary = cfg.world_spec()
-	check(int(world["floors"]) == 5 and int(world["choices_per_floor"]) == 2, "world: 5 floors, 2 choices")
+	check(int(world["floors"]) == 7 and int(world["choices_per_floor"]) == 2 and (world["region_order"] as Array).size() == 7, "world: 7 floors in a fixed climb order (choices_per_floor kept for the order-less offer)")
 	check(",".join(cfg.region_ids()) == "ch1,ch2,ch3,swamp,desert,hellfire,sky_isles" and cfg.region_index("ch2") == 1 and cfg.region_index("zz") == -1, "region ids and indexes")
 	check(is_equal_approx(cfg.floor_heal_ratio(), 0.6), "floor_heal_ratio 0.6 (Story 040 tuning, was 0.35)")
 	var final: Dictionary = cfg.final_match()
@@ -192,10 +192,10 @@ func _initialize() -> void:
 
 	# Tiers by floor and onboarding cap.
 	var spec1: Dictionary = cfg.region_spec("ch1", 0)
-	var spec3: Dictionary = cfg.region_spec("ch1", 2)
+	var spec3: Dictionary = cfg.region_spec("ch1", 3)
 	check(int(spec1["columns"][0]["tier"]) == 0 and int(spec1["columns"][1]["tier"]) == 1 and int(spec1["columns"][2]["tier"]) == 1, "floor 1 tiers [0,1,1]")
-	check(int(spec3["columns"][0]["tier"]) == 1 and int(spec3["columns"][1]["tier"]) == 2 and int(spec3["columns"][2]["tier"]) == 2, "floor 3 tiers [1,2,2]")
-	check(int(cfg.region_spec("ch1", 3)["floor_number"]) == 4 and int(spec3["floor"]) == 2, "region_spec carries floor and floor_number")
+	check(int(spec3["columns"][0]["tier"]) == 1 and int(spec3["columns"][1]["tier"]) == 2 and int(spec3["columns"][2]["tier"]) == 2, "floor 4 tiers [1,2,2] (floors 1-3 stay [0,1,1] since the 7-floor climb)")
+	check(int(cfg.region_spec("ch1", 3)["floor_number"]) == 4 and int(spec3["floor"]) == 3, "region_spec carries floor and floor_number")
 	var capped: Array[Dictionary] = cfg.generate_region_map("ch1", 3, 4, 0)
 	check(int(capped[1]["tier"]) == 1 and int(capped[2]["tier"]) == 1, "onboarding cap still clamps region map tiers")
 	check(cfg.region_spec("zz", 0).is_empty(), "unknown region -> empty spec")

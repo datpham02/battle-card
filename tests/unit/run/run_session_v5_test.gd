@@ -58,7 +58,7 @@ func _initialize() -> void:
 	var s: RunSession = _new(chapters)
 	_check("begin_world: floor 0, offer open, no region, no map", s.floor == 0 and s.is_choosing_region() and s.region_id.is_empty()
 		and s.map.is_empty() and s.region_path.is_empty() and s.hp == -1.0 and not s.is_run_won())
-	_check("offer = WorldMapGen", s.region_offer == WorldMapGen.offer_for_floor(chapters.region_ids(), SEED, 0, [],
+	_check("offer = WorldMapGen", s.region_offer == WorldMapGen.floor_offer(chapters.region_order(), chapters.region_ids(), SEED, 0, [],
 		int(chapters.world_spec()["choices_per_floor"])))
 	# exit 1: world map (region offer open)
 	s.elapsed_sec = 12.5
@@ -113,7 +113,7 @@ func _initialize() -> void:
 	_check("region boss: heal floor_heal_ratio x max", is_equal_approx(s.hp, 100.0 + ratio * MAX_HP) and is_equal_approx(float(res["healed"]), ratio * MAX_HP), str(s.hp))
 	_check("floor_heal_ratio read from world data (story start value 0.25; the file wins)", ratio > 0.0 and ratio <= 1.0 and is_equal_approx(ratio, float(chapters.world_spec()["floor_heal_ratio"])))
 	_check("region boss: +1 removal token, counter", s.removal_tokens == tokens + 1 and s.cleared_bosses_this_run == 1)
-	_check("region boss: next offer rolled", s.is_choosing_region() and s.region_offer == WorldMapGen.offer_for_floor(chapters.region_ids(), SEED, 1, [pick],
+	_check("region boss: next offer rolled", s.is_choosing_region() and s.region_offer == WorldMapGen.floor_offer(chapters.region_order(), chapters.region_ids(), SEED, 1, [pick],
 		int(chapters.world_spec()["choices_per_floor"])) and s.last_node_kind == "boss")
 	# exit 6: boss reward pending while the next floor's offer is open
 	s.set_pending_reward(["kiem_khi"] as Array[String])

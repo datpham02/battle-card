@@ -145,6 +145,13 @@ func world_spec() -> Dictionary:
 
 
 ## Run floors before the final match (>= 1).
+## 2026-11-07: the fixed climb order (`world.region_order`): the region of each 0-based floor; [] = none (offer).
+func region_order() -> Array[String]:
+	var out: Array[String] = []
+	out.assign(_world.get("region_order", []) as Array)
+	return out
+
+
 func world_floors() -> int:
 	return int(_world["floors"])
 
@@ -686,6 +693,17 @@ func _clean_world(raw: Variant) -> Dictionary:
 		for chapter: Dictionary in _chapters:
 			pool.append(str(chapter["id"]))
 	world["region_pool"] = pool
+	# 2026-11-07 (user: the run climbs every region, bottom to top of the climb map): `region_order` = the region of
+	# each floor in order (unknown ids dropped); empty / absent = the Story 031 offer of choices_per_floor regions.
+	var order: Array[String] = []
+	var raw_order: Variant = source.get("region_order")
+	if typeof(raw_order) == TYPE_ARRAY:
+		for id: Variant in raw_order as Array:
+			if region_index(str(id)) < 0:
+				push_warning("ChaptersConfig: world.region_order: unknown region '%s' dropped" % id)
+			else:
+				order.append(str(id))
+	world["region_order"] = order
 	var columns: Array = []
 	if typeof(source.get("region_columns")) == TYPE_ARRAY:
 		columns = (source["region_columns"] as Array).duplicate(true)

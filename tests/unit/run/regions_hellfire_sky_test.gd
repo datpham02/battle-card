@@ -435,7 +435,7 @@ func _test_world(cfg: ChaptersConfig) -> void:
 			locked_pool.append(id)
 	var locked_ok: bool = true
 	for seed_value: int in WORLD_SEEDS:
-		var path2: Array = _walk(locked_pool, seed_value, cfg.world_floors())
+		var path2: Array = _walk(locked_pool, seed_value, mini(cfg.world_floors(), locked_pool.size()))
 		var unique2: Dictionary = {}
 		for id: Variant in path2:
 			unique2[id] = true

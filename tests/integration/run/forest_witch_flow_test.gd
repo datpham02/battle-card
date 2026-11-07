@@ -24,10 +24,10 @@ func _check(name: String, ok: bool, extra: String = "") -> void:
 
 func _initialize() -> void:
 	var chapters: ChaptersConfig = ChaptersConfig.load_from_file()
-	var params: Dictionary = RunConfig.from_node(chapters, "ch1", "forest_witch", "boss", 7, 3).matches[0]
+	var params: Dictionary = RunConfig.from_node(chapters, "ch1", "forest_witch", "boss", 7, 5).matches[0]
 	_check("RunConfig: pattern brain, enemy forest_witch, boss_hall", str(params.get("brain", "")) == RunConfig.BRAIN_PATTERN
 		and str(params.get("enemy", "")) == "forest_witch" and str((params.get("arena", {}) as Dictionary).get("shape", "")) == "boss_hall", str(params.get("arena")))
-	_check("RunConfig: HP from 1090 written (%.1f at floor 3)" % float(params["boss_max_hp"]), float(params["boss_max_hp"]) > 700.0)
+	_check("RunConfig: HP from 1090 written (%.1f at floor 6 of 7)" % float(params["boss_max_hp"]), float(params["boss_max_hp"]) > 700.0)
 	await _play(params)
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)

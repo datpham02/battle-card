@@ -162,7 +162,14 @@ func _test_pieces() -> void:
 	_check("pieces: effective weights agree", not PieceDeck.effective_weights(state, lib, "ch1", cfg, locked).has(locked[0]))
 
 
-func _test_regions(chapters: ChaptersConfig) -> void:
+func _test_regions(climb: ChaptersConfig) -> void:
+	# 2026-11-07: the shipped climb order offers each floor's region whatever is locked (the climb walks every region);
+	# the lock rule is checked on the order-less offer (the same data without world.region_order).
+	var climb_run: RunSession = _session(climb, {"region": [climb.region_order()[0]]}, 7)
+	_check("regions: the climb order offers floor 1's region even when it is locked", climb_run.region_offer == ([climb.region_order()[0]] as Array[String]))
+	var raw: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ChaptersConfig.DEFAULT_PATH))
+	(raw["world"] as Dictionary)["region_order"] = []
+	var chapters: ChaptersConfig = ChaptersConfig.from_dictionary(raw)
 	var all_ids: Array[String] = chapters.region_ids()
 	var victim: String = all_ids[0]
 	var leaked: bool = false

@@ -51,6 +51,15 @@ static func offer_for_floor(region_pool: Array, run_seed: int, floor: int, chose
 	return offer
 
 
+## 2026-11-07: the offer of 0-based [param floor]: with a fixed climb order ([param order], world.region_order) the
+## one region of that floor (region locks do not apply: the climb walks every region); without one,
+## [method offer_for_floor] over [param pool].
+static func floor_offer(order: Array, pool: Array, run_seed: int, floor: int, chosen_path: Array, choices: int = DEFAULT_CHOICES) -> Array[String]:
+	if not order.is_empty():
+		return [str(order[floor % order.size()])] as Array[String]
+	return offer_for_floor(pool, run_seed, floor, chosen_path, choices)
+
+
 ## Seed of the map of [param region_id] entered at 0-based [param floor]:
 ## hash([run_seed, region_id, floor]), non-negative. The same region met again on another floor gets
 ## another map.

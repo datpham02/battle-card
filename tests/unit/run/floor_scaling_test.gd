@@ -35,7 +35,7 @@ func _initialize() -> void:
 	var norm1: Dictionary = cfg.region_normalize("ch1")
 	var base: Dictionary = cfg.get_match_def(0, "goblin_brute")
 	var table_ok: bool = true
-	for floor_index: int in 6:
+	for floor_index: int in cfg.world_floors() + 1:
 		var row: Dictionary = cfg.floor_scaling(floor_index)
 		var m: Dictionary = RunConfig.from_node(cfg, "ch1", "goblin_brute", "battle", 5, floor_index).matches[0]
 		var expect_hp: float = float(base["boss_max_hp"]) * float(norm1["hp_mult"]) * float(row["hp_mult"])
@@ -46,16 +46,16 @@ func _initialize() -> void:
 				and _near(float(m["boss_defense"]), expect_def) and int(m["boss_min_runes"]) == expect_size):
 			table_ok = false
 			print("  row ", row, " got ", m["boss_max_hp"], " ", m["boss_step_cooldown_mult"], " ", m["boss_defense"], " ", m["boss_min_runes"])
-	check(table_ok, "ch1 floors 1-5 and final match the floor_scaling table (hp, step, defense, piece size)")
+	check(table_ok, "ch1 floors 1-N and final match the floor_scaling table (hp, step, defense, piece size)")
 	var rows_data: Dictionary = cfg.world_spec()["floor_scaling"]
-	check(_near(float(cfg.floor_scaling(3)["hp_mult"]), float(rows_data["4"]["hp_mult"])) and _near(float(cfg.floor_scaling(5)["hp_mult"]), float(rows_data["final"]["hp_mult"])), "floor_scaling(floor) is 0-based, floor 5 = final")
-	check(cfg.floor_scaling(9) == cfg.floor_scaling(5), "a floor past the end uses the final row")
+	check(_near(float(cfg.floor_scaling(3)["hp_mult"]), float(rows_data["4"]["hp_mult"])) and _near(float(cfg.floor_scaling(cfg.world_floors())["hp_mult"]), float(rows_data["final"]["hp_mult"])), "floor_scaling(floor) is 0-based, floor N = final")
+	check(cfg.floor_scaling(cfg.world_floors() + 4) == cfg.floor_scaling(cfg.world_floors()), "a floor past the end uses the final row")
 
 	# Floor 1 vs floor 5 for the same match (floor 4 has no size step after the Story 031 tuning).
 	var f1: Dictionary = RunConfig.from_node(cfg, "ch1", "goblin_brute", "battle", 5, 0).matches[0]
-	var f4: Dictionary = RunConfig.from_node(cfg, "ch1", "goblin_brute", "battle", 5, 4).matches[0]
+	var f4: Dictionary = RunConfig.from_node(cfg, "ch1", "goblin_brute", "battle", 5, cfg.world_floors() - 1).matches[0]
 	check(float(f4["boss_max_hp"]) > float(f1["boss_max_hp"]) and float(f4["boss_step_cooldown_mult"]) < float(f1["boss_step_cooldown_mult"])
-			and float(f4["boss_defense"]) > float(f1["boss_defense"]) and int(f4["boss_min_runes"]) > int(f1["boss_min_runes"]), "floor 5 is harder than floor 1 on all four axes")
+			and float(f4["boss_defense"]) > float(f1["boss_defense"]) and int(f4["boss_min_runes"]) > int(f1["boss_min_runes"]), "the last floor is harder than floor 1 on all four axes")
 
 	# Region normalize applies before the floor row (multiplicative on hp/step, additive on defense).
 	var ch2_base: Dictionary = cfg.get_match_def(1, "skeleton")
@@ -81,15 +81,15 @@ func _initialize() -> void:
 	# Normalize first, then scale: ch3 with defense 4 (wisp family has defense) -> (4 - 1) + floor add.
 	var wisp: Dictionary = cfg.get_match_def(2, "stone_sentry")
 	var s_m: Dictionary = RunConfig.from_node(cfg, "ch3", "stone_sentry", "battle", 5, 2).matches[0]
-	var expect_def: float = maxf(float(wisp["boss_defense"]) - 1.0, 0.0) + 1.0
-	check(_near(float(s_m["boss_defense"]), expect_def), "ch3 stone_sentry floor 3: max(def-1, 0) + 1")
+	var expect_def: float = maxf(float(wisp["boss_defense"]) - 1.0, 0.0) + float(cfg.floor_scaling(2)["defense_add"])
+	check(_near(float(s_m["boss_defense"]), expect_def), "ch3 stone_sentry floor 3: max(def-1, 0) + the floor row's defense")
 
 	# Final match (Story 035: an_dai / an_dai_keeper, identity normalize) with the `final` row, no double application.
 	var fin: Dictionary = cfg.final_match()
 	var final_base: Dictionary = cfg.get_match_def(cfg.region_index(fin["region"]), fin["match_id"])
-	var final_m: Dictionary = RunConfig.from_node(cfg, fin["region"], fin["match_id"], "boss", 5, 5).matches[0]
+	var final_m: Dictionary = RunConfig.from_node(cfg, fin["region"], fin["match_id"], "boss", 5, cfg.world_floors()).matches[0]
 	var norm3: Dictionary = cfg.region_normalize(fin["region"])
-	var final_row: Dictionary = cfg.floor_scaling(5)
+	var final_row: Dictionary = cfg.floor_scaling(cfg.world_floors())
 	check(_near(float(final_m["boss_max_hp"]), float(final_base["boss_max_hp"]) * float(norm3["hp_mult"]) * float(final_row["hp_mult"]))
 			and _near(float(final_m["boss_step_cooldown_mult"]), float(final_base["boss_step_cooldown_mult"]) * float(norm3["step_mult"]) * float(final_row["step_mult"]))
 			and int(final_m["boss_min_runes"]) == maxi(int(final_base["boss_min_runes"]) + int(final_row["size_add"]), 0), "final match: region normalize then the `final` row")
