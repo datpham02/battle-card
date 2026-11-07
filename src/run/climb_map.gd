@@ -766,6 +766,8 @@ static func draw_island_fx(canvas: CanvasItem, r: Rect2, region: String, t: floa
 			_fx_wind(canvas, r.position, k, tex, fx, t, tint)
 		"embers":
 			_fx_embers(canvas, r.position, k, region, tex, fx, t, tint)
+		"clouds":
+			_fx_clouds(canvas, r.position, k, tex, fx, t, tint)
 
 
 static func _fx_px(canvas: CanvasItem, at: Vector2, k: float, p: Vector2, size: Vector2, c: Color) -> void:
@@ -806,16 +808,22 @@ static func _fx_wind(canvas: CanvasItem, at: Vector2, k: float, tex: Texture2D, 
 		var y: float = roundf(top + fx_hash(i + 37) * (bottom - top) + 3.0 * sin(t * 1.8 + float(i)))
 		var length: float = roundf(min_len + fx_hash(i + 59) * (max_len - min_len))
 		var fade: float = clampf(sin(PI * clampf((x + 30.0) / span, 0.0, 1.0)), 0.0, 1.0)
-		var c := Color(FX_FROST, 0.95 * fade) * tint
+		var c := Color(Color(str(fx.get("color", FX_FROST.to_html(false)))), 0.95 * fade) * tint
 		_fx_px(canvas, at, k, Vector2(x, y), Vector2(length, 2.0 if i % 2 == 0 else 1.0), c)
 		# A dimmer tail one row lower and a flake ahead give the gust its slant.
 		_fx_px(canvas, at, k, Vector2(x - length * 0.6, y + 1.0), Vector2(length * 0.6, 1.0), Color(c, c.a * 0.45))
 		if i % 3 == 0:
 			_fx_px(canvas, at, k, Vector2(x + length + 3.0, y - 1.0), Vector2.ONE, c)
+		if bool(fx.get("grains", false)):
+			for g: int in 3:
+				var gx: float = x - float(g) * 7.0 - fx_hash(i * 3 + g) * 5.0
+				_fx_px(canvas, at, k, Vector2(roundf(gx), y + 2.0 + float(g % 2) * 2.0), Vector2.ONE, Color(c, c.a * 0.8))
 
 
 static func _fx_embers(canvas: CanvasItem, at: Vector2, k: float, region: String, tex: Texture2D, fx: Dictionary, t: float, tint: Color) -> void:
-	var px: PackedVector2Array = _fx_pixels(region, tex, "lava", 0)
+	var px: PackedVector2Array = _fx_pixels(region, tex, str(fx.get("source", "lava")), 0)
+	var hot: Color = Color(str(fx.get("hot", FX_EMBER_HOT.to_html(false))))
+	var cool: Color = Color(str(fx.get("cool", FX_EMBER_COOL.to_html(false))))
 	if px.is_empty():
 		return
 	var count: int = int(fx.get("count", 14))
@@ -825,9 +833,29 @@ static func _fx_embers(canvas: CanvasItem, at: Vector2, k: float, region: String
 		var src: Vector2 = px[int(fx_hash(i + 13) * float(px.size())) % px.size()]
 		var u: float = fposmod(t / period + fx_hash(i), 1.0)
 		var p := Vector2(roundf(src.x + 3.0 * sin(u * 6.0 + float(i))), roundf(src.y - u * rise))
-		var c: Color = FX_EMBER_HOT.lerp(FX_EMBER_COOL, u)
+		var c: Color = hot.lerp(cool, u)
 		c.a = 1.0 - u * u
 		_fx_px(canvas, at, k, p, Vector2(3.0, 3.0) if u < 0.35 else (Vector2(2.0, 2.0) if u < 0.7 else Vector2.ONE), c * tint)
+
+
+static func _fx_clouds(canvas: CanvasItem, at: Vector2, k: float, tex: Texture2D, fx: Dictionary, t: float, tint: Color) -> void:
+	var w: float = float(tex.get_width())
+	var count: int = int(fx.get("count", 5))
+	var speed: float = float(fx.get("speed", 9.0))
+	var top: float = float(fx.get("top", 120))
+	var bottom: float = float(fx.get("bottom", 175))
+	var base := Color(str(fx.get("color", "e6e0f5")))
+	for i: int in count:
+		var span: float = w + 120.0
+		var x: float = fposmod(fx_hash(i + 3) * span + t * speed * (0.7 + 0.6 * fx_hash(i + 17)), span) - 60.0
+		var y: float = roundf(top + fx_hash(i + 29) * (bottom - top))
+		var fade: float = clampf(sin(PI * clampf((x + 60.0) / span, 0.0, 1.0)), 0.0, 1.0)
+		var size: float = 1.0 + fx_hash(i + 41)
+		var c := Color(base, 0.55 * fade) * tint
+		# A blocky puff: a wide base, a raised middle and a small cap (angular, no circles).
+		_fx_px(canvas, at, k, Vector2(roundf(x), y), Vector2(roundf(30.0 * size), roundf(5.0 * size)), c)
+		_fx_px(canvas, at, k, Vector2(roundf(x + 6.0 * size), y - roundf(4.0 * size)), Vector2(roundf(16.0 * size), roundf(4.0 * size)), c)
+		_fx_px(canvas, at, k, Vector2(roundf(x + 10.0 * size), y - roundf(7.0 * size)), Vector2(roundf(7.0 * size), roundf(3.0 * size)), c)
 
 
 # The sprite pixels an effect runs on (cached): "water" = blue fall pixels at or below [param min_y]; "lava" = hot
@@ -849,6 +877,8 @@ static func _fx_pixels(region: String, tex: Texture2D, kind: String, min_y: int)
 			var hit: bool
 			if kind == "water":
 				hit = c.h > 0.47 and c.h < 0.65 and c.s > 0.3 and c.v > 0.45
+			elif kind == "spore":
+				hit = c.h > 0.68 and c.h < 0.92 and c.s > 0.18 and c.v > 0.5
 			else:
 				hit = (c.h < 0.12 or c.h > 0.97) and c.s > 0.55 and c.v > 0.6
 			if hit:

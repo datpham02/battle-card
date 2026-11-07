@@ -145,7 +145,18 @@
       "marker": [
         150,
         99
-      ]
+      ],
+      "fx": {
+        "kind": "wind",
+        "color": "fff0c0",
+        "count": 26,
+        "speed": 40.0,
+        "min_len": 6,
+        "max_len": 14,
+        "top": -10,
+        "bottom": 185,
+        "grains": true
+      }
     },
     "swamp": {
       "sprite": "island_swamp.png",
@@ -156,7 +167,16 @@
       "marker": [
         165,
         102
-      ]
+      ],
+      "fx": {
+        "kind": "embers",
+        "source": "spore",
+        "hot": "f6e4ff",
+        "cool": "b48cff",
+        "count": 26,
+        "rise": 46.0,
+        "period": 2.8
+      }
     },
     "ch2": {
       "sprite": "island_ch2.png",
@@ -198,7 +218,15 @@
       "marker": [
         180,
         96
-      ]
+      ],
+      "fx": {
+        "kind": "clouds",
+        "color": "e6e0f5",
+        "count": 5,
+        "speed": 9.0,
+        "top": 120,
+        "bottom": 175
+      }
     }
   },
   "stair_root": {
@@ -239,5 +267,5 @@
       "depth": 25
     }
   },
-  "_fx_doc": "2026-11-07 (user: ice wind, forest waterfall): per-island live effect drawn by code over the sprite. waterfall = bright bands run down the blue fall pixels below min_y (speed px/s, a lit band of `lit` px every `band` px) and droplets fall drop_len px below each fall's foot; wind = `count` frost streaks (min_len..max_len px) blow left to right at speed px/s between rows top..bottom; embers = `count` sparks rise `rise` px from lava pixels over `period` s. All in sprite px."
+  "_fx_doc": "2026-11-07 (user: ice wind, forest waterfall): per-island live effect drawn by code over the sprite. waterfall = bright bands run down the blue fall pixels below min_y (speed px/s, a lit band of `lit` px every `band` px) and droplets fall drop_len px below each fall's foot; wind = `count` frost streaks (min_len..max_len px) blow left to right at speed px/s between rows top..bottom; embers = `count` sparks rise `rise` px from lava pixels over `period` s. All in sprite px. wind takes `color` and `grains` (loose dots, for sand); embers take `source` (lava or spore pixels) and `hot`/`cool` colours; clouds = `count` blocky puffs drift right at speed px/s between rows top..bottom, in front of the island's underside."
 }
