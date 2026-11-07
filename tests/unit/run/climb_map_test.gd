@@ -26,6 +26,8 @@ func _init() -> void:
 	test_island_anchors()
 	test_stair_25d()
 	test_island_animation()
+	test_old_save_offer_follows_order()
+	test_drag_scroll()
 	print("FAILS: %d" % fails)
 	quit(1 if fails > 0 else 0)
 
@@ -158,3 +160,25 @@ func test_island_animation() -> void:
 	check("a region without an effect has none", not ClimbMap.island_info("no_such_region").has("fx"))
 	var h: float = ClimbMap.fx_hash(7)
 	check("fx hash is stable and in 0..1", h == ClimbMap.fx_hash(7) and h >= 0.0 and h < 1.0)
+
+
+# 2026-11-07 (user: the first floor showed the swamp): a run saved with a random pre-climb offer loads with the
+# floor's region of the climb order.
+func test_old_save_offer_follows_order() -> void:
+	var c: ChaptersConfig = ChaptersConfig.load_from_file()
+	var hero: Dictionary = {"id": "kiem_si", "max_hp": 200.0, "starter_deck": ["slash"]}
+	var s: RunSession = RunSession.begin_world(c, hero, 5)
+	var d: Dictionary = s.to_dict()
+	d["region_offer"] = ["swamp"]
+	var back: RunSession = RunSession.from_dict(d, c)
+	check("an old saved offer loads as the climb's floor-1 region", back != null and str(back.region_offer) == str(["ch1"]))
+
+
+# 2026-11-07 (user: could not drag up to see the floors above): a drag scrolls the map within its bounds.
+func test_drag_scroll() -> void:
+	var limit: float = ClimbMap.scroll_limit(VP, 7)
+	var start: float = ClimbMap.scroll_for(VP, 0, 7)
+	check("the first floor's view starts near the bottom", start > limit * 0.5)
+	check("dragging down shows higher floors", ClimbMap.dragged_scroll(VP, 7, start, 200.0) < start)
+	check("a drag stops at the top", ClimbMap.dragged_scroll(VP, 7, start, 99999.0) == 0.0)
+	check("a drag stops at the bottom", ClimbMap.dragged_scroll(VP, 7, start, -99999.0) == limit)

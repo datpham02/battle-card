@@ -138,6 +138,16 @@ static func cube_center(vp: Vector2) -> Vector2:
 	return Vector2(vp.x * 0.5, vp.y * CUBE_Y)
 
 
+## Pure: the largest scroll (the map's bottom at the screen's bottom).
+static func scroll_limit(vp: Vector2, floors: int) -> float:
+	return maxf(map_height(vp, floors) - vp.y, 0.0)
+
+
+## Pure: the scroll after a drag of [param dy] px (finger down = positive, shows higher floors) from [param start].
+static func dragged_scroll(vp: Vector2, floors: int, start: float, dy: float) -> float:
+	return clampf(start - dy, 0.0, scroll_limit(vp, floors))
+
+
 ## Pure: the scroll (px, map y shown at the screen's top) that puts floor [param floor] at FOCUS_Y, clamped to the
 ## map; the top of the map (the cube) once the floors are done.
 static func scroll_for(vp: Vector2, floor: int, floors: int) -> float:

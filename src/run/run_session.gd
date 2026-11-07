@@ -1024,6 +1024,10 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s._won = bool(d.get("won", false))
 	s.hp = float(d.get("hp", -1.0))
 	s.run_seed = int(d.get("run_seed", 0))
+	# 2026-11-07 (user: "sao map đầu lại là map poison"): a run saved before the fixed climb order kept its random
+	# offer; with world.region_order set, an open offer is that floor's region of the order again.
+	if not s.region_offer.is_empty() and not chapters.region_order().is_empty():
+		s.region_offer = s.roll_offer()
 	s.elapsed_sec = maxf(float(d.get("elapsed", 0.0)), 0.0)
 	s.revives = maxi(int(d.get("revives", 0)), 0)
 	s.deck = _known_entries(d.get("deck", []), cards)

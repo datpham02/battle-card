@@ -182,6 +182,15 @@ var _dev_select: bool = false
 ## Banner shown until the first tap: a string key ("" = none) and its format args (may be empty).
 var _notice_key: String = ""
 var _notice_args: Array = []
+## 2026-11-07 (user: "tôi ko kéo lên để xem các tầng ở trên đc"): drag (touch or mouse) or wheel to scroll the climb.
+## _view_scroll < 0 = follow the current floor; a press becomes a tap only when it moved less than DRAG_SLOP px.
+const DRAG_SLOP: float = 12.0
+const WHEEL_STEP: float = 60.0
+var _view_scroll: float = -1.0
+var _view_floor: int = -1
+var _press_at: Vector2 = Vector2.INF
+var _press_scroll: float = 0.0
+var _dragging: bool = false
 
 
 func _ready() -> void:
@@ -203,6 +212,9 @@ func _process(delta: float) -> void:
 		_selected = ""
 		_notice_key = ""
 		_notice_args = []
+		_view_scroll = -1.0
+		_press_at = Vector2.INF
+		_dragging = false
 		queue_redraw()  # clear the last frame (see TitleView)
 		return
 	if _notice_key.is_empty():
@@ -272,13 +284,41 @@ func _input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 	if event.device != InputEvent.DEVICE_ID_EMULATION and _strip.visible and _strip.handle_input(event):
 		return
+	if event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
+	var vp: Vector2 = get_viewport_rect().size
+	if event is InputEventMouseButton:
+		var wheel := event as InputEventMouseButton
+		if wheel.pressed and (wheel.button_index == MOUSE_BUTTON_WHEEL_UP or wheel.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+			var dy: float = WHEEL_STEP if wheel.button_index == MOUSE_BUTTON_WHEEL_UP else -WHEEL_STEP
+			_view_scroll = ClimbMap.dragged_scroll(vp, _flow.get_floor_count(), view_scroll(vp), dy)
+			return
 	var pos: Vector2 = _press_position(event)
-	if pos == Vector2.INF or event.device == InputEvent.DEVICE_ID_EMULATION:
+	if pos != Vector2.INF:
+		if not _notice_key.is_empty():
+			_close_notice()
+			return
+		_press_at = pos
+		_press_scroll = view_scroll(vp)
+		_dragging = false
 		return
-	if not _notice_key.is_empty():
-		_close_notice()
+	if _press_at == Vector2.INF:
 		return
-	_tap(pos)
+	var move: Vector2 = _drag_position(event)
+	if move != Vector2.INF:
+		if not _dragging and absf(move.y - _press_at.y) >= DRAG_SLOP:
+			_dragging = true
+			_selected = ""
+		if _dragging:
+			_view_scroll = ClimbMap.dragged_scroll(vp, _flow.get_floor_count(), _press_scroll, move.y - _press_at.y)
+		return
+	if _is_release(event):
+		var at: Vector2 = _press_at
+		var was_drag: bool = _dragging
+		_press_at = Vector2.INF
+		_dragging = false
+		if not was_drag:
+			_tap(at)
 
 
 # One real tap at [param pos] (no banner open).
@@ -318,6 +358,36 @@ func _confirm() -> void:
 func _close_notice() -> void:
 	_notice_key = ""
 	_notice_args = []
+
+
+## The climb's scroll on screen now: the player's dragged view, else the current floor's.
+func view_scroll(vp: Vector2) -> float:
+	var floors: int = _flow.get_floor_count()
+	if _view_floor != _flow.get_floor():
+		_view_floor = _flow.get_floor()
+		_view_scroll = -1.0
+	if _view_scroll < 0.0:
+		return ClimbMap.scroll_for(vp, _flow.get_floor(), floors)
+	return clampf(_view_scroll, 0.0, ClimbMap.scroll_limit(vp, floors))
+
+
+# Position of a left-held mouse move or a touch drag; Vector2.INF for any other event.
+func _drag_position(event: InputEvent) -> Vector2:
+	if event is InputEventMouseMotion and ((event as InputEventMouseMotion).button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
+		return (event as InputEventMouseMotion).position
+	if event is InputEventScreenDrag:
+		return (event as InputEventScreenDrag).position
+	return Vector2.INF
+
+
+# True for a left mouse release or a touch release.
+func _is_release(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		var b := event as InputEventMouseButton
+		return b.button_index == MOUSE_BUTTON_LEFT and not b.pressed
+	if event is InputEventScreenTouch:
+		return not (event as InputEventScreenTouch).pressed
+	return false
 
 
 # Position of a left mouse press or a touch press; Vector2.INF for any other event.
@@ -361,7 +431,7 @@ func _draw() -> void:
 func _draw_climb(vp: Vector2) -> void:
 	var floors: int = _flow.get_floor_count()
 	var floor: int = _flow.get_floor()
-	var scroll: float = ClimbMap.scroll_for(vp, floor, floors)
+	var scroll: float = view_scroll(vp)
 	var off := Vector2(0.0, -scroll)
 	ClimbMap.draw_sky(self, vp, scroll, floors)
 	_draw_cube(vp, off)
@@ -539,7 +609,7 @@ func current_island_rect(vp: Vector2) -> Rect2:
 	var floors: int = _flow.get_floor_count()
 	var floor: int = mini(_flow.get_floor(), floors - 1)
 	var r: Rect2 = ClimbMap.island_rect(vp, floor, floors, floor)
-	r.position.y -= ClimbMap.scroll_for(vp, _flow.get_floor(), floors)
+	r.position.y -= view_scroll(vp)
 	return r.grow(ISLAND_TOUCH_GROW)
 
 
