@@ -951,6 +951,9 @@ ui.map.enter,Vào,Enter
 ui.map.cleared,Đã qua,Cleared
 card.do_kiem.name,Đỡ Kiếm,Parry
 card.do_kiem.desc,"Chỉ khi địch ra đòn. Đỡ {parry_sec} s: đòn kế dội lại x{reflect_mult}, địch Đóng Băng {parry_pin_sec} s.","Only while the foe winds up. Guard {parry_sec} s: the next hit bounces back x{reflect_mult}, foe Frozen {parry_pin_sec} s."
+card.tram_dia.name,Trảm Địa,Earth-Splitting Wave
+card.tram_dia.desc,"Sóng kiếm nổ ở ô đầu x{burst_first} và Đóng Băng {burst_pin_sec} s, rồi lan từng ô. Có khối ngang: +{surge_pct}% mỗi ô lan (tối đa +{surge_cap_pct}%).","A sword wave bursts on the first cell x{burst_first} and Freezes {burst_pin_sec} s, then surges cell by cell. With a flat line: +{surge_pct}% per cell surged (max +{surge_cap_pct}%)."
+card.tram_dia.desc_battle,"Nổ ô đầu x{burst_first}, Đóng Băng {burst_pin_sec} s, rồi lan.","Bursts x{burst_first}, Freezes {burst_pin_sec} s, then surges."
 ui.hud.crit,CHÍ MẠNG,CRIT
 ui.hud.parry,ĐỠ,PARRY
 ui.hud.no_telegraph,chờ đòn địch,wait for a tell

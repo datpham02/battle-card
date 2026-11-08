@@ -1,0 +1,5 @@
+DemoArgs: tram_live shape=bar4 rot=0 cells=[(4, 1), (5, 1), (6, 1), (7, 1)] tags=["line", "line_h"] boss=[(5, 1)] duration=1.200
+TRAM #0 t=0.00 clock=1.200 cell=(4, 1) kind=burst step=0 mult=1.50 hit=false dmg=0.0 pinned=false
+TRAM #1 t=0.21 clock=1.410 cell=(5, 1) kind=surge step=1 mult=1.15 hit=true dmg=27.6 pinned=false
+TRAM #2 t=0.29 clock=1.490 cell=(6, 1) kind=surge step=2 mult=1.30 hit=false dmg=0.0 pinned=false
+TRAM #3 t=0.37 clock=1.570 cell=(7, 1) kind=surge step=3 mult=1.45 hit=false dmg=0.0 pinned=false

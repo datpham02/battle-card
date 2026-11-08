@@ -195,6 +195,33 @@
    "note": "2026-11-02 guard stance: PixMiniMax from the guard anchor (first and last frame pinned to it), src frames 0,1,2,3,4,8,6,7,0: guard, raise, lift, coil, coil (frame 4, held during the swing telegraph by the cast index gesture_hold_frame), slash with the arm fully out (5, the release cut and the wave leave; src 5 had a baked crescent smear, dropped), follow-through x2, back to the guard. Same 9 frames and ms as the v4 clip, so the cast timing data is unchanged"
   },
   {
+   "name": "cast_forward",
+   "frames": [
+    "cast_forward/0.png",
+    "cast_forward/1.png",
+    "cast_forward/2.png",
+    "cast_forward/3.png",
+    "cast_forward/4.png",
+    "cast_forward/5.png",
+    "cast_forward/6.png",
+    "cast_forward/7.png",
+    "cast_forward/8.png"
+   ],
+   "ms": [
+    83,
+    83,
+    83,
+    83,
+    200,
+    50,
+    83,
+    100,
+    133
+   ],
+   "loop": "once",
+   "note": "2026-11-08 Trảm Địa (user-approved PixMiniMax job 5e5e14ed-952d-42ec-b517-8bff32bb795e, 1 gen; first and last frame pinned to cast_gesture/0 guard): raw f0-f8 in design/assets/candidates/swordsman/cast-forward/raw, cleaned mechanically (tools/qa/sprite_clean.gd: palette snap to the 7 sheet colours, specks < 6 px dropped, f1/f2 +5 px, f3 +6 px, f6/f7 -1 px so the feet stay on x32-38). Slots: f0 guard, f1-f2 draw back, f3 coil (also slot 4, held during the swing telegraph like cast_gesture's frame 4), f5 release (low forward), f6-f7 follow-through, f8 guard; raw f4 dropped (baked slash smear). Same 9 ms as cast_gesture so the cast timing data is unchanged. Known: the wind-up raises the sword high (not low to the hip as asked) (cape fixed 2026-11-08: tools/qa/sprite_recolour_region.gd b8893a -> 34406e on the INTERIOR of gold components >= 25 px, slots 5 and 6 only, 54 + 30 px; the 1 px gold trim and every armour trim kept)."
+  },
+  {
    "name": "hit",
    "frames": [
     "hit/0.png",

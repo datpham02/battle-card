@@ -155,24 +155,26 @@ static func is_upgrade(id: String, deck_levels: Dictionary, max_level: int = Ski
 ## cards of that rarity or better are offered; when too few exist the rest is topped up from the
 ## whole pool (warning). Deterministic for the same inputs. Fewer candidates than offer_count:
 ## returns what exists.
+## Skill v2 Q3 (docs/skill-v2/02-design-decisions.md, approved): [param hero_id] = the run's hero; that hero's own cards
+## flagged `hero_reward` (cards.json) join the pool at their rarity. Other heroes' cards never do; "" = none.
 static func roll(cards: SkillConfig, config: Dictionary, seed: int,
 		exclude_ids: Array[String] = [], deck_levels: Dictionary = {}, luck: float = 0.0,
-		min_rarity: String = "common") -> Array[String]:
+		min_rarity: String = "common", hero_id: String = "") -> Array[String]:
 	var cfg: Dictionary = clean_config(config)
 	var weights: Dictionary = luck_rarity_weights(cfg, luck)
 	var floor_rank: int = maxi(SkillConfig.RARITIES.find(min_rarity), 0)
 	var want: int = int(cfg["offer_count"])
-	var offer: Array[String] = _draw(cards, cfg, weights, floor_rank, seed, exclude_ids, deck_levels, want)
+	var offer: Array[String] = _draw(cards, cfg, weights, floor_rank, seed, exclude_ids, deck_levels, want, hero_id)
 	if offer.size() < want and floor_rank > 0:
 		push_warning("RewardRoller: only %d cards of rarity %s or better, topping up" % [offer.size(), min_rarity])
 		var skip: Array[String] = exclude_ids.duplicate()
 		skip.append_array(offer)
-		offer.append_array(_draw(cards, cfg, weights, 0, seed + 1, skip, deck_levels, want - offer.size()))
+		offer.append_array(_draw(cards, cfg, weights, 0, seed + 1, skip, deck_levels, want - offer.size(), hero_id))
 	return offer
 
 
 static func _draw(cards: SkillConfig, cfg: Dictionary, weights: Dictionary, floor_rank: int, seed: int,
-		exclude_ids: Array[String], deck_levels: Dictionary, want: int) -> Array[String]:
+		exclude_ids: Array[String], deck_levels: Dictionary, want: int, hero_id: String = "") -> Array[String]:
 	var max_level: int = int(cfg["max_card_level"])
 	var ids: Array[String] = []
 	var w: Array[float] = []
@@ -181,8 +183,10 @@ static func _draw(cards: SkillConfig, cfg: Dictionary, weights: Dictionary, floo
 	for id: String in cards.card_order:
 		if exclude_ids.has(id) or not bool(cards.get_skill(id).get("implemented", false)):
 			continue
-		# Cast rhythm spec 2026-11-05: hero cards (cards.json `hero`) never come from rewards, shops or events.
-		if not cards.hero_of(id).is_empty():
+		# Cast rhythm spec 2026-11-05: hero cards (cards.json `hero`) never come from rewards, shops or events, except
+		# (Skill v2 Q3) the run hero's own cards flagged `hero_reward`, offered in its rewards only.
+		if not cards.hero_of(id).is_empty() and not (not hero_id.is_empty() and cards.hero_of(id) == hero_id
+				and bool(cards.get_skill(id).get("hero_reward", false))):
 			continue
 		if bool(cfg["pool_excludes_defaults"]) and cards.default_deck.has(id):
 			continue

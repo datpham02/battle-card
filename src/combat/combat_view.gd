@@ -197,6 +197,14 @@ var _hit_delay: Dictionary = {}
 ## The hero's wave flowing through the last cut's cells (user 2026-11-01): {"plan": CastVfx.flow_plan, "start":
 ## FloorVfx clock at the resolve, "pack": cast pack id}; {} when none runs.
 var _cast_flow: Dictionary = {}
+## Skill v2 (Trảm Địa): the surge cells drawn now, one per fired impact event of a scheduled player cast: {cell, from
+## ((-1, -1) for a start cell), kind (burst / landing / surge), start (FloorVfx clock), hit}; pruned after SURGE_FX_SEC.
+var _surge_fx: Array[Dictionary] = []
+## Skill v2: the impact events of the player's scheduled casts fired so far (presentation order check, tests).
+var _impact_log: Array[Dictionary] = []
+## Skill v2 (Trảm Địa): the player's scheduled surge events on the arbiter clock (SwingArbiter.cast_scheduled), read
+## to draw the incoming fronts exactly on the authoritative times; [] when none.
+var _surge_plan: Array[Dictionary] = []
 ## ADR-0001 Task 5: the player's last resolved cast for the code-drawn travel ({} = none): {cells, delivery, caster,
 ## arrive, start (FloorVfx clock at the resolve)}.
 var _cast_travel: Dictionary = {}
@@ -440,6 +448,10 @@ func _ready() -> void:
 	_wire_relics()
 	_arbiter.swing_resolved.connect(_on_swing_resolved)
 	_arbiter.swing_interrupted.connect(_on_swing_interrupted)
+	_arbiter.impact_resolved.connect(_on_impact_resolved)
+	_arbiter.cast_scheduled.connect(_on_cast_scheduled)
+	# Skill v2 (Trảm Địa): the boss reads the surge still running on the same clock (BossBrain pending threat).
+	_boss.pending_threat_fn = _arbiter.pending_cells.bind(CombatState.Side.PLAYER)
 	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
 	_boss.get_drops().point_spawned.connect(_on_point_spawned.bind(CombatState.Side.ENEMY))
 	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
@@ -2283,9 +2295,14 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		"skill_id": str(result.get("skill_id", "")),
 		"crit": bool(result.get("crit", false)),
 	}
-	_play_cut_vfx(side, feedback)
+	# Skill v2: a scheduled cast drew its impacts event by event (_on_impact_resolved) and its HIT marker showed at the
+	# hitting event; only a whole miss still shows its marker here, at the cast's end.
+	var scheduled: bool = bool(result.get("scheduled", false))
+	if not scheduled:
+		_play_cut_vfx(side, feedback)
 	if side == CombatState.Side.PLAYER:
-		_feedback = feedback
+		if not (scheduled and bool(result["hit"])):
+			_feedback = feedback
 		_count_cast(_cast_info)
 		_relics_on_cast_landed(result)
 		# Story 029: the one cover point (hit or miss; interrupted / cancelled swings never resolve).
@@ -2912,6 +2929,151 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 		vfx.play("hit_impact", target, target_side, wait)
 	else:
 		vfx.play("hit_impact", feedback.get("cell", target), target_side)
+
+
+## Seconds a surge cell's code-drawn crack / shockwave stays (CastFloorFx.crack_rects / shock_rects).
+const SURGE_FX_SEC: float = 0.6
+
+
+# Skill v2 (Trảm Địa, docs/skill-v2/02-vfx-concepts.md §8.1): one AUTHORITATIVE impact event of a scheduled cast fired
+# (SwingArbiter.impact_resolved). Its ground burst plays now, on its own cell: the landing burst (big steel) on the
+# `burst` cell, the small steel burst on every other cell, each with its stamp; the crack from the cell the surge came
+# from and the shockwave are code-drawn (get_surge_fx). Damage feedback (HIT marker, hit_impact) only when the event
+# damaged the target. Presentation only: the arbiter already applied the event.
+func _on_impact_resolved(side: int, event: Dictionary, hit: bool) -> void:
+	if side != CombatState.Side.PLAYER:
+		return
+	var cells: Array = event.get("cells", []) as Array
+	if cells.is_empty():
+		return
+	var cell: Vector2i = cells[0]
+	var kind: String = str(event.get("kind", "hit"))
+	var vfx: FloorVfx = get_floor_vfx()
+	_impact_log.append({"index": int(event.get("index", 0)), "cell": cell, "kind": kind, "hit": hit, "at": event.get("at", 0.0)})
+	var hero_id: String = str(UnitLayer.unit_ids_for(match_params).get(CombatState.Side.PLAYER, ""))
+	var skill_id: String = str(event.get("skill_id", ""))
+	var ctx: Dictionary = event.get("context", {}) as Dictionary
+	var delivery: Dictionary = ctx.get("delivery", {}) as Dictionary
+	if delivery.is_empty():
+		delivery = delivery_for(skill_id)
+	# 2026-11-08: the card's own cast overrides (Trảm Địa: the eruption pack + its floor mark on the burst cell).
+	var entry: Dictionary = CastVfx.entry_for(hero_id, str(delivery.get("impact", "")), skill_id)
+	if not is_cell_locked(cell):
+		var big: bool = kind == CastResolver.KIND_BURST
+		var burst: String = str(entry.get("impact" if big else "cell_burst", ""))
+		var mark: String = str(entry.get("impact_mark" if big else "cell_mark", ""))
+		if not burst.is_empty():
+			vfx.play(burst, cell, CombatState.Side.ENEMY)
+		if not mark.is_empty():
+			vfx.play(mark, cell, CombatState.Side.ENEMY)
+		_surge_fx.append({"cell": cell, "from": event.get("from", CastResolver.NO_CELL), "kind": kind,
+			"start": vfx.elapsed(), "hit": hit})
+	if not hit:
+		return
+	var target: Vector2i = event.get("target_cell", cell)
+	vfx.play("hit_impact", target, CombatState.Side.ENEMY)
+	_hit_delay[CombatState.Side.ENEMY] = 0.0
+	_feedback = {"cells": cells, "hit": true, "damage": float(event.get("damage", 0.0)), "cell": target,
+		"time_left": FEEDBACK_SEC, "pin_bonus": false, "featured": false, "featured_mult": 1.0, "featured_effect": "",
+		"skill_id": skill_id, "crit": bool(event.get("crit", false))}
+
+
+# Skill v2 (Trảm Địa): keeps the player's scheduled events (cell, from, at on the arbiter clock) for the fronts.
+func _on_cast_scheduled(side: int, cast: Dictionary) -> void:
+	if side != CombatState.Side.PLAYER:
+		return
+	_surge_plan = []
+	for e: Dictionary in cast.get("events", []) as Array:
+		_surge_plan.append({"cell": (e["cells"] as Array)[0], "from": e.get("from", CastResolver.NO_CELL), "at": float(e["at"]),
+			"kind": str(e.get("kind", ""))})
+
+
+## Skill v2 (Trảm Địa): the incoming steel fronts to draw now: [{from, to, f}] for every planned surge step whose source
+## cell has fired and whose own event has not (f = fraction of the way on the ARBITER clock, so a front reaches its
+## cell exactly when that cell's authoritative event fires). [] when no surge runs.
+func get_surge_fronts() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _surge_plan.is_empty() or _arbiter == null:
+		return out
+	var now: float = _arbiter.clock()
+	var at_of: Dictionary = {}
+	var last: float = 0.0
+	for e: Dictionary in _surge_plan:
+		at_of[e["cell"]] = float(e["at"])
+		last = maxf(last, float(e["at"]))
+	if now > last + 0.05:
+		_surge_plan = []
+		return out
+	for e: Dictionary in _surge_plan:
+		var from: Vector2i = e["from"]
+		if from == CastResolver.NO_CELL or not at_of.has(from):
+			continue
+		var t0: float = float(at_of[from])
+		var t1: float = float(e["at"])
+		if now >= t0 and now < t1 and t1 > t0:
+			out.append({"from": from, "to": e["cell"], "f": (now - t0) / (t1 - t0)})
+	return out
+
+
+## Skill v2 (Trảm Địa targeting preview): while the card menu is open with an AVAILABLE scheduled-surge card in the
+## hand, the surge it would make on the placed cells right now: {card, events: CastResolver.surge_events (kind, step,
+## from, t), blocked: the placed cells locked now}; {} otherwise. The same resolver the cast uses (locked cells now).
+## Also while the player's swing of such a card winds up (the menu covers the board while open): then it is the
+## swing's own cells and card, the telegraph of the surge to come.
+func get_surge_preview() -> Dictionary:
+	if _cut_flow == null or _skill_config == null or _state == null:
+		return {}
+	var cells: Array[Vector2i] = []
+	var hand: Array[String] = []
+	if _cut_flow.is_menu_open():
+		cells = _cut_flow.get_cells()
+		hand = _cut_flow.get_hand()
+	elif _cut_actor != null and _cut_actor.is_swinging():
+		cells = _cut_actor.get_cells()
+		hand = [_cut_actor.get_skill_id()]
+	if cells.is_empty():
+		return {}
+	var swinging: bool = not _cut_flow.is_menu_open()
+	for id: String in hand:
+		var skill: Dictionary = _skill_config.get_skill(id)
+		if str(skill.get("resolve", "instant")) != CastResolver.RESOLVE_ARRIVAL:
+			continue
+		var delivery: Dictionary = skill.get("delivery", {}) as Dictionary
+		if str(delivery.get("type", "")) != SkillDelivery.CASTER_TO_TARGET:
+			continue
+		if not swinging and not bool(SkillAvailability.check(_skill_config, _cooldowns, id, cells.size(), _cut_flow.card_level(id),
+				_cut_flow.availability_context())["available"]):
+			continue
+		var blocked: Array = []
+		for c: Vector2i in cells:
+			if is_cell_locked(c):
+				blocked.append(c)
+		var ctx: Dictionary = {"delivery": delivery, "caster_cell": _state.player_cell}
+		return {"card": id, "events": CastResolver.surge_events(skill, cells, ctx, delivery_timing(), blocked), "blocked": blocked}
+	return {}
+
+
+## Skill v2 (Trảm Địa): the surge cells to draw now: [{cell, from, kind, age (s), hit}], pruned past SURGE_FX_SEC.
+func get_surge_fx() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _surge_fx.is_empty():
+		return out
+	var now: float = get_floor_vfx().elapsed()
+	var keep: Array[Dictionary] = []
+	for r: Dictionary in _surge_fx:
+		var age: float = now - float(r["start"])
+		if age <= SURGE_FX_SEC:
+			keep.append(r)
+			var d: Dictionary = r.duplicate()
+			d["age"] = age
+			out.append(d)
+	_surge_fx = keep
+	return out
+
+
+## Skill v2: the player's scheduled impact events fired so far ({index, cell, kind, hit, at}), oldest first.
+func get_impact_log() -> Array[Dictionary]:
+	return _impact_log
 
 
 ## ADR-0001 A1: the normalized delivery of card [param skill_id] (SkillDelivery form); the fallback when unknown.

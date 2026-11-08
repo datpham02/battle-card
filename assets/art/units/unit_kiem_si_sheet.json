@@ -1255,10 +1255,208 @@
       "duration": 133
     },
     {
-      "filename": "kiem_si_hit_0",
+      "filename": "kiem_si_cast_forward_0",
       "frame": {
         "x": 0,
         "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_forward_1",
+      "frame": {
+        "x": 97,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_forward_2",
+      "frame": {
+        "x": 194,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_forward_3",
+      "frame": {
+        "x": 291,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_forward_4",
+      "frame": {
+        "x": 388,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 200
+    },
+    {
+      "filename": "kiem_si_cast_forward_5",
+      "frame": {
+        "x": 485,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "kiem_si_cast_forward_6",
+      "frame": {
+        "x": 582,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_forward_7",
+      "frame": {
+        "x": 679,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_cast_forward_8",
+      "frame": {
+        "x": 776,
+        "y": 568,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 133
+    },
+    {
+      "filename": "kiem_si_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 639,
         "w": 96,
         "h": 70
       },
@@ -1280,7 +1478,7 @@
       "filename": "kiem_si_hit_1",
       "frame": {
         "x": 97,
-        "y": 568,
+        "y": 639,
         "w": 96,
         "h": 70
       },
@@ -1302,7 +1500,7 @@
       "filename": "kiem_si_hit_2",
       "frame": {
         "x": 194,
-        "y": 568,
+        "y": 639,
         "w": 96,
         "h": 70
       },
@@ -1324,7 +1522,7 @@
       "filename": "kiem_si_victory_0",
       "frame": {
         "x": 0,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1346,7 +1544,7 @@
       "filename": "kiem_si_victory_1",
       "frame": {
         "x": 97,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1368,7 +1566,7 @@
       "filename": "kiem_si_victory_2",
       "frame": {
         "x": 194,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1390,7 +1588,7 @@
       "filename": "kiem_si_victory_3",
       "frame": {
         "x": 291,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1412,7 +1610,7 @@
       "filename": "kiem_si_victory_4",
       "frame": {
         "x": 388,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1434,7 +1632,7 @@
       "filename": "kiem_si_defeat_0",
       "frame": {
         "x": 0,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1456,7 +1654,7 @@
       "filename": "kiem_si_defeat_1",
       "frame": {
         "x": 97,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1478,7 +1676,7 @@
       "filename": "kiem_si_defeat_2",
       "frame": {
         "x": 194,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1500,7 +1698,7 @@
       "filename": "kiem_si_defeat_3",
       "frame": {
         "x": 291,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1522,7 +1720,7 @@
       "filename": "kiem_si_defeat_4",
       "frame": {
         "x": 388,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1544,7 +1742,7 @@
       "filename": "kiem_si_defeat_5",
       "frame": {
         "x": 485,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1566,7 +1764,7 @@
       "filename": "kiem_si_defeat_6",
       "frame": {
         "x": 582,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1588,7 +1786,7 @@
       "filename": "kiem_si_defeat_7",
       "frame": {
         "x": 679,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1610,7 +1808,7 @@
       "filename": "kiem_si_fall_0",
       "frame": {
         "x": 0,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1632,7 +1830,7 @@
       "filename": "kiem_si_fall_1",
       "frame": {
         "x": 97,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1654,7 +1852,7 @@
       "filename": "kiem_si_fall_2",
       "frame": {
         "x": 194,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1676,7 +1874,7 @@
       "filename": "kiem_si_fall_3",
       "frame": {
         "x": 291,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1698,7 +1896,7 @@
       "filename": "kiem_si_awaken_0",
       "frame": {
         "x": 0,
-        "y": 852,
+        "y": 923,
         "w": 96,
         "h": 70
       },
@@ -1720,7 +1918,7 @@
       "filename": "kiem_si_awaken_1",
       "frame": {
         "x": 97,
-        "y": 852,
+        "y": 923,
         "w": 96,
         "h": 70
       },
@@ -1742,7 +1940,7 @@
       "filename": "kiem_si_awaken_2",
       "frame": {
         "x": 194,
-        "y": 852,
+        "y": 923,
         "w": 96,
         "h": 70
       },
@@ -1764,7 +1962,7 @@
       "filename": "kiem_si_awaken_3",
       "frame": {
         "x": 291,
-        "y": 852,
+        "y": 923,
         "w": 96,
         "h": 70
       },
@@ -1786,7 +1984,7 @@
       "filename": "kiem_si_awaken_4",
       "frame": {
         "x": 388,
-        "y": 852,
+        "y": 923,
         "w": 96,
         "h": 70
       },
@@ -1808,7 +2006,7 @@
       "filename": "kiem_si_awaken_5",
       "frame": {
         "x": 485,
-        "y": 852,
+        "y": 923,
         "w": 96,
         "h": 70
       },
@@ -1834,7 +2032,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 872,
-      "h": 922
+      "h": 993
     },
     "scale": "1",
     "frameTags": [
@@ -1887,33 +2085,39 @@
         "direction": "forward"
       },
       {
-        "name": "hit",
+        "name": "cast_forward",
         "from": 57,
-        "to": 59,
+        "to": 65,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 66,
+        "to": 68,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 60,
-        "to": 64,
+        "from": 69,
+        "to": 73,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 65,
-        "to": 72,
+        "from": 74,
+        "to": 81,
         "direction": "forward"
       },
       {
         "name": "fall",
-        "from": 73,
-        "to": 76,
+        "from": 82,
+        "to": 85,
         "direction": "forward"
       },
       {
         "name": "awaken",
-        "from": 77,
-        "to": 82,
+        "from": 86,
+        "to": 91,
         "direction": "forward"
       }
     ],
@@ -1944,6 +2148,7 @@
         "step_up": "once",
         "step_down": "once",
         "cast_gesture": "once",
+        "cast_forward": "once",
         "hit": "once",
         "victory": "hold_last",
         "defeat": "hold_last",

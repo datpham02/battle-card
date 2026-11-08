@@ -321,7 +321,9 @@ func test_legacy_cards_stay_instant() -> void:
 	for id: String in sc.cards.keys():
 		if str((sc.cards[id] as Dictionary).get("resolve", "instant")) != "instant":
 			not_instant.append(id)
-	ck("every card in cards.json resolves instant (legacy path)", not_instant.is_empty(), str(not_instant))
+	# Skill v2 cards opt in one by one (tram_dia, 2026-11-08); every other card stays on the legacy instant path.
+	var v2: Array[String] = ["tram_dia"]
+	ck("only the Skill v2 cards leave the instant (legacy) path", not_instant == v2, str(not_instant))
 	var w: Dictionary = _world("tl", {})
 	_cast(w)
 	(w["arb"] as SwingArbiter).tick(3.0)

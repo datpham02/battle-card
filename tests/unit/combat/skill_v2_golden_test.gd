@@ -27,9 +27,15 @@ func _init() -> void:
 	var sc: SkillConfig = SkillConfig.load_from_file()
 	var cc: CutConfig = CutConfig.load_from_file()
 	var cfg: CombatConfig = CombatConfig.load_from_file()
-	ck("32 player cards in card_order", sc.card_order.size() == 32, str(sc.card_order.size()))
-	var out: Dictionary = {}
+	# The golden pins the 32 LEGACY cards (resolve instant). Skill v2 cards (Trảm Địa, resolve arrival) are not legacy:
+	# they have their own tests (tram_dia_test.gd); the fixture is never re-recorded to make room for them.
+	var legacy: Array[String] = []
 	for id: String in sc.card_order:
+		if str(sc.get_skill(id).get("resolve", "instant")) == "instant":
+			legacy.append(id)
+	ck("32 legacy (instant) player cards in card_order", legacy.size() == 32, str(legacy.size()))
+	var out: Dictionary = {}
+	for id: String in legacy:
 		for level: int in [1, 3]:
 			for scen: Dictionary in scenarios():
 				var key: String = "%s|L%d|%s" % [id, level, str(scen["name"])]

@@ -135,6 +135,11 @@ extends Node
 ##                                           CutActor swing of that card over the boss's cell and up to N-1 of its
 ##                                           neighbours (default 3 cells), time RUNNING (boss inactive): capture a
 ##                                           frame sequence to see the charge, the delivery's travel and the impacts
+##   godot --path . -- --character=kiem_si --demo=tram_live [--tram-shape=<pieces id>] [--tram-rot=N] [--tram-first]
+##       [--tram-move=dx,dy] [--cast-lock]   Skill v2 Trảm Địa: the Knight's REAL tram_dia swing (CutActor + CastContext
+##       from a real Piece, so shape tags hold) placed on the boss half with the boss on the surge's FARTHEST cell (or on
+##       the burst cell with --tram-first); --tram-move moves the boss by dx,dy when the burst fires (moving target);
+##       --pattern=dev_pattern_boss gives a 2x2 boss. Time runs; every impact event is printed (TRAM line).
 ##   godot --path . -- --demo=cast_live ... --cast-lock   the same, one non-foe target cell cracking first (locked: no
 ##                                           charge fill / check / impact drawn on it; Task 5 item 5)
 ##   godot --path . -- --demo=boss_cast_live --cast-card=<card id> [--cast-cells=N]   Task 5 item 4: the BOSS's real
@@ -340,6 +345,13 @@ const DROP_DEMOS: Array[String] = ["drop_crack", "drop_on_player", "drop_hole", 
 const CAST_CARD_PREFIX: String = "--cast-card="
 const CAST_CELLS_PREFIX: String = "--cast-cells="
 const CAST_DEMO_CELLS: int = 3
+## Skill v2 tram_live demo args.
+const TRAM_SHAPE_PREFIX: String = "--tram-shape="
+const TRAM_ROT_PREFIX: String = "--tram-rot="
+const TRAM_MOVE_PREFIX: String = "--tram-move="
+const TRAM_FIRST_ARG: String = "--tram-first"
+const TRAM_CARD: String = "tram_dia"
+var _tram_move: Vector2i = Vector2i.ZERO
 ## Task 5 item 5 evidence: `--cast-lock` cracks the first non-foe cell of the cast_live mask (StatusEffects.apply_drop
 ## on the enemy half) before the swing, so the cast runs over a locked cell.
 const CAST_LOCK_ARG: String = "--cast-lock"
@@ -590,6 +602,9 @@ func _ready() -> void:
 		"cast_live", "boss_cast_live":
 			_skip_intro()
 			_cast_live_demo.call_deferred()
+		"tram_live":
+			_skip_intro()
+			_tram_live_demo.call_deferred()
 		"parry_live":
 			_skip_intro()
 			_parry_live_demo.call_deferred()
@@ -841,6 +856,83 @@ func _cast_live_demo() -> void:
 	combat.freeze_time = false
 	print("DemoArgs: %s card=%s cells=%s duration=%.3f delivery=%s" % [_mode, card, str(cells),
 		actor.get_time_left(), str(combat.delivery_for(card))])
+
+
+# Skill v2 "tram_live": the real tram_dia swing of a real piece over the boss (see the header). The anchor is the one
+# whose piece covers the boss and puts it on the surge's farthest cell (or its burst cell with --tram-first).
+func _tram_live_demo() -> void:
+	var combat: CombatView = _combat()
+	var grid: BoardGrid = combat.get_grid()
+	var state: CombatState = combat.get_state()
+	var shape: String = "bar4"
+	var rot: int = 0
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(TRAM_SHAPE_PREFIX):
+			shape = arg.substr(TRAM_SHAPE_PREFIX.length())
+		elif arg.begins_with(TRAM_ROT_PREFIX):
+			rot = arg.substr(TRAM_ROT_PREFIX.length()).to_int()
+		elif arg.begins_with(TRAM_MOVE_PREFIX):
+			var p: PackedStringArray = arg.substr(TRAM_MOVE_PREFIX.length()).split(",")
+			if p.size() == 2:
+				_tram_move = Vector2i(p[0].to_int(), p[1].to_int())
+	var first_wanted: bool = OS.get_cmdline_user_args().has(TRAM_FIRST_ARG)
+	var piece: Piece = PieceLibrary.load_from_file().make_piece(shape, rot)
+	if piece == null:
+		push_warning("DemoArgs: tram_live: unknown shape %s" % shape)
+		return
+	var skill: Dictionary = combat.get_skill_config().get_skill(TRAM_CARD)
+	var delivery: Dictionary = combat.delivery_for(TRAM_CARD)
+	var foe: Array[Vector2i] = state.enemy_footprint_cells()
+	var best: Array[Vector2i] = []
+	var best_score: int = -999
+	for x: int in range(-6, grid.total_cols + 6):
+		for y: int in range(-6, grid.rows + 6):
+			var cells: Array[Vector2i] = piece.cells_at(Vector2i(x, y))
+			var ok: bool = true
+			for c: Vector2i in cells:
+				ok = ok and grid.is_enemy_cell(c)
+			if not ok or not state.unit_in(CombatState.Side.ENEMY, cells):
+				continue
+			var ctx0: Dictionary = {"delivery": delivery, "caster_cell": state.player_cell}
+			var ev: Array[Dictionary] = CastResolver.surge_events(skill, cells, ctx0, combat.delivery_timing())
+			var step: int = 99
+			for e: Dictionary in ev:
+				if foe.has((e["cells"] as Array)[0]):
+					step = mini(step, int(e["step"]))
+			var score: int = -step if first_wanted else step
+			if score > best_score:
+				best_score = score
+				best = cells
+	if best.is_empty():
+		push_warning("DemoArgs: tram_live: %s (rot %d) has no placement over the boss" % [shape, rot])
+		return
+	if OS.get_cmdline_user_args().has(CAST_LOCK_ARG) and combat.get_status() != null:
+		for c: Vector2i in best:
+			if not foe.has(c) and c != SkillDelivery.first_link(delivery, best, state.player_cell):
+				combat.get_status().apply_drop(CombatState.Side.ENEMY, [c] as Array[Vector2i], CAST_LOCK_WARN_SEC, CAST_LOCK_WARN_SEC)
+				print("DemoArgs: tram_live locked %s" % str(c))
+				break
+	var placed: Array[Piece] = [piece]
+	var ctx: Dictionary = CastContext.build(TRAM_CARD, 1, placed, [best], delivery, false, CombatState.Side.PLAYER,
+		state.player_cell, {"cast_mode": "direct"})
+	combat.get_arbiter().impact_resolved.connect(_tram_on_impact)
+	if not combat.get_cut_actor().begin_swing(best, TRAM_CARD, true, 1, -1.0, {}, ctx):
+		push_warning("DemoArgs: tram_live: the swing did not start")
+		return
+	combat.freeze_time = false
+	print("DemoArgs: tram_live shape=%s rot=%d cells=%s tags=%s boss=%s duration=%.3f" % [shape, rot, str(best),
+		str((ctx["pieces"] as Array)[0]["tags"]), str(foe), combat.get_cut_actor().get_time_left()])
+
+
+func _tram_on_impact(side: int, ev: Dictionary, hit: bool) -> void:
+	var combat: CombatView = _combat()
+	print("TRAM #%d t=%.2f clock=%.3f cell=%s kind=%s step=%d mult=%.2f hit=%s dmg=%.1f pinned=%s" % [int(ev["index"]),
+		float(ev["t"]), combat.get_arbiter().clock(), str((ev["cells"] as Array)[0]), str(ev["kind"]), int(ev.get("step", 0)),
+		float(ev["mult"]), str(hit), float(ev.get("damage", 0.0)), str(ev.get("pinned", false))])
+	if side == CombatState.Side.PLAYER and str(ev["kind"]) == CastResolver.KIND_BURST and _tram_move != Vector2i.ZERO:
+		var st: CombatState = combat.get_state()
+		var moved: bool = st.set_enemy_cell(st.enemy_cell + _tram_move)
+		print("DemoArgs: tram_live boss moved by %s -> %s ok=%s" % [str(_tram_move), str(st.enemy_cell), str(moved)])
 
 
 # Cast rhythm spec 2026-11-05 "parry_live": ticks the pattern enemy (time frozen for the view) until an attack warns on

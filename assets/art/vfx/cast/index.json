@@ -326,5 +326,21 @@
    "burst",
    "burn"
   ]
+ },
+ "_doc_card_casts": "2026-11-08 (Trảm Địa art production, user-approved): card id -> overrides of the hero's cast entry for that card only: clip = the hero sheet clip played instead of cast_gesture (same 9 ms and coil / release frames), hand = the art-px launch point from the feet on that clip's release frame. Cards not listed keep the hero entry and cast_gesture. charge_hand = where the charge glint loops during the coil when the coil holds the hands away from the release point. impact / impact_mark replace the hero entry's landing burst and its stamp on the card's burst cell (Trảm Địa: the vfx_workbench steel eruption + its floor shockwave / cracks).",
+ "card_casts": {
+  "tram_dia": {
+   "clip": "cast_forward",
+   "hand": [
+    34,
+    -10
+   ],
+   "charge_hand": [
+    2,
+    -30
+   ],
+   "impact": "impact_eruption_tram_dia",
+   "impact_mark": "mark_eruption_tram_dia"
+  }
  }
 }

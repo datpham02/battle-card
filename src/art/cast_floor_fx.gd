@@ -313,6 +313,137 @@ static func _div(a: int, b: int) -> int:
 
 
 ## Pure: a [param size] px square centred on [param centre] (whole px).
+## Skill v2 (Trảm Địa, V13 crack): the steel crack the surge leaves from [param a] to [param b] (flat art px centres):
+## squares of [param size] every [param gap] px along the line, jittered 1 px across it per [param seed]; revealed from
+## a to b over [param reveal_sec], then all shrink away from a to b over the rest of [param sec]. [] outside [0, sec).
+static func crack_rects(a: Vector2i, b: Vector2i, age: float, reveal_sec: float, sec: float, size: int, gap: int, seed: int) -> Array[Rect2i]:
+	var out: Array[Rect2i] = []
+	if age < 0.0 or age >= sec or a == b or gap <= 0:
+		return out
+	var d: Vector2 = Vector2(b - a)
+	var n: int = maxi(int(d.length()) / gap, 1)
+	var across: Vector2 = Vector2(-d.y, d.x).normalized()
+	var shown: int = n if reveal_sec <= 0.0 else clampi(int(ceilf(age / reveal_sec * float(n))), 1, n)
+	var fade_k: float = clampf((age - reveal_sec) / maxf(sec - reveal_sec, 0.001), 0.0, 1.0)
+	for i: int in shown + 1:
+		var f: float = float(i) / float(n)
+		if f < fade_k:
+			continue
+		var j: int = ((seed + i * 7) % 3) - 1
+		var p: Vector2 = Vector2(a) + d * f + across * float(j)
+		var s: int = maxi(size - (1 if f < fade_k + 0.3 and fade_k > 0.0 else 0), 1)
+		out.append(square_rect(Vector2i(p.round()), s))
+	return out
+
+
+## Skill v2 (Trảm Địa): the ground shockwave of a burst: [param count] squares leaving [param centre] (flat art px) in
+## the 8 directions (count / 8 per ring), out to [param reach] px over [param sec], shrinking from [param size] to 1.
+## No outline frame (a white cell frame read as a selection box, 2026-11-02). [] outside [0, sec).
+static func shock_rects(centre: Vector2i, age: float, sec: float, reach: int, count: int, size: int) -> Array[Rect2i]:
+	var out: Array[Rect2i] = []
+	if sec <= 0.0 or age < 0.0 or age >= sec or count <= 0:
+		return out
+	var k: float = age / sec
+	var e: float = 1.0 - (1.0 - k) * (1.0 - k)
+	var s: int = maxi(int(roundf(lerpf(float(size), 1.0, k))), 1)
+	for i: int in count:
+		var ang: float = TAU * float(i) / float(count)
+		var dir := Vector2(cos(ang), sin(ang) * 0.6)
+		out.append(square_rect(Vector2i((Vector2(centre) + dir * float(reach) * e).round()), s))
+	return out
+
+
+## Skill v2 (Trảm Địa primary impact): the steel eruption out of the burst tile, in SCREEN art px (vertical = up on
+## screen, never mapped onto the floor). [param base] = the tile's drawn centre, [param cell_w] its drawn width. Beats:
+## 0-0.05 s a flat white collision flash across the tile; 0-0.14 s a column of squares shooting up to 1.4 cells and
+## thinning; 0.04 s on, [param shards] shards (sizes 4-8, deterministic per [param seed]) thrown up and out, falling
+## back under gravity and shrinking until [param sec]. Returns [{rect, light}] (light = highlight colour). [] outside.
+static func eruption_rects(base: Vector2i, cell_w: int, age: float, sec: float, seed: int, shards: int = 16) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if age < 0.0 or age >= sec or cell_w <= 0:
+		return out
+	var u: float = float(cell_w)
+	if age < 0.05:
+		var fw: int = int(u * lerpf(0.9, 0.5, age / 0.05))
+		out.append({"rect": Rect2i(base.x - fw / 2, base.y - 2, fw, 4), "light": true})
+	if age < 0.14:
+		var k: float = age / 0.14
+		var h: int = int(u * 1.4 * (1.0 - (1.0 - k) * (1.0 - k)))
+		var cw: int = maxi(int(u * lerpf(0.45, 0.12, k)), 2)
+		var step: int = maxi(cw, 3)
+		var y: int = 0
+		var i: int = 0
+		while y < h:
+			var w: int = maxi(cw - (i % 2) * 2, 2)
+			out.append({"rect": Rect2i(base.x - w / 2, base.y - y - step, w, step - 1), "light": y > h / 2})
+			y += step
+			i += 1
+	var t: float = age - 0.04
+	if t >= 0.0:
+		var life: float = maxf(sec - 0.04, 0.001)
+		for j: int in shards:
+			var r: int = absi(hash(seed * 131 + j * 17))
+			var vx: float = (float(r % 200) / 100.0 - 1.0) * u * 0.9
+			var vy: float = u * (1.6 + float((r / 200) % 100) / 100.0 * 1.4)
+			var g: float = u * 7.0
+			var x: float = float(base.x) + vx * t
+			var yy: float = float(base.y) - (vy * t - 0.5 * g * t * t)
+			if yy > float(base.y) + 2.0:
+				continue
+			var s0: int = 4 + (r / 7) % 5
+			var s: int = maxi(int(roundf(float(s0) * (1.0 - t / life))), 1)
+			out.append({"rect": square_rect(Vector2i(int(roundf(x)), int(roundf(yy))), s), "light": j % 3 == 0})
+	return out
+
+
+## Skill v2 (Trảm Địa propagation): the incoming steel front between two surge cells, on the FLAT floor: a short
+## stepped bar of [param count] squares at fraction [param f] of the way from [param a] to [param b] (centres, art px),
+## trailing back toward a; the first square is the lit leading edge. [] when f is outside [0, 1].
+static func front_rects(a: Vector2i, b: Vector2i, f: float, count: int, size: int) -> Array[Rect2i]:
+	var out: Array[Rect2i] = []
+	if f < 0.0 or f > 1.0 or a == b:
+		return out
+	var d: Vector2 = Vector2(b - a)
+	var dir: Vector2 = d.normalized()
+	var head: Vector2 = Vector2(a) + d * f
+	for i: int in count:
+		var p: Vector2 = head - dir * float(i * (size + 1))
+		if (p - Vector2(a)).dot(dir) < 0.0:
+			break
+		out.append(square_rect(Vector2i(p.round()), maxi(size - i, 2)))
+	return out
+
+
+## Skill v2 (Trảm Địa targeting preview): tile-exact marks on the FLAT floor for one planned surge cell of
+## [param cell_rect]: the landing cell gets four corner squares (size 3), a surge cell a small chevron of squares
+## pointing from [param from_centre] into the cell (its step direction), a cell cut off by a lock gets a small X.
+## [param kind] = burst / landing / surge / blocked. Returns rects (no colours; the caller uses steel / dim).
+static func preview_rects(cell_rect: Rect2i, kind: String, from_centre: Vector2i) -> Array[Rect2i]:
+	var out: Array[Rect2i] = []
+	var c: Vector2i = cell_rect.position + cell_rect.size / 2
+	var q: int = mini(cell_rect.size.x, cell_rect.size.y) / 4
+	match kind:
+		"burst", "landing":
+			var s: int = 3 if kind == "burst" else 2
+			for corner: Vector2i in [Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1)]:
+				out.append(square_rect(c + corner * q, s))
+			if kind == "burst":
+				out.append(square_rect(c, 3))
+		"blocked":
+			for i: int in range(-2, 3):
+				out.append(square_rect(c + Vector2i(i * 2, i * 2), 2))
+				out.append(square_rect(c + Vector2i(i * 2, -i * 2), 2))
+		_:
+			var dir: Vector2 = Vector2(c - from_centre).normalized() if c != from_centre else Vector2.RIGHT
+			var side := Vector2(-dir.y, dir.x)
+			var tip: Vector2 = Vector2(c) + dir * float(q) * 0.5
+			out.append(square_rect(Vector2i(tip.round()), 2))
+			for k: int in [1, 2]:
+				out.append(square_rect(Vector2i((tip - dir * float(k * 3) + side * float(k * 3)).round()), 2))
+				out.append(square_rect(Vector2i((tip - dir * float(k * 3) - side * float(k * 3)).round()), 2))
+	return out
+
+
 static func square_rect(centre: Vector2i, size: int) -> Rect2i:
 	@warning_ignore("integer_division")
 	return Rect2i(centre - Vector2i(size / 2, size / 2), Vector2i(size, size))

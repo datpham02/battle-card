@@ -18,7 +18,7 @@ const UNITS := {
 		# 2026-10-31: v3 tall anchor (PixelLab 2d093318...), PixMiniMax south-east clips cleaned to 96x70.
 		# 2026-11-02: guard stance (user: the knight holds the sword ready the whole battle): idle, hit and the four
 		# directional dashes come from the guard_* candidates, the match-start draw from draw_to_guard.
-		"frame": Vector2i(96, 70), "sheet": Vector2i(872, 922), "facing": "right",
+		"frame": Vector2i(96, 70), "sheet": Vector2i(872, 993), "facing": "right",
 		"candidate": "swordsman/v3-tall/clean-96x70/%s.png",
 		"clips": [
 			# 2026-11-05: idle = anim-idle-v2 (PixMiniMax breathing + cape follow-through, 8 frames @125 ms), cleaned copies in guard_idle_v2.
@@ -30,6 +30,8 @@ const UNITS := {
 			["step_up", ["guard_step_up/0", "guard_step_up/1", "guard_step_up/2", "guard_step_up/3", "guard_step_up/4", "guard_step_up/5", "guard_step_up/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
 			["step_down", ["guard_step_down/0", "guard_step_down/1", "guard_step_down/2", "guard_step_down/3", "guard_step_down/4", "guard_step_down/5", "guard_step_down/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
 			["cast_gesture", ["guard_cast/0", "guard_cast/1", "guard_cast/2", "guard_cast/3", "guard_cast/4", "guard_cast/5", "guard_cast/6", "guard_cast/7", "guard_cast/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
+			# 2026-11-08: Trảm Địa cast_forward (PixMiniMax 5e5e14ed, user-approved; mechanical clean, see clips.json note).
+			["cast_forward", ["cast_forward/0", "cast_forward/1", "cast_forward/2", "cast_forward/3", "cast_forward/4", "cast_forward/5", "cast_forward/6", "cast_forward/7", "cast_forward/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
 			["hit", ["guard_hit/0", "guard_hit/1", "guard_hit/2"], [40, 40, 40], "once"],
 			["victory", ["victory/0", "victory/1", "victory/2", "victory/3", "victory/4"], [100, 100, 100, 100, 100], "hold_last"],
 			["defeat", ["defeat/0", "defeat/1", "defeat/2", "defeat/3", "defeat/4", "defeat/5", "defeat/6", "defeat/7"], [100, 100, 100, 100, 100, 100, 100, 100], "hold_last"],

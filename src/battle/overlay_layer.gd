@@ -62,6 +62,7 @@ func _process(_delta: float) -> void:
 	var travel: Array[Dictionary] = travel_items()
 	if not travel.is_empty():
 		state.append({"travel": travel})
+
 	if state != _drawn:
 		_drawn = state
 		queue_redraw()
@@ -81,7 +82,7 @@ func projectile_state() -> Dictionary:
 		return {}
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
 	var delivery: Dictionary = combat.delivery_for(actor.get_skill_id())
-	var entry: Dictionary = CastVfx.entry_for(hero_id, str(delivery.get("impact", "")))
+	var entry: Dictionary = CastVfx.entry_for(hero_id, str(delivery.get("impact", "")), actor.get_skill_id())
 	if entry.is_empty():
 		return {}
 	var from: Vector2i = CastVfx.hand_point(entry, units.unit_feet_art(CombatState.Side.PLAYER))
@@ -95,7 +96,12 @@ func projectile_state() -> Dictionary:
 			return {}
 		var clip: String = str(charge.get("clip", CastVfx.DEFAULT_CLIP))
 		var cframe: int = 0 if reduce else VfxPack.frame_at(charge_pack.clip(clip), charged, charge_pack.frame_ms(), charge_pack.is_loop())
-		return {"projectile": str(charge["id"]), "pos": from, "frame": cframe, "clip": clip, "hero": hero_id, "charge": true}
+		# 2026-11-08: a card whose coil pose holds the hands elsewhere than its release point (Trảm Địa's cast_forward
+		# raises the sword on the coil) charges at its `charge_hand` instead.
+		var charge_at: Vector2i = from
+		if entry.has("charge_hand"):
+			charge_at = CastVfx.hand_point({"hand": entry["charge_hand"]}, units.unit_feet_art(CombatState.Side.PLAYER))
+		return {"projectile": str(charge["id"]), "pos": charge_at, "frame": cframe, "clip": clip, "hero": hero_id, "charge": true}
 	var t: float = CastVfx.flight_t(entry, actor.get_time_left())
 	if t < 0.0:
 		return {}
@@ -110,7 +116,9 @@ func projectile_state() -> Dictionary:
 	# or a chain's first link), where the spread starts.
 	var to: Vector2i = CastVfx.flight_to(entry, from, targets)
 	if str(entry.get("path", "")) == CastVfx.PATH_FIRST_CELL and not actor.get_cells().is_empty():
-		var first: Vector2i = SkillDelivery.first_link(delivery, actor.get_cells(), combat.get_state().player_cell)
+		# Skill v2: the landing cell is the surge's (locked cells skipped), the cell CastResolver bursts on first.
+		var open: Array = combat.unlocked_for_vfx(actor.get_cells())
+		var first: Vector2i = SkillDelivery.first_link(delivery, open if not open.is_empty() else actor.get_cells(), combat.get_state().player_cell)
 		to = CastVfx.aim_point(entry, [units.feet_art_of_cell(first)] as Array[Vector2i])
 	var pos: Vector2i = CastVfx.flight_pos(from, to, t)
 	# Task 5 item 3: the crescent wave is not square-based (pack 01 §1A): the pack's art stays on disk, unused.
@@ -137,7 +145,7 @@ func release_state() -> Dictionary:
 	if units == null:
 		return {}
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
-	var entry: Dictionary = CastVfx.entry_for(hero_id, str(combat.delivery_for(actor.get_skill_id()).get("impact", "")))
+	var entry: Dictionary = CastVfx.entry_for(hero_id, str(combat.delivery_for(actor.get_skill_id()).get("impact", "")), actor.get_skill_id())
 	var elapsed: float = CastVfx.release_elapsed(entry, actor.get_time_left())
 	if elapsed < 0.0:
 		return {}
@@ -190,6 +198,7 @@ func _draw() -> void:
 	_draw_travel(combat, travel_items())
 
 
+
 ## Task 5: the code-drawn travel, flash and impact squares to draw now: one {"rect": Rect2i, "col": Color, "fill": bool,
 ## "width": int, "edge": bool (1 px Ink edge under it)} each; [] when unbound or nothing runs. Both sides (item 4: the
 ## boss's casts in the enemy block colours `_enemy`, only on the cells it hits, locked cells skipped).
@@ -205,7 +214,114 @@ func travel_items() -> Array[Dictionary]:
 		_streak(out, shot["from"], shot["to"], float(shot["t"]), CastVfx.impact_colours(str(shot.get("impact", "")), hero_id))
 	_side_items(out, combat, CombatState.Side.PLAYER, hero_id)
 	_side_items(out, combat, CombatState.Side.ENEMY, ENEMY_BLOCK)
+	_surge_items(out, combat, hero_id)
+	_front_items(out, combat, hero_id)
+	_preview_items(out, combat, hero_id)
 	return out
+
+
+## Skill v2 (Trảm Địa): incoming front squares, eruption timing and the preview colours.
+const SURGE_FRONT_COUNT: int = 4
+const SURGE_FRONT_SIZE: int = 5
+const SURGE_ERUPT_SEC: float = 0.5
+const SURGE_PREVIEW_ALPHA: float = 0.85
+const SURGE_BLOCKED_ALPHA: float = 0.6
+
+
+# Skill v2 (Trảm Địa): the steel front travelling into each next surge cell (on the arbiter clock).
+func _front_items(out: Array[Dictionary], combat: CombatView, hero_id: String) -> void:
+	var cols: Array[Color] = CastVfx.block_colours(hero_id)
+	for fr: Dictionary in combat.get_surge_fronts():
+		var rects: Array[Rect2i] = CastFloorFx.front_rects(_centre(fr["from"]), _centre(fr["to"]), float(fr["f"]),
+			SURGE_FRONT_COUNT, SURGE_FRONT_SIZE)
+		for i: int in rects.size():
+			out.append(_sq(rects[i], cols[1] if i == 0 else cols[0]))
+
+
+# Skill v2 (Trảm Địa): the subtle tile-exact preview of the surge while the card menu offers it (landing corners,
+# step chevrons pointing the propagation direction, a dim X on cells a lock cuts off). Steel, never red.
+func _preview_items(out: Array[Dictionary], combat: CombatView, hero_id: String) -> void:
+	var pv: Dictionary = combat.get_surge_preview()
+	if pv.is_empty():
+		return
+	var cols: Array[Color] = CastVfx.block_colours(hero_id)
+	var lit := Color(cols[1], SURGE_PREVIEW_ALPHA)
+	var dim := Color(cols[0], SURGE_PREVIEW_ALPHA)
+	for e: Dictionary in pv["events"] as Array:
+		var cell: Vector2i = (e["cells"] as Array)[0]
+		var from: Vector2i = e.get("from", CastResolver.NO_CELL)
+		var kind: String = str(e["kind"])
+		var src: Vector2i = _centre(from) if from != CastResolver.NO_CELL else _centre(cell)
+		for r: Rect2i in CastFloorFx.preview_rects(_floor.cell_art_rect(cell), kind, src):
+			out.append({"rect": r, "col": lit if kind != CastResolver.KIND_SURGE else dim, "fill": true, "width": 0, "edge": true})
+	for b: Variant in pv["blocked"] as Array:
+		for r: Rect2i in CastFloorFx.preview_rects(_floor.cell_art_rect(b as Vector2i), "blocked", Vector2i.ZERO):
+			out.append({"rect": r, "col": Color(cols[0], SURGE_BLOCKED_ALPHA), "fill": true, "width": 0, "edge": false})
+
+
+## Skill v2 (Trảm Địa primary impact): the screen-space eruption items [{rect, col}] (drawn unmapped, vertical on
+## screen, anchored on the burst tile's drawn centre); [] when none runs.
+func eruption_items() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or _floor == null:
+		return out
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var cols: Array[Color] = CastVfx.block_colours(hero_id)
+	var geo: BoardGeometry = _bg()
+	for r: Dictionary in combat.get_surge_fx():
+		if str(r["kind"]) != CastResolver.KIND_BURST:
+			continue
+		var cell: Vector2i = r["cell"]
+		var flat: Rect2i = _floor.cell_art_rect(cell)
+		var base: Vector2i = _centre(cell)
+		var w: int = flat.size.x
+		if geo != null and geo.is_warped():
+			base = geo.warp_art_px(base)
+		for it: Dictionary in CastFloorFx.eruption_rects(base, w, float(r["age"]), SURGE_ERUPT_SEC, hash(cell)):
+			out.append({"rect": it["rect"], "col": cols[1] if bool(it["light"]) else cols[0]})
+	return out
+
+
+## Skill v2 (Trảm Địa): crack line, reveal time and shockwave numbers (art px / seconds).
+const SURGE_CRACK_REVEAL_SEC: float = 0.08
+const SURGE_CRACK_SIZE: int = 3
+const SURGE_CRACK_GAP: int = 3
+const SURGE_SHOCK_SEC: float = 0.3
+const SURGE_SHOCK_COUNT: int = 16
+const SURGE_SHOCK_SIZE: int = 6
+## The burst's second, inner shock ring starts this much later (the heavier first impact).
+const SURGE_SHOCK_ECHO_SEC: float = 0.08
+
+
+# Skill v2 (Trảm Địa, 02-vfx-concepts.md §8.1): per fired surge event, the steel crack from the cell the surge came from
+# and, on the burst / a landing, the ground shockwave squares; in the caster's block colours (steel), never red.
+func _surge_items(out: Array[Dictionary], combat: CombatView, hero_id: String) -> void:
+	var fx: Array[Dictionary] = combat.get_surge_fx()
+	if fx.is_empty():
+		return
+	var cols: Array[Color] = CastVfx.block_colours(hero_id)
+	for r: Dictionary in fx:
+		var cell: Vector2i = r["cell"]
+		var from: Vector2i = r["from"]
+		var age: float = float(r["age"])
+		if from != CastResolver.NO_CELL:
+			var rects: Array[Rect2i] = CastFloorFx.crack_rects(_centre(from), _centre(cell), age, SURGE_CRACK_REVEAL_SEC,
+				CombatView.SURGE_FX_SEC, SURGE_CRACK_SIZE, SURGE_CRACK_GAP, hash(cell))
+			for i: int in rects.size():
+				out.append(_sq(rects[i], cols[1] if i % 2 == 0 else cols[0]))
+		var kind: String = str(r["kind"])
+		# 2026-11-08: the burst's ring now comes from mark_eruption_tram_dia (one shockwave, not two); a landing keeps it.
+		if kind == CastResolver.KIND_LANDING:
+			var w: int = _floor.cell_art_rect(cell).size.x
+			var big: bool = kind == CastResolver.KIND_BURST
+			var rects2: Array[Rect2i] = CastFloorFx.shock_rects(_centre(cell), age, SURGE_SHOCK_SEC,
+				int(w * (1.0 if big else 0.5)), SURGE_SHOCK_COUNT if big else SURGE_SHOCK_COUNT / 2, SURGE_SHOCK_SIZE if big else 3)
+			if big:
+				rects2.append_array(CastFloorFx.shock_rects(_centre(cell), age - SURGE_SHOCK_ECHO_SEC, SURGE_SHOCK_SEC,
+					int(w * 0.6), SURGE_SHOCK_COUNT / 2, SURGE_SHOCK_SIZE - 2))
+			for i: int in rects2.size():
+				out.append(_sq(rects2[i], cols[1] if i % 3 == 0 else cols[0]))
 
 
 ## The block colours key of the boss's casts (index.json block_colours `_enemy`, #CFC6B4 flat).

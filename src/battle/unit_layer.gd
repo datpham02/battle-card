@@ -436,7 +436,7 @@ func clip_context(side: int) -> Dictionary:
 	# 2026-10-31: the cast_gesture shows for the player's whole swing (held on its first frame until the projectile is
 	# due, CastVfx), not only for the clip's length.
 	var actor: CutActor = _combat.get_cut_actor() if player else null
-	var casting: bool = _cast_pending or (actor != null and actor.is_swinging()) or (anim != null and anim.current_clip() == CLIP_CAST and not anim.is_finished())
+	var casting: bool = _cast_pending or (actor != null and actor.is_swinging()) or (anim != null and is_cast_clip(anim.current_clip()) and not anim.is_finished())
 	var boss_actor: CutActor = _combat.get_boss().get_actor() if _combat.get_boss() != null else null
 	# 2026-11-02: a pattern-brain enemy has no swinging CutActor; its own stages drive the windup / phase clips.
 	var pattern: PatternController = _combat.get_pattern_controller() if not player else null
@@ -471,7 +471,7 @@ func cast_hold(side: int) -> bool:
 	var actor: CutActor = _combat.get_cut_actor()
 	if actor == null or not actor.is_swinging():
 		return false
-	var entry: Dictionary = CastVfx.entry_for(String(_unit_id.get(side, "")), _cast_impact())
+	var entry: Dictionary = CastVfx.entry_for(String(_unit_id.get(side, "")), _cast_impact(), _cast_skill())
 	if entry.is_empty():
 		return false
 	return actor.get_time_left() > CastVfx.gesture_due_left(entry)
@@ -479,6 +479,27 @@ func cast_hold(side: int) -> bool:
 
 # 2026-11-07: the delivery impact of the player's swing now ("" without one), so the cast timings follow the pack the
 # card is drawn with (CastVfx.entry_for).
+# 2026-11-08: the card the player's swing casts ("" without one).
+func _cast_skill() -> String:
+	if _combat == null or _combat.get_cut_actor() == null:
+		return ""
+	return _combat.get_cut_actor().get_skill_id()
+
+
+## 2026-11-08: the sheet clip of the player's current cast: the card's `card_casts` clip when the hero sheet has it
+## (Trảm Địa: cast_forward), else cast_gesture.
+func cast_clip_for(side: int) -> String:
+	var clip: String = CastVfx.cast_clip(_cast_skill(), CLIP_CAST)
+	if clip != CLIP_CAST and (get_sheet(side) == null or not get_sheet(side).has_clip(clip)):
+		return CLIP_CAST
+	return clip
+
+
+## True for the hero's cast clips (cast_gesture and the per-card ones such as cast_forward).
+static func is_cast_clip(clip: String) -> bool:
+	return clip == CLIP_CAST or clip == "cast_forward"
+
+
 func _cast_impact() -> String:
 	if _combat == null or _combat.get_cut_actor() == null:
 		return ""
@@ -489,7 +510,7 @@ func _cast_impact() -> String:
 # gesture_hold_frame) while the telegraph runs; when the launch is due it jumps to the slash frame after the coil.
 # An entry without a hold frame keeps the old behaviour (held on frame 0 until due).
 func _drive_cast_hold(side: int, anim: UnitAnimator) -> void:
-	var hold: int = CastVfx.gesture_hold_frame(CastVfx.entry_for(String(_unit_id.get(side, "")), _cast_impact()))
+	var hold: int = CastVfx.gesture_hold_frame(CastVfx.entry_for(String(_unit_id.get(side, "")), _cast_impact(), _cast_skill()))
 	var step: Dictionary = cast_hold_step(anim.frame_index(), anim.frame_count(), hold, cast_hold(side))
 	if int(step["seek"]) >= 0:
 		anim.seek(int(step["seek"]))
@@ -756,11 +777,12 @@ func _update_clip(side: int, step: float) -> void:
 			else:
 				anim.play(CLIP_HIT)
 		CLIP_CAST:
+			var cast_clip: String = cast_clip_for(side)
 			if _cast_pending:
 				_cast_pending = false
-				anim.play(CLIP_CAST, true)
+				anim.play(cast_clip, true)
 			else:
-				anim.play(CLIP_CAST)
+				anim.play(cast_clip)
 			_drive_cast_hold(side, anim)
 		CLIP_STEP:
 			var step_clip: String = String(_step_clip.get(side, CLIP_STEP))

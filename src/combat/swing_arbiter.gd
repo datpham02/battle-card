@@ -33,6 +33,9 @@ signal swing_interrupted(victim_side: int, cells: Array[Vector2i], skill_id: Str
 ## Skill v2 B1.5: one impact event of a SCHEDULED cast fired: [param event] {cast_id, wave, index, t, at, cells, kind,
 ## mult}, [param hit] whether it damaged the target. Instant (legacy) casts do not emit it.
 signal impact_resolved(side: int, event: Dictionary, hit: bool)
+## Skill v2 (Trảm Địa): a scheduled cast was put on the clock at the swing end: [param cast] {cast_id, side, skill_id,
+## cells, events (the plan's events with `at`), context}. Presentation reads it (the travel landing, the forecast).
+signal cast_scheduled(side: int, cast: Dictionary)
 
 ## Two swings resolving this close in time count as simultaneous.
 const TIE_EPSILON_SEC: float = 0.0005
@@ -150,6 +153,26 @@ func scheduled_count() -> int:
 	return _events.size()
 
 
+## Skill v2 (Trảm Địa, boss awareness): the cells of [param side]'s scheduled impact events that can still hit (their
+## cast below max_hits, their wave not yet landed) and the seconds to the soonest of them on the clock:
+## {cells: Array[Vector2i], time_left: float}; {} when none. The same authoritative schedule that resolves the damage.
+func pending_cells(side: int) -> Dictionary:
+	var cells: Array[Vector2i] = []
+	var left: float = INF
+	for e: Dictionary in _events:
+		var cast: Dictionary = _casts.get(int(e["cast_id"]), {}) as Dictionary
+		if cast.is_empty() or int(cast["side"]) != side or int(cast["hits"]) >= int(cast["max_hits"]) \
+				or (cast["wave_hit"] as Dictionary).has(int(e["wave"])):
+			continue
+		for c: Vector2i in e["cells"] as Array:
+			if not cells.has(c):
+				cells.append(c)
+		left = minf(left, float(e["at"]) - _clock)
+	if cells.is_empty():
+		return {}
+	return {"cells": cells, "time_left": maxf(left, 0.0)}
+
+
 ## Skill v2 B1.5: the number of scheduled casts not finished yet.
 func active_cast_count() -> int:
 	return _casts.size()
@@ -194,7 +217,13 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 	# Skill v2 B1 (docs/skill-v2/02-mechanics-catalog.md M02): the swing becomes an impact plan (CastResolver). An
 	# `instant` card (all cards today) -> one wave of all its cells at t = 0 -> one CutEffects.apply exactly as before
 	# (golden test). A scheduled card puts its events on the clock instead (B1.5).
-	var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(skill_id), cells, cast_context, delivery_timing)
+	var locked: Array = []
+	if _status != null:
+		var open: Array[Vector2i] = _status.unlocked_cells(cells)
+		for c: Vector2i in cells:
+			if not open.has(c):
+				locked.append(c)
+	var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(skill_id), cells, cast_context, delivery_timing, locked)
 	if not bool(plan["legacy"]):
 		_schedule_cast(side, cells, skill_id, trade, level, featured_bonus, cast_context, plan)
 		return
@@ -295,6 +324,14 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 		if absf(float(a["at"]) - float(b["at"])) > 0.0000001:
 			return float(a["at"]) < float(b["at"])
 		return int(a["seq"]) < int(b["seq"]))
+	var listed: Array[Dictionary] = []
+	for e: Dictionary in _events:
+		if int(e["cast_id"]) == id:
+			var pub: Dictionary = e.duplicate()
+			pub.erase("seq")
+			listed.append(pub)
+	cast_scheduled.emit(side, {"cast_id": id, "side": side, "skill_id": skill_id, "cells": cells.duplicate(),
+		"events": listed, "context": cast_context})
 	if (plan["events"] as Array).is_empty():
 		_finish_cast(id)
 
@@ -337,6 +374,14 @@ func _fire_event(ev: Dictionary) -> void:
 				"cast_context": cast["context"], "cast_cell_count": int(cast["cast_cells"]),
 				"impact_mult": float(ev["mult"]), "apply_heal": false})
 		hit = bool(result["hit"])
+		# Trảm Địa: the burst's Pin lands with a damaging hit (not on a parry).
+		if hit and float(ev.get("pin_sec", 0.0)) > 0.0 and _status != null and not bool(result.get("parried", false)):
+			_status.pin(_opposite(side), float(ev["pin_sec"]))
+			result["pinned"] = true
+		ev["damage"] = float(result.get("damage", 0.0))
+		ev["target_cell"] = result.get("cell", Vector2i(-1, -1))
+		ev["crit"] = bool(result.get("crit", false))
+		ev["pinned"] = bool(result.get("pinned", false))
 		if hit:
 			cast["hits"] = int(cast["hits"]) + 1
 			(cast["wave_hit"] as Dictionary)[wave] = true
@@ -357,6 +402,8 @@ func _fire_event(ev: Dictionary) -> void:
 					swing_interrupted.emit(victim_side, victim_cells, victim_skill)
 	var public: Dictionary = ev.duplicate()
 	public.erase("seq")
+	public["context"] = cast["context"]
+	public["skill_id"] = cast["skill_id"]
 	impact_resolved.emit(side, public, hit)
 	if not _casts.has(id):
 		return

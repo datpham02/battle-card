@@ -1,0 +1,75 @@
+{
+ "app": "PixelLab vfx_workbench (free, user-approved 2026-11-08)",
+ "name": "Tessera fx - Trảm Địa eruption floor mark (ground shockwave, short cracks, settling shards)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 12,
+ "loop": false,
+ "canvas": {
+  "w": 112,
+  "h": 112
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 56,
+  "y": 84
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "back",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 12,
+   "frame": {
+    "w": 112,
+    "h": 112
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 12,
+     "columns": 4,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -56,
+    "y": -84
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "mark_eruption_tram_dia",
+  "layer": "floor",
+  "index_entry": {
+   "dir": "mark_eruption_tram_dia",
+   "layer": "floor",
+   "play": "once",
+   "clip": "whole",
+   "frames": 12,
+   "frame_ms": 50,
+   "anchor": "ground_center",
+   "cell": [
+    64,
+    46
+   ]
+  },
+  "source": {
+   "tool": "mcp__pixellab__vfx_workbench",
+   "effect_id": "851f40e8-0ea8-4fa5-8a30-1c329f4c50bc",
+   "image_id": "7c436b1c-277e-4532-a0a9-b909aa607889",
+   "candidate": "design/assets/candidates/fx/tram-dia-eruption/mark-eruption-tram-dia.png"
+  },
+  "palette": [
+   "#1B1722",
+   "#5F6F82",
+   "#8FA3B8",
+   "#C8D2DE",
+   "#EEF4FA",
+   "#FFFFFF"
+  ]
+ }
+}

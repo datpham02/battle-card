@@ -28,6 +28,9 @@ const COMBO_SKILL: String = "kiem_khi"
 ## DEV-ONLY (capture demos): when true the next small cut is a feint regardless of the
 ## learning roll; cleared once used. Never set by gameplay code.
 var force_next_feint: bool = false
+## Skill v2 (Trảm Địa): Callable() -> Dictionary, the player's still-pending scheduled impact cells
+## (SwingArbiter.pending_cells); invalid = none. Passed to the brain as ctx.pending_threat.
+var pending_threat_fn: Callable = Callable()
 
 var _brain_config: BossBrainConfig
 var _status: StatusEffects = null
@@ -130,6 +133,8 @@ func tick(delta: float, player_actor: CutActor) -> void:
 	}
 	if _player_step_cooldown > 0.0:
 		ctx["player_step_cooldown"] = _player_step_cooldown
+	if pending_threat_fn.is_valid():
+		ctx["pending_threat"] = pending_threat_fn.call()
 	var action: Dictionary = _brain.decide(ctx)
 	match str(action["type"]):
 		"move":

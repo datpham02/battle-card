@@ -98,6 +98,11 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"parry_sec": _num(float(skill.get("parry_sec", 0.0)), loc),
 		"reflect_mult": _num(float(skill.get("reflect_mult", 0.0)), loc),
 		"parry_pin_sec": _num(float(skill.get("parry_pin_sec", 0.0)), loc),
+		# Skill v2 (Trảm Địa): the burst multiplier and Pin, and the surge clause in percent per step / cap.
+		"burst_first": _num(float(skill.get("burst_first", 1.0)), loc),
+		"burst_pin_sec": _num(float(skill.get("burst_pin_sec", 0.0)), loc),
+		"surge_pct": _num(float(roundi(float((skill.get("shape_clause", {}) as Dictionary).get("surge_per_step", 0.0)) * 100.0)), loc),
+		"surge_cap_pct": _num(float(roundi(float((skill.get("shape_clause", {}) as Dictionary).get("surge_cap", 0.0)) * 100.0)), loc),
 	}
 	for zone_key: String in SkillConfig.ZONE_KEYS:
 		out[zone_key] = _num(float(skill.get(zone_key, zones.get(zone_key, 0.0))), loc)

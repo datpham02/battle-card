@@ -113,3 +113,12 @@ B1 adds **no new skill** and must leave every existing card behaving exactly as 
    of the pre-B1 baseline. Only then are new rules switched on (B2+).
 
 Fallback tests (decisions §13) and the no-option 0.5 s auto-cast land in B1 as well, since they touch `CutFlow` only.
+
+## 8. Progress log
+
+| Date | Step | State | Where |
+|---|---|---|---|
+| 2026-11-08 | B1 cast context, resolver wave, Q10 fallback | committed + pushed `986874b` | `03-b1.5-validation-report.md` |
+| 2026-11-08 | B1.5 ShapeTags `compact`, frozen context, scheduled waves | committed + pushed `986874b` | `03-b1.5-validation-report.md` |
+| 2026-11-08 | **Trảm Địa** (first advanced skill): gameplay, `cast_forward`, eruption VFX | **approved**; Android QA pending | `skill-checklist.md`, reports 04–06 |
+| — | Ngàn Kiếm | not started (waits for the user) | — |

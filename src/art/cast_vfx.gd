@@ -34,7 +34,9 @@ static var _packs: Dictionary = {}
 ## The pack entry for the hero [param unit_id] (the index's `default` for an unmapped id); {} when none.
 ## 2026-11-07: with [param impact_id] (the card's delivery impact), a hero whose `unit_impacts` list leaves that impact
 ## out casts it with the default pack (the Mage's fireball is for strike and fire cards, not ice or slash).
-static func entry_for(unit_id: String, impact_id: String = "") -> Dictionary:
+## 2026-11-08: with [param skill_id], that card's `card_casts` overrides (clip, hand) are merged in (Trảm Địa's
+## cast_forward and its low launch point); other cards are unchanged.
+static func entry_for(unit_id: String, impact_id: String = "", skill_id: String = "") -> Dictionary:
 	_ensure()
 	var units: Dictionary = _index.get("units", {}) if _index.get("units", {}) is Dictionary else {}
 	var pack_id: String = str(units.get(unit_id, _index.get("default", "")))
@@ -49,7 +51,22 @@ static func entry_for(unit_id: String, impact_id: String = "") -> Dictionary:
 		return {}
 	var out: Dictionary = (e as Dictionary).duplicate()
 	out["id"] = pack_id
+	var cards: Variant = _index.get("card_casts", {})
+	if not skill_id.is_empty() and cards is Dictionary and (cards as Dictionary).get(skill_id) is Dictionary:
+		var over: Dictionary = (cards as Dictionary)[skill_id]
+		for k: Variant in over.keys():
+			out[k] = over[k]
 	return out
+
+
+## 2026-11-08: the hero sheet clip a cast of [param skill_id] plays ([param fallback] = cast_gesture when the card has
+## no `card_casts` clip).
+static func cast_clip(skill_id: String, fallback: String) -> String:
+	_ensure()
+	var cards: Variant = _index.get("card_casts", {})
+	if cards is Dictionary and (cards as Dictionary).get(skill_id) is Dictionary:
+		return str(((cards as Dictionary)[skill_id] as Dictionary).get("clip", fallback))
+	return fallback
 
 
 ## The loaded VfxPack of [param entry] (cached); null when the entry or its files are missing.

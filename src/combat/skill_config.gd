@@ -198,9 +198,10 @@ func boss_card_order() -> Array[String]:
 	return out
 
 
-## True when the block-brain boss may hold card [param id]: a known card that is not a zone card and casts `direct`.
+## True when the block-brain boss may hold card [param id]: a known card that is not a zone card, casts `direct` and is
+## not a hero's own card (Skill v2: tram_dia is the Knight's; do_kiem was already out as a parry card).
 func is_boss_playable(id: String) -> bool:
-	return cards.has(id) and not is_zone_card(id) and cast_mode(id) == CAST_MODE_DIRECT
+	return cards.has(id) and not is_zone_card(id) and cast_mode(id) == CAST_MODE_DIRECT and hero_of(id).is_empty()
 
 
 ## Cast rhythm spec 2026-11-05: the cast_mode of [param id] ("direct" for an unknown card).
@@ -368,6 +369,8 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"implemented": bool(raw.get("implemented", false)),
 		"player_pool": bool(raw.get("player_pool", true)),
 		"hero": str(raw.get("hero", "")),
+		# Skill v2 Q3: a hero card offered in its own hero's rewards (RewardRoller hero_id); false = never drawn.
+		"hero_reward": bool(raw.get("hero_reward", false)),
 		# ADR-0001 D7 / A1: the card's delivery (origin, travel, impact, cell mask = the block shape); presentation
 		# only - CutEffects never reads it (SkillDelivery).
 		"delivery": SkillDelivery.parse(raw.get("delivery"), "card %s" % id),
@@ -384,7 +387,9 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"hit_interval_sec": resolve_check["hit_interval_sec"],
 		"wave_mults": resolve_check["wave_mults"],
 		"resolve_errors": resolve_check["errors"],
-		"shape_clause": (raw.get("shape_clause", {}) as Dictionary).duplicate(true) if raw.get("shape_clause", {}) is Dictionary else {},
+		"shape_clause": resolve_check["shape_clause"],
+		"burst_first": resolve_check["burst_first"],
+		"burst_pin_sec": resolve_check["burst_pin_sec"],
 		"tags": (raw.get("tags", []) as Array).duplicate() if raw.get("tags", []) is Array else [],
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:

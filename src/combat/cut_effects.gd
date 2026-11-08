@@ -221,14 +221,16 @@ static func apply(
 		damage *= crit_mult
 		result["crit"] = true
 		result["crit_mult"] = crit_mult
+	# Skill v2 (02-design-decisions.md §10): the impact event's shape-clause group S (burst-first, surge, wave_mults),
+	# applied right after crit; 1.0 for every legacy call.
+	var impact_mult: float = float(options.get("impact_mult", 1.0))
+	if impact_mult != 1.0:
+		damage *= impact_mult
+		result["impact_mult"] = impact_mult
 	if not featured.is_empty():
 		var featured_mult: float = float(featured.get("damage_mult", 1.0))
 		damage *= featured_mult
 		result["featured_mult"] = featured_mult
-	# Skill v2 B1.5: the impact event's multiplier (CastResolver wave_mults); 1.0 for every legacy call.
-	var impact_mult: float = float(options.get("impact_mult", 1.0))
-	if impact_mult != 1.0:
-		damage *= impact_mult
 	var relic_modifier: Variant = options.get("relic_modifier")
 	if typeof(relic_modifier) == TYPE_CALLABLE and (relic_modifier as Callable).is_valid():
 		damage = float((relic_modifier as Callable).call(count, damage))

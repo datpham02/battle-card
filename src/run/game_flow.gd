@@ -2506,8 +2506,9 @@ func _offer_reward(kind: String) -> void:
 		_continue_after_reward(false)
 		return
 	cfg["offer_count"] = offers
+	# Skill v2 Q3: the run hero's own `hero_reward` cards (Trảm Địa for the Knight) may be offered in its rewards.
 	var offer: Array[String] = RewardRoller.roll(get_cards(), cfg, _reward_seed(), _run.locked_ids("card"), _run.deck_levels(),
-		_run.luck(cfg), str(info.get("min_rarity", "common")))
+		_run.luck(cfg), str(info.get("min_rarity", "common")), get_character_id())
 	for id: String in offer:
 		_progress.mark_card_seen(id)
 	_run.set_pending_reward(offer)

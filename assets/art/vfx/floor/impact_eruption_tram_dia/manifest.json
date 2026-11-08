@@ -1,0 +1,75 @@
+{
+ "app": "PixelLab vfx_workbench (free, user-approved 2026-11-08)",
+ "name": "Tessera fx - Trảm Địa primary eruption (steel sword-energy blades tearing up and forward, white core, shards)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 112,
+  "h": 112
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 56,
+  "y": 84
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 112,
+    "h": 112
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 3,
+     "rows": 3
+    }
+   ],
+   "offset": {
+    "x": -56,
+    "y": -84
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "impact_eruption_tram_dia",
+  "layer": "overlay",
+  "index_entry": {
+   "dir": "impact_eruption_tram_dia",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 50,
+   "anchor": "ground_center",
+   "cell": [
+    64,
+    46
+   ]
+  },
+  "source": {
+   "tool": "mcp__pixellab__vfx_workbench",
+   "effect_id": "d31090ea-3c86-40bb-96aa-12cce551a388",
+   "image_id": "8cd20292-32e1-4fa9-89c0-2591f8c2fb9c",
+   "candidate": "design/assets/candidates/fx/tram-dia-eruption/impact-eruption-tram-dia.png"
+  },
+  "palette": [
+   "#1B1722",
+   "#5F6F82",
+   "#8FA3B8",
+   "#C8D2DE",
+   "#EEF4FA",
+   "#FFFFFF"
+  ]
+ }
+}

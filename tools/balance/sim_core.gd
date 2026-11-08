@@ -890,6 +890,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	boss.get_actor().swing_started.connect(_on_boss_swing_started)
 	boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
 	arbiter = SwingArbiter.new(state, grid, actor, boss.get_actor(), cut_config, cards, status)
+	# Skill v2: the boss reads pending surge cells as in CombatView.
+	boss.pending_threat_fn = arbiter.pending_cells.bind(CombatState.Side.PLAYER)
 	parry_guard = ParryGuard.new()
 	arbiter.player_guard = parry_guard
 	if pattern != null:

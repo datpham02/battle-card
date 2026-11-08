@@ -31,5 +31,22 @@ func _init() -> void:
 	var chars: CharacterConfig = CharacterConfig.load_from_file()
 	_check("test_kiem_si_starter_keeps_its_hero_card", chars.deck_of("kiem_si").has("do_kiem"), str(chars.deck_of("kiem_si")))
 
+	# Skill v2 Q3 (approved): tram_dia (Knight, hero_reward, rare) joins the KNIGHT's rewards only; do_kiem never does.
+	var by_hero: Dictionary = {}
+	var do_kiem_seen: int = 0
+	for hero: String in ["kiem_si", "phap_su", "giao_si", "sat_thu", "tho_san", ""]:
+		var n: int = 0
+		for sd: int in 1500:
+			var offer: Array[String] = RewardRoller.roll(cards, cfg, sd, none, {}, float(sd % 70), ["common", "rare", "epic"][sd % 3], hero)
+			n += offer.count("tram_dia")
+			do_kiem_seen += offer.count("do_kiem")
+		by_hero[hero] = n
+	_check("test_tram_dia_offered_to_the_knight", int(by_hero["kiem_si"]) > 0, str(by_hero))
+	_check("test_tram_dia_never_offered_to_other_heroes_or_no_hero", int(by_hero["phap_su"]) == 0 and int(by_hero["giao_si"]) == 0
+		and int(by_hero["sat_thu"]) == 0 and int(by_hero["tho_san"]) == 0 and int(by_hero[""]) == 0, str(by_hero))
+	_check("test_do_kiem_still_never_offered", do_kiem_seen == 0, str(do_kiem_seen))
+	_check("test_tram_dia_rare_and_not_in_a_starter_deck", cards.get_rarity("tram_dia") == "rare"
+		and not chars.deck_of("kiem_si").has("tram_dia"), str(chars.deck_of("kiem_si")))
+
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)

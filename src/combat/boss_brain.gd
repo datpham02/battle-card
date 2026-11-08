@@ -85,6 +85,9 @@ var _reaction_sec: float = 0.0
 var _set_name: String = ""
 var _think_clock: float = 0.0
 var _player_seen_sec: float = 0.0
+## Skill v2 (Trảm Địa): the player's swing cells the boss saw (after its reaction time) during the current or last
+## swing; once the swing resolved, its still-pending surge cells count as incoming only if they are among these.
+var _seen_cells: Array[Vector2i] = []
 var _combo_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _debug: Dictionary = {}
 ## "shape|rotated cells" -> valid anchors on the player's half (the grid never changes).
@@ -255,6 +258,20 @@ func decide(ctx: Dictionary) -> Dictionary:
 	_think_clock = 0.0
 
 	var incoming: Array[Vector2i] = _visible_incoming(player_actor)
+	# Skill v2 (Trảm Địa): after the swing resolves, the surge still running on the clock is the same telegraph the boss
+	# already saw: its pending cells (and their real time left) stay incoming. Nothing unseen is revealed.
+	var incoming_left: float = player_actor.get_time_left()
+	if not incoming.is_empty():
+		_seen_cells = incoming.duplicate()
+	elif not player_actor.is_swinging():
+		var pending: Dictionary = ctx.get("pending_threat", {}) as Dictionary
+		for c: Variant in pending.get("cells", []) as Array:
+			if _seen_cells.has(c as Vector2i):
+				incoming.append(c as Vector2i)
+		if incoming.is_empty():
+			_seen_cells = []
+		else:
+			incoming_left = float(pending.get("time_left", 0.0))
 	# Story 027: own_blocked = burning cells + open holes of the boss's half (never entered); player_blocked =
 	# burning cells (the player cannot escape into them).
 	var own_blocked: Array[Vector2i] = []
@@ -282,10 +299,10 @@ func decide(ctx: Dictionary) -> Dictionary:
 		_apply_crumble(state.enemy_cell)
 	_stand_clock = 0.0
 	_swing_damage = _cut_config.slash_damage(incoming.size()) if not incoming.is_empty() else 0.0
-	_swing_time_left = player_actor.get_time_left() if not incoming.is_empty() else 0.0
+	_swing_time_left = incoming_left if not incoming.is_empty() else 0.0
 	_boss_step_sec = _config.step_cooldown_sec * maxf(mover.cooldown_mult, 0.0)
 	_dodge_plan = {}
-	var urgency: float = 1.0 / maxf(player_actor.get_time_left(), _MIN_TIME_LEFT)
+	var urgency: float = 1.0 / maxf(incoming_left, _MIN_TIME_LEFT)
 	var player_step_cooldown: float = float(ctx.get("player_step_cooldown", _config.step_cooldown_sec))
 	var idle_score: float = float(_weights["idle_bias"]) - _crumble_cost
 	var best_cut: Dictionary = _best_cut(
