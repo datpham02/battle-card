@@ -6,7 +6,7 @@ which stays PENDING until it is run on an Android phone (see `production/qa/andr
 | Card | Hero | Gameplay | Animation | VFX | Automated tests | Real-device QA | Docs |
 |---|---|---|---|---|---|---|---|
 | `tram_dia` Trảm Địa | Knight (`kiem_si`) | **COMPLETE** | **APPROVED** (`cast_forward`) | **APPROVED** (`impact_eruption_tram_dia` + `mark_eruption_tram_dia` + code surge) | **PASSED** (2026-11-08) | **PENDING** (Android) | 04, 05, 06 reports |
-| `ngan_kiem` Ngàn Kiếm | Knight | not started | — | — | — | — | — |
+| `ngan_kiem` Ngàn Kiếm | Knight | **COMPLETE** (+ Cast Commitment prototype) | **ACCEPTED 2026-11-08** (`cast_summon`, job 91224bb1; top-row HUD overlap accepted) | **APPROVED** (SkyDropFx, scale final 2026-11-08) | **PASSED** (212/212, 2026-11-08) | **PENDING** (Android; human playtest also pending) | 07 report, 08 acceptance |
 
 ## Trảm Địa (approved by the user 2026-11-08)
 

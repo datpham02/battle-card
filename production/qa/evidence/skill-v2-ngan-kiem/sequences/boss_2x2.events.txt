@@ -1,0 +1,5 @@
+DemoArgs: tram_live shape=l4 rot=0 cells=[(4, 0), (4, 1), (4, 2), (5, 2)] tags=["L"] boss=[(5, 1), (6, 1), (5, 2), (6, 2)] duration=1.200
+TRAM #0 t=0.50 clock=1.700 cell=(4, 1) kind=drop step=0 mult=1.00 hit=false dmg=0.0 pinned=false
+TRAM #1 t=0.62 clock=1.820 cell=(4, 0) kind=drop step=1 mult=1.00 hit=false dmg=0.0 pinned=false
+TRAM #2 t=0.74 clock=1.940 cell=(4, 2) kind=drop step=2 mult=1.00 hit=false dmg=0.0 pinned=false
+TRAM #3 t=0.86 clock=2.060 cell=(5, 2) kind=drop step=3 mult=1.00 hit=true dmg=12.0 pinned=false

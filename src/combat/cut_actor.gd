@@ -29,6 +29,9 @@ var duration_modifier: Callable = Callable()
 ## player's relics, RelicRegistry.fold_cast_time; called exactly once per begun swing, never for a refused
 ## one). The result is floored at 0 (a 0 s windup resolves on the next tick). Invalid = none.
 var cast_time_modifier: Callable = Callable()
+## Cast Commitment (Ngàn Kiếm): Callable(skill_id) -> float, seconds added to the swing of that card AFTER every other
+## duration rule (cards.json channel_extend_sec). Unset = none.
+var channel_extend_fn: Callable = Callable()
 
 var _config: CutConfig
 var _swinging: bool = false
@@ -78,6 +81,9 @@ func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool
 		duration = duration_override
 	if cast_time_modifier.is_valid():
 		duration = maxf(float(cast_time_modifier.call(cells.size(), duration)), 0.0)
+	# Cast Commitment: a channel card's extension comes after every modifier (the stab gap after the commit stays fixed).
+	if channel_extend_fn.is_valid():
+		duration += maxf(float(channel_extend_fn.call(skill_id)), 0.0)
 	_featured_bonus = featured_bonus.duplicate(true)
 	_cast_context = cast_context.duplicate(true)
 	_start(cells, skill_id, target_is_enemy, duration, level)

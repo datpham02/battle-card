@@ -656,6 +656,31 @@ static func cancel_hit_rect(viewport_size: Vector2, menu: bool = false) -> Rect2
 	return placing_row_hit_rects(viewport_size)[0 if menu else 2]
 
 
+## Cast Commitment (Ngàn Kiếm prototype): the channel's Hủy. It sits on the RIGHT, just above the Block bag (the right
+## thumb), the size of Tung phép, so a left thumb resting on the floating joystick never presses it during the channel.
+static func channel_cancel_rect(viewport_size: Vector2) -> Rect2:
+	var size: Vector2 = confirm_button_rect(viewport_size).size
+	var slots: Array[Rect2] = slot_rects(viewport_size, HoldSlots.MAX_SLOTS)
+	var right: float = slots[slots.size() - 1].end.x if not slots.is_empty() else viewport_size.x - size.x
+	# above the bag's TAP rects (they reach higher than the slots themselves)
+	var top: float = viewport_size.y
+	for r: Rect2 in slot_hit_rects(viewport_size, HoldSlots.MAX_SLOTS):
+		top = minf(top, r.position.y)
+	var gap: float = roundf(BOTTOM_ROW_GAP_PX * controls_scale(viewport_size))
+	return Rect2(Vector2(right - size.x, top - gap - size.y), size)
+
+
+## The tap rect of [method channel_cancel_rect]: grown to the minimum touch side; it never reaches the bag below it.
+static func channel_cancel_hit_rect(viewport_size: Vector2) -> Rect2:
+	var r: Rect2 = touch_rect(channel_cancel_rect(viewport_size))
+	var top: float = viewport_size.y
+	for s: Rect2 in slot_hit_rects(viewport_size, HoldSlots.MAX_SLOTS):
+		top = minf(top, s.position.y)
+	if r.end.y > top:
+		r.size.y = maxf(top - r.position.y, 1.0)
+	return r
+
+
 ## Card menu (2026-11-01): one CardFace rectangle per drawn card, left to right, the row centred on the screen
 ## (4 cards: 249-1030 x 232-488 px at 1280x720). Every card is a tap target of the full card size.
 static func skill_menu_rects(viewport_size: Vector2, count: int) -> Array[Rect2]:

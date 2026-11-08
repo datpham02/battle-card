@@ -22,7 +22,7 @@ const FIXTURE_FRAME := Vector2i(40, 48)
 ## unit id -> [clips in frameTags order, frame size, facing]
 const REAL_SHEETS: Dictionary = {
 	# 2026-11-02: + draw (match start) and the four directional dashes (guard stance, OSFE).
-	"kiem_si": [["idle", "draw", "step", "step_forward", "step_back", "step_up", "step_down", "cast_gesture", "cast_forward", "hit", "victory", "defeat", "fall", "awaken"], Vector2i(96, 70), "right"],
+	"kiem_si": [["idle", "draw", "step", "step_forward", "step_back", "step_up", "step_down", "cast_gesture", "cast_forward", "cast_summon", "hit", "victory", "defeat", "fall", "awaken"], Vector2i(96, 92), "right"],
 	"goblin_scout": [["idle", "step", "windup", "hit", "down"], Vector2i(64, 52), "left"],
 	# 2026-11-02: Rootling (ASSET-021), the first Misty Forest normal.
 	"rootling": [["idle", "step", "windup", "hit", "down"], Vector2i(64, 52), "left"],
@@ -165,6 +165,14 @@ func test_real_sheets_match_story_045_table() -> void:
 	# clear_cache drops the instances.
 	SpriteSheetScript.clear_cache()
 	check("clear_cache yields a fresh instance", SpriteSheetScript.load_unit("kiem_si") != ks)
+	# 2026-11-08: the Knight's 96x92 frame keeps a 70 px body (HUD pops, portraits); units without body_h use their frame.
+	var k2 := SpriteSheetScript.load_unit("kiem_si")
+	check("kiem_si body height 70 inside a 92 frame", k2 != null and k2.body_height() == 70 and k2.frame_size() == Vector2i(96, 92))
+	if k2 != null:
+		var r := Rect2i(10, 20, 96, 92)
+		check("body_rect keeps the bottom 70 rows (feet row unchanged)", k2.body_rect(r) == Rect2i(10, 42, 96, 70) and k2.body_rect(r).end == r.end)
+	var gob := SpriteSheetScript.load_unit("goblin_scout")
+	check("a unit without body_h: body height = frame height", gob != null and gob.body_height() == gob.frame_size().y)
 
 
 func test_load_unit_missing_is_null_and_cached() -> void:

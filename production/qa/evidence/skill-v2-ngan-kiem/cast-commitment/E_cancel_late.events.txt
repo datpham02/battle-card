@@ -1,0 +1,7 @@
+DemoArgs: tram_live shape=bar4 rot=0 cells=[(4, 1), (5, 1), (6, 1), (7, 1)] tags=["line", "line_h"] boss=[(5, 1)] duration=1.480
+DemoArgs: scenario t=1.567 Hủy pressed in phase 'commit' -> refused
+DemoArgs: scenario t=1.617 phase now 'resolution', feedback ĐÃ CHỐT (refused), scheduled impacts 1
+TRAM #0 t=0.22 clock=1.700 cell=(5, 1) kind=drop step=0 mult=1.00 hit=true dmg=12.0 pinned=false
+TRAM #1 t=0.34 clock=1.820 cell=(4, 1) kind=drop step=1 mult=1.00 hit=false dmg=0.0 pinned=false
+TRAM #2 t=0.46 clock=1.940 cell=(6, 1) kind=drop step=2 mult=1.00 hit=false dmg=0.0 pinned=false
+TRAM #3 t=0.58 clock=2.060 cell=(7, 1) kind=drop step=3 mult=1.00 hit=false dmg=0.0 pinned=false

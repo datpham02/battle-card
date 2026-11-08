@@ -21,7 +21,11 @@ source was not Aseprite:
     assets/art/units/unit_<id>_sheet.json  frames[] + meta.frameTags[] + meta.tessera
 
 Rules enforced (an error aborts the export with exit 2):
-  * every frame is <frame.w> x <frame.h>, 8-bit, non-interlaced
+  * every frame is <frame.w> x <frame.h>, 8-bit, non-interlaced; a frame as wide but SHORTER (an older, shorter
+    canvas kept as it was approved) is bottom-aligned into the cell: transparent rows are added on top, so its
+    feet stay on the cell's bottom row (2026-11-08: the Knight's 96x92 frame for the raised-sword headroom of cast_summon)
+  * optional clips.json "body_h" (default frame.h): the standing body height the HUD treats as the unit's height
+    (meta.tessera.body_h), so a taller frame for one raised-weapon clip does not move what sits above the head
   * alpha is only 0 or 255; every opaque colour is in the palette;
     at most MAX_COLOURS distinct opaque colours per unit (§8.9 #4)
   * the left, right and top 1 px edge of every frame is transparent (§8.3;
@@ -223,24 +227,27 @@ def build_unit(unit_dir: Path, palette: dict[str, str]) -> tuple[str, bytes, str
             if not fpath.is_file():
                 raise ExportError(f"{uid}/{clip['name']}: frame missing: {fpath}")
             w, h, px = read_png(fpath)
-            if (w, h) != (fw, fh):
-                raise ExportError(f"{fpath}: is {w}x{h}, unit frame is {fw}x{fh}")
+            if w != fw or h > fh:
+                raise ExportError(f"{fpath}: is {w}x{h}, unit frame is {fw}x{fh} (a shorter frame of the same width is bottom-aligned)")
+            pad = fh - h  # transparent rows above a shorter frame: the feet stay on the bottom row
             ox = col * (fw + GUTTER)
             oy = row * (fh + GUTTER)
-            for y in range(fh):
+            for sy in range(h):
+                y = sy + pad
                 line = sheet[oy + y]
                 for x in range(fw):
-                    r, g, b, a = px[y][x]
+                    r, g, b, a = px[sy][x]
                     if a not in (0, 255):
-                        raise ExportError(f"{fpath}: alpha {a} at ({x},{y}); only 0 or 255 allowed")
+                        raise ExportError(f"{fpath}: alpha {a} at ({x},{sy}); only 0 or 255 allowed")
                     if a == 0:
                         continue  # stays (0,0,0,0)
-                    if x == 0 or y == 0 or x == fw - 1:
-                        # The bottom row is exempt: feet touch the last pixel row (art bible 8.3).
-                        raise ExportError(f"{fpath}: opaque pixel on the frame edge at ({x},{y}); art bible 8.3 needs a 1 px margin left, right and top")
+                    if x == 0 or sy == 0 or x == fw - 1:
+                        # The bottom row is exempt: feet touch the last pixel row (art bible 8.3). The top margin is
+                        # checked on the source frame itself, as it was approved.
+                        raise ExportError(f"{fpath}: opaque pixel on the frame edge at ({x},{sy}); art bible 8.3 needs a 1 px margin left, right and top")
                     key = f"#{r:02X}{g:02X}{b:02X}"
                     if key not in palette:
-                        raise ExportError(f"{fpath}: colour {key} at ({x},{y}) is not in the palette")
+                        raise ExportError(f"{fpath}: colour {key} at ({x},{sy}) is not in the palette")
                     colours.add(key)
                     base = (ox + x) * 4
                     line[base] = r
@@ -289,6 +296,9 @@ def build_unit(unit_dir: Path, palette: dict[str, str]) -> tuple[str, bytes, str
             },
         },
     }
+    if "body_h" in spec:
+        # only a unit that declares it (the Knight): every other sheet stays byte-identical
+        doc["meta"]["tessera"]["body_h"] = int(spec["body_h"])
     text = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
     return uid, png, text
 

@@ -1,0 +1,58 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+ngan_kiem_probe chapter=1 (ch1) seeds=12 deck=starter+2xngan_kiem
+RESULT | setup | match | win % | mean sec | NK casts | cancels | interrupts | committed | hit casts % | dmg/committed | whiff % (boss dodged) | HP lost channeling/cast | casts in enemy recovery %
+RESULT | PREV | goblin_scout | 100 | 41.3 | 25 | 0 | 0 | 25 | 52 | 6.2 | 48 | 0.64 | 20
+RESULT | PREV | wolf | 100 | 44.6 | 24 | 0 | 4 | 20 | 0 | 0.0 | 100 | 2.00 | 17
+RESULT | PREV | goblin_chief | 100 | 56.7 | 30 | 0 | 14 | 16 | 6 | 0.8 | 94 | 5.13 | 7
+RESULT | PREV | goblin_warrior | 100 | 25.4 | 18 | 0 | 2 | 16 | 38 | 4.5 | 63 | 2.00 | 17
+RESULT | PREV | dire_wolf | 100 | 65.2 | 38 | 0 | 0 | 38 | 47 | 5.7 | 53 | 3.16 | 26
+RESULT | PREV | goblin_shaman | 92 | 70.5 | 42 | 0 | 20 | 22 | 9 | 1.1 | 91 | 5.57 | 14
+RESULT | PREV | wolf_alpha | 100 | 83.5 | 58 | 0 | 0 | 58 | 86 | 11.4 | 14 | 2.52 | 31
+RESULT | PREV | goblin_archer | 100 | 40.2 | 26 | 0 | 0 | 26 | 81 | 9.7 | 19 | 1.31 | 42
+RESULT | PREV | goblin_brute | 100 | 64.3 | 38 | 0 | 11 | 27 | 0 | 0.0 | 100 | 3.32 | 5
+RESULT | PREV | goblin_warlock | 83 | 135.7 | 86 | 0 | 0 | 86 | 86 | 19.4 | 14 | 2.33 | 33
+RESULT | PREV | forest_witch | 8 | 179.1 | 121 | 0 | 0 | 120 | 94 | 22.4 | 6 | 1.59 | 36
+RESULT | PREV | rootling | 100 | 50.4 | 33 | 0 | 0 | 33 | 48 | 5.8 | 52 | 2.18 | 9
+RESULT | PREV | mossbound_sentry | 100 | 67.9 | 48 | 0 | 0 | 48 | 58 | 6.8 | 42 | 2.63 | 29
+RESULT | PREV | greycap_sporeling | 100 | 53.6 | 37 | 0 | 0 | 37 | 59 | 7.1 | 41 | 2.16 | 22
+RESULT | PREV | ancient_root_sentinel | 100 | 99.5 | 62 | 0 | 0 | 62 | 68 | 9.1 | 32 | 0.26 | 16
+RESULT | PREV | mistbriar_matron | 92 | 151.8 | 95 | 0 | 0 | 95 | 29 | 3.6 | 71 | 2.02 | 14
+RESULT | PREV | ALL | 92 | 76.9 | 781 | 0 | 51 | 729 | 60 | 10.2 | 40 | 2.29 | 23
+RESULT | COMMIT | goblin_scout | 100 | 42.3 | 27 | 0 | 0 | 27 | 59 | 7.1 | 41 | 1.19 | 22
+RESULT | COMMIT | wolf | 100 | 37.4 | 22 | 0 | 7 | 15 | 13 | 1.6 | 87 | 3.82 | 14
+RESULT | COMMIT | goblin_chief | 100 | 59.9 | 33 | 0 | 17 | 16 | 0 | 0.0 | 100 | 6.73 | 3
+RESULT | COMMIT | goblin_warrior | 100 | 27.4 | 19 | 0 | 6 | 13 | 31 | 3.7 | 69 | 4.74 | 16
+RESULT | COMMIT | dire_wolf | 100 | 59.4 | 37 | 0 | 0 | 37 | 54 | 6.5 | 46 | 4.59 | 27
+RESULT | COMMIT | goblin_shaman | 100 | 65.3 | 40 | 0 | 25 | 15 | 0 | 0.0 | 100 | 8.30 | 15
+RESULT | COMMIT | wolf_alpha | 100 | 86.2 | 61 | 0 | 0 | 61 | 79 | 10.0 | 21 | 5.44 | 23
+RESULT | COMMIT | goblin_archer | 100 | 40.7 | 27 | 0 | 0 | 27 | 85 | 10.7 | 15 | 3.85 | 41
+RESULT | COMMIT | goblin_brute | 100 | 63.0 | 35 | 0 | 21 | 14 | 7 | 0.9 | 93 | 7.89 | 6
+RESULT | COMMIT | goblin_warlock | 83 | 131.5 | 85 | 0 | 0 | 85 | 88 | 21.9 | 12 | 2.82 | 44
+RESULT | COMMIT | forest_witch | 8 | 179.7 | 123 | 0 | 0 | 123 | 91 | 21.9 | 9 | 1.89 | 36
+RESULT | COMMIT | rootling | 100 | 52.8 | 37 | 0 | 0 | 37 | 43 | 5.2 | 57 | 2.16 | 8
+RESULT | COMMIT | mossbound_sentry | 100 | 66.6 | 44 | 0 | 0 | 44 | 59 | 6.5 | 41 | 5.73 | 30
+RESULT | COMMIT | greycap_sporeling | 100 | 51.0 | 34 | 0 | 0 | 34 | 47 | 6.0 | 53 | 2.65 | 24
+RESULT | COMMIT | ancient_root_sentinel | 100 | 100.4 | 65 | 0 | 0 | 65 | 71 | 9.0 | 29 | 0.25 | 20
+RESULT | COMMIT | mistbriar_matron | 92 | 156.8 | 97 | 0 | 0 | 97 | 38 | 4.4 | 62 | 1.86 | 15
+RESULT | COMMIT | ALL | 93 | 76.3 | 786 | 0 | 76 | 710 | 62 | 10.8 | 38 | 3.48 | 24
+RESULT | COMMIT+CANCEL | goblin_scout | 100 | 42.3 | 27 | 0 | 0 | 27 | 59 | 7.1 | 41 | 1.19 | 22
+RESULT | COMMIT+CANCEL | wolf | 100 | 37.4 | 22 | 0 | 7 | 15 | 13 | 1.6 | 87 | 3.82 | 14
+RESULT | COMMIT+CANCEL | goblin_chief | 100 | 61.4 | 34 | 4 | 15 | 15 | 0 | 0.0 | 100 | 5.24 | 3
+RESULT | COMMIT+CANCEL | goblin_warrior | 100 | 27.4 | 19 | 0 | 6 | 13 | 31 | 3.7 | 69 | 4.74 | 16
+RESULT | COMMIT+CANCEL | dire_wolf | 100 | 59.4 | 37 | 0 | 0 | 37 | 54 | 6.5 | 46 | 4.59 | 27
+RESULT | COMMIT+CANCEL | goblin_shaman | 100 | 65.3 | 40 | 0 | 25 | 15 | 0 | 0.0 | 100 | 8.30 | 15
+RESULT | COMMIT+CANCEL | wolf_alpha | 100 | 86.2 | 61 | 0 | 0 | 61 | 79 | 10.0 | 21 | 5.44 | 23
+RESULT | COMMIT+CANCEL | goblin_archer | 100 | 40.7 | 27 | 0 | 0 | 27 | 85 | 10.7 | 15 | 3.85 | 41
+RESULT | COMMIT+CANCEL | goblin_brute | 100 | 63.0 | 35 | 0 | 21 | 14 | 7 | 0.9 | 93 | 7.89 | 6
+RESULT | COMMIT+CANCEL | goblin_warlock | 83 | 131.5 | 85 | 0 | 0 | 85 | 88 | 21.9 | 12 | 2.82 | 44
+RESULT | COMMIT+CANCEL | forest_witch | 8 | 179.7 | 123 | 0 | 0 | 123 | 91 | 21.9 | 9 | 1.89 | 36
+RESULT | COMMIT+CANCEL | rootling | 100 | 52.8 | 37 | 0 | 0 | 37 | 43 | 5.2 | 57 | 2.16 | 8
+RESULT | COMMIT+CANCEL | mossbound_sentry | 100 | 66.6 | 44 | 0 | 0 | 44 | 59 | 6.5 | 41 | 5.73 | 30
+RESULT | COMMIT+CANCEL | greycap_sporeling | 100 | 51.0 | 34 | 0 | 0 | 34 | 47 | 6.0 | 53 | 2.65 | 24
+RESULT | COMMIT+CANCEL | ancient_root_sentinel | 100 | 100.4 | 65 | 0 | 0 | 65 | 71 | 9.0 | 29 | 0.25 | 20
+RESULT | COMMIT+CANCEL | mistbriar_matron | 92 | 156.8 | 97 | 0 | 0 | 97 | 38 | 4.4 | 62 | 1.86 | 15
+RESULT | COMMIT+CANCEL | ALL | 93 | 76.4 | 787 | 4 | 74 | 709 | 62 | 10.8 | 38 | 3.42 | 24
+
+Notes: hit casts % = committed casts with >= 1 hit; whiff % = committed casts that hit nothing (the boss left
+or was never in the region); HP lost channeling counts every HP the hero lost while its channel ran.

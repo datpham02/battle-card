@@ -390,6 +390,19 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"shape_clause": resolve_check["shape_clause"],
 		"burst_first": resolve_check["burst_first"],
 		"burst_pin_sec": resolve_check["burst_pin_sec"],
+		# Skill v2 (Ngàn Kiếm): sky drop timing / order, fixed per-hit damage, Awakening extra max hits.
+		"sky_hover_sec": resolve_check["sky_hover_sec"],
+		"sky_stagger_sec": resolve_check["sky_stagger_sec"],
+		"drop_order": resolve_check["drop_order"],
+		"fixed_hit": resolve_check["fixed_hit"],
+		"awakening_extra_hits": resolve_check["awakening_extra_hits"],
+		# Skill v2 Cast Commitment (design/quick-specs/cast-commitment-ngan-kiem-2026-11-08.md; Ngàn Kiếm only):
+		# commit_lock_sec >= 0 makes the swing a CHANNEL (hero rooted, cancellable), the swing end the COMMIT (then
+		# locked commit_lock_sec more), then RESOLUTION. channel_extend_sec lengthens the channel (added after every
+		# swing-time modifier). cancel_policy "spent": a cancelled channel keeps its spent pieces and its cooldown.
+		"commit_lock_sec": maxf(float(raw.get("commit_lock_sec", -1.0)), -1.0),
+		"channel_extend_sec": maxf(float(raw.get("channel_extend_sec", 0.0)), 0.0),
+		"cancel_policy": str(raw.get("cancel_policy", "spent")),
 		"tags": (raw.get("tags", []) as Array).duplicate() if raw.get("tags", []) is Array else [],
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:

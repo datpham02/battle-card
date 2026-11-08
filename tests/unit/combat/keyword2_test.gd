@@ -154,7 +154,8 @@ func _init() -> void:
 	var by_kw: Dictionary = {"pin": 0, "burn": 0, "fragile": 0, "frost": 0}
 	for id: String in real.cards:
 		var c: Dictionary = real.get_skill(id)
-		if float(c["damage_per_cell"]) > 8.0:
+		# Skill v2 (Ngàn Kiếm): a fixed_hit card's damage_per_cell is damage per HIT (never x cells), outside the per-cell curve.
+		if float(c["damage_per_cell"]) > 8.0 and not bool(c.get("fixed_hit", false)):
 			over.append(id)
 		var rar: String = str(c["rarity"])
 		var dpc: float = float(c["damage_per_cell"])

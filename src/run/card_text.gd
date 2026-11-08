@@ -102,6 +102,9 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"burst_first": _num(float(skill.get("burst_first", 1.0)), loc),
 		"burst_pin_sec": _num(float(skill.get("burst_pin_sec", 0.0)), loc),
 		"surge_pct": _num(float(roundi(float((skill.get("shape_clause", {}) as Dictionary).get("surge_per_step", 0.0)) * 100.0)), loc),
+		# Skill v2 (Ngàn Kiếm): the cast's hit cap and the branched centre multiplier.
+		"max_hits": _num(float(skill.get("max_hits", 1)), loc),
+		"centre_mult": _num(float((skill.get("shape_clause", {}) as Dictionary).get("centre_mult", 1.0)), loc),
 		"surge_cap_pct": _num(float(roundi(float((skill.get("shape_clause", {}) as Dictionary).get("surge_cap", 0.0)) * 100.0)), loc),
 	}
 	for zone_key: String in SkillConfig.ZONE_KEYS:

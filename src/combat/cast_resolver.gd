@@ -28,6 +28,17 @@ extends RefCounted
 ## Regions are ordered primary first, then by (start cell's Manhattan distance to the caster, y, x).
 ## Event extras: step (from its region's start), region (order index), from (the cell the surge came from; (-1, -1)
 ## for a start cell), pin_sec (the burst's Pin on a hit).
+## Sky drops (SKY_TO_TARGET arrival; Ngàn Kiếm, M05 + M06 from_centre): every open (not locked) cell gets ONE drop, each
+## its own wave (a unit is hit at most once per drop; `max_hits` caps the cast), drop i at sky_hover_sec + i x
+## sky_stagger_sec (card fields; else the delivery timing fall_sec / stagger_sec). Order (`drop_order`):
+##   row_major (default)  by y, then x.
+##   from_centre          the hub first, then outward by BFS distance inside its region (ties y, x). The hub = the
+##                        union's ShapeTags centre (ties nearest the caster). Regions not connected to the hub follow,
+##                        ordered by their own centre's Manhattan distance to the hub (ties y, x), each from its own
+##                        centre; no path between regions.
+## Branched rule (shape_clause {tag: branched, tips_first: true, centre_mult}): when the clause holds, the hub is the
+## union cell with the most neighbours (the junction; ties nearest the bbox centre, then y, x) and the whole order is
+## reversed: tips first, the hub LAST as kind `drop_final` x centre_mult. Kinds: drop / drop_final.
 ## Per-event multiplier = the shape-clause group S (02-design-decisions.md §10), capped at [constant SHAPE_GROUP_CAP]:
 ## the burst x `burst_first`; a surge event x (1 + min(step x surge_per_step, surge_cap)) when the card's shape_clause
 ## holds for the cast (scope any_piece / all_pieces / union, tags of the PHYSICAL pieces in the CastContext).
@@ -48,7 +59,11 @@ const SCHEDULED_EFFECTS: Array[String] = ["damage"]
 ## 02-design-decisions.md §10: the product of a card's shape-clause multipliers (burst-first, surge, ...) is capped here.
 const SHAPE_GROUP_CAP: float = 2.0
 const CLAUSE_SCOPES: Array[String] = ["any_piece", "all_pieces", "union"]
-const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap"]
+const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult"]
+const DROP_ORDERS: Array[String] = ["row_major", "from_centre"]
+const KIND_DROP: String = "drop"
+const KIND_DROP_FINAL: String = "drop_final"
+const MAX_AWAKENING_EXTRA_HITS: int = 3
 ## Event kinds of the surge.
 const KIND_BURST: String = "burst"
 const KIND_LANDING: String = "landing"
@@ -89,6 +104,21 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 	var burst: float = _num_field(id, raw, "burst_first", 1.0, 1.0, MAX_BURST_FIRST, errors)
 	var pin_sec: float = _num_field(id, raw, "burst_pin_sec", 0.0, 0.0, MAX_PIN_SEC, errors)
 	var clause: Dictionary = _clause(id, raw.get("shape_clause", {}), errors)
+	var hover: float = _num_field(id, raw, "sky_hover_sec", -1.0, 0.0, 2.0, errors)
+	var stagger: float = _num_field(id, raw, "sky_stagger_sec", -1.0, 0.02, 1.0, errors)
+	var drop_order: String = str(raw.get("drop_order", "row_major"))
+	if not DROP_ORDERS.has(drop_order):
+		errors.append("card %s: drop_order '%s' unknown (known: %s)" % [id, drop_order, ", ".join(DROP_ORDERS)])
+	var extra_hits: int = _int_field(id, raw, "awakening_extra_hits", 0, 0, MAX_AWAKENING_EXTRA_HITS, errors)
+	var fixed_hit: bool = false
+	if raw.has("fixed_hit"):
+		if not raw["fixed_hit"] is bool:
+			errors.append("card %s: fixed_hit must be true / false" % id)
+		else:
+			fixed_hit = bool(raw["fixed_hit"])
+	if resolve != RESOLVE_ARRIVAL and (raw.has("sky_hover_sec") or raw.has("sky_stagger_sec") or raw.has("drop_order")
+			or clause.has("tips_first")):
+		errors.append("card %s: sky_hover_sec / sky_stagger_sec / drop_order / a tips_first clause need resolve 'arrival'" % id)
 	if resolve != RESOLVE_ARRIVAL and (raw.has("burst_first") or raw.has("burst_pin_sec") or clause.has("surge_per_step")):
 		errors.append("card %s: burst_first / burst_pin_sec / a surge clause need resolve 'arrival'" % id)
 	if resolve == RESOLVE_INSTANT and hits > 1:
@@ -99,9 +129,13 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 		errors.append("card %s: resolve '%s' needs cast_mode direct (got '%s')" % [id, resolve, cast_mode])
 	if not errors.is_empty():
 		return {"resolve": RESOLVE_INSTANT, "hits": 1, "max_hits": 1, "hit_interval_sec": DEFAULT_INTERVAL_SEC,
-			"wave_mults": [] as Array[float], "burst_first": 1.0, "burst_pin_sec": 0.0, "shape_clause": {}, "errors": errors}
+			"wave_mults": [] as Array[float], "burst_first": 1.0, "burst_pin_sec": 0.0, "shape_clause": {},
+			"sky_hover_sec": -1.0, "sky_stagger_sec": -1.0, "drop_order": "row_major", "awakening_extra_hits": 0,
+			"fixed_hit": false, "errors": errors}
 	return {"resolve": resolve, "hits": hits, "max_hits": max_hits, "hit_interval_sec": interval, "wave_mults": mults,
-		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clause, "errors": errors}
+		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clause, "sky_hover_sec": hover,
+		"sky_stagger_sec": stagger, "drop_order": drop_order, "awakening_extra_hits": extra_hits, "fixed_hit": fixed_hit,
+		"errors": errors}
 
 
 ## The impact plan of card [param skill] (a normalized SkillConfig entry) cast on [param cells] with [param context]
@@ -125,6 +159,9 @@ static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
 			if _delivery_type(skill, context) == SkillDelivery.CASTER_TO_TARGET:
 				surge = true
 				events = surge_events(skill, cells, context, timing, locked)
+			elif _delivery_type(skill, context) == SkillDelivery.SKY_TO_TARGET:
+				surge = true
+				events = sky_events(skill, cells, context, timing, locked)
 			else:
 				events = _arrival_events(skill, cells, context, timing)
 		_:
@@ -235,6 +272,116 @@ static func surge_events(skill: Dictionary, cells: Array[Vector2i], context: Dic
 		var cb: Vector2i = (b["cells"] as Array[Vector2i])[0]
 		return ca.y < cb.y or (ca.y == cb.y and ca.x < cb.x))
 	return out
+
+
+## The sky-drop events of a SKY_TO_TARGET `arrival` card (see the class doc), in drop order, not indexed.
+static func sky_events(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
+		timing: Dictionary = SkillDelivery.DEFAULT_TIMING, locked: Array = []) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var open: Array[Vector2i] = []
+	for c: Vector2i in cells:
+		if not locked.has(c) and not open.has(c):
+			open.append(c)
+	if open.is_empty():
+		return out
+	var t: Dictionary = SkillDelivery.DEFAULT_TIMING[SkillDelivery.SKY_TO_TARGET]
+	if timing.get(SkillDelivery.SKY_TO_TARGET) is Dictionary:
+		t = timing[SkillDelivery.SKY_TO_TARGET]
+	var hover: float = float(skill.get("sky_hover_sec", -1.0))
+	if hover < 0.0:
+		hover = maxf(float(t.get("fall_sec", 0.12)), 0.0)
+	var stagger: float = float(skill.get("sky_stagger_sec", -1.0))
+	if stagger < 0.0:
+		stagger = maxf(float(t.get("stagger_sec", 0.03)), 0.0)
+	var caster: Vector2i = context.get("caster_cell", Vector2i(-1, open[0].y))
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var branched: bool = bool(clause.get("tips_first", false)) and clause_holds(clause, context)
+	var order: Array[Vector2i] = []
+	var regions_of: Dictionary = {}
+	if str(skill.get("drop_order", "row_major")) == "from_centre":
+		var hub: Vector2i = junction(open) if branched else ShapeTags.tags_for(open, false, caster)["centre"]
+		var regions: Array = _regions(open)
+		var starts: Array[Vector2i] = []
+		for reg: Variant in regions:
+			var region: Array[Vector2i] = reg
+			starts.append(hub if region.has(hub) else ShapeTags.tags_for(region, false, caster)["centre"])
+		var idx: Array = range(regions.size())
+		idx.sort_custom(func(a: int, b: int) -> bool:
+			var sa: Vector2i = starts[a]
+			var sb: Vector2i = starts[b]
+			if (sa == hub) != (sb == hub):
+				return sa == hub
+			var da: int = absi(sa.x - hub.x) + absi(sa.y - hub.y)
+			var db: int = absi(sb.x - hub.x) + absi(sb.y - hub.y)
+			return da < db or (da == db and (sa.y < sb.y or (sa.y == sb.y and sa.x < sb.x))))
+		for ri: int in idx.size():
+			var region: Array[Vector2i] = regions[idx[ri]]
+			var dist: Dictionary = _bfs(region, starts[idx[ri]])
+			var cells_r: Array[Vector2i] = region.duplicate()
+			cells_r.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+				if int(dist[a]) != int(dist[b]):
+					return int(dist[a]) < int(dist[b])
+				return a.y < b.y or (a.y == b.y and a.x < b.x))
+			for c: Vector2i in cells_r:
+				order.append(c)
+				regions_of[c] = ri
+		if branched:
+			order.reverse()
+	else:
+		order = open.duplicate()
+		order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.y < b.y or (a.y == b.y and a.x < b.x))
+	var centre_mult: float = minf(float(clause.get("centre_mult", 1.0)), SHAPE_GROUP_CAP) if branched else 1.0
+	for i: int in order.size():
+		var last: bool = branched and i == order.size() - 1
+		var one: Array[Vector2i] = [order[i]]
+		var e: Dictionary = _event(i, hover + float(i) * stagger, one, KIND_DROP_FINAL if last else KIND_DROP,
+			centre_mult if last else 1.0)
+		e["step"] = i
+		e["region"] = int(regions_of.get(order[i], 0))
+		e["from"] = NO_CELL
+		e["pin_sec"] = 0.0
+		out.append(e)
+	return out
+
+
+## The junction of [param cells]: the cell with the most 4-neighbours inside them; ties -> nearest the bbox centre,
+## then smallest y, then x (deterministic for T, plus, Y and Odd blocks).
+static func junction(cells: Array[Vector2i]) -> Vector2i:
+	var lo: Vector2i = cells[0]
+	var hi: Vector2i = cells[0]
+	for c: Vector2i in cells:
+		lo = Vector2i(mini(lo.x, c.x), mini(lo.y, c.y))
+		hi = Vector2i(maxi(hi.x, c.x), maxi(hi.y, c.y))
+	var mid: Vector2 = (Vector2(lo) + Vector2(hi)) * 0.5
+	var best: Vector2i = cells[0]
+	var best_deg: int = -1
+	var best_d: float = INF
+	for c: Vector2i in cells:
+		var deg: int = 0
+		for d: Vector2i in _DIRS:
+			if cells.has(c + d):
+				deg += 1
+		var dd: float = Vector2(c).distance_squared_to(mid)
+		var better: bool = deg > best_deg or (deg == best_deg and (dd < best_d - 0.0001 or (absf(dd - best_d) <= 0.0001
+			and (c.y < best.y or (c.y == best.y and c.x < best.x)))))
+		if better:
+			best = c
+			best_deg = deg
+			best_d = dd
+	return best
+
+
+static func _bfs(region: Array[Vector2i], start: Vector2i) -> Dictionary:
+	var dist: Dictionary = {start: 0}
+	var queue: Array[Vector2i] = [start]
+	while not queue.is_empty():
+		var cur: Vector2i = queue.pop_front()
+		for d: Vector2i in _DIRS:
+			var n: Vector2i = cur + d
+			if region.has(n) and not dist.has(n):
+				dist[n] = int(dist[cur]) + 1
+				queue.append(n)
+	return dist
 
 
 ## True when shape clause [param clause] ({tag, scope}) holds for the cast [param context]: any_piece (default) = at
@@ -349,6 +496,13 @@ static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictiona
 	for k: String in ["surge_per_step", "surge_cap"]:
 		if c.has(k):
 			out[k] = _num_field(id, c, k, 0.0, 0.0, 1.0, errors)
+	if c.has("tips_first"):
+		if not c["tips_first"] is bool:
+			errors.append("card %s: shape_clause tips_first must be true / false" % id)
+		else:
+			out["tips_first"] = bool(c["tips_first"])
+	if c.has("centre_mult"):
+		out["centre_mult"] = _num_field(id, c, "centre_mult", 1.0, 1.0, SHAPE_GROUP_CAP, errors)
 	return out
 
 

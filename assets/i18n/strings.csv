@@ -297,6 +297,11 @@ keyword.vs_fragile,×%s khi Rạn,×%s vs Fragile
 keyword.fragile_stacks,Rạn +%d,Fragile +%d
 keyword.frost_stacks,Giá Lạnh +%d,Chill +%d
 ui.hud.cancel,Hủy,Cancel
+ui.hud.channel_cancel_cost,mất khối · thẻ vẫn hồi chiêu,Blocks lost · card stays on cooldown
+ui.hud.channel_cancelled,ĐÃ HỦY,CANCELLED
+ui.hud.channel_cancelled_sub,khối đã dùng · thẻ vẫn hồi chiêu,Blocks spent · card on cooldown
+ui.hud.channel_committed,ĐÃ CHỐT,COMMITTED
+ui.hud.channel_committed_sub,không thể hủy nữa,too late to cancel
 ui.hud.place_hit,Sẽ trúng,Will hit
 ui.hud.place_miss,Sẽ trượt,Will miss
 ui.hud.place_off,Đặt lên đất địch,Place it on the enemy's side
@@ -951,6 +956,9 @@ ui.map.enter,Vào,Enter
 ui.map.cleared,Đã qua,Cleared
 card.do_kiem.name,Đỡ Kiếm,Parry
 card.do_kiem.desc,"Chỉ khi địch ra đòn. Đỡ {parry_sec} s: đòn kế dội lại x{reflect_mult}, địch Đóng Băng {parry_pin_sec} s.","Only while the foe winds up. Guard {parry_sec} s: the next hit bounces back x{reflect_mult}, foe Frozen {parry_pin_sec} s."
+card.ngan_kiem.name,Ngàn Kiếm,Thousand Blades
+card.ngan_kiem.desc,"Mỗi ô một thanh kiếm từ trời rơi xuống, lần lượt; mỗi lần trúng gây sát thương cố định, trúng tối đa {max_hits} lần. Khối có nhánh: các mũi rơi trước, tâm rơi cuối x{centre_mult}.","A sword falls on each cell, one after another; each hit deals fixed damage, at most {max_hits} hits. Branched Block: the tips fall first, the centre last x{centre_mult}."
+card.ngan_kiem.desc_battle,"Kiếm rơi từng ô, tối đa {max_hits} lần trúng.","Swords fall cell by cell, up to {max_hits} hits."
 card.tram_dia.name,Trảm Địa,Earth-Splitting Wave
 card.tram_dia.desc,"Sóng kiếm nổ ở ô đầu x{burst_first} và Đóng Băng {burst_pin_sec} s, rồi lan từng ô. Có khối ngang: +{surge_pct}% mỗi ô lan (tối đa +{surge_cap_pct}%).","A sword wave bursts on the first cell x{burst_first} and Freezes {burst_pin_sec} s, then surges cell by cell. With a flat line: +{surge_pct}% per cell surged (max +{surge_cap_pct}%)."
 card.tram_dia.desc_battle,"Nổ ô đầu x{burst_first}, Đóng Băng {burst_pin_sec} s, rồi lan.","Bursts x{burst_first}, Freezes {burst_pin_sec} s, then surges."

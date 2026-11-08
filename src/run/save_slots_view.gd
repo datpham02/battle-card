@@ -334,7 +334,8 @@ func _draw_hero(area: Rect2, id: String) -> void:
 	var frames: Array = sheet.clip(SPRITE_CLIP).get("frames", []) as Array
 	if frames.is_empty():
 		return
-	var src: Rect2i = frames[0]
+	# The body rows only (bottom-aligned frames): a taller frame for a raised-weapon clip must not shrink the portrait.
+	var src: Rect2i = sheet.body_rect(frames[0])
 	var k: int = maxi(floori(area.size.y / src.size.y), 1)
 	var vis_w: int = mini(src.size.x, floori(area.size.x / k))
 	@warning_ignore("integer_division")

@@ -90,6 +90,14 @@ var player_guard: ParryGuard = null
 ## Cast rhythm spec 2026-11-05 (fix): the hero's crit multiplier read when its swing STARTS ("cast while the foe is
 ## Frozen" crits): a Pin lasts 1.2 s and a 3-6 cell swing 0.95-1.7 s, so reading it at the hit missed almost every crit.
 var _player_crit_at_start: float = 1.0
+## Skill v2 (Ngàn Kiếm): Callable() -> bool, true while the PLAYER's Awakening (signature) is active; a scheduled card
+## with `awakening_extra_hits` then gets that many more max hits for the cast (read when the swing resolves).
+var player_awakening_fn: Callable = Callable()
+## Skill v2 fix 2026-11-08 (interruption policy, catalog M02 / pattern D9): Callable() called ONCE per scheduled PLAYER
+## cast at its FIRST damaging impact (not parried, not a parry card), so a pattern enemy's interruptible windup /
+## warning is broken at that moment instead of at the cast's end. CombatView and the sim bind PatternController.on_enemy_hit;
+## instant (legacy) casts keep calling it from swing_resolved. Invalid = none.
+var pattern_hit_fn: Callable = Callable()
 ## Skill v2 B1.5: the delivery timing table the `arrival` resolve reads (CombatConfig.delivery_timing; set by CombatView).
 var delivery_timing: Dictionary = SkillDelivery.DEFAULT_TIMING
 # The authoritative combat clock (seconds ticked), the pending impact events sorted by (at, seq) and the scheduled
@@ -171,6 +179,19 @@ func pending_cells(side: int) -> Dictionary:
 	if cells.is_empty():
 		return {}
 	return {"cells": cells, "time_left": maxf(left, 0.0)}
+
+
+## Skill v2 (Ngàn Kiếm root rule): the earliest `at` still on the clock (INF when nothing is scheduled). Read-only.
+func first_event_at() -> float:
+	var best: float = INF
+	for e: Dictionary in _events:
+		best = minf(best, float(e["at"]))
+	return best
+
+
+## Skill v2 (Ngàn Kiếm VFX): true while scheduled cast [param cast_id] still has events on the clock.
+func has_cast(cast_id: int) -> bool:
+	return _casts.has(cast_id)
 
 
 ## Skill v2 B1.5: the number of scheduled casts not finished yet.
@@ -309,7 +330,7 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 		waves[int(w["wave"])] = w
 	_casts[id] = {"id": id, "side": side, "skill_id": skill_id, "level": level, "cells": cells.duplicate(), "trade": trade,
 		"featured_bonus": featured_bonus if is_player else {}, "context": cast_context, "cast_cells": count,
-		"max_hits": int(plan["max_hits"]), "hits": 0, "wave_hit": {}, "wave_left": wave_left, "waves": waves,
+		"max_hits": int(plan["max_hits"]) + _awakening_extra(is_player, skill), "hits": 0, "wave_hit": {}, "wave_left": wave_left, "waves": waves,
 		"events_left": (plan["events"] as Array).size(), "damage": 0.0, "interrupted": false, "last_hit": {},
 		"crit_at_start": _player_crit_at_start if is_player else 1.0,
 		"healed": CutEffects.heal_caster(_state, side, skill)}
@@ -334,6 +355,14 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 		"events": listed, "context": cast_context})
 	if (plan["events"] as Array).is_empty():
 		_finish_cast(id)
+
+
+# Ngàn Kiếm: the extra max hits of an active Awakening for the player's card (0 otherwise).
+func _awakening_extra(is_player: bool, skill: Dictionary) -> int:
+	var extra: int = int(skill.get("awakening_extra_hits", 0))
+	if not is_player or extra <= 0 or not player_awakening_fn.is_valid():
+		return 0
+	return extra if bool(player_awakening_fn.call()) else 0
 
 
 # Fires every event due by now (at <= clock + tie window), in order. Stops when a unit dies.
@@ -382,11 +411,15 @@ func _fire_event(ev: Dictionary) -> void:
 		ev["target_cell"] = result.get("cell", Vector2i(-1, -1))
 		ev["crit"] = bool(result.get("crit", false))
 		ev["pinned"] = bool(result.get("pinned", false))
+		ev["parried"] = bool(result.get("parried", false))
 		if hit:
 			cast["hits"] = int(cast["hits"]) + 1
 			(cast["wave_hit"] as Dictionary)[wave] = true
 			cast["damage"] = float(cast["damage"]) + float(result.get("damage", 0.0))
 			cast["last_hit"] = result
+			if is_player and not bool(cast.get("pattern_hit", false)) and not bool(result.get("parried", false)) 					and not _skill_config.is_parry_card(skill_id) and pattern_hit_fn.is_valid():
+				cast["pattern_hit"] = true
+				pattern_hit_fn.call()
 			var at_zero: bool = float(ev["t"]) <= TIE_EPSILON_SEC
 			var may_interrupt: bool = not bool(cast["interrupted"]) and not (bool(cast["trade"]) and at_zero)
 			may_interrupt = may_interrupt and not bool(result.get("parried", false))

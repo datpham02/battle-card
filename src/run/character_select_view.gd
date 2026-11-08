@@ -538,7 +538,8 @@ func _draw_hero(area: Rect2, id: String, locked: bool) -> void:
 	var index: int = clip_frame_at(clip, 0.0 if locked else _anim_time)
 	if index < 0:
 		return
-	var src: Rect2i = (clip["frames"] as Array)[index]
+	# The body rows only (bottom-aligned frames): a taller frame for a raised-weapon clip must not shrink the portrait.
+	var src: Rect2i = sheet.body_rect((clip["frames"] as Array)[index])
 	# Scaled by the height (the frames carry wide empty sides for weapons and casts); what overflows the card's width
 	# is cropped evenly from both sides, in whole art px.
 	var k: int = maxi(floori(area.size.y / src.size.y), 1)

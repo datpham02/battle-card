@@ -18,7 +18,9 @@ const UNITS := {
 		# 2026-10-31: v3 tall anchor (PixelLab 2d093318...), PixMiniMax south-east clips cleaned to 96x70.
 		# 2026-11-02: guard stance (user: the knight holds the sword ready the whole battle): idle, hit and the four
 		# directional dashes come from the guard_* candidates, the match-start draw from draw_to_guard.
-		"frame": Vector2i(96, 70), "sheet": Vector2i(872, 993), "facing": "right",
+		# 2026-11-08 (option A, user-approved): the frame grew to 96x92 for the cast_overhead headroom; the 96x70
+		# sources are bottom-aligned (22 clear rows on top) and body_h 70 keeps the HUD / portraits on the old body.
+		"frame": Vector2i(96, 92), "source": Vector2i(96, 70), "body_h": 70, "sheet": Vector2i(872, 1394), "facing": "right",
 		"candidate": "swordsman/v3-tall/clean-96x70/%s.png",
 		"clips": [
 			# 2026-11-05: idle = anim-idle-v2 (PixMiniMax breathing + cape follow-through, 8 frames @125 ms), cleaned copies in guard_idle_v2.
@@ -32,6 +34,8 @@ const UNITS := {
 			["cast_gesture", ["guard_cast/0", "guard_cast/1", "guard_cast/2", "guard_cast/3", "guard_cast/4", "guard_cast/5", "guard_cast/6", "guard_cast/7", "guard_cast/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
 			# 2026-11-08: Trảm Địa cast_forward (PixMiniMax 5e5e14ed, user-approved; mechanical clean, see clips.json note).
 			["cast_forward", ["cast_forward/0", "cast_forward/1", "cast_forward/2", "cast_forward/3", "cast_forward/4", "cast_forward/5", "cast_forward/6", "cast_forward/7", "cast_forward/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
+			# 2026-11-08: Ngàn Kiếm cast_summon (PixMiniMax 91224bb1, user-approved; 96x92 sources; see clips.json note).
+			["cast_summon", ["cast_summon/0", "cast_summon/1", "cast_summon/2", "cast_summon/3", "cast_summon/4", "cast_summon/5", "cast_summon/6", "cast_summon/7", "cast_summon/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
 			["hit", ["guard_hit/0", "guard_hit/1", "guard_hit/2"], [40, 40, 40], "once"],
 			["victory", ["victory/0", "victory/1", "victory/2", "victory/3", "victory/4"], [100, 100, 100, 100, 100], "hold_last"],
 			["defeat", ["defeat/0", "defeat/1", "defeat/2", "defeat/3", "defeat/4", "defeat/5", "defeat/6", "defeat/7"], [100, 100, 100, 100, 100, 100, 100, 100], "hold_last"],
@@ -179,6 +183,14 @@ func _same_pixels(sheet: Image, rect: Rect2i, frame: Image) -> bool:
 	return true
 
 
+func _rows_clear(sheet: Image, at: Vector2i, w: int, h: int) -> bool:
+	for y: int in h:
+		for x: int in w:
+			if sheet.get_pixel(at.x + x, at.y + y).a != 0.0:
+				return false
+	return true
+
+
 func _gutter_clear(sheet: Image, frame: Vector2i, cols: int, rows: int) -> bool:
 	for c: int in range(1, cols):
 		var gx: int = c * (frame.x + 1) - 1
@@ -237,6 +249,8 @@ func _check_unit(uid: String, spec: Dictionary, palette: Dictionary) -> void:
 	var tessera: Dictionary = meta.get("tessera", {})
 	ck("%s: facing = %s" % [uid, spec["facing"]], tessera.get("facing", "") == spec["facing"])
 	ck("%s: tessera.frame" % uid, int(tessera.get("frame", {}).get("w", 0)) == frame.x and int(tessera.get("frame", {}).get("h", 0)) == frame.y)
+	ck("%s: tessera.body_h only when the unit declares one" % uid, int(tessera.get("body_h", -1)) == int(spec.get("body_h", -1)))
+	var source: Vector2i = spec.get("source", frame)
 	var frames: Array = doc["frames"]
 	var expected_total: int = 0
 	var all_ok: bool = true
@@ -263,9 +277,15 @@ func _check_unit(uid: String, spec: Dictionary, palette: Dictionary) -> void:
 			# 3 the cell equals the source frame, and the source frame equals the candidate
 			var src_path: String = SRC_DIR + "%s/%s/%d.png" % [uid, clip[0], n]
 			var src: Image = Image.load_from_file(_abs(src_path))
-			ck("%s: source %s/%d.png loads at %s" % [uid, clip[0], n, frame], src != null and Vector2i(src.get_width(), src.get_height()) == frame)
+			# a source is the unit's old height (bottom-aligned) or, for a clip made at the new height, the full frame
+			ck("%s: source %s/%d.png loads at %s or %s" % [uid, clip[0], n, source, frame], src != null and src.get_width() == frame.x
+				and (src.get_height() == source.y or src.get_height() == frame.y))
 			if src != null and pos_ok:
-				ck("%s: cell %s_%d pixel-identical to source" % [uid, clip[0], n], _same_pixels(sheet, rect, src))
+				# A shorter source is bottom-aligned: its pixels on the cell's bottom rows, clear rows above (feet kept).
+				var pad: int = frame.y - src.get_height()
+				ck("%s: cell %s_%d pixel-identical to source (bottom-aligned)" % [uid, clip[0], n],
+					_same_pixels(sheet, Rect2i(rect.position + Vector2i(0, pad), Vector2i(rect.size.x, src.get_height())), src)
+					and _rows_clear(sheet, rect.position, rect.size.x, pad))
 			var cand_path: String = CANDIDATES + spec["candidate"] % names[n]
 			var src_bytes: PackedByteArray = FileAccess.get_file_as_bytes(_abs(src_path))
 			var cand_bytes: PackedByteArray = FileAccess.get_file_as_bytes(_abs(cand_path))

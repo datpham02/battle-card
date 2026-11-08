@@ -351,7 +351,16 @@ const TRAM_ROT_PREFIX: String = "--tram-rot="
 const TRAM_MOVE_PREFIX: String = "--tram-move="
 const TRAM_FIRST_ARG: String = "--tram-first"
 const TRAM_CARD: String = "tram_dia"
+## Skill v2: the scheduled card tram_live casts (--live-card=ngan_kiem); default TRAM_CARD.
+const LIVE_CARD_PREFIX: String = "--live-card="
 var _tram_move: Vector2i = Vector2i.ZERO
+## Cast Commitment scenarios (tram_live, Ngàn Kiếm prototype): --channel-cancel-at=S presses Hủy S s into the channel
+## (after the commit it is the "refused" case); --after-cancel-step=dx,dy steps the hero once the cancel is done;
+## --boss-move-at=S:dx,dy moves the enemy S s into the channel. Timed on the arbiter clock from the swing start.
+const CHANNEL_CANCEL_AT_PREFIX: String = "--channel-cancel-at="
+const AFTER_CANCEL_STEP_PREFIX: String = "--after-cancel-step="
+const BOSS_MOVE_AT_PREFIX: String = "--boss-move-at="
+var _scn: Dictionary = {}
 ## Task 5 item 5 evidence: `--cast-lock` cracks the first non-foe cell of the cast_live mask (StatusEffects.apply_drop
 ## on the enemy half) before the swing, so the cast runs over a locked cell.
 const CAST_LOCK_ARG: String = "--cast-lock"
@@ -876,12 +885,18 @@ func _tram_live_demo() -> void:
 			if p.size() == 2:
 				_tram_move = Vector2i(p[0].to_int(), p[1].to_int())
 	var first_wanted: bool = OS.get_cmdline_user_args().has(TRAM_FIRST_ARG)
+	# Skill v2: --live-card=<id> casts another scheduled card the same way (ngan_kiem); default tram_dia.
+	var card: String = TRAM_CARD
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(LIVE_CARD_PREFIX):
+			card = arg.substr(LIVE_CARD_PREFIX.length())
 	var piece: Piece = PieceLibrary.load_from_file().make_piece(shape, rot)
 	if piece == null:
 		push_warning("DemoArgs: tram_live: unknown shape %s" % shape)
 		return
-	var skill: Dictionary = combat.get_skill_config().get_skill(TRAM_CARD)
-	var delivery: Dictionary = combat.delivery_for(TRAM_CARD)
+	var skill: Dictionary = combat.get_skill_config().get_skill(card)
+	var delivery: Dictionary = combat.delivery_for(card)
+	var one: Array[Piece] = [piece]
 	var foe: Array[Vector2i] = state.enemy_footprint_cells()
 	var best: Array[Vector2i] = []
 	var best_score: int = -999
@@ -893,12 +908,12 @@ func _tram_live_demo() -> void:
 				ok = ok and grid.is_enemy_cell(c)
 			if not ok or not state.unit_in(CombatState.Side.ENEMY, cells):
 				continue
-			var ctx0: Dictionary = {"delivery": delivery, "caster_cell": state.player_cell}
-			var ev: Array[Dictionary] = CastResolver.surge_events(skill, cells, ctx0, combat.delivery_timing())
+			var ctx0: Dictionary = CastContext.build(card, 1, one, [cells], delivery, false, CombatState.Side.PLAYER, state.player_cell)
+			var ev: Array = CastResolver.plan(skill, cells, ctx0, combat.delivery_timing())["events"]
 			var step: int = 99
 			for e: Dictionary in ev:
 				if foe.has((e["cells"] as Array)[0]):
-					step = mini(step, int(e["step"]))
+					step = mini(step, int(e.get("step", e["index"])))
 			var score: int = -step if first_wanted else step
 			if score > best_score:
 				best_score = score
@@ -913,15 +928,82 @@ func _tram_live_demo() -> void:
 				print("DemoArgs: tram_live locked %s" % str(c))
 				break
 	var placed: Array[Piece] = [piece]
-	var ctx: Dictionary = CastContext.build(TRAM_CARD, 1, placed, [best], delivery, false, CombatState.Side.PLAYER,
+	var ctx: Dictionary = CastContext.build(card, 1, placed, [best], delivery, false, CombatState.Side.PLAYER,
 		state.player_cell, {"cast_mode": "direct"})
 	combat.get_arbiter().impact_resolved.connect(_tram_on_impact)
-	if not combat.get_cut_actor().begin_swing(best, TRAM_CARD, true, 1, -1.0, {}, ctx):
+	if not combat.get_cut_actor().begin_swing(best, card, true, 1, -1.0, {}, ctx):
 		push_warning("DemoArgs: tram_live: the swing did not start")
 		return
 	combat.freeze_time = false
+	_scenario_setup(combat)
+	# VFX scale guide (2026-11-08): the real art-px geometry of the target cells (flat rect and drawn quad bbox).
+	var canvas: BattleCanvas = combat.get_battle_canvas()
+	if canvas != null and canvas.get_floor_layer() != null:
+		var flat: Rect2i = canvas.get_floor_layer().cell_art_rect(best[0])
+		var geo: BoardGeometry = BoardGeometry.of(combat)
+		var quad: PackedVector2Array = geo.art_quad(Rect2(flat)) if geo != null else PackedVector2Array()
+		var lo := Vector2(INF, INF)
+		var hi := Vector2(-INF, -INF)
+		for p: Vector2 in quad:
+			lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
+			hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
+		print("DemoArgs: tram_live geometry cell=%s flat=%s drawn=%s feet_hero=%s" % [str(best[0]), str(flat),
+			str(Rect2(lo, hi - lo)), str(canvas.get_unit_layer().unit_feet_art(CombatState.Side.PLAYER)) if canvas.get_unit_layer() != null else "?"])
 	print("DemoArgs: tram_live shape=%s rot=%d cells=%s tags=%s boss=%s duration=%.3f" % [shape, rot, str(best),
 		str((ctx["pieces"] as Array)[0]["tags"]), str(foe), combat.get_cut_actor().get_time_left()])
+
+
+func _scenario_setup(combat: CombatView) -> void:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(CHANNEL_CANCEL_AT_PREFIX):
+			_scn["cancel_at"] = float(arg.substr(CHANNEL_CANCEL_AT_PREFIX.length()))
+		elif arg.begins_with(AFTER_CANCEL_STEP_PREFIX):
+			var p: PackedStringArray = arg.substr(AFTER_CANCEL_STEP_PREFIX.length()).split(",")
+			if p.size() == 2:
+				_scn["step"] = Vector2i(p[0].to_int(), p[1].to_int())
+		elif arg.begins_with(BOSS_MOVE_AT_PREFIX):
+			var q: PackedStringArray = arg.substr(BOSS_MOVE_AT_PREFIX.length()).split(":")
+			var d: PackedStringArray = q[1].split(",") if q.size() == 2 else PackedStringArray()
+			if d.size() == 2:
+				_scn["move_at"] = float(q[0])
+				_scn["move"] = Vector2i(d[0].to_int(), d[1].to_int())
+	_scn["log_only"] = _scn.is_empty()
+	_scn["from"] = combat.get_arbiter().clock()
+	get_tree().process_frame.connect(_scenario_tick)
+
+
+# One scenario frame: fires each scripted action once, at its time on the arbiter clock, and prints what happened.
+func _scenario_tick() -> void:
+	var combat: CombatView = _combat()
+	if combat == null or combat.get_arbiter() == null:
+		return
+	var t: float = combat.get_arbiter().clock() - float(_scn["from"])
+	var hp: float = combat.get_state().player_hp
+	if absf(hp - float(_scn.get("hp", hp))) > 0.001:
+		print("DemoArgs: scenario t=%.3f hero HP %.0f -> %.0f at %s (phase %s)" % [t, float(_scn["hp"]), hp,
+			str(combat.get_state().player_cell), combat.channel_phase()])
+	_scn["hp"] = hp
+	if _scn.has("move_at") and not _scn.has("moved") and t >= float(_scn["move_at"]):
+		_scn["moved"] = true
+		var st: CombatState = combat.get_state()
+		var ok: bool = st.set_enemy_cell(st.enemy_cell + (_scn["move"] as Vector2i))
+		print("DemoArgs: scenario t=%.3f boss moved by %s -> %s ok=%s (phase %s)" % [t, str(_scn["move"]), str(st.enemy_cell), str(ok),
+			combat.channel_phase()])
+	if _scn.has("cancel_at") and not _scn.has("pressed") and t >= float(_scn["cancel_at"]):
+		_scn["pressed"] = true
+		var phase: String = combat.channel_phase()
+		var taken: bool = combat.request_channel_cancel()
+		print("DemoArgs: scenario t=%.3f Hủy pressed in phase '%s' -> %s" % [t, phase, "queued" if taken else "refused"])
+	if _scn.has("pressed") and not _scn.has("reported") and float(_scn["cancel_at"]) + 0.05 <= t:
+		_scn["reported"] = true
+		var flash: Dictionary = combat.get_channel_flash()
+		print("DemoArgs: scenario t=%.3f phase now '%s', feedback %s, scheduled impacts %s" % [t, combat.channel_phase(),
+			"none" if flash.is_empty() else ("ĐÃ CHỐT (refused)" if bool(flash["refused"]) else "ĐÃ HỦY"),
+			str(combat.get_arbiter().active_cast_count())])
+	if _scn.has("step") and _scn.has("reported") and not _scn.has("stepped") and combat.channel_phase() == CombatView.PHASE_NONE:
+		if combat.try_step_player(_scn["step"] as Vector2i):
+			_scn["stepped"] = true
+			print("DemoArgs: scenario t=%.3f hero stepped to %s" % [t, str(combat.get_state().player_cell)])
 
 
 func _tram_on_impact(side: int, ev: Dictionary, hit: bool) -> void:
@@ -929,7 +1011,7 @@ func _tram_on_impact(side: int, ev: Dictionary, hit: bool) -> void:
 	print("TRAM #%d t=%.2f clock=%.3f cell=%s kind=%s step=%d mult=%.2f hit=%s dmg=%.1f pinned=%s" % [int(ev["index"]),
 		float(ev["t"]), combat.get_arbiter().clock(), str((ev["cells"] as Array)[0]), str(ev["kind"]), int(ev.get("step", 0)),
 		float(ev["mult"]), str(hit), float(ev.get("damage", 0.0)), str(ev.get("pinned", false))])
-	if side == CombatState.Side.PLAYER and str(ev["kind"]) == CastResolver.KIND_BURST and _tram_move != Vector2i.ZERO:
+	if side == CombatState.Side.PLAYER and int(ev["index"]) == 0 and _tram_move != Vector2i.ZERO:
 		var st: CombatState = combat.get_state()
 		var moved: bool = st.set_enemy_cell(st.enemy_cell + _tram_move)
 		print("DemoArgs: tram_live boss moved by %s -> %s ok=%s" % [str(_tram_move), str(st.enemy_cell), str(moved)])
@@ -2450,5 +2532,28 @@ func _process(_delta: float) -> void:
 	var image: Image = get_viewport().get_texture().get_image()
 	var err: Error = image.save_png(_shot_path)
 	print("DemoArgs shot %dx%d -> %s (%s)" % [image.get_width(), image.get_height(), _shot_path, error_string(err)])
+	_print_shot_geometry(image.get_size())
 	get_tree().quit()
+
+
+# 2026-11-08 (raised-sword HUD clearance): the hero's drawn feet (art px) and every HUD obstacle rect (screen px) at
+# the shot, so a QA script can test a planned taller pose against the HUD. Dev output only.
+func _print_shot_geometry(vp: Vector2i) -> void:
+	var combat: CombatView = _combat()
+	if combat == null or combat.get_battle_canvas() == null:
+		return
+	var units: UnitLayer = combat.get_battle_canvas().get_unit_layer()
+	if units == null:
+		return
+	var v := Vector2(vp)
+	var named: Dictionary = {"top_row": ScreenLayout.hud_top_row_rect(v), "player_panel": ScreenLayout.hud_player_panel_rect(v),
+		"floor_title": ScreenLayout.floor_title_rect(v), "gold": ScreenLayout.hud_gold_rect(v), "pause": ScreenLayout.pause_button_rect(v),
+		"status_row": ScreenLayout.hud_status_row_rect(v), "relic_strip": ScreenLayout.hud_relic_strip_rect(v),
+		"boss_status": ScreenLayout.hud_boss_status_rect(v)}
+	var rects: Array[String] = []
+	for k: String in named:
+		var r: Rect2 = named[k]
+		rects.append("%s:%d,%d,%d,%d" % [k, r.position.x, r.position.y, r.size.x, r.size.y])
+	print("DemoArgs shot geometry feet_hero_art=%s art_rect=%s hud=%s" % [str(units.unit_feet_art(CombatState.Side.PLAYER)),
+		str(ScreenLayout.art_rect(Vector2(vp))), ";".join(rects)])
 

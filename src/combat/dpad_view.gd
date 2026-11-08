@@ -199,12 +199,12 @@ func _can_step_now() -> bool:
 	return _combat.get_mover().is_ready()
 
 
-# True while Focus pauses the match and locks movement (Story 012): the stick dims and every
-# drag or key is swallowed without a step.
+# True while Focus pauses the match and locks movement (Story 012), or a rooting cast holds the hero (Ngàn Kiếm, user
+# 2026-11-08): the stick dims and every drag or key is swallowed without a step.
 func _is_locked() -> bool:
 	if _combat == null:
 		return false
-	return _combat.is_movement_locked()
+	return _combat.is_step_locked()
 
 
 func _draw() -> void:

@@ -246,6 +246,13 @@ const TEXT_ROW_WARNING: String = "ui.hud.row_warning"
 const WARN_SEC_PARAM: String = "warn_sec"
 
 const TEXT_INTERRUPT: String = "ui.hud.interrupt"
+## Cast Commitment (Ngàn Kiếm prototype): the cost line under the channel's Hủy, and the cancel / refused feedback.
+const TEXT_CHANNEL_COST: String = "ui.hud.channel_cancel_cost"
+const TEXT_CHANNEL_CANCELLED: String = "ui.hud.channel_cancelled"
+const TEXT_CHANNEL_CANCELLED_SUB: String = "ui.hud.channel_cancelled_sub"
+const TEXT_CHANNEL_COMMITTED: String = "ui.hud.channel_committed"
+const TEXT_CHANNEL_COMMITTED_SUB: String = "ui.hud.channel_committed_sub"
+const CHANNEL_CANCEL_COLOR: Color = Color(0.85, 0.85, 0.9)
 const TEXT_INTERRUPT_BOSS: String = "ui.hud.interrupt_boss"
 const TEXT_INTERRUPT_PLAYER: String = "ui.hud.interrupt_player"
 const TEXT_CONFIRM: String = "ui.hud.cast"
@@ -795,7 +802,7 @@ static func dot_pop_offset(elapsed: float, index: int) -> Vector2:
 	return Vector2(DOT_POP_STAGGER * index, -DOT_POP_LIFT - DOT_POP_RISE * t)
 
 
-# Screen px above the feet a floor-damage pop starts for [param side]: the sprite frame's height at the art scale
+# Screen px above the feet a floor-damage pop starts for [param side]: the sprite's body height at the art scale
 # plus DOT_POP_HEAD_GAP (over the head); DOT_POP_LIFT for a unit drawn without a sheet.
 func _pop_lift(vp: Vector2, side: int) -> float:
 	var canvas: BattleCanvas = _combat.get_battle_canvas()
@@ -803,7 +810,7 @@ func _pop_lift(vp: Vector2, side: int) -> float:
 	var sheet: SpriteSheet = units.get_sheet(side) if units != null else null
 	if sheet == null or units.is_placeholder(side):
 		return DOT_POP_LIFT
-	return float(sheet.frame_size().y * ScreenLayout.art_scale(vp)) + DOT_POP_HEAD_GAP
+	return float(sheet.body_height() * ScreenLayout.art_scale(vp)) + DOT_POP_HEAD_GAP
 
 
 ## Alpha of a floor-damage pop with [param left] seconds to go: 1 until the last DOT_POP_FADE share, then linear to 0.
@@ -875,6 +882,10 @@ func _input(event: InputEvent) -> void:
 # Returns true when the key was used (consumed, so Esc does not also pause the run).
 func _piece_key(code: Key) -> bool:
 	if code == KEY_ESCAPE:
+		# Cast Commitment: Esc cancels a channel (after the accidental-tap guard) and is refused during the commit lock.
+		if _combat.is_channel_cancel_shown() or _combat.is_commit_locked():
+			_combat.request_channel_cancel()
+			return true
 		return _combat.cancel_placement()
 	if code == KEY_R:
 		return _combat.rotate_piece()
@@ -900,6 +911,11 @@ func _press_at(pos: Vector2, emulated: bool) -> bool:
 	var flow: CutFlow = _combat.get_cut_flow()
 	# Controls v3: a tap on a buff / debuff frame opens (or closes) its tooltip; any other press closes it.
 	if not flow.is_menu_open() and _status_press(vp, pos, emulated):
+		return true
+	# Cast Commitment: the channel's Hủy (right, above the Block bag). A press there during the commit lock is refused.
+	if (_combat.is_channel_cancel_shown() or _combat.is_commit_locked()) and ScreenLayout.channel_cancel_hit_rect(vp).has_point(pos):
+		if not emulated:
+			_combat.request_channel_cancel()
 		return true
 	if _combat.is_placing() and ScreenLayout.rotate_hit_rect(vp).has_point(pos):
 		# Real touches only act (the emulated mouse copy of the first finger is swallowed). Any finger
@@ -1314,6 +1330,7 @@ func _draw() -> void:
 	_draw_hazard_traits(vp)
 	_draw_vent_eruptions(vp)
 	_draw_interrupt(vp)
+	_draw_channel_flash(vp)
 	_draw_feint(vp)
 	_draw_hp_plates(vp)
 	_draw_pins(vp)
@@ -3122,12 +3139,47 @@ func _draw_place_hint(vp: Vector2) -> void:
 # Controls v3: the "Hủy" button: right of Xoay while PLACING / in the place window, in the corner place of Tung phép while
 # the card menu is open (then drawn above the menu overlay by _draw_menu).
 func _draw_cancel(vp: Vector2) -> void:
+	if _combat.is_channel_cancel_shown():
+		_draw_channel_cancel(vp)
+		return
 	var menu: bool = _combat.get_cut_flow().is_menu_open()
 	if not (_combat.is_placing() or _combat.is_placed() or menu):
 		return
 	var rect: Rect2 = ScreenLayout.cancel_button_rect(vp, menu)
 	# Battle HUD pass 2026-11-01: the menus' pixel stone NEUTRAL button (it returns the pieces, nothing is lost).
 	UiButtons.draw_button(self, rect, tr(TEXT_CANCEL), UiButtons.Style.NEUTRAL, UiButtons.is_pressed_at(self, rect), true, BUTTON_FONT_SIZE)
+
+
+# Cast Commitment (Ngàn Kiếm prototype): while the hero channels, one DANGER "Hủy" on the right above the Block bag
+# (ScreenLayout.channel_cancel_rect; greyed during the accidental-tap guard) with the cost written over it: the Blocks
+# are spent and the card keeps its cooldown.
+func _draw_channel_cancel(vp: Vector2) -> void:
+	var rect: Rect2 = ScreenLayout.channel_cancel_rect(vp)
+	var ready: bool = _combat.can_cancel_channel()
+	UiButtons.draw_button(self, rect, tr(TEXT_CANCEL), UiButtons.Style.DANGER, ready and UiButtons.is_pressed_at(self, rect), ready,
+		BUTTON_FONT_SIZE)
+	var s: float = ScreenLayout.controls_scale(vp)
+	var size: int = maxi(int(roundf(BUTTON_FONT_SIZE * 0.62)), 10)
+	# the cost line, right-aligned to the button (it may be wider than the button)
+	var width: float = rect.size.x * 5.0
+	EffectText.draw(self, Vector2(rect.end.x - width, rect.position.y - roundf(4.0 * s)), tr(TEXT_CHANNEL_COST), size, EffectText.NEUTRAL,
+		HORIZONTAL_ALIGNMENT_RIGHT, width, s)
+
+
+# Cast Commitment feedback over the cast cells: ĐÃ HỦY (Blocks spent, card on cooldown, no damage) or ĐÃ CHỐT (the cast
+# was committed; too late to cancel). Outlined text, no backing (house rule for battle effect text).
+func _draw_channel_flash(vp: Vector2) -> void:
+	var flash: Dictionary = _combat.get_channel_flash()
+	if flash.is_empty():
+		return
+	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
+	var cells: Array[Vector2i] = flash["cells"]
+	if cells.is_empty():
+		cells = [_combat.get_state().player_cell]
+	if bool(flash["refused"]):
+		_draw_cells_label(vp, cells, tr(TEXT_CHANNEL_COMMITTED), tr(TEXT_CHANNEL_COMMITTED_SUB), INTERRUPT_COLOR, fade)
+	else:
+		_draw_cells_label(vp, cells, tr(TEXT_CHANNEL_CANCELLED), tr(TEXT_CHANNEL_CANCELLED_SUB), CHANNEL_CANCEL_COLOR, fade)
 
 
 # 2026-11-01 card menu (quick spec menu-la-giua-man-hinh): the light grey see-through overlay over the whole screen and

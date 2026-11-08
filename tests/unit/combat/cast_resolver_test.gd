@@ -43,6 +43,9 @@ func test_instant_card_is_one_wave() -> void:
 	var sc: SkillConfig = SkillConfig.load_from_file()
 	var cells: Array[Vector2i] = [Vector2i(3, 1), Vector2i(4, 1), Vector2i(5, 1)]
 	for id: String in sc.card_order:
+		# Skill v2 cards (resolve not instant: tram_dia, ngan_kiem) are scheduled on purpose; their own tests cover them.
+		if str(sc.get_skill(id).get("resolve", "instant")) != "instant":
+			continue
 		var waves: Array[Dictionary] = CastResolver.schedule(sc.get_skill(id), cells, {})
 		var ok: bool = waves.size() == 1 and is_zero_approx(float(waves[0]["t"])) and (waves[0]["cells"] as Array) == cells
 		if not ok:

@@ -6,7 +6,7 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -14,11 +14,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -28,7 +28,7 @@
         "x": 97,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -36,11 +36,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -50,7 +50,7 @@
         "x": 194,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -58,11 +58,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -72,7 +72,7 @@
         "x": 291,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -80,11 +80,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -94,7 +94,7 @@
         "x": 388,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -102,11 +102,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -116,7 +116,7 @@
         "x": 485,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -124,11 +124,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -138,7 +138,7 @@
         "x": 582,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -146,11 +146,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -160,7 +160,7 @@
         "x": 679,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -168,11 +168,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 125
     },
@@ -180,9 +180,9 @@
       "filename": "kiem_si_draw_0",
       "frame": {
         "x": 0,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -190,11 +190,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 60
     },
@@ -202,9 +202,9 @@
       "filename": "kiem_si_draw_1",
       "frame": {
         "x": 97,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -212,11 +212,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 60
     },
@@ -224,9 +224,9 @@
       "filename": "kiem_si_draw_2",
       "frame": {
         "x": 194,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -234,11 +234,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 80
     },
@@ -246,9 +246,9 @@
       "filename": "kiem_si_draw_3",
       "frame": {
         "x": 291,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -256,11 +256,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 80
     },
@@ -268,9 +268,9 @@
       "filename": "kiem_si_draw_4",
       "frame": {
         "x": 388,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -278,11 +278,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 80
     },
@@ -290,9 +290,9 @@
       "filename": "kiem_si_draw_5",
       "frame": {
         "x": 485,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -300,11 +300,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 80
     },
@@ -312,9 +312,9 @@
       "filename": "kiem_si_draw_6",
       "frame": {
         "x": 582,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -322,11 +322,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 80
     },
@@ -334,9 +334,9 @@
       "filename": "kiem_si_draw_7",
       "frame": {
         "x": 679,
-        "y": 71,
+        "y": 93,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -344,11 +344,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 120
     },
@@ -356,9 +356,9 @@
       "filename": "kiem_si_step_0",
       "frame": {
         "x": 0,
-        "y": 142,
+        "y": 186,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -366,11 +366,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -378,9 +378,9 @@
       "filename": "kiem_si_step_1",
       "frame": {
         "x": 97,
-        "y": 142,
+        "y": 186,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -388,11 +388,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -400,9 +400,9 @@
       "filename": "kiem_si_step_2",
       "frame": {
         "x": 194,
-        "y": 142,
+        "y": 186,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -410,11 +410,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -422,9 +422,9 @@
       "filename": "kiem_si_step_3",
       "frame": {
         "x": 291,
-        "y": 142,
+        "y": 186,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -432,11 +432,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -444,9 +444,9 @@
       "filename": "kiem_si_step_forward_0",
       "frame": {
         "x": 0,
-        "y": 213,
+        "y": 279,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -454,11 +454,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -466,9 +466,9 @@
       "filename": "kiem_si_step_forward_1",
       "frame": {
         "x": 97,
-        "y": 213,
+        "y": 279,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -476,11 +476,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -488,9 +488,9 @@
       "filename": "kiem_si_step_forward_2",
       "frame": {
         "x": 194,
-        "y": 213,
+        "y": 279,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -498,11 +498,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -510,9 +510,9 @@
       "filename": "kiem_si_step_forward_3",
       "frame": {
         "x": 291,
-        "y": 213,
+        "y": 279,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -520,11 +520,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -532,9 +532,9 @@
       "filename": "kiem_si_step_forward_4",
       "frame": {
         "x": 388,
-        "y": 213,
+        "y": 279,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -542,11 +542,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -554,9 +554,9 @@
       "filename": "kiem_si_step_forward_5",
       "frame": {
         "x": 485,
-        "y": 213,
+        "y": 279,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -564,11 +564,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -576,9 +576,9 @@
       "filename": "kiem_si_step_forward_6",
       "frame": {
         "x": 582,
-        "y": 213,
+        "y": 279,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -586,11 +586,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -598,9 +598,9 @@
       "filename": "kiem_si_step_back_0",
       "frame": {
         "x": 0,
-        "y": 284,
+        "y": 372,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -608,11 +608,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -620,9 +620,9 @@
       "filename": "kiem_si_step_back_1",
       "frame": {
         "x": 97,
-        "y": 284,
+        "y": 372,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -630,11 +630,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -642,9 +642,9 @@
       "filename": "kiem_si_step_back_2",
       "frame": {
         "x": 194,
-        "y": 284,
+        "y": 372,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -652,11 +652,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -664,9 +664,9 @@
       "filename": "kiem_si_step_back_3",
       "frame": {
         "x": 291,
-        "y": 284,
+        "y": 372,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -674,11 +674,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -686,9 +686,9 @@
       "filename": "kiem_si_step_back_4",
       "frame": {
         "x": 388,
-        "y": 284,
+        "y": 372,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -696,11 +696,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -708,9 +708,9 @@
       "filename": "kiem_si_step_back_5",
       "frame": {
         "x": 485,
-        "y": 284,
+        "y": 372,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -718,11 +718,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -730,9 +730,9 @@
       "filename": "kiem_si_step_back_6",
       "frame": {
         "x": 582,
-        "y": 284,
+        "y": 372,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -740,11 +740,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -752,9 +752,9 @@
       "filename": "kiem_si_step_up_0",
       "frame": {
         "x": 0,
-        "y": 355,
+        "y": 465,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -762,11 +762,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -774,9 +774,9 @@
       "filename": "kiem_si_step_up_1",
       "frame": {
         "x": 97,
-        "y": 355,
+        "y": 465,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -784,11 +784,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -796,9 +796,9 @@
       "filename": "kiem_si_step_up_2",
       "frame": {
         "x": 194,
-        "y": 355,
+        "y": 465,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -806,11 +806,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -818,9 +818,9 @@
       "filename": "kiem_si_step_up_3",
       "frame": {
         "x": 291,
-        "y": 355,
+        "y": 465,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -828,11 +828,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -840,9 +840,9 @@
       "filename": "kiem_si_step_up_4",
       "frame": {
         "x": 388,
-        "y": 355,
+        "y": 465,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -850,11 +850,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -862,9 +862,9 @@
       "filename": "kiem_si_step_up_5",
       "frame": {
         "x": 485,
-        "y": 355,
+        "y": 465,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -872,11 +872,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -884,9 +884,9 @@
       "filename": "kiem_si_step_up_6",
       "frame": {
         "x": 582,
-        "y": 355,
+        "y": 465,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -894,11 +894,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -906,9 +906,9 @@
       "filename": "kiem_si_step_down_0",
       "frame": {
         "x": 0,
-        "y": 426,
+        "y": 558,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -916,11 +916,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -928,9 +928,9 @@
       "filename": "kiem_si_step_down_1",
       "frame": {
         "x": 97,
-        "y": 426,
+        "y": 558,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -938,11 +938,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -950,9 +950,9 @@
       "filename": "kiem_si_step_down_2",
       "frame": {
         "x": 194,
-        "y": 426,
+        "y": 558,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -960,11 +960,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -972,9 +972,9 @@
       "filename": "kiem_si_step_down_3",
       "frame": {
         "x": 291,
-        "y": 426,
+        "y": 558,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -982,11 +982,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -994,9 +994,9 @@
       "filename": "kiem_si_step_down_4",
       "frame": {
         "x": 388,
-        "y": 426,
+        "y": 558,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1004,11 +1004,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -1016,9 +1016,9 @@
       "filename": "kiem_si_step_down_5",
       "frame": {
         "x": 485,
-        "y": 426,
+        "y": 558,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1026,11 +1026,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -1038,9 +1038,9 @@
       "filename": "kiem_si_step_down_6",
       "frame": {
         "x": 582,
-        "y": 426,
+        "y": 558,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1048,11 +1048,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -1060,9 +1060,9 @@
       "filename": "kiem_si_cast_gesture_0",
       "frame": {
         "x": 0,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1070,11 +1070,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1082,9 +1082,9 @@
       "filename": "kiem_si_cast_gesture_1",
       "frame": {
         "x": 97,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1092,11 +1092,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1104,9 +1104,9 @@
       "filename": "kiem_si_cast_gesture_2",
       "frame": {
         "x": 194,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1114,11 +1114,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1126,9 +1126,9 @@
       "filename": "kiem_si_cast_gesture_3",
       "frame": {
         "x": 291,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1136,11 +1136,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1148,9 +1148,9 @@
       "filename": "kiem_si_cast_gesture_4",
       "frame": {
         "x": 388,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1158,11 +1158,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 200
     },
@@ -1170,9 +1170,9 @@
       "filename": "kiem_si_cast_gesture_5",
       "frame": {
         "x": 485,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1180,11 +1180,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -1192,9 +1192,9 @@
       "filename": "kiem_si_cast_gesture_6",
       "frame": {
         "x": 582,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1202,11 +1202,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1214,9 +1214,9 @@
       "filename": "kiem_si_cast_gesture_7",
       "frame": {
         "x": 679,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1224,11 +1224,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1236,9 +1236,9 @@
       "filename": "kiem_si_cast_gesture_8",
       "frame": {
         "x": 776,
-        "y": 497,
+        "y": 651,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1246,11 +1246,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 133
     },
@@ -1258,9 +1258,9 @@
       "filename": "kiem_si_cast_forward_0",
       "frame": {
         "x": 0,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1268,11 +1268,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1280,9 +1280,9 @@
       "filename": "kiem_si_cast_forward_1",
       "frame": {
         "x": 97,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1290,11 +1290,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1302,9 +1302,9 @@
       "filename": "kiem_si_cast_forward_2",
       "frame": {
         "x": 194,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1312,11 +1312,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1324,9 +1324,9 @@
       "filename": "kiem_si_cast_forward_3",
       "frame": {
         "x": 291,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1334,11 +1334,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1346,9 +1346,9 @@
       "filename": "kiem_si_cast_forward_4",
       "frame": {
         "x": 388,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1356,11 +1356,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 200
     },
@@ -1368,9 +1368,9 @@
       "filename": "kiem_si_cast_forward_5",
       "frame": {
         "x": 485,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1378,11 +1378,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 50
     },
@@ -1390,9 +1390,9 @@
       "filename": "kiem_si_cast_forward_6",
       "frame": {
         "x": 582,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1400,11 +1400,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 83
     },
@@ -1412,9 +1412,9 @@
       "filename": "kiem_si_cast_forward_7",
       "frame": {
         "x": 679,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1422,11 +1422,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1434,9 +1434,9 @@
       "filename": "kiem_si_cast_forward_8",
       "frame": {
         "x": 776,
-        "y": 568,
+        "y": 744,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1444,11 +1444,209 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
+      },
+      "duration": 133
+    },
+    {
+      "filename": "kiem_si_cast_summon_0",
+      "frame": {
+        "x": 0,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_summon_1",
+      "frame": {
+        "x": 97,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_summon_2",
+      "frame": {
+        "x": 194,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_summon_3",
+      "frame": {
+        "x": 291,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_summon_4",
+      "frame": {
+        "x": 388,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 200
+    },
+    {
+      "filename": "kiem_si_cast_summon_5",
+      "frame": {
+        "x": 485,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 50
+    },
+    {
+      "filename": "kiem_si_cast_summon_6",
+      "frame": {
+        "x": 582,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_summon_7",
+      "frame": {
+        "x": 679,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_cast_summon_8",
+      "frame": {
+        "x": 776,
+        "y": 837,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
       },
       "duration": 133
     },
@@ -1456,9 +1654,9 @@
       "filename": "kiem_si_hit_0",
       "frame": {
         "x": 0,
-        "y": 639,
+        "y": 930,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1466,11 +1664,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 40
     },
@@ -1478,9 +1676,9 @@
       "filename": "kiem_si_hit_1",
       "frame": {
         "x": 97,
-        "y": 639,
+        "y": 930,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1488,11 +1686,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 40
     },
@@ -1500,9 +1698,9 @@
       "filename": "kiem_si_hit_2",
       "frame": {
         "x": 194,
-        "y": 639,
+        "y": 930,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1510,11 +1708,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 40
     },
@@ -1522,9 +1720,9 @@
       "filename": "kiem_si_victory_0",
       "frame": {
         "x": 0,
-        "y": 710,
+        "y": 1023,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1532,11 +1730,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1544,9 +1742,9 @@
       "filename": "kiem_si_victory_1",
       "frame": {
         "x": 97,
-        "y": 710,
+        "y": 1023,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1554,11 +1752,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1566,9 +1764,9 @@
       "filename": "kiem_si_victory_2",
       "frame": {
         "x": 194,
-        "y": 710,
+        "y": 1023,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1576,11 +1774,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1588,9 +1786,9 @@
       "filename": "kiem_si_victory_3",
       "frame": {
         "x": 291,
-        "y": 710,
+        "y": 1023,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1598,11 +1796,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1610,9 +1808,9 @@
       "filename": "kiem_si_victory_4",
       "frame": {
         "x": 388,
-        "y": 710,
+        "y": 1023,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1620,11 +1818,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1632,9 +1830,9 @@
       "filename": "kiem_si_defeat_0",
       "frame": {
         "x": 0,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1642,11 +1840,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1654,9 +1852,9 @@
       "filename": "kiem_si_defeat_1",
       "frame": {
         "x": 97,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1664,11 +1862,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1676,9 +1874,9 @@
       "filename": "kiem_si_defeat_2",
       "frame": {
         "x": 194,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1686,11 +1884,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1698,9 +1896,9 @@
       "filename": "kiem_si_defeat_3",
       "frame": {
         "x": 291,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1708,11 +1906,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1720,9 +1918,9 @@
       "filename": "kiem_si_defeat_4",
       "frame": {
         "x": 388,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1730,11 +1928,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1742,9 +1940,9 @@
       "filename": "kiem_si_defeat_5",
       "frame": {
         "x": 485,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1752,11 +1950,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1764,9 +1962,9 @@
       "filename": "kiem_si_defeat_6",
       "frame": {
         "x": 582,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1774,11 +1972,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1786,9 +1984,9 @@
       "filename": "kiem_si_defeat_7",
       "frame": {
         "x": 679,
-        "y": 781,
+        "y": 1116,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1796,11 +1994,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1808,9 +2006,9 @@
       "filename": "kiem_si_fall_0",
       "frame": {
         "x": 0,
-        "y": 852,
+        "y": 1209,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1818,11 +2016,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1830,9 +2028,9 @@
       "filename": "kiem_si_fall_1",
       "frame": {
         "x": 97,
-        "y": 852,
+        "y": 1209,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1840,11 +2038,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1852,9 +2050,9 @@
       "filename": "kiem_si_fall_2",
       "frame": {
         "x": 194,
-        "y": 852,
+        "y": 1209,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1862,11 +2060,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1874,9 +2072,9 @@
       "filename": "kiem_si_fall_3",
       "frame": {
         "x": 291,
-        "y": 852,
+        "y": 1209,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1884,11 +2082,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 100
     },
@@ -1896,9 +2094,9 @@
       "filename": "kiem_si_awaken_0",
       "frame": {
         "x": 0,
-        "y": 923,
+        "y": 1302,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1906,11 +2104,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 120
     },
@@ -1918,9 +2116,9 @@
       "filename": "kiem_si_awaken_1",
       "frame": {
         "x": 97,
-        "y": 923,
+        "y": 1302,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1928,11 +2126,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 120
     },
@@ -1940,9 +2138,9 @@
       "filename": "kiem_si_awaken_2",
       "frame": {
         "x": 194,
-        "y": 923,
+        "y": 1302,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1950,11 +2148,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 120
     },
@@ -1962,9 +2160,9 @@
       "filename": "kiem_si_awaken_3",
       "frame": {
         "x": 291,
-        "y": 923,
+        "y": 1302,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1972,11 +2170,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 120
     },
@@ -1984,9 +2182,9 @@
       "filename": "kiem_si_awaken_4",
       "frame": {
         "x": 388,
-        "y": 923,
+        "y": 1302,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -1994,11 +2192,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 120
     },
@@ -2006,9 +2204,9 @@
       "filename": "kiem_si_awaken_5",
       "frame": {
         "x": 485,
-        "y": 923,
+        "y": 1302,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "rotated": false,
       "trimmed": false,
@@ -2016,11 +2214,11 @@
         "x": 0,
         "y": 0,
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "sourceSize": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "duration": 120
     }
@@ -2032,7 +2230,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 872,
-      "h": 993
+      "h": 1394
     },
     "scale": "1",
     "frameTags": [
@@ -2091,33 +2289,39 @@
         "direction": "forward"
       },
       {
-        "name": "hit",
+        "name": "cast_summon",
         "from": 66,
-        "to": 68,
+        "to": 74,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 75,
+        "to": 77,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 69,
-        "to": 73,
+        "from": 78,
+        "to": 82,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 74,
-        "to": 81,
+        "from": 83,
+        "to": 90,
         "direction": "forward"
       },
       {
         "name": "fall",
-        "from": 82,
-        "to": 85,
+        "from": 91,
+        "to": 94,
         "direction": "forward"
       },
       {
         "name": "awaken",
-        "from": 86,
-        "to": 91,
+        "from": 95,
+        "to": 100,
         "direction": "forward"
       }
     ],
@@ -2135,7 +2339,7 @@
       "facing": "right",
       "frame": {
         "w": 96,
-        "h": 70
+        "h": 92
       },
       "gutter": 1,
       "columns": 9,
@@ -2149,6 +2353,7 @@
         "step_down": "once",
         "cast_gesture": "once",
         "cast_forward": "once",
+        "cast_summon": "once",
         "hit": "once",
         "victory": "hold_last",
         "defeat": "hold_last",
@@ -2164,7 +2369,8 @@
         "#D8CDB0",
         "#E3B99A",
         "#EEF4FA"
-      ]
+      ],
+      "body_h": 70
     }
   }
 }

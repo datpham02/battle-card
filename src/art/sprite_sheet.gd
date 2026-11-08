@@ -32,6 +32,8 @@ var _image_path: String = ""
 var _facing: String = DEFAULT_FACING
 var _frame_size: Vector2i = Vector2i.ZERO
 var _image_size: Vector2i = Vector2i.ZERO
+## meta.tessera.body_h (0 = the frame height), see body_height().
+var _body_h: int = 0
 ## clip name -> clip Dictionary (see `clip()`), in frameTags order.
 var _clips: Dictionary = {}
 var _texture: Texture2D = null
@@ -111,6 +113,7 @@ static func from_json(data: Dictionary, image_path: String) -> SpriteSheet:
 	sheet._image_path = image_path
 	sheet._frame_size = rects[0].size
 	sheet._image_size = _read_size(m.get("size", null))
+	sheet._body_h = maxi(int(t.get("body_h", 0)), 0)
 	var facing := String(t.get("facing", DEFAULT_FACING))
 	sheet._facing = facing if FACINGS.has(facing) else DEFAULT_FACING
 	sheet._unit_id = String(t.get("unit", ""))
@@ -153,6 +156,19 @@ func facing() -> String:
 ## Size of one frame in art px, read from the first frame (every frame of a unit shares it).
 func frame_size() -> Vector2i:
 	return _frame_size
+
+
+## The standing body height in art px (`meta.tessera.body_h`, else the frame height): what the HUD treats as the
+## unit's height. The Knight's frame is 92 tall for the raised-sword headroom (cast_summon), its body 70.
+func body_height() -> int:
+	return _body_h if _body_h > 0 else _frame_size.y
+
+
+## The bottom body_height() rows of a frame rect [param src] (frames are bottom-aligned: the feet sit on the bottom
+## row): what a portrait that scales by height draws, so a taller frame does not shrink it.
+func body_rect(src: Rect2i) -> Rect2i:
+	var h: int = mini(body_height(), src.size.y)
+	return Rect2i(src.position.x, src.end.y - h, src.size.x, h)
 
 
 ## `meta.size` of the whole sheet image (zero when absent).

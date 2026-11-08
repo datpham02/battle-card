@@ -1,0 +1,4 @@
+DemoArgs: tram_live shape=plus5 rot=0 cells=[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)] tags=["branched", "plus"] boss=[(5, 1)] duration=1.730
+DemoArgs: scenario t=1.000 Hủy pressed in phase 'channeling' -> queued
+DemoArgs: scenario t=1.050 phase now '', feedback ĐÃ HỦY, scheduled impacts 0
+DemoArgs: scenario t=1.050 hero stepped to (2, 0)

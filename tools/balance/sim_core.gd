@@ -82,6 +82,9 @@ const LEGACY_DODGE_P: float = 0.85
 ## Bot model defaults. Each key is a CLI flag (see README): --dodge=, --gap=min,max, --aim=, --counter=,
 ## --place-sec=, --choose-sec=, --join-sec=, --join=, --hold=, --aware=, --aware-min=, --sig=off|ready|rules.
 const DEFAULT_BOT: Dictionary = {
+	# Cast Commitment (Ngàn Kiếm prototype): "never" = the bot always commits; "on_warning" = it cancels a channel
+	# (after the 0.15 s accidental-tap guard) when an enemy warning covers its cell, then its dodge logic steps away.
+	"channel_cancel": "never",
 	"dodge": LEGACY_DODGE_P,  # chance to step out of a telegraphed boss swing aimed at the bot's cell
 	"dodge_reaction": 0.2,  # sim seconds between the telegraph and the dodge step
 	"gap_min": 0.6,  # sim seconds between the end of the bot's swing and its next placement, uniform
@@ -864,6 +867,11 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	if relic_merged.has("focus_sec"):
 		focus.set_max_sec_override(maxf(_relic_value(focus.get_max_sec(), "focus_sec"), 0.0))
 	actor = CutActor.new(cut_config, PLAYER)
+	# Mirrors CombatView: a Cast Commitment card's channel is longer by channel_extend_sec (after every modifier).
+	actor.channel_extend_fn = func(id: String) -> float: return float(cards.get_skill(id).get("channel_extend_sec", 0.0))
+	actor.swing_cancelled.connect(_on_player_swing_cancelled)
+	_commit_lock_until = -1.0
+	_nk_cast = {}
 	flow = CutFlow.new(cards, cooldowns)
 	flow.level_of = Callable(self, "card_level")
 	flow.availability_context_fn = Callable(self, "availability_context")
@@ -892,6 +900,12 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	arbiter = SwingArbiter.new(state, grid, actor, boss.get_actor(), cut_config, cards, status)
 	# Skill v2: the boss reads pending surge cells as in CombatView.
 	boss.pending_threat_fn = arbiter.pending_cells.bind(CombatState.Side.PLAYER)
+	arbiter.player_awakening_fn = func() -> bool: return signature != null and signature.is_active()
+	arbiter.pattern_hit_fn = func() -> void:
+		if pattern != null:
+			pattern.on_enemy_hit()
+	arbiter.cast_scheduled.connect(_on_cast_scheduled_commit)
+	arbiter.impact_resolved.connect(_on_impact_commit_stats)
 	parry_guard = ParryGuard.new()
 	arbiter.player_guard = parry_guard
 	if pattern != null:
@@ -951,6 +965,11 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_cast_zone = false
 	_next_cast = rng.randf_range(float(bot["gap_min"]), float(bot["gap_max"]))
 	ms = {
+		# Cast Commitment metrics (channel cards only): casts started, cancelled by the bot, interrupted, committed,
+		# hits / damage of committed casts, committed casts with at least one hit, HP lost while channeling, casts started
+		# while the enemy was in RECOVERY (pattern) or rooted in its own swing (block boss).
+		"ch_casts": 0, "ch_cancels": 0, "ch_interrupts": 0, "ch_committed": 0, "ch_hits": 0, "ch_dmg": 0.0, "ch_hit_casts": 0,
+		"ch_taken": 0.0, "ch_recovery_casts": 0,
 		"casts": 0, "resolved": 0, "hits": 0, "dealt": 0.0, "taken": 0.0, "bstarts": 0, "bswings": 0, "bhits": 0, "shits": 0, "bdmg": 0.0,
 		"interrupts": 0, "counters": 0, "sig_acts": 0, "sig_dmg": 0.0, "sig_first": -1.0, "focus_uses": 0,
 		"joins": 0, "featured": 0, "cells": 0,
@@ -1260,6 +1279,7 @@ func _loop_step() -> void:
 
 func _world_tick(step: float) -> void:
 	t += step
+	var channel_hp0: float = state.player_hp if _is_channeling() else -1.0
 	# Story 039: HP the player loses to burn ticks while standing in an erupting vent, boss HP a burn tick healed.
 	var vent_here: bool = _haz_vents > 0 and bool(hazards.call("is_venting", PLAYER, state.player_cell))
 	var php0: float = state.player_hp
@@ -1293,6 +1313,9 @@ func _world_tick(step: float) -> void:
 	if pattern != null:
 		pattern.tick(step)
 	arbiter.tick(step)
+	_bot_channel_cancel()
+	if channel_hp0 >= 0.0:
+		ms["ch_taken"] = float(ms["ch_taken"]) + maxf(channel_hp0 - state.player_hp, 0.0)
 	bag.tick_rot(step)
 	if not (state.is_player_dead() or state.is_enemy_dead()):
 		trait_host.on_tick(step)
@@ -1548,7 +1571,8 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		if pattern != null:
 			# Mirrors CombatView: every player cast may break markers; a hit interrupts an interruptible wind-up.
 			pattern.on_player_cast(cells)
-			if bool(result["hit"]) and not bool(result.get("no_interrupt", false)):
+			# Skill v2: a scheduled cast already interrupted at its first damaging impact (arbiter.pattern_hit_fn).
+			if bool(result["hit"]) and not bool(result.get("no_interrupt", false)) and not bool(result.get("scheduled", false)):
 				pattern.on_enemy_hit()
 		trait_host.on_player_swing_resolved(result)
 		trait_host.on_boss_damaged(damage)
@@ -1806,6 +1830,12 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 			signature.on_cast(skill_id, cells.size())
 		ms["casts"] = int(ms["casts"]) + 1
 		ms["cells"] = int(ms["cells"]) + cells.size()
+		if _is_commitment(skill_id):
+			ms["ch_casts"] = int(ms["ch_casts"]) + 1
+			var recovering: bool = pattern != null and pattern.get_stage() == PatternController.Stage.RECOVERY
+			if recovering or boss.get_actor().is_swinging():
+				ms["ch_recovery_casts"] = int(ms["ch_recovery_casts"]) + 1
+			_nk_cast = {"skill": skill_id, "cast_id": -1, "hits": 0, "bot_cancel": false}
 		_cast_t = t
 		_cast_zone = cards.is_zone_card(skill_id)
 		if _cast_zone:
@@ -1879,9 +1909,75 @@ func _ready_to_cast() -> bool:
 	return n >= int(bot["hold"]) or _force_aim or bag.is_full() or _zone_follow_until > t
 
 
+
+# ================================================================ Cast Commitment (mirrors CombatView)
+var _commit_lock_until: float = -1.0
+## The current channel card's cast {skill, cast_id, hits, bot_cancel}; {} when none.
+var _nk_cast: Dictionary = {}
+
+
+func _is_commitment(skill_id: String) -> bool:
+	return float(cards.get_skill(skill_id).get("commit_lock_sec", -1.0)) >= 0.0
+
+
+func _is_channeling() -> bool:
+	return actor != null and actor.is_swinging() and _is_commitment(actor.get_skill_id())
+
+
+## Mirrors CombatView.is_cast_rooted: CHANNELING or the COMMIT lock.
+func _is_cast_rooted() -> bool:
+	return _is_channeling() or (arbiter != null and arbiter.clock() < _commit_lock_until)
+
+
+# Mirrors CombatView._on_cast_scheduled: the swing end is the commit; the hero stays locked commit_lock_sec more.
+func _on_cast_scheduled_commit(side: int, cast: Dictionary) -> void:
+	if side != PLAYER or not _is_commitment(str(cast.get("skill_id", ""))):
+		return
+	_commit_lock_until = arbiter.clock() + float(cards.get_skill(str(cast["skill_id"])).get("commit_lock_sec", 0.0))
+	ms["ch_committed"] = int(ms["ch_committed"]) + 1
+	if not _nk_cast.is_empty():
+		_nk_cast["cast_id"] = int(cast.get("cast_id", -1))
+
+
+func _on_impact_commit_stats(side: int, ev: Dictionary, hit: bool) -> void:
+	if side != PLAYER or _nk_cast.is_empty() or int(ev.get("cast_id", -2)) != int(_nk_cast["cast_id"]):
+		return
+	if hit:
+		if int(_nk_cast["hits"]) == 0:
+			ms["ch_hit_casts"] = int(ms["ch_hit_casts"]) + 1
+		_nk_cast["hits"] = int(_nk_cast["hits"]) + 1
+		ms["ch_hits"] = int(ms["ch_hits"]) + 1
+		ms["ch_dmg"] = float(ms["ch_dmg"]) + float(ev.get("damage", 0.0))
+
+
+func _on_player_swing_cancelled(_cells: Array[Vector2i], skill_id: String) -> void:
+	if not _is_commitment(skill_id) or _nk_cast.is_empty():
+		return
+	if bool(_nk_cast["bot_cancel"]):
+		ms["ch_cancels"] = int(ms["ch_cancels"]) + 1
+	else:
+		ms["ch_interrupts"] = int(ms["ch_interrupts"]) + 1
+	_nk_cast = {}
+
+
+# Bot policy "on_warning": after the arbiter tick (so a commit in that tick wins, as in CombatView), cancel the channel
+# past its 0.15 s guard when an enemy warning covers the bot's cell. Policy "spent": nothing is refunded.
+func _bot_channel_cancel() -> void:
+	if str(bot.get("channel_cancel", "never")) != "on_warning" or not _is_channeling():
+		return
+	if actor.get_duration() - actor.get_time_left() < CombatView.CHANNEL_CANCEL_GUARD_SEC:
+		return
+	if _warned_cells().has(state.player_cell):
+		if not _nk_cast.is_empty():
+			_nk_cast["bot_cancel"] = true
+		actor.cancel()
+
 # One real step through the mover; a success is forwarded to the TraitHost (CombatView.try_step_player).
 func _bot_step(d: Vector2i) -> bool:
 	var from: Vector2i = state.player_cell
+	# Mirrors CombatView.try_step_player: no step while a Cast Commitment card channels or in its commit lock.
+	if _is_cast_rooted():
+		return false
 	if not mover.try_step(d):
 		return false
 	trait_host.on_player_stepped(from, state.player_cell)

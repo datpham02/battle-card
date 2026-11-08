@@ -62,6 +62,9 @@ func _process(_delta: float) -> void:
 	var travel: Array[Dictionary] = travel_items()
 	if not travel.is_empty():
 		state.append({"travel": travel})
+	var sky: Array[Dictionary] = sky_items()
+	if not sky.is_empty():
+		state.append({"sky": sky})
 
 	if state != _drawn:
 		_drawn = state
@@ -196,6 +199,20 @@ func _draw() -> void:
 			cut_pack.draw_clip(self, str(cut["clip"]), cut["pos"], int(cut["frame"]))
 	_draw_shards(combat.get_cast_flood())
 	_draw_travel(combat, travel_items())
+	# Skill v2 (Ngàn Kiếm): the sky blades stand up on screen over their tiles (unmapped). Per drop, back rows first: its
+	# Ink edge (`edge` px, 2 on the finale), then its colours, so a nearer sword's edge cuts cleanly over the one behind.
+	var sky: Array[Dictionary] = sky_items()
+	var i: int = 0
+	while i < sky.size():
+		var j: int = i
+		while j < sky.size() and int(sky[j].get("group", -1)) == int(sky[i].get("group", -1)):
+			j += 1
+		for n: int in range(i, j):
+			var ink: Color = Color(SlabPainter.INK, float((sky[n]["col"] as Color).a))
+			draw_rect(Rect2((sky[n]["rect"] as Rect2i).grow(int(sky[n].get("edge", 1)))), ink)
+		for n: int in range(i, j):
+			draw_rect(Rect2(sky[n]["rect"]), sky[n]["col"])
+		i = j
 
 
 
@@ -215,8 +232,65 @@ func travel_items() -> Array[Dictionary]:
 	_side_items(out, combat, CombatState.Side.PLAYER, hero_id)
 	_side_items(out, combat, CombatState.Side.ENEMY, ENEMY_BLOCK)
 	_surge_items(out, combat, hero_id)
+	_sky_shadow_items(out, combat)
 	_front_items(out, combat, hero_id)
 	_preview_items(out, combat, hero_id)
+	return out
+
+
+# Skill v2 (Ngàn Kiếm, SkyDropFx): the tile-exact floor shadow of every pending drop, darker as its strike nears.
+func _sky_shadow_items(out: Array[Dictionary], combat: CombatView) -> void:
+	var now: float = combat.combat_clock()
+	for d: Dictionary in combat.get_sky_drops():
+		var a: float = SkyDropFx.shadow_alpha(d, now)
+		if a <= 0.0:
+			continue
+		out.append({"rect": SkyDropFx.shadow_rect(_floor.cell_art_rect(d["cell"])), "col": Color(SlabPainter.INK, a),
+			"fill": true, "width": 0, "edge": false})
+
+
+## Skill v2 (Ngàn Kiếm, SkyDropFx): the screen-space sky items [{rect, col, edge, group}]: the summoning squares at the
+## Knight's hand while a SKY_TO_TARGET swing winds up (group -1), then every drop's blade / impact / shatter over its
+## tile's drawn ground centre (group = its draw index, back rows first). A blade hovering over the enemy is see-through
+## (SkyDropFx.blade_alpha). Drawn unmapped (vertical on screen), each group's Ink edge first.
+func sky_items() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or _floor == null:
+		return out
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	var geo: BoardGeometry = _bg()
+	var actor: CutActor = combat.get_cut_actor()
+	if actor != null and actor.is_swinging() and combat.get_battle_canvas() != null \
+			and str(combat.delivery_for(actor.get_skill_id()).get("type", "")) == SkillDelivery.SKY_TO_TARGET:
+		var units: UnitLayer = combat.get_battle_canvas().get_unit_layer()
+		var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+		var entry: Dictionary = CastVfx.entry_for(hero_id, "", actor.get_skill_id())
+		if units != null and not entry.is_empty():
+			# 2026-11-08: on the card's own coil pose (a card whose coil pose holds the sword up), the squares
+			# gather at its `charge_hand` (the raised blade); else at the release hand.
+			var hand: Vector2i = CastVfx.hand_point({"hand": entry.get("charge_hand", entry.get("hand", [0, 0]))},
+				units.unit_feet_art(CombatState.Side.PLAYER))
+			var k: float = 1.0 - actor.get_time_left() / maxf(actor.get_duration(), 0.001)
+			var cols: Array[Color] = SkyDropFx.tone_colours(false)
+			# an on-tile summon card (`summon_fx`) shows nothing at the hand: its swords form on the target tiles
+			if not bool(entry.get("summon_fx", false)):
+				for it: Dictionary in SkyDropFx.summon_items(hand, k, 5, reduce):
+					out.append({"rect": it["rect"], "col": cols[int(it["tone"])]})
+	var now: float = combat.combat_clock()
+	# Back rows first, so a nearer (lower) sword overlaps the one behind it (VFX scale guide: layering).
+	var drops: Array[Dictionary] = combat.get_sky_drops()
+	drops.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return (a["cell"] as Vector2i).y < (b["cell"] as Vector2i).y)
+	var state: CombatState = combat.get_state()
+	for g: int in drops.size():
+		var d: Dictionary = drops[g]
+		var base: Vector2i = _centre(d["cell"])
+		if geo != null and geo.is_warped():
+			base = geo.warp_art_px(base)
+		var cols2: Array[Color] = SkyDropFx.tone_colours(bool(d.get("final", false)))
+		var a: float = SkyDropFx.blade_alpha(d, now, state != null and state.is_enemy_at(d["cell"]))
+		for it: Dictionary in SkyDropFx.items(d, now, base, reduce):
+			out.append({"rect": it["rect"], "col": Color(cols2[int(it["tone"])], a), "edge": int(it.get("edge", 1)), "group": g})
 	return out
 
 

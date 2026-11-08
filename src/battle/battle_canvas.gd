@@ -54,6 +54,8 @@ var _floor_warp: Sprite2D = null
 ## 2026-11-06: the pickups' own flat SubViewport and its warp sprite (floor shader, white tints); null while flat.
 var _pickup_viewport: SubViewport = null
 var _pickup_warp: Sprite2D = null
+## Skill v2 (Ngàn Kiếm finale): the visual-only board shake now applied (SkyDropFx.board_shake; zero under reduce motion).
+var _board_offset: Vector2i = Vector2i.ZERO
 ## The units' pass: shares the art viewport's World2D, renders UNIT_VISIBILITY_LAYER only, transparent.
 var _unit_viewport: SubViewport = null
 
@@ -103,6 +105,29 @@ func _ready() -> void:
 	_put_on_unit_layer(_overlay)
 	get_viewport().size_changed.connect(queue_redraw)
 	call_deferred("_bind")
+
+
+func _process(_delta: float) -> void:
+	if _combat == null:
+		return
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	var o: Vector2i = SkyDropFx.board_shake(_combat.get_sky_drops(), _combat.combat_clock(), reduce)
+	if o != _board_offset:
+		set_board_offset(o)
+
+
+## Visual-only board shake: moves the stone foundation, the floor (or its warp sprite), the pickups (or theirs), the
+## units and the overlay by [param offset] art px; the far backdrop stays put. Never touches gameplay state.
+func set_board_offset(offset: Vector2i) -> void:
+	_board_offset = offset
+	for n: Node2D in [_support, _floor_warp if _floor_warp != null else _floor, _pickup_warp if _pickup_warp != null else _pickups, _units, _overlay]:
+		if n != null:
+			n.position = Vector2(offset)
+
+
+## The visual-only board offset applied now (Vector2i.ZERO at rest).
+func get_board_offset() -> Vector2i:
+	return _board_offset
 
 
 # Binds the layers to the CombatView after its _ready ran.

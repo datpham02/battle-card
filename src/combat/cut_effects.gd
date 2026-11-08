@@ -197,7 +197,12 @@ static func apply(
 	if count < 0:
 		count = cells.size()
 	var effective_cells: int = count
-	if cells_modifier.is_valid():
+	# Skill v2 (Ngàn Kiếm): a fixed_hit card deals damage_per_cell per HIT, never x cells; the signature's cell rule
+	# (Trảm x2) does not apply to it. The relic / passive / signature hooks below still see the cast's cell count.
+	var fixed_hit: bool = bool(skill.get("fixed_hit", false))
+	if fixed_hit:
+		effective_cells = 1
+	if cells_modifier.is_valid() and not fixed_hit:
 		effective_cells = maxi(int(cells_modifier.call(effective_cells)), 0)
 	var damage: float = per_cell * float(effective_cells)
 	# Cast rhythm spec 1.2: the crit condition is read at the moment of the hit, before Ran is spent or keywords land.

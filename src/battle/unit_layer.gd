@@ -468,6 +468,9 @@ func clip_context(side: int) -> Dictionary:
 func cast_hold(side: int) -> bool:
 	if side != CombatState.Side.PLAYER or _combat == null:
 		return false
+	# Ngàn Kiếm on-tile summon: the summon pose holds until the visual command (also past the swing end), visual only
+	if _combat.summon_hold_until() >= 0.0:
+		return true
 	var actor: CutActor = _combat.get_cut_actor()
 	if actor == null or not actor.is_swinging():
 		return false
@@ -483,11 +486,14 @@ func cast_hold(side: int) -> bool:
 func _cast_skill() -> String:
 	if _combat == null or _combat.get_cut_actor() == null:
 		return ""
-	return _combat.get_cut_actor().get_skill_id()
+	var actor: CutActor = _combat.get_cut_actor()
+	if actor.is_swinging() or _combat.summon_skill().is_empty():
+		return actor.get_skill_id()
+	return _combat.summon_skill()
 
 
 ## 2026-11-08: the sheet clip of the player's current cast: the card's `card_casts` clip when the hero sheet has it
-## (Trảm Địa: cast_forward), else cast_gesture.
+## (Trảm Địa: cast_forward, Ngàn Kiếm: cast_summon), else cast_gesture.
 func cast_clip_for(side: int) -> String:
 	var clip: String = CastVfx.cast_clip(_cast_skill(), CLIP_CAST)
 	if clip != CLIP_CAST and (get_sheet(side) == null or not get_sheet(side).has_clip(clip)):
@@ -495,9 +501,9 @@ func cast_clip_for(side: int) -> String:
 	return clip
 
 
-## True for the hero's cast clips (cast_gesture and the per-card ones such as cast_forward).
+## True for the hero's cast clips (cast_gesture and the per-card ones: cast_forward, cast_summon).
 static func is_cast_clip(clip: String) -> bool:
-	return clip == CLIP_CAST or clip == "cast_forward"
+	return clip == CLIP_CAST or clip == "cast_forward" or clip == "cast_summon"
 
 
 func _cast_impact() -> String:

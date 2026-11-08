@@ -341,6 +341,20 @@
    ],
    "impact": "impact_eruption_tram_dia",
    "impact_mark": "mark_eruption_tram_dia"
+  },
+  "ngan_kiem": {
+   "clip": "cast_summon",
+   "hand": [
+    44,
+    -9
+   ],
+   "charge_hand": [
+    -39,
+    -84
+   ],
+   "release": "",
+   "summon_fx": true,
+   "summon_focus_from_sec": 0.166
   }
  }
 }

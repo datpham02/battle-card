@@ -205,6 +205,25 @@ var _impact_log: Array[Dictionary] = []
 ## Skill v2 (Trảm Địa): the player's scheduled surge events on the arbiter clock (SwingArbiter.cast_scheduled), read
 ## to draw the incoming fronts exactly on the authoritative times; [] when none.
 var _surge_plan: Array[Dictionary] = []
+## Skill v2 (Ngàn Kiếm, SkyDropFx): the player's scheduled sky drops {cell, at, t0, final, seed, cast_id} on the arbiter
+## clock (from SwingArbiter.cast_scheduled), drawn by the overlay; pruned once finished.
+var _sky_plan: Array[Dictionary] = []
+## Skill v2 Cast Commitment (Ngàn Kiếm prototype): taps on Hủy in the first CHANNEL_CANCEL_GUARD_SEC of a channel are
+## ignored (the finger that chose the card cannot cancel it).
+const CHANNEL_CANCEL_GUARD_SEC: float = 0.15
+## The COMMIT lock: the hero may not step until this arbiter-clock time (swing end + commit_lock_sec); -1 = none.
+var _commit_lock_until: float = -1.0
+## The committed (scheduled) cast of the last channel, for the RESOLUTION phase; -1 = none.
+var _commit_cast: int = -1
+## A Hủy / Esc request waiting for the next tick: it is resolved AFTER the arbiter tick, so a commit in that tick wins.
+var _cancel_requested: bool = false
+## Cast Commitment feedback: {cells, refused (bool), time_left}; {} when none.
+var _channel_flash: Dictionary = {}
+## Skill v2 (Ngàn Kiếm on-tile summon): the swing's preview {skill, cells, from, command_at, records}; {} otherwise.
+var _sky_summon: Dictionary = {}
+## Skill v2 (Ngàn Kiếm on-tile summon): the Knight's visual summon hold {skill, until (clock), cell}: the cast clip keeps
+## its summon pose until `until` (the command), then pulls down. Cleared when the player moves. {} otherwise.
+var _summon_hold: Dictionary = {}
 ## ADR-0001 Task 5: the player's last resolved cast for the code-drawn travel ({} = none): {cells, delivery, caster,
 ## arrive, start (FloorVfx clock at the resolve)}.
 var _cast_travel: Dictionary = {}
@@ -428,6 +447,9 @@ func _ready() -> void:
 	_boss.feinted.connect(_on_boss_feinted)
 	_boss.get_actor().swing_started.connect(_on_boss_swing_started)
 	_boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
+	_cut_actor.swing_cancelled.connect(_on_player_swing_cancelled)
+	_cut_actor.channel_extend_fn = func(id: String) -> float:
+		return float(_skill_config.get_skill(id).get("channel_extend_sec", 0.0)) if _skill_config != null else 0.0
 	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config, _status)
 	_arbiter.player_guard = _parry_guard
 	# Skill v2 B1.5: the `arrival` resolve reads the same delivery timing as the cast visuals.
@@ -452,6 +474,12 @@ func _ready() -> void:
 	_arbiter.cast_scheduled.connect(_on_cast_scheduled)
 	# Skill v2 (Trảm Địa): the boss reads the surge still running on the same clock (BossBrain pending threat).
 	_boss.pending_threat_fn = _arbiter.pending_cells.bind(CombatState.Side.PLAYER)
+	# Skill v2 (Ngàn Kiếm): an active Awakening raises a card's max hits (awakening_extra_hits).
+	_arbiter.player_awakening_fn = is_signature_active
+	# Skill v2 fix: a scheduled cast breaks a pattern windup / warning at its first damaging impact.
+	_arbiter.pattern_hit_fn = func() -> void:
+		if _pattern != null:
+			_pattern.on_enemy_hit()
 	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
 	_boss.get_drops().point_spawned.connect(_on_point_spawned.bind(CombatState.Side.ENEMY))
 	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
@@ -1325,6 +1353,7 @@ func _process(delta: float) -> void:
 		if _pattern != null:
 			_pattern.tick(step)
 		_arbiter.tick(step)
+		_resolve_channel_cancel()
 		if hold != null:
 			hold.tick_rot(step)
 		# Traits run after the arbiter (they see this frame's resolutions) and only while both live.
@@ -1333,6 +1362,7 @@ func _process(delta: float) -> void:
 		_age_flash(_feedback, step)
 		_age_flash(_boss_feedback, step)
 		_age_flash(_interrupt_flash, step)
+		_age_flash(_channel_flash, step)
 		_age_flash(_feint_flash, step)
 		_age_flash(_heal_flash, step)
 		_age_flash(_parry_flash, step)
@@ -1407,6 +1437,9 @@ func can_pause() -> bool:
 	for actor: CutActor in [_cut_actor, _boss.get_actor()]:
 		if actor.is_swinging() and actor.get_time_left() <= lockout:
 			return false
+	# Cast Commitment: never during the commit lock.
+	if is_commit_locked():
+		return false
 	return true
 
 
@@ -2314,7 +2347,9 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		if _pattern != null:
 			# Phase 2: every player cast may break markers; a hit interrupts an interruptible windup / warning (D9).
 			_pattern.on_player_cast(cast_cells)
-			if bool(result["hit"]) and not bool(result.get("no_interrupt", false)):
+			# Skill v2 fix 2026-11-08: a scheduled cast interrupted the pattern at its FIRST damaging impact
+			# (SwingArbiter.pattern_hit_fn), as the interruption policy says; not again at the cast's end.
+			if bool(result["hit"]) and not bool(result.get("no_interrupt", false)) and not bool(result.get("scheduled", false)):
 				_pattern.on_enemy_hit()
 		_trait_host.on_player_swing_resolved(result)
 		_trait_host.on_boss_damaged(float(result["damage"]))
@@ -2576,9 +2611,10 @@ func get_drops_config() -> FieldDropsConfig:
 
 
 ## Tries one step of the player in [param direction] (Vector2i.UP/DOWN/LEFT/RIGHT).
-## Returns false on cooldown, wall, when dead, or while Focus locks movement; nothing is queued.
+## Returns false on cooldown, wall, when dead, while Focus locks movement or a Cast Commitment channel / commit lock
+## holds the hero (Ngàn Kiếm, [method is_cast_rooted]); nothing is queued.
 func try_step_player(direction: Vector2i) -> bool:
-	if is_movement_locked():
+	if is_step_locked():
 		return false
 	var from_cell: Vector2i = _state.player_cell
 	var stepped: bool = _mover.try_step(direction)
@@ -2958,7 +2994,13 @@ func _on_impact_resolved(side: int, event: Dictionary, hit: bool) -> void:
 		delivery = delivery_for(skill_id)
 	# 2026-11-08: the card's own cast overrides (Trảm Địa: the eruption pack + its floor mark on the burst cell).
 	var entry: Dictionary = CastVfx.entry_for(hero_id, str(delivery.get("impact", "")), skill_id)
-	if not is_cell_locked(cell):
+	var sky: bool = kind == CastResolver.KIND_DROP or kind == CastResolver.KIND_DROP_FINAL
+	if sky and not is_cell_locked(cell):
+		# Ngàn Kiếm: the blade, its impact and shatter are SkyDropFx (overlay); only the floor stamp is a pack here.
+		var stamp: String = str(entry.get("impact_mark" if kind == CastResolver.KIND_DROP_FINAL else "cell_mark", ""))
+		if not stamp.is_empty():
+			vfx.play(stamp, cell, CombatState.Side.ENEMY)
+	elif not is_cell_locked(cell):
 		var big: bool = kind == CastResolver.KIND_BURST
 		var burst: String = str(entry.get("impact" if big else "cell_burst", ""))
 		var mark: String = str(entry.get("impact_mark" if big else "cell_mark", ""))
@@ -2982,10 +3024,241 @@ func _on_impact_resolved(side: int, event: Dictionary, hit: bool) -> void:
 func _on_cast_scheduled(side: int, cast: Dictionary) -> void:
 	if side != CombatState.Side.PLAYER:
 		return
+	# Cast Commitment: the swing end IS the commit; the hero stays locked commit_lock_sec more.
+	var lock: float = float(_skill_config.get_skill(str(cast.get("skill_id", ""))).get("commit_lock_sec", -1.0)) \
+		if _skill_config != null else -1.0
+	if lock >= 0.0 and _arbiter != null:
+		_commit_lock_until = _arbiter.clock() + lock
+		_commit_cast = int(cast.get("cast_id", -1))
+	# Ngàn Kiếm: a SKY_TO_TARGET card's drops become SkyDropFx records (same cells, same authoritative `at`); the
+	# enemy's cells at the swing end only pick the visual hover (over_enemy), never a target.
+	if str(delivery_for(str(cast.get("skill_id", ""))).get("type", "")) == SkillDelivery.SKY_TO_TARGET:
+		var enemy_cells: Array = _state.enemy_footprint_cells() if _state != null else []
+		var recs: Array[Dictionary] = SkyDropFx.records_from_cast(cast, _arbiter.clock() if _arbiter != null else 0.0, enemy_cells)
+		# on-tile summon card: the same re-timing the swing preview used, so the formed swords are the falling ones
+		if not _sky_summon.is_empty() and str(_sky_summon.get("skill", "")) == str(cast.get("skill_id", "")):
+			# the pull-down and the lock-on happen AT the commit (this tick: the swing end)
+			var command_at: float = _arbiter.clock() if _arbiter != null else 0.0
+			recs = SkyDropFx.summon_records(recs, float(_sky_summon["from"]), command_at)
+			_summon_hold = {"skill": str(cast.get("skill_id", "")), "until": command_at,
+				"cell": _state.player_cell if _state != null else Vector2i.ZERO}
+		_sky_summon = {}
+		_sky_plan.append_array(recs)
+		return
 	_surge_plan = []
 	for e: Dictionary in cast.get("events", []) as Array:
 		_surge_plan.append({"cell": (e["cells"] as Array)[0], "from": e.get("from", CastResolver.NO_CELL), "at": float(e["at"]),
 			"kind": str(e.get("kind", ""))})
+
+
+## Skill v2 (Ngàn Kiếm): the sky drops to draw now (SkyDropFx.drops_now on the arbiter clock; a dropped cast's
+## pending blades vanish); finished records are pruned.
+func get_sky_drops() -> Array[Dictionary]:
+	if _arbiter == null:
+		return []
+	var now: float = _arbiter.clock()
+	var preview: Array[Dictionary] = _sky_summon_preview(now)
+	if not preview.is_empty():
+		return preview
+	if _sky_plan.is_empty():
+		return []
+	var keep: Array[Dictionary] = []
+	for d: Dictionary in _sky_plan:
+		if now < float(d["at"]) + SkyDropFx.end_after_impact():
+			keep.append(d)
+	_sky_plan = keep
+	return SkyDropFx.drops_now(_sky_plan, now, _arbiter.has_cast)
+
+
+# Skill v2 (Ngàn Kiếm on-tile summon, card_casts `summon_fx`): while the player's swing of such a card runs, its swords
+# assemble on the target tiles from the cast clip's raise frame. The plan is the SAME resolver call the arbiter makes
+# at the swing end (this swing's cells, cast context, locked cells now); `at` is predicted from the swing end. Visual
+# only: the real schedule replaces it at the swing end with the same re-timing. [] when no such swing runs.
+func _sky_summon_preview(now: float) -> Array[Dictionary]:
+	if _cut_actor == null or not _cut_actor.is_swinging() or _skill_config == null:
+		return []
+	var id: String = _cut_actor.get_skill_id()
+	if str(delivery_for(id).get("type", "")) != SkillDelivery.SKY_TO_TARGET:
+		return []
+	var hero_id: String = str(UnitLayer.unit_ids_for(match_params).get(CombatState.Side.PLAYER, ""))
+	var entry: Dictionary = CastVfx.entry_for(hero_id, "", id)
+	if not bool(entry.get("summon_fx", false)):
+		return []
+	var left: float = _cut_actor.get_time_left()
+	var swing_from: float = now - (_cut_actor.get_duration() - left)
+	var cells: Array[Vector2i] = _cut_actor.get_cells()
+	if _sky_summon.is_empty() or str(_sky_summon.get("skill", "")) != id or _sky_summon.get("cells", []) != cells \
+			or absf(float(_sky_summon.get("swing_from", -1.0)) - swing_from) > 0.001:
+		var blocked: Array = []
+		for c: Vector2i in cells:
+			if is_cell_locked(c):
+				blocked.append(c)
+		var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(id), cells, _cut_actor.get_cast_context(),
+			delivery_timing(), blocked)
+		var swing_end: float = now + left
+		var events: Array = []
+		for e: Variant in plan.get("events", []) as Array:
+			var ev: Dictionary = (e as Dictionary).duplicate()
+			ev["at"] = swing_end + float(ev.get("t", 0.0))
+			events.append(ev)
+		var from: float = swing_from + float(entry.get("summon_focus_from_sec", 0.0))
+		var recs: Array[Dictionary] = SkyDropFx.records_from_cast({"events": events, "cast_id": -1, "skill_id": id}, swing_end,
+			_state.enemy_footprint_cells() if _state != null else [])
+		# Cast Commitment: the pull-down comes at the commit (the swing end); a card without a channel keeps the
+		# visual command lead before its first stab.
+		var command_at: float = swing_end if is_commitment_card(id) else SkyDropFx.summon_command_at(recs)
+		_sky_summon = {"skill": id, "cells": cells, "swing_from": swing_from, "from": from, "command_at": command_at,
+			"records": SkyDropFx.summon_records(recs, from, command_at)}
+		_summon_hold = {"skill": id, "until": command_at, "cell": _state.player_cell if _state != null else Vector2i.ZERO}
+	var shown: Array[Dictionary] = []
+	for d: Dictionary in _sky_summon["records"] as Array:
+		if now >= float(d["t0"]):
+			shown.append(d)
+	return shown
+
+
+## Cast Commitment phases of the player's channel card (design/quick-specs/cast-commitment-ngan-kiem-2026-11-08.md).
+const PHASE_NONE: String = ""
+const PHASE_CHANNELING: String = "channeling"
+const PHASE_COMMIT: String = "commit"
+const PHASE_RESOLUTION: String = "resolution"
+
+
+## True when [param skill_id] is a Cast Commitment card (cards.json commit_lock_sec >= 0; Ngàn Kiếm only today).
+func is_commitment_card(skill_id: String) -> bool:
+	return _skill_config != null and float(_skill_config.get_skill(skill_id).get("commit_lock_sec", -1.0)) >= 0.0
+
+
+## The Cast Commitment phase now: CHANNELING while a channel card's swing runs; COMMIT from its swing end for
+## commit_lock_sec; RESOLUTION while its committed events are still on the clock; "" otherwise (PLANNING is the
+## existing cast stop: placing / the place window / the card menu).
+func channel_phase() -> String:
+	if _cut_actor != null and _cut_actor.is_swinging() and is_commitment_card(_cut_actor.get_skill_id()):
+		return PHASE_CHANNELING
+	if _arbiter == null:
+		return PHASE_NONE
+	if _commit_lock_until >= 0.0 and _arbiter.clock() < _commit_lock_until:
+		return PHASE_COMMIT
+	if _commit_cast >= 0 and _arbiter.has_cast(_commit_cast):
+		return PHASE_RESOLUTION
+	return PHASE_NONE
+
+
+## True while the hero may not step because of a channel card: CHANNELING and the COMMIT lock. Only steps: Focus and
+## Awakening are not blocked by it.
+func is_cast_rooted() -> bool:
+	var phase: String = channel_phase()
+	return phase == PHASE_CHANNELING or phase == PHASE_COMMIT
+
+
+## True during the COMMIT lock (the release gesture): no step, no pause, no cancel.
+func is_commit_locked() -> bool:
+	return channel_phase() == PHASE_COMMIT
+
+
+## Seconds the current channel has run (0 when none).
+func channel_elapsed() -> float:
+	if channel_phase() != PHASE_CHANNELING:
+		return 0.0
+	return _cut_actor.get_duration() - _cut_actor.get_time_left()
+
+
+## True when the Hủy button of the channel is shown (CHANNELING).
+func is_channel_cancel_shown() -> bool:
+	return channel_phase() == PHASE_CHANNELING
+
+
+## True when a Hủy press would be taken now (CHANNELING, past the accidental-tap guard).
+func can_cancel_channel() -> bool:
+	return is_channel_cancel_shown() and channel_elapsed() >= CHANNEL_CANCEL_GUARD_SEC
+
+
+## Hủy / Esc on a channel. CHANNELING past the guard: the cancel is queued and done after the next arbiter tick (so a
+## commit in that very tick wins) -> true. Inside the guard: ignored -> false. COMMIT / RESOLUTION: refused with the
+## "committed" feedback -> false. Otherwise false.
+func request_channel_cancel() -> bool:
+	var phase: String = channel_phase()
+	if phase == PHASE_CHANNELING:
+		if channel_elapsed() < CHANNEL_CANCEL_GUARD_SEC:
+			return false
+		_cancel_requested = true
+		return true
+	if phase == PHASE_COMMIT or phase == PHASE_RESOLUTION:
+		_channel_flash = {"cells": _last_channel_cells(), "refused": true, "time_left": FEEDBACK_SEC}
+	return false
+
+
+# After the arbiter tick: a queued cancel stops the channel if it is still CHANNELING (policy "spent": the pieces were
+# spent at the card choice and the cooldown started with the swing; both stay so). If the swing resolved (COMMIT) in
+# this same tick, commit wins: the request is refused.
+func _resolve_channel_cancel() -> void:
+	if not _cancel_requested:
+		return
+	_cancel_requested = false
+	if channel_phase() == PHASE_CHANNELING:
+		var cells: Array[Vector2i] = _cut_actor.get_cells()
+		# the summoned swords to disperse are this frame's preview, whether or not it has been drawn yet
+		if _arbiter != null:
+			_sky_summon_preview(_arbiter.clock())
+		_cut_actor.cancel()
+		_channel_flash = {"cells": cells, "refused": false, "time_left": FEEDBACK_SEC}
+	else:
+		_channel_flash = {"cells": _last_channel_cells(), "refused": true, "time_left": FEEDBACK_SEC}
+
+
+func _last_channel_cells() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for d: Dictionary in _sky_plan:
+		if not cells.has(d["cell"]):
+			cells.append(d["cell"])
+	return cells
+
+
+## Cast Commitment feedback to draw: {cells, refused, time_left}; {} when none.
+func get_channel_flash() -> Dictionary:
+	return _channel_flash
+
+
+# The player's swing was cancelled (Hủy, a boss interrupt, a death): a channel's uncommitted swords disperse in place
+# (no impact, no damage); the summon hold and any queued request end.
+func _on_player_swing_cancelled(_cells: Array[Vector2i], skill_id: String) -> void:
+	_cancel_requested = false
+	if not _sky_summon.is_empty() and str(_sky_summon.get("skill", "")) == skill_id and _arbiter != null:
+		var now: float = _arbiter.clock()
+		for d: Dictionary in _sky_summon["records"] as Array:
+			if now >= float(d["t0"]):
+				_sky_plan.append(SkyDropFx.dispersed(d, now))
+	_sky_summon = {}
+	_summon_hold = {}
+
+
+## True when a step is refused now: [method is_movement_locked] (Focus, placing, the card menu) or a Cast Commitment
+## channel / commit lock ([method is_cast_rooted]).
+func is_step_locked() -> bool:
+	return is_movement_locked() or is_cast_rooted()
+
+
+## Skill v2 (Ngàn Kiếm on-tile summon): the clock time until which the Knight's cast clip holds its summon pose (the
+## command: the commit, i.e. the swing end, for a Cast Commitment card); -1 when no summon hold runs or it has passed.
+## Visual only.
+func summon_hold_until() -> float:
+	if _summon_hold.is_empty() or _arbiter == null:
+		return -1.0
+	var until: float = float(_summon_hold["until"])
+	return until if _arbiter.clock() < until else -1.0
+
+
+## Skill v2 (Ngàn Kiếm on-tile summon): the card whose summon hold / pull-down the Knight is playing ("" otherwise); it
+## outlives the swing by the clip's release and recovery so the clip does not switch mid-way.
+func summon_skill() -> String:
+	if _summon_hold.is_empty() or _arbiter == null:
+		return ""
+	return str(_summon_hold["skill"]) if _arbiter.clock() < float(_summon_hold["until"]) + 0.6 else ""
+
+
+## Skill v2 (Ngàn Kiếm): the arbiter clock the sky drops are drawn on (0 without an arbiter).
+func combat_clock() -> float:
+	return _arbiter.clock() if _arbiter != null else 0.0
 
 
 ## Skill v2 (Trảm Địa): the incoming steel fronts to draw now: [{from, to, f}] for every planned surge step whose source
