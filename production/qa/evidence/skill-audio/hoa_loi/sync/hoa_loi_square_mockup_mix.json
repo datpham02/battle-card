@@ -1,0 +1,149 @@
+{
+ "out": "production\\qa\\evidence\\skill-audio\\hoa_loi\\sync\\hoa_loi_square_mockup_mix.wav",
+ "timeline": "production\\qa\\evidence\\skill-audio\\hoa_loi\\sync\\hoa_loi_square_timeline.json",
+ "pre_sec": 0.0,
+ "overrides": {
+  "skill.hoa_loi.windup": "audio_src/derived/hoa_loi_mockups/elec_cast.wav",
+  "skill.hoa_loi.seal": "audio_src/derived/hoa_loi_mockups/elec_lock.wav",
+  "skill.hoa_loi.tick": "audio_src/derived/hoa_loi_mockups/elec_pulse.wav"
+ },
+ "match_rms": false,
+ "peak_dbfs": -2.0,
+ "rms_dbfs": -27.56,
+ "clipped": false,
+ "duration_sec": 6.333,
+ "layers": [
+  {
+   "id": "skill.hoa_loi.windup",
+   "start": 0.0,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\elec_cast.wav",
+   "gain_db": -6.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.0,
+   "len_sec": 0.25,
+   "peak_dbfs": -9.0
+  },
+  {
+   "id": "skill.hoa_loi.seal",
+   "start": 0.716666666666667,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\elec_lock.wav",
+   "gain_db": -5.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.717,
+   "len_sec": 0.16,
+   "peak_dbfs": -8.0
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 1.06666666666667,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\elec_pulse.wav",
+   "gain_db": -9.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 1.067,
+   "len_sec": 0.07,
+   "peak_dbfs": -12.0
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 1.66666666666667,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\elec_pulse.wav",
+   "gain_db": -8.0,
+   "step": 1,
+   "tier": "S",
+   "t_in_file": 1.667,
+   "len_sec": 0.062,
+   "peak_dbfs": -11.29
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 1.91666666666666,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\elec_pulse.wav",
+   "gain_db": -7.0,
+   "step": 2,
+   "tier": "S",
+   "t_in_file": 1.917,
+   "len_sec": 0.056,
+   "peak_dbfs": -10.16
+  },
+  {
+   "id": "status.burn.loop",
+   "start": 2.25,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_loop_01.wav",
+   "gain_db": -23.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.25,
+   "len_sec": 1.983,
+   "peak_dbfs": -29.0
+  },
+  {
+   "id": "skill.hoa_loi.impact",
+   "start": 2.26666666666666,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_impact_m_01.wav",
+   "gain_db": -1.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 2.267,
+   "len_sec": 0.65,
+   "peak_dbfs": -2.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 2.73333333333333,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.733,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 3.23333333333333,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 3.233,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 3.73333333333333,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 3.733,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 4.23333333333332,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 4.233,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.out",
+   "start": 4.23333333333332,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_out_01.wav",
+   "gain_db": -13.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 4.233,
+   "len_sec": 0.6,
+   "peak_dbfs": -22.0
+  }
+ ]
+}

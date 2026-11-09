@@ -1,0 +1,24 @@
+{
+  "_doc": "Raw ElevenLabs takes for skill.ngan_kiem.charge. Source material only: NOT used in the game, NOT approved, not production-ready. audio_src/ is outside assets/ (.gdignore) and is not exported.",
+  "layer": "skill.ngan_kiem.charge (fragments assembling above the tiles)",
+  "batch": "ngan_kiem_charge_v1",
+  "date": "2026-11-09",
+  "provider": "ElevenLabs (MCP, ElevenCreative flows)",
+  "model_id": "eleven_text_to_sound_v2",
+  "flow_id": "2IUROnhpKdx5Ty6O4W4k",
+  "node_id": "1AoWZzcxDmdo0ZY8tZyV",
+  "settings": { "duration_seconds": 1.2, "prompt_influence": 0.6, "loop": false, "generations_count": 2 },
+  "prompt": "Several small forged steel sword fragments materialize in midair and rapidly assemble into a complete magical blade. Crisp layered metallic shings, delicate steel resonance, distinct locking clicks, and a restrained mystical harmonic shimmer. Sharp initial attacks with a short resonant tail. Powerful but elegant fantasy sword summoning sound, isolated close-up effect, dry recording, no background ambience, no music, no voices, no sci-fi lasers.",
+  "prompt_note": "User-approved prompt minus the word 'sound' in 'close-up sound effect' (454 -> 448 chars; model limit 450). Approved by the user 2026-11-09.",
+  "estimate_credits": 24,
+  "takes": [
+    { "label": "Take A", "generation_id": "UPRGuaNUiMv5NKJsnJJ6", "session_id": "lWfx9d6LtLxRyKWvQDi2", "file": "ngan_kiem_charge_v1_takeA_UPRGuaNUiMv5NKJsnJJ6.mp3", "credits_reported": 4, "format": "MP3 128 kbps 44.1 kHz stereo, 1.2 s", "sha256": "c2f5f6786297bf770afc75ce32fc42a4a09dc5fd1a1874b7dd62d4258d59e2f5", "status": "completed" },
+    { "label": "Take B", "generation_id": "beUOVYuXhWt8leYI0Lag", "session_id": "WL53a53hEHTQBmH1h2yT", "file": "ngan_kiem_charge_v1_takeB_beUOVYuXhWt8leYI0Lag.mp3", "credits_reported": 4, "format": "MP3 128 kbps 44.1 kHz stereo, 1.2 s", "sha256": "387a36e68b6393de67a6c8abfb5dce5b858ad29b09e0ab9534cd66fa43b7fde3", "status": "completed" }
+  ],
+  "failed_attempts": [
+    { "generation_ids": ["PTlsHiE3oEijL0Ks5MoP", "lsOF26jdji90CXsE9kke"], "error": "Prompt must be at most 450 characters, got 454.", "credits_reported": 8, "note": "Whether the 8 credits were actually charged is unverified (no balance tool)." }
+  ],
+  "credits_reported_total": 16,
+  "licence": "UNCONFIRMED: commercial use depends on the user's ElevenLabs plan, not yet provided. Do not record as cleared.",
+  "selected_take": null
+}

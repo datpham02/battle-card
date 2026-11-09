@@ -1,0 +1,90 @@
+{
+ "out": "production\\qa\\evidence\\skill-audio\\ngan_kiem\\final\\ngan_kiem_t4_final.wav",
+ "timeline": "production\\qa\\evidence\\skill-audio\\ngan_kiem\\final\\t4_timeline.json",
+ "pre_sec": 0.5,
+ "overrides": {},
+ "match_rms": false,
+ "peak_dbfs": -1.39,
+ "rms_dbfs": -22.34,
+ "clipped": false,
+ "duration_sec": 4.16,
+ "layers": [
+  {
+   "id": "skill.ngan_kiem.channel_loop",
+   "start": 0.0,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_channel_loop_el_01.wav",
+   "gain_db": -9.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.5,
+   "len_sec": 1.483,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "combat.hit.enemy",
+   "start": 1.7,
+   "src": "assets\\audio\\sfx\\sfx_combat_hit_enemy_01.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.2,
+   "len_sec": 0.16,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact",
+   "start": 1.7,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_el_01.wav",
+   "gain_db": -6.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.2,
+   "len_sec": 0.35,
+   "peak_dbfs": -7.0
+  },
+  {
+   "id": "skill.generic.hit",
+   "start": 1.7,
+   "src": "assets\\audio\\sfx\\sfx_skill_generic_hit_01.wav",
+   "gain_db": -9.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.2,
+   "len_sec": 0.06,
+   "peak_dbfs": -14.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact",
+   "start": 1.82,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_el_02.wav",
+   "gain_db": -6.0,
+   "step": 1,
+   "tier": "S",
+   "t_in_file": 2.32,
+   "len_sec": 0.35,
+   "peak_dbfs": -7.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact",
+   "start": 1.94,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_el_03.wav",
+   "gain_db": -6.0,
+   "step": 2,
+   "tier": "S",
+   "t_in_file": 2.44,
+   "len_sec": 0.35,
+   "peak_dbfs": -7.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact_final",
+   "start": 2.06,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_final_el_01.wav",
+   "gain_db": -7.0,
+   "step": 3,
+   "tier": "L",
+   "t_in_file": 2.56,
+   "len_sec": 0.6,
+   "peak_dbfs": -8.0
+  }
+ ]
+}

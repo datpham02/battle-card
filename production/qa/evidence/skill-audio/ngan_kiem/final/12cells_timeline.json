@@ -1,0 +1,494 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.28,
+    "commit_lock_sec": 0.13,
+    "drop_order": "from_centre",
+    "sky_hover_sec": 0.22,
+    "sky_stagger_sec": 0.12
+  },
+  "cells": "[(4, 0), (5, 0), (6, 0), (7, 0), (4, 1), (5, 1), (6, 1), (7, 1), (4, 2), (5, 2), (6, 2), (7, 2)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(5, 1)]",
+      "clock": 3.69999999999999,
+      "hit": true,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 0)]",
+      "clock": 3.82,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(4, 1)]",
+      "clock": 3.94,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(6, 1)]",
+      "clock": 4.06,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 2)]",
+      "clock": 4.18,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(4, 0)]",
+      "clock": 4.29999999999999,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(6, 0)]",
+      "clock": 4.42,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(7, 1)]",
+      "clock": 4.54,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(4, 2)]",
+      "clock": 4.66,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(6, 2)]",
+      "clock": 4.78,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(7, 0)]",
+      "clock": 4.89999999999999,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(7, 2)]",
+      "clock": 5.02,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 12,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.ngan_kiem.channel_loop",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "channel:0",
+      "tier": "L"
+    },
+    {
+      "cells": 1,
+      "clock": 3.69999999999999,
+      "handle": 2,
+      "id": "combat.hit.enemy",
+      "local": 3.68333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 3.7,
+      "cells": 1,
+      "clock": 3.69999999999999,
+      "handle": 3,
+      "id": "skill.ngan_kiem.impact",
+      "local": 3.68333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.69999999999999,
+      "handle": 4,
+      "id": "skill.generic.hit",
+      "local": 3.68333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.69999999999999,
+      "handle": 2,
+      "id": "combat.hit.enemy",
+      "local": 3.68333333333333,
+      "op": "merge",
+      "retier": false,
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 3.82,
+      "cells": 1,
+      "clock": 3.82,
+      "handle": 5,
+      "id": "skill.ngan_kiem.impact",
+      "local": 3.81666666666666,
+      "op": "play",
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 3.94,
+      "cells": 1,
+      "clock": 3.94,
+      "handle": 6,
+      "id": "skill.ngan_kiem.impact",
+      "local": 3.93333333333332,
+      "op": "play",
+      "step": 2,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.06,
+      "cells": 1,
+      "clock": 4.06,
+      "handle": 7,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.04999999999999,
+      "op": "play",
+      "step": 3,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.18,
+      "cells": 1,
+      "clock": 4.18,
+      "handle": 8,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.16666666666666,
+      "op": "play",
+      "step": 4,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.3,
+      "cells": 1,
+      "clock": 4.29999999999999,
+      "handle": 9,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.28333333333332,
+      "op": "play",
+      "step": 5,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.42,
+      "cells": 1,
+      "clock": 4.42,
+      "handle": 10,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.41666666666666,
+      "op": "play",
+      "step": 6,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.54,
+      "cells": 1,
+      "clock": 4.54,
+      "handle": 11,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.53333333333332,
+      "op": "play",
+      "step": 7,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.66,
+      "cells": 1,
+      "clock": 4.66,
+      "handle": 12,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.64999999999999,
+      "op": "play",
+      "step": 8,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.78,
+      "cells": 1,
+      "clock": 4.78,
+      "handle": 13,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.76666666666666,
+      "op": "play",
+      "step": 9,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 4.9,
+      "cells": 1,
+      "clock": 4.89999999999999,
+      "handle": 14,
+      "id": "skill.ngan_kiem.impact",
+      "local": 4.88333333333332,
+      "op": "play",
+      "step": 10,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 5.02,
+      "cells": 1,
+      "clock": 5.02,
+      "handle": 15,
+      "id": "skill.ngan_kiem.impact",
+      "local": 5.01666666666665,
+      "op": "play",
+      "step": 11,
+      "tag": "cast:1",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 3.48,
+      "events": [
+        {
+          "at": 3.7,
+          "cells": "[(5, 1)]",
+          "kind": "drop",
+          "step": 0
+        },
+        {
+          "at": 3.82,
+          "cells": "[(5, 0)]",
+          "kind": "drop",
+          "step": 1
+        },
+        {
+          "at": 3.94,
+          "cells": "[(4, 1)]",
+          "kind": "drop",
+          "step": 2
+        },
+        {
+          "at": 4.06,
+          "cells": "[(6, 1)]",
+          "kind": "drop",
+          "step": 3
+        },
+        {
+          "at": 4.18,
+          "cells": "[(5, 2)]",
+          "kind": "drop",
+          "step": 4
+        },
+        {
+          "at": 4.3,
+          "cells": "[(4, 0)]",
+          "kind": "drop",
+          "step": 5
+        },
+        {
+          "at": 4.42,
+          "cells": "[(6, 0)]",
+          "kind": "drop",
+          "step": 6
+        },
+        {
+          "at": 4.54,
+          "cells": "[(7, 1)]",
+          "kind": "drop",
+          "step": 7
+        },
+        {
+          "at": 4.66,
+          "cells": "[(4, 2)]",
+          "kind": "drop",
+          "step": 8
+        },
+        {
+          "at": 4.78,
+          "cells": "[(6, 2)]",
+          "kind": "drop",
+          "step": 9
+        },
+        {
+          "at": 4.9,
+          "cells": "[(7, 0)]",
+          "kind": "drop",
+          "step": 10
+        },
+        {
+          "at": 5.02,
+          "cells": "[(7, 2)]",
+          "kind": "drop",
+          "step": 11
+        }
+      ]
+    }
+  ],
+  "shape": "bar4r0_4-0+bar4r0_4-1+bar4r0_4-2",
+  "skill": "ngan_kiem",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 3.48333333333333,
+      "id": "skill.ngan_kiem.channel_loop",
+      "loop": true,
+      "start": 0.0166666666666667,
+      "tier": "L"
+    },
+    {
+      "end": 4.06666666666666,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 3.69999999999999,
+      "tier": "S"
+    },
+    {
+      "end": 4.18333333333332,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 3.83333333333332,
+      "tier": "S"
+    },
+    {
+      "end": 4.29999999999999,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 3.69999999999999,
+      "tier": "S"
+    },
+    {
+      "end": 4.29999999999999,
+      "id": "skill.generic.hit",
+      "loop": false,
+      "start": 3.69999999999999,
+      "tier": "S"
+    },
+    {
+      "end": 4.29999999999999,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 3.94999999999999,
+      "tier": "S"
+    },
+    {
+      "end": 4.43333333333332,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.06666666666666,
+      "tier": "S"
+    },
+    {
+      "end": 4.54999999999999,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.18333333333332,
+      "tier": "S"
+    },
+    {
+      "end": 4.66666666666666,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.29999999999999,
+      "tier": "S"
+    },
+    {
+      "end": 4.78333333333332,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.43333333333332,
+      "tier": "S"
+    },
+    {
+      "end": 4.89999999999999,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.54999999999999,
+      "tier": "S"
+    },
+    {
+      "end": 5.03333333333332,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.66666666666666,
+      "tier": "S"
+    },
+    {
+      "end": 5.38333333333332,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.78333333333332,
+      "tier": "S"
+    },
+    {
+      "end": 5.49999999999999,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 4.89999999999999,
+      "tier": "S"
+    },
+    {
+      "end": 5.63333333333332,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 5.03333333333332,
+      "tier": "S"
+    }
+  ]
+}

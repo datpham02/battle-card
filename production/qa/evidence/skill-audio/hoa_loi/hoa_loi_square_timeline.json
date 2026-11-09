@@ -1,0 +1,369 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": 0.45,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (5, 0), (4, 1), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(4, 0), (5, 0), (4, 1), (5, 1)]",
+      "clock": 2.25,
+      "hit": true,
+      "kind": "fuse",
+      "mult": 2.4,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 4,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.hoa_loi.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "cells": 4,
+      "clock": 0.450001,
+      "handle": 2,
+      "id": "skill.generic.commit",
+      "local": 0.45,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "M"
+    },
+    {
+      "cells": 4,
+      "clock": 0.450001,
+      "handle": 3,
+      "id": "skill.hoa_loi.seal",
+      "local": 0.45,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 0.450001,
+      "handle": 4,
+      "id": "skill.hoa_loi.charge",
+      "local": 0.45,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 0.450001,
+      "cells": 1,
+      "clock": 0.450001,
+      "handle": 5,
+      "id": "skill.hoa_loi.tick",
+      "local": 0.45,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.050001,
+      "cells": 1,
+      "clock": 1.06666666666667,
+      "handle": 6,
+      "id": "skill.hoa_loi.tick",
+      "local": 1.06666666666667,
+      "op": "play",
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.650001,
+      "cells": 1,
+      "clock": 1.66666666666667,
+      "handle": 7,
+      "id": "skill.hoa_loi.tick",
+      "local": 1.66666666666667,
+      "op": "play",
+      "step": 2,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.950001,
+      "cells": 1,
+      "clock": 1.96666666666666,
+      "handle": 8,
+      "id": "skill.hoa_loi.prime",
+      "local": 1.96666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 2.25,
+      "handle": 9,
+      "id": "combat.hit.enemy",
+      "local": 2.23333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 2.25,
+      "handle": 10,
+      "id": "status.burn.loop",
+      "local": 2.23333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "burn",
+      "tier": "S"
+    },
+    {
+      "cells": 4,
+      "clock": 2.25,
+      "handle": 11,
+      "id": "skill.generic.hit",
+      "local": 2.23333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 2.25,
+      "handle": 9,
+      "id": "combat.hit.enemy",
+      "local": 2.23333333333333,
+      "op": "merge",
+      "retier": false,
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 2.250001,
+      "cells": 4,
+      "clock": 2.26666666666666,
+      "handle": 12,
+      "id": "skill.hoa_loi.impact",
+      "local": 2.26666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 2.73333333333333,
+      "handle": 13,
+      "id": "combat.hit.enemy",
+      "local": 2.71666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.23333333333333,
+      "handle": 14,
+      "id": "combat.hit.enemy",
+      "local": 3.21666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.73333333333333,
+      "handle": 15,
+      "id": "combat.hit.enemy",
+      "local": 3.71666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 4.23333333333332,
+      "handle": 16,
+      "id": "combat.hit.enemy",
+      "local": 4.21666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 4.23333333333332,
+      "handle": 17,
+      "id": "status.burn.out",
+      "local": 4.21666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 0.450001,
+      "events": [
+        {
+          "at": 2.250001,
+          "cells": "[(4, 0), (5, 0), (4, 1), (5, 1)]",
+          "kind": "fuse",
+          "step": 0
+        }
+      ]
+    }
+  ],
+  "shape": "square",
+  "skill": "hoa_loi",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.466666666666667,
+      "id": "skill.hoa_loi.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.05,
+      "id": "skill.generic.commit",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.05,
+      "id": "skill.hoa_loi.seal",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.05,
+      "id": "skill.hoa_loi.charge",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 1.05,
+      "id": "skill.hoa_loi.tick",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 1.68333333333333,
+      "id": "skill.hoa_loi.tick",
+      "loop": false,
+      "start": 1.06666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 2.28333333333333,
+      "id": "skill.hoa_loi.tick",
+      "loop": false,
+      "start": 1.66666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 2.58333333333333,
+      "id": "skill.hoa_loi.prime",
+      "loop": false,
+      "start": 1.96666666666666,
+      "tier": "S"
+    },
+    {
+      "end": 2.84999999999999,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 2.25,
+      "tier": "S"
+    },
+    {
+      "end": 2.84999999999999,
+      "id": "skill.generic.hit",
+      "loop": false,
+      "start": 2.25,
+      "tier": "M"
+    },
+    {
+      "end": 2.88333333333333,
+      "id": "skill.hoa_loi.impact",
+      "loop": false,
+      "start": 2.26666666666666,
+      "tier": "M"
+    },
+    {
+      "end": 3.33333333333333,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 2.73333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 3.83333333333332,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 3.23333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 4.23333333333332,
+      "id": "status.burn.loop",
+      "loop": true,
+      "start": 2.25,
+      "tier": "S"
+    },
+    {
+      "end": 4.33333333333332,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 3.73333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 4.83333333333332,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 4.23333333333332,
+      "tier": "S"
+    },
+    {
+      "end": 4.83333333333332,
+      "id": "status.burn.out",
+      "loop": false,
+      "start": 4.23333333333332,
+      "tier": "S"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+ "out": "production\\qa\\evidence\\skill-audio\\hoa_loi\\hoa_loi_square_1_placeholder.wav",
+ "timeline": "production\\qa\\evidence\\skill-audio\\hoa_loi\\hoa_loi_square_timeline.json",
+ "pre_sec": 0.5,
+ "overrides": {},
+ "match_rms": false,
+ "peak_dbfs": -2.05,
+ "rms_dbfs": -28.06,
+ "clipped": false,
+ "duration_sec": 6.333,
+ "layers": [
+  {
+   "id": "skill.hoa_loi.windup",
+   "start": 0.0,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_windup_01.wav",
+   "gain_db": -6.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.5,
+   "len_sec": 0.37,
+   "peak_dbfs": -11.0
+  },
+  {
+   "id": "skill.generic.commit",
+   "start": 0.450001,
+   "src": "assets\\audio\\sfx\\sfx_skill_generic_commit_01.wav",
+   "gain_db": -5.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.95,
+   "len_sec": 0.2,
+   "peak_dbfs": -9.0
+  },
+  {
+   "id": "skill.hoa_loi.seal",
+   "start": 0.450001,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_seal_01.wav",
+   "gain_db": -5.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.95,
+   "len_sec": 0.45,
+   "peak_dbfs": -9.0
+  },
+  {
+   "id": "skill.hoa_loi.charge",
+   "start": 0.450001,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_charge_01.wav",
+   "gain_db": -14.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 0.95,
+   "len_sec": 1.0,
+   "peak_dbfs": -24.0
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 0.450001,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_tick_01.wav",
+   "gain_db": -9.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 0.95,
+   "len_sec": 0.06,
+   "peak_dbfs": -14.0
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 1.06666666666667,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_tick_01.wav",
+   "gain_db": -8.0,
+   "step": 1,
+   "tier": "S",
+   "t_in_file": 1.567,
+   "len_sec": 0.053,
+   "peak_dbfs": -13.14
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 1.66666666666667,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_tick_01.wav",
+   "gain_db": -7.0,
+   "step": 2,
+   "tier": "S",
+   "t_in_file": 2.167,
+   "len_sec": 0.048,
+   "peak_dbfs": -12.1
+  },
+  {
+   "id": "skill.hoa_loi.prime",
+   "start": 1.96666666666666,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_prime_01.wav",
+   "gain_db": -8.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.467,
+   "len_sec": 0.3,
+   "peak_dbfs": -12.0
+  },
+  {
+   "id": "combat.hit.enemy",
+   "start": 2.25,
+   "src": "assets\\audio\\sfx\\sfx_combat_hit_enemy_01.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.75,
+   "len_sec": 0.16,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "status.burn.loop",
+   "start": 2.25,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_loop_01.wav",
+   "gain_db": -17.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.75,
+   "len_sec": 1.983,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "skill.generic.hit",
+   "start": 2.25,
+   "src": "assets\\audio\\sfx\\sfx_skill_generic_hit_01.wav",
+   "gain_db": -6.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 2.75,
+   "len_sec": 0.06,
+   "peak_dbfs": -11.0
+  },
+  {
+   "id": "skill.hoa_loi.impact",
+   "start": 2.26666666666666,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_impact_m_01.wav",
+   "gain_db": -1.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 2.767,
+   "len_sec": 0.65,
+   "peak_dbfs": -2.0
+  },
+  {
+   "id": "combat.hit.enemy",
+   "start": 2.73333333333333,
+   "src": "assets\\audio\\sfx\\sfx_combat_hit_enemy_02.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 3.233,
+   "len_sec": 0.16,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "combat.hit.enemy",
+   "start": 3.23333333333333,
+   "src": "assets\\audio\\sfx\\sfx_combat_hit_enemy_01.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 3.733,
+   "len_sec": 0.16,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "combat.hit.enemy",
+   "start": 3.73333333333333,
+   "src": "assets\\audio\\sfx\\sfx_combat_hit_enemy_02.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 4.233,
+   "len_sec": 0.16,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "combat.hit.enemy",
+   "start": 4.23333333333332,
+   "src": "assets\\audio\\sfx\\sfx_combat_hit_enemy_01.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 4.733,
+   "len_sec": 0.16,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "status.burn.out",
+   "start": 4.23333333333332,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_out_01.wav",
+   "gain_db": -13.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 4.733,
+   "len_sec": 0.6,
+   "peak_dbfs": -22.0
+  }
+ ]
+}

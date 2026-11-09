@@ -1,0 +1,38 @@
+{
+ "_doc": "Raw ElevenLabs takes for skill.hoa_loi.impact (thunderstrike direction 2026-11-09). Source material only: NOT in the game, NOT approved. audio_src/ is outside assets/ (.gdignore).",
+ "layer": "skill.hoa_loi.impact (one blast for all armed tiles, tiers S/M/L by level)",
+ "batch": "hoa_loi_thunder_v1",
+ "date": "2026-11-09",
+ "provider": "ElevenLabs (MCP, ElevenCreative flows)",
+ "model_id": "eleven_text_to_sound_v2",
+ "flow_id": "2IUROnhpKdx5Ty6O4W4k",
+ "node_id": "nFCQ0P8xJRigyIzpsGYw",
+ "settings": {
+  "duration_seconds": 0.8,
+  "prompt_influence": 0.6,
+  "loop": false,
+  "generations_count": 2
+ },
+ "prompt": "One single devastating magical thunderstrike erupts instantly from an enchanted ground seal: a brutally sharp electrical lightning crack fused with an enormous, deep, chest-hitting thunderclap. Violent, powerful and cinematic, one unified impact at the very start, short heavy tail with a brief electrical decay. Dark fantasy magic. No buildup, no rolling thunder, no repeated strikes, no extra explosions, no bells, no lasers, no music, no voices.",
+ "prompt_note": "User prompt (524 chars) trimmed to 448 (limit 450); the trimmed text was shown and the run approved by the user 2026-11-09.",
+ "estimate_credits": 16,
+ "credits_reported": "run result 3 per take (6); run status 2.667 per take (5.3). Unverified.",
+ "takes": [
+  {
+   "label": "Take A",
+   "generation_id": "LfFgFapK4Uzf7B9H0svh",
+   "session_id": "hq8AqxoKMTu4LxVZngyR",
+   "file": "hoa_loi_thunder_v1_takeA_LfFgFapK4Uzf7B9H0svh.mp3",
+   "sha256_16": "151ad02be1209120"
+  },
+  {
+   "label": "Take B",
+   "generation_id": "2GhvmghqO026bpy8NPih",
+   "session_id": "AkxsS9qZHuBefRIAXcRD",
+   "file": "hoa_loi_thunder_v1_takeB_2GhvmghqO026bpy8NPih.mp3",
+   "sha256_16": "2eeec9a8f1720a13"
+  }
+ ],
+ "licence": "UNCONFIRMED: commercial use depends on the user's ElevenLabs plan, not yet provided.",
+ "selected_take": null
+}

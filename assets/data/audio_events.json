@@ -1,0 +1,804 @@
+{
+	"_doc": "Tessera audio events (docs/skill-v2/10-audio-system-design.md), read by AudioBank. Event ids are <category>.<subject>.<action>; files are sfx_<category>_<subject>_<action>_<nn>.wav (tier files _s/_m/_l). A card phase resolves cards[id] -> archetypes[delivery][impact] -> archetypes[delivery]['*'] -> archetypes['*'][impact] -> archetypes['*']['*']; an empty string means silent.",
+	"version": 1,
+	"buses": [
+		"Master",
+		"Music",
+		"Ambience",
+		"SFX",
+		"Skill",
+		"Combat",
+		"UI",
+		"Warning"
+	],
+	"volume_buses": [
+		"Master",
+		"Music",
+		"SFX",
+		"UI",
+		"Ambience"
+	],
+	"priorities": {
+		"low": 0,
+		"normal": 1,
+		"high": 2,
+		"critical": 3
+	},
+	"voice_caps": {
+		"total": 24,
+		"Skill": 8,
+		"Combat": 6,
+		"UI": 4,
+		"Warning": 2,
+		"Ambience": 4,
+		"SFX": 6,
+		"Music": 2
+	},
+	"reserved_voices": {
+		"Warning": 2
+	},
+	"defaults": {
+		"gain_db": 0.0,
+		"pitch_semitones": 1.5,
+		"gain_jitter_db": 2.0,
+		"cooldown_ms": 40,
+		"max_voices": 3,
+		"loop": false,
+		"reducible": false,
+		"vibrate_ms": 0,
+		"duck": false,
+		"step_pitch_semitones": 0.0,
+		"step_gain_db": 0.0
+	},
+	"size_tiers": {
+		"S": 1,
+		"M": 3,
+		"L": 5
+	},
+	"tier_gain_db": {
+		"S": -3.0,
+		"M": 0.0,
+		"L": 2.0
+	},
+	"duck": {
+		"sec": 0.4,
+		"buses_db": {
+			"Skill": -6.0,
+			"Combat": -6.0,
+			"SFX": -6.0,
+			"Music": -8.0
+		}
+	},
+	"timing": {
+		"latency_lead_max_sec": 0.08,
+		"group_epsilon_sec": 0.001,
+		"travel_min_sec": 0.05,
+		"aftermath_delay_sec": 0.4,
+		"fuse_ticks": 3,
+		"seal_lock_delay_sec": 0.25,
+		"final_warning_sec": 0.35,
+		"prime_lead_sec": 0.3,
+		"imminent_lead_sec": 0.5,
+		"hp_low_ratio": 0.25,
+		"default_sound_sec": 0.6
+	},
+	"phase_fallbacks": {
+		"impact_final": "impact"
+	},
+	"final_kinds": [
+		"burst",
+		"drop_final"
+	],
+	"skill_phases": [
+		"windup",
+		"charge",
+		"channel_loop",
+		"commit",
+		"seal",
+		"tick",
+		"prime",
+		"travel",
+		"impact",
+		"impact_final",
+		"hit",
+		"body_hit",
+		"aftermath",
+		"cancel",
+		"fizzle"
+	],
+	"cues": {
+		"tap": "ui.tap",
+		"toggle": "ui.toggle",
+		"back": "ui.back",
+		"menu_open": "card.menu_open",
+		"choose": "card.choose",
+		"highlight": "card.highlight",
+		"unavailable": "card.unavailable",
+		"ready": "card.ready"
+	},
+	"events": {
+		"ui.tap": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_ui_tap_01.wav",
+				"res://assets/audio/sfx/sfx_ui_tap_02.wav"
+			],
+			"gain_db": -6
+		},
+		"ui.back": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_ui_back_01.wav"
+			],
+			"gain_db": -6
+		},
+		"ui.toggle": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_ui_toggle_01.wav"
+			],
+			"gain_db": -6
+		},
+		"block.pickup": {
+			"bus": "UI",
+			"priority": "normal",
+			"tier_files": {
+				"S": [
+					"res://assets/audio/sfx/sfx_block_pickup_s_01.wav"
+				],
+				"M": [
+					"res://assets/audio/sfx/sfx_block_pickup_m_01.wav"
+				],
+				"L": [
+					"res://assets/audio/sfx/sfx_block_pickup_l_01.wav"
+				]
+			},
+			"gain_db": -4
+		},
+		"block.select": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_block_select_01.wav"
+			],
+			"gain_db": -6
+		},
+		"block.place": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_block_place_01.wav",
+				"res://assets/audio/sfx/sfx_block_place_02.wav"
+			],
+			"gain_db": -3
+		},
+		"block.invalid": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_block_invalid_01.wav"
+			],
+			"gain_db": -6,
+			"cooldown_ms": 400
+		},
+		"block.confirm": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_block_confirm_01.wav"
+			],
+			"gain_db": -3
+		},
+		"block.slot_full": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_block_slot_full_01.wav"
+			],
+			"gain_db": -4,
+			"cooldown_ms": 300
+		},
+		"card.menu_open": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_card_menu_open_01.wav"
+			],
+			"gain_db": -5
+		},
+		"card.highlight": {
+			"bus": "UI",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_card_highlight_01.wav"
+			],
+			"gain_db": -8,
+			"cooldown_ms": 60
+		},
+		"card.choose": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_card_choose_01.wav"
+			],
+			"gain_db": -4
+		},
+		"card.unavailable": {
+			"bus": "UI",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_card_unavailable_01.wav"
+			],
+			"gain_db": -5,
+			"cooldown_ms": 200
+		},
+		"card.ready": {
+			"bus": "UI",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_card_ready_01.wav"
+			],
+			"gain_db": -9,
+			"cooldown_ms": 500,
+			"reducible": true
+		},
+		"combat.hit.player": {
+			"bus": "Combat",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_hit_player_01.wav",
+				"res://assets/audio/sfx/sfx_combat_hit_player_02.wav"
+			],
+			"gain_db": -2,
+			"cooldown_ms": 60
+		},
+		"combat.hit.enemy": {
+			"bus": "Combat",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_hit_enemy_01.wav",
+				"res://assets/audio/sfx/sfx_combat_hit_enemy_02.wav"
+			],
+			"gain_db": -4,
+			"cooldown_ms": 60
+		},
+		"combat.interrupt": {
+			"bus": "Combat",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_interrupt_01.wav"
+			],
+			"gain_db": -2
+		},
+		"combat.parry": {
+			"bus": "Combat",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_parry_01.wav"
+			],
+			"gain_db": -2
+		},
+		"combat.crit": {
+			"bus": "Combat",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_crit_01.wav"
+			],
+			"gain_db": -3
+		},
+		"combat.death": {
+			"bus": "Combat",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_death_01.wav"
+			],
+			"gain_db": -2
+		},
+		"combat.hp_low": {
+			"bus": "Combat",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_hp_low_01.wav"
+			],
+			"gain_db": -6,
+			"cooldown_ms": 1500
+		},
+		"combat.lock": {
+			"bus": "Combat",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_combat_lock_01.wav"
+			],
+			"gain_db": -5
+		},
+		"warn.boss.windup": {
+			"bus": "Warning",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_warn_boss_windup_01.wav"
+			],
+			"gain_db": -3,
+			"cooldown_ms": 150
+		},
+		"warn.boss.imminent": {
+			"bus": "Warning",
+			"priority": "critical",
+			"files": [
+				"res://assets/audio/sfx/sfx_warn_boss_imminent_01.wav"
+			],
+			"gain_db": -1,
+			"cooldown_ms": 200,
+			"vibrate_ms": 40,
+			"duck": true
+		},
+		"warn.boss.recovery": {
+			"bus": "Warning",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_warn_boss_recovery_01.wav"
+			],
+			"gain_db": -6
+		},
+		"warn.terrain.vent": {
+			"bus": "Warning",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_warn_terrain_vent_01.wav"
+			],
+			"gain_db": -4,
+			"cooldown_ms": 250
+		},
+		"flow.victory": {
+			"bus": "Music",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_flow_victory_01.wav"
+			],
+			"gain_db": -4
+		},
+		"flow.defeat": {
+			"bus": "Music",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_flow_defeat_01.wav"
+			],
+			"gain_db": -4
+		},
+		"skill.generic.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_generic_windup_01.wav",
+				"res://assets/audio/sfx/sfx_skill_generic_windup_02.wav"
+			],
+			"gain_db": -7
+		},
+		"skill.generic.commit": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_generic_commit_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.generic.travel": {
+			"bus": "Skill",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_generic_travel_01.wav"
+			],
+			"gain_db": -9
+		},
+		"skill.generic.hit": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_generic_hit_01.wav"
+			],
+			"gain_db": -6,
+			"cooldown_ms": 60
+		},
+		"skill.generic.cancel": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_generic_cancel_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.generic.fizzle": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_generic_fizzle_01.wav"
+			],
+			"gain_db": -8
+		},
+		"skill.impact.burst": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_burst_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.slash": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_slash_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.burn": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_burn_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.freeze": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_freeze_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.knockback": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_knockback_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.shatter": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_shatter_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.thorns": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_thorns_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.poison": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_poison_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.impact.curse": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_impact_curse_01.wav"
+			],
+			"gain_db": -3
+		},
+		"status.burn.ignite": {
+			"bus": "SFX",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_status_burn_ignite_01.wav"
+			],
+			"gain_db": -8,
+			"reducible": true,
+			"cooldown_ms": 120
+		},
+		"status.burn.loop": {
+			"bus": "SFX",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_status_burn_loop_01.wav"
+			],
+			"gain_db": -20,
+			"loop": true,
+			"max_voices": 1,
+			"reducible": true
+		},
+		"status.burn.hurt": {
+			"bus": "SFX",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_status_burn_hurt_01.wav"
+			],
+			"gain_db": -12,
+			"reducible": true,
+			"cooldown_ms": 120
+		},
+		"status.burn.out": {
+			"bus": "SFX",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_status_burn_out_01.wav"
+			],
+			"gain_db": -10,
+			"reducible": true
+		},
+		"skill.tram_dia.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_tram_dia_windup_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.tram_dia.commit": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_tram_dia_commit_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.tram_dia.travel": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_tram_dia_travel_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.tram_dia.impact_final": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_tram_dia_impact_final_01.wav"
+			],
+			"gain_db": -1
+		},
+		"skill.tram_dia.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_tram_dia_impact_01.wav",
+				"res://assets/audio/sfx/sfx_skill_tram_dia_impact_02.wav"
+			],
+			"gain_db": -4,
+			"step_pitch_semitones": 1.0,
+			"step_gain_db": -3.0,
+			"max_voices": 4,
+			"cooldown_ms": 30
+		},
+		"skill.tram_dia.aftermath": {
+			"bus": "Skill",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_tram_dia_aftermath_01.wav"
+			],
+			"gain_db": -10,
+			"reducible": true
+		},
+		"skill.ngan_kiem.charge": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_charge_01.wav"
+			],
+			"gain_db": -7
+		},
+		"skill.ngan_kiem.channel_loop": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_channel_loop_el_01.wav"
+			],
+			"gain_db": -9,
+			"loop": true,
+			"max_voices": 1
+		},
+		"skill.ngan_kiem.commit": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_commit_01.wav"
+			],
+			"gain_db": -3
+		},
+		"skill.ngan_kiem.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_01.wav",
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_02.wav",
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_03.wav",
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_04.wav"
+			],
+			"gain_db": -3,
+			"max_voices": 3,
+			"cooldown_ms": 30
+		},
+		"skill.ngan_kiem.impact_final": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_final_el_01.wav"
+			],
+			"gain_db": -9
+		},
+		"skill.ngan_kiem.cancel": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_cancel_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.hoa_loi.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_windup_fb_01.wav"
+			],
+			"gain_db": -4
+		},
+		"skill.hoa_loi.seal": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_seal_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.hoa_loi.charge": {
+			"bus": "Skill",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_charge_01.wav"
+			],
+			"gain_db": -11,
+			"reducible": true
+		},
+		"skill.hoa_loi.tick": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_tick_01.wav"
+			],
+			"gain_db": -6,
+			"step_pitch_semitones": 2.0,
+			"step_gain_db": 1.0,
+			"cooldown_ms": 0
+		},
+		"skill.hoa_loi.prime": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_prime_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.hoa_loi.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"tier_files": {
+				"S": [
+					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_el_s_01.wav"
+				],
+				"M": [
+					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_el_m_01.wav"
+				],
+				"L": [
+					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_el_l_01.wav"
+				]
+			},
+			"gain_db": 2
+		},
+		"skill.hoa_loi.ignite": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_ignite_01.wav"
+			],
+			"gain_db": -4
+		},
+		"skill.hoa_loi.fizzle": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_fizzle_01.wav"
+			],
+			"gain_db": -8
+		}
+	},
+	"archetypes": {
+		"*": {
+			"*": {
+				"windup": "skill.generic.windup",
+				"commit": "skill.generic.commit",
+				"impact": "skill.impact.burst",
+				"hit": "skill.generic.hit",
+				"cancel": "skill.generic.cancel",
+				"fizzle": "skill.generic.fizzle"
+			},
+			"burst": {
+				"impact": "skill.impact.burst"
+			},
+			"slash": {
+				"impact": "skill.impact.slash"
+			},
+			"burn": {
+				"impact": "skill.impact.burn",
+				"aftermath": "status.burn.ignite"
+			},
+			"freeze": {
+				"impact": "skill.impact.freeze"
+			},
+			"knockback": {
+				"impact": "skill.impact.knockback"
+			},
+			"shatter": {
+				"impact": "skill.impact.shatter"
+			},
+			"thorns": {
+				"impact": "skill.impact.thorns"
+			},
+			"poison": {
+				"impact": "skill.impact.poison"
+			},
+			"curse": {
+				"impact": "skill.impact.curse"
+			}
+		},
+		"CASTER_TO_TARGET": {
+			"*": {
+				"travel": "skill.generic.travel"
+			}
+		},
+		"GROUND_PROPAGATION": {
+			"*": {
+				"travel": "skill.generic.travel"
+			}
+		},
+		"SEQUENTIAL_CHAIN": {
+			"*": {
+				"travel": "skill.generic.travel"
+			}
+		}
+	},
+	"cards": {
+		"tram_dia": {
+			"windup": "skill.tram_dia.windup",
+			"commit": "skill.tram_dia.commit",
+			"travel": "skill.tram_dia.travel",
+			"impact": "skill.tram_dia.impact",
+			"impact_final": "skill.tram_dia.impact_final",
+			"aftermath": "skill.tram_dia.aftermath"
+		},
+		"ngan_kiem": {
+			"windup": "",
+			"channel_loop": "skill.ngan_kiem.channel_loop",
+			"commit": "",
+			"impact": "skill.ngan_kiem.impact",
+			"impact_final": "skill.ngan_kiem.impact_final",
+			"cancel": "skill.ngan_kiem.cancel"
+		},
+		"hoa_loi": {
+			"windup": "skill.hoa_loi.windup",
+			"seal": "",
+			"charge": "",
+			"tick": "",
+			"prime": "",
+			"impact": "skill.hoa_loi.impact",
+			"fizzle": "skill.hoa_loi.fizzle",
+			"aftermath": "",
+			"commit": "skill.hoa_loi.ignite",
+			"hit": "",
+			"body_hit": ""
+		}
+	}
+}

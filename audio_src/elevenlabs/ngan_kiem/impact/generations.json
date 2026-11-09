@@ -1,0 +1,24 @@
+{
+  "_doc": "Raw ElevenLabs takes for skill.ngan_kiem.impact (one sword stabbing a tile). Source material only: NOT used in the game, NOT approved, not production-ready. audio_src/ is outside assets/ (.gdignore).",
+  "layer": "skill.ngan_kiem.impact (vertical steel blade into a stone tile; drops 0.12 s apart)",
+  "batch": "ngan_kiem_impact_v1",
+  "date": "2026-11-09",
+  "provider": "ElevenLabs (MCP, ElevenCreative flows)",
+  "model_id": "eleven_text_to_sound_v2",
+  "flow_id": "2IUROnhpKdx5Ty6O4W4k",
+  "node_id": "kf2Cs66Ixsi5RxoHIGxM",
+  "settings": { "duration_seconds": 0.8, "prompt_influence": 0.6, "loop": false, "generations_count": 4 },
+  "prompt": "A massive enchanted steel sword plunges vertically into solid ancient stone. A sudden razor-sharp metallic strike, deep powerful impact body, stone cracking under the blade, and a short heavy steel resonance. Brutal, weighty, precise fantasy weapon impact, strong initial transient, close and dry. No horizontal sword swing, no slash, no sword drawing, no generic explosion, no music, no voices.",
+  "prompt_note": "Exact user-approved prompt (395 chars), approved 2026-11-09.",
+  "estimate_credits": 32,
+  "credits_reported": "run result: 3 per take (12); run status: 2.667 per take (10.67). Actual charge unverified (no balance tool).",
+  "takes": [
+    { "label": "Take A", "generation_id": "hC6J5kSKKandCtVQHWIi", "session_id": "SasFJEIPddkir2cPKcgd", "file": "ngan_kiem_impact_v1_takeA_hC6J5kSKKandCtVQHWIi.mp3", "sha256_16": "f9dbfe10da7b6ca6" },
+    { "label": "Take B", "generation_id": "wK46mLNLpCyHBxEloQAD", "session_id": "X8otQTfk7BTCtO18vPju", "file": "ngan_kiem_impact_v1_takeB_wK46mLNLpCyHBxEloQAD.mp3", "sha256_16": "763df98cd1653c4f" },
+    { "label": "Take C", "generation_id": "udvF7Xs2CLR86C8UhkJv", "session_id": "gu8Tcd3evhMSFg53e7vX", "file": "ngan_kiem_impact_v1_takeC_udvF7Xs2CLR86C8UhkJv.mp3", "sha256_16": "df220ea54ce403df" },
+    { "label": "Take D", "generation_id": "oFSOThm9Y12k0wZawMsf", "session_id": "aeS5rHPqU9JTe9rgSg4U", "file": "ngan_kiem_impact_v1_takeD_oFSOThm9Y12k0wZawMsf.mp3", "sha256_16": "1074d295f14ce209" }
+  ],
+  "format": "MP3 128 kbps 44.1 kHz stereo, 0.8 s each, normalised to 0 dBFS (a few samples at full scale)",
+  "licence": "UNCONFIRMED: commercial use depends on the user's ElevenLabs plan, not yet provided.",
+  "selected_takes": null
+}

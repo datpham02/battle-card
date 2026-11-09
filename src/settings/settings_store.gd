@@ -14,6 +14,12 @@ extends RefCounted
 ## [code]last_slot[/code] (0-based save slot the title opens) moved here from the progress file: they belong to the
 ## machine, not to a slot. [method memory] builds a store that never touches a file (tests, dev args).
 ##
+## Audio (docs/skill-v2/10-audio-system-design.md §9, decision A3, 2026-11-09): [code]"audio": {"volumes": {"Master":
+## 80, "Music": 80, "SFX": 80, "UI": 80, "Ambience": 80}, "reduced": false, "vibration": true}[/code]. Volumes are
+## percents 0-100 (default [constant DEFAULT_VOLUME]); Reduced audio drops ambience one-shots, aftermaths and
+## skill-ready tones (warnings stay); vibration on Critical cues (Android). [signal audio_changed] fires on every audio
+## change so the [AudioDirector] re-applies them.
+##
 ## Two ways to use it. The game reads the shared instance ([method shared]), loaded lazily from
 ## the real file. Tests build their own instance on a temp path ([code]SettingsStore.new(path)[/code])
 ## and never touch the real file.
@@ -30,6 +36,16 @@ const CARD_TIMES: Array[String] = [CARD_TIME_NORMAL, CARD_TIME_LONG, CARD_TIME_U
 ## Time multiplier per card time value (0 = no limit).
 const CARD_TIME_MULTS: Dictionary = {CARD_TIME_NORMAL: 1.0, CARD_TIME_LONG: 2.0, CARD_TIME_UNLIMITED: 0.0}
 
+## Audio: the buses with a player volume, in the settings row order.
+const VOLUME_BUSES: Array[String] = ["Master", "Music", "SFX", "UI", "Ambience"]
+## Audio: every volume starts here (accessibility-requirements.md: 80 %).
+const DEFAULT_VOLUME: int = 80
+## Audio: one tap on a volume row moves it by this many percent (wrapping 100 -> 0).
+const VOLUME_STEP: int = 10
+
+## Emitted after any audio value changed (volume, reduced audio, vibration).
+signal audio_changed
+
 static var _shared: SettingsStore = null
 
 var _path: String
@@ -38,6 +54,9 @@ var _reduce_motion: bool = false
 var _card_time: String = CARD_TIME_NORMAL
 var _locale: String = ""
 var _last_slot: int = 0
+var _volumes: Dictionary = {}
+var _reduced_audio: bool = false
+var _vibration: bool = true
 
 
 ## Builds a store on [param path] and loads it (missing or broken file = defaults).
@@ -127,6 +146,53 @@ func set_last_slot(index: int) -> void:
 	save_file()
 
 
+## Audio: the volume of [param bus] in percent (0-100; [constant DEFAULT_VOLUME] when never set; 0 for an unknown bus).
+func get_volume(bus: String) -> int:
+	if not VOLUME_BUSES.has(bus):
+		return 0
+	return int(_volumes.get(bus, DEFAULT_VOLUME))
+
+
+## Audio: sets the volume of [param bus] (clamped 0-100) and saves; an unknown bus is ignored.
+func set_volume(bus: String, percent: int) -> void:
+	if not VOLUME_BUSES.has(bus):
+		return
+	_volumes[bus] = clampi(percent, 0, 100)
+	save_file()
+	audio_changed.emit()
+
+
+## Audio: raises the volume of [param bus] by [constant VOLUME_STEP], wrapping from 100 to 0; returns the new value.
+func cycle_volume(bus: String) -> int:
+	var now: int = get_volume(bus)
+	set_volume(bus, 0 if now >= 100 else mini(now + VOLUME_STEP, 100))
+	return get_volume(bus)
+
+
+## Audio: true when Reduced audio is on (default off).
+func get_reduced_audio() -> bool:
+	return _reduced_audio
+
+
+## Audio: sets Reduced audio and saves.
+func set_reduced_audio(on: bool) -> void:
+	_reduced_audio = on
+	save_file()
+	audio_changed.emit()
+
+
+## Audio: true when Critical cues may vibrate (default on).
+func get_vibration() -> bool:
+	return _vibration
+
+
+## Audio: sets vibration and saves.
+func set_vibration(on: bool) -> void:
+	_vibration = on
+	save_file()
+	audio_changed.emit()
+
+
 ## Pure: the time multiplier of card time [param value] (1 for an unknown value; 0 = no limit).
 static func card_time_mult(value: String) -> float:
 	return float(CARD_TIME_MULTS.get(value, 1.0))
@@ -140,6 +206,9 @@ func load_file() -> bool:
 	_card_time = CARD_TIME_NORMAL
 	_locale = ""
 	_last_slot = 0
+	_volumes = {}
+	_reduced_audio = false
+	_vibration = true
 	if _path.is_empty() or not FileAccess.file_exists(_path):
 		return false
 	var file: FileAccess = FileAccess.open(_path, FileAccess.READ)
@@ -159,6 +228,18 @@ func load_file() -> bool:
 	_locale = locale if locale is String else ""
 	var slot: Variant = data.get("last_slot", 0)
 	_last_slot = maxi(int(slot), 0) if typeof(slot) in [TYPE_INT, TYPE_FLOAT] else 0
+	var audio: Variant = data.get("audio", {})
+	if audio is Dictionary:
+		var vols: Variant = (audio as Dictionary).get("volumes", {})
+		if vols is Dictionary:
+			for bus: String in VOLUME_BUSES:
+				var v: Variant = (vols as Dictionary).get(bus, null)
+				if typeof(v) in [TYPE_INT, TYPE_FLOAT]:
+					_volumes[bus] = clampi(int(v), 0, 100)
+		var reduced: Variant = (audio as Dictionary).get("reduced", false)
+		_reduced_audio = reduced is bool and bool(reduced)
+		var vib: Variant = (audio as Dictionary).get("vibration", true)
+		_vibration = not (vib is bool) or bool(vib)
 	return true
 
 
@@ -175,7 +256,16 @@ func save_file() -> bool:
 		"card_time": _card_time,
 		"locale": _locale,
 		"last_slot": _last_slot,
+		"audio": _audio_data(),
 	}
 	file.store_string(JSON.stringify(data, "\t"))
 	return true
+
+
+# The "audio" object written by save_file: every volume (defaults included), reduced, vibration.
+func _audio_data() -> Dictionary:
+	var vols: Dictionary = {}
+	for bus: String in VOLUME_BUSES:
+		vols[bus] = get_volume(bus)
+	return {"volumes": vols, "reduced": _reduced_audio, "vibration": _vibration}
 

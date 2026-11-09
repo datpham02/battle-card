@@ -1,0 +1,37 @@
+{
+ "date": "2026-11-09",
+ "provider": "ElevenLabs (MCP, ElevenCreative flows)",
+ "model_id": "eleven_text_to_sound_v2",
+ "flow_id": "2IUROnhpKdx5Ty6O4W4k",
+ "licence": "UNCONFIRMED: commercial use depends on the user's ElevenLabs plan, not yet provided.",
+ "selected_takes": null,
+ "_doc": "Raw ElevenLabs takes. Source material only: NOT used in the game, NOT approved, not production-ready. audio_src/ is outside assets/ (.gdignore).",
+ "layer": "skill.ngan_kiem.channel_loop (swords hovering while the Knight channels)",
+ "batch": "ngan_kiem_channel_loop_v1",
+ "node_id": "ditZ98KVy3l6vb5DWSiu",
+ "settings": {
+  "duration_seconds": 2.0,
+  "prompt_influence": 0.6,
+  "loop": true,
+  "generations_count": 2
+ },
+ "prompt": "A continuous ominous magical resonance from many heavy enchanted steel swords suspended in the air, held motionless by immense magical force. Deep tense metallic vibration, sustained pressure, subtle rhythmic energy throbs, dark powerful magical atmosphere. Steady intensity, heavy and threatening, seamless continuous texture. No bells, no chimes, no organ chords, no cheerful tones, no whoosh, no impacts, no music, no voices.",
+ "prompt_note": "Exact user-approved prompt (428 chars).",
+ "estimate_credits": 40,
+ "credits_reported": "run result 7 per take (14); run status 6.667 per take (13.3). Actual charge unverified. One take was delayed by a concurrency limit and retried automatically by ElevenLabs.",
+ "takes": [
+  {
+   "label": "Take A",
+   "generation_id": "xtVcpq0UlItwN5HHypS6",
+   "session_id": "VNJ5b1UOi3hz8yESf3xZ",
+   "file": "ngan_kiem_channel_loop_v1_takeA_xtVcpq0UlItwN5HHypS6.mp3"
+  },
+  {
+   "label": "Take B",
+   "generation_id": "kigG56gQWrYufmIk7h7u",
+   "session_id": "Nd688FRSUtNHqhtxDzC3",
+   "file": "ngan_kiem_channel_loop_v1_takeB_kigG56gQWrYufmIk7h7u.mp3"
+  }
+ ],
+ "format": "MP3 128 kbps 44.1 kHz stereo, 2.25 s returned for a 2.0 s request"
+}

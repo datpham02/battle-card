@@ -993,3 +993,13 @@ ui.slots.abandon,Chơi mới,New climb
 ui.slots.abandon_title,Bỏ chuyến leo ở ô %d?,Abandon the climb in slot %d?
 ui.slots.abandon_body,"Chuyến leo đang dở sẽ mất. Mở khóa, Giao Kèo và thành tựu của ô vẫn giữ.","The climb in progress will be lost. The slot keeps its unlocks, Pact levels and achievements."
 ui.slots.abandon_yes,Bỏ chuyến leo,Abandon
+ui.settings.audio,Âm thanh,Audio
+ui.settings.vol_master,Âm lượng chung,Master volume
+ui.settings.vol_music,Nhạc,Music
+ui.settings.vol_sfx,Hiệu ứng,Effects
+ui.settings.vol_ui,Giao diện,Interface
+ui.settings.vol_ambience,Môi trường,Ambience
+ui.settings.reduced_audio,Giảm âm thanh,Reduced audio
+ui.settings.vibration,Rung,Vibration
+ui.settings.volume_value,{pct}%,{pct}%
+ui.settings.tab_general,Chung,General

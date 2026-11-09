@@ -1,0 +1,49 @@
+{
+ "date": "2026-11-09",
+ "provider": "ElevenLabs (MCP, ElevenCreative flows)",
+ "model_id": "eleven_text_to_sound_v2",
+ "flow_id": "2IUROnhpKdx5Ty6O4W4k",
+ "licence": "UNCONFIRMED: commercial use depends on the user's ElevenLabs plan, not yet provided.",
+ "selected_takes": null,
+ "_doc": "Raw ElevenLabs takes. Source material only: NOT used in the game, NOT approved, not production-ready. audio_src/ is outside assets/ (.gdignore).",
+ "layer": "skill.ngan_kiem.charge (Knight raises the sword; several swords materialise above the tiles)",
+ "batch": "ngan_kiem_charge_v2",
+ "node_id": "OhO0VZsvNcIo0xdkmNMs",
+ "settings": {
+  "duration_seconds": 1.0,
+  "prompt_influence": 0.6,
+  "loop": false,
+  "generations_count": 4
+ },
+ "prompt": "Multiple heavy enchanted steel swords materialize separately in midair. Deep metallic resonance, powerful magical pressure, several distinct heavy steel locking sounds appearing in rapid succession, and an ominous low-frequency energy pulse. Dark, tense, majestic, forceful fantasy summoning. Clear attacks, powerful weight. No bells, no chimes, no tinkling, no playful sparkle, no sword swing, no slash, no machinery, no music, no voices.",
+ "prompt_note": "User-approved prompt minus \"above a battlefield\" (459 -> 439 chars; limit 450), approved by the user 2026-11-09.",
+ "estimate_credits": 40,
+ "credits_reported": "run result 3 per take (12); run status 3.333 per take (13.3). Actual charge unverified.",
+ "takes": [
+  {
+   "label": "Take A",
+   "generation_id": "5HEyks8lXXlMoIFrLtOD",
+   "session_id": "u4bVuxPFsjWf0Zdx6XAI",
+   "file": "ngan_kiem_charge_v2_takeA_5HEyks8lXXlMoIFrLtOD.mp3"
+  },
+  {
+   "label": "Take B",
+   "generation_id": "l0MwURIAoKjybzlooAlo",
+   "session_id": "eFzWqf2n7pAT5sbboXbB",
+   "file": "ngan_kiem_charge_v2_takeB_l0MwURIAoKjybzlooAlo.mp3"
+  },
+  {
+   "label": "Take C",
+   "generation_id": "lmYObOzVrdKWRUxRb563",
+   "session_id": "l08NJWuqWoE4OtZEvWKP",
+   "file": "ngan_kiem_charge_v2_takeC_lmYObOzVrdKWRUxRb563.mp3"
+  },
+  {
+   "label": "Take D",
+   "generation_id": "SsGp0bJnGseb1nFWAVE9",
+   "session_id": "MjQhtgTzXsEE0yXbV4Hg",
+   "file": "ngan_kiem_charge_v2_takeD_SsGp0bJnGseb1nFWAVE9.mp3"
+  }
+ ],
+ "format": "MP3 128 kbps 44.1 kHz stereo, 1.0 s"
+}

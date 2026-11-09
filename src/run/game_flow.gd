@@ -503,6 +503,8 @@ func enter_test_floor(run_config: RunConfig) -> RunController:
 
 
 func _ready() -> void:
+	# Audio (docs/skill-v2/10-audio-system-design.md): the rig only listens to the flow and battle signals.
+	add_child(AudioRig.new())
 	_config = ChaptersConfig.load_from_file()
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var progress_mode: String = ""

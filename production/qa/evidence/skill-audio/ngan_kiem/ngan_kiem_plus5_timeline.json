@@ -1,0 +1,299 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.28,
+    "commit_lock_sec": 0.13,
+    "drop_order": "from_centre",
+    "sky_hover_sec": 0.22,
+    "sky_stagger_sec": 0.12
+  },
+  "cells": "[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(5, 2)]",
+      "clock": 1.95,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(6, 1)]",
+      "clock": 2.07,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(4, 1)]",
+      "clock": 2.19,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 0)]",
+      "clock": 2.31,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 1)]",
+      "clock": 2.43,
+      "hit": true,
+      "kind": "drop_final",
+      "mult": 1.5,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 5,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.ngan_kiem.charge",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "L"
+    },
+    {
+      "cells": 5,
+      "clock": 0.0,
+      "handle": 2,
+      "id": "skill.ngan_kiem.channel_loop",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "channel:0",
+      "tier": "L"
+    },
+    {
+      "cells": 5,
+      "clock": 1.73,
+      "handle": 3,
+      "id": "skill.ngan_kiem.commit",
+      "local": 1.71666666666667,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "L"
+    },
+    {
+      "at": 1.95,
+      "cells": 1,
+      "clock": 1.95,
+      "handle": 4,
+      "id": "skill.ngan_kiem.impact",
+      "local": 1.93333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 2.07,
+      "cells": 1,
+      "clock": 2.07,
+      "handle": 5,
+      "id": "skill.ngan_kiem.impact",
+      "local": 2.06666666666666,
+      "op": "play",
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 2.19,
+      "cells": 1,
+      "clock": 2.19,
+      "handle": 6,
+      "id": "skill.ngan_kiem.impact",
+      "local": 2.18333333333333,
+      "op": "play",
+      "step": 2,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 2.31,
+      "cells": 1,
+      "clock": 2.31,
+      "handle": 7,
+      "id": "skill.ngan_kiem.impact",
+      "local": 2.3,
+      "op": "play",
+      "step": 3,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 2.43,
+      "handle": 8,
+      "id": "combat.hit.enemy",
+      "local": 2.41666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 2.43,
+      "cells": 1,
+      "clock": 2.43,
+      "handle": 9,
+      "id": "skill.ngan_kiem.impact_final",
+      "local": 2.41666666666666,
+      "op": "play",
+      "step": 4,
+      "tag": "cast:1",
+      "tier": "L"
+    },
+    {
+      "cells": 1,
+      "clock": 2.43,
+      "handle": 10,
+      "id": "skill.generic.hit",
+      "local": 2.41666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 2.43,
+      "handle": 8,
+      "id": "combat.hit.enemy",
+      "local": 2.41666666666666,
+      "op": "merge",
+      "retier": false,
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 1.73,
+      "events": [
+        {
+          "at": 1.95,
+          "cells": "[(5, 2)]",
+          "kind": "drop",
+          "step": 0
+        },
+        {
+          "at": 2.07,
+          "cells": "[(6, 1)]",
+          "kind": "drop",
+          "step": 1
+        },
+        {
+          "at": 2.19,
+          "cells": "[(4, 1)]",
+          "kind": "drop",
+          "step": 2
+        },
+        {
+          "at": 2.31,
+          "cells": "[(5, 0)]",
+          "kind": "drop",
+          "step": 3
+        },
+        {
+          "at": 2.43,
+          "cells": "[(5, 1)]",
+          "kind": "drop_final",
+          "step": 4
+        }
+      ]
+    }
+  ],
+  "shape": "plus5",
+  "skill": "ngan_kiem",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.ngan_kiem.charge",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "L"
+    },
+    {
+      "end": 1.73333333333333,
+      "id": "skill.ngan_kiem.channel_loop",
+      "loop": true,
+      "start": 0.0166666666666667,
+      "tier": "L"
+    },
+    {
+      "end": 2.31666666666666,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 1.95,
+      "tier": "S"
+    },
+    {
+      "end": 2.33333333333333,
+      "id": "skill.ngan_kiem.commit",
+      "loop": false,
+      "start": 1.73333333333333,
+      "tier": "L"
+    },
+    {
+      "end": 2.68333333333333,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 2.08333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 2.79999999999999,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 2.2,
+      "tier": "S"
+    },
+    {
+      "end": 2.91666666666666,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 2.31666666666666,
+      "tier": "S"
+    },
+    {
+      "end": 3.03333333333333,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 2.43333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 3.03333333333333,
+      "id": "skill.ngan_kiem.impact_final",
+      "loop": false,
+      "start": 2.43333333333333,
+      "tier": "L"
+    },
+    {
+      "end": 3.03333333333333,
+      "id": "skill.generic.hit",
+      "loop": false,
+      "start": 2.43333333333333,
+      "tier": "S"
+    }
+  ]
+}

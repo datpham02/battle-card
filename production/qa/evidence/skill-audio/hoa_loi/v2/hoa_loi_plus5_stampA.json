@@ -1,0 +1,171 @@
+{
+ "out": "production\\qa\\evidence\\skill-audio\\hoa_loi\\v2\\hoa_loi_plus5_stampA.wav",
+ "timeline": "production\\qa\\evidence\\skill-audio\\hoa_loi\\v2\\hoa_loi_plus5_timeline.json",
+ "pre_sec": 0.5,
+ "overrides": {
+  "skill.hoa_loi.windup": "audio_src/derived/hoa_loi_mockups/cast_stamp_A.wav",
+  "skill.hoa_loi.seal": "audio_src/derived/hoa_loi_mockups/seal_armed.wav",
+  "skill.hoa_loi.tick": "audio_src/derived/hoa_loi_mockups/pulse.wav"
+ },
+ "match_rms": false,
+ "peak_dbfs": -2.01,
+ "rms_dbfs": -24.52,
+ "clipped": false,
+ "duration_sec": 6.033,
+ "layers": [
+  {
+   "id": "skill.hoa_loi.windup",
+   "start": 0.0,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\cast_stamp_A.wav",
+   "gain_db": -4.0,
+   "step": 0,
+   "tier": "L",
+   "t_in_file": 0.5,
+   "len_sec": 0.25,
+   "peak_dbfs": -7.0
+  },
+  {
+   "id": "skill.hoa_loi.seal",
+   "start": 0.450001,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\seal_armed.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "L",
+   "t_in_file": 0.95,
+   "len_sec": 0.35,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "skill.hoa_loi.charge",
+   "start": 0.450001,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_charge_01.wav",
+   "gain_db": -14.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 0.95,
+   "len_sec": 1.0,
+   "peak_dbfs": -24.0
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 0.450001,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\pulse.wav",
+   "gain_db": -9.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 0.95,
+   "len_sec": 0.16,
+   "peak_dbfs": -12.0
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 0.966666666666668,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\pulse.wav",
+   "gain_db": -8.0,
+   "step": 1,
+   "tier": "S",
+   "t_in_file": 1.467,
+   "len_sec": 0.143,
+   "peak_dbfs": -11.01
+  },
+  {
+   "id": "skill.hoa_loi.tick",
+   "start": 1.46666666666667,
+   "src": "audio_src\\derived\\hoa_loi_mockups\\pulse.wav",
+   "gain_db": -7.0,
+   "step": 2,
+   "tier": "S",
+   "t_in_file": 1.967,
+   "len_sec": 0.127,
+   "peak_dbfs": -10.03
+  },
+  {
+   "id": "skill.hoa_loi.prime",
+   "start": 1.66666666666667,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_prime_01.wav",
+   "gain_db": -208.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.167,
+   "len_sec": 0.3,
+   "peak_dbfs": -180.0
+  },
+  {
+   "id": "status.burn.loop",
+   "start": 1.95,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_loop_01.wav",
+   "gain_db": -17.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.45,
+   "len_sec": 1.983,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "skill.hoa_loi.impact",
+   "start": 1.96666666666666,
+   "src": "assets\\audio\\sfx\\sfx_skill_hoa_loi_impact_l_01.wav",
+   "gain_db": -1.0,
+   "step": 0,
+   "tier": "L",
+   "t_in_file": 2.467,
+   "len_sec": 0.85,
+   "peak_dbfs": -2.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 2.43333333333333,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.933,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 2.93333333333333,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 3.433,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 3.43333333333333,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 3.933,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.hurt",
+   "start": 3.93333333333332,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_hurt_01.wav",
+   "gain_db": -15.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 4.433,
+   "len_sec": 0.12,
+   "peak_dbfs": -23.0
+  },
+  {
+   "id": "status.burn.out",
+   "start": 3.93333333333332,
+   "src": "assets\\audio\\sfx\\sfx_status_burn_out_01.wav",
+   "gain_db": -13.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 4.433,
+   "len_sec": 0.6,
+   "peak_dbfs": -22.0
+  }
+ ]
+}

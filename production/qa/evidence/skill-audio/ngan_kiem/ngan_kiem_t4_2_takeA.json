@@ -1,0 +1,114 @@
+{
+ "out": "production\\qa\\evidence\\skill-audio\\ngan_kiem\\ngan_kiem_t4_2_takeA.wav",
+ "timeline": "production\\qa\\evidence\\skill-audio\\ngan_kiem\\ngan_kiem_t4_timeline.json",
+ "pre_sec": 0.5,
+ "overrides": {
+  "skill.ngan_kiem.charge": "audio_src/elevenlabs/ngan_kiem/charge/ngan_kiem_charge_v1_takeA_UPRGuaNUiMv5NKJsnJJ6.mp3"
+ },
+ "match_rms": true,
+ "peak_dbfs": -2.0,
+ "rms_dbfs": -27.01,
+ "clipped": false,
+ "duration_sec": 4.31,
+ "layers": [
+  {
+   "id": "skill.ngan_kiem.charge",
+   "start": 0.0,
+   "src": "audio_src\\elevenlabs\\ngan_kiem\\charge\\ngan_kiem_charge_v1_takeA_UPRGuaNUiMv5NKJsnJJ6.mp3",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.5,
+   "len_sec": 1.2,
+   "peak_dbfs": -7.11
+  },
+  {
+   "id": "skill.ngan_kiem.channel_loop",
+   "start": 0.0,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_channel_loop_01.wav",
+   "gain_db": -10.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 0.5,
+   "len_sec": 1.483,
+   "peak_dbfs": -20.0
+  },
+  {
+   "id": "skill.ngan_kiem.commit",
+   "start": 1.48,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_commit_01.wav",
+   "gain_db": -3.0,
+   "step": 0,
+   "tier": "M",
+   "t_in_file": 1.98,
+   "len_sec": 0.22,
+   "peak_dbfs": -6.0
+  },
+  {
+   "id": "combat.hit.enemy",
+   "start": 1.7,
+   "src": "assets\\audio\\sfx\\sfx_combat_hit_enemy_01.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.2,
+   "len_sec": 0.16,
+   "peak_dbfs": -10.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact",
+   "start": 1.7,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_01.wav",
+   "gain_db": -7.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.2,
+   "len_sec": 0.145,
+   "peak_dbfs": -11.0
+  },
+  {
+   "id": "skill.generic.hit",
+   "start": 1.7,
+   "src": "assets\\audio\\sfx\\sfx_skill_generic_hit_01.wav",
+   "gain_db": -9.0,
+   "step": 0,
+   "tier": "S",
+   "t_in_file": 2.2,
+   "len_sec": 0.06,
+   "peak_dbfs": -14.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact",
+   "start": 1.82,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_02.wav",
+   "gain_db": -7.0,
+   "step": 1,
+   "tier": "S",
+   "t_in_file": 2.32,
+   "len_sec": 0.145,
+   "peak_dbfs": -11.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact",
+   "start": 1.94,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_03.wav",
+   "gain_db": -7.0,
+   "step": 2,
+   "tier": "S",
+   "t_in_file": 2.44,
+   "len_sec": 0.145,
+   "peak_dbfs": -11.0
+  },
+  {
+   "id": "skill.ngan_kiem.impact_final",
+   "start": 2.06,
+   "src": "assets\\audio\\sfx\\sfx_skill_ngan_kiem_impact_final_01.wav",
+   "gain_db": 0.0,
+   "step": 3,
+   "tier": "L",
+   "t_in_file": 2.56,
+   "len_sec": 0.75,
+   "peak_dbfs": -2.0
+  }
+ ]
+}
