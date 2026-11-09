@@ -1,0 +1,15 @@
+DemoArgs: tram_live boss live (BossBrain on)
+DemoArgs: tram_live cast when free after 2.40 s (clock 2.383)
+DemoArgs: tram_live shape=bar2 rot=0 cells=[(4, 1), (5, 1)] tags=["domino", "line", "line_h"] boss=[(5, 1)] duration=0.450
+DemoArgs: t=0.467 BRAIN type=wait reason=thinking fuse={  } busy=true locked=true ready=false
+DemoArgs: t=0.717 BRAIN type=wait reason=chosen fuse={ "urgent": false, "armed_left": -1.0, "incoming": [], "soft": [(4, 1), (5, 1)], "react_sec": 0.8, "delay": 0.0 } busy=true locked=true ready=false
+DemoArgs: t=0.733 BRAIN type=wait reason=thinking fuse={  } busy=true locked=true ready=false
+DemoArgs: t=0.850 boss -> (5, 0) (burning [])
+DemoArgs: t=1.183 BRAIN type=wait reason=thinking fuse={  } busy=false locked=false ready=true
+DemoArgs: t=1.233 BRAIN type=wait reason=chosen fuse={ "urgent": true, "armed_left": 0.73333433333334, "incoming": [(4, 1), (5, 1)], "soft": [], "react_sec": 0.8, "delay": 0.0 } busy=false locked=false ready=true
+DemoArgs: t=1.250 BRAIN type=wait reason=thinking fuse={  } busy=false locked=false ready=true
+DemoArgs: t=1.750 BRAIN type=wait reason=chosen fuse={ "urgent": true, "armed_left": 0.21666766666667, "incoming": [(4, 1), (5, 1)], "soft": [], "react_sec": 0.8, "delay": 0.0 } busy=false locked=false ready=true
+DemoArgs: t=1.767 BRAIN type=wait reason=thinking fuse={  } busy=false locked=false ready=true
+TRAM #0 t=1.50 clock=4.333 cell=(4, 1) kind=fuse step=0 mult=2.00 hit=false dmg=0.0 pinned=false
+FUSE cells=[(4, 1), (5, 1)] boss=[(5, 0)] ignited=[(4, 1), (5, 1)] fizzled=[]
+DemoArgs: scenario t=3.933 hero HP 202 -> 194 at (2, 1) (phase )

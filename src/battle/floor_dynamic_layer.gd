@@ -30,6 +30,8 @@ var _drawn_holes: Array[Dictionary] = []
 var _drawn_charge: Array[Dictionary] = []
 ## P2.3: the pattern markers / ivory outlines drawn last ({} = none); compared by value each frame.
 var _drawn_extras: Dictionary = {}
+## Skill v2 Hỏa Lôi H2: the fire-seal floor items drawn last ({} = none): {"under": blast items, "over": sigils}.
+var _drawn_fuse: Dictionary = {}
 var _redraws: int = 0
 
 
@@ -176,6 +178,31 @@ func charge_state() -> Array[Dictionary]:
 	return out
 
 
+## Skill v2 Hỏa Lôi H2 (FuseFx): the floor part of every armed field now, in flat cell art px: {"under": the blast
+## flash / shock ring / scorch / fizzle (drawn under the burn flames), "over": the armed sigils (drawn over a burning
+## cell, so a seal on fire stays readable)}; {} when none.
+func fuse_state() -> Dictionary:
+	var combat: CombatView = combat_of(_floor)
+	if combat == null or _floor == null or combat.get_arbiter() == null:
+		return {}
+	var recs: Array[Dictionary] = combat.get_fuse_fx()
+	if recs.is_empty():
+		return {}
+	var now: float = combat.combat_clock()
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	var under: Array[Dictionary] = []
+	var over: Array[Dictionary] = []
+	for rec: Dictionary in recs:
+		var cell_rect: Rect2i = _floor.cell_art_rect(rec["cell"])
+		var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
+		slab.position += cell_rect.position
+		over.append_array(FuseFx.sigil_items(rec, now, slab, reduce))
+		under.append_array(FuseFx.blast_floor_items(rec, now, slab, reduce))
+	if under.is_empty() and over.is_empty():
+		return {}
+	return {"under": under, "over": over}
+
+
 func _process(_delta: float) -> void:
 	var combat_now: CombatView = combat_of(_floor) if _floor != null else null
 	if combat_now != null and not combat_now.get_cast_flood().is_empty():
@@ -188,6 +215,10 @@ func _process(_delta: float) -> void:
 	var holes: Array[Dictionary] = hole_state()
 	var charge: Array[Dictionary] = charge_state()
 	var extras: Dictionary = _floor.pattern_extras()
+	var fuse: Dictionary = fuse_state()
+	if fuse != _drawn_fuse:
+		_drawn_fuse = fuse
+		queue_redraw()
 	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx or holes != _drawn_holes or charge != _drawn_charge 			or extras != _drawn_extras:
 		_drawn_extras = extras
 		_drawn_charge = charge
@@ -217,7 +248,12 @@ func _draw() -> void:
 		for item: Dictionary in _drawn_vfx:
 			var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])
 			vfx.draw(self, str(item["id"]), FloorVfx.feet_for(cell_rect), int(item["frame"]), item["tint"], cell_rect)
+	_drawn_fuse = fuse_state()
+	for it: Dictionary in _drawn_fuse.get("under", []) as Array:
+		draw_rect(Rect2(it["rect"]), it["col"])
 	BurnPainter.paint(self, _floor, _drawn_burn, vfx != null and vfx.has_pack("burning_cell"))
+	for it: Dictionary in _drawn_fuse.get("over", []) as Array:
+		draw_rect(Rect2(it["rect"]), it["col"])
 	if combat != null:
 		_draw_charge(combat)
 	_floor.paint_dynamic(self, _drawn)

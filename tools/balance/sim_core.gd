@@ -111,7 +111,21 @@ const DEFAULT_BOT: Dictionary = {
 	"sig_thanh_an_min_stacks": 1,  # Story 037: Thanh An fires when the boss has this many Han stacks
 	"parry": 0.85,  # cast rhythm spec 2026-11-05: chance to answer a telegraph on its cell with a ready parry card (as dodge)
 	"parry_lead": 0.4,  # sim seconds before the strike the parry cast is started (inside parry_sec, a human's timing)
+	# Hỏa Lôi damage-model evaluation (docs/skill-v2/13-hoa-loi-damage-models.md), EVALUATION ONLY: "baseline" = the
+	# bot as before (a delayed card is valued at FUSE_HIT_EXPECT, aimed like any card); "predict" = while a delayed card
+	# is ready the planner also covers the boss's open exits and its planned destination, and the card choice uses an
+	# estimated hit chance (rooted through the fuse / reachable cells covered) and skips the delayed card below
+	# FUSE_SKIP_P (no casting into clearly ineffective fields).
+	"fuse_policy": "baseline",
 }
+## Predictive fuse policy weights (evaluation only).
+const SCORE_FUSE_EXIT: float = 60.0
+const SCORE_FUSE_DEST: float = 200.0
+const FUSE_SKIP_P: float = 0.4
+## Evaluation: the damage-model seam handed to every match's SwingArbiter (armed_damage_cells_fn); invalid = Model A.
+var armed_damage_policy: Callable = Callable()
+# Evaluation: cells last ignited by a fuse blast (cell -> true) whose burn the fz_burn_dmg metric attributes to it.
+var _fz_burn_cells: Dictionary = {}
 ## Placement score weights (planner): covering the target, each covered neighbour (escape cell), each
 ## cell, a featured two-piece union, Anh Bo small cut, per second of wind-up beyond the strike budget.
 const SCORE_TARGET: float = 1000.0
@@ -124,6 +138,9 @@ const SCORE_OVER_BUDGET_PER_SEC: float = 40.0
 const PAIR_SEEDS: int = 8
 ## Card value model (ported from the rune-era deck_sim).
 const BURN_EXPECT: float = 0.6
+## Skill v2 delayed (Hỏa Lôi): the bot's expected share of a fuse that lands (its value estimate only; the sim measures
+## the real hit rate in the fz_ metrics).
+const FUSE_HIT_EXPECT: float = 0.5
 const BURN_STACK_MULT: float = 2.0
 const FROST_EXPECT: float = 0.8
 const AVG_CELLS: float = 3.5
@@ -859,6 +876,10 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	plan = CastPlan.new().init(_max_join, combat.max_cast_cells)
 	featured = arena_library.featured_for_match(m, grid)
 	state.cell_changed.connect(_on_cell_changed)
+	# Evaluation (boss archetype): the boss's steps and footprint size.
+	state.cell_changed.connect(func(side: int, _a: Vector2i, _b: Vector2i) -> void:
+		if side == ENEMY:
+			ms["b_steps"] = int(ms.get("b_steps", 0)) + 1)
 	cooldowns = SkillCooldowns.new()
 	deck = Deck.from_array(deck_entries, match_seed)
 	focus = FocusController.new(cards)
@@ -869,6 +890,8 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	actor = CutActor.new(cut_config, PLAYER)
 	# Mirrors CombatView: a Cast Commitment card's channel is longer by channel_extend_sec (after every modifier).
 	actor.channel_extend_fn = func(id: String) -> float: return float(cards.get_skill(id).get("channel_extend_sec", 0.0))
+	# Mirrors CombatView: a card's fixed cast time (cast_time_sec; Hỏa Lôi).
+	actor.cast_time_fn = func(id: String) -> float: return float(cards.get_skill(id).get("cast_time_sec", -1.0))
 	actor.swing_cancelled.connect(_on_player_swing_cancelled)
 	_commit_lock_until = -1.0
 	_nk_cast = {}
@@ -900,12 +923,20 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	arbiter = SwingArbiter.new(state, grid, actor, boss.get_actor(), cut_config, cards, status)
 	# Skill v2: the boss reads pending surge cells as in CombatView.
 	boss.pending_threat_fn = arbiter.pending_cells.bind(CombatState.Side.PLAYER)
+	# Mirrors CombatView: a running delayed swing's threat comes fuse_sec after its end.
+	boss.cast_delay_fn = func(a: CutActor) -> float:
+		return CastResolver.threat_delay(cards.get_skill(a.get_skill_id()), a.get_cast_context())
 	arbiter.player_awakening_fn = func() -> bool: return signature != null and signature.is_active()
 	arbiter.pattern_hit_fn = func() -> void:
 		if pattern != null:
 			pattern.on_enemy_hit()
 	arbiter.cast_scheduled.connect(_on_cast_scheduled_commit)
 	arbiter.impact_resolved.connect(_on_impact_commit_stats)
+	arbiter.impact_resolved.connect(_on_impact_fuse_stats)
+	arbiter.armed_damage_cells_fn = armed_damage_policy
+	_fz_burn_cells = {}
+	status.burn_hurt.connect(_on_burn_hurt_fuse)
+	status.cell_burned_out.connect(func(cell: Vector2i) -> void: _fz_burn_cells.erase(cell))
 	parry_guard = ParryGuard.new()
 	arbiter.player_guard = parry_guard
 	if pattern != null:
@@ -970,6 +1001,11 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		# while the enemy was in RECOVERY (pattern) or rooted in its own swing (block boss).
 		"ch_casts": 0, "ch_cancels": 0, "ch_interrupts": 0, "ch_committed": 0, "ch_hits": 0, "ch_dmg": 0.0, "ch_hit_casts": 0,
 		"ch_taken": 0.0, "ch_recovery_casts": 0,
+		# Skill v2 delayed (Hỏa Lôi) metrics: detonations, hits, armed cells, damage, and one record per detonation
+		# {n: armed cells, k: armed cells under the boss footprint at the blast, fp: footprint size, hit, dmg, mult}
+		# (the damage-model probe recomputes alternatives from it), plus casts started while the enemy was busy.
+		"fz_events": 0, "fz_hits": 0, "fz_cells": 0, "fz_dmg": 0.0, "fz_log": [], "fz_busy_casts": 0,
+		"fz_burn_dmg": 0.0, "fz_skipped": 0, "fz_casts": 0,
 		"casts": 0, "resolved": 0, "hits": 0, "dealt": 0.0, "taken": 0.0, "bstarts": 0, "bswings": 0, "bhits": 0, "shits": 0, "bdmg": 0.0,
 		"interrupts": 0, "counters": 0, "sig_acts": 0, "sig_dmg": 0.0, "sig_first": -1.0, "focus_uses": 0,
 		"joins": 0, "featured": 0, "cells": 0,
@@ -1279,6 +1315,10 @@ func _loop_step() -> void:
 
 func _world_tick(step: float) -> void:
 	t += step
+	# Evaluation (boss archetype): seconds the boss is rooted (a pattern skill running / its own swing) of the match.
+	ms["b_total_t"] = float(ms.get("b_total_t", 0.0)) + step
+	if (pattern != null and pattern.is_busy()) or (boss != null and boss.get_actor().is_swinging()):
+		ms["b_busy_t"] = float(ms.get("b_busy_t", 0.0)) + step
 	var channel_hp0: float = state.player_hp if _is_channeling() else -1.0
 	# Story 039: HP the player loses to burn ticks while standing in an erupting vent, boss HP a burn tick healed.
 	var vent_here: bool = _haz_vents > 0 and bool(hazards.call("is_venting", PLAYER, state.player_cell))
@@ -1325,7 +1365,15 @@ func _world_tick(step: float) -> void:
 
 ## Mirrors CombatView.get_availability_context (parry cards need an enemy attack telegraph).
 func availability_context() -> Dictionary:
-	return {SkillAvailability.CTX_ENEMY_TELEGRAPH: ParryGuard.enemy_telegraph(pattern, boss.get_actor() if boss != null else null)}
+	var ctx: Dictionary = {SkillAvailability.CTX_ENEMY_TELEGRAPH: ParryGuard.enemy_telegraph(pattern, boss.get_actor() if boss != null else null)}
+	# Mirrors CombatView: the delayed cards' armed-field cap and open cells.
+	if arbiter != null:
+		var arb: SwingArbiter = arbiter
+		ctx[SkillAvailability.CTX_ARMED_COUNT_FN] = func(id: String) -> int: return arb.armed_cast_count(PLAYER, id)
+		if flow != null and flow.is_menu_open():
+			ctx[SkillAvailability.CTX_DELAYED_OPEN_CELLS] = SkillAvailability.delayed_open_cells(flow.menu_cells(),
+				arbiter.armed_cells(PLAYER), status)
+	return ctx
 
 
 func _on_parried(blocked: float, reflected: float, _pin_sec: float) -> void:
@@ -1810,11 +1858,15 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 	if fm > 0.0 and not bonus.is_empty():
 		bonus["damage_mult"] = fm
 	_cast_info = _make_cast_info(skill_id, cells.size(), plan.pieces().size() >= 2, not bonus.is_empty())
+	# Parity fix 2026-11-09 (mirrors CombatView._on_skill_chosen): the swing carries the CastContext (pieces, shape tags,
+	# featured, effective cells), so shape clauses (Hỏa Lôi square, Trảm Địa line_h, Ngàn Kiếm branched) apply in the
+	# sim as in the game; before, the sim swing had no context and no clause ever held.
+	var ctx: Dictionary = _cast_context_for(skill_id, cells, bonus)
 	plan.clear()
 	_phase = Phase.IDLE
 	var level: int = card_level(skill_id)
 	_tr("PLAYER cast %s n=%d cells=%s boss=%s featured=%s" % [skill_id, cells.size(), str(cells), str(state.enemy_cell), str(not bonus.is_empty())])
-	if actor.begin_swing(cells, skill_id, true, level, -1.0, bonus):
+	if actor.begin_swing(cells, skill_id, true, level, -1.0, bonus, ctx):
 		cooldowns.start(skill_id, float(cards.resolved(skill_id, level).get("cooldown_sec", 0.0)))
 		# Mirrors CombatView._begin_cut: a parry card opens the guard as the match runs again.
 		if cards.is_parry_card(skill_id):
@@ -1836,6 +1888,11 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 			if recovering or boss.get_actor().is_swinging():
 				ms["ch_recovery_casts"] = int(ms["ch_recovery_casts"]) + 1
 			_nk_cast = {"skill": skill_id, "cast_id": -1, "hits": 0, "bot_cancel": false}
+		if str(cards.get_skill(skill_id).get("resolve", "")) == CastResolver.RESOLVE_DELAYED:
+			ms["fz_casts"] = int(ms["fz_casts"]) + 1
+			var busy: bool = (pattern != null and pattern.is_busy()) or boss.get_actor().is_swinging()
+			if busy:
+				ms["fz_busy_casts"] = int(ms["fz_busy_casts"]) + 1
 		_cast_t = t
 		_cast_zone = cards.is_zone_card(skill_id)
 		if _cast_zone:
@@ -1926,7 +1983,12 @@ func _is_channeling() -> bool:
 
 ## Mirrors CombatView.is_cast_rooted: CHANNELING or the COMMIT lock.
 func _is_cast_rooted() -> bool:
-	return _is_channeling() or (arbiter != null and arbiter.clock() < _commit_lock_until)
+	return _is_channeling() or (arbiter != null and arbiter.clock() < _commit_lock_until) or _is_cast_locked()
+
+
+## Mirrors CombatView.is_cast_locked: a `cast_root: "lock"` card roots the hero for its swing only (Hỏa Lôi).
+func _is_cast_locked() -> bool:
+	return actor != null and actor.is_swinging() and str(cards.get_skill(actor.get_skill_id()).get("cast_root", "none")) == "lock"
 
 
 # Mirrors CombatView._on_cast_scheduled: the swing end is the commit; the hero stays locked commit_lock_sec more.
@@ -1948,6 +2010,35 @@ func _on_impact_commit_stats(side: int, ev: Dictionary, hit: bool) -> void:
 		_nk_cast["hits"] = int(_nk_cast["hits"]) + 1
 		ms["ch_hits"] = int(ms["ch_hits"]) + 1
 		ms["ch_dmg"] = float(ms["ch_dmg"]) + float(ev.get("damage", 0.0))
+
+
+# Skill v2 delayed: one record per player fuse detonation (see the fz_ metrics).
+func _on_impact_fuse_stats(side: int, ev: Dictionary, hit: bool) -> void:
+	if side != PLAYER or str(ev.get("kind", "")) != CastResolver.KIND_FUSE:
+		return
+	var cells: Array = ev.get("cells", []) as Array
+	var fp: Array[Vector2i] = state.enemy_footprint_cells()
+	var k: int = 0
+	for c: Variant in cells:
+		if fp.has(c as Vector2i):
+			k += 1
+	ms["fz_events"] = int(ms["fz_events"]) + 1
+	for c: Variant in ev.get("ignited", []) as Array:
+		_fz_burn_cells[c as Vector2i] = true
+	ms["fz_cells"] = int(ms["fz_cells"]) + cells.size()
+	if hit:
+		ms["fz_hits"] = int(ms["fz_hits"]) + 1
+		ms["fz_dmg"] = float(ms["fz_dmg"]) + float(ev.get("damage", 0.0))
+	(ms["fz_log"] as Array).append({"n": cells.size(), "k": k, "fp": fp.size(), "hit": hit,
+		"dmg": float(ev.get("damage", 0.0)), "mult": float(ev.get("mult", 1.0)),
+		# the square clause raised this blast's multiplier above the card's base
+		"sq": float(ev.get("mult", 1.0)) > float(cards.get_skill(str(ev.get("skill_id", ""))).get("fuse_mult", 1.0)) + 0.0001})
+
+
+# Evaluation: burn damage to the boss on a cell a fuse blast lit (until that cell burns out) counts as Hỏa Lôi's burn.
+func _on_burn_hurt_fuse(side: int, cell: Vector2i, damage: float) -> void:
+	if side == ENEMY and _fz_burn_cells.has(cell):
+		ms["fz_burn_dmg"] = float(ms["fz_burn_dmg"]) + damage
 
 
 func _on_player_swing_cancelled(_cells: Array[Vector2i], skill_id: String) -> void:
@@ -2328,6 +2419,7 @@ func _choose_card() -> void:
 		return
 	var best: String = ""
 	var best_value: float = -INF
+	var delayed_offered: String = ""
 	for id: String in flow.get_hand():
 		if not bool(SkillAvailability.check(cards, cooldowns, id, count, card_level(id), availability_context())["available"]):
 			continue
@@ -2336,9 +2428,26 @@ func _choose_card() -> void:
 		if cards.is_parry_card(id) and not _parry_cast:
 			continue
 		var v: float = cast_value(id, card_level(id), count)
+		if str(cards.get_skill(id).get("resolve", "")) == CastResolver.RESOLVE_DELAYED:
+			delayed_offered = id
+			if str(bot.get("fuse_policy", "baseline")) == "predict":
+				var ev: Dictionary = fuse_expected_value(id)
+				if float(ev["p"]) < FUSE_SKIP_P:
+					ms["fz_skipped"] = int(ms.get("fz_skipped", 0)) + 1
+					continue
+				v = float(ev["value"])
 		if v > best_value:
 			best_value = v
 			best = id
+	# Evaluation: how often the delayed card was offered (in hand and castable) and what was cast instead.
+	if not delayed_offered.is_empty():
+		ms["fz_offered"] = int(ms.get("fz_offered", 0)) + 1
+		if best == delayed_offered:
+			ms["fz_chosen"] = int(ms.get("fz_chosen", 0)) + 1
+		elif not best.is_empty():
+			var passed: Dictionary = ms.get("fz_passed", {}) as Dictionary
+			passed[best] = int(passed.get(best, 0)) + 1
+			ms["fz_passed"] = passed
 	if best.is_empty() or not flow.choose(best):
 		_phase = Phase.MENU_WAIT
 
@@ -2352,6 +2461,99 @@ func _boss_open_exits() -> Array[Vector2i]:
 		if grid.is_enemy_cell(c) and not b_mover.is_cell_blocked(c):
 			out.append(c)
 	return out
+
+
+# Mirrors CombatView: the CastContext of the plan now (read before the plan is cleared).
+func _cast_context_for(skill_id: String, cells: Array[Vector2i], bonus: Dictionary) -> Dictionary:
+	var piece_cells: Array = []
+	for i: int in plan.piece_count():
+		piece_cells.append(plan.piece_cells(i))
+	var effective: int = cells.size()
+	if arbiter != null and arbiter.player_cells_modifier.is_valid():
+		effective = maxi(int(arbiter.player_cells_modifier.call(cells.size())), 0)
+	return CastContext.build(skill_id, card_level(skill_id), plan.pieces(), piece_cells, cards.get_skill(skill_id)["delivery"],
+		not bonus.is_empty(), PLAYER, state.player_cell, {"cast_mode": cards.cast_mode(skill_id), "featured_bonus": bonus,
+			"effective_cells": effective, "t_cast": arbiter.clock() if arbiter != null else 0.0})
+
+
+## Evaluation (fuse_policy predict, model-aware since 2026-11-09): the expected value of casting delayed card [param id]
+## on the current plan: p_hit x the damage the AUTHORITATIVE rule gives (CastResolver.damage_cells on the cells it can
+## still arm and the boss footprint; the clause-aware fuse multiplier, e.g. the square's) after the boss's damage
+## multipliers and defense, plus the expected burn of its payload. Returns {value, p, cells, mult}.
+func fuse_expected_value(id: String) -> Dictionary:
+	var level: int = card_level(id)
+	var skill: Dictionary = cards.resolved(id, level)
+	var open: Array[Vector2i] = SkillAvailability.delayed_open_cells(plan.cells(), arbiter.armed_cells(PLAYER), status)
+	var ctx: Dictionary = _cast_context_for(id, plan.cells(), {})
+	var fuse: Dictionary = CastResolver.fuse_timing(skill, ctx)
+	var fp: int = state.enemy_footprint_cells().size()
+	var n_dmg: int = CastResolver.damage_cells(skill, open.size(), fp)
+	var dmg: float = float(skill["damage_per_cell"]) * float(n_dmg) * float(fuse["fuse_mult"])
+	dmg *= status.damage_mult_against(ENEMY) * status.fragile_mult_against(ENEMY)
+	if passive != null:
+		dmg = passive.modify_damage(open.size(), dmg)
+	dmg = _after_defense(dmg, skill)
+	var p: float = fuse_hit_estimate(open, id, float(fuse["fuse_sec"]))
+	var burn: float = 0.0
+	var ig: Dictionary = (skill.get("event_payload", {}) as Dictionary).get("ignite", {}) as Dictionary
+	if not ig.is_empty():
+		burn = float(ig["sec"]) / maxf(float(ig["tick_sec"]), 0.01) * float(ig["damage"]) * BURN_EXPECT * p
+	return {"value": p * dmg + burn, "p": p, "cells": n_dmg, "mult": float(fuse["fuse_mult"])}
+
+
+# Evaluation (fuse_policy predict): true when the deck holds a delayed card whose cooldown is ready.
+func _delayed_ready() -> bool:
+	if deck == null:
+		return false
+	for e: Dictionary in deck._cards:
+		var id: String = str(e.get("id", ""))
+		if str(cards.get_skill(id).get("resolve", "")) == CastResolver.RESOLVE_DELAYED and cooldowns.is_ready(id):
+			return true
+	return false
+
+
+# Evaluation: the cell the boss's brain is walking to (BossBrain destination, else a pattern move's target), or NO_CELL.
+func _boss_destination() -> Vector2i:
+	var d: Dictionary = boss.get_brain().get_destination()
+	if not d.is_empty() and d.get("cell") is Vector2i and (d["cell"] as Vector2i) != state.enemy_cell:
+		return d["cell"] as Vector2i
+	if pattern != null and pattern.move_target_cell() != BoardGrid.NO_CELL:
+		return pattern.move_target_cell()
+	return BoardGrid.NO_CELL
+
+
+## Evaluation (fuse_policy predict): the estimated chance that a delayed card [param id] cast on [param cells] now
+## lands. The boss rooted through the whole cast + fuse (its pattern skill or its own swing) and standing on a cell -> 0.9;
+## else its reachable cells (its cell + open exits) covered by the field: all covered -> 0.85, otherwise a quarter of the
+## covered share, + 0.2 when its planned destination is covered.
+func fuse_hit_estimate(cells: Array[Vector2i], id: String, fuse_sec: float = -1.0) -> float:
+	var skill: Dictionary = cards.get_skill(id)
+	var total: float = maxf(float(skill.get("cast_time_sec", -1.0)), 0.0) + (fuse_sec if fuse_sec > 0.0 else float(skill.get("fuse_sec", 1.5)))
+	var fp: Array[Vector2i] = state.enemy_footprint_cells()
+	var on: bool = false
+	for c: Vector2i in fp:
+		on = on or cells.has(c)
+	var rooted_left: float = 0.0
+	if pattern != null and pattern.is_busy():
+		if pattern.is_threatening():
+			rooted_left = pattern.strike_time_left() + 0.3
+		else:
+			rooted_left = float(pattern.get("_stage_left"))
+	if boss.get_actor().is_swinging():
+		rooted_left = maxf(rooted_left, boss.get_actor().get_time_left())
+	if rooted_left >= total:
+		return 0.9 if on else 0.0
+	var reach: Array[Vector2i] = [state.enemy_cell]
+	reach.append_array(_boss_open_exits())
+	var covered: int = 0
+	for c: Vector2i in reach:
+		if cells.has(c):
+			covered += 1
+	var p: float = 0.85 if covered == reach.size() else 0.25 * float(covered) / float(reach.size())
+	var dest: Vector2i = _boss_destination()
+	if dest != BoardGrid.NO_CELL and cells.has(dest):
+		p += 0.2
+	return clampf(p, 0.0, 0.95)
 
 
 # Story 027 zone-card rule (see the file header): the zone card to pick for the placed cast, or "".
@@ -2425,6 +2627,13 @@ func _score(cells: Array[Vector2i], target: Vector2i, budget: float, pair: bool)
 	var over: float = _swing_sec(cells.size()) - maxf(budget, 0.0)
 	if over > 0.0:
 		s -= SCORE_OVER_BUDGET_PER_SEC * over
+	if str(bot.get("fuse_policy", "baseline")) == "predict" and _delayed_ready():
+		for exit_cell: Vector2i in _boss_open_exits():
+			if cells.has(exit_cell):
+				s += SCORE_FUSE_EXIT
+		var dest: Vector2i = _boss_destination()
+		if dest != BoardGrid.NO_CELL and cells.has(dest):
+			s += SCORE_FUSE_DEST
 	if pair and not featured.is_empty() and FeaturedShape.matches(featured["cells"] as Array[Vector2i], cells):
 		s += SCORE_FEATURED
 	if signature is AnhBoSignature and signature.is_active() and cells.size() <= signature.param_int("small_cells", AnhBoSignature.DEFAULT_SMALL_CELLS):
@@ -2612,6 +2821,9 @@ func cast_value(id: String, level: int, count: int) -> float:
 	if effect == "damage" or effect == "push":
 		var eff_cells: int = maxi(signature.modify_cells(count), 0) if signature != null else count
 		var dmg: float = float(c["damage_per_cell"]) * eff_cells
+		# Skill v2 delayed: the fuse multiplier times the expected landing share, plus the burn it leaves
+		if str(c.get("resolve", "")) == CastResolver.RESOLVE_DELAYED:
+			dmg *= float(c.get("fuse_mult", 1.0)) * FUSE_HIT_EXPECT
 		if status.fragile_stacks(ENEMY) > 0 and float(c.get("bonus_vs_fragile_mult", 1.0)) > 1.0:
 			dmg *= float(c["bonus_vs_fragile_mult"])
 		dmg *= status.damage_mult_against(ENEMY)

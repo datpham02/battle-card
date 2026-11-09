@@ -1,0 +1,5 @@
+DemoArgs: tram_live cast when free after 0.52 s (clock 0.500)
+DemoArgs: t=1.550 BRAIN step (1, 0): type=move purpose=dodge score=10.00 fuse={ "urgent": true, "armed_left": 0.400001, "incoming": [(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)], "soft": [], "react_sec": 0
+TRAM #0 t=1.50 clock=2.450 cell=(5, 0) kind=fuse step=0 mult=2.00 hit=true dmg=60.0 pinned=false
+FUSE cells=[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)] boss=[(6, 1)] ignited=[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)] fizzled=[]
+DemoArgs: t=2.583 BRAIN step (1, 0): type=move purpose=retreat score=2.00 fuse={  }

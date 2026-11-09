@@ -39,6 +39,13 @@ extends RefCounted
 ## Branched rule (shape_clause {tag: branched, tips_first: true, centre_mult}): when the clause holds, the hub is the
 ## union cell with the most neighbours (the junction; ties nearest the bbox centre, then y, x) and the whole order is
 ## reversed: tips first, the hub LAST as kind `drop_final` x centre_mult. Kinds: drop / drop_final.
+## Delayed (M07, `resolve: "delayed"`; Hỏa Lôi, docs/skill-v2/09-hoa-loi-design.md): the open cells (not locked, not in
+## the caller's `excluded` list = cells already holding an armed event of the same side) become ONE wave, ONE event of
+## kind `fuse` at t = fuse_sec, x fuse_mult (all cells detonate in the same instant; a unit is hit once). The event is
+## `armed` (an armed-zone cell until it fires), re-checks locks when it fires (`recheck_locked`) and carries the card's
+## `event_payload` (applied by the arbiter after the damage, hit or miss). A shape_clause {fuse_sec, fuse_mult} that holds
+## replaces both (its fuse_mult / the card's is the shape-clause group, capped). The plan's `cast_cells` = the number of
+## armed cells (damage counts them). No open cell -> no event (`fizzled`).
 ## Per-event multiplier = the shape-clause group S (02-design-decisions.md §10), capped at [constant SHAPE_GROUP_CAP]:
 ## the burst x `burst_first`; a surge event x (1 + min(step x surge_per_step, surge_cap)) when the card's shape_clause
 ## holds for the cast (scope any_piece / all_pieces / union, tags of the PHYSICAL pieces in the CastContext).
@@ -46,7 +53,21 @@ extends RefCounted
 const RESOLVE_INSTANT: String = "instant"
 const RESOLVE_WAVES: String = "waves"
 const RESOLVE_ARRIVAL: String = "arrival"
-const RESOLVE_MODES: Array[String] = [RESOLVE_INSTANT, RESOLVE_WAVES, RESOLVE_ARRIVAL]
+const RESOLVE_DELAYED: String = "delayed"
+const RESOLVE_MODES: Array[String] = [RESOLVE_INSTANT, RESOLVE_WAVES, RESOLVE_ARRIVAL, RESOLVE_DELAYED]
+## Delayed (fuse) bounds and the event kind.
+const MIN_FUSE_SEC: float = 0.2
+const MAX_FUSE_SEC: float = 5.0
+const MAX_FUSE_MULT: float = 4.0
+const MAX_ACTIVE_FIELDS: int = 4
+const KIND_FUSE: String = "fuse"
+## Payload effects a scheduled event may carry (applied after its damage): ignite {sec, tick_sec, damage}.
+const PAYLOAD_KEYS: Array[String] = ["ignite"]
+## Damage-cell rules (card field `damage_cells_rule`, scheduled resolves): how many of a cast's cells its damage counts
+## when it hits (dpc x counted cells x mult). "all" (default: every cell, the rule of every card so far), "footprint"
+## (at most the target's footprint cells + `extra`; Hỏa Lôi Model C, docs/skill-v2/13-hoa-loi-damage-models.md), "max"
+## (at most `max` cells). SwingArbiter and the balance sim both read [method damage_cells].
+const DAMAGE_CELL_MODES: Array[String] = ["all", "footprint", "max"]
 ## Bounds of the validated numbers.
 const MAX_HITS: int = 8
 const MIN_INTERVAL_SEC: float = 0.02
@@ -59,7 +80,8 @@ const SCHEDULED_EFFECTS: Array[String] = ["damage"]
 ## 02-design-decisions.md §10: the product of a card's shape-clause multipliers (burst-first, surge, ...) is capped here.
 const SHAPE_GROUP_CAP: float = 2.0
 const CLAUSE_SCOPES: Array[String] = ["any_piece", "all_pieces", "union"]
-const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult"]
+const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult", "fuse_sec",
+	"fuse_mult", "fuse_mult_scale"]
 const DROP_ORDERS: Array[String] = ["row_major", "from_centre"]
 const KIND_DROP: String = "drop"
 const KIND_DROP_FINAL: String = "drop_final"
@@ -123,6 +145,20 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 		errors.append("card %s: burst_first / burst_pin_sec / a surge clause need resolve 'arrival'" % id)
 	if resolve == RESOLVE_INSTANT and hits > 1:
 		errors.append("card %s: hits %d needs resolve 'waves' (instant resolves once)" % [id, hits])
+	var fuse_sec: float = _num_field(id, raw, "fuse_sec", 1.5, MIN_FUSE_SEC, MAX_FUSE_SEC, errors)
+	var fuse_mult: float = _num_field(id, raw, "fuse_mult", 1.0, 0.0, MAX_FUSE_MULT, errors)
+	var max_active: int = _int_field(id, raw, "max_active", 0, 0, MAX_ACTIVE_FIELDS, errors)
+	var payload: Dictionary = _payload(id, raw.get("event_payload", {}), errors)
+	var dmg_rule: Dictionary = _damage_cells_rule(id, raw.get("damage_cells_rule", {}), errors)
+	if resolve == RESOLVE_INSTANT and str(dmg_rule.get("mode", "all")) != "all":
+		errors.append("card %s: damage_cells_rule needs a scheduled resolve" % id)
+	if resolve != RESOLVE_DELAYED and (raw.has("fuse_sec") or raw.has("fuse_mult") or raw.has("max_active")
+			or clause.has("fuse_sec") or clause.has("fuse_mult") or clause.has("fuse_mult_scale")):
+		errors.append("card %s: fuse_sec / fuse_mult / max_active / a fuse clause need resolve 'delayed'" % id)
+	if resolve != RESOLVE_DELAYED and not payload.is_empty():
+		errors.append("card %s: event_payload is carried by resolve 'delayed' events only (for now)" % id)
+	if clause.has("fuse_mult") and fuse_mult > 0.0 and float(clause["fuse_mult"]) / fuse_mult > SHAPE_GROUP_CAP + 0.000001:
+		errors.append("card %s: shape_clause fuse_mult / fuse_mult must be <= %s (shape-clause group cap)" % [id, SHAPE_GROUP_CAP])
 	if resolve != RESOLVE_INSTANT and not SCHEDULED_EFFECTS.has(effect):
 		errors.append("card %s: resolve '%s' is not supported for effect '%s' yet (damage only)" % [id, resolve, effect])
 	if resolve != RESOLVE_INSTANT and cast_mode != "direct":
@@ -131,8 +167,11 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 		return {"resolve": RESOLVE_INSTANT, "hits": 1, "max_hits": 1, "hit_interval_sec": DEFAULT_INTERVAL_SEC,
 			"wave_mults": [] as Array[float], "burst_first": 1.0, "burst_pin_sec": 0.0, "shape_clause": {},
 			"sky_hover_sec": -1.0, "sky_stagger_sec": -1.0, "drop_order": "row_major", "awakening_extra_hits": 0,
-			"fixed_hit": false, "errors": errors}
-	return {"resolve": resolve, "hits": hits, "max_hits": max_hits, "hit_interval_sec": interval, "wave_mults": mults,
+			"fixed_hit": false, "fuse_sec": 1.5, "fuse_mult": 1.0, "max_active": 0, "event_payload": {},
+			"damage_cells_rule": {"mode": "all"}, "errors": errors}
+	return {"fuse_sec": fuse_sec, "fuse_mult": fuse_mult, "max_active": max_active, "event_payload": payload,
+		"damage_cells_rule": dmg_rule,
+		"resolve": resolve, "hits": hits, "max_hits": max_hits, "hit_interval_sec": interval, "wave_mults": mults,
 		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clause, "sky_hover_sec": hover,
 		"sky_stagger_sec": stagger, "drop_order": drop_order, "awakening_extra_hits": extra_hits, "fixed_hit": fixed_hit,
 		"errors": errors}
@@ -141,13 +180,36 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 ## The impact plan of card [param skill] (a normalized SkillConfig entry) cast on [param cells] with [param context]
 ## (CastContext; may be empty). [param timing] = the delivery timing table (CombatConfig.delivery_timing).
 ## [param locked] = the cells locked (cracking / hole) at the resolve: no event on them; the surge does not cross them.
+## [param excluded] = cells skipped by a `delayed` card (already armed by the same side); other modes ignore it.
 static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
-		timing: Dictionary = SkillDelivery.DEFAULT_TIMING, locked: Array = []) -> Dictionary:
+		timing: Dictionary = SkillDelivery.DEFAULT_TIMING, locked: Array = [], excluded: Array = []) -> Dictionary:
 	var resolve: String = str(skill.get("resolve", RESOLVE_INSTANT))
 	var events: Array[Dictionary] = []
 	var max_hits: int = maxi(int(skill.get("max_hits", 1)), 1)
 	var surge: bool = false
+	var extra: Dictionary = {}
 	match resolve:
+		RESOLVE_DELAYED:
+			max_hits = 1
+			var open: Array[Vector2i] = []
+			for c: Vector2i in cells:
+				if not locked.has(c) and not excluded.has(c) and not open.has(c):
+					open.append(c)
+			var skipped: Array[Vector2i] = []
+			for c: Vector2i in cells:
+				if excluded.has(c) and not locked.has(c) and not skipped.has(c):
+					skipped.append(c)
+			var fuse: Dictionary = fuse_timing(skill, context)
+			extra = {"cast_cells": open.size(), "skipped_cells": skipped, "fizzled": open.is_empty(),
+				"fuse_sec": float(fuse["fuse_sec"]), "fuse_mult": float(fuse["fuse_mult"]), "clause": bool(fuse["clause"])}
+			if not open.is_empty():
+				var e: Dictionary = _event(0, float(fuse["fuse_sec"]), open, KIND_FUSE, float(fuse["fuse_mult"]))
+				e["armed"] = true
+				e["recheck_locked"] = true
+				var payload: Dictionary = skill.get("event_payload", {}) as Dictionary
+				if not payload.is_empty():
+					e["payload"] = payload.duplicate(true)
+				events.append(e)
 		RESOLVE_WAVES:
 			var hits: int = maxi(int(skill.get("hits", 1)), 1)
 			var interval: float = float(skill.get("hit_interval_sec", DEFAULT_INTERVAL_SEC))
@@ -185,8 +247,45 @@ static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
 	keys.sort()
 	for w: Variant in keys:
 		wave_list.append(waves[w])
-	return {"resolve": resolve, "legacy": resolve == RESOLVE_INSTANT, "max_hits": max_hits, "waves": wave_list,
+	var out: Dictionary = {"resolve": resolve, "legacy": resolve == RESOLVE_INSTANT, "max_hits": max_hits, "waves": wave_list,
 		"events": events}
+	out.merge(extra)
+	return out
+
+
+## Seconds between the swing end and the damage of [param skill] cast with [param context]: the fuse of a `delayed`
+## card, 0 otherwise (the boss's threat feed adds it to a running swing's time left).
+static func threat_delay(skill: Dictionary, context: Dictionary) -> float:
+	if str(skill.get("resolve", RESOLVE_INSTANT)) != RESOLVE_DELAYED:
+		return 0.0
+	return float(fuse_timing(skill, context)["fuse_sec"])
+
+
+## Delayed (fuse) timing of [param skill] for the cast [param context]: {fuse_sec, fuse_mult, clause (bool)}. A
+## shape_clause carrying fuse_sec / fuse_mult that holds (e.g. Hỏa Lôi's `square`) replaces the card's values.
+static func fuse_timing(skill: Dictionary, context: Dictionary) -> Dictionary:
+	var sec: float = float(skill.get("fuse_sec", 1.5))
+	var mult: float = float(skill.get("fuse_mult", 1.0))
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var holds: bool = (clause.has("fuse_sec") or clause.has("fuse_mult") or clause.has("fuse_mult_scale")) 		and clause_holds(clause, context)
+	if holds:
+		sec = float(clause.get("fuse_sec", sec))
+		# fuse_mult_scale: the clause's multiplier as a ratio of the card's own (follows a re-tuned base)
+		mult = mult * float(clause["fuse_mult_scale"]) if clause.has("fuse_mult_scale") else float(clause.get("fuse_mult", mult))
+	return {"fuse_sec": sec, "fuse_mult": mult, "clause": holds}
+
+
+## The cell count the damage of a hit of [param skill] uses: its cast counted [param cast_cells] cells and the target's
+## footprint has [param footprint_cells] cells (DAMAGE_CELL_MODES; "all" = cast_cells). Never below 1.
+static func damage_cells(skill: Dictionary, cast_cells: int, footprint_cells: int) -> int:
+	var rule: Dictionary = skill.get("damage_cells_rule", {}) as Dictionary
+	match str(rule.get("mode", "all")):
+		"footprint":
+			return maxi(mini(cast_cells, maxi(footprint_cells, 1) + int(rule.get("extra", 0))), 1)
+		"max":
+			return maxi(mini(cast_cells, int(rule.get("max", cast_cells))), 1)
+		_:
+			return cast_cells
 
 
 ## B1 API kept: the waves of [method plan].
@@ -503,6 +602,59 @@ static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictiona
 			out["tips_first"] = bool(c["tips_first"])
 	if c.has("centre_mult"):
 		out["centre_mult"] = _num_field(id, c, "centre_mult", 1.0, 1.0, SHAPE_GROUP_CAP, errors)
+	if c.has("fuse_sec"):
+		out["fuse_sec"] = _num_field(id, c, "fuse_sec", 1.5, MIN_FUSE_SEC, MAX_FUSE_SEC, errors)
+	if c.has("fuse_mult"):
+		out["fuse_mult"] = _num_field(id, c, "fuse_mult", 1.0, 0.0, MAX_FUSE_MULT, errors)
+	if c.has("fuse_mult_scale"):
+		out["fuse_mult_scale"] = _num_field(id, c, "fuse_mult_scale", 1.0, 1.0, SHAPE_GROUP_CAP, errors)
+		if c.has("fuse_mult"):
+			errors.append("card %s: shape_clause takes fuse_mult or fuse_mult_scale, not both" % id)
+	return out
+
+
+# The card's damage_cells_rule ({} / {"mode": "all"} = every cell): DAMAGE_CELL_MODES; footprint {extra 0..4}, max {max 1..20}.
+static func _damage_cells_rule(id: String, raw: Variant, errors: Array[String]) -> Dictionary:
+	if raw == null or (raw is Dictionary and (raw as Dictionary).is_empty()):
+		return {"mode": "all"}
+	if not raw is Dictionary:
+		errors.append("card %s: damage_cells_rule must be an object" % id)
+		return {"mode": "all"}
+	var d: Dictionary = raw as Dictionary
+	var mode: String = str(d.get("mode", "all"))
+	if not DAMAGE_CELL_MODES.has(mode):
+		errors.append("card %s: damage_cells_rule mode '%s' unknown (known: %s)" % [id, mode, ", ".join(DAMAGE_CELL_MODES)])
+		return {"mode": "all"}
+	var out: Dictionary = {"mode": mode}
+	if mode == "footprint":
+		out["extra"] = _int_field(id, d, "extra", 0, 0, 4, errors)
+	elif mode == "max":
+		out["max"] = _int_field(id, d, "max", 4, 1, 20, errors)
+	return out
+
+
+# The card's event_payload ({} = none): only PAYLOAD_KEYS; ignite = {sec > 0, tick_sec > 0, damage >= 0}.
+static func _payload(id: String, raw: Variant, errors: Array[String]) -> Dictionary:
+	if raw == null or (raw is Dictionary and (raw as Dictionary).is_empty()):
+		return {}
+	if not raw is Dictionary:
+		errors.append("card %s: event_payload must be an object" % id)
+		return {}
+	var out: Dictionary = {}
+	for k: Variant in (raw as Dictionary).keys():
+		if not PAYLOAD_KEYS.has(str(k)):
+			errors.append("card %s: event_payload key '%s' unknown (known: %s)" % [id, str(k), ", ".join(PAYLOAD_KEYS)])
+	var ig: Variant = (raw as Dictionary).get("ignite")
+	if ig != null:
+		if not ig is Dictionary:
+			errors.append("card %s: event_payload ignite must be an object" % id)
+		else:
+			var d: Dictionary = ig as Dictionary
+			out["ignite"] = {"sec": _num_field(id, d, "sec", 0.0, 0.05, 10.0, errors),
+				"tick_sec": _num_field(id, d, "tick_sec", 0.5, 0.05, 5.0, errors),
+				"damage": _num_field(id, d, "damage", 0.0, 0.0, 100.0, errors)}
+			if not d.has("sec"):
+				errors.append("card %s: event_payload ignite needs sec" % id)
 	return out
 
 

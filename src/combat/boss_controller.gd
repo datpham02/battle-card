@@ -31,6 +31,9 @@ var force_next_feint: bool = false
 ## Skill v2 (Trảm Địa): Callable() -> Dictionary, the player's still-pending scheduled impact cells
 ## (SwingArbiter.pending_cells); invalid = none. Passed to the brain as ctx.pending_threat.
 var pending_threat_fn: Callable = Callable()
+## Skill v2 delayed (Hỏa Lôi): Callable(player_actor: CutActor) -> float, seconds between the player's running swing's
+## end and its damage (a fuse; CastResolver.threat_delay); passed to the brain as ctx.player_cast_delay. Invalid = 0.
+var cast_delay_fn: Callable = Callable()
 
 var _brain_config: BossBrainConfig
 var _status: StatusEffects = null
@@ -135,6 +138,8 @@ func tick(delta: float, player_actor: CutActor) -> void:
 		ctx["player_step_cooldown"] = _player_step_cooldown
 	if pending_threat_fn.is_valid():
 		ctx["pending_threat"] = pending_threat_fn.call()
+	if cast_delay_fn.is_valid() and player_actor.is_swinging():
+		ctx["player_cast_delay"] = float(cast_delay_fn.call(player_actor))
 	var action: Dictionary = _brain.decide(ctx)
 	match str(action["type"]):
 		"move":

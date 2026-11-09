@@ -355,6 +355,20 @@
    "release": "",
    "summon_fx": true,
    "summon_focus_from_sec": 0.166
+  },
+  "hoa_loi": {
+   "_doc": "Skill v2 Hoa Loi H2 prototype (docs/skill-v2/09 §11): cast_gesture over the fixed 0.45 s cast; the palm-out frame 5 lands on the swing end (travel 0.01 + lead 0.05 s); a code-drawn command glyph (FuseFx) at the book hand; no fireball, charge, impact pack or flood: the seals, blast and burn are FuseFx + the existing burn.",
+   "clip": "cast_gesture",
+   "travel_sec": 0.01,
+   "gesture_lead_sec": 0.05,
+   "gesture_hold_frame": 4,
+   "charge": "",
+   "release": "",
+   "impact": "",
+   "cell_burst": "",
+   "impact_mark": "",
+   "cell_mark": "",
+   "glyph": true
   }
  }
 }

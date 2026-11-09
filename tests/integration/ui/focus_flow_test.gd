@@ -175,6 +175,9 @@ func _initialize() -> void:
 	var main: Node = load("res://src/main.tscn").instantiate()
 	var flow := main.get_node("GameFlow") as GameFlow
 	flow.set_store_for_test(ProgressStore.memory_store())
+	# The real test window can lose OS focus to another app; the production focus-loss auto-pause would then pause the
+	# battle under the pushed taps (2026-11-09 diagnosis). It is covered by focus_autopause_test; off here.
+	flow.set_focus_autopause_for_test(false)
 	root.add_child(main)
 	root.add_child(RealMouseGuard.new())
 	await process_frame

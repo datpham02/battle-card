@@ -1,0 +1,14 @@
+DemoArgs: tram_live boss live (BossBrain on)
+DemoArgs: tram_live cast when free after 0.52 s (clock 0.500)
+DemoArgs: tram_live shape=bar2 rot=0 cells=[(4, 1), (5, 1)] tags=["domino", "line", "line_h"] boss=[(5, 1)] duration=0.450
+DemoArgs: t=0.467 BRAIN type=wait reason=thinking fuse={  } busy=false locked=false ready=true
+DemoArgs: t=0.533 BRAIN type=wait reason=chosen fuse={ "urgent": false, "armed_left": -1.0, "incoming": [], "soft": [(4, 1), (5, 1)], "react_sec": 0.8, "delay": 0.0 } busy=false locked=false ready=true
+DemoArgs: t=0.550 BRAIN type=wait reason=thinking fuse={  } busy=false locked=false ready=true
+DemoArgs: t=1.050 BRAIN type=wait reason=chosen fuse={ "urgent": false, "armed_left": -1.0, "incoming": [], "soft": [(4, 1), (5, 1)], "react_sec": 0.8, "delay": 0.0 } busy=false locked=false ready=true
+DemoArgs: t=1.067 BRAIN type=wait reason=thinking fuse={  } busy=false locked=false ready=true
+DemoArgs: t=1.550 boss -> (6, 1) (burning [])
+DemoArgs: t=1.550 BRAIN step (1, 0): type=move purpose=dodge score=10.00 fuse={ "urgent": true, "armed_left": 0.400001, "incoming": [(4, 1), (5, 1)], "soft": [], "react_sec": 0.8, "delay": 0.0 }
+DemoArgs: t=1.567 BRAIN type=move reason=chosen fuse={ "urgent": true, "armed_left": 0.400001, "incoming": [(4, 1), (5, 1)], "soft": [], "react_sec": 0.8, "delay": 0.0 } busy=false locked=false ready=false
+DemoArgs: t=1.583 BRAIN type=wait reason=thinking fuse={  } busy=false locked=false ready=false
+TRAM #0 t=1.50 clock=2.450 cell=(4, 1) kind=fuse step=0 mult=2.00 hit=false dmg=0.0 pinned=false
+FUSE cells=[(4, 1), (5, 1)] boss=[(6, 1)] ignited=[(4, 1), (5, 1)] fizzled=[]

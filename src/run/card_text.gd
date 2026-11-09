@@ -81,7 +81,13 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 	var out: Dictionary = {
 		"min_cells": _num(float(skill.get("min_cells", 1)), loc),
 		"push_cells": _num(float(skill.get("push_cells", 0)), loc),
-		"burn_sec": _num(float(skill.get("burn_duration_sec", 0.0)), loc),
+		# Skill v2 delayed (Hỏa Lôi): a card whose burn comes from its event payload shows that burn.
+		"burn_sec": _num(float(skill.get("burn_duration_sec", 0.0)) if float(skill.get("burn_duration_sec", 0.0)) > 0.0
+			else float(((skill.get("event_payload", {}) as Dictionary).get("ignite", {}) as Dictionary).get("sec", 0.0)), loc),
+		"fuse_sec": _num(float(skill.get("fuse_sec", 0.0)), loc),
+		"fuse_mult": _num(float(skill.get("fuse_mult", 1.0)), loc),
+		# Hỏa Lôi Model C: the extra cells counted beyond the foe's size (damage_cells_rule footprint).
+		"cells_extra": _num(float((skill.get("damage_cells_rule", {}) as Dictionary).get("extra", 0)), loc),
 		"pin_sec": _num(float(skill.get("pin_duration_sec", 0.0)), loc),
 		"fragile_stacks": _num(float(skill.get("fragile_stacks", 0)), loc),
 		"frost_stacks": _num(float(skill.get("frost_stacks", 0)), loc),

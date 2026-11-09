@@ -472,6 +472,13 @@ func set_store_for_test(store: ProgressStore) -> void:
 	_store = store
 
 
+## Test hook (windowed UI tests): false = the focus-loss auto-pause is off for this GameFlow, exactly as the demos'
+## --no-autopause (the test window may lose OS focus to another app while it runs; a paused battle then ignores the
+## pushed input). Production keeps the auto-pause (default true). Call before or after the node enters the tree.
+func set_focus_autopause_for_test(enabled: bool) -> void:
+	_no_autopause = not enabled
+
+
 ## Test hook (save slots): installs the slots (and optionally the settings; memory settings otherwise) BEFORE the
 ## node enters the tree; the active slot is the settings' last slot. Wins over --progress args.
 func set_slots_for_test(slots: SaveSlots, settings: SettingsStore = null) -> void:

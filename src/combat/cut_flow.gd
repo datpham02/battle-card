@@ -133,6 +133,11 @@ func cancel_menu() -> Array[Vector2i]:
 	return cells
 
 
+## The cells of the open cut ([] when no menu is open).
+func menu_cells() -> Array[Vector2i]:
+	return _cells.duplicate() if _open else ([] as Array[Vector2i])
+
+
 ## The SkillAvailability context now ([member availability_context_fn]; {} without one).
 func availability_context() -> Dictionary:
 	if availability_context_fn.is_valid():

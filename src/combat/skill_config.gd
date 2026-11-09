@@ -403,6 +403,19 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"commit_lock_sec": maxf(float(raw.get("commit_lock_sec", -1.0)), -1.0),
 		"channel_extend_sec": maxf(float(raw.get("channel_extend_sec", 0.0)), 0.0),
 		"cancel_policy": str(raw.get("cancel_policy", "spent")),
+		# Skill v2 delayed (M07; Hỏa Lôi, docs/skill-v2/09-hoa-loi-design.md): fuse timing / multiplier, the cap of armed
+		# fields of this card at once (0 = none) and the payload its events carry (CastResolver.validate).
+		"fuse_sec": resolve_check["fuse_sec"],
+		"fuse_mult": resolve_check["fuse_mult"],
+		"max_active": resolve_check["max_active"],
+		"event_payload": resolve_check["event_payload"],
+		# Skill v2: how many cells a scheduled hit's damage counts (CastResolver.damage_cells; "all" by default).
+		"damage_cells_rule": resolve_check["damage_cells_rule"],
+		# Skill v2 cast profile: cast_time_sec > 0 fixes the swing time (replaces the per-cell formula and the passive's
+		# duration modifier; relic cast-time hooks still apply); cast_root "lock" roots the hero for the swing only (no
+		# Hủy, no commit lock). "none" = today's swing (the hero may step). Channel cards use commit_lock_sec instead.
+		"cast_time_sec": maxf(float(raw.get("cast_time_sec", -1.0)), -1.0),
+		"cast_root": str(raw.get("cast_root", "none")) if ["none", "lock"].has(str(raw.get("cast_root", "none"))) else "none",
 		"tags": (raw.get("tags", []) as Array).duplicate() if raw.get("tags", []) is Array else [],
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:

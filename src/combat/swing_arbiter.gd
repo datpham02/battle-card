@@ -18,6 +18,10 @@ extends RefCounted
 ## (not on a trade at t = 0, never for a parry card). A cast's scheduled events survive the caster being hit; all are
 ## cleared when a unit dies ([method clear_scheduled] for the match end). A swing cancelled before it resolves
 ## schedules nothing.
+## Skill v2 delayed (M07; Hỏa Lôi): an `armed` event is an armed-zone cell until it fires (the armed-zone registry is
+## this schedule: [method armed_cells], [method armed_cast_count]); a new delayed cast of the same side skips cells that
+## are already armed. A `recheck_locked` event drops the cells locked by the time it fires (no damage, no payload
+## there). An event `payload` (ignite) is applied on its open cells after the damage, hit or miss.
 
 ## Emitted after a swing's effects were applied. [param result] is CutEffects' dictionary
 ## {hit, damage, pushed, cell} extended with {cells, skill_id, level, pin_bonus}. [param side] = CombatState.Side.
@@ -98,6 +102,10 @@ var player_awakening_fn: Callable = Callable()
 ## warning is broken at that moment instead of at the cast's end. CombatView and the sim bind PatternController.on_enemy_hit;
 ## instant (legacy) casts keep calling it from swing_resolved. Invalid = none.
 var pattern_hit_fn: Callable = Callable()
+## EVALUATION SEAM (balance probe only; never set by the game): Callable(armed_cells: int, footprint_cells: int) -> int,
+## the cell count an ARMED (delayed) event's damage uses instead of the cast's armed cells (damage-model experiments A4 /
+## C, docs/skill-v2/13-hoa-loi-damage-models.md). Invalid = the approved rule (Model A: every armed cell counts).
+var armed_damage_cells_fn: Callable = Callable()
 ## Skill v2 B1.5: the delivery timing table the `arrival` resolve reads (CombatConfig.delivery_timing; set by CombatView).
 var delivery_timing: Dictionary = SkillDelivery.DEFAULT_TIMING
 # The authoritative combat clock (seconds ticked), the pending impact events sorted by (at, seq) and the scheduled
@@ -167,18 +175,25 @@ func scheduled_count() -> int:
 func pending_cells(side: int) -> Dictionary:
 	var cells: Array[Vector2i] = []
 	var left: float = INF
+	var armed: Array[Dictionary] = armed_threats(side)
 	for e: Dictionary in _events:
 		var cast: Dictionary = _casts.get(int(e["cast_id"]), {}) as Dictionary
 		if cast.is_empty() or int(cast["side"]) != side or int(cast["hits"]) >= int(cast["max_hits"]) \
 				or (cast["wave_hit"] as Dictionary).has(int(e["wave"])):
+			continue
+		# armed (delayed) events are reported apart, in `armed`: the brain weighs them by time left
+		if bool(e.get("armed", false)):
 			continue
 		for c: Vector2i in e["cells"] as Array:
 			if not cells.has(c):
 				cells.append(c)
 		left = minf(left, float(e["at"]) - _clock)
 	if cells.is_empty():
-		return {}
-	return {"cells": cells, "time_left": maxf(left, 0.0)}
+		return {} if armed.is_empty() else {"armed": armed}
+	var out: Dictionary = {"cells": cells, "time_left": maxf(left, 0.0)}
+	if not armed.is_empty():
+		out["armed"] = armed
+	return out
 
 
 ## Skill v2 (Ngàn Kiếm root rule): the earliest `at` still on the clock (INF when nothing is scheduled). Read-only.
@@ -192,6 +207,51 @@ func first_event_at() -> float:
 ## Skill v2 (Ngàn Kiếm VFX): true while scheduled cast [param cast_id] still has events on the clock.
 func has_cast(cast_id: int) -> bool:
 	return _casts.has(cast_id)
+
+
+## Skill v2 delayed (armed-zone registry): the cells of [param side]'s armed events still on the clock (sorted y, x).
+func armed_cells(side: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for e: Dictionary in _events:
+		if not bool(e.get("armed", false)):
+			continue
+		var cast: Dictionary = _casts.get(int(e["cast_id"]), {}) as Dictionary
+		if cast.is_empty() or int(cast["side"]) != side:
+			continue
+		for c: Vector2i in e["cells"] as Array:
+			if not out.has(c):
+				out.append(c)
+	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.y < b.y or (a.y == b.y and a.x < b.x))
+	return out
+
+
+## Skill v2 delayed: the number of [param side]'s casts of [param skill_id] that still hold an armed event.
+func armed_cast_count(side: int, skill_id: String) -> int:
+	var ids: Dictionary = {}
+	for e: Dictionary in _events:
+		if not bool(e.get("armed", false)):
+			continue
+		var cast: Dictionary = _casts.get(int(e["cast_id"]), {}) as Dictionary
+		if not cast.is_empty() and int(cast["side"]) == side and str(cast["skill_id"]) == skill_id:
+			ids[int(e["cast_id"])] = true
+	return ids.size()
+
+
+## Skill v2 delayed (boss threat feed): [param side]'s armed events still on the clock, one entry per event:
+## [{cast_id, skill_id, cells, time_left}], soonest first. The same schedule that resolves them.
+func armed_threats(side: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for e: Dictionary in _events:
+		if not bool(e.get("armed", false)):
+			continue
+		var cast: Dictionary = _casts.get(int(e["cast_id"]), {}) as Dictionary
+		if cast.is_empty() or int(cast["side"]) != side:
+			continue
+		var cells: Array[Vector2i] = []
+		cells.assign(e["cells"])
+		out.append({"cast_id": int(e["cast_id"]), "skill_id": str(cast["skill_id"]), "cells": cells,
+			"time_left": maxf(float(e["at"]) - _clock, 0.0)})
+	return out
 
 
 ## Skill v2 B1.5: the number of scheduled casts not finished yet.
@@ -244,7 +304,8 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		for c: Vector2i in cells:
 			if not open.has(c):
 				locked.append(c)
-	var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(skill_id), cells, cast_context, delivery_timing, locked)
+	var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(skill_id), cells, cast_context, delivery_timing, locked,
+		armed_cells(side))
 	if not bool(plan["legacy"]):
 		_schedule_cast(side, cells, skill_id, trade, level, featured_bonus, cast_context, plan)
 		return
@@ -319,6 +380,9 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 		cast_context: Dictionary, plan: Dictionary) -> void:
 	var is_player: bool = side == CombatState.Side.PLAYER
 	var count: int = (_status.unlocked_cells(cells) if _status != null else cells).size()
+	# a delayed cast counts only the cells it armed (skipped / locked cells deal nothing)
+	if plan.has("cast_cells"):
+		count = int(plan["cast_cells"])
 	var skill: Dictionary = CutEffects.resolved_skill(_skill_config, skill_id, level)
 	var id: int = _next_cast_id
 	_next_cast_id += 1
@@ -333,7 +397,8 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 		"max_hits": int(plan["max_hits"]) + _awakening_extra(is_player, skill), "hits": 0, "wave_hit": {}, "wave_left": wave_left, "waves": waves,
 		"events_left": (plan["events"] as Array).size(), "damage": 0.0, "interrupted": false, "last_hit": {},
 		"crit_at_start": _player_crit_at_start if is_player else 1.0,
-		"healed": CutEffects.heal_caster(_state, side, skill)}
+		"healed": CutEffects.heal_caster(_state, side, skill), "fizzled": bool(plan.get("fizzled", false)),
+		"skipped_cells": plan.get("skipped_cells", [])}
 	for e: Dictionary in plan["events"]:
 		var ev: Dictionary = e.duplicate()
 		ev["cast_id"] = id
@@ -351,8 +416,12 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 			var pub: Dictionary = e.duplicate()
 			pub.erase("seq")
 			listed.append(pub)
-	cast_scheduled.emit(side, {"cast_id": id, "side": side, "skill_id": skill_id, "cells": cells.duplicate(),
-		"events": listed, "context": cast_context})
+	var info: Dictionary = {"cast_id": id, "side": side, "skill_id": skill_id, "cells": cells.duplicate(),
+		"events": listed, "context": cast_context}
+	for k: String in ["fizzled", "skipped_cells", "fuse_sec", "fuse_mult", "clause"]:
+		if plan.has(k):
+			info[k] = plan[k]
+	cast_scheduled.emit(side, info)
 	if (plan["events"] as Array).is_empty():
 		_finish_cast(id)
 
@@ -384,10 +453,27 @@ func _fire_event(ev: Dictionary) -> void:
 	var wave: int = int(ev["wave"])
 	var ev_cells: Array[Vector2i] = []
 	ev_cells.assign(ev["cells"])
+	# delayed: cells locked since the cast fizzle (no damage, no payload there)
+	if bool(ev.get("recheck_locked", false)) and _status != null:
+		var open: Array[Vector2i] = _status.unlocked_cells(ev_cells)
+		var gone: Array[Vector2i] = []
+		for c: Vector2i in ev_cells:
+			if not open.has(c):
+				gone.append(c)
+		if not gone.is_empty():
+			ev["fizzled_cells"] = gone
+		ev_cells = open
+		ev["cells"] = open
 	var hit: bool = false
 	var can_hit: bool = int(cast["hits"]) < int(cast["max_hits"]) and not (cast["wave_hit"] as Dictionary).has(wave)
-	if can_hit and _state.unit_in(_opposite(side), ev_cells):
+	if can_hit and not ev_cells.is_empty() and _state.unit_in(_opposite(side), ev_cells):
 		var skill_id: String = str(cast["skill_id"])
+		# the card's damage-cell rule (CastResolver.damage_cells: "all" for every card but those that set one, e.g.
+		# Hỏa Lôi's Model C), on the target's footprint now; the evaluation seam, when a probe sets it, overrides it
+		var fp: int = _state.enemy_footprint_cells().size() if is_player else 1
+		var dmg_cells: int = CastResolver.damage_cells(_skill_config.get_skill(skill_id), int(cast["cast_cells"]), fp)
+		if bool(ev.get("armed", false)) and armed_damage_cells_fn.is_valid():
+			dmg_cells = maxi(int(armed_damage_cells_fn.call(int(cast["cast_cells"]), fp)), 1)
 		var result: Dictionary = CutEffects.apply(
 			_state, _grid, side, ev_cells, skill_id, _cut_config, _skill_config, _status,
 			player_damage_modifier if is_player else Callable(), int(cast["level"]),
@@ -400,7 +486,7 @@ func _fire_event(ev: Dictionary) -> void:
 				"player_guard": player_guard if not is_player else null,
 				"crit_mult_at_start": float(cast["crit_at_start"]),
 				"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call()),
-				"cast_context": cast["context"], "cast_cell_count": int(cast["cast_cells"]),
+				"cast_context": cast["context"], "cast_cell_count": dmg_cells, "wave_index": wave,
 				"impact_mult": float(ev["mult"]), "apply_heal": false})
 		hit = bool(result["hit"])
 		# Trảm Địa: the burst's Pin lands with a damaging hit (not on a parry).
@@ -433,6 +519,14 @@ func _fire_event(ev: Dictionary) -> void:
 					var victim_skill: String = victim.get_skill_id()
 					victim.cancel()
 					swing_interrupted.emit(victim_side, victim_cells, victim_skill)
+	# the event's payload lands on its open cells after the damage (hit or miss); a burn on the target's cell now does
+	# not pay an entry tick for this hit (StatusEffects ticks it from the next tick)
+	var payload: Dictionary = ev.get("payload", {}) as Dictionary
+	if not payload.is_empty() and _status != null and not ev_cells.is_empty() and not _state.is_player_dead() \
+			and not _state.is_enemy_dead():
+		var ig: Dictionary = payload.get("ignite", {}) as Dictionary
+		if not ig.is_empty():
+			ev["ignited"] = _status.ignite(ev_cells, float(ig["sec"]), float(ig["tick_sec"]), float(ig["damage"]))
 	var public: Dictionary = ev.duplicate()
 	public.erase("seq")
 	public["context"] = cast["context"]
@@ -469,6 +563,8 @@ func _finish_cast(id: int) -> void:
 	result["hits"] = int(cast["hits"])
 	result["healed"] = float(cast["healed"])
 	result["scheduled"] = true
+	result["fizzled"] = bool(cast.get("fizzled", false))
+	result["skipped_cells"] = cast.get("skipped_cells", [])
 	result["cells"] = cast["cells"]
 	result["cast_context"] = cast["context"]
 	result["skill_id"] = cast["skill_id"]

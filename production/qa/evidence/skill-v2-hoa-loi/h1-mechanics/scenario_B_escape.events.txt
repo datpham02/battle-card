@@ -1,0 +1,6 @@
+DemoArgs: tram_live boss idle
+DemoArgs: tram_live shape=bar2 rot=0 cells=[(4, 1), (5, 1)] tags=["domino", "line", "line_h"] boss=[(5, 1)] duration=0.450
+DemoArgs: t=1.000 boss -> (5, 2) (burning [])
+DemoArgs: scenario t=1.000 boss moved by (0, 1) -> (5, 2) ok=true (phase )
+TRAM #0 t=1.50 clock=1.950 cell=(4, 1) kind=fuse step=0 mult=2.00 hit=false dmg=0.0 pinned=false
+FUSE cells=[(4, 1), (5, 1)] boss=[(5, 2)] ignited=[(4, 1), (5, 1)] fizzled=[]

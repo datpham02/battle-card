@@ -364,6 +364,17 @@ var _scn: Dictionary = {}
 ## Task 5 item 5 evidence: `--cast-lock` cracks the first non-foe cell of the cast_live mask (StatusEffects.apply_drop
 ## on the enemy half) before the swing, so the cast runs over a locked cell.
 const CAST_LOCK_ARG: String = "--cast-lock"
+## Hỏa Lôi H1 evidence (tram_live): --boss-idle keeps the boss still (no brain, no attacks) for the stationary /
+## scripted-move scenarios; in every tram_live run the boss's cells and the burning cells are logged as they change.
+const BOSS_IDLE_ARG: String = "--boss-idle"
+## Hỏa Lôi H2 evidence: --cast-when-free waits (time running) until the live boss is free to move (no pattern skill
+## running, its own swing not rooting it), then casts; every boss move logs the BossBrain decision that chose it
+## (type, score, and what it read from the armed seals). Demo tooling only: no boss rule changes.
+const CAST_FREE_ARG: String = "--cast-when-free"
+const CAST_FREE_TIMEOUT_SEC: float = 15.0
+## Hỏa Lôi H2 evidence: --boss-live keeps the REAL BossController / BossBrain running in tram_live (every demo turns it
+## off by default), so its own movement decisions (dodges, burning-cell avoidance) happen and are logged.
+const BOSS_LIVE_ARG: String = "--boss-live"
 const CAST_LOCK_WARN_SEC: float = 5.0
 const DROP_DEMO_CELLS: int = 3
 ## Dev flag for the drop demos: timed mire under the drop cells (seconds of mire long enough to outlast the demo).
@@ -873,6 +884,20 @@ func _tram_live_demo() -> void:
 	var combat: CombatView = _combat()
 	var grid: BoardGrid = combat.get_grid()
 	var state: CombatState = combat.get_state()
+	if OS.get_cmdline_user_args().has(BOSS_LIVE_ARG):
+		combat.get_boss().set_active(true)
+		print("DemoArgs: tram_live boss live (BossBrain on)")
+	if OS.get_cmdline_user_args().has(CAST_FREE_ARG):
+		combat.freeze_time = false
+		var waited: float = 0.0
+		while waited < CAST_FREE_TIMEOUT_SEC:
+			var pc: PatternController = combat.get_pattern_controller()
+			var busy: bool = (pc != null and pc.is_busy()) or combat.get_boss().get_actor().is_swinging() 				or combat.is_boss_step_locked()
+			if not busy and waited >= 0.5:
+				break
+			await get_tree().process_frame
+			waited += get_process_delta_time()
+		print("DemoArgs: tram_live cast when free after %.2f s (clock %.3f)" % [waited, combat.get_arbiter().clock()])
 	var shape: String = "bar4"
 	var rot: int = 0
 	for arg: String in OS.get_cmdline_user_args():
@@ -935,6 +960,22 @@ func _tram_live_demo() -> void:
 		push_warning("DemoArgs: tram_live: the swing did not start")
 		return
 	combat.freeze_time = false
+	if OS.get_cmdline_user_args().has(BOSS_IDLE_ARG):
+		combat.get_boss().set_active(false)
+		# a pattern enemy is ticked by CombatView itself; the idle demo drops it (dev only)
+		if combat.get_pattern_controller() != null:
+			combat.set("_pattern", null)
+		print("DemoArgs: tram_live boss idle")
+	state.cell_changed.connect(func(side: int, _old: Vector2i, new_cell: Vector2i) -> void:
+		if side == CombatState.Side.ENEMY:
+			print("DemoArgs: t=%.3f boss -> %s (burning %s)" % [combat.get_arbiter().clock() - float(_scn.get("from", 0.0)),
+				str(new_cell), str(combat.get_status().burning_cells() if combat.get_status() != null else [])]))
+	# the BossBrain decision that issued each step (BossController.moved fires right after decide -> try_step)
+	combat.get_boss().moved.connect(func(direction: Vector2i) -> void:
+		var dbg: Dictionary = combat.get_boss().get_brain().last_debug()
+		print("DemoArgs: t=%.3f BRAIN step %s: type=%s purpose=%s score=%.2f fuse=%s" % [
+			combat.get_arbiter().clock() - float(_scn.get("from", 0.0)), str(direction), str(dbg.get("type", "")),
+			str(dbg.get("purpose", dbg.get("breakdown", {}))), float(dbg.get("score", 0.0)), str(dbg.get("fuse", {}))]))
 	_scenario_setup(combat)
 	# VFX scale guide (2026-11-08): the real art-px geometry of the target cells (flat rect and drawn quad bbox).
 	var canvas: BattleCanvas = combat.get_battle_canvas()
@@ -978,6 +1019,16 @@ func _scenario_tick() -> void:
 	if combat == null or combat.get_arbiter() == null:
 		return
 	var t: float = combat.get_arbiter().clock() - float(_scn["from"])
+	# Hỏa Lôi H2: every change of what the BossBrain reads from the armed seals (decision type + seal reading + why
+	# it may not step: pattern skill running / own swing / mover cooldown)
+	if combat.get_boss() != null and not combat.get_arbiter().armed_cells(CombatState.Side.PLAYER).is_empty():
+		var dbg: Dictionary = combat.get_boss().get_brain().last_debug()
+		var pc: PatternController = combat.get_pattern_controller()
+		var line: String = "type=%s reason=%s fuse=%s busy=%s locked=%s ready=%s" % [str(dbg.get("type", "")), str(dbg.get("reason", "")), str(dbg.get("fuse", {})),
+			str(pc != null and pc.is_busy()), str(combat.is_boss_step_locked()), str(combat.get_boss().get_mover().is_ready())]
+		if line != str(_scn.get("brain_line", "")):
+			_scn["brain_line"] = line
+			print("DemoArgs: t=%.3f BRAIN %s" % [t, line])
 	var hp: float = combat.get_state().player_hp
 	if absf(hp - float(_scn.get("hp", hp))) > 0.001:
 		print("DemoArgs: scenario t=%.3f hero HP %.0f -> %.0f at %s (phase %s)" % [t, float(_scn["hp"]), hp,
@@ -1009,8 +1060,11 @@ func _scenario_tick() -> void:
 func _tram_on_impact(side: int, ev: Dictionary, hit: bool) -> void:
 	var combat: CombatView = _combat()
 	print("TRAM #%d t=%.2f clock=%.3f cell=%s kind=%s step=%d mult=%.2f hit=%s dmg=%.1f pinned=%s" % [int(ev["index"]),
-		float(ev["t"]), combat.get_arbiter().clock(), str((ev["cells"] as Array)[0]), str(ev["kind"]), int(ev.get("step", 0)),
-		float(ev["mult"]), str(hit), float(ev.get("damage", 0.0)), str(ev.get("pinned", false))])
+		float(ev["t"]), combat.get_arbiter().clock(), str((ev["cells"] as Array)[0]) if not (ev["cells"] as Array).is_empty() else "-",
+		str(ev["kind"]), int(ev.get("step", 0)), float(ev["mult"]), str(hit), float(ev.get("damage", 0.0)), str(ev.get("pinned", false))])
+	if str(ev["kind"]) == CastResolver.KIND_FUSE:
+		print("FUSE cells=%s boss=%s ignited=%s fizzled=%s" % [str(ev["cells"]), str(combat.get_state().enemy_footprint_cells()),
+			str(ev.get("ignited", [])), str(ev.get("fizzled_cells", []))])
 	if side == CombatState.Side.PLAYER and int(ev["index"]) == 0 and _tram_move != Vector2i.ZERO:
 		var st: CombatState = combat.get_state()
 		var moved: bool = st.set_enemy_cell(st.enemy_cell + _tram_move)

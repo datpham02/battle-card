@@ -41,6 +41,11 @@ const DEFAULT_WEIGHTS: Dictionary = {
 	## `crumble` arena (the boss relocates instead of camping); 0 = the boss ignores the timer (fallen and cracking
 	## cells stay blocked either way).
 	"crumble_avoid": 1.0,
+	## Skill v2 delayed (Hỏa Lôi, docs/skill-v2/09-hoa-loi-design.md §8): a visible armed seal is an URGENT threat (dodged
+	## like a swing) only in its last fuse_react_sec; before that its cells cost fuse_avoid per step (paths go around
+	## while cheaper). Per set, so bosses read fire differently.
+	"fuse_react_sec": 0.8,
+	"fuse_avoid": 1.0,
 	"escape_penalty": 4.0,
 	"combo_chance": 0.25,
 	"combo_gap_sec": 0.5,

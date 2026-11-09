@@ -993,6 +993,11 @@ ui.slots.abandon,Chơi mới,New climb
 ui.slots.abandon_title,Bỏ chuyến leo ở ô %d?,Abandon the climb in slot %d?
 ui.slots.abandon_body,"Chuyến leo đang dở sẽ mất. Mở khóa, Giao Kèo và thành tựu của ô vẫn giữ.","The climb in progress will be lost. The slot keeps its unlocks, Pact levels and achievements."
 ui.slots.abandon_yes,Bỏ chuyến leo,Abandon
+card.hoa_loi.name,Hỏa Lôi,Fire Mine
+card.hoa_loi.desc,"Khắc ấn lửa lên các ô; sau {fuse_sec} s cả trận nổ cùng lúc: địch đứng trên ấn chịu sát thương theo số ô (tính tối đa bằng kích thước địch + {cells_extra} ô) x{fuse_mult}, rồi các ô cháy {burn_sec} s. Khối vuông: nạp lâu hơn, nổ mạnh hơn.","Brands fire sigils on the cells; after {fuse_sec} s they all explode at once: a foe on a sigil takes damage per cell (counting at most its size + {cells_extra} cells) x{fuse_mult}, then the cells burn for {burn_sec} s. Square Block: a longer charge, a bigger blast."
+card.hoa_loi.desc_battle,"Ấn lửa nổ sau {fuse_sec} s, rồi cháy.","Sigils explode after {fuse_sec} s, then burn."
+ui.hud.field_cap,đã đủ ấn lửa,sigils at limit
+ui.hud.no_valid_cells,ô đã có ấn,cells already branded
 ui.settings.audio,Âm thanh,Audio
 ui.settings.vol_master,Âm lượng chung,Master volume
 ui.settings.vol_music,Nhạc,Music

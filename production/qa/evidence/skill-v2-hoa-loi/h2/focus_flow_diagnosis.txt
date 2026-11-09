@@ -1,0 +1,22 @@
+focus_flow_test.gd "tap piece -> PLACING + focus active" — diagnosis 2026-11-09
+
+Observed
+- 2026-11-09 (user active at the PC): fails 3/4 and 3/3 standalone runs; also fails on a clean worktree of 0472896 (no H1 code).
+- Later (user away): 4/4 PASS, unchanged code. Instrumented runs (prints or silent in-memory log) also passed.
+- Failing runs: identical state before the tap (slot 0 = bar2, placeable, no menu, not placed, Focus ready, hero idle).
+  Passing runs' input log: HUD press not taken -> HandInputController _down on slot 0 -> placing.
+
+Root cause (reproduced)
+- GameFlow._notification pauses the run on NOTIFICATION_APPLICATION_FOCUS_OUT / WM_WINDOW_FOCUS_OUT
+  (src/run/game_flow.gd:641-647, the intended mobile/desktop auto-pause).
+- The windowed UI test opens a real window; when another window holds OS focus (the user working, the Claude app,
+  a browser pane), the test window loses focus and the run auto-pauses; the pushed tap then lands on a paused battle.
+- Reproduction: propagate NOTIFICATION_APPLICATION_FOCUS_OUT before the tap -> run paused=true, placing=false,
+  the same FAIL, 2/2 runs.
+
+Classification: test-environment / harness problem (window focus), NOT a gameplay or input regression.
+The game behaves as designed (auto-pause on focus loss).
+
+Recommended harness fix (not applied, needs review): windowed UI tests opt out of the focus auto-pause the way the
+demos do (GameFlow `_no_autopause`, e.g. a set_no_autopause_for_test()), or re-assert focus before input. No
+assertion is weakened by either.

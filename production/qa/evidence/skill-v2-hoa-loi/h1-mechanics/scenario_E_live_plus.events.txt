@@ -1,0 +1,6 @@
+DemoArgs: tram_live shape=plus5 rot=0 cells=[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)] tags=["branched", "plus"] boss=[(5, 1)] duration=0.450
+DemoArgs: scenario t=1.750 hero HP 210 -> 202 at (2, 1) (phase )
+TRAM #0 t=1.50 clock=1.950 cell=(5, 0) kind=fuse step=0 mult=2.00 hit=true dmg=60.0 pinned=false
+FUSE cells=[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)] boss=[(5, 1)] ignited=[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)] fizzled=[]
+DemoArgs: t=3.233 boss -> (5, 0) (burning [(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)])
+DemoArgs: scenario t=6.317 hero HP 202 -> 194 at (2, 1) (phase )

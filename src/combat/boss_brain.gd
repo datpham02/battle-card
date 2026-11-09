@@ -120,6 +120,9 @@ var _mire_pen: Dictionary = {}
 ## Story 036: hazard components of the last think (mire costs, sand cells blocked, wind, pickup drift);
 ## copied into last_debug().hazards when hazards are set.
 var _hazard_debug: Dictionary = {}
+## Skill v2 Hỏa Lôi: what the last decision read from the armed seals (debug only, last_debug().fuse): urgent cells,
+## the soonest urgent time left, the soft-cost cells and the window used.
+var _fuse_debug: Dictionary = {}
 ## Story 039: the cell the boss has been standing on, how long (seconds, counted at each think) and the
 ## time banked by tick() since the last think. Only read when hazards are set on a crumble arena.
 var _stand_cell: Vector2i = BoardGrid.NO_CELL
@@ -261,6 +264,16 @@ func decide(ctx: Dictionary) -> Dictionary:
 	# Skill v2 (Trảm Địa): after the swing resolves, the surge still running on the clock is the same telegraph the boss
 	# already saw: its pending cells (and their real time left) stay incoming. Nothing unseen is revealed.
 	var incoming_left: float = player_actor.get_time_left()
+	# Skill v2 delayed (Hỏa Lôi): a delayed swing damages fuse_sec after its end, and armed seals are visible floor
+	# objects. Both are urgent only inside the set's fuse_react_sec; earlier they are a soft path cost (fuse_avoid).
+	var react: float = float(_weights.get("fuse_react_sec", 0.8))
+	var fuse_soft: Array[Vector2i] = []
+	var delay: float = float(ctx.get("player_cast_delay", 0.0))
+	if not incoming.is_empty() and delay > 0.0:
+		incoming_left += delay
+		if incoming_left > react:
+			fuse_soft = incoming.duplicate()
+			incoming = []
 	if not incoming.is_empty():
 		_seen_cells = incoming.duplicate()
 	elif not player_actor.is_swinging():
@@ -272,6 +285,23 @@ func decide(ctx: Dictionary) -> Dictionary:
 			_seen_cells = []
 		else:
 			incoming_left = float(pending.get("time_left", 0.0))
+	var had_incoming: bool = not incoming.is_empty()
+	var armed_left: float = INF
+	for entry: Variant in (ctx.get("pending_threat", {}) as Dictionary).get("armed", []) as Array:
+		var left: float = float((entry as Dictionary).get("time_left", 0.0))
+		for c: Variant in (entry as Dictionary).get("cells", []) as Array:
+			if left <= react:
+				if not incoming.has(c as Vector2i):
+					incoming.append(c as Vector2i)
+				armed_left = minf(armed_left, left)
+			elif not fuse_soft.has(c as Vector2i):
+				fuse_soft.append(c as Vector2i)
+	if armed_left < INF:
+		incoming_left = minf(incoming_left, armed_left) if had_incoming else armed_left
+	_fuse_debug = {}
+	if armed_left < INF or not fuse_soft.is_empty():
+		_fuse_debug = {"urgent": armed_left < INF, "armed_left": armed_left if armed_left < INF else -1.0,
+			"incoming": incoming.duplicate(), "soft": fuse_soft.duplicate(), "react_sec": react, "delay": delay}
 	# Story 027: own_blocked = burning cells + open holes of the boss's half (never entered); player_blocked =
 	# burning cells (the player cannot escape into them).
 	var own_blocked: Array[Vector2i] = []
@@ -286,6 +316,10 @@ func decide(ctx: Dictionary) -> Dictionary:
 		var thorn_avoid: float = float(_weights.get("thorn_avoid", 0.0))
 		for cell: Vector2i in _status.thorn_cells(CombatState.Side.ENEMY):
 			_thorn_pen[cell] = thorn_avoid * float(_status.thorns_at(CombatState.Side.ENEMY, cell).get("damage", 0.0))
+	var fuse_avoid: float = float(_weights.get("fuse_avoid", 1.0))
+	for cell: Vector2i in fuse_soft:
+		if not incoming.has(cell):
+			_thorn_pen[cell] = float(_thorn_pen.get(cell, 0.0)) + fuse_avoid
 	if extra_own_blocked_fn.is_valid():
 		for cell: Variant in extra_own_blocked_fn.call() as Array:
 			if not own_blocked.has(cell as Vector2i):
@@ -327,6 +361,8 @@ func decide(ctx: Dictionary) -> Dictionary:
 	_debug["reason"] = "chosen"
 	_debug["destination"] = get_destination()
 	_debug["cut_candidates"] = _cut_candidates.duplicate()
+	if not _fuse_debug.is_empty():
+		_debug["fuse"] = _fuse_debug.duplicate(true)
 	if not _dodge_plan.is_empty():
 		_debug["dodge_plan"] = _dodge_plan.duplicate()
 	if _hazards != null:

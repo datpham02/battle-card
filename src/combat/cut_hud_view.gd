@@ -275,6 +275,8 @@ const TEXT_HIT: String = "ui.hud.hit"
 const TEXT_CRIT: String = "ui.hud.crit"
 const TEXT_PARRY: String = "ui.hud.parry"
 const TEXT_NO_TELEGRAPH: String = "ui.hud.no_telegraph"
+const TEXT_FIELD_CAP: String = "ui.hud.field_cap"
+const TEXT_NO_VALID_CELLS: String = "ui.hud.no_valid_cells"
 ## A crit's damage number is this much bigger than a plain one ("one step larger").
 const CRIT_NUMBER_SCALE: float = 1.3
 ## The hero's parry guard: the thin timer bar under the hero's cell (share of the cell width / height, inset from the
@@ -3361,6 +3363,10 @@ func _skill_status(id: String, cell_count: int) -> Dictionary:
 		text = tr(TEXT_COOLDOWN) % float(check["cooldown_left"])
 	elif str(check["reason"]) == "no_telegraph":
 		text = tr(TEXT_NO_TELEGRAPH)
+	elif str(check["reason"]) == "field_cap":
+		text = tr(TEXT_FIELD_CAP)
+	elif str(check["reason"]) == "no_valid_cells":
+		text = tr(TEXT_NO_VALID_CELLS)
 	return {"available": bool(check["available"]), "text": text}
 
 

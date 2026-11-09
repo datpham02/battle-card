@@ -1,0 +1,2 @@
+TRAM #0 t=1.50 clock=1.950 cell=(4, 1) kind=fuse step=0 mult=2.00 hit=true dmg=36.0 pinned=false
+FUSE cells=[(4, 1), (5, 1), (7, 1)] boss=[(5, 1)] ignited=[(4, 1), (5, 1), (7, 1)] fizzled=[]

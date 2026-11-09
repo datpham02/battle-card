@@ -65,6 +65,9 @@ func _process(_delta: float) -> void:
 	var sky: Array[Dictionary] = sky_items()
 	if not sky.is_empty():
 		state.append({"sky": sky})
+	var fuse: Array[Dictionary] = fuse_items()
+	if not fuse.is_empty():
+		state.append({"fuse": fuse})
 
 	if state != _drawn:
 		_drawn = state
@@ -213,6 +216,21 @@ func _draw() -> void:
 		for n: int in range(i, j):
 			draw_rect(Rect2(sky[n]["rect"]), sky[n]["col"])
 		i = j
+	# Skill v2 Hỏa Lôi H2: the command glyph at the Mage's hand and the tile-origin flame columns (FuseFx), each
+	# group's Ink edges first, back rows first.
+	var fuse: Array[Dictionary] = fuse_items()
+	var a: int = 0
+	while a < fuse.size():
+		var b: int = a
+		while b < fuse.size() and int(fuse[b].get("group", -1)) == int(fuse[a].get("group", -1)):
+			b += 1
+		for n: int in range(a, b):
+			var e: int = int(fuse[n].get("edge", 0))
+			if e > 0:
+				draw_rect(Rect2((fuse[n]["rect"] as Rect2i).grow(e)), Color(SlabPainter.INK, float((fuse[n]["col"] as Color).a)))
+		for n: int in range(a, b):
+			draw_rect(Rect2(fuse[n]["rect"]), fuse[n]["col"])
+		a = b
 
 
 
@@ -291,6 +309,43 @@ func sky_items() -> Array[Dictionary]:
 		var a: float = SkyDropFx.blade_alpha(d, now, state != null and state.is_enemy_at(d["cell"]))
 		for it: Dictionary in SkyDropFx.items(d, now, base, reduce):
 			out.append({"rect": it["rect"], "col": Color(cols2[int(it["tone"])], a), "edge": int(it.get("edge", 1)), "group": g})
+	return out
+
+
+## Skill v2 Hỏa Lôi H2 (FuseFx): the screen-space items [{rect, col, edge, group}]: the command glyph at the Mage's
+## hand while a `glyph` card's swing runs (group -1), then each armed cell's flame column over its tile's drawn ground
+## centre once the field blows (group = draw index, back rows first). Same records and clock as the gameplay events.
+func fuse_items() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or _floor == null or combat.get_arbiter() == null:
+		return out
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	var actor: CutActor = combat.get_cut_actor()
+	if actor != null and actor.is_swinging() and combat.get_battle_canvas() != null:
+		var units: UnitLayer = combat.get_battle_canvas().get_unit_layer()
+		var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+		var entry: Dictionary = CastVfx.entry_for(hero_id, "", actor.get_skill_id())
+		if units != null and bool(entry.get("glyph", false)):
+			var hand: Vector2i = CastVfx.hand_point({"hand": entry.get("charge_hand", entry.get("hand", [0, 0]))},
+				units.unit_feet_art(CombatState.Side.PLAYER))
+			var k: float = 1.0 - actor.get_time_left() / maxf(actor.get_duration(), 0.001)
+			for it: Dictionary in FuseFx.glyph_items(hand, k, reduce):
+				it["group"] = -1
+				out.append(it)
+	var recs: Array[Dictionary] = combat.get_fuse_fx().duplicate()
+	recs.sort_custom(func(p: Dictionary, q: Dictionary) -> bool: return (p["cell"] as Vector2i).y < (q["cell"] as Vector2i).y)
+	var now: float = combat.combat_clock()
+	var geo: BoardGeometry = _bg()
+	for g: int in recs.size():
+		var rec: Dictionary = recs[g]
+		var base: Vector2i = _centre(rec["cell"])
+		if geo != null and geo.is_warped():
+			base = geo.warp_art_px(base)
+		var w: int = _floor.cell_art_rect(rec["cell"]).size.x
+		for it: Dictionary in FuseFx.eruption_items(rec, now, base, w, reduce):
+			it["group"] = g
+			out.append(it)
 	return out
 
 

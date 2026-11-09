@@ -32,6 +32,10 @@ var cast_time_modifier: Callable = Callable()
 ## Cast Commitment (Ngàn Kiếm): Callable(skill_id) -> float, seconds added to the swing of that card AFTER every other
 ## duration rule (cards.json channel_extend_sec). Unset = none.
 var channel_extend_fn: Callable = Callable()
+## Skill v2 cast profile (Hỏa Lôi): Callable(skill_id) -> float, a FIXED swing time for that card (> 0; cards.json
+## cast_time_sec) replacing the per-cell formula and [member duration_modifier] (the passive); a duration_override and
+## the relic [member cast_time_modifier] still apply after it. <= 0 / unset = the formula.
+var cast_time_fn: Callable = Callable()
 
 var _config: CutConfig
 var _swinging: bool = false
@@ -77,6 +81,10 @@ func begin_swing(cells: Array[Vector2i], skill_id: String, target_is_enemy: bool
 	var duration: float = _config.swing_duration(cells.size()) * duration_mult
 	if duration_modifier.is_valid():
 		duration = float(duration_modifier.call(cells.size(), duration))
+	if cast_time_fn.is_valid():
+		var fixed: float = float(cast_time_fn.call(skill_id))
+		if fixed > 0.0:
+			duration = fixed
 	if duration_override > 0.0:
 		duration = duration_override
 	if cast_time_modifier.is_valid():

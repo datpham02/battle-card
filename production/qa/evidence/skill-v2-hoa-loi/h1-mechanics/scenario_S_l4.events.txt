@@ -1,0 +1,4 @@
+DemoArgs: tram_live boss idle
+DemoArgs: tram_live shape=l4 rot=0 cells=[(5, 0), (5, 1), (5, 2), (6, 2)] tags=["L"] boss=[(5, 1)] duration=0.450
+TRAM #0 t=1.50 clock=1.950 cell=(5, 0) kind=fuse step=0 mult=2.00 hit=true dmg=48.0 pinned=false
+FUSE cells=[(5, 0), (5, 1), (5, 2), (6, 2)] boss=[(5, 1)] ignited=[(5, 0), (5, 1), (5, 2), (6, 2)] fizzled=[]

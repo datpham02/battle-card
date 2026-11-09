@@ -121,4 +121,27 @@ Fallback tests (decisions §13) and the no-option 0.5 s auto-cast land in B1 as 
 | 2026-11-08 | B1 cast context, resolver wave, Q10 fallback | committed + pushed `986874b` | `03-b1.5-validation-report.md` |
 | 2026-11-08 | B1.5 ShapeTags `compact`, frozen context, scheduled waves | committed + pushed `986874b` | `03-b1.5-validation-report.md` |
 | 2026-11-08 | **Trảm Địa** (first advanced skill): gameplay, `cast_forward`, eruption VFX | **approved**; Android QA pending | `skill-checklist.md`, reports 04–06 |
-| — | Ngàn Kiếm | not started (waits for the user) | — |
+| 2026-11-08 | **Ngàn Kiếm**: gameplay, `cast_summon`, tile-summon VFX, Cast Commitment | **approved** as a technical prototype, committed `0472896`; Android QA + human playtest pending | `07`, `08` reports |
+| 2026-11-08 | **Hỏa Lôi** design + audit; **Audio System** design + audit | approved (D1–D9, A1–A7 with conditions) | `09-hoa-loi-design.md`, `10-audio-system-design.md` |
+| 2026-11-09 | **Hỏa Lôi H1** mechanics: delayed wave, event payload, armed registry, threat feed, cast profile, sim parity, probe | accepted for prototype (Model A kept through H2) | `11-hoa-loi-h1-report.md` |
+| 2026-11-09 | **Hỏa Lôi H2** visual prototype: FuseFx sigils / countdown / tile eruptions, cast sync, live-boss evidence | accepted as technical visual prototype; visual review + Android QA pending | `12-hoa-loi-h2-report.md` |
+| 2026-11-09 | **Hỏa Lôi damage models** A / A4 / C, 10,220 full matches, baseline + predictive bot | evaluated; recommends C + fuse_mult tuning, awaiting approval | `13-hoa-loi-damage-models.md` |
+
+---
+
+## 9. Revision 3 — development phases with audio (proposed 2026-11-08)
+
+The roadmap above had no audio work. Audio is now an explicit workstream (`10-audio-system-design.md`).
+
+| Phase | Content | State |
+|---|---|---|
+| 1 Combat audit | `01-current-system-audit.md` + the audio audit (`10` §1) | done |
+| 2 Skill v2 design | the `02-*` documents | done |
+| 3 Reference skills: mechanics, animation, VFX | Trảm Địa (approved), Ngàn Kiếm (approved prototype), Hỏa Lôi (`09`, proposed) | in progress |
+| 4 Shared Audio System + reference skill sound design | director, buses, music / ambience, final warning / UI / Block sounds, the 3 reference skills | proposed |
+| 5 Expansion toward the 60-card MVP | batches B2–B7 (§2); each card ships with archetype audio | — |
+| 6 Balancing, Android optimization, human playtesting | sim, device QA, playtests, loudness on device | — |
+
+**Audio tasks that run alongside Phase 3** (they unblock playtests and cost no assets): the missing gameplay signals
+(`PatternController.stage_changed`, piece / menu signals), `AudioEventRules`, `VoicePool`, a silent `AudioDirector`
+with tests, the bus layout, the volume settings, and free placeholder cues for the three reference skills.

@@ -207,7 +207,11 @@ static func apply(
 	var damage: float = per_cell * float(effective_cells)
 	# Cast rhythm spec 1.2: the crit condition is read at the moment of the hit, before Ran is spent or keywords land.
 	# Only the hero's swings crit: the block-brain boss reuses player cards, and its swings never crit.
-	var crit_mult: float = CritRules.mult_for(skill, {"state": state, "status": status, "target_side": target_side}) if side == CombatState.Side.PLAYER else 1.0
+	# Skill v2 M19: the hit's wave index (combo_3), its cast context (line_full) and the time since the target was last
+	# hit (first_strike) when the caller knows them.
+	var crit_mult: float = CritRules.mult_for(skill, {"state": state, "status": status, "target_side": target_side,
+		"wave_index": int(options.get("wave_index", -1)), "cast_context": options.get("cast_context", {}),
+		"since_target_hit": float(options.get("since_target_hit", -1.0))}) if side == CombatState.Side.PLAYER else 1.0
 	# Fix 2026-11-05: a swing whose condition held when it STARTED crits too (options.crit_mult_at_start, set by the
 	# arbiter), so "cast while the foe is Frozen" crits even if the Pin ends during the swing.
 	if side == CombatState.Side.PLAYER:

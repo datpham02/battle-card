@@ -213,6 +213,9 @@ var _sky_plan: Array[Dictionary] = []
 const CHANNEL_CANCEL_GUARD_SEC: float = 0.15
 ## The COMMIT lock: the hero may not step until this arbiter-clock time (swing end + commit_lock_sec); -1 = none.
 var _commit_lock_until: float = -1.0
+## Skill v2 Hỏa Lôi H2: the fire-seal records (FuseFx.records_from_cast) of the player's armed fields, from the
+## authoritative schedule; marked fired / fizzled by the matching impact event; pruned once drawn out.
+var _fuse_fx: Array[Dictionary] = []
 ## The committed (scheduled) cast of the last channel, for the RESOLUTION phase; -1 = none.
 var _commit_cast: int = -1
 ## A Hủy / Esc request waiting for the next tick: it is resolved AFTER the arbiter tick, so a commit in that tick wins.
@@ -450,6 +453,9 @@ func _ready() -> void:
 	_cut_actor.swing_cancelled.connect(_on_player_swing_cancelled)
 	_cut_actor.channel_extend_fn = func(id: String) -> float:
 		return float(_skill_config.get_skill(id).get("channel_extend_sec", 0.0)) if _skill_config != null else 0.0
+	# Skill v2 cast profile: a card's fixed cast time (cards.json cast_time_sec; Hỏa Lôi 0.45 s).
+	_cut_actor.cast_time_fn = func(id: String) -> float:
+		return float(_skill_config.get_skill(id).get("cast_time_sec", -1.0)) if _skill_config != null else -1.0
 	_arbiter = SwingArbiter.new(_state, _grid, _cut_actor, _boss.get_actor(), _cut_config, _skill_config, _status)
 	_arbiter.player_guard = _parry_guard
 	# Skill v2 B1.5: the `arrival` resolve reads the same delivery timing as the cast visuals.
@@ -474,6 +480,9 @@ func _ready() -> void:
 	_arbiter.cast_scheduled.connect(_on_cast_scheduled)
 	# Skill v2 (Trảm Địa): the boss reads the surge still running on the same clock (BossBrain pending threat).
 	_boss.pending_threat_fn = _arbiter.pending_cells.bind(CombatState.Side.PLAYER)
+	# Skill v2 delayed (Hỏa Lôi): a running delayed swing's threat comes fuse_sec after its end.
+	_boss.cast_delay_fn = func(actor: CutActor) -> float:
+		return CastResolver.threat_delay(_skill_config.get_skill(actor.get_skill_id()), actor.get_cast_context())
 	# Skill v2 (Ngàn Kiếm): an active Awakening raises a card's max hits (awakening_extra_hits).
 	_arbiter.player_awakening_fn = is_signature_active
 	# Skill v2 fix: a scheduled cast breaks a pattern windup / warning at its first damaging impact.
@@ -2279,7 +2288,15 @@ func get_frost_stacks() -> int:
 ## Cast rhythm spec 2026-11-05: the SkillAvailability context of the match now (CutFlow, the card menu greying, the
 ## timeout pick): {enemy_telegraph: true while a pattern enemy winds up / warns an attack or the block-brain boss swings}.
 func get_availability_context() -> Dictionary:
-	return {SkillAvailability.CTX_ENEMY_TELEGRAPH: ParryGuard.enemy_telegraph(_pattern, _boss.get_actor() if _boss != null else null)}
+	var ctx: Dictionary = {SkillAvailability.CTX_ENEMY_TELEGRAPH: ParryGuard.enemy_telegraph(_pattern, _boss.get_actor() if _boss != null else null)}
+	# Skill v2 delayed (Hỏa Lôi): the armed-field cap and the cells a delayed card could still arm on the open cut.
+	if _arbiter != null:
+		var arb: SwingArbiter = _arbiter
+		ctx[SkillAvailability.CTX_ARMED_COUNT_FN] = func(id: String) -> int: return arb.armed_cast_count(CombatState.Side.PLAYER, id)
+		if _cut_flow != null and _cut_flow.is_menu_open():
+			ctx[SkillAvailability.CTX_DELAYED_OPEN_CELLS] = SkillAvailability.delayed_open_cells(_cut_flow.menu_cells(),
+				_arbiter.armed_cells(CombatState.Side.PLAYER), _status)
+	return ctx
 
 
 ## Cast rhythm spec 2026-11-05: the hero's parry guard (never null).
@@ -2979,6 +2996,9 @@ const SURGE_FX_SEC: float = 0.6
 func _on_impact_resolved(side: int, event: Dictionary, hit: bool) -> void:
 	if side != CombatState.Side.PLAYER:
 		return
+	# Hỏa Lôi: mark the seals first (an event whose every cell fizzled has no cells left, and still shows its fizzle).
+	if str(event.get("kind", "")) == CastResolver.KIND_FUSE:
+		_mark_fuse(event, hit)
 	var cells: Array = event.get("cells", []) as Array
 	if cells.is_empty():
 		return
@@ -2995,7 +3015,10 @@ func _on_impact_resolved(side: int, event: Dictionary, hit: bool) -> void:
 	# 2026-11-08: the card's own cast overrides (Trảm Địa: the eruption pack + its floor mark on the burst cell).
 	var entry: Dictionary = CastVfx.entry_for(hero_id, str(delivery.get("impact", "")), skill_id)
 	var sky: bool = kind == CastResolver.KIND_DROP or kind == CastResolver.KIND_DROP_FINAL
-	if sky and not is_cell_locked(cell):
+	# Hỏa Lôi: the sigils, blast and fizzle are FuseFx (floor + overlay), driven by this very event.
+	if kind == CastResolver.KIND_FUSE:
+		pass
+	elif sky and not is_cell_locked(cell):
 		# Ngàn Kiếm: the blade, its impact and shatter are SkyDropFx (overlay); only the floor stamp is a pack here.
 		var stamp: String = str(entry.get("impact_mark" if kind == CastResolver.KIND_DROP_FINAL else "cell_mark", ""))
 		if not stamp.is_empty():
@@ -3030,6 +3053,9 @@ func _on_cast_scheduled(side: int, cast: Dictionary) -> void:
 	if lock >= 0.0 and _arbiter != null:
 		_commit_lock_until = _arbiter.clock() + lock
 		_commit_cast = int(cast.get("cast_id", -1))
+	# Hỏa Lôi: a delayed card's armed cells become FuseFx records (same cells, same authoritative `at`).
+	if _skill_config != null and str(_skill_config.get_skill(str(cast.get("skill_id", ""))).get("resolve", "")) 			== CastResolver.RESOLVE_DELAYED and _arbiter != null:
+		_fuse_fx.append_array(FuseFx.records_from_cast(cast, _arbiter.clock()))
 	# Ngàn Kiếm: a SKY_TO_TARGET card's drops become SkyDropFx records (same cells, same authoritative `at`); the
 	# enemy's cells at the swing end only pick the visual hover (over_enemy), never a target.
 	if str(delivery_for(str(cast.get("skill_id", ""))).get("type", "")) == SkillDelivery.SKY_TO_TARGET:
@@ -3148,7 +3174,14 @@ func channel_phase() -> String:
 ## Awakening are not blocked by it.
 func is_cast_rooted() -> bool:
 	var phase: String = channel_phase()
-	return phase == PHASE_CHANNELING or phase == PHASE_COMMIT
+	return phase == PHASE_CHANNELING or phase == PHASE_COMMIT or is_cast_locked()
+
+
+## Skill v2 cast profile "lock" (Hỏa Lôi): true while the hero's swing of a `cast_root: "lock"` card runs. The hero is
+## rooted for the swing only: no Hủy, no commit lock, free again at the swing end.
+func is_cast_locked() -> bool:
+	return _cut_actor != null and _cut_actor.is_swinging() and _skill_config != null \
+		and str(_skill_config.get_skill(_cut_actor.get_skill_id()).get("cast_root", "none")) == "lock"
 
 
 ## True during the COMMIT lock (the release gesture): no step, no pause, no cancel.
@@ -3466,6 +3499,36 @@ func cast_travel_now(tail: float = 0.3, side: int = CombatState.Side.PLAYER) -> 
 	out["rel"] = rel
 	out["swinging"] = false
 	return out
+
+
+# Hỏa Lôi: the fuse event of a cast fired: its records blast (every armed cell of the cast at once), a cell that was
+# locked since the cast fizzles instead.
+func _mark_fuse(event: Dictionary, hit: bool) -> void:
+	var id: int = int(event.get("cast_id", -1))
+	var gone: Array = event.get("fizzled_cells", []) as Array
+	for rec: Dictionary in _fuse_fx:
+		if int(rec["cast_id"]) != id:
+			continue
+		rec["fired"] = true
+		rec["hit"] = hit
+		rec["fizzled"] = gone.has(rec["cell"])
+
+
+## Skill v2 Hỏa Lôi H2: the fire-seal records to draw now (FuseFx), after dropping the ones drawn out and the armed
+## ones whose cast was cleared (caster death, match end: nothing fires, nothing shows).
+func get_fuse_fx() -> Array[Dictionary]:
+	if _arbiter == null:
+		return _fuse_fx
+	var now: float = _arbiter.clock()
+	var keep: Array[Dictionary] = []
+	for rec: Dictionary in _fuse_fx:
+		if now >= FuseFx.end_time(rec):
+			continue
+		if not bool(rec["fired"]) and not _arbiter.has_cast(int(rec["cast_id"])):
+			continue
+		keep.append(rec)
+	_fuse_fx = keep
+	return _fuse_fx
 
 
 ## The stain flooding the last cut's area now: {"cells": CastVfx.flood_cells, "style": CastVfx.flood_style};
