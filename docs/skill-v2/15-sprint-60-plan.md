@@ -24,7 +24,7 @@
 |---|---|
 | Total cards | 60 |
 | **COMPLETE (all 12 points)** | **1: Ngàn Kiếm**: gameplay committed in `0472896`, sound in `7336f78`; animation + audio approved 2026-11-09; ElevenLabs licence line still to record |
-| Presentation approved, other points pending | Hỏa Lôi: animation + audio approved, sound committed in `7336f78`; **gameplay / VFX / Model C code NOT committed yet**; multiplier + rewards pending |
+| Presentation approved, other points pending | Hỏa Lôi: animation + audio approved, gameplay / VFX / Model C committed in `7319996`, sound in `7336f78`; multiplier + rewards pending |
 | SFX done, audio sign-off pending | Trảm Địa |
 | Legacy-playable, v2 upgrade pending | 32 existing cards (old instant cast path, generic impact packs, shared `cast_gesture`) |
 | Not built | 25 new cards |
