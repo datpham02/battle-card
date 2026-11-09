@@ -289,6 +289,12 @@ var match_params: Dictionary = {}
 
 ## Emitted ONCE, end_delay_sec of real time after either unit died.
 signal match_ended(player_won: bool, player_hp: float)
+## A bag piece was picked and PLACING started (audio: block.select). Not emitted for a rotate of the same slot.
+signal piece_selected(slot: int)
+## A piece was committed onto the cast: the first one (place window) or a later join. [param cells] are that piece's.
+signal piece_placed(slot: int, cells: Array[Vector2i])
+## The placed cast was locked and the card menu opened on it (Tung phép or the place-window timeout).
+signal placement_confirmed(cells: Array[Vector2i])
 ## Story 021: the player activated the signature [param id] (the charge was reset).
 signal signature_activated(id: String)
 ## Story 021: the timed effect of the signature [param id] ran out.
@@ -1675,7 +1681,10 @@ func select_piece(index: int, rotate_if_selected: bool = true) -> bool:
 	var blocked: Array[Vector2i] = []
 	if joining:
 		blocked = _plan.cells()
-	return _placement.begin(index, piece, blocked)
+	var began: bool = _placement.begin(index, piece, blocked)
+	if began:
+		piece_selected.emit(index)
+	return began
 
 
 ## Rotates the piece being placed 90 degrees (keeps the anchor if still valid, else re-snaps).
@@ -1806,6 +1815,7 @@ func confirm_placement() -> bool:
 	_placed = true
 	_place_left = get_place_duration()
 	_notify_pattern_aim()
+	piece_placed.emit(slot, cells.duplicate())
 	return true
 
 
@@ -1840,8 +1850,10 @@ func _open_card_menu() -> bool:
 	# Story 033: the menu hand keeps at least one non-curse card while the deck has one; a drawn curse
 	# with draw_damage (oan_hon) hurts the player once per draw.
 	var hand: Array[String] = _deck.draw_menu(_skill_config.hand_size, Callable(_skill_config, "is_curse"))
-	if not _cut_flow.open_menu(_plan_labels(), _plan.cells(), hand, left):
+	var cast_cells: Array[Vector2i] = _plan.cells()
+	if not _cut_flow.open_menu(_plan_labels(), cast_cells, hand, left):
 		return false
+	placement_confirmed.emit(cast_cells.duplicate())
 	_apply_curse_draw_damage(hand)
 	return true
 
@@ -2031,6 +2043,7 @@ func _attach_piece(hold: HoldSlots) -> bool:
 	_join_points.append(hold.remove(slot))
 	_consuming = false
 	hold.clear_selection()
+	piece_placed.emit(slot, cells.duplicate())
 	if not _relics.is_empty():
 		var info: Dictionary = _make_cast_info("", _plan.cells(), _plan_labels(), true, is_plan_featured())
 		for relic: BaseRelic in _relics:

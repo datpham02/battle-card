@@ -217,7 +217,7 @@ static func on_warning_cleared(skill_id: String) -> Array[Dictionary]:
 	return [{"op": "cancel", "tag": warn_tag(skill_id)}]
 
 
-## The pattern boss entered its WINDUP stage (bridge edge of PatternController.get_stage; no signal exists).
+## [signal PatternController.stage_changed] entered WINDUP (boss wind-up warning).
 static func on_boss_windup() -> Array[Dictionary]:
 	return [{"op": "play", "id": "warn.boss.windup", "cells": 1, "step": 0, "tag": swing_tag(SIDE_ENEMY)}]
 

@@ -110,6 +110,9 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"surge_pct": _num(float(roundi(float((skill.get("shape_clause", {}) as Dictionary).get("surge_per_step", 0.0)) * 100.0)), loc),
 		# Skill v2 (Ngàn Kiếm): the cast's hit cap and the branched centre multiplier.
 		"max_hits": _num(float(skill.get("max_hits", 1)), loc),
+		"hits": _num(float(skill.get("hits", 1)), loc),
+		"hit_gap": _num(float(skill.get("hit_interval_sec", 0.12)), loc),
+		"clause_hits": _num(float((skill.get("shape_clause", {}) as Dictionary).get("hits", skill.get("hits", 1))), loc),
 		"centre_mult": _num(float((skill.get("shape_clause", {}) as Dictionary).get("centre_mult", 1.0)), loc),
 		"surge_cap_pct": _num(float(roundi(float((skill.get("shape_clause", {}) as Dictionary).get("surge_cap", 0.0)) * 100.0)), loc),
 	}

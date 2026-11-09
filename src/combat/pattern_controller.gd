@@ -24,6 +24,9 @@ signal markers_changed
 ## P2.3: the player broke a marker with a stun (Sentinel's root anchor): the enemy stands still for [param sec], the
 ## skill in progress (and its followup) cancelled.
 signal stunned(sec: float)
+## Entered [param stage] (a [enum Stage] value). [param skill_id] is the skill in progress, or the skill that just
+## ended when the new stage is RECOVERY / IDLE after it. Audio listens for WINDUP and RECOVERY (docs/skill-v2/10).
+signal stage_changed(stage: int, skill_id: String)
 
 ## P2.3 adds FOLLOWUP_WAIT (a followup's `delay_sec` between the first strike and the followup warning) and STUNNED.
 enum Stage { IDLE, WINDUP, WARNING, RECOVERY, TRANSITION, FOLLOWUP_WAIT, STUNNED }
@@ -116,6 +119,16 @@ func get_enemy() -> Dictionary:
 ## Current stage (a [enum Stage] value).
 func get_stage() -> int:
 	return _stage
+
+
+## Sets the stage and emits [signal stage_changed] when it actually changes. [param skill_id] overrides the skill
+## read off the controller (needed once [member _skill] was already cleared, e.g. entering RECOVERY).
+func _set_stage(next: int, skill_id: String = "") -> void:
+	if next == _stage:
+		return
+	_stage = next
+	var sid: String = skill_id if not skill_id.is_empty() else (str(_skill.get("id", "")) if not _skill.is_empty() else "")
+	stage_changed.emit(next, sid)
 
 
 ## Index of the current phase (0-based).
@@ -283,7 +296,7 @@ func stun(sec: float) -> void:
 	if not _skill.is_empty():
 		_cooldowns[str(_skill["id"])] = float(_skill["cooldown_sec"]) * tempo_mult * float(_ai()["cancel_cooldown_ratio"])
 		_end_skill("stunned", false)
-	_stage = Stage.STUNNED
+	_set_stage(Stage.STUNNED)
 	_stage_left = maxf(already, sec)
 	event_log.append({"t": _time, "skill": "", "event": "stun", "sec": sec, "phase": _phase})
 	stunned.emit(sec)
@@ -315,7 +328,7 @@ func tick(delta: float) -> void:
 			_stage_left -= delta
 			if _stage_left <= _EPS:
 				_state.enemy_invulnerable_left = 0.0
-				_stage = Stage.IDLE
+				_set_stage(Stage.IDLE)
 				_apply_hp_floor()
 				_forced_queue.assign(((_phases()[_phase] as Dictionary)["transition"] as Dictionary)["on_enter"] as Array)
 				_think_left = 0.0
@@ -330,7 +343,7 @@ func tick(delta: float) -> void:
 		Stage.RECOVERY, Stage.STUNNED:
 			_stage_left -= delta
 			if _stage_left <= _EPS:
-				_stage = Stage.IDLE
+				_set_stage(Stage.IDLE)
 				_think_left = 0.0
 		Stage.FOLLOWUP_WAIT:
 			_stage_left -= delta
@@ -376,7 +389,7 @@ func _try_choose() -> void:
 		return
 	_skill = choice["skill"] as Dictionary
 	_plan = choice["plan"] as Dictionary
-	_stage = Stage.WINDUP
+	_set_stage(Stage.WINDUP)
 	_stage_left = float(_skill["windup_sec"]) * tempo_mult
 	if _stage_left <= _EPS:
 		_after_windup()
@@ -504,7 +517,7 @@ func _start_warning(cells: Array[Vector2i], queued: Array[Vector2i], warning_sec
 	_queued_cells = queued.duplicate()
 	_warn_total = warning_sec
 	_stage_left = warning_sec
-	_stage = Stage.WARNING
+	_set_stage(Stage.WARNING)
 	_since_warning = 0.0
 	warning_started.emit(str(_skill["id"]), _warn_cells.duplicate(), _queued_cells.duplicate(), warning_sec)
 
@@ -521,7 +534,7 @@ func _resolve_warning() -> void:
 	if float(followup.get("delay_sec", 0.0)) > _EPS and not bool(followup["show_with_first"]):
 		# P2.3: the enemy holds still delay_sec, then the followup warning starts (cells chosen then).
 		_warn_cells.clear()
-		_stage = Stage.FOLLOWUP_WAIT
+		_set_stage(Stage.FOLLOWUP_WAIT)
 		_stage_left = float(followup["delay_sec"])
 		return
 	_start_followup()
@@ -716,7 +729,7 @@ func _finish_skill() -> void:
 	_warn_cells.clear()
 	_queued_cells.clear()
 	_is_followup = false
-	_stage = Stage.RECOVERY if recovery > _EPS else Stage.IDLE
+	_set_stage(Stage.RECOVERY if recovery > _EPS else Stage.IDLE, id)
 	_stage_left = recovery
 	_think_left = 0.0
 
@@ -728,7 +741,7 @@ func _end_skill(reason: String, _resolved: bool) -> void:
 	_warn_cells.clear()
 	_queued_cells.clear()
 	_is_followup = false
-	_stage = Stage.IDLE
+	_set_stage(Stage.IDLE, id)
 	_think_left = think_interval_sec
 	if was_warning or reason == "aborted":
 		warning_cleared.emit(id, reason)
@@ -742,14 +755,14 @@ func _begin_transition() -> void:
 	_phase_casts = 0
 	_forced_queue.clear()
 	var sec: float = float(((_phases()[_phase] as Dictionary)["transition"] as Dictionary)["sec"])
-	_stage = Stage.TRANSITION
+	_set_stage(Stage.TRANSITION)
 	_stage_left = sec
 	_state.enemy_invulnerable_left = sec
 	event_log.append({"t": _time, "skill": "", "event": "phase", "phase": _phase})
 	phase_started.emit(_phase, str(_phases()[_phase]["id"]))
 	if sec <= _EPS:
 		_state.enemy_invulnerable_left = 0.0
-		_stage = Stage.IDLE
+		_set_stage(Stage.IDLE)
 		_apply_hp_floor()
 		_forced_queue.assign(((_phases()[_phase] as Dictionary)["transition"] as Dictionary)["on_enter"] as Array)
 

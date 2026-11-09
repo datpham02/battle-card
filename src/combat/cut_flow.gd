@@ -12,6 +12,8 @@ extends RefCounted
 
 ## Emitted once when a card is chosen (by the player or by timeout); the menu is closed.
 signal skill_chosen(skill_id: String, labels: Array[String], cells: Array[Vector2i])
+## The card menu opened on [param cells] with the drawn [param hand] (audio: menu_open).
+signal menu_opened(cells: Array[Vector2i], hand: Array[String])
 
 var _config: SkillConfig
 var _cooldowns: SkillCooldowns
@@ -54,6 +56,7 @@ func open_menu(labels: Array[String], cells: Array[Vector2i], hand: Array[String
 	# whole choose time; the timeout path (default_card) runs after menu_no_option_sec.
 	if not _any_available():
 		_time_left = minf(_time_left, _config.menu_no_option_sec)
+	menu_opened.emit(_cells.duplicate(), _hand.duplicate())
 	return true
 
 

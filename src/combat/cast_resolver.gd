@@ -14,6 +14,8 @@ extends RefCounted
 ##   instant  legacy: one wave, one event of every cell at t = 0. SwingArbiter keeps the pre-v2 code path for it
 ##            (golden test). Every legacy card uses it.
 ##   waves    `hits` waves on the same cells, `hit_interval_sec` apart (M08 engine form); `wave_mults` optional.
+##            A shape_clause `hits` that holds replaces the card's hit count for that cast (Song Đao mono/domino → 4,
+##            Liên Trảm line → 3). `tag` may be one string or a list (OR). The plan's max_hits is at least that count.
 ##   arrival  one event per cell, one wave. CASTER_TO_TARGET = the SURGE rule below (M03); a SKY_TO_TARGET delivery
 ##            makes every cell its own wave (M05); other types use SkillDelivery.arrival_times (M04 / M06).
 ## Hit limits (applied by the arbiter): a unit is hit at most once per wave and at most `max_hits` times per cast.
@@ -81,7 +83,7 @@ const SCHEDULED_EFFECTS: Array[String] = ["damage"]
 const SHAPE_GROUP_CAP: float = 2.0
 const CLAUSE_SCOPES: Array[String] = ["any_piece", "all_pieces", "union"]
 const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult", "fuse_sec",
-	"fuse_mult", "fuse_mult_scale"]
+	"fuse_mult", "fuse_mult_scale", "hits"]
 const DROP_ORDERS: Array[String] = ["row_major", "from_centre"]
 const KIND_DROP: String = "drop"
 const KIND_DROP_FINAL: String = "drop_final"
@@ -155,6 +157,8 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 	if resolve != RESOLVE_DELAYED and (raw.has("fuse_sec") or raw.has("fuse_mult") or raw.has("max_active")
 			or clause.has("fuse_sec") or clause.has("fuse_mult") or clause.has("fuse_mult_scale")):
 		errors.append("card %s: fuse_sec / fuse_mult / max_active / a fuse clause need resolve 'delayed'" % id)
+	if clause.has("hits") and resolve != RESOLVE_WAVES:
+		errors.append("card %s: a shape_clause hits override needs resolve 'waves'" % id)
 	if resolve != RESOLVE_DELAYED and not payload.is_empty():
 		errors.append("card %s: event_payload is carried by resolve 'delayed' events only (for now)" % id)
 	if clause.has("fuse_mult") and fuse_mult > 0.0 and float(clause["fuse_mult"]) / fuse_mult > SHAPE_GROUP_CAP + 0.000001:
@@ -211,7 +215,8 @@ static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
 					e["payload"] = payload.duplicate(true)
 				events.append(e)
 		RESOLVE_WAVES:
-			var hits: int = maxi(int(skill.get("hits", 1)), 1)
+			var hits: int = wave_count(skill, context)
+			max_hits = maxi(max_hits, hits)
 			var interval: float = float(skill.get("hit_interval_sec", DEFAULT_INTERVAL_SEC))
 			var mults: Array = skill.get("wave_mults", []) as Array
 			for k: int in hits:
@@ -483,26 +488,65 @@ static func _bfs(region: Array[Vector2i], start: Vector2i) -> Dictionary:
 	return dist
 
 
-## True when shape clause [param clause] ({tag, scope}) holds for the cast [param context]: any_piece (default) = at
-## least one placed piece has the tag; all_pieces = every placed piece; union = the union of the cells. {} / no tag /
-## no pieces = false. Tags come from the PHYSICAL pieces (effective cells never change them).
+## Hit count of a `waves` card for this cast: the shape clause's `hits` when that clause holds, else the card's `hits`.
+static func wave_count(skill: Dictionary, context: Dictionary) -> int:
+	var hits: int = maxi(int(skill.get("hits", 1)), 1)
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	if clause.has("hits") and clause_holds(clause, context):
+		hits = int(clause["hits"])
+	return clampi(hits, 1, MAX_HITS)
+
+
+## Tags a clause matches (OR). `tag` is one string or a list; `tags` is the normalized list. Either form is enough.
+static func clause_tags(clause: Dictionary) -> Array[String]:
+	var tags: Array[String] = []
+	_collect_tags(tags, clause.get("tags", []))
+	_collect_tags(tags, clause.get("tag", ""))
+	return tags
+
+
+static func _collect_tags(tags: Array[String], raw: Variant) -> void:
+	if raw is String:
+		if not (raw as String).is_empty() and not tags.has(raw):
+			tags.append(raw)
+	elif raw is Array:
+		for t: Variant in raw as Array:
+			var s: String = str(t)
+			if not s.is_empty() and not tags.has(s):
+				tags.append(s)
+
+
+## True when shape clause [param clause] ({tag or tag list, scope}) holds for the cast [param context]: any_piece
+## (default) = at least one placed piece has any of the tags; all_pieces = every placed piece has any of them;
+## union = the union of the cells has any of them. {} / no tag / no pieces = false. Tags come from the PHYSICAL
+## pieces (effective cells never change them).
 static func clause_holds(clause: Dictionary, context: Dictionary) -> bool:
-	var tag: String = str(clause.get("tag", ""))
+	var tags: Array[String] = clause_tags(clause)
 	var pieces: Array = context.get("pieces", []) as Array
-	if tag.is_empty() or pieces.is_empty():
+	if tags.is_empty() or pieces.is_empty():
 		return false
 	match str(clause.get("scope", "any_piece")):
 		"all_pieces":
 			for p: Variant in pieces:
-				if not ((p as Dictionary).get("tags", []) as Array).has(tag):
+				if not _has_any_tag((p as Dictionary).get("tags", []) as Array, tags):
 					return false
 			return true
 		"union":
 			var union: Array[Vector2i] = []
 			union.assign(context.get("cells", []) as Array)
-			return (ShapeTags.tags_for(union)["tags"] as Array).has(tag)
+			return _has_any_tag(ShapeTags.tags_for(union)["tags"] as Array, tags)
 		_:
-			return CastContext.has_tag(context, tag)
+			for tag: String in tags:
+				if CastContext.has_tag(context, tag):
+					return true
+			return false
+
+
+static func _has_any_tag(have: Array, want: Array[String]) -> bool:
+	for tag: String in want:
+		if have.has(tag):
+			return true
+	return false
 
 
 static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: Dictionary, timing: Dictionary) -> Array[Dictionary]:
@@ -585,13 +629,28 @@ static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictiona
 	for k: Variant in c.keys():
 		if not CLAUSE_KEYS.has(str(k)):
 			errors.append("card %s: shape_clause key '%s' unknown (known: %s)" % [id, str(k), ", ".join(CLAUSE_KEYS)])
-	var tag: String = str(c.get("tag", ""))
-	if tag.is_empty():
+	var tags: Array[String] = []
+	var tag_raw: Variant = c.get("tag", "")
+	if tag_raw is Array:
+		for t: Variant in tag_raw as Array:
+			if not (t is String) or str(t).is_empty():
+				errors.append("card %s: shape_clause tag list entries must be non-empty strings" % id)
+				break
+			if not tags.has(str(t)):
+				tags.append(str(t))
+	elif tag_raw is String:
+		if not str(tag_raw).is_empty():
+			tags.append(str(tag_raw))
+	else:
+		errors.append("card %s: shape_clause tag must be a string or a list of strings" % id)
+	if tags.is_empty():
 		errors.append("card %s: shape_clause needs a tag" % id)
 	var scope: String = str(c.get("scope", "any_piece"))
 	if not CLAUSE_SCOPES.has(scope):
 		errors.append("card %s: shape_clause scope '%s' unknown" % [id, scope])
-	var out: Dictionary = {"tag": tag, "scope": scope}
+	var out: Dictionary = {"tag": tags[0] if not tags.is_empty() else "", "tags": tags, "scope": scope}
+	if c.has("hits"):
+		out["hits"] = _int_field(id, c, "hits", 1, 1, MAX_HITS, errors)
 	for k: String in ["surge_per_step", "surge_cap"]:
 		if c.has(k):
 			out[k] = _num_field(id, c, k, 0.0, 0.0, 1.0, errors)

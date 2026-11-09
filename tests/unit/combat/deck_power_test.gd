@@ -57,8 +57,9 @@ func _initialize() -> void:
 	# The Wall cards left the player's cards (quick spec 2026-10-31) and were deleted outright on 2026-11-01
 	# (ADR-0001 Phase 1); the cast rhythm spec 2026-11-05 added the common parry card do_kiem, so card_order holds 32.
 	# Skill v2 (2026-11-08): the Knight's own rare tram_dia and epic ngan_kiem joined (34 player cards, 12 rare, 5 epic);
-	# then the Mage's common hoa_loi (H1 prototype, 35 player cards, 18 common).
-	check(rar["common"] == 18 and rar["rare"] == 12 and rar["epic"] == 5, "rarity spread (35 player cards, song_kiem epic) %s" % str(rar))
+	# then the Mage's common hoa_loi (H1 prototype, 35 player cards, 18 common);
+	# then Song Đao + Liên Trảm (M08, both common: 37 player cards, 20 common).
+	check(rar["common"] == 20 and rar["rare"] == 12 and rar["epic"] == 5, "rarity spread (37 player cards, song_kiem epic) %s" % str(rar))
 	# Story 027: the boss's default card list never holds a zone card (zones come from its traits only).
 	var boss_ids: Array[String] = cards.boss_card_order()
 	var boss_zone_free: bool = true
