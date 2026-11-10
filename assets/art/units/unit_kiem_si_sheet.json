@@ -2221,6 +2221,204 @@
         "h": 92
       },
       "duration": 120
+    },
+    {
+      "filename": "kiem_si_cast_hand_0",
+      "frame": {
+        "x": 0,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_hand_1",
+      "frame": {
+        "x": 97,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_hand_2",
+      "frame": {
+        "x": 194,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_hand_3",
+      "frame": {
+        "x": 291,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_hand_4",
+      "frame": {
+        "x": 388,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 200
+    },
+    {
+      "filename": "kiem_si_cast_hand_5",
+      "frame": {
+        "x": 485,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 50
+    },
+    {
+      "filename": "kiem_si_cast_hand_6",
+      "frame": {
+        "x": 582,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 83
+    },
+    {
+      "filename": "kiem_si_cast_hand_7",
+      "frame": {
+        "x": 679,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 100
+    },
+    {
+      "filename": "kiem_si_cast_hand_8",
+      "frame": {
+        "x": 776,
+        "y": 1395,
+        "w": 96,
+        "h": 92
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 92
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 92
+      },
+      "duration": 133
     }
   ],
   "meta": {
@@ -2230,7 +2428,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 872,
-      "h": 1394
+      "h": 1487
     },
     "scale": "1",
     "frameTags": [
@@ -2323,6 +2521,12 @@
         "from": 95,
         "to": 100,
         "direction": "forward"
+      },
+      {
+        "name": "cast_hand",
+        "from": 101,
+        "to": 109,
+        "direction": "forward"
       }
     ],
     "layers": [
@@ -2358,7 +2562,8 @@
         "victory": "hold_last",
         "defeat": "hold_last",
         "fall": "hold_last",
-        "awaken": "loop"
+        "awaken": "loop",
+        "cast_hand": "once"
       },
       "palette": [
         "#1B1722",
