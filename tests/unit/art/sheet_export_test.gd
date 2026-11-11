@@ -20,7 +20,7 @@ const UNITS := {
 		# directional dashes come from the guard_* candidates, the match-start draw from draw_to_guard.
 		# 2026-11-08 (option A, user-approved): the frame grew to 96x92 for the cast_overhead headroom; the 96x70
 		# sources are bottom-aligned (22 clear rows on top) and body_h 70 keeps the HUD / portraits on the old body.
-		"frame": Vector2i(96, 92), "source": Vector2i(96, 70), "body_h": 70, "sheet": Vector2i(872, 1487), "facing": "right",
+		"frame": Vector2i(96, 92), "source": Vector2i(96, 70), "body_h": 70, "sheet": Vector2i(872, 1394), "facing": "right",
 		"candidate": "swordsman/v3-tall/clean-96x70/%s.png",
 		"clips": [
 			# 2026-11-05: idle = anim-idle-v2 (PixMiniMax breathing + cape follow-through, 8 frames @125 ms), cleaned copies in guard_idle_v2.
@@ -41,8 +41,6 @@ const UNITS := {
 			["defeat", ["defeat/0", "defeat/1", "defeat/2", "defeat/3", "defeat/4", "defeat/5", "defeat/6", "defeat/7"], [100, 100, 100, 100, 100, 100, 100, 100], "hold_last"],
 			["fall", ["fall/0", "fall/1", "fall/2", "fall/3"], [100, 100, 100, 100], "hold_last"],
 			["awaken", ["awaken/0", "awaken/1", "awaken/2", "awaken/3", "awaken/4", "awaken/5"], [120, 120, 120, 120, 120, 120], "loop"],
-			# 2026-11-10: hand cast = PixMiniMax v3 (job 2a14a25c, user-approved), copied from candidates/swordsman/cast-hand-v3.
-			["cast_hand", ["cast_hand/0", "cast_hand/1", "cast_hand/2", "cast_hand/3", "cast_hand/4", "cast_hand/5", "cast_hand/6", "cast_hand/7", "cast_hand/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
 		],
 	},
 	"forest_witch": {

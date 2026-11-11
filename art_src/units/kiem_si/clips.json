@@ -343,33 +343,6 @@
     120
    ],
    "loop": "loop"
-  },
-  {
-   "name": "cast_hand",
-   "frames": [
-    "cast_hand/0.png",
-    "cast_hand/1.png",
-    "cast_hand/2.png",
-    "cast_hand/3.png",
-    "cast_hand/4.png",
-    "cast_hand/5.png",
-    "cast_hand/6.png",
-    "cast_hand/7.png",
-    "cast_hand/8.png"
-   ],
-   "ms": [
-    83,
-    83,
-    83,
-    83,
-    200,
-    50,
-    83,
-    100,
-    133
-   ],
-   "loop": "once",
-   "note": "Hand cast. Weapon stays. PixMiniMax v3 (job 2a14a25c, user-approved 2026-11-10): frames 2-3 raise, frame 4 the forward hand push held through 6 (gesture_hold_frame 4). Source: design/assets/candidates/swordsman/cast-hand-v3."
   }
 ]
 }

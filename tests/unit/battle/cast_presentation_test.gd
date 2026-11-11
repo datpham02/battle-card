@@ -11,16 +11,6 @@ func ck(name: String, ok: bool, extra: String = "") -> void:
 		fails += 1
 
 
-func _same(a: Image, b: Image) -> bool:
-	if a.get_size() != b.get_size():
-		return false
-	for y: int in a.get_height():
-		for x: int in a.get_width():
-			if a.get_pixel(x, y) != b.get_pixel(x, y):
-				return false
-	return true
-
-
 func _init() -> void:
 	var sc: SkillConfig = SkillConfig.load_from_file()
 	ck("vung_lay is hand", str(sc.get_skill("vung_lay").get("cast_presentation", "")) == "hand")
@@ -42,15 +32,9 @@ func _init() -> void:
 		UnitLayer.resolve_cast_clip("weapon", "", "kiem_si", false, true) == UnitLayer.CLIP_CAST)
 	for id: String in ["kiem_si", "sat_thu", "tho_san", "giao_si"]:
 		var sheet: SpriteSheet = SpriteSheet.load_unit(id)
-		var has: bool = sheet != null and sheet.has_clip(UnitLayer.CLIP_HAND)
-		ck("%s sheet has cast_hand" % id, has)
-		ck("%s hand cast plays cast_hand" % id,
-			UnitLayer.resolve_cast_clip("hand", "", id, false, has) == UnitLayer.CLIP_HAND)
-		var rest: Image = Image.load_from_file("res://art_src/units/%s/idle/0.png" % id)
-		var release: Image = Image.load_from_file("res://art_src/units/%s/cast_hand/5.png" % id)
-		ck("%s release frame moves off the idle pose" % id, rest != null and release != null and not _same(rest, release))
-		var coil: Image = Image.load_from_file("res://art_src/units/%s/cast_hand/4.png" % id)
-		ck("%s coil and release are different poses" % id, coil != null and release != null and not _same(coil, release))
+		ck("%s sheet has no cast_hand" % id, sheet != null and not sheet.has_clip(UnitLayer.CLIP_HAND))
+		ck("%s hand cast holds idle" % id,
+			UnitLayer.resolve_cast_clip("hand", "", id, false, false).is_empty())
 	var mage: SpriteSheet = SpriteSheet.load_unit("phap_su")
 	ck("mage has no cast_hand row", mage != null and not mage.has_clip(UnitLayer.CLIP_HAND))
 	var knight: SpriteSheet = SpriteSheet.load_unit("kiem_si")
