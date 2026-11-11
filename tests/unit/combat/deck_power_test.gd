@@ -63,8 +63,9 @@ func _initialize() -> void:
 	# then Skill v2 batch 1 (2026-11-11): thuong_xuyen, dap_vo, min_tre (common) + chuoi_set (rare): 42 player cards;
 	# then batch 2 (2026-11-11): dia_chan (common), loc_cuon + bang_vo (rare), hoa_bang + hoi_am + the Mage's thien_thach
 	# (epic): 48 player cards; then batch 3 (2026-11-11): bay_kep, bay_lo, thanh_thuan, khien_thep (common), tuong_da,
-	# hoa_tuyen (rare), gai_no (epic): 55 player cards.
-	check(rar["common"] == 29 and rar["rare"] == 17 and rar["epic"] == 9, "rarity spread (55 player cards, song_kiem epic) %s" % str(rar))
+	# hoa_tuyen (rare), gai_no (epic): 55 player cards; then batch 4 (2026-11-11): chuong_thanh, phi_tieu, moc_keo (rare),
+	# thien_quang, dau_tu (epic): 60 player cards.
+	check(rar["common"] == 29 and rar["rare"] == 20 and rar["epic"] == 11, "rarity spread (60 player cards, song_kiem epic) %s" % str(rar))
 	# Story 027: the boss's default card list never holds a zone card (zones come from its traits only).
 	var boss_ids: Array[String] = cards.boss_card_order()
 	var boss_zone_free: bool = true

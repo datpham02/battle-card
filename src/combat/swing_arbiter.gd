@@ -44,6 +44,8 @@ signal cast_scheduled(side: int, cast: Dictionary)
 
 ## Two swings resolving this close in time count as simultaneous.
 const TIE_EPSILON_SEC: float = 0.0005
+## Batch 4 (Dấu Tử, 02-design-decisions.md §7): seconds after a marked cast's last event its echo wave lands.
+const MARK_ECHO_DELAY_SEC: float = 0.6
 ## Smallest time slice, guarantees the tick loop always makes progress.
 const _MIN_SLICE_SEC: float = 0.000001
 
@@ -333,6 +335,8 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		player_cells_modifier if is_player else Callable(),
 		player_signature_modifier if is_player else Callable(),
 		{"target_defense": boss_defense + (_status.guard_amount(CombatState.Side.ENEMY) if _status != null else 0.0), "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
+			"mark_execute_ratio": float(_status.mark_at(_opposite(side)).get("execute_ratio", 0.0)) if (is_player and _status != null
+				and (_skill_config.get_skill(skill_id).get("mark", {}) as Dictionary).is_empty()) else 0.0,
 			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
 			"reactions": reactions,
 			"relic_modifier": player_relic_modifier if is_player else Callable(),
@@ -354,6 +358,7 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 	# not land on an interruptible skill); listeners skip PatternController.on_enemy_hit on it too.
 	result["no_interrupt"] = is_player and _skill_config.is_parry_card(skill_id)
 	swing_resolved.emit(side, result)
+	_trigger_mark(side, skill_id, level, result, cast_context)
 	if trade or not bool(result["hit"]) or bool(result.get("parried", false)) or bool(result["no_interrupt"]):
 		return
 	var victim_side: int = _opposite(side)
@@ -403,7 +408,7 @@ func _cancel_all() -> void:
 # Skill v2 B1.5: records a scheduled cast and puts its events on the clock (at = now + event t). The heal_self of the
 # card happens now, once (the swing landed), as on the legacy path.
 func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, level: int, featured_bonus: Dictionary,
-		cast_context: Dictionary, plan: Dictionary) -> void:
+		cast_context: Dictionary, plan: Dictionary, echo: bool = false) -> void:
 	var is_player: bool = side == CombatState.Side.PLAYER
 	var count: int = (_status.unlocked_cells(cells) if _status != null else cells).size()
 	# a delayed cast counts only the cells it armed (skipped / locked cells deal nothing)
@@ -418,13 +423,14 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 	var waves: Dictionary = {}
 	for w: Dictionary in plan["waves"]:
 		waves[int(w["wave"])] = w
+	# batch 4: an echo cast (the death mark's) never heals, never triggers a mark, never counts as a cast for listeners
 	_casts[id] = {"id": id, "side": side, "skill_id": skill_id, "level": level, "cells": cells.duplicate(), "trade": trade,
 		"featured_bonus": featured_bonus if is_player else {}, "context": cast_context, "cast_cells": count,
 		"max_hits": int(plan["max_hits"]) + _awakening_extra(is_player, skill), "hits": 0, "wave_hit": {}, "wave_left": wave_left, "waves": waves,
 		"events_left": (plan["events"] as Array).size(), "damage": 0.0, "interrupted": false, "last_hit": {},
 		"crit_at_start": _player_crit_at_start if is_player else 1.0,
-		"healed": CutEffects.heal_caster(_state, side, skill), "fizzled": bool(plan.get("fizzled", false)),
-		"skipped_cells": plan.get("skipped_cells", [])}
+		"healed": 0.0 if echo else CutEffects.heal_caster(_state, side, skill), "fizzled": bool(plan.get("fizzled", false)),
+		"skipped_cells": plan.get("skipped_cells", []), "echo": echo, "keyword_hits": 0}
 	for e: Dictionary in plan["events"]:
 		var ev: Dictionary = e.duplicate()
 		ev["cast_id"] = id
@@ -447,6 +453,11 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 	for k: String in ["fizzled", "skipped_cells", "fuse_sec", "fuse_mult", "clause"]:
 		if plan.has(k):
 			info[k] = plan[k]
+	info["echo"] = echo
+	# batch 4 (Móc Kéo): the pull path telegraph: the cells the target would be dragged through toward the divider
+	var pull: int = _pull_row_cells(skill, cast_context)
+	if pull > 0:
+		info["pull_path"] = _pull_path(_opposite(side), pull)
 	cast_scheduled.emit(side, info)
 	if (plan["events"] as Array).is_empty():
 		_finish_cast(id)
@@ -492,8 +503,34 @@ func _fire_event(ev: Dictionary) -> void:
 		ev["cells"] = open
 	var hit: bool = false
 	var can_hit: bool = int(cast["hits"]) < int(cast["max_hits"]) and not (cast["wave_hit"] as Dictionary).has(wave)
-	if can_hit and not ev_cells.is_empty() and CutEffects.can_affect(_state, _skill_config.get_skill(str(cast["skill_id"])), _opposite(side), ev_cells):
+	var target_side: int = _opposite(side)
+	var skill_now: Dictionary = _skill_config.get_skill(str(cast["skill_id"]))
+	var is_echo_cast: bool = bool(cast.get("echo", false)) or str(ev.get("kind", "")) == CastResolver.KIND_ECHO
+	# batch 4 (Phi Tiêu bounce): a dagger whose cell is empty re-targets the mask cell the unit moved to
+	if bool(ev.get("bounce", false)) and can_hit and not ev_cells.is_empty() and not _state.unit_in(target_side, ev_cells):
+		for c: Vector2i in cast["cells"] as Array:
+			if _state.unit_at(target_side, c) and not (_status != null and _status.is_locked(c)):
+				ev["bounced_from"] = ev_cells[0]
+				ev_cells = [c]
+				ev["cells"] = ev_cells
+				break
+	# batch 4 (Thiên Quang keyword_hits_max): a drop that finds the unit after the cast's damage hits are spent applies
+	# only the card's keywords, up to keyword_hits_max per cast (the damage hits count too)
+	var kw_max: int = int(skill_now.get("keyword_hits_max", 0))
+	if not can_hit and kw_max > 0 and int(cast["hits"]) >= int(cast["max_hits"]) and int(cast["keyword_hits"]) < kw_max \
+			and not is_echo_cast and not ev_cells.is_empty() and _state.unit_in(target_side, ev_cells) and _status != null:
+		var kw: Dictionary = CutEffects.apply_keywords_only(_state, _status, target_side, CutEffects.resolved_skill(_skill_config, str(cast["skill_id"]), int(cast["level"])), cast["context"] as Dictionary)
+		cast["keyword_hits"] = int(cast["keyword_hits"]) + 1
+		ev["keyword_only"] = true
+		ev["frost_applied"] = int(kw["frost_applied"])
+		ev["fragile_applied"] = int(kw["fragile_applied"])
+	if can_hit and not ev_cells.is_empty() and CutEffects.can_affect(_state, skill_now, target_side, ev_cells):
 		var skill_id: String = str(cast["skill_id"])
+		# batch 4 (Dấu Tử): the cast that lands on a marked target executes at the mark's ratio (never the mark's own card
+		# or an echo wave)
+		var mark_ratio: float = 0.0
+		if is_player and _status != null and _status.has_mark(target_side) and (skill_now.get("mark", {}) as Dictionary).is_empty() and not is_echo_cast:
+			mark_ratio = float(_status.mark_at(target_side).get("execute_ratio", 0.0))
 		# the card's damage-cell rule (CastResolver.damage_cells: "all" for every card but those that set one, e.g.
 		# Hỏa Lôi's Model C), on the target's footprint now; the evaluation seam, when a probe sets it, overrides it
 		var fp: int = _state.enemy_footprint_cells().size() if is_player else 1
@@ -514,8 +551,31 @@ func _fire_event(ev: Dictionary) -> void:
 				"crit_mult_at_start": float(cast["crit_at_start"]),
 				"target_untargetable": is_player and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call()),
 				"cast_context": cast["context"], "cast_cell_count": dmg_cells, "wave_index": wave,
-				"impact_mult": float(ev["mult"]), "apply_heal": false})
+				"impact_mult": float(ev["mult"]), "apply_heal": false, "echo": is_echo_cast, "mark_execute_ratio": mark_ratio})
 		hit = bool(result["hit"])
+		if hit:
+			cast["keyword_hits"] = int(cast["keyword_hits"]) + 1
+		# batch 4 (Thiên Quang plus): the first drop (the centre) that hits heals the caster
+		var clause_now: Dictionary = skill_now.get("shape_clause", {}) as Dictionary
+		if hit and int(ev["index"]) == 0 and clause_now.has("hub_heal") and is_player and not is_echo_cast \
+				and CastResolver.clause_holds(clause_now, cast["context"] as Dictionary):
+			var before: float = _state.player_hp
+			_state.set_player_hp(before + float(clause_now["hub_heal"]))
+			ev["hub_heal"] = _state.player_hp - before
+			cast["healed"] = float(cast["healed"]) + float(ev["hub_heal"])
+		# batch 4 (Móc Kéo): the hook that lands drags the target along its row toward the divider; a refused step slams
+		var pull: int = _pull_row_cells(skill_now, cast["context"] as Dictionary)
+		if hit and pull > 0 and not bool(result.get("parried", false)) and not is_echo_cast:
+			var from: Vector2i = _state.cell_of(target_side)
+			var goal := Vector2i(_grid.side_cols if target_side == CombatState.Side.ENEMY else _grid.side_cols - 1, from.y)
+			var moved: Dictionary = CutEffects.pull_toward(_state, _grid, target_side, goal, pull, blocked_cell_fns.get(target_side, Callable()) as Callable)
+			ev["pulled"] = int(moved["steps"]) > 0
+			ev["pull_from"] = from
+			ev["pull_to"] = _state.cell_of(target_side)
+			result["pulled"] = ev["pulled"]
+			if bool(moved["blocked"]) and (skill_now.get("reactions", []) as Array).has("r3") and _status != null and str(result.get("reaction", "")).is_empty():
+				CutEffects._react_r3(_state, _status, target_side, CutEffects.reaction_numbers({"reactions": reactions}), result)
+				ev["reaction"] = "r3"
 		# batch 3: a field zone formed by this event (trap / ward / pillar) reaches the card-level result
 		if not str(result.get("zone_kind", "")).is_empty():
 			cast["zone"] = {"zone_kind": result["zone_kind"], "zone_cells": result["zone_cells"]}
@@ -533,6 +593,7 @@ func _fire_event(ev: Dictionary) -> void:
 			(cast["wave_hit"] as Dictionary)[wave] = true
 			cast["damage"] = float(cast["damage"]) + float(result.get("damage", 0.0))
 			cast["last_hit"] = result
+			cast["last_hit_cells"] = ev_cells.duplicate()
 			if is_player and not bool(cast.get("pattern_hit", false)) and not bool(result.get("parried", false)) 					and not _skill_config.is_parry_card(skill_id) and pattern_hit_fn.is_valid():
 				cast["pattern_hit"] = true
 				pattern_hit_fn.call()
@@ -558,7 +619,6 @@ func _fire_event(ev: Dictionary) -> void:
 		if not ig.is_empty():
 			# batch 3 (M11 fire wall, Hỏa Tuyến line clause): the cells that burn as a wall block the target's steps, so the
 			# leave-a-path rule keeps it one exit (the rest of the mask burns without blocking)
-			var skill_now: Dictionary = _skill_config.get_skill(str(cast["skill_id"]))
 			var clause: Dictionary = skill_now.get("shape_clause", {}) as Dictionary
 			var wall: Array[Vector2i] = []
 			if bool(clause.get("fire_wall", false)) and CastResolver.clause_holds(clause, cast["context"] as Dictionary):
@@ -639,7 +699,64 @@ func _finish_cast(id: int) -> void:
 	result["skill_id"] = cast["skill_id"]
 	result["level"] = cast["level"]
 	result["no_interrupt"] = side == CombatState.Side.PLAYER and _skill_config.is_parry_card(str(cast["skill_id"]))
+	result["echo"] = bool(cast.get("echo", false))
+	# batch 4 (Dấu Tử): the cells of the cast's last damaging hit (the wave the mark's echo repeats)
+	result["echo_cells"] = cast.get("last_hit_cells", cast["cells"])
+	# batch 4: an echo cast is not a cast for the listeners (no Engraving / Awakening charge, no relic on_cast, no
+	# cast count); its impacts already reached impact_resolved / wave_resolved
+	if bool(cast.get("echo", false)):
+		return
 	swing_resolved.emit(side, result)
+	_trigger_mark(side, str(cast["skill_id"]), int(cast["level"]), result, cast["context"] as Dictionary)
+
+
+## Batch 4 (Dấu Tử, 02-design-decisions.md §7): a damaging cast by [param side] whose [param result] hit a marked
+## target (not the mark's own card, not an echo) spends the mark and schedules ONE echo wave of its last hit's cells
+## 0.6 s later at x echo_mult, as an echo cast (CutEffects options.echo: no Rạn, no crit, no execute; no heal, no
+## listeners' cast). The echo never triggers a mark itself.
+func _trigger_mark(side: int, skill_id: String, level: int, result: Dictionary, context: Dictionary) -> void:
+	if _status == null or not bool(result.get("hit", false)) or bool(result.get("parried", false)) or bool(result.get("echo", false)):
+		return
+	var target: int = _opposite(side)
+	if not _status.has_mark(target) or not (_skill_config.get_skill(skill_id).get("mark", {}) as Dictionary).is_empty():
+		return
+	var mark: Dictionary = _status.consume_mark(target)
+	var cells: Array[Vector2i] = []
+	cells.assign(result.get("echo_cells", result.get("cells", [])) as Array)
+	if cells.is_empty():
+		return
+	var mult: float = float(mark.get("echo_mult", 0.6))
+	var e: Dictionary = {"wave": 0, "index": 0, "t": MARK_ECHO_DELAY_SEC, "cells": cells.duplicate(), "kind": CastResolver.KIND_ECHO, "mult": mult, "mark": true}
+	# the echo repeats the parent's hit: its damage counts the parent cast's cells, not only the repeated wave's
+	var parent_cells: int = (result.get("cells", []) as Array).size()
+	var plan: Dictionary = {"resolve": CastResolver.RESOLVE_WAVES, "legacy": false, "max_hits": 1, "events": [e],
+		"waves": [{"wave": 0, "t": MARK_ECHO_DELAY_SEC, "cells": cells.duplicate(), "kind": CastResolver.KIND_ECHO, "mult": mult}],
+		"cast_cells": maxi(parent_cells, cells.size())}
+	_schedule_cast(side, cells, skill_id, false, level, {}, context, plan, true)
+
+
+# Batch 4 (Móc Kéo): the cells the hit pulls the target along its row (the clause's when it holds, else the card's).
+func _pull_row_cells(skill: Dictionary, context: Dictionary) -> int:
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	if clause.has("pull_row_cells") and CastResolver.clause_holds(clause, context):
+		return int(clause["pull_row_cells"])
+	return int(skill.get("pull_row_cells", 0))
+
+
+# Batch 4 (Móc Kéo telegraph): the cells of [param target_side]'s half the unit would be dragged through toward the
+# divider, [param cells] at most, from where it stands now (the path is read, never hit).
+func _pull_path(target_side: int, cells: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var cell: Vector2i = _state.cell_of(target_side)
+	var dir: int = -1 if target_side == CombatState.Side.ENEMY else 1
+	for i: int in cells:
+		var next := Vector2i(cell.x + dir, cell.y)
+		var on_half: bool = _grid.is_enemy_cell(next) if target_side == CombatState.Side.ENEMY else _grid.is_player_cell(next)
+		if not on_half:
+			break
+		out.append(next)
+		cell = next
+	return out
 
 
 func _opposite(side: int) -> int:

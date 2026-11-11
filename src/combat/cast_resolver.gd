@@ -103,7 +103,10 @@ const MAX_RING_STEP_SEC: float = 1.0
 ## `count` echo waves repeat the cast at x mult, delay_sec apart, each shifted `shift` cells further toward the
 ## target half's back edge when every shifted cell is allowed (else in place). Kind: echo. A clause may set echo_count.
 const KIND_ECHO: String = "echo"
-const MAX_ECHO_COUNT: int = 2
+## Batch 4: Chuông Thánh's square clause rings three echoes; the death mark may add one more (SwingArbiter), never
+## past MAX_ECHO_WAVES per cast (02-design-decisions.md §7).
+const MAX_ECHO_COUNT: int = 3
+const MAX_ECHO_WAVES: int = 3
 const MAX_ECHO_DELAY_SEC: float = 3.0
 const MAX_FORCE_CELLS: int = 3
 ## 02-design-decisions.md §10: the product of a card's shape-clause multipliers (burst-first, surge, ...) is capped here.
@@ -115,10 +118,13 @@ const CLAUSE_SCOPES: Array[String] = ["any_piece", "all_pieces", "union"]
 ## hub_all (Thiên Thạch plus / square), echo_count (Hồi Âm square).
 ## Batch 3 clause keys: trap_pin_sec (Bẫy Kẹp line_v), regrow_sec (Gai Nổ branched), attacker_frost (Thánh Thuẫn
 ## square), push_immune (Khiên Thép line_v), pillar_sec (Tường Đá line), fire_wall (Hỏa Tuyến line).
+## Batch 4 clause keys: hub_heal (Thiên Quang plus: the caster heals when the first drop hits), corner_first (Phi Tiêu
+## L: the corner's dagger flies first), mark_sec (Dấu Tử mono), pull_row_cells (Móc Kéo line_h).
 const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult", "fuse_sec",
 	"fuse_mult", "fuse_mult_scale", "hits", "link_step_sec", "fragile_stacks", "push_cells", "pull_cells", "pin_sec",
 	"ring_step_sec", "hub_mult", "hub_all", "echo_count", "trap_pin_sec", "regrow_sec", "attacker_frost", "push_immune",
-	"pillar_sec", "fire_wall"]
+	"pillar_sec", "fire_wall", "hub_heal", "corner_first", "mark_sec", "pull_row_cells"]
+const MAX_HUB_HEAL: float = 50.0
 const MAX_ZONE_SEC: float = 20.0
 const MAX_CLAUSE_FRAGILE_STACKS: int = 3
 const DROP_ORDERS: Array[String] = ["row_major", "from_centre"]
@@ -191,8 +197,11 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 	var dmg_rule: Dictionary = _damage_cells_rule(id, raw.get("damage_cells_rule", {}), errors)
 	var link_ramp: float = _num_field(id, raw, "link_ramp", 0.0, 0.0, MAX_LINK_RAMP, errors)
 	var link_ramp_cap: float = _num_field(id, raw, "link_ramp_cap", DEFAULT_LINK_RAMP_CAP, 0.0, SHAPE_GROUP_CAP - 1.0, errors)
-	if resolve != RESOLVE_ARRIVAL and (raw.has("link_ramp") or raw.has("link_ramp_cap") or clause.has("link_step_sec")):
-		errors.append("card %s: link_ramp / link_ramp_cap / a link_step_sec clause need resolve 'arrival' (a chain)" % id)
+	# batch 4: the card's own link step (Phi Tiêu 0.08 s); 0 = the delivery timing
+	var link_step: float = _num_field(id, raw, "link_step_sec", 0.0, MIN_INTERVAL_SEC, MAX_INTERVAL_SEC, errors)
+	if resolve != RESOLVE_ARRIVAL and (raw.has("link_ramp") or raw.has("link_ramp_cap") or clause.has("link_step_sec")
+			or raw.has("link_step_sec") or raw.has("bounce") or clause.has("corner_first")):
+		errors.append("card %s: link_ramp / link_ramp_cap / link_step_sec / bounce / a link or corner clause need resolve 'arrival' (a chain)" % id)
 	# batch 2: sky shockwave (arrival) and echo (waves)
 	var sky_mode: String = str(raw.get("sky_mode", "drops"))
 	if not SKY_MODES.has(sky_mode):
@@ -228,10 +237,10 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 			"sky_hover_sec": -1.0, "sky_stagger_sec": -1.0, "drop_order": "row_major", "awakening_extra_hits": 0,
 			"fixed_hit": false, "fuse_sec": 1.5, "fuse_mult": 1.0, "max_active": 0, "event_payload": {},
 			"damage_cells_rule": {"mode": "all"}, "link_ramp": 0.0, "link_ramp_cap": DEFAULT_LINK_RAMP_CAP,
-			"sky_mode": "drops", "ring_step_sec": 0.1, "hub_mult": 1.0, "echo": {}, "errors": errors}
+			"sky_mode": "drops", "ring_step_sec": 0.1, "hub_mult": 1.0, "echo": {}, "link_step_sec": 0.0, "errors": errors}
 	return {"fuse_sec": fuse_sec, "fuse_mult": fuse_mult, "max_active": max_active, "event_payload": payload,
 		"damage_cells_rule": dmg_rule, "link_ramp": link_ramp, "link_ramp_cap": link_ramp_cap,
-		"sky_mode": sky_mode, "ring_step_sec": ring_step, "hub_mult": hub_mult, "echo": echo,
+		"sky_mode": sky_mode, "ring_step_sec": ring_step, "hub_mult": hub_mult, "echo": echo, "link_step_sec": link_step,
 		"resolve": resolve, "hits": hits, "max_hits": max_hits, "hit_interval_sec": interval, "wave_mults": mults,
 		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clause, "sky_hover_sec": hover,
 		"sky_stagger_sec": stagger, "drop_order": drop_order, "awakening_extra_hits": extra_hits, "fixed_hit": fixed_hit,
@@ -589,6 +598,23 @@ static func echo_events(skill: Dictionary, cells: Array[Vector2i], context: Dict
 	return out
 
 
+## Batch 4 (Phi Tiêu L clause): the corner of an L-shaped [param cells]: the first cell (by y, then x) whose two
+## neighbours inside the mask are perpendicular (one along x, one along y). NO_CELL when there is none.
+static func corner_cell(cells: Array[Vector2i]) -> Vector2i:
+	var sorted: Array[Vector2i] = cells.duplicate()
+	sorted.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.y < b.y or (a.y == b.y and a.x < b.x))
+	for c: Vector2i in sorted:
+		var along_x: bool = cells.has(c + Vector2i(1, 0)) or cells.has(c + Vector2i(-1, 0))
+		var along_y: bool = cells.has(c + Vector2i(0, 1)) or cells.has(c + Vector2i(0, -1))
+		var n: int = 0
+		for d: Vector2i in _DIRS:
+			if cells.has(c + d):
+				n += 1
+		if n == 2 and along_x and along_y:
+			return c
+	return NO_CELL
+
+
 ## The junction of [param cells]: the cell with the most 4-neighbours inside them; ties -> nearest the bbox centre,
 ## then smallest y, then x (deterministic for T, plus, Y and Odd blocks).
 static func junction(cells: Array[Vector2i]) -> Vector2i:
@@ -707,8 +733,9 @@ static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: 
 	if cells.is_empty():
 		return events
 	var times: Dictionary = SkillDelivery.arrival_times(delivery, cells, caster, timing)
-	var per_cell_wave: bool = str(delivery.get("type", "")) == SkillDelivery.SKY_TO_TARGET
 	var chain: bool = str(delivery.get("type", "")) == SkillDelivery.SEQUENTIAL_CHAIN
+	# a sky drop is its own wave; so is each dagger of a bouncing chain (batch 4: Phi Tiêu may hit twice, max_hits caps it)
+	var per_cell_wave: bool = str(delivery.get("type", "")) == SkillDelivery.SKY_TO_TARGET or (chain and bool(skill.get("bounce", false)))
 	if str(delivery.get("type", "")) == SkillDelivery.GROUND_PROPAGATION:
 		var origin: Vector2i = SkillDelivery.origin_cell(delivery, cells, caster)
 		var start: Vector2i = SkillDelivery.nearest_cell(cells, origin)
@@ -726,8 +753,17 @@ static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: 
 	var link_mult: Dictionary = {}
 	if chain:
 		var links: Array[Vector2i] = SkillDelivery.chain_cells(delivery, cells, caster)
-		var step: float = -1.0
-		if clause.has("link_step_sec") and clause_holds(clause, context):
+		var holds: bool = clause_holds(clause, context)
+		# batch 4 (Phi Tiêu L): the corner's dagger flies first, the rest keep their order
+		if bool(clause.get("corner_first", false)) and holds:
+			var corner: Vector2i = corner_cell(cells)
+			if corner != NO_CELL and links.has(corner):
+				links.erase(corner)
+				links.insert(0, corner)
+		var step: float = float(skill.get("link_step_sec", 0.0))
+		if step <= 0.0:
+			step = -1.0
+		if clause.has("link_step_sec") and holds:
 			step = float(clause["link_step_sec"])
 		var ramp: float = float(skill.get("link_ramp", 0.0))
 		var cap: float = float(skill.get("link_ramp_cap", DEFAULT_LINK_RAMP_CAP))
@@ -748,6 +784,9 @@ static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: 
 			float(link_mult.get(ordered[i], 1.0)))
 		if chain:
 			e["step"] = i
+			# batch 4 (Phi Tiêu): a link whose cell is empty re-targets the mask cell the unit moved to (SwingArbiter)
+			if bool(skill.get("bounce", false)):
+				e["bounce"] = true
 		events.append(e)
 	return events
 
@@ -878,12 +917,18 @@ static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictiona
 			out[k] = _num_field(id, c, k, 0.0, 0.0, MAX_ZONE_SEC, errors)
 	if c.has("attacker_frost"):
 		out["attacker_frost"] = _int_field(id, c, "attacker_frost", 1, 1, 3, errors)
-	for k: String in ["push_immune", "fire_wall"]:
+	for k: String in ["push_immune", "fire_wall", "corner_first"]:
 		if c.has(k):
 			if not c[k] is bool:
 				errors.append("card %s: shape_clause %s must be true / false" % [id, k])
 			else:
 				out[k] = bool(c[k])
+	if c.has("hub_heal"):
+		out["hub_heal"] = _num_field(id, c, "hub_heal", 0.0, 0.0, MAX_HUB_HEAL, errors)
+	if c.has("mark_sec"):
+		out["mark_sec"] = _num_field(id, c, "mark_sec", 3.0, 0.1, MAX_ZONE_SEC, errors)
+	if c.has("pull_row_cells"):
+		out["pull_row_cells"] = _int_field(id, c, "pull_row_cells", 1, 1, MAX_FORCE_CELLS, errors)
 	return out
 
 

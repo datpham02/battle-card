@@ -269,14 +269,22 @@ static func apply(
 	# Only the hero's swings crit: the block-brain boss reuses player cards, and its swings never crit.
 	# Skill v2 M19: the hit's wave index (combo_3), its cast context (line_full) and the time since the target was last
 	# hit (first_strike) when the caller knows them.
+	# Batch 4 (02-design-decisions.md §7): options.echo = this is an echo wave (a card echo or the death mark's): it
+	# neither consumes nor receives Rạn, never crits and never executes.
+	var is_echo: bool = bool(options.get("echo", false))
 	var crit_mult: float = CritRules.mult_for(skill, {"state": state, "status": status, "target_side": target_side,
 		"wave_index": int(options.get("wave_index", -1)), "cast_context": options.get("cast_context", {}),
-		"since_target_hit": float(options.get("since_target_hit", -1.0))}) if side == CombatState.Side.PLAYER else 1.0
+		"since_target_hit": float(options.get("since_target_hit", -1.0))}) if side == CombatState.Side.PLAYER and not is_echo else 1.0
 	# Fix 2026-11-05: a swing whose condition held when it STARTED crits too (options.crit_mult_at_start, set by the
 	# arbiter), so "cast while the foe is Frozen" crits even if the Pin ends during the swing.
-	if side == CombatState.Side.PLAYER:
+	if side == CombatState.Side.PLAYER and not is_echo:
 		crit_mult = maxf(crit_mult, float(options.get("crit_mult_at_start", 1.0)))
-	if status != null:
+	if status != null and is_echo:
+		var pin_mult_echo: float = status.damage_mult_against(target_side)
+		if pin_mult_echo != 1.0:
+			damage *= pin_mult_echo
+			result["pin_bonus"] = true
+	elif status != null:
 		# Batch 2 (Băng Vỡ): fragile_timing "before" lands the card's Rạn before this hit spends one.
 		if str(skill.get("fragile_timing", "after")) == "before" and int(skill.get("fragile_stacks", 0)) > 0:
 			status.apply_fragile(target_side, int(skill["fragile_stacks"]))
@@ -328,6 +336,11 @@ static func apply(
 	var ratio: float = float(skill.get("execute_ratio", 0.0))
 	if ratio <= 0.0 and bool(skill.get("execute", false)):
 		ratio = float(options.get("execute_ratio", 0.0))
+	# Batch 4 (Dấu Tử): the cast that triggers a death mark executes at the mark's ratio (never its echo).
+	if not is_echo and float(options.get("mark_execute_ratio", 0.0)) > 0.0:
+		ratio = maxf(ratio, float(options["mark_execute_ratio"]))
+	if is_echo:
+		ratio = 0.0
 	if ratio > 0.0 and _hp_of(state, target_side) <= ratio * _max_hp_of(state, target_side):
 		damage *= EXECUTE_MULT
 		result["executed"] = true
@@ -361,6 +374,15 @@ static func apply(
 	state.damage(target_side, damage)
 	if status != null:
 		_apply_keywords(state, status, target_side, skill, result, options.get("cast_context", {}) as Dictionary)
+		# Batch 4 (Dấu Tử): the card's own hit leaves the death mark (refreshed, never stacked; a clause mark_sec lengthens it).
+		var mark: Dictionary = skill.get("mark", {}) as Dictionary
+		if not mark.is_empty() and not is_echo:
+			var sec: float = float(mark["sec"])
+			var mclause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+			if mclause.has("mark_sec") and CastResolver.clause_holds(mclause, options.get("cast_context", {}) as Dictionary):
+				sec = float(mclause["mark_sec"])
+			status.apply_mark(target_side, sec, float(mark["echo_mult"]), float(mark["execute_ratio"]))
+			result["marked"] = sec
 		# Batch 2 (R1 Hơi Nước, cards that list it): this hit gave Hàn while the target stands on a burning cell.
 		if card_reacts.has("r1") and int(result["frost_applied"]) > 0:
 			try_r1(state, status, target_side, reactions, result)
@@ -792,6 +814,16 @@ static func _regrow_tips(status: StatusEffects, target_side: int, cells: Array[V
 	var numbers: Dictionary = _zone_defaults(options)
 	ZoneRules.cast_thorns(status, target_side, tips, float(clause["regrow_sec"]), float(numbers["thorn_damage"]),
 		int(numbers["thorn_fragile_stacks"]))
+
+
+## Batch 4 (Thiên Quang keyword_hits_max): applies only the keywords of [param skill] (Rạn / Hàn, a Hàn burst damages)
+## to [param target_side], as a drop that finds the unit after the cast's damage hits are spent. Returns the result
+## fields {fragile_applied, frost_applied, frost_burst}.
+static func apply_keywords_only(state: CombatState, status: StatusEffects, target_side: int, skill: Dictionary, context: Dictionary = {}) -> Dictionary:
+	var result: Dictionary = {"fragile_applied": 0, "frost_applied": 0, "frost_burst": 0.0}
+	if status != null:
+		_apply_keywords(state, status, target_side, skill, result, context)
+	return result
 
 
 ## Batch 3: the push away from the divider as a public step (StatusEffects.fire_trap); returns the cells moved.

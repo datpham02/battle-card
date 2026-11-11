@@ -65,3 +65,15 @@ Open items of Skill v2 batch 2 (`19-batch2-report.md`). All PENDING, none blocks
 8. **Trap damage through the defense path** — a snapping trap deals `dpc × cells` straight to HP like a thorn toll
    (`boss_defense` is not subtracted); decide with the balance pass.
 9. **Bùng Nổ detonating a fire wall; a trap fling into a pillar as R3** — low priority.
+
+### Added by batch 4 (2026-11-11, same decision: PENDING, none blocks 60/60)
+
+10. **Dấu Tử HUD chip** — the mark is a status with its own signals (`mark_applied` / `mark_expired` /
+    `mark_triggered`, status id `mark`) but no chip in the buff / debuff row and no board bracket yet (VFX).
+11. **Echo snapshots of the Assassin's Awakening (Bóng Lướt ×1.75 on the echo)** — the mark's echo re-runs the
+    parent's cast context, but the signature hook is live, not snapshotted; verify with the Assassin's passive tests.
+12. **Móc Kéo pull path as a `path_rule`** — the drag path is telegraphed as data (`cast_scheduled.pull_path`), not
+    through the delivery's `path_rule`; the path is never hit.
+13. **Card echoes and Rạn** — a card's own echo waves (Hồi Âm, Chuông Thánh) and the mark's echo now run as echo waves
+    (no Rạn spent or gained, no crit, no execute); the catalog's "never consumes Rạn twice in one wave" reading is
+    the stricter one and was applied to every echo wave. Re-measure with the balance pass.

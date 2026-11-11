@@ -469,6 +469,16 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		# Pillar (M11): seconds the empty mask cells block steps.
 		"pillar_sec": maxf(float(raw.get("pillar_sec", 3.0)), 0.0),
 		"id": id,
+		# Skill v2 batch 4 (docs/skill-v2/21-batch4-report.md). Dấu Tử: the mark a hit leaves ({} = none; sec, echo_mult,
+		# execute_ratio). Thiên Quang: events that may apply the card's keywords after max_hits is spent (0 = none).
+		# Phi Tiêu: a chain link whose cell is empty re-targets the mask cell the unit moved to; link_step_sec = seconds
+		# between links (CastResolver.validate; 0 = the delivery timing). Móc Kéo: cells the hit pulls the target along
+		# its row toward the divider (CutEffects.pull_toward).
+		"mark": _mark(id, raw),
+		"keyword_hits_max": maxi(int(raw.get("keyword_hits_max", 0)), 0),
+		"bounce": bool(raw.get("bounce", false)),
+		"link_step_sec": resolve_check["link_step_sec"],
+		"pull_row_cells": clampi(int(raw.get("pull_row_cells", 0)), 0, CastResolver.MAX_FORCE_CELLS),
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:
 		for key: String in PARRY_DEFAULTS.keys():
@@ -503,6 +513,19 @@ static func _requires_shape(id: String, raw: Dictionary) -> Dictionary:
 		push_warning("SkillConfig: card %s requires_shape scope '%s' unknown, using any_piece" % [id, scope])
 		scope = "any_piece"
 	return {"tag": str((r as Dictionary)["tag"]), "scope": scope}
+
+
+# Batch 4: the card's death mark ({} = none): {sec > 0, echo_mult >= 0 (default 0.6), execute_ratio 0..1 (default 0.3)}.
+static func _mark(id: String, raw: Dictionary) -> Dictionary:
+	if not raw.has("mark"):
+		return {}
+	var r: Variant = raw["mark"]
+	if not r is Dictionary or float((r as Dictionary).get("sec", 0.0)) <= 0.0:
+		push_warning("SkillConfig: card %s mark needs {sec > 0}, ignored" % id)
+		return {}
+	var d: Dictionary = r as Dictionary
+	return {"sec": float(d["sec"]), "echo_mult": maxf(float(d.get("echo_mult", 0.6)), 0.0),
+		"execute_ratio": clampf(float(d.get("execute_ratio", 0.3)), 0.0, 1.0)}
 
 
 # Batch 3: the card's placement ("enemy" when absent; an unknown value falls back to enemy with a warning).

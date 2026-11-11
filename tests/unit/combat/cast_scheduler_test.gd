@@ -325,9 +325,10 @@ func test_legacy_cards_stay_instant() -> void:
 	# batch 2 bang_vo / dia_chan / hoa_bang / hoi_am / loc_cuon / thien_thach, 2026-11-11); every other card stays on the
 	# legacy instant path.
 	# Batch 3 (2026-11-11): bay_kep, bay_lo, gai_no, hoa_tuyen, khien_thep, thanh_thuan, tuong_da.
-	var v2: Array[String] = ["bang_vo", "bay_kep", "bay_lo", "chuoi_set", "dap_vo", "dia_chan", "gai_no", "hoa_bang", "hoa_loi", "hoa_tuyen",
-		"hoi_am", "khien_thep", "lien_tram", "loc_cuon", "min_tre", "ngan_kiem", "song_dao", "thanh_thuan", "thien_thach", "thuong_xuyen",
-		"tram_dia", "tuong_da"]
+	# Batch 4 (2026-11-11): chuong_thanh, dau_tu, moc_keo, phi_tieu, thien_quang.
+	var v2: Array[String] = ["bang_vo", "bay_kep", "bay_lo", "chuoi_set", "chuong_thanh", "dap_vo", "dau_tu", "dia_chan", "gai_no", "hoa_bang",
+		"hoa_loi", "hoa_tuyen", "hoi_am", "khien_thep", "lien_tram", "loc_cuon", "min_tre", "moc_keo", "ngan_kiem", "phi_tieu", "song_dao",
+		"thanh_thuan", "thien_quang", "thien_thach", "thuong_xuyen", "tram_dia", "tuong_da"]
 	not_instant.sort()
 	ck("only the Skill v2 cards leave the instant (legacy) path", not_instant == v2, str(not_instant))
 	var w: Dictionary = _world("tl", {})

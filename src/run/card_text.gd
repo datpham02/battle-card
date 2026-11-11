@@ -162,6 +162,16 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"clause_attacker_frost": _num(float((skill.get("shape_clause", {}) as Dictionary).get("attacker_frost", 0)), loc),
 		"pillar_sec": _num(float(skill.get("pillar_sec", 0.0)), loc),
 		"clause_pillar_sec": _num(float((skill.get("shape_clause", {}) as Dictionary).get("pillar_sec", skill.get("pillar_sec", 0.0))), loc),
+		# Skill v2 batch 4: Thiên Quang (keyword cap, plus heal), Dấu Tử (mark), Phi Tiêu (link step), Móc Kéo (row pull).
+		"keyword_hits_max": _num(float(skill.get("keyword_hits_max", 0)), loc),
+		"clause_hub_heal": _num(float((skill.get("shape_clause", {}) as Dictionary).get("hub_heal", 0.0)), loc),
+		"mark_sec": _num(float((skill.get("mark", {}) as Dictionary).get("sec", 0.0)), loc),
+		"clause_mark_sec": _num(float((skill.get("shape_clause", {}) as Dictionary).get("mark_sec", (skill.get("mark", {}) as Dictionary).get("sec", 0.0))), loc),
+		"mark_echo_pct": _num(float(roundi(float((skill.get("mark", {}) as Dictionary).get("echo_mult", 0.0)) * 100.0)), loc),
+		"mark_execute_pct": _num(float(roundi(float((skill.get("mark", {}) as Dictionary).get("execute_ratio", 0.0)) * 100.0)), loc),
+		"link_step_sec": _num(float(skill.get("link_step_sec", 0.0)), loc),
+		"pull_row_cells": _num(float(skill.get("pull_row_cells", 0)), loc),
+		"clause_pull_row_cells": _num(float((skill.get("shape_clause", {}) as Dictionary).get("pull_row_cells", skill.get("pull_row_cells", 0))), loc),
 	}
 	for zone_key: String in SkillConfig.ZONE_KEYS:
 		out[zone_key] = _num(float(skill.get(zone_key, zones.get(zone_key, 0.0))), loc)

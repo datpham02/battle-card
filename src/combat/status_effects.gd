@@ -52,6 +52,12 @@ signal hole_restored(side: int, cell: Vector2i)
 ## the cast; the zone is consumed) for [param damage] to the unit of that side.
 signal trap_fired(side: int, cast_id: int, cells: Array[Vector2i], damage: float)
 
+## Skill v2 batch 4 (Dấu Tử, 02-design-decisions.md §7): the death mark on the unit of [param side] was applied or
+## refreshed ([param sec] left), expired, or triggered (the next damaging cast on it echoes; the mark is gone).
+signal mark_applied(side: int, sec: float)
+signal mark_expired(side: int)
+signal mark_triggered(side: int)
+
 ## Zone kind names (also the zone_applied / zone_expired payload).
 const KIND_THORNS: String = "thorns"
 ## Skill v2 batch 3 field zones (docs/skill-v2/02-mechanics-catalog.md M09 / M10 / M11, §G): a trap (armed: fires on
@@ -82,6 +88,8 @@ var _thorns: Dictionary = {}
 # pin_sec, push_cells, r3, skill_id; ward: the card's ward numbers plus skill_id; pillar: skill_id).
 var _fields: Dictionary = {}
 var _field_seq: int = 0
+# Batch 4 Dấu Tử: Side -> {left, total, echo_mult, execute_ratio}. A timed card status, never a Rạn stack.
+var _marks: Dictionary = {}
 # Side -> the cell the unit stood on at the previous tick (thorn entry detection).
 var _last_cell: Dictionary = {}
 # Keyword numbers, see configure(). Defaults = no stacking / no Ghim bonus (old behaviour).
@@ -380,6 +388,12 @@ func tick(delta: float, state: CombatState) -> void:
 			_pins[side] = pin_left
 	_tick_zones(_thorns, KIND_THORNS, delta)
 	_tick_fields(delta, state)
+	for side: int in _marks.keys():
+		var m: Dictionary = _marks[side] as Dictionary
+		m["left"] = float(m["left"]) - delta
+		if float(m["left"]) <= _EPS:
+			_marks.erase(side)
+			mark_expired.emit(side)
 	_tick_phase2_statuses(delta)
 	_tick_holes(delta, state)
 
@@ -459,9 +473,46 @@ func clear() -> void:
 	_frost.clear()
 	_thorns.clear()
 	_fields.clear()
+	_marks.clear()
 	_holes.clear()
 	_hole_fade.clear()
 	_last_cell.clear()
+
+
+# --- Skill v2 batch 4: Dấu Tử (death mark, 02-design-decisions.md §7) ------------------------------------------------
+
+## Status id of the death mark (HUD / VFX).
+const STATUS_MARK: String = "mark"
+
+
+## Puts the death mark on the unit of [param side] for [param sec] seconds: the next damaging cast on it echoes once at
+## x [param echo_mult] and executes x2 at or under [param execute_ratio] of max HP. Re-applying refreshes (no stacking).
+func apply_mark(side: int, sec: float, echo_mult: float, execute_ratio: float) -> void:
+	if sec <= 0.0:
+		return
+	_marks[side] = {"left": sec, "total": sec, "echo_mult": maxf(echo_mult, 0.0), "execute_ratio": clampf(execute_ratio, 0.0, 1.0)}
+	_totals[_total_key(STATUS_MARK, side)] = sec
+	mark_applied.emit(side, sec)
+
+
+## The death mark on [param side]: {left, total, echo_mult, execute_ratio}; {} when none.
+func mark_at(side: int) -> Dictionary:
+	return (_marks[side] as Dictionary).duplicate() if _marks.has(side) else {}
+
+
+## True while the unit of [param side] carries the death mark.
+func has_mark(side: int) -> bool:
+	return _marks.has(side)
+
+
+## Spends the death mark of [param side] (a damaging cast landed on it): returns its data ({} when none) and removes it.
+func consume_mark(side: int) -> Dictionary:
+	if not _marks.has(side):
+		return {}
+	var m: Dictionary = (_marks[side] as Dictionary).duplicate()
+	_marks.erase(side)
+	mark_triggered.emit(side)
+	return m
 
 
 # --- Skill v2 batch 3 field zones: trap (M09), ward (M10), pillar (M11) ----------------------------------------------
