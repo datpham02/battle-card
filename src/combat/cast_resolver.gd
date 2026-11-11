@@ -63,8 +63,16 @@ const MAX_FUSE_SEC: float = 5.0
 const MAX_FUSE_MULT: float = 4.0
 const MAX_ACTIVE_FIELDS: int = 4
 const KIND_FUSE: String = "fuse"
-## Payload effects a scheduled event may carry (applied after its damage): ignite {sec, tick_sec, damage}.
-const PAYLOAD_KEYS: Array[String] = ["ignite"]
+## Payload effects a scheduled event may carry (applied after its damage): ignite {sec, tick_sec, damage} (hit or miss),
+## push {cells} (Skill v2 batch 1, Mìn Trễ: on a HIT the target is pushed that many cells away from the mask's centre;
+## SwingArbiter, CutEffects.push_from).
+const PAYLOAD_KEYS: Array[String] = ["ignite", "push"]
+const MAX_PUSH_CELLS: int = 3
+## Skill v2 batch 1 (M06 ramp; Chuỗi Sét): `link_ramp` adds that share of the damage per chain link after the first,
+## `link_ramp_cap` caps the total bonus (link k x min(k x ramp, cap)). 0 (the default) = every link x1, the rule of
+## every chain card before the batch. SEQUENTIAL_CHAIN `arrival` cards only.
+const MAX_LINK_RAMP: float = 1.0
+const DEFAULT_LINK_RAMP_CAP: float = 0.6
 ## Damage-cell rules (card field `damage_cells_rule`, scheduled resolves): how many of a cast's cells its damage counts
 ## when it hits (dpc x counted cells x mult). "all" (default: every cell, the rule of every card so far), "footprint"
 ## (at most the target's footprint cells + `extra`; Hỏa Lôi Model C, docs/skill-v2/13-hoa-loi-damage-models.md), "max"
@@ -82,8 +90,11 @@ const SCHEDULED_EFFECTS: Array[String] = ["damage"]
 ## 02-design-decisions.md §10: the product of a card's shape-clause multipliers (burst-first, surge, ...) is capped here.
 const SHAPE_GROUP_CAP: float = 2.0
 const CLAUSE_SCOPES: Array[String] = ["any_piece", "all_pieces", "union"]
+## Batch 1 clause keys: link_step_sec (Chuỗi Sét `S`: seconds between chain links instead of the delivery timing) and
+## fragile_stacks (Đập Vỡ `compact`: Rạn stacks applied on a hit, CutEffects).
 const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult", "fuse_sec",
-	"fuse_mult", "fuse_mult_scale", "hits"]
+	"fuse_mult", "fuse_mult_scale", "hits", "link_step_sec", "fragile_stacks"]
+const MAX_CLAUSE_FRAGILE_STACKS: int = 3
 const DROP_ORDERS: Array[String] = ["row_major", "from_centre"]
 const KIND_DROP: String = "drop"
 const KIND_DROP_FINAL: String = "drop_final"
@@ -152,6 +163,10 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 	var max_active: int = _int_field(id, raw, "max_active", 0, 0, MAX_ACTIVE_FIELDS, errors)
 	var payload: Dictionary = _payload(id, raw.get("event_payload", {}), errors)
 	var dmg_rule: Dictionary = _damage_cells_rule(id, raw.get("damage_cells_rule", {}), errors)
+	var link_ramp: float = _num_field(id, raw, "link_ramp", 0.0, 0.0, MAX_LINK_RAMP, errors)
+	var link_ramp_cap: float = _num_field(id, raw, "link_ramp_cap", DEFAULT_LINK_RAMP_CAP, 0.0, SHAPE_GROUP_CAP - 1.0, errors)
+	if resolve != RESOLVE_ARRIVAL and (raw.has("link_ramp") or raw.has("link_ramp_cap") or clause.has("link_step_sec")):
+		errors.append("card %s: link_ramp / link_ramp_cap / a link_step_sec clause need resolve 'arrival' (a chain)" % id)
 	if resolve == RESOLVE_INSTANT and str(dmg_rule.get("mode", "all")) != "all":
 		errors.append("card %s: damage_cells_rule needs a scheduled resolve" % id)
 	if resolve != RESOLVE_DELAYED and (raw.has("fuse_sec") or raw.has("fuse_mult") or raw.has("max_active")
@@ -172,9 +187,9 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 			"wave_mults": [] as Array[float], "burst_first": 1.0, "burst_pin_sec": 0.0, "shape_clause": {},
 			"sky_hover_sec": -1.0, "sky_stagger_sec": -1.0, "drop_order": "row_major", "awakening_extra_hits": 0,
 			"fixed_hit": false, "fuse_sec": 1.5, "fuse_mult": 1.0, "max_active": 0, "event_payload": {},
-			"damage_cells_rule": {"mode": "all"}, "errors": errors}
+			"damage_cells_rule": {"mode": "all"}, "link_ramp": 0.0, "link_ramp_cap": DEFAULT_LINK_RAMP_CAP, "errors": errors}
 	return {"fuse_sec": fuse_sec, "fuse_mult": fuse_mult, "max_active": max_active, "event_payload": payload,
-		"damage_cells_rule": dmg_rule,
+		"damage_cells_rule": dmg_rule, "link_ramp": link_ramp, "link_ramp_cap": link_ramp_cap,
 		"resolve": resolve, "hits": hits, "max_hits": max_hits, "hit_interval_sec": interval, "wave_mults": mults,
 		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clause, "sky_hover_sec": hover,
 		"sky_stagger_sec": stagger, "drop_order": drop_order, "awakening_extra_hits": extra_hits, "fixed_hit": fixed_hit,
@@ -555,6 +570,21 @@ static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: 
 	var caster: Vector2i = context.get("caster_cell", Vector2i(-1, cells[0].y if not cells.is_empty() else 0))
 	var times: Dictionary = SkillDelivery.arrival_times(delivery, cells, caster, timing)
 	var per_cell_wave: bool = str(delivery.get("type", "")) == SkillDelivery.SKY_TO_TARGET
+	var chain: bool = str(delivery.get("type", "")) == SkillDelivery.SEQUENTIAL_CHAIN
+	# Batch 1 (Chuỗi Sét): a link_step_sec clause that holds re-times the links; the ramp multiplies link k.
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var link_mult: Dictionary = {}
+	if chain:
+		var links: Array[Vector2i] = SkillDelivery.chain_cells(delivery, cells, caster)
+		var step: float = -1.0
+		if clause.has("link_step_sec") and clause_holds(clause, context):
+			step = float(clause["link_step_sec"])
+		var ramp: float = float(skill.get("link_ramp", 0.0))
+		var cap: float = float(skill.get("link_ramp_cap", DEFAULT_LINK_RAMP_CAP))
+		for i: int in links.size():
+			if step >= 0.0:
+				times[links[i]] = float(i) * step
+			link_mult[links[i]] = 1.0 + minf(float(i) * ramp, cap) if ramp > 0.0 else 1.0
 	var ordered: Array[Vector2i] = cells.duplicate()
 	ordered.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		var ta: float = float(times.get(a, 0.0))
@@ -564,7 +594,11 @@ static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: 
 		return a.y < b.y or (a.y == b.y and a.x < b.x))
 	for i: int in ordered.size():
 		var one: Array[Vector2i] = [ordered[i]]
-		events.append(_event(i if per_cell_wave else 0, float(times.get(ordered[i], 0.0)), one, "hit", 1.0))
+		var e: Dictionary = _event(i if per_cell_wave else 0, float(times.get(ordered[i], 0.0)), one, "hit",
+			float(link_mult.get(ordered[i], 1.0)))
+		if chain:
+			e["step"] = i
+		events.append(e)
 	return events
 
 
@@ -669,6 +703,10 @@ static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictiona
 		out["fuse_mult_scale"] = _num_field(id, c, "fuse_mult_scale", 1.0, 1.0, SHAPE_GROUP_CAP, errors)
 		if c.has("fuse_mult"):
 			errors.append("card %s: shape_clause takes fuse_mult or fuse_mult_scale, not both" % id)
+	if c.has("link_step_sec"):
+		out["link_step_sec"] = _num_field(id, c, "link_step_sec", DEFAULT_INTERVAL_SEC, MIN_INTERVAL_SEC, MAX_INTERVAL_SEC, errors)
+	if c.has("fragile_stacks"):
+		out["fragile_stacks"] = _int_field(id, c, "fragile_stacks", 1, 1, MAX_CLAUSE_FRAGILE_STACKS, errors)
 	return out
 
 
@@ -692,7 +730,7 @@ static func _damage_cells_rule(id: String, raw: Variant, errors: Array[String]) 
 	return out
 
 
-# The card's event_payload ({} = none): only PAYLOAD_KEYS; ignite = {sec > 0, tick_sec > 0, damage >= 0}.
+# The card's event_payload ({} = none): only PAYLOAD_KEYS; ignite = {sec > 0, tick_sec > 0, damage >= 0}; push = {cells 1..3}.
 static func _payload(id: String, raw: Variant, errors: Array[String]) -> Dictionary:
 	if raw == null or (raw is Dictionary and (raw as Dictionary).is_empty()):
 		return {}
@@ -714,6 +752,12 @@ static func _payload(id: String, raw: Variant, errors: Array[String]) -> Diction
 				"damage": _num_field(id, d, "damage", 0.0, 0.0, 100.0, errors)}
 			if not d.has("sec"):
 				errors.append("card %s: event_payload ignite needs sec" % id)
+	var pu: Variant = (raw as Dictionary).get("push")
+	if pu != null:
+		if not pu is Dictionary:
+			errors.append("card %s: event_payload push must be an object" % id)
+		else:
+			out["push"] = {"cells": _int_field(id, pu as Dictionary, "cells", 1, 1, MAX_PUSH_CELLS, errors)}
 	return out
 
 

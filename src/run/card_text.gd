@@ -93,6 +93,7 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"frost_stacks": _num(float(skill.get("frost_stacks", 0)), loc),
 		"fragile_bonus": _num(float(skill.get("bonus_vs_fragile_mult", 1.0)), loc),
 		"heal_self": _num(float(skill.get("heal_self", 0.0)), loc),
+		"mire_sec": _num(float(skill.get("mire_sec", 0.0)), loc),
 		"draw_damage": _num(float(skill.get("draw_damage", 0.0)), loc),
 		"fragile_mult": _num(cc.fragile_mult, loc),
 		"frost_burst_stacks": _num(float(cc.frost_stacks_to_burst), loc),
@@ -115,6 +116,16 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"clause_hits": _num(float((skill.get("shape_clause", {}) as Dictionary).get("hits", skill.get("hits", 1))), loc),
 		"centre_mult": _num(float((skill.get("shape_clause", {}) as Dictionary).get("centre_mult", 1.0)), loc),
 		"surge_cap_pct": _num(float(roundi(float((skill.get("shape_clause", {}) as Dictionary).get("surge_cap", 0.0)) * 100.0)), loc),
+		# Skill v2 batch 1: the chain ramp (Chuỗi Sét) in percent per link / cap, the Guard-break multiplier (Đập Vỡ),
+		# the per-cell damage bonus of a line payoff (Thương Xuyên) and the fuse push (Mìn Trễ: event_payload push).
+		"link_ramp_pct": _num(float(roundi(float(skill.get("link_ramp", 0.0)) * 100.0)), loc),
+		"link_cap_pct": _num(float(roundi(float(skill.get("link_ramp_cap", 0.0)) * 100.0)), loc),
+		"guard_break_mult": _num(float(skill.get("guard_break_mult", 1.0)), loc),
+		"dpc_bonus_per": _num(float((skill.get("dpc_bonus", {}) as Dictionary).get("per_cell", 0.0)), loc),
+		"dpc_bonus_from": _num(float((skill.get("dpc_bonus", {}) as Dictionary).get("from_cells", 0)), loc),
+		"dpc_bonus_cap": _num(float((skill.get("dpc_bonus", {}) as Dictionary).get("cap", 0.0)), loc),
+		"payload_push_cells": _num(float(((skill.get("event_payload", {}) as Dictionary).get("push", {}) as Dictionary).get("cells", 0)), loc),
+		"clause_fragile_stacks": _num(float((skill.get("shape_clause", {}) as Dictionary).get("fragile_stacks", 0)), loc),
 	}
 	for zone_key: String in SkillConfig.ZONE_KEYS:
 		out[zone_key] = _num(float(skill.get(zone_key, zones.get(zone_key, 0.0))), loc)

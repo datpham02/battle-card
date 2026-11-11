@@ -994,11 +994,14 @@ ui.slots.abandon_title,Bỏ chuyến leo ở ô %d?,Abandon the climb in slot %d
 ui.slots.abandon_body,"Chuyến leo đang dở sẽ mất. Mở khóa, Giao Kèo và thành tựu của ô vẫn giữ.","The climb in progress will be lost. The slot keeps its unlocks, Pact levels and achievements."
 ui.slots.abandon_yes,Bỏ chuyến leo,Abandon
 card.song_dao.name,Song Đao,Twin Blades
-card.song_dao.desc,"{hits} nhát đầy đủ trên cùng các ô, cách {hit_gap} s. Từ nhát thứ 3 chí mạng x{crit_mult}. Khối 1 ô hoặc domino: {clause_hits} nhát.","{hits} full hits on the same cells, {hit_gap} s apart. From the 3rd hit, a crit x{crit_mult}. A 1-cell or domino Block: {clause_hits} hits."
-card.song_dao.desc_battle,"{hits} nhát, nhát 3 chí mạng.","{hits} hits, crit from the 3rd."
+card.song_dao.desc,"{hits} nhát đầy đủ trên cùng các ô, cách {hit_gap} s. Từ nhát thứ ba chí mạng x{crit_mult}. Khối một ô hoặc domino: {clause_hits} nhát.","{hits} full hits on the same cells, {hit_gap} s apart. From the third hit, a crit x{crit_mult}. A one-cell or domino Block: {clause_hits} hits."
+card.song_dao.desc_battle,"{hits} nhát, nhát ba chí mạng.","{hits} hits, crit from the third."
 card.lien_tram.name,Liên Trảm,Double Slash
 card.lien_tram.desc,"{hits} nhát trên cùng các ô, cách {hit_gap} s. Khối thẳng: {clause_hits} nhát.","{hits} hits on the same cells, {hit_gap} s apart. A straight Block: {clause_hits} hits."
 card.lien_tram.desc_battle,"{hits} nhát; khối thẳng thêm nhát.","{hits} hits; a line adds one."
+card.vung_lay.name,Vũng Lầy,Mire
+card.vung_lay.desc,"Gây sát thương theo số ô, rồi những ô đó thành vũng lầy trong {mire_sec} s.","Damage per cell, then those cells are mire for {mire_sec} s."
+card.vung_lay.desc_battle,"Sát thương, rồi vũng lầy {mire_sec} s.","Damage, then mire for {mire_sec} s."
 card.hoa_loi.name,Hỏa Lôi,Fire Mine
 card.hoa_loi.desc,"Khắc ấn lửa lên các ô; sau {fuse_sec} s cả trận nổ cùng lúc: địch đứng trên ấn chịu sát thương theo số ô (tính tối đa bằng kích thước địch + {cells_extra} ô) x{fuse_mult}, rồi các ô cháy {burn_sec} s. Khối vuông: nạp lâu hơn, nổ mạnh hơn.","Brands fire sigils on the cells; after {fuse_sec} s they all explode at once: a foe on a sigil takes damage per cell (counting at most its size + {cells_extra} cells) x{fuse_mult}, then the cells burn for {burn_sec} s. Square Block: a longer charge, a bigger blast."
 card.hoa_loi.desc_battle,"Ấn lửa nổ sau {fuse_sec} s, rồi cháy.","Sigils explode after {fuse_sec} s, then burn."
@@ -1014,3 +1017,16 @@ ui.settings.reduced_audio,Giảm âm thanh,Reduced audio
 ui.settings.vibration,Rung,Vibration
 ui.settings.volume_value,{pct}%,{pct}%
 ui.settings.tab_general,Chung,General
+card.thuong_xuyen.name,Thương Xuyên,Piercing Lance
+card.thuong_xuyen.desc,"Cần một khối thẳng. Mũi thương bay dọc khối, xuyên từng ô từ gần ra xa; +{dpc_bonus_per} sát thương mỗi ô khi khối dài hơn {dpc_bonus_from} ô (tối đa +{dpc_bonus_cap}).","Needs a line Block. A lance flies along it, piercing cell by cell from near to far; +{dpc_bonus_per} damage per cell beyond {dpc_bonus_from} cells (max +{dpc_bonus_cap})."
+card.thuong_xuyen.desc_battle,Cần khối thẳng; xuyên từng ô từ gần ra xa.,Needs a line; pierces near to far.
+card.dap_vo.name,Đập Vỡ,Guard Breaker
+card.dap_vo.desc,"Búa giáng xuống từng ô: phá Giáp của địch trước, gây x{guard_break_mult} nếu địch đang có Giáp. Khối đặc: thêm {clause_fragile_stacks} Rạn.",A hammer drops on each cell: strips the foe's Guard first and deals x{guard_break_mult} if it had Guard. Compact Block: +{clause_fragile_stacks} Rạn.
+card.dap_vo.desc_battle,"Phá Giáp, x{guard_break_mult} nếu có Giáp.","Breaks Guard, x{guard_break_mult} if guarded."
+card.chuoi_set.name,Chuỗi Sét,Chain Spark
+card.chuoi_set.desc,"Tia sét nhảy từng ô; mỗi mắt sau mắt đầu mạnh thêm {link_ramp_pct}% (tối đa +{link_cap_pct}%), trúng ở mắt tìm thấy địch. Khối S: nhảy nhanh hơn.","A spark hops cell by cell; each link after the first adds {link_ramp_pct}% (max +{link_cap_pct}%), hitting at the link that finds the foe. S Block: faster hops."
+card.chuoi_set.desc_battle,"Sét nhảy từng ô, +{link_ramp_pct}% mỗi mắt.","Spark hops, +{link_ramp_pct}% per link."
+card.min_tre.name,Mìn Trễ,Delay Mine
+card.min_tre.desc,Cài mìn lên các ô; sau {fuse_sec} s nổ cùng lúc: địch đứng trên mìn chịu sát thương theo số ô x{fuse_mult} và bị đẩy {payload_push_cells} ô ra xa tâm khối.,Plants mines on the cells; after {fuse_sec} s they all blow at once: a foe on a mine takes damage per cell x{fuse_mult} and is pushed {payload_push_cells} cell away from the Block's centre.
+card.min_tre.desc_battle,"Mìn nổ sau {fuse_sec} s, đẩy {payload_push_cells} ô.","Mines blow after {fuse_sec} s, push {payload_push_cells}."
+ui.hud.need_shape,chưa đúng hình khối,wrong block shape

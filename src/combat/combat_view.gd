@@ -616,6 +616,8 @@ func _setup_hazards() -> void:
 	# Story 036 (W4): the boss brain prices mire, treats sand as blocked and leads drifting pieces.
 	if _boss != null and _boss.has_method("set_hazards"):
 		_boss.set_hazards(_hazards)
+	if _arbiter != null:
+		_arbiter.tile_hazards = _hazards
 	var status: StatusEffects = _status
 	var boss_mover: UnitMover = _boss.get_mover()
 	var movers: Dictionary = {CombatState.Side.PLAYER: _mover, CombatState.Side.ENEMY: boss_mover}
@@ -2309,6 +2311,9 @@ func get_availability_context() -> Dictionary:
 		if _cut_flow != null and _cut_flow.is_menu_open():
 			ctx[SkillAvailability.CTX_DELAYED_OPEN_CELLS] = SkillAvailability.delayed_open_cells(_cut_flow.menu_cells(),
 				_arbiter.armed_cells(CombatState.Side.PLAYER), _status)
+	# Skill v2 batch 1 (Thương Xuyên): the placed pieces' shape tags while the menu is open (requires_shape).
+	if _cut_flow != null and _cut_flow.is_menu_open() and _plan != null and _state != null:
+		ctx[SkillAvailability.CTX_PIECE_TAGS] = SkillAvailability.piece_tags_of(_plan, _state.player_cell)
 	return ctx
 
 
@@ -2959,7 +2964,7 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 	if not cells.is_empty():
 		# Task 5 item 4: the boss's casts are recorded too (its travel squares / impacts drawn on the cells it hits).
 		var rec: Dictionary = {"cells": shown, "delivery": delivery, "caster": caster, "arrive": delays,
-			"start": vfx.elapsed(), "hit": bool(feedback.get("hit", false))}
+			"start": vfx.elapsed(), "hit": bool(feedback.get("hit", false)), "skill_id": str(feedback.get("skill_id", ""))}
 		if side == CombatState.Side.PLAYER:
 			_cast_travel = rec
 		else:

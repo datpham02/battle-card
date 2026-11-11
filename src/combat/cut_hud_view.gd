@@ -277,6 +277,8 @@ const TEXT_PARRY: String = "ui.hud.parry"
 const TEXT_NO_TELEGRAPH: String = "ui.hud.no_telegraph"
 const TEXT_FIELD_CAP: String = "ui.hud.field_cap"
 const TEXT_NO_VALID_CELLS: String = "ui.hud.no_valid_cells"
+## Skill v2 batch 1: the menu reason of a card that needs a block shape no placed piece has (Thương Xuyên: a line).
+const TEXT_NEED_SHAPE: String = "ui.hud.need_shape"
 ## A crit's damage number is this much bigger than a plain one ("one step larger").
 const CRIT_NUMBER_SCALE: float = 1.3
 ## The hero's parry guard: the thin timer bar under the hero's cell (share of the cell width / height, inset from the
@@ -3367,6 +3369,8 @@ func _skill_status(id: String, cell_count: int) -> Dictionary:
 		text = tr(TEXT_FIELD_CAP)
 	elif str(check["reason"]) == "no_valid_cells":
 		text = tr(TEXT_NO_VALID_CELLS)
+	elif str(check["reason"]) == "need_shape":
+		text = tr(TEXT_NEED_SHAPE)
 	return {"available": bool(check["available"]), "text": text}
 
 

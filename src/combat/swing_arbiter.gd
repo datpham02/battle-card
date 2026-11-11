@@ -21,7 +21,8 @@ extends RefCounted
 ## Skill v2 delayed (M07; Hỏa Lôi): an `armed` event is an armed-zone cell until it fires (the armed-zone registry is
 ## this schedule: [method armed_cells], [method armed_cast_count]); a new delayed cast of the same side skips cells that
 ## are already armed. A `recheck_locked` event drops the cells locked by the time it fires (no damage, no payload
-## there). An event `payload` (ignite) is applied on its open cells after the damage, hit or miss.
+## there). An event `payload` (ignite) is applied on its open cells after the damage, hit or miss; a `push` payload
+## (batch 1, Mìn Trễ) moves the target away from the mask's centre on a damaging hit (CutEffects.push_from).
 
 ## Emitted after a swing's effects were applied. [param result] is CutEffects' dictionary
 ## {hit, damage, pushed, cell} extended with {cells, skill_id, level, pin_bonus}. [param side] = CombatState.Side.
@@ -53,6 +54,8 @@ var _cut_config: CutConfig
 var _skill_config: SkillConfig
 var _pending: Array[Dictionary] = []
 var _status: StatusEffects = null
+## Skill v2 Vũng Lầy: the match hazards. Null in tests that never lay mire. CombatView sets it after TileHazards exists.
+var tile_hazards: TileHazards = null
 ## Story 018: Callable(cells: int, damage: float) -> float applied to the PLAYER's hit damage only
 ## (the character passive); invalid = none.
 var player_damage_modifier: Callable = Callable()
@@ -332,6 +335,7 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 			"cast_context": cast_context})
 	result["cells"] = cells
 	result["cast_context"] = cast_context
+	_lay_mire(side, cells, skill_id)
 	wave_resolved.emit(side, wave, result)
 	result["skill_id"] = skill_id
 	result["level"] = level
@@ -348,6 +352,17 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		var victim_skill: String = victim.get_skill_id()
 		victim.cancel()
 		swing_interrupted.emit(victim_side, victim_cells, victim_skill)
+
+
+# Vũng Lầy: the whole mask becomes timed mire on the target half, hit or miss. Holes and the compact +1 s
+# clause are not in this path (see docs/skill-v2/16-mvp-matrix.md).
+func _lay_mire(side: int, cells: Array[Vector2i], skill_id: String) -> void:
+	if tile_hazards == null:
+		return
+	var sec: float = float(_skill_config.get_skill(skill_id).get("mire_sec", 0.0))
+	if sec <= 0.0:
+		return
+	tile_hazards.add_mire(_opposite(side), cells, sec)
 
 
 func _on_actor_resolved(cells: Array[Vector2i], skill_id: String, side: int) -> void:
@@ -527,6 +542,17 @@ func _fire_event(ev: Dictionary) -> void:
 		var ig: Dictionary = payload.get("ignite", {}) as Dictionary
 		if not ig.is_empty():
 			ev["ignited"] = _status.ignite(ev_cells, float(ig["sec"]), float(ig["tick_sec"]), float(ig["damage"]))
+	# Batch 1 (Mìn Trễ): a `push` payload moves the target away from the cast mask's centre on a damaging hit only.
+	var push: Dictionary = payload.get("push", {}) as Dictionary
+	if hit and not push.is_empty() and not bool(ev.get("parried", false)) and not _state.is_player_dead() \
+			and not _state.is_enemy_dead():
+		var mask: Array[Vector2i] = []
+		mask.assign(cast["cells"])
+		var centre: Vector2i = ShapeTags.tags_for(mask)["centre"]
+		ev["pushed"] = CutEffects.push_from(_state, _grid, _opposite(side), centre, int(push["cells"]),
+			blocked_cell_fns.get(_opposite(side), Callable()))
+		ev["push_from"] = centre
+		(cast["last_hit"] as Dictionary)["pushed"] = bool(ev["pushed"])
 	var public: Dictionary = ev.duplicate()
 	public.erase("seq")
 	public["context"] = cast["context"]

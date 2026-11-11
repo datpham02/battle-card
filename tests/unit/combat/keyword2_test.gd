@@ -161,9 +161,16 @@ func _init() -> void:
 		var dpc: float = float(c["damage_per_cell"])
 		if dpc > 0.0:
 			# Cast rhythm spec 2026-11-05: a mode card (cast_mode not direct, e.g. the parry do_kiem) is tuned through its own
-			# measure, never toward the 6-7 curve.
+			# measure, never toward the 6-7 curve. A waves card (Song Đao dpc 3 x 3, Liên Trảm dpc 4 x 2) is tuned per
+			# hit, so its per-cell number sits under the single-hit band on purpose.
 			var mode_card: bool = str(c.get("cast_mode", "direct")) != "direct"
-			if rar == "common" and not mode_card and (dpc < 6.0 or dpc > 7.0) and id != "chan_phong" and id != "xung_kich" and id != "han_tran" and id != "gai_doc":
+			var waves: bool = str(c.get("resolve", "instant")) == "waves"
+			# Vũng Lầy: bible dpc 2; the mire is the payoff, not the hit.
+			var hazard: bool = float(c.get("mire_sec", 0.0)) > 0.0
+			# Skill v2 batch 1 (2026-11-11): a delayed card (Mìn Trễ dpc 5 x fuse_mult 1.6) and a dpc_bonus card
+			# (Thương Xuyên dpc 5 + up to +3 per cell) carry their payoff in those fields, outside the single-hit band.
+			var own_measure: bool = str(c.get("resolve", "instant")) == "delayed" or not (c.get("dpc_bonus", {}) as Dictionary).is_empty()
+			if rar == "common" and not mode_card and not waves and not hazard and not own_measure and (dpc < 6.0 or dpc > 7.0) and id != "chan_phong" and id != "xung_kich" and id != "han_tran" and id != "gai_doc":
 				over.append(id + ":common")
 			if rar == "rare" and dpc > 8.0:
 				over.append(id + ":rare")

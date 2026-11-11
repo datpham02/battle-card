@@ -15,6 +15,8 @@ const CURSE_RARITY: String = "curse"
 ## Highest card level (levels are 1..MAX_LEVEL; Story 020).
 const MAX_LEVEL: int = 3
 const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "thorns"]
+## How the body casts. Not a delivery type. weapon = the equipped weapon clip.
+const CAST_PRESENTATIONS: Array[String] = ["weapon", "hand", "throw", "body", "special"]
 ## Keys an `upgrade` table may change (additive deltas), with the floor each is clamped to.
 const UPGRADE_FLOORS: Dictionary = {
 	"damage_per_cell": 0.0, "min_cells": 1.0, "cooldown_sec": 0.0, "burn_damage_per_tick": 0.0,
@@ -22,6 +24,7 @@ const UPGRADE_FLOORS: Dictionary = {
 	"fragile_stacks": 0.0, "frost_stacks": 0.0,
 	"thorn_sec": 0.0, "thorn_damage": 0.0, "thorn_fragile_stacks": 0.0,
 	"parry_sec": 0.0, "reflect_mult": 0.0, "parry_pin_sec": 0.0,
+	"link_ramp": 0.0, "guard_break_mult": 1.0,
 }
 
 ## Story 027: the optional per-card zone number keys.
@@ -353,6 +356,10 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"cooldown_sec": maxf(float(raw.get("cooldown_sec", 0.0)), 0.0),
 		"damage_per_cell": dpc,
 		"push_cells": maxi(int(raw.get("push_cells", 0)), 0),
+		# Skill v2 Vũng Lầy: seconds the mask stays mire after the swing (0 = none). TileHazards.add_mire.
+		"mire_sec": maxf(float(raw.get("mire_sec", 0.0)), 0.0),
+		# Visual only. Delivery (floor_run, sky, chain) is separate. Unknown values fall back to weapon.
+		"cast_presentation": _cast_presentation(id, raw),
 		# Story 023: keyword stacks the card applies to a target it hits, defense piercing, execute
 		# (execute_ratio > 0 = own threshold; execute true = combat.json default) and the Ran bonus.
 		"fragile_stacks": maxi(int(raw.get("fragile_stacks", 0)), 0),
@@ -417,6 +424,17 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"cast_time_sec": maxf(float(raw.get("cast_time_sec", -1.0)), -1.0),
 		"cast_root": str(raw.get("cast_root", "none")) if ["none", "lock"].has(str(raw.get("cast_root", "none"))) else "none",
 		"tags": (raw.get("tags", []) as Array).duplicate() if raw.get("tags", []) is Array else [],
+		# Skill v2 batch 1 (docs/skill-v2/18-batch1-report.md). Chuỗi Sét M06 ramp: +link_ramp of the damage per chain
+		# link after the first, capped at link_ramp_cap (CastResolver.validate; 0 = the old chain rule).
+		"link_ramp": resolve_check["link_ramp"],
+		"link_ramp_cap": resolve_check["link_ramp_cap"],
+		# Đập Vỡ: a hit strips the target's Guard first and deals x guard_break_mult when Guard was present (CutEffects).
+		"guard_break": bool(raw.get("guard_break", false)),
+		"guard_break_mult": maxf(float(raw.get("guard_break_mult", 1.0)), 1.0),
+		# Thương Xuyên: the card is pickable only when a placed piece carries the tag ({} = no requirement;
+		# SkillAvailability reason need_shape) and gets +per_cell damage per cell beyond from_cells, capped (CutEffects).
+		"requires_shape": _requires_shape(id, raw),
+		"dpc_bonus": _dpc_bonus(id, raw),
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:
 		for key: String in PARRY_DEFAULTS.keys():
@@ -435,3 +453,41 @@ static func _cast_mode(id: String, raw: Dictionary) -> String:
 		push_warning("SkillConfig: card %s cast_mode '%s' unknown or not implemented, using direct" % [id, mode])
 		return CAST_MODE_DIRECT
 	return mode
+
+
+# Batch 1: the card's requires_shape ({} = none): {tag: String, scope: any_piece | all_pieces}. A bad object is dropped
+# with a warning (the card then needs no shape).
+static func _requires_shape(id: String, raw: Dictionary) -> Dictionary:
+	if not raw.has("requires_shape"):
+		return {}
+	var r: Variant = raw["requires_shape"]
+	if not r is Dictionary or str((r as Dictionary).get("tag", "")).is_empty():
+		push_warning("SkillConfig: card %s requires_shape needs {tag}, ignored" % id)
+		return {}
+	var scope: String = str((r as Dictionary).get("scope", "any_piece"))
+	if not ["any_piece", "all_pieces"].has(scope):
+		push_warning("SkillConfig: card %s requires_shape scope '%s' unknown, using any_piece" % [id, scope])
+		scope = "any_piece"
+	return {"tag": str((r as Dictionary)["tag"]), "scope": scope}
+
+
+# Batch 1: the card's dpc_bonus ({} = none): {per_cell >= 0, from_cells >= 0, cap >= 0}; damage_per_cell grows by
+# min((cells - from_cells) x per_cell, cap) for the cast. A bad object is dropped with a warning.
+static func _dpc_bonus(id: String, raw: Dictionary) -> Dictionary:
+	if not raw.has("dpc_bonus"):
+		return {}
+	var r: Variant = raw["dpc_bonus"]
+	if not r is Dictionary:
+		push_warning("SkillConfig: card %s dpc_bonus must be an object, ignored" % id)
+		return {}
+	var d: Dictionary = r as Dictionary
+	return {"per_cell": maxf(float(d.get("per_cell", 0.0)), 0.0), "from_cells": maxi(int(d.get("from_cells", 0)), 0),
+		"cap": maxf(float(d.get("cap", 0.0)), 0.0)}
+
+
+static func _cast_presentation(id: String, raw: Dictionary) -> String:
+	var presentation: String = str(raw.get("cast_presentation", "weapon"))
+	if not CAST_PRESENTATIONS.has(presentation):
+		push_warning("SkillConfig: card %s cast_presentation '%s' unknown, using weapon" % [id, presentation])
+		return "weapon"
+	return presentation

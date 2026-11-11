@@ -1373,6 +1373,9 @@ func availability_context() -> Dictionary:
 		if flow != null and flow.is_menu_open():
 			ctx[SkillAvailability.CTX_DELAYED_OPEN_CELLS] = SkillAvailability.delayed_open_cells(flow.menu_cells(),
 				arbiter.armed_cells(PLAYER), status)
+	# Batch 1 (Thương Xuyên): mirrors CombatView, the placed pieces' shape tags for requires_shape cards.
+	if flow != null and flow.is_menu_open() and plan != null:
+		ctx[SkillAvailability.CTX_PIECE_TAGS] = SkillAvailability.piece_tags_of(plan, state.player_cell)
 	return ctx
 
 
@@ -2820,10 +2823,21 @@ func cast_value(id: String, level: int, count: int) -> float:
 	var effect: String = str(c["effect"])
 	if effect == "damage" or effect == "push":
 		var eff_cells: int = maxi(signature.modify_cells(count), 0) if signature != null else count
-		var dmg: float = float(c["damage_per_cell"]) * eff_cells
+		# Batch 1 (Thương Xuyên): the same per-cell bonus rule CutEffects applies.
+		var dmg: float = (float(c["damage_per_cell"]) + CutEffects.dpc_bonus(c, count)) * eff_cells
 		# Skill v2 delayed: the fuse multiplier times the expected landing share, plus the burn it leaves
 		if str(c.get("resolve", "")) == CastResolver.RESOLVE_DELAYED:
 			dmg *= float(c.get("fuse_mult", 1.0)) * FUSE_HIT_EXPECT
+		# Batch 1 (Chuỗi Sét): the hit link is unknown ahead, so the ramp counts as the mean link multiplier.
+		var ramp: float = float(c.get("link_ramp", 0.0))
+		if ramp > 0.0 and count > 0:
+			var sum: float = 0.0
+			for k: int in count:
+				sum += 1.0 + minf(float(k) * ramp, float(c.get("link_ramp_cap", CastResolver.DEFAULT_LINK_RAMP_CAP)))
+			dmg *= sum / float(count)
+		# Batch 1 (Đập Vỡ): x guard_break_mult while the boss has Guard (the Guard itself is stripped, never subtracted).
+		if bool(c.get("guard_break", false)) and status.guard_amount(ENEMY) > 0.0:
+			dmg *= float(c.get("guard_break_mult", 1.0))
 		if status.fragile_stacks(ENEMY) > 0 and float(c.get("bonus_vs_fragile_mult", 1.0)) > 1.0:
 			dmg *= float(c["bonus_vs_fragile_mult"])
 		dmg *= status.damage_mult_against(ENEMY)

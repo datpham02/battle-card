@@ -196,6 +196,11 @@ static func apply(
 	var count: int = int(options.get("cast_cell_count", -1))
 	if count < 0:
 		count = cells.size()
+	# Batch 1 (Thương Xuyên): dpc_bonus grows damage_per_cell with the cast's cell count (SkillConfig). Cards without
+	# the field get no result key (the legacy golden fixture compares whole results).
+	if not (skill.get("dpc_bonus", {}) as Dictionary).is_empty():
+		result["dpc_bonus"] = dpc_bonus(skill, count)
+		per_cell += float(result["dpc_bonus"])
 	var effective_cells: int = count
 	# Skill v2 (Ngàn Kiếm): a fixed_hit card deals damage_per_cell per HIT, never x cells; the signature's cell rule
 	# (Trảm x2) does not apply to it. The relic / passive / signature hooks below still see the cast's cell count.
@@ -236,6 +241,16 @@ static func apply(
 	if impact_mult != 1.0:
 		damage *= impact_mult
 		result["impact_mult"] = impact_mult
+	# Batch 1 (Đập Vỡ): a guard_break card strips the target's Guard BEFORE the damage and deals x guard_break_mult when
+	# Guard was present; the stripped amount leaves the flat defense of this hit (options.target_defense carries it).
+	var guard_stripped: float = 0.0
+	if bool(skill.get("guard_break", false)):
+		result["guard_broken"] = false
+		if status != null and status.guard_amount(target_side) > 0.0:
+			guard_stripped = status.guard_amount(target_side)
+			status.clear_guard(target_side)
+			damage *= float(skill.get("guard_break_mult", 1.0))
+			result["guard_broken"] = true
 	if not featured.is_empty():
 		var featured_mult: float = float(featured.get("damage_mult", 1.0))
 		damage *= featured_mult
@@ -255,6 +270,7 @@ static func apply(
 		damage = float(signature_modifier.call(
 			skill_id, count, damage, status != null and status.is_pinned(target_side)))
 	var defense: float = float(options.get("target_defense", 0.0)) if target_side == CombatState.Side.ENEMY else 0.0
+	defense = maxf(defense - guard_stripped, 0.0)
 	if defense > 0.0 and not bool(skill.get("pierce_defense", false)) and damage > 0.0:
 		var after: float = maxf(damage - defense, minf(damage, MIN_DAMAGE_AFTER_DEFENSE))
 		result["defense_applied"] = damage - after
@@ -270,7 +286,7 @@ static func apply(
 	result["damage"] = damage
 	state.damage(target_side, damage)
 	if status != null:
-		_apply_keywords(state, status, target_side, skill, result)
+		_apply_keywords(state, status, target_side, skill, result, options.get("cast_context", {}) as Dictionary)
 	_apply_featured_effect(state, status, target_side, cells, featured, result)
 	if push_cells > 0:
 		result["pushed"] = _push(state, grid, target_side, push_cells)
@@ -362,9 +378,14 @@ static func _fallback_zone_numbers() -> Dictionary:
 
 
 # Applies the card's Ran / Han stacks to the target after a hit (a card's own hit never benefits from
-# its own Ran). A Han burst damages the target directly (ignores defense and Ran).
-static func _apply_keywords(state: CombatState, status: StatusEffects, target_side: int, skill: Dictionary, result: Dictionary) -> void:
+# its own Ran). A Han burst damages the target directly (ignores defense and Ran). Batch 1: a shape_clause
+# `fragile_stacks` that holds for [param context] (CastContext; {} = never) adds its Rạn (Đập Vỡ compact).
+static func _apply_keywords(state: CombatState, status: StatusEffects, target_side: int, skill: Dictionary, result: Dictionary,
+		context: Dictionary = {}) -> void:
 	var fragile: int = int(skill.get("fragile_stacks", 0))
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	if clause.has("fragile_stacks") and not context.is_empty() and CastResolver.clause_holds(clause, context):
+		fragile += int(clause["fragile_stacks"])
 	if fragile > 0:
 		status.apply_fragile(target_side, fragile)
 		result["fragile_applied"] = fragile
@@ -448,6 +469,49 @@ static func _resolve(skill_config: SkillConfig, skill_id: String, level: int) ->
 	if skill_config.has_method("resolved"):
 		return skill_config.call("resolved", skill_id, level) as Dictionary
 	return skill_config.get_skill(skill_id)
+
+
+## Batch 1 (Thương Xuyên): the damage_per_cell bonus of [param skill] (its `dpc_bonus`, SkillConfig) for a cast of
+## [param cells] cells: min((cells - from_cells) x per_cell, cap), never below 0; 0 for a card without one. The balance
+## sim reads the same rule.
+static func dpc_bonus(skill: Dictionary, cells: int) -> float:
+	var b: Dictionary = skill.get("dpc_bonus", {}) as Dictionary
+	if b.is_empty():
+		return 0.0
+	var extra: float = float(maxi(cells - int(b.get("from_cells", 0)), 0)) * float(b.get("per_cell", 0.0))
+	return minf(extra, float(b.get("cap", 0.0)))
+
+
+## Batch 1 (Mìn Trễ, event payload `push`): moves the unit of [param target_side] up to [param steps] cells AWAY from
+## [param from] (the mask's centre): along the axis of the larger offset between the unit's cell and [param from]
+## (ties: the row), and away from the divider when the unit stands on [param from]. Stops at the half's edge, at a
+## cell the footprint does not fit or that [param blocked_fn] (Callable(cell) -> bool, the target mover's blockers)
+## refuses. True if it moved at all.
+static func push_from(state: CombatState, grid: BoardGrid, target_side: int, from: Vector2i, steps: int,
+		blocked_fn: Callable = Callable()) -> bool:
+	var cell: Vector2i = state.cell_of(target_side)
+	var d: Vector2i = cell - from
+	var dir: Vector2i
+	if d == Vector2i.ZERO:
+		dir = Vector2i(1, 0) if target_side == CombatState.Side.ENEMY else Vector2i(-1, 0)
+	elif absi(d.x) >= absi(d.y):
+		dir = Vector2i(signi(d.x), 0)
+	else:
+		dir = Vector2i(0, signi(d.y))
+	var moved: bool = false
+	for i: int in steps:
+		var next: Vector2i = cell + dir
+		var on_half: bool = grid.is_enemy_cell(next) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(next)
+		if not on_half or (blocked_fn.is_valid() and bool(blocked_fn.call(next))):
+			break
+		if target_side == CombatState.Side.ENEMY and not state.enemy_fits(next, blocked_fn):
+			break
+		var ok: bool = state.set_enemy_cell(next) if target_side == CombatState.Side.ENEMY else state.set_player_cell(next)
+		if not ok:
+			break
+		cell = next
+		moved = true
+	return moved
 
 
 # Moves the unit up to [param steps] cells away from the divider; stops at a missing cell
