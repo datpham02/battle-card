@@ -88,6 +88,9 @@ var execute_ratio: float = 0.0
 ## blocked from stepping onto a cell (UnitMover.is_cell_blocked); used by the seal leave-a-path rule.
 var zone_numbers: Dictionary = {}
 var blocked_cell_fns: Dictionary = {}
+## Skill v2 batch 2 (M15): the reaction numbers (CombatConfig.reactions(); empty = CutEffects' built-in defaults),
+## passed to CutEffects as options.reactions. Set by CombatView and the balance sim.
+var reactions: Dictionary = {}
 ## Story 036: Callable() -> bool, true while the BOSS cannot be hit (TraitHost.is_boss_untargetable, burrow; set by
 ## TraitHost). A player cast that lands then is a miss (no damage, no interrupt) but still leaves its zone. Invalid = never.
 var enemy_untargetable_fn: Callable = Callable()
@@ -307,8 +310,15 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		for c: Vector2i in cells:
 			if not open.has(c):
 				locked.append(c)
-	var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(skill_id), cells, cast_context, delivery_timing, locked,
-		armed_cells(side))
+	# batch 2: the target half's cells bound an echo's shift; a context without a side (the boss's swings) gets this one
+	# for the planning only (the frozen context itself stays as it is)
+	var allowed: Array = _grid.enemy_cells() if side == CombatState.Side.PLAYER else _grid.player_cells()
+	var plan_ctx: Dictionary = cast_context
+	if not plan_ctx.has("side"):
+		plan_ctx = cast_context.duplicate()
+		plan_ctx["side"] = side
+	var plan: Dictionary = CastResolver.plan(_skill_config.get_skill(skill_id), cells, plan_ctx, delivery_timing, locked,
+		armed_cells(side), allowed)
 	if not bool(plan["legacy"]):
 		_schedule_cast(side, cells, skill_id, trade, level, featured_bonus, cast_context, plan)
 		return
@@ -324,6 +334,7 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 		player_signature_modifier if is_player else Callable(),
 		{"target_defense": boss_defense + (_status.guard_amount(CombatState.Side.ENEMY) if _status != null else 0.0), "execute_ratio": execute_ratio, "featured_bonus": featured_bonus if is_player else {},
 			"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
+			"reactions": reactions,
 			"relic_modifier": player_relic_modifier if is_player else Callable(),
 			"zone_overrides": player_zone_overrides if is_player else {},
 			"zone_sec_mult": float(player_zone_sec_mult_fn.call()) if (is_player and player_zone_sec_mult_fn.is_valid()) else 1.0,
@@ -481,7 +492,7 @@ func _fire_event(ev: Dictionary) -> void:
 		ev["cells"] = open
 	var hit: bool = false
 	var can_hit: bool = int(cast["hits"]) < int(cast["max_hits"]) and not (cast["wave_hit"] as Dictionary).has(wave)
-	if can_hit and not ev_cells.is_empty() and _state.unit_in(_opposite(side), ev_cells):
+	if can_hit and not ev_cells.is_empty() and CutEffects.can_affect(_state, _skill_config.get_skill(str(cast["skill_id"])), _opposite(side), ev_cells):
 		var skill_id: String = str(cast["skill_id"])
 		# the card's damage-cell rule (CastResolver.damage_cells: "all" for every card but those that set one, e.g.
 		# Hỏa Lôi's Model C), on the target's footprint now; the evaluation seam, when a probe sets it, overrides it
@@ -497,6 +508,7 @@ func _fire_event(ev: Dictionary) -> void:
 			{"target_defense": boss_defense + (_status.guard_amount(CombatState.Side.ENEMY) if _status != null else 0.0),
 				"execute_ratio": execute_ratio, "featured_bonus": cast["featured_bonus"],
 				"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
+				"reactions": reactions,
 				"relic_modifier": player_relic_modifier if is_player else Callable(),
 				"player_guard": player_guard if not is_player else null,
 				"crit_mult_at_start": float(cast["crit_at_start"]),
@@ -542,6 +554,13 @@ func _fire_event(ev: Dictionary) -> void:
 		var ig: Dictionary = payload.get("ignite", {}) as Dictionary
 		if not ig.is_empty():
 			ev["ignited"] = _status.ignite(ev_cells, float(ig["sec"]), float(ig["tick_sec"]), float(ig["damage"]))
+			# batch 2 (R1, Hỏa Băng): the event ignited the cell under a target this hit just chilled
+			var last: Dictionary = cast["last_hit"] as Dictionary
+			var reacts: Array = _skill_config.get_skill(str(cast["skill_id"])).get("reactions", []) as Array
+			if hit and reacts.has("r1") and int(last.get("frost_applied", 0)) > 0 \
+					and CutEffects.try_r1(_state, _status, _opposite(side), CutEffects.reaction_numbers({"reactions": reactions}), last):
+				ev["reaction"] = "r1"
+				ev["reaction_damage"] = float(last.get("reaction_damage", 0.0))
 	# Batch 1 (Mìn Trễ): a `push` payload moves the target away from the cast mask's centre on a damaging hit only.
 	var push: Dictionary = payload.get("push", {}) as Dictionary
 	if hit and not push.is_empty() and not bool(ev.get("parried", false)) and not _state.is_player_dead() \

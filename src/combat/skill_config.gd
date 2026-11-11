@@ -15,6 +15,8 @@ const CURSE_RARITY: String = "curse"
 ## Highest card level (levels are 1..MAX_LEVEL; Story 020).
 const MAX_LEVEL: int = 3
 const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "thorns"]
+## Batch 2 (M15): the status reactions a card may list in `reactions`.
+const REACTION_IDS: Array[String] = ["r1", "r2", "r3"]
 ## How the body casts. Not a delivery type. weapon = the equipped weapon clip.
 const CAST_PRESENTATIONS: Array[String] = ["weapon", "hand", "throw", "body", "special"]
 ## Keys an `upgrade` table may change (additive deltas), with the floor each is clamped to.
@@ -435,6 +437,18 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		# SkillAvailability reason need_shape) and gets +per_cell damage per cell beyond from_cells, capped (CutEffects).
 		"requires_shape": _requires_shape(id, raw),
 		"dpc_bonus": _dpc_bonus(id, raw),
+		# Skill v2 batch 2 (docs/skill-v2/19-batch2-report.md). reactions: the M15 reactions this card may trigger
+		# (r1 Hơi Nước, r2 Vỡ Băng, r3 Va Đập; numbers in combat.json `reactions`); [] = none (CutEffects).
+		"reactions": _reactions(id, raw),
+		# Lốc Cuốn: cells a unit inside or next to the mask is pulled toward the mask's centre before the hit (0 = none).
+		"pull_cells": clampi(int(raw.get("pull_cells", 0)), 0, CastResolver.MAX_FORCE_CELLS),
+		# Băng Vỡ: when the card's Rạn lands - "after" the hit (every card so far) or "before" it (so R2 can fire).
+		"fragile_timing": "before" if str(raw.get("fragile_timing", "after")) == "before" else "after",
+		# Thiên Thạch (M05 shockwave) and Hồi Âm (M14 echo): CastResolver.validate.
+		"sky_mode": resolve_check["sky_mode"],
+		"ring_step_sec": resolve_check["ring_step_sec"],
+		"hub_mult": resolve_check["hub_mult"],
+		"echo": resolve_check["echo"],
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:
 		for key: String in PARRY_DEFAULTS.keys():
@@ -469,6 +483,22 @@ static func _requires_shape(id: String, raw: Dictionary) -> Dictionary:
 		push_warning("SkillConfig: card %s requires_shape scope '%s' unknown, using any_piece" % [id, scope])
 		scope = "any_piece"
 	return {"tag": str((r as Dictionary)["tag"]), "scope": scope}
+
+
+# Batch 2: the card's reactions list ([] = none): only REACTION_IDS, unknown ids dropped with a warning.
+static func _reactions(id: String, raw: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	var r: Variant = raw.get("reactions", [])
+	if not r is Array:
+		push_warning("SkillConfig: card %s reactions must be a list, ignored" % id)
+		return out
+	for e: Variant in r as Array:
+		var s: String = str(e)
+		if not REACTION_IDS.has(s):
+			push_warning("SkillConfig: card %s reaction '%s' unknown (known: %s), ignored" % [id, s, ", ".join(REACTION_IDS)])
+		elif not out.has(s):
+			out.append(s)
+	return out
 
 
 # Batch 1: the card's dpc_bonus ({} = none): {per_cell >= 0, from_cells >= 0, cap >= 0}; damage_per_cell grows by

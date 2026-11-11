@@ -169,7 +169,9 @@ func _init() -> void:
 			var hazard: bool = float(c.get("mire_sec", 0.0)) > 0.0
 			# Skill v2 batch 1 (2026-11-11): a delayed card (Mìn Trễ dpc 5 x fuse_mult 1.6) and a dpc_bonus card
 			# (Thương Xuyên dpc 5 + up to +3 per cell) carry their payoff in those fields, outside the single-hit band.
-			var own_measure: bool = str(c.get("resolve", "instant")) == "delayed" or not (c.get("dpc_bonus", {}) as Dictionary).is_empty()
+			# Batch 2 (2026-11-11): a push card (Địa Chấn dpc 5 + the push / R3 slam) sits under the band like chan_phong / xung_kich.
+			var own_measure: bool = str(c.get("resolve", "instant")) == "delayed" or not (c.get("dpc_bonus", {}) as Dictionary).is_empty() \
+				or str(c["effect"]) == "push"
 			if rar == "common" and not mode_card and not waves and not hazard and not own_measure and (dpc < 6.0 or dpc > 7.0) and id != "chan_phong" and id != "xung_kich" and id != "han_tran" and id != "gai_doc":
 				over.append(id + ":common")
 			if rar == "rare" and dpc > 8.0:

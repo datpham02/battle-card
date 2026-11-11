@@ -84,7 +84,8 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		# Skill v2 delayed (Hỏa Lôi): a card whose burn comes from its event payload shows that burn.
 		"burn_sec": _num(float(skill.get("burn_duration_sec", 0.0)) if float(skill.get("burn_duration_sec", 0.0)) > 0.0
 			else float(((skill.get("event_payload", {}) as Dictionary).get("ignite", {}) as Dictionary).get("sec", 0.0)), loc),
-		"fuse_sec": _num(float(skill.get("fuse_sec", 0.0)), loc),
+		"fuse_sec": _num(float(skill.get("fuse_sec", 0.0)) if str(skill.get("resolve", "")) == "delayed"
+			else maxf(float(skill.get("sky_hover_sec", 0.0)), 0.0), loc),
 		"fuse_mult": _num(float(skill.get("fuse_mult", 1.0)), loc),
 		# Hỏa Lôi Model C: the extra cells counted beyond the foe's size (damage_cells_rule footprint).
 		"cells_extra": _num(float((skill.get("damage_cells_rule", {}) as Dictionary).get("extra", 0)), loc),
@@ -126,6 +127,25 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"dpc_bonus_cap": _num(float((skill.get("dpc_bonus", {}) as Dictionary).get("cap", 0.0)), loc),
 		"payload_push_cells": _num(float(((skill.get("event_payload", {}) as Dictionary).get("push", {}) as Dictionary).get("cells", 0)), loc),
 		"clause_fragile_stacks": _num(float((skill.get("shape_clause", {}) as Dictionary).get("fragile_stacks", 0)), loc),
+		# Skill v2 batch 2: force moves (Địa Chấn / Lốc Cuốn clauses), the reaction numbers (combat.json `reactions`),
+		# the shockwave (Thiên Thạch; its shadow time is sky_hover_sec, shown through {fuse_sec} when the card has no fuse)
+		# and the echo (Hồi Âm).
+		"clause_push_cells": _num(float((skill.get("shape_clause", {}) as Dictionary).get("push_cells", skill.get("push_cells", 0))), loc),
+		"pull_cells": _num(float(skill.get("pull_cells", 0)), loc),
+		"clause_pull_cells": _num(float((skill.get("shape_clause", {}) as Dictionary).get("pull_cells", skill.get("pull_cells", 0))), loc),
+		"clause_pin_sec": _num(float((skill.get("shape_clause", {}) as Dictionary).get("pin_sec", 0.0)), loc),
+		"r1_burst": _num(cc.r1_burst_damage, loc),
+		"r2_mult": _num(cc.r2_mult, loc),
+		"r3_damage": _num(cc.r3_damage, loc),
+		"r3_pin_sec": _num(cc.r3_pin_sec, loc),
+		"hub_mult": _num(float(skill.get("hub_mult", 1.0)), loc),
+		"clause_hub_mult": _num(float((skill.get("shape_clause", {}) as Dictionary).get("hub_mult", skill.get("hub_mult", 1.0))), loc),
+		"ring_step_sec": _num(float(skill.get("ring_step_sec", 0.0)), loc),
+		"echo_mult_pct": _num(float(roundi(float((skill.get("echo", {}) as Dictionary).get("mult", 0.0)) * 100.0)), loc),
+		"echo_delay_sec": _num(float((skill.get("echo", {}) as Dictionary).get("delay_sec", 0.0)), loc),
+		"echo_shift": _num(float((skill.get("echo", {}) as Dictionary).get("shift", 0)), loc),
+		"echo_count": _num(float((skill.get("echo", {}) as Dictionary).get("count", 0)), loc),
+		"clause_echo_count": _num(float((skill.get("shape_clause", {}) as Dictionary).get("echo_count", (skill.get("echo", {}) as Dictionary).get("count", 0))), loc),
 	}
 	for zone_key: String in SkillConfig.ZONE_KEYS:
 		out[zone_key] = _num(float(skill.get(zone_key, zones.get(zone_key, 0.0))), loc)

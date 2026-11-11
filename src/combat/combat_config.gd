@@ -74,6 +74,13 @@ var seal_sec: float = 1.2
 var thorn_sec: float = 3.0
 var thorn_damage: float = 6.0
 var thorn_fragile_stacks: int = 1
+## Skill v2 batch 2 (docs/skill-v2/02-mechanics-catalog.md M15, combat.json `reactions`): the status reactions'
+## numbers. R1 Hơi Nước burst damage (ignores defense), R2 Vỡ Băng damage multiplier (replaces the Rạn multiplier),
+## R3 Va Đập damage and Pin seconds. A card opts in with its `reactions` list (CutEffects); numbers live here only.
+var r1_burst_damage: float = 12.0
+var r2_mult: float = 2.0
+var r3_damage: float = 8.0
+var r3_pin_sec: float = 0.6
 ## Drop tiles (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md, combat.json `zones`): seconds a chosen cell
 ## cracks before it falls (the hole then stays open seal_sec), the reaction share taken off that warning when judging
 ## whether the player can step off in time (cell eligible when step cooldown left <= warn - margin), and whether a
@@ -172,6 +179,7 @@ static func from_dictionary(data: Dictionary) -> CombatConfig:
 	var cap: int = int(data.get("max_cast_cells", config.max_cast_cells))
 	config.max_cast_cells = 0 if cap <= 0 else cap
 	config._parse_zones(data)
+	config._parse_reactions(data)
 	var entry: Variant = data.get("burn_on_entry", config.burn_on_entry)
 	if typeof(entry) == TYPE_BOOL:
 		config.burn_on_entry = bool(entry)
@@ -377,6 +385,34 @@ static func _parse_alpha_pair(raw: Variant, fallback: Vector2) -> Vector2:
 		if from >= 0.0 and from <= 1.0 and to >= 0.0 and to <= 1.0:
 			return Vector2(from, to)
 	return Vector2(-1.0, -1.0)
+
+
+## Batch 2: the reaction numbers as CutEffects takes them (options.reactions):
+## {r1: {burst_damage}, r2: {mult}, r3: {damage, pin_sec}}.
+func reactions() -> Dictionary:
+	return {"r1": {"burst_damage": r1_burst_damage}, "r2": {"mult": r2_mult}, "r3": {"damage": r3_damage, "pin_sec": r3_pin_sec}}
+
+
+# Batch 2: the `reactions` block; a bad number keeps its default (warning).
+func _parse_reactions(data: Dictionary) -> void:
+	var raw: Variant = data.get("reactions")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var r: Dictionary = raw as Dictionary
+	var r1: Dictionary = r.get("r1", {}) as Dictionary if r.get("r1") is Dictionary else {}
+	var r2: Dictionary = r.get("r2", {}) as Dictionary if r.get("r2") is Dictionary else {}
+	var r3: Dictionary = r.get("r3", {}) as Dictionary if r.get("r3") is Dictionary else {}
+	var burst: float = float(r1.get("burst_damage", r1_burst_damage))
+	var mult: float = float(r2.get("mult", r2_mult))
+	var dmg: float = float(r3.get("damage", r3_damage))
+	var pin: float = float(r3.get("pin_sec", r3_pin_sec))
+	if burst >= 0.0 and mult >= 1.0 and dmg >= 0.0 and pin >= 0.0:
+		r1_burst_damage = burst
+		r2_mult = mult
+		r3_damage = dmg
+		r3_pin_sec = pin
+	else:
+		push_warning("CombatConfig: invalid reactions values (r1 burst_damage>=0, r2 mult>=1, r3 damage>=0, pin_sec>=0), using defaults")
 
 
 # Story 027: the `zones` block; one invalid value -> all four fall back to the defaults (warning).

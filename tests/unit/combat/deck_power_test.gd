@@ -60,8 +60,10 @@ func _initialize() -> void:
 	# then the Mage's common hoa_loi (H1 prototype, 35 player cards, 18 common);
 	# then Song Đao + Liên Trảm (M08, both common: 37 player cards, 20 common);
 	# then Vũng Lầy (shared common: 38 player cards, 21 common);
-	# then Skill v2 batch 1 (2026-11-11): thuong_xuyen, dap_vo, min_tre (common) + chuoi_set (rare): 42 player cards.
-	check(rar["common"] == 24 and rar["rare"] == 13 and rar["epic"] == 5, "rarity spread (42 player cards, song_kiem epic) %s" % str(rar))
+	# then Skill v2 batch 1 (2026-11-11): thuong_xuyen, dap_vo, min_tre (common) + chuoi_set (rare): 42 player cards;
+	# then batch 2 (2026-11-11): dia_chan (common), loc_cuon + bang_vo (rare), hoa_bang + hoi_am + the Mage's thien_thach
+	# (epic): 48 player cards.
+	check(rar["common"] == 25 and rar["rare"] == 15 and rar["epic"] == 8, "rarity spread (48 player cards, song_kiem epic) %s" % str(rar))
 	# Story 027: the boss's default card list never holds a zone card (zones come from its traits only).
 	var boss_ids: Array[String] = cards.boss_card_order()
 	var boss_zone_free: bool = true

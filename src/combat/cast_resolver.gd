@@ -85,15 +85,35 @@ const MAX_INTERVAL_SEC: float = 2.0
 const DEFAULT_INTERVAL_SEC: float = 0.12
 const MAX_BURST_FIRST: float = 2.0
 const MAX_PIN_SEC: float = 2.0
-## Card effects a scheduled (non-instant) resolve may carry; zone / status cards stay instant.
-const SCHEDULED_EFFECTS: Array[String] = ["damage"]
+## Card effects a scheduled (non-instant) resolve may carry; zone / status cards stay instant. Batch 2: `push` (Địa
+## Chấn: a ground wave that pushes on its hit event).
+const SCHEDULED_EFFECTS: Array[String] = ["damage", "push"]
+## Batch 2 (M05 shockwave; Thiên Thạch): `sky_mode` of a SKY_TO_TARGET arrival card. drops = every cell its own drop
+## (the rule so far); shockwave = ONE drop on the hub (the mask's centre) x `hub_mult` at sky_hover_sec, then the
+## other cells ring by ring `ring_step_sec` apart (BFS distance from the hub; a cell not connected to the hub by its
+## Manhattan distance). Kinds: hub / ring. A clause may set ring_step_sec (0 = every ring at once), hub_mult, or hub_all
+## (every cell is a hub: the square clause).
+const SKY_MODES: Array[String] = ["drops", "shockwave"]
+const KIND_HUB: String = "hub"
+const KIND_RING: String = "ring"
+const MAX_RING_STEP_SEC: float = 1.0
+## Batch 2 (M14 echo; Hồi Âm): `echo` {count 1..2, mult, delay_sec, shift} on a `waves` card: after the last wave,
+## `count` echo waves repeat the cast at x mult, delay_sec apart, each shifted `shift` cells further toward the
+## target half's back edge when every shifted cell is allowed (else in place). Kind: echo. A clause may set echo_count.
+const KIND_ECHO: String = "echo"
+const MAX_ECHO_COUNT: int = 2
+const MAX_ECHO_DELAY_SEC: float = 3.0
+const MAX_FORCE_CELLS: int = 3
 ## 02-design-decisions.md §10: the product of a card's shape-clause multipliers (burst-first, surge, ...) is capped here.
 const SHAPE_GROUP_CAP: float = 2.0
 const CLAUSE_SCOPES: Array[String] = ["any_piece", "all_pieces", "union"]
 ## Batch 1 clause keys: link_step_sec (Chuỗi Sét `S`: seconds between chain links instead of the delivery timing) and
 ## fragile_stacks (Đập Vỡ `compact`: Rạn stacks applied on a hit, CutEffects).
+## Batch 2 clause keys: push_cells (Địa Chấn line), pull_cells / pin_sec (Lốc Cuốn square), ring_step_sec / hub_mult /
+## hub_all (Thiên Thạch plus / square), echo_count (Hồi Âm square).
 const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult", "fuse_sec",
-	"fuse_mult", "fuse_mult_scale", "hits", "link_step_sec", "fragile_stacks"]
+	"fuse_mult", "fuse_mult_scale", "hits", "link_step_sec", "fragile_stacks", "push_cells", "pull_cells", "pin_sec",
+	"ring_step_sec", "hub_mult", "hub_all", "echo_count"]
 const MAX_CLAUSE_FRAGILE_STACKS: int = 3
 const DROP_ORDERS: Array[String] = ["row_major", "from_centre"]
 const KIND_DROP: String = "drop"
@@ -167,6 +187,18 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 	var link_ramp_cap: float = _num_field(id, raw, "link_ramp_cap", DEFAULT_LINK_RAMP_CAP, 0.0, SHAPE_GROUP_CAP - 1.0, errors)
 	if resolve != RESOLVE_ARRIVAL and (raw.has("link_ramp") or raw.has("link_ramp_cap") or clause.has("link_step_sec")):
 		errors.append("card %s: link_ramp / link_ramp_cap / a link_step_sec clause need resolve 'arrival' (a chain)" % id)
+	# batch 2: sky shockwave (arrival) and echo (waves)
+	var sky_mode: String = str(raw.get("sky_mode", "drops"))
+	if not SKY_MODES.has(sky_mode):
+		errors.append("card %s: sky_mode '%s' unknown (known: %s)" % [id, sky_mode, ", ".join(SKY_MODES)])
+	var ring_step: float = _num_field(id, raw, "ring_step_sec", 0.1, 0.0, MAX_RING_STEP_SEC, errors)
+	var hub_mult: float = _num_field(id, raw, "hub_mult", 1.0, 1.0, SHAPE_GROUP_CAP, errors)
+	if resolve != RESOLVE_ARRIVAL and (raw.has("sky_mode") or raw.has("ring_step_sec") or raw.has("hub_mult")
+			or clause.has("ring_step_sec") or clause.has("hub_mult") or clause.has("hub_all")):
+		errors.append("card %s: sky_mode / ring_step_sec / hub_mult / a shockwave clause need resolve 'arrival'" % id)
+	var echo: Dictionary = _echo(id, raw.get("echo", {}), errors)
+	if resolve != RESOLVE_WAVES and (not echo.is_empty() or clause.has("echo_count")):
+		errors.append("card %s: echo / an echo_count clause need resolve 'waves'" % id)
 	if resolve == RESOLVE_INSTANT and str(dmg_rule.get("mode", "all")) != "all":
 		errors.append("card %s: damage_cells_rule needs a scheduled resolve" % id)
 	if resolve != RESOLVE_DELAYED and (raw.has("fuse_sec") or raw.has("fuse_mult") or raw.has("max_active")
@@ -174,8 +206,9 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 		errors.append("card %s: fuse_sec / fuse_mult / max_active / a fuse clause need resolve 'delayed'" % id)
 	if clause.has("hits") and resolve != RESOLVE_WAVES:
 		errors.append("card %s: a shape_clause hits override needs resolve 'waves'" % id)
-	if resolve != RESOLVE_DELAYED and not payload.is_empty():
-		errors.append("card %s: event_payload is carried by resolve 'delayed' events only (for now)" % id)
+	# batch 2: an event_payload rides on every scheduled event (delayed, arrival, waves); never on an instant card
+	if resolve == RESOLVE_INSTANT and not payload.is_empty():
+		errors.append("card %s: event_payload needs a scheduled resolve (delayed / arrival / waves)" % id)
 	if clause.has("fuse_mult") and fuse_mult > 0.0 and float(clause["fuse_mult"]) / fuse_mult > SHAPE_GROUP_CAP + 0.000001:
 		errors.append("card %s: shape_clause fuse_mult / fuse_mult must be <= %s (shape-clause group cap)" % [id, SHAPE_GROUP_CAP])
 	if resolve != RESOLVE_INSTANT and not SCHEDULED_EFFECTS.has(effect):
@@ -187,9 +220,11 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 			"wave_mults": [] as Array[float], "burst_first": 1.0, "burst_pin_sec": 0.0, "shape_clause": {},
 			"sky_hover_sec": -1.0, "sky_stagger_sec": -1.0, "drop_order": "row_major", "awakening_extra_hits": 0,
 			"fixed_hit": false, "fuse_sec": 1.5, "fuse_mult": 1.0, "max_active": 0, "event_payload": {},
-			"damage_cells_rule": {"mode": "all"}, "link_ramp": 0.0, "link_ramp_cap": DEFAULT_LINK_RAMP_CAP, "errors": errors}
+			"damage_cells_rule": {"mode": "all"}, "link_ramp": 0.0, "link_ramp_cap": DEFAULT_LINK_RAMP_CAP,
+			"sky_mode": "drops", "ring_step_sec": 0.1, "hub_mult": 1.0, "echo": {}, "errors": errors}
 	return {"fuse_sec": fuse_sec, "fuse_mult": fuse_mult, "max_active": max_active, "event_payload": payload,
 		"damage_cells_rule": dmg_rule, "link_ramp": link_ramp, "link_ramp_cap": link_ramp_cap,
+		"sky_mode": sky_mode, "ring_step_sec": ring_step, "hub_mult": hub_mult, "echo": echo,
 		"resolve": resolve, "hits": hits, "max_hits": max_hits, "hit_interval_sec": interval, "wave_mults": mults,
 		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clause, "sky_hover_sec": hover,
 		"sky_stagger_sec": stagger, "drop_order": drop_order, "awakening_extra_hits": extra_hits, "fixed_hit": fixed_hit,
@@ -200,13 +235,15 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 ## (CastContext; may be empty). [param timing] = the delivery timing table (CombatConfig.delivery_timing).
 ## [param locked] = the cells locked (cracking / hole) at the resolve: no event on them; the surge does not cross them.
 ## [param excluded] = cells skipped by a `delayed` card (already armed by the same side); other modes ignore it.
+## [param allowed] = the cells of the target half (batch 2: an echo shifts only onto allowed cells; [] = no check).
 static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
-		timing: Dictionary = SkillDelivery.DEFAULT_TIMING, locked: Array = [], excluded: Array = []) -> Dictionary:
+		timing: Dictionary = SkillDelivery.DEFAULT_TIMING, locked: Array = [], excluded: Array = [], allowed: Array = []) -> Dictionary:
 	var resolve: String = str(skill.get("resolve", RESOLVE_INSTANT))
 	var events: Array[Dictionary] = []
 	var max_hits: int = maxi(int(skill.get("max_hits", 1)), 1)
 	var surge: bool = false
 	var extra: Dictionary = {}
+	var payload: Dictionary = skill.get("event_payload", {}) as Dictionary
 	match resolve:
 		RESOLVE_DELAYED:
 			max_hits = 1
@@ -225,9 +262,6 @@ static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
 				var e: Dictionary = _event(0, float(fuse["fuse_sec"]), open, KIND_FUSE, float(fuse["fuse_mult"]))
 				e["armed"] = true
 				e["recheck_locked"] = true
-				var payload: Dictionary = skill.get("event_payload", {}) as Dictionary
-				if not payload.is_empty():
-					e["payload"] = payload.duplicate(true)
 				events.append(e)
 		RESOLVE_WAVES:
 			var hits: int = wave_count(skill, context)
@@ -237,6 +271,12 @@ static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
 			for k: int in hits:
 				var m: float = float(mults[k]) if k < mults.size() else 1.0
 				events.append(_event(k, float(k) * interval, cells.duplicate(), "hit", m))
+			# batch 2 (Hồi Âm): the echo waves after the last wave
+			var echoes: Array[Dictionary] = echo_events(skill, cells, context, hits, float(hits - 1) * interval, allowed)
+			if not echoes.is_empty():
+				max_hits += echoes.size()
+				events.append_array(echoes)
+				extra["echo_count"] = echoes.size()
 		RESOLVE_ARRIVAL:
 			if _delivery_type(skill, context) == SkillDelivery.CASTER_TO_TARGET:
 				surge = true
@@ -245,11 +285,15 @@ static func plan(skill: Dictionary, cells: Array[Vector2i], context: Dictionary,
 				surge = true
 				events = sky_events(skill, cells, context, timing, locked)
 			else:
-				events = _arrival_events(skill, cells, context, timing)
+				events = _arrival_events(skill, cells, context, timing, locked)
 		_:
 			resolve = RESOLVE_INSTANT
 			max_hits = 1
 			events.append(_event(0, 0.0, cells.duplicate(), "hit", 1.0))
+	# the card's event_payload rides on every scheduled event (ignite on the event's cells, push on a hit; arbiter)
+	if resolve != RESOLVE_INSTANT and not payload.is_empty():
+		for e: Dictionary in events:
+			e["payload"] = payload.duplicate(true)
 	if not surge:
 		events.sort_custom(_event_before)
 	var waves: Dictionary = {}
@@ -414,6 +458,8 @@ static func sky_events(skill: Dictionary, cells: Array[Vector2i], context: Dicti
 		stagger = maxf(float(t.get("stagger_sec", 0.03)), 0.0)
 	var caster: Vector2i = context.get("caster_cell", Vector2i(-1, open[0].y))
 	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	if str(skill.get("sky_mode", "drops")) == "shockwave":
+		return shockwave_events(skill, open, context, hover, caster)
 	var branched: bool = bool(clause.get("tips_first", false)) and clause_holds(clause, context)
 	var order: Array[Vector2i] = []
 	var regions_of: Dictionary = {}
@@ -459,6 +505,79 @@ static func sky_events(skill: Dictionary, cells: Array[Vector2i], context: Dicti
 		e["region"] = int(regions_of.get(order[i], 0))
 		e["from"] = NO_CELL
 		e["pin_sec"] = 0.0
+		out.append(e)
+	return out
+
+
+## Batch 2 (M05 shockwave, Thiên Thạch): the events of a `shockwave` sky card on the open cells [param open]: the hub
+## (ShapeTags centre, ties nearest the caster) at [param hover] x hub_mult (kind hub), then every other cell at hover +
+## ring x ring_step_sec (kind ring; ring = BFS distance from the hub inside the open cells, the Manhattan distance
+## for a cell not connected). A clause that holds may replace ring_step_sec / hub_mult, or (hub_all) make every cell a
+## hub at hover. Every event is its own wave (one hit per cast with max_hits 1), ordered (t, y, x).
+static func shockwave_events(skill: Dictionary, open: Array[Vector2i], context: Dictionary, hover: float, caster: Vector2i) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var holds: bool = clause_holds(clause, context)
+	var ring_sec: float = float(skill.get("ring_step_sec", 0.1))
+	var hub_mult: float = minf(float(skill.get("hub_mult", 1.0)), SHAPE_GROUP_CAP)
+	var hub_all: bool = false
+	if holds:
+		ring_sec = float(clause.get("ring_step_sec", ring_sec))
+		hub_mult = minf(float(clause.get("hub_mult", hub_mult)), SHAPE_GROUP_CAP)
+		hub_all = bool(clause.get("hub_all", false))
+	var hub: Vector2i = ShapeTags.tags_for(open, false, caster)["centre"]
+	var dist: Dictionary = _bfs(open, hub)
+	var ordered: Array[Vector2i] = open.duplicate()
+	ordered.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		var da: int = int(dist.get(a, absi(a.x - hub.x) + absi(a.y - hub.y)))
+		var db: int = int(dist.get(b, absi(b.x - hub.x) + absi(b.y - hub.y)))
+		if da != db:
+			return da < db
+		return a.y < b.y or (a.y == b.y and a.x < b.x))
+	for i: int in ordered.size():
+		var c: Vector2i = ordered[i]
+		var ring: int = 0 if hub_all else int(dist.get(c, absi(c.x - hub.x) + absi(c.y - hub.y)))
+		var is_hub: bool = hub_all or c == hub
+		var one: Array[Vector2i] = [c]
+		var e: Dictionary = _event(i, hover + float(ring) * ring_sec, one, KIND_HUB if is_hub else KIND_RING, hub_mult if is_hub else 1.0)
+		e["step"] = ring
+		e["region"] = 0
+		e["from"] = NO_CELL if is_hub else hub
+		e["pin_sec"] = 0.0
+		out.append(e)
+	return out
+
+
+## Batch 2 (M14 echo, Hồi Âm): the echo waves of a `waves` card whose `echo` {count, mult, delay_sec, shift} is set
+## (a clause `echo_count` that holds replaces the count). Echo k (1..count) is wave [param first_wave] + k - 1 at
+## [param last_t] + k x delay_sec on the mask shifted k x shift cells toward the target half's back edge (+x for the
+## player's cast, -x for the boss's) when every shifted cell is in [param allowed] ([] = unchecked), else in place.
+## Kind echo, x mult; `echo` = k on the event. [] when the card has no echo.
+static func echo_events(skill: Dictionary, cells: Array[Vector2i], context: Dictionary, first_wave: int, last_t: float,
+		allowed: Array = []) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var echo: Dictionary = skill.get("echo", {}) as Dictionary
+	if echo.is_empty():
+		return out
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var count: int = int(echo.get("count", 1))
+	if clause.has("echo_count") and clause_holds(clause, context):
+		count = int(clause["echo_count"])
+	count = clampi(count, 0, MAX_ECHO_COUNT)
+	var dir: int = 1 if int(context.get("side", CombatState.Side.PLAYER)) == CombatState.Side.PLAYER else -1
+	var shift: int = int(echo.get("shift", 1))
+	for k: int in range(1, count + 1):
+		var shifted: Array[Vector2i] = []
+		var ok: bool = true
+		for c: Vector2i in cells:
+			var s: Vector2i = c + Vector2i(dir * shift * k, 0)
+			shifted.append(s)
+			if not allowed.is_empty() and not allowed.has(s):
+				ok = false
+		var e: Dictionary = _event(first_wave + k - 1, last_t + float(k) * float(echo.get("delay_sec", 0.6)),
+			shifted if ok else cells.duplicate(), KIND_ECHO, float(echo.get("mult", 0.5)))
+		e["echo"] = k
+		e["shifted"] = ok
 		out.append(e)
 	return out
 
@@ -564,13 +683,37 @@ static func _has_any_tag(have: Array, want: Array[String]) -> bool:
 	return false
 
 
-static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: Dictionary, timing: Dictionary) -> Array[Dictionary]:
+# Batch 2 (M04): [param locked] cells (cracking / holes) get no event; a GROUND_PROPAGATION run never crosses them:
+# it starts on the open cell nearest its origin and reaches only the open cells 4-connected to it, at (BFS distance +
+# the start's Manhattan distance from the origin) x step_sec. Other types just drop the locked cells.
+static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: Dictionary, timing: Dictionary,
+		locked: Array = []) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	var delivery: Dictionary = context.get("delivery", skill.get("delivery", {})) as Dictionary
 	var caster: Vector2i = context.get("caster_cell", Vector2i(-1, cells[0].y if not cells.is_empty() else 0))
+	if not locked.is_empty():
+		var open: Array[Vector2i] = []
+		for c: Vector2i in cells:
+			if not locked.has(c) and not open.has(c):
+				open.append(c)
+		cells = open
+	if cells.is_empty():
+		return events
 	var times: Dictionary = SkillDelivery.arrival_times(delivery, cells, caster, timing)
 	var per_cell_wave: bool = str(delivery.get("type", "")) == SkillDelivery.SKY_TO_TARGET
 	var chain: bool = str(delivery.get("type", "")) == SkillDelivery.SEQUENTIAL_CHAIN
+	if str(delivery.get("type", "")) == SkillDelivery.GROUND_PROPAGATION:
+		var origin: Vector2i = SkillDelivery.origin_cell(delivery, cells, caster)
+		var start: Vector2i = SkillDelivery.nearest_cell(cells, origin)
+		var dist: Dictionary = _bfs(cells, start)
+		var step: float = float(SkillDelivery._timing_of(timing, SkillDelivery.GROUND_PROPAGATION)["step_sec"])
+		var base: int = absi(start.x - origin.x) + absi(start.y - origin.y)
+		var reached: Array[Vector2i] = []
+		for c: Vector2i in cells:
+			if dist.has(c):
+				reached.append(c)
+				times[c] = float(base + int(dist[c])) * step
+		cells = reached
 	# Batch 1 (Chuỗi Sét): a link_step_sec clause that holds re-times the links; the ramp multiplies link k.
 	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
 	var link_mult: Dictionary = {}
@@ -707,7 +850,37 @@ static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictiona
 		out["link_step_sec"] = _num_field(id, c, "link_step_sec", DEFAULT_INTERVAL_SEC, MIN_INTERVAL_SEC, MAX_INTERVAL_SEC, errors)
 	if c.has("fragile_stacks"):
 		out["fragile_stacks"] = _int_field(id, c, "fragile_stacks", 1, 1, MAX_CLAUSE_FRAGILE_STACKS, errors)
+	for k: String in ["push_cells", "pull_cells"]:
+		if c.has(k):
+			out[k] = _int_field(id, c, k, 1, 1, MAX_FORCE_CELLS, errors)
+	if c.has("pin_sec"):
+		out["pin_sec"] = _num_field(id, c, "pin_sec", 0.0, 0.0, MAX_PIN_SEC, errors)
+	if c.has("ring_step_sec"):
+		out["ring_step_sec"] = _num_field(id, c, "ring_step_sec", 0.1, 0.0, MAX_RING_STEP_SEC, errors)
+	if c.has("hub_mult"):
+		out["hub_mult"] = _num_field(id, c, "hub_mult", 1.0, 1.0, SHAPE_GROUP_CAP, errors)
+	if c.has("hub_all"):
+		if not c["hub_all"] is bool:
+			errors.append("card %s: shape_clause hub_all must be true / false" % id)
+		else:
+			out["hub_all"] = bool(c["hub_all"])
+	if c.has("echo_count"):
+		out["echo_count"] = _int_field(id, c, "echo_count", 1, 1, MAX_ECHO_COUNT, errors)
 	return out
+
+
+# The card's echo ({} = none): {count 1..2, mult >= 0, delay_sec > 0, shift 0..2}.
+static func _echo(id: String, raw: Variant, errors: Array[String]) -> Dictionary:
+	if raw == null or (raw is Dictionary and (raw as Dictionary).is_empty()):
+		return {}
+	if not raw is Dictionary:
+		errors.append("card %s: echo must be an object" % id)
+		return {}
+	var d: Dictionary = raw as Dictionary
+	return {"count": _int_field(id, d, "count", 1, 1, MAX_ECHO_COUNT, errors),
+		"mult": _num_field(id, d, "mult", 0.5, 0.0, SHAPE_GROUP_CAP, errors),
+		"delay_sec": _num_field(id, d, "delay_sec", 0.6, MIN_INTERVAL_SEC, MAX_ECHO_DELAY_SEC, errors),
+		"shift": _int_field(id, d, "shift", 1, 0, 2, errors)}
 
 
 # The card's damage_cells_rule ({} / {"mode": "all"} = every cell): DAMAGE_CELL_MODES; footprint {extra 0..4}, max {max 1..20}.

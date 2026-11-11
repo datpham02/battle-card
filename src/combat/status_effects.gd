@@ -264,6 +264,20 @@ func frost_stacks(side: int) -> int:
 	return int(_frost.get(side, 0))
 
 
+## Batch 2 (R1 Hơi Nước): removes up to [param stacks] Han from [param side] without a burst; returns how many went.
+func consume_frost(side: int, stacks: int) -> int:
+	var have: int = frost_stacks(side)
+	var gone: int = mini(maxi(stacks, 0), have)
+	if gone <= 0:
+		return 0
+	if have - gone <= 0:
+		_frost.erase(side)
+	else:
+		_frost[side] = have - gone
+	frost_changed.emit(side)
+	return gone
+
+
 ## HUD alias of [method frost_stacks].
 func get_frost_stacks(side: int) -> int:
 	return frost_stacks(side)
@@ -399,6 +413,16 @@ func is_pinned(side: int) -> bool:
 ## Seconds of pin left for [param side]; 0 if not pinned.
 func get_pin_left(side: int) -> float:
 	return float(_pins.get(side, 0.0))
+
+
+## Batch 2 (R2 Vỡ Băng): ends the Pin of [param side] now (the unlock bookkeeping runs as for a timed-out pin).
+## Returns true when a pin was running.
+func end_pin(side: int) -> bool:
+	if not _pins.has(side):
+		return false
+	_pins.erase(side)
+	_mark_unlocked(side, 0.0)
+	return true
 
 
 ## Removes every effect without emitting signals.

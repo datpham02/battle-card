@@ -592,6 +592,7 @@ func _wire_zones() -> void:
 	status.hole_cracked.connect(func(_side: int, _cells: Array[Vector2i]) -> void: _mark_floor_dirty())
 	status.hole_fell.connect(func(side: int, _cell: Vector2i, victim: bool) -> void:
 		if victim and _state != null and (_state.is_player_dead() if side == CombatState.Side.PLAYER else _state.is_enemy_dead()):
+	_arbiter.reactions = _config.reactions()
 			_fell[side] = true
 		_mark_floor_dirty())
 	status.hole_restored.connect(func(_side: int, _cell: Vector2i) -> void: _mark_floor_dirty())

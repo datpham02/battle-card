@@ -40,6 +40,11 @@
 		"hole_fall_lethal": true,
 		"hole_return_fade_sec": 0.3
 	},
+	"reactions": {
+		"r1": {"burst_damage": 12.0},
+		"r2": {"mult": 2.0},
+		"r3": {"damage": 8.0, "pin_sec": 0.6}
+	},
 	"hazards": {
 		"mire_step_mult": 1.6,
 		"mire_tick_damage": 0.5,

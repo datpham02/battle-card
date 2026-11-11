@@ -3,7 +3,7 @@ extends SceneTree
 ## the 4 batch-1 cards from the bag through the card menu and saves the in-game frame right after its damaging impact
 ## under production/qa/evidence/skill-v2-batch1/ (coding-standards: a parse check is not a run). Modelled on
 ## tools/qa/impact_footage.gd. Not a test (no *_test.gd name): the suite runner skips it.
-## Run (WINDOWED, not headless): godot --path . --windowed --resolution 1280x720 -s res://tests/integration/run/skill_v2_batch1_evidence.gd
+## Run (WINDOWED, not headless, muted): godot --path . --windowed --resolution 1280x720 --audio-driver Dummy -s res://tests/integration/run/skill_v2_batch1_evidence.gd
 
 const OUT: String = "res://production/qa/evidence/skill-v2-batch1"
 ## card -> {shape, offset (anchor relative to the boss), guard (Guard given to the boss before the cast), name}.

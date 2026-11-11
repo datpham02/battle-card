@@ -1030,3 +1030,21 @@ card.min_tre.name,Mìn Trễ,Delay Mine
 card.min_tre.desc,Cài mìn lên các ô; sau {fuse_sec} s nổ cùng lúc: địch đứng trên mìn chịu sát thương theo số ô x{fuse_mult} và bị đẩy {payload_push_cells} ô ra xa tâm khối.,Plants mines on the cells; after {fuse_sec} s they all blow at once: a foe on a mine takes damage per cell x{fuse_mult} and is pushed {payload_push_cells} cell away from the Block's centre.
 card.min_tre.desc_battle,"Mìn nổ sau {fuse_sec} s, đẩy {payload_push_cells} ô.","Mines blow after {fuse_sec} s, push {payload_push_cells}."
 ui.hud.need_shape,chưa đúng hình khối,wrong block shape
+card.dia_chan.name,Địa Chấn,Tremor
+card.dia_chan.desc,Rung chấn chạy qua khối từ ô gần bạn nhất (hố chặn lại); trúng thì đẩy địch {push_cells} ô. Khối thẳng: đẩy {clause_push_cells} ô. Bị chặn đường: Va Đập {r3_damage} sát thương và Đóng Băng {r3_pin_sec} s.,A tremor rolls through the Block from the cell nearest you (holes stop it); a hit pushes the foe {push_cells} cell. Line Block: push {clause_push_cells}. Blocked: Slam {r3_damage} damage and Freeze {r3_pin_sec} s.
+card.dia_chan.desc_battle,"Rung chấn, đẩy {push_cells} ô; chặn thì Va Đập.","Tremor, push {push_cells}; blocked = Slam."
+card.loc_cuon.name,Lốc Cuốn,Vortex
+card.loc_cuon.desc,"Kéo địch đứng trong hoặc sát khối {pull_cells} ô về tâm khối, rồi đánh. Khối vuông: kéo {clause_pull_cells} ô và Đóng Băng {clause_pin_sec} s. Bị chặn đường: Va Đập {r3_damage} sát thương.","Pulls a foe inside or next to the Block {pull_cells} cell toward its centre, then hits. Square Block: pull {clause_pull_cells} and Freeze {clause_pin_sec} s. Blocked: Slam {r3_damage} damage."
+card.loc_cuon.desc_battle,"Kéo {pull_cells} ô về tâm, rồi đánh.","Pull {pull_cells} to the centre, then hit."
+card.bang_vo.name,Băng Vỡ,Shatter
+card.bang_vo.desc,Gai băng rơi: đặt {fragile_stacks} Rạn trước khi đánh. Địch đang Đóng Băng và có Rạn: Vỡ Băng x{r2_mult} và tan băng ngay.,An ice spike drops: {fragile_stacks} Rạn before the hit. A Frozen foe with Rạn: Shatter x{r2_mult} and the ice breaks at once.
+card.bang_vo.desc_battle,"Rạn trước, Vỡ Băng x{r2_mult} nếu đang Đóng Băng.",Rạn first; Shatter x{r2_mult} if Frozen.
+card.hoa_bang.name,Hỏa Băng,Frostfire
+card.hoa_bang.desc,Đốt các ô trong {burn_sec} s và thêm {frost_stacks} Giá Lạnh khi trúng: địch đứng trên ô cháy mà nhận Giá Lạnh thì Hơi Nước nổ {r1_burst} sát thương (bỏ qua giáp) và dập lửa ô đó.,Burns the cells for {burn_sec} s and adds {frost_stacks} Hàn on a hit: a foe on a burning cell that gains Hàn bursts into Steam for {r1_burst} damage (ignores defense) and the fire goes out there.
+card.hoa_bang.desc_battle,Đốt + Giá Lạnh: Hơi Nước nổ {r1_burst}.,Burn + Hàn: Steam bursts {r1_burst}.
+card.thien_thach.name,Thiên Thạch,Meteor
+card.thien_thach.desc,"Thiên thạch rơi xuống ô tâm sau {fuse_sec} s bóng đổ, tâm chịu x{hub_mult}; sóng xung kích lan ra từng vòng, {ring_step_sec} s mỗi vòng. Mọi ô cháy {burn_sec} s. Khối chữ thập: cả bốn cánh nổ cùng lúc, tâm x{clause_hub_mult}.","A meteor falls on the centre cell after a {fuse_sec} s shadow, the centre takes x{hub_mult}; a shockwave rolls outward ring by ring, {ring_step_sec} s per ring. Every cell burns {burn_sec} s. Plus Block: all four arms at once, centre x{clause_hub_mult}."
+card.thien_thach.desc_battle,"Tâm x{hub_mult}, sóng lan từng vòng, rồi cháy.","Centre x{hub_mult}, ring shockwave, then burn."
+card.hoi_am.name,Hồi Âm,Echo
+card.hoi_am.desc,"Đánh ngay, rồi sau {echo_delay_sec} s một tiếng vọng x{echo_mult_pct}% trên cùng hình khối dịch {echo_shift} ô về phía mép sau của địch (không dịch được thì tại chỗ). Khối vuông: {clause_echo_count} tiếng vọng.","Hits now, then after {echo_delay_sec} s an echo at {echo_mult_pct}% on the same shape shifted {echo_shift} cell toward the foe's back edge (in place when it cannot shift). Square Block: {clause_echo_count} echoes."
+card.hoi_am.desc_battle,"Đánh, rồi vọng x{echo_mult_pct}% dịch {echo_shift} ô.","Hit, then echo {echo_mult_pct}% shifted {echo_shift}."

@@ -321,9 +321,11 @@ func test_legacy_cards_stay_instant() -> void:
 	for id: String in sc.cards.keys():
 		if str((sc.cards[id] as Dictionary).get("resolve", "instant")) != "instant":
 			not_instant.append(id)
-	# Skill v2 cards opt in one by one (tram_dia, 2026-11-08; batch 1 chuoi_set / dap_vo / min_tre / thuong_xuyen,
-	# 2026-11-11); every other card stays on the legacy instant path.
-	var v2: Array[String] = ["chuoi_set", "dap_vo", "hoa_loi", "lien_tram", "min_tre", "ngan_kiem", "song_dao", "thuong_xuyen", "tram_dia"]
+	# Skill v2 cards opt in one by one (tram_dia, 2026-11-08; batch 1 chuoi_set / dap_vo / min_tre / thuong_xuyen and
+	# batch 2 bang_vo / dia_chan / hoa_bang / hoi_am / loc_cuon / thien_thach, 2026-11-11); every other card stays on the
+	# legacy instant path.
+	var v2: Array[String] = ["bang_vo", "chuoi_set", "dap_vo", "dia_chan", "hoa_bang", "hoa_loi", "hoi_am", "lien_tram", "loc_cuon",
+		"min_tre", "ngan_kiem", "song_dao", "thien_thach", "thuong_xuyen", "tram_dia"]
 	not_instant.sort()
 	ck("only the Skill v2 cards leave the instant (legacy) path", not_instant == v2, str(not_instant))
 	var w: Dictionary = _world("tl", {})

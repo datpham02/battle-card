@@ -141,6 +141,8 @@ const BURN_EXPECT: float = 0.6
 ## Skill v2 delayed (Hỏa Lôi): the bot's expected share of a fuse that lands (its value estimate only; the sim measures
 ## the real hit rate in the fz_ metrics).
 const FUSE_HIT_EXPECT: float = 0.5
+## Skill v2 batch 2 (Hồi Âm): the bot's expected share of echo waves that still find the boss (value estimate only).
+const ECHO_STAY_EXPECT: float = 0.5
 const BURN_STACK_MULT: float = 2.0
 const FROST_EXPECT: float = 0.8
 const AVG_CELLS: float = 3.5
@@ -1097,6 +1099,7 @@ func _wire_zones() -> void:
 		mv.add_blocker(func(cell: Vector2i) -> bool: return st.is_hole(hole_side, cell))
 		arbiter.blocked_cell_fns[side] = Callable(mv, "is_cell_blocked")
 	arbiter.zone_numbers = combat.zone_numbers()
+	arbiter.reactions = combat.reactions()
 
 
 # Mirrors CombatView._boss_card_ids: zone cards are never the boss's (SkillConfig.boss_card_order).
@@ -2838,6 +2841,15 @@ func cast_value(id: String, level: int, count: int) -> float:
 		# Batch 1 (Đập Vỡ): x guard_break_mult while the boss has Guard (the Guard itself is stripped, never subtracted).
 		if bool(c.get("guard_break", false)) and status.guard_amount(ENEMY) > 0.0:
 			dmg *= float(c.get("guard_break_mult", 1.0))
+		# Batch 2: a shockwave's hub multiplier is one cell of the mask (the hit lands on one cell): mean over the cells;
+		# an echo adds its waves at x mult (a unit that stays is hit again); R2 doubles instead of the Rạn multiplier.
+		if str(c.get("sky_mode", "drops")) == "shockwave" and count > 0:
+			dmg *= (float(c.get("hub_mult", 1.0)) + float(count - 1)) / float(count)
+		var echo: Dictionary = c.get("echo", {}) as Dictionary
+		if not echo.is_empty():
+			dmg *= 1.0 + float(echo.get("count", 1)) * float(echo.get("mult", 0.5)) * ECHO_STAY_EXPECT
+		if (c.get("reactions", []) as Array).has("r2") and status.is_pinned(ENEMY) and (status.fragile_stacks(ENEMY) > 0 or int(c.get("fragile_stacks", 0)) > 0):
+			dmg *= CombatConfig.load_from_file().r2_mult / maxf(status.fragile_mult_against(ENEMY), 1.0)
 		if status.fragile_stacks(ENEMY) > 0 and float(c.get("bonus_vs_fragile_mult", 1.0)) > 1.0:
 			dmg *= float(c["bonus_vs_fragile_mult"])
 		dmg *= status.damage_mult_against(ENEMY)
