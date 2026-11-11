@@ -218,19 +218,71 @@ func _draw() -> void:
 		i = j
 	# Skill v2 Hỏa Lôi H2: the command glyph at the Mage's hand and the tile-origin flame columns (FuseFx), each
 	# group's Ink edges first, back rows first.
-	var fuse: Array[Dictionary] = fuse_items()
+	_draw_groups(fuse_items())
+	# Skill v2 V1: the standing part of the player's per-card impacts (ImpactFx.standing_items), rising from the hit
+	# tiles like the flame columns, back rows first.
+	_draw_groups(impact_standing_items())
+
+
+## Screen-space items [{rect, col, edge, group}] drawn group by group (back rows first): each group's Ink edges
+## (`edge` px, 0 = none), then its colours, so a nearer group's edge cuts cleanly over the one behind.
+func _draw_groups(list: Array[Dictionary]) -> void:
 	var a: int = 0
-	while a < fuse.size():
+	while a < list.size():
 		var b: int = a
-		while b < fuse.size() and int(fuse[b].get("group", -1)) == int(fuse[a].get("group", -1)):
+		while b < list.size() and int(list[b].get("group", -1)) == int(list[a].get("group", -1)):
 			b += 1
 		for n: int in range(a, b):
-			var e: int = int(fuse[n].get("edge", 0))
+			var e: int = int(list[n].get("edge", 0))
 			if e > 0:
-				draw_rect(Rect2((fuse[n]["rect"] as Rect2i).grow(e)), Color(SlabPainter.INK, float((fuse[n]["col"] as Color).a)))
+				draw_rect(Rect2((list[n]["rect"] as Rect2i).grow(e)), Color(SlabPainter.INK, float((list[n]["col"] as Color).a)))
 		for n: int in range(a, b):
-			draw_rect(Rect2(fuse[n]["rect"]), fuse[n]["col"])
+			draw_rect(Rect2(list[n]["rect"]), list[n]["col"])
 		a = b
+
+
+## Skill v2 V1 (ImpactFx): the STANDING items of the player's resolved cast on every hit cell: screen art px over
+## the tile's drawn ground centre (unmapped, like fuse_items), [{rect, col, edge, group}] with group = draw index
+## (back rows first). [] while nothing stands: no recorded hit, a card without an `impact_variants` form, or a cast
+## whose impacts a pack owns (the same rule as the flat path in _side_items).
+func impact_standing_items() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or _floor == null:
+		return out
+	var tr: Dictionary = combat.cast_travel_now(TRAVEL_TAIL_SEC, CombatState.Side.PLAYER)
+	if tr.is_empty() or not bool(tr.get("hit", false)) or bool(tr.get("swinging", false)):
+		return out
+	var variant: Dictionary = CastVfx.impact_variant(str(tr.get("skill_id", "")))
+	var form: String = ImpactFx.form_of(variant)
+	if form.is_empty():
+		return out
+	var delivery: Dictionary = tr["delivery"]
+	var impact: String = str(delivery.get("impact", ""))
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var packs_own: bool = str(delivery.get("type", "")) == SkillDelivery.CASTER_TO_TARGET \
+			and str(delivery.get("travel", "")) == "hero_pack" and CastVfx.packs_replace_shards(CastVfx.entry_for(hero_id, impact))
+	if packs_own or CastVfx.impact_pack_owns_cells(impact):
+		return out
+	var style: Dictionary = CastVfx.impact_style(impact)
+	var sec: float = float(variant.get("sec", style.get("sec", 0.24)))
+	var cols: Array[Color] = CastVfx.impact_colours(impact, hero_id)
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	var geo: BoardGeometry = _bg()
+	var cells: Array = tr["cells"].duplicate()
+	cells.sort_custom(func(p: Vector2i, q: Vector2i) -> bool: return p.y < q.y or (p.y == q.y and p.x < q.x))
+	var arrive: Dictionary = tr["arrive"]
+	for g: int in cells.size():
+		var c: Vector2i = cells[g]
+		var age: float = float(tr["rel"]) - float(arrive.get(c, 0.0))
+		var base: Vector2i = _centre(c)
+		if geo != null and geo.is_warped():
+			base = geo.warp_art_px(base)
+		var w: int = _floor.cell_art_rect(c).size.x
+		for it: Dictionary in ImpactFx.standing_items(form, base, w, age, sec, hash(c) + 11, 1, variant, reduce):
+			var r: Rect2i = it["rect"]
+			out.append({"rect": r, "col": cols[1] if bool(it["light"]) else cols[0], "edge": 1 if mini(r.size.x, r.size.y) >= 3 else 0, "group": g})
+	return out
 
 
 
@@ -326,13 +378,22 @@ func fuse_items() -> Array[Dictionary]:
 		var units: UnitLayer = combat.get_battle_canvas().get_unit_layer()
 		var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
 		var entry: Dictionary = CastVfx.entry_for(hero_id, "", actor.get_skill_id())
+		var k: float = 1.0 - actor.get_time_left() / maxf(actor.get_duration(), 0.001)
 		if units != null and bool(entry.get("glyph", false)):
 			var hand: Vector2i = CastVfx.hand_point({"hand": entry.get("charge_hand", entry.get("hand", [0, 0]))},
 				units.unit_feet_art(CombatState.Side.PLAYER))
-			var k: float = 1.0 - actor.get_time_left() / maxf(actor.get_duration(), 0.001)
 			for it: Dictionary in FuseFx.glyph_items(hand, k, reduce):
 				it["group"] = -1
 				out.append(it)
+		elif units != null and CastVfx.card_clip(actor.get_skill_id()).is_empty():
+			# Skill v2 V2: every other cast speaks its hero's glyph (index cast_glyphs) at the hold frame's hand.
+			var kit: Dictionary = CastVfx.cast_glyph(hero_id)
+			if not kit.is_empty():
+				var ghand: Vector2i = CastVfx.hand_point({"hand": kit.get("hand", entry.get("hand", [0, 0]))},
+					units.unit_feet_art(CombatState.Side.PLAYER))
+				for it: Dictionary in CastGlyphFx.items(str(kit["form"]), ghand, k, CastVfx.block_colours(hero_id), reduce):
+					it["group"] = -1
+					out.append(it)
 	var recs: Array[Dictionary] = combat.get_fuse_fx().duplicate()
 	recs.sort_custom(func(p: Dictionary, q: Dictionary) -> bool: return (p["cell"] as Vector2i).y < (q["cell"] as Vector2i).y)
 	var now: float = combat.combat_clock()
@@ -456,7 +517,7 @@ func _surge_items(out: Array[Dictionary], combat: CombatView, hero_id: String) -
 ## The block colours key of the boss's casts (index.json block_colours `_enemy`, #CFC6B4 flat).
 const ENEMY_BLOCK: String = "_enemy"
 ## Seconds the recorded cast stays drawn past its last arrival (covers the longest impact_style sec).
-const TRAVEL_TAIL_SEC: float = 0.4
+const TRAVEL_TAIL_SEC: float = 0.55
 
 
 func _streak(out: Array[Dictionary], from: Vector2i, to: Vector2i, t: float, block: Array[Color]) -> void:
@@ -533,13 +594,21 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 	# 2026-11-04: an impact drawn by its own FloorVfx pack (impact_packs: the Mage's fire) drops the code flash / shards too.
 	if packs_own or (bool(tr.get("hit", false)) and CastVfx.impact_pack_owns_cells(impact)):
 		return
+	# Skill v2 V1: the player's card may name its own ImpactFx form (index impact_variants); the shared shards otherwise.
+	var variant: Dictionary = CastVfx.impact_variant(str(tr.get("skill_id", ""))) if side == CombatState.Side.PLAYER else {}
+	var form: String = ImpactFx.form_of(variant)
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
 	for c: Vector2i in shown:
 		var age: float = rel - float(arrive.get(c, 0.0))
 		for f: Dictionary in CastFloorFx.flash_rects(_floor.cell_art_rect(c), age, sec):
 			out.append({"rect": f["rect"], "col": Color(block[1], 0.85) if bool(f["fill"]) else block[1], "fill": bool(f["fill"]),
 				"width": int(f["width"]), "edge": false})
 		if bool(tr.get("hit", false)) and not style.is_empty():
-			for it: Dictionary in CastFloorFx.impact_rects(impact, _floor.cell_art_rect(c), age, float(style.get("sec", 0.24)), hash(c) + 11, dir):
+			# a variant's own `sec` (0.5 s) outlasts the type's; the recorded cast is kept past its last arrival for it
+			var impact_sec: float = float(variant.get("sec", style.get("sec", 0.24)))
+			var items: Array[Dictionary] = ImpactFx.items(form, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir, variant, reduce) \
+				if not form.is_empty() else CastFloorFx.impact_rects(impact, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir)
+			for it: Dictionary in items:
 				var r: Rect2i = it["rect"]
 				out.append({"rect": r, "col": cols[1] if bool(it["light"]) else cols[0], "fill": true, "width": 0,
 					"edge": mini(r.size.x, r.size.y) >= 3})

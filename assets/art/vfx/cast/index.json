@@ -327,6 +327,44 @@
    "burn"
   ]
  },
+ "_doc_impact_variants": "`sec` (per variant, 0.5 s on 2026-11-11, user: the first pass was too sparse) replaces the type's impact_style sec for that card. 2026-11-10 (Skill v2 V1, user-approved contact sheet): card id -> the ImpactFx form drawn on each hit cell instead of the shared impact_style shards, plus that form's knobs (sparse, diag, drops, tilt, count, size, web, vine). Colours and sec still come from impact_style of the card's impact. A card not listed keeps CastFloorFx.impact_rects. Forms: ImpactFx.FORMS.",
+ "impact_variants": {
+  "bang_phong": {"form": "frame", "sec": 0.5},
+  "suong_mong": {"form": "frame", "sparse": true, "sec": 0.5},
+  "han_khi": {"form": "cross", "sec": 0.5},
+  "han_phong": {"form": "cross", "diag": true, "sec": 0.5},
+  "thanh_thuy": {"form": "cross", "drops": 3, "sec": 0.5},
+  "han_kiem": {"form": "spike", "tilt": true, "sec": 0.5},
+  "han_tran": {"form": "spike", "count": 2, "sec": 0.5},
+  "bang_chau": {"form": "cluster", "sec": 0.5},
+  "thiet_kiem": {"form": "arc_h", "sec": 0.5},
+  "kiem_vu": {"form": "arc_v", "sec": 0.5},
+  "kiem_than": {"form": "cross_x", "sec": 0.5},
+  "dai_dao": {"form": "double", "sec": 0.5},
+  "song_kiem": {"form": "double", "size": 2, "sec": 0.5},
+  "tu_kiem": {"form": "stab4", "sec": 0.5},
+  "ran_kich": {"form": "crack", "sec": 0.5},
+  "ran_van": {"form": "crack", "web": true, "sec": 0.5},
+  "han_bang": {"form": "chunks", "sec": 0.5},
+  "bang_tam": {"form": "shards", "sec": 0.5},
+  "chan_phong": {"form": "column", "sec": 0.5},
+  "cuong_phong": {"form": "column", "count": 2, "sec": 0.5},
+  "xung_kich": {"form": "wedge", "sec": 0.5},
+  "thien_lang": {"form": "slam", "sec": 0.5},
+  "tran_gai": {"form": "spikes", "sec": 0.5},
+  "gai_nguyen": {"form": "spikes", "vine": true, "sec": 0.5},
+  "gai_doc": {"form": "bubbles", "sec": 0.5},
+  "kiem_khi": {"form": "ring", "sec": 0.5},
+  "do_kiem": {"form": "ring2", "sec": 0.5}
+ },
+ "_doc_cast_glyphs": "2026-11-11 (Skill v2 V2, hero cast glyphs): hero id -> {form, hand}: the CastGlyphFx kit drawn at `hand` (art px from the feet, the casting hand on the cast_gesture hold frame) while any card without a `card_casts` clip or its own `glyph` swings (Trảm Địa, Ngàn Kiếm and Hỏa Lôi keep their own). Colours = the hero's block_colours. Forms: CastGlyphFx.FORMS.",
+ "cast_glyphs": {
+  "kiem_si": {"form": "sigil", "hand": [22, -46]},
+  "phap_su": {"form": "runes", "hand": [22, -34]},
+  "sat_thu": {"form": "daggers", "hand": [22, -48]},
+  "tho_san": {"form": "leaf", "hand": [32, -40]},
+  "giao_si": {"form": "halo", "hand": [20, -58]}
+ },
  "_doc_card_casts": "2026-11-08 (Trảm Địa art production, user-approved): card id -> overrides of the hero's cast entry for that card only: clip = the hero sheet clip played instead of cast_gesture (same 9 ms and coil / release frames), hand = the art-px launch point from the feet on that clip's release frame. Cards not listed keep the hero entry and cast_gesture. charge_hand = where the charge glint loops during the coil when the coil holds the hands away from the release point. impact / impact_mark replace the hero entry's landing burst and its stamp on the card's burst cell (Trảm Địa: the vfx_workbench steel eruption + its floor shockwave / cracks).",
  "card_casts": {
   "tram_dia": {

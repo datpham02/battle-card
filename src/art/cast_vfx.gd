@@ -63,10 +63,17 @@ static func entry_for(unit_id: String, impact_id: String = "", skill_id: String 
 ## no `card_casts` clip).
 static func cast_clip(skill_id: String, fallback: String) -> String:
 	_ensure()
+	var clip: String = card_clip(skill_id)
+	return clip if not clip.is_empty() else fallback
+
+
+## The `card_casts` clip of [param skill_id], or "" when that card has no dedicated clip.
+static func card_clip(skill_id: String) -> String:
+	_ensure()
 	var cards: Variant = _index.get("card_casts", {})
 	if cards is Dictionary and (cards as Dictionary).get(skill_id) is Dictionary:
-		return str(((cards as Dictionary)[skill_id] as Dictionary).get("clip", fallback))
-	return fallback
+		return str(((cards as Dictionary)[skill_id] as Dictionary).get("clip", ""))
+	return ""
 
 
 ## The loaded VfxPack of [param entry] (cached); null when the entry or its files are missing.
@@ -495,6 +502,28 @@ static func impact_style(impact_id: String) -> Dictionary:
 	var m: Variant = _index.get("impact_style", {})
 	var s: Variant = (m as Dictionary).get(impact_id, {}) if m is Dictionary else {}
 	return s as Dictionary if s is Dictionary else {}
+
+
+## Skill v2 V2: the CastGlyphFx kit of hero [param unit_id] (index `cast_glyphs`: {"form": ..., "hand": [dx, dy]});
+## {} when the hero has none or names an unknown form.
+static func cast_glyph(unit_id: String) -> Dictionary:
+	_ensure()
+	var m: Variant = _index.get("cast_glyphs", {})
+	var v: Variant = (m as Dictionary).get(unit_id, {}) if m is Dictionary else {}
+	var kit: Dictionary = v as Dictionary if v is Dictionary else {}
+	return kit if CastGlyphFx.FORMS.has(str(kit.get("form", ""))) else {}
+
+
+## Skill v2 V1: the ImpactFx variant of card [param skill_id] (index `impact_variants`: {"form": ..., knobs}); {} when
+## the card has none or names an unknown form, so the caller keeps the shared CastFloorFx.impact_rects.
+static func impact_variant(skill_id: String) -> Dictionary:
+	_ensure()
+	if skill_id.is_empty():
+		return {}
+	var m: Variant = _index.get("impact_variants", {})
+	var v: Variant = (m as Dictionary).get(skill_id, {}) if m is Dictionary else {}
+	var variant: Dictionary = v as Dictionary if v is Dictionary else {}
+	return variant if not ImpactFx.form_of(variant).is_empty() else {}
 
 
 ## Task 5 item 2: [body, highlight] of impact [param impact_id] cast by [param caster_id] (a character id or "_enemy"):
