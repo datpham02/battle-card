@@ -110,6 +110,28 @@ Evidence: `production/qa/evidence/skill-v2-feel-pass/` — `<card>_before.png` (
 core timing, aftermath), `delivery_fx_test`, the flow tests of Hỏa Lôi / Ngàn Kiếm / Mìn Trễ (hit-stop leaves their
 clock-relative timings intact).
 
+## V4-E — signature forms of the batch-2 cards (2026-11-11, approved to start: "Làm đi")
+
+Six new ImpactFx forms, each flat + standing, with per-card knobs in `impact_variants`:
+`thien_thach` **crater** (meteor streaking in from the upper left — `DeliveryFx.meteor_standing` on the first-arrival
+cell, `meteor: true` — then a 16 px chunk sinking, a fire column to 1.1 H, 16 rocks, a crater ring + cracks; the
+ring cells take `slam` via `ring_form`; fire `colours`), `loc_cuon` **vortex** (12 squares spiralling inward on the
+floor, a stacked funnel to 1.0 H with climbing bands on the mask's centre cell only, `hub_only`), `hoa_bang`
+**steam** (a wet dashed patch spreading, six steam puffs rising to 1.2 H over the fire pack; ice `colours`),
+`bang_vo` **iceburst** (a 20 px ice block cracking, flashing, bursting into 14 chunks + halves; cracks + web),
+`hoi_am` **echo** (a scar, then in the aftermath 0.1–0.4 s a ghost double ring replays the hit), `dia_chan`
+**quake** (three expanding rings over cracks; ground slabs heaving in a row, 10 stones).
+
+Plumbing this needed: scheduled casts (arrival / waves / delayed) never recorded `_cast_travel`, so none of the
+batch-1/2 cards drew any ImpactFx; `CombatView._on_impact_resolved` now records every resolved player event
+(`_event_impacts`, `event_impacts_now()`), the overlay draws those records beside the instant one (`_record_items`,
+`_record_standing_items`), and the hit-stop fires on them too. SkyDropFx (the Ngàn Kiếm blades) is now limited to
+cards whose cast entry has `summon_fx` (it was drawing swords on every scheduled sky card). A signature form plays
+over a pack-owned impact (the Mage's fire) instead of being dropped with the shared shards.
+
+Evidence: `production/qa/evidence/skill-v2-signature/<card>_ingame.png` (8 frames over 1.4 s) and the six rows at
+the bottom of `skill-v2-impact-families/contact_sheet_x3.png` (`signature_x3.png`).
+
 ## Card → form
 
 | Family | Card | Form | Knobs |

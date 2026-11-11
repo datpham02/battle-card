@@ -83,6 +83,25 @@ static func sky_standing(base: Vector2i, cell_w: int, until_land: float, drop_se
 	return out
 
 
+## Standing: Thiên Thạch's meteor over [param base]: a 15 px rock with a bright edge streaking in from the upper
+## left on a trail of eight fire squares, from 2.2 H away over [param drop_sec]; [] outside [0, drop_sec].
+static func meteor_standing(base: Vector2i, cell_w: int, until_land: float, drop_sec: float, seed: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if drop_sec <= 0.0 or until_land < 0.0 or until_land > drop_sec:
+		return out
+	var H: int = maxi(roundi(float(cell_w) * COLUMN_CELLS), 8)
+	var k: float = until_land / drop_sec
+	var dist: float = float(H) * 2.2 * k * k
+	var core := Vector2i(base.x - roundi(dist * 0.55), base.y - roundi(dist) - 8)
+	out.append(_sq(core + Vector2i(2, 3), 15, false, 0))
+	out.append(_sq(core, 15, false))
+	out.append(_sq(core + Vector2i(-4, -4), 6, true, 3))
+	for i: int in 8:
+		var t: Vector2i = core + Vector2i(-6 - i * 5 + ((i * 3 + seed) % 3), -8 - i * 8)
+		out.append(_sq(t, 7 - _d(i, 2), i < 2, 2 if i < 2 else (1 if i < 5 else 0)))
+	return out
+
+
 # --- ground ----------------------------------------------------------------------------------------
 
 ## Flat: the ripple front running from [param a] to [param b] (flat cell centres), [param rel] seconds into a

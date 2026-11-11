@@ -69,8 +69,20 @@ func _cast_one(v: CombatView, lib: PieceLibrary, card: String, boss: Vector2i) -
 		# the same tail as OverlayLayer, or this call would drop the record before the aftermath ends
 		var tr: Dictionary = v.cast_travel_now(OverlayLayer.TRAVEL_TAIL_SEC)
 		if tr.is_empty():
-			if seen_hit:
-				break
+			# a scheduled cast (arrival / waves / delayed) records its impacts event by event instead
+			var evs: Array[Dictionary] = v.event_impacts_now(OverlayLayer.TRAVEL_TAIL_SEC)
+			if evs.is_empty():
+				if seen_hit:
+					break
+				continue
+			seen_hit = true
+			var oldest: float = 0.0
+			for e: Dictionary in evs:
+				oldest = maxf(oldest, float(e["rel"]))
+			if (_i % 2) == 0:
+				var ename: String = "%s_%03d.png" % [card, roundi(oldest * 1000.0)]
+				root.get_texture().get_image().save_png(_out.path_join(ename))
+				saved.append(ename)
 			continue
 		# the cast glyph (CastGlyphFx) draws while the swing runs: a few frames of it, named by swing progress
 		if bool(tr.get("swinging", false)) and swing_shots < 10 and (_i % 5) == 0:

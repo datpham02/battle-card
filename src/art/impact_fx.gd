@@ -29,6 +29,9 @@ const FORMS: Array[String] = [
 	"column", "wedge", "slam",                       # knockback
 	"spikes", "bubbles",                             # thorns / poison
 	"ring", "ring2",                                 # burst
+	# signature forms of the batch-2 cards (2026-11-11): Thiên Thạch crater, Lốc Cuốn vortex, Hỏa Băng steam,
+	# Băng Vỡ ice burst, Hồi Âm echo, Địa Chấn quake
+	"crater", "vortex", "steam", "iceburst", "echo", "quake",
 ]
 
 ## Reduce motion (art bible §3): the last frame, still, for this long.
@@ -78,6 +81,14 @@ static func items(form: String, cell_rect: Rect2i, age: float, sec: float, seed:
 		"spikes":
 			if bool(params.get("vine", false)) and u > 0.4:
 				out.append(g.bar(g.r.position.x + 2, g.r.end.y - 6, g.w - 4, 3, false))
+		"crater": _crater_floor(out, g, u)
+		"vortex": _vortex_floor(out, g, u)
+		"steam": _steam_floor(out, g, u)
+		"iceburst":
+			if u > 0.4:
+				_crack(out, g, (u - 0.4) / 0.6, {"lines": 6, "web": true})
+		"echo": _arc_scar(out, g, u)
+		"quake": _quake_floor(out, g, u)
 	_residue(out, g, u)
 	# Art bible §3: only inside the target cell (its 1 px Ink edge included).
 	var bound: Rect2i = cell_rect.grow(1)
@@ -152,6 +163,32 @@ static func aftermath_items(form: String, cell_rect: Rect2i, age: float, after_s
 		"bubbles":
 			for i: int in 4:
 				out.append(g.sq(Vector2i(g.r.position.x + 8 + _d((g.w - 16) * (i * 2 + 1), 8), g.c.y + ((i * 5) % 11) - 5), 3 if not fade else 2, false))
+		"crater":
+			_outline(out, Rect2i(g.c - Vector2i(roundi(float(g.hw) * 0.7), roundi(float(g.hh) * 0.7)), Vector2i(roundi(float(g.w) * 0.7), roundi(float(g.h) * 0.7))), 3 if not fade else 2)
+			_crack(out, g, 1.0, {"lines": 6, "web": false})
+			out.append(g.sq(g.c, 10 if not fade else 6, false))
+		"vortex", "quake":
+			_crack(out, g, 1.0, {"lines": 5, "web": false})
+			for i: int in 6:
+				out.append(g.sq(Vector2i(g.r.position.x + 5 + _d((g.w - 10) * (i * 2 + 1), 12), g.r.end.y - 5 - ((i * 7) % 9)), 4 if not fade else 2, false))
+		"steam":
+			for i: int in 6:
+				out.append(g.sq(Vector2i(g.r.position.x + 6 + _d((g.w - 12) * (i * 2 + 1), 12), g.r.position.y + 6 + ((i * 9) % (g.h - 12))), 3 if not fade else 2, false))
+		"iceburst":
+			_crack(out, g, 1.0, {"lines": 6, "web": true})
+			for i: int in 4:
+				out.append(g.sq(Vector2i(g.r.position.x + 8 + _d((g.w - 16) * (i * 2 + 1), 8), g.r.end.y - 7), 4 if not fade else 2, false))
+		"echo":
+			# the echo: 0.1–0.4 s after the clip a ghost of the hit replays — a double ring pulsing out and the scar
+			var a := Vector2i(g.r.position.x + 4, g.r.end.y - 6)
+			var b := Vector2i(g.r.end.x - 4, g.r.position.y + 6)
+			_stepped(out, a, b, 2 if not fade else 1, 2)
+			var ek: float = clampf((age - 0.1) / 0.3, 0.0, 1.0)
+			if ek > 0.0 and ek < 1.0:
+				for ring: int in 2:
+					var frac: float = lerpf(0.3, 1.0, clampf(ek - float(ring) * 0.2, 0.0, 1.0))
+					_outline(out, Rect2i(g.c - Vector2i(roundi(float(g.hw) * frac), roundi(float(g.hh) * frac)), Vector2i(roundi(float(g.w) * frac), roundi(float(g.h) * frac))), 2)
+				_stepped(out, Vector2i(a.x, g.r.position.y + 6), Vector2i(b.x, g.r.end.y - 6), 2, 2)
 	var toned: Array[Dictionary] = []
 	for it: Dictionary in out:
 		var r: Rect2i = (it["rect"] as Rect2i).intersection(cell_rect.grow(1))
@@ -194,11 +231,172 @@ static func standing_items(form: String, base: Vector2i, cell_w: int, age: float
 		"ring2":
 			_ring_up(out, s, u, 0.0, params)
 			_ring_up(out, s, u, 0.3, params)
+		"crater": _crater_standing(out, s, u)
+		"vortex": _vortex_standing(out, s, u)
+		"steam": _steam_standing(out, s, u)
+		"iceburst": _iceburst_standing(out, s, u)
+		"echo": _arc(out, s, u, 0.0, params)
+		"quake": _quake_standing(out, s, u)
 	var toned: Array[Dictionary] = []
 	for it: Dictionary in out:
 		var r: Rect2i = it["rect"]
 		toned.append(_toned(r, bool(it["light"]), u, r.end.y >= base.y - 4))
 	return toned
+
+
+# --- signature forms (batch-2 cards) --------------------------------------------------------------
+
+## Thiên Thạch, flat: a crater — a 4 px square ring at 0.9 of the cell that settles to 0.7, radial cracks, a dark
+## core; the ring cells of the shockwave get the `slam` form from the variant's `ring_form`.
+static func _crater_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var frac: float = lerpf(0.95, 0.7, minf(u / 0.3, 1.0))
+	_outline(out, Rect2i(g.c - Vector2i(roundi(float(g.hw) * frac), roundi(float(g.hh) * frac)),
+		Vector2i(roundi(float(g.w) * frac), roundi(float(g.h) * frac))), 4)
+	_crack(out, g, minf(u / 0.5, 1.0) * 0.6, {"lines": 6})
+	out.append(g.sq(g.c, 10, false))
+
+
+## Thiên Thạch, standing: the meteor chunk embedded in the tile (a 16 px block sinking over the first 0.2), a
+## stepped fire column bursting up to 1.1 H and sinking back, and sixteen rocks thrown out in arcs.
+static func _crater_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var sink: int = roundi(float(s.H) * 0.25 * (1.0 - minf(u / 0.2, 1.0)))
+	out.append(s.sq(0, sink + 6, 16, false))
+	out.append(s.sq(-3, sink + 9, 6, true))
+	var top: float = float(s.H) * 1.1 * (1.0 - (1.0 - minf(u / 0.25, 1.0)) * (1.0 - minf(u / 0.25, 1.0))) if u < 0.45 \
+		else float(s.H) * 1.1 * clampf(1.0 - (u - 0.45) / 0.45, 0.0, 1.0)
+	var layers: int = maxi(roundi(top / 3.0), 0)
+	for k: int in layers:
+		var frac: float = float(k) / float(maxi(layers, 1))
+		var w: int = maxi(roundi(float(s.w) * (0.75 - 0.6 * frac)), 3) + ((k * 3) % 5) - 2
+		out.append(s.slab(0, 10 + k * 3, w, 3, frac > 0.45))
+	for i: int in 16:
+		var a: float = PI * (float(i) + 0.5) / 16.0 + s.rng.randf_range(-0.1, 0.1)
+		var vx: float = cos(a) * float(s.hw) * s.rng.randf_range(0.7, 1.15)
+		var vy: float = (0.4 + 0.8 * sin(a)) * float(s.H) * s.rng.randf_range(0.6, 1.3)
+		var up: int = roundi(vy * u - vy * 0.9 * u * u)
+		out.append(s.sq(roundi(vx * u), maxi(up, 0) + 8, 5 if i % 3 == 0 else 4, false))
+
+
+## Lốc Cuốn, flat: twelve squares spiralling inward (one and a half turns over the clip) onto a 6 px core, and a
+## 3 px ring that tightens as they arrive.
+static func _vortex_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	for i: int in 12:
+		var k: float = clampf(u * 1.3 - float(i) * 0.025, 0.0, 1.0)
+		var a: float = TAU * (float(i) / 12.0) + k * TAU * 1.5
+		var r: float = 1.0 - k * 0.9
+		out.append(g.sq(g.c + Vector2i(roundi(cos(a) * float(g.hw - 2) * r), roundi(sin(a) * float(g.hh - 2) * r)), 5 if k < 0.5 else 4, i % 3 == 0))
+	var frac: float = lerpf(0.9, 0.35, minf(u / 0.6, 1.0))
+	_outline(out, Rect2i(g.c - Vector2i(roundi(float(g.hw) * frac), roundi(float(g.hh) * frac)),
+		Vector2i(roundi(float(g.w) * frac), roundi(float(g.h) * frac))), 3)
+	out.append(g.sq(g.c, 6, true))
+
+
+## Lốc Cuốn, standing: a funnel at the centre — stacked bars widening upward to 1.0 H, with highlight bands that
+## climb (the spin), and six squares orbiting in and up.
+static func _vortex_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var grow: float = minf(u / 0.3, 1.0)
+	var layers: int = roundi(float(s.H) * grow / 3.0)
+	for k: int in layers:
+		var frac: float = float(k) / float(maxi(layers, 1))
+		var w: int = maxi(roundi(6.0 + float(s.w) * 0.8 * frac), 4)
+		var band: bool = int(floorf(u * 24.0)) % 4 == k % 4
+		out.append(s.slab(((k * 7) % 5) - 2, 3 + k * 3, w, 3, band))
+	for i: int in 6:
+		var a: float = u * TAU * 2.0 + TAU * float(i) / 6.0
+		var r: float = float(s.hw) * (1.0 - u * 0.7)
+		out.append(s.sq(roundi(cos(a) * r), roundi(float(s.H) * u * 0.9) + 4, 4, i % 2 == 0))
+
+
+## Hỏa Băng, flat: a wet patch — a dashed 3 px ring that spreads from the centre to the cell edge.
+static func _steam_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var frac: float = lerpf(0.3, 1.0, minf(u / 0.5, 1.0))
+	var f := Rect2i(g.c - Vector2i(roundi(float(g.hw) * frac), roundi(float(g.hh) * frac)), Vector2i(roundi(float(g.w) * frac), roundi(float(g.h) * frac)))
+	for x: int in range(f.position.x, f.end.x, 8):
+		out.append(g.bar(x, f.position.y, 4, 3, false))
+		out.append(g.bar(x, f.end.y - 3, 4, 3, false))
+	for y: int in range(f.position.y, f.end.y, 8):
+		out.append(g.bar(f.position.x, y, 3, 4, false))
+		out.append(g.bar(f.end.x - 3, y, 3, 4, false))
+	out.append(g.sq(g.c, 6, true))
+
+
+## Hỏa Băng, standing: six steam puffs rising from the tile to 1.2 H, growing 6 → 14 px then thinning, with a
+## bright cap each; the burst of the hit stays underneath.
+static func _steam_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	for i: int in 6:
+		var start: float = s.rng.randf_range(0.0, 0.3)
+		var x0: int = roundi(s.rng.randf_range(-float(s.hw) + 8.0, float(s.hw) - 8.0))
+		var sway: float = s.rng.randf_range(2.0, 5.0)
+		var lag: float = clampf((u - start) / 0.7, 0.0, 1.0)
+		if lag <= 0.0:
+			continue
+		var up: int = 4 + roundi(float(s.H) * 1.2 * lag)
+		var size: int = roundi(6.0 + 8.0 * minf(lag * 2.0, 1.0)) - roundi(4.0 * maxf(lag - 0.7, 0.0) / 0.3)
+		var dx: int = x0 + roundi(sin(lag * 5.0 + float(i)) * sway)
+		out.append(s.sq(dx, up, size, false))
+		out.append(s.sq(dx - 2, up + 3, maxi(size - 6, 2), true))
+
+
+## Băng Vỡ, standing: a 20 px ice block on the tile cracks (dark lines over its face, u < 0.4), flashes, then
+## bursts into fourteen chunks and the block's halves fall apart.
+static func _iceburst_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	if u < 0.4:
+		out.append(s.sq(0, 12, 20, false))
+		out.append(s.sq(-5, 17, 6, true))
+		var cracks: int = clampi(ceili(u / 0.4 * 4.0), 0, 4)
+		for i: int in cracks:
+			var a: Vector2i = Vector2i(0, 12) + Vector2i([-8, 6, 4, -6][i], [6, 8, -7, -5][i])
+			out.append({"rect": Rect2i(s.base.x + a.x - 1, s.base.y - a.y - 4, 2, 8), "light": false})
+		if u > 0.34:
+			out.append(s.sq(0, 12, 22, true))
+		return
+	var k: float = (u - 0.4) / 0.6
+	for sd: int in [-1, 1]:
+		out.append(s.sq(sd * (6 + roundi(k * 10.0)), maxi(10 - roundi(k * k * 14.0), 3), 10, false))
+	for i: int in 14:
+		var a: float = PI * (float(i) + 0.5) / 14.0
+		var vx: float = cos(a) * float(s.hw) * s.rng.randf_range(0.8, 1.4)
+		var vy: float = (0.3 + 0.9 * sin(a)) * float(s.H) * s.rng.randf_range(0.6, 1.2)
+		var up: int = roundi(12.0 + vy * k - vy * 0.9 * k * k)
+		out.append(s.sq(roundi(vx * k), maxi(up, 2), 5 if i % 3 == 0 else 4, i % 2 == 0))
+
+
+## Hồi Âm, flat: the first hit's scar (a stepped line across the cell), then at the echo (see aftermath) a ghost.
+static func _arc_scar(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	if u < 0.3:
+		return
+	var reveal: float = minf((u - 0.3) / 0.3, 1.0)
+	var a := Vector2i(g.r.position.x + 4, g.r.end.y - 6)
+	var b := Vector2i(g.r.end.x - 4, g.r.position.y + 6)
+	var end: Vector2i = Vector2i((Vector2(a) + Vector2(b - a) * reveal).round())
+	_stepped(out, a, end, 2, 2)
+
+
+## Địa Chấn, flat: three square rings expanding one after another to the cell edge and fading, over radial cracks.
+static func _quake_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	for i: int in 3:
+		var k: float = clampf((u - float(i) * 0.15) / 0.6, 0.0, 1.0)
+		if k <= 0.0 or k >= 1.0:
+			continue
+		var frac: float = lerpf(0.2, 1.0, k)
+		_outline(out, Rect2i(g.c - Vector2i(roundi(float(g.hw) * frac), roundi(float(g.hh) * frac)),
+			Vector2i(roundi(float(g.w) * frac), roundi(float(g.h) * frac))), 4 if k < 0.5 else 3)
+	_crack(out, g, minf(u / 0.5, 1.0) * 0.6, {"lines": 5})
+
+
+## Địa Chấn, standing: slabs of ground heave up in a row across the tile (each a 10 px bar lifting then dropping,
+## staggered), and ten stones thrown up with dust.
+static func _quake_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	for i: int in 5:
+		var k: float = clampf((u - float(i) * 0.06) / 0.5, 0.0, 1.0)
+		var lift: int = roundi(float(s.H) * 0.35 * 4.0 * k * (1.0 - k))
+		out.append(s.slab(-s.hw + 7 + i * _d(s.w - 10, 5), lift, 10, 5, k > 0.3 and k < 0.7))
+	for i: int in 10:
+		var a: float = PI * (float(i) + 0.5) / 10.0
+		var vx: float = cos(a) * float(s.hw) * s.rng.randf_range(0.7, 1.3)
+		var vy: float = (0.5 + 0.6 * sin(a)) * float(s.H) * s.rng.randf_range(0.6, 1.2)
+		var up: int = roundi(vy * u - vy * 0.9 * u * u)
+		out.append(s.sq(roundi(vx * u), maxi(up, 0) + 6, 5 if i % 3 == 0 else 3, i % 2 == 0))
 
 
 ## The form of a card's variant entry ({"form": ..., knobs}); "" when it names none or an unknown one.

@@ -251,7 +251,22 @@ func impact_standing_items() -> Array[Dictionary]:
 	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
 	if combat == null or _floor == null:
 		return out
-	var tr: Dictionary = combat.cast_travel_now(TRAVEL_TAIL_SEC, CombatState.Side.PLAYER)
+	var recs: Array[Dictionary] = []
+	var tr0: Dictionary = combat.cast_travel_now(TRAVEL_TAIL_SEC, CombatState.Side.PLAYER)
+	if not tr0.is_empty():
+		recs.append(tr0)
+	recs.append_array(combat.event_impacts_now(TRAVEL_TAIL_SEC))
+	var group_base: int = 0
+	for tr: Dictionary in recs:
+		var part: Array[Dictionary] = _record_standing_items(combat, tr, group_base)
+		out.append_array(part)
+		group_base += 64
+	return out
+
+
+## The standing impact items of one recorded cast [param tr]; groups start at [param group_base].
+func _record_standing_items(combat: CombatView, tr: Dictionary, group_base: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	if tr.is_empty() or not bool(tr.get("hit", false)) or bool(tr.get("swinging", false)):
 		return out
 	var variant: Dictionary = CastVfx.impact_variant(str(tr.get("skill_id", "")))
@@ -261,28 +276,34 @@ func impact_standing_items() -> Array[Dictionary]:
 	var delivery: Dictionary = tr["delivery"]
 	var impact: String = str(delivery.get("impact", ""))
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
-	var packs_own: bool = str(delivery.get("type", "")) == SkillDelivery.CASTER_TO_TARGET \
-			and str(delivery.get("travel", "")) == "hero_pack" and CastVfx.packs_replace_shards(CastVfx.entry_for(hero_id, impact))
-	if packs_own or CastVfx.impact_pack_owns_cells(impact):
-		return out
+	# a signature form stands even over a pack-owned impact (the form was checked non-empty above)
 	var style: Dictionary = CastVfx.impact_style(impact)
 	var sec: float = float(variant.get("sec", style.get("sec", 0.24)))
-	var cols: Array[Color] = CastVfx.impact_colours(impact, hero_id)
+	var cols: Array[Color] = variant_colours(variant, CastVfx.impact_colours(impact, hero_id))
 	var reduce: bool = SettingsStore.shared().get_reduce_motion()
 	var geo: BoardGeometry = _bg()
 	var cells: Array = tr["cells"].duplicate()
 	cells.sort_custom(func(p: Vector2i, q: Vector2i) -> bool: return p.y < q.y or (p.y == q.y and p.x < q.x))
 	var arrive: Dictionary = tr["arrive"]
+	var first_at: float = _first_arrival(arrive)
+	var ring_form: String = str(variant.get("ring_form", ""))
+	# `hub_only`: the standing part plays on ONE cell, the one nearest the mask's centre (Lốc Cuốn's funnel)
+	var hub: Vector2i = _hub_cell(cells) if bool(variant.get("hub_only", false)) else Vector2i(-9999, -9999)
 	for g: int in cells.size():
 		var c: Vector2i = cells[g]
+		if hub.x != -9999 and c != hub:
+			continue
 		var age: float = float(tr["rel"]) - float(arrive.get(c, 0.0))
 		var base: Vector2i = _centre(c)
 		if geo != null and geo.is_warped():
 			base = geo.warp_art_px(base)
 		var w: int = _floor.cell_art_rect(c).size.x
-		for it: Dictionary in ImpactFx.standing_items(form, base, w, age, sec, hash(c) + 11, 1, variant, reduce):
+		var cell_form: String = form
+		if not ring_form.is_empty() and ImpactFx.FORMS.has(ring_form) and float(arrive.get(c, 0.0)) > first_at + 0.001:
+			cell_form = ring_form
+		for it: Dictionary in ImpactFx.standing_items(cell_form, base, w, age, sec, hash(c) + 11, 1, variant, reduce):
 			var r: Rect2i = it["rect"]
-			out.append({"rect": r, "col": tone_colour(it, cols), "edge": 1 if mini(r.size.x, r.size.y) >= 3 else 0, "group": g})
+			out.append({"rect": r, "col": tone_colour(it, cols), "edge": 1 if mini(r.size.x, r.size.y) >= 3 else 0, "group": group_base + g})
 	return out
 
 
@@ -558,7 +579,8 @@ func delivery_standing_items() -> Array[Dictionary]:
 	if travel == "hero_pack" or travel == "square_streak":
 		return out
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
-	var cols: Array[Color] = CastVfx.impact_colours(str(delivery.get("impact", "")), hero_id)
+	var variant: Dictionary = CastVfx.impact_variant(str(tr.get("skill_id", "")))
+	var cols: Array[Color] = variant_colours(variant, CastVfx.impact_colours(str(delivery.get("impact", "")), hero_id))
 	var rel: float = float(tr["rel"])
 	var arrive: Dictionary = tr["arrive"]
 	var geo: BoardGeometry = _bg()
@@ -569,9 +591,16 @@ func delivery_standing_items() -> Array[Dictionary]:
 	match travel:
 		"falling_squares":
 			var fall: float = float((timing.get(SkillDelivery.SKY_TO_TARGET, {}) as Dictionary).get("fall_sec", 0.12))
+			var first_at: float = _first_arrival(arrive)
+			var meteor: bool = bool(variant.get("meteor", false))
 			for g: int in cells.size():
 				var c: Vector2i = cells[g]
-				for it: Dictionary in DeliveryFx.sky_standing(_ground_of(c, geo), _floor.cell_art_rect(c).size.x, float(arrive.get(c, 0.0)) - rel, fall, hash(c)):
+				var until: float = float(arrive.get(c, 0.0)) - rel
+				var w: int = _floor.cell_art_rect(c).size.x
+				# Thiên Thạch: the first-arrival cell takes the meteor, streaking in over the whole hover
+				var sky: Array[Dictionary] = DeliveryFx.meteor_standing(_ground_of(c, geo), w, until, maxf(float(arrive.get(c, 0.0)), fall), hash(c)) \
+					if meteor and float(arrive.get(c, 0.0)) <= first_at + 0.001 else DeliveryFx.sky_standing(_ground_of(c, geo), w, until, fall, hash(c))
+				for it: Dictionary in sky:
 					it["group"] = g
 					items.append(it)
 		"chain_spark":
@@ -611,6 +640,40 @@ func delivery_standing_items() -> Array[Dictionary]:
 	return out
 
 
+## Signature knob `colours` ([body, highlight] hex) of an impact variant, else [param fallback].
+static func variant_colours(variant: Dictionary, fallback: Array[Color]) -> Array[Color]:
+	var v: Variant = variant.get("colours", null)
+	if v is Array and (v as Array).size() >= 2:
+		return [Color(str(v[0])), Color(str(v[1]))]
+	return fallback
+
+
+## The cell of [param cells] nearest their centroid (ties: the first in the list).
+static func _hub_cell(cells: Array) -> Vector2i:
+	if cells.is_empty():
+		return Vector2i(-9999, -9999)
+	var sum := Vector2.ZERO
+	for c: Vector2i in cells:
+		sum += Vector2(c)
+	var centre: Vector2 = sum / float(cells.size())
+	var best: Vector2i = cells[0]
+	var best_d: float = INF
+	for c: Vector2i in cells:
+		var d: float = Vector2(c).distance_squared_to(centre)
+		if d < best_d:
+			best_d = d
+			best = c
+	return best
+
+
+## The earliest arrival time of a cast's cells (INF for none).
+static func _first_arrival(arrive: Dictionary) -> float:
+	var first: float = INF
+	for c: Vector2i in arrive:
+		first = minf(first, float(arrive[c]))
+	return first
+
+
 ## The drawn (warped) ground centre of [param cell], screen art px.
 func _ground_of(cell: Vector2i, geo: BoardGeometry) -> Vector2i:
 	var base: Vector2i = _centre(cell)
@@ -621,8 +684,17 @@ func _ground_of(cell: Vector2i, geo: BoardGeometry) -> Vector2i:
 
 func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_id: String) -> void:
 	var tr: Dictionary = combat.cast_travel_now(TRAVEL_TAIL_SEC, side)
-	if tr.is_empty():
-		return
+	if not tr.is_empty():
+		_record_items(out, combat, side, caster_id, tr)
+	# Skill v2 V1: the player's scheduled casts come event by event (CombatView.event_impacts_now)
+	if side == CombatState.Side.PLAYER:
+		for rec: Dictionary in combat.event_impacts_now(TRAVEL_TAIL_SEC):
+			_record_items(out, combat, side, caster_id, rec)
+
+
+## The flat items of one recorded cast [param tr] (a cast_travel_now record or an event record): its travel, the
+## impact flash and the impact / aftermath on its cells.
+func _record_items(out: Array[Dictionary], combat: CombatView, side: int, caster_id: String, tr: Dictionary) -> void:
 	var block: Array[Color] = CastVfx.block_colours(caster_id)
 	var delivery: Dictionary = tr["delivery"]
 	# 2026-11-07 (user: the Mage's falling fire was dark specks): the player's travel squares take the impact's own
@@ -675,25 +747,36 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 	var packs_own: bool = side == CombatState.Side.PLAYER and str(delivery.get("type", "")) == SkillDelivery.CASTER_TO_TARGET \
 			and str(delivery.get("travel", "")) == "hero_pack" and CastVfx.packs_replace_shards(CastVfx.entry_for(caster_id, impact))
 	# 2026-11-04: an impact drawn by its own FloorVfx pack (impact_packs: the Mage's fire) drops the code flash / shards too.
-	if packs_own or (bool(tr.get("hit", false)) and CastVfx.impact_pack_owns_cells(impact)):
-		return
 	# Skill v2 V1: the player's card may name its own ImpactFx form (index impact_variants); the shared shards otherwise.
 	var variant: Dictionary = CastVfx.impact_variant(str(tr.get("skill_id", ""))) if side == CombatState.Side.PLAYER else {}
 	var form: String = ImpactFx.form_of(variant)
+	# a pack that owns the cells (the steel burst, the burn flames) replaces the shared flash / shards, but a card's
+	# own signature form still plays over it (Hỏa Băng's steam over the fire)
+	if (packs_own or (bool(tr.get("hit", false)) and CastVfx.impact_pack_owns_cells(impact))) and form.is_empty():
+		return
+	var owned: bool = packs_own or CastVfx.impact_pack_owns_cells(impact)
 	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	# signature knobs: the variant's own colours, and a second form for the cells that are not the first arrival
+	cols = variant_colours(variant, cols)
+	var first_at: float = _first_arrival(arrive)
+	var ring_form: String = str(variant.get("ring_form", ""))
 	for c: Vector2i in shown:
 		var age: float = rel - float(arrive.get(c, 0.0))
-		for f: Dictionary in CastFloorFx.flash_rects(_floor.cell_art_rect(c), age, sec):
-			out.append({"rect": f["rect"], "col": Color(block[1], 0.85) if bool(f["fill"]) else block[1], "fill": bool(f["fill"]),
-				"width": int(f["width"]), "edge": false})
+		var cell_form: String = form
+		if not ring_form.is_empty() and ImpactFx.FORMS.has(ring_form) and float(arrive.get(c, 0.0)) > first_at + 0.001:
+			cell_form = ring_form
+		if not owned:
+			for f: Dictionary in CastFloorFx.flash_rects(_floor.cell_art_rect(c), age, sec):
+				out.append({"rect": f["rect"], "col": Color(block[1], 0.85) if bool(f["fill"]) else block[1], "fill": bool(f["fill"]),
+					"width": int(f["width"]), "edge": false})
 		if bool(tr.get("hit", false)) and not style.is_empty():
 			# a variant's own `sec` (0.5 s) outlasts the type's; the recorded cast is kept past its last arrival for it
 			var impact_sec: float = float(variant.get("sec", style.get("sec", 0.24)))
-			var items: Array[Dictionary] = ImpactFx.items(form, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir, variant, reduce) \
+			var items: Array[Dictionary] = ImpactFx.items(cell_form, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir, variant, reduce) \
 				if not form.is_empty() else CastFloorFx.impact_rects(impact, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir)
 			# V4 feel pass: what the hit leaves on the cell after its clip (ImpactFx.aftermath_items, `after_sec`)
 			if not form.is_empty() and age >= impact_sec:
-				items = ImpactFx.aftermath_items(form, _floor.cell_art_rect(c), age - impact_sec, float(variant.get("after_sec", 0.0)), hash(c) + 11, variant)
+				items = ImpactFx.aftermath_items(cell_form, _floor.cell_art_rect(c), age - impact_sec, float(variant.get("after_sec", 0.0)), hash(c) + 11, variant)
 			for it: Dictionary in items:
 				var r: Rect2i = it["rect"]
 				out.append({"rect": r, "col": tone_colour(it, cols), "fill": true, "width": 0,

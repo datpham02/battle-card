@@ -332,7 +332,7 @@
    "burn"
   ]
  },
- "_doc_impact_variants": "`after_sec` (1.0 s, 2026-11-11 feel pass) = how long ImpactFx.aftermath_items stays on the cell after `sec`. `sec` (per variant, 0.5 s on 2026-11-11, user: the first pass was too sparse) replaces the type's impact_style sec for that card. 2026-11-10 (Skill v2 V1, user-approved contact sheet): card id -> the ImpactFx form drawn on each hit cell instead of the shared impact_style shards, plus that form's knobs (sparse, diag, drops, tilt, count, size, web, vine). Colours and sec still come from impact_style of the card's impact. A card not listed keeps CastFloorFx.impact_rects. Forms: ImpactFx.FORMS.",
+ "_doc_impact_variants": "Signature knobs (batch-2 cards): `colours` [body, highlight] replaces the impact_style colours for that card; `ring_form` = the form on the cells that are not the first arrival (Thiên Thạch's shockwave ring); `meteor` = DeliveryFx.meteor_standing on the first-arrival cell instead of the sky block. `after_sec` (1.0 s, 2026-11-11 feel pass) = how long ImpactFx.aftermath_items stays on the cell after `sec`. `sec` (per variant, 0.5 s on 2026-11-11, user: the first pass was too sparse) replaces the type's impact_style sec for that card. 2026-11-10 (Skill v2 V1, user-approved contact sheet): card id -> the ImpactFx form drawn on each hit cell instead of the shared impact_style shards, plus that form's knobs (sparse, diag, drops, tilt, count, size, web, vine). Colours and sec still come from impact_style of the card's impact. A card not listed keeps CastFloorFx.impact_rects. Forms: ImpactFx.FORMS.",
  "impact_variants": {
   "bang_phong": {"form": "frame", "sec": 0.5, "after_sec": 1.0},
   "suong_mong": {"form": "frame", "sparse": true, "sec": 0.5, "after_sec": 1.0},
@@ -360,7 +360,13 @@
   "gai_nguyen": {"form": "spikes", "vine": true, "sec": 0.5, "after_sec": 1.0},
   "gai_doc": {"form": "bubbles", "sec": 0.5, "after_sec": 1.0},
   "kiem_khi": {"form": "ring", "sec": 0.5, "after_sec": 1.0},
-  "do_kiem": {"form": "ring2", "sec": 0.5, "after_sec": 1.0}
+  "do_kiem": {"form": "ring2", "sec": 0.5, "after_sec": 1.0},
+  "thien_thach": {"form": "crater", "ring_form": "slam", "meteor": true, "colours": ["#FF7A1F", "#FFB21F"], "sec": 0.6, "after_sec": 1.5},
+  "loc_cuon": {"form": "vortex", "hub_only": true, "sec": 0.6, "after_sec": 1.0},
+  "hoa_bang": {"form": "steam", "colours": ["#B8B0A0", "#EFE6D2"], "sec": 0.7, "after_sec": 1.0},
+  "bang_vo": {"form": "iceburst", "colours": ["#A6EEFF", "#EEF4FA"], "sec": 0.6, "after_sec": 1.0},
+  "hoi_am": {"form": "echo", "sec": 0.5, "after_sec": 1.2},
+  "dia_chan": {"form": "quake", "sec": 0.6, "after_sec": 1.0}
  },
  "_doc_cast_glyphs": "2026-11-11 (Skill v2 V2, hero cast glyphs): hero id -> {form, hand}: the CastGlyphFx kit drawn at `hand` (art px from the feet, the casting hand on the cast_gesture hold frame) while any card without a `card_casts` clip or its own `glyph` swings (Trảm Địa, Ngàn Kiếm and Hỏa Lôi keep their own). Colours = the hero's block_colours. Forms: CastGlyphFx.FORMS.",
  "cast_glyphs": {

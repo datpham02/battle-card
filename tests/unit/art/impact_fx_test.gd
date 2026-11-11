@@ -59,7 +59,9 @@ func _initialize() -> void:
 			and ImpactFx.standing_items(form, base, 64, SEC, SEC, 3, 1, p).is_empty())
 		var drew: bool = false
 		var ok: bool = true
-		var limit := Rect2i(base.x - 32 - 8, base.y - 64 - 8, 64 + 16, 64 + 8 + 8)
+		# signature forms (meteor column, steam) rise to 1.3 cells; the others stay within one
+		var tall: int = 96 if ["crater", "steam", "vortex"].has(form) else 64
+		var limit := Rect2i(base.x - 32 - 8, base.y - tall - 8, 64 + 16, tall + 8 + 8)
 		for k: float in [0.1, 0.3, 0.5, 0.7, 0.9]:
 			var st: Array[Dictionary] = ImpactFx.standing_items(form, base, 64, k * SEC, SEC, 3, 1, p)
 			drew = drew or not st.is_empty()

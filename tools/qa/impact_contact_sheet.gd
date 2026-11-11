@@ -46,6 +46,13 @@ const VARIANTS := {
 	"gai_doc": {"impact": "poison", "form": "bubbles"},
 	"kiem_khi": {"impact": "burst", "form": "ring"},
 	"do_kiem": {"impact": "burst", "form": "ring2"},
+	# signature forms of the batch-2 cards
+	"thien_thach": {"impact": "burst", "form": "crater", "colours": ["#FF7A1F", "#FFB21F"], "sec": 0.6},
+	"loc_cuon": {"impact": "knockback", "form": "vortex", "sec": 0.6},
+	"hoa_bang": {"impact": "burn", "form": "steam", "colours": ["#B8B0A0", "#EFE6D2"], "sec": 0.7},
+	"bang_vo": {"impact": "shatter", "form": "iceburst", "colours": ["#A6EEFF", "#EEF4FA"], "sec": 0.6},
+	"hoi_am": {"impact": "slash", "form": "echo"},
+	"dia_chan": {"impact": "knockback", "form": "quake", "sec": 0.6},
 }
 
 
@@ -68,10 +75,11 @@ func _initialize() -> void:
 		var y0: int = PAD + row * (panel_h + PAD)
 		font.draw(img, card, Vector2i(PAD, y0 + AIR + 2), Color("EFE6D2"))
 		font.draw(img, str(v["form"]), Vector2i(PAD, y0 + AIR + 10), Color("A6A6A6"))
-		var colours: Array[Color] = CastVfx.impact_colours(str(v["impact"]), caster)
+		var colours: Array[Color] = OverlayLayer.variant_colours(v, CastVfx.impact_colours(str(v["impact"]), caster))
 		var params: Dictionary = v.duplicate()
 		params.erase("impact")
 		params.erase("form")
+		params.erase("colours")
 		var sec: float = float(v.get("sec", 0.5))
 		for i: int in cols:
 			var x0: int = label_w + PAD + i * (CELL.x + PAD)

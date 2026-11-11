@@ -230,6 +230,10 @@ var _summon_hold: Dictionary = {}
 ## ADR-0001 Task 5: the player's last resolved cast for the code-drawn travel ({} = none): {cells, delivery, caster,
 ## arrive, start (FloorVfx clock at the resolve)}.
 var _cast_travel: Dictionary = {}
+## Skill v2 V1 (2026-11-11): a SCHEDULED cast (arrival / waves / delayed) never records `_cast_travel`, so its
+## impacts are recorded event by event here instead (same shape, arrival 0 at `start`), one record per resolved
+## player event; OverlayLayer reads them with event_impacts_now() and drops them after its tail.
+var _event_impacts: Array[Dictionary] = []
 ## Task 5 item 4: the boss's last resolved cast, same form as _cast_travel.
 var _boss_travel: Dictionary = {}
 ## ADR-0001 Task 5 item 6: side -> true once that unit died by falling into a hole (UnitLayer plays its `fall` clip).
@@ -590,6 +594,10 @@ func _wire_zones() -> void:
 		var seal_side: int = side
 		# Drop tiles (Ô rớt rule 4): an open hole cannot be entered; a cracking cell stays enterable (rule 3).
 		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_hole(seal_side, cell))
+		# Skill v2 batch 3 (M11): a pillar of the unit's own half blocks its step; a fire wall blocks the ENEMY only.
+		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_pillar(seal_side, cell))
+		if side == CombatState.Side.ENEMY:
+			mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_fire_wall(cell))
 		_arbiter.blocked_cell_fns[side] = Callable(mover, "is_cell_blocked")
 	_arbiter.zone_numbers = _config.zone_numbers()
 	_arbiter.reactions = _config.reactions()
@@ -2271,6 +2279,9 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 			"t_cast": _arbiter.clock() if _arbiter != null else 0.0})
 	_plan.clear()
 	_drop_placement()
+	# Skill v2 batch 3 (M10, option A2): a self-anchored card (ward) casts on its shape re-anchored on the hero's own half.
+	if _skill_config.is_self_anchored(skill_id):
+		cells = WardAnchor.remap(cells, _state.player_cell, _grid, _status)
 	_begin_cut(skill_id, cells, bonus, info, ctx)
 	_try_pick_up_under_player()
 
@@ -2325,7 +2336,10 @@ func get_availability_context() -> Dictionary:
 	# Skill v2 delayed (Hỏa Lôi): the armed-field cap and the cells a delayed card could still arm on the open cut.
 	if _arbiter != null:
 		var arb: SwingArbiter = _arbiter
-		ctx[SkillAvailability.CTX_ARMED_COUNT_FN] = func(id: String) -> int: return arb.armed_cast_count(CombatState.Side.PLAYER, id)
+		var st: StatusEffects = _status
+		# batch 3: a trap card's cap counts its armed trap casts on the enemy half
+		ctx[SkillAvailability.CTX_ARMED_COUNT_FN] = func(id: String) -> int: return arb.armed_cast_count(CombatState.Side.PLAYER, id) \
+			+ (st.trap_cast_count(CombatState.Side.ENEMY, id) if st != null else 0)
 		if _cut_flow != null and _cut_flow.is_menu_open():
 			ctx[SkillAvailability.CTX_DELAYED_OPEN_CELLS] = SkillAvailability.delayed_open_cells(_cut_flow.menu_cells(),
 				_arbiter.armed_cells(CombatState.Side.PLAYER), _status)
@@ -2387,7 +2401,10 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 	if not scheduled:
 		_play_cut_vfx(side, feedback)
 	if side == CombatState.Side.PLAYER:
-		if not (scheduled and bool(result["hit"])):
+		# Skill v2 batch 3: a field-zone card that formed its zone without a hit (a ward, a pillar, an armed trap) is not a
+		# MISS: no marker (the zone itself is the feedback).
+		var zone_only: bool = not bool(result["hit"]) and ["ward", "pillar", "trap"].has(str(result.get("zone_kind", "")))
+		if not (scheduled and bool(result["hit"])) and not zone_only:
 			_feedback = feedback
 		_count_cast(_cast_info)
 		_relics_on_cast_landed(result)
@@ -3057,6 +3074,17 @@ func _on_impact_resolved(side: int, event: Dictionary, hit: bool) -> void:
 	# 2026-11-08: the card's own cast overrides (Trảm Địa: the eruption pack + its floor mark on the burst cell).
 	var entry: Dictionary = CastVfx.entry_for(hero_id, str(delivery.get("impact", "")), skill_id)
 	var sky: bool = kind == CastResolver.KIND_DROP or kind == CastResolver.KIND_DROP_FINAL
+	# V1 impacts for scheduled casts: every resolved event (except a Hỏa Lôi fuse, drawn by FuseFx) is a record the
+	# overlay draws like a resolved instant cut: its cells arrive now. A landing player hit also stops the match a beat.
+	if kind != CastResolver.KIND_FUSE:
+		var shown: Array = unlocked_for_vfx(cells)
+		var arrive: Dictionary = {}
+		for c: Vector2i in shown:
+			arrive[c] = 0.0
+		_event_impacts.append({"cells": shown, "delivery": delivery, "caster": _state.cast_origin(CombatState.Side.PLAYER) if _state != null else Vector2i(-1, -1),
+			"arrive": arrive, "start": vfx.elapsed(), "hit": hit, "skill_id": skill_id, "kind": kind, "event": true})
+		if hit and float(event.get("damage", 0.0)) > 0.0:
+			_hit_stop_at = vfx.elapsed()
 	# Hỏa Lôi: the sigils, blast and fizzle are FuseFx (floor + overlay), driven by this very event.
 	if kind == CastResolver.KIND_FUSE:
 		pass
@@ -3100,7 +3128,11 @@ func _on_cast_scheduled(side: int, cast: Dictionary) -> void:
 		_fuse_fx.append_array(FuseFx.records_from_cast(cast, _arbiter.clock()))
 	# Ngàn Kiếm: a SKY_TO_TARGET card's drops become SkyDropFx records (same cells, same authoritative `at`); the
 	# enemy's cells at the swing end only pick the visual hover (over_enemy), never a target.
-	if str(delivery_for(str(cast.get("skill_id", ""))).get("type", "")) == SkillDelivery.SKY_TO_TARGET:
+	# 2026-11-11: only a card whose cast entry asks for the summoned blades (`summon_fx`, Ngàn Kiếm) gets SkyDropFx;
+	# every other scheduled sky card (Thiên Thạch, Băng Vỡ, Đập Vỡ) draws its own ImpactFx / DeliveryFx instead.
+	var hero_for_sky: String = str(UnitLayer.unit_ids_for(match_params).get(CombatState.Side.PLAYER, ""))
+	if str(delivery_for(str(cast.get("skill_id", ""))).get("type", "")) == SkillDelivery.SKY_TO_TARGET \
+			and bool(CastVfx.entry_for(hero_for_sky, "", str(cast.get("skill_id", ""))).get("summon_fx", false)):
 		var enemy_cells: Array = _state.enemy_footprint_cells() if _state != null else []
 		var recs: Array[Dictionary] = SkyDropFx.records_from_cast(cast, _arbiter.clock() if _arbiter != null else 0.0, enemy_cells)
 		# on-tile summon card: the same re-timing the swing preview used, so the formed swords are the falling ones
@@ -3334,6 +3366,27 @@ func summon_skill() -> String:
 ## Skill v2 (Ngàn Kiếm): the arbiter clock the sky drops are drawn on (0 without an arbiter).
 func combat_clock() -> float:
 	return _arbiter.clock() if _arbiter != null else 0.0
+
+
+## Skill v2 V1: the player's resolved scheduled-cast events still drawn (see `_event_impacts`), each as a travel-shaped
+## record with "rel" = seconds since it resolved; records older than their last arrival + [param tail] are dropped.
+func event_impacts_now(tail: float = 0.3) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _event_impacts.is_empty():
+		return out
+	var now: float = get_floor_vfx().elapsed()
+	var keep: Array[Dictionary] = []
+	for rec: Dictionary in _event_impacts:
+		var rel: float = now - float(rec["start"])
+		if rel > tail:
+			continue
+		keep.append(rec)
+		var r: Dictionary = rec.duplicate()
+		r["rel"] = rel
+		r["swinging"] = false
+		out.append(r)
+	_event_impacts = keep
+	return out
 
 
 ## V4 feel pass: the visual-only board offset of the hit shake now (CastVfx.hit_feel board_shake_px, flipping side
