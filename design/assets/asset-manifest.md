@@ -1,50 +1,245 @@
-# Asset Manifest
+# Asset Manifest (GENERATED)
 
-> Last updated: 2026-10-31 (Story 047: ASSET-004/005/007 and the status overlays 017/018/020 are drawn in the battle canvas and set to Done, rows 017–020 added; Story 045: ASSET-001 and ASSET-003 exported to `assets/art/units/` and set to Done; earlier the same day every slice-1 asset with drawn art got a candidate: units, Misty Forest set, UI frames + icons, floor tiles, slash + push VFX; ASSET-016 added)
-> Vertical slice 1: all 18 inventory rows marked Slice = 1 are specced (ASSET-001..016; UI frames are one asset with four files; inventory row 112 Push joined slice 1 on 2026-10-31 because Chấn phong is in the Swordsman starter deck).
+> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-11. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
 
-## Progress Summary
+Lifecycle: `candidate → accepted → installed → approved`; `legacy` = replaced. **installed is not approved**: `Accepted` / `Approved` columns show what the user recorded; `unknown` means no record exists.
 
-| Total | Needed | In Progress | Done | Approved |
-|-------|--------|-------------|------|----------|
-| 20 | 3 | 8 (+1 superseded) | 8 | 0 |
+## Summary
 
-**In Progress** means: the frames or files exist as candidates under `design/assets/candidates/<group>/`, were rendered through `prototypes/art-check` with retained evidence (`production/qa/evidence/asset-slice1-art-check/`), and the production log lives in the spec. Still missing for Done: the art-director's sign-off on the open points listed in each spec, and the export into `assets/art/...` (units via Story 045's exporter; UI, floor and VFX files are already at their final pixel size and only need copying + import settings). **Needed** rows are code, not drawn art (ASSET-010 shader, ASSET-014 fills), plus the portrait.
+| Total | Candidate | Accepted | Installed | Approved | Legacy |
+|---|---|---|---|---|---|
+| 108 | 1 | 0 | 84 | 19 | 4 |
 
-## Assets by Context
+Acceptance recorded: unknown 79, pending 11, accepted 18, rejected 0.
 
-### Character: Swordsman
-| Asset ID | Name | Category | Status | Spec File |
-|----------|------|----------|--------|-----------|
-| ASSET-001 | Swordsman sprite sheet | Sprite / 2D art | Done (Story 045, 2026-10-31: `assets/art/units/unit_kiem_si_sheet.png` 81x391 + `.json`, 8 clips / 14 frames, facing right, exported by `tools/asset-pipeline/export_sheets.py` from `art_src/units/kiem_si/`; evidence `production/qa/evidence/unit-sheet-export/`; awaiting the art-director's sign-off for Approved) | design/assets/specs/swordsman-assets.md |
-| ASSET-002 | Swordsman portrait | Sprite / 2D art | Needed | design/assets/specs/swordsman-assets.md |
+## Needs the user's decision
 
-### Character: Goblin Scout
-| Asset ID | Name | Category | Status | Spec File |
-|----------|------|----------|--------|-----------|
-| ASSET-003 | Goblin small body sprite sheet (base: Goblin Scout) | Sprite / 2D art | Done (Story 045, 2026-10-31: `assets/art/units/unit_goblin_scout_sheet.png` 65x244 + `.json`, 5 clips / 8 frames, facing left, exported from `art_src/units/goblin_scout/`; evidence `production/qa/evidence/unit-sheet-export/`; awaiting the art-director's sign-off for Approved; open from the spec: outline counting rule) | design/assets/specs/goblin-scout-assets.md |
+| Asset | Open point |
+|---|---|
+| `unit.phap_su` | anchor result never recorded as approved: design/assets/specs/mage-assets.md rows anchor-02 / anim03-idle-v3 record per-call approval only. Confirm the current anchor, or name the fix. |
+| `unit.sat_thu` | anchor result never recorded as approved: design/assets/specs/assassin-assets.md:5 design approved 2026-11-05 ("Duyệt cả ba"); row anchor-01 records the gen approval ("Duyệt, gen 7 gen"), not the result. Confirm the current anchor, or name the fix. |
+| `unit.tho_san` | anchor result never recorded as approved: design/assets/specs/hunter-assets.md:5 design approved 2026-11-05 ("Duyệt cả ba"); rows anchor-01/02 record gen approval, not the result. Confirm the current anchor, or name the fix. |
+| `vfx.floor.small_burst` | declared TEMP in its manifest and index _doc ("the big burst halved 2:1, to be replaced by a generated one"). Replace (paid) or keep? |
+| `vfx.status.burn_goblin` | only hero and goblin body sizes exist (status/index.json); this pack is drawn unscaled on 80x80 elites and 160x130 bosses (unit_layer.gd frame_kind_of). Accept as is, or author elite/boss overlays (free vfx_workbench)? |
+| `vfx.status.chill_goblin` | only hero and goblin body sizes exist (status/index.json); this pack is drawn unscaled on 80x80 elites and 160x130 bosses (unit_layer.gd frame_kind_of). Accept as is, or author elite/boss overlays (free vfx_workbench)? |
+| `vfx.status.frozen_goblin` | only hero and goblin body sizes exist (status/index.json); this pack is drawn unscaled on 80x80 elites and 160x130 bosses (unit_layer.gd frame_kind_of). Accept as is, or author elite/boss overlays (free vfx_workbench)? |
+| `env.forest.env_support_forest_arch` | conflicting records: design/art/forest-arena-gap-plan-2026-11-06.md:75 "Còn chờ duyệt: #3 vòm lõm" vs assets/art/env/forest/region.json support._doc_kit "2026-11-06 PixelLab kit (user-approved): pillar, arch, roots, ferns". Confirm whether this piece is approved. |
+| `env.forest.env_support_forest_ferns` | conflicting records: design/art/forest-arena-gap-plan-2026-11-06.md:75 "Còn chờ duyệt: #5 dương xỉ tiền cảnh" vs assets/art/env/forest/region.json support._doc_kit "2026-11-06 PixelLab kit (user-approved): pillar, arch, roots, ferns". Confirm whether this piece is approved. |
+| `env.forest.env_support_forest_roots` | conflicting records: design/art/forest-arena-gap-plan-2026-11-06.md:75 "Còn chờ duyệt: #4 rễ góc" vs assets/art/env/forest/region.json support._doc_kit "2026-11-06 PixelLab kit (user-approved): pillar, arch, roots, ferns". Confirm whether this piece is approved. |
+| `ui.climb.stairs` | six wired stair PNGs stay (stair_step_0..3, stair_body, stair_root) and are still untracked. stair_segment.png was unreferenced and was deleted 2026-11-11. acceptance is still unknown. |
+| `ui.icons_55` | direction decision pending: slice1-combat-ui-assets.md:220 "two candidate sets: 12x12 pixel-grid set and the 55 px OSFE-style set; direction decision pending" (the 55 px set is the one in game) |
 
-### Level: Misty Forest
-| Asset ID | Name | Category | Status | Spec File |
-|----------|------|----------|--------|-----------|
-| ASSET-004 | Slab set: Misty Forest | Environment | Done (in game since Story 047, 2026-10-31: `assets/art/env/forest/env_slab_forest_9slice.png` + stamps drawn by `SlabPainter`; v4 nine-slice + 18 stamps, dark tone approved; light variant parked in `slab-explorations/`; awaiting art-director sign-off) | design/assets/specs/misty-forest-assets.md |
-| ASSET-005 | Backdrop: Misty Forest | Environment | Done (in game since Story 047, 2026-10-31: `assets/art/env/forest/bg_forest_far.png` + `bg_forest_near.png` via `BackdropLayer`, mist bottom row 70 in `region.json`; v2 one-frame scene, 20 % band; open: palette lock; awaiting sign-off) | design/assets/specs/misty-forest-assets.md |
-| ASSET-006 | Wall (Misty Forest) | Environment | Superseded 2026-10-31 — the Wall cards drop the tile out (code effect on the slab art, no drawn asset); v1/v2 files kept as history | design/assets/specs/misty-forest-assets.md |
-| ASSET-007 | Thorns patch (Misty Forest) | Environment | Done (in game since Story 047, 2026-10-31: `assets/art/env/forest/env_thorn_forest_tile16.png` tiled over thorn cells by `FloorLayer`; awaiting sign-off) | design/assets/specs/misty-forest-assets.md |
+## Units (heroes, enemies, bosses)
 
-### System: Slice 1 combat visuals and UI
-| Asset ID | Name | Category | Status | Spec File |
-|----------|------|----------|--------|-----------|
-| ASSET-008 | Steel block tiles | Sprite / 2D art | In Progress (16x16 + 5x5, steel column only, `design/assets/candidates/slice1-fx/`) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-009 | Spell VFX: Slash | VFX | In Progress (4 frames 38x27, v2 solid 3 px band; open: §3 says 2x2) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-010 | Hit flash (shader) | VFX | Needed (code; the art-check `--seq` flash shader shows the intended look) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-011 | Cast target tile | VFX | In Progress (5 mark masks 16x16 + JSON; steel checked in-game, the other four on preview only) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-012 | Telegraph tile | VFX | In Progress (8x8 stripe fallback texture; frame + Ink edge are code) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-013 | UI frames (Panel, Button, Slot, Bar) | UI | In Progress (four 9/3-slice sources, `design/assets/candidates/slice1-ui/`; open: lip below the border, bar 16 px vs §7.5 12 px) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-014 | Health bar skins | UI | Needed (code-drawn fills on the ASSET-013 bar; mocked in art-check `--ui`) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-015 | Icon set 12x12 (HUD) | UI | In Progress (21 icons + JSON; open: pad arrows 28 px vs the 12 px grid) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-016 | Spell VFX: Push | VFX | In Progress (4 frames 38x27, Chấn phong group) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-017 | Status overlay: Burning (hero + goblin frames) | VFX | Done (in game since Story 047, 2026-10-31: PixelLab VFX game pack under `assets/art/vfx/status/`, `VfxPack` + `UnitLayer` behind/front; awaiting sign-off) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-018 | Status overlay: Frozen (hero + goblin frames) | VFX | Done (in game since Story 047, 2026-10-31: PixelLab VFX game pack under `assets/art/vfx/status/`, `VfxPack` + `UnitLayer` behind/front; awaiting sign-off) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-019 | Status overlay: Fragile | VFX | In Progress (script overlay in `draw_status.py`; stays code-drawn in `CutHudView`) | design/assets/specs/slice1-combat-ui-assets.md |
-| ASSET-020 | Status overlay: Chill (hero + goblin frames) | VFX | Done (in game since Story 047, 2026-10-31: PixelLab VFX game pack under `assets/art/vfx/status/`, `VfxPack` + `UnitLayer` behind/front; awaiting sign-off) | design/assets/specs/slice1-combat-ui-assets.md |
+| Registry id | Legacy id | Tier | Frame | Facing | Status | Accepted | Approved | Clips (status) | Spec |
+|---|---|---|---|---|---|---|---|---|---|
+| `unit.ancient_root_sentinel` | ASSET-024 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, stunned 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.dire_wolf` | ASSET-027 | monster | 68x52 | left | **approved** | unknown | yes 2026-11-03 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.forest_witch` | ASSET-020 | boss | 160x130 | left | **approved** | unknown | yes 2026-11-02 | idle 4+, step_forward 7+, step_back 7+, step_up 5+, step_down 7+, windup 3+, windup_heavy 3+, phase_shift 8+, hit 3+, down 6+ | `design/assets/specs/forest-witch-assets.md` |
+| `unit.giao_si` | ASSET-033 | hero | 96x72 | right | **approved** | unknown | yes 2026-11-05 | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/cleric-assets.md` |
+| `unit.goblin_archer` | ASSET-026 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-03 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.goblin_scout` | ASSET-003 | monster | 64x52 | left | **approved** | unknown | yes 2026-10-31 | idle 4?, step 4?, windup 2?, hit 3?, down 8? | `design/assets/specs/goblin-scout-assets.md` |
+| `unit.goblin_warlock` | ASSET-029 | boss | 160x130 | left | **approved** | unknown | yes 2026-11-04 | idle 4?, step 4?, windup 4?, windup_heavy 4?, phase_shift 4?, hit 3?, down 5? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.greycap_sporeling` | ASSET-022 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.kiem_si` | ASSET-001 | hero | 96x92 | right | **approved** | unknown | yes 2026-10-31 | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_up 7?, step_down 7?, cast_gesture 9?, cast_forward 9*, cast_summon 9+, hit 3?, victory 5?, defeat 8?, fall 4?, awaken 6? | `design/assets/specs/swordsman-assets.md` |
+| `unit.mistbriar_matron` | ASSET-025 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, guard 4?, hit 3?, down 4? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.mossbound_sentry` | ASSET-023 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, brace 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.phap_su` | ASSET-030 | hero | 96x70 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 8? | `design/assets/specs/mage-assets.md` |
+| `unit.rootling` | ASSET-021 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.sat_thu` | ASSET-031 | hero | 96x70 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/assassin-assets.md` |
+| `unit.tho_san` | ASSET-032 | hero | 96x72 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 5?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/hunter-assets.md` |
+| `unit.wolf_alpha` | ASSET-028 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-04 | idle 4?, step 4?, windup 4?, howl 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+
+Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` needs a decision.
+
+## VFX packs
+
+| Registry id | Index | Frames × ms | Canvas | Provider | Status | Accepted | Approved | Note |
+|---|---|---|---|---|---|---|---|---|
+| `vfx.cast.charge_flame_burn` | packs.charge_flame_burn | 6 × 50 | 46x46 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.cast.hand_charge` | packs.hand_charge | 4 × 71 | 24x24 | pixellab | **installed** | unknown | no record | open in active.md: "hand_charge/root_seal workbench" (rework considered) |
+| `vfx.cast.release_square_slash_steel` | packs.release_square_slash_steel | 4 × 50 | 86x28 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.cast.sword_wave` | packs.sword_wave | 4 × 83 | 50x48 | pixellab | **installed** | unknown | no record | cast/index.json default pack (sat_thu, tho_san, giao_si); the Knight moved to square_wave_steel on 2026-11-02 after "hiệu ứng còn quá nhỏ nhìn từ xa"; kept for rollback (index _doc_task5) |
+| `vfx.cast.travel_fireball_burn` | packs.fire_bolt_burn | 4 × 50 | 94x42 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.cast.travel_square_wave_steel` | packs.square_wave_steel | 4 × 50 | 72x54 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.big_burst` | packs.big_burst | 9 × 50 | 64x96 | pixellab | **approved** | unknown | yes 2026-11-01 |  |
+| `vfx.floor.burning_cell` | packs.burning_cell | 12 × 100 | 70x86 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.cast_target` | packs.cast_target | 16 × 100 | 74x52 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.cell_slash` | packs.cell_slash | 7 × 45 | 64x64 | pixellab | **installed** | unknown | no record | assets/art/vfx/floor/index.json _doc: "cell_slash … PixelLab-generated (Pro Flash key + animate_image, user 2026-11-01)" — generation approved; result approval not stated |
+| `vfx.floor.cracked_cell` | packs.cracked_cell | 12 × 83 | 83x52 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.engraving_complete` | packs.engraving_complete | 10 × 67 | 49x45 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.engraving_lit` | packs.engraving_lit | 24 × 125 | 70x52 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.hit_impact` | packs.hit_impact | 6 × 56 | 49x40 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.impact_burst_big_steel` | packs.impact_burst_big_steel | 7 × 50 | 106x88 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.impact_burst_big_steel_c43x31` | packs.impact_burst_big_steel_c43x31 | 7 × 50 | 72x66 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.impact_burst_small_steel` | packs.impact_burst_small_steel | 5 × 50 | 106x74 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.impact_burst_small_steel_c43x31` | packs.impact_burst_small_steel_c43x31 | 5 × 50 | 72x56 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.impact_eruption_tram_dia` | packs.impact_eruption_tram_dia | 7 × 50 | 112x112 | fx-pipeline | **approved** | unknown | yes 2026-11-08 |  |
+| `vfx.floor.impact_flame_burn` | packs.impact_flame_burn | 7 × 50 | 94x116 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.floor.impact_flame_burn_c43x31` | packs.impact_flame_burn_c43x31 | 7 × 50 | 62x80 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.floor.impact_flame_small_burn` | packs.impact_flame_small_burn | 6 × 50 | 94x102 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.floor.impact_flame_small_burn_c43x31` | packs.impact_flame_small_burn_c43x31 | 6 × 50 | 62x72 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.floor.interrupt` | packs.interrupt | 6 × 56 | 49x46 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.mark_embers_burn` | packs.mark_embers_burn | 7 × 50 | 64x46 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.floor.mark_embers_burn_c43x31` | packs.mark_embers_burn_c43x31 | 7 × 50 | 44x32 | fx-pipeline | **installed** | unknown | no record | prototype 2 (hoa_tran) / Mage fireball cast pack; the look was accepted as a prototype (fx-pipeline-assets.md §Prototype 2) but no install-approval line was found for these packs |
+| `vfx.floor.mark_eruption_tram_dia` | packs.mark_eruption_tram_dia | 12 × 50 | 112x112 | fx-pipeline | **approved** | unknown | yes 2026-11-08 |  |
+| `vfx.floor.mark_stamp_big_steel` | packs.mark_stamp_big_steel | 9 × 50 | 64x46 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.mark_stamp_big_steel_c43x31` | packs.mark_stamp_big_steel_c43x31 | 9 × 50 | 44x32 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.mark_stamp_small_steel` | packs.mark_stamp_small_steel | 7 × 50 | 64x46 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.mark_stamp_small_steel_c43x31` | packs.mark_stamp_small_steel_c43x31 | 7 × 50 | 44x32 | fx-pipeline | **installed** | yes 2026-11-02 | no record |  |
+| `vfx.floor.miss_dust` | packs.miss_dust | 10 × 83 | 70x52 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.root_seal` | packs.root_seal | 12 × 100 | 74x52 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.floor.small_burst` | packs.small_burst | 9 × 45 | 32x48 | pixellab | **installed** | unknown | no record |  |
+| `vfx.floor.thorn_spikes` | packs.thorn_spikes | 8 × 63 | 70x52 | pixellab | **installed** | pending | no record | Story 048 evidence C-3: "PASS (chờ ký)" (production/qa/evidence/floor-vfx-evidence.md, 2026-10-31) — technical pass, sign-off pending |
+| `vfx.status.burn_goblin` | burn.goblin | 12 × 83 | 35x65 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
+| `vfx.status.burn_hero` | burn.hero | 12 × 83 | 46x87 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
+| `vfx.status.chill_goblin` | chill.goblin | 16 × 83 | 50x53 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
+| `vfx.status.chill_hero` | chill.hero | 16 × 83 | 95x103 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
+| `vfx.status.frozen_goblin` | frozen.goblin | 12 × 100 | 44x61 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
+| `vfx.status.frozen_hero` | frozen.hero | 12 × 100 | 60x83 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
+| `vfx.floor.impact_flash_steel_pixelfx` | — | 7 × 50 | 80x64 | pixelfx (upstream impacts/hit-flash) | **candidate** | pending | no record | P3 proof of concept: shows the PixelFX -> VfxPack path end to end; 7 of 11 source frames kept for the 350 ms overlay rule; glow under alpha 128 dropped; 673 source colours snapped to the 4-colour steel ramp. Not installed, not accepted: the user decides. |
+
+## Environment
+
+| Registry id | Name | File(s) | Size | Status | Accepted | Approved | Spec | Note |
+|---|---|---|---|---|---|---|---|---|
+| `env.forest.bg_forest_far` | bg_forest_far | `assets/art/env/forest/bg_forest_far.png` | 800x360 | **legacy** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | v1 (Story 047); replaced by v4 — region.json _doc_far: "Older far backdrops kept"; referenced by tests only |
+| `env.forest.bg_forest_far_edge` | bg_forest_far_edge | `assets/art/env/forest/bg_forest_far_edge.png` | 800x360 | **installed** | unknown | no record | — | area variant, 2026-11-06 ("Làm thử 3 khu"); region.json areas._doc: create_image_pro 792x336, 25 gen each, gen approved "oke gen di"; result approval not recorded |
+| `env.forest.bg_forest_far_sanctum` | bg_forest_far_sanctum | `assets/art/env/forest/bg_forest_far_sanctum.png` | 800x360 | **installed** | unknown | no record | — | area variant, 2026-11-06 ("Làm thử 3 khu"); region.json areas._doc: create_image_pro 792x336, 25 gen each, gen approved "oke gen di"; result approval not recorded |
+| `env.forest.bg_forest_far_v2` | bg_forest_far_v2 | `assets/art/env/forest/bg_forest_far_v2.png` | 800x360 | **legacy** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | replaced by v4 — region.json _doc_far: "Older far backdrops kept"; unreferenced |
+| `env.forest.bg_forest_far_v3` | bg_forest_far_v3 | `assets/art/env/forest/bg_forest_far_v3.png` | 800x360 | **legacy** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | replaced by v4 — region.json _doc_far: "Older far backdrops kept"; unreferenced |
+| `env.forest.bg_forest_far_v4` | Misty Forest far backdrop v4 (in use) | `assets/art/env/forest/bg_forest_far_v4.png` | 800x360 | **installed** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | region.json backdrop._doc_far: v4 = v3 (create_image_pro, 25 gen) + rows 0-71 from the approved master concept; the backdrop itself has no result-approval record |
+| `env.forest.bg_forest_near` | bg_forest_near | `assets/art/env/forest/bg_forest_near.png` | 800x48 | **installed** | unknown | no record | — | near mist layer; region.json near_enabled: false (not drawn) |
+| `env.forest.env_platform_forest_face` | env_platform_forest_face | `assets/art/env/forest/env_platform_forest_face.png` | 231x12 | **installed** | unknown | no record | — | 0 gen: rows 15-26 cut from the support wall (region.json platform._doc_face_tile) |
+| `env.forest.env_slab_forest_9slice` | Misty Forest slab 9-slice (ASSET-004) | `assets/art/env/forest/env_slab_forest_9slice.png` | 16x16 | **approved** | unknown | yes 2026-10-31 | `design/assets/specs/misty-forest-assets.md` |  |
+| `env.forest.env_slab_forest_flagstones` | Misty Forest flagstones 16 x 64x64 (create_tiles_pro) | `assets/art/env/forest/env_slab_forest_flagstones.png` | 256x256 | **installed** | unknown | no record | — | assets/art/env/forest/region.json slab.flagstone_meta._doc: "2026-11-06 PixelLab create_tiles_pro (15 gen, user-approved prompt)" — prompt approval, result approval not recorded |
+| `env.forest.env_slab_forest_stamps` | Misty Forest slab stamps (ASSET-004, 18 stamps + json) | `assets/art/env/forest/env_slab_forest_stamps.png`, `assets/art/env/forest/env_slab_forest_stamps.json` | 96x48 | **approved** | unknown | yes 2026-10-31 | `design/assets/specs/misty-forest-assets.md` |  |
+| `env.forest.env_support_forest_arch` | env_support_forest_arch | `assets/art/env/forest/env_support_forest_arch.png` | 72x40 | **installed** | unknown | no record | `design/art/forest-arena-gap-plan-2026-11-06.md` |  |
+| `env.forest.env_support_forest_ferns` | env_support_forest_ferns | `assets/art/env/forest/env_support_forest_ferns.png` | 96x32 | **installed** | unknown | no record | `design/art/forest-arena-gap-plan-2026-11-06.md` |  |
+| `env.forest.env_support_forest_pillar` | env_support_forest_pillar | `assets/art/env/forest/env_support_forest_pillar.png` | 28x56 | **installed** | yes 2026-11-06 | no record | `design/art/forest-arena-gap-plan-2026-11-06.md` |  |
+| `env.forest.env_support_forest_roots` | env_support_forest_roots | `assets/art/env/forest/env_support_forest_roots.png` | 64x64 | **installed** | unknown | no record | `design/art/forest-arena-gap-plan-2026-11-06.md` |  |
+| `env.forest.env_support_forest_wall` | env_support_forest_wall | `assets/art/env/forest/env_support_forest_wall.png` | 231x44 | **approved** | unknown | yes 2026-11-06 | `design/art/forest-arena-gap-plan-2026-11-06.md` |  |
+| `env.forest.env_thorn_forest_tile16` | env_thorn_forest_tile16 | `assets/art/env/forest/env_thorn_forest_tile16.png` | 16x16 | **legacy** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | v1 thorn tile; region.json thorn_tile points at _v2 (2026-11-06 recolour); _doc_thorn_tile: "the original env_thorn_forest_tile16.png is kept" |
+| `env.forest.env_thorn_forest_tile16_v2` | env_thorn_forest_tile16_v2 | `assets/art/env/forest/env_thorn_forest_tile16_v2.png` | 16x16 | **installed** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | 2026-11-06 colour-for-colour recolour to pale bone / dark earth (region.json _doc_thorn_tile); acceptance not recorded |
+
+## UI
+
+| Registry id | Name | File(s) | Size | Status | Accepted | Approved | Spec | Note |
+|---|---|---|---|---|---|---|---|---|
+| `ui.cards.frames` | Card frames (card_frame, card_frame_ancient) | `assets/art/ui/cards/card_frame.png`, `assets/art/ui/cards/card_frame_ancient.png` | — | **installed** | unknown | no record | — |  |
+| `ui.climb.clouds` | Tower Ascent cloud banks x4 (128x48) | `assets/art/ui/climb/cloud_0.png`, `assets/art/ui/climb/cloud_1.png`, `assets/art/ui/climb/cloud_2.png`, `assets/art/ui/climb/cloud_3.png` | — | **installed** | unknown | no record | `design/art/climb-map-asset-spec-2026-11-07.md` |  |
+| `ui.climb.islands` | Tower Ascent islands x7 (320x192) + islands.json anchors | `assets/art/ui/climb/island_ch1.png`, `assets/art/ui/climb/island_ch2.png`, `assets/art/ui/climb/island_ch3.png`, `assets/art/ui/climb/island_desert.png`, `assets/art/ui/climb/island_hellfire.png`, `assets/art/ui/climb/island_sky_isles.png`, `assets/art/ui/climb/island_swamp.png`, `assets/art/ui/climb/islands.json` | — | **installed** | unknown | no record | `design/art/climb-map-asset-spec-2026-11-07.md` | prototype: climb-map-asset-spec Phase 3 "needs approval", Phase 5 "after the prototype is approved"; no island has a result-approval record; the Lattice Heart island is missing (backlog) |
+| `ui.climb.sky_far` | sky_far | `assets/art/ui/climb/sky_far.png` | 640x424 | **installed** | unknown | no record | `design/art/climb-map-asset-spec-2026-11-07.md` |  |
+| `ui.climb.stairs` | Tower Ascent stair sprites (steps x4, body, root) | `assets/art/ui/climb/stair_body.png`, `assets/art/ui/climb/stair_root.png`, `assets/art/ui/climb/stair_step_0.png`, `assets/art/ui/climb/stair_step_1.png`, `assets/art/ui/climb/stair_step_2.png`, `assets/art/ui/climb/stair_step_3.png` | — | **installed** | unknown | no record | `design/art/climb-map-asset-spec-2026-11-07.md` |  |
+| `ui.climb.summit` | summit | `assets/art/ui/climb/summit.png` | 256x224 | **installed** | unknown | no record | `design/art/climb-map-asset-spec-2026-11-07.md` |  |
+| `ui.map.set` | Chapter map icons, plates, stats, pennant (code-drawn) | `assets/art/ui/map/check.png`, `assets/art/ui/map/gear.png`, `assets/art/ui/map/icon_battle.png`, `assets/art/ui/map/icon_boss.png`, `assets/art/ui/map/icon_danger.png`, `assets/art/ui/map/icon_event.png`, `assets/art/ui/map/icon_miniboss.png`, `assets/art/ui/map/icon_rest.png`, `assets/art/ui/map/icon_shop.png`, `assets/art/ui/map/icon_treasure.png`, `assets/art/ui/map/node_plate.png`, `assets/art/ui/map/node_plate_boss.png`, `assets/art/ui/map/node_plate_selected.png`, `assets/art/ui/map/pennant.png`, `assets/art/ui/map/stat_blocks.png`, `assets/art/ui/map/stat_deck.png`, `assets/art/ui/map/stat_gold.png`, `assets/art/ui/map/stat_removal.png` | — | **installed** | unknown | no record | — |  |
+| `ui.plates.set` | Button plates (5 looks x up/down) + gem, code-drawn | `assets/art/ui/plates/gem.png`, `assets/art/ui/plates/plate_gold_down.png`, `assets/art/ui/plates/plate_gold_up.png`, `assets/art/ui/plates/plate_grey_down.png`, `assets/art/ui/plates/plate_grey_up.png`, `assets/art/ui/plates/plate_moss_down.png`, `assets/art/ui/plates/plate_moss_up.png`, `assets/art/ui/plates/plate_navy_down.png`, `assets/art/ui/plates/plate_navy_up.png`, `assets/art/ui/plates/plate_wine_down.png`, `assets/art/ui/plates/plate_wine_up.png` | — | **installed** | unknown | no record | — |  |
+| `ui.title.button_frame` | button_frame | `assets/art/ui/title/button_frame.png` | 92x27 | **installed** | unknown | no record | — |  |
+| `ui.title.hero_back_ne` | hero_back_ne | `assets/art/ui/title/hero_back_ne.png` | 84x84 | **installed** | unknown | no record | — |  |
+| `ui.title.menu_bg` | menu_bg | `assets/art/ui/title/menu_bg.png` | 640x360 | **installed** | unknown | no record | — |  |
+| `ui.icons_55` | HUD icon sheet 55 px (16 icons, OSFE-style) | `assets/art/ui/ui_icons_55.png`, `assets/art/ui/ui_icons_55.json` | 223x223 | **installed** | unknown | no record | `design/assets/specs/slice1-combat-ui-assets.md` |  |
+
+## Card art
+
+| Registry id | Name | File(s) | Size | Status | Accepted | Approved | Spec | Note |
+|---|---|---|---|---|---|---|---|---|
+| `card.bang_chau` | Card art 32x32: bang_chau | `assets/art/cards/bang_chau.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.chan_phong` | Card art 32x32: chan_phong | `assets/art/cards/chan_phong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.dai_dao` | Card art 32x32: dai_dao | `assets/art/cards/dai_dao.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.han_khi` | Card art 32x32: han_khi | `assets/art/cards/han_khi.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.hoa_tinh` | Card art 32x32: hoa_tinh | `assets/art/cards/hoa_tinh.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.hoa_tran` | Card art 32x32: hoa_tran | `assets/art/cards/hoa_tran.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.hoa_xa` | Card art 32x32: hoa_xa | `assets/art/cards/hoa_xa.png` | 32x32 | **installed** | yes  | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.kiem_khi` | Card art 32x32: kiem_khi | `assets/art/cards/kiem_khi.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.kiem_vu` | Card art 32x32: kiem_vu | `assets/art/cards/kiem_vu.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.ran_kich` | Card art 32x32: ran_kich | `assets/art/cards/ran_kich.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.suong_mong` | Card art 32x32: suong_mong | `assets/art/cards/suong_mong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.thiet_kiem` | Card art 32x32: thiet_kiem | `assets/art/cards/thiet_kiem.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.xung_kich` | Card art 32x32: xung_kich | `assets/art/cards/xung_kich.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+
+## Loose textures
+
+| Registry id | Name | File(s) | Size | Status | Accepted | Approved | Spec | Note |
+|---|---|---|---|---|---|---|---|---|
+| `texture.fx_telegraph_stripe_8` | fx_telegraph_stripe_8 | `assets/art/vfx/fx_telegraph_stripe_8.png` | 8x8 | **installed** | unknown | no record | `design/assets/specs/slice1-combat-ui-assets.md` | fallback stripe texture (shader stripes are code); 2026-10-31 manifest row: In Progress |
+
+## Other
+
+| Registry id | Name | File(s) | Size | Status | Accepted | Approved | Spec | Note |
+|---|---|---|---|---|---|---|---|---|
+| `other.vfx_cast_index` | Cast VFX index (packs, impact styles, card casts, glyphs) | `assets/art/vfx/cast/index.json` | — | **installed** | unknown | no record | — | read by src/art/cast_vfx.gd; data, not art — status by location only |
+| `other.vfx_floor_index` | Floor VFX index | `assets/art/vfx/floor/index.json` | — | **installed** | unknown | no record | — | read by src/art/floor_vfx.gd |
+| `other.vfx_status_index` | Status overlay index | `assets/art/vfx/status/index.json` | — | **installed** | unknown | no record | — | read by src/art/status_packs.gd |
+| `other.pickup_voxel_config` | Ground Block pickup voxel config (code-drawn pickups) | `assets/art/vfx/pickup_voxel.json` | — | **installed** | unknown | no record | — | read by src/art/voxel_piece.gd; no PNG |
+| `other.regions_config` | Region map: chapter -> region, fallback bands, half tints | `assets/art/regions.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd; fallback bands are flat colours for regions without art |
+| `other.region_forest_config` | Misty Forest region config (backdrop, slab, platform, support, areas) | `assets/art/env/forest/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+
+## Backlog — required, no production file yet
+
+| Id | What | Required by | Note |
+|---|---|---|---|
+| `portrait.kiem_si` | Character-select portrait 64x80 for kiem_si | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
+| `portrait.phap_su` | Character-select portrait 64x80 for phap_su | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
+| `portrait.sat_thu` | Character-select portrait 64x80 for sat_thu | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
+| `portrait.tho_san` | Character-select portrait 64x80 for tho_san | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
+| `portrait.giao_si` | Character-select portrait 64x80 for giao_si | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
+| `card.do_kiem` | Card art 32x32: do_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.ngan_kiem` | Card art 32x32: ngan_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.hoa_loi` | Card art 32x32: hoa_loi | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.tram_dia` | Card art 32x32: tram_dia | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.song_dao` | Card art 32x32: song_dao | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.lien_tram` | Card art 32x32: lien_tram | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.vung_lay` | Card art 32x32: vung_lay | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.thuong_xuyen` | Card art 32x32: thuong_xuyen | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.dap_vo` | Card art 32x32: dap_vo | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.chuoi_set` | Card art 32x32: chuoi_set | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.min_tre` | Card art 32x32: min_tre | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.dia_chan` | Card art 32x32: dia_chan | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.loc_cuon` | Card art 32x32: loc_cuon | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.bang_vo` | Card art 32x32: bang_vo | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.hoa_bang` | Card art 32x32: hoa_bang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.thien_thach` | Card art 32x32: thien_thach | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.hoi_am` | Card art 32x32: hoi_am | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.bang_phong` | Card art 32x32: bang_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.cuong_phong` | Card art 32x32: cuong_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.liet_hoa` | Card art 32x32: liet_hoa | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.kiem_than` | Card art 32x32: kiem_than | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.song_kiem` | Card art 32x32: song_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.thien_lang` | Card art 32x32: thien_lang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.han_bang` | Card art 32x32: han_bang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.thien_hoa` | Card art 32x32: thien_hoa | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.tu_kiem` | Card art 32x32: tu_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.ran_van` | Card art 32x32: ran_van | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.han_phong` | Card art 32x32: han_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.han_tran` | Card art 32x32: han_tran | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.han_kiem` | Card art 32x32: han_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.tran_gai` | Card art 32x32: tran_gai | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.gai_nguyen` | Card art 32x32: gai_nguyen | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.gai_doc` | Card art 32x32: gai_doc | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.thanh_thuy` | Card art 32x32: thanh_thuy | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.bang_tam` | Card art 32x32: bang_tam | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.ganh_nang` | Card art 32x32: ganh_nang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.oan_hon` | Card art 32x32: oan_hon | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `env.dungeon.slab_set` | Slab 9-slice + stamps: dungeon | assets/art/regions.json (region mapped, no env/dungeon/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
+| `env.dungeon.backdrop` | Far backdrop 800x360: dungeon | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
+| `unit.dungeon.roster` | Enemy bodies + warden for dungeon | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
+| `env.ice_tower.slab_set` | Slab 9-slice + stamps: ice_tower | assets/art/regions.json (region mapped, no env/ice_tower/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
+| `env.ice_tower.backdrop` | Far backdrop 800x360: ice_tower | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
+| `unit.ice_tower.roster` | Enemy bodies + warden for ice_tower | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
+| `env.swamp.slab_set` | Slab 9-slice + stamps: swamp | assets/art/regions.json (region mapped, no env/swamp/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
+| `env.swamp.backdrop` | Far backdrop 800x360: swamp | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
+| `unit.swamp.roster` | Enemy bodies + warden for swamp | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
+| `env.sands.slab_set` | Slab 9-slice + stamps: sands | assets/art/regions.json (region mapped, no env/sands/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
+| `env.sands.backdrop` | Far backdrop 800x360: sands | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
+| `unit.sands.roster` | Enemy bodies + warden for sands | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
+| `env.hellfire.slab_set` | Slab 9-slice + stamps: hellfire | assets/art/regions.json (region mapped, no env/hellfire/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
+| `env.hellfire.backdrop` | Far backdrop 800x360: hellfire | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
+| `unit.hellfire.roster` | Enemy bodies + warden for hellfire | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
+| `env.sky_isles.slab_set` | Slab 9-slice + stamps: sky_isles | assets/art/regions.json (region mapped, no env/sky_isles/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
+| `env.sky_isles.backdrop` | Far backdrop 800x360: sky_isles | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
+| `unit.sky_isles.roster` | Enemy bodies + warden for sky_isles | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
+| `env.lattice_heart.slab_set` | Slab 9-slice + stamps: lattice_heart | assets/art/regions.json (region mapped, no env/lattice_heart/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
+| `env.lattice_heart.backdrop` | Far backdrop 800x360: lattice_heart | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
+| `unit.lattice_heart.roster` | Enemy bodies + warden for lattice_heart | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
+| `ui.climb.island_lattice_heart` | Tower Ascent island: Lattice Heart summit | design/art/climb-map-asset-spec-2026-11-07.md Phase 5; assets/art/ui/climb/islands.json has no an_dai entry | candidate design/assets/candidates/climb-map/s-lattice-heart-01.png exists, not shipped |
+| `vfx.status.elite_boss_overlays` | Burn / frozen / chill overlays sized for 80x80 elites and 160x130 bosses | audit docs/art/AI-ART-WORKFLOW-AUDIT-2026-11-11.md §6 #5; assets/art/vfx/status/index.json has hero/goblin only | user decision: accept the goblin-size overlay on big bodies, or author new packs (free vfx_workbench) |

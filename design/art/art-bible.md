@@ -2,7 +2,7 @@
 
 > **Status**: Draft (đủ 9 mục, người dùng duyệt từng mục 2026-10-28/29)
 > **Owned By**: art-director
-> **Last Updated**: 2026-10-29
+> **Last Updated**: 2026-10-29 · 2026-11-11: §8.1, §8.3, §8.7 đồng bộ với sheet thật trên đĩa (kỹ thuật, không đổi hướng mỹ thuật; nguồn: `design/assets/asset-registry.yaml`)
 > **Art Director Sign-Off (AD-ART-BIBLE)**: SKIPPED 2026-10-28 — solo mode
 
 `/art-bible` writes these nine sections in this order and replaces each
@@ -779,14 +779,14 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 | Khác | `.png` rời: nền, chân dung | `assets/art/...` | art |
 | Màu | vẽ indexed theo bảng chung; xuất RGBA 8-bit; **alpha chỉ 0 hoặc 255** | | art |
 
-- Thư mục: `assets/art/{palette,units,wardens,env/<region>,blocks,vfx,ui,portraits}/`. Region: `forest, dungeon, ice_tower, swamp, sands, hellfire, sky_isles, lattice_heart`.
+- Thư mục (mục tiêu): `assets/art/{palette,units,wardens,env/<region>,blocks,vfx,ui,portraits}/`. **Thực tế 2026-11-11:** có `units/` (cả Kẻ Gác), `env/forest/`, `vfx/{cast,floor,status}/<gói>/`, `ui/{cards,climb,map,plates,title}/`, `cards/`; chưa có `wardens, blocks, portraits, palette` (bảng màu nằm ở `art_src/palette/tessera_master.gpl`). Region: `forest, dungeon, ice_tower, swamp, sands, hellfire, sky_isles, lattice_heart`.
 - Tên: snake_case tiếng Anh cho nhóm, **id dữ liệu** cho tên (`kiem_si`, `phap_su`, `goblin_scout`…), dạng `[nhóm]_[tên]_[biến thể]_[cỡ]`.
 
 | Asset | Ví dụ |
 |---|---|
 | Anh hùng | `units/unit_kiem_si_sheet.png` + `.json`; tag `idle`, `step`, `cast_gesture` |
 | Quái, biến thể | `units/unit_goblin_scout_sheet.png`, `unit_goblin_scout_alt_sheet.png` |
-| Kẻ Gác | `wardens/warden_forest_sheet.png` (48×64) |
+| Kẻ Gác | `units/unit_forest_witch_sheet.png` (160×130, 2026-11-02); `wardens/` (48×64) chưa dùng |
 | Phiến | `env/hellfire/env_slab_hellfire_9slice.png` + `env_slab_hellfire_stamps.png` |
 | Bãi Gai | `env/forest/env_thorn_forest.png`. Tường `env_wall_forest.png` **bỏ 2026-10-31**, thay bằng Ô rớt (ASSET-006 Superseded, `design/assets/specs/misty-forest-assets.md`) |
 | Nền | `env/sands/bg_sands_sky.png`, `bg_sands_far.png`, `bg_sands_near.png` |
@@ -794,7 +794,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 | VFX | `vfx/vfx_slash_sheet.png` (6 loại: `slash, push, burn, ice, crack, build`) |
 | Icon | `ui/ui_icons_status_12.png` |
 | Chân dung | `portraits/portrait_phap_su.png` |
-| Bảng màu | `palette/tessera_master.gpl` (Aseprite đọc thẳng), `tessera_master_lut.png`, `tessera_region_hellfire.gpl` |
+| Bảng màu | `palette/tessera_master.gpl` (Aseprite đọc thẳng), `tessera_master_lut.png`, `tessera_region_hellfire.gpl` — **thực tế:** `art_src/palette/tessera_master.gpl` (47 màu, 2026-11-11), chưa có LUT và tập con vùng |
 
 ### 8.2 Render và màn hình
 - Chiến trường vẽ trong **SubViewport 800×360** (vùng chơi 640 ở giữa, 80 px mỗi bên chỉ là nền). Texture filter Nearest, MSAA 2D tắt, HDR 2D tắt.
@@ -807,9 +807,9 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 ### 8.3 Khung, neo, đệm
 | Loại | Khung (art-px) | Ghi chú |
 |---|---|---|
-| Anh hùng | **96×70** (sửa lần 2, 2026-10-31: mẫu Kiếm sĩ v3 cao kiểu One Step From Eden, người dùng duyệt; khung rộng để chứa đường chém ngang ở clip niệm; chân ở hàng cuối, tâm chân x = 48). Trước đó 40×48 | cao ~66; thân rộng ~31; ~1,4 ô trên sân 3x3, ~2,1 ô trên sân 5x5; vật cầm/vung nằm trong khung |
-| Quái, Tinh Anh | **64×52** cho Goblin Scout v3 (sửa 2026-10-31, mẫu tỉ lệ OSFE người dùng duyệt: cao ~46, khoảng 70 % Kiếm sĩ; chân ở hàng cuối, tâm chân x = 32). Trước đó 32×48 | cao ~46 (quái thường, ≈ 70 % anh hùng); Tinh Anh cao hơn; vật vung nằm trong khung |
-| Kẻ Gác, Người Giữ Tâm Lưới | 48×64; thân ≤ 52×40 (Mục 5) | Mảnh Gốc **không vẽ trong sheet**: code dựng, 2 px/ô |
+| Anh hùng | **96×70** (sửa lần 2, 2026-10-31: mẫu Kiếm sĩ v3 cao kiểu One Step From Eden, người dùng duyệt; khung rộng để chứa đường chém ngang ở clip niệm; chân ở hàng cuối, tâm chân x = 48). Trước đó 40×48. **Trên đĩa 2026-11-11:** `phap_su`, `sat_thu` 96×70; `tho_san`, `giao_si` 96×72 (giữ chóp lông/gậy); `kiem_si` 96×92 (`body_h` 70, người dùng duyệt phương án A 2026-11-08, nguồn 96×70 căn đáy) | cao ~66; thân rộng ~31; ~1,4 ô trên sân 3x3, ~2,1 ô trên sân 5x5; vật cầm/vung nằm trong khung |
+| Quái, Tinh Anh | **64×52** cho Goblin Scout v3 (sửa 2026-10-31, mẫu tỉ lệ OSFE người dùng duyệt: cao ~46, khoảng 70 % Kiếm sĩ; chân ở hàng cuối, tâm chân x = 32). Trước đó 32×48. **Trên đĩa:** quái thường 64×52 (`dire_wolf` 68×52 vì đuôi); **Tinh Anh 80×80** (`ancient_root_sentinel`, `mistbriar_matron`, `wolf_alpha`, người dùng duyệt 2026-11-02, to hơn theo bậc) | cao ~46 (quái thường, ≈ 70 % anh hùng); Tinh Anh cao hơn; vật vung nằm trong khung |
+| Kẻ Gác, Người Giữ Tâm Lưới | 48×64; thân ≤ 52×40 (Mục 5). **Trên đĩa:** **160×130** (`forest_witch` neo rộng duyệt 2026-11-02 "to ra hơn để khớp với 2x2"; `goblin_warlock` 2026-11-04); 48×64 không còn đúng cho boss 2×2 | Mảnh Gốc **không vẽ trong sheet**: code dựng, 2 px/ô |
 | Phiến | 9-slice nguồn 16×16, lề 3 trái-phải-trên, mép trước 2–3 dưới; + 6 stamp (Mục 6.3) | ô thật 38×27 … 64×46 |
 | Bãi Gai | v2: mảng `_tile16` 16×16 lặp phủ mặt phiến (lùi 1 px); dải 40×12 neo giữa đáy (v1) chỉ còn cho dải nhặt nếu dùng | Khung Tường 40×40 **bỏ 2026-10-31**, thay bằng Ô rớt (ASSET-006 Superseded) |
 | Nền | 800×360 mỗi lớp (≤ 3: trời, xa, gần); lớp trời có thể ≤ 800×200 | lớp mây trôi: lặp ngang liền mạch (hai quad lệch 800 px) |
@@ -857,7 +857,7 @@ Soạn: art-director (hướng art) + technical-artist (giới hạn Godot 4.6 v
 
 ### 8.7 Import và bộ nhớ
 - **Import mọi ảnh art:** Compress = **Lossless** (nén VRAM làm vỡ pixel art), Mipmaps tắt, `fix_alpha_border` bật, Premult Alpha tắt. Lọc đặt NEAREST trên node. Cờ ETC2/ASTC khi export có thể vẫn phải bật (cần kiểm).
-- **Trần texture:** atlas ≤ 2048×2048, dùng **1024×1024** (máy yếu, cần kiểm trên máy thật). Mỗi sinh vật một hàng: 12 khung × 32 = 384×48 (Kẻ Gác 576×64).
+- **Trần texture:** atlas ≤ 2048×2048, dùng **1024×1024** (máy yếu, cần kiểm trên máy thật). Mỗi sinh vật một hàng: 12 khung × 32 = 384×48 (Kẻ Gác 576×64). **Thực tế 2026-11-11:** chưa gộp atlas; mỗi đơn vị một sheet riêng (mỗi clip một hàng, ô 96×92 … 160×130), lớn nhất `unit_forest_witch_sheet.png` 1287×1309 (dưới 2048², trên mục tiêu 1024²); bảng dung lượng dưới đây vẫn là ước tính theo khung cũ.
 - Draw call tầng art ≈ 20–30 (đoán, đo ở Debugger → Monitors), còn ≥ 100 cho HUD trong ngân sách 150.
 
 | Mục (RGBA8) | MB |

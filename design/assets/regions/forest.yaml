@@ -1,0 +1,32 @@
+id: forest
+name: "Rừng Sương"
+floor: 1
+final_battle: false
+environment: present
+background: "800x360, max 3 layers, no outline, no gameplay overlay"
+floor_tiles: "nine-slice 16x16, no outline"
+sprite_palette_status: partial_see_palette_doc
+sprite_colours: []
+monsters:
+  - goblin_scout
+  - rootling
+  - mossbound_sentry
+  - greycap_sporeling
+  - goblin_archer
+  - dire_wolf
+  - wolf_alpha
+  - ancient_root_sentinel
+  - mistbriar_matron
+  - goblin_warlock
+  - forest_witch
+out_of_pool:
+  - wolf
+  - goblin_chief
+  - goblin_warrior
+  - goblin_shaman
+  - goblin_brute
+sources:
+  - docs/art/FLOOR-MAP-ROSTER.md
+  - docs/art/REGION-MATERIALS-AND-PALETTE.md
+  - docs/art/RENDER-STANDARDS.md
+  - design/art/region-visual-brief-2026-11-05.md

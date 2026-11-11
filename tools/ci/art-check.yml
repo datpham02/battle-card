@@ -1,0 +1,35 @@
+# PROPOSAL (P4, 2026-11-11) — not active. To activate: copy to .github/workflows/art-check.yml.
+# Minimal CI for the art pipeline. Python-only: registry validation, art metadata, sheet export drift,
+# VFX pack rules, the adapter self-test. No Godot (the suites need the editor binary; add a godot
+# setup step later), no PixelLab, no PixelFX render, nothing paid. Fails on FAIL only.
+name: art-check
+on:
+  push:
+    paths: ["assets/art/**", "art_src/**", "design/assets/asset-registry.yaml", "tools/asset-pipeline/**", "tools/fx-pipeline/**", "tools/qa/art_check.py"]
+  pull_request:
+    paths: ["assets/art/**", "art_src/**", "design/assets/asset-registry.yaml", "tools/asset-pipeline/**", "tools/fx-pipeline/**", "tools/qa/art_check.py"]
+jobs:
+  art-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Registry validate + check
+        run: |
+          python -X utf8 -I tools/asset-pipeline/asset_registry.py validate
+          python -X utf8 -I tools/asset-pipeline/asset_registry.py check
+      - name: Sheet export drift (palette, alpha, margins, frames)
+        run: python -X utf8 -I tools/asset-pipeline/export_sheets.py --check
+      - name: fxkit + adapter self-tests
+        run: |
+          python -X utf8 -I tools/fx-pipeline/fxc.py selftest
+          python -X utf8 -I tools/fx-pipeline/pixelfx_adapter.py selftest
+      - name: Unified art QA (no Godot)
+        run: python -X utf8 -I tools/qa/art_check.py all --no-godot --json art-check.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: art-check-report
+          path: art-check.json

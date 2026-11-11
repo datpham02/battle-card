@@ -3,7 +3,7 @@ name: asset-spec
 description: "Per-asset visual specs plus AI generation prompts from GDDs and character profiles. After the art bible."
 argument-hint: "[system:<name> | level:<name> | character:<name>] [--review full|lean|solo]"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Write, Edit, Agent, AskUserQuestion, Bash(bash "*/.claude/skills/asset-spec/../../hooks/yaml-helper.sh" resolve_config *)
+allowed-tools: Read, Glob, Grep, Write, Edit, Agent, AskUserQuestion, Bash(bash "*/.claude/skills/asset-spec/../../hooks/yaml-helper.sh" resolve_config *), Bash(python -X utf8 -I tools/asset-pipeline/asset_registry.py show *), Bash(python -X utf8 -I tools/asset-pipeline/asset_registry.py bootstrap), Bash(python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest)
 model: sonnet
 ---
 
@@ -30,6 +30,29 @@ generator (calling an image API) always prompts regardless of
 unconditionally, independent of whether `external_calls` is listed in
 `automation_always_ask`. (Today this skill only emits generation-prompt
 *text*; the guard applies if live generation is ever wired in.)
+
+## Project overlay (read first when `design/assets/asset-registry.yaml` exists)
+
+This project has a registry, per-character Master References and its own spec
+format. Read `references/project-format.md` before Phase 1 and follow it: the
+registry (`asset_registry.py show <id>`, `backlog[]`) replaces the entity
+inventory as the list of what exists and what is required; a character spec
+inherits `design/assets/references/characters/<id>.md`; spec blocks use the
+project format (Design, Tier / frame, Facing, Palette locked, Likeness check,
+Pre-generation checklist, Tool / route, Prompt, Clips, Acceptance, Generation
+log); the manifest is generated from the registry and never appended by hand.
+If the registry file is absent, say so and fall back to the generic phases.
+Supported targets: `character:`, `animation:<id> <clip>`, `vfx:<pack>`,
+`ui:<asset>`, `card:<id>`, `environment:<region> <part>`, besides `system:`
+and `level:`.
+
+Frame, anchor, outline and pixel rules: `docs/art/RENDER-STANDARDS.md` first.
+Art Bible frame sizes and monster lists do not override it. Filling a missing
+field with `unknown` or `undefined` is allowed. Writing a generation prompt is
+not, until a Master Reference exists and `palette_status` is `locked` or
+`group_assigned_not_per_creature` with hexes that are in the GPL. Never call
+`asset_registry.py set-status` with `approved`. Acceptance without a quoted
+user line stays `unknown`.
 
 ## Phase 0b: Entity & Screen Inventory (runs when no arguments and no existing inventory)
 
@@ -310,6 +333,12 @@ Write the file with:
 
 [all asset specs in ASSET-NNN format]
 ```
+
+**Project overlay:** when `design/assets/asset-registry.yaml` exists, do not
+edit the manifest: add a `backlog[]` row or asset entry to the registry (ask
+"May I write `design/assets/asset-registry.yaml`?"), then run
+`python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest`. The
+template below applies only to projects without a registry.
 
 Then update `design/assets/asset-manifest.md`. If it doesn't exist, create it:
 

@@ -100,6 +100,61 @@ mode) signs the open points off and the file sits at its final path.
 - Sources that are not final (candidates, explorations, raw generator output)
   live outside the engine's import path, each with the script that made them.
 
+## 5a. Candidate folders, versions and history (P1, 2026-11-11)
+
+Everything a generator or a script produces is a **candidate** until the user
+accepts it and it is installed. Candidates live outside the engine's import
+path and are never deleted (rejected and superseded versions stay as history;
+removing one is the user's explicit call).
+
+**Folder convention** (new work; the pre-2026-11-11 folders keep their names and
+are listed in the registry's `candidates` field):
+
+```
+design/assets/candidates/<group>/<asset-or-clip>-v<N>-<YYYY-MM-DD>/
+    raw/            frames exactly as the generator returned them (0.png … or f0.png …)
+    clean/          after mechanical edits (palette snap, specks, re-plant, recentre)
+    preview/        strips, contact sheets, in-game paste mocks (x2 / x3 / x4)
+    QA.md           what was generated, measured and decided (template below)
+    metadata.json   {"asset_id","entity_id","clip","version","tool","job_id","character_id",
+                     "prompt","params","seed","date","source_anchor","qa","acceptance"}
+```
+
+`<group>` is the character or asset family folder already in use (`swordsman`,
+`goblin-scout`, `fx-pipeline`, `floor-vfx`, `ui`, …); `<asset-or-clip>` is the
+registry id's last part or the clip name (`cast_hand`, `anchor`, `idle`);
+`v<N>` restarts at 1 per asset-or-clip and never reuses a number; the date is
+the generation date. One folder = one generation call (or one script build);
+a retake is the next `v<N>`.
+
+**Traceability:** every candidate folder maps to one registry entry (asset id +
+clip), one generation id (PixelLab job / character / image id, or the script
+and recipe), one prompt or spec row, one QA result and one acceptance state.
+`metadata.json` carries them so a future session can resume without the chat.
+
+**QA.md template:** `## Request` (what, why, spec row) · `## Call` (tool,
+parameters, prompt, cost, ids) · `## Measured` (frames, bbox, feet row/x,
+colours off-palette, red/orange pixels, clipping — from `sprite_measure.gd`,
+`anim_qa.py`, `fxc check`) · `## Verdict` (PASS / WARN / FAIL per check, then
+the user's words verbatim with the date, or `pending`) · `## Next` (install,
+retake, or rejected and why).
+
+**Tooling (P3):** `python -X utf8 -I tools/asset-pipeline/candidate.py new --group <g> --name <n> --asset <id> [--clip] --tool ... [--job-id] [--seed] [--prompt]`
+creates the folder, `metadata.json` and `QA.md` and logs `candidate_created`;
+`candidate.py qa <folder> --verdict ... --summary ...` and
+`candidate.py verdict <folder> --acceptance accepted|rejected --by user --evidence "..."` fill them and
+update the registry; `tools/qa/art_check.py candidate <folder>` runs the technical checks;
+`tools/qa/review_package.py <folder> [--current ...]` builds the review package.
+
+**Status flow and the registry:** candidate → (user) accepted → installed
+(`assets/art/`, exporter / index updated) → (user) approved; a replaced version
+becomes `legacy`. Record each step with
+`tools/asset-pipeline/asset_registry.py log-event | set-acceptance | set-status`
+so the registry's `history` carries: generation started / completed, candidate
+created, QA completed, user accepted, integration completed, user approved,
+candidate rejected, version retired. The Master Reference's §8–§10 and the
+spec's generation log are updated from the same facts.
+
 ## 6. Tools (verified state on 2026-10-31)
 
 | Tool | Role here | Verified? |

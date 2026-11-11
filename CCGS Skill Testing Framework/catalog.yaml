@@ -797,6 +797,17 @@ skills:
     priority: low
     category: utility
 
+  - name: game-art-workflow
+    spec: CCGS Skill Testing Framework/skills/utility/game-art-workflow.md
+    last_static: ""
+    last_static_result: ""
+    last_spec: ""
+    last_spec_result: ""
+    last_category: ""
+    last_category_result: ""
+    priority: medium
+    category: utility
+
   - name: pixellab-animation-engineer
     spec: CCGS Skill Testing Framework/skills/utility/pixellab-animation-engineer.md
     last_static: ""

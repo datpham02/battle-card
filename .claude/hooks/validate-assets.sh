@@ -81,9 +81,11 @@ case "$FILE_PATH" in
 esac
 shopt -u nocasematch
 
-# Only check files under an asset root.
+# Only check files under an asset root -- plus, for the art pipeline (P4 of the
+# AI Game Art Workflow, 2026-11-11), the art sources and the asset registry.
 case "$REL_PATH" in
     assets/*|Assets/*|Content/*) ;;
+    art_src/*|design/assets/asset-registry.yaml) ;;
     *) exit 0 ;;
 esac
 
@@ -136,6 +138,43 @@ if echo "$REL_PATH" | grep -qE '^(assets|Assets|Content)/(.*/)?[Dd]ata/.*\.[Jj][
         fi
     fi
 fi
+
+# BLOCKING (art pipeline): sprite-sheet / VFX / region JSON under assets/art and
+# the sources' clips.json are read by the game and the exporter; the asset
+# registry is read by every art skill. A malformed one breaks the next run as
+# surely as a data file, so the same exit-2 feedback applies. The registry is
+# checked by its own validator (schema, lifecycle, history), not only as YAML.
+_VA_PY=""
+for cmd in python python3 py; do
+    if command -v "$cmd" >/dev/null 2>&1 && "$cmd" -c 'import sys; sys.exit(sys.version_info[0] < 3)' >/dev/null 2>&1; then
+        _VA_PY="$cmd"; break
+    fi
+done
+case "$REL_PATH" in
+    assets/art/*.json|art_src/*.json)
+        if [ -f "$REL_PATH" ]; then
+            if [ -n "$_VA_PY" ]; then
+                if ! "$_VA_PY" -c 'import json, sys; json.load(open(sys.argv[1], encoding="utf-8-sig"))' "$REL_PATH" > /dev/null 2>&1; then
+                    ERRORS="$ERRORS\n  FORMAT: $REL_PATH is not valid JSON — the art pipeline (exporter, VfxPack, ArtAssets) will refuse it"
+                fi
+            else
+                WARNINGS="$WARNINGS\n  UNCHECKED: cannot validate JSON (python not found) — $REL_PATH"
+            fi
+        fi ;;
+    design/assets/asset-registry.yaml)
+        if [ -f tools/asset-pipeline/asset_registry.py ]; then
+            if [ -n "$_VA_PY" ]; then
+                _VA_REG=$("$_VA_PY" -X utf8 -I tools/asset-pipeline/asset_registry.py validate 2>&1)
+                if [ $? -ne 0 ]; then
+                    ERRORS="$ERRORS\n  REGISTRY: asset-registry.yaml fails its validator:\n$(printf '%s\n' "$_VA_REG" | grep -E '^FAIL' | head -8 | sed 's/^/    /')"
+                fi
+            else
+                WARNINGS="$WARNINGS\n  UNCHECKED: cannot validate the asset registry (python not found)"
+            fi
+        else
+            WARNINGS="$WARNINGS\n  UNCHECKED: tools/asset-pipeline/asset_registry.py missing — registry not validated"
+        fi ;;
+esac
 
 # Report build-breaking issues. exit 2 routes this to Claude, not just the user,
 # so the file that was already written can actually be corrected. Any warnings

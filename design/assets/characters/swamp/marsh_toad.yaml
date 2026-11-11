@@ -1,0 +1,18 @@
+id: marsh_toad
+name: "Cóc Đầm"
+region: swamp
+role: "battle t1–2, danger t1–2"
+tier: monster
+frame: [64, 52]
+anchor: bottom_center
+outline: "#1B1722"
+sheet: absent
+palette_status: needs_art_director_review
+colours: []
+silhouette: unknown
+materials: unknown
+approval: unknown
+sources:
+  - docs/art/FLOOR-MAP-ROSTER.md
+  - docs/art/RENDER-STANDARDS.md
+  - docs/art/REGION-MATERIALS-AND-PALETTE.md

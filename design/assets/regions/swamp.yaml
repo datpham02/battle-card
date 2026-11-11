@@ -1,0 +1,24 @@
+id: swamp
+name: "Đầm Lầy Độc"
+floor: 4
+final_battle: false
+environment: missing
+background: "800x360, max 3 layers, no outline, no gameplay overlay"
+floor_tiles: "nine-slice 16x16, no outline"
+sprite_palette_status: needs_art_director_review
+sprite_colours: []
+monsters:
+  - bog_rat
+  - mire_slug
+  - swamp_lizard
+  - marsh_toad
+  - reed_witch
+  - bog_hound
+  - spore_cap
+  - leap_frog
+  - toad_matriarch
+sources:
+  - docs/art/FLOOR-MAP-ROSTER.md
+  - docs/art/REGION-MATERIALS-AND-PALETTE.md
+  - docs/art/RENDER-STANDARDS.md
+  - design/art/region-visual-brief-2026-11-05.md

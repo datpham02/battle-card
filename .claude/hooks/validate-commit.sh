@@ -576,6 +576,47 @@ sys.stdout.buffer.write(("CCGS-JSON-CHECKED\n" + "".join("B\t" + p + "\n" for p 
     fi
 fi
 
+# ---------------------------------------------------------------------------
+# BLOCKING (art pipeline, P4 of the AI Game Art Workflow, 2026-11-11). A commit
+# that touches production art, the art sources or the asset registry runs the
+# unified art QA on exactly those files: registry vs disk, sheet export drift
+# (palette, alpha, margins, frame counts), VFX pack rules, import flags, PNG
+# integrity. FAIL blocks. WARNING and UNKNOWN pass with the lines shown, so a
+# known pre-fxkit pack never blocks and a checker that could not run says so.
+# A check that cannot RUN at all (no Python, the tool missing, or the 25 s
+# budget exceeded) blocks too: silently passing an unchecked sheet is the
+# failure skill-authoring.md names. The operator then runs
+# `bash tools/qa/art_check.sh changed` by hand and commits again.
+# 25 s, not 12: one changed-mode pass over the in-progress detect_3d import
+# diff (about 40 VFX packs) measured 13 s on 2026-11-11. 12 s blocked that
+# tree with no FAIL.
+# ---------------------------------------------------------------------------
+ART_FILES=$(echo "$STAGED" | grep -E '^(assets/art/|art_src/|design/assets/asset-registry\.yaml$)')
+if [ -n "$ART_FILES" ]; then
+    if [ -z "$_VC_PY" ]; then
+        echo "BLOCKED: $(printf '%s\n' "$ART_FILES" | grep -c .) staged art file(s) could not be checked -- no Python 3 interpreter found" >&2
+        exit 2
+    elif [ ! -f tools/qa/art_check.py ]; then
+        echo "BLOCKED: staged art files but tools/qa/art_check.py is missing -- restore it or commit the art separately after checking by hand" >&2
+        exit 2
+    else
+        _VC_ART=$(timeout 25 "$_VC_PY" -X utf8 -I tools/qa/art_check.py changed --no-godot 2>&1)
+        _VC_ART_RC=$?
+        if [ "$_VC_ART_RC" -eq 124 ]; then
+            echo "BLOCKED: art check exceeded the hook budget (25 s). Run: bash tools/qa/art_check.sh changed -- then commit again" >&2
+            exit 2
+        elif [ "$_VC_ART_RC" -ne 0 ]; then
+            echo "BLOCKED: art check FAIL on staged art files:" >&2
+            printf '%s\n' "$_VC_ART" | grep -E '^(FAIL|UNKNOWN)' | head -12 | sed 's/^/  /' >&2
+            echo "Fix the files (or the registry) and run: bash tools/qa/art_check.sh changed" >&2
+            exit 2
+        else
+            _VC_ART_W=$(printf '%s\n' "$_VC_ART" | grep -E '^(WARNING|UNKNOWN)' | head -8)
+            [ -n "$_VC_ART_W" ] && WARNINGS="$WARNINGS\n  ART CHECK (advisory):\n$(printf '%s\n' "$_VC_ART_W" | sed 's/^/    /')"
+        fi
+    fi
+fi
+
 # Check design documents for the sections REQUIRED AT THIS PROJECT'S TIER.
 #
 # Demanding all 8 sections unconditionally would contradict

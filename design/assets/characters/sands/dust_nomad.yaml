@@ -1,0 +1,18 @@
+id: dust_nomad
+name: "Du Mục Bụi"
+region: sands
+role: "battle t1–2, danger t1"
+tier: monster
+frame: [64, 52]
+anchor: bottom_center
+outline: "#1B1722"
+sheet: absent
+palette_status: needs_art_director_review
+colours: []
+silhouette: unknown
+materials: unknown
+approval: unknown
+sources:
+  - docs/art/FLOOR-MAP-ROSTER.md
+  - docs/art/RENDER-STANDARDS.md
+  - docs/art/REGION-MATERIALS-AND-PALETTE.md

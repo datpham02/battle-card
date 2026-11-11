@@ -1,8 +1,9 @@
 ---
 name: pixellab-animation-engineer
 description: "2D animation director + PixelLab prompt engineer: key poses, frame timing, PixelLab prompts, approved MCP runs, frame QA. Engine-agnostic."
-argument-hint: "[animation request, e.g. 'hero heavy slash, south-east'] [--manual] [--profile <path>]"
+argument-hint: "[--mode animation|anchor|image] [request, e.g. 'hero heavy slash, south-east' or 'anchor goblin_shaman'] [--manual] [--profile <path>]"
 user-invocable: true
+model: sonnet
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, AskUserQuestion, mcp__pixellab__get_balance, mcp__pixellab__get_character, mcp__pixellab__get_object, mcp__pixellab__get_image, mcp__pixellab__list_jobs, mcp__pixellab__wait_for_jobs, mcp__pixellab__get_pro_flash_capabilities, mcp__pixellab__search_help
 ---
 
@@ -47,8 +48,35 @@ view, paths) comes from the project's **animation profile** (Phase 0).
 
 ---
 
+## Modes (Tessera extension, 2026-11-11)
+
+`--mode animation` (default; Phases 0–7 below), `--mode anchor` (a
+character's approved still, Phase A) and `--mode image` (a one-off image
+asset: env piece, island, card art, portrait, tile set; Phase I). Anchor and
+image modes reuse Phase 0 (registry + reference + profile), the Phase 4 gate,
+the Phase 5 download rules and the Phase 7 record keeping; their design step is
+`references/anchor-checklist.md`. The generic rules above apply unchanged.
+
 ## Phase 0: Load the profile and references
 
+0. **Registry and Master Reference first (project with a registry).** Run
+   `python -X utf8 -I tools/asset-pipeline/asset_registry.py show unit.<id>`
+   (or the asset's id) and read `design/assets/references/characters/<id>.md`
+   when the entry names a `reference`. They hold the anchor path, PixelLab
+   character id and lineage, frame, feet, palette, the clip contract and the
+   open points; the profile below only adds generator defaults. A character
+   with an entry but no reference → use the entry + its spec and say
+   `NOT ASSESSED — no Master Reference`. No registry file → skip this step and
+   say so. Filling that gap in the reference (`unknown` / `undefined`) is a
+   documentation job and may continue. A generation prompt may not.
+0b. **Palette gate, before any colour prompt or API call.** Read
+   `palette_status` on `design/assets/characters/<region>/<id>.yaml` when that
+   file exists, and §4 of the Master Reference. `locked` and
+   `group_assigned_not_per_creature` may name hexes that are in
+   `art_src/palette/tessera_master.gpl`. `needs_art_director_review`,
+   `undefined`, or a missing Master Reference: do not write a colour prompt
+   and do not call the PixelLab API. The paid-call gate in Phase 4 still
+   applies when the palette is locked.
 1. Profile: `--profile <path>` if given; else look for `design/art/pixellab-profile.md`,
    then any `**/pixellab-profile.md`. Read it.
    - **No profile:** say so, offer to draft one from `templates/` knowledge
@@ -104,7 +132,8 @@ Present the sheet. Ask "May I write this to [profile.paths.design_sheets]/<chara
 
 ## Phase 3: Prompt Pack
 
-Build the prompt with `references/prompt-templates.md`:
+If step 0b stopped this request, do not build a prompt. Say which gate failed
+and stop. Otherwise build the prompt with `references/prompt-templates.md`:
 1. The **structured brief** (identity recap verbatim from the profile,
    reference constraints, action, key poses, frame-by-frame, timing,
    direction/view, size, style, palette, loop, constraints, export).
@@ -140,6 +169,10 @@ Build the prompt with `references/prompt-templates.md`:
 3. Download every frame into a new candidates folder
    (`[profile.paths.candidates]/<character>/<clip>-<date>/raw/`), never over
    accepted art. Note job id, seed, charged generations, enhanced prompt.
+   Project with a registry: make the folder with
+   `python -X utf8 -I tools/asset-pipeline/candidate.py new --group <character> --name <clip> --asset unit.<id> --clip <clip> --tool <tool> --job-id <id> --seed <n> --prompt "<motion text>"`
+   (it writes `metadata.json`, `QA.md` and the `candidate_created` event), then
+   download into its `raw/`.
 
 ## Phase 6: QA
 
@@ -181,6 +214,37 @@ Build the prompt with `references/prompt-templates.md`:
    row to the profile's generation log (date, tool, params, prompt, seed, job
    id, cost, verdict), or updating the profile's clip list.
 3. Never overwrite accepted art; keep the old frames next to the new ones.
+4. **Registry (project with a registry):** record every call and verdict so the
+   next session resumes from files:
+   `python -X utf8 -I tools/asset-pipeline/asset_registry.py log-event <id> generation_started|generation_completed|candidate_created|qa_completed [--clip <clip>] --job-id <id> --candidate <folder> --note "<tool, params, cost, verdict>"`;
+   the user's verdict with `set-acceptance … --by user --evidence "<file>: <their words>"`.
+   Store the PixelLab character / image / upload ids in the entry's `pixellab`
+   block (ask "May I write" for that edit) and update the Master Reference §8
+   lineage. Candidate folders follow `docs/art/PIXEL_ART_WORKFLOW.md` §5a
+   (`<asset-or-clip>-v<N>-<date>/{raw,clean,preview,QA.md,metadata.json}`).
+
+## Phase A: Anchor mode (`--mode anchor <entity_id>`)
+
+1. Phase 0 (registry, reference if any, profile). An entity with an installed
+   anchor → say so and offer `revise` (a new version) instead of a duplicate.
+2. Fill `references/anchor-checklist.md` §A–§B from the spec (run `/asset-spec
+   character:<id>` if the design row, palette or likeness check is missing)
+   and show it: every line answered, the likeness named.
+3. Phase 4 gate with the call shape from the checklist §C: tool, canvas, view,
+   seed, palette, style image, prompt, cost; **one pilot call**.
+4. Phase 5 download to `design/assets/candidates/<group>/anchor-v<N>-<date>/raw/`.
+5. QA per checklist §D (measure, paste mock, likeness again); verdict FAIL >
+   WARN > NOT ASSESSED > PASS as in Phase 6; the user decides.
+6. Phase 7 record. The anchor is accepted only in the user's words; clips wait
+   for that.
+
+## Phase I: Image mode (`--mode image <asset id>`)
+
+Same as Phase A with the checklist's image rows: spec row, size, palette
+(region ramp or card ramp), `no_background`, style image if the family has
+one; candidates under `design/assets/candidates/<group>/<asset>-v<N>-<date>/`;
+QA = palette / alpha / size measured + in-context mock (art-check or the
+game); the registry entry gets `provider: pixellab` and the ids.
 
 ---
 

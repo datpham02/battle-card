@@ -24,9 +24,18 @@ Sources: `design/assets/specs/swordsman-assets.md`, `design/assets/specs/goblin-
 | candidates | `design/assets/candidates/<character>/` (raw PixelLab output, never accepted art) |
 | accepted frames | `art_src/units/<id>/<clip>/<n>.png` + `art_src/units/<id>/clips.json` |
 | generation log | the character's spec in `design/assets/specs/` (Generation log table) |
+| registry | `design/assets/asset-registry.yaml` — status, approval, PixelLab ids and lineage per unit and per clip (P0, 2026-11-11); `python -X utf8 -I tools/asset-pipeline/asset_registry.py show unit.<id>` |
+| master references | `design/assets/references/characters/<id>.md` (P1, one file per character; until then the registry entry + the spec are the reference) |
 | evidence | `production/qa/evidence/` |
 
 ## Characters
+
+> 2026-11-11: this section covers 2 of the 16 animated units. The other 14 are
+> described by their registry entries (`unit.<id>` in
+> `design/assets/asset-registry.yaml`: frame, facing, clips, PixelLab character
+> id, lineage) and their specs; P1 moves every unit into
+> `design/assets/references/characters/`. Facts below for `kiem_si` predate the
+> 96×92 canvas change of 2026-11-08 (`body_h` 70, sources bottom-aligned).
 
 ### kiem_si — Swordsman (player)
 

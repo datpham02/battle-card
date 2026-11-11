@@ -4,9 +4,9 @@ Hooks are configured in `.claude/settings.json` and fire automatically:
 
 | Hook | Event | Trigger | Action |
 | ---- | ----- | ------- | ------ |
-| `validate-commit.sh` | PreToolUse (Bash, PowerShell) | `git commit` commands | Validates design doc sections, JSON data files, hardcoded values, TODO format |
+| `validate-commit.sh` | PreToolUse (Bash, PowerShell) | `git commit` commands | Validates design doc sections, JSON data files, hardcoded values, TODO format. Staged art (`assets/art/`, `art_src/`, `design/assets/asset-registry.yaml`) also runs `art_check.py changed --no-godot`; FAIL or a check that cannot run blocks (25 s budget) |
 | `validate-push.sh` | PreToolUse (Bash, PowerShell) | `git push` commands | Warns on pushes to protected branches (`main`, `master` and `release/*`) |
-| `validate-assets.sh` | PostToolUse (Write/Edit) | Asset file changes | Checks data-file JSON under `assets/`, `Assets/` or `Content/`, and asset naming in Godot's `assets/` only |
+| `validate-assets.sh` | PostToolUse (Write/Edit) | Asset file changes | Checks data-file JSON under `assets/`, `Assets/` or `Content/`, and asset naming in Godot's `assets/` only. Also validates `assets/art/**/*.json` and `art_src/**/*.json`, and runs the registry validator when `design/assets/asset-registry.yaml` is written |
 | `session-start.sh` | SessionStart | Session begins | Loads sprint context, milestone, git activity; detects and previews active session state file for recovery |
 | `detect-gaps.sh` | SessionStart | Session begins | Detects fresh projects (suggests /start) and missing documentation when code/prototypes exist, suggests /reverse-document or /project-stage-detect |
 | `pre-compact.sh` | PreCompact | Context compression | Logs the compaction to `production/session-logs/compaction-log.txt`. Its state summary goes to the debug log only: Claude Code does not add PreCompact output to the conversation. `session-start.sh`, which runs again after every compaction, is what restores context |

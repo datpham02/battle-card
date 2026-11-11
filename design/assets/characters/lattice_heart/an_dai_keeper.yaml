@@ -1,0 +1,19 @@
+id: an_dai_keeper
+name: "Người Giữ Tâm Lưới"
+region: lattice_heart
+role: "boss"
+tier: keeper
+frame: [160, 130]
+anchor: bottom_center
+outline: "#1B1722"
+sheet: absent
+palette_status: needs_art_director_review
+colours: []
+silhouette: unknown
+materials: unknown
+approval: unknown
+sources:
+  - docs/art/FLOOR-MAP-ROSTER.md
+  - docs/art/RENDER-STANDARDS.md
+  - docs/art/REGION-MATERIALS-AND-PALETTE.md
+frame_conflict: "brief still says 48x64; RENDER-STANDARDS wins at 160x130"

@@ -1,0 +1,24 @@
+id: hellfire
+name: "Thành Hỏa Ngục"
+floor: 2
+final_battle: false
+environment: missing
+background: "800x360, max 3 layers, no outline, no gameplay overlay"
+floor_tiles: "nine-slice 16x16, no outline"
+sprite_palette_status: needs_art_director_review
+sprite_colours: []
+monsters:
+  - imp
+  - ember_hound
+  - ash_golem
+  - flame_cultist
+  - magma_slug
+  - hell_knight
+  - fire_eater
+  - ash_phoenix
+  - inferno_lord
+sources:
+  - docs/art/FLOOR-MAP-ROSTER.md
+  - docs/art/REGION-MATERIALS-AND-PALETTE.md
+  - docs/art/RENDER-STANDARDS.md
+  - design/art/region-visual-brief-2026-11-05.md

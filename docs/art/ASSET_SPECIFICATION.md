@@ -5,6 +5,13 @@ bible is the source; this page exists so a programmer or an exporter script
 can find the numbers without reading nine sections. Values marked *proposed*
 or *to verify* carry those labels from the art bible.
 
+> **Synced 2026-11-11 (P0 of the AI art workflow):** §2–§6 now state what is on
+> disk, verified against `assets/art/units/*_sheet.json`, the `.import` files and
+> `art_src/`. Per-asset facts (frame, clips, PixelLab ids, status, approval) live
+> in `design/assets/asset-registry.yaml`; `design/assets/asset-manifest.md` is
+> generated from it. Values the art bible still carries as the *target* are
+> marked *(bible target)*.
+
 ## 1. Render contract
 
 | Item | Value |
@@ -20,9 +27,10 @@ or *to verify* carry those labels from the art bible.
 
 | Asset | Canvas | Notes |
 |---|---|---|
-| Hero | 40×48 | body ≤ 30 wide, 38–42 tall; weapon stays inside the canvas |
-| Monster / elite | 32×48 | body ≤ 30 wide, ≤ 34 / ≤ 40 tall |
-| Warden / Heart Keeper | 48×64 | body ≤ 52×40; Primal Shard built in code |
+| Hero | **96×70** (phap_su, sat_thu), **96×72** (tho_san, giao_si), **96×92** (kiem_si, `body_h` 70; sources 96×70 bottom-aligned by the exporter since 2026-11-08) | body ≈ 31 wide, ≈ 66 tall; feet on the last row at x = 48; weapon stays inside the canvas. *(bible §8.3 target: 96×70; 40×48 and 32×48 were the pre-2026-10-31 sizes)* |
+| Monster | **64×52** (goblin_scout, goblin_archer, rootling, greycap_sporeling, mossbound_sentry); **68×52** dire_wolf (tail) | body ≈ 46 tall, feet x = 32 (34 for the wolf) |
+| Elite | **80×80** (ancient_root_sentinel, mistbriar_matron, wolf_alpha) | taller than normals by tier; feet x = 40 |
+| Boss / Warden | **160×130** (forest_witch, goblin_warlock; 2×2 block) | feet x = 80; Primal Shard built in code. *(bible target was 48×64 — superseded 2026-11-02 by the wide boss anchor)* |
 | Slab | 9-slice source 16×16 (margins 3/3/3, front lip 2–3) + up to 6 stamps | real cells 38×27 … 64×46, aspect 1.4 |
 | Wall / Thorns | 40×40 / 40×12 | bottom-centre anchor |
 | Backdrop | 800×360 per layer, ≤ 3 layers (sky ≤ 800×200, far, near) | near = drifting mist, seamless horizontally |
@@ -40,7 +48,7 @@ sizes so the centre lands on a pixel.
 
 ## 3. Palette
 
-- Master ≤ 64 colours: `assets/art/palette/tessera_master.gpl` + `tessera_master_lut.png`; region subsets `tessera_region_<id>.gpl` = shared colours + ≤ 3 own.
+- Master ≤ 64 colours: **`art_src/palette/tessera_master.gpl`** (47 colours on 2026-11-11, grown from 16; `.gdignore`d with the sources, read by `export_sheets.py`, `tools/fx-pipeline` and `tests/unit/art/sheet_export_test.gd`). *(bible target: `assets/art/palette/` + `tessera_master_lut.png` + region subsets — none of those exist yet.)*
 - Per sprite: hero ≤ 8, monster ≤ 8, warden ≤ 12. Alpha only 0 or 255 on sprites, units and backdrops; alpha blending allowed only on floor overlays (cast tile 60 %, drag miss 50 %) and HUD glass (90 %).
 - Red #E5293B only for the telegraph. No smooth gradients; dither only on mist layers and one transition band (2×2 checker, ≤ 4 px).
 - Monster variants are exported as separate sheets by script (colour swap + accessories), never recoloured at runtime.
@@ -52,14 +60,12 @@ Pattern `[group]_[data id]_[variant]_[size]`, snake_case, English groups, data i
 
 | Group | Folder | Example |
 |---|---|---|
-| units | `assets/art/units/` | `unit_kiem_si_sheet.png` + `.json`; `unit_goblin_scout_alt_sheet.png` |
-| wardens | `assets/art/wardens/` | `warden_forest_sheet.png` |
-| environment | `assets/art/env/<region>/` | `env_slab_forest_9slice.png`, `env_slab_forest_stamps.png`, `env_wall_forest.png`, `bg_forest_far.png` |
-| blocks | `assets/art/blocks/` | `block_tiles_16.png`, `block_tiles_5.png` |
-| vfx | `assets/art/vfx/` | `vfx_slash_sheet.png`, `vfx_push_sheet.png`, `fx_material_marks_16.png`, `fx_telegraph_stripe_8.png` |
-| ui | `assets/art/ui/` | `ui_frame_panel_9slice.png`, `ui_icons_12.png` + `.json` |
-| portraits | `assets/art/portraits/` | `portrait_phap_su.png` |
-| palette | `assets/art/palette/` | `tessera_master.gpl` |
+| units (heroes, monsters, elites, bosses — one folder) | `assets/art/units/` | `unit_kiem_si_sheet.png` + `.json`, `unit_forest_witch_sheet.png` (bosses live here too; no `wardens/`) |
+| environment | `assets/art/env/<region>/` + `region.json` | `env_slab_forest_9slice.png`, `env_slab_forest_stamps.png` + `.json`, `env_slab_forest_flagstones.png`, `env_support_forest_{wall,pillar,arch,roots,ferns}.png`, `env_platform_forest_face.png`, `env_thorn_forest_tile16_v2.png`, `bg_forest_far_v4.png`, `bg_forest_far_{edge,sanctum}.png`; only `forest/` exists; `assets/art/regions.json` maps chapters to regions |
+| vfx (packs) | `assets/art/vfx/{cast,floor,status}/<pack>/` + `index.json` per kind | `manifest.json` + `whole.png` (+ `behind.png` / `front.png`) per pack, `VfxPack` format; `_c43x31` siblings are the 43×31-cell variants; loose: `vfx/fx_telegraph_stripe_8.png`, `vfx/pickup_voxel.json` |
+| ui | `assets/art/ui/{cards,climb,map,plates,title}/`, `ui/ui_icons_55.png` + `.json` | `card_frame.png`, `island_<region>.png` + `islands.json`, `icon_*.png`, `plate_<look>_{up,down}.png`, `menu_bg.png` — no group prefix today *(bible target: `[group]_[id]_[variant]_[size]`)* |
+| cards | `assets/art/cards/<card_id>.png` | 32×32 per card id, found by convention from `card_face.gd` |
+| blocks, portraits, palette | — | **not created**: blocks are code-drawn, portraits are missing (registry backlog), the palette is in `art_src/palette/` |
 
 Regions: `forest, dungeon, ice_tower, swamp, sands, hellfire, sky_isles, lattice_heart`.
 
@@ -70,7 +76,8 @@ Not imported by the engine: `design/assets/candidates/` (has `.gdignore`),
 
 - Hand-drawn source: one `.aseprite` per unit, tag = clip with frame durations. Accepted substitute until an artist works in Aseprite: `art_src/units/<id>/<clip>/<n>.png` + `clips.json` (order, ms, loop) — Story 045.
 - Export: sheet PNG (one row per clip, fixed cells, 1 px transparent gutter) + Aseprite-format JSON (`frames`, `meta.frameTags`), so `aseprite -b --sheet --data` output and the Python exporter are interchangeable. Aseprite CLI *not verified here*.
-- Battle atlases are generated by script: one shared atlas (heroes, VFX, overlays, icons, UI frames, block materials) and one per region (monsters, warden, slabs, props). Edit a source, rerun the script.
+- Battle atlases *(bible target, not implemented)*: today every unit sheet, VFX pack sheet and env tile is its own texture; the largest is `unit_forest_witch_sheet.png` 1287×1309 (under the 2048² ceiling, over the 1024² target).
+- Sources that are not final (candidates, explorations, raw generator output) live outside the engine's import path: `design/assets/candidates/` (`.gdignore`), `art_src/` (`.gdignore`), `design/art/reference/` (`.gdignore`). `production/qa/evidence/` has **no** `.gdignore` yet, so Godot imports every evidence screenshot (P4 fix).
 - Every PNG: RGBA 8-bit, lossless.
 
 ## 6. Godot import settings (every art PNG)
@@ -81,6 +88,7 @@ Not imported by the engine: `design/assets/candidates/` (has `.gdignore`),
 | Mipmaps | off | blurs at non-native scales |
 | Fix alpha border | on | no dark fringe on transparent edges |
 | Premultiplied alpha | off | |
+| `detect_3d/compress_to` | 0 on the 8 unit sheets `sheet_export_test.gd` pins; the default 1 on the other 162 art imports (2026-11-11) | harmless in 2D; made consistent in P4 |
 | Filter | Nearest, set on the node (`texture_filter`) and the SubViewport default | |
 | Texture ceiling | ≤ 2048², target 1024² atlases (*to verify* on low-end devices) | |
 

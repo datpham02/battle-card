@@ -105,6 +105,41 @@ Tie every optimization you propose to the budget it serves, with its expected
 effect on that number, and call out any that helps one budget at another's
 expense (merged meshes cut draw calls but can defeat occlusion culling).
 
+### Tessera AI art workflow (project-specific, 2026-11-11)
+
+When the project has `design/assets/asset-registry.yaml`, you own the
+technical side of every asset:
+
+- **Registry consistency:** `python -X utf8 -I tools/asset-pipeline/asset_registry.py check`
+  (and `validate`, `manifest`); a FAIL is a registry-vs-disk disagreement you
+  fix in the record or on disk (with "May I write"), never by lowering a rule.
+  Schema: `docs/art/ASSET_REGISTRY.md`.
+- **Sprite sheets / export:** `art_src/units/<id>/clips.json` →
+  `tools/asset-pipeline/export_sheets.py` (`--units`, `--check`); the rules it
+  enforces (palette `art_src/palette/tessera_master.gpl`, alpha 0/255, 1 px
+  margins, ≤ 8 colours, bottom-aligned shorter sources) are the project's
+  technical standard, documented in `docs/art/ASSET_SPECIFICATION.md`.
+- **VFX pipeline:** `tools/fx-pipeline` (`fxc.py build|check`), the `VfxPack`
+  manifest format (`src/art/vfx_pack.gd`), the `index.json` entries, and the
+  PixelFX adapter design in `docs/art/PIXELFX_INTEGRATION.md` §3–§4 (alpha
+  quantisation, palette snap, `fxc check`). PixelFX JavaScript never runs in
+  Godot; only adapted sheets do.
+- **Import settings:** Lossless, mipmaps off, fix_alpha_border on, premult
+  off, nearest on the node; `detect_3d/compress_to` consistency; evidence
+  under `production/` must not be imported (`.gdignore`, P4).
+- **Technical QA:** frame, anchor, alpha 0/255, 1 px outline, and Godot import
+  (`compress/mode=0`, no mipmaps, `detect_3d/compress_to=0` on unit sheets)
+  against `docs/art/RENDER-STANDARDS.md` and the sheet JSON. Feet row / x,
+  frame counts, `tests/unit/art/*` headless, `tools/qa/sprite_measure.gd` /
+  `sprite_clean.gd`, contact sheets. Report FAIL > WARN > NOT ASSESSED (a
+  check that did not run, named) > PASS. Do not pick colours and do not
+  record `accepted` or `approved`. The eight unit `.import` files set to
+  `detect_3d/compress_to=0` on 2026-11-11 stay as they are.
+- **Godot integration:** the procedure in
+  `.claude/skills/game-art-workflow/references/integration.md`; never
+  overwrite a production file, never install without the user's recorded
+  acceptance, record `set-status … installed` with the evidence path.
+
 ### What This Agent Must NOT Do
 
 - Make aesthetic decisions (defer to art-director) — offer the implementation

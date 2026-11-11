@@ -31,7 +31,8 @@
 | `/art-bible` | Guided, section-by-section Art Bible authoring — creates visual identity spec before asset production begins |
 | `/asset-spec` | Generate per-asset visual specifications and AI generation prompts from GDDs, level docs, or character profiles |
 | `/asset-audit` | Audit assets for naming conventions, file size budgets, and pipeline compliance |
-| `/pixellab-animation-engineer` | 2D animation director + PixelLab prompt engineer: key poses, frame timing, prompts, approved MCP runs, frame QA (engine-agnostic) |
+| `/pixellab-animation-engineer` | 2D animation director + PixelLab prompt engineer: key poses, frame timing, prompts, approved MCP runs, frame QA (engine-agnostic); `--mode anchor|image` for stills (project extension) |
+| `/game-art-workflow` | Single entry point for AI game art (project skill): resolves an asset's state from the registry and Master References, picks the next valid step and tool (PixelLab, PixelFX, fx-pipeline, script), runs the specialised skill, records the result; the user stays the only approver |
 
 ## UX & Interface Design
 

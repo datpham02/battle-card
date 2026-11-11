@@ -3,7 +3,7 @@ name: asset-audit
 description: "Audit assets against naming conventions, file size budgets, format standards. Finds orphaned assets, missing references."
 argument-hint: "[category|all]"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Bash(stat *), Bash(file *), Bash(od *), Bash(wc *), Bash(du *)
+allowed-tools: Read, Glob, Grep, Bash(stat *), Bash(file *), Bash(od *), Bash(wc *), Bash(du *), Bash(python -X utf8 -I tools/asset-pipeline/asset_registry.py check), Bash(python -X utf8 -I tools/asset-pipeline/asset_registry.py show *), Bash(python -X utf8 -I tools/asset-pipeline/export_sheets.py --check), Bash(python -X utf8 -I tools/fx-pipeline/fxc.py check *)
 model: sonnet
 # Read-only diagnostic skill — no specialist agent delegation needed
 ---
@@ -56,6 +56,21 @@ the two happened — a reader cannot tell from a green result.
 
 ---
 
+## Project overlay (when `design/assets/asset-registry.yaml` exists)
+
+This project is pixel art with a registry: read `references/project-rules.md`
+and run its checks instead of the generic Phase 3 file standards. The
+power-of-two rule does not apply to sprite sheets here; registry drift, sheet
+export drift, VFX pack rules, import flags, frame tiers and lifecycle do. Each
+check names the command that ran it; a command that could not run makes its
+row `NOT ASSESSED` with the reason. The registry's `acceptance` is the only
+record of the user's verdict — this audit never upgrades it, never calls
+`set-status`, and never writes `approved`. Also run
+`python -X utf8 -I tools/asset-pipeline/spec_check.py`. A sheet with no
+Master Reference, a reference hex missing from `tessera_master.gpl`, and a
+frame that disagrees with `docs/art/RENDER-STANDARDS.md` are report rows in
+`references/project-rules.md`. Report them. Do not edit the asset to clear them.
+
 ## Phase 1: Read Standards
 
 Read the art bible's Asset Standards section (`design/art/art-bible.md`) and any
@@ -102,7 +117,7 @@ those engines check names only against a naming rule the art bible states; with
 none, Naming is `NOT ASSESSED — no naming rule for <engine>` (name `/art-bible`).
 
 **File standards:**
-- Textures: Power-of-two dimensions, correct format (PNG for UI, compressed for 3D), within size budget
+- Textures: Power-of-two dimensions, correct format (PNG for UI, compressed for 3D), within size budget — **not for pixel-art sprite sheets**: on a project with `references/project-rules.md` in force, skip the power-of-two rule and apply that file's checks
 - Audio: Correct sample rate, format (OGG for SFX, OGG/MP3 for music), within duration limits.
   `file` reports an audio file's format and sample rate but not its length, and no
   pre-approved tool here does; a duration budget is therefore
