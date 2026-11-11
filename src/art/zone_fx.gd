@@ -25,6 +25,37 @@ static func marks(kind: String, skill_id: String, slab: Rect2i, step: int) -> Ar
 	return out
 
 
+## Deferred 7 (Hỏa Tuyến): the flat base of a standing fire wall on a burning wall cell: a bright bar across the
+## slab's middle whose ends flicker with [param step].
+static func wall_floor(slab: Rect2i, step: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var inset: int = 4 + (step % 3)
+	var cx: int = slab.position.x + floori(float(slab.size.x) / 2.0)
+	var cy: int = slab.position.y + floori(float(slab.size.y) / 2.0)
+	var w: int = maxi(slab.size.x - inset * 2, 8)
+	out.append(_bar(cx - floori(float(w) / 2.0), cy - 3, w, 6, Color("C2410C")))
+	out.append(_bar(cx - floori(float(w) / 2.0) + 2, cy - 1, w - 4, 2, Color("FFB21F")))
+	return out
+
+
+## Deferred 7 (Hỏa Tuyến): the standing fire wall over a wall cell's drawn ground point [param base]: three stepped
+## columns across the tile (0.55 H, the middle one taller) flickering with [param step] (0..7). Items {rect, light}.
+static func wall_standing(base: Vector2i, cell_w: int, step: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var H: int = maxi(cell_w, 8)
+	var s: int = step % 8
+	for i: int in 3:
+		var dx: int = (i - 1) * floori(float(cell_w) / 3.0)
+		var tall: float = 0.55 + (0.15 if i == 1 else 0.0) + (0.08 if (s + i) % 3 == 0 else 0.0)
+		var layers: int = maxi(roundi(float(H) * tall / 3.0), 2)
+		var base_w: int = 10 if i == 1 else 8
+		for k: int in layers:
+			var bw: int = maxi(base_w - floori(float(k * base_w) / float(layers)), 2)
+			var lean: int = (1 if (s + k) % 2 == 0 else -1) if k > layers / 2 else 0
+			out.append({"rect": Rect2i(base.x + dx + lean - floori(float(bw) / 2.0), base.y - k * 3 - 3, bw, 3), "light": k >= layers - 2})
+	return out
+
+
 ## Batch 4 (Dấu Tử): the death mark on the marked unit's slab while it lasts: four corner brackets that breathe with
 ## [param step] and shorten as [param frac] (time left / total) runs out, a 4 px core.
 static func mark(slab: Rect2i, step: int, frac: float) -> Array[Dictionary]:

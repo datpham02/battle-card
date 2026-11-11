@@ -38,6 +38,9 @@ const PREVIEW_LINE: Color = Color(1.0, 1.0, 1.0, 0.95)
 ## Story 024 placement ghost: green when the piece covers the boss's cell, red when it does not.
 const GHOST_HIT_TINT: Color = Color(0.2, 0.85, 0.3, 0.45)
 const GHOST_HIT_OUTLINE: Color = Color(0.1, 0.65, 0.2, 0.95)
+## Deferred 6: the ward ghost around the hero while the card menu holds a ward card (Thánh Thuẫn's gold).
+const WARD_GHOST_TINT: Color = Color("E6D7A8", 0.35)
+const WARD_GHOST_OUTLINE: Color = Color("8A6A20", 0.95)
 const GHOST_MISS_TINT: Color = Color(0.9, 0.2, 0.15, 0.4)
 const GHOST_MISS_OUTLINE: Color = Color(0.85, 0.1, 0.1, 0.95)
 const GHOST_OFF_FILL: Color = Color(0.7, 0.7, 0.75, 0.35)
@@ -174,6 +177,8 @@ const DOT_POP_STAGGER: float = 10.0
 const DOT_BURN_COLOR: Color = Color("FF7A1F")
 const DOT_THORN_COLOR: Color = Color("D9B98A")
 const DOT_MIRE_COLOR: Color = Color("A8B4C0")
+## Deferred 5 / 9: the pop colour per reaction id fired outside a cast (StatusEffects.reaction_fired).
+const DOT_REACTION_COLORS: Dictionary = {"r1": Color("FFB21F"), "r2": Color("A6EEFF"), "r3": Color("D9B07A")}
 const PIN_RING_COLOR: Color = Color(0.58, 0.58, 0.62, 0.95)
 const PIN_RING_DARK: Color = Color(0.2, 0.2, 0.22, 0.95)
 const PIN_TEXT_COLOR: Color = Color(0.25, 0.25, 0.28)
@@ -748,11 +753,21 @@ func _connect_zones() -> void:
 		_zone_status.thorn_entered.disconnect(_on_thorn_entered)
 	if _zone_status != null and _zone_status.burn_hurt.is_connected(_on_burn_hurt):
 		_zone_status.burn_hurt.disconnect(_on_burn_hurt)
+	if _zone_status != null and _zone_status.reaction_fired.is_connected(_on_reaction_fired):
+		_zone_status.reaction_fired.disconnect(_on_reaction_fired)
 	_zone_status = status
 	_thorn_flashes.clear()
 	_dot_pops.clear()
 	status.thorn_entered.connect(_on_thorn_entered)
 	status.burn_hurt.connect(_on_burn_hurt)
+	status.reaction_fired.connect(_on_reaction_fired)
+
+
+## Deferred 5 / 9 (batch 5): a reaction fired outside a cast (R1 on stepping into fire with Hàn, R3 on a stopped
+## fling / a thorn landing) has no CutEffects result to show a number from: it pops like a floor-damage tick, in
+## the reaction's colour (R1 the burst's amber, R3 the slam's tan, anything else the thorn colour).
+func _on_reaction_fired(side: int, id: String, damage: float) -> void:
+	add_dot_pop(side, damage, DOT_REACTION_COLORS.get(id, DOT_THORN_COLOR))
 
 
 # 2026-10-31: connects TileHazards.mire_damage for the floor-damage pops once the battle has hazards.
@@ -1345,6 +1360,7 @@ func _draw() -> void:
 	_draw_rotate(vp)
 	_draw_signature_effect(vp)
 	_draw_signature_button(vp)
+	_draw_ward_ghost(vp)
 	_draw_menu(vp)
 	# Above the menu overlay: the cooldowns and the buffs / debuffs stay crisp while the cards are picked.
 	_draw_cooldown_column(vp)
@@ -1499,6 +1515,31 @@ func cast_fuse() -> Vector2:
 # Chamfer of a fuse frame round the stone button [param rect]: its corner studs (3 art px at the menu density).
 func _fuse_cut(vp: Vector2) -> float:
 	return float(3 * PixelFrame.scale_for(vp.y))
+
+
+## Deferred 6 (batch 3 M10 "needs"): while the card menu is open and the hand holds a ward card, the shape it would
+## re-anchor on the hero (WardAnchor.remap of the menu cells) shows as a gold ghost around the hero, so the player sees
+## where the ward lands before picking it. Pure read; nothing when the menu is closed or no ward card is in the hand.
+func _draw_ward_ghost(vp: Vector2) -> void:
+	var cells: Array[Vector2i] = ward_ghost_cells()
+	if not cells.is_empty():
+		_draw_cells(vp, cells, WARD_GHOST_TINT, WARD_GHOST_OUTLINE)
+
+
+## The cells of the ward ghost (see [method _draw_ward_ghost]); [] when none should show.
+func ward_ghost_cells() -> Array[Vector2i]:
+	var flow: CutFlow = _combat.get_cut_flow()
+	if flow == null or not flow.is_menu_open():
+		return []
+	var config: SkillConfig = _combat.get_skill_config()
+	var has_ward: bool = false
+	for id: String in flow.get_hand():
+		if config != null and config.get_skill(id).has("ward"):
+			has_ward = true
+			break
+	if not has_ward or _combat.get_state() == null or _combat.get_grid() == null:
+		return []
+	return WardAnchor.remap(flow.menu_cells(), _combat.get_state().player_cell, _combat.get_grid(), _combat.get_status())
 
 
 func _draw_cells(_vp: Vector2, cells: Array[Vector2i], tint: Color, outline: Color) -> void:
@@ -2207,6 +2248,9 @@ func _draw_pins(vp: Vector2) -> void:
 			chips.append(["chill", -1.0])
 		if status.get_fragile_stacks(side) > 0:
 			chips.append(["fragile", -1.0])
+		# Deferred 10 (batch 4): Dấu Tử's death mark on the enemy (no sheet icon yet: StatusRow's code glyph)
+		if status.has_mark(side):
+			chips.append(["mark", -1.0])
 		if chips.is_empty():
 			continue
 		var feet: Vector2 = _unit_feet_screen(vp, side, state)
@@ -2268,7 +2312,9 @@ func _draw_keyword_chips(feet: Vector2, chips: Array) -> void:
 	for chip: Array in chips:
 		var rect := Rect2(x, y, CHIP_SIZE, CHIP_SIZE)
 		HudSkin.panel(self, rect, [0.0, CHIP_CUT, 0.0, CHIP_CUT], HudSkin.NIGHT_STONE, HudSkin.MIST, HudSkin.PANEL_LINE_WIDTH)
-		HudSkin.icon(self, str(chip[0]), rect.get_center(), CHIP_ICON_SCALE)
+		# a status the icon sheet has no art for yet (the death mark) gets StatusRow's angular code glyph instead
+		if not HudSkin.icon(self, str(chip[0]), rect.get_center(), CHIP_ICON_SCALE):
+			StatusRow.draw_glyph(self, str(chip[0]), rect.grow(-CHIP_SIZE * 0.2), StatusRow.color_of(str(chip[0])))
 		# Story 048 (user 2026-10-31): no time bar under the chip; chip[1] is ignored.
 		x += CHIP_SIZE + CHIP_GAP
 

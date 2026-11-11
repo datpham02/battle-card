@@ -164,6 +164,28 @@ Every echo wave of Chuông Thánh is its own impact event, so the bell rings thr
 No PixelLab call. Contact sheet `production/qa/evidence/skill-v2-signature/batch4_x3.png`; in-game frames
 `production/qa/evidence/skill-v2-signature/batch4-ingame/`.
 
+## Deferred 6 / 7 / 10 — the VFX half of "Deferred after 60/60" (2026-11-11, user: "Làm tiếp 1-13 nhé")
+
+- **6 Ward ghost in the card menu.** While the menu is open and the hand holds a ward card (`ward` on the card),
+  `CutHudView.ward_ghost_cells` remaps the menu cells on the hero (`WardAnchor.remap`) and `_draw_ward_ghost` paints
+  them as a gold ghost (WARD_GHOST_TINT / OUTLINE) under the menu, so the player sees where the ward lands.
+- **7 Standing fire wall.** A Hỏa Tuyến line cell burns with the `wall` flag (`StatusEffects.wall_cells`):
+  `ZoneFx.wall_floor` draws the bright base bar on the slab (`FloorDynamicLayer.zone_state`) and
+  `ZoneFx.wall_standing` three flickering stepped columns per cell (`OverlayLayer.wall_standing_items`, drawn last,
+  Hỏa Tuyến's impact colours). Trap / ward / pillar marks were already V4-F.
+- **10 Dấu Tử chip.** `StatusRow.INFO` has `mark` (the mark's pink) with `ui.status.mark.*` strings and a code glyph
+  (four corner brackets round a diamond, `StatusRow.draw_glyph`). The enemy's statuses live in the keyword chips under
+  its HP plate, so `_draw_hp_plates` adds a `mark` chip while `StatusEffects.has_mark`; a chip whose icon the sheet
+  lacks falls back to that glyph. The player's row lists it too once `active_statuses` carries the mark (the
+  mechanics session's change). The board bracket is V4-G.
+
+- **Reaction cue (batch 5 left-open).** `StatusEffects.reaction_fired` (R1 on stepping into fire with Hàn, R3 on a
+  stopped fling / thorn landing) pops its damage over the unit like a floor tick, in the reaction's colour
+  (`CutHudView.DOT_REACTION_COLORS`); no new strings.
+
+Evidence `production/qa/evidence/skill-v2-deferred/` (tools/qa/deferred_vfx_footage.gd, muted): `06-ward-ghost-menu.png`,
+`07-fire-wall_100.png` / `_250.png` (a bar3 line: three wall cells), `10-mark-chip_150.png`.
+
 ## Card → form
 
 | Family | Card | Form | Knobs |

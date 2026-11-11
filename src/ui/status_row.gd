@@ -16,6 +16,8 @@ const INFO: Dictionary = {
 	"fragile": ["fragile", Color(0.62, 0.32, 0.88), "keyword.fragile", "ui.status.fragile.desc"],
 	"chill": ["chill", Color(0.3, 0.68, 0.95), "keyword.frost", "ui.status.chill.desc"],
 	"guard": ["armor", Color("F8E080"), "ui.status.guard.name", "ui.status.guard.desc"],
+	# Deferred 10 (batch 4): Dấu Tử's death mark, a code glyph in the mark's crimson until the sheet has an icon
+	"mark": ["", Color("FFB3C6"), "ui.status.mark.name", "ui.status.mark.desc"],
 }
 const UNKNOWN_COLOR: Color = Color("EFE6D2")
 ## Frame fill, the shade over the time already gone, the stack number colour.
@@ -203,6 +205,19 @@ static func draw_glyph(canvas: CanvasItem, id: String, rect: Rect2, color: Color
 			for b: Rect2 in [top, bottom]:
 				canvas.draw_rect(b.grow(1.0), ink)
 				canvas.draw_rect(b, color)
+		"mark":
+			# Deferred 10: the death mark — four corner brackets around a small diamond (the board bracket's twin).
+			var a: float = u * 2.5
+			var t: float = maxf(u * 0.75, 1.0)
+			for corner: Vector2 in [r.position, Vector2(r.end.x, r.position.y), Vector2(r.position.x, r.end.y), r.end]:
+				var sx: float = 1.0 if corner.x <= r.get_center().x else -1.0
+				var sy: float = 1.0 if corner.y <= r.get_center().y else -1.0
+				var h := Rect2(corner.x if sx > 0.0 else corner.x - a, corner.y if sy > 0.0 else corner.y - t, a, t)
+				var v := Rect2(corner.x if sx > 0.0 else corner.x - t, corner.y if sy > 0.0 else corner.y - a, t, a)
+				for b: Rect2 in [h, v]:
+					canvas.draw_rect(b.grow(1.0), ink)
+					canvas.draw_rect(b, color)
+			HudSkin.diamond(canvas, r.get_center(), r.size.x * 0.22, color, ink, 2.0)
 		_:
 			HudSkin.diamond(canvas, r.get_center(), r.size.x * 0.4, color, ink, 2.0)
 

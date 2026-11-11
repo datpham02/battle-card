@@ -38,5 +38,15 @@ func _initialize() -> void:
 	ck("mark draws inside, deterministic", not mark.is_empty() and _inside(mark) and mark == Fx.mark(SLAB, 0, 1.0))
 	ck("mark breathes", mark != Fx.mark(SLAB, 4, 1.0))
 	ck("mark shortens as it runs out", (Fx.mark(SLAB, 0, 0.1)[0]["rect"] as Rect2i).size.x < (mark[0]["rect"] as Rect2i).size.x)
+	# Deferred 7: the fire wall base and columns
+	var wf: Array[Dictionary] = Fx.wall_floor(SLAB, 0)
+	ck("wall_floor draws inside, deterministic, flickers", not wf.is_empty() and _inside(wf) and wf == Fx.wall_floor(SLAB, 0) and wf != Fx.wall_floor(SLAB, 1))
+	var base := Vector2i(300, 200)
+	var ws: Array[Dictionary] = Fx.wall_standing(base, 64, 0)
+	var ws_ok: bool = ws.all(func(it: Dictionary) -> bool:
+		var r: Rect2i = it["rect"]
+		return r.end.y <= base.y and r.position.y >= base.y - 64 - 8 and r.position.x >= base.x - 40 and r.end.x <= base.x + 40)
+	ck("wall_standing stands on the base within one cell, deterministic, flickers", not ws.is_empty() and ws_ok
+		and ws == Fx.wall_standing(base, 64, 0) and ws != Fx.wall_standing(base, 64, 3))
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)

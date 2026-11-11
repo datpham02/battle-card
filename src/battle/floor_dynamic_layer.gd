@@ -222,6 +222,13 @@ func zone_state() -> Array[Dictionary]:
 				var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
 				slab.position += cell_rect.position
 				out.append_array(_ZoneFx.marks(kind, str((info.get("data", {}) as Dictionary).get("skill_id", "")), slab, step))
+		# Deferred 7 (Hỏa Tuyến): the flat base of every standing fire wall cell
+		if side == CombatState.Side.ENEMY:
+			for cell: Vector2i in status.wall_cells():
+				var cell_rect: Rect2i = _floor.cell_art_rect(cell)
+				var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
+				slab.position += cell_rect.position
+				out.append_array(_ZoneFx.wall_floor(slab, step))
 		# batch 4 (Dấu Tử): the death mark on the marked unit's cells while it lasts
 		if status.has_mark(side):
 			var m: Dictionary = status.mark_at(side)

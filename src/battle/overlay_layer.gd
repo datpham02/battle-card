@@ -223,6 +223,31 @@ func _draw() -> void:
 	# rising from the tiles like the flame columns, back rows first.
 	_draw_groups(delivery_standing_items())
 	_draw_groups(impact_standing_items())
+	# Deferred 7 (Hỏa Tuyến): the standing fire wall over every burning wall cell while it stands.
+	_draw_groups(wall_standing_items())
+
+
+## Deferred 7: the standing fire-wall columns (ZoneFx.wall_standing) over every wall cell (StatusEffects.wall_cells),
+## in Hỏa Tuyến's impact colours, flickering on the combat clock; [] when none stands.
+func wall_standing_items() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or _floor == null or combat.get_status() == null:
+		return out
+	var walls: Array[Vector2i] = combat.get_status().wall_cells()
+	if walls.is_empty():
+		return out
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var cols: Array[Color] = variant_colours(CastVfx.impact_variant("hoa_tuyen"), CastVfx.impact_colours("burn", hero_id))
+	var step: int = int(combat.combat_clock() * 8.0) % 8
+	var geo: BoardGeometry = _bg()
+	walls.sort_custom(func(p: Vector2i, q: Vector2i) -> bool: return p.y < q.y or (p.y == q.y and p.x < q.x))
+	for g: int in walls.size():
+		var c: Vector2i = walls[g]
+		for it: Dictionary in ZoneFx.wall_standing(_ground_of(c, geo), _floor.cell_art_rect(c).size.x, step):
+			var r: Rect2i = it["rect"]
+			out.append({"rect": r, "col": cols[1] if bool(it["light"]) else cols[0], "edge": 1 if mini(r.size.x, r.size.y) >= 3 else 0, "group": 900 + g})
+	return out
 
 
 ## Screen-space items [{rect, col, edge, group}] drawn group by group (back rows first): each group's Ink edges
