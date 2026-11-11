@@ -27,7 +27,7 @@ func _init() -> void:
 	test_hit_pushes_one()
 	test_line_clause_pushes_two()
 	test_blocked_push_slams()
-	test_other_push_cards_never_slam()
+	test_other_push_cards_slam_too()
 	test_determinism()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
@@ -153,15 +153,16 @@ func test_blocked_push_slams() -> void:
 		and (w2["state"] as CombatState).enemy_cell == Vector2i(7, 1), "%.1f" % _lost(w2))
 
 
-func test_other_push_cards_never_slam() -> void:
+func test_other_push_cards_slam_too() -> void:
 	var w: Dictionary = _world(Vector2i(7, 1))
 	(w["player"] as CutActor).begin_swing(BAR3_FAR, "chan_phong", true, 1, -1.0, {}, {})
 	var t: float = 0.0
 	while t < 3.0:
 		(w["arb"] as SwingArbiter).tick(STEP)
 		t += STEP
-	ck("chan_phong at the edge: plain 4 x 3 = 12, no R3, not pinned", is_equal_approx(_lost(w), 12.0)
-		and not (w["fx"] as StatusEffects).is_pinned(CombatState.Side.ENEMY), "%.1f" % _lost(w))
+	# batch 5 (Deferred 2): reactions are GLOBAL: a push stopped short slams for every card, not only the ones that list r3
+	ck("chan_phong at the edge: 4 x 3 = 12 + the global R3 slam 8 = 20, Pinned", is_equal_approx(_lost(w), 20.0)
+		and (w["fx"] as StatusEffects).is_pinned(CombatState.Side.ENEMY), "%.1f" % _lost(w))
 
 
 func test_determinism() -> void:

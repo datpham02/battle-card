@@ -9,6 +9,17 @@ python -X utf8 -I tools/fx-pipeline/fxc.py build tools/fx-pipeline/recipes/kiem_
 python -X utf8 -I tools/fx-pipeline/fxc.py check <pack folder>... [--layer overlay|floor]
 ```
 
+## PixelFX adapter (`pixelfx_adapter.py`, P3 2026-11-11)
+
+Turns a PixelFX sheet export (`node tools/render.mjs <id> --sheet` in the `C:/WorkSpace/research/pixelfx`
+checkout: PNG grid + Aseprite-style JSON with `meta.pixelfx`) into a VfxPack candidate the same `fxc check`
+judges: frames cut out, optional window / crop, alpha quantised to 0/255 (threshold or Bayer), colours snapped
+to the master palette (or one ramp from `palettes.json`), telegraph red avoided, 1 px border padding, `whole.png`
+grid + `manifest.json` with `source` provenance (`provider pixelfx`, origin, effect id, upstream commit, seed,
+options, adapter version) and the `index_entry` to add, previews and `adapter-report.json`. Nothing is written
+into `assets/`. `python -X utf8 -I tools/fx-pipeline/pixelfx_adapter.py selftest` round-trips a synthetic
+export. Rules and roles: `docs/art/PIXELFX_INTEGRATION.md`.
+
 ## What a build does
 
 For every pack of a recipe and every cell size it lists:

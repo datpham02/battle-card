@@ -81,6 +81,12 @@ var r1_burst_damage: float = 12.0
 var r2_mult: float = 2.0
 var r3_damage: float = 8.0
 var r3_pin_sec: float = 0.6
+## Skill v2 batch 5 (Deferred 1, 2, 8): the per-unit per-reaction cooldown (M15 ICD), whether R1-R3 fire for every
+## card (true) or only for the cards that list them (false), and whether a snapping trap's damage goes through the
+## target's flat defense like a hit (true) or straight to HP like a thorn toll (false).
+var reaction_icd_sec: float = 1.0
+var reactions_global: bool = true
+var trap_through_defense: bool = true
 ## Drop tiles (Ô rớt, design/quick-specs/o-rot-thay-tuong-2026-10-31.md, combat.json `zones`): seconds a chosen cell
 ## cracks before it falls (the hole then stays open seal_sec), the reaction share taken off that warning when judging
 ## whether the player can step off in time (cell eligible when step cooldown left <= warn - margin), and whether a
@@ -390,7 +396,8 @@ static func _parse_alpha_pair(raw: Variant, fallback: Vector2) -> Vector2:
 ## Batch 2: the reaction numbers as CutEffects takes them (options.reactions):
 ## {r1: {burst_damage}, r2: {mult}, r3: {damage, pin_sec}}.
 func reactions() -> Dictionary:
-	return {"r1": {"burst_damage": r1_burst_damage}, "r2": {"mult": r2_mult}, "r3": {"damage": r3_damage, "pin_sec": r3_pin_sec}}
+	return {"r1": {"burst_damage": r1_burst_damage}, "r2": {"mult": r2_mult}, "r3": {"damage": r3_damage, "pin_sec": r3_pin_sec},
+		"icd_sec": reaction_icd_sec, "global": reactions_global, "trap_through_defense": trap_through_defense}
 
 
 # Batch 2: the `reactions` block; a bad number keeps its default (warning).
@@ -406,11 +413,17 @@ func _parse_reactions(data: Dictionary) -> void:
 	var mult: float = float(r2.get("mult", r2_mult))
 	var dmg: float = float(r3.get("damage", r3_damage))
 	var pin: float = float(r3.get("pin_sec", r3_pin_sec))
-	if burst >= 0.0 and mult >= 1.0 and dmg >= 0.0 and pin >= 0.0:
+	var icd: float = float(r.get("icd_sec", reaction_icd_sec))
+	if burst >= 0.0 and mult >= 1.0 and dmg >= 0.0 and pin >= 0.0 and icd >= 0.0:
 		r1_burst_damage = burst
 		r2_mult = mult
 		r3_damage = dmg
 		r3_pin_sec = pin
+		reaction_icd_sec = icd
+		if r.get("global") is bool:
+			reactions_global = bool(r["global"])
+		if r.get("trap_through_defense") is bool:
+			trap_through_defense = bool(r["trap_through_defense"])
 	else:
 		push_warning("CombatConfig: invalid reactions values (r1 burst_damage>=0, r2 mult>=1, r3 damage>=0, pin_sec>=0), using defaults")
 
@@ -492,6 +505,9 @@ func configure_status(status: StatusEffects) -> void:
 	status.configure(burn_stack_extend_sec, burn_stack_tick_bonus, burn_max_stacks, pinned_damage_mult)
 	status.configure_keywords(fragile_mult, fragile_max_stacks, frost_stacks_to_burst, frost_burst_damage)
 	status.burn_on_entry = burn_on_entry
+	# batch 5: the reaction numbers the status book fires on its own (R1 on entry, a trap's R3), the ICD, the trap rule
+	status.reaction_numbers = reactions()
+	status.trap_through_defense = trap_through_defense
 	# Drop tiles: lethal or not, the non-lethal fall damage (hazards.fall_damage; CombatView re-reads it with the
 	# match overrides) and the return fade.
 	status.hole_fall_lethal = hole_fall_lethal

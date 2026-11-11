@@ -80,7 +80,9 @@ func _init() -> void:
 	r = CutEffects.apply(s3, grid, P, hit, "pin_fr", cc, sc, fx3)
 	ck("pin + fragile_stacks 2", bool(r["pinned"]) and fx3.is_pinned(E) and fx3.fragile_stacks(E) == 2 and int(r["fragile_applied"]) == 2)
 	r = CutEffects.apply(s3, grid, P, hit, "sw", cc, sc, fx3)
-	ck("Ghim no longer multiplies (pinned_damage_mult 1.0): Ran only = 21", is_equal_approx(float(r["damage"]), 21.0) and not bool(r["pin_bonus"]))
+	# batch 5 (Deferred 2, global R2): a damage event on a Pinned unit with Rạn shatters: x2 (not x1.5), the Pin ends
+	ck("Ghim no longer multiplies (pinned_damage_mult 1.0): the global R2 x2 = 28, Pin ended, 1 stack left", is_equal_approx(float(r["damage"]), 28.0)
+		and not bool(r["pin_bonus"]) and str(r.get("reaction", "")) == "r2" and not fx3.is_pinned(E) and fx3.fragile_stacks(E) == 1)
 	# bonus_vs_fragile before the stack is spent
 	var s4: CombatState = mk()
 	var fx4: StatusEffects = StatusEffects.new()

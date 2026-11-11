@@ -125,7 +125,8 @@ func test_ending_on_thorns_triggers_them() -> void:
 	var w: Dictionary = _world(Vector2i(7, 1))
 	ZoneRules.cast_thorns(w["fx"], CombatState.Side.ENEMY, [Vector2i(5, 1)] as Array[Vector2i], 5.0, 6.0, 1)
 	_cast(w, "l3", L3)
-	ck("dragged onto the thorn cell (5,1): the entry toll 6 + 1 Rạn on top of the hit: 18", is_equal_approx(_lost(w), 18.0)
+	# batch 5 (Deferred 5): a forced move that ends on a thorn cell slams too: 12 + the toll 6 + R3 8 = 26, Pinned 0.6
+	ck("dragged onto the thorn cell (5,1): the entry toll 6 + 1 Rạn + the R3 slam 8 on top of the hit: 26 (the 0.6 s Pin has run out)", is_equal_approx(_lost(w), 26.0)
 		and (w["fx"] as StatusEffects).fragile_stacks(CombatState.Side.ENEMY) == 1, "%.1f" % _lost(w))
 
 

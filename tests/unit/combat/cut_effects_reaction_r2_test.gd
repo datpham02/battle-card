@@ -22,7 +22,7 @@ func _init() -> void:
 	test_data()
 	test_r2_on_pinned_target()
 	test_unpinned_target_plain_ran_hit()
-	test_card_without_r2_keeps_the_old_rule()
+	test_card_without_r2_reacts_globally()
 	test_real_arbiter_sky()
 	test_determinism()
 	print("FAILS=%d" % fails)
@@ -87,13 +87,22 @@ func test_unpinned_target_plain_ran_hit() -> void:
 		and str(r.get("reaction", "")).is_empty() and (w["fx"] as StatusEffects).fragile_stacks(CombatState.Side.ENEMY) == 0, str(r))
 
 
-func test_card_without_r2_keeps_the_old_rule() -> void:
+func test_card_without_r2_reacts_globally() -> void:
 	var w: Dictionary = _world(Vector2i(5, 1))
 	(w["fx"] as StatusEffects).pin(CombatState.Side.ENEMY, 1.0)
 	(w["fx"] as StatusEffects).apply_fragile(CombatState.Side.ENEMY, 1)
 	var r: Dictionary = _apply(w, BAR3, "kiem_khi")
-	ck("kiem_khi on a Pinned foe with Rạn: 6 x 3 x 1.5 = 27, Pin stays, no reaction key", is_equal_approx(float(r["damage"]), 27.0)
-		and (w["fx"] as StatusEffects).is_pinned(CombatState.Side.ENEMY) and not r.has("reaction"), str(r))
+	# batch 5 (Deferred 2): reactions are GLOBAL: kiem_khi shatters the Pin too (6 x 3 x 2 = 36, the Pin ends, reaction r2)
+	ck("kiem_khi on a Pinned foe with Rạn: 6 x 3 x 2 = 36 (global R2), the Pin ends, reaction r2", is_equal_approx(float(r["damage"]), 36.0)
+		and not (w["fx"] as StatusEffects).is_pinned(CombatState.Side.ENEMY) and str(r.get("reaction", "")) == "r2", str(r))
+	# the card-listed rule is still there as data (options.reactions.global false): the old Rạn multiplier, no key
+	var w2: Dictionary = _world(Vector2i(5, 1))
+	(w2["fx"] as StatusEffects).pin(CombatState.Side.ENEMY, 1.0)
+	(w2["fx"] as StatusEffects).apply_fragile(CombatState.Side.ENEMY, 1)
+	var r2: Dictionary = CutEffects.apply(w2["state"], w2["grid"], CombatState.Side.PLAYER, BAR3, "kiem_khi", w2["cc"], w2["sc"], w2["fx"], Callable(), 1,
+		Callable(), Callable(), {"reactions": {"global": false}})
+	ck("reactions.global false: kiem_khi 6 x 3 x 1.5 = 27, Pin stays, no reaction key", is_equal_approx(float(r2["damage"]), 27.0)
+		and (w2["fx"] as StatusEffects).is_pinned(CombatState.Side.ENEMY) and not r2.has("reaction"), str(r2))
 
 
 func test_real_arbiter_sky() -> void:

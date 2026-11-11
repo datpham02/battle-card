@@ -1,5 +1,16 @@
 # QA tools (`tools/qa/`)
 
+## Art QA (P3 of the AI Game Art Workflow, 2026-11-11)
+
+| File | What it is |
+|---|---|
+| `art_check.py` / `art_check.sh` | One command for the technical art QA: `all` · `changed` · `asset <registry id>` · `character <entity>` · `clip <entity> <clip>` · `candidate <folder>`. Runs the existing checkers (registry `check`, `export_sheets.py --check`, `fxc.py check`, `.import` flags, PNG decode, `clips.json` vs sheet, `anim_qa.py`, the `tests/unit/art` suites) and prints one row per check: PASS / WARNING / FAIL / UNKNOWN (a checker that could not run, with the reason). Pre-fxkit packs recorded in the registry as `qa.known_fxc_fail` show as WARNING "KNOWN", never PASS. `--no-godot` skips the suites, `--json <path>` writes the report. Exit 1 on FAIL. Technical PASS is not acceptance. |
+| `review_package.py` | Builds `<candidate>/preview/`: `contact_x4.png`, `anim.gif`, `before_after_x4.png` (with `--current`), `REVIEW.md` (what to look at, QA summary from `--qa-json` / `adapter-report.json` / `raw/qa.json`, known issues, suggested revision, the decision to record). Ends with "Waiting for the user's decision". |
+
+Candidate folders come from `tools/asset-pipeline/candidate.py new|qa|verdict`.
+
+## Playtest bot
+
 A playtest bot that plays real battles through the same `CombatView` API the touch input uses, and checks
 the cast rules every frame. It is a **tool, not a test**: the test runner never runs it, and the game
 never loads it. It was moved here from session scratch on 2026-11-05, after it played 72 matches with 0

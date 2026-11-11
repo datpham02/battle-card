@@ -24,7 +24,7 @@ func _init() -> void:
 	test_hit_ignites_then_reacts()
 	test_target_already_burning_reacts_in_apply()
 	test_miss_ignites_without_reaction()
-	test_card_without_r1_never_bursts()
+	test_card_without_r1_reacts_globally()
 	test_determinism()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
@@ -117,12 +117,23 @@ func test_miss_ignites_without_reaction() -> void:
 		"%.1f" % _lost(w))
 
 
-func test_card_without_r1_never_bursts() -> void:
+func test_card_without_r1_reacts_globally() -> void:
 	var w: Dictionary = _world(Vector2i(5, 1))
 	(w["fx"] as StatusEffects).ignite([Vector2i(5, 1)] as Array[Vector2i], 5.0, 10.0, 0.0)
 	_cast(w, BAR4, "han_kiem", 0.3)
-	ck("han_kiem (Hàn, no r1) on a burning cell: 6 x 4 = 24 only, Hàn 1 stays, the cell still burns", is_equal_approx(_lost(w), 24.0)
-		and (w["fx"] as StatusEffects).frost_stacks(CombatState.Side.ENEMY) == 1 and (w["fx"] as StatusEffects).is_burning(Vector2i(5, 1)), "%.1f" % _lost(w))
+	# batch 5 (Deferred 2): reactions are GLOBAL (combat.json reactions.global): a card that does not list r1 reacts too
+	ck("han_kiem (Hàn, no r1 listed) on a burning cell: 6 x 4 = 24 + the global R1 burst 12 = 36, the Hàn spent, the fire out",
+		is_equal_approx(_lost(w), 36.0) and (w["fx"] as StatusEffects).frost_stacks(CombatState.Side.ENEMY) == 0
+		and not (w["fx"] as StatusEffects).is_burning(Vector2i(5, 1)), "%.1f" % _lost(w))
+	# the card-listed rule is still there as data: reactions.global false
+	var w2: Dictionary = _world(Vector2i(5, 1))
+	var listed: Dictionary = CombatConfig.load_from_file().reactions()
+	listed["global"] = false
+	(w2["arb"] as SwingArbiter).reactions = listed
+	(w2["fx"] as StatusEffects).ignite([Vector2i(5, 1)] as Array[Vector2i], 5.0, 10.0, 0.0)
+	_cast(w2, BAR4, "han_kiem", 0.3)
+	ck("reactions.global false: han_kiem deals 24 only, Hàn 1 stays, the cell still burns", is_equal_approx(_lost(w2), 24.0)
+		and (w2["fx"] as StatusEffects).frost_stacks(CombatState.Side.ENEMY) == 1 and (w2["fx"] as StatusEffects).is_burning(Vector2i(5, 1)), "%.1f" % _lost(w2))
 
 
 func test_determinism() -> void:

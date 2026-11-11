@@ -1607,13 +1607,11 @@
 		"thorns_enemy": []
 	},
 	"bang_tam|L1|hit3_burning": {
-		"burning": [
-			"(4, 1)"
-		],
+		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 973.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -1640,6 +1638,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -1724,17 +1725,17 @@
 	"bang_tam|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 977.5,
+		"enemy_hp": 970.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 22.5,
+			"damage": 30.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -1753,6 +1754,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -1981,13 +1983,11 @@
 		"thorns_enemy": []
 	},
 	"bang_tam|L3|hit3_burning": {
-		"burning": [
-			"(4, 1)"
-		],
+		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 967.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -2014,6 +2014,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -2098,17 +2101,17 @@
 	"bang_tam|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 968.5,
+		"enemy_hp": 958.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 31.5,
+			"damage": 42.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -2127,6 +2130,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -2283,10 +2287,10 @@
 	"chan_phong|L1|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 988.0,
+		"enemy_hp": 980.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -2310,8 +2314,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -2472,17 +2478,17 @@
 	"chan_phong|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": true,
 			"crit_mult": 1.5,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -2501,6 +2507,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -2657,10 +2664,10 @@
 	"chan_phong|L3|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 988.0,
+		"enemy_hp": 980.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -2684,8 +2691,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -2846,17 +2855,17 @@
 	"chan_phong|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": true,
 			"crit_mult": 1.5,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -2875,6 +2884,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -3031,10 +3041,10 @@
 	"cuong_phong|L1|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -3058,8 +3068,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -3220,17 +3232,17 @@
 	"cuong_phong|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 968.5,
+		"enemy_hp": 958.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 31.5,
+			"damage": 42.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -3249,6 +3261,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -3405,10 +3418,10 @@
 	"cuong_phong|L3|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -3432,8 +3445,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -3594,17 +3609,17 @@
 	"cuong_phong|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 968.5,
+		"enemy_hp": 958.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 31.5,
+			"damage": 42.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -3623,6 +3638,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -3968,17 +3984,17 @@
 	"dai_dao|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 968.5,
+		"enemy_hp": 958.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 31.5,
+			"damage": 42.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -3997,6 +4013,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -4342,17 +4359,17 @@
 	"dai_dao|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 968.5,
+		"enemy_hp": 958.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 31.5,
+			"damage": 42.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -4371,6 +4388,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -4716,17 +4734,17 @@
 	"do_kiem|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 986.5,
+		"enemy_hp": 982.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 13.5,
+			"damage": 18.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -4745,6 +4763,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -5090,17 +5109,17 @@
 	"do_kiem|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 986.5,
+		"enemy_hp": 982.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 13.5,
+			"damage": 18.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -5119,6 +5138,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -5506,17 +5526,17 @@
 	"gai_doc|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 991.0,
+		"enemy_hp": 988.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 9.0,
+			"damage": 12.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -5535,6 +5555,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [
 				"(3, 1)",
 				"(4, 1)",
@@ -5958,17 +5979,17 @@
 	"gai_doc|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 991.0,
+		"enemy_hp": 988.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 9.0,
+			"damage": 12.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -5987,6 +6008,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [
 				"(3, 1)",
 				"(4, 1)",
@@ -8651,13 +8673,11 @@
 		"thorns_enemy": []
 	},
 	"han_kiem|L1|hit3_burning": {
-		"burning": [
-			"(4, 1)"
-		],
+		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 970.0,
 		"fragile": 0,
-		"frost": 1,
+		"frost": 0,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -8684,6 +8704,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -8768,17 +8791,17 @@
 	"han_kiem|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 1,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -8797,6 +8820,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -9025,13 +9049,11 @@
 		"thorns_enemy": []
 	},
 	"han_kiem|L3|hit3_burning": {
-		"burning": [
-			"(4, 1)"
-		],
+		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 976.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
-		"frost": 1,
+		"frost": 0,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -9058,6 +9080,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -9142,17 +9167,17 @@
 	"han_kiem|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 964.0,
+		"enemy_hp": 952.0,
 		"fragile": 0,
 		"frost": 1,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 36.0,
+			"damage": 48.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -9171,6 +9196,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -10147,13 +10173,11 @@
 		"thorns_enemy": []
 	},
 	"han_tran|L1|hit3_burning": {
-		"burning": [
-			"(4, 1)"
-		],
+		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 988.0,
+		"enemy_hp": 976.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -10180,6 +10204,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -10264,17 +10291,17 @@
 	"han_tran|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 976.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 18.0,
+			"damage": 24.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -10293,6 +10320,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -10521,13 +10549,11 @@
 		"thorns_enemy": []
 	},
 	"han_tran|L3|hit3_burning": {
-		"burning": [
-			"(4, 1)"
-		],
+		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 988.0,
+		"enemy_hp": 976.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -10554,6 +10580,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -10638,17 +10667,17 @@
 	"han_tran|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 976.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 18.0,
+			"damage": 24.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -10667,6 +10696,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -10949,13 +10979,12 @@
 	"hoa_tinh|L1|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 970.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -10982,6 +11011,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -11036,17 +11068,17 @@
 			"(5, 1)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": true,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -11065,6 +11097,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -11361,13 +11394,12 @@
 	"hoa_tinh|L3|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 970.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -11394,6 +11426,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -11448,17 +11483,17 @@
 			"(5, 1)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": true,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -11477,6 +11512,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -11773,13 +11809,12 @@
 	"hoa_tran|L1|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 970.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -11806,6 +11841,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -11860,17 +11898,17 @@
 			"(5, 1)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": true,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -11889,6 +11927,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -12185,13 +12224,12 @@
 	"hoa_tran|L3|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 970.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -12218,6 +12256,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -12272,17 +12313,17 @@
 			"(5, 1)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": true,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -12301,6 +12342,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -12597,13 +12639,12 @@
 	"hoa_xa|L1|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 970.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -12630,6 +12671,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -12684,17 +12728,17 @@
 			"(5, 1)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": true,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -12713,6 +12757,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -13009,13 +13054,12 @@
 	"hoa_xa|L3|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 982.0,
+		"enemy_hp": 970.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -13042,6 +13086,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -13096,17 +13143,17 @@
 			"(5, 1)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": true,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -13125,6 +13172,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -13484,17 +13532,17 @@
 	"kiem_khi|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -13513,6 +13561,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -13858,17 +13907,17 @@
 	"kiem_khi|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 964.0,
+		"enemy_hp": 952.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 36.0,
+			"damage": 48.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -13887,6 +13936,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -14232,17 +14282,17 @@
 	"kiem_than|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 964.0,
+		"enemy_hp": 952.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 36.0,
+			"damage": 48.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -14261,6 +14311,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -14606,17 +14657,17 @@
 	"kiem_than|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 964.0,
+		"enemy_hp": 952.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 36.0,
+			"damage": 48.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -14635,6 +14686,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -14980,17 +15032,17 @@
 	"kiem_vu|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 952.75,
+		"enemy_hp": 937.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": true,
 			"crit_mult": 1.5,
-			"damage": 47.25,
+			"damage": 63.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -15009,6 +15061,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -15354,17 +15407,17 @@
 	"kiem_vu|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 939.25,
+		"enemy_hp": 919.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": true,
 			"crit_mult": 1.5,
-			"damage": 60.75,
+			"damage": 81.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -15383,6 +15436,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -15665,13 +15719,12 @@
 	"liet_hoa|L1|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 1000.0,
+		"enemy_hp": 988.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -15698,6 +15751,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -16077,13 +16133,12 @@
 	"liet_hoa|L3|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 1000.0,
+		"enemy_hp": 988.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -16110,6 +16165,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -18048,17 +18106,17 @@
 	"song_kiem|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 946.0,
+		"enemy_hp": 928.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 54.0,
+			"damage": 72.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -18077,6 +18135,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -18422,17 +18481,17 @@
 	"song_kiem|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 946.0,
+		"enemy_hp": 928.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 54.0,
+			"damage": 72.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -18451,6 +18510,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -20229,13 +20289,12 @@
 	"thien_hoa|L1|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 1000.0,
+		"enemy_hp": 988.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -20262,6 +20321,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -20641,13 +20703,12 @@
 	"thien_hoa|L3|hit3_frost2": {
 		"burning": [
 			"(4, 0)",
-			"(4, 1)",
 			"(4, 2)"
 		],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 1000.0,
+		"enemy_hp": 988.0,
 		"fragile": 0,
-		"frost": 2,
+		"frost": 1,
 		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
@@ -20674,6 +20735,9 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r1",
+			"reaction_cell": "(4, 1)",
+			"reaction_damage": 12.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -20890,10 +20954,10 @@
 	"thien_lang|L1|boss2x2_4cells": {
 		"burning": [],
 		"enemy_cell": "(4, 0)",
-		"enemy_hp": 972.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -20917,8 +20981,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -20927,10 +20993,10 @@
 	"thien_lang|L1|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -20954,8 +21020,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -20964,10 +21032,10 @@
 	"thien_lang|L1|hit1": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 993.0,
+		"enemy_hp": 985.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -20991,8 +21059,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21003,10 +21073,10 @@
 			"(4, 1)"
 		],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21030,8 +21100,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21040,10 +21112,10 @@
 	"thien_lang|L1|hit3_frost2": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21067,8 +21139,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21077,10 +21151,10 @@
 	"thien_lang|L1|hit3_hole": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 986.0,
+		"enemy_hp": 978.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21106,8 +21180,10 @@
 			],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21116,17 +21192,17 @@
 	"thien_lang|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 968.5,
+		"enemy_hp": 958.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 31.5,
+			"damage": 42.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -21145,6 +21221,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21153,10 +21230,10 @@
 	"thien_lang|L1|hit3_row": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21180,8 +21257,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21190,10 +21269,10 @@
 	"thien_lang|L1|hit5_plus": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 965.0,
+		"enemy_hp": 957.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21217,8 +21296,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21264,10 +21345,10 @@
 	"thien_lang|L3|boss2x2_4cells": {
 		"burning": [],
 		"enemy_cell": "(4, 0)",
-		"enemy_hp": 972.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21291,8 +21372,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21301,10 +21384,10 @@
 	"thien_lang|L3|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21328,8 +21411,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21338,10 +21423,10 @@
 	"thien_lang|L3|hit1": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 993.0,
+		"enemy_hp": 985.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21365,8 +21450,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21377,10 +21464,10 @@
 			"(4, 1)"
 		],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21404,8 +21491,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21414,10 +21503,10 @@
 	"thien_lang|L3|hit3_frost2": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21441,8 +21530,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21451,10 +21542,10 @@
 	"thien_lang|L3|hit3_hole": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 986.0,
+		"enemy_hp": 978.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21480,8 +21571,10 @@
 			],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21490,17 +21583,17 @@
 	"thien_lang|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 968.5,
+		"enemy_hp": 958.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 31.5,
+			"damage": 42.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -21519,6 +21612,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21527,10 +21621,10 @@
 	"thien_lang|L3|hit3_row": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 979.0,
+		"enemy_hp": 971.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21554,8 +21648,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21564,10 +21660,10 @@
 	"thien_lang|L3|hit5_plus": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 965.0,
+		"enemy_hp": 957.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -21591,8 +21687,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -21864,17 +21962,17 @@
 	"thiet_kiem|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 952.75,
+		"enemy_hp": 937.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": true,
 			"crit_mult": 1.5,
-			"damage": 47.25,
+			"damage": 63.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -21893,6 +21991,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -22238,17 +22337,17 @@
 	"thiet_kiem|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 952.75,
+		"enemy_hp": 937.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": true,
 			"crit_mult": 1.5,
-			"damage": 47.25,
+			"damage": 63.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -22267,6 +22366,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -22654,17 +22754,17 @@
 	"tran_gai|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -22683,6 +22783,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [
 				"(3, 1)",
 				"(4, 1)",
@@ -23106,17 +23207,17 @@
 	"tran_gai|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 973.0,
+		"enemy_hp": 964.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 27.0,
+			"damage": 36.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -23135,6 +23236,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [
 				"(3, 1)",
 				"(4, 1)",
@@ -23516,17 +23618,17 @@
 	"tu_kiem|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 964.0,
+		"enemy_hp": 952.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 36.0,
+			"damage": 48.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -23545,6 +23647,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -23890,17 +23993,17 @@
 	"tu_kiem|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(4, 1)",
-		"enemy_hp": 964.0,
+		"enemy_hp": 952.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 36.0,
+			"damage": 48.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -23919,6 +24022,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": false,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24038,10 +24142,10 @@
 	"xung_kich|L1|boss2x2_4cells": {
 		"burning": [],
 		"enemy_cell": "(4, 0)",
-		"enemy_hp": 980.0,
+		"enemy_hp": 972.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24065,8 +24169,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24075,10 +24181,10 @@
 	"xung_kich|L1|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24102,8 +24208,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24112,10 +24220,10 @@
 	"xung_kich|L1|hit1": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 995.0,
+		"enemy_hp": 987.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24139,8 +24247,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24151,10 +24261,10 @@
 			"(4, 1)"
 		],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24178,8 +24288,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24188,10 +24300,10 @@
 	"xung_kich|L1|hit3_frost2": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24215,8 +24327,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24225,10 +24339,10 @@
 	"xung_kich|L1|hit3_hole": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 990.0,
+		"enemy_hp": 982.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24254,8 +24368,10 @@
 			],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24264,17 +24380,17 @@
 	"xung_kich|L1|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 977.5,
+		"enemy_hp": 970.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 22.5,
+			"damage": 30.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -24293,6 +24409,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24301,10 +24418,10 @@
 	"xung_kich|L1|hit3_row": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24328,8 +24445,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24338,10 +24457,10 @@
 	"xung_kich|L1|hit5_plus": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 975.0,
+		"enemy_hp": 967.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24365,8 +24484,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24412,10 +24533,10 @@
 	"xung_kich|L3|boss2x2_4cells": {
 		"burning": [],
 		"enemy_cell": "(4, 0)",
-		"enemy_hp": 980.0,
+		"enemy_hp": 972.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24439,8 +24560,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24449,10 +24572,10 @@
 	"xung_kich|L3|edge_push": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24476,8 +24599,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": false,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24486,10 +24611,10 @@
 	"xung_kich|L3|hit1": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 995.0,
+		"enemy_hp": 987.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24513,8 +24638,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24525,10 +24652,10 @@
 			"(4, 1)"
 		],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24552,8 +24679,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24562,10 +24691,10 @@
 	"xung_kich|L3|hit3_frost2": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 2,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24589,8 +24718,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24599,10 +24730,10 @@
 	"xung_kich|L3|hit3_hole": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 990.0,
+		"enemy_hp": 982.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24628,8 +24759,10 @@
 			],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24638,17 +24771,17 @@
 	"xung_kich|L3|hit3_ran_pinned": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 977.5,
+		"enemy_hp": 970.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": true,
+		"pinned": false,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
 			"cell": "(4, 1)",
 			"crit": false,
 			"crit_mult": 1.0,
-			"damage": 22.5,
+			"damage": 30.0,
 			"defense_applied": 0.0,
 			"executed": false,
 			"featured": false,
@@ -24667,6 +24800,7 @@
 			"pin_bonus": false,
 			"pinned": false,
 			"pushed": true,
+			"reaction": "r2",
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24675,10 +24809,10 @@
 	"xung_kich|L3|hit3_row": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 985.0,
+		"enemy_hp": 977.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24702,8 +24836,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},
@@ -24712,10 +24848,10 @@
 	"xung_kich|L3|hit5_plus": {
 		"burning": [],
 		"enemy_cell": "(5, 1)",
-		"enemy_hp": 975.0,
+		"enemy_hp": 967.0,
 		"fragile": 0,
 		"frost": 0,
-		"pinned": false,
+		"pinned": true,
 		"player_hp": 1000.0,
 		"result": {
 			"burning": false,
@@ -24739,8 +24875,10 @@
 			"locked_cells": [],
 			"parried": false,
 			"pin_bonus": false,
-			"pinned": false,
+			"pinned": true,
 			"pushed": true,
+			"reaction": "r3",
+			"reaction_damage": 8.0,
 			"zone_cells": [],
 			"zone_kind": ""
 		},

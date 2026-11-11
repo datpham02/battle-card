@@ -179,6 +179,24 @@ internal cooldown; priority R2 > R1 > R3; one reaction per event.
 - **Snapshots:** the echo uses the parent's cast-time modifiers (Bóng Lướt active at cast → ×1.75 on the echo too;
   activating it after does not count). Echoes never charge Engraving or the Awakening.
 
+### 7.1 Addendum (batch 5, 2026-11-11) — echo waves and Rạn, measured
+
+`tools/balance/echo_ran_probe.gd` compared the shipped rule **A** (an echo wave neither spends Rạn nor takes the ×1.5)
+with the looser reading **B** (an echo wave is a damage event like any other) on a 1000 HP boss, bar3 casts:
+
+| Case | Rạn before | A total | B total | B / A | stacks left A / B |
+|---|---|---|---|---|---|
+| Hồi Âm (hit + echo 0.6) | 0 / 1 / 3 | 24.0 / 31.5 / 31.5 | 24.0 / 31.5 / 36.0 | 1.00 / 1.00 / 1.14 | 0 / 0 / 2 vs 0 / 0 / 1 |
+| Chuông Thánh (hit + 2 echoes 0.5) | 0 / 1 / 3 | 48.0 / 54.0 / 54.0 | 48.0 / 54.0 / 60.0 | 1.00 / 1.00 / 1.11 | 0 / 0 / 2 vs 0 / 0 / 0 |
+| Kiếm Khí on a marked boss (hit + mark echo 0.6) | 0 / 1 / 3 | 28.8 / 37.8 / 37.8 | 28.8 / 37.8 / 43.2 | 1.00 / 1.00 / 1.14 | 0 / 0 / 2 vs 0 / 0 / 1 |
+
+With 0 or 1 stack the readings are identical; only a 2+ stack bank differs, by 11–14 % of the cast, and B eats the
+bank (Chuông Thánh spends all three in one cast). **Rule A stays.** An echo repeats the base hit; the stacks stay for
+the next cast, so Rạn remains a per-cast resource the player spends on purpose rather than a bank an echoing card
+drains by itself. The signature snapshot of the "Snapshots" bullet is implemented (`SwingArbiter` `sig_factor`,
+`swing_arbiter_signature_snapshot_test.gd`); reactions (R1–R3) do fire on echo waves like on any damage event, gated by
+the M15 ICD (batch 5, `22-deferred-report.md`).
+
 ## 8. Q6 — legacy behaviour changes
 Through B1–B6 every one of the 32 existing cards resolves exactly as today (all cells at the swing end, one hit test).
 The golden test pins this. In B7, each change in the bible §8 migration table is turned on card by card (data flag

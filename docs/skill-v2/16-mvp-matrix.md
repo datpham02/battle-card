@@ -43,17 +43,19 @@ Do not invent these.
 
 ## Deferred after 60/60 (user decision 2026-11-11)
 
-Open items of Skill v2 batch 2 (`19-batch2-report.md`). All PENDING, none blocks 60/60. In priority order:
+Open items of Skill v2 batch 2 (`19-batch2-report.md`). None blocks 60/60. In priority order. **Batch 5
+(2026-11-11, `22-deferred-report.md`) closed 1, 2, 3 (smoke only), 4, 5, 8, 9, 11, 12, 13 and the data half of 10;
+6, 7 and the chip / bracket of 10 are the VFX session's.**
 
-1. **Reaction ICD 1.0 s per unit per reaction id + `immune_status` / `burn_eater` checks** (M15 rules) — must land
+1. **DONE (batch 5)** — **Reaction ICD 1.0 s per unit per reaction id + `immune_status` / `burn_eater` checks** (M15 rules) — must land
    before the balance pass.
-2. **R1–R3 card-listed or global** — a balance decision after 60/60, leaning global; needs the 33 legacy cards
+2. **DONE (batch 5: global, `reactions.global`)** — **R1–R3 card-listed or global** — a balance decision after 60/60, leaning global; needs the 33 legacy cards
    re-measured and `skill_v2_golden_test` re-recorded (`hit3_ran_pinned`, `edge_push` change under global R2 / R3).
-3. **The boss drawing the 5 new shared cards** (`dia_chan`, `loc_cuon`, `bang_vo`, `hoa_bang`, `hoi_am`) — tune in the
+3. **SMOKED (batch 5: the five are in `boss_card_order`; the tuning itself is the balance pass)** — **The boss drawing the 5 new shared cards** (`dia_chan`, `loc_cuon`, `bang_vo`, `hoa_bang`, `hoi_am`) — tune in the
    sim during the balance pass.
-4. **Several shape clauses on one card** (Thiên Thạch `square` → every cell is the centre; the `hub_all` clause key
+4. **DONE (batch 5: `shape_clauses`)** — **Several shape clauses on one card** (Thiên Thạch `square` → every cell is the centre; the `hub_all` clause key
    exists) — low priority.
-5. **R1 when a unit with Hàn enters a burning cell; R3 when a forced move ends on a thorn cell** — low priority.
+5. **DONE (batch 5)** — **R1 when a unit with Hàn enters a burning cell; R3 when a forced move ends on a thorn cell** — low priority.
 
 ### Added by batch 3 (2026-11-11, same decision: PENDING, none blocks 60/60)
 
@@ -62,18 +64,18 @@ Open items of Skill v2 batch 2 (`19-batch2-report.md`). All PENDING, none blocks
 7. **Floor drawing for the field zones** (trap jaws, ward frames, pillars, fire-wall columns) — the VFX session's
    `FloorLayer`; `StatusEffects.zone_applied` / `zone_expired` already carry the kinds `trap` / `ward` / `pillar`,
    `StatusEffects.wall_cells()` the wall.
-8. **Trap damage through the defense path** — a snapping trap deals `dpc × cells` straight to HP like a thorn toll
+8. **DONE (batch 5: through, `reactions.trap_through_defense`)** — **Trap damage through the defense path** — a snapping trap deals `dpc × cells` straight to HP like a thorn toll
    (`boss_defense` is not subtracted); decide with the balance pass.
-9. **Bùng Nổ detonating a fire wall; a trap fling into a pillar as R3** — low priority.
+9. **DONE (batch 5)** — **Bùng Nổ detonating a fire wall; a trap fling into a pillar as R3** — low priority.
 
 ### Added by batch 4 (2026-11-11, same decision: PENDING, none blocks 60/60)
 
-10. **Dấu Tử HUD chip** — the mark is a status with its own signals (`mark_applied` / `mark_expired` /
+10. **DATA DONE (batch 5: `active_statuses` lists `mark`, `ui.status.mark.*`; the `status_row.gd` row and the bracket are VFX)** — **Dấu Tử HUD chip** — the mark is a status with its own signals (`mark_applied` / `mark_expired` /
     `mark_triggered`, status id `mark`) but no chip in the buff / debuff row and no board bracket yet (VFX).
-11. **Echo snapshots of the Assassin's Awakening (Bóng Lướt ×1.75 on the echo)** — the mark's echo re-runs the
+11. **DONE (batch 5)** — **Echo snapshots of the Assassin's Awakening (Bóng Lướt ×1.75 on the echo)** — the mark's echo re-runs the
     parent's cast context, but the signature hook is live, not snapshotted; verify with the Assassin's passive tests.
-12. **Móc Kéo pull path as a `path_rule`** — the drag path is telegraphed as data (`cast_scheduled.pull_path`), not
+12. **DONE (batch 5: `path_rule {effect pull}`)** — **Móc Kéo pull path as a `path_rule`** — the drag path is telegraphed as data (`cast_scheduled.pull_path`), not
     through the delivery's `path_rule`; the path is never hit.
-13. **Card echoes and Rạn** — a card's own echo waves (Hồi Âm, Chuông Thánh) and the mark's echo now run as echo waves
+13. **DONE (batch 5: rule A kept, 02-design-decisions.md §7.1)** — **Card echoes and Rạn** — a card's own echo waves (Hồi Âm, Chuông Thánh) and the mark's echo now run as echo waves
     (no Rạn spent or gained, no crit, no execute); the catalog's "never consumes Rạn twice in one wave" reading is
     the stricter one and was applied to every echo wave. Re-measure with the balance pass.

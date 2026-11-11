@@ -10,13 +10,13 @@ A `card_casts` clip still wins. Trảm Địa stays `cast_forward`. Ngàn Kiếm
 
 | Body | `cast_gesture` frames | Hand cast |
 |---|---|---|
-| `kiem_si` | 9 frames, 96×92, `cast_gesture` 0–8. Sword raise and horizontal cut. `cast_forward` and `cast_summon` are also sword poses. | `cast_hand` 0–8, painted from `idle/0`. Sword stays lowered. The free arm reaches across the chest. Frame 4 is the coil, frame 5 the open hand. |
-| `sat_thu` | 9 frames, 96×70, `cast_gesture` 0–8. Dual daggers, then a slash. | `cast_hand` 0–8. One dagger stays lowered. The other hand extends. |
-| `tho_san` | 9 frames, 96×72, `cast_gesture` 0–8. Crossbow raise, aim, shot. | `cast_hand` 0–8. Crossbow stays at the hip. The other hand extends. |
-| `giao_si` | 9 frames, 96×72, `cast_gesture` 0–8. Staff raised the whole clip. | `cast_hand` 0–8. One hand keeps the staff. The other extends. |
+| `kiem_si` | 9 frames, 96×92, `cast_gesture` 0–8. Sword raise and horizontal cut. `cast_forward` and `cast_summon` are also sword poses. | No `cast_hand` row. A hand cast holds idle. |
+| `sat_thu` | 9 frames, 96×70, `cast_gesture` 0–8. Dual daggers, then a slash. | No `cast_hand` row. A hand cast holds idle. |
+| `tho_san` | 9 frames, 96×72, `cast_gesture` 0–8. Crossbow raise, aim, shot. | No `cast_hand` row. A hand cast holds idle. |
+| `giao_si` | 9 frames, 96×72, `cast_gesture` 0–8. Staff raised the whole clip. | No `cast_hand` row. A hand cast holds idle. |
 | `phap_su` | 9 frames, 96×70, `cast_gesture` 0–8. Book in one hand, the other hand opens toward the target. | That clip is the hand cast. No `cast_hand` row. |
 
-Sheets face right. Left facing is the existing flip. One `cast_hand` row covers both.
+Sheets face right. Left facing is the existing flip. No hero sheet has a `cast_hand` row (dropped 2026-11-11).
 
 `vung_lay` is `hand`. Delivery stays `floor_run`.
 

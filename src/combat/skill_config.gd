@@ -404,6 +404,8 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"wave_mults": resolve_check["wave_mults"],
 		"resolve_errors": resolve_check["errors"],
 		"shape_clause": resolve_check["shape_clause"],
+		# batch 5 (Deferred 4): every clause of the card (CastResolver.shape_clauses / active_clause); shape_clause is the first
+		"shape_clauses": resolve_check["shape_clauses"],
 		"burst_first": resolve_check["burst_first"],
 		"burst_pin_sec": resolve_check["burst_pin_sec"],
 		# Skill v2 (Ngàn Kiếm): sky drop timing / order, fixed per-hit damage, Awakening extra max hits.

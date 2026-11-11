@@ -136,7 +136,7 @@ extends Node
 ##                                           neighbours (default 3 cells), time RUNNING (boss inactive): capture a
 ##                                           frame sequence to see the charge, the delivery's travel and the impacts
 ##   godot --path . -- --character=kiem_si --demo=tram_live [--tram-shape=<pieces id>] [--tram-rot=N] [--tram-first]
-##       [--tram-move=dx,dy] [--cast-lock]   Skill v2 Trảm Địa: the Knight's REAL tram_dia swing (CutActor + CastContext
+##       [--tram-move=dx,dy] [--cast-lock] [--tram-replay]   Skill v2 Trảm Địa: the Knight's REAL tram_dia swing (CutActor + CastContext
 ##       from a real Piece, so shape tags hold) placed on the boss half with the boss on the surge's FARTHEST cell (or on
 ##       the burst cell with --tram-first); --tram-move moves the boss by dx,dy when the burst fires (moving target);
 ##       --pattern=dev_pattern_boss gives a 2x2 boss. Time runs; every impact event is printed (TRAM line).
@@ -350,6 +350,7 @@ const TRAM_SHAPE_PREFIX: String = "--tram-shape="
 const TRAM_ROT_PREFIX: String = "--tram-rot="
 const TRAM_MOVE_PREFIX: String = "--tram-move="
 const TRAM_FIRST_ARG: String = "--tram-first"
+const TRAM_REPLAY_ARG: String = "--tram-replay"
 const TRAM_CARD: String = "tram_dia"
 ## Skill v2: the scheduled card tram_live casts (--live-card=ngan_kiem); default TRAM_CARD.
 const LIVE_CARD_PREFIX: String = "--live-card="
@@ -976,6 +977,8 @@ func _tram_live_demo() -> void:
 		print("DemoArgs: t=%.3f BRAIN step %s: type=%s purpose=%s score=%.2f fuse=%s" % [
 			combat.get_arbiter().clock() - float(_scn.get("from", 0.0)), str(direction), str(dbg.get("type", "")),
 			str(dbg.get("purpose", dbg.get("breakdown", {}))), float(dbg.get("score", 0.0)), str(dbg.get("fuse", {}))]))
+	if OS.get_cmdline_user_args().has(TRAM_REPLAY_ARG):
+		_scn["replay"] = {"cells": best, "card": card, "ctx": ctx, "after": combat.get_cut_actor().get_time_left() + 0.7}
 	_scenario_setup(combat)
 	# VFX scale guide (2026-11-08): the real art-px geometry of the target cells (flat rect and drawn quad bbox).
 	var canvas: BattleCanvas = combat.get_battle_canvas()
@@ -1051,6 +1054,14 @@ func _scenario_tick() -> void:
 		print("DemoArgs: scenario t=%.3f phase now '%s', feedback %s, scheduled impacts %s" % [t, combat.channel_phase(),
 			"none" if flash.is_empty() else ("ĐÃ CHỐT (refused)" if bool(flash["refused"]) else "ĐÃ HỦY"),
 			str(combat.get_arbiter().active_cast_count())])
+	var replay: Dictionary = _scn.get("replay", {}) as Dictionary
+	if not replay.is_empty() and not combat.get_cut_actor().is_swinging() and t >= float(replay["after"]):
+		var again: Array[Vector2i] = []
+		for c: Vector2i in replay["cells"]:
+			again.append(c)
+		if combat.get_cut_actor().begin_swing(again, replay["card"], true, 1, -1.0, {}, replay["ctx"]):
+			_scn["from"] = combat.get_arbiter().clock()
+			print("DemoArgs: tram_live replay")
 	if _scn.has("step") and _scn.has("reported") and not _scn.has("stepped") and combat.channel_phase() == CombatView.PHASE_NONE:
 		if combat.try_step_player(_scn["step"] as Vector2i):
 			_scn["stepped"] = true

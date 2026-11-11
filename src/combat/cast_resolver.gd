@@ -170,7 +170,12 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 				mults.append(float(m))
 	var burst: float = _num_field(id, raw, "burst_first", 1.0, 1.0, MAX_BURST_FIRST, errors)
 	var pin_sec: float = _num_field(id, raw, "burst_pin_sec", 0.0, 0.0, MAX_PIN_SEC, errors)
-	var clause: Dictionary = _clause(id, raw.get("shape_clause", {}), errors)
+	# batch 5 (Deferred 4): `shape_clause` (one) and / or `shape_clauses` (a list); the first that holds for a cast is the
+	# active one (active_clause). `clause` below is the key union, for the field checks only.
+	var clauses: Array[Dictionary] = _clauses(id, raw, errors)
+	var clause: Dictionary = {}
+	for c: Dictionary in clauses:
+		clause.merge(c, false)
 	var hover: float = _num_field(id, raw, "sky_hover_sec", -1.0, 0.0, 2.0, errors)
 	var stagger: float = _num_field(id, raw, "sky_stagger_sec", -1.0, 0.02, 1.0, errors)
 	var drop_order: String = str(raw.get("drop_order", "row_major"))
@@ -225,8 +230,10 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 	# batch 2: an event_payload rides on every scheduled event (delayed, arrival, waves); never on an instant card
 	if resolve == RESOLVE_INSTANT and not payload.is_empty():
 		errors.append("card %s: event_payload needs a scheduled resolve (delayed / arrival / waves)" % id)
-	if clause.has("fuse_mult") and fuse_mult > 0.0 and float(clause["fuse_mult"]) / fuse_mult > SHAPE_GROUP_CAP + 0.000001:
-		errors.append("card %s: shape_clause fuse_mult / fuse_mult must be <= %s (shape-clause group cap)" % [id, SHAPE_GROUP_CAP])
+	for c: Dictionary in clauses:
+		if c.has("fuse_mult") and fuse_mult > 0.0 and float(c["fuse_mult"]) / fuse_mult > SHAPE_GROUP_CAP + 0.000001:
+			errors.append("card %s: shape_clause fuse_mult / fuse_mult must be <= %s (shape-clause group cap)" % [id, SHAPE_GROUP_CAP])
+			break
 	if resolve != RESOLVE_INSTANT and not SCHEDULED_EFFECTS.has(effect):
 		errors.append("card %s: resolve '%s' is not supported for effect '%s' yet (damage only)" % [id, resolve, effect])
 	if resolve != RESOLVE_INSTANT and not SCHEDULED_CAST_MODES.has(cast_mode):
@@ -234,7 +241,7 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 	if not errors.is_empty():
 		return {"resolve": RESOLVE_INSTANT, "hits": 1, "max_hits": 1, "hit_interval_sec": DEFAULT_INTERVAL_SEC,
 			"wave_mults": [] as Array[float], "burst_first": 1.0, "burst_pin_sec": 0.0, "shape_clause": {},
-			"sky_hover_sec": -1.0, "sky_stagger_sec": -1.0, "drop_order": "row_major", "awakening_extra_hits": 0,
+			"shape_clauses": [] as Array[Dictionary], "sky_hover_sec": -1.0, "sky_stagger_sec": -1.0, "drop_order": "row_major", "awakening_extra_hits": 0,
 			"fixed_hit": false, "fuse_sec": 1.5, "fuse_mult": 1.0, "max_active": 0, "event_payload": {},
 			"damage_cells_rule": {"mode": "all"}, "link_ramp": 0.0, "link_ramp_cap": DEFAULT_LINK_RAMP_CAP,
 			"sky_mode": "drops", "ring_step_sec": 0.1, "hub_mult": 1.0, "echo": {}, "link_step_sec": 0.0, "errors": errors}
@@ -242,7 +249,8 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 		"damage_cells_rule": dmg_rule, "link_ramp": link_ramp, "link_ramp_cap": link_ramp_cap,
 		"sky_mode": sky_mode, "ring_step_sec": ring_step, "hub_mult": hub_mult, "echo": echo, "link_step_sec": link_step,
 		"resolve": resolve, "hits": hits, "max_hits": max_hits, "hit_interval_sec": interval, "wave_mults": mults,
-		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clause, "sky_hover_sec": hover,
+		"burst_first": burst, "burst_pin_sec": pin_sec, "shape_clause": clauses[0] if not clauses.is_empty() else {},
+		"shape_clauses": clauses, "sky_hover_sec": hover,
 		"sky_stagger_sec": stagger, "drop_order": drop_order, "awakening_extra_hits": extra_hits, "fixed_hit": fixed_hit,
 		"errors": errors}
 
@@ -346,8 +354,8 @@ static func threat_delay(skill: Dictionary, context: Dictionary) -> float:
 static func fuse_timing(skill: Dictionary, context: Dictionary) -> Dictionary:
 	var sec: float = float(skill.get("fuse_sec", 1.5))
 	var mult: float = float(skill.get("fuse_mult", 1.0))
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	var holds: bool = (clause.has("fuse_sec") or clause.has("fuse_mult") or clause.has("fuse_mult_scale")) 		and clause_holds(clause, context)
+	var clause: Dictionary = active_clause(skill, context)
+	var holds: bool = clause.has("fuse_sec") or clause.has("fuse_mult") or clause.has("fuse_mult_scale")
 	if holds:
 		sec = float(clause.get("fuse_sec", sec))
 		# fuse_mult_scale: the clause's multiplier as a ratio of the card's own (follows a re-tuned base)
@@ -409,8 +417,8 @@ static func surge_events(skill: Dictionary, cells: Array[Vector2i], context: Dic
 		return da < db or (da == db and (sa.y < sb.y or (sa.y == sb.y and sa.x < sb.x))))
 	var burst: float = float(skill.get("burst_first", 1.0))
 	var pin_sec: float = float(skill.get("burst_pin_sec", 0.0))
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	var per_step: float = float(clause.get("surge_per_step", 0.0)) if clause_holds(clause, context) else 0.0
+	var clause: Dictionary = active_clause(skill, context)
+	var per_step: float = float(clause.get("surge_per_step", 0.0))
 	var cap: float = float(clause.get("surge_cap", 0.0))
 	for ri: int in order.size():
 		var region: Array[Vector2i] = regions[order[ri]]
@@ -473,10 +481,10 @@ static func sky_events(skill: Dictionary, cells: Array[Vector2i], context: Dicti
 	if stagger < 0.0:
 		stagger = maxf(float(t.get("stagger_sec", 0.03)), 0.0)
 	var caster: Vector2i = context.get("caster_cell", Vector2i(-1, open[0].y))
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var clause: Dictionary = active_clause(skill, context)
 	if str(skill.get("sky_mode", "drops")) == "shockwave":
 		return shockwave_events(skill, open, context, hover, caster)
-	var branched: bool = bool(clause.get("tips_first", false)) and clause_holds(clause, context)
+	var branched: bool = bool(clause.get("tips_first", false))
 	var order: Array[Vector2i] = []
 	var regions_of: Dictionary = {}
 	if str(skill.get("drop_order", "row_major")) == "from_centre":
@@ -532,8 +540,8 @@ static func sky_events(skill: Dictionary, cells: Array[Vector2i], context: Dicti
 ## hub at hover. Every event is its own wave (one hit per cast with max_hits 1), ordered (t, y, x).
 static func shockwave_events(skill: Dictionary, open: Array[Vector2i], context: Dictionary, hover: float, caster: Vector2i) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	var holds: bool = clause_holds(clause, context)
+	var clause: Dictionary = active_clause(skill, context)
+	var holds: bool = not clause.is_empty()
 	var ring_sec: float = float(skill.get("ring_step_sec", 0.1))
 	var hub_mult: float = minf(float(skill.get("hub_mult", 1.0)), SHAPE_GROUP_CAP)
 	var hub_all: bool = false
@@ -575,9 +583,9 @@ static func echo_events(skill: Dictionary, cells: Array[Vector2i], context: Dict
 	var echo: Dictionary = skill.get("echo", {}) as Dictionary
 	if echo.is_empty():
 		return out
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var clause: Dictionary = active_clause(skill, context)
 	var count: int = int(echo.get("count", 1))
-	if clause.has("echo_count") and clause_holds(clause, context):
+	if clause.has("echo_count"):
 		count = int(clause["echo_count"])
 	count = clampi(count, 0, MAX_ECHO_COUNT)
 	var dir: int = 1 if int(context.get("side", CombatState.Side.PLAYER)) == CombatState.Side.PLAYER else -1
@@ -658,8 +666,8 @@ static func _bfs(region: Array[Vector2i], start: Vector2i) -> Dictionary:
 ## Hit count of a `waves` card for this cast: the shape clause's `hits` when that clause holds, else the card's `hits`.
 static func wave_count(skill: Dictionary, context: Dictionary) -> int:
 	var hits: int = maxi(int(skill.get("hits", 1)), 1)
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	if clause.has("hits") and clause_holds(clause, context):
+	var clause: Dictionary = active_clause(skill, context)
+	if clause.has("hits"):
 		hits = int(clause["hits"])
 	return clampi(hits, 1, MAX_HITS)
 
@@ -681,6 +689,31 @@ static func _collect_tags(tags: Array[String], raw: Variant) -> void:
 			var s: String = str(t)
 			if not s.is_empty() and not tags.has(s):
 				tags.append(s)
+
+
+## Batch 5 (Deferred 4): every shape clause of card [param skill] (its `shape_clauses` list; a lone `shape_clause` is
+## that list's one entry), in card order.
+static func shape_clauses(skill: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var raw: Variant = skill.get("shape_clauses", null)
+	if raw is Array:
+		for c: Variant in raw as Array:
+			if c is Dictionary and not (c as Dictionary).is_empty():
+				out.append(c as Dictionary)
+		return out
+	var one: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	if not one.is_empty():
+		out.append(one)
+	return out
+
+
+## Batch 5 (Deferred 4): the FIRST shape clause of [param skill] that holds for the cast [param context] ({} when none
+## does); every reader of a card's clause goes through it, so a card may carry several (Thiên Thạch `plus` / `square`).
+static func active_clause(skill: Dictionary, context: Dictionary) -> Dictionary:
+	for c: Dictionary in shape_clauses(skill):
+		if clause_holds(c, context):
+			return c
+	return {}
 
 
 ## True when shape clause [param clause] ({tag or tag list, scope}) holds for the cast [param context]: any_piece
@@ -749,11 +782,11 @@ static func _arrival_events(skill: Dictionary, cells: Array[Vector2i], context: 
 				times[c] = float(base + int(dist[c])) * step
 		cells = reached
 	# Batch 1 (Chuỗi Sét): a link_step_sec clause that holds re-times the links; the ramp multiplies link k.
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var clause: Dictionary = active_clause(skill, context)
 	var link_mult: Dictionary = {}
 	if chain:
 		var links: Array[Vector2i] = SkillDelivery.chain_cells(delivery, cells, caster)
-		var holds: bool = clause_holds(clause, context)
+		var holds: bool = not clause.is_empty()
 		# batch 4 (Phi Tiêu L): the corner's dagger flies first, the rest keep their order
 		if bool(clause.get("corner_first", false)) and holds:
 			var corner: Vector2i = corner_cell(cells)
@@ -840,6 +873,29 @@ static func _num_field(id: String, raw: Dictionary, key: String, fallback: float
 		errors.append("card %s: %s %s must be a number in [%s, %s]" % [id, key, str(v), lo, hi])
 		return fallback
 	return float(v)
+
+
+# Batch 5: the card's clauses: `shape_clause` (one object) first, then every entry of `shape_clauses` (a list of
+# objects); an empty / absent field adds nothing.
+static func _clauses(id: String, raw: Dictionary, errors: Array[String]) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var one: Dictionary = _clause(id, raw.get("shape_clause", {}), errors)
+	if not one.is_empty():
+		out.append(one)
+	var many: Variant = raw.get("shape_clauses", null)
+	if many == null:
+		return out
+	if not many is Array:
+		errors.append("card %s: shape_clauses must be a list of clause objects" % id)
+		return out
+	for entry: Variant in many as Array:
+		if not entry is Dictionary:
+			errors.append("card %s: shape_clauses entries must be clause objects" % id)
+			break
+		var c: Dictionary = _clause(id, entry, errors)
+		if not c.is_empty():
+			out.append(c)
+	return out
 
 
 static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictionary:

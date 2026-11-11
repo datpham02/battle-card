@@ -1084,3 +1084,5 @@ card.phi_tieu.desc_battle,"Phi tiêu nảy theo địch, tối đa {max_hits} đ
 card.moc_keo.name,Móc Kéo,Hook Pull
 card.moc_keo.desc,"Móc bay tới ô gần bạn nhất của khối; trúng thì kéo địch dọc hàng về phía đường chia tối đa {pull_row_cells} ô, từng ô một (đường kéo được báo trước). Bị chặn: Va Đập {r3_damage} sát thương. Dừng trên gai hay bẫy thì kích hoạt. Khối ngang: kéo {clause_pull_row_cells} ô.","A hook flies to the Block cell nearest you; a hit drags the foe along its row toward the divider up to {pull_row_cells} cells, one by one (the path is telegraphed). Blocked: Slam {r3_damage} damage. Ending on thorns or a trap triggers them. Flat Block: pull {clause_pull_row_cells}."
 card.moc_keo.desc_battle,Móc rồi kéo {pull_row_cells} ô về đường chia.,"Hook, then drag {pull_row_cells} toward the divider."
+ui.status.mark.name,Dấu Tử,Death Mark
+ui.status.mark.desc,Đòn sát thương kế tiếp vang lại 60 % và hành quyết ×2 khi máu dưới 30 %.,The next damaging cast echoes at 60 % and executes ×2 under 30 % HP.

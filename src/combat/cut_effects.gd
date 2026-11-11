@@ -144,12 +144,14 @@ static func apply(
 	var reactions: Dictionary = reaction_numbers(options)
 	var card_reacts: Array = skill.get("reactions", []) as Array
 	if not card_reacts.is_empty():
-		result["reaction"] = ""  # the reaction that fired on this hit ("" = none); cards without reactions get no key
+		result["reaction"] = ""  # the reaction that fired on this hit ("" = none); batch 5: a global reaction sets the key when it fires
 	# Batch 2 (Lốc Cuốn, M12 pull): a unit inside or 4-adjacent to the mask is pulled toward the mask's centre BEFORE
-	# the hit is judged (the card's pull_cells, or the clause's when it holds); a blocked step is R3 when the card lists it.
+	# the hit is judged (the card's pull_cells, or the clause's when it holds); a blocked step is R3 (batch 5: for every
+	# card when reactions.global, else for the cards that list it; the M15 ICD gates it).
 	var pull: int = int(skill.get("pull_cells", 0))
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	var clause_holds: bool = not clause.is_empty() and CastResolver.clause_holds(clause, options.get("cast_context", {}) as Dictionary)
+	# batch 5 (Deferred 4): the first of the card's shape clauses that holds for this cast ({} = none)
+	var clause: Dictionary = CastResolver.active_clause(skill, options.get("cast_context", {}) as Dictionary)
+	var clause_holds: bool = not clause.is_empty()
 	if clause_holds and clause.has("pull_cells"):
 		pull = int(clause["pull_cells"])
 	if pull > 0 and grid != null and not cells.is_empty() and not bool(options.get("target_untargetable", false)):
@@ -159,8 +161,10 @@ static func apply(
 			var moved: Dictionary = pull_toward(state, grid, target_side, centre, pull, options.get("target_blocked_fn", Callable()) as Callable)
 			result["pulled"] = int(moved["steps"]) > 0
 			result["pull_from"] = tc
-			if bool(moved["blocked"]) and card_reacts.has("r3"):
-				_react_r3(state, status, target_side, reactions, result)
+			if bool(moved["blocked"]):
+				_react_r3(state, status, target_side, reactions, result, skill)
+			elif int(moved["steps"]) > 0:
+				_r3_on_thorns(state, status, target_side, reactions, result, skill)
 	var inside: bool = state.unit_in(target_side, cells) and not bool(options.get("target_untargetable", false))
 	if inside and target_side == CombatState.Side.ENEMY:
 		result["cell"] = state.enemy_hit_cell(cells)
@@ -183,11 +187,14 @@ static func apply(
 		var blown: Array[Vector2i] = []
 		for c: Vector2i in cells:
 			var is_trap: bool = str(status.field_at(target_side, c).get("kind", "")) == StatusEffects.KIND_TRAP
-			if not status.thorns_at(target_side, c).is_empty() or is_trap:
+			# batch 5 (Deferred 9): a fire-wall column (Hỏa Tuyến line) is a field the blast consumes too
+			if not status.thorns_at(target_side, c).is_empty() or is_trap or status.is_fire_wall(c):
 				blown.append(c)
 		for c: Vector2i in blown:
 			status.clear_thorn_cell(target_side, c)
 			status.remove_field(target_side, c)
+			if status.is_fire_wall(c):
+				status.clear_burn([c])
 		result["detonated"] = blown
 		detonated_under = 0
 		for c: Vector2i in state.unit_cells(target_side):
@@ -226,6 +233,9 @@ static func apply(
 				float(skill.get("burn_tick_sec", 0.5)), float(skill.get("burn_damage_per_tick", 0.0)))
 			result["burning"] = true
 			result["hit"] = inside
+			# batch 5 (M15 R1 "is ignited on": Deferred 2 / 5): the fire lands under a unit that carries Hàn
+			if inside and status.frost_stacks(target_side) > 0:
+				try_r1(state, status, target_side, reactions, result, skill)
 		elif effect == "pin" and inside:
 			status.pin(target_side, float(skill.get("pin_duration_sec", 0.0)))
 			result["pinned"] = true
@@ -298,7 +308,7 @@ static func apply(
 		if status.fragile_stacks(target_side) > 0:
 			# Batch 2 (R2 Vỡ Băng, cards that list it): a damage event on a Pinned unit with Rạn deals x r2.mult instead
 			# of the Rạn multiplier; the stack is spent and the Pin ends at once.
-			if card_reacts.has("r2") and status.is_pinned(target_side):
+			if status.is_pinned(target_side) and _reaction_ok(status, target_side, "r2", skill, reactions):
 				status.consume_fragile(target_side)
 				status.end_pin(target_side)
 				damage *= float((reactions["r2"] as Dictionary)["mult"])
@@ -378,14 +388,13 @@ static func apply(
 		var mark: Dictionary = skill.get("mark", {}) as Dictionary
 		if not mark.is_empty() and not is_echo:
 			var sec: float = float(mark["sec"])
-			var mclause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-			if mclause.has("mark_sec") and CastResolver.clause_holds(mclause, options.get("cast_context", {}) as Dictionary):
-				sec = float(mclause["mark_sec"])
+			if clause.has("mark_sec"):
+				sec = float(clause["mark_sec"])
 			status.apply_mark(target_side, sec, float(mark["echo_mult"]), float(mark["execute_ratio"]))
 			result["marked"] = sec
 		# Batch 2 (R1 Hơi Nước, cards that list it): this hit gave Hàn while the target stands on a burning cell.
-		if card_reacts.has("r1") and int(result["frost_applied"]) > 0:
-			try_r1(state, status, target_side, reactions, result)
+		if int(result["frost_applied"]) > 0:
+			try_r1(state, status, target_side, reactions, result, skill)
 		# Batch 2 (Lốc Cuốn square): a clause pin_sec that holds pins the target on the hit.
 		if clause_holds and float(clause.get("pin_sec", 0.0)) > 0.0:
 			status.pin(target_side, float(clause["pin_sec"]))
@@ -403,17 +412,49 @@ static func apply(
 		# batch 3: a push never enters a blocked cell (a pillar, a hole: options.target_blocked_fn, the target mover's test)
 		var steps: int = _push(state, grid, target_side, push_cells, options.get("target_blocked_fn", Callable()) as Callable)
 		result["pushed"] = steps > 0
-		# Batch 2 (R3 Va Đập, cards that list it): a push stopped short (edge, hole, blocked cell) slams the target.
-		if steps < push_cells and card_reacts.has("r3") and status != null and str(result.get("reaction", "")).is_empty():
-			_react_r3(state, status, target_side, reactions, result)
+		# Batch 2 (R3 Va Đập): a push stopped short (edge, hole, blocked cell) slams the target; batch 5: global, and a
+		# push that ends on a thorn cell slams too (Deferred 5).
+		if steps < push_cells and status != null and str(result.get("reaction", "")).is_empty():
+			_react_r3(state, status, target_side, reactions, result, skill)
+		elif steps > 0:
+			_r3_on_thorns(state, status, target_side, reactions, result, skill)
 	return result
+
+
+## Batch 5 (M15): true when reaction [param id] fires for card [param skill]: every card when [param reactions].global
+## (combat.json, the default), else only a card whose `reactions` list names it.
+static func reaction_enabled(skill: Dictionary, id: String, reactions: Dictionary) -> bool:
+	if bool(reactions.get("global", true)):
+		return true
+	return (skill.get("reactions", []) as Array).has(id)
+
+
+# The gate before a reaction fires: enabled for the card AND allowed by the status book (immunity, the per-unit ICD;
+# StatusEffects.reaction_allowed starts the cooldown). No status book = no ICD.
+static func _reaction_ok(status: StatusEffects, target_side: int, id: String, skill: Dictionary, reactions: Dictionary) -> bool:
+	if not reaction_enabled(skill, id, reactions):
+		return false
+	if status == null:
+		return true
+	return status.reaction_allowed(target_side, id, float(reactions.get("icd_sec", -1.0)))
+
+
+# Batch 5 (Deferred 5): a forced move that ENDED on a thorn cell slams (R3) on top of the thorn toll the entry pays.
+static func _r3_on_thorns(state: CombatState, status: StatusEffects, target_side: int, reactions: Dictionary, result: Dictionary, skill: Dictionary) -> void:
+	if status == null or not str(result.get("reaction", "")).is_empty():
+		return
+	for c: Vector2i in state.unit_cells(target_side):
+		if not status.thorns_at(target_side, c).is_empty():
+			_react_r3(state, status, target_side, reactions, result, skill)
+			return
 
 
 ## Batch 2 (R1 Hơi Nước): fires R1 on [param target_side] when it stands on a burning cell and the card gave it Hàn
 ## (one reaction per event: skipped when [param result].reaction is already set): burst r1.burst_damage straight to its
 ## HP (ignores defense and Rạn), that cell's burn is put out, 1 Hàn is spent. True when it fired. Also called by
 ## SwingArbiter after an event's ignite payload, so a card that ignites and chills in one event (Hỏa Băng) reacts.
-static func try_r1(state: CombatState, status: StatusEffects, target_side: int, reactions: Dictionary, result: Dictionary) -> bool:
+static func try_r1(state: CombatState, status: StatusEffects, target_side: int, reactions: Dictionary, result: Dictionary,
+		skill: Dictionary = {}) -> bool:
 	if not str(result.get("reaction", "")).is_empty() or status == null:
 		return false
 	var cell: Vector2i = state.cell_of(target_side)
@@ -424,6 +465,9 @@ static func try_r1(state: CombatState, status: StatusEffects, target_side: int, 
 				cell = c
 				break
 	if not status.is_burning(cell) or status.frost_stacks(target_side) <= 0:
+		return false
+	# batch 5 (M15): global or card-listed, then the ICD / immunity (a burn_eater boss never reacts)
+	if not _reaction_ok(status, target_side, "r1", skill, reactions):
 		return false
 	var burst: float = float((reactions.get("r1", {}) as Dictionary).get("burst_damage", 12.0))
 	status.consume_frost(target_side, 1)
@@ -436,7 +480,11 @@ static func try_r1(state: CombatState, status: StatusEffects, target_side: int, 
 
 
 # Batch 2 (R3 Va Đập): [param reactions].r3 damage straight to the HP of [param target_side] and a Pin of pin_sec.
-static func _react_r3(state: CombatState, status: StatusEffects, target_side: int, reactions: Dictionary, result: Dictionary) -> void:
+## Batch 5: returns true when it fired (the gate: reactions.global or the card lists r3, then the ICD / immunity).
+static func _react_r3(state: CombatState, status: StatusEffects, target_side: int, reactions: Dictionary, result: Dictionary,
+		skill: Dictionary = {}) -> bool:
+	if not _reaction_ok(status, target_side, "r3", skill, reactions):
+		return false
 	var r3: Dictionary = reactions.get("r3", {}) as Dictionary
 	var dmg: float = float(r3.get("damage", 8.0))
 	state.damage(target_side, dmg)
@@ -445,16 +493,24 @@ static func _react_r3(state: CombatState, status: StatusEffects, target_side: in
 		result["pinned"] = true
 	result["reaction"] = "r3"
 	result["reaction_damage"] = dmg
+	return true
 
 
 ## Batch 2: the reaction numbers CutEffects uses: options.reactions (CombatConfig.reactions()) laid over the built-in
-## defaults {r1: {burst_damage 12}, r2: {mult 2}, r3: {damage 8, pin_sec 0.6}}.
+## defaults {r1: {burst_damage 12}, r2: {mult 2}, r3: {damage 8, pin_sec 0.6}}; batch 5 (M15 rules): icd_sec 1.0 (the
+## per-unit per-reaction cooldown), global true (every card reacts; false = only the cards that list the reaction).
 static func reaction_numbers(options: Dictionary) -> Dictionary:
-	var out: Dictionary = {"r1": {"burst_damage": 12.0}, "r2": {"mult": 2.0}, "r3": {"damage": 8.0, "pin_sec": 0.6}}
+	var out: Dictionary = {"r1": {"burst_damage": 12.0}, "r2": {"mult": 2.0}, "r3": {"damage": 8.0, "pin_sec": 0.6},
+		"icd_sec": 1.0, "global": true}
 	if typeof(options.get("reactions")) == TYPE_DICTIONARY:
 		for k: Variant in (options["reactions"] as Dictionary).keys():
-			if out.has(k) and (options["reactions"] as Dictionary)[k] is Dictionary:
-				(out[k] as Dictionary).merge((options["reactions"] as Dictionary)[k] as Dictionary, true)
+			var v: Variant = (options["reactions"] as Dictionary)[k]
+			if out.has(k) and v is Dictionary:
+				(out[k] as Dictionary).merge(v as Dictionary, true)
+			elif str(k) == "icd_sec" and (v is float or v is int) and float(v) >= 0.0:
+				out["icd_sec"] = float(v)
+			elif str(k) == "global" and v is bool:
+				out["global"] = bool(v)
 	return out
 
 
@@ -468,7 +524,10 @@ static func can_affect(state: CombatState, skill: Dictionary, target_side: int, 
 	var effect: String = str(skill.get("effect", ""))
 	if effect == "trap" or effect == "ward" or effect == "pillar" or bool(skill.get("detonate_zones", false)):
 		return true
-	var pulls: bool = int(skill.get("pull_cells", 0)) > 0 or (skill.get("shape_clause", {}) as Dictionary).has("pull_cells")
+	var pulls: bool = int(skill.get("pull_cells", 0)) > 0
+	for c: Dictionary in CastResolver.shape_clauses(skill):
+		if c.has("pull_cells"):
+			pulls = true
 	return pulls and _adjacent_to(state, target_side, cells)
 
 
@@ -600,8 +659,8 @@ static func _apply_keywords(state: CombatState, status: StatusEffects, target_si
 		context: Dictionary = {}) -> void:
 	# batch 2: a fragile_timing "before" card landed its Rạn before the hit (apply), never again here
 	var fragile: int = 0 if str(skill.get("fragile_timing", "after")) == "before" else int(skill.get("fragile_stacks", 0))
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	if clause.has("fragile_stacks") and not context.is_empty() and CastResolver.clause_holds(clause, context):
+	var clause: Dictionary = CastResolver.active_clause(skill, context) if not context.is_empty() else {}
+	if clause.has("fragile_stacks"):
 		fragile += int(clause["fragile_stacks"])
 	if fragile > 0:
 		status.apply_fragile(target_side, fragile)
@@ -740,17 +799,23 @@ static func push_from(state: CombatState, grid: BoardGrid, target_side: int, fro
 #           .fit_cells keeps the target one exit. Never a hit.
 static func _form_field(state: CombatState, grid: BoardGrid, status: StatusEffects, side: int, target_side: int,
 		cells: Array[Vector2i], effect: String, skill: Dictionary, options: Dictionary, result: Dictionary) -> void:
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	var holds: bool = not clause.is_empty() and CastResolver.clause_holds(clause, options.get("cast_context", {}) as Dictionary)
+	var clause: Dictionary = CastResolver.active_clause(skill, options.get("cast_context", {}) as Dictionary)
+	var holds: bool = not clause.is_empty()
 	var cast_id: int = status.next_field_cast_id()
 	result["field_cast_id"] = cast_id
 	match effect:
 		"trap":
-			var reacts: Array = skill.get("reactions", []) as Array
+			# batch 5: the R3 numbers ride on the trap when the reaction is enabled for the card (global or listed); the
+			# book's ICD gates the slam when the fling fires; pierce_defense skips the defense of the snap (Deferred 8)
+			var numbers: Dictionary = reaction_numbers(options)
+			var r3: Dictionary = {}
+			if reaction_enabled(skill, "r3", numbers):
+				r3 = (numbers["r3"] as Dictionary).duplicate()
+				r3["icd_sec"] = float(numbers["icd_sec"])
 			var data: Dictionary = {"dpc": float(skill.get("damage_per_cell", 0.0)),
 				"pin_sec": float(clause.get("trap_pin_sec", skill.get("trap_pin_sec", 0.0))) if holds else float(skill.get("trap_pin_sec", 0.0)),
 				"push_cells": int(skill.get("trap_push_cells", 0)), "skill_id": str(skill.get("id", options.get("skill_id", ""))),
-				"r3": (reaction_numbers(options)["r3"] as Dictionary) if reacts.has("r3") else {}}
+				"r3": r3, "pierce_defense": bool(skill.get("pierce_defense", false))}
 			var wanted: Array[Vector2i] = []
 			for c: Vector2i in cells:
 				var on_half: bool = grid.is_enemy_cell(c) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(c)
@@ -800,8 +865,8 @@ static func _form_field(state: CombatState, grid: BoardGrid, status: StatusEffec
 # Batch 3 (Gai Nổ branched clause): after the blast the branch-tip cells of the mask (one neighbour inside it) grow
 # thorns back for regrow_sec with the match's thorn numbers.
 static func _regrow_tips(status: StatusEffects, target_side: int, cells: Array[Vector2i], skill: Dictionary, options: Dictionary) -> void:
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	if not clause.has("regrow_sec") or not CastResolver.clause_holds(clause, options.get("cast_context", {}) as Dictionary):
+	var clause: Dictionary = CastResolver.active_clause(skill, options.get("cast_context", {}) as Dictionary)
+	if not clause.has("regrow_sec"):
 		return
 	var tips: Array[Vector2i] = []
 	for c: Vector2i in cells:
@@ -826,9 +891,10 @@ static func apply_keywords_only(state: CombatState, status: StatusEffects, targe
 	return result
 
 
-## Batch 3: the push away from the divider as a public step (StatusEffects.fire_trap); returns the cells moved.
-static func push_away(state: CombatState, grid: BoardGrid, target_side: int, steps: int) -> int:
-	return _push(state, grid, target_side, steps)
+## Batch 3: the push away from the divider as a public step (StatusEffects.fire_trap); returns the cells moved. Batch 5:
+## [param blocked_fn] (Callable(cell) -> bool) stops the fling at a pillar / hole like a card's push.
+static func push_away(state: CombatState, grid: BoardGrid, target_side: int, steps: int, blocked_fn: Callable = Callable()) -> int:
+	return _push(state, grid, target_side, steps, blocked_fn)
 
 
 # Moves the unit up to [param steps] cells away from the divider; stops at a missing cell, the board edge or a cell

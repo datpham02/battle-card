@@ -57,6 +57,9 @@ signal trap_fired(side: int, cast_id: int, cells: Array[Vector2i], damage: float
 signal mark_applied(side: int, sec: float)
 signal mark_expired(side: int)
 signal mark_triggered(side: int)
+## Skill v2 batch 5 (M15, Deferred 1 / 5 / 9): a reaction the status book fired on its own: R1 when a unit with Hàn
+## stepped onto a burning cell, R3 when a trap's fling was stopped short. CutEffects' reactions are reported in its result.
+signal reaction_fired(side: int, id: String, damage: float)
 
 ## Zone kind names (also the zone_applied / zone_expired payload).
 const KIND_THORNS: String = "thorns"
@@ -117,6 +120,20 @@ var burn_heal_ratio_fn: Callable = Callable()
 ## less than tick_sec still hurts. Default false (inert for the old tests); CombatConfig sets it from combat.json
 ## `burn_on_entry`.
 var burn_on_entry: bool = false
+## Skill v2 batch 5 (M15 rules, Deferred 1): the reaction numbers this book fires on its own (CombatConfig.reactions():
+## r1 / r3 numbers, icd_sec), the per-unit per-reaction cooldown book, and the immunity hook: Callable(side, reaction
+## id) -> bool, true when the unit of that side is immune to that reaction (an enemy's `immune_status` list; the HUD
+## or TraitHost sets it). A burn_eater boss (burn_heal_ratio_fn > 0) is immune to R1 on its own: it heals from fire.
+var reaction_numbers: Dictionary = {}
+var reaction_immune_fn: Callable = Callable()
+var _reaction_at: Dictionary = {}
+var _time: float = 0.0
+## Batch 5 (Deferred 8 / 9): a snapping trap's damage goes through the flat defense of the unit when true
+## ([member defense_fn]: Callable(side) -> float, the target's flat defense now; SwingArbiter sets it), and its fling
+## never enters a cell [member blocked_fn_for] refuses (Callable(side) -> Callable(cell) -> bool, the mover's blockers).
+var trap_through_defense: bool = false
+var defense_fn: Callable = Callable()
+var blocked_fn_for: Callable = Callable()
 ## Drop tile (2026-10-31 spec rule 5): true = a unit on a cell when it falls drops to HP 0 (combat.json
 ## `zones.hole_fall_lethal`); false = it is pushed to an open neighbour and loses [member hole_fall_damage] (the Sky
 ## Isles crumble fallback). CombatConfig.configure_status sets both.
@@ -348,6 +365,7 @@ func tick(delta: float, state: CombatState) -> void:
 	_check_thorn_entries(state)
 	if delta <= 0.0:
 		return
+	_time += delta
 	var leads: Dictionary = _burn_lead_cells(state)
 	for cell: Vector2i in _burning.keys():
 		var entry: Dictionary = _burning[cell] as Dictionary
@@ -477,6 +495,39 @@ func clear() -> void:
 	_holes.clear()
 	_hole_fade.clear()
 	_last_cell.clear()
+	_reaction_at.clear()
+
+
+# --- Skill v2 batch 5: reaction rules (M15 ICD / immunity) -------------------------------------------------------------
+
+## The ONE gate every reaction passes (CutEffects, SwingArbiter and this book): true when reaction [param id] (r1 / r2
+## / r3) may fire on the unit of [param side] now: it is not immune ([member reaction_immune_fn]; a burn_eater boss is
+## immune to R1) and its per-unit cooldown for that id has run out ([param icd_sec] < 0 = reaction_numbers.icd_sec, 1 s
+## by default). A true answer STARTS the cooldown, so ask only when the reaction fires.
+func reaction_allowed(side: int, id: String, icd_sec: float = -1.0) -> bool:
+	if reaction_immune_fn.is_valid() and bool(reaction_immune_fn.call(side, id)):
+		return false
+	if id == "r1" and side == CombatState.Side.ENEMY and burn_heal_ratio_fn.is_valid() and float(burn_heal_ratio_fn.call()) > 0.0:
+		return false
+	var icd: float = icd_sec if icd_sec >= 0.0 else float(reaction_numbers.get("icd_sec", 1.0))
+	var key: String = "%d|%s" % [side, id]
+	if _reaction_at.has(key) and _time - float(_reaction_at[key]) < icd - _EPS:
+		return false
+	_reaction_at[key] = _time
+	return true
+
+
+## Seconds left of the reaction [param id]'s cooldown on [param side] (0 when it may fire).
+func reaction_cooldown_left(side: int, id: String) -> float:
+	var key: String = "%d|%s" % [side, id]
+	if not _reaction_at.has(key):
+		return 0.0
+	return maxf(float(reaction_numbers.get("icd_sec", 1.0)) - (_time - float(_reaction_at[key])), 0.0)
+
+
+## The book's clock (seconds ticked), for tests and probes.
+func time() -> float:
+	return _time
 
 
 # --- Skill v2 batch 4: Dấu Tử (death mark, 02-design-decisions.md §7) ------------------------------------------------
@@ -625,18 +676,34 @@ func fire_trap(side: int, cast_id: int, state: CombatState) -> float:
 		remove_field(side, cell)
 	var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
 	var damage: float = float(data.get("dpc", 0.0)) * float(maxi(under, 1))
+	# batch 5 (Deferred 8): the snap is a hit, so the target's flat defense takes its share (minimum 1), unless the card
+	# pierces or the config keeps the old thorn-toll rule
+	if trap_through_defense and not dead and damage > 0.0 and defense_fn.is_valid() and not bool(data.get("pierce_defense", false)):
+		var defense: float = maxf(float(defense_fn.call(side)), 0.0)
+		if defense > 0.0:
+			damage = maxf(damage - defense, minf(damage, CutEffects.MIN_DAMAGE_AFTER_DEFENSE))
 	if not dead:
 		state.damage(side, damage)
 		if float(data.get("pin_sec", 0.0)) > 0.0:
 			pin(side, float(data["pin_sec"]))
 		var push_cells: int = int(data.get("push_cells", 0))
 		if push_cells > 0 and state.grid != null:
-			var moved: int = CutEffects.push_away(state, state.grid, side, push_cells)
+			# batch 5 (Deferred 9): the fling never enters a pillar / hole (the mover's blockers); a short fling slams
+			var blocked: Callable = blocked_fn_for.call(side) as Callable if blocked_fn_for.is_valid() else Callable()
+			var moved: int = CutEffects.push_away(state, state.grid, side, push_cells, blocked)
 			var r3: Dictionary = data.get("r3", {}) as Dictionary
-			if moved < push_cells and not r3.is_empty():
+			var slam: bool = moved < push_cells
+			# batch 5 (Deferred 5): a fling that ends on a thorn cell slams too (the thorns fire on the entry as well)
+			if not slam and moved > 0:
+				for c: Vector2i in state.unit_cells(side):
+					if not thorns_at(side, c).is_empty():
+						slam = true
+						break
+			if slam and not r3.is_empty() and reaction_allowed(side, "r3", float(r3.get("icd_sec", -1.0))):
 				state.damage(side, float(r3.get("damage", 0.0)))
 				if float(r3.get("pin_sec", 0.0)) > 0.0:
 					pin(side, float(r3["pin_sec"]))
+				reaction_fired.emit(side, "r3", float(r3.get("damage", 0.0)))
 	trap_fired.emit(side, cast_id, cells, damage)
 	return damage
 
@@ -1164,6 +1231,7 @@ func _check_thorn_entries(state: CombatState) -> void:
 			if cell == BoardGrid.NO_CELL:
 				continue
 		_burn_entry(side, cell, state)
+		_r1_entry(side, cell, state)
 		# batch 3 (M09): the first entry into a trap cell fires the whole cast
 		var field: Dictionary = field_at(side, cell)
 		if str(field.get("kind", "")) == KIND_TRAP:
@@ -1198,6 +1266,21 @@ func _entered_cell(state: CombatState, last_anchor: Vector2i) -> Vector2i:
 		if _burning.has(c):
 			return c
 	return fresh[0]
+
+
+# Batch 5 (M15 R1, Deferred 5): a unit carrying Hàn that steps onto a burning cell reacts at once (hit or no hit):
+# r1.burst_damage straight to its HP, the cell's burn put out, 1 Hàn spent; gated by the ICD / immunity.
+func _r1_entry(side: int, cell: Vector2i, state: CombatState) -> void:
+	if not _burning.has(cell) or frost_stacks(side) <= 0:
+		return
+	var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+	if dead or not reaction_allowed(side, "r1"):
+		return
+	var burst: float = float((reaction_numbers.get("r1", {}) as Dictionary).get("burst_damage", 12.0))
+	consume_frost(side, 1)
+	clear_burn([cell])
+	state.damage(side, burst)
+	reaction_fired.emit(side, "r1", burst)
 
 
 # 2026-10-31: the entry toll of a burning [param cell] for the unit of [param side] that just stepped onto it: one tick
@@ -1373,7 +1456,7 @@ const STATUS_BURN: String = "burn"
 const STATUS_FRAGILE: String = "fragile"
 const STATUS_CHILL: String = "chill"
 ## Order of the HUD row: the step locks first, then the other debuffs, the buff last.
-const STATUS_ORDER: Array[String] = [STATUS_FROZEN, STATUS_ROOT, STATUS_SLOW, STATUS_BURN, STATUS_FRAGILE, STATUS_CHILL, STATUS_GUARD]
+const STATUS_ORDER: Array[String] = [STATUS_FROZEN, STATUS_ROOT, STATUS_SLOW, STATUS_BURN, STATUS_FRAGILE, STATUS_CHILL, STATUS_MARK, STATUS_GUARD]
 
 
 func _total_key(id: String, side: int) -> String:
@@ -1405,6 +1488,9 @@ func active_statuses(side: int, cell: Vector2i) -> Array[Dictionary]:
 				stacks = fragile_stacks(side)
 			STATUS_CHILL:
 				stacks = frost_stacks(side)
+			STATUS_MARK:
+				# batch 5 (Deferred 10): the death mark is a timed debuff chip (ui.status.mark.*)
+				left = float(mark_at(side).get("left", 0.0))
 		var timed: bool = id != STATUS_FRAGILE and id != STATUS_CHILL
 		if (timed and left <= _EPS) or (not timed and stacks <= 0):
 			continue

@@ -141,6 +141,13 @@ func _init(
 	boss_actor.swing_resolved.connect(_on_actor_resolved.bind(CombatState.Side.ENEMY))
 	state.player_died.connect(_cancel_all)
 	state.enemy_died.connect(_cancel_all)
+	# batch 5 (Deferred 8 / 9): the status book's own hits (a snapping trap) read the target's flat defense and the
+	# mover's blockers from here, as every card hit does
+	if _status != null:
+		_status.defense_fn = func(s: int) -> float:
+			return boss_defense + _status.guard_amount(CombatState.Side.ENEMY) if s == CombatState.Side.ENEMY else 0.0
+		_status.blocked_fn_for = func(s: int) -> Callable:
+			return blocked_cell_fns.get(s, Callable()) as Callable
 
 
 ## Advances both actors by [param delta] seconds in time order and resolves swings.
@@ -350,6 +357,8 @@ func _settle(side: int, cells: Array[Vector2i], skill_id: String, trade: bool, l
 			"cast_context": cast_context})
 	result["cells"] = cells
 	result["cast_context"] = cast_context
+	# batch 5 (Deferred 11): the signature's factor at the cast, for the mark's echo of this cast (§7 snapshot)
+	result["sig_factor"] = _signature_factor(is_player, skill_id, cells.size())
 	_lay_mire(side, cells, skill_id)
 	wave_resolved.emit(side, wave, result)
 	result["skill_id"] = skill_id
@@ -430,7 +439,10 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 		"events_left": (plan["events"] as Array).size(), "damage": 0.0, "interrupted": false, "last_hit": {},
 		"crit_at_start": _player_crit_at_start if is_player else 1.0,
 		"healed": 0.0 if echo else CutEffects.heal_caster(_state, side, skill), "fizzled": bool(plan.get("fizzled", false)),
-		"skipped_cells": plan.get("skipped_cells", []), "echo": echo, "keyword_hits": 0}
+		"skipped_cells": plan.get("skipped_cells", []), "echo": echo, "keyword_hits": 0,
+		# batch 5 (Deferred 11, §7 snapshots): the signature's factor at the cast; the cast's own echo waves and the
+		# mark's echo cast (plan.sig_factor, the parent's) use it instead of the live hook
+		"sig_factor": float(plan["sig_factor"]) if plan.has("sig_factor") else _signature_factor(is_player, skill_id, count)}
 	for e: Dictionary in plan["events"]:
 		var ev: Dictionary = e.duplicate()
 		ev["cast_id"] = id
@@ -454,9 +466,10 @@ func _schedule_cast(side: int, cells: Array[Vector2i], skill_id: String, trade: 
 		if plan.has(k):
 			info[k] = plan[k]
 	info["echo"] = echo
-	# batch 4 (Móc Kéo): the pull path telegraph: the cells the target would be dragged through toward the divider
+	# batch 4 (Móc Kéo): the pull path telegraph: the cells the target would be dragged through toward the divider;
+	# batch 5 (Deferred 12): declared by the delivery's path_rule {effect "pull", telegraphed true} (SkillDelivery)
 	var pull: int = _pull_row_cells(skill, cast_context)
-	if pull > 0:
+	if pull > 0 and SkillDelivery.path_effect(skill.get("delivery", {}) as Dictionary) == SkillDelivery.PATH_EFFECT_PULL:
 		info["pull_path"] = _pull_path(_opposite(side), pull)
 	cast_scheduled.emit(side, info)
 	if (plan["events"] as Array).is_empty():
@@ -537,11 +550,16 @@ func _fire_event(ev: Dictionary) -> void:
 		var dmg_cells: int = CastResolver.damage_cells(_skill_config.get_skill(skill_id), int(cast["cast_cells"]), fp)
 		if bool(ev.get("armed", false)) and armed_damage_cells_fn.is_valid():
 			dmg_cells = maxi(int(armed_damage_cells_fn.call(int(cast["cast_cells"]), fp)), 1)
+		# batch 5 (Deferred 11): an echo wave uses the signature as it was at the cast (the snapshot), never the live hook
+		var sig: Callable = player_signature_modifier if is_player else Callable()
+		if is_player and is_echo_cast:
+			var factor: float = float(cast.get("sig_factor", 1.0))
+			sig = func(_id: String, _count: int, dmg: float, _pinned: bool) -> float: return dmg * factor
 		var result: Dictionary = CutEffects.apply(
 			_state, _grid, side, ev_cells, skill_id, _cut_config, _skill_config, _status,
 			player_damage_modifier if is_player else Callable(), int(cast["level"]),
 			player_cells_modifier if is_player else Callable(),
-			player_signature_modifier if is_player else Callable(),
+			sig,
 			{"target_defense": boss_defense + (_status.guard_amount(CombatState.Side.ENEMY) if _status != null else 0.0),
 				"execute_ratio": execute_ratio, "featured_bonus": cast["featured_bonus"],
 				"zones": zone_numbers, "target_blocked_fn": blocked_cell_fns.get(_opposite(side), Callable()),
@@ -556,9 +574,8 @@ func _fire_event(ev: Dictionary) -> void:
 		if hit:
 			cast["keyword_hits"] = int(cast["keyword_hits"]) + 1
 		# batch 4 (Thiên Quang plus): the first drop (the centre) that hits heals the caster
-		var clause_now: Dictionary = skill_now.get("shape_clause", {}) as Dictionary
-		if hit and int(ev["index"]) == 0 and clause_now.has("hub_heal") and is_player and not is_echo_cast \
-				and CastResolver.clause_holds(clause_now, cast["context"] as Dictionary):
+		var clause_now: Dictionary = CastResolver.active_clause(skill_now, cast["context"] as Dictionary)
+		if hit and int(ev["index"]) == 0 and clause_now.has("hub_heal") and is_player and not is_echo_cast:
 			var before: float = _state.player_hp
 			_state.set_player_hp(before + float(clause_now["hub_heal"]))
 			ev["hub_heal"] = _state.player_hp - before
@@ -573,9 +590,17 @@ func _fire_event(ev: Dictionary) -> void:
 			ev["pull_from"] = from
 			ev["pull_to"] = _state.cell_of(target_side)
 			result["pulled"] = ev["pulled"]
-			if bool(moved["blocked"]) and (skill_now.get("reactions", []) as Array).has("r3") and _status != null and str(result.get("reaction", "")).is_empty():
-				CutEffects._react_r3(_state, _status, target_side, CutEffects.reaction_numbers({"reactions": reactions}), result)
-				ev["reaction"] = "r3"
+			if _status != null and str(result.get("reaction", "")).is_empty():
+				var numbers: Dictionary = CutEffects.reaction_numbers({"reactions": reactions})
+				var slammed: bool = false
+				if bool(moved["blocked"]):
+					slammed = CutEffects._react_r3(_state, _status, target_side, numbers, result, skill_now)
+				elif int(moved["steps"]) > 0:
+					# batch 5 (Deferred 5): a drag that ends on a thorn cell slams too
+					CutEffects._r3_on_thorns(_state, _status, target_side, numbers, result, skill_now)
+					slammed = str(result.get("reaction", "")) == "r3"
+				if slammed:
+					ev["reaction"] = "r3"
 		# batch 3: a field zone formed by this event (trap / ward / pillar) reaches the card-level result
 		if not str(result.get("zone_kind", "")).is_empty():
 			cast["zone"] = {"zone_kind": result["zone_kind"], "zone_cells": result["zone_cells"]}
@@ -619,9 +644,9 @@ func _fire_event(ev: Dictionary) -> void:
 		if not ig.is_empty():
 			# batch 3 (M11 fire wall, Hỏa Tuyến line clause): the cells that burn as a wall block the target's steps, so the
 			# leave-a-path rule keeps it one exit (the rest of the mask burns without blocking)
-			var clause: Dictionary = skill_now.get("shape_clause", {}) as Dictionary
+			var clause: Dictionary = CastResolver.active_clause(skill_now, cast["context"] as Dictionary)
 			var wall: Array[Vector2i] = []
-			if bool(clause.get("fire_wall", false)) and CastResolver.clause_holds(clause, cast["context"] as Dictionary):
+			if bool(clause.get("fire_wall", false)):
 				var target: int = _opposite(side)
 				var blocked: Callable = blocked_cell_fns.get(target, Callable()) as Callable
 				var blocked_all: Callable = func(c: Vector2i) -> bool: return _status.is_fire_wall(c) or (blocked.is_valid() and bool(blocked.call(c)))
@@ -635,11 +660,11 @@ func _fire_event(ev: Dictionary) -> void:
 				lit.append_array(_status.ignite(wall, float(ig["sec"]), float(ig["tick_sec"]), float(ig["damage"]), false, true))
 				ev["wall_cells"] = wall
 			ev["ignited"] = lit
-			# batch 2 (R1, Hỏa Băng): the event ignited the cell under a target this hit just chilled
+			# batch 2 (R1, Hỏa Băng): the event ignited the cell under a target this hit just chilled; batch 5 (M15 "is
+			# ignited on", global): a target that carries Hàn when the fire lands under it reacts too (the ICD gates it)
 			var last: Dictionary = cast["last_hit"] as Dictionary
-			var reacts: Array = _skill_config.get_skill(str(cast["skill_id"])).get("reactions", []) as Array
-			if hit and reacts.has("r1") and int(last.get("frost_applied", 0)) > 0 \
-					and CutEffects.try_r1(_state, _status, _opposite(side), CutEffects.reaction_numbers({"reactions": reactions}), last):
+			if hit and (int(last.get("frost_applied", 0)) > 0 or _status.frost_stacks(_opposite(side)) > 0) \
+					and CutEffects.try_r1(_state, _status, _opposite(side), CutEffects.reaction_numbers({"reactions": reactions}), last, skill_now):
 				ev["reaction"] = "r1"
 				ev["reaction_damage"] = float(last.get("reaction_damage", 0.0))
 	# Batch 1 (Mìn Trễ): a `push` payload moves the target away from the cast mask's centre on a damaging hit only.
@@ -700,6 +725,7 @@ func _finish_cast(id: int) -> void:
 	result["level"] = cast["level"]
 	result["no_interrupt"] = side == CombatState.Side.PLAYER and _skill_config.is_parry_card(str(cast["skill_id"]))
 	result["echo"] = bool(cast.get("echo", false))
+	result["sig_factor"] = float(cast.get("sig_factor", 1.0))
 	# batch 4 (Dấu Tử): the cells of the cast's last damaging hit (the wave the mark's echo repeats)
 	result["echo_cells"] = cast.get("last_hit_cells", cast["cells"])
 	# batch 4: an echo cast is not a cast for the listeners (no Engraving / Awakening charge, no relic on_cast, no
@@ -731,14 +757,23 @@ func _trigger_mark(side: int, skill_id: String, level: int, result: Dictionary, 
 	var parent_cells: int = (result.get("cells", []) as Array).size()
 	var plan: Dictionary = {"resolve": CastResolver.RESOLVE_WAVES, "legacy": false, "max_hits": 1, "events": [e],
 		"waves": [{"wave": 0, "t": MARK_ECHO_DELAY_SEC, "cells": cells.duplicate(), "kind": CastResolver.KIND_ECHO, "mult": mult}],
-		"cast_cells": maxi(parent_cells, cells.size())}
+		"cast_cells": maxi(parent_cells, cells.size()), "sig_factor": float(result.get("sig_factor", 1.0))}
 	_schedule_cast(side, cells, skill_id, false, level, {}, context, plan, true)
+
+
+# Batch 5 (Deferred 11): the PLAYER signature's damage factor for a [param count]-cell cast of [param skill_id] as it is
+# NOW (Bóng Lướt x1.75 while active, else 1); 1 for the boss or without a hook.
+func _signature_factor(is_player: bool, skill_id: String, count: int) -> float:
+	if not is_player or not player_signature_modifier.is_valid():
+		return 1.0
+	var pinned: bool = _status != null and _status.is_pinned(CombatState.Side.ENEMY)
+	return float(player_signature_modifier.call(skill_id, count, 1.0, pinned))
 
 
 # Batch 4 (Móc Kéo): the cells the hit pulls the target along its row (the clause's when it holds, else the card's).
 func _pull_row_cells(skill: Dictionary, context: Dictionary) -> int:
-	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
-	if clause.has("pull_row_cells") and CastResolver.clause_holds(clause, context):
+	var clause: Dictionary = CastResolver.active_clause(skill, context)
+	if clause.has("pull_row_cells"):
 		return int(clause["pull_row_cells"])
 	return int(skill.get("pull_row_cells", 0))
 

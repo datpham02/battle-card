@@ -42,7 +42,10 @@ const IMPACTS: Array[String] = ["slash", "burst", "shatter", "burn", "freeze", "
 const CHAIN_ORDERS: Array[String] = ["nearest_first", "row_major", "authored"]
 const CELL_MASK_BLOCK_SHAPE: String = "block_shape"
 ## What a skill's own path rule may apply on the travel cells.
-const PATH_EFFECTS: Array[String] = ["damage", "status"]
+const PATH_EFFECTS: Array[String] = ["damage", "status", PATH_EFFECT_PULL]
+## Batch 5 (Deferred 12, Móc Kéo): the path is the DRAG path the target is pulled along (SwingArbiter telegraphs it as
+## cast_scheduled.pull_path); it is read, never hit, so [method damage_cells] adds no travel cell for it.
+const PATH_EFFECT_PULL: String = "pull"
 ## Types whose travel crosses floor cells (the only ones a path rule can mean anything for).
 const PATH_TYPES: Array[String] = [CASTER_TO_TARGET, GROUND_PROPAGATION, SEQUENTIAL_CHAIN]
 ## Default of a skill with no / unusable delivery data (flagged as a problem; never silently SKY_TO_TARGET).
@@ -270,10 +273,19 @@ static func damage_cells(delivery: Dictionary, mask: Array, caster_cell: Vector2
 	var out: Array[Vector2i] = []
 	out.assign(mask)
 	var rule: Variant = delivery.get("path_rule", {})
-	if rule is Dictionary and bool((rule as Dictionary).get("telegraphed", false)):
+	if rule is Dictionary and bool((rule as Dictionary).get("telegraphed", false)) and str((rule as Dictionary).get("effect", "")) != PATH_EFFECT_PULL:
 		for c: Vector2i in travel_cells(delivery, mask, caster_cell):
 			out.append(c)
 	return out
+
+
+## Batch 5: the effect of [param delivery]'s path rule ("" when it has none): "damage" / "status" (the travel cells are
+## hit) or "pull" (the drag path is telegraphed).
+static func path_effect(delivery: Dictionary) -> String:
+	var rule: Variant = delivery.get("path_rule", {})
+	if rule is Dictionary and bool((rule as Dictionary).get("telegraphed", false)):
+		return str((rule as Dictionary).get("effect", ""))
+	return ""
 
 
 static func _normalize_path_rule(raw: Variant, type: String, problems: Array[String]) -> Dictionary:
