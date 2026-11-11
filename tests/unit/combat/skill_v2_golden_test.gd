@@ -12,6 +12,9 @@ const FIXTURE: String = "res://tests/unit/combat/golden/skill_v2_cut_effects.jso
 const ENEMY_HP: float = 1000.0
 const PLAYER_HP: float = 1000.0
 const ZONE_SEED: int = 7
+## Skill v2 cards that resolve instant but are NOT legacy (added after the baseline was recorded): they have their own
+## tests (batch reports in docs/skill-v2/) and never enter the fixture, so the legacy count stays 32 without a re-record.
+const V2_INSTANT_CARDS: Array[String] = ["vung_lay"]
 
 var fails: int = 0
 
@@ -31,6 +34,8 @@ func _init() -> void:
 	# they have their own tests (tram_dia_test.gd); the fixture is never re-recorded to make room for them.
 	var legacy: Array[String] = []
 	for id: String in sc.card_order:
+		if V2_INSTANT_CARDS.has(id):
+			continue
 		if str(sc.get_skill(id).get("resolve", "instant")) == "instant":
 			legacy.append(id)
 	ck("32 legacy (instant) player cards in card_order", legacy.size() == 32, str(legacy.size()))
