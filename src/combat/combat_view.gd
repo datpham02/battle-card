@@ -266,6 +266,13 @@ var _formation: FormationMap = null
 var _signature_ready_flag: bool = false
 ## Seconds left of the completion flash (real time); 0 = none.
 var _formation_flash_left: float = 0.0
+## Skill v2 V4 feel pass (CastVfx.hit_feel): the simulation pause and the board shake when the player's cast lands on
+## the boss. `_hit_stop_at` = the floor-vfx time of the first arrival of the pending player hit (-1 = none);
+## `_hit_stop_left` / `_hit_shake_left` run on REAL time. Presentation: the boss and every clock stop together for
+## hit_stop_sec, so no scheduled time changes relative to another.
+var _hit_stop_at: float = -1.0
+var _hit_stop_left: float = 0.0
+var _hit_shake_left: float = 0.0
 var _signature_name_key: String = ""
 var _signature_was_active: bool = false
 ## Story 029 Phần D: the character's signature cooldown (characters.json signature.cooldown_sec, >= 0)
@@ -585,6 +592,7 @@ func _wire_zones() -> void:
 		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_hole(seal_side, cell))
 		_arbiter.blocked_cell_fns[side] = Callable(mover, "is_cell_blocked")
 	_arbiter.zone_numbers = _config.zone_numbers()
+	_arbiter.reactions = _config.reactions()
 	# Drop tiles (rule 6): a rooted unit holds the crack under it like a Frozen one; a non-lethal fall lands on a cell
 	# its mover accepts.
 	status.step_locked_fn = func(side: int) -> bool: return (movers[side] as UnitMover).is_step_locked()
@@ -592,7 +600,6 @@ func _wire_zones() -> void:
 	status.hole_cracked.connect(func(_side: int, _cells: Array[Vector2i]) -> void: _mark_floor_dirty())
 	status.hole_fell.connect(func(side: int, _cell: Vector2i, victim: bool) -> void:
 		if victim and _state != null and (_state.is_player_dead() if side == CombatState.Side.PLAYER else _state.is_enemy_dead()):
-	_arbiter.reactions = _config.reactions()
 			_fell[side] = true
 		_mark_floor_dirty())
 	status.hole_restored.connect(func(_side: int, _cell: Vector2i) -> void: _mark_floor_dirty())
@@ -1340,7 +1347,17 @@ func _process(delta: float) -> void:
 		# lives in the same scaled time.
 		_update_focus(real_step)
 		_formation_flash_left = maxf(_formation_flash_left - real_step, 0.0)
+		_hit_shake_left = maxf(_hit_shake_left - real_step, 0.0)
+		if _hit_stop_at >= 0.0 and get_floor_vfx().elapsed() >= _hit_stop_at:
+			var feel: Dictionary = CastVfx.hit_feel()
+			_hit_stop_at = -1.0
+			_hit_stop_left = float(feel.get("hit_stop_sec", 0.0))
+			_hit_shake_left = 0.0 if SettingsStore.shared().get_reduce_motion() else float(feel.get("board_shake_sec", 0.0))
 		var step: float = real_step * _sim_scale()
+		if _hit_stop_left > 0.0:
+			# V4 hit-stop: the whole simulation holds for hit_stop_sec of real time, then carries on.
+			_hit_stop_left = maxf(_hit_stop_left - real_step, 0.0)
+			step = 0.0
 		if step <= 0.0:
 			# Full stop (Focus with scale 0): nothing in the simulation moves; real-time
 			# things (menu, Focus clocks, match end) already ran above.
@@ -2966,6 +2983,12 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 		# Task 5 item 4: the boss's casts are recorded too (its travel squares / impacts drawn on the cells it hits).
 		var rec: Dictionary = {"cells": shown, "delivery": delivery, "caster": caster, "arrive": delays,
 			"start": vfx.elapsed(), "hit": bool(feedback.get("hit", false)), "skill_id": str(feedback.get("skill_id", ""))}
+		# V4 feel pass: the player's landing hit stops the match for a beat and shakes the board, at its first arrival.
+		if side == CombatState.Side.PLAYER and bool(feedback.get("hit", false)) and float(feedback.get("damage", 0.0)) > 0.0:
+			var first: float = INF
+			for c: Vector2i in delays:
+				first = minf(first, float(delays[c]))
+			_hit_stop_at = vfx.elapsed() + (first if first < INF else 0.0)
 		if side == CombatState.Side.PLAYER:
 			_cast_travel = rec
 		else:
@@ -3313,6 +3336,20 @@ func combat_clock() -> float:
 	return _arbiter.clock() if _arbiter != null else 0.0
 
 
+## V4 feel pass: the visual-only board offset of the hit shake now (CastVfx.hit_feel board_shake_px, flipping side
+## every 0.03 s), Vector2i.ZERO at rest. BattleCanvas applies it like the Ngàn Kiếm finale shake.
+func hit_shake_offset() -> Vector2i:
+	if _hit_shake_left <= 0.0:
+		return Vector2i.ZERO
+	var px: int = int(CastVfx.hit_feel().get("board_shake_px", 0))
+	return Vector2i(px if int(_hit_shake_left / 0.03) % 2 == 0 else -px, 0)
+
+
+## V4 feel pass: true while the hit-stop holds the simulation.
+func is_hit_stopped() -> bool:
+	return _hit_stop_left > 0.0
+
+
 ## Skill v2 (Trảm Địa): the incoming steel fronts to draw now: [{from, to, f}] for every planned surge step whose source
 ## cell has fired and whose own event has not (f = fraction of the way on the ARBITER clock, so a front reaches its
 ## cell exactly when that cell's authoritative event fires). [] when no surge runs.
@@ -3575,6 +3612,6 @@ func take_hit_delay(side: int) -> float:
 
 
 func scaled_delta(delta: float) -> float:
-	if freeze_time or _config == null:
+	if freeze_time or _config == null or _hit_stop_left > 0.0:
 		return 0.0
 	return maxf(minf(delta, _config.max_tick_sec) * _sim_scale(), 0.0)

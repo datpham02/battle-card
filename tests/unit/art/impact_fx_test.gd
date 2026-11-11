@@ -75,6 +75,21 @@ func _initialize() -> void:
 		var right: Array[Dictionary] = ImpactFx.items(form, CELL, 0.5 * SEC, SEC, 3, 1, p) + ImpactFx.standing_items(form, base, 64, 0.5 * SEC, SEC, 3, 1, p)
 		var left: Array[Dictionary] = ImpactFx.items(form, CELL, 0.5 * SEC, SEC, 3, -1, p) + ImpactFx.standing_items(form, base, 64, 0.5 * SEC, SEC, 3, -1, p)
 		ck("%s: flips with the travel direction" % form, right != left)
+	# V4: tones and the aftermath
+	for form: String in ImpactFx.FORMS:
+		var p: Dictionary = PARAMS.get(form, {})
+		var early: Array[Dictionary] = ImpactFx.items(form, CELL, 0.02, SEC, 3, 1, p) + ImpactFx.standing_items(form, base, 64, 0.02, SEC, 3, 1, p)
+		var toned: bool = early.all(func(it: Dictionary) -> bool: return it.has("tone") and int(it["tone"]) >= 0 and int(it["tone"]) <= 3)
+		var has_core: bool = early.any(func(it: Dictionary) -> bool: return int(it["tone"]) == 3)
+		ck("%s: every item toned 0..3, with a core at the start" % form, toned and has_core)
+		var late: Array[Dictionary] = ImpactFx.items(form, CELL, 0.5 * SEC, SEC, 3, 1, p)
+		ck("%s: no core past the first tenth" % form, late.all(func(it: Dictionary) -> bool: return int(it["tone"]) != 3))
+		ck("%s aftermath: [] outside, draws inside the cell, deterministic, dark at the end" % form,
+			ImpactFx.aftermath_items(form, CELL, -0.01, 1.0, 3, p).is_empty() and ImpactFx.aftermath_items(form, CELL, 1.0, 1.0, 3, p).is_empty()
+			and not ImpactFx.aftermath_items(form, CELL, 0.2, 1.0, 3, p).is_empty()
+			and ImpactFx.aftermath_items(form, CELL, 0.2, 1.0, 3, p) == ImpactFx.aftermath_items(form, CELL, 0.2, 1.0, 3, p)
+			and _inside(ImpactFx.aftermath_items(form, CELL, 0.2, 1.0, 3, p))
+			and ImpactFx.aftermath_items(form, CELL, 0.9, 1.0, 3, p).all(func(it: Dictionary) -> bool: return int(it["tone"]) == 0))
 	ck("unknown form -> []", ImpactFx.items("laser", CELL, 0.1, SEC, 3).is_empty())
 	ck("sec 0 -> []", ImpactFx.items("frame", CELL, 0.0, 0.0, 3).is_empty())
 	ck("form_of: known", ImpactFx.form_of({"form": "frame", "sparse": true}) == "frame")

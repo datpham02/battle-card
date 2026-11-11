@@ -219,8 +219,9 @@ func _draw() -> void:
 	# Skill v2 Hỏa Lôi H2: the command glyph at the Mage's hand and the tile-origin flame columns (FuseFx), each
 	# group's Ink edges first, back rows first.
 	_draw_groups(fuse_items())
-	# Skill v2 V1: the standing part of the player's per-card impacts (ImpactFx.standing_items), rising from the hit
-	# tiles like the flame columns, back rows first.
+	# Skill v2 V3 / V1: the standing parts of the player's cast travel (DeliveryFx) and per-card impacts (ImpactFx),
+	# rising from the tiles like the flame columns, back rows first.
+	_draw_groups(delivery_standing_items())
 	_draw_groups(impact_standing_items())
 
 
@@ -281,7 +282,7 @@ func impact_standing_items() -> Array[Dictionary]:
 		var w: int = _floor.cell_art_rect(c).size.x
 		for it: Dictionary in ImpactFx.standing_items(form, base, w, age, sec, hash(c) + 11, 1, variant, reduce):
 			var r: Rect2i = it["rect"]
-			out.append({"rect": r, "col": cols[1] if bool(it["light"]) else cols[0], "edge": 1 if mini(r.size.x, r.size.y) >= 3 else 0, "group": g})
+			out.append({"rect": r, "col": tone_colour(it, cols), "edge": 1 if mini(r.size.x, r.size.y) >= 3 else 0, "group": g})
 	return out
 
 
@@ -469,7 +470,7 @@ func eruption_items() -> Array[Dictionary]:
 		if geo != null and geo.is_warped():
 			base = geo.warp_art_px(base)
 		for it: Dictionary in CastFloorFx.eruption_rects(base, w, float(r["age"]), SURGE_ERUPT_SEC, hash(cell)):
-			out.append({"rect": it["rect"], "col": cols[1] if bool(it["light"]) else cols[0]})
+			out.append({"rect": it["rect"], "col": tone_colour(it, cols)})
 	return out
 
 
@@ -517,14 +518,105 @@ func _surge_items(out: Array[Dictionary], combat: CombatView, hero_id: String) -
 ## The block colours key of the boss's casts (index.json block_colours `_enemy`, #CFC6B4 flat).
 const ENEMY_BLOCK: String = "_enemy"
 ## Seconds the recorded cast stays drawn past its last arrival (covers the longest impact_style sec).
-const TRAVEL_TAIL_SEC: float = 0.55
+const TRAVEL_TAIL_SEC: float = 1.6
+
+
+## V4 feel pass: the colour of a toned item (ImpactFx / DeliveryFx `tone`: 0 dark, 1 body, 2 highlight, 3 core) from
+## [param cols] = [body, highlight]; an item without a tone falls back to its `light` flag.
+static func tone_colour(it: Dictionary, cols: Array[Color]) -> Color:
+	match int(it.get("tone", 2 if bool(it.get("light", false)) else 1)):
+		0:
+			return cols[0].darkened(0.38)
+		1:
+			return cols[0]
+		2:
+			return cols[1]
+		_:
+			return Color("F8FBFF")
 
 
 func _streak(out: Array[Dictionary], from: Vector2i, to: Vector2i, t: float, block: Array[Color]) -> void:
-	var st: Dictionary = CastVfx.travel_style("square_streak")
-	var rects: Array[Rect2i] = CastFloorFx.streak_rects(from, to, t, int(st.get("count", 4)), int(st.get("size", 5)), float(st.get("spacing", 6)))
-	for i: int in rects.size():
-		out.append(_sq(rects[i], block[1] if i == 0 else block[0]))
+	# Skill v2 V3: the boss's straight shot as a DeliveryFx streak (head, tail, sparks).
+	for it: Dictionary in DeliveryFx.streak(from, to, t):
+		out.append(_sq(it["rect"], block[1] if bool(it["light"]) else block[0]))
+
+
+## Skill v2 V3 (DeliveryFx): the STANDING part of the player's cast travel: the falling block of a sky delivery, the
+## hopping bolt of a chain, the dust behind a ground ripple, the drop-in of an in-place card — screen art px over the
+## tiles' drawn ground points, [{rect, col, edge, group}] (group = draw index, back rows first). [] when no cast
+## travels or its hero pack draws the travel itself.
+func delivery_standing_items() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = FloorDynamicLayer.combat_of(_floor)
+	if combat == null or _floor == null:
+		return out
+	var tr: Dictionary = combat.cast_travel_now(TRAVEL_TAIL_SEC, CombatState.Side.PLAYER)
+	if tr.is_empty():
+		return out
+	var delivery: Dictionary = tr["delivery"]
+	var travel: String = str(delivery.get("travel", ""))
+	if travel == "hero_pack" or travel == "square_streak":
+		return out
+	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
+	var cols: Array[Color] = CastVfx.impact_colours(str(delivery.get("impact", "")), hero_id)
+	var rel: float = float(tr["rel"])
+	var arrive: Dictionary = tr["arrive"]
+	var geo: BoardGeometry = _bg()
+	var cells: Array = tr["cells"].duplicate()
+	cells.sort_custom(func(p: Vector2i, q: Vector2i) -> bool: return p.y < q.y or (p.y == q.y and p.x < q.x))
+	var timing: Dictionary = combat.delivery_timing()
+	var items: Array[Dictionary] = []
+	match travel:
+		"falling_squares":
+			var fall: float = float((timing.get(SkillDelivery.SKY_TO_TARGET, {}) as Dictionary).get("fall_sec", 0.12))
+			for g: int in cells.size():
+				var c: Vector2i = cells[g]
+				for it: Dictionary in DeliveryFx.sky_standing(_ground_of(c, geo), _floor.cell_art_rect(c).size.x, float(arrive.get(c, 0.0)) - rel, fall, hash(c)):
+					it["group"] = g
+					items.append(it)
+		"chain_spark":
+			var links: Array = arrive.keys()
+			links.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return float(arrive[a]) < float(arrive[b]))
+			for k: int in range(links.size() - 1):
+				var t0: float = float(arrive[links[k]])
+				var t1: float = float(arrive[links[k + 1]])
+				if rel >= t0 and rel < t1:
+					for it: Dictionary in DeliveryFx.chain_standing(_ground_of(links[k], geo), _ground_of(links[k + 1], geo),
+							_floor.cell_art_rect(links[k + 1]).size.x, (rel - t0) / maxf(t1 - t0, 0.001)):
+						it["group"] = k
+						items.append(it)
+		"floor_run":
+			var o: Vector2i = SkillDelivery.origin_cell(delivery, arrive.keys(), tr["caster"])
+			var ob: Vector2i = _ground_of(o, geo)
+			for g: int in cells.size():
+				var c: Vector2i = cells[g]
+				var at: float = float(arrive.get(c, 0.0))
+				if at <= 0.0 or rel < 0.0 or rel > at:
+					continue
+				var cb: Vector2i = _ground_of(c, geo)
+				var front: Vector2i = Vector2i(Vector2(ob).lerp(Vector2(cb), rel / at).round())
+				var back: Vector2 = Vector2(ob - cb).normalized() if ob != cb else Vector2(-1, 0)
+				for it: Dictionary in DeliveryFx.ground_dust(front, back, _floor.cell_art_rect(c).size.x, rel / at, hash(c)):
+					it["group"] = g
+					items.append(it)
+		"none":
+			for g: int in cells.size():
+				var c: Vector2i = cells[g]
+				for it: Dictionary in DeliveryFx.gather_standing(_ground_of(c, geo), _floor.cell_art_rect(c).size.x, float(arrive.get(c, 0.0)) - rel):
+					it["group"] = g
+					items.append(it)
+	for it: Dictionary in items:
+		var r: Rect2i = it["rect"]
+		out.append({"rect": r, "col": tone_colour(it, cols), "edge": 1 if mini(r.size.x, r.size.y) >= 3 else 0, "group": int(it["group"])})
+	return out
+
+
+## The drawn (warped) ground centre of [param cell], screen art px.
+func _ground_of(cell: Vector2i, geo: BoardGeometry) -> Vector2i:
+	var base: Vector2i = _centre(cell)
+	if geo != null and geo.is_warped():
+		base = geo.warp_art_px(base)
+	return base
 
 
 func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_id: String) -> void:
@@ -552,32 +644,23 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 			var from: Vector2i = Vector2i(_bg().unwarp_art(Vector2(hand_at) + Vector2(0.5, 0.5)).floor())
 			var first: Vector2i = SkillDelivery.first_link(delivery, shown, tr["caster"])
 			_streak(out, from, _centre(first), t, block)
+	# Skill v2 V3 (DeliveryFx): the flat part of the travel; the standing part is delivery_standing_items().
 	match str(delivery.get("travel", "")):
 		"falling_squares":
-			var fs: Dictionary = CastVfx.travel_style("falling_squares")
 			for c: Vector2i in shown:
-				var rects: Array[Rect2i] = CastFloorFx.fall_rects(_floor.cell_art_rect(c), float(arrive.get(c, 0.0)) - rel,
-					float(fs.get("drop_sec", 0.2)), int(fs.get("height", 70)), int(fs.get("count", 3)), int(fs.get("size", 4)), hash(c))
-				for i: int in rects.size():
-					out.append(_sq(rects[i], travel_cols[1] if i == 0 else travel_cols[0]))
+				for it: Dictionary in DeliveryFx.sky_floor(_floor.cell_art_rect(c), float(arrive.get(c, 0.0)) - rel):
+					out.append(_sq(it["rect"], tone_colour(it, travel_cols)))
 		"chain_spark":
-			var cs: Dictionary = CastVfx.travel_style("chain_spark")
-			var links: Array = arrive.keys()
-			links.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return float(arrive[a]) < float(arrive[b]))
-			for k: int in range(links.size() - 1):
-				var t0: float = float(arrive[links[k]])
-				var t1: float = float(arrive[links[k + 1]])
-				if rel >= t0 and rel < t1:
-					var p: Vector2i = CastFloorFx.hop_point(_centre(links[k]), _centre(links[k + 1]), (rel - t0) / maxf(t1 - t0, 0.001), int(cs.get("lift", 12)))
-					out.append(_sq(CastFloorFx.square_rect(p, int(cs.get("size", 4))), travel_cols[1]))
+			pass  # the hopping bolt stands up on screen (delivery_standing_items)
 		"floor_run":
-			var fr: Dictionary = CastVfx.travel_style("floor_run")
 			var o: Vector2i = SkillDelivery.origin_cell(delivery, arrive.keys(), tr["caster"])
 			for c: Vector2i in shown:
-				var rects: Array[Rect2i] = CastFloorFx.run_rects(_centre(o), _centre(c), rel, float(arrive.get(c, 0.0)),
-					int(fr.get("count", 3)), int(fr.get("size", 4)), float(fr.get("trail_sec", 0.025)))
-				for i: int in rects.size():
-					out.append(_sq(rects[i], travel_cols[1] if i == 0 else travel_cols[0]))
+				for it: Dictionary in DeliveryFx.ground_floor(_centre(o), _centre(c), rel, float(arrive.get(c, 0.0))):
+					out.append(_sq(it["rect"], tone_colour(it, travel_cols)))
+		"none":
+			for c: Vector2i in shown:
+				for it: Dictionary in DeliveryFx.gather_floor(_floor.cell_art_rect(c), float(arrive.get(c, 0.0)) - rel):
+					out.append(_sq(it["rect"], tone_colour(it, travel_cols)))
 	if bool(tr.get("swinging", false)):
 		return
 	# The square impact flash on every reached (unlocked) cell, then (item 2) the impact's square shards on a hit.
@@ -608,9 +691,12 @@ func _side_items(out: Array[Dictionary], combat: CombatView, side: int, caster_i
 			var impact_sec: float = float(variant.get("sec", style.get("sec", 0.24)))
 			var items: Array[Dictionary] = ImpactFx.items(form, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir, variant, reduce) \
 				if not form.is_empty() else CastFloorFx.impact_rects(impact, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir)
+			# V4 feel pass: what the hit leaves on the cell after its clip (ImpactFx.aftermath_items, `after_sec`)
+			if not form.is_empty() and age >= impact_sec:
+				items = ImpactFx.aftermath_items(form, _floor.cell_art_rect(c), age - impact_sec, float(variant.get("after_sec", 0.0)), hash(c) + 11, variant)
 			for it: Dictionary in items:
 				var r: Rect2i = it["rect"]
-				out.append({"rect": r, "col": cols[1] if bool(it["light"]) else cols[0], "fill": true, "width": 0,
+				out.append({"rect": r, "col": tone_colour(it, cols), "fill": true, "width": 0,
 					"edge": mini(r.size.x, r.size.y) >= 3})
 
 

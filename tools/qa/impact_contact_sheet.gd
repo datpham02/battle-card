@@ -102,7 +102,7 @@ func _paint(img: Image, items: Array[Dictionary], colours: Array[Color], clip: R
 			_fill_clipped(img, r.grow(1), INK, clip)
 	for it: Dictionary in items:
 		var r: Rect2i = it["rect"]
-		_fill_clipped(img, r, colours[1] if bool(it["light"]) else colours[0], clip)
+		_fill_clipped(img, r, OverlayLayer.tone_colour(it, colours), clip)
 
 
 func _fill_clipped(img: Image, r: Rect2i, col: Color, clip: Rect2i) -> void:

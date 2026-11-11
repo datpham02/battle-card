@@ -112,6 +112,9 @@ func _process(_delta: float) -> void:
 		return
 	var reduce: bool = SettingsStore.shared().get_reduce_motion()
 	var o: Vector2i = SkyDropFx.board_shake(_combat.get_sky_drops(), _combat.combat_clock(), reduce)
+	if o == Vector2i.ZERO:
+		# V4 feel pass: the hit shake of a landing player cast (CombatView.hit_shake_offset, zero under reduce motion).
+		o = _combat.hit_shake_offset()
 	if o != _board_offset:
 		set_board_offset(o)
 

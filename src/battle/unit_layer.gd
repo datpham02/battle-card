@@ -106,6 +106,10 @@ const CLIP_STEP_DOWN: String = "step_down"
 ## 2026-11-02 guard stance: played once when the match binds (the hero draws the sword into the guard), then idle.
 const CLIP_DRAW: String = "draw"
 const CLIP_CAST: String = "cast_gesture"
+## Empty-hand cast. No sheet has these frames yet (see docs/skill-v2/17-cast-presentation.md).
+const CLIP_HAND: String = "cast_hand"
+## cast_gesture on these bodies is a weapon or staff strike. A hand cast must not play it.
+const WEAPON_CAST_BODIES: Array[String] = ["kiem_si", "sat_thu", "tho_san", "giao_si"]
 const CLIP_HIT: String = "hit"
 const CLIP_WINDUP: String = "windup"
 ## 2026-11-02 Forest Witch (pattern brain): an uninterruptible skill winding up / warning, and a phase transition.
@@ -190,6 +194,8 @@ var _bound_actor: CutActor = null
 ## values, and the add-blend child the flash is drawn on.
 var _flash_left: Dictionary = {}
 var _shake_left: Dictionary = {}
+## V4 feel pass: seconds of recoil left per side (recoil_offset).
+var _recoil_left: Dictionary = {}
 var _feel: Dictionary = {}
 var _flash: Node2D = null
 ## A damage event whose flash has not started: CombatState.Side -> seconds still to wait (-1 = delay not read yet).
@@ -251,6 +257,7 @@ func advance(step: float) -> void:
 		_update_clip(side, maxf(step, 0.0))
 		_flash_left[side] = maxf(float(_flash_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
 		_shake_left[side] = maxf(float(_shake_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
+		_recoil_left[side] = maxf(float(_recoil_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
 		_tick_flash_wait(side, maxf(step, 0.0))
 
 
@@ -495,15 +502,34 @@ func _cast_skill() -> String:
 ## 2026-11-08: the sheet clip of the player's current cast: the card's `card_casts` clip when the hero sheet has it
 ## (Trảm Địa: cast_forward, Ngàn Kiếm: cast_summon), else cast_gesture.
 func cast_clip_for(side: int) -> String:
-	var clip: String = CastVfx.cast_clip(_cast_skill(), CLIP_CAST)
-	if clip != CLIP_CAST and (get_sheet(side) == null or not get_sheet(side).has_clip(clip)):
+	var skill_id: String = _cast_skill()
+	var presentation: String = "weapon"
+	if _combat != null and _combat.get_skill_config() != null:
+		presentation = str(_combat.get_skill_config().get_skill(skill_id).get("cast_presentation", "weapon"))
+	var card_clip: String = CastVfx.card_clip(skill_id)
+	var sheet: SpriteSheet = get_sheet(side)
+	return resolve_cast_clip(presentation, card_clip, str(_unit_id.get(side, "")),
+		sheet != null and sheet.has_clip(card_clip), sheet != null and sheet.has_clip(CLIP_HAND))
+
+
+## The sheet clip for a cast. A non-empty [param card_clip] wins (Trảm Địa, Ngàn Kiếm, Hỏa Lôi).
+## `hand` plays [constant CLIP_HAND] when the sheet has it. A weapon or staff body without that clip
+## returns "" so the caller holds idle: never the weapon swing. The Mage's cast_gesture is already an open hand.
+static func resolve_cast_clip(presentation: String, card_clip: String, unit_id: String, has_card_clip: bool, has_hand: bool) -> String:
+	if not card_clip.is_empty():
+		return card_clip if has_card_clip or card_clip == CLIP_CAST else CLIP_CAST
+	if presentation == "hand":
+		if has_hand:
+			return CLIP_HAND
+		if WEAPON_CAST_BODIES.has(unit_id):
+			return ""
 		return CLIP_CAST
-	return clip
+	return CLIP_CAST
 
 
-## True for the hero's cast clips (cast_gesture and the per-card ones: cast_forward, cast_summon).
+## True for the hero's cast clips (cast_gesture, cast_hand, and the per-card ones: cast_forward, cast_summon).
 static func is_cast_clip(clip: String) -> bool:
-	return clip == CLIP_CAST or clip == "cast_forward" or clip == "cast_summon"
+	return clip == CLIP_CAST or clip == CLIP_HAND or clip == "cast_forward" or clip == "cast_summon"
 
 
 func _cast_impact() -> String:
@@ -715,6 +741,18 @@ func _tick_flash_wait(side: int, step: float) -> void:
 	_flash_left[side] = float(_feel.get("flash_sec", 0.0))
 	if not _reduce_motion:
 		_shake_left[side] = float(_feel.get("shake_sec", 0.0))
+		_recoil_left[side] = float(_feel.get("recoil_sec", 0.0))
+
+
+## V4 feel pass: the hit unit's nudge away from the blow (art px): recoil_px along its facing's back (the boss is
+## knocked right, the player left), decaying linearly over recoil_sec; zero at rest or under reduce motion.
+func recoil_offset(side: int) -> Vector2i:
+	var left: float = float(_recoil_left.get(side, 0.0))
+	var sec: float = float(_feel.get("recoil_sec", 0.0))
+	if left <= 0.0 or sec <= 0.0:
+		return Vector2i.ZERO
+	var px: int = roundi(float(int(_feel.get("recoil_px", 0))) * left / sec)
+	return Vector2i(px if side != CombatState.Side.PLAYER else -px, 0)
 
 
 func _on_cell_changed(side: int, _old_cell: Vector2i, _new_cell: Vector2i) -> void:
@@ -784,12 +822,16 @@ func _update_clip(side: int, step: float) -> void:
 				anim.play(CLIP_HIT)
 		CLIP_CAST:
 			var cast_clip: String = cast_clip_for(side)
-			if _cast_pending:
-				_cast_pending = false
-				anim.play(cast_clip, true)
+			if cast_clip.is_empty():
+				anim.play(CLIP_IDLE)
+				anim.set_paused(false)
 			else:
-				anim.play(cast_clip)
-			_drive_cast_hold(side, anim)
+				if _cast_pending:
+					_cast_pending = false
+					anim.play(cast_clip, true)
+				else:
+					anim.play(cast_clip)
+				_drive_cast_hold(side, anim)
 		CLIP_STEP:
 			var step_clip: String = String(_step_clip.get(side, CLIP_STEP))
 			if get_sheet(side) == null or not get_sheet(side).has_clip(step_clip):
@@ -976,7 +1018,7 @@ func _draw() -> void:
 		var kinds: Array[String] = get_active_status_kinds(side)
 		var ground: Vector2i = _ground_of(side)
 		_draw_shadow(_unit_art_rect(side).size, ground, side == CombatState.Side.ENEMY and _combat.get_state().footprint_extent().y > 1)
-		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
+		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side)
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
 		if not _draw_sprite(side, feet):
 			if side == CombatState.Side.PLAYER:
@@ -1019,7 +1061,7 @@ func _draw_flash() -> void:
 		if src.size.x <= 0 or src.size.y <= 0:
 			continue
 		# The flash sits on the drawn (gliding) feet, like the sprite it whitens.
-		var feet: Vector2i = _ground_of(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0)))
+		var feet: Vector2i = _ground_of(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side)
 		var dest: Rect2 = sprite_dest_rect(feet, src.size, sheet.facing() != facing_for(side))
 		_flash.draw_texture_rect_region(sheet.texture(), dest, Rect2(src), Color(1.0, 1.0, 1.0, alpha))
 

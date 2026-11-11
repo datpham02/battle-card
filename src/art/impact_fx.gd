@@ -62,8 +62,6 @@ static func items(form: String, cell_rect: Rect2i, age: float, sec: float, seed:
 		return out
 	var g := _Geo.new(cell_rect, 1 if dir >= 0 else -1, seed)
 	g.whole = reduce
-	if not bool(params.get("no_burst", false)) and u < SHEET_END:
-		out.append({"rect": g.r, "light": u < SHEET_END * 0.5})
 	match form:
 		"frame": _frame(out, g, u, params)
 		"cross": _cross(out, g, u, params)
@@ -84,11 +82,82 @@ static func items(form: String, cell_rect: Rect2i, age: float, sec: float, seed:
 	# Art bible §3: only inside the target cell (its 1 px Ink edge included).
 	var bound: Rect2i = cell_rect.grow(1)
 	var clipped: Array[Dictionary] = []
+	# the hit sheet: the whole cell flashes core-white for SHEET_END, under everything else
+	if not bool(params.get("no_burst", false)) and u < SHEET_END:
+		clipped.append({"rect": g.r, "light": true, "tone": 3})
 	for it: Dictionary in out:
 		var r: Rect2i = (it["rect"] as Rect2i).intersection(bound)
 		if r.size.x > 0 and r.size.y > 0:
-			clipped.append({"rect": r, "light": bool(it["light"])})
+			clipped.append(_toned(r, bool(it["light"]), u, r.end.y >= cell_rect.end.y - _d(cell_rect.size.y, 4)))
 	return clipped
+
+
+## V4 feel pass (user: "hiệu ứng hơi đơn giản"): a 4-tone ramp instead of two colours. Every item carries `tone`:
+## 0 dark (the body colour darkened), 1 body, 2 highlight, 3 core (near white, the first CORE_U of the clip on the
+## highlight items only). Low parts (the bottom quarter of a flat cell, the bottom layers of a standing shape) go
+## dark, so columns, frames and streaks have a shaded underside. `light` stays for callers that read it.
+const CORE_U: float = 0.1
+static func _toned(r: Rect2i, light: bool, u: float, low: bool) -> Dictionary:
+	var tone: int = 2 if light else 1
+	if light and u < CORE_U:
+		tone = 3
+	elif not light and low:
+		tone = 0
+	return {"rect": r, "light": light, "tone": tone}
+
+
+## The AFTERMATH of form [param form]: what the hit leaves on the cell for [param after_sec] seconds once the impact
+## clip ended ([param age] seconds after the clip's end), flat and fading: freeze forms leave a rime frame and
+## lying shards, shatter forms keep their cracks, slashes a scar, knockback and burst forms settling chips, thorns
+## their stumps, bubbles a few drops. Tones 0–1 only (never brighter than the body), shrinking to 1 px over the last
+## third. [] outside [0, after_sec).
+static func aftermath_items(form: String, cell_rect: Rect2i, age: float, after_sec: float, seed: int, params: Dictionary = {}) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if after_sec <= 0.0 or age < 0.0 or age >= after_sec or not FORMS.has(form):
+		return out
+	var k: float = age / after_sec
+	var fade: bool = k > 0.66
+	var g := _Geo.new(cell_rect, 1, seed)
+	match form:
+		"frame", "cross", "spike", "cluster":
+			# rime: a thin frame inside the cell and four lying shards
+			_outline(out, g.r.grow(-3), 2 if not fade else 1)
+			for i: int in 4:
+				out.append(g.sq(Vector2i(g.r.position.x + 8 + _d((g.w - 16) * (i * 2 + 1), 8), g.r.end.y - 7 - (i % 2) * 5), 3 if not fade else 2, false))
+			if form == "cross" and not fade:
+				out.append(g.bar(g.c.x - _d(g.w, 4), g.c.y - 1, _d(g.w, 2), 2, false))
+				out.append(g.bar(g.c.x - 1, g.c.y - _d(g.h, 4), 2, _d(g.h, 2), false))
+		"crack", "chunks", "shards":
+			_crack(out, g, 1.0, {"lines": int(params.get("lines", 5)), "web": false})
+			if fade:
+				var thin: Array[Dictionary] = []
+				for it: Dictionary in out:
+					var r: Rect2i = it["rect"]
+					if (r.size.x + r.size.y) % 2 == 0:
+						thin.append(it)
+				out = thin
+		"arc_h", "arc_v", "cross_x", "double", "stab4":
+			# the scar: a 2 px stepped line across the cell (and its twin for the double / X forms)
+			var a := Vector2i(g.r.position.x + 4, g.r.end.y - 6)
+			var b := Vector2i(g.r.end.x - 4, g.r.position.y + 6)
+			_stepped(out, a, b, 2 if not fade else 1, 2)
+			if form == "double" or form == "cross_x":
+				_stepped(out, Vector2i(a.x, g.r.position.y + 6), Vector2i(b.x, g.r.end.y - 6), 2 if not fade else 1, 2)
+		"column", "wedge", "slam", "ring", "ring2":
+			for i: int in 6:
+				out.append(g.sq(Vector2i(g.r.position.x + 5 + _d((g.w - 10) * (i * 2 + 1), 12), g.r.end.y - 5 - ((i * 7) % 9)), 3 if not fade else 2, false))
+		"spikes":
+			for i: int in 5:
+				out.append(g.bar(g.r.position.x + 6 + i * _d(g.w - 12, 5) - 2, g.r.end.y - 6, 5, 3 if not fade else 2, false))
+		"bubbles":
+			for i: int in 4:
+				out.append(g.sq(Vector2i(g.r.position.x + 8 + _d((g.w - 16) * (i * 2 + 1), 8), g.c.y + ((i * 5) % 11) - 5), 3 if not fade else 2, false))
+	var toned: Array[Dictionary] = []
+	for it: Dictionary in out:
+		var r: Rect2i = (it["rect"] as Rect2i).intersection(cell_rect.grow(1))
+		if r.size.x > 0 and r.size.y > 0:
+			toned.append({"rect": r, "light": false, "tone": 0 if fade else 1})
+	return toned
 
 
 ## The STANDING items of form [param form] at [param age] over [param sec]: screen art px, standing on [param base]
@@ -125,7 +194,11 @@ static func standing_items(form: String, base: Vector2i, cell_w: int, age: float
 		"ring2":
 			_ring_up(out, s, u, 0.0, params)
 			_ring_up(out, s, u, 0.3, params)
-	return out
+	var toned: Array[Dictionary] = []
+	for it: Dictionary in out:
+		var r: Rect2i = it["rect"]
+		toned.append(_toned(r, bool(it["light"]), u, r.end.y >= base.y - 4))
+	return toned
 
 
 ## The form of a card's variant entry ({"form": ..., knobs}); "" when it names none or an unknown one.

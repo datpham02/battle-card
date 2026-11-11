@@ -4,7 +4,7 @@ extends SceneTree
 ## Run (windowed, not headless): godot --path . -s res://tools/qa/impact_footage.gd -- <out_dir> <hero> <card,card,...>
 
 const PIECE: String = "plus5"
-const WINDOW_SEC: float = 0.55
+const WINDOW_SEC: float = 1.6
 
 var _out: String
 var _frames: Dictionary = {}
@@ -66,7 +66,8 @@ func _cast_one(v: CombatView, lib: PieceLibrary, card: String, boss: Vector2i) -
 	var swing_shots: int = 0
 	for _i in 400:
 		await process_frame
-		var tr: Dictionary = v.cast_travel_now(0.5)
+		# the same tail as OverlayLayer, or this call would drop the record before the aftermath ends
+		var tr: Dictionary = v.cast_travel_now(OverlayLayer.TRAVEL_TAIL_SEC)
 		if tr.is_empty():
 			if seen_hit:
 				break
@@ -87,6 +88,12 @@ func _cast_one(v: CombatView, lib: PieceLibrary, card: String, boss: Vector2i) -
 		for c: Vector2i in tr["arrive"]:
 			first = minf(first, float(tr["arrive"][c]))
 		var age: float = float(tr["rel"]) - first
+		# V3: the travel frames before the first cell is reached (DeliveryFx), every 2nd frame
+		if age < 0.0 and (_i % 2) == 0:
+			var tname: String = "%s_travel_%03d.png" % [card, roundi(-age * 1000.0)]
+			root.get_texture().get_image().save_png(_out.path_join(tname))
+			saved.append(tname)
+			continue
 		if age >= 0.0 and age <= WINDOW_SEC:
 			var name: String = "%s_%03d.png" % [card, roundi(age * 1000.0)]
 			root.get_texture().get_image().save_png(_out.path_join(name))

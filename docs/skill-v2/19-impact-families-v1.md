@@ -63,6 +63,53 @@ Timeline on the CutActor clock: draw-in 0–0.6, pulse 0.6–0.85, flare ring �
   `production/qa/evidence/skill-v2-cast-glyphs/glyph_contact_sheet_x3.png` (each hero's real hold frame + glyph at
   k 0.15 / 0.4 / 0.7 / 0.9 + reduce).
 
+## V3 — delivery upgrades (2026-11-11, approved to start: "lam v3 di")
+
+`src/art/delivery_fx.gd` (new): the travel of every generic card, in the same flat + standing layers, on
+`SkillDelivery.arrival_times`:
+- **sky** (`falling_squares`, 9 cards): flat target square closing in on the cell over the last 0.3 s; standing
+  element block (9 px core, trail of three, two sparks) falling from 1.4 H onto the tile over `fall_sec`.
+- **ground** (`floor_run`, 9 cards): flat ripple front — five slabs along the path with a two-row wedge each side,
+  the Trảm Địa front idea; standing dust squares hopping up behind the front.
+- **chain** (`chain_spark`, 6 cards): the hop is now a standing bolt (8 px head, tail of seven, two sparks) arcing
+  link to link at 0.45 H; the old flat hop square is gone.
+- **projectile** (`square_streak`, the boss's straight shot): 8 px head, tail of three, two side sparks (the
+  player's projectiles stay on the hero cast packs).
+- **in place** (`travel none`, 7 cards): flat gather — eight squares converging on each cell over the last 0.2 s
+  before it manifests — and three standing squares dropping in from 0.6 H.
+Wiring: `OverlayLayer._side_items` draws the flat parts (replacing `fall_rects` / `run_rects` / the hop square),
+`delivery_standing_items()` the standing parts (player side; hero_pack and square_streak casts excluded), drawn by
+`_draw_groups` before the impact's standing layer. Tests: `tests/unit/art/delivery_fx_test.gd`. Review sheet:
+`tools/qa/delivery_contact_sheet.gd` → `production/qa/evidence/skill-v2-delivery/delivery_contact_sheet_x3.png`;
+in-game strips `<card>_travel_ingame.png` (kiem_vu sky, xung_kich ground, bang_chau chain; the gather of bang_phong
+runs in the last 0.2 s of the swing, which the footage tool's swing sampling did not reach — seen on the sheet only).
+
+## V4 — feel pass (2026-11-11, user: "skill nó hơi đơn giản", approved A + B + C)
+
+**A. Hit feel** (`CastVfx.hit_feel`, new keys in `index.json`, all data-driven, 0 disables):
+- `hit_stop_sec` 0.06: when the player's cast lands on the boss (damage > 0), `CombatView` holds the whole
+  simulation for that much REAL time at the cast's first arrival (`_hit_stop_at`, `_hit_stop_left`); the floor VFX
+  clock pauses with it (`scaled_delta`), so nothing scheduled shifts relative to anything else. `is_hit_stopped()`.
+- `board_shake_px` 2 / `board_shake_sec` 0.14: a visual-only board shake (`hit_shake_offset`, applied by
+  `BattleCanvas` like the Ngàn Kiếm finale shake; zero under reduce motion).
+- `recoil_px` 3 / `recoil_sec` 0.12: the hit unit is nudged away from the blow (the boss right, the hero left),
+  decaying, on top of its white flash and side-to-side shake (`UnitLayer.recoil_offset`).
+
+**B. Four tones** instead of two: every ImpactFx / DeliveryFx item carries `tone` 0–3 (dark = body darkened 38 %,
+body, highlight, core #F8FBFF). `OverlayLayer.tone_colour` maps it. Cores show only in the first tenth of a clip
+(the hit sheet is core-white for `SHEET_END`, streak and sky-block heads carry a core); low parts (the bottom quarter
+of a flat cell, the bottom layers of standing shapes) go dark, so columns, frames and streaks have a shaded base.
+
+**C. Aftermath** (`ImpactFx.aftermath_items`, `after_sec` 1.0 on every variant, `TRAVEL_TAIL_SEC` 0.55 → 1.6):
+after the impact clip the cell keeps a flat, dark trace that thins in its last third — rime frame and lying shards
+(freeze), the cracks (shatter), a scar line (slash), settling chips (knockback, burst), stumps (thorns), drops
+(poison). Tones 0–1 only, never brighter than the body colour.
+
+Evidence: `production/qa/evidence/skill-v2-feel-pass/` — `<card>_before.png` (the committed V1 strips) and
+`<card>_after.png` (8 frames over 1.4 s, so the aftermath is in the last three). Tests: `impact_fx_test` (tones,
+core timing, aftermath), `delivery_fx_test`, the flow tests of Hỏa Lôi / Ngàn Kiếm / Mìn Trễ (hit-stop leaves their
+clock-relative timings intact).
+
 ## Card → form
 
 | Family | Card | Form | Knobs |
@@ -109,6 +156,9 @@ Burn cards keep their art pack. `vung_lay`, Trảm Địa, Ngàn Kiếm and Hỏ
   kiem_than, ran_van, xung_kich, thien_lang, gai_doc, bang_chau, han_khi, chan_phong), 7 frames across the 0.3 s.
 
 ## Tests
+
+Full suite with V3 + V4 (+ batch 2) in the tree (2026-11-11): **256 suites, 255 green, 1 red** — the same
+pre-existing `skill_v2_golden_test` mismatch (33 vs 32 instant cards from `vung_lay`).
 
 - `tests/unit/art/*` (15 files) and the battle / combat tests touching CastVfx or the overlay: green.
 - Full suite: see below.

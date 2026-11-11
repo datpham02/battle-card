@@ -23,8 +23,12 @@ const DEFAULT_CHARGE_SEC: float = 0.15
 const DEFAULT_STAGGER_SEC: float = 0.04
 ## step_slide_sec / step_dust_sec (2026-11-02, user: "animation move ... hơi cứng", OSFE dash): a unit glides from its
 ## old feet to the new ones over step_slide_sec (ease-out) and leaves square dust on the old cell for step_dust_sec.
+## Skill v2 V4 feel pass (2026-11-11): hit_stop_sec = the simulation pause when the player's cast lands on the boss
+## (0 = none), board_shake_px / _sec = the whole-board shake then, recoil_px / _sec = the hit unit's nudge away from
+## the blow (decaying) on top of its flash and side-to-side shake.
 const DEFAULT_HIT_FEEL: Dictionary = {"flash_sec": 0.1, "flash_alpha": 0.75, "shake_px": 2, "shake_sec": 0.12,
-	"step_slide_sec": 0.15, "step_dust_sec": 0.25}
+	"step_slide_sec": 0.15, "step_dust_sec": 0.25, "hit_stop_sec": 0.0, "board_shake_px": 0, "board_shake_sec": 0.0,
+	"recoil_px": 0, "recoil_sec": 0.0}
 
 static var _index: Dictionary = {}
 static var _loaded: bool = false
