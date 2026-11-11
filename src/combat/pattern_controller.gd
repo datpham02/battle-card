@@ -590,6 +590,9 @@ func _resolve_cells(cells: Array[Vector2i], effects: Dictionary) -> Dictionary:
 		has_status = false
 	if hit and damage > 0.0:
 		var before: float = _state.player_hp
+		# Skill v2 batch 3 (M10): the hero on a ward takes x damage_mult minus the ward's Guard (StatusEffects.ward_absorb).
+		if _status != null:
+			damage = _status.ward_absorb(CombatState.Side.PLAYER, damage, _state)
 		_state.damage_player(damage)
 		result["damage"] = before - _state.player_hp
 	if hit and _status != null and has_status:

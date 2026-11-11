@@ -87,7 +87,9 @@ const MAX_BURST_FIRST: float = 2.0
 const MAX_PIN_SEC: float = 2.0
 ## Card effects a scheduled (non-instant) resolve may carry; zone / status cards stay instant. Batch 2: `push` (Địa
 ## Chấn: a ground wave that pushes on its hit event).
-const SCHEDULED_EFFECTS: Array[String] = ["damage", "push"]
+const SCHEDULED_EFFECTS: Array[String] = ["damage", "push", "trap", "ward", "pillar"]
+## Batch 3: cast modes a scheduled resolve accepts (a trap card arms on a scheduled event like any other).
+const SCHEDULED_CAST_MODES: Array[String] = ["direct", "trap"]
 ## Batch 2 (M05 shockwave; Thiên Thạch): `sky_mode` of a SKY_TO_TARGET arrival card. drops = every cell its own drop
 ## (the rule so far); shockwave = ONE drop on the hub (the mask's centre) x `hub_mult` at sky_hover_sec, then the
 ## other cells ring by ring `ring_step_sec` apart (BFS distance from the hub; a cell not connected to the hub by its
@@ -111,9 +113,13 @@ const CLAUSE_SCOPES: Array[String] = ["any_piece", "all_pieces", "union"]
 ## fragile_stacks (Đập Vỡ `compact`: Rạn stacks applied on a hit, CutEffects).
 ## Batch 2 clause keys: push_cells (Địa Chấn line), pull_cells / pin_sec (Lốc Cuốn square), ring_step_sec / hub_mult /
 ## hub_all (Thiên Thạch plus / square), echo_count (Hồi Âm square).
+## Batch 3 clause keys: trap_pin_sec (Bẫy Kẹp line_v), regrow_sec (Gai Nổ branched), attacker_frost (Thánh Thuẫn
+## square), push_immune (Khiên Thép line_v), pillar_sec (Tường Đá line), fire_wall (Hỏa Tuyến line).
 const CLAUSE_KEYS: Array[String] = ["tag", "scope", "surge_per_step", "surge_cap", "tips_first", "centre_mult", "fuse_sec",
 	"fuse_mult", "fuse_mult_scale", "hits", "link_step_sec", "fragile_stacks", "push_cells", "pull_cells", "pin_sec",
-	"ring_step_sec", "hub_mult", "hub_all", "echo_count"]
+	"ring_step_sec", "hub_mult", "hub_all", "echo_count", "trap_pin_sec", "regrow_sec", "attacker_frost", "push_immune",
+	"pillar_sec", "fire_wall"]
+const MAX_ZONE_SEC: float = 20.0
 const MAX_CLAUSE_FRAGILE_STACKS: int = 3
 const DROP_ORDERS: Array[String] = ["row_major", "from_centre"]
 const KIND_DROP: String = "drop"
@@ -201,9 +207,10 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 		errors.append("card %s: echo / an echo_count clause need resolve 'waves'" % id)
 	if resolve == RESOLVE_INSTANT and str(dmg_rule.get("mode", "all")) != "all":
 		errors.append("card %s: damage_cells_rule needs a scheduled resolve" % id)
-	if resolve != RESOLVE_DELAYED and (raw.has("fuse_sec") or raw.has("fuse_mult") or raw.has("max_active")
+	# batch 3: max_active also caps a trap card's armed trap casts
+	if resolve != RESOLVE_DELAYED and (raw.has("fuse_sec") or raw.has("fuse_mult") or (raw.has("max_active") and cast_mode != "trap")
 			or clause.has("fuse_sec") or clause.has("fuse_mult") or clause.has("fuse_mult_scale")):
-		errors.append("card %s: fuse_sec / fuse_mult / max_active / a fuse clause need resolve 'delayed'" % id)
+		errors.append("card %s: fuse_sec / fuse_mult / max_active (unless a trap card) / a fuse clause need resolve 'delayed'" % id)
 	if clause.has("hits") and resolve != RESOLVE_WAVES:
 		errors.append("card %s: a shape_clause hits override needs resolve 'waves'" % id)
 	# batch 2: an event_payload rides on every scheduled event (delayed, arrival, waves); never on an instant card
@@ -213,8 +220,8 @@ static func validate(id: String, raw: Dictionary, effect: String = "damage", cas
 		errors.append("card %s: shape_clause fuse_mult / fuse_mult must be <= %s (shape-clause group cap)" % [id, SHAPE_GROUP_CAP])
 	if resolve != RESOLVE_INSTANT and not SCHEDULED_EFFECTS.has(effect):
 		errors.append("card %s: resolve '%s' is not supported for effect '%s' yet (damage only)" % [id, resolve, effect])
-	if resolve != RESOLVE_INSTANT and cast_mode != "direct":
-		errors.append("card %s: resolve '%s' needs cast_mode direct (got '%s')" % [id, resolve, cast_mode])
+	if resolve != RESOLVE_INSTANT and not SCHEDULED_CAST_MODES.has(cast_mode):
+		errors.append("card %s: resolve '%s' needs cast_mode direct or trap (got '%s')" % [id, resolve, cast_mode])
 	if not errors.is_empty():
 		return {"resolve": RESOLVE_INSTANT, "hits": 1, "max_hits": 1, "hit_interval_sec": DEFAULT_INTERVAL_SEC,
 			"wave_mults": [] as Array[float], "burst_first": 1.0, "burst_pin_sec": 0.0, "shape_clause": {},
@@ -866,6 +873,17 @@ static func _clause(id: String, raw: Variant, errors: Array[String]) -> Dictiona
 			out["hub_all"] = bool(c["hub_all"])
 	if c.has("echo_count"):
 		out["echo_count"] = _int_field(id, c, "echo_count", 1, 1, MAX_ECHO_COUNT, errors)
+	for k: String in ["trap_pin_sec", "regrow_sec", "pillar_sec"]:
+		if c.has(k):
+			out[k] = _num_field(id, c, k, 0.0, 0.0, MAX_ZONE_SEC, errors)
+	if c.has("attacker_frost"):
+		out["attacker_frost"] = _int_field(id, c, "attacker_frost", 1, 1, 3, errors)
+	for k: String in ["push_immune", "fire_wall"]:
+		if c.has(k):
+			if not c[k] is bool:
+				errors.append("card %s: shape_clause %s must be true / false" % [id, k])
+			else:
+				out[k] = bool(c[k])
 	return out
 
 

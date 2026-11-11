@@ -62,8 +62,9 @@ func _initialize() -> void:
 	# then Vũng Lầy (shared common: 38 player cards, 21 common);
 	# then Skill v2 batch 1 (2026-11-11): thuong_xuyen, dap_vo, min_tre (common) + chuoi_set (rare): 42 player cards;
 	# then batch 2 (2026-11-11): dia_chan (common), loc_cuon + bang_vo (rare), hoa_bang + hoi_am + the Mage's thien_thach
-	# (epic): 48 player cards.
-	check(rar["common"] == 25 and rar["rare"] == 15 and rar["epic"] == 8, "rarity spread (48 player cards, song_kiem epic) %s" % str(rar))
+	# (epic): 48 player cards; then batch 3 (2026-11-11): bay_kep, bay_lo, thanh_thuan, khien_thep (common), tuong_da,
+	# hoa_tuyen (rare), gai_no (epic): 55 player cards.
+	check(rar["common"] == 29 and rar["rare"] == 17 and rar["epic"] == 9, "rarity spread (55 player cards, song_kiem epic) %s" % str(rar))
 	# Story 027: the boss's default card list never holds a zone card (zones come from its traits only).
 	var boss_ids: Array[String] = cards.boss_card_order()
 	var boss_zone_free: bool = true
@@ -79,13 +80,19 @@ func _initialize() -> void:
 		"every card is a player card or a curse (no boss-only Wall cards left) %d" % cards.cards.size())
 	# Cast rhythm spec 2026-11-05: the parry card (do_kiem) answers an enemy telegraph; the boss never holds it either.
 	# Skill v2 (2026-11-08): hero cards are never the boss's either (tram_dia, the Knight's).
+	# Skill v2 batch 3 (2026-11-11): the shared field-zone cards (bay_lo trap, khien_thep ward, tuong_da pillar) are zone
+	# cards too, so the shared zone count is read from the data (the 3 thorn cards are still asserted above).
 	var hero_cards: int = 0
+	var shared_zone: int = 0
 	for id: String in cards.card_order:
 		if not cards.hero_of(id).is_empty():
 			hero_cards += 1
-	check(boss_zone_free and all_zone and boss_ids.size() == cards.card_order.size() - zone_ids.size() - hero_cards and not boss_ids.has("do_kiem")
+		elif cards.is_zone_card(id):
+			shared_zone += 1
+	check(boss_zone_free and all_zone and shared_zone >= zone_ids.size()
+		and boss_ids.size() == cards.card_order.size() - shared_zone - hero_cards and not boss_ids.has("do_kiem")
 		and not boss_ids.has("tram_dia") and not boss_ids.has("ngan_kiem"),
-		"boss card list excludes the 3 player zone cards, the parry card and hero cards (%d of %d)" % [boss_ids.size(), cards.card_order.size()])
+		"boss card list excludes the %d shared zone cards, the parry card and hero cards (%d of %d)" % [shared_zone, boss_ids.size(), cards.card_order.size()])
 	check(all_ok, "all name/desc keys in CSV vi+en")
 	check(dpc_ok, "every card has float damage_per_cell")
 	check(up_ok, "every card has upgrade table")

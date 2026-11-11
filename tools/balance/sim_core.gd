@@ -1097,6 +1097,10 @@ func _wire_zones() -> void:
 		var mv: UnitMover = movers[side] as UnitMover
 		var hole_side: int = side
 		mv.add_blocker(func(cell: Vector2i) -> bool: return st.is_hole(hole_side, cell))
+		# Batch 3 (mirrors CombatView._wire_zones): pillars block the own half's unit, a fire wall blocks the boss.
+		mv.add_blocker(func(cell: Vector2i) -> bool: return st.is_pillar(hole_side, cell))
+		if side == ENEMY:
+			mv.add_blocker(func(cell: Vector2i) -> bool: return st.is_fire_wall(cell))
 		arbiter.blocked_cell_fns[side] = Callable(mv, "is_cell_blocked")
 	arbiter.zone_numbers = combat.zone_numbers()
 	arbiter.reactions = combat.reactions()
@@ -1372,7 +1376,9 @@ func availability_context() -> Dictionary:
 	# Mirrors CombatView: the delayed cards' armed-field cap and open cells.
 	if arbiter != null:
 		var arb: SwingArbiter = arbiter
-		ctx[SkillAvailability.CTX_ARMED_COUNT_FN] = func(id: String) -> int: return arb.armed_cast_count(PLAYER, id)
+		var st: StatusEffects = status
+		ctx[SkillAvailability.CTX_ARMED_COUNT_FN] = func(id: String) -> int: return arb.armed_cast_count(PLAYER, id) \
+			+ (st.trap_cast_count(ENEMY, id) if st != null else 0)
 		if flow != null and flow.is_menu_open():
 			ctx[SkillAvailability.CTX_DELAYED_OPEN_CELLS] = SkillAvailability.delayed_open_cells(flow.menu_cells(),
 				arbiter.armed_cells(PLAYER), status)
@@ -1871,6 +1877,9 @@ func _on_skill_chosen(skill_id: String, _labels: Array[String], cells: Array[Vec
 	plan.clear()
 	_phase = Phase.IDLE
 	var level: int = card_level(skill_id)
+	# Batch 3 (mirrors CombatView._on_skill_chosen): a self-anchored card casts on the shape re-anchored on the hero.
+	if cards.is_self_anchored(skill_id):
+		cells = WardAnchor.remap(cells, state.player_cell, grid, status)
 	_tr("PLAYER cast %s n=%d cells=%s boss=%s featured=%s" % [skill_id, cells.size(), str(cells), str(state.enemy_cell), str(not bonus.is_empty())])
 	if actor.begin_swing(cells, skill_id, true, level, -1.0, bonus, ctx):
 		cooldowns.start(skill_id, float(cards.resolved(skill_id, level).get("cooldown_sec", 0.0)))

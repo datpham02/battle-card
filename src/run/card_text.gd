@@ -146,6 +146,22 @@ static func values(skill: Dictionary, combat: CombatConfig = null, locale: Strin
 		"echo_shift": _num(float((skill.get("echo", {}) as Dictionary).get("shift", 0)), loc),
 		"echo_count": _num(float((skill.get("echo", {}) as Dictionary).get("count", 0)), loc),
 		"clause_echo_count": _num(float((skill.get("shape_clause", {}) as Dictionary).get("echo_count", (skill.get("echo", {}) as Dictionary).get("count", 0))), loc),
+		# Skill v2 batch 3: traps (Bẫy Kẹp / Bẫy Lò Xo), Gai Nổ, wards (Thánh Thuẫn / Khiên Thép), pillars (Tường Đá).
+		"dpc": _num(float(skill.get("damage_per_cell", 0.0)), loc),
+		"max_active": _num(float(skill.get("max_active", 0)), loc),
+		"trap_sec": _num(float(skill.get("trap_sec", 0.0)), loc),
+		"trap_pin_sec": _num(float(skill.get("trap_pin_sec", 0.0)), loc),
+		"clause_trap_pin_sec": _num(float((skill.get("shape_clause", {}) as Dictionary).get("trap_pin_sec", skill.get("trap_pin_sec", 0.0))), loc),
+		"trap_push_cells": _num(float(skill.get("trap_push_cells", 0)), loc),
+		"fragile_per_cell": _num(float(skill.get("fragile_per_cell", 0)), loc),
+		"clause_regrow_sec": _num(float((skill.get("shape_clause", {}) as Dictionary).get("regrow_sec", 0.0)), loc),
+		"ward_sec": _num(float(skill.get("ward_sec", 0.0)), loc),
+		"ward_mult_pct": _num(float(roundi(float((skill.get("ward", {}) as Dictionary).get("damage_mult", 1.0)) * 100.0)), loc),
+		"ward_heal": _num(float((skill.get("ward", {}) as Dictionary).get("heal_per_sec", 0.0)), loc),
+		"ward_guard": _num(float((skill.get("ward", {}) as Dictionary).get("guard", 0.0)), loc),
+		"clause_attacker_frost": _num(float((skill.get("shape_clause", {}) as Dictionary).get("attacker_frost", 0)), loc),
+		"pillar_sec": _num(float(skill.get("pillar_sec", 0.0)), loc),
+		"clause_pillar_sec": _num(float((skill.get("shape_clause", {}) as Dictionary).get("pillar_sec", skill.get("pillar_sec", 0.0))), loc),
 	}
 	for zone_key: String in SkillConfig.ZONE_KEYS:
 		out[zone_key] = _num(float(skill.get(zone_key, zones.get(zone_key, 0.0))), loc)

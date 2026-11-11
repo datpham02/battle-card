@@ -49,13 +49,14 @@ static func check(config: SkillConfig, cooldowns: SkillCooldowns, skill_id: Stri
 		result["reason"] = "need_shape"
 		return result
 	# Skill v2 delayed: at most max_active armed fields of this card; never a cast that would arm no cell (it would
-	# spend the Blocks and the cooldown for nothing).
+	# spend the Blocks and the cooldown for nothing). Batch 3: a trap card's max_active counts its armed trap casts
+	# (the caller's CTX_ARMED_COUNT_FN adds StatusEffects.trap_cast_count).
+	var cap: int = int(skill.get("max_active", 0))
+	var count_fn: Variant = context.get(CTX_ARMED_COUNT_FN)
+	if cap > 0 and count_fn is Callable and (count_fn as Callable).is_valid() and int((count_fn as Callable).call(skill_id)) >= cap:
+		result["reason"] = "field_cap"
+		return result
 	if str(skill.get("resolve", "")) == "delayed":
-		var cap: int = int(skill.get("max_active", 0))
-		var count_fn: Variant = context.get(CTX_ARMED_COUNT_FN)
-		if cap > 0 and count_fn is Callable and (count_fn as Callable).is_valid() and int((count_fn as Callable).call(skill_id)) >= cap:
-			result["reason"] = "field_cap"
-			return result
 		if context.has(CTX_DELAYED_OPEN_CELLS) and (context[CTX_DELAYED_OPEN_CELLS] as Array).is_empty():
 			result["reason"] = "no_valid_cells"
 			return result

@@ -166,6 +166,39 @@ static func apply(
 		result["cell"] = state.enemy_hit_cell(cells)
 	result["zone_kind"] = ""
 	result["zone_cells"] = [] as Array[Vector2i]
+	# Batch 3 field zones: trap (M09), ward (M10, on the cells already re-anchored on the hero), pillar (M11). They form
+	# hit or miss; a trap cast on the unit's own cell fires at once. The enemy is never "hit" by a ward or a pillar.
+	if effect == "trap" or effect == "ward" or effect == "pillar":
+		if status == null:
+			if not _warned_no_status:
+				_warned_no_status = true
+				push_warning("CutEffects: skill '%s' needs a StatusEffects, ignored" % skill_id)
+			return result
+		_form_field(state, grid, status, side, target_side, cells, effect, skill, options, result)
+		return result
+	# Batch 3 (Gai Nổ): detonate_zones consumes the player's thorn / trap cells inside the mask; the damage below counts
+	# only the detonated cells under the target's footprint (no field = a miss), + fragile_per_cell Rạn each.
+	var detonated_under: int = -1
+	if bool(skill.get("detonate_zones", false)) and status != null:
+		var blown: Array[Vector2i] = []
+		for c: Vector2i in cells:
+			var is_trap: bool = str(status.field_at(target_side, c).get("kind", "")) == StatusEffects.KIND_TRAP
+			if not status.thorns_at(target_side, c).is_empty() or is_trap:
+				blown.append(c)
+		for c: Vector2i in blown:
+			status.clear_thorn_cell(target_side, c)
+			status.remove_field(target_side, c)
+		result["detonated"] = blown
+		detonated_under = 0
+		for c: Vector2i in state.unit_cells(target_side):
+			if blown.has(c):
+				detonated_under += 1
+		_regrow_tips(status, target_side, cells, skill, options)
+		if detonated_under <= 0:
+			return result
+		skill = skill.duplicate()
+		skill["fragile_stacks"] = int(skill.get("fragile_per_cell", 0)) * detonated_under
+		cells = blown
 	if effect == "thorns":
 		if status == null:
 			if not _warned_no_status:
@@ -216,6 +249,8 @@ static func apply(
 	var count: int = int(options.get("cast_cell_count", -1))
 	if count < 0:
 		count = cells.size()
+	if detonated_under >= 0:
+		count = detonated_under
 	# Batch 1 (Thương Xuyên): dpc_bonus grows damage_per_cell with the cast's cell count (SkillConfig). Cards without
 	# the field get no result key (the legacy golden fixture compares whole results).
 	if not (skill.get("dpc_bonus", {}) as Dictionary).is_empty():
@@ -308,6 +343,13 @@ static func apply(
 		result["defense_applied"] = damage - after
 		damage = after
 	result["hit"] = true
+	# Batch 3 (M10): the hero standing on a ward takes x damage_mult, minus the ward's Guard (a reduced hit may chill the
+	# attacker); StatusEffects.ward_absorb, the same hook PatternController uses for pattern skills.
+	if target_side == CombatState.Side.PLAYER and status != null:
+		var absorbed: float = status.ward_absorb(target_side, damage, state)
+		if absorbed < damage:
+			result["warded"] = damage - absorbed
+			damage = absorbed
 	var guard: ParryGuard = options.get("player_guard") as ParryGuard
 	if target_side == CombatState.Side.PLAYER and guard != null and guard.is_active():
 		var parry: Dictionary = guard.try_parry(state, status, damage)
@@ -330,8 +372,14 @@ static func apply(
 	# Batch 2 (Địa Chấn line): a clause push_cells that holds replaces the card's push.
 	if clause_holds and clause.has("push_cells"):
 		push_cells = int(clause["push_cells"])
+	# Batch 3 (Khiên Thép line_v): a ward with push_immune holds the hero in place.
+	if push_cells > 0 and target_side == CombatState.Side.PLAYER and status != null and status.ward_push_immune(target_side, state):
+		result["pushed"] = false
+		result["push_immune"] = true
+		push_cells = 0
 	if push_cells > 0:
-		var steps: int = _push(state, grid, target_side, push_cells)
+		# batch 3: a push never enters a blocked cell (a pillar, a hole: options.target_blocked_fn, the target mover's test)
+		var steps: int = _push(state, grid, target_side, push_cells, options.get("target_blocked_fn", Callable()) as Callable)
 		result["pushed"] = steps > 0
 		# Batch 2 (R3 Va Đập, cards that list it): a push stopped short (edge, hole, blocked cell) slams the target.
 		if steps < push_cells and card_reacts.has("r3") and status != null and str(result.get("reaction", "")).is_empty():
@@ -390,9 +438,13 @@ static func reaction_numbers(options: Dictionary) -> Dictionary:
 
 ## Batch 2: true when a resolve of [param skill] on [param cells] can touch the unit of [param target_side] now: it
 ## stands inside, or the card pulls (pull_cells, or a pull clause) and it stands 4-adjacent. SwingArbiter gates its
-## scheduled events with this (an instant swing always calls apply).
+## scheduled events with this (an instant swing always calls apply). Batch 3: a field-zone card (trap / ward /
+## pillar) or a detonating card always resolves (the zone forms, hit or miss).
 static func can_affect(state: CombatState, skill: Dictionary, target_side: int, cells: Array[Vector2i]) -> bool:
 	if state.unit_in(target_side, cells):
+		return true
+	var effect: String = str(skill.get("effect", ""))
+	if effect == "trap" or effect == "ward" or effect == "pillar" or bool(skill.get("detonate_zones", false)):
 		return true
 	var pulls: bool = int(skill.get("pull_cells", 0)) > 0 or (skill.get("shape_clause", {}) as Dictionary).has("pull_cells")
 	return pulls and _adjacent_to(state, target_side, cells)
@@ -657,16 +709,108 @@ static func push_from(state: CombatState, grid: BoardGrid, target_side: int, fro
 	return moved
 
 
-# Moves the unit up to [param steps] cells away from the divider; stops at a missing cell
-# or the board edge. Returns the number of cells moved (batch 2: a short move is an R3 slam for cards that list it).
-static func _push(state: CombatState, grid: BoardGrid, target_side: int, steps: int) -> int:
+# Batch 3: forms a field zone (trap / ward / pillar) when the swing arrives, hit or miss.
+#   trap:   the cells on the target's half become one trap cast (trap_sec; data dpc / pin_sec (clause pin) / push /
+#           r3 / skill_id); the target standing on one fires it at once (result hit, damage).
+#   ward:   [param cells] are already the hero's own-half cells (WardAnchor.remap): ward_sec with the card's `ward`
+#           numbers (+ clause attacker_frost / push_immune). Never a hit.
+#   pillar: the empty cells (no unit, not locked) become pillars for pillar_sec (clause may lengthen it); ZoneRules
+#           .fit_cells keeps the target one exit. Never a hit.
+static func _form_field(state: CombatState, grid: BoardGrid, status: StatusEffects, side: int, target_side: int,
+		cells: Array[Vector2i], effect: String, skill: Dictionary, options: Dictionary, result: Dictionary) -> void:
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	var holds: bool = not clause.is_empty() and CastResolver.clause_holds(clause, options.get("cast_context", {}) as Dictionary)
+	var cast_id: int = status.next_field_cast_id()
+	result["field_cast_id"] = cast_id
+	match effect:
+		"trap":
+			var reacts: Array = skill.get("reactions", []) as Array
+			var data: Dictionary = {"dpc": float(skill.get("damage_per_cell", 0.0)),
+				"pin_sec": float(clause.get("trap_pin_sec", skill.get("trap_pin_sec", 0.0))) if holds else float(skill.get("trap_pin_sec", 0.0)),
+				"push_cells": int(skill.get("trap_push_cells", 0)), "skill_id": str(skill.get("id", options.get("skill_id", ""))),
+				"r3": (reaction_numbers(options)["r3"] as Dictionary) if reacts.has("r3") else {}}
+			var wanted: Array[Vector2i] = []
+			for c: Vector2i in cells:
+				var on_half: bool = grid.is_enemy_cell(c) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(c)
+				if on_half:
+					wanted.append(c)
+			var placed: Array[Vector2i] = status.apply_field(target_side, StatusEffects.KIND_TRAP, wanted, float(skill.get("trap_sec", 0.0)), cast_id, data)
+			result["zone_kind"] = "trap"
+			result["zone_cells"] = placed
+			if not placed.is_empty() and state.unit_in(target_side, placed) and not bool(options.get("target_untargetable", false)):
+				var dmg: float = status.fire_trap(target_side, cast_id, state)
+				result["hit"] = true
+				result["damage"] = dmg
+				result["cell"] = state.enemy_hit_cell(placed) if target_side == CombatState.Side.ENEMY else state.cell_of(target_side)
+				result["pinned"] = status.is_pinned(target_side)
+		"ward":
+			var data: Dictionary = (skill.get("ward", {}) as Dictionary).duplicate()
+			if holds:
+				if clause.has("attacker_frost"):
+					data["attacker_frost"] = int(clause["attacker_frost"])
+				if clause.has("push_immune"):
+					data["push_immune"] = bool(clause["push_immune"])
+			var own: Array[Vector2i] = []
+			for c: Vector2i in cells:
+				var on_half: bool = grid.is_player_cell(c) if side == CombatState.Side.PLAYER else grid.is_enemy_cell(c)
+				if on_half:
+					own.append(c)
+			var placed: Array[Vector2i] = status.apply_field(side, StatusEffects.KIND_WARD, own, float(skill.get("ward_sec", 0.0)), cast_id, data)
+			result["zone_kind"] = "ward"
+			result["zone_cells"] = placed
+		"pillar":
+			var sec: float = float(clause.get("pillar_sec", skill.get("pillar_sec", 0.0))) if holds else float(skill.get("pillar_sec", 0.0))
+			var empty: Array[Vector2i] = []
+			for c: Vector2i in cells:
+				var on_half: bool = grid.is_enemy_cell(c) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(c)
+				if on_half and not state.unit_at(target_side, c) and not state.unit_at(side, c) and not status.is_locked(c):
+					empty.append(c)
+			var blocked: Callable = options.get("target_blocked_fn", Callable()) as Callable
+			var blocked_all: Callable = func(c: Vector2i) -> bool:
+				return status.is_pillar(target_side, c) or (blocked.is_valid() and bool(blocked.call(c)))
+			var kept: Array[Vector2i] = ZoneRules.fit_cells(grid, target_side, state.cell_of(target_side), empty, blocked_all)
+			var placed: Array[Vector2i] = status.apply_field(target_side, StatusEffects.KIND_PILLAR, kept, sec, cast_id, {})
+			result["zone_kind"] = "pillar"
+			result["zone_cells"] = placed
+
+
+# Batch 3 (Gai Nổ branched clause): after the blast the branch-tip cells of the mask (one neighbour inside it) grow
+# thorns back for regrow_sec with the match's thorn numbers.
+static func _regrow_tips(status: StatusEffects, target_side: int, cells: Array[Vector2i], skill: Dictionary, options: Dictionary) -> void:
+	var clause: Dictionary = skill.get("shape_clause", {}) as Dictionary
+	if not clause.has("regrow_sec") or not CastResolver.clause_holds(clause, options.get("cast_context", {}) as Dictionary):
+		return
+	var tips: Array[Vector2i] = []
+	for c: Vector2i in cells:
+		var n: int = 0
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if cells.has(c + d):
+				n += 1
+		if n <= 1:
+			tips.append(c)
+	var numbers: Dictionary = _zone_defaults(options)
+	ZoneRules.cast_thorns(status, target_side, tips, float(clause["regrow_sec"]), float(numbers["thorn_damage"]),
+		int(numbers["thorn_fragile_stacks"]))
+
+
+## Batch 3: the push away from the divider as a public step (StatusEffects.fire_trap); returns the cells moved.
+static func push_away(state: CombatState, grid: BoardGrid, target_side: int, steps: int) -> int:
+	return _push(state, grid, target_side, steps)
+
+
+# Moves the unit up to [param steps] cells away from the divider; stops at a missing cell, the board edge or a cell
+# [param blocked_fn] (Callable(cell) -> bool) refuses (batch 3: pillars, holes). Returns the number of cells moved
+# (batch 2: a short move is an R3 slam for cards that list it).
+static func _push(state: CombatState, grid: BoardGrid, target_side: int, steps: int, blocked_fn: Callable = Callable()) -> int:
 	var dir: int = 1 if target_side == CombatState.Side.ENEMY else -1
 	var cell: Vector2i = state.cell_of(target_side)
 	var moved: int = 0
 	for i: int in steps:
 		var next: Vector2i = Vector2i(cell.x + dir, cell.y)
 		var on_half: bool = grid.is_enemy_cell(next) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(next)
-		if not on_half:
+		if not on_half or (blocked_fn.is_valid() and bool(blocked_fn.call(next))):
+			break
+		if target_side == CombatState.Side.ENEMY and not state.enemy_fits(next, blocked_fn):
 			break
 		var ok: bool = state.set_enemy_cell(next) if target_side == CombatState.Side.ENEMY else state.set_player_cell(next)
 		if not ok:

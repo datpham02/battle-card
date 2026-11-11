@@ -54,3 +54,14 @@ Open items of Skill v2 batch 2 (`19-batch2-report.md`). All PENDING, none blocks
 4. **Several shape clauses on one card** (Thiên Thạch `square` → every cell is the centre; the `hub_all` clause key
    exists) — low priority.
 5. **R1 when a unit with Hàn enters a burning cell; R3 when a forced move ends on a thorn cell** — low priority.
+
+### Added by batch 3 (2026-11-11, same decision: PENDING, none blocks 60/60)
+
+6. **Ward ghost preview in the card menu** (the highlighted ward card shows where the shape lands around the hero,
+   M10 "needs") — HUD work in `cut_hud_view.gd`; the remap itself is pure (`WardAnchor.remap`).
+7. **Floor drawing for the field zones** (trap jaws, ward frames, pillars, fire-wall columns) — the VFX session's
+   `FloorLayer`; `StatusEffects.zone_applied` / `zone_expired` already carry the kinds `trap` / `ward` / `pillar`,
+   `StatusEffects.wall_cells()` the wall.
+8. **Trap damage through the defense path** — a snapping trap deals `dpc × cells` straight to HP like a thorn toll
+   (`boss_defense` is not subtracted); decide with the balance pass.
+9. **Bùng Nổ detonating a fire wall; a trap fling into a pillar as R3** — low priority.

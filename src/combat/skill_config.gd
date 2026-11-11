@@ -14,7 +14,11 @@ const RARITIES: Array[String] = ["common", "rare", "epic"]
 const CURSE_RARITY: String = "curse"
 ## Highest card level (levels are 1..MAX_LEVEL; Story 020).
 const MAX_LEVEL: int = 3
-const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "thorns"]
+## Batch 3 field effects: trap (M09), ward (M10, self-anchored), pillar (M11).
+const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "frost", "thorns", "trap", "ward", "pillar"]
+## Batch 3: where a card's cells land: "enemy" (the placed cells, every card so far) or "self_anchor" (M10: the shape
+## re-anchored on the hero's own half when the card is chosen, WardAnchor.remap).
+const PLACEMENTS: Array[String] = ["enemy", "self_anchor"]
 ## Batch 2 (M15): the status reactions a card may list in `reactions`.
 const REACTION_IDS: Array[String] = ["r1", "r2", "r3"]
 ## How the body casts. Not a delivery type. weapon = the equipped weapon clip.
@@ -27,18 +31,21 @@ const UPGRADE_FLOORS: Dictionary = {
 	"thorn_sec": 0.0, "thorn_damage": 0.0, "thorn_fragile_stacks": 0.0,
 	"parry_sec": 0.0, "reflect_mult": 0.0, "parry_pin_sec": 0.0,
 	"link_ramp": 0.0, "guard_break_mult": 1.0,
+	"trap_sec": 0.0, "ward_sec": 0.0, "pillar_sec": 0.0, "trap_pin_sec": 0.0,
 }
 
 ## Story 027: the optional per-card zone number keys.
 const ZONE_KEYS: Array[String] = ["thorn_sec", "thorn_damage", "thorn_fragile_stacks"]
-## Story 027: card effects that form a zone (kept out of the boss's card list).
-const ZONE_EFFECTS: Array[String] = ["thorns"]
+## Story 027: card effects that form a zone (kept out of the boss's card list). Batch 3: the field zones too.
+const ZONE_EFFECTS: Array[String] = ["thorns", "trap", "ward", "pillar"]
 ## Cast rhythm spec 2026-11-05 (design/quick-specs/nhip-ra-chieu-2026-11-05.md 1.1): how a card resolves. Only `direct`
 ## (the old behaviour, the default) and `parry` (the Knight's Do Kiem) are implemented; the other modes of the spec are
 ## later stories and an unknown mode falls back to `direct` (warning).
 const CAST_MODE_DIRECT: String = "direct"
 const CAST_MODE_PARRY: String = "parry"
-const CAST_MODES: Array[String] = [CAST_MODE_DIRECT, CAST_MODE_PARRY]
+## Batch 3 (M09): a trap card (its cells arm instead of hitting; fires on the first enemy entry).
+const CAST_MODE_TRAP: String = "trap"
+const CAST_MODES: Array[String] = [CAST_MODE_DIRECT, CAST_MODE_PARRY, CAST_MODE_TRAP]
 ## Parry numbers used when a `parry` card omits its own (cards.json normally carries them).
 const PARRY_DEFAULTS: Dictionary = {"parry_sec": 0.8, "reflect_mult": 1.5, "parry_pin_sec": 1.2}
 
@@ -390,7 +397,7 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		# (resolve: instant = one wave at the swing end). B1.5: resolve / hits / max_hits / hit_interval_sec / wave_mults
 		# come from CastResolver.validate; resolve_errors lists what was rejected ([] for a valid card).
 		"resolve": resolve_check["resolve"],
-		"placement": str(raw.get("placement", "enemy")),
+		"placement": _placement(id, raw),
 		"hits": resolve_check["hits"],
 		"max_hits": resolve_check["max_hits"],
 		"hit_interval_sec": resolve_check["hit_interval_sec"],
@@ -449,6 +456,19 @@ static func _normalize(id: String, raw: Dictionary) -> Dictionary:
 		"ring_step_sec": resolve_check["ring_step_sec"],
 		"hub_mult": resolve_check["hub_mult"],
 		"echo": resolve_check["echo"],
+		# Skill v2 batch 3 (docs/skill-v2/20-batch3-report.md). Trap (M09): seconds armed, the Pin on firing, the push on
+		# firing (Bẫy Lò Xo). Gai Nổ: detonate the player's thorn / trap cells in the mask, Rạn per detonated cell.
+		"trap_sec": maxf(float(raw.get("trap_sec", 8.0)), 0.0),
+		"trap_pin_sec": maxf(float(raw.get("trap_pin_sec", 0.0)), 0.0),
+		"trap_push_cells": clampi(int(raw.get("trap_push_cells", 0)), 0, CastResolver.MAX_FORCE_CELLS),
+		"detonate_zones": bool(raw.get("detonate_zones", false)),
+		"fragile_per_cell": maxi(int(raw.get("fragile_per_cell", 0)), 0),
+		# Ward (M10): seconds the own-half cells stay a ward and its numbers (CutEffects / StatusEffects.ward_absorb).
+		"ward_sec": maxf(float(raw.get("ward_sec", 4.0)), 0.0),
+		"ward": _ward(id, raw),
+		# Pillar (M11): seconds the empty mask cells block steps.
+		"pillar_sec": maxf(float(raw.get("pillar_sec", 3.0)), 0.0),
+		"id": id,
 	}
 	if str(out["cast_mode"]) == CAST_MODE_PARRY:
 		for key: String in PARRY_DEFAULTS.keys():
@@ -483,6 +503,35 @@ static func _requires_shape(id: String, raw: Dictionary) -> Dictionary:
 		push_warning("SkillConfig: card %s requires_shape scope '%s' unknown, using any_piece" % [id, scope])
 		scope = "any_piece"
 	return {"tag": str((r as Dictionary)["tag"]), "scope": scope}
+
+
+# Batch 3: the card's placement ("enemy" when absent; an unknown value falls back to enemy with a warning).
+static func _placement(id: String, raw: Dictionary) -> String:
+	var p: String = str(raw.get("placement", "enemy"))
+	if not PLACEMENTS.has(p):
+		push_warning("SkillConfig: card %s placement '%s' unknown, using enemy" % [id, p])
+		return "enemy"
+	return p
+
+
+# Batch 3: the card's ward numbers ({} = none): damage_mult 0..1 (default 1), heal_per_sec >= 0, guard >= 0,
+# push_immune bool, attacker_frost >= 0. A non-object is dropped with a warning.
+static func _ward(id: String, raw: Dictionary) -> Dictionary:
+	if not raw.has("ward"):
+		return {}
+	var r: Variant = raw["ward"]
+	if not r is Dictionary:
+		push_warning("SkillConfig: card %s ward must be an object, ignored" % id)
+		return {}
+	var d: Dictionary = r as Dictionary
+	return {"damage_mult": clampf(float(d.get("damage_mult", 1.0)), 0.0, 1.0), "heal_per_sec": maxf(float(d.get("heal_per_sec", 0.0)), 0.0),
+		"guard": maxf(float(d.get("guard", 0.0)), 0.0), "push_immune": bool(d.get("push_immune", false)),
+		"attacker_frost": maxi(int(d.get("attacker_frost", 0)), 0)}
+
+
+## Batch 3 (M10): true when [param id] re-anchors its cells on the hero when chosen (placement self_anchor).
+func is_self_anchored(id: String) -> bool:
+	return str(get_skill(id).get("placement", "enemy")) == "self_anchor"
 
 
 # Batch 2: the card's reactions list ([] = none): only REACTION_IDS, unknown ids dropped with a warning.

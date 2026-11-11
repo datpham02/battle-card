@@ -516,6 +516,9 @@ func _fire_event(ev: Dictionary) -> void:
 				"cast_context": cast["context"], "cast_cell_count": dmg_cells, "wave_index": wave,
 				"impact_mult": float(ev["mult"]), "apply_heal": false})
 		hit = bool(result["hit"])
+		# batch 3: a field zone formed by this event (trap / ward / pillar) reaches the card-level result
+		if not str(result.get("zone_kind", "")).is_empty():
+			cast["zone"] = {"zone_kind": result["zone_kind"], "zone_cells": result["zone_cells"]}
 		# Trảm Địa: the burst's Pin lands with a damaging hit (not on a parry).
 		if hit and float(ev.get("pin_sec", 0.0)) > 0.0 and _status != null and not bool(result.get("parried", false)):
 			_status.pin(_opposite(side), float(ev["pin_sec"]))
@@ -553,7 +556,25 @@ func _fire_event(ev: Dictionary) -> void:
 			and not _state.is_enemy_dead():
 		var ig: Dictionary = payload.get("ignite", {}) as Dictionary
 		if not ig.is_empty():
-			ev["ignited"] = _status.ignite(ev_cells, float(ig["sec"]), float(ig["tick_sec"]), float(ig["damage"]))
+			# batch 3 (M11 fire wall, Hỏa Tuyến line clause): the cells that burn as a wall block the target's steps, so the
+			# leave-a-path rule keeps it one exit (the rest of the mask burns without blocking)
+			var skill_now: Dictionary = _skill_config.get_skill(str(cast["skill_id"]))
+			var clause: Dictionary = skill_now.get("shape_clause", {}) as Dictionary
+			var wall: Array[Vector2i] = []
+			if bool(clause.get("fire_wall", false)) and CastResolver.clause_holds(clause, cast["context"] as Dictionary):
+				var target: int = _opposite(side)
+				var blocked: Callable = blocked_cell_fns.get(target, Callable()) as Callable
+				var blocked_all: Callable = func(c: Vector2i) -> bool: return _status.is_fire_wall(c) or (blocked.is_valid() and bool(blocked.call(c)))
+				wall = ZoneRules.fit_cells(_grid, target, _state.cell_of(target), ev_cells, blocked_all)
+			var plain: Array[Vector2i] = []
+			for c: Vector2i in ev_cells:
+				if not wall.has(c):
+					plain.append(c)
+			var lit: Array[Vector2i] = _status.ignite(plain, float(ig["sec"]), float(ig["tick_sec"]), float(ig["damage"]))
+			if not wall.is_empty():
+				lit.append_array(_status.ignite(wall, float(ig["sec"]), float(ig["tick_sec"]), float(ig["damage"]), false, true))
+				ev["wall_cells"] = wall
+			ev["ignited"] = lit
 			# batch 2 (R1, Hỏa Băng): the event ignited the cell under a target this hit just chilled
 			var last: Dictionary = cast["last_hit"] as Dictionary
 			var reacts: Array = _skill_config.get_skill(str(cast["skill_id"])).get("reactions", []) as Array
@@ -606,6 +627,9 @@ func _finish_cast(id: int) -> void:
 	result["hit"] = int(cast["hits"]) > 0
 	result["damage"] = float(cast["damage"])
 	result["hits"] = int(cast["hits"])
+	if cast.has("zone"):
+		result["zone_kind"] = (cast["zone"] as Dictionary)["zone_kind"]
+		result["zone_cells"] = (cast["zone"] as Dictionary)["zone_cells"]
 	result["healed"] = float(cast["healed"])
 	result["scheduled"] = true
 	result["fizzled"] = bool(cast.get("fizzled", false))

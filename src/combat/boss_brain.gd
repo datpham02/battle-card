@@ -313,9 +313,17 @@ func decide(ctx: Dictionary) -> Dictionary:
 		for cell: Vector2i in _status.hole_cells(CombatState.Side.ENEMY):
 			if not own_blocked.has(cell):
 				own_blocked.append(cell)
+		# Skill v2 batch 3 (M11): a pillar is a blocked cell like a hole (the mover refuses it too).
+		for cell: Vector2i in _status.field_cells(CombatState.Side.ENEMY, StatusEffects.KIND_PILLAR):
+			if not own_blocked.has(cell):
+				own_blocked.append(cell)
 		var thorn_avoid: float = float(_weights.get("thorn_avoid", 0.0))
 		for cell: Vector2i in _status.thorn_cells(CombatState.Side.ENEMY):
 			_thorn_pen[cell] = thorn_avoid * float(_status.thorns_at(CombatState.Side.ENEMY, cell).get("damage", 0.0))
+		# Batch 3 (M09): a trap cell costs trap_avoid (thorn_avoid when the set has none) x the trap's damage per cell.
+		var trap_avoid: float = float(_weights.get("trap_avoid", thorn_avoid))
+		for cell: Vector2i in _status.field_cells(CombatState.Side.ENEMY, StatusEffects.KIND_TRAP):
+			_thorn_pen[cell] = float(_thorn_pen.get(cell, 0.0)) + trap_avoid * float((_status.field_at(CombatState.Side.ENEMY, cell)["data"] as Dictionary).get("dpc", 0.0))
 	var fuse_avoid: float = float(_weights.get("fuse_avoid", 1.0))
 	for cell: Vector2i in fuse_soft:
 		if not incoming.has(cell):

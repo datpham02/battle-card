@@ -48,8 +48,19 @@ signal hole_fell(side: int, cell: Vector2i, victim: bool)
 ## Drop tile: [param cell] is a normal cell again (the hole closed, the fall was cancelled, or clear_zones ran).
 signal hole_restored(side: int, cell: Vector2i)
 
+## Skill v2 batch 3 (M09): the trap cast [param cast_id] on [param side]'s half fired on [param cells] (every trap cell of
+## the cast; the zone is consumed) for [param damage] to the unit of that side.
+signal trap_fired(side: int, cast_id: int, cells: Array[Vector2i], damage: float)
+
 ## Zone kind names (also the zone_applied / zone_expired payload).
 const KIND_THORNS: String = "thorns"
+## Skill v2 batch 3 field zones (docs/skill-v2/02-mechanics-catalog.md M09 / M10 / M11, §G): a trap (armed: fires on
+## the first entry, every cell of its cast at once), a ward (own half: damage x mult / Guard / heal while standing on
+## it) and a pillar (solid: blocks steps). One book, [member _fields]; each is one zone of the cell (zone_kinds_at).
+const KIND_TRAP: String = "trap"
+const KIND_WARD: String = "ward"
+const KIND_PILLAR: String = "pillar"
+const FIELD_KINDS: Array[String] = [KIND_TRAP, KIND_WARD, KIND_PILLAR]
 ## Drop tile phases (see [method apply_drop]).
 const HOLE_PHASE_CRACK: String = "crack"
 const HOLE_PHASE_HOLE: String = "hole"
@@ -67,6 +78,10 @@ var _burning: Dictionary = {}
 var _pins: Dictionary = {}
 # Story 027 zones: Side -> {Vector2i -> {left, total, damage, fragile}} (thorns).
 var _thorns: Dictionary = {}
+# Batch 3 field zones: Side -> {Vector2i -> {kind, left, total, cast_id, data}}; data = the card's numbers (trap: dpc,
+# pin_sec, push_cells, r3, skill_id; ward: damage_mult, heal_per_sec, guard, push_immune, attacker_frost; pillar: {}).
+var _fields: Dictionary = {}
+var _field_seq: int = 0
 # Side -> the cell the unit stood on at the previous tick (thorn entry detection).
 var _last_cell: Dictionary = {}
 # Keyword numbers, see configure(). Defaults = no stacking / no Ghim bonus (old behaviour).
@@ -137,9 +152,12 @@ var _burn_zone_seq: int = 0
 ## Quick spec 2026-11-01 (one zone per cell): a skill's fire is a zone effect, so a locked cell (cracking / hole) is
 ## skipped and another zone on the cell (thorns) is removed first ([method _claim_zone_cell]). [param terrain] true =
 ## the fire of region terrain (a lava vent): not a zone effect, it keeps its old behaviour (no lock, no replacement).
-## Returns the cells that burn now.
+## Returns the cells that burn now. Batch 3 (M11 fire wall, Hỏa Tuyến line): [param wall] true marks the cells as a
+## fire wall ([method is_fire_wall]): the ENEMY's mover refuses them while they burn (CombatView / sim blockers); a
+## re-ignite keeps the flag.
 func ignite(
-	cells: Array[Vector2i], duration: float, tick_sec: float, damage_per_tick: float, terrain: bool = false
+	cells: Array[Vector2i], duration: float, tick_sec: float, damage_per_tick: float, terrain: bool = false,
+	wall: bool = false
 ) -> Array[Vector2i]:
 	var lit: Array[Vector2i] = []
 	if duration <= 0.0:
@@ -153,6 +171,7 @@ func ignite(
 		var left: float = duration
 		var stacks: int = 1
 		var base: float = maxf(damage_per_tick, 0.0)
+		var is_wall: bool = wall
 		if _burning.has(cell):
 			var old: Dictionary = _burning[cell] as Dictionary
 			acc = float(old["tick_acc"])
@@ -160,10 +179,11 @@ func ignite(
 			stacks = mini(int(old["stacks"]) + 1, _burn_max_stacks)
 			base = maxf(float(old.get("base", old["damage"])), base)
 			zone = zone or bool(old.get("zone", true))
+			is_wall = is_wall or bool(old.get("wall", false))
 		var damage: float = base + _burn_tick_bonus * float(stacks - 1)
 		_burning[cell] = {
 			"left": left, "total": left, "tick_acc": acc, "stacks": stacks, "base": base,
-			"tick_sec": maxf(tick_sec, _EPS), "damage": damage, "zone": zone, "zone_id": _burn_zone_seq,
+			"tick_sec": maxf(tick_sec, _EPS), "damage": damage, "zone": zone, "zone_id": _burn_zone_seq, "wall": is_wall,
 		}
 		lit.append(cell)
 		cell_ignited.emit(cell)
@@ -359,6 +379,7 @@ func tick(delta: float, state: CombatState) -> void:
 		else:
 			_pins[side] = pin_left
 	_tick_zones(_thorns, KIND_THORNS, delta)
+	_tick_fields(delta, state)
 	_tick_phase2_statuses(delta)
 	_tick_holes(delta, state)
 
@@ -437,9 +458,205 @@ func clear() -> void:
 	_fragile.clear()
 	_frost.clear()
 	_thorns.clear()
+	_fields.clear()
 	_holes.clear()
 	_hole_fade.clear()
 	_last_cell.clear()
+
+
+# --- Skill v2 batch 3 field zones: trap (M09), ward (M10), pillar (M11) ----------------------------------------------
+
+## A fresh cast id for a field zone cast (traps fire per cast; wards / pillars are grouped by it for the HUD).
+func next_field_cast_id() -> int:
+	_field_seq += 1
+	return _field_seq
+
+
+## Places a field zone of [param kind] (FIELD_KINDS) on [param cells] of [param side]'s half for [param duration]
+## seconds, grouped under [param cast_id] with the card's [param data]. Each cell passes the one-zone-per-cell gate
+## ([method _claim_zone_cell]: a locked cell, an armed trap or a solid pillar of another cast refuses it; a surface
+## zone is replaced); the same kind on a cell refreshes it. Returns the cells placed; emits zone_applied(kind).
+func apply_field(side: int, kind: String, cells: Array[Vector2i], duration: float, cast_id: int, data: Dictionary = {}) -> Array[Vector2i]:
+	var placed: Array[Vector2i] = []
+	if duration <= 0.0 or cells.is_empty() or not FIELD_KINDS.has(kind):
+		return placed
+	for cell: Vector2i in cells:
+		if placed.has(cell) or not _claim_zone_cell(cell, kind):
+			continue
+		_zone_of(_fields, side)[cell] = {"kind": kind, "left": duration, "total": duration, "cast_id": cast_id, "data": data.duplicate(true)}
+		placed.append(cell)
+	if not placed.is_empty():
+		zone_applied.emit(kind, side, placed)
+	return placed
+
+
+## The field zone on [param cell] of [param side]'s half: {kind, left, total, cast_id, data}; {} when none.
+func field_at(side: int, cell: Vector2i) -> Dictionary:
+	var zone: Dictionary = _fields.get(side, {}) as Dictionary
+	if not zone.has(cell):
+		return {}
+	var e: Dictionary = zone[cell] as Dictionary
+	return {"kind": str(e["kind"]), "left": float(e["left"]), "total": float(e["total"]), "cast_id": int(e["cast_id"]), "data": e["data"]}
+
+
+## The cells of [param side]'s half holding a field zone of [param kind] ("" = any), sorted by x then y.
+func field_cells(side: int, kind: String = "") -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var zone: Dictionary = _fields.get(side, {}) as Dictionary
+	for cell: Vector2i in _sorted_cells(zone):
+		if kind.is_empty() or str((zone[cell] as Dictionary)["kind"]) == kind:
+			out.append(cell)
+	return out
+
+
+## True while [param cell] of [param side]'s half is a pillar (a step there is refused: the movers' blockers).
+func is_pillar(side: int, cell: Vector2i) -> bool:
+	return str(field_at(side, cell).get("kind", "")) == KIND_PILLAR
+
+
+## Batch 3 (M09 cap): the number of trap casts of card [param skill_id] ("" = any card) still armed on [param side]'s half.
+func trap_cast_count(side: int, skill_id: String = "") -> int:
+	var ids: Dictionary = {}
+	var zone: Dictionary = _fields.get(side, {}) as Dictionary
+	for cell: Vector2i in zone.keys():
+		var e: Dictionary = zone[cell] as Dictionary
+		if str(e["kind"]) == KIND_TRAP and (skill_id.is_empty() or str((e["data"] as Dictionary).get("skill_id", "")) == skill_id):
+			ids[int(e["cast_id"])] = true
+	return ids.size()
+
+
+## Removes the field zone on [param cell] of [param side] (no fire, no reaction), emitting zone_expired. True if one was there.
+func remove_field(side: int, cell: Vector2i) -> bool:
+	var zone: Dictionary = _fields.get(side, {}) as Dictionary
+	if not zone.has(cell):
+		return false
+	var kind: String = str((zone[cell] as Dictionary)["kind"])
+	zone.erase(cell)
+	if zone.is_empty():
+		_fields.erase(side)
+	zone_expired.emit(kind, side, cell)
+	return true
+
+
+## Batch 3 (Gai Nổ): removes the thorns on [param cell] of [param side] without a toll, emitting zone_expired. True if any.
+func clear_thorn_cell(side: int, cell: Vector2i) -> bool:
+	var zone: Dictionary = _thorns.get(side, {}) as Dictionary
+	if not zone.has(cell):
+		return false
+	zone.erase(cell)
+	if zone.is_empty():
+		_thorns.erase(side)
+	zone_expired.emit(KIND_THORNS, side, cell)
+	return true
+
+
+## Batch 3 (M09): fires the trap cast [param cast_id] on [param side]'s half NOW: every trap cell of the cast is
+## consumed; the unit of that side (alive) takes data.dpc x the trap cells under its footprint (at least 1), is Pinned
+## data.pin_sec, pushed data.push_cells away from the divider (CutEffects.push_away; a short push slams when data.r3
+## holds the R3 numbers). Returns the damage dealt (0 when nothing was armed). Called by the entry check and by
+## CutEffects when the cast lands on the unit's own cell.
+func fire_trap(side: int, cast_id: int, state: CombatState) -> float:
+	var zone: Dictionary = _fields.get(side, {}) as Dictionary
+	var cells: Array[Vector2i] = []
+	var data: Dictionary = {}
+	for cell: Vector2i in _sorted_cells(zone):
+		var e: Dictionary = zone[cell] as Dictionary
+		if str(e["kind"]) == KIND_TRAP and int(e["cast_id"]) == cast_id:
+			cells.append(cell)
+			data = e["data"] as Dictionary
+	if cells.is_empty():
+		return 0.0
+	var under: int = 0
+	for c: Vector2i in state.unit_cells(side):
+		if cells.has(c):
+			under += 1
+	for cell: Vector2i in cells:
+		remove_field(side, cell)
+	var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+	var damage: float = float(data.get("dpc", 0.0)) * float(maxi(under, 1))
+	if not dead:
+		state.damage(side, damage)
+		if float(data.get("pin_sec", 0.0)) > 0.0:
+			pin(side, float(data["pin_sec"]))
+		var push_cells: int = int(data.get("push_cells", 0))
+		if push_cells > 0 and state.grid != null:
+			var moved: int = CutEffects.push_away(state, state.grid, side, push_cells)
+			var r3: Dictionary = data.get("r3", {}) as Dictionary
+			if moved < push_cells and not r3.is_empty():
+				state.damage(side, float(r3.get("damage", 0.0)))
+				if float(r3.get("pin_sec", 0.0)) > 0.0:
+					pin(side, float(r3["pin_sec"]))
+	trap_fired.emit(side, cast_id, cells, damage)
+	return damage
+
+
+## Batch 3 (M10): the ward under the unit of [param side] ({} when it stands on none): the field's data.
+func ward_at(side: int, state: CombatState) -> Dictionary:
+	var f: Dictionary = field_at(side, state.cell_of(side))
+	if str(f.get("kind", "")) != KIND_WARD:
+		return {}
+	return f["data"] as Dictionary
+
+
+## Batch 3 (M10): [param damage] about to hit the unit of [param side] after its ward: x data.damage_mult, then minus
+## data.guard (never below 1 when the hit was at least 1), and a reduced hit gives the attacker data.attacker_frost Hàn
+## (its burst lands on the attacker through [param state]). Unchanged when the unit stands on no ward.
+func ward_absorb(side: int, damage: float, state: CombatState) -> float:
+	var w: Dictionary = ward_at(side, state)
+	if w.is_empty() or damage <= 0.0:
+		return damage
+	var out: float = damage * float(w.get("damage_mult", 1.0))
+	var guard: float = float(w.get("guard", 0.0))
+	if guard > 0.0:
+		out = maxf(out - guard, minf(out, 1.0))
+	var frost: int = int(w.get("attacker_frost", 0))
+	if frost > 0 and out < damage - _EPS:
+		var other: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
+		var burst: float = apply_frost(other, frost)
+		if burst > 0.0:
+			state.damage(other, burst)
+	return out
+
+
+## Batch 3 (M10, Khiên Thép line_v): true while the unit of [param side] stands on a ward with push_immune.
+func ward_push_immune(side: int, state: CombatState) -> bool:
+	return bool(ward_at(side, state).get("push_immune", false))
+
+
+## Batch 3 (M11): true while [param cell] burns as a fire wall (Hỏa Tuyến line): the enemy's mover refuses it.
+func is_fire_wall(cell: Vector2i) -> bool:
+	return _burning.has(cell) and bool((_burning[cell] as Dictionary).get("wall", false))
+
+
+## The burning cells flagged as a fire wall, sorted by x then y.
+func wall_cells() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in _burning.keys():
+		if bool((_burning[cell] as Dictionary).get("wall", false)):
+			out.append(cell)
+	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x or (a.x == b.x and a.y < b.y))
+	return out
+
+
+# Field zones count down (zone_expired at 0); a ward heals the unit standing on it data.heal_per_sec x delta.
+func _tick_fields(delta: float, state: CombatState) -> void:
+	for side: int in _fields.keys():
+		var zone: Dictionary = _fields[side] as Dictionary
+		var standing: Vector2i = state.cell_of(side)
+		for cell: Vector2i in _sorted_cells(zone):
+			var entry: Dictionary = zone[cell] as Dictionary
+			if str(entry["kind"]) == KIND_WARD and cell == standing and side == CombatState.Side.PLAYER and not state.is_player_dead():
+				var heal: float = float((entry["data"] as Dictionary).get("heal_per_sec", 0.0)) * delta
+				if heal > 0.0:
+					state.set_player_hp(state.player_hp + heal)
+			var left: float = float(entry["left"]) - delta
+			if left <= _EPS:
+				zone.erase(cell)
+				zone_expired.emit(str(entry["kind"]), side, cell)
+			else:
+				entry["left"] = left
+		if zone.is_empty():
+			_fields.erase(side)
 
 
 ## Story 027 Thorns (Tran gai): the [param cells] (cells of [param side]'s half) stay steppable, but every
@@ -501,6 +718,15 @@ func clear_zones(side: int = -1) -> void:
 		_thorns.erase(s)
 		for cell: Vector2i in thorn_cells_of:
 			zone_expired.emit(KIND_THORNS, s, cell)
+	# batch 3: the field zones (traps never fire on a clear, wards / pillars just go)
+	for s: int in _fields.keys():
+		if side != -1 and s != side:
+			continue
+		var book: Dictionary = _fields[s] as Dictionary
+		var field_cells_of: Array[Vector2i] = _sorted_cells(book)
+		_fields.erase(s)
+		for cell: Vector2i in field_cells_of:
+			zone_expired.emit(str((book[cell] as Dictionary)["kind"]), s, cell)
 	# Drop tiles of that side close too (a dead boss leaves no crack that could still kill the player).
 	for s: int in _holes.keys():
 		if side != -1 and s != side:
@@ -549,6 +775,9 @@ func zone_kinds_at(cell: Vector2i) -> Array[String]:
 	for side: int in _thorns.keys():
 		if (_thorns[side] as Dictionary).has(cell):
 			out.append(KIND_THORNS)
+	for side: int in _fields.keys():
+		if (_fields[side] as Dictionary).has(cell):
+			out.append(str(((_fields[side] as Dictionary)[cell] as Dictionary)["kind"]))
 	if is_locked(cell):
 		out.append(KIND_DROP)
 	return out
@@ -560,6 +789,22 @@ func zone_kinds_at(cell: Vector2i) -> Array[String]:
 func _claim_zone_cell(cell: Vector2i, kind: String) -> bool:
 	if is_locked(cell):
 		return false
+	# batch 3 (catalog §G): an armed trap or a solid pillar is never replaced by another zone (the new zone skips the
+	# cell; the same kind refreshes it, the caller's rule); a lock (KIND_DROP) removes any field, a trap without firing
+	# (X3 disarm); a surface field (ward) is replaced like thorns.
+	for side: int in _fields.keys():
+		var book: Dictionary = _fields[side] as Dictionary
+		if not book.has(cell):
+			continue
+		var have: String = str((book[cell] as Dictionary)["kind"])
+		if have == kind:
+			continue
+		if (have == KIND_TRAP or have == KIND_PILLAR) and kind != KIND_DROP:
+			return false
+		book.erase(cell)
+		if book.is_empty():
+			_fields.erase(side)
+		zone_expired.emit(have, side, cell)
 	if kind != KIND_BURN and _burning.has(cell) and bool((_burning[cell] as Dictionary).get("zone", true)):
 		_burning.erase(cell)
 		cell_burned_out.emit(cell)
@@ -868,6 +1113,10 @@ func _check_thorn_entries(state: CombatState) -> void:
 			if cell == BoardGrid.NO_CELL:
 				continue
 		_burn_entry(side, cell, state)
+		# batch 3 (M09): the first entry into a trap cell fires the whole cast
+		var field: Dictionary = field_at(side, cell)
+		if str(field.get("kind", "")) == KIND_TRAP:
+			fire_trap(side, int(field["cast_id"]), state)
 		var thorn: Dictionary = thorns_at(side, cell)
 		if thorn.is_empty():
 			continue
@@ -892,7 +1141,7 @@ func _entered_cell(state: CombatState, last_anchor: Vector2i) -> Vector2i:
 	if fresh.is_empty():
 		return BoardGrid.NO_CELL
 	for c: Vector2i in fresh:
-		if not thorns_at(CombatState.Side.ENEMY, c).is_empty():
+		if not thorns_at(CombatState.Side.ENEMY, c).is_empty() or str(field_at(CombatState.Side.ENEMY, c).get("kind", "")) == KIND_TRAP:
 			return c
 	for c: Vector2i in fresh:
 		if _burning.has(c):
