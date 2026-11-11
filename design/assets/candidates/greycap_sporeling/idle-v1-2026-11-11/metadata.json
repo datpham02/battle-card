@@ -1,0 +1,38 @@
+{
+ "asset_id": "unit.greycap_sporeling",
+ "entity_id": "greycap_sporeling",
+ "clip": "idle",
+ "name": "idle",
+ "version": 1,
+ "date": "2026-11-11",
+ "provider": "pixellab",
+ "tool": "animate_character",
+ "job_id": "f90a856a-140a-446e-99bd-4cfcfe0c0925",
+ "character_id": "5705da35-be85-49c2-9704-555fbe8c755e",
+ "effect_id": null,
+ "seed": null,
+ "cost": "1 generation",
+ "prompt": "Idle breathing loop, four frames numbered 0, 1, 2 and 3, facing south-west. Frame 0 stays the pinned start pose. On frame 1 the big cap rises one pixel. On frame 2 the big cap stays one pixel higher and the two side caps rise one pixel. On frame 3 all three caps return to the frame 0 pose. The root base and both feet stay on the same pixels. Cap shapes, body width, and the one-pixel dark outline stay unchanged. Flat colour bands only.",
+ "params": {
+  "mode": "v3",
+  "directions": [
+   "south-west"
+  ],
+  "frame_count": 4,
+  "keep_first_frame": true,
+  "canvas": "64x76",
+  "animation_group_id": "ac4c6b8f-0ce7-458b-a921-75c214250250",
+  "server_animation_name": "idle_v2_2026-11-11"
+ },
+ "source_anchor": "art_src/units/greycap_sporeling/idle/0.png",
+ "qa": {
+  "verdict": "FAIL",
+  "summary": "frame 0 = anchor, feet fixed, no red; FAIL amplitude (cap +3..6 px, body +1..3 px/side, 400-620 px redrawn) and palette (54-94 off-palette px per frame)",
+  "report": "QA.md",
+  "on": "2026-11-11"
+ },
+ "acceptance": "accepted",
+ "folder": "design/assets/candidates/greycap_sporeling/idle-v1-2026-11-11",
+ "acceptance_evidence": "user 2026-11-11: 'Cài thay idle cũ' after viewing preview/old-vs-snap-x3.png",
+ "acceptance_on": "2026-11-11"
+}

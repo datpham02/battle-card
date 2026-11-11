@@ -1,14 +1,98 @@
 {
   "id": "greycap_sporeling",
   "asset": "ASSET-022",
-  "frame": {"w": 64, "h": 52},
+  "frame": {
+    "w": 64,
+    "h": 52
+  },
   "facing": "left",
   "source": "PixelLab character 5705da35-be85-49c2-9704-555fbe8c755e (approved 2026-11-02), PixMiniMax south-west clips in design/assets/candidates/greycap/anim/<clip>/<n>.png, cleaned (palette snap to the 8 locked colours, specks removed, feet on the bottom row at x 32) into design/assets/candidates/greycap/clean-64x52/",
   "clips": [
-    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop"},
-    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "nominal; the game paces step by the step cooldown"},
-    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png", "windup/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last", "note": "src 1, 2, 4, 6: the model drew the swelling red; the palette snap turned it into a grey-violet puff"},
-    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src 5-7 (2-4 had baked bursts)"},
-    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png"], "ms": [100, 120, 150, 150, 150, 150], "loop": "hold_last"}
+    {
+      "name": "idle",
+      "frames": [
+        "idle/0.png",
+        "idle/1.png",
+        "idle/2.png",
+        "idle/3.png"
+      ],
+      "ms": [
+        250,
+        250,
+        250,
+        250
+      ],
+      "loop": "loop",
+      "note": "2026-11-11: replaced by v3 animate_character job f90a856a (design/assets/candidates/greycap_sporeling/idle-v1-2026-11-11), snapped to the 8 locked hex and cropped to 64x52; user accepted the cap sway over the 1 px breathe brief"
+    },
+    {
+      "name": "step",
+      "frames": [
+        "step/0.png",
+        "step/1.png",
+        "step/2.png",
+        "step/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": "loop",
+      "note": "nominal; the game paces step by the step cooldown"
+    },
+    {
+      "name": "windup",
+      "frames": [
+        "windup/0.png",
+        "windup/1.png",
+        "windup/2.png",
+        "windup/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        0
+      ],
+      "loop": "hold_last",
+      "note": "src 1, 2, 4, 6: the model drew the swelling red; the palette snap turned it into a grey-violet puff"
+    },
+    {
+      "name": "hit",
+      "frames": [
+        "hit/0.png",
+        "hit/1.png",
+        "hit/2.png"
+      ],
+      "ms": [
+        40,
+        40,
+        40
+      ],
+      "loop": "once",
+      "note": "src 5-7 (2-4 had baked bursts)"
+    },
+    {
+      "name": "down",
+      "frames": [
+        "down/0.png",
+        "down/1.png",
+        "down/2.png",
+        "down/3.png",
+        "down/4.png",
+        "down/5.png"
+      ],
+      "ms": [
+        100,
+        120,
+        150,
+        150,
+        150,
+        150
+      ],
+      "loop": "hold_last"
+    }
   ]
 }
