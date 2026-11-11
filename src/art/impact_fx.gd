@@ -32,6 +32,9 @@ const FORMS: Array[String] = [
 	# signature forms of the batch-2 cards (2026-11-11): Thiên Thạch crater, Lốc Cuốn vortex, Hỏa Băng steam,
 	# Băng Vỡ ice burst, Hồi Âm echo, Địa Chấn quake
 	"crater", "vortex", "steam", "iceburst", "echo", "quake",
+	# signature forms of the batch-3 cards: Bẫy Kẹp jaw, Bẫy Lò Xo spring, Gai Nổ splinter,
+	# Thánh Thuẫn ward, Khiên Thép plate, Tường Đá pillar, Hỏa Tuyến firewall
+	"jaw", "spring", "splinter", "ward", "plate", "pillar", "firewall",
 ]
 
 ## Reduce motion (art bible §3): the last frame, still, for this long.
@@ -89,6 +92,13 @@ static func items(form: String, cell_rect: Rect2i, age: float, sec: float, seed:
 				_crack(out, g, (u - 0.4) / 0.6, {"lines": 6, "web": true})
 		"echo": _arc_scar(out, g, u)
 		"quake": _quake_floor(out, g, u)
+		"jaw": _jaw_floor(out, g, u)
+		"spring": _spring_floor(out, g, u)
+		"splinter": _splinter_floor(out, g, u)
+		"ward": _ward_floor(out, g, u)
+		"plate": _plate_floor(out, g, u)
+		"pillar": _pillar_floor(out, g, u)
+		"firewall": _firewall_floor(out, g, u)
 	_residue(out, g, u)
 	# Art bible §3: only inside the target cell (its 1 px Ink edge included).
 	var bound: Rect2i = cell_rect.grow(1)
@@ -178,6 +188,21 @@ static func aftermath_items(form: String, cell_rect: Rect2i, age: float, after_s
 			_crack(out, g, 1.0, {"lines": 6, "web": true})
 			for i: int in 4:
 				out.append(g.sq(Vector2i(g.r.position.x + 8 + _d((g.w - 16) * (i * 2 + 1), 8), g.r.end.y - 7), 4 if not fade else 2, false))
+		"jaw", "plate":
+			out.append(g.bar(g.r.position.x + 4, g.c.y - 4, 8, 8, false))
+			out.append(g.bar(g.r.end.x - 12, g.c.y - 4, 8, 8, false))
+		"spring":
+			out.append(g.bar(g.r.position.x + 6, g.r.end.y - 8, g.w - 12, 4, false))
+		"splinter":
+			for i: int in 5:
+				out.append(g.bar(g.r.position.x + 6 + i * _d(g.w - 12, 5) - 2, g.r.end.y - 6, 5, 3 if not fade else 2, false))
+		"ward":
+			_outline(out, g.r.grow(-4), 2 if not fade else 1)
+		"pillar":
+			out.append(g.sq(g.c, 12 if not fade else 8, false))
+		"firewall":
+			for i: int in 4:
+				out.append(g.sq(Vector2i(g.r.position.x + 8 + _d((g.w - 16) * (i * 2 + 1), 8), g.r.end.y - 8), 4 if not fade else 2, false))
 		"echo":
 			# the echo: 0.1–0.4 s after the clip a ghost of the hit replays — a double ring pulsing out and the scar
 			var a := Vector2i(g.r.position.x + 4, g.r.end.y - 6)
@@ -237,6 +262,13 @@ static func standing_items(form: String, base: Vector2i, cell_w: int, age: float
 		"iceburst": _iceburst_standing(out, s, u)
 		"echo": _arc(out, s, u, 0.0, params)
 		"quake": _quake_standing(out, s, u)
+		"jaw": _jaw_standing(out, s, u)
+		"spring": _spring_standing(out, s, u)
+		"splinter": _spikes(out, s, u, {})
+		"ward": _ward_standing(out, s, u)
+		"plate": _plate_standing(out, s, u)
+		"pillar": s.column(out, 0, maxi(roundi(float(s.H) * 0.7 / 3.0), 2), 14, 0)
+		"firewall": _firewall_standing(out, s, u)
 	var toned: Array[Dictionary] = []
 	for it: Dictionary in out:
 		var r: Rect2i = it["rect"]
@@ -397,6 +429,101 @@ static func _quake_standing(out: Array[Dictionary], s: _Stand, u: float) -> void
 		var vy: float = (0.5 + 0.6 * sin(a)) * float(s.H) * s.rng.randf_range(0.6, 1.2)
 		var up: int = roundi(vy * u - vy * 0.9 * u * u)
 		out.append(s.sq(roundi(vx * u), maxi(up, 0) + 6, 5 if i % 3 == 0 else 3, i % 2 == 0))
+
+
+## Bẫy Kẹp, flat: two jaws slide in from the cell edges and stop with a gap.
+static func _jaw_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var close: float = minf(u / 0.35, 1.0)
+	var jaw_w: int = maxi(roundi(lerpf(float(g.w) * 0.22, float(g.w) * 0.34, close)), 6)
+	var top: int = g.c.y - _d(g.h, 3)
+	var bh: int = _d(g.h, 2) + 2
+	out.append(g.bar(g.r.position.x + 2, top, jaw_w, bh, false))
+	out.append(g.bar(g.r.end.x - 2 - jaw_w, top, jaw_w, bh, true))
+
+
+## Bẫy Kẹp, standing: the same two jaws, short, snapping shut.
+static func _jaw_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var gap: int = roundi(lerpf(float(s.hw) * 0.7, 6.0, minf(u / 0.35, 1.0)))
+	out.append(s.slab(-gap, 4, 10, 16, false))
+	out.append(s.slab(gap, 4, 10, 16, true))
+
+
+## Bẫy Lò Xo, flat: a plate across the near edge and a 4 px hub.
+static func _spring_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	out.append(g.bar(g.r.position.x + 4, g.r.end.y - 8, g.w - 8, 4, false))
+	var n: int = 3 if u < 0.5 else 2
+	for i: int in n:
+		out.append(g.sq(g.c + Vector2i(0, -6 + i * 6), 4, i == 0))
+
+
+## Bẫy Lò Xo, standing: a coil of bars that compresses, then three squares bounce up.
+static func _spring_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var coils: int = 4 if u < 0.4 else 2
+	for i: int in coils:
+		out.append(s.slab(0, 4 + i * 5, 16 - i * 2, 3, i % 2 == 0))
+	if u >= 0.4:
+		var k: float = (u - 0.4) / 0.6
+		for i: int in 3:
+			var up: int = roundi(float(s.H) * 0.45 * 4.0 * k * (1.0 - k))
+			out.append(s.sq((i - 1) * 8, up + 8, 5, i == 1))
+
+
+## Gai Nổ, flat: cracks, then five stumps along the near edge.
+static func _splinter_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	_crack(out, g, minf(u / 0.4, 1.0) * 0.5, {"lines": 4})
+	if u > 0.35:
+		for i: int in 5:
+			out.append(g.bar(g.r.position.x + 4 + i * _d(g.w - 8, 5), g.r.end.y - 7, 4, 4, i % 2 == 0))
+
+
+## Thánh Thuẫn, flat: a square frame that draws in from the edge to an inset.
+static func _ward_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var frac: float = lerpf(1.0, 0.72, minf(u / 0.4, 1.0))
+	_outline(out, Rect2i(g.c - Vector2i(roundi(float(g.hw) * frac), roundi(float(g.hh) * frac)),
+		Vector2i(maxi(roundi(float(g.w) * frac), 4), maxi(roundi(float(g.h) * frac), 4))), 3)
+
+
+## Thánh Thuẫn, standing: four short posts at the tile corners.
+static func _ward_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var h: int = maxi(roundi(float(s.H) * 0.35 * minf(u / 0.3, 1.0)), 4)
+	for dx: int in [-s.hw + 8, s.hw - 8]:
+		out.append(s.slab(dx, 0, 6, h, true))
+
+
+## Khiên Thép, flat: two vertical plates.
+static func _plate_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var bw: int = maxi(roundi(lerpf(4.0, float(g.w) * 0.22, minf(u / 0.3, 1.0))), 4)
+	out.append(g.bar(g.c.x - _d(g.w, 3) - _d(bw, 2), g.r.position.y + 4, bw, g.h - 8, false))
+	out.append(g.bar(g.c.x + _d(g.w, 5), g.r.position.y + 4, bw, g.h - 8, true))
+
+
+## Khiên Thép, standing: the two plates rise to about half a cell.
+static func _plate_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var h: int = maxi(roundi(float(s.H) * 0.55 * minf(u / 0.35, 1.0)), 6)
+	out.append(s.slab(-_d(s.w, 4), 0, 8, h, false))
+	out.append(s.slab(_d(s.w, 4), 0, 8, h, true))
+
+
+## Tường Đá, flat: a stone footprint in the middle of the cell.
+static func _pillar_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var frac: float = lerpf(0.2, 0.55, minf(u / 0.3, 1.0))
+	var sz := Vector2i(maxi(roundi(float(g.w) * frac), 6), maxi(roundi(float(g.h) * frac), 6))
+	out.append(g.bar(g.c.x - _d(sz.x, 2), g.c.y - _d(sz.y, 2), sz.x, sz.y, false))
+	out.append(g.sq(g.c, 4, true))
+
+
+## Hỏa Tuyến, flat: a bright bar across the cell (the wall's base) plus cracks.
+static func _firewall_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var bw: int = maxi(roundi(lerpf(4.0, float(g.w) * 0.8, minf(u / 0.25, 1.0))), 4)
+	out.append(g.bar(g.c.x - _d(bw, 2), g.c.y - 3, bw, 6, true))
+	_crack(out, g, minf(u / 0.5, 1.0) * 0.4, {"lines": 3})
+
+
+## Hỏa Tuyến, standing: three short fire columns across the tile.
+static func _firewall_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var layers: int = maxi(roundi(float(s.H) * 0.55 * minf(u / 0.3, 1.0) / 3.0), 1)
+	for dx: int in [-_d(s.w, 3), 0, _d(s.w, 3)]:
+		s.column(out, dx, layers, 8, 0)
 
 
 ## The form of a card's variant entry ({"form": ..., knobs}); "" when it names none or an unknown one.

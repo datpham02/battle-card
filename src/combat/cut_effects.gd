@@ -745,6 +745,7 @@ static func _form_field(state: CombatState, grid: BoardGrid, status: StatusEffec
 				result["pinned"] = status.is_pinned(target_side)
 		"ward":
 			var data: Dictionary = (skill.get("ward", {}) as Dictionary).duplicate()
+			data["skill_id"] = str(skill.get("id", options.get("skill_id", "")))
 			if holds:
 				if clause.has("attacker_frost"):
 					data["attacker_frost"] = int(clause["attacker_frost"])
@@ -769,7 +770,7 @@ static func _form_field(state: CombatState, grid: BoardGrid, status: StatusEffec
 			var blocked_all: Callable = func(c: Vector2i) -> bool:
 				return status.is_pillar(target_side, c) or (blocked.is_valid() and bool(blocked.call(c)))
 			var kept: Array[Vector2i] = ZoneRules.fit_cells(grid, target_side, state.cell_of(target_side), empty, blocked_all)
-			var placed: Array[Vector2i] = status.apply_field(target_side, StatusEffects.KIND_PILLAR, kept, sec, cast_id, {})
+			var placed: Array[Vector2i] = status.apply_field(target_side, StatusEffects.KIND_PILLAR, kept, sec, cast_id, {"skill_id": str(skill.get("id", options.get("skill_id", "")))})
 			result["zone_kind"] = "pillar"
 			result["zone_cells"] = placed
 

@@ -79,7 +79,7 @@ var _pins: Dictionary = {}
 # Story 027 zones: Side -> {Vector2i -> {left, total, damage, fragile}} (thorns).
 var _thorns: Dictionary = {}
 # Batch 3 field zones: Side -> {Vector2i -> {kind, left, total, cast_id, data}}; data = the card's numbers (trap: dpc,
-# pin_sec, push_cells, r3, skill_id; ward: damage_mult, heal_per_sec, guard, push_immune, attacker_frost; pillar: {}).
+# pin_sec, push_cells, r3, skill_id; ward: the card's ward numbers plus skill_id; pillar: skill_id).
 var _fields: Dictionary = {}
 var _field_seq: int = 0
 # Side -> the cell the unit stood on at the previous tick (thorn entry detection).

@@ -1,5 +1,6 @@
 class_name FloorDynamicLayer
 extends Node2D
+const _ZoneFx = preload("res://src/art/zone_fx.gd")
 ## The cheap dynamic part of the floor (Story 046 Part C, art bible 8.6): a child of FloorLayer, so it draws right
 ## after the static slabs and still before UnitLayer. It paints the Story 048 floor VFX (FloorVfx, layer "floor"),
 ## then the burning cells' time bars (BurnPainter), then the boss's telegraph (TelegraphPainter, so the red telegraph
@@ -32,6 +33,8 @@ var _drawn_charge: Array[Dictionary] = []
 var _drawn_extras: Dictionary = {}
 ## Skill v2 Hỏa Lôi H2: the fire-seal floor items drawn last ({} = none): {"under": blast items, "over": sigils}.
 var _drawn_fuse: Dictionary = {}
+## Batch-3 field marks drawn last (trap jaws, ward frame, pillar stone).
+var _drawn_zone: Array[Dictionary] = []
 var _redraws: int = 0
 
 
@@ -203,6 +206,25 @@ func fuse_state() -> Dictionary:
 	return {"under": under, "over": over}
 
 
+## Flat marks on armed trap / ward / pillar cells (both halves). [] when none.
+func zone_state() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var combat: CombatView = combat_of(_floor)
+	if combat == null or _floor == null or combat.get_status() == null:
+		return out
+	var step: int = int(combat.combat_clock() * 8.0) % 8
+	var status: StatusEffects = combat.get_status()
+	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+		for kind: String in StatusEffects.FIELD_KINDS:
+			for cell: Vector2i in status.field_cells(side, kind):
+				var info: Dictionary = status.field_at(side, cell)
+				var cell_rect: Rect2i = _floor.cell_art_rect(cell)
+				var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
+				slab.position += cell_rect.position
+				out.append_array(_ZoneFx.marks(kind, str((info.get("data", {}) as Dictionary).get("skill_id", "")), slab, step))
+	return out
+
+
 func _process(_delta: float) -> void:
 	var combat_now: CombatView = combat_of(_floor) if _floor != null else null
 	if combat_now != null and not combat_now.get_cast_flood().is_empty():
@@ -218,6 +240,10 @@ func _process(_delta: float) -> void:
 	var fuse: Dictionary = fuse_state()
 	if fuse != _drawn_fuse:
 		_drawn_fuse = fuse
+		queue_redraw()
+	var zone: Array[Dictionary] = zone_state()
+	if zone != _drawn_zone:
+		_drawn_zone = zone
 		queue_redraw()
 	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx or holes != _drawn_holes or charge != _drawn_charge 			or extras != _drawn_extras:
 		_drawn_extras = extras
@@ -253,6 +279,9 @@ func _draw() -> void:
 		draw_rect(Rect2(it["rect"]), it["col"])
 	BurnPainter.paint(self, _floor, _drawn_burn, vfx != null and vfx.has_pack("burning_cell"))
 	for it: Dictionary in _drawn_fuse.get("over", []) as Array:
+		draw_rect(Rect2(it["rect"]), it["col"])
+	_drawn_zone = zone_state()
+	for it: Dictionary in _drawn_zone:
 		draw_rect(Rect2(it["rect"]), it["col"])
 	if combat != null:
 		_draw_charge(combat)

@@ -132,6 +132,17 @@ over a pack-owned impact (the Mage's fire) instead of being dropped with the sha
 Evidence: `production/qa/evidence/skill-v2-signature/<card>_ingame.png` (8 frames over 1.4 s) and the six rows at
 the bottom of `skill-v2-impact-families/contact_sheet_x3.png` (`signature_x3.png`).
 
+## V4-F — signature forms of the batch-3 cards (2026-11-11)
+
+Seven ImpactFx forms, same two layers: `bay_kep` **jaw**, `bay_lo` **spring**, `gai_no` **splinter**,
+`thanh_thuan` **ward**, `khien_thep` **plate**, `tuong_da` **pillar**, `hoa_tuyen` **firewall**. Wired in
+`impact_variants`. While a trap, ward or pillar is armed, `ZoneFx.marks` draws the flat object on that slab
+(`FloorDynamicLayer.zone_state`): jaws, spring plate, thorn stumps, ward frame, steel plates, stone footprint.
+`bay_lo` / `gai_no` / `khien_thep` pick their mark from the field's `skill_id` (ward and pillar data now store it,
+same as traps). No PixelLab call: V16 in `02-vfx-concepts.md` is code. Contact sheet
+`production/qa/evidence/skill-v2-signature/batch3_x3.png`. In-game frames (the armed mark, not an 8-frame strip):
+`production/qa/evidence/skill-v2-batch3/01..07.png`.
+
 ## Card → form
 
 | Family | Card | Form | Knobs |

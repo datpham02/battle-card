@@ -2,8 +2,7 @@ extends SceneTree
 ## Skill v2 batch 3 evidence: in a REAL ch1 battle (main.tscn, GameFlow.enter_test_floor, boss frozen, Hunter) casts
 ## each of the 7 batch-3 cards from the bag through the card menu and saves the in-game frame that shows the card's
 ## rule (the trap snapping, the thorn burst, the ward around the hero...) under production/qa/evidence/skill-v2-batch3/.
-## The field zones have no floor drawing yet (the VFX session's), so the frames show the HUD effects (HIT numbers,
-## Frozen / Rạn chips, the hero's HP) over the board. Not a test (no *_test.gd name).
+## Armed traps, wards and pillars also draw ZoneFx marks on the slab. Not a test (no *_test.gd name).
 ## Run (WINDOWED, not headless, muted): godot --path . --windowed --resolution 1280x720 --audio-driver Dummy -s res://tests/integration/run/skill_v2_batch3_evidence.gd
 
 const OUT: String = "res://production/qa/evidence/skill-v2-batch3"

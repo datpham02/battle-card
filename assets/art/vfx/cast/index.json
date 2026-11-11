@@ -366,7 +366,14 @@
   "hoa_bang": {"form": "steam", "colours": ["#B8B0A0", "#EFE6D2"], "sec": 0.7, "after_sec": 1.0},
   "bang_vo": {"form": "iceburst", "colours": ["#A6EEFF", "#EEF4FA"], "sec": 0.6, "after_sec": 1.0},
   "hoi_am": {"form": "echo", "sec": 0.5, "after_sec": 1.2},
-  "dia_chan": {"form": "quake", "sec": 0.6, "after_sec": 1.0}
+  "dia_chan": {"form": "quake", "sec": 0.6, "after_sec": 1.0},
+  "bay_kep": {"form": "jaw", "colours": ["#3A3A42", "#C8C8D0"], "sec": 0.45, "after_sec": 0.8},
+  "bay_lo": {"form": "spring", "colours": ["#4A3428", "#C8C8D0"], "sec": 0.5, "after_sec": 0.6},
+  "gai_no": {"form": "splinter", "colours": ["#5A4630", "#E2CFA0"], "sec": 0.45, "after_sec": 0.8},
+  "thanh_thuan": {"form": "ward", "colours": ["#8A6A20", "#E6D7A8"], "sec": 0.5, "after_sec": 1.0},
+  "khien_thep": {"form": "plate", "colours": ["#5E6A78", "#C5D0DC"], "sec": 0.45, "after_sec": 1.0},
+  "tuong_da": {"form": "pillar", "colours": ["#5A4630", "#A89B88"], "sec": 0.5, "after_sec": 1.2},
+  "hoa_tuyen": {"form": "firewall", "colours": ["#C2410C", "#FFB21F"], "sec": 0.55, "after_sec": 0.8}
  },
  "_doc_cast_glyphs": "2026-11-11 (Skill v2 V2, hero cast glyphs): hero id -> {form, hand}: the CastGlyphFx kit drawn at `hand` (art px from the feet, the casting hand on the cast_gesture hold frame) while any card without a `card_casts` clip or its own `glyph` swings (Trảm Địa, Ngàn Kiếm and Hỏa Lôi keep their own). Colours = the hero's block_colours. Forms: CastGlyphFx.FORMS.",
  "cast_glyphs": {

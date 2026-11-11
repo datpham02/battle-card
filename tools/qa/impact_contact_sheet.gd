@@ -5,7 +5,7 @@ extends SceneTree
 ## (the real cell art size) with the FLAT layer (ImpactFx.items) on it and the STANDING layer
 ## (ImpactFx.standing_items) rising from the slab's bottom-centre into the 64 px of air above it, drawn with that
 ## card's impact colours (CastVfx.impact_colours) and a 1 px Ink edge on squares >= 3 px, like OverlayLayer.
-## Run: godot --headless --path . -s res://tools/qa/impact_contact_sheet.gd -- <out.png> [scale] [hero]
+## Run: godot --headless --path . -s res://tools/qa/impact_contact_sheet.gd -- <out.png> [scale] [hero] [card,card]
 
 const CELL := Vector2i(64, 46)
 const AIR: int = 64
@@ -53,6 +53,14 @@ const VARIANTS := {
 	"bang_vo": {"impact": "shatter", "form": "iceburst", "colours": ["#A6EEFF", "#EEF4FA"], "sec": 0.6},
 	"hoi_am": {"impact": "slash", "form": "echo"},
 	"dia_chan": {"impact": "knockback", "form": "quake", "sec": 0.6},
+	# signature forms of the batch-3 cards
+	"bay_kep": {"impact": "thorns", "form": "jaw", "colours": ["#3A3A42", "#C8C8D0"], "sec": 0.45},
+	"bay_lo": {"impact": "thorns", "form": "spring", "colours": ["#4A3428", "#C8C8D0"], "sec": 0.5},
+	"gai_no": {"impact": "thorns", "form": "splinter", "colours": ["#5A4630", "#E2CFA0"], "sec": 0.45},
+	"thanh_thuan": {"impact": "burst", "form": "ward", "colours": ["#8A6A20", "#E6D7A8"], "sec": 0.5},
+	"khien_thep": {"impact": "burst", "form": "plate", "colours": ["#5E6A78", "#C5D0DC"], "sec": 0.45},
+	"tuong_da": {"impact": "knockback", "form": "pillar", "colours": ["#5A4630", "#A89B88"], "sec": 0.5},
+	"hoa_tuyen": {"impact": "burn", "form": "firewall", "colours": ["#C2410C", "#FFB21F"], "sec": 0.55},
 }
 
 
@@ -61,16 +69,21 @@ func _initialize() -> void:
 	var out_path: String = args[0] if args.size() > 0 else "user://impact_contact_sheet.png"
 	var scale: int = int(args[1]) if args.size() > 1 else 2
 	var caster: String = args[2] if args.size() > 2 else "kiem_si"
+	var only: PackedStringArray = args[3].split(",") if args.size() > 3 else PackedStringArray()
+	var cards: Array[String] = []
+	for card: String in VARIANTS:
+		if only.is_empty() or only.has(card):
+			cards.append(card)
 	var cols: int = FRAMES.size() + 1
-	var label_w: int = 70
+	var label_w: int = 96
 	var panel_h: int = AIR + CELL.y
 	var w: int = label_w + cols * (CELL.x + PAD) + PAD
-	var h: int = PAD + VARIANTS.size() * (panel_h + PAD)
+	var h: int = PAD + cards.size() * (panel_h + PAD)
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
 	img.fill(BG)
 	var font := _TinyFont.new()
 	var row: int = 0
-	for card: String in VARIANTS:
+	for card: String in cards:
 		var v: Dictionary = VARIANTS[card]
 		var y0: int = PAD + row * (panel_h + PAD)
 		font.draw(img, card, Vector2i(PAD, y0 + AIR + 2), Color("EFE6D2"))
@@ -99,7 +112,7 @@ func _initialize() -> void:
 	if scale > 1:
 		img.resize(w * scale, h * scale, Image.INTERPOLATE_NEAREST)
 	var err: int = img.save_png(out_path)
-	print("wrote ", out_path, " ", img.get_width(), "x", img.get_height(), " err=", err, " forms=", VARIANTS.size())
+	print("wrote ", out_path, " ", img.get_width(), "x", img.get_height(), " err=", err, " forms=", cards.size())
 	quit(0 if err == OK else 1)
 
 
