@@ -70,10 +70,9 @@ the -6), the daggers' two hits, the hook's drag to the divider cell. The mark ha
 
 ### Full suite (`bash tools/qa/run_all_tests.sh production/qa/batch4-suite-2026-11-11.txt`)
 
-The regression subset (34 files: the reference skills, batches 1–3, strings, audio, sim) was green before the
-commit (the one find, Thiên Quang's `Cột`, fixed to `Trụ`). The full suite was still running when the user asked
-for the commit (32 / 263 green at that point); its final line is appended in a follow-up commit.
-
+Run 2026-11-11 (headless unit + integration, windowed ui): **271 tests, 271 green (FAILS=0, 0 script errors).**
+The regression subset run before the commit had one find (Thiên Quang's `Cột`, fixed to `Trụ` before this run).
+`skill_v2_golden_test` is green since the parent session's `V2_INSTANT_CARDS` fix; batch 4 adds no instant card.
 
 ## Left open
 
