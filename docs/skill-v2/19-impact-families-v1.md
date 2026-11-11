@@ -143,6 +143,27 @@ same as traps). No PixelLab call: V16 in `02-vfx-concepts.md` is code. Contact s
 `production/qa/evidence/skill-v2-signature/batch3_x3.png`. In-game frames (the armed mark, not an 8-frame strip):
 `production/qa/evidence/skill-v2-batch3/01..07.png`.
 
+## V4-G — signature forms of the batch-4 cards (2026-11-11, approved to start: "Làm tiếp hình chữ ký đi")
+
+Five ImpactFx forms, same two layers: `chuong_thanh` **bell** (two square rings rolling out on the slab; a five-slab
+bell swinging at the top of the cell with its clapper, two rings of slabs rising), `thien_quang` **lightpillar** (a
+hub with four rays on the slab; a 1.4 H column of light that narrows as it fades, six sparks), `dau_tu` **deathmark**
+(four corner brackets closing in and a stepped X; two crossed dagger streaks then a hollow sigil shrinking at 0.5 H),
+`phi_tieu` **dagger** (the thrown dagger lying where it struck; one stuck upright, quivering, three sparks),
+`moc_keo` **hook** (a chain of squares from the caster's edge to the hook head, yanked back; the head standing with
+its chain at 0.2 H; flips with the travel direction). Wired in `impact_variants` with their own colours.
+
+Two field marks beyond the impact clip:
+- the **death mark** (`StatusEffects.has_mark`): `ZoneFx.mark` draws four breathing brackets and a core on the marked
+  unit's slab (`FloorDynamicLayer.zone_state`), the brackets shortening as the mark runs out;
+- the **pull path** (`SwingArbiter.cast_scheduled` `pull_path`): `CombatView.pull_telegraph_now` keeps the cells from
+  the swing end until the hook's first event + `PULL_TELEGRAPH_TAIL_SEC`, and `DeliveryFx.pull_path_floor` draws two
+  chevrons per cell marching toward the divider (`OverlayLayer.travel_items`).
+
+Every echo wave of Chuông Thánh is its own impact event, so the bell rings three (square: four) times on its own.
+No PixelLab call. Contact sheet `production/qa/evidence/skill-v2-signature/batch4_x3.png`; in-game frames
+`production/qa/evidence/skill-v2-signature/batch4-ingame/`.
+
 ## Card → form
 
 | Family | Card | Form | Knobs |

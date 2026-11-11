@@ -230,6 +230,10 @@ var _summon_hold: Dictionary = {}
 ## ADR-0001 Task 5: the player's last resolved cast for the code-drawn travel ({} = none): {cells, delivery, caster,
 ## arrive, start (FloorVfx clock at the resolve)}.
 var _cast_travel: Dictionary = {}
+## Batch 4 (Móc Kéo): the pull path telegraph {cells, start (FloorVfx clock), sec}; {} when none.
+var _pull_telegraph: Dictionary = {}
+## How long the pull path stays drawn after the hook's first event.
+const PULL_TELEGRAPH_TAIL_SEC: float = 0.25
 ## Skill v2 V1 (2026-11-11): a SCHEDULED cast (arrival / waves / delayed) never records `_cast_travel`, so its
 ## impacts are recorded event by event here instead (same shape, arrival 0 at `start`), one record per resolved
 ## player event; OverlayLayer reads them with event_impacts_now() and drops them after its tail.
@@ -3145,10 +3149,31 @@ func _on_cast_scheduled(side: int, cast: Dictionary) -> void:
 		_sky_summon = {}
 		_sky_plan.append_array(recs)
 		return
+	# batch 4 (Móc Kéo): the pull path (SwingArbiter `pull_path`) is telegraphed on the floor from the swing end until
+	# the hook's first event lands, plus PULL_TELEGRAPH_TAIL_SEC
+	var path: Array = cast.get("pull_path", []) as Array
+	if not path.is_empty() and _arbiter != null:
+		var first_at: float = INF
+		for e: Dictionary in cast.get("events", []) as Array:
+			first_at = minf(first_at, float(e["at"]))
+		var sec: float = (maxf(first_at - _arbiter.clock(), 0.0) if first_at < INF else 0.0) + PULL_TELEGRAPH_TAIL_SEC
+		_pull_telegraph = {"cells": path.duplicate(), "start": get_floor_vfx().elapsed(), "sec": sec}
 	_surge_plan = []
 	for e: Dictionary in cast.get("events", []) as Array:
 		_surge_plan.append({"cell": (e["cells"] as Array)[0], "from": e.get("from", CastResolver.NO_CELL), "at": float(e["at"]),
 			"kind": str(e.get("kind", ""))})
+
+
+## Batch 4 (Móc Kéo): the pull path telegraph to draw now: {cells, t (seconds since the swing end)}; {} when none
+## or it has run out (the record is dropped then).
+func pull_telegraph_now() -> Dictionary:
+	if _pull_telegraph.is_empty():
+		return {}
+	var t: float = get_floor_vfx().elapsed() - float(_pull_telegraph["start"])
+	if t > float(_pull_telegraph["sec"]):
+		_pull_telegraph = {}
+		return {}
+	return {"cells": _pull_telegraph["cells"], "t": t}
 
 
 ## Skill v2 (Ngàn Kiếm): the sky drops to draw now (SkyDropFx.drops_now on the arbiter clock; a dropped cast's

@@ -33,5 +33,10 @@ func _initialize() -> void:
 	ck("khien_thep is not the ward frame", Fx.marks("ward", "khien_thep", SLAB, 0) != Fx.marks("ward", "thanh_thuan", SLAB, 0))
 	ck("jaws pulse", Fx.marks("trap", "bay_kep", SLAB, 0) != Fx.marks("trap", "bay_kep", SLAB, 7))
 	ck("unknown kind draws nothing", Fx.marks("fuse", "", SLAB, 0).is_empty())
+	# batch 4: the death mark
+	var mark: Array[Dictionary] = Fx.mark(SLAB, 0, 1.0)
+	ck("mark draws inside, deterministic", not mark.is_empty() and _inside(mark) and mark == Fx.mark(SLAB, 0, 1.0))
+	ck("mark breathes", mark != Fx.mark(SLAB, 4, 1.0))
+	ck("mark shortens as it runs out", (Fx.mark(SLAB, 0, 0.1)[0]["rect"] as Rect2i).size.x < (mark[0]["rect"] as Rect2i).size.x)
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)

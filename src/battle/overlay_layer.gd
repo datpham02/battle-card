@@ -267,11 +267,12 @@ func impact_standing_items() -> Array[Dictionary]:
 ## The standing impact items of one recorded cast [param tr]; groups start at [param group_base].
 func _record_standing_items(combat: CombatView, tr: Dictionary, group_base: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	if tr.is_empty() or not bool(tr.get("hit", false)) or bool(tr.get("swinging", false)):
+	if tr.is_empty() or bool(tr.get("swinging", false)):
 		return out
 	var variant: Dictionary = CastVfx.impact_variant(str(tr.get("skill_id", "")))
 	var form: String = ImpactFx.form_of(variant)
-	if form.is_empty():
+	# `always`: the form plays on every reached cell, hit or not (Thiên Quang's pillars fall on each cell)
+	if form.is_empty() or not (bool(tr.get("hit", false)) or bool(variant.get("always", false))):
 		return out
 	var delivery: Dictionary = tr["delivery"]
 	var impact: String = str(delivery.get("impact", ""))
@@ -323,6 +324,15 @@ func travel_items() -> Array[Dictionary]:
 		_streak(out, shot["from"], shot["to"], float(shot["t"]), CastVfx.impact_colours(str(shot.get("impact", "")), hero_id))
 	_side_items(out, combat, CombatState.Side.PLAYER, hero_id)
 	_side_items(out, combat, CombatState.Side.ENEMY, ENEMY_BLOCK)
+	# batch 4 (Móc Kéo): the pull path chevrons march toward the divider (the enemy half's left edge)
+	var pull: Dictionary = combat.pull_telegraph_now()
+	if not pull.is_empty():
+		var rects: Array[Rect2i] = []
+		for c: Vector2i in pull["cells"] as Array:
+			rects.append(_floor.cell_art_rect(c))
+		var pull_cols: Array[Color] = variant_colours(CastVfx.impact_variant("moc_keo"), CastVfx.block_colours(hero_id))
+		for it: Dictionary in DeliveryFx.pull_path_floor(rects, -1, float(pull["t"])):
+			out.append(_sq(it["rect"], tone_colour(it, pull_cols)))
 	_surge_items(out, combat, hero_id)
 	_sky_shadow_items(out, combat)
 	_front_items(out, combat, hero_id)
@@ -769,7 +779,8 @@ func _record_items(out: Array[Dictionary], combat: CombatView, side: int, caster
 			for f: Dictionary in CastFloorFx.flash_rects(_floor.cell_art_rect(c), age, sec):
 				out.append({"rect": f["rect"], "col": Color(block[1], 0.85) if bool(f["fill"]) else block[1], "fill": bool(f["fill"]),
 					"width": int(f["width"]), "edge": false})
-		if bool(tr.get("hit", false)) and not style.is_empty():
+		# `always`: a signature form that plays on every reached cell, hit or not (Thiên Quang's pillars)
+		if (bool(tr.get("hit", false)) or (not form.is_empty() and bool(variant.get("always", false)))) and not style.is_empty():
 			# a variant's own `sec` (0.5 s) outlasts the type's; the recorded cast is kept past its last arrival for it
 			var impact_sec: float = float(variant.get("sec", style.get("sec", 0.24)))
 			var items: Array[Dictionary] = ImpactFx.items(cell_form, _floor.cell_art_rect(c), age, impact_sec, hash(c) + 11, dir, variant, reduce) \

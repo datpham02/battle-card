@@ -25,6 +25,31 @@ static func marks(kind: String, skill_id: String, slab: Rect2i, step: int) -> Ar
 	return out
 
 
+## Batch 4 (Dấu Tử): the death mark on the marked unit's slab while it lasts: four corner brackets that breathe with
+## [param step] and shorten as [param frac] (time left / total) runs out, a 4 px core.
+static func mark(slab: Rect2i, step: int, frac: float) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var pulse: float = float(step % 8) / 7.0
+	var inset: int = 4 + roundi(pulse * 2.0)
+	var f: Rect2i = slab.grow(-inset)
+	if f.size.x < 8 or f.size.y < 8:
+		f = slab
+	var arm: int = maxi(roundi(lerpf(4.0, 10.0, clampf(frac, 0.0, 1.0))), 4)
+	var ink := Color("7A1F3A")
+	var fill := Color("FFB3C6")
+	out.append(_bar(f.position.x, f.position.y, arm, 2, fill))
+	out.append(_bar(f.position.x, f.position.y, 2, arm, fill))
+	out.append(_bar(f.end.x - arm, f.position.y, arm, 2, fill))
+	out.append(_bar(f.end.x - 2, f.position.y, 2, arm, fill))
+	out.append(_bar(f.position.x, f.end.y - 2, arm, 2, ink))
+	out.append(_bar(f.position.x, f.end.y - arm, 2, arm, ink))
+	out.append(_bar(f.end.x - arm, f.end.y - 2, arm, 2, ink))
+	out.append(_bar(f.end.x - 2, f.end.y - arm, 2, arm, ink))
+	var c := slab.position + Vector2i(floori(float(slab.size.x) / 2.0), floori(float(slab.size.y) / 2.0))
+	out.append(_sq(c, 4, fill if pulse < 0.5 else ink))
+	return out
+
+
 static func _jaws(out: Array[Dictionary], slab: Rect2i, pulse: float) -> void:
 	var jaw: int = maxi(roundi(lerpf(float(slab.size.x) * 0.22, float(slab.size.x) * 0.32, pulse)), 6)
 	var top: int = slab.position.y + floori(float(slab.size.y) * 0.28)

@@ -53,6 +53,12 @@ const VARIANTS := {
 	"bang_vo": {"impact": "shatter", "form": "iceburst", "colours": ["#A6EEFF", "#EEF4FA"], "sec": 0.6},
 	"hoi_am": {"impact": "slash", "form": "echo"},
 	"dia_chan": {"impact": "knockback", "form": "quake", "sec": 0.6},
+	# signature forms of the batch-4 cards
+	"chuong_thanh": {"impact": "freeze", "form": "bell", "colours": ["#B8C4D8", "#F6F2E4"], "sec": 0.55},
+	"thien_quang": {"impact": "freeze", "form": "lightpillar", "colours": ["#D8C878", "#FFF8DC"], "sec": 0.6},
+	"dau_tu": {"impact": "slash", "form": "deathmark", "colours": ["#7A1F3A", "#FFB3C6"], "sec": 0.5},
+	"phi_tieu": {"impact": "slash", "form": "dagger", "colours": ["#6E7A86", "#E6EEF4"], "sec": 0.45},
+	"moc_keo": {"impact": "knockback", "form": "hook", "colours": ["#8A5A33", "#D9B07A"], "sec": 0.5},
 	# signature forms of the batch-3 cards
 	"bay_kep": {"impact": "thorns", "form": "jaw", "colours": ["#3A3A42", "#C8C8D0"], "sec": 0.45},
 	"bay_lo": {"impact": "thorns", "form": "spring", "colours": ["#4A3428", "#C8C8D0"], "sec": 0.5},

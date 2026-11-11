@@ -222,6 +222,17 @@ func zone_state() -> Array[Dictionary]:
 				var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
 				slab.position += cell_rect.position
 				out.append_array(_ZoneFx.marks(kind, str((info.get("data", {}) as Dictionary).get("skill_id", "")), slab, step))
+		# batch 4 (Dấu Tử): the death mark on the marked unit's cells while it lasts
+		if status.has_mark(side):
+			var m: Dictionary = status.mark_at(side)
+			var frac: float = float(m.get("left", 0.0)) / maxf(float(m.get("total", 1.0)), 0.001)
+			var state: CombatState = combat.get_state()
+			var marked: Array = state.enemy_footprint_cells() if side == CombatState.Side.ENEMY else [state.player_cell]
+			for cell: Vector2i in marked:
+				var cell_rect: Rect2i = _floor.cell_art_rect(cell)
+				var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
+				slab.position += cell_rect.position
+				out.append_array(_ZoneFx.mark(slab, step, frac))
 	return out
 
 

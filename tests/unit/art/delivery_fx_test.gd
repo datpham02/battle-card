@@ -53,5 +53,12 @@ func _initialize() -> void:
 		and (DeliveryFx.gather_floor(CELL, 0.02)[0]["rect"] as Rect2i).get_center().distance_to(CELL.get_center()) < (DeliveryFx.gather_floor(CELL, 0.18)[0]["rect"] as Rect2i).get_center().distance_to(CELL.get_center()))
 	ck("gather_standing: drops in and stays above the base", not DeliveryFx.gather_standing(BASE, 64, 0.1).is_empty() and _above(DeliveryFx.gather_standing(BASE, 64, 0.0), BASE.y)
 		and DeliveryFx.gather_standing(BASE, 64, 0.3).is_empty())
+	# batch 4 (Móc Kéo): the pull path chevrons stay inside their cells, march with time, flip with `toward`
+	var path: Array[Rect2i] = [CELL, Rect2i(CELL.position + Vector2i(70, 0), CELL.size)]
+	var pp: Array[Dictionary] = DeliveryFx.pull_path_floor(path, -1, 0.0)
+	var pp_in: bool = pp.all(func(it: Dictionary) -> bool: return CELL.encloses(it["rect"]) or path[1].encloses(it["rect"]))
+	ck("pull_path_floor: draws inside its cells, deterministic", not pp.is_empty() and pp_in and pp == DeliveryFx.pull_path_floor(path, -1, 0.0))
+	ck("pull_path_floor: marches with time and flips with toward", pp != DeliveryFx.pull_path_floor(path, -1, 0.2)
+		and pp != DeliveryFx.pull_path_floor(path, 1, 0.0))
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)

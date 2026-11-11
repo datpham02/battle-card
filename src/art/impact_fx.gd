@@ -35,6 +35,9 @@ const FORMS: Array[String] = [
 	# signature forms of the batch-3 cards: Bẫy Kẹp jaw, Bẫy Lò Xo spring, Gai Nổ splinter,
 	# Thánh Thuẫn ward, Khiên Thép plate, Tường Đá pillar, Hỏa Tuyến firewall
 	"jaw", "spring", "splinter", "ward", "plate", "pillar", "firewall",
+	# signature forms of the batch-4 cards: Chuông Thánh bell, Thiên Quang light pillar, Dấu Tử death mark,
+	# Phi Tiêu dagger, Móc Kéo hook
+	"bell", "lightpillar", "deathmark", "dagger", "hook",
 ]
 
 ## Reduce motion (art bible §3): the last frame, still, for this long.
@@ -99,6 +102,11 @@ static func items(form: String, cell_rect: Rect2i, age: float, sec: float, seed:
 		"plate": _plate_floor(out, g, u)
 		"pillar": _pillar_floor(out, g, u)
 		"firewall": _firewall_floor(out, g, u)
+		"bell": _bell_floor(out, g, u)
+		"lightpillar": _lightpillar_floor(out, g, u)
+		"deathmark": _deathmark_floor(out, g, u)
+		"dagger": _dagger_floor(out, g, u)
+		"hook": _hook_floor(out, g, u)
 	_residue(out, g, u)
 	# Art bible §3: only inside the target cell (its 1 px Ink edge included).
 	var bound: Rect2i = cell_rect.grow(1)
@@ -203,6 +211,20 @@ static func aftermath_items(form: String, cell_rect: Rect2i, age: float, after_s
 		"firewall":
 			for i: int in 4:
 				out.append(g.sq(Vector2i(g.r.position.x + 8 + _d((g.w - 16) * (i * 2 + 1), 8), g.r.end.y - 8), 4 if not fade else 2, false))
+		"bell":
+			_outline(out, g.r.grow(-5), 2 if not fade else 1)
+			out.append(g.sq(g.c, 6 if not fade else 3, false))
+		"lightpillar":
+			out.append(g.sq(g.c, 14 if not fade else 6, false))
+			if not fade:
+				out.append(g.bar(g.c.x - _d(g.w, 3), g.c.y - 1, _d(g.w, 3) * 2, 2, false))
+		"deathmark":
+			_brackets(out, g.r.grow(-5), 8 if not fade else 4, 2)
+		"dagger":
+			_dagger_lying(out, g, 3 if not fade else 2)
+		"hook":
+			for i: int in 5:
+				out.append(g.sq(Vector2i(g.r.position.x + 6 + i * _d(g.w - 12, 4), g.c.y), 4 if not fade else 2, false))
 		"echo":
 			# the echo: 0.1–0.4 s after the clip a ghost of the hit replays — a double ring pulsing out and the scar
 			var a := Vector2i(g.r.position.x + 4, g.r.end.y - 6)
@@ -269,6 +291,11 @@ static func standing_items(form: String, base: Vector2i, cell_w: int, age: float
 		"plate": _plate_standing(out, s, u)
 		"pillar": s.column(out, 0, maxi(roundi(float(s.H) * 0.7 / 3.0), 2), 14, 0)
 		"firewall": _firewall_standing(out, s, u)
+		"bell": _bell_standing(out, s, u)
+		"lightpillar": _lightpillar_standing(out, s, u)
+		"deathmark": _deathmark_standing(out, s, u)
+		"dagger": _dagger_standing(out, s, u)
+		"hook": _hook_standing(out, s, u)
 	var toned: Array[Dictionary] = []
 	for it: Dictionary in out:
 		var r: Rect2i = it["rect"]
@@ -524,6 +551,169 @@ static func _firewall_standing(out: Array[Dictionary], s: _Stand, u: float) -> v
 	var layers: int = maxi(roundi(float(s.H) * 0.55 * minf(u / 0.3, 1.0) / 3.0), 1)
 	for dx: int in [-_d(s.w, 3), 0, _d(s.w, 3)]:
 		s.column(out, dx, layers, 8, 0)
+
+
+# --- signature forms (batch-4 cards) --------------------------------------------------------------
+
+## Chuông Thánh, flat: two square rings rolling out from the centre (the second 0.3 behind), a 6 px hub.
+static func _bell_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	for ring: int in 2:
+		var k: float = clampf((u - float(ring) * 0.3) / 0.7, 0.0, 1.0)
+		if k <= 0.0 or k >= 1.0:
+			continue
+		var frac: float = lerpf(0.25, 1.0, k)
+		_outline(out, Rect2i(g.c - Vector2i(roundi(float(g.hw) * frac), roundi(float(g.hh) * frac)),
+			Vector2i(maxi(roundi(float(g.w) * frac), 4), maxi(roundi(float(g.h) * frac), 4))), 3 if ring == 0 else 2)
+	out.append(g.sq(g.c, 6, true))
+
+
+## Chuông Thánh, standing: a bell (five slabs widening downward) hanging at the top of the cell, swinging twice,
+## its clapper below; two rings of two slabs rise from the base.
+static func _bell_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var lean: int = roundi(sin(u * TAU * 2.0) * 6.0 * (1.0 - u * 0.5))
+	var top: int = s.H - 2
+	for k: int in 5:
+		out.append(s.slab(lean * (4 - k) / 4, top - 4 * (k + 1), 8 + k * 5, 4, k < 2))
+	out.append(s.sq(lean, top - 24, 5, true))
+	for ring: int in 2:
+		var k: float = clampf((u - float(ring) * 0.25) / 0.75, 0.0, 1.0)
+		if k <= 0.0 or k >= 1.0:
+			continue
+		var w: int = maxi(roundi(float(s.w) * k), 6)
+		var up: int = roundi(float(s.H) * 0.4 * k)
+		out.append(s.slab(0, up + 6, w, 2, true))
+		out.append(s.slab(0, up, w, 2, false))
+
+
+## Thiên Quang, flat: a hub square growing to 0.6 of the cell with four rays to the edges that thin out.
+static func _lightpillar_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var frac: float = lerpf(0.2, 0.6, minf(u / 0.3, 1.0))
+	var sz := Vector2i(maxi(roundi(float(g.w) * frac), 6), maxi(roundi(float(g.h) * frac), 6))
+	out.append(g.bar(g.c.x - _d(sz.x, 2), g.c.y - _d(sz.y, 2), sz.x, sz.y, false))
+	out.append(g.sq(g.c, maxi(_d(sz.y, 2), 4), true))
+	if u > 0.15:
+		var t: int = 4 if u < 0.7 else 2
+		out.append(g.bar(g.r.position.x + 2, g.c.y - _d(t, 2), g.w - 4, t, false))
+		out.append(g.bar(g.c.x - _d(t, 2), g.r.position.y + 2, t, g.h - 4, false))
+
+
+## Thiên Quang, standing: a column of light rising to 1.4 H over the first quarter, narrowing from 14 px to 4 px
+## as it fades, six sparks drifting out beside it.
+static func _lightpillar_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var rise: float = minf(u / 0.25, 1.0)
+	var fade: float = clampf((u - 0.6) / 0.4, 0.0, 1.0)
+	var layers: int = maxi(roundi(float(s.H) * 1.4 * rise / 3.0), 1)
+	var bw: int = maxi(roundi(lerpf(14.0, 4.0, fade)), 4)
+	for k: int in layers:
+		out.append(s.slab(0, k * 3, bw, 3, k % 3 != 0))
+	for i: int in 6:
+		var side: int = -1 if i % 2 == 0 else 1
+		var dx: int = side * (10 + roundi(float(i) * 2.0 + u * 10.0))
+		var up: int = 6 + i * roundi(float(s.H) / 7.0) + roundi(u * 8.0)
+		if up < s.H:
+			out.append(s.sq(dx, up, 3, i % 3 == 0))
+
+
+## Dấu Tử, flat: four corner brackets closing in from the cell's corners and a stepped X at the centre.
+static func _deathmark_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	var close: float = minf(u / 0.3, 1.0)
+	var inset: int = roundi(lerpf(2.0, 7.0, close))
+	var arm: int = maxi(roundi(lerpf(6.0, float(g.hw) * 0.5, close)), 4)
+	_brackets(out, g.r.grow(-inset), arm, 3)
+	if u > 0.2:
+		var e: int = maxi(_d(g.hh, 2), 4)
+		_stepped(out, g.c + Vector2i(-e, -e), g.c + Vector2i(e, e), 3, 2)
+		_stepped(out, g.c + Vector2i(-e, e), g.c + Vector2i(e, -e), 3, 2)
+	out.append(g.sq(g.c, 4, true))
+
+
+## Dấu Tử, standing: two crossed dagger streaks sweep over the tile, then a hollow sigil hangs at 0.5 H and
+## shrinks around a bright core.
+static func _deathmark_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	if u < 0.5:
+		var k: float = u / 0.5
+		s.streak(out, Vector2i(-s.hw, roundi(float(s.H) * 0.9)), Vector2i(s.hw, 4), k, 4)
+		s.streak(out, Vector2i(s.hw, roundi(float(s.H) * 0.9)), Vector2i(-s.hw, 4), k, 4)
+	var k2: float = clampf((u - 0.35) / 0.65, 0.0, 1.0)
+	var size: int = maxi(roundi(lerpf(22.0, 12.0, k2)), 8)
+	var up: int = roundi(float(s.H) * 0.5)
+	var f := Rect2i(s.base.x - _d(size, 2), s.base.y - up - _d(size, 2), size, size)
+	_outline(out, f, 3)
+	out.append(s.sq(0, up, 4, true))
+
+
+## Phi Tiêu, flat: the thrown dagger lying where it struck (a stepped blade, a crossguard, a hilt) and three chips.
+static func _dagger_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	_dagger_lying(out, g, 3)
+	if u < 0.5:
+		for i: int in 3:
+			out.append(g.sq(g.c + Vector2i((i - 1) * 9, -6 - roundi(u * 10.0)), 3, i == 1))
+
+
+## The lying dagger shared by the flat clip and the aftermath: blade from the upper left of the cell to the centre,
+## crossguard and hilt past it.
+static func _dagger_lying(out: Array[Dictionary], g: _Geo, size: int) -> void:
+	var tip: Vector2i = g.c + Vector2i(-roundi(float(g.hw) * 0.45), -roundi(float(g.hh) * 0.35))
+	var hilt: Vector2i = g.c + Vector2i(roundi(float(g.hw) * 0.2), roundi(float(g.hh) * 0.25))
+	_stepped(out, tip, hilt, size, 2)
+	out.append(g.bar(hilt.x - 5, hilt.y - 1, 10, 3, false))
+	out.append(g.bar(hilt.x + 2, hilt.y + 2, 4, 6, false))
+
+
+## Phi Tiêu, standing: the dagger stuck upright in the tile, quivering (lean fading out), with three sparks at the
+## base over the first 0.3.
+static func _dagger_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var lean: int = roundi(sin(u * TAU * 3.0) * 4.0 * (1.0 - u))
+	var blade: int = maxi(roundi(float(s.H) * 0.45), 8)
+	out.append(s.slab(lean, 0, 3, blade, true))
+	out.append(s.slab(lean, blade, 10, 3, false))
+	out.append(s.slab(lean, blade + 3, 4, 8, false))
+	if u < 0.3:
+		for i: int in 3:
+			out.append(s.sq((i - 1) * 8, 4 + roundi(u * 20.0), 3, i == 1))
+
+
+## Móc Kéo, flat: a chain of squares from the caster's edge of the cell to the hook head in the middle, the head
+## (a bar with a three-square curl) yanked back toward the caster as the chain tightens.
+static func _hook_floor(out: Array[Dictionary], g: _Geo, u: float) -> void:
+	# the head struck the far side of the cell and is yanked back past the centre as the chain tightens
+	var head := Vector2i(g.c.x + g.sgn * roundi(lerpf(float(g.hw) * 0.55, float(-g.hw) * 0.3, minf(u / 0.6, 1.0))), g.c.y)
+	var edge_x: int = g.c.x - g.sgn * (g.hw - 3)
+	var n: int = maxi(absi(head.x - edge_x) / 6, 1)
+	for i: int in n:
+		var x: int = edge_x + g.sgn * i * 6
+		out.append(g.sq(Vector2i(x, g.c.y - 2 + (i % 2) * 4), 5, i % 2 == 0))
+	out.append(g.bar(head.x - 3, head.y - 10, 6, 18, true))
+	for i: int in 3:
+		out.append(g.sq(Vector2i(head.x - g.sgn * (5 + i * 5), head.y + 8 - i * 3), 5, i == 2))
+
+
+## Móc Kéo, standing: the hook head standing on the tile, yanked back toward the caster, a chain of squares
+## running back to the caster's side at 0.2 H.
+static func _hook_standing(out: Array[Dictionary], s: _Stand, u: float) -> void:
+	var dx: int = s.sgn * roundi(lerpf(float(s.hw) * 0.55, float(-s.hw) * 0.3, minf(u / 0.6, 1.0)))
+	var up: int = roundi(float(s.H) * 0.2)
+	out.append(s.slab(dx, up, 6, 22, true))
+	for i: int in 3:
+		out.append(s.sq(dx - s.sgn * (5 + i * 5), up + 2 + i * 3, 5, i == 2))
+	var from: int = -s.sgn * s.hw
+	var n: int = maxi(absi(dx - from) / 6, 1)
+	for i: int in n:
+		out.append(s.sq(from + s.sgn * i * 6, up + 14 + (i % 2) * 3, 5, i % 2 == 0))
+
+
+## Four L brackets [param arm] px long and [param t] px thick at the corners of [param f].
+static func _brackets(out: Array[Dictionary], f: Rect2i, arm: int, t: int) -> void:
+	var a: int = maxi(arm, maxi(t, 1))
+	var tt: int = maxi(t, 1)
+	out.append(_bar_at(f.position.x, f.position.y, a, tt, true))
+	out.append(_bar_at(f.position.x, f.position.y, tt, a, true))
+	out.append(_bar_at(f.end.x - a, f.position.y, a, tt, true))
+	out.append(_bar_at(f.end.x - tt, f.position.y, tt, a, true))
+	out.append(_bar_at(f.position.x, f.end.y - tt, a, tt, false))
+	out.append(_bar_at(f.position.x, f.end.y - a, tt, a, false))
+	out.append(_bar_at(f.end.x - a, f.end.y - tt, a, tt, false))
+	out.append(_bar_at(f.end.x - tt, f.end.y - a, tt, a, false))
 
 
 ## The form of a card's variant entry ({"form": ..., knobs}); "" when it names none or an unknown one.

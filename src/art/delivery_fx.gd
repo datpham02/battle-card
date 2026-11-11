@@ -222,3 +222,22 @@ static func gather_standing(base: Vector2i, cell_w: int, until: float) -> Array[
 		var up: int = roundi(float(H) * (0.6 - 0.1 * float(i % 2)) * k * k) + 3
 		out.append(_sq(Vector2i(base.x + (i - 1) * 9, base.y - up), 5 if i == 1 else 4, i == 1))
 	return out
+
+
+## Batch 4 (Móc Kéo): the pull path telegraph on [param cell_rects] (the cells the hooked unit will be dragged
+## through, flat cell art px): two chevrons of three 3 px squares per cell pointing [param toward] (-1 = left, +1 =
+## right), marching that way with [param t] (seconds). The leading chevron is highlight, the other body.
+static func pull_path_floor(cell_rects: Array[Rect2i], toward: int, t: float) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var dir: int = 1 if toward >= 0 else -1
+	var march: int = roundi(fposmod(t * 2.0, 1.0) * 10.0) * dir
+	for r: Rect2i in cell_rects:
+		var c: Vector2i = r.position + Vector2i(_d(r.size.x, 2), _d(r.size.y, 2))
+		for n: int in 2:
+			var cx: int = c.x + march - dir * (n * 10 - 5)
+			var light: bool = n == 0
+			for p: Vector2i in [Vector2i(cx + dir * 3, c.y), Vector2i(cx - dir * 1, c.y - 4), Vector2i(cx - dir * 1, c.y + 4)]:
+				var q: Rect2i = Rect2i(p - Vector2i(1, 1), Vector2i(3, 3)).intersection(r)
+				if q.size.x > 0 and q.size.y > 0:
+					out.append({"rect": q, "light": light, "tone": 2 if light else 1})
+	return out

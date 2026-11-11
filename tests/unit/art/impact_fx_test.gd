@@ -7,7 +7,7 @@ extends SceneTree
 const CELL := Rect2i(100, 60, 64, 46)
 const SEC: float = 0.3
 ## Forms whose shape depends on the travel direction.
-const DIRECTIONAL: Array[String] = ["arc_h", "arc_v", "cross_x", "double", "spike", "column", "wedge"]
+const DIRECTIONAL: Array[String] = ["arc_h", "arc_v", "cross_x", "double", "spike", "column", "wedge", "hook"]
 const PARAMS := {"spike": {"tilt": true}}
 
 var fails: int = 0
@@ -60,7 +60,7 @@ func _initialize() -> void:
 		var drew: bool = false
 		var ok: bool = true
 		# signature forms (meteor column, steam) rise to 1.3 cells; the others stay within one
-		var tall: int = 96 if ["crater", "steam", "vortex"].has(form) else 64
+		var tall: int = 96 if ["crater", "steam", "vortex", "lightpillar"].has(form) else 64
 		var limit := Rect2i(base.x - 32 - 8, base.y - tall - 8, 64 + 16, tall + 8 + 8)
 		for k: float in [0.1, 0.3, 0.5, 0.7, 0.9]:
 			var st: Array[Dictionary] = ImpactFx.standing_items(form, base, 64, k * SEC, SEC, 3, 1, p)
