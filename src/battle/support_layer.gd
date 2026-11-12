@@ -49,6 +49,11 @@ var _pillar_tex: Texture2D = null
 var _arch_tex: Texture2D = null
 var _roots_tex: Texture2D = null
 var _ferns_tex: Texture2D = null
+## 2026-11-12 (arena integration): the region's ground-contact strip at every wall's foot (`support.foot_tile`,
+## alpha where nothing lies): sand piled against the wall, stagnant water, ash and embers, a snow drift, rubble, or
+## for the Sky Isles loose stones floating under the island. `foot_rise` px above the foot (overlapping the wall's
+## last rows), `foot_extend` px beyond each end of the span, `foot_modulate`.
+var _foot_tex: Texture2D = null
 var _redraws: int = 0
 
 
@@ -73,7 +78,13 @@ func set_region_id(id: String) -> void:
 	_arch_tex = ArtAssets.region_texture(id, "support.arch")
 	_roots_tex = ArtAssets.region_texture(id, "support.roots")
 	_ferns_tex = ArtAssets.region_texture(id, "support.ferns")
+	_foot_tex = ArtAssets.region_texture(id, "support.foot_tile")
 	queue_redraw()
+
+
+## 2026-11-12: the region's ground-contact strip (null = none).
+func get_foot_texture() -> Texture2D:
+	return _foot_tex
 
 
 ## True when the region defines a support block (otherwise the layer draws nothing).
@@ -159,10 +170,35 @@ func _draw() -> void:
 		var foot: float = minf(tl.y, tr.y) + h
 		for i: int in bands.size():
 			draw_rect(Rect2(tl.x - 2 - i * 2, foot + i * band, tr.x - tl.x + 4 + i * 4, band), Color(Color("1B1722"), float(bands[i])))
+	if _foot_tex != null:
+		for span: Dictionary in wall_spans(geo, _combat.get_grid(), h):
+			_draw_foot_strip(span, h)
 	_draw_ferns_and_roots(geo, h)
 	if _mist != null and lowest > 0.0 and _num("mist_alpha") > 0.0:
 		var y: float = lowest - float(_mist.get_height()) + 8.0
 		draw_texture(_mist, Vector2(0.0, y), Color(1, 1, 1, _num("mist_alpha")))
+
+
+# 2026-11-12: the ground-contact strip across a span's foot: repeated on an absolute x grid (neighbouring spans line
+# up), from foot_extend px left of the span to foot_extend px right of it, its top foot_rise px above the foot.
+func _draw_foot_strip(span: Dictionary, h: int) -> void:
+	var tl: Vector2 = span["top_left"]
+	var tr: Vector2 = span["top_right"]
+	var ext: int = int(_cfg.get("foot_extend", 0))
+	var x0: int = int(tl.x) - ext
+	var x1: int = int(tr.x) + ext
+	var top: int = int(minf(tl.y, tr.y)) + h - int(_cfg.get("foot_rise", 0))
+	var tw: int = _foot_tex.get_width()
+	var th: int = _foot_tex.get_height()
+	if x1 <= x0 or tw <= 0 or th <= 0:
+		return
+	var mod := Color(str(_cfg.get("foot_modulate", "#FFFFFF")))
+	var x: int = x0 - posmod(x0, tw)
+	while x < x1:
+		var a: int = maxi(x, x0)
+		var b: int = mini(x + tw, x1)
+		draw_texture_rect_region(_foot_tex, Rect2(a, top, b - a, th), Rect2(a - x, 0, b - a, th), mod)
+		x += tw
 
 
 # 2026-11-06: fern clumps along every wall's foot (fern_xs, in front of the foot shadow), then roots hanging from the

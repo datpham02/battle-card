@@ -34,7 +34,7 @@ func test_area_for_columns() -> void:
 	var want: Array[String] = ["edge", "edge", "edge", "ruins", "ruins", "ruins"]
 	check("columns 0-2 edge, 3-5 ruins: %s" % [got], got == want)
 	check("miniboss mid-map stays ruins", Assets.area_for("forest", 3, COLUMNS, "miniboss") == "ruins")
-	check("a region without areas has none", Assets.area_for("dungeon", 0, COLUMNS, "battle") == "")
+	check("a region without areas has none", Assets.area_for("lattice_heart", 0, COLUMNS, "battle") == "")  # 2026-11-12: dungeon gained areas (World Map v2 region visuals); the final match has none
 
 
 func test_area_for_boss() -> void:

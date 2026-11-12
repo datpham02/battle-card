@@ -1,0 +1,236 @@
+{
+  "cell": [
+    16,
+    8
+  ],
+  "stamps": [
+    {
+      "name": "crack_a",
+      "rect": [
+        0,
+        0,
+        11,
+        7
+      ],
+      "anchor": "any",
+      "kind": "crack"
+    },
+    {
+      "name": "crack_b",
+      "rect": [
+        16,
+        0,
+        12,
+        7
+      ],
+      "anchor": "any",
+      "kind": "crack"
+    },
+    {
+      "name": "moss_tl",
+      "rect": [
+        32,
+        0,
+        6,
+        5
+      ],
+      "anchor": "top_left",
+      "kind": "cover"
+    },
+    {
+      "name": "moss_br",
+      "rect": [
+        9,
+        12,
+        7,
+        4
+      ],
+      "anchor": "bottom_right",
+      "kind": "cover"
+    },
+    {
+      "name": "root_bl",
+      "rect": [
+        16,
+        10,
+        12,
+        6
+      ],
+      "anchor": "bottom_left",
+      "kind": "cover"
+    },
+    {
+      "name": "leaves",
+      "rect": [
+        32,
+        8,
+        10,
+        6
+      ],
+      "anchor": "any",
+      "kind": "cover"
+    },
+    {
+      "name": "crack_c",
+      "rect": [
+        0,
+        16,
+        32,
+        14
+      ],
+      "anchor": "any",
+      "kind": "crack"
+    },
+    {
+      "name": "moss_c",
+      "rect": [
+        34,
+        16,
+        8,
+        7
+      ],
+      "anchor": "any",
+      "kind": "cover"
+    },
+    {
+      "name": "moss_d",
+      "rect": [
+        44,
+        16,
+        8,
+        4
+      ],
+      "anchor": "any",
+      "kind": "cover"
+    },
+    {
+      "name": "speckle_a",
+      "rect": [
+        54,
+        16,
+        16,
+        8
+      ],
+      "anchor": "any",
+      "kind": "speckle"
+    },
+    {
+      "name": "speckle_b",
+      "rect": [
+        72,
+        16,
+        16,
+        8
+      ],
+      "anchor": "any",
+      "kind": "speckle"
+    },
+    {
+      "name": "chip_tl",
+      "rect": [
+        0,
+        32,
+        5,
+        4
+      ],
+      "anchor": "top_left",
+      "kind": "chip"
+    },
+    {
+      "name": "chip_tr",
+      "rect": [
+        6,
+        32,
+        5,
+        4
+      ],
+      "anchor": "top_right",
+      "kind": "chip"
+    },
+    {
+      "name": "chip_bl",
+      "rect": [
+        12,
+        32,
+        4,
+        4
+      ],
+      "anchor": "bottom_left_face",
+      "kind": "chip"
+    },
+    {
+      "name": "chip_br",
+      "rect": [
+        17,
+        32,
+        4,
+        4
+      ],
+      "anchor": "bottom_right_face",
+      "kind": "chip"
+    },
+    {
+      "name": "nick_top",
+      "rect": [
+        22,
+        32,
+        6,
+        2
+      ],
+      "anchor": "top_edge",
+      "kind": "chip"
+    },
+    {
+      "name": "nick_left",
+      "rect": [
+        29,
+        32,
+        2,
+        6
+      ],
+      "anchor": "left_edge",
+      "kind": "chip"
+    },
+    {
+      "name": "nick_lip",
+      "rect": [
+        32,
+        32,
+        6,
+        3
+      ],
+      "anchor": "lip_bottom",
+      "kind": "chip"
+    }
+  ],
+  "version": "dungeon 2026-11-12 (forest v2 sheet recoloured)",
+  "rules": {
+    "max_cracks_per_slab": 2,
+    "max_cover_face_ratio": 0.25,
+    "speckle_max_face_ratio": 0.04,
+    "placed_by": "cell seed"
+  },
+  "palette": {
+    "stone": "#484C58",
+    "light_edge": "#5A5E6A",
+    "dark_edge": "#363A44",
+    "crack": "#2E323B",
+    "lip": "#24272E",
+    "lip_top": "#6A6E7A",
+    "ink": "#1B1722",
+    "cover": "#6E6252",
+    "cover_dark": "#4E4438"
+  },
+  "nine_slice": {
+    "size": [
+      16,
+      16
+    ],
+    "margins": {
+      "left": 3,
+      "right": 3,
+      "top": 3,
+      "bottom": 4
+    }
+  }
+}

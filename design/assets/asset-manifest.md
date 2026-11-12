@@ -1,6 +1,6 @@
 # Asset Manifest (GENERATED)
 
-> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-11. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
+> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-12. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
 
 Lifecycle: `candidate → accepted → installed → approved`; `legacy` = replaced. **installed is not approved**: `Accepted` / `Approved` columns show what the user recorded; `unknown` means no record exists.
 
@@ -8,9 +8,9 @@ Lifecycle: `candidate → accepted → installed → approved`; `legacy` = repla
 
 | Total | Candidate | Accepted | Installed | Approved | Legacy |
 |---|---|---|---|---|---|
-| 108 | 1 | 0 | 84 | 19 | 4 |
+| 181 | 1 | 0 | 157 | 19 | 4 |
 
-Acceptance recorded: unknown 79, pending 11, accepted 18, rejected 0.
+Acceptance recorded: unknown 152, pending 11, accepted 18, rejected 0.
 
 ## Needs the user's decision
 
@@ -40,7 +40,7 @@ Acceptance recorded: unknown 79, pending 11, accepted 18, rejected 0.
 | `unit.goblin_archer` | ASSET-026 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-03 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.goblin_scout` | ASSET-003 | monster | 64x52 | left | **approved** | unknown | yes 2026-10-31 | idle 4?, step 4?, windup 2?, hit 3?, down 8? | `design/assets/specs/goblin-scout-assets.md` |
 | `unit.goblin_warlock` | ASSET-029 | boss | 160x130 | left | **approved** | unknown | yes 2026-11-04 | idle 4?, step 4?, windup 4?, windup_heavy 4?, phase_shift 4?, hit 3?, down 5? | `design/assets/specs/misty-forest-roster-assets.md` |
-| `unit.greycap_sporeling` | ASSET-022 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.greycap_sporeling` | ASSET-022 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4+, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.kiem_si` | ASSET-001 | hero | 96x92 | right | **approved** | unknown | yes 2026-10-31 | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_up 7?, step_down 7?, cast_gesture 9?, cast_forward 9*, cast_summon 9+, hit 3?, victory 5?, defeat 8?, fall 4?, awaken 6? | `design/assets/specs/swordsman-assets.md` |
 | `unit.mistbriar_matron` | ASSET-025 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, guard 4?, hit 3?, down 4? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.mossbound_sentry` | ASSET-023 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, brace 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
@@ -121,6 +121,72 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 | `env.forest.env_support_forest_wall` | env_support_forest_wall | `assets/art/env/forest/env_support_forest_wall.png` | 231x44 | **approved** | unknown | yes 2026-11-06 | `design/art/forest-arena-gap-plan-2026-11-06.md` |  |
 | `env.forest.env_thorn_forest_tile16` | env_thorn_forest_tile16 | `assets/art/env/forest/env_thorn_forest_tile16.png` | 16x16 | **legacy** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | v1 thorn tile; region.json thorn_tile points at _v2 (2026-11-06 recolour); _doc_thorn_tile: "the original env_thorn_forest_tile16.png is kept" |
 | `env.forest.env_thorn_forest_tile16_v2` | env_thorn_forest_tile16_v2 | `assets/art/env/forest/env_thorn_forest_tile16_v2.png` | 16x16 | **installed** | unknown | no record | `design/assets/specs/misty-forest-assets.md` | 2026-11-06 colour-for-colour recolour to pale bone / dark earth (region.json _doc_thorn_tile); acceptance not recorded |
+| `env.dungeon.bg_dungeon_far_inner` | bg_dungeon_far_inner | `assets/art/env/dungeon/bg_dungeon_far_inner.png` | 800x360 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_slab_dungeon_9slice` | env_slab_dungeon_9slice | `assets/art/env/dungeon/env_slab_dungeon_9slice.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_slab_dungeon_stamps` | env_slab_dungeon_stamps | `assets/art/env/dungeon/env_slab_dungeon_stamps.png`, `assets/art/env/dungeon/env_slab_dungeon_stamps.json` | 96x48 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_support_dungeon_pillar` | env_support_dungeon_pillar | `assets/art/env/dungeon/env_support_dungeon_pillar.png` | 28x56 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_support_dungeon_wall` | env_support_dungeon_wall | `assets/art/env/dungeon/env_support_dungeon_wall.png` | 231x44 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_thorn_dungeon_tile16` | env_thorn_dungeon_tile16 | `assets/art/env/dungeon/env_thorn_dungeon_tile16.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.hellfire.bg_hellfire_far_inner` | bg_hellfire_far_inner | `assets/art/env/hellfire/bg_hellfire_far_inner.png` | 800x360 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_slab_hellfire_9slice` | env_slab_hellfire_9slice | `assets/art/env/hellfire/env_slab_hellfire_9slice.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_slab_hellfire_stamps` | env_slab_hellfire_stamps | `assets/art/env/hellfire/env_slab_hellfire_stamps.png`, `assets/art/env/hellfire/env_slab_hellfire_stamps.json` | 96x48 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_support_hellfire_pillar` | env_support_hellfire_pillar | `assets/art/env/hellfire/env_support_hellfire_pillar.png` | 28x56 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_support_hellfire_wall` | env_support_hellfire_wall | `assets/art/env/hellfire/env_support_hellfire_wall.png` | 231x44 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_thorn_hellfire_tile16` | env_thorn_hellfire_tile16 | `assets/art/env/hellfire/env_thorn_hellfire_tile16.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.bg_ice_tower_far_inner` | bg_ice_tower_far_inner | `assets/art/env/ice_tower/bg_ice_tower_far_inner.png` | 800x360 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_slab_ice_tower_9slice` | env_slab_ice_tower_9slice | `assets/art/env/ice_tower/env_slab_ice_tower_9slice.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_slab_ice_tower_stamps` | env_slab_ice_tower_stamps | `assets/art/env/ice_tower/env_slab_ice_tower_stamps.png`, `assets/art/env/ice_tower/env_slab_ice_tower_stamps.json` | 96x48 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_support_ice_tower_pillar` | env_support_ice_tower_pillar | `assets/art/env/ice_tower/env_support_ice_tower_pillar.png` | 28x56 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_support_ice_tower_wall` | env_support_ice_tower_wall | `assets/art/env/ice_tower/env_support_ice_tower_wall.png` | 231x44 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_thorn_ice_tower_tile16` | env_thorn_ice_tower_tile16 | `assets/art/env/ice_tower/env_thorn_ice_tower_tile16.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.lattice_heart.bg_lattice_heart_far_inner` | bg_lattice_heart_far_inner | `assets/art/env/lattice_heart/bg_lattice_heart_far_inner.png` | 800x360 | **installed** | unknown | no record | — |  |
+| `env.lattice_heart.env_slab_lattice_heart_9slice` | env_slab_lattice_heart_9slice | `assets/art/env/lattice_heart/env_slab_lattice_heart_9slice.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.lattice_heart.env_slab_lattice_heart_stamps` | env_slab_lattice_heart_stamps | `assets/art/env/lattice_heart/env_slab_lattice_heart_stamps.png`, `assets/art/env/lattice_heart/env_slab_lattice_heart_stamps.json` | 96x48 | **installed** | unknown | no record | — |  |
+| `env.lattice_heart.env_support_lattice_heart_pillar` | env_support_lattice_heart_pillar | `assets/art/env/lattice_heart/env_support_lattice_heart_pillar.png` | 28x56 | **installed** | unknown | no record | — |  |
+| `env.lattice_heart.env_support_lattice_heart_wall` | env_support_lattice_heart_wall | `assets/art/env/lattice_heart/env_support_lattice_heart_wall.png` | 231x44 | **installed** | unknown | no record | — |  |
+| `env.lattice_heart.env_thorn_lattice_heart_tile16` | env_thorn_lattice_heart_tile16 | `assets/art/env/lattice_heart/env_thorn_lattice_heart_tile16.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.sands.bg_sands_far_inner` | bg_sands_far_inner | `assets/art/env/sands/bg_sands_far_inner.png` | 800x360 | **installed** | unknown | no record | — |  |
+| `env.sands.env_slab_sands_9slice` | env_slab_sands_9slice | `assets/art/env/sands/env_slab_sands_9slice.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.sands.env_slab_sands_stamps` | env_slab_sands_stamps | `assets/art/env/sands/env_slab_sands_stamps.png`, `assets/art/env/sands/env_slab_sands_stamps.json` | 96x48 | **installed** | unknown | no record | — |  |
+| `env.sands.env_support_sands_pillar` | env_support_sands_pillar | `assets/art/env/sands/env_support_sands_pillar.png` | 28x56 | **installed** | unknown | no record | — |  |
+| `env.sands.env_support_sands_wall` | env_support_sands_wall | `assets/art/env/sands/env_support_sands_wall.png` | 231x44 | **installed** | unknown | no record | — |  |
+| `env.sands.env_thorn_sands_tile16` | env_thorn_sands_tile16 | `assets/art/env/sands/env_thorn_sands_tile16.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.bg_sky_isles_far_inner` | bg_sky_isles_far_inner | `assets/art/env/sky_isles/bg_sky_isles_far_inner.png` | 800x360 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_slab_sky_isles_9slice` | env_slab_sky_isles_9slice | `assets/art/env/sky_isles/env_slab_sky_isles_9slice.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_slab_sky_isles_stamps` | env_slab_sky_isles_stamps | `assets/art/env/sky_isles/env_slab_sky_isles_stamps.png`, `assets/art/env/sky_isles/env_slab_sky_isles_stamps.json` | 96x48 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_support_sky_isles_wall` | env_support_sky_isles_wall | `assets/art/env/sky_isles/env_support_sky_isles_wall.png` | 231x44 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_thorn_sky_isles_tile16` | env_thorn_sky_isles_tile16 | `assets/art/env/sky_isles/env_thorn_sky_isles_tile16.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.swamp.bg_swamp_far_inner` | bg_swamp_far_inner | `assets/art/env/swamp/bg_swamp_far_inner.png` | 800x360 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_slab_swamp_9slice` | env_slab_swamp_9slice | `assets/art/env/swamp/env_slab_swamp_9slice.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_slab_swamp_stamps` | env_slab_swamp_stamps | `assets/art/env/swamp/env_slab_swamp_stamps.png`, `assets/art/env/swamp/env_slab_swamp_stamps.json` | 96x48 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_support_swamp_ferns` | env_support_swamp_ferns | `assets/art/env/swamp/env_support_swamp_ferns.png` | 96x32 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_support_swamp_roots` | env_support_swamp_roots | `assets/art/env/swamp/env_support_swamp_roots.png` | 64x64 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_support_swamp_wall` | env_support_swamp_wall | `assets/art/env/swamp/env_support_swamp_wall.png` | 231x44 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_thorn_swamp_tile16` | env_thorn_swamp_tile16 | `assets/art/env/swamp/env_thorn_swamp_tile16.png` | 16x16 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_platform_dungeon_face` | env_platform_dungeon_face | `assets/art/env/dungeon/env_platform_dungeon_face.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_platform_dungeon_rim` | env_platform_dungeon_rim | `assets/art/env/dungeon/env_platform_dungeon_rim.png` | 231x7 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_support_dungeon_foot` | env_support_dungeon_foot | `assets/art/env/dungeon/env_support_dungeon_foot.png` | 231x10 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_platform_hellfire_face` | env_platform_hellfire_face | `assets/art/env/hellfire/env_platform_hellfire_face.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_platform_hellfire_rim` | env_platform_hellfire_rim | `assets/art/env/hellfire/env_platform_hellfire_rim.png` | 231x8 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_support_hellfire_foot` | env_support_hellfire_foot | `assets/art/env/hellfire/env_support_hellfire_foot.png` | 231x14 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_platform_ice_tower_face` | env_platform_ice_tower_face | `assets/art/env/ice_tower/env_platform_ice_tower_face.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_platform_ice_tower_rim` | env_platform_ice_tower_rim | `assets/art/env/ice_tower/env_platform_ice_tower_rim.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_support_ice_tower_foot` | env_support_ice_tower_foot | `assets/art/env/ice_tower/env_support_ice_tower_foot.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.sands.env_platform_sands_face` | env_platform_sands_face | `assets/art/env/sands/env_platform_sands_face.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.sands.env_platform_sands_rim` | env_platform_sands_rim | `assets/art/env/sands/env_platform_sands_rim.png` | 231x9 | **installed** | unknown | no record | — |  |
+| `env.sands.env_support_sands_foot` | env_support_sands_foot | `assets/art/env/sands/env_support_sands_foot.png` | 231x16 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_platform_sky_isles_face` | env_platform_sky_isles_face | `assets/art/env/sky_isles/env_platform_sky_isles_face.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_platform_sky_isles_rim` | env_platform_sky_isles_rim | `assets/art/env/sky_isles/env_platform_sky_isles_rim.png` | 231x6 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_support_sky_isles_foot` | env_support_sky_isles_foot | `assets/art/env/sky_isles/env_support_sky_isles_foot.png` | 231x22 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_platform_swamp_face` | env_platform_swamp_face | `assets/art/env/swamp/env_platform_swamp_face.png` | 231x12 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_platform_swamp_rim` | env_platform_swamp_rim | `assets/art/env/swamp/env_platform_swamp_rim.png` | 231x8 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_support_swamp_foot` | env_support_swamp_foot | `assets/art/env/swamp/env_support_swamp_foot.png` | 231x14 | **installed** | unknown | no record | — |  |
+| `env.dungeon.env_slab_dungeon_flagstones` | env_slab_dungeon_flagstones | `assets/art/env/dungeon/env_slab_dungeon_flagstones.png` | 256x256 | **installed** | unknown | no record | — |  |
+| `env.hellfire.env_slab_hellfire_flagstones` | env_slab_hellfire_flagstones | `assets/art/env/hellfire/env_slab_hellfire_flagstones.png` | 256x256 | **installed** | unknown | no record | — |  |
+| `env.ice_tower.env_slab_ice_tower_flagstones` | env_slab_ice_tower_flagstones | `assets/art/env/ice_tower/env_slab_ice_tower_flagstones.png` | 256x256 | **installed** | unknown | no record | — |  |
+| `env.sands.env_slab_sands_flagstones` | env_slab_sands_flagstones | `assets/art/env/sands/env_slab_sands_flagstones.png` | 256x256 | **installed** | unknown | no record | — |  |
+| `env.sky_isles.env_slab_sky_isles_flagstones` | env_slab_sky_isles_flagstones | `assets/art/env/sky_isles/env_slab_sky_isles_flagstones.png` | 256x256 | **installed** | unknown | no record | — |  |
+| `env.swamp.env_slab_swamp_flagstones` | env_slab_swamp_flagstones | `assets/art/env/swamp/env_slab_swamp_flagstones.png` | 256x256 | **installed** | unknown | no record | — |  |
 
 ## UI
 
@@ -173,6 +239,13 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 | `other.pickup_voxel_config` | Ground Block pickup voxel config (code-drawn pickups) | `assets/art/vfx/pickup_voxel.json` | — | **installed** | unknown | no record | — | read by src/art/voxel_piece.gd; no PNG |
 | `other.regions_config` | Region map: chapter -> region, fallback bands, half tints | `assets/art/regions.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd; fallback bands are flat colours for regions without art |
 | `other.region_forest_config` | Misty Forest region config (backdrop, slab, platform, support, areas) | `assets/art/env/forest/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+| `other.region_hellfire_config` | Thành Hỏa Ngục region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py | `assets/art/env/hellfire/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+| `other.region_sands_config` | Sa Mạc Cát Vùi region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py | `assets/art/env/sands/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+| `other.region_swamp_config` | Đầm Lầy Độc region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py | `assets/art/env/swamp/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+| `other.region_dungeon_config` | Hầm Ngục region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py | `assets/art/env/dungeon/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+| `other.region_ice_tower_config` | Tháp Sương region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py | `assets/art/env/ice_tower/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+| `other.region_sky_isles_config` | Không Đảo region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py | `assets/art/env/sky_isles/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
+| `other.region_lattice_heart_config` | Tâm Lưới (final) region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py | `assets/art/env/lattice_heart/region.json` | — | **installed** | unknown | no record | — | read by src/art/art_assets.gd |
 
 ## Backlog — required, no production file yet
 

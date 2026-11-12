@@ -35,7 +35,16 @@
         2,
         1
       ]
-    }
+    },
+    "perimeter": {
+      "kind": "root",
+      "color": "#4A4238",
+      "light": "#6A5E50",
+      "dark": "#2C2622",
+      "depth": 8,
+      "chance": 0.35
+    },
+    "_doc_perimeter": "2026-11-12 arena surface integration: roots from the surrounding forest reaching onto the cells along the board's outer edges (SlabPainter.paint_perimeter_cover, seeded, <= depth px, only on open sides). The approved flagstone sheet is unchanged."
   },
   "thorn_tile": "env_thorn_forest_tile16_v2.png",
   "platform": {

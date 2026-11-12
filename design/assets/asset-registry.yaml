@@ -38,7 +38,7 @@
 #   PixelLab character:   Grep pattern="character_id:"
 
 schema_version: 1
-updated: "2026-11-11"
+updated: "2026-11-12"
 palette:
   file: art_src/palette/tessera_master.gpl
   colours:
@@ -7446,6 +7446,195 @@ assets:
     event: registered
     note: "bootstrapped from disk by asset_registry.py; status by location only"
   notes: ["read by src/art/art_assets.gd"]
+- id: other.region_hellfire_config
+  type: other
+  name: "Thành Hỏa Ngục region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: data
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/region.json]
+  source: []
+  candidates: []
+  evidence: []
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "World Map v2 region visuals (side session); written by make_region_env.py"
+  notes: ["read by src/art/art_assets.gd"]
+- id: other.region_sands_config
+  type: other
+  name: "Sa Mạc Cát Vùi region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: data
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/region.json]
+  source: []
+  candidates: []
+  evidence: []
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "World Map v2 region visuals (side session); written by make_region_env.py"
+  notes: ["read by src/art/art_assets.gd"]
+- id: other.region_swamp_config
+  type: other
+  name: "Đầm Lầy Độc region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: data
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/region.json]
+  source: []
+  candidates: []
+  evidence: []
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "World Map v2 region visuals (side session); written by make_region_env.py"
+  notes: ["read by src/art/art_assets.gd"]
+- id: other.region_dungeon_config
+  type: other
+  name: "Hầm Ngục region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: data
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/region.json]
+  source: []
+  candidates: []
+  evidence: []
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "World Map v2 region visuals (side session); written by make_region_env.py"
+  notes: ["read by src/art/art_assets.gd"]
+- id: other.region_ice_tower_config
+  type: other
+  name: "Tháp Sương region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: data
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/region.json]
+  source: []
+  candidates: []
+  evidence: []
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "World Map v2 region visuals (side session); written by make_region_env.py"
+  notes: ["read by src/art/art_assets.gd"]
+- id: other.region_sky_isles_config
+  type: other
+  name: "Không Đảo region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: data
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/region.json]
+  source: []
+  candidates: []
+  evidence: []
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "World Map v2 region visuals (side session); written by make_region_env.py"
+  notes: ["read by src/art/art_assets.gd"]
+- id: other.region_lattice_heart_config
+  type: other
+  name: "Tâm Lưới (final) region config (backdrop, slab, platform, support, areas) — generated 2026-11-12 by tools/asset-pipeline/make_region_env.py"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: data
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/lattice_heart/region.json]
+  source: []
+  candidates: []
+  evidence: []
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "World Map v2 region visuals (side session); written by make_region_env.py"
+  notes: ["read by src/art/art_assets.gd"]
 - id: vfx.floor.impact_flash_steel_pixelfx
   type: vfx_pack
   name: "Tessera fx - hit flash (pixelfx impacts/hit-flash, steel ramp) - proof of concept"
@@ -7521,6 +7710,2066 @@ assets:
     note: "fxc check PASS, art_check candidate PASS; review package in preview/"
   notes:
   - "P3 proof of concept: shows the PixelFX -> VfxPack path end to end; 7 of 11 source frames kept for the 350 ms overlay rule; glow under alpha 128 dropped; 673 source colours snapped to the 4-colour steel ramp. Not installed, not accepted: the user decides."
+- id: env.dungeon.bg_dungeon_far_inner
+  type: env
+  name: bg_dungeon_far_inner
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/bg_dungeon_far_inner.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 800
+    h: 360
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_slab_dungeon_9slice
+  type: env
+  name: env_slab_dungeon_9slice
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_slab_dungeon_9slice.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_slab_dungeon_stamps
+  type: env
+  name: env_slab_dungeon_stamps
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production:
+  - assets/art/env/dungeon/env_slab_dungeon_stamps.png
+  - assets/art/env/dungeon/env_slab_dungeon_stamps.json
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 48
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_support_dungeon_pillar
+  type: env
+  name: env_support_dungeon_pillar
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_support_dungeon_pillar.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 28
+    h: 56
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_support_dungeon_wall
+  type: env
+  name: env_support_dungeon_wall
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_support_dungeon_wall.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 44
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_thorn_dungeon_tile16
+  type: env
+  name: env_thorn_dungeon_tile16
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_thorn_dungeon_tile16.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.bg_hellfire_far_inner
+  type: env
+  name: bg_hellfire_far_inner
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/bg_hellfire_far_inner.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 800
+    h: 360
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_slab_hellfire_9slice
+  type: env
+  name: env_slab_hellfire_9slice
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_slab_hellfire_9slice.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_slab_hellfire_stamps
+  type: env
+  name: env_slab_hellfire_stamps
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production:
+  - assets/art/env/hellfire/env_slab_hellfire_stamps.png
+  - assets/art/env/hellfire/env_slab_hellfire_stamps.json
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 48
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_support_hellfire_pillar
+  type: env
+  name: env_support_hellfire_pillar
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_support_hellfire_pillar.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 28
+    h: 56
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_support_hellfire_wall
+  type: env
+  name: env_support_hellfire_wall
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_support_hellfire_wall.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 44
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_thorn_hellfire_tile16
+  type: env
+  name: env_thorn_hellfire_tile16
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_thorn_hellfire_tile16.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.bg_ice_tower_far_inner
+  type: env
+  name: bg_ice_tower_far_inner
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/bg_ice_tower_far_inner.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 800
+    h: 360
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_slab_ice_tower_9slice
+  type: env
+  name: env_slab_ice_tower_9slice
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_slab_ice_tower_9slice.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_slab_ice_tower_stamps
+  type: env
+  name: env_slab_ice_tower_stamps
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production:
+  - assets/art/env/ice_tower/env_slab_ice_tower_stamps.png
+  - assets/art/env/ice_tower/env_slab_ice_tower_stamps.json
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 48
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_support_ice_tower_pillar
+  type: env
+  name: env_support_ice_tower_pillar
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_support_ice_tower_pillar.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 28
+    h: 56
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_support_ice_tower_wall
+  type: env
+  name: env_support_ice_tower_wall
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_support_ice_tower_wall.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 44
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_thorn_ice_tower_tile16
+  type: env
+  name: env_thorn_ice_tower_tile16
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_thorn_ice_tower_tile16.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.lattice_heart.bg_lattice_heart_far_inner
+  type: env
+  name: bg_lattice_heart_far_inner
+  entity_id: lattice_heart
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/lattice_heart/bg_lattice_heart_far_inner.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 800
+    h: 360
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.lattice_heart.env_slab_lattice_heart_9slice
+  type: env
+  name: env_slab_lattice_heart_9slice
+  entity_id: lattice_heart
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/lattice_heart/env_slab_lattice_heart_9slice.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.lattice_heart.env_slab_lattice_heart_stamps
+  type: env
+  name: env_slab_lattice_heart_stamps
+  entity_id: lattice_heart
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production:
+  - assets/art/env/lattice_heart/env_slab_lattice_heart_stamps.png
+  - assets/art/env/lattice_heart/env_slab_lattice_heart_stamps.json
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 48
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.lattice_heart.env_support_lattice_heart_pillar
+  type: env
+  name: env_support_lattice_heart_pillar
+  entity_id: lattice_heart
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/lattice_heart/env_support_lattice_heart_pillar.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 28
+    h: 56
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.lattice_heart.env_support_lattice_heart_wall
+  type: env
+  name: env_support_lattice_heart_wall
+  entity_id: lattice_heart
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/lattice_heart/env_support_lattice_heart_wall.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 44
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.lattice_heart.env_thorn_lattice_heart_tile16
+  type: env
+  name: env_thorn_lattice_heart_tile16
+  entity_id: lattice_heart
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/lattice_heart/env_thorn_lattice_heart_tile16.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.bg_sands_far_inner
+  type: env
+  name: bg_sands_far_inner
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/bg_sands_far_inner.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 800
+    h: 360
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_slab_sands_9slice
+  type: env
+  name: env_slab_sands_9slice
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_slab_sands_9slice.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_slab_sands_stamps
+  type: env
+  name: env_slab_sands_stamps
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production:
+  - assets/art/env/sands/env_slab_sands_stamps.png
+  - assets/art/env/sands/env_slab_sands_stamps.json
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 48
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_support_sands_pillar
+  type: env
+  name: env_support_sands_pillar
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_support_sands_pillar.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 28
+    h: 56
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_support_sands_wall
+  type: env
+  name: env_support_sands_wall
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_support_sands_wall.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 44
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_thorn_sands_tile16
+  type: env
+  name: env_thorn_sands_tile16
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_thorn_sands_tile16.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.bg_sky_isles_far_inner
+  type: env
+  name: bg_sky_isles_far_inner
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/bg_sky_isles_far_inner.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 800
+    h: 360
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_slab_sky_isles_9slice
+  type: env
+  name: env_slab_sky_isles_9slice
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/env_slab_sky_isles_9slice.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_slab_sky_isles_stamps
+  type: env
+  name: env_slab_sky_isles_stamps
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production:
+  - assets/art/env/sky_isles/env_slab_sky_isles_stamps.png
+  - assets/art/env/sky_isles/env_slab_sky_isles_stamps.json
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 48
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_support_sky_isles_wall
+  type: env
+  name: env_support_sky_isles_wall
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/env_support_sky_isles_wall.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 44
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_thorn_sky_isles_tile16
+  type: env
+  name: env_thorn_sky_isles_tile16
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/env_thorn_sky_isles_tile16.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.bg_swamp_far_inner
+  type: env
+  name: bg_swamp_far_inner
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/bg_swamp_far_inner.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 800
+    h: 360
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_slab_swamp_9slice
+  type: env
+  name: env_slab_swamp_9slice
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_slab_swamp_9slice.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_slab_swamp_stamps
+  type: env
+  name: env_slab_swamp_stamps
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production:
+  - assets/art/env/swamp/env_slab_swamp_stamps.png
+  - assets/art/env/swamp/env_slab_swamp_stamps.json
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 48
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_support_swamp_ferns
+  type: env
+  name: env_support_swamp_ferns
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_support_swamp_ferns.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 96
+    h: 32
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_support_swamp_roots
+  type: env
+  name: env_support_swamp_roots
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_support_swamp_roots.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 64
+    h: 64
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_support_swamp_wall
+  type: env
+  name: env_support_swamp_wall
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_support_swamp_wall.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 44
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_thorn_swamp_tile16
+  type: env
+  name: env_thorn_swamp_tile16
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_thorn_swamp_tile16.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 16
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_platform_dungeon_face
+  type: env
+  name: env_platform_dungeon_face
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_platform_dungeon_face.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_platform_dungeon_rim
+  type: env
+  name: env_platform_dungeon_rim
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_platform_dungeon_rim.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 7
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_support_dungeon_foot
+  type: env
+  name: env_support_dungeon_foot
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_support_dungeon_foot.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 10
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_platform_hellfire_face
+  type: env
+  name: env_platform_hellfire_face
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_platform_hellfire_face.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_platform_hellfire_rim
+  type: env
+  name: env_platform_hellfire_rim
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_platform_hellfire_rim.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 8
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_support_hellfire_foot
+  type: env
+  name: env_support_hellfire_foot
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_support_hellfire_foot.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 14
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_platform_ice_tower_face
+  type: env
+  name: env_platform_ice_tower_face
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_platform_ice_tower_face.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_platform_ice_tower_rim
+  type: env
+  name: env_platform_ice_tower_rim
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_platform_ice_tower_rim.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_support_ice_tower_foot
+  type: env
+  name: env_support_ice_tower_foot
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_support_ice_tower_foot.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_platform_sands_face
+  type: env
+  name: env_platform_sands_face
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_platform_sands_face.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_platform_sands_rim
+  type: env
+  name: env_platform_sands_rim
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_platform_sands_rim.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 9
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_support_sands_foot
+  type: env
+  name: env_support_sands_foot
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_support_sands_foot.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 16
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_platform_sky_isles_face
+  type: env
+  name: env_platform_sky_isles_face
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/env_platform_sky_isles_face.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_platform_sky_isles_rim
+  type: env
+  name: env_platform_sky_isles_rim
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/env_platform_sky_isles_rim.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 6
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_support_sky_isles_foot
+  type: env
+  name: env_support_sky_isles_foot
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/env_support_sky_isles_foot.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 22
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_platform_swamp_face
+  type: env
+  name: env_platform_swamp_face
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_platform_swamp_face.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 12
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_platform_swamp_rim
+  type: env
+  name: env_platform_swamp_rim
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_platform_swamp_rim.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 8
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_support_swamp_foot
+  type: env
+  name: env_support_swamp_foot
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_support_swamp_foot.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 231
+    h: 14
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.dungeon.env_slab_dungeon_flagstones
+  type: env
+  name: env_slab_dungeon_flagstones
+  entity_id: dungeon
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/dungeon/env_slab_dungeon_flagstones.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 256
+    h: 256
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.hellfire.env_slab_hellfire_flagstones
+  type: env
+  name: env_slab_hellfire_flagstones
+  entity_id: hellfire
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/hellfire/env_slab_hellfire_flagstones.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 256
+    h: 256
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.ice_tower.env_slab_ice_tower_flagstones
+  type: env
+  name: env_slab_ice_tower_flagstones
+  entity_id: ice_tower
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/ice_tower/env_slab_ice_tower_flagstones.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 256
+    h: 256
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sands.env_slab_sands_flagstones
+  type: env
+  name: env_slab_sands_flagstones
+  entity_id: sands
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sands/env_slab_sands_flagstones.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 256
+    h: 256
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.sky_isles.env_slab_sky_isles_flagstones
+  type: env
+  name: env_slab_sky_isles_flagstones
+  entity_id: sky_isles
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/sky_isles/env_slab_sky_isles_flagstones.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 256
+    h: 256
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: env.swamp.env_slab_swamp_flagstones
+  type: env
+  name: env_slab_swamp_flagstones
+  entity_id: swamp
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/env/swamp/env_slab_swamp_flagstones.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 256
+    h: 256
+    colour_type: 6
+  history:
+  - on: "2026-11-12"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
 backlog:
 - id: portrait.kiem_si
   name: "Character-select portrait 64x80 for kiem_si"

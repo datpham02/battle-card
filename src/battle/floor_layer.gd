@@ -44,6 +44,15 @@ var _flagstones: Texture2D = null
 var _flagstone_meta: Dictionary = {}
 ## 2026-11-06: the region's front face strip (a capstone course of the support wall); null = SlabPainter's coded face.
 var _face_tile: Texture2D = null
+## 2026-11-12 (arena integration): the region's edge rim strip over the front faces (SlabPainter.paint_rim_strip);
+## null = none. `platform.rim_rise` px above the face top, `platform.rim_modulate`.
+var _rim_tile: Texture2D = null
+## 2026-11-12: `platform.joints` {"color", "dark", "chance"}: seeded 1 px veins / rime / sand lines in the joints
+## between neighbouring cells (SlabPainter.joint_segments); {} = plain joints.
+var _joints: Dictionary = {}
+## 2026-11-12: `slab.perimeter` (SlabPainter.paint_perimeter_cover): the ground reaching onto the cells along the
+## board's outer edges (sand, snow, ash, moss, roots, rime); {} = none.
+var _perimeter: Dictionary = {}
 
 
 func _init() -> void:
@@ -75,6 +84,11 @@ func set_region_id(id: String) -> void:
 	_thorn_tile = ArtAssets.region_texture(id, "thorn_tile")
 	_flagstones = ArtAssets.region_texture(id, "slab.flagstones")
 	_face_tile = ArtAssets.region_texture(id, "platform.face_tile")
+	_rim_tile = ArtAssets.region_texture(id, "platform.rim_tile")
+	var joints: Variant = (ArtAssets.region(id).get("platform", {}) as Dictionary).get("joints", {})
+	_joints = joints if joints is Dictionary else {}
+	var perim: Variant = (ArtAssets.region(id).get("slab", {}) as Dictionary).get("perimeter", {})
+	_perimeter = perim if perim is Dictionary else {}
 	var fmeta: Variant = (ArtAssets.region(id).get("slab", {}) as Dictionary).get("flagstone_meta", {})
 	_flagstone_meta = fmeta if fmeta is Dictionary else {}
 	var palette: Variant = ArtAssets.region(id).get("platform", {})
@@ -316,6 +330,21 @@ func _draw() -> void:
 				int(_flagstone_meta.get("border", 6)), _flagstone_meta.get("weights", []), half_tint(side))
 		else:
 			SlabPainter.paint_cell(self, rects[i], seed, _nine, _stamps_tex, _stamps_meta, half_tint(side))
+		if not _perimeter.is_empty():
+			var c: Vector2i = cells[i]
+			var open: Dictionary = {
+				"left": not grid.is_in_board(c + Vector2i.LEFT), "right": not grid.is_in_board(c + Vector2i.RIGHT),
+				"top": not grid.is_in_board(c + Vector2i.UP), "bottom": not grid.is_in_board(c + Vector2i.DOWN),
+			}
+			SlabPainter.paint_perimeter_cover(self, rects[i], seed, open, _perimeter)
+	# 2026-11-12 (arena integration): what the region leaves in the joints and on the edge, over the slabs, under
+	# the zones and the units: 1 px seeded joint lines, then the rim strip over the front faces (never over a cell).
+	if not _joints.is_empty():
+		var veins: Array[Rect2i] = SlabPainter.joint_segments(rects, cells, float(_joints.get("chance", 0.0)), int(_joints.get("salt", 0)))
+		SlabPainter.paint_joint_segments(self, veins, Color(str(_joints.get("color", "#FFFFFF"))), Color(str(_joints.get("dark", "#1B1722"))))
+	if _rim_tile != null:
+		SlabPainter.paint_rim_strip(self, SlabPainter.merge_row_rects(SlabPainter.platform_front_rects(rects, has_cell_below)), _rim_tile,
+			int(_platform_palette.get("rim_rise", 3)), Color(str(_platform_palette.get("rim_modulate", "#FFFFFF"))))
 	_draw_zones(grid)
 
 

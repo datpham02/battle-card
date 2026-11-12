@@ -31,6 +31,9 @@ const REGION_PATH_KEYS: Array[String] = [
 	"support.pillar",
 	# 2026-11-06: the generated recessed arch, corner roots and foreground ferns (SupportLayer).
 	"support.arch", "support.roots", "support.ferns",
+	# 2026-11-12 (arena integration, all 7 regions): the region's edge rim strip over the platform's front faces
+	# (FloorLayer, warped with the floor) and the ground-contact strip at the foundation's foot (SupportLayer).
+	"platform.rim_tile", "support.foot_tile",
 ]
 ## Chapter -> region map (`chapters`, `default`) and the flat backdrop colours per region
 ## (`fallback_bands`), read once by [method region_for_chapter] / [method fallback_bands].

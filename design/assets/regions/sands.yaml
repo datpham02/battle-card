@@ -2,7 +2,7 @@ id: sands
 name: "Sa Mạc Cát Vùi"
 floor: 3
 final_battle: false
-environment: missing
+environment: present_generated_2026-11-12
 background: "800x360, max 3 layers, no outline, no gameplay overlay"
 floor_tiles: "nine-slice 16x16, no outline"
 sprite_palette_status: needs_art_director_review
