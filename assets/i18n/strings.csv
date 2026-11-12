@@ -1086,3 +1086,41 @@ card.moc_keo.desc,"Móc bay tới ô gần bạn nhất của khối; trúng th�
 card.moc_keo.desc_battle,Móc rồi kéo {pull_row_cells} ô về đường chia.,"Hook, then drag {pull_row_cells} toward the divider."
 ui.status.mark.name,Dấu Tử,Death Mark
 ui.status.mark.desc,Đòn sát thương kế tiếp vang lại 60 % và hành quyết ×2 khi máu dưới 30 %.,The next damaging cast echoes at 60 % and executes ×2 under 30 % HP.
+node.forge.name,Lò Khối,Block Forge
+node.forge.desc,Học một hình khối mới và quên một hình miễn phí.,Learn a new block shape and forget one for free.
+route.safe.name,An toàn,Safe
+route.treasure.name,Kho báu,Treasure
+route.peril.name,Hiểm nguy,Peril
+route.elite.name,Tinh anh,Elite
+route.mystery.name,Bí ẩn,Mystery
+route.safe.desc,Ít mất máu; có thêm một dịp nghỉ.,Low HP loss; one extra rest.
+route.treasure.desc,Thêm vàng; một rương và lò khối.,More gold; a chest and the forge.
+route.peril.desc,Trận khó hơn; thưởng bậc cao và mục tiêu.,Harder fights; higher reward tiers and an objective.
+route.elite.desc,Một tinh anh; sàn hiếm và một bảo vật.,An elite; a rare floor and a relic.
+route.mystery.desc,Hai sự kiện; nhiều rủi ro.,Two events; high variance.
+rule.heat.name,Nhiệt,Heat
+rule.heat.desc,Đánh làm thành nóng lên: mạch lửa phun dày hơn và thưởng cao hơn; nghỉ hay mua sắm làm nguội.,Fighting heats the citadel: vents erupt faster and rewards rise; rest or shop to cool it.
+mod.row_burner,Thiêu hàng,Row burner
+mod.seal_caster,Chặn Lối,Boxed In
+mod.thorn_field,Gai Níu Chân,Bramble Trail
+mod.frost_aura,Sương Nặng,Heavy Mist
+mod.shroud,Màn che,Shroud
+mod.step_reactor,Phản bước,Step reactor
+mod.big_hands,Khối lớn hơn,Bigger blocks
+mod.quick_blocks,Khối rơi nhanh,Quick blocks
+mod.narrow_arena,Sân biến thể,Arena variant
+mod.vent_surge,Mạch lửa dồn,Vent surge
+objective.no_hit_3,Trúng không quá 3 đòn,Take at most 3 hits
+objective.joiner,Ghép 2 khối ít nhất 2 lần,Join blocks at least twice
+objective.big_cast,Một đòn 4 ô trở lên,One cast of 4+ cells
+objective.vent_dancer,Né 2 đợt mạch lửa,Dodge 2 vent eruptions
+ui.map.heat,Nhiệt %d/%d,Heat %d/%d
+ui.map.heat_after,Nhiệt %d -> %d,Heat %d -> %d
+ui.map.enemy,Địch: %s,Enemy: %s
+ui.map.arena,Sân: %s,Arena: %s
+ui.map.tier,Thưởng bậc %d,Reward tier %d
+ui.map.objective,Mục tiêu: %s,Objective: %s
+ui.world.shop_here,Có cửa hàng ở ngã ba,Shop at the crossing
+ui.forge.title,LÒ KHỐI,BLOCK FORGE
+ui.forge.free_removal,Quên hình miễn phí: %s,Free forget: %s
+ui.forge.ink,Học %s,Learn %s

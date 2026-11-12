@@ -113,7 +113,7 @@ func _initialize() -> void:
 	neg["gold"] = -40
 	var clamped: RunSession = RunSession.from_dict(neg, ChaptersConfig.load_from_file())
 	check(clamped != null and clamped.gold == 0, "a negative saved gold loads as 0")
-	check(RunSession.SAVE_VERSION == 7, "SAVE_VERSION 7 (Story 038 bump after Story 035; the Story 033 keys stay optional)")
+	check(RunSession.SAVE_VERSION == 8, "SAVE_VERSION 8 (World Map v2 D5 bump after Story 038; the Story 033 keys stay optional)")
 
 	# --- run modifiers ---
 	var m: RunSession = _session()

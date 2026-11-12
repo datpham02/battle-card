@@ -1,0 +1,90 @@
+cur-probe-safe-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=safe
+cur-probe-treasure-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=treasure
+cur-probe-peril-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=peril
+cur-probe-elite-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=elite
+cur-probe-mystery-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=mystery
+cur-probe-value-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=value
+cur-probe-safe-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=safe
+cur-probe-treasure-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=treasure
+cur-probe-peril-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=peril
+cur-probe-elite-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=elite
+cur-probe-mystery-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=mystery
+cur-probe-value-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=value
+cur-probe-safe-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=safe
+cur-probe-treasure-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=treasure
+cur-probe-peril-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=peril
+cur-probe-elite-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=elite
+cur-probe-mystery-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=mystery
+cur-probe-value-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=value
+cur-probe-safe-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=safe
+cur-probe-treasure-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=treasure
+cur-probe-peril-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=peril
+cur-probe-elite-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=elite
+cur-probe-mystery-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=mystery
+cur-probe-value-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=value
+cur-probe-safe-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=safe
+cur-probe-treasure-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=treasure
+cur-probe-peril-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=peril
+cur-probe-elite-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=elite
+cur-probe-mystery-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=mystery
+cur-probe-value-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=value
+A-probe-peril-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-peril-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+A-probe-safe-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-safe-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-probe-peril-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=peril --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+A-probe-peril-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-peril-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+A-probe-safe-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-safe-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-probe-peril-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=peril --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+A-probe-peril-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-peril-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+A-probe-safe-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-safe-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-probe-peril-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=peril --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+A-probe-peril-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-peril-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+A-probe-safe-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-safe-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-probe-peril-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=peril --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+A-probe-peril-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-peril-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+A-probe-safe-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-probe-safe-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-probe-peril-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=peril --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+curpieces-probe-peril-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=peril --pieces=on
+curpieces-probe-treasure-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=treasure --pieces=on
+curpieces-probe-safe-kiem_si|--characters=kiem_si --floors=2..2 --final=off --route-policy=safe --pieces=on
+curpieces-probe-peril-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=peril --pieces=on
+curpieces-probe-treasure-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=treasure --pieces=on
+curpieces-probe-safe-phap_su|--characters=phap_su --floors=2..2 --final=off --route-policy=safe --pieces=on
+curpieces-probe-peril-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=peril --pieces=on
+curpieces-probe-treasure-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=treasure --pieces=on
+curpieces-probe-safe-sat_thu|--characters=sat_thu --floors=2..2 --final=off --route-policy=safe --pieces=on
+curpieces-probe-peril-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=peril --pieces=on
+curpieces-probe-treasure-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=treasure --pieces=on
+curpieces-probe-safe-tho_san|--characters=tho_san --floors=2..2 --final=off --route-policy=safe --pieces=on
+curpieces-probe-peril-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=peril --pieces=on
+curpieces-probe-treasure-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=treasure --pieces=on
+curpieces-probe-safe-giao_si|--characters=giao_si --floors=2..2 --final=off --route-policy=safe --pieces=on
+cur-full-value-kiem_si|--characters=kiem_si --final=on --route-policy=value
+A-full-value-kiem_si|--characters=kiem_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-full-value-kiem_si|--characters=kiem_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-full-value-kiem_si|--characters=kiem_si --final=on --route-policy=value --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+cur-full-value-phap_su|--characters=phap_su --final=on --route-policy=value
+A-full-value-phap_su|--characters=phap_su --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-full-value-phap_su|--characters=phap_su --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-full-value-phap_su|--characters=phap_su --final=on --route-policy=value --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+cur-full-value-sat_thu|--characters=sat_thu --final=on --route-policy=value
+A-full-value-sat_thu|--characters=sat_thu --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-full-value-sat_thu|--characters=sat_thu --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-full-value-sat_thu|--characters=sat_thu --final=on --route-policy=value --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+cur-full-value-tho_san|--characters=tho_san --final=on --route-policy=value
+A-full-value-tho_san|--characters=tho_san --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-full-value-tho_san|--characters=tho_san --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-full-value-tho_san|--characters=tho_san --final=on --route-policy=value --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+cur-full-value-giao_si|--characters=giao_si --final=on --route-policy=value
+A-full-value-giao_si|--characters=giao_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_A.json
+B-full-value-giao_si|--characters=giao_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_B.json
+C-full-value-giao_si|--characters=giao_si --final=on --route-policy=value --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json

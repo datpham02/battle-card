@@ -1,0 +1,43 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+map_sim: seeds=10000 offset=0 pairs=assigned (7) cleared_bosses=1 kiep=0 force_v2=false depth_layout=[1, 3, 3, 1, 3, 2, 1]
+
+PAIR ch1 floor 1 (v1-wrapped): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.558 p95=0.801 max=1.325
+  INFO distinct_match_ids_mean=6.99 kinds={ "battle": 77596, "treasure": 14997, "event": 10000, "danger": 22490, "rest": 10000, "shop": 10000, "boss": 10000 }
+
+PAIR hellfire floor 2 (v2): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.484 p95=0.774 max=2.376
+  INFO archetype_triples=9: elite+mystery+safe=633, elite+mystery+treasure=660, elite+peril+safe=1407, elite+peril+treasure=1381, elite+safe+treasure=735, mystery+peril+safe=1498, mystery+peril+treasure=1397, mystery+safe+treasure=672, peril+safe+treasure=1617
+  INFO identical_lane_profiles=0 (0.00 %) lane_match_repeats=2332 (23.32 %) hub={ "rest": 3131, "shop": 4957, "event": 1912 } shop_plan_hits=4957
+  INFO distinct_match_ids_mean=8.42 kinds={ "battle": 50627, "event": 9233, "danger": 21900, "rest": 13269, "forge": 6337, "miniboss": 14816, "boss": 10000, "shop": 4957, "treasure": 8861 }
+
+PAIR desert floor 3 (v1-wrapped): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.493 p95=0.800 max=9.520
+  INFO distinct_match_ids_mean=8.00 kinds={ "battle": 55265, "danger": 45220, "treasure": 14972, "miniboss": 10000, "rest": 10000, "shop": 5059, "boss": 10000, "event": 4475 }
+
+PAIR swamp floor 4 (v1-wrapped): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.512 p95=0.820 max=2.276
+  INFO distinct_match_ids_mean=7.96 kinds={ "battle": 55383, "danger": 45161, "treasure": 14940, "miniboss": 10000, "rest": 10000, "boss": 10000, "shop": 5046, "event": 4503 }
+
+PAIR ch2 floor 5 (v1-wrapped): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.527 p95=0.876 max=8.096
+  INFO distinct_match_ids_mean=9.74 kinds={ "battle": 55368, "danger": 45238, "treasure": 15045, "miniboss": 10000, "rest": 10000, "shop": 4973, "boss": 10000, "event": 4515 }
+
+PAIR ch3 floor 6 (v1-wrapped): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.522 p95=0.834 max=7.311
+  INFO distinct_match_ids_mean=9.71 kinds={ "battle": 55164, "danger": 45352, "treasure": 14997, "miniboss": 10000, "rest": 10000, "boss": 10000, "event": 4534, "shop": 4994 }
+
+PAIR sky_isles floor 7 (v1-wrapped): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.510 p95=0.849 max=2.463
+  INFO distinct_match_ids_mean=7.96 kinds={ "battle": 55209, "danger": 45260, "treasure": 15007, "miniboss": 10000, "rest": 10000, "shop": 4971, "boss": 10000, "event": 4447 }
+
+TOTAL maps=70000 valid=70000 (100.000 %) gen_ms p50=0.516 p95=0.823
+FAILED SEEDS (0 listed of 0):

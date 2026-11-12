@@ -1,0 +1,34 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS U13 unknown modifier dropped, known kept
+PASS U13 big_hands -> boss_min_runes_add, thorn_field -> trait
+PASS U13 tier, objective and rule carried
+PASS U13 heat 3 patch merged (vent 4.5 s, tick 3, drops x0.9)
+PASS U13 heat 4 adds vent_surge after the modifier traits
+PASS U13 heat 3 lifts the reward tier by one (cap 3)
+PASS U13 a non-fight node gets no patch and tier 1
+PASS U13 warden hook at heat 3 and 4 (surge 7 s, first at 10 s), not at 2
+PASS U13 heat 4 burns 2.5 s; heat 3 and 2 keep the base eruption
+PASS U13 a v1 node in a rule-less region gets an empty patch
+PASS U15 empty profile -> from_node byte-equal to today
+PASS U15 danger trait first, then the profile's traits: ["row_burner", "thorn_field", "vent_surge"]
+PASS U15 hazard overrides reach the cleaned match
+PASS U15 boss_drop_interval_mult multiplied
+PASS U15 boss_min_runes_add resolved after scaling
+PASS U15 warden hook sets interval 7 / first delay 10 on the existing vent_surge and keeps its vents 2 (B1)
+PASS U15 heat 2 warden: the boss's own surge (10 s, 2 vents) and the base eruption length
+PASS U15 heat 4 warden: eruptions 2.5 s, warning unchanged
+WARNING: EncounterComposer: patch key 'typo' is not a combat key, ignored
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] apply_to_raw (res://src/run/map/encounter_composer.gd:113)
+       [1] _initialize (res://tests/unit/run/map_v2/encounter_composer_test.gd:78)
+PASS U15 arena patch sets the variant flag; a non-combat key is ignored
+PASS U16 no_hit_3 <= 3
+PASS U16 big_cast >= 4; a missing counter is never met
+PASS U16 vent_dancer >= 2; {} never met
+PASS U17 every modifier resolves to a registered trait or a whitelisted match / arena key (10 modifiers)
+PASS U14 preview names the enemy, arena and archetype
+PASS U14 preview shows heat before (2) and after (3) a fight
+PASS U14 hidden preview blanks enemy / arena / modifiers, keeps kind and tier
+FAILS=0

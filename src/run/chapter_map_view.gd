@@ -36,6 +36,30 @@ const GLYPH_BOSS: Color = HudSkin.GRID_LIGHT
 ## Story 033: shop (green purse, gold coin) and event (blue scroll).
 const GLYPH_SHOP: Color = Color("6FD39A")
 const GLYPH_EVENT: Color = Color("86A8F2")
+## World Map v2 (docs/design/world-map-v2/01 section G): the forge node's code-drawn angular glyph, the lane bands'
+## colours per archetype (translucent parallelograms behind the lane's three nodes), the Heat meter, the tier marks.
+const KIND_FORGE: String = MapGraph.KIND_FORGE
+const GLYPH_FORGE: Color = Color("D9A066")
+const ARCHETYPE_COLORS: Dictionary = {"safe": Color("5FB37A"), "treasure": Color("E8B04A"), "peril": Color("E2653A"), "elite": Color("C495E0"), "mystery": Color("86A8F2")}
+const BAND_ALPHA: float = 0.2
+const BAND_LINE_ALPHA: float = 0.65
+const BAND_HEIGHT_RATIO: float = 1.35
+const BAND_PAD_RATIO: float = 0.75
+const BAND_FONT_SIZE: int = 18
+const HEAT_COLOR: Color = Color("F08A4B")
+const HEAT_SIZE_PX: Vector2 = Vector2(440.0, 30.0)
+const HEAT_GAP_PX: float = 8.0
+const HEAT_FONT_SIZE: int = 20
+const TIER_MARK_PX: float = 6.0
+const PREVIEW_FONT_SIZE: int = 18
+const PREVIEW_NAME_FONT_SIZE: int = 22
+const ROUTE_NAME_KEY_FORMAT: String = "route.%s.name"
+const TEXT_HEAT: String = "ui.map.heat"
+const TEXT_HEAT_AFTER: String = "ui.map.heat_after"
+const TEXT_ENEMY: String = "ui.map.enemy"
+const TEXT_ARENA: String = "ui.map.arena"
+const TEXT_TIER: String = "ui.map.tier"
+const TEXT_OBJECTIVE: String = "ui.map.objective"
 ## Map v6 (2026-11-02 reference): pixel art made by tools/asset-pipeline/make_map_icons.py, drawn at the menus'
 ## whole-number scale: the diamond node plates (normal, selected, warden), one 20x20 icon per kind, the check.
 const PLATE_TEX: Texture2D = preload("res://assets/art/ui/map/node_plate.png")
@@ -387,6 +411,7 @@ func _draw() -> void:
 	_draw_hud_bar(vp, _flow.get_run())
 	_draw_info(vp, map, current)
 	_draw_floor_banner(vp)
+	_draw_heat(vp)
 	_draw_legend(vp, map)
 	if _paused:
 		_draw_pause(vp)
@@ -399,6 +424,10 @@ func _draw() -> void:
 func _draw_route(vp: Vector2, map: Array[Dictionary], current: int, show_selection: bool) -> void:
 	var s: float = ScreenLayout.controls_scale(vp)
 	var count: int = map.size()
+	# World Map v2: the lane bands behind a v2 region's three lanes, under the links.
+	var graph: Dictionary = _flow.get_map_graph()
+	if str(graph.get("source", "")) == MapGraph.SOURCE_V2:
+		_draw_lane_bands(vp, map, graph)
 	# 2026-11-03: every link of the floor (ChapterMapGen.link_columns; a map without links joins every pair), violet.
 	for ci: int in count - 1:
 		var from_nodes: Array = map[ci].get("nodes", [])
@@ -435,7 +464,11 @@ func _draw_route(vp: Vector2, map: Array[Dictionary], current: int, show_selecti
 			var tint: Color = Color.WHITE if open else (NODE_WARDEN_DIM if kind == KIND_BOSS else NODE_DIM)
 			var plate: Texture2D = PLATE_SELECTED_TEX if selected else (PLATE_BOSS_TEX if kind == KIND_BOSS else PLATE_TEX)
 			_draw_pixel(plate, center, art, tint)
-			_draw_pixel(ICONS.get(kind, ICONS["battle"]), center, art, tint)
+			_draw_kind_icon(kind, center, art, tint, icon)
+			# World Map v2: reward tier 2 / 3 marks (one / two small gold diamonds above the plate's right edge).
+			var tier: int = int((nodes[ni] as Dictionary).get("reward_tier", 1))
+			for k: int in tier - 1:
+				HudSkin.diamond(self, center + Vector2(icon * 0.3 + float(k) * TIER_MARK_PX * 2.4 * s, -icon * 0.36), TIER_MARK_PX * s, Color(HudSkin.GRID_LIGHT, tint.a), HudSkin.TEXT_OUTLINE, 1.5)
 			if ni == cleared:
 				_draw_pixel(CHECK_TEX, center + Vector2(icon * 0.22, icon * 0.24), art, Color.WHITE)
 	# The hero marker above the node the run stands on (the start point before the first column is cleared).
@@ -451,6 +484,70 @@ func _draw_route(vp: Vector2, map: Array[Dictionary], current: int, show_selecti
 	var half: float = POINTER_HALF_PX * s
 	var pointer := PackedVector2Array([Vector2(sel.x, tip_y), Vector2(sel.x + half, tip_y + half), Vector2(sel.x - half, tip_y + half)])
 	draw_colored_polygon(pointer, Color(MARKER_COLOR, _pulse_alpha()))
+
+
+# World Map v2: a node kind's icon: the pixel icon when one exists, else (forge) a code-drawn angular glyph: a diamond
+# of the forge colour with a dark slab across its middle (no circle, no box).
+func _draw_kind_icon(kind: String, center: Vector2, art: int, tint: Color, icon: float) -> void:
+	if ICONS.has(kind):
+		_draw_pixel(ICONS[kind], center, art, tint)
+		return
+	if kind == KIND_FORGE:
+		var r: float = icon * 0.3
+		HudSkin.diamond(self, center, r, Color(GLYPH_FORGE * tint, tint.a), HudSkin.TEXT_OUTLINE, 2.0)
+		draw_rect(Rect2(center - Vector2(r * 0.55, r * 0.18), Vector2(r * 1.1, r * 0.36)), Color(HudSkin.NIGHT_STONE, tint.a))
+		return
+	_draw_pixel(ICONS["battle"], center, art, tint)
+
+
+# World Map v2 (01 section G1): one translucent angular band per lane behind its three nodes (depths 1, 2 and 4 of
+# the layout), in the archetype's colour, labelled with the archetype's name at its left end.
+func _draw_lane_bands(vp: Vector2, map: Array[Dictionary], graph: Dictionary) -> void:
+	var s: float = ScreenLayout.controls_scale(vp)
+	var count: int = map.size()
+	var lanes: Array = graph.get("lanes", [])
+	if lanes.is_empty() or count < 5:
+		return
+	var icon: float = ScreenLayout.MAP_NODE_ICON_PX * s
+	var lane_count: int = lanes.size()
+	for lane: Variant in lanes:
+		var order: int = int((lane as Dictionary).get("order", 0))
+		var arch: String = str((lane as Dictionary).get("archetype", ""))
+		var color: Color = ARCHETYPE_COLORS.get(arch, HudSkin.MIST)
+		var first: Vector2 = ScreenLayout.map_route_node_center(vp, 1, count, order, lane_count)
+		var last: Vector2 = ScreenLayout.map_route_node_center(vp, 4, count, order, lane_count)
+		var h: float = icon * BAND_HEIGHT_RATIO
+		var pad: float = icon * BAND_PAD_RATIO
+		var rect := Rect2(first.x - pad, first.y - h * 0.5, last.x - first.x + pad * 2.0, h)
+		var cut: float = h * 0.35
+		var points: PackedVector2Array = HudSkin.chamfer_points(rect, [cut, 0.0, cut, 0.0])
+		draw_colored_polygon(points, Color(color, BAND_ALPHA))
+		var outline: PackedVector2Array = points.duplicate()
+		outline.append(points[0])
+		draw_polyline(outline, Color(color, BAND_LINE_ALPHA), 2.0 * s)
+		var label: String = tr(ROUTE_NAME_KEY_FORMAT % arch)
+		MenuFont.text(self, Vector2(rect.position.x + cut * 0.5, rect.position.y - 4.0 * s), label, BAND_FONT_SIZE, color.lightened(0.25))
+
+
+# World Map v2 (02 section 2): the region rule's gauge under the floor banner — "Nhiệt n/max" and max angular
+# segments, the lit ones in ember. Nothing when the region has no rule.
+func _draw_heat(vp: Vector2) -> void:
+	var state: Dictionary = _flow.get_rule_state()
+	if state.is_empty():
+		return
+	var rule: Dictionary = _flow.get_region_rule()
+	var gauge_cfg: Dictionary = rule.get("gauge", {}) if typeof(rule.get("gauge")) == TYPE_DICTIONARY else {}
+	var gmax: int = maxi(int(gauge_cfg.get("max", 4)), 1)
+	var value: int = clampi(int(state.get("gauge", 0)), 0, gmax)
+	var s: float = ScreenLayout.controls_scale(vp)
+	var banner: Rect2 = ScreenLayout.map_floor_banner_rect(vp)
+	var size: Vector2 = (HEAT_SIZE_PX * s).round()
+	var rect := Rect2(Vector2(banner.end.x - size.x, banner.end.y + HEAT_GAP_PX * s).round(), size)
+	var label: String = tr(TEXT_HEAT) % [value, gmax]
+	var label_w: float = HudSkin.text_width(label, MenuFont.size(HEAT_FONT_SIZE), true) + 12.0 * s
+	MenuFont.text(self, Vector2(rect.position.x, rect.get_center().y + MenuFont.size(HEAT_FONT_SIZE) * 0.35), label, HEAT_FONT_SIZE, HEAT_COLOR)
+	var meter := Rect2(rect.position.x + label_w, rect.position.y + 4.0 * s, rect.size.x - label_w, rect.size.y - 8.0 * s)
+	HudSkin.segments(self, meter, gmax, value, HEAT_COLOR)
 
 
 # The HUD bar: the hero pennant; the hero block (name, "HP hp/max", the HP bar, a thin gold rule with diamond ends);
@@ -526,13 +623,48 @@ func _draw_info(vp: Vector2, map: Array[Dictionary], current: int) -> void:
 	var kind: String = str((nodes[_selected] as Dictionary).get("kind", ""))
 	var inset: float = INFO_INSET_PX * s
 	var glyph: float = INFO_GLYPH_PX * s
-	_draw_pixel(ICONS.get(kind, ICONS["battle"]), Vector2(band.position.x + inset + glyph * 0.5, band.get_center().y), PixelFrame.scale_for(vp.y), Color.WHITE)
+	_draw_kind_icon(kind, Vector2(band.position.x + inset + glyph * 0.5, band.get_center().y), PixelFrame.scale_for(vp.y), Color.WHITE, ScreenLayout.MAP_NODE_ICON_PX * s)
 	var text_x: float = band.position.x + inset * 2.0 + glyph
 	var text_w: float = band.end.x - text_x - inset
-	MenuFont.text(self, Vector2(text_x, band.position.y + band.size.y * 0.42), kind_name(kind), INFO_NAME_FONT_SIZE, _glyph_color(kind), HORIZONTAL_ALIGNMENT_LEFT, text_w)
-	var line: String = kind_description(kind)
-	MenuFont.text(self, Vector2(text_x, band.position.y + band.size.y * 0.82), line, MenuFont.fit_size(line, INFO_LINE_FONT_SIZE, text_w), INFO_LINE_COLOR,
-		HORIZONTAL_ALIGNMENT_LEFT, text_w)
+	# World Map v2 (01 section G1, 03 section 7): a v2 node's preview — kind + lane, enemy + arena, modifiers, tier,
+	# objective, heat before -> after; a v1 node keeps the kind name and its one-line description.
+	var preview: Dictionary = _flow.get_node_preview(_selected) if str(_flow.get_map_graph().get("source", "")) == MapGraph.SOURCE_V2 else {}
+	if preview.is_empty():
+		MenuFont.text(self, Vector2(text_x, band.position.y + band.size.y * 0.42), kind_name(kind), INFO_NAME_FONT_SIZE, _glyph_color(kind), HORIZONTAL_ALIGNMENT_LEFT, text_w)
+		var line: String = kind_description(kind)
+		MenuFont.text(self, Vector2(text_x, band.position.y + band.size.y * 0.82), line, MenuFont.fit_size(line, INFO_LINE_FONT_SIZE, text_w), INFO_LINE_COLOR,
+			HORIZONTAL_ALIGNMENT_LEFT, text_w)
+		return
+	var name: String = kind_name(kind)
+	var arch: String = str(preview.get("archetype", ""))
+	if not arch.is_empty():
+		name += " · " + tr(ROUTE_NAME_KEY_FORMAT % arch)
+	var name_color: Color = ARCHETYPE_COLORS.get(arch, _glyph_color(kind)) if not arch.is_empty() else _glyph_color(kind)
+	MenuFont.text(self, Vector2(text_x, band.position.y + band.size.y * 0.32), name, MenuFont.fit_size(name, PREVIEW_NAME_FONT_SIZE, text_w), name_color, HORIZONTAL_ALIGNMENT_LEFT, text_w)
+	var parts: Array[String] = []
+	var enemy_key: String = str(preview.get("enemy_name_key", ""))
+	if not enemy_key.is_empty():
+		parts.append(tr(TEXT_ENEMY) % tr(enemy_key))
+	var shape: String = str(preview.get("arena_shape", ""))
+	if not shape.is_empty():
+		parts.append(tr(TEXT_ARENA) % shape)
+	for m: Variant in preview.get("modifiers", []):
+		parts.append(tr(str((m as Dictionary).get("text_key", ""))))
+	var line2: String = " · ".join(parts)
+	if not line2.is_empty():
+		MenuFont.text(self, Vector2(text_x, band.position.y + band.size.y * 0.6), line2, MenuFont.fit_size(line2, PREVIEW_FONT_SIZE, text_w), INFO_LINE_COLOR, HORIZONTAL_ALIGNMENT_LEFT, text_w)
+	var parts3: Array[String] = []
+	if MapGraph.MATCH_KINDS.has(kind):
+		parts3.append(tr(TEXT_TIER) % int(preview.get("reward_tier", 1)))
+	var objective_key: String = str(preview.get("objective_text_key", ""))
+	if not objective_key.is_empty():
+		parts3.append(tr(TEXT_OBJECTIVE) % tr(objective_key))
+	if not _flow.get_rule_state().is_empty() and int(preview.get("gauge", 0)) != int(preview.get("gauge_after", 0)):
+		parts3.append(tr(TEXT_HEAT_AFTER) % [int(preview.get("gauge", 0)), int(preview.get("gauge_after", 0))])
+	if parts3.is_empty():
+		parts3.append(kind_description(kind))
+	var line3: String = " · ".join(parts3)
+	MenuFont.text(self, Vector2(text_x, band.position.y + band.size.y * 0.88), line3, MenuFont.fit_size(line3, PREVIEW_FONT_SIZE, text_w), HudSkin.GRID_LIGHT if MapGraph.MATCH_KINDS.has(kind) else INFO_LINE_COLOR, HORIZONTAL_ALIGNMENT_LEFT, text_w)
 
 
 # The next-column node indices [param node] links to (its `next`); every index below [param next_count] when it has
@@ -669,6 +801,8 @@ func _glyph_color(kind: String) -> Color:
 			return GLYPH_SHOP
 		KIND_EVENT:
 			return GLYPH_EVENT
+		KIND_FORGE:
+			return GLYPH_FORGE
 	return GLYPH_BATTLE
 
 

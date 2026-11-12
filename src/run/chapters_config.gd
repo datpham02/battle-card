@@ -345,6 +345,52 @@ func generate_region_map(region_id: String, run_seed: int, floor: int, cleared_b
 	return ChapterMapGen.generate(spec, WorldMapGen.region_map_seed(run_seed, region_id, floor), cleared_bosses)
 
 
+## World Map v2: the region's map as a [MapGraph]: a RegionMapGen graph when `region_rules.json` says the region uses
+## `map_gen: v2` (or [param force_v2]), else today's [method generate_region_map] column map wrapped by
+## [method MapGraph.from_v1_columns] — the v1 map itself is generated exactly as before. The v2 spec is
+## [method region_spec] plus the keys RegionMapGen reads (`guarantee_shop`, `cleared_bosses`, `kiep_level`,
+## `match_traits`, `match_min_runes`); the seed is the same [method WorldMapGen.region_map_seed]. Null for an unknown
+## region. Story 038: Kiep acts on the v1 path through [method KiepRules.apply_map_spec] (inside region_spec) and on
+## the v2 path through the `peril` archetype weight (RegionMapGen.draw_archetypes).
+func generate_region_graph(region_id: String, run_seed: int, floor: int, cleared_bosses: int, kiep_level: int = 0, force_v2: bool = false) -> MapGraph:
+	var ci: int = region_index(region_id)
+	if ci < 0:
+		return null
+	var seed: int = WorldMapGen.region_map_seed(run_seed, region_id, floor)
+	if not force_v2 and not RegionRules.shared().uses_v2(region_id):
+		var columns: Array[Dictionary] = generate_region_map(region_id, run_seed, floor, cleared_bosses, kiep_level)
+		return MapGraph.from_v1_columns(columns, region_id, floor, seed)
+	return RegionMapGen.generate(region_graph_spec(region_id, run_seed, floor, cleared_bosses, kiep_level), seed)
+
+
+## World Map v2: the RegionMapGen spec of [param region_id] at [param floor]: [method region_spec] (without the Kiep
+## column pass: v2 applies Kiep to archetype weights instead) + `guarantee_shop`, `cleared_bosses`, `kiep_level`,
+## `match_traits` ({match id: [trait ids]} from the raw matches) and `match_min_runes` ({match id: boss_min_runes}).
+## {} for an unknown region.
+func region_graph_spec(region_id: String, run_seed: int, floor: int, cleared_bosses: int, kiep_level: int = 0) -> Dictionary:
+	var ci: int = region_index(region_id)
+	if ci < 0:
+		return {}
+	var spec: Dictionary = region_spec(region_id, floor, 0)
+	spec["guarantee_shop"] = shop_floors(run_seed).has(clampi(floor, 0, world_floors() - 1))
+	spec["cleared_bosses"] = cleared_bosses
+	spec["kiep_level"] = kiep_level
+	var traits: Dictionary = {}
+	var min_runes: Dictionary = {}
+	for mid: String in match_ids(ci):
+		var raw: Dictionary = get_match_raw(ci, mid)
+		var ids: Array[String] = []
+		if typeof(raw.get("traits")) == TYPE_ARRAY:
+			for t: Variant in raw["traits"] as Array:
+				if typeof(t) == TYPE_DICTIONARY:
+					ids.append(str((t as Dictionary).get("id", "")))
+		traits[mid] = ids
+		min_runes[mid] = int(raw.get("boss_min_runes", 0))
+	spec["match_traits"] = traits
+	spec["match_min_runes"] = min_runes
+	return spec
+
+
 ## Story 033: the cleaned `world.special_nodes` block: {column (0-based column of the region frame whose
 ## fight nodes a shop / event replace, default 1), shop_weight, event_weight (0..1 probability per region), guaranteed_shops
 ## (count of floors per run whose region always has a shop), guaranteed_min_floor (1-based first eligible floor)}.

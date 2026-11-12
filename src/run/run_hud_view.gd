@@ -90,6 +90,11 @@ const INTRO_ARENA_PAD_PX: float = 14.0
 const INTRO_SHAPE_PX: float = 44.0
 const INTRO_SHAPE_GOLD: Color = Color("FFD447")
 const TEXT_INTRO_RESONANCE: String = "ui.run_hud.intro_resonance"
+## World Map v2 (balance validation 2026-11-12): the encounter's ACTIVE modifiers (RunController.match_modifiers = the
+## node's profile ids, nothing merely available) at the band's left end, mirroring the arena block: one line per
+## modifier, a small angular glyph (720p px) and the glossary name, in the warning colour. Display only.
+const INTRO_MOD_GLYPH_PX: float = 12.0
+const INTRO_MOD_COLOR: Color = EffectText.MISS
 ## Controls v3: the "Floor 1/5 · ..." title line is drawn only in debug builds; a capture may hide it with the user
 ## argument --no-dev-title (the release look).
 static var show_dev_title: bool = OS.is_debug_build() and not OS.get_cmdline_user_args().has("--no-dev-title")
@@ -537,18 +542,24 @@ func _draw_intro(vp: Vector2) -> void:
 		boss = kind == ChapterMapView.KIND_BOSS or kind == ChapterMapView.KIND_MINIBOSS
 		title = tr(TEXT_INTRO_TITLE_BOSS) if kind == ChapterMapView.KIND_BOSS else ChapterMapView.kind_name(kind).to_upper()
 	_text(band, band.position.y + band.size.y * BAND_TITLE_BASELINE, title, BAND_TITLE_FONT_SIZE, TEXT_BOSS if boss else TEXT_WHITE, true)
-	_text(band, band.position.y + band.size.y * BAND_NAME_BASELINE, _match_name(state.get_match_index()), BAND_NAME_FONT_SIZE, TEXT_LIGHT)
-	# Controls v3: the arena name and the shape to join for resonance, once, at the band's right end.
+	# Controls v3: the arena name and the shape to join for resonance, once, at the band's right end; World Map v2:
+	# the active modifiers at the left end. The name and description lines are centred, so with a block shown they
+	# shrink to the width between the two blocks (never over them).
 	var block: Rect2 = intro_arena_rect(vp)
 	var shown: bool = _draw_intro_arena(vp, block)
-	# Story 023: the match's one-line description (desc_key) under the name, shrunk to the band width (and, with the
-	# arena block shown, clear of it on both sides since the line is centred).
+	var mods_shown: bool = _draw_intro_modifiers(vp, intro_modifiers_rect(vp))
+	var name: String = _match_name(state.get_match_index())
+	var inner_width: float = band.size.x - (band.end.x - block.position.x) * 2.0
+	var name_width: float = inner_width if shown or mods_shown else band.size.x - ScreenLayout.side_margin(vp) * 2.0
+	_text(band, band.position.y + band.size.y * BAND_NAME_BASELINE, name, _fit_line_font(name, name_width, BAND_NAME_FONT_SIZE), TEXT_LIGHT)
+	# Story 023: the match's one-line description (desc_key) under the name, shrunk to the band width (and, with a
+	# block shown, clear of it on both sides since the line is centred).
 	var desc_key: String = str(_controller.get_config().matches[state.get_match_index()].get("desc_key", ""))
 	if not desc_key.is_empty():
 		var desc: String = tr(desc_key)
 		var desc_width: float = band.size.x - ScreenLayout.side_margin(vp) * 2.0
-		if shown:
-			desc_width = band.size.x - (band.end.x - block.position.x) * 2.0
+		if shown or mods_shown:
+			desc_width = inner_width
 		_text(band, band.position.y + band.size.y * BAND_DESC_BASELINE, desc, _fit_line_font(desc, desc_width, BAND_DESC_FONT_SIZE), TEXT_DIM)
 	_text(band, band.position.y + band.size.y * BAND_HINT_BASELINE, tr(TEXT_INTRO_HINT), BAND_HINT_FONT_SIZE, TEXT_DIM)
 
@@ -563,6 +574,45 @@ static func intro_arena_rect(vp: Vector2) -> Rect2:
 	var top: float = band.position.y + roundf(INTRO_ARENA_PAD_PX * s)
 	var bottom: float = band.position.y + band.size.y * BAND_DESC_BASELINE - roundf(BAND_DESC_FONT_SIZE * s * 1.2)
 	return Rect2(band.end.x - margin - w, top, w, maxf(bottom - top, 0.0))
+
+
+## World Map v2: the intro band's modifier block (left end, the arena block's size and vertical span).
+static func intro_modifiers_rect(vp: Vector2) -> Rect2:
+	var block: Rect2 = intro_arena_rect(vp)
+	return Rect2(ScreenLayout.side_margin(vp), block.position.y, block.size.x, block.size.y)
+
+
+# The encounter's active modifiers, one per line (glyph + glossary name), centred in [param block]. False (nothing
+# drawn) when the match has none. The ids come from RunController.match_modifiers (GameFlow sets them from the node's
+# encounter profile), so a modifier that is in the region's pool but not drawn for this fight is never shown.
+func _draw_intro_modifiers(vp: Vector2, block: Rect2) -> bool:
+	if _controller == null or _controller.match_modifiers.is_empty():
+		return false
+	var rules: RegionRules = RegionRules.shared()
+	var s: float = ScreenLayout.controls_scale(vp)
+	var size: int = roundi(BAND_HINT_FONT_SIZE * s)
+	var glyph: float = roundf(INTRO_MOD_GLYPH_PX * s)
+	var gap: float = roundf(8.0 * s)
+	var lines: Array[String] = []
+	for id: String in _controller.match_modifiers:
+		var key: String = str(rules.modifier(id).get("text_key", ""))
+		lines.append(tr(key) if not key.is_empty() else id)
+	var text_w: float = block.size.x - glyph - gap
+	var fonts: Array[int] = []
+	var widest: float = 0.0
+	for t: String in lines:
+		var f: int = _fit_line_font(t, text_w, size)
+		fonts.append(f)
+		widest = maxf(widest, HudSkin.text_width(t, f, true))
+	var line_h: float = roundf(float(size) * 1.3)
+	var top: float = block.position.y + maxf((block.size.y - line_h * float(lines.size())) * 0.5, 0.0)
+	var left: float = roundf(block.get_center().x - (glyph + gap + widest) * 0.5)
+	for i: int in lines.size():
+		var cy: float = roundf(top + line_h * (float(i) + 0.5))
+		HudSkin.diamond(self, Vector2(left + glyph * 0.5, cy), glyph * 0.5, INTRO_MOD_COLOR, HudSkin.TEXT_OUTLINE, 1.5)
+		EffectText.draw(self, Vector2(left + glyph + gap, roundf(cy + float(fonts[i]) * 0.36)), lines[i], fonts[i], INTRO_MOD_COLOR,
+			HORIZONTAL_ALIGNMENT_LEFT, -1.0, s)
+	return true
 
 
 # The arena name, and under it the featured shape as gold cells with "Cộng hưởng ×1,5" (the bonus multiplier) beside

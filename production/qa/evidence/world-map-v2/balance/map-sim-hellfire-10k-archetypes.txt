@@ -1,0 +1,19 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+map_sim: seeds=10000 offset=0 pairs=assigned (1) cleared_bosses=1 kiep=0 force_v2=false depth_layout=[1, 3, 3, 1, 3, 2, 1]
+
+PAIR hellfire floor 2 (v2): maps=10000
+  BLOCK valid=10000/10000 (100.00 %) reach_fail=0 determinism_fail(first 100 x2)=0 events>2=0
+  BLOCK gen_ms p50=0.919 p95=1.089 max=36.930
+  INFO archetype_triples=9: elite+mystery+safe=633, elite+mystery+treasure=660, elite+peril+safe=1407, elite+peril+treasure=1381, elite+safe+treasure=735, mystery+peril+safe=1498, mystery+peril+treasure=1397, mystery+safe+treasure=672, peril+safe+treasure=1617
+  INFO identical_lane_profiles=0 (0.00 %) lane_match_repeats=2332 (23.32 %) hub={ "rest": 3131, "shop": 4957, "event": 1912 } shop_plan_hits=4957
+  INFO distinct_match_ids_mean=8.42 kinds={ "battle": 50627, "event": 9233, "danger": 21900, "rest": 13269, "forge": 6337, "miniboss": 14816, "boss": 10000, "shop": 4957, "treasure": 8861 }
+  ARCH elite: maps=4816 (48.16 %) lane0/1/2=1640/1573/1603 slots: d1{battle=4816} d2{miniboss=4816} d4{battle=4816}
+  ARCH mystery: maps=4860 (48.60 %) lane0/1/2=1605/1604/1651 slots: d1{event=4860} d2{battle=4860} d4{event=2461,treasure=2399}
+  ARCH peril: maps=7300 (73.00 %) lane0/1/2=2423/2429/2448 slots: d1{danger=7300} d2{danger=7300} d4{danger=7300}
+  ARCH safe: maps=6562 (65.62 %) lane0/1/2=2111/2209/2242 slots: d1{battle=6562} d2{battle=6562} d4{battle=3293,rest=3269}
+  ARCH treasure: maps=6462 (64.62 %) lane0/1/2=2221/2185/2056 slots: d1{battle=6462} d2{treasure=6462} d4{battle=3256,forge=3206}
+  ARCH hostile_per_map(0/1/2/3)=672/6540/2788/0 three_hostile=0.00 % repeated_archetype_maps=0 guarantee_miss(no safe, no treasure)=0 gamble={ "miniboss": 10000 } inaccessible=none
+
+TOTAL maps=10000 valid=10000 (100.000 %) gen_ms p50=0.919 p95=1.089
+FAILED SEEDS (0 listed of 0):

@@ -1,0 +1,201 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["tho_san"] cleared_bosses=1 region-pick=order node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none | odd=on chance=0.12 (data) sizes 5..7 max=clamp(cells/4+3, 4, 7) weights={ 5: 6.0, 6: 3.0, 7: 1.0 } tries=40
+relics: start=none relic-policy=pick (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+world-map-v2: region_rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json route_archetypes=res://assets/data/route_archetypes.json route-policy=peril pieces=off
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=7 choices=2 pool=["ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"] columns=7 heal=0.60 final={ "region": "an_dai", "match_id": "an_dai_keeper" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [0, 1, 1], "4": [1, 2, 2], "5": [1, 2, 2], "6": [1, 2, 2], "7": [1, 2, 2] }
+final prelude (TD-029): [["shop"]] before the final boss column
+  floor_scaling 1: { "hp_mult": 0.7, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 0.75, "step_mult": 0.97, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 0.8, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 0.85, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 0.95, "step_mult": 0.87, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 6: { "hp_mult": 1.05, "step_mult": 0.84, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 7: { "hp_mult": 1.15, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.25, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+  region_normalize swamp: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize desert: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize hellfire: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize sky_isles: { "hp_mult": 0.45, "step_mult": 1.05, "defense_add": 0.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+v6 (Story 040): floors=2..2 (--floors) | final=off | mercy=none | shop=greedy | pieces=off | relic=legacy:pick | dodge=0.85 | kiep=0
+v6 seeds start at 3002 (--seed-offset=3001), not 1
+v6 run time (ASSUMPTIONS, TD-006 family): out-of-match seconds map 8 / node, reward pick 15, shop 45, event 30, rest 10, fate choice 10; + intro_sec + end_delay_sec of every match; est. minutes = (match real sec + out-of-match sec) / 60
+v6 relic value (--relic=value: first best of the offer by rarity rank x 10 + bonus; ASSUMPTION): an_don=+3 chi_khau=+2 phong_an=+0 gai_ran=+0 manh_tuoi=+1 dinh_tam=+1 la_ban=+0 tam_huong=+2 tui_rong=+3 dau_than=+1 khoi_the=+2 phan_don=+1 han_ky=+1 huyet_an=-50 an_chu=+2 tam_hop=+3
+v6 pieces policy (--pieces=on): ink a 2-3 cell shape (fewest cells) when offered, remove 5-cell shapes (biggest bounding box first) with every shape-removal token; shop extras (--shop=on): remove-card over 10 cards, remove-shape when pieces on
+  ... tho_san 10/70 seeds, 34.7 s
+  ... tho_san 20/70 seeds, 62.3 s
+  ... tho_san 30/70 seeds, 99.6 s
+  ... tho_san 40/70 seeds, 138.6 s
+  ... tho_san 50/70 seeds, 181.4 s
+  ... tho_san 60/70 seeds, 224.1 s
+  ... tho_san 70/70 seeds, 269.2 s
+
+=== WORLD tho_san / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| tho_san | build | 90.0 | 63 | 5.3 | 5.8 | 4.26 | 6.87 | 51.1 | 31.4 | 0.00 | 6.5 (4.0-9.3) | 6.5 | 10.1 | 64/26/9 | 7.84 | 9.66 | 0.73 | 0.20 / 0.77 / 0.70 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| tho_san | 1 | 100.0 | 0 | 0.0 | 100.0 | 0.0 | 0.0 |
+| tho_san | 2 | 90.0 | 7 | 100.0 | 90.0 | 100.0 | 49.9 |
+| tho_san | 3 | 90.0 | 0 | 0.0 | 100.0 | 0.0 | 0.0 |
+| tho_san | 4 | 90.0 | 0 | 0.0 | 100.0 | 0.0 | 0.0 |
+| tho_san | 5 | 90.0 | 0 | 0.0 | 100.0 | 0.0 | 0.0 |
+| tho_san | 6 | 90.0 | 0 | 0.0 | 100.0 | 0.0 | 0.0 |
+| tho_san | 7 | 90.0 | 0 | 0.0 | 100.0 | 0.0 | 0.0 |
+| tho_san | final | 90.0 | 0 | 0.0 | 100.0 | 0.0 | 0.0 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| tho_san | 2 | hellfire | 70 | 63 | 90.0 |
+
+WORLD DEATHS BY FLOOR/KIND tho_san: f2/battle=1, f2/boss=3, f2/danger=2, f2/miniboss=1
+WORLD RELICS tho_san/build: relic-policy=pick mean relics at end 2.34 | owned at end (runs): an_don=7, chi_khau=11, phong_an=9, gai_ran=10, manh_tuoi=12, dinh_tam=7, la_ban=12, tam_huong=16, tui_rong=11, dau_than=16, khoi_the=12, phan_don=8, han_ky=15, huyet_an=18 | triggers / run: an_don=0.0, chi_khau=0.0, khoi_the=0.3, phan_don=0.2, huyet_an=1.4
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| tho_san | build | greedy | risky | 90.0 | 140 (86-198) | 143 | 141 (91-200) | 139 / 3 / 0 | 48 (0-86) | 104 (62-218) | 105 (66-220) (63) | 0.59 | 1.29 | 1.29 (41) | 0.76; 0.76 | 0.49 / 0.21 / 0.06 | 79 (54-109) (41) | 100 |
+WORLD EVENTS | tho_san | build | events / run 0.36 | non-leave choices / run 0.29 | tran_thach extra fights 0, deaths 0 (0.0%) | curses picked up / run 0.11 | curse draws / run 0.66 | curse dmg / run 0.7 | matches slowed by loi_the / run 0.10 | picks: ban_tho_mau/give=2, ke_buon_nguyen/accept=5, ke_lang_thang/leave=3, loi_the/swear=5, mo_hoang/dig=3, mo_hoang/leave=1, song_bac/bet_small=1, suoi_tinh/bathe=3, suoi_tinh/drink=1, tran_thach/leave=1
+ECONOMY RAW tho_san/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 164|0|184|1|0|-1|-1 96|42|74|1|1|1|66 126|0|146|1|0|-1|-1 139|0|159|1|0|-1|-1 196|106|110|1|2|2|113 90|53|57|1|1|1|58 177|0|197|1|0|-1|-1 138|85|73|1|2|2|86 165|0|185|0|0|-1|-1 138|74|84|1|1|1|74 85|32|73|1|1|1|47 154|53|121|1|1|1|81 139|53|106|1|1|1|75 138|53|105|1|1|1|83 145|74|91|1|1|1|85 168|106|82|1|2|2|110 104|0|124|1|0|-1|-1 141|53|108|1|1|1|82 123|53|90|1|1|1|75 86|0|106|1|0|-1|-1 95|53|62|1|1|1|62 192|0|212|1|0|-1|-1 143|53|110|1|1|1|80 128|74|74|1|1|1|78 104|74|50|0|2|2|81 213|0|233|1|0|-1|-1 214|0|234|1|0|-1|-1 140|74|86|1|1|1|84 200|0|220|1|0|-1|-1 153|74|99|1|1|1|89 99|74|45|1|1|1|75 140|74|86|1|1|1|75 166|74|112|1|1|1|84 105|0|125|0|0|-1|-1 169|95|94|1|2|2|117 88|42|66|1|1|1|58 198|0|218|1|0|-1|-1 133|74|79|1|1|1|79 80|32|68|1|1|1|51 215|0|235|1|0|-1|-1 146|0|166|1|0|-1|-1 59|53|26|0|1|1|79 155|0|175|1|0|-1|-1 84|0|104|0|0|-1|-1 83|53|50|1|1|1|54 153|127|46|1|2|2|127 78|32|66|1|1|1|48 140|74|86|1|2|2|75 181|106|95|1|2|2|107 44|0|64|0|0|-1|-1 111|53|78|1|1|1|68 186|0|206|1|0|-1|-1 184|106|98|1|2|2|109 128|0|148|1|0|-1|-1 117|74|63|1|1|1|79 205|0|225|1|0|-1|-1 164|106|78|1|2|2|106 92|74|38|0|2|2|80 140|0|160|1|0|-1|-1 232|0|252|1|0|-1|-1 128|0|148|1|0|-1|-1 189|0|209|1|0|-1|-1 201|0|221|1|0|-1|-1 188|0|208|1|0|-1|-1 106|42|84|1|1|1|52 137|53|104|1|1|1|71 192|0|212|1|0|-1|-1 132|53|99|1|1|1|76 145|85|80|1|2|2|87 191|0|211|1|0|-1|-1
+ECONOMY TARGETS tho_san/build (shop=greedy event=risky): earned/run 143 in 350-450: MISS | items/run 0.76 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 100%: PASS
+WORLD VERDICT tho_san/build: run win 90.0% (target 20-40) TOO EASY; est. minutes won run 6.5 (target 40-50) TOO SHORT; max region spread at a floor 0.0 pts (target <= 15, n >= 5) PASS; max floor share of deaths 100.0% (target <= 40) FAIL; survival strictly decreasing FAIL (a floor with no deaths); boss hits / won run 5.3
+
+ROUTE | character | archetype | runs | region clear % | gold gained (drops, mean) | HP lost pts of max (mean) | relics gained (mean) | objective met / run | run win % | route policy |
+ROUTE | tho_san | elite | 2 | 100.0 | 106.5 | 25.0 | 1.50 | 0.00 | 100.0 | peril |
+ROUTE | tho_san | mystery | 14 | 100.0 | 83.6 | 31.8 | 2.43 | 0.00 | 100.0 | peril |
+ROUTE | tho_san | peril | 50 | 86.0 | 131.2 | 50.8 | 2.40 | 0.22 | 86.0 | peril |
+ROUTE | tho_san | safe | 1 | 100.0 | 135.0 | 55.0 | 2.00 | 0.00 | 100.0 | peril |
+ROUTE | tho_san | treasure | 3 | 100.0 | 78.0 | 23.3 | 1.67 | 0.00 | 100.0 | peril |
+ROUTE2 | character | archetype | routes ended | heat at warden mean (reached; count by heat 0..4) | heat max mean | objective fights won / met per route | relic rows offered / taken per route | ink rows offered / taken per route | forge visits / free removals per route | HP lost in fights pts | HP healed outside fights pts | event HP delta pts |
+ROUTE2 | tho_san | elite | 2 | 2.00 (2; 0:0 1:0 2:2 3:0 4:0) | 2.50 | 0.00 / 0.00 | 0.50 / 0.50 | n/a (pieces off) | 0.00 / n/a | 25.0 | 0.0 | 0.0 |
+ROUTE2 | tho_san | mystery | 14 | 0.79 (14; 0:8 1:3 2:2 3:0 4:1) | 1.86 | 0.00 / 0.00 | 0.86 / 0.50 | n/a (pieces off) | 0.00 / n/a | 27.5 | 0.0 | -4.3 |
+ROUTE2 | tho_san | peril | 50 | 2.52 (46; 0:0 1:13 2:11 3:7 4:15) | 3.14 | 0.94 / 0.22 | 1.78 / 1.40 | n/a (pieces off) | 0.00 / n/a | 66.3 | 9.2 | 0.5 |
+ROUTE2 | tho_san | safe | 1 | 4.00 (1; 0:0 1:0 2:0 3:0 4:1) | 4.00 | 0.00 / 0.00 | 1.00 / 1.00 | n/a (pieces off) | 0.00 / n/a | 55.0 | 0.0 | 0.0 |
+ROUTE2 | tho_san | treasure | 3 | 1.00 (3; 0:0 1:3 2:0 3:0 4:0) | 2.00 | 0.00 / 0.00 | 0.00 / 0.00 | n/a (pieces off) | 0.00 / n/a | 43.3 | 20.0 | 0.0 |
+ROUTE3 | character | archetype | routes ended | rests per route | heat before -> after rest (mean) | shops per route | heat before -> after shop (mean) | warden reached | warden hook fired % (of reached) |
+ROUTE3 | tho_san | elite | 2 | 1.50 | 2.00 -> 1.00 | 0.00 | - | 2 | 0.0 |
+ROUTE3 | tho_san | mystery | 14 | 1.00 | 1.00 -> 0.50 | 0.71 | 1.60 -> 0.60 | 14 | 7.1 |
+ROUTE3 | tho_san | peril | 50 | 0.94 | 2.79 -> 1.79 | 0.56 | 2.75 -> 1.75 | 46 | 47.8 |
+ROUTE3 | tho_san | safe | 1 | 1.00 | 2.00 -> 1.00 | 0.00 | - | 1 | 100.0 |
+ROUTE3 | tho_san | treasure | 3 | 1.00 | 2.00 -> 1.00 | 1.00 | 2.00 -> 1.00 | 3 | 0.0 |
+
+=== RUN v6 tho_san / build: 70 runs, dodge=0.85 mercy=none pieces=off ===
+RUN | character | policy | kiep | win % | deaths by floor (f1 f2 f3 f4 f5 final) | hits taken / won run | run minutes (est., won median / lost median) | gold earned / spent (all runs; won runs) | relics / run | deck size | piece set size |
+RUN | tho_san | build [mercy=none shop=greedy pieces=off relic=legacy:pick dodge=0.85] | 0 | 90.0 | 0/7/0/0/0/0/0/0 | 5.3 | 6.7 / 6.5 | 143 / 40; 148 / 41 | 2.34 | 7.84 | 16.0 |
+RUN DETAIL tho_san/build: death % of runs entering floor f1..f7: -/10.0/0.0/0.0/0.0/0.0/0.0 | final reached 0, won 0 (0.0 %) | mean boss swing hit 9.4 % of max HP (405 swing hits) | gold at the final median - (cheapest shop relic 60 at the last floor) | wins 63 / 70
+REGION x FLOOR | character | floor | region | matches entered | match win % |
+REGION x FLOOR | tho_san | 2 | hellfire | 298 | 97.7 |
+REGION x FLOOR CHECK tho_san/build: floors f2 mean 97.7 (n=298) | regions within +-10 pts of the floor mean (cells with n >= 20: 1 checked, 0 small): PASS
+VERDICT run tho_san/build | run win % 30-45 | 90.0 % (+-3.6 sd, n=70) | FAIL
+VERDICT run tho_san/build | death probability non-decreasing f1..f5 | fewer than two floors played | DEFERRED
+VERDICT run tho_san/build | floor-1 deaths <= 10 % of runs | floor 1 not played (--floors) | DEFERRED
+VERDICT run tho_san/build | final-match win when reached 50-70 % | the final was never reached (or --final=off) | DEFERRED
+VERDICT run tho_san/build | won-run minutes median 40-50 | 6.7 min (63 won runs) | FAIL
+VERDICT run tho_san/build | boss hits per won run 15-30 | 5.3 | FAIL
+VERDICT run tho_san/build | gold spent >= 70 % of earned (won runs) | 27.8 % (41 of 148 per run) | FAIL
+VERDICT run tho_san/build | gold left at the final median <= one shop relic | the final was not played | DEFERRED
+VERDICT run tho_san/build | lost-run minutes median >= 15 | 6.5 min (7 lost runs) | FAIL
+VERDICT run tho_san/build | mean boss hit 4-15 % of max HP | 9.4 % (swing hits only) | PASS
+VERDICT run tho_san/build | regions within +-10 pts of the floor mean | see REGION x FLOOR CHECK | PASS
+VERDICT run tho_san/build | onboarding (empty save) win >= 20 % | this run has every unlock open (--progress=all) | DEFERRED (run with --progress=none)
+VERDICT run tho_san/build | bot anchored on a playtest (Part A, TD-006) | dodge=0.85 (legacy default) | DEFERRED (no playtest log: DEFAULT_BOT stays, TD-006 open; read the DODGE SENSITIVITY run)
+
+ODD | character | odd share of player drops % | mean odd size | odd fallbacks (total; per run) | boss odd share % | policy | player odd / drops | boss odd / drops | boss mean odd size | boss fallbacks | matches with odd possible player / boss / all | odd=on chance=0.12 (data) sizes 5..7 max=clamp(cells/4+3, 4, 7) weights={ 5: 6.0, 6: 3.0, 7: 1.0 } tries=40
+ODD | tho_san | 11.6 | 5.62 | 0; 0.00 | 11.8 | build [mercy=none shop=greedy pieces=off relic=legacy:pick dodge=0.85] | 392 / 3393 | 392 / 3312 | 5.61 | 0 | 298 / 298 / 298 |
+
+=== RUN v6 AGGREGATE (dodge=0.85 mercy=none pieces=off): 70 runs of ["tho_san"] ===
+RELIC LIFT | relic | runs with it by floor <= 2 | win % with | win % without | lift (pts) | note |
+RELIC LIFT | an_don | 7 | 100.0 | 88.9 | +11.1 | small (n < 10)
+RELIC LIFT | chi_khau | 11 | 100.0 | 88.1 | +11.9 |
+RELIC LIFT | dau_than | 16 | 100.0 | 87.0 | +13.0 |
+RELIC LIFT | dinh_tam | 7 | 100.0 | 88.9 | +11.1 | small (n < 10)
+RELIC LIFT | gai_ran | 10 | 90.0 | 90.0 | +0.0 |
+RELIC LIFT | han_ky | 15 | 93.3 | 89.1 | +4.2 |
+RELIC LIFT | huyet_an | 18 | 88.9 | 90.4 | -1.5 |
+RELIC LIFT | khoi_the | 12 | 100.0 | 87.9 | +12.1 |
+RELIC LIFT | la_ban | 12 | 100.0 | 87.9 | +12.1 |
+RELIC LIFT | manh_tuoi | 12 | 83.3 | 91.4 | -8.0 |
+RELIC LIFT | phan_don | 8 | 100.0 | 88.7 | +11.3 | small (n < 10)
+RELIC LIFT | phong_an | 9 | 88.9 | 90.2 | -1.3 | small (n < 10)
+RELIC LIFT | tam_huong | 16 | 93.8 | 88.9 | +4.9 |
+RELIC LIFT | tui_rong | 11 | 100.0 | 88.1 | +11.9 |
+RELIC LIFT CHECK: no relic above +15 pts (cells with >= 10 runs with and without): max +13.0 (dau_than) | PASS | small cells: an_don,dinh_tam,phan_don,phong_an
+VERDICT run all | no relic lift > +15 pts | max +13.0 (dau_than) | PASS
+SHOP | item | bought | offered | bought % of shop visits | bought % of offers |
+SHOP | relic:la_ban | 7 | 10 | 17.1 | 70.0 |
+SHOP | relic:gai_ran | 6 | 8 | 14.6 | 75.0 |
+SHOP | relic:phong_an | 5 | 9 | 12.2 | 55.6 |
+SHOP | relic:chi_khau | 4 | 11 | 9.8 | 36.4 |
+SHOP | service:heal | 4 | 41 | 9.8 | 9.8 |
+SHOP | card:dap_vo | 3 | 3 | 7.3 | 100.0 |
+SHOP | card:bay_lo | 2 | 6 | 4.9 | 33.3 |
+SHOP | relic:dau_than | 2 | 5 | 4.9 | 40.0 |
+SHOP | relic:dinh_tam | 2 | 9 | 4.9 | 22.2 |
+SHOP | relic:manh_tuoi | 2 | 10 | 4.9 | 20.0 |
+SHOP | relic:phan_don | 2 | 6 | 4.9 | 33.3 |
+SHOP | card:bang_tam | 1 | 1 | 2.4 | 100.0 |
+SHOP | card:chan_phong | 1 | 3 | 2.4 | 33.3 |
+SHOP | card:gai_doc | 1 | 5 | 2.4 | 20.0 |
+SHOP | card:han_kiem | 1 | 4 | 2.4 | 25.0 |
+SHOP | card:kiem_than | 1 | 3 | 2.4 | 33.3 |
+SHOP | card:kiem_vu | 1 | 4 | 2.4 | 25.0 |
+SHOP | card:thuong_xuyen | 1 | 4 | 2.4 | 25.0 |
+SHOP | card:tran_gai | 1 | 1 | 2.4 | 100.0 |
+SHOP | card:tuong_da | 1 | 1 | 2.4 | 100.0 |
+SHOP | card:vung_lay | 1 | 6 | 2.4 | 16.7 |
+SHOP | relic:an_don | 1 | 6 | 2.4 | 16.7 |
+SHOP | relic:huyet_an | 1 | 2 | 2.4 | 50.0 |
+SHOP | relic:khoi_the | 1 | 1 | 2.4 | 100.0 |
+SHOP | relic:tam_huong | 1 | 1 | 2.4 | 100.0 |
+SHOP | card:bang_chau | 0 | 4 | 0.0 | 0.0 |
+SHOP | card:bang_phong | 0 | 1 | 0.0 | 0.0 |
+SHOP | card:bang_vo | 0 | 1 | 0.0 | 0.0 |
+SHOP | card:chuoi_set | 0 | 1 | 0.0 | 0.0 |
+SHOP | card:cuong_phong | 0 | 2 | 0.0 | 0.0 |
+SHOP | card:dai_dao | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:dia_chan | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:gai_nguyen | 0 | 2 | 0.0 | 0.0 |
+SHOP | card:han_khi | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:han_phong | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:han_tran | 0 | 1 | 0.0 | 0.0 |
+SHOP | card:hoa_bang | 0 | 1 | 0.0 | 0.0 |
+SHOP | card:hoa_tinh | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:hoa_tran | 0 | 1 | 0.0 | 0.0 |
+SHOP | card:hoa_xa | 0 | 5 | 0.0 | 0.0 |
+SHOP | card:khien_thep | 0 | 7 | 0.0 | 0.0 |
+SHOP | card:kiem_khi | 0 | 5 | 0.0 | 0.0 |
+SHOP | card:lien_tram | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:liet_hoa | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:loc_cuon | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:min_tre | 0 | 5 | 0.0 | 0.0 |
+SHOP | card:ran_kich | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:ran_van | 0 | 2 | 0.0 | 0.0 |
+SHOP | card:suong_mong | 0 | 5 | 0.0 | 0.0 |
+SHOP | card:thanh_thuy | 0 | 4 | 0.0 | 0.0 |
+SHOP | card:thien_lang | 0 | 1 | 0.0 | 0.0 |
+SHOP | card:thiet_kiem | 0 | 4 | 0.0 | 0.0 |
+SHOP | card:xung_kich | 0 | 3 | 0.0 | 0.0 |
+SHOP | relic:han_ky | 0 | 2 | 0.0 | 0.0 |
+SHOP | relic:tui_rong | 0 | 2 | 0.0 | 0.0 |
+SHOP | service:remove_card | 0 | 41 | 0.0 | 0.0 |
+SHOP | service:remove_shape | 0 | 41 | 0.0 | 0.0 |
+SHOP CHECK: 41 shop visits | literal rule, bought in < 2 % of shop visits: 32 of 57 items (a relic / card that is rarely in stock lands here; read the next line) | never worth buying, offered >= 10 times and bought < 2 % of those offers: 2 items (service:remove_card 0/41, service:remove_shape 0/41) | FAIL
+VERDICT run all | no shop item bought < 2 % of its offers (offered >= 10 times) | 41 visits, 2 items flagged | FAIL
+VERDICT run all | spread between characters <= 20 pts | one character | DEFERRED (run --characters=kiem_si,phap_su,sat_thu,tho_san,giao_si)
+WORLD CHARACTERS | progress=all | build | tho_san | run win 90.0% (63/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,tho_san)
+
+VERDICT run all | kill vs spare win gap <= 10 pts | needs both runs | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --mercy=kill,spare)
+VERDICT run all | pieces on not above off by > 10 pts | needs both runs | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --pieces=on,off)
+VERDICT run all | Kiep win % monotone 0..10, Kiep 10 >= 3 % | see the KIEP CHECK lines | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --kiep=0..10 --seeds=30 --characters=kiem_si)
+runtime: 270.8 s
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 32 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

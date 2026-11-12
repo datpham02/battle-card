@@ -54,6 +54,13 @@ const TILE_BORDER: float = 4.0
 const SELECTED_BORDER: float = 8.0
 const STRIKE_WIDTH: float = 5.0
 const TITLE_FONT_SIZE: int = 44
+## World Map v2 (01 section B8): the FORGE node reuses this screen: title "LÒ KHỐI", the free-removal line instead of
+## the token count, two angular "Học <hình>" buttons (the ink row) in the title band's right part, Close = leave.
+const TEXT_FORGE_TITLE: String = "ui.forge.title"
+const TEXT_FORGE_FREE: String = "ui.forge.free_removal"
+const TEXT_FORGE_INK: String = "ui.forge.ink"
+const INK_BUTTON_FONT_SIZE: int = 20
+const INK_BUTTON_GAP_PX: float = 10.0
 const HEADER_FONT_SIZE: int = 24
 const NAME_FONT_SIZE: int = 22
 const PERCENT_FONT_SIZE: int = 20
@@ -191,7 +198,32 @@ func reason_text(row: Dictionary) -> String:
 
 
 func _is_active() -> bool:
-	return _flow != null and _flow.get_phase() == GameFlow.Phase.PIECE_DECK and _flow.get_run() != null
+	return _flow != null and (_flow.get_phase() == GameFlow.Phase.PIECE_DECK or _flow.get_phase() == GameFlow.Phase.FORGE) and _flow.get_run() != null
+
+
+# World Map v2: true while this screen is the forge node.
+func _is_forge() -> bool:
+	return _flow != null and _flow.is_forge_open()
+
+
+# World Map v2: the ink row's button rects (one per offered shape) in the title band's right part; [] outside the forge
+# or without an offer.
+func _ink_rects(vp: Vector2) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	if not _is_forge():
+		return out
+	var offer: Array[String] = _flow.get_ink_offer()
+	if offer.is_empty():
+		return out
+	var s: float = UiButtons.ui_scale(self)
+	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
+	var area: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
+	var gap: float = INK_BUTTON_GAP_PX * s
+	var w: float = (area.size.x - gap * float(offer.size() - 1)) / float(offer.size())
+	var h: float = maxf(band.size.y * 0.8, ScreenLayout.MIN_TOUCH_SIDE)
+	for i: int in offer.size():
+		out.append(Rect2(Vector2(area.position.x + float(i) * (w + gap), band.get_center().y - h * 0.5).round(), Vector2(w, h).round()))
+	return out
 
 
 func _reset() -> void:
@@ -233,8 +265,20 @@ func _input(event: InputEvent) -> void:
 # A real press: the buttons act at once; a tile waits for its release.
 func _on_press(pos: Vector2, vp: Vector2) -> void:
 	if ScreenLayout.shop_leave_rect(vp).has_point(pos):
-		_flow.close_piece_deck()
+		if _is_forge():
+			_flow.forge_leave()
+		else:
+			_flow.close_piece_deck()
 		return
+	var ink_rects: Array[Rect2] = _ink_rects(vp)
+	for i: int in ink_rects.size():
+		if ScreenLayout.touch_rect(ink_rects[i]).has_point(pos):
+			var offer: Array[String] = _flow.get_ink_offer()
+			if i < offer.size():
+				_flow.choose_ink(offer[i])
+				_message = tr(TEXT_FORGE_INK) % str(_row(offer[i]).get("name", offer[i]))
+				_message_bad = false
+			return
 	if not _selected.is_empty() and ScreenLayout.shop_buy_rect(vp).has_point(pos):
 		_remove_selected()
 		return
@@ -357,10 +401,18 @@ func _draw_odd_rule(vp: Vector2) -> void:
 # Title band: "BỘ MẢNH" centred, the shape-removal tokens at the right.
 func _draw_header(vp: Vector2) -> void:
 	var band: Rect2 = ScreenLayout.floor_title_rect(vp)
-	var title: String = tr(TEXT_TITLE)
+	var forge: bool = _is_forge()
+	var title: String = tr(TEXT_FORGE_TITLE if forge else TEXT_TITLE)
 	_text(band, band.get_center().y + TITLE_FONT_SIZE * 0.35, title, _fit(title, vp.x * 0.4, TITLE_FONT_SIZE, true), TITLE_COLOR, true)
 	var label: Rect2 = ScreenLayout.floor_hero_label_rect(vp)
-	var tokens: String = tr(TEXT_TOKENS) % _flow.get_shape_removals()
+	var ink_rects: Array[Rect2] = _ink_rects(vp)
+	if forge and not ink_rects.is_empty():
+		var offer: Array[String] = _flow.get_ink_offer()
+		for i: int in ink_rects.size():
+			var caption: String = tr(TEXT_FORGE_INK) % str(_row(offer[i]).get("name", offer[i]))
+			UiButtons.draw_button(self, ink_rects[i], caption, UiButtons.Style.PRIMARY, UiButtons.is_pressed_at(self, ScreenLayout.touch_rect(ink_rects[i])), true, _fit(caption, ink_rects[i].size.x * 0.9, INK_BUTTON_FONT_SIZE))
+		return
+	var tokens: String = (tr(TEXT_FORGE_FREE) % ("1" if _flow.forge_free_removal_left() else "0")) if forge else (tr(TEXT_TOKENS) % _flow.get_shape_removals())
 	MenuFont.text(self, Vector2(label.position.x, label.get_center().y + HEADER_FONT_SIZE * 0.35), tokens, _fit(tokens, label.size.x, HEADER_FONT_SIZE), HEADER_COLOR, HORIZONTAL_ALIGNMENT_RIGHT, label.size.x)
 
 

@@ -1,0 +1,150 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS mire: leaving a mire cell multiplies that step's cooldown
+PASS mire: a step from a normal cell costs the plain cooldown
+PASS mire: now on a mire cell, stepping out is slow again
+PASS mire: step_cost_mult reads the configured mire_step_mult
+PASS mire: enemy half mire does not slow the player side
+PASS mire: a free step stays free
+PASS mire: without step_cost_fn the cooldown is plain
+PASS mire: an immune side is not slowed
+PASS mire tick: nothing during the grace period
+PASS mire tick: first tick right after the grace (0.5 s)
+PASS mire tick: no second tick before the cadence
+PASS mire tick: second tick one mire_tick_sec later
+PASS mire tick: third tick at the cadence
+PASS mire tick: standing time accumulates
+PASS mire tick: walking through one mire cell costs nothing
+PASS mire tick: re-entering restarts the grace period
+PASS mire immune: the immune boss takes no tick damage, the player does
+PASS mire immune: no standing time counted
+PASS mire timed: permanent mire is not shortened
+PASS mire timed: a timed cell reports its time
+PASS mire timed: the timed cell is gone after its time
+PASS mire timed: cells of the other half are ignored
+PASS mire clear: clear_mire empties both sides
+PASS idle: with nothing enabled the model emits nothing
+PASS sand: add_sand returns the kept cells
+PASS sand: first the warning, not yet blocked
+PASS sand: still a warning just before sand_warn_sec
+PASS sand: filled after the warning and blocks the step
+PASS sand: the piece lying on the filled cell is buried, the other stays
+PASS sand: sand_cells lists it and a time bar is available
+PASS sand: the cell opens again after sand_sec
+PASS sand: a step into the cleared cell works
+PASS sand: the cell under the unit is never kept
+PASS sand: a unit that stepped onto a warning cell cancels it (never sand under a unit)
+PASS sand: cells of the other half and duplicates are dropped
+PASS sand: leave-a-path keeps one neighbour of the unit open
+PASS sand: exactly one neighbour is open
+PASS sand: warn 0 fills at once
+PASS sand: seals count as blocked for leave-a-path
+PASS sand periodic: nothing before the interval
+PASS sand periodic: both halves get a fall
+PASS sand periodic: never under a unit
+PASS sand periodic: the player keeps a way out even when the fall wants every cell
+PASS sand periodic: the same seed gives the same cells
+PASS sand periodic: sand_cells per side
+PASS sand periodic: warning turned into sand
+PASS wind: seeded direction among the 4
+PASS wind: the same seed gives the same direction
+PASS wind: the direction holds until wind_shift_sec
+PASS wind: the direction changes every wind_shift_sec
+PASS wind: the shift is seed-deterministic
+PASS wind: off gives (0,0)
+PASS wind: no drift before drift_sec
+PASS wind: drift_due every drift_sec (2.0)
+PASS wind: drift_mult 0.5 doubles the cadence
+PASS wind: drift_sec comes from the configured value
+PASS drift: a piece moves one cell along the direction
+PASS drift: keeps going
+PASS drift: never outside the half
+PASS drift: never off the top edge
+PASS drift: direction (0,0) does nothing
+PASS drift: never into a missing cell
+PASS drift: never into a sand cell
+PASS drift: never into a cell holding a piece, the free one moves
+PASS drift: a dragged piece does not drift, the others do
+PASS bury: removes the pieces on those cells and reports the number
+PASS wind offset: a new drop lands one cell along the wind (same draw, shifted)
+PASS config: combat.json hazards block mirrors the code defaults
+WARNING: TileHazards: hazards.mire_step_mult must be a number, keeping 1.6
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] clean (res://src/combat/tile_hazards.gd:119)
+       [1] from_dictionary (res://src/combat/combat_config.gd:196)
+       [2] _config_tests (res://tests/unit/combat/hazard_test.gd:389)
+       [3] _init (res://tests/unit/combat/hazard_test.gd:63)
+WARNING: TileHazards: hazards.mire_tick_sec=0 is out of range, keeping 0.5
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] clean (res://src/combat/tile_hazards.gd:133)
+       [1] from_dictionary (res://src/combat/combat_config.gd:196)
+       [2] _config_tests (res://tests/unit/combat/hazard_test.gd:389)
+       [3] _init (res://tests/unit/combat/hazard_test.gd:63)
+PASS config: a bad hazards value keeps its default, a good one applies
+PASS config: no hazards block gives the defaults
+PASS config: a match override changes the step cost
+PASS vent: the fixed streak cells are listed from the start
+PASS vent: nothing before vent_interval_sec
+PASS vent: the warning starts on the beat
+PASS vent: a warning vent never blocks a step
+PASS vent: erupts after vent_warn_sec on all its cells
+PASS vent: the other row is not venting
+PASS vent: ends after vent_sec
+PASS vent: the next vent follows one interval after the first
+PASS vent burn: the erupted cells are burning cells of the StatusEffects
+PASS vent burn: a unit standing on the vent loses HP per tick
+PASS vent burn: the piece on the vent is burnt, the other stays
+PASS vent stats: ticks and damage are counted for the unit on the vent
+PASS vent trigger: no vent on the side gives false
+PASS vent trigger: trigger_vents starts the vent holding prefer_cell first
+PASS vent trigger: a busy vent is not triggered again by index
+PASS vent trigger: count caps the number started, the busy one is skipped
+PASS vent trigger: nothing idle left gives false
+PASS vent trigger: the seeded order is deterministic
+PASS vent trigger: warn 0 erupts at once
+PASS vent clock: set_vent_interval_mult halves the cadence and enemy vents run too
+PASS vent idle: a model without vents stays silent
+PASS trigger_vents: asking 3 of 2 idle vents starts 2 (clamped to the half)
+PASS trigger_vents: nothing idle -> 0
+PASS trigger_vents: both erupt after the warning
+PASS trigger_vents: both idle again after vent_sec
+PASS trigger_vents: one vent already warning -> asking 3 starts the other 1
+PASS trigger_vents: count 1 with the player's cell on row 1 starts row 1 first
+PASS crumble: enabled flag
+PASS crumble: the standing timer shows its progress (0..1) while the unit stays
+PASS crumble: nothing cracks before crumble_after_sec
+PASS crumble: the cell cracks after crumble_after_sec of standing
+PASS crumble: a cracking cell can still be stepped on (a warning, not a wall)
+PASS crumble: it falls after crumble_warn_sec and the unit is pushed off
+PASS crumble: the push lands on a neighbour of the fallen cell
+PASS crumble: a fallen cell blocks the step and lists a time bar
+PASS crumble: stats count the pushes (player only, the boss half never crumbles) and fall_damage
+PASS crumble: the cell is restored after fall_sec
+PASS crumble return: the fade starts at 1.0 (full white) the moment the cell returns
+PASS crumble return: the returning cell is steppable at once (the fade is presentation only)
+PASS crumble return: the fade is over after return_fade_sec
+PASS crumble: moving every 1.5 s keeps every cell standing
+PASS crumble: off by default, a long stand changes nothing
+PASS crumble: the enemy side never crumbles under the boss
+PASS crumble: crumbles_side is player only
+PASS islands: two components of real cells
+PASS islands: each component is one connected island
+PASS leave-a-path: a unit on a 2-cell island never crumbles its cell (no way off the island afterwards)
+PASS drop_cells: returns the cells kept and starts their crack warning
+PASS drop_cells: islands() still counts the cracking cells as standing
+PASS drop_cells: still cracking just before warn_sec
+PASS drop_cells: the island falls after warn_sec and blocks
+PASS drop_cells: islands() now lists only the standing island
+PASS drop_cells: an already fallen cell is not dropped twice
+PASS drop_cells: never drops the whole last standing island (leave-a-path keeps the unit's neighbour)
+PASS drop_cells: the dropped island is restored after fall_sec
+PASS drop_cells: a single remaining cell (the last island) never falls
+PASS drop_cells: dropping one island out of two works
+PASS drop_cells: the unit on the falling cell is pushed to the open cell next to it
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 10 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

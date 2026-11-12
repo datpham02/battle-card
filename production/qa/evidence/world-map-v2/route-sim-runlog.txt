@@ -1,0 +1,85 @@
+safe kiem_si exit=0 seconds=178
+safe tho_san exit=0 seconds=183
+safe sat_thu exit=0 seconds=192
+safe phap_su exit=0 seconds=193
+safe giao_si exit=0 seconds=210
+treasure tho_san exit=0 seconds=181
+treasure kiem_si exit=0 seconds=184
+treasure phap_su exit=0 seconds=193
+treasure sat_thu exit=0 seconds=195
+treasure giao_si exit=0 seconds=216
+peril tho_san exit=0 seconds=169
+peril kiem_si exit=0 seconds=173
+peril sat_thu exit=0 seconds=190
+peril phap_su exit=0 seconds=194
+peril giao_si exit=0 seconds=211
+elite kiem_si exit=0 seconds=167
+elite tho_san exit=0 seconds=171
+elite sat_thu exit=0 seconds=186
+elite phap_su exit=0 seconds=187
+elite giao_si exit=0 seconds=218
+mystery kiem_si exit=0 seconds=172
+mystery tho_san exit=0 seconds=173
+mystery phap_su exit=0 seconds=195
+mystery sat_thu exit=0 seconds=195
+mystery giao_si exit=0 seconds=213
+random tho_san exit=0 seconds=175
+random kiem_si exit=0 seconds=178
+random phap_su exit=0 seconds=189
+random sat_thu exit=0 seconds=195
+random giao_si exit=0 seconds=219
+value tho_san exit=0 seconds=188
+value kiem_si exit=0 seconds=193
+value phap_su exit=0 seconds=203
+value sat_thu exit=0 seconds=203
+value giao_si exit=0 seconds=233
+PROBES DONE
+fullrun value giao_si exit=127 seconds=212
+fullrun value tho_san exit=127 seconds=212
+fullrun value phap_su exit=127 seconds=213
+fullrun value sat_thu exit=127 seconds=213
+fullrun value kiem_si exit=127 seconds=213
+ALL ROUTE SIMS DONE
+RERUN 2026-11-12 (route lane kept past the hub; earlier probe files overwritten)
+safe kiem_si exit=0 seconds=187
+safe tho_san exit=0 seconds=190
+safe sat_thu exit=0 seconds=203
+safe phap_su exit=0 seconds=206
+safe giao_si exit=0 seconds=220
+treasure kiem_si exit=0 seconds=191
+treasure tho_san exit=0 seconds=192
+treasure sat_thu exit=0 seconds=209
+treasure phap_su exit=0 seconds=212
+treasure giao_si exit=0 seconds=232
+peril tho_san exit=0 seconds=184
+peril kiem_si exit=0 seconds=194
+peril sat_thu exit=0 seconds=200
+peril phap_su exit=0 seconds=208
+peril giao_si exit=0 seconds=229
+elite kiem_si exit=0 seconds=181
+elite tho_san exit=0 seconds=182
+elite sat_thu exit=0 seconds=196
+elite phap_su exit=0 seconds=198
+elite giao_si exit=0 seconds=225
+mystery kiem_si exit=0 seconds=170
+mystery tho_san exit=0 seconds=170
+mystery phap_su exit=0 seconds=189
+mystery sat_thu exit=0 seconds=190
+mystery giao_si exit=0 seconds=208
+random tho_san exit=0 seconds=189
+random sat_thu exit=0 seconds=205
+random phap_su exit=0 seconds=208
+random kiem_si exit=0 seconds=211
+random giao_si exit=0 seconds=241
+value tho_san exit=0 seconds=200
+value sat_thu exit=0 seconds=212
+value kiem_si exit=0 seconds=214
+value phap_su exit=0 seconds=222
+value giao_si exit=0 seconds=248
+PROBES DONE (rerun)
+fullrun value sat_thu exit=0 seconds=678
+fullrun value phap_su exit=0 seconds=807
+fullrun value giao_si exit=0 seconds=816
+fullrun value tho_san exit=0 seconds=880
+fullrun value kiem_si exit=0 seconds=1026
+ALL ROUTE SIMS DONE (rerun)

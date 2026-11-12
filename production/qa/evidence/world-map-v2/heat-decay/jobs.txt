@@ -1,0 +1,110 @@
+C-s2001-probe-peril-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=peril
+D-s2001-probe-peril-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-safe-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=safe
+D-s2001-probe-safe-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-treasure-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=treasure
+D-s2001-probe-treasure-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-elite-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=elite
+D-s2001-probe-elite-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-mystery-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=mystery
+D-s2001-probe-mystery-kiem_si|--seed-offset=2001 --characters=kiem_si --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-peril-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=peril
+D-s2001-probe-peril-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-safe-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=safe
+D-s2001-probe-safe-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-treasure-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=treasure
+D-s2001-probe-treasure-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-elite-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=elite
+D-s2001-probe-elite-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-mystery-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=mystery
+D-s2001-probe-mystery-phap_su|--seed-offset=2001 --characters=phap_su --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-peril-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=peril
+D-s2001-probe-peril-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-safe-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=safe
+D-s2001-probe-safe-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-treasure-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=treasure
+D-s2001-probe-treasure-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-elite-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=elite
+D-s2001-probe-elite-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-mystery-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=mystery
+D-s2001-probe-mystery-sat_thu|--seed-offset=2001 --characters=sat_thu --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-peril-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=peril
+D-s2001-probe-peril-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-safe-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=safe
+D-s2001-probe-safe-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-treasure-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=treasure
+D-s2001-probe-treasure-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-elite-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=elite
+D-s2001-probe-elite-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-mystery-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=mystery
+D-s2001-probe-mystery-tho_san|--seed-offset=2001 --characters=tho_san --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-peril-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=peril
+D-s2001-probe-peril-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-safe-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=safe
+D-s2001-probe-safe-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-treasure-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=treasure
+D-s2001-probe-treasure-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-elite-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=elite
+D-s2001-probe-elite-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s2001-probe-mystery-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=mystery
+D-s2001-probe-mystery-giao_si|--seed-offset=2001 --characters=giao_si --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-peril-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=peril
+D-s3001-probe-peril-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-safe-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=safe
+D-s3001-probe-safe-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-treasure-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=treasure
+D-s3001-probe-treasure-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-elite-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=elite
+D-s3001-probe-elite-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-mystery-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=mystery
+D-s3001-probe-mystery-kiem_si|--seed-offset=3001 --characters=kiem_si --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-peril-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=peril
+D-s3001-probe-peril-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-safe-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=safe
+D-s3001-probe-safe-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-treasure-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=treasure
+D-s3001-probe-treasure-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-elite-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=elite
+D-s3001-probe-elite-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-mystery-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=mystery
+D-s3001-probe-mystery-phap_su|--seed-offset=3001 --characters=phap_su --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-peril-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=peril
+D-s3001-probe-peril-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-safe-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=safe
+D-s3001-probe-safe-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-treasure-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=treasure
+D-s3001-probe-treasure-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-elite-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=elite
+D-s3001-probe-elite-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-mystery-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=mystery
+D-s3001-probe-mystery-sat_thu|--seed-offset=3001 --characters=sat_thu --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-peril-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=peril
+D-s3001-probe-peril-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-safe-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=safe
+D-s3001-probe-safe-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-treasure-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=treasure
+D-s3001-probe-treasure-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-elite-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=elite
+D-s3001-probe-elite-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-mystery-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=mystery
+D-s3001-probe-mystery-tho_san|--seed-offset=3001 --characters=tho_san --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-peril-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=peril
+D-s3001-probe-peril-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=peril --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-safe-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=safe
+D-s3001-probe-safe-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=safe --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-treasure-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=treasure
+D-s3001-probe-treasure-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=treasure --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-elite-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=elite
+D-s3001-probe-elite-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=elite --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+C-s3001-probe-mystery-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=mystery
+D-s3001-probe-mystery-giao_si|--seed-offset=3001 --characters=giao_si --floors=2..2 --final=off --route-policy=mystery --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s2001-full-value-kiem_si|--seed-offset=2001 --characters=kiem_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s2001-full-value-phap_su|--seed-offset=2001 --characters=phap_su --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s2001-full-value-sat_thu|--seed-offset=2001 --characters=sat_thu --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s2001-full-value-tho_san|--seed-offset=2001 --characters=tho_san --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s2001-full-value-giao_si|--seed-offset=2001 --characters=giao_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s3001-full-value-kiem_si|--seed-offset=3001 --characters=kiem_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s3001-full-value-phap_su|--seed-offset=3001 --characters=phap_su --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s3001-full-value-sat_thu|--seed-offset=3001 --characters=sat_thu --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s3001-full-value-tho_san|--seed-offset=3001 --characters=tho_san --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json
+D-s3001-full-value-giao_si|--seed-offset=3001 --characters=giao_si --final=on --route-policy=value --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_D.json

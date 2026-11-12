@@ -1,0 +1,116 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS registry: spore_burst 
+PASS registry: hop_skip 
+PASS registry: bog_spread 
+PASS registry: burrow 
+PASS registry: riposte 
+PASS registry: sandstorm 
+PASS spore: player cell + 2 neighbours mired [(1, 1), (2, 1), (1, 0)]
+PASS spore: timed spore_mire_sec 4.0
+PASS spore: second hit inside icd ignored 
+PASS spore: bursts again after icd_sec 
+PASS hop: (4,1) is an open hole 
+PASS hop: no hop before hop_every steps 
+PASS hop: shadow on (5,1) over the hole (5, 1)
+PASS hop: warn time = hop_warn_sec 0.4
+PASS hop: boss steps locked during the shadow 
+PASS hop: landed on (5,1) (5, 1)
+PASS hop: step counter reset, shadow cleared 
+PASS hop: sand on the only destination refuses the hop kept=[(5, 1)] target=(-1, -1)
+PASS bog: nothing before interval_sec 
+PASS bog: 2 seeded mire cells at interval_sec [(2, 2), (0, 0)]
+PASS bog: mire_sec 
+PASS bog: escape priority while the boss casts >= 3 cells [(0, 1), (2, 1)]
+PASS burrow: not before interval_sec 
+PASS burrow: burrowed at interval_sec, untargetable, boss inactive 
+PASS burrow: no surface circle before the warning window 
+PASS burrow: surface circle in the last surface_warn_sec (5, 2) 0.500000
+PASS burrow: surfaced on the announced cell, active again (5, 2)
+PASS untargetable: host wired the arbiter 
+PASS untargetable: host reports the burrow 
+PASS untargetable: landing cast misses (no damage) 1000.0
+PASS untargetable: its thorns still form [(3, 1), (4, 1), (5, 1)]
+PASS untargetable: surfaced 
+PASS untargetable: after surfacing a cast hits 994.0
+PASS untargetable: teardown unwires the arbiter 
+PASS riposte: a 3-cell hit does not trigger 
+PASS riposte: a 4-cell miss does not trigger 
+PASS riposte: a 4-cell hit warns on the player's cell 
+PASS riposte: standing still takes damage 90.0
+PASS riposte: not re-aimed, stepping away dodges 
+PASS storm: not before interval_sec 
+PASS storm: started, drift mult 0.5 
+PASS storm: extra sand on the player's half, not the player's cell [(1, 2), (2, 2)]
+PASS storm: bar half way 0.5
+PASS storm: drift mult back to 1 after storm_sec 
+WARNING: spore_burst: ctx has no `hazards` (TileHazards), trait inactive
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] get_hazards (res://src/traits/boss_trait.gd:198)
+       [1] on_boss_damaged (res://src/traits/spore_burst.gd:57)
+       [2] _test_missing_hazards_is_inert (res://tests/unit/traits/region_traits_test.gd:280)
+       [3] _initialize (res://tests/unit/traits/region_traits_test.gd:34)
+PASS no hazards: spore_burst does nothing 
+PASS registry: burn_eater 
+PASS registry: rebirth 
+PASS registry: vent_surge 
+PASS registry: gust 
+PASS registry: shroud 
+PASS registry: island_drop 
+PASS burn_eater: control (no trait) burning hurts 490.0
+PASS burn_eater: a burn tick heals instead of damaging 510.0
+PASS burn_eater: green-number signal fired with the amount [10.0]
+PASS burn_eater: getters 
+PASS burn_eater: every tick heals 520.0
+PASS burn_eater: the player's own burn still hurts the player 90.0
+PASS burn_eater: heal clamps at max HP 1000.0
+PASS burn_eater: teardown unwires the hook 
+PASS rebirth: one life before 
+PASS rebirth: the first death is taken over (held at 1 HP, no enemy_died) hp=1.000000 deaths=0
+PASS rebirth: reviving, untargetable, boss paused, lives 0 
+PASS rebirth: a blow while reviving does not kill 
+PASS rebirth: still reviving before revive_sec 
+PASS rebirth: revived at revive_ratio x max HP, active again 400.0
+PASS rebirth: the second death is final 
+PASS rebirth: teardown unwires the death hook 
+PASS rebirth: >= 1 Han stack at death means it dies 
+PASS vent_surge: nothing before interval_sec 
+PASS vent_surge: 2 vents warn at interval_sec (6 cells) surges=1 count=2 cells=6
+PASS vent_surge: the vent holding the player's cell is one of them 
+PASS vent_surge: no vents on the side = nothing happens 
+PASS vent_surge first_delay: no surge at 9.9 s surges=0
+PASS vent_surge first_delay: the first surge at 10 s starts both vents surges=1 last=2
+PASS vent_surge first_delay: still one surge at 16.9 s (interval 7, not 10) surges=1
+PASS vent_surge first_delay: the second surge at 17 s (vents idle again after warn 1 s + burn 2 s) surges=2 last=2
+PASS gust: (1,0) and (1,2) are open holes [(1, 0), (1, 2)]
+PASS gust: hole and sand cells are no push targets 
+PASS gust: outside the half is refused, a free cell is allowed 
+PASS gust: no arrow before interval_sec 
+PASS gust: arrow with a 1-cell direction and warn_sec (-1, 0) 0.600000
+PASS gust: the push into a forbidden cell is cancelled (the player stays) (1, 1)
+PASS gust: every gust moves the player 0 or 1 cell inside its half moved=9 pushes=9
+PASS shroud: forecast blocked by default (host + placement controller) 
+PASS shroud: not blocked while the boss is pinned 
+PASS shroud: blocked again once the pin ends 
+PASS shroud: not blocked while the boss is casting 
+PASS shroud: teardown unwires the switch 
+PASS shroud: a match without the trait never blocks 
+PASS island_drop twin_isles: islands = the arena's islands (bridges removed, each >= 2 cells) trait=[[(1, 0), (1, 1), (0, 1), (1, 2)], [(3, 1), (4, 1), (3, 2), (3, 0), (5, 1), (4, 2), (4, 0), (5, 2), (5, 0)]] arena=[[(1, 0), (1, 1), (0, 1), (1, 2)], [(3, 0), (4, 0), (3, 1), (5, 0), (4, 1), (3, 2), (5, 1), (4, 2), (5, 2)]]
+PASS island_drop twin_isles: nothing before interval_sec 
+PASS island_drop twin_isles: the announced cells lie in ONE island, >= 2 cells, warn_sec [(3, 1), (4, 1), (3, 2), (3, 0), (5, 1), (4, 2), (4, 0), (5, 2), (5, 0)] 1.200000
+PASS island_drop twin_isles: an island really fell during the run 
+PASS island_drop twin_isles: one whole island and every bridge always stand (never the last island) 
+PASS island_drop three_isles: islands = the arena's islands (bridges removed, each >= 2 cells) trait=[[(0, 0), (1, 0), (0, 1), (1, 1)], [(3, 1), (4, 1), (3, 0), (4, 0)], [(6, 1), (6, 0)]] arena=[[(0, 0), (1, 0), (0, 1), (1, 1)], [(3, 0), (4, 0), (3, 1), (4, 1)], [(6, 0), (6, 1)]]
+PASS island_drop three_isles: nothing before interval_sec 
+PASS island_drop three_isles: the announced cells lie in ONE island, >= 2 cells, warn_sec [(0, 0), (1, 0), (0, 1), (1, 1)] 1.200000
+PASS island_drop three_isles: an island really fell during the run 
+PASS island_drop three_isles: one whole island and every bridge always stand (never the last island) 
+PASS island_drop: a half with one island never drops 
+PASS phase_shift: phase 1 leaves the vent clock alone 
+PASS phase_shift: phase 2 multiplies the vent interval by 0.7 7.000000 -> 4.900000
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 7 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

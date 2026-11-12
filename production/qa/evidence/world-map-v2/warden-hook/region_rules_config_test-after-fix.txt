@@ -1,0 +1,103 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS depth_layout is the approved [1,3,3,1,3,2,1]
+PASS hellfire: v2 + heat
+PASS ch1 stays v1 with no active rule
+PASS desert stays v1 with no active rule
+PASS swamp stays v1 with no active rule
+PASS ch2 stays v1 with no active rule
+PASS ch3 stays v1 with no active rule
+PASS sky_isles stays v1 with no active rule
+PASS an_dai stays v1 with no active rule
+PASS unknown region -> v1, no rule
+PASS hellfire modifier pool as shipped
+PASS hellfire raises peril
+PASS modifier catalogue entries
+PASS heat has a gauge starting at 0
+PASS battle +1 -> 1
+PASS miniboss +2 -> 3
+PASS clamped at 4
+PASS rest -2 -> 2
+PASS shop -1 -> 1
+PASS clamped at 0
+PASS forge / event / treasure leave heat alone
+PASS no rule -> gauge unchanged
+PASS heat 0: no patch
+PASS heat 1: vent 6 s
+PASS heat 2: vent 5 s
+PASS heat 3: vent 4.5 s, tick 3, enemy drops x0.9, no surge
+PASS heat 3: eruption length untouched (B1 2026-11-12: the 2.5 s burn is heat 4 only)
+PASS heat 4: vent 4 s + vent_surge trait
+PASS heat 4: eruptions burn 2.5 s (B1), tick 3, drops x0.9, warning untouched
+PASS above the last row: nearest lower row
+PASS patch key vent_interval_sec is a combat key
+PASS patch key vent_tick_damage is a combat key
+PASS patch key boss_drop_interval_mult is a combat key
+PASS patch key vent_sec is a combat key
+PASS patch key traits is a combat key
+PASS tier bonus from heat 3
+PASS warden hook: nothing at heat 2
+PASS warden hook at heat 3 and 4: vent_surge interval 7 s, first surge at 10 s (B1 2026-11-12)
+PASS warden hook never sets vents (the caldera has 2 per half; a higher count is clamped)
+WARNING: RegionRules: file not found, using defaults (no rules, every region v1): res://assets/data/does_not_exist.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_from_file (res://src/run/map/region_rules.gd:39)
+       [1] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:63)
+PASS missing file -> every region v1, no rule, default layout
+WARNING: RegionRules: depth_layout must be >= 3 positive counts, using the default
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] from_dictionary (res://src/run/map/region_rules.gd:62)
+       [1] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: modifier 'x' has no trait / match / arena part, dropped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] from_dictionary (res://src/run/map/region_rules.gd:74)
+       [1] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: rule 'r' gauge max < min, using min
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _clean_rule (res://src/run/map/region_rules.gd:258)
+       [1] from_dictionary (res://src/run/map/region_rules.gd:82)
+       [2] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: rule 'r' by_gauge key 'a' is not an integer, dropped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _clean_rule (res://src/run/map/region_rules.gd:276)
+       [1] from_dictionary (res://src/run/map/region_rules.gd:82)
+       [2] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: rule 'r' patch key 'typo_key' is not a combat key, dropped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _clean_patch (res://src/run/map/region_rules.gd:319)
+       [1] _clean_rule (res://src/run/map/region_rules.gd:280)
+       [2] from_dictionary (res://src/run/map/region_rules.gd:82)
+       [3] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: region 'ch1' map_gen 'v3' unknown, using v1
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] from_dictionary (res://src/run/map/region_rules.gd:97)
+       [1] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: region 'ch1' names unknown rule 'ghost', ignored
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] from_dictionary (res://src/run/map/region_rules.gd:100)
+       [1] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: region 'ch1' modifier_pool names unknown modifier 'x', dropped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] from_dictionary (res://src/run/map/region_rules.gd:114)
+       [1] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+WARNING: RegionRules: region 'ch1' modifier_pool names unknown modifier 'nope', dropped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] from_dictionary (res://src/run/map/region_rules.gd:114)
+       [1] _initialize (res://tests/unit/run/map_v2/region_rules_config_test.gd:65)
+PASS bad depth_layout -> default
+PASS modifier without trait/match/arena dropped
+PASS unknown map_gen -> v1; unknown rule -> none
+PASS unknown modifiers dropped from the pool
+PASS gauge max < min -> min
+PASS typo patch key dropped, valid hazard key kept, non-integer gauge key dropped
+FAILS=0

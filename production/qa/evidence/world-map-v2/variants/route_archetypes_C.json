@@ -1,0 +1,191 @@
+{
+	"_doc": "World Map v2 (docs/design/world-map-v2/03-encounter-system.md section 3, approved D3). A region map draws 3 distinct archetypes; each lane has 3 slots = depths 1, 2 and 4 of the layout. slot.kind: a kind or a list of alternatives (seeded 50/50). tier_delta shifts the pool tier of a fight slot (-1 = one tier easier when that pool exists). reward_tier 1 = today's reward table. modifier_slots: extra modifiers per slot (the danger kind keeps defaults.danger_traits on top). min_floor: 1-based floor the archetype first appears on. weight: draw weight (regions override in region_rules.json). gold_mult / relic_offer / objective: see 01 section E.",
+	"archetypes": {
+		"safe": {
+			"slots": [
+				{
+					"kind": "battle",
+					"tier_delta": -1,
+					"reward_tier": 1
+				},
+				{
+					"kind": "battle",
+					"tier_delta": 0,
+					"reward_tier": 1
+				},
+				{
+					"kind": [
+						"rest",
+						"battle"
+					],
+					"tier_delta": 0,
+					"reward_tier": 1
+				}
+			],
+			"modifier_slots": [
+				0,
+				0,
+				0
+			],
+			"min_floor": 1,
+			"weight": 1.0
+		},
+		"treasure": {
+			"slots": [
+				{
+					"kind": "battle",
+					"tier_delta": 0,
+					"reward_tier": 1
+				},
+				{
+					"kind": "treasure",
+					"reward_tier": 1
+				},
+				{
+					"kind": [
+						"battle",
+						"forge"
+					],
+					"tier_delta": 0,
+					"reward_tier": 1,
+					"gold_mult": 1.5
+				}
+			],
+			"modifier_slots": [
+				0,
+				0,
+				0
+			],
+			"min_floor": 1,
+			"weight": 1.0
+		},
+		"peril": {
+			"slots": [
+				{
+					"kind": "danger",
+					"tier_delta": 0,
+					"reward_tier": 2
+				},
+				{
+					"kind": "danger",
+					"tier_delta": 0,
+					"reward_tier": 2
+				},
+				{
+					"kind": "danger",
+					"tier_delta": 0,
+					"reward_tier": 3,
+					"objective": true
+				}
+			],
+			"modifier_slots": [
+				0,
+				1,
+				1
+			],
+			"min_floor": 2,
+			"weight": 1.0
+		},
+		"elite": {
+			"slots": [
+				{
+					"kind": "battle",
+					"tier_delta": 0,
+					"reward_tier": 2
+				},
+				{
+					"kind": "miniboss",
+					"tier_delta": 0,
+					"reward_tier": 3,
+					"relic_offer": 1
+				},
+				{
+					"kind": "battle",
+					"tier_delta": 0,
+					"reward_tier": 2
+				}
+			],
+			"modifier_slots": [
+				0,
+				0,
+				1
+			],
+			"min_floor": 2,
+			"weight": 0.8
+		},
+		"mystery": {
+			"slots": [
+				{
+					"kind": "event",
+					"reward_tier": 1
+				},
+				{
+					"kind": "battle",
+					"tier_delta": 0,
+					"reward_tier": 1
+				},
+				{
+					"kind": [
+						"event",
+						"treasure"
+					],
+					"reward_tier": 1
+				}
+			],
+			"modifier_slots": [
+				0,
+				0,
+				0
+			],
+			"min_floor": 1,
+			"weight": 0.8
+		}
+	},
+	"guarantee": [
+		"safe",
+		"treasure"
+	],
+	"hub_kinds": [
+		"rest",
+		"event"
+	],
+	"gamble": {
+		"kind": "miniboss",
+		"min_floor": 2,
+		"before_min_floor": "event"
+	},
+	"objectives": {
+		"no_hit_3": {
+			"stat": "hits_taken",
+			"op": "<=",
+			"value": 3,
+			"text_key": "objective.no_hit_3"
+		},
+		"joiner": {
+			"stat": "joins",
+			"op": ">=",
+			"value": 2,
+			"text_key": "objective.joiner"
+		},
+		"big_cast": {
+			"stat": "max_cast_cells",
+			"op": ">=",
+			"value": 4,
+			"text_key": "objective.big_cast"
+		},
+		"vent_dancer": {
+			"stat": "vents_dodged",
+			"op": ">=",
+			"value": 2,
+			"text_key": "objective.vent_dancer",
+			"regions": [
+				"hellfire"
+			]
+		}
+	},
+	"objective_bonus": {
+		"gold_mult": 1.3,
+		"relic_offer": 1
+	},
+	"_variant": "C: peril slot-3 modifier count 2 -> 1"
+}

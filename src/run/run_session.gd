@@ -17,12 +17,14 @@ extends RefCounted
 ## pending boss offer can still be shown over it; [method choose_region] replaces it.
 
 ## Save format version written by [method to_dict] (v7, Story 038: kiep_level; v6 was Story 035: boss_fates, pending_fate, stats).
-const SAVE_VERSION: int = 7
+## World Map v2 (approved D5): v8 saves the region graph (`map_graph`), the rule state and the objectives met; v5-v7
+## runs take the needs_restart path like the pre-v5 ones (no converter).
+const SAVE_VERSION: int = 8
 ## Story 038: highest Kiep level (the session clamps [member kiep_level] to 0..this; the rows of kiep_levels.json are 1..this).
 const KIEP_LEVEL_MAX: int = 10
 ## Oldest save [method from_dict] still loads as a live run (a v5 save gets the Story 035 fields at their
 ## defaults); anything older loads as [member needs_restart].
-const MIN_LOADABLE_VERSION: int = 5
+const MIN_LOADABLE_VERSION: int = 8
 ## Restart reason key for a pre-v5 (chapter / floor) run found in a save (shown as one line by the flow).
 const RESTART_OLD_SAVE: String = "run.restart.old_save"
 ## Node kind that ends a region (and grants a removal token).
@@ -55,6 +57,20 @@ var region_path: Array[String] = []
 var chapter_index: int = 0
 ## The current region's map (see class doc); [] before the first region is chosen.
 var map: Array[Dictionary] = []
+## World Map v2: the region map as a graph (null before a region is entered). For a v2 region (RegionRules
+## `map_gen: v2`) it is the source of truth and [member map] is its column MIRROR (depth = column, screen order =
+## node index, edges = `next`; see [method columns_from_graph]), so every column-addressed rule below works unchanged;
+## for a v1 region it is the wrap of the generated column map (the map itself is generated exactly as before).
+var graph: MapGraph = null
+## World Map v2: the region rule's live state ({id, gauge}; {} when the region has no rule). Reset on entering a
+## region; stepped by [method complete_node] (RegionRules.gauge_after).
+var rule_state: Dictionary = {}
+## World Map v2: ids of the nodes whose objective was met this region (reset on entering a region).
+var objectives_met: Array[String] = []
+## World Map v2: luck added by reward tiers (rewards.json reward_tiers.luck_bonus), on top of luck_per_node x nodes.
+var luck_extra: float = 0.0
+## World Map v2: the open forge node ({node: "floor/column/node", free_left: bool}; {} when none), for a resume.
+var forge_state: Dictionary = {}
 ## Current column index (0-based); == map.size() once the last column is done.
 var column: int = 0
 ## Chosen node in the current column; -1 = none chosen yet.
@@ -193,6 +209,8 @@ static func begin(chapters: ChaptersConfig, character: Dictionary, chapter_index
 	s.region_offer = []
 	s.region_path = [s.region_id]
 	s.map = map.duplicate(true)
+	if not s.map.is_empty():
+		s.graph = MapGraph.from_v1_columns(s.map, s.region_id, s.floor, WorldMapGen.region_map_seed(run_seed, s.region_id, s.floor))
 	return s
 
 
@@ -274,23 +292,144 @@ static func _clean_locked(raw: Variant) -> Dictionary:
 func choose_region(id: String, cleared_bosses: int) -> bool:
 	if not region_offer.has(id) or _chapters == null or has_pending_reward():
 		return false
-	var new_map: Array[Dictionary] = _chapters.generate_region_map(id, run_seed, floor, cleared_bosses, kiep_level)
-	if new_map.is_empty():
-		return false
-	_enter_region(id, new_map)
+	var new_graph: MapGraph = null
+	var new_map: Array[Dictionary] = []
+	if RegionRules.shared().uses_v2(id):
+		# World Map v2 region: the graph is the truth, the column map its mirror.
+		new_graph = _chapters.generate_region_graph(id, run_seed, floor, cleared_bosses, kiep_level)
+		if new_graph == null:
+			return false
+		new_map = columns_from_graph(new_graph)
+	else:
+		new_map = _chapters.generate_region_map(id, run_seed, floor, cleared_bosses, kiep_level)
+		if new_map.is_empty():
+			return false
+		new_graph = MapGraph.from_v1_columns(new_map, id, floor, WorldMapGen.region_map_seed(run_seed, id, floor))
+	_enter_region(id, new_map, new_graph)
 	region_path.append(id)
 	region_offer = []
 	return true
 
 
-# Puts the run at column 0 of region [param id] with [param new_map].
-func _enter_region(id: String, new_map: Array[Dictionary]) -> void:
+# Puts the run at column 0 of region [param id] with [param new_map] (and, World Map v2, its [param new_graph]: null =
+# a plain column map, wrapped on the spot). Resets the rule state and the objectives of the region.
+func _enter_region(id: String, new_map: Array[Dictionary], new_graph: MapGraph = null) -> void:
 	region_id = id
 	chapter_index = _chapters.region_index(id) if _chapters != null else chapter_index
 	map = new_map.duplicate(true)
 	column = 0
 	node_index = -1
 	cleared_nodes = []
+	graph = new_graph if new_graph != null else MapGraph.from_v1_columns(map, id, floor, WorldMapGen.region_map_seed(run_seed, id, floor))
+	objectives_met = []
+	rule_state = {}
+	var rule: Dictionary = RegionRules.shared().rule_for(id)
+	if not rule.is_empty() and graph != null and not graph.is_v1():
+		rule_state = {"id": str(rule["id"]), "gauge": RegionRules.gauge_start(rule)}
+
+
+## World Map v2: the column mirror of [param g]: one column per depth ({index, tier, nodes}), nodes in screen order
+## carrying {kind, match_id, next (indices into the next depth), id, lane, slot, reward_tier, modifiers, objective}
+## plus `tier` / `gold_mult` / `relic_offer` when the node has them. A column's `tier` is the highest node tier of
+## the depth (0 when none). [] for a null graph.
+static func columns_from_graph(g: MapGraph) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if g == null:
+		return out
+	var by_depth: Array = []
+	for d: int in g.depths:
+		by_depth.append(g.nodes_at_depth(d))
+	for d: int in g.depths:
+		var ids: Array[String] = by_depth[d]
+		var nodes: Array = []
+		var col_tier: int = 0
+		for id: String in ids:
+			var n: Dictionary = g.node(id)
+			var next: Array = []
+			if d + 1 < g.depths:
+				var next_ids: Array[String] = by_depth[d + 1]
+				for to: String in g.out_edges(id):
+					var at: int = next_ids.find(to)
+					if at >= 0 and not next.has(at):
+						next.append(at)
+				next.sort()
+			var entry: Dictionary = {"kind": str(n["kind"]), "match_id": str(n["match_id"]), "next": next, "id": id,
+				"lane": str(n["lane"]), "slot": str(n["slot"]), "reward_tier": int(n["reward_tier"]),
+				"modifiers": (n["modifiers"] as Array).duplicate(), "objective": str(n["objective"])}
+			for extra: String in ["tier", "gold_mult", "relic_offer"]:
+				if n.has(extra):
+					entry[extra] = n[extra]
+			col_tier = maxi(col_tier, int(n.get("tier", 0)))
+			nodes.append(entry)
+		out.append({"index": d, "tier": col_tier, "nodes": nodes})
+	return out
+
+
+## World Map v2: true when the current region's map comes from RegionMapGen (lanes, rule, profiles).
+func is_v2_region() -> bool:
+	return graph != null and not graph.is_v1()
+
+
+## World Map v2: the id of the node at ([param col], [param idx]) of the mirror ("" when out of range; a v1 map
+## answers "c<col>n<idx>").
+func node_id_at(col: int, idx: int) -> String:
+	if col < 0 or col >= map.size():
+		return ""
+	var nodes: Array = map[col].get("nodes", [])
+	if idx < 0 or idx >= nodes.size():
+		return ""
+	var n: Dictionary = nodes[idx]
+	return str(n.get("id", MapGraph.v1_node_id(col, idx)))
+
+
+## World Map v2: the chosen node's id ("" when none is chosen).
+func current_node_id() -> String:
+	return node_id_at(column, node_index) if node_index >= 0 else ""
+
+
+## World Map v2: [method choose_node] by node id (the current column's node with that id); false when it is not
+## available now.
+func choose_node_id(id: String) -> bool:
+	var col: Dictionary = current_column()
+	var nodes: Array = col.get("nodes", []) if not col.is_empty() else []
+	for i: int in nodes.size():
+		if node_id_at(column, i) == id:
+			return choose_node(i)
+	return false
+
+
+## World Map v2: ids of the available nodes (see [method available_nodes]).
+func available_node_ids() -> Array[String]:
+	var out: Array[String] = []
+	for n: Dictionary in available_nodes():
+		out.append(node_id_at(column, int(n["node_index"])))
+	return out
+
+
+## World Map v2: ids of the nodes cleared in this region, in order.
+func cleared_ids() -> Array[String]:
+	var out: Array[String] = []
+	for c: Variant in cleared_nodes:
+		out.append(node_id_at(int((c as Dictionary)["column"]), int((c as Dictionary)["node_index"])))
+	return out
+
+
+## World Map v2: the gauge of the region rule (0 without one).
+func gauge() -> int:
+	return int(rule_state.get("gauge", 0))
+
+
+## World Map v2: the active rule record of the current region ({} when none, or a v1 region).
+func current_rule() -> Dictionary:
+	if rule_state.is_empty():
+		return {}
+	return RegionRules.shared().rule(str(rule_state.get("id", "")))
+
+
+## World Map v2: records that the objective of node [param id] was met (once).
+func record_objective_met(id: String) -> void:
+	if not id.is_empty() and not objectives_met.has(id):
+		objectives_met.append(id)
 
 
 # The final floor's map (ChaptersConfig.final_map): the `world.final_prelude` columns (TD-029: a shop
@@ -396,6 +535,9 @@ func complete_node(hp_end: float, max_hp: float, node_kind: String, config: Dict
 	var kind: String = node_kind if not node_kind.is_empty() else str(current_node().get("kind", ""))
 	var region_done: String = region_id
 	hp = minf(hp_end + maxf(passive_heal, 0.0), max_hp)
+	# World Map v2: the region rule's gauge steps by the kind completed (RegionRules.gauge_after, clamped).
+	if not rule_state.is_empty():
+		rule_state["gauge"] = RegionRules.gauge_after(current_rule(), gauge(), kind)
 	cleared_nodes.append({"column": column, "node_index": node_index, "kind": kind})
 	nodes_cleared += 1
 	last_node_kind = kind
@@ -449,7 +591,7 @@ func is_run_won() -> bool:
 
 ## Run luck = luck_start + luck_per_node x nodes cleared over the whole run (rewards.json via [param config]).
 func luck(config: Dictionary = {}) -> float:
-	return cfg(config, "luck_start") + cfg(config, "luck_per_node") * float(nodes_cleared)
+	return luck_extra + cfg(config, "luck_start") + cfg(config, "luck_per_node") * float(nodes_cleared)
 
 
 ## Spends one removal token. False (no change) at 0.
@@ -963,6 +1105,8 @@ func to_dict() -> Dictionary:
 		"boss_fates": boss_fates.duplicate(true), "pending_fate": pending_fate,
 		"pending_fate_match": pending_fate_match.duplicate(true), "stats": stats.duplicate(true),
 		"locked": locked.duplicate(true), "kiep_level": kiep_level,
+		"map_graph": graph.to_dict() if graph != null else {}, "rule_state": rule_state.duplicate(true),
+		"objectives_met": objectives_met.duplicate(), "luck_extra": luck_extra, "forge_state": forge_state.duplicate(true),
 	}
 
 
@@ -1002,6 +1146,25 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 			return null
 	s.region_path = _string_list(d.get("region_path", []))
 	s.map = _clean_map(d.get("map", []))
+	# World Map v2 (v8): the graph is the truth of a v2 region; its column mirror is rebuilt from it (the saved
+	# `map` of a v2 region is only a convenience copy). A v1 region keeps the saved columns and wraps them.
+	s.graph = MapGraph.from_dict(d.get("map_graph")) if typeof(d.get("map_graph")) == TYPE_DICTIONARY and not (d["map_graph"] as Dictionary).is_empty() else null
+	if s.graph != null and not s.graph.is_v1():
+		if not bool(MapValidator.validate(s.graph)["ok"]):
+			push_warning("RunSession: saved region graph is invalid, run dropped")
+			return null
+		s.map = columns_from_graph(s.graph)
+	s.rule_state = MapGraph.clean_rule_state(d["rule_state"]) if typeof(d.get("rule_state")) == TYPE_DICTIONARY else {}
+	if not s.rule_state.is_empty():
+		var rule: Dictionary = RegionRules.shared().rule(str(s.rule_state.get("id", "")))
+		if rule.is_empty():
+			push_warning("RunSession: saved rule '%s' is unknown, rule state dropped" % str(s.rule_state.get("id", "")))
+			s.rule_state = {}
+		else:
+			s.rule_state["gauge"] = RegionRules.gauge_clamp(rule, int(s.rule_state["gauge"]))
+	s.objectives_met = _string_list(d.get("objectives_met", []))
+	s.luck_extra = maxf(float(d.get("luck_extra", 0.0)), 0.0)
+	s.forge_state = (d["forge_state"] as Dictionary).duplicate(true) if typeof(d.get("forge_state")) == TYPE_DICTIONARY else {}
 	s.column = int(d.get("column", 0))
 	s.node_index = int(d.get("node_index", -1))
 	if s.region_offer.is_empty():
@@ -1024,6 +1187,9 @@ static func from_dict(d: Dictionary, chapters: ChaptersConfig, cards: SkillConfi
 	s._won = bool(d.get("won", false))
 	s.hp = float(d.get("hp", -1.0))
 	s.run_seed = int(d.get("run_seed", 0))
+	if s.graph == null and not s.map.is_empty():
+		# A v1 region: the saved columns are the truth; wrap them with the same seed choose_region used.
+		s.graph = MapGraph.from_v1_columns(s.map, s.region_id, s.floor, WorldMapGen.region_map_seed(s.run_seed, s.region_id, s.floor))
 	# 2026-11-07 (user: "sao map đầu lại là map poison"): a run saved before the fixed climb order kept its random
 	# offer; with world.region_order set, an open offer is that floor's region of the order again.
 	if not s.region_offer.is_empty() and not chapters.region_order().is_empty():

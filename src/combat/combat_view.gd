@@ -350,7 +350,7 @@ var _downed: bool = false
 var _canvas: BattleCanvas = null
 ## Story 035 match stats (see [method get_match_stats]); counted from the existing hooks only.
 var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_casts": 0, "signatures_used": 0,
-	"frost_bursts": 0, "boss_thorn_steps": 0}
+	"frost_bursts": 0, "boss_thorn_steps": 0, "max_cast_cells": 0, "vents_dodged": 0}
 ## Story 037: the last passive heal ({amount, time_left}) for the HUD "+N" flash; {} when none.
 var _heal_flash: Dictionary = {}
 ## Cast rhythm spec 2026-11-05 (Knight parry): the hero's guard (opened by a `parry` card, ticked in match time) and the
@@ -685,6 +685,9 @@ func _on_mire_damage(side: int, amount: float) -> void:
 # standing there take the tick damage, the boss brain's burn handling already avoids them) and the field pieces lying
 # there are burnt (lost).
 func _on_vent_erupted(side: int, _vent_index: int, cells: Array[Vector2i]) -> void:
+	# World Map v2 objectives (03 section 5): an eruption on the player's half that the player is not standing in.
+	if side == CombatState.Side.PLAYER and _state != null and not cells.has(_state.player_cell):
+		_stats["vents_dodged"] = int(_stats["vents_dodged"]) + 1
 	# Quick spec 2026-11-01: a vent is region terrain, not a zone effect (terrain = true: no lock, no replacement).
 	_status.ignite(cells, _hazards.config_value("vent_sec"), _hazards.config_value("vent_tick_sec"),
 		_hazards.config_value("vent_tick_damage"), true)
@@ -2462,6 +2465,8 @@ func _on_boss_feinted(cells: Array[Vector2i], _labels: Array[String]) -> void:
 # Story 035: one resolved player cast for the match stats ([param info] = the cast's _make_cast_info).
 func _count_cast(info: Dictionary) -> void:
 	_stats["casts"] = int(_stats["casts"]) + 1
+	# World Map v2 objectives (03 section 5): the largest cast of the match, in cells.
+	_stats["max_cast_cells"] = maxi(int(_stats["max_cast_cells"]), int(info.get("cells", 0)))
 	if bool(info.get("joined", false)):
 		_stats["joins"] = int(_stats["joins"]) + 1
 	if bool(info.get("featured", false)):
@@ -2505,7 +2510,8 @@ func is_boss_downed() -> bool:
 ## player lost), hits_taken (boss swings that hit the player), casts (player swings that resolved), joins (of
 ## them, casts of joined pieces), featured_casts (casts of the arena's featured shape), signatures_used,
 ## frost_bursts (Han bursts on the boss, Story 037), boss_thorn_steps (times the boss stepped onto one of the
-## player's thorn cells, Story 037)}.
+## player's thorn cells, Story 037), max_cast_cells (World Map v2: the largest player cast, in cells), vents_dodged
+## (World Map v2: vent eruptions on the player's half the player was not standing in)}.
 ## All 0 before anything happened. Read-only.
 func get_match_stats() -> Dictionary:
 	var out: Dictionary = _stats.duplicate()

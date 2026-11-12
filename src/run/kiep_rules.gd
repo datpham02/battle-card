@@ -350,6 +350,15 @@ func apply_map_spec(spec: Dictionary, level: int) -> Dictionary:
 	return out
 
 
+## World Map v2: the clamped `node_weight` product of [param kind] at [param level] (1.0 when none) — what
+## [method apply_map_spec] uses to multiply a v1 column's kind entries; RegionMapGen multiplies the `peril` archetype's
+## draw weight by the same number so Kiep 3 (danger x2) acts on a v2 map too. Read-only.
+func node_weight_mult(kind: String, level: int) -> float:
+	if level <= 0:
+		return 1.0
+	return _hi("node_weight_mult_max", _product_for_kind(level, kind))
+
+
 func _product_for_kind(level: int, kind: String) -> float:
 	var p: float = 1.0
 	for rule: Dictionary in _active(level):

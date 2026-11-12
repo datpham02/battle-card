@@ -1,0 +1,207 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["kiem_si"] cleared_bosses=1 region-pick=order node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none | odd=on chance=0.12 (data) sizes 5..7 max=clamp(cells/4+3, 4, 7) weights={ 5: 6.0, 6: 3.0, 7: 1.0 } tries=40
+relics: start=none relic-policy=pick (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+world-map-v2: region_rules=res://assets/data/region_rules.json route_archetypes=res://assets/data/route_archetypes.json route-policy=value pieces=off
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=7 choices=2 pool=["ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"] columns=7 heal=0.60 final={ "region": "an_dai", "match_id": "an_dai_keeper" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [0, 1, 1], "4": [1, 2, 2], "5": [1, 2, 2], "6": [1, 2, 2], "7": [1, 2, 2] }
+final prelude (TD-029): [["shop"]] before the final boss column
+  floor_scaling 1: { "hp_mult": 0.7, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 0.75, "step_mult": 0.97, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 0.8, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 0.85, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 0.95, "step_mult": 0.87, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 6: { "hp_mult": 1.05, "step_mult": 0.84, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 7: { "hp_mult": 1.15, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.25, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+  region_normalize swamp: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize desert: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize hellfire: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize sky_isles: { "hp_mult": 0.45, "step_mult": 1.05, "defense_add": 0.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+v6 (Story 040): floors=1..7 | final=on | mercy=none | shop=greedy | pieces=off | relic=legacy:pick | dodge=0.85 | kiep=0
+v6 seeds start at 2002 (--seed-offset=2001), not 1
+v6 run time (ASSUMPTIONS, TD-006 family): out-of-match seconds map 8 / node, reward pick 15, shop 45, event 30, rest 10, fate choice 10; + intro_sec + end_delay_sec of every match; est. minutes = (match real sec + out-of-match sec) / 60
+v6 relic value (--relic=value: first best of the offer by rarity rank x 10 + bonus; ASSUMPTION): an_don=+3 chi_khau=+2 phong_an=+0 gai_ran=+0 manh_tuoi=+1 dinh_tam=+1 la_ban=+0 tam_huong=+2 tui_rong=+3 dau_than=+1 khoi_the=+2 phan_don=+1 han_ky=+1 huyet_an=-50 an_chu=+2 tam_hop=+3
+v6 pieces policy (--pieces=on): ink a 2-3 cell shape (fewest cells) when offered, remove 5-cell shapes (biggest bounding box first) with every shape-removal token; shop extras (--shop=on): remove-card over 10 cards, remove-shape when pieces on
+  ... kiem_si 10/70 seeds, 209.1 s
+  ... kiem_si 20/70 seeds, 435.9 s
+  ... kiem_si 30/70 seeds, 647.6 s
+  ... kiem_si 40/70 seeds, 914.7 s
+  ... kiem_si 50/70 seeds, 1130.1 s
+  ... kiem_si 60/70 seeds, 1325.8 s
+  ... kiem_si 70/70 seeds, 1553.6 s
+
+=== WORLD kiem_si / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | 24.3 | 17 | 49.2 | 43.4 | 24.04 | 40.41 | 56.6 | 34.5 | 0.03 | 48.8 (44.8-52.9) | 39.5 | 43.5 | 46/31/23 | 12.76 | 23.60 | 6.14 | 0.39 / 2.93 / 7.64 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| kiem_si | 1 | 100.0 | 0 | 0.0 | 100.0 | 100.0 | 73.4 |
+| kiem_si | 2 | 98.6 | 1 | 1.9 | 98.6 | 100.0 | 73.3 |
+| kiem_si | 3 | 98.6 | 0 | 0.0 | 100.0 | 99.7 | 84.1 |
+| kiem_si | 4 | 84.3 | 10 | 18.9 | 85.5 | 99.7 | 72.5 |
+| kiem_si | 5 | 58.6 | 18 | 34.0 | 69.5 | 98.6 | 70.6 |
+| kiem_si | 6 | 48.6 | 7 | 13.2 | 82.9 | 98.2 | 65.7 |
+| kiem_si | 7 | 34.3 | 10 | 18.9 | 70.6 | 98.0 | 57.8 |
+| kiem_si | final | 24.3 | 7 | 13.2 | 70.8 | 95.3 | 63.2 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| kiem_si | 1 | ch1 | 70 | 70 | 100.0 |
+| kiem_si | 2 | hellfire | 70 | 69 | 98.6 |
+| kiem_si | 3 | desert | 69 | 69 | 100.0 |
+| kiem_si | 4 | swamp | 69 | 59 | 85.5 |
+| kiem_si | 5 | ch2 | 59 | 41 | 69.5 |
+| kiem_si | 6 | ch3 | 41 | 34 | 82.9 |
+| kiem_si | 7 | sky_isles | 34 | 24 | 70.6 |
+
+WORLD DEATHS BY FLOOR/KIND kiem_si: f2/danger=1, f4/battle=3, f4/boss=6, f4/danger=1, f5/battle=4, f5/boss=2, f5/miniboss=12, f6/battle=2, f6/danger=2, f6/miniboss=3, f7/battle=1, f7/boss=9, ffinal/final=7
+WORLD RELICS kiem_si/build: relic-policy=pick mean relics at end 12.30 | owned at end (runs): an_don=56, chi_khau=57, phong_an=55, gai_ran=58, manh_tuoi=56, dinh_tam=61, la_ban=67, tam_huong=63, tui_rong=66, dau_than=63, khoi_the=64, phan_don=64, han_ky=65, huyet_an=66 | triggers / run: an_don=10.9, chi_khau=6.5, khoi_the=13.4, phan_don=13.6, huyet_an=32.4
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| kiem_si | build | greedy | risky | 24.3 | 757 (473-1063) | 775 | 1038 (958-1128) | 742 / 33 / 4 | 435 (141-594) | 442 (199-572) | 530 (426-623) (17) | 3.30 | 2.29 | 1.69 (70) | 7.56; 10.82 | 3.99 / 3.57 / 0.00 | 73 (54-104) (70) | 96 |
+WORLD EVENTS | kiem_si | build | events / run 2.37 | non-leave choices / run 2.30 | tran_thach extra fights 20, deaths 0 (0.0%) | curses picked up / run 0.40 | curse draws / run 4.14 | curse dmg / run 1.4 | matches slowed by loi_the / run 0.60 | picks: ban_tho_mau/give=18, ban_tho_mau/leave=3, ke_buon_nguyen/accept=23, ke_buon_nguyen/leave=1, ke_lang_thang/swap=21, loi_the/leave=1, loi_the/swear=22, mo_hoang/dig=17, song_bac/bet_small=18, suoi_tinh/bathe=21, suoi_tinh/drink=1, tran_thach/fight=20
+ECONOMY RAW kiem_si/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 1005|453|572|1|9|1|74 767|298|489|0|6|2|84 459|440|39|0|8|3|55 383|335|68|0|7|4|59 159|80|99|0|2|2|90 451|50|421|0|1|1|63 1000|599|421|0|12|2|95 945|474|491|0|10|3|138 1038|528|530|1|9|2|101 555|384|191|0|6|1|64 1007|572|455|1|13|2|104 601|491|130|0|8|2|104 410|321|109|0|6|1|77 481|127|344|0|2|2|42 645|176|489|0|3|1|99 950|454|486|1|9|2|31 1062|514|568|1|9|1|104 624|155|489|0|3|1|77 1102|566|556|1|12|1|71 912|532|400|0|11|1|69 566|245|341|0|5|1|65 882|499|403|0|9|1|71 550|100|470|0|2|2|110 1110|555|575|1|11|3|55 746|493|273|0|11|1|76 982|632|370|0|13|1|72 517|334|203|0|7|2|100 1193|724|489|1|14|1|105 414|70|364|0|1|1|78 1011|551|480|1|11|1|75 588|408|200|0|7|1|68 1022|476|566|0|10|1|69 1006|613|383|1|12|1|74 1019|483|556|0|9|2|146 964|455|529|1|9|1|71 912|589|343|0|11|1|76 927|436|511|0|9|1|69 734|499|255|0|9|1|60 1068|430|658|1|8|1|100 983|406|597|0|7|1|67 575|146|449|0|3|1|61 947|707|260|1|14|2|99 639|176|483|0|4|4|59 891|318|593|0|6|3|58 1099|472|647|1|10|1|106 590|156|454|0|3|1|76 678|339|359|0|7|1|73 629|143|476|0|3|3|27 604|176|448|0|3|1|76 952|593|379|0|13|1|69 1155|665|480|1|14|4|26 643|184|449|0|4|4|44 577|253|344|0|5|2|83 931|438|513|0|8|1|78 601|369|222|0|7|4|44 449|50|419|0|1|1|72 724|465|279|0|10|1|61 587|345|262|0|6|2|83 916|538|398|0|11|2|89 684|446|258|0|7|1|85 959|434|545|0|9|1|72 489|127|352|0|2|2|27 965|697|258|0|14|5|58 640|215|445|0|4|1|60 577|159|438|0|3|3|59 1034|447|607|1|10|2|114 1076|504|592|1|10|1|75 893|383|530|0|7|1|70 474|423|71|0|8|1|63 555|144|431|0|2|1|74
+ECONOMY TARGETS kiem_si/build (shop=greedy event=risky): earned/run 775 in 350-450: MISS | items/run 7.56 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 96%: PASS
+WORLD VERDICT kiem_si/build: run win 24.3% (target 20-40) PASS; est. minutes won run 48.8 (target 40-50) PASS; max region spread at a floor 0.0 pts (target <= 15, n >= 5) PASS; max floor share of deaths 34.0% (target <= 40) PASS; survival strictly decreasing FAIL (a floor with no deaths); boss hits / won run 49.2
+
+ROUTE | character | archetype | runs | region clear % | gold gained (drops, mean) | HP lost pts of max (mean) | relics gained (mean) | objective met / run | run win % | route policy |
+ROUTE | kiem_si | elite | 21 | 100.0 | 720.8 | 25.2 | 2.38 | 0.00 | 28.6 | value |
+ROUTE | kiem_si | peril | 47 | 97.9 | 607.3 | 23.3 | 2.85 | 0.30 | 21.3 | value |
+ROUTE | kiem_si | treasure | 2 | 100.0 | 629.0 | 24.8 | 2.00 | 0.00 | 50.0 | value |
+ROUTE2 | character | archetype | routes ended | heat at warden mean (reached; count by heat 0..4) | heat max mean | objective fights won / met per route | relic rows offered / taken per route | ink rows offered / taken per route | forge visits / free removals per route | HP lost in fights pts | HP healed outside fights pts | event HP delta pts |
+ROUTE2 | kiem_si | elite | 21 | 1.57 (21; 0:9 1:1 2:4 3:4 4:3) | 2.90 | 0.00 / 0.00 | 1.19 / 0.86 | n/a (pieces off) | 0.00 / n/a | 54.3 | 30.0 | -1.0 |
+ROUTE2 | kiem_si | peril | 47 | 1.46 (46; 0:14 1:13 2:7 3:8 4:4) | 2.91 | 0.98 / 0.30 | 1.83 / 1.38 | n/a (pieces off) | 0.00 / n/a | 54.5 | 31.1 | -2.0 |
+ROUTE2 | kiem_si | treasure | 2 | 1.00 (2; 0:1 1:0 2:1 3:0 4:0) | 2.00 | 0.00 / 0.00 | 0.50 / 0.50 | n/a (pieces off) | 1.00 / n/a | 45.3 | 20.5 | 0.0 |
+
+=== RUN v6 kiem_si / build: 70 runs, dodge=0.85 mercy=none pieces=off ===
+RUN | character | policy | kiep | win % | deaths by floor (f1 f2 f3 f4 f5 final) | hits taken / won run | run minutes (est., won median / lost median) | gold earned / spent (all runs; won runs) | relics / run | deck size | piece set size |
+RUN | kiem_si | build [mercy=none shop=greedy pieces=off relic=legacy:pick dodge=0.85] | 0 | 24.3 | 0/1/0/10/18/7/10/7 | 49.2 | 51.9 / 35.8 | 775 / 387; 1049 / 542 | 12.30 | 12.76 | 16.0 |
+RUN DETAIL kiem_si/build: death % of runs entering floor f1..f7: 0.0/1.4/0.0/14.5/30.5/17.1/29.4 | final reached 24, won 17 (70.8 %) | mean boss swing hit 8.8 % of max HP (2368 swing hits) | gold at the final median 479 (cheapest shop relic 60 at the last floor) | wins 17 / 70
+REGION x FLOOR | character | floor | region | matches entered | match win % |
+REGION x FLOOR | kiem_si | 1 | ch1 | 232 | 100.0 |
+REGION x FLOOR | kiem_si | 2 | hellfire | 322 | 99.7 |
+REGION x FLOOR | kiem_si | 3 | desert | 293 | 100.0 |
+REGION x FLOOR | kiem_si | 4 | swamp | 280 | 96.4 |
+REGION x FLOOR | kiem_si | 5 | ch2 | 230 | 92.2 |
+REGION x FLOOR | kiem_si | 6 | ch3 | 156 | 95.5 |
+REGION x FLOOR | kiem_si | 7 | sky_isles | 146 | 93.2 |
+REGION x FLOOR CHECK kiem_si/build: floors f1 mean 100.0 (n=232); f2 mean 99.7 (n=322); f3 mean 100.0 (n=293); f4 mean 96.4 (n=280); f5 mean 92.2 (n=230); f6 mean 95.5 (n=156); f7 mean 93.2 (n=146) | regions within +-10 pts of the floor mean (cells with n >= 20: 7 checked, 0 small): PASS
+VERDICT run kiem_si/build | run win % 30-45 | 24.3 % (+-5.1 sd, n=70) | FAIL
+VERDICT run kiem_si/build | death probability non-decreasing f1..f5 | death prob by floor 0.0/1.4/0.0/14.5/30.5/17.1/29.4 (allow -3 pts); falls: f6 17.1 < f5 30.5 | FAIL
+VERDICT run kiem_si/build | floor-1 deaths <= 10 % of runs | 0.0 % | PASS
+VERDICT run kiem_si/build | final-match win when reached 50-70 % | 70.8 % (17 / 24) | FAIL
+VERDICT run kiem_si/build | won-run minutes median 40-50 | 51.9 min (17 won runs) | FAIL
+VERDICT run kiem_si/build | boss hits per won run 15-30 | 49.2 | FAIL
+VERDICT run kiem_si/build | gold spent >= 70 % of earned (won runs) | 51.7 % (542 of 1049 per run) | FAIL
+VERDICT run kiem_si/build | gold left at the final median <= one shop relic | 479 <= 60 | FAIL
+VERDICT run kiem_si/build | lost-run minutes median >= 15 | 35.8 min (53 lost runs) | PASS
+VERDICT run kiem_si/build | mean boss hit 4-15 % of max HP | 8.8 % (swing hits only) | PASS
+VERDICT run kiem_si/build | regions within +-10 pts of the floor mean | see REGION x FLOOR CHECK | PASS
+VERDICT run kiem_si/build | onboarding (empty save) win >= 20 % | this run has every unlock open (--progress=all) | DEFERRED (run with --progress=none)
+VERDICT run kiem_si/build | bot anchored on a playtest (Part A, TD-006) | dodge=0.85 (legacy default) | DEFERRED (no playtest log: DEFAULT_BOT stays, TD-006 open; read the DODGE SENSITIVITY run)
+
+ODD | character | odd share of player drops % | mean odd size | odd fallbacks (total; per run) | boss odd share % | policy | player odd / drops | boss odd / drops | boss mean odd size | boss fallbacks | matches with odd possible player / boss / all | odd=on chance=0.12 (data) sizes 5..7 max=clamp(cells/4+3, 4, 7) weights={ 5: 6.0, 6: 3.0, 7: 1.0 } tries=40
+ODD | kiem_si | 10.7 | 5.47 | 39; 0.56 | 12.0 | build [mercy=none shop=greedy pieces=off relic=legacy:pick dodge=0.85] | 2188 / 20403 | 2042 / 17014 | 5.45 | 36 | 1683 / 1451 / 1683 |
+
+=== RUN v6 AGGREGATE (dodge=0.85 mercy=none pieces=off): 70 runs of ["kiem_si"] ===
+RELIC LIFT | relic | runs with it by floor <= 2 | win % with | win % without | lift (pts) | note |
+RELIC LIFT | an_don | 15 | 33.3 | 21.8 | +11.5 |
+RELIC LIFT | chi_khau | 19 | 10.5 | 29.4 | -18.9 |
+RELIC LIFT | dau_than | 31 | 25.8 | 23.1 | +2.7 |
+RELIC LIFT | dinh_tam | 27 | 14.8 | 30.2 | -15.4 |
+RELIC LIFT | gai_ran | 18 | 16.7 | 26.9 | -10.3 |
+RELIC LIFT | han_ky | 40 | 30.0 | 16.7 | +13.3 |
+RELIC LIFT | huyet_an | 40 | 32.5 | 13.3 | +19.2 |
+RELIC LIFT | khoi_the | 27 | 33.3 | 18.6 | +14.7 |
+RELIC LIFT | la_ban | 31 | 19.4 | 28.2 | -8.9 |
+RELIC LIFT | manh_tuoi | 18 | 16.7 | 26.9 | -10.3 |
+RELIC LIFT | phan_don | 23 | 26.1 | 23.4 | +2.7 |
+RELIC LIFT | phong_an | 23 | 26.1 | 23.4 | +2.7 |
+RELIC LIFT | tam_huong | 32 | 18.8 | 28.9 | -10.2 |
+RELIC LIFT | tui_rong | 30 | 23.3 | 25.0 | -1.7 |
+RELIC LIFT CHECK: no relic above +15 pts (cells with >= 10 runs with and without): max +19.2 (huyet_an) | above: huyet_an +19.2 | FAIL
+VERDICT run all | no relic lift > +15 pts | max +19.2 (huyet_an) | FAIL
+SHOP | item | bought | offered | bought % of shop visits | bought % of offers |
+SHOP | relic:dinh_tam | 44 | 52 | 19.0 | 84.6 |
+SHOP | relic:chi_khau | 31 | 37 | 13.4 | 83.8 |
+SHOP | relic:gai_ran | 31 | 39 | 13.4 | 79.5 |
+SHOP | relic:an_don | 28 | 36 | 12.1 | 77.8 |
+SHOP | relic:phong_an | 27 | 39 | 11.7 | 69.2 |
+SHOP | relic:manh_tuoi | 26 | 38 | 11.3 | 68.4 |
+SHOP | relic:khoi_the | 18 | 20 | 7.8 | 90.0 |
+SHOP | card:bay_lo | 16 | 22 | 6.9 | 72.7 |
+SHOP | card:kiem_khi | 16 | 23 | 6.9 | 69.6 |
+SHOP | card:han_kiem | 15 | 23 | 6.5 | 65.2 |
+SHOP | card:kiem_vu | 15 | 25 | 6.5 | 60.0 |
+SHOP | relic:tui_rong | 15 | 20 | 6.5 | 75.0 |
+SHOP | card:thiet_kiem | 14 | 20 | 6.1 | 70.0 |
+SHOP | card:vung_lay | 14 | 20 | 6.1 | 70.0 |
+SHOP | card:xung_kich | 14 | 22 | 6.1 | 63.6 |
+SHOP | relic:tam_huong | 14 | 16 | 6.1 | 87.5 |
+SHOP | card:dap_vo | 13 | 18 | 5.6 | 72.2 |
+SHOP | card:min_tre | 13 | 25 | 5.6 | 52.0 |
+SHOP | relic:dau_than | 13 | 13 | 5.6 | 100.0 |
+SHOP | card:khien_thep | 12 | 23 | 5.2 | 52.2 |
+SHOP | card:cuong_phong | 11 | 18 | 4.8 | 61.1 |
+SHOP | card:bang_tam | 10 | 17 | 4.3 | 58.8 |
+SHOP | card:lien_tram | 10 | 23 | 4.3 | 43.5 |
+SHOP | relic:phan_don | 10 | 12 | 4.3 | 83.3 |
+SHOP | card:thuong_xuyen | 9 | 16 | 3.9 | 56.3 |
+SHOP | card:tran_gai | 9 | 14 | 3.9 | 64.3 |
+SHOP | relic:la_ban | 9 | 10 | 3.9 | 90.0 |
+SHOP | card:chuoi_set | 8 | 11 | 3.5 | 72.7 |
+SHOP | card:kiem_than | 8 | 15 | 3.5 | 53.3 |
+SHOP | card:chan_phong | 7 | 18 | 3.0 | 38.9 |
+SHOP | card:dia_chan | 7 | 13 | 3.0 | 53.8 |
+SHOP | card:gai_doc | 7 | 15 | 3.0 | 46.7 |
+SHOP | relic:huyet_an | 7 | 11 | 3.0 | 63.6 |
+SHOP | relic:han_ky | 6 | 9 | 2.6 | 66.7 |
+SHOP | card:hoa_bang | 5 | 5 | 2.2 | 100.0 |
+SHOP | card:loc_cuon | 5 | 8 | 2.2 | 62.5 |
+SHOP | card:bang_vo | 4 | 11 | 1.7 | 36.4 |
+SHOP | card:tuong_da | 4 | 13 | 1.7 | 30.8 |
+SHOP | card:gai_nguyen | 3 | 10 | 1.3 | 30.0 |
+SHOP | card:hoi_am | 1 | 2 | 0.4 | 50.0 |
+SHOP | card:bang_chau | 0 | 25 | 0.0 | 0.0 |
+SHOP | card:bang_phong | 0 | 8 | 0.0 | 0.0 |
+SHOP | card:dai_dao | 0 | 24 | 0.0 | 0.0 |
+SHOP | card:han_bang | 0 | 3 | 0.0 | 0.0 |
+SHOP | card:han_khi | 0 | 22 | 0.0 | 0.0 |
+SHOP | card:han_phong | 0 | 10 | 0.0 | 0.0 |
+SHOP | card:han_tran | 0 | 11 | 0.0 | 0.0 |
+SHOP | card:hoa_tinh | 0 | 14 | 0.0 | 0.0 |
+SHOP | card:hoa_tran | 0 | 6 | 0.0 | 0.0 |
+SHOP | card:hoa_xa | 0 | 24 | 0.0 | 0.0 |
+SHOP | card:liet_hoa | 0 | 10 | 0.0 | 0.0 |
+SHOP | card:ran_kich | 0 | 17 | 0.0 | 0.0 |
+SHOP | card:ran_van | 0 | 12 | 0.0 | 0.0 |
+SHOP | card:song_kiem | 0 | 4 | 0.0 | 0.0 |
+SHOP | card:suong_mong | 0 | 21 | 0.0 | 0.0 |
+SHOP | card:thanh_thuy | 0 | 26 | 0.0 | 0.0 |
+SHOP | card:thien_hoa | 0 | 8 | 0.0 | 0.0 |
+SHOP | card:thien_lang | 0 | 12 | 0.0 | 0.0 |
+SHOP | card:tu_kiem | 0 | 6 | 0.0 | 0.0 |
+SHOP | service:heal | 0 | 231 | 0.0 | 0.0 |
+SHOP | service:remove_card | 0 | 231 | 0.0 | 0.0 |
+SHOP | service:remove_shape | 0 | 231 | 0.0 | 0.0 |
+SHOP CHECK: 231 shop visits | literal rule, bought in < 2 % of shop visits: 26 of 62 items (a relic / card that is rarely in stock lands here; read the next line) | never worth buying, offered >= 10 times and bought < 2 % of those offers: 16 items (card:bang_chau 0/25, card:dai_dao 0/24, card:han_khi 0/22, card:han_phong 0/10, card:han_tran 0/11, card:hoa_tinh 0/14, card:hoa_xa 0/24, card:liet_hoa 0/10, card:ran_kich 0/17, card:ran_van 0/12, card:suong_mong 0/21, card:thanh_thuy 0/26, card:thien_lang 0/12, service:heal 0/231, service:remove_card 0/231, service:remove_shape 0/231) | FAIL
+VERDICT run all | no shop item bought < 2 % of its offers (offered >= 10 times) | 231 visits, 16 items flagged | FAIL
+VERDICT run all | spread between characters <= 20 pts | one character | DEFERRED (run --characters=kiem_si,phap_su,sat_thu,tho_san,giao_si)
+
+VERDICT run all | kill vs spare win gap <= 10 pts | needs both runs | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --mercy=kill,spare)
+VERDICT run all | pieces on not above off by > 10 pts | needs both runs | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --pieces=on,off)
+VERDICT run all | Kiep win % monotone 0..10, Kiep 10 >= 3 % | see the KIEP CHECK lines | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --kiep=0..10 --seeds=30 --characters=kiem_si)
+runtime: 1555.1 s
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 33 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

@@ -214,13 +214,15 @@ func _initialize() -> void:
 	_check("begin (legacy) is Kiep 0", RunSession.begin(chapters, hero, 0, SEED).kiep_level == 0)
 	_check("begin_world clamps the level to 0..10", _session(99).kiep_level == 10 and _session(-3).kiep_level == 0)
 	var d: Dictionary = JSON.parse_string(JSON.stringify(run.to_dict()))
-	_check("to_dict writes the current version and kiep_level", int(d["version"]) == RunSession.SAVE_VERSION and RunSession.SAVE_VERSION == 7 and int(d["kiep_level"]) == 4)
+	_check("to_dict writes the current version and kiep_level", int(d["version"]) == RunSession.SAVE_VERSION and RunSession.SAVE_VERSION == 8 and int(d["kiep_level"]) == 4)
 	var back: RunSession = RunSession.from_dict(d, chapters)
 	_check("save round trip keeps kiep_level", back != null and back.kiep_level == 4)
 	d.erase("kiep_level")
 	d["version"] = 6
+	# World Map v2 (D5): a v6 save is older than MIN_LOADABLE_VERSION 8 -> needs_restart, Kiep 0, re-saved as v8.
 	var old: RunSession = RunSession.from_dict(d, chapters)
-	_check("a v6 save without the key loads as Kiep 0 and re-saves as v7", old != null and old.kiep_level == 0 and int(old.to_dict()["version"]) == 7)
+	_check("a v6 save restarts (needs_restart), loads as Kiep 0 and re-saves as v8", old != null and old.needs_restart and old.kiep_level == 0 and int(old.to_dict()["version"]) == 8)
+	d["version"] = RunSession.SAVE_VERSION
 	d["kiep_level"] = 55
 	_check("a bad saved level is clamped", RunSession.from_dict(d, chapters).kiep_level == 10)
 	d["kiep_level"] = "x"

@@ -14,7 +14,7 @@ extends SceneTree
 ## most ZONE_PER_EFFECT per effect in the deck (higher damage_per_cell / thorn_fragile_stacks first);
 ## --no-zone-cards drops the zone cards from the reward pool and the decks (the "before" measurement).
 ## Story 031 --world: a run = `world.floors` floors (pick 1 of the WorldMapGen offer per floor, bot pick
-## --region-pick=random|first, seeded) of short region maps (ChaptersConfig.generate_region_map), then the
+## --region-pick=random|first|order, seeded; `order` = the shipped `world.region_order` climb) of short region maps (ChaptersConfig.generate_region_map), then the
 ## final floor (TD-029: the `world.final_prelude` columns, a shop, through the same shop / node policy as
 ## the region maps, then the final match `world.final_match`); every match RunConfig.from_node(..., floor); a region boss gives the
 ## boss reward and heals `floor_heal_ratio` x max HP instead of ending the run. Runs its own run state
@@ -110,7 +110,18 @@ const EVENT_FIGHT_SEED_TAG: String = "event_fight"
 const ECON_EARNED_TARGET: Array = [350.0, 450.0]
 const ECON_ITEMS_TARGET: Array = [4.0, 6.0]
 const ECON_LEFT_WON_MAX: float = 100.0
-const REGION_PICKS: Array[String] = ["random", "first"]
+## World Map v2 step 0 (docs/design/world-map-v2/06-validation-plan.md section 1): `order` = the game's own rule,
+## WorldMapGen.floor_offer with `world.region_order` (the fixed climb; region locks do not apply there, as in RunSession);
+## without a region_order it is the plain offer's first id. The pick RNG is not drawn in this mode. `random` and `first`
+## are unchanged, so every older command line prints the same output.
+const REGION_PICKS: Array[String] = ["random", "first", "order"]
+## World Map v2 (06 section 3): `--route-policy=` — the lane the bot takes at the fork of a v2 region map: an archetype id,
+## `random` (seeded by the run seed) or `value` (peril / elite above VALUE_HP_RATIO of max HP, else safe / treasure).
+## Empty = the old node policy decides (it sees kinds only).
+const ROUTE_POLICIES: Array[String] = ["safe", "treasure", "peril", "elite", "mystery", "random", "value"]
+const VALUE_HP_RATIO: float = 0.6
+const ROUTE_RANK_RISKY: Array[String] = ["peril", "elite", "treasure", "mystery", "safe"]
+const ROUTE_RANK_SAFE: Array[String] = ["safe", "treasure", "mystery", "elite", "peril"]
 ## Story 038 Kiep levels (README "Story 038"): the story's checks. win(k) <= win(k-1) + KIEP_STEP_TOLERANCE, win(k) < win(k-2),
 ## no drop above KIEP_MAX_DROP points between neighbours, the level-10 win % floor per character (only Kiem si is gated), level 10
 ## est. minutes (WON run mean) <= KIEP_MINUTES_MAX; an --kiep-only rule that moves the win % less than KIEP_NO_EFFECT_PTS is "NO EFFECT".
@@ -202,6 +213,16 @@ var _match_stats: Dictionary = {}
 # Story 031 world mode.
 var _world: bool = false
 var _region_pick: String = "random"
+var _route_policy: String = ""
+## World Map v2: the live match node's profile numbers (set by _world_match, read by _drop_gold / _apply_policy).
+var _live_tier: int = 1
+var _live_relic_offer: int = 0
+var _live_gold_mult: float = 1.0
+var _live_objective_met: bool = false
+## World Map v2 tuning experiments: `--region-rules=<path>` / `--route-archetypes=<path>` load an alternative data file
+## into the shared loaders (tool only; the game keeps assets/data/*). Printed in the world header.
+var _region_rules_path: String = ""
+var _route_archetypes_path: String = ""
 var _node_overhead: float = DEFAULT_NODE_OVERHEAD_SEC
 var _world_set: Array[String] = []
 ## Story 040: `--char-set=<id>.<key path>:<X|xF>[,...]` overrides characters.json in memory (e.g.
@@ -297,9 +318,16 @@ class WorldRun:
 	## Story 040 (`--pieces=on` only): the run's piece deck and its shape-removal tokens (see RunSession).
 	var piece_deck: Dictionary = {}
 	var shape_removals: int = 0
+	## World Map v2: the region graph of a v2 region (null for v1), its active rule, the live gauge, the tier luck.
+	var graph: MapGraph = null
+	var rule: Dictionary = {}
+	var gauge: int = 0
+	var luck_extra: float = 0.0
+	## World Map v2: the lane taken at the fork ("" before it); the route policy keeps it past the hub.
+	var route_lane: String = ""
 
 	func luck(config: Dictionary = {}) -> float:
-		return float(config.get("luck_start", 0.0)) + float(config.get("luck_per_node", 1.0)) * float(nodes_cleared)
+		return luck_extra + float(config.get("luck_start", 0.0)) + float(config.get("luck_per_node", 1.0)) * float(nodes_cleared)
 
 	func reward_seed() -> int:
 		return hash([run_seed, floor, region_id, column, nodes_cleared]) & 0x7fffffff
@@ -426,6 +454,17 @@ func _init() -> void:
 				_region_pick = v.strip_edges()
 			else:
 				print("--region-pick: '%s' unknown, using %s (one of %s)" % [v, _region_pick, str(REGION_PICKS)])
+		elif arg.begins_with("--route-policy="):
+			if ROUTE_POLICIES.has(v.strip_edges()):
+				_route_policy = v.strip_edges()
+			else:
+				print("--route-policy: '%s' unknown, ignored (one of %s)" % [v, str(ROUTE_POLICIES)])
+		elif arg.begins_with("--region-rules="):
+			_region_rules_path = v.strip_edges()
+			RegionRules.set_shared(RegionRules.load_from_file(_region_rules_path))
+		elif arg.begins_with("--route-archetypes="):
+			_route_archetypes_path = v.strip_edges()
+			RouteArchetypes.set_shared(RouteArchetypes.load_from_file(_route_archetypes_path))
 		elif arg.begins_with("--node-overhead="):
 			_node_overhead = maxf(float(v), 0.0)
 			_node_overhead_given = true
@@ -863,10 +902,13 @@ func _forge_index(session) -> int:
 
 
 func _apply_policy(session, policy: String, kind: String, out: Dictionary) -> void:
-	var info: Dictionary = RewardRoller.reward_for_node(kind, _reward_config)
+	# World Map v2: a tiered node (v2 region fight, _world_match) uses its tier's rarity floor and luck bonus.
+	var info: Dictionary = RewardRoller.reward_for_node_tier(kind, _reward_config, _live_tier if session is WorldRun else 1)
 	var offers: int = int(info.get("offers", 0))
 	if offers <= 0:
 		return
+	if session is WorldRun and _live_tier > 1:
+		(session as WorldRun).luck_extra += float(info.get("luck_bonus", 0.0))
 	if out.has("oo_sec"):
 		out["oo_sec"] = float(out["oo_sec"]) + OOM_REWARD_SEC
 	var cfg: Dictionary = _reward_config.duplicate(true)
@@ -1114,6 +1156,10 @@ func _run_world_mode(seeds: int) -> void:
 		print(_core.describe_piece_weight_set())
 	print("relics: start=%s relic-policy=%s (pick = relic row over card row at treasure, rarest first; damage cap %.1f)" % [
 		",".join(PackedStringArray(_core.ov["relics"])) if not (_core.ov["relics"] as Array).is_empty() else "none", _relic_policy, _core.relic_config.relic_damage_mult_cap])
+	print("world-map-v2: region_rules=%s route_archetypes=%s route-policy=%s pieces=%s" % [
+		_region_rules_path if not _region_rules_path.is_empty() else RegionRules.DEFAULT_PATH,
+		_route_archetypes_path if not _route_archetypes_path.is_empty() else RouteArchetypes.DEFAULT_PATH,
+		_route_policy if not _route_policy.is_empty() else "node-policy", "on" if _pieces_on else "off"])
 	print("economy (Story 033): shop-policy=%s event-policy=%s economy-set=%s | start gold %d | shop entered with >= %d gold; greedy = heal below %.0f%% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above %.0f%% HP, else a pure heal choice, else Rời đi" % [
 		_shop_policy, _event_policy, ",".join(PackedStringArray(_economy_set)) if not _economy_set.is_empty() else "none",
 		_economy.starting_gold(), SHOP_MIN_GOLD, 100.0 * SHOP_HEAL_BELOW, 100.0 * EVENT_RISKY_ABOVE])
@@ -1371,13 +1417,13 @@ func _world_relic_report(char_id: String, policy: String, runs: Array[Dictionary
 # Story 032 --relic-policy=pick at a treasure node: rolls the relic row and adds the rarest offered relic
 # to [param owned]. False (the card row is used) with relic-policy none, the always_skip policy or an
 # empty relic row.
-func _take_relic(owned: Array[String], policy: String, relic_seed: int) -> bool:
+func _take_relic(owned: Array[String], policy: String, relic_seed: int, source: String = RelicRoller.SOURCE_TREASURE) -> bool:
 	if _relic_policy != "pick" or policy == "always_skip":
 		return false
 	var rng := RandomNumberGenerator.new()
 	rng.seed = relic_seed
 	# Story 037: a locked relic is not rolled; it is passed as "owned", which RelicRoller already never offers.
-	var offer: Array[String] = RelicRoller.roll(RelicRoller.SOURCE_TREASURE, _owned_or_locked(owned), rng, _core.relic_config)
+	var offer: Array[String] = RelicRoller.roll(source, _owned_or_locked(owned), rng, _core.relic_config)
 	if offer.is_empty():
 		return false
 	owned.append(_rarest_relic(offer, relic_seed))
@@ -1515,6 +1561,20 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		"matches": 0.0, "nodes": 0.0, "real_sec": 0.0, "sim_sec": 0.0, "timeouts": 0.0, "hp_in": [], "hp_out": [],
 		"rest_heal": 0.0, "rest_forge": 0.0, "treasure": 0.0, "tokens": 0.0, "zpicks": 0.0, "relic_trig": {},
 		# Story 033 economy.
+		"route_arch": "", "route_floor": -1.0, "route_cleared": 0.0, "route_gold_in": 0.0, "route_gold_out": 0.0,
+		"route_hp_in": 0.0, "route_hp_out": 0.0, "route_relics_in": 0.0, "route_relics_out": 0.0, "route_relics_gained": 0.0,
+		"route_obj": 0.0, "route_ended": 0.0, "route_gold_drop_in": 0.0,
+		# World Map v2 instrumentation (balance validation 2026-11-12): heat when the warden fight began (-1 = not
+		# reached), the highest heat on the route, objective fights won / relic rows offered on the route, ink rows
+		# offered / taken and forge visits / free removals (--pieces=on only), HP lost in fights, HP healed outside
+		# fights (rest, shop, passive heal on win) and the signed HP delta of events, all in points of max HP.
+		"route_heat_warden": -1.0, "route_heat_max": 0.0, "route_obj_nodes": 0.0, "route_relic_rows": 0.0,
+		"route_ink_offer": 0.0, "route_ink_taken": 0.0, "route_forge": 0.0, "route_forge_removed": 0.0,
+		"route_hp_combat": 0.0, "route_hp_heal": 0.0, "route_hp_event": 0.0, "forge": 0.0,
+		# Heat decay experiment (2026-11-12): rests / shops on the route with the heat before and after each, and
+		# whether the warden hook (RegionRules.warden_hook at the heat the warden fight began) fired (-1 = not reached).
+		"route_rest_n": 0.0, "route_rest_heat_in": 0.0, "route_rest_heat_out": 0.0,
+		"route_shop_n": 0.0, "route_shop_heat_in": 0.0, "route_shop_heat_out": 0.0, "route_hook": -1.0,
 		"gold_drop": 0.0, "gold_event_in": 0.0, "gold_event_out": 0.0, "gold_spent": 0.0, "gold_left": 0.0,
 		"shops": 0.0, "shop_items": [], "first_shop_items": -1.0, "first_shop_gold": -1.0,
 		"seen_shop_gold": -1.0, "seen_shop_afford": -1.0, "seen_shop_floor": -1.0,
@@ -1554,13 +1614,28 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 		w.floor = f
 		var map: Array[Dictionary] = []
 		if f < floors:
-			var offer: Array[String] = WorldMapGen.offer_for_floor(_open_region_ids(), seed_value, f, path, choices)
+			var offer: Array[String] = []
+			if _region_pick == "order":
+				offer = WorldMapGen.floor_offer(_chapters.region_order(), _open_region_ids(), seed_value, f, path, choices)
+			else:
+				offer = WorldMapGen.offer_for_floor(_open_region_ids(), seed_value, f, path, choices)
 			if offer.is_empty():
 				break
-			var region: String = offer[0] if _region_pick == "first" else offer[pick_rng.randi_range(0, offer.size() - 1)]
+			var region: String = offer[0] if _region_pick != "random" else offer[pick_rng.randi_range(0, offer.size() - 1)]
 			path.append(region)
 			w.region_id = region
-			map = _chapters.generate_region_map(region, seed_value, f, CLEARED_BOSSES_MAIN, _kiep_level)
+			# World Map v2: a v2 region (region_rules.json) walks the column MIRROR of its graph, like RunSession.
+			w.graph = null
+			w.rule = {}
+			w.gauge = 0
+			w.route_lane = ""
+			if RegionRules.shared().uses_v2(region):
+				w.graph = _chapters.generate_region_graph(region, seed_value, f, CLEARED_BOSSES_MAIN, _kiep_level)
+				map = RunSession.columns_from_graph(w.graph)
+				w.rule = RegionRules.shared().rule_for(region)
+				w.gauge = RegionRules.gauge_start(w.rule)
+			else:
+				map = _chapters.generate_region_map(region, seed_value, f, CLEARED_BOSSES_MAIN, _kiep_level)
 		else:
 			var fm: Dictionary = _chapters.final_match()
 			if fm.is_empty():
@@ -1569,6 +1644,9 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			# TD-029: the `world.final_prelude` columns (a shop) come first, through the same node policy.
 			map = _chapters.final_map()
 			out["final_reached"] = true
+			w.graph = null
+			w.rule = {}
+			w.gauge = 0
 		w.chapter_index = _chapters.region_index(w.region_id)
 		(out["hp_in"] as Array).append(_hp_ratio(w, max_hp))
 		for col: int in map.size():
@@ -1586,10 +1664,24 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 			var kind: String = str(node.get("kind", ""))
 			out["nodes"] = float(out["nodes"]) + 1.0
 			out["oo_sec"] = float(out["oo_sec"]) + OOM_MAP_SEC
+			# World Map v2: route bookkeeping at the fork for EVERY lane kind (the mystery lane opens with an event; the
+			# first pass only began the route inside _world_match, so event-led lanes were missing from the ROUTE table).
+			if w.graph != null and not w.graph.is_v1() and col == 1 and str(node.get("slot", "")) == MapGraph.SLOT_LANE:
+				_route_begin(w, node, max_hp, out)
+			var hp_before_node: float = _hp_ratio(w, max_hp)
 			if kind == ChapterMapGen.KIND_SHOP:
 				out["oo_sec"] = float(out["oo_sec"]) + OOM_SHOP_SEC
+				var shop_heat_in: int = w.gauge
 				_visit_shop(w, int(node["node_index"]), policy, max_hp, out)
+				var shop_on_route: bool = _on_route(w, out)
+				if shop_on_route:
+					out["route_hp_heal"] = float(out["route_hp_heal"]) + (_hp_ratio(w, max_hp) - hp_before_node) * 100.0
 				w.nodes_cleared += 1
+				_step_gauge(w, kind, out)
+				if shop_on_route:
+					out["route_shop_n"] = float(out["route_shop_n"]) + 1.0
+					out["route_shop_heat_in"] = float(out["route_shop_heat_in"]) + float(shop_heat_in)
+					out["route_shop_heat_out"] = float(out["route_shop_heat_out"]) + float(w.gauge)
 				continue
 			if kind == ChapterMapGen.KIND_EVENT:
 				out["oo_sec"] = float(out["oo_sec"]) + OOM_EVENT_SEC
@@ -1597,19 +1689,44 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 					lost = true
 					out["death_floor"] = f
 					out["death_kind"] = "event_fight"
+					if _on_route(w, out):
+						out["route_hp_event"] = float(out["route_hp_event"]) - hp_before_node * 100.0
+						_route_region_end(w, max_hp, out, false)
 					break
+				if _on_route(w, out):
+					out["route_hp_event"] = float(out["route_hp_event"]) + (_hp_ratio(w, max_hp) - hp_before_node) * 100.0
 				w.nodes_cleared += 1
+				_step_gauge(w, kind, out)
 				continue
 			if kind == ChapterMapGen.KIND_REST:
 				out["oo_sec"] = float(out["oo_sec"]) + OOM_REST_SEC
+				var rest_heat_in: int = w.gauge
+				var rest_on_route: bool = _on_route(w, out)
 				var forge_index: int = _forge_index(w)
 				if _hp_ratio(w, max_hp) < REST_HEAL_BELOW or forge_index < 0:
-					w.rest_heal(max_hp, _reward_config)
+					var healed: float = w.rest_heal(max_hp, _reward_config)
 					out["rest_heal"] = float(out["rest_heal"]) + 1.0
+					if _on_route(w, out):
+						out["route_hp_heal"] = float(out["route_hp_heal"]) + healed / max_hp * 100.0
 				else:
 					w.rest_forge(forge_index, _reward_config)
 					out["rest_forge"] = float(out["rest_forge"]) + 1.0
 				w.nodes_cleared += 1
+				_step_gauge(w, kind, out)
+				if rest_on_route:
+					out["route_rest_n"] = float(out["route_rest_n"]) + 1.0
+					out["route_rest_heat_in"] = float(out["route_rest_heat_in"]) + float(rest_heat_in)
+					out["route_rest_heat_out"] = float(out["route_rest_heat_out"]) + float(w.gauge)
+				continue
+			if kind == MapGraph.KIND_FORGE:
+				# World Map v2 (GameFlow._open_forge): an ink row and one free shape removal, no fight, no gold.
+				out["oo_sec"] = float(out["oo_sec"]) + OOM_REWARD_SEC
+				out["forge"] = float(out["forge"]) + 1.0
+				if _on_route(w, out):
+					out["route_forge"] = float(out["route_forge"]) + 1.0
+				w.nodes_cleared += 1
+				_step_gauge(w, kind, out)
+				_pieces_after_node(w, kind, out)
 				continue
 			if kind == ChapterMapGen.KIND_TREASURE:
 				out["treasure"] = float(out["treasure"]) + 1.0
@@ -1619,27 +1736,38 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 				else:
 					out["oo_sec"] = float(out["oo_sec"]) + OOM_REWARD_SEC
 				w.nodes_cleared += 1
+				_step_gauge(w, kind, out)
 				_pieces_after_node(w, kind, out)
 				continue
 			var match_seed: int = hash([seed_value, f, w.region_id, col, int(node["node_index"])]) & SEED_MASK
 			if f == floors:
 				out["gold_at_final"] = float(w.gold)
-			var r: Dictionary = _world_match(w, kind, str(node.get("match_id", "")), match_seed, character, bot_rng, out)
+			var r: Dictionary = _world_match(w, kind, str(node.get("match_id", "")), match_seed, character, bot_rng, out, node)
 			var rec: Dictionary = _match_record(r, w, kind, str(node.get("match_id", "")), f == floors)
 			(out["match_log"] as Array).append(rec)
 			if f == floors:
 				out["final_phase"] = int(r.get("boss_phase", 0))
 				out["final_boss_hp"] = float(r.get("boss_hp_end_ratio", 0.0))
+			if _on_route(w, out):
+				var end_ratio: float = clampf(float(r["hp_end"]) / max_hp, 0.0, 1.0) if bool(r["won"]) else 0.0
+				out["route_hp_combat"] = float(out["route_hp_combat"]) + maxf(hp_before_node - end_ratio, 0.0) * 100.0
+				if bool(r["won"]):
+					out["route_hp_heal"] = float(out["route_hp_heal"]) + maxf(minf(float(r["hp_end"]) + maxf(float(r["passive_heal"]), 0.0), max_hp) / max_hp - end_ratio, 0.0) * 100.0
 			if not bool(r["won"]):
 				lost = true
 				out["death_floor"] = f
 				out["death_kind"] = "final" if f == floors else kind
+				if w.graph != null and not w.graph.is_v1() and float(out["route_floor"]) == float(f):
+					_route_region_end(w, max_hp, out, false)
 				break
 			w.hp = minf(float(r["hp_end"]) + maxf(float(r["passive_heal"]), 0.0), max_hp)
 			# Story 033: GameFlow._complete_match_node = gold drop, then the run modifiers tick.
-			_drop_gold(w, kind, int(node["node_index"]), out)
+			_drop_gold(w, kind, int(node["node_index"]), out, _live_gold_mult)
+			if _live_objective_met:
+				out["route_obj"] = float(out["route_obj"]) + 1.0
 			_tick_modifiers(w)
 			w.nodes_cleared += 1
+			_step_gauge(w, kind, out)
 			if kind == ChapterMapGen.KIND_BOSS:
 				w.removal_tokens += int(_reward_config.get("boss_removal_tokens", 1))
 				if _pieces_on:
@@ -1650,6 +1778,18 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 					hash([seed_value, f, w.region_id, FATE_SEED_TAG]) & SEED_MASK, out)
 				out["oo_sec"] = float(out["oo_sec"]) + OOM_FATE_SEC
 			_apply_policy(w, policy, kind, out)
+			if _on_route(w, out):
+				out["route_relic_rows"] = float(out["route_relic_rows"]) + float(_live_relic_offer)
+			# World Map v2: the relic rows of a tier-3 / elite / objective reward (GameFlow: source `event`).
+			if _live_relic_offer > 0 and _relic_policy == "pick":
+				if _take_relic(w.relics, policy, hash([seed_value, f, col, int(node["node_index"]), RELIC_SEED_TAG]) & SEED_MASK, RelicRoller.SOURCE_EVENT):
+					out["route_relics_gained"] = float(out["route_relics_gained"]) + 1.0
+			_live_tier = 1
+			_live_relic_offer = 0
+			_live_gold_mult = 1.0
+			_live_objective_met = false
+			if w.graph != null and not w.graph.is_v1() and kind == ChapterMapGen.KIND_BOSS and float(out["route_floor"]) == float(f):
+				_route_region_end(w, max_hp, out, true)
 			_pieces_after_node(w, kind, out)
 			rec["deck_ids"] = _deck_ids(w)
 		if f == 1 or (lost and f <= 1):
@@ -1689,6 +1829,18 @@ func _run_world(seed_value: int, char_id: String, policy: String, floors: int) -
 # SHOP_MIN_GOLD) > event (risky) > the Story 022 order over the other nodes. With --shop-policy=none /
 # --event-policy=leave those nodes are only entered when the column has nothing else (walked past).
 func _world_choose_node(nodes: Array[Dictionary], w: WorldRun, max_hp: float) -> Dictionary:
+	# World Map v2: at the fork of a v2 map (depth 1) the route policy picks the lane by its archetype; after the hub
+	# (depth 4) it stays on that lane, so a probe measures the whole lane (the game lets the player switch there).
+	if w.graph != null and not w.graph.is_v1() and not _route_policy.is_empty():
+		if w.column == 1:
+			var picked: Dictionary = _route_pick(nodes, w, max_hp)
+			if not picked.is_empty():
+				w.route_lane = str(picked.get("lane", ""))
+				return picked
+		elif w.column == 4 and not w.route_lane.is_empty():
+			for n: Dictionary in nodes:
+				if str(n.get("lane", "")) == w.route_lane:
+					return n
 	if _hp_ratio(w, max_hp) < REST_HEAL_BELOW:
 		for n: Dictionary in nodes:
 			if str(n.get("kind", "")) == ChapterMapGen.KIND_REST:
@@ -1713,6 +1865,73 @@ func _world_choose_node(nodes: Array[Dictionary], w: WorldRun, max_hp: float) ->
 	if others.is_empty():
 		return nodes[0]
 	return _bot_choose_node(others, w, max_hp)
+
+
+# World Map v2: the character's max HP (the run's max_hp is a local of the world loop).
+func _character_max_hp_of(character: Dictionary) -> float:
+	return maxf(float(character.get("max_hp", 100.0)), 1.0)
+
+
+# World Map v2: the lane-start node whose archetype the route policy wants ({} when none matches).
+func _route_pick(nodes: Array[Dictionary], w: WorldRun, max_hp: float) -> Dictionary:
+	var by_arch: Dictionary = {}
+	for n: Dictionary in nodes:
+		var arch: String = w.graph.archetype_of(str(n.get("id", "")))
+		if not arch.is_empty():
+			by_arch[arch] = n
+	if by_arch.is_empty():
+		return {}
+	var want: Array[String] = []
+	match _route_policy:
+		"random":
+			var rng := RandomNumberGenerator.new()
+			rng.seed = hash([w.run_seed, w.floor, "route"]) & SEED_MASK
+			var keys: Array = by_arch.keys()
+			keys.sort()
+			want.append(str(keys[rng.randi_range(0, keys.size() - 1)]))
+		"value":
+			want.assign(ROUTE_RANK_RISKY if _hp_ratio(w, max_hp) >= VALUE_HP_RATIO else ROUTE_RANK_SAFE)
+		_:
+			want.append(_route_policy)
+	for arch: String in want:
+		if by_arch.has(arch):
+			return by_arch[arch]
+	return {}
+
+
+# World Map v2: the region rule's gauge after a node of [param kind] (RunSession.complete_node).
+func _step_gauge(w: WorldRun, kind: String, out: Dictionary = {}) -> void:
+	if not w.rule.is_empty():
+		w.gauge = RegionRules.gauge_after(w.rule, w.gauge, kind)
+	if not out.is_empty() and _on_route(w, out):
+		out["route_heat_max"] = maxf(float(out["route_heat_max"]), float(w.gauge))
+
+
+# World Map v2: true while the run is inside the route of a v2 region (the fork was taken on this floor and the
+# region has not ended); the instrumentation above counts only then.
+func _on_route(w: WorldRun, out: Dictionary) -> bool:
+	return w.graph != null and not w.graph.is_v1() and float(out["route_floor"]) == float(w.floor) and float(out["route_ended"]) <= 0.0
+
+
+# World Map v2: route bookkeeping at the fork (called from _world_match when the node is a depth-1 lane node).
+func _route_begin(w: WorldRun, node: Dictionary, max_hp: float, out: Dictionary) -> void:
+	out["route_arch"] = w.graph.archetype_of(str(node.get("id", "")))
+	out["route_floor"] = float(w.floor)
+	out["route_gold_in"] = float(w.gold)
+	out["route_gold_drop_in"] = float(out["gold_drop"])
+	out["route_hp_in"] = _hp_ratio(w, max_hp)
+	out["route_relics_in"] = float(w.relics.size())
+
+
+# World Map v2: the region ended (warden cleared or death): the route's gold / HP / relic deltas.
+func _route_region_end(w: WorldRun, max_hp: float, out: Dictionary, cleared: bool) -> void:
+	if float(out["route_ended"]) > 0.0:
+		return
+	out["route_ended"] = 1.0
+	out["route_cleared"] = 1.0 if cleared else 0.0
+	out["route_gold_out"] = float(w.gold)
+	out["route_hp_out"] = _hp_ratio(w, max_hp)
+	out["route_relics_out"] = float(w.relics.size())
 
 
 # ---------------------------------------------------------------- Story 038 Kiep levels
@@ -1937,8 +2156,23 @@ func _kiep_check_line(label: String, n: int, bad: Array[String]) -> int:
 # Plays one match of the world run (a node's or an event's extra fight) with the run's relics and run
 # modifiers and adds its numbers to [param out]. Returns SimCore.play_match's result.
 func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, character: Dictionary,
-		bot_rng: RandomNumberGenerator, out: Dictionary) -> Dictionary:
-	var run_config: RunConfig = RunConfig.from_node(_chapters, w.region_id, match_id, kind, w.run_seed, w.floor, w.kiep_level)
+		bot_rng: RandomNumberGenerator, out: Dictionary, node: Dictionary = {}) -> Dictionary:
+	# World Map v2: the node's encounter profile (GameFlow._spawn_match) patches the match; its tier, relic rows and
+	# gold multiplier are read by the reward step; the objective is judged on the match result below.
+	var profile: Dictionary = {}
+	_live_tier = 1
+	_live_relic_offer = 0
+	_live_gold_mult = float(node.get("gold_mult", 1.0)) if not node.is_empty() else 1.0
+	_live_objective_met = false
+	if w.graph != null and not w.graph.is_v1() and node.has("id"):
+		profile = EncounterComposer.profile(node, w.region_id, w.gauge)
+		_live_tier = int(profile.get("reward_tier", 1))
+		_live_relic_offer = int(node.get("relic_offer", 0)) + int(RewardRoller.tier_rule(_reward_config, _live_tier)["relic_offer"])
+		_live_gold_mult *= float(RewardRoller.tier_rule(_reward_config, _live_tier)["gold_mult"])
+		if kind == ChapterMapGen.KIND_BOSS and _on_route(w, out):
+			out["route_heat_warden"] = float(w.gauge)
+			out["route_hook"] = 1.0 if not RegionRules.warden_hook(w.rule, w.gauge).is_empty() else 0.0
+	var run_config: RunConfig = RunConfig.from_node(_chapters, w.region_id, match_id, kind, w.run_seed, w.floor, w.kiep_level, profile)
 	var m: Dictionary = _core.prepare_match(run_config.matches[0])
 	m["chapter_id"] = w.region_id
 	_core.invulnerable = false
@@ -1956,6 +2190,17 @@ func _world_match(w: WorldRun, kind: String, match_id: String, match_seed: int, 
 	var r: Dictionary = _core.play_match(m, character, w.deck_entries(), w.hp, match_seed, bot_rng)
 	_core.run_modifiers = {}
 	out["matches"] = float(out["matches"]) + 1.0
+	# World Map v2 objective (03 section 5) on the counters the sim has (hits taken, joins); the two combat-only
+	# counters (max_cast_cells, vents_dodged) are not simulated and count as not met.
+	var objective: Dictionary = profile.get("objective", {}) if not profile.is_empty() else {}
+	if bool(r["won"]) and not objective.is_empty():
+		if _on_route(w, out):
+			out["route_obj_nodes"] = float(out["route_obj_nodes"]) + 1.0
+		var stats: Dictionary = {"hits_taken": float(r.get("bhits", 0)), "joins": float(r.get("joins", 0))}
+		_live_objective_met = EncounterComposer.objective_met(objective, stats)
+		if _live_objective_met:
+			_live_gold_mult *= float(RouteArchetypes.shared().objective_bonus()["gold_mult"])
+			_live_relic_offer += int(RouteArchetypes.shared().objective_bonus()["relic_offer"])
 	# Story 040: the v6 run time (a match's intro + end delay) and the per-match log of the REGION x FLOOR table.
 	out["match_extra_sec"] = float(out["match_extra_sec"]) + run_config.intro_sec + run_config.end_delay_sec
 	out["shits"] = float(out["shits"]) + float(r["shits"])
@@ -2034,8 +2279,11 @@ func _sync_back(rs: RunSession, w: WorldRun) -> void:
 
 
 # GameFlow._drop_gold: EconomyConfig.gold_for(kind, floor, hash([run_seed, floor, column, node_index, "gold"])).
-func _drop_gold(w: WorldRun, kind: String, node_index: int, out: Dictionary) -> void:
+func _drop_gold(w: WorldRun, kind: String, node_index: int, out: Dictionary, mult: float = 1.0) -> void:
 	var g: int = _economy.gold_for(kind, w.floor, hash([w.run_seed, w.floor, w.column, node_index, GOLD_SEED_TAG]) & SEED_MASK)
+	if mult != 1.0:
+		# World Map v2: node gold_mult x reward tier x objective bonus (GameFlow._reward_gold_mult).
+		g = maxi(roundi(float(g) * mult), 0)
 	if w.kiep_level > 0:
 		# Story 038 (Kiep 5): GameFlow's drop x economy_mult("gold"), rounded, at least 0.
 		g = maxi(roundi(float(g) * KiepRules.shared().economy_mult("gold", w.kiep_level)), 0)
@@ -3023,16 +3271,29 @@ func _pieces_after_node(w: WorldRun, kind: String, out: Dictionary) -> void:
 	if not _pieces_on:
 		return
 	var cfg: PieceDeckConfig = _core.piece_deck_cfg
-	if kind == ChapterMapGen.KIND_BATTLE or kind == ChapterMapGen.KIND_DANGER or kind == ChapterMapGen.KIND_TREASURE:
+	if kind == ChapterMapGen.KIND_BATTLE or kind == ChapterMapGen.KIND_DANGER or kind == ChapterMapGen.KIND_TREASURE or kind == MapGraph.KIND_FORGE:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = hash([w.run_seed, w.floor, w.region_id, w.column, w.nodes_cleared, INK_SEED_TAG]) & SEED_MASK
 		var hit: bool = rng.randf() < cfg.ink_offer_chance
-		if kind == ChapterMapGen.KIND_TREASURE or hit:
+		# World Map v2: a forge node always offers an ink row (GameFlow._roll_ink_for(KIND_FORGE, true)).
+		if kind == ChapterMapGen.KIND_TREASURE or kind == MapGraph.KIND_FORGE or hit:
 			var offer: Array[String] = PieceDeck.roll_ink_offer(w.piece_deck, _core.piece_lib, cfg, rng.randi() & SEED_MASK, _core.locked_ids("piece"))
+			if _on_route(w, out):
+				out["route_ink_offer"] = float(out["route_ink_offer"]) + 1.0
 			var pick: String = _ink_pick(offer)
 			if not pick.is_empty():
 				w.piece_deck = PieceDeck.apply_ink(w.piece_deck, pick, _core.piece_lib, cfg)
 				out["ink_taken"] = float(out["ink_taken"]) + 1.0
+				if _on_route(w, out):
+					out["route_ink_taken"] = float(out["route_ink_taken"]) + 1.0
+		if kind == MapGraph.KIND_FORGE:
+			# World Map v2: the forge's one free shape removal (GameFlow: remove_shape is free once in phase FORGE).
+			var free_pick: String = _pieces_remove_pick(w.piece_deck)
+			if not free_pick.is_empty():
+				w.piece_deck = PieceDeck.remove(w.piece_deck, free_pick, _core.piece_lib, cfg)
+				out["shape_removed"] = float(out["shape_removed"]) + 1.0
+				if _on_route(w, out):
+					out["route_forge_removed"] = float(out["route_forge_removed"]) + 1.0
 	_pieces_use_tokens(w, out)
 
 
@@ -3227,6 +3488,128 @@ func _v6_run_report(char_id: String, policy: String, runs: Array[Dictionary], fl
 	var spent: Array = _field(runs, "gold_spent")
 	var spent_won: Array = _field(won_runs, "gold_spent")
 	var hits_won: float = _mean(_field(won_runs, "hits"))
+	# World Map v2 (06 section 3): per lane archetype taken at the v2 region's fork (hellfire): runs, region clear %,
+	# gold gained in the region (drops), HP lost (points of max HP), relics gained, objective met, run win %.
+	var by_route: Dictionary = {}
+	for r: Dictionary in runs:
+		var arch: String = str(r.get("route_arch", ""))
+		if arch.is_empty():
+			continue
+		if not by_route.has(arch):
+			by_route[arch] = []
+		(by_route[arch] as Array).append(r)
+	if not by_route.is_empty():
+		print("")
+		print("ROUTE | character | archetype | runs | region clear % | gold gained (drops, mean) | HP lost pts of max (mean) | relics gained (mean) | objective met / run | run win % | route policy |")
+		var archs: Array = by_route.keys()
+		archs.sort()
+		for arch: Variant in archs:
+			var rs: Array = by_route[arch]
+			var cleared: float = 0.0
+			var gold: float = 0.0
+			var hp_lost: float = 0.0
+			var relics: float = 0.0
+			var obj: float = 0.0
+			var wins: float = 0.0
+			var ended: float = 0.0
+			for r: Dictionary in rs:
+				if float(r["route_ended"]) > 0.0:
+					ended += 1.0
+					cleared += float(r["route_cleared"])
+					gold += float(r["gold_drop"]) - float(r["route_gold_drop_in"]) if float(r["route_cleared"]) > 0.0 else 0.0
+					hp_lost += (float(r["route_hp_in"]) - float(r["route_hp_out"])) * 100.0
+					relics += float(r["route_relics_out"]) - float(r["route_relics_in"])
+				obj += float(r["route_obj"])
+				if bool(r.get("won", false)):
+					wins += 1.0
+			var den: float = maxf(ended, 1.0)
+			print("ROUTE | %s | %s | %d | %.1f | %.1f | %.1f | %.2f | %.2f | %.1f | %s |" % [char_id, str(arch), rs.size(), 100.0 * cleared / den, gold / den, hp_lost / den, relics / den, obj / float(rs.size()), 100.0 * wins / float(rs.size()), _route_policy if not _route_policy.is_empty() else "node-policy"])
+		# Balance validation 2026-11-12: the second row per archetype — heat at the warden (routes that reached it; the
+		# count by heat value), the route's highest heat, objective fights won / met, relic rows offered / taken, ink
+		# rows offered / taken and forge visits / free removals (--pieces=on, else n/a), HP lost in fights vs healed
+		# outside fights vs the events' signed delta (points of max HP, per route that ended).
+		print("ROUTE2 | character | archetype | routes ended | heat at warden mean (reached; count by heat 0..4) | heat max mean | objective fights won / met per route | relic rows offered / taken per route | ink rows offered / taken per route | forge visits / free removals per route | HP lost in fights pts | HP healed outside fights pts | event HP delta pts |")
+		for arch: Variant in archs:
+			var rs: Array = by_route[arch]
+			var ended: float = 0.0
+			var reached: float = 0.0
+			var heat_sum: float = 0.0
+			var heat_count: Array[int] = [0, 0, 0, 0, 0]
+			var heat_max: float = 0.0
+			var obj_nodes: float = 0.0
+			var obj_met: float = 0.0
+			var rows: float = 0.0
+			var rows_taken: float = 0.0
+			var ink_o: float = 0.0
+			var ink_t: float = 0.0
+			var forge_v: float = 0.0
+			var forge_r: float = 0.0
+			var hp_c: float = 0.0
+			var hp_h: float = 0.0
+			var hp_e: float = 0.0
+			for r: Dictionary in rs:
+				if float(r["route_ended"]) <= 0.0:
+					continue
+				ended += 1.0
+				var hw: float = float(r["route_heat_warden"])
+				if hw >= 0.0:
+					reached += 1.0
+					heat_sum += hw
+					heat_count[clampi(int(hw), 0, 4)] += 1
+				heat_max += float(r["route_heat_max"])
+				obj_nodes += float(r["route_obj_nodes"])
+				obj_met += float(r["route_obj"])
+				rows += float(r["route_relic_rows"])
+				rows_taken += float(r["route_relics_gained"])
+				ink_o += float(r["route_ink_offer"])
+				ink_t += float(r["route_ink_taken"])
+				forge_v += float(r["route_forge"])
+				forge_r += float(r["route_forge_removed"])
+				hp_c += float(r["route_hp_combat"])
+				hp_h += float(r["route_hp_heal"])
+				hp_e += float(r["route_hp_event"])
+			var den2: float = maxf(ended, 1.0)
+			var heat_cells: Array[String] = []
+			for h: int in 5:
+				heat_cells.append("%d:%d" % [h, heat_count[h]])
+			print("ROUTE2 | %s | %s | %d | %s (%d; %s) | %.2f | %.2f / %.2f | %.2f / %.2f | %s | %s | %.1f | %.1f | %.1f |" % [
+				char_id, str(arch), int(ended), ("%.2f" % (heat_sum / reached)) if reached > 0.0 else "-", int(reached), " ".join(PackedStringArray(heat_cells)),
+				heat_max / den2, obj_nodes / den2, obj_met / den2, rows / den2, rows_taken / den2,
+				("%.2f / %.2f" % [ink_o / den2, ink_t / den2]) if _pieces_on else "n/a (pieces off)",
+				("%.2f / %.2f" % [forge_v / den2, forge_r / den2]) if _pieces_on else ("%.2f / n/a" % (forge_v / den2)),
+				hp_c / den2, hp_h / den2, hp_e / den2])
+		# Heat decay experiment (2026-11-12): rests and shops on the route with the mean heat before -> after each, and
+		# the warden hook firing rate among the routes that reached the warden.
+		print("ROUTE3 | character | archetype | routes ended | rests per route | heat before -> after rest (mean) | shops per route | heat before -> after shop (mean) | warden reached | warden hook fired % (of reached) |")
+		for arch: Variant in archs:
+			var rs: Array = by_route[arch]
+			var ended: float = 0.0
+			var rest_n: float = 0.0
+			var rest_in: float = 0.0
+			var rest_out: float = 0.0
+			var shop_n: float = 0.0
+			var shop_in: float = 0.0
+			var shop_out: float = 0.0
+			var reached: float = 0.0
+			var hooked: float = 0.0
+			for r: Dictionary in rs:
+				if float(r["route_ended"]) <= 0.0:
+					continue
+				ended += 1.0
+				rest_n += float(r["route_rest_n"])
+				rest_in += float(r["route_rest_heat_in"])
+				rest_out += float(r["route_rest_heat_out"])
+				shop_n += float(r["route_shop_n"])
+				shop_in += float(r["route_shop_heat_in"])
+				shop_out += float(r["route_shop_heat_out"])
+				if float(r["route_hook"]) >= 0.0:
+					reached += 1.0
+					hooked += float(r["route_hook"])
+			print("ROUTE3 | %s | %s | %d | %.2f | %s | %.2f | %s | %d | %s |" % [
+				char_id, str(arch), int(ended), rest_n / maxf(ended, 1.0),
+				("%.2f -> %.2f" % [rest_in / rest_n, rest_out / rest_n]) if rest_n > 0.0 else "-",
+				shop_n / maxf(ended, 1.0), ("%.2f -> %.2f" % [shop_in / shop_n, shop_out / shop_n]) if shop_n > 0.0 else "-",
+				int(reached), ("%.1f" % (100.0 * hooked / reached)) if reached > 0.0 else "-"])
 	print("")
 	print("=== RUN v6 %s / %s: %d runs, %s ===" % [char_id, policy, n, _variant_label if not _variant_label.is_empty() else "kiep %d" % _kiep_level])
 	print("RUN | character | policy | kiep | win % | deaths by floor (f1 f2 f3 f4 f5 final) | hits taken / won run | run minutes (est., won median / lost median) | gold earned / spent (all runs; won runs) | relics / run | deck size | piece set size |")

@@ -1,0 +1,279 @@
+extends SceneTree
+## Scratchpad bot for the B1 Hellfire warden playtest (2026-11-12). Not part of the repo. Boots the real game
+## (main.tscn, memory store), enters ONE live warden fight composed exactly as the route would compose it
+## (EncounterComposer.profile of the warden node at the given Heat -> RunConfig.from_node -> GameFlow.enter_test_floor),
+## plays it with the tools/qa/play_bot.gd style (random pieces, cards or the 4 s clock) plus a vent policy, and prints
+## what a human tester would write down: surge times, vents per surge, eruptions, hits by vents with attributable vent
+## damage (StatusEffects.burn_hurt on a venting cell), hits while movement was locked by a cast, unescapable
+## warnings (nearest safe cell farther than the warning allows), dodges, casts abandoned to dodge, phase-2 time,
+## result, duration, HP. Screenshots: first surge, phase 2, end. Windowed.
+## Run: godot --path . --fixed-fps 60 [--write-movie <file>.avi] -s <abs>/warden_bot.gd -- <out_dir> <hero> <heat> <seed> <policy:dodge|naive> [react_sec] --no-autopause
+const MAX_SEC: float = 240.0
+const DIRS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+const P: int = CombatState.Side.PLAYER
+
+var out: String
+var tag: String
+var shots: int = 0
+var t: float = 0.0
+## Simulated match seconds (real frames x CombatView's time scale: the match slows / stops while placing or in the card
+## menu, so surge intervals are measured on this clock, the one the trait and a human both experience as "fight time").
+var sim_t: float = 0.0
+
+
+func _shot(name: String) -> void:
+	if shots >= 6:
+		return
+	shots += 1
+	root.get_texture().get_image().save_png("%s/%s-%d-%s.png" % [out, tag, shots, name])
+
+
+func _safe(hz: TileHazards, cell: Vector2i) -> bool:
+	return not hz.is_vent_warning(P, cell) and not hz.is_venting(P, cell)
+
+
+## Steps to the nearest safe real player cell from [param from] (0 = already safe; 99 = none reachable).
+func _dist_to_safe(grid: BoardGrid, hz: TileHazards, from: Vector2i) -> int:
+	if _safe(hz, from):
+		return 0
+	var seen: Dictionary = {from: 0}
+	var queue: Array[Vector2i] = [from]
+	while not queue.is_empty():
+		var c: Vector2i = queue.pop_front()
+		for d: Vector2i in DIRS:
+			var n: Vector2i = c + d
+			if seen.has(n) or not grid.is_player_cell(n):
+				continue
+			seen[n] = int(seen[c]) + 1
+			if _safe(hz, n):
+				return int(seen[n])
+			queue.append(n)
+	return 99
+
+
+func _initialize() -> void:
+	var a := OS.get_cmdline_user_args()
+	out = a[0]
+	var hero: String = a[1]
+	var heat: int = int(a[2])
+	var seed_value: int = int(a[3])
+	var policy: String = a[4] if a.size() > 4 else "dodge"
+	var react_sec: float = float(a[5]) if a.size() > 5 and a[5].is_valid_float() else 0.3
+	DirAccess.make_dir_recursive_absolute(out)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	tag = "%s-heat%d-%s-s%d" % [hero, heat, policy, seed_value]
+	TranslationServer.set_locale("vi")
+	var main: Node = load("res://src/main.tscn").instantiate()
+	var gf := main.get_node("GameFlow") as GameFlow
+	gf.set_store_for_test(ProgressStore.memory_store())
+	root.add_child(main)
+	await process_frame
+	gf.set_character(hero)
+	var cfg: ChaptersConfig = ChaptersConfig.load_from_file()
+	var warden: Dictionary = MapGraph.clean_node({"id": "w", "slot": "warden", "kind": "boss", "match_id": "inferno_lord"})
+	var profile: Dictionary = EncounterComposer.profile(warden, "hellfire", heat)
+	print("PROFILE heat=%d patch=%s" % [heat, JSON.stringify(profile.get("match_patch", {}))])
+	var rc: RunController = gf.enter_test_floor(RunConfig.from_node(cfg, "hellfire", "inferno_lord", "boss", seed_value, 1, 0, profile))
+	for _i in 900:
+		if rc.get_state().get_phase() == RunState.Phase.PLAYING:
+			break
+		await process_frame
+	var v := rc.get_battle().get_node("CombatView") as CombatView
+	v.set_card_time(SettingsStore.CARD_TIME_NORMAL)
+	v.get_cut_flow().rng.seed = seed_value
+	var st: CombatState = v.get_state()
+	var grid: BoardGrid = v.get_grid()
+	var hz: TileHazards = v.get_hazards()
+	var status: StatusEffects = v.get_status()
+	var host: TraitHost = v.get_trait_host()
+	var surge_trait: VentSurgeTrait = host.get_trait("vent_surge") as VentSurgeTrait
+	print("MATCH traits=%s hazards vent_interval=%s warn=%s vent_sec=%s tick=%s tick_dmg=%s player_vents=%d start=%s hp=%.0f" % [
+		JSON.stringify(v.match_params.get("traits", [])), str(hz.config_value("vent_interval_sec")), str(hz.config_value("vent_warn_sec")),
+		str(hz.config_value("vent_sec")), str(hz.config_value("vent_tick_sec")), str(hz.config_value("vent_tick_damage")), hz.vent_count(P), str(grid.to_side_coords(st.player_cell)), st.player_hp])
+	var lib := PieceLibrary.load_from_file()
+	var step_sec: float = CombatConfig.load_from_file().step_cooldown_for(grid)
+	print("STEP cooldown on this board = %.3f s" % step_sec)
+	var shapes: Array[String] = ["mono", "bar2", "bar3", "l3", "square", "t4", "l4", "plus5"]
+	# --- instrumentation
+	var log: Dictionary = {"surges": [], "surge_vents": [], "warned": 0, "erupted": 0, "vent_hits": 0, "vent_dmg": 0.0,
+		"vent_dmg_locked": 0.0, "vent_hits_locked": 0, "total_dmg": 0.0, "unescapable": 0, "warn_on_me": 0, "dodges": 0,
+		"dodge_fail": 0, "abandoned": 0, "casts": 0, "timeouts": 0, "phase2_at": -1.0, "burn_other_dmg": 0.0, "cards": {}, "surges_real": []}
+	var hit_eruptions: Dictionary = {}  # vent cells key -> true once hit during this eruption
+	if surge_trait != null:
+		surge_trait.surged.connect(func(n: int) -> void:
+			(log["surges"] as Array).append(snappedf(sim_t, 0.1))
+			(log["surges_real"] as Array).append(snappedf(t, 0.1))
+			(log["surge_vents"] as Array).append(n)
+			if shots == 0:
+				_shot.call_deferred("first-surge"))
+	hz.vent_warned.connect(func(side: int, _i: int, cells: Array[Vector2i]) -> void:
+		if side != P:
+			return
+		log["warned"] = int(log["warned"]) + 1
+		if cells.has(st.player_cell):
+			log["warn_on_me"] = int(log["warn_on_me"]) + 1
+			var dist: int = _dist_to_safe(grid, hz, st.player_cell)
+			var need: float = float(dist) * step_sec
+			if need > float(hz.config_value("vent_warn_sec")) + 0.05:
+				log["unescapable"] = int(log["unescapable"]) + 1
+				print("UNESCAPABLE t=%.1f cell=%s dist=%d need=%.2f locked=%s" % [t, str(grid.to_side_coords(st.player_cell)), dist, need, str(v.is_movement_locked())]))
+	hz.vent_erupted.connect(func(side: int, idx: int, _cells: Array[Vector2i]) -> void:
+		if side == P:
+			log["erupted"] = int(log["erupted"]) + 1
+			hit_eruptions.erase(idx))
+	status.burn_hurt.connect(func(side: int, cell: Vector2i, dmg: float) -> void:
+		if side != P:
+			return
+		if hz.is_venting(P, cell):
+			log["vent_dmg"] = float(log["vent_dmg"]) + dmg
+			var key: String = str(cell) + "@" + str(int(t))
+			var idx: int = -1
+			for i: int in hz.vent_count(P):
+				if (hz.vent_cells(P) as Array).has(cell):
+					idx = i
+			if not hit_eruptions.has(key):
+				hit_eruptions[key] = true
+				log["vent_hits"] = int(log["vent_hits"]) + 1
+				if v.is_movement_locked():
+					log["vent_hits_locked"] = int(log["vent_hits_locked"]) + 1
+			if v.is_movement_locked():
+				log["vent_dmg_locked"] = float(log["vent_dmg_locked"]) + dmg
+		else:
+			log["burn_other_dmg"] = float(log["burn_other_dmg"]) + dmg)
+	st.damaged.connect(func(side: int, amount: float) -> void:
+		if side == P:
+			log["total_dmg"] = float(log["total_dmg"]) + amount)
+	host.phase_changed.connect(func(phase: int) -> void:
+		if phase >= 2 and float(log["phase2_at"]) < 0.0:
+			log["phase2_at"] = snappedf(sim_t, 0.1)
+			_shot.call_deferred("phase2"))
+	# --- play
+	var dt: float = 1.0 / 60.0
+	var next_action: float = 1.0
+	var mode: String = ""
+	var mode_t: float = 0.0
+	var danger_since: float = -1.0
+	while t < MAX_SEC and not st.is_player_dead() and not st.is_enemy_dead():
+		await process_frame
+		t += dt
+		sim_t += dt * float(v._sim_scale())
+		if st.is_player_dead() or st.is_enemy_dead():
+			break
+		# --- vent policy: leave a warning / erupting cell after react_sec (human reaction), cancelling a placement if needed
+		var in_danger: bool = not _safe(hz, st.player_cell)
+		if policy == "dodge" and in_danger:
+			if danger_since < 0.0:
+				danger_since = t
+			if t - danger_since >= react_sec:
+				if v.is_movement_locked() and (v.is_placing() or v.is_placed()) and not v.get_cut_flow().is_menu_open():
+					if v.cancel_placement():
+						log["abandoned"] = int(log["abandoned"]) + 1
+						mode = ""
+						next_action = t + 0.3
+				if not v.is_movement_locked():
+					# pick the step that reaches a safe cell soonest
+					var best: Vector2i = Vector2i.ZERO
+					var best_d: int = 99
+					for d: Vector2i in DIRS:
+						var n: Vector2i = st.player_cell + d
+						if not grid.is_player_cell(n):
+							continue
+						var dd: int = _dist_to_safe(grid, hz, n)
+						if dd < best_d:
+							best_d = dd
+							best = d
+					if best != Vector2i.ZERO and v.try_step_player(best):
+						log["dodges"] = int(log["dodges"]) + 1
+					elif best == Vector2i.ZERO:
+						log["dodge_fail"] = int(log["dodge_fail"]) + 1
+				continue
+		else:
+			danger_since = -1.0
+		# --- the play_bot loop (abridged): place a piece on the enemy, then lift / choose a card / let the clock run
+		if mode == "":
+			if t < next_action:
+				if rng.randf() < 0.03 and not v.is_movement_locked():
+					var d: Vector2i = DIRS[rng.randi_range(0, 3)]
+					if policy == "dodge" and not _safe(hz, st.player_cell + d):
+						continue
+					v.try_step_player(d)
+				continue
+			if v.get_cut_actor().is_swinging():
+				continue
+			if policy == "dodge" and not _safe(hz, st.player_cell):
+				continue  # never start a cast while standing in a warning
+			var hold: HoldSlots = v.get_hold()
+			if hold.get_piece(0) == null:
+				var p := FieldPoint.new()
+				p.uid = -1000 - int(t * 10)
+				p.freshness_left = 0.0
+				p.piece = lib.make_piece(shapes[rng.randi_range(0, shapes.size() - 1)], rng.randi_range(0, 3))
+				p.label = "bot"
+				hold.place(p, 0)
+			var ok_sel: bool = v.select_piece(0, false)
+			var ok_aim: bool = ok_sel and v.aim_at_cell(st.enemy_cell)
+			for _r in 3:
+				if ok_aim or not ok_sel:
+					break
+				v.rotate_piece()
+				ok_aim = v.aim_at_cell(st.enemy_cell)
+			if not (ok_aim and v.confirm_placement()):
+				v.cancel_placement()
+				next_action = t + 0.5
+				continue
+			var r: float = rng.randf()
+			mode = "lift" if r < 0.25 else ("timeout" if r < 0.45 else "choose")
+			mode_t = t
+		elif mode == "lift":
+			if t - mode_t > 0.4:
+				if v.lift_placed_piece(0):
+					v.rotate_piece()
+					v.aim_at_cell(st.enemy_cell + Vector2i(0, rng.randi_range(-1, 1)))
+					if v.can_confirm_placement():
+						v.confirm_placement()
+				mode = "choose"
+				mode_t = t
+		elif mode == "choose":
+			if t - mode_t > 0.6:
+				if v.is_placing():
+					v.cancel_placement()
+				if v.is_placed() and v.press_cast():
+					var flow: CutFlow = v.get_cut_flow()
+					var picked: String = ""
+					for id: String in flow.get_hand():
+						if bool(SkillAvailability.check(v.get_skill_config(), v.get_skill_cooldowns(), id, flow.get_cells().size())["available"]):
+							picked = id
+							break
+					if picked != "" and flow.choose(picked):
+						log["casts"] = int(log["casts"]) + 1
+						(log["cards"] as Dictionary)[picked] = int((log["cards"] as Dictionary).get(picked, 0)) + 1
+					elif flow.is_menu_open():
+						flow.tick_real(99.0)
+						log["casts"] = int(log["casts"]) + 1
+				mode = ""
+				next_action = t + 1.0 + rng.randf()
+		elif mode == "timeout":
+			if not v.is_casting():
+				if v.get_cut_actor().is_swinging():
+					log["timeouts"] = int(log["timeouts"]) + 1
+					log["casts"] = int(log["casts"]) + 1
+				mode = ""
+				next_action = t + 1.0 + rng.randf()
+			elif t - mode_t > 6.0:
+				v.cancel_placement()
+				mode = ""
+	_shot("end")
+	var result: String = "WIN" if st.is_enemy_dead() else ("LOSS" if st.is_player_dead() else "TIMEUP")
+	var gaps: Array = []
+	var s: Array = log["surges"]
+	for i: int in range(1, s.size()):
+		gaps.append(snappedf(float(s[i]) - float(s[i - 1]), 0.1))
+	var hzs: Dictionary = hz.stats()
+	print("RESULT %s %s %.1fs (sim %.1fs) hp %.0f/%.0f enemy %.0f/%.0f | first_surge %s gaps %s (real %s) vents_per_surge %s | warned %d erupted %d warn_on_me %d unescapable %d | vent_hits %d vent_dmg %.1f (locked %d / %.1f) other_burn %.1f total_dmg %.1f | dodges %d dodge_fail %d abandoned %d casts %d timeouts %d | phase2_at %s | hz_stats %s" % [
+		tag, result, t, sim_t, st.player_hp, st.player_max_hp, st.enemy_hp, st.enemy_max_hp,
+		str(s[0]) if s.size() > 0 else "-", JSON.stringify(gaps), JSON.stringify(log["surges_real"]), JSON.stringify(log["surge_vents"]),
+		log["warned"], log["erupted"], log["warn_on_me"], log["unescapable"], log["vent_hits"], float(log["vent_dmg"]),
+		log["vent_hits_locked"], float(log["vent_dmg_locked"]), float(log["burn_other_dmg"]), float(log["total_dmg"]),
+		log["dodges"], log["dodge_fail"], log["abandoned"], log["casts"], log["timeouts"], str(log["phase2_at"]), JSON.stringify(hzs)])
+	quit()

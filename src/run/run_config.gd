@@ -104,8 +104,12 @@ static func from_dictionary(data: Dictionary) -> RunConfig:
 ## [method KiepRules.scaling_floor] (+ [method KiepRules.final_extra] hp), then [method KiepRules.apply_match] changes the
 ## raw match (extra boss trait, boss swing speed, the player's drop interval via the match key
 ## `player_drop_interval_mult`) after the danger traits are added.
+## World Map v2 (docs/design/world-map-v2/03 section 8): [param profile] = EncounterComposer.profile(...) of the node;
+## its patches (modifiers, the region rule at the current gauge, the warden hook) are applied to the raw match AFTER
+## the danger traits and BEFORE Kiep. An empty profile (every v1 node, tests, dev args) leaves the result exactly as
+## without the parameter.
 static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant, match_id: String, node_kind: String,
-		run_seed: int, floor: int = -1, kiep_level: int = 0) -> RunConfig:
+		run_seed: int, floor: int = -1, kiep_level: int = 0, profile: Dictionary = {}) -> RunConfig:
 	var chapter_index: int = -1
 	if typeof(chapter_index_or_region) == TYPE_STRING or typeof(chapter_index_or_region) == TYPE_STRING_NAME:
 		chapter_index = chapters.region_index(str(chapter_index_or_region))
@@ -135,6 +139,8 @@ static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant
 			if not known:
 				traits.append(extra)
 		raw["traits"] = traits
+	if not profile.is_empty():
+		EncounterComposer.apply_to_raw(raw, profile)
 	if kiep_level > 0:
 		raw = KiepRules.shared().apply_match(raw, kiep_level, {"run_seed": run_seed, "floor": floor, "match_id": match_id,
 				"node_kind": node_kind, "is_final": floor >= chapters.world_floors()})

@@ -1,0 +1,15 @@
+rep-v1-full-value-kiem_si|--characters=kiem_si --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_v1.json
+rep-cur-full-value-kiem_si|--characters=kiem_si
+rep-C-full-value-kiem_si|--characters=kiem_si --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+rep-v1-full-value-phap_su|--characters=phap_su --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_v1.json
+rep-cur-full-value-phap_su|--characters=phap_su
+rep-C-full-value-phap_su|--characters=phap_su --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+rep-v1-full-value-sat_thu|--characters=sat_thu --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_v1.json
+rep-cur-full-value-sat_thu|--characters=sat_thu
+rep-C-full-value-sat_thu|--characters=sat_thu --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+rep-v1-full-value-tho_san|--characters=tho_san --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_v1.json
+rep-cur-full-value-tho_san|--characters=tho_san
+rep-C-full-value-tho_san|--characters=tho_san --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json
+rep-v1-full-value-giao_si|--characters=giao_si --region-rules=res://production/qa/evidence/world-map-v2/variants/region_rules_v1.json
+rep-cur-full-value-giao_si|--characters=giao_si
+rep-C-full-value-giao_si|--characters=giao_si --route-archetypes=res://production/qa/evidence/world-map-v2/variants/route_archetypes_C.json

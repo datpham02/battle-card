@@ -36,6 +36,7 @@ func _initialize() -> void:
 	_test_burn_eater_heals_instead_of_damaging()
 	_test_rebirth_once_and_not_with_frost()
 	_test_vent_surge_timing()
+	_test_vent_surge_first_delay()
 	_test_gust_cancels_into_forbidden_cells()
 	_test_gust_pushes_one_cell()
 	_test_shroud_blocks_forecast_except_pinned_or_casting()
@@ -571,6 +572,42 @@ func _idle_drops() -> FieldDropsConfig:
 
 
 # phase_shift param vent_interval_mult scales the vent clock when phase 2 starts.
+# B1 (2026-11-12): the warden hook sets interval_sec 7 with first_delay_sec 10 — the first surge keeps the boss's 10 s
+# opening, the next ones come every 7 s. The hazards are ticked alongside so the vents are idle again for the second surge.
+func _test_vent_surge_first_delay() -> void:
+	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
+	var hz: TileHazards = w["hazards"]
+	var col1: Array[Vector2i] = [Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2)]
+	var col2: Array[Vector2i] = [Vector2i(2, 0), Vector2i(2, 1), Vector2i(2, 2)]
+	hz.configure({"vent_interval_sec": 1000.0})  # the regular clock stays out of the way (set before the vents arm it)
+	hz.set_vents(CombatState.Side.PLAYER, [col1, col2])
+	var t: VentSurgeTrait = _make("vent_surge", w, {"interval_sec": 7.0, "first_delay_sec": 10.0, "vents": 2}) as VentSurgeTrait
+	var state: CombatState = w["state"]
+	var elapsed: float = 0.0
+	while elapsed < 9.9 - EPS:
+		t.on_tick(STEP)
+		hz.tick(STEP, state)
+		elapsed += STEP
+	_check("vent_surge first_delay: no surge at 9.9 s", t.get_surge_count() == 0, "surges=%d" % t.get_surge_count())
+	t.on_tick(STEP)
+	hz.tick(STEP, state)
+	elapsed += STEP
+	_check("vent_surge first_delay: the first surge at 10 s starts both vents", t.get_surge_count() == 1 and t.get_last_count() == 2
+		and hz.is_vent_warning(CombatState.Side.PLAYER, Vector2i(1, 1)) and hz.is_vent_warning(CombatState.Side.PLAYER, Vector2i(2, 1)),
+		"surges=%d last=%d" % [t.get_surge_count(), t.get_last_count()])
+	while elapsed < 16.9 - EPS:
+		t.on_tick(STEP)
+		hz.tick(STEP, state)
+		elapsed += STEP
+	_check("vent_surge first_delay: still one surge at 16.9 s (interval 7, not 10)", t.get_surge_count() == 1, "surges=%d" % t.get_surge_count())
+	t.on_tick(STEP)
+	hz.tick(STEP, state)
+	elapsed += STEP
+	_check("vent_surge first_delay: the second surge at 17 s (vents idle again after warn 1 s + burn 2 s)", t.get_surge_count() == 2 and t.get_last_count() == 2,
+		"surges=%d last=%d" % [t.get_surge_count(), t.get_last_count()])
+	t.teardown()
+
+
 func _test_phase_shift_vent_interval_mult() -> void:
 	var w: Dictionary = _world(Vector2i(1, 1), Vector2i(4, 1))
 	var hz: TileHazards = w["hazards"]

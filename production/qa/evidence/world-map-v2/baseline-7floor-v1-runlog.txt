@@ -1,0 +1,16 @@
+sat_thu exit=0 seconds=672
+tho_san exit=0 seconds=857
+phap_su exit=0 seconds=908
+giao_si exit=0 seconds=939
+kiem_si exit=0 seconds=1016
+sat_thu replicateB exit=0 seconds=641
+tho_san replicateB exit=0 seconds=846
+giao_si replicateB exit=0 seconds=884
+phap_su replicateB exit=0 seconds=899
+kiem_si replicateB exit=0 seconds=1001
+sat_thu seeded exit=0 seconds=649
+tho_san seeded exit=0 seconds=809
+giao_si seeded exit=0 seconds=883
+phap_su seeded exit=0 seconds=888
+kiem_si seeded exit=0 seconds=980
+kiem_si seeded-repeat exit=0 seconds=860

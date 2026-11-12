@@ -94,6 +94,10 @@ const CARD_DESC_TOP: float = 0.25
 const CARD_BOSS_BASELINE: float = 0.55
 const CARD_DIFFICULTY_BASELINE: float = 0.68
 const CARD_EXTRA_BASELINE: float = 0.78
+## World Map v2 briefing (01 section G1): the region's rule and "shop at the crossing" line, in ember.
+const CARD_RULE_BASELINE: float = 0.86
+const CARD_RULE_TEXT: Color = Color("F08A4B")
+const TEXT_SHOP_HERE: String = "ui.world.shop_here"
 const CARD_HINT_BASELINE: float = 0.93
 const CARD_INSET_RATIO: float = 0.05
 ## Offset of the shadow a raised card leaves on its rest position (pixels).
@@ -519,6 +523,15 @@ func _draw_climb_panel(rect: Rect2, region: String) -> void:
 		["warden", tr(TEXT_BOSS) % tr(str(preview.get("boss_name", ""))), CARD_BOSS_TEXT],
 		["hp", tr(TEXT_ENEMY_HP) % _decimal(float(scaling.get("hp_mult", 1.0))), CARD_TEXT],
 	]
+	# World Map v2 briefing (01 section G1): the region's rule (its name and one line) and the shop plan.
+	var rule: Dictionary = preview.get("rule", {}) if typeof(preview.get("rule")) == TYPE_DICTIONARY else {}
+	var rule_parts: Array[String] = []
+	if not rule.is_empty() and not str(rule.get("name_key", "")).is_empty():
+		rule_parts.append(tr(str(rule["name_key"])))
+	if bool(preview.get("has_shop", false)):
+		rule_parts.append(tr(TEXT_SHOP_HERE))
+	if not rule_parts.is_empty():
+		rows.append(["rule" if not rule.is_empty() else "shop", SEPARATOR.join(rule_parts), CARD_RULE_TEXT if not rule.is_empty() else CARD_TEXT])
 	for row: Array in rows:
 		y += PANEL_ROW_H
 		_draw_row_icon(str(row[0]), Vector2(inner.position.x + PANEL_ICON * 0.5, y - PANEL_ROW_SIZE * 0.35))
@@ -526,11 +539,21 @@ func _draw_climb_panel(rect: Rect2, region: String) -> void:
 		MenuFont.text(self, Vector2(tx, y), str(row[1]), _fit(str(row[1]), inner.end.x - tx, PANEL_ROW_SIZE), row[2] as Color, HORIZONTAL_ALIGNMENT_LEFT, inner.end.x - tx)
 	y = _panel_rule(inner, y + 16.0)
 	var desc: String = _preview_desc(preview)
+	if rows.size() > 3 and not desc.is_empty():
+		# World Map v2: with the rule / shop row the plate has room for the description's first clause only.
+		var cut: int = desc.length()
+		for mark: String in [";", "."]:
+			var at: int = desc.find(mark)
+			if at > 0 and at < cut:
+				cut = at
+		desc = desc.left(cut).strip_edges()
 	if not desc.is_empty():
 		var f: Font = HudSkin.font()
 		var pos := Vector2(inner.position.x, y + PANEL_DESC_SIZE + 6.0)
-		draw_multiline_string_outline(f, pos, desc, HORIZONTAL_ALIGNMENT_LEFT, inner.size.x, PANEL_DESC_SIZE, 4, HudSkin.TEXT_OUTLINE_PX, HudSkin.TEXT_OUTLINE)
-		draw_multiline_string(f, pos, desc, HORIZONTAL_ALIGNMENT_LEFT, inner.size.x, PANEL_DESC_SIZE, 4, CARD_DESC_TEXT)
+		# World Map v2: each row above the three fixed ones (the rule / shop line) costs the description two of its four lines.
+		var max_lines: int = clampi(4 - 2 * (rows.size() - 3), 1, 4)
+		draw_multiline_string_outline(f, pos, desc, HORIZONTAL_ALIGNMENT_LEFT, inner.size.x, PANEL_DESC_SIZE, max_lines, HudSkin.TEXT_OUTLINE_PX, HudSkin.TEXT_OUTLINE)
+		draw_multiline_string(f, pos, desc, HORIZONTAL_ALIGNMENT_LEFT, inner.size.x, PANEL_DESC_SIZE, max_lines, CARD_DESC_TEXT)
 
 
 # A thin gold rule across [param inner] at [param y] with a small diamond in its middle; returns the y under it.
@@ -555,6 +578,15 @@ func _draw_row_icon(kind: String, c: Vector2) -> void:
 		"floor":
 			for i: int in 3:
 				draw_rect(Rect2(c + Vector2(-4.0 * u + i * 2.6 * u, 2.0 * u - i * 2.0 * u), Vector2(2.6 * u, 2.0 * u + i * 2.0 * u)).abs(), col)
+		"rule":
+			# World Map v2: the region rule's angular flame (HudSkin.flame_points) in ember.
+			draw_colored_polygon(HudSkin.flame_points(c + Vector2(0.0, 3.5 * u), 7.0 * u), CARD_RULE_TEXT)
+		"shop":
+			# World Map v2: a chamfered pouch with a slit (no circle).
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-3 * u, -1 * u), c + Vector2(3 * u, -1 * u), c + Vector2(3.5 * u, 3.5 * u),
+				c + Vector2(-3.5 * u, 3.5 * u)]), col)
+			draw_rect(Rect2(c + Vector2(-1.5 * u, -3.5 * u), Vector2(3 * u, 2.2 * u)), col)
+			draw_rect(Rect2(c + Vector2(-1.2 * u, 0.6 * u), Vector2(2.4 * u, 0.8 * u)), ClimbMap.INK)
 		"warden":
 			draw_colored_polygon(PackedVector2Array([c + Vector2(-3 * u, -1 * u), c + Vector2(3 * u, -1 * u), c + Vector2(2.4 * u, 3 * u),
 				c + Vector2(-2.4 * u, 3 * u)]), col)
@@ -783,6 +815,14 @@ func _draw_card(vp: Vector2, base: Rect2, region_id: String, index: int) -> void
 	var extras: String = _scaling_extras(scaling)
 	if not extras.is_empty():
 		_card_line(rect, CARD_EXTRA_BASELINE, extras, CARD_EXTRA_FONT_SIZE, CARD_DESC_TEXT, inner)
+	var rule: Dictionary = preview.get("rule", {}) if typeof(preview.get("rule")) == TYPE_DICTIONARY else {}
+	var rule_parts: Array[String] = []
+	if not rule.is_empty() and not str(rule.get("name_key", "")).is_empty():
+		rule_parts.append(tr(str(rule["name_key"])))
+	if bool(preview.get("has_shop", false)):
+		rule_parts.append(tr(TEXT_SHOP_HERE))
+	if not rule_parts.is_empty():
+		_card_line(rect, CARD_RULE_BASELINE, SEPARATOR.join(rule_parts), CARD_EXTRA_FONT_SIZE, CARD_RULE_TEXT, inner)
 	var hint: String = tr(TEXT_TAP_AGAIN if selected else TEXT_TAP_TO_PICK)
 	_card_line(rect, CARD_HINT_BASELINE, hint, CARD_HINT_FONT_SIZE, CARD_HINT_SELECTED_TEXT if selected else CARD_HINT_TEXT, inner)
 

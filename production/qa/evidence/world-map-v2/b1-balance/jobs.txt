@@ -1,0 +1,10 @@
+B1-s2001-full-value-kiem_si|--seed-offset=2001 --characters=kiem_si
+B1-s2001-full-value-phap_su|--seed-offset=2001 --characters=phap_su
+B1-s2001-full-value-sat_thu|--seed-offset=2001 --characters=sat_thu
+B1-s2001-full-value-tho_san|--seed-offset=2001 --characters=tho_san
+B1-s2001-full-value-giao_si|--seed-offset=2001 --characters=giao_si
+B1-s3001-full-value-kiem_si|--seed-offset=3001 --characters=kiem_si
+B1-s3001-full-value-phap_su|--seed-offset=3001 --characters=phap_su
+B1-s3001-full-value-sat_thu|--seed-offset=3001 --characters=sat_thu
+B1-s3001-full-value-tho_san|--seed-offset=3001 --characters=tho_san
+B1-s3001-full-value-giao_si|--seed-offset=3001 --characters=giao_si

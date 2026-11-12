@@ -157,7 +157,7 @@ signal run_changed()
 ## ACHIEVEMENTS (Story 037): the achievements screen opened from the title ([method open_achievements]).
 ## SETTINGS (Main Menu pass, user 2026-11-01): the settings screen opened from the title ([method open_settings]).
 ## SAVE_SLOTS (save slots, user 2026-11-07): the save slot screen opened from the title ([method open_save_slots]).
-enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, ACHIEVEMENTS, SETTINGS, SAVE_SLOTS, IN_FLOOR = IN_NODE }
+enum Phase { TITLE, CHARACTER_SELECT, WORLD_MAP, IN_NODE, MAP, REST, SHOP, EVENT, PIECE_DECK, FATE, ENDING, ACHIEVEMENTS, SETTINGS, SAVE_SLOTS, FORGE, IN_FLOOR = IN_NODE }
 ## Story 019: how the live run ended; NONE while it is still going (or when there is none).
 enum RunResult { NONE, WON, LOST }
 
@@ -370,6 +370,10 @@ const KIND_BOSS: String = "boss"
 const KIND_SHOP: String = ChapterMapGen.KIND_SHOP
 const KIND_EVENT: String = ChapterMapGen.KIND_EVENT
 const KIND_BATTLE: String = "battle"
+## World Map v2 (01 section B8, approved D11): the forge node (ink choice + one free shape removal on the FORGE screen).
+const KIND_FORGE: String = MapGraph.KIND_FORGE
+## World Map v2: relic rows of tiered / objective rewards use the `event` source rule (03 section 5).
+const RELIC_SOURCE_EVENT: String = "event"
 ## Story 033: seed salt of the extra match drawn for an event `fight`.
 const EVENT_FIGHT_SEED_TAG: String = "event_fight"
 ## Story 033: keys of RunSession.event_state (the "used" list lives for the whole run; the others belong
@@ -401,6 +405,13 @@ var _slot_confirm: Dictionary = {}
 var _new_unlocks: Array[String] = []
 ## Story 037: CombatView.get_match_stats() of the match just won (read by [method _complete_match_node]).
 var _last_match_stats: Dictionary = {}
+## World Map v2: the encounter profile of the live match node (EncounterComposer.profile; {} for a v1 node or an
+## event fight), kept until its reward is resolved: reward tier, objective, modifiers.
+var _live_profile: Dictionary = {}
+## World Map v2: the live node's objective was met (read by the reward of that node).
+var _objective_bonus: bool = false
+## World Map v2: the open forge node still has its free shape removal.
+var _forge_free_left: bool = false
 var _phase: Phase = Phase.TITLE
 var _controller: RunController = null
 var _dev_seed: int = -1
@@ -475,6 +486,11 @@ func set_store_for_test(store: ProgressStore) -> void:
 ## Test hook (windowed UI tests): false = the focus-loss auto-pause is off for this GameFlow, exactly as the demos'
 ## --no-autopause (the test window may lose OS focus to another app while it runs; a paused battle then ignores the
 ## pushed input). Production keeps the auto-pause (default true). Call before or after the node enters the tree.
+## World Map v2 tests: the seed of the NEXT run started here (the --seed dev arg's value); negative = random again.
+func set_seed_for_test(seed: int) -> void:
+	_dev_seed = seed & ChaptersConfig.SEED_MASK if seed >= 0 else -1
+
+
 func set_focus_autopause_for_test(enabled: bool) -> void:
 	_no_autopause = not enabled
 
@@ -986,10 +1002,23 @@ func region_preview(region_id: String) -> Dictionary:
 		var shown: String = tr(key)
 		if not names.has(shown):
 			names.append(shown)
+	# World Map v2 briefing (01 section G1): the region's rule, the warden's trait ids, the shop plan, the generator.
+	var rules: RegionRules = RegionRules.shared()
+	var rule: Dictionary = rules.rule_for(region_id)
+	var warden_traits: Array[String] = []
+	for id: Variant in boss_ids:
+		var raw: Dictionary = _config.get_match_raw(ci, str(id))
+		if typeof(raw.get("traits")) == TYPE_ARRAY:
+			for t: Variant in raw["traits"] as Array:
+				var tid: String = str((t as Dictionary).get("id", "")) if typeof(t) == TYPE_DICTIONARY else ""
+				if not tid.is_empty() and not warden_traits.has(tid):
+					warden_traits.append(tid)
+	var has_shop: bool = _run != null and _config.shop_floors(_run.run_seed).has(clampi(at, 0, _config.world_floors() - 1))
 	return {
 		"region_id": region_id, "name": region_name(region_id), "desc_key": "region.%s.desc" % region_id,
 		"intro_key": _config.chapter_text_key(ci, "intro"), "boss_name": " / ".join(names),
 		"floor": at, "floor_number": at + 1, "floor_scaling": _config.floor_scaling(at),
+		"map_gen": rules.map_gen_for(region_id), "rule": rule, "warden_traits": warden_traits, "has_shop": has_shop,
 	}
 
 
@@ -1024,10 +1053,97 @@ func choose_node(node_index: int) -> bool:
 		_open_shop()
 	elif kind == KIND_EVENT:
 		_open_event()
+	elif kind == KIND_FORGE:
+		_open_forge()
 	else:
 		_enter_current_node()
 	run_changed.emit()
 	return true
+
+
+## World Map v2: [method choose_node] by node id (RunSession.node_id_at); false when the id is not available now.
+func choose_node_id(id: String) -> bool:
+	if _run == null:
+		return false
+	var col: Dictionary = _run.current_column()
+	var nodes: Array = col.get("nodes", []) if not col.is_empty() else []
+	for i: int in nodes.size():
+		if _run.node_id_at(_run.column, i) == id:
+			return choose_node(i)
+	return false
+
+
+## World Map v2: the preview of node [param node_index] of the current column (EncounterComposer.preview at the
+## current gauge: enemy, arena, modifiers, reward tier, objective, heat before / after); {} without a run or node.
+func get_node_preview(node_index: int) -> Dictionary:
+	if _run == null:
+		return {}
+	var col: Dictionary = _run.current_column()
+	var nodes: Array = col.get("nodes", []) if not col.is_empty() else []
+	if node_index < 0 or node_index >= nodes.size():
+		return {}
+	var node: Dictionary = (nodes[node_index] as Dictionary).duplicate(true)
+	node["id"] = _run.node_id_at(_run.column, node_index)
+	var prof: Dictionary = EncounterComposer.profile(node, _run.region_id, _run.gauge())
+	var preview: Dictionary = EncounterComposer.preview(node, prof, _run.region_id, false, _config, _run.graph)
+	preview["node_index"] = node_index
+	return preview
+
+
+## World Map v2: the live region rule state ({id, gauge}; {} without one).
+func get_rule_state() -> Dictionary:
+	return {} if _run == null else _run.rule_state.duplicate()
+
+
+## World Map v2: the active rule record of the live region (RegionRules.rule: name_key, desc_key, icon, gauge
+## {min, max, start}); {} when the region has none.
+func get_region_rule() -> Dictionary:
+	return {} if _run == null else _run.current_rule()
+
+
+## World Map v2: the live region map as a graph dictionary (MapGraph.to_dict; lanes with archetypes, nodes by id,
+## edges); {} without a run or map.
+func get_map_graph() -> Dictionary:
+	if _run == null or _run.graph == null:
+		return {}
+	return _run.graph.to_dict()
+
+
+## World Map v2: true while a forge node is open (phase FORGE).
+func is_forge_open() -> bool:
+	return _phase == Phase.FORGE
+
+
+## World Map v2: true while the open forge still offers its free shape removal.
+func forge_free_removal_left() -> bool:
+	return _phase == Phase.FORGE and _forge_free_left
+
+
+## World Map v2: leaves the forge: the ink row closes (nothing inked when still open), the node completes, back to
+## the MAP. Ignored with a warning outside FORGE.
+func forge_leave() -> void:
+	if _run == null or _phase != Phase.FORGE:
+		push_warning("GameFlow: forge_leave() outside a forge node, ignored")
+		return
+	_run.clear_pending_ink_offer()
+	_run.forge_state = {}
+	_forge_free_left = false
+	_complete_plain_node(KIND_FORGE)
+
+
+# World Map v2: opens the chosen FORGE node: a resume restores its saved state (the ink row is saved with the run),
+# else rolls the ink row (always, like a treasure) and grants the free removal; saves; phase FORGE.
+func _open_forge() -> void:
+	var key: String = _node_key()
+	if str(_run.forge_state.get("node", "")) == key:
+		_forge_free_left = bool(_run.forge_state.get("free_left", false))
+	else:
+		_run.clear_pending_ink_offer()
+		_run.set_pending_ink_offer(_roll_ink_for(KIND_FORGE, true))
+		_forge_free_left = true
+		_run.forge_state = {"node": key, "free_left": true}
+	_save_run()
+	_set_phase(Phase.FORGE)
 
 
 ## Story 022: REST "Nghỉ": heals rest_heal_ratio x max HP (clamped), completes the node and shows
@@ -1796,7 +1912,8 @@ func get_piece_deck_rows() -> Array[Dictionary]:
 	for id: String in ids:
 		var in_deck: bool = active.has(id)
 		var mult: float = PieceDeck.mult_of(state, id) if in_deck else 0.0
-		var verdict: Dictionary = _run.can_remove_shape(id, true, lib, cfg)
+		# World Map v2: inside the forge the one free removal needs no token (RunSession.remove_shape spend_token false).
+		var verdict: Dictionary = _run.can_remove_shape(id, not forge_free_removal_left(), lib, cfg)
 		rows.append({
 			"id": id, "name": tr(lib.name_key(id)), "cells": lib.shape_cells(id), "mult": mult,
 			"dots": ceili(mult) if in_deck else 0, "removed": not in_deck and not lib.is_run_only(id),
@@ -1820,10 +1937,15 @@ func remove_shape(id: String) -> bool:
 	if _run == null:
 		push_warning("GameFlow: remove_shape('%s') without a run, ignored" % id)
 		return false
-	var result: Dictionary = _run.remove_shape(id, true)
+	# World Map v2: the open forge's removal is free once (no token); every other removal spends a token as before.
+	var free: bool = _phase == Phase.FORGE and _forge_free_left
+	var result: Dictionary = _run.remove_shape(id, not free)
 	if not bool(result.get("ok", false)):
 		push_warning("GameFlow: remove_shape('%s') refused (%s)" % [id, str(result.get("reason", ""))])
 		return false
+	if free:
+		_forge_free_left = false
+		_run.forge_state["free_left"] = false
 	_save_run()
 	run_changed.emit()
 	return true
@@ -2293,8 +2415,15 @@ func _enter_current_node() -> void:
 func _spawn_match(match_id: String, kind: String) -> void:
 	_free_controller()
 	_elapsed_base = _run.elapsed_sec
+	# World Map v2: the node's encounter profile (modifiers, the region rule at the current gauge, the warden hook)
+	# patches the match; a v1 region, an event fight or a non-fight node has an empty profile = today's match.
+	_live_profile = {}
+	if _run.is_v2_region() and not _is_event_fight_active() and _run.node_index >= 0:
+		var node: Dictionary = _run.current_node()
+		node["id"] = _run.current_node_id()
+		_live_profile = EncounterComposer.profile(node, _run.region_id, _run.gauge())
 	var run_config: RunConfig = RunConfig.from_node(_config, _run.region_id, match_id, kind,
-		_run.floor_seed(), _run.floor, _run.kiep_level)
+		_run.floor_seed(), _run.floor, _run.kiep_level, _live_profile)
 	run_config.between_sec = 0.0
 	run_config.retry_min_hp_ratio = 0.0
 	var controller := RunController.new()
@@ -2308,6 +2437,8 @@ func _spawn_match(match_id: String, kind: String) -> void:
 	controller.piece_deck = _run.piece_deck.duplicate(true)
 	controller.locked_pieces = _run.locked_ids("piece")
 	controller.boss_can_down = FateLogic.is_boss_fate_node(kind, _run.is_final_floor()) and not _is_event_fight_active()
+	if not _live_profile.is_empty():
+		controller.match_modifiers.assign(_live_profile.get("modifiers", []))
 	_live_match_id = match_id
 	controller.hold_intro = _reward_blocking
 	controller.configure(run_config, 0, _run.hp)
@@ -2350,6 +2481,8 @@ func _resume_position() -> void:
 		_open_shop()
 	elif kind == KIND_EVENT:
 		_open_event()
+	elif kind == KIND_FORGE:
+		_open_forge()
 	else:
 		_reward_blocking = _run.has_pending_reward()
 		_enter_current_node()
@@ -2454,6 +2587,12 @@ func _on_match_won() -> void:
 		_run.add_match_stats(_last_match_stats, true)
 	else:
 		_last_match_stats = {}
+	# World Map v2 objectives (03 section 5): judged on the won match's stats, recorded on the node, paid by its reward.
+	_objective_bonus = false
+	var objective: Dictionary = _live_profile.get("objective", {}) if typeof(_live_profile.get("objective")) == TYPE_DICTIONARY else {}
+	if not objective.is_empty() and not _is_event_fight_active() and EncounterComposer.objective_met(objective, _last_match_stats):
+		_objective_bonus = true
+		_run.record_objective_met(_run.current_node_id())
 	if _is_event_fight_active():
 		_process_unlocks(_match_won_event(false, false))
 		_finish_event_fight(_controller.get_last_player_hp(), _controller.get_player_max_hp(), passive_heal)
@@ -2496,6 +2635,11 @@ func _complete_match_node(hp_end: float, max_hp: float, passive_heal: float) -> 
 func _drop_gold(kind: String) -> void:
 	var gold_seed: int = hash([_run.run_seed, _run.floor, _run.column, _run.node_index, GOLD_SEED_TAG]) & ChaptersConfig.SEED_MASK
 	_last_gold_gain = EconomyConfig.shared().gold_for(kind, _run.floor, gold_seed)
+	# World Map v2 (01 section E2-E3): the node's own gold multiplier (treasure lane), the reward tier's, and the
+	# objective bonus. A v1 node / tier 1 / no objective multiplies by 1.
+	var mult: float = _reward_gold_mult()
+	if mult != 1.0:
+		_last_gold_gain = maxi(roundi(float(_last_gold_gain) * mult), 0)
 	if _run.kiep_level > 0: # Story 038 (Kiep 5): gold x economy_mult("gold"), rounded, never below 0
 		_last_gold_gain = maxi(roundi(float(_last_gold_gain) * KiepRules.shared().economy_mult("gold", _run.kiep_level)), 0)
 	_run.last_gold_gain = _last_gold_gain
@@ -2507,13 +2651,17 @@ func _drop_gold(kind: String) -> void:
 # pool skips the offer and goes on.
 func _offer_reward(kind: String) -> void:
 	var cfg: Dictionary = get_reward_config()
-	var info: Dictionary = RewardRoller.reward_for_node(kind, cfg)
+	# World Map v2: a tiered fight node (v2 region) rewards by its tier; everything else is the plain kind row (tier 1).
+	var tier: int = _reward_tier()
+	var info: Dictionary = RewardRoller.reward_for_node_tier(kind, cfg, tier)
 	_pending_node_kind = kind
 	var offers: int = int(info.get("offers", 0))
 	if offers <= 0:
 		_run.clear_pending_reward()
 		_continue_after_reward(false)
 		return
+	if tier > 1:
+		_run.luck_extra += float(info.get("luck_bonus", 0.0))
 	cfg["offer_count"] = offers
 	# Skill v2 Q3: the run hero's own `hero_reward` cards (Trảm Địa for the Knight) may be offered in its rewards.
 	var offer: Array[String] = RewardRoller.roll(get_cards(), cfg, _reward_seed(), _run.locked_ids("card"), _run.deck_levels(),
@@ -2524,6 +2672,13 @@ func _offer_reward(kind: String) -> void:
 	_run.clear_pending_relic_offer()
 	if kind == KIND_TREASURE and not offer.is_empty():
 		_run.set_pending_relic_offer(_roll_treasure_relics())
+	elif not offer.is_empty():
+		# World Map v2: relic rows of the tier (3), the node (elite's miniboss) and a met objective, one roll.
+		var relic_count: int = int(info.get("relic_offer", 0)) + _live_node_relic_offer() + (int(RouteArchetypes.shared().objective_bonus()["relic_offer"]) if _objective_bonus else 0)
+		if relic_count > 0:
+			var rng := RandomNumberGenerator.new()
+			rng.seed = hash([_run.run_seed, _run.floor, _run.column, _run.node_index, RELIC_SEED_TAG]) & ChaptersConfig.SEED_MASK
+			_run.set_pending_relic_offer(_relic_roll(RELIC_SOURCE_EVENT, _run.relic_ids(), rng, mini(relic_count, 3)))
 	_run.clear_pending_ink_offer()
 	if not offer.is_empty():
 		_run.set_pending_ink_offer(_roll_ink_for(kind, false))
@@ -2543,15 +2698,41 @@ func _roll_treasure_relics() -> Array[String]:
 
 
 # The two spots that touch the relic data classes (Story 032).
-func _relic_roll(source: String, owned: Array[String], rng: RandomNumberGenerator) -> Array[String]:
+func _relic_roll(source: String, owned: Array[String], rng: RandomNumberGenerator, count: int = 3) -> Array[String]:
 	var out: Array[String] = []
-	for id: Variant in RelicRoller.roll(source, owned, rng, null, 3, "", _run.locked_ids("relic")):
+	for id: Variant in RelicRoller.roll(source, owned, rng, null, count, "", _run.locked_ids("relic")):
 		out.append(str(id))
 	return out
 
 
 func _relic_info_raw(id: String) -> Dictionary:
 	return RelicRegistry.info(id)
+
+
+# World Map v2: the reward tier of the node whose reward is being built: the live profile's (a v2 fight node), else 1.
+func _reward_tier() -> int:
+	if _live_profile.is_empty():
+		return 1
+	return clampi(int(_live_profile.get("reward_tier", 1)), 1, 3)
+
+
+# World Map v2: the extra relic rows the node itself carries (RegionMapGen `relic_offer`, the elite's miniboss).
+func _live_node_relic_offer() -> int:
+	if _live_profile.is_empty() or _run == null or _run.node_index < 0:
+		return 0
+	return int(_run.current_node().get("relic_offer", 0))
+
+
+# World Map v2: gold multiplier of the node being completed: node gold_mult x tier gold_mult x objective bonus.
+func _reward_gold_mult() -> float:
+	if _run == null or _run.node_index < 0:
+		return 1.0
+	var mult: float = float(_run.current_node().get("gold_mult", 1.0))
+	if not _live_profile.is_empty():
+		mult *= float(RewardRoller.tier_rule(get_reward_config(), _reward_tier())["gold_mult"])
+		if _objective_bonus:
+			mult *= float(RouteArchetypes.shared().objective_bonus()["gold_mult"])
+	return mult
 
 
 # Deterministic offer seed: run seed and the position (floor, region, column, nodes cleared).
@@ -2574,6 +2755,8 @@ func _continue_after_reward(deck_changed: bool) -> void:
 	if _run.node_index >= 0:
 		_run.complete_node(_run.hp, _player_max_hp(), "", get_reward_config(), 0.0)
 	_pending_node_kind = ""
+	_live_profile = {}
+	_objective_bonus = false
 	if _run.is_run_won():
 		_finish_run_won()
 		return

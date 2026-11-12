@@ -1,0 +1,10 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS hellfire/inferno_lord own vent_surge vents 2 <= 2 vents of its arena { "shape": "caldera" }
+PASS hellfire (rule heat) has at least one match with an arena block to check against
+PASS hellfire heat row 4 vent_surge vents 2 <= 2 vents of arena { "shape": "forge" } (imp, ash_golem, magma_slug, fire_eater)
+PASS hellfire heat row 4 vent_surge vents 2 <= 2 vents of arena { "shape": "caldera" } (ember_hound, flame_cultist, hell_knight, ash_phoenix, inferno_lord)
+PASS hellfire modifier vent_surge vent_surge vents 2 <= 2 vents of arena { "shape": "forge" }
+PASS hellfire modifier vent_surge vent_surge vents 2 <= 2 vents of arena { "shape": "caldera" }
+PASS at least one vent_surge entry was checked (5)
+FAILS=0

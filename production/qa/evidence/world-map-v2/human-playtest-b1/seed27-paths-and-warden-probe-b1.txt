@@ -1,0 +1,31 @@
+rule C rest=-2 shop=-1 | rule D rest=-1 shop=-1
+PATH | seed | lane | archetype | approach | kinds | heat C | heat D |
+SEED 27: warden w match_id=inferno_lord kind=boss
+PATH | 27 | L0 | elite | prepare:forge | battle,battle,miniboss,rest,battle,forge | 3 | 4 |
+PATH | 27 | L0 | elite | gamble:miniboss | battle,battle,miniboss,rest,battle,miniboss | 4 | 4 |
+PATH | 27 | L0 | elite | prepare:forge | battle,battle,miniboss,rest,battle,forge | 3 | 4 |
+PATH | 27 | L0 | elite | gamble:miniboss | battle,battle,miniboss,rest,battle,miniboss | 4 | 4 |
+PATH | 27 | L0 | elite | prepare:forge | battle,battle,miniboss,rest,danger,forge | 3 | 4 |
+PATH | 27 | L0 | elite | gamble:miniboss | battle,battle,miniboss,rest,danger,miniboss | 4 | 4 |
+PATH | 27 | L1 | safe | prepare:forge | battle,battle,battle,rest,battle,forge | 2 | 3 |
+PATH | 27 | L1 | safe | gamble:miniboss | battle,battle,battle,rest,battle,miniboss | 4 | 4 |
+PATH | 27 | L1 | safe | prepare:forge | battle,battle,battle,rest,battle,forge | 2 | 3 |
+PATH | 27 | L1 | safe | gamble:miniboss | battle,battle,battle,rest,battle,miniboss | 4 | 4 |
+PATH | 27 | L1 | safe | prepare:forge | battle,battle,battle,rest,danger,forge | 2 | 3 |
+PATH | 27 | L1 | safe | gamble:miniboss | battle,battle,battle,rest,danger,miniboss | 4 | 4 |
+PATH | 27 | L2 | peril | prepare:forge | battle,danger,danger,rest,battle,forge | 2 | 3 |
+PATH | 27 | L2 | peril | gamble:miniboss | battle,danger,danger,rest,battle,miniboss | 4 | 4 |
+PATH | 27 | L2 | peril | prepare:forge | battle,danger,danger,rest,battle,forge | 2 | 3 |
+PATH | 27 | L2 | peril | gamble:miniboss | battle,danger,danger,rest,battle,miniboss | 4 | 4 |
+PATH | 27 | L2 | peril | prepare:forge | battle,danger,danger,rest,danger,forge | 2 | 3 |
+PATH | 27 | L2 | peril | gamble:miniboss | battle,danger,danger,rest,danger,miniboss | 4 | 4 |
+PROBE 27: heat at warden entry = 4 (rule_state { "id": "heat", "gauge": 4 })
+PROBE 27: warden preview gauge=4 modifiers=[]
+PROBE 27: match traits = [{ "id": "vent_surge", "params": { "interval_sec": 7.0, "vents": 2.0, "first_delay_sec": 10.0 } }, { "id": "phase_shift", "params": { "at_hp_ratio": 0.5, "brain_set": "aggressive", "step_mult": 1.0, "extra_traits": [], "vent_interval_mult": 0.7 } }]
+PROBE 27: arena = { "shape": "caldera" }
+PROBE 27: hazards vent_interval_sec=4.0 vent_warn_sec=1.0 vent_sec=2.5 vent_tick_sec=0.5 vent_tick_damage=3.0
+PROBE 27: player-half vents = 2
+PROBE 27:   vent cells [(1, 0), (1, 1), (1, 2), (1, 3), (1, 4)]
+PROBE 27:   vent cells [(4, 0), (4, 1), (4, 2), (4, 3), (4, 4)]
+PROBE 27: enemy-half vents = 2
+PROBE 27: trigger_vents(PLAYER, 3) started 2

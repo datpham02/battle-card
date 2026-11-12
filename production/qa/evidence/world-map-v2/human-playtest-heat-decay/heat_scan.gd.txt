@@ -1,0 +1,228 @@
+extends SceneTree
+## Scratchpad (not part of the repo): for each run seed, boots the real game headless (memory store), walks floor 1,
+## enters Hellfire and lists every entry -> warden path with the heat at warden entry under C (shipped rest -2) and D
+## (variants/region_rules_D.json, rest -1), computed with the game's own RegionRules.gauge_after over the path's kinds.
+## --probe=<seed>: additionally plays seed <seed> to the warden through the gamble and prints the live hazards
+## (vents of the player's half, trait params) so the "vents 3" hook can be checked against the arena.
+## Run: godot --headless --path . -s <abs path>/heat_scan.gd -- --seeds=1..40 [--hero=kiem_si] [--probe=24]
+const MAIN_SCENE: String = "res://src/main.tscn"
+const D_PATH: String = "res://production/qa/evidence/world-map-v2/variants/region_rules_D.json"
+const MAX_FRAMES: int = 4000
+
+var _hero: String = "kiem_si"
+var _lo: int = 1
+var _hi: int = 20
+var _probe: int = -1
+
+
+func _initialize() -> void:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with("--seeds="):
+			var r: String = arg.get_slice("=", 1)
+			_lo = int(r.get_slice("..", 0))
+			_hi = int(r.get_slice("..", 1)) if r.contains("..") else _lo
+		elif arg.begins_with("--hero="):
+			_hero = arg.get_slice("=", 1)
+		elif arg.begins_with("--probe="):
+			_probe = int(arg.get_slice("=", 1))
+	TranslationServer.set_locale("vi")
+	var rule_c: Dictionary = RegionRules.shared().rule_for("hellfire")
+	var rule_d: Dictionary = RegionRules.load_from_file(D_PATH).rule_for("hellfire")
+	print("rule C rest=%d shop=%d | rule D rest=%d shop=%d" % [rule_c["gauge"]["per_kind"]["rest"], rule_c["gauge"]["per_kind"]["shop"], rule_d["gauge"]["per_kind"]["rest"], rule_d["gauge"]["per_kind"]["shop"]])
+	print("PATH | seed | lane | archetype | approach | kinds | heat C | heat D |")
+	for seed: int in range(_lo, _hi + 1):
+		var store: ProgressStore = ProgressStore.memory_store()
+		var main: Node = await _new_main(store, seed)
+		var flow: GameFlow = main.get_node("GameFlow") as GameFlow
+		flow.start_requested()
+		flow.character_chosen(_hero)
+		flow.choose_region("ch1")
+		await _walk_region(flow)
+		if flow.get_phase() != GameFlow.Phase.WORLD_MAP or not flow.get_region_offer().has("hellfire"):
+			print("SEED %d: hellfire not offered (phase %d, offer %s)" % [seed, flow.get_phase(), str(flow.get_region_offer())])
+			await _drop_main(main)
+			continue
+		flow.choose_region("hellfire")
+		var g: MapGraph = flow.get_run().graph
+		var warden: String = g.warden_id()
+		var wnode: Dictionary = g.node(warden)
+		print("SEED %d: warden %s match_id=%s kind=%s" % [seed, warden, str(wnode.get("match_id", "")), str(wnode.get("kind", ""))])
+		_paths(g, rule_c, rule_d, seed, g.entry_id(), [], warden)
+		await _drop_main(main)
+	if _probe > 0:
+		await _probe_warden(_probe)
+	quit()
+
+
+func _paths(g: MapGraph, rc: Dictionary, rd: Dictionary, seed: int, id: String, so_far: Array, warden: String) -> void:
+	var path: Array = so_far.duplicate()
+	path.append(id)
+	if id == warden:
+		var hc: int = RegionRules.gauge_start(rc)
+		var hd: int = RegionRules.gauge_start(rd)
+		var kinds: Array[String] = []
+		var lane_id: String = ""
+		var arch: String = ""
+		var approach: String = ""
+		for nid: String in path:
+			if nid == warden:
+				break
+			var n: Dictionary = g.node(nid)
+			var kind: String = str(n.get("kind", ""))
+			kinds.append(kind)
+			hc = RegionRules.gauge_after(rc, hc, kind)
+			hd = RegionRules.gauge_after(rd, hd, kind)
+			if str(n.get("slot", "")) == MapGraph.SLOT_LANE and lane_id.is_empty():
+				lane_id = str(n.get("lane", ""))
+				arch = g.archetype_of(nid)
+			if str(n.get("slot", "")) in [MapGraph.SLOT_PREPARE, MapGraph.SLOT_GAMBLE]:
+				approach = str(n.get("slot", "")) + ":" + kind
+		print("PATH | %d | %s | %s | %s | %s | %d | %d |" % [seed, lane_id, arch, approach, ",".join(PackedStringArray(kinds)), hc, hd])
+		return
+	for nxt: String in g.out_edges(id):
+		_paths(g, rc, rd, seed, nxt, path, warden)
+
+
+func _probe_warden(seed: int) -> void:
+	var store: ProgressStore = ProgressStore.memory_store()
+	var main: Node = await _new_main(store, seed)
+	var flow: GameFlow = main.get_node("GameFlow") as GameFlow
+	flow.start_requested()
+	flow.character_chosen(_hero)
+	flow.choose_region("ch1")
+	await _walk_region(flow)
+	flow.choose_region("hellfire")
+	var g: MapGraph = flow.get_run().graph
+	# Walk: entry, then the first lane whose end leads to the hub, always the first available node, gamble at the approach.
+	for _i: int in 20:
+		if flow.get_phase() != GameFlow.Phase.MAP:
+			break
+		var avail: Array[Dictionary] = flow.get_available_nodes()
+		if avail.is_empty():
+			break
+		var pick: int = int(avail[0]["node_index"])
+		for n: Dictionary in avail:
+			var nid: String = flow.get_run().node_id_at(flow.get_run().column, int(n["node_index"]))
+			if str(g.node(nid).get("slot", "")) == MapGraph.SLOT_GAMBLE:
+				pick = int(n["node_index"])
+		var pick_id: String = flow.get_run().node_id_at(flow.get_run().column, pick)
+		if str(g.node(pick_id).get("slot", "")) == MapGraph.SLOT_WARDEN:
+			print("PROBE %d: heat at warden entry = %d (rule_state %s)" % [seed, flow.get_rule_state().get("gauge", -1), str(flow.get_rule_state())])
+			var pw: Dictionary = flow.get_node_preview(pick)
+			print("PROBE %d: warden preview gauge=%s modifiers=%s" % [seed, str(pw.get("gauge")), str(pw.get("modifiers"))])
+			flow.choose_node(pick)
+			var c: RunController = flow.get_controller()
+			await _wait_phase(c, RunState.Phase.PLAYING)
+			var view: CombatView = c.get_battle().get_node(RunController.COMBAT_VIEW_NODE) as CombatView
+			print("PROBE %d: match traits = %s" % [seed, str(view.match_params.get("traits", []))])
+			print("PROBE %d: arena = %s" % [seed, str(view.match_params.get("arena", {}))])
+			var hz: TileHazards = view._hazards
+			print("PROBE %d: hazards vent_interval_sec=%s vent_warn_sec=%s vent_sec=%s vent_tick_sec=%s vent_tick_damage=%s" % [seed,
+				str(hz.config_value("vent_interval_sec")), str(hz.config_value("vent_warn_sec")), str(hz.config_value("vent_sec")), str(hz.config_value("vent_tick_sec")), str(hz.config_value("vent_tick_damage"))])
+			var vents: Array = hz._vents[CombatState.Side.PLAYER]
+			print("PROBE %d: player-half vents = %d" % [seed, vents.size()])
+			for v: Dictionary in vents:
+				print("PROBE %d:   vent cells %s" % [seed, str(v["cells"])])
+			print("PROBE %d: enemy-half vents = %d" % [seed, (hz._vents[CombatState.Side.ENEMY] as Array).size()])
+			# What a surge of 3 could start right now:
+			var started: int = hz.trigger_vents(CombatState.Side.PLAYER, 3)
+			print("PROBE %d: trigger_vents(PLAYER, 3) started %d" % [seed, started])
+			break
+		await _play(flow, pick)
+	await _drop_main(main)
+
+
+func _play(flow: GameFlow, index: int) -> void:
+	var kind: String = ""
+	for n: Dictionary in flow.get_available_nodes():
+		if int(n["node_index"]) == index:
+			kind = str(n["kind"])
+	flow.choose_node(index)
+	match kind:
+		"battle", "danger", "miniboss", "boss":
+			var c: RunController = flow.get_controller()
+			if c == null:
+				return
+			await _wait_phase(c, RunState.Phase.PLAYING)
+			await _kill_until_won(c)
+			await process_frame
+			if flow.get_phase() == GameFlow.Phase.FATE:
+				flow.choose_fate("spare")
+			_skip_reward(flow)
+		"treasure":
+			_skip_reward(flow)
+		"rest":
+			flow.rest_heal_requested()
+		"shop":
+			flow.shop_leave()
+		"event":
+			flow.event_leave()
+		"forge":
+			flow.forge_leave()
+
+
+func _walk_region(flow: GameFlow) -> void:
+	for _i: int in 20:
+		if flow.get_phase() != GameFlow.Phase.MAP:
+			return
+		var avail: Array[Dictionary] = flow.get_available_nodes()
+		if avail.is_empty():
+			return
+		var pick: int = int(avail[0]["node_index"])
+		for n: Dictionary in avail:
+			if n["kind"] == "boss":
+				pick = int(n["node_index"])
+		await _play(flow, pick)
+
+
+func _skip_reward(flow: GameFlow) -> void:
+	if flow.get_run().has_pending_relic_offer():
+		flow.skip_relic_offer()
+	if flow.has_ink_offer():
+		flow.skip_ink_offer()
+	if flow.get_run().has_pending_reward():
+		flow.reward_skipped()
+
+
+func _phase(c: RunController) -> int:
+	return c.get_state().get_phase()
+
+
+func _wait_phase(c: RunController, phase: int) -> bool:
+	for _i: int in MAX_FRAMES:
+		if c == null or not is_instance_valid(c):
+			return false
+		if _phase(c) == phase:
+			return true
+		await process_frame
+	return false
+
+
+func _kill_until_won(c: RunController) -> bool:
+	for _i: int in MAX_FRAMES:
+		if c == null or not is_instance_valid(c):
+			return false
+		if _phase(c) == RunState.Phase.WON:
+			return true
+		var view: CombatView = (c.get_battle().get_node(RunController.COMBAT_VIEW_NODE) as CombatView) if c.get_battle() != null else null
+		if view != null and view.get_state() != null and not view.get_state().is_enemy_dead():
+			view.get_state().enemy_invulnerable_left = 0.0
+			view.get_state().damage(CombatState.Side.ENEMY, 999999.0)
+		await process_frame
+	return false
+
+
+func _new_main(store: ProgressStore, seed: int) -> Node:
+	var main: Node = (load(MAIN_SCENE) as PackedScene).instantiate()
+	var flow: GameFlow = main.get_node("GameFlow") as GameFlow
+	flow.set_store_for_test(store)
+	flow.set_seed_for_test(seed)
+	root.add_child(main)
+	await process_frame
+	return main
+
+
+func _drop_main(main: Node) -> void:
+	root.remove_child(main)
+	main.queue_free()
+	await process_frame

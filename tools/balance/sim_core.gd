@@ -898,6 +898,12 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	_commit_lock_until = -1.0
 	_nk_cast = {}
 	flow = CutFlow.new(cards, cooldowns)
+	# World Map v2 step 0 (second source of run-to-run drift, found after seeding zone_rng): CutFlow.rng picks the
+	# timeout card and is randomized at creation ("tests seed it for a deterministic pick", cut_flow.gd). The game leaves
+	# it random; the sim seeds it from the match seed at the next free offset (+5; 0 drops, +1 boss, +2 boss pieces,
+	# +3 zone, +4 pattern) so the same command gives the same output. Tool code only; CutFlow is unchanged.
+	if match_seed >= 0:
+		flow.rng.seed = match_seed + 5
 	flow.level_of = Callable(self, "card_level")
 	flow.availability_context_fn = Callable(self, "availability_context")
 	flow.skill_chosen.connect(_on_skill_chosen)
@@ -923,6 +929,16 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	boss.get_actor().swing_started.connect(_on_boss_swing_started)
 	boss.get_actor().swing_cancelled.connect(_on_boss_swing_cancelled)
 	arbiter = SwingArbiter.new(state, grid, actor, boss.get_actor(), cut_config, cards, status)
+	# World Map v2 step 0 (production/qa/evidence/world-map-v2/baseline-7floor-v1.md section 3): the Vay Bat extra thorn
+	# cells draw from arbiter.zone_rng; CombatView seeds it with drops_seed + 3 (combat_view.gd, "User 2026-11-01"). Left
+	# null here, CutEffects.extra_thorn_cells fell back to a randomized RNG and two runs of one command differed. The sim's
+	# match_seed is its drops_seed (drops = match_seed, boss +1, boss pieces +2, pattern +4), so +3 is the same offset and a
+	# stream no other sim component uses. A negative seed keeps CombatView's randomized fallback.
+	arbiter.zone_rng = RandomNumberGenerator.new()
+	if match_seed >= 0:
+		arbiter.zone_rng.seed = match_seed + 3
+	else:
+		arbiter.zone_rng.randomize()
 	# Skill v2: the boss reads pending surge cells as in CombatView.
 	boss.pending_threat_fn = arbiter.pending_cells.bind(CombatState.Side.PLAYER)
 	# Mirrors CombatView: a running delayed swing's threat comes fuse_sec after its end.

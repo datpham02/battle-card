@@ -137,10 +137,11 @@ func _init() -> void:
 	for k: String in ["boss_fates", "pending_fate", "pending_fate_match", "stats"]:
 		v5.erase(k)
 	var o5: RunSession = RunSession.from_dict(v5, chapters)
-	_check("v5 save loads as a live run", o5 != null and not o5.needs_restart and not o5.map.is_empty())
+	# World Map v2 (D5): saves below MIN_LOADABLE_VERSION 8 (v5-v7) take the needs_restart path, like pre-v5 ones.
+	_check("v5 save restarts (needs_restart, empty map)", o5 != null and o5.needs_restart and o5.map.is_empty() and o5.restart_reason == RunSession.RESTART_OLD_SAVE)
 	_check("v5 save: empty fates, nothing pending, zero stats", o5 != null and o5.boss_fates.is_empty() and not o5.pending_fate
 		and int(o5.stats["matches_won"]) == 0 and float(o5.stats["damage_dealt"]) == 0.0 and (o5.stats["death"] as Dictionary).is_empty())
-	_check("v5 save re-saves as the current version (v7, Story 038)", o5 != null and int(o5.to_dict()["version"]) == RunSession.SAVE_VERSION and RunSession.SAVE_VERSION == 7)
+	_check("v5 save re-saves as the current version (v8, World Map v2)", o5 != null and int(o5.to_dict()["version"]) == RunSession.SAVE_VERSION and RunSession.SAVE_VERSION == 8)
 	var v4: Dictionary = v5.duplicate(true)
 	v4["version"] = 4
 	var o4: RunSession = RunSession.from_dict(v4, chapters)

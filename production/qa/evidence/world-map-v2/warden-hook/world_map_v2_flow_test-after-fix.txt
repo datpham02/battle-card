@@ -1,0 +1,295 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS: floor 1 offers ch1
+PASS: ch1 briefing: v1, no rule
+PASS: ch1 is v1 (wrapped graph available)
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (danger)
+PASS: danger won
+PASS: choose node 0 (danger)
+PASS: danger won
+PASS: choose node 0 (boss)
+PASS: boss won
+PASS: ch1 warden spared -> floor 2 offers hellfire (phase 2)
+PASS: hellfire briefing: v2, heat, warden vent_surge, shop on this floor
+PASS: hellfire entered: v2 map with 7 depths
+PASS: seed 24: lanes ["peril", "safe", "treasure"], heat 0
+PASS: entry preview: enemy named, heat 0 -> 1
+WARNING: ArtAssets: no region 'hellfire' (res://assets/art/env/hellfire/region.json missing)
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _warn_once (res://src/art/art_assets.gd:267)
+       [1] region (res://src/art/art_assets.gd:78)
+       [2] area_for (res://src/art/art_assets.gd:116)
+       [3] current_art_area (res://src/run/game_flow.gd:3285)
+       [4] _spawn_match (res://src/run/game_flow.gd:2433)
+       [5] _enter_current_node (res://src/run/game_flow.gd:2410)
+       [6] choose_node (res://src/run/game_flow.gd:1059)
+       [7] _play (res://tests/integration/run/world_map_v2_flow_test.gd:113)
+       [8] _run (res://tests/integration/run/world_map_v2_flow_test.gd:206)
+       [9] _walk_region (res://tests/integration/run/world_map_v2_flow_test.gd:145)
+       [10] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+PASS: choose node 0 (battle)
+WARNING: SpriteSheet: no sheet JSON at res://assets/art/units/unit_ember_hound_sheet.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json (res://src/art/sprite_sheet.gd:59)
+       [1] load_unit (res://src/art/sprite_sheet.gd:48)
+       [2] _bind_match (res://src/battle/unit_layer.gd:693)
+       [3] setup (res://src/battle/unit_layer.gd:229)
+       [4] _bind (res://src/battle/battle_canvas.gd:150)
+PASS: battle won
+PASS: entry won: heat 1, three lane starts
+PASS: lane previews carry archetype and tier
+PASS: at the fork: go_back keeps the save
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:212)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:212)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:212)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:212)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:212)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:212)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:212)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+PASS: at the fork: continue restores graph, position and heat
+PASS: choose node 0 (danger)
+WARNING: SpriteSheet: no sheet JSON at res://assets/art/units/unit_magma_slug_sheet.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json (res://src/art/sprite_sheet.gd:59)
+       [1] load_unit (res://src/art/sprite_sheet.gd:48)
+       [2] _bind_match (res://src/battle/unit_layer.gd:693)
+       [3] setup (res://src/battle/unit_layer.gd:229)
+       [4] _bind (res://src/battle/battle_canvas.gd:150)
+PASS: danger won
+PASS: L0.1 danger: row_burner, no extra modifier
+PASS: I2 heat 1 fight: vent interval 6 s in TileHazards
+PASS: lane commitment: only L0.2 open, heat 2
+PASS: choose node 0 (danger)
+WARNING: SpriteSheet: no sheet JSON at res://assets/art/units/unit_ash_golem_sheet.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json (res://src/art/sprite_sheet.gd:59)
+       [1] load_unit (res://src/art/sprite_sheet.gd:48)
+       [2] _bind_match (res://src/battle/unit_layer.gd:693)
+       [3] setup (res://src/battle/unit_layer.gd:229)
+       [4] _bind (res://src/battle/battle_canvas.gd:150)
+PASS: danger won
+PASS: L0.2 danger carries one modifier: ["thorn_field"]
+PASS: I2 heat 2 fight: vent interval 5 s
+PASS: heat 3 before the hub
+PASS: before the hub: go_back keeps the save
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _reload (res://tests/integration/run/world_map_v2_flow_test.gd:169)
+       [4] _run (res://tests/integration/run/world_map_v2_flow_test.gd:223)
+       [5] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+PASS: before the hub: continue restores graph, position and heat
+PASS: the hub is the shop
+PASS: choose node 0 (shop)
+PASS: shop: heat 3 -> 2, every lane's last node open
+PASS: choose node 0 (danger)
+WARNING: SpriteSheet: no sheet JSON at res://assets/art/units/unit_flame_cultist_sheet.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json (res://src/art/sprite_sheet.gd:59)
+       [1] load_unit (res://src/art/sprite_sheet.gd:48)
+       [2] _bind_match (res://src/battle/unit_layer.gd:693)
+       [3] setup (res://src/battle/unit_layer.gd:229)
+       [4] _bind (res://src/battle/battle_canvas.gd:150)
+PASS: danger won
+PASS: L0.4 peril end carries one modifier (tuned 2026-11-12, was two): ["seal_caster"]
+PASS: intro band modifiers == the node preview's ids ["seal_caster"] (1 of a pool of 5)
+PASS: intro modifier block inside the band, clear of the arena block ([P: (38.4, 147.2), S: (280.0, 130.48)] | [P: (961.6, 147.2), S: (280.0, 130.48)])
+PASS: objective no_hit_3 met on L0.4 (no hits taken)
+PASS: tier-3 node paid gold (231 -> 281)
+PASS: tier luck bonus added (4.0)
+PASS: heat 3, approach offers prepare + gamble
+PASS: at the approach: go_back keeps the save
+PASS: at the approach: continue restores graph, position and heat
+PASS: a1 is the rest (prepare)
+PASS: choose node 1 (miniboss)
+WARNING: SpriteSheet: no sheet JSON at res://assets/art/units/unit_ash_phoenix_sheet.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json (res://src/art/sprite_sheet.gd:59)
+       [1] load_unit (res://src/art/sprite_sheet.gd:48)
+       [2] _bind_match (res://src/battle/unit_layer.gd:693)
+       [3] setup (res://src/battle/unit_layer.gd:229)
+       [4] _bind (res://src/battle/battle_canvas.gd:150)
+PASS: miniboss won
+PASS: gamble miniboss: heat 3 -> 4 (clamped)
+PASS: warden preview at heat 4
+PASS: choose node 0 (boss)
+WARNING: SpriteSheet: no sheet JSON at res://assets/art/units/unit_inferno_lord_sheet.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json (res://src/art/sprite_sheet.gd:59)
+       [1] load_unit (res://src/art/sprite_sheet.gd:48)
+       [2] _bind_match (res://src/battle/unit_layer.gd:693)
+       [3] setup (res://src/battle/unit_layer.gd:229)
+       [4] _bind (res://src/battle/battle_canvas.gd:150)
+PASS: boss won
+PASS: warden hook at heat >= 3 (B1 2026-11-12): vent_surge every 7 s, first at 10 s, vents stay 2 ({ "interval_sec": 7.0, "vents": 2.0, "first_delay_sec": 10.0 })
+PASS: I2 heat 4 warden: vent 4 s, tick 3
+PASS: I2 heat 4 warden: eruptions 2.5 s, warning 1.0 s (B1)
+PASS: warden spared -> floor 3 offers desert
+PASS: desert is v1 again, no rule state
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _run (res://tests/integration/run/world_map_v2_flow_test.gd:264)
+       [4] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (event)
+PASS: choose node 0 (rest)
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 0 (boss)
+PASS: boss won
+PASS: seed 28 map holds a forge (L1.4)
+PASS: choose node 0 (battle)
+PASS: battle won
+PASS: choose node 1 (battle)
+WARNING: SpriteSheet: no sheet JSON at res://assets/art/units/unit_imp_sheet.json
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json (res://src/art/sprite_sheet.gd:59)
+       [1] load_unit (res://src/art/sprite_sheet.gd:48)
+       [2] _bind_match (res://src/battle/unit_layer.gd:693)
+       [3] setup (res://src/battle/unit_layer.gd:229)
+       [4] _bind (res://src/battle/battle_canvas.gd:150)
+PASS: battle won
+PASS: choose node 1 (treasure)
+PASS: choose node 0 (shop)
+PASS: forge opens
+PASS: forge: two inks offered, free removal available
+PASS: forge: one free removal spends no token
+PASS: forge: ink applied
+PASS: forge_leave completes the node
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _run (res://tests/integration/run/world_map_v2_flow_test.gd:302)
+       [4] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _run (res://tests/integration/run/world_map_v2_flow_test.gd:302)
+       [4] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _run (res://tests/integration/run/world_map_v2_flow_test.gd:302)
+       [4] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _run (res://tests/integration/run/world_map_v2_flow_test.gd:302)
+       [4] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _run (res://tests/integration/run/world_map_v2_flow_test.gd:302)
+       [4] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+ERROR: Parameter "obj" is null.
+   at: is_connected (core/variant/callable.cpp:557)
+   GDScript backtrace (most recent call first):
+       [0] detach (res://src/audio/ui_audio_bridge.gd:35)
+       [1] _exit_tree (res://src/audio/audio_rig.gd:46)
+       [2] _drop_main (res://tests/integration/run/world_map_v2_flow_test.gd:63)
+       [3] _run (res://tests/integration/run/world_map_v2_flow_test.gd:302)
+       [4] _play (res://tests/integration/run/world_map_v2_flow_test.gd:127)
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 9 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

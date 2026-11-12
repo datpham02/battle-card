@@ -409,7 +409,12 @@ func _run() -> void:
 	flow2b.continue_requested()
 	_check(flow2b.get_phase() == GameFlow.Phase.WORLD_MAP and flow2b.get_floor() == 1 and flow2b.get_region_offer() == offer1 and flow2b.get_run().deck_ids.size() == after_b, "continue -> floor 2 WORLD_MAP")
 	flow2b.choose_region(offer1[0])
-	_check(flow2b.get_phase() == GameFlow.Phase.MAP and flow2b.get_current_column() == 0 and flow2b.get_run_map() == config.generate_region_map(offer1[0], 11, 1, store2.load_state(config).get_cleared_bosses()), "floor 2 region %s: its floor-2 map" % offer1[0])
+	# World Map v2: a v2 region (hellfire, floor 2) shows the column MIRROR of its generated graph; a v1 region the
+	# column map exactly as before.
+	var want_map2: Array[Dictionary] = config.generate_region_map(offer1[0], 11, 1, store2.load_state(config).get_cleared_bosses())
+	if RegionRules.shared().uses_v2(offer1[0]):
+		want_map2 = RunSession.columns_from_graph(config.generate_region_graph(offer1[0], 11, 1, store2.load_state(config).get_cleared_bosses()))
+	_check(flow2b.get_phase() == GameFlow.Phase.MAP and flow2b.get_current_column() == 0 and flow2b.get_run_map() == want_map2, "floor 2 region %s: its floor-2 map" % offer1[0])
 	_check(flow2b.get_cleared_nodes().is_empty() and is_equal_approx(flow2b.get_luck(), 5.0 * float(reward_cfg["luck_per_node"])), "new region: cleared reset, luck carried (%.1f)" % flow2b.get_luck())
 	await _drop_main(main2b)
 

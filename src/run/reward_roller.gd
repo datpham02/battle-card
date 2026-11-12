@@ -35,6 +35,12 @@ static func default_config() -> Dictionary:
 			"rest": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false},
 			"shop": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false},
 			"event": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false},
+			"forge": {"offers": 0, "min_rarity": "common", "free": false, "removal_token": false},
+		},
+		"reward_tiers": {
+			"1": {"gold_mult": 1.0, "min_rarity": "", "relic_offer": 0, "luck_bonus": 0.0},
+			"2": {"gold_mult": 1.3, "min_rarity": "", "relic_offer": 0, "luck_bonus": 1.0},
+			"3": {"gold_mult": 1.6, "min_rarity": "rare", "relic_offer": 1, "luck_bonus": 2.0},
 		},
 	}
 
@@ -89,6 +95,15 @@ static func clean_config(data: Dictionary) -> Dictionary:
 			push_warning("RewardRoller: rarity_weights_at_luck has no valid anchor, ignored")
 		else:
 			result["rarity_weights_at_luck"] = anchors
+	if data.has("reward_tiers"):
+		if typeof(data["reward_tiers"]) == TYPE_DICTIONARY:
+			var tiers: Dictionary = result["reward_tiers"]
+			for tier: String in tiers.keys():
+				var entry: Variant = (data["reward_tiers"] as Dictionary).get(tier)
+				if typeof(entry) == TYPE_DICTIONARY:
+					tiers[tier] = _clean_tier(entry as Dictionary, tiers[tier])
+		else:
+			push_warning("RewardRoller: reward_tiers must be an object, using defaults")
 	if data.has("node_rewards"):
 		if typeof(data["node_rewards"]) == TYPE_DICTIONARY:
 			var table: Dictionary = result["node_rewards"]
@@ -111,6 +126,28 @@ static func reward_for_node(kind: String, config: Dictionary) -> Dictionary:
 		push_warning("RewardRoller: unknown node kind '%s', using battle" % kind)
 		key = "battle"
 	return (table[key] as Dictionary).duplicate()
+
+
+## World Map v2 (01 section E2): the tier rule of [param tier] (1..3, clamped): {gold_mult, min_rarity ("" = the
+## kind's own), relic_offer, luck_bonus}. Tier 1 is always {1.0, "", 0, 0}: a tier-1 node rewards exactly as today.
+static func tier_rule(config: Dictionary, tier: int) -> Dictionary:
+	var tiers: Dictionary = clean_config(config)["reward_tiers"]
+	return (tiers[str(clampi(tier, 1, 3))] as Dictionary).duplicate()
+
+
+## World Map v2: [method reward_for_node] of [param kind] at [param tier]: the kind's row plus the tier's
+## `gold_mult`, `relic_offer`, `luck_bonus` and `tier`; `min_rarity` is the higher of the kind's and the tier's.
+static func reward_for_node_tier(kind: String, config: Dictionary, tier: int) -> Dictionary:
+	var info: Dictionary = reward_for_node(kind, config)
+	var rule: Dictionary = tier_rule(config, tier)
+	var tier_rarity: String = str(rule["min_rarity"])
+	if not tier_rarity.is_empty() and SkillConfig.RARITIES.find(tier_rarity) > SkillConfig.RARITIES.find(str(info["min_rarity"])):
+		info["min_rarity"] = tier_rarity
+	info["gold_mult"] = float(rule["gold_mult"])
+	info["relic_offer"] = int(rule["relic_offer"])
+	info["luck_bonus"] = float(rule["luck_bonus"])
+	info["tier"] = clampi(tier, 1, 3)
+	return info
 
 
 ## Rarity weights {"common", "rare", "epic"} at [param luck]: linear interpolation between the
@@ -248,6 +285,22 @@ static func _anchor_key(anchors: Dictionary, luck: float) -> String:
 		if is_equal_approx(float(key), luck):
 			return key
 	return str(anchors.keys()[0])
+
+
+static func _clean_tier(raw: Dictionary, fallback: Dictionary) -> Dictionary:
+	var entry: Dictionary = fallback.duplicate()
+	if raw.has("gold_mult"):
+		entry["gold_mult"] = maxf(float(raw["gold_mult"]), 0.0)
+	var rarity: String = str(raw.get("min_rarity", entry["min_rarity"]))
+	if rarity.is_empty() or SkillConfig.RARITIES.has(rarity):
+		entry["min_rarity"] = rarity
+	else:
+		push_warning("RewardRoller: reward_tiers min_rarity '%s' unknown, kept '%s'" % [rarity, entry["min_rarity"]])
+	if raw.has("relic_offer"):
+		entry["relic_offer"] = maxi(int(raw["relic_offer"]), 0)
+	if raw.has("luck_bonus"):
+		entry["luck_bonus"] = maxf(float(raw["luck_bonus"]), 0.0)
+	return entry
 
 
 static func _clean_node_reward(raw: Dictionary, fallback: Dictionary) -> Dictionary:

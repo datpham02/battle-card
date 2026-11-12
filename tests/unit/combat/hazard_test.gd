@@ -62,6 +62,7 @@ func _init() -> void:
 	_drift_tests()
 	_config_tests()
 	_vent_tests()
+	_vent_trigger_clamp_tests()
 	_crumble_tests()
 	print("FAILS=%d" % fails)
 	quit(1 if fails > 0 else 0)
@@ -504,6 +505,28 @@ func _vent_tests() -> void:
 
 
 # --- Story 039: crumbling cells and island drops -----------------------------------------------------------
+
+# B1 (2026-11-12): trigger_vents starts "up to count" IDLE vents — a count above what the half has (the shipped warden hook
+# asked 3 of a caldera with 2) is clamped, and a vent already warning or erupting is skipped. Existing behaviour, pinned.
+func _vent_trigger_clamp_tests() -> void:
+	var st: CombatState = mk() # player (1,1)
+	var hz: TileHazards = hz_new(st, 4)
+	hz.configure({"vent_interval_sec": 1000.0, "vent_warn_sec": 0.5, "vent_sec": 1.0})
+	var row1: Array[Vector2i] = cells([Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
+	hz.set_vents(P, [row0(), row1])
+	ck("trigger_vents: asking 3 of 2 idle vents starts 2 (clamped to the half)", hz.trigger_vents(P, 3) == 2 and hz.is_vent_warning(P, Vector2i(0, 0)) and hz.is_vent_warning(P, Vector2i(0, 1)))
+	ck("trigger_vents: nothing idle -> 0", hz.trigger_vents(P, 3) == 0)
+	run(hz, st, 0.55)
+	ck("trigger_vents: both erupt after the warning", hz.is_venting(P, Vector2i(0, 0)) and hz.is_venting(P, Vector2i(0, 1)))
+	run(hz, st, 1.1)
+	ck("trigger_vents: both idle again after vent_sec", not hz.is_venting(P, Vector2i(0, 0)) and not hz.is_vent_warning(P, Vector2i(0, 1)))
+	ck("trigger_vents: one vent already warning -> asking 3 starts the other 1", hz.trigger_vent(P, 0) and hz.trigger_vents(P, 3) == 1 and hz.is_vent_warning(P, Vector2i(0, 1)))
+	var st2: CombatState = mk()
+	var hz2: TileHazards = hz_new(st2, 4)
+	hz2.configure({"vent_interval_sec": 1000.0})
+	hz2.set_vents(P, [row0(), row1])
+	ck("trigger_vents: count 1 with the player's cell on row 1 starts row 1 first", hz2.trigger_vents(P, 1, st2.player_cell) == 1 and hz2.is_vent_warning(P, Vector2i(1, 1)) and not hz2.is_vent_warning(P, Vector2i(1, 0)))
+
 
 func _crumble_tests() -> void:
 	var st: CombatState = mk() # player (1,1)
