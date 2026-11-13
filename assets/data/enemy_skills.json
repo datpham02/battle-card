@@ -308,6 +308,167 @@
 			"effects": {"damage": 14},
 			"followup": {"offsets": [[2, 0], [-2, 0], [0, 2], [0, -2], [3, 0], [-3, 0], [0, 3], [0, -3]], "relative_to": "first_shift", "show_with_first": true, "exclude_first": true, "warning_sec": 0.75, "effects": {"damage": 14}},
 			"recovery_sec": 1.5, "cooldown_sec": 7.0, "interruptible": false
+		},
+		"shared_sidestep": {
+			"id": "shared_sidestep", "owner": "shared", "kind": "self", "name_key": "enemy_skill.shared_sidestep.name", "counter_key": "enemy_skill.shared_sidestep.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "adjacent_row"}},
+			"recovery_sec": 0.3, "cooldown_sec": 5.0, "counts_as_cast": false, "weight": 0.4
+		},
+		"imp_ash_dart": {
+			"id": "imp_ash_dart", "owner": "imp", "kind": "attack", "name_key": "enemy_skill.imp_ash_dart.name", "counter_key": "enemy_skill.imp_ash_dart.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 1.0,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "burn"},
+			"effects": {"damage": 6, "status": {"id": "fragile", "stacks": 1}},
+			"weights": {"allies_alive": 1.5},
+			"recovery_sec": 0.6, "cooldown_sec": 2.6
+		},
+		"hound_ember_charge": {
+			"id": "hound_ember_charge", "owner": "ember_hound", "kind": "attack", "name_key": "enemy_skill.hound_ember_charge.name", "counter_key": "enemy_skill.hound_ember_charge.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
+			"effects": {"damage": 10},
+			"weights": {"player_status": {"fragile": 2.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 3.0
+		},
+		"golem_ash_mantle": {
+			"id": "golem_ash_mantle", "owner": "ash_golem", "kind": "self", "name_key": "enemy_skill.golem_ash_mantle.name", "counter_key": "enemy_skill.golem_ash_mantle.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"guard": {"amount": 3, "sec": 4}},
+			"weight": 0.3, "weights": {"allies_alive": 4.0},
+			"recovery_sec": 0.6, "cooldown_sec": 8.0, "interruptible": true, "interrupt_stun_sec": 0.8
+		},
+		"golem_cinder_slam": {
+			"id": "golem_cinder_slam", "owner": "ash_golem", "kind": "attack", "name_key": "enemy_skill.golem_cinder_slam.name", "counter_key": "enemy_skill.golem_cinder_slam.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.7, "warning_sec": 1.3,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"effects": {"damage": 12},
+			"recovery_sec": 1.2, "cooldown_sec": 5.0, "interruptible": false
+		},
+		"shared_jab": {
+			"id": "shared_jab", "owner": "shared", "kind": "attack", "name_key": "enemy_skill.shared_jab.name", "counter_key": "enemy_skill.shared_jab.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 8},
+			"recovery_sec": 0.6, "cooldown_sec": 2.6
+		},
+		"cultist_kindle": {
+			"id": "cultist_kindle", "owner": "flame_cultist", "kind": "attack", "name_key": "enemy_skill.cultist_kindle.name", "counter_key": "enemy_skill.cultist_kindle.counter",
+			"pattern": {"offsets": [[0, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "burn"},
+			"effects": {"damage": 0, "zone": {"id": "burn", "sec": 3.0, "tick_sec": 0.5, "damage": 2.0}},
+			"conditions": {"max_zone_cells": {"burn": 3}},
+			"recovery_sec": 0.6, "cooldown_sec": 6.0
+		},
+		"slug_lava_spit": {
+			"id": "slug_lava_spit", "owner": "magma_slug", "kind": "attack", "name_key": "enemy_skill.slug_lava_spit.name", "counter_key": "enemy_skill.slug_lava_spit.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.7, "warning_sec": 1.2,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burn"},
+			"effects": {"damage": 8, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 3.4
+		},
+		"slug_molten_trail": {
+			"id": "slug_molten_trail", "owner": "magma_slug", "kind": "self", "name_key": "enemy_skill.slug_molten_trail.name", "counter_key": "enemy_skill.slug_molten_trail.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "burn"},
+			"effects": {"move": {"to": "adjacent_row"}, "zone": {"id": "burn", "side": "self", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}},
+			"recovery_sec": 0.3, "cooldown_sec": 7.0, "counts_as_cast": false, "weight": 0.5
+		},
+		"knight_cleave": {
+			"id": "knight_cleave", "owner": "hell_knight", "kind": "attack", "name_key": "enemy_skill.knight_cleave.name", "counter_key": "enemy_skill.knight_cleave.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 14},
+			"recovery_sec": 1.2, "cooldown_sec": 4.5, "interruptible": false
+		},
+		"knight_bulwark": {
+			"id": "knight_bulwark", "owner": "hell_knight", "kind": "self", "name_key": "enemy_skill.knight_bulwark.name", "counter_key": "enemy_skill.knight_bulwark.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"guard": {"amount": 5, "sec": 4}},
+			"conditions": {"hp_below": 0.5, "once": true},
+			"recovery_sec": 0.6, "cooldown_sec": 0.0, "weight": 2.0
+		},
+		"eater_ember_belch": {
+			"id": "eater_ember_belch", "owner": "fire_eater", "kind": "attack", "name_key": "enemy_skill.eater_ember_belch.name", "counter_key": "enemy_skill.eater_ember_belch.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "column_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
+			"effects": {"damage": 12, "zone": {"id": "burn", "sec": 2.5, "tick_sec": 0.5, "damage": 2.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 5.0
+		},
+		"eater_devour": {
+			"id": "eater_devour", "owner": "fire_eater", "kind": "self", "name_key": "enemy_skill.eater_devour.name", "counter_key": "enemy_skill.eater_devour.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 1.4,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "burn"},
+			"effects": {"consume_burn": {"heal_per_cell": 6}},
+			"conditions": {"burning_cells": 2},
+			"recovery_sec": 0.6, "cooldown_sec": 9.0, "weight": 1.5, "interruptible": true, "interrupt_stun_sec": 1.0
+		},
+		"phoenix_ash_dive": {
+			"id": "phoenix_ash_dive", "owner": "ash_phoenix", "kind": "attack", "name_key": "enemy_skill.phoenix_ash_dive.name", "counter_key": "enemy_skill.phoenix_ash_dive.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
+			"windup_sec": 0.5, "warning_sec": 1.1,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burn"},
+			"effects": {"damage": 12, "status": {"id": "fragile", "stacks": 1}},
+			"recovery_sec": 0.6, "cooldown_sec": 3.5
+		},
+		"phoenix_pyre": {
+			"id": "phoenix_pyre", "owner": "ash_phoenix", "kind": "attack", "name_key": "enemy_skill.phoenix_pyre.name", "counter_key": "enemy_skill.phoenix_pyre.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
+			"windup_sec": 0.8, "warning_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "burn"},
+			"effects": {"damage": 0, "zone": {"id": "burn", "sec": 4.0, "tick_sec": 0.5, "damage": 2.0}},
+			"conditions": {"hp_below": 0.5, "once": true},
+			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 2.0, "interruptible": false
+		},
+		"lord_brand": {
+			"id": "lord_brand", "owner": "inferno_lord", "kind": "attack", "name_key": "enemy_skill.lord_brand.name", "counter_key": "enemy_skill.lord_brand.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "burn"},
+			"effects": {"damage": 10, "status": {"id": "fragile", "stacks": 1}},
+			"recovery_sec": 0.6, "cooldown_sec": 2.8
+		},
+		"lord_cinder_lane": {
+			"id": "lord_cinder_lane", "owner": "inferno_lord", "kind": "attack", "name_key": "enemy_skill.lord_cinder_lane.name", "counter_key": "enemy_skill.lord_cinder_lane.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.8, "warning_sec": 1.4,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
+			"effects": {"damage": 14, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}},
+			"recovery_sec": 1.2, "cooldown_sec": 5.5, "interruptible": false
+		},
+		"lord_stride": {
+			"id": "lord_stride", "owner": "inferno_lord", "kind": "self", "name_key": "enemy_skill.lord_stride.name", "counter_key": "enemy_skill.lord_stride.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "adjacent_row"}},
+			"recovery_sec": 0.4, "cooldown_sec": 8.0, "counts_as_cast": false, "weight": 2.0
+		},
+		"lord_eruption_call": {
+			"id": "lord_eruption_call", "owner": "inferno_lord", "kind": "attack", "name_key": "enemy_skill.lord_eruption_call.name", "counter_key": "enemy_skill.lord_eruption_call.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.9, "warning_sec": 1.5,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burst"},
+			"effects": {"damage": 14},
+			"followup": {"relative_to": "same_cells", "delay_sec": 1.0, "warning_sec": 1.0,
+				"effects": {"damage": 10, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}}},
+			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
 		}
 	},
 	"enemies": {
@@ -322,6 +483,26 @@
 			"footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
 			"arena": "boss_hall",
 			"skills": ["dev_prick", "dev_bar"]
+		},
+		"imp": {"tier": "normal", "arena": "forge",
+			"phases": [{"id": "main", "skills": ["imp_ash_dart", "shared_sidestep"], "overrides": {"shared_sidestep": {"weight": 0.6}}}]},
+		"ember_hound": {"tier": "normal", "arena": "caldera", "skills": ["hound_ember_charge"]},
+		"ash_golem": {"tier": "normal", "arena": "forge", "skills": ["golem_ash_mantle", "golem_cinder_slam"]},
+		"flame_cultist": {"tier": "normal", "arena": "caldera", "skills": ["cultist_kindle", "shared_jab"]},
+		"magma_slug": {"tier": "normal", "arena": "forge", "skills": ["slug_lava_spit", "slug_molten_trail"]},
+		"hell_knight": {"tier": "normal", "arena": "caldera", "skills": ["knight_cleave", "knight_bulwark"]},
+		"fire_eater": {"tier": "elite", "arena": "forge",
+			"phases": [{"id": "main", "skills": ["eater_ember_belch", "eater_devour"], "mechanic": "eater_devour"}]},
+		"ash_phoenix": {"tier": "elite", "arena": "caldera", "skills": ["phoenix_ash_dive", "phoenix_pyre"]},
+		"inferno_lord": {
+			"tier": "warden",
+			"arena": "caldera",
+			"phases": [
+				{"id": "p1", "enter_hp_ratio": 1.0, "skills": ["lord_brand", "lord_cinder_lane", "lord_stride"], "mechanic": "lord_cinder_lane"},
+				{"id": "p2", "enter_hp_ratio": 0.5, "skills": ["lord_brand", "lord_cinder_lane", "lord_stride", "lord_eruption_call"],
+					"mechanic": "lord_eruption_call", "every_nth": {"skill": "lord_eruption_call", "n": 3},
+					"transition": {"sec": 1.5, "on_enter": [{"skill": "lord_eruption_call"}]}}
+			]
 		},
 		"rootling": {"tier": "normal", "arena": "square", "skills": ["root_prick", "creep"]},
 		"mossbound_sentry": {"tier": "normal", "arena": "rect", "skills": ["slab_tap", "brace"]},

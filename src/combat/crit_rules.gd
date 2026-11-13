@@ -58,7 +58,8 @@ static func holds(when: String, ctx: Dictionary) -> bool:
 		"target_burning", "target_on_hazard":
 			if status == null or state == null:
 				return false
-			var cells: Array[Vector2i] = state.enemy_footprint_cells() if target_side == CombatState.Side.ENEMY else [state.player_cell] as Array[Vector2i]
+			# Multi-enemy Phase 2: target_side is the target unit's KEY (1 = unit 0); its own footprint is read.
+			var cells: Array[Vector2i] = state.unit_cells(target_side)
 			for c: Vector2i in cells:
 				if when == "target_burning" and status.is_burning(c):
 					return true
@@ -70,7 +71,8 @@ static func holds(when: String, ctx: Dictionary) -> bool:
 		"self_hp_high":
 			if state == null:
 				return false
-			var caster_player: bool = target_side == CombatState.Side.ENEMY
+			# the caster is the opposite of the target: the hero for any enemy unit key (only unit 0 casts in Phase 2)
+			var caster_player: bool = target_side != CombatState.Side.PLAYER
 			var hp: float = state.player_hp if caster_player else state.enemy_hp
 			var mx: float = state.player_max_hp if caster_player else state.enemy_max_hp
 			return mx > 0.0 and hp / mx >= SELF_HP_HIGH_RATIO

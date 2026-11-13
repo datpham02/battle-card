@@ -1,0 +1,74 @@
+=== step 1: watch the regression test FAIL against the unfixed code ===
+unfix: pattern_controller.gd reverted to the pre-fix state (3 edits)
+UNFIXED pattern_resolve_abort (expected: FAILS>=1): FAILS=3 exit=1
+SCRIPT ERROR: Invalid access to property or key 'id' on a base object of type 'Dictionary'.
+SCRIPT ERROR: Invalid access to property or key 'id' on a base object of type 'Dictionary'.
+FAIL abort: it carries the real skill id, not a null read 'dev_prick' expected 'dev_bar'
+FAIL abort: warning_cleared came from the abort, not from a second 'resolved' ["test_abort", "resolved"]
+FAIL abort: the controller is idle and holds no skill 3
+FAILS=3
+=== step 2: restore the fix and re-run ===
+restored src/combat/pattern_controller.gd from backup OK
+FIXED pattern_resolve_abort (expected: FAILS=0): FAILS=3 exit=1
+FAIL abort: skill_resolved still fired exactly once ["dev_bar", "dev_prick"]
+FAIL abort: warning_cleared came from the abort, not from a second 'resolved' ["test_abort", "resolved"]
+FAIL abort: the controller is idle and holds no skill 3
+FAILS=3
+=== step 3: suites the two fixes touch ===
+combat/pattern_controller_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_wiring_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_fairness_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_roster_mechanics_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_phase0_ai_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_phase0_effects_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_phase0_bugfix_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_phase0_pause_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_hellfire_group_a_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_hellfire_group_b_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_hellfire_group_c_test: FAILS=0 exit=0
+FAILS=0
+combat/pattern_hellfire_group_d_test: FAILS=0 exit=0
+FAILS=0
+combat/multi_enemy_agents_test: FAILS=0 exit=0
+FAILS=0 PASSES=48
+battle/multi_enemy_hud: FAILS=0 exit=0
+FAILS=0 PASSES=33
+battle/interrupt_tell: FAILS=0 exit=0
+FAILS=0
+=== step 4: the two suites that overlapped with another Godot earlier ===
+combat/telegraph_alpha: FAILS=0 exit=0
+FAILS=0
+combat/vent_crumble_view: FAILS=0 exit=0
+FAILS=0
+DONE
+restored src/combat/pattern_controller.gd from backup OK
+=== RETRY after tightening the test ===
+unfix: pattern_controller.gd reverted to the pre-fix state (3 edits)
+UNFIXED: FAILS=1
+SCRIPT ERROR: Invalid access to property or key 'id' on a base object of type 'Dictionary'.
+SCRIPT ERROR: Invalid access to property or key 'id' on a base object of type 'Dictionary'.
+FAIL abort: it carries the real skill id, not a null read 'dev_prick' expected 'dev_bar'
+FAILS=1
+restored OK
+FIXED: FAILS=0
+PASS abort: the enemy warns a strike on the hero dev_bar
+PASS abort: a skill really was ended during its resolve dev_bar
+PASS abort: the aborted skill still reported itself ["dev_bar"]
+PASS abort: it carries the real skill id, not a null read 'dev_bar' expected 'dev_bar'
+PASS abort: the aborted skill cleared with the abort reason, not with 'resolved' ["test_abort"]
+PASS abort: the aborted skill is no longer the current one
+PASS normal: the enemy warns a strike on the hero dev_bar
+PASS normal: skill_resolved carries a real skill id ["dev_bar"]
+PASS normal: that skill's warning cleared with 'resolved' ["resolved"] for 'dev_bar'
+FAILS=0
+restored OK

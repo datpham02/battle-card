@@ -48,6 +48,27 @@ var external_red_fn: Callable = Callable()
 ## Cast rhythm spec 2026-11-05 (Knight parry): the hero's ParryGuard. A strike that hits the hero while it is open is
 ## parried in [method _resolve_cells] (0 damage, no status, reflect + pin through the guard). Null = no parry.
 var player_guard: ParryGuard = null
+## Monster Skill Phase 0 (design §5.2): the match's TileHazards for the mire / sand / fall zones; null = those zones
+## are skipped with a warning (the skill still strikes).
+var hazards: TileHazards = null
+## Phase 0: Callable(cell) -> bool, the PLAYER mover's blocked test (pillars, holes, sand) a push / pull never enters.
+var player_blocked_fn: Callable = Callable()
+## Phase 0: the reaction numbers (CombatConfig.reactions(); {} = CutEffects' defaults) for the R3 slam of a push / pull
+## stopped short, through the same StatusEffects.reaction_allowed gate as the cards.
+var reactions: Dictionary = {}
+## Phase 0 (design §9.2): seconds between two pushes / pulls of the player by enemy skills (0 = none).
+var push_icd_sec: float = 0.0
+## Phase 0 (multi-enemy, tier B): Callable() -> Dictionary {alive: int, died_within_sec: float, min_hp_ratio: float}
+## describing the OTHER enemies of the encounter. Invalid (today's single-enemy engine) = no allies: alive 0,
+## died_within_sec INF, min_hp_ratio 1.0. Only the ally_* conditions and the allies_alive weight read it.
+var allies_fn: Callable = Callable()
+## Multi-enemy Phase 3 (D1): the match's shared ThreatBoard; null = none (the pre-Phase-3 controller). With a shared
+## board: a skill starts only with an attack token (released when the skill ends), and the F5 warning gap counts every
+## unit's warnings.
+var threat_board: ThreatBoard = null
+## Multi-enemy Phase 3: the unit KEY this controller drives (1 = unit 0, Side.ENEMY). Every own-unit read / write goes
+## through it, so two controllers never touch each other's unit.
+var _key: int = CombatState.Side.ENEMY
 
 var _state: CombatState
 var _grid: BoardGrid
@@ -84,13 +105,26 @@ var _haste_mult: float = 1.0
 ## P2.3: seconds since the player last placed a block covering the enemy (on_player_aim); the Rootling's creep
 ## condition `player_aimed_within_sec` reads it.
 var _since_aim: float = 1000.0
+# Phase 0: seconds left of the enemy's evade (untargetable) and shroud (hit forecast hidden) self effects.
+var _evade_left: float = 0.0
+var _shroud_left: float = 0.0
+# Phase 0: a heal over time in progress (effects.heal with sec > 0): seconds left and HP per second.
+var _heal_left: float = 0.0
+var _heal_per_sec: float = 0.0
+# Phase 0: player steps since each skill last finished (conditions.player_steps_since; the step_reactor rule as data).
+var _steps_since: Dictionary = {}
+var _since_push: float = 1000.0
+# Phase 0 (burrow / rebirth): false = every clock stands still and nothing is chosen (set_active).
+var _active: bool = true
 ## Every resolved strike / event, in order, for tests and the decision log: {t, skill, cells, hit, phase}.
 var event_log: Array[Dictionary] = []
 var _time: float = 0.0
 
 
 ## [param enemy_id] must exist in [param config] (else the controller stays idle forever, with a warning).
-func _init(state: CombatState, grid: BoardGrid, config: EnemySkillsConfig, enemy_id: String, status: StatusEffects, seed_value: int = -1) -> void:
+func _init(state: CombatState, grid: BoardGrid, config: EnemySkillsConfig, enemy_id: String, status: StatusEffects, seed_value: int = -1,
+		key: int = CombatState.Side.ENEMY) -> void:
+	_key = key
 	_state = state
 	_grid = grid
 	_config = config
@@ -102,13 +136,30 @@ func _init(state: CombatState, grid: BoardGrid, config: EnemySkillsConfig, enemy
 	if not _enemy.is_empty():
 		var footprint: Array[Vector2i] = []
 		footprint.assign(_enemy.get("footprint", [Vector2i.ZERO]) as Array)
-		_state.set_enemy_footprint(footprint)
+		_state.set_unit_footprint(CombatState.unit_index_of(_key), footprint)
 	_brain = PatternBrain.new(_enemy.get("ai", config.ai) as Dictionary, seed_value)
 	if seed_value >= 0:
 		_rng.seed = seed_value + 101
 	else:
 		_rng.randomize()
 	_apply_hp_floor()
+
+
+## Multi-enemy Phase 3: the unit key this controller drives.
+func get_key() -> int:
+	return _key
+
+
+# Phase 3: the EnemyUnit this controller drives.
+func _unit() -> EnemyUnit:
+	return _state.get_unit(CombatState.unit_index_of(_key))
+
+
+# Phase 3 (D1 / F5): seconds since the last warning, of this unit or (with a shared board) of any unit.
+func _since_any_warning() -> float:
+	if threat_board != null and threat_board.shared:
+		return minf(_since_warning, threat_board.since_warning())
+	return _since_warning
 
 
 ## The enemy definition in use.
@@ -127,6 +178,9 @@ func _set_stage(next: int, skill_id: String = "") -> void:
 	if next == _stage:
 		return
 	_stage = next
+	# Phase 3 (D1): the attack token is held from the windup to the end of the warning / followup
+	if threat_board != null and next != Stage.WINDUP and next != Stage.WARNING and next != Stage.FOLLOWUP_WAIT:
+		threat_board.release(_key)
 	var sid: String = skill_id if not skill_id.is_empty() else (str(_skill.get("id", "")) if not _skill.is_empty() else "")
 	stage_changed.emit(next, sid)
 
@@ -199,7 +253,7 @@ func move_target_cell() -> Vector2i:
 ## P2.3: the player placed a block on [param cells] of the enemy half (CombatView.confirm_placement: the first piece
 ## of a cast or a joined one). When it covers the enemy, conditions.player_aimed_within_sec starts counting from now.
 func on_player_aim(cells: Array[Vector2i]) -> void:
-	if _state.enemy_in(cells):
+	if _state.unit_in(_key, cells):
 		_since_aim = 0.0
 
 
@@ -248,6 +302,108 @@ func cooldown_left(skill_id: String) -> float:
 	return float(_cooldowns.get(skill_id, 0.0))
 
 
+# --- Monster Skill Phase 0 -------------------------------------------------------------------------------------------
+
+## Phase 0 (burrow / rebirth pause): [param active] false freezes the controller: no clock runs (cooldowns, haste,
+## evade, markers, stage timers), nothing is chosen, and a skill in WINDUP / WARNING / FOLLOWUP_WAIT is cancelled at
+## once (red off, cooldown x ai.cancel_cooldown_ratio like an interrupt, event "paused"). A RECOVERY / STUNNED timer is
+## kept and resumes. true resumes from exactly where the clocks stopped; an idle controller waits one think interval
+## before its next choice, so a resume never casts twice. Idempotent.
+func set_active(active: bool) -> void:
+	if active == _active:
+		return
+	_active = active
+	if not active:
+		if not _skill.is_empty() and (_stage == Stage.WINDUP or _stage == Stage.WARNING or _stage == Stage.FOLLOWUP_WAIT):
+			_cooldowns[str(_skill["id"])] = float(_skill["cooldown_sec"]) * tempo_mult * float(_ai()["cancel_cooldown_ratio"])
+			_end_skill("paused", false)
+		_heal_left = 0.0
+		_heal_per_sec = 0.0
+		event_log.append({"t": _time, "skill": "", "event": "pause", "phase": _phase})
+	else:
+		if _stage == Stage.IDLE:
+			_think_left = think_interval_sec
+		event_log.append({"t": _time, "skill": "", "event": "resume", "phase": _phase})
+
+
+## Phase 0: false while paused by [method set_active].
+func is_active() -> bool:
+	return _active
+
+
+## Phase 0 (effects.evade): true while the enemy cannot be hit (TraitHost.extra_untargetable_fn -> SwingArbiter).
+func is_evading() -> bool:
+	return _evade_left > _EPS
+
+
+## Phase 0 (effects.shroud): true while the placement hit forecast must be hidden (TraitHost.extra_forecast_blocked_fn).
+func is_shrouded() -> bool:
+	return _shroud_left > _EPS
+
+
+## Phase 0: seconds left of the evade / shroud self effects (HUD, tests).
+func evade_left() -> float:
+	return maxf(_evade_left, 0.0)
+
+
+func shroud_left() -> float:
+	return maxf(_shroud_left, 0.0)
+
+
+## Phase 0 (M15 immunity): true when this enemy's data lists reaction [param id] in `immune_reactions` and [param side]
+## is the enemy's. TraitHost.extra_reaction_immune_fn points here.
+func reaction_immune(side: int, id: String) -> bool:
+	return side == E and (_enemy.get("immune_reactions", []) as Array).has(id)
+
+
+## Phase 0: the PLAYER completed a step (CombatView.try_step_player); feeds conditions.player_steps_since.
+func on_player_stepped() -> void:
+	for id: Variant in _steps_since.keys():
+		_steps_since[id] = int(_steps_since[id]) + 1
+	_steps_since["*"] = int(_steps_since.get("*", 0)) + 1
+
+
+## Phase 0 (G5): the `traits` entries ({id, params}) of phase [param index] (the current phase by default); [] when none.
+func phase_traits(index: int = -1) -> Array:
+	var p: Dictionary = _phase_dict(index)
+	return (p.get("traits", []) as Array).duplicate(true)
+
+
+## Phase 0: the BossBrain weight set the phase asks for ("" = keep the match's).
+func phase_brain_set(index: int = -1) -> String:
+	return str(_phase_dict(index).get("brain_set", ""))
+
+
+## Phase 0: the phase's tempo multiplier (1.0 = none); CombatView multiplies the match tempo by it when the phase starts.
+func phase_tempo_mult(index: int = -1) -> float:
+	return float(_phase_dict(index).get("tempo_mult", 1.0))
+
+
+func _phase_dict(index: int) -> Dictionary:
+	if _enemy.is_empty():
+		return {}
+	var i: int = _phase if index < 0 else index
+	if i < 0 or i >= _phases().size():
+		return {}
+	return _phases()[i] as Dictionary
+
+
+## Phase 0 (G4, presentation only): the feedback CombatView plays a resolved ATTACK strike with: {cells, hit, damage,
+## skill_id, delivery}; {} for a self / marker skill (nothing to draw on the player's half). A result without a usable
+## delivery gets SkillDelivery.FALLBACK, so an unknown delivery never breaks the game; the caller logs it.
+static func vfx_feedback(result: Dictionary) -> Dictionary:
+	if str(result.get("kind", "attack")) != "attack":
+		return {}
+	var delivery: Variant = result.get("delivery")
+	var out: Dictionary = {
+		"cells": (result.get("cells", []) as Array).duplicate(), "hit": bool(result.get("hit", false)),
+		"damage": float(result.get("damage", 0.0)), "skill_id": str(result.get("skill_id", "")),
+		"delivery": (delivery as Dictionary).duplicate(true) if delivery is Dictionary and not (delivery as Dictionary).is_empty() else SkillDelivery.FALLBACK.duplicate(true),
+		"delivery_fallback": not (delivery is Dictionary) or (delivery as Dictionary).is_empty(),
+	}
+	return out
+
+
 ## 2026-11-03: seconds left of the enemy's haste (effects.haste; 0 = none) - for the view and tests.
 func haste_left() -> float:
 	return _haste_left
@@ -290,9 +446,12 @@ func on_player_cast(cells: Array[Vector2i]) -> void:
 ## dropped, cooldown x ai.cancel_cooldown_ratio like an interrupt), then it stands still and casts nothing (is_busy).
 ## Ignored during a phase transition and when dead.
 func stun(sec: float) -> void:
-	if sec <= _EPS or _stage == Stage.TRANSITION or _enemy.is_empty() or _state.is_enemy_dead():
+	if sec <= _EPS or _stage == Stage.TRANSITION or _enemy.is_empty() or _state.is_key_dead(_key):
 		return
 	var already: float = _stage_left if _stage == Stage.STUNNED else 0.0
+	# Phase 0: a stun ends a heal over time (the Spore Cap's regrow is lost when it is hit mid-growth).
+	_heal_left = 0.0
+	_heal_per_sec = 0.0
 	if not _skill.is_empty():
 		_cooldowns[str(_skill["id"])] = float(_skill["cooldown_sec"]) * tempo_mult * float(_ai()["cancel_cooldown_ratio"])
 		_end_skill("stunned", false)
@@ -304,14 +463,21 @@ func stun(sec: float) -> void:
 
 ## Advances every clock by [param delta] (scaled simulation time: Focus slows / stops it with the match).
 func tick(delta: float) -> void:
-	if _enemy.is_empty() or delta <= 0.0 or _state.is_enemy_dead() or _state.is_player_dead():
+	if _enemy.is_empty() or delta <= 0.0 or _state.is_key_dead(_key) or _state.is_player_dead() or not _active:
 		return
 	_time += delta
 	_since_warning += delta
 	_since_aim += delta
+	_since_push += delta
 	for id: String in _cooldowns.keys():
 		_cooldowns[id] = maxf(float(_cooldowns[id]) - delta, 0.0)
 	_haste_left = maxf(_haste_left - delta, 0.0)
+	_evade_left = maxf(_evade_left - delta, 0.0)
+	_shroud_left = maxf(_shroud_left - delta, 0.0)
+	if _heal_left > _EPS:
+		var slice: float = minf(delta, _heal_left)
+		_state.heal_key(_key, _heal_per_sec * slice)
+		_heal_left -= slice
 	if _state.player_cell == _last_player_cell:
 		_still_sec += delta
 	else:
@@ -319,15 +485,15 @@ func tick(delta: float) -> void:
 		_last_player_cell = _state.player_cell
 	_tick_markers(delta)
 	if _stage != Stage.TRANSITION and _phase + 1 < _phases().size() \
-			and _state.enemy_hp <= float(_phases()[_phase + 1]["enter_hp_ratio"]) * _state.enemy_max_hp + _EPS:
+			and _state.hp_of(_key) <= float(_phases()[_phase + 1]["enter_hp_ratio"]) * _state.max_hp_of(_key) + _EPS:
 		_begin_transition()
 		return
 	match _stage:
 		Stage.TRANSITION:
-			_state.enemy_invulnerable_left = maxf(_state.enemy_invulnerable_left - delta, 0.0)
+			_unit().invulnerable_left = maxf(_unit().invulnerable_left - delta, 0.0)
 			_stage_left -= delta
 			if _stage_left <= _EPS:
-				_state.enemy_invulnerable_left = 0.0
+				_unit().invulnerable_left = 0.0
 				_set_stage(Stage.IDLE)
 				_apply_hp_floor()
 				_forced_queue.assign(((_phases()[_phase] as Dictionary)["transition"] as Dictionary)["on_enter"] as Array)
@@ -359,7 +525,11 @@ func tick(delta: float) -> void:
 # --- choice ---------------------------------------------------------------------------------------------------------
 
 func _try_choose() -> void:
-	if not FairnessCheck.gap_ok(_since_warning, maxf(_gap_needed, float(_config.fairness["min_gap_between_warnings_sec"]))):
+	if not FairnessCheck.gap_ok(_since_any_warning(), maxf(_gap_needed, float(_config.fairness["min_gap_between_warnings_sec"]))):
+		return
+	# Multi-enemy Phase 3 (D1): no free attack token = no skill this think (checked before the on_enter queue is read,
+	# so a forced skill waits for its token instead of being lost); a single enemy's board never refuses.
+	if threat_board != null and not threat_board.request(_key):
 		return
 	var phase: Dictionary = _phases()[_phase]
 	var candidates: Array[Dictionary] = []
@@ -379,13 +549,20 @@ func _try_choose() -> void:
 		_forced_queue.pop_front()
 	var every: Dictionary = phase["every_nth"] as Dictionary
 	var forced: String = ""
-	if not every.is_empty() and (_phase_casts + 1) % int(every["n"]) == 0:
+	if not forced_queue_skill.is_empty():
+		forced = forced_queue_skill  # on_enter forces its skill (schema: weight 0 = only when forced by every_nth / on_enter)
+	elif not every.is_empty() and (_phase_casts + 1) % int(every["n"]) == 0:
 		forced = str(every["skill"])
 	var choice: Dictionary = _brain.choose(candidates, {
 		"player_cell": _state.player_cell, "player_still_sec": _still_sec, "last_skill": _last_skill,
 		"mechanic": str(phase["mechanic"]), "forced_skill": forced,
+		# Phase 0: the fight's state the `weights` blocks read.
+		"player_statuses": _player_statuses(), "player_zones": _player_zones(), "self_statuses": _self_statuses(),
+		"allies_alive": int(_allies().get("alive", 0)),
 	})
 	if choice.is_empty():
+		if threat_board != null:
+			threat_board.release(_key)
 		return
 	_skill = choice["skill"] as Dictionary
 	_plan = choice["plan"] as Dictionary
@@ -397,7 +574,7 @@ func _try_choose() -> void:
 
 func _conditions_ok(skill: Dictionary, phase: Dictionary) -> bool:
 	var c: Dictionary = skill["conditions"] as Dictionary
-	var ratio: float = _state.enemy_hp / maxf(_state.enemy_max_hp, _EPS)
+	var ratio: float = _state.hp_of(_key) / maxf(_state.max_hp_of(_key), _EPS)
 	if c.has("phases") and not (c["phases"] as Array).has(str(phase["id"])):
 		return false
 	if c.has("hp_below") and ratio > float(c["hp_below"]) + _EPS:
@@ -412,7 +589,130 @@ func _conditions_ok(skill: Dictionary, phase: Dictionary) -> bool:
 		return false
 	if c.has("player_aimed_within_sec") and _since_aim > float(c["player_aimed_within_sec"]) + _EPS:
 		return false
+	# Phase 0 (design §5.2): the fight's state. Any-of lists: a string counts as a one-item list.
+	if c.has("player_status") and not _any_of(c["player_status"], _player_statuses()):
+		return false
+	if c.has("player_on_zone") and not _any_of(c["player_on_zone"], _player_zones()):
+		return false
+	if c.has("self_status") and not _any_of(c["self_status"], _self_statuses()):
+		return false
+	if c.has("player_steps_since") and int(_steps_since.get(str(skill["id"]), _steps_since.get("*", 0))) < int(c["player_steps_since"]):
+		return false
+	if c.has("burning_cells") and _status != null and _zone_fires().size() < int(c["burning_cells"]):
+		return false
+	if typeof(c.get("max_zone_cells")) == TYPE_DICTIONARY:
+		# The zone budget (design §9.3): the skill waits while the player's half already holds that many cells of the kind.
+		for kind: Variant in (c["max_zone_cells"] as Dictionary):
+			if _zone_cell_count(str(kind)) >= int((c["max_zone_cells"] as Dictionary)[kind]):
+				return false
+	var allies: Dictionary = _allies()
+	if c.has("allies_alive_min") and int(allies.get("alive", 0)) < int(c["allies_alive_min"]):
+		return false
+	if c.has("allies_alive_max") and int(allies.get("alive", 0)) > int(c["allies_alive_max"]):
+		return false
+	if c.has("ally_died_within_sec") and float(allies.get("died_within_sec", INF)) > float(c["ally_died_within_sec"]) + _EPS:
+		return false
+	if c.has("ally_hp_below") and float(allies.get("min_hp_ratio", 1.0)) > float(c["ally_hp_below"]) + _EPS:
+		return false
 	return true
+
+
+# Phase 0: true when [param wanted] (a String or an Array of ids) names at least one id of [param have].
+static func _any_of(wanted: Variant, have: Array[String]) -> bool:
+	if wanted is Array:
+		for id: Variant in (wanted as Array):
+			if have.has(str(id)):
+				return true
+		return false
+	return have.has(str(wanted))
+
+
+## Phase 0: the status ids on the player right now (StatusEffects ids: frozen = pin): fragile, frost, slow, root,
+## frozen, poison, mark.
+func _player_statuses() -> Array[String]:
+	var out: Array[String] = []
+	if _status == null:
+		return out
+	if _status.fragile_stacks(P) > 0:
+		out.append("fragile")
+	if _status.frost_stacks(P) > 0:
+		out.append("frost")
+	if _status.get_slow_left(P) > _EPS:
+		out.append("slow")
+	if _status.is_rooted(P):
+		out.append("root")
+	if _status.is_pinned(P):
+		out.append("frozen")
+	if _status.is_poisoned(P):
+		out.append("poison")
+	if _status.has_mark(P):
+		out.append("mark")
+	return out
+
+
+## Phase 0: the zone kinds under the player's cell right now: burn, thorns, mire, sand, crack (StatusEffects / TileHazards).
+func _player_zones() -> Array[String]:
+	var out: Array[String] = []
+	var cell: Vector2i = _state.player_cell
+	if _status != null:
+		if _status.is_burning(cell):
+			out.append("burn")
+		if not _status.thorns_at(P, cell).is_empty():
+			out.append("thorns")
+		if _status.is_cracking(P, cell):
+			out.append("crack")
+	if hazards != null:
+		if hazards.is_mire(P, cell):
+			out.append("mire")
+		if hazards.is_sanded(P, cell):
+			out.append("sand")
+	return out
+
+
+## Phase 0: the enemy's own self-effect ids right now: guard, haste, evade, shroud.
+func _self_statuses() -> Array[String]:
+	var out: Array[String] = []
+	if _status != null and _status.guard_amount(_key) > 0.0:
+		out.append("guard")
+	if _haste_left > _EPS:
+		out.append("haste")
+	if is_evading():
+		out.append("evade")
+	if is_shrouded():
+		out.append("shroud")
+	return out
+
+
+# Phase 0: cells of [param kind] on the player's half (burn / thorns / mire / sand / hole / fall), for max_zone_cells.
+func _zone_cell_count(kind: String) -> int:
+	match kind:
+		"burn":
+			if _status == null:
+				return 0
+			var n: int = 0
+			for c: Vector2i in _status.burning_cells():
+				if _grid.is_player_cell(c):
+					n += 1
+			return n
+		"thorns":
+			return _status.thorn_cells(P).size() if _status != null else 0
+		"mire":
+			return hazards.mire_cells(P).size() if hazards != null else 0
+		"sand":
+			return hazards.sand_cells(P).size() + hazards.sand_warning_cells(P).size() if hazards != null else 0
+		"hole", "drop":
+			return _status.hole_cells(P).size() + _status.crack_cells(P).size() if _status != null else 0
+		"fall":
+			return hazards.fallen_cells(P).size() if hazards != null else 0
+	return 0
+
+
+func _allies() -> Dictionary:
+	if allies_fn.is_valid():
+		var d: Variant = allies_fn.call()
+		if d is Dictionary:
+			return d as Dictionary
+	return {"alive": 0, "died_within_sec": INF, "min_hp_ratio": 1.0}
 
 
 # Plans of [param skill] that pass F1 (4.1) and F2 (red ceiling). Self / marker skills only need a plan.
@@ -420,7 +720,7 @@ func _valid_plans(skill: Dictionary, warning_sec: float) -> Array[Dictionary]:
 	if typeof((skill["effects"] as Dictionary).get("move")) == TYPE_DICTIONARY:
 		# P2.3 (Rootling creep): one plan per cell it may step to; none = it cannot cast now.
 		var moves: Array[Dictionary] = []
-		for cell: Vector2i in _move_targets():
+		for cell: Vector2i in _move_targets(str(((skill["effects"] as Dictionary)["move"] as Dictionary).get("to", "adjacent_row"))):
 			moves.append({"cells": [cell] as Array[Vector2i], "anchor": cell, "rotation": 0, "move_to": cell})
 		return moves
 	var all: Array[Dictionary] = PatternPlanner.plans(skill, _plan_ctx())
@@ -478,9 +778,10 @@ func _player_lock_left() -> float:
 func _plan_ctx() -> Dictionary:
 	var status: StatusEffects = _status
 	return {
-		"grid": _grid, "player_cell": _state.player_cell, "enemy_cell": _state.enemy_cell, "markers": marker_cells(),
-		"enemy_cells": _state.enemy_footprint_cells(),
-		"cell_ok_fn": (func(c: Vector2i) -> bool: return not status.is_locked(c)) if status != null else Callable(),
+		"grid": _grid, "player_cell": _state.player_cell, "enemy_cell": _state.cell_of(_key), "markers": marker_cells(),
+		"enemy_cells": _state.unit_cells(_key),
+		# Phase 3: a cell under ANOTHER living enemy unit is not this unit's free cell (no other unit = unchanged)
+		"cell_ok_fn": (func(c: Vector2i) -> bool: return not status.is_locked(c) and _free_of_others(c)) if status != null else Callable(),
 	}
 
 
@@ -503,7 +804,7 @@ func _after_windup() -> void:
 			var lanes: Array[Dictionary] = _fair_followups(followup, chosen["cells"] as Array[Vector2i], float(_skill["warning_sec"]), chosen["cells"] as Array, int(chosen.get("rotation", 0)))
 			if not lanes.is_empty():
 				queued = lanes[0]["cells"] as Array[Vector2i]
-	if chosen.is_empty() or not FairnessCheck.gap_ok(_since_warning, float(_config.fairness["min_gap_between_warnings_sec"])):
+	if chosen.is_empty() or not FairnessCheck.gap_ok(_since_any_warning(), float(_config.fairness["min_gap_between_warnings_sec"])):
 		_cooldowns[str(_skill["id"])] = float(_skill["cooldown_sec"]) * tempo_mult * float(_ai()["cancel_cooldown_ratio"])
 		_end_skill("aborted", false)
 		return
@@ -519,12 +820,20 @@ func _start_warning(cells: Array[Vector2i], queued: Array[Vector2i], warning_sec
 	_stage_left = warning_sec
 	_set_stage(Stage.WARNING)
 	_since_warning = 0.0
+	if threat_board != null:
+		threat_board.note_warning()
 	warning_started.emit(str(_skill["id"]), _warn_cells.duplicate(), _queued_cells.duplicate(), warning_sec)
 
 
 func _resolve_warning() -> void:
 	var effects: Dictionary = (_skill["followup"] as Dictionary)["effects"] if _is_followup else _skill["effects"]
 	var result: Dictionary = _resolve_cells(_warn_cells, effects as Dictionary)
+	# Crash fix 2026-11-13: the strike may have ended its own skill inside _resolve_cells (a parried reflect crossing
+	# a phase threshold, a rebirth / burrow pause, a stun). _end_skill has already emitted warning_cleared and reset
+	# the stage, so there is nothing left to clear, follow up or finish — and _skill is empty, which every line below
+	# would read.
+	if _skill.is_empty():
+		return
 	warning_cleared.emit(str(_skill["id"]), "resolved")
 	var followup: Dictionary = _skill["followup"] as Dictionary
 	if _is_followup or followup.is_empty() or marker_cells().size() < int(followup["requires_anchor"]):
@@ -574,7 +883,9 @@ func _fair_followups(followup: Dictionary, first: Array[Vector2i], warning_sec: 
 func _resolve_cells(cells: Array[Vector2i], effects: Dictionary) -> Dictionary:
 	var open: Array[Vector2i] = _status.unlocked_cells(cells) if _status != null else cells.duplicate()
 	var hit: bool = open.has(_state.player_cell)
-	var result: Dictionary = {"skill_id": str(_skill["id"]), "cells": open, "hit": hit, "damage": 0.0, "status": "", "zone_cells": [] as Array[Vector2i], "followup": false}
+	var result: Dictionary = {"skill_id": str(_skill["id"]), "cells": open, "hit": hit, "damage": 0.0, "status": "", "zone_cells": [] as Array[Vector2i], "followup": false,
+		# Phase 0 (G4): what the view needs to draw the strike (presentation reads it, never the other way round).
+		"kind": str(_skill.get("kind", "attack")), "delivery": (_skill.get("delivery", {}) as Dictionary).duplicate(true)}
 	var damage: float = float(effects.get("damage", 0.0))
 	if effects.has("damage_no_markers") and _markers.is_empty():
 		damage = float(effects["damage_no_markers"])  # P2.4: forest_last_knot without an anchor
@@ -582,7 +893,7 @@ func _resolve_cells(cells: Array[Vector2i], effects: Dictionary) -> Dictionary:
 	var has_status: bool = typeof(effects.get("status")) == TYPE_DICTIONARY
 	result["parried"] = false
 	if hit and (damage > 0.0 or has_status) and player_guard != null and player_guard.is_active():
-		var parry: Dictionary = player_guard.try_parry(_state, _status, damage)
+		var parry: Dictionary = player_guard.try_parry(_state, _status, damage, _key)
 		result["parried"] = true
 		result["reflected"] = float(parry.get("reflected", 0.0))
 		result["blocked"] = float(parry.get("blocked", 0.0))
@@ -590,23 +901,70 @@ func _resolve_cells(cells: Array[Vector2i], effects: Dictionary) -> Dictionary:
 		has_status = false
 	if hit and damage > 0.0:
 		var before: float = _state.player_hp
-		# Skill v2 batch 3 (M10): the hero on a ward takes x damage_mult minus the ward's Guard (StatusEffects.ward_absorb).
 		if _status != null:
+			# Phase 0 (bug G1): the player's Rạn (fragile) multiplies an enemy strike and spends a stack, as it does for
+			# the block boss's casts (CutEffects). Before the ward, which is the hero's armour.
+			if _status.fragile_stacks(P) > 0:
+				damage *= _status.consume_fragile(P)
+				result["fragile_hit"] = true
+			# Skill v2 batch 3 (M10): the hero on a ward takes x damage_mult minus the ward's Guard (StatusEffects.ward_absorb).
 			damage = _status.ward_absorb(CombatState.Side.PLAYER, damage, _state)
 		_state.damage_player(damage)
 		result["damage"] = before - _state.player_hp
 	if hit and _status != null and has_status:
 		var st: Dictionary = effects["status"] as Dictionary
 		if not bool(st["first_cell_only"]) or (not open.is_empty() and open[0] == _state.player_cell and cells[0] == open[0]):
-			result["status"] = _apply_status(st)
-	if _status != null and typeof(effects.get("zone")) == TYPE_DICTIONARY:
+			result["status"] = _apply_status(st, result)
+	if hit and not bool(result["parried"]) and (effects.has("push") or effects.has("pull")):
+		# Phase 0 (design §5.2): a forced move of the hero through the cards' own push / pull (CutEffects), R3 when stopped.
+		_apply_forced_move(effects, result)
+	if _status != null and typeof(effects.get("zone")) == TYPE_DICTIONARY and str((effects["zone"] as Dictionary).get("side", "player")) == "player":
 		result["zone_cells"] = _apply_zone(effects["zone"] as Dictionary, open)
 	_record(result)
-	skill_resolved.emit(str(_skill["id"]), result)
+	# Crash fix 2026-11-13 (found by the monster-skills session, kiem_si set 2001): everything above may end the skill
+	# under us — a parried strike whose reflect crosses a phase threshold, a rebirth or burrow pause, a stun — and
+	# _end_skill empties _skill. Read the id from the result, which was filled before any of that ran.
+	skill_resolved.emit(str(result["skill_id"]), result)
 	return result
 
 
-func _apply_status(st: Dictionary) -> String:
+# Phase 0: effects.push {cells} moves the hero away from the divider, effects.pull {cells} toward the enemy's cast origin;
+# never into a cell player_blocked_fn refuses, never through a ward with push_immune, never inside push_icd_sec of the
+# previous one. A move stopped short slams (R3, the cards' reaction numbers, the shared reaction gate).
+func _apply_forced_move(effects: Dictionary, result: Dictionary) -> void:
+	if push_icd_sec > _EPS and _since_push < push_icd_sec - _EPS:
+		result["push_icd"] = true
+		return
+	if _status != null and _status.ward_push_immune(P, _state):
+		result["push_immune"] = true
+		return
+	var wanted: int = 0
+	var moved: int = 0
+	var blocked: bool = false
+	if effects.has("push"):
+		wanted = int((effects["push"] as Dictionary)["cells"])
+		moved = CutEffects.push_away(_state, _grid, P, wanted, player_blocked_fn)
+		blocked = moved < wanted
+	else:
+		wanted = int((effects["pull"] as Dictionary)["cells"])
+		var pulled: Dictionary = CutEffects.pull_toward(_state, _grid, P, _state.cast_origin(_key), wanted, player_blocked_fn)
+		moved = int(pulled["steps"])
+		blocked = bool(pulled["blocked"])
+	_since_push = 0.0
+	result["moved"] = moved
+	if blocked and _status != null and _status.reaction_allowed(P, "r3", float(reactions.get("icd_sec", -1.0))):
+		var r3: Dictionary = CutEffects.reaction_numbers({"reactions": reactions})["r3"] as Dictionary
+		var dmg: float = float(r3.get("damage", 8.0))
+		var before: float = _state.player_hp
+		_state.damage_player(dmg)
+		result["damage"] = float(result["damage"]) + (before - _state.player_hp)
+		if float(r3.get("pin_sec", 0.0)) > 0.0:
+			_status.pin(P, float(r3["pin_sec"]))
+		result["reaction"] = "r3"
+		_status.reaction_fired.emit(P, "r3", dmg)
+
+
+func _apply_status(st: Dictionary, result: Dictionary = {}) -> String:
 	var id: String = str(st["id"])
 	match id:
 		"root", "pin":
@@ -624,7 +982,16 @@ func _apply_status(st: Dictionary) -> String:
 		"fragile":
 			_status.apply_fragile(P, int(st["stacks"]))
 		"frost":
-			_status.apply_frost(P, int(st["stacks"]))
+			# Phase 0 (bug G2): apply_frost RETURNS the burst damage and the caller applies it (StatusEffects' contract);
+			# it ignores defense and Rạn, so it goes straight to the HP, not through the ward.
+			var burst: float = _status.apply_frost(P, int(st["stacks"]))
+			if burst > 0.0:
+				var before: float = _state.player_hp
+				_state.damage_player(burst)
+				result["frost_burst"] = burst
+				result["damage"] = float(result.get("damage", 0.0)) + (before - _state.player_hp)
+		"poison":
+			_status.poison(P, float(st["sec"]), float(st["tick_sec"]), float(st["damage"]))
 	return id
 
 
@@ -652,12 +1019,37 @@ func _apply_zone(zone: Dictionary, cells: Array[Vector2i]) -> Array[Vector2i]:
 		var step_left: float = float(player_step_left_fn.call()) if player_step_left_fn.is_valid() else 0.0
 		var ok: bool = ZoneRules.unit_cell_droppable(step_left, warn, margin, _status.is_pinned(P), _status.is_rooted(P))
 		return ZoneRules.cast_drop(_state, _grid, _status, P, zone_cells, warn, float(zone.get("hole_sec", 1.2)), ok)
+	# Phase 0 (design §5.2): the cell effects that already exist, opened to enemy skills. Each keeps its own leave-a-path
+	# rule (ignite: the one-zone-per-cell book; TileHazards: its own blockers) on top of F3 above.
+	if id == "burn":
+		return _ignite(zone_cells, zone)
+	if hazards == null:
+		push_warning("PatternController: zone '%s' needs the match TileHazards (none wired), skipped" % id)
+		return [] as Array[Vector2i]
+	if id == "mire":
+		hazards.add_mire(P, zone_cells, maxf(float(zone.get("sec", 4.0)), 0.05))
+		return zone_cells
+	if id == "sand":
+		return hazards.add_sand(P, zone_cells, float(zone.get("sec", -1.0)), float(zone.get("warn_sec", -1.0)))
+	if id == "fall":
+		return hazards.drop_cells(P, zone_cells, float(zone.get("fall_sec", -1.0)), float(zone.get("warn_sec", -1.0)))
 	return [] as Array[Vector2i]
+
+
+# Phase 0: lights [param cells] through the ONE burn API every fire uses (row_burner, vents, the cards): sec / tick_sec /
+# damage from the zone (defaults 3 / 0.5 / 2, the row_burner numbers). Returns the cells lit.
+func _ignite(cells: Array[Vector2i], zone: Dictionary) -> Array[Vector2i]:
+	if cells.is_empty() or _status == null:
+		return [] as Array[Vector2i]
+	_status.ignite(cells, maxf(float(zone.get("sec", 3.0)), 0.05), maxf(float(zone.get("tick_sec", 0.5)), 0.05), maxf(float(zone.get("damage", 2.0)), 0.0))
+	return cells.duplicate()
 
 
 func _resolve_self_or_marker() -> void:
 	var effects: Dictionary = _skill["effects"] as Dictionary
-	var result: Dictionary = {"skill_id": str(_skill["id"]), "cells": [] as Array[Vector2i], "hit": false, "damage": 0.0, "status": "", "zone_cells": [] as Array[Vector2i], "followup": false}
+	var result: Dictionary = {"skill_id": str(_skill["id"]), "cells": [] as Array[Vector2i], "hit": false, "damage": 0.0, "status": "", "zone_cells": [] as Array[Vector2i], "followup": false,
+		"kind": str(_skill.get("kind", "self")), "delivery": (_skill.get("delivery", {}) as Dictionary).duplicate(true)}
+	var left_cells: Array[Vector2i] = _state.unit_cells(_key)
 	if str(_skill["kind"]) == "marker":
 		var plans: Array[Dictionary] = PatternPlanner.plans(_skill, _plan_ctx())
 		var marker: Dictionary = effects.get("marker", {"life_sec": float(_config.defaults["marker_life_sec"]), "break_min_cells": int(_config.defaults["marker_break_min_cells"])}) as Dictionary
@@ -681,7 +1073,7 @@ func _resolve_self_or_marker() -> void:
 	if typeof(effects.get("move")) == TYPE_DICTIONARY and _plan.has("move_to"):
 		# P2.3 (Rootling creep): steps to the cell shown during the windup when it is still free; else stays.
 		var to: Vector2i = _plan["move_to"] as Vector2i
-		if _can_move_to(to) and _state.set_enemy_cell(to):
+		if _can_move_to(to) and _state.set_key_cell(_key, to):
 			(result["cells"] as Array[Vector2i]).append(to)
 	if typeof(effects.get("haste")) == TYPE_DICTIONARY:
 		_haste_left = float((effects["haste"] as Dictionary)["sec"])
@@ -690,18 +1082,64 @@ func _resolve_self_or_marker() -> void:
 	if typeof(effects.get("guard")) == TYPE_DICTIONARY and _status != null:
 		var g: Dictionary = effects["guard"] as Dictionary
 		if not bool(g["while_markers"]) or not _markers.is_empty():
-			_status.guard(E, float(g["amount"]), float(g["sec"]))
+			_status.guard(_key, float(g["amount"]), float(g["sec"]))
 			_guard_markers = bool(g["while_markers"])
 			result["status"] = "guard"
+	# Phase 0 self effects (design §5.2): heal (at once, or over sec through tick), consume_burn, evade, shroud, and a
+	# zone with side `self` on the footprint cells the enemy just LEFT (molten trail; its current cells when it did not move).
+	if typeof(effects.get("heal")) == TYPE_DICTIONARY:
+		var h: Dictionary = effects["heal"] as Dictionary
+		var amount: float = float(h["amount"]) + float(h["ratio"]) * _state.max_hp_of(_key)
+		if float(h["sec"]) > _EPS:
+			_heal_left = float(h["sec"])
+			_heal_per_sec = amount / float(h["sec"])
+		else:
+			_state.heal_key(_key, amount)
+		result["heal"] = amount
+		result["status"] = "heal"
+	if typeof(effects.get("consume_burn")) == TYPE_DICTIONARY and _status != null:
+		var burning: Array[Vector2i] = _zone_fires()
+		if not burning.is_empty():
+			_status.clear_burn(burning)
+			var gained: float = _state.heal_key(_key, float((effects["consume_burn"] as Dictionary)["heal_per_cell"]) * burning.size())
+			result["consumed_burn"] = burning.size()
+			result["heal"] = gained
+	if typeof(effects.get("evade")) == TYPE_DICTIONARY:
+		_evade_left = maxf(_evade_left, float((effects["evade"] as Dictionary)["sec"]))
+		result["status"] = "evade"
+	if typeof(effects.get("shroud")) == TYPE_DICTIONARY:
+		_shroud_left = maxf(_shroud_left, float((effects["shroud"] as Dictionary)["sec"]))
+		result["status"] = "shroud"
+	if typeof(effects.get("zone")) == TYPE_DICTIONARY and str((effects["zone"] as Dictionary).get("side", "player")) == "self":
+		var zone: Dictionary = effects["zone"] as Dictionary
+		if str(zone.get("id", "")) == "burn":
+			result["zone_cells"] = _ignite(left_cells, zone)
+		else:
+			push_warning("PatternController: zone side 'self' supports burn only ('%s' skipped)" % str(zone.get("id", "")))
 	_record(result)
-	skill_resolved.emit(str(_skill["id"]), result)
+	# Same reason as in _resolve_cells: a self skill's own effects can end it before this line.
+	skill_resolved.emit(str(result["skill_id"]), result)
 
 
 # P2.3: cells a moving self skill may step to: one row up / down on the enemy's half (effects.move.to adjacent_row).
-func _move_targets() -> Array[Vector2i]:
+# Phase 0: `far_cell` = the anchors of its half the footprint fits on, at the largest step distance from where it stands
+# (several at a tie, the controller's seeded pick chooses); none when nothing is farther than its own cell.
+func _move_targets(to: String = "adjacent_row") -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
+	if to == "far_cell":
+		var best: int = 0
+		for anchor: Vector2i in _state.unit_anchors(CombatState.unit_index_of(_key)):
+			if anchor == _state.cell_of(_key) or not _can_move_to(anchor):
+				continue
+			var dist: int = absi(anchor.x - _state.cell_of(_key).x) + absi(anchor.y - _state.cell_of(_key).y)
+			if dist > best:
+				best = dist
+				out.clear()
+			if dist == best:
+				out.append(anchor)
+		return out
 	for dy: int in [-1, 1]:
-		var cell: Vector2i = _state.enemy_cell + Vector2i(0, dy)
+		var cell: Vector2i = _state.cell_of(_key) + Vector2i(0, dy)
 		if _can_move_to(cell):
 			out.append(cell)
 	return out
@@ -711,7 +1149,7 @@ func _move_targets() -> Array[Vector2i]:
 func _can_move_to(anchor: Vector2i) -> bool:
 	var status: StatusEffects = _status
 	var marks: Array[Vector2i] = marker_cells()
-	return _state.enemy_fits(anchor, func(c: Vector2i) -> bool:
+	return _state.key_fits(_key, anchor, func(c: Vector2i) -> bool:
 		return marks.has(c) or (status != null and (status.is_hole(E, c) or status.is_cracking(E, c))))
 
 
@@ -722,6 +1160,8 @@ func _finish_skill() -> void:
 	_cooldowns[id] = float(_skill["cooldown_sec"]) * tempo_mult * (_haste_mult if hasted else 1.0)
 	if bool((_skill["conditions"] as Dictionary).get("once", false)):
 		_used_once[id] = true
+	# Phase 0: conditions.player_steps_since counts from the skill's last cast.
+	_steps_since[id] = 0
 	_last_skill = id
 	if bool(_skill.get("counts_as_cast", true)):
 		_phase_casts += 1
@@ -760,11 +1200,11 @@ func _begin_transition() -> void:
 	var sec: float = float(((_phases()[_phase] as Dictionary)["transition"] as Dictionary)["sec"])
 	_set_stage(Stage.TRANSITION)
 	_stage_left = sec
-	_state.enemy_invulnerable_left = sec
+	_unit().invulnerable_left = sec
 	event_log.append({"t": _time, "skill": "", "event": "phase", "phase": _phase})
 	phase_started.emit(_phase, str(_phases()[_phase]["id"]))
 	if sec <= _EPS:
-		_state.enemy_invulnerable_left = 0.0
+		_unit().invulnerable_left = 0.0
 		_set_stage(Stage.IDLE)
 		_apply_hp_floor()
 		_forced_queue.assign(((_phases()[_phase] as Dictionary)["transition"] as Dictionary)["on_enter"] as Array)
@@ -775,9 +1215,9 @@ func _apply_hp_floor() -> void:
 	if _enemy.is_empty():
 		return
 	if _phase + 1 < _phases().size():
-		_state.enemy_hp_floor = float(_phases()[_phase + 1]["enter_hp_ratio"]) * _state.enemy_max_hp
+		_unit().hp_floor = float(_phases()[_phase + 1]["enter_hp_ratio"]) * _unit().max_hp
 	else:
-		_state.enemy_hp_floor = 0.0
+		_unit().hp_floor = 0.0
 
 
 func _tick_markers(delta: float) -> void:
@@ -788,7 +1228,7 @@ func _tick_markers(delta: float) -> void:
 			_markers.remove_at(i)
 			changed = true
 	if _guard_markers and _markers.is_empty() and _status != null:
-		_status.clear_guard(E)
+		_status.clear_guard(_key)
 		_guard_markers = false
 	if changed:
 		markers_changed.emit()
@@ -805,3 +1245,21 @@ func _phases() -> Array:
 
 func _ai() -> Dictionary:
 	return _enemy.get("ai", _config.ai) as Dictionary
+
+
+# Phase 3: true when no OTHER living enemy unit covers [param cell] (always true with one unit).
+func _free_of_others(cell: Vector2i) -> bool:
+	var other: int = _state.key_at(CombatState.Side.ENEMY, cell)
+	return other < 0 or other == _key
+
+
+# R11 (user-approved 2026-11-13): fires a skill or a card lit (zone fire); a lava vent's terrain fire is not food for
+# consume_burn (eater_devour) and does not count toward a `burning_cells` condition.
+func _zone_fires() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if _status == null:
+		return out
+	for c: Vector2i in _status.burning_cells():
+		if _status.zone_kind_at(c) == StatusEffects.KIND_BURN:
+			out.append(c)
+	return out

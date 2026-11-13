@@ -33,6 +33,20 @@ static func weight_for(skill: Dictionary, plan: Dictionary, ctx: Dictionary, ai:
 		w *= float(ai["avoid_repeat_last_skill"])
 	if not str(ctx.get("mechanic", "")).is_empty() and str(skill["id"]) == str(ctx.get("mechanic", "")):
 		w *= float(ai["favor_phase_mechanic"])
+	# Monster Skill Phase 0 (design §5.2): the skill's `weights` blocks x the fight's state the controller hands over
+	# (player_statuses / player_zones / self_statuses: Array[String]; allies_alive: int). Every matching entry multiplies;
+	# a missing block or an empty ctx list changes nothing, so the 11 forest enemies (no `weights`) score as before.
+	var weights: Dictionary = skill.get("weights", {}) as Dictionary
+	for block_key: String in ["player_status", "player_on_zone", "self_status"]:
+		var ctx_key: String = str({"player_status": "player_statuses", "player_on_zone": "player_zones", "self_status": "self_statuses"}[block_key])
+		if typeof(weights.get(block_key)) != TYPE_DICTIONARY:
+			continue
+		var have: Array = ctx.get(ctx_key, []) as Array
+		for id: Variant in (weights[block_key] as Dictionary):
+			if have.has(str(id)):
+				w *= float((weights[block_key] as Dictionary)[id])
+	if weights.has("allies_alive") and int(ctx.get("allies_alive", 0)) > 0:
+		w *= float(weights["allies_alive"])
 	return w
 
 

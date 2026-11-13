@@ -97,6 +97,9 @@ var _status: StatusEffects = null
 ## P2.4: Callable() -> Array of enemy-half cells the boss must never step onto (the pattern brain's root anchors: the
 ## Forest Witch never walks onto her own anchors, spec 7.1); invalid = none. Read every think, blocked like a hole.
 var extra_own_blocked_fn: Callable = Callable()
+## Multi-enemy Phase 3: the unit KEY this brain drives (1 = unit 0, the pre-Phase-3 enemy). Its own cell / footprint /
+## HP are read through it; the other living units' cells count as blocked for its moves.
+var self_key: int = CombatState.Side.ENEMY
 var _learning: BossLearning = null
 ## Current destination: {cell, purpose, path_style_in_use, target_uid (pickup), from_cell and
 ## juke (dodge)}; empty when the boss has nowhere to go.
@@ -254,7 +257,7 @@ func decide(ctx: Dictionary) -> Dictionary:
 	if state == null or hand == null or drops == null or mover == null or actor == null \
 			or cooldowns == null or player_actor == null:
 		return _finish_wait("bad_context", 0.0)
-	if state.is_enemy_dead() or state.is_player_dead():
+	if state.is_key_dead(self_key) or state.is_player_dead():
 		return _finish_wait("dead", 0.0)
 	if _think_clock < _config.think_interval_sec:
 		return _finish_wait("thinking", 0.0)
@@ -332,13 +335,20 @@ func decide(ctx: Dictionary) -> Dictionary:
 		for cell: Variant in extra_own_blocked_fn.call() as Array:
 			if not own_blocked.has(cell as Vector2i):
 				own_blocked.append(cell as Vector2i)
+	# Phase 3: the cells of the OTHER living enemy units (none with one unit) are walls for this unit's moves
+	for other: int in state.enemy_keys(true):
+		if other == self_key:
+			continue
+		for cell: Vector2i in state.unit_cells(other):
+			if not own_blocked.has(cell):
+				own_blocked.append(cell)
 	_mire_pen = {}
 	_hazard_debug = {}
 	_crumble_cost = 0.0
 	_crumble_leave = false
 	if _hazards != null:
 		_apply_hazards(own_blocked, player_blocked)
-		_apply_crumble(state.enemy_cell)
+		_apply_crumble(state.cell_of(self_key))
 	_stand_clock = 0.0
 	_swing_damage = _cut_config.slash_damage(incoming.size()) if not incoming.is_empty() else 0.0
 	_swing_time_left = incoming_left if not incoming.is_empty() else 0.0
@@ -353,7 +363,7 @@ func decide(ctx: Dictionary) -> Dictionary:
 	# P2.2b (D13): a multi-cell enemy plans its moves in ANCHOR space (see _anchor_space); a 1-cell enemy is unchanged.
 	var move_incoming: Array[Vector2i] = incoming
 	var move_blocked: Array[Vector2i] = own_blocked
-	if state.enemy_footprint_size() > 1:
+	if state.footprint_size_of(self_key) > 1:
 		var spaced: Dictionary = _anchor_space(state, incoming, own_blocked)
 		move_incoming = spaced["incoming"]
 		move_blocked = spaced["blocked"]
@@ -805,12 +815,12 @@ func _anchor_space(state: CombatState, incoming: Array[Vector2i], blocked: Array
 	var thorn: Dictionary = {}
 	var mire: Dictionary = {}
 	for anchor: Vector2i in _grid.enemy_cells():
-		if not state.enemy_fits(anchor):
+		if not state.key_fits(self_key, anchor):
 			out_blocked.append(anchor)
 			continue
 		var t: float = 0.0
 		var m: float = 0.0
-		for cell: Vector2i in state.footprint_cells_at(anchor):
+		for cell: Vector2i in state.cells_at_key(self_key, anchor):
 			if incoming.has(cell) and not out_in.has(anchor):
 				out_in.append(anchor)
 			if blocked.has(cell) and not out_blocked.has(anchor):
@@ -832,7 +842,7 @@ func _plan_move(
 	state: CombatState, hand: HoldSlots, drops: FieldDrops, incoming: Array[Vector2i],
 	burning: Array[Vector2i], urgency: float, can_step: bool
 ) -> Dictionary:
-	var here: Vector2i = state.enemy_cell
+	var here: Vector2i = state.cell_of(self_key)
 	var points: Array[FieldPoint] = drops.get_points()
 	# 1. Arrival and invalidation of the current destination.
 	if not _destination.is_empty():
@@ -985,7 +995,7 @@ func _choose_destination(
 				if target != point.cell:
 					best["drift_from"] = point.cell
 	if best.is_empty():
-		var hp_ratio: float = state.enemy_hp / maxf(state.enemy_max_hp, 0.001)
+		var hp_ratio: float = state.hp_of(self_key) / maxf(state.max_hp_of(self_key), 0.001)
 		if hp_ratio < float(_weights["retreat_hp_ratio"]) and float(_weights["retreat_bonus"]) > 0.0:
 			var far: Vector2i = _farthest_cell(here, reach, incoming)
 			if far != here:
@@ -1276,7 +1286,7 @@ func _apply_hazards(own_blocked: Array[Vector2i], player_blocked: Array[Vector2i
 	var step_mult: float = float(cfg.get("mire_step_mult", 1.0))
 	var unit_cost: float = maxf(step_mult - 1.0, 0.0) + maxf(float(cfg.get("mire_tick_damage", 0.0)), 0.0)
 	var weight: float = float(_weights.get("mire_avoid", 0.0))
-	var immune: bool = _is_mire_immune(enemy, step_mult)
+	var immune: bool = _is_mire_immune(self_key, step_mult)
 	if not immune and weight > 0.0 and unit_cost > 0.0:
 		for cell: Vector2i in _hazards.mire_cells(enemy):
 			_mire_pen[cell] = weight * unit_cost
@@ -1367,7 +1377,8 @@ func _mire_penalty(cell: Vector2i) -> float:
 func _is_mire_immune(side: int, step_mult: float) -> bool:
 	if _hazards.has_method("is_mire_immune"):
 		return bool(_hazards.call("is_mire_immune", side))
-	var cells: Array[Vector2i] = _hazards.mire_cells(side)
+	var half: int = CombatState.side_of(side)
+	var cells: Array[Vector2i] = _hazards.mire_cells(half)
 	if cells.is_empty() or step_mult <= 1.0:
 		return false
 	return _hazards.step_cost_mult(side, cells[0]) <= 1.0

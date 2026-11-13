@@ -1,0 +1,20 @@
+tests/unit/combat/multi_enemy_resolver_test.gd: FAILS=5 se=0
+    FAIL C: a hit on unit 1 does not interrupt unit 0's swing  
+    FAIL D: execute reads each unit's own HP  
+    FAIL G: unit 0 dead: its actor stops, the match goes on  
+    FAIL G: unit 0's cell is free once it died  
+    FAIL G: unit 1 still takes hits; its death ends the fight  
+    FAILS=5 PASSES=40
+tests/unit/combat/combat_state_units_test.gd: FAILS=0 se=0
+    FAILS=0 PASSES=63
+tests/unit/combat/boss_footprint_test.gd: FAILS=0 se=0
+    FAILS=0
+tests/unit/combat/state_damaged_signal_test.gd: FAILS=0 se=0
+    FAILS=0
+tests/unit/combat/boss_downed_test.gd: FAILS=0 se=0
+    FAILS=0
+tests/unit/combat/arbiter_test.gd: FAILS: 0 se=0
+    FAILS: 0
+tests/unit/combat/cut_test.gd: FAILS: 0 se=0
+    FAILS: 0
+DONE

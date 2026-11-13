@@ -1,0 +1,28 @@
+=== tests/unit/run/map_v2/pattern_modifiers_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/encounter_composer_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/region_rules_config_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/region_map_gen_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/route_archetypes_config_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/run_session_v2_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/vent_surge_arena_invariant_test.gd
+FAILS=0
+=== tests/unit/ui/terminology_scan_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_group_a_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_group_b_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_group_c_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_group_d_test.gd
+FAILS=0
+=== sim smoke (1 seed)
+sim exit=0 script_errors=0
+137
+DONE

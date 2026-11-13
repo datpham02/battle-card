@@ -32,7 +32,15 @@ func is_cloud_lifted() -> bool:
 	if status != null and status.is_pinned(CombatState.Side.ENEMY):
 		return true
 	var boss: BossController = get_context().get("boss") as BossController
-	return boss != null and boss.get_actor() != null and boss.get_actor().is_swinging()
+	if boss != null and boss.get_actor() != null and boss.get_actor().is_swinging():
+		return true
+	# Phase 0 (G6): a pattern enemy "casts" through its controller, not the cut actor: the cloud lifts while a skill
+	# winds up or warns (ctx `pattern_getter`, set by CombatView; absent in block-brain matches and most tests).
+	var getter: Callable = get_context().get("pattern_getter", Callable()) as Callable
+	if not getter.is_valid():
+		return false
+	var pattern: PatternController = getter.call() as PatternController
+	return pattern != null and pattern.is_threatening()
 
 
 func get_debug() -> Dictionary:

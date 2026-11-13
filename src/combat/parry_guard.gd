@@ -81,19 +81,21 @@ func clear() -> void:
 ## reflect_mult x [param damage] through [param state] and pins it for parry_pin_sec through [param status] (may be
 ## null: no pin), and returns {parried: true, blocked, reflected, pin_sec}; the CALLER deals the hero 0 and skips the
 ## hit's status. Closed: {parried: false}.
-func try_parry(state: CombatState, status: StatusEffects, damage: float) -> Dictionary:
+## Multi-enemy Phase 3: [param attacker_key] = the unit KEY that struck (1 = unit 0, the pre-Phase-3 target); the reflect
+## and the pin land on that unit only.
+func try_parry(state: CombatState, status: StatusEffects, damage: float, attacker_key: int = CombatState.Side.ENEMY) -> Dictionary:
 	if not is_active() or state == null:
 		return {"parried": false}
 	var blocked: float = maxf(damage, 0.0)
 	var reflect: float = blocked * _reflect_mult
 	var pin_sec: float = _pin_sec
 	clear()
-	var hp_before: float = state.enemy_hp
-	if reflect > 0.0 and not state.is_enemy_dead():
-		state.damage(CombatState.Side.ENEMY, reflect)
-	var reflected: float = hp_before - state.enemy_hp
-	if status != null and pin_sec > 0.0 and not state.is_enemy_dead():
-		status.pin(CombatState.Side.ENEMY, pin_sec)
+	var hp_before: float = state.hp_of(attacker_key)
+	if reflect > 0.0 and not state.is_key_dead(attacker_key):
+		state.damage(attacker_key, reflect)
+	var reflected: float = hp_before - state.hp_of(attacker_key)
+	if status != null and pin_sec > 0.0 and not state.is_key_dead(attacker_key):
+		status.pin(attacker_key, pin_sec)
 	parries += 1
 	parried.emit(blocked, reflected, pin_sec)
 	return {"parried": true, "blocked": blocked, "reflected": reflected, "pin_sec": pin_sec}

@@ -18,6 +18,9 @@ const INFO: Dictionary = {
 	"guard": ["armor", Color("F8E080"), "ui.status.guard.name", "ui.status.guard.desc"],
 	# Deferred 10 (batch 4): Dấu Tử's death mark, a code glyph in the mark's crimson until the sheet has an icon
 	"mark": ["", Color("FFB3C6"), "ui.status.mark.name", "ui.status.mark.desc"],
+	# Monster Skill Phase 0: Poison (Độc), a unit-bound DoT from enemy skills; code glyph in the swamp's mushroom mauve
+	# (REGION palette) until the sheet has an icon.
+	"poison": ["", Color("8E8296"), "ui.status.poison.name", "ui.status.poison.desc"],
 }
 const UNKNOWN_COLOR: Color = Color("EFE6D2")
 ## Frame fill, the shade over the time already gone, the stack number colour.

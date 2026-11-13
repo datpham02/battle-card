@@ -1,0 +1,35 @@
+waited 95s for other Godot processes
+=== tests/unit/combat/pattern_hellfire_group_a_test.gd
+FAILS=0
+=== tests/unit/run/chapters_test.gd
+FAILS=0 PASSES=39
+=== tests/unit/run/chapters23_test.gd
+FAILS=0 PASSES=124
+=== tests/unit/run/world_map_gen_test.gd
+FAILS=0 PASSES=38
+=== tests/unit/ui/hazard_strings_039_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_roster_mechanics_test.gd
+FAILS=0
+=== shot imp frame 150
+ERROR: 10 resources still in use at exit (run with --verbose for details).
+=== shot imp frame 260
+ERROR: 10 resources still in use at exit (run with --verbose for details).
+=== shot ember_hound frame 150
+ERROR: 10 resources still in use at exit (run with --verbose for details).
+=== shot ember_hound frame 260
+ERROR: 10 resources still in use at exit (run with --verbose for details).
+=== shot ash_golem frame 150
+ERROR: 10 resources still in use at exit (run with --verbose for details).
+=== shot ash_golem frame 260
+ERROR: 10 resources still in use at exit (run with --verbose for details).
+total 656
+drwxr-xr-x 1 ADMIN 197121      0 Nov 13 08:07 .
+drwxr-xr-x 1 ADMIN 197121      0 Nov 13 08:06 ..
+-rw-r--r-- 1 ADMIN 197121 104014 Nov 13 08:07 ash_golem-forge-f150.png
+-rw-r--r-- 1 ADMIN 197121  99802 Nov 13 08:07 ash_golem-forge-f260.png
+-rw-r--r-- 1 ADMIN 197121 127567 Nov 13 08:06 ember_hound-caldera-f150.png
+-rw-r--r-- 1 ADMIN 197121 125740 Nov 13 08:07 ember_hound-caldera-f260.png
+-rw-r--r-- 1 ADMIN 197121  96789 Nov 13 08:06 imp-forge-f150.png
+-rw-r--r-- 1 ADMIN 197121  98395 Nov 13 08:06 imp-forge-f260.png
+DONE

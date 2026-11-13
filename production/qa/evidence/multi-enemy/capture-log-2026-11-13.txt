@@ -1,0 +1,13 @@
+--- multi_two -> 01-two-units.png (exit 0)
+DemoArgs: multi_two with 2 enemy units on boss_hall
+DemoArgs: multi_two units: key 1 'rootling' hp 100 at (8, 1); key 2 'goblin_scout' hp 60 at (8, 2)
+DemoArgs shot 1280x720 -> production/qa/evidence/multi-enemy/01-two-units.png (OK)
+DemoArgs shot geometry feet_hero_art=(299, 129) art_rect=[P: (-160.0, 0.0), S: (1600.0, 720.0)] hud=top_row:0,12,1280,48;player_panel:0,0,260,42;floor_title:0,21,1280,72;gold:1126,12,84,48;pause:1184,0,96,96;status_row:12,82,248,40;relic_strip:12,48,248,28;boss_status:674,85,557,58
+--- multi_three -> 02-three-units.png (exit 0)
+DemoArgs: multi_three with 3 enemy units on boss_hall
+DemoArgs: multi_three units: key 1 'mossbound_sentry' hp 131 at (8, 1); key 2 'goblin_scout' hp 60 at (8, 2); key 3 'ogre_king' hp 150 at (9, 1)
+DemoArgs shot 1280x720 -> production/qa/evidence/multi-enemy/02-three-units.png (OK)
+DemoArgs shot geometry feet_hero_art=(299, 129) art_rect=[P: (-160.0, 0.0), S: (1600.0, 720.0)] hud=top_row:0,12,1280,48;player_panel:0,0,260,42;floor_title:0,21,1280,72;gold:1126,12,84,48;pause:1184,0,96,96;status_row:12,82,248,40;relic_strip:12,48,248,28;boss_status:674,85,557,58
+--- files on disk
+-rw-r--r-- 1 ADMIN 197121 117720 Nov 13 22:21 production/qa/evidence/multi-enemy/01-two-units.png
+-rw-r--r-- 1 ADMIN 197121 121279 Nov 13 22:21 production/qa/evidence/multi-enemy/02-three-units.png

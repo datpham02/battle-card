@@ -200,8 +200,9 @@ var _feel: Dictionary = {}
 var _flash: Node2D = null
 ## A damage event whose flash has not started: CombatState.Side -> seconds still to wait (-1 = delay not read yet).
 var _flash_wait: Dictionary = {}
-## Seconds the boss has been invulnerable without a break (0 when it is not): drives the blink.
-var _invuln_time: float = 0.0
+## Seconds each enemy unit has been invulnerable without a break (key -> seconds; absent / 0 when it is not): drives
+## the blink. Multi-enemy Phase 4 (step 1): one clock per unit, so two invulnerable units blink on their own beat.
+var _invuln_time: Dictionary = {}
 ## Step glide (2026-11-02, OSFE dash feel): per side, the cell and ground (drawn feet) seen on the last advance, the
 ## glide {from: Vector2i ground, left, total} and the dust {at: Vector2i, left, total}.
 var _last_cell: Dictionary = {}
@@ -260,6 +261,37 @@ func _exit_tree() -> void:
 	_unbind_match()
 
 
+## Multi-enemy Phase 4 (step 1): every unit key the layer clocks and draws — the player, then one key per enemy unit,
+## dead ones included (they keep their defeat clip). A 1v1 match returns exactly [constant SIDES], in the same order,
+## so every per-key table is walked as before. [constant SIDES] while unbound.
+func unit_keys() -> Array[int]:
+	if _combat == null or _combat.get_state() == null:
+		return SIDES.duplicate()
+	return _combat.get_state().all_keys()
+
+
+# Multi-enemy Phase 4 (step 1): width and height (cells) of the footprint of [param key], from its own cells.
+# CombatState.footprint_extent() answers for unit 0 only, so the layer measures each unit itself.
+func _extent_of(key: int) -> Vector2i:
+	var cells: Array[Vector2i] = _combat.get_state().unit_cells(key)
+	if cells.is_empty():
+		return Vector2i.ONE
+	var lo: Vector2i = cells[0]
+	var hi: Vector2i = cells[0]
+	for cell: Vector2i in cells:
+		lo = Vector2i(mini(lo.x, cell.x), mini(lo.y, cell.y))
+		hi = Vector2i(maxi(hi.x, cell.x), maxi(hi.y, cell.y))
+	return hi - lo + Vector2i.ONE
+
+
+# Multi-enemy Phase 4 (step 1): seconds of invulnerability left on [param key] (0 for the player and unknown keys).
+func _invuln_left_of(key: int) -> float:
+	if key == CombatState.Side.PLAYER or _combat == null or _combat.get_state() == null:
+		return 0.0
+	var unit: EnemyUnit = _combat.get_state().get_unit(CombatState.unit_index_of(key))
+	return unit.invulnerable_left if unit != null else 0.0
+
+
 ## Advances every clock of the layer by [param step] match seconds: the status overlays and the unit
 ## animators (clip selection, then tick). _process calls it with [method CombatView.scaled_delta];
 ## tests call it directly. No-op until the view has a state.
@@ -269,9 +301,12 @@ func advance(step: float) -> void:
 	_bind_match()
 	_advance_status_clocks(step)
 	var state: CombatState = _combat.get_state()
-	_invuln_time = _invuln_time + maxf(step, 0.0) if state.enemy_invulnerable_left > 0.0 and not state.is_enemy_dead() else 0.0
 	_motion_clock += maxf(step, 0.0)
-	for side: int in SIDES:
+	for side: int in unit_keys():
+		if _invuln_left_of(side) > 0.0 and not state.is_key_dead(side):
+			_invuln_time[side] = float(_invuln_time.get(side, 0.0)) + maxf(step, 0.0)
+		else:
+			_invuln_time[side] = 0.0
 		_settle_left[side] = maxf(float(_settle_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
 		_release_left[side] = maxf(float(_release_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
 		_track_step(side, maxf(step, 0.0))
@@ -527,17 +562,21 @@ func clip_context(side: int) -> Dictionary:
 	# due, CastVfx), not only for the clip's length.
 	var actor: CutActor = _combat.get_cut_actor() if player else null
 	var casting: bool = _cast_pending or (actor != null and actor.is_swinging()) or (anim != null and is_cast_clip(anim.current_clip()) and not anim.is_finished())
-	var boss_actor: CutActor = _combat.get_boss().get_actor() if _combat.get_boss() != null else null
+	# Multi-enemy Phase 4 (step 1): the actor and the pattern of THIS unit, not of unit 0.
+	var ctrl: BossController = _combat.controller_of(side) if not player else null
+	var boss_actor: CutActor = ctrl.get_actor() if ctrl != null else null
 	# 2026-11-02: a pattern-brain enemy has no swinging CutActor; its own stages drive the windup / phase clips.
-	var pattern: PatternController = _combat.get_pattern_controller() if not player else null
+	var pattern: PatternController = _combat.pattern_of(side) if not player else null
 	var stage: int = pattern.get_stage() if pattern != null else -1
 	var pattern_cast: bool = stage == PatternController.Stage.WINDUP or stage == PatternController.Stage.WARNING 		or stage == PatternController.Stage.FOLLOWUP_WAIT
 	return {
 		CTX_SIDE: side,
-		CTX_DEAD: state.is_player_dead() if player else state.is_enemy_dead(),
-		CTX_DOWNED: (not player) and _combat.is_boss_downed(),
+		CTX_DEAD: state.is_player_dead() if player else state.is_key_dead(side),
+		# "Downed" (Story 035) is a unit-0 state: only unit 0 can stand at 0 HP.
+		CTX_DOWNED: side == CombatState.Side.ENEMY and _combat.is_boss_downed(),
 		CTX_FELL: _combat.died_by_fall(side),
-		CTX_OPPONENT_DEAD: state.is_enemy_dead() if player else state.is_player_dead(),
+		# The player's victory clip waits for the whole formation, not only unit 0 (identical with one unit).
+		CTX_OPPONENT_DEAD: state.all_required_dead() if player else state.is_player_dead(),
 		CTX_HIT: get_hit_left(side) > 0.0,
 		CTX_CASTING: player and casting,
 		CTX_SWINGING: (not player) and ((boss_actor != null and boss_actor.is_swinging()) or pattern_cast),
@@ -693,10 +732,22 @@ static func clip_for(ctx: Dictionary) -> String:
 static func unit_ids_for(match_params: Dictionary) -> Dictionary:
 	var character: Variant = match_params.get("character")
 	var player_id: String = str((character as Dictionary).get("id", "")) if character is Dictionary else ""
-	return {
+	var out: Dictionary = {
 		CombatState.Side.PLAYER: player_id,
 		CombatState.Side.ENEMY: str(match_params.get("id", "")),
 	}
+	# Multi-enemy Phase 4 (step 1): a resolved formation names one sprite per unit (`enemies[i]` is unit i, so entry 0
+	# overrides the match id). An entry with neither key keeps what is already there.
+	var entries: Variant = match_params.get("enemies")
+	if typeof(entries) == TYPE_ARRAY:
+		for i: int in range((entries as Array).size()):
+			var raw: Variant = (entries as Array)[i]
+			if typeof(raw) != TYPE_DICTIONARY:
+				continue
+			var unit_id: String = str((raw as Dictionary).get("template_id", (raw as Dictionary).get("id", "")))
+			if not unit_id.is_empty():
+				out[CombatState.unit_key(i)] = unit_id
+	return out
 
 
 ## The facing [param side] must show: the player faces right, the boss faces left (both face the divider).
@@ -762,16 +813,26 @@ func _bind_match() -> void:
 		return
 	_unbind_match()
 	_bound_state = state
+	# Multi-enemy Phase 4 (step 1): the player keeps the legacy side-keyed signals; every enemy unit (unit 0 included)
+	# comes in on the unit-indexed ones, so unit 0 is never handled twice.
 	state.damaged.connect(_on_damaged)
 	state.cell_changed.connect(_on_cell_changed)
+	state.unit_damaged.connect(_on_unit_damaged)
+	state.unit_cell_changed.connect(_on_unit_cell_changed)
 	var actor: CutActor = _combat.get_cut_actor()
 	if actor != null:
 		actor.swing_started.connect(_on_player_swing_started)
 		_bound_actor = actor
 	var ids: Dictionary = unit_ids_for(_combat.match_params)
 	_cast_pending = false
-	for side: int in SIDES:
-		var unit_id: String = String(ids[side])
+	for side: int in unit_keys():
+		var unit_id: String = String(ids.get(side, ""))
+		# The state's own unit id wins when it has one (CombatState.from_match_params resolved it); match_params is the
+		# fallback for a plain match and for the player.
+		if side != CombatState.Side.PLAYER:
+			var unit: EnemyUnit = state.get_unit(CombatState.unit_index_of(side))
+			if unit != null and not unit.id.is_empty():
+				unit_id = unit.id
 		_unit_id[side] = unit_id
 		_sheet[side] = SpriteSheet.load_unit(unit_id) if not unit_id.is_empty() else null
 		_motion[side] = UnitMotion.for_unit(unit_id)
@@ -797,6 +858,10 @@ func _unbind_match() -> void:
 			_bound_state.damaged.disconnect(_on_damaged)
 		if _bound_state.cell_changed.is_connected(_on_cell_changed):
 			_bound_state.cell_changed.disconnect(_on_cell_changed)
+		if _bound_state.unit_damaged.is_connected(_on_unit_damaged):
+			_bound_state.unit_damaged.disconnect(_on_unit_damaged)
+		if _bound_state.unit_cell_changed.is_connected(_on_unit_cell_changed):
+			_bound_state.unit_cell_changed.disconnect(_on_unit_cell_changed)
 	if _bound_actor != null and is_instance_valid(_bound_actor) and _bound_actor.swing_started.is_connected(_on_player_swing_started):
 		_bound_actor.swing_started.disconnect(_on_player_swing_started)
 	_bound_state = null
@@ -804,6 +869,10 @@ func _unbind_match() -> void:
 
 
 func _on_damaged(side: int, amount: float) -> void:
+	# Multi-enemy Phase 4 (step 1): the enemy side arrives on unit_damaged, which fires for every unit including
+	# unit 0; taking it here as well would restart unit 0's hit clip twice per blow.
+	if side != CombatState.Side.PLAYER:
+		return
 	if amount <= 0.0:
 		return
 	_hit_left[side] = HIT_SEC
@@ -811,6 +880,21 @@ func _on_damaged(side: int, amount: float) -> void:
 	# The flash waits for the cell blast that hits this unit (CombatView.take_hit_delay, read on the next update,
 	# after the cut's blasts were queued).
 	_flash_wait[side] = -1.0
+
+
+# Multi-enemy Phase 4 (step 1): the hit clip, flash, shake and recoil of the enemy unit that actually lost HP.
+func _on_unit_damaged(index: int, amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var key: int = CombatState.unit_key(index)
+	_hit_left[key] = HIT_SEC
+	_hit_restart[key] = true
+	_flash_wait[key] = -1.0
+
+
+# Multi-enemy Phase 4 (step 1): the step clip of the enemy unit that actually moved.
+func _on_unit_cell_changed(index: int, _old_cell: Vector2i, _new_cell: Vector2i) -> void:
+	_step_pending[CombatState.unit_key(index)] = true
 
 
 # Starts the hit flash and shake of [param side] once its wait (see _on_damaged) has run out.
@@ -844,6 +928,9 @@ func recoil_offset(side: int) -> Vector2i:
 
 
 func _on_cell_changed(side: int, _old_cell: Vector2i, _new_cell: Vector2i) -> void:
+	# Multi-enemy Phase 4 (step 1): the enemy side arrives on unit_cell_changed (see _on_damaged).
+	if side != CombatState.Side.PLAYER:
+		return
 	# The mover starts its cooldown AFTER the state emits cell_changed; the length is read on the next update.
 	_step_pending[side] = true
 
@@ -856,7 +943,9 @@ func _on_player_swing_started(_cells: Array[Vector2i], _skill_id: String, _durat
 func _mover_of(side: int) -> UnitMover:
 	if side == CombatState.Side.PLAYER:
 		return _combat.get_mover()
-	return _combat.get_boss().get_mover() if _combat.get_boss() != null else null
+	# Multi-enemy Phase 4 (step 1): each enemy unit has its own BossController, so its own mover and cooldown.
+	var ctrl: BossController = _combat.controller_of(side)
+	return ctrl.get_mover() if ctrl != null else null
 
 
 # One update of [param side]: consume a pending step (its length = the cooldown just started), run the
@@ -1027,18 +1116,18 @@ func _cell_art_rect(cell: Vector2i) -> Rect2i:
 
 
 func _cell_of(side: int) -> Vector2i:
-	var state: CombatState = _combat.get_state()
-	return state.player_cell if side == CombatState.Side.PLAYER else state.enemy_cell
+	# Multi-enemy Phase 4 (step 1): CombatState.cell_of answers for any key (player, unit 0, units 1+).
+	return _combat.get_state().cell_of(side)
 
 
 # P2.2b (D13): the art rect a unit stands in: its cell, or the bounding rect of a multi-cell enemy's footprint.
 func _unit_art_rect(side: int) -> Rect2i:
 	var state: CombatState = _combat.get_state()
-	if side == CombatState.Side.PLAYER or state.enemy_footprint_size() <= 1:
+	if side == CombatState.Side.PLAYER or state.footprint_size_of(side) <= 1:
 		return _cell_art_rect(_cell_of(side))
 	var out: Rect2i = Rect2i()
 	var first: bool = true
-	for cell: Vector2i in state.enemy_footprint_cells():
+	for cell: Vector2i in state.unit_cells(side):
 		var r: Rect2i = _cell_art_rect(cell)
 		out = r if first else out.merge(r)
 		first = false
@@ -1050,15 +1139,16 @@ func _unit_art_rect(side: int) -> Rect2i:
 # footprint the way a 1-cell unit stands on its cell.
 func _feet_of_unit(side: int) -> Vector2i:
 	var state: CombatState = _combat.get_state()
-	if side == CombatState.Side.PLAYER or state.enemy_footprint_size() <= 1:
+	if side == CombatState.Side.PLAYER or state.footprint_size_of(side) <= 1:
 		return _feet_of_cell(_cell_of(side))
 	var rect: Rect2i = _unit_art_rect(side)
 	@warning_ignore("integer_division")
 	var x: int = rect.position.x + rect.size.x / 2
-	if state.footprint_extent().y > 1:
+	var extent: Vector2i = _extent_of(side)
+	if extent.y > 1:
 		# A block two or more rows deep: the feet stand in its middle, so the body covers every cell of it.
 		return _warp_feet(Vector2i(x, rect.position.y + roundi(rect.size.y * FOOTPRINT_FEET_DEPTH_RATIO)))
-	var bottom: Vector2i = state.enemy_cell + Vector2i(0, state.footprint_extent().y - 1)
+	var bottom: Vector2i = _cell_of(side) + Vector2i(0, extent.y - 1)
 	var bottom_rect: Rect2i = _cell_art_rect(bottom)
 	var y: int = mini(bottom_rect.position.y + roundi(bottom_rect.size.y * FEET_DEPTH_RATIO), bottom_rect.end.y - FEET_INSET_ART)
 	return _warp_feet(Vector2i(x, y))
@@ -1067,8 +1157,8 @@ func _feet_of_unit(side: int) -> Vector2i:
 # P2.2b: the cell the status overlays read (burn): a burning footprint cell when any burns, else the unit's cell.
 func _status_cell(side: int) -> Vector2i:
 	var state: CombatState = _combat.get_state()
-	if side == CombatState.Side.ENEMY and state.enemy_footprint_size() > 1 and _combat.get_status() != null:
-		for cell: Vector2i in state.enemy_footprint_cells():
+	if side != CombatState.Side.PLAYER and state.footprint_size_of(side) > 1 and _combat.get_status() != null:
+		for cell: Vector2i in state.unit_cells(side):
 			if _combat.get_status().is_burning(cell):
 				return cell
 	return _cell_of(side)
@@ -1080,13 +1170,15 @@ func _is_alive(side: int) -> bool:
 	var state: CombatState = _combat.get_state()
 	if side == CombatState.Side.PLAYER:
 		return not state.is_player_dead()
-	return not state.is_enemy_dead() or _combat.is_boss_downed()
+	# Multi-enemy Phase 4 (step 1): "downed" is a unit-0 state (Story 035), so only unit 0 stays alive for the overlays
+	# while downed; units 1+ answer from their own HP.
+	return not state.is_key_dead(side) or (side == CombatState.Side.ENEMY and _combat.is_boss_downed())
 
 
 # Advances the clock of every active kind by [param step] match seconds; a kind that just started
 # begins at 0, a kind that ended is dropped (so it restarts from 0 next time).
 func _advance_status_clocks(step: float) -> void:
-	for side: int in SIDES:
+	for side: int in unit_keys():
 		var kinds: Array[String] = get_active_status_kinds(side)
 		if not _status_clock.has(side):
 			_status_clock[side] = {}
@@ -1105,10 +1197,14 @@ func _draw() -> void:
 	if _combat == null or _combat.get_state() == null:
 		return
 	# Draw order (art bible 8.6): back row first, then left to right; the player before the boss on a tie.
-	var units: Array[Dictionary] = [
-		{"side": CombatState.Side.PLAYER, "cell": _cell_of(CombatState.Side.PLAYER)},
-		{"side": CombatState.Side.ENEMY, "cell": _cell_of(CombatState.Side.ENEMY) + Vector2i(0, _combat.get_state().footprint_extent().y - 1)},
-	]
+	# Multi-enemy Phase 4 (step 1): one entry per unit key, each sorted by the FRONT (bottom) row of its own footprint,
+	# so a 2x2 unit behind a 1-cell unit is drawn behind it. Two units = the old player/boss pair, same order.
+	var units: Array[Dictionary] = []
+	for key: int in unit_keys():
+		var depth: Vector2i = _cell_of(key)
+		if key != CombatState.Side.PLAYER:
+			depth += Vector2i(0, _extent_of(key).y - 1)
+		units.append({"side": key, "cell": depth})
 	units.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var ca: Vector2i = a["cell"]
 		var cb: Vector2i = b["cell"]
@@ -1117,7 +1213,7 @@ func _draw() -> void:
 		if ca.x != cb.x:
 			return ca.x < cb.x
 		return int(a["side"]) < int(b["side"]))
-	for side: int in SIDES:
+	for side: int in unit_keys():
 		_draw_dust(side)
 	for unit: Dictionary in units:
 		var side: int = int(unit["side"])
@@ -1129,7 +1225,7 @@ func _draw() -> void:
 		var shadow_rect: Vector2i = _unit_art_rect(side).size
 		if pose.y < 0:
 			shadow_rect.x = maxi(shadow_rect.x + pose.y * 4, 4)
-		_draw_shadow(shadow_rect, ground, side == CombatState.Side.ENEMY and _combat.get_state().footprint_extent().y > 1)
+		_draw_shadow(shadow_rect, ground, side != CombatState.Side.PLAYER and _extent_of(side).y > 1)
 		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side) \
 				+ Vector2i(pose.x, pose.y)
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
@@ -1137,7 +1233,7 @@ func _draw() -> void:
 			if side == CombatState.Side.PLAYER:
 				_draw_player_marker(cell)
 			else:
-				_draw_enemy(_unit_art_rect(side))
+				_draw_enemy(_unit_art_rect(side), side)
 		_draw_status_overlays(side, kinds, feet, CLIP_FRONT)
 
 
@@ -1160,12 +1256,12 @@ func _draw_flash() -> void:
 	if _combat == null or _combat.get_state() == null:
 		return
 	var total: float = maxf(float(_feel.get("flash_sec", 0.0)), 0.001)
-	for side: int in SIDES:
+	for side: int in unit_keys():
 		var left: float = float(_flash_left.get(side, 0.0))
 		var alpha: float = float(_feel.get("flash_alpha", 0.75)) * clampf(left / total, 0.0, 1.0)
 		var state: CombatState = _combat.get_state()
-		if side == CombatState.Side.ENEMY and state.enemy_invulnerable_left > 0.0 and not state.is_enemy_dead():
-			alpha = maxf(alpha, invulnerable_flash_alpha(_invuln_time, _reduce_motion))
+		if side != CombatState.Side.PLAYER and _invuln_left_of(side) > 0.0 and not state.is_key_dead(side):
+			alpha = maxf(alpha, invulnerable_flash_alpha(float(_invuln_time.get(side, 0.0)), _reduce_motion))
 		var sheet: SpriteSheet = get_sheet(side)
 		var anim: UnitAnimator = get_animator(side)
 		if alpha <= 0.0 or sheet == null or anim == null or sheet.texture() == null:
@@ -1203,7 +1299,7 @@ func _draw_sprite(side: int, feet: Vector2i, pose: Vector4i = Vector4i.ZERO) -> 
 		return false
 	var tint: Color = Color.WHITE
 	if side == CombatState.Side.ENEMY and _combat.is_boss_downed():
-		tint = DOWNED_COLOR
+		tint = DOWNED_COLOR  # unit 0 only: "downed" has no meaning for units 1+
 	_draw_frame_bands(self, side, texture, src, feet, sheet.facing() != facing_for(side), pose, tint)
 	return true
 
@@ -1292,20 +1388,21 @@ static func enemy_body_rect(area: Rect2i) -> Rect2:
 ## ADR-0002: the drawn polygon of the boss placeholder (art px): its footprint's body rect (an inset of the footprint,
 ## [method enemy_body_rect]) through BoardGeometry.art_quad, so on the perspective board it is the warped footprint
 ## polygon inset; the plain body rect's corners while flat. Empty when unbound.
-func enemy_placeholder_polygon() -> PackedVector2Array:
+## Multi-enemy Phase 4 (step 1): [param key] picks the unit (unit 0 by default, so existing callers are unchanged).
+func enemy_placeholder_polygon(key: int = CombatState.Side.ENEMY) -> PackedVector2Array:
 	if _combat == null or _combat.get_state() == null:
 		return PackedVector2Array()
-	return _bg().art_quad(enemy_body_rect(_unit_art_rect(CombatState.Side.ENEMY)))
+	return _bg().art_quad(enemy_body_rect(_unit_art_rect(key)))
 
 
 # The boss's placeholder: the body ([method enemy_body_rect] of [param area]) drawn as the mapped quad of the floor
 # (ADR-0002); Story 035 kneeling when downed, an outline while invulnerable, grey with a cross when dead.
-func _draw_enemy(area: Rect2i) -> void:
+func _draw_enemy(area: Rect2i, key: int = CombatState.Side.ENEMY) -> void:
 	var state: CombatState = _combat.get_state()
-	var dead: bool = state.is_enemy_dead()
+	var dead: bool = state.is_key_dead(key)
 	var geo: BoardGeometry = _bg()
 	var body: Rect2 = enemy_body_rect(area)
-	if _combat.is_boss_downed():
+	if key == CombatState.Side.ENEMY and _combat.is_boss_downed():
 		var kneel_h: float = floorf(body.size.y * DOWNED_BODY_HEIGHT_RATIO)
 		var kneel := Rect2(Vector2(body.position.x, body.end.y - kneel_h), Vector2(body.size.x, kneel_h))
 		_fill_art(geo, kneel, DOWNED_COLOR)
@@ -1313,7 +1410,7 @@ func _draw_enemy(area: Rect2i) -> void:
 		return
 	_fill_art(geo, body, ENEMY_DEAD_COLOR if dead else ENEMY_COLOR)
 	_outline_art(geo, body, TEXT_COLOR, BODY_OUTLINE_ART)
-	if not dead and state.enemy_invulnerable_left > 0.0:
+	if not dead and _invuln_left_of(key) > 0.0:
 		_outline_art(geo, body.grow(INVULNERABLE_GROW_ART), INVULNERABLE_OUTLINE, BODY_OUTLINE_ART)
 	if dead:
 		draw_line(geo.warp_art(body.position), geo.warp_art(body.end), TEXT_COLOR, DEAD_CROSS_ART)

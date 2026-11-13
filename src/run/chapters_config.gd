@@ -39,6 +39,16 @@ const DEFAULT_REGION_COLUMNS: Array[Dictionary] = [
 	{"tier": 2, "kinds": [], "pick": [1, 1], "required": ["boss"]},
 ]
 
+## Multi-enemy Phase 0: the `pools` kind that lists formation ids (routed to the chapter's `formation_pools`).
+const FORMATION_POOL_KIND: String = "formation"
+## Multi-enemy Phase 0: the lookups FormationRules needs, loaded lazily on the first chapter with a `formations` block
+## (shipped data has none yet, so loading chapters.json costs exactly what it did). Tests inject their own with
+## [method set_formation_lookup].
+static var _formation_arena_library: ArenaLibrary = null
+static var _formation_footprint_lookup: Callable = Callable()
+## Multi-enemy Phase 0: every reason a formation (or a formation pool entry) was dropped while loading, in order.
+var _formation_problems: Array[String] = []
+
 var _defaults: Dictionary = {}
 ## Each chapter: {id, name, name_is_key, floors: Array[Dictionary]}. Each floor: {id, name, name_is_key, arena, arena_pool,
 ## arena_variant, matches (raw dictionaries), overrides (defaults keys present on the floor)}.
@@ -81,6 +91,7 @@ static func from_dictionary(data: Dictionary) -> ChaptersConfig:
 			"floors": [_make_floor("f1", TEXT_DEFAULT_FLOOR_NAME, [{}])],
 			"matches": {"match_1": {"id": "match_1"}}, "match_ids": ["match_1"], "pools": {}, "columns": [],
 			"region_columns": [], "region_normalize": {"hp_mult": 1.0, "step_mult": 1.0, "defense_add": 0.0},
+			"formations": {}, "formation_pools": {},
 			})
 	c._world = c._clean_world(data.get("world"))
 	return c
@@ -451,6 +462,73 @@ func get_match_raw(ci: int, match_id: String) -> Dictionary:
 	return (matches[match_id] as Dictionary).duplicate(true)
 
 
+## Multi-enemy Phase 0: injects the arena library and the footprint lookup (Callable(enemy id) -> [[dx, dy], ...])
+## that formations are validated and resolved with; null / invalid = load the shipped files on first use. Static: set
+## it before [method from_dictionary] (tests).
+static func set_formation_lookup(library: ArenaLibrary, footprint_fn: Callable) -> void:
+	_formation_arena_library = library
+	_formation_footprint_lookup = footprint_fn
+
+
+## Multi-enemy Phase 0: ids of the VALID formations of chapter [param ci] (file order); [] when none / out of range.
+func formation_ids(ci: int) -> Array[String]:
+	var ids: Array[String] = []
+	if ci >= 0 and ci < _chapters.size():
+		for id: Variant in (_chapters[ci]["formations"] as Dictionary).keys():
+			ids.append(str(id))
+	return ids
+
+
+## Multi-enemy Phase 0: true when [param id] is a valid formation of chapter [param ci] (never also a match id).
+func has_formation(ci: int, id: String) -> bool:
+	return ci >= 0 and ci < _chapters.size() and (_chapters[ci]["formations"] as Dictionary).has(id)
+
+
+## Multi-enemy Phase 0: the cleaned formation (see [method FormationRules.clean_formation]; deep copy), {} when unknown.
+func get_formation(ci: int, id: String) -> Dictionary:
+	if not has_formation(ci, id):
+		return {}
+	return ((_chapters[ci]["formations"] as Dictionary)[id] as Dictionary).duplicate(true)
+
+
+## Multi-enemy Phase 0: `pools.formation` of chapter [param ci] (tier -> valid formation ids; deep copy), {} when none.
+func formation_pools(ci: int) -> Dictionary:
+	if ci < 0 or ci >= _chapters.size():
+		return {}
+	return (_chapters[ci]["formation_pools"] as Dictionary).duplicate(true)
+
+
+## Multi-enemy Phase 0: the RAW match a formation node plays, in the shape [method get_match_raw] gives for a match:
+## the template of the FIRST enemy (deep copy of that match block, so the unit-0 `boss_*` keys, brain and traits are
+## its own), with `id` / `name_key` / `arena` of the formation and the formation's `enemies`, `attack_slots` and
+## `hp_budget_mult` on top. {} when unknown. The combat does not read `enemies` yet (Phase 1+).
+func get_formation_match_raw(ci: int, id: String) -> Dictionary:
+	var formation: Dictionary = get_formation(ci, id)
+	if formation.is_empty():
+		return {}
+	var first: Dictionary = (formation["enemies"] as Array)[0]
+	var raw: Dictionary = get_match_raw(ci, str(first["id"]))
+	raw["id"] = id
+	raw["name_key"] = str(formation["name_key"])
+	raw["arena"] = (formation["arena"] as Dictionary).duplicate(true)
+	raw["enemies"] = (formation["enemies"] as Array).duplicate(true)
+	raw["attack_slots"] = int(formation["attack_slots"])
+	raw["hp_budget_mult"] = float(formation["hp_budget_mult"])
+	return raw
+
+
+## Multi-enemy Phase 0: every reason a formation or a formation pool entry was dropped while loading (copy). [] when
+## the data is clean; the shipped file must load with [].
+func formation_problems() -> Array[String]:
+	return _formation_problems.duplicate()
+
+
+## Multi-enemy Phase 1: the footprint offsets ([[dx, dy], ...]) of a RAW match block: its `enemy_skills.json` enemy's
+## footprint for a pattern brain (lookup of [method set_formation_lookup], loaded lazily), else [[0, 0]].
+func footprint_of(template: Dictionary) -> Array:
+	return FormationRules.footprint_offsets(template, _formation_footprint_fn())
+
+
 ## Extra traits a `danger` node adds to its match (from `defaults.danger_traits`).
 func danger_traits() -> Array:
 	return (_map_defaults["danger_traits"] as Array).duplicate(true)
@@ -586,16 +664,63 @@ func _clean_chapter(entry: Variant, index: int, seen: Dictionary) -> Dictionary:
 	var columns: Array = []
 	if typeof(raw.get("columns")) == TYPE_ARRAY:
 		columns = (raw["columns"] as Array).duplicate(true)
+	# Multi-enemy Phase 0: `formations` (validated by FormationRules; invalid ones dropped) and the `formation` kind of
+	# `pools`, kept APART from `pools` / `match_ids` so every map generator, validator and test sees exactly the data it
+	# saw before. The arena / footprint lookups load lazily, only when a chapter has a formations block.
+	var formations: Dictionary = {}
+	var formation_pools: Dictionary = {}
+	var raw_pools: Dictionary = {}
+	if typeof(raw.get("pools")) == TYPE_DICTIONARY:
+		raw_pools = (raw["pools"] as Dictionary).duplicate()
+	if raw.has("formations"):
+		formations = FormationRules.clean_block(raw["formations"], matches, _formation_library(), _formation_footprint_fn(), id,
+				_formation_problems)
+	if raw_pools.has(FORMATION_POOL_KIND):
+		formation_pools = _clean_formation_pools(raw_pools[FORMATION_POOL_KIND], formations, id)
+		raw_pools.erase(FORMATION_POOL_KIND)
 	var pools: Dictionary = {}
 	if typeof(raw.get("pools")) == TYPE_DICTIONARY:
-		pools = _clean_pools(raw["pools"] as Dictionary, matches, id)
+		pools = _clean_pools(raw_pools, matches, id)
 	var region_columns: Array = []
 	if typeof(raw.get("region_columns")) == TYPE_ARRAY:
 		region_columns = (raw["region_columns"] as Array).duplicate(true)
 	return {"id": id, "name": named[0], "name_is_key": named[1], "floors": floors, "matches": matches,
 		"match_ids": match_ids, "pools": pools, "columns": columns, "region_columns": region_columns,
 		"region_normalize": _clean_normalize(raw.get("region_normalize"), id),
-		"intro_key": str(raw.get("intro_key", "")), "end_key": str(raw.get("end_key", ""))}
+		"intro_key": str(raw.get("intro_key", "")), "end_key": str(raw.get("end_key", "")),
+		"formations": formations, "formation_pools": formation_pools}
+
+
+# Multi-enemy Phase 0: pools.formation = tier -> formation ids (ids that are not a VALID formation of the chapter are
+# dropped with a warning, like _clean_pools does for matches).
+static func _clean_formation_pools(raw: Variant, formations: Dictionary, chapter_id_text: String) -> Dictionary:
+	var tiers: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("ChaptersConfig: pools.formation of '%s' must be an object, ignored" % chapter_id_text)
+		return tiers
+	for tier: Variant in (raw as Dictionary).keys():
+		var ids: Array = []
+		var list: Variant = (raw as Dictionary)[tier]
+		if typeof(list) == TYPE_ARRAY:
+			for fid: Variant in list as Array:
+				if formations.has(str(fid)):
+					ids.append(str(fid))
+				else:
+					push_warning("ChaptersConfig: pools.formation.%s of '%s': unknown or invalid formation '%s' dropped" % [tier, chapter_id_text, fid])
+		tiers[str(tier)] = ids
+	return tiers
+
+
+func _formation_library() -> ArenaLibrary:
+	if _formation_arena_library == null:
+		_formation_arena_library = ArenaLibrary.load_from_file()
+	return _formation_arena_library
+
+
+func _formation_footprint_fn() -> Callable:
+	if not _formation_footprint_lookup.is_valid():
+		_formation_footprint_lookup = FormationRules.skills_footprint_fn(EnemySkillsConfig.load_from_file())
+	return _formation_footprint_lookup
 
 
 # pools: kind -> tier ("0".."n") -> match ids; unknown ids are dropped with a warning.

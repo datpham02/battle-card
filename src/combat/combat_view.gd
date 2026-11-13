@@ -186,8 +186,14 @@ var _dragging: bool = false
 var _drag_point: Vector2 = Vector2.ZERO
 var _boss: BossController
 var _arbiter: SwingArbiter
-## Last resolved boss cut, drawn on the player's half: same shape as [member _feedback].
+## Last resolved boss cut, drawn on the player's half: same shape as [member _feedback]. Unit 0 (legacy).
 var _boss_feedback: Dictionary = {}
+## Multi-enemy Phase 4 (step 4): number-only feedback records of the OTHER units a single player cut hit, one per
+## unit past the first, each over its own cell. Empty with one enemy unit.
+var _unit_feedback: Array[Dictionary] = []
+## Multi-enemy Phase 4 (step 4): resolved cuts of the enemy units that are NOT unit 0, so two units striking the
+## player in the same breath keep their own marker instead of overwriting one another. Empty with one enemy unit.
+var _boss_feedback_extra: Array[Dictionary] = []
 ## Last interrupt flash {side (victim), cells, time_left}; empty = none.
 var _interrupt_flash: Dictionary = {}
 ## Story 048: the floor-VFX clock and one-shot queue (created on first use; see [method get_floor_vfx]).
@@ -250,6 +256,21 @@ var _learning: BossLearning
 var _trait_host: TraitHost
 ## Phase 2: the pattern brain's skill lifecycle (match key `brain` == "pattern"); null for every block-brain match.
 var _pattern: PatternController = null
+## Multi-enemy Phase 3 (MULTI-ENEMY-PHASE3-5-PLAN.md 1.3): the shared threat book (D1) and the agents of units 1+
+## (unit 0 stays `_boss` / `_pattern`, wired exactly as before). Empty with one unit.
+var _threat: ThreatBoard = null
+var _extra_agents: Array[EnemyAgent] = []
+## Phase 3: every unit's mover by unit key (0 = the hero, 1 = unit 0, 2+ = extra units); the status hooks read it.
+var _movers_by_key: Dictionary = {}
+## Phase 3: simulation seconds, and when each enemy unit died (the pattern ally conditions read it).
+var _sim_time: float = 0.0
+var _unit_died_at: Dictionary = {}
+## Monster Skill Phase 0: the match's pattern tempo before any phase `tempo_mult` (phases multiply it, never compound).
+var _pattern_base_tempo: float = 1.0
+## Phase 0 (G5): the traits the CURRENT pattern phase added (torn down when the next phase starts).
+var _pattern_phase_traits: Array[BossTrait] = []
+## Phase 0 (G4): skill ids already warned about for a missing / unknown delivery (one warning each).
+var _pattern_vfx_warned: Dictionary = {}
 ## Story 036: the tile hazard model (mire, sand, wind); null before setup.
 var _hazards: TileHazards
 ## The character passive of this match (Story 018); null without a character or with an unknown id.
@@ -379,8 +400,11 @@ func _ready() -> void:
 	var character: Dictionary = _character()
 	_setup_relics(_relic_ids())
 	var player_max_hp: float = maxf(float(character.get("max_hp", _config.player_max_hp)), 1.0)
-	_state = CombatState.new(
-		_grid, player_max_hp, boss_max_hp, _config.player_start_cell, _config.enemy_start_cell
+	# Multi-enemy Phase 3: one unit per resolved `enemies[]` entry (a plain match = the single unit 0, as _init)
+	var state_params: Dictionary = match_params.duplicate()
+	state_params["boss_max_hp"] = boss_max_hp
+	_state = CombatState.from_match_params(
+		_grid, player_max_hp, state_params, _config.player_start_cell, _config.enemy_start_cell
 	)
 	var start_hp: float = float(match_params.get("player_hp", -1.0))
 	if start_hp >= 0.0:
@@ -441,6 +465,8 @@ func _ready() -> void:
 	_cut_flow.skill_chosen.connect(_on_skill_chosen)
 	var brain_config: BossBrainConfig = BossBrainConfig.load_from_file()
 	_apply_brain_params(brain_config)
+	# Multi-enemy Phase 3 (D3): with N enemy units every unit thinks base x sqrt(N), clamped 0.05..1.0 s (N = 1: unchanged)
+	brain_config.think_interval_sec = _scaled_think(brain_config.think_interval_sec)
 	var hold_config: HoldSlotsConfig = HoldSlotsConfig.load_from_file()
 	if hold_config == null:
 		hold_config = HoldSlotsConfig.new()
@@ -507,14 +533,17 @@ func _ready() -> void:
 	# Skill v2 (Ngàn Kiếm): an active Awakening raises a card's max hits (awakening_extra_hits).
 	_arbiter.player_awakening_fn = is_signature_active
 	# Skill v2 fix: a scheduled cast breaks a pattern windup / warning at its first damaging impact.
-	_arbiter.pattern_hit_fn = func() -> void:
-		if _pattern != null:
-			_pattern.on_enemy_hit()
+	# Multi-enemy Phase 3 (A3): the hit unit's own pattern controller only
+	_arbiter.pattern_hit_fn = func(key: int) -> void:
+		var hit_pattern: PatternController = _pattern_of(key)
+		if hit_pattern != null:
+			hit_pattern.on_enemy_hit()
 	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
 	_boss.get_drops().point_spawned.connect(_on_point_spawned.bind(CombatState.Side.ENEMY))
 	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
 	_trait_host.on_match_start()
 	_setup_pattern_brain(brain_config)
+	_setup_extra_units(boss_drops_config, hold_config)
 	_setup_passive(character)
 	_setup_signature(character)
 	_wire_status_hooks()
@@ -593,6 +622,8 @@ func get_heal_flash() -> Dictionary:
 func _wire_zones() -> void:
 	var status: StatusEffects = _status
 	var movers: Dictionary = {CombatState.Side.PLAYER: _mover, CombatState.Side.ENEMY: _boss.get_mover()}
+	# Phase 3: extra units add their movers here (_setup_extra_units); the hooks below read this dictionary by unit key
+	_movers_by_key = movers
 	for side: int in movers:
 		var mover: UnitMover = movers[side] as UnitMover
 		var seal_side: int = side
@@ -1223,6 +1254,9 @@ func make_trait_ctx() -> Dictionary:
 		"boss": _boss, "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"), "player_mover": _mover,
 		"skill_config": _skill_config, "cut_config": _cut_config,
 		"hazards": _hazards, "placement": _placement,
+		# Monster Skill Phase 0 (G6): the pattern brain's controller, read lazily (it is built after the host): burrow /
+		# rebirth pause it, shroud reads its stage. Null in block-brain matches.
+		"pattern_getter": Callable(self, "get_pattern_controller"),
 	}
 
 
@@ -1270,30 +1304,32 @@ func get_arena_info() -> Dictionary:
 
 
 # Run match settings onto the freshly loaded brain config (before the BossController exists).
-func _apply_brain_params(brain_config: BossBrainConfig) -> void:
-	if match_params.has("boss_step_cooldown_sec"):
+func _apply_brain_params(brain_config: BossBrainConfig, params: Variant = null) -> void:
+	# Multi-enemy Phase 3 (A2): [param params] = a unit's resolved `ai` block (null = the match's own keys, unit 0)
+	var mp: Dictionary = self.match_params if params == null else params as Dictionary
+	if mp.has("boss_step_cooldown_sec"):
 		push_warning("CombatView: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")
-		brain_config.step_cooldown_sec = maxf(float(match_params["boss_step_cooldown_sec"]), 0.0)
-	elif match_params.has("boss_step_cooldown_mult"):
-		brain_config.step_cooldown_sec = maxf(_base_step_cooldown * float(match_params["boss_step_cooldown_mult"]), 0.0)
-	brain_config.think_interval_sec = maxf(float(match_params.get("boss_think_interval_sec", brain_config.think_interval_sec)), 0.0)
-	brain_config.reaction_sec = maxf(float(match_params.get("boss_reaction_sec", brain_config.reaction_sec)), 0.0)
-	if match_params.has("boss_root_while_swinging"):
-		brain_config.root_while_swinging = bool(match_params["boss_root_while_swinging"])
-	var wanted: String = str(match_params.get("brain_set", ""))
+		brain_config.step_cooldown_sec = maxf(float(mp["boss_step_cooldown_sec"]), 0.0)
+	elif mp.has("boss_step_cooldown_mult"):
+		brain_config.step_cooldown_sec = maxf(_base_step_cooldown * float(mp["boss_step_cooldown_mult"]), 0.0)
+	brain_config.think_interval_sec = maxf(float(mp.get("boss_think_interval_sec", brain_config.think_interval_sec)), 0.0)
+	brain_config.reaction_sec = maxf(float(mp.get("boss_reaction_sec", brain_config.reaction_sec)), 0.0)
+	if mp.has("boss_root_while_swinging"):
+		brain_config.root_while_swinging = bool(mp["boss_root_while_swinging"])
+	var wanted: String = str(mp.get("brain_set", ""))
 	if not wanted.is_empty():
 		if brain_config.has_set(wanted):
 			brain_config.active_set = wanted
 		else:
 			push_warning("CombatView: unknown brain_set '%s' in match params" % wanted)
-	if match_params.has("boss_reaction_sec"):
+	if mp.has("boss_reaction_sec"):
 		# The match value is more specific than the set's own movement.reaction_sec.
 		brain_config.override_movement(brain_config.active_set, {"reaction_sec": brain_config.reaction_sec})
-	if float(match_params.get("combo_chance", -1.0)) >= 0.0:
-		brain_config.override_weight(brain_config.active_set, "combo_chance", float(match_params["combo_chance"]))
-	if float(match_params.get("combo_gap_sec", -1.0)) >= 0.0:
-		brain_config.override_weight(brain_config.active_set, "combo_gap_sec", float(match_params["combo_gap_sec"]))
-	var movement_override: Variant = match_params.get("movement")
+	if float(mp.get("combo_chance", -1.0)) >= 0.0:
+		brain_config.override_weight(brain_config.active_set, "combo_chance", float(mp["combo_chance"]))
+	if float(mp.get("combo_gap_sec", -1.0)) >= 0.0:
+		brain_config.override_weight(brain_config.active_set, "combo_gap_sec", float(mp["combo_gap_sec"]))
+	var movement_override: Variant = mp.get("movement")
 	if typeof(movement_override) == TYPE_DICTIONARY and not (movement_override as Dictionary).is_empty():
 		brain_config.override_movement(brain_config.active_set, movement_override as Dictionary)
 
@@ -1303,7 +1339,8 @@ func _tick_end(delta: float) -> void:
 	if _end_emitted or _state == null:
 		return
 	if _end_timer < 0.0:
-		if not (_state.is_player_dead() or _state.is_enemy_dead()):
+		# Multi-enemy Phase 3: the match ends when the hero or EVERY required enemy unit is down (one unit: unit 0)
+		if not (_state.is_player_dead() or _state.all_required_dead()):
 			return
 		_end_timer = maxf(float(match_params.get("end_delay_sec", DEFAULT_END_DELAY_SEC)), 0.0)
 	_end_timer -= delta
@@ -1402,6 +1439,14 @@ func _process(delta: float) -> void:
 		_boss.tick(step, _cut_actor)
 		if _pattern != null:
 			_pattern.tick(step)
+		# Multi-enemy Phase 3: units 1+ by index (deterministic order), then the shared threat clock
+		for agent: EnemyAgent in _extra_agents:
+			agent.controller.tick(step, _cut_actor)
+			if agent.pattern != null:
+				agent.pattern.tick(step)
+		if _threat != null:
+			_threat.tick(step)
+		_sim_time += step
 		_arbiter.tick(step)
 		_resolve_channel_cancel()
 		if hold != null:
@@ -1411,6 +1456,13 @@ func _process(delta: float) -> void:
 			_trait_host.on_tick(step)
 		_age_flash(_feedback, step)
 		_age_flash(_boss_feedback, step)
+		# Multi-enemy Phase 4 (step 4): the per-unit records age on the same clock, then drop when they run out.
+		for extra: Dictionary in _unit_feedback:
+			_age_flash(extra, step)
+		for extra: Dictionary in _boss_feedback_extra:
+			_age_flash(extra, step)
+		_unit_feedback = _live_records(_unit_feedback)
+		_boss_feedback_extra = _live_records(_boss_feedback_extra)
 		_age_flash(_interrupt_flash, step)
 		_age_flash(_channel_flash, step)
 		_age_flash(_feint_flash, step)
@@ -1457,6 +1509,16 @@ func _no_cells() -> Array[Vector2i]:
 
 # Counts a feedback dictionary's time_left down; clears it in place when over. A "wait" (seconds) is spent first:
 # the HIT marker of a wave cast waits for the wave to reach the target (user 2026-11-01).
+# Multi-enemy Phase 4 (step 4): the records of [param list] that _age_flash has not emptied yet. A typed loop, not
+# Array.filter, which hands back an untyped array.
+func _live_records(list: Array[Dictionary]) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for rec: Dictionary in list:
+		if not rec.is_empty():
+			out.append(rec)
+	return out
+
+
 func _age_flash(flash: Dictionary, step: float) -> void:
 	if flash.is_empty():
 		return
@@ -1562,9 +1624,11 @@ func _deck_ids() -> Array:
 
 # match_params["boss_cards"] ids that exist; absent, invalid or empty = the basics (card_order).
 # Story 027: zone cards (seal / thorns) are never the boss's (SkillConfig.boss_card_order).
-func _boss_card_ids() -> Array[String]:
+func _boss_card_ids(params: Variant = null) -> Array[String]:
+	# Multi-enemy Phase 3 (A2): [param params] = a unit's resolved `ai` block (null = the match's own keys, unit 0)
+	var mp: Dictionary = self.match_params if params == null else params as Dictionary
 	var ids: Array[String] = []
-	var raw: Variant = match_params.get("boss_cards", [])
+	var raw: Variant = mp.get("boss_cards", [])
 	if typeof(raw) == TYPE_ARRAY:
 		for id: Variant in raw as Array:
 			if _skill_config.is_curse(str(id)):
@@ -1573,8 +1637,8 @@ func _boss_card_ids() -> Array[String]:
 				push_warning("CombatView: boss_cards '%s' is a zone card (the boss gets zones only through traits), dropped" % str(id))
 			elif _skill_config.has_skill(str(id)) and not ids.has(str(id)):
 				ids.append(str(id))
-	elif match_params.has("boss_cards"):
-		push_warning("CombatView: match_params boss_cards must be an array, using the basics")
+	elif mp.has("boss_cards"):
+		push_warning("CombatView: mp boss_cards must be an array, using the basics")
 	if ids.is_empty():
 		ids = _skill_config.boss_card_order()
 	return ids
@@ -2092,6 +2156,9 @@ func _attach_piece(hold: HoldSlots) -> bool:
 func _notify_pattern_aim() -> void:
 	if _pattern != null:
 		_pattern.on_player_aim(_plan.cells())
+	for agent: EnemyAgent in _extra_agents:
+		if agent.pattern != null:
+			agent.pattern.on_player_aim(_plan.cells())
 
 
 func _plan_labels() -> Array[String]:
@@ -2318,8 +2385,16 @@ func get_card_level(skill_id: String) -> int:
 
 
 ## Story 020 HUD hook: burn stacks on the boss's half (highest over its burning cells; 0 = none).
-func get_burn_stacks() -> int:
+## Multi-enemy Phase 4 (step 3): with [param key] the burn on THAT unit's own cells (so a chip belongs to the unit it
+## is drawn under); the default -1 keeps the legacy answer, the strongest burn anywhere on the enemy half.
+func get_burn_stacks(key: int = -1) -> int:
 	var cells: Array[Vector2i] = []
+	if key >= 0 and key != CombatState.Side.PLAYER:
+		var own: Array[Vector2i] = _state.unit_cells(key)
+		for cell: Vector2i in _status.burning_cells():
+			if own.has(cell):
+				cells.append(cell)
+		return _status.max_stacks_on(cells)
 	for cell: Vector2i in _status.burning_cells():
 		if _grid.is_enemy_cell(cell):
 			cells.append(cell)
@@ -2402,9 +2477,40 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		"skill_id": str(result.get("skill_id", "")),
 		"crit": bool(result.get("crit", false)),
 	}
+	# Multi-enemy Phase 4 (step 4): one cut may hit several units. The merged result carries the TOTAL damage at the
+	# first hit unit's cell, which would print one wrong number over one unit; split it back per unit, so each unit
+	# shows its own number over its own cell. A single-unit result has no `unit_results` and is untouched.
+	# The split belongs to the player's cut only, and the clear must stay inside that branch: clearing it for every
+	# resolved swing would wipe the numbers of the player's last cut the moment any enemy unit resolves its own.
+	# A scheduled cast already printed each impact through _on_impact_resolved, so it is skipped here as well.
+	var scheduled: bool = bool(result.get("scheduled", false))
+	if side == CombatState.Side.PLAYER and not scheduled and result.has("unit_results"):
+		_unit_feedback.clear()
+		var own: Array = []
+		for raw: Variant in result["unit_results"] as Array:
+			var r: Dictionary = raw as Dictionary
+			if not bool(r.get("hit", false)) or float(r.get("damage", 0.0)) <= 0.0:
+				continue
+			own.append(r)
+		if own.size() == 1:
+			feedback["damage"] = float((own[0] as Dictionary).get("damage", feedback["damage"]))
+		elif own.size() > 1:
+			# The marker (cells, HIT / MISS, featured) stays on the first hit unit and carries its own number; every
+			# further unit gets a number-only record over its own cell.
+			feedback["damage"] = float((own[0] as Dictionary).get("damage", 0.0))
+			feedback["cell"] = (own[0] as Dictionary).get("cell", feedback["cell"])
+			feedback["crit"] = bool((own[0] as Dictionary).get("crit", false))
+			for i: int in range(1, own.size()):
+				var r2: Dictionary = own[i] as Dictionary
+				_unit_feedback.append({
+					"cells": [] as Array[Vector2i], "hit": true, "damage": float(r2.get("damage", 0.0)),
+					"cell": r2.get("cell", feedback["cell"]), "time_left": FEEDBACK_SEC,
+					"pin_bonus": bool(r2.get("pin_bonus", false)), "featured": false, "featured_mult": 1.0,
+					"featured_effect": "", "skill_id": str(result.get("skill_id", "")),
+					"crit": bool(r2.get("crit", false)), "number_only": true,
+				})
 	# Skill v2: a scheduled cast drew its impacts event by event (_on_impact_resolved) and its HIT marker showed at the
 	# hitting event; only a whole miss still shows its marker here, at the cast's end.
-	var scheduled: bool = bool(result.get("scheduled", false))
 	if not scheduled:
 		_play_cut_vfx(side, feedback)
 	if side == CombatState.Side.PLAYER:
@@ -2426,23 +2532,46 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 			_pattern.on_player_cast(cast_cells)
 			# Skill v2 fix 2026-11-08: a scheduled cast interrupted the pattern at its FIRST damaging impact
 			# (SwingArbiter.pattern_hit_fn), as the interruption policy says; not again at the cast's end.
-			if bool(result["hit"]) and not bool(result.get("no_interrupt", false)) and not bool(result.get("scheduled", false)):
+			# Multi-enemy Phase 2 (decision 5): the pattern brain belongs to unit 0 and reacts to a hit on unit 0 only.
+			if CutEffects.hit_unit0(result) and not bool(result.get("no_interrupt", false)) and not bool(result.get("scheduled", false)):
 				_pattern.on_enemy_hit()
+		# Multi-enemy Phase 3: the extra units' patterns: every cast may break their markers; a hit reaches the hit unit's
+		# own pattern only (A3)
+		var hit_keys: Array = result.get("unit_keys_hit", []) as Array
+		for agent: EnemyAgent in _extra_agents:
+			if agent.pattern == null:
+				continue
+			agent.pattern.on_player_cast(cast_cells)
+			if hit_keys.has(agent.key) and not bool(result.get("no_interrupt", false)) and not bool(result.get("scheduled", false)):
+				agent.pattern.on_enemy_hit()
 		_trait_host.on_player_swing_resolved(result)
-		_trait_host.on_boss_damaged(float(result["damage"]))
+		# Phase 2: the traits belong to unit 0: they hear the damage unit 0 took (the whole damage with one unit)
+		_trait_host.on_boss_damaged(float(result.get("unit0_damage", result["damage"])))
 	else:
-		_boss_feedback = feedback
+		# Multi-enemy Phase 4 (step 4): unit 0 keeps the legacy single record; every other attacking unit adds its own,
+		# so a second unit striking in the same breath does not erase the first one's marker.
+		if side == CombatState.Side.ENEMY:
+			_boss_feedback = feedback
+		else:
+			# Every enemy cut resolves on the PLAYER's cell, so two units striking inside FEEDBACK_SEC would stack
+			# two whole markers on one anchor. The extra ones print their number only, lifted one line per record,
+			# so the player reads "two blows landed" instead of an unreadable pile.
+			feedback["number_only"] = true
+			feedback["stack"] = _boss_feedback_extra.size() + 1
+			_boss_feedback_extra.append(feedback)
 		if bool(result["hit"]) and not bool(result.get("parried", false)):
 			_stats["hits_taken"] = int(_stats["hits_taken"]) + 1
-		_learning.on_boss_swing_resolved(bool(result["hit"]))
-		_trait_host.on_boss_swing_resolved(result)
+		# Phase 3 (A1): the learning record of the unit that swung; the traits belong to unit 0 (Phase 5)
+		_learning.on_boss_swing_resolved(bool(result["hit"]), side)
+		if side == CombatState.Side.ENEMY:
+			_trait_host.on_boss_swing_resolved(result)
 
 
 func _on_swing_interrupted(victim_side: int, cells: Array[Vector2i], _skill_id: String) -> void:
 	_interrupt_flash = {"side": victim_side, "cells": cells, "time_left": FEEDBACK_SEC}
 	for cell: Vector2i in cells:
 		get_floor_vfx().play("interrupt", cell, victim_side)  # Story 048 F8
-	if victim_side == CombatState.Side.ENEMY:
+	if victim_side != CombatState.Side.PLAYER:
 		_learning.on_player_interrupted_boss()
 		for relic: BaseRelic in _relics:
 			relic.on_interrupt_by_player()
@@ -2515,7 +2644,12 @@ func is_boss_downed() -> bool:
 ## All 0 before anything happened. Read-only.
 func get_match_stats() -> Dictionary:
 	var out: Dictionary = _stats.duplicate()
-	out["damage_dealt"] = _state.enemy_damage_taken if _state != null else 0.0
+	# Multi-enemy Phase 2 (decision 6): the damage dealt to EVERY enemy unit (one unit: enemy_damage_taken)
+	var dealt: float = 0.0
+	if _state != null:
+		for u: EnemyUnit in _state.units:
+			dealt += u.damage_taken
+	out["damage_dealt"] = dealt
 	out["damage_taken"] = _state.player_damage_taken if _state != null else 0.0
 	return out
 
@@ -2538,6 +2672,234 @@ func get_feint_flash() -> Dictionary:
 ## The boss agent (hand, drops, mover, actor, brain).
 func get_boss() -> BossController:
 	return _boss
+
+
+## Multi-enemy Phase 3: the agents of units 1+ (index order; [] with one unit).
+func get_extra_agents() -> Array[EnemyAgent]:
+	return _extra_agents
+
+
+## Multi-enemy Phase 3: the shared threat book (D1).
+func get_threat_board() -> ThreatBoard:
+	return _threat
+
+
+## Multi-enemy Phase 3: the BossController of the unit [param key] (unit 0 = get_boss()); null when unknown.
+func controller_of(key: int) -> BossController:
+	if key == CombatState.Side.ENEMY:
+		return _boss
+	for agent: EnemyAgent in _extra_agents:
+		if agent.key == key:
+			return agent.controller
+	return null
+
+
+## Multi-enemy Phase 3: the PatternController of the unit [param key] (unit 0 = get_pattern_controller()); null for a
+## block-brain unit or an unknown key.
+## Multi-enemy Phase 4 (step 1): the PatternController of the unit [param key] for the view layers (null for a
+## block-brain unit, the player or an unknown key). Public face of [method _pattern_of].
+func pattern_of(key: int) -> PatternController:
+	return _pattern_of(key)
+
+
+func _pattern_of(key: int) -> PatternController:
+	if key == CombatState.Side.ENEMY:
+		return _pattern
+	for agent: EnemyAgent in _extra_agents:
+		if agent.key == key:
+			return agent.pattern
+	return null
+
+
+# Multi-enemy Phase 3 (D3): think interval x sqrt(N) for N >= 2 enemy units, clamped 0.05..1.0 s; N = 1 unchanged.
+func _scaled_think(base: float) -> float:
+	var n: int = _state.unit_count() if _state != null else 1
+	if n <= 1:
+		return base
+	return clampf(base * sqrt(float(n)), 0.05, 1.0)
+
+
+# Multi-enemy Phase 3: builds the threat book and, with 2+ units, one agent per unit 1+ (MULTI-ENEMY-PHASE3-5-PLAN.md
+# 1.1b): its own BossBrainConfig from its `ai` block (A2), a BossController on the SHARED half drops (D4) with its own
+# hand (D5), a PatternController for a pattern-brain unit (its key, the shared F2 / F5 / tokens), its actor in the
+# arbiter, the same zone / hazard blockers as unit 0, its learning record (A1). Unit 0 keeps every legacy wire.
+func _setup_extra_units(boss_drops_config: FieldDropsConfig, hold_config: HoldSlotsConfig) -> void:
+	var n: int = _state.unit_count()
+	_threat = ThreatBoard.new(int(match_params.get("attack_slots", 1)), n)
+	_threat.extra_red_fn = Callable(self, "trait_warning_cells")
+	_boss.threat_board = _threat
+	if _pattern != null:
+		_pattern.threat_board = _threat
+	_state.unit_died.connect(_on_unit_died)
+	if n <= 1:
+		return
+	var e: int = CombatState.Side.ENEMY
+	_threat.register_red(e, _red_cells_of.bind(_boss, _pattern))
+	if _pattern != null:
+		_pattern.external_red_fn = func() -> Array: return _threat.red_cells(e)
+		_pattern.allies_fn = _allies_of.bind(e)
+	var shared: FieldDrops = _boss.get_drops()
+	var drops_enabled: bool = not is_pattern_brain()
+	var chapter: String = str(match_params.get("chapter_id", ""))
+	var skills_config: EnemySkillsConfig = null
+	var status: StatusEffects = _status
+	var hazards: TileHazards = _hazards
+	for i: int in range(1, n):
+		var unit: EnemyUnit = _state.get_unit(i)
+		var key: int = CombatState.unit_key(i)
+		var ai: Dictionary = unit.source.get("ai", {}) as Dictionary
+		var cfg: BossBrainConfig = BossBrainConfig.load_from_file()
+		_apply_brain_params(cfg, ai)
+		cfg.think_interval_sec = _scaled_think(cfg.think_interval_sec)
+		var pattern_unit: bool = str(unit.source.get("brain", "")) == RunConfig.BRAIN_PATTERN \
+				and not str(unit.source.get("enemy", "")).is_empty()
+		var seed_i: int = drops_seed + 10 * i if drops_seed >= 0 else -1
+		var ctrl := BossController.new(_state, _grid, _cut_config, _skill_config, cfg, boss_drops_config, hold_config,
+			seed_i, key, shared)
+		if not pattern_unit:
+			ctrl.enable_pieces(PieceLibrary.load_from_file(), chapter, seed_i + 2 if seed_i >= 0 else -1, _config.max_pieces_per_cast)
+			if not drops_enabled:
+				# the shared half drops start dropping pieces once a block-brain unit is on the team
+				shared.enable_pieces(PieceLibrary.load_from_file(), chapter, _grid, seed_i + 2 if seed_i >= 0 else -1, false)
+				drops_enabled = true
+		ctrl.threat_board = _threat
+		ctrl.set_player_step_cooldown(_player_step_cooldown)
+		ctrl.get_brain().cards = _boss_card_ids(ai)
+		ctrl.get_brain().min_runes = maxi(int(ai.get("boss_min_runes", 0)), 0)
+		ctrl.get_actor().duration_mult = maxf(float(ai.get("swing_speed_mult", 1.0)), 0.01)
+		ctrl.set_status(_status)
+		ctrl.set_learning(_learning)
+		ctrl.set_hazards(_hazards)
+		ctrl.pending_threat_fn = _arbiter.pending_cells.bind(CombatState.Side.PLAYER)
+		ctrl.cast_delay_fn = func(actor: CutActor) -> float:
+			return CastResolver.threat_delay(_skill_config.get_skill(actor.get_skill_id()), actor.get_cast_context())
+		ctrl.feinted.connect(_on_boss_feinted)
+		var actor: CutActor = ctrl.get_actor()
+		actor.swing_started.connect(_on_extra_swing_started.bind(key))
+		actor.swing_cancelled.connect(_on_extra_swing_cancelled.bind(key))
+		_arbiter.add_enemy_actor(key, actor)
+		# the same step blockers as unit 0 (holes, pillars, fire walls, sand, fallen cells) and its own mire cost
+		var mover: UnitMover = ctrl.get_mover()
+		_movers_by_key[key] = mover
+		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_hole(e, cell))
+		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_pillar(e, cell))
+		mover.add_blocker(func(cell: Vector2i) -> bool: return status.is_fire_wall(cell))
+		mover.add_blocker(func(cell: Vector2i) -> bool: return hazards.is_sanded(e, cell) or hazards.is_fallen(e, cell))
+		var mover_key: int = key
+		mover.step_cost_fn = func(from_cell: Vector2i) -> float: return hazards.step_cost_mult(mover_key, from_cell)
+		_hazards.set_mire_immune(key, bool(ai.get("mire_immune", false)))
+		var pattern: PatternController = null
+		if pattern_unit:
+			if skills_config == null:
+				skills_config = EnemySkillsConfig.load_from_file()
+			pattern = PatternController.new(_state, _grid, skills_config, str(unit.source["enemy"]), _status,
+				drops_seed + 4 + 10 * i if drops_seed >= 0 else -1, key)
+			pattern.think_interval_sec = maxf(cfg.think_interval_sec, 0.05)
+			pattern.tempo_mult = maxf(float(ai.get("pattern_tempo_mult", 1.0)), 0.01)
+			pattern.player_step_cd = _player_step_cooldown
+			pattern.player_step_left_fn = Callable(_mover, "get_cooldown_remaining")
+			var red_key: int = key
+			pattern.external_red_fn = func() -> Array: return _threat.red_cells(red_key)
+			pattern.allies_fn = _allies_of.bind(key)
+			pattern.player_guard = _parry_guard
+			pattern.threat_board = _threat
+			pattern.hazards = _hazards
+			pattern.player_blocked_fn = Callable(_mover, "is_cell_blocked")
+			pattern.reactions = _config.reactions() if _config != null else {}
+			pattern.markers_changed.connect(_mark_floor_dirty)
+			# Multi-enemy fix (2026-11-13): bind THIS unit's key, so its VFX leaves its own cells.
+			pattern.skill_resolved.connect(_on_pattern_skill_resolved.bind(key))
+			ctrl.extra_step_lock_fn = Callable(pattern, "is_busy")
+		_threat.register_red(key, _red_cells_of.bind(ctrl, pattern))
+		_extra_agents.append(EnemyAgent.new(key, unit, ctrl, pattern, cfg))
+	# D4: the shared drops' "hungry" rule reads the emptiest block-brain hand of the team
+	_boss.hand_count_fn = _min_block_hand
+	# every enemy unit plans around and refuses EVERY pattern marker on the half (markers are cells of the shared half)
+	var all_marks: Callable = _all_marker_cells
+	_boss.get_brain().extra_own_blocked_fn = all_marks
+	_boss.get_mover().add_blocker(func(cell: Vector2i) -> bool: return (all_marks.call() as Array).has(cell))
+	for agent: EnemyAgent in _extra_agents:
+		agent.controller.get_brain().extra_own_blocked_fn = all_marks
+		agent.controller.get_mover().add_blocker(func(cell: Vector2i) -> bool: return (all_marks.call() as Array).has(cell))
+
+
+# Phase 3 (F2): the red / queued cells the unit behind [param ctrl] / [param pattern] shows now.
+func _red_cells_of(ctrl: BossController, pattern: PatternController) -> Array:
+	var out: Array = []
+	if pattern != null:
+		out.append_array(pattern.telegraph_cells())
+		out.append_array(pattern.queued_cells())
+		return out
+	var actor: CutActor = ctrl.get_actor()
+	if actor.is_swinging():
+		out.append_array(actor.get_cells())
+	if actor.has_queued():
+		out.append_array(actor.get_queued_cells())
+	return out
+
+
+# Phase 3: the pattern ally conditions for the unit [param key]: {alive: other living units, died_within_sec: seconds
+# since another unit died (INF when none), min_hp_ratio: the lowest HP ratio among the other living units (1 = none)}.
+func _allies_of(key: int) -> Dictionary:
+	var alive: int = 0
+	var min_ratio: float = 1.0
+	for other: int in _state.enemy_keys(true):
+		if other == key:
+			continue
+		alive += 1
+		min_ratio = minf(min_ratio, _state.hp_of(other) / maxf(_state.max_hp_of(other), 0.001))
+	var since: float = INF
+	for dead: Variant in _unit_died_at.keys():
+		if int(dead) != key:
+			since = minf(since, _sim_time - float(_unit_died_at[dead]))
+	return {"alive": alive, "died_within_sec": since, "min_hp_ratio": min_ratio}
+
+
+# Phase 3 (D4): the fewest pieces held by a living block-brain unit (unit 0 included when it is block brain).
+func _min_block_hand() -> int:
+	var best: int = -1
+	if not is_pattern_brain() and not _state.is_unit_dead(0):
+		best = _boss.get_hand().get_occupied_count()
+	for agent: EnemyAgent in _extra_agents:
+		if agent.is_block_brain() and not _state.is_key_dead(agent.key):
+			var held: int = agent.controller.get_hand().get_occupied_count()
+			best = held if best < 0 else mini(best, held)
+	return maxi(best, 0)
+
+
+# Phase 3: the marker cells of every pattern unit (unit 0 first).
+func _all_marker_cells() -> Array:
+	var out: Array = []
+	if _pattern != null:
+		out.append_array(_pattern.marker_cells())
+	for agent: EnemyAgent in _extra_agents:
+		if agent.pattern != null:
+			out.append_array(agent.pattern.marker_cells())
+	return out
+
+
+# Phase 3 (A1): an extra unit's swing started / was cancelled: its own learning record.
+func _on_extra_swing_started(cells: Array[Vector2i], _skill_id: String, _duration: float, key: int) -> void:
+	_learning.on_boss_swing_started(cells, _state.player_cell, key)
+
+
+func _on_extra_swing_cancelled(_cells: Array[Vector2i], _skill_id: String, key: int) -> void:
+	_learning.on_boss_swing_cancelled(key)
+
+
+# Phase 3: a unit died: its attack token goes back and an extra unit's agent stops (unit 0 keeps ticking its owned
+# drops; its brain and pattern stop on their own death checks).
+func _on_unit_died(index: int) -> void:
+	var key: int = CombatState.unit_key(index)
+	_unit_died_at[key] = _sim_time
+	if _threat != null:
+		_threat.release(key)
+	if index == 0:
+		return
+	for agent: EnemyAgent in _extra_agents:
+		if agent.key == key:
+			agent.controller.set_active(false)
+			agent.controller.get_actor().cancel()
 
 
 ## Phase 2: true when this match runs the pattern brain (match_params `brain` == "pattern" with an `enemy` id).
@@ -2590,11 +2952,75 @@ func _setup_pattern_brain(brain_config: BossBrainConfig) -> void:
 	var pattern: PatternController = _pattern
 	_boss.get_brain().extra_own_blocked_fn = Callable(pattern, "marker_cells")
 	_boss.get_mover().add_blocker(func(cell: Vector2i) -> bool: return pattern.marker_cells().has(cell))
+	# Monster Skill Phase 0 (docs/design/world-map-v2/MONSTER-SKILL-DESIGN.md §5.2, §11 step 0): the effects that reuse
+	# existing code reach the controller through the same public objects the traits use.
+	_pattern_base_tempo = _pattern.tempo_mult
+	_pattern.hazards = _hazards
+	_pattern.player_blocked_fn = Callable(_mover, "is_cell_blocked")
+	_pattern.reactions = _config.reactions() if _config != null else {}
+	if _trait_host != null:
+		_trait_host.extra_untargetable_fn = Callable(pattern, "is_evading")
+		_trait_host.extra_forecast_blocked_fn = Callable(pattern, "is_shrouded")
+		_trait_host.extra_reaction_immune_fn = Callable(pattern, "reaction_immune")
+	# G4: the strike's delivery drives its travel / impact VFX (presentation only, after the damage was applied).
+	_pattern.skill_resolved.connect(_on_pattern_skill_resolved)
+	# G5: a phase's traits / brain_set / tempo_mult are applied when it starts; the HUD banner hears it too.
+	_pattern.phase_started.connect(_on_pattern_phase_started)
+	_apply_pattern_phase(0)
+
+
+# Phase 0 (G4): plays a resolved pattern ATTACK through the cards' cut VFX path with the SKILL's delivery (the cards'
+# delivery_for only knows cards.json). A skill without a usable delivery plays the SkillDelivery fallback and warns once.
+## Multi-enemy fix (2026-11-13): [param key] names the unit whose skill resolved. _play_cut_vfx takes the caster's
+## cast origin from it, so a travelling effect leaves the unit that cast it. Without the key every pattern unit's VFX
+## flew out of unit 0 — out of a corpse once unit 0 had died.
+func _on_pattern_skill_resolved(skill_id: String, result: Dictionary, key: int = CombatState.Side.ENEMY) -> void:
+	var feedback: Dictionary = PatternController.vfx_feedback(result)
+	if feedback.is_empty():
+		return
+	if bool(feedback.get("delivery_fallback", false)) and not _pattern_vfx_warned.has(skill_id):
+		_pattern_vfx_warned[skill_id] = true
+		push_warning("CombatView: enemy skill '%s' has no usable delivery, the fallback VFX is played" % skill_id)
+	_play_cut_vfx(key, feedback, feedback["delivery"] as Dictionary)
+
+
+# Phase 0 (G5): the pattern enemy entered phase [param index]: the previous phase's traits go, the new phase's come
+# (TraitHost.add_trait, the phase_shift mechanism), the movement brain switches set, the tempo follows the phase, and
+# the HUD banner fires through the host (PHA n, n = index + 1, as boss_phases announces it).
+func _on_pattern_phase_started(index: int, _phase_id: String) -> void:
+	_apply_pattern_phase(index)
+	if _trait_host != null and index > 0:
+		_trait_host.announce_phase(index + 1)
+
+
+func _apply_pattern_phase(index: int) -> void:
+	if _pattern == null:
+		return
+	if _trait_host != null:
+		for t: BossTrait in _pattern_phase_traits:
+			_trait_host.remove_trait(t)
+		_pattern_phase_traits.clear()
+		for spec: Variant in _pattern.phase_traits(index):
+			var d: Dictionary = spec as Dictionary
+			var added: BossTrait = _trait_host.add_trait(str(d.get("id", "")), d.get("params", {}) as Dictionary)
+			if added != null:
+				_pattern_phase_traits.append(added)
+	var set_name: String = _pattern.phase_brain_set(index)
+	if not set_name.is_empty() and _boss != null and _boss.get_brain() != null:
+		_boss.get_brain().use_set(set_name)
+	_pattern.tempo_mult = _pattern_base_tempo * _pattern.phase_tempo_mult(index)
 
 
 ## Story 025: true while the boss is rooted by its own swing (see BossController.is_step_locked).
 func is_boss_step_locked() -> bool:
 	return _boss.is_step_locked()
+
+
+## Multi-enemy Phase 4 (step 5): true when the unit of [param key] is rooted by its own running swing (the foot-lock
+## seal, F10). Unit 0 answers exactly as [method is_boss_step_locked].
+func is_step_locked_of(key: int) -> bool:
+	var ctrl: BossController = controller_of(key)
+	return ctrl != null and ctrl.is_step_locked()
 
 
 ## The boss's queued second swing of a combo ({cells, duration}); empty when none is queued.
@@ -2614,6 +3040,17 @@ func get_arbiter() -> SwingArbiter:
 ## time_left}); empty when nothing is showing.
 func get_boss_feedback() -> Dictionary:
 	return _boss_feedback
+
+
+## Multi-enemy Phase 4 (step 4): the number-only records of the other units a single player cut hit (one per unit past
+## the first, each over its own cell). Empty with one enemy unit.
+func get_unit_feedback() -> Array[Dictionary]:
+	return _unit_feedback
+
+
+## Multi-enemy Phase 4 (step 4): resolved cuts of the attacking units that are not unit 0. Empty with one enemy unit.
+func get_boss_feedback_extra() -> Array[Dictionary]:
+	return _boss_feedback_extra
 
 
 ## Last interrupt ({side = victim side, cells = cancelled swing's cells, time_left}); empty
@@ -2700,6 +3137,8 @@ func try_step_player(direction: Vector2i) -> bool:
 	var stepped: bool = _mover.try_step(direction)
 	if stepped and _trait_host != null:
 		_trait_host.on_player_stepped(from_cell, _state.player_cell)
+	if stepped and _pattern != null:
+		_pattern.on_player_stepped()  # Phase 0: conditions.player_steps_since
 	return stepped
 
 
@@ -2992,7 +3431,9 @@ func get_floor_vfx() -> FloorVfx:
 # miss_dust (floor) on every cell of a miss. ADR-0001 A1: every cell's effect waits for the card's delivery to reach
 # it (SkillDelivery.arrival_times); the impact per cell is the delivery's impact (CastVfx.impact_pack); the travel
 # cells only get the travel's visual. Presentation only: the damage was already applied to the mask by CutEffects.
-func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
+## [param delivery_override] (Phase 0): the delivery to draw with when the caster is not a card (a pattern enemy's
+## skill carries its own); {} = the card's delivery by skill id.
+func _play_cut_vfx(side: int, feedback: Dictionary, delivery_override: Dictionary = {}) -> void:
 	var vfx: FloorVfx = get_floor_vfx()
 	var target_side: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
 	var cells: Array = feedback.get("cells", [])
@@ -3000,7 +3441,7 @@ func _play_cut_vfx(side: int, feedback: Dictionary) -> void:
 	var caster: Vector2i = Vector2i(-1, -1)
 	if state != null:
 		caster = state.cast_origin(side)
-	var delivery: Dictionary = delivery_for(str(feedback.get("skill_id", "")))
+	var delivery: Dictionary = delivery_override if not delivery_override.is_empty() else delivery_for(str(feedback.get("skill_id", "")))
 	var delays: Dictionary = SkillDelivery.arrival_times(delivery, cells, caster, delivery_timing()) if not cells.is_empty() else {}
 	_play_delivery_travel(delivery, cells, caster, target_side)
 	# Task 5 item 5 (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md): a locked cell (cracking / hole) takes nothing,

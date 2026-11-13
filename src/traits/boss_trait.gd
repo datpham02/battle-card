@@ -133,6 +133,13 @@ func on_boss_would_die() -> bool:
 	return false
 
 
+## Monster Skill Phase 0 (M15 immunity, bug G3): true when the unit of [param _side] (CombatState.Side) is immune to
+## reaction [param _id] (r1 / r2 / r3). TraitHost.reaction_immune() ORs it over the live traits; StatusEffects.
+## reaction_immune_fn is what every reaction gate asks. Default false. (burn_eater's R1 immunity stays the burn-heal rule.)
+func reaction_immune(_side: int, _id: String) -> bool:
+	return false
+
+
 ## Story 039 (shroud): true while the placement preview's HIT FORECAST (green / red ghost + hit / miss tag) must be hidden.
 ## TraitHost.hit_forecast_blocked() ORs it over the live traits; PlacementController.forecast_blocked() is what the HUD
 ## reads. Default false.

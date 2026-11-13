@@ -14,6 +14,12 @@ var _traits: Array[BossTrait] = []
 var _ctx: Dictionary = {}
 var _seed_value: int = -1
 var _next_index: int = 0
+## Monster Skill Phase 0: a second voice on the three one-point hooks, for the pattern brain's skill effects (evade,
+## shroud, immune_reactions): Callable() -> bool / Callable(side, id) -> bool, OR'd with the live traits' answers.
+## Invalid = none. Set by CombatView after the PatternController exists; never by a trait.
+var extra_untargetable_fn: Callable = Callable()
+var extra_forecast_blocked_fn: Callable = Callable()
+var extra_reaction_immune_fn: Callable = Callable()
 
 
 ## Builds a trait per entry of [param specs] (each `{id: String, params: Dictionary}`; `params`
@@ -31,6 +37,8 @@ func _init(ctx: Dictionary, specs: Array, seed_value: int) -> void:
 	var status: StatusEffects = ctx.get("status") as StatusEffects
 	if status != null:
 		status.burn_heal_ratio_fn = Callable(self, "burn_heal_ratio")
+		# Phase 0 (bug G3): the reaction immunity hook was declared by StatusEffects but never bound by anyone.
+		status.reaction_immune_fn = Callable(self, "reaction_immune")
 	var combat_state: CombatState = ctx.get("state") as CombatState
 	if combat_state != null:
 		combat_state.enemy_death_hook_fn = Callable(self, "on_boss_would_die")
@@ -181,7 +189,17 @@ func is_boss_untargetable() -> bool:
 	for trait_instance: BossTrait in _traits:
 		if trait_instance.untargetable():
 			return true
-	return false
+	return extra_untargetable_fn.is_valid() and bool(extra_untargetable_fn.call())
+
+
+## Phase 0 (M15 immunity): true when the unit of [param side] is immune to reaction [param id] by a live trait
+## (BossTrait.reaction_immune) or by [member extra_reaction_immune_fn] (a pattern enemy's `immune_reactions`).
+## StatusEffects.reaction_immune_fn points here: the ONE place reaction immunity is decided.
+func reaction_immune(side: int, id: String) -> bool:
+	for trait_instance: BossTrait in _traits:
+		if trait_instance.reaction_immune(side, id):
+			return true
+	return extra_reaction_immune_fn.is_valid() and bool(extra_reaction_immune_fn.call(side, id))
 
 
 ## Story 039: the largest burn-heal ratio of the live traits (burn_eater); 0 = burning hurts the boss as usual.
@@ -208,7 +226,7 @@ func hit_forecast_blocked() -> bool:
 	for trait_instance: BossTrait in _traits:
 		if trait_instance.hit_forecast_blocked():
 			return true
-	return false
+	return extra_forecast_blocked_fn.is_valid() and bool(extra_forecast_blocked_fn.call())
 
 
 ## Tears every trait down and forgets them. Safe to call more than once.
@@ -222,6 +240,11 @@ func teardown_all() -> void:
 	var status: StatusEffects = _ctx.get("status") as StatusEffects
 	if status != null and status.burn_heal_ratio_fn == Callable(self, "burn_heal_ratio"):
 		status.burn_heal_ratio_fn = Callable()
+	if status != null and status.reaction_immune_fn == Callable(self, "reaction_immune"):
+		status.reaction_immune_fn = Callable()
+	extra_untargetable_fn = Callable()
+	extra_forecast_blocked_fn = Callable()
+	extra_reaction_immune_fn = Callable()
 	var combat_state: CombatState = _ctx.get("state") as CombatState
 	if combat_state != null and combat_state.enemy_death_hook_fn == Callable(self, "on_boss_would_die"):
 		combat_state.enemy_death_hook_fn = Callable()

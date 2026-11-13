@@ -1,0 +1,212 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+deck_sim --world (Story 031): seeds=70 timeout=180s policies=["build"] characters=["giao_si"] cleared_bosses=1 region-pick=order node-overhead=25s (ASSUMPTION: node pick + reward + reading, per node) world-set=none
+bot: dodge=0.85 (TD-006 legacy default, not re-anchored) gap=0.60-1.60s aim=0.90 counter=0.50 place=1.20s join=1.00/1.00s hold=1 choose=0.80s aware=0.00 sig=rules dt=0.050 | overrides: none | odd=on chance=0.12 (data) sizes 5..7 max=clamp(cells/4+3, 4, 7) weights={ 5: 6.0, 6: 3.0, 7: 1.0 } tries=40
+relics: start=none relic-policy=pick (pick = relic row over card row at treasure, rarest first; damage cap 3.0)
+world-map-v2: region_rules=res://assets/data/region_rules.json route_archetypes=res://assets/data/route_archetypes.json route-policy=value pieces=off
+economy (Story 033): shop-policy=greedy event-policy=risky economy-set=none | start gold 20 | shop entered with >= 60 gold; greedy = heal below 50% HP, then the dearest affordable relic (repeat), then the cards the build policy picks while affordable; risky = first enabled non-heal choice above 60% HP, else a pure heal choice, else Rời đi
+world: floors=7 choices=2 pool=["ch1", "ch2", "ch3", "swamp", "desert", "hellfire", "sky_isles"] columns=7 heal=0.60 final={ "region": "an_dai", "match_id": "an_dai_keeper" } tiers={ "1": [0, 1, 1], "2": [0, 1, 1], "3": [0, 1, 1], "4": [1, 2, 2], "5": [1, 2, 2], "6": [1, 2, 2], "7": [1, 2, 2] }
+final prelude (TD-029): [["shop"]] before the final boss column
+  floor_scaling 1: { "hp_mult": 0.7, "step_mult": 1.0, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 2: { "hp_mult": 0.75, "step_mult": 0.97, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 3: { "hp_mult": 0.8, "step_mult": 0.95, "defense_add": 0.0, "size_add": 0 }
+  floor_scaling 4: { "hp_mult": 0.85, "step_mult": 0.9, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 5: { "hp_mult": 0.95, "step_mult": 0.87, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 6: { "hp_mult": 1.05, "step_mult": 0.84, "defense_add": 1.0, "size_add": 0 }
+  floor_scaling 7: { "hp_mult": 1.15, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  floor_scaling final: { "hp_mult": 1.25, "step_mult": 0.8, "defense_add": 2.0, "size_add": 1 }
+  region_normalize ch1: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch2: { "hp_mult": 0.85, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize ch3: { "hp_mult": 0.75, "step_mult": 1.1, "defense_add": -1.0 }
+  region_normalize swamp: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize desert: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize hellfire: { "hp_mult": 0.75, "step_mult": 1.05, "defense_add": 0.0 }
+  region_normalize sky_isles: { "hp_mult": 0.45, "step_mult": 1.05, "defense_add": 0.0 }
+node policy: rest when HP < 50%, else treasure > rest (heal < 50% else forge) > miniboss at >= 70% HP > battle > danger; boss when alone. Region boss: boss reward + token + floor heal. Run time = (sum of match REAL seconds + overhead x nodes) / 60.
+v6 (Story 040): floors=1..7 | final=on | mercy=none | shop=greedy | pieces=off | relic=legacy:pick | dodge=0.85 | kiep=0
+v6 seeds start at 3002 (--seed-offset=3001), not 1
+v6 run time (ASSUMPTIONS, TD-006 family): out-of-match seconds map 8 / node, reward pick 15, shop 45, event 30, rest 10, fate choice 10; + intro_sec + end_delay_sec of every match; est. minutes = (match real sec + out-of-match sec) / 60
+v6 relic value (--relic=value: first best of the offer by rarity rank x 10 + bonus; ASSUMPTION): an_don=+3 chi_khau=+2 phong_an=+0 gai_ran=+0 manh_tuoi=+1 dinh_tam=+1 la_ban=+0 tam_huong=+2 tui_rong=+3 dau_than=+1 khoi_the=+2 phan_don=+1 han_ky=+1 huyet_an=-50 an_chu=+2 tam_hop=+3
+v6 pieces policy (--pieces=on): ink a 2-3 cell shape (fewest cells) when offered, remove 5-cell shapes (biggest bounding box first) with every shape-removal token; shop extras (--shop=on): remove-card over 10 cards, remove-shape when pieces on
+  ... giao_si 10/70 seeds, 113.2 s
+  ... giao_si 20/70 seeds, 212.3 s
+  ... giao_si 30/70 seeds, 343.0 s
+  ... giao_si 40/70 seeds, 463.5 s
+  ... giao_si 50/70 seeds, 570.0 s
+  ... giao_si 60/70 seeds, 666.8 s
+  ... giao_si 70/70 seeds, 775.9 s
+
+=== WORLD giao_si / build: 70 runs ===
+WORLD SUMMARY | character | policy | run win % | wins | boss hits / WON run | hits / run (all) | matches / run | nodes / run | mean match real sec | mean match sim sec | timeouts / run | est. minutes WON run mean (min-max) | est. minutes all runs | final luck (all runs) | rarity weights c/r/e at that luck | final deck size | deck level sum | tokens spent | rest heal / rest forge / treasure per run |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| giao_si | build | 11.4 | 8 | 45.8 | 31.6 | 22.40 | 37.30 | 52.7 | 31.9 | 0.00 | 50.0 (46.3-53.2) | 35.2 | 40.4 | 47/31/22 | 12.54 | 21.44 | 5.54 | 0.94 / 2.60 / 6.49 |
+
+WORLD FLOORS | character | floor | alive after % | deaths | deaths % of all deaths | clear % of runs entering | mean HP % entering | mean HP % after boss (before heal) |
+|---|---|---|---|---|---|---|---|
+| giao_si | 1 | 100.0 | 0 | 0.0 | 100.0 | 100.0 | 77.6 |
+| giao_si | 2 | 100.0 | 0 | 0.0 | 100.0 | 99.7 | 88.4 |
+| giao_si | 3 | 100.0 | 0 | 0.0 | 100.0 | 100.0 | 60.6 |
+| giao_si | 4 | 70.0 | 21 | 33.9 | 70.0 | 97.1 | 44.4 |
+| giao_si | 5 | 44.3 | 18 | 29.0 | 63.3 | 92.6 | 47.4 |
+| giao_si | 6 | 32.9 | 8 | 12.9 | 74.2 | 96.0 | 43.5 |
+| giao_si | 7 | 15.7 | 12 | 19.4 | 47.8 | 92.6 | 45.3 |
+| giao_si | final | 11.4 | 3 | 4.8 | 72.7 | 91.5 | 35.0 |
+
+WORLD REGIONS | character | floor | region | entered | cleared | clear % |
+|---|---|---|---|---|---|
+| giao_si | 1 | ch1 | 70 | 70 | 100.0 |
+| giao_si | 2 | hellfire | 70 | 70 | 100.0 |
+| giao_si | 3 | desert | 70 | 70 | 100.0 |
+| giao_si | 4 | swamp | 70 | 49 | 70.0 |
+| giao_si | 5 | ch2 | 49 | 31 | 63.3 |
+| giao_si | 6 | ch3 | 31 | 23 | 74.2 |
+| giao_si | 7 | sky_isles | 23 | 11 | 47.8 |
+
+WORLD DEATHS BY FLOOR/KIND giao_si: f4/battle=2, f4/boss=17, f4/danger=2, f5/battle=8, f5/boss=3, f5/danger=1, f5/miniboss=6, f6/battle=4, f6/boss=3, f6/danger=1, f7/battle=1, f7/boss=9, f7/danger=2, ffinal/final=3
+WORLD RELICS giao_si/build: relic-policy=pick mean relics at end 11.71 | owned at end (runs): an_don=56, chi_khau=55, phong_an=45, gai_ran=52, manh_tuoi=58, dinh_tam=53, la_ban=64, tam_huong=60, tui_rong=62, dau_than=62, khoi_the=61, phan_don=63, han_ky=65, huyet_an=64 | triggers / run: an_don=11.2, chi_khau=6.4, khoi_the=11.6, phan_don=13.7, huyet_an=26.1
+
+WORLD ECONOMY | character | policy | shop | event | run win % | gold earned / run all (median P10-P90) | mean | earned / WON run (median P10-P90) | drops / event gold in / event gold lost (mean) | spent at shop all (median P10-P90) | left all | left WON runs (n) | shops / run | items / shop (mean) | items / first shop (mean, n) | items / run (mean; WON) | relics / cards / heals bought per run | gold at first shop offered (median P10-P90, n) | affords 1 item there % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| giao_si | build | greedy | risky | 11.4 | 614 (426-976) | 685 | 1040 (967-1063) | 651 / 34 / 3 | 369 (159-569) | 322 (139-500) | 517 (384-635) (8) | 2.99 | 2.34 | 1.69 (70) | 7.00; 10.75 | 3.99 / 2.89 / 0.13 | 75 (56-107) (70) | 99 |
+WORLD EVENTS | giao_si | build | events / run 2.13 | non-leave choices / run 1.99 | tran_thach extra fights 18, deaths 0 (0.0%) | curses picked up / run 0.34 | curse draws / run 3.11 | curse dmg / run 1.5 | matches slowed by loi_the / run 0.59 | picks: ban_tho_mau/give=18, ban_tho_mau/leave=1, ke_buon_nguyen/accept=19, ke_buon_nguyen/leave=1, ke_lang_thang/leave=3, ke_lang_thang/swap=10, loi_the/leave=1, loi_the/swear=21, mo_hoang/dig=20, mo_hoang/leave=1, song_bac/bet_small=15, song_bac/leave=2, suoi_tinh/bathe=15, suoi_tinh/drink=3, tran_thach/fight=18, tran_thach/leave=1
+ECONOMY RAW giao_si/build: per run earned|spent|left|won|items|first_shop_items|seen_shop_gold = 662|70|612|0|1|1|79 1052|454|618|1|8|2|133 1048|548|520|1|11|2|92 625|209|406|0|4|4|46 886|408|498|0|7|1|61 428|287|161|0|5|1|83 510|516|14|0|10|1|99 560|354|226|0|7|4|58 1069|414|675|1|9|1|72 946|452|514|0|8|1|91 862|436|446|0|8|1|73 460|344|136|0|6|1|62 424|135|309|0|3|1|60 842|488|344|0|8|2|35 570|383|207|0|7|1|97 775|490|305|0|10|1|78 453|237|236|0|4|1|60 887|502|405|0|10|2|90 671|262|429|0|5|3|54 426|132|314|0|2|2|56 910|440|490|0|9|1|101 751|437|334|0|8|1|63 918|635|303|0|12|1|70 966|488|498|0|8|1|98 912|557|345|0|11|1|97 572|215|377|0|4|1|72 966|533|453|0|10|1|90 438|309|149|0|5|1|74 579|299|300|0|5|1|106 488|385|123|0|8|3|138 652|349|323|0|6|1|84 562|340|242|0|6|1|61 623|159|484|0|3|3|55 856|451|425|0|9|2|102 1032|464|588|1|10|3|59 432|165|287|0|2|1|97 911|559|372|0|11|1|71 886|672|234|0|13|1|72 378|287|111|0|5|2|85 807|373|454|0|6|1|74 667|366|321|0|7|1|86 545|238|327|0|5|2|117 493|415|98|0|9|5|57 652|410|262|0|6|1|73 414|295|139|0|6|2|104 404|153|271|0|3|2|101 426|165|281|0|2|1|98 586|360|246|0|6|2|101 1001|574|447|1|12|2|76 537|270|287|0|5|3|57 539|197|362|0|3|1|99 858|612|266|0|12|2|144 549|159|380|0|3|3|28 500|299|221|0|6|1|100 354|124|250|0|2|1|69 566|257|329|0|4|1|75 596|482|134|0|8|2|138 590|159|421|0|3|3|52 887|611|296|1|12|1|74 604|301|323|0|6|1|72 973|692|301|0|14|2|104 589|187|422|0|3|3|58 900|454|466|0|9|2|116 533|371|182|0|7|4|56 404|281|113|0|5|2|42 472|341|151|0|8|2|86 858|514|364|0|11|1|60 1061|568|513|1|12|1|74 1007|605|422|1|12|2|111 560|269|311|0|5|1|75
+ECONOMY TARGETS giao_si/build (shop=greedy event=risky): earned/run 685 in 350-450: MISS | items/run 7.00 in 4-6: MISS | median left WON < 100: MISS | affords 1 item at first shop (median gold >= cheapest) 99%: PASS
+WORLD VERDICT giao_si/build: run win 11.4% (target 20-40) TOO HARD; est. minutes won run 50.0 (target 40-50) PASS; max region spread at a floor 0.0 pts (target <= 15, n >= 5) PASS; max floor share of deaths 33.9% (target <= 40) PASS; survival strictly decreasing FAIL (a floor with no deaths); boss hits / won run 45.8
+
+ROUTE | character | archetype | runs | region clear % | gold gained (drops, mean) | HP lost pts of max (mean) | relics gained (mean) | objective met / run | run win % | route policy |
+ROUTE | giao_si | elite | 16 | 100.0 | 433.1 | 6.9 | 2.25 | 0.00 | 12.5 | value |
+ROUTE | giao_si | peril | 50 | 100.0 | 600.7 | 10.7 | 2.94 | 0.24 | 12.0 | value |
+ROUTE | giao_si | treasure | 4 | 100.0 | 460.3 | 7.1 | 1.75 | 0.00 | 0.0 | value |
+ROUTE2 | character | archetype | routes ended | heat at warden mean (reached; count by heat 0..4) | heat max mean | objective fights won / met per route | relic rows offered / taken per route | ink rows offered / taken per route | forge visits / free removals per route | HP lost in fights pts | HP healed outside fights pts | event HP delta pts |
+ROUTE2 | giao_si | elite | 16 | 1.19 (16; 0:8 1:1 2:4 3:2 4:1) | 2.81 | 0.00 / 0.00 | 1.06 / 0.75 | n/a (pieces off) | 0.00 / n/a | 8.3 | 0.0 | 0.0 |
+ROUTE2 | giao_si | peril | 50 | 1.78 (50; 0:13 1:11 2:10 3:6 4:10) | 3.14 | 1.00 / 0.24 | 2.08 / 1.58 | n/a (pieces off) | 0.00 / n/a | 12.7 | 0.5 | -0.0 |
+ROUTE2 | giao_si | treasure | 4 | 1.00 (4; 0:2 1:1 2:0 3:1 4:0) | 2.50 | 0.00 / 0.00 | 0.25 / 0.25 | n/a (pieces off) | 0.25 / n/a | 9.5 | 0.0 | 0.0 |
+ROUTE3 | character | archetype | routes ended | rests per route | heat before -> after rest (mean) | shops per route | heat before -> after shop (mean) | warden reached | warden hook fired % (of reached) |
+ROUTE3 | giao_si | elite | 16 | 1.00 | 2.69 -> 0.69 | 0.69 | 2.55 -> 1.55 | 16 | 18.8 |
+ROUTE3 | giao_si | peril | 50 | 1.00 | 2.88 -> 0.88 | 0.58 | 2.86 -> 1.86 | 50 | 32.0 |
+ROUTE3 | giao_si | treasure | 4 | 1.00 | 2.00 -> 0.25 | 0.50 | 2.00 -> 1.00 | 4 | 25.0 |
+
+=== RUN v6 giao_si / build: 70 runs, dodge=0.85 mercy=none pieces=off ===
+RUN | character | policy | kiep | win % | deaths by floor (f1 f2 f3 f4 f5 final) | hits taken / won run | run minutes (est., won median / lost median) | gold earned / spent (all runs; won runs) | relics / run | deck size | piece set size |
+RUN | giao_si | build [mercy=none shop=greedy pieces=off relic=legacy:pick dodge=0.85] | 0 | 11.4 | 0/0/0/21/18/8/12/3 | 45.8 | 52.4 / 31.3 | 685 / 371; 1020 / 530 | 11.71 | 12.54 | 16.0 |
+RUN DETAIL giao_si/build: death % of runs entering floor f1..f7: 0.0/0.0/0.0/30.0/36.7/25.8/52.2 | final reached 11, won 8 (72.7 %) | mean boss swing hit 10.9 % of max HP (1591 swing hits) | gold at the final median 462 (cheapest shop relic 60 at the last floor) | wins 8 / 70
+REGION x FLOOR | character | floor | region | matches entered | match win % |
+REGION x FLOOR | giao_si | 1 | ch1 | 231 | 100.0 |
+REGION x FLOOR | giao_si | 2 | hellfire | 332 | 100.0 |
+REGION x FLOOR | giao_si | 3 | desert | 297 | 100.0 |
+REGION x FLOOR | giao_si | 4 | swamp | 294 | 92.9 |
+REGION x FLOOR | giao_si | 5 | ch2 | 181 | 90.1 |
+REGION x FLOOR | giao_si | 6 | ch3 | 127 | 93.7 |
+REGION x FLOOR | giao_si | 7 | sky_isles | 95 | 87.4 |
+REGION x FLOOR CHECK giao_si/build: floors f1 mean 100.0 (n=231); f2 mean 100.0 (n=332); f3 mean 100.0 (n=297); f4 mean 92.9 (n=294); f5 mean 90.1 (n=181); f6 mean 93.7 (n=127); f7 mean 87.4 (n=95) | regions within +-10 pts of the floor mean (cells with n >= 20: 7 checked, 0 small): PASS
+VERDICT run giao_si/build | run win % 30-45 | 11.4 % (+-3.8 sd, n=70) | FAIL
+VERDICT run giao_si/build | death probability non-decreasing f1..f5 | death prob by floor 0.0/0.0/0.0/30.0/36.7/25.8/52.2 (allow -3 pts); falls: f6 25.8 < f5 36.7 | FAIL
+VERDICT run giao_si/build | floor-1 deaths <= 10 % of runs | 0.0 % | PASS
+VERDICT run giao_si/build | final-match win when reached 50-70 % | 72.7 % (8 / 11) | FAIL
+VERDICT run giao_si/build | won-run minutes median 40-50 | 52.4 min (8 won runs) | FAIL
+VERDICT run giao_si/build | boss hits per won run 15-30 | 45.8 | FAIL
+VERDICT run giao_si/build | gold spent >= 70 % of earned (won runs) | 52.0 % (530 of 1020 per run) | FAIL
+VERDICT run giao_si/build | gold left at the final median <= one shop relic | 462 <= 60 | FAIL
+VERDICT run giao_si/build | lost-run minutes median >= 15 | 31.3 min (62 lost runs) | PASS
+VERDICT run giao_si/build | mean boss hit 4-15 % of max HP | 10.9 % (swing hits only) | PASS
+VERDICT run giao_si/build | regions within +-10 pts of the floor mean | see REGION x FLOOR CHECK | PASS
+VERDICT run giao_si/build | onboarding (empty save) win >= 20 % | this run has every unlock open (--progress=all) | DEFERRED (run with --progress=none)
+VERDICT run giao_si/build | bot anchored on a playtest (Part A, TD-006) | dodge=0.85 (legacy default) | DEFERRED (no playtest log: DEFAULT_BOT stays, TD-006 open; read the DODGE SENSITIVITY run)
+
+ODD | character | odd share of player drops % | mean odd size | odd fallbacks (total; per run) | boss odd share % | policy | player odd / drops | boss odd / drops | boss mean odd size | boss fallbacks | matches with odd possible player / boss / all | odd=on chance=0.12 (data) sizes 5..7 max=clamp(cells/4+3, 4, 7) weights={ 5: 6.0, 6: 3.0, 7: 1.0 } tries=40
+ODD | giao_si | 10.7 | 5.45 | 37; 0.53 | 11.8 | build [mercy=none shop=greedy pieces=off relic=legacy:pick dodge=0.85] | 1875 / 17519 | 1461 / 12391 | 5.45 | 32 | 1568 / 1005 / 1568 |
+
+=== RUN v6 AGGREGATE (dodge=0.85 mercy=none pieces=off): 70 runs of ["giao_si"] ===
+RELIC LIFT | relic | runs with it by floor <= 2 | win % with | win % without | lift (pts) | note |
+RELIC LIFT | an_don | 25 | 12.0 | 11.1 | +0.9 |
+RELIC LIFT | chi_khau | 20 | 15.0 | 10.0 | +5.0 |
+RELIC LIFT | dau_than | 29 | 13.8 | 9.8 | +4.0 |
+RELIC LIFT | dinh_tam | 16 | 0.0 | 14.8 | -14.8 |
+RELIC LIFT | gai_ran | 20 | 10.0 | 12.0 | -2.0 |
+RELIC LIFT | han_ky | 34 | 11.8 | 11.1 | +0.7 |
+RELIC LIFT | huyet_an | 33 | 9.1 | 13.5 | -4.4 |
+RELIC LIFT | khoi_the | 27 | 14.8 | 9.3 | +5.5 |
+RELIC LIFT | la_ban | 28 | 10.7 | 11.9 | -1.2 |
+RELIC LIFT | manh_tuoi | 30 | 10.0 | 12.5 | -2.5 |
+RELIC LIFT | phan_don | 27 | 14.8 | 9.3 | +5.5 |
+RELIC LIFT | phong_an | 22 | 13.6 | 10.4 | +3.2 |
+RELIC LIFT | tam_huong | 31 | 16.1 | 7.7 | +8.4 |
+RELIC LIFT | tui_rong | 29 | 17.2 | 7.3 | +9.9 |
+RELIC LIFT CHECK: no relic above +15 pts (cells with >= 10 runs with and without): max +9.9 (tui_rong) | PASS
+VERDICT run all | no relic lift > +15 pts | max +9.9 (tui_rong) | PASS
+SHOP | item | bought | offered | bought % of shop visits | bought % of offers |
+SHOP | relic:chi_khau | 34 | 49 | 16.3 | 69.4 |
+SHOP | relic:an_don | 33 | 41 | 15.8 | 80.5 |
+SHOP | relic:dinh_tam | 30 | 39 | 14.4 | 76.9 |
+SHOP | relic:manh_tuoi | 25 | 30 | 12.0 | 83.3 |
+SHOP | relic:gai_ran | 24 | 31 | 11.5 | 77.4 |
+SHOP | relic:phong_an | 23 | 29 | 11.0 | 79.3 |
+SHOP | relic:la_ban | 22 | 26 | 10.5 | 84.6 |
+SHOP | card:bay_lo | 17 | 21 | 8.1 | 81.0 |
+SHOP | relic:khoi_the | 16 | 20 | 7.7 | 80.0 |
+SHOP | relic:phan_don | 16 | 20 | 7.7 | 80.0 |
+SHOP | relic:tui_rong | 16 | 22 | 7.7 | 72.7 |
+SHOP | card:gai_doc | 15 | 25 | 7.2 | 60.0 |
+SHOP | card:thiet_kiem | 14 | 19 | 6.7 | 73.7 |
+SHOP | card:thuong_xuyen | 13 | 17 | 6.2 | 76.5 |
+SHOP | card:kiem_khi | 12 | 18 | 5.7 | 66.7 |
+SHOP | card:xung_kich | 12 | 21 | 5.7 | 57.1 |
+SHOP | relic:dau_than | 12 | 13 | 5.7 | 92.3 |
+SHOP | relic:huyet_an | 11 | 13 | 5.3 | 84.6 |
+SHOP | card:khien_thep | 9 | 22 | 4.3 | 40.9 |
+SHOP | card:kiem_vu | 9 | 16 | 4.3 | 56.3 |
+SHOP | relic:tam_huong | 9 | 10 | 4.3 | 90.0 |
+SHOP | service:heal | 9 | 209 | 4.3 | 4.3 |
+SHOP | card:chan_phong | 8 | 17 | 3.8 | 47.1 |
+SHOP | card:han_kiem | 8 | 16 | 3.8 | 50.0 |
+SHOP | card:kiem_than | 8 | 11 | 3.8 | 72.7 |
+SHOP | card:lien_tram | 8 | 16 | 3.8 | 50.0 |
+SHOP | card:vung_lay | 8 | 21 | 3.8 | 38.1 |
+SHOP | relic:han_ky | 8 | 12 | 3.8 | 66.7 |
+SHOP | card:dap_vo | 7 | 19 | 3.3 | 36.8 |
+SHOP | card:min_tre | 7 | 17 | 3.3 | 41.2 |
+SHOP | card:bang_tam | 6 | 12 | 2.9 | 50.0 |
+SHOP | card:dia_chan | 6 | 13 | 2.9 | 46.2 |
+SHOP | card:tran_gai | 6 | 14 | 2.9 | 42.9 |
+SHOP | card:tuong_da | 6 | 10 | 2.9 | 60.0 |
+SHOP | card:hoi_am | 5 | 9 | 2.4 | 55.6 |
+SHOP | card:bang_vo | 4 | 6 | 1.9 | 66.7 |
+SHOP | card:chuoi_set | 4 | 11 | 1.9 | 36.4 |
+SHOP | card:cuong_phong | 3 | 7 | 1.4 | 42.9 |
+SHOP | card:loc_cuon | 3 | 7 | 1.4 | 42.9 |
+SHOP | card:gai_nguyen | 2 | 14 | 1.0 | 14.3 |
+SHOP | card:hoa_bang | 2 | 4 | 1.0 | 50.0 |
+SHOP | card:bang_chau | 0 | 19 | 0.0 | 0.0 |
+SHOP | card:bang_phong | 0 | 10 | 0.0 | 0.0 |
+SHOP | card:dai_dao | 0 | 15 | 0.0 | 0.0 |
+SHOP | card:han_bang | 0 | 2 | 0.0 | 0.0 |
+SHOP | card:han_khi | 0 | 17 | 0.0 | 0.0 |
+SHOP | card:han_phong | 0 | 14 | 0.0 | 0.0 |
+SHOP | card:han_tran | 0 | 5 | 0.0 | 0.0 |
+SHOP | card:hoa_tinh | 0 | 19 | 0.0 | 0.0 |
+SHOP | card:hoa_tran | 0 | 6 | 0.0 | 0.0 |
+SHOP | card:hoa_xa | 0 | 23 | 0.0 | 0.0 |
+SHOP | card:liet_hoa | 0 | 6 | 0.0 | 0.0 |
+SHOP | card:ran_kich | 0 | 26 | 0.0 | 0.0 |
+SHOP | card:ran_van | 0 | 12 | 0.0 | 0.0 |
+SHOP | card:song_kiem | 0 | 12 | 0.0 | 0.0 |
+SHOP | card:suong_mong | 0 | 21 | 0.0 | 0.0 |
+SHOP | card:thanh_thuy | 0 | 19 | 0.0 | 0.0 |
+SHOP | card:thien_hoa | 0 | 5 | 0.0 | 0.0 |
+SHOP | card:thien_lang | 0 | 9 | 0.0 | 0.0 |
+SHOP | card:tu_kiem | 0 | 4 | 0.0 | 0.0 |
+SHOP | service:remove_card | 0 | 209 | 0.0 | 0.0 |
+SHOP | service:remove_shape | 0 | 209 | 0.0 | 0.0 |
+SHOP CHECK: 209 shop visits | literal rule, bought in < 2 % of shop visits: 27 of 62 items (a relic / card that is rarely in stock lands here; read the next line) | never worth buying, offered >= 10 times and bought < 2 % of those offers: 14 items (card:bang_chau 0/19, card:bang_phong 0/10, card:dai_dao 0/15, card:han_khi 0/17, card:han_phong 0/14, card:hoa_tinh 0/19, card:hoa_xa 0/23, card:ran_kich 0/26, card:ran_van 0/12, card:song_kiem 0/12, card:suong_mong 0/21, card:thanh_thuy 0/19, service:remove_card 0/209, service:remove_shape 0/209) | FAIL
+VERDICT run all | no shop item bought < 2 % of its offers (offered >= 10 times) | 209 visits, 14 items flagged | FAIL
+VERDICT run all | spread between characters <= 20 pts | one character | DEFERRED (run --characters=kiem_si,phap_su,sat_thu,tho_san,giao_si)
+WORLD CHARACTERS | progress=all | build | giao_si | run win 11.4% (8/70) | no open character in this run to compare (add --characters=kiem_si,phap_su,sat_thu,giao_si)
+
+VERDICT run all | kill vs spare win gap <= 10 pts | needs both runs | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --mercy=kill,spare)
+VERDICT run all | pieces on not above off by > 10 pts | needs both runs | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --pieces=on,off)
+VERDICT run all | Kiep win % monotone 0..10, Kiep 10 >= 3 % | see the KIEP CHECK lines | DEFERRED (godot --headless --path . -s res://tools/balance/deck_sim.gd -- --run=v6 --seeds=70 --kiep=0..10 --seeds=30 --characters=kiem_si)
+runtime: 776.7 s
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 34 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)

@@ -31,6 +31,10 @@ var _drawn_holes: Array[Dictionary] = []
 var _drawn_charge: Array[Dictionary] = []
 ## P2.3: the pattern markers / ivory outlines drawn last ({} = none); compared by value each frame.
 var _drawn_extras: Dictionary = {}
+## Multi-enemy Phase 4 (step 5): the telegraphs and extras of the units past unit 0, as last drawn. Empty with one
+## enemy unit, so a 1v1 match compares exactly what it compared before.
+var _drawn_states: Array[Dictionary] = []
+var _drawn_extras_list: Array[Dictionary] = []
 ## Skill v2 Hỏa Lôi H2: the fire-seal floor items drawn last ({} = none): {"under": blast items, "over": sigils}.
 var _drawn_fuse: Dictionary = {}
 ## Batch-3 field marks drawn last (trap jaws, ward frame, pillar stone).
@@ -115,11 +119,16 @@ func vfx_state() -> Array[Dictionary]:
 			out.append(_item("burning_cell", entry["cell"], frame))
 	# F5 (cast_target pack) is replaced by the code-drawn charge (ADR-0001 Task 5: charge_state / _draw_charge).
 	# F10 (playtest 2026-11-01): the foot-lock seal under the enemy while its own swing roots it (replaces the ring).
-	if combat.is_boss_step_locked() and not combat.get_state().is_enemy_dead() and vfx.has_pack("root_seal"):
+	# Multi-enemy Phase 4 (step 5): one seal per rooted unit, under its own footprint; with one unit this is the
+	# same single seal as before.
+	if vfx.has_pack("root_seal"):
 		var frame: int = FloorVfx.frame_for(vfx.entry("root_seal"), clock, reduce)
-		# P2.2b: one seal under every footprint cell of a multi-cell enemy.
-		for seal_cell: Vector2i in combat.get_state().enemy_footprint_cells():
-			out.append(_item("root_seal", seal_cell, frame))
+		for key: int in combat.get_state().enemy_keys():
+			if not combat.is_step_locked_of(key):
+				continue
+			# P2.2b: one seal under every footprint cell of a multi-cell enemy.
+			for seal_cell: Vector2i in combat.get_state().unit_cells(key):
+				out.append(_item("root_seal", seal_cell, frame))
 	# F3 / F7 / F9: floor one-shots.
 	for ev: Dictionary in vfx.active_events(FloorVfx.LAYER_FLOOR):
 		var frame: int = FloorVfx.frame_for(vfx.entry(str(ev["id"])), float(ev["age"]), reduce)
@@ -214,6 +223,8 @@ func zone_state() -> Array[Dictionary]:
 		return out
 	var step: int = int(combat.combat_clock() * 8.0) % 8
 	var status: StatusEffects = combat.get_status()
+	# Multi-enemy Phase 4 (step 5): field zones and walls stay per HALF (the player's and the enemy's), while the death
+	# mark belongs to a unit, so the marks of units 1+ are drawn after this loop.
 	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
 		for kind: String in StatusEffects.FIELD_KINDS:
 			for cell: Vector2i in status.field_cells(side, kind):
@@ -231,15 +242,23 @@ func zone_state() -> Array[Dictionary]:
 				out.append_array(_ZoneFx.wall_floor(slab, step))
 		# batch 4 (Dấu Tử): the death mark on the marked unit's cells while it lasts
 		if status.has_mark(side):
-			var m: Dictionary = status.mark_at(side)
-			var frac: float = float(m.get("left", 0.0)) / maxf(float(m.get("total", 1.0)), 0.001)
-			var state: CombatState = combat.get_state()
-			var marked: Array = state.enemy_footprint_cells() if side == CombatState.Side.ENEMY else [state.player_cell]
-			for cell: Vector2i in marked:
-				var cell_rect: Rect2i = _floor.cell_art_rect(cell)
-				var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
-				slab.position += cell_rect.position
-				out.append_array(_ZoneFx.mark(slab, step, frac))
+			out.append_array(_mark_items(combat, status, side, step))
+	for key: int in combat.get_state().enemy_keys():
+		if key != CombatState.Side.ENEMY and status.has_mark(key):
+			out.append_array(_mark_items(combat, status, key, step))
+	return out
+
+
+# Multi-enemy Phase 4 (step 5): the death-mark slabs of the unit of [param key], on its OWN cells.
+func _mark_items(combat: CombatView, status: StatusEffects, key: int, step: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var m: Dictionary = status.mark_at(key)
+	var frac: float = float(m.get("left", 0.0)) / maxf(float(m.get("total", 1.0)), 0.001)
+	for cell: Vector2i in combat.get_state().unit_cells(key):
+		var cell_rect: Rect2i = _floor.cell_art_rect(cell)
+		var slab: Rect2i = SlabPainter.slab_rect(cell_rect.size)
+		slab.position += cell_rect.position
+		out.append_array(_ZoneFx.mark(slab, step, frac))
 	return out
 
 
@@ -250,6 +269,11 @@ func _process(_delta: float) -> void:
 	if _floor == null:
 		return
 	var state: Dictionary = _floor.telegraph_state()
+	# Multi-enemy Phase 4 (step 5): the redraw test covers EVERY unit's telegraph and extras. With only unit 0's dict
+	# watched, a second unit's warning would never ask for a redraw, and a source that alternated between two units
+	# would flip the watched value every frame (flicker). Comparing the whole list is stable.
+	var states: Array[Dictionary] = _floor.extra_telegraph_states()
+	var extras_list: Array[Dictionary] = _floor.pattern_extras_list()
 	var burn: Array[Dictionary] = burn_state()
 	var vfx: Array[Dictionary] = vfx_state()
 	var holes: Array[Dictionary] = hole_state()
@@ -263,7 +287,9 @@ func _process(_delta: float) -> void:
 	if zone != _drawn_zone:
 		_drawn_zone = zone
 		queue_redraw()
-	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx or holes != _drawn_holes or charge != _drawn_charge 			or extras != _drawn_extras:
+	if state != _drawn or burn != _drawn_burn or vfx != _drawn_vfx or holes != _drawn_holes or charge != _drawn_charge 			or extras != _drawn_extras or states != _drawn_states or extras_list != _drawn_extras_list:
+		_drawn_states = states
+		_drawn_extras_list = extras_list
 		_drawn_extras = extras
 		_drawn_charge = charge
 		_drawn = state
@@ -284,6 +310,8 @@ func _draw() -> void:
 	_drawn = _floor.telegraph_state()
 	_drawn_charge = charge_state()
 	_drawn_extras = _floor.pattern_extras()
+	_drawn_states = _floor.extra_telegraph_states()
+	_drawn_extras_list = _floor.pattern_extras_list()
 	var combat: CombatView = combat_of(_floor)
 	var vfx: FloorVfx = null if combat == null else combat.get_floor_vfx()
 	if combat != null:

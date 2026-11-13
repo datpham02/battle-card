@@ -1,0 +1,28 @@
+tests/unit/combat/multi_enemy_agents_test.gd: FAILS=3 se=0 15s
+    FAIL T1: never more than 1 unit(s) attacking at once (max seen 3)  
+    FAIL T2: never more than 2 unit(s) attacking at once (max seen 3)  
+    FAIL 7: the match ends (won) once every required unit is dead  []
+    FAILS=3 PASSES=45
+tests/unit/combat/multi_enemy_resolver_test.gd: FAILS=0 se=0 3s
+    FAILS=0 PASSES=49
+tests/unit/combat/combat_state_units_test.gd: FAILS=0 se=0 2s
+    FAILS=0 PASSES=63
+tests/unit/run/formations_config_test.gd: FAILS=0 se=0 3s
+    FAILS=0 PASSES=59
+tests/unit/combat/boss_footprint_test.gd: FAILS=0 se=0 4s
+    FAILS=0
+tests/unit/combat/state_damaged_signal_test.gd: FAILS=0 se=0 0s
+    FAILS=0
+tests/unit/combat/boss_downed_test.gd: FAILS=0 se=0 5s
+    FAILS=0
+tests/unit/combat/pattern_wiring_test.gd: FAILS=0 se=0 4s
+    FAILS=0
+tests/unit/combat/arbiter_test.gd: FAILS: 0 se=0 3s
+    FAILS: 0
+tests/unit/combat/cut_test.gd: FAILS: 0 se=0 3s
+    FAILS: 0
+tests/unit/combat/pattern_controller_test.gd: FAILS=0 se=0 3s
+    FAILS=0
+tests/unit/combat/learning_test.gd: FAILS=0 se=0 10s
+    FAILS=0
+DONE

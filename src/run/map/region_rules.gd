@@ -12,7 +12,9 @@ const MAP_GEN_V2: String = "v2"
 ## Node counts per depth of the approved layout (01 section B1): entry, 3 lanes, 3 lanes, hub, 3 lanes, approach, warden.
 const DEFAULT_DEPTH_LAYOUT: Array[int] = [1, 3, 3, 1, 3, 2, 1]
 ## Match keys a combat patch may carry besides the hazard numbers and `traits` (04 section 2 / 07 C7).
-const PATCH_MULT_KEYS: Array[String] = ["boss_drop_interval_mult", "player_drop_interval_mult", "boss_step_cooldown_mult", "swing_speed_mult"]
+## 2026-11-13 (Monster Skill Phase 1): `pattern_tempo_mult` so a modifier can reach a pattern-brain enemy (windup /
+## cooldown / recovery, never warning_sec); RunConfig keeps the key only on `brain: pattern` matches.
+const PATCH_MULT_KEYS: Array[String] = ["boss_drop_interval_mult", "player_drop_interval_mult", "boss_step_cooldown_mult", "swing_speed_mult", "pattern_tempo_mult"]
 const PATCH_ADD_KEYS: Array[String] = ["boss_min_runes_add", "boss_defense_add"]
 
 static var _shared: RegionRules = null

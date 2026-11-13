@@ -57,10 +57,8 @@ func try_step(direction: Vector2i) -> bool:
 			return false
 	var from_cell: Vector2i = _state.cell_of(_side)
 	var moved: bool
-	if _side == CombatState.Side.PLAYER:
-		moved = _state.set_player_cell(_state.player_cell + direction)
-	else:
-		moved = _state.set_enemy_cell(_state.enemy_cell + direction)
+	# Multi-enemy Phase 3: [member _side] is the unit KEY (1 = unit 0 as before); set_key_cell checks occupancy
+	moved = _state.set_key_cell(_side, from_cell + direction)
 	if moved:
 		var scale: float = _scale()
 		# Story 036: a plugged-in step cost (mire: leaving a mire cell) multiplies AFTER cooldown_scale, so a
@@ -100,8 +98,8 @@ func is_cell_blocked(cell: Vector2i) -> bool:
 
 # Cells the unit would cover with its cell / anchor on [param anchor] (the enemy's footprint; the cell itself otherwise).
 func _dest_cells(anchor: Vector2i) -> Array[Vector2i]:
-	if _side == CombatState.Side.ENEMY:
-		return _state.footprint_cells_at(anchor)
+	if _side != CombatState.Side.PLAYER:
+		return _state.cells_at_key(_side, anchor)
 	var one: Array[Vector2i] = [anchor]
 	return one
 

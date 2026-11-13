@@ -8,12 +8,16 @@ extends RefCounted
 
 ## Keys every match entry carries after validation (a deprecated absolute
 ## `boss_step_cooldown_sec` is carried too, but only when the data had it).
+## Multi-enemy Phase 0 (docs/design/world-map-v2/MULTI-ENEMY-ENCOUNTER-AUDIT.md section 5): `enemies`, `attack_slots`
+## and `hp_budget_mult` are carried ONLY when the data has them (a formation node, or a flat config that writes them);
+## a plain match keeps exactly the keys it had. Not read by the combat yet.
 const MATCH_KEYS: Array[String] = [
 	"id", "name_key", "display_name", "boss_max_hp", "brain_set", "boss_step_cooldown_mult",
 	"boss_think_interval_sec", "boss_reaction_sec", "boss_drop_interval_mult", "movement",
 	"swing_speed_mult", "combo_chance", "combo_gap_sec", "arena", "arena_seed", "traits", "boss_cards", "boss_defense", "boss_min_runes",
 	"desc_key", "boss_root_while_swinging",
 	"mire_immune", "player_drop_interval_mult", "odd_blocks",
+	"enemies", "attack_slots", "hp_budget_mult",
 ]
 ## Story 036: combat.json `hazards` keys a match may override (same name in the match; absent = not set in the match dict).
 const HAZARD_OVERRIDE_KEYS: Array[String] = [
@@ -115,13 +119,17 @@ static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant
 		chapter_index = chapters.region_index(str(chapter_index_or_region))
 	else:
 		chapter_index = int(chapter_index_or_region)
-	var raw: Dictionary = chapters.get_match_raw(chapter_index, match_id)
+	# Multi-enemy Phase 0: a node whose id names a formation plays the formation's raw match (its first enemy's
+	# template + `enemies`); every other id is a plain match, exactly as before.
+	var raw: Dictionary = chapters.get_formation_match_raw(chapter_index, match_id) if chapters.has_formation(chapter_index, match_id) \
+			else chapters.get_match_raw(chapter_index, match_id)
 	if raw.is_empty():
 		push_warning("RunConfig: unknown match '%s' in chapter %d, using the default match" % [match_id, chapter_index])
 		return from_dictionary(chapters.defaults())
 	raw["arena_seed"] = hash([run_seed, match_id]) & ChaptersConfig.SEED_MASK
+	var scaling: Dictionary = {}
 	if floor >= 0:
-		var scaling: Dictionary = chapters.floor_scaling(floor)
+		scaling = chapters.floor_scaling(floor)
 		if kiep_level > 0:
 			var rules: KiepRules = KiepRules.shared()
 			scaling = chapters.floor_scaling(rules.scaling_floor(floor, kiep_level, chapters.world_floors()))
@@ -129,6 +137,9 @@ static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant
 			if extra.has("hp_mult"):
 				scaling["hp_mult"] = float(scaling.get("hp_mult", 1.0)) * float(extra["hp_mult"])
 		_apply_scaling(raw, chapters.region_normalize_at(chapter_index), scaling)
+	# Multi-enemy Phase 1: a formation's entries get their numbers here (unit 0 folded into the raw match, units 1..
+	# from their templates with the same rows); a plain match has no `enemies` and is untouched.
+	_resolve_enemies(raw, chapters, chapter_index, chapters.region_normalize_at(chapter_index), scaling, true)
 	if node_kind == "danger":
 		var traits: Array = (raw.get("traits", []) as Array).duplicate(true)
 		for extra: Variant in chapters.danger_traits():
@@ -144,6 +155,8 @@ static func from_node(chapters: ChaptersConfig, chapter_index_or_region: Variant
 	if kiep_level > 0:
 		raw = KiepRules.shared().apply_match(raw, kiep_level, {"run_seed": run_seed, "floor": floor, "match_id": match_id,
 				"node_kind": node_kind, "is_final": floor >= chapters.world_floors()})
+	# Phase 1: entry 0 mirrors the FINAL raw match (one number per unit).
+	_resolve_enemies(raw, chapters, chapter_index, {}, {}, false)
 	var data: Dictionary = chapters.defaults()
 	data["matches"] = [raw]
 	return from_dictionary(data)
@@ -290,12 +303,135 @@ static func _clean_match(raw: Dictionary, index: int) -> Dictionary:
 		push_warning("RunConfig: boss_cards of match %s must be an array, ignored" % m["id"])
 	if raw.has("phases"):
 		_apply_phases(m, raw["phases"])
+	_apply_enemies(m, raw)
 	if raw.has("boss_step_cooldown_sec"):
 		# Deprecated absolute value: carried (and used by CombatView) only for old data.
 		push_warning("RunConfig: boss_step_cooldown_sec is deprecated, use boss_step_cooldown_mult")
 		m["boss_step_cooldown_sec"] = maxf(float(raw["boss_step_cooldown_sec"]), 0.0)
 	_apply_brain(m, raw)
 	return m
+
+
+# Multi-enemy Phase 0: `enemies` (array of {id, slot?, role?, required?, hp_mult?, defense_add?, tempo_mult?, traits?}),
+# `attack_slots` (int >= 1) and `hp_budget_mult` (> 0) are carried ONLY when the data has them. The entries are
+# cleaned structurally (FormationRules.clean_entry keys and ranges; `id` required); the chapter-level rules (ids,
+# unit caps, arena) ran in ChaptersConfig for a formation node and cannot run here for a flat config. A bad value
+# is dropped with a warning and the match keeps the single-enemy shape.
+# Phase 1: every entry also carries FormationRules.RESOLVED_KEYS (`template_id`, `max_hp`, `defense`, `brain`,
+# `enemy`, `footprint`): the values from_node resolved, or, for a flat config that wrote none, the match's own
+# numbers (max_hp = boss_max_hp, defense = boss_defense, block brain, one cell), so CombatState.from_match_params
+# never needs a lookup.
+static func _apply_enemies(m: Dictionary, raw: Dictionary) -> void:
+	if raw.has("enemies"):
+		var entries: Array = []
+		if typeof(raw["enemies"]) == TYPE_ARRAY:
+			for e: Variant in raw["enemies"] as Array:
+				if typeof(e) != TYPE_DICTIONARY or str((e as Dictionary).get("id", "")).is_empty():
+					push_warning("RunConfig: an enemies entry of match %s needs an id, enemies ignored" % m["id"])
+					entries.clear()
+					break
+				var src: Dictionary = e as Dictionary
+				var templates: Dictionary = {str(src["id"]): {}}
+				var problems: Array[String] = []
+				var entry: Dictionary = FormationRules.clean_entry(src, templates, "match %s" % m["id"], problems)
+				for p: String in problems:
+					push_warning("RunConfig: " + p)
+				entry["template_id"] = str(src.get("template_id", entry["id"]))
+				var hp: float = float(src.get("max_hp", m["boss_max_hp"]))
+				if hp <= 0.0:
+					push_warning("RunConfig: enemies entry '%s' of match %s max_hp must be > 0, using boss_max_hp" % [entry["id"], m["id"]])
+					hp = float(m["boss_max_hp"])
+				entry["max_hp"] = hp
+				entry["defense"] = maxf(float(src.get("defense", m["boss_defense"])), 0.0)
+				var brain: String = str(src.get("brain", BRAIN_BLOCK))
+				var enemy: String = str(src.get("enemy", ""))
+				if brain != BRAIN_PATTERN or enemy.is_empty():
+					if brain != BRAIN_BLOCK and brain != BRAIN_PATTERN:
+						push_warning("RunConfig: enemies entry '%s' of match %s brain '%s' unknown, using block" % [entry["id"], m["id"], brain])
+					brain = BRAIN_BLOCK
+					enemy = ""
+				entry["brain"] = brain
+				entry["enemy"] = enemy
+				entry["footprint"] = FormationRules.clean_footprint(src.get("footprint"), [[0, 0]])
+				# Phase 3 (A2): the entry's AI block (from_node wrote it; a flat config without one gets the match's own)
+				entry["ai"] = FormationRules.ai_block(src["ai"] as Dictionary) if typeof(src.get("ai")) == TYPE_DICTIONARY 						else FormationRules.ai_block(m)
+				entries.append(entry)
+		else:
+			push_warning("RunConfig: enemies of match %s must be an array, ignored" % m["id"])
+		if not entries.is_empty():
+			m["enemies"] = entries
+	if raw.has("attack_slots"):
+		m["attack_slots"] = maxi(int(raw["attack_slots"]), 1)
+	if raw.has("hp_budget_mult"):
+		m["hp_budget_mult"] = _positive(raw, "hp_budget_mult", 1.0)
+
+
+# Multi-enemy Phase 1: resolves the `enemies[]` of a formation node's RAW match (design 3.3). Called by from_node in
+# two steps so there is ONE number per unit:
+# - [param before] (right after the floor scaling, before danger traits / profile / Kiep): entry 0's `hp_mult` /
+#   `defense_add` / `traits` are folded INTO the raw match (`boss_max_hp`, `boss_defense`, `traits`), so every later
+#   patch sees the unit-0 numbers; entries 1.. are resolved from their own template with the SAME normalize /
+#   scaling rows: max_hp = template boss_max_hp x normalize.hp_mult x scaling.hp_mult x hp_mult, defense =
+#   max(max(template boss_defense + normalize.defense_add, 0) + scaling.defense_add, 0) + defense_add (>= 0),
+#   brain / enemy from the template (`pattern` only with an enemy id), footprint from ChaptersConfig.footprint_of,
+#   traits = template traits + entry traits (deduplicated by id). Profile modifiers and Kiep touch unit 0 only
+#   (Phase 3 decides a `modifier_target`).
+# - not [param before] (last): entry 0 is DERIVED from the final raw match (`boss_max_hp`, `boss_defense`, brain,
+#   enemy, footprint, traits), never computed on its own, so `enemies[0].max_hp == boss_max_hp` by construction.
+static func _resolve_enemies(raw: Dictionary, chapters: ChaptersConfig, chapter_index: int, normalize: Dictionary,
+		scaling: Dictionary, before: bool) -> void:
+	if typeof(raw.get("enemies")) != TYPE_ARRAY or (raw["enemies"] as Array).is_empty():
+		return
+	var entries: Array = raw["enemies"]
+	var base: Dictionary = _default_match(0)
+	if before:
+		var first: Dictionary = entries[0]
+		raw["boss_max_hp"] = float(raw.get("boss_max_hp", base["boss_max_hp"])) * float(first.get("hp_mult", 1.0))
+		raw["boss_defense"] = maxf(float(raw.get("boss_defense", base["boss_defense"])) + float(first.get("defense_add", 0.0)), 0.0)
+		raw["traits"] = _merge_traits(raw.get("traits", []), first.get("traits", []))
+		for i: int in range(1, entries.size()):
+			var entry: Dictionary = entries[i]
+			var template: Dictionary = chapters.get_match_raw(chapter_index, str(entry.get("id", "")))
+			if not scaling.is_empty():
+				_apply_scaling(template, normalize, scaling)
+			entry["template_id"] = str(entry.get("id", ""))
+			entry["max_hp"] = float(template.get("boss_max_hp", base["boss_max_hp"])) * float(entry.get("hp_mult", 1.0))
+			entry["defense"] = maxf(float(template.get("boss_defense", base["boss_defense"])) + float(entry.get("defense_add", 0.0)), 0.0)
+			var pattern: bool = str(template.get("brain", "")) == BRAIN_PATTERN and not str(template.get("enemy", "")).is_empty()
+			entry["brain"] = BRAIN_PATTERN if pattern else BRAIN_BLOCK
+			entry["enemy"] = str(template.get("enemy", "")) if pattern else ""
+			entry["footprint"] = chapters.footprint_of(template)
+			entry["traits"] = _merge_traits(template.get("traits", []), entry.get("traits", []))
+			# Phase 3 (A2): the template's own AI keys, scaled by the same rows as unit 0 (template is a deep copy)
+			entry["ai"] = FormationRules.ai_block(template)
+		return
+	var first: Dictionary = entries[0]
+	first["template_id"] = str(first.get("id", ""))
+	first["max_hp"] = float(raw.get("boss_max_hp", base["boss_max_hp"]))
+	first["defense"] = float(raw.get("boss_defense", base["boss_defense"]))
+	var pattern0: bool = str(raw.get("brain", "")) == BRAIN_PATTERN and not str(raw.get("enemy", "")).is_empty()
+	first["brain"] = BRAIN_PATTERN if pattern0 else BRAIN_BLOCK
+	first["enemy"] = str(raw.get("enemy", "")) if pattern0 else ""
+	first["footprint"] = chapters.footprint_of(raw)
+	first["traits"] = (raw.get("traits", []) as Array).duplicate(true) if typeof(raw.get("traits", [])) == TYPE_ARRAY else []
+	# Phase 3 (A2): unit 0's AI block mirrors the final raw match (the keys the single-enemy path reads)
+	first["ai"] = FormationRules.ai_block(raw)
+
+
+# Trait entries of [param base] followed by those of [param extra] whose id is not already present (deep copies).
+static func _merge_traits(base: Variant, extra: Variant) -> Array:
+	var out: Array = []
+	var ids: Dictionary = {}
+	for list: Variant in [base, extra]:
+		if typeof(list) != TYPE_ARRAY:
+			continue
+		for t: Variant in list as Array:
+			var id: String = str((t as Dictionary).get("id", "")) if typeof(t) == TYPE_DICTIONARY else str(t)
+			if ids.has(id):
+				continue
+			ids[id] = true
+			out.append((t as Dictionary).duplicate(true) if typeof(t) == TYPE_DICTIONARY else t)
+	return out
 
 
 # Phase 2: `brain` / `enemy` / `pattern_tempo_mult` carried ONLY when the data has `brain` (a match without it keeps

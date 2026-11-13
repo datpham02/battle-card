@@ -36,6 +36,8 @@ gauge**, run inside an otherwise unchanged game through one graph API that wraps
 1. **Authored lanes, not random links** — few long fights per region means every node must carry a readable
    meaning (01 §B2).
 2. **No multi-enemy fights** — the combat core is 1v1 by construction; depth comes from composition (03 §1).
+   **Superseded 2026-11-13:** multi-enemy encounters are the Phase 3 direction (`MULTI-ENEMY-ENCOUNTER-AUDIT.md`,
+   03 §1 change note); single-enemy encounters stay compatible. Phase 0 (data schema) is implemented.
 3. **One Region Rule system, seven configs; six need no new combat code** (02 §9).
 4. **Rewards gain a tier; tier 1 equals today** — nothing is retuned before the simulation (01 §E).
 5. **Keep the fixed 7-region climb** (user 2026-11-07, this brief) over ADR-0001 D3's "5 tiers × 2 lands" (user

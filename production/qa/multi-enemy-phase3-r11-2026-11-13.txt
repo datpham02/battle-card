@@ -1,0 +1,65 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS shipped enemy_skills.json has no problems []
+PASS eater: elite, belch + devour, mechanic devour
+PASS phoenix: elite, dive + pyre
+PASS eater_ember_belch has name / counter keys and a delivery
+PASS eater_devour has name / counter keys and a delivery
+PASS phoenix_ash_dive has name / counter keys and a delivery
+PASS phoenix_pyre has name / counter keys and a delivery
+PASS belch: warns
+PASS belch: 2-3 cells down the hero's column [(2, 1), (2, 2)]
+PASS belch: 12 damage { "t": 1.85, "skill": "eater_ember_belch", "event": "resolve", "cells": [(2, 1), (2, 2)], "hit": true, "damage": 12.0, "phase": 0, "followup_strike": false }
+PASS belch: every struck cell burns 2.5 s
+PASS belch: nothing on the enemy half
+PASS belch: the dodger is missed 100.0
+PASS belch: the column still burns after a miss [(2, 1), (2, 2)]
+PASS belch: the dodger does not stand in the fire
+PASS devour: not chosen with no fire
+PASS devour: not chosen with one fire
+PASS devour: chosen with two fires
+PASS devour: 4 fires lit, 2 per half [(5, 0), (6, 0), (0, 0), (1, 0)]
+PASS devour: resolved
+PASS devour: every fire of both halves is out []
+PASS devour: +6 HP per fire (24) 524.0
+PASS devour: the hero is untouched
+PASS devour: heal capped at max HP 1000.0
+PASS devour: winds up
+PASS devour: blinking interrupt tell
+PASS devour: a hit interrupts it
+PASS devour: stunned
+PASS devour: still stunned at 0.9 s
+PASS devour: no heal, the fires stay 500.0
+PASS devour: cooldown x cancel ratio (9 x 0.5) 3.6
+PASS R11: a vent row alone (terrain fire) never triggers devour 0
+PASS R11: devour fires once two zone fires burn
+PASS R11: the vent row keeps burning
+PASS R11: the zone fires are eaten
+PASS R11: +6 per zone fire only (512) 2 zone, hp 512.0
+PASS burn_eater: two ticks of 2 on its cell heal it (504) 504.0
+PASS burn_eater: R1 never fires on it
+PASS burn_eater: R2 / R3 still can
+PASS dive: warns
+PASS dive: an L of 3 over the hero [(2, 2), (2, 1), (1, 2)]
+PASS dive: 12 x 1.5 against an earlier Rạn = 18 { "t": 1.65, "skill": "phoenix_ash_dive", "event": "resolve", "cells": [(2, 2), (2, 1), (1, 2)], "hit": true, "damage": 18.0, "phase": 0, "followup_strike": false }
+PASS dive: leaves 1 Rạn 1
+PASS dive: Rạn never passes the cap (3) 3
+PASS pyre: never above 50 % HP
+PASS pyre: warns below 50 %
+PASS pyre: the solid ivory tell (cannot be interrupted)
+PASS pyre: 1-3 cells burn (F3 may drop one), never the hero's cell [(1, 2), (1, 1), (0, 2)]
+PASS pyre: the cells are around the hero [(1, 2), (1, 1), (0, 2)]
+PASS pyre: 4 s burn
+PASS pyre: the hero keeps an unburnt neighbour
+PASS pyre: the hero standing still takes no damage 100.0
+PASS pyre: the Phoenix is not hurt by its own pyre 450.0
+PASS pyre: once only 1
+PASS rebirth: no pyre at full HP
+PASS rebirth: held at 1 HP, reviving, pattern paused
+PASS rebirth: back at 40 %, pattern active 400.0
+PASS rebirth: the revived Phoenix (40 % < 50 %) lights its pyre
+PASS rebirth: with 1 Hàn the Phoenix dies for good
+PASS strings: every Hellfire skill / poison key is present []
+PASS strings: those rows parse as exactly key, vi, en []
+FAILS=0
+exit=0

@@ -1,0 +1,66 @@
+{
+	"_doc": "Multi-enemy Phase 4 QA fixture. A TEST fixture, never production content: it lets a headless test enter a real battle (GameFlow.enter_test_floor) with 2 and then 3 enemy units, so the view stack (UnitLayer, CutHudView, FloorLayer) can be checked with several units on the board. Match 1 = two units (block + pattern), match 2 = three units (block + pattern + a 2x2 pattern boss). The `enemies` entries are RAW: RunConfig.clean_match resolves `ai`, `footprint` and `defense` from them. dev_pattern_dummy and dev_pattern_boss already exist in assets/data/enemy_skills.json as dev entries, so this fixture adds no new game content.",
+	"heal_between_matches": 25,
+	"intro_sec": 0.05,
+	"end_delay_sec": 0.05,
+	"between_sec": 0.1,
+	"matches": [
+		{
+			"id": "goblin_scout",
+			"name_key": "boss.goblin_scout.name",
+			"boss_max_hp": 80,
+			"brain_set": "cautious",
+			"boss_step_cooldown_sec": 0.80,
+			"boss_think_interval_sec": 0.50,
+			"boss_reaction_sec": 0.60,
+			"boss_drop_interval_mult": 1.3,
+			"attack_slots": 1,
+			"enemies": [
+				{
+					"id": "goblin_scout",
+					"max_hp": 80,
+					"brain": "block"
+				},
+				{
+					"id": "dummy_a",
+					"max_hp": 60,
+					"brain": "pattern",
+					"enemy": "dev_pattern_dummy"
+				}
+			]
+		},
+		{
+			"id": "goblin_chief",
+			"name_key": "boss.goblin_chief.name",
+			"boss_max_hp": 120,
+			"brain_set": "balanced",
+			"boss_step_cooldown_sec": 0.55,
+			"boss_think_interval_sec": 0.30,
+			"boss_reaction_sec": 0.35,
+			"boss_drop_interval_mult": 1.0,
+			"arena": {
+				"shape": "boss_hall"
+			},
+			"attack_slots": 2,
+			"enemies": [
+				{
+					"id": "goblin_chief",
+					"max_hp": 120,
+					"brain": "block"
+				},
+				{
+					"id": "dummy_b",
+					"max_hp": 60,
+					"brain": "pattern",
+					"enemy": "dev_pattern_dummy"
+				},
+				{
+					"id": "big_b",
+					"max_hp": 150,
+					"brain": "pattern",
+					"enemy": "dev_pattern_boss"
+				}
+			]
+		}
+	]
+}

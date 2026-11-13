@@ -133,3 +133,45 @@ static func _open_neighbours(
 
 static func _before(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x or (a.x == b.x and a.y < b.y)
+
+
+## Multi-enemy Phase 2: [method fit_cells] for EVERY unit standing on [param side]'s half ([param standing_cells], e.g.
+## [method standing_cells]): the rule is applied unit by unit (index order), each unit's exits also refusing the cells
+## the other units stand on, so every unit keeps one open neighbour. One standing cell = exactly [method fit_cells].
+static func fit_cells_for(
+	grid: BoardGrid, side: int, standing_cells: Array[Vector2i], zone_cells: Array[Vector2i], blocked_fn: Callable
+) -> Array[Vector2i]:
+	var zone: Array[Vector2i] = []
+	for cell: Vector2i in zone_cells:
+		if not zone.has(cell):
+			zone.append(cell)
+	for i: int in standing_cells.size():
+		var here: Vector2i = standing_cells[i]
+		var others: Array[Vector2i] = []
+		for j: int in standing_cells.size():
+			if j != i:
+				others.append(standing_cells[j])
+		var blocked: Callable = blocked_fn
+		if not others.is_empty():
+			blocked = func(c: Vector2i) -> bool:
+				return others.has(c) or (blocked_fn.is_valid() and bool(blocked_fn.call(c)))
+		zone = fit_cells(grid, side, here, zone, blocked)
+	return zone
+
+
+## Multi-enemy Phase 2: the cells the units of [param side]'s half stand on (anchors), index order: the player's cell,
+## or every LIVING enemy unit's anchor (unit 0's anchor when none lives, the pre-Phase-2 answer). [NO_CELL] without a
+## state.
+static func standing_cells(state: CombatState, side: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if state == null:
+		out.append(BoardGrid.NO_CELL)
+		return out
+	if side == CombatState.Side.PLAYER:
+		out.append(state.player_cell)
+		return out
+	for key: int in state.enemy_keys(true):
+		out.append(state.cell_of(key))
+	if out.is_empty():
+		out.append(state.cell_of(CombatState.Side.ENEMY))
+	return out

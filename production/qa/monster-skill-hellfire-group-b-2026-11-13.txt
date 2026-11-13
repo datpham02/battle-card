@@ -1,0 +1,59 @@
+start 08:32:23
+=== tests/unit/combat/pattern_hellfire_group_b_test.gd
+FAIL budget: the jab still fires (no starvation) 0
+FAILS=1
+=== tests/unit/combat/pattern_hellfire_group_a_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_fairness_test.gd
+FAILS=0
+=== tests/integration/run/pattern_hellfire_dodge_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_phase0_bugfix_test.gd
+FAILS=0
+=== tests/unit/combat/status_poison_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_phase0_effects_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_phase0_ai_test.gd
+FAIL shipped enemy_skills.json: no weights, no problems []
+FAILS=1
+=== tests/unit/combat/pattern_phase0_pause_test.gd
+FAILS=0
+=== tests/unit/combat/enemy_skills_config_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_controller_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_roster_fairness_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_roster_mechanics_test.gd
+FAILS=0
+=== tests/integration/run/pattern_dodge_test.gd
+FAILS=0
+=== tests/integration/run/pattern_roster_dodge_test.gd
+FAILS=0
+=== tests/unit/combat/status_test.gd
+FAILS=0
+=== tests/unit/traits/region_traits_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/vent_surge_arena_invariant_test.gd
+FAILS=0
+=== tests/unit/run/chapters_test.gd
+FAILS=0 PASSES=39
+=== tests/unit/run/chapters23_test.gd
+FAILS=0 PASSES=124
+=== tests/unit/run/world_map_gen_test.gd
+FAILS=0 PASSES=38
+=== shot flame_cultist frame 150
+=== shot flame_cultist frame 260
+=== shot magma_slug frame 150
+=== shot magma_slug frame 260
+=== shot hell_knight frame 150
+=== shot hell_knight frame 260
+flame_cultist-caldera-f150.png
+flame_cultist-caldera-f260.png
+hell_knight-caldera-f150.png
+hell_knight-caldera-f260.png
+magma_slug-forge-f150.png
+magma_slug-forge-f260.png
+end 08:46:13
+DONE

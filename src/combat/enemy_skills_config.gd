@@ -25,10 +25,23 @@ const RELATIVE_TO: Array[String] = ["first_cells", "first_end", "first_center", 
 ## (Witch branch_lattice: the extra cell grows from the L's end toward the anchor's row); none / no marker = all kept.
 const FOLLOWUP_PREFER: Array[String] = ["none", "anchor_row"]
 ## P2.3: `effects.move.to` values of a self skill that moves the enemy (Rootling creep): one cell up or down.
-const MOVE_TO: Array[String] = ["adjacent_row"]
-## Status ids a skill may apply: existing pin (Frozen), fragile (Ran), frost (Han) + Phase 2 root (D2) / slow (D4).
-const STATUS_IDS: Array[String] = ["root", "slow", "pin", "fragile", "frost"]
-const ZONE_IDS: Array[String] = ["thorns", "drop"]
+## Monster Skill Phase 0: `far_cell` = the free cell of its half farthest from where it stands (Dust Nomad's veil step).
+const MOVE_TO: Array[String] = ["adjacent_row", "far_cell"]
+## Status ids a skill may apply: existing pin (Frozen), fragile (Ran), frost (Han) + Phase 2 root (D2) / slow (D4);
+## Phase 0: poison (Độc, a unit-bound DoT on the player: StatusEffects.poison, never stacks).
+const STATUS_IDS: Array[String] = ["root", "slow", "pin", "fragile", "frost", "poison"]
+## Zone ids: Phase 2 thorns / drop; Phase 0 opens the cell effects that already exist in code to enemy skills:
+## burn (StatusEffects.ignite), mire / sand / fall (TileHazards.add_mire / add_sand / drop_cells).
+const ZONE_IDS: Array[String] = ["thorns", "drop", "burn", "mire", "sand", "fall"]
+## Phase 0: `zone.side`: `player` (default) = the strike's cells on the player's half; `self` = the enemy's own footprint
+## cells (a self skill only: the Magma Slug's molten trail lights the cells it leaves).
+const ZONE_SIDES: Array[String] = ["player", "self"]
+## Phase 0: reaction ids an enemy may be immune to (`enemies.<id>.immune_reactions`, M15 immunity).
+const REACTION_IDS: Array[String] = ["r1", "r2", "r3"]
+## Phase 0: `weights` blocks a skill may carry (PatternBrain multiplies its weight by the matching entry):
+## player_status {status id: mult}, player_on_zone {zone kind: mult}, self_status {guard|haste|evade|shroud: mult},
+## allies_alive (mult while at least one ally lives; multi-enemy, inert until the engine has allies).
+const WEIGHT_KEYS: Array[String] = ["player_status", "player_on_zone", "self_status", "allies_alive"]
 const DEFAULT_FAIRNESS: Dictionary = {
 	"reaction_margin_sec": 0.25, "max_red_ratio": 0.5, "cc_grace_sec": 1.0,
 	"min_gap_between_warnings_sec": 0.4, "followup_min_warning_sec": 0.75, "heavy_recovery_sec": 1.2,
@@ -44,6 +57,8 @@ const DEFAULT_DEFAULTS: Dictionary = {
 const DEFAULT_STATUSES: Dictionary = {
 	"root": {"sec": 0.7}, "slow": {"sec": 1.5, "step_mult": 1.3}, "guard": {"amount": 3.0, "sec": 3.0},
 	"fragile": {"stacks": 1}, "frost": {"stacks": 1},
+	# Phase 0: Poison fallbacks (design §4.4 Bog Rat / Scorpion numbers are per skill; these are the floor).
+	"poison": {"sec": 3.0, "tick_sec": 0.5, "damage": 1.0},
 }
 const _EPS: float = 0.000001
 
@@ -157,6 +172,8 @@ func _normalize_skill(id: String, raw: Variant) -> Dictionary:
 		"name_key": str(d.get("name_key", "")),
 		"effects": _normalize_effects(d.get("effects", {}), errors, "effects"),
 		"followup": {},
+		# Phase 0: weight multipliers by the fight's state (PatternBrain.weight_for); {} = none.
+		"weights": _normalize_weights(d.get("weights", {}), errors),
 	}
 	if kind == "attack" and float(s["warning_sec"]) <= 0.0:
 		errors.append("attack skill needs warning_sec > 0")
@@ -264,12 +281,42 @@ func _normalize_effects(raw: Variant, errors: Array[String], where: String) -> D
 			"id": sid, "sec": float(st.get("sec", base.get("sec", 0.0))), "stacks": int(st.get("stacks", base.get("stacks", 1))),
 			"step_mult": float(st.get("step_mult", base.get("step_mult", 1.0))),
 			"first_cell_only": bool(st.get("first_cell_only", false)),
+			# Phase 0 (poison): the tick cadence and the damage per tick.
+			"tick_sec": float(st.get("tick_sec", base.get("tick_sec", 0.5))), "damage": float(st.get("damage", base.get("damage", 1.0))),
 		}
+		if sid == "poison" and (float(out["status"]["sec"]) <= 0.0 or float(out["status"]["tick_sec"]) <= 0.0 or float(out["status"]["damage"]) <= 0.0):
+			errors.append("%s.status poison needs sec, tick_sec and damage > 0" % where)
 	if typeof(d.get("zone")) == TYPE_DICTIONARY:
 		var z: Dictionary = d["zone"] as Dictionary
 		if not ZONE_IDS.has(str(z.get("id", ""))):
 			errors.append("%s.zone id '%s' unknown (known: %s)" % [where, str(z.get("id", "")), ", ".join(ZONE_IDS)])
+		if not ZONE_SIDES.has(str(z.get("side", "player"))):
+			errors.append("%s.zone side '%s' unknown (known: %s)" % [where, str(z.get("side", "")), ", ".join(ZONE_SIDES)])
 		out["zone"] = z.duplicate(true)
+		out["zone"]["side"] = str(z.get("side", "player"))
+	# Phase 0: the effects below reuse code that exists (CombatState.heal_enemy, StatusEffects.burning_cells /
+	# clear_burn, CutEffects.push_away / pull_toward, TraitHost's untargetable / forecast hooks).
+	if typeof(d.get("heal")) == TYPE_DICTIONARY:
+		var h: Dictionary = d["heal"] as Dictionary
+		out["heal"] = {"ratio": maxf(float(h.get("ratio", 0.0)), 0.0), "amount": maxf(float(h.get("amount", 0.0)), 0.0),
+			"sec": maxf(float(h.get("sec", 0.0)), 0.0)}
+		if float(out["heal"]["ratio"]) <= 0.0 and float(out["heal"]["amount"]) <= 0.0:
+			errors.append("%s.heal needs ratio or amount > 0" % where)
+	if typeof(d.get("consume_burn")) == TYPE_DICTIONARY:
+		var cb: Dictionary = d["consume_burn"] as Dictionary
+		out["consume_burn"] = {"heal_per_cell": maxf(float(cb.get("heal_per_cell", 0.0)), 0.0)}
+	for key: String in ["push", "pull"]:
+		if typeof(d.get(key)) == TYPE_DICTIONARY:
+			var cells: int = int((d[key] as Dictionary).get("cells", 1))
+			if cells < 1:
+				errors.append("%s.%s cells must be >= 1" % [where, key])
+			out[key] = {"cells": maxi(cells, 1)}
+	for key: String in ["evade", "shroud"]:
+		if typeof(d.get(key)) == TYPE_DICTIONARY:
+			var sec: float = float((d[key] as Dictionary).get("sec", 0.0))
+			if sec <= 0.0:
+				errors.append("%s.%s sec must be > 0" % [where, key])
+			out[key] = {"sec": maxf(sec, 0.0)}
 	if typeof(d.get("guard")) == TYPE_DICTIONARY:
 		var g: Dictionary = d["guard"] as Dictionary
 		out["guard"] = {
@@ -299,6 +346,39 @@ func _normalize_effects(raw: Variant, errors: Array[String], where: String) -> D
 	return out
 
 
+# Phase 0: `weights` = {player_status: {id: mult}, player_on_zone: {kind: mult}, self_status: {id: mult}, allies_alive: mult}.
+# An unknown block or a non-positive multiplier refuses the skill (a weight of 0 would silence a skill by accident).
+func _normalize_weights(raw: Variant, errors: Array[String]) -> Dictionary:
+	var out: Dictionary = {}
+	if raw == null:
+		return out
+	if typeof(raw) != TYPE_DICTIONARY:
+		errors.append("weights must be an object")
+		return out
+	for key: Variant in (raw as Dictionary):
+		var k: String = str(key)
+		var v: Variant = (raw as Dictionary)[key]
+		if not WEIGHT_KEYS.has(k):
+			errors.append("weights.%s unknown (known: %s)" % [k, ", ".join(WEIGHT_KEYS)])
+		elif k == "allies_alive":
+			if not (v is float or v is int) or float(v) <= 0.0:
+				errors.append("weights.allies_alive must be a number > 0")
+			else:
+				out[k] = float(v)
+		elif typeof(v) != TYPE_DICTIONARY:
+			errors.append("weights.%s must be an object of multipliers" % k)
+		else:
+			var block: Dictionary = {}
+			for sid: Variant in (v as Dictionary):
+				var mult: Variant = (v as Dictionary)[sid]
+				if not (mult is float or mult is int) or float(mult) <= 0.0:
+					errors.append("weights.%s.%s must be a number > 0" % [k, str(sid)])
+				else:
+					block[str(sid)] = float(mult)
+			out[k] = block
+	return out
+
+
 func _normalize_enemy(id: String, raw: Variant) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		problems.append("enemy %s: must be an object, refused" % id)
@@ -307,6 +387,14 @@ func _normalize_enemy(id: String, raw: Variant) -> Dictionary:
 	var enemy_ai: Dictionary = ai.duplicate(true)
 	if typeof(d.get("ai")) == TYPE_DICTIONARY:
 		enemy_ai = _merge_numbers(ai, d["ai"], "enemy %s ai" % id, problems)
+	# Phase 0 (M15 immunity): reaction ids this enemy never suffers; an unknown id is dropped with a problem line.
+	var immune: Array[String] = []
+	for rid: Variant in (d["immune_reactions"] as Array if typeof(d.get("immune_reactions")) == TYPE_ARRAY else []):
+		if REACTION_IDS.has(str(rid)):
+			if not immune.has(str(rid)):
+				immune.append(str(rid))
+		else:
+			problems.append("enemy %s: immune_reactions '%s' unknown (known: %s), dropped" % [id, str(rid), ", ".join(REACTION_IDS)])
 	var raw_phases: Array = []
 	if typeof(d.get("phases")) == TYPE_ARRAY:
 		raw_phases = d["phases"] as Array
@@ -348,11 +436,24 @@ func _normalize_enemy(id: String, raw: Variant) -> Dictionary:
 			if not ids.has(str(every["skill"])) or int(every["n"]) < 1:
 				problems.append("enemy %s phase %s: every_nth needs a skill of the phase and n >= 1, ignored" % [id, pid])
 				every = {}
+		# Phase 0 (G5): `traits` entries must be {id, params?} objects (CombatView hands them to TraitHost.add_trait when
+		# the phase starts; the previous phase's are torn down); `brain_set` = the BossBrain weight set of the phase
+		# (movement); `tempo_mult` > 0 scales the match's pattern tempo for the phase (windup / cooldown / recovery).
+		var phase_traits: Array = []
+		for entry: Variant in (p["traits"] as Array if typeof(p.get("traits")) == TYPE_ARRAY else []):
+			if typeof(entry) == TYPE_DICTIONARY and not str((entry as Dictionary).get("id", "")).is_empty():
+				phase_traits.append((entry as Dictionary).duplicate(true))
+			else:
+				problems.append("enemy %s phase %s: a traits entry is not {id, params}, dropped" % [id, pid])
+		var tempo: float = float(p.get("tempo_mult", 1.0))
+		if tempo <= 0.0:
+			problems.append("enemy %s phase %s: tempo_mult must be > 0, 1.0 used" % [id, pid])
+			tempo = 1.0
 		phases.append({
 			"id": pid, "enter_hp_ratio": ratio, "skills": ids, "mechanic": str(p.get("mechanic", "")),
 			"every_nth": every, "transition": transition,
 			"overrides": (p["overrides"] as Dictionary).duplicate(true) if typeof(p.get("overrides")) == TYPE_DICTIONARY else {},
-			"traits": (p["traits"] as Array).duplicate(true) if typeof(p.get("traits")) == TYPE_ARRAY else [],
+			"traits": phase_traits, "brain_set": str(p.get("brain_set", "")), "tempo_mult": tempo,
 		})
 	if phases.is_empty():
 		problems.append("enemy %s: no usable phase, refused" % id)
@@ -376,7 +477,7 @@ func _normalize_enemy(id: String, raw: Variant) -> Dictionary:
 				problems.append(e + ", 1 cell used")
 	# P2.2b: `arena` = an arenas.json shape id the dev launcher (--pattern=) starts this enemy on; "" = the match's own.
 	return {"id": id, "tier": str(d.get("tier", "normal")), "ai": enemy_ai, "phases": phases, "dev": bool(d.get("dev", false)),
-		"footprint": footprint, "arena": str(d.get("arena", ""))}
+		"footprint": footprint, "arena": str(d.get("arena", "")), "immune_reactions": immune}
 
 
 static func _merge_numbers(base: Dictionary, raw: Variant, where: String, out_problems: Array[String]) -> Dictionary:

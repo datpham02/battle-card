@@ -12,9 +12,11 @@ extends RefCounted
 ## Implements: Story 010.
 
 var _rules: Dictionary
-var _swing_active: bool = false
-var _swing_cells: Array[Vector2i] = []
-var _swing_dodged: bool = false
+## Multi-enemy Phase 3 (A1, MULTI-ENEMY-PHASE3-5-PLAN.md 1.1b): ONE learning book for the whole enemy team, but each
+## enemy unit's RUNNING swing has its own record (unit key -> {cells, dodged}), so two overlapping swings never
+## overwrite each other. The learned numbers (dodge streak, interrupts, full hand) stay shared. Every key defaults to 1
+## (unit 0): with one swing at a time the book behaves exactly as before.
+var _swings: Dictionary = {}
 var _player_cell: Vector2i = Vector2i(-1, -1)
 var _dodge_streak: int = 0
 var _interrupt_count: int = 0
@@ -28,36 +30,44 @@ func _init(rules: Dictionary = {}) -> void:
 		_rules[key] = rules[key]
 
 
-## A boss swing began over [param cells] while the player stood on [param player_cell].
-func on_boss_swing_started(cells: Array[Vector2i], player_cell: Vector2i) -> void:
-	_swing_active = true
-	_swing_cells = cells.duplicate()
-	_swing_dodged = false
+## A boss swing of the unit [param key] began over [param cells] while the player stood on [param player_cell].
+func on_boss_swing_started(cells: Array[Vector2i], player_cell: Vector2i, key: int = CombatState.Side.ENEMY) -> void:
+	_swings[key] = {"cells": cells.duplicate(), "dodged": false}
 	_player_cell = player_cell
 
 
-## The player moved to [param new_cell]. Leaving the cells of a running boss swing is an early dodge.
+## The player moved to [param new_cell]. Leaving the cells of a running boss swing is an early dodge (each running swing
+## judged on its own cells).
 func on_player_moved(new_cell: Vector2i) -> void:
-	if _swing_active and _swing_cells.has(_player_cell) and not _swing_cells.has(new_cell):
-		_swing_dodged = true
+	for key: Variant in _swings.keys():
+		var rec: Dictionary = _swings[key] as Dictionary
+		var cells: Array = rec["cells"] as Array
+		if cells.has(_player_cell) and not cells.has(new_cell):
+			rec["dodged"] = true
 	_player_cell = new_cell
 
 
-## The running boss swing was cancelled (interrupt or feint): it neither hits nor misses.
-func on_boss_swing_cancelled() -> void:
-	_swing_active = false
+## The running swing of the unit [param key] was cancelled (interrupt or feint): it neither hits nor misses.
+func on_boss_swing_cancelled(key: int = CombatState.Side.ENEMY) -> void:
+	_swings.erase(key)
 
 
-## The boss swing resolved. A hit resets the dodge streak; a miss after an early dodge extends it;
+## The swing of the unit [param key] resolved. A hit resets the dodge streak; a miss after an early dodge extends it;
 ## any other miss leaves it.
-func on_boss_swing_resolved(hit: bool) -> void:
-	if not _swing_active:
+func on_boss_swing_resolved(hit: bool, key: int = CombatState.Side.ENEMY) -> void:
+	if not _swings.has(key):
 		return
-	_swing_active = false
+	var rec: Dictionary = _swings[key] as Dictionary
+	_swings.erase(key)
 	if hit:
 		_dodge_streak = 0
-	elif _swing_dodged:
+	elif bool(rec["dodged"]):
 		_dodge_streak += 1
+
+
+## Phase 3 (A1): true while the unit [param key] has a running swing on record.
+func has_running_swing(key: int = CombatState.Side.ENEMY) -> bool:
+	return _swings.has(key)
 
 
 ## The player's swing cancelled the boss's swing.
@@ -75,9 +85,7 @@ func tick(delta: float, player_hand_full: bool) -> void:
 
 ## Forgets everything learned.
 func reset() -> void:
-	_swing_active = false
-	_swing_cells = []
-	_swing_dodged = false
+	_swings.clear()
 	_dodge_streak = 0
 	_interrupt_count = 0
 	_full_hand_sec = 0.0

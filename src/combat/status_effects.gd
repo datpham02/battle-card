@@ -60,6 +60,11 @@ signal mark_triggered(side: int)
 ## Skill v2 batch 5 (M15, Deferred 1 / 5 / 9): a reaction the status book fired on its own: R1 when a unit with Hàn
 ## stepped onto a burning cell, R3 when a trap's fling was stopped short. CutEffects' reactions are reported in its result.
 signal reaction_fired(side: int, id: String, damage: float)
+## Monster Skill Phase 0 (docs/design/world-map-v2/MONSTER-SKILL-DESIGN.md §5.3): Poison (Độc) landed on the unit of
+## [param side] (first application or a refresh); a tick hurt it for [param damage]; it ran out.
+signal poisoned(side: int)
+signal poison_hurt(side: int, damage: float)
+signal poison_ended(side: int)
 
 ## Zone kind names (also the zone_applied / zone_expired payload).
 const KIND_THORNS: String = "thorns"
@@ -107,6 +112,15 @@ var _fragile_mult: float = 1.0
 var _fragile_max_stacks: int = 1
 var _frost_stacks_to_burst: int = 0
 var _frost_burst_damage: float = 0.0
+## Phase 0 (design §9.2, a pack-level budget): seconds between two Hàn bursts on one side (CombatState.Side -> sec).
+## A side without an entry (or 0) bursts every time, as before. While the cooldown runs the stacks stay capped one
+## below the threshold and [method apply_frost] returns 0 (no burst, no damage). The game sets it from data; tests set
+## it directly.
+var frost_burst_icd: Dictionary = {}
+var _frost_burst_at: Dictionary = {}
+# Phase 0 Poison (Độc): CombatState.Side -> {left, total, tick_sec, damage, acc}. One entry per side: a second
+# application REFRESHES (left = max of both, damage = the larger), it never stacks (design §5.3 "không chồng, làm mới").
+var _poisons: Dictionary = {}
 ## Story 037 hooks of the BOSS side only (the player's signature; invalid = none, the config numbers stand):
 ## [member fragile_mult_fn] Callable() -> float gives the multiplier ONE consumed Ran stack applies instead of
 ## fragile_mult (<= 0 = use the config's); [member frost_burst_mult_fn] Callable() -> float scales a Han burst.
@@ -277,7 +291,8 @@ func consume_fragile(side: int) -> float:
 
 # Story 037: the Ran multiplier of one stack on [param side]: the boss side may take it from fragile_mult_fn.
 func _effective_fragile_mult(side: int) -> float:
-	if side == CombatState.Side.ENEMY and fragile_mult_fn.is_valid():
+	# Phase 2: the player's signature boosts Rạn on EVERY enemy unit (key >= 1)
+	if side != CombatState.Side.PLAYER and fragile_mult_fn.is_valid():
 		var override: float = float(fragile_mult_fn.call())
 		if override > 0.0:
 			return maxf(override, 1.0)
@@ -292,10 +307,19 @@ func apply_frost(side: int, stacks: int) -> float:
 		return 0.0
 	var total: int = int(_frost.get(side, 0)) + stacks
 	if _frost_stacks_to_burst > 0 and total >= _frost_stacks_to_burst:
+		# Phase 0: the per-side burst cooldown (off by default) holds the stacks one below the threshold instead.
+		var icd: float = float(frost_burst_icd.get(side, 0.0))
+		if icd > 0.0 and _frost_burst_at.has(side) and _time - float(_frost_burst_at[side]) < icd - _EPS:
+			var capped: int = _frost_stacks_to_burst - 1
+			if int(_frost.get(side, 0)) != capped:
+				_frost[side] = capped
+				frost_changed.emit(side)
+			return 0.0
+		_frost_burst_at[side] = _time
 		_frost.erase(side)
 		frost_changed.emit(side)
 		var burst: float = _frost_burst_damage
-		if side == CombatState.Side.ENEMY and frost_burst_mult_fn.is_valid():
+		if side != CombatState.Side.PLAYER and frost_burst_mult_fn.is_valid():
 			burst *= maxf(float(frost_burst_mult_fn.call()), 0.0)
 		frost_burst.emit(side, burst)
 		return burst
@@ -382,7 +406,7 @@ func tick(delta: float, state: CombatState) -> void:
 				for side: int in victims:
 					var ratio: float = _burn_heal_ratio(side)
 					if ratio > 0.0:
-						var gained: float = state.heal_enemy(float(entry["damage"]) * ratio)
+						var gained: float = state.heal_key(side, float(entry["damage"]) * ratio)
 						burn_healed.emit(side, gained)
 					else:
 						state.damage(side, float(entry["damage"]))
@@ -413,7 +437,80 @@ func tick(delta: float, state: CombatState) -> void:
 			_marks.erase(side)
 			mark_expired.emit(side)
 	_tick_phase2_statuses(delta)
+	_tick_poison(delta, state)
 	_tick_holes(delta, state)
+
+
+# --- Monster Skill Phase 0: Poison (Độc) ---------------------------------------------------------------------------
+
+## Status id of Poison (HUD chip / VFX).
+const STATUS_POISON: String = "poison"
+
+
+## Phase 0: Poison on the unit of [param side]: [param damage] HP every [param tick_sec] for [param duration] seconds,
+## ticking on the book's clock (the first tick after tick_sec). Re-applying never stacks: the time left becomes the
+## larger of the two, the tick damage the larger, the cadence the shorter (design §5.3: refresh, no stacks). Bad numbers
+## (duration / tick_sec / damage <= 0) are ignored. Emits [signal poisoned].
+func poison(side: int, duration: float, tick_sec: float, damage: float) -> void:
+	if duration <= 0.0 or tick_sec <= 0.0 or damage <= 0.0:
+		return
+	var prev: Dictionary = _poisons.get(side, {}) as Dictionary
+	var left: float = maxf(duration, float(prev.get("left", 0.0)))
+	_poisons[side] = {"left": left, "tick_sec": minf(tick_sec, float(prev.get("tick_sec", tick_sec))),
+		"damage": maxf(damage, float(prev.get("damage", 0.0))), "acc": float(prev.get("acc", 0.0))}
+	_totals[_total_key(STATUS_POISON, side)] = left
+	poisoned.emit(side)
+
+
+## True while the unit of [param side] is poisoned.
+func is_poisoned(side: int) -> bool:
+	return _poisons.has(side)
+
+
+## Seconds of Poison left for [param side]; 0 when not poisoned.
+func get_poison_left(side: int) -> float:
+	return float((_poisons[side] as Dictionary)["left"]) if _poisons.has(side) else 0.0
+
+
+## Damage of one Poison tick on [param side]; 0 when not poisoned.
+func poison_tick_damage(side: int) -> float:
+	return float((_poisons[side] as Dictionary)["damage"]) if _poisons.has(side) else 0.0
+
+
+## Ends the Poison of [param side] now (cleanse); true when there was one.
+func clear_poison(side: int) -> bool:
+	if not _poisons.has(side):
+		return false
+	_poisons.erase(side)
+	poison_ended.emit(side)
+	return true
+
+
+# Poison ticks: once per elapsed tick_sec however large the delta (the burn rule), through CombatState.damage (the
+# player's damage_player, the enemy's damage_enemy with its invulnerability / floor). A dead unit is cleansed, never hurt.
+func _tick_poison(delta: float, state: CombatState) -> void:
+	for side: int in _poisons.keys():
+		if _is_dead(side, state):
+			_poisons.erase(side)
+			poison_ended.emit(side)
+			continue
+		var entry: Dictionary = _poisons[side] as Dictionary
+		var active: float = minf(delta, float(entry["left"]))
+		var tick_sec: float = float(entry["tick_sec"])
+		var acc: float = float(entry["acc"]) + active
+		while acc >= tick_sec - _EPS:
+			acc -= tick_sec
+			state.damage(side, float(entry["damage"]))
+			poison_hurt.emit(side, float(entry["damage"]))
+			if _is_dead(side, state):
+				break
+		var left: float = float(entry["left"]) - delta
+		if left <= _EPS or _is_dead(side, state):
+			_poisons.erase(side)
+			poison_ended.emit(side)
+		else:
+			entry["left"] = left
+			entry["acc"] = acc
 
 
 ## True while [param cell] is burning.
@@ -496,6 +593,8 @@ func clear() -> void:
 	_hole_fade.clear()
 	_last_cell.clear()
 	_reaction_at.clear()
+	_poisons.clear()
+	_frost_burst_at.clear()
 
 
 # --- Skill v2 batch 5: reaction rules (M15 ICD / immunity) -------------------------------------------------------------
@@ -658,7 +757,9 @@ func clear_thorn_cell(side: int, cell: Vector2i) -> bool:
 ## holds the R3 numbers). Returns the damage dealt (0 when nothing was armed). Called by the entry check and by
 ## CutEffects when the cast lands on the unit's own cell.
 func fire_trap(side: int, cast_id: int, state: CombatState) -> float:
-	var zone: Dictionary = _fields.get(side, {}) as Dictionary
+	# Multi-enemy Phase 2: [param side] is the unit KEY the trap fires on; the trap book is its half's.
+	var half: int = CombatState.side_of(side)
+	var zone: Dictionary = _fields.get(half, {}) as Dictionary
 	var cells: Array[Vector2i] = []
 	var data: Dictionary = {}
 	for cell: Vector2i in _sorted_cells(zone):
@@ -673,8 +774,8 @@ func fire_trap(side: int, cast_id: int, state: CombatState) -> float:
 		if cells.has(c):
 			under += 1
 	for cell: Vector2i in cells:
-		remove_field(side, cell)
-	var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+		remove_field(half, cell)
+	var dead: bool = state.is_key_dead(side)
 	var damage: float = float(data.get("dpc", 0.0)) * float(maxi(under, 1))
 	# batch 5 (Deferred 8): the snap is a hit, so the target's flat defense takes its share (minimum 1), unless the card
 	# pierces or the config keeps the old thorn-toll rule
@@ -696,7 +797,7 @@ func fire_trap(side: int, cast_id: int, state: CombatState) -> float:
 			# batch 5 (Deferred 5): a fling that ends on a thorn cell slams too (the thorns fire on the entry as well)
 			if not slam and moved > 0:
 				for c: Vector2i in state.unit_cells(side):
-					if not thorns_at(side, c).is_empty():
+					if not thorns_at(half, c).is_empty():
 						slam = true
 						break
 			if slam and not r3.is_empty() and reaction_allowed(side, "r3", float(r3.get("icd_sec", -1.0))):
@@ -704,7 +805,7 @@ func fire_trap(side: int, cast_id: int, state: CombatState) -> float:
 				if float(r3.get("pin_sec", 0.0)) > 0.0:
 					pin(side, float(r3["pin_sec"]))
 				reaction_fired.emit(side, "r3", float(r3.get("damage", 0.0)))
-	trap_fired.emit(side, cast_id, cells, damage)
+	trap_fired.emit(half, cast_id, cells, damage)
 	return damage
 
 
@@ -1049,7 +1150,7 @@ func _unit_stuck(side: int) -> bool:
 
 
 func _is_dead(side: int, state: CombatState) -> bool:
-	return state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+	return state.is_key_dead(side)
 
 
 # Drop tiles: runs the crack clocks (a crack under a Frozen / rooted unit is held, spec rule 6), turns due cracks into
@@ -1068,25 +1169,27 @@ func _tick_holes(delta: float, state: CombatState) -> void:
 			_hole_fade.erase(side)
 	for side: int in _holes.keys():
 		var book: Dictionary = _holes[side] as Dictionary
-		var alive: bool = not _is_dead(side, state)
-		# P2.2b: a unit falls at most once per tick (a multi-cell boss over several cracks of one drop).
-		var fell: bool = false
+		# P2.2b: a unit falls at most once per tick (a multi-cell boss over several cracks of one drop). Phase 2: per unit.
+		var fell: Dictionary = {}
 		for cell: Vector2i in _sorted_cells(book):
 			if not book.has(cell):
 				continue
 			var entry: Dictionary = book[cell] as Dictionary
 			if str(entry["phase"]) == HOLE_PHASE_CRACK:
-				# P2.2b: "on the cell" = any footprint cell of a multi-cell boss (the cell itself for 1 cell).
-				var on_cell: bool = alive and state.unit_at(side, cell)
+				# P2.2b: "on the cell" = any footprint cell of a multi-cell boss. Phase 2: whichever living unit of this half.
+				var on_key: int = _key_on(side, cell, state)
+				var on_cell: bool = on_key >= 0
 				# Held while the unit stands here and was Frozen / rooted at some point since it stepped on; leaving clears it.
-				entry["held"] = on_cell and (bool(entry["held"]) or _unit_stuck(side))
+				entry["held"] = on_cell and (bool(entry["held"]) or _unit_stuck(on_key))
 				entry["left"] = float(entry["left"]) - delta
 				if float(entry["left"]) > _EPS:
 					continue
 				if bool(entry["held"]):
 					entry["left"] = 0.0
 					continue
-				fell = _fall_hole(side, cell, -float(entry["left"]), state, fell) or fell
+				var victim_key: int = on_key
+				if _fall_hole(side, cell, -float(entry["left"]), state, bool(fell.get(victim_key, false)), victim_key):
+					fell[victim_key] = true
 			else:
 				entry["left"] = float(entry["left"]) - delta
 				if float(entry["left"]) <= _EPS:
@@ -1097,52 +1200,64 @@ func _tick_holes(delta: float, state: CombatState) -> void:
 			_holes.erase(side)
 
 
+# Phase 2: the key of the LIVING unit of [param half] covering [param cell]; -1 when none. One unit per half on a cell
+# (occupancy), so the answer is unique.
+func _key_on(half: int, cell: Vector2i, state: CombatState) -> int:
+	if half == CombatState.Side.PLAYER:
+		return CombatState.Side.PLAYER if (not state.is_player_dead() and state.player_cell == cell) else -1
+	for key: int in state.enemy_keys(true):
+		if state.unit_at(key, cell):
+			return key
+	return -1
+
+
 # The crack of [param cell] ran out: it becomes a hole for its total minus the overshoot [param carry]. A unit standing
 # there falls: HP 0 (hole_fall_lethal), else it is pushed to an open neighbour and loses hole_fall_damage; with no
 # landing cell the non-lethal fall is cancelled (the cell returns at once), as a Sky Isles crumble does.
 # P2.2b: a multi-cell boss is "standing there" when any footprint cell is [param cell]; it lands on a neighbouring
 # anchor whose whole footprint is open; [param already_fell] true = it fell this tick already (no second fall or
 # damage). Returns true when a unit fell here.
-func _fall_hole(side: int, cell: Vector2i, carry: float, state: CombatState, already_fell: bool = false) -> bool:
+func _fall_hole(side: int, cell: Vector2i, carry: float, state: CombatState, already_fell: bool = false, victim_key: int = -2) -> bool:
 	var book: Dictionary = _holes[side] as Dictionary
 	var entry: Dictionary = book[cell] as Dictionary
-	var victim: bool = not already_fell and not _is_dead(side, state) and state.unit_at(side, cell)
+	# Phase 2: [param side] is the half; the victim is the living unit of that half standing on [param cell] (-2 = look
+	# it up; -1 = nobody).
+	var key: int = victim_key if victim_key != -2 else _key_on(side, cell, state)
+	var victim: bool = not already_fell and key >= 0 and not _is_dead(key, state) and state.unit_at(key, cell)
 	if victim and not hole_fall_lethal:
-		var target: Vector2i = _landing_cell(side, cell, state.grid)
-		if side == CombatState.Side.ENEMY and state.enemy_footprint_size() > 1:
-			target = _landing_anchor(state)
+		var target: Vector2i = _landing_cell(side, cell, state.grid, state, key)
+		if key != CombatState.Side.PLAYER and state.footprint_size_of(key) > 1:
+			target = _landing_anchor(state, key)
 		if target == BoardGrid.NO_CELL:
 			book.erase(cell)
 			hole_restored.emit(side, cell)
 			return false
-		if side == CombatState.Side.PLAYER:
-			state.set_player_cell(target)
-		else:
-			state.set_enemy_cell(target)
-		_last_cell[side] = target
+		state.set_key_cell(key, target)
+		_last_cell[key] = target
 	entry["phase"] = HOLE_PHASE_HOLE
 	entry["held"] = false
 	entry["left"] = maxf(float(entry["total"]) - carry, _EPS)
 	if victim:
 		if hole_fall_lethal:
-			var hp: float = state.player_hp if side == CombatState.Side.PLAYER else state.enemy_hp
-			state.damage(side, hp)
+			state.damage(key, state.hp_of(key))
 		else:
-			state.damage(side, hole_fall_damage)
+			state.damage(key, hole_fall_damage)
 	hole_fell.emit(side, cell, victim)
 	return victim
 
 
 # P2.2b, non-lethal fall of a multi-cell boss: the neighbouring anchor (up, right, down, left of the current one; ties by
 # x then y) whose whole footprint fits, with no cracking / hole cell and nothing refused by hole_blocked_fn.
-func _landing_anchor(state: CombatState) -> Vector2i:
+func _landing_anchor(state: CombatState, key: int = CombatState.Side.ENEMY) -> Vector2i:
 	var best: Vector2i = BoardGrid.NO_CELL
 	var e: int = CombatState.Side.ENEMY
 	var blocked: Callable = func(c: Vector2i) -> bool:
 		return _hole_phase(e, c) != "" or (hole_blocked_fn.is_valid() and bool(hole_blocked_fn.call(e, c)))
+	var here: Vector2i = state.cell_of(key)
 	for dir: Vector2i in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
-		var anchor: Vector2i = state.enemy_cell + dir
-		if not state.enemy_fits(anchor, blocked):
+		var anchor: Vector2i = here + dir
+		# Phase 2: key_fits also refuses the cells of the other living units
+		if not state.key_fits(key, anchor, blocked):
 			continue
 		if best == BoardGrid.NO_CELL or anchor.x < best.x or (anchor.x == best.x and anchor.y < best.y):
 			best = anchor
@@ -1151,7 +1266,7 @@ func _landing_anchor(state: CombatState) -> Vector2i:
 
 # Non-lethal fall: the 4-neighbour of [param from] on the same half the unit lands on: not cracking, not a hole, not
 # refused by hole_blocked_fn; ties broken by x then y. NO_CELL when none.
-func _landing_cell(side: int, from: Vector2i, grid: BoardGrid) -> Vector2i:
+func _landing_cell(side: int, from: Vector2i, grid: BoardGrid, state: CombatState = null, key: int = -1) -> Vector2i:
 	var best: Vector2i = BoardGrid.NO_CELL
 	for dir: Vector2i in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
 		var cell: Vector2i = from + dir
@@ -1160,6 +1275,11 @@ func _landing_cell(side: int, from: Vector2i, grid: BoardGrid) -> Vector2i:
 			continue
 		if hole_blocked_fn.is_valid() and bool(hole_blocked_fn.call(side, cell)):
 			continue
+		# Phase 2: never onto another living unit
+		if state != null and key >= 0:
+			var other: int = _key_on(side, cell, state)
+			if other >= 0 and other != key:
+				continue
 		if best == BoardGrid.NO_CELL or cell.x < best.x or (cell.x == best.x and cell.y < best.y):
 			best = cell
 	return best
@@ -1219,28 +1339,30 @@ func _burn_heal_ratio(side: int) -> float:
 # A unit that CHANGED cell since the last tick and now stands on a thorn cell pays the toll once; with
 # [member burn_on_entry], one that stepped onto a burning cell pays one burn tick at once (2026-10-31).
 func _check_thorn_entries(state: CombatState) -> void:
-	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
+	# Phase 2: every unit (the player, then each enemy unit by index), each with its own last cell (keyed by unit key);
+	# the thorn / trap / burn books are read on the unit's half.
+	for side: int in state.all_keys():
+		var half: int = CombatState.side_of(side)
 		var cell: Vector2i = state.cell_of(side)
 		var had: bool = _last_cell.has(side)
 		var last: Vector2i = _last_cell.get(side, cell)
 		_last_cell[side] = cell
 		if not had or last == cell:
 			continue
-		if side == CombatState.Side.ENEMY and state.enemy_footprint_size() > 1:
-			cell = _entered_cell(state, last)
+		if side != CombatState.Side.PLAYER and state.footprint_size_of(side) > 1:
+			cell = _entered_cell(state, last, side)
 			if cell == BoardGrid.NO_CELL:
 				continue
 		_burn_entry(side, cell, state)
 		_r1_entry(side, cell, state)
 		# batch 3 (M09): the first entry into a trap cell fires the whole cast
-		var field: Dictionary = field_at(side, cell)
+		var field: Dictionary = field_at(half, cell)
 		if str(field.get("kind", "")) == KIND_TRAP:
 			fire_trap(side, int(field["cast_id"]), state)
-		var thorn: Dictionary = thorns_at(side, cell)
+		var thorn: Dictionary = thorns_at(half, cell)
 		if thorn.is_empty():
 			continue
-		var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
-		if dead:
+		if state.is_key_dead(side):
 			continue
 		var damage: float = float(thorn["damage"])
 		state.damage(side, damage)
@@ -1251,10 +1373,10 @@ func _check_thorn_entries(state: CombatState) -> void:
 # P2.2b: a multi-cell enemy that moved from the anchor [param last_anchor] pays ONE entry toll per step: the cell
 # returned is the first footprint cell it newly covers (footprint order) that holds thorns, else the first new one
 # that burns, else the first new one (nothing to pay there); NO_CELL when it covers no new cell.
-func _entered_cell(state: CombatState, last_anchor: Vector2i) -> Vector2i:
-	var before: Array[Vector2i] = state.footprint_cells_at(last_anchor)
+func _entered_cell(state: CombatState, last_anchor: Vector2i, key: int = CombatState.Side.ENEMY) -> Vector2i:
+	var before: Array[Vector2i] = state.cells_at_key(key, last_anchor)
 	var fresh: Array[Vector2i] = []
-	for c: Vector2i in state.enemy_footprint_cells():
+	for c: Vector2i in state.unit_cells(key):
 		if not before.has(c):
 			fresh.append(c)
 	if fresh.is_empty():
@@ -1273,7 +1395,7 @@ func _entered_cell(state: CombatState, last_anchor: Vector2i) -> Vector2i:
 func _r1_entry(side: int, cell: Vector2i, state: CombatState) -> void:
 	if not _burning.has(cell) or frost_stacks(side) <= 0:
 		return
-	var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+	var dead: bool = state.is_key_dead(side)
 	if dead or not reaction_allowed(side, "r1"):
 		return
 	var burst: float = float((reaction_numbers.get("r1", {}) as Dictionary).get("burst_damage", 12.0))
@@ -1289,7 +1411,7 @@ func _r1_entry(side: int, cell: Vector2i, state: CombatState) -> void:
 func _burn_entry(side: int, cell: Vector2i, state: CombatState) -> void:
 	if not burn_on_entry or not _burning.has(cell):
 		return
-	var dead: bool = state.is_player_dead() if side == CombatState.Side.PLAYER else state.is_enemy_dead()
+	var dead: bool = state.is_key_dead(side)
 	if dead:
 		return
 	var entry: Dictionary = _burning[cell] as Dictionary
@@ -1297,7 +1419,7 @@ func _burn_entry(side: int, cell: Vector2i, state: CombatState) -> void:
 	var damage: float = float(entry["damage"])
 	var ratio: float = _burn_heal_ratio(side)
 	if ratio > 0.0:
-		burn_healed.emit(side, state.heal_enemy(damage * ratio))
+		burn_healed.emit(side, state.heal_key(side, damage * ratio))
 		return
 	state.damage(side, damage)
 	burn_hurt.emit(side, cell, damage)
@@ -1307,30 +1429,37 @@ func _burn_entry(side: int, cell: Vector2i, state: CombatState) -> void:
 # fire zone under it ([param leads], from _burn_lead_cells), so one zone ticks it once per tick however many of its
 # cells the footprint covers; a 1-cell enemy is checked exactly as before.
 func _units_on(cell: Vector2i, state: CombatState, leads: Dictionary = {}) -> Array[int]:
+	# Phase 2: the keys of every living unit on [param cell]: the player, then each enemy unit by index; a multi-cell unit
+	# counts only on its lead cells ([param leads]: key -> {zone id: lead cell}).
 	var out: Array[int] = []
 	if not state.is_player_dead() and state.player_cell == cell:
 		out.append(CombatState.Side.PLAYER)
-	if not state.is_enemy_dead():
-		if state.enemy_footprint_size() <= 1:
-			if state.enemy_cell == cell:
-				out.append(CombatState.Side.ENEMY)
-		elif leads.values().has(cell):
-			out.append(CombatState.Side.ENEMY)
+	for key: int in state.enemy_keys(true):
+		if state.footprint_size_of(key) <= 1:
+			if state.cell_of(key) == cell:
+				out.append(key)
+		elif (leads.get(key, {}) as Dictionary).values().has(cell):
+			out.append(key)
 	return out
 
 
 # P2.2b: zone id -> the one burning cell under a multi-cell enemy's footprint that ticks it (the first in footprint
 # order: top row first, left to right). Empty for a 1-cell or dead enemy.
 func _burn_lead_cells(state: CombatState) -> Dictionary:
+	# Phase 2: per enemy unit key (multi-cell, living units only): {key: {zone id: lead cell}}.
 	var leads: Dictionary = {}
-	if state.enemy_footprint_size() <= 1 or state.is_enemy_dead():
-		return leads
-	for cell: Vector2i in state.enemy_footprint_cells():
-		if not _burning.has(cell):
+	for key: int in state.enemy_keys(true):
+		if state.footprint_size_of(key) <= 1:
 			continue
-		var zone_id: int = int((_burning[cell] as Dictionary).get("zone_id", 0))
-		if not leads.has(zone_id):
-			leads[zone_id] = cell
+		var mine: Dictionary = {}
+		for cell: Vector2i in state.unit_cells(key):
+			if not _burning.has(cell):
+				continue
+			var zone_id: int = int((_burning[cell] as Dictionary).get("zone_id", 0))
+			if not mine.has(zone_id):
+				mine[zone_id] = cell
+		if not mine.is_empty():
+			leads[key] = mine
 	return leads
 
 
@@ -1456,7 +1585,7 @@ const STATUS_BURN: String = "burn"
 const STATUS_FRAGILE: String = "fragile"
 const STATUS_CHILL: String = "chill"
 ## Order of the HUD row: the step locks first, then the other debuffs, the buff last.
-const STATUS_ORDER: Array[String] = [STATUS_FROZEN, STATUS_ROOT, STATUS_SLOW, STATUS_BURN, STATUS_FRAGILE, STATUS_CHILL, STATUS_MARK, STATUS_GUARD]
+const STATUS_ORDER: Array[String] = [STATUS_FROZEN, STATUS_ROOT, STATUS_SLOW, STATUS_BURN, STATUS_POISON, STATUS_FRAGILE, STATUS_CHILL, STATUS_MARK, STATUS_GUARD]
 
 
 func _total_key(id: String, side: int) -> String:
@@ -1484,6 +1613,8 @@ func active_statuses(side: int, cell: Vector2i) -> Array[Dictionary]:
 			STATUS_BURN:
 				left = get_burn_left(cell)
 				stacks = stacks_at(cell)
+			STATUS_POISON:
+				left = get_poison_left(side)
 			STATUS_FRAGILE:
 				stacks = fragile_stacks(side)
 			STATUS_CHILL:

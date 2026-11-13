@@ -1,0 +1,15 @@
+=== shot fire_eater frame 150
+=== shot fire_eater frame 260
+=== shot fire_eater frame 380
+=== shot ash_phoenix frame 150
+=== shot ash_phoenix frame 260
+=== shot ash_phoenix frame 380
+=== shot ash_phoenix pyre (hp 0.45)
+ash_phoenix-caldera-f150.png
+ash_phoenix-caldera-f260.png
+ash_phoenix-caldera-f380.png
+ash_phoenix-caldera-hp45-f200.png
+fire_eater-forge-f150.png
+fire_eater-forge-f260.png
+fire_eater-forge-f380.png
+DONE

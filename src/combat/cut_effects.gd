@@ -90,7 +90,13 @@ static func apply(
 	signature_modifier: Callable = Callable(),
 	options: Dictionary = {}
 ) -> Dictionary:
-	var target_side: int = CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER
+	# Multi-enemy Phase 2 (MULTI-ENEMY-PHASE2-PREFLIGHT.md 7.2): options.target_key = the unit this call resolves on (0 =
+	# the player, 1 + i = enemy unit i; default = the opposite side's key, i.e. unit 0 for a player swing: every legacy
+	# call); options.cast_parts false = a second / later unit of the SAME cast: the cast-level parts (caster heal, zones,
+	# fields, ignite, detonation, featured burn) already ran on the first unit and are skipped here.
+	var target_side: int = int(options.get("target_key", CombatState.Side.ENEMY if side == CombatState.Side.PLAYER else CombatState.Side.PLAYER))
+	var target_half: int = CombatState.side_of(target_side)
+	var cast_parts: bool = bool(options.get("cast_parts", true))
 	var target_cell: Vector2i = state.cell_of(target_side)
 	var result: Dictionary = {
 		"hit": false, "damage": 0.0, "pushed": false, "cell": target_cell,
@@ -136,7 +142,7 @@ static func apply(
 	# Story 037: heal_self heals the CASTER (the player) when the swing lands, hit or miss, at this ONE point.
 	result["healed"] = 0.0
 	# Skill v2 B1.5: options.apply_heal false = the arbiter heals once per scheduled cast itself (heal_caster).
-	if bool(options.get("apply_heal", true)):
+	if bool(options.get("apply_heal", true)) and cast_parts:
 		result["healed"] = heal_caster(state, side, skill)
 	# Story 036: options.target_untargetable (burrowed boss) = the cast misses the unit; zones still form (Story 027).
 	# P2.2b (D13 / ADR-0001 A7): the target is inside when ANY of its cells is cast on (a multi-cell boss's footprint); this
@@ -166,8 +172,8 @@ static func apply(
 			elif int(moved["steps"]) > 0:
 				_r3_on_thorns(state, status, target_side, reactions, result, skill)
 	var inside: bool = state.unit_in(target_side, cells) and not bool(options.get("target_untargetable", false))
-	if inside and target_side == CombatState.Side.ENEMY:
-		result["cell"] = state.enemy_hit_cell(cells)
+	if inside and target_half == CombatState.Side.ENEMY:
+		result["cell"] = state.hit_cell_of(target_side, cells)
 	result["zone_kind"] = ""
 	result["zone_cells"] = [] as Array[Vector2i]
 	# Batch 3 field zones: trap (M09), ward (M10, on the cells already re-anchored on the hero), pillar (M11). They form
@@ -178,29 +184,36 @@ static func apply(
 				_warned_no_status = true
 				push_warning("CutEffects: skill '%s' needs a StatusEffects, ignored" % skill_id)
 			return result
-		_form_field(state, grid, status, side, target_side, cells, effect, skill, options, result)
+		if cast_parts:
+			_form_field(state, grid, status, side, target_side, cells, effect, skill, options, result)
 		return result
 	# Batch 3 (Gai Nổ): detonate_zones consumes the player's thorn / trap cells inside the mask; the damage below counts
 	# only the detonated cells under the target's footprint (no field = a miss), + fragile_per_cell Rạn each.
+	# Phase 2: the blast happens once (cast_parts); a later unit of the same cast reads the blown cells from
+	# options.detonated (the first call's result["detonated"]).
 	var detonated_under: int = -1
 	if bool(skill.get("detonate_zones", false)) and status != null:
 		var blown: Array[Vector2i] = []
-		for c: Vector2i in cells:
-			var is_trap: bool = str(status.field_at(target_side, c).get("kind", "")) == StatusEffects.KIND_TRAP
-			# batch 5 (Deferred 9): a fire-wall column (Hỏa Tuyến line) is a field the blast consumes too
-			if not status.thorns_at(target_side, c).is_empty() or is_trap or status.is_fire_wall(c):
-				blown.append(c)
-		for c: Vector2i in blown:
-			status.clear_thorn_cell(target_side, c)
-			status.remove_field(target_side, c)
-			if status.is_fire_wall(c):
-				status.clear_burn([c])
+		if cast_parts:
+			for c: Vector2i in cells:
+				var is_trap: bool = str(status.field_at(target_half, c).get("kind", "")) == StatusEffects.KIND_TRAP
+				# batch 5 (Deferred 9): a fire-wall column (Hỏa Tuyến line) is a field the blast consumes too
+				if not status.thorns_at(target_half, c).is_empty() or is_trap or status.is_fire_wall(c):
+					blown.append(c)
+			for c: Vector2i in blown:
+				status.clear_thorn_cell(target_half, c)
+				status.remove_field(target_half, c)
+				if status.is_fire_wall(c):
+					status.clear_burn([c])
+		else:
+			blown.assign(options.get("detonated", []) as Array)
 		result["detonated"] = blown
 		detonated_under = 0
 		for c: Vector2i in state.unit_cells(target_side):
 			if blown.has(c):
 				detonated_under += 1
-		_regrow_tips(status, target_side, cells, skill, options)
+		if cast_parts:
+			_regrow_tips(status, target_half, cells, skill, options)
 		if detonated_under <= 0:
 			return result
 		skill = skill.duplicate()
@@ -212,13 +225,14 @@ static func apply(
 				_warned_no_status = true
 				push_warning("CutEffects: skill '%s' needs a StatusEffects, ignored" % skill_id)
 			return result
-		_form_zone(state, grid, status, target_side, cells, effect, skill, options, result)
+		if cast_parts:
+			_form_zone(state, grid, status, target_side, cells, effect, skill, options, result)
 		if not inside:
 			return result
 		if float(skill.get("damage_per_cell", 0.0)) <= 0.0:
 			result["hit"] = true
 			_apply_keywords(state, status, target_side, skill, result)
-			_apply_featured_effect(state, status, target_side, cells, featured, result)
+			_apply_featured_effect(state, status, target_side, cells, featured, result, cast_parts)
 			return result
 		# A thorn card with damage_per_cell > 0 falls through to the normal damage path.
 	if effect == "burn" or effect == "pin" or effect == "fragile" or effect == "frost":
@@ -228,9 +242,11 @@ static func apply(
 				push_warning("CutEffects: skill '%s' needs a StatusEffects, ignored" % skill_id)
 			return result
 		if effect == "burn":
-			status.ignite(
-				cells, float(skill.get("burn_duration_sec", 0.0)),
-				float(skill.get("burn_tick_sec", 0.5)), float(skill.get("burn_damage_per_tick", 0.0)))
+			# Phase 2: the cells burn once per cast (cast_parts); a later unit is only judged inside / R1.
+			if cast_parts:
+				status.ignite(
+					cells, float(skill.get("burn_duration_sec", 0.0)),
+					float(skill.get("burn_tick_sec", 0.5)), float(skill.get("burn_damage_per_tick", 0.0)))
 			result["burning"] = true
 			result["hit"] = inside
 			# batch 5 (M15 R1 "is ignited on": Deferred 2 / 5): the fire lands under a unit that carries Hàn
@@ -248,7 +264,7 @@ static func apply(
 		if not burn_hits_too:
 			if result["hit"]:
 				_apply_keywords(state, status, target_side, skill, result)
-				_apply_featured_effect(state, status, target_side, cells, featured, result)
+				_apply_featured_effect(state, status, target_side, cells, featured, result, cast_parts)
 			return result
 	if not inside:
 		return result
@@ -351,7 +367,7 @@ static func apply(
 		ratio = maxf(ratio, float(options["mark_execute_ratio"]))
 	if is_echo:
 		ratio = 0.0
-	if ratio > 0.0 and _hp_of(state, target_side) <= ratio * _max_hp_of(state, target_side):
+	if ratio > 0.0 and state.hp_of(target_side) <= ratio * state.max_hp_of(target_side):
 		damage *= EXECUTE_MULT
 		result["executed"] = true
 	if damage_modifier.is_valid():
@@ -359,7 +375,7 @@ static func apply(
 	if signature_modifier.is_valid():
 		damage = float(signature_modifier.call(
 			skill_id, count, damage, status != null and status.is_pinned(target_side)))
-	var defense: float = float(options.get("target_defense", 0.0)) if target_side == CombatState.Side.ENEMY else 0.0
+	var defense: float = float(options.get("target_defense", 0.0)) if target_half == CombatState.Side.ENEMY else 0.0
 	defense = maxf(defense - guard_stripped, 0.0)
 	if defense > 0.0 and not bool(skill.get("pierce_defense", false)) and damage > 0.0:
 		var after: float = maxf(damage - defense, minf(damage, MIN_DAMAGE_AFTER_DEFENSE))
@@ -375,7 +391,8 @@ static func apply(
 			damage = absorbed
 	var guard: ParryGuard = options.get("player_guard") as ParryGuard
 	if target_side == CombatState.Side.PLAYER and guard != null and guard.is_active():
-		var parry: Dictionary = guard.try_parry(state, status, damage)
+		# Phase 3: the caster [param side] is the attacking unit's key (1 = unit 0)
+		var parry: Dictionary = guard.try_parry(state, status, damage, side)
 		result["parried"] = true
 		result["reflected"] = float(parry.get("reflected", 0.0))
 		result["blocked"] = float(parry.get("blocked", 0.0))
@@ -399,7 +416,7 @@ static func apply(
 		if clause_holds and float(clause.get("pin_sec", 0.0)) > 0.0:
 			status.pin(target_side, float(clause["pin_sec"]))
 			result["pinned"] = true
-	_apply_featured_effect(state, status, target_side, cells, featured, result)
+	_apply_featured_effect(state, status, target_side, cells, featured, result, cast_parts)
 	# Batch 2 (Địa Chấn line): a clause push_cells that holds replaces the card's push.
 	if clause_holds and clause.has("push_cells"):
 		push_cells = int(clause["push_cells"])
@@ -444,7 +461,7 @@ static func _r3_on_thorns(state: CombatState, status: StatusEffects, target_side
 	if status == null or not str(result.get("reaction", "")).is_empty():
 		return
 	for c: Vector2i in state.unit_cells(target_side):
-		if not status.thorns_at(target_side, c).is_empty():
+		if not status.thorns_at(CombatState.side_of(target_side), c).is_empty():
 			_react_r3(state, status, target_side, reactions, result, skill)
 			return
 
@@ -458,9 +475,9 @@ static func try_r1(state: CombatState, status: StatusEffects, target_side: int, 
 	if not str(result.get("reaction", "")).is_empty() or status == null:
 		return false
 	var cell: Vector2i = state.cell_of(target_side)
-	if target_side == CombatState.Side.ENEMY:
-		# a multi-cell boss reacts on any burning footprint cell
-		for c: Vector2i in state.enemy_footprint_cells():
+	if target_side != CombatState.Side.PLAYER:
+		# a multi-cell boss reacts on any burning footprint cell (Phase 2: the footprint of the unit of this key)
+		for c: Vector2i in state.unit_cells(target_side):
 			if status.is_burning(c):
 				cell = c
 				break
@@ -555,11 +572,12 @@ static func pull_toward(state: CombatState, grid: BoardGrid, target_side: int, t
 			break
 		var dir: Vector2i = Vector2i(signi(d.x), 0) if absi(d.x) >= absi(d.y) else Vector2i(0, signi(d.y))
 		var next: Vector2i = cell + dir
-		var on_half: bool = grid.is_enemy_cell(next) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(next)
+		var on_half: bool = grid.is_enemy_cell(next) if target_side != CombatState.Side.PLAYER else grid.is_player_cell(next)
 		var fits: bool = on_half and not (blocked_fn.is_valid() and bool(blocked_fn.call(next)))
-		if fits and target_side == CombatState.Side.ENEMY:
-			fits = state.enemy_fits(next, blocked_fn)
-		var ok: bool = fits and (state.set_enemy_cell(next) if target_side == CombatState.Side.ENEMY else state.set_player_cell(next))
+		# Phase 2: an enemy unit's step checks its own footprint AND the other living units (occupancy, re-read each step)
+		if fits and target_side != CombatState.Side.PLAYER:
+			fits = state.key_fits(target_side, next, blocked_fn)
+		var ok: bool = fits and state.set_key_cell(target_side, next)
 		if not ok:
 			blocked = true
 			break
@@ -589,7 +607,7 @@ static func _form_zone(
 		var rng: RandomNumberGenerator = options.get("zone_rng") as RandomNumberGenerator
 		thorn_cells.append_array(extra_thorn_cells(state, grid, status, target_side, cells, extra, blocked, rng))
 	var placed: Array[Vector2i] = ZoneRules.cast_thorns(
-		status, target_side, thorn_cells,
+		status, CombatState.side_of(target_side), thorn_cells,
 		maxf(RelicRegistry.apply_override(float(skill.get("thorn_sec", numbers["thorn_sec"])), overrides, "thorn_sec"), 0.0) * sec_mult,
 		float(skill.get("thorn_damage", numbers["thorn_damage"])),
 		maxi(roundi(RelicRegistry.apply_override(
@@ -614,14 +632,17 @@ static func extra_thorn_cells(
 	if count <= 0 or grid == null or state == null:
 		return out
 	var candidates: Array[Vector2i] = []
+	# Phase 2: [param target_side] is a unit key; the half is its side, and no cell under ANY living unit of that half is
+	# a candidate (thorns formed under a unit never trigger).
+	var half: int = CombatState.side_of(target_side)
 	for cell: Vector2i in cells:
 		for dir: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var n: Vector2i = cell + dir
-			var on_half: bool = grid.is_enemy_cell(n) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(n)
+			var on_half: bool = grid.is_enemy_cell(n) if half == CombatState.Side.ENEMY else grid.is_player_cell(n)
 			# P2.2b: every cell of a multi-cell boss is "the target unit's own cell".
-			if not on_half or state.unit_at(target_side, n) or cells.has(n) or candidates.has(n):
+			if not on_half or state.unit_at(target_side, n) or state.key_at(half, n) >= 0 or cells.has(n) or candidates.has(n):
 				continue
-			if status != null and not status.thorns_at(target_side, n).is_empty():
+			if status != null and not status.thorns_at(half, n).is_empty():
 				continue
 			if blocked_fn.is_valid() and bool(blocked_fn.call(n)):
 				continue
@@ -678,8 +699,10 @@ static func _apply_keywords(state: CombatState, status: StatusEffects, target_si
 # effect, or a null status for the status effects) and fills the result's featured_* fields.
 static func _apply_featured_effect(
 	state: CombatState, status: StatusEffects, target_side: int, cells: Array[Vector2i],
-	featured: Dictionary, result: Dictionary
+	featured: Dictionary, result: Dictionary, cast_parts: bool = true
 ) -> void:
+	# Phase 2: [param cast_parts] false = a later unit of the same cast: its own Rạn / Hàn / pin land, the `burn` cells
+	# were already lit once by the first unit.
 	if featured.is_empty():
 		return
 	var effect: String = str(featured.get("effect", ""))
@@ -702,7 +725,7 @@ static func _apply_featured_effect(
 				result["frost_burst"] = float(result["frost_burst"]) + burst
 				state.damage(target_side, burst)
 		"burn":
-			for _i: int in stacks:
+			for _i: int in (stacks if cast_parts else 0):
 				status.ignite(
 					cells, float(featured.get("burn_duration_sec", FEATURED_BURN_DURATION_SEC)),
 					float(featured.get("burn_tick_sec", FEATURED_BURN_TICK_SEC)),
@@ -769,7 +792,7 @@ static func push_from(state: CombatState, grid: BoardGrid, target_side: int, fro
 	var d: Vector2i = cell - from
 	var dir: Vector2i
 	if d == Vector2i.ZERO:
-		dir = Vector2i(1, 0) if target_side == CombatState.Side.ENEMY else Vector2i(-1, 0)
+		dir = Vector2i(1, 0) if target_side != CombatState.Side.PLAYER else Vector2i(-1, 0)
 	elif absi(d.x) >= absi(d.y):
 		dir = Vector2i(signi(d.x), 0)
 	else:
@@ -777,12 +800,12 @@ static func push_from(state: CombatState, grid: BoardGrid, target_side: int, fro
 	var moved: bool = false
 	for i: int in steps:
 		var next: Vector2i = cell + dir
-		var on_half: bool = grid.is_enemy_cell(next) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(next)
+		var on_half: bool = grid.is_enemy_cell(next) if target_side != CombatState.Side.PLAYER else grid.is_player_cell(next)
 		if not on_half or (blocked_fn.is_valid() and bool(blocked_fn.call(next))):
 			break
-		if target_side == CombatState.Side.ENEMY and not state.enemy_fits(next, blocked_fn):
+		if target_side != CombatState.Side.PLAYER and not state.key_fits(target_side, next, blocked_fn):
 			break
-		var ok: bool = state.set_enemy_cell(next) if target_side == CombatState.Side.ENEMY else state.set_player_cell(next)
+		var ok: bool = state.set_key_cell(target_side, next)
 		if not ok:
 			break
 		cell = next
@@ -818,17 +841,17 @@ static func _form_field(state: CombatState, grid: BoardGrid, status: StatusEffec
 				"r3": r3, "pierce_defense": bool(skill.get("pierce_defense", false))}
 			var wanted: Array[Vector2i] = []
 			for c: Vector2i in cells:
-				var on_half: bool = grid.is_enemy_cell(c) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(c)
+				var on_half: bool = grid.is_enemy_cell(c) if CombatState.side_of(target_side) == CombatState.Side.ENEMY else grid.is_player_cell(c)
 				if on_half:
 					wanted.append(c)
-			var placed: Array[Vector2i] = status.apply_field(target_side, StatusEffects.KIND_TRAP, wanted, float(skill.get("trap_sec", 0.0)), cast_id, data)
+			var placed: Array[Vector2i] = status.apply_field(CombatState.side_of(target_side), StatusEffects.KIND_TRAP, wanted, float(skill.get("trap_sec", 0.0)), cast_id, data)
 			result["zone_kind"] = "trap"
 			result["zone_cells"] = placed
 			if not placed.is_empty() and state.unit_in(target_side, placed) and not bool(options.get("target_untargetable", false)):
 				var dmg: float = status.fire_trap(target_side, cast_id, state)
 				result["hit"] = true
 				result["damage"] = dmg
-				result["cell"] = state.enemy_hit_cell(placed) if target_side == CombatState.Side.ENEMY else state.cell_of(target_side)
+				result["cell"] = state.hit_cell_of(target_side, placed)
 				result["pinned"] = status.is_pinned(target_side)
 		"ward":
 			var data: Dictionary = (skill.get("ward", {}) as Dictionary).duplicate()
@@ -850,14 +873,14 @@ static func _form_field(state: CombatState, grid: BoardGrid, status: StatusEffec
 			var sec: float = float(clause.get("pillar_sec", skill.get("pillar_sec", 0.0))) if holds else float(skill.get("pillar_sec", 0.0))
 			var empty: Array[Vector2i] = []
 			for c: Vector2i in cells:
-				var on_half: bool = grid.is_enemy_cell(c) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(c)
-				if on_half and not state.unit_at(target_side, c) and not state.unit_at(side, c) and not status.is_locked(c):
+				var on_half: bool = grid.is_enemy_cell(c) if CombatState.side_of(target_side) == CombatState.Side.ENEMY else grid.is_player_cell(c)
+				if on_half and not state.unit_at(target_side, c) and state.key_at(CombatState.side_of(target_side), c) < 0 and not state.unit_at(side, c) and not status.is_locked(c):
 					empty.append(c)
 			var blocked: Callable = options.get("target_blocked_fn", Callable()) as Callable
 			var blocked_all: Callable = func(c: Vector2i) -> bool:
-				return status.is_pillar(target_side, c) or (blocked.is_valid() and bool(blocked.call(c)))
-			var kept: Array[Vector2i] = ZoneRules.fit_cells(grid, target_side, state.cell_of(target_side), empty, blocked_all)
-			var placed: Array[Vector2i] = status.apply_field(target_side, StatusEffects.KIND_PILLAR, kept, sec, cast_id, {"skill_id": str(skill.get("id", options.get("skill_id", "")))})
+				return status.is_pillar(CombatState.side_of(target_side), c) or (blocked.is_valid() and bool(blocked.call(c)))
+			var kept: Array[Vector2i] = ZoneRules.fit_cells_for(grid, CombatState.side_of(target_side), ZoneRules.standing_cells(state, CombatState.side_of(target_side)), empty, blocked_all)
+			var placed: Array[Vector2i] = status.apply_field(CombatState.side_of(target_side), StatusEffects.KIND_PILLAR, kept, sec, cast_id, {"skill_id": str(skill.get("id", options.get("skill_id", "")))})
 			result["zone_kind"] = "pillar"
 			result["zone_cells"] = placed
 
@@ -901,19 +924,96 @@ static func push_away(state: CombatState, grid: BoardGrid, target_side: int, ste
 # [param blocked_fn] (Callable(cell) -> bool) refuses (batch 3: pillars, holes). Returns the number of cells moved
 # (batch 2: a short move is an R3 slam for cards that list it).
 static func _push(state: CombatState, grid: BoardGrid, target_side: int, steps: int, blocked_fn: Callable = Callable()) -> int:
-	var dir: int = 1 if target_side == CombatState.Side.ENEMY else -1
+	var dir: int = 1 if target_side != CombatState.Side.PLAYER else -1
 	var cell: Vector2i = state.cell_of(target_side)
 	var moved: int = 0
 	for i: int in steps:
 		var next: Vector2i = Vector2i(cell.x + dir, cell.y)
-		var on_half: bool = grid.is_enemy_cell(next) if target_side == CombatState.Side.ENEMY else grid.is_player_cell(next)
+		var on_half: bool = grid.is_enemy_cell(next) if target_side != CombatState.Side.PLAYER else grid.is_player_cell(next)
 		if not on_half or (blocked_fn.is_valid() and bool(blocked_fn.call(next))):
 			break
-		if target_side == CombatState.Side.ENEMY and not state.enemy_fits(next, blocked_fn):
+		if target_side != CombatState.Side.PLAYER and not state.key_fits(target_side, next, blocked_fn):
 			break
-		var ok: bool = state.set_enemy_cell(next) if target_side == CombatState.Side.ENEMY else state.set_player_cell(next)
+		var ok: bool = state.set_key_cell(target_side, next)
 		if not ok:
 			break
 		cell = next
 		moved += 1
 	return moved
+
+
+# --- Multi-enemy Phase 2: per-unit targeting (MULTI-ENEMY-PHASE2-PREFLIGHT.md 6.1 / 7.2) ----------------------------
+
+## The unit KEYS a resolve of [param skill] by [param side] on [param cells] runs on, in index order (decision 2: units
+## are processed by ascending index). A boss swing targets the player ([0]). A player swing: the living enemy units
+## whose footprint is inside [param cells], plus, for a card that pulls (pull_cells or a pull clause), the living units
+## 4-adjacent to the mask. No unit at all = [the key of unit 0] (the miss path: the cast-level parts still run once,
+## exactly as a single-enemy miss). A match with ONE unit always gets [Side.ENEMY], the pre-Phase-2 call.
+static func target_keys(state: CombatState, skill: Dictionary, side: int, cells: Array[Vector2i]) -> Array[int]:
+	var out: Array[int] = []
+	if side != CombatState.Side.PLAYER:
+		out.append(CombatState.Side.PLAYER)
+		return out
+	if state.unit_count() <= 1:
+		out.append(CombatState.Side.ENEMY)
+		return out
+	var pulls: bool = int(skill.get("pull_cells", 0)) > 0
+	for c: Dictionary in CastResolver.shape_clauses(skill):
+		if c.has("pull_cells"):
+			pulls = true
+	for key: int in state.enemy_keys(true):
+		if state.unit_in(key, cells) or (pulls and _adjacent_to(state, key, cells)):
+			out.append(key)
+	if out.is_empty():
+		out.append(CombatState.Side.ENEMY)
+	return out
+
+
+## Folds the per-unit results of ONE cast (same order as the keys) into the single result every listener reads: a
+## single result on the hero or unit 0 is returned as it is (the pre-Phase-2 dictionary, byte for byte). Otherwise (several
+## results, or one on unit 1+): the first HIT unit's result
+## is the base (its cell / crit / executed / reaction ... drive the feedback), `hit` = any unit hit, `damage` = the sum
+## (decision 6), the cast-level fields (healed, zone_kind, zone_cells, detonated, burning) come from the first call
+## (the one with cast_parts), and it gains `unit_results` (each result with its `key`), `unit_keys_hit` and
+## `unit0_damage` (the damage unit 0 took: traits and the pattern brain belong to unit 0).
+static func merge_unit_results(results: Array[Dictionary], keys: Array[int]) -> Dictionary:
+	# a single result on the hero or on unit 0 is the legacy dictionary; a single result on another unit still needs
+	# its key (else listeners would read it as a hit on unit 0)
+	if results.size() == 1 and keys[0] <= CombatState.Side.ENEMY:
+		return results[0]
+	var base: Dictionary = results[0]
+	var hit_keys: Array[int] = []
+	var total: float = 0.0
+	var unit0: float = 0.0
+	var tagged: Array = []
+	for i: int in results.size():
+		var r: Dictionary = results[i]
+		var tag: Dictionary = r.duplicate()
+		tag["key"] = keys[i]
+		tagged.append(tag)
+		if bool(r.get("hit", false)):
+			if hit_keys.is_empty():
+				base = r
+			hit_keys.append(keys[i])
+		total += float(r.get("damage", 0.0))
+		if keys[i] == CombatState.Side.ENEMY:
+			unit0 = float(r.get("damage", 0.0))
+	var out: Dictionary = base.duplicate()
+	var first: Dictionary = results[0]
+	for k: String in ["healed", "zone_kind", "zone_cells", "detonated", "burning", "locked_cells", "field_cast_id"]:
+		if first.has(k):
+			out[k] = first[k]
+	out["hit"] = not hit_keys.is_empty()
+	out["damage"] = total
+	out["unit_results"] = tagged
+	out["unit_keys_hit"] = hit_keys
+	out["unit0_damage"] = unit0
+	return out
+
+
+## True when [param result] (a single or a merged one) hit UNIT 0 (or the player, for a boss swing): the interrupt and
+## the pattern brain's hit reaction listen to unit 0 only in Phase 2 (decision 5).
+static func hit_unit0(result: Dictionary) -> bool:
+	if result.has("unit_keys_hit"):
+		return (result["unit_keys_hit"] as Array).has(CombatState.Side.ENEMY)
+	return bool(result.get("hit", false))

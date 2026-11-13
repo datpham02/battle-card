@@ -29,6 +29,15 @@ var _lives: int = 1
 var _reviving: bool = false
 var _revive_left: float = 0.0
 var _restore_active: bool = false
+var _restore_pattern: bool = false
+
+
+# Phase 0 (G6): the pattern brain's controller when the match runs one (ctx `pattern_getter`), else null.
+func _pattern() -> PatternController:
+	var getter: Callable = get_context().get("pattern_getter", Callable()) as Callable
+	if not getter.is_valid():
+		return null
+	return getter.call() as PatternController
 
 
 func get_id() -> String:
@@ -69,6 +78,11 @@ func on_boss_would_die() -> bool:
 	_restore_active = boss != null and boss.is_active()
 	if boss != null:
 		boss.set_active(false)
+	# Phase 0 (G6): a pattern enemy in its ashes casts nothing (its skill in progress is cancelled, its clocks stop).
+	var pattern: PatternController = _pattern()
+	_restore_pattern = pattern != null and pattern.is_active()
+	if pattern != null:
+		pattern.set_active(false)
 	revival_started.emit()
 	if _revive_sec <= _EPS:
 		_revive()
@@ -114,6 +128,9 @@ func teardown() -> void:
 		var boss: BossController = get_context().get("boss") as BossController
 		if boss != null and _restore_active:
 			boss.set_active(true)
+		var pattern: PatternController = _pattern()
+		if pattern != null and _restore_pattern:
+			pattern.set_active(true)
 	_reviving = false
 	super()
 
@@ -130,3 +147,6 @@ func _revive() -> void:
 		revived.emit(state.enemy_hp)
 	if boss != null and _restore_active:
 		boss.set_active(true)
+	var pattern: PatternController = _pattern()
+	if pattern != null and _restore_pattern:
+		pattern.set_active(true)

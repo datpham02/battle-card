@@ -1,0 +1,1233 @@
+=== tests/unit/combat/pattern_phase0_bugfix_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS G1: 8 damage x1.5 Rạn = 12 88.0
+PASS G1: the Rạn stack is spent
+PASS G1: event log records 12 damage { "t": 1.35, "skill": "hit", "event": "resolve", "cells": [(1, 1)], "hit": true, "damage": 12.0, "phase": 0, "followup_strike": false }
+PASS G1: without Rạn the strike stays 8 92.0
+PASS G2: the Hàn burst deals 24 to the player 76.0
+PASS G2: stacks cleared after the burst
+PASS G2: frost_burst emitted for the player side
+PASS G2: the strike's logged damage includes the burst { "t": 1.35, "skill": "hit", "event": "resolve", "cells": [(1, 1)], "hit": true, "damage": 24.0, "phase": 0, "followup_strike": false }
+PASS ICD: first burst fires
+PASS ICD: second burst inside the cooldown returns 0
+PASS ICD: stacks capped at threshold - 1 2
+PASS ICD: after 10 s a new stack bursts again
+PASS ICD: a side without an entry bursts every time
+PASS G3: no host = hook unbound
+PASS G3: no host = r3 allowed
+PASS G3: the host bound StatusEffects.reaction_immune_fn
+PASS G3: the trait's immunity blocks r3 on the enemy
+PASS G3: r1 / r2 still fire
+PASS G3: teardown unbinds the hook
+PASS G3: unknown reaction id reported ["enemy ghost: immune_reactions \'bogus\' unknown (known: r1, r2, r3), dropped"]
+PASS G3: r1 kept on the enemy
+PASS G3: pattern enemy immune to r1
+PASS G3: pattern enemy not immune to r2
+PASS G3: the player is never immune
+PASS G3: an enemy without the key is not immune
+FAILS=0
+--- exit 0
+=== tests/unit/combat/status_poison_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS poison: active with 3 s left
+PASS poison: no damage before the first cadence
+PASS poison: 2 damage at 0.5 s 98.0
+PASS poison: 6 ticks in 3 s = 12 damage 88.0
+PASS poison: ended on time, signal once
+PASS poison: nothing after the end
+PASS poison: one 5 s delta = 4 ticks of 1.5 = 6 94.0
+PASS poison: gone after the big delta
+PASS refresh: 4 damage after 1 s
+PASS refresh: time becomes the longer (5 s) 5.0
+PASS refresh: damage keeps the larger (2)
+PASS refresh: poisoned signal twice (two applications)
+PASS refresh: one tick of 2 per cadence, not 3 94.0
+PASS refresh: 9 more ticks of 2 = 18, then ends 76.0
+PASS refresh: a shorter poison never shortens the time
+FAIL death: the tick killed the player once
+PASS death: the poison is cleansed on death
+FAIL death: nothing after death
+PASS clear: wipes the poison, no damage
+PASS clear_poison: true when one was there
+PASS clear_poison: false when none
+PASS enemy: poison hurts the enemy through damage_enemy 97.0
+PASS enemy: an invulnerable enemy takes no poison tick 97.0
+PASS enemy: the player is untouched
+PASS bad numbers: nothing applied
+PASS hud: poison listed as a timed debuff [{ "id": "poison", "left": 3.0, "total": 4.0, "stacks": 0, "buff": false }]
+PASS hud: left 3 of total 4 { "id": "poison", "left": 3.0, "total": 4.0, "stacks": 0, "buff": false }
+PASS hud: STATUS_ORDER holds poison
+FAILS=2
+--- exit 1
+=== tests/unit/combat/pattern_phase0_effects_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS burn: two cells resolved [(1, 1), (0, 1)]
+PASS burn: the resolved cells are burning
+PASS burn: 2 s left 2.0
+PASS burn: the player on the lit cell takes a tick 98.0
+PASS mire: the cell beside the player is mire (1, 0)
+PASS mire: the player's own cell is not
+PASS sand: the cell is sand (or warning) after the strike (1, 0)
+PASS fall: the cell cracks (crumble warning) after the strike (1, 0)
+PASS fall: then it is fallen
+WARNING: PatternController: zone 'mire' needs the match TileHazards (none wired), skipped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _apply_zone (res://src/combat/pattern_controller.gd:978)
+       [1] _resolve_cells (res://src/combat/pattern_controller.gd:876)
+       [2] _resolve_warning (res://src/combat/pattern_controller.gd:790)
+       [3] tick (res://src/combat/pattern_controller.gd:479)
+       [4] _run (res://tests/unit/combat/pattern_phase0_effects_test.gd:82)
+       [5] _tick_until (res://tests/unit/combat/pattern_phase0_effects_test.gd:90)
+       [6] _resolve_once (res://tests/unit/combat/pattern_phase0_effects_test.gd:99)
+       [7] test_zone_without_hazards_is_skipped (res://tests/unit/combat/pattern_phase0_effects_test.gd:154)
+       [8] _initialize (res://tests/unit/combat/pattern_phase0_effects_test.gd:27)
+PASS no hazards: the strike still resolves, the zone is skipped
+PASS no hazards: no crash, controller idle or recovering
+PASS heal: +30 at once 230.0
+PASS heal over time: about half of 10 % (30) after 1 s 215.0
+PASS heal over time: the full 30 after 2 s, then stops 230.0
+PASS heal: capped at max HP
+PASS heal over time: a stun ends it (about 10 of 40 gained) 210.0 210.0
+PASS consume_burn: both halves' fires are out
+PASS consume_burn: +6 per cell 212.0
+PASS consume_burn: logged
+PASS push: moved one cell away from the divider (0, 1)
+PASS push: 5 damage, no slam 95.0
+PASS push blocked: stays at the edge (0, 1)
+PASS push blocked: R3 slam 5 + 8 82.0
+PASS push blocked: R3 pins the player
+PASS push blocked: logged 13 damage { "t": 5.69999999999999, "skill": "shove", "event": "resolve", "cells": [(0, 1)], "hit": true, "damage": 13.0, "phase": 0, "followup_strike": false }
+PASS push icd: first shove moves (1, 1)
+PASS push icd: second shove inside 3 s does not move (1, 1)
+PASS push icd: both strikes' damage landed 90.0
+PASS pull: moved one cell toward the enemy (1, 1)
+PASS evade: not before the skill
+PASS evade: untargetable through the host after the skill
+PASS shroud: forecast hidden through the host
+PASS evade: over after 1 s, shroud still on
+PASS shroud: over after 2 s
+PASS teardown clears the extra hooks
+PASS far_cell: a target is shown during the windup
+PASS far_cell: landed on the announced cell (5, 0) (5, 0)
+PASS far_cell: at the largest step distance of the 3x3 half (2 from the centre) 2
+PASS poison skill: hit for 4 and poisoned 96.0
+PASS poison skill: 6 ticks of 1.5 = 9 more 87.0
+PASS poison skill: event logged
+PASS poison skill: statuses.poison defaults 3 / 0.5 / 1 { "id": "poison", "sec": 3.0, "stacks": 1, "step_mult": 1.0, "first_cell_only": false, "tick_sec": 0.5, "damage": 1.0 }
+PASS refused: lava
+PASS refused: side
+PASS refused: heal0
+PASS refused: push0
+PASS refused: evade0
+PASS refused: poison0
+PASS refused: w_unknown
+PASS refused: w_zero
+PASS refused: far
+PASS kept: the valid skill
+PASS problems name every refusal 18
+PASS vfx: attack feedback carries cells, hit, damage, delivery
+PASS vfx: a missing delivery falls back safely and says so
+PASS vfx: a self skill draws nothing
+PASS vfx: skill_resolved result has kind and delivery
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_phase0_ai_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS player_status: not chosen without Rạn
+PASS player_status: chosen with Rạn
+PASS player_status list: not chosen
+PASS player_status list: any-of matches poison
+PASS player_on_zone: not chosen on dry ground
+PASS player_on_zone: chosen on mire
+PASS player_on_zone: chosen on a burning cell
+PASS steps: not chosen before any step
+PASS steps: one step is not enough
+PASS steps: chosen after 2 steps
+PASS steps: the counter resets when the skill finishes
+PASS steps: and counts again
+PASS budget: 2 burning cells on the player's half block a burn skill capped at 2
+PASS budget: 1 burning cell lets it through
+PASS burning_cells: not chosen with none
+PASS burning_cells: chosen with 2 anywhere (the Fire Eater's devour)
+PASS allies: a single-enemy engine has no allies: not chosen
+PASS allies: chosen when allies_fn reports one
+PASS allies: ally_died_within_sec 3 with a death 5 s ago: not chosen
+PASS allies: chosen with a death 1 s ago
+PASS allies: allies_alive_max 2 with 3 alive: not chosen
+PASS allies: 2 alive, one below 0.4: chosen
+PASS self_status: not chosen without guard
+PASS self_status: chosen while guarded
+PASS weights: nothing matching = 1.0
+PASS weights: fragile x2 and an ally x1.5 = 3.0
+PASS weights: every matching entry multiplies (2 x 3 x 1.5 x 4 x 1.5 = 54)
+PASS weights: allies_alive needs at least one ally
+PASS no weights block: the fight's state changes nothing
+PASS shipped enemy_skills.json: no weights, no problems []
+PASS phases: p1 has no traits, no brain set, tempo 1
+PASS phases: p2 keeps the one {id, params} entry [{ "id": "row_burner", "params": { "interval_sec": 5 } }]
+PASS phases: p2 brain_set and tempo_mult
+PASS phases: p3 bad tempo falls back to 1.0 with a problem
+PASS phases: the two bad trait entries and the bad tempo are reported ["enemy boss phase p2: a traits entry is not {id, params}, dropped", "enemy boss phase p2: a traits entry is not {id, params}, dropped", "enemy boss phase p3: tempo_mult must be > 0, 1.0 used"]
+PASS phases: the current phase is read when no index is given
+PASS phases: an index out of range gives the defaults
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_phase0_pause_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS warning starts
+PASS pause: inactive, idle, no skill, red off
+PASS pause: cooldown x cancel ratio 1.5
+PASS pause: logged
+PASS pause: cooldown frozen 1.5
+PASS pause: no new warning, no damage
+PASS pause in recovery: still recovering (timer frozen)
+PASS resume: recovery still running (0.3 + 0.5 < 1.0)
+PASS resume: recovery ends on the frozen clock (0.3 + 0.8 >= 1.0)
+PASS idempotent: a second pause logs nothing
+PASS idempotent: a second resume logs nothing
+PASS resume: no warning before the cooldown ran out
+PASS resume: next warning after the cooldown
+PASS resume: exactly one new warning 2
+PASS resume: the strike resolves once
+PASS paused: on_enemy_hit cancels nothing (no skill)
+PASS paused: a cast over the enemy breaks nothing and stuns nothing
+PASS resumed: idle, ready to think again
+PASS burrow: waits while the pattern skill runs
+PASS burrow: burrowed once idle, the pattern paused
+PASS burrow: surfaced, pattern active again
+PASS burrow: the cooldown did not tick underground 2.4 2.4
+PASS rebirth: held at 1 HP, reviving
+PASS rebirth: the pattern is paused and its warning cancelled
+PASS rebirth: back with 40 % HP, pattern active 120.0
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_controller_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS warning starts
+PASS red = player cell at warning start
+PASS resolves
+PASS hit cells = snapshot, not the new player cell
+PASS dodged: no damage
+PASS standing still is hit next time
+PASS 8 damage + Root
+PASS cracking cell loses red at once
+PASS locked cell not hit
+PASS interruptible windup cancelled
+PASS cancel cooldown = 3.0 x 0.5
+PASS interrupt during warning clears red
+PASS non-interruptible skill ignores the hit (D9)
+PASS windup x0.8 (1.0 -> 0.8 s) 0.8
+PASS warning_sec unchanged 0.9
+PASS cooldown x0.8 (2.0 -> 1.6 s) 1.6
+PASS hit lands but no Root inside the cc grace (F4)
+PASS floor at phase 2 threshold (0.75)
+PASS one big hit stops at the threshold
+PASS transition starts, warning cleared
+PASS invulnerable 1.5 s (D14)
+PASS no damage while invulnerable
+PASS transition lasts 1.5 s 1.5
+PASS phase 2 active, next floor 0.5
+PASS on_enter marker placed (first cast of the phase, one more marker) 1 -> 2 { "t": 3.99999999999999, "skill": "fx_4", "event": "resolve", "cells": [(3, 1)], "hit": false, "damage": 0.0, "phase": 1, "followup_strike": false }
+PASS followup shows a NEW warning (0.75 s) [[[(1, 1)], 1.2], [[(0, 1), (2, 1)], 0.75]]
+PASS followup = two cells on one axis around the first
+PASS show_with_first: queued lane shown from the start
+PASS weights multiply: 1.2 x 0.45 x 1.25
+PASS no factor when moving
+PASS same seed, same choices
+PASS weight 4 picked most
+PASS every_nth forced skill wins
+PASS fx3x7 reaches its last phase
+PASS fx3x7 casts in every phase { 0: 6, 1: 6, 2: 6 }
+PASS fx3x7 uses most of its 7 skills ["fx_3", "fx_1", "fx_2", "fx_4", "fx_6", "fx_7"]
+PASS fx3x7 perfect dodger untouched 100.0
+PASS fx4x9 reaches its last phase
+PASS fx4x9 casts in every phase { 0: 6, 1: 6, 2: 6, 3: 5 }
+PASS fx4x9 uses most of its 9 skills ["fx_3", "fx_1", "fx_2", "fx_4", "fx_6", "fx_8", "fx_9"]
+PASS fx4x9 perfect dodger untouched 100.0
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_fairness_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS on_player: one plan on the player
+PASS bar 4 rotations from centre
+PASS every plan covers the player (must_cover_player)
+PASS near_player: anchor next to player, T covers player 6
+PASS row_of_anchor: front start, marker row
+PASS row_of_anchor without marker falls back to player row
+PASS row_of_player: windows containing the player
+PASS column_of_player: vertical windows with the player
+PASS fixed: absolute pattern coords, col 0 = front
+PASS enemy_half_empty: free enemy cells only 7
+PASS self_cell: the enemy's cell
+PASS rotate 90
+PASS rotate 180
+PASS rotate 270
+PASS pattern col grows away from the enemy
+PASS no clip: off-board rotations dropped (corner keeps 2)
+PASS clip keeps the on-board cells (2 >= min 2)
+PASS clip below min_cells = no plan (canCast false)
+PASS F7 locked cells never in a plan 1
+PASS F7 drop_locked
+PASS t_need k=1 ready
+PASS t_need k=1 just stepped
+PASS t_need k=2
+PASS not in pattern = fair
+PASS 0.9 s warning fair just after a step (3x3)
+PASS Rooted 0.5 s left: 0.9 s fair
+PASS Rooted 0.7 s left: 0.9 s unfair (F9)
+PASS lock_left = max
+PASS plus shape from centre: 2 steps, 0.70 s ok
+PASS plus shape with Slow (mire-like x1.3): 0.70 s unfair
+PASS row: one step out
+PASS holes and other warnings are not safe ends (0.6 s, 2 steps needed)
+PASS same case fair at 0.9 s (walks through red)
+PASS path may cross red
+PASS 3x3 cap 4
+PASS cross 12 cap 6
+PASS 4 red ok on 3x3
+PASS 5 red refused on 3x3
+PASS overlap counted once
+PASS usable floor drops holes / cracks
+PASS F3 corner with both exits in zone fails
+PASS F3 one exit left passes
+PASS F4 locked: no new lock
+PASS F4 grace: no new lock
+PASS F4 free and grace over: allowed
+PASS F5 0.39 s too soon
+PASS F5 0.4 s ok
+PASS F10 heavy recovery leaves a step
+PASS F10 light skill keeps min gap
+PASS F8 two sources leave a common safe cell
+PASS F8 refused when union closes every reachable safe cell
+PASS root lands
+PASS rooted: step refused
+PASS root does not stack
+PASS root ends
+PASS no Root on Frozen (D2)
+PASS lock_left covers Frozen
+PASS Slow x1.3 step cooldown (D4) 0.585
+PASS Slow ends after 1.5 s
+PASS Guard amount
+WARNING: SkillConfig: card hit has no upgrade table
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _normalize (res://src/combat/skill_config.gd:348)
+       [1] from_dictionary (res://src/combat/skill_config.gd:137)
+       [2] test_root_slow_guard_statuses (res://tests/unit/combat/pattern_fairness_test.gd:188)
+       [3] _initialize (res://tests/unit/combat/pattern_fairness_test.gd:31)
+WARNING: SkillDelivery: card hit: no delivery (every skill must declare one), using DIRECT_MANIFESTATION
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] parse (res://src/combat/skill_delivery.gd:126)
+       [1] _normalize (res://src/combat/skill_config.gd:356)
+       [2] from_dictionary (res://src/combat/skill_config.gd:137)
+       [3] test_root_slow_guard_statuses (res://tests/unit/combat/pattern_fairness_test.gd:188)
+       [4] _initialize (res://tests/unit/combat/pattern_fairness_test.gd:31)
+WARNING: SkillConfig: card pierce has no upgrade table
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _normalize (res://src/combat/skill_config.gd:348)
+       [1] from_dictionary (res://src/combat/skill_config.gd:137)
+       [2] test_root_slow_guard_statuses (res://tests/unit/combat/pattern_fairness_test.gd:188)
+       [3] _initialize (res://tests/unit/combat/pattern_fairness_test.gd:31)
+WARNING: SkillDelivery: card pierce: no delivery (every skill must declare one), using DIRECT_MANIFESTATION
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] parse (res://src/combat/skill_delivery.gd:126)
+       [1] _normalize (res://src/combat/skill_config.gd:356)
+       [2] from_dictionary (res://src/combat/skill_config.gd:137)
+       [3] test_root_slow_guard_statuses (res://tests/unit/combat/pattern_fairness_test.gd:188)
+       [4] _initialize (res://tests/unit/combat/pattern_fairness_test.gd:31)
+PASS Guard reduces a normal hit (10 - 3) 7.0
+PASS Pierce ignores Guard fully (D5) 17.0
+PASS Guard expires
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 7 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)
+--- exit 0
+=== tests/unit/combat/pattern_roster_fairness_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS shipped enemy_skills.json has no problems []
+PASS rootling on square (+200 variants, 201 grids, 2963 warnings) F1: every warning escapable in time []
+PASS rootling on square (+200 variants, 201 grids, 2963 warnings) F2: red within the ceiling []
+PASS rootling on square (+200 variants, 201 grids, 2963 warnings) F3: a zone always leaves an exit []
+PASS rootling on square (+200 variants, 201 grids, 2963 warnings) perfect dodger never hurt []
+PASS rootling on square (+200 variants, 201 grids, 2963 warnings) every skill is usable silent=[]
+PASS mossbound_sentry on square (+200 variants, 201 grids, 2814 warnings) F1: every warning escapable in time []
+PASS mossbound_sentry on square (+200 variants, 201 grids, 2814 warnings) F2: red within the ceiling []
+PASS mossbound_sentry on square (+200 variants, 201 grids, 2814 warnings) F3: a zone always leaves an exit []
+PASS mossbound_sentry on square (+200 variants, 201 grids, 2814 warnings) perfect dodger never hurt []
+PASS mossbound_sentry on square (+200 variants, 201 grids, 2814 warnings) every skill is usable silent=[]
+PASS greycap_sporeling on square (+200 variants, 201 grids, 2681 warnings) F1: every warning escapable in time []
+PASS greycap_sporeling on square (+200 variants, 201 grids, 2681 warnings) F2: red within the ceiling []
+PASS greycap_sporeling on square (+200 variants, 201 grids, 2681 warnings) F3: a zone always leaves an exit []
+PASS greycap_sporeling on square (+200 variants, 201 grids, 2681 warnings) perfect dodger never hurt []
+PASS greycap_sporeling on square (+200 variants, 201 grids, 2681 warnings) every skill is usable silent=[]
+PASS ancient_root_sentinel on square (+200 variants, 201 grids, 3648 warnings) F1: every warning escapable in time []
+PASS ancient_root_sentinel on square (+200 variants, 201 grids, 3648 warnings) F2: red within the ceiling []
+PASS ancient_root_sentinel on square (+200 variants, 201 grids, 3648 warnings) F3: a zone always leaves an exit []
+PASS ancient_root_sentinel on square (+200 variants, 201 grids, 3648 warnings) perfect dodger never hurt []
+PASS ancient_root_sentinel on square (+200 variants, 201 grids, 3648 warnings) every skill is usable silent=[]
+PASS mistbriar_matron on square (+200 variants, 201 grids, 3520 warnings) F1: every warning escapable in time []
+PASS mistbriar_matron on square (+200 variants, 201 grids, 3520 warnings) F2: red within the ceiling []
+PASS mistbriar_matron on square (+200 variants, 201 grids, 3520 warnings) F3: a zone always leaves an exit []
+PASS mistbriar_matron on square (+200 variants, 201 grids, 3520 warnings) perfect dodger never hurt []
+PASS mistbriar_matron on square (+200 variants, 201 grids, 3520 warnings) every skill is usable silent=[]
+PASS goblin_scout on square (+200 variants, 201 grids, 2623 warnings) F1: every warning escapable in time []
+PASS goblin_scout on square (+200 variants, 201 grids, 2623 warnings) F2: red within the ceiling []
+PASS goblin_scout on square (+200 variants, 201 grids, 2623 warnings) F3: a zone always leaves an exit []
+PASS goblin_scout on square (+200 variants, 201 grids, 2623 warnings) perfect dodger never hurt []
+PASS goblin_scout on square (+200 variants, 201 grids, 2623 warnings) every skill is usable silent=[]
+PASS goblin_archer on square (+200 variants, 201 grids, 4821 warnings) F1: every warning escapable in time []
+PASS goblin_archer on square (+200 variants, 201 grids, 4821 warnings) F2: red within the ceiling []
+PASS goblin_archer on square (+200 variants, 201 grids, 4821 warnings) F3: a zone always leaves an exit []
+PASS goblin_archer on square (+200 variants, 201 grids, 4821 warnings) perfect dodger never hurt []
+PASS goblin_archer on square (+200 variants, 201 grids, 4821 warnings) every skill is usable silent=[]
+PASS dire_wolf on square (+200 variants, 201 grids, 4824 warnings) F1: every warning escapable in time []
+PASS dire_wolf on square (+200 variants, 201 grids, 4824 warnings) F2: red within the ceiling []
+PASS dire_wolf on square (+200 variants, 201 grids, 4824 warnings) F3: a zone always leaves an exit []
+PASS dire_wolf on square (+200 variants, 201 grids, 4824 warnings) perfect dodger never hurt []
+PASS dire_wolf on square (+200 variants, 201 grids, 4824 warnings) every skill is usable silent=[]
+PASS wolf_alpha on square (+200 variants, 201 grids, 5732 warnings) F1: every warning escapable in time []
+PASS wolf_alpha on square (+200 variants, 201 grids, 5732 warnings) F2: red within the ceiling []
+PASS wolf_alpha on square (+200 variants, 201 grids, 5732 warnings) F3: a zone always leaves an exit []
+PASS wolf_alpha on square (+200 variants, 201 grids, 5732 warnings) perfect dodger never hurt []
+PASS wolf_alpha on square (+200 variants, 201 grids, 5732 warnings) every skill is usable silent=[]
+PASS rootling on rect (+200 variants, 201 grids, 2951 warnings) F1: every warning escapable in time []
+PASS rootling on rect (+200 variants, 201 grids, 2951 warnings) F2: red within the ceiling []
+PASS rootling on rect (+200 variants, 201 grids, 2951 warnings) F3: a zone always leaves an exit []
+PASS rootling on rect (+200 variants, 201 grids, 2951 warnings) perfect dodger never hurt []
+PASS rootling on rect (+200 variants, 201 grids, 2951 warnings) every skill is usable silent=[]
+PASS mossbound_sentry on rect (+200 variants, 201 grids, 2814 warnings) F1: every warning escapable in time []
+PASS mossbound_sentry on rect (+200 variants, 201 grids, 2814 warnings) F2: red within the ceiling []
+PASS mossbound_sentry on rect (+200 variants, 201 grids, 2814 warnings) F3: a zone always leaves an exit []
+PASS mossbound_sentry on rect (+200 variants, 201 grids, 2814 warnings) perfect dodger never hurt []
+PASS mossbound_sentry on rect (+200 variants, 201 grids, 2814 warnings) every skill is usable silent=[]
+PASS greycap_sporeling on rect (+200 variants, 201 grids, 3039 warnings) F1: every warning escapable in time []
+PASS greycap_sporeling on rect (+200 variants, 201 grids, 3039 warnings) F2: red within the ceiling []
+PASS greycap_sporeling on rect (+200 variants, 201 grids, 3039 warnings) F3: a zone always leaves an exit []
+PASS greycap_sporeling on rect (+200 variants, 201 grids, 3039 warnings) perfect dodger never hurt []
+PASS greycap_sporeling on rect (+200 variants, 201 grids, 3039 warnings) every skill is usable silent=[]
+PASS ancient_root_sentinel on rect (+200 variants, 201 grids, 3600 warnings) F1: every warning escapable in time []
+PASS ancient_root_sentinel on rect (+200 variants, 201 grids, 3600 warnings) F2: red within the ceiling []
+PASS ancient_root_sentinel on rect (+200 variants, 201 grids, 3600 warnings) F3: a zone always leaves an exit []
+PASS ancient_root_sentinel on rect (+200 variants, 201 grids, 3600 warnings) perfect dodger never hurt []
+PASS ancient_root_sentinel on rect (+200 variants, 201 grids, 3600 warnings) every skill is usable silent=[]
+PASS mistbriar_matron on rect (+200 variants, 201 grids, 3536 warnings) F1: every warning escapable in time []
+PASS mistbriar_matron on rect (+200 variants, 201 grids, 3536 warnings) F2: red within the ceiling []
+PASS mistbriar_matron on rect (+200 variants, 201 grids, 3536 warnings) F3: a zone always leaves an exit []
+PASS mistbriar_matron on rect (+200 variants, 201 grids, 3536 warnings) perfect dodger never hurt []
+PASS mistbriar_matron on rect (+200 variants, 201 grids, 3536 warnings) every skill is usable silent=[]
+PASS goblin_scout on rect (+200 variants, 201 grids, 2624 warnings) F1: every warning escapable in time []
+PASS goblin_scout on rect (+200 variants, 201 grids, 2624 warnings) F2: red within the ceiling []
+PASS goblin_scout on rect (+200 variants, 201 grids, 2624 warnings) F3: a zone always leaves an exit []
+PASS goblin_scout on rect (+200 variants, 201 grids, 2624 warnings) perfect dodger never hurt []
+PASS goblin_scout on rect (+200 variants, 201 grids, 2624 warnings) every skill is usable silent=[]
+PASS goblin_archer on rect (+200 variants, 201 grids, 4824 warnings) F1: every warning escapable in time []
+PASS goblin_archer on rect (+200 variants, 201 grids, 4824 warnings) F2: red within the ceiling []
+PASS goblin_archer on rect (+200 variants, 201 grids, 4824 warnings) F3: a zone always leaves an exit []
+PASS goblin_archer on rect (+200 variants, 201 grids, 4824 warnings) perfect dodger never hurt []
+PASS goblin_archer on rect (+200 variants, 201 grids, 4824 warnings) every skill is usable silent=[]
+PASS dire_wolf on rect (+200 variants, 201 grids, 4824 warnings) F1: every warning escapable in time []
+PASS dire_wolf on rect (+200 variants, 201 grids, 4824 warnings) F2: red within the ceiling []
+PASS dire_wolf on rect (+200 variants, 201 grids, 4824 warnings) F3: a zone always leaves an exit []
+PASS dire_wolf on rect (+200 variants, 201 grids, 4824 warnings) perfect dodger never hurt []
+PASS dire_wolf on rect (+200 variants, 201 grids, 4824 warnings) every skill is usable silent=[]
+PASS wolf_alpha on rect (+200 variants, 201 grids, 5729 warnings) F1: every warning escapable in time []
+PASS wolf_alpha on rect (+200 variants, 201 grids, 5729 warnings) F2: red within the ceiling []
+PASS wolf_alpha on rect (+200 variants, 201 grids, 5729 warnings) F3: a zone always leaves an exit []
+PASS wolf_alpha on rect (+200 variants, 201 grids, 5729 warnings) perfect dodger never hurt []
+PASS wolf_alpha on rect (+200 variants, 201 grids, 5729 warnings) every skill is usable silent=[]
+PASS rootling on u_shape (+200 variants, 201 grids, 2947 warnings) F1: every warning escapable in time []
+PASS rootling on u_shape (+200 variants, 201 grids, 2947 warnings) F2: red within the ceiling []
+PASS rootling on u_shape (+200 variants, 201 grids, 2947 warnings) F3: a zone always leaves an exit []
+PASS rootling on u_shape (+200 variants, 201 grids, 2947 warnings) perfect dodger never hurt []
+PASS rootling on u_shape (+200 variants, 201 grids, 2947 warnings) every skill is usable silent=[]
+PASS mossbound_sentry on u_shape (+200 variants, 201 grids, 2814 warnings) F1: every warning escapable in time []
+PASS mossbound_sentry on u_shape (+200 variants, 201 grids, 2814 warnings) F2: red within the ceiling []
+PASS mossbound_sentry on u_shape (+200 variants, 201 grids, 2814 warnings) F3: a zone always leaves an exit []
+PASS mossbound_sentry on u_shape (+200 variants, 201 grids, 2814 warnings) perfect dodger never hurt []
+PASS mossbound_sentry on u_shape (+200 variants, 201 grids, 2814 warnings) every skill is usable silent=[]
+PASS greycap_sporeling on u_shape (+200 variants, 201 grids, 2677 warnings) F1: every warning escapable in time []
+PASS greycap_sporeling on u_shape (+200 variants, 201 grids, 2677 warnings) F2: red within the ceiling []
+PASS greycap_sporeling on u_shape (+200 variants, 201 grids, 2677 warnings) F3: a zone always leaves an exit []
+PASS greycap_sporeling on u_shape (+200 variants, 201 grids, 2677 warnings) perfect dodger never hurt []
+PASS greycap_sporeling on u_shape (+200 variants, 201 grids, 2677 warnings) every skill is usable silent=[]
+PASS ancient_root_sentinel on u_shape (+200 variants, 201 grids, 3671 warnings) F1: every warning escapable in time []
+PASS ancient_root_sentinel on u_shape (+200 variants, 201 grids, 3671 warnings) F2: red within the ceiling []
+PASS ancient_root_sentinel on u_shape (+200 variants, 201 grids, 3671 warnings) F3: a zone always leaves an exit []
+PASS ancient_root_sentinel on u_shape (+200 variants, 201 grids, 3671 warnings) perfect dodger never hurt []
+PASS ancient_root_sentinel on u_shape (+200 variants, 201 grids, 3671 warnings) every skill is usable silent=[]
+PASS mistbriar_matron on u_shape (+200 variants, 201 grids, 3567 warnings) F1: every warning escapable in time []
+PASS mistbriar_matron on u_shape (+200 variants, 201 grids, 3567 warnings) F2: red within the ceiling []
+PASS mistbriar_matron on u_shape (+200 variants, 201 grids, 3567 warnings) F3: a zone always leaves an exit []
+PASS mistbriar_matron on u_shape (+200 variants, 201 grids, 3567 warnings) perfect dodger never hurt []
+PASS mistbriar_matron on u_shape (+200 variants, 201 grids, 3567 warnings) every skill is usable silent=[]
+PASS goblin_scout on u_shape (+200 variants, 201 grids, 2621 warnings) F1: every warning escapable in time []
+PASS goblin_scout on u_shape (+200 variants, 201 grids, 2621 warnings) F2: red within the ceiling []
+PASS goblin_scout on u_shape (+200 variants, 201 grids, 2621 warnings) F3: a zone always leaves an exit []
+PASS goblin_scout on u_shape (+200 variants, 201 grids, 2621 warnings) perfect dodger never hurt []
+PASS goblin_scout on u_shape (+200 variants, 201 grids, 2621 warnings) every skill is usable silent=[]
+PASS goblin_archer on u_shape (+200 variants, 201 grids, 4823 warnings) F1: every warning escapable in time []
+PASS goblin_archer on u_shape (+200 variants, 201 grids, 4823 warnings) F2: red within the ceiling []
+PASS goblin_archer on u_shape (+200 variants, 201 grids, 4823 warnings) F3: a zone always leaves an exit []
+PASS goblin_archer on u_shape (+200 variants, 201 grids, 4823 warnings) perfect dodger never hurt []
+PASS goblin_archer on u_shape (+200 variants, 201 grids, 4823 warnings) every skill is usable silent=[]
+PASS dire_wolf on u_shape (+200 variants, 201 grids, 4824 warnings) F1: every warning escapable in time []
+PASS dire_wolf on u_shape (+200 variants, 201 grids, 4824 warnings) F2: red within the ceiling []
+PASS dire_wolf on u_shape (+200 variants, 201 grids, 4824 warnings) F3: a zone always leaves an exit []
+PASS dire_wolf on u_shape (+200 variants, 201 grids, 4824 warnings) perfect dodger never hurt []
+PASS dire_wolf on u_shape (+200 variants, 201 grids, 4824 warnings) every skill is usable silent=[]
+PASS wolf_alpha on u_shape (+200 variants, 201 grids, 5736 warnings) F1: every warning escapable in time []
+PASS wolf_alpha on u_shape (+200 variants, 201 grids, 5736 warnings) F2: red within the ceiling []
+PASS wolf_alpha on u_shape (+200 variants, 201 grids, 5736 warnings) F3: a zone always leaves an exit []
+PASS wolf_alpha on u_shape (+200 variants, 201 grids, 5736 warnings) perfect dodger never hurt []
+PASS wolf_alpha on u_shape (+200 variants, 201 grids, 5736 warnings) every skill is usable silent=[]
+PASS rootling on cross (+200 variants, 201 grids, 2942 warnings) F1: every warning escapable in time []
+PASS rootling on cross (+200 variants, 201 grids, 2942 warnings) F2: red within the ceiling []
+PASS rootling on cross (+200 variants, 201 grids, 2942 warnings) F3: a zone always leaves an exit []
+PASS rootling on cross (+200 variants, 201 grids, 2942 warnings) perfect dodger never hurt []
+PASS rootling on cross (+200 variants, 201 grids, 2942 warnings) every skill is usable silent=[]
+PASS mossbound_sentry on cross (+200 variants, 201 grids, 2814 warnings) F1: every warning escapable in time []
+PASS mossbound_sentry on cross (+200 variants, 201 grids, 2814 warnings) F2: red within the ceiling []
+PASS mossbound_sentry on cross (+200 variants, 201 grids, 2814 warnings) F3: a zone always leaves an exit []
+PASS mossbound_sentry on cross (+200 variants, 201 grids, 2814 warnings) perfect dodger never hurt []
+PASS mossbound_sentry on cross (+200 variants, 201 grids, 2814 warnings) every skill is usable silent=[]
+PASS greycap_sporeling on cross (+200 variants, 201 grids, 3294 warnings) F1: every warning escapable in time []
+PASS greycap_sporeling on cross (+200 variants, 201 grids, 3294 warnings) F2: red within the ceiling []
+PASS greycap_sporeling on cross (+200 variants, 201 grids, 3294 warnings) F3: a zone always leaves an exit []
+PASS greycap_sporeling on cross (+200 variants, 201 grids, 3294 warnings) perfect dodger never hurt []
+PASS greycap_sporeling on cross (+200 variants, 201 grids, 3294 warnings) every skill is usable silent=[]
+PASS ancient_root_sentinel on cross (+200 variants, 201 grids, 3590 warnings) F1: every warning escapable in time []
+PASS ancient_root_sentinel on cross (+200 variants, 201 grids, 3590 warnings) F2: red within the ceiling []
+PASS ancient_root_sentinel on cross (+200 variants, 201 grids, 3590 warnings) F3: a zone always leaves an exit []
+PASS ancient_root_sentinel on cross (+200 variants, 201 grids, 3590 warnings) perfect dodger never hurt []
+PASS ancient_root_sentinel on cross (+200 variants, 201 grids, 3590 warnings) every skill is usable silent=[]
+PASS mistbriar_matron on cross (+200 variants, 201 grids, 3567 warnings) F1: every warning escapable in time []
+PASS mistbriar_matron on cross (+200 variants, 201 grids, 3567 warnings) F2: red within the ceiling []
+PASS mistbriar_matron on cross (+200 variants, 201 grids, 3567 warnings) F3: a zone always leaves an exit []
+PASS mistbriar_matron on cross (+200 variants, 201 grids, 3567 warnings) perfect dodger never hurt []
+PASS mistbriar_matron on cross (+200 variants, 201 grids, 3567 warnings) every skill is usable silent=[]
+PASS goblin_scout on cross (+200 variants, 201 grids, 2614 warnings) F1: every warning escapable in time []
+PASS goblin_scout on cross (+200 variants, 201 grids, 2614 warnings) F2: red within the ceiling []
+PASS goblin_scout on cross (+200 variants, 201 grids, 2614 warnings) F3: a zone always leaves an exit []
+PASS goblin_scout on cross (+200 variants, 201 grids, 2614 warnings) perfect dodger never hurt []
+PASS goblin_scout on cross (+200 variants, 201 grids, 2614 warnings) every skill is usable silent=[]
+PASS goblin_archer on cross (+200 variants, 201 grids, 4824 warnings) F1: every warning escapable in time []
+PASS goblin_archer on cross (+200 variants, 201 grids, 4824 warnings) F2: red within the ceiling []
+PASS goblin_archer on cross (+200 variants, 201 grids, 4824 warnings) F3: a zone always leaves an exit []
+PASS goblin_archer on cross (+200 variants, 201 grids, 4824 warnings) perfect dodger never hurt []
+PASS goblin_archer on cross (+200 variants, 201 grids, 4824 warnings) every skill is usable silent=[]
+PASS dire_wolf on cross (+200 variants, 201 grids, 4824 warnings) F1: every warning escapable in time []
+PASS dire_wolf on cross (+200 variants, 201 grids, 4824 warnings) F2: red within the ceiling []
+PASS dire_wolf on cross (+200 variants, 201 grids, 4824 warnings) F3: a zone always leaves an exit []
+PASS dire_wolf on cross (+200 variants, 201 grids, 4824 warnings) perfect dodger never hurt []
+PASS dire_wolf on cross (+200 variants, 201 grids, 4824 warnings) every skill is usable silent=[]
+PASS wolf_alpha on cross (+200 variants, 201 grids, 5730 warnings) F1: every warning escapable in time []
+PASS wolf_alpha on cross (+200 variants, 201 grids, 5730 warnings) F2: red within the ceiling []
+PASS wolf_alpha on cross (+200 variants, 201 grids, 5730 warnings) F3: a zone always leaves an exit []
+PASS wolf_alpha on cross (+200 variants, 201 grids, 5730 warnings) perfect dodger never hurt []
+PASS wolf_alpha on cross (+200 variants, 201 grids, 5730 warnings) every skill is usable silent=[]
+PASS rootling on staircase (+200 variants, 201 grids, 2937 warnings) F1: every warning escapable in time []
+PASS rootling on staircase (+200 variants, 201 grids, 2937 warnings) F2: red within the ceiling []
+PASS rootling on staircase (+200 variants, 201 grids, 2937 warnings) F3: a zone always leaves an exit []
+PASS rootling on staircase (+200 variants, 201 grids, 2937 warnings) perfect dodger never hurt []
+PASS rootling on staircase (+200 variants, 201 grids, 2937 warnings) every skill is usable silent=[]
+PASS mossbound_sentry on staircase (+200 variants, 201 grids, 2814 warnings) F1: every warning escapable in time []
+PASS mossbound_sentry on staircase (+200 variants, 201 grids, 2814 warnings) F2: red within the ceiling []
+PASS mossbound_sentry on staircase (+200 variants, 201 grids, 2814 warnings) F3: a zone always leaves an exit []
+PASS mossbound_sentry on staircase (+200 variants, 201 grids, 2814 warnings) perfect dodger never hurt []
+PASS mossbound_sentry on staircase (+200 variants, 201 grids, 2814 warnings) every skill is usable silent=[]
+PASS greycap_sporeling on staircase (+200 variants, 201 grids, 2906 warnings) F1: every warning escapable in time []
+PASS greycap_sporeling on staircase (+200 variants, 201 grids, 2906 warnings) F2: red within the ceiling []
+PASS greycap_sporeling on staircase (+200 variants, 201 grids, 2906 warnings) F3: a zone always leaves an exit []
+PASS greycap_sporeling on staircase (+200 variants, 201 grids, 2906 warnings) perfect dodger never hurt []
+PASS greycap_sporeling on staircase (+200 variants, 201 grids, 2906 warnings) every skill is usable silent=[]
+PASS ancient_root_sentinel on staircase (+200 variants, 201 grids, 3652 warnings) F1: every warning escapable in time []
+PASS ancient_root_sentinel on staircase (+200 variants, 201 grids, 3652 warnings) F2: red within the ceiling []
+PASS ancient_root_sentinel on staircase (+200 variants, 201 grids, 3652 warnings) F3: a zone always leaves an exit []
+PASS ancient_root_sentinel on staircase (+200 variants, 201 grids, 3652 warnings) perfect dodger never hurt []
+PASS ancient_root_sentinel on staircase (+200 variants, 201 grids, 3652 warnings) every skill is usable silent=[]
+PASS mistbriar_matron on staircase (+200 variants, 201 grids, 3205 warnings) F1: every warning escapable in time []
+PASS mistbriar_matron on staircase (+200 variants, 201 grids, 3205 warnings) F2: red within the ceiling []
+PASS mistbriar_matron on staircase (+200 variants, 201 grids, 3205 warnings) F3: a zone always leaves an exit []
+PASS mistbriar_matron on staircase (+200 variants, 201 grids, 3205 warnings) perfect dodger never hurt []
+PASS mistbriar_matron on staircase (+200 variants, 201 grids, 3205 warnings) every skill is usable silent=[]
+PASS goblin_scout on staircase (+200 variants, 201 grids, 2614 warnings) F1: every warning escapable in time []
+PASS goblin_scout on staircase (+200 variants, 201 grids, 2614 warnings) F2: red within the ceiling []
+PASS goblin_scout on staircase (+200 variants, 201 grids, 2614 warnings) F3: a zone always leaves an exit []
+PASS goblin_scout on staircase (+200 variants, 201 grids, 2614 warnings) perfect dodger never hurt []
+PASS goblin_scout on staircase (+200 variants, 201 grids, 2614 warnings) every skill is usable silent=[]
+PASS goblin_archer on staircase (+200 variants, 201 grids, 4783 warnings) F1: every warning escapable in time []
+PASS goblin_archer on staircase (+200 variants, 201 grids, 4783 warnings) F2: red within the ceiling []
+PASS goblin_archer on staircase (+200 variants, 201 grids, 4783 warnings) F3: a zone always leaves an exit []
+PASS goblin_archer on staircase (+200 variants, 201 grids, 4783 warnings) perfect dodger never hurt []
+PASS goblin_archer on staircase (+200 variants, 201 grids, 4783 warnings) every skill is usable silent=[]
+PASS dire_wolf on staircase (+200 variants, 201 grids, 4824 warnings) F1: every warning escapable in time []
+PASS dire_wolf on staircase (+200 variants, 201 grids, 4824 warnings) F2: red within the ceiling []
+PASS dire_wolf on staircase (+200 variants, 201 grids, 4824 warnings) F3: a zone always leaves an exit []
+PASS dire_wolf on staircase (+200 variants, 201 grids, 4824 warnings) perfect dodger never hurt []
+PASS dire_wolf on staircase (+200 variants, 201 grids, 4824 warnings) every skill is usable silent=[]
+PASS wolf_alpha on staircase (+200 variants, 201 grids, 5728 warnings) F1: every warning escapable in time []
+PASS wolf_alpha on staircase (+200 variants, 201 grids, 5728 warnings) F2: red within the ceiling []
+PASS wolf_alpha on staircase (+200 variants, 201 grids, 5728 warnings) F3: a zone always leaves an exit []
+PASS wolf_alpha on staircase (+200 variants, 201 grids, 5728 warnings) perfect dodger never hurt []
+PASS wolf_alpha on staircase (+200 variants, 201 grids, 5728 warnings) every skill is usable silent=[]
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_roster_mechanics_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS shipped enemy_skills.json has no problems []
+PASS root_prick hits a standing player
+PASS root_prick roots the player for 0.7 s (D2) left=0.700
+PASS root_prick deals 8 dmg=8.0
+PASS rooted: a step is refused
+PASS after 0.7 s the root is gone
+PASS creep never fires without a block aimed at the Rootling
+PASS creep fires right after a block is aimed at the Rootling
+PASS creep shows its target one row up / down (ivory, not red) (4, 1) -> (4, 2)
+PASS the Rootling ends on the shown cell (4, 2)
+PASS a block aimed elsewhere does not trigger creep
+PASS brace is used
+PASS brace = Guard +3 for 3 s (D5) left=3.00
+PASS Guard ends after 3 s
+PASS seedbed is used
+PASS seedbed lands next to the player, never on it (1, 2) vs (1, 1)
+PASS seedbed leaves Thorns (D3: no Poison in Phase 2)
+PASS seedbed strike itself deals no damage
+PASS branch_net resolves with an anchor and waits for its repeat
+PASS an anchor stands on the Sentinel's half
+PASS a 1-cell block does not break the anchor (break_min_cells 2)
+PASS a 2-cell block breaks the anchor
+PASS breaking the anchor stuns the Sentinel 1.0 s [1.0]
+PASS the repeat is cancelled at once
+PASS still stunned at 0.95 s
+PASS stun over after 1.0 s
+PASS the cancelled repeat never strikes 0 -> 0
+PASS branch_net repeat warning reached
+PASS anchor broken during the repeat warning: red off, stunned
+PASS sentinel_anchor data: pattern.row = player
+PASS sentinel_anchor placed in 24 seeded matches 24
+PASS the anchor lands in the player's current row (every row, 24 seeds)
+PASS the anchor's column is drawn, not fixed (>= 2 columns seen) [5, 7, 6, 4]
+PASS planner: row player -> only the player's row 4
+PASS planner: no free cell in the player's row -> any empty cell (old rule) 7 vs 7
+PASS an unknown pattern.row refuses the skill with a problem line ["skill bad_row: pattern.row \'diagonal\' unknown (known: any, player), refused"]
+PASS bark_shift is used
+PASS bark_shift cracks a cell next to the player (drop tile, D6) (3, 1)
+PASS no Thorns from bark_shift (barrier became a drop tile)
+PASS thorn_fork first red = the player's cell
+PASS fork followup = both cells next to the first on the axis stepped along (1, 0) [(0, 1), (2, 1)]
+PASS thorn_fork first red = the player's cell
+PASS fork followup = both cells next to the first on the axis stepped along (0, 1) [(1, 0), (1, 2)]
+PASS wreath_guard not used above 50 % HP
+PASS wreath_guard used at <= 50 % HP
+PASS one wreath on the Matron's half, Guard +5 up (D5)
+PASS a 1-cell block breaks the wreath and the Guard drops, no stun
+PASS wreath_guard is once per match
+PASS Forest Witch has no rotten_thrower (D12)
+PASS boss pool: tier 1 goblin_warlock, tier 2 forest_witch (D11) { "1": ["goblin_warlock"], "2": ["forest_witch"] }
+PASS rootling: a ch1 match on the pattern brain with its own enemy
+PASS mossbound_sentry: a ch1 match on the pattern brain with its own enemy
+PASS greycap_sporeling: a ch1 match on the pattern brain with its own enemy
+PASS ancient_root_sentinel: a ch1 match on the pattern brain with its own enemy
+PASS mistbriar_matron: a ch1 match on the pattern brain with its own enemy
+PASS Sentinel teach_after rootling + mossbound_sentry (D10)
+PASS Matron teach_after greycap_sporeling + rootling (D10)
+PASS authored HP = pack budget at the floor-3 reference (spec 5.1, D8)
+PASS every new enemy and skill has its name / counter strings []
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_variants_haste_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS variants: fixture loads without problems []
+PASS variants: both shapes parsed as cell lists
+PASS variants: refused with a row anchor ["skill row_shape: pattern.variants needs anchor on_player or near_player (got \'row_of_player\'), refused"]
+PASS variants: plan [(2, 1), (2, 2), (2, 3), (1, 3)] covers 4 cells
+PASS variants: plan [(2, 1), (1, 1), (0, 1), (1, 2)] covers 4 cells
+PASS variants: plans of both shapes offered [0, 1]
+PASS variants: the L still plans when the T cannot fit plans=1
+PASS haste: the howl resolves
+PASS haste: lasts 6 s after the howl left=6.00
+PASS haste: the bite comes during the haste
+PASS haste: the bite's warning stays 0.9 s
+PASS haste: the bite's cooldown is 4.0 x 0.5 cd=2.00
+PASS haste: over after 6 s (the howl does not shorten its own cooldown) left=0.00 howl_cd=1.95
+PASS interrupt: the howl winds up
+PASS interrupt: a hit during the howl cancels it
+PASS interrupt: the enemy is stunned for 1.0 s
+PASS interrupt: still stunned at 0.9 s
+PASS interrupt: stun over after 1.0 s
+PASS interrupt: no haste from a cancelled howl
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_wiring_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS no brain: no brain/enemy/pattern_tempo_mult key
+PASS brain block adds only `brain` ["arena", "arena_seed", "boss_cards", "boss_defense", "boss_drop_interval_mult", "boss_max_hp", "boss_min_runes", "boss_reaction_sec", "boss_step_cooldown_mult", "boss_think_interval_sec", "brain", "brain_set", "combo_chance", "combo_gap_sec", "desc_key", "display_name", "id", "movement", "name_key", "player_drop_interval_mult", "swing_speed_mult", "traits"]
+PASS pattern brain + enemy carried
+PASS pattern_tempo_mult = region x floor step_mult 1.26
+PASS block match gets no tempo from scaling
+WARNING: RunConfig: brain 'nonsense' of match m is unknown, using the block brain
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _apply_brain (res://src/run/run_config.gd:346)
+       [1] _clean_match (res://src/run/run_config.gd:305)
+       [2] from_dictionary (res://src/run/run_config.gd:90)
+       [3] _test_run_config_brain (res://tests/unit/combat/pattern_wiring_test.gd:63)
+       [4] _initialize (res://tests/unit/combat/pattern_wiring_test.gd:25)
+PASS unknown brain falls back to block
+WARNING: RunConfig: match m has brain 'pattern' but no enemy, using the block brain
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _apply_brain (res://src/run/run_config.gd:349)
+       [1] _clean_match (res://src/run/run_config.gd:305)
+       [2] from_dictionary (res://src/run/run_config.gd:90)
+       [3] _test_run_config_brain (res://tests/unit/combat/pattern_wiring_test.gd:65)
+       [4] _initialize (res://tests/unit/combat/pattern_wiring_test.gd:25)
+PASS pattern without enemy falls back to block
+PASS a 2+ cell warning is showing [(1, 1), (1, 2), (2, 1)]
+PASS state lists every red cell
+PASS drop locks the cell
+PASS locked cell not drawn red [(1, 2), (2, 1)]
+PASS no pattern = empty state
+PASS never locked = INF
+PASS 0 while rooted
+PASS counts after the root ends 0.1
+PASS keeps counting
+PASS clear() resets to INF
+PASS block match is not pattern
+PASS row_burner present
+PASS trait_warning_cells = the row on the player's half [(0, 1), (1, 1), (2, 1)]
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 9 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)
+--- exit 0
+=== tests/unit/combat/status_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS burn: is_burning
+PASS burn: no dmg before tick
+PASS burn: 2 dmg at 0.5s
+PASS burn: enemy untouched
+PASS burn: 4 dmg at 1.0s
+PASS burn: reignite resets
+PASS burn: 60 small ticks = 12 dmg (12.0)
+PASS burn: burned out
+PASS burn: delta 3.0 = 12 dmg (12.0)
+PASS burn: off-cell no dmg
+PASS pin: refuses
+PASS pin: refreshed still pinned
+PASS pin: ends
+PASS pin: no status unchanged
+PASS drops: 500 ticks no blocked spawn (seen 500)
+PASS drops: blocked pick null, no signal
+PASS drops: blocked full hand no signal
+PASS drops: unblocked works
+PASS fx: burn 9 ignite, inside hit, dmg per cell
+PASS fx: burn outside ignites, hit false
+PASS fx: pin inside
+PASS fx: pin outside
+PASS fx: slash 3 cells 18
+PASS fx: push 5 cells 20 pushed
+WARNING: CutEffects: skill 'hoa_tran' needs a StatusEffects, ignored
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] apply (res://src/combat/cut_effects.gd:228)
+       [1] _init (res://tests/unit/combat/status_test.gd:114)
+PASS fx: null status burn no crash
+PASS fx: null status pin no crash
+PASS avail: burn 3 cells
+PASS avail: burn 4
+PASS avail: pin 3
+PASS avail: pin 4
+FAILS=0
+--- exit 0
+=== tests/unit/combat/status_effects_reaction_icd_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS combat.json reactions: icd_sec 1.0, global true, trap_through_defense true, the r1-r3 numbers kept { "r1": { "burst_damage": 12.0 }, "r2": { "mult": 2.0 }, "r3": { "damage": 8.0, "pin_sec": 0.6 }, "icd_sec": 1.0, "global": true, "trap_through_defense": true }
+PASS CutEffects built-in defaults carry icd_sec 1.0 and global true
+PASS options.reactions overrides global / icd_sec
+PASS reaction_enabled: global -> every card; listed only when global is off
+PASS first hit on a Pinned foe with Rạn: R2 x2 = 36, the Pin ends { "hit": true, "damage": 36.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 0, "frost_applied": 0, "frost_burst": 0.0, "fragile_hit": true, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "zone_kind": "", "zone_cells": [], "reaction": "r2" }
+PASS the R2 cooldown of the ENEMY runs: 1.0 s left
+PASS 0.5 s later: no R2 (ICD), the plain Rạn multiplier 27, the Pin stays { "hit": true, "damage": 27.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 0, "frost_applied": 0, "frost_burst": 0.0, "fragile_hit": true, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "zone_kind": "", "zone_cells": [] }
+PASS 1.0 s after the first: R2 again (36, Pin ends) { "hit": true, "damage": 36.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 0, "frost_applied": 0, "frost_burst": 0.0, "fragile_hit": true, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "zone_kind": "", "zone_cells": [], "reaction": "r2" }
+PASS R2 on the ENEMY does not start R1 / R3, nor the PLAYER's R2
+PASS a true answer starts that cooldown: R1 on the ENEMY is now on cooldown
+PASS an explicit icd_sec 0 ignores the cooldown
+PASS clear() resets the reaction book
+PASS an enemy immune to R2: the plain Rạn hit 27, the Pin stays, no reaction { "hit": true, "damage": 27.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 0, "frost_applied": 0, "frost_burst": 0.0, "fragile_hit": true, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "zone_kind": "", "zone_cells": [] }
+PASS the immunity is per id: R3 is still allowed
+PASS han_kiem (+1 Hàn) on a burning cell under a burn_eater boss: no R1, 18 only, the Hàn stays, the cell still burns { "hit": true, "damage": 18.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 0, "frost_applied": 1, "frost_burst": 0.0, "fragile_hit": false, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "zone_kind": "", "zone_cells": [] }
+PASS the same boss without burn_eater: R1 fires (18 + 12), the Hàn spent, the fire out { "hit": true, "damage": 18.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 0, "frost_applied": 1, "frost_burst": 0.0, "fragile_hit": false, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "zone_kind": "", "zone_cells": [], "reaction": "r1", "reaction_damage": 12.0, "reaction_cell": (5, 1) }
+PASS global off: kiem_khi (no list) keeps the old Rạn rule 27 { "hit": true, "damage": 27.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 0, "frost_applied": 0, "frost_burst": 0.0, "fragile_hit": true, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "zone_kind": "", "zone_cells": [] }
+PASS global off: bang_vo (lists r2) still shatters: 5 x 3 x 2 = 30 { "hit": true, "damage": 30.0, "pushed": false, "cell": (5, 1), "burning": false, "pinned": false, "pin_bonus": false, "fragile_applied": 1, "frost_applied": 0, "frost_burst": 0.0, "fragile_hit": true, "executed": false, "defense_applied": 0.0, "featured": false, "featured_mult": 1.0, "featured_effect": "", "featured_stacks": 0, "featured_sec": 0.0, "crit": false, "crit_mult": 1.0, "parried": false, "locked_cells": [], "healed": 0.0, "reaction": "r2", "zone_kind": "", "zone_cells": [] }
+PASS two identical runs: same HP
+FAILS=0
+--- exit 0
+=== tests/unit/traits/region_traits_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS registry: spore_burst 
+PASS registry: hop_skip 
+PASS registry: bog_spread 
+PASS registry: burrow 
+PASS registry: riposte 
+PASS registry: sandstorm 
+PASS spore: player cell + 2 neighbours mired [(1, 1), (2, 1), (1, 0)]
+PASS spore: timed spore_mire_sec 4.0
+PASS spore: second hit inside icd ignored 
+PASS spore: bursts again after icd_sec 
+PASS hop: (4,1) is an open hole 
+PASS hop: no hop before hop_every steps 
+PASS hop: shadow on (5,1) over the hole (5, 1)
+PASS hop: warn time = hop_warn_sec 0.4
+PASS hop: boss steps locked during the shadow 
+PASS hop: landed on (5,1) (5, 1)
+PASS hop: step counter reset, shadow cleared 
+PASS hop: sand on the only destination refuses the hop kept=[(5, 1)] target=(-1, -1)
+PASS bog: nothing before interval_sec 
+PASS bog: 2 seeded mire cells at interval_sec [(2, 2), (0, 0)]
+PASS bog: mire_sec 
+PASS bog: escape priority while the boss casts >= 3 cells [(0, 1), (2, 1)]
+PASS burrow: not before interval_sec 
+PASS burrow: burrowed at interval_sec, untargetable, boss inactive 
+PASS burrow: no surface circle before the warning window 
+PASS burrow: surface circle in the last surface_warn_sec (5, 2) 0.500000
+PASS burrow: surfaced on the announced cell, active again (5, 2)
+PASS untargetable: host wired the arbiter 
+PASS untargetable: host reports the burrow 
+PASS untargetable: landing cast misses (no damage) 1000.0
+PASS untargetable: its thorns still form [(3, 1), (4, 1), (5, 1)]
+PASS untargetable: surfaced 
+PASS untargetable: after surfacing a cast hits 994.0
+PASS untargetable: teardown unwires the arbiter 
+PASS riposte: a 3-cell hit does not trigger 
+PASS riposte: a 4-cell miss does not trigger 
+PASS riposte: a 4-cell hit warns on the player's cell 
+PASS riposte: standing still takes damage 90.0
+PASS riposte: not re-aimed, stepping away dodges 
+PASS storm: not before interval_sec 
+PASS storm: started, drift mult 0.5 
+PASS storm: extra sand on the player's half, not the player's cell [(1, 2), (2, 2)]
+PASS storm: bar half way 0.5
+PASS storm: drift mult back to 1 after storm_sec 
+WARNING: spore_burst: ctx has no `hazards` (TileHazards), trait inactive
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] get_hazards (res://src/traits/boss_trait.gd:205)
+       [1] on_boss_damaged (res://src/traits/spore_burst.gd:57)
+       [2] _test_missing_hazards_is_inert (res://tests/unit/traits/region_traits_test.gd:280)
+       [3] _initialize (res://tests/unit/traits/region_traits_test.gd:34)
+PASS no hazards: spore_burst does nothing 
+PASS registry: burn_eater 
+PASS registry: rebirth 
+PASS registry: vent_surge 
+PASS registry: gust 
+PASS registry: shroud 
+PASS registry: island_drop 
+PASS burn_eater: control (no trait) burning hurts 490.0
+PASS burn_eater: a burn tick heals instead of damaging 510.0
+PASS burn_eater: green-number signal fired with the amount [10.0]
+PASS burn_eater: getters 
+PASS burn_eater: every tick heals 520.0
+PASS burn_eater: the player's own burn still hurts the player 90.0
+PASS burn_eater: heal clamps at max HP 1000.0
+PASS burn_eater: teardown unwires the hook 
+PASS rebirth: one life before 
+PASS rebirth: the first death is taken over (held at 1 HP, no enemy_died) hp=1.000000 deaths=0
+PASS rebirth: reviving, untargetable, boss paused, lives 0 
+PASS rebirth: a blow while reviving does not kill 
+PASS rebirth: still reviving before revive_sec 
+PASS rebirth: revived at revive_ratio x max HP, active again 400.0
+PASS rebirth: the second death is final 
+PASS rebirth: teardown unwires the death hook 
+PASS rebirth: >= 1 Han stack at death means it dies 
+PASS vent_surge: nothing before interval_sec 
+PASS vent_surge: 2 vents warn at interval_sec (6 cells) surges=1 count=2 cells=6
+PASS vent_surge: the vent holding the player's cell is one of them 
+PASS vent_surge: no vents on the side = nothing happens 
+PASS vent_surge first_delay: no surge at 9.9 s surges=0
+PASS vent_surge first_delay: the first surge at 10 s starts both vents surges=1 last=2
+PASS vent_surge first_delay: still one surge at 16.9 s (interval 7, not 10) surges=1
+PASS vent_surge first_delay: the second surge at 17 s (vents idle again after warn 1 s + burn 2 s) surges=2 last=2
+PASS gust: (1,0) and (1,2) are open holes [(1, 0), (1, 2)]
+PASS gust: hole and sand cells are no push targets 
+PASS gust: outside the half is refused, a free cell is allowed 
+PASS gust: no arrow before interval_sec 
+PASS gust: arrow with a 1-cell direction and warn_sec (-1, 0) 0.600000
+PASS gust: the push into a forbidden cell is cancelled (the player stays) (1, 1)
+PASS gust: every gust moves the player 0 or 1 cell inside its half moved=9 pushes=9
+PASS shroud: forecast blocked by default (host + placement controller) 
+PASS shroud: not blocked while the boss is pinned 
+PASS shroud: blocked again once the pin ends 
+PASS shroud: not blocked while the boss is casting 
+PASS shroud: teardown unwires the switch 
+PASS shroud: a match without the trait never blocks 
+PASS island_drop twin_isles: islands = the arena's islands (bridges removed, each >= 2 cells) trait=[[(1, 0), (1, 1), (0, 1), (1, 2)], [(3, 1), (4, 1), (3, 2), (3, 0), (5, 1), (4, 2), (4, 0), (5, 2), (5, 0)]] arena=[[(1, 0), (1, 1), (0, 1), (1, 2)], [(3, 0), (4, 0), (3, 1), (5, 0), (4, 1), (3, 2), (5, 1), (4, 2), (5, 2)]]
+PASS island_drop twin_isles: nothing before interval_sec 
+PASS island_drop twin_isles: the announced cells lie in ONE island, >= 2 cells, warn_sec [(3, 1), (4, 1), (3, 2), (3, 0), (5, 1), (4, 2), (4, 0), (5, 2), (5, 0)] 1.200000
+PASS island_drop twin_isles: an island really fell during the run 
+PASS island_drop twin_isles: one whole island and every bridge always stand (never the last island) 
+PASS island_drop three_isles: islands = the arena's islands (bridges removed, each >= 2 cells) trait=[[(0, 0), (1, 0), (0, 1), (1, 1)], [(3, 1), (4, 1), (3, 0), (4, 0)], [(6, 1), (6, 0)]] arena=[[(0, 0), (1, 0), (0, 1), (1, 1)], [(3, 0), (4, 0), (3, 1), (4, 1)], [(6, 0), (6, 1)]]
+PASS island_drop three_isles: nothing before interval_sec 
+PASS island_drop three_isles: the announced cells lie in ONE island, >= 2 cells, warn_sec [(0, 0), (1, 0), (0, 1), (1, 1)] 1.200000
+PASS island_drop three_isles: an island really fell during the run 
+PASS island_drop three_isles: one whole island and every bridge always stand (never the last island) 
+PASS island_drop: a half with one island never drops 
+PASS phase_shift: phase 1 leaves the vent clock alone 
+PASS phase_shift: phase 2 multiplies the vent interval by 0.7 7.000000 -> 4.900000
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 7 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)
+--- exit 0
+=== tests/unit/traits/trait_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+WARNING: TraitRegistry: unknown trait id 'nope' (known: bog_spread, boss_phases, burn_eater, burrow, frost_aura, fuse_cannon, gust, hop_skip, island_drop, phase_shift, rebirth, riposte, rotten_thrower, row_burner, sandstorm, seal_caster, shroud, slam, spore_burst, step_reactor, thorn_field, vent_surge), skipped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] create (res://src/traits/trait_registry.gd:38)
+       [1] _test_registry (res://tests/unit/traits/trait_test.gd:81)
+       [2] _init (res://tests/unit/traits/trait_test.gd:69)
+PASS registry unknown null
+PASS registry known ids ["bog_spread", "boss_phases", "burn_eater", "burrow", "frost_aura", "fuse_cannon", "gust", "hop_skip", "island_drop", "phase_shift", "rebirth", "riposte", "rotten_thrower", "row_burner", "sandstorm", "seal_caster", "shroud", "slam", "spore_burst", "step_reactor", "thorn_field", "vent_surge"]
+WARNING: TraitRegistry: unknown trait id 'nope' (known: bog_spread, boss_phases, burn_eater, burrow, frost_aura, fuse_cannon, gust, hop_skip, island_drop, phase_shift, rebirth, riposte, rotten_thrower, row_burner, sandstorm, seal_caster, shroud, slam, spore_burst, step_reactor, thorn_field, vent_surge), skipped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] create (res://src/traits/trait_registry.gd:38)
+       [1] _create_and_setup (res://src/traits/trait_host.gd:68)
+       [2] _init (res://src/traits/trait_host.gd:54)
+       [3] _test_registry (res://tests/unit/traits/trait_test.gd:83)
+       [4] _init (res://tests/unit/traits/trait_test.gd:69)
+WARNING: TraitHost: a trait entry is not an object, skipped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _init (res://src/traits/trait_host.gd:50)
+       [1] _test_registry (res://tests/unit/traits/trait_test.gd:83)
+       [2] _init (res://tests/unit/traits/trait_test.gd:69)
+WARNING: TraitHost: params of trait 'row_burner' must be an object, using defaults
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _create_and_setup (res://src/traits/trait_host.gd:75)
+       [1] _init (res://src/traits/trait_host.gd:54)
+       [2] _test_registry (res://tests/unit/traits/trait_test.gd:83)
+       [3] _init (res://tests/unit/traits/trait_test.gd:69)
+PASS host skips unknown (1 of 4 entries bad, 2 valid) ["row_burner", "row_burner"]
+PASS host still runs
+PASS empty host ok
+PASS rb no warning before first_delay
+PASS rb first warning at first_delay [1.0]
+PASS rb warned cells = player's row [(0, 0), (1, 0), (2, 0)]
+PASS rb warning getters
+PASS rb nothing burning during warning
+PASS rb burn starts warn_sec later [1.55]
+PASS rb row burning [(0, 0), (1, 0), (2, 0)]
+PASS rb warning cleared
+PASS rb still burning before burn_sec
+PASS rb burned out after burn_sec []
+PASS rb player in row took damage_per_tick per tick_sec (lost 8.0, expect 6..8 in steps of 2)
+PASS rb no second warning yet
+PASS rb next warning interval after the first [1.0, 4.04999999999999]
+PASS rb debug
+PASS rb2 warned player's row (1) [(0, 1), (1, 1), (2, 1)]
+PASS rb2 burned the row fixed at warning time [(0, 1), (1, 1), (2, 1)]
+PASS rb2 player who left the row took no damage 100.0
+PASS rb2 random row_pick gives one whole player row [(0, 1), (1, 1), (2, 1)]
+PASS rt nothing before first_delay
+PASS rt first throw at first_delay [1.0]
+PASS rt point is a rotten piece with rot time
+PASS rt cell is a free player cell, not the player, not burning (2, 1)
+PASS rt only free candidates were (1,2)/(2,1)/(2,2)... got (2, 1)
+PASS rt last thrown cell
+PASS rt on field
+PASS rt max_on_field respected (still 1 after interval)
+PASS rt pick up
+PASS rt occupies a slot
+PASS rt toggle_selected false
+PASS rt not in selected labels/indices
+PASS rt remove_selected removes nothing
+PASS rt still held before rot_in_hand_sec
+PASS rt removed after rot_in_hand_sec with slot_cleared [0]
+PASS rt pending throw once the field is free [1.0, 3.65]
+PASS rt debug
+PASS place_rotten_piece refuses occupied
+PASS place_rotten_piece refuses boss cell
+PASS place_rotten_piece refuses blocked (burning) cell
+PASS determinism same seed same cells (34 events) [(0, 0), (0, 0), (2, 1), (1, 0), (0, 2), (0, 1), (0, 0), (2, 2), (1, 0), (0, 1), (0, 0), (0, 2), (0, 2), (2, 1), (2, 0), (0, 0), (0, 2), (2, 1), (0, 1), (2, 2), (0, 1), (0, 1), (1, 2), (0, 1), (0, 2), (1, 0), (0, 0), (0, 1), (0, 0), (0, 2), (2, 1), (0, 2), (0, 2), (0, 0)]
+PASS determinism different seed differs (informational) [(0, 1), (0, 0), (0, 2), (1, 2), (0, 1), (2, 0), (0, 2), (2, 1), (1, 2), (0, 1), (0, 2), (0, 0), (0, 2), (2, 0), (1, 2), (0, 0), (2, 1), (0, 2), (0, 2), (1, 0), (0, 2), (1, 2), (2, 1), (0, 1), (2, 0), (0, 0), (0, 2), (1, 2), (2, 2), (0, 0), (0, 2), (2, 0), (0, 1), (1, 2)]
+PASS teardown: 2 traits before
+PASS teardown: host empty
+PASS teardown: traits dropped context/params
+PASS teardown: idempotent
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 7 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)
+--- exit 0
+=== tests/unit/traits/traits2_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS registry creates step_reactor
+PASS registry creates fuse_cannon
+PASS registry creates slam
+PASS registry creates frost_aura
+PASS registry creates phase_shift
+WARNING: TraitRegistry: unknown trait id 'nope' (known: bog_spread, boss_phases, burn_eater, burrow, frost_aura, fuse_cannon, gust, hop_skip, island_drop, phase_shift, rebirth, riposte, rotten_thrower, row_burner, sandstorm, seal_caster, shroud, slam, spore_burst, step_reactor, thorn_field, vent_surge), skipped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] create (res://src/traits/trait_registry.gd:38)
+       [1] _test_registry (res://tests/unit/traits/traits2_test.gd:101)
+       [2] _init (res://tests/unit/traits/traits2_test.gd:70)
+PASS registry unknown null
+PASS reactor idle: no charge standing still
+PASS reactor 2 steps = 2 charges, no swing
+PASS reactor fires on 3rd step
+PASS reactor swing 3 cells incl player
+PASS reactor warning 0.5s 0.5
+PASS reactor charges reset
+PASS reactor cluster connected
+PASS reactor cooldown: step adds no charge
+PASS reactor swing resolved
+PASS reactor cooldown over
+PASS reactor counts again after cooldown
+PASS reactor params honoured
+PASS reactor swing cancellable
+PASS reactor waits while boss busy
+PASS reactor fires when free
+PASS fuse not yet at 11.9
+PASS fuse warning row at 12s
+PASS fuse warning is player row only
+PASS fuse blast dealt 40 to player 40.0
+PASS fuse restarted
+PASS fuse dodge: warning running
+PASS fuse dodge: no damage when player left row
+PASS fuse 29 does not reset
+PASS fuse 30 resets
+PASS slam nothing before 7s
+PASS slam warns exactly 2 cells [(1, 0), (0, 1)]
+PASS slam never under player
+PASS slam cells on player half
+PASS slam warned cell not blocked yet
+PASS slam cracked 2 cells after 0.8s
+PASS slam blocks stepping onto cracked
+PASS slam still cracked before crack_sec ends
+PASS slam first batch expired
+PASS slam step allowed after expiry
+PASS slam all-but-player cracked (8) 8
+PASS slam no damage when player not on cracked cell
+PASS slam damages unit standing on warned cell when it cracks 20.0
+PASS crackfield warned
+PASS crackfield cracked
+PASS crackfield expired
+PASS frost active at full hp
+PASS frost active at 51%
+PASS frost off at 50%
+PASS frost stays off
+PASS frost slows spawn count 6 vs 5
+PASS frost params honoured
+PASS frost params ratio honoured
+PASS phase starts 1
+PASS phase still 1 at 51%
+PASS phase 2 at 50%
+PASS phase switched brain set aggressive
+PASS phase added row_burner
+PASS phase step cooldown x0.85
+PASS phase fires once [2]
+WARNING: TraitRegistry: unknown trait id 'nope' (known: bog_spread, boss_phases, burn_eater, burrow, frost_aura, fuse_cannon, gust, hop_skip, island_drop, phase_shift, rebirth, riposte, rotten_thrower, row_burner, sandstorm, seal_caster, shroud, slam, spore_burst, step_reactor, thorn_field, vent_surge), skipped
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] create (res://src/traits/trait_registry.gd:38)
+       [1] _create_and_setup (res://src/traits/trait_host.gd:68)
+       [2] add_trait (res://src/traits/trait_host.gd:60)
+       [3] _check (res://src/traits/phase_shift.gd:88)
+       [4] on_tick (res://src/traits/phase_shift.gd:51)
+       [5] on_tick (res://src/traits/trait_host.gd:130)
+       [6] _test_phase (res://tests/unit/traits/traits2_test.gd:339)
+       [7] _init (res://tests/unit/traits/traits2_test.gd:75)
+PASS phase params honoured (slam added, unknown skipped)
+PASS bad params -> 5 traits
+PASS default charges 3
+PASS default fuse 12
+PASS default slam interval 7
+PASS mover blocker installed
+PASS frost default scale
+PASS teardown clears traits
+PASS teardown removes blocker
+PASS teardown restores rune scale
+PASS teardown twice ok
+FAILS=0
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2663)
+ERROR: 7 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:810)
+--- exit 0
+=== tests/unit/traits/zone_traits_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS registry: seal_caster 
+PASS registry: thorn_field 
+PASS seal: no seal before the first interval 
+PASS seal: armed after interval_sec 
+PASS seal: not placed while the swing has more than lead_sec left 
+PASS seal: placed once the swing is within lead_sec [(1, 0), (1, 1)]
+PASS seal: 2-3 cells [(1, 0), (1, 1)]
+PASS drop: player half, outside the swing or the player's own cell (2026-10-31 spec rule 2) [(1, 0), (1, 1)]
+PASS seal: the player keeps an open neighbour 
+PASS seal: not again before the next interval 
+PASS seal: placed again at the next interval 
+PASS seal: a swing below min_swing_cells carries no seal 
+PASS corner: a seal was placed [(0, 0), (0, 1), (0, 2)]
+PASS corner: the player keeps an open neighbour [(0, 0), (0, 1), (0, 2)]
+PASS corner: an escape cell outside the swing is still reachable [(1, 1)]
+PASS corner + crack: the only exit (0,1) is never sealed [(0, 0)]
+PASS corner + crack: open neighbour left 
+PASS thorns: a 3-cell swing lays nothing 
+PASS thorns: a 4-cell swing lays a field [(0, 0), (0, 2), (1, 2)]
+PASS thorns: escape cells next to the swing, outside it, never the player's cell, <= max_cells [(0, 0), (0, 2), (1, 2)]
+PASS thorns: combat.json numbers by default { "left": 3.0, "damage": 6.0, "fragile_stacks": 1 }
+PASS thorns: cooldown blocks the second field 
+PASS thorns: after cooldown_sec a new field 
+PASS chapters.json: jailer carries seal_caster 
+PASS chapters.json: frost_mage carries thorn_field 
+FAILS=0
+--- exit 0
+=== tests/integration/run/pattern_dodge_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS shipped enemy_skills.json has no problems []
+PASS dev enemy present
+PASS no chapters.json match plays a dev enemy []
+PASS ch1 arenas found
+PASS square/1 dodger untouched hp=100.0 events=14
+PASS square/1 standing still is damaged hp=0.0
+PASS square/2 dodger untouched hp=100.0 events=14
+PASS square/2 standing still is damaged hp=0.0
+PASS square/3 dodger untouched hp=100.0 events=14
+PASS square/3 standing still is damaged hp=0.0
+PASS rect/1 dodger untouched hp=100.0 events=14
+PASS rect/1 standing still is damaged hp=0.0
+PASS rect/2 dodger untouched hp=100.0 events=14
+PASS rect/2 standing still is damaged hp=0.0
+PASS rect/3 dodger untouched hp=100.0 events=14
+PASS rect/3 standing still is damaged hp=0.0
+PASS u_shape/1 dodger untouched hp=100.0 events=14
+PASS u_shape/1 standing still is damaged hp=0.0
+PASS u_shape/2 dodger untouched hp=100.0 events=14
+PASS u_shape/2 standing still is damaged hp=0.0
+PASS u_shape/3 dodger untouched hp=100.0 events=14
+PASS u_shape/3 standing still is damaged hp=0.0
+PASS boss_hall/1 dodger untouched hp=100.0 events=14
+PASS boss_hall/1 standing still is damaged hp=0.0
+PASS boss_hall/2 dodger untouched hp=100.0 events=14
+PASS boss_hall/2 standing still is damaged hp=0.0
+PASS boss_hall/3 dodger untouched hp=100.0 events=14
+PASS boss_hall/3 standing still is damaged hp=0.0
+PASS cross/1 dodger untouched hp=100.0 events=14
+PASS cross/1 standing still is damaged hp=0.0
+PASS cross/2 dodger untouched hp=100.0 events=14
+PASS cross/2 standing still is damaged hp=0.0
+PASS cross/3 dodger untouched hp=100.0 events=14
+PASS cross/3 standing still is damaged hp=0.0
+FAILS=0
+--- exit 0
+=== tests/integration/run/pattern_roster_dodge_test.gd
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+PASS shipped enemy_skills.json has no problems []
+PASS rootling has a ch1 arena
+PASS rootling/square/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS rootling/square/1 standing still is damaged hp=188.0
+PASS rootling/square/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS rootling/square/2 standing still is damaged hp=180.0
+PASS rootling/square/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS rootling/square/3 standing still is damaged hp=188.0
+PASS rootling: every skill fired in the dodger matches silent=[]
+PASS mossbound_sentry has a ch1 arena
+PASS mossbound_sentry/rect/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS mossbound_sentry/rect/1 standing still is damaged hp=118.0
+PASS mossbound_sentry/rect/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS mossbound_sentry/rect/2 standing still is damaged hp=104.0
+PASS mossbound_sentry/rect/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS mossbound_sentry/rect/3 standing still is damaged hp=118.0
+PASS mossbound_sentry: every skill fired in the dodger matches silent=[]
+PASS greycap_sporeling has a ch1 arena
+PASS greycap_sporeling/u_shape/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS greycap_sporeling/u_shape/1 standing still is damaged hp=170.0
+PASS greycap_sporeling/u_shape/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS greycap_sporeling/u_shape/2 standing still is damaged hp=170.0
+PASS greycap_sporeling/u_shape/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS greycap_sporeling/u_shape/3 standing still is damaged hp=170.0
+PASS greycap_sporeling: every skill fired in the dodger matches silent=[]
+PASS ancient_root_sentinel has a ch1 arena
+PASS ancient_root_sentinel/rect/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS ancient_root_sentinel/rect/1 standing still is damaged hp=108.0
+PASS ancient_root_sentinel/rect/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS ancient_root_sentinel/rect/2 standing still is damaged hp=108.0
+PASS ancient_root_sentinel/rect/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS ancient_root_sentinel/rect/3 standing still is damaged hp=108.0
+PASS ancient_root_sentinel: every skill fired in the dodger matches silent=[]
+PASS mistbriar_matron has a ch1 arena
+PASS mistbriar_matron/cross/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS mistbriar_matron/cross/1 standing still is damaged hp=192.0
+PASS mistbriar_matron/cross/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS mistbriar_matron/cross/2 standing still is damaged hp=192.0
+PASS mistbriar_matron/cross/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS mistbriar_matron/cross/3 standing still is damaged hp=192.0
+PASS mistbriar_matron: every skill fired in the dodger matches silent=[]
+PASS goblin_scout has a ch1 arena
+PASS goblin_scout/square/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS goblin_scout/square/1 standing still is damaged hp=196.0
+PASS goblin_scout/square/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS goblin_scout/square/2 standing still is damaged hp=196.0
+PASS goblin_scout/square/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS goblin_scout/square/3 standing still is damaged hp=196.0
+PASS goblin_scout: every skill fired in the dodger matches silent=[]
+PASS goblin_archer has a ch1 arena
+PASS goblin_archer/rect/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS goblin_archer/rect/1 standing still is damaged hp=26.0
+PASS goblin_archer/rect/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS goblin_archer/rect/2 standing still is damaged hp=22.0
+PASS goblin_archer/rect/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS goblin_archer/rect/3 standing still is damaged hp=26.0
+PASS goblin_archer: every skill fired in the dodger matches silent=[]
+PASS dire_wolf has a ch1 arena
+PASS dire_wolf/rect/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS dire_wolf/rect/1 standing still is damaged hp=60.0
+PASS dire_wolf/rect/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS dire_wolf/rect/2 standing still is damaged hp=60.0
+PASS dire_wolf/rect/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS dire_wolf/rect/3 standing still is damaged hp=60.0
+PASS dire_wolf: every skill fired in the dodger matches silent=[]
+PASS wolf_alpha has a ch1 arena
+PASS wolf_alpha/rect/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS wolf_alpha/rect/1 standing still is damaged hp=0.0
+PASS wolf_alpha/rect/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS wolf_alpha/rect/2 standing still is damaged hp=0.0
+PASS wolf_alpha/rect/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS wolf_alpha/rect/3 standing still is damaged hp=0.0
+PASS wolf_alpha: every skill fired in the dodger matches silent=[]
+FAILS=0
+--- exit 0
+DONE

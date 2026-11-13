@@ -36,6 +36,7 @@ var _burrowed: bool = false
 var _burrow_left: float = 0.0
 var _surface_cell: Vector2i = _NONE
 var _restore_active: bool = false
+var _restore_pattern: bool = false
 var _burrow_count: int = 0
 
 
@@ -79,8 +80,20 @@ func on_tick(step: float) -> void:
 	var boss: BossController = get_context().get("boss") as BossController
 	if boss != null and boss.get_actor() != null and boss.get_actor().is_swinging():
 		return  # waits for the cast in progress to resolve
+	var pattern: PatternController = _pattern()
+	if pattern != null and pattern.is_busy():
+		return  # Phase 0 (G6): a pattern enemy finishes its skill (windup / warning / recovery) before it burrows
 	_timer = _interval_sec
 	_burrow(boss)
+
+
+# Phase 0 (G6): the pattern brain's controller when the match runs one (ctx `pattern_getter`: Callable() ->
+# PatternController, set by CombatView; the controller is built after the host), else null.
+func _pattern() -> PatternController:
+	var getter: Callable = get_context().get("pattern_getter", Callable()) as Callable
+	if not getter.is_valid():
+		return null
+	return getter.call() as PatternController
 
 
 ## True while the boss is burrowed (cannot be hit).
@@ -121,6 +134,9 @@ func teardown() -> void:
 		var boss: BossController = get_context().get("boss") as BossController
 		if boss != null and _restore_active:
 			boss.set_active(true)
+		var pattern: PatternController = _pattern()
+		if pattern != null and _restore_pattern:
+			pattern.set_active(true)
 	_burrowed = false
 	super()
 
@@ -135,6 +151,11 @@ func _burrow(boss: BossController) -> void:
 	_restore_active = boss != null and boss.is_active()
 	if boss != null:
 		boss.set_active(false)
+	# Phase 0 (G6): the pattern brain's clocks stop too (no skill is chosen or resolved underground).
+	var pattern: PatternController = _pattern()
+	_restore_pattern = pattern != null and pattern.is_active()
+	if pattern != null:
+		pattern.set_active(false)
 	_surface_cell = _pick_cell(state.enemy_cell)
 	burrowed.emit(_surface_cell)
 
@@ -153,6 +174,9 @@ func _surface() -> void:
 		surfaced.emit(state.enemy_cell)
 	if boss != null and _restore_active:
 		boss.set_active(true)
+	var pattern: PatternController = _pattern()
+	if pattern != null and _restore_pattern:
+		pattern.set_active(true)
 	_surface_cell = _NONE
 
 

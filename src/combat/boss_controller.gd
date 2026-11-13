@@ -63,14 +63,29 @@ var _max_pieces: int = 2
 ## Phase 2 (pattern brain): Callable() -> bool; true = the boss stands still (PatternController.is_busy: windup,
 ## warning, recovery, phase transition). Invalid (default, every block-brain match) = no extra lock.
 var extra_step_lock_fn: Callable = Callable()
+## Multi-enemy Phase 3 (D1): the match's shared ThreatBoard; null = no tokens (every cut allowed, the pre-Phase-3 rule).
+var threat_board: ThreatBoard = null
+## Multi-enemy Phase 3: the unit KEY this controller drives (1 = unit 0).
+var _key: int = CombatState.Side.ENEMY
+## Phase 3 (D4): false when the half's FieldDrops is shared (injected): CombatView ticks it once per frame, not us.
+var _owns_drops: bool = true
+## Phase 3 (D1): true while THIS controller holds the unit's attack token for a cut (a pattern unit's movement-only
+## controller never takes one, so it must never give back the token its PatternController holds).
+var _token_held: bool = false
+## Phase 3 (D4): Callable() -> int, the hand count the OWNED drops' "hungry" rule reads (CombatView: the emptiest
+## block-brain hand of the team); invalid = this controller's own hand (the pre-Phase-3 rule).
+var hand_count_fn: Callable = Callable()
 
 
 ## [param seed_value] below 0 = random; otherwise drops and brain noise are deterministic.
 func _init(
 	state: CombatState, grid: BoardGrid, cut_config: CutConfig, skill_config: SkillConfig,
 	brain_config: BossBrainConfig, drops_config: FieldDropsConfig, hold_config: HoldSlotsConfig,
-	seed_value: int = -1
+	seed_value: int = -1, key: int = CombatState.Side.ENEMY, shared_drops: FieldDrops = null
 ) -> void:
+	# Multi-enemy Phase 3: [param key] = the unit this controller drives; [param shared_drops] = the half's shared
+	# FieldDrops (D4; null = own drops, the pre-Phase-3 controller). Unit 0 with own drops = exactly the old controller.
+	_key = key
 	_state = state
 	_brain_config = brain_config
 	if seed_value >= 0:
@@ -82,13 +97,20 @@ func _init(
 	_skill_config = skill_config
 	_hold_config = hold_config
 	_hand = HoldSlots.create_piece_hand(hold_config.piece_slot_count)
-	_drops = FieldDrops.new(drops_config, grid.enemy_cells(), seed_value)
-	_mover = UnitMover.new(state, CombatState.Side.ENEMY, brain_config.step_cooldown_sec)
+	_owns_drops = shared_drops == null
+	_drops = FieldDrops.new(drops_config, grid.enemy_cells(), seed_value) if _owns_drops else shared_drops
+	_mover = UnitMover.new(state, key, brain_config.step_cooldown_sec)
 	_actor = CutActor.new(cut_config, CombatState.Side.ENEMY)
 	_mover.step_lock_fn = Callable(self, "is_step_locked")
 	_cooldowns = SkillCooldowns.new()
 	_brain = BossBrain.new(brain_config, grid, cut_config, skill_config, seed_value)
-	state.cell_changed.connect(_on_cell_changed)
+	_brain.self_key = key
+	# Phase 3 (D5): unit 0 keeps the legacy cell_changed hook (same signal order as before); another unit picks up on
+	# its own unit_cell_changed only.
+	if key == CombatState.Side.ENEMY:
+		state.cell_changed.connect(_on_cell_changed)
+	else:
+		state.unit_cell_changed.connect(_on_unit_cell_changed)
 	_hand.slot_cleared.connect(_on_slot_cleared)
 
 
@@ -101,7 +123,9 @@ func _init(
 func enable_pieces(library: PieceLibrary, chapter_id: String, rng_seed: int, max_pieces: int = 2) -> void:
 	_max_pieces = maxi(max_pieces, 1)
 	_brain.max_pieces = _max_pieces
-	_drops.enable_pieces(library, chapter_id, _grid, rng_seed, false)
+	# Phase 3 (D4): a shared FieldDrops is enabled once by its owner (CombatView), not by every controller
+	if _owns_drops:
+		_drops.enable_pieces(library, chapter_id, _grid, rng_seed, false)
 
 
 ## Story 025: true while the boss is rooted: the config's root_while_swinging is on and its actor
@@ -123,11 +147,18 @@ func set_root_while_swinging(value: bool) -> void:
 func tick(delta: float, player_actor: CutActor) -> void:
 	if not _active:
 		return
-	_drops.tick(delta, _state.enemy_cell, _hand.get_occupied_count())
+	if _owns_drops:
+		var held: int = int(hand_count_fn.call()) if hand_count_fn.is_valid() else _hand.get_occupied_count()
+		_drops.tick(delta, _state.cell_of(_key), held)
+	# Phase 3 (D1): the attack token goes back once the swing (and any queued combo swing) is over
+	if _token_held and not _actor.is_swinging() and not _actor.has_queued():
+		_token_held = false
+		if threat_board != null:
+			threat_board.release(_key)
 	_mover.tick(delta)
 	_cooldowns.tick(delta)
 	_brain.tick(delta, player_actor.is_swinging())
-	if _state.is_enemy_dead() or _state.is_player_dead():
+	if _state.is_key_dead(_key) or _state.is_player_dead():
 		return
 	_tick_feint()
 	var ctx: Dictionary = {
@@ -251,6 +282,12 @@ func _do_cut(action: Dictionary) -> void:
 	var cells: Array[Vector2i] = _valid_piece_cells(action.get("cells"))
 	if cells.is_empty() or not _actor.can_begin():
 		return
+	# Multi-enemy Phase 3 (D1): no free attack token = no cut this think (the unit keeps moving / picking up); a single
+	# enemy's board never refuses.
+	if threat_board != null:
+		if not threat_board.request(_key):
+			return
+		_token_held = true
 	# Optional combo: validated up front (any bad index or empty cells = no combo, cut goes on).
 	var combo_indices: Array[int] = []
 	var combo_labels: Array[String] = []
@@ -353,6 +390,23 @@ func _tick_feint() -> void:
 	feinted.emit(_feint_cells, _feint_labels)
 
 
+# Phase 3 (D5): another unit's controller picks up on its own unit only.
+func _on_unit_cell_changed(index: int, _old_cell: Vector2i, new_cell: Vector2i) -> void:
+	if CombatState.unit_key(index) != _key:
+		return
+	_pick_up(new_cell)
+
+
+## Multi-enemy Phase 3: the unit key this controller drives.
+func get_key() -> int:
+	return _key
+
+
+## Phase 3 (D4): true when this controller owns (and ticks) its FieldDrops; false for the shared half drops.
+func owns_drops() -> bool:
+	return _owns_drops
+
+
 func _on_cell_changed(side: int, _old_cell: Vector2i, new_cell: Vector2i) -> void:
 	if side != CombatState.Side.ENEMY:
 		return
@@ -367,8 +421,8 @@ func _on_slot_cleared(_index: int, _point: FieldPoint) -> void:
 
 # Picks up the point under the boss's feet when there is room (same carry-over as the player).
 func _carry_over() -> void:
-	if not _state.is_enemy_dead():
-		_pick_up(_state.enemy_cell)
+	if not _state.is_key_dead(_key):
+		_pick_up(_state.cell_of(_key))
 
 
 func _pick_up(cell: Vector2i) -> void:

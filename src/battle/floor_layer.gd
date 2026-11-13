@@ -147,6 +147,39 @@ func telegraph_state() -> Dictionary:
 		_combat.get_status())
 
 
+## Multi-enemy Phase 4 (step 5): the telegraph of EVERY enemy agent, index order, empty ones dropped. Each unit keeps
+## its own `cells` and its own progress `k`, so two units warning at different speeds do not share one bar and do not
+## flicker between two states. One enemy unit returns exactly [method telegraph_state] in a one-item list.
+func telegraph_states() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _combat == null or not is_instance_valid(_combat) or _combat.get_boss() == null:
+		return out
+	var first: Dictionary = telegraph_state()
+	if not first.is_empty():
+		out.append(first)
+	out.append_array(extra_telegraph_states())
+	return out
+
+
+## Multi-enemy Phase 4 (step 5): the telegraphs of the units PAST unit 0 only, index order, empty ones dropped.
+## [method paint_dynamic] uses this, because it has already painted unit 0's telegraph itself.
+func extra_telegraph_states() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _combat == null or not is_instance_valid(_combat):
+		return out
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	var config: CombatConfig = _combat.get_config()
+	for agent: EnemyAgent in _combat.get_extra_agents():
+		var one: Dictionary = {}
+		if agent.pattern != null:
+			one = pattern_telegraph_state(agent.pattern, config, reduce)
+		elif agent.controller != null:
+			one = TelegraphPainter.state_for(agent.controller.get_actor(), config, reduce, _combat.get_status())
+		if not one.is_empty():
+			out.append(one)
+	return out
+
+
 ## Phase 2 (spec 3.6, F6, F7): the pattern brain's warning in TelegraphPainter's shape: `cells` = the snapshotted red
 ## cells minus locked ones (exactly the cells that will be hit), `queued` = the second lane's sparser stripe, `k` =
 ## the warning's progress (reduce motion quantized, never hidden). {} when no warning is showing.
@@ -171,8 +204,10 @@ static func pattern_telegraph_state(pattern: PatternController, config: CombatCo
 ## `blink` (2026-11-04) = {cells, on, dashed} while an interrupt window is open (PatternController.interrupt_tell): the
 ## enemy's cells in a blinking ivory frame at [param time_sec] (on for INTERRUPT_BLINK_SEC, off as long), or with
 ## [param reduce_motion] a steady dashed frame; {} otherwise. Those cells never join the solid `outline`.
+## Multi-enemy Phase 4 (step 5): [param key] names the unit the Guard frame and the interrupt blink belong to
+## (unit 0 by default, so every existing caller is unchanged).
 static func pattern_extras_state(pattern: PatternController, status: StatusEffects, state: CombatState,
-		time_sec: float = 0.0, reduce_motion: bool = false) -> Dictionary:
+		time_sec: float = 0.0, reduce_motion: bool = false, key: int = CombatState.Side.ENEMY) -> Dictionary:
 	if pattern == null:
 		return {}
 	var marks: Array[Dictionary] = []
@@ -187,15 +222,15 @@ static func pattern_extras_state(pattern: PatternController, status: StatusEffec
 		else:
 			outline.append(target)
 	# P2.4 (spec 3.6, D9): an uninterruptible skill winding up / warning frames the enemy in ivory too (same frame as Guard).
-	var framed: bool = pattern.uninterruptible_tell() or (status != null and status.get_guard_left(CombatState.Side.ENEMY) > 0.0)
-	if state != null and framed and not state.is_enemy_dead():
-		for cell: Vector2i in state.enemy_footprint_cells():
+	var framed: bool = pattern.uninterruptible_tell() or (status != null and status.get_guard_left(key) > 0.0)
+	if state != null and framed and not state.is_key_dead(key):
+		for cell: Vector2i in state.unit_cells(key):
 			if not outline.has(cell):
 				outline.append(cell)
 	var blink: Dictionary = {}
-	if state != null and pattern.interrupt_tell() and not state.is_enemy_dead():
+	if state != null and pattern.interrupt_tell() and not state.is_key_dead(key):
 		var cells: Array[Vector2i] = []
-		cells.assign(state.enemy_footprint_cells())
+		cells.assign(state.unit_cells(key))
 		var on: bool = reduce_motion or fmod(maxf(time_sec, 0.0), INTERRUPT_BLINK_SEC * 2.0) < INTERRUPT_BLINK_SEC
 		blink = {"cells": cells, "on": on, "dashed": reduce_motion}
 		for c: Vector2i in cells:
@@ -211,6 +246,29 @@ func pattern_extras() -> Dictionary:
 		return {}
 	return pattern_extras_state(_combat.get_pattern_controller(), _combat.get_status(), _combat.get_state(),
 		Time.get_ticks_msec() / 1000.0, SettingsStore.shared().get_reduce_motion())
+
+
+## Multi-enemy Phase 4 (step 5): the pattern extras of EVERY pattern-brain unit, index order, empty ones dropped.
+## Each unit frames its OWN cells, so a Guard on unit 1 never outlines unit 0. One enemy unit returns exactly
+## [method pattern_extras] in a one-item list.
+func pattern_extras_list() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if _combat == null or not is_instance_valid(_combat):
+		return out
+	var first: Dictionary = pattern_extras()
+	if not first.is_empty():
+		out.append(first)
+	var status: StatusEffects = _combat.get_status()
+	var state: CombatState = _combat.get_state()
+	var now: float = Time.get_ticks_msec() / 1000.0
+	var reduce: bool = SettingsStore.shared().get_reduce_motion()
+	for agent: EnemyAgent in _combat.get_extra_agents():
+		if agent.pattern == null:
+			continue
+		var one: Dictionary = pattern_extras_state(agent.pattern, status, state, now, reduce, agent.key)
+		if not one.is_empty():
+			out.append(one)
+	return out
 
 
 # P2.3: marker squares and ivory outlines (see pattern_extras_state), whole art px, flat colours.
@@ -268,8 +326,16 @@ func _slab_of(cell: Vector2i) -> Rect2i:
 func paint_dynamic(canvas: Node2D, state: Dictionary) -> void:
 	if _combat == null or not is_instance_valid(_combat) or _combat.get_grid() == null:
 		return
-	_paint_pattern_extras(canvas, pattern_extras())
+	# Multi-enemy Phase 4 (step 5): every unit's extras under every unit's red, in index order. The painter is called
+	# once per unit, so two telegraphs are layered instead of one replacing the other. [param state] is still painted
+	# (unit 0's, or whatever the caller passed) and the extra units follow it.
+	for extras: Dictionary in pattern_extras_list():
+		_paint_pattern_extras(canvas, extras)
 	TelegraphPainter.paint(canvas, self, state, _combat.get_config())
+	# [param state] is unit 0's (or whatever the caller passed); index 0 of the list is that same telegraph, so the
+	# units past the first are painted here. Index, not value: two units may warn on an identical shape.
+	for one: Dictionary in extra_telegraph_states():
+		TelegraphPainter.paint(canvas, self, one, _combat.get_config())
 	for painter: Callable in _painters:
 		if painter.is_valid():
 			painter.call(canvas, self)

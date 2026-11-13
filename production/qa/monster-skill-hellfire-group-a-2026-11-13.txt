@@ -1,0 +1,30 @@
+=== tests/unit/combat/enemy_skills_config_test.gd
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_hellfire_group_a_test.gd
+FAIL imp: no other damage source (hp = 1000 - 6) 94.0
+FAIL hound: hp = 1000 - 15, nothing else 85.0
+FAILS=2
+--- exit 1
+=== tests/unit/combat/pattern_hellfire_fairness_test.gd
+FAILS=0
+--- exit 0
+=== tests/integration/run/pattern_hellfire_dodge_test.gd
+FAILS=0
+--- exit 0
+=== tests/integration/run/pattern_dodge_test.gd
+FAILS=0
+--- exit 0
+=== tests/unit/combat/pattern_roster_fairness_test.gd
+FAILS=0
+--- exit 0
+=== tests/integration/run/pattern_roster_dodge_test.gd
+FAILS=0
+--- exit 0
+=== tests/unit/run/map_v2/vent_surge_arena_invariant_test.gd
+FAILS=0
+--- exit 0
+=== tests/unit/run/chapters_config_test.gd (missing, skipped)
+=== tests/unit/run/world_map_test.gd (missing, skipped)
+=== tests/unit/ui/strings_test.gd (missing, skipped)
+DONE

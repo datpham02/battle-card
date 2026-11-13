@@ -1,0 +1,115 @@
+start 10:08:11
+=== tests/unit/combat/pattern_hellfire_group_d_test.gd
+FAIL phase: the first warning of p2 is the eruption (on_enter) ["lord_cinder_lane"]
+FAIL p2: the first counted cast is the eruption ["lord_cinder_lane", "lord_brand", "lord_eruption_call", "lord_brand", "lord_cinder_lane", "lord_eruption_call"]
+FAILS=2
+=== tests/unit/combat/pattern_hellfire_group_c_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_group_b_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_group_a_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_fairness_test.gd
+FAILS=0
+=== tests/integration/run/pattern_hellfire_dodge_test.gd
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+FAILS=0
+=== tests/unit/combat/pattern_phase0_bugfix_test.gd
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+FAILS=0
+=== tests/unit/combat/status_poison_test.gd
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+FAILS=0
+=== tests/unit/combat/pattern_phase0_effects_test.gd
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Parse Error: Too many arguments for "_apply_featured_effect()" call. Expected at most 6 but received 7.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Invalid call. Nonexistent function 'push_away' in base 'GDScript'.
+FAIL push: moved one cell away from the divider (1, 1)
+SCRIPT ERROR: Invalid call. Nonexistent function 'push_away' in base 'GDScript'.
+FAIL push blocked: stays at the edge (1, 1)
+FAIL push blocked: R3 slam 5 + 8 90.0
+FAIL push blocked: R3 pins the player
+FAIL push blocked: logged 13 damage { "t": 5.69999999999999, "skill": "shove", "event": "resolve", "cells": [(1, 1)], "hit": true, "damage": 5.0, "phase": 0, "followup_strike": false }
+SCRIPT ERROR: Invalid call. Nonexistent function 'push_away' in base 'GDScript'.
+FAIL push icd: first shove moves (2, 1)
+SCRIPT ERROR: Invalid call. Nonexistent function 'push_away' in base 'GDScript'.
+FAIL push icd: second shove inside 3 s does not move (2, 1)
+SCRIPT ERROR: Invalid call. Nonexistent function 'pull_toward' in base 'GDScript'.
+FAIL pull: moved one cell toward the enemy (0, 1)
+FAILS=8
+=== tests/unit/combat/pattern_phase0_ai_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_phase0_pause_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_controller_test.gd
+FAILS=0
+=== tests/unit/combat/pattern_roster_fairness_test.gd
+FAILS=0
+=== tests/integration/run/pattern_roster_dodge_test.gd
+SCRIPT ERROR: Parse Error: Static function "standing_cells()" not found in base "ZoneRules".
+SCRIPT ERROR: Parse Error: Static function "fit_cells_for()" not found in base "ZoneRules".
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Parse Error: Static function "standing_cells()" not found in base "ZoneRules".
+SCRIPT ERROR: Parse Error: Static function "fit_cells_for()" not found in base "ZoneRules".
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+FAILS=0
+=== tests/unit/combat/status_test.gd
+SCRIPT ERROR: Parse Error: Static function "standing_cells()" not found in base "ZoneRules".
+SCRIPT ERROR: Parse Error: Static function "fit_cells_for()" not found in base "ZoneRules".
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply' in base 'GDScript'.
+=== tests/unit/traits/trait_test.gd
+FAILS=0
+=== tests/unit/traits/traits2_test.gd
+FAILS=0
+=== tests/unit/traits/region_traits_test.gd
+FAILS=0
+=== tests/unit/run/map_v2/vent_surge_arena_invariant_test.gd
+FAILS=0
+=== tests/unit/run/chapters_test.gd
+FAILS=0 PASSES=39
+=== tests/unit/run/chapters23_test.gd
+FAILS=0 PASSES=124
+=== tests/unit/ui/terminology_scan_test.gd
+FAIL no unlisted old group 1-4 term in en values (1 found: ["enemy_skill.lord_cinder_lane.counter: runs"])
+FAILS=1
+targeted end 10:54:05
+full end 11:28:05
+inferno_lord-p1-f150.png
+inferno_lord-p1-f300.png
+inferno_lord-p2-f140.png
+inferno_lord-p2-f220.png
+inferno_lord-p2-f300.png
+DONE

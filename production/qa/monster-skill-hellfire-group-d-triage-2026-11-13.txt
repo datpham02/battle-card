@@ -1,0 +1,12 @@
+=== tests/unit/ui/terminology_scan_test.gd
+FAILS=0
+--- took 1 s
+=== tests/unit/combat/pattern_roster_fairness_test.gd
+FAILS=0
+--- took 278 s
+=== tests/unit/combat/pattern_hellfire_group_d_test.gd
+FAIL phase: the first warning of p2 is the eruption (on_enter) ["lord_cinder_lane"]
+FAIL p2: the first counted cast is the eruption ["lord_cinder_lane", "lord_brand", "lord_eruption_call", "lord_brand", "lord_cinder_lane", "lord_eruption_call"]
+FAILS=2
+--- took 4 s
+DONE

@@ -1576,6 +1576,8 @@
 				"imp": {
 					"id": "imp",
 					"name_key": "boss.imp.name",
+					"brain": "pattern",
+					"enemy": "imp",
 					"boss_max_hp": 92,
 					"brain_set": "cautious",
 					"boss_step_cooldown_mult": 1.78,
@@ -1590,6 +1592,8 @@
 				"ember_hound": {
 					"id": "ember_hound",
 					"name_key": "boss.ember_hound.name",
+					"brain": "pattern",
+					"enemy": "ember_hound",
 					"boss_max_hp": 110,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.5,
@@ -1607,6 +1611,8 @@
 				"ash_golem": {
 					"id": "ash_golem",
 					"name_key": "boss.ash_golem.name",
+					"brain": "pattern",
+					"enemy": "ash_golem",
 					"boss_max_hp": 132,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.44,
@@ -1622,6 +1628,8 @@
 				"flame_cultist": {
 					"id": "flame_cultist",
 					"name_key": "boss.flame_cultist.name",
+					"brain": "pattern",
+					"enemy": "flame_cultist",
 					"boss_max_hp": 128,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.44,
@@ -1642,6 +1650,8 @@
 				"magma_slug": {
 					"id": "magma_slug",
 					"name_key": "boss.magma_slug.name",
+					"brain": "pattern",
+					"enemy": "magma_slug",
 					"boss_max_hp": 140,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.35,
@@ -1656,6 +1666,8 @@
 				"hell_knight": {
 					"id": "hell_knight",
 					"name_key": "boss.hell_knight.name",
+					"brain": "pattern",
+					"enemy": "hell_knight",
 					"boss_max_hp": 156,
 					"brain_set": "balanced",
 					"boss_step_cooldown_mult": 1.6,
@@ -1672,6 +1684,8 @@
 				"fire_eater": {
 					"id": "fire_eater",
 					"name_key": "boss.fire_eater.name",
+					"brain": "pattern",
+					"enemy": "fire_eater",
 					"desc_key": "match.fire_eater.desc",
 					"boss_max_hp": 90,
 					"brain_set": "balanced",
@@ -1696,6 +1710,8 @@
 				"ash_phoenix": {
 					"id": "ash_phoenix",
 					"name_key": "boss.ash_phoenix.name",
+					"brain": "pattern",
+					"enemy": "ash_phoenix",
 					"desc_key": "match.ash_phoenix.desc",
 					"boss_max_hp": 74,
 					"brain_set": "balanced",
@@ -1721,6 +1737,8 @@
 				"inferno_lord": {
 					"id": "inferno_lord",
 					"name_key": "boss.inferno_lord.name",
+					"brain": "pattern",
+					"enemy": "inferno_lord",
 					"desc_key": "match.inferno_lord.desc",
 					"boss_max_hp": 180,
 					"brain_set": "aggressive",

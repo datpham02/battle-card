@@ -60,7 +60,8 @@ func test_refusals() -> void:
 	(short_fu["followup"] as Dictionary)["warning_sec"] = 0.5
 	skills["short_followup"] = short_fu
 	var bad_status: Dictionary = (skills["fx_1"] as Dictionary).duplicate(true)
-	bad_status["effects"] = {"damage": 5, "status": {"id": "poison", "sec": 2}}
+	# Monster Skill Phase 0 made `poison` a real status; `plague` stays unknown.
+	bad_status["effects"] = {"damage": 5, "status": {"id": "plague", "sec": 2}}
 	skills["bad_status"] = bad_status
 	var bad_rot: Dictionary = (skills["fx_2"] as Dictionary).duplicate(true)
 	(bad_rot["pattern"] as Dictionary)["rotations"] = [45]
@@ -76,7 +77,7 @@ func test_refusals() -> void:
 	_check("never patched to SKY", not c.skills.has("no_delivery"))
 	_check("unknown anchor refused", not c.skills.has("bad_anchor") and _has_problem(c, "anchor 'on_moon' unknown"))
 	_check("short followup refused", not c.skills.has("short_followup") and _has_problem(c, "below fairness.followup_min_warning_sec"))
-	_check("unknown status refused", not c.skills.has("bad_status") and _has_problem(c, "status id 'poison' unknown"))
+	_check("unknown status refused", not c.skills.has("bad_status") and _has_problem(c, "status id 'plague' unknown"))
 	_check("bad rotation refused", not c.skills.has("bad_rot") and _has_problem(c, "45 not in 0/90/180/270"))
 	_check("attack without warning refused", not c.skills.has("no_warning") and _has_problem(c, "needs warning_sec"))
 	_check("unknown delivery type refused", not c.skills.has("bad_type") and _has_problem(c, "delivery type 'TELEPORT'"))

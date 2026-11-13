@@ -1,0 +1,72 @@
+start 13:14:30
+=== tests/unit/combat/pattern_hellfire_group_d_test.gd
+PASS p2 at 0.5: + eruption, mechanic eruption, every 3rd
+PASS p2 transition 1.5 s, on_enter eruption
+PASS phase: the first warning of p2 is the eruption (on_enter) ["lord_eruption_call"]
+PASS p2: the first counted cast is the eruption ["lord_eruption_call", "lord_cinder_lane", "lord_eruption_call", "lord_brand", "lord_cinder_lane", "lord_eruption_call"]
+PASS p2: an eruption only at cast 1 or every 3rd cast bad=[] seq=["lord_eruption_call", "lord_cinder_lane", "lord_eruption_call", "lord_brand", "lord_cinder_lane", "lord_eruption_call", "lord_cinder_lane", "lord_brand", "lord_eruption_call", "lord_brand", "lord_cinder_lane", "lord_eruption_call", "lord_cinder_lane", "lord_brand"]
+FAILS=0
+--- 3 s
+=== tests/unit/combat/forest_witch_phases_test.gd
+PASS phase 3: forest_last_knot only on every 3rd cast []
+FAILS=0
+--- 5 s
+=== tests/unit/combat/forest_witch_mechanics_test.gd
+PASS phase 3: forest_last_knot every 3rd cast
+FAILS=0
+--- 4 s
+=== tests/unit/combat/forest_witch_fairness_test.gd
+FAILS=0
+--- 25 s
+=== tests/unit/combat/pattern_controller_test.gd
+PASS on_enter marker placed (first cast of the phase, one more marker) 1 -> 2 { "t": 3.99999999999999, "skill": "fx_4", "event": "resolve", "cells": [(3, 1)], "hit": false, "damage": 0.0, "phase": 1, "followup_strike": false }
+FAILS=0
+--- 3 s
+=== tests/unit/combat/pattern_hellfire_group_a_test.gd
+FAILS=0
+--- 4 s
+=== tests/unit/combat/pattern_hellfire_group_b_test.gd
+FAILS=0
+--- 4 s
+=== tests/unit/combat/pattern_hellfire_group_c_test.gd
+FAILS=0
+--- 4 s
+=== tests/unit/combat/pattern_phase0_bugfix_test.gd
+FAILS=0
+--- 3 s
+=== tests/unit/combat/status_poison_test.gd
+FAILS=0
+--- 3 s
+=== tests/unit/combat/pattern_phase0_effects_test.gd
+FAILS=0
+--- 4 s
+=== tests/unit/combat/pattern_phase0_ai_test.gd
+FAILS=0
+--- 3 s
+=== tests/unit/combat/pattern_phase0_pause_test.gd
+FAILS=0
+--- 3 s
+=== tests/unit/combat/pattern_roster_mechanics_test.gd
+FAILS=0
+--- 3 s
+=== tests/unit/combat/pattern_variants_haste_test.gd
+FAILS=0
+--- 3 s
+=== tests/integration/run/pattern_dodge_test.gd
+FAILS=0
+--- 4 s
+=== tests/integration/run/pattern_roster_dodge_test.gd
+FAILS=0
+--- 5 s
+=== tests/unit/combat/pattern_hellfire_fairness_test.gd
+FAILS=0
+--- 123 s
+=== tests/integration/run/pattern_hellfire_dodge_test.gd
+FAILS=0
+--- 5 s
+targeted end 13:18:06
+full end 13:51:30
+=== timed-out / no-result suites in the full run:
+TIMEOUT? tests/unit/combat/pattern_roster_fairness_test.gd
+  alone: FAILS=0 0 se, 267 s
+DONE

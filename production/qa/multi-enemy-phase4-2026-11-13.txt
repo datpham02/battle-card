@@ -1,0 +1,67 @@
+=== import (new fixture + new test file) ===
+import exit=0
+=== new Phase 4 test ===
+hud: FAILS=0 exit=0
+FAILS=0 PASSES=33
+=== Phase 3 must stay green ===
+agents: FAILS=0 exit=0
+FAILS=0 PASSES=48
+state_units: FAILS=0 exit=0
+FAILS=0 PASSES=63
+resolver: FAILS=0 exit=0
+FAILS=0 PASSES=49
+=== the view suites my diff touches ===
+battle/unit_sprites: FAILS=0 exit=0
+FAILS=0
+battle/unit_motion: FAILS=0 exit=0
+FAILS=0
+battle/unit_pass_order: FAILS=0 exit=0
+FAILS=0
+battle/unit_step_glide: FAILS=0 exit=0
+FAILS=0
+battle/unit_status_overlay: FAILS=0 exit=0
+FAILS=0
+battle/battle_canvas: FAILS=0 exit=0
+FAILS=0
+battle/floor_layer: FAILS=0 exit=0
+FAILS=0
+battle/floor_perspective_wiring: FAILS=0 exit=0
+FAILS=0
+battle/interrupt_tell: FAILS=0 exit=0
+FAILS=0
+battle/cast_presentation: FAILS=0 exit=0
+FAILS=0
+battle/burn_painter: FAILS=0 exit=0
+FAILS=0
+battle/backdrop_v2: FAILS=0 exit=0
+FAILS=0
+battle/pickup_voxel: FAILS=0 exit=0
+FAILS=0
+battle/support_layer: FAILS=0 exit=0
+FAILS=0
+battle/roster_sprite: FAILS=0 exit=0
+FAILS=0
+battle/witch_sprite: FAILS=0 exit=0
+FAILS=0
+battle/cast_hold_short_clip: FAILS=0 exit=0
+FAILS=0
+=== combat suites that read the changed view API ===
+combat/pattern_wiring: FAILS=0 exit=0
+FAILS=0
+combat/boss_footprint: FAILS=0 exit=0
+FAILS=0
+combat/boss_downed: FAILS=0 exit=0
+FAILS=0
+combat/cut_test: FAILS: 0 exit=0
+FAILS: 0
+combat/arbiter_test: FAILS: 0 exit=0
+FAILS: 0
+combat/pattern_controller_test: FAILS=0 exit=0
+FAILS=0
+combat/combat_config_hud: FAILS=0 exit=0
+FAILS=0
+combat/telegraph_alpha: FAILS=0 exit=0
+FAILS=0
+combat/vent_crumble_view: FAILS=0 exit=0
+FAILS=0
+DONE

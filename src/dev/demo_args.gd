@@ -20,6 +20,10 @@ extends Node
 ##                                      outline, shrinking top bar, "SẮP CHÁY" tag; the player stands in that row
 ##   godot --path . -- --demo=row_burning  as row_warn, ticked past the warning: the row is on fire through
 ##                                      StatusEffects.ignite (existing burn look), 1.0 s of burning elapsed
+##   godot --path . -- --demo=multi_two|multi_three   Multi-enemy Phase 4: a formation of 2 (block + dev_pattern_dummy)
+##       or 3 (+ dev_pattern_boss 2x2) enemy units on boss_hall, resolved through RunConfig.clean_match like a real
+##       chapter formation. DEV ONLY: nothing is added to chapters.json. Capture with
+##       --windowed --audio-driver Dummy --shot=production/qa/evidence/multi-enemy/<name>.png
 ##   godot --path . -- --demo=formation_half|formation_warn|formation_complete   Story 029: formation map half lit / cells about to fade / completed (flash + banner); skips the intro
 ##   godot --path . -- --demo=signature_cooldown   Story 029 Phần D: 40% of the enemy cells lit, signature cooldown ~9 s left ("Hồi 9 s"); skips the intro
 ##   godot --path . -- --demo=signature_ready|signature_half  Story 021: signature charge full / half (needs CombatView.debug_set_signature_charge)
@@ -484,6 +488,18 @@ var _mode: String = ""
 const RELIC_BAG4_SLOTS: int = 4
 const RELIC_FLASH_IDS: Array[String] = ["an_don", "chi_khau", "tui_rong", "huyet_an"]
 
+## Multi-enemy Phase 4: the formation demos (2 and 3 enemy units). DEV ONLY — they build the formation in
+## match_params through the game's own RunConfig.clean_match, so nothing is added to chapters.json.
+const MULTI_DEMOS: Array[String] = ["multi_two", "multi_three"]
+## The dev enemies the formation demos use; both already exist in assets/data/enemy_skills.json.
+const MULTI_DUMMY: String = "dev_pattern_dummy"
+const MULTI_BOSS: String = "dev_pattern_boss"
+## The arena the 3-unit demo needs: boss_hall is wide enough for a 2x2 unit plus two 1-cell ones.
+const MULTI_ARENA: String = "boss_hall"
+## Shipped unit sheets the extra units wear, so the capture shows real sprites instead of placeholder quads.
+const MULTI_SPRITE_SMALL: String = "goblin_scout"
+const MULTI_SPRITE_BIG: String = "ogre_king"
+
 
 func _enter_tree() -> void:
 	_mode = _parse_mode()
@@ -498,6 +514,10 @@ func _enter_tree() -> void:
 		_combat().match_params["brain"] = RunConfig.BRAIN_PATTERN
 		_combat().match_params["enemy"] = pattern_enemy
 		_apply_pattern_hints(pattern_enemy, arena_id.is_empty())
+	# Multi-enemy Phase 4: the two formation demos, built here (before _ready) because CombatState is created from
+	# match_params when the view becomes ready.
+	if MULTI_DEMOS.has(_mode):
+		_apply_multi_formation(_mode)
 	if _mode != "":
 		_combat().drops_seed = DEMO_SEED
 	if _mode == "boss_downed":
@@ -518,6 +538,52 @@ func _enter_tree() -> void:
 	var drops_seed: int = _parse_drops_seed()
 	if drops_seed >= 0:
 		_combat().drops_seed = drops_seed
+
+
+# Multi-enemy Phase 4: rebuilds match_params with a formation of 2 ([param mode] "multi_two") or 3 ("multi_three")
+# enemy units, resolved by RunConfig.clean_match exactly as a real chapter formation would be — so the demo exercises
+# the production resolve path (ai block, footprint, defense) instead of hand-written entries. Unit 0 keeps the match's
+# own id and HP; the extra units are the dev pattern enemies. No production data is read or written.
+func _apply_multi_formation(mode: String) -> void:
+	var combat: CombatView = _combat()
+	var params: Dictionary = combat.match_params
+	var three: bool = mode == "multi_three"
+	# The entry id picks the SPRITE (SpriteSheet.load_unit); `enemy` picks the behaviour. They are independent, so the
+	# demo pairs a real shipped sheet with a dev skill set — an invented id would draw the placeholder quad and prove
+	# nothing about per-unit sprites.
+	var entries: Array = [
+		{"id": str(params.get("id", "goblin_scout")), "max_hp": float(params.get("boss_max_hp", 80.0)), "brain": "block"},
+		{"id": MULTI_SPRITE_SMALL, "max_hp": 60.0, "brain": RunConfig.BRAIN_PATTERN, "enemy": MULTI_DUMMY},
+	]
+	if three:
+		entries.append({"id": MULTI_SPRITE_BIG, "max_hp": 150.0, "brain": RunConfig.BRAIN_PATTERN, "enemy": MULTI_BOSS})
+	var raw: Dictionary = params.duplicate(true)
+	raw["enemies"] = entries
+	raw["attack_slots"] = 2 if three else 1
+	# An explicit --arena= wins; MULTI_ARENA is only the default wide board the 3-unit demo needs.
+	if _parse_arena().is_empty():
+		raw["arena"] = {"shape": MULTI_ARENA}
+	var resolved: Dictionary = RunConfig.clean_match(raw, 0)
+	# clean_match rebuilds the dict from MATCH_KEYS only, so it DROPS everything the run put there: `character`
+	# (player HP, name, deck, passive, signature), `relics`, `deck`, `player_hp`, `chapter_id` (the piece library of
+	# the block-brain units) and the timing keys. Merge the resolved formation into the real params instead of
+	# replacing them, so the demo runs the match the player would actually see.
+	var merged: Dictionary = params.duplicate(true)
+	for key: Variant in resolved.keys():
+		merged[key] = resolved[key]
+	combat.match_params = merged
+	print("DemoArgs: %s with %d enemy units on %s" % [mode, entries.size(), MULTI_ARENA])
+
+
+# Multi-enemy Phase 4: prints what the formation demo actually built, so a capture run says on stdout how many units
+# stand on the board and where — the screenshot is then checked against this line.
+func _multi_demo_report(combat: CombatView) -> void:
+	var state: CombatState = combat.get_state()
+	var parts: Array[String] = []
+	for key: int in state.enemy_keys():
+		parts.append("key %d '%s' hp %d at %s" % [key, state.get_unit(CombatState.unit_index_of(key)).id,
+			roundi(state.hp_of(key)), str(state.cell_of(key))])
+	print("DemoArgs: %s units: %s" % [_mode, "; ".join(parts)])
 
 
 func _ready() -> void:
@@ -667,6 +733,10 @@ func _ready() -> void:
 			_art_demo.call_deferred()
 		"pickups":
 			_pickup_demo(combat, grid)
+		"multi_two", "multi_three":
+			# Multi-enemy Phase 4: the formation was built in _enter_tree; the units are already on the board, still
+			# (freeze_time) and alive. Nothing more to stage — the capture shows sprites, HP plates and chips.
+			_multi_demo_report(combat)
 		"rotten_piece":
 			var lib2: PieceLibrary = PieceLibrary.load_from_file()
 			var rotten_cell2: Vector2i = _other_player_cell(grid, combat.get_state().player_cell)

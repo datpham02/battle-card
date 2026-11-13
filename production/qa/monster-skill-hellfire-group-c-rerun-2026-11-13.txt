@@ -1,0 +1,55 @@
+=== tests/unit/combat/pattern_hellfire_group_c_test.gd
+PASS eater: elite, belch + devour, mechanic devour
+PASS eater_ember_belch has name / counter keys and a delivery
+PASS belch: warns
+PASS belch: 2-3 cells down the hero's column [(2, 1), (2, 2)]
+PASS belch: 12 damage { "t": 1.85, "skill": "eater_ember_belch", "event": "resolve", "cells": [(2, 1), (2, 2)], "hit": true, "damage": 12.0, "phase": 0, "followup_strike": false }
+PASS belch: every struck cell burns 2.5 s
+PASS belch: nothing on the enemy half
+PASS belch: the dodger is missed 100.0
+PASS belch: the column still burns after a miss [(2, 1), (2, 2)]
+PASS belch: the dodger does not stand in the fire
+FAILS=0
+=== tests/unit/combat/pattern_hellfire_fairness_test.gd
+PASS fire_eater on forge (+200 variants, 201 grids, 1758 warnings) F1: every warning escapable in time []
+PASS fire_eater on forge (+200 variants, 201 grids, 1758 warnings) F2: red within the ceiling []
+PASS fire_eater on forge (+200 variants, 201 grids, 1758 warnings) F3: a zone always leaves an exit []
+PASS fire_eater on forge (+200 variants, 201 grids, 1758 warnings) perfect dodger never hurt []
+PASS fire_eater on forge (+200 variants, 201 grids, 1758 warnings) every skill is usable silent=[]
+PASS ash_phoenix on forge (+200 variants, 201 grids, 1701 warnings) F1: every warning escapable in time []
+PASS ash_phoenix on forge (+200 variants, 201 grids, 1701 warnings) F2: red within the ceiling []
+PASS ash_phoenix on forge (+200 variants, 201 grids, 1701 warnings) F3: a zone always leaves an exit []
+PASS ash_phoenix on forge (+200 variants, 201 grids, 1701 warnings) perfect dodger never hurt []
+PASS ash_phoenix on forge (+200 variants, 201 grids, 1701 warnings) every skill is usable silent=[]
+PASS fire_eater on caldera (+200 variants, 201 grids, 1802 warnings) F1: every warning escapable in time []
+PASS fire_eater on caldera (+200 variants, 201 grids, 1802 warnings) F2: red within the ceiling []
+PASS fire_eater on caldera (+200 variants, 201 grids, 1802 warnings) F3: a zone always leaves an exit []
+PASS fire_eater on caldera (+200 variants, 201 grids, 1802 warnings) perfect dodger never hurt []
+PASS fire_eater on caldera (+200 variants, 201 grids, 1802 warnings) every skill is usable silent=[]
+PASS ash_phoenix on caldera (+200 variants, 201 grids, 1468 warnings) F1: every warning escapable in time []
+PASS ash_phoenix on caldera (+200 variants, 201 grids, 1468 warnings) F2: red within the ceiling []
+PASS ash_phoenix on caldera (+200 variants, 201 grids, 1468 warnings) F3: a zone always leaves an exit []
+PASS ash_phoenix on caldera (+200 variants, 201 grids, 1468 warnings) perfect dodger never hurt []
+PASS ash_phoenix on caldera (+200 variants, 201 grids, 1468 warnings) every skill is usable silent=[]
+FAILS=0
+=== tests/integration/run/pattern_hellfire_dodge_test.gd
+PASS fire_eater has a hellfire arena
+PASS fire_eater match runs the pattern brain with its own enemy id pattern
+PASS fire_eater/forge/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS fire_eater/forge/1 standing still is damaged hp=112.0
+PASS fire_eater/forge/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS fire_eater/forge/2 standing still is damaged hp=112.0
+PASS fire_eater/forge/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS fire_eater/forge/3 standing still is damaged hp=112.0
+PASS fire_eater: every skill fired in the dodger matches silent=[]
+PASS ash_phoenix has a hellfire arena
+PASS ash_phoenix match runs the pattern brain with its own enemy id pattern
+PASS ash_phoenix/caldera/1 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS ash_phoenix/caldera/1 standing still is damaged hp=168.0
+PASS ash_phoenix/caldera/2 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS ash_phoenix/caldera/2 standing still is damaged hp=168.0
+PASS ash_phoenix/caldera/3 dodger takes 0 damage in 60 s hp=300.0 hits=[]
+PASS ash_phoenix/caldera/3 standing still is damaged hp=168.0
+PASS ash_phoenix: every skill fired in the dodger matches silent=[]
+FAILS=0
+DONE

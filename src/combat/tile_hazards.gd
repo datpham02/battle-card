@@ -63,10 +63,12 @@ var _state: CombatState = null
 var _cfg: Dictionary = DEFAULTS.duplicate()
 var _mire: Array[Dictionary] = [{}, {}]  # per side: cell -> seconds left (-1.0 = permanent)
 var _sand: Array[Dictionary] = [{}, {}]  # per side: cell -> {warn, left, total, filled}
-var _immune: Array[bool] = [false, false]
-var _standing: Array[float] = [0.0, 0.0]
-var _next_tick: Array[float] = [0.0, 0.0]
-var _stand_cell: Array[Vector2i] = [BoardGrid.NO_CELL, BoardGrid.NO_CELL]
+# Multi-enemy Phase 2: the UNIT books (mire immunity, standing timers, crumble standing) are keyed by unit key (0 =
+# player, 1 + i = enemy unit i); the CELL books (_mire, _sand, _vents, _crumble) stay per half (index = Side).
+var _immune: Dictionary = {}
+var _standing: Dictionary = {}
+var _next_tick: Dictionary = {}
+var _stand_cell: Dictionary = {}
 var _sand_on: bool = false
 var _sand_timer: float = 0.0
 var _wind_on: bool = false
@@ -78,7 +80,7 @@ var _drift_mult: float = 1.0
 var _vents: Array[Array] = [[], []]
 var _vent_timer: float = 0.0
 var _vent_mult: float = 1.0
-var _vent_standing: Array[float] = [0.0, 0.0]
+var _vent_standing: Dictionary = {}
 # Story 039 crumble: per side cell -> {phase: int (1 crack, 2 fallen), left, total (fall seconds), kind: "crumble" | "drop"}.
 var _crumble: Array[Dictionary] = [{}, {}]
 var _crumble_on: bool = false
@@ -88,8 +90,8 @@ var _crumble_on: bool = false
 var return_fade_sec: float = 0.0
 # Per side: restored cell -> fade seconds left.
 var _return_fade: Array[Dictionary] = [{}, {}]
-var _cr_cell: Array[Vector2i] = [BoardGrid.NO_CELL, BoardGrid.NO_CELL]
-var _cr_stand: Array[float] = [0.0, 0.0]
+var _cr_cell: Dictionary = {}
+var _cr_stand: Dictionary = {}
 var _stats: Dictionary = {"pushes": 0, "vent_ticks": 0, "fall_damage_total": 0.0, "vent_damage_total": 0.0}
 
 const _IDLE: int = 0
@@ -177,11 +179,14 @@ func clear_mire(side: int = -1) -> void:
 	for s: int in _SIDES:
 		if side < 0 or side == s:
 			_mire[s].clear()
-			_standing[s] = 0.0
+	for k: Variant in _standing.keys():
+		if side < 0 or CombatState.side_of(int(k)) == side:
+			_standing[k] = 0.0
 
 
 ## The unit of [param side] ignores mire (no slow, no damage) while [param immune].
 func set_mire_immune(side: int, immune: bool) -> void:
+	# Phase 2: [param side] is a unit key (Side.ENEMY = unit 0, the match's `mire_immune`)
 	_immune[side] = immune
 
 
@@ -294,14 +299,14 @@ func wind_enabled() -> bool:
 ## Multiplier of the step that starts on [param from_cell]: mire_step_mult when that cell is mire for [param side] and the
 ## side is not immune, else 1.0. Plugged into UnitMover.step_cost_fn (it runs after cooldown_scale, so a free step stays free).
 func step_cost_mult(side: int, from_cell: Vector2i) -> float:
-	if _immune[side] or not _mire[side].has(from_cell):
+	if bool(_immune.get(side, false)) or not _mire[CombatState.side_of(side)].has(from_cell):
 		return 1.0
 	return float(_cfg["mire_step_mult"])
 
 
 ## Seconds the unit of [param side] has stood in mire on its current cell (0 when not in mire / immune).
 func mire_standing_sec(side: int) -> float:
-	return _standing[side]
+	return float(_standing.get(side, 0.0))
 
 
 ## Seconds until the next periodic sand fall (0 when sand is off).
@@ -323,7 +328,7 @@ func drift_left() -> float:
 
 ## True while the unit of [param side] ignores mire (see [method set_mire_immune]).
 func is_mire_immune(side: int) -> bool:
-	return _immune[side]
+	return bool(_immune.get(side, false))
 
 
 ## Debug snapshot for tests and capture overlays.
@@ -358,27 +363,36 @@ func _tick_mire(delta: float) -> void:
 	var grace: float = float(_cfg["mire_grace_sec"])
 	var tick_sec: float = float(_cfg["mire_tick_sec"])
 	var amount: float = float(_cfg["mire_tick_damage"])
-	for side: int in _SIDES:
+	for side: int in _unit_keys():
+		var half: int = CombatState.side_of(side)
 		var cell: Vector2i = _state.cell_of(side)
-		if cell != _stand_cell[side]:
+		if cell != _stand_cell.get(side, BoardGrid.NO_CELL):
 			_stand_cell[side] = cell
 			_standing[side] = 0.0
 			_next_tick[side] = grace
-		if _immune[side] or not _unit_over(side, func(c: Vector2i) -> bool: return _mire[side].has(c)):
+		if bool(_immune.get(side, false)) or not _unit_over(side, func(c: Vector2i) -> bool: return _mire[half].has(c)):
 			_standing[side] = 0.0
 			_next_tick[side] = grace
 			continue
-		_standing[side] += delta
+		_standing[side] = float(_standing.get(side, 0.0)) + delta
 		var fired: int = 0
-		while _standing[side] + _EPS >= _next_tick[side] and fired < _MAX_TICKS_PER_CALL:
-			_next_tick[side] += tick_sec
+		while float(_standing[side]) + _EPS >= float(_next_tick.get(side, grace)) and fired < _MAX_TICKS_PER_CALL:
+			_next_tick[side] = float(_next_tick.get(side, grace)) + tick_sec
 			fired += 1
 			if amount > 0.0 and not _is_dead(side):
 				mire_damage.emit(side, amount)
 
 
 func _is_dead(side: int) -> bool:
-	return _state.is_player_dead() if side == CombatState.Side.PLAYER else _state.is_enemy_dead()
+	return _state.is_key_dead(side)
+
+
+# Phase 2: the unit keys the unit books run over: the player, then every enemy unit (the two sides without a state).
+func _unit_keys() -> Array[int]:
+	if _state == null:
+		var both: Array[int] = [CombatState.Side.PLAYER, CombatState.Side.ENEMY]
+		return both
+	return _state.all_keys()
 
 
 # --- sand ---------------------------------------------------------------------------------------------------
@@ -427,7 +441,7 @@ func _schedule(side: int, cells: Array[Vector2i], total: float, warn: float) -> 
 	for cell: Vector2i in cells:
 		if _is_half_cell(side, cell) and not _sand[side].has(cell) and not _unit_on(side, cell) and not wanted.has(cell):
 			wanted.append(cell)
-	var kept: Array[Vector2i] = ZoneRules.fit_cells(_grid, side, _unit_cell(side), wanted, _blocked_fn(side, []))
+	var kept: Array[Vector2i] = ZoneRules.fit_cells_for(_grid, side, ZoneRules.standing_cells(_state, side), wanted, _blocked_fn(side, []))
 	for cell: Vector2i in kept:
 		_sand[side][cell] = {"warn": warn, "left": total, "total": total, "filled": false}
 	if kept.is_empty():
@@ -454,7 +468,7 @@ func _resolve_fills(side: int) -> void:
 	for cell: Vector2i in expired:
 		if not _unit_on(side, cell):
 			candidates.append(cell)
-	var kept: Array[Vector2i] = ZoneRules.fit_cells(_grid, side, _unit_cell(side), candidates, _blocked_fn(side, expired))
+	var kept: Array[Vector2i] = ZoneRules.fit_cells_for(_grid, side, ZoneRules.standing_cells(_state, side), candidates, _blocked_fn(side, expired))
 	for cell: Vector2i in expired:
 		if not kept.has(cell):
 			table.erase(cell)
@@ -519,7 +533,9 @@ func set_vents(side: int, vents: Array) -> void:
 		if not cells.is_empty():
 			out.append({"cells": cells, "phase": _IDLE, "left": 0.0})
 	_vents[side] = out
-	_vent_standing[side] = 0.0
+	for k: Variant in _vent_standing.keys():
+		if CombatState.side_of(int(k)) == side:
+			_vent_standing[k] = 0.0
 	if _vent_count() == 0:
 		_vent_timer = 0.0
 	elif _vent_timer <= 0.0:
@@ -727,13 +743,14 @@ func _tick_vent_burn(delta: float) -> void:
 	if _state == null:
 		return
 	var tick_sec: float = float(_cfg["vent_tick_sec"])
-	for side: int in _SIDES:
-		if _is_dead(side) or not _unit_over(side, func(c: Vector2i) -> bool: return is_venting(side, c)):
+	for side: int in _unit_keys():
+		var half: int = CombatState.side_of(side)
+		if _is_dead(side) or not _unit_over(side, func(c: Vector2i) -> bool: return is_venting(half, c)):
 			_vent_standing[side] = 0.0
 			continue
-		_vent_standing[side] += delta
-		while _vent_standing[side] + _EPS >= tick_sec:
-			_vent_standing[side] -= tick_sec
+		_vent_standing[side] = float(_vent_standing.get(side, 0.0)) + delta
+		while float(_vent_standing[side]) + _EPS >= tick_sec:
+			_vent_standing[side] = float(_vent_standing[side]) - tick_sec
 			_stats["vent_ticks"] = int(_stats["vent_ticks"]) + 1
 			_stats["vent_damage_total"] = float(_stats["vent_damage_total"]) + float(_cfg["vent_tick_damage"])
 
@@ -745,9 +762,8 @@ func _tick_vent_burn(delta: float) -> void:
 ## fall_damage from the caller). Cells already cracking / fallen are not affected by switching off.
 func enable_crumble(on: bool) -> void:
 	_crumble_on = on
-	for side: int in _SIDES:
-		_cr_cell[side] = BoardGrid.NO_CELL
-		_cr_stand[side] = 0.0
+	_cr_cell.clear()
+	_cr_stand.clear()
 
 
 ## True when crumbling cells are on.
@@ -772,7 +788,7 @@ func drop_cells(side: int, cells: Array[Vector2i], fall_sec: float = -1.0, warn_
 	for cell: Vector2i in cells:
 		if _is_half_cell(side, cell) and not _crumble[side].has(cell) and not wanted.has(cell):
 			wanted.append(cell)
-	var kept: Array[Vector2i] = ZoneRules.fit_cells(_grid, side, _unit_cell(side), wanted, _blocked_fn(side, []))
+	var kept: Array[Vector2i] = ZoneRules.fit_cells_for(_grid, side, ZoneRules.standing_cells(_state, side), wanted, _blocked_fn(side, []))
 	if kept.is_empty() or _standing_cells(side, kept, false).is_empty():
 		var none: Array[Vector2i] = []
 		return none
@@ -852,9 +868,9 @@ func fall_total_sec(side: int, cell: Vector2i) -> float:
 func crumble_progress(side: int, cell: Vector2i) -> float:
 	if _crumble[side].has(cell):
 		return 1.0 if int((_crumble[side][cell] as Dictionary)["phase"]) == _WARN else 0.0
-	if not _crumble_on or _cr_cell[side] != cell or _state == null or _state.cell_of(side) != cell:
+	if not _crumble_on or _cr_cell.get(side, BoardGrid.NO_CELL) != cell or _state == null or _state.cell_of(side) != cell:
 		return 0.0
-	return minf(_cr_stand[side] / float(_cfg["crumble_after_sec"]), 0.99)
+	return minf(float(_cr_stand.get(side, 0.0)) / float(_cfg["crumble_after_sec"]), 0.99)
 
 
 ## True while [param cell] of [param side] shows its crack warning.
@@ -900,18 +916,19 @@ func _tick_crumble(delta: float) -> void:
 	if not _crumble_on or _state == null:
 		return
 	var after: float = float(_cfg["crumble_after_sec"])
-	for side: int in _SIDES:
-		if _is_dead(side) or not crumbles_side(side):
+	for side: int in _unit_keys():
+		var half: int = CombatState.side_of(side)
+		if _is_dead(side) or not crumbles_side(half):
 			continue
 		var cell: Vector2i = _state.cell_of(side)
-		if cell != _cr_cell[side]:
+		if cell != _cr_cell.get(side, BoardGrid.NO_CELL):
 			_cr_cell[side] = cell
 			_cr_stand[side] = 0.0
 			continue
-		_cr_stand[side] += delta
-		if _cr_stand[side] + _EPS >= after and not _crumble[side].has(cell) \
-				and _push_target(side, cell, true) != BoardGrid.NO_CELL:
-			_start_crack(side, cell, float(_cfg["crumble_warn_sec"]), float(_cfg["fall_sec"]), "crumble")
+		_cr_stand[side] = float(_cr_stand.get(side, 0.0)) + delta
+		if float(_cr_stand[side]) + _EPS >= after and not _crumble[half].has(cell) \
+				and _push_target(half, cell, true) != BoardGrid.NO_CELL:
+			_start_crack(half, cell, float(_cfg["crumble_warn_sec"]), float(_cfg["fall_sec"]), "crumble")
 
 
 func _start_crack(side: int, cell: Vector2i, warn: float, fall: float, kind: String) -> void:
@@ -926,16 +943,18 @@ func _start_crack(side: int, cell: Vector2i, warn: float, fall: float, kind: Str
 func _fall(side: int, cell: Vector2i, carry: float) -> void:
 	var entry: Dictionary = _crumble[side][cell]
 	var pushed: bool = false
-	if _state != null and _state.cell_of(side) == cell and not _is_dead(side):
+	# Phase 2: [param side] is the half; the unit on the cell is whichever living unit of that half stands there.
+	var key: int = _key_on(side, cell)
+	if key >= 0:
 		var target: Vector2i = _push_target(side, cell, String(entry["kind"]) == "crumble")
 		if target == BoardGrid.NO_CELL:
 			_crumble[side].erase(cell)
-			_cr_stand[side] = 0.0
+			_cr_stand[key] = 0.0
 			return
-		pushed = _state.set_player_cell(target) if side == CombatState.Side.PLAYER else _state.set_enemy_cell(target)
+		pushed = _state.set_key_cell(key, target)
 		if pushed:
-			_cr_cell[side] = target
-			_cr_stand[side] = 0.0
+			_cr_cell[key] = target
+			_cr_stand[key] = 0.0
 			_stats["pushes"] = int(_stats["pushes"]) + 1
 			_stats["fall_damage_total"] = float(_stats["fall_damage_total"]) + float(_cfg["fall_damage"])
 	entry["phase"] = _ACTIVE
@@ -969,6 +988,9 @@ func _push_target(side: int, from: Vector2i, single: bool) -> Vector2i:
 # A cell a unit could stand on / land on: not cracking, fallen or sand, and not blocked by the caller's test.
 func _is_open(side: int, cell: Vector2i) -> bool:
 	if _crumble[side].has(cell) or _sand[side].has(cell):
+		return false
+	# Phase 2: a cell another living unit of that half covers is not a landing cell (one unit: never true off its cell)
+	if _state != null and side == CombatState.Side.ENEMY and _state.unit_count() > 1 and _state.enemy_at(cell) >= 0:
 		return false
 	return not (extra_blocked_fn.is_valid() and bool(extra_blocked_fn.call(side, cell)))
 
@@ -1012,9 +1034,23 @@ func _unit_cell(side: int) -> Vector2i:
 	return BoardGrid.NO_CELL if _state == null else _state.cell_of(side)
 
 
-# P2.2b: true when the unit of [param side] covers [param cell] (any footprint cell of a multi-cell boss).
+# P2.2b: true when a unit of [param side]'s half covers [param cell] (any footprint cell of a multi-cell boss). Phase 2:
+# any living unit of that half (unit 0 / the player as before, even dead, for the single-unit answer).
 func _unit_on(side: int, cell: Vector2i) -> bool:
-	return _state != null and _state.unit_at(side, cell)
+	return _state != null and (_state.unit_at(side, cell) or _state.key_at(side, cell) >= 0)
+
+
+# Phase 2: the key of the living unit of [param half] whose ANCHOR is [param cell] (the pre-Phase-2 fall test read the
+# anchor only, `cell_of(side) == cell`); -1 when none or without a state.
+func _key_on(half: int, cell: Vector2i) -> int:
+	if _state == null:
+		return -1
+	if half == CombatState.Side.PLAYER:
+		return CombatState.Side.PLAYER if (not _state.is_player_dead() and _state.player_cell == cell) else -1
+	for key: int in _state.enemy_keys(true):
+		if _state.cell_of(key) == cell:
+			return key
+	return -1
 
 
 # P2.2b: true when [param test] (Callable(cell) -> bool) holds on any cell the unit of [param side] covers; one answer, so

@@ -5,6 +5,25 @@ enemy, pool, arena and trait that exists. Audit references: `00` §1.4–1.6.
 
 ## 1. Decision: composition, not multi-enemy
 
+> **Decision changed on 2026-11-13 (user approval; see `MULTI-ENEMY-ENCOUNTER-AUDIT.md`).** The decision recorded
+> below ("composition, not multi-enemy", 2026-11-11) is **superseded**, not deleted. New decision:
+> - An encounter may contain **several simultaneously active enemy units**; multi-enemy is the official direction for
+>   **Phase 3** (as `design/quick-specs/phase2-misty-forest-2026-11-01.md` D7 already anticipated: "Một quái mỗi trận
+>   trong Phase 2; nhiều quái cùng lúc làm ở Phase 3").
+> - Every existing single-enemy encounter (every `matches` block, every pool, every flat test config) keeps its exact
+>   behaviour; a node whose `match_id` is a plain match is a 1-unit encounter.
+> - Rationale: the audit found the 1v1 assumption is a *keying* assumption (`CombatState.Side` + scalar `enemy_*`
+>   fields), not an architectural one; the agent layer is RefCounted and instantiable N times, hit tests are spatial
+>   (no target UI needed), and `UnitLayer._draw` already sorts a unit list. Composition (the profile below) stays and
+>   now applies to each unit of a formation.
+> - Limits approved with the audit: 4 units and 5 occupied cells per half, `square` 2 units, a 2×2 warden with extra
+>   units only on `boss_hall` / `oasis`; no new Support trait in Phase 0–2 (existing Tank self-guard / Disruptor
+>   behaviour is used); stats, roster, ids, pools, AI, rewards and drops unchanged by the data step.
+> - Phase 0 (2026-11-13) adds only the data schema (`chapters.json` `formations`, `pools.formation`, match keys
+>   `enemies` / `attack_slots`, `FormationRules`, the `RunConfig` whitelist); the combat does not read `enemies` yet.
+>
+> **Original decision (2026-11-11), kept for the record:**
+
 The brief asks whether a multi-enemy system is worth it. **No, not now.** `CombatState` holds one enemy
 (`combat_state.gd:28-51`), `SwingArbiter`, `BossController`, the HUD and every trait assume one opponent; the
 pattern brain and the 2×2 footprint are the only "bigger enemy" paths. Rebuilding that is a combat rewrite with no

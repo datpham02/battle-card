@@ -1,0 +1,10 @@
+=== tests/unit/combat/enemy_skills_config_test.gd
+FAIL unknown status refused
+FAILS=1
+=== tests/unit/ui/controls_v3_hud_test.gd
+FAIL: test_status_poison_has_name_and_effect_keys ["poison", ""]
+FAILS=1
+=== tests/integration/ui/stick_flow_test.gd
+      1 FAILS=0
+      1 ERROR: 10 resources still in use at exit (run with --verbose for details).
+DONE

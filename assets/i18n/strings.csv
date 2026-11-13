@@ -1106,8 +1106,8 @@ mod.thorn_field,Gai Níu Chân,Bramble Trail
 mod.frost_aura,Sương Nặng,Heavy Mist
 mod.shroud,Màn che,Shroud
 mod.step_reactor,Phản bước,Step reactor
-mod.big_hands,Khối lớn hơn,Bigger blocks
-mod.quick_blocks,Khối rơi nhanh,Quick blocks
+mod.big_hands,"Khối lớn hơn, niệm nhanh hơn","Bigger blocks, faster casts"
+mod.quick_blocks,"Khối rơi nhanh, hồi chiêu nhanh hơn","Quick blocks, faster recovery"
 mod.narrow_arena,Sân biến thể,Arena variant
 mod.vent_surge,Mạch lửa dồn,Vent surge
 objective.no_hit_3,Trúng không quá 3 đòn,Take at most 3 hits
@@ -1124,6 +1124,46 @@ ui.world.shop_here,Có cửa hàng ở ngã ba,Shop at the crossing
 ui.forge.title,LÒ KHỐI,BLOCK FORGE
 ui.forge.free_removal,Quên hình miễn phí: %s,Free forget: %s
 ui.forge.ink,Học %s,Learn %s
+ui.status.poison.name,Độc,Poisoned
+ui.status.poison.desc,"Mất máu mỗi nhịp cho tới khi hết độc; trúng độc lần nữa chỉ làm mới, không chồng.","You lose HP every tick until it wears off; another dose refreshes it, never stacks."
+enemy_skill.shared_sidestep.name,Dời Hàng,Sidestep
+enemy_skill.shared_sidestep.counter,Nó dời một hàng; ô viền ngà là chỗ nó sẽ đứng.,It shifts one row; the ivory cell is where it lands.
+enemy_skill.imp_ash_dart.name,Phi Tiêu Tro,Ash Dart
+enemy_skill.imp_ash_dart.counter,Ô đỏ đơn: bước sang ô khác. Trúng thì dính Dấu Tro (Rạn): đòn kế tiếp đau hơn.,A single red cell: step off it. A hit leaves Ash Mark (Fragile): the next hit hurts more.
+enemy_skill.hound_ember_charge.name,Lao Than Hồng,Ember Charge
+enemy_skill.hound_ember_charge.counter,"Nó lao dọc hàng của bạn, mạnh gấp rưỡi khi bạn đang Rạn: đổi hàng.","It charges along your row, half again as hard while you are Fragile: change rows."
+enemy_skill.golem_ash_mantle.name,Áo Tro,Ash Mantle
+enemy_skill.golem_ash_mantle.counter,"Phủ tro: cả phe nó thêm giáp 4 giây. Ngắt lúc nó đang niệm, hoặc dùng đòn xuyên giáp.","Ash armour: its whole side gains Guard for 4 s. Interrupt it while it channels, or use a piercing strike."
+enemy_skill.golem_cinder_slam.name,Đấm Than,Cinder Slam
+enemy_skill.golem_cinder_slam.counter,Khối đỏ 2×2 cạnh bạn: ra phía hở. Không phá phép được.,A 2x2 red block beside you: leave through the open side. Cannot be interrupted.
+enemy_skill.shared_jab.name,Đâm Thẳng,Jab
+enemy_skill.shared_jab.counter,Ô đỏ đơn: bước sang ô kề là thoát.,A single red cell: one step to a neighbour clears it.
+enemy_skill.cultist_kindle.name,Thắp Lửa,Kindle
+enemy_skill.cultist_kindle.counter,Hai ô kề bạn sắp cháy 3 giây: đừng bước vào; luôn còn một lối ra.,Two cells beside you are about to burn for 3 s: do not step in; one way out always stays open.
+enemy_skill.slug_lava_spit.name,Nhổ Dung Nham,Lava Spit
+enemy_skill.slug_lava_spit.counter,Bước khỏi ô đỏ và đừng quay lại: ô đó cháy thêm 2 giây.,Step off the red cell and do not come back: it burns for 2 more seconds.
+enemy_skill.slug_molten_trail.name,Vệt Dung Nham,Molten Trail
+enemy_skill.slug_molten_trail.counter,Nó dời hàng và ô vừa rời bốc cháy: khối đặt lên vệt sẽ cháy mất.,It shifts a row and the cell it left catches fire: a block placed on the trail burns away.
+enemy_skill.knight_cleave.name,Chém Ngang,Cleave
+enemy_skill.knight_cleave.counter,Chém dọc hàng của bạn: đổi hàng. Không phá phép được.,It cleaves along your row: change rows. Cannot be interrupted.
+enemy_skill.knight_bulwark.name,Giơ Khiên,Bulwark
+enemy_skill.knight_bulwark.counter,Dưới nửa máu nó giơ khiên một lần: giáp +5 trong 4 giây. Dùng đòn xuyên giáp hoặc chờ.,Below half HP it raises its shield once: Guard +5 for 4 s. Use a piercing strike or wait.
+enemy_skill.eater_ember_belch.name,Phun Than,Ember Belch
+enemy_skill.eater_ember_belch.counter,"Phun dọc theo đường thẳng qua ô bạn và để lại lửa 2,5 giây: bước ngang ra khỏi đường đó.",It belches down the straight line through your cell and leaves fire for 2.5 s: step sideways off that line.
+enemy_skill.eater_devour.name,Nuốt Lửa,Devour Flame
+enemy_skill.eater_devour.counter,Hút mọi ô đang cháy để hồi máu: đánh trúng nó lúc đang hút để ngắt và làm nó choáng 1 giây.,It swallows every burning cell to heal: hit it while it swallows to interrupt and stun it for 1 s.
+enemy_skill.phoenix_ash_dive.name,Bổ Nhào Tro,Ash Dive
+enemy_skill.phoenix_ash_dive.counter,Chữ L đỏ: ra phía mở. Trúng thì dính Rạn.,A red L: leave through its open side. A hit leaves you Fragile.
+enemy_skill.phoenix_pyre.name,Giàn Thiêu,Pyre
+enemy_skill.phoenix_pyre.counter,"Dưới nửa máu nó thắp 3 ô quanh bạn trong 4 giây, một lần: đứng yên hoặc đi lối còn mở. Không phá phép được.","Below half HP it lights 3 cells around you for 4 s, once: stay put or take the open way. Cannot be interrupted."
+enemy_skill.lord_brand.name,Dấu Nung,Brand
+enemy_skill.lord_brand.counter,Ô đỏ đơn: bước sang ô khác. Trúng thì dính Rạn.,A single red cell: step off it. A hit leaves you Fragile.
+enemy_skill.lord_cinder_lane.name,Làn Than,Cinder Lane
+enemy_skill.lord_cinder_lane.counter,Làn than chạy dọc hàng của bạn rồi cháy 2 giây: đổi hàng sớm và đừng quay lại. Không phá phép được.,A cinder lane sweeps along your row and then burns for 2 s: change rows early and do not come back. Cannot be interrupted.
+enemy_skill.lord_stride.name,Sải Bước,Stride
+enemy_skill.lord_stride.counter,Nó dời một hàng; ô viền ngà là chỗ nó sẽ đứng.,It shifts one row; the ivory cell is where it lands.
+enemy_skill.lord_eruption_call.name,Gọi Phun Trào,Eruption Call
+enemy_skill.lord_eruption_call.counter,Khối 2×2 đỏ rồi đánh lại đúng chỗ đó sau 1 giây và để lửa: ra khỏi khối và đừng quay lại. Không phá phép được.,"A red 2x2 block strikes, then strikes the same cells again 1 s later and leaves fire: leave it and do not come back. Cannot be interrupted."
 character.kiem_si.lore,"Trước Biến Cố, rút kiếm ra là xong. Giờ mỗi nhát chém phải đi qua một khối thép tự tay nhặt lấy. Kiếm sĩ leo lên Tâm Lưới để đòi lại cái vung tay tự do ngày trước.","Before the Cataclysm, drawing the blade was enough. Now every cut must pass through a steel block they pick up themselves. The Swordsman climbs to the Lattice Heart to take back that free swing."
 character.kiem_si.personality,"Ít lời, kiên nhẫn, không bao giờ khích địch.","Terse, patient, never taunts."
 character.kiem_si.playstyle,"Ít đòn, đòn nào cũng nặng. Giữ thế rồi kết liễu.","Few casts, each one heavy. Hold the line, then end it."

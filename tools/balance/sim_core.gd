@@ -983,9 +983,22 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 		"boss": boss, "status": status, "arbiter": arbiter, "hold_getter": Callable(self, "get_bag"), "player_mover": mover,
 		"skill_config": cards, "cut_config": cut_config,
 		"hazards": hazards,
+		# Monster Skill Phase 1 (port of CombatView.make_trait_ctx): burrow / rebirth pause the pattern brain, shroud reads
+		# its stage. Read lazily, like CombatView.
+		"pattern_getter": func() -> PatternController: return pattern,
 	}
 	var traits: Variant = m.get("traits", [])
 	trait_host = TraitHost.new(ctx, (traits as Array) if typeof(traits) == TYPE_ARRAY else [], match_seed)
+	if pattern != null:
+		# Port of the Phase 0 wiring in CombatView._setup_pattern_brain (the sim built only the Phase 2 part): the effects
+		# that reuse existing code, the trait warnings as other red (F1 / F2, spec 3.9), the one-point hooks.
+		pattern.hazards = hazards
+		pattern.player_blocked_fn = Callable(mover, "is_cell_blocked")
+		pattern.reactions = combat.reactions()
+		pattern.external_red_fn = Callable(self, "_trait_warning_cells")
+		trait_host.extra_untargetable_fn = Callable(pattern, "is_evading")
+		trait_host.extra_forecast_blocked_fn = Callable(pattern, "is_shrouded")
+		trait_host.extra_reaction_immune_fn = Callable(pattern, "reaction_immune")
 	trait_host.on_match_start()
 	_fuse = trait_host.get_trait("fuse_cannon") as FuseCannonTrait
 	if _fuse != null:
@@ -1789,6 +1802,20 @@ func _on_boss_swing_started(cells: Array[Vector2i], skill_id: String, duration: 
 
 # 2026-11-04: port of CombatView._setup_pattern_brain (the trait warnings are not fed as external red: no ch1 pattern
 # match carries a trait).
+# Monster Skill Phase 1: port of CombatView.trait_warning_cells: cells the traits warn about on the player's half (row_burner,
+# slam, fuse_cannon), handed to the pattern brain as other red (F1 / F2).
+func _trait_warning_cells() -> Array:
+	var out: Array = []
+	if trait_host == null or grid == null:
+		return out
+	for tr: BossTrait in trait_host.get_traits():
+		if tr != null and tr.has_method("get_warning_cells"):
+			for cell: Vector2i in tr.call("get_warning_cells") as Array:
+				if grid.is_player_cell(cell) and not out.has(cell):
+					out.append(cell)
+	return out
+
+
 func _setup_pattern(m: Dictionary, brain_config: BossBrainConfig, player_cd: float, match_seed: int) -> void:
 	if _skills_config == null:
 		_skills_config = EnemySkillsConfig.load_from_file()

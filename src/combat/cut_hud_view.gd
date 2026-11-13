@@ -610,8 +610,11 @@ const TEXT_REVIVING: String = "ui.hud.reviving"
 ## left] each), the heal being summed and the state the enemy_healed signal is connected to.
 var _hz_cfg_owner: int = 0
 var _hz_cfg: Dictionary = {}
+## Multi-enemy Phase 4 (step 4): each entry is [amount, seconds left, unit key], so a heal rises off the unit that
+## was healed, not always off unit 0.
 var _boss_heals: Array = []
-var _heal_pending: float = 0.0
+## Multi-enemy Phase 4 (step 4): unit key -> HP healed since the last batch.
+var _heal_pending: Dictionary = {}
 var _heal_pending_t: float = 0.0
 var _heal_state: CombatState = null
 
@@ -2040,6 +2043,9 @@ func _draw_parry_flash(vp: Vector2) -> void:
 # Boss HIT / MISS on the player's half (same look as the player's feedback).
 func _draw_boss_feedback(vp: Vector2) -> void:
 	_draw_feedback_for(vp, _combat.get_boss_feedback())
+	# Multi-enemy Phase 4 (step 4): the other units' cuts keep their own marker instead of overwriting unit 0's.
+	for extra: Dictionary in _combat.get_boss_feedback_extra():
+		_draw_feedback_for(vp, extra)
 
 
 # NGẮT flash over the victim's cancelled swing cells: orange tint, a big X per cell, text fading out.
@@ -2100,14 +2106,20 @@ func _draw_cells_label(_vp: Vector2, cells: Array[Vector2i], line1: String, line
 
 func _draw_feedback(vp: Vector2) -> void:
 	_draw_feedback_for(vp, _combat.get_cut_feedback())
+	# Multi-enemy Phase 4 (step 4): one cut that hit several units prints each unit's own number over its own cell.
+	for extra: Dictionary in _combat.get_unit_feedback():
+		_draw_feedback_for(vp, extra)
 
 
 func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	if fb.is_empty() or float(fb.get("wait", 0.0)) > 0.0:
 		return
 	var hit: bool = bool(fb["hit"])
+	# Multi-enemy Phase 4 (step 4): a number-only record belongs to a further unit of the same cut — the cell tint and
+	# the HIT / MISS word already stand on the first unit, so it prints its number and nothing else.
+	var number_only: bool = bool(fb.get("number_only", false))
 	var cells: Array[Vector2i] = fb["cells"]
-	if not _vfx_ok("hit_impact" if hit else "miss_dust"):  # Story 048 F6 / F7 replace the tint
+	if not number_only and not _vfx_ok("hit_impact" if hit else "miss_dust"):  # Story 048 F6 / F7 replace the tint
 		_draw_cells(vp, cells, HIT_TINT if hit else MISS_TINT, HIT_TEXT if hit else MISS_TEXT)
 	var flat_cell: Rect2 = _bg().flat_cell_rect(fb["cell"])
 	# ADR-0002: the HIT / MISS text stands on the drawn cell (its fit rect, top edge = the drawn top-centre), sized by
@@ -2124,12 +2136,18 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	var base: float = cell_rect.position.y - 2.0
 	# Cast rhythm spec 2026-11-05 (1.2): a crit shows CHÍ MẠNG as bare gold effect text (no box), its number one step larger.
 	var crit: bool = hit and bool(fb.get("crit", false))
+	# Multi-enemy Phase 4 (step 4): several number-only records may share one anchor (two enemy units both resolve on
+	# the player's cell); each sits one line higher than the last.
+	base -= size * 1.1 * float(fb.get("stack", 0))
 	if show_damage:
 		# Story 020: a hit multiplied by Ghim shows its number in the pin blue.
 		var damage_color: Color = PIN_BONUS_TEXT if bool(fb.get("pin_bonus", false)) else color
 		var number_size: int = roundi(size * CRIT_NUMBER_SCALE) if crit else size
 		HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), number_size, damage_color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
 		base -= number_size * 1.0
+	if crit and number_only:
+		# A further unit of the same cut prints its number and nothing else: one CHÍ MẠNG per cut, on the main marker.
+		return
 	if crit:
 		var s_crit: float = ScreenLayout.controls_scale(vp)
 		var crit_size: int = EffectText.size_for(size)
@@ -2139,6 +2157,8 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 		var crit_left: float = clampf(cell_rect.get_center().x - crit_w * 0.5, board_c.position.x, maxf(board_c.end.x - crit_w, board_c.position.x))
 		EffectText.draw(self, Vector2(roundf(crit_left), roundf(base)), crit_text, crit_size, EffectText.GOOD, HORIZONTAL_ALIGNMENT_CENTER, crit_w, s_crit)
 		_labels_drawn.append("crit")
+		return
+	if number_only:
 		return
 	HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_HIT) if hit else tr(TEXT_MISS), size, color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
 	var back := Rect2(label_box.position.x, base - size * 2.6, label_box.size.x, size * 1.3)  # the featured pill sits above the text
@@ -2232,8 +2252,9 @@ func _draw_pins(vp: Vector2) -> void:
 		return
 	var state: CombatState = _combat.get_state()
 	# Controls v3: the player's statuses live in the buff / debuff row (top-left); only the enemy keeps its chips.
-	for side: int in [CombatState.Side.ENEMY]:
-		if side == CombatState.Side.ENEMY and state.is_enemy_dead():
+	# Multi-enemy Phase 4 (step 3): every living enemy unit carries its own chip row, under its own HP plate.
+	for side: int in state.enemy_keys():
+		if state.is_key_dead(side):
 			continue
 		var chips: Array = []
 		if status.is_pinned(side):
@@ -2242,7 +2263,10 @@ func _draw_pins(vp: Vector2) -> void:
 			chips.append(["frozen", clampf(left / maxf(float(_pin_max[side]), 0.001), 0.0, 1.0)])
 		else:
 			_pin_max.erase(side)
-		if side == CombatState.Side.ENEMY and _combat.get_burn_stacks() > 0:
+		# With ONE enemy unit the legacy half-wide answer is kept, so a 1v1 match shows exactly the chip it showed
+		# before Phase 4 (a burn anywhere on the enemy half, even on a cell the enemy has just left).
+		var burn: int = _combat.get_burn_stacks(side) if state.unit_count() > 1 else _combat.get_burn_stacks()
+		if burn > 0:
 			chips.append(["burn", -1.0])
 		if status.get_frost_stacks(side) > 0:
 			chips.append(["chill", -1.0])
@@ -2274,8 +2298,12 @@ func _hp_plate_on(side: int) -> bool:
 # while the corner HP panels are off. The number only (no bar).
 func _draw_hp_plates(vp: Vector2) -> void:
 	var state: CombatState = _combat.get_state()
-	for side: int in [CombatState.Side.PLAYER, CombatState.Side.ENEMY]:
-		var hp: float = state.player_hp if side == CombatState.Side.PLAYER else state.enemy_hp
+	# Multi-enemy Phase 4 (step 2): one plate per LIVING unit — the player, then each living enemy unit. A plate is
+	# anchored on its own unit's feet, so two units never share one. One enemy unit = the old pair, unchanged.
+	var keys: Array[int] = [CombatState.Side.PLAYER]
+	keys.append_array(state.enemy_keys())
+	for side: int in keys:
+		var hp: float = state.hp_of(side)
 		if hp <= 0.0 or not _hp_plate_on(side):
 			continue
 		var text: String = str(ceili(hp))
@@ -2781,31 +2809,37 @@ func _draw_rebirth(vp: Vector2) -> void:
 # Connects CombatState.enemy_healed (W3: every heal of the boss, burn_eater's burn heals included) once the state exists.
 func _connect_burn_heal() -> void:
 	var state: CombatState = _combat.get_state()
-	if state == null or state == _heal_state or not state.has_signal("enemy_healed"):
+	# Multi-enemy Phase 4 (step 4): unit_healed fires for EVERY unit (unit 0 included), so it replaces the legacy
+	# enemy_healed here; taking both would count unit 0's heal twice.
+	if state == null or state == _heal_state or not state.has_signal("unit_healed"):
 		return
-	if _heal_state != null and _heal_state.is_connected("enemy_healed", _on_enemy_healed):
-		_heal_state.disconnect("enemy_healed", _on_enemy_healed)
+	if _heal_state != null and _heal_state.is_connected("unit_healed", _on_unit_healed):
+		_heal_state.disconnect("unit_healed", _on_unit_healed)
 	_heal_state = state
-	state.connect("enemy_healed", _on_enemy_healed)
+	state.connect("unit_healed", _on_unit_healed)
 
 
-func _on_enemy_healed(amount: float) -> void:
-	if amount > 0.0:
-		_heal_pending += amount
+func _on_unit_healed(index: int, amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var key: int = CombatState.unit_key(index)
+	_heal_pending[key] = float(_heal_pending.get(key, 0.0)) + amount
 
 
 ## A green "+N" rising off the boss, for [param seconds] (dev hook of the burn_eater demo: a long time keeps it on screen).
 func debug_show_boss_heal(amount: float, seconds: float = BOSS_HEAL_SEC) -> void:
-	_boss_heals.append([amount, seconds])
+	_boss_heals.append([amount, seconds, CombatState.Side.ENEMY])
 
 
 # Sums the burn heals of a short batch into one number and ages the numbers on screen.
 func _tick_boss_heals(delta: float) -> void:
-	if _heal_pending > 0.0:
+	if not _heal_pending.is_empty():
 		_heal_pending_t += delta
 		if _heal_pending_t >= BOSS_HEAL_BATCH_SEC:
-			_boss_heals.append([_heal_pending, BOSS_HEAL_SEC])
-			_heal_pending = 0.0
+			# One number per unit: two units healing in the same batch do not add up into one.
+			for key: Variant in _heal_pending.keys():
+				_boss_heals.append([float(_heal_pending[key]), BOSS_HEAL_SEC, int(key)])
+			_heal_pending.clear()
 			_heal_pending_t = 0.0
 	for entry: Array in _boss_heals:
 		entry[1] = float(entry[1]) - delta
@@ -2816,10 +2850,13 @@ func _tick_boss_heals(delta: float) -> void:
 func _draw_boss_heals(_vp: Vector2) -> void:
 	if _boss_heals.is_empty():
 		return
-	var flat: Rect2 = _bg().flat_cell_rect(_combat.get_state().enemy_cell)
-	var cell: Rect2 = _bg().fit_rect(flat)
-	var size: int = int(flat.size.y * FEEDBACK_FONT_RATIO * 1.3)
+	var state: CombatState = _combat.get_state()
 	for entry: Array in _boss_heals:
+		# Multi-enemy Phase 4 (step 4): each number rises off its own unit's cell (entry[2]; unit 0 for the dev hook).
+		var key: int = int(entry[2]) if entry.size() > 2 else CombatState.Side.ENEMY
+		var flat: Rect2 = _bg().flat_cell_rect(state.cell_of(key))
+		var cell: Rect2 = _bg().fit_rect(flat)
+		var size: int = int(flat.size.y * FEEDBACK_FONT_RATIO * 1.3)
 		var fade: float = clampf(float(entry[1]) / BOSS_HEAL_SEC, 0.0, 1.0)
 		var rise: float = cell.size.y * BOSS_HEAL_RISE_RATIO * (1.0 - fade)
 		var back := Rect2(cell.position + Vector2(0.0, -size * 1.4 - rise), Vector2(cell.size.x, size * 1.4))
