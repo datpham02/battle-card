@@ -437,7 +437,34 @@ Each phase is independently shippable, data-first, and leaves the game playable.
 file currently held by another session except `combat_view.gd` (phase 3), which must wait for the
 multi-enemy session to hand it back.
 
-### F1 — Identity & data schema — **DONE + VERIFIED 2026-11-13 (not committed)**
+### F1 — Identity & data schema — **DONE + VERIFIED 2026-11-13, shipped in commit `40e6e3b4`**
+
+> **Where F1 actually lives in the history.** F1 was committed and pushed as part of **`40e6e3b4`
+> "feat: unified sound identity with a per-skill voice for every card"**, whose message describes only
+> the audio work. Searching the log for the character system will not find it. The seven F1 artefacts
+> inside that commit are `assets/data/characters.json`, `assets/data/schema.md`,
+> `design/game-brief.md`, `src/run/character_config.gd`,
+> `tests/unit/run/character_identity_test.gd`, this document, and the 20 `character.*` rows added to
+> `assets/i18n/strings.csv` (exactly +20/−0 — no audio strings).
+>
+> **How it happened, so it is not repeated.** Eleven sessions share this working tree and therefore
+> share one git index. The character-system session staged its six F1 paths while preparing its own
+> commit and then ended its turn with them still staged; fifteen minutes later the audio session ran
+> a correctly pathspec-limited `git add` and committed — and `git commit` takes the **whole index**,
+> not the paths that were just added. Any session committing in that window would have swept the same
+> files. The audio session did nothing wrong.
+>
+> **Not split.** `40e6e3b4` reached `origin/main` before the sweep was noticed, so separating it would
+> mean force-pushing a branch eleven sessions share, three of them holding uncommitted work in this
+> same checkout. The user chose this note over that rewrite. Content is unaffected: every F1 file is
+> correct and its tests are green.
+>
+> **Rule for this repo:** stage and commit in a single operation, never end a turn with anything
+> staged, and verify `git diff --cached --name-only` is exactly your own paths immediately before
+> committing. To stage part of a file another session is editing, use a temporary index via
+> `GIT_INDEX_FILE` so the shared index is never touched — and re-read `HEAD` immediately before
+> building any blob, since `HEAD` can move mid-task (a blob built from a stale
+> `git show HEAD:assets/i18n/strings.csv` silently duplicated 20 rows during this very cleanup).
 Shipped: `identity` block on all 5 characters (`lore_key`, `personality_key`, `playstyle_key`,
 `block_material_key`, `accent_color`, `portrait`, `select_art`); `CharacterConfig._read_identity` +
 `identity_of()` / `accent_of()` with warn-and-clean validation; 20 new strings (vi + en) drawn from
