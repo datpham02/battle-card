@@ -1,6 +1,6 @@
 # Asset Manifest (GENERATED)
 
-> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-13. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
+> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-14. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
 
 Lifecycle: `candidate → accepted → installed → approved`; `legacy` = replaced. **installed is not approved**: `Accepted` / `Approved` columns show what the user recorded; `unknown` means no record exists.
 
@@ -8,9 +8,9 @@ Lifecycle: `candidate → accepted → installed → approved`; `legacy` = repla
 
 | Total | Candidate | Accepted | Installed | Approved | Legacy |
 |---|---|---|---|---|---|
-| 286 | 1 | 0 | 206 | 75 | 4 |
+| 286 | 0 | 0 | 207 | 75 | 4 |
 
-Acceptance recorded: unknown 140, pending 11, accepted 135, rejected 0.
+Acceptance recorded: unknown 140, pending 10, accepted 136, rejected 0.
 
 ## Needs the user's decision
 
@@ -154,7 +154,7 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 | `vfx.status.chill_hero` | chill.hero | 16 × 83 | 95x103 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
 | `vfx.status.frozen_goblin` | frozen.goblin | 12 × 100 | 44x61 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
 | `vfx.status.frozen_hero` | frozen.hero | 12 × 100 | 60x83 | pixellab | **installed** | yes 2026-10-31 | no record | 2026-10-31 manifest row (archived): Done (in game since Story 047), awaiting the art-director's sign-off; ASSET-020 was also used by the Forest Witch spec; the registry keys them apart |
-| `vfx.floor.impact_flash_steel_pixelfx` | — | 7 × 50 | 80x64 | pixelfx (upstream impacts/hit-flash) | **candidate** | pending | no record | P3 proof of concept: shows the PixelFX -> VfxPack path end to end; 7 of 11 source frames kept for the 350 ms overlay rule; glow under alpha 128 dropped; 673 source colours snapped to the 4-colour steel ramp. Not installed, not accepted: the user decides. |
+| `vfx.floor.impact_flash_steel_pixelfx` | — | 7 × 50 | 80x64 | pixelfx (upstream impacts/hit-flash) | **installed** | yes 2026-11-14 | no record | P3 proof of concept: shows the PixelFX -> VfxPack path end to end; 7 of 11 source frames kept for the 350 ms overlay rule; glow under alpha 128 dropped; 673 source colours snapped to the 4-colour steel ramp. Not installed, not accepted: the user decides. |
 
 ## Environment
 

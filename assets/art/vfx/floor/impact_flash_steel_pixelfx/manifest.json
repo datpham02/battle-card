@@ -1,0 +1,218 @@
+{
+ "app": "pixelfx via tools/fx-pipeline/pixelfx_adapter.py 0.1",
+ "name": "Tessera fx - hit flash (pixelfx impacts/hit-flash, steel ramp) - proof of concept",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 80,
+  "h": 64
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 40,
+  "y": 54
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect (pixelfx layers composited)",
+   "depth": "both",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 80,
+    "h": 64
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 7,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -40,
+    "y": -54
+   }
+  }
+ ],
+ "source": {
+  "provider": "pixelfx",
+  "origin": "upstream",
+  "effect_id": "impacts/hit-flash",
+  "upstream_repo": "https://github.com/patch-gg/pixelfx",
+  "upstream_commit": "a84159688af3ca37a4be05a0d422b94451b2e24e",
+  "exported_json": "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\claude\\55006878ee6e73be\\5beb7864-d5ae-4890-9786-43635d7a3bd2\\scratchpad\\pfx2\\impacts\\hit-flash\\hit-flash.json",
+  "exported_png": "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\claude\\55006878ee6e73be\\5beb7864-d5ae-4890-9786-43635d7a3bd2\\scratchpad\\pfx2\\impacts\\hit-flash\\hit-flash.png",
+  "fps_rendered": 20,
+  "seed": 17,
+  "frames_window": [
+   0,
+   5
+  ],
+  "crop": null,
+  "alpha": "threshold",
+  "alpha_cut": 128,
+  "ramp": "steel",
+  "adapter_version": "0.1",
+  "adapted_on": "2026-11-11",
+  "act": {
+   "windup": 0.26,
+   "recovery": 0.36,
+   "onBody": true,
+   "targets": [],
+   "hits": [
+    {
+     "t": 0,
+     "freeze": 0.07,
+     "shake": 0.14,
+     "amp": 2,
+     "push": 1.2
+    }
+   ],
+   "poses": [
+    {
+     "t": -0.26,
+     "how": "smooth",
+     "pose": {
+      "crouch": 3,
+      "fx": 11,
+      "fy": -21,
+      "bx": 9,
+      "by": -21,
+      "ffx": 7,
+      "fbx": -7,
+      "x": 0
+     }
+    },
+    {
+     "t": 0,
+     "how": "snap",
+     "pose": {
+      "x": -5,
+      "crouch": 4,
+      "lean": -5,
+      "hx": -1,
+      "fx": 8,
+      "fy": -33,
+      "bx": -11,
+      "by": -27,
+      "ffx": 9,
+      "ffy": -7,
+      "fbx": -6
+     }
+    },
+    {
+     "t": 0.16,
+     "how": "smooth",
+     "pose": {
+      "x": -8,
+      "crouch": 5,
+      "lean": -5,
+      "hx": -1,
+      "fx": 8,
+      "fy": -33,
+      "bx": -11,
+      "by": -27,
+      "ffx": 9,
+      "ffy": -7,
+      "fbx": -6
+     }
+    },
+    {
+     "t": 0.42,
+     "how": "smooth",
+     "pose": {
+      "x": -8,
+      "crouch": 5,
+      "lean": -2,
+      "hx": -1,
+      "fx": 9,
+      "fy": -22,
+      "bx": 6,
+      "by": -20,
+      "ffx": 9,
+      "ffy": -4,
+      "fbx": -6
+     }
+    },
+    {
+     "t": 0.86,
+     "how": "smooth",
+     "pose": {
+      "crouch": 3,
+      "fx": 11,
+      "fy": -21,
+      "bx": 9,
+      "by": -21,
+      "ffx": 7,
+      "fbx": -7,
+      "x": 0
+     }
+    }
+   ]
+  }
+ },
+ "tessera": {
+  "pack": "impact_flash_steel_pixelfx",
+  "layer": "overlay",
+  "cell": [
+   64,
+   46
+  ],
+  "duration_sec": 0.35,
+  "palette": [
+   "#5F6F82",
+   "#8FA3B8",
+   "#EEF4FA",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "impact_flash_steel_pixelfx",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 50,
+   "anchor": "ground_center",
+   "cell": [
+    64,
+    46
+   ]
+  },
+  "stats": {
+   "alpha_dropped": 7231,
+   "alpha_kept_translucent": 194,
+   "snapped": 3027,
+   "unchanged": 114,
+   "red_avoided": 0,
+   "colours_in": 673,
+   "colours_out": [
+    "#5F6F82",
+    "#8FA3B8",
+    "#EEF4FA",
+    "#EFE6D2"
+   ],
+   "empty_frame_appended": true
+  },
+  "border_padded_px": 0
+ },
+ "index_entry": {
+  "dir": "impact_flash_steel_pixelfx",
+  "layer": "overlay",
+  "play": "once",
+  "clip": "whole",
+  "frames": 7,
+  "frame_ms": 50,
+  "anchor": "ground_center",
+  "cell": [
+   64,
+   46
+  ]
+ }
+}

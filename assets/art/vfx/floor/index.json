@@ -253,7 +253,8 @@
   "impact_flame_small_burn_c43x31": {"dir": "impact_flame_small_burn_c43x31", "layer": "overlay", "play": "once", "clip": "whole", "frames": 6, "frame_ms": 50, "anchor": "ground_center", "cell": [43, 31]},
   "mark_embers_burn_c43x31": {"dir": "mark_embers_burn_c43x31", "layer": "floor", "play": "once", "clip": "whole", "frames": 7, "frame_ms": 50, "anchor": "center", "cell": [43, 31]},
   "impact_eruption_tram_dia": {"dir": "impact_eruption_tram_dia", "layer": "overlay", "play": "once", "clip": "whole", "frames": 7, "frame_ms": 50, "anchor": "ground_center", "cell": [64, 46]},
-  "mark_eruption_tram_dia": {"dir": "mark_eruption_tram_dia", "layer": "floor", "play": "once", "clip": "whole", "frames": 12, "frame_ms": 50, "anchor": "ground_center", "cell": [64, 46]}
+  "mark_eruption_tram_dia": {"dir": "mark_eruption_tram_dia", "layer": "floor", "play": "once", "clip": "whole", "frames": 12, "frame_ms": 50, "anchor": "ground_center", "cell": [64, 46]},
+  "impact_flash_steel_pixelfx": {"dir": "impact_flash_steel_pixelfx", "layer": "overlay", "play": "once", "clip": "whole", "frames": 7, "frame_ms": 50, "anchor": "ground_center", "cell": [64, 46]}
  },
  "_doc_fx_pipeline": "2026-11-02 (user: install the Knight packs): code-drawn square packs from tools/fx-pipeline (recipe kiem_khi). A pack id with a _c<w>x<h> sibling is drawn in the variant whose cell is nearest the cell it plays on (FloorVfx.variant_for); `cell` = the cell size the pack was made for. impact_burst_* = overlay bursts (<= 0.35 s over units); mark_stamp_* = floor squares left on the cell."
 }

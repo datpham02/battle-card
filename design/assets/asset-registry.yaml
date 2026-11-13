@@ -38,7 +38,7 @@
 #   PixelLab character:   Grep pattern="character_id:"
 
 schema_version: 1
-updated: "2026-11-13"
+updated: "2026-11-14"
 palette:
   file: art_src/palette/tessera_master.gpl
   colours:
@@ -11523,18 +11523,18 @@ assets:
   tier: n/a
   legacy_asset_id: null
   provider: pixelfx
-  status: candidate
-  acceptance: pending
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  status: installed
+  acceptance: accepted
+  accepted_on: "2026-11-14"
+  accepted_by: user
+  accepted_evidence: "chat 2026-11-14, user: 'Chấp nhận' (after seeing preview/contact_x4.png and anim.gif)"
   approved_on: null
   approved_by: null
   approved_evidence: null
   attention: null
   spec: docs/art/PIXELFX_INTEGRATION.md
   reference: null
-  production: []
+  production: [assets/art/vfx/floor/impact_flash_steel_pixelfx]
   source: []
   candidates: [design/assets/candidates/pixelfx/impact_flash_steel_pixelfx-v1-2026-11-11]
   evidence: [design/assets/candidates/pixelfx/impact_flash_steel_pixelfx-v1-2026-11-11/preview]
@@ -11589,6 +11589,25 @@ assets:
   - on: "2026-11-11"
     event: qa_completed
     note: "fxc check PASS, art_check candidate PASS; review package in preview/"
+  - on: "2026-11-14"
+    event: user_accepted
+    by: user
+    evidence: "chat 2026-11-14, user: 'Chấp nhận' (after seeing preview/contact_x4.png and anim.gif)"
+    note: "acceptance set to accepted"
+  - on: "2026-11-14"
+    event: user_accepted
+    from: candidate
+    to: accepted
+    by: user
+    evidence: "chat 2026-11-14, user: 'Chấp nhận' (after seeing preview/contact_x4.png and anim.gif)"
+    note: "state moved to the acceptance already recorded (integrate.py)"
+  - on: "2026-11-14"
+    event: integration_completed
+    from: accepted
+    to: installed
+    by: user
+    evidence: production/qa/evidence/integration/2026-11-14-vfx-floor-impact_flash_steel_pixelfx.md
+    note: "integrate.py pack -> assets/art/vfx/floor/impact_flash_steel_pixelfx"
   notes:
   - "P3 proof of concept: shows the PixelFX -> VfxPack path end to end; 7 of 11 source frames kept for the 350 ms overlay rule; glow under alpha 128 dropped; 673 source colours snapped to the 4-colour steel ramp. Not installed, not accepted: the user decides."
 - id: env.dungeon.bg_dungeon_far_inner

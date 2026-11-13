@@ -31,6 +31,8 @@
   "report": "adapter-report.json",
   "on": "2026-11-11"
  },
- "acceptance": "pending",
- "folder": "design/assets/candidates/pixelfx/impact_flash_steel_pixelfx-v1-2026-11-11"
+ "acceptance": "accepted",
+ "folder": "design/assets/candidates/pixelfx/impact_flash_steel_pixelfx-v1-2026-11-11",
+ "acceptance_evidence": "chat 2026-11-14, user: 'Chấp nhận' (after seeing preview/contact_x4.png and anim.gif)",
+ "acceptance_on": "2026-11-14"
 }

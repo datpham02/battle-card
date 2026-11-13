@@ -15,8 +15,8 @@
 - `node tools/check.mjs impacts/hit-flash`: ok
 
 ## Verdict
-- Technical: **PASS** (2026-11-11)
-- User: pending
+- Technical: PASS
+- User: **accepted** (2026-11-14) — chat 2026-11-14, user: 'Chấp nhận' (after seeing preview/contact_x4.png and anim.gif)
 
 ## Next
 Review `preview/REVIEW.md`; the user decides accept / retake / reject. Known: the upstream effect is a red/white flash with radial lines; with the steel ramp it reads as a steel burst.

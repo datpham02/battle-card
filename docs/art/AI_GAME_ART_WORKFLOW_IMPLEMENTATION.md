@@ -23,6 +23,8 @@ concept is still `acceptance: pending`
 `integrate.py pack` on that id exits BLOCKED until the user accepts it.
 The deferred visual items are in the risk table. Do not start them without a yes.
 
+**2026-11-14 PixelFX PoC installed.** The user accepted it in chat ("Chấp nhận", after the contact sheet and gif). `candidate.py verdict` recorded acceptance; `integrate.py pack` installed it (status `installed`, evidence `production/qa/evidence/integration/2026-11-14-vfx-floor-impact_flash_steel_pixelfx.md`). Found on the real run: `integrate.py` re-dumped the hand-laid `floor/index.json` (100-line diff). Fixed: `_insert_pack_line` appends one line and verifies the parse, falling back to a full rewrite. Rehearsed in a scratch tree: byte-identical to the real tree. `floor_vfx_test.gd` PACK_IDS gained the id (the suite asserts the index count). Not `approved`: no skill plays it.
+
 **2026-11-14 state check (continuation after the context reset):** most P0–P4 files are
 already committed (`c0c81ae8` and later). Still uncommitted from this workflow:
 `tools/qa/review_package.py`, `tools/fx-pipeline/pixelfx_adapter.py`,

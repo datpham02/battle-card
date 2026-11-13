@@ -17,6 +17,8 @@ const PACK_IDS: Array[String] = [
 	"impact_flame_small_burn", "impact_flame_small_burn_c43x31",
 	# 2026-11-08 (Trảm Địa art, vfx_workbench): the burst cell's eruption and its floor mark
 	"impact_eruption_tram_dia", "mark_eruption_tram_dia",
+	# 2026-11-14 PixelFX proof of concept (hit-flash, steel ramp), installed by integrate.py on the user's acceptance
+	"impact_flash_steel_pixelfx",
 ]
 ## Fixture entries (factory data; the frame counts / times are the point of the boundary checks).
 const LOOP_ENTRY: Dictionary = {"play": "loop", "frames": 4, "frame_ms": 100}

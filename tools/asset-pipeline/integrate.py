@@ -97,6 +97,74 @@ def write_evidence(name: str, lines: list[str]) -> Path:
 
 
 # ─── packs ───────────────────────────────────────────────────────────────────
+def _insert_pack_line(text: str, key: str, entry: dict) -> str | None:
+    """Append `"key": {entry}` as ONE line at the end of the index's "packs"
+    object and leave every other byte alone. The floor/cast indexes are laid
+    out by hand (one compact line per pack); re-dumping the whole file turned a
+    one-line install into a 100-line diff (2026-11-14). Returns None when the
+    layout is not recognised, or when the result would not parse to the
+    expected data, so the caller falls back to a full rewrite."""
+    if not text:
+        return None
+    start = text.find('"packs"')
+    brace = text.find("{", start) if start >= 0 else -1
+    if brace < 0:
+        return None
+    depth, in_str, esc, close = 0, False, False, -1
+    for i in range(brace, len(text)):
+        ch = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                close = i
+                break
+    if close < 0:
+        return None
+    body_end = len(text[:close].rstrip())  # end of the last pack entry
+    nl = "\r\n" if "\r\n" in text else "\n"
+    empty = text[brace + 1:close].strip() == ""
+    line = ("" if empty else ",") + nl + "  " + json.dumps(key, ensure_ascii=False) + ": " + json.dumps(entry, ensure_ascii=False)
+    out = text[:body_end] + line + text[body_end:]
+    try:
+        want = json.loads(text)
+        want.setdefault("packs", {})[key] = entry
+        if json.loads(out) != want:
+            return None
+    except ValueError:
+        return None
+    return out
+
+
+
+def godot_import_then_tests(a, tests: list[str], plan: list[str]) -> None:
+    """Import new PNGs, then run the art suites. A freshly copied PNG has no
+    .import yet, so a suite that loads its texture (FloorVfx.has_pack) fails
+    until Godot imports it: watched 2026-11-14, floor_vfx_test 1 FAIL
+    `pack_impact_flash_steel_pixelfx_drawable` after a --no-godot install.
+    --audio-driver Dummy: these runs must stay silent."""
+    if a.no_godot:
+        plan.append("Godot skipped (--no-godot): the new PNGs are NOT imported yet. Before trusting the art suites run "
+                    "`godot --headless --audio-driver Dummy --path . --import`, then the suites (a Godot slot is shared: ask first)")
+        return
+    rc, out = run([a.godot, "--headless", "--audio-driver", "Dummy", "--path", str(ROOT), "--import"], timeout=600)
+    plan.append("godot --import: " + ("ok" if rc == 0 else "exit %s: %s" % (rc, out.strip()[-200:])))
+    for t in tests:
+        if (ROOT / t).is_file():
+            rc2, out2 = run([a.godot, "--headless", "--audio-driver", "Dummy", "--path", str(ROOT), "-s", "res://" + t], timeout=240)
+            plan.append("%s: %s" % (t, "FAILS=0" if "FAILS=0" in out2 else "see output: " + out2.strip()[-200:]))
+
+
 def cmd_pack(a) -> int:
     data = registry()
     e = entry(data, a.id)
@@ -136,20 +204,20 @@ def cmd_pack(a) -> int:
     for f in files:
         shutil.copy2(cand / f, dest / f)
     if kind != "status":
-        idx = json.loads(index_p.read_text(encoding="utf-8")) if index_p.is_file() else {"packs": {}}
-        idx.setdefault("packs", {})[key] = {k: v for k, v in ie.items() if k != "dir"} | {"dir": pack_id}
-        if "_doc_integrate" not in idx:
-            idx["_doc_integrate"] = "entries added by tools/asset-pipeline/integrate.py carry the candidate's index_entry verbatim; see the registry for provenance"
-        index_p.write_text(json.dumps(idx, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        pack_entry = {"dir": pack_id} | {k: v for k, v in ie.items() if k != "dir"}
+        text = index_p.read_text(encoding="utf-8") if index_p.is_file() else ""
+        new_text = _insert_pack_line(text, key, pack_entry)
+        if new_text is None:
+            # No hand-laid "packs" object to append to: write the file whole.
+            idx = json.loads(text) if text else {"packs": {}}
+            idx.setdefault("packs", {})[key] = pack_entry
+            new_text = json.dumps(idx, ensure_ascii=False, indent=1) + "\n"
+        index_p.write_text(new_text, encoding="utf-8")
     else:
         plan.append("status packs need a hand edit of status/index.json (kind x body) — not automated")
     rc, out = run(PY + [str(ART_CHECK), "candidate", str(dest), "--layer", ie.get("layer", "overlay")] + (["--no-godot"] if a.no_godot else []))
     plan.append("art_check candidate on the installed pack: " + ("PASS" if rc == 0 else "FAIL\n" + out[-400:]))
-    if not a.no_godot:
-        for t in ("tests/unit/art/vfx_pack_test.gd", "tests/unit/art/floor_vfx_test.gd", "tests/unit/art/cast_vfx_test.gd"):
-            if (ROOT / t).is_file():
-                rc2, out2 = run([a.godot, "--headless", "--path", str(ROOT), "-s", "res://" + t], timeout=240)
-                plan.append("%s: %s" % (t, "FAILS=0" if "FAILS=0" in out2 else "see output: " + out2.strip()[-200:]))
+    godot_import_then_tests(a, ["tests/unit/art/vfx_pack_test.gd", "tests/unit/art/floor_vfx_test.gd", "tests/unit/art/cast_vfx_test.gd"], plan)
     ev = write_evidence(a.id.replace(".", "-"), plan)
     plan += record_installed(e, a.id, None, ev, "integrate.py pack -> " + rel(dest), a.by)
     run(PY + [str(REGISTRY)] + ROOT_ARG + ["set-production", a.id, rel(dest)])
@@ -224,10 +292,7 @@ def cmd_clip(a) -> int:
     plan.append("export_sheets --units %s: ok" % a.entity)
     rc, out = run(PY + [str(ART_CHECK), "clip", a.entity, a.clip] + (["--no-godot"] if a.no_godot else []))
     plan.append("art_check clip: " + ("PASS/WARNING" if rc == 0 else "FAIL\n" + out[-400:]))
-    if not a.no_godot:
-        for t in ("tests/unit/art/sheet_export_test.gd", "tests/unit/art/sprite_sheet_test.gd"):
-            rc2, out2 = run([a.godot, "--headless", "--path", str(ROOT), "-s", "res://" + t], timeout=240)
-            plan.append("%s: %s" % (t, "FAILS=0" if "FAILS=0" in out2 else "see output: " + out2.strip()[-200:]))
+    godot_import_then_tests(a, ["tests/unit/art/sheet_export_test.gd", "tests/unit/art/sprite_sheet_test.gd"], plan)
     ev = write_evidence("unit-%s-%s" % (a.entity, a.clip), plan)
     if clip is not None:
         plan += record_installed(e, "unit." + a.entity, a.clip, ev, "integrate.py clip", a.by)
