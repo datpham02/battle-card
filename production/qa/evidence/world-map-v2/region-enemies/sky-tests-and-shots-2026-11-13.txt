@@ -1,0 +1,24 @@
+import done
+== tests/unit/art/sheet_export_test.gd
+FAILS=0
+== tests/unit/art/sprite_sheet_test.gd
+FAILS=0
+== tests/unit/battle/roster_sprite_test.gd
+PASS: test_gale_bird_stands_taller_than_the_normals (elite 79 px, tallest normal 52 px)
+PASS: test_cloud_veil_stands_taller_than_the_normals (elite 69 px, tallest normal 52 px)
+PASS: test_storm_dragon_is_bigger_than_gale_bird (warden 95 px / 2575 opaque, elite 79 px / 2038 opaque)
+PASS: test_storm_dragon_is_bigger_than_cloud_veil (warden 95 px / 2575 opaque, elite 69 px / 1404 opaque)
+FAILS=0
+== tests/unit/battle/unit_sprites_test.gd
+FAILS=0
+== shots
+cloud_sprite: production/qa/evidence/world-map-v2/region-enemies/10-sky-cloud_sprite-idle.png (OK)
+harpy: production/qa/evidence/world-map-v2/region-enemies/10-sky-harpy-idle.png (OK)
+wind_monk: production/qa/evidence/world-map-v2/region-enemies/10-sky-wind_monk-idle.png (OK)
+storm_eagle: production/qa/evidence/world-map-v2/region-enemies/10-sky-storm_eagle-idle.png (OK)
+sky_sentinel: production/qa/evidence/world-map-v2/region-enemies/10-sky-sky_sentinel-idle.png (OK)
+thunder_shaman: production/qa/evidence/world-map-v2/region-enemies/10-sky-thunder_shaman-idle.png (OK)
+gale_bird: production/qa/evidence/world-map-v2/region-enemies/10-sky-gale_bird-idle.png (OK)
+cloud_veil: production/qa/evidence/world-map-v2/region-enemies/10-sky-cloud_veil-idle.png (OK)
+storm_dragon: production/qa/evidence/world-map-v2/region-enemies/10-sky-storm_dragon-idle.png (OK)
+DONE

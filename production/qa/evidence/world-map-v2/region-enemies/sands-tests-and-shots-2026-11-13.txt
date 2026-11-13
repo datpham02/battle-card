@@ -1,0 +1,41 @@
+== tests/unit/art/sheet_export_test.gd
+FAILS=0
+== tests/unit/art/sprite_sheet_test.gd
+FAILS=0
+== tests/unit/battle/roster_sprite_test.gd
+PASS: test_dune_jackal_sheet_has_the_basic_clips
+PASS: test_dune_jackal_faces_left
+PASS: test_sand_beetle_sheet_has_the_basic_clips
+PASS: test_sand_beetle_faces_left
+PASS: test_dust_nomad_sheet_has_the_basic_clips
+PASS: test_dust_nomad_faces_left
+PASS: test_mirage_sprite_sheet_has_the_basic_clips
+PASS: test_mirage_sprite_faces_left
+PASS: test_scarab_guard_sheet_has_the_basic_clips
+PASS: test_scarab_guard_faces_left
+PASS: test_sun_archer_sheet_has_the_basic_clips
+PASS: test_sun_archer_faces_left
+PASS: test_sand_burrower_sheet_has_the_basic_clips
+PASS: test_sand_burrower_faces_left
+PASS: test_scorpion_sheet_has_the_basic_clips
+PASS: test_scorpion_faces_left
+PASS: test_sand_sphinx_sheet_has_the_basic_clips
+PASS: test_sand_sphinx_faces_left
+PASS: test_sand_burrower_stands_taller_than_the_normals (elite 73 px, tallest normal 50 px)
+PASS: test_scorpion_stands_taller_than_the_normals (elite 73 px, tallest normal 50 px)
+PASS: test_sand_sphinx_stands_taller_than_sand_burrower (warden 85 px, elite 73 px)
+PASS: test_sand_sphinx_stands_taller_than_scorpion (warden 85 px, elite 73 px)
+FAILS=0
+== tests/unit/battle/unit_sprites_test.gd
+FAILS=0
+== shots
+sand_beetle: production/qa/evidence/world-map-v2/region-enemies/10-sands-sand_beetle-idle.png (OK)
+dune_jackal: production/qa/evidence/world-map-v2/region-enemies/10-sands-dune_jackal-idle.png (OK)
+dust_nomad: production/qa/evidence/world-map-v2/region-enemies/10-sands-dust_nomad-idle.png (OK)
+mirage_sprite: production/qa/evidence/world-map-v2/region-enemies/10-sands-mirage_sprite-idle.png (OK)
+scarab_guard: production/qa/evidence/world-map-v2/region-enemies/10-sands-scarab_guard-idle.png (OK)
+sun_archer: production/qa/evidence/world-map-v2/region-enemies/10-sands-sun_archer-idle.png (OK)
+sand_burrower: production/qa/evidence/world-map-v2/region-enemies/10-sands-sand_burrower-idle.png (OK)
+scorpion: production/qa/evidence/world-map-v2/region-enemies/10-sands-scorpion-idle.png (OK)
+sand_sphinx: production/qa/evidence/world-map-v2/region-enemies/10-sands-sand_sphinx-idle.png (OK)
+DONE

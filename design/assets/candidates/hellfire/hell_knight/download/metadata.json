@@ -1,0 +1,102 @@
+{
+  "group_id": "0077d47a-11d5-4e97-98af-f5a863f20491",
+  "states": [
+    {
+      "character": {
+        "id": "28dd0f18-c5e2-4766-94d3-f90789b60739",
+        "name": "Idle",
+        "prompt": "heavy knight in charcoal plate armour, about 47 px tall, helmet with two curved dark bronze horns, square cracked plate shield on the far arm, a black greatsword resting on the near shoulder, dull ochre cracks on the breastplate, no visible face, 1 px dark outline, flat shading, transparent background, no ground shadow, no lava glow, no fire, no red, no orange, no gradient",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-12T17:20:46.817115+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "hit": {
+            "south-west": [
+              "Idle/animations/hit/south-west/frame_000.png",
+              "Idle/animations/hit/south-west/frame_001.png",
+              "Idle/animations/hit/south-west/frame_002.png",
+              "Idle/animations/hit/south-west/frame_003.png",
+              "Idle/animations/hit/south-west/frame_004.png",
+              "Idle/animations/hit/south-west/frame_005.png",
+              "Idle/animations/hit/south-west/frame_006.png",
+              "Idle/animations/hit/south-west/frame_007.png",
+              "Idle/animations/hit/south-west/frame_008.png"
+            ]
+          },
+          "idle": {
+            "south-west": [
+              "Idle/animations/idle/south-west/frame_000.png",
+              "Idle/animations/idle/south-west/frame_001.png",
+              "Idle/animations/idle/south-west/frame_002.png",
+              "Idle/animations/idle/south-west/frame_003.png",
+              "Idle/animations/idle/south-west/frame_004.png",
+              "Idle/animations/idle/south-west/frame_005.png",
+              "Idle/animations/idle/south-west/frame_006.png",
+              "Idle/animations/idle/south-west/frame_007.png",
+              "Idle/animations/idle/south-west/frame_008.png"
+            ]
+          },
+          "step": {
+            "south-west": [
+              "Idle/animations/step/south-west/frame_000.png",
+              "Idle/animations/step/south-west/frame_001.png",
+              "Idle/animations/step/south-west/frame_002.png",
+              "Idle/animations/step/south-west/frame_003.png",
+              "Idle/animations/step/south-west/frame_004.png",
+              "Idle/animations/step/south-west/frame_005.png",
+              "Idle/animations/step/south-west/frame_006.png",
+              "Idle/animations/step/south-west/frame_007.png",
+              "Idle/animations/step/south-west/frame_008.png"
+            ]
+          },
+          "windup": {
+            "south-west": [
+              "Idle/animations/windup/south-west/frame_000.png",
+              "Idle/animations/windup/south-west/frame_001.png",
+              "Idle/animations/windup/south-west/frame_002.png",
+              "Idle/animations/windup/south-west/frame_003.png",
+              "Idle/animations/windup/south-west/frame_004.png",
+              "Idle/animations/windup/south-west/frame_005.png",
+              "Idle/animations/windup/south-west/frame_006.png",
+              "Idle/animations/windup/south-west/frame_007.png",
+              "Idle/animations/windup/south-west/frame_008.png"
+            ]
+          },
+          "down": {
+            "south-west": [
+              "Idle/animations/down/south-west/frame_000.png",
+              "Idle/animations/down/south-west/frame_001.png",
+              "Idle/animations/down/south-west/frame_002.png",
+              "Idle/animations/down/south-west/frame_003.png",
+              "Idle/animations/down/south-west/frame_004.png",
+              "Idle/animations/down/south-west/frame_005.png",
+              "Idle/animations/down/south-west/frame_006.png",
+              "Idle/animations/down/south-west/frame_007.png",
+              "Idle/animations/down/south-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-12T17:58:13.337263"
+}

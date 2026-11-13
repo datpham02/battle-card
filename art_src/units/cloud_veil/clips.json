@@ -1,0 +1,99 @@
+{
+  "id": "cloud_veil",
+  "asset": "unit.cloud_veil",
+  "frame": {
+    "w": 80,
+    "h": 80
+  },
+  "facing": "left",
+  "source": "PixelLab character 35004d4d-4743-4f1c-9b9c-419e84f0b2d6 (sky_isles roster, Checkpoint A anchor accepted by the user 2026-11-13), PixMiniMax south-west clips (8 frames) in design/assets/candidates/sky_isles/cloud_veil/download/Idle/animations/<clip>/south-west/, cleaned mechanically (palette snap to the locked colours, clusters < 12 px removed, feet on the bottom row, one horizontal shift per unit from idle frame 0) into design/assets/candidates/sky_isles/cloud_veil/clean-80x80/",
+  "clips": [
+    {
+      "name": "idle",
+      "frames": [
+        "idle/0.png",
+        "idle/1.png",
+        "idle/2.png",
+        "idle/3.png"
+      ],
+      "ms": [
+        250,
+        250,
+        250,
+        250
+      ],
+      "loop": "loop",
+      "note": "src 0/2/4/6"
+    },
+    {
+      "name": "step",
+      "frames": [
+        "step/0.png",
+        "step/1.png",
+        "step/2.png",
+        "step/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": "loop",
+      "note": "src 1/3/5/7, glide ; nominal; the game paces step by the step cooldown"
+    },
+    {
+      "name": "windup",
+      "frames": [
+        "windup/0.png",
+        "windup/1.png",
+        "windup/2.png",
+        "windup/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        0
+      ],
+      "loop": "hold_last",
+      "note": "src 2/4/6/8, robe spread like arms, held"
+    },
+    {
+      "name": "hit",
+      "frames": [
+        "hit/0.png",
+        "hit/1.png",
+        "hit/2.png"
+      ],
+      "ms": [
+        40,
+        40,
+        40
+      ],
+      "loop": "once",
+      "note": "src 3/4/5, veil swings"
+    },
+    {
+      "name": "down",
+      "frames": [
+        "down/0.png",
+        "down/1.png",
+        "down/2.png",
+        "down/3.png",
+        "down/4.png",
+        "down/5.png"
+      ],
+      "ms": [
+        100,
+        120,
+        150,
+        150,
+        150,
+        150
+      ],
+      "loop": "hold_last",
+      "note": "src 2/3/4/5/6/8, folds into a heap of cloud with the veil on top"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+== controls_v3_hud_test
+FAIL: test_status_poison_has_name_and_effect_keys ["poison", ""]
+FAILS=1
+== fate_flow_test
+FAILS=0
+DONE

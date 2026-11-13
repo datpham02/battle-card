@@ -1,0 +1,543 @@
+{
+  "frames": [
+    {
+      "filename": "frost_mage_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "frost_mage_idle_1",
+      "frame": {
+        "x": 95,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "frost_mage_idle_2",
+      "frame": {
+        "x": 190,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "frost_mage_idle_3",
+      "frame": {
+        "x": 285,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "frost_mage_step_0",
+      "frame": {
+        "x": 0,
+        "y": 81,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_step_1",
+      "frame": {
+        "x": 95,
+        "y": 81,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_step_2",
+      "frame": {
+        "x": 190,
+        "y": 81,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_step_3",
+      "frame": {
+        "x": 285,
+        "y": 81,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 162,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_windup_1",
+      "frame": {
+        "x": 95,
+        "y": 162,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_windup_2",
+      "frame": {
+        "x": 190,
+        "y": 162,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_windup_3",
+      "frame": {
+        "x": 285,
+        "y": 162,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 0
+    },
+    {
+      "filename": "frost_mage_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 243,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 40
+    },
+    {
+      "filename": "frost_mage_hit_1",
+      "frame": {
+        "x": 95,
+        "y": 243,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 40
+    },
+    {
+      "filename": "frost_mage_hit_2",
+      "frame": {
+        "x": 190,
+        "y": 243,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 40
+    },
+    {
+      "filename": "frost_mage_down_0",
+      "frame": {
+        "x": 0,
+        "y": 324,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "frost_mage_down_1",
+      "frame": {
+        "x": 95,
+        "y": 324,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 120
+    },
+    {
+      "filename": "frost_mage_down_2",
+      "frame": {
+        "x": 190,
+        "y": 324,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 150
+    },
+    {
+      "filename": "frost_mage_down_3",
+      "frame": {
+        "x": 285,
+        "y": 324,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 150
+    },
+    {
+      "filename": "frost_mage_down_4",
+      "frame": {
+        "x": 380,
+        "y": 324,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 150
+    },
+    {
+      "filename": "frost_mage_down_5",
+      "frame": {
+        "x": 475,
+        "y": 324,
+        "w": 94,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 94,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 94,
+        "h": 80
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_frost_mage_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 569,
+      "h": 404
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 12,
+        "to": 14,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 15,
+        "to": 20,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "frost_mage",
+      "asset": "unit.frost_mage",
+      "facing": "left",
+      "frame": {
+        "w": 94,
+        "h": 80
+      },
+      "gutter": 1,
+      "columns": 6,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold_last",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#2E3450",
+        "#4C5266",
+        "#6E7282",
+        "#A8B0C8",
+        "#EFE6D2"
+      ]
+    }
+  }
+}

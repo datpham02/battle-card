@@ -1,0 +1,17 @@
+== tests/unit/combat/multi_enemy_resolver_test.gd
+FAIL C: a hit on unit 1 does not interrupt unit 0's swing  
+FAIL D: execute reads each unit's own HP  
+FAIL G: unit 0 dead: its actor stops, the match goes on  
+FAIL G: unit 0's cell is free once it died  
+FAIL G: unit 1 still takes hits; its death ends the fight  
+FAILS=5 PASSES=40
+ERROR: 8 resources still in use at exit (run with --verbose for details).
+== tests/unit/combat/pattern_hellfire_group_d_test.gd
+FAIL phase: the first warning of p2 is the eruption (on_enter) ["lord_cinder_lane"]
+FAIL p2: the first counted cast is the eruption ["lord_cinder_lane", "lord_brand", "lord_eruption_call", "lord_brand", "lord_cinder_lane", "lord_eruption_call"]
+FAILS=2
+== tests/unit/combat/pattern_roster_fairness_test.gd
+FAILS=0
+== tests/unit/ui/terminology_scan_test.gd
+FAILS=0
+DONE

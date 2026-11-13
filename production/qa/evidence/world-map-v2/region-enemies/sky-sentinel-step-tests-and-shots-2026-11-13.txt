@@ -1,0 +1,12 @@
+import done
+== tests/unit/art/sheet_export_test.gd
+FAILS=0
+== tests/unit/art/sprite_sheet_test.gd
+FAILS=0
+== tests/unit/battle/roster_sprite_test.gd
+FAILS=0
+== tests/unit/battle/unit_sprites_test.gd
+FAILS=0
+== shot
+sky_sentinel: production/qa/evidence/world-map-v2/region-enemies/10-sky-sky_sentinel-idle.png (OK)
+DONE

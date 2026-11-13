@@ -79,3 +79,28 @@ Columns: 8
 110 114 130	Cleric robe shadow #6E7282
 184 188 200	Cleric lead grey #B8BCC8
 226 227 234	Cleric ivory-grey #E2E3EA
+# 2026-11-13 Region enemy rosters, 6 regions (user-approved baseline "Palette: mở rộng +17, tổng 64";
+# production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md section 7.2). Region colours of
+# RENDER-STANDARDS section 4 / art bible section 5.2 wardens; no signal colour, no hero block colour. 47 -> 64 entries (the cap).
+# Hellfire (ochre shared with Dungeon chains)
+ 36  32  30	Hellfire char #24201E
+122  90  54	Hellfire dark bronze #7A5A36
+138 106  64	Ochre dull #8A6A40 (hellfire cracks, dungeon chains)
+# Sands
+168 154 128	Sands beige #A89A80
+110  98  72	Sands beige dark #6E6248
+ 79 138 128	Sands jade dull #4F8A80
+# Swamp (moss and mushroom ramps reused from the forest roster)
+ 78  76  60	Swamp olive #4E4C3C
+ 90  74  58	Swamp mud #5A4A3A
+# Dungeon
+ 62  68  80	Dungeon grey-blue #3E4450
+107  74  58	Dungeon rust #6B4A3A
+# Ice Tower (no cyan: #A6EEFF stays Frozen-only)
+ 46  52  80	Ice night blue #2E3450
+ 76  82 102	Ice slate #4C5266
+168 176 200	Ice rime light #A8B0C8
+# Sky Isles
+ 90  80  72	Sky island rock #5A5048
+106 112 128	Sky storm grey #6A7080
+184 168  96	Sky storm yellow dull #B8A860

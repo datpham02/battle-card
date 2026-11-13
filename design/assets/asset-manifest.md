@@ -1,6 +1,6 @@
 # Asset Manifest (GENERATED)
 
-> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-12. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
+> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-13. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
 
 Lifecycle: `candidate → accepted → installed → approved`; `legacy` = replaced. **installed is not approved**: `Accepted` / `Approved` columns show what the user recorded; `unknown` means no record exists.
 
@@ -8,9 +8,9 @@ Lifecycle: `candidate → accepted → installed → approved`; `legacy` = repla
 
 | Total | Candidate | Accepted | Installed | Approved | Legacy |
 |---|---|---|---|---|---|
-| 181 | 1 | 0 | 157 | 19 | 4 |
+| 237 | 1 | 0 | 157 | 75 | 4 |
 
-Acceptance recorded: unknown 152, pending 11, accepted 18, rejected 0.
+Acceptance recorded: unknown 152, pending 11, accepted 74, rejected 0.
 
 ## Needs the user's decision
 
@@ -28,6 +28,7 @@ Acceptance recorded: unknown 152, pending 11, accepted 18, rejected 0.
 | `env.forest.env_support_forest_roots` | conflicting records: design/art/forest-arena-gap-plan-2026-11-06.md:75 "Còn chờ duyệt: #4 rễ góc" vs assets/art/env/forest/region.json support._doc_kit "2026-11-06 PixelLab kit (user-approved): pillar, arch, roots, ferns". Confirm whether this piece is approved. |
 | `ui.climb.stairs` | six wired stair PNGs stay (stair_step_0..3, stair_body, stair_root) and are still untracked. stair_segment.png was unreferenced and was deleted 2026-11-11. acceptance is still unknown. |
 | `ui.icons_55` | direction decision pending: slice1-combat-ui-assets.md:220 "two candidate sets: 12x12 pixel-grid set and the 55 px OSFE-style set; direction decision pending" (the 55 px set is the one in game) |
+| `unit.ghost_elite` | bible 5.6 accessory (<= 8x8, upper half) not added yet: needs the user (mechanical crop from mist_lord crown or none) |
 
 ## Units (heroes, enemies, bosses)
 
@@ -49,6 +50,62 @@ Acceptance recorded: unknown 152, pending 11, accepted 18, rejected 0.
 | `unit.sat_thu` | ASSET-031 | hero | 96x70 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/assassin-assets.md` |
 | `unit.tho_san` | ASSET-032 | hero | 96x72 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 5?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/hunter-assets.md` |
 | `unit.wolf_alpha` | ASSET-028 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-04 | idle 4?, step 4?, windup 4?, howl 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
+| `unit.ash_golem` | unit.ash_golem | monster | 72x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.ash_phoenix` | unit.ash_phoenix | elite | 84x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.ember_hound` | unit.ember_hound | monster | 68x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.fire_eater` | unit.fire_eater | elite | 92x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.flame_cultist` | unit.flame_cultist | monster | 70x54 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.hell_knight` | unit.hell_knight | monster | 68x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.imp` | unit.imp | monster | 70x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.inferno_lord` | unit.inferno_lord | boss | 108x86 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.magma_slug` | unit.magma_slug | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.dune_jackal` | unit.dune_jackal | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.dust_nomad` | unit.dust_nomad | monster | 70x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.mirage_sprite` | unit.mirage_sprite | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.sand_beetle` | unit.sand_beetle | monster | 70x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.sand_burrower` | unit.sand_burrower | elite | 80x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.sand_sphinx` | unit.sand_sphinx | boss | 106x86 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.scarab_guard` | unit.scarab_guard | monster | 80x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.scorpion` | unit.scorpion | elite | 80x81 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.sun_archer` | unit.sun_archer | monster | 74x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.bog_hound` | unit.bog_hound | monster | 66x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.bog_rat` | unit.bog_rat | monster | 74x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.leap_frog` | unit.leap_frog | elite | 80x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.marsh_toad` | unit.marsh_toad | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.mire_slug` | unit.mire_slug | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.reed_witch` | unit.reed_witch | monster | 76x53 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.spore_cap` | unit.spore_cap | elite | 80x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.swamp_lizard` | unit.swamp_lizard | monster | 68x53 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.toad_matriarch` | unit.toad_matriarch | boss | 104x84 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.bat_swarm` | unit.bat_swarm | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.cultist` | unit.cultist | monster | 72x53 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.ghost` | unit.ghost | monster | 72x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.jailer` | unit.jailer | elite | 84x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.ogre_king` | unit.ogre_king | boss | 96x84 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.rat_king_guard` | unit.rat_king_guard | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.reacter` | unit.reacter | monster | 66x55 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.skeleton` | unit.skeleton | monster | 80x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.slime` | unit.slime | monster | 72x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.zombie` | unit.zombie | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.frost_mage` | unit.frost_mage | elite | 94x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.frost_sprite` | unit.frost_sprite | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.fuse_golem` | unit.fuse_golem | monster | 64x54 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.ghost_elite` | unit.ghost_elite | monster | 72x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.ice_golem` | unit.ice_golem | monster | 66x53 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.mist_lord` | unit.mist_lord | boss | 96x91 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.rime_archer` | unit.rime_archer | monster | 74x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.snow_wolf` | unit.snow_wolf | monster | 72x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.stone_sentry` | unit.stone_sentry | monster | 70x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.wisp` | unit.wisp | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.cloud_sprite` | unit.cloud_sprite | monster | 64x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.cloud_veil` | unit.cloud_veil | elite | 80x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.gale_bird` | unit.gale_bird | elite | 90x81 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.harpy` | unit.harpy | monster | 74x56 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.sky_sentinel` | unit.sky_sentinel | monster | 64x53 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.storm_dragon` | unit.storm_dragon | boss | 100x96 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.storm_eagle` | unit.storm_eagle | monster | 74x55 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.thunder_shaman` | unit.thunder_shaman | monster | 80x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.wind_monk` | unit.wind_monk | monster | 64x53 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
 
 Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` needs a decision.
 

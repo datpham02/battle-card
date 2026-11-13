@@ -507,7 +507,7 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 | Kẻ Gác | Thiết kế một dòng (nhận dạng ở nửa trên) | Lấy / Bỏ (`08-warden-*`) |
 |---|---|---|
 | Phù thủy rừng | Gầy; mặt nạ mỏ chim có sừng hươu (12 px trên), áo choàng lá rách, gậy cầm sát người, thấp hơn sừng | Lấy: sừng, mỏ, áo lá, tóc ngà. Bỏ: gậy cao quá đầu, hoa nhỏ, lá thò ra > 40 px |
-| Quỷ Khổng Lồ | Đá xám, vai rộng 40, đầu nhỏ 12 px, vương miện + râu ngà, xích gỉ ochre #8A6A40 vắt ngực và cổ tay | Lấy: xích, vương miện, râu, giáp vai. Bỏ: vòng cột đá lơ lửng (tranh Mảnh Gốc) |
+| Quỷ Khổng Lồ | Đá xám, vai rộng 40, đầu nhỏ 12 px, vương miện + râu ngà, xích gỉ ochre #8A6A40 vắt ngực và cổ tay. **Sprite cài 2026-11-13 (người dùng chốt):** v2 remap cơ học da đá xám, xích ngực/cổ tay thành xám tối thay vì ochre — đánh đổi tạm chấp nhận, không tô tay lại | Lấy: xích, vương miện, râu, giáp vai. Bỏ: vòng cột đá lơ lửng (tranh Mảnh Gốc) |
 | Chúa Tể Băng Giá (Frost Lord; trước 2026-11-01 là Chúa Tể Sương) | Cao hẹp, áo xanh đêm rũ, cổ lông Ngà, vương miện gai băng, mũ không mặt; gai băng chỉ ở một vai | Lấy: cổ lông, vương miện, mũ trống. Bỏ: băng xanh sáng (va Đóng Băng, khối Sát thủ), khói áo > 40 px |
 | Cóc Chúa | Tròn, rộng 40, thấp; 3–4 nấm xám-tím #6A5868 trên đầu, rêu nhỏ giọt; tay sau kéo | Lấy: dáng tròn, nấm, bụng sáng. Bỏ: dây chuyền ô vuông ngà (đọc như Khối), nấm kem to |
 | Nhân Sư Cát | **Ngồi thẳng**; đầu người đội sừng, đai ochre + ngọc #4F8A80, hai cánh phiến đá gập sau vai, đuôi vòng | Lấy: mũ sừng, cánh phiến. Bỏ: dáng nằm ngang (> 70 px), trang sức vàng (Ánh Lưới), gạch lơ lửng |

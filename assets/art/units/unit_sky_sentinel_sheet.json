@@ -1,0 +1,544 @@
+{
+  "frames": [
+    {
+      "filename": "sky_sentinel_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 250
+    },
+    {
+      "filename": "sky_sentinel_idle_1",
+      "frame": {
+        "x": 65,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 250
+    },
+    {
+      "filename": "sky_sentinel_idle_2",
+      "frame": {
+        "x": 130,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 250
+    },
+    {
+      "filename": "sky_sentinel_idle_3",
+      "frame": {
+        "x": 195,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 250
+    },
+    {
+      "filename": "sky_sentinel_step_0",
+      "frame": {
+        "x": 0,
+        "y": 54,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_step_1",
+      "frame": {
+        "x": 65,
+        "y": 54,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_step_2",
+      "frame": {
+        "x": 130,
+        "y": 54,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_step_3",
+      "frame": {
+        "x": 195,
+        "y": 54,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 108,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_windup_1",
+      "frame": {
+        "x": 65,
+        "y": 108,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_windup_2",
+      "frame": {
+        "x": 130,
+        "y": 108,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_windup_3",
+      "frame": {
+        "x": 195,
+        "y": 108,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 0
+    },
+    {
+      "filename": "sky_sentinel_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 162,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 40
+    },
+    {
+      "filename": "sky_sentinel_hit_1",
+      "frame": {
+        "x": 65,
+        "y": 162,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 40
+    },
+    {
+      "filename": "sky_sentinel_hit_2",
+      "frame": {
+        "x": 130,
+        "y": 162,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 40
+    },
+    {
+      "filename": "sky_sentinel_down_0",
+      "frame": {
+        "x": 0,
+        "y": 216,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 100
+    },
+    {
+      "filename": "sky_sentinel_down_1",
+      "frame": {
+        "x": 65,
+        "y": 216,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 120
+    },
+    {
+      "filename": "sky_sentinel_down_2",
+      "frame": {
+        "x": 130,
+        "y": 216,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 150
+    },
+    {
+      "filename": "sky_sentinel_down_3",
+      "frame": {
+        "x": 195,
+        "y": 216,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 150
+    },
+    {
+      "filename": "sky_sentinel_down_4",
+      "frame": {
+        "x": 260,
+        "y": 216,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 150
+    },
+    {
+      "filename": "sky_sentinel_down_5",
+      "frame": {
+        "x": 325,
+        "y": 216,
+        "w": 64,
+        "h": 53
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 53
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 53
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_sky_sentinel_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 389,
+      "h": 269
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 12,
+        "to": 14,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 15,
+        "to": 20,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "sky_sentinel",
+      "asset": "unit.sky_sentinel",
+      "facing": "left",
+      "frame": {
+        "w": 64,
+        "h": 53
+      },
+      "gutter": 1,
+      "columns": 6,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold_last",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#2C2925",
+        "#4A4640",
+        "#5A5048",
+        "#6A6B62",
+        "#8A6A40",
+        "#EFE6D2"
+      ]
+    }
+  }
+}

@@ -1,0 +1,34 @@
+import done
+== tests/unit/art/sheet_export_test.gd
+FAILS=0
+== tests/unit/art/sprite_sheet_test.gd
+FAILS=0
+== tests/unit/battle/roster_sprite_test.gd
+PASS: test_spore_cap_sheet_has_the_basic_clips
+PASS: test_spore_cap_faces_left
+PASS: test_leap_frog_sheet_has_the_basic_clips
+PASS: test_leap_frog_faces_left
+PASS: test_toad_matriarch_sheet_has_the_basic_clips
+PASS: test_toad_matriarch_faces_left
+PASS: test_spore_cap_stands_taller_than_the_normals (elite 78 px, tallest normal 52 px)
+PASS: test_inferno_lord_is_bigger_than_fire_eater (warden 79 px / 2362 opaque, elite 75 px / 2798 opaque)
+PASS: test_inferno_lord_is_bigger_than_ash_phoenix (warden 79 px / 2362 opaque, elite 73 px / 1480 opaque)
+PASS: test_sand_sphinx_is_bigger_than_sand_burrower (warden 85 px / 2589 opaque, elite 73 px / 2049 opaque)
+PASS: test_sand_sphinx_is_bigger_than_scorpion (warden 85 px / 2589 opaque, elite 73 px / 2031 opaque)
+PASS: test_toad_matriarch_is_bigger_than_spore_cap (warden 75 px / 3529 opaque, elite 78 px / 2028 opaque)
+PASS: test_toad_matriarch_is_bigger_than_leap_frog (warden 75 px / 3529 opaque, elite 62 px / 1237 opaque)
+PASS: test_leap_frog_stands_taller_than_the_low_normals (elite 62 px, tallest low normal 44 px)
+FAILS=0
+== tests/unit/battle/unit_sprites_test.gd
+FAILS=0
+== shots
+bog_rat: production/qa/evidence/world-map-v2/region-enemies/10-swamp-bog_rat-idle.png (OK)
+mire_slug: production/qa/evidence/world-map-v2/region-enemies/10-swamp-mire_slug-idle.png (OK)
+swamp_lizard: production/qa/evidence/world-map-v2/region-enemies/10-swamp-swamp_lizard-idle.png (OK)
+marsh_toad: production/qa/evidence/world-map-v2/region-enemies/10-swamp-marsh_toad-idle.png (OK)
+reed_witch: production/qa/evidence/world-map-v2/region-enemies/10-swamp-reed_witch-idle.png (OK)
+bog_hound: production/qa/evidence/world-map-v2/region-enemies/10-swamp-bog_hound-idle.png (OK)
+spore_cap: production/qa/evidence/world-map-v2/region-enemies/10-swamp-spore_cap-idle.png (OK)
+leap_frog: production/qa/evidence/world-map-v2/region-enemies/10-swamp-leap_frog-idle.png (OK)
+toad_matriarch: production/qa/evidence/world-map-v2/region-enemies/10-swamp-toad_matriarch-idle.png (OK)
+DONE

@@ -1,0 +1,80 @@
+# Master Reference — Toad Matriarch (`toad_matriarch`)
+
+> One file per character (P1 convention). Facts come from the registry entry `unit.toad_matriarch`, `art_src/units/toad_matriarch/clips.json`, the sheet JSON and the region roster report; every claim names its source. **Approval lives in the registry** (`asset_registry.py show unit.toad_matriarch`); this file explains the character so new generations stay consistent. Unknown = no record exists; do not fill it from memory.
+
+## 1. Identity
+
+| Field | Value |
+|---|---|
+| Registry id | `unit.toad_matriarch` |
+| Type / tier | unit / boss |
+| Role | Enemy — warden / boss (boss t1–2, bog_spread + seal_caster), Đầm Lầy Độc; stands on ONE cell (block brain) |
+| Name (VI) | Cóc Chúa (`strings.csv` `boss.toad_matriarch.name`) |
+| Spec / report | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` §3 (design row), region Checkpoint A/B sections |
+| Design (prompt text, anchor accepted 2026-11-13) | enormous round toad queen seated low and wide (art bible §5.2 row): three or four grey-violet mushrooms on her head, olive warty body, moss dripping from her back, big pale ivory throat and belly, one arm trailing behind; no ivory square chain. |
+| Silhouette / proportions | 79x75 south-west, 7 colours; warden, low and wide by design: bigger than the elites by body mass (3529 opaque px vs 2028), user-accepted rule 2026-11-13. |
+| Likeness check | Closest: the 08-warden-swamp concept → round body and mushrooms kept, square chain dropped. |
+
+## 2. Approved references and anchor
+
+| Field | Value |
+|---|---|
+| Concept reference | none (text design; region direction §3 of the report, art bible §5.2 warden row for the warden) |
+| Anchor image (canonical frame) | `art_src/units/toad_matriarch/idle/0.png` — idle frame 0 of the installed source (= cleaned south-west rotation); every new clip is generated from this frame or from the PixelLab character below |
+| Rotation set | `design/assets/candidates/swamp/toad_matriarch/rot-v2/` (south, south-west, west) |
+| Anchor approval | **accepted** — user 2026-11-13 "Yes, 45 clip" after the Checkpoint A review (measurements, likeness, line-up)
+- v1 anchor `4e08740c-dd9a-4bd2-8c42-60c9e0de3a57` retired (size / likeness), kept on PixelLab, not used |
+
+## 3. Facing and frame
+
+| Field | Value |
+|---|---|
+| Sheet facing | left (`clips.json` facing; the engine flips by negative width for the other side) |
+| PixelLab view / direction | low top-down / south-west |
+| Frame | 104x84 art px (widened from the tier minimum where a clip moves sideways or spreads) |
+| Anchor rule | feet (lowest opaque row) on the last pixel row, body centred at x = w/2 from idle frame 0 (one shift per unit); ≥ 1 transparent px left / right / top |
+| Sheet | `assets/art/units/unit_toad_matriarch_sheet.png`, one row per clip, 1 px gutter, Aseprite-array JSON |
+
+## 4. Palette constraints
+
+- Locked at generation (≤ 8 of `tessera_master.gpl`, Đầm Lầy rows added 2026-11-13): #1B1722, #3A4538, #4E4C3C, #5A4A3A, #5E6B55, #6A5868, #EFE6D2
+- Dark region (V ≤ 40, black water): every body carries a light mass in the upper half (ivory belly / throat, light mushroom #8E8296, light moss #5E6B55). Olive #4E4C3C and mud #5A4A3A are the region colours; the forest moss and mushroom ramps are reused; the mire-cell colours #4E4A2A / #A8C83A are never on a body. No red: open mouths the model drew red were snapped to the palette.
+
+## 5. PixelLab configuration and style reference
+
+| Field | Value |
+|---|---|
+| Character id | `c773c9a5-4885-4fae-b6bd-0859e54be123` |
+| Configuration that produced the anchor | `create_character_pro_flash`, canvas by tier (64 / 80 / 96), low top-down, 8 directions, palette locked (max 8), style_image = Goblin Scout v3 south rotation (`3b9516c8`), colour transfer off; prompt = the region's Checkpoint A table in the report |
+| Clips | `animate_character` mode pixminimax, south-west, 8 frames, 1 gen each; motion-only prompts (no negative words) |
+| Post-generation (free, mechanical only) | palette snap to the locked colours, 8-connected clusters < 12 px removed, feet re-planted on the last row, one horizontal shift per unit, cropped to the frame (same logic as `tools/qa/sprite_clean.gd`); never hand-painted detail (user rule) |
+
+## 6. Animation contract
+
+Required for a block-brain enemy: `idle`, `step`, `windup`, `hit`, `down` (the special clips are only requested for pattern brains).
+
+| Clip | Frames | ms per frame | Loop | Status | Acceptance | Generation | Note |
+|---|---|---|---|---|---|---|---|
+| `idle` | 4 | 250, 250, 250, 250 | loop | installed | anchor accepted 2026-11-13; clip approved by the user 2026-11-13 | 1 gen pixminimax SW 8f | src 0/2/4/6, throat pouch, mushrooms wobble |
+| `step` | 4 | 100, 100, 100, 100 | loop | installed | anchor accepted 2026-11-13; clip approved by the user 2026-11-13 | 1 gen pixminimax SW 8f | src 1/3/5/7, waddle ; nominal; the game paces step by the step cooldown |
+| `windup` | 4 | 100, 100, 100, 0 | hold_last | installed | anchor accepted 2026-11-13; clip approved by the user 2026-11-13 | 1 gen pixminimax SW 8f | src 2/4/6/8, throat puffed huge, arm raised, held |
+| `hit` | 3 | 40, 40, 40 | once | installed | anchor accepted 2026-11-13; clip approved by the user 2026-11-13 | 1 gen pixminimax SW 8f | src 6/7/8 (2-5 had a baked dark blob) |
+| `down` | 6 | 100, 120, 150, 150, 150, 150 | hold_last | installed | anchor accepted 2026-11-13; clip approved by the user 2026-11-13 | 1 gen pixminimax SW 8f | src 2/3/4/5/6/8, slumps onto her belly |
+
+## 7. Visual constraints (what a new generation must keep)
+
+- Same anchor and character id; same canvas, feet row and feet x.
+- Identity in the upper half: 79x75 south-west, 7 colours.
+- 1 px closed Ink outline; banded shading; no glow, no gradient, no anti-aliasing fringe.
+- Facing stays left in every frame; frames with baked effects (slashes, projectiles, debris) are dropped, never kept (see the clip notes).
+
+## 8. Generation lineage
+
+- 2026-11-13 anchor → character `c773c9a5-4885-4fae-b6bd-0859e54be123` (6–7 gen) after a retired v1 (6–7 gen) — ACCEPTED ("Yes, 45 clip")
+- 2026-11-13 5 clips (5 gen) → clean-104x84 → sheet
+
+## 9. Approval history
+
+| Date | Event | By | Evidence |
+|---|---|---|---|
+| 2026-11-13 | anchor accepted, clips generated, sheet installed | user / session | report; in-game `production/qa/evidence/world-map-v2/region-enemies/10-swamp-toad_matriarch-idle.png` |

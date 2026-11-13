@@ -1,0 +1,544 @@
+{
+  "frames": [
+    {
+      "filename": "scorpion_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 250
+    },
+    {
+      "filename": "scorpion_idle_1",
+      "frame": {
+        "x": 81,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 250
+    },
+    {
+      "filename": "scorpion_idle_2",
+      "frame": {
+        "x": 162,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 250
+    },
+    {
+      "filename": "scorpion_idle_3",
+      "frame": {
+        "x": 243,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 250
+    },
+    {
+      "filename": "scorpion_step_0",
+      "frame": {
+        "x": 0,
+        "y": 82,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_step_1",
+      "frame": {
+        "x": 81,
+        "y": 82,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_step_2",
+      "frame": {
+        "x": 162,
+        "y": 82,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_step_3",
+      "frame": {
+        "x": 243,
+        "y": 82,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 164,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_windup_1",
+      "frame": {
+        "x": 81,
+        "y": 164,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_windup_2",
+      "frame": {
+        "x": 162,
+        "y": 164,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_windup_3",
+      "frame": {
+        "x": 243,
+        "y": 164,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 0
+    },
+    {
+      "filename": "scorpion_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 246,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 40
+    },
+    {
+      "filename": "scorpion_hit_1",
+      "frame": {
+        "x": 81,
+        "y": 246,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 40
+    },
+    {
+      "filename": "scorpion_hit_2",
+      "frame": {
+        "x": 162,
+        "y": 246,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 40
+    },
+    {
+      "filename": "scorpion_down_0",
+      "frame": {
+        "x": 0,
+        "y": 328,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 100
+    },
+    {
+      "filename": "scorpion_down_1",
+      "frame": {
+        "x": 81,
+        "y": 328,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 120
+    },
+    {
+      "filename": "scorpion_down_2",
+      "frame": {
+        "x": 162,
+        "y": 328,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 150
+    },
+    {
+      "filename": "scorpion_down_3",
+      "frame": {
+        "x": 243,
+        "y": 328,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 150
+    },
+    {
+      "filename": "scorpion_down_4",
+      "frame": {
+        "x": 324,
+        "y": 328,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 150
+    },
+    {
+      "filename": "scorpion_down_5",
+      "frame": {
+        "x": 405,
+        "y": 328,
+        "w": 80,
+        "h": 81
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 81
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 81
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_scorpion_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 485,
+      "h": 409
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 12,
+        "to": 14,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 15,
+        "to": 20,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "scorpion",
+      "asset": "unit.scorpion",
+      "facing": "left",
+      "frame": {
+        "w": 80,
+        "h": 81
+      },
+      "gutter": 1,
+      "columns": 6,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold_last",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#2C2925",
+        "#4A4640",
+        "#4F8A80",
+        "#6E6248",
+        "#A89A80",
+        "#EFE6D2"
+      ]
+    }
+  }
+}

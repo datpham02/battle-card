@@ -1,0 +1,99 @@
+{
+  "id": "ghost_elite",
+  "asset": "unit.ghost_elite",
+  "frame": {
+    "w": 72,
+    "h": 52
+  },
+  "facing": "left",
+  "source": "Script variant of unit.ghost (art bible 5.6, user baseline 2026-11-13 \"ghost_elite su dung bien the script cua ghost, khong gen than moi\"): every ghost frame recoloured mechanically #6A6B62->#4C5266, #4A4640->#2E3450, #2C2925->#2E3450, #6B4A3A->#6E7282 (cold night-blue shroud, frost-grey chain) into design/assets/candidates/ice_tower/ghost_elite/script-variant/. No accessory yet (see the report).",
+  "clips": [
+    {
+      "name": "idle",
+      "frames": [
+        "idle/0.png",
+        "idle/1.png",
+        "idle/2.png",
+        "idle/3.png"
+      ],
+      "ms": [
+        250,
+        250,
+        250,
+        250
+      ],
+      "loop": "loop",
+      "note": "src 0/2/4/6, hover"
+    },
+    {
+      "name": "step",
+      "frames": [
+        "step/0.png",
+        "step/1.png",
+        "step/2.png",
+        "step/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": "loop",
+      "note": "src 1/3/5/7, glide ; nominal; the game paces step by the step cooldown"
+    },
+    {
+      "name": "windup",
+      "frames": [
+        "windup/0.png",
+        "windup/1.png",
+        "windup/2.png",
+        "windup/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        0
+      ],
+      "loop": "hold_last",
+      "note": "src 2/4/6/8, arms spread, held"
+    },
+    {
+      "name": "hit",
+      "frames": [
+        "hit/0.png",
+        "hit/1.png",
+        "hit/2.png"
+      ],
+      "ms": [
+        40,
+        40,
+        40
+      ],
+      "loop": "once",
+      "note": "src 3/4/5"
+    },
+    {
+      "name": "down",
+      "frames": [
+        "down/0.png",
+        "down/1.png",
+        "down/2.png",
+        "down/3.png",
+        "down/4.png",
+        "down/5.png"
+      ],
+      "ms": [
+        100,
+        120,
+        150,
+        150,
+        150,
+        150
+      ],
+      "loop": "hold_last",
+      "note": "src 2/3/4/5/6/8, empty shroud heap"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+import done
+== tests/unit/art/sheet_export_test.gd
+FAILS=0
+== tests/unit/art/sprite_sheet_test.gd
+FAILS=0
+== tests/unit/battle/roster_sprite_test.gd
+PASS: test_frost_mage_stands_taller_than_the_normals (elite 74 px, tallest normal 52 px)
+PASS: test_mist_lord_is_bigger_than_frost_mage (warden 88 px / 1959 opaque, elite 74 px / 1969 opaque)
+FAILS=0
+== tests/unit/battle/unit_sprites_test.gd
+FAILS=0
+== shots
+frost_sprite: production/qa/evidence/world-map-v2/region-enemies/10-ice-frost_sprite-idle.png (OK)
+wisp: production/qa/evidence/world-map-v2/region-enemies/10-ice-wisp-idle.png (OK)
+stone_sentry: production/qa/evidence/world-map-v2/region-enemies/10-ice-stone_sentry-idle.png (OK)
+snow_wolf: production/qa/evidence/world-map-v2/region-enemies/10-ice-snow_wolf-idle.png (OK)
+fuse_golem: production/qa/evidence/world-map-v2/region-enemies/10-ice-fuse_golem-idle.png (OK)
+rime_archer: production/qa/evidence/world-map-v2/region-enemies/10-ice-rime_archer-idle.png (OK)
+ice_golem: production/qa/evidence/world-map-v2/region-enemies/10-ice-ice_golem-idle.png (OK)
+ghost_elite: production/qa/evidence/world-map-v2/region-enemies/10-ice-ghost_elite-idle.png (OK)
+frost_mage: production/qa/evidence/world-map-v2/region-enemies/10-ice-frost_mage-idle.png (OK)
+mist_lord: production/qa/evidence/world-map-v2/region-enemies/10-ice-mist_lord-idle.png (OK)
+DONE

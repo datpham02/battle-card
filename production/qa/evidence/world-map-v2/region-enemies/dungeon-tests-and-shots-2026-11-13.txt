@@ -1,0 +1,23 @@
+import done
+== tests/unit/art/sheet_export_test.gd
+FAILS=0
+== tests/unit/art/sprite_sheet_test.gd
+FAILS=0
+== tests/unit/battle/roster_sprite_test.gd
+PASS: test_jailer_stands_taller_than_the_normals (elite 69 px, tallest normal 52 px)
+PASS: test_ogre_king_is_bigger_than_jailer (warden 81 px / 3146 opaque, elite 69 px / 1930 opaque)
+FAILS=0
+== tests/unit/battle/unit_sprites_test.gd
+FAILS=0
+== shots
+skeleton: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-skeleton-idle.png (OK)
+zombie: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-zombie-idle.png (OK)
+bat_swarm: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-bat_swarm-idle.png (OK)
+slime: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-slime-idle.png (OK)
+ghost: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-ghost-idle.png (OK)
+reacter: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-reacter-idle.png (OK)
+cultist: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-cultist-idle.png (OK)
+rat_king_guard: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-rat_king_guard-idle.png (OK)
+jailer: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-jailer-idle.png (OK)
+ogre_king: production/qa/evidence/world-map-v2/region-enemies/10-dungeon-ogre_king-idle.png (OK)
+DONE

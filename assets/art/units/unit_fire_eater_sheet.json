@@ -1,0 +1,543 @@
+{
+  "frames": [
+    {
+      "filename": "fire_eater_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fire_eater_idle_1",
+      "frame": {
+        "x": 93,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fire_eater_idle_2",
+      "frame": {
+        "x": 186,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fire_eater_idle_3",
+      "frame": {
+        "x": 279,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fire_eater_step_0",
+      "frame": {
+        "x": 0,
+        "y": 81,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_step_1",
+      "frame": {
+        "x": 93,
+        "y": 81,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_step_2",
+      "frame": {
+        "x": 186,
+        "y": 81,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_step_3",
+      "frame": {
+        "x": 279,
+        "y": 81,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 162,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_windup_1",
+      "frame": {
+        "x": 93,
+        "y": 162,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_windup_2",
+      "frame": {
+        "x": 186,
+        "y": 162,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_windup_3",
+      "frame": {
+        "x": 279,
+        "y": 162,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 0
+    },
+    {
+      "filename": "fire_eater_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 243,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 40
+    },
+    {
+      "filename": "fire_eater_hit_1",
+      "frame": {
+        "x": 93,
+        "y": 243,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 40
+    },
+    {
+      "filename": "fire_eater_hit_2",
+      "frame": {
+        "x": 186,
+        "y": 243,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 40
+    },
+    {
+      "filename": "fire_eater_down_0",
+      "frame": {
+        "x": 0,
+        "y": 324,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fire_eater_down_1",
+      "frame": {
+        "x": 93,
+        "y": 324,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 120
+    },
+    {
+      "filename": "fire_eater_down_2",
+      "frame": {
+        "x": 186,
+        "y": 324,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 150
+    },
+    {
+      "filename": "fire_eater_down_3",
+      "frame": {
+        "x": 279,
+        "y": 324,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 150
+    },
+    {
+      "filename": "fire_eater_down_4",
+      "frame": {
+        "x": 372,
+        "y": 324,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 150
+    },
+    {
+      "filename": "fire_eater_down_5",
+      "frame": {
+        "x": 465,
+        "y": 324,
+        "w": 92,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 80
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_fire_eater_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 557,
+      "h": 404
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 12,
+        "to": 14,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 15,
+        "to": 20,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "fire_eater",
+      "asset": "unit.fire_eater",
+      "facing": "left",
+      "frame": {
+        "w": 92,
+        "h": 80
+      },
+      "gutter": 1,
+      "columns": 6,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold_last",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#24201E",
+        "#2C2925",
+        "#4A4640",
+        "#7A5A36",
+        "#8A6A40",
+        "#EFE6D2"
+      ]
+    }
+  }
+}

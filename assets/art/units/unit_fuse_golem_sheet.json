@@ -1,0 +1,543 @@
+{
+  "frames": [
+    {
+      "filename": "fuse_golem_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fuse_golem_idle_1",
+      "frame": {
+        "x": 65,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fuse_golem_idle_2",
+      "frame": {
+        "x": 130,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fuse_golem_idle_3",
+      "frame": {
+        "x": 195,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 250
+    },
+    {
+      "filename": "fuse_golem_step_0",
+      "frame": {
+        "x": 0,
+        "y": 55,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_step_1",
+      "frame": {
+        "x": 65,
+        "y": 55,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_step_2",
+      "frame": {
+        "x": 130,
+        "y": 55,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_step_3",
+      "frame": {
+        "x": 195,
+        "y": 55,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 110,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_windup_1",
+      "frame": {
+        "x": 65,
+        "y": 110,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_windup_2",
+      "frame": {
+        "x": 130,
+        "y": 110,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_windup_3",
+      "frame": {
+        "x": 195,
+        "y": 110,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 0
+    },
+    {
+      "filename": "fuse_golem_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 165,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 40
+    },
+    {
+      "filename": "fuse_golem_hit_1",
+      "frame": {
+        "x": 65,
+        "y": 165,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 40
+    },
+    {
+      "filename": "fuse_golem_hit_2",
+      "frame": {
+        "x": 130,
+        "y": 165,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 40
+    },
+    {
+      "filename": "fuse_golem_down_0",
+      "frame": {
+        "x": 0,
+        "y": 220,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 100
+    },
+    {
+      "filename": "fuse_golem_down_1",
+      "frame": {
+        "x": 65,
+        "y": 220,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 120
+    },
+    {
+      "filename": "fuse_golem_down_2",
+      "frame": {
+        "x": 130,
+        "y": 220,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 150
+    },
+    {
+      "filename": "fuse_golem_down_3",
+      "frame": {
+        "x": 195,
+        "y": 220,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 150
+    },
+    {
+      "filename": "fuse_golem_down_4",
+      "frame": {
+        "x": 260,
+        "y": 220,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 150
+    },
+    {
+      "filename": "fuse_golem_down_5",
+      "frame": {
+        "x": 325,
+        "y": 220,
+        "w": 64,
+        "h": 54
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 54
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 54
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_fuse_golem_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 389,
+      "h": 274
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 12,
+        "to": 14,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 15,
+        "to": 20,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "fuse_golem",
+      "asset": "unit.fuse_golem",
+      "facing": "left",
+      "frame": {
+        "w": 64,
+        "h": 54
+      },
+      "gutter": 1,
+      "columns": 6,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold_last",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#2E3450",
+        "#4A4640",
+        "#4C5266",
+        "#6A6B62",
+        "#EFE6D2"
+      ]
+    }
+  }
+}
