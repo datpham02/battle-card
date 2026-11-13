@@ -400,12 +400,25 @@ Hồi quy: `region_traits_test`, `trait_test`, `traits2_test`, `zone_traits_test
 `final_boss_phase_test`, `multi_enemy_agents_test`, `multi_enemy_hud_test`.
 Bằng chứng hình ảnh: một trận 2 quái trong đó mỗi con mang một trait PER-UNIT khác nhau.
 
-### 3.7 Quyết định cần người dùng chốt trước khi code
+### 3.7 Quyết định đã chốt (người dùng, 2026-11-14: "theo khuyến nghị")
 
-1. **D4**: loại formation có trait SHARED trùng (đề xuất) hay đếm tham chiếu từng trait?
-2. **D7**: banner pha chỉ cho unit 0 (đề xuất) hay mang tên quái?
-3. **Phạm vi**: làm cả 6 bước, hay chỉ bước 1–3 (hạ tầng + quy gán) rồi dừng xem lại?
+| # | Quyết định | Chốt |
+|---|---|---|
+| D4 | Trait SHARED trùng trong một formation | **Loại formation đó kèm cảnh báo**, như Phase 0 đã loại formation sai. Không đếm tham chiếu 11 trait |
+| D7 | Banner đổi pha khi có nhiều quái | **Chỉ unit 0 được `announce_phase`.** Banner pha là ngôn ngữ của trận boss một mình; hai banner cùng số là nhiễu |
+| Phạm vi | Làm tới đâu rồi dừng | **Bước 1–3 rồi dừng xem lại** (hạ tầng + hook theo key + quy gán đúng chủ). Bước 4–6 là lượt duyệt riêng |
 
+Lý do chọn bước 1–3: đó là phần xoá được 5 trong 7 mối nguy ở §3.2 (H2, H5, H6, H7, và H1 ở mức hạ tầng), và là
+phần **không đổi hành vi nào của trận 1v1**. Bước 4 (chặn formation) đổi dữ liệu nào hợp lệ, bước 5 (banner) đổi
+thứ người chơi nhìn thấy, bước 6 (HUD) đổi 16 chỗ gọi — cả ba đều đáng được xem lại riêng.
+
+### 3.8 Chưa bắt đầu — điều kiện khởi động
+
+1. Commit chung phải lên main trước. Phase 5 đụng đúng những file đang chờ trong đó; bắt đầu sớm là tạo thêm một
+   lớp chồng chưa commit nữa, đúng cái đã làm tối nay mất nhiều giờ.
+2. Bàn giao 5 file trait từ monster-skills (`trait_host.gd`, `boss_trait.gd`, `burrow.gd`, `rebirth.gd`,
+   `shroud.gd`). Mọi thay đổi đang có trong chúng là Phase 0 của họ.
+3. `combat_view.gd` rảnh (phiên character commit F2 xong).
 
 ---
 
