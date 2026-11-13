@@ -229,10 +229,11 @@ static func on_boss_windup() -> Array[Dictionary]:
 	return [{"op": "play", "id": "warn.boss.windup", "cells": 1, "step": 0, "tag": swing_tag(SIDE_ENEMY)}]
 
 
-## [signal CombatView.match_ended]: drops pending cues, stops combat voices, plays the stinger.
-static func on_match_ended(player_won: bool) -> Array[Dictionary]:
-	return [{"op": "cancel_all"}, {"op": "stop_all"},
-		{"op": "play", "id": "flow.victory" if player_won else "flow.defeat", "cells": 1, "step": 0, "tag": ""}]
+## [signal CombatView.match_ended]: drops pending cues and stops combat voices. The victory / defeat stinger is music
+## ([method MusicPlayer.play_stinger], from [AudioRig]); the old flow.victory / flow.defeat chimes are no longer played
+## (user 2026-11-13: they clashed with the stinger). [param _player_won] is kept for callers.
+static func on_match_ended(_player_won: bool) -> Array[Dictionary]:
+	return [{"op": "cancel_all"}, {"op": "stop_all"}]
 
 
 ## A Block went into a hold slot ([signal HoldSlots.slot_filled]); pitch tier by its cell count.

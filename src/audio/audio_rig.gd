@@ -4,6 +4,8 @@ extends Node
 ## owns the [AudioDirector] in the tree, applies the audio settings (and re-applies them on
 ## [signal SettingsStore.audio_changed]), attaches a [UiAudioBridge] to the flow and a [CombatAudioBridge] to every
 ## battle a RunController spawns, and pauses / backgrounds the director with the app. Gameplay never calls it.
+## It also owns the [MusicPlayer] (docs/design/audio/music-plan.md): explore outside a match, battle / boss while a
+## match is fought, the victory / defeat stinger when it ends.
 ## The director is injected ([member director]) or the shared one ([method AudioDirector.shared], silent when headless).
 
 ## The flow node name (GameFlow adds the rig as a child named so).
@@ -19,6 +21,9 @@ var _flow: GameFlow = null
 var _ui: UiAudioBridge = null
 var _settings: SettingsStore = null
 var _combat: CombatAudioBridge = null
+var _music: MusicPlayer = null
+## True from a battle's spawn until its match ends (the music follows the fight, not the flow phase alone).
+var _match_live: bool = false
 
 
 func _init(with_director: AudioDirector = null) -> void:
@@ -33,10 +38,14 @@ func _ready() -> void:
 	if director.get_parent() == null:
 		add_child(director)
 	_flow = get_parent() as GameFlow
+	_music = MusicPlayer.new(director.get_bank(), director.is_silent())
+	add_child(_music)
 	_ui = UiAudioBridge.new(director)
 	if _flow != null:
 		_ui.attach_flow(_flow)
 		_flow.controller_changed.connect(_on_controller_changed)
+		_flow.phase_changed.connect(_on_flow_phase_changed)
+		_update_music.call_deferred()
 	# GameFlow resolves its settings later in its own _ready.
 	_bind_settings.call_deferred()
 
@@ -51,17 +60,22 @@ func _notification(what: int) -> void:
 		return
 	match what:
 		NOTIFICATION_APPLICATION_PAUSED:
-			director.set_background(true)
+			_set_background(true)
 		NOTIFICATION_APPLICATION_FOCUS_OUT:
 			if not keep_audio_unfocused:
-				director.set_background(true)
+				_set_background(true)
 		NOTIFICATION_APPLICATION_RESUMED, NOTIFICATION_APPLICATION_FOCUS_IN:
-			director.set_background(false)
+			_set_background(false)
 
 
 ## The UI bridge (screens call tap / toggle / back on it).
 func get_ui() -> UiAudioBridge:
 	return _ui
+
+
+## The music player.
+func get_music() -> MusicPlayer:
+	return _music
 
 
 ## The current battle's bridge, or null.
@@ -93,6 +107,8 @@ func _on_controller_changed(controller: RunController) -> void:
 	director.reset_combat()
 	director.set_paused(false)
 	if controller == null:
+		_match_live = false
+		_update_music()
 		return
 	_ui.attach_controller(controller)
 	if not controller.battle_spawned.is_connected(_on_battle_spawned):
@@ -107,3 +123,36 @@ func _on_battle_spawned(battle: Node) -> void:
 	if view == null:
 		return
 	_combat = CombatAudioBridge.attach_view(director, view)
+	_match_live = true
+	if view.has_signal("match_ended") and not view.match_ended.is_connected(_on_match_ended):
+		view.match_ended.connect(_on_match_ended)
+	_update_music()
+
+
+func _set_background(background: bool) -> void:
+	director.set_background(background)
+	if _music != null:
+		_music.set_background(background)
+
+
+func _on_flow_phase_changed(phase: int) -> void:
+	if phase != GameFlow.Phase.IN_NODE:
+		_match_live = false
+	_update_music()
+
+
+func _on_match_ended(player_won: bool, _player_hp: float) -> void:
+	_match_live = false
+	_music.play_stinger(player_won)
+	_update_music()
+
+
+# Asks the music player for the track the flow state wants now.
+func _update_music() -> void:
+	if _music == null or _flow == null:
+		return
+	var fighting: bool = _match_live and _flow.get_phase() == GameFlow.Phase.IN_NODE
+	var kind: String = ""
+	if fighting and _flow.get_run() != null:
+		kind = str(_flow.get_run().current_node().get("kind", ""))
+	_music.request(MusicPlayer.track_for(fighting, kind))

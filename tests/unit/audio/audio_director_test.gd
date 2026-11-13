@@ -126,8 +126,8 @@ func test_stop_tag_and_cancel_all() -> void:
 	d.apply([{"op": "at", "id": "skill.generic.hit", "at": 9.0, "cells": 1, "step": 0, "tag": "cast:3"},
 		{"op": "play", "id": "skill.generic.windup", "cells": 1, "step": 0, "tag": ""}])
 	d.apply(AudioEventRules.on_match_ended(true))
-	ck("match end: pending dropped, combat voices stopped, stinger plays on Music", d.pending().is_empty()
-		and d.get_pool().active_count("Skill") == 0 and _plays(d, "flow.victory").size() == 1)
+	ck("match end: pending dropped, combat voices stopped, no flow chime", d.pending().is_empty()
+		and d.get_pool().active_count("Skill") == 0 and _plays(d, "flow.victory").is_empty())
 	d.free()
 
 

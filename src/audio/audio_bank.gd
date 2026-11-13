@@ -131,6 +131,12 @@ func duck() -> Dictionary:
 	return _data.get("duck", {"sec": 0.0, "buses_db": {}})
 
 
+## The music settings {crossfade_sec, stop_fade_sec, stinger_hold_sec, tracks: {id: {file, loop_start, gain_db}}}
+## read by [MusicPlayer]; empty when the data has none.
+func music() -> Dictionary:
+	return _data.get("music", {}) if _data.get("music", {}) is Dictionary else {}
+
+
 ## Event kinds that make an impact group the cast's big final layer (burst, drop_final).
 func final_kinds() -> Array[String]:
 	var out: Array[String] = []
@@ -263,6 +269,14 @@ func validate(check_files: bool = true) -> Array[String]:
 	for c: String in (_data.get("cues", {}) as Dictionary).keys():
 		if not has_event(cue(c)):
 			errors.append("cues.%s: unknown event '%s'" % [c, cue(c)])
+	var tracks: Variant = music().get("tracks", {})
+	if tracks is Dictionary:
+		for t: String in (tracks as Dictionary).keys():
+			var f: String = str((tracks as Dictionary)[t].get("file", "")) if (tracks as Dictionary)[t] is Dictionary else ""
+			if f.is_empty():
+				errors.append("music.tracks.%s: no file" % t)
+			elif check_files and not FileAccess.file_exists(f) and not ResourceLoader.exists(f):
+				errors.append("music.tracks.%s: missing file %s" % [t, f])
 	var arche: Dictionary = _data.get("archetypes", {})
 	for d: String in arche.keys():
 		for i: String in (arche[d] as Dictionary).keys():

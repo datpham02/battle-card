@@ -46,6 +46,9 @@ func _run() -> void:
 	await _frames(1)
 	ck("navigation plays a UI tap", director.play_log.slice(before).any(func(e: Dictionary) -> bool: return e["id"] == "ui.tap"))
 	flow.close_settings()
+	var music: MusicPlayer = rig.get_music()
+	ck("the rig owns a music player that plays explore outside a match", music != null and music.current_track() == "explore",
+		music.current_track() if music != null else "none")
 	var controller: RunController = flow.enter_test_floor(RunConfig.load_from_file())
 	for i: int in 600:
 		if controller.get_state().get_phase() == RunState.Phase.PLAYING:
@@ -54,6 +57,7 @@ func _run() -> void:
 	ck("the test floor reaches PLAYING", controller.get_state().get_phase() == RunState.Phase.PLAYING)
 	var view: CombatView = controller.get_battle().get_node(RunController.COMBAT_VIEW_NODE) as CombatView if controller.get_battle() != null else null
 	ck("a test floor spawned a battle", view != null)
+	ck("a fought match switches the music to battle", music.current_track() == "battle", music.current_track())
 	var bridge: CombatAudioBridge = rig.get_combat_bridge()
 	ck("the battle got a CombatAudioBridge under the battle root", bridge != null and bridge.get_parent() == controller.get_battle())
 	ck("the director reads that battle's arbiter clock", director.clock_fn.is_valid() and view != null
@@ -84,6 +88,10 @@ func _run() -> void:
 		return e["op"] == "play" and e["id"] == "combat.hit.player"))
 	await _frames(30)
 	ck("the battle keeps running with audio attached", not view.get_state().is_player_dead())
+	rig._on_match_ended(true, 1.0)
+	ck("the match end plays the victory stinger and leaves the battle loop", music.current_track() == ""
+		and music.voices().any(func(v: Dictionary) -> bool: return v["track"] == "victory")
+		and music.wanted_track() == "explore", str(music.voices()))
 	root.remove_child(main)
 	main.free()
 	await _frames(2)

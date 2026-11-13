@@ -183,8 +183,9 @@ func test_boss_warnings() -> void:
 
 func test_match_end_and_ui() -> void:
 	var v: Array[Dictionary] = AudioEventRules.on_match_ended(true)
-	ck("match end: cancel pending, stop combat, victory stinger", v[0]["op"] == "cancel_all" and v[1]["op"] == "stop_all" and v[2]["id"] == "flow.victory")
-	ck("defeat stinger", AudioEventRules.on_match_ended(false)[2]["id"] == "flow.defeat")
+	ck("match end: cancel pending, stop combat, no chime (the stinger is music)", v.size() == 2 and v[0]["op"] == "cancel_all"
+		and v[1]["op"] == "stop_all")
+	ck("a lost match plays no chime either", AudioEventRules.on_match_ended(false).size() == 2)
 	var p: Array[Dictionary] = AudioEventRules.on_block_pickup(bank, 5)
 	ck("Block pickup pitch tier by size (5 cells = L)", p[0]["id"] == "block.pickup" and p[0]["tier"] == "L")
 	ck("UI cue", AudioEventRules.ui("card.choose")[0]["id"] == "card.choose")

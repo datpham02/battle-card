@@ -69,6 +69,39 @@
 			"Music": -8.0
 		}
 	},
+	"music": {
+		"_doc": "Music (docs/design/audio/music-plan.md), played by MusicPlayer on the Music bus. One track per flow state; loop_start = where the loop jumps back to (the file ends at the loop end). Raw takes and song ids: audio_src/pixellab/music/SOURCES.md.",
+		"crossfade_sec": 1.5,
+		"stop_fade_sec": 0.6,
+		"stinger_hold_sec": 7.0,
+		"tracks": {
+			"explore": {
+				"file": "res://assets/audio/music/music_forest_explore.ogg",
+				"loop_start": 56.355,
+				"gain_db": 0.0
+			},
+			"battle": {
+				"file": "res://assets/audio/music/music_forest_battle.ogg",
+				"loop_start": 52.57,
+				"gain_db": 0.0
+			},
+			"boss": {
+				"file": "res://assets/audio/music/music_boss.ogg",
+				"loop_start": 43.282,
+				"gain_db": 0.0
+			},
+			"victory": {
+				"file": "res://assets/audio/music/music_victory.ogg",
+				"loop_start": -1,
+				"gain_db": 0.0
+			},
+			"defeat": {
+				"file": "res://assets/audio/music/music_defeat.ogg",
+				"loop_start": -1,
+				"gain_db": 0.0
+			}
+		}
+	},
 	"timing": {
 		"latency_lead_max_sec": 0.08,
 		"group_epsilon_sec": 0.001,
