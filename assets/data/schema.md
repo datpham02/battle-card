@@ -603,13 +603,22 @@ The pool is every `implemented` card; the roll (`RewardRoller.roll(cards, config
 
 ## `characters.json` (Story 018, read by `src/run/character_config.gd`, class CharacterConfig)
 
-Playable classes. Pure data; the stats and starter deck enter the match through `match_params["character"]` (GameFlow -> RunController -> CombatView). No character chosen = the plain combat.json player (old numbers).
+Playable characters. **There is no class system and no weapon system** — a character is the unit of
+identity (user decision 2026-10-22, `design/game-brief.md` "Nhân vật (018, 021) — không có lớp"; the
+audit in `docs/design/character-system/CHARACTER-SYSTEM-REDESIGN.md` confirms nothing in the repo
+implements one). Pure data; the stats and starter deck enter the match through
+`match_params["character"]` (GameFlow -> RunController -> CombatView). No character chosen = the plain
+combat.json player (old numbers).
+
+> `cast_presentation: "weapon"` in `cards.json` is **animation routing**, not equipment: it picks
+> which cast clip the body plays. It is unrelated to this file.
 
 | Key | Type | Meaning |
 |---|---|---|
 | `default_character` | string | Id used by `CharacterConfig.default_id()`; unknown/absent -> the first character |
-| `characters[].id` | string | Unique id (duplicate -> warning, later dropped) |
-| `characters[].name_key` / `desc_key` | translation keys | Class name and short description (`character.<id>.name` / `.desc`) |
+| `characters[].id` | string | Unique id (duplicate -> warning, later dropped). **Permanent: never rename one.** `run_session.gd` drops a saved run whose character id is unknown, and `progress_state.gd` (v8) keys Pact level and `runs_won:<id>` on it |
+| `characters[].name_key` / `desc_key` | translation keys | Character name and short description (`character.<id>.name` / `.desc`) |
+| `characters[].identity` | object (optional) | **F1, pillar 1.** `{lore_key, personality_key, playstyle_key, block_material_key, accent_color, portrait, select_art}`. See the identity table below. Absent or malformed -> warning and the empty identity; `CharacterConfig.get_character()` ALWAYS returns a full identity dictionary, so a view never tests for the block |
 | `characters[].max_hp` | number | Player max and start HP; clamped >= 1 |
 | `characters[].step_cooldown_mult` | number | Multiplies the board-scaled player step cooldown (0.9 = 10 % faster steps); <= 0 -> 1. The boss's own step cooldown is NOT affected |
 | `characters[].focus_max_sec` | number | Real seconds one Focus lasts (overrides cards.json `focus.focus_max_sec`); clamped >= 0 |
@@ -617,6 +626,30 @@ Playable classes. Pure data; the stats and starter deck enter the match through 
 | `characters[].passive_name_key` / `passive_desc_key` | translation keys | Passive name / description for the select screen (`passive.<id>.name` / `.desc`) |
 | `characters[].starter_deck` | array of card ids | Deck of the match; unknown card -> warning and dropped, empty -> cards.json `default_deck` |
 | `characters[].unlock_by` | string (optional) | Story 037: id of the achievement that unlocks the character (`achievements.json` rewards list it); absent = open from the start. The old static `unlocked` flag is gone: `CharacterConfig.set_unlock_source(fn)` decides (no source = everything unlocked), `get_character(id)` returns the computed `unlocked` and `unlock_by` |
+
+**`characters[].identity` (F1 of the character-system redesign, approved 2026-11-13).** Pillar 1
+"Identity": what makes a character recognisable without a class or weapon label. Nothing here is
+gameplay — no value is read by combat. Source material: `design/world-context.md` §6 (five explorers,
+approved 2026-10-27).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `lore_key` | translation key | Two or three sentences: who they were before the Cataclysm and why they climb (`character.<id>.lore`) |
+| `personality_key` | translation key | One line of temperament (`character.<id>.personality`) |
+| `playstyle_key` | translation key | One player-facing line: how this character is played (`character.<id>.playstyle`) |
+| `block_material_key` | translation key | What this character's blocks are made of (`character.<id>.block_material`). From `world-context.md` §6: picking up and placing blocks is the main verb, so each character's blocks must look different |
+| `accent_color` | HTML colour | Card frame, passive cue tint, icon tint. Unparsable -> warning and `CharacterConfig.FALLBACK_ACCENT` (`#EFE6D2`, HudSkin.IVORY). Red is reserved for enemy telegraphs; the player HP green is reserved too |
+| `portrait` / `select_art` | `res://` path or `""` | `""` while the art does not exist yet (produced in F9). A NON-EMPTY path that is missing on disk -> warning and cleared, so the select screen falls back to the body sheet instead of drawing nothing |
+
+Every `*_key` field names its own character (`character.<id>.<field>`); `character_identity_test.gd`
+fails a key that points at another character's text, which is the failure a plain "the key exists"
+check cannot see. That test also gates: all four keys present and non-empty in **both** locales, lore
+longer than a stub, lore/personality/playstyle unique across characters, accents valid, non-fallback
+and far enough apart to tell two cards apart, art paths empty-or-existing, and malformed blocks
+degrading to the full empty identity rather than null.
+
+Shipped identity values: `kiem_si` `#8FA8BE` steel · `phap_su` `#E08A2E` ember · `sat_thu` `#6FD8E8`
+keen ice · `tho_san` `#7FA64B` wood and cord · `giao_si` `#C08FE8` stained glass.
 
 Passive params: `second_wind {heal_after_match}` extra HP after a won match (added before the max clamp); `wide_caster {min_cells, duration_mult}` player swings over `min_cells` or more cells wind up `duration_mult` times as long; `quick_blade {max_cells, damage_mult}` player hits over `max_cells` or fewer cells deal `damage_mult` times the final damage. Passives only affect the player.
 
@@ -1152,3 +1185,84 @@ Design: `docs/design/world-map-v2/` (01 game design, 02 regions, 03 encounters, 
 ### Run save v8 (`RunSession.SAVE_VERSION` 8; `MIN_LOADABLE_VERSION` 8: v5-v7 runs take the `needs_restart` path)
 
 New keys on top of v7: `map_graph` (the `MapGraph.to_dict()` of the region: `schema` 2, `source` "v1"\|"v2", `region_id`, `floor`, `seed`, `depths`, `lanes` [{id, archetype, order}], `nodes` {id: {id, depth, lane, slot, kind, match_id, reward_tier, modifiers, objective, tags, tier?, gold_mult?, relic_offer?}}, `edges` [[from, to]], `rule` {id, gauge}), `rule_state` {id, gauge}, `objectives_met` [node id], `luck_extra` (float), `forge_state` {node, free_left}. For a v2 region the graph is the truth and `map` is rebuilt from it on load (`RunSession.columns_from_graph`: depth = column, screen order = node index, edges = `next`); a v1 region keeps `map` as before and wraps it (`MapGraph.from_v1_columns`, node ids `c<column>n<index>`). A saved graph that fails `MapValidator.validate` drops the run; an unknown `rule_state.id` drops the rule state; the gauge is clamped.
+
+## Multi-enemy encounters, Phase 0 (2026-11-13): `chapters.json` `formations` / `pools.formation`, match keys `enemies` / `attack_slots` / `hp_budget_mult`
+
+Design: `docs/design/world-map-v2/MULTI-ENEMY-ENCOUNTER-AUDIT.md` (sections 5, 8.4) and the decision change in
+`03-encounter-system.md` section 1. Code: `src/run/formation_rules.gd` (class FormationRules, pure validator),
+`ChaptersConfig` (`formation_ids / has_formation / get_formation / formation_pools / get_formation_match_raw /
+formation_problems / set_formation_lookup`), `RunConfig` (whitelist + `from_node`). **Phase 0 is data only: the combat
+does not read `enemies` yet** (a formation node today plays its first enemy exactly as that match). The shipped
+`chapters.json` carries no `formations` block yet, so it loads exactly as before (`formation_problems() == []`).
+
+Per chapter, optional, kept APART from `matches` / `match_ids` / `pools` (every map generator, validator and test sees
+the data it saw before):
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `formations` | object formation id -> block | The chapter's multi-enemy encounters. An id that is also a match id is refused. A block that fails ANY rule below is DROPPED (warning + `formation_problems()`), never clamped | `{}` |
+| `formations.<fid>.type` | `normal` \| `hard` \| `elite` \| `boss` | Encounter type (design label; maps to the node kinds battle / danger / miniboss / boss) | required |
+| `.name_key` | string | strings.csv key of the encounter name | `formation.<fid>.name` |
+| `.arena` | arena block (`{shape, variant?}` or direct `{side_cols, side_rows, missing_cells}`) | The encounter's board (overrides every template's `arena`) | the first enemy's `arena` |
+| `.attack_slots` | int, 1..units | How many units may be in WINDUP / WARNING at once (the attack tokens of the audit, section 6.2; read from Phase 3) | 1 |
+| `.hp_budget_mult` | number > 0 | Multiplier on the encounter's total HP budget (read from Phase 3) | 1.0 |
+| `.enemies` | array, 1..4 | The units, in index order (index 0 = the primary unit, `Side.ENEMY` in the audit's keying) | required |
+| `.enemies[].id` | match id of the SAME chapter | The unit's template: that match block's `boss_*` keys, `brain` / `enemy`, `traits`, `boss_defense`… | required |
+| `.enemies[].slot` | string | Spawn slot name (arena `spawn_slots`, Phase 3+); unknown names fall back to the nearest fitting anchor | `""` |
+| `.enemies[].role` | `attacker` \| `tank` \| `support` \| `disruptor` \| `""` | Design / display label, no logic. Another value warns and clears | `""` |
+| `.enemies[].required` | bool | Counts toward victory; at least one unit of a formation must be required | `true` |
+| `.enemies[].hp_mult`, `.tempo_mult` | number > 0 | Per-unit multipliers applied AFTER `region_normalize` x `floor_scaling` (Phase 3) | 1.0 |
+| `.enemies[].defense_add` | number | Added to the unit's flat defense (Phase 3) | 0 |
+| `.enemies[].traits` | array of `{id, params}` | Extra traits of that unit only (Phase 5) | `[]` |
+| `.enemies[].spawn_at` | — | NOT supported in Phase 0 (roadmap step 7): refused with a problem line | — |
+| `pools.formation` | object tier (`"0"`..) -> array of formation ids | Draw pool of formations per tier (no generator reads it before roadmap step 6). Unknown / invalid ids are dropped with a warning. Stored as `formation_pools`, not inside `pools` | `{}` |
+
+Layout rules (`FormationRules.check_layout`, audit section 8.4; `real` = real cells of one half of the arena, a
+`variant: true` arena counted minus `arenas.json rules.variant_change_max`): units <= 4; occupied cells (sum of the
+templates' footprints: a pattern enemy's `enemy_skills.json footprint`, else 1) <= 5; units <= 2 when `real` <= 9
+(`square`), <= 3 when `real` <= 16, else <= 4; occupied cells x 3 <= `real`; `real` - occupied >= 6; a multi-cell unit
+(2x2 warden) with any other unit only on `boss_hall` / `oasis`; an arena that is neither a known shape nor a valid
+direct block fails the check. Examples (per the audit's sample formations, section 7.2):
+
+```jsonc
+"formations": {
+  "hf_patrol": {"type": "normal", "arena": {"shape": "forge"}, "attack_slots": 1,
+    "enemies": [{"id": "imp", "slot": "front_top", "role": "attacker"},
+                {"id": "ember_hound", "slot": "front_bottom", "role": "attacker", "hp_mult": 0.9}]},
+  "hf_siege": {"type": "hard", "arena": {"shape": "caldera"}, "attack_slots": 2,
+    "enemies": [{"id": "hell_knight", "slot": "front_mid", "role": "tank"},
+                {"id": "flame_cultist", "slot": "back_top", "role": "disruptor"},
+                {"id": "imp", "slot": "back_bottom", "role": "attacker", "hp_mult": 0.7}]}
+},
+"pools": {"battle": {...}, "formation": {"0": ["hf_patrol"], "1": ["hf_patrol", "hf_siege"]}}
+```
+
+**Match keys** (`RunConfig.MATCH_KEYS`, carried ONLY when the data has them, so a plain match keeps exactly its old
+keys; `RunConfig.clean_match` of a flat config cleans them structurally, the chapter rules above run only in
+`ChaptersConfig`):
+
+| Key | Type | Meaning | Default |
+|---|---|---|---|
+| `enemies` | array of cleaned entries: `FormationRules.ENTRY_KEYS` (`id, slot, role, required, hp_mult, defense_add, tempo_mult, traits`) + **Phase 1 `RESOLVED_KEYS`** (`template_id, max_hp, defense, brain, enemy, footprint`) | The formation's units. An entry without `id` or a non-array drops the whole key with a warning. Resolved keys written by `RunConfig.from_node` (below); a flat config that writes none gets the match's own numbers (`max_hp` = `boss_max_hp`, `defense` = `boss_defense`, `block`, `""`, `[[0, 0]]`); a written `max_hp` <= 0, a `pattern` brain without `enemy`, an unknown brain or a footprint without `[0, 0]` fall back the same way (warning) | absent |
+| `attack_slots` | int >= 1 | see above | absent |
+| `hp_budget_mult` | number > 0 | see above | absent |
+
+`RunConfig.from_node(chapters, region, <formation id>, kind, seed, floor, …)` plays the formation's raw match
+(`ChaptersConfig.get_formation_match_raw`): a deep copy of the FIRST enemy's match block (so unit 0's `boss_*`, brain
+and traits are that template's and `region_normalize` / `floor_scaling` / danger traits / profile patches / Kiep apply
+to it exactly as to a match), with `id` / `name_key` / `arena` of the formation and `enemies` / `attack_slots` /
+`hp_budget_mult` on top. Every other id goes through `get_match_raw` as before.
+
+**Phase 1 resolution (`RunConfig._resolve_enemies`, design 3.3), one number per unit:** right after the floor scaling,
+entry 0's `hp_mult` / `defense_add` / `traits` are folded INTO the raw match (`boss_max_hp` x hp_mult, `boss_defense` +
+defense_add, traits merged by id), so danger traits, profile patches and Kiep see the unit-0 numbers; entries 1.. are
+resolved from their own template with the SAME `region_normalize` / `floor_scaling` rows: `max_hp` = template
+`boss_max_hp` x normalize.hp_mult x floor.hp_mult x `hp_mult`; `defense` = max(max(template `boss_defense` +
+normalize.defense_add, 0) + floor.defense_add, 0) + `defense_add` (>= 0); `brain` / `enemy` from the template
+(`pattern` only with an enemy id); `footprint` = `ChaptersConfig.footprint_of(template)` (the `enemy_skills.json`
+footprint of a pattern enemy, else `[[0, 0]]`); `traits` = template traits + entry traits, deduplicated by id. At the
+end (after Kiep) entry 0 is DERIVED from the final raw match (`max_hp` = `boss_max_hp`, `defense` = `boss_defense`,
+brain / enemy / footprint / traits of the match), so `enemies[0].max_hp == boss_max_hp` by construction. Profile
+modifiers and Kiep reach unit 0 only (a per-unit `modifier_target` is a Phase 3 decision). `floor < 0` = no scaling
+for every unit. `CombatState.from_match_params(grid, player_max_hp, match_params, …)` builds unit 0 as `_init` and one
+unit per further entry from these keys, without any lookup; the combat does not call it before Phase 3.

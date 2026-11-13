@@ -1,0 +1,188 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "from_centre",
+    "sky_hover_sec": 0.7,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (5, 0), (6, 0), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(5, 1)]",
+      "clock": 1.9,
+      "hit": true,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 0)]",
+      "clock": 1.93,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(4, 0)]",
+      "clock": 1.96,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(6, 0)]",
+      "clock": 1.99,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 4,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.thien_quang.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "at": 1.9,
+      "cells": 1,
+      "clock": 1.9,
+      "handle": 2,
+      "id": "skill.card.thien_quang.impact",
+      "local": 1.88333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 1.9,
+      "handle": 3,
+      "id": "combat.hit.enemy",
+      "local": 1.88333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 1.93,
+      "cells": 1,
+      "clock": 1.93,
+      "handle": 2,
+      "id": "skill.card.thien_quang.impact",
+      "local": 1.91666666666666,
+      "op": "merge",
+      "retier": false,
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.96,
+      "cells": 1,
+      "clock": 1.96,
+      "handle": 4,
+      "id": "skill.card.thien_quang.impact",
+      "local": 1.95,
+      "op": "play",
+      "step": 2,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.99,
+      "cells": 1,
+      "clock": 1.99,
+      "handle": 4,
+      "id": "skill.card.thien_quang.impact",
+      "local": 1.98333333333333,
+      "op": "merge",
+      "retier": false,
+      "step": 3,
+      "tag": "cast:1",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 1.2,
+      "events": [
+        {
+          "at": 1.9,
+          "cells": "[(5, 1)]",
+          "kind": "drop",
+          "step": 0
+        },
+        {
+          "at": 1.93,
+          "cells": "[(5, 0)]",
+          "kind": "drop",
+          "step": 1
+        },
+        {
+          "at": 1.96,
+          "cells": "[(4, 0)]",
+          "kind": "drop",
+          "step": 2
+        },
+        {
+          "at": 1.99,
+          "cells": "[(6, 0)]",
+          "kind": "drop",
+          "step": 3
+        }
+      ]
+    }
+  ],
+  "shape": "t4",
+  "skill": "thien_quang",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.thien_quang.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 2.5,
+      "id": "skill.card.thien_quang.impact",
+      "loop": false,
+      "start": 1.9,
+      "tier": "S"
+    },
+    {
+      "end": 2.5,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 1.9,
+      "tier": "S"
+    },
+    {
+      "end": 2.56666666666666,
+      "id": "skill.card.thien_quang.impact",
+      "loop": false,
+      "start": 1.96666666666666,
+      "tier": "S"
+    }
+  ]
+}

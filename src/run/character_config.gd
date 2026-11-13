@@ -1,7 +1,9 @@
 class_name CharacterConfig
 extends RefCounted
-## Playable characters (classes) from assets/data/characters.json (Story 018): base stats, a
+## Playable characters from assets/data/characters.json (Story 018): identity, base stats, a
 ## pluggable passive (see PassiveRegistry) and a starter deck. Pure data: no scene access.
+## There is no class and no weapon system: a character IS the unit of identity (user decision
+## 2026-10-22, design/game-brief.md "Nhân vật (018, 021) — không có lớp").
 ## Validation: duplicate id -> warning, the later one dropped; unknown card in starter_deck ->
 ## warning, that card dropped; empty deck -> SkillConfig.default_deck; max_hp >= 1;
 ## step_cooldown_mult > 0 else 1; focus_max_sec >= 0. Never null from [method load_from_file].
@@ -12,6 +14,15 @@ const DEFAULT_PATH: String = "res://assets/data/characters.json"
 const FALLBACK_ID: String = "kiem_si"
 const FALLBACK_MAX_HP: float = 100.0
 const FALLBACK_FOCUS_SEC: float = 4.0
+
+## F1 (docs/design/character-system/CHARACTER-SYSTEM-REDESIGN.md §B.3): the `identity` block's
+## translation-key fields. Each one is a strings.csv key; an absent field reads as "" and the view
+## falls back to `desc_key`. Never a literal string: display text lives in assets/i18n/strings.csv.
+const IDENTITY_KEY_FIELDS: Array[String] = [
+	"lore_key", "personality_key", "playstyle_key", "block_material_key",
+]
+## Accent colour used when `identity.accent_color` is absent or unparsable (HudSkin.IVORY).
+const FALLBACK_ACCENT: String = "#EFE6D2"
 
 var _order: Array[String] = []
 var _characters: Dictionary = {}
@@ -81,7 +92,9 @@ func has(id: String) -> bool:
 	return _characters.has(id)
 
 
-## A copy of the cleaned character [param id] ({id, name_key, desc_key, max_hp, step_cooldown_mult,
+## A copy of the cleaned character [param id] ({id, name_key, desc_key, identity (F1: always a full
+## dictionary — lore_key, personality_key, playstyle_key, block_material_key, accent_color, portrait,
+## select_art), max_hp, step_cooldown_mult,
 ## focus_max_sec, passive {id, params}, passive_name_key, passive_desc_key, signature ({} or
 ## {id, name_key, desc_key, params}, Story 021), starter_deck, unlock_by (Story 037: achievement id or ""),
 ## unlocked (computed with the unlock source)}); {} when unknown.
@@ -143,10 +156,12 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 		var params: Variant = (raw_passive as Dictionary).get("params", {})
 		passive["params"] = (params as Dictionary).duplicate(true) if typeof(params) == TYPE_DICTIONARY else {}
 	var signature: Dictionary = _read_signature(id, raw.get("signature"))
+	var identity: Dictionary = _read_identity(id, raw.get("identity"))
 	_characters[id] = {
 		"id": id,
 		"name_key": str(raw.get("name_key", "")),
 		"desc_key": str(raw.get("desc_key", "")),
+		"identity": identity,
 		"max_hp": maxf(float(raw.get("max_hp", FALLBACK_MAX_HP)), 1.0),
 		"step_cooldown_mult": mult if mult > 0.0 else 1.0,
 		"focus_max_sec": maxf(float(raw.get("focus_max_sec", FALLBACK_FOCUS_SEC)), 0.0),
@@ -158,6 +173,59 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 		"unlock_by": str(raw.get("unlock_by", "")),
 	}
 	_order.append(id)
+
+
+# F1 (character-system redesign, pillar 1 "Identity"): the cleaned `identity` block. ALWAYS a full
+# dictionary with every key present, so a view never has to test for the block itself — an absent or
+# malformed block simply yields empty keys and the fallback accent. Nothing here is gameplay: the
+# values are translation keys, a colour and two art paths.
+# Rules: not an object -> warning and the empty identity; each *_key field is a string key or "";
+# `accent_color` must parse as an HTML colour else a warning and FALLBACK_ACCENT; `portrait` /
+# `select_art` are res:// paths, "" when the art does not exist yet (F9) — a NON-EMPTY path that is
+# missing on disk warns and is cleared, so the select screen falls back to the body sheet instead of
+# drawing nothing.
+func _read_identity(id: String, raw: Variant) -> Dictionary:
+	var out: Dictionary = {
+		"lore_key": "", "personality_key": "", "playstyle_key": "", "block_material_key": "",
+		"accent_color": FALLBACK_ACCENT, "portrait": "", "select_art": "",
+	}
+	if raw == null:
+		return out
+	if typeof(raw) != TYPE_DICTIONARY:
+		push_warning("CharacterConfig: %s identity is not an object, the empty identity is used" % id)
+		return out
+	var dict: Dictionary = raw as Dictionary
+	for field: String in IDENTITY_KEY_FIELDS:
+		out[field] = str(dict.get(field, ""))
+	var accent: String = str(dict.get("accent_color", ""))
+	if accent.is_empty():
+		pass
+	elif Color.html_is_valid(accent):
+		out["accent_color"] = accent
+	else:
+		push_warning("CharacterConfig: %s identity accent_color '%s' is not a colour, %s used" % [id, accent, FALLBACK_ACCENT])
+	for field: String in ["portrait", "select_art"]:
+		var path: String = str(dict.get(field, ""))
+		if path.is_empty():
+			continue
+		if ResourceLoader.exists(path) or FileAccess.file_exists(path):
+			out[field] = path
+		else:
+			push_warning("CharacterConfig: %s identity %s '%s' does not exist, the body sheet is used" % [id, field, path])
+	return out
+
+
+## F1: the cleaned identity of [param id] (see [method _read_identity]); the empty identity for an
+## unknown character, so a caller never gets null.
+func identity_of(id: String) -> Dictionary:
+	if not _characters.has(id):
+		return _read_identity(id, null)
+	return ((_characters[id] as Dictionary)["identity"] as Dictionary).duplicate(true)
+
+
+## F1: the accent colour of [param id] ([constant FALLBACK_ACCENT] when unknown or unset).
+func accent_of(id: String) -> Color:
+	return Color(str(identity_of(id).get("accent_color", FALLBACK_ACCENT)))
 
 
 # Story 021: the cleaned `signature` block ({id, name_key, desc_key, cooldown_sec, params}) or {} when

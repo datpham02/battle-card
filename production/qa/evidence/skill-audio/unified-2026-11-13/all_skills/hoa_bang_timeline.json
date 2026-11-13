@@ -1,0 +1,156 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (5, 0), (6, 0), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(4, 0), (5, 0), (6, 0), (5, 1)]",
+      "clock": 1.2,
+      "hit": true,
+      "kind": "hit",
+      "mult": 1.0,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 4,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.hoa_bang.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "at": 1.2,
+      "cells": 4,
+      "clock": 1.2,
+      "handle": 2,
+      "id": "skill.card.hoa_bang.impact",
+      "local": 1.18333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 1.2,
+      "handle": 3,
+      "id": "status.burn.loop",
+      "local": 1.18333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "burn",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 1.2,
+      "handle": 4,
+      "id": "combat.hit.enemy",
+      "local": 1.18333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 1.6,
+      "cells": 4,
+      "clock": 1.6,
+      "handle": 5,
+      "id": "status.burn.ignite",
+      "local": 1.6,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 3.18333333333333,
+      "handle": 6,
+      "id": "status.burn.out",
+      "local": 3.16666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 1.2,
+      "events": [
+        {
+          "at": 1.2,
+          "cells": "[(4, 0), (5, 0), (6, 0), (5, 1)]",
+          "kind": "hit",
+          "step": 0
+        }
+      ]
+    }
+  ],
+  "shape": "t4",
+  "skill": "hoa_bang",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.hoa_bang.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.8,
+      "id": "skill.card.hoa_bang.impact",
+      "loop": false,
+      "start": 1.2,
+      "tier": "M"
+    },
+    {
+      "end": 1.8,
+      "id": "status.burn.loop",
+      "loop": false,
+      "start": 1.2,
+      "tier": "S"
+    },
+    {
+      "end": 1.8,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 1.2,
+      "tier": "S"
+    },
+    {
+      "end": 2.21666666666666,
+      "id": "status.burn.ignite",
+      "loop": false,
+      "start": 1.6,
+      "tier": "M"
+    },
+    {
+      "end": 3.78333333333332,
+      "id": "status.burn.out",
+      "loop": false,
+      "start": 3.18333333333333,
+      "tier": "S"
+    }
+  ]
+}

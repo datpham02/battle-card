@@ -175,6 +175,9 @@ static func on_impact_resolved(bank: AudioBank, side: int, event: Dictionary, hi
 	# a card whose impact IS the hit (Hỏa Lôi's one blast) lists body_hit "": no thump stacked on its impact body
 	if not bank.card_silences(skill_id, "body_hit"):
 		_add(out, {"op": "play", "id": "combat.hit.enemy" if side == SIDE_PLAYER else "combat.hit.player", "cells": 1, "step": 0, "tag": ""})
+	# a critical hit adds the crit ting on top (SwingArbiter marks the event `crit`)
+	if bool(event.get("crit", false)):
+		_add(out, {"op": "play", "id": "combat.crit", "cells": 1, "step": 0, "tag": ""})
 	return out
 
 
@@ -249,6 +252,63 @@ static func on_burning_changed(bank: AudioBank, before: int, now: int) -> Array[
 	if before > 0 and now <= 0:
 		return [{"op": "stop", "tag": BURN_TAG}, {"op": "play", "id": BURN_OUT, "cells": before, "step": 0, "tag": ""}]
 	return []
+
+
+## [signal SwingArbiter.swing_resolved] of an INSTANT cast (not `scheduled`: those already sound per impact through
+## [method on_impact_resolved]): the player's card lands now -> its impact material (archetype by delivery x impact,
+## size tier by cells) and the crit ting on a crit. The body thump comes from the damage itself (on_damaged).
+## Enemy swings stay silent here: the player hears them as combat.hit.player.
+static func on_swing_resolved(bank: AudioBank, side: int, result: Dictionary, skill_id: String, skill_def: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if side != SIDE_PLAYER or bool(result.get("scheduled", false)):
+		return out
+	var cells: int = maxi((result.get("cells", []) as Array).size(), 1)
+	out.append({"op": "stop", "tag": swing_tag(side)})
+	_add(out, {"op": "play", "id": skill_event(bank, skill_id, skill_def, "impact"), "cells": cells,
+		"tier": bank.size_tier(cells), "step": 0, "tag": ""})
+	if bool(result.get("crit", false)):
+		_add(out, {"op": "play", "id": "combat.crit", "cells": 1, "step": 0, "tag": ""})
+	return out
+
+
+## Unified identity events (docs/design/audio/unified-audio-identity.md §4, §8.1) -----------------------------------
+
+## Status kinds told apart by pitch on the two shared status events (step x step_pitch_semitones), never one sound
+## per status.
+const STATUS_STEP: Dictionary = {"pin": 0, "mark": 1, "poison": 2, "zone": 3}
+
+
+## A unit moved to another cell: the hero's step (enemies are silent: they are seen, and many would spam).
+static func on_cell_changed(side: int) -> Array[Dictionary]:
+	if side != SIDE_PLAYER:
+		return []
+	return [{"op": "play", "id": "move.step", "cells": 1, "step": 0, "tag": ""}]
+
+
+## A unit died (any side, any unit).
+static func on_death() -> Array[Dictionary]:
+	return [{"op": "play", "id": "combat.death", "cells": 1, "step": 0, "tag": ""}]
+
+
+## The pattern boss opened its recovery window (stage RECOVERY): the "opening" cue.
+static func on_boss_recovery() -> Array[Dictionary]:
+	return [{"op": "play", "id": "warn.boss.recovery", "cells": 1, "step": 0, "tag": ""}]
+
+
+## A terrain vent warns before it erupts.
+static func on_terrain_warning() -> Array[Dictionary]:
+	return [{"op": "play", "id": "warn.terrain.vent", "cells": 1, "step": 0, "tag": ""}]
+
+
+## A status of [param kind] (STATUS_STEP key) landed ([param applied]) or ended.
+static func on_status(kind: String, applied: bool) -> Array[Dictionary]:
+	return [{"op": "play", "id": "status.apply" if applied else "status.expire", "cells": 1,
+		"step": int(STATUS_STEP.get(kind, 0)), "tag": ""}]
+
+
+## The enemy took a field point (the player's own pick-up already sounds through the hold slot).
+static func on_enemy_picked_point() -> Array[Dictionary]:
+	return [{"op": "play", "id": "pickup.point", "cells": 1, "step": 0, "tag": ""}]
 
 
 ## A one-shot cue of event [param id] (block.place, combat.parry, ...).

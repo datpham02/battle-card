@@ -1,0 +1,139 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (4, 1), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [],
+  "log": [
+    {
+      "cells": 3,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.tran_gai.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 0.95,
+      "handle": 2,
+      "id": "status.apply",
+      "local": 0.933333333333335,
+      "op": "play",
+      "step": 3,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 3,
+      "clock": 0.95,
+      "handle": 3,
+      "id": "skill.card.tran_gai.impact",
+      "local": 0.933333333333335,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 0.950000000000001,
+      "handle": 4,
+      "id": "combat.hit.enemy",
+      "local": 0.950000000000001,
+      "op": "play",
+      "step": 0,
+      "tag": "body:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.93333333333332,
+      "handle": 5,
+      "id": "status.expire",
+      "local": 3.91666666666666,
+      "op": "play",
+      "step": 3,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.93333333333332,
+      "handle": 5,
+      "id": "status.expire",
+      "local": 3.91666666666666,
+      "op": "merge",
+      "retier": false,
+      "step": 3,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.93333333333332,
+      "handle": 5,
+      "id": "status.expire",
+      "local": 3.91666666666666,
+      "op": "merge",
+      "retier": true,
+      "step": 3,
+      "tag": "",
+      "tier": "M"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [],
+  "shape": "l3",
+  "skill": "tran_gai",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.tran_gai.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.55,
+      "id": "status.apply",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 1.55,
+      "id": "skill.card.tran_gai.impact",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "M"
+    },
+    {
+      "end": 1.56666666666667,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 4.53333333333332,
+      "id": "status.expire",
+      "loop": false,
+      "start": 3.93333333333332,
+      "tier": "M"
+    }
+  ]
+}

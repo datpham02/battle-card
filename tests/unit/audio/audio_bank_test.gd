@@ -5,7 +5,8 @@ extends SceneTree
 ## delivery -> impact -> default; "" = silent; impact_final falls back to impact; size tiers; tier files.
 ## Run: godot --headless --path . -s res://tests/unit/audio/audio_bank_test.gd
 
-const CORE_PHASES: Array[String] = ["windup", "commit", "impact", "impact_final", "hit", "cancel", "fizzle"]
+# "hit" is silent by design in the unified identity (impact material + body thump only, doc §3 rule 2)
+const CORE_PHASES: Array[String] = ["windup", "commit", "impact", "impact_final", "cancel", "fizzle"]
 
 var fails: int = 0
 
@@ -75,8 +76,11 @@ func test_every_card_has_core_sounds() -> void:
 	ck("every card (%d) resolves windup / commit / impact / impact_final / hit / cancel / fizzle" % cards.size(),
 		missing.is_empty() and cards.size() >= 36, str(missing.slice(0, 6)))
 	var burn_card: Dictionary = sc.get_skill("hoa_xa")
-	ck("an archetype card picks its impact family (hoa_xa burn -> skill.impact.burn)",
-		AudioEventRules.skill_event(bank, "hoa_xa", burn_card, "impact") == "skill.impact.burn")
+	# every card now has its own voice (doc §9); the archetype table stays as the fallback for a card without one
+	ck("a card with its own voice uses it (hoa_xa -> skill.card.hoa_xa.impact)",
+		AudioEventRules.skill_event(bank, "hoa_xa", burn_card, "impact") == "skill.card.hoa_xa.impact")
+	ck("a card without a voice falls back to its impact family (future burn card -> skill.impact.burn)",
+		AudioEventRules.skill_event(bank, "future_card", burn_card, "impact") == "skill.impact.burn")
 	ck("a CASTER_TO_TARGET card gets the travel whoosh", AudioEventRules.skill_event(bank, "kiem_khi", sc.get_skill("kiem_khi"), "travel")
 		== "skill.generic.travel")
 	ck("a SKY_TO_TARGET card has no travel sound", AudioEventRules.skill_event(bank, "kiem_vu", sc.get_skill("kiem_vu"), "travel").is_empty())
@@ -128,7 +132,7 @@ func test_size_tiers_and_tier_files() -> void:
 	var l: Array[String] = bank.files_for("skill.hoa_loi.impact", "L")
 	ck("Hoa Loi detonation has one file per tier", bank.has_tier_files("skill.hoa_loi.impact") and s.size() == 1 and l.size() == 1
 		and s[0] != l[0] and l[0].ends_with("_l_01.wav"))
-	ck("an event without tier files plays its variants at any tier", bank.files_for("skill.ngan_kiem.impact", "L").size() == 4)
+	ck("an event without tier files plays its variants at any tier", bank.files_for("skill.ngan_kiem.impact", "L").size() == 3)
 	ck("tier gain for plain events: S quieter than L", bank.tier_gain_db("S") < bank.tier_gain_db("L"))
 
 
@@ -144,12 +148,21 @@ func test_priorities_and_caps() -> void:
 	ck("voice caps: total 24, Skill 8, Combat 6, UI 4, Warning 2 reserved", bank.voice_cap("total") == 24 and bank.voice_cap("Skill") == 8
 		and bank.voice_cap("Combat") == 6 and bank.voice_cap("UI") == 4 and bank.voice_cap("Warning") == 2 and bank.reserved_voices("Warning") == 2)
 	ck("Ngan Kiem drops capped at 3 overlapping", int(bank.get_event("skill.ngan_kiem.impact")["max_voices"]) == 3)
-	# the summon loop plays its intro once, then repeats only its sustain (tools/audio/sfx_import.py sustain_loop)
-	var loop_stream: AudioStreamWAV = load(bank.files_for("skill.ngan_kiem.channel_loop", "M")[0]) as AudioStreamWAV
-	ck("Ngan Kiem summon loop: forward loop from a loop_begin inside the file (no restart of the intro)",
-		loop_stream != null and loop_stream.loop_mode == AudioStreamWAV.LOOP_FORWARD and loop_stream.loop_begin > 0
-		and loop_stream.loop_begin < int(loop_stream.get_length() * loop_stream.mix_rate),
-		"" if loop_stream == null else "mode %d begin %d" % [loop_stream.loop_mode, loop_stream.loop_begin])
+	# unified identity (docs/design/audio/unified-audio-identity.md §3): no waiting drone; every event is a short
+	# one-shot (feedback <= 200 ms, warnings / big impacts / stingers <= 400-700 ms)
+	var drones: Array[String] = []
+	var too_long: Array[String] = []
+	for id: String in bank.event_ids():
+		if bool(bank.get_event(id).get("loop", false)):
+			drones.append(id)
+		for t: String in ["S", "M", "L"]:
+			for f: String in bank.files_for(id, t):
+				var st: AudioStream = load(f) as AudioStream
+				var cap: float = 0.7 if id.begins_with("flow.") else 0.4
+				if st != null and st.get_length() > cap + 0.001 and not too_long.has(f):
+					too_long.append(f)
+	ck("no looping (drone) event in the unified set", drones.is_empty(), str(drones))
+	ck("every file is short (<= 0.4 s, stingers <= 0.7 s)", too_long.is_empty(), str(too_long))
 	ck("defaults merge into events (pitch range)", float(bank.get_event("ui.tap").get("pitch_semitones", -1.0)) > 0.0)
 
 

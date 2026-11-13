@@ -136,7 +136,8 @@ func test_scheduled_bodies_start_at_at_minus_lead(id: String, shape: String, rot
 	var layers: int = _plays(w, "skill.generic.hit").size() + (w["director"] as AudioDirector).play_log.filter(
 		func(e: Dictionary) -> bool: return e["op"] == "merge" and e["id"] == "skill.generic.hit").size()
 	# Hỏa Lôi's blast is its own hit (audio_events cards.hoa_loi hit / body_hit ""): no layer, no thump on top of it
-	var want_layers: int = 0 if id == "hoa_loi" else hits
+	# unified identity (2026-11-13): no separate hit layer on any card; impact material + body thump only
+	var want_layers: int = 0
 	ck("%s: hit layers per hitting event (%d expected)" % [id, want_layers], hits > 0 and layers == want_layers, "%d layers" % layers)
 	if id == "hoa_loi":
 		var blast_at: float = float(groups[0]["at"])
@@ -214,10 +215,11 @@ func test_hoa_loi_burn_loop_follows_the_burning_cells() -> void:
 	var last_out: float = out.max()
 	ck("burn lasts the card's ignite time (%.1f s)" % burn_sec, absf(last_out - first_lit - burn_sec) < 0.1,
 		"%.3f -> %.3f" % [first_lit, last_out])
-	ck("the burning-ground loop plays only while cells burn", not loop_on.is_empty()
-		and loop_on.min() <= first_lit + STEP * 1.5 and loop_on.max() < last_out + STEP * 1.5 and loop_on.max() >= last_out - STEP * 1.5,
-		"loop %.3f..%.3f, burn %.3f..%.3f" % [loop_on.min() if not loop_on.is_empty() else -1.0,
-			loop_on.max() if not loop_on.is_empty() else -1.0, first_lit, last_out])
+	# unified identity (no drone): status.burn.loop is a one-shot "fire caught" cue on the first ignite, not a loop
+	var caught: Array[Dictionary] = _plays(w, "status.burn.loop")
+	ck("the fire-caught cue plays once, on the first ignite (no drone over the burn)", caught.size() == 1
+		and absf(float(caught[0]["clock"]) - first_lit) <= STEP * 1.5 and (loop_on.is_empty() or loop_on.max() < last_out),
+		"cue %s, burn %.3f..%.3f" % [str(caught.map(func(e: Dictionary) -> float: return float(e["clock"]))), first_lit, last_out])
 	var outs: Array[Dictionary] = _plays(w, "status.burn.out")
 	ck("embers out plays once, when the last cell burns out", outs.size() == 1 and absf(float(outs[0]["clock"]) - last_out) <= STEP * 1.5,
 		str(outs.map(func(e: Dictionary) -> float: return float(e["clock"]))))

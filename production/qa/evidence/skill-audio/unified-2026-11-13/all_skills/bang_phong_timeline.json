@@ -1,0 +1,97 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (5, 0), (6, 0), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [],
+  "log": [
+    {
+      "cells": 4,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.bang_phong.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 1.2,
+      "handle": 2,
+      "id": "status.apply",
+      "local": 1.18333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 4,
+      "clock": 1.2,
+      "handle": 3,
+      "id": "skill.card.bang_phong.impact",
+      "local": 1.18333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 2.38333333333333,
+      "handle": 4,
+      "id": "status.expire",
+      "local": 2.36666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [],
+  "shape": "t4",
+  "skill": "bang_phong",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.bang_phong.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.8,
+      "id": "status.apply",
+      "loop": false,
+      "start": 1.2,
+      "tier": "S"
+    },
+    {
+      "end": 1.8,
+      "id": "skill.card.bang_phong.impact",
+      "loop": false,
+      "start": 1.2,
+      "tier": "M"
+    },
+    {
+      "end": 2.98333333333333,
+      "id": "status.expire",
+      "loop": false,
+      "start": 2.38333333333333,
+      "tier": "S"
+    }
+  ]
+}

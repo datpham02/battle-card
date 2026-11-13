@@ -184,23 +184,6 @@
 			"gain_db": -6,
 			"cooldown_ms": 400
 		},
-		"block.confirm": {
-			"bus": "UI",
-			"priority": "normal",
-			"files": [
-				"res://assets/audio/sfx/sfx_block_confirm_01.wav"
-			],
-			"gain_db": -3
-		},
-		"block.slot_full": {
-			"bus": "UI",
-			"priority": "normal",
-			"files": [
-				"res://assets/audio/sfx/sfx_block_slot_full_01.wav"
-			],
-			"gain_db": -4,
-			"cooldown_ms": 300
-		},
 		"card.menu_open": {
 			"bus": "UI",
 			"priority": "normal",
@@ -262,7 +245,7 @@
 				"res://assets/audio/sfx/sfx_combat_hit_enemy_01.wav",
 				"res://assets/audio/sfx/sfx_combat_hit_enemy_02.wav"
 			],
-			"gain_db": -4,
+			"gain_db": -6,
 			"cooldown_ms": 60
 		},
 		"combat.interrupt": {
@@ -423,7 +406,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_burst_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.slash": {
 			"bus": "Skill",
@@ -431,7 +414,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_slash_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.burn": {
 			"bus": "Skill",
@@ -439,7 +422,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_burn_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.freeze": {
 			"bus": "Skill",
@@ -447,7 +430,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_freeze_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.knockback": {
 			"bus": "Skill",
@@ -455,7 +438,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_knockback_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.shatter": {
 			"bus": "Skill",
@@ -463,7 +446,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_shatter_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.thorns": {
 			"bus": "Skill",
@@ -471,7 +454,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_thorns_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.poison": {
 			"bus": "Skill",
@@ -479,7 +462,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_poison_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"skill.impact.curse": {
 			"bus": "Skill",
@@ -487,7 +470,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_impact_curse_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -5
 		},
 		"status.burn.ignite": {
 			"bus": "SFX",
@@ -505,9 +488,8 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_status_burn_loop_01.wav"
 			],
-			"gain_db": -20,
-			"loop": true,
-			"max_voices": 1,
+			"gain_db": -10,
+			"loop": false,
 			"reducible": true
 		},
 		"status.burn.hurt": {
@@ -543,7 +525,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_tram_dia_commit_01.wav"
 			],
-			"gain_db": -3
+			"gain_db": -8
 		},
 		"skill.tram_dia.travel": {
 			"bus": "Skill",
@@ -559,7 +541,7 @@
 			"files": [
 				"res://assets/audio/sfx/sfx_skill_tram_dia_impact_final_01.wav"
 			],
-			"gain_db": -1
+			"gain_db": -7
 		},
 		"skill.tram_dia.impact": {
 			"bus": "Skill",
@@ -595,10 +577,10 @@
 			"bus": "Skill",
 			"priority": "normal",
 			"files": [
-				"res://assets/audio/sfx/sfx_skill_ngan_kiem_channel_loop_el_01.wav"
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_channel_loop_01.wav"
 			],
-			"gain_db": -9,
-			"loop": true,
+			"gain_db": -4,
+			"loop": false,
 			"max_voices": 1
 		},
 		"skill.ngan_kiem.commit": {
@@ -613,10 +595,9 @@
 			"bus": "Skill",
 			"priority": "high",
 			"files": [
-				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_01.wav",
-				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_02.wav",
-				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_03.wav",
-				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_el_04.wav"
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_01.wav",
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_02.wav",
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_03.wav"
 			],
 			"gain_db": -3,
 			"max_voices": 3,
@@ -626,9 +607,9 @@
 			"bus": "Skill",
 			"priority": "high",
 			"files": [
-				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_final_el_01.wav"
+				"res://assets/audio/sfx/sfx_skill_ngan_kiem_impact_final_01.wav"
 			],
-			"gain_db": -9
+			"gain_db": -2
 		},
 		"skill.ngan_kiem.cancel": {
 			"bus": "Skill",
@@ -642,7 +623,7 @@
 			"bus": "Skill",
 			"priority": "normal",
 			"files": [
-				"res://assets/audio/sfx/sfx_skill_hoa_loi_windup_fb_01.wav"
+				"res://assets/audio/sfx/sfx_skill_hoa_loi_windup_01.wav"
 			],
 			"gain_db": -4
 		},
@@ -687,16 +668,16 @@
 			"priority": "high",
 			"tier_files": {
 				"S": [
-					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_el_s_01.wav"
+					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_s_01.wav"
 				],
 				"M": [
-					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_el_m_01.wav"
+					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_m_01.wav"
 				],
 				"L": [
-					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_el_l_01.wav"
+					"res://assets/audio/sfx/sfx_skill_hoa_loi_impact_l_01.wav"
 				]
 			},
-			"gain_db": 2
+			"gain_db": -1
 		},
 		"skill.hoa_loi.ignite": {
 			"bus": "Skill",
@@ -713,6 +694,995 @@
 				"res://assets/audio/sfx/sfx_skill_hoa_loi_fizzle_01.wav"
 			],
 			"gain_db": -8
+		},
+		"move.step": {
+			"bus": "SFX",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_move_step_01.wav",
+				"res://assets/audio/sfx/sfx_move_step_02.wav"
+			],
+			"gain_db": -8,
+			"reducible": true,
+			"cooldown_ms": 80
+		},
+		"pickup.point": {
+			"bus": "SFX",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_pickup_point_01.wav",
+				"res://assets/audio/sfx/sfx_pickup_point_02.wav"
+			],
+			"gain_db": -5,
+			"cooldown_ms": 60
+		},
+		"status.apply": {
+			"bus": "SFX",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_status_apply_01.wav",
+				"res://assets/audio/sfx/sfx_status_apply_02.wav"
+			],
+			"gain_db": -8,
+			"reducible": true,
+			"cooldown_ms": 120,
+			"step_pitch_semitones": 2.0
+		},
+		"status.expire": {
+			"bus": "SFX",
+			"priority": "low",
+			"files": [
+				"res://assets/audio/sfx/sfx_status_expire_01.wav",
+				"res://assets/audio/sfx/sfx_status_expire_02.wav"
+			],
+			"gain_db": -10,
+			"reducible": true,
+			"cooldown_ms": 120,
+			"step_pitch_semitones": 2.0
+		},
+		"skill.card.bang_chau.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_chau_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.bang_chau.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_chau_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.bang_phong.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_phong_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.bang_phong.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_phong_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.chuong_thanh.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_chuong_thanh_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.chuong_thanh.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_chuong_thanh_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.han_khi.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_khi_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.han_khi.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_khi_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.han_kiem.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_kiem_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.han_kiem.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_kiem_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.han_phong.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_phong_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.han_phong.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_phong_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.han_tran.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_tran_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.han_tran.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_tran_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.suong_mong.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_suong_mong_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.suong_mong.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_suong_mong_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thanh_thuy.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thanh_thuy_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thanh_thuy.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thanh_thuy_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thien_quang.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_quang_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thien_quang.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_quang_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.bang_tam.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_tam_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.bang_tam.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_tam_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.bang_vo.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_vo_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.bang_vo.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bang_vo_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.dap_vo.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dap_vo_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.dap_vo.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dap_vo_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.han_bang.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_bang_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.han_bang.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_han_bang_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.ran_kich.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_ran_kich_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.ran_kich.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_ran_kich_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.ran_van.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_ran_van_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.ran_van.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_ran_van_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.bay_kep.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bay_kep_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.bay_kep.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bay_kep_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.gai_nguyen.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_gai_nguyen_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.gai_nguyen.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_gai_nguyen_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.gai_no.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_gai_no_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.gai_no.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_gai_no_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.tran_gai.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_tran_gai_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.tran_gai.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_tran_gai_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.bay_lo.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bay_lo_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.bay_lo.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_bay_lo_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.chan_phong.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_chan_phong_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.chan_phong.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_chan_phong_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.cuong_phong.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_cuong_phong_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.cuong_phong.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_cuong_phong_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.dia_chan.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dia_chan_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.dia_chan.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dia_chan_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.loc_cuon.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_loc_cuon_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.loc_cuon.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_loc_cuon_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.min_tre.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_min_tre_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.min_tre.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_min_tre_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.moc_keo.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_moc_keo_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.moc_keo.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_moc_keo_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thien_lang.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_lang_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thien_lang.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_lang_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.vung_lay.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_vung_lay_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.vung_lay.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_vung_lay_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.xung_kich.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_xung_kich_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.xung_kich.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_xung_kich_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.chuoi_set.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_chuoi_set_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.chuoi_set.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_chuoi_set_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.do_kiem.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_do_kiem_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.do_kiem.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_do_kiem_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.kiem_khi.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_kiem_khi_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.kiem_khi.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_kiem_khi_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thien_thach.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_thach_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thien_thach.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_thach_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.dai_dao.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dai_dao_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.dai_dao.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dai_dao_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.dau_tu.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dau_tu_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.dau_tu.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_dau_tu_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.hoi_am.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoi_am_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.hoi_am.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoi_am_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.kiem_than.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_kiem_than_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.kiem_than.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_kiem_than_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.kiem_vu.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_kiem_vu_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.kiem_vu.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_kiem_vu_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.lien_tram.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_lien_tram_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.lien_tram.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_lien_tram_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.phi_tieu.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_phi_tieu_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.phi_tieu.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_phi_tieu_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.song_dao.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_song_dao_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.song_dao.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_song_dao_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.song_kiem.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_song_kiem_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.song_kiem.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_song_kiem_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thiet_kiem.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thiet_kiem_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thiet_kiem.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thiet_kiem_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thuong_xuyen.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thuong_xuyen_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thuong_xuyen.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thuong_xuyen_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.tu_kiem.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_tu_kiem_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.tu_kiem.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_tu_kiem_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.gai_doc.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_gai_doc_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.gai_doc.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_gai_doc_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.ganh_nang.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_ganh_nang_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.ganh_nang.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_ganh_nang_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.oan_hon.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_oan_hon_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.oan_hon.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_oan_hon_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.hoa_bang.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_bang_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.hoa_bang.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_bang_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.hoa_tinh.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_tinh_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.hoa_tinh.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_tinh_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.hoa_tran.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_tran_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.hoa_tran.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_tran_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.hoa_tuyen.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_tuyen_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.hoa_tuyen.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_tuyen_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.hoa_xa.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_xa_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.hoa_xa.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_hoa_xa_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.liet_hoa.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_liet_hoa_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.liet_hoa.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_liet_hoa_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thien_hoa.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_hoa_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thien_hoa.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thien_hoa_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.khien_thep.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_khien_thep_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.khien_thep.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_khien_thep_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.thanh_thuan.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thanh_thuan_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.thanh_thuan.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_thanh_thuan_impact_01.wav"
+			],
+			"gain_db": -5
+		},
+		"skill.card.tuong_da.windup": {
+			"bus": "Skill",
+			"priority": "normal",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_tuong_da_windup_01.wav"
+			],
+			"gain_db": -6
+		},
+		"skill.card.tuong_da.impact": {
+			"bus": "Skill",
+			"priority": "high",
+			"files": [
+				"res://assets/audio/sfx/sfx_skill_card_tuong_da_impact_01.wav"
+			],
+			"gain_db": -5
 		}
 	},
 	"archetypes": {
@@ -721,7 +1691,7 @@
 				"windup": "skill.generic.windup",
 				"commit": "skill.generic.commit",
 				"impact": "skill.impact.burst",
-				"hit": "skill.generic.hit",
+				"hit": "",
 				"cancel": "skill.generic.cancel",
 				"fizzle": "skill.generic.fizzle"
 			},
@@ -799,6 +1769,301 @@
 			"commit": "skill.hoa_loi.ignite",
 			"hit": "",
 			"body_hit": ""
+		},
+		"bang_chau": {
+			"windup": "skill.card.bang_chau.windup",
+			"impact": "skill.card.bang_chau.impact",
+			"commit": ""
+		},
+		"bang_phong": {
+			"windup": "skill.card.bang_phong.windup",
+			"impact": "skill.card.bang_phong.impact",
+			"commit": ""
+		},
+		"chuong_thanh": {
+			"windup": "skill.card.chuong_thanh.windup",
+			"impact": "skill.card.chuong_thanh.impact",
+			"commit": ""
+		},
+		"han_khi": {
+			"windup": "skill.card.han_khi.windup",
+			"impact": "skill.card.han_khi.impact",
+			"commit": ""
+		},
+		"han_kiem": {
+			"windup": "skill.card.han_kiem.windup",
+			"impact": "skill.card.han_kiem.impact",
+			"commit": ""
+		},
+		"han_phong": {
+			"windup": "skill.card.han_phong.windup",
+			"impact": "skill.card.han_phong.impact",
+			"commit": ""
+		},
+		"han_tran": {
+			"windup": "skill.card.han_tran.windup",
+			"impact": "skill.card.han_tran.impact",
+			"commit": ""
+		},
+		"suong_mong": {
+			"windup": "skill.card.suong_mong.windup",
+			"impact": "skill.card.suong_mong.impact",
+			"commit": ""
+		},
+		"thanh_thuy": {
+			"windup": "skill.card.thanh_thuy.windup",
+			"impact": "skill.card.thanh_thuy.impact",
+			"commit": ""
+		},
+		"thien_quang": {
+			"windup": "skill.card.thien_quang.windup",
+			"impact": "skill.card.thien_quang.impact",
+			"commit": ""
+		},
+		"bang_tam": {
+			"windup": "skill.card.bang_tam.windup",
+			"impact": "skill.card.bang_tam.impact",
+			"commit": ""
+		},
+		"bang_vo": {
+			"windup": "skill.card.bang_vo.windup",
+			"impact": "skill.card.bang_vo.impact",
+			"commit": ""
+		},
+		"dap_vo": {
+			"windup": "skill.card.dap_vo.windup",
+			"impact": "skill.card.dap_vo.impact",
+			"commit": ""
+		},
+		"han_bang": {
+			"windup": "skill.card.han_bang.windup",
+			"impact": "skill.card.han_bang.impact",
+			"commit": ""
+		},
+		"ran_kich": {
+			"windup": "skill.card.ran_kich.windup",
+			"impact": "skill.card.ran_kich.impact",
+			"commit": ""
+		},
+		"ran_van": {
+			"windup": "skill.card.ran_van.windup",
+			"impact": "skill.card.ran_van.impact",
+			"commit": ""
+		},
+		"bay_kep": {
+			"windup": "skill.card.bay_kep.windup",
+			"impact": "skill.card.bay_kep.impact",
+			"commit": ""
+		},
+		"gai_nguyen": {
+			"windup": "skill.card.gai_nguyen.windup",
+			"impact": "skill.card.gai_nguyen.impact",
+			"commit": ""
+		},
+		"gai_no": {
+			"windup": "skill.card.gai_no.windup",
+			"impact": "skill.card.gai_no.impact",
+			"commit": ""
+		},
+		"tran_gai": {
+			"windup": "skill.card.tran_gai.windup",
+			"impact": "skill.card.tran_gai.impact",
+			"commit": ""
+		},
+		"bay_lo": {
+			"windup": "skill.card.bay_lo.windup",
+			"impact": "skill.card.bay_lo.impact",
+			"commit": ""
+		},
+		"chan_phong": {
+			"windup": "skill.card.chan_phong.windup",
+			"impact": "skill.card.chan_phong.impact",
+			"commit": ""
+		},
+		"cuong_phong": {
+			"windup": "skill.card.cuong_phong.windup",
+			"impact": "skill.card.cuong_phong.impact",
+			"commit": ""
+		},
+		"dia_chan": {
+			"windup": "skill.card.dia_chan.windup",
+			"impact": "skill.card.dia_chan.impact",
+			"commit": ""
+		},
+		"loc_cuon": {
+			"windup": "skill.card.loc_cuon.windup",
+			"impact": "skill.card.loc_cuon.impact",
+			"commit": ""
+		},
+		"min_tre": {
+			"windup": "skill.card.min_tre.windup",
+			"impact": "skill.card.min_tre.impact",
+			"commit": ""
+		},
+		"moc_keo": {
+			"windup": "skill.card.moc_keo.windup",
+			"impact": "skill.card.moc_keo.impact",
+			"commit": ""
+		},
+		"thien_lang": {
+			"windup": "skill.card.thien_lang.windup",
+			"impact": "skill.card.thien_lang.impact",
+			"commit": ""
+		},
+		"vung_lay": {
+			"windup": "skill.card.vung_lay.windup",
+			"impact": "skill.card.vung_lay.impact",
+			"commit": ""
+		},
+		"xung_kich": {
+			"windup": "skill.card.xung_kich.windup",
+			"impact": "skill.card.xung_kich.impact",
+			"commit": ""
+		},
+		"chuoi_set": {
+			"windup": "skill.card.chuoi_set.windup",
+			"impact": "skill.card.chuoi_set.impact",
+			"commit": ""
+		},
+		"do_kiem": {
+			"windup": "skill.card.do_kiem.windup",
+			"impact": "skill.card.do_kiem.impact",
+			"commit": ""
+		},
+		"kiem_khi": {
+			"windup": "skill.card.kiem_khi.windup",
+			"impact": "skill.card.kiem_khi.impact",
+			"commit": ""
+		},
+		"thien_thach": {
+			"windup": "skill.card.thien_thach.windup",
+			"impact": "skill.card.thien_thach.impact",
+			"commit": ""
+		},
+		"dai_dao": {
+			"windup": "skill.card.dai_dao.windup",
+			"impact": "skill.card.dai_dao.impact",
+			"commit": ""
+		},
+		"dau_tu": {
+			"windup": "skill.card.dau_tu.windup",
+			"impact": "skill.card.dau_tu.impact",
+			"commit": ""
+		},
+		"hoi_am": {
+			"windup": "skill.card.hoi_am.windup",
+			"impact": "skill.card.hoi_am.impact",
+			"commit": ""
+		},
+		"kiem_than": {
+			"windup": "skill.card.kiem_than.windup",
+			"impact": "skill.card.kiem_than.impact",
+			"commit": ""
+		},
+		"kiem_vu": {
+			"windup": "skill.card.kiem_vu.windup",
+			"impact": "skill.card.kiem_vu.impact",
+			"commit": ""
+		},
+		"lien_tram": {
+			"windup": "skill.card.lien_tram.windup",
+			"impact": "skill.card.lien_tram.impact",
+			"commit": ""
+		},
+		"phi_tieu": {
+			"windup": "skill.card.phi_tieu.windup",
+			"impact": "skill.card.phi_tieu.impact",
+			"commit": ""
+		},
+		"song_dao": {
+			"windup": "skill.card.song_dao.windup",
+			"impact": "skill.card.song_dao.impact",
+			"commit": ""
+		},
+		"song_kiem": {
+			"windup": "skill.card.song_kiem.windup",
+			"impact": "skill.card.song_kiem.impact",
+			"commit": ""
+		},
+		"thiet_kiem": {
+			"windup": "skill.card.thiet_kiem.windup",
+			"impact": "skill.card.thiet_kiem.impact",
+			"commit": ""
+		},
+		"thuong_xuyen": {
+			"windup": "skill.card.thuong_xuyen.windup",
+			"impact": "skill.card.thuong_xuyen.impact",
+			"commit": ""
+		},
+		"tu_kiem": {
+			"windup": "skill.card.tu_kiem.windup",
+			"impact": "skill.card.tu_kiem.impact",
+			"commit": ""
+		},
+		"gai_doc": {
+			"windup": "skill.card.gai_doc.windup",
+			"impact": "skill.card.gai_doc.impact",
+			"commit": ""
+		},
+		"ganh_nang": {
+			"windup": "skill.card.ganh_nang.windup",
+			"impact": "skill.card.ganh_nang.impact",
+			"commit": ""
+		},
+		"oan_hon": {
+			"windup": "skill.card.oan_hon.windup",
+			"impact": "skill.card.oan_hon.impact",
+			"commit": ""
+		},
+		"hoa_bang": {
+			"windup": "skill.card.hoa_bang.windup",
+			"impact": "skill.card.hoa_bang.impact",
+			"commit": ""
+		},
+		"hoa_tinh": {
+			"windup": "skill.card.hoa_tinh.windup",
+			"impact": "skill.card.hoa_tinh.impact",
+			"commit": ""
+		},
+		"hoa_tran": {
+			"windup": "skill.card.hoa_tran.windup",
+			"impact": "skill.card.hoa_tran.impact",
+			"commit": ""
+		},
+		"hoa_tuyen": {
+			"windup": "skill.card.hoa_tuyen.windup",
+			"impact": "skill.card.hoa_tuyen.impact",
+			"commit": ""
+		},
+		"hoa_xa": {
+			"windup": "skill.card.hoa_xa.windup",
+			"impact": "skill.card.hoa_xa.impact",
+			"commit": ""
+		},
+		"liet_hoa": {
+			"windup": "skill.card.liet_hoa.windup",
+			"impact": "skill.card.liet_hoa.impact",
+			"commit": ""
+		},
+		"thien_hoa": {
+			"windup": "skill.card.thien_hoa.windup",
+			"impact": "skill.card.thien_hoa.impact",
+			"commit": ""
+		},
+		"khien_thep": {
+			"windup": "skill.card.khien_thep.windup",
+			"impact": "skill.card.khien_thep.impact",
+			"commit": ""
+		},
+		"thanh_thuan": {
+			"windup": "skill.card.thanh_thuan.windup",
+			"impact": "skill.card.thanh_thuan.impact",
+			"commit": ""
+		},
+		"tuong_da": {
+			"windup": "skill.card.tuong_da.windup",
+			"impact": "skill.card.tuong_da.impact",
+			"commit": ""
 		}
 	}
 }

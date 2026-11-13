@@ -1,0 +1,536 @@
+{
+ "_doc": "Per-card voices, built by tools/audio/card_voices.py from cards.json + the cast VFX index (impact_variants form -> impact shape; family register + pentatonic degree -> note; VFX sec -> length; cast_presentation / delivery -> wind-up). sfx_synth.py renders sfx_skill_card_<id>_*.",
+ "cards": {
+  "bang_chau": {
+   "family": "freeze",
+   "vfx_form": "cluster",
+   "impact_shape": "cluster",
+   "note": 523.2,
+   "impact_sec": 0.3,
+   "windup_shape": "chain",
+   "windup_note": 523.2
+  },
+  "bang_phong": {
+   "family": "freeze",
+   "vfx_form": "frame",
+   "impact_shape": "frame",
+   "note": 587.4,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 293.7
+  },
+  "chuong_thanh": {
+   "family": "freeze",
+   "vfx_form": "bell",
+   "impact_shape": "bell",
+   "note": 659.2,
+   "impact_sec": 0.33,
+   "windup_shape": "weapon",
+   "windup_note": 659.2
+  },
+  "han_khi": {
+   "family": "freeze",
+   "vfx_form": "cross",
+   "impact_shape": "cross",
+   "note": 784.0,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 784.0
+  },
+  "han_kiem": {
+   "family": "freeze",
+   "vfx_form": "spike",
+   "impact_shape": "spike_tilt",
+   "note": 880.0,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 880.0
+  },
+  "han_phong": {
+   "family": "freeze",
+   "vfx_form": "cross",
+   "impact_shape": "cross_diag",
+   "note": 1046.4,
+   "impact_sec": 0.3,
+   "windup_shape": "chain",
+   "windup_note": 1046.4
+  },
+  "han_tran": {
+   "family": "freeze",
+   "vfx_form": "spike",
+   "impact_shape": "spike2",
+   "note": 1174.8,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 587.4
+  },
+  "suong_mong": {
+   "family": "freeze",
+   "vfx_form": "frame",
+   "impact_shape": "frame_sparse",
+   "note": 1318.4,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 659.2
+  },
+  "thanh_thuy": {
+   "family": "freeze",
+   "vfx_form": "cross",
+   "impact_shape": "drops3",
+   "note": 1568.0,
+   "impact_sec": 0.3,
+   "windup_shape": "chain",
+   "windup_note": 1568.0
+  },
+  "thien_quang": {
+   "family": "freeze",
+   "vfx_form": "lightpillar",
+   "impact_shape": "lightpillar",
+   "note": 1760.0,
+   "impact_sec": 0.36,
+   "windup_shape": "hand",
+   "windup_note": 880.0
+  },
+  "bang_tam": {
+   "family": "shatter",
+   "vfx_form": "shards",
+   "impact_shape": "shards",
+   "note": 261.6,
+   "impact_sec": 0.3,
+   "windup_shape": "chain",
+   "windup_note": 261.6
+  },
+  "bang_vo": {
+   "family": "shatter",
+   "vfx_form": "iceburst",
+   "impact_shape": "iceburst",
+   "note": 293.7,
+   "impact_sec": 0.36,
+   "windup_shape": "hand",
+   "windup_note": 146.8
+  },
+  "dap_vo": {
+   "family": "shatter",
+   "vfx_form": "-",
+   "impact_shape": "smash",
+   "note": 329.6,
+   "impact_sec": 0.28,
+   "windup_shape": "weapon",
+   "windup_note": 329.6
+  },
+  "han_bang": {
+   "family": "shatter",
+   "vfx_form": "chunks",
+   "impact_shape": "chunks",
+   "note": 392.0,
+   "impact_sec": 0.3,
+   "windup_shape": "sky",
+   "windup_note": 392.0
+  },
+  "ran_kich": {
+   "family": "shatter",
+   "vfx_form": "crack",
+   "impact_shape": "crack",
+   "note": 440.0,
+   "impact_sec": 0.3,
+   "windup_shape": "ground",
+   "windup_note": 440.0
+  },
+  "ran_van": {
+   "family": "shatter",
+   "vfx_form": "crack",
+   "impact_shape": "crack_web",
+   "note": 523.2,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 261.6
+  },
+  "bay_kep": {
+   "family": "thorns",
+   "vfx_form": "jaw",
+   "impact_shape": "jaw",
+   "note": 261.6,
+   "impact_sec": 0.27,
+   "windup_shape": "body",
+   "windup_note": 130.8
+  },
+  "gai_nguyen": {
+   "family": "thorns",
+   "vfx_form": "spikes",
+   "impact_shape": "vine",
+   "note": 293.7,
+   "impact_sec": 0.3,
+   "windup_shape": "ground",
+   "windup_note": 293.7
+  },
+  "gai_no": {
+   "family": "thorns",
+   "vfx_form": "splinter",
+   "impact_shape": "splinter",
+   "note": 329.6,
+   "impact_sec": 0.27,
+   "windup_shape": "body",
+   "windup_note": 164.8
+  },
+  "tran_gai": {
+   "family": "thorns",
+   "vfx_form": "spikes",
+   "impact_shape": "spikes",
+   "note": 392.0,
+   "impact_sec": 0.3,
+   "windup_shape": "ground",
+   "windup_note": 392.0
+  },
+  "bay_lo": {
+   "family": "knockback",
+   "vfx_form": "spring",
+   "impact_shape": "spring",
+   "note": 261.6,
+   "impact_sec": 0.3,
+   "windup_shape": "body",
+   "windup_note": 130.8
+  },
+  "chan_phong": {
+   "family": "knockback",
+   "vfx_form": "column",
+   "impact_shape": "column",
+   "note": 293.7,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 293.7
+  },
+  "cuong_phong": {
+   "family": "knockback",
+   "vfx_form": "column",
+   "impact_shape": "column2",
+   "note": 329.6,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 329.6
+  },
+  "dia_chan": {
+   "family": "knockback",
+   "vfx_form": "quake",
+   "impact_shape": "quake",
+   "note": 392.0,
+   "impact_sec": 0.36,
+   "windup_shape": "body",
+   "windup_note": 196.0
+  },
+  "loc_cuon": {
+   "family": "knockback",
+   "vfx_form": "vortex",
+   "impact_shape": "vortex",
+   "note": 440.0,
+   "impact_sec": 0.36,
+   "windup_shape": "hand",
+   "windup_note": 220.0
+  },
+  "min_tre": {
+   "family": "knockback",
+   "vfx_form": "-",
+   "impact_shape": "knock_puff",
+   "note": 523.2,
+   "impact_sec": 0.24,
+   "windup_shape": "throw",
+   "windup_note": 523.2
+  },
+  "moc_keo": {
+   "family": "knockback",
+   "vfx_form": "hook",
+   "impact_shape": "hook",
+   "note": 587.4,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 587.4
+  },
+  "thien_lang": {
+   "family": "knockback",
+   "vfx_form": "slam",
+   "impact_shape": "slam",
+   "note": 659.2,
+   "impact_sec": 0.3,
+   "windup_shape": "sky",
+   "windup_note": 659.2
+  },
+  "vung_lay": {
+   "family": "knockback",
+   "vfx_form": "-",
+   "impact_shape": "wide",
+   "note": 784.0,
+   "impact_sec": 0.24,
+   "windup_shape": "hand",
+   "windup_note": 392.0
+  },
+  "xung_kich": {
+   "family": "knockback",
+   "vfx_form": "wedge",
+   "impact_shape": "wedge",
+   "note": 880.0,
+   "impact_sec": 0.3,
+   "windup_shape": "ground",
+   "windup_note": 880.0
+  },
+  "chuoi_set": {
+   "family": "burst",
+   "vfx_form": "-",
+   "impact_shape": "spark4",
+   "note": 261.6,
+   "impact_sec": 0.24,
+   "windup_shape": "hand",
+   "windup_note": 130.8
+  },
+  "do_kiem": {
+   "family": "burst",
+   "vfx_form": "ring2",
+   "impact_shape": "ring2",
+   "note": 293.7,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 293.7
+  },
+  "kiem_khi": {
+   "family": "burst",
+   "vfx_form": "ring",
+   "impact_shape": "ring",
+   "note": 329.6,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 329.6
+  },
+  "thien_thach": {
+   "family": "burst",
+   "vfx_form": "crater",
+   "impact_shape": "crater",
+   "note": 392.0,
+   "impact_sec": 0.36,
+   "windup_shape": "hand",
+   "windup_note": 196.0
+  },
+  "dai_dao": {
+   "family": "slash",
+   "vfx_form": "double",
+   "impact_shape": "double",
+   "note": 261.6,
+   "impact_sec": 0.3,
+   "windup_shape": "chain",
+   "windup_note": 261.6
+  },
+  "dau_tu": {
+   "family": "slash",
+   "vfx_form": "deathmark",
+   "impact_shape": "deathmark",
+   "note": 293.7,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 146.8
+  },
+  "hoi_am": {
+   "family": "slash",
+   "vfx_form": "echo",
+   "impact_shape": "echo",
+   "note": 329.6,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 164.8
+  },
+  "kiem_than": {
+   "family": "slash",
+   "vfx_form": "cross_x",
+   "impact_shape": "cross_x",
+   "note": 392.0,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 392.0
+  },
+  "kiem_vu": {
+   "family": "slash",
+   "vfx_form": "arc_v",
+   "impact_shape": "arc_v",
+   "note": 440.0,
+   "impact_sec": 0.3,
+   "windup_shape": "sky",
+   "windup_note": 440.0
+  },
+  "lien_tram": {
+   "family": "slash",
+   "vfx_form": "-",
+   "impact_shape": "chain3",
+   "note": 523.2,
+   "impact_sec": 0.22,
+   "windup_shape": "hand",
+   "windup_note": 261.6
+  },
+  "phi_tieu": {
+   "family": "slash",
+   "vfx_form": "dagger",
+   "impact_shape": "dagger",
+   "note": 587.4,
+   "impact_sec": 0.27,
+   "windup_shape": "throw",
+   "windup_note": 587.4
+  },
+  "song_dao": {
+   "family": "slash",
+   "vfx_form": "-",
+   "impact_shape": "twin",
+   "note": 659.2,
+   "impact_sec": 0.22,
+   "windup_shape": "hand",
+   "windup_note": 329.6
+  },
+  "song_kiem": {
+   "family": "slash",
+   "vfx_form": "double",
+   "impact_shape": "double",
+   "note": 784.0,
+   "impact_sec": 0.3,
+   "windup_shape": "chain",
+   "windup_note": 784.0
+  },
+  "thiet_kiem": {
+   "family": "slash",
+   "vfx_form": "arc_h",
+   "impact_shape": "arc_h",
+   "note": 880.0,
+   "impact_sec": 0.3,
+   "windup_shape": "throw",
+   "windup_note": 880.0
+  },
+  "thuong_xuyen": {
+   "family": "slash",
+   "vfx_form": "-",
+   "impact_shape": "pierce",
+   "note": 1046.4,
+   "impact_sec": 0.22,
+   "windup_shape": "weapon",
+   "windup_note": 1046.4
+  },
+  "tu_kiem": {
+   "family": "slash",
+   "vfx_form": "stab4",
+   "impact_shape": "stab4",
+   "note": 1174.8,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 587.4
+  },
+  "gai_doc": {
+   "family": "poison",
+   "vfx_form": "bubbles",
+   "impact_shape": "bubbles",
+   "note": 261.6,
+   "impact_sec": 0.3,
+   "windup_shape": "ground",
+   "windup_note": 261.6
+  },
+  "ganh_nang": {
+   "family": "curse",
+   "vfx_form": "-",
+   "impact_shape": "curse_low",
+   "note": 130.8,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 65.4
+  },
+  "oan_hon": {
+   "family": "curse",
+   "vfx_form": "-",
+   "impact_shape": "ghost",
+   "note": 146.8,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 73.4
+  },
+  "hoa_bang": {
+   "family": "burn",
+   "vfx_form": "steam",
+   "impact_shape": "steam",
+   "note": 261.6,
+   "impact_sec": 0.4,
+   "windup_shape": "hand",
+   "windup_note": 130.8
+  },
+  "hoa_tinh": {
+   "family": "burn",
+   "vfx_form": "-",
+   "impact_shape": "sparks_fall",
+   "note": 293.7,
+   "impact_sec": 0.3,
+   "windup_shape": "sky",
+   "windup_note": 293.7
+  },
+  "hoa_tran": {
+   "family": "burn",
+   "vfx_form": "-",
+   "impact_shape": "fire_field",
+   "note": 329.6,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 164.8
+  },
+  "hoa_tuyen": {
+   "family": "burn",
+   "vfx_form": "firewall",
+   "impact_shape": "firewall",
+   "note": 392.0,
+   "impact_sec": 0.33,
+   "windup_shape": "hand",
+   "windup_note": 196.0
+  },
+  "hoa_xa": {
+   "family": "burn",
+   "vfx_form": "-",
+   "impact_shape": "floor_fire",
+   "note": 440.0,
+   "impact_sec": 0.3,
+   "windup_shape": "ground",
+   "windup_note": 440.0
+  },
+  "liet_hoa": {
+   "family": "burn",
+   "vfx_form": "-",
+   "impact_shape": "firewall",
+   "note": 523.2,
+   "impact_sec": 0.3,
+   "windup_shape": "ground",
+   "windup_note": 523.2
+  },
+  "thien_hoa": {
+   "family": "burn",
+   "vfx_form": "-",
+   "impact_shape": "fire_sky",
+   "note": 587.4,
+   "impact_sec": 0.3,
+   "windup_shape": "sky",
+   "windup_note": 587.4
+  },
+  "khien_thep": {
+   "family": "guard",
+   "vfx_form": "plate",
+   "impact_shape": "plate",
+   "note": 261.6,
+   "impact_sec": 0.27,
+   "windup_shape": "weapon",
+   "windup_note": 261.6
+  },
+  "thanh_thuan": {
+   "family": "guard",
+   "vfx_form": "ward",
+   "impact_shape": "ward",
+   "note": 293.7,
+   "impact_sec": 0.3,
+   "windup_shape": "hand",
+   "windup_note": 146.8
+  },
+  "tuong_da": {
+   "family": "seal",
+   "vfx_form": "pillar",
+   "impact_shape": "pillar",
+   "note": 261.6,
+   "impact_sec": 0.3,
+   "windup_shape": "body",
+   "windup_note": 130.8
+  }
+ }
+}

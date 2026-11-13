@@ -1,0 +1,79 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(5, 0), (4, 1), (5, 1), (6, 1), (5, 2)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [],
+  "log": [
+    {
+      "cells": 5,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.han_tran.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "L"
+    },
+    {
+      "cells": 5,
+      "clock": 1.450001,
+      "handle": 2,
+      "id": "skill.card.han_tran.impact",
+      "local": 1.45,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "L"
+    },
+    {
+      "cells": 1,
+      "clock": 1.46666666666667,
+      "handle": 3,
+      "id": "combat.hit.enemy",
+      "local": 1.46666666666667,
+      "op": "play",
+      "step": 0,
+      "tag": "body:1",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [],
+  "shape": "plus5",
+  "skill": "han_tran",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.han_tran.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "L"
+    },
+    {
+      "end": 2.06666666666666,
+      "id": "skill.card.han_tran.impact",
+      "loop": false,
+      "start": 1.46666666666667,
+      "tier": "L"
+    },
+    {
+      "end": 2.08333333333333,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 1.46666666666667,
+      "tier": "S"
+    }
+  ]
+}

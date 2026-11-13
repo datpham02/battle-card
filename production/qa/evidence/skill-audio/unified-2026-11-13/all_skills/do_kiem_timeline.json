@@ -1,0 +1,79 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [],
+  "log": [
+    {
+      "cells": 1,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.do_kiem.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.450001,
+      "handle": 2,
+      "id": "skill.card.do_kiem.impact",
+      "local": 0.45,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.466666666666667,
+      "handle": 3,
+      "id": "combat.hit.enemy",
+      "local": 0.466666666666667,
+      "op": "play",
+      "step": 0,
+      "tag": "body:1",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [],
+  "shape": "mono",
+  "skill": "do_kiem",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.466666666666667,
+      "id": "skill.card.do_kiem.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 1.05,
+      "id": "skill.card.do_kiem.impact",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 1.06666666666667,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "S"
+    }
+  ]
+}

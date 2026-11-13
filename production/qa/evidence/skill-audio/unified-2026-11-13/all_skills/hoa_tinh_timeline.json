@@ -1,0 +1,205 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (4, 1), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [],
+  "log": [
+    {
+      "cells": 3,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.hoa_tinh.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 0.95,
+      "handle": 2,
+      "id": "status.burn.loop",
+      "local": 0.933333333333335,
+      "op": "play",
+      "step": 0,
+      "tag": "burn",
+      "tier": "S"
+    },
+    {
+      "cells": 3,
+      "clock": 0.95,
+      "handle": 3,
+      "id": "skill.card.hoa_tinh.impact",
+      "local": 0.933333333333335,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 0.950000000000001,
+      "handle": 4,
+      "id": "combat.hit.enemy",
+      "local": 0.950000000000001,
+      "op": "play",
+      "step": 0,
+      "tag": "body:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 1.43333333333333,
+      "handle": 5,
+      "id": "status.burn.hurt",
+      "local": 1.41666666666667,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 1.93333333333333,
+      "handle": 6,
+      "id": "status.burn.hurt",
+      "local": 1.91666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 2.43333333333333,
+      "handle": 7,
+      "id": "status.burn.hurt",
+      "local": 2.41666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 2.93333333333333,
+      "handle": 8,
+      "id": "status.burn.hurt",
+      "local": 2.91666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.43333333333333,
+      "handle": 9,
+      "id": "status.burn.hurt",
+      "local": 3.41666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 3.43333333333333,
+      "handle": 10,
+      "id": "status.burn.out",
+      "local": 3.41666666666666,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [],
+  "shape": "l3",
+  "skill": "hoa_tinh",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.hoa_tinh.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.55,
+      "id": "status.burn.loop",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 1.55,
+      "id": "skill.card.hoa_tinh.impact",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "M"
+    },
+    {
+      "end": 1.56666666666667,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 2.03333333333333,
+      "id": "status.burn.hurt",
+      "loop": false,
+      "start": 1.43333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 2.53333333333333,
+      "id": "status.burn.hurt",
+      "loop": false,
+      "start": 1.93333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 3.03333333333333,
+      "id": "status.burn.hurt",
+      "loop": false,
+      "start": 2.43333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 3.53333333333333,
+      "id": "status.burn.hurt",
+      "loop": false,
+      "start": 2.93333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 4.03333333333332,
+      "id": "status.burn.hurt",
+      "loop": false,
+      "start": 3.43333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 4.03333333333332,
+      "id": "status.burn.out",
+      "loop": false,
+      "start": 3.43333333333333,
+      "tier": "S"
+    }
+  ]
+}

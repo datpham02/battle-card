@@ -1,0 +1,152 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (4, 1), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(4, 0), (4, 1), (5, 1)]",
+      "clock": 0.95,
+      "hit": true,
+      "kind": "hit",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 0), (5, 1), (6, 1)]",
+      "clock": 1.55,
+      "hit": true,
+      "kind": "echo",
+      "mult": 0.6,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 3,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.hoi_am.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "at": 0.95,
+      "cells": 3,
+      "clock": 0.95,
+      "handle": 2,
+      "id": "skill.card.hoi_am.impact",
+      "local": 0.933333333333335,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 0.95,
+      "handle": 3,
+      "id": "combat.hit.enemy",
+      "local": 0.933333333333335,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 1.55,
+      "cells": 3,
+      "clock": 1.55,
+      "handle": 4,
+      "id": "skill.card.hoi_am.impact",
+      "local": 1.53333333333333,
+      "op": "play",
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "M"
+    },
+    {
+      "cells": 1,
+      "clock": 1.55,
+      "handle": 5,
+      "id": "combat.hit.enemy",
+      "local": 1.53333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 0.95,
+      "events": [
+        {
+          "at": 0.95,
+          "cells": "[(4, 0), (4, 1), (5, 1)]",
+          "kind": "hit",
+          "step": 0
+        },
+        {
+          "at": 1.55,
+          "cells": "[(5, 0), (5, 1), (6, 1)]",
+          "kind": "echo",
+          "step": 1
+        }
+      ]
+    }
+  ],
+  "shape": "l3",
+  "skill": "hoi_am",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.hoi_am.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.55,
+      "id": "skill.card.hoi_am.impact",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "M"
+    },
+    {
+      "end": 1.55,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.950000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 2.15,
+      "id": "skill.card.hoi_am.impact",
+      "loop": false,
+      "start": 1.55,
+      "tier": "M"
+    },
+    {
+      "end": 2.15,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 1.55,
+      "tier": "S"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.28,
+    "commit_lock_sec": 0.13,
+    "drop_order": "from_centre",
+    "sky_hover_sec": 0.22,
+    "sky_stagger_sec": 0.12
+  },
+  "cells": "[(4, 0), (5, 0), (6, 0), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(5, 1)]",
+      "clock": 1.7,
+      "hit": true,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(6, 0)]",
+      "clock": 1.82,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(4, 0)]",
+      "clock": 1.94,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 0)]",
+      "clock": 2.06,
+      "hit": false,
+      "kind": "drop_final",
+      "mult": 1.5,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 4,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.ngan_kiem.channel_loop",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "channel:0",
+      "tier": "M"
+    },
+    {
+      "at": 1.7,
+      "cells": 1,
+      "clock": 1.7,
+      "handle": 2,
+      "id": "skill.ngan_kiem.impact",
+      "local": 1.68333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 1.7,
+      "handle": 3,
+      "id": "combat.hit.enemy",
+      "local": 1.68333333333333,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 1.82,
+      "cells": 1,
+      "clock": 1.82,
+      "handle": 4,
+      "id": "skill.ngan_kiem.impact",
+      "local": 1.81666666666667,
+      "op": "play",
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.94,
+      "cells": 1,
+      "clock": 1.94,
+      "handle": 5,
+      "id": "skill.ngan_kiem.impact",
+      "local": 1.93333333333333,
+      "op": "play",
+      "step": 2,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 2.06,
+      "cells": 1,
+      "clock": 2.06,
+      "handle": 6,
+      "id": "skill.ngan_kiem.impact_final",
+      "local": 2.05,
+      "op": "play",
+      "step": 3,
+      "tag": "cast:1",
+      "tier": "L"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 1.48,
+      "events": [
+        {
+          "at": 1.7,
+          "cells": "[(5, 1)]",
+          "kind": "drop",
+          "step": 0
+        },
+        {
+          "at": 1.82,
+          "cells": "[(6, 0)]",
+          "kind": "drop",
+          "step": 1
+        },
+        {
+          "at": 1.94,
+          "cells": "[(4, 0)]",
+          "kind": "drop",
+          "step": 2
+        },
+        {
+          "at": 2.06,
+          "cells": "[(5, 0)]",
+          "kind": "drop_final",
+          "step": 3
+        }
+      ]
+    }
+  ],
+  "shape": "t4",
+  "skill": "ngan_kiem",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.ngan_kiem.channel_loop",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 2.3,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 1.7,
+      "tier": "S"
+    },
+    {
+      "end": 2.3,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 1.7,
+      "tier": "S"
+    },
+    {
+      "end": 2.43333333333333,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 1.83333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 2.55,
+      "id": "skill.ngan_kiem.impact",
+      "loop": false,
+      "start": 1.95,
+      "tier": "S"
+    },
+    {
+      "end": 2.66666666666666,
+      "id": "skill.ngan_kiem.impact_final",
+      "loop": false,
+      "start": 2.06666666666666,
+      "tier": "L"
+    }
+  ]
+}

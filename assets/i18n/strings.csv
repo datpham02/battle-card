@@ -1124,3 +1124,23 @@ ui.world.shop_here,Có cửa hàng ở ngã ba,Shop at the crossing
 ui.forge.title,LÒ KHỐI,BLOCK FORGE
 ui.forge.free_removal,Quên hình miễn phí: %s,Free forget: %s
 ui.forge.ink,Học %s,Learn %s
+character.kiem_si.lore,"Trước Biến Cố, rút kiếm ra là xong. Giờ mỗi nhát chém phải đi qua một khối thép tự tay nhặt lấy. Kiếm sĩ leo lên Tâm Lưới để đòi lại cái vung tay tự do ngày trước.","Before the Cataclysm, drawing the blade was enough. Now every cut must pass through a steel block they pick up themselves. The Swordsman climbs to the Lattice Heart to take back that free swing."
+character.kiem_si.personality,"Ít lời, kiên nhẫn, không bao giờ khích địch.","Terse, patient, never taunts."
+character.kiem_si.playstyle,"Ít đòn, đòn nào cũng nặng. Giữ thế rồi kết liễu.","Few casts, each one heavy. Hold the line, then end it."
+character.kiem_si.block_material,"Thép: khối như phiến kim loại, in xuống thành vết chém sáng.",Steel: blocks like metal plates that stamp down as a bright cut.
+character.phap_su.lore,"Không tiếc phép thuật cũ, Pháp sư chỉ muốn biết luật mới được viết ra sao. Mỗi khối than nứt hổ phách đặt xuống là một lần thử; đám cháy để lại chính là ghi chép.","The Mage does not mourn the old magic, only wants to know how the new law is written. Every ember block they set down is an experiment, and the fire left behind is the notes."
+character.phap_su.personality,"Tò mò, lạnh lùng, coi mỗi trận là một thí nghiệm.",Curious and cool-headed; treats every fight as an experiment.
+character.phap_su.playstyle,"Đốt diện rộng, để lửa làm việc thay mình.",Burn wide and let the fire do the work.
+character.phap_su.block_material,"Than lửa: khối thân tối nứt hổ phách, để lại tàn lửa.",Ember: dark blocks cracked with amber that leave embers behind.
+character.sat_thu.lore,"Có người trả tiền để lấy về một Mảnh Gốc, và Sát thủ nhận việc. Khối của Sát thủ nhỏ, trong và sắc cạnh: đủ để mở một đường, không đủ để ai kịp nhìn.","Someone paid to have a Primal Shard brought back, and the Assassin took the job. Their blocks are small, clear and sharp-edged: enough to open a line, never enough for anyone to see it coming."
+character.sat_thu.personality,"Thực tế, ít gắn bó, chỉ tính công việc.","Practical, unattached, in it for the job."
+character.sat_thu.playstyle,"Khối nhỏ, bước nhanh, ép địch liên tục.","Small blocks, fast feet, constant pressure."
+character.sat_thu.block_material,"Băng sắc: khối nhỏ, trong suốt, cạnh nhọn.","Keen ice: small blocks, clear, with sharp edges."
+character.tho_san.lore,"Thợ săn không leo vì Tâm Lưới mà vì những Kẻ Gác. Khối gỗ và dây trong tay là khung bẫy: đất mới là thứ ra đòn, Thợ săn chỉ chọn chỗ.","The Hunter does not climb for the Lattice Heart but for the Wardens. The wood-and-cord blocks in their hands are trap frames: the ground does the striking, the Hunter only picks the spot."
+character.tho_san.personality,"Lì lợm, kiên nhẫn, tin vào cái bẫy hơn tin vào đòn đánh.",Stubborn and patient; trusts the trap more than the blow.
+character.tho_san.playstyle,Rải sẵn mặt đất rồi ép địch bước vào.,"Seed the ground first, then make them walk into it."
+character.tho_san.block_material,Gỗ và dây: khối như khung bẫy đã lên cò.,Wood and cord: blocks like a trap frame already set.
+character.giao_si.lore,"Giáo sĩ tin thế giới còn ghép lại được, và mỗi khối kính thánh đặt xuống là một phần của niềm tin ấy. Tha cho một Kẻ Gác khó hơn là hạ nó, nên Giáo sĩ chọn cái khó.","The Priest believes the world can still be put back together, and every stained-glass block they set down is part of that belief. Sparing a Warden is harder than felling one, so the Priest takes the harder road."
+character.giao_si.personality,"Điềm tĩnh, cứng rắn, tha thứ nhưng không mềm yếu.",Calm and firm; merciful without being soft.
+character.giao_si.playstyle,Chồng Giá Lạnh; mỗi lần nổ là một lần hồi máu.,Stack Chill; every burst is a heal.
+character.giao_si.block_material,Kính thánh: khối như kính màu phát sáng.,Stained glass: blocks like glowing coloured glass.

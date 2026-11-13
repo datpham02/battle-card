@@ -37,7 +37,7 @@ static func attach_view(director: AudioDirector, view: CombatView) -> CombatAudi
 		"enemy_actor": view.get_boss().get_actor() if view.get_boss() != null else null,
 		"state": view.get_state(), "pattern": view.get_pattern_controller(), "skills": view.get_skill_config(),
 		"cut_flow": view.get_cut_flow(), "hold": view.get_hold(), "parry": view.get_parry_guard(),
-		"status": view.get_status(),
+		"status": view.get_status(), "hazards": view.get_hazards(), "boss": view.get_boss(),
 	}
 	bridge.attach(parts)
 	var host: Node = view.get_parent() if view.get_parent() != null else view
@@ -57,6 +57,7 @@ func attach(parts: Dictionary) -> void:
 		_link(arb.cast_scheduled, _on_cast_scheduled)
 		_link(arb.impact_resolved, _on_impact_resolved)
 		_link(arb.swing_interrupted, _on_swing_interrupted)
+		_link(arb.swing_resolved, _on_swing_resolved)
 		_director.clock_fn = Callable(arb, "clock")
 	for key: String in ["player_actor", "enemy_actor"]:
 		var actor: CutActor = parts.get(key, null) as CutActor
@@ -67,6 +68,10 @@ func attach(parts: Dictionary) -> void:
 	var state: CombatState = parts.get("state", null) as CombatState
 	if state != null:
 		_link(state.damaged, _on_damaged)
+		_link(state.unit_damaged, _on_unit_damaged)
+		_link(state.cell_changed, _on_cell_changed)
+		_link(state.unit_died, _on_unit_died)
+		_link(state.player_died, _on_death)
 	var pattern: PatternController = parts.get("pattern", null) as PatternController
 	if pattern != null:
 		_link(pattern.warning_started, _on_warning_started)
@@ -95,6 +100,20 @@ func attach(parts: Dictionary) -> void:
 		_link(status.cell_ignited, _on_cell_ignited)
 		_link(status.cell_burned_out, _on_cell_burned_out)
 		_link(status.burn_hurt, _on_burn_hurt)
+		_link(status.pinned, _on_status.bind("pin", true))
+		_link(status.pin_ended, _on_status.bind("pin", false))
+		_link(status.mark_applied, _on_mark_applied)
+		_link(status.mark_expired, _on_status.bind("mark", false))
+		_link(status.poisoned, _on_status.bind("poison", true))
+		_link(status.poison_ended, _on_status.bind("poison", false))
+		_link(status.zone_applied, _on_zone_applied)
+		_link(status.zone_expired, _on_zone_expired)
+	var hazards: TileHazards = parts.get("hazards", null) as TileHazards
+	if hazards != null:
+		_link(hazards.vent_warned, _on_vent_warned)
+	var boss: BossController = parts.get("boss", null) as BossController
+	if boss != null:
+		_link(boss.point_picked, _on_enemy_picked_point)
 
 
 ## Disconnects everything and clears the director's combat state (pending cues, combat voices, clock).
@@ -120,6 +139,59 @@ func _exit_tree() -> void:
 func _on_stage_changed(stage: int, _skill_id: String) -> void:
 	if stage == PatternController.Stage.WINDUP:
 		_director.apply(AudioEventRules.on_boss_windup())
+	elif stage == PatternController.Stage.RECOVERY:
+		_director.apply(AudioEventRules.on_boss_recovery())
+
+
+func _on_swing_resolved(side: int, result: Dictionary) -> void:
+	var skill_id: String = str(result.get("skill_id", ""))
+	_director.apply(AudioEventRules.on_swing_resolved(_bank, side, result, skill_id, _skill_def(skill_id)))
+
+
+func _on_cell_changed(side: int, _old_cell: Vector2i, _new_cell: Vector2i) -> void:
+	_director.apply(AudioEventRules.on_cell_changed(side))
+
+
+# Multi-enemy: CombatState.damaged covers the player and unit 0 only; units 1+ report through unit_damaged. They share
+# the enemy body hit (one enemy voice, doc §6 item A): several units hit together merge into one thump by cooldown.
+func _on_unit_damaged(index: int, amount: float) -> void:
+	if index > 0:
+		_director.apply(AudioEventRules.on_damaged(_bank, AudioEventRules.SIDE_ENEMY, amount, 1.0))
+
+
+func _on_unit_died(_index: int) -> void:
+	_director.apply(AudioEventRules.on_death())
+
+
+func _on_death() -> void:
+	_director.apply(AudioEventRules.on_death())
+
+
+# Status signals carry the side first; the bound args (kind, applied) come last.
+func _on_status(_side: int, kind: String, applied: bool) -> void:
+	_director.apply(AudioEventRules.on_status(kind, applied))
+
+
+func _on_mark_applied(_side: int, _sec: float) -> void:
+	_director.apply(AudioEventRules.on_status("mark", true))
+
+
+func _on_zone_applied(kind: String, _side: int, _cells: Array[Vector2i]) -> void:
+	if kind != "burn":
+		_director.apply(AudioEventRules.on_status("zone", true))
+
+
+func _on_zone_expired(kind: String, _side: int, _cell: Vector2i) -> void:
+	if kind != "burn":
+		_director.apply(AudioEventRules.on_status("zone", false))
+
+
+func _on_vent_warned(_side: int, _vent_index: int, _cells: Array[Vector2i]) -> void:
+	_director.apply(AudioEventRules.on_terrain_warning())
+
+
+func _on_enemy_picked_point(_point: FieldPoint) -> void:
+	_director.apply(AudioEventRules.on_enemy_picked_point())
 
 
 func _on_menu_opened(_cells: Array, _hand: Array) -> void:

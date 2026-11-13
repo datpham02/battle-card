@@ -109,7 +109,14 @@ func test_local_delay_and_cancel() -> void:
 
 
 func test_stop_tag_and_cancel_all() -> void:
-	var d := _director()
+	# The game data has no looping event any more (unified identity: no drone), but the director still supports loops:
+	# the test marks one event as a loop in its own copy of the data.
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/audio_events.json"))
+	data["events"]["skill.ngan_kiem.channel_loop"]["loop"] = true
+	var d := AudioDirector.silent(AudioBank.new(data))
+	clock = 0.0
+	d.clock_fn = func() -> float: return clock
+	d.lead_override = 0.03
 	d.apply([{"op": "play", "id": "skill.ngan_kiem.channel_loop", "cells": 1, "step": 0, "tag": "channel:0"}])
 	ck("the loop voice is live", d.get_pool().voices().any(func(v: Dictionary) -> bool: return v["tag"] == "channel:0" and v["loop"]))
 	_step(d, 0.5, 10)

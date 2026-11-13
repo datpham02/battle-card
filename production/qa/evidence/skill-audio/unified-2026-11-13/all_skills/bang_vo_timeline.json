@@ -1,0 +1,161 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(4, 0), (4, 1), (5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(4, 0)]",
+      "clock": 1.07,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(4, 1)]",
+      "clock": 1.1,
+      "hit": false,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 1)]",
+      "clock": 1.13,
+      "hit": true,
+      "kind": "drop",
+      "mult": 1.0,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 3,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.bang_vo.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "M"
+    },
+    {
+      "at": 1.07,
+      "cells": 1,
+      "clock": 1.07,
+      "handle": 2,
+      "id": "skill.card.bang_vo.impact",
+      "local": 1.06666666666667,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.1,
+      "cells": 1,
+      "clock": 1.1,
+      "handle": 2,
+      "id": "skill.card.bang_vo.impact",
+      "local": 1.08333333333333,
+      "op": "merge",
+      "retier": false,
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "at": 1.13,
+      "cells": 1,
+      "clock": 1.13,
+      "handle": 3,
+      "id": "skill.card.bang_vo.impact",
+      "local": 1.11666666666667,
+      "op": "play",
+      "step": 2,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 1.13,
+      "handle": 4,
+      "id": "combat.hit.enemy",
+      "local": 1.11666666666667,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 0.95,
+      "events": [
+        {
+          "at": 1.07,
+          "cells": "[(4, 0)]",
+          "kind": "drop",
+          "step": 0
+        },
+        {
+          "at": 1.1,
+          "cells": "[(4, 1)]",
+          "kind": "drop",
+          "step": 1
+        },
+        {
+          "at": 1.13,
+          "cells": "[(5, 1)]",
+          "kind": "drop",
+          "step": 2
+        }
+      ]
+    }
+  ],
+  "shape": "l3",
+  "skill": "bang_vo",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.6,
+      "id": "skill.card.bang_vo.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "M"
+    },
+    {
+      "end": 1.68333333333333,
+      "id": "skill.card.bang_vo.impact",
+      "loop": false,
+      "start": 1.08333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 1.73333333333333,
+      "id": "skill.card.bang_vo.impact",
+      "loop": false,
+      "start": 1.13333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 1.73333333333333,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 1.13333333333333,
+      "tier": "S"
+    }
+  ]
+}

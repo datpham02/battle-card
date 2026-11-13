@@ -63,7 +63,9 @@ func test_swing_started() -> void:
 	var t: Array[Dictionary] = AudioEventRules.on_swing_started(bank, P, "tram_dia", sc.get_skill("tram_dia"), 3)
 	ck("Tram Dia swing start: its wind-up only (no loop)", _ids(t) == ["skill.tram_dia.windup"])
 	var g: Array[Dictionary] = AudioEventRules.on_swing_started(bank, P, "kiem_khi", sc.get_skill("kiem_khi"), 2)
-	ck("an archetype card: the generic wind-up", _ids(g) == ["skill.generic.windup"])
+	ck("a card with its own voice: its own wind-up", _ids(g) == ["skill.card.kiem_khi.windup"], str(_ids(g)))
+	var f: Array[Dictionary] = AudioEventRules.on_swing_started(bank, P, "future_card", sc.get_skill("kiem_khi"), 2)
+	ck("a card without a voice: the generic wind-up (archetype fallback)", _ids(f) == ["skill.generic.windup"])
 	var b: Array[Dictionary] = AudioEventRules.on_swing_started(bank, E, "kiem_khi", sc.get_skill("kiem_khi"), 2)
 	ck("the boss's swing start is the boss wind-up warning", _ids(b) == ["warn.boss.windup"])
 
@@ -147,8 +149,8 @@ func test_fizzle() -> void:
 
 func test_impact_hit_layer_only_on_hit() -> void:
 	var hit: Array[Dictionary] = AudioEventRules.on_impact_resolved(bank, P, _ev(1.0, 2, "hit"), true, "kiem_khi", sc.get_skill("kiem_khi"))
-	ck("a hit drops the deferred body hit, then plays the hit layer and the enemy body hit",
-		_ids(_ops(hit, "play")) == ["skill.generic.hit", "combat.hit.enemy"] and _ops(hit, "cancel").size() == 1
+	ck("a hit drops the deferred body hit, then plays the enemy body hit (no extra hit layer: unified identity)",
+		_ids(_ops(hit, "play")) == ["combat.hit.enemy"] and _ops(hit, "cancel").size() == 1
 		and _ops(hit, "cancel")[0]["tag"] == AudioEventRules.body_tag(AudioEventRules.SIDE_ENEMY), str(hit))
 	var blast: Array[Dictionary] = AudioEventRules.on_impact_resolved(bank, P, _ev(1.0, 4, "fuse"), true, "hoa_loi", sc.get_skill("hoa_loi"))
 	ck("Hoa Loi's blast is the hit: no hit layer and no body thump on top (user 2026-11-09)", _ops(blast, "play").is_empty()

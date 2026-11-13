@@ -1,0 +1,290 @@
+{
+  "boss": "(5, 1)",
+  "cancel_at": -1.0,
+  "card_timing": {
+    "cast_time_sec": -1.0,
+    "channel_extend_sec": 0.0,
+    "commit_lock_sec": -1.0,
+    "drop_order": "row_major",
+    "sky_hover_sec": -1.0,
+    "sky_stagger_sec": -1.0
+  },
+  "cells": "[(5, 1)]",
+  "frame_sec": 0.0166666666666667,
+  "impacts": [
+    {
+      "cells": "[(5, 1)]",
+      "clock": 0.450001,
+      "hit": true,
+      "kind": "hit",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 1)]",
+      "clock": 0.570001,
+      "hit": true,
+      "kind": "hit",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 1)]",
+      "clock": 0.690001,
+      "hit": true,
+      "kind": "hit",
+      "mult": 1.0,
+      "side": 0
+    },
+    {
+      "cells": "[(5, 1)]",
+      "clock": 0.810001,
+      "hit": true,
+      "kind": "hit",
+      "mult": 1.0,
+      "side": 0
+    }
+  ],
+  "log": [
+    {
+      "cells": 1,
+      "clock": 0.0,
+      "handle": 1,
+      "id": "skill.card.song_dao.windup",
+      "local": 0.0,
+      "op": "play",
+      "step": 0,
+      "tag": "swing:0",
+      "tier": "S"
+    },
+    {
+      "at": 0.450001,
+      "cells": 1,
+      "clock": 0.450001,
+      "handle": 2,
+      "id": "skill.card.song_dao.impact",
+      "local": 0.45,
+      "op": "play",
+      "step": 0,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.450001,
+      "handle": 3,
+      "id": "combat.hit.enemy",
+      "local": 0.45,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 0.570001,
+      "cells": 1,
+      "clock": 0.570001,
+      "handle": 4,
+      "id": "skill.card.song_dao.impact",
+      "local": 0.566666666666667,
+      "op": "play",
+      "step": 1,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.570001,
+      "handle": 5,
+      "id": "combat.hit.enemy",
+      "local": 0.566666666666667,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 0.690001,
+      "cells": 1,
+      "clock": 0.690001,
+      "handle": 6,
+      "id": "skill.card.song_dao.impact",
+      "local": 0.683333333333334,
+      "op": "play",
+      "step": 2,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.690001,
+      "handle": 7,
+      "id": "combat.hit.enemy",
+      "local": 0.683333333333334,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.690001,
+      "handle": 8,
+      "id": "combat.crit",
+      "local": 0.683333333333334,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "at": 0.810001,
+      "cells": 1,
+      "clock": 0.810001,
+      "handle": 9,
+      "id": "skill.card.song_dao.impact",
+      "local": 0.800000000000001,
+      "op": "play",
+      "step": 3,
+      "tag": "cast:1",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.810001,
+      "handle": 10,
+      "id": "combat.hit.enemy",
+      "local": 0.800000000000001,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    },
+    {
+      "cells": 1,
+      "clock": 0.810001,
+      "handle": 11,
+      "id": "combat.crit",
+      "local": 0.800000000000001,
+      "op": "play",
+      "step": 0,
+      "tag": "",
+      "tier": "S"
+    }
+  ],
+  "rot": 0,
+  "scheduled": [
+    {
+      "clock": 0.450001,
+      "events": [
+        {
+          "at": 0.450001,
+          "cells": "[(5, 1)]",
+          "kind": "hit",
+          "step": 0
+        },
+        {
+          "at": 0.570001,
+          "cells": "[(5, 1)]",
+          "kind": "hit",
+          "step": 1
+        },
+        {
+          "at": 0.690001,
+          "cells": "[(5, 1)]",
+          "kind": "hit",
+          "step": 2
+        },
+        {
+          "at": 0.810001,
+          "cells": "[(5, 1)]",
+          "kind": "hit",
+          "step": 3
+        }
+      ]
+    }
+  ],
+  "shape": "mono",
+  "skill": "song_dao",
+  "swing_start_clock": 0.0,
+  "swing_started": true,
+  "voices": [
+    {
+      "end": 0.466666666666667,
+      "id": "skill.card.song_dao.windup",
+      "loop": false,
+      "start": 0.0166666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 0.816666666666668,
+      "id": "skill.card.song_dao.impact",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 0.816666666666668,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.466666666666667,
+      "tier": "S"
+    },
+    {
+      "end": 1.16666666666667,
+      "id": "skill.card.song_dao.impact",
+      "loop": false,
+      "start": 0.583333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 1.16666666666667,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.583333333333333,
+      "tier": "S"
+    },
+    {
+      "end": 1.28333333333333,
+      "id": "skill.card.song_dao.impact",
+      "loop": false,
+      "start": 0.700000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 1.28333333333333,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.700000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 1.28333333333333,
+      "id": "combat.crit",
+      "loop": false,
+      "start": 0.700000000000001,
+      "tier": "S"
+    },
+    {
+      "end": 1.41666666666667,
+      "id": "skill.card.song_dao.impact",
+      "loop": false,
+      "start": 0.816666666666668,
+      "tier": "S"
+    },
+    {
+      "end": 1.41666666666667,
+      "id": "combat.hit.enemy",
+      "loop": false,
+      "start": 0.816666666666668,
+      "tier": "S"
+    },
+    {
+      "end": 1.41666666666667,
+      "id": "combat.crit",
+      "loop": false,
+      "start": 0.816666666666668,
+      "tier": "S"
+    }
+  ]
+}

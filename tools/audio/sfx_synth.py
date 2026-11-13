@@ -249,408 +249,535 @@ def recipe(base, peak=-3.0, desc="", variants=1, tiers=None):
     return deco
 
 
-# UI / Block / card (wood and stone family, not sci-fi)
-@recipe("sfx_ui_tap", -6, "short wood tick", variants=2)
+# --- Unified audio identity (docs/design/audio/unified-audio-identity.md, user 2026-11-13) ---------------------------
+# One small palette for the whole game, Minecraft-style: simple, recognisable, pleasant, never cinematic.
+# Feedback <= 200 ms, warnings <= 400 ms, no swell / riser / hall reverb, no waiting drone. Five materials:
+#   tick  (dry wood/stone click)  knock (short struck body)  thump (soft low body)  ting (one clean note)
+#   puff  (very short air, no sweep)  plus a short crackle for fire.
+# Every note sits on one C major pentatonic scale so the whole game shares one "voice". Actions are told apart by
+# material, pitch and length, never by which unit acts.
+
+C4, D4, E4, G4, A4 = 261.6, 293.7, 329.6, 392.0, 440.0
+C5, D5, E5, G5, A5 = 523.3, 587.3, 659.3, 784.0, 880.0
+C6, D6, E6, G6 = 1046.5, 1174.7, 1318.5, 1568.0
+
+
+def u_tick(rng, f=1200.0, sec=0.04, amp=1.0):
+    """Dry click: a 3 ms band of noise and a very short body at f."""
+    click = bandpass(noise(0.006, rng, attack=0.0005, decay=0.004, curve=5.0), f * 0.8, f * 3.0)
+    body = tone(sec, f, amp=0.5, attack=0.001, decay=sec * 0.35, curve=6.0)
+    return gain(mix(gain(click, 2.0), body), amp)
+
+
+def u_knock(rng, f=400.0, sec=0.08, amp=1.0):
+    """Struck wood/stone: two inharmonic partials and a click, fast decay."""
+    body = bell(sec, f, partials=(1.0, 2.31), amps=(1.0, 0.35), decay=sec * 0.3)
+    return gain(mix(u_tick(rng, f * 2.5, 0.02, 0.6), body), amp)
+
+
+def u_thump(rng, f0=150.0, f1=80.0, sec=0.12, amp=1.0):
+    """Soft low body: a short downward sine and a little low noise (felt, not boomy)."""
+    return gain(mix(tone(sec, f0, f1, amp=1.0, attack=0.002, decay=sec * 0.35, curve=5.0),
+                    gain(lowpass(noise(0.03, rng, decay=0.02), 600.0), 0.5)), amp)
+
+
+def u_ting(f, sec=0.18, amp=1.0):
+    """One clean pleasant note (sine with a faint 2nd and 3rd partial)."""
+    return bell(sec, f, partials=(1.0, 2.0, 3.0), amps=(1.0, 0.18, 0.06), amp=amp, decay=sec * 0.45)
+
+
+def u_puff(rng, lo=800.0, hi=3000.0, sec=0.1, amp=1.0):
+    """Very short air: band of noise, quick attack, no pitch sweep."""
+    return gain(bandpass(noise(sec, rng, attack=0.006, decay=sec * 0.5, curve=4.0), lo, hi), amp * 2.0)
+
+
+def u_crackle(rng, sec=0.15, density=90.0, amp=1.0):
+    return crackle(sec, rng, density, lo=1200.0, hi=4500.0, amp=amp)
+
+
+def u_at(x, sec):
+    """x delayed by sec (for use inside mix)."""
+    return silence(sec) + list(x)
+
+
+def u_seq(*pairs):
+    """[(offset_sec, samples), ...] mixed."""
+    return place(*[at(x, o) for o, x in pairs])
+
+
+# UI / Block / card ------------------------------------------------------------------------------------------------
+
+@recipe("sfx_ui_tap", -6, "tap: dry tick", variants=2)
 def _(rng, v):
-    f = 880 * (1.0 if v == 1 else 1.08)
-    return mix(tone(0.05, f, f * 0.8, amp=0.7, decay=0.02, curve=6), gain(bandpass(noise(0.02, rng, decay=0.006), 1500, 4000), 0.9))
+    return u_tick(rng, 1250.0 if v == 1 else 1400.0)
 
 
-@recipe("sfx_ui_back", -6, "two descending wood ticks")
+@recipe("sfx_ui_back", -6, "back: two ticks, second lower")
 def _(rng, v):
-    return place(at(tone(0.05, 800, 700, decay=0.02, curve=6), 0.0), at(tone(0.06, 600, 520, decay=0.025, curve=6), 0.06))
+    return u_seq((0.0, u_tick(rng, 1250.0)), (0.06, u_tick(rng, 950.0)))
 
 
-@recipe("sfx_ui_toggle", -6, "two quick rising ticks")
+@recipe("sfx_ui_toggle", -6, "toggle: two ticks, second higher")
 def _(rng, v):
-    return place(at(tone(0.04, 1000, decay=0.015, curve=6), 0.0), at(tone(0.05, 1300, decay=0.02, curve=6), 0.03))
+    return u_seq((0.0, u_tick(rng, 1100.0)), (0.05, u_tick(rng, 1450.0)))
 
 
-@recipe("sfx_block_pickup", -6, "stone clack, pitch by Block size", tiers=["S", "M", "L"])
+@recipe("sfx_block_pickup", -6, "Block pick-up: knock, smaller Block higher", tiers=["S", "M", "L"])
 def _(rng, t):
-    body = {"S": 560.0, "M": 400.0, "L": 270.0}[t]
-    return clack(rng, body, 0.12 + 0.03 * ["S", "M", "L"].index(t))
+    return u_knock(rng, {"S": G5, "M": E5, "L": C5}[t], 0.08)
 
 
-@recipe("sfx_block_select", -6, "light lift, airy rising tone")
+@recipe("sfx_block_select", -6, "Block select: light tick")
 def _(rng, v):
-    return mix(tone(0.09, 600, 900, amp=0.6, attack=0.01, decay=0.06), gain(bandpass(noise(0.08, rng, attack=0.02, decay=0.05), 1200, 3500), 0.6))
+    return u_tick(rng, 1600.0, 0.035, 0.8)
 
 
-@recipe("sfx_block_place", -4, "firm stone set: low thud and clack", variants=2)
+@recipe("sfx_block_place", -4, "Block place: low stone knock with a soft thump", variants=2)
 def _(rng, v):
-    return mix(thud(rng, 150 if v == 1 else 135, 80, 0.18), clack(rng, 330 if v == 1 else 300, 0.1, 0.8))
+    f = 300.0 if v == 1 else 320.0
+    return mix(u_knock(rng, f, 0.1), u_thump(rng, 160.0, 110.0, 0.08, 0.6))
 
 
-@recipe("sfx_block_invalid", -6, "one muted buzz")
+@recipe("sfx_block_invalid", -6, "invalid: two dull low knocks (a soft 'no')")
 def _(rng, v):
-    b = lowpass(tone(0.13, 180, shape="square", amp=0.8, attack=0.004, decay=0.1, curve=2), 1200)
-    return place(at(b, 0.0), at(gain(b, 0.6), 0.14))
+    return u_seq((0.0, u_knock(rng, 220.0, 0.07)), (0.08, u_knock(rng, 200.0, 0.07)))
 
 
-@recipe("sfx_block_confirm", -4, "two-stone lock")
+@recipe("sfx_card_menu_open", -5, "card menu: short paper puff and a soft ting")
 def _(rng, v):
-    return place(at(clack(rng, 330, 0.1), 0.0), at(clack(rng, 470, 0.12), 0.07))
+    return mix(u_puff(rng, 1500.0, 5000.0, 0.07, 0.6), u_at(u_ting(C5, 0.14, 0.6), 0.02))
 
 
-@recipe("sfx_block_slot_full", -6, "dull knock, twice")
+@recipe("sfx_card_highlight", -8, "card highlight: soft high tick")
 def _(rng, v):
-    k = mix(tone(0.12, 220, 190, decay=0.06, curve=5), gain(lowpass(noise(0.05, rng, decay=0.02), 900), 0.8))
-    return place(at(k, 0.0), at(gain(k, 0.7), 0.11))
+    return u_tick(rng, 1800.0, 0.03, 0.7)
 
 
-@recipe("sfx_card_menu_open", -5, "paper flip and soft rune hum")
+@recipe("sfx_card_choose", -4, "card choose: two quick tings (E5, G5)")
 def _(rng, v):
-    flip = gain(bandpass(noise(0.18, rng, attack=0.05, decay=0.1), 1000, 5000), 1.6)
-    hum = mix(tone(0.4, 330, amp=0.35, attack=0.08, decay=0.3), tone(0.4, 495, amp=0.2, attack=0.1, decay=0.3))
-    return mix(flip, hum)
+    return u_seq((0.0, u_ting(E5, 0.12)), (0.05, u_ting(G5, 0.14)))
 
 
-@recipe("sfx_card_highlight", -8, "soft tick")
+@recipe("sfx_card_unavailable", -5, "card unavailable: one dull knock")
 def _(rng, v):
-    return tone(0.03, 1400, 1300, amp=0.8, decay=0.012, curve=6)
+    return u_knock(rng, 200.0, 0.08)
 
 
-@recipe("sfx_card_choose", -4, "bright confirm bell")
+@recipe("sfx_card_ready", -9, "card ready: one soft high ting")
 def _(rng, v):
-    return mix(ping(880, 0.3), gain(ping(1320, 0.3), 0.6))
+    return u_ting(C6, 0.2, 0.8)
 
 
-@recipe("sfx_card_unavailable", -5, "dull locked click")
+# Combat ------------------------------------------------------------------------------------------------------------
+
+@recipe("sfx_combat_hit_player", -3, "player hit: low thump and a short crunch", variants=2)
 def _(rng, v):
-    return mix(lowpass(clack(rng, 160, 0.08), 900), tone(0.06, 160, 140, amp=0.6, decay=0.03))
+    return mix(u_thump(rng, 130.0 if v == 1 else 120.0, 70.0, 0.12), u_puff(rng, 500.0, 2500.0, 0.05, 0.7))
 
 
-@recipe("sfx_card_ready", -9, "soft ready tone")
+@recipe("sfx_combat_hit_enemy", -3, "enemy hit: thump and a click", variants=2)
 def _(rng, v):
-    return ping(1046, 0.32, 0.8)
+    return mix(u_thump(rng, 170.0 if v == 1 else 160.0, 95.0, 0.1), u_tick(rng, 900.0, 0.03, 0.7))
 
 
-# Generic combat
-@recipe("sfx_combat_hit_player", -3, "body hit: low thump and crunch", variants=2)
+@recipe("sfx_combat_interrupt", -3, "interrupt (NGẮT!): low knock cut by a puff")
 def _(rng, v):
-    return mix(thud(rng, 95 if v == 1 else 85, 55, 0.2), gain(bandpass(noise(0.12, rng, decay=0.05), 600, 2500), 1.4))
+    return u_seq((0.0, u_knock(rng, 260.0, 0.08)), (0.03, u_puff(rng, 600.0, 2500.0, 0.08, 0.8)))
 
 
-@recipe("sfx_combat_hit_enemy", -3, "impact smack", variants=2)
+@recipe("sfx_combat_parry", -3, "parry: bright metal ting over a knock")
 def _(rng, v):
-    return mix(thud(rng, 150 if v == 1 else 170, 80, 0.16), gain(bandpass(noise(0.1, rng, decay=0.035), 1000, 4000), 1.5))
+    return mix(u_knock(rng, 500.0, 0.06, 0.8), u_ting(A5, 0.16))
 
 
-@recipe("sfx_combat_interrupt", -3, "broken whoosh cut by a thud (NGAT!)")
+@recipe("sfx_combat_crit", -3, "crit: thump with a high ting on top")
 def _(rng, v):
-    w = whoosh(rng, 0.18, 500, 2500, rise=True)
-    return place(at(w, 0.0), at(thud(rng, 120, 45, 0.3), 0.17), at(gain(clack(rng, 250, 0.1), 0.7), 0.17))
+    return mix(u_thump(rng, 170.0, 90.0, 0.1), u_at(u_ting(C6, 0.15, 0.8), 0.005))
 
 
-@recipe("sfx_combat_parry", -3, "metallic clang")
+@recipe("sfx_combat_death", -3, "death: longer low thump and a soft puff of dust")
 def _(rng, v):
-    return mix(steel_ring(1200, 0.5), gain(bandpass(noise(0.03, rng, decay=0.01), 1500, 5000), 1.2))
+    return mix(u_thump(rng, 120.0, 55.0, 0.28), u_at(u_puff(rng, 300.0, 1500.0, 0.2, 0.5), 0.04))
 
 
-@recipe("sfx_combat_crit", -3, "sharp crack, ping and thump")
+@recipe("sfx_combat_hp_low", -6, "low HP: two soft heartbeat thumps")
 def _(rng, v):
-    return mix(gain(bandpass(noise(0.06, rng, decay=0.02), 1200, 5000), 1.6), ping(1600, 0.25, 0.7), thud(rng, 130, 60, 0.2, 0.8))
+    return u_seq((0.0, u_thump(rng, 90.0, 60.0, 0.1)), (0.16, u_thump(rng, 80.0, 55.0, 0.12, 0.8)))
 
 
-@recipe("sfx_combat_death", -3, "falling low tone with dust")
+@recipe("sfx_combat_lock", -5, "lock: high tick and a small knock")
 def _(rng, v):
-    return mix(tone(0.9, 200, 60, amp=0.8, attack=0.01, decay=0.8, curve=3), gain(lowpass(noise(0.9, rng, attack=0.05, decay=0.7), 700), 0.6))
+    return mix(u_tick(rng, 2000.0, 0.03), u_knock(rng, G5, 0.06, 0.6))
 
 
-@recipe("sfx_combat_hp_low", -6, "heartbeat lub-dub")
+# Warnings (<= 400 ms; energy kept in 1-3 kHz for accessibility) -------------------------------------------------
+
+@recipe("sfx_warn_boss_windup", -1, "boss wind-up: low thump and a knock-tick at 1.5 kHz")
 def _(rng, v):
-    beat = tone(0.14, 70, 50, decay=0.1, curve=4)
-    return place(at(beat, 0.0), at(gain(beat, 0.75), 0.2), at(silence(0.3), 0.34))
+    return mix(u_thump(rng, 110.0, 70.0, 0.16), u_at(u_knock(rng, 600.0, 0.08, 0.8), 0.01), u_at(u_tick(rng, 1500.0, 0.04), 0.02))
 
 
-@recipe("sfx_combat_lock", -5, "short bright lock clink")
+@recipe("sfx_warn_boss_imminent", -1, "boss imminent: two notes up (G5, C6), clear and short")
 def _(rng, v):
-    return mix(ping(2000, 0.14), gain(ping(3000, 0.1), 0.4), gain(clack(rng, 600, 0.05), 0.5))
+    return u_seq((0.0, u_ting(G5, 0.14)), (0.13, u_ting(C6, 0.18)))
 
 
-# Boss warnings: energy in 1-3 kHz, never only above 4 kHz
-@recipe("sfx_warn_boss_windup", -1, "low drum hit, armour shift and rattle (1-2.5 kHz)")
+@recipe("sfx_warn_boss_recovery", -3, "boss recovery (opening): two notes down (C6, G5), soft")
 def _(rng, v):
-    drum = thud(rng, 90, 50, 0.35)
-    cloth = gain(bandpass(noise(0.25, rng, attack=0.08, decay=0.15), 300, 1500), 1.2)
-    rattle = gain(crackle(0.22, rng, density=120, lo=1500, hi=2500), 2.0)
-    return mix(drum, cloth, rattle)
+    return u_seq((0.0, u_ting(C6, 0.14, 0.8)), (0.12, u_ting(G5, 0.2, 0.8)))
 
 
-@recipe("sfx_warn_boss_imminent", -1, "two-note rising alarm, 1.1 then 1.65 kHz")
+@recipe("sfx_warn_terrain_vent", -1, "terrain vent: short 1-3 kHz puff over a low thump")
 def _(rng, v):
-    a = lowpass(tone(0.12, 1100, shape="square", attack=0.004, decay=0.11, curve=1.5), 3500)
-    b = lowpass(tone(0.17, 1650, shape="square", attack=0.004, decay=0.16, curve=1.5), 3500)
-    return place(at(a, 0.0), at(b, 0.13))
+    return mix(u_puff(rng, 1000.0, 3000.0, 0.25), u_thump(rng, 100.0, 70.0, 0.15, 0.6))
 
 
-@recipe("sfx_warn_boss_recovery", -3, "soft descending exhale chime (opening)")
+# Flow (short stingers on the same scale) ---------------------------------------------------------------------------
+
+@recipe("sfx_flow_victory", -3, "victory: C5 E5 G5 C6")
 def _(rng, v):
-    return mix(tone(0.5, 1320, 880, amp=0.7, attack=0.01, decay=0.45), gain(lowpass(noise(0.45, rng, attack=0.05, decay=0.35), 1500), 0.4))
+    return u_seq(*[(i * 0.09, u_ting(f, 0.22 if i == 3 else 0.14)) for i, f in enumerate([C5, E5, G5, C6])])
 
 
-@recipe("sfx_warn_terrain_vent", -1, "vent hiss over a rising rumble (1-3 kHz)")
+@recipe("sfx_flow_defeat", -3, "defeat: G4 E4 C4, soft")
 def _(rng, v):
-    hiss = gain(bandpass(noise(0.6, rng, attack=0.2, decay=0.35), 1000, 3000), 1.6)
-    rumble = gain(lowpass(noise(0.6, rng, attack=0.3, decay=0.3), 200), 1.5)
-    return mix(hiss, rumble)
+    return u_seq(*[(i * 0.12, u_ting(f, 0.24 if i == 2 else 0.16, 0.9)) for i, f in enumerate([G4, E4, C4])])
 
 
-# Stingers (placeholders until music, decision A8)
-@recipe("sfx_flow_victory", -3, "major arpeggio stinger")
+# Skill archetypes (every card without its own set) -----------------------------------------------------------------
+
+@recipe("sfx_skill_generic_windup", -5, "wind-up: soft low puff and a tick", variants=2)
 def _(rng, v):
-    notes = [523.25, 659.25, 783.99, 1046.5]
-    layers = [at(bell(1.2, f, amp=0.8), i * 0.13) for i, f in enumerate(notes)]
-    layers.append(at(gain(tone(1.6, 261.6, attack=0.2, decay=1.4, curve=2), 0.3), 0.0))
-    return place(*layers)
+    return mix(u_puff(rng, 400.0, 1800.0, 0.1, 0.8), u_at(u_tick(rng, 900.0 if v == 1 else 1000.0, 0.03, 0.6), 0.04))
 
 
-@recipe("sfx_flow_defeat", -3, "falling minor phrase over a low drone")
+@recipe("sfx_skill_generic_commit", -4, "release: puff with a small thump")
 def _(rng, v):
-    notes = [440.0, 349.2, 293.7]
-    layers = [at(bell(1.0, f, amp=0.8, decay=0.9), i * 0.32) for i, f in enumerate(notes)]
-    layers.append(at(gain(tone(2.0, 110, attack=0.3, decay=1.6, curve=2), 0.4), 0.0))
-    return place(*layers)
+    return mix(u_puff(rng, 600.0, 2600.0, 0.1), u_thump(rng, 160.0, 100.0, 0.08, 0.7))
 
 
-# Generic skill archetype
-@recipe("sfx_skill_generic_windup", -5, "rising wind-up whoosh", variants=2)
+@recipe("sfx_skill_generic_travel", -8, "travel: very soft short air")
 def _(rng, v):
-    return whoosh(rng, 0.35 if v == 1 else 0.3, 400, 1500 if v == 1 else 1800, rise=True)
+    return u_puff(rng, 700.0, 2200.0, 0.12, 0.7)
 
 
-@recipe("sfx_skill_generic_commit", -4, "release whoosh with a thump")
+@recipe("sfx_skill_generic_hit", -5, "hit confirm: small knock")
 def _(rng, v):
-    return mix(whoosh(rng, 0.2, 600, 2000, rise=False), thud(rng, 140, 70, 0.15, 0.7))
+    return u_knock(rng, 520.0, 0.06)
 
 
-@recipe("sfx_skill_generic_travel", -8, "soft air rush")
+@recipe("sfx_skill_generic_cancel", -5, "cancel: two soft tings down (C6, G5)")
 def _(rng, v):
-    return gain(lowpass(noise(0.3, rng, attack=0.08, decay=0.2), (600, 1400)), 1.5)
+    return u_seq((0.0, u_ting(C6, 0.08, 0.7)), (0.06, u_ting(G5, 0.1, 0.6)))
 
 
-@recipe("sfx_skill_generic_hit", -5, "crunchy hit confirm")
+@recipe("sfx_skill_generic_fizzle", -7, "fizzle: tiny dry puff")
 def _(rng, v):
-    return mix(gain(bandpass(noise(0.06, rng, decay=0.02), 1000, 3000), 1.6), tone(0.06, 700, 500, amp=0.6, decay=0.03))
+    return u_puff(rng, 900.0, 3000.0, 0.05, 0.8)
 
 
-@recipe("sfx_skill_generic_cancel", -5, "descending scatter")
+@recipe("sfx_skill_impact_burst", -3, "impact burst: thump and puff")
 def _(rng, v):
-    return place(*[at(ping(f, 0.12, 0.7), i * 0.045) for i, f in enumerate([1500, 1250, 1000, 800, 640])])
+    return mix(u_thump(rng, 150.0, 75.0, 0.14), u_puff(rng, 500.0, 2500.0, 0.1, 0.8))
 
 
-@recipe("sfx_skill_generic_fizzle", -7, "dry pop")
+@recipe("sfx_skill_impact_slash", -3, "impact slash: high puff and a short steel ting")
 def _(rng, v):
-    return mix(gain(lowpass(noise(0.05, rng, decay=0.015), 1000), 1.4), tone(0.05, 300, 200, amp=0.5, decay=0.02))
+    return mix(u_puff(rng, 2000.0, 6000.0, 0.06, 0.8), u_at(u_ting(E6, 0.1, 0.6), 0.01), u_knock(rng, 700.0, 0.05, 0.5))
 
 
-@recipe("sfx_skill_impact_burst", -3, "burst: deep thud and blast")
+@recipe("sfx_skill_impact_burn", -3, "impact burn: thump and a short crackle")
 def _(rng, v):
-    return mix(thud(rng, 110, 45, 0.45), gain(lowpass(noise(0.5, rng, decay=0.3), (2500, 500)), 1.6))
+    return mix(u_thump(rng, 140.0, 80.0, 0.12), u_crackle(rng, 0.16, 110.0, 1.2))
 
 
-@recipe("sfx_skill_impact_slash", -3, "slash: sharp swish and blade ring")
+@recipe("sfx_skill_impact_freeze", -3, "impact freeze: high ting and a crisp tick")
 def _(rng, v):
-    return mix(gain(bandpass(noise(0.12, rng, attack=0.01, decay=0.06), 1500, 5000), 1.8), gain(steel_ring(1800, 0.3), 0.5))
+    return mix(u_ting(G6, 0.16, 0.7), u_tick(rng, 3000.0, 0.03))
 
 
-@recipe("sfx_skill_impact_burn", -3, "burn: whump and crackle")
+@recipe("sfx_skill_impact_knockback", -3, "impact knockback: low thump and air")
 def _(rng, v):
-    return mix(thud(rng, 90, 45, 0.35), gain(lowpass(noise(0.4, rng, attack=0.01, decay=0.3), 1800), 1.2), crackle(0.6, rng, 70, amp=1.5))
+    return mix(u_thump(rng, 120.0, 65.0, 0.14), u_puff(rng, 400.0, 1500.0, 0.12, 0.8))
 
 
-@recipe("sfx_skill_impact_freeze", -3, "freeze: crystalline chime and crack")
+@recipe("sfx_skill_impact_shatter", -3, "impact shatter: three quick high ticks")
 def _(rng, v):
-    return mix(bell(0.6, 2100, partials=(1.0, 1.38, 1.76), amps=(0.8, 0.5, 0.3)), gain(bandpass(noise(0.05, rng, decay=0.015), 1500, 5000), 1.4))
+    return u_seq((0.0, u_tick(rng, 2600.0)), (0.035, u_tick(rng, 3100.0, 0.03)), (0.07, u_tick(rng, 2300.0, 0.03)))
 
 
-@recipe("sfx_skill_impact_knockback", -3, "knockback: heavy punch and air")
+@recipe("sfx_skill_impact_thorns", -3, "impact thorns: three quick knocks")
 def _(rng, v):
-    return mix(thud(rng, 80, 40, 0.35), whoosh(rng, 0.25, 300, 1200, rise=False, amp=0.7))
+    return u_seq((0.0, u_knock(rng, 700.0, 0.04)), (0.04, u_knock(rng, 780.0, 0.04)), (0.08, u_knock(rng, 660.0, 0.04)))
 
 
-@recipe("sfx_skill_impact_shatter", -3, "shatter: glassy breaks")
+@recipe("sfx_skill_impact_poison", -4, "impact poison: two soft bubble blips")
 def _(rng, v):
-    layers = [at(ping(rng.uniform(1500, 3800), 0.18, rng.uniform(0.3, 0.7)), rng.uniform(0.0, 0.08)) for _ in range(9)]
-    layers.append(at(gain(bandpass(noise(0.08, rng, decay=0.03), 1500, 5000), 1.4), 0.0))
-    return place(*layers)
+    return u_seq((0.0, tone(0.06, 300.0, 520.0, amp=0.9, decay=0.04)), (0.07, tone(0.06, 340.0, 600.0, amp=0.8, decay=0.04)))
 
 
-@recipe("sfx_skill_impact_thorns", -3, "thorns: three quick spiked stabs")
+@recipe("sfx_skill_impact_curse", -4, "impact curse: low thump and a low ting (dark, short)")
 def _(rng, v):
-    stab = mix(resonator(noise(0.05, rng, decay=0.02), 1200, 8), tone(0.05, 260, 180, amp=0.5, decay=0.02))
-    return place(at(stab, 0.0), at(gain(stab, 0.8), 0.05), at(gain(stab, 0.65), 0.1))
+    return mix(u_thump(rng, 110.0, 60.0, 0.16), u_ting(C4, 0.2, 0.7))
 
 
-@recipe("sfx_skill_impact_poison", -4, "poison: bubbling chirps")
+@recipe("sfx_status_burn_ignite", -8, "fire catches: short crackle")
 def _(rng, v):
-    return place(*[at(tone(0.07, rng.uniform(300, 500), rng.uniform(600, 900), amp=0.6, attack=0.01, decay=0.05), i * 0.06)
-                   for i in range(6)])
+    return mix(u_crackle(rng, 0.14, 120.0), u_puff(rng, 600.0, 2000.0, 0.08, 0.4))
 
 
-@recipe("sfx_skill_impact_curse", -4, "curse: dark beating drone with a reverse swell")
+@recipe("sfx_status_burn_loop", -8, "burning starts (any source): short soft crackle, one shot (no drone)")
 def _(rng, v):
-    drone = mix(tone(0.6, 110, amp=0.6, attack=0.05, decay=0.5), tone(0.6, 116, amp=0.6, attack=0.05, decay=0.5))
-    sw = [s * w for s, w in zip(bandpass(noise(0.3, rng), 400, 1500), swell(n_of(0.3), 3))]
-    return place(at(gain(sw, 1.5), 0.0), at(drone, 0.25))
+    return u_crackle(rng, 0.2, 70.0, 0.9)
 
 
-@recipe("sfx_status_burn_ignite", -8, "ignition whoosh and embers")
+@recipe("sfx_status_burn_hurt", -8, "burn tick on a unit: tiny sizzle")
 def _(rng, v):
-    return mix(whoosh(rng, 0.25, 300, 1500, rise=True, amp=0.8), crackle(0.4, rng, 50, amp=1.2))
+    return u_puff(rng, 2000.0, 6000.0, 0.06, 0.7)
 
 
-# Tram Dia: earth and grinding steel, low and heavy
-@recipe("sfx_skill_tram_dia_windup", -4, "Tram Dia wind-up: low steel scrape and a rising breath of tension")
+@recipe("sfx_status_burn_out", -9, "fire out: short soft puff")
 def _(rng, v):
-    scrape = gain(resonator(bandpass(noise(0.5, rng, attack=0.15, decay=0.3), 400, 1600), 700, 12), 3.0)
-    tension = tone(0.5, 196.0, 207.65, amp=0.4, attack=0.2, decay=0.3, curve=2)
-    return mix(scrape, tension)
+    return u_puff(rng, 700.0, 2200.0, 0.12, 0.6)
 
 
-@recipe("sfx_skill_tram_dia_commit", -3, "Tram Dia release: heavy whoosh with a gritty floor-drag tail")
+# The three reference cards keep their own events (doc §8.1) but use the same palette --------------------------------
+
+@recipe("sfx_skill_tram_dia_windup", -4, "Tram Dia wind-up: low stone knock and a soft thump")
 def _(rng, v):
-    return place(at(whoosh(rng, 0.22, 300, 1500, rise=False, amp=1.2), 0.0), at(thud(rng, 100, 55, 0.2, 0.7), 0.0),
-                 at(crackle(0.5, rng, 140, lo=300, hi=1800, amp=1.4), 0.12))
+    return mix(u_knock(rng, 200.0, 0.1), u_thump(rng, 110.0, 80.0, 0.1, 0.6))
 
 
-@recipe("sfx_skill_tram_dia_travel", -5, "Tram Dia wave: short grinding floor rumble")
+@recipe("sfx_skill_tram_dia_commit", -3, "Tram Dia release: puff and thump")
 def _(rng, v):
-    return amp_mod(gain(lowpass(highpass(noise(0.4, rng, attack=0.05, decay=0.3), 60), 420), 3.0), 30.0, 0.6)
+    return mix(u_puff(rng, 500.0, 2000.0, 0.12), u_thump(rng, 140.0, 80.0, 0.1))
 
 
-@recipe("sfx_skill_tram_dia_impact_final", -1, "Tram Dia eruption: deep thud, split-rock crack, bright steel ring")
+@recipe("sfx_skill_tram_dia_travel", -5, "Tram Dia wave: low short puff")
 def _(rng, v):
-    return mix(thud(rng, 75, 38, 0.55, 1.2), gain(bandpass(noise(0.12, rng, decay=0.05), 800, 3000), 1.8),
-               gain(steel_ring(1250, 0.9), 0.55))
+    return u_puff(rng, 250.0, 1000.0, 0.14)
 
 
-@recipe("sfx_skill_tram_dia_impact", -4, "Tram Dia surge step: small rock crack", variants=2)
+@recipe("sfx_skill_tram_dia_impact_final", -1, "Tram Dia first eruption (biggest): deep thump, rock knock, low steel ting")
 def _(rng, v):
-    return mix(gain(bandpass(noise(0.12, rng, decay=0.04), 600, 2500), 1.6), thud(rng, 180 if v == 1 else 165, 100, 0.12, 0.7))
+    return mix(u_thump(rng, 120.0, 55.0, 0.22), u_knock(rng, 260.0, 0.1), u_at(u_ting(G4, 0.25, 0.6), 0.01))
 
 
-@recipe("sfx_skill_tram_dia_aftermath", -9, "Tram Dia aftermath: pebble trickle and fading ring")
+@recipe("sfx_skill_tram_dia_impact", -4, "Tram Dia surge step: small rock knock", variants=2)
 def _(rng, v):
-    return mix(crackle(0.9, rng, 35, lo=500, hi=2500, amp=1.5), gain(steel_ring(1250, 0.9), 0.15))
+    return mix(u_knock(rng, 300.0 if v == 1 else 330.0, 0.08), u_thump(rng, 150.0, 100.0, 0.06, 0.5))
 
 
-# Ngan Kiem: bright resonant steel, high and glassy; every gather sound sits on the tiles
-@recipe("sfx_skill_ngan_kiem_charge", -6, "Ngan Kiem gather: staggered metallic tinkles at the tiles")
+@recipe("sfx_skill_tram_dia_aftermath", -9, "Tram Dia aftermath: two pebble ticks")
 def _(rng, v):
-    return place(*[at(ping(f, 0.18, 0.6), i * 0.06) for i, f in enumerate([2000, 2380, 2120, 2670, 2240])])
+    return u_seq((0.0, u_tick(rng, 1400.0, 0.03, 0.7)), (0.08, u_tick(rng, 1700.0, 0.03, 0.5)))
 
 
-@recipe("sfx_skill_ngan_kiem_channel_loop", -10, "Ngan Kiem hovering swords: quiet steel resonance loop (1.0 s, seamless)")
+@recipe("sfx_skill_ngan_kiem_charge", -6, "Ngan Kiem gather (silent by design): soft ting")
 def _(rng, v):
-    n = SR  # 1.0 s, integer-Hz partials complete whole cycles -> seamless loop
-    out = []
-    for i in range(n):
-        t = i / SR
-        s = (math.sin(TAU * 880 * t) * 0.5 + math.sin(TAU * 1320 * t) * 0.3 + math.sin(TAU * 1761 * t) * 0.2
-             + math.sin(TAU * 1759 * t) * 0.2)
-        out.append(s * (0.75 + 0.25 * math.sin(TAU * 6 * t)))
-    return out
+    return u_ting(E6, 0.12, 0.6)
 
 
-@recipe("sfx_skill_ngan_kiem_commit", -3, "Ngan Kiem command: sharp downward shing and air cut")
+@recipe("sfx_skill_ngan_kiem_channel_loop", -8, "Ngan Kiem summon: three soft steel tings at the tiles, one shot (no drone)")
 def _(rng, v):
-    shing = mix(tone(0.22, 3000, 1500, amp=0.6, decay=0.15), tone(0.22, 4500, 2250, amp=0.25, decay=0.1))
-    return mix(shing, gain(bandpass(noise(0.15, rng, attack=0.005, decay=0.06), 1500, 6000), 1.4))
+    return u_seq((0.0, u_ting(G5, 0.1, 0.8)), (0.045, u_ting(C6, 0.1, 0.7)), (0.09, u_ting(E6, 0.11, 0.6)))
 
 
-@recipe("sfx_skill_ngan_kiem_impact", -4, "Ngan Kiem drop: blade whistle and stab into stone", variants=3)
+@recipe("sfx_skill_ngan_kiem_commit", -3, "Ngan Kiem command (silent by design): knock")
 def _(rng, v):
-    f = [2500, 2350, 2700][v - 1]
-    whistle = tone(0.05, f, f * 0.72, amp=0.5, attack=0.003, decay=0.04)
-    stab = mix(gain(bandpass(noise(0.08, rng, decay=0.025), 900, 3500), 1.6), thud(rng, 210, 120, 0.1, 0.6))
-    return place(at(whistle, 0.0), at(stab, 0.045))
+    return u_knock(rng, 600.0, 0.06)
 
 
-@recipe("sfx_skill_ngan_kiem_impact_final", -2, "Ngan Kiem centre blade: heavier stab, stone crack and ring")
+@recipe("sfx_skill_ngan_kiem_impact", -4, "Ngan Kiem drop: steel ting into a stone knock", variants=3)
 def _(rng, v):
-    stab = mix(gain(bandpass(noise(0.12, rng, decay=0.04), 700, 3000), 1.8), thud(rng, 150, 60, 0.25))
-    return place(at(tone(0.06, 2400, 1700, amp=0.5, decay=0.05), 0.0), at(stab, 0.05),
-                 at(steel_ring(1500, 0.7, 0.5), 0.05), at(gain(steel_ring(2300, 0.5), 0.25), 0.05))
+    f = [A5, G5, C6][v - 1]
+    return mix(u_knock(rng, 380.0, 0.07), u_ting(f, 0.1, 0.7))
 
 
-@recipe("sfx_skill_ngan_kiem_cancel", -5, "Ngan Kiem dispersal: resonance cut, descending glassy scatter")
+@recipe("sfx_skill_ngan_kiem_impact_final", -2, "Ngan Kiem centre blade: thump, knock and a lower ting")
 def _(rng, v):
-    return place(*[at(ping(f, 0.16, 0.6), i * 0.05) for i, f in enumerate([3000, 2600, 2150, 1800, 1450, 1200])])
+    return mix(u_thump(rng, 140.0, 70.0, 0.16), u_knock(rng, 340.0, 0.08), u_ting(E5, 0.2, 0.8))
 
 
-# Hoa Loi: ember crackle, rising pressure, deep whump
-@recipe("sfx_skill_hoa_loi_windup", -5, "Hoa Loi book: page flick and a small ember spark")
+@recipe("sfx_skill_ngan_kiem_cancel", -5, "Ngan Kiem dispersal: three tings down")
 def _(rng, v):
-    flick = gain(bandpass(noise(0.04, rng, decay=0.015), 2000, 5000), 1.4)
-    return place(at(flick, 0.0), at(gain(flick, 0.8), 0.06), at(crackle(0.25, rng, 60, lo=1000, hi=3500, amp=1.3), 0.12))
+    return u_seq((0.0, u_ting(E6, 0.07, 0.7)), (0.05, u_ting(C6, 0.07, 0.6)), (0.1, u_ting(G5, 0.1, 0.5)))
 
 
-@recipe("sfx_skill_hoa_loi_seal", -4, "Hoa Loi brand: low sizzle at the seals")
+@recipe("sfx_skill_hoa_loi_windup", -6, "Hoa Loi cast: soft crackle, fire catching")
 def _(rng, v):
-    sizzle = gain(bandpass(noise(0.45, rng, attack=0.01, decay=0.35), 1000, 3000), 1.3)
-    return mix(amp_mod(sizzle, 40, 0.4), tone(0.4, 120, amp=0.4, attack=0.02, decay=0.35))
+    return u_crackle(rng, 0.2, 80.0, 0.9)
 
 
-@recipe("sfx_skill_hoa_loi_charge", -10, "Hoa Loi fuse bed: soft crackle")
+@recipe("sfx_skill_hoa_loi_ignite", -4, "Hoa Loi release (seals appear): one short puff and thump")
 def _(rng, v):
-    return crackle(1.0, rng, 45, lo=900, hi=3200, amp=1.2, fade=False)
+    return mix(u_puff(rng, 500.0, 2500.0, 0.1), u_thump(rng, 170.0, 100.0, 0.08, 0.7))
 
 
-@recipe("sfx_skill_hoa_loi_tick", -5, "Hoa Loi countdown tick (pitched up per step at runtime)")
+@recipe("sfx_skill_hoa_loi_seal", -4, "Hoa Loi seal (silent by design): tick")
 def _(rng, v):
-    return mix(tone(0.06, 1000, amp=0.8, decay=0.04, curve=5), gain(bandpass(noise(0.02, rng, decay=0.008), 1000, 3000), 0.8))
+    return u_tick(rng, 900.0)
 
 
-@recipe("sfx_skill_hoa_loi_prime", -4, "Hoa Loi last pulse: short rising pressure hiss")
+@recipe("sfx_skill_hoa_loi_charge", -10, "Hoa Loi fuse (silent by design): tiny crackle")
 def _(rng, v):
-    n = noise(0.3, rng, attack=0.28, decay=0.05)
-    return gain(lowpass(highpass(n, 600), (900, 3200)), 2.4)
+    return u_crackle(rng, 0.12, 60.0)
 
 
-@recipe("sfx_skill_hoa_loi_impact", -1, "Hoa Loi detonation: deep whump and roaring flame burst, one per cast", tiers=["S", "M", "L"])
+@recipe("sfx_skill_hoa_loi_tick", -5, "Hoa Loi countdown (silent by design): tick")
+def _(rng, v):
+    return u_tick(rng, 1000.0)
+
+
+@recipe("sfx_skill_hoa_loi_prime", -4, "Hoa Loi prime (silent by design): puff")
+def _(rng, v):
+    return u_puff(rng, 900.0, 3000.0, 0.08)
+
+
+@recipe("sfx_skill_hoa_loi_impact", -1, "Hoa Loi blast, one per cast: crack, thump and crackle (bigger tier lower and longer)",
+        tiers=["S", "M", "L"])
 def _(rng, t):
     k = ["S", "M", "L"].index(t)
-    sec = 0.45 + 0.2 * k
-    whump = thud(rng, 85 - 10 * k, 38 - 4 * k, sec * 0.9, 1.0 + 0.2 * k)
-    roar = gain(lowpass(noise(sec, rng, attack=0.01, decay=sec * 0.7), (2200, 700)), 1.4 + 0.3 * k)
-    return mix(whump, roar, crackle(sec, rng, 60 + 30 * k, lo=900, hi=3500, amp=1.2))
+    sec = 0.18 + 0.06 * k
+    return mix(u_tick(rng, 2500.0, 0.03), u_thump(rng, 170.0 - 20.0 * k, 70.0 - 8.0 * k, sec),
+               u_at(u_crackle(rng, sec * 0.8, 100.0, 1.0), 0.02))
 
 
-@recipe("sfx_status_burn_out", -9, "Burning ground out (last burning cell burned out): soft hiss-out")
+@recipe("sfx_skill_hoa_loi_fizzle", -7, "Hoa Loi fizzle: tiny puff")
 def _(rng, v):
-    return gain(bandpass(noise(0.6, rng, attack=0.02, decay=0.5, curve=3), 800, 2500), 1.2)
+    return u_puff(rng, 900.0, 3000.0, 0.05, 0.8)
 
 
-@recipe("sfx_status_burn_hurt", -8, "Burn tick on a unit: short light sizzle (no body thump)")
+# New events approved 2026-11-13 (doc §4, §8 item 3); wiring is Phase 4 (multi-enemy) ------------------------------
+
+@recipe("sfx_move_step", -9, "hero step to a cell: soft low stone tick", variants=2)
 def _(rng, v):
-    return mix(gain(bandpass(noise(0.12, rng, attack=0.004, decay=0.09, curve=4), 1800, 6000), 1.2),
-               crackle(0.12, rng, 120, lo=1500, hi=5000, amp=0.8))
+    return u_knock(rng, 240.0 if v == 1 else 260.0, 0.05, 0.8)
 
 
-def loop_xfade(x, xf_sec):
-    """Seamless loop: the last xf_sec cross-fades (equal power) into the head, then is cut off."""
-    xf = n_of(xf_sec)
-    n = len(x) - xf
-    out = list(x[:n])
-    for i in range(xf):
-        t = (i + 0.5) / xf
-        out[i] = x[i] * math.sin(t * math.pi / 2) + x[n + i] * math.cos(t * math.pi / 2)
-    return out
-
-
-@recipe("sfx_status_burn_loop", -6, "Burning ground: steady ember crackle over a low fire bed (1.5 s, seamless loop)")
+@recipe("sfx_pickup_point", -5, "pick up a field point: one pleasant ting", variants=2)
 def _(rng, v):
-    sec = 1.7
-    bed = lowpass([rng.random() * 2.0 - 1.0 for _ in range(n_of(sec))], 500)  # flat (env() always fades out)
-    pops = crackle(sec, rng, 45, lo=700, hi=3200, amp=1.6, fade=False)
-    return loop_xfade(mix(gain(bed, 0.5), pops), 0.2)
+    return u_ting(G5 if v == 1 else A5, 0.14)
 
 
-@recipe("sfx_skill_hoa_loi_fizzle", -7, "Hoa Loi fizzle: small dry pop")
+@recipe("sfx_status_apply", -7, "a status lands: two quick tings up (pitch by status at runtime)", variants=2)
 def _(rng, v):
-    return mix(gain(lowpass(noise(0.04, rng, decay=0.012), 1200), 1.4), tone(0.04, 260, 180, amp=0.5, decay=0.02))
+    base = [D5, E5][v - 1]
+    return u_seq((0.0, u_ting(base, 0.07, 0.7)), (0.045, u_ting(base * 1.5, 0.09, 0.7)))
+
+
+@recipe("sfx_status_expire", -8, "a status ends: two quick tings down", variants=2)
+def _(rng, v):
+    base = [D5, E5][v - 1]
+    return u_seq((0.0, u_ting(base * 1.5, 0.07, 0.6)), (0.045, u_ting(base, 0.09, 0.6)))
+
+
+# Per-card voices (user 2026-11-13: "làm biến thể" — each skill its own sound, matched to its VFX, same palette) ---
+# tools/audio/card_voices.json (built by tools/audio/card_voices.py from cards.json + assets/art/vfx/cast/index.json)
+# gives every card without its own hand-made set: a windup shape + note and an impact shape + note + length. The
+# shapes below turn the card's VFX form (impact_variants form: ring, double, stab4, bell, jaw ...) into the same
+# gesture in sound. Same five materials, same scale: one voice for the game, a different word for each skill.
+
+
+def _len(x, sec):
+    n = n_of(sec)
+    x = list(x[:n])
+    return fade_out(x + [0.0] * (n - len(x)), min(0.02, sec * 0.2))
+
+
+IMPACT_SHAPES = {
+    # slash family
+    "ring": lambda rng, f, s: mix(u_puff(rng, 1500.0, 5000.0, 0.08, 0.7), u_ting(f, s * 0.8)),
+    "ring2": lambda rng, f, s: u_seq((0.0, u_ting(f, 0.1)), (0.07, mix(u_puff(rng, 1500.0, 5000.0, 0.06, 0.6), u_ting(f * 1.5, 0.12)))),
+    "arc_h": lambda rng, f, s: mix(u_puff(rng, 800.0, 3000.0, 0.12, 0.9), u_at(u_ting(f, 0.12, 0.7), 0.04)),
+    "arc_v": lambda rng, f, s: mix(u_puff(rng, 1200.0, 4000.0, 0.06, 0.8), u_at(u_knock(rng, f * 0.5, 0.08), 0.04)),
+    "cross_x": lambda rng, f, s: u_seq((0.0, mix(u_puff(rng, 1500.0, 5000.0, 0.05, 0.7), u_ting(f, 0.07, 0.7))),
+                                       (0.06, mix(u_puff(rng, 1500.0, 5000.0, 0.05, 0.7), u_ting(f * 1.26, 0.09, 0.7)))),
+    "double": lambda rng, f, s: u_seq((0.0, mix(u_knock(rng, f * 0.5, 0.06), u_ting(f, 0.07, 0.6))),
+                                      (0.08, mix(u_knock(rng, f * 0.5, 0.06), u_ting(f, 0.09, 0.6)))),
+    "stab4": lambda rng, f, s: u_seq(*[(i * 0.045, mix(u_tick(rng, f * 2.0, 0.03), u_ting(f * (1.0 + 0.12 * i), 0.05, 0.5))) for i in range(4)]),
+    "dagger": lambda rng, f, s: mix(u_tick(rng, f * 3.0, 0.03), u_ting(f * 2.0, 0.12, 0.7)),
+    "hook": lambda rng, f, s: u_seq((0.0, u_knock(rng, f, 0.06)), (0.05, u_puff(rng, 500.0, 1800.0, 0.1, 0.7))),
+    "echo": lambda rng, f, s: u_seq((0.0, u_ting(f, 0.1)), (0.12, gain(u_ting(f, 0.1), 0.45))),
+    "deathmark": lambda rng, f, s: mix(u_ting(f * 0.5, s * 0.8, 0.8), u_tick(rng, 2400.0, 0.03, 0.6)),
+    "wide": lambda rng, f, s: mix(u_puff(rng, 600.0, 2600.0, 0.16), u_at(u_ting(f, 0.1, 0.6), 0.06)),
+    "pierce": lambda rng, f, s: mix(u_tick(rng, f * 2.5, 0.03), u_ting(f * 1.5, 0.16, 0.8)),
+    "chain3": lambda rng, f, s: u_seq(*[(i * 0.06, mix(u_puff(rng, 1500.0, 5000.0, 0.04, 0.6), u_ting(f * (1.0 + 0.25 * i), 0.06, 0.6))) for i in range(3)]),
+    "twin": lambda rng, f, s: u_seq((0.0, u_ting(f, 0.06)), (0.035, u_ting(f * 1.33, 0.08))),
+    # knockback / burst / earth family
+    "wedge": lambda rng, f, s: mix(u_knock(rng, f, 0.08), u_thump(rng, 160.0, 100.0, 0.1, 0.8)),
+    "slam": lambda rng, f, s: mix(u_thump(rng, 130.0, 60.0, s), u_knock(rng, f * 0.5, 0.1, 0.7)),
+    "column": lambda rng, f, s: mix(u_puff(rng, 700.0, 2500.0, s), u_at(u_tick(rng, f * 2.0, 0.03), s * 0.6)),
+    "column2": lambda rng, f, s: u_seq((0.0, u_puff(rng, 700.0, 2500.0, 0.12)), (0.1, u_puff(rng, 900.0, 3200.0, 0.12))),
+    "vortex": lambda rng, f, s: u_seq(*[(i * 0.07, u_puff(rng, 600.0 + 300.0 * i, 2200.0 + 600.0 * i, 0.09, 0.8)) for i in range(3)]),
+    "quake": lambda rng, f, s: u_seq((0.0, u_thump(rng, 100.0, 55.0, 0.18)), (0.06, u_knock(rng, f * 0.5, 0.06, 0.6)), (0.13, u_knock(rng, f * 0.45, 0.06, 0.5))),
+    "crater": lambda rng, f, s: mix(u_thump(rng, 120.0, 50.0, s), u_puff(rng, 400.0, 1800.0, s * 0.7, 0.7), u_at(u_ting(f * 0.5, 0.2, 0.5), 0.02)),
+    "knock_puff": lambda rng, f, s: mix(u_knock(rng, f, 0.07), u_puff(rng, 500.0, 2000.0, 0.1, 0.7)),
+    "smash": lambda rng, f, s: mix(u_thump(rng, 150.0, 80.0, 0.12), u_seq((0.02, u_tick(rng, 2600.0)), (0.05, u_tick(rng, 3000.0, 0.03)))),
+    "spark4": lambda rng, f, s: u_seq(*[(i * 0.05, mix(u_tick(rng, f * 3.0, 0.03), u_ting(f * 2.0, 0.04, 0.4))) for i in range(4)]),
+    # shatter / freeze family
+    "frame": lambda rng, f, s: u_seq(*[(i * 0.04, u_tick(rng, f * 2.0 * (1.0 + 0.06 * i), 0.03)) for i in range(4)]),
+    "frame_sparse": lambda rng, f, s: u_seq((0.0, u_tick(rng, f * 2.0, 0.03)), (0.09, u_tick(rng, f * 2.4, 0.03)), (0.17, u_ting(f * 2.0, 0.08, 0.5))),
+    "cross": lambda rng, f, s: u_seq((0.0, u_tick(rng, f * 2.5, 0.03)), (0.03, u_tick(rng, f * 2.0, 0.03)), (0.05, u_ting(f * 2.0, 0.12, 0.6))),
+    "cross_diag": lambda rng, f, s: u_seq((0.0, u_tick(rng, f * 2.0, 0.03)), (0.05, u_tick(rng, f * 2.6, 0.03)), (0.08, u_ting(f * 1.5, 0.12, 0.6))),
+    "drops3": lambda rng, f, s: u_seq(*[(i * 0.08, tone(0.06, f * (1.4 - 0.12 * i), f * (1.1 - 0.1 * i), amp=0.8, decay=0.04)) for i in range(3)]),
+    "spike": lambda rng, f, s: mix(u_tick(rng, f * 3.0, 0.03), u_ting(f * 2.0, 0.14, 0.7)),
+    "spike_tilt": lambda rng, f, s: mix(u_tick(rng, f * 2.6, 0.03), u_ting(f * 1.75, 0.14, 0.7), u_at(u_tick(rng, f * 3.2, 0.02, 0.5), 0.05)),
+    "spike2": lambda rng, f, s: u_seq((0.0, mix(u_tick(rng, f * 3.0, 0.03), u_ting(f * 2.0, 0.08, 0.6))), (0.07, mix(u_tick(rng, f * 3.0, 0.03), u_ting(f * 2.5, 0.1, 0.6)))),
+    "cluster": lambda rng, f, s: u_seq((0.0, u_ting(f * 2.0, 0.08, 0.6)), (0.03, u_ting(f * 2.5, 0.08, 0.6)), (0.06, u_ting(f * 3.0, 0.1, 0.6))),
+    "crack": lambda rng, f, s: mix(u_tick(rng, 2600.0, 0.03), u_knock(rng, f, 0.08)),
+    "crack_web": lambda rng, f, s: u_seq((0.0, mix(u_tick(rng, 2600.0, 0.03), u_knock(rng, f, 0.06))), (0.05, u_tick(rng, 2900.0, 0.03)), (0.09, u_tick(rng, 2300.0, 0.03))),
+    "chunks": lambda rng, f, s: u_seq((0.0, u_knock(rng, f * 0.75, 0.07)), (0.06, u_knock(rng, f * 0.6, 0.07)), (0.12, u_knock(rng, f * 0.7, 0.07))),
+    "shards": lambda rng, f, s: u_seq(*[(i * 0.03, u_tick(rng, f * (3.0 + 0.4 * i), 0.03)) for i in range(5)]),
+    "iceburst": lambda rng, f, s: mix(u_thump(rng, 150.0, 90.0, 0.08, 0.6), u_seq((0.0, u_ting(f * 2.0, 0.1, 0.7)), (0.04, u_tick(rng, 3000.0, 0.03)), (0.07, u_tick(rng, 3400.0, 0.03)))),
+    "steam": lambda rng, f, s: mix(u_puff(rng, 2000.0, 6000.0, s * 0.8, 0.8), u_crackle(rng, s * 0.6, 80.0, 0.7)),
+    # thorns / poison / guard / curse / light family
+    "spikes": lambda rng, f, s: u_seq((0.0, u_knock(rng, f, 0.05)), (0.04, u_knock(rng, f * 1.12, 0.05)), (0.08, u_knock(rng, f * 0.9, 0.05))),
+    "vine": lambda rng, f, s: u_seq((0.0, u_knock(rng, f, 0.05)), (0.05, u_puff(rng, 500.0, 1800.0, 0.1, 0.6)), (0.1, u_knock(rng, f * 1.12, 0.05))),
+    "bubbles": lambda rng, f, s: u_seq(*[(i * 0.06, tone(0.05, f * (0.55 + 0.1 * i), f * (0.9 + 0.1 * i), amp=0.8, decay=0.035)) for i in range(3)]),
+    "jaw": lambda rng, f, s: u_seq((0.0, u_knock(rng, f, 0.05)), (0.05, mix(u_knock(rng, f * 0.8, 0.07), u_tick(rng, 2000.0, 0.03)))),
+    "spring": lambda rng, f, s: u_seq((0.0, u_ting(f, 0.06)), (0.04, u_ting(f * 1.5, 0.06)), (0.08, u_ting(f, 0.08, 0.7))),
+    "splinter": lambda rng, f, s: mix(u_knock(rng, f, 0.06), u_seq((0.02, u_tick(rng, 1800.0, 0.03)), (0.05, u_tick(rng, 2100.0, 0.03)))),
+    "ward": lambda rng, f, s: mix(u_ting(f, 0.2, 0.7), u_ting(f * 1.5, 0.2, 0.5)),
+    "plate": lambda rng, f, s: mix(u_knock(rng, f * 0.5, 0.08), u_ting(f, 0.16, 0.7)),
+    "pillar": lambda rng, f, s: u_seq((0.0, u_knock(rng, f * 0.5, 0.08)), (0.08, u_knock(rng, f * 0.6, 0.08)), (0.16, u_thump(rng, 120.0, 80.0, 0.08, 0.6))),
+    "bell": lambda rng, f, s: bell(min(s, 0.35), f, partials=(1.0, 2.0, 2.76), amps=(1.0, 0.35, 0.2), decay=min(s, 0.35) * 0.4),
+    "lightpillar": lambda rng, f, s: mix(u_ting(f * 2.0, s * 0.8, 0.7), u_puff(rng, 2500.0, 7000.0, s * 0.6, 0.5)),
+    "curse_low": lambda rng, f, s: mix(u_thump(rng, 110.0, 60.0, 0.14), u_ting(f * 0.5, s * 0.8, 0.7)),
+    "ghost": lambda rng, f, s: u_seq((0.0, u_ting(f * 0.5, 0.12, 0.6)), (0.06, u_ting(f * 0.53, 0.14, 0.5))),
+    # fire family
+    "firewall": lambda rng, f, s: mix(u_crackle(rng, s, 120.0), u_puff(rng, 500.0, 2000.0, s * 0.6, 0.6)),
+    "sparks_fall": lambda rng, f, s: mix(u_crackle(rng, s, 90.0), u_seq((0.0, u_tick(rng, f * 3.0, 0.03)), (0.07, u_tick(rng, f * 3.3, 0.03)))),
+    "floor_fire": lambda rng, f, s: mix(u_crackle(rng, s, 110.0), u_thump(rng, 140.0, 90.0, 0.08, 0.6)),
+    "fire_field": lambda rng, f, s: mix(u_crackle(rng, s, 140.0, 1.1), u_puff(rng, 400.0, 1500.0, s * 0.7, 0.6)),
+    "fire_sky": lambda rng, f, s: mix(u_crackle(rng, s, 130.0), u_thump(rng, 150.0, 70.0, s * 0.8), u_at(u_ting(f, 0.1, 0.4), 0.02)),
+}
+
+WINDUP_SHAPES = {
+    "hand": lambda rng, f: mix(u_tick(rng, f * 2.0, 0.03, 0.7), u_at(u_ting(f, 0.08, 0.6), 0.03)),
+    "body": lambda rng, f: mix(u_puff(rng, 400.0, 1600.0, 0.1, 0.8), u_thump(rng, 130.0, 100.0, 0.07, 0.5), u_at(u_tick(rng, f, 0.03, 0.5), 0.05)),
+    "weapon": lambda rng, f: mix(u_tick(rng, f * 2.5, 0.03, 0.8), u_at(u_ting(f * 1.5, 0.06, 0.4), 0.02)),
+    "throw": lambda rng, f: mix(u_puff(rng, 900.0, 3000.0, 0.07, 0.8), u_tick(rng, f * 2.0, 0.03, 0.5)),
+    "sky": lambda rng, f: u_seq((0.0, u_tick(rng, f * 2.0, 0.03, 0.6)), (0.05, u_ting(f * 1.5, 0.07, 0.5))),
+    "ground": lambda rng, f: mix(u_knock(rng, f * 0.5, 0.07, 0.8), u_puff(rng, 300.0, 1200.0, 0.08, 0.5)),
+    "chain": lambda rng, f: u_seq((0.0, u_tick(rng, f * 2.0, 0.03, 0.6)), (0.04, u_tick(rng, f * 2.5, 0.03, 0.6))),
+}
+
+
+def _card_voices():
+    p = os.path.join(ROOT, "tools", "audio", "card_voices.json")
+    return json.load(open(p, encoding="utf8"))["cards"] if os.path.exists(p) else {}
+
+
+for _cid, _v in sorted(_card_voices().items()):
+    def _impact(rng, v, _v=_v):
+        return _len(IMPACT_SHAPES[_v["impact_shape"]](rng, float(_v["note"]), float(_v["impact_sec"])), float(_v["impact_sec"]))
+
+    def _windup(rng, v, _v=_v):
+        return WINDUP_SHAPES[_v["windup_shape"]](rng, float(_v["windup_note"]))
+
+    recipe("sfx_skill_card_%s_impact" % _cid, -3, "%s impact: %s (VFX form %s)" % (_cid, _v["impact_shape"], _v.get("vfx_form", "-")))(_impact)
+    recipe("sfx_skill_card_%s_windup" % _cid, -6, "%s wind-up: %s" % (_cid, _v["windup_shape"]))(_windup)
 
 
 # --- driver ----------------------------------------------------------------------------------------------------------

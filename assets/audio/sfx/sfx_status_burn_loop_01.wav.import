@@ -2,7 +2,7 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://dyb16bx2spx2d"
+uid="uid://cueyyhvmpbx4l"
 path="res://.godot/imported/sfx_status_burn_loop_01.wav-91f89b3d50b55c66472e3c3dfee879bb.sample"
 
 [deps]
@@ -18,7 +18,7 @@ force/max_rate=false
 force/max_rate_hz=44100
 edit/trim=false
 edit/normalize=false
-edit/loop_mode=2
+edit/loop_mode=0
 edit/loop_begin=0
 edit/loop_end=-1
 compress/mode=2
