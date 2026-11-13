@@ -1,0 +1,10 @@
+# Raw capture frames (~9,800 PNG, ~235 MB) stay local; tools/qa/unit_motion_footage.gd regenerates them.
+# Committed: READMEs, compare/ (mp4 + strips), seams/, move/, and each run's context.png + motion.csv.
+footage/before/*/*.png
+footage/after/*/*.png
+review/before/*/*.png
+review/after/*/*.png
+tuning-caster-sway/before/*/*.png
+tuning-caster-sway/after/*/*.png
+lean-review/windup/*/*.png
+!context.png

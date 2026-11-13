@@ -212,6 +212,24 @@ var _step_clip: Dictionary = {}
 ## A new step started since the clip was last chosen (a second dash the same way restarts the clip).
 var _step_restart: Dictionary = {}
 var _dust: Dictionary = {}
+## Unit motion pass (2026-11-13, [UnitMotion]): per side the motion profile, the measured body height (band rows),
+## the screen direction of the last move, the settle after a glide (seconds left / total), the weight-release dip
+## left after an action clip hands back to idle, and the clip seen on the last update. _motion_clock runs the idle
+## breath / sway / hover (match seconds).
+var _motion: Dictionary = {}
+var _body_h: Dictionary = {}
+var _move_dir: Dictionary = {}
+var _settle_left: Dictionary = {}
+var _settle_total: Dictionary = {}
+var _release_left: Dictionary = {}
+var _prev_clip: Dictionary = {}
+var _motion_clock: float = 0.0
+
+## Clips that hand back to idle with a weight-release dip (UnitMotion.release_sec).
+const RELEASE_FROM: Array[String] = ["windup", "windup_heavy", "guard", "brace", "howl", "cast_gesture", "cast_hand",
+	"cast_forward", "cast_summon", "phase_shift", "stunned", "awaken", "draw", "parry_guard"]
+## Clips that coil (UnitMotion.windup_pose).
+const COIL_CLIPS: Array[String] = ["windup", "windup_heavy", "guard", "brace", "howl"]
 
 
 ## Binds the layer to the battle's CombatView (state, grid, names and screen size come from it).
@@ -252,7 +270,10 @@ func advance(step: float) -> void:
 	_advance_status_clocks(step)
 	var state: CombatState = _combat.get_state()
 	_invuln_time = _invuln_time + maxf(step, 0.0) if state.enemy_invulnerable_left > 0.0 and not state.is_enemy_dead() else 0.0
+	_motion_clock += maxf(step, 0.0)
 	for side: int in SIDES:
+		_settle_left[side] = maxf(float(_settle_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
+		_release_left[side] = maxf(float(_release_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
 		_track_step(side, maxf(step, 0.0))
 		_update_clip(side, maxf(step, 0.0))
 		_flash_left[side] = maxf(float(_flash_left.get(side, 0.0)) - maxf(step, 0.0), 0.0)
@@ -311,6 +332,53 @@ func get_slide_left(side: int) -> float:
 	return float((_slide.get(side, {}) as Dictionary).get("left", 0.0))
 
 
+## Unit motion pass: the motion profile of [param side] (the `default` profile until the match binds).
+func motion_of(side: int) -> UnitMotion:
+	var m: UnitMotion = _motion.get(side, null)
+	return m if m != null else UnitMotion.for_unit("")
+
+
+## Seconds of post-glide settle left on [param side] (0 when settled).
+func get_settle_left(side: int) -> float:
+	return float(_settle_left.get(side, 0.0))
+
+
+## Unit motion pass: the procedural pose of [param side] now, Vector4i(body_x, body_y, lean, squash) in whole art px
+## (see [UnitMotion]). Highest first: reduce motion, a placeholder or a dead / downed / victory / defeat / fall /
+## cast / awaken / parry / phase / stunned clip -> no pose (the authored clip alone); hit -> head whiplash; a coil
+## clip -> windup coil; gliding -> move pose; settling -> settle pose; else the idle breath / sway / hover, deepened
+## by the weight-release dip. Every state is read fresh each call, so any higher state interrupts at once.
+func unit_pose(side: int) -> Vector4i:
+	if _reduce_motion or _combat == null or _combat.get_state() == null or is_placeholder(side):
+		return Vector4i.ZERO
+	var m: UnitMotion = motion_of(side)
+	var face: int = 1 if facing_for(side) == FACING_PLAYER else -1
+	var clip: String = get_current_clip(side)
+	var recoil: float = float(_recoil_left.get(side, 0.0))
+	var recoil_sec: float = float(_feel.get("recoil_sec", 0.0))
+	if clip == CLIP_HIT or recoil > 0.0:
+		if clip == CLIP_DOWN or clip == CLIP_DEFEAT or clip == CLIP_FALL:
+			return Vector4i.ZERO
+		return m.hit_pose(recoil / recoil_sec if recoil_sec > 0.0 else 0.0, face)
+	if COIL_CLIPS.has(clip):
+		return m.windup_pose(face)
+	if clip != CLIP_IDLE and clip != CLIP_STEP:
+		return Vector4i.ZERO
+	var slide: Dictionary = _slide.get(side, {})
+	var dir: Vector2i = _move_dir.get(side, Vector2i.ZERO)
+	if not slide.is_empty():
+		var total: float = maxf(float(slide["total"]), 0.001)
+		return m.move_pose(1.0 - float(slide["left"]) / total, dir)
+	var settle: float = get_settle_left(side)
+	if settle > 0.0:
+		var stotal: float = maxf(float(_settle_total.get(side, settle)), 0.001)
+		return m.settle_pose(1.0 - settle / stotal, dir)
+	var pose: Vector4i = m.idle_pose(_motion_clock, face)
+	if float(_release_left.get(side, 0.0)) > 0.0:
+		pose.w = maxi(pose.w, 1)
+	return pose
+
+
 # The drawn feet of [param side]: its cell's feet plus the glide offset while it is stepping.
 func _ground_of(side: int) -> Vector2i:
 	var to: Vector2i = _feet_of_unit(side)
@@ -327,23 +395,38 @@ func _track_step(side: int, step: float) -> void:
 	if _reduce_motion:
 		_slide.erase(side)
 		_dust.erase(side)
+	if _reduce_motion:
+		_settle_left[side] = 0.0
 	if _last_cell.has(side) and _last_cell[side] != cell and not _reduce_motion:
-		var slide_sec: float = float(_feel.get("step_slide_sec", 0.0))
+		# Unit motion pass: heavy units glide a little longer, agile ones shorter (UnitMotion.slide_scale; visual only,
+		# the cell already changed).
+		var slide_sec: float = float(_feel.get("step_slide_sec", 0.0)) * motion_of(side).slide_scale
 		var dust_sec: float = float(_feel.get("step_dust_sec", 0.0))
 		var from: Vector2i = _last_ground[side]
 		_step_clip[side] = step_clip_for(_last_cell[side], cell, facing_for(side) == FACING_PLAYER)
 		_step_restart[side] = true
+		var d: Vector2i = cell - (_last_cell[side] as Vector2i)
+		_move_dir[side] = Vector2i(signi(d.x), signi(d.y))
+		_settle_left[side] = 0.0
 		if slide_sec > 0.0:
 			_slide[side] = {"from": from, "left": slide_sec, "total": slide_sec}
 		if dust_sec > 0.0:
 			_dust[side] = {"at": from, "left": dust_sec, "total": dust_sec}
 	else:
-		for table: Dictionary in [_slide, _dust]:
-			var entry: Dictionary = table.get(side, {})
-			if not entry.is_empty():
-				entry["left"] = maxf(float(entry["left"]) - step, 0.0)
-				if float(entry["left"]) <= 0.0:
-					table.erase(side)
+		var slide_entry: Dictionary = _slide.get(side, {})
+		if not slide_entry.is_empty():
+			slide_entry["left"] = maxf(float(slide_entry["left"]) - step, 0.0)
+			if float(slide_entry["left"]) <= 0.0:
+				_slide.erase(side)
+				# Landed: the settle (squash, follow-through, overshoot) starts now.
+				var settle: float = motion_of(side).settle_sec
+				_settle_left[side] = settle
+				_settle_total[side] = settle
+		var dust_entry: Dictionary = _dust.get(side, {})
+		if not dust_entry.is_empty():
+			dust_entry["left"] = maxf(float(dust_entry["left"]) - step, 0.0)
+			if float(dust_entry["left"]) <= 0.0:
+				_dust.erase(side)
 	_last_cell[side] = cell
 	_last_ground[side] = _ground_of(side)
 
@@ -691,6 +774,11 @@ func _bind_match() -> void:
 		var unit_id: String = String(ids[side])
 		_unit_id[side] = unit_id
 		_sheet[side] = SpriteSheet.load_unit(unit_id) if not unit_id.is_empty() else null
+		_motion[side] = UnitMotion.for_unit(unit_id)
+		_body_h[side] = UnitMotion.body_height_of(_sheet[side])
+		_settle_left[side] = 0.0
+		_release_left[side] = 0.0
+		_prev_clip[side] = CLIP_IDLE
 		var anim := UnitAnimator.new(_sheet[side])
 		anim.set_reduce_motion(_reduce_motion)
 		var sheet: SpriteSheet = _sheet[side]
@@ -783,7 +871,8 @@ func _update_clip(side: int, step: float) -> void:
 	_step_left[side] = maxf(float(_step_left.get(side, 0.0)) - step, 0.0)
 	var anim: UnitAnimator = get_animator(side)
 	if anim != null:
-		anim.tick(step)
+		# Unit motion pass: the idle loop runs at the unit's own speed (heavy slower, agile faster).
+		anim.tick(step * motion_of(side).idle_speed if anim.current_clip() == CLIP_IDLE else step)
 	var want: String = clip_for(clip_context(side))
 	# Task 5 item 6: a unit whose sheet has no `fall` clip keeps its normal death.
 	if want == CLIP_FALL and (get_sheet(side) == null or not get_sheet(side).has_clip(CLIP_FALL)):
@@ -801,6 +890,15 @@ func _update_clip(side: int, step: float) -> void:
 		var sheet_g: SpriteSheet = get_sheet(side)
 		want = CLIP_GUARD if sheet_g != null and sheet_g.has_clip(CLIP_GUARD) else (CLIP_BRACE if sheet_g != null and sheet_g.has_clip(CLIP_BRACE) else CLIP_WINDUP)
 	_logical_clip[side] = want
+	if want != CLIP_STEP:
+		# A step seen while another clip ruled is stale once that clip ends (the directional branch re-plays on its own
+		# clip check; the plain step must not restart late).
+		_step_restart[side] = false
+	# Unit motion pass: an action clip handing back to idle releases its weight (a short dip, unit_pose).
+	var prev: String = String(_prev_clip.get(side, CLIP_IDLE))
+	if want == CLIP_IDLE and prev != CLIP_IDLE and RELEASE_FROM.has(prev):
+		_release_left[side] = motion_of(side).release_sec
+	_prev_clip[side] = want
 	if anim == null:
 		return
 	if want == CLIP_PARRY_GUARD:
@@ -837,8 +935,17 @@ func _update_clip(side: int, step: float) -> void:
 			if get_sheet(side) == null or not get_sheet(side).has_clip(step_clip):
 				step_clip = CLIP_STEP
 			if step_clip == CLIP_STEP:
-				if anim.current_clip() != step_clip or anim.is_finished():
-					anim.play_timed(step_clip, float(_step_left[side]), UnitAnimator.ONCE)
+				if _reduce_motion:
+					if anim.current_clip() != step_clip or anim.is_finished():
+						anim.play_timed(step_clip, float(_step_left[side]), UnitAnimator.ONCE)
+				elif bool(_step_restart.get(side, false)) or (anim.current_clip() != step_clip and anim.current_clip() != CLIP_IDLE):
+					# Unit motion pass: the legs cycle over the glide and its settle (not the whole cooldown, which left
+					# the unit walking in place after it arrived), then stand in idle until the step ends.
+					_step_restart[side] = false
+					var legs: float = float(_feel.get("step_slide_sec", 0.0)) * motion_of(side).slide_scale + motion_of(side).settle_sec
+					anim.play_timed(step_clip, minf(legs, float(_step_left[side])) if legs > 0.0 else float(_step_left[side]), UnitAnimator.ONCE)
+				elif anim.current_clip() == step_clip and anim.is_finished():
+					anim.play(CLIP_IDLE)
 			elif anim.current_clip() != step_clip or bool(_step_restart.get(side, false)):
 				_step_restart[side] = false
 				# A directional dash keeps its own frame times (50 ms), so its lean meets the glide instead of being
@@ -1017,10 +1124,16 @@ func _draw() -> void:
 		var cell: Vector2i = _cell_of(side)
 		var kinds: Array[String] = get_active_status_kinds(side)
 		var ground: Vector2i = _ground_of(side)
-		_draw_shadow(_unit_art_rect(side).size, ground, side == CombatState.Side.ENEMY and _combat.get_state().footprint_extent().y > 1)
-		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side)
+		var pose: Vector4i = unit_pose(side)
+		# Unit motion pass: a lifted unit (hop, hover) leaves its shadow on the floor, 2 art px narrower per px of lift.
+		var shadow_rect: Vector2i = _unit_art_rect(side).size
+		if pose.y < 0:
+			shadow_rect.x = maxi(shadow_rect.x + pose.y * 4, 4)
+		_draw_shadow(shadow_rect, ground, side == CombatState.Side.ENEMY and _combat.get_state().footprint_extent().y > 1)
+		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side) \
+				+ Vector2i(pose.x, pose.y)
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
-		if not _draw_sprite(side, feet):
+		if not _draw_sprite(side, feet, pose):
 			if side == CombatState.Side.PLAYER:
 				_draw_player_marker(cell)
 			else:
@@ -1060,10 +1173,11 @@ func _draw_flash() -> void:
 		var src: Rect2i = anim.frame_rect()
 		if src.size.x <= 0 or src.size.y <= 0:
 			continue
-		# The flash sits on the drawn (gliding) feet, like the sprite it whitens.
-		var feet: Vector2i = _ground_of(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side)
-		var dest: Rect2 = sprite_dest_rect(feet, src.size, sheet.facing() != facing_for(side))
-		_flash.draw_texture_rect_region(sheet.texture(), dest, Rect2(src), Color(1.0, 1.0, 1.0, alpha))
+		# The flash sits on the drawn (gliding) feet and pose, like the sprite it whitens.
+		var pose: Vector4i = unit_pose(side)
+		var feet: Vector2i = _ground_of(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side) \
+				+ Vector2i(pose.x, pose.y)
+		_draw_frame_bands(_flash, side, sheet.texture(), src, feet, sheet.facing() != facing_for(side), pose, Color(1.0, 1.0, 1.0, alpha))
 
 
 ## Pure: the white added over an invulnerable sprite boss [param time] seconds into its invulnerability: INVULN_FLASH_ALPHA
@@ -1078,7 +1192,7 @@ static func invulnerable_flash_alpha(time: float, reduce_motion: bool) -> float:
 # The sprite of [param side] at the feet anchor: the animator's frame from the sheet texture, mirrored
 # when the sheet faces away from the divider; the downed boss tinted DOWNED_COLOR (an invulnerable boss blinks white
 # on the flash layer, _draw_flash). False (nothing drawn) for a placeholder unit.
-func _draw_sprite(side: int, feet: Vector2i) -> bool:
+func _draw_sprite(side: int, feet: Vector2i, pose: Vector4i = Vector4i.ZERO) -> bool:
 	var sheet: SpriteSheet = get_sheet(side)
 	var anim: UnitAnimator = get_animator(side)
 	if sheet == null or anim == null:
@@ -1087,13 +1201,50 @@ func _draw_sprite(side: int, feet: Vector2i) -> bool:
 	var src: Rect2i = anim.frame_rect()
 	if texture == null or src.size.x <= 0 or src.size.y <= 0:
 		return false
-	var dest: Rect2 = sprite_dest_rect(feet, src.size, sheet.facing() != facing_for(side))
 	var tint: Color = Color.WHITE
-	var state: CombatState = _combat.get_state()
 	if side == CombatState.Side.ENEMY and _combat.is_boss_downed():
 		tint = DOWNED_COLOR
-	draw_texture_rect_region(texture, dest, Rect2(src), tint)
+	_draw_frame_bands(self, side, texture, src, feet, sheet.facing() != facing_for(side), pose, tint)
 	return true
+
+
+## Pure: the three bands a frame of height [param frame_h] is drawn in for a body [param body_h] tall split at
+## [param rows] (Vector2i(waist rows, chest rows) from the bottom, UnitMotion.band_rows): Vector2i(chest_y, waist_y),
+## the first source row of the torso band and of the legs band (0 <= chest_y <= waist_y <= frame_h).
+static func band_split(frame_h: int, body_h: int, rows: Vector2i) -> Vector2i:
+	var b: int = clampi(body_h, 1, frame_h)
+	var waist_y: int = clampi(frame_h - mini(rows.x, b), 0, frame_h)
+	var chest_y: int = clampi(frame_h - mini(rows.y, b), 0, waist_y)
+	return Vector2i(chest_y, waist_y)
+
+
+# Unit motion pass: draws the frame [param src] of [param texture] on [param canvas] with its bottom-centre at
+# [param feet], in three bands: legs (rows below the waist) where they are, torso shifted by (lean / 2, squash), head
+# (rows above the chest) by (lean, squash). Upper bands are drawn last, so a squash overlaps the band below and never
+# opens a gap. One plain draw when the pose has no lean or squash. Whole art px only (art bible 8.10).
+func _draw_frame_bands(canvas: CanvasItem, side: int, texture: Texture2D, src: Rect2i, feet: Vector2i, flip: bool,
+		pose: Vector4i, tint: Color) -> void:
+	var dest: Rect2 = sprite_dest_rect(feet, src.size, flip)
+	if pose.z == 0 and pose.w == 0:
+		canvas.draw_texture_rect_region(texture, dest, Rect2(src), tint)
+		return
+	var split: Vector2i = band_split(src.size.y, int(_body_h.get(side, src.size.y)), motion_of(side).band_rows(int(_body_h.get(side, src.size.y))))
+	var chest_y: int = split.x
+	var waist_y: int = split.y
+	@warning_ignore("integer_division")
+	var torso_dx: int = pose.z / 2
+	# Legs.
+	if waist_y < src.size.y:
+		canvas.draw_texture_rect_region(texture, Rect2(dest.position.x, dest.position.y + waist_y, dest.size.x, src.size.y - waist_y),
+			Rect2(src.position.x, src.position.y + waist_y, src.size.x, src.size.y - waist_y), tint)
+	# Torso.
+	if chest_y < waist_y:
+		canvas.draw_texture_rect_region(texture, Rect2(dest.position.x + torso_dx, dest.position.y + chest_y + pose.w, dest.size.x, waist_y - chest_y),
+			Rect2(src.position.x, src.position.y + chest_y, src.size.x, waist_y - chest_y), tint)
+	# Head.
+	if chest_y > 0:
+		canvas.draw_texture_rect_region(texture, Rect2(dest.position.x + pose.z, dest.position.y + pose.w, dest.size.x, chest_y),
+			Rect2(src.position.x, src.position.y, src.size.x, chest_y), tint)
 
 
 # One clip ([param clip_name]) of every active pack of [param side] at the feet anchor; a missing pack
