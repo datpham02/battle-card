@@ -19,3 +19,6 @@ sessions' headless Godot jobs, user: "Chạy song song"). Previous capture kept 
 Observations: page 1 now matches the rest (same #2C2A35 background); gai_nguyen, thien_quang, bay_kep, min_tre read
 clearly; still weak: tran_gai (dim ring/spiral), kiem_khi (slash reads a little like a feather). Still code-drawn:
 cuong_phong, vung_lay.
+
+## Recapture 2026-11-13 (cuong_phong + vung_lay)
+All 62 cards now show a picture (cuong_phong = ram horn a7, vung_lay = mire puddle a1). Import 0 errors.

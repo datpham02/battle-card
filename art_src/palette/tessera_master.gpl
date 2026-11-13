@@ -111,3 +111,8 @@ Columns: 8
 # off their bodies (Frozen-only). Mire #A8C83A / #4E4A2A not added (still undefined). 63 -> 65 entries.
 166 238 255	Frozen ice signal #A6EEFF (card art)
  58  92 240	Chill signal #3A5CF0 (card art)
+# 2026-11-13 Mire signal colours for the vung_lay card picture (user: "gen asset riêng cho nó", after the proposal to
+# add the mire colours of RENDER-STANDARDS section 4). #4E4A2A stays the mire-cell face, #A8C83A the mire bubbles.
+# 65 -> 67 entries (3 over the art-bible cap of 64).
+168 200  58	Mire bubble signal #A8C83A (card art)
+ 78  74  42	Mire face signal #4E4A2A (card art)

@@ -71,7 +71,7 @@ Hệ quả: chính anchor không qua §4 / §7 hiện tại. Xem lại nó thu�
 | Gai / Rêu | `#5E6B55`, `#4A5545`, `#B89A6A`, `#8A7350` | — |
 | Băng / Đóng băng | `#A6EEFF` (thêm vào gpl 2026-11-13, người dùng: "Thêm vào gpl, vượt trần"), `#EEF4FA`, `#8FA3B8`, `#5F6F82` | — |
 | Giá Lạnh | `#3A5CF0` (thêm cùng lúc), `#EEF4FA`, `#A8B0C8`, `#8FA3B8` | — |
-| Lầy | `#4E4C3C`, `#5A4A3A` (màu Đầm Lầy) | `#A8C83A`, `#4E4A2A` |
+| Lầy | `#A8C83A`, `#4E4A2A` (thêm vào gpl 2026-11-13, người dùng: "gen asset riêng cho nó"), `#4E4C3C`, `#5A4A3A` | — |
 | Sương | — | `#7D8896` |
 
 ### 4.3 Palette con theo từng card (khóa 2026-11-13, người dùng: "Khóa palette con trước")

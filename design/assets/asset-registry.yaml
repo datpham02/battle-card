@@ -9439,6 +9439,119 @@ assets:
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
   notes: []
+- id: card.cuong_phong
+  type: card
+  name: "Card art 32x32: cuong_phong"
+  entity_id: cuong_phong
+  tier: n/a
+  legacy_asset_id: null
+  provider: pixellab
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/candidates/ui/card-art/batch3/prompts.json
+  reference: design/assets/references/ui/card-art.md
+  production: [assets/art/cards/cuong_phong.png]
+  source: [design/assets/candidates/ui/card-art/batch3/raw/cuong_phong_a7.png]
+  candidates: [design/assets/candidates/ui/card-art/batch3/cuong_phong_a7.png]
+  evidence: [design/assets/candidates/ui/card-art/batch3/review]
+  frame:
+    w: 32
+    h: 32
+    colour_type: 6
+  generation:
+    tool: mcp__pixellab__create_image_pixflux
+    gens: 7
+    job_id: "6cfe9b75-8db2-4931-b049-e9b5d009cdab"
+    job_ids:
+    - "01767773-c8d3-4fe6-991b-2a368e21cea2"
+    - "8a303bc3-bc39-4bc6-9fdf-2290e340aa68"
+    - f32c9a1f-b140-4d6f-b6f6-02a788cbbd61
+    - dd199a16-1cb7-4553-a0c7-aa6f68e47734
+    - "161ad7fb-b2c0-4fd3-9a39-f84c2739dea2"
+    - bb005d3e-771a-465c-9fdc-322b7afd709c
+    - "6cfe9b75-8db2-4931-b049-e9b5d009cdab"
+    seed: null
+    prompt_file: design/assets/candidates/ui/card-art/batch3/prompts.json
+  history:
+  - on: "2026-11-13"
+    event: generation_started
+    by: user
+    evidence: "user chat 2026-11-13: \"Task: Review và hoàn thiện toàn bộ Card Art còn thiếu ... Bạn được quyền tự thực hiện generation theo batch mà không cần hỏi tôi xác nhận từng ảnh ... Lưu đúng tên assets/art/cards/<card_id>.png. Cập nhật registry thành installed theo schema hiện có ... Giữ acceptance ở trạng thái hiện tại\""
+    note: "batch3 last two (user: \"gen asset riêng cho nó\"; cuong_phong = proposed ram horn, vung_lay unblocked by adding #A8C83A / #4E4A2A to tessera_master.gpl); 7 attempt(s): a1 01767773-c8d3-4fe6-991b-2a368e21cea2, a2 8a303bc3-bc39-4bc6-9fdf-2290e340aa68, a3 f32c9a1f-b140-4d6f-b6f6-02a788cbbd61, a4 dd199a16-1cb7-4553-a0c7-aa6f68e47734, a5 161ad7fb-b2c0-4fd3-9a39-f84c2739dea2, a6 bb005d3e-771a-465c-9fdc-322b7afd709c, a7 6cfe9b75-8db2-4931-b049-e9b5d009cdab; prompt + subset in design/assets/candidates/ui/card-art/batch3/prompts.json (history keeps earlier subjects)"
+  - on: "2026-11-13"
+    event: generation_completed
+    job_id: "6cfe9b75-8db2-4931-b049-e9b5d009cdab"
+    candidate: design/assets/candidates/ui/card-art/batch3/cuong_phong_a7.png
+    note: "picked attempt a7; raw design/assets/candidates/ui/card-art/batch3/raw/cuong_phong_a7.png; earlier attempts kept in batch3/ and batch3/raw/"
+  - on: "2026-11-13"
+    event: qa_completed
+    note: "Master Reference §9.1-9.2 auto QA (card_qa.py): 32x32, alpha 0/255, margin >= 2 px (bbox [7, 6, 24, 25]), background #2C2A35, 5 colours all in the §4.3 subset, Ink edge closed (28 px recoloured, §8 step 4); black-fill family sheet batch3/review/final_*_sil.png checked by Claude"
+  - on: "2026-11-13"
+    event: integration_completed
+    by: user
+    evidence: "user chat 2026-11-13: \"Task: Review và hoàn thiện toàn bộ Card Art còn thiếu ... Bạn được quyền tự thực hiện generation theo batch mà không cần hỏi tôi xác nhận từng ảnh ... Lưu đúng tên assets/art/cards/<card_id>.png. Cập nhật registry thành installed theo schema hiện có ... Giữ acceptance ở trạng thái hiện tại\""
+    note: "new entry created as installed (file under assets/art/cards), the way the 2026-11-11 bootstrap registered installed files; installed is NOT approval, acceptance stays unknown"
+  notes: []
+- id: card.vung_lay
+  type: card
+  name: "Card art 32x32: vung_lay"
+  entity_id: vung_lay
+  tier: n/a
+  legacy_asset_id: null
+  provider: pixellab
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/candidates/ui/card-art/batch3/prompts.json
+  reference: design/assets/references/ui/card-art.md
+  production: [assets/art/cards/vung_lay.png]
+  source: [design/assets/candidates/ui/card-art/batch3/raw/vung_lay_a1.png]
+  candidates: [design/assets/candidates/ui/card-art/batch3/vung_lay_a1.png]
+  evidence: [design/assets/candidates/ui/card-art/batch3/review]
+  frame:
+    w: 32
+    h: 32
+    colour_type: 6
+  generation:
+    tool: mcp__pixellab__create_image_pixflux
+    gens: 2
+    job_id: df5e4271-c9b9-4168-b1f3-0ac50cc96e12
+    job_ids: [df5e4271-c9b9-4168-b1f3-0ac50cc96e12, de3615fc-9b83-412c-9c69-5cd0f331d2be]
+    seed: null
+    prompt_file: design/assets/candidates/ui/card-art/batch3/prompts.json
+  history:
+  - on: "2026-11-13"
+    event: generation_started
+    by: user
+    evidence: "user chat 2026-11-13: \"Task: Review và hoàn thiện toàn bộ Card Art còn thiếu ... Bạn được quyền tự thực hiện generation theo batch mà không cần hỏi tôi xác nhận từng ảnh ... Lưu đúng tên assets/art/cards/<card_id>.png. Cập nhật registry thành installed theo schema hiện có ... Giữ acceptance ở trạng thái hiện tại\""
+    note: "batch3 last two (user: \"gen asset riêng cho nó\"; cuong_phong = proposed ram horn, vung_lay unblocked by adding #A8C83A / #4E4A2A to tessera_master.gpl); 2 attempt(s): a1 df5e4271-c9b9-4168-b1f3-0ac50cc96e12, a2 de3615fc-9b83-412c-9c69-5cd0f331d2be; prompt + subset in design/assets/candidates/ui/card-art/batch3/prompts.json (history keeps earlier subjects)"
+  - on: "2026-11-13"
+    event: generation_completed
+    job_id: df5e4271-c9b9-4168-b1f3-0ac50cc96e12
+    candidate: design/assets/candidates/ui/card-art/batch3/vung_lay_a1.png
+    note: "picked attempt a1; raw design/assets/candidates/ui/card-art/batch3/raw/vung_lay_a1.png; earlier attempts kept in batch3/ and batch3/raw/"
+  - on: "2026-11-13"
+    event: qa_completed
+    note: "Master Reference §9.1-9.2 auto QA (card_qa.py): 32x32, alpha 0/255, margin >= 2 px (bbox [2, 7, 29, 25]), background #2C2A35, 4 colours all in the §4.3 subset, Ink edge closed (30 px recoloured, §8 step 4); black-fill family sheet batch3/review/final_*_sil.png checked by Claude"
+  - on: "2026-11-13"
+    event: integration_completed
+    by: user
+    evidence: "user chat 2026-11-13: \"Task: Review và hoàn thiện toàn bộ Card Art còn thiếu ... Bạn được quyền tự thực hiện generation theo batch mà không cần hỏi tôi xác nhận từng ảnh ... Lưu đúng tên assets/art/cards/<card_id>.png. Cập nhật registry thành installed theo schema hiện có ... Giữ acceptance ở trạng thái hiện tại\""
+    note: "new entry created as installed (file under assets/art/cards), the way the 2026-11-11 bootstrap registered installed files; installed is NOT approval, acceptance stays unknown"
+  notes: []
 - id: env.forest.bg_forest_far
   type: env
   name: bg_forest_far
@@ -20612,14 +20725,6 @@ backlog:
   name: "Character-select portrait 64x80 for giao_si"
   required_by: "design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5"
   note: "character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes"
-- id: card.vung_lay
-  name: "Card art 32x32: vung_lay"
-  required_by: "assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention"
-  note: "BLOCKED 2026-11-13: Mire: #A8C83A / #4E4A2A undefined (Master Reference §4.2 undefined); not generated"
-- id: card.cuong_phong
-  name: "Card art 32x32: cuong_phong"
-  required_by: "assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention"
-  note: "batch3 2026-11-13: 5 pixflux attempts, none passed QA (edge contact or unreadable: box, scroll, cannon, cart); files in design/assets/candidates/ui/card-art/batch3/cuong_phong_a*.png; needs a new subject idea from the user"
 - id: env.dungeon.slab_set
   name: "Slab 9-slice + stamps: dungeon"
   required_by: "assets/art/regions.json (region mapped, no env/dungeon/); design/assets/entity-inventory.md rows 81-94"

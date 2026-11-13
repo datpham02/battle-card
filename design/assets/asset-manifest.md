@@ -8,9 +8,9 @@ Lifecycle: `candidate → accepted → installed → approved`; `legacy` = repla
 
 | Total | Candidate | Accepted | Installed | Approved | Legacy |
 |---|---|---|---|---|---|
-| 284 | 6 | 0 | 199 | 75 | 4 |
+| 286 | 6 | 0 | 201 | 75 | 4 |
 
-Acceptance recorded: unknown 196, pending 14, accepted 74, rejected 0.
+Acceptance recorded: unknown 198, pending 14, accepted 74, rejected 0.
 
 ## Needs the user's decision
 
@@ -332,6 +332,8 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 | `card.han_phong` | Card art 32x32: han_phong | `assets/art/cards/han_phong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
 | `card.han_tran` | Card art 32x32: han_tran | `assets/art/cards/han_tran.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
 | `card.bang_tam` | Card art 32x32: bang_tam | `assets/art/cards/bang_tam.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.cuong_phong` | Card art 32x32: cuong_phong | `assets/art/cards/cuong_phong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.vung_lay` | Card art 32x32: vung_lay | `assets/art/cards/vung_lay.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
 
 ## Loose textures
 
@@ -366,8 +368,6 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 | `portrait.sat_thu` | Character-select portrait 64x80 for sat_thu | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
 | `portrait.tho_san` | Character-select portrait 64x80 for tho_san | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
 | `portrait.giao_si` | Character-select portrait 64x80 for giao_si | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
-| `card.vung_lay` | Card art 32x32: vung_lay | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | BLOCKED 2026-11-13: Mire: #A8C83A / #4E4A2A undefined (Master Reference §4.2 undefined); not generated |
-| `card.cuong_phong` | Card art 32x32: cuong_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | batch3 2026-11-13: 5 pixflux attempts, none passed QA (edge contact or unreadable: box, scroll, cannon, cart); files in design/assets/candidates/ui/card-art/batch3/cuong_phong_a*.png; needs a new subject idea from the user |
 | `env.dungeon.slab_set` | Slab 9-slice + stamps: dungeon | assets/art/regions.json (region mapped, no env/dungeon/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
 | `env.dungeon.backdrop` | Far backdrop 800x360: dungeon | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
 | `unit.dungeon.roster` | Enemy bodies + warden for dungeon | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |

@@ -367,9 +367,9 @@
   },
   "cuong_phong": {
    "family": "push",
-   "subject": "a heavy square iron battering ram head with a short wooden shaft behind it, pointing right, three short speed lines at the left, the whole thing only half as wide as the picture",
-   "colours": "wood #8A7350 and #B89A6A log, dark steel #5F6F82 and steel #8FA3B8 iron cap and bands",
-   "only": "#1B1722,#5F6F82,#8FA3B8,#8A7350,#B89A6A",
+   "subject": "one big curled ram horn spiralling once, its pointed tip aiming to the right, with three short speed lines behind it",
+   "colours": "ivory #EFE6D2 and pale tan #B89A6A horn ridges, thorn shadow #8A7350 shading, stone pale #6A6B62 speed lines",
+   "only": "#1B1722,#6A6B62,#8A7350,#B89A6A,#EFE6D2",
    "history": [
     {
      "subject": "a short heavy wooden battering ram log with a square iron cap on its front end, charging to the right, two short speed lines behind it",
@@ -386,6 +386,10 @@
     {
      "subject": "a wooden battering ram on two small square wheels, a long log with a big square iron head pointing right",
      "reason": "a4: log on wheels reads as a cannon"
+    },
+    {
+     "subject": "a heavy square iron battering ram head with a short wooden shaft behind it, pointing right, three short speed lines at the left, the whole thing only half as wide as the picture",
+     "reason": "battering-ram concept failed 5 times; user chose the proposed ram horn"
     }
    ]
   },
@@ -715,11 +719,15 @@
    "colours": "white #EEF4FA and pale #A8B0C8 arms, deep cold blue #3A5CF0 centre and tips, steel #8FA3B8",
    "only": "#1B1722,#5F6F82,#8FA3B8,#A8B0C8,#EEF4FA,#3A5CF0",
    "replaces": "assets/art/cards/han_khi.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "vung_lay": {
+   "family": "mire",
+   "subject": "a flat round muddy puddle seen slightly from above with three small square bubbles rising out of it",
+   "colours": "mire mud #4E4A2A and olive #4E4C3C puddle, swamp mud #5A4A3A rim, bright mire green #A8C83A bubbles",
+   "only": "#1B1722,#4E4A2A,#4E4C3C,#5A4A3A,#A8C83A"
   }
  },
- "blocked": {
-  "vung_lay": "Mire: #A8C83A / #4E4A2A undefined"
- },
+ "blocked": {},
  "template_v1": "game icon: {subject}, small centered subject with a wide empty border of at least 3 pixels on every side, one bold subject, Western fantasy, angular geometric shapes, {colours}, flat pixel colours, up to 3 shades lit from the top-left, hard pixel edges, 1 pixel dark ink outline, clean readable silhouette",
  "_template_note": "template v2 from the 3rd generation round on (2026-11-13): many v1 results touched the canvas edge (2 px margin)"
 }
