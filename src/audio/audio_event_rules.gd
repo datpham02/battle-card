@@ -39,8 +39,10 @@ static func cast_tag(cast_id: int) -> String:
 
 
 ## Tag of a boss warning's imminent cue.
-static func warn_tag(skill_id: String) -> String:
-	return "warn:%s" % skill_id
+## [param key] is the warning unit's key (multi-enemy): each unit owns its own tag, so one unit's warning_cleared drops
+## only its own pending alarm, never another unit's warning of the same skill. key < 0 = the single-pattern tag.
+static func warn_tag(skill_id: String, key: int = -1) -> String:
+	return "warn:%s" % skill_id if key < 0 else "warn:%s@%d" % [skill_id, key]
 
 
 ## {delivery, impact} of a card definition (cards.json entry); "" when missing.
@@ -209,15 +211,17 @@ static func on_damaged(bank: AudioBank, side: int, amount: float, hp_ratio: floa
 
 
 ## [signal PatternController.warning_started]: the imminent alarm in the last timing.imminent_lead_sec of the warning
-## (at once when the warning is shorter).
-static func on_warning_started(bank: AudioBank, skill_id: String, warning_sec: float) -> Array[Dictionary]:
+## (at once when the warning is shorter). [param key] = the warning unit (multi-enemy; see [method warn_tag]). Two units
+## warning together still make ONE alarm: the second start merges into the first by the event cooldown.
+static func on_warning_started(bank: AudioBank, skill_id: String, warning_sec: float, key: int = -1) -> Array[Dictionary]:
 	var delay: float = maxf(warning_sec - bank.timing("imminent_lead_sec", 0.5), 0.0)
-	return [{"op": "after", "id": "warn.boss.imminent", "delay": delay, "cells": 1, "step": 0, "tag": warn_tag(skill_id)}]
+	return [{"op": "after", "id": "warn.boss.imminent", "delay": delay, "cells": 1, "step": 0, "tag": warn_tag(skill_id, key)}]
 
 
-## [signal PatternController.warning_cleared]: drops a pending imminent alarm (a stun or a cancelled skill).
-static func on_warning_cleared(skill_id: String) -> Array[Dictionary]:
-	return [{"op": "cancel", "tag": warn_tag(skill_id)}]
+## [signal PatternController.warning_cleared]: drops the pending imminent alarm of THAT unit only (a stun or a
+## cancelled skill); another unit warning the same skill keeps its alarm.
+static func on_warning_cleared(skill_id: String, key: int = -1) -> Array[Dictionary]:
+	return [{"op": "cancel", "tag": warn_tag(skill_id, key)}]
 
 
 ## [signal PatternController.stage_changed] entered WINDUP (boss wind-up warning).

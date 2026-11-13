@@ -25,6 +25,8 @@ func ck(name: String, ok: bool, extra: String = "") -> void:
 func _initialize() -> void:
 	test_movement_death_status_and_vent()
 	test_boss_recovery()
+	test_multi_enemy_warnings_are_per_unit()
+	test_boss_windup_has_one_source()
 	test_instant_card_impact_and_crit()
 	test_enemy_pickup_rule()
 	print("FAILS=%d" % fails)
@@ -103,6 +105,66 @@ func test_boss_recovery() -> void:
 	bridge.detach()
 	bridge.free()
 	d.free()
+
+
+# Multi-enemy item B (docs/design/audio/unified-audio-identity.md §6): two units warning the SAME skill; unit 1 is
+# stunned (warning_cleared). Unit 2's imminent alarm must still sound. With one tag per skill, unit 1's clear cancelled
+# both alarms.
+func test_multi_enemy_warnings_are_per_unit() -> void:
+	var cfg: EnemySkillsConfig = EnemySkillsConfig.from_dictionary({
+		"skills": Fx.skills(), "enemies": {"solo": {"ai": {"noise": 0.0}, "skills": ["fx_1"]}},
+	})
+	var c1: PatternController = Fx.world(BoardGrid.new(3, 3), cfg, "solo", 1)["ctrl"]
+	var c2: PatternController = Fx.world(BoardGrid.new(3, 3), cfg, "solo", 2)["ctrl"]
+	var d := AudioDirector.silent()
+	var bridge := CombatAudioBridge.new(d)
+	bridge.attach({"patterns": [[1, c1], [2, c2]]})
+	var none: Array[Vector2i] = []
+	c1.warning_started.emit("fx_1", none, none, 1.0)
+	c2.warning_started.emit("fx_1", none, none, 1.0)
+	c1.warning_cleared.emit("fx_1", "stun")
+	for i: int in 30:
+		d.advance(0.05)
+	ck("unit 1 stunned: unit 2's imminent alarm for the same skill still sounds", _plays(d, "warn.boss.imminent").size() == 1,
+		str(_plays(d, "warn.boss.imminent").size()))
+	c2.warning_started.emit("fx_1", none, none, 1.0)
+	c2.warning_cleared.emit("fx_1", "stun")
+	for i: int in 30:
+		d.advance(0.05)
+	ck("a unit's own clear still cancels its own alarm", _plays(d, "warn.boss.imminent").size() == 1)
+	bridge.detach()
+	bridge.free()
+	d.free()
+
+
+# Item C: a pattern boss telegraphs through stage_changed (WINDUP); its actor's swing start must not sound the
+# wind-up cue a second time. A boss without a pattern brain keeps the swing-start cue.
+func test_boss_windup_has_one_source() -> void:
+	var cfg: EnemySkillsConfig = EnemySkillsConfig.from_dictionary({
+		"skills": Fx.skills(), "enemies": {"solo": {"ai": {"noise": 0.0}, "skills": ["fx_1"]}},
+	})
+	var ctrl: PatternController = Fx.world(BoardGrid.new(3, 3), cfg, "solo", 1)["ctrl"]
+	var actor := CutActor.new(CutConfig.load_from_file(), CombatState.Side.ENEMY)
+	var cells: Array[Vector2i] = [Vector2i(1, 1)]
+	var d := AudioDirector.silent()
+	var bridge := CombatAudioBridge.new(d)
+	bridge.attach({"pattern": ctrl, "enemy_actor": actor})
+	actor.swing_started.emit(cells, "fx_1", 1.0)
+	var from_swing: int = d.play_log.filter(func(e: Dictionary) -> bool: return str(e["id"]) == "warn.boss.windup").size()
+	ck("pattern boss: the actor's swing start does not sound the wind-up", from_swing == 0, str(from_swing))
+	ctrl.stage_changed.emit(PatternController.Stage.WINDUP, "fx_1")
+	ck("pattern boss: stage WINDUP sounds it once", _plays(d, "warn.boss.windup").size() == 1)
+	bridge.detach()
+	var d2 := AudioDirector.silent()
+	var b2 := CombatAudioBridge.new(d2)
+	b2.attach({"enemy_actor": actor})
+	actor.swing_started.emit(cells, "fx_1", 1.0)
+	ck("a boss without a pattern brain keeps the swing-start wind-up", _plays(d2, "warn.boss.windup").size() == 1)
+	b2.detach()
+	b2.free()
+	bridge.free()
+	d.free()
+	d2.free()
 
 
 func test_instant_card_impact_and_crit() -> void:

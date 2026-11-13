@@ -38,6 +38,7 @@ static func attach_view(director: AudioDirector, view: CombatView) -> CombatAudi
 		"state": view.get_state(), "pattern": view.get_pattern_controller(), "skills": view.get_skill_config(),
 		"cut_flow": view.get_cut_flow(), "hold": view.get_hold(), "parry": view.get_parry_guard(),
 		"status": view.get_status(), "hazards": view.get_hazards(), "boss": view.get_boss(),
+		"patterns": _unit_patterns(view),
 	}
 	bridge.attach(parts)
 	var host: Node = view.get_parent() if view.get_parent() != null else view
@@ -45,9 +46,23 @@ static func attach_view(director: AudioDirector, view: CombatView) -> CombatAudi
 	return bridge
 
 
-## Connects to the given parts (any may be missing or null): view, arbiter, player_actor, enemy_actor, state, pattern,
-## skills (SkillConfig), cut_flow, hold, parry (ParryGuard), status (StatusEffects: the burning-ground loop). Sets the
-## director's arbiter clock.
+## Multi-enemy: [[unit key, PatternController], ...] for every enemy unit that has a pattern brain (unit 0 included).
+static func _unit_patterns(view: CombatView) -> Array:
+	var out: Array = []
+	var state: CombatState = view.get_state()
+	if state == null:
+		return out
+	for key: int in state.enemy_keys(false):
+		var pc: PatternController = view.pattern_of(key)
+		if pc != null:
+			out.append([key, pc])
+	return out
+
+
+## Connects to the given parts (any may be missing or null): view, arbiter, player_actor, enemy_actor, state, pattern
+## (one pattern brain) or patterns ([[unit key, PatternController], ...]: every unit, each with its own warning tag),
+## skills (SkillConfig), cut_flow, hold, parry (ParryGuard), status (StatusEffects: the burning-ground loop), hazards,
+## boss. Sets the director's arbiter clock.
 func attach(parts: Dictionary) -> void:
 	detach()
 	_parts = parts
@@ -72,11 +87,19 @@ func attach(parts: Dictionary) -> void:
 		_link(state.cell_changed, _on_cell_changed)
 		_link(state.unit_died, _on_unit_died)
 		_link(state.player_died, _on_death)
-	var pattern: PatternController = parts.get("pattern", null) as PatternController
-	if pattern != null:
-		_link(pattern.warning_started, _on_warning_started)
-		_link(pattern.warning_cleared, _on_warning_cleared)
-		_link(pattern.stage_changed, _on_stage_changed)
+	var units: Array = parts.get("patterns", [])
+	if not units.is_empty():
+		for pair: Array in units:
+			var pc: PatternController = pair[1] as PatternController
+			_link(pc.warning_started, _on_warning_started.bind(int(pair[0])))
+			_link(pc.warning_cleared, _on_warning_cleared.bind(int(pair[0])))
+			_link(pc.stage_changed, _on_stage_changed)
+	else:
+		var pattern: PatternController = parts.get("pattern", null) as PatternController
+		if pattern != null:
+			_link(pattern.warning_started, _on_warning_started.bind(-1))
+			_link(pattern.warning_cleared, _on_warning_cleared.bind(-1))
+			_link(pattern.stage_changed, _on_stage_changed)
 	var view: Object = parts.get("view", null)
 	if view != null and view.has_signal("match_ended"):
 		_link(view.match_ended, _on_match_ended)
@@ -240,7 +263,15 @@ func _clock() -> float:
 
 
 func _on_swing_started(cells: Array[Vector2i], skill_id: String, _duration: float, side: int) -> void:
+	# One source for the boss wind-up cue: a pattern brain telegraphs through stage_changed (WINDUP, the visible tell);
+	# its actor's swing start must not sound it a second time (it was only hidden by the 150 ms cooldown).
+	if side == AudioEventRules.SIDE_ENEMY and _has_pattern():
+		return
 	_director.apply(AudioEventRules.on_swing_started(_bank, side, skill_id, _skill_def(skill_id), cells.size()))
+
+
+func _has_pattern() -> bool:
+	return _parts.get("pattern", null) != null or not (_parts.get("patterns", []) as Array).is_empty()
 
 
 func _on_swing_cancelled(_cells: Array[Vector2i], skill_id: String, side: int) -> void:
@@ -268,12 +299,12 @@ func _on_damaged(side: int, amount: float) -> void:
 	_director.apply(AudioEventRules.on_damaged(_bank, side, amount, ratio))
 
 
-func _on_warning_started(skill_id: String, _cells: Array[Vector2i], _queued: Array[Vector2i], warning_sec: float) -> void:
-	_director.apply(AudioEventRules.on_warning_started(_bank, skill_id, warning_sec))
+func _on_warning_started(skill_id: String, _cells: Array[Vector2i], _queued: Array[Vector2i], warning_sec: float, key: int) -> void:
+	_director.apply(AudioEventRules.on_warning_started(_bank, skill_id, warning_sec, key))
 
 
-func _on_warning_cleared(skill_id: String, _reason: String) -> void:
-	_director.apply(AudioEventRules.on_warning_cleared(skill_id))
+func _on_warning_cleared(skill_id: String, _reason: String, key: int) -> void:
+	_director.apply(AudioEventRules.on_warning_cleared(skill_id, key))
 
 
 func _on_match_ended(player_won: bool, _player_hp: float) -> void:
