@@ -226,7 +226,7 @@ var _route_archetypes_path: String = ""
 var _node_overhead: float = DEFAULT_NODE_OVERHEAD_SEC
 var _world_set: Array[String] = []
 ## Story 040: `--char-set=<id>.<key path>:<X|xF>[,...]` overrides characters.json in memory (e.g.
-## phap_su.max_hp:210, phap_su.signature.params.burn_damage_per_tick:x1.5), so character probes run side by side.
+## phap_su.attributes.max_hp:170 (or the short phap_su.max_hp:170), phap_su.signature.params.burn_damage_per_tick:x1.5), so character probes run side by side.
 var _char_set: Array[String] = []
 var _policies_given: bool = false
 var _relic_policy: String = "none"
@@ -1131,6 +1131,15 @@ func _characters_with_overrides(items: Array[String]) -> CharacterConfig:
 		for i: int in range(1, parts.size() - 1):
 			target = target.get(parts[i], {}) if typeof(target.get(parts[i], {})) == TYPE_DICTIONARY else {}
 		var leaf: String = parts[parts.size() - 1]
+		# F2 (2026-11-13): the five base stats moved from the character's top level into its
+		# `attributes` block, so the documented short paths (`phap_su.max_hp:170`) would otherwise
+		# fall through to "unknown key ... ignored" — a silently wrong multi-hour run. Both spellings
+		# resolve: the short one falls back to `attributes`, and `<id>.attributes.max_hp` still works
+		# through the normal walk above.
+		if parts.size() == 2 and not target.has(leaf):
+			var attributes: Variant = target.get("attributes")
+			if typeof(attributes) == TYPE_DICTIONARY and (attributes as Dictionary).has(leaf):
+				target = attributes as Dictionary
 		if parts.size() < 2 or not target.has(leaf):
 			print("--char-set: unknown key '%s' ignored" % item)
 			continue

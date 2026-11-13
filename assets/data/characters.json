@@ -14,9 +14,13 @@
 				"portrait": "",
 				"select_art": ""
 			},
-			"max_hp": 200,
-			"step_cooldown_mult": 1.0,
-			"focus_max_sec": 4.0,
+			"attributes": {
+				"max_hp": 200,
+				"step_cooldown_mult": 1.0,
+				"focus_max_sec": 4.0,
+				"cast_speed_mult": 1.0,
+				"hazard_resist_mult": 1.0
+			},
 			"passive": {"id": "second_wind", "params": {"heal_after_match": 20}},
 			"passive_name_key": "passive.second_wind.name",
 			"passive_desc_key": "passive.second_wind.desc",
@@ -36,9 +40,13 @@
 				"portrait": "",
 				"select_art": ""
 			},
-			"max_hp": 210,
-			"step_cooldown_mult": 1.0,
-			"focus_max_sec": 5.0,
+			"attributes": {
+				"max_hp": 170,
+				"step_cooldown_mult": 1.0,
+				"focus_max_sec": 5.0,
+				"cast_speed_mult": 1.0,
+				"hazard_resist_mult": 1.0
+			},
 			"passive": {"id": "wide_caster", "params": {"min_cells": 4, "duration_mult": 0.75}},
 			"passive_name_key": "passive.wide_caster.name",
 			"passive_desc_key": "passive.wide_caster.desc",
@@ -58,9 +66,13 @@
 				"portrait": "",
 				"select_art": ""
 			},
-			"max_hp": 180,
-			"step_cooldown_mult": 0.9,
-			"focus_max_sec": 4.0,
+			"attributes": {
+				"max_hp": 180,
+				"step_cooldown_mult": 0.9,
+				"focus_max_sec": 4.0,
+				"cast_speed_mult": 1.0,
+				"hazard_resist_mult": 1.0
+			},
 			"passive": {"id": "quick_blade", "params": {"max_cells": 4, "damage_mult": 1.4}},
 			"passive_name_key": "passive.quick_blade.name",
 			"passive_desc_key": "passive.quick_blade.desc",
@@ -81,9 +93,13 @@
 				"select_art": ""
 			},
 			"unlock_by": "hunter_path",
-			"max_hp": 200,
-			"step_cooldown_mult": 0.95,
-			"focus_max_sec": 4.0,
+			"attributes": {
+				"max_hp": 200,
+				"step_cooldown_mult": 0.95,
+				"focus_max_sec": 4.0,
+				"cast_speed_mult": 1.0,
+				"hazard_resist_mult": 1.0
+			},
 			"passive": {"id": "hunter_mark", "params": {"fragile_stacks": 1, "icd_sec": 3.0}},
 			"passive_name_key": "passive.hunter_mark.name",
 			"passive_desc_key": "passive.hunter_mark.desc",
@@ -104,9 +120,13 @@
 				"select_art": ""
 			},
 			"unlock_by": "mercy_path",
-			"max_hp": 210,
-			"step_cooldown_mult": 1.05,
-			"focus_max_sec": 4.5,
+			"attributes": {
+				"max_hp": 210,
+				"step_cooldown_mult": 1.05,
+				"focus_max_sec": 4.5,
+				"cast_speed_mult": 1.0,
+				"hazard_resist_mult": 1.0
+			},
 			"passive": {"id": "prayer", "params": {"heal_per_burst": 8}},
 			"passive_name_key": "passive.prayer.name",
 			"passive_desc_key": "passive.prayer.desc",

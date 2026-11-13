@@ -619,9 +619,10 @@ combat.json player (old numbers).
 | `characters[].id` | string | Unique id (duplicate -> warning, later dropped). **Permanent: never rename one.** `run_session.gd` drops a saved run whose character id is unknown, and `progress_state.gd` (v8) keys Pact level and `runs_won:<id>` on it |
 | `characters[].name_key` / `desc_key` | translation keys | Character name and short description (`character.<id>.name` / `.desc`) |
 | `characters[].identity` | object (optional) | **F1, pillar 1.** `{lore_key, personality_key, playstyle_key, block_material_key, accent_color, portrait, select_art}`. See the identity table below. Absent or malformed -> warning and the empty identity; `CharacterConfig.get_character()` ALWAYS returns a full identity dictionary, so a view never tests for the block |
-| `characters[].max_hp` | number | Player max and start HP; clamped >= 1 |
-| `characters[].step_cooldown_mult` | number | Multiplies the board-scaled player step cooldown (0.9 = 10 % faster steps); <= 0 -> 1. The boss's own step cooldown is NOT affected |
-| `characters[].focus_max_sec` | number | Real seconds one Focus lasts (overrides cards.json `focus.focus_max_sec`); clamped >= 0 |
+| `characters[].attributes` | object | **F2, pillar 2.** All five base stats together. See the attributes table below. Each stat may ALSO be written as a flat key at the character's top level (the pre-F2 spelling, still read); when a stat appears in both, `attributes` wins and a warning is logged, because two numbers for one stat is an authoring mistake |
+| `characters[].max_hp` | number | *(legacy flat spelling of `attributes.max_hp`)* Player max and start HP; clamped >= 1 |
+| `characters[].step_cooldown_mult` | number | *(legacy flat spelling)* Multiplies the board-scaled player step cooldown (0.9 = 10 % faster steps); <= 0 -> 1. The boss's own step cooldown is NOT affected |
+| `characters[].focus_max_sec` | number | *(legacy flat spelling)* Real seconds one Focus lasts (overrides cards.json `focus.focus_max_sec`); clamped >= 0 |
 | `characters[].passive` | object | `{id, params}`; id is a `PassiveRegistry` key (`second_wind`, `wide_caster`, `quick_blade`), unknown id -> warning and no passive |
 | `characters[].passive_name_key` / `passive_desc_key` | translation keys | Passive name / description for the select screen (`passive.<id>.name` / `.desc`) |
 | `characters[].starter_deck` | array of card ids | Deck of the match; unknown card -> warning and dropped, empty -> cards.json `default_deck` |
@@ -650,6 +651,33 @@ degrading to the full empty identity rather than null.
 
 Shipped identity values: `kiem_si` `#8FA8BE` steel · `phap_su` `#E08A2E` ember · `sat_thu` `#6FD8E8`
 keen ice · `tho_san` `#7FA64B` wood and cord · `giao_si` `#C08FE8` stained glass.
+
+**`characters[].attributes` (F2, OD-2 approved 2026-11-13).** Pillar 2 "Base Attributes". Read by
+`CharacterConfig._read_attributes`; `get_character()` returns every stat FLAT as well as under
+`attributes`, so the pre-F2 dictionary shape that 15+ test suites read is unchanged.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `max_hp` | 100 | Player max and start HP; clamped >= 1 |
+| `step_cooldown_mult` | 1.0 | Multiplies the board-scaled player step cooldown (0.9 = 10 % faster steps); <= 0 -> 1. The boss is NOT affected. Applied via `UnitMover.cooldown_mult` |
+| `focus_max_sec` | 4.0 | Real seconds one Focus lasts (overrides cards.json `focus.focus_max_sec`); clamped >= 0 |
+| `cast_speed_mult` | 1.0 | **F2.** Multiplies the card windup. Applied as the PLAYER actor's `CutActor.duration_mult`, i.e. BEFORE the passive — the order in `CutActor.begin_swing` is `swing_duration(cells) * duration_mult` -> passive `duration_modifier` -> `cast_time_fn` -> `duration_override` -> relic `cast_time_modifier` -> `channel_extend_fn`. <= 0 -> 1 |
+| `hazard_resist_mult` | 1.0 | **F2.** Multiplies hazard damage the PLAYER takes, at the three points in `combat_view.gd` where a hazard signal becomes HP loss (`_on_mire_damage`, `_on_cell_fell` -> `_state.damage`, and the vent tick feeding `StatusEffects.ignite`). NOT applied inside the shared `TileHazards` tick — `side` is a unit key, so that would hit enemy units too. <= 0 -> 1 |
+
+> **`cast_time_fn` and `duration_override` OVERWRITE the windup rather than multiplying it**, so a
+> card with a fixed `cast_time_sec` (Skill v2, e.g. Hỏa Lôi) ignores `cast_speed_mult` — exactly as it
+> already ignores the passive. **OD-10, approved 2026-11-13: that is intended, a fixed cast time stays
+> fixed.** Anything that must act as a *global* speed factor has to be applied after those two.
+
+> **`formation_fade_mult` was proposed and REJECTED** (OD-2): it would change the Awakening charge
+> rate and needs its own balance pass. Putting it in the data does nothing — `character_attributes_test.gd`
+> gates that it stays inert.
+
+Shipped attributes: `kiem_si` 200 / 1.0 / 4.0 · `phap_su` **170** / 1.0 / 5.0 · `sat_thu` 180 / 0.9 /
+4.0 · `tho_san` 200 / 0.95 / 4.0 · `giao_si` 210 / 1.05 / 4.5; `cast_speed_mult` and
+`hazard_resist_mult` are 1.0 for all five, so F2 moves no balance number by itself. `phap_su` dropped
+from 210 to 170 under OD-1 so the "frail" description matches the number — that single change needs a
+bot balance pass.
 
 Passive params: `second_wind {heal_after_match}` extra HP after a won match (added before the max clamp); `wide_caster {min_cells, duration_mult}` player swings over `min_cells` or more cells wind up `duration_mult` times as long; `quick_blade {max_cells, damage_mult}` player hits over `max_cells` or fewer cells deal `damage_mult` times the final damage. Passives only affect the player.
 

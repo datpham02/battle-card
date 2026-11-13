@@ -491,12 +491,47 @@ bot balance pass with the two new multipliers.
 - **Acceptance:** all 5 characters have lore, personality, playstyle, accent colour; `schema.md` and `character_config.gd` no longer call characters "classes"; a `characters.json` without any new key still loads with zero warnings.
 
 ### F2 — Base attributes
-- **Files:** `assets/data/characters.json`, `src/run/character_config.gd`, `src/combat/combat_view.gd` (read-through only), `src/combat/cut_actor.gd`, `src/combat/unit_mover.gd`, `src/combat/tile_hazards.gd`
+- **Files (corrected 2026-11-13 after reading the code — the earlier list was wrong):**
+  `assets/data/characters.json`, `src/run/character_config.gd` (**done**), and
+  `src/combat/combat_view.gd` — **four lines, in that one file.** `cut_actor.gd`, `unit_mover.gd`
+  and `tile_hazards.gd` need **no change at all**:
+  - `cut_actor.gd` already has the hook: `begin_swing` multiplies by `duration_mult`, and the
+    PLAYER's actor never sets it (it is only ever set on boss/enemy actors, `combat_view.gd:487`
+    and `:2769`). `cast_speed_mult` is therefore one assignment to `_cut_actor.duration_mult`, and
+    it lands exactly where the approved order wants it — before the passive.
+  - `unit_mover.gd` already carries `cooldown_mult` for `step_cooldown_mult`. Nothing new.
+  - `tile_hazards.gd` **never applies damage** — it only signals, and its own header says the caller
+    applies the amount. The three places a hazard signal becomes HP loss are all in `combat_view.gd`:
+    `_on_mire_damage` (:711), `_on_cell_fell` → `_state.damage(side, fall_damage)` (:729), and the
+    vent tick handing `vent_tick_damage` to `StatusEffects.ignite` (:724). `hazard_resist_mult` goes
+    at those three points. (Confirmed by the multi-enemy session, which owns the file.)
 - **Scope (OD-2 approved):** exactly two new multipliers — `cast_speed_mult`, `hazard_resist_mult`. `formation_fade_mult` is out. **Also carries OD-1: `phap_su` max_hp 210 → ~170.**
-- **Depends on:** F1
-- **Regression risk:** `cast_speed_mult` multiplies the same duration the passive `modify_swing_duration` already modifies — **order must be fixed and documented** (proposed: base → attribute mult → passive → signature, matching the existing damage order). A silent double-apply would shift every balance number.
+- **Depends on:** F1; **the multi-enemy session handing back `combat_view.gd`** (it holds unverified Phase 4 work there). Every remaining F2 edit is in that one file, so there is nothing to do in parallel — do not interleave.
+- **Regression risk:** `cast_speed_mult` multiplies the same duration the passive `modify_swing_duration` already modifies — **order must be fixed and documented**. The real order in `CutActor.begin_swing` is:
+  `swing_duration(cells) * duration_mult` → passive `duration_modifier` → `cast_time_fn` →
+  `duration_override` → relic `cast_time_modifier` → `channel_extend_fn`.
+  **`cast_time_fn` and `duration_override` OVERWRITE rather than multiply**, so they already bypass
+  the passive and will bypass the character attribute too. **OD-10, approved 2026-11-13: that is
+  intended — a fixed cast time stays fixed**, consistent with `cast_time_fn` already replacing the
+  passive. Anything that must act as a *global* speed factor has to be applied AFTER those two or it
+  silently does nothing for every Skill v2 fixed-cast card.
+  `hazard_resist_mult` must sit at the three attribution points above and **not** inside the shared
+  hazard tick: `side` is now a unit key rather than a board half, so a resist applied in the tick
+  would hand a player attribute to enemy units.
 - **Tests:** new attribute unit test per multiplier (1.0 = today's numbers, exactly); `deck_power_test.gd` and the balance suites re-run and compared.
 - **Acceptance:** with every new multiplier at 1.0 the full suite produces byte-identical balance output; each multiplier is proven to bite in isolation; no character number exists in shared combat code.
+- **OPEN, found 2026-11-13 — the balance sim cannot see F2's attributes.** `tools/balance/deck_sim.gd`
+  runs `tools/balance/sim_core.gd`, **not** `combat_view.gd`, and `sim_core.gd` **mirrors** the combat
+  view's hazard wiring with its own `_on_mire_damage` (:3010), `_on_vent_erupted` (:3034) and
+  `_on_cell_fell` (:3048). Verified by grep: `cast_speed_mult` and `hazard_resist_mult` appear
+  **nowhere** in `sim_core.gd`. It reads `max_hp` (:818), `step_cooldown_mult` (:823) and
+  `focus_max_sec` (:888) from the character, and sets `duration_mult` only on the BOSS actor (:919) —
+  though its windup formula already multiplies by `actor.duration_mult` (:2337), so the hook exists.
+  **Consequence:** the same four-line change must be mirrored into `sim_core.gd`, or the bot balance
+  pass that OD-2 demands will measure nothing when either multiplier is tuned — the sim would report
+  "no change" and the number would look safe. Harmless while both ship at 1.0; it must land **before**
+  anyone tunes them. `sim_core.gd` was held and in use by the monster-skills calibration when this was
+  found, so it was deliberately not touched.
 
 ### F3 — Passives: feedback + hooks
 - **Files:** `src/passives/*.gd`, `src/combat/combat_view.gd` **(blocked on the multi-enemy session)**, `src/battle/overlay_layer.gd`, `assets/data/audio_events.json` **(coordinate with multi-enemy — `src/audio` is theirs)**, new icon + VFX assets

@@ -19,6 +19,19 @@ const MATCH_KINDS: Array[String] = ["battle", "danger", "miniboss", "boss"]
 var _fails: int = 0
 
 
+## F2 (2026-11-13): the hero's max HP, read ONCE from characters.json instead of hardcoded.
+## It used to be written out as a bare `210.0` in four places — the clamp and the ratio of the rest
+## heal, and the same pair again for the floor heal. When OD-1 changed phap_su from 210 to 170, two
+## of the four were found by grepping for the mage and two were not, because those lines mention
+## neither "max_hp" nor the character: they only ENCODE the value. A keyword search finds the places
+## that name a thing; it cannot find the places that merely carry its number. So the number lives in
+## one place now, and this integration test checks the PLUMBING (does characters.json reach the live
+## match and the heal maths) while character_attributes_test / character_unlock_test gate the value
+## itself. Changing a character's HP must not require editing this file at all.
+func _hero_max_hp() -> float:
+	return float(CharacterConfig.load_from_file().get_character(HERO).get("max_hp", 0.0))
+
+
 func _initialize() -> void:
 	_run()
 
@@ -211,7 +224,9 @@ func _run() -> void:
 	var ok: bool = await _wait_phase(c, RunState.Phase.PLAYING)
 	_check(ok, "intro -> PLAYING")
 	var max_hp: float = c.get_player_max_hp()
-	_check(is_equal_approx(max_hp, 210.0), "mage max HP 210 (from characters.json, Story 040)")
+	# F2: compare the LIVE match max against characters.json, not against a literal — this asserts the
+	# plumbing (config -> run -> match), and stays true when the number is retuned.
+	_check(is_equal_approx(max_hp, _hero_max_hp()), "mage max HP %.0f reaches the match (from characters.json)" % _hero_max_hp())
 
 	# --- win -> node completed -> reward gate --------------------------------------------------------
 	_view(c).get_state().damage(CombatState.Side.PLAYER, 30.0)
@@ -364,7 +379,8 @@ func _run() -> void:
 	_check(flow2b.get_phase() == GameFlow.Phase.REST, "forge out of range refused, still REST")
 	var hp_before_rest: float = flow2b.get_run().hp
 	flow2b.rest_heal_requested()
-	var expected_rest: float = minf(hp_before_rest + float(reward_cfg["rest_heal_ratio"]) * 210.0, 210.0)
+	var hero_max: float = _hero_max_hp()
+	var expected_rest: float = minf(hp_before_rest + float(reward_cfg["rest_heal_ratio"]) * hero_max, hero_max)
 	_check(is_equal_approx(flow2b.get_run().hp, expected_rest), "rest heal: %.1f -> %.1f" % [hp_before_rest, flow2b.get_run().hp])
 	_check(flow2b.get_phase() == GameFlow.Phase.MAP and flow2b.get_current_column() == 3 and str(flow2b.get_cleared_nodes()[2]["kind"]) == "rest", "rest completed -> MAP column 3")
 	saved = store2.load_state(config).get_run_dict()
@@ -389,8 +405,10 @@ func _run() -> void:
 	_check(flow2b.get_removal_tokens() == 1, "boss granted a removal token (1)")
 	_check(not flow2b.get_run().is_run_won() and flow2b.get_run_result() == GameFlow.RunResult.NONE, "a region boss does not win the run")
 	_check(flow2b.get_floor() == 1 and not flow2b.get_region_offer().is_empty() and flow2b.get_current_region().is_empty(), "floor 2, next offer open: %s" % str(flow2b.get_region_offer()))
-	var boss_end: float = minf(c6.get_last_player_hp() + _view(c6).get_passive_heal(), 210.0)
-	var floor_heal: float = minf(boss_end + config.floor_heal_ratio() * 210.0, 210.0) - boss_end
+	# F2: both the clamp and the floor-heal ratio are taken OF the hero's max, read from characters.json.
+	var boss_max: float = _hero_max_hp()
+	var boss_end: float = minf(c6.get_last_player_hp() + _view(c6).get_passive_heal(), boss_max)
+	var floor_heal: float = minf(boss_end + config.floor_heal_ratio() * boss_max, boss_max) - boss_end
 	_check(is_equal_approx(flow2b.get_run().hp, boss_end + floor_heal), "floor heal: %.1f + %.1f = %.1f" % [boss_end, floor_heal, flow2b.get_run().hp])
 	var fnotice: Dictionary = flow2b.take_floor_clear_notice()
 	_check(int(fnotice.get("floor", -1)) == 1 and int(fnotice.get("floor_number", -1)) == 2 and is_equal_approx(float(fnotice.get("healed", -1.0)), floor_heal), "floor-clear notice %s" % str(fnotice))

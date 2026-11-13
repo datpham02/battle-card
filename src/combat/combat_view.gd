@@ -273,6 +273,9 @@ var _pattern_phase_traits: Array[BossTrait] = []
 var _pattern_vfx_warned: Dictionary = {}
 ## Story 036: the tile hazard model (mire, sand, wind); null before setup.
 var _hazards: TileHazards
+## F2 (characters.json `attributes.hazard_resist_mult`): multiplies hazard damage the PLAYER takes.
+## 1.0 (the default, and the value without a character) leaves every number exactly as it was.
+var _hazard_resist_mult: float = 1.0
 ## The character passive of this match (Story 018); null without a character or with an unknown id.
 var _passive: BasePassive = null
 var _passive_heal: float = 0.0
@@ -544,6 +547,7 @@ func _ready() -> void:
 	_trait_host.on_match_start()
 	_setup_pattern_brain(brain_config)
 	_setup_extra_units(boss_drops_config, hold_config)
+	_setup_attributes(character)
 	_setup_passive(character)
 	_setup_signature(character)
 	_wire_status_hooks()
@@ -709,7 +713,7 @@ func _setup_hazards() -> void:
 
 # The unit standing in mire takes the tick damage (CombatState keeps its own invulnerability rules).
 func _on_mire_damage(side: int, amount: float) -> void:
-	_state.damage(side, amount)
+	_state.damage(side, _hazard_amount(side, amount))
 
 
 # Story 039: a vent erupts: its cells burn through the SAME StatusEffects burning cell as row_burner / Hoa tran (units
@@ -720,8 +724,14 @@ func _on_vent_erupted(side: int, _vent_index: int, cells: Array[Vector2i]) -> vo
 	if side == CombatState.Side.PLAYER and _state != null and not cells.has(_state.player_cell):
 		_stats["vents_dodged"] = int(_stats["vents_dodged"]) + 1
 	# Quick spec 2026-11-01: a vent is region terrain, not a zone effect (terrain = true: no lock, no replacement).
+	# F2: the vent's burn is applied per CELL by StatusEffects, not per unit, so the resist is scaled
+	# here using the half the vent erupted on. That is exact only because the board is two facing
+	# halves and a unit never stands on the other side's cells (BoardGrid: player half = cols
+	# 0..side_cols-1). If an enemy unit can ever occupy the player's half, this needs a per-unit
+	# resist at the burn tick instead — the one place in F2 where the attribute is applied by half
+	# rather than by target.
 	_status.ignite(cells, _hazards.config_value("vent_sec"), _hazards.config_value("vent_tick_sec"),
-		_hazards.config_value("vent_tick_damage"), true)
+		_hazard_amount(side, _hazards.config_value("vent_tick_damage")), true)
 	_drops_of(side).bury_cells(cells)
 
 
@@ -730,7 +740,7 @@ func _on_cell_fell(side: int, cell: Vector2i, occupant_pushed: bool) -> void:
 	var lost: Array[Vector2i] = [cell]
 	_drops_of(side).bury_cells(lost)
 	if occupant_pushed:
-		_state.damage(side, _hazards.config_value("fall_damage"))
+		_state.damage(side, _hazard_amount(side, _hazards.config_value("fall_damage")))
 
 
 # Sand filled on [param cells] of [param side]: field pieces lying there are buried.
@@ -1035,6 +1045,31 @@ func _step_mult(character: Dictionary) -> float:
 
 # Creates the character's passive and hooks it in at the two single points: the player actor's
 # swing duration and the arbiter's player damage. Unknown id: PassiveRegistry warns, no passive.
+# F2 (pillar 2 "Base Attributes", OD-2 approved 2026-11-13): the character's two new multipliers.
+# Called BEFORE _setup_passive on purpose: `cast_speed_mult` rides the PLAYER actor's `duration_mult`,
+# which CutActor.begin_swing applies BEFORE the passive's `duration_modifier` — the approved order is
+# base -> attribute -> passive -> signature. `duration_mult` is free for the player: it is otherwise
+# only ever set on boss / enemy actors (their per-match swing speed).
+# NOTE (OD-10, approved): `cast_time_fn` and `duration_override` OVERWRITE the windup later in
+# begin_swing, so a card with a fixed cast_time_sec ignores this multiplier, exactly as it already
+# ignores the passive. That is intended: a fixed cast time stays fixed.
+# Both multipliers default to 1.0, so a match without a character is byte-identical to before F2.
+func _setup_attributes(character: Dictionary) -> void:
+	var cast_speed: float = float(character.get("cast_speed_mult", 1.0))
+	if cast_speed > 0.0:
+		_cut_actor.duration_mult = cast_speed
+	var resist: float = float(character.get("hazard_resist_mult", 1.0))
+	_hazard_resist_mult = resist if resist > 0.0 else 1.0
+
+
+# F2: hazard damage [param amount] aimed at [param side], scaled by the character's
+# `hazard_resist_mult` when — and only when — the target is the PLAYER.
+# The guard is load-bearing: since multi-enemy Phase 4 `side` is a UNIT KEY, not a board half, so
+# applying the player's attribute to whatever arrives would hand it to enemy units as well.
+func _hazard_amount(side: int, amount: float) -> float:
+	return amount * _hazard_resist_mult if side == CombatState.Side.PLAYER else amount
+
+
 func _setup_passive(character: Dictionary) -> void:
 	var spec: Variant = character.get("passive")
 	if typeof(spec) != TYPE_DICTIONARY:

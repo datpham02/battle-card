@@ -24,6 +24,23 @@ const IDENTITY_KEY_FIELDS: Array[String] = [
 ## Accent colour used when `identity.accent_color` is absent or unparsable (HudSkin.IVORY).
 const FALLBACK_ACCENT: String = "#EFE6D2"
 
+## F2 (pillar 2 "Base Attributes", OD-2 approved 2026-11-13): every per-character stat, with its
+## default. Read from the `attributes` block when present, else from the LEGACY flat key of the same
+## name at the character's top level (every pre-F2 characters.json keeps working, and both spellings
+## stay readable forever — `get_character()` returns them flat, which is the shape 15+ tests expect).
+## A value <= 0 or non-numeric falls back to the default with a warning; `max_hp` clamps to >= 1.
+## `formation_fade_mult` was proposed and REJECTED under OD-2: it would change the Awakening charge
+## rate, which needs its own balance pass. Do not add it here without that decision.
+const ATTRIBUTE_DEFAULTS: Dictionary = {
+	"max_hp": FALLBACK_MAX_HP,
+	"step_cooldown_mult": 1.0,
+	"focus_max_sec": FALLBACK_FOCUS_SEC,
+	"cast_speed_mult": 1.0,
+	"hazard_resist_mult": 1.0,
+}
+## Attributes that are a multiplier: clamped > 0 (a 0 or negative multiplier is never meaningful).
+const ATTRIBUTE_MULTS: Array[String] = ["step_cooldown_mult", "cast_speed_mult", "hazard_resist_mult"]
+
 var _order: Array[String] = []
 var _characters: Dictionary = {}
 var _default_id: String = ""
@@ -94,7 +111,8 @@ func has(id: String) -> bool:
 
 ## A copy of the cleaned character [param id] ({id, name_key, desc_key, identity (F1: always a full
 ## dictionary — lore_key, personality_key, playstyle_key, block_material_key, accent_color, portrait,
-## select_art), max_hp, step_cooldown_mult,
+## select_art), F2: cast_speed_mult, hazard_resist_mult and `attributes` (all five stats together;
+## the three legacy ones stay flat too), max_hp, step_cooldown_mult,
 ## focus_max_sec, passive {id, params}, passive_name_key, passive_desc_key, signature ({} or
 ## {id, name_key, desc_key, params}, Story 021), starter_deck, unlock_by (Story 037: achievement id or ""),
 ## unlocked (computed with the unlock source)}); {} when unknown.
@@ -148,7 +166,7 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 	if deck.is_empty():
 		push_warning("CharacterConfig: %s has an empty deck, using the default deck" % id)
 		deck = skills.default_deck.duplicate()
-	var mult: float = float(raw.get("step_cooldown_mult", 1.0))
+	var attributes: Dictionary = _read_attributes(id, raw)
 	var passive: Dictionary = {"id": "", "params": {}}
 	var raw_passive: Variant = raw.get("passive")
 	if typeof(raw_passive) == TYPE_DICTIONARY:
@@ -162,9 +180,13 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 		"name_key": str(raw.get("name_key", "")),
 		"desc_key": str(raw.get("desc_key", "")),
 		"identity": identity,
-		"max_hp": maxf(float(raw.get("max_hp", FALLBACK_MAX_HP)), 1.0),
-		"step_cooldown_mult": mult if mult > 0.0 else 1.0,
-		"focus_max_sec": maxf(float(raw.get("focus_max_sec", FALLBACK_FOCUS_SEC)), 0.0),
+		"max_hp": attributes["max_hp"],
+		"step_cooldown_mult": attributes["step_cooldown_mult"],
+		"focus_max_sec": attributes["focus_max_sec"],
+		# F2: new attributes, flat alongside the three legacy ones (same shape for every consumer).
+		"cast_speed_mult": attributes["cast_speed_mult"],
+		"hazard_resist_mult": attributes["hazard_resist_mult"],
+		"attributes": attributes.duplicate(),
 		"passive": passive,
 		"passive_name_key": str(raw.get("passive_name_key", "")),
 		"passive_desc_key": str(raw.get("passive_desc_key", "")),
@@ -173,6 +195,54 @@ func _add(raw: Dictionary, skills: SkillConfig) -> void:
 		"unlock_by": str(raw.get("unlock_by", "")),
 	}
 	_order.append(id)
+
+
+# F2 (pillar 2 "Base Attributes"): every stat of [constant ATTRIBUTE_DEFAULTS], read from the
+# `attributes` block first and from the legacy flat key of the same name second, so a pre-F2 file and
+# an F2 file both load with identical numbers. Never partial: always all five keys.
+# Precedence is deliberate — `attributes` wins over a flat key of the same name, and a character
+# carrying BOTH gets a warning, because two different numbers for one stat is an authoring mistake,
+# not a feature.
+func _read_attributes(id: String, raw: Dictionary) -> Dictionary:
+	var block: Dictionary = {}
+	var raw_block: Variant = raw.get("attributes")
+	if raw_block != null:
+		if typeof(raw_block) == TYPE_DICTIONARY:
+			block = raw_block as Dictionary
+		else:
+			push_warning("CharacterConfig: %s attributes is not an object, the legacy flat keys are used" % id)
+	var out: Dictionary = {}
+	for key: String in ATTRIBUTE_DEFAULTS:
+		var fallback: float = float(ATTRIBUTE_DEFAULTS[key])
+		var source: Variant = null
+		if block.has(key) and raw.has(key):
+			push_warning("CharacterConfig: %s sets '%s' both in attributes and at the top level; attributes wins" % [id, key])
+		if block.has(key):
+			source = block[key]
+		elif raw.has(key):
+			source = raw[key]
+		var value: float = fallback
+		if source != null:
+			if typeof(source) == TYPE_FLOAT or typeof(source) == TYPE_INT:
+				value = float(source)
+			else:
+				push_warning("CharacterConfig: %s attribute '%s' is not a number, %s used" % [id, key, fallback])
+		if ATTRIBUTE_MULTS.has(key) and value <= 0.0:
+			if source != null:
+				push_warning("CharacterConfig: %s attribute '%s' must be > 0, %s used" % [id, key, fallback])
+			value = fallback
+		out[key] = value
+	out["max_hp"] = maxf(float(out["max_hp"]), 1.0)
+	out["focus_max_sec"] = maxf(float(out["focus_max_sec"]), 0.0)
+	return out
+
+
+## F2: a copy of every base attribute of [param id] ([constant ATTRIBUTE_DEFAULTS] for an unknown
+## character, so a caller never gets an empty dictionary).
+func attributes_of(id: String) -> Dictionary:
+	if not _characters.has(id):
+		return ATTRIBUTE_DEFAULTS.duplicate()
+	return ((_characters[id] as Dictionary)["attributes"] as Dictionary).duplicate()
 
 
 # F1 (character-system redesign, pillar 1 "Identity"): the cleaned `identity` block. ALWAYS a full

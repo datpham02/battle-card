@@ -53,7 +53,9 @@ func _init() -> void:
 	_core.load_configs()
 	var chapters: ChaptersConfig = ChaptersConfig.load_from_file()
 	var character: Dictionary = _core.prepare_character(_core.characters.get_character("phap_su"))
-	var start_hp: float = -1.0 if hp_ratio >= 1.0 else float(character.get("max_hp", 210)) * hp_ratio
+	# The fallback never fires (get_character always returns max_hp flat, F2 keeps that), but it must
+	# not state a number that no longer exists: phap_su is 170 since F2 / OD-1, was 210.
+	var start_hp: float = -1.0 if hp_ratio >= 1.0 else float(character.get("max_hp", 170)) * hp_ratio
 	var base_deck: Array = []
 	for id: Variant in character.get("starter_deck", []):
 		base_deck.append({"id": str(id), "level": 1})
