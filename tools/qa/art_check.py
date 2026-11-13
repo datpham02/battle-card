@@ -259,8 +259,18 @@ def check_frames(rep: Report, unit: str, clip: str | None = None):
     if not cj.is_file():
         rep.add("frames", "UNKNOWN", "no clips.json for %s" % unit, unit)
         return
-    clips = json.loads(cj.read_text(encoding="utf-8"))
-    sheet = json.loads(sj.read_text(encoding="utf-8")) if sj.is_file() else None
+    # A malformed clips.json or sheet JSON is a FAIL line, not a traceback: the
+    # commit hook greps FAIL lines to tell the user what to fix (watched 2026-11-14).
+    try:
+        clips = json.loads(cj.read_text(encoding="utf-8-sig"))
+    except (ValueError, OSError) as e:
+        rep.add("frames", "FAIL", "%s is not valid JSON: %s" % (cj.relative_to(ROOT).as_posix(), e), unit)
+        return
+    try:
+        sheet = json.loads(sj.read_text(encoding="utf-8-sig")) if sj.is_file() else None
+    except (ValueError, OSError) as e:
+        rep.add("frames", "FAIL", "%s is not valid JSON: %s" % (sj.relative_to(ROOT).as_posix(), e), unit)
+        return
     tags = {t["name"]: t for t in (sheet["meta"]["frameTags"] if sheet else [])}
     fw, fh = clips["frame"]["w"], clips["frame"]["h"]
     problems, seen = [], 0

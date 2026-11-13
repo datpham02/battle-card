@@ -1,0 +1,27 @@
+{
+ "pack": "design\\assets\\candidates\\pixelfx\\impact_flash_steel_pixelfx-v1-2026-11-11",
+ "verdict": "PASS",
+ "findings": [
+  {
+   "level": "info",
+   "code": "stats",
+   "message": "7 frames x 50 ms = 350 ms, 80x64, up to 40 clusters a frame, 16 single-px specks in all"
+  }
+ ],
+ "stats": {
+  "alpha_dropped": 7231,
+  "alpha_kept_translucent": 194,
+  "snapped": 3027,
+  "unchanged": 114,
+  "red_avoided": 0,
+  "colours_in": 673,
+  "colours_out": [
+   "#5F6F82",
+   "#8FA3B8",
+   "#EEF4FA",
+   "#EFE6D2"
+  ],
+  "empty_frame_appended": true
+ },
+ "adapter_version": "0.1"
+}

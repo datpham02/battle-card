@@ -23,6 +23,20 @@ concept is still `acceptance: pending`
 `integrate.py pack` on that id exits BLOCKED until the user accepts it.
 The deferred visual items are in the risk table. Do not start them without a yes.
 
+**2026-11-14 state check (continuation after the context reset):** most P0–P4 files are
+already committed (`c0c81ae8` and later). Still uncommitted from this workflow:
+`tools/qa/review_package.py`, `tools/fx-pipeline/pixelfx_adapter.py`,
+`tests/unit/art/pixelfx_adapter_test.gd`, `tests/fixtures/art/pixelfx_adapted_fixture/`,
+`design/assets/candidates/pixelfx/` (proof of concept), today's `tools/qa/art_check.py`
+fix and the two docs. **The P4.2 `detect_3d/compress_to=0` edit is no longer in the
+tree:** HEAD and the working copy both hold 72 (now 78 with new card arts) imports at 0
+and 262 at 1, and `git diff --ignore-cr-at-eol` on `assets/art/**/*.import` is empty.
+The 140 "modified" imports differ only by CRLF. It was not re-applied: that is the user's
+call (the mix is a WARNING in `art_check`, not a FAIL). Separately, the three art suites
+red on a clean `main` (reported by another session) are not this workflow's: 128 untracked
+candidate PNGs from the Ngàn Kiếm / forest-monster sessions, plus 7 candidate JSONs that
+check out CRLF because `.gitattributes` has no `eol=lf` rule under `design/assets/candidates/`.
+
 ## P3 checklist (done 2026-11-11)
 
 - [x] P3.1 Generation process: the skill's Phases 0–7 + `tools/asset-pipeline/candidate.py new|qa|verdict` persist folder, `metadata.json`, `QA.md` and registry events (`candidate_created`, `qa_completed`, `set-acceptance`); paid calls still gated by the specialised skill and the harness.
@@ -126,6 +140,8 @@ Division of labour (user decision): PixelLab = characters, animation, image asse
 | `integrate.py pack vfx.floor.impact_flash_steel_pixelfx` on the real tree | exit 2, `BLOCKED — … acceptance: pending`. No file written |
 | Commit hook, staged `art_src/units/goblin_scout/clips.json` with a fake clip `_hooktest` (missing frame) | exit 2. stderr: `BLOCKED: art check FAIL` with registry (`clip _hooktest … not in registry`) and frames (`frame file missing _hooktest/0.png`). File restored with `git restore --staged --worktree`; clip names back to idle/step/windup/hit/down; `git diff` empty |
 | `art_check.py changed --no-godot` on the current dirty art tree (182 paths, before the hook mutation) | exit 0, verdict WARNING, 0 FAIL. Known pre-fxkit packs stay WARNING |
+| 2026-11-14 — commit hook, staged a temp `art_src/units/_hooktest/clips.json` with malformed JSON | exit 2, `BLOCKED: art check FAIL` naming `frames [_hooktest] … is not valid JSON`. First run blocked too but `art_check.py` crashed with a traceback instead of a FAIL line; fixed (`check_frames` now reports malformed `clips.json` / sheet JSON as FAIL, reads `utf-8-sig`). Temp file unstaged and deleted, index empty |
+| 2026-11-14 — `art_check.py all --no-godot` after that fix | exit 0, verdict WARNING: 0 FAIL, 0 UNKNOWN, 25 WARNING (23 known pre-fxkit packs + leftover `production/**/*.import` hygiene + 1 other), 92 PASS. Godot suites not rerun today (Godot slot held by another session; last 18/18 FAILS=0 on 2026-11-11) |
 | `art_check.py all` after `.gdignore`, `detect_3d=0`, and the `changed`-mode fixes | exit 0, verdict WARNING: 0 FAIL, 24 WARNING (23 known pre-fxkit packs + 1492 leftover `production/**/*.png.import`), 56 PASS. Imports: 170/170 Lossless, no mipmaps, fix alpha, no premult, no `detect_3d` mix. 18/18 `tests/unit/art/*_test.gd` FAILS=0 |
 
 ## P4.2 risk table (classified, not applied)
@@ -150,6 +166,8 @@ Already applied this phase, both reversible: `production/.gdignore`; `detect_3d/
 Accepted candidates now have one install command. The two technical fixes that do not change the picture (evidence no longer imported, 3D compression flag consistent) are in. Hooks block a bad art commit. The CI file exists and is off. Visual findings stay classified.
 
 ### Files this continuation touched
+
+Modified (2026-11-14 continuation): `tools/qa/art_check.py` (malformed JSON → FAIL line), `docs/art/PIXELFX_INTEGRATION.md` §9 (P2/P4 rows closed), this file.
 
 Modified: `tools/qa/art_check.py` (`changed` path bugs, hygiene wording), `.claude/hooks/validate-commit.sh` (budget 12 s → 25 s), `tools/asset-pipeline/README.md`, `.claude/docs/hooks-reference.md`, `.claude/skills/game-art-workflow/references/integration.md`, this file.
 

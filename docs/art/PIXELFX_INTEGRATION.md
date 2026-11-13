@@ -243,9 +243,9 @@ PixelLab-generated clips.
 |---|---|---|
 | P0 | tool recorded (this file, registry `providers.pixelfx`), installed version and source verified, plugin untouched | done 2026-11-11 |
 | P1 | registry `provider` + `pixelfx` block + validation; provenance rules (upstream / adapted / original, attribution) | done 2026-11-11 |
-| P2 | `game-art-workflow` routes VFX requests per §2; reuses the installed `pixelfx` skill (same version as upstream 0.3.0 — reuse, add Tessera notes: authoring checkout path, `--fps 20`, Tessera ramps, alpha rule, square grammar, no red) | pending |
+| P2 | `game-art-workflow` routes VFX requests per §2; reuses the installed `pixelfx` skill (same version as upstream 0.3.0 — reuse, add Tessera notes: authoring checkout path, `--fps 20`, Tessera ramps, alpha rule, square grammar, no red) | done 2026-11-11 (`.claude/skills/game-art-workflow/references/routing.md`, `pixelfx-tessera-notes.md`) |
 | P3 | `tools/fx-pipeline/pixelfx_adapter.py` + selftest + Godot test; review package (`tools/qa/review_package.py`); proof of concept `impact_flash_steel_pixelfx-v1` (candidate only, pending the user) | done 2026-11-11 |
-| P4 | install an approved PixelFX pack through the normal path; `art_check.sh` covers adapter output; existing packs unchanged | pending |
+| P4 | install an approved PixelFX pack through the normal path; `art_check.sh` covers adapter output; existing packs unchanged | done 2026-11-11 for the script (`tools/asset-pipeline/integrate.py pack`; `art_check.py candidate` covers adapter output). The real install stays BLOCKED (exit 2, nothing written) until the user accepts `vfx.floor.impact_flash_steel_pixelfx`. Existing packs unchanged |
 
 Done when: Claude can discover and evaluate catalog effects; create and refine
 a new procedural VFX; render and inspect it; export PNG + JSON; adapt the

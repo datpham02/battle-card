@@ -1,0 +1,36 @@
+{
+ "asset_id": "vfx.floor.impact_flash_steel_pixelfx",
+ "entity_id": null,
+ "clip": null,
+ "name": "impact_flash_steel_pixelfx",
+ "version": 1,
+ "date": "2026-11-11",
+ "provider": "pixelfx",
+ "tool": "pixelfx render + pixelfx_adapter 0.1",
+ "job_id": null,
+ "character_id": null,
+ "effect_id": "impacts/hit-flash",
+ "seed": 17,
+ "cost": "0 gen",
+ "prompt": null,
+ "params": {
+  "palette": [
+   "#1B1722",
+   "#5F6F82",
+   "#8FA3B8",
+   "#EEF4FA",
+   "#EFE6D2"
+  ],
+  "fps": 20,
+  "adapter": "--frames 0:5 --frame-ms 50 --layer overlay --anchor ground_center --cell 64x46 --ramp steel"
+ },
+ "source_anchor": null,
+ "qa": {
+  "verdict": "PASS",
+  "summary": "fxc check clean (overlay, 7 x 50 ms, 80x64, 4 colours)",
+  "report": "adapter-report.json",
+  "on": "2026-11-11"
+ },
+ "acceptance": "pending",
+ "folder": "design/assets/candidates/pixelfx/impact_flash_steel_pixelfx-v1-2026-11-11"
+}
