@@ -437,9 +437,9 @@
   },
   "tran_gai": {
    "family": "thorns",
-   "subject": "a thick bold bramble stem bent into a small ring only half as wide as the picture, covered in big pale angular thorns pointing outward",
-   "colours": "moss #5E6B55 and #4A5545 thick stem, big pale thorn #B89A6A thorns, ivory #EFE6D2 thorn tips",
-   "only": "#1B1722,#4A5545,#5E6B55,#B89A6A,#EFE6D2",
+   "subject": "a thick bright bramble vine curling into one bold loop, with five big pale thorns sticking out, the vine thick and light coloured so it stands out on a dark background",
+   "colours": "pale thorn #B89A6A vine, ivory #EFE6D2 thorn tips and top edge, moss #5E6B55 shading",
+   "only": "#1B1722,#5E6B55,#8A7350,#B89A6A,#EFE6D2",
    "history": [
     {
      "subject": "a curling green thorny bramble vine forming one loop, with sharp angular thorns",
@@ -456,6 +456,10 @@
     {
      "subject": "a thick bold bramble stem bent into a ring, covered in big pale angular thorns pointing outward",
      "reason": "a4/a5: good bold ring but touches the 2 px margin"
+    },
+    {
+     "subject": "a thick bold bramble stem bent into a small ring only half as wide as the picture, covered in big pale angular thorns pointing outward",
+     "reason": "in-game: dim dark spiral, hard to read at card size"
     }
    ]
   },
@@ -599,10 +603,20 @@
   },
   "kiem_khi": {
    "family": "blade",
-   "subject": "a single thin diagonal steel slash streak from top-right to bottom-left with three small square sparks at its lower end",
-   "colours": "pale steel #EEF4FA streak core, steel #8FA3B8 and #5F6F82 edges, ivory #EFE6D2 sparks",
-   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#EFE6D2",
-   "replaces": "assets/art/cards/kiem_khi.png from batch1 (backup batch3/replaced-2026-11-13/)"
+   "subject": "one thin straight diagonal slash streak of pale steel from top-right to bottom-left, sharp pointed at both ends, flat and even in width, nothing else in the picture",
+   "colours": "pale steel #EEF4FA streak core, steel #8FA3B8 lower edge, dark steel #5F6F82 thin shadow",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA",
+   "replaces": "assets/art/cards/kiem_khi.png from batch1 (backup batch3/replaced-2026-11-13/)",
+   "history": [
+    {
+     "subject": "a single thin diagonal steel slash streak from top-right to bottom-left with three small square sparks at its lower end",
+     "reason": "in-game: the slash streak reads like a feather"
+    },
+    {
+     "subject": "one bold straight steel sword blade cutting diagonally from top-right to bottom-left, with a short bright slash streak along its edge",
+     "reason": "a2/a3: a sword silhouette duplicates dai_dao in the black-fill test"
+    }
+   ]
   },
   "chan_phong": {
    "family": "push",

@@ -5637,10 +5637,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -5690,6 +5690,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/bang_chau.png replaced by design/assets/candidates/ui/card-art/batch3/bang_chau_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/bang_chau.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.chan_phong
   type: card
@@ -5699,10 +5704,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -5757,6 +5762,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/chan_phong.png replaced by design/assets/candidates/ui/card-art/batch3/chan_phong_a2.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/chan_phong.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.dai_dao
   type: card
@@ -5766,10 +5776,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -5824,6 +5834,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/dai_dao.png replaced by design/assets/candidates/ui/card-art/batch3/dai_dao_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/dai_dao.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.han_khi
   type: card
@@ -5833,10 +5848,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -5886,6 +5901,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/han_khi.png replaced by design/assets/candidates/ui/card-art/batch3/han_khi_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/han_khi.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.hoa_tinh
   type: card
@@ -5895,10 +5915,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -5953,6 +5973,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/hoa_tinh.png replaced by design/assets/candidates/ui/card-art/batch3/hoa_tinh_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/hoa_tinh.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.hoa_tran
   type: card
@@ -5962,10 +5987,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6015,6 +6040,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/hoa_tran.png replaced by design/assets/candidates/ui/card-art/batch3/hoa_tran_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/hoa_tran.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.hoa_xa
   type: card
@@ -6025,13 +6055,13 @@ assets:
   provider: pixellab
   status: installed
   acceptance: accepted
-  accepted_on: null
+  accepted_on: "2026-11-13"
   accepted_by: user
-  accepted_evidence: "design/assets/candidates/ui/card-art/prompts.md:13 hoa_xa row: \"(done, approved style)\" — date not recorded"
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
-  attention: "the recorded acceptance (design/assets/candidates/ui/card-art/prompts.md:13 hoa_xa row: \"(done, approved style)\" — date not recorded) is for the previous image (kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/hoa_xa.png); the new image of 2026-11-13 has not been accepted by the user"
+  attention: null
   spec: design/assets/candidates/ui/card-art/batch3/prompts.json
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/hoa_xa.png]
@@ -6087,6 +6117,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/hoa_xa.png replaced by design/assets/candidates/ui/card-art/batch3/hoa_xa_a2.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/hoa_xa.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set (replaces the earlier acceptance of the previous image)"
   notes: []
 - id: card.kiem_khi
   type: card
@@ -6096,10 +6131,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6107,13 +6142,17 @@ assets:
   spec: design/assets/candidates/ui/card-art/batch3/prompts.json
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/kiem_khi.png]
-  source: [design/assets/candidates/ui/card-art/batch3/raw/kiem_khi_a1.png]
+  source:
+  - design/assets/candidates/ui/card-art/batch3/raw/kiem_khi_a1.png
+  - design/assets/candidates/ui/card-art/batch3/raw/kiem_khi_a4.png
   candidates:
   - design/assets/candidates/ui/card-art
   - design/assets/candidates/ui/card-art/batch2/kiem_khi.png
   - design/assets/candidates/ui/card-art/kiem_khi_v2.png
   - design/assets/candidates/ui/card-art/batch3/kiem_khi_a1.png
   - design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/kiem_khi.png
+  - design/assets/candidates/ui/card-art/batch3/kiem_khi_a4.png
+  - design/assets/candidates/ui/card-art/batch3/replaced-weak-2026-11-13/kiem_khi.png
   evidence:
   - production/qa/evidence/card-layout-v2
   - production/qa/evidence/cards-deck
@@ -6124,9 +6163,12 @@ assets:
     colour_type: 6
   generation:
     tool: mcp__pixellab__create_image_pixflux
-    gens: 1
-    job_id: e089e78a-3632-45e4-9ed7-5f82b59721b8
-    job_ids: [e089e78a-3632-45e4-9ed7-5f82b59721b8]
+    gens: 3
+    job_id: "5affa977-4396-4da1-a616-31a9dc4cc6c5"
+    job_ids:
+    - e089e78a-3632-45e4-9ed7-5f82b59721b8
+    - "5affa977-4396-4da1-a616-31a9dc4cc6c5"
+    - "0d94d758-5479-4eee-b7d1-859b08e856fb"
     seed: null
     prompt_file: design/assets/candidates/ui/card-art/batch3/prompts.json
   history:
@@ -6159,6 +6201,29 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/kiem_khi.png replaced by design/assets/candidates/ui/card-art/batch3/kiem_khi_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/kiem_khi.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: generation_started
+    by: user
+    evidence: "user chat 2026-11-13: \"3 -> làm theo đề xuất\" (fix the two weak pictures first, then accept)"
+    note: "weak at in-game size; new subject (flat slash streak, a sword silhouette duplicated dai_dao)"
+  - on: "2026-11-13"
+    event: generation_completed
+    job_id: "5affa977-4396-4da1-a616-31a9dc4cc6c5"
+    candidate: design/assets/candidates/ui/card-art/batch3/kiem_khi_a4.png
+    note: "picked a4"
+  - on: "2026-11-13"
+    event: qa_completed
+    note: "card_qa.py: bbox [2, 2, 29, 29], 4 colours in the subset, Ink edge closed; black-fill compared with the blade / thorn families"
+  - on: "2026-11-13"
+    event: note
+    by: user
+    evidence: "user chat 2026-11-13: \"3 -> làm theo đề xuất\" (fix the two weak pictures first, then accept)"
+    note: "assets/art/cards/kiem_khi.png replaced; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-weak-2026-11-13/kiem_khi.png"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.kiem_vu
   type: card
@@ -6168,10 +6233,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6224,6 +6289,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/kiem_vu.png replaced by design/assets/candidates/ui/card-art/batch3/kiem_vu_a3.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/kiem_vu.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.ran_kich
   type: card
@@ -6233,10 +6303,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6286,6 +6356,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/ran_kich.png replaced by design/assets/candidates/ui/card-art/batch3/ran_kich_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/ran_kich.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.suong_mong
   type: card
@@ -6295,10 +6370,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6348,6 +6423,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/suong_mong.png replaced by design/assets/candidates/ui/card-art/batch3/suong_mong_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/suong_mong.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.thiet_kiem
   type: card
@@ -6357,10 +6437,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6410,6 +6490,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/thiet_kiem.png replaced by design/assets/candidates/ui/card-art/batch3/thiet_kiem_a1.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/thiet_kiem.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.xung_kich
   type: card
@@ -6419,10 +6504,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6480,6 +6565,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Gen lại 13 art cũ\" (after the in-game review, report §9)"
     note: "assets/art/cards/xung_kich.png replaced by design/assets/candidates/ui/card-art/batch3/xung_kich_a3.png; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/xung_kich.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.liet_hoa
   type: card
@@ -6488,15 +6578,15 @@ assets:
   tier: n/a
   legacy_asset_id: null
   provider: pixellab
-  status: candidate
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  status: installed
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
-  attention: "file installed at assets/art/cards/liet_hoa.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call"
+  attention: null
   spec: design/assets/candidates/ui/card-art/prompts.md
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/liet_hoa.png]
@@ -6543,6 +6633,20 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    from: candidate
+    to: accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "user accepted the installed picture; moving on to installed"
+  - on: "2026-11-13"
+    event: integration_completed
+    from: accepted
+    to: installed
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "file already at assets/art/cards/; status catches up with disk"
   notes:
   - "measured 2026-11-13: background #000000, 0/6 colours in tessera_master.gpl — predates the card-art Master Reference (§4); not reviewed by the user"
 - id: card.thien_hoa
@@ -6552,15 +6656,15 @@ assets:
   tier: n/a
   legacy_asset_id: null
   provider: pixellab
-  status: candidate
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  status: installed
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
-  attention: "file installed at assets/art/cards/thien_hoa.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call"
+  attention: null
   spec: design/assets/candidates/ui/card-art/prompts.md
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/thien_hoa.png]
@@ -6612,6 +6716,20 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    from: candidate
+    to: accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "user accepted the installed picture; moving on to installed"
+  - on: "2026-11-13"
+    event: integration_completed
+    from: accepted
+    to: installed
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "file already at assets/art/cards/; status catches up with disk"
   notes:
   - "measured 2026-11-13: background #1F2835, 0/9 colours in tessera_master.gpl — predates the card-art Master Reference (§4); not reviewed by the user"
 - id: card.do_kiem
@@ -6621,15 +6739,15 @@ assets:
   tier: n/a
   legacy_asset_id: null
   provider: pixellab
-  status: candidate
-  acceptance: pending
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  status: installed
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
-  attention: "file installed at assets/art/cards/do_kiem.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call"
+  attention: null
   spec: design/assets/candidates/ui/card-art/pilot-prompts-2026-11-13.md
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/do_kiem.png]
@@ -6706,6 +6824,20 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    from: candidate
+    to: accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "user accepted the installed picture; moving on to installed"
+  - on: "2026-11-13"
+    event: integration_completed
+    from: accepted
+    to: installed
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "file already at assets/art/cards/; status catches up with disk"
   notes: ["seed not returned by the job receipt"]
 - id: card.hoa_loi
   type: card
@@ -6714,15 +6846,15 @@ assets:
   tier: n/a
   legacy_asset_id: null
   provider: pixellab
-  status: candidate
-  acceptance: pending
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  status: installed
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
-  attention: "file installed at assets/art/cards/hoa_loi.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call"
+  attention: null
   spec: design/assets/candidates/ui/card-art/pilot-prompts-2026-11-13.md
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/hoa_loi.png]
@@ -6839,6 +6971,20 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    from: candidate
+    to: accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "user accepted the installed picture; moving on to installed"
+  - on: "2026-11-13"
+    event: integration_completed
+    from: accepted
+    to: installed
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "file already at assets/art/cards/; status catches up with disk"
   notes: ["seed not returned by the job receipt"]
 - id: card.khien_thep
   type: card
@@ -6847,15 +6993,15 @@ assets:
   tier: n/a
   legacy_asset_id: null
   provider: pixellab
-  status: candidate
-  acceptance: pending
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  status: installed
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
-  attention: "file installed at assets/art/cards/khien_thep.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call"
+  attention: null
   spec: design/assets/candidates/ui/card-art/pilot-prompts-2026-11-13.md
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/khien_thep.png]
@@ -6925,6 +7071,20 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    from: candidate
+    to: accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "user accepted the installed picture; moving on to installed"
+  - on: "2026-11-13"
+    event: integration_completed
+    from: accepted
+    to: installed
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "file already at assets/art/cards/; status catches up with disk"
   notes: ["seed not returned by the job receipt"]
 - id: card.ngan_kiem
   type: card
@@ -6934,10 +7094,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -6981,6 +7141,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.tram_dia
   type: card
@@ -6990,10 +7155,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7037,6 +7202,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.hoa_tuyen
   type: card
@@ -7046,10 +7216,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7093,6 +7263,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.thien_thach
   type: card
@@ -7102,10 +7277,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7152,6 +7327,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.song_dao
   type: card
@@ -7161,10 +7341,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7208,6 +7388,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.phi_tieu
   type: card
@@ -7217,10 +7402,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7267,6 +7452,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.dau_tu
   type: card
@@ -7276,10 +7466,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7326,6 +7516,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.bay_kep
   type: card
@@ -7335,10 +7530,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7414,6 +7609,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"sửa luôn 5 ảnh yếu đi\" (weak at in-game size, report §9)"
     note: "assets/art/cards/bay_kep.png replaced by design/assets/candidates/ui/card-art/batch3/bay_kep_a7.png; previous image kept at design/assets/candidates/ui/card-art/batch3/bay_kep_a5.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.moc_keo
   type: card
@@ -7423,10 +7623,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7470,6 +7670,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.gai_no
   type: card
@@ -7479,10 +7684,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7529,6 +7734,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.thanh_thuan
   type: card
@@ -7538,10 +7748,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7585,6 +7795,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.chuong_thanh
   type: card
@@ -7594,10 +7809,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7641,6 +7856,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.thien_quang
   type: card
@@ -7650,10 +7870,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7728,6 +7948,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"sửa luôn 5 ảnh yếu đi\" (weak at in-game size, report §9)"
     note: "assets/art/cards/thien_quang.png replaced by design/assets/candidates/ui/card-art/batch3/thien_quang_a6.png; previous image kept at design/assets/candidates/ui/card-art/batch3/thien_quang_a4.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.lien_tram
   type: card
@@ -7737,10 +7962,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7784,6 +8009,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.kiem_than
   type: card
@@ -7793,10 +8023,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7843,6 +8073,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.song_kiem
   type: card
@@ -7852,10 +8087,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7899,6 +8134,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.tu_kiem
   type: card
@@ -7908,10 +8148,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -7955,6 +8195,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.thuong_xuyen
   type: card
@@ -7964,10 +8209,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8011,6 +8256,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.dap_vo
   type: card
@@ -8020,10 +8270,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8067,6 +8317,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.min_tre
   type: card
@@ -8076,10 +8331,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8154,6 +8409,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"sửa luôn 5 ảnh yếu đi\" (weak at in-game size, report §9)"
     note: "assets/art/cards/min_tre.png replaced by design/assets/candidates/ui/card-art/batch3/min_tre_a5.png; previous image kept at design/assets/candidates/ui/card-art/batch3/min_tre_a4.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.bay_lo
   type: card
@@ -8163,10 +8423,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8210,6 +8470,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.chuoi_set
   type: card
@@ -8219,10 +8484,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8266,6 +8531,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.loc_cuon
   type: card
@@ -8275,10 +8545,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8322,6 +8592,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.dia_chan
   type: card
@@ -8331,10 +8606,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8381,6 +8656,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.tuong_da
   type: card
@@ -8390,10 +8670,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8437,6 +8717,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.hoi_am
   type: card
@@ -8446,10 +8731,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8497,6 +8782,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.thien_lang
   type: card
@@ -8506,10 +8796,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8553,6 +8843,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.ran_van
   type: card
@@ -8562,10 +8857,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8609,6 +8904,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.tran_gai
   type: card
@@ -8618,10 +8918,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8629,8 +8929,13 @@ assets:
   spec: design/assets/candidates/ui/card-art/batch3/prompts.json
   reference: design/assets/references/ui/card-art.md
   production: [assets/art/cards/tran_gai.png]
-  source: [design/assets/candidates/ui/card-art/batch3/raw/tran_gai_a3.png]
-  candidates: [design/assets/candidates/ui/card-art/batch3/tran_gai_a3.png]
+  source:
+  - design/assets/candidates/ui/card-art/batch3/raw/tran_gai_a3.png
+  - design/assets/candidates/ui/card-art/batch3/raw/tran_gai_a8.png
+  candidates:
+  - design/assets/candidates/ui/card-art/batch3/tran_gai_a3.png
+  - design/assets/candidates/ui/card-art/batch3/tran_gai_a8.png
+  - design/assets/candidates/ui/card-art/batch3/replaced-weak-2026-11-13/tran_gai.png
   evidence: [design/assets/candidates/ui/card-art/batch3/review, production/qa/evidence/card-art]
   frame:
     w: 32
@@ -8638,12 +8943,14 @@ assets:
     colour_type: 6
   generation:
     tool: mcp__pixellab__create_image_pixflux
-    gens: 3
-    job_id: "6b0340f3-34cd-4e7b-8e0e-f000024435fd"
+    gens: 5
+    job_id: "1062d987-19a7-4fb4-bf61-a8bf391e4abf"
     job_ids:
     - c5ff49d7-ae96-4975-8e39-c82a2a44ada8
     - "187b7270-5674-4424-a165-d8dda3462be2"
     - "6b0340f3-34cd-4e7b-8e0e-f000024435fd"
+    - "1062d987-19a7-4fb4-bf61-a8bf391e4abf"
+    - "7daf4f2c-569c-4e10-a90e-1345862e12ad"
     seed: null
     prompt_file: design/assets/candidates/ui/card-art/batch3/prompts.json
   history:
@@ -8668,6 +8975,29 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: generation_started
+    by: user
+    evidence: "user chat 2026-11-13: \"3 -> làm theo đề xuất\" (fix the two weak pictures first, then accept)"
+    note: "weak at in-game size; new subject (bright thorn ring)"
+  - on: "2026-11-13"
+    event: generation_completed
+    job_id: "1062d987-19a7-4fb4-bf61-a8bf391e4abf"
+    candidate: design/assets/candidates/ui/card-art/batch3/tran_gai_a8.png
+    note: "picked a8"
+  - on: "2026-11-13"
+    event: qa_completed
+    note: "card_qa.py: bbox [3, 3, 28, 28], 4 colours in the subset, Ink edge closed; black-fill compared with the blade / thorn families"
+  - on: "2026-11-13"
+    event: note
+    by: user
+    evidence: "user chat 2026-11-13: \"3 -> làm theo đề xuất\" (fix the two weak pictures first, then accept)"
+    note: "assets/art/cards/tran_gai.png replaced; previous image kept at design/assets/candidates/ui/card-art/batch3/replaced-weak-2026-11-13/tran_gai.png"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.gai_nguyen
   type: card
@@ -8677,10 +9007,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8757,6 +9087,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"sửa luôn 5 ảnh yếu đi\" (weak at in-game size, report §9)"
     note: "assets/art/cards/gai_nguyen.png replaced by design/assets/candidates/ui/card-art/batch3/gai_nguyen_a5.png; previous image kept at design/assets/candidates/ui/card-art/batch3/gai_nguyen_a2.png; status unchanged (installed)"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.gai_doc
   type: card
@@ -8766,10 +9101,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8813,6 +9148,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.ganh_nang
   type: card
@@ -8822,10 +9162,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8869,6 +9209,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.oan_hon
   type: card
@@ -8878,10 +9223,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8925,6 +9270,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.bang_phong
   type: card
@@ -8934,10 +9284,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -8981,6 +9331,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.han_bang
   type: card
@@ -8990,10 +9345,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9037,6 +9392,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.bang_vo
   type: card
@@ -9046,10 +9406,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9096,6 +9456,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.hoa_bang
   type: card
@@ -9105,10 +9470,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9152,6 +9517,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.han_kiem
   type: card
@@ -9161,10 +9531,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9211,6 +9581,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.thanh_thuy
   type: card
@@ -9220,10 +9595,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9267,6 +9642,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.han_phong
   type: card
@@ -9276,10 +9656,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9326,6 +9706,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.han_tran
   type: card
@@ -9335,10 +9720,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9382,6 +9767,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.bang_tam
   type: card
@@ -9391,10 +9781,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9438,6 +9828,11 @@ assets:
   - on: "2026-11-13"
     event: note
     note: "in-game capture (CardFace ancient, 1280x720) production/qa/evidence/card-art/gallery-*.png; observations in its README"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.cuong_phong
   type: card
@@ -9447,10 +9842,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9498,6 +9893,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Task: Review và hoàn thiện toàn bộ Card Art còn thiếu ... Bạn được quyền tự thực hiện generation theo batch mà không cần hỏi tôi xác nhận từng ảnh ... Lưu đúng tên assets/art/cards/<card_id>.png. Cập nhật registry thành installed theo schema hiện có ... Giữ acceptance ở trạng thái hiện tại\""
     note: "new entry created as installed (file under assets/art/cards), the way the 2026-11-11 bootstrap registered installed files; installed is NOT approval, acceptance stays unknown"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: card.vung_lay
   type: card
@@ -9507,10 +9907,10 @@ assets:
   legacy_asset_id: null
   provider: pixellab
   status: installed
-  acceptance: unknown
-  accepted_on: null
-  accepted_by: null
-  accepted_evidence: null
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
   approved_on: null
   approved_by: null
   approved_evidence: null
@@ -9551,6 +9951,11 @@ assets:
     by: user
     evidence: "user chat 2026-11-13: \"Task: Review và hoàn thiện toàn bộ Card Art còn thiếu ... Bạn được quyền tự thực hiện generation theo batch mà không cần hỏi tôi xác nhận từng ảnh ... Lưu đúng tên assets/art/cards/<card_id>.png. Cập nhật registry thành installed theo schema hiện có ... Giữ acceptance ở trạng thái hiện tại\""
     note: "new entry created as installed (file under assets/art/cards), the way the 2026-11-11 bootstrap registered installed files; installed is NOT approval, acceptance stays unknown"
+  - on: "2026-11-13"
+    event: user_accepted
+    by: user
+    evidence: "user chat 2026-11-13: \"1 -> oke tôi accepted / 2 -> duyệt / 3 -> làm theo đề xuất / còn lại 56 cart -> duyệt\" (all 62 card pictures, after the in-game gallery review)"
+    note: "accepted with the whole 62-card set"
   notes: []
 - id: env.forest.bg_forest_far
   type: env
