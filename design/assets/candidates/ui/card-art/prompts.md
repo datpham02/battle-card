@@ -1,5 +1,7 @@
 # Card pictures — PixelLab prompts (2026-11-01)
 
+> **2026-11-13:** prompt hiện hành cho card mới nằm ở `batch3/prompts.json` (Master Reference `design/assets/references/ui/card-art.md`). Bảng dưới là lịch sử batch1/2. Báo cáo: `batch3/REPORT-2026-11-13.md`.
+
 Tool: `create_image_pixflux`, 32x32, 1 gen each, `no_background: false`, outline "single color black outline",
 shading "basic shading", detail "low detail", palette forced from `assets/art/ui/ui_icons_55.png`
 (`color_image_url`). Approved style: **Tia lửa (hoa_xa)** — one bold subject, centred, plain dark navy

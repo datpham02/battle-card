@@ -1,0 +1,725 @@
+{
+ "_doc": "Batch3 card-art prompts (2026-11-13, user task 'Review va hoan thien toan bo Card Art'). Template + rules: design/assets/references/ui/card-art.md 4.3 / 5. Every colour is a tessera_master.gpl row; Ink #1B1722 is the only dark colour; #2C2A35 never in a subset.",
+ "template": "game icon: {subject}, the whole subject fills only the middle two thirds of the picture, small centered subject with a wide empty border of at least 3 pixels on every side, one bold subject, Western fantasy, angular geometric shapes, {colours}, flat pixel colours, up to 3 shades lit from the top-left, hard pixel edges, 1 pixel dark ink outline, clean readable silhouette",
+ "params": {
+  "width": 32,
+  "height": 32,
+  "no_background": true,
+  "outline": "single color black outline",
+  "shading": "basic shading",
+  "detail": "low detail",
+  "text_guidance_scale": 8.0
+ },
+ "cards": {
+  "do_kiem": {
+   "family": "hero kiem_si",
+   "subject": "a plain unmarked steel kite shield standing upright with a straight double-edged sword crossing diagonally in front of it, a small square ivory spark where the blade meets the shield rim",
+   "colours": "steel blue-grey #8FA3B8, pale steel #EEF4FA, dark steel #5F6F82 and #4F5864, ivory #EFE6D2 spark",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#EFE6D2"
+  },
+  "ngan_kiem": {
+   "family": "hero kiem_si",
+   "subject": "five small straight steel swords falling point-down in two staggered rows, each with a short stepped square trail above it",
+   "colours": "steel #8FA3B8, pale steel #EEF4FA, dark steel #5F6F82",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA"
+  },
+  "tram_dia": {
+   "family": "hero kiem_si",
+   "subject": "a straight steel sword driven point-first into a small square stone block, a stepped zig-zag crack running from the block to the right",
+   "colours": "steel #8FA3B8, pale steel #EEF4FA, dark steel #5F6F82, stone #4A4640 and #5A5650, ivory #EFE6D2 crack light",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#4A4640,#5A5650,#EFE6D2"
+  },
+  "hoa_loi": {
+   "family": "hero phap_su",
+   "subject": "a small square charcoal stone block at the bottom with an orange cross-shaped crack on its top, a blocky stepped flame made of square steps bursting up from the crack, the flame twice as tall as the block",
+   "colours": "charcoal #3A2A26 block with amber #F0A030 edges, orange #FF7A1F flame, gold-orange #FFB21F inner flame, ivory #EFE6D2 core",
+   "only": "#1B1722,#3A2A26,#F0A030,#FF7A1F,#FFB21F,#EFE6D2"
+  },
+  "hoa_tuyen": {
+   "family": "hero phap_su",
+   "subject": "three large stepped square flames standing in a straight diagonal row from bottom-left to top-right, each flame bigger than the one before, on a short charcoal ground strip",
+   "colours": "orange #FF7A1F, gold-orange #FFB21F, amber #F0A030, ivory #EFE6D2 tips, charcoal #3A2A26 scorched ground marks",
+   "only": "#1B1722,#3A2A26,#F0A030,#FF7A1F,#FFB21F,#EFE6D2",
+   "history": [
+    {
+     "subject": "a straight diagonal line of five small square stepped flames running along the ground from bottom-left to top-right, each flame a little taller than the last",
+     "reason": "a1: five flames came out as tiny dots, unreadable at x2"
+    }
+   ]
+  },
+  "thien_thach": {
+   "family": "hero phap_su",
+   "subject": "a small dark charcoal rock the size of a fist flying toward the bottom-left, with a long tapering orange flame tail stretching behind it to the top-right, the rock and tail together fill only the middle two thirds of the picture",
+   "colours": "charcoal #3A2A26 rock, amber #F0A030 cracks, orange #FF7A1F and gold-orange #FFB21F flames, ivory #EFE6D2 hot edge",
+   "only": "#1B1722,#3A2A26,#F0A030,#FF7A1F,#FFB21F,#EFE6D2",
+   "history": [
+    {
+     "subject": "a square-cut burning rock falling diagonally from top-right toward bottom-left with a stepped square flame trail behind it",
+     "reason": "a1: a shapeless burning lump, reads like an ember pile (hoa_tinh), no falling motion"
+    },
+    {
+     "subject": "a square charcoal boulder in the upper right corner with one long thick straight flame trail streaking behind it down to the bottom-left, like a falling comet",
+     "reason": "a2: a square box filled with fire, reads as a burning tile, no falling rock"
+    }
+   ]
+  },
+  "song_dao": {
+   "family": "hero sat_thu",
+   "subject": "two short stubby daggers crossed in an X in the middle, each dagger only half as long as the picture, blades pointing up, small square pommels",
+   "colours": "steel #8FA3B8 and pale steel #EEF4FA blades, dark steel #5F6F82, pale jade #BFF3EC edge glints",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#BFF3EC",
+   "history": [
+    {
+     "subject": "two short straight daggers crossed in an X, blades pointing up, small square pommels",
+     "reason": "a1: two long swords filling the whole canvas (bbox 0-31), not daggers"
+    }
+   ]
+  },
+  "phi_tieu": {
+   "family": "hero sat_thu",
+   "subject": "three small throwing knives lying horizontally, all pointing right, one above another with clear gaps, each a simple leaf-shaped steel blade with a short straight handle, the group fills only the middle two thirds of the picture",
+   "colours": "steel #8FA3B8, pale steel #EEF4FA, dark steel #5F6F82, pale jade #BFF3EC trails",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#BFF3EC",
+   "history": [
+    {
+     "subject": "three small throwing knives flying to the right in a fan, one above another, each with a short square trail behind it",
+     "reason": "a1: one single kunai-like dagger, not three knives"
+    },
+    {
+     "subject": "three separate small throwing knives all pointing right, stacked one above another with clear gaps between them, each a simple leaf-shaped steel blade with a short straight handle",
+     "reason": "a2: blades fanned upward like feathers, bbox y 1-30"
+    }
+   ]
+  },
+  "dau_tu": {
+   "family": "hero sat_thu",
+   "subject": "a diamond-shaped mark with a small skull inside, the diamond only half as wide as the picture, sitting in the centre with lots of empty space around it, four tiny angular bracket corners close around the diamond",
+   "colours": "pale jade #BFF3EC diamond and brackets, ivory #EFE6D2 skull, dark steel #5F6F82 and steel #8FA3B8 shading",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#BFF3EC,#EFE6D2",
+   "history": [
+    {
+     "subject": "a diamond-shaped mark standing on its point with a small skull inside it and four angular bracket corners around the diamond",
+     "reason": "a1: good design but bbox y 1-30 breaks the 2 px margin"
+    },
+    {
+     "subject": "a small diamond-shaped mark standing on its point with a small skull inside it and four angular bracket corners around the diamond, kept well inside the picture",
+     "reason": "a1/a2: good design but the diamond reaches the canvas edge (bbox 1-30)"
+    }
+   ]
+  },
+  "bay_kep": {
+   "family": "hero tho_san",
+   "subject": "an open steel bear trap seen from the side, two big curved steel jaws with sharp square teeth opened wide like a V, standing on a flat base",
+   "colours": "dark steel #5F6F82 and steel #8FA3B8 jaws and base, leather #8A5A33 and #5C3A22 chain tag, hunter jade #46D6A4 pressure plate",
+   "only": "#1B1722,#5C3A22,#8A5A33,#46D6A4,#5F6F82,#8FA3B8",
+   "history": [
+    {
+     "subject": "an open iron jaw trap seen from the front, two half-rings of square teeth wide open, a round base plate",
+     "reason": "a1: brown round blob, jaws unreadable, reads like a bowl"
+    },
+    {
+     "subject": "an iron bear trap seen from above at an angle, two curved steel jaws with square teeth opened wide on a flat round iron base, a small jade pressure plate in the middle",
+     "reason": "a1/a2: brown and grey clutter, jaws unreadable"
+    },
+    {
+     "subject": "a simple steel bear trap seen from the front: two big semicircular steel jaws lined with square teeth, opened wide like a V, on a small flat base, the trap fills only the middle two thirds of the picture",
+     "reason": "a3: good V jaws but bbox x 1-30"
+    },
+    {
+     "subject": "a small steel bear trap seen from the front, two semicircular steel jaws with square teeth open in a V on a small flat base, the trap is only half as wide as the picture",
+     "reason": "a1-a4: clutter or edge contact; a4 looked like a chest"
+    },
+    {
+     "subject": "a round iron jaw trap seen from straight above, a flat ring with two half-moon jaws lined with square teeth, open, a small jade plate in the middle",
+     "reason": "in-game review: reads as a ring, not a trap"
+    }
+   ]
+  },
+  "moc_keo": {
+   "family": "hero tho_san",
+   "subject": "an iron grappling hook with three angular prongs pointing right, a taut rope running from it to the left edge",
+   "colours": "steel #8FA3B8 and dark steel #5F6F82 hook, rope tan #B89A6A and leather #8A5A33, hunter jade #46D6A4 binding",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#8A5A33,#B89A6A,#46D6A4"
+  },
+  "gai_no": {
+   "family": "hero tho_san",
+   "subject": "a small burst of eight short wooden thorn spikes around a small square jade centre, the burst only half as wide as the picture",
+   "colours": "bark brown #5C3A22 and #8A5A33, pale wood #B89A6A, hunter jade #46D6A4 centre",
+   "only": "#1B1722,#5C3A22,#8A5A33,#B89A6A,#46D6A4",
+   "history": [
+    {
+     "subject": "a burst of sharp wooden thorn spikes exploding outward in eight directions from a small square centre, splinters flying",
+     "reason": "a1: good burst but bbox y 1-29"
+    },
+    {
+     "subject": "a burst of sharp wooden thorn spikes pointing outward in eight directions from a small square jade centre, the whole burst fills only the middle two thirds of the picture",
+     "reason": "a1/a2: burst touches the canvas edge"
+    }
+   ]
+  },
+  "thanh_thuan": {
+   "family": "hero giao_si",
+   "subject": "a small pale heater shield with a pointed bottom in the centre, four short separate light bars around it forming the corners of a square, everything within the middle two thirds of the picture",
+   "colours": "lead grey #B8BCC8 and ivory-grey #E2E3EA shield, robe shadow #6E7282, ivory #EFE6D2 light bars",
+   "only": "#1B1722,#6E7282,#B8BCC8,#E2E3EA,#EFE6D2",
+   "history": [
+    {
+     "subject": "a small heater shield standing inside a square frame made of four short pale light bars",
+     "reason": "a1: a square frame with a diamond, no shield, bbox 1-30"
+    }
+   ]
+  },
+  "chuong_thanh": {
+   "family": "hero giao_si",
+   "subject": "a silver bell hanging still, two square ripple rings beside it on the left and right",
+   "colours": "lead grey #B8BCC8 and ivory-grey #E2E3EA bell, robe shadow #6E7282, ivory #EFE6D2 ripple rings",
+   "only": "#1B1722,#6E7282,#B8BCC8,#E2E3EA,#EFE6D2"
+  },
+  "thien_quang": {
+   "family": "hero giao_si",
+   "subject": "a thick bright square beam of ivory light shining straight down onto a small square stone tile, the beam one third as wide as the picture",
+   "colours": "ivory #EFE6D2 and ivory-grey #E2E3EA beam, lead grey #B8BCC8 beam edges, robe shadow #6E7282, stone #4A4640 tile",
+   "only": "#1B1722,#6E7282,#B8BCC8,#E2E3EA,#EFE6D2,#4A4640",
+   "history": [
+    {
+     "subject": "a tall vertical square-edged beam of pale light coming straight down onto a small square stone tile",
+     "reason": "a1: beam runs off the top and bottom of the canvas (bbox y 0-31)"
+    },
+    {
+     "subject": "a short vertical square-edged beam of pale light falling onto a small square stone tile, the beam starts well below the top of the picture and the tile ends well above the bottom, everything within the middle two thirds of the picture",
+     "reason": "a1/a2: beam runs off the canvas"
+    },
+    {
+     "subject": "a small square stone tile at the bottom centre with a short wide square beam of pale light standing on it, the beam only half as tall as the picture, empty space above the beam",
+     "reason": "a3: the light beam vanished, only a small pedestal"
+    },
+    {
+     "subject": "a tall thin pillar of pale light with square edges coming straight down onto a small dark stone tile, the light pillar is the main subject and is bright ivory",
+     "reason": "in-game review: the light pillar is too thin"
+    }
+   ]
+  },
+  "lien_tram": {
+   "family": "blade",
+   "subject": "two parallel diagonal slash streaks side by side, sharp tapered ends, from top-right to bottom-left",
+   "colours": "pale steel #EEF4FA streak cores, steel #8FA3B8 and dark steel #5F6F82 edges",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA"
+  },
+  "kiem_than": {
+   "family": "blade",
+   "subject": "a slim steel blade lying diagonally from bottom-left to top-right over a tiny grey whetstone, the whetstone only a quarter of the picture, a four-point star glint at the blade tip",
+   "colours": "steel #8FA3B8, pale steel #EEF4FA, dark steel #5F6F82, stone #5A5650 whetstone, ivory #EFE6D2 glint",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#5A5650,#EFE6D2",
+   "history": [
+    {
+     "subject": "a slim straight steel blade lying diagonally across a small square grey whetstone, a four-point star glint on the blade edge",
+     "reason": "a1: reads well but bbox y 1-28"
+    },
+    {
+     "subject": "a slim straight steel blade lying diagonally across a small square grey whetstone, a small four-point star glint on the blade edge, the whole subject fills only the middle two thirds of the picture",
+     "reason": "a2: square whetstone silhouette, same as khien_thep in the black-fill test"
+    }
+   ]
+  },
+  "song_kiem": {
+   "family": "blade",
+   "subject": "a thick steel wedge driven point-down into a square grey stone that is cracking apart",
+   "colours": "steel #8FA3B8, pale steel #EEF4FA, dark steel #5F6F82 wedge, stone #4A4640 and #6A6B62, ivory #EFE6D2 crack",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#4A4640,#6A6B62,#EFE6D2"
+  },
+  "tu_kiem": {
+   "family": "blade",
+   "subject": "a single-bladed executioner axe with one broad square steel head on the right side of a short straight handle, the axe fills only the middle two thirds of the picture",
+   "colours": "dark steel #4F5864 and #5F6F82 head, steel #8FA3B8 edge, ivory #EFE6D2 edge line, wood #8A7350 handle",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EFE6D2,#8A7350",
+   "history": [
+    {
+     "subject": "a large executioner axe with a broad square steel head and a short straight handle, head at the top",
+     "reason": "a1: a double-bitted axe touching the top and bottom (bbox y 1-30)"
+    }
+   ]
+  },
+  "thuong_xuyen": {
+   "family": "blade",
+   "subject": "a long steel spear pointing right, passing through three small square stone tiles in a row",
+   "colours": "steel #8FA3B8 and pale steel #EEF4FA spearhead, wood #8A7350 shaft, stone #5A5650 and #6A6B62 tiles",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#8A7350,#5A5650,#6A6B62"
+  },
+  "dap_vo": {
+   "family": "stone/steel",
+   "subject": "a heavy square-headed war hammer smashing down onto a small shield that is breaking into two halves",
+   "colours": "dark steel #5F6F82 and steel #8FA3B8 hammer head, wood #8A7350 handle, stone #5A5650 shield, ivory #EFE6D2 crack",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#8A7350,#5A5650,#EFE6D2"
+  },
+  "khien_thep": {
+   "family": "ward",
+   "subject": "a rectangular steel tower shield seen straight from the front, flat top edge, flat bottom edge, thick dark rim, four round rivets in the corners, a horizontal metal band across the middle",
+   "colours": "steel #8FA3B8 face, dark steel #5F6F82 and #4F5864 rim, pale steel #EEF4FA highlight on the top-left",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA",
+   "history": [
+    {
+     "subject": "a tall narrow steel tower shield twice as tall as it is wide, with a pointed top edge, one vertical raised ridge down the middle",
+     "reason": "a1: reads as a crystal, bbox y 0-31"
+    }
+   ]
+  },
+  "min_tre": {
+   "family": "stone/fire",
+   "subject": "a plain square dark iron mine box with one big ivory hourglass standing on top, nothing else",
+   "colours": "stone grey #4A4640 #5A5650 #6A6B62 box, ivory #EFE6D2 hourglass glass, orange #FF7A1F sand",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2,#FF7A1F",
+   "history": [
+    {
+     "subject": "a small square iron mine box with a short fuse on top, the fuse tip burning with a tiny square flame",
+     "reason": "a1: block with flame looks like hoa_loi, bbox y 2-30"
+    },
+    {
+     "subject": "a squat square iron mine casing with four rivets, a long curling rope fuse coming out of its top and ending in a tiny orange spark, the fuse longer than the casing is tall",
+     "reason": "a2: bbox y 1-30"
+    },
+    {
+     "subject": "a squat square iron mine casing with four rivets and a short curling rope fuse ending in a tiny orange spark, the whole mine only half as tall as the picture",
+     "reason": "a1-a3: block with flame looks like hoa_loi; edge contact"
+    },
+    {
+     "subject": "a small square iron mine box with four rivets and a tiny hourglass standing on top of it, showing the delay",
+     "reason": "in-game review: busy"
+    }
+   ]
+  },
+  "bay_lo": {
+   "family": "trap",
+   "subject": "a tight coiled metal spring under a small square wooden plate that is launching upward",
+   "colours": "steel #8FA3B8, pale steel #EEF4FA, dark steel #5F6F82 spring, wood #8A7350 and #B89A6A plate",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#8A7350,#B89A6A"
+  },
+  "chuoi_set": {
+   "family": "spark",
+   "subject": "one big thick zig-zag lightning bolt made of chunky square segments, as wide as a thumb, three sharp bends, from top-right to bottom-left",
+   "colours": "ivory #EFE6D2 and pale steel #EEF4FA bolt core, steel #8FA3B8 and dark steel #5F6F82 edges",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#EFE6D2",
+   "history": [
+    {
+     "subject": "a zig-zag lightning bolt made of linked square segments, three sharp bends, from top to bottom",
+     "reason": "a1: thin bolt, under 120 subject pixels"
+    }
+   ]
+  },
+  "loc_cuon": {
+   "family": "stone",
+   "subject": "a stepped square spiral vortex winding inward to its centre, made of thick angular bands",
+   "colours": "ivory #EFE6D2 outer band, stone pale #6A6B62 and #5A5650 and #4A4640 inner bands",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2"
+  },
+  "dia_chan": {
+   "family": "stone",
+   "subject": "three jagged stone shards bursting up out of the ground in a row from left to right, each shard taller than the last, a short crack line under them",
+   "colours": "stone #4A4640 #5A5650 #6A6B62, ivory #EFE6D2 shock lines and crack",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2",
+   "history": [
+    {
+     "subject": "a square stone slab cracking and lifting upward in three stepped layers, with three short straight shock lines to its right",
+     "reason": "a1: stacked stone tower, bbox y 0-30"
+    },
+    {
+     "subject": "a flat square stone floor tile cracking, its middle part pushed up into a small stepped hump, three short shock lines rising above it",
+     "reason": "a2: square tile silhouette, same as loc_cuon in the black-fill test"
+    }
+   ]
+  },
+  "tuong_da": {
+   "family": "stone",
+   "subject": "two tall square stone pillars standing side by side with a small gap between them",
+   "colours": "stone #4A4640 #5A5650 #6A6B62, ivory #EFE6D2 top-left edge light",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2"
+  },
+  "hoi_am": {
+   "family": "stone",
+   "subject": "two small identical solid square blocks side by side with a gap, the left block bright ivory, the right block a paler grey copy of it, both small with lots of empty space around them",
+   "colours": "ivory #EFE6D2 first mark, stone pale #6A6B62 and #5A5650 second mark",
+   "only": "#1B1722,#5A5650,#6A6B62,#EFE6D2",
+   "history": [
+    {
+     "subject": "one square stamp mark made of four small squares, and a second paler copy of the same mark offset down and to the right",
+     "reason": "a1: a single tiny square (64 px)"
+    },
+    {
+     "subject": "two big hollow square rings of the same size overlapping diagonally, the front ring bright and thick, the back ring paler, like an echo",
+     "reason": "a2: two stacked rings read as the digit 8 (Master Reference: no numbers)"
+    },
+    {
+     "subject": "a small solid ivory square in the centre with three thin square ripple rings around it, each ring paler than the one inside it, like an echo spreading outward",
+     "reason": "a3: the whole canvas filled with ivory"
+    }
+   ]
+  },
+  "thien_lang": {
+   "family": "push/stone",
+   "subject": "three separate round-cornered grey boulders of different sizes rolling down a slope to the right in a diagonal line, small to large, with gaps between them",
+   "colours": "stone #4A4640 #5A5650 #6A6B62, ivory #EFE6D2 edge light",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2",
+   "history": [
+    {
+     "subject": "three square-cut grey boulders tumbling to the right, the front one largest",
+     "reason": "a1: one stone cube, same silhouette as ran_van / song_kiem"
+    }
+   ]
+  },
+  "cuong_phong": {
+   "family": "push",
+   "subject": "a heavy square iron battering ram head with a short wooden shaft behind it, pointing right, three short speed lines at the left, the whole thing only half as wide as the picture",
+   "colours": "wood #8A7350 and #B89A6A log, dark steel #5F6F82 and steel #8FA3B8 iron cap and bands",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#8A7350,#B89A6A",
+   "history": [
+    {
+     "subject": "a short heavy wooden battering ram log with a square iron cap on its front end, charging to the right, two short speed lines behind it",
+     "reason": "a1: dark banded box, does not read as a ram"
+    },
+    {
+     "subject": "a long horizontal wooden battering ram log seen from the side, pointing right, its right end capped with a big square iron head, two iron bands around the log, three short speed lines at its left end",
+     "reason": "a2: good log ram but bbox x 0-31"
+    },
+    {
+     "subject": "a short wooden battering ram log seen from the side, pointing right, its right end capped with a square iron head, two iron bands, the ram only half as wide as the picture, empty space on both sides",
+     "reason": "a3: the log reads as a scroll"
+    },
+    {
+     "subject": "a wooden battering ram on two small square wheels, a long log with a big square iron head pointing right",
+     "reason": "a4: log on wheels reads as a cannon"
+    }
+   ]
+  },
+  "ran_van": {
+   "family": "fragile",
+   "subject": "a small square grey stone block split in two halves by one deep jagged crack running top to bottom, the two halves slightly apart",
+   "colours": "stone #4A4640 #5A5650 #6A6B62, ivory #EFE6D2 crack edges",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2",
+   "history": [
+    {
+     "subject": "a square grey stone block split in two by one deep jagged crack running top to bottom",
+     "reason": "a1: good design but bbox y 1-30"
+    }
+   ]
+  },
+  "liet_hoa": {
+   "family": "fire",
+   "subject": "a wide low wall of stepped square flames spreading sideways across the ground, wider than tall",
+   "colours": "orange #FF7A1F, gold-orange #FFB21F, amber #F0A030, ivory #EFE6D2 tips",
+   "only": "#1B1722,#F0A030,#FF7A1F,#FFB21F,#EFE6D2"
+  },
+  "thien_hoa": {
+   "family": "fire",
+   "subject": "a short wide bonfire pyre of crossed logs with big stepped flames rising from it, the flames only as tall as the logs are wide, empty space above",
+   "colours": "orange #FF7A1F, gold-orange #FFB21F, amber #F0A030, ivory #EFE6D2 core",
+   "only": "#1B1722,#F0A030,#FF7A1F,#FFB21F,#EFE6D2",
+   "history": [
+    {
+     "subject": "a tall narrow pillar of stepped square fire rising straight up, square sparks rising beside it",
+     "reason": "a1: an orange crystal shape touching top and bottom edges"
+    },
+    {
+     "subject": "a burning bonfire pyre of crossed logs at the bottom with one tall column of stepped flames rising straight up from it",
+     "reason": "a2: bbox y 0-31"
+    },
+    {
+     "subject": "a small bonfire pyre of crossed logs with one column of stepped flames rising from it, the pyre and flames together only half as tall as the picture, empty space above the flames",
+     "reason": "a3: good bonfire but bbox y 1-31"
+    },
+    {
+     "subject": "a tall narrow column of stepped square flames rising from a small pile of crossed logs, the whole pyre three quarters of the picture tall with empty space above and below",
+     "reason": "a4: flame column reads as a candle, bbox y 0-30"
+    }
+   ]
+  },
+  "tran_gai": {
+   "family": "thorns",
+   "subject": "a thick bold bramble stem bent into a small ring only half as wide as the picture, covered in big pale angular thorns pointing outward",
+   "colours": "moss #5E6B55 and #4A5545 thick stem, big pale thorn #B89A6A thorns, ivory #EFE6D2 thorn tips",
+   "only": "#1B1722,#4A5545,#5E6B55,#B89A6A,#EFE6D2",
+   "history": [
+    {
+     "subject": "a curling green thorny bramble vine forming one loop, with sharp angular thorns",
+     "reason": "a1: thin dark loop, low contrast"
+    },
+    {
+     "subject": "a thick green bramble stem curling into one bold spiral, covered in big pale angular thorns",
+     "reason": "a2: bbox 1-31"
+    },
+    {
+     "subject": "a thick green bramble stem curling into one bold spiral covered in pale angular thorns, the spiral only half as wide as the picture",
+     "reason": "in-game review: dim thin spiral"
+    },
+    {
+     "subject": "a thick bold bramble stem bent into a ring, covered in big pale angular thorns pointing outward",
+     "reason": "a4/a5: good bold ring but touches the 2 px margin"
+    }
+   ]
+  },
+  "gai_nguyen": {
+   "family": "thorns",
+   "subject": "one thick bright pale tan dead thorn branch bent once, bold and light coloured, with four big hooked ivory-tipped thorns",
+   "colours": "pale thorn #B89A6A branch, thorn shadow #8A7350 shading, ivory #EFE6D2 thorn tips and highlight",
+   "only": "#1B1722,#8A7350,#B89A6A,#EFE6D2",
+   "history": [
+    {
+     "subject": "a dry withered brown thorn branch bent in a zig-zag, long sharp thorns",
+     "reason": "a1: thin branch, bbox x 1-29"
+    },
+    {
+     "subject": "a short thick dry dead thorn branch bent in one zig-zag, with five big pale sharp thorns",
+     "reason": "a2: thin dark twig, low contrast on the dark background"
+    },
+    {
+     "subject": "a thick pale tan dead branch bent once, with four big hooked thorns, the branch is bold and light coloured",
+     "reason": "a3: good branch, bbox y 1-30"
+    },
+    {
+     "subject": "a short pale tan dead branch bent once with four big hooked thorns, the branch only half as tall as the picture",
+     "reason": "in-game review: dark thin twig almost lost on the dark background"
+    }
+   ]
+  },
+  "gai_doc": {
+   "family": "thorns",
+   "subject": "three small spiked iron caltrops lying on the ground in a triangle",
+   "colours": "dark steel #4F5864 and #5F6F82 and steel #8FA3B8 spikes, pale steel #EEF4FA tips",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA"
+  },
+  "ganh_nang": {
+   "family": "curse",
+   "subject": "a round heavy iron ball in the lower right with a short chain of four square links going up to the left",
+   "colours": "dark steel #4F5864 and #5F6F82 ball, steel #8FA3B8 highlight and chain",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8",
+   "history": [
+    {
+     "subject": "a heavy dull iron ball attached to a short chain of square links",
+     "reason": "a1: good design but bbox y 1-27"
+    }
+   ]
+  },
+  "oan_hon": {
+   "family": "curse",
+   "subject": "a small pale ghostly wisp with a pointed tail and two angry slanted eyes",
+   "colours": "ivory #EFE6D2 body, stone pale #6A6B62 and #5A5650 shading, ink #1B1722 eyes",
+   "only": "#1B1722,#5A5650,#6A6B62,#EFE6D2"
+  },
+  "bang_phong": {
+   "family": "ice",
+   "subject": "a clear square ice cube seen at a slight angle with one small white snowflake frozen inside it",
+   "colours": "pale cyan ice #A6EEFF faces, white #EEF4FA highlight edge, steel blue #8FA3B8 and #5F6F82 shaded faces",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#A6EEFF"
+  },
+  "han_bang": {
+   "family": "ice",
+   "subject": "a small cluster of three jagged ice spikes, the middle spike tallest, the cluster only half as wide as the picture",
+   "colours": "pale cyan ice #A6EEFF, white #EEF4FA tips, steel blue #8FA3B8 and #5F6F82 shadows",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#A6EEFF",
+   "history": [
+    {
+     "subject": "a cluster of three big jagged ice spikes rising from the ground, the middle spike tallest, one crack across it",
+     "reason": "a1: good spikes, bbox x 1-31"
+    }
+   ]
+  },
+  "bang_vo": {
+   "family": "ice",
+   "subject": "one tall ice crystal shard cracked through the middle, its two halves splitting apart diagonally with a few small square chips between them, small in the centre",
+   "colours": "pale cyan ice #A6EEFF, white #EEF4FA, steel blue #8FA3B8 and #5F6F82 shadows",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#A6EEFF",
+   "history": [
+    {
+     "subject": "a square ice block breaking apart into four square shards flying outward, a thin ice spike stabbing down into its centre",
+     "reason": "a1: block with a spike on top = same silhouette as tram_dia, bbox y 1-30"
+    },
+    {
+     "subject": "an ice cube bursting apart into six square shards flying outward in all directions from its centre, gaps between the shards",
+     "reason": "a2: an ice cube, same silhouette as bang_phong, bbox x 1-29"
+    }
+   ]
+  },
+  "hoa_bang": {
+   "family": "ice/fire",
+   "subject": "a square block split diagonally, the top-left half made of stepped orange flame, the bottom-right half made of pale cyan ice",
+   "colours": "orange #FF7A1F and gold-orange #FFB21F fire half, pale cyan #A6EEFF and white #EEF4FA ice half, steel blue #8FA3B8 ice shadow",
+   "only": "#1B1722,#8FA3B8,#EEF4FA,#A6EEFF,#FF7A1F,#FFB21F"
+  },
+  "han_kiem": {
+   "family": "chill",
+   "subject": "a short sword standing point-down inside a small jagged ice crystal, only the hilt and part of the blade above the ice, the crystal small in the centre",
+   "colours": "white #EEF4FA frost crystal, deep cold blue #3A5CF0 crystal edges, steel #8FA3B8 and #5F6F82 hilt, pale #A8B0C8",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#A8B0C8,#EEF4FA,#3A5CF0",
+   "history": [
+    {
+     "subject": "a straight double-edged sword pointing up, its blade covered in white frost with a deep blue frost edge",
+     "reason": "a1: plain sword touching top and bottom, no blue frost visible"
+    },
+    {
+     "subject": "a short straight sword pointing diagonally up to the right, its blade wrapped in jagged white frost with deep blue icy edges, the sword only half as long as the picture",
+     "reason": "a2: plain diagonal sword, no frost, fills the canvas"
+    }
+   ]
+  },
+  "thanh_thuy": {
+   "family": "chill",
+   "subject": "one big silver-blue water droplet with a small square sparkle on its upper left side",
+   "colours": "pale silver #A8B0C8 and white #EEF4FA droplet, deep cold blue #3A5CF0 lower edge, steel #8FA3B8 shade",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#A8B0C8,#EEF4FA,#3A5CF0"
+  },
+  "han_phong": {
+   "family": "chill",
+   "subject": "one single thick white curl of wind shaped like a hook, with four small blue square snowflakes around it, on an empty background, small in the centre",
+   "colours": "white #EEF4FA gusts, pale #A8B0C8, deep cold blue #3A5CF0 snowflakes and edges, steel #8FA3B8",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#A8B0C8,#EEF4FA,#3A5CF0",
+   "history": [
+    {
+     "subject": "three curved wind gusts sweeping to the right carrying small square snowflakes, a blizzard with no cloud",
+     "reason": "a1: a filled square panel"
+    },
+    {
+     "subject": "three separate curved white wind streaks swirling to the right with five small blue square snowflakes between them, lots of empty space between the streaks",
+     "reason": "a1/a2: blizzard renders as a filled panel"
+    }
+   ]
+  },
+  "han_tran": {
+   "family": "chill",
+   "subject": "a small grey-blue cloud at the top with square snowflakes falling below it in three columns",
+   "colours": "pale #A8B0C8 and steel #8FA3B8 cloud, white #EEF4FA and deep cold blue #3A5CF0 snowflakes, #5F6F82 cloud shadow",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#A8B0C8,#EEF4FA,#3A5CF0"
+  },
+  "bang_tam": {
+   "family": "chill",
+   "subject": "a pair of big pointed icy fangs biting down from above, seen from the front",
+   "colours": "white #EEF4FA fangs, pale #A8B0C8, deep cold blue #3A5CF0 roots and edges, steel #8FA3B8 shading",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#A8B0C8,#EEF4FA,#3A5CF0"
+  },
+  "kiem_khi": {
+   "family": "blade",
+   "subject": "a single thin diagonal steel slash streak from top-right to bottom-left with three small square sparks at its lower end",
+   "colours": "pale steel #EEF4FA streak core, steel #8FA3B8 and #5F6F82 edges, ivory #EFE6D2 sparks",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#EFE6D2",
+   "replaces": "assets/art/cards/kiem_khi.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "chan_phong": {
+   "family": "push",
+   "subject": "one short pale steel arrow pointing right with two short speed lines behind it, the arrow only half as wide as the picture",
+   "colours": "pale steel #EEF4FA and steel #8FA3B8 arrow, dark steel #5F6F82 shading, ivory #EFE6D2 speed lines",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#EFE6D2",
+   "replaces": "assets/art/cards/chan_phong.png from batch1 (backup batch3/replaced-2026-11-13/)",
+   "history": [
+    {
+     "subject": "one short pale steel arrow pointing right with two short speed lines behind it",
+     "reason": "a1: bbox 1-30"
+    }
+   ]
+  },
+  "kiem_vu": {
+   "family": "blade/stone",
+   "subject": "a heavy cleaver blade with a jagged saw-toothed edge, pointing up to the right, short wrapped grip",
+   "colours": "steel #8FA3B8 blade, pale steel #EEF4FA jagged edge, dark steel #5F6F82 and #4F5864 spine and grip",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA",
+   "replaces": "assets/art/cards/kiem_vu.png from batch1 (backup batch3/replaced-2026-11-13/)",
+   "history": [
+    {
+     "subject": "three deep jagged gashes cut diagonally into a small square stone slab",
+     "reason": "a1: a tile with a cross, the gashes do not read"
+    },
+    {
+     "subject": "three thick parallel diagonal claw slash marks from top-right to bottom-left floating in the air, bright ivory cores with grey edges, no background object",
+     "reason": "a1 tile with a cross; a2 one feather-like streak, same as kiem_khi"
+    }
+   ]
+  },
+  "thiet_kiem": {
+   "family": "blade",
+   "subject": "one broad wide sweeping crescent of steel from left to right, a horizontal cleave arc",
+   "colours": "pale steel #EEF4FA arc core, steel #8FA3B8 and dark steel #5F6F82 edges",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#EFE6D2",
+   "replaces": "assets/art/cards/thiet_kiem.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "dai_dao": {
+   "family": "blade",
+   "subject": "a huge heavy two-handed greatsword pointing straight down, very wide blade, short cross guard",
+   "colours": "steel #8FA3B8 blade, pale steel #EEF4FA edge, dark steel #5F6F82 and #4F5864 guard and grip",
+   "only": "#1B1722,#4F5864,#5F6F82,#8FA3B8,#EEF4FA,#EFE6D2",
+   "replaces": "assets/art/cards/dai_dao.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "xung_kich": {
+   "family": "push/stone",
+   "subject": "a heavy grey stone gauntlet fist punching to the right with three short straight speed lines behind it",
+   "colours": "stone #4A4640 #5A5650 #6A6B62 gauntlet, ivory #EFE6D2 speed lines and edge light",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2",
+   "replaces": "assets/art/cards/xung_kich.png from batch1 (backup batch3/replaced-2026-11-13/)",
+   "history": [
+    {
+     "subject": "two thick stacked chevron arrows pointing right, carved from grey stone",
+     "reason": "a1: the chevrons came out as two arrows pointing up; a push card must point right"
+    },
+    {
+     "subject": "two thick stone chevron shapes like >> pointing to the right, side by side horizontally",
+     "reason": "a1 arrows point up; a2 two diamonds, same silhouette as hoi_am"
+    }
+   ]
+  },
+  "hoa_tinh": {
+   "family": "fire",
+   "subject": "a small low pile of orange-hot square ember coals with three tiny square sparks above it",
+   "colours": "charcoal #3A2A26 coals, orange #FF7A1F and gold-orange #FFB21F hot cores, amber #F0A030, ivory #EFE6D2 sparks",
+   "only": "#1B1722,#3A2A26,#F0A030,#FF7A1F,#FFB21F,#EFE6D2",
+   "replaces": "assets/art/cards/hoa_tinh.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "hoa_xa": {
+   "family": "fire",
+   "subject": "a single small floating teardrop-shaped stepped flame spark with no base and nothing under it, a pale hot core, two tiny square embers beside it",
+   "colours": "orange #FF7A1F and gold-orange #FFB21F flame, amber #F0A030, ivory #EFE6D2 core",
+   "only": "#1B1722,#3A2A26,#F0A030,#FF7A1F,#FFB21F,#EFE6D2",
+   "replaces": "assets/art/cards/hoa_xa.png from batch1 (backup batch3/replaced-2026-11-13/)",
+   "history": [
+    {
+     "subject": "a single small stepped square flame spark with a pale hot core, a few tiny square embers around it",
+     "reason": "a1: flame on an ember base, same triangle silhouette as hoa_tinh"
+    }
+   ]
+  },
+  "hoa_tran": {
+   "family": "fire",
+   "subject": "an iron brazier bowl on three short legs with stepped square flames rising from it",
+   "colours": "charcoal #3A2A26 iron bowl and legs, orange #FF7A1F and gold-orange #FFB21F flames, amber #F0A030, ivory #EFE6D2 tips",
+   "only": "#1B1722,#3A2A26,#F0A030,#FF7A1F,#FFB21F,#EFE6D2",
+   "replaces": "assets/art/cards/hoa_tran.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "suong_mong": {
+   "family": "ice",
+   "subject": "a thin tilted sheet of glassy ice with one sharp crystal shard standing on it",
+   "colours": "pale cyan ice #A6EEFF, white #EEF4FA highlight, steel blue #8FA3B8 and #5F6F82 shadow",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#A6EEFF",
+   "replaces": "assets/art/cards/suong_mong.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "bang_chau": {
+   "family": "ice",
+   "subject": "three round hailstones of different sizes falling diagonally to the bottom-left with short trails",
+   "colours": "pale cyan ice #A6EEFF and white #EEF4FA hailstones, steel blue #8FA3B8 and #5F6F82 shadow",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#EEF4FA,#A6EEFF",
+   "replaces": "assets/art/cards/bang_chau.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "ran_kich": {
+   "family": "fragile",
+   "subject": "a flat square grey stone tile with one thin jagged crack across it",
+   "colours": "stone #4A4640 #5A5650 #6A6B62 tile, ivory #EFE6D2 crack edge",
+   "only": "#1B1722,#4A4640,#5A5650,#6A6B62,#EFE6D2",
+   "replaces": "assets/art/cards/ran_kich.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  },
+  "han_khi": {
+   "family": "chill",
+   "subject": "one big snowflake with six straight arms ending in small squares",
+   "colours": "white #EEF4FA and pale #A8B0C8 arms, deep cold blue #3A5CF0 centre and tips, steel #8FA3B8",
+   "only": "#1B1722,#5F6F82,#8FA3B8,#A8B0C8,#EEF4FA,#3A5CF0",
+   "replaces": "assets/art/cards/han_khi.png from batch1 (backup batch3/replaced-2026-11-13/)"
+  }
+ },
+ "blocked": {
+  "vung_lay": "Mire: #A8C83A / #4E4A2A undefined"
+ },
+ "template_v1": "game icon: {subject}, small centered subject with a wide empty border of at least 3 pixels on every side, one bold subject, Western fantasy, angular geometric shapes, {colours}, flat pixel colours, up to 3 shades lit from the top-left, hard pixel edges, 1 pixel dark ink outline, clean readable silhouette",
+ "_template_note": "template v2 from the 3rd generation round on (2026-11-13): many v1 results touched the canvas edge (2 px margin)"
+}

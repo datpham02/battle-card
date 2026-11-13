@@ -104,3 +104,10 @@ Columns: 8
  90  80  72	Sky island rock #5A5048
 106 112 128	Sky storm grey #6A7080
 184 168  96	Sky storm yellow dull #B8A860
+# 2026-11-13 Card art signal colours (user decision "Thêm vào gpl, vượt trần", card-art batch3 report Q-B):
+# Frozen and Chill signal colours of RENDER-STANDARDS section 4, needed by the ice / chill card pictures
+# (design/assets/references/ui/card-art.md section 4.2). This takes the palette to 65 entries, one over the
+# art-bible cap of 64 (the comment above says 64; the file had 63 rows). Region enemies still keep #A6EEFF
+# off their bodies (Frozen-only). Mire #A8C83A / #4E4A2A not added (still undefined). 63 -> 65 entries.
+166 238 255	Frozen ice signal #A6EEFF (card art)
+ 58  92 240	Chill signal #3A5CF0 (card art)

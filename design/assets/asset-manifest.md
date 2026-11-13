@@ -8,9 +8,9 @@ Lifecycle: `candidate → accepted → installed → approved`; `legacy` = repla
 
 | Total | Candidate | Accepted | Installed | Approved | Legacy |
 |---|---|---|---|---|---|
-| 237 | 1 | 0 | 157 | 75 | 4 |
+| 284 | 6 | 0 | 199 | 75 | 4 |
 
-Acceptance recorded: unknown 152, pending 11, accepted 74, rejected 0.
+Acceptance recorded: unknown 196, pending 14, accepted 74, rejected 0.
 
 ## Needs the user's decision
 
@@ -23,6 +23,12 @@ Acceptance recorded: unknown 152, pending 11, accepted 74, rejected 0.
 | `vfx.status.burn_goblin` | only hero and goblin body sizes exist (status/index.json); this pack is drawn unscaled on 80x80 elites and 160x130 bosses (unit_layer.gd frame_kind_of). Accept as is, or author elite/boss overlays (free vfx_workbench)? |
 | `vfx.status.chill_goblin` | only hero and goblin body sizes exist (status/index.json); this pack is drawn unscaled on 80x80 elites and 160x130 bosses (unit_layer.gd frame_kind_of). Accept as is, or author elite/boss overlays (free vfx_workbench)? |
 | `vfx.status.frozen_goblin` | only hero and goblin body sizes exist (status/index.json); this pack is drawn unscaled on 80x80 elites and 160x130 bosses (unit_layer.gd frame_kind_of). Accept as is, or author elite/boss overlays (free vfx_workbench)? |
+| `card.hoa_xa` | the recorded acceptance (design/assets/candidates/ui/card-art/prompts.md:13 hoa_xa row: "(done, approved style)" — date not recorded) is for the previous image (kept at design/assets/candidates/ui/card-art/batch3/replaced-2026-11-13/hoa_xa.png); the new image of 2026-11-13 has not been accepted by the user |
+| `card.liet_hoa` | file installed at assets/art/cards/liet_hoa.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call |
+| `card.thien_hoa` | file installed at assets/art/cards/thien_hoa.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call |
+| `card.do_kiem` | file installed at assets/art/cards/do_kiem.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call |
+| `card.hoa_loi` | file installed at assets/art/cards/hoa_loi.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call |
+| `card.khien_thep` | file installed at assets/art/cards/khien_thep.png on 2026-11-13 per the user's batch task, but status stays candidate: the registry lifecycle only allows candidate -> accepted -> installed, and accepted is the user's call |
 | `env.forest.env_support_forest_arch` | conflicting records: design/art/forest-arena-gap-plan-2026-11-06.md:75 "Còn chờ duyệt: #3 vòm lõm" vs assets/art/env/forest/region.json support._doc_kit "2026-11-06 PixelLab kit (user-approved): pillar, arch, roots, ferns". Confirm whether this piece is approved. |
 | `env.forest.env_support_forest_ferns` | conflicting records: design/art/forest-arena-gap-plan-2026-11-06.md:75 "Còn chờ duyệt: #5 dương xỉ tiền cảnh" vs assets/art/env/forest/region.json support._doc_kit "2026-11-06 PixelLab kit (user-approved): pillar, arch, roots, ferns". Confirm whether this piece is approved. |
 | `env.forest.env_support_forest_roots` | conflicting records: design/art/forest-arena-gap-plan-2026-11-06.md:75 "Còn chờ duyệt: #4 rễ góc" vs assets/art/env/forest/region.json support._doc_kit "2026-11-06 PixelLab kit (user-approved): pillar, arch, roots, ferns". Confirm whether this piece is approved. |
@@ -266,19 +272,66 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 
 | Registry id | Name | File(s) | Size | Status | Accepted | Approved | Spec | Note |
 |---|---|---|---|---|---|---|---|---|
-| `card.bang_chau` | Card art 32x32: bang_chau | `assets/art/cards/bang_chau.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.chan_phong` | Card art 32x32: chan_phong | `assets/art/cards/chan_phong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.dai_dao` | Card art 32x32: dai_dao | `assets/art/cards/dai_dao.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.han_khi` | Card art 32x32: han_khi | `assets/art/cards/han_khi.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.hoa_tinh` | Card art 32x32: hoa_tinh | `assets/art/cards/hoa_tinh.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.hoa_tran` | Card art 32x32: hoa_tran | `assets/art/cards/hoa_tran.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.hoa_xa` | Card art 32x32: hoa_xa | `assets/art/cards/hoa_xa.png` | 32x32 | **installed** | yes  | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.kiem_khi` | Card art 32x32: kiem_khi | `assets/art/cards/kiem_khi.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.kiem_vu` | Card art 32x32: kiem_vu | `assets/art/cards/kiem_vu.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.ran_kich` | Card art 32x32: ran_kich | `assets/art/cards/ran_kich.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.suong_mong` | Card art 32x32: suong_mong | `assets/art/cards/suong_mong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.thiet_kiem` | Card art 32x32: thiet_kiem | `assets/art/cards/thiet_kiem.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
-| `card.xung_kich` | Card art 32x32: xung_kich | `assets/art/cards/xung_kich.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` |  |
+| `card.bang_chau` | Card art 32x32: bang_chau | `assets/art/cards/bang_chau.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.chan_phong` | Card art 32x32: chan_phong | `assets/art/cards/chan_phong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.dai_dao` | Card art 32x32: dai_dao | `assets/art/cards/dai_dao.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.han_khi` | Card art 32x32: han_khi | `assets/art/cards/han_khi.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.hoa_tinh` | Card art 32x32: hoa_tinh | `assets/art/cards/hoa_tinh.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.hoa_tran` | Card art 32x32: hoa_tran | `assets/art/cards/hoa_tran.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.hoa_xa` | Card art 32x32: hoa_xa | `assets/art/cards/hoa_xa.png` | 32x32 | **installed** | yes  | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.kiem_khi` | Card art 32x32: kiem_khi | `assets/art/cards/kiem_khi.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.kiem_vu` | Card art 32x32: kiem_vu | `assets/art/cards/kiem_vu.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.ran_kich` | Card art 32x32: ran_kich | `assets/art/cards/ran_kich.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.suong_mong` | Card art 32x32: suong_mong | `assets/art/cards/suong_mong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.thiet_kiem` | Card art 32x32: thiet_kiem | `assets/art/cards/thiet_kiem.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.xung_kich` | Card art 32x32: xung_kich | `assets/art/cards/xung_kich.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.liet_hoa` | Card art 32x32: liet_hoa | `assets/art/cards/liet_hoa.png` | 32x32 | **candidate** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` | measured 2026-11-13: background #000000, 0/6 colours in tessera_master.gpl — predates the card-art Master Reference (§4); not reviewed by the user |
+| `card.thien_hoa` | Card art 32x32: thien_hoa | `assets/art/cards/thien_hoa.png` | 32x32 | **candidate** | unknown | no record | `design/assets/candidates/ui/card-art/prompts.md` | measured 2026-11-13: background #1F2835, 0/9 colours in tessera_master.gpl — predates the card-art Master Reference (§4); not reviewed by the user |
+| `card.do_kiem` | Card art 32x32: do_kiem | `assets/art/cards/do_kiem.png` | 32x32 | **candidate** | pending | no record | `design/assets/candidates/ui/card-art/pilot-prompts-2026-11-13.md` | seed not returned by the job receipt |
+| `card.hoa_loi` | Card art 32x32: hoa_loi | `assets/art/cards/hoa_loi.png` | 32x32 | **candidate** | pending | no record | `design/assets/candidates/ui/card-art/pilot-prompts-2026-11-13.md` | seed not returned by the job receipt |
+| `card.khien_thep` | Card art 32x32: khien_thep | `assets/art/cards/khien_thep.png` | 32x32 | **candidate** | pending | no record | `design/assets/candidates/ui/card-art/pilot-prompts-2026-11-13.md` | seed not returned by the job receipt |
+| `card.ngan_kiem` | Card art 32x32: ngan_kiem | `assets/art/cards/ngan_kiem.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.tram_dia` | Card art 32x32: tram_dia | `assets/art/cards/tram_dia.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.hoa_tuyen` | Card art 32x32: hoa_tuyen | `assets/art/cards/hoa_tuyen.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.thien_thach` | Card art 32x32: thien_thach | `assets/art/cards/thien_thach.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.song_dao` | Card art 32x32: song_dao | `assets/art/cards/song_dao.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.phi_tieu` | Card art 32x32: phi_tieu | `assets/art/cards/phi_tieu.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.dau_tu` | Card art 32x32: dau_tu | `assets/art/cards/dau_tu.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.bay_kep` | Card art 32x32: bay_kep | `assets/art/cards/bay_kep.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.moc_keo` | Card art 32x32: moc_keo | `assets/art/cards/moc_keo.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.gai_no` | Card art 32x32: gai_no | `assets/art/cards/gai_no.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.thanh_thuan` | Card art 32x32: thanh_thuan | `assets/art/cards/thanh_thuan.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.chuong_thanh` | Card art 32x32: chuong_thanh | `assets/art/cards/chuong_thanh.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.thien_quang` | Card art 32x32: thien_quang | `assets/art/cards/thien_quang.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.lien_tram` | Card art 32x32: lien_tram | `assets/art/cards/lien_tram.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.kiem_than` | Card art 32x32: kiem_than | `assets/art/cards/kiem_than.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.song_kiem` | Card art 32x32: song_kiem | `assets/art/cards/song_kiem.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.tu_kiem` | Card art 32x32: tu_kiem | `assets/art/cards/tu_kiem.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.thuong_xuyen` | Card art 32x32: thuong_xuyen | `assets/art/cards/thuong_xuyen.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.dap_vo` | Card art 32x32: dap_vo | `assets/art/cards/dap_vo.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.min_tre` | Card art 32x32: min_tre | `assets/art/cards/min_tre.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.bay_lo` | Card art 32x32: bay_lo | `assets/art/cards/bay_lo.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.chuoi_set` | Card art 32x32: chuoi_set | `assets/art/cards/chuoi_set.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.loc_cuon` | Card art 32x32: loc_cuon | `assets/art/cards/loc_cuon.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.dia_chan` | Card art 32x32: dia_chan | `assets/art/cards/dia_chan.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.tuong_da` | Card art 32x32: tuong_da | `assets/art/cards/tuong_da.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.hoi_am` | Card art 32x32: hoi_am | `assets/art/cards/hoi_am.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.thien_lang` | Card art 32x32: thien_lang | `assets/art/cards/thien_lang.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.ran_van` | Card art 32x32: ran_van | `assets/art/cards/ran_van.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.tran_gai` | Card art 32x32: tran_gai | `assets/art/cards/tran_gai.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.gai_nguyen` | Card art 32x32: gai_nguyen | `assets/art/cards/gai_nguyen.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.gai_doc` | Card art 32x32: gai_doc | `assets/art/cards/gai_doc.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.ganh_nang` | Card art 32x32: ganh_nang | `assets/art/cards/ganh_nang.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.oan_hon` | Card art 32x32: oan_hon | `assets/art/cards/oan_hon.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.bang_phong` | Card art 32x32: bang_phong | `assets/art/cards/bang_phong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.han_bang` | Card art 32x32: han_bang | `assets/art/cards/han_bang.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.bang_vo` | Card art 32x32: bang_vo | `assets/art/cards/bang_vo.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.hoa_bang` | Card art 32x32: hoa_bang | `assets/art/cards/hoa_bang.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.han_kiem` | Card art 32x32: han_kiem | `assets/art/cards/han_kiem.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.thanh_thuy` | Card art 32x32: thanh_thuy | `assets/art/cards/thanh_thuy.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.han_phong` | Card art 32x32: han_phong | `assets/art/cards/han_phong.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.han_tran` | Card art 32x32: han_tran | `assets/art/cards/han_tran.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
+| `card.bang_tam` | Card art 32x32: bang_tam | `assets/art/cards/bang_tam.png` | 32x32 | **installed** | unknown | no record | `design/assets/candidates/ui/card-art/batch3/prompts.json` |  |
 
 ## Loose textures
 
@@ -313,43 +366,8 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 | `portrait.sat_thu` | Character-select portrait 64x80 for sat_thu | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
 | `portrait.tho_san` | Character-select portrait 64x80 for tho_san | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
 | `portrait.giao_si` | Character-select portrait 64x80 for giao_si | design/assets/asset-manifest-2026-10-31-archive.md ASSET-002 (Needed); design/assets/entity-inventory.md rows 6-10; art bible §5.5 | character_select_view.gd draws the sheet's idle frame instead; paid generation needs the user's yes |
-| `card.do_kiem` | Card art 32x32: do_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.ngan_kiem` | Card art 32x32: ngan_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.hoa_loi` | Card art 32x32: hoa_loi | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.tram_dia` | Card art 32x32: tram_dia | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.song_dao` | Card art 32x32: song_dao | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.lien_tram` | Card art 32x32: lien_tram | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.vung_lay` | Card art 32x32: vung_lay | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.thuong_xuyen` | Card art 32x32: thuong_xuyen | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.dap_vo` | Card art 32x32: dap_vo | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.chuoi_set` | Card art 32x32: chuoi_set | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.min_tre` | Card art 32x32: min_tre | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.dia_chan` | Card art 32x32: dia_chan | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.loc_cuon` | Card art 32x32: loc_cuon | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.bang_vo` | Card art 32x32: bang_vo | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.hoa_bang` | Card art 32x32: hoa_bang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.thien_thach` | Card art 32x32: thien_thach | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.hoi_am` | Card art 32x32: hoi_am | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.bang_phong` | Card art 32x32: bang_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.cuong_phong` | Card art 32x32: cuong_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.liet_hoa` | Card art 32x32: liet_hoa | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.kiem_than` | Card art 32x32: kiem_than | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.song_kiem` | Card art 32x32: song_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.thien_lang` | Card art 32x32: thien_lang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.han_bang` | Card art 32x32: han_bang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.thien_hoa` | Card art 32x32: thien_hoa | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.tu_kiem` | Card art 32x32: tu_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.ran_van` | Card art 32x32: ran_van | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.han_phong` | Card art 32x32: han_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.han_tran` | Card art 32x32: han_tran | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.han_kiem` | Card art 32x32: han_kiem | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.tran_gai` | Card art 32x32: tran_gai | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.gai_nguyen` | Card art 32x32: gai_nguyen | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.gai_doc` | Card art 32x32: gai_doc | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.thanh_thuy` | Card art 32x32: thanh_thuy | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.bang_tam` | Card art 32x32: bang_tam | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.ganh_nang` | Card art 32x32: ganh_nang | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
-| `card.oan_hon` | Card art 32x32: oan_hon | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | code-drawn window until generated; active.md open question: gen real card art (paid, ask) |
+| `card.vung_lay` | Card art 32x32: vung_lay | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | BLOCKED 2026-11-13: Mire: #A8C83A / #4E4A2A undefined (Master Reference §4.2 undefined); not generated |
+| `card.cuong_phong` | Card art 32x32: cuong_phong | assets/data/cards.json (card exists); src/ui/card_face.gd CARD_ART_PATH convention | batch3 2026-11-13: 5 pixflux attempts, none passed QA (edge contact or unreadable: box, scroll, cannon, cart); files in design/assets/candidates/ui/card-art/batch3/cuong_phong_a*.png; needs a new subject idea from the user |
 | `env.dungeon.slab_set` | Slab 9-slice + stamps: dungeon | assets/art/regions.json (region mapped, no env/dungeon/); design/assets/entity-inventory.md rows 81-94 | fallback flat bands drawn today (regions.json fallback_bands) |
 | `env.dungeon.backdrop` | Far backdrop 800x360: dungeon | assets/art/regions.json; design/assets/entity-inventory.md rows 81-94 | — |
 | `unit.dungeon.roster` | Enemy bodies + warden for dungeon | assets/data/chapters.json enemy ids with no sheet; design/assets/entity-inventory.md rows 22-78 | ids and count to confirm with the user: chapters.json mixes enemy ids with pattern ids, and the roster may change |
