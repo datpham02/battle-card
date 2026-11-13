@@ -51,6 +51,22 @@ func _run() -> void:
 	ck("any other fought node wants battle", MusicPlayer.track_for(true, "miniboss") == "battle"
 		and MusicPlayer.track_for(true, "") == "battle")
 
+	# region tracks
+	var rb := AudioBank.new({"music": {"tracks": {"explore": {"file": "a"}, "battle": {"file": "b"}, "boss": {"file": "c"},
+		"ch2_explore": {"file": "d"}, "ch2_battle": {"file": "e"}, "heart": {"file": "f"}},
+		"regions": {"ch2": {"explore": "ch2_explore", "battle": "ch2_battle"},
+			"an_dai": {"explore": "heart", "battle": "heart", "boss": "heart"}, "bad": {"explore": "missing"}}}})
+	var r := MusicPlayer.new(rb, true)
+	ck("a region with its own music gets its explore and battle", r.resolve("explore", "ch2") == "ch2_explore"
+		and r.resolve("battle", "ch2") == "ch2_battle")
+	ck("a region without its own boss keeps the shared boss", r.resolve("boss", "ch2") == "boss")
+	ck("a region without music uses the shared set", r.resolve("explore", "ch1") == "explore" and r.resolve("battle", "") == "battle")
+	ck("the final region plays its one theme for every state", r.resolve("explore", "an_dai") == "heart"
+		and r.resolve("boss", "an_dai") == "heart")
+	ck("a region naming a missing track falls back", r.resolve("explore", "bad") == "explore")
+	ck("silence stays silence", r.resolve("", "ch2") == "")
+	r.free()
+
 	# crossfade explore -> battle
 	var m := MusicPlayer.new(_bank(), true)
 	m.request("explore")
@@ -111,6 +127,11 @@ func _run() -> void:
 	var tracks: Dictionary = bank.music().get("tracks", {})
 	for id: String in ["explore", "battle", "boss", "victory", "defeat"]:
 		ck("music has track %s" % id, tracks.has(id))
+	var rules: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/region_rules.json"))
+	var known: Dictionary = (rules as Dictionary).get("regions", {}) if rules is Dictionary else {}
+	for region: String in (bank.music().get("regions", {}) as Dictionary).keys():
+		ck("music region %s is a real region and resolves to its own tracks" % region, known.has(region)
+			and bank.music()["regions"][region].values().all(func(id: Variant) -> bool: return tracks.has(str(id))))
 	var real := MusicPlayer.new(bank, false)
 	for id: String in tracks.keys():
 		var s: AudioStream = real._stream_for(id)

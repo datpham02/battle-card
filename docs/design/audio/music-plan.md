@@ -38,3 +38,26 @@ Hoãn theo `unified-audio-identity.md` §8 mục 4: bắt đầu sau khi Phase 4
   vẫn giữ trong data nhưng không ai phát.
 - `MusicPlayer` (src/audio/music_player.gd), gắn trong `AudioRig`: khám phá ngoài trận, trận / boss khi đang đánh,
   stinger khi trận kết thúc (giữ 7 s rồi trở lại khám phá), crossfade 1.5 s, quay lại bản đã rời thì phát tiếp từ chỗ cũ.
+
+## Đề xuất: nhạc riêng từng vùng (2026-11-13, chưa tạo)
+Giữ chung "ADN" của Tessera (hoà tấu nhỏ, chậm, u buồn, không điện ảnh, dải 1–4 kHz thưa trong bản trận); mỗi vùng đổi
+**một nhạc cụ đặc trưng + giọng + tempo**. Mỗi vùng: bản khám phá (create) → bản trận (restyle, cùng giai điệu) → 2 vòng
+lặp. Bản boss và stinger thắng / thua dùng chung. Tâm Lưới (an_dai): restyle chủ đề Rừng Sương thành bản trang nghiêm,
+để trận cuối nghe lại giai điệu mở đầu.
+
+| Vùng (id) | Nhạc cụ đặc trưng | Giọng / bpm | Không khí |
+|---|---|---|---|
+| Rừng Sương (ch1) | đã có | D Dorian / 80 | |
+| Hầm Ngục (ch2) | cello trầm kéo dài, harp gảy thưa, clarinet trầm | E Aeolian / 70 | lạnh, ẩm, tối, vang đá |
+| Tháp Sương (ch3) | celesta / chuông thuỷ tinh, dây cao bồi âm, sáo hơi | F# Aeolian / 72 | lạnh, cao, trong |
+| Đầm Lầy Độc (swamp) | bass clarinet, dây gảy trầm, trống tay thưa | G Phrygian / 76 | nặng, ngột, lầy lội |
+| Sa Mạc Cát Vùi (desert) | đàn lute gảy, frame drum, sáo thổi đầu | A Phrygian / 84 | nóng, khô, cổ xưa |
+| Thành Hỏa Ngục (hellfire) | ostinato cello + bass, trống trầm như nhịp tim, harp tối | C Aeolian / 88 | căng, nóng, nhịp đập |
+| Không Đảo (sky_isles) | harp, sáo cao, dây nhẹ, chuông gió | G Lydian / 84 | rộng, gió, sáng hơn |
+| Tâm Lưới (an_dai) | restyle chủ đề Rừng Sương: dây chậm, harp, chuông, pad hợp xướng không lời rất nhẹ | D Dorian / 70 | trang nghiêm, yên |
+
+Chi phí (gen gói Tier 2): 6 vùng × (10 create + 10 restyle + 2 × 4 loop) = 168; Tâm Lưới 10 restyle + 4 loop = 14.
+Tổng ~182 gen. Hai đợt: đợt 3 = 7 bản khám phá / Tâm Lưới (70 gen) → người dùng chọn take; đợt 4 = 6 bản trận + 13 vòng
+lặp (~112 gen).
+Code: thêm `music.regions` {region_id: {explore, battle}} vào audio_events.json, MusicPlayer chọn theo vùng của run
+(thiếu vùng → Rừng Sương); an_dai dùng bản riêng cho cả khám phá lẫn trận cuối.

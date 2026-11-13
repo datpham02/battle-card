@@ -70,7 +70,7 @@
 		}
 	},
 	"music": {
-		"_doc": "Music (docs/design/audio/music-plan.md), played by MusicPlayer on the Music bus. One track per flow state; loop_start = where the loop jumps back to (the file ends at the loop end). Raw takes and song ids: audio_src/pixellab/music/SOURCES.md.",
+		"_doc": "Music (docs/design/audio/music-plan.md), played by MusicPlayer on the Music bus. One track per flow state; loop_start = where the loop jumps back to (the file ends at the loop end). Raw takes and song ids: audio_src/pixellab/music/SOURCES.md. regions: {region_id: {explore|battle|boss: track}}; a state a region does not list uses the shared track (ch1 = Rừng Sương = the shared set).",
 		"crossfade_sec": 1.5,
 		"stop_fade_sec": 0.6,
 		"stinger_hold_sec": 7.0,
@@ -99,6 +99,102 @@
 				"file": "res://assets/audio/music/music_defeat.ogg",
 				"loop_start": -1,
 				"gain_db": 0.0
+			},
+			"dungeon_explore": {
+				"file": "res://assets/audio/music/music_dungeon_explore.ogg",
+				"loop_start": 54.915,
+				"gain_db": 0.0
+			},
+			"dungeon_battle": {
+				"file": "res://assets/audio/music/music_dungeon_battle.ogg",
+				"loop_start": 48.089,
+				"gain_db": 0.0
+			},
+			"tower_explore": {
+				"file": "res://assets/audio/music/music_tower_explore.ogg",
+				"loop_start": 60.14,
+				"gain_db": 0.0
+			},
+			"tower_battle": {
+				"file": "res://assets/audio/music/music_tower_battle.ogg",
+				"loop_start": 58.932,
+				"gain_db": 0.0
+			},
+			"swamp_explore": {
+				"file": "res://assets/audio/music/music_swamp_explore.ogg",
+				"loop_start": 60.906,
+				"gain_db": 0.0
+			},
+			"swamp_battle": {
+				"file": "res://assets/audio/music/music_swamp_battle.ogg",
+				"loop_start": 58.421,
+				"gain_db": 0.0
+			},
+			"desert_battle": {
+				"file": "res://assets/audio/music/music_desert_battle.ogg",
+				"loop_start": 50.805,
+				"gain_db": 0.0
+			},
+			"desert_explore": {
+				"file": "res://assets/audio/music/music_desert_explore.ogg",
+				"loop_start": 58.003,
+				"gain_db": 0.0
+			},
+			"hellfire_explore": {
+				"file": "res://assets/audio/music/music_hellfire_explore.ogg",
+				"loop_start": 59.884,
+				"gain_db": 0.0
+			},
+			"hellfire_battle": {
+				"file": "res://assets/audio/music/music_hellfire_battle.ogg",
+				"loop_start": 60.372,
+				"gain_db": 0.0
+			},
+			"sky_explore": {
+				"file": "res://assets/audio/music/music_sky_explore.ogg",
+				"loop_start": 60.883,
+				"gain_db": 0.0
+			},
+			"sky_battle": {
+				"file": "res://assets/audio/music/music_sky_battle.ogg",
+				"loop_start": 62.485,
+				"gain_db": 0.0
+			},
+			"heart": {
+				"file": "res://assets/audio/music/music_heart.ogg",
+				"loop_start": 56.262,
+				"gain_db": 0.0
+			}
+		},
+		"regions": {
+			"ch2": {
+				"explore": "dungeon_explore",
+				"battle": "dungeon_battle"
+			},
+			"ch3": {
+				"explore": "tower_explore",
+				"battle": "tower_battle"
+			},
+			"swamp": {
+				"explore": "swamp_explore",
+				"battle": "swamp_battle"
+			},
+			"desert": {
+				"explore": "desert_explore",
+				"battle": "desert_battle"
+			},
+			"hellfire": {
+				"explore": "hellfire_explore",
+				"battle": "hellfire_battle"
+			},
+			"sky_isles": {
+				"explore": "sky_explore",
+				"battle": "sky_battle"
+			},
+			"an_dai": {
+				"explore": "heart",
+				"battle": "heart",
+				"boss": "heart"
 			}
 		}
 	},

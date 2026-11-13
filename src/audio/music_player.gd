@@ -65,6 +65,17 @@ static func track_for(in_battle: bool, node_kind: String) -> String:
 	return EXPLORE
 
 
+## The region's own track for [param base] (explore / battle / boss) from the data's
+## [code]music.regions[region][base][/code], else [param base] (regions without their own music use the shared set).
+func resolve(base: String, region: String) -> String:
+	var regions: Variant = _settings.get("regions", {})
+	if base == NONE or not (regions is Dictionary) or not (regions as Dictionary).has(region):
+		return base
+	var own: Variant = (regions as Dictionary)[region]
+	var id: String = str((own as Dictionary).get(base, "")) if own is Dictionary else ""
+	return id if has_track(id) else base
+
+
 ## True when the data has track [param id].
 func has_track(id: String) -> bool:
 	return _tracks.has(id)

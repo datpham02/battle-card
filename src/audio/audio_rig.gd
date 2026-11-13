@@ -153,6 +153,9 @@ func _update_music() -> void:
 		return
 	var fighting: bool = _match_live and _flow.get_phase() == GameFlow.Phase.IN_NODE
 	var kind: String = ""
-	if fighting and _flow.get_run() != null:
-		kind = str(_flow.get_run().current_node().get("kind", ""))
-	_music.request(MusicPlayer.track_for(fighting, kind))
+	var region: String = ""
+	if _flow.get_run() != null:
+		region = _flow.get_run().region_id
+		if fighting:
+			kind = str(_flow.get_run().current_node().get("kind", ""))
+	_music.request(_music.resolve(MusicPlayer.track_for(fighting, kind), region))
