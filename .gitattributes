@@ -25,5 +25,18 @@
 # writes LF. Same reason as *.tsv above: a CRLF checkout would make the sheet
 # JSON differ on every line and fail the check on a fresh clone.
 assets/art/**/*.json text eol=lf
+# Candidate manifests are compared by sha256 against their installed copies in
+# assets/art/ (vfx_pack_test, art_assets_test). Those are LF, so a CRLF checkout
+# of the candidate side fails the check on a fresh Windows clone.
+design/assets/candidates/**/*.json text eol=lf
 art_src/**/clips.json text eol=lf
 art_src/**/*.gpl text eol=lf
+
+# Candidate text files (manifests, metadata, README) are compared by sha256
+# against their installed copies under assets/art/ by tests/unit/art/*_test.gd.
+# Without this rule a fresh clone with core.autocrlf=true checks them out CRLF
+# while the production copy (rule above) is LF: 7 false test failures on a
+# clean main (found 2026-11-14).
+design/assets/candidates/**/*.json text eol=lf
+design/assets/candidates/**/*.txt text eol=lf
+design/assets/candidates/**/*.md text eol=lf
