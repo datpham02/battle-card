@@ -21143,7 +21143,7 @@ assets:
   approved_on: null
   approved_by: null
   approved_evidence: null
-  attention: null
+  attention: "in-game gap: the 3 Lattice Light (#FFD45C) shards above the head are meant to be drawn by code (art bible 5.2 / 8, Manh Goc) but do not appear in the arena shot production/qa/evidence/world-map-v2/region-enemies/10-lattice-an_dai_keeper-idle.png (2026-11-14). The sheet is complete; the presentation code is missing. Size exception (73 px) accepted by the user 2026-11-14."
   spec: production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md
   reference: design/assets/references/characters/an_dai_keeper.md
   production:

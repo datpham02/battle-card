@@ -78,3 +78,8 @@ Required for a block-brain enemy: `idle`, `step`, `windup`, `hit`, `down` (the s
 | Date | Event | By | Evidence |
 |---|---|---|---|
 | 2026-11-13 | anchor accepted, clips generated, sheet installed | user / session | report; in-game `production/qa/evidence/world-map-v2/region-enemies/10-lattice_heart-an_dai_keeper-idle.png` |
+
+## 10. Open gap (2026-11-14)
+
+- **Lattice Light shards not drawn in game.** The art bible (§5.2 Keeper row, §8 "Mảnh Gốc không vẽ trong sheet") says 3 shards of Lattice Light `#FFD45C` float above the head and are drawn by code. The arena shot `production/qa/evidence/world-map-v2/region-enemies/10-lattice-an_dai_keeper-idle.png` shows none. The sheet is complete. The presentation code is still missing. Not done; not assigned.
+- **Size exception:** about 73 px, below the wardens (81–95 px). Accepted by the user 2026-11-14 ("Nhận 72 px, gen clip"). See the report §20 for why.
