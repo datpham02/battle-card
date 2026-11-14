@@ -211,17 +211,17 @@ Giảm thiểu:
 | Quái (34) | 13 px, ~48 % | 0 |
 | Kẻ Gác (52, Mảnh Gốc +10) | 31 px: cả hàng sau + 4 px; Mảnh Gốc tới 41 | 12 px, ~26 %; Mảnh Gốc tới 22 |
 
-- Nửa dưới thân thường bị đơn vị hàng trước che, nên **mọi dấu nhận dạng (vật cầm, mũ, tai, Mảnh Gốc) nằm ở nửa trên**.
+- Nửa dưới thân thường bị đơn vị hàng trước che, nên **mọi dấu nhận dạng (tay, mũ/voan, dụng cụ, tai, Mảnh Gốc) nằm ở nửa trên**. Anh hùng không dùng vũ khí làm dấu nhận dạng — xem §5.1; quái và Kẻ Gác không bị ràng buộc.
 
 **Năm anh hùng**
 
 | Anh hùng | Dáng tổng | Dấu duy nhất |
 |---|---|---|
-| Kiếm sĩ | Chữ nhật, vai vuông | Kiếm lớn chéo lưng, chuôi vượt đầu |
+| Kiếm sĩ | Chữ nhật, vai vuông | Hai cẳng tay quấn dây bắt chéo ngang ngực, bàn tay trần mở |
 | Pháp sư | Tam giác cao, gầy | Mũ chóp nhọn gập đầu |
-| Sát thủ | Thoi dẹt, khom; cao ~34–36 px (thấp nhất nhóm) | Mũ trùm nhọn + hai dao chĩa ngang |
-| Thợ săn | Chữ T | Nỏ vắt ngang vai, mũ rộng vành |
-| Giáo sĩ | Chuông đáy rộng | Gậy, đầu gậy là ô vuông lồng ô vuông |
+| Sát thủ | Thoi dẹt, khom; cao ~34–36 px (thấp nhất nhóm) | Mũ trùm nhọn, góc cạnh nhất nhóm; hai tay thấp sát người, xoè ngón |
+| Thợ săn | Chữ T | Mũ rộng vành + 1 lông, cuộn dây vắt ngực (dụng cụ bẫy) |
+| Giáo sĩ | Chuông đáy rộng | Voan phủ đầu, hai tay nâng khum trước ngực |
 
 **Quái và tư thế niệm**
 - Dấu loài của quái:
@@ -472,22 +472,23 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 
 | Anh hùng | Dáng · vật đặc trưng (nửa trên) | Chính · nhấn | Mặt, tóc ở 40 px |
 |---|---|---|---|
-| Kiếm sĩ | Chữ nhật, HAI vai vuông to đối xứng; kiếm thẳng hai lưỡi hẹp (2 px) trong vỏ tối đeo chéo lưng, chỉ chuôi + **chắn tay chữ thập** rộng ~6 px + núm tròn nhô trên đầu ≥ 4 px (dấu nhận dạng là chữ thập, không phải lưỡi bản rộng) | Giáp thép #8FA3B8 tấm đối xứng, viền Ngà ngang ngực; choàng ngắn ngang hông Sương tối #4F5864 cài hai vai (không lam #3A5CF0) · nhấn #EEF4FA | Tóc vàng nhạt cắt ngắn, mái bằng, 3 chùm nhỏ chỉ ở đỉnh, băng đầu Ngà 1 px; mắt mở 2×2, chân mày 1 px thẳng. *Sửa 2026-10-31: bản v1 (tóc dựng cao, đại kiếm bản rộng, choàng dài) đọc ra Cloud FF7 nên bỏ.* |
+| Kiếm sĩ | Chữ nhật, HAI vai vuông to đối xứng; **hai cẳng tay giơ bắt chéo ngang ngực, quấn dây, BÀN TAY TRẦN mở** — dấu nhận dạng là đôi tay, không phải vật cầm. *Sửa 2026-11-14 (người dùng chốt): bỏ hẳn kiếm và chắn tay chữ thập; KHÔNG đeo vỏ kiếm (vỏ không kiếm đọc ra "mất kiếm", là nhân vật khác).* | Giáp thép #8FA3B8 tấm đối xứng, viền Ngà ngang ngực; choàng ngắn ngang hông Sương tối #4F5864 cài hai vai (không lam #3A5CF0) · nhấn #EEF4FA | Tóc vàng nhạt cắt ngắn, mái bằng, 3 chùm nhỏ chỉ ở đỉnh, băng đầu Ngà 1 px; mắt mở 2×2, chân mày 1 px thẳng. *Sửa 2026-10-31: bản v1 (tóc dựng cao, đại kiếm bản rộng, choàng dài) đọc ra Cloud FF7 nên bỏ.* |
 | Pháp sư | Tam giác cao gầy; mũ chóp gập có chùm bông. **Cầm sách mở một tay** (người dùng chốt 2026-11-04, theo ảnh mẫu `04-mage-01`; trước đó "Không sách") | **Áo nâu than #3A2A26** · nhấn hổ phách #F0A030 ở dải mũ, gấu áo, thắt lưng (người dùng chốt 2026-10-29) | Tóc bạc lòa xòa 3 px dưới vành; mắt 2×1 |
-| Sát thủ | Thoi dẹt, khom; cao ~34–36 px (thấp nhất nhóm); mũ trùm nhọn, hai dao ngang ngực | Vải xám than #3A3744 · ngọc-trắng #BFF3EC ở lưỡi dao, mép mũ | Khăn che mặt; chỉ khe mắt Ngà 3×1 |
-| Thợ săn | Chữ T; nỏ vắt vai, mũ rộng vành + 1 lông ngà | Da nâu #8A5A33, choàng xám-ô-liu S ≤ 35 % · dây ngọc #46D6A4 (≤ 6 px) | Tóc nâu; mắt 2×1 trong bóng vành |
-| Giáo sĩ | Chuông đáy rộng; gậy đầu ô vuông lồng ô vuông; voan | Áo Ngà-xám, chì #B8BCC8 · tím nhạt #B9B0DC ở đầu gậy, mép voan | Voan phủ tóc; mắt nhắm 3×1 |
+| Sát thủ | Thoi dẹt, khom; cao ~34–36 px (thấp nhất nhóm); **mũ trùm nhọn — góc cạnh nhất nhóm — là dấu nhận dạng duy nhất ở 20 px trên**; hai tay để thấp, sát người, xoè ngón, không cầm gì. *Sửa 2026-11-14: bỏ hai dao; KHÔNG đeo bao dao rỗng.* | Vải xám than #3A3744 · ngọc-trắng #BFF3EC ở **mép mũ và cổ tay** (trước ở lưỡi dao) | Khăn che mặt; chỉ khe mắt Ngà 3×1 |
+| Thợ săn | Chữ T; **vành mũ rộng + 1 lông ngà** là dấu nhận dạng, **cuộn dây vắt ngực** và cuộn cọc ở vai. *Sửa 2026-11-14: bỏ nỏ. Dây, cọc và khung gập là DỤNG CỤ ĐẶT BẪY, không phải vũ khí.* | Da nâu #8A5A33, choàng xám-ô-liu S ≤ 35 % · dây ngọc #46D6A4 (≤ 6 px) | Tóc nâu; mắt 2×1 trong bóng vành |
+| Giáo sĩ | Chuông đáy rộng; **voan** là dấu nhận dạng, **hai tay nâng khum trước ngực** như đang đỡ một tấm kính. *Sửa 2026-11-14: bỏ gậy đầu ô vuông.* | Áo Ngà-xám, chì #B8BCC8 · tím nhạt #B9B0DC ở **mép voan và cổ tay** (trước ở đầu gậy) | Voan phủ tóc; mắt nhắm 3×1 |
 
 | Anh hùng | Idle (2 khung) | Cử chỉ niệm: A (0,08 s) → B (0,12 s), tầm vai, không quá đầu | Thức Tỉnh (2 khung lặp) |
 |---|---|---|---|
-| Kiếm sĩ | Ngực lên 1 px, đuôi choàng lệch 1 px; đứng dạng chân | A: kiếm rút ngang vai, mũi chỉ ra sau. B: chém ngang tới x = 30. Hết cử chỉ về **thế thủ** (sửa 2026-11-02, người dùng: suốt trận cầm kiếm vào thế; trận mở bằng clip `draw` rút kiếm vào thế; kiếm về lưng chỉ ở màn thắng) | Vung Hết Sức: hai tay cầm kiếm ngang ngực, thủ rồi chém; choàng bay |
+| Kiếm sĩ | Ngực lên 1 px, đuôi choàng lệch 1 px; đứng dạng chân | A: hai tay thu về ngang ngực, lòng bàn tay hướng vào nhau. B: hai tay đẩy ra và tách rộng, ôm lấy chỗ khối hình thành. Hết cử chỉ về **thế thủ tay không**. *Sửa 2026-11-14: thay cho "kiếm rút ngang vai → chém ngang"; clip `draw` (rút kiếm vào thế, quy định 2026-11-02) không còn nghĩa — sheet mới bỏ clip đó, UnitLayer tự rơi về `idle` nên không cần sửa code.* | Vung Hết Sức: hai tay dang rộng ngang ngực rồi ấn mạnh ra trước; choàng bay |
 | Pháp sư | Chóp mũ và chùm bông đung 1 px, bàn tay rảnh co duỗi | Sách giữ một tay (sửa 2026-11-04). A: tay rảnh co về. B: lòng bàn tay rảnh đẩy ra trước | Bùng Nổ: giơ sách cao trước mặt, trang sách bay, tay rảnh dang rộng, áo và mũ bay |
-| Sát thủ | Cả người tụt 1 px, mũi dao nhích ±1 px luân phiên | A: hai dao chéo trước ngực. B: hai tay hất ra, dao hướng phải | Bóng Lướt: lao người; 2 bản sao tối hơn phía sau cách 4 px (code) |
-| Thợ săn | Vành mũ nghiêng 1 px, lông vũ rung, dồn trọng lượng | A: nỏ hạ ngang hông. B: nỏ giương ngang vai, mũi chĩa ra | Bẫy Sập: quỳ một gối, nỏ chống đất phía trước |
-| Giáo sĩ | Voan và gấu áo lệch 1 px, đầu cúi 1 px | A: gậy dựng thẳng. B: gậy nghiêng, đầu gậy chĩa ra ngang đầu | Ban Phước: hai tay giữ gậy cắm xuống, cúi đầu |
+| Sát thủ | Cả người tụt 1 px, các ngón tay nhích ±1 px luân phiên | A: hai tay chéo thấp trước bụng. B: hai tay hất ra hai bên, ngón xoè, người hạ thêm 1 px | Bóng Lướt: lao người; 2 bản sao tối hơn phía sau cách 4 px (code) |
+| Thợ săn | Vành mũ nghiêng 1 px, lông vũ rung, dồn trọng lượng | A: một tay rút dây ở ngực. B: hai tay kéo căng dây ngang hông, như lên cò một cái bẫy | Bẫy Sập: quỳ một gối, hai tay ghim khung bẫy xuống đất phía trước |
+| Giáo sĩ | Voan và gấu áo lệch 1 px, đầu cúi 1 px | A: hai tay khum lại sát ngực. B: hai tay nâng lên ngang đầu, lòng bàn tay ngửa | Ban Phước: hai tay ấn xuống trước mặt, cúi đầu |
 
-- **Lấy từ `04-lineup-01`:** kiếm lưng, giáp vai (Kiếm sĩ); mũ chùm bông, viền gấu áo, sách mở (Pháp sư, thêm sách 2026-11-04); mũ trùm, dao cầm ngược (Sát thủ); vành rộng, lông, nỏ vai, dây (Thợ săn); voan, gậy ô vuông (Giáo sĩ).
+- **Ảnh concept `04-lineup-01` có:** kiếm lưng, giáp vai (Kiếm sĩ); mũ chùm bông, viền gấu áo, sách mở (Pháp sư, thêm sách 2026-11-04); mũ trùm, dao cầm ngược (Sát thủ); vành rộng, lông, nỏ vai, dây (Thợ săn); voan, gậy ô vuông (Giáo sĩ).
 - **Bỏ:** tóc trắng-vàng cả năm người (mất khác biệt); viền vàng (trùng Ánh Lưới); choàng lam hoàng gia (gần Giá Lạnh); khăn lam-ngọc Sát thủ (va dây ngọc Thợ săn); tím bão hòa; mắt to có lòng trắng (vỡ ở 40 px).
+- **Bỏ vũ khí làm dấu nhận dạng anh hùng (người dùng chốt 2026-11-14):** bốn anh hùng trước đây mang bản sắc ở vật cầm (kiếm, hai dao, nỏ, gậy); từ nay dấu nhận dạng ở **20 px trên** là đôi tay, mũ/voan và dụng cụ. Lý do: sau Biến Cố mọi sức mạnh chỉ đi qua khối, nên nhân vật gồng bằng thân chứ không bằng vũ khí. **Đây KHÔNG phải lệnh cấm vũ khí trong thế giới Tessera** — quái, Kẻ Gác và lore không bị ràng buộc; chỉ bỏ vai trò *vũ khí như dấu hiệu nhận diện bắt buộc của anh hùng*. Pháp sư không đổi (vốn chỉ cầm sách và niệm bằng tay mở).
 
 ### 5.2 Kẻ thù
 - Phân biệt địch/ta ở 1× bằng 3 thứ:
