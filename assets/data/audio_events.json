@@ -198,6 +198,74 @@
 			}
 		}
 	},
+	"ambience": {
+		"_doc": "Region ambience (docs/design/audio/ambience-plan.md), played by AmbiencePlayer on the Ambience bus: one looping bed per region (files levelled to -31 LUFS, 8 dB under the music) and rare one-shots (-30 LUFS) every gap_min..gap_max s outside fights. In a fight the bed drops by battle_db and one-shots stop; Reduced audio stops one-shots. Sources: audio_src/pixellab/ambience/SOURCES.md.",
+		"fade_sec": 2.0,
+		"battle_db": -6.0,
+		"battle_fade_sec": 1.0,
+		"bed_db": 0.0,
+		"oneshot_db": 0.0,
+		"gap_min_sec": 15.0,
+		"gap_max_sec": 40.0,
+		"regions": {
+			"ch1": {
+				"bed": "res://assets/audio/ambience/amb_forest_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_forest_bird.ogg",
+					"res://assets/audio/ambience/amb_forest_drip.ogg"
+				]
+			},
+			"ch2": {
+				"bed": "res://assets/audio/ambience/amb_dungeon_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_dungeon_drip.ogg",
+					"res://assets/audio/ambience/amb_dungeon_chain.ogg"
+				]
+			},
+			"ch3": {
+				"bed": "res://assets/audio/ambience/amb_tower_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_tower_ice.ogg",
+					"res://assets/audio/ambience/amb_tower_crystals.ogg"
+				]
+			},
+			"swamp": {
+				"bed": "res://assets/audio/ambience/amb_swamp_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_swamp_frog.ogg",
+					"res://assets/audio/ambience/amb_swamp_bubble.ogg"
+				]
+			},
+			"desert": {
+				"bed": "res://assets/audio/ambience/amb_desert_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_desert_gust.ogg",
+					"res://assets/audio/ambience/amb_desert_stones.ogg"
+				]
+			},
+			"hellfire": {
+				"bed": "res://assets/audio/ambience/amb_hellfire_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_hellfire_lava.ogg",
+					"res://assets/audio/ambience/amb_hellfire_embers.ogg"
+				]
+			},
+			"sky_isles": {
+				"bed": "res://assets/audio/ambience/amb_sky_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_sky_chimes.ogg",
+					"res://assets/audio/ambience/amb_sky_rock.ogg"
+				]
+			},
+			"an_dai": {
+				"bed": "res://assets/audio/ambience/amb_heart_bed.ogg",
+				"oneshots": [
+					"res://assets/audio/ambience/amb_heart_crystal.ogg",
+					"res://assets/audio/ambience/amb_heart_pulse.ogg"
+				]
+			}
+		}
+	},
 	"timing": {
 		"latency_lead_max_sec": 0.08,
 		"group_epsilon_sec": 0.001,

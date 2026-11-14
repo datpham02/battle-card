@@ -5,11 +5,14 @@ extends Node
 ## [signal SettingsStore.audio_changed]), attaches a [UiAudioBridge] to the flow and a [CombatAudioBridge] to every
 ## battle a RunController spawns, and pauses / backgrounds the director with the app. Gameplay never calls it.
 ## It also owns the [MusicPlayer] (docs/design/audio/music-plan.md): explore outside a match, battle / boss while a
-## match is fought, the victory / defeat stinger when it ends.
+## match is fought, the victory / defeat stinger when it ends; and the region ambience player
+## (docs/design/audio/ambience-plan.md): the run's region bed, lowered in a fight.
 ## The director is injected ([member director]) or the shared one ([method AudioDirector.shared], silent when headless).
 
 ## The flow node name (GameFlow adds the rig as a child named so).
 const NODE_NAME: String = "AudioRig"
+## Region ambience (preloaded, no class_name: see the script's doc).
+const AmbiencePlayerScript: GDScript = preload("res://src/audio/ambience_player.gd")
 
 ## The director this rig drives; null at _ready = [method AudioDirector.shared].
 var director: AudioDirector = null
@@ -22,6 +25,7 @@ var _ui: UiAudioBridge = null
 var _settings: SettingsStore = null
 var _combat: CombatAudioBridge = null
 var _music: MusicPlayer = null
+var _ambience: Node = null
 ## True from a battle's spawn until its match ends (the music follows the fight, not the flow phase alone).
 var _match_live: bool = false
 
@@ -40,6 +44,8 @@ func _ready() -> void:
 	_flow = get_parent() as GameFlow
 	_music = MusicPlayer.new(director.get_bank(), director.is_silent())
 	add_child(_music)
+	_ambience = AmbiencePlayerScript.new(director.get_bank(), director.is_silent())
+	add_child(_ambience)
 	_ui = UiAudioBridge.new(director)
 	if _flow != null:
 		_ui.attach_flow(_flow)
@@ -78,6 +84,11 @@ func get_music() -> MusicPlayer:
 	return _music
 
 
+## The ambience player (an ambience_player.gd node).
+func get_ambience() -> Node:
+	return _ambience
+
+
 ## The current battle's bridge, or null.
 func get_combat_bridge() -> CombatAudioBridge:
 	return _combat if is_instance_valid(_combat) else null
@@ -94,6 +105,7 @@ func _bind_settings() -> void:
 		return
 	_settings = store
 	director.apply_settings(store)
+	_ambience.set_reduced(director.reduced_audio)
 	if not store.audio_changed.is_connected(_on_audio_changed):
 		store.audio_changed.connect(_on_audio_changed)
 
@@ -101,6 +113,7 @@ func _bind_settings() -> void:
 func _on_audio_changed() -> void:
 	if _settings != null:
 		director.apply_settings(_settings)
+		_ambience.set_reduced(director.reduced_audio)
 
 
 func _on_controller_changed(controller: RunController) -> void:
@@ -133,6 +146,8 @@ func _set_background(background: bool) -> void:
 	director.set_background(background)
 	if _music != null:
 		_music.set_background(background)
+	if _ambience != null:
+		_ambience.set_background(background)
 
 
 func _on_flow_phase_changed(phase: int) -> void:
@@ -159,3 +174,5 @@ func _update_music() -> void:
 		if fighting:
 			kind = str(_flow.get_run().current_node().get("kind", ""))
 	_music.request(_music.resolve(MusicPlayer.track_for(fighting, kind), region))
+	_ambience.set_region(region)
+	_ambience.set_battle(fighting)

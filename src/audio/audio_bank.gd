@@ -137,6 +137,12 @@ func music() -> Dictionary:
 	return _data.get("music", {}) if _data.get("music", {}) is Dictionary else {}
 
 
+## The ambience settings {fade_sec, battle_db, gap_min_sec, gap_max_sec, regions: {id: {bed, oneshots}}} read by the
+## AmbiencePlayer; empty when the data has none.
+func ambience() -> Dictionary:
+	return _data.get("ambience", {}) if _data.get("ambience", {}) is Dictionary else {}
+
+
 ## Event kinds that make an impact group the cast's big final layer (burst, drop_final).
 func final_kinds() -> Array[String]:
 	var out: Array[String] = []
@@ -277,6 +283,17 @@ func validate(check_files: bool = true) -> Array[String]:
 				errors.append("music.tracks.%s: no file" % t)
 			elif check_files and not FileAccess.file_exists(f) and not ResourceLoader.exists(f):
 				errors.append("music.tracks.%s: missing file %s" % [t, f])
+	var amb: Variant = ambience().get("regions", {})
+	if amb is Dictionary:
+		for r: String in (amb as Dictionary).keys():
+			var def: Dictionary = (amb as Dictionary)[r] if (amb as Dictionary)[r] is Dictionary else {}
+			var files: Array = [def.get("bed", "")]
+			files.append_array(def.get("oneshots", []))
+			for f: Variant in files:
+				if str(f).is_empty():
+					errors.append("ambience.regions.%s: no bed" % r)
+				elif check_files and not FileAccess.file_exists(str(f)) and not ResourceLoader.exists(str(f)):
+					errors.append("ambience.regions.%s: missing file %s" % [r, f])
 	var arche: Dictionary = _data.get("archetypes", {})
 	for d: String in arche.keys():
 		for i: String in (arche[d] as Dictionary).keys():

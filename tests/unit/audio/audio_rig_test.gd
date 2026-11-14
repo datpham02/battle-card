@@ -58,6 +58,7 @@ func _run() -> void:
 	var view: CombatView = controller.get_battle().get_node(RunController.COMBAT_VIEW_NODE) as CombatView if controller.get_battle() != null else null
 	ck("a test floor spawned a battle", view != null)
 	ck("a fought match switches the music to battle", music.current_track() == "battle", music.current_track())
+	ck("the rig owns an ambience player", rig.get_ambience() != null and rig.get_ambience().has_method("set_region"))
 	var bridge: CombatAudioBridge = rig.get_combat_bridge()
 	ck("the battle got a CombatAudioBridge under the battle root", bridge != null and bridge.get_parent() == controller.get_battle())
 	ck("the director reads that battle's arbiter clock", director.clock_fn.is_valid() and view != null

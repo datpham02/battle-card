@@ -27,7 +27,10 @@ func _wait(sec: float) -> void:
 
 func _music() -> String:
 	var rig: AudioRig = AudioRig.of(_flow)
-	return rig.get_music().current_track() if rig != null and rig.get_music() != null else "?"
+	if rig == null or rig.get_music() == null:
+		return "?"
+	var amb: Node = rig.get_ambience()
+	return "%s ambience=%s" % [rig.get_music().current_track(), amb.current_region() if amb != null else "?"]
 
 
 func _run() -> void:
