@@ -302,6 +302,20 @@ const TEXT_DAMAGE_NUMBER: String = "ui.hud.damage_number"
 const TEXT_HEAL_NUMBER: String = "ui.hud.heal_number"
 const HEAL_TEXT: Color = HudSkin.HP_FILL
 const HEAL_RISE_RATIO: float = 0.5
+## F3: the prayer link's stroke as a share of a cell's width. Sized from the CELL, never a fixed
+## pixel count — a hairline crossing the middle of the board is the likeliest way this cue fails, and
+## the project has rejected an effect for being invisible from a normal viewing distance before.
+const HEAL_LINK_WIDTH_RATIO: float = 0.12
+## F3: hunter_mark's cue — a CRACK that spreads across the marked enemy's body, in the hunter's accent.
+## Rạn means "cracked", the game already draws this glyph for the keyword (CRACK_POINTS, the status
+## chip), and the passive's only output is a Rạn stack — so the cue borrows the word the player has
+## already learnt instead of teaching a new one. Box sized from the enemy's feet anchor and the cell's
+## screen width, so it scales with the unit and sits ON the sprite rather than around the cell.
+const MARK_BODY_W_RATIO: float = 0.62
+const MARK_BODY_ASPECT: float = 1.25
+const MARK_SPREAD_RATE: float = 3.0
+const MARK_FADE_RATE: float = 2.5
+const MARK_WIDTH_RATIO: float = 0.09
 ## Story 020: "Cháy ×%d" (burn stacks on the boss), "Ghim" (boss pinned), "+%d" after a menu card name.
 const TEXT_BURN_STACKS: String = "ui.hud.burn_stacks"
 ## Horizontal padding inside a menu slot for the card name (Story 020: names carry "+N").
@@ -1382,6 +1396,7 @@ func _draw() -> void:
 	_draw_channel_flash(vp)
 	_draw_feint(vp)
 	_draw_hp_plates(vp)
+	_draw_passive_mark(vp)
 	_draw_pins(vp)
 	_draw_dot_pops(vp)
 	_draw_confirm(vp)
@@ -2023,7 +2038,70 @@ func _draw_heal_flash(_vp: Vector2) -> void:
 	var size: int = int(flat.size.y * FEEDBACK_FONT_RATIO * 1.3)
 	var rise: float = cell.size.y * HEAL_RISE_RATIO * (1.0 - fade)
 	var back := Rect2(cell.position + Vector2(0.0, -size * 1.4 - rise), Vector2(cell.size.x, size * 1.4))
+	# F3 (passive feedback): when the heal has an on-board cause, draw the link BEFORE the number, so
+	# the "+N" sits on top of its own connector. `prayer` is the only passive whose cause and effect
+	# are in different places: the Chill burst is on the enemy, the heal lands on the player, and the
+	# "+N" alone shows only the effect. The line is what joins them — without it the player sees two
+	# unrelated events. Straight segments, no curve (angular-shapes rule); stroke sized from the CELL,
+	# never a hairline, because it crosses the busiest part of the board.
+	var from_cell: Vector2i = flash.get("from", BoardGrid.NO_CELL)
+	if from_cell != BoardGrid.NO_CELL:
+		var src: Rect2 = _bg().fit_rect(_bg().flat_cell_rect(from_cell))
+		var a: Vector2 = src.position + src.size * 0.5
+		var b: Vector2 = back.position + back.size * 0.5
+		var mid := Vector2(b.x, a.y)  # one right-angle elbow: two straight segments, no diagonal curve
+		var width: float = maxf(cell.size.x * HEAL_LINK_WIDTH_RATIO, 2.0)
+		var tint: Color = Color(_combat.passive_accent(), fade)
+		draw_line(a, mid, tint, width)
+		draw_line(mid, b, tint, width)
 	_draw_centered(back, tr(TEXT_HEAL_NUMBER) % roundi(float(flash["amount"])), size, Color(HEAL_TEXT, fade))
+
+
+# F3 (passive feedback): hunter_mark's cue. The passive's whole output is a Rạn stack, and a Rạn stack
+# from a CARD draws the identical chip — so without a cue of its own the player cannot tell that the
+# character did anything.
+#
+# A crack spreading across the enemy's body, in the hunter's accent. Two earlier shapes were rejected
+# by the user (2026-11-14) and the reasons are worth keeping, because both were defensible:
+#   * jaws built from a `fit_rect` box — `board_geometry.gd:149` documents that as an AXIS-ALIGNED
+#     SCREEN rect for text and icons. The board is in perspective, so vertical jaws sat askew, spilled
+#     into the neighbouring thorn cells and cut across the enemy's feet. "Misaligned and ugly."
+#   * the same jaws rebuilt in model space. Correctly projected, and still wrong: two brackets flanking
+#     a unit read as "selected" or "targeted" in every game UI, not as "branded". The user had to ASK
+#     what it meant, which is the answer — a cue that needs explaining has failed.
+# The crack says the thing that actually happened: this one is now cracked. It reuses CRACK_POINTS,
+# which the status chip already uses for Rạn, so the cue and the keyword speak with one voice.
+func _draw_passive_mark(vp: Vector2) -> void:
+	var flash: Dictionary = _combat.get_passive_mark_flash()
+	if flash.is_empty():
+		return
+	var state: CombatState = _combat.get_state()
+	if state == null:
+		return
+	var cells: Array[Vector2i] = state.enemy_footprint_cells()
+	if cells.is_empty():
+		return
+	var flat: Rect2 = _bg().flat_cells_rect(cells)
+	if flat.size.x <= 0.0:
+		return
+	# Cell width ON SCREEN: the body box and the stroke both scale with it, so a far enemy gets a
+	# smaller, thinner crack and the mark reads as painted on that unit rather than on the camera.
+	var centre_y: float = flat.get_center().y
+	var span: float = absf(_bg().to_screen(Vector2(flat.end.x, centre_y)).x - _bg().to_screen(Vector2(flat.position.x, centre_y)).x)
+	if span <= 0.0:
+		return
+	var feet: Vector2 = _unit_feet_screen(vp, CombatState.Side.ENEMY, state)
+	var w: float = span * MARK_BODY_W_RATIO
+	var h: float = w * MARK_BODY_ASPECT
+	var body := Rect2(feet.x - w * 0.5, feet.y - h, w, h)
+	var fade: float = clampf(float(flash["time_left"]) / CombatView.FEEDBACK_SEC, 0.0, 1.0)
+	# The crack DRAWS ITSELF over the first third of the cue, then holds and fades. Spreading is what
+	# makes it read as something that just happened to this enemy; a crack that is simply there reads
+	# as part of the sprite.
+	var ratio: float = clampf((1.0 - fade) * MARK_SPREAD_RATE, 0.0, 1.0)
+	var alpha: float = clampf(fade * MARK_FADE_RATE, 0.0, 1.0)
+	var width: float = maxf(span * MARK_WIDTH_RATIO, 2.0)
+	_draw_crack_partial(body, ratio, Color(_combat.passive_accent(), alpha), width)
 
 
 # Cast rhythm spec 2026-11-05 (Knight parry): while the guard is open, a thin Ivory timer bar in the hero's cell, centred
@@ -2168,7 +2246,17 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 	base -= size * 1.1 * float(fb.get("stack", 0))
 	if show_damage:
 		# Story 020: a hit multiplied by Ghim shows its number in the pin blue.
-		var damage_color: Color = PIN_BONUS_TEXT if bool(fb.get("pin_bonus", false)) else color
+		# F3 (passive feedback): a hit multiplied by the character's PASSIVE shows its number in that
+		# character's accent — the same convention, extended. This is the one cue in F3 that needs no
+		# new object on screen: the number is already drawn, and text carries HudSkin's ink outline
+		# against the board, which is the contrast the first wide_caster attempt lacked.
+		# Ghim wins when both apply: it is a board state the player must keep reading, while the
+		# passive is constant for the whole run and can afford to yield.
+		var damage_color: Color = color
+		if bool(fb.get("pin_bonus", false)):
+			damage_color = PIN_BONUS_TEXT
+		elif bool(fb.get("passive_bonus", false)):
+			damage_color = _combat.passive_accent()
 		var number_size: int = roundi(size * CRIT_NUMBER_SCALE) if crit else size
 		HudSkin.text(self, Vector2(label_box.position.x, base), tr(TEXT_DAMAGE_NUMBER) % roundi(float(fb["damage"])), number_size, damage_color, HORIZONTAL_ALIGNMENT_CENTER, label_box.size.x, true)
 		base -= number_size * 1.0

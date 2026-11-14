@@ -718,6 +718,7 @@ signature.vay_bat.desc,"4 giây: Bãi Gai bạn rải kéo dài ×1,5 và rải 
 signature.thanh_an.name,Ban Phước,Benediction
 signature.thanh_an.desc,"4 giây: mỗi đòn trúng boss thêm 1 tầng Giá Lạnh; Giá Lạnh nổ gây ×1,5.",4 s: every hit on the boss adds 1 Chill; Chill bursts deal ×1.5.
 ui.hud.heal_number,+%d,+%d
+ui.hud.passive_heal_number,+%dhp,+%dhp
 title.achievements,Thành tựu,Achievements
 achievements.title,THÀNH TỰU,ACHIEVEMENTS
 achievements.counter,%d/%d,%d/%d

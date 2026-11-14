@@ -198,6 +198,19 @@ var _shake_left: Dictionary = {}
 var _recoil_left: Dictionary = {}
 var _feel: Dictionary = {}
 var _flash: Node2D = null
+## F3 §2.1 passive victory cue (`second_wind`). It lives in its own node because the battle subtree
+## is frozen on the winning frame — see `passive_cue_layer.gd` for why nothing already here can
+## animate at that moment. Null until [method _ensure_passive_cue].
+const PassiveCueLayer = preload("res://src/battle/passive_cue_layer.gd")
+var _passive_cue: PassiveCueLayer = null
+## Peak strength of the green body glow, added over the sprite exactly as the white hit flash is.
+const PASSIVE_GLOW_ALPHA: float = 0.85
+## How far the "+Nhp" rises, as a fraction of the sprite's height.
+const PASSIVE_TEXT_RISE_RATIO: float = 0.55
+## Text height as a fraction of the sprite's height.
+const PASSIVE_TEXT_SIZE_RATIO: float = 0.42
+## "+%dhp" — the heal figure with its unit, so it cannot be read as the gold "+N" on the same screen.
+const TEXT_PASSIVE_HEAL: String = "ui.hud.passive_heal_number"
 ## A damage event whose flash has not started: CombatState.Side -> seconds still to wait (-1 = delay not read yet).
 var _flash_wait: Dictionary = {}
 ## Seconds each enemy unit has been invulnerable without a break (key -> seconds; absent / 0 when it is not): drives
@@ -245,6 +258,9 @@ func setup(combat: CombatView, settings: SettingsStore = null) -> void:
 	set_process(combat != null)
 	_feel = CastVfx.hit_feel()
 	_ensure_flash_layer()
+	_ensure_passive_cue()
+	if _combat != null and not _combat.match_ended.is_connected(_on_match_ended_cue):
+		_combat.match_ended.connect(_on_match_ended_cue)
 	_bind_match()
 	queue_redraw()
 
@@ -1238,6 +1254,94 @@ func _draw() -> void:
 
 
 # The add-blend child the hit flash draws on (created once; children draw over the units).
+# F3 §2.1: the victory cue is started from here rather than pushed by CombatView, so the view layer
+# observes the model instead of the model having to know a drawing layer exists. The heal figure is
+# already computed by then (`combat_view.gd`, on the winning frame) and only discarded later.
+func _on_match_ended_cue(won: bool, _hp: float) -> void:
+	if not won or _combat == null:
+		return
+	play_passive_cue(CombatState.Side.PLAYER, roundi(_combat.get_passive_heal()))
+
+
+## Builds the passive-cue node. Separate from the hit-flash layer on purpose: that one is clocked by
+## the simulation step loop and by this node's `_process`, both of which stop at the victory moment.
+func _ensure_passive_cue() -> void:
+	if _passive_cue != null:
+		return
+	_passive_cue = PassiveCueLayer.new()
+	_passive_cue.name = "PassiveCue"
+	add_child(_passive_cue)
+	_passive_cue.draw.connect(_draw_passive_cue_text)
+	var glow: Node2D = _passive_cue.glow_canvas()
+	if glow != null:
+		glow.draw.connect(_draw_passive_cue_glow)
+
+
+## Plays the victory cue on [param side]: the body lights green, then "+[param amount]hp" rises.
+## Safe to call as the match ends — surviving the freeze that follows is the whole point of the node.
+## Does nothing for a non-positive [param amount].
+func play_passive_cue(side: int, amount: int) -> void:
+	_ensure_passive_cue()
+	if _passive_cue != null and amount > 0:
+		_passive_cue.play(side, amount)
+
+
+## True while the victory cue is on screen (tests and captures read this).
+func passive_cue_playing() -> bool:
+	return _passive_cue != null and _passive_cue.is_playing()
+
+
+# The sprite frame added over itself in the HP green, exactly as _draw_flash does it in white: the
+# glide, shake, recoil, pose and facing all come along, which is why this reuses that path instead of
+# drawing a shape over the unit.
+func _draw_passive_cue_glow() -> void:
+	if _passive_cue == null or _combat == null:
+		return
+	var fade: float = _passive_cue.glow_fade()
+	if fade <= 0.0:
+		return
+	var side: int = _passive_cue.side()
+	var sheet: SpriteSheet = get_sheet(side)
+	var anim: UnitAnimator = get_animator(side)
+	if sheet == null or anim == null or sheet.texture() == null:
+		return
+	var src: Rect2i = anim.frame_rect()
+	if src.size.x <= 0 or src.size.y <= 0:
+		return
+	var pose: Vector4i = unit_pose(side)
+	var feet: Vector2i = _ground_of(side) + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) \
+			+ recoil_offset(side) + Vector2i(pose.x, pose.y)
+	_draw_frame_bands(_passive_cue.glow_canvas(), side, sheet.texture(), src, feet, sheet.facing() != facing_for(side),
+			pose, Color(HudSkin.HP_FILL, PASSIVE_GLOW_ALPHA * fade))
+
+
+# "+Nhp" rising from the sprite's top edge, fading over the last third of the rise.
+func _draw_passive_cue_text() -> void:
+	if _passive_cue == null or _combat == null:
+		return
+	var t: float = _passive_cue.text_progress()
+	if t < 0.0:
+		return
+	var side: int = _passive_cue.side()
+	var sheet: SpriteSheet = get_sheet(side)
+	var anim: UnitAnimator = get_animator(side)
+	if sheet == null or anim == null:
+		return
+	var src: Rect2i = anim.frame_rect()
+	if src.size.y <= 0:
+		return
+	var pose: Vector4i = unit_pose(side)
+	var feet: Vector2i = _ground_of(side) + recoil_offset(side) + Vector2i(pose.x, pose.y)
+	var top: float = float(feet.y - src.size.y)
+	var rise: float = float(src.size.y) * PASSIVE_TEXT_RISE_RATIO * t
+	var size: int = maxi(int(float(src.size.y) * PASSIVE_TEXT_SIZE_RATIO), 8)
+	var alpha: float = 1.0 if t < 0.66 else clampf((1.0 - t) / 0.34, 0.0, 1.0)
+	var span: float = float(src.size.x) * 3.0
+	HudSkin.text(_passive_cue, Vector2(float(feet.x) - span * 0.5, top - 2.0 - rise),
+			tr(TEXT_PASSIVE_HEAL) % _passive_cue.amount(), size, Color(HudSkin.HP_FILL, alpha),
+			HORIZONTAL_ALIGNMENT_CENTER, span, true)
+
+
 func _ensure_flash_layer() -> void:
 	if _flash != null:
 		return

@@ -285,6 +285,10 @@ var _hazards: TileHazards
 ## F2 (characters.json `attributes.hazard_resist_mult`): multiplies hazard damage the PLAYER takes.
 ## 1.0 (the default, and the value without a character) leaves every number exactly as it was.
 var _hazard_resist_mult: float = 1.0
+## F3 (passive feedback): the character's accent colour from characters.json `identity.accent_color`
+## (F1). Every passive cue is tinted with it, so NO cue colour is hardcoded in combat code — the same
+## rule F2 applied to numbers, applied to presentation. HudSkin.IVORY without a character.
+var _accent: Color = HudSkin.IVORY
 ## The character passive of this match (Story 018); null without a character or with an unknown id.
 var _passive: BasePassive = null
 var _passive_heal: float = 0.0
@@ -386,6 +390,13 @@ var _stats: Dictionary = {"hits_taken": 0, "casts": 0, "joins": 0, "featured_cas
 	"frost_bursts": 0, "boss_thorn_steps": 0, "max_cast_cells": 0, "vents_dodged": 0}
 ## Story 037: the last passive heal ({amount, time_left}) for the HUD "+N" flash; {} when none.
 var _heal_flash: Dictionary = {}
+## F3: the cell a heal came FROM while one is being attributed (prayer's Chill burst on the enemy),
+## else BoardGrid.NO_CELL. Only live inside _on_status_frost_burst, which is where the cause is known.
+var _heal_flash_from: Vector2i = BoardGrid.NO_CELL
+## F3: the hunter_mark cue ({time_left}); {} when none shows. Raised by the PASSIVE (BasePassive.
+## take_event_cue), never by a card applying the same Ran stack — the two look identical in the chip
+## row, and the cue is the only thing that tells them apart.
+var _passive_mark_flash: Dictionary = {}
 ## Cast rhythm spec 2026-11-05 (Knight parry): the hero's guard (opened by a `parry` card, ticked in match time) and the
 ## flash of the last parry ({cell, reflected, time_left}; empty when none shows).
 var _parry_guard: ParryGuard = ParryGuard.new()
@@ -584,8 +595,15 @@ func _on_status_frost_burst(side: int, damage: float) -> void:
 	if side != CombatState.Side.ENEMY:
 		return
 	_stats["frost_bursts"] = int(_stats["frost_bursts"]) + 1
+	# F3 (passive feedback): remember WHERE the burst happened, so the heal it may cause can be drawn
+	# as coming from there. `prayer` is the only passive whose cause and effect are in different
+	# places — the burst is on the enemy, the heal lands on the player — and the existing "+N" shows
+	# only the effect. Without the link the player sees two unrelated things and never joins them.
+	# Set before the passive runs, because the passive's heal_player callback fires inside this call.
+	_heal_flash_from = _state.cell_of(CombatState.Side.ENEMY) if _state != null else BoardGrid.NO_CELL
 	if _passive != null:
 		_passive.on_frost_burst(damage)
+	_heal_flash_from = BoardGrid.NO_CELL
 
 
 func _on_status_thorn_entered(key: int, cell: Vector2i, _damage: float) -> void:
@@ -607,12 +625,14 @@ func _on_status_thorn_entered(key: int, cell: Vector2i, _damage: float) -> void:
 	_stats["boss_thorn_steps"] = int(_stats["boss_thorn_steps"]) + 1
 	if _passive != null:
 		_passive.on_boss_thorn_step(cell)
+		_drain_passive_cue()
 
 
 func _on_status_zone_applied(kind: String, side: int, cells: Array[Vector2i]) -> void:
 	_mark_floor_dirty()
 	if side == CombatState.Side.ENEMY and _passive != null:
 		_passive.on_player_zone_formed(kind, cells)
+		_drain_passive_cue()
 
 
 # Story 047 Part B: a seal / thorn cell expired (or was cleared): the floor redraws without it.
@@ -638,12 +658,40 @@ func _passive_heal_player(amount: float) -> void:
 	if gained <= 0.0:
 		return
 	var total: float = gained + (float(_heal_flash.get("amount", 0.0)) if not _heal_flash.is_empty() else 0.0)
-	_heal_flash = {"amount": total, "time_left": FEEDBACK_SEC}
+	# F3: `from` is the cell the heal is attributed to (prayer's burst cell), NO_CELL when the heal
+	# has no on-board cause — a relic or a card heal keeps the plain "+N" it has always had.
+	_heal_flash = {"amount": total, "time_left": FEEDBACK_SEC, "from": _heal_flash_from}
 
 
-## Story 037: the last passive heal as {amount: float, time_left: float} for the HUD; {} when none is showing.
+## Story 037: the last passive heal as {amount, time_left} for the HUD; {} when none is showing.
+## F3 adds `from`: the cell that caused it (prayer's Chill burst on the enemy), BoardGrid.NO_CELL when
+## the heal has no on-board cause.
 func get_heal_flash() -> Dictionary:
 	return _heal_flash
+
+
+# F3: raises the cue flash when the passive's rule just fired. Called right where the rule can fire —
+# the two signal handlers above — and NOT from the simulation step loop.
+#
+# It lived in the step loop until 2026-11-14, which gave the cue a hidden precondition: it was visible
+# only if a simulation step happened to follow the mark. In a real match steps run every frame so it
+# showed, but `--demo=vay_bat` freezes simulation time and the cue could never be captured at all —
+# the flash sat undrained in the passive forever. `prayer`'s `_heal_flash` is already raised straight
+# from `_on_status_frost_burst`, so this also stops the two F3 cues working in two different ways for
+# a reason nobody chose.
+#
+# Consequence worth knowing when reading captures: `_age_flash` IS still step-gated, so in a
+# frozen-time demo this mark appears and never fades. `_heal_flash` has always behaved that way. That
+# is the harness, not a second bug.
+func _drain_passive_cue() -> void:
+	if _passive != null and _passive.take_event_cue():
+		_passive_mark_flash = {"time_left": FEEDBACK_SEC}
+
+
+## F3: the hunter_mark cue as {time_left}; {} when none shows. Only the PASSIVE raises it, so a Ran
+## stack applied by a card never lights it.
+func get_passive_mark_flash() -> Dictionary:
+	return _passive_mark_flash
 
 
 # Story 027: sealed cells block stepping for BOTH movers (OR-ed with cracks and any other blocker via
@@ -1060,6 +1108,19 @@ func get_passive() -> BasePassive:
 	return _passive
 
 
+## F3: the character's accent colour for passive cues (HudSkin.IVORY without a character).
+func passive_accent() -> Color:
+	return _accent
+
+
+## F3: true when the passive's cue should play for a cast or hit of [param cells] cells. The drawing
+## layers ask this instead of testing cell counts themselves, so the cue cannot drift from the rule
+## when a param is tuned. False without a passive, and false for every passive whose trigger is not a
+## cell count — so a drawing layer may call it unconditionally.
+func passive_cue_for_cells(cells: int) -> bool:
+	return _passive != null and _passive.cue_for_cells(cells)
+
+
 ## Extra HP the passive heals after a WON match (computed when [signal match_ended] fires; 0 before
 ## that, after a loss, or without a passive). RunController adds it to the between-match heal.
 func get_passive_heal() -> float:
@@ -1097,6 +1158,13 @@ func _setup_attributes(character: Dictionary) -> void:
 		_cut_actor.duration_mult = cast_speed
 	var resist: float = float(character.get("hazard_resist_mult", 1.0))
 	_hazard_resist_mult = resist if resist > 0.0 else 1.0
+	# F3: the accent travels with the character, not with the passive id, so a character that later
+	# swaps passives keeps one colour identity across all of its cues.
+	var identity: Variant = character.get("identity")
+	if typeof(identity) == TYPE_DICTIONARY:
+		var raw: String = str((identity as Dictionary).get("accent_color", ""))
+		if Color.html_is_valid(raw):
+			_accent = Color(raw)
 
 
 # F2: hazard damage [param amount] aimed at [param side], scaled by the character's
@@ -1618,6 +1686,7 @@ func _process(delta: float) -> void:
 		_age_flash(_channel_flash, step)
 		_age_flash(_feint_flash, step)
 		_age_flash(_heal_flash, step)
+		_age_flash(_passive_mark_flash, step)
 		_age_flash(_parry_flash, step)
 	queue_redraw()
 
@@ -2622,6 +2691,12 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 		"cells": result["cells"], "hit": bool(result["hit"]), "damage": float(result["damage"]),
 		"cell": result["cell"], "time_left": FEEDBACK_SEC,
 		"pin_bonus": bool(result.get("pin_bonus", false)),
+		# F3 (passive feedback): true when the PLAYER's passive boosted this hit — quick_blade, whose
+		# cue recolours the damage number exactly as `pin_bonus` already does for Ghim. The passive
+		# answers (CombatView.passive_cue_for_cells -> BasePassive.cue_for_cells), so the mark cannot
+		# drift from the rule when max_cells is tuned. Enemy swings never carry it.
+		"passive_bonus": side == CombatState.Side.PLAYER
+			and passive_cue_for_cells((result["cells"] as Array).size()),
 		"featured": bool(result.get("featured", false)),
 		"featured_mult": float(result.get("featured_mult", 1.0)),
 		"featured_effect": str(result.get("featured_effect", "")),
@@ -3731,6 +3806,9 @@ func _on_impact_resolved(side: int, event: Dictionary, hit: bool) -> void:
 	_hit_delay[CombatState.Side.ENEMY] = 0.0
 	_feedback = {"cells": cells, "hit": true, "damage": float(event.get("damage", 0.0)), "cell": target,
 		"time_left": FEEDBACK_SEC, "pin_bonus": false, "featured": false, "featured_mult": 1.0, "featured_effect": "",
+		# F3: scheduled player events (Trảm Địa's fronts) carry the passive mark too, so a boosted hit
+		# reads the same whether it resolved through the arbiter or through this path.
+		"passive_bonus": passive_cue_for_cells(cells.size()),
 		"skill_id": skill_id, "crit": bool(event.get("crit", false))}
 
 

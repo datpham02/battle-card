@@ -27,6 +27,12 @@ const PATH_FIELDS: Array[String] = ["portrait", "select_art"]
 ## Two accent colours closer than this (sum of the RGB channel distances) read as the same colour on
 ## a card at phone width.
 const MIN_ACCENT_DISTANCE: float = 0.35
+## Tightest pair as of 2026-11-14: tho_san #46D6A4 and sat_thu #6FD8E8, distance 0.435.
+## tho_san moved from #7FA64B to #46D6A4 (art-bible 5.1 locked palette; the old value was not in it),
+## which cut that pair from 0.874 to 0.435 — still passing, but the margin is now 0.085, the
+## smallest in the roster. kiem_si/giao_si sits at 0.45, within rounding of it, so there are TWO
+## tight pairs, not one — a change to any of those four accents needs this gate re-read, not just
+## re-run. Measured 2026-11-14, suite green, FAILS=0.
 ## A lore line shorter than this is a stub, not an identity.
 const MIN_LORE_LENGTH: int = 40
 

@@ -14,6 +14,7 @@ extends RefCounted
 
 var _ctx: Dictionary = {}
 var _params: Dictionary = {}
+var _cue_pending: bool = false
 
 
 ## Stores the context and params. Called once, before [method on_match_start]. Override to cache
@@ -51,6 +52,40 @@ func modify_damage(_cells: int, damage: float) -> float:
 	return damage
 
 
+## F3 (passive feedback): true when this passive's cue should play for a cast or hit covering
+## [param cells] cells. The PASSIVE answers, never the view.
+##
+## The condition lives next to the rule it mirrors on purpose. A view that re-implemented
+## `cells >= min_cells` would keep saying yes after someone tuned the number in characters.json, and
+## the cue would mark the wrong casts while every test still passed — the player would be taught a
+## rule the game no longer follows.
+##
+## Default false: a passive whose trigger is not a cell count (second_wind fires on a won match,
+## hunter_mark on a thorn event, prayer on a Chill burst) has no per-cast cue and must not claim one.
+func cue_for_cells(_cells: int) -> bool:
+	return false
+
+
+## F3 (passive feedback): raised by a subclass the moment its rule actually fires, for the passives
+## whose trigger is an EVENT rather than a cell count (hunter_mark marking the boss, and any later
+## passive of the same shape). [method cue_for_cells] cannot serve them: there is no cast to measure.
+##
+## One-shot by design. [method take_event_cue] clears it, so one firing of the rule draws exactly one
+## cue; a view that polled a sticky flag would redraw the cue every frame until the next mark, which
+## reads as "the passive is firing continuously" and teaches the player the wrong frequency.
+func fire_event_cue() -> void:
+	_cue_pending = true
+
+
+## F3: true ONCE per [method fire_event_cue], then false until the rule fires again. CombatView drains
+## it on each simulation step; nothing else may call it, or the cue is swallowed before it is drawn.
+func take_event_cue() -> bool:
+	if not _cue_pending:
+		return false
+	_cue_pending = false
+	return true
+
+
 ## Story 037: advances the passive's own clock by [param dt] SIMULATION seconds (CombatView calls it once per
 ## simulation step; default: nothing).
 func tick(_dt: float) -> void:
@@ -81,6 +116,7 @@ func on_frost_burst(_damage: float) -> void:
 func teardown() -> void:
 	_ctx = {}
 	_params = {}
+	_cue_pending = false
 
 
 ## The params given at setup (empty after teardown).

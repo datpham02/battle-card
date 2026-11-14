@@ -63,4 +63,8 @@ func _try_mark(key: int = CombatState.Side.ENEMY) -> void:
 		return
 	status.apply_fragile(key, stacks)
 	_marks += 1
+	# F3: the mark is the passive's whole visible output, and a Ran stack from a CARD looks identical in
+	# the chip row. The cue is raised HERE, after the stack actually landed, so it can never promise a
+	# mark the internal cooldown refused.
+	fire_event_cue()
 	_ready_at = _clock + maxf(param_float("icd_sec", DEFAULT_ICD_SEC), 0.0)

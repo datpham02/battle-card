@@ -96,6 +96,8 @@ extends Node2D
 ##   --run=event=<id>           Story 033: standing in EVENT <id> (an events.json id) at floor 2, same
 ##                              node rule as --run=shop
 ##   --run=gold_reward          Story 033: a won battle's reward screen (the "+N vàng" line shows)
+##   --run=second_wind          F3 §2.1: the enemy is killed and the REAL end path is left to run, so
+##                              the board freezes and the victory cue plays. Needs --character=kiem_si.
 ##   --shape-removals=N         Story 034: every run starts with N shape-removal tokens (memory store)
 ##   --piece-deck-state=SPEC    Story 034: every run's piece deck starts as SPEC, "|"-separated parts:
 ##                              remove:id,id (PieceDeck.remove, min_shapes respected, refusals warn) /
@@ -269,6 +271,8 @@ const FLOW_RUN_SHOP: String = "shop"
 const FLOW_RUN_EVENT: String = "event"
 const FLOW_RUN_EVENT_PREFIX: String = "event="
 const FLOW_RUN_GOLD_REWARD: String = "gold_reward"
+## F3 §2.1 capture: a won match left to end THROUGH CombatView, for the victory cue.
+const FLOW_RUN_SECOND_WIND: String = "second_wind"
 ## Story 034 captures: the piece deck screen, a battle reward with the ink row (optionally a capped shape).
 const FLOW_RUN_PIECE_DECK: String = "piece_deck"
 const FLOW_RUN_INK_OFFER: String = "ink_offer"
@@ -308,6 +312,7 @@ const FLOW_RUN_KINDS: Array[String] = [
 	FLOW_RUN_REWARD, FLOW_RUN_OVER, FLOW_RUN_WON, FLOW_RUN_MAP, FLOW_RUN_MAP3, FLOW_RUN_REST,
 	FLOW_RUN_TREASURE, FLOW_RUN_MINIBOSS_REWARD, FLOW_RUN_BOSS_REWARD, FLOW_RUN_RELIC_TREASURE,
 	FLOW_RUN_WORLD, FLOW_RUN_WORLD3, FLOW_RUN_FLOORCLEAR, FLOW_RUN_FINAL, FLOW_RUN_SHOP, FLOW_RUN_GOLD_REWARD,
+	FLOW_RUN_SECOND_WIND,
 	FLOW_RUN_PIECE_DECK, FLOW_RUN_INK_OFFER, FLOW_RUN_INK_OFFER_CAPPED,
 	FLOW_RUN_FATE, FLOW_RUN_FATE_RESUMED, FLOW_RUN_FATE_OFFER,
 	FLOW_RUN_ENDING_SPARE, FLOW_RUN_ENDING_BALANCE, FLOW_RUN_ENDING_EXECUTE,
@@ -3096,6 +3101,32 @@ func _dev_advance_to_kind(kind: String) -> bool:
 # completed like a real win (offer opened; the final match wins the run). [param _offer] is kept for
 # old callers (a run is only won by the final match now). [param hp_ratio] >= 0 ends the match at that
 # share of max HP instead of DEV_FLOW_HP.
+# DEV-ONLY (--run=second_wind): kill the enemy, then GET OUT OF THE WAY.
+#
+# _dev_win_current_match below is a shortcut: it jumps the run state to WON and calls
+# _complete_match_node directly with passive_heal = 0.0, so `match_ended` is never emitted. Nothing
+# downstream of that signal happens — no RunController._freeze_battle(), no UnitLayer victory cue,
+# and the heal is a hardcoded zero rather than the passive's own number. It is the right tool for
+# photographing the reward screen and the wrong one for photographing the moment of winning: it
+# would produce a perfectly valid-looking frame that cannot contain the thing being photographed,
+# and the blame would land on the cue.
+#
+# This leaves CombatView to notice the death itself, run its DEFAULT_END_DELAY_SEC (1.5 s), compute
+# the heal through the passive and emit `match_ended`. Slower, and the only version that photographs
+# a screen the game actually produces.
+func _dev_kill_enemy_live() -> void:
+	if _controller == null:
+		return
+	var battle: Node = _controller.get_battle()
+	var view: CombatView = null if battle == null else battle.get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
+	# NOT shortened. An earlier version set match_params["end_delay_sec"] = 0.2 to pull the cue into
+	# low frame numbers; every shot then timed out, including frame 60, which had worked before.
+	# Reverted rather than explained away: a harness change that makes the harness worse is not a
+	# harness change worth keeping, and the capture window is not worth buying with instability.
+	if view != null:
+		view.get_state().damage(CombatState.Side.ENEMY, 999999.0)
+
+
 func _dev_win_current_match(_offer: bool, hp_ratio: float = -1.0) -> void:
 	if _controller == null:
 		return
@@ -3182,6 +3213,9 @@ func _apply_dev_flow_run(kind: String) -> void:
 		FLOW_RUN_GOLD_REWARD:
 			if _dev_advance_to_kind(KIND_BATTLE):
 				_dev_win_current_match(true)
+		FLOW_RUN_SECOND_WIND:
+			if _dev_advance_to_kind(KIND_BATTLE):
+				_dev_kill_enemy_live()
 		FLOW_RUN_SHOP:
 			if _dev_gold < 0:
 				_run.gold = maxi(_run.gold, DEV_SHOP_GOLD)

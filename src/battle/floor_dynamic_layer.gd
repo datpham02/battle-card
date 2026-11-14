@@ -186,14 +186,29 @@ func charge_state() -> Array[Dictionary]:
 		return out
 	var style: Dictionary = CastVfx.travel_style("charge")
 	var steps: int = int(style.get("steps", CastFloorFx.DEFAULT_CHARGE_STEPS))
+	var state: CombatState = combat.get_state()
+	# F3: the passive decides whether this cast is one it speeds up, asked ONCE per collect with the
+	# cast's real cell count (actor.get_cells(), before locked cells are dropped below).
+	var cue: bool = combat.passive_cue_for_cells(actor.get_cells().size())
+	# F3, second attempt. The first (accent tint + 1 px outline) FAILED its readability gate: measured
+	# A/B capture showed nothing, because for phap_su the accent IS the block colour and a pixel of
+	# outline does not read at 1280x720.
+	#
+	# This passive shortens the windup, so the honest cue is the charge itself. But "faster" cannot be
+	# seen without something to compare against — a player watching one cast has no slow version
+	# beside it. So the cue changes the charge's RHYTHM, not only its speed: a qualifying cast
+	# brightens in FEWER, BIGGER steps, which is perceptible in a single cast because each jump is a
+	# visible tick rather than part of a smooth ramp. Same total time, same end state; what differs is
+	# the character of the animation, which needs no reference frame.
+	if cue:
+		steps = maxi(steps - 2, 2)
 	var step: int = CastFloorFx.charge_step(actor.get_progress(), steps)
 	if SettingsStore.shared().get_reduce_motion():
 		step = steps - 1
-	var state: CombatState = combat.get_state()
 	for cell: Vector2i in actor.get_cells():
 		if combat.is_cell_locked(cell):
 			continue
-		out.append({"cell": cell, "step": step, "steps": steps, "check": state.is_enemy_at(cell)})
+		out.append({"cell": cell, "step": step, "steps": steps, "check": state.is_enemy_at(cell), "cue": cue})
 	return out
 
 
@@ -386,12 +401,26 @@ func _draw_charge(combat: CombatView) -> void:
 		return
 	var hero_id: String = str(UnitLayer.unit_ids_for(combat.match_params).get(CombatState.Side.PLAYER, ""))
 	var block: Array[Color] = CastVfx.block_colours(hero_id)
+	# F3 (passive feedback): this is the ONE place the PLAYER's windup is drawn — TelegraphPainter
+	# draws the BOSS's telegraph, in the reserved enemy red, and must never carry a player cue.
+	# `wide_caster` speeds up casts of >= min_cells; the passive itself answers which casts qualify
+	# (CombatView.passive_cue_for_cells), so the mark cannot drift from the rule when the param is tuned.
+	# The mark is accent tint PLUS a thicker outline: the character that owns this passive is the Mage,
+	# whose accent is ember and whose block colours are ember, so hue alone would be invisible from
+	# across the board. Thickness survives what hue does not.
+	# `cue` is decided when the charge is COLLECTED, not here: _drawn_charge drops locked cells, so its
+	# size is not the cast's cell count, and the actor may have resolved by draw time.
+	var cue: bool = not _drawn_charge.is_empty() and bool((_drawn_charge[0] as Dictionary).get("cue", false))
+	if cue:
+		block = [block[0], combat.passive_accent()] as Array[Color]
 	var style: Dictionary = CastVfx.travel_style("charge")
 	var alpha: Variant = style.get("fill_alpha", [0.35, 0.75])
 	var ok: bool = alpha is Array and (alpha as Array).size() == 2
 	var lo: float = float(alpha[0]) if ok else 0.35
 	var hi: float = float(alpha[1]) if ok else 0.75
 	var px: int = int(style.get("outline_px", 2))
+	if cue:
+		px += 1  # F3: thickness, because hue alone is invisible when accent and block colour agree
 	var check_px: int = int(style.get("check_px", 2))
 	for item: Dictionary in _drawn_charge:
 		var cell_rect: Rect2i = _floor.cell_art_rect(item["cell"])

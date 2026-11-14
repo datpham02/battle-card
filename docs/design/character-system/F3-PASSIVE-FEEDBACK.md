@@ -10,10 +10,26 @@
 
 ## 1. The problem, stated precisely
 
-The audit found pillar 3 **mechanically complete and presentationally absent**: five passives, five
-genuinely different mechanisms, and **not one line of VFX, audio or icon anywhere in the repo**. A
-player cannot see a passive fire, cannot tell two characters apart by what happens on screen, and
-cannot learn what their passive does by playing.
+The audit said pillar 3 was **mechanically complete and presentationally absent** — "not one line of
+VFX, audio or icon anywhere in the repo".
+
+> **That was overstated, corrected 2026-11-14 by reading the HUD rather than the passives.** Two of
+> the five already have feedback:
+> - **`prayer`** has a real cue today: `cut_hud_view.gd:1989` `_draw_heal_flash` rises a `+N` over the
+>   player's cell and fades it (Story 037). And it is **bare text, no box** — the `back` rect is only a
+>   centring box for `_draw_centered`, nothing is filled — so it already matches the project rule and
+>   is the shape F3 would have built anyway. What `prayer` lacks is not a cue but the **link**: the
+>   burst happens on the enemy, the `+N` appears on the player, and nothing joins them.
+> - **`hunter_mark`** shows its *state*: "Rạn ×N" in the boss status strip (Story 023). What is missing
+>   is the *moment* of marking, which is what tells the player a window just opened.
+>
+> The three with genuinely nothing are `second_wind`, `wide_caster` and `quick_blade`. The audit's
+> error was inferring the absence of presentation from the absence of code *in the passive scripts* —
+> the feedback lives in the HUD, keyed off `CombatView.get_heal_flash()` and the status strip, which is
+> exactly where it belongs and exactly where I did not look.
+
+So the honest problem is narrower than stated: three passives are invisible, one is visible but
+disconnected from its cause, and one shows its result without its trigger.
 
 The naive fix — "give each passive a cue" — is wrong, and it is worth saying why before the spec.
 
@@ -59,9 +75,213 @@ reserved for HP. Each cue is tinted with its character's accent from F1.
 
 *Moment:* the victory/reward screen, not the match. The heal has already happened in `RunSession`.
 
-*Visual:* a single angular ring — a hexagon outline, not a circle — expands once from the hero sprite
-to roughly two cell widths and fades. The HP bar's **gained segment** lights in steel `#8FA8BE` for
-the same beat, then settles into the normal HP green. One pulse, ~0.6 s, no repeat.
+*Visual:* **the original plan has no home — corrected 2026-11-14 while implementing.**
+
+> It called for a ring from the hero sprite plus "the HP bar's gained segment" lighting on the victory
+> screen. There is no such thing: `reward_view.gd` draws **no HP at all** (grep: zero matches), so the
+> segment this cue was supposed to light does not exist, and the hero sprite is not on that screen
+> either. This is the third premise in this document to fail contact with the code, after the
+> TelegraphPainter ownership and the accent-equals-block-colour contrast.
+>
+> **Replacement, and it is better than what it replaces.** The player's HP after a match appears in
+> the run HUD as **text** — `run_hud_view.gd:669`, `"HP x/y"`. So the cue is a `+N` in the character's
+> accent beside that figure, held for one beat as the map returns, bare emphasised text with no box.
+> It inherits a **carrier**: text already carries HudSkin's ink outline against the background, which
+> is precisely why `PIN_BONUS_TEXT` reads and why the first `wide_caster` attempt did not. It also
+> lands where the player is already looking to learn what the match cost them.
+>
+> Needs plumbing: `passive_heal` exists at `game_flow.gd:2581-2600` and is handed to
+> `_complete_match_node`, but nothing keeps it for the HUD to show. One stored value and one accessor.
+> Both files are free.
+
+> **DECIDED 2026-11-14 — the user chose the hexagon ring on the victory screen, relayed through the
+> coordinator session (not witnessed here).** That overrides the `+N`-in-the-run-HUD replacement
+> above, which was my proposal, not theirs. The replacement text stays on the page because the reason
+> it was written has not gone away, and it is now the thing to solve rather than the thing to ship.
+>
+> **What the decision buys and what it leaves open.** The ring itself is buildable on that screen —
+> it needs no hero sprite and no HP segment, only a centre and a radius. What is *not* buildable as
+> originally specified is the part that carried the meaning: `reward_view.gd` has **zero** matches for
+> `hp`, `HP` or `heal` (re-verified 2026-11-14), so there is no figure for the ring to point at.
+>
+> By this document's own test, a ring alone **is decoration** — see *Why this shape* immediately
+> below, written before the decision and not revised to suit it. A hexagon that appears after every
+> won match, next to nothing, teaches the player that they won. They already know.
+>
+> **So one thing still has to be settled before this is implementable: what number the ring carries.**
+> The honest options are (a) draw `+N` inside or beside the ring on the victory screen — the ring
+> becomes the thing that draws the eye, the number is the content, which is what the original design
+> intended the HP segment to do; or (b) show the run's HP figure on the victory screen and let the
+> ring frame it — more plumbing, more useful beyond this cue. **(a) is the cheaper one and I
+> recommend it.** Either way `passive_heal` must reach the screen: it is computed at
+> `combat_view.gd:1563`, read at `game_flow.gd:2585`, and dropped before any view sees it — one
+> stored value and one accessor, as noted above.
+>
+> This is not a reversal of the user's choice. The ring is theirs and stays. The open part is what
+> goes inside it, which nobody has been asked yet.
+>
+> **Two corrections to the paragraphs above, from looking at an actual capture
+> (`production/qa/evidence/ui-style-2026-11-14/after-reward-shape-tiles.png`, 2026-11-14 10:34)
+> instead of reading grep output.**
+>
+> 1. **The `+N`-beside-the-run-HUD replacement was built on a misread and is withdrawn outright.**
+>    It cited `run_hud_view.gd:669` as the place a run shows `"HP x/y"`. That line is inside
+>    `_draw_between`, whose own comment says it is the between-matches panel **for a floor outside a
+>    run** — "a run floor shows the reward screen instead". A run never draws it. So the home I
+>    proposed for the cue does not exist on the path the cue fires on. That is the *fourth* premise in
+>    this document to fail contact with the code, and the second one I wrote myself while correcting
+>    the first.
+> 2. **There IS an HP figure on screen at reward time, and "zero matches in `reward_view.gd`" hid
+>    it.** The reward screen is an overlay: the battle scene stays underneath, dimmed, and with it the
+>    battle HP plate (`cut_hud_view.gd` `_draw_hp_plates`). The capture shows it top-left —
+>    "Swordsman 200/200". My grep was scoped to one file and I reported its silence as the screen's
+>    silence. **A file that does not draw something is not a screen that does not show it.**
+>
+> 3. **"The victory screen" is one view with at least three faces, and the capture happens to show
+>    the busiest.** `reward_view.gd` draws `ui.reward.title` ("CHỌN MỘT LÁ"), `ui.reward.title_treasure`
+>    ("KHO BÁU") and `ui.piece_deck.ink_title` ("Học hình") — card offer, treasure, shape offer. The
+>    screenshot above is the **shape** face: title, two large framed tiles, two buttons. The ring must
+>    work on all three, so it has to be placed against the busiest of them, not the emptiest. Judging
+>    it on a treasure screen would flatter it.
+>
+> This widens the choice rather than settling it, and the widening is the user's to judge. The plate
+> is real but it is **dimmed, in the corner, and competing with nothing — because the eye is at the
+> centre**, on "LEARN A SHAPE" and two cards that demand a decision. A ring drawn around a dimmed
+> corner plate points at the right number in the wrong place. A ring at the centre with its own `+N`
+> owns the moment but duplicates a figure already on screen. Neither is obviously right; both are now
+> stated with their cost, which the version above was not.
+
+> **SETTLED 2026-11-14, by the user, in this session — and it replaces the ring as well as the `+N`.**
+> *"lúc chiến thắng ấy là một hiệu ứng sáng lên ở char kiểu như một ánh sáng xanh rồi cái +20hp
+> hiển lên là xong"*, then **green** when asked green-vs-steel.
+>
+> **The cue is: at the victory moment, on the COMBAT screen, the hero's body lights green and
+> `+20hp` rises. Not on the reward screen, and not a hexagon ring.**
+>
+> **Why this is cheaper than everything above it on this page, including my own proposals.** The heal
+> figure already exists at `combat_view.gd:1563`, in the combat view, at match end — it is only
+> *discarded* on the way to the reward screen. Drawing the cue where the value already lives needs
+> **no plumbing at all**. Every earlier option on this page, mine included, proposed carrying that
+> number somewhere it wasn't.
+>
+> **And the hero is only visible at that moment.** On the reward screen the hero is behind the two
+> card panels; the sprite still visible on the dimmed board is the **enemy** (Mossbound Sentry, the
+> `132` beneath it is its HP). I had written that the hero "is not on that screen" — true, and for a
+> reason I had not checked. The victory moment, before the overlay, is the one point where the hero
+> is on screen unobstructed.
+>
+> **Green, and specifically `HudSkin.HP_FILL` `#58D468`** — the HP bar's own fill. Do not invent a
+> new green. The game has already taught the player that this exact colour means health.
+>
+> **The cost of green, stated rather than buried:** `giao_si`'s `prayer` heal number already draws in
+> this colour (`cut_hud_view.gd:303`, `HEAL_TEXT = HudSkin.HP_FILL`), so hue alone will not say
+> *which* character acted — the thing an accent exists to do. I recommended the steel accent
+> `#8FA8BE` for that reason and the user chose green, which buys instant legibility instead. **The
+> distinctness has to come from somewhere else, and it does: nothing else in the game lights the
+> entire hero body, and nothing else fires at the victory moment.** Shape and timing carry identity;
+> colour carries meaning. Keep both of those properties or the choice stops working.
+
+> **AMENDED 2026-11-14 — no hexagon ring at all. Relayed through the coordinator session, not
+> witnessed here:** *"cái chữ +20hp fade up lên ở gần char đó như cái HIT ấy"*, then the button
+> *"Bỏ vòng, chỉ chữ bay lên"*. So the cue is a **damage-number-style `+20hp` rising beside the
+> hero**, reusing `TEXT_DAMAGE_NUMBER` / `HudSkin.text` (`cut_hud_view.gd:2114`, `:2234`) rather than
+> anything new. **Every mention of a ring on this page is dead**, and with it the low chime that was
+> specified "on the ring's first frame" — there is no such frame now.
+>
+> **The hero really is on screen, and the mechanism is worth writing down because two sessions
+> guessed wrong about it before anyone read the code.** `run_controller.gd:386` `_on_match_ended`
+> does not tear the battle down. It calls `_freeze_battle()`, which only sets
+> `_battle.process_mode = Node.PROCESS_MODE_DISABLED` (`:401-403`) — the node stays in the tree and
+> stays drawn. The hero is standing on his cell, frozen, for `between_sec` = **3.0 s**
+> (`run_config.gd:45`, `chapters.json`). A 0.8 s rise fits with room to spare.
+>
+> ### The trap, and the correction to the fix that was proposed for it
+>
+> `PROCESS_MODE_DISABLED` stops `_process` for the **whole subtree**, so a node that animates by
+> advancing time and calling `queue_redraw()` freezes with it. The fix offered to me was "let the HUD
+> draw it, since the HUD is not inside the frozen tree."
+>
+> **That is false in this project.** `src/battle/battle.tscn:34` has `CutHudView` as a **child of
+> `Battle`**, alongside `CombatView` and the rest. Freezing `Battle` freezes the HUD too. Drawing the
+> cue "from the HUD" would produce a `+20hp` that appears and then hangs motionless for three seconds
+> — and it would do so only at runtime, looking perfectly correct in review.
+>
+> **What actually works** is the other half of the same advice: the node that animates the cue must
+> carry `PROCESS_MODE_ALWAYS`, which overrides the disabled parent. Prefer a small dedicated node for
+> it over setting `ALWAYS` on `CutHudView` as a whole — that would un-freeze every other thing the
+> HUD animates, which is the opposite of what `_freeze_battle` is for.
+>
+> *Audio:* **none.** The ring's chime is gone with the ring, and a once-per-match `+20hp` does not
+> need a cue of its own on a screen that already has victory audio. Stated rather than left blank, so
+> a later reader does not restore a sound that was dropped on purpose.
+>
+> **CLOSED 2026-11-14, witnessed here: "Có sáng xanh" — both.** The body lights green AND the
+> `+20hp` rises. The two answers that looked contradictory were answering different questions.
+>
+> ### How to build it, after reading the drawing code rather than guessing
+>
+> **The green body glow needs no new rendering code.** `unit_layer.gd:1255` `_draw_flash()` already
+> draws each unit's **current frame added over itself** on an add-blend child
+> (`_ensure_flash_layer()`, `:1241-1250`), via
+> `_draw_frame_bands(_flash, side, texture, src, feet, flip, pose, Color(1,1,1,alpha))`. The white is
+> nothing but that `Color`. **A green glow is the same call with `Color(HudSkin.HP_FILL, alpha)`**,
+> and it inherits the parts that are easy to get wrong for free: the glide, the shake offset, the
+> recoil, the pose, the facing flip — all of which the flash already matches to the sprite.
+>
+> **What does NOT come for free is the clock**, and it is the same trap as the text:
+> `unit_layer._process` (`:252-254`) is what calls `_flash.queue_redraw()`, and `_process` does not
+> run under `PROCESS_MODE_DISABLED`. At the victory moment the whole layer is frozen, so the existing
+> flash path would draw one green frame and hold it. The hit flash is additionally driven through
+> `_tick_flash_wait` in the **step** loop (`:314`), which is step-gated — the same thing that froze
+> the `hunter_mark` cue earlier in this document. **Do not reuse `_flash_left`.**
+>
+> So: one small add-blend node with `PROCESS_MODE_ALWAYS` owning its own real-time countdown, drawing
+> (a) the glow through a new **public** method on `UnitLayer` that wraps `_draw_frame_bands` — it is
+> private today — and (b) the rising `+20hp` with `TEXT_DAMAGE_NUMBER` / `HudSkin.text`. Everything
+> else is reuse.
+>
+> *(Superseded question, kept because the reasoning still applies if either half is revisited:* The user described the cue here as
+> a glow *plus* text and then chose **green** (`HudSkin.HP_FILL` `#58D468`) for it; the relayed answer
+> dropped the ring and said "only the text rises", which was answering a ring-versus-text question and
+> did not mention the glow. Those are not the same answer and this page will not pretend they are.
+> Asked, not assumed.
+
+> ### Built 2026-11-14 — written and gated, NOT yet seen on screen
+>
+> `src/battle/passive_cue_layer.gd` (new) and `src/battle/unit_layer.gd` (+104 lines, 0 removed).
+> The glow reuses `_draw_frame_bands`, the same path `_draw_flash` whitens a hit with, so the glide,
+> shake, recoil, pose and facing come along instead of being re-derived. The text uses
+> `HudSkin.text` with a new key `ui.hud.passive_heal_number` = `+%dhp`.
+>
+> `tests/unit/battle/victory_cue_test.gd`: **FAILS=0**, parse check clean.
+>
+> **What is still unproven: how it LOOKS.** No capture exists, because no demo stops in the frozen
+> window after a win — `--run=gold_reward` jumps past it to the reward screen. That needs a new dev
+> flag. Until then this is a cue that is known to animate and not known to read.
+>
+> ### The control leg nearly took the whole premise down with it
+>
+> The test's control — the same node set to `PROCESS_MODE_INHERIT`, which must FAIL to advance under
+> a frozen parent — came back **red**: it advanced. Read plainly that says the freeze trap does not
+> exist, the whole design above is unnecessary, and the control should be relaxed.
+>
+> It was wrong, and finding out took a **third instrument**: a throwaway probe of eight cases using
+> a plain node rather than the class under test. INHERIT under a `PROCESS_MODE_DISABLED` parent gets
+> **0 ticks**; `ALWAYS` runs; freezing a parent after the child is already in the tree stops it dead.
+> The premise holds exactly as written.
+>
+> The real cause, reproduced: **a node built in the first moments of `_initialize` reports
+> `can_process() == true` for a couple of frames even with a disabled parent**, because the tree has
+> not built its process lists yet. Identical code a few frames later reports `false`. The control leg
+> sat in that window. Two burnt frames fix it, and it now separates cleanly — INHERIT frozen at
+> `0.0000`, the shipped node running at `0.0207`.
+>
+> **Two things worth keeping from that.** A red control has two readings — "the gate is broken" and
+> "the premise is wrong" — and they are the same colour; only an instrument independent of both can
+> tell them apart, and the tempting move (relax the control until it is green) would have left a test
+> that passes forever while explaining itself wrongly. And this failed **loudly**: had the startup
+> window made the control *green* instead of red, nothing would ever have pointed at it, and the file
+> would be guarding something it cannot guard.
 
 *Why this shape:* the player must connect "I won" with "I got HP back". Lighting the gained segment
 is the connection; the ring is only what draws the eye to it. Without the segment highlight, the cue
@@ -79,16 +299,73 @@ changes; the cue does not grow louder with rank.
 
 *Moment:* cast start, on the player.
 
-*Visual:* **no new effect — two existing consumers of the windup already draw it.**
-`CutActor.get_progress()` (0..1, documented to reach 1 exactly when the swing resolves) is read by
-`telegraph_painter.gd:54`, which paints the telegraph at a quantized `k`, and by
-`floor_dynamic_layer.gd:182` via `CastFloorFx.charge_step(...)`. For a qualifying cast, the player's
-telegraph and charge step are drawn in ember `#E08A2E` instead of their default colour, completing
-with a one-frame snap. A non-qualifying cast is unchanged.
+*Visual:* **no new effect — the player's windup is already drawn.**
 
-Note the shape of the cue matches the mechanic: the passive makes the windup **shorter**, so the
-honest read is the telegraph filling visibly faster in a different colour — the player sees the thing
-that actually changed, not a symbol standing in for it.
+> **CORRECTION, 2026-11-14 (found while implementing).** The first version of this section named
+> `telegraph_painter.gd:54` as a second consumer of the player's windup. **It is not.** TelegraphPainter
+> draws the **BOSS's** attack telegraph on the player's half, in the reserved enemy red `#E5293B`
+> (`floor_layer.gd:146` passes `_combat.get_boss().get_actor()`). Recolouring it would have marked the
+> enemy's attack with the player's accent. The error came from grepping for `get_progress()` consumers
+> without checking whose actor each one reads. **Only one consumer draws the player's windup:**
+> `floor_dynamic_layer.gd:177`, which reads `combat.get_cut_actor()` and paints the charge steps.
+
+The charge is painted by `CastFloorFx.charge_colours(base, light, step, steps)` with
+`base`/`light` from `CastVfx.block_colours(hero_id)` — i.e. **already per-character**. For a
+qualifying cast the charge is marked; a non-qualifying one is unchanged.
+
+**Readability problem to solve, not to paper over.** Tinting the charge with the character's accent
+is nearly useless for the character that owns this passive: `phap_su`'s accent is ember `#E08A2E` and
+its block colours are ember, so accent-on-accent is invisible — the exact "can't see it from afar"
+failure the project has rejected before. So the mark must not rest on hue alone. First attempt: accent
+tint plus an **outline one pixel thicker**, on the theory that thickness survives where hue does not.
+
+> **MEASURED 2026-11-14 — that attempt FAILED the readability gate.** A/B capture at 1280×720, same
+> card (`hoa_xa`), same seed, same frame, 4 cells (cue on) against 3 cells (cue off):
+> `production/qa/evidence/character-system/f3-wide-caster/`. The only difference a viewer can see is
+> the **number of charged cells**, which is the cast's size, not the passive's mark. The accent tint
+> does nothing because it is the block colour, and +1 px of outline is imperceptible at this zoom.
+>
+> Correctness passed in the same run (`passive_cue_test`, FAILS=0) — the cue marks exactly the right
+> casts. It is simply invisible. That is precisely why these are two gates: a cue can be perfectly
+> correct and worthless, and a single "it works" would have hidden it.
+>
+> **Second attempt, 2026-11-14 — rhythm, not brightness.** The user chose "make the charge brighten
+> faster". Implemented as a change of *rhythm*, because speed alone cannot be seen: a player watching
+> one cast has no slow version beside it, which is the same structural flaw as an accent that equals
+> the block colour — nothing to compare against. A qualifying cast brightens in **2 steps instead of
+> 4**, so each jump is a visible tick rather than part of a smooth ramp, and that is perceptible in a
+> single cast because what differs is the *character* of the animation, not a quantity.
+>
+> **Risk stated before running it, and MEASURED AGAINST.** The prediction was that the qualifying
+> cast would stay *darker* for the first half (`charge_colours` ramps on `step / (steps - 1)`: 4 steps
+> → 0.00 / 0.33 / 0.67 / 1.00, 2 steps → 0.00 / 1.00) and so read as sluggish, the opposite of the
+> mechanic.
+>
+> **It did not happen, and the reason matters.** That analysis compared the legs *progress for
+> progress*. The capture compares them *frame for frame* — wall clock — and the passive shortens the
+> windup to ×0.75, so at the same frame the qualifying cast is further along. The two effects compound
+> in the right direction instead of fighting.
+>
+> **Result — the readability gate PASSES.** `production/qa/evidence/character-system/f3-wide-caster/rhythm/`,
+> same card (`hoa_xa`), same seed, frames 30/50/70/90:
+> - **Frame 30:** 4 cells (cue on) is already bright orange with strong outlines; 3 cells (cue off) is
+>   still dim brown with faint outlines. The difference is obvious at 1× without hunting for it.
+> - **Frame 50 onward:** both are at full brightness — the cue converges.
+>
+> So the mark lives in the **first half of the windup** and then stops distinguishing. That is the
+> right window rather than a limitation: it tells the player while the cast is still in flight, and it
+> leaves the end state identical, so nothing has to be unlearned. Accept as shipped; the accent tint
+> and the +1 px outline stay as harmless reinforcement, no longer load-bearing.
+>
+> **Do not reach for a brighter colour.** The next levers, in order: (1) animate — make the
+> qualifying charge step through its palette *visibly faster*, which is the mechanic itself and needs
+> no new colour; (2) change the outline's *shape*, e.g. corner ticks only, so the silhouette differs
+> rather than the hue; (3) a one-frame snap at completion. Only if all three fail does this cue need
+> something that is not already on screen — and at that point the honest answer may be that
+> `wide_caster` cannot be read from the charge at all and needs its own mark.
+
+The cue matches the mechanic either way: the passive makes the windup **shorter**, so what the player
+sees is the charge they already know completing visibly sooner — the thing that actually changed.
 
 *Why:* the player's question is never "did something happen?" — a cast is already loud. It is "was
 *this* cast the fast one?". A colour difference on the thing they are already watching answers that;
