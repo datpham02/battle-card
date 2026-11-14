@@ -1192,6 +1192,8 @@
 				},
 				"spore_cap": {
 					"id": "spore_cap",
+					"brain": "pattern",
+					"enemy": "spore_cap",
 					"name_key": "boss.spore_cap.name",
 					"desc_key": "match.spore_cap.desc",
 					"boss_max_hp": 70,
@@ -1218,6 +1220,8 @@
 				},
 				"leap_frog": {
 					"id": "leap_frog",
+					"brain": "pattern",
+					"enemy": "leap_frog",
 					"name_key": "boss.leap_frog.name",
 					"desc_key": "match.leap_frog.desc",
 					"boss_max_hp": 80,

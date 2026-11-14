@@ -1233,3 +1233,11 @@ enemy_skill.witch_rot_cloud.name,Mây Mục,Rot Cloud
 enemy_skill.witch_rot_cloud.counter,Hình L ôm lấy bạn; ra phía mở của chữ L,An L closes around you; leave by its open side
 enemy_skill.hound_mire_chase.name,Đuổi Lầy,Mire Chase
 enemy_skill.hound_mire_chase.counter,Nó lao dọc hàng và hăng hơn khi bạn đang chậm; đổi hàng,It runs the row and presses harder while you are slowed; change rows
+enemy_skill.spore_puff.name,Phun Bào Tử,Spore Puff
+enemy_skill.spore_puff.counter,Chữ thập hở bốn góc; bước chéo,The cross leaves its corners open; step diagonally
+enemy_skill.spore_regrow.name,Mọc Lại,Regrow
+enemy_skill.spore_regrow.counter,"Đánh lúc nó mọc thì mất phần hồi; nhưng mỗi đòn trúng lại rải lầy, nên dùng đòn ít ô mà mạnh","Hitting it while it regrows cancels the heal, but every hit spreads mire: use few cells, hard"
+enemy_skill.frog_leap_slam.name,Đè Nhảy,Leap Slam
+enemy_skill.frog_leap_slam.counter,Đè hai nhịp xuống đúng chỗ cũ; ra khỏi ô và đừng quay lại,It slams the same cells twice; leave them and do not come back
+enemy_skill.frog_croak.name,Tiếng Kêu,Croak
+enemy_skill.frog_croak.counter,"Ngắt lúc nó kêu, không thì nó đánh nhanh hơn 6 giây","Interrupt the croak, or it attacks faster for 6 seconds"

@@ -507,3 +507,52 @@ Sửa không phải bằng cách đảo dấu — đảo dấu cũng chỉ là p
 `hound_mire_chase` mang `weights: {player_status: {slow: 2.0}}`. Suite khẳng định con số đó **có trong dữ liệu**;
 nó **không** khẳng định planner thật sự ưu tiên kỹ năng khi hero bị chậm — weight chỉ dịch xác suất, mà một suite
 tất định không đọc được xác suất từ một lượt chạy. Header của suite nêu đúng vật cản này.
+
+## 17. Nhóm W-C — đã triển khai (2026-11-14, chưa commit)
+
+**Quái:** `spore_cap`, `leap_frog` (hai elite Đầm Lầy). ×3,5.
+
+| Kỹ năng | Damage | Hình / hiệu ứng |
+|---|---|---|
+| `spore_puff` | 8 → **28** + Độc 3 s | chữ thập phủ hero, `clip` + `min_cells 3` |
+| `spore_regrow` | 0 | hồi **12 % máu tối đa trong 3 s**, chỉ khi `hp_below 0,6`, ngắt được (stun 1,0) |
+| `frog_leap_slam` | 12 → **42**, nhịp hai 10 → **35** | 2×2 phủ hero, đè lại **đúng ô cũ** sau 1 s |
+| `frog_croak` | 0 | `haste` ×0,75 trong 6 s, ngắt được (stun 0,8) |
+
+**Suite:** `pattern_swamp_group_c_test.gd` 37 PASS, FAILS=0. Lượt xác nhận 5 suite, manifest `a6448785…` hai đầu
+→ TREE STABLE.
+
+### 17.1 `heal` lần đầu được dùng trong dữ liệu đã ship
+
+`spore_regrow` là kỹ năng đầu tiên chạm `PatternController` :1090–1098 và `CombatState.heal_key` từ dữ liệu thật.
+**Không có lần xanh nào trước để so**, nên một màu xanh ở đây nghĩa là đường heal chạy được **với hình dạng NÀY**
+(`ratio` trải trong `sec`), không phải `heal` nói chung đã ổn. Biến thể `amount` (hồi thẳng một cục) **chưa kỹ
+năng nào dùng** và suite này không che nó — ghi trong header suite.
+
+### 17.2 Ba lỗi, cả ba trong test
+
+| Dòng đỏ | Nguyên nhân |
+|---|---|
+| `croak: the cast reports haste` | `_record` **không bao giờ** ghi khoá `status`; nó chỉ có trên tín hiệu `skill_resolved`. Chân đó không thể xanh. Đúng lỗi đã mắc ở Sa Mạc với `zone_cells`. Sửa: đọc `ctrl.haste_left()` |
+| 5 chân `slam` (`[]`, `{ }`) | hero của fixture đứng ở ô 2×2 không đặt được |
+
+### 17.3 `frog_leap_slam` trên `reed_maze`: 10/17 ô — counterplay, không phải hỏng
+
+Đo bằng probe (2026-11-14): nửa sân người chơi của `reed_maze` là **hình lược** — hàng 0/2/4 đầy, hàng 1 và 3 mỗi
+hàng **một ô** (`(4,1)` và `(0,3)`). Hình 2×2 cần hai hàng kề nhau, nên:
+
+```
+min_cells=3 -> đặt được từ 10/17 ô hero
+min_cells=2 -> đặt được từ 17/17
+```
+
+Ô mặc định của fixture `(2,2)` nằm trong 7 ô không đặt được, và trong thế giới cô lập hero không di chuyển — nên
+suite nằm vĩnh viễn ở điểm chết và báo 5 dòng đỏ **trông y hệt "kỹ năng không bao giờ tung ra"**.
+
+**Giữ `min_cells: 3`.** Hạ xuống 2 làm suite xanh ngay và biến cú đè 2×2 thành thanh hai ô — tức **sửa trò chơi để
+chiều phép kiểm**. Trong trận thật hero di chuyển nên con Ếch có cơ hội; khoảng trống theo vị trí là counterplay.
+Test dời hero tới ô đặt được rồi mới phán xét.
+
+**Cùng triệu chứng, nguyên nhân ngược với §16.2.** Ở `witch_rot_cloud` dữ liệu thật sự sai (thiếu `clip`); ở đây
+dữ liệu đúng và test đứng sai chỗ. Phân biệt được **chỉ nhờ probe đếm số kế hoạch theo từng ô hero** — không nhờ
+đọc lại dữ liệu, cũng không nhờ nhìn lâu hơn vào dòng đỏ.

@@ -680,6 +680,41 @@
 			"effects": {"damage": 42},
 			"weights": {"player_status": {"slow": 2.0}},
 			"recovery_sec": 0.6, "cooldown_sec": 3.5
+		},
+		"spore_puff": {
+			"id": "spore_puff", "owner": "spore_cap", "kind": "attack", "name_key": "enemy_skill.spore_puff.name", "counter_key": "enemy_skill.spore_puff.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]], "anchor": "near_player", "must_cover_player": true, "clip": true, "min_cells": 3},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "poison"},
+			"effects": {"damage": 28, "status": {"id": "poison", "sec": 3.0, "tick_sec": 0.5, "damage": 1.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 5.0
+		},
+		"spore_regrow": {
+			"id": "spore_regrow", "owner": "spore_cap", "kind": "self", "name_key": "enemy_skill.spore_regrow.name", "counter_key": "enemy_skill.spore_regrow.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"heal": {"ratio": 0.12, "sec": 3.0}},
+			"conditions": {"hp_below": 0.6}, "weight": 1.5,
+			"recovery_sec": 0.4, "cooldown_sec": 10.0, "interruptible": true, "interrupt_stun_sec": 1.0, "counts_as_cast": false
+		},
+		"frog_leap_slam": {
+			"id": "frog_leap_slam", "owner": "leap_frog", "kind": "attack", "name_key": "enemy_skill.frog_leap_slam.name", "counter_key": "enemy_skill.frog_leap_slam.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true, "clip": true, "min_cells": 3},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "shatter"},
+			"effects": {"damage": 42},
+			"followup": {"offsets": [[0, 0]], "relative_to": "same_cells", "delay_sec": 1.0, "warning_sec": 1.0, "effects": {"damage": 35}},
+			"recovery_sec": 0.6, "cooldown_sec": 5.0
+		},
+		"frog_croak": {
+			"id": "frog_croak", "owner": "leap_frog", "kind": "self", "name_key": "enemy_skill.frog_croak.name", "counter_key": "enemy_skill.frog_croak.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"haste": {"cooldown_mult": 0.75, "sec": 6.0}},
+			"weight": 0.8,
+			"recovery_sec": 0.4, "cooldown_sec": 12.0, "interruptible": true, "interrupt_stun_sec": 0.8, "counts_as_cast": false
 		}
 	},
 	"enemies": {
@@ -778,6 +813,8 @@
 			"skills": ["lizard_tail_sweep", "lizard_drag_bite", "lizard_drag_bite_mire", "shared_sidestep"]},
 		"marsh_toad": {"tier": "normal", "arena": "bog", "skills": ["toad_tongue", "shared_sidestep"]},
 		"reed_witch": {"tier": "normal", "arena": "reed_maze", "skills": ["witch_rot_cloud", "shared_sidestep"]},
-		"bog_hound": {"tier": "normal", "arena": "bog", "skills": ["hound_mire_chase", "shared_sidestep"]}
+		"bog_hound": {"tier": "normal", "arena": "bog", "skills": ["hound_mire_chase", "shared_sidestep"]},
+		"spore_cap": {"tier": "elite", "arena": "bog", "skills": ["spore_puff", "spore_regrow", "shared_sidestep"]},
+		"leap_frog": {"tier": "elite", "arena": "reed_maze", "skills": ["frog_leap_slam", "frog_croak", "shared_sidestep"]}
 	}
 }
