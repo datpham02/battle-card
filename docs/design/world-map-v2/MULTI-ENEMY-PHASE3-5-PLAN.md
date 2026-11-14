@@ -537,9 +537,29 @@ bước 2. Demo nay dùng sheet có thật (`goblin_scout`, `ogre_king`): id quy
 **Ảnh KHÔNG chứng minh** (nói rõ để không ai suy sai): chip trạng thái (không unit nào mang trạng thái lúc chụp) và
 telegraph (demo đóng băng thời gian). Bước 3 và 5 chỉ có bằng chứng từ test headless.
 
-**Khiếm khuyết hình ảnh còn lại, chưa sửa:** khi một quái đứng ngay trước quái khác, sprite phía trước **che một phần
-thanh máu** của quái phía sau (thấy rõ ở `01`, thanh "100" của Rootling). Đúng rủi ro mà bản rà soát độc lập đã nghi.
-Nhẹ, nhưng có thật. Cần một bước tránh va cho plate nếu muốn xử lý.
+**Khiếm khuyết hình ảnh — ĐÃ SỬA 14/11, kèm đính chính chẩn đoán.**
+
+Mô tả ban đầu của tôi **sai**, và commit `a40b53bb` đã mang theo chữ sai đó: tôi viết là sprite phía trước "che một
+phần thanh máu". Xem kỹ lại `01-two-units.png` thì **không có che**: HUD vẽ trên sprite nên con số "100" hiện đầy đủ
+và đọc được.
+
+Lỗi thật là **quy gán**: thanh máu của quái phía sau rơi đúng vào **thân** con quái đứng trước nó, nên người chơi
+đọc được con số nhưng không biết nó của con nào. Mà quy gán chính là lý do duy nhất để có thanh máu riêng từng unit.
+
+Cách sửa: `hp_plate_rect_clear` (thuần, `cut_hud_view.gd`). Nếu thanh máu đặt dưới chân sẽ đè lên hộp thân của một
+unit **gần camera hơn**, nó được nâng lên **trên đầu chính unit đó** thay vì đẩy xuống sâu hơn vào unit kia. Hộp thân
+dùng lại đúng cách xấp xỉ mà `corner_label_blockers` đã dùng, không bịa cách mới. Unit phía sau không bao giờ là vật
+cản, vì nó được vẽ trước. Trận 1 quái: hai thân nằm hai nửa sân nên không bao giờ giao nhau, kết quả y hệt trước.
+
+**Kết quả (14/11, khe yên tĩnh do monster-skills nhường):** `multi_enemy_hud_test` 39 PASS, 0 FAIL, 0 lỗi script,
+trong đó 6 phép kiểm cho riêng `hp_plate_rect_clear`. Ảnh so sánh trong `production/qa/evidence/multi-enemy/`:
+
+| Trước | Sau |
+|---|---|
+| `01-two-units.png` — số "100" của con sau nằm trên ngực con goblin | `03-two-units-after.png` — "132" lên trên đầu con sau, "60" dưới chân goblin |
+| `02-three-units.png` | `04-three-units-after.png` — 3 số, 3 vị trí, không số nào chạm thân con khác |
+
+Ảnh cũ **giữ nguyên** làm bản "trước"; ảnh mới là tệp riêng, không ghi đè.
 
 **Chưa làm, ngoài phạm vi đã duyệt:** `overlay_layer.cast_travel_now(side)` vẫn chỉ hoạt hoạ một đòn bay của phe địch;
 `run_hud_view.boss_swing_line()` vẫn một dòng cho một boss; Phase 5 (trait theo unit) chưa bắt đầu.

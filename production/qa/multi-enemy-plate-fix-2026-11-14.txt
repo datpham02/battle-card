@@ -1,0 +1,14 @@
+import 09:14:32
+import exit=0
+hud: FAILS=0 PASSES=39 se=0
+PASS plate: with nothing in front it is exactly the old rect
+PASS plate: a nearer unit moves it
+PASS plate: it moves ABOVE its own unit, not further down onto the other
+PASS plate: it stays centred on its own unit and keeps its width
+PASS plate: the moved rect really clears the body it hit
+PASS plate: a unit behind is not treated as a blocker
+FAILS=0 PASSES=39
+capture multi_two exit=0
+capture multi_three exit=0
+118088 production/qa/evidence/multi-enemy/03-two-units-after.png
+121341 production/qa/evidence/multi-enemy/04-three-units-after.png

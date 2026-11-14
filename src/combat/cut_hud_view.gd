@@ -2302,12 +2302,27 @@ func _draw_hp_plates(vp: Vector2) -> void:
 	# anchored on its own unit's feet, so two units never share one. One enemy unit = the old pair, unchanged.
 	var keys: Array[int] = [CombatState.Side.PLAYER]
 	keys.append_array(state.enemy_keys())
+	# The body box each unit is approximated by, the same one corner_label_blockers uses.
+	var cell_size: Vector2 = _bg().cell_size()
+	var body := Vector2(cell_size.x * CORNER_LABEL_BODY_W, cell_size.y * CORNER_LABEL_BODY_H)
+	var feet_of: Dictionary = {}
+	for k: int in keys:
+		feet_of[k] = _unit_feet_screen(vp, k, state)
 	for side: int in keys:
 		var hp: float = state.hp_of(side)
 		if hp <= 0.0 or not _hp_plate_on(side):
 			continue
 		var text: String = str(ceili(hp))
-		var rect: Rect2 = hp_plate_rect(_unit_feet_screen(vp, side, state), HudSkin.text_width(text, HP_PLATE_FONT, true))
+		var feet: Vector2 = feet_of[side]
+		# Only a unit NEARER the camera can cover this one's plate; a unit behind is drawn before it and cannot.
+		var blockers: Array[Rect2] = []
+		for other: int in keys:
+			if other == side:
+				continue
+			var f: Vector2 = feet_of[other]
+			if f.y > feet.y:
+				blockers.append(Rect2(f - Vector2(body.x * 0.5, body.y), body))
+		var rect: Rect2 = hp_plate_rect_clear(feet, HudSkin.text_width(text, HP_PLATE_FONT, true), body, blockers)
 		var is_player: bool = side == CombatState.Side.PLAYER
 		HudSkin.text(self, Vector2(rect.position.x, floorf(rect.get_center().y + HP_PLATE_FONT * 0.36)), text, HP_PLATE_FONT, HudSkin.TEXT if is_player else HudSkin.IVORY, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true)
 
@@ -2318,6 +2333,21 @@ func _draw_hp_plates(vp: Vector2) -> void:
 static func hp_plate_rect(feet: Vector2, text_w: float) -> Rect2:
 	var w: float = ceilf(maxf(text_w + HP_PLATE_PAD_X * 2.0, HP_PLATE_MIN_W))
 	return Rect2(floorf(feet.x - w * 0.5), floorf(feet.y + HP_PLATE_GAP), w, HP_PLATE_HEIGHT)
+
+
+## Multi-enemy (2026-11-14): the same plate, moved above the unit's own head when it would otherwise land on the
+## body of a unit standing NEARER the camera. Pure. [param body] is the body box every unit is approximated by (the
+## one [method corner_label_blockers] already uses), [param blockers] the body rects of the nearer units.
+## The plate is NOT hidden or shrunk: a number that lands on another unit's chest is still readable, but the player
+## cannot tell whose it is, and attribution is the whole point of a per-unit plate. With one enemy unit the two
+## bodies are on opposite halves and never intersect, so the result is [method hp_plate_rect] unchanged.
+static func hp_plate_rect_clear(feet: Vector2, text_w: float, body: Vector2, blockers: Array[Rect2]) -> Rect2:
+	var below: Rect2 = hp_plate_rect(feet, text_w)
+	for b: Rect2 in blockers:
+		if below.intersects(b):
+			return Rect2(below.position.x, floorf(feet.y - body.y - HP_PLATE_HEIGHT - HP_PLATE_GAP),
+				below.size.x, HP_PLATE_HEIGHT)
+	return below
 
 
 # Screen position of the feet of [param side]'s unit (the battle canvas's anchor; the bottom-centre of

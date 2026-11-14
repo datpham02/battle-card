@@ -32,6 +32,7 @@ func _initialize() -> void:
 	await _test_feedback_split_between_units()
 	await _test_two_attackers_keep_their_markers()
 	await _test_telegraph_states_list()
+	_test_hp_plate_avoids_a_nearer_unit()
 	await _test_single_unit_is_unchanged()
 	await process_frame
 	print("FAILS=%d PASSES=%d" % [fails, passes])
@@ -271,6 +272,37 @@ func _test_telegraph_states_list() -> void:
 	check(max_seen[0] >= 1, "telegraph: at least one unit telegraphed while the match ran", str(max_seen[0]))
 	layer.free()
 	_drop(holder)
+
+
+# --- step 2 follow-up: a plate must stay attached to its own unit ------------------------------------------------
+
+# 2026-11-14: with two units in the same column the back unit's number landed on the FRONT unit's chest. It was
+# never hidden — the HUD draws over the sprites — but a number sitting on another unit's body cannot be read as
+# belonging to the unit behind it, and attribution is the only reason a per-unit plate exists.
+func _test_hp_plate_avoids_a_nearer_unit() -> void:
+	var body := Vector2(40.0, 60.0)
+	var feet := Vector2(200.0, 300.0)
+	var plain: Rect2 = CutHudView.hp_plate_rect(feet, 24.0)
+
+	var none: Array[Rect2] = []
+	check(CutHudView.hp_plate_rect_clear(feet, 24.0, body, none) == plain,
+		"plate: with nothing in front it is exactly the old rect", str(plain))
+
+	# A unit one row nearer the camera: its body box reaches up past these feet, so the plate below them lands on it.
+	var nearer := Vector2(200.0, 355.0)
+	var blocked: Array[Rect2] = [Rect2(nearer - Vector2(body.x * 0.5, body.y), body)]
+	var lifted: Rect2 = CutHudView.hp_plate_rect_clear(feet, 24.0, body, blocked)
+	check(lifted != plain, "plate: a nearer unit moves it", "%s vs %s" % [str(lifted), str(plain)])
+	check(lifted.position.y < feet.y, "plate: it moves ABOVE its own unit, not further down onto the other",
+		str(lifted.position.y))
+	check(is_equal_approx(lifted.position.x, plain.position.x) and is_equal_approx(lifted.size.x, plain.size.x),
+		"plate: it stays centred on its own unit and keeps its width", str(lifted))
+	check(not lifted.intersects(blocked[0]), "plate: the moved rect really clears the body it hit", str(lifted))
+
+	# A unit the same distance away or further back is drawn behind and can never cover the plate.
+	var behind: Array[Rect2] = [Rect2(Vector2(200.0, 240.0) - Vector2(body.x * 0.5, body.y), body)]
+	check(CutHudView.hp_plate_rect_clear(feet, 24.0, body, behind) == plain,
+		"plate: a unit behind is not treated as a blocker", str(behind[0]))
 
 
 # --- the 1v1 match must be untouched ---------------------------------------------------------------------------
