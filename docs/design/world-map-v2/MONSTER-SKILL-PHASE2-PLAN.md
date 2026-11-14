@@ -414,3 +414,96 @@ damage" nay nói rõ đó là TỔNG máu đã mất và vì sao quy được v�
 Nhóm A–C còn một đính chính nữa: vân tay cây mã ở các nhóm đó dùng `git status --porcelain | md5sum`, **băm tên
 file chứ không băm nội dung** — không phát hiện được sửa nội dung một file vốn đã ở trạng thái ` M`. Từ nhóm D
 dùng manifest `git hash-object`.
+
+## 15. Nhóm W-A — đã triển khai (2026-11-14, chưa commit)
+
+**Quái:** `bog_rat`, `mire_slug`, `swamp_lizard`. Nhân ×3,5 như cả vùng Đầm Lầy.
+
+| Kỹ năng | Damage (thiết kế → data) | Hình |
+|---|---|---|
+| `rat_gnaw` | 6 → **21** + Độc 2 s | 1 ô trên hero |
+| `slug_slime_trail` | 0 (chỉ vùng) | 2 ô CẠNH hero, lầy 4 s |
+| `lizard_tail_sweep` | 9 → **32** + Chậm 1,5 s | thanh 3 ô phủ hero |
+| `lizard_drag_bite` | 14 → **49** + Trói 0,7 s | 1 ô, có cổng chặn |
+
+Độc giữ 1,0/nhịp **không nhân** — khớp cách `scorpion_venom_sting` đã ship (thiết kế 1,5/nhịp → data 1.5).
+
+### 15.1 Cắn Lôi tách làm hai entry — engine không viết được điều kiện HOẶC
+
+§4.4 ghi cổng chặn là `player_status: slow` **HOẶC** `player_on_zone: mire`. `_conditions_ok`
+(pattern_controller.gd:575–600) **AND tất cả các key**; "bất kỳ cái nào" chỉ áp dụng *bên trong* một key. Nên
+điều kiện HOẶC giữa hai key khác nhau không viết được trong một skill.
+
+Người dùng chốt (2026-11-14): **giữ hai entry** — `lizard_drag_bite` (gated `slow`) và `lizard_drag_bite_mire`
+(gated `mire`), **chung `name_key` và `counter_key`**, cùng damage. Người chơi thấy một kỹ năng, một luật.
+
+Phương án bị loại: hạ cổng chặn xuống thành `weights`. Nó gọn hơn nhưng khiến Cắn Lôi nổ vào người chơi không
+chậm cũng không trong lầy — tức **luật mà kỹ năng dạy trở thành sai**, và bản sắc Thằn Lằn ("đừng để bị chậm gần
+nó") sụp theo.
+
+Ghi vào §13 như việc engine thứ tư cần người dùng quyết: `conditions` không có khối `any`.
+
+### 15.2 Cổng chặn phải kiểm CẢ HAI chiều
+
+`test_drag_bite_is_gated` có ba chân: người chơi sạch chạy 24 giây **không ăn phát nào**; người chơi bị chậm thì
+entry `slow` nổ; người chơi đứng trong lầy thì entry `mire` nổ.
+
+Chỉ chân thứ nhất thì một cổng chặn **hỏng tới mức không bao giờ chọn được kỹ năng** cũng xanh y hệt. Chỉ hai chân
+sau thì một kỹ năng **không có cổng nào** cũng xanh y hệt. Ba chân mới ràng được cả hai phía.
+
+---
+
+## 16. Nhóm W-B — đã triển khai (2026-11-14, chưa commit)
+
+**Quái:** `marsh_toad`, `reed_witch`, `bog_hound`. ×3,5.
+
+| Kỹ năng | Damage | Hình |
+|---|---|---|
+| `toad_tongue` | 10 → **35** + kéo 1 ô | lưỡi DỌC 2 ô theo cột hero |
+| `witch_rot_cloud` | 8 → **28** + Độc 3 s | chữ L 3 ô, hero ở góc |
+| `hound_mire_chase` | 12 → **42** | làn dọc hàng hero, weight ×2 khi hero Chậm |
+
+**Suite:** `pattern_swamp_group_a_test` 38 PASS, `pattern_swamp_group_b_test` 30 PASS, cả hai FAILS=0.
+Lượt xác nhận chạy kèm `pattern_sands_group_a_test` (52) và `pattern_sands_fairness_test` (91); manifest
+`f43dbf5a…` giống nhau hai đầu → TREE STABLE.
+
+### 16.1 Lỗi trục `column_of_player` xuất hiện LẦN THỨ BA
+
+Bản thiết kế §4.4 in `toad_tongue` là `[[0,0],[0,1]]`. Trên `column_of_player`, planner map
+`Vector2i(player.x - off.y, start + off.x)` (pattern_planner.gd:87): **`off.x` đi XUỐNG cột, `off.y` đi NGANG**.
+Nên `[[0,0],[0,1]]` tạo ra một **cặp ô nằm ngang**.
+
+Ba lần cùng một cặp chữ số: `eater_ember_belch` (Hỏa Ngục), `scarab_spear` (đã ship ở S-B, sửa ở §12.1), và giờ là
+bản thiết kế in lại cho Cóc Đầm. Data ở đây **lệch khỏi tài liệu có chủ ý**: `[[0,0],[1,0]]`, và `sw_group_b.py`
+tự kiểm offsets **trên file đã ghi** chứ không tin chuỗi literal.
+
+Leg kiểm trục đòi một cú tung **2 ô không bị cắt** trước khi phán xét — không có điều kiện đó, một cú bị cắt còn
+1 ô làm câu "mọi ô cùng cột với hero" **đúng hiển nhiên**, và đó đúng là cách `scarab_spear` qua được test đầu
+tiên rồi ship ra.
+
+### 16.2 `witch_rot_cloud` thiếu `clip` → kỹ năng không bao giờ tung ra
+
+Trong `_add_plan` (pattern_planner.gd), nếu pattern **không** có `clip` thì chỉ cần **một** ô rơi ngoài nửa sân
+người chơi là **cả kế hoạch bị bỏ**. Trên `reed_maze` (lưới khuyết ô) hình L ba ô rụng ở cả bốn hướng xoay, nên
+Mây Mục không tung được lần nào trong 8 giây.
+
+`_cfg.problems` **rỗng** suốt — dữ liệu hợp lệ hoàn hảo theo bộ kiểm cấu hình. **Một kỹ năng hợp lệ mà không bao
+giờ nổ trông y hệt một kỹ năng chưa tới lượt.** Đã thêm `clip: true, min_cells: 2`.
+
+Quy tắc rút ra cho các nhóm sau: **mọi pattern từ 3 ô trở lên trên arena có lưới khuyết (`reed_maze`, `bog` var)
+phải có `clip` + `min_cells`**, trừ khi có lý do rõ ràng để muốn nó bị bỏ qua.
+
+### 16.3 Phép khẳng định về cú kéo không được mã hoá hướng bàn cờ
+
+Chân test đầu tiên viết `after.x <= before.x` — tức mã hoá **phỏng đoán của tác giả về hướng bàn** thành luật.
+`CutEffects.pull_toward` kéo hero về phía **ô của kẻ tung đòn**, bên nào ở x lớn hơn là tuỳ bàn, nên
+`(2,1) → (3,1)` là hành vi ĐÚNG và chân test sai.
+
+Sửa không phải bằng cách đảo dấu — đảo dấu cũng chỉ là phỏng đoán ngược lại và sẽ đỏ trên arena khác. Giờ nó đo
+**khoảng cách tới kẻ tung đòn không được tăng**.
+
+### 16.4 Điều suite W-B KHÔNG chứng minh
+
+`hound_mire_chase` mang `weights: {player_status: {slow: 2.0}}`. Suite khẳng định con số đó **có trong dữ liệu**;
+nó **không** khẳng định planner thật sự ưu tiên kỹ năng khi hero bị chậm — weight chỉ dịch xác suất, mà một suite
+tất định không đọc được xác suất từ một lượt chạy. Header của suite nêu đúng vật cản này.

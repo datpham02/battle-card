@@ -1072,6 +1072,8 @@
 			"matches": {
 				"bog_rat": {
 					"id": "bog_rat",
+					"brain": "pattern",
+					"enemy": "bog_rat",
 					"name_key": "boss.bog_rat.name",
 					"boss_max_hp": 88,
 					"brain_set": "cautious",
@@ -1086,6 +1088,8 @@
 				},
 				"mire_slug": {
 					"id": "mire_slug",
+					"brain": "pattern",
+					"enemy": "mire_slug",
 					"name_key": "boss.mire_slug.name",
 					"desc_key": "match.mire_slug.desc",
 					"boss_max_hp": 104,
@@ -1102,6 +1106,8 @@
 				},
 				"swamp_lizard": {
 					"id": "swamp_lizard",
+					"brain": "pattern",
+					"enemy": "swamp_lizard",
 					"name_key": "boss.swamp_lizard.name",
 					"boss_max_hp": 112,
 					"brain_set": "balanced",
@@ -1121,6 +1127,8 @@
 				},
 				"marsh_toad": {
 					"id": "marsh_toad",
+					"brain": "pattern",
+					"enemy": "marsh_toad",
 					"name_key": "boss.marsh_toad.name",
 					"boss_max_hp": 126,
 					"brain_set": "balanced",
@@ -1136,6 +1144,8 @@
 				},
 				"reed_witch": {
 					"id": "reed_witch",
+					"brain": "pattern",
+					"enemy": "reed_witch",
 					"name_key": "boss.reed_witch.name",
 					"boss_max_hp": 138,
 					"brain_set": "balanced",
@@ -1159,6 +1169,8 @@
 				},
 				"bog_hound": {
 					"id": "bog_hound",
+					"brain": "pattern",
+					"enemy": "bog_hound",
 					"name_key": "boss.bog_hound.name",
 					"boss_max_hp": 150,
 					"brain_set": "balanced",

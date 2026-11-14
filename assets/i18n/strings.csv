@@ -1218,3 +1218,17 @@ enemy_skill.sphinx_bury.name,Chôn Cát,Bury
 enemy_skill.sphinx_bury.counter,Hai ô cạnh bạn bị lấp; đừng để bị dồn vào góc,Two cells beside you fill in; do not get cornered
 enemy_skill.sphinx_sandfall.name,Cát Đổ,Sandfall
 enemy_skill.sphinx_sandfall.counter,"Đổ hai nhịp, lệch một hàng; ra phía không có làn chờ","Two beats, one row apart; leave by the side with no waiting lane"
+enemy_skill.rat_gnaw.name,Gặm,Gnaw
+enemy_skill.rat_gnaw.counter,Bước đi; độc làm mới chứ không chồng nên hai con không gấp đôi,"Step away; the venom refreshes, never stacks"
+enemy_skill.slug_slime_trail.name,Vệt Nhớt,Slime Trail
+enemy_skill.slug_slime_trail.counter,"Hai ô cạnh bạn hoá lầy; đừng bước vào, bước ra khỏi lầy rất chậm",Two cells beside you turn to mire; stepping out of it is slow
+enemy_skill.lizard_tail_sweep.name,Quật Đuôi,Tail Sweep
+enemy_skill.lizard_tail_sweep.counter,"Thanh ba ô; bước vuông góc, dính là bị chậm","A three-cell bar; step sideways, a hit slows you"
+enemy_skill.lizard_drag_bite.name,Cắn Lôi,Drag Bite
+enemy_skill.lizard_drag_bite.counter,Nó chỉ cắn khi bạn đang chậm hoặc đứng trong lầy; ra khỏi lầy trước,It bites only while you are slowed or standing in mire; leave the mire first
+enemy_skill.toad_tongue.name,Lưỡi Kéo,Tongue Pull
+enemy_skill.toad_tongue.counter,"Lưỡi đâm dọc hai ô; bước ngang, và đừng đứng trước ô lầy","The tongue strikes two cells lengthwise; step sideways, and do not stand in front of mire"
+enemy_skill.witch_rot_cloud.name,Mây Mục,Rot Cloud
+enemy_skill.witch_rot_cloud.counter,Hình L ôm lấy bạn; ra phía mở của chữ L,An L closes around you; leave by its open side
+enemy_skill.hound_mire_chase.name,Đuổi Lầy,Mire Chase
+enemy_skill.hound_mire_chase.counter,Nó lao dọc hàng và hăng hơn khi bạn đang chậm; đổi hàng,It runs the row and presses harder while you are slowed; change rows

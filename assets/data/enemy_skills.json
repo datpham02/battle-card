@@ -612,6 +612,74 @@
 			"followup": {"offsets": [[0, 1]], "rotations": [0, 180], "relative_to": "first_shift", "show_with_first": true,
 				"warning_sec": 0.75, "effects": {"damage": 30}},
 			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
+		},
+		"rat_gnaw": {
+			"id": "rat_gnaw", "owner": "bog_rat", "kind": "attack", "name_key": "enemy_skill.rat_gnaw.name", "counter_key": "enemy_skill.rat_gnaw.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "poison"},
+			"effects": {"damage": 21, "status": {"id": "poison", "sec": 2.0, "tick_sec": 0.5, "damage": 1.0}},
+			"weights": {"allies_alive": 1.5},
+			"recovery_sec": 0.5, "cooldown_sec": 2.4
+		},
+		"slug_slime_trail": {
+			"id": "slug_slime_trail", "owner": "mire_slug", "kind": "attack", "name_key": "enemy_skill.slug_slime_trail.name", "counter_key": "enemy_skill.slug_slime_trail.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
+			"windup_sec": 0.6, "warning_sec": 1.0,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "poison"},
+			"effects": {"zone": {"id": "mire", "sec": 4.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 5.0
+		},
+		"lizard_tail_sweep": {
+			"id": "lizard_tail_sweep", "owner": "swamp_lizard", "kind": "attack", "name_key": "enemy_skill.lizard_tail_sweep.name", "counter_key": "enemy_skill.lizard_tail_sweep.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.5, "warning_sec": 1.1,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 32, "status": {"id": "slow", "sec": 1.5}},
+			"recovery_sec": 0.6, "cooldown_sec": 3.5
+		},
+		"lizard_drag_bite": {
+			"id": "lizard_drag_bite", "owner": "swamp_lizard", "kind": "attack", "name_key": "enemy_skill.lizard_drag_bite.name", "counter_key": "enemy_skill.lizard_drag_bite.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 1.0,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "slash"},
+			"effects": {"damage": 49, "status": {"id": "root", "sec": 0.7}},
+			"conditions": {"player_status": ["slow"]}, "weight": 2.0,
+			"recovery_sec": 0.6, "cooldown_sec": 4.0
+		},
+		"lizard_drag_bite_mire": {
+			"id": "lizard_drag_bite_mire", "owner": "swamp_lizard", "kind": "attack", "name_key": "enemy_skill.lizard_drag_bite.name", "counter_key": "enemy_skill.lizard_drag_bite.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 1.0,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "slash"},
+			"effects": {"damage": 49, "status": {"id": "root", "sec": 0.7}},
+			"conditions": {"player_on_zone": ["mire"]}, "weight": 2.0,
+			"recovery_sec": 0.6, "cooldown_sec": 4.0
+		},
+		"toad_tongue": {
+			"id": "toad_tongue", "owner": "marsh_toad", "kind": "attack", "name_key": "enemy_skill.toad_tongue.name", "counter_key": "enemy_skill.toad_tongue.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "column_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.6, "warning_sec": 1.1,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "knockback"},
+			"effects": {"damage": 35, "pull": {"cells": 1}},
+			"recovery_sec": 0.6, "cooldown_sec": 4.5
+		},
+		"witch_rot_cloud": {
+			"id": "witch_rot_cloud", "owner": "reed_witch", "kind": "attack", "name_key": "enemy_skill.witch_rot_cloud.name", "counter_key": "enemy_skill.witch_rot_cloud.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1]], "anchor": "on_player", "rotations": [0, 90, 180, 270], "clip": true, "min_cells": 2},
+			"windup_sec": 0.5, "warning_sec": 1.1,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "poison"},
+			"effects": {"damage": 28, "status": {"id": "poison", "sec": 3.0, "tick_sec": 0.5, "damage": 1.5}},
+			"recovery_sec": 0.6, "cooldown_sec": 4.0
+		},
+		"hound_mire_chase": {
+			"id": "hound_mire_chase", "owner": "bog_hound", "kind": "attack", "name_key": "enemy_skill.hound_mire_chase.name", "counter_key": "enemy_skill.hound_mire_chase.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "slash"},
+			"effects": {"damage": 42},
+			"weights": {"player_status": {"slow": 2.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 3.5
 		}
 	},
 	"enemies": {
@@ -702,6 +770,14 @@
 					"every_nth": {"skill": "sphinx_sandfall", "n": 3},
 					"traits": [{"id": "sandstorm", "params": {"interval_sec": 9.0}}],
 					"transition": {"sec": 1.5, "on_enter": [{"skill": "sphinx_sandfall"}]}}
-			]}
+			]},
+		"bog_rat": {"tier": "normal", "arena": "bog", "skills": ["rat_gnaw", "shared_sidestep"]},
+		"mire_slug": {"tier": "normal", "arena": "bog", "skills": ["slug_slime_trail", "shared_sidestep"],
+			"overrides": {"shared_sidestep": {"weight": 0.3, "cooldown_sec": 7.0}}},
+		"swamp_lizard": {"tier": "normal", "arena": "reed_maze",
+			"skills": ["lizard_tail_sweep", "lizard_drag_bite", "lizard_drag_bite_mire", "shared_sidestep"]},
+		"marsh_toad": {"tier": "normal", "arena": "bog", "skills": ["toad_tongue", "shared_sidestep"]},
+		"reed_witch": {"tier": "normal", "arena": "reed_maze", "skills": ["witch_rot_cloud", "shared_sidestep"]},
+		"bog_hound": {"tier": "normal", "arena": "bog", "skills": ["hound_mire_chase", "shared_sidestep"]}
 	}
 }
