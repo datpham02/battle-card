@@ -1335,6 +1335,8 @@
 			"matches": {
 				"dune_jackal": {
 					"id": "dune_jackal",
+					"brain": "pattern",
+					"enemy": "dune_jackal",
 					"name_key": "boss.dune_jackal.name",
 					"boss_max_hp": 90,
 					"brain_set": "cautious",
@@ -1349,6 +1351,8 @@
 				},
 				"sand_beetle": {
 					"id": "sand_beetle",
+					"brain": "pattern",
+					"enemy": "sand_beetle",
 					"name_key": "boss.sand_beetle.name",
 					"boss_max_hp": 106,
 					"brain_set": "balanced",
@@ -1364,6 +1368,8 @@
 				},
 				"dust_nomad": {
 					"id": "dust_nomad",
+					"brain": "pattern",
+					"enemy": "dust_nomad",
 					"name_key": "boss.dust_nomad.name",
 					"boss_max_hp": 116,
 					"brain_set": "balanced",
@@ -1378,6 +1384,8 @@
 				},
 				"mirage_sprite": {
 					"id": "mirage_sprite",
+					"brain": "pattern",
+					"enemy": "mirage_sprite",
 					"name_key": "boss.mirage_sprite.name",
 					"boss_max_hp": 124,
 					"brain_set": "cautious",
@@ -1396,6 +1404,8 @@
 				},
 				"scarab_guard": {
 					"id": "scarab_guard",
+					"brain": "pattern",
+					"enemy": "scarab_guard",
 					"name_key": "boss.scarab_guard.name",
 					"boss_max_hp": 140,
 					"brain_set": "balanced",
@@ -1412,6 +1422,8 @@
 				},
 				"sun_archer": {
 					"id": "sun_archer",
+					"brain": "pattern",
+					"enemy": "sun_archer",
 					"name_key": "boss.sun_archer.name",
 					"boss_max_hp": 152,
 					"brain_set": "balanced",
@@ -1433,6 +1445,8 @@
 				},
 				"sand_burrower": {
 					"id": "sand_burrower",
+					"brain": "pattern",
+					"enemy": "sand_burrower",
 					"name_key": "boss.sand_burrower.name",
 					"desc_key": "match.sand_burrower.desc",
 					"boss_max_hp": 84,
@@ -1459,6 +1473,8 @@
 				},
 				"scorpion": {
 					"id": "scorpion",
+					"brain": "pattern",
+					"enemy": "scorpion",
 					"name_key": "boss.scorpion.name",
 					"desc_key": "match.scorpion.desc",
 					"boss_max_hp": 96,
@@ -1484,6 +1500,8 @@
 				},
 				"sand_sphinx": {
 					"id": "sand_sphinx",
+					"brain": "pattern",
+					"enemy": "sand_sphinx",
 					"name_key": "boss.sand_sphinx.name",
 					"desc_key": "match.sand_sphinx.desc",
 					"boss_max_hp": 175,

@@ -469,6 +469,149 @@
 			"followup": {"relative_to": "same_cells", "delay_sec": 1.0, "warning_sec": 1.0,
 				"effects": {"damage": 35, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}}},
 			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
+		},
+		"jackal_pack_nip": {
+			"id": "jackal_pack_nip", "owner": "dune_jackal", "kind": "attack", "name_key": "enemy_skill.jackal_pack_nip.name", "counter_key": "enemy_skill.jackal_pack_nip.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 18},
+			"followup": {"relative_to": "player", "delay_sec": 0.0, "warning_sec": 0.75,
+				"effects": {"damage": 15}},
+			"recovery_sec": 0.5, "cooldown_sec": 2.8, "weights": {"allies_alive": 1.5}
+		},
+		"beetle_sand_spray": {
+			"id": "beetle_sand_spray", "owner": "sand_beetle", "kind": "attack", "name_key": "enemy_skill.beetle_sand_spray.name", "counter_key": "enemy_skill.beetle_sand_spray.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "shatter"},
+			"effects": {"damage": 20, "zone": {"id": "sand", "sec": 3.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 4.0
+		},
+		"nomad_ambush": {
+			"id": "nomad_ambush", "owner": "dust_nomad", "kind": "attack", "name_key": "enemy_skill.nomad_ambush.name", "counter_key": "enemy_skill.nomad_ambush.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [-1, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.5, "warning_sec": 1.1,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 30},
+			"conditions": {"player_still_sec": 1.2},
+			"recovery_sec": 0.6, "cooldown_sec": 4.0, "weight": 2.0
+		},
+		"nomad_veil_step": {
+			"id": "nomad_veil_step", "owner": "dust_nomad", "kind": "self", "name_key": "enemy_skill.nomad_veil_step.name", "counter_key": "enemy_skill.nomad_veil_step.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"move": {"to": "far_cell"}, "evade": {"sec": 0.6}},
+			"recovery_sec": 0.2, "cooldown_sec": 7.0, "weight": 0.8, "counts_as_cast": false
+		},
+		"sprite_mirage": {
+			"id": "sprite_mirage", "owner": "mirage_sprite", "kind": "marker", "name_key": "enemy_skill.sprite_mirage.name", "counter_key": "enemy_skill.sprite_mirage.counter",
+			"pattern": {"anchor": "enemy_half_empty", "count": 1, "row": "player"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "none"},
+			"effects": {"marker": {"kind": "mirage", "life_sec": 8.0, "break_min_cells": 1}},
+			"recovery_sec": 0.4, "cooldown_sec": 6.0
+		},
+		"sprite_shimmer_lash": {
+			"id": "sprite_shimmer_lash", "owner": "mirage_sprite", "kind": "attack", "name_key": "enemy_skill.sprite_shimmer_lash.name", "counter_key": "enemy_skill.sprite_shimmer_lash.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "row_of_anchor", "start": "front", "clip": true, "min_cells": 2},
+			"windup_sec": 0.5, "warning_sec": 1.0,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 25, "status": {"id": "fragile", "stacks": 1}},
+			"conditions": {"requires_anchor": 1},
+			"recovery_sec": 0.5, "cooldown_sec": 3.2
+		},
+		"scarab_shield_wall": {
+			"id": "scarab_shield_wall", "owner": "scarab_guard", "kind": "self", "name_key": "enemy_skill.scarab_shield_wall.name", "counter_key": "enemy_skill.scarab_shield_wall.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.6,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"guard": {"amount": 4, "sec": 4}},
+			"recovery_sec": 0.4, "cooldown_sec": 9.0, "weight": 0.3, "weights": {"allies_alive": 4.0}, "interrupt_stun_sec": 0.8
+		},
+		"scarab_spear": {
+			"id": "scarab_spear", "owner": "scarab_guard", "kind": "attack", "name_key": "enemy_skill.scarab_spear.name", "counter_key": "enemy_skill.scarab_spear.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "column_of_player", "clip": true, "min_cells": 1},
+			"windup_sec": 0.5, "warning_sec": 1.1,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 30},
+			"recovery_sec": 0.5, "cooldown_sec": 3.4
+		},
+		"archer_blinding_arc": {
+			"id": "archer_blinding_arc", "owner": "sun_archer", "kind": "attack", "name_key": "enemy_skill.archer_blinding_arc.name", "counter_key": "enemy_skill.archer_blinding_arc.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]], "anchor": "near_player", "must_cover_player": true},
+			"windup_sec": 0.6, "warning_sec": 1.3,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "slash"},
+			"effects": {"damage": 25, "status": {"id": "slow", "sec": 1.5, "step_mult": 1.3}},
+			"recovery_sec": 0.6, "cooldown_sec": 4.0
+		},
+		"burrower_undertow": {
+			"id": "burrower_undertow", "owner": "sand_burrower", "kind": "attack", "name_key": "enemy_skill.burrower_undertow.name", "counter_key": "enemy_skill.burrower_undertow.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "column_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "shatter"},
+			"effects": {"damage": 30, "status": {"id": "root", "sec": 0.7, "first_cell_only": true}},
+			"recovery_sec": 0.6, "cooldown_sec": 4.5
+		},
+		"burrower_sinkhole": {
+			"id": "burrower_sinkhole", "owner": "sand_burrower", "kind": "attack", "name_key": "enemy_skill.burrower_sinkhole.name", "counter_key": "enemy_skill.burrower_sinkhole.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
+			"windup_sec": 0.5, "warning_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"effects": {"zone": {"id": "drop", "warn_sec": 0.8, "hole_sec": 1.5}},
+			"conditions": {"hp_below": 0.5},
+			"recovery_sec": 0.5, "cooldown_sec": 8.0
+		},
+		"scorpion_venom_sting": {
+			"id": "scorpion_venom_sting", "owner": "scorpion", "kind": "attack", "name_key": "enemy_skill.scorpion_venom_sting.name", "counter_key": "enemy_skill.scorpion_venom_sting.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "poison"},
+			"effects": {"damage": 20, "status": {"id": "poison", "sec": 3.0, "tick_sec": 0.5, "damage": 1.5}},
+			"recovery_sec": 0.5, "cooldown_sec": 3.0
+		},
+		"scorpion_pincer_hold": {
+			"id": "scorpion_pincer_hold", "owner": "scorpion", "kind": "attack", "name_key": "enemy_skill.scorpion_pincer_hold.name", "counter_key": "enemy_skill.scorpion_pincer_hold.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "knockback"},
+			"effects": {"damage": 25, "status": {"id": "pin", "sec": 0.6}},
+			"recovery_sec": 0.6, "cooldown_sec": 5.5
+		},
+		"sphinx_gaze": {
+			"id": "sphinx_gaze", "owner": "sand_sphinx", "kind": "attack", "name_key": "enemy_skill.sphinx_gaze.name", "counter_key": "enemy_skill.sphinx_gaze.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "curse"},
+			"effects": {"damage": 25, "status": {"id": "fragile", "stacks": 1}},
+			"recovery_sec": 0.5, "cooldown_sec": 2.8
+		},
+		"sphinx_claw": {
+			"id": "sphinx_claw", "owner": "sand_sphinx", "kind": "attack", "name_key": "enemy_skill.sphinx_claw.name", "counter_key": "enemy_skill.sphinx_claw.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [-1, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.6, "warning_sec": 1.3,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"effects": {"damage": 35},
+			"recovery_sec": 0.6, "cooldown_sec": 4.5
+		},
+		"sphinx_bury": {
+			"id": "sphinx_bury", "owner": "sand_sphinx", "kind": "attack", "name_key": "enemy_skill.sphinx_bury.name", "counter_key": "enemy_skill.sphinx_bury.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
+			"windup_sec": 0.6, "warning_sec": 1.1,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "seal"},
+			"effects": {"zone": {"id": "sand", "sec": 4.0}},
+			"recovery_sec": 0.6, "cooldown_sec": 6.0
+		},
+		"sphinx_sandfall": {
+			"id": "sphinx_sandfall", "owner": "sand_sphinx", "kind": "attack", "name_key": "enemy_skill.sphinx_sandfall.name", "counter_key": "enemy_skill.sphinx_sandfall.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
+			"windup_sec": 0.9, "warning_sec": 1.5,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "shatter"},
+			"effects": {"damage": 40},
+			"followup": {"offsets": [[0, 1]], "rotations": [0, 180], "relative_to": "first_shift", "show_with_first": true,
+				"warning_sec": 0.75, "effects": {"damage": 30}},
+			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
 		}
 	},
 	"enemies": {
@@ -540,6 +683,25 @@
 					"overrides": {"root_anchor": {"count": 2}, "entangled_row": {"pattern": {"anchor_rows": 2}}},
 					"transition": {"sec": 1.5}}
 			]
-		}
+		},
+		"dune_jackal": {"tier": "normal", "arena": "dunes",
+			"phases": [{"id": "main", "skills": ["jackal_pack_nip", "shared_sidestep"], "overrides": {"shared_sidestep": {"weight": 0.6}}}]},
+		"sand_beetle": {"tier": "normal", "arena": "dunes", "skills": ["beetle_sand_spray"]},
+		"dust_nomad": {"tier": "normal", "arena": "oasis", "skills": ["nomad_ambush", "nomad_veil_step"]},
+		"mirage_sprite": {"tier": "normal", "arena": "dunes", "skills": ["sprite_mirage", "sprite_shimmer_lash"]},
+		"scarab_guard": {"tier": "normal", "arena": "oasis", "skills": ["scarab_shield_wall", "scarab_spear"]},
+		"sun_archer": {"tier": "normal", "arena": "dunes", "skills": ["archer_blinding_arc"]},
+		"sand_burrower": {"tier": "elite", "arena": "dunes", "skills": ["burrower_undertow", "burrower_sinkhole"]},
+		"scorpion": {"tier": "elite", "arena": "oasis", "skills": ["scorpion_venom_sting", "scorpion_pincer_hold"]},
+		"sand_sphinx": {"tier": "boss", "arena": "oasis",
+			"phases": [
+				{"id": "p1", "enter_hp_ratio": 1.0, "skills": ["sphinx_gaze", "sphinx_claw", "sphinx_bury", "shared_sidestep"],
+					"mechanic": "sphinx_bury", "overrides": {"shared_sidestep": {"weight": 2.0, "cooldown_sec": 8.0}}},
+				{"id": "p2", "enter_hp_ratio": 0.5, "skills": ["sphinx_gaze", "sphinx_claw", "sphinx_bury", "shared_sidestep", "sphinx_sandfall"],
+					"mechanic": "sphinx_sandfall", "overrides": {"shared_sidestep": {"weight": 2.0, "cooldown_sec": 8.0}},
+					"every_nth": {"skill": "sphinx_sandfall", "n": 3},
+					"traits": [{"id": "sandstorm", "params": {"interval_sec": 9.0}}],
+					"transition": {"sec": 1.5, "on_enter": [{"skill": "sphinx_sandfall"}]}}
+			]}
 	}
 }

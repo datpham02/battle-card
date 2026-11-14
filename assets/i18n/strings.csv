@@ -1184,3 +1184,37 @@ character.giao_si.lore,"Giáo sĩ tin thế giới còn ghép lại được, v�
 character.giao_si.personality,"Điềm tĩnh, cứng rắn, tha thứ nhưng không mềm yếu.",Calm and firm; merciful without being soft.
 character.giao_si.playstyle,Chồng Giá Lạnh; mỗi lần nổ là một lần hồi máu.,Stack Chill; every burst is a heal.
 character.giao_si.block_material,Kính thánh: khối như kính màu phát sáng.,Stained glass: blocks like glowing coloured glass.
+enemy_skill.jackal_pack_nip.name,Cắn Bầy,Pack Nip
+enemy_skill.jackal_pack_nip.counter,Bước hai lần: nó cắn đuổi một nhịp sau,Step twice: it chases one beat later
+enemy_skill.beetle_sand_spray.name,Phun Cát,Sand Spray
+enemy_skill.beetle_sand_spray.counter,Bước vuông góc; ô cát không đứng được,Step sideways; a sanded cell cannot be stood on
+enemy_skill.nomad_ambush.name,Phục Kích,Ambush
+enemy_skill.nomad_ambush.counter,Đừng đứng yên; hình chữ T luôn hở ba phía,Keep moving; the T is open on three sides
+enemy_skill.nomad_veil_step.name,Bước Bụi,Veil Step
+enemy_skill.nomad_veil_step.counter,Đòn đang bay sẽ trượt; đánh nó trước khi bụi tan,A strike in flight misses; hit it before the dust clears
+enemy_skill.sprite_mirage.name,Bóng Cát,Mirage
+enemy_skill.sprite_mirage.counter,Đánh một ô lên bóng là xoá được,One cell on the shade clears it
+enemy_skill.sprite_shimmer_lash.name,Roi Nắng,Shimmer Lash
+enemy_skill.sprite_shimmer_lash.counter,"Rời hàng của bóng, hoặc phá bóng trước","Leave the shade's row, or break the shade"
+enemy_skill.scarab_shield_wall.name,Tường Khiên,Shield Wall
+enemy_skill.scarab_shield_wall.counter,"Xuyên giáp, hoặc ngắt lúc nó đang giơ khiên","Pierce it, or interrupt while the shield rises"
+enemy_skill.scarab_spear.name,Đâm Giáo,Spear Thrust
+enemy_skill.scarab_spear.counter,Bước ngang: ngọn giáo đâm dọc,Step sideways: the spear thrusts lengthwise
+enemy_skill.archer_blinding_arc.name,Cung Chói,Blinding Arc
+enemy_skill.archer_blinding_arc.counter,Bước chéo: hình chữ thập hở bốn góc,Step diagonally: the cross leaves its corners open
+enemy_skill.burrower_undertow.name,Cát Cuốn,Undertow
+enemy_skill.burrower_undertow.counter,Bước ngang; ô đầu dòng cát giữ chân,Step sideways; the first cell holds you
+enemy_skill.burrower_sinkhole.name,Hố Sụt,Sinkhole
+enemy_skill.burrower_sinkhole.counter,Hai ô cạnh bạn sắp sụp; luôn còn một ô kề an toàn,Two cells beside you collapse; one neighbour always stays
+enemy_skill.scorpion_venom_sting.name,Chích Độc,Venom Sting
+enemy_skill.scorpion_venom_sting.counter,"Một ô, bước là né; nọc chỉ làm mới chứ không chồng","One cell, just step; the venom refreshes, never stacks"
+enemy_skill.scorpion_pincer_hold.name,Kẹp Càng,Pincer Hold
+enemy_skill.scorpion_pincer_hold.counter,Bước vuông góc; đừng tung đòn lớn ngay sau đó,Step sideways; do not swing wide right after
+enemy_skill.sphinx_gaze.name,Mắt Đố,Riddle Gaze
+enemy_skill.sphinx_gaze.counter,"Một ô; bước đi, nhưng vết nứt còn lại","One cell; step away, the crack remains"
+enemy_skill.sphinx_claw.name,Vuốt Đá,Stone Claw
+enemy_skill.sphinx_claw.counter,Hình chữ T; ra phía hở,A T shape; leave by the open side
+enemy_skill.sphinx_bury.name,Chôn Cát,Bury
+enemy_skill.sphinx_bury.counter,Hai ô cạnh bạn bị lấp; đừng để bị dồn vào góc,Two cells beside you fill in; do not get cornered
+enemy_skill.sphinx_sandfall.name,Cát Đổ,Sandfall
+enemy_skill.sphinx_sandfall.counter,"Đổ hai nhịp, lệch một hàng; ra phía không có làn chờ","Two beats, one row apart; leave by the side with no waiting lane"
