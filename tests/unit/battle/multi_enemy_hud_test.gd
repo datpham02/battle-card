@@ -33,6 +33,7 @@ func _initialize() -> void:
 	await _test_two_attackers_keep_their_markers()
 	await _test_telegraph_states_list()
 	_test_hp_plate_avoids_a_nearer_unit()
+	await _test_pause_names_the_soonest_swing()
 	await _test_single_unit_is_unchanged()
 	await process_frame
 	print("FAILS=%d PASSES=%d" % [fails, passes])
@@ -303,6 +304,35 @@ func _test_hp_plate_avoids_a_nearer_unit() -> void:
 	var behind: Array[Rect2] = [Rect2(Vector2(200.0, 240.0) - Vector2(body.x * 0.5, body.y), body)]
 	check(CutHudView.hp_plate_rect_clear(feet, 24.0, body, behind) == plain,
 		"plate: a unit behind is not treated as a blocker", str(behind[0]))
+
+
+# --- the pause panel must name a threat from ANY unit ------------------------------------------------------------
+
+# 2026-11-14: RunHudView.boss_swing_line read unit 0's actor only, so with several enemies the pause panel went
+# silent whenever a different unit was the one about to land a blow. It now names the swing resolving soonest.
+func _test_pause_names_the_soonest_swing() -> void:
+	var holder: Node = await _match(_params([_block("a"), _block("b")]))
+	var v: CombatView = _view(holder)
+	var s: CombatState = v.get_state()
+	var k1: int = CombatState.unit_key(1)
+	var a0: CutActor = v.get_boss().get_actor()
+	var a1: CutActor = v.controller_of(k1).get_actor()
+	var cells: Array[Vector2i] = [s.player_cell]
+
+	var none: Array[EnemyAgent] = []
+	check(RunHudView.soonest_swing(a0, v.get_extra_agents()) == null,
+		"pause: nothing is named while no unit is winding up")
+
+	# Unit 1 is about to land; unit 0 has only just started.
+	check(a0.begin_swing(cells, "t0", false, 1, 2.0), "pause: unit 0's swing started")
+	check(a1.begin_swing(cells, "t1", false, 1, 0.5), "pause: unit 1's swing started")
+	check(RunHudView.soonest_swing(a0, v.get_extra_agents()) == a1,
+		"pause: the swing that lands SOONEST is named, even when it is not unit 0's")
+
+	# With one enemy unit the extras list is empty and the answer is unit 0's actor, exactly as before.
+	check(RunHudView.soonest_swing(a0, none) == a0, "pause: one enemy unit still names unit 0")
+	check(RunHudView.soonest_swing(null, none) == null, "pause: no boss actor, nothing named")
+	_drop(holder)
 
 
 # --- the 1v1 match must be untouched ---------------------------------------------------------------------------

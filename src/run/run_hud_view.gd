@@ -897,12 +897,35 @@ func boss_swing_line() -> String:
 	var view := _controller.get_battle().get_node_or_null(RunController.COMBAT_VIEW_NODE) as CombatView
 	if view == null or view.get_boss() == null or view.get_skill_config() == null:
 		return ""
-	var actor: CutActor = view.get_boss().get_actor()
-	if not actor.is_swinging():
+	# Multi-enemy (2026-11-14): the line names the swing that lands SOONEST, across every enemy unit. Reading unit 0's
+	# actor alone left the panel silent whenever another unit was the one about to hit — which is the moment a player
+	# is most likely to pause.
+	var actor: CutActor = soonest_swing(view.get_boss().get_actor(), view.get_extra_agents())
+	if actor == null:
 		return ""
 	var id: String = actor.get_skill_id()
 	var move: String = tr(str(view.get_skill_config().get_skill(id).get("name_key", id)))
 	return tr(TEXT_PAUSE_BOSS_SWING) % [move, tr(TEXT_PAUSE_BOSS_CELLS) % actor.get_cells().size()]
+
+
+## Multi-enemy (2026-11-14): of every enemy unit that is winding up, the actor whose swing resolves first; null when
+## none is. [param boss_actor] is unit 0's, [param agents] the units past it. Unit 0 wins a tie, so a match with one
+## enemy unit (empty [param agents]) returns exactly what the old code returned: unit 0's actor, or null.
+## Static and free of the HUD so it can be tested on real actors without building a pause panel.
+static func soonest_swing(boss_actor: CutActor, agents: Array[EnemyAgent]) -> CutActor:
+	var best: CutActor = null
+	var best_left: float = INF
+	if boss_actor != null and boss_actor.is_swinging():
+		best = boss_actor
+		best_left = boss_actor.get_time_left()
+	for agent: EnemyAgent in agents:
+		if agent == null or agent.controller == null:
+			continue
+		var a: CutActor = agent.controller.get_actor()
+		if a != null and a.is_swinging() and a.get_time_left() < best_left:
+			best = a
+			best_left = a.get_time_left()
+	return best
 
 
 # Dim overlay over the whole screen plus the centred panel; returns the panel rect.

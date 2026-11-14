@@ -1,0 +1,11 @@
+start 10:16:29
+import exit=0
+hud: FAILS=0 PASSES=45 se=0
+PASS pause: nothing is named while no unit is winding up
+PASS pause: unit 0's swing started
+PASS pause: unit 1's swing started
+PASS pause: the swing that lands SOONEST is named, even when it is not unit 0's
+PASS pause: one enemy unit still names unit 0
+PASS pause: no boss actor, nothing named
+FAILS=0 PASSES=45
+end 10:16:54
