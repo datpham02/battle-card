@@ -322,7 +322,7 @@
 			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
 			"windup_sec": 0.4, "warning_sec": 1.0,
 			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "burn"},
-			"effects": {"damage": 6, "status": {"id": "fragile", "stacks": 1}},
+			"effects": {"damage": 21, "status": {"id": "fragile", "stacks": 1}},
 			"weights": {"allies_alive": 1.5},
 			"recovery_sec": 0.6, "cooldown_sec": 2.6
 		},
@@ -331,7 +331,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
 			"windup_sec": 0.5, "warning_sec": 1.0,
 			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
-			"effects": {"damage": 10},
+			"effects": {"damage": 35},
 			"weights": {"player_status": {"fragile": 2.0}},
 			"recovery_sec": 0.6, "cooldown_sec": 3.0
 		},
@@ -349,7 +349,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
 			"windup_sec": 0.7, "warning_sec": 1.3,
 			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
-			"effects": {"damage": 12},
+			"effects": {"damage": 42},
 			"recovery_sec": 1.2, "cooldown_sec": 5.0, "interruptible": false
 		},
 		"shared_jab": {
@@ -357,7 +357,7 @@
 			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
 			"windup_sec": 0.4, "warning_sec": 0.9,
 			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
-			"effects": {"damage": 8},
+			"effects": {"damage": 28},
 			"recovery_sec": 0.6, "cooldown_sec": 2.6
 		},
 		"cultist_kindle": {
@@ -374,7 +374,7 @@
 			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
 			"windup_sec": 0.7, "warning_sec": 1.2,
 			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burn"},
-			"effects": {"damage": 8, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}},
+			"effects": {"damage": 28, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}},
 			"recovery_sec": 0.6, "cooldown_sec": 3.4
 		},
 		"slug_molten_trail": {
@@ -390,7 +390,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
 			"windup_sec": 0.6, "warning_sec": 1.2,
 			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
-			"effects": {"damage": 14},
+			"effects": {"damage": 49},
 			"recovery_sec": 1.2, "cooldown_sec": 4.5, "interruptible": false
 		},
 		"knight_bulwark": {
@@ -407,7 +407,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "column_of_player", "clip": true, "min_cells": 2},
 			"windup_sec": 0.6, "warning_sec": 1.2,
 			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
-			"effects": {"damage": 12, "zone": {"id": "burn", "sec": 2.5, "tick_sec": 0.5, "damage": 2.0}},
+			"effects": {"damage": 42, "zone": {"id": "burn", "sec": 2.5, "tick_sec": 0.5, "damage": 2.0}},
 			"recovery_sec": 0.6, "cooldown_sec": 5.0
 		},
 		"eater_devour": {
@@ -424,7 +424,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
 			"windup_sec": 0.5, "warning_sec": 1.1,
 			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burn"},
-			"effects": {"damage": 12, "status": {"id": "fragile", "stacks": 1}},
+			"effects": {"damage": 42, "status": {"id": "fragile", "stacks": 1}},
 			"recovery_sec": 0.6, "cooldown_sec": 3.5
 		},
 		"phoenix_pyre": {
@@ -441,7 +441,7 @@
 			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
 			"windup_sec": 0.4, "warning_sec": 0.9,
 			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "burn"},
-			"effects": {"damage": 10, "status": {"id": "fragile", "stacks": 1}},
+			"effects": {"damage": 35, "status": {"id": "fragile", "stacks": 1}},
 			"recovery_sec": 0.6, "cooldown_sec": 2.8
 		},
 		"lord_cinder_lane": {
@@ -449,7 +449,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "row_of_player", "clip": true, "min_cells": 2},
 			"windup_sec": 0.8, "warning_sec": 1.4,
 			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
-			"effects": {"damage": 14, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}},
+			"effects": {"damage": 49, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}},
 			"recovery_sec": 1.2, "cooldown_sec": 5.5, "interruptible": false
 		},
 		"lord_stride": {
@@ -465,9 +465,9 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
 			"windup_sec": 0.9, "warning_sec": 1.5,
 			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "burst"},
-			"effects": {"damage": 14},
+			"effects": {"damage": 49},
 			"followup": {"relative_to": "same_cells", "delay_sec": 1.0, "warning_sec": 1.0,
-				"effects": {"damage": 10, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}}},
+				"effects": {"damage": 35, "zone": {"id": "burn", "sec": 2.0, "tick_sec": 0.5, "damage": 2.0}}},
 			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
 		}
 	},

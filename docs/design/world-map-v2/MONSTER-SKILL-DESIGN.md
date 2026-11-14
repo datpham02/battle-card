@@ -1288,3 +1288,12 @@ Sim cùng seed với B1: Hỏa Ngục trên pattern brain **dễ hơn nhiều** 
 thời gian run +5,5 %). Giá trị damage §4 (6–14) ngang rừng tầng 1, nên cần một đợt tinh chỉnh trước khi coi Hỏa Ngục là
 tầng 2 thật. Chi tiết và các lựa chọn: `MONSTER-SKILL-PHASE1-HELLFIRE-PLAN.md` §12.1. Bài học cho Phase 2+ (Sands, Swamp…):
 đặt damage theo tầng của vùng, không lấy rừng làm mốc, và chạy sim so với baseline block trước khi chốt.
+
+### B.5 Hỏa Ngục — damage chốt sau tinh chỉnh (2026-11-14)
+
+Damage đòn trực tiếp của 11 skill Hỏa Ngục = **giá trị thiết kế §4 × 3,5** (Imp 21, Hound 35, Golem/Eater/Phoenix 42,
+Cultist/Slug 28, Knight 49, Lord: Dấu Nung 35 / Cinder Lane 49 / Eruption 49 rồi 35). Lửa cháy theo nhịp giữ 2/tick.
+Cơ sở: `MONSTER-SKILL-PHASE1-HELLFIRE-PLAN.md` §12.2 — tỉ lệ thắng gộp bằng B1 (13,2 vs 13,3), phút/run bằng nhau.
+Trần an toàn: đòn nặng nhất ×1,5 (Rạn) phải dưới nửa máu hero thấp nhất; test `pattern_hellfire_group_d_test` giữ gate này.
+**Bài học cho Phase 2+ (Sands, Swamp…):** đặt damage theo tầng của vùng chứ không lấy rừng tầng 1 làm mốc, và chạy sim
+so với baseline block TRƯỚC khi chốt; giá trị thiết kế ban đầu lệch 3,5 lần.

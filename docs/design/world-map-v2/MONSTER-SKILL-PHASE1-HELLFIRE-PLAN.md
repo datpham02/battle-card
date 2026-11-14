@@ -336,3 +336,31 @@ pattern (chỉ có `pattern_tempo_mult`). Lưu ý: rừng (pattern, tầng 1) c�
 Cần người dùng chọn (chưa sửa gì): (a) tăng `effects.damage` của 17 skill Hỏa Ngục (data, ~×2–2,5, mục tiêu HP mất ~55–65 / tuyến)
 rồi chạy lại nhóm E; (b) thêm núm `pattern_damage_mult` theo vùng (code nền, cần đề xuất riêng); (c) chấp nhận và để playtest
 người thật quyết định.
+
+### 12.2 Tinh chỉnh damage ×3,5 — kết quả nhóm E2 (2026-11-14)
+
+Người dùng chọn hướng (a) "tăng damage skill" sau khi nhóm E ở ×1 không đạt. Quy trình: hiệu chỉnh ×3 trên 2 nhân vật
+(`tuning/cal-x3-*`), chọn ×3,5, chạy lại đủ 10 job cùng seed với B1 (`group-e2/`, 10/10 exit 0, 0 script error).
+Script đổi hệ số: `tuning/scale_hellfire_damage.py <mult>` (luôn tính từ giá trị thiết kế gốc, nên chạy lại được).
+Bảng đầy đủ: `group-e2/report-e2.md` và `group-e2/aggregate-e2.md`.
+
+| chỉ số (gộp 5 nhân vật) | B1 | E ×1 | E2 ×3,5 | ngưỡng | kết luận |
+|---|---|---|---|---|---|
+| tỉ lệ thắng run | 13,3 % | 17,7 % | **13,2 %** | ±10 điểm | đạt (−0,1) |
+| phút / run | 32,8 | 34,6 | 31,3 | ±2 % | −4,3 %, nhưng bỏ Pháp Sư thì ±0,0 % |
+| qua Hỏa Ngục | 84,6 % | 100 % | 90,1 % | — | còn dễ hơn B1 ~5 điểm |
+| HP mất trong trận / tuyến | 63,4 | 15,2 | 48,8 | — | còn thấp hơn B1 23 % |
+| HP sau warden | 49,7 % | 85,1 % | 58,7 % | — | còn cao hơn B1 9 điểm |
+
+**Pháp Sư là số liệu trộn, không dùng để kết luận về damage.** Giữa lần chạy E và E2, F2/OD-1 hạ `max_hp` 210 → 170
+(−19 %). Thắng của Pháp Sư 16,5 % → 4,3 %, và phút/run 32,8 → 25,4 đều gồm cả hai thay đổi. Bỏ Pháp Sư ra, 4 nhân vật
+còn lại: thắng 12,5 → 15,4 (+2,9), phút/run ±0,0 %, HP mất 64,8 → 47,2. Đợt cân bằng F2 cần đo lại Pháp Sư riêng.
+
+**Khuyến nghị: giữ ×3,5, không đẩy lên ×4.**
+1. Tỉ lệ thắng gộp lệch B1 đúng 0,1 điểm, và thời gian run bằng nhau (bỏ Pháp Sư) — hai chỉ số cổng chính đều đạt.
+2. Để HP mất bằng B1 cần khoảng ×4,5; ở mức đó đòn nặng nhất ×1,5 vì Rạn là 95,6 > 85 (nửa máu hero thấp nhất 170),
+   tức **vi phạm test chặn đòn chết ngay**. Ngay ×4 cũng chỉ còn 84 so với ngưỡng 85 — sát tới mức một thay đổi HP nhỏ
+   bất kỳ sẽ làm vỡ gate.
+3. Khoảng chênh HP còn lại **nhiều khả năng là đặc tính của bot, không phải của thiết kế**: bot sim né 85 % đòn có cảnh
+   báo, mà quái pattern thì đòn nào cũng cảnh báo, còn boss block thì không. Chỉnh cho HP mất của bot bằng B1 gần như
+   chắc chắn sẽ làm trận quá khó với người thật. Phần còn lại nên để playtest người quyết, không tinh chỉnh thêm bằng sim.

@@ -1,0 +1,15 @@
+tests/unit/combat/pattern_hellfire_group_a_test.gd: FAILS=0 0se exit=0
+FAILS=0
+tests/unit/combat/pattern_hellfire_group_b_test.gd: FAILS=0 0se exit=0
+FAILS=0
+tests/unit/combat/pattern_hellfire_group_c_test.gd: FAILS=0 0se exit=0
+FAILS=0
+tests/unit/combat/pattern_hellfire_group_d_test.gd: FAILS=0 0se exit=0
+FAILS=0
+tests/unit/combat/pattern_hellfire_fairness_test.gd: FAILS=0 0se exit=0
+FAILS=0
+tests/integration/run/pattern_hellfire_dodge_test.gd: FAILS=0 0se exit=0
+FAILS=0
+tests/unit/combat/enemy_skills_config_test.gd: FAILS=0 0se exit=0
+FAILS=0
+TESTS DONE fail=0
