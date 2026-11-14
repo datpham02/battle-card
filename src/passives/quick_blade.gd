@@ -16,3 +16,9 @@ func modify_damage(cells: int, damage: float) -> float:
 	if cells <= param_int("max_cells", DEFAULT_MAX_CELLS):
 		return damage * maxf(param_float("damage_mult", DEFAULT_DAMAGE_MULT), 0.0)
 	return damage
+
+
+# F3: the cue marks exactly the hits this passive boosts — the same test as above, read from the
+# same params, so tuning `max_cells` moves the rule and the cue together.
+func cue_for_cells(cells: int) -> bool:
+	return cells <= param_int("max_cells", DEFAULT_MAX_CELLS)

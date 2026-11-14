@@ -1273,8 +1273,10 @@ func _ensure_passive_cue() -> void:
 	add_child(_passive_cue)
 	_passive_cue.draw.connect(_draw_passive_cue_text)
 	var glow: Node2D = _passive_cue.glow_canvas()
-	if glow != null:
-		glow.draw.connect(_draw_passive_cue_glow)
+	if glow == null:
+		push_error("PassiveCue: no glow canvas; the victory glow will never draw")
+		return
+	glow.draw.connect(_draw_passive_cue_glow)
 
 
 ## Plays the victory cue on [param side]: the body lights green, then "+[param amount]hp" rises.

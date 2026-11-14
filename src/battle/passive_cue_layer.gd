@@ -36,18 +36,30 @@ var _glow: Node2D = null
 
 
 func _ready() -> void:
+	_build()
+	visible = false
+
+
+## Builds the additive glow child. Called from [method _ready] AND from
+## [method glow_canvas], because `_ready` only runs when the node enters the TREE -- adding it
+## to a parent that is not itself in the tree does not run it. The owner connects to the glow's
+## draw signal right after add_child, and for a while that connection was silently skipped
+## because the child did not exist yet. Building on demand makes the null case impossible.
+func _build() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if _glow != null:
+		return
 	_glow = Node2D.new()
 	_glow.name = "PassiveGlow"
 	var mat := CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_glow.material = mat
 	add_child(_glow)
-	visible = false
 
 
 ## The additive child the body glow is drawn on. Null before [method _ready].
 func glow_canvas() -> Node2D:
+	_build()
 	return _glow
 
 

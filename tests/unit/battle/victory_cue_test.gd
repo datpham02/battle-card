@@ -50,6 +50,7 @@ func _initialize() -> void:
 	await _test_frozen_parent_stops_an_inheriting_node()
 	await _test_cue_runs_under_a_frozen_parent()
 	await _test_text_rises_then_the_cue_ends()
+	_test_glow_canvas_before_tree_entry()
 	print("FAILS=%d" % fails)
 	quit(fails)
 
@@ -131,3 +132,34 @@ func _test_text_rises_then_the_cue_ends() -> void:
 	ck("the cue ends on its own", not cue.is_playing(), "elapsed=%.3f" % cue.elapsed())
 	ck("and hides itself when it does", not cue.visible)
 	parent.queue_free()
+
+
+## The glow canvas must exist BEFORE the node enters the tree.
+##
+## This is the leg that would have caught the live bug, and nothing else did. `_ready` runs on TREE
+## ENTRY, not on `add_child`: UnitLayer builds the cue, adds it to a parent that is not yet in the
+## tree, and immediately asks for the glow canvas to connect its `draw` signal. That returned null,
+## and the owner's `if glow == null: return` skipped the connection WITHOUT a symptom -- the cue
+## clocked correctly, the suite above stayed green, and the body simply never drew. A guard that
+## fails open leaves no trace to find.
+##
+## No tree, on purpose: adding the node to `root` here would make the assertion pass through
+## `_ready` and the test would no longer be able to fail in the presence of the fault.
+func _test_glow_canvas_before_tree_entry() -> void:
+	var cue := PassiveCueLayer.new()
+	ck("glow canvas: is not null before the node enters the tree", cue.glow_canvas() != null)
+	# The control run caught this one being decorative: written as `a() == a()` it passed against
+	# the BROKEN code, because null == null. An assertion that holds when the thing under test
+	# does not exist is not an assertion. It now requires a non-null object on both calls.
+	var first: Node2D = cue.glow_canvas()
+	ck("glow canvas: the same non-null canvas is returned on a second call",
+		first != null and first == cue.glow_canvas())
+	var glow: Node2D = cue.glow_canvas()
+	ck("glow canvas: it is a child of the cue, so it inherits the cue's transform",
+		glow != null and glow.get_parent() == cue)
+	# Additive is what makes the body LIGHT UP rather than be painted over. A plain canvas would
+	# still connect, still draw, and look wrong in a way no state assertion would notice.
+	var mat: CanvasItemMaterial = null if glow == null else glow.material as CanvasItemMaterial
+	ck("glow canvas: draws additively",
+		mat != null and mat.blend_mode == CanvasItemMaterial.BLEND_MODE_ADD)
+	cue.free()
