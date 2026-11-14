@@ -64,5 +64,5 @@ Code: thêm `music.regions` {region_id: {explore, battle}} vào audio_events.jso
 
 Kết quả: đợt 3 (70 gen) + đợt 4 (112 gen) xong, commit a77e2a54; nhạc nén Vorbis q2 (27 MB). Quay trong game
 (`tools/audio/music_capture.gd`, bằng chứng `production/qa/evidence/music/ingame/README.md`): ch1, hellfire, sky_isles
-đúng bản khám phá / trận / stinger / quay lại khám phá; người dùng duyệt "Đạt" 2026-11-14. Bản quyền PixelLab vẫn
-chưa xác nhận.
+đúng bản khám phá / trận / stinger / quay lại khám phá; người dùng duyệt "Đạt" 2026-11-14. Bản quyền: dùng thương mại được theo
+điều khoản PixelLab mục 1.3 (người dùng xác nhận 2026-11-14; chi tiết ở `assets/audio/music/MUSIC_CREDITS.md`).

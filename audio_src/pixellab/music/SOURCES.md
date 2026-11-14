@@ -1,6 +1,6 @@
 # PixelLab music, batch 1 (2026-11-13), raw takes, not in the game yet
 
-Tool: PixelLab `create_music` (Tier 2 subscription, 10 generations per call, 40 total). Licence: UNCONFIRMED
+Tool: PixelLab `create_music` (Tier 2 subscription, 10 generations per call, 40 total). Licence: commercial use allowed (see the Licence note at the end)
 (user has not stated the PixelLab plan terms). Prompts: see docs/design/audio/music-plan.md.
 
 | File | song_id | Length | Loudness | Peak |
@@ -80,3 +80,6 @@ Battle restyle take ids: dungeon 83fc70e7, tower db66ce52, swamp aae0200c / e2ed
 | heart_loop_8f39866f.mp3 | 8f39866f-6cb0-409a-84da-937231771131 | 56.262 -> 160.100 s |
 
 Batch 3/4 raw takes stay local only (about 50 MB); every take can be fetched again from PixelLab by the song ids above.
+
+## Licence
+Commercial use allowed: PixelLab ToS 1.3 (user owns the outputs; commercial and non-commercial use without further permission; no attribution required); paid Tier 2 plan; checked 2026-11-14, user confirmed. Open points: the ToS text names images / outputs, not music or sound by name, and clause 4.1 points to the Open RAIL-M licence (not reviewed). Not allowed: training other models on the outputs.

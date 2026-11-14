@@ -1,4 +1,4 @@
-# PixelLab ambience, batch A (2026-11-14, user "Có, chạy đợt A"): 21 gens. Licence UNCONFIRMED.
+# PixelLab ambience, batch A (2026-11-14, user "Có, chạy đợt A"): 21 gens. Licence: commercial use allowed (see the Licence note at the end).
 
 | File | sound_effect_id | Prompt (short) | Raw level |
 |---|---|---|---|
@@ -37,3 +37,6 @@ loop, levelled to -31 LUFS; amb_forest_bird.ogg levelled to -30 LUFS. Vorbis q2.
 
 Beds: window 2-28 s (heart 6-28 s: it swells in over 6 s), last 3 s crossfaded into the first 3 s -> 23 s loops (heart 19 s), -31 LUFS.
 One-shots: -30 LUFS, limiter at -12 dBFS. Vorbis q2. Prompts in PixelLab library by id.
+
+## Licence
+Commercial use allowed: PixelLab ToS 1.3 (user owns the outputs; commercial and non-commercial use without further permission; no attribution required); paid Tier 2 plan; checked 2026-11-14, user confirmed. Open points: the ToS text names images / outputs, not music or sound by name, and clause 4.1 points to the Open RAIL-M licence (not reviewed). Not allowed: training other models on the outputs.
