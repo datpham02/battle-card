@@ -206,7 +206,8 @@ const TEXT_INK_TITLE: String = "ui.piece_deck.ink_title"
 const TEXT_INK_CONFIRM: String = "ui.piece_deck.ink_confirm"
 const TEXT_INK_SKIP: String = "ui.piece_deck.ink_skip"
 const TEXT_INK_NEW: String = "ui.piece_deck.new_shape"
-const SHAPE_TILE_BORDER: Color = HudSkin.MIST
+## 2026-11-14: the tile's frame is HudSkin.stone_card (the ancient plate), so the tile no longer carries a border
+## colour of its own; the old 1 px Sương line it used is gone with it.
 const SHAPE_FILL: Color = Color(0.36, 0.58, 0.82)
 const SHAPE_OUTLINE: Color = Color(0.06, 0.07, 0.1, 0.9)
 const DOT_ON: Color = HudSkin.GRID_LIGHT
@@ -860,7 +861,6 @@ static func draw_shape_tile(canvas: CanvasItem, rect: Rect2, piece: Piece, name:
 	if highlight == 2:
 		canvas.draw_rect(Rect2(rect.position + Vector2(5.0, 5.0), rect.size), ShopView.SHADOW_COLOR)
 		r.position.y -= short_side * SHAPE_TILE_PAD_RATIO * 0.5
-	var border: Color = SHAPE_TILE_BORDER
 	var text: Color = NAME_COLOR
 	var fill: Color = SHAPE_FILL
 	var outline: Color = SHAPE_OUTLINE
@@ -872,9 +872,12 @@ static func draw_shape_tile(canvas: CanvasItem, rect: Rect2, piece: Piece, name:
 		outline.a *= UiButtons.DIM_ALPHA
 		on.a *= UiButtons.DIM_ALPHA
 		off.a *= UiButtons.DIM_ALPHA
-	HudSkin.card(canvas, r, border, highlight > 0, disabled)
-	var pad: float = short_side * SHAPE_TILE_PAD_RATIO
-	var inner: Rect2 = r.grow(-pad)
+	# 2026-11-14 (user approved option F of production/qa/evidence/ui-style-2026-11-14/option-B-and-F.png): the
+	# ancient stone plate instead of the 1 px Sương card frame, with a gold ring for the selected tile. The tile
+	# rect and every hit area are unchanged; the content is laid out inside the plate's inner line.
+	var body: Rect2 = HudSkin.stone_card(canvas, r, highlight > 0, disabled)
+	var pad: float = short_side * SHAPE_TILE_PAD_RATIO * 0.5
+	var inner: Rect2 = body.grow(-pad)
 	var shape_area: Rect2
 	var text_area: Rect2
 	if r.size.x >= r.size.y * SHAPE_TILE_WIDE_ASPECT:

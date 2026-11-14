@@ -86,6 +86,12 @@ const HUD_ENGRAVING_SEGMENTS: int = 7
 const HUD_ROW3_BASELINE: float = 49.0
 ## Room kept right of the Engraving bar for its "lit/total" count (and clear of the panel's cut corner).
 const HUD_ENGRAVING_COUNT_ROOM: float = 64.0
+## 2026-11-14 stone-plate HUD panels (HudSkin.stone_panel): the rows are measured from the plate's CONTENT rect
+## (inside its inner gold line) rather than from the panel rect, so the plate's rim never crowds them. Row 1
+## baseline below the content top, and the HP bar's height; the bar sits on the content's bottom edge, and has no
+## frame of its own because the plate already is one.
+const HUD_PLATE_NAME_BASELINE: float = 16.0
+const HUD_PLATE_BAR_HEIGHT: float = 7.0
 ## Gap between a number and the text or bar beside it.
 const HUD_NUMBER_GAP: float = 8.0
 ## Smallest name font (720p px) a long name shrinks to before it is clipped.
@@ -3286,13 +3292,15 @@ func _draw_hud(vp: Vector2) -> void:
 # row: its count stays on the Awaken button. The boss has no panel (its HP stays on the plate under its feet).
 func _draw_player_panel(vp: Vector2, s: float) -> void:
 	var panel: Rect2 = ScreenLayout.hud_player_panel_rect(vp)
-	HudSkin.panel(self, panel, [0.0, 0.0, HUD_PANEL_CUT * s, 0.0], Color(HudSkin.NIGHT_STONE, HUD_PANEL_ALPHA), HudSkin.MIST)
-	var inset: float = HUD_INSET * s
+	# 2026-11-14 (user approved option B of production/qa/evidence/ui-style-2026-11-14/option-B-and-F.png): the
+	# ancient stone plate instead of the 1 px Sương border. The panel rect is unchanged, so no layout and no touch
+	# target moves; only the frame and the bar's own frame change.
+	var content: Rect2 = HudSkin.stone_panel(self, panel)
 	var name_size: int = roundi(HUD_NAME_FONT * s)
 	var number_size: int = roundi(HUD_NUMBER_FONT * s)
-	var name_y: float = panel.position.y + HUD_NAME_BASELINE * s
-	var bar := Rect2(Vector2(panel.position.x + inset, floorf(panel.position.y + HUD_BAR_TOP * s)),
-		Vector2(floorf(panel.size.x - inset * 2.0 - HUD_PANEL_CUT * s * 0.5), maxf(roundf(HUD_BAR_HEIGHT * s), 1.0)))
+	var name_y: float = floorf(content.position.y + HUD_PLATE_NAME_BASELINE * s)
+	var bar_h: float = maxf(roundf(HUD_PLATE_BAR_HEIGHT * s), 1.0)
+	var bar := Rect2(Vector2(content.position.x, floorf(content.end.y - bar_h)), Vector2(floorf(content.size.x), bar_h))
 	var hp_text: String = HUD_NUMBER_FORMAT % [ceili(_state.player_hp), ceili(_state.player_max_hp)]
 	var hp_w: float = HudSkin.text_width(hp_text, number_size, true)
 	HudSkin.text(self, Vector2(bar.end.x - hp_w, name_y), hp_text, number_size, HudSkin.TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1.0, true)
@@ -3300,7 +3308,7 @@ func _draw_player_panel(vp: Vector2, s: float) -> void:
 	var player_name: String = get_player_name()
 	HudSkin.text(self, Vector2(bar.position.x, name_y), player_name, _fit_font(player_name, name_size, roundi(HUD_NAME_MIN_FONT * s), room), HudSkin.TEXT,
 		HORIZONTAL_ALIGNMENT_LEFT, room)
-	HudSkin.hp_bar(self, bar, _hp_ratio(0), _hp_trail_shown(0), HudSkin.HP_FILL, false)
+	HudSkin.groove_bar(self, bar, _hp_ratio(0), _hp_trail_shown(0), HudSkin.HP_FILL)
 
 
 # 2026-10-31 (combat.json hud.corner_panels = false): no corner panels; the boss's held points float on the

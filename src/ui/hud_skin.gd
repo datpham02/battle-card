@@ -339,6 +339,58 @@ static func card(canvas: CanvasItem, rect: Rect2, line: Color = CARD_LINE, selec
 	panel(canvas, rect, [0.0, button_cut(rect), 0.0, 0.0], fill, edge, 3.0 if selected else PANEL_LINE_WIDTH)
 
 
+## 2026-11-14 (user: the battle HP plate and the reward shape tiles "still look like a modern border"): the ancient
+## stone plate (UiButtons.PLATES — cut corners, gold rim, speckled fill, lip) as a plain HUD panel, finishing the
+## 2026-11-07 pass that put this look on the event / rest / world-map panels. [param kind] is a PLATES look
+## ("navy" | "gold" | "wine" | "grey" | "moss"); [param art_scale] <= 0 takes PixelFrame.small_scale_for, the
+## battle-HUD density, which a short panel needs (two 8 art-px corners do not fit a 42 px box at the menu density).
+## Returns the content rect inside the plate's inner gold line. Unlike [method plate_panel] it draws no gems and no
+## selection ring: this is a panel, not a button.
+static func stone_panel(canvas: CanvasItem, rect: Rect2, kind: String = "navy", art_scale: int = 0, modulate: Color = Color.WHITE) -> Rect2:
+	var s: int = art_scale if art_scale > 0 else PixelFrame.small_scale_for(canvas.get_viewport_rect().size.y)
+	s = maxi(s, 1)
+	var tex: Texture2D = UiButtons.PLATES.get("%s_up" % kind, UiButtons.PLATES["navy_up"])
+	PixelFrame.draw_nine_tiled(canvas, tex, rect, UiButtons.PLATE_MARGINS, s, modulate)
+	return UiButtons.body_rect(rect, float(s), false).grow(-UiButtons.PLATE_INNER_ART * s)
+
+
+## 2026-11-14: the HP bar for a panel that carries a frame of its own ([method stone_panel]): the ink groove, the
+## damage trail up to [param trail_ratio_value], the [param fill] up to [param ratio] and its 1 px lighter top row.
+## No frame and no outline of its own — a frame inside a frame reads as noise at HUD size. [param notch] marks 50 %
+## in Ivory, as [method hp_bar] does for the boss.
+static func groove_bar(canvas: CanvasItem, rect: Rect2, ratio: float, trail_ratio_value: float, fill: Color, notch: bool = false) -> void:
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		return
+	var r: float = clampf(ratio, 0.0, 1.0)
+	var t: float = clampf(trail_ratio_value, 0.0, 1.0)
+	canvas.draw_rect(rect, Color(PixelFrame.BAR_GROOVE, fill.a))
+	if t > r:
+		canvas.draw_rect(Rect2(rect.position, Vector2(floorf(rect.size.x * t), rect.size.y)), Color(HP_TRAIL, fill.a))
+	var fill_w: float = floorf(rect.size.x * r)
+	if fill_w > 0.0:
+		canvas.draw_rect(Rect2(rect.position, Vector2(fill_w, rect.size.y)), fill)
+		canvas.draw_rect(Rect2(rect.position, Vector2(fill_w, 1.0)), Color(fill.lightened(PixelFrame.BAR_SHINE), fill.a))
+	if notch:
+		var nx: float = floorf(rect.position.x + rect.size.x * 0.5) - NOTCH_WIDTH * 0.5
+		canvas.draw_rect(Rect2(nx, rect.position.y, NOTCH_WIDTH, rect.size.y), Color(IVORY, fill.a))
+
+
+## 2026-11-14: a tappable tile in the ancient-plate look (the reward and shop shape tiles). The navy plate, plus a
+## GRID_LIGHT ring just outside it while [param selected]; [param dim] fades the plate (locked / unaffordable).
+## The plate never turns gold when selected — a gold field drowns the tile's blue shape and its green "New" tag
+## (judged on the 2026-11-14 mockup sheet, option G) — so the ring carries the selection on its own.
+## Returns the content rect inside the plate's inner gold line.
+static func stone_card(canvas: CanvasItem, rect: Rect2, selected: bool = false, dim: bool = false) -> Rect2:
+	var s: int = maxi(int(UiButtons.ui_scale(canvas)), 1)
+	var alpha: float = BUTTON_DIM_ALPHA if dim else 1.0
+	var content: Rect2 = stone_panel(canvas, rect, "navy", s, Color(1.0, 1.0, 1.0, alpha))
+	if selected:
+		var out: Rect2 = rect.grow(float(s) * PLATE_RING_GAP_ART)
+		var c: float = float(s) * PLATE_RING_CUT_ART
+		_outline(canvas, chamfer_points(out, [c, c, c, c]), Color(GRID_LIGHT, alpha), float(s) * 2.0)
+	return content
+
+
 ## HP bar (art bible §7.5): outlined groove, the trail up to [param trail_ratio] behind the [param fill]
 ## up to [param ratio] (with a 1 px lighter top line), and with [param notch] a 2 px Ivory mark at 50 %
 ## protruding 3 px above and below.
