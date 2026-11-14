@@ -28,9 +28,30 @@ suites=0; fail_total=0; se_total=0; to_total=0; nores_total=0
 # denylist has to be complete; an allowlist only has to be small.
 tree_moved=0
 TREE_BEFORE=$(mktemp); TREE_AFTER=$(mktemp)
+# 2026-11-14 (6): the LIST comes from the INDEX, not from `git status`. Two defects in the porcelain version,
+# one found by the character session and one that fell out of fixing it:
+#   a) `git status` reports dirty-vs-index, so a plain `git commit` MOVED the manifest with no byte on disk
+#      changing - the files simply left the ' M' column. `git add` did the same. That made 'do not commit while
+#      someone is running' an etiquette rule, and etiquette rules are broken by whoever is in a hurry.
+#      `git ls-files` lists by the index and `--others` covers new files, so their union survives add AND commit.
+#   b) it only hashed files that were already DIRTY, so it was blind to the whole clean tree - while the run
+#      loads all of it. An edit to a clean file was invisible to the guard whose job is to see edits.
+# The [ -f ] filter is load-bearing: `git ls-files` still lists a file deleted from disk but not `git rm`-ed, and
+# `--stdin-paths` goes fatal on the first missing path - MID-STREAM, after printing earlier hashes. A caller
+# reading stdout without checking $? gets a short but well-formed manifest, and two runs truncated at the same
+# place COMPARE EQUAL: a silent-pass mode hiding inside a loud failure. Filtering first guarantees every path fed
+# to hash-object exists.
+# Filter-then-one-process, not hash-per-file: the per-file loop measured 1m21s for 1254 files on this machine
+# (process spawn, not hashing) against 0.84s this way. Taken twice a run, that is the difference between a guard
+# people keep and one someone deletes for being slow.
 tree_manifest() {
-  git status --porcelain 2>/dev/null | awk '{print $NF}' | grep -E '\.(gd|json|csv|tres|tscn|cfg|sh)$' | sort \
-    | while read -r f; do [ -f "$f" ] && printf '%s  %s\n' "$(git hash-object "$f")" "$f"; done
+  local list
+  list=$(mktemp)
+  { git ls-files; git ls-files --others --exclude-standard; } 2>/dev/null \
+    | grep -E '\.(gd|json|csv|tres|tscn|cfg|sh)$' | sort -u \
+    | while read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done > "$list"
+  git hash-object --stdin-paths < "$list" | paste -d' ' - "$list"
+  rm -f "$list"
 }
 # Taken AFTER the import above: the sidecars the import itself writes belong in the baseline, not the diff.
 # It sits here and not up beside the import because the function and $TREE_BEFORE are declared above it.
