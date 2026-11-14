@@ -39,7 +39,7 @@ Hoãn theo `unified-audio-identity.md` §8 mục 4: bắt đầu sau khi Phase 4
 - `MusicPlayer` (src/audio/music_player.gd), gắn trong `AudioRig`: khám phá ngoài trận, trận / boss khi đang đánh,
   stinger khi trận kết thúc (giữ 7 s rồi trở lại khám phá), crossfade 1.5 s, quay lại bản đã rời thì phát tiếp từ chỗ cũ.
 
-## Đề xuất: nhạc riêng từng vùng (2026-11-13, chưa tạo)
+## Nhạc riêng từng vùng (đề xuất 2026-11-13; làm xong và người dùng duyệt 2026-11-14)
 Giữ chung "ADN" của Tessera (hoà tấu nhỏ, chậm, u buồn, không điện ảnh, dải 1–4 kHz thưa trong bản trận); mỗi vùng đổi
 **một nhạc cụ đặc trưng + giọng + tempo**. Mỗi vùng: bản khám phá (create) → bản trận (restyle, cùng giai điệu) → 2 vòng
 lặp. Bản boss và stinger thắng / thua dùng chung. Tâm Lưới (an_dai): restyle chủ đề Rừng Sương thành bản trang nghiêm,
@@ -61,3 +61,8 @@ Tổng ~182 gen. Hai đợt: đợt 3 = 7 bản khám phá / Tâm Lưới (70 ge
 lặp (~112 gen).
 Code: thêm `music.regions` {region_id: {explore, battle}} vào audio_events.json, MusicPlayer chọn theo vùng của run
 (thiếu vùng → Rừng Sương); an_dai dùng bản riêng cho cả khám phá lẫn trận cuối.
+
+Kết quả: đợt 3 (70 gen) + đợt 4 (112 gen) xong, commit a77e2a54; nhạc nén Vorbis q2 (27 MB). Quay trong game
+(`tools/audio/music_capture.gd`, bằng chứng `production/qa/evidence/music/ingame/README.md`): ch1, hellfire, sky_isles
+đúng bản khám phá / trận / stinger / quay lại khám phá; người dùng duyệt "Đạt" 2026-11-14. Bản quyền PixelLab vẫn
+chưa xác nhận.
