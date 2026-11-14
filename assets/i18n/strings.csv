@@ -1251,3 +1251,37 @@ enemy_skill.matriarch_toxic_croak.name,Tiếng Kêu Độc,Toxic Croak
 enemy_skill.matriarch_toxic_croak.counter,"Đổ hai nhịp, lệch một hàng; ra phía không có làn chờ, và không ngắt được","Two beats, one row apart; leave by the side with no waiting lane, and it cannot be interrupted"
 enemy_skill.matriarch_regrow.name,Lột Xác,Regrow
 enemy_skill.matriarch_regrow.counter,Nó hồi một lần duy nhất khi vào pha hai,"It heals exactly once, on entering the second phase"
+enemy_skill.skeleton_shield_bash.name,Húc Khiên,Shield Bash
+enemy_skill.skeleton_shield_bash.counter,"Một ô; bước đi, ghìm rất ngắn và không chồng","One cell; step away, the pin is brief and never stacks"
+enemy_skill.zombie_grab.name,Níu Chân,Grab
+enemy_skill.zombie_grab.counter,"Một ô; bị trói là ăn đòn tiếp của đồng đội nó, nên né Zombie trước","One cell; being rooted means eating its allies' next blow, so dodge the Zombie first"
+enemy_skill.swarm_scatter.name,Cắn Rải,Scatter Bite
+enemy_skill.swarm_scatter.counter,"Ba vết cắn rời nhau, hình đổi mỗi lần; một bước là thoát",Three separate bites in a shape that changes each time; one step is enough
+enemy_skill.slime_engulf.name,Trùm Nhớt,Engulf
+enemy_skill.slime_engulf.counter,"Trùm 2×2; ra khỏi ô, dính là bị chậm","A 2x2 smothering; leave the square, a hit slows you"
+enemy_skill.slime_ooze.name,Rỉ Nhớt,Ooze
+enemy_skill.slime_ooze.counter,"Một ô nhớt cạnh bạn; đừng bước vào, nó giữ bạn trong tầm Trùm","One slick cell beside you; do not step in, it holds you inside Engulf's reach"
+enemy_skill.ghost_wail.name,Tiếng Rú,Wail
+enemy_skill.ghost_wail.counter,Rú dọc cột hai ô; bước ngang,The wail runs two cells down your column; step sideways
+enemy_skill.ghost_phase.name,Tan Biến,Phase
+enemy_skill.ghost_phase.counter,"Lúc tan không đánh được; ghim khối trước khi nó tan, hoặc đợi nó hiện","It cannot be hit while faded; pin it before it fades, or wait for it"
+enemy_skill.reacter_lash.name,Dây Vướng,Trip Lash
+enemy_skill.reacter_lash.counter,Nó chỉ quất sau khi bạn bước ba lần; đứng yên đặt khối là an toàn,It only lashes after your third step; standing still to place blocks is safe
+enemy_skill.cultist_curse_ring.name,Vòng Nguyền,Curse Ring
+enemy_skill.cultist_curse_ring.counter,"Bốn ô quanh bạn, không trúng ô đang đứng; đứng yên là an toàn, hoặc bước hai lần liền","Four cells around you, never the one you stand on; stand still, or take two steps in a row"
+enemy_skill.cultist_dark_rite.name,Nghi Lễ Tối,Dark Rite
+enemy_skill.cultist_dark_rite.counter,"Nó làm lễ khi đồng đội vừa ngã; ngắt ngay, hoặc giết Giáo Phái trước","It performs the rite when an ally has just fallen; interrupt it, or kill the Cultist first"
+enemy_skill.guard_shove.name,Húc Đẩy,Shield Shove
+enemy_skill.guard_shove.counter,"Thanh hai ô, trúng là bị đẩy lùi; bước vuông góc và đừng đứng sát hàng cuối",A two-cell bar that shoves you back; step sideways and do not stand against the back row
+enemy_skill.jailer_chain_hook.name,Móc Xích,Chain Hook
+enemy_skill.jailer_chain_hook.counter,"Móc dọc cột hai ô, trúng là bị trói và kéo lại; bước ngang","The hook runs two cells down your column, rooting and dragging you in; step sideways"
+enemy_skill.jailer_lockdown.name,Khóa Cửa,Lockdown
+enemy_skill.jailer_lockdown.counter,Hai ô thoát hoá hố; rời trước khi hố mở,Two escape cells become pits; leave before they open
+enemy_skill.ogre_club.name,Chùy Đá,Club
+enemy_skill.ogre_club.counter,"Đập 2×2, không ngắt được; ra khỏi ô vuông",A 2x2 smash that cannot be interrupted; leave the square
+enemy_skill.ogre_grab.name,Tóm,Grab
+enemy_skill.ogre_grab.counter,Một ô; bị ghìm là không tránh được chùy tiếp theo,One cell; being held means the next club cannot be dodged
+enemy_skill.ogre_roar.name,Gầm,Roar
+enemy_skill.ogre_roar.counter,Nó gầm lúc vào pha hai rồi đánh nhanh hơn 6 giây; ngắt được,It roars on entering the second phase and then strikes faster for 6 seconds; it can be interrupted
+enemy_skill.ogre_quake.name,Địa Chấn,Quake
+enemy_skill.ogre_quake.counter,"Cả hàng, rồi hàng kề một nhịp sau; sang hàng không có làn chờ, đứng yên là ăn cả hai","The whole row, then the next row a beat later; move to the row with no waiting lane, standing still eats both"

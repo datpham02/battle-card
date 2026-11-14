@@ -488,6 +488,8 @@
 			"matches": {
 				"skeleton": {
 					"id": "skeleton",
+					"brain": "pattern",
+					"enemy": "skeleton",
 					"name_key": "boss.skeleton.name",
 					"boss_max_hp": 92,
 					"brain_set": "cautious",
@@ -503,6 +505,8 @@
 				},
 				"zombie": {
 					"id": "zombie",
+					"brain": "pattern",
+					"enemy": "zombie",
 					"name_key": "boss.zombie.name",
 					"boss_max_hp": 104,
 					"brain_set": "balanced",
@@ -518,6 +522,8 @@
 				},
 				"bat_swarm": {
 					"id": "bat_swarm",
+					"brain": "pattern",
+					"enemy": "bat_swarm",
 					"name_key": "boss.bat_swarm.name",
 					"boss_max_hp": 115,
 					"brain_set": "balanced",
@@ -539,6 +545,8 @@
 				},
 				"slime": {
 					"id": "slime",
+					"brain": "pattern",
+					"enemy": "slime",
 					"name_key": "boss.slime.name",
 					"boss_max_hp": 138,
 					"brain_set": "balanced",
@@ -555,6 +563,8 @@
 				},
 				"cultist": {
 					"id": "cultist",
+					"brain": "pattern",
+					"enemy": "cultist",
 					"name_key": "boss.cultist.name",
 					"boss_max_hp": 150,
 					"brain_set": "balanced",
@@ -571,6 +581,8 @@
 				},
 				"rat_king_guard": {
 					"id": "rat_king_guard",
+					"brain": "pattern",
+					"enemy": "rat_king_guard",
 					"name_key": "boss.rat_king_guard.name",
 					"boss_max_hp": 161,
 					"brain_set": "balanced",
@@ -593,6 +605,8 @@
 				},
 				"ghost": {
 					"id": "ghost",
+					"brain": "pattern",
+					"enemy": "ghost",
 					"name_key": "boss.ghost.name",
 					"desc_key": "match.ghost.desc",
 					"boss_max_hp": 24,
@@ -609,6 +623,8 @@
 				},
 				"reacter": {
 					"id": "reacter",
+					"brain": "pattern",
+					"enemy": "reacter",
 					"name_key": "boss.reacter.name",
 					"desc_key": "match.reacter.desc",
 					"boss_max_hp": 70,
@@ -632,6 +648,8 @@
 				},
 				"jailer": {
 					"id": "jailer",
+					"brain": "pattern",
+					"enemy": "jailer",
 					"name_key": "boss.jailer.name",
 					"boss_max_hp": 77,
 					"brain_set": "balanced",
@@ -651,18 +669,6 @@
 						{
 							"id": "row_burner",
 							"params": {}
-						},
-						{
-							"id": "seal_caster",
-							"params": {
-								"may_target_player_cell": true,
-								"interval_sec": 9.0,
-								"first_delay_sec": 6.0,
-								"cells_min": 2,
-								"cells_max": 3,
-								"lead_sec": 0.6,
-								"min_swing_cells": 3
-							}
 						}
 					],
 					"arena": {
@@ -672,6 +678,8 @@
 				},
 				"ogre_king": {
 					"id": "ogre_king",
+					"brain": "pattern",
+					"enemy": "ogre_king",
 					"name_key": "boss.ogre_king.name",
 					"desc_key": "match.ogre_king.desc",
 					"boss_max_hp": 132,

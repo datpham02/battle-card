@@ -611,3 +611,89 @@ PASS lash: an unclipped cast was found to judge the axis on  no 2+ cell cast ove
 Vế sau viết cho **trường hợp hỏng** nhưng in cạnh chữ PASS. Người đọc lướt thấy "không có cú tung 2 ô nào" ngay
 cạnh dòng xanh. Đã sửa: `extra` chỉ in khi FAIL. Đây là lần đầu trong Phase 2 lỗi nằm ở **dụng cụ đo** chứ không
 ở phép đo hay dữ liệu — cùng một dòng chữ phục vụ hai tình huống trái ngược.
+
+## 19–22. Hầm Ngục `ch2` — đã triển khai (2026-11-15, chưa commit)
+
+**10/10 quái, hệ số ×2,5** (người dùng chốt). Vùng này **không cần sửa code nền** — mọi khoá §4.5 đòi
+(`player_steps_since`, `ally_died_within_sec`, `push`/`pull`, `evade`, `guard`, `move`, `pattern.variants`,
+status `pin`, travel `chain_spark`) đều đã có sẵn. Đó là lý do nó rẻ hơn Sa Mạc và Đầm Lầy.
+
+| Nhóm | Quái | Suite |
+|---|---|---|
+| D-A | Xương, Zombie, Bầy Dơi | 31 PASS |
+| D-B | Slime, Ma, Reacter | 44 PASS |
+| D-C | Giáo Phái, Vệ Binh Chuột, Cai Ngục | 45 PASS |
+| D-D | Ogre Vương (boss) | 45 PASS |
+
+Lượt xác nhận 10 suite (4 Hầm Ngục + 4 Đầm Lầy + 2 Sa Mạc), manifest `13e51f0b…` hai đầu → TREE STABLE.
+
+### 19.1 Vì sao ×2,5 chứ không ×3,5 — và chốt chặn cũ hỏi sai câu
+
+Bảng đối chiếu đầy đủ 15 dòng (không phải một dòng) cho thấy chỗ chốt chặn cũ mù:
+
+```
+Đòn nặng nhất ogre_quake, ×1,5 khi dính Rạn:
+  ×2,5 -> 60 = 35 % máu Pháp Sư (170)
+  ×3,5 -> 84 = 49 %              (ngưỡng 50 %)
+
+Quake + nhịp hai nếu hero đứng yên ăn CẢ HAI:
+  ×2,5 -> 70 = 41 %
+  ×3,5 -> 98 = 58 %   <- vượt nửa máu trong MỘT nhịp
+```
+
+Chân guard của mọi suite trước chỉ kiểm **đòn đơn**. Ở ×3,5 thì 56 và 42 đều dưới ngưỡng 85 nên **xanh**, trong khi
+người chơi mất 58 % máu ở tầng 2. Suite D-D giờ mang **cả hai chân**: từng nhịp, và tổng hai nhịp.
+
+**Còn chưa che:** `sphinx_sandfall` (Sa Mạc) và `matriarch_toxic_croak` (Đầm Lầy) cùng hình dạng hai nhịp và
+**chưa từng được kiểm theo cách này**. Ở hệ số đã ship chúng là 70 và 84 trên 170 — trong ngưỡng, nhưng *chưa
+kiểm* không phải *đã an toàn*.
+
+### 19.2 HAI LỖI DỮ LIỆU THẬT (khác bốn nhóm Đầm Lầy, vốn toàn lỗi test)
+
+**(a) `overrides` ở cấp quái bị bỏ qua IM LẶNG — và một con đã ship.**
+Quái không có `phases` được sinh phase mặc định `{"id":"main","enter_hp_ratio":1.0,"skills":…}`
+(`enemy_skills_config.gd:402`) — **không mang `overrides` theo**. Bốn con bị ảnh hưởng:
+
+| Quái | Vùng | Trạng thái |
+|---|---|---|
+| `mire_slug` | Đầm Lầy | **đã ship ở `5f5ab244`** — con Sên chạy số sidestep mặc định thay vì weight 0,3 / hồi 7 s |
+| `skeleton`, `bat_swarm` | Hầm Ngục | chưa ship |
+| `jailer` | Hầm Ngục | chưa ship |
+
+Đã sửa cả bốn sang **phase tường minh**. `_cfg.problems` rỗng suốt — không có tín hiệu nào.
+
+**Đề xuất sửa code nền (chờ người dùng duyệt, KHÔNG tự sửa):** ở dòng 402, (1) phase mặc định mang `overrides`
+theo, và (2) **mọi khoá cấp quái không được dùng tới thì `problems.append`**. Việc (2) quan trọng hơn — nó biến
+cả lớp lỗi "im lặng rơi mất" thành thứ nhìn thấy ngay lần chạy đầu, kể cả những khoá chưa ai nghĩ tới.
+
+**(b) `must_cover_player` mặc định BẬT cho `on_player` và mâu thuẫn với `exclude_player`.**
+`covers_by_default` bật cho `on_player` / `row_of_player` / `column_of_player`
+(`enemy_skills_config.gd:220`). Một bên đòi ô hero **phải có**, bên kia đòi **phải không có** → mọi kế hoạch bị
+loại, kỹ năng **không bao giờ tung ra**, `_cfg.problems` rỗng. Probe: `0/10` và `0/9` ô hero trên staircase và
+square. Đã thêm `must_cover_player: false` cho `cultist_curse_ring`.
+
+Thiết kế §4.5 viết Vòng Nguyền là `near_player` + hình cộng 5 ô + `exclude_player` — còn tệ hơn: neo ở ô **kề**
+hero thì hình cộng **luôn** chứa ô hero, nên nó bị loại mọi lần kể cả khi không có mâu thuẫn trên. Data ship là
+`on_player` với **bốn ô kề**, không `[0,0]`.
+
+**Đề xuất thứ hai:** config nên **từ chối** `exclude_player && must_cover_player` như một mâu thuẫn, thay vì nhận
+rồi im lặng không bao giờ tung ra.
+
+### 19.3 MỘT LỖI TEST: Húc Đẩy 33 vs 25
+
+Engine đúng. Cú đẩy **bị chặn** kích hoạt **R3 Va Đập** cộng 8 damage
+(`pattern_controller.gd _apply_forced_move`). Chân test giờ chấp nhận `data` hoặc `data + R3`, **kèm một chân
+ngược lại**: phần dư chỉ được xuất hiện khi hero thật sự không bị đẩy đi.
+
+### 19.4 Lỗi trong chính script, assert chặn được
+
+Hàm gỡ trait tìm `"id": "seal_caster"` **không giới hạn trong khối của Cai Ngục**. Lần chạy thứ hai, trait của
+Cai Ngục đã gỡ rồi nên nó tìm thấy chuỗi kế tiếp — thuộc **`an_dai_keeper`, boss cuối, chương `an_dai`, ngoài
+phạm vi nhiệm vụ**. Assert "không tìm được dấu phẩy" nổ vì cấu trúc khác nhau, **không phải** vì nó biết mình
+nhầm quái. Đã giới hạn tìm kiếm bằng brace-matching trong khối của chính quái đó, và kiểm boss cuối còn nguyên
+`seal_caster` ở cả hai pha.
+
+### 19.5 Lỗi trục `column_of_player` lần thứ tư và thứ năm
+
+`ghost_wail` và `jailer_chain_hook` đều bị §4.5 in là `[[0,0],[0,1]]` — thanh nằm ngang thay vì cột dọc. Data
+ship `[[0,0],[1,0]]`, và hai suite đòi một cú tung **2 ô không bị cắt** trước khi phán xét trục.
