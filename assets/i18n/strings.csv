@@ -1241,3 +1241,13 @@ enemy_skill.frog_leap_slam.name,Đè Nhảy,Leap Slam
 enemy_skill.frog_leap_slam.counter,Đè hai nhịp xuống đúng chỗ cũ; ra khỏi ô và đừng quay lại,It slams the same cells twice; leave them and do not come back
 enemy_skill.frog_croak.name,Tiếng Kêu,Croak
 enemy_skill.frog_croak.counter,"Ngắt lúc nó kêu, không thì nó đánh nhanh hơn 6 giây","Interrupt the croak, or it attacks faster for 6 seconds"
+enemy_skill.matriarch_spit.name,Phun Lầy,Mire Spit
+enemy_skill.matriarch_spit.counter,"Một ô, bước là né; nhưng ô đó hoá lầy, đừng quay lại","One cell, just step; but that cell turns to mire, so do not come back"
+enemy_skill.matriarch_tongue_lash.name,Quặt Lưỡi,Tongue Lash
+enemy_skill.matriarch_tongue_lash.counter,"Lưỡi quặt dọc cột ba ô; bước ngang, dính là bị chậm","The tongue sweeps three cells down your column; step sideways, a hit slows you"
+enemy_skill.matriarch_sink.name,Sụt Lầy,Sink
+enemy_skill.matriarch_sink.counter,"Hai ô thoát sắp sụp; rời trước khi hố mở, luôn còn một ô kề an toàn","Two escape cells are about to collapse; leave before the hole opens, one neighbour always stays"
+enemy_skill.matriarch_toxic_croak.name,Tiếng Kêu Độc,Toxic Croak
+enemy_skill.matriarch_toxic_croak.counter,"Đổ hai nhịp, lệch một hàng; ra phía không có làn chờ, và không ngắt được","Two beats, one row apart; leave by the side with no waiting lane, and it cannot be interrupted"
+enemy_skill.matriarch_regrow.name,Lột Xác,Regrow
+enemy_skill.matriarch_regrow.counter,Nó hồi một lần duy nhất khi vào pha hai,"It heals exactly once, on entering the second phase"

@@ -1247,6 +1247,8 @@
 				},
 				"toad_matriarch": {
 					"id": "toad_matriarch",
+					"brain": "pattern",
+					"enemy": "toad_matriarch",
 					"name_key": "boss.toad_matriarch.name",
 					"desc_key": "match.toad_matriarch.desc",
 					"boss_max_hp": 170,
@@ -1265,18 +1267,6 @@
 								"interval_sec": 8.0,
 								"cells": 2,
 								"mire_sec": 5.0
-							}
-						},
-						{
-							"id": "seal_caster",
-							"params": {
-								"may_target_player_cell": true,
-								"interval_sec": 12.0,
-								"first_delay_sec": 8.0,
-								"cells_min": 2,
-								"cells_max": 2,
-								"lead_sec": 0.6,
-								"min_swing_cells": 3
 							}
 						}
 					],

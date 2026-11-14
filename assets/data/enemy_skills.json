@@ -715,6 +715,49 @@
 			"effects": {"haste": {"cooldown_mult": 0.75, "sec": 6.0}},
 			"weight": 0.8,
 			"recovery_sec": 0.4, "cooldown_sec": 12.0, "interruptible": true, "interrupt_stun_sec": 0.8, "counts_as_cast": false
+		},
+		"matriarch_spit": {
+			"id": "matriarch_spit", "owner": "toad_matriarch", "kind": "attack", "name_key": "enemy_skill.matriarch_spit.name", "counter_key": "enemy_skill.matriarch_spit.counter",
+			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
+			"windup_sec": 0.4, "warning_sec": 0.9,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "poison"},
+			"effects": {"damage": 35, "zone": {"id": "mire", "sec": 3.0}},
+			"recovery_sec": 0.5, "cooldown_sec": 2.8
+		},
+		"matriarch_tongue_lash": {
+			"id": "matriarch_tongue_lash", "owner": "toad_matriarch", "kind": "attack", "name_key": "enemy_skill.matriarch_tongue_lash.name", "counter_key": "enemy_skill.matriarch_tongue_lash.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [2, 0]], "anchor": "column_of_player", "clip": true, "min_cells": 2},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
+			"effects": {"damage": 42, "status": {"id": "slow", "sec": 1.5}},
+			"recovery_sec": 0.6, "cooldown_sec": 4.5
+		},
+		"matriarch_sink": {
+			"id": "matriarch_sink", "owner": "toad_matriarch", "kind": "attack", "name_key": "enemy_skill.matriarch_sink.name", "counter_key": "enemy_skill.matriarch_sink.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
+			"windup_sec": 0.6, "warning_sec": 1.2,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "seal"},
+			"effects": {"zone": {"id": "drop", "warn_sec": 0.8, "hole_sec": 1.2}},
+			"recovery_sec": 0.6, "cooldown_sec": 9.0
+		},
+		"matriarch_toxic_croak": {
+			"id": "matriarch_toxic_croak", "owner": "toad_matriarch", "kind": "attack", "name_key": "enemy_skill.matriarch_toxic_croak.name", "counter_key": "enemy_skill.matriarch_toxic_croak.counter",
+			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true, "clip": true, "min_cells": 3},
+			"windup_sec": 0.9, "warning_sec": 1.5,
+			"delivery": {"type": "SKY_TO_TARGET", "origin": "sky", "travel": "falling_squares", "impact": "poison"},
+			"effects": {"damage": 49, "status": {"id": "poison", "sec": 4.0, "tick_sec": 0.5, "damage": 1.5}},
+			"followup": {"offsets": [[0, 1]], "rotations": [0, 180], "relative_to": "first_shift", "show_with_first": true,
+				"warning_sec": 0.75, "effects": {"damage": 35}},
+			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 0.0, "interruptible": false
+		},
+		"matriarch_regrow": {
+			"id": "matriarch_regrow", "owner": "toad_matriarch", "kind": "self", "name_key": "enemy_skill.matriarch_regrow.name", "counter_key": "enemy_skill.matriarch_regrow.counter",
+			"pattern": {"anchor": "self_cell"},
+			"windup_sec": 0.8,
+			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "guard"},
+			"effects": {"heal": {"ratio": 0.08, "sec": 1.5}},
+			"conditions": {"once": true}, "weight": 0.0,
+			"recovery_sec": 0.4, "cooldown_sec": 0.0, "counts_as_cast": false
 		}
 	},
 	"enemies": {
@@ -815,6 +858,18 @@
 		"reed_witch": {"tier": "normal", "arena": "reed_maze", "skills": ["witch_rot_cloud", "shared_sidestep"]},
 		"bog_hound": {"tier": "normal", "arena": "bog", "skills": ["hound_mire_chase", "shared_sidestep"]},
 		"spore_cap": {"tier": "elite", "arena": "bog", "skills": ["spore_puff", "spore_regrow", "shared_sidestep"]},
-		"leap_frog": {"tier": "elite", "arena": "reed_maze", "skills": ["frog_leap_slam", "frog_croak", "shared_sidestep"]}
+		"leap_frog": {"tier": "elite", "arena": "reed_maze", "skills": ["frog_leap_slam", "frog_croak", "shared_sidestep"]},
+		"toad_matriarch": {"tier": "boss", "arena": "bog",
+			"phases": [
+				{"id": "p1", "enter_hp_ratio": 1.0,
+					"skills": ["matriarch_spit", "matriarch_tongue_lash", "matriarch_sink", "shared_sidestep"],
+					"mechanic": "matriarch_sink", "overrides": {"shared_sidestep": {"weight": 2.0, "cooldown_sec": 8.0}}},
+				{"id": "p2", "enter_hp_ratio": 0.5,
+					"skills": ["matriarch_spit", "matriarch_tongue_lash", "matriarch_sink", "shared_sidestep", "matriarch_toxic_croak", "matriarch_regrow"],
+					"mechanic": "matriarch_toxic_croak", "overrides": {"shared_sidestep": {"weight": 2.0, "cooldown_sec": 8.0}},
+					"every_nth": {"skill": "matriarch_toxic_croak", "n": 3},
+					"traits": [{"id": "bog_spread", "params": {"interval_sec": 6.0}}],
+					"transition": {"sec": 1.5, "on_enter": [{"skill": "matriarch_regrow"}]}}
+			]}
 	}
 }

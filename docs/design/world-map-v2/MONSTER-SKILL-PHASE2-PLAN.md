@@ -556,3 +556,58 @@ Test dời hero tới ô đặt được rồi mới phán xét.
 **Cùng triệu chứng, nguyên nhân ngược với §16.2.** Ở `witch_rot_cloud` dữ liệu thật sự sai (thiếu `clip`); ở đây
 dữ liệu đúng và test đứng sai chỗ. Phân biệt được **chỉ nhờ probe đếm số kế hoạch theo từng ô hero** — không nhờ
 đọc lại dữ liệu, cũng không nhờ nhìn lâu hơn vào dòng đỏ.
+
+## 18. Nhóm W-D — đã triển khai (2026-11-15, chưa commit)
+
+**Quái:** `toad_matriarch` (boss Đầm Lầy). ×3,5. **Vùng Đầm Lầy hoàn tất 9/9 quái.**
+
+| Kỹ năng | Damage | Hình / hiệu ứng |
+|---|---|---|
+| `matriarch_spit` | 10 → **35** | 1 ô trên hero, **ô đó hoá lầy 3 s** |
+| `matriarch_tongue_lash` | 12 → **42** + Chậm 1,5 s | lưỡi DỌC cột 3 ô, `clip` + `min_cells 2` |
+| `matriarch_sink` | 0 | 2 ô CẠNH hero sụp xuống (`zone: drop`, warn 0,8 / hole 1,2) |
+| `matriarch_toxic_croak` | 14 → **49**, nhịp hai 10 → **35** | 2×2 phủ hero + Độc 4 s, rồi lệch một hàng; **không ngắt được** |
+| `matriarch_regrow` | 0 | hồi **8 % máu tối đa trong 1,5 s**, `once`, ép ra lúc chuyển pha |
+
+Hai pha: p1 cơ chế `matriarch_sink`; p2 ở 0,5 máu thêm croak (weight 0) + regrow, `every_nth 3`, chuyển pha 1,5 s
+với `on_enter` là regrow, và `phases[].traits` siết `bog_spread` từ 8 s xuống **6 s**.
+
+**Suite:** `pattern_swamp_group_d_test.gd` **49 PASS**, FAILS=0. Lượt xác nhận 6 suite, manifest `0506a0a1…`
+hai đầu → TREE STABLE.
+
+### 18.1 `seal_caster` đã GỠ khỏi `chapters.json`, không chỉ "không dùng"
+
+§4.4: trait ấy móc vào swing block nên phải chuyển thành kỹ năng. Script `sw_group_d.py` gỡ object trait bằng
+**brace-matching từ chính `"id": "seal_caster"`** (không regex, vì `params` lồng nhau), và mang hai assert đối
+xứng chạy trên file đã ghi:
+
+- `seal_caster` phải **mất**
+- `bog_spread` phải **còn** (p2 chỉ ghi đè interval)
+
+**Chốt chặn này bắt được lỗi thật ngay lần dry-run đầu.** Bản script đầu chỉ *thêm* kỹ năng; nếu không có assert,
+Cóc Chúa sẽ vừa có `matriarch_sink` **vừa** còn trait `seal_caster` — hai cơ chế làm cùng một việc — và **không
+phép kiểm nào của suite hỏi tới trait**, nên toàn bộ vẫn xanh. Chiều thứ hai (`bog_spread` phải còn) cũng cần:
+một bản sửa gỡ nhầm cả hai trait vẫn qua được chiều thứ nhất.
+
+### 18.2 Một lượt xanh giả, và vì sao nó suýt trót lọt
+
+Lượt đầu: `39 PASS, FAILS=0` **kèm** `SCRIPT ERROR: Invalid cast: could not convert value to 'Dictionary'`.
+
+Nguyên nhân: `transition.on_enter` được `enemy_skills_config.gd:424-431` **làm phẳng thành `Array[String]`** —
+các object `{"skill": ...}` trong JSON biến thành id trần. Ép kiểu sang `Dictionary` nên nổ, và cú nổ **cắt cụt
+`test_data_shape`**: **chín chân phía dưới không bao giờ chạy**, gồm đúng ba chân kiểm ba chỗ lệch có chủ đích
+(`sink` offsets, `lash` trục cột, `croak` clip). Dòng tổng kết vẫn in `FAILS=0` vì nó chỉ đếm phần đã in.
+
+Sau khi sửa: **49 PASS**, không `SCRIPT ERROR`. Chênh lệch 39 → 49 chính là phần đã im lặng.
+
+### 18.3 Lỗi trong chính dụng cụ đo
+
+`_check` in tham số `extra` **cả khi PASS**, nên một dòng xanh đọc thành câu nói ngược:
+
+```
+PASS lash: an unclipped cast was found to judge the axis on  no 2+ cell cast over 8 seeds
+```
+
+Vế sau viết cho **trường hợp hỏng** nhưng in cạnh chữ PASS. Người đọc lướt thấy "không có cú tung 2 ô nào" ngay
+cạnh dòng xanh. Đã sửa: `extra` chỉ in khi FAIL. Đây là lần đầu trong Phase 2 lỗi nằm ở **dụng cụ đo** chứ không
+ở phép đo hay dữ liệu — cùng một dòng chữ phục vụ hai tình huống trái ngược.
