@@ -21128,6 +21128,134 @@ assets:
     evidence: "production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md; user 2026-11-13: 'commit clip đi'"
     note: "clips approved for commit by the user"
   notes: []
+- id: unit.an_dai_keeper
+  type: unit
+  name: "Heart Keeper (Người Giữ Tâm Lưới)"
+  entity_id: an_dai_keeper
+  tier: boss
+  legacy_asset_id: unit.an_dai_keeper
+  provider: pixellab
+  status: installed
+  acceptance: accepted
+  accepted_on: "2026-11-13"
+  accepted_by: user
+  accepted_evidence: "production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md Checkpoint A section: anchors shown to the user (measurements, likeness checks, line-up); user's 'Yes, 45 clip' = anchors accepted, clips approved for generation"
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md
+  reference: design/assets/references/characters/an_dai_keeper.md
+  production:
+  - assets/art/units/unit_an_dai_keeper_sheet.png
+  - assets/art/units/unit_an_dai_keeper_sheet.json
+  source: [art_src/units/an_dai_keeper/clips.json]
+  candidates:
+  - design/assets/candidates/lattice_heart/an_dai_keeper/clean-96x84/
+  - design/assets/candidates/lattice_heart/an_dai_keeper/download/Idle/animations/
+  evidence: [production/qa/evidence/world-map-v2/region-enemies]
+  frame:
+    w: 96
+    h: 84
+    body_h: null
+    facing: left
+  palette:
+    file: art_src/palette/tessera_master.gpl
+    max: 8
+    colours: ["#1B1722", "#2E3450", "#4C5266", "#6A6B62", "#A89A80", "#D8CDB0", "#EFE6D2"]
+  pixellab:
+    character_id: d32ddbf9-a403-4f4d-a246-50d958d79363
+    image_ids: []
+    job_ids: []
+    style_lineage: "create_character_pro_flash with style_image = Goblin v3 south rotation (3b9516c8), colour transfer off, palette locked; low top-down; region colours of tessera_master.gpl 2026-11-13"
+  generation:
+    source_note: "PixelLab character d32ddbf9-a403-4f4d-a246-50d958d79363 (lattice_heart roster, anchor v2 d32ddbf9 accepted by the user 2026-11-14 at about 72 px as a size exception for the final boss), PixMiniMax south-west clips (8 frames) in design/assets/candidates/lattice_heart/an_dai_keeper/download/Idle/animations/<clip>/south-west/, cleaned mechanically (palette snap to the locked colours, clusters < 12 px removed, feet on the bottom row, one horizontal shift per unit from idle frame 0) into design/assets/candidates/lattice_heart/an_dai_keeper/clean-96x84/"
+  clips:
+  - name: idle
+    frames: 4
+    loop: loop
+    ms: [250, 250, 250, 250]
+    source_dir: art_src/units/an_dai_keeper/idle
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: null
+    generation: null
+    note: "src 0/2/4/6, slow breathing, ribbons drifting"
+  - name: step
+    frames: 4
+    loop: loop
+    ms: [100, 100, 100, 100]
+    source_dir: art_src/units/an_dai_keeper/step
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: null
+    generation: null
+    note: "src 1/3/5/7, glide ; nominal; the game paces step by the step cooldown"
+  - name: windup
+    frames: 4
+    loop: hold_last
+    ms: [100, 100, 100, 0]
+    source_dir: art_src/units/an_dai_keeper/windup
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: null
+    generation: null
+    note: "src 2/4/6/8, both hands raised wide, held (a small yellow tassel was snapped to the palette)"
+  - name: hit
+    frames: 3
+    loop: once
+    ms: [40, 40, 40]
+    source_dir: art_src/units/an_dai_keeper/hit
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: null
+    generation: null
+    note: "src 3/4/5, sways back"
+  - name: down
+    frames: 6
+    loop: hold_last
+    ms: [100, 120, 150, 150, 150, 150]
+    source_dir: art_src/units/an_dai_keeper/down
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: null
+    generation: null
+    note: "src 2/3/4/5/6/8, sinks into a heap of cloth"
+  history:
+  - on: "2026-11-14"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
 backlog:
 - id: portrait.kiem_si
   name: "Character-select portrait 64x80 for kiem_si"

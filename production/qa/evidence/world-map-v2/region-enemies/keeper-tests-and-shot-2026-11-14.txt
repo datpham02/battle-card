@@ -1,0 +1,60 @@
+== start 2026-11-14 19:10:23
+b261d909f9d7acf1a73135e4841e0313af1cde1b src/battle/floor_dynamic_layer.gd
+f0711bfd25f02a4b3fb36029a11dfa166cf673b4 src/combat/cut_hud_view.gd
+c823198cf33adb92283722839bdc1c0812ee164b src/battle/unit_layer.gd
+4578f9d57585a69ba4732b92c0d40430fa302dda src/combat/combat_view.gd
+f3e320ee675c8b352e57ff39d10b0ca3f2ca6bb0 assets/data/chapters.json
+8f65a3443ed1a00a00a333972f9322f11e72b87b assets/art/units/unit_an_dai_keeper_sheet.png
+== dirty src/assets/data at start (other sessions)
+ M assets/data/chapters.json
+ M assets/data/characters.json
+ M assets/data/enemy_skills.json
+ M src/battle/floor_dynamic_layer.gd
+ M src/combat/combat_view.gd
+ M src/combat/cut_hud_view.gd
+ M src/combat/status_effects.gd
+ M src/combat/swing_arbiter.gd
+ M src/passives/base_passive.gd
+ M src/passives/hunter_mark.gd
+ M src/passives/quick_blade.gd
+ M src/passives/wide_caster.gd
+ M src/traits/boss_phases.gd
+ M src/traits/boss_trait.gd
+ M src/traits/burrow.gd
+ M src/traits/hop_skip.gd
+ M src/traits/phase_shift.gd
+ M src/traits/rebirth.gd
+ M src/traits/shroud.gd
+ M src/traits/trait_host.gd
+?? src/art/fuse_fx.gd.uid
+?? src/art/sky_drop_fx.gd.uid
+?? src/art/voxel_piece.gd.uid
+?? src/battle/pickup_layer.gd.uid
+?? src/battle/support_layer.gd.uid
+?? src/combat/cast_context.gd.uid
+?? src/combat/cast_resolver.gd.uid
+?? src/combat/crit_rules.gd.uid
+?? src/combat/parry_guard.gd.uid
+?? src/pieces/shape_tags.gd.uid
+?? src/run/climb_map.gd.uid
+?? src/run/save_slots.gd.uid
+?? src/run/save_slots_view.gd.uid
+import done
+== tests/unit/art/sheet_export_test.gd
+FAILS=0
+== tests/unit/art/sprite_sheet_test.gd
+FAILS=0
+== tests/unit/battle/roster_sprite_test.gd
+FAILS=0
+== tests/unit/battle/unit_sprites_test.gd
+FAILS=0
+== shot
+an_dai_keeper: production/qa/evidence/world-map-v2/region-enemies/10-lattice-an_dai_keeper-idle.png (OK)
+== end 19:11:21
+b261d909f9d7acf1a73135e4841e0313af1cde1b src/battle/floor_dynamic_layer.gd
+f0711bfd25f02a4b3fb36029a11dfa166cf673b4 src/combat/cut_hud_view.gd
+c823198cf33adb92283722839bdc1c0812ee164b src/battle/unit_layer.gd
+4578f9d57585a69ba4732b92c0d40430fa302dda src/combat/combat_view.gd
+f3e320ee675c8b352e57ff39d10b0ca3f2ca6bb0 assets/data/chapters.json
+8f65a3443ed1a00a00a333972f9322f11e72b87b assets/art/units/unit_an_dai_keeper_sheet.png
+DONE

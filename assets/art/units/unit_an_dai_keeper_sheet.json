@@ -1,0 +1,544 @@
+{
+  "frames": [
+    {
+      "filename": "an_dai_keeper_idle_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 250
+    },
+    {
+      "filename": "an_dai_keeper_idle_1",
+      "frame": {
+        "x": 97,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 250
+    },
+    {
+      "filename": "an_dai_keeper_idle_2",
+      "frame": {
+        "x": 194,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 250
+    },
+    {
+      "filename": "an_dai_keeper_idle_3",
+      "frame": {
+        "x": 291,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 250
+    },
+    {
+      "filename": "an_dai_keeper_step_0",
+      "frame": {
+        "x": 0,
+        "y": 85,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_step_1",
+      "frame": {
+        "x": 97,
+        "y": 85,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_step_2",
+      "frame": {
+        "x": 194,
+        "y": 85,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_step_3",
+      "frame": {
+        "x": 291,
+        "y": 85,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_windup_0",
+      "frame": {
+        "x": 0,
+        "y": 170,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_windup_1",
+      "frame": {
+        "x": 97,
+        "y": 170,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_windup_2",
+      "frame": {
+        "x": 194,
+        "y": 170,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_windup_3",
+      "frame": {
+        "x": 291,
+        "y": 170,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 0
+    },
+    {
+      "filename": "an_dai_keeper_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 255,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 40
+    },
+    {
+      "filename": "an_dai_keeper_hit_1",
+      "frame": {
+        "x": 97,
+        "y": 255,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 40
+    },
+    {
+      "filename": "an_dai_keeper_hit_2",
+      "frame": {
+        "x": 194,
+        "y": 255,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 40
+    },
+    {
+      "filename": "an_dai_keeper_down_0",
+      "frame": {
+        "x": 0,
+        "y": 340,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 100
+    },
+    {
+      "filename": "an_dai_keeper_down_1",
+      "frame": {
+        "x": 97,
+        "y": 340,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 120
+    },
+    {
+      "filename": "an_dai_keeper_down_2",
+      "frame": {
+        "x": 194,
+        "y": 340,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 150
+    },
+    {
+      "filename": "an_dai_keeper_down_3",
+      "frame": {
+        "x": 291,
+        "y": 340,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 150
+    },
+    {
+      "filename": "an_dai_keeper_down_4",
+      "frame": {
+        "x": 388,
+        "y": 340,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 150
+    },
+    {
+      "filename": "an_dai_keeper_down_5",
+      "frame": {
+        "x": 485,
+        "y": 340,
+        "w": 96,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 84
+      },
+      "duration": 150
+    }
+  ],
+  "meta": {
+    "app": "tools/asset-pipeline/export_sheets.py",
+    "version": "1.0",
+    "image": "unit_an_dai_keeper_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 581,
+      "h": 424
+    },
+    "scale": "1",
+    "frameTags": [
+      {
+        "name": "idle",
+        "from": 0,
+        "to": 3,
+        "direction": "forward"
+      },
+      {
+        "name": "step",
+        "from": 4,
+        "to": 7,
+        "direction": "forward"
+      },
+      {
+        "name": "windup",
+        "from": 8,
+        "to": 11,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 12,
+        "to": 14,
+        "direction": "forward"
+      },
+      {
+        "name": "down",
+        "from": 15,
+        "to": 20,
+        "direction": "forward"
+      }
+    ],
+    "layers": [
+      {
+        "name": "unit",
+        "opacity": 255,
+        "blendMode": "normal"
+      }
+    ],
+    "slices": [],
+    "tessera": {
+      "unit": "an_dai_keeper",
+      "asset": "unit.an_dai_keeper",
+      "facing": "left",
+      "frame": {
+        "w": 96,
+        "h": 84
+      },
+      "gutter": 1,
+      "columns": 6,
+      "loop": {
+        "idle": "loop",
+        "step": "loop",
+        "windup": "hold_last",
+        "hit": "once",
+        "down": "hold_last"
+      },
+      "palette": [
+        "#1B1722",
+        "#2E3450",
+        "#4C5266",
+        "#6A6B62",
+        "#A89A80",
+        "#D8CDB0",
+        "#EFE6D2"
+      ]
+    }
+  }
+}

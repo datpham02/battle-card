@@ -8,9 +8,9 @@ Lifecycle: `candidate → accepted → installed → approved`; `legacy` = repla
 
 | Total | Candidate | Accepted | Installed | Approved | Legacy |
 |---|---|---|---|---|---|
-| 286 | 0 | 0 | 207 | 75 | 4 |
+| 287 | 0 | 0 | 208 | 75 | 4 |
 
-Acceptance recorded: unknown 140, pending 10, accepted 136, rejected 0.
+Acceptance recorded: unknown 140, pending 10, accepted 137, rejected 0.
 
 ## Needs the user's decision
 
@@ -106,6 +106,7 @@ Acceptance recorded: unknown 140, pending 10, accepted 136, rejected 0.
 | `unit.storm_eagle` | unit.storm_eagle | monster | 74x55 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
 | `unit.thunder_shaman` | unit.thunder_shaman | monster | 80x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
 | `unit.wind_monk` | unit.wind_monk | monster | 64x53 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
+| `unit.an_dai_keeper` | unit.an_dai_keeper | boss | 96x84 | left | **installed** | yes 2026-11-13 | no record | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
 
 Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` needs a decision.
 

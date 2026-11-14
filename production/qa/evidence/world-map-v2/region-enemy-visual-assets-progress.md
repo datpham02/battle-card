@@ -342,7 +342,7 @@ Trạng thái: `—` chưa bắt đầu · `A` anchor duyệt · `C` 5 clip sạ
 | Hầm Ngục | skeleton `✓` · zombie `✓` · bat_swarm `✓` · slime `✓` · ghost `✓` · reacter `✓` · cultist `✓` · rat_king_guard `✓` · jailer `✓` · ogre_king `✓` — 10/10 (118 gen) |
 | Tháp Băng | frost_sprite `✓` · wisp `✓` · stone_sentry `✓` · snow_wolf `✓` · fuse_golem `✓` · rime_archer `✓` · ice_golem `✓` · ghost_elite `✓` (script, phụ kiện chờ) · frost_mage `✓` · mist_lord `✓` — 10/10 (100 gen) |
 | Không Đảo | cloud_sprite `✓` · harpy `✓` · wind_monk `✓` · storm_eagle `✓` · sky_sentinel `✓` · thunder_shaman `✓` · gale_bird `✓` · cloud_veil `✓` · storm_dragon `✓` — 9/9 (112 gen) |
-| Tâm Lưới | an_dai_keeper — (ngoài 7 vùng) |
+| Tâm Lưới | an_dai_keeper `G` (ngoại lệ cỡ 73 px, 27 gen, chưa commit) |
 
 ## 11. Khoảng trống còn lại và điều cần người dùng quyết
 
@@ -955,3 +955,143 @@ Tầng cao: thường cao nhất 52 (harpy v1 đã loại) → nay sky_sentinel 
 ### 18. Duyệt clip và commit (2026-11-13)
 
 Người dùng: "commit clip đi rồi làm người giữ tấm lưới". Lệnh này được ghi nhận là duyệt clip của 56 con thuộc 6 vùng. Registry chuyển 56 mục sang `approved` (approved_by user, 2026-11-13), tracker §10.2 chuyển `G` thành `✓`. Commit chỉ gồm file của task asset quái. Code combat, i18n, data và file của các session khác không nằm trong commit.
+
+## 19. Checkpoint A — Người Giữ Tâm Lưới (`an_dai_keeper`): 1 lệnh anchor (soạn 2026-11-13, CHỜ "yes")
+
+**Kiểm tra code:** trận `an_dai_keeper` không có khoá `brain`, nên chạy block brain. `clip_for` chỉ gọi `idle`, `step`, `windup`, `hit`, `down`. `phase_shift` chỉ dùng khi PatternController ở giai đoạn TRANSITION, nên block brain không bao giờ gọi. Ba mảnh Ánh Lưới trên đầu do code dựng (bible §8, "Mảnh Gốc không vẽ trong sheet"), nên sprite **không** có vàng. Pha 2 ("palette sáng thêm 1 bậc + hai cung vòng") không có clip nào gọi, nên ghi lại thành việc riêng, không gen.
+
+**Thiết kế (bible §5.2 dòng Người Giữ + ảnh `08-heart-keeper-01.png`, bỏ bệ phiến, khối lơ lửng và vàng phủ thân):** áo thụng nhiều lớp màu ngà-xám ấm, dải giữa màu chàm tối chạy dọc thân, mũ trùm sâu với mặt trống tối, vai khoác có hoa văn ô vuông đá, vài dải vải mảnh 2 px bay từ vai, một tay mở ra phía trước, lòng bàn tay ngửa.
+
+| Mục kiểm | Cách đạt |
+|---|---|
+| Cỡ: Boss cuối, tầng cao nhất | Canvas 96×96, mũ chạm mép trên, ~90 px. Đề xuất test: cao ≥ 88 và khối ≥ Kẻ Gác nặng nhất (Quỷ Khổng Lồ 3146 px) |
+| Đạo cụ / tay ở 3/4 | Tay mở chìa về phía trước, nhìn rõ ở góc tây nam |
+| Nhấn màu trên mảng lớn | Dải chàm dọc thân, không phải chi tiết nhỏ |
+| Mặt | Mũ trùm trống, tối, **không mắt**. Khác Chúa Tể Băng Giá có mắt Ngà, vương miện và áo tối |
+| Tương phản | Thân sáng trên phiến tối của nửa địch |
+| Màu cấm | Không #FFD45C và không vàng; không cyan; không #E2E3EA hay #B8BCC8 của Giáo Sĩ |
+
+**Giống nhân vật nổi tiếng nhất:** Nazgûl / Ringwraith (mũ trùm, mặt trống). Khác nhờ áo ngà sáng, dải chàm, dải vải và tay mở. **Rủi ro trong game:** Giáo Sĩ (`giao_si`) cũng mặc áo ngà-xám. Vì vậy dùng ngà ấm và be-xám thay vì xám chì lạnh của Giáo Sĩ, và kiểm line-up với Giáo Sĩ, Chúa Tể Băng Giá và Thần Mây trước khi gen clip.
+
+| Id | Canvas | Prompt (EN) | Palette khoá (7) | Gen |
+|---|---|---|---|---|
+| `an_dai_keeper` | 96×96 | "the Heart Keeper, a tall robed guardian filling the whole canvas height, about 90 px tall with the top of the hood touching the top edge, a long layered robe of warm ivory-grey cloth with a dark indigo panel running down the front, a deep hood with an empty dark face, a shoulder mantle patterned with small square stone tiles, a few thin cloth ribbons trailing from the shoulders, one hand held open in front, palm up, the other arm in a long sleeve, 1 px dark outline, flat shading, transparent background, no ground shadow, no glow, no gold, no yellow, no floating blocks, no base, no gradient" | #1B1722 #2E3450 #4C5266 #6A6B62 #A89A80 #D8CDB0 #EFE6D2 | 7 |
+
+Cài đặt như mọi lần: low top-down, style_image Goblin v3 south (`3b9516c8`), tắt colour transfer, seed 1. Sau anchor: đo kích thước, line-up (Giáo Sĩ · Chúa Tể Băng Giá · Thần Mây · Long Vương Gió · Người Giữ), rồi 5 clip (5 gen, hỏi "yes" riêng). Tổng dự kiến 12 gen.
+
+### 19.1 Kết quả anchor Người Giữ (2026-11-13, người dùng "Yes, gen anchor", 7 gen)
+
+Character `1dacabeb-7c93-4289-925a-69f52206ad2d`. Rotation trong `design/assets/candidates/lattice_heart/an_dai_keeper/rot/`, line-up `design/assets/candidates/lattice_heart/keeper-lineup-sw-x3.png` (Giáo Sĩ · Chúa Tể Băng Giá · Thần Mây · Long Vương Gió · Quỷ Khổng Lồ · Người Giữ).
+
+| Mục | Kết quả |
+|---|---|
+| Nhận dạng | Mũ trùm sâu mặt trống, áo thụng ngà-be có dải chàm, dải vải ở vai. Tông be ấm tách khỏi Giáo Sĩ trắng-xám, không mắt nên khác Chúa Tể Băng Giá. **Đạt.** |
+| Tay mở | Đọc yếu ở góc tây nam: tay gần thân, lòng bàn tay không rõ |
+| Cỡ | 44×66 px góc tây nam, 1503 px đặc, mép trên trống 16 px. **KHÔNG ĐẠT:** Boss cuối nhỏ hơn mọi Kẻ Gác (81–95 px) và chưa bằng nửa khối Quỷ Khổng Lồ (3146 px) |
+
+**Verdict: KHÔNG ĐẠT (cỡ).** Đề nghị gen lại 1 lần (7 gen, seed 2), giữ nguyên thiết kế và palette, và nhấn mạnh cỡ: "a towering robed guardian, about 92 px tall and 56 px wide, the hood touching the top edge of the canvas and the robe hem flaring wide at the bottom edge", "one arm stretched forward with the open palm clearly visible". Không re-roll thêm nếu lần này vẫn không đạt: dừng và báo.
+
+### 19.2 Gen lại Người Giữ v2 (2026-11-13, người dùng "Yes, gen lại", 7 gen) — DỪNG
+
+Character `d32ddbf9-a403-4f4d-a246-50d958d79363`, rotation `design/assets/candidates/lattice_heart/an_dai_keeper/rot-v2/`, line-up `keeper-lineup-sw-v2-x3.png`.
+
+| | v1 | v2 |
+|---|---|---|
+| Cao góc tây nam | 66 px | 73 px |
+| Khối đặc | 1503 | 1854 |
+| Mép trên trống | 16 px | 13 px |
+| Tay mở | yếu | rõ hơn, lòng bàn tay thấy được |
+
+**Vẫn KHÔNG ĐẠT cỡ**: nhỏ hơn mọi Kẻ Gác (81–95 px, Quỷ Khổng Lồ 3146 px). Theo quy tắc đã thống nhất, dừng ở con này, không re-roll.
+
+**Nguyên nhân:** trên canvas 96×96, pro flash vẽ người mặc áo thụng cao khoảng 70–75 px và luôn chừa 13–16 px phía trên, dù prompt ghi số px hay "chạm mép trên". Các Kẻ Gác đạt 81–95 px vì là sinh vật to ngang (ogre, rồng, nhân sư), không phải người đứng thẳng. Đây là giới hạn của khung, không phải của prompt.
+
+**Hướng xử lý (chờ người dùng chọn):**
+1. Gen lại trên canvas lớn hơn, khoảng 120×120. Tỉ lệ ~76 % canvas sẽ cho người cao ~90 px. Khung xuất cao ~92–96, ngang với Long Vương Gió. Chi phí ước tính 8–9 gen anchor, cần "yes" riêng.
+2. Chấp nhận v2 (73 px) và ngoại lệ quy tắc cỡ cho Boss cuối. Boss cuối sẽ nổi bật nhờ 3 mảnh Ánh Lưới do code vẽ và hiệu ứng pha 2, không nhờ thân to. 0 gen.
+
+### 19.3 Người Giữ v3 trên canvas 120×120 — bảng kiểm khoá (2026-11-14, CHỜ "yes")
+
+Người dùng chọn hướng "Tạo lại ở 120×120" (chuyển qua session điều phối). Lựa chọn này **chưa** phải lời đồng ý cho lần gen trả phí, nên vẫn hỏi "yes" riêng.
+
+**Kiểm trước:**
+- Góc nhìn low top-down, style_image Goblin v3 south `3b9516c8` (vừa trong 120×120), tắt colour transfer: giống mọi quái.
+- Ảnh tham chiếu `design/art/reference/08-heart-keeper-01.png` và bible §5.2. Bỏ bệ phiến, khối lơ lửng, vàng phủ thân. Ba mảnh Ánh Lưới do code vẽ.
+- Bố cục: v2 trên 96 cho 40×73 (≈ 76 % canvas). Trên 120 dự kiến ≈ 50×91 px. Khung xuất ≈ 100×96, trong khoảng các Kẻ Gác đã duyệt (Long Vương Gió 100×96, Chúa Quỷ Lửa 108×86). Một ô, đứng giữa ô.
+- Trong repo chưa có sheet hay clip nào của Người Giữ, nên không có khung chuyển động cũ phải dựng lại. 5 clip sẽ gen từ anchor mới.
+
+| Bảng kiểm | Khoá |
+|---|---|
+| Cỡ | ≥ 88 px cao và khối ≥ 2600 px đặc (lớn hơn Long Vương Gió 2575; Quỷ Khổng Lồ 3146 là con to ngang) |
+| Tay mở ở 3/4 | Một cánh tay chìa thẳng ra, lòng bàn tay thấy rõ (v2 đã đạt, giữ câu chữ) |
+| Màu nhấn trên mảng lớn | Dải chàm `#2E3450` chạy dọc thân áo |
+| Mặt | Mũ trùm sâu, mặt trống tối, không mắt |
+| Tương phản | Áo ngà-be sáng trên phiến tối nửa địch |
+| Màu cấm | Không vàng hay `#FFD45C`, không cyan, không xám chì lạnh của Giáo Sĩ |
+
+**Giống nhân vật nổi tiếng nhất:** Nazgûl / Ringwraith. Khác nhờ áo ngà sáng, dải chàm, dải vải và tay mở. Trong game, kiểm line-up với Giáo Sĩ trước khi gen clip.
+
+| Id | Canvas | Prompt (EN) | Palette (7) | Seed | Gen |
+|---|---|---|---|---|---|
+| `an_dai_keeper` v3 | 120×120 | Giữ nguyên prompt v2, chỉ đổi câu cỡ: "a towering robed guardian, about 92 px tall and 56 px wide, the hood touching the top edge of the canvas and the robe hem flaring wide at the bottom edge" … | như v1 / v2 | 2 | **8** |
+
+Nếu v3 vẫn không đạt cỡ: dừng, không gen thêm, báo người dùng.
+
+### 19.4 Người Giữ v3 trên 120×120 (2026-11-14, người dùng "Yes, gen 120×120", 8 gen) — DỪNG
+
+Character `e180e48a-aed6-4baf-9cbb-a68106cea588`, rotation `rot-v3/`, line-up `keeper-lineup-sw-v3-x3.png`.
+
+| | v1 (96) | v2 (96) | v3 (120) |
+|---|---|---|---|
+| Cao góc tây nam | 66 | 73 | **72** |
+| Khối đặc | 1503 | 1854 | 1965 |
+| Mép trên trống | 16 | 13 | **24** |
+
+**Vẫn KHÔNG ĐẠT.** Khung lớn hơn không làm người to hơn, chỉ thêm khoảng trống. Thiết kế vẫn tốt: mũ trùm, dải chàm, dải vải, tay mở rõ.
+
+**Nguyên nhân thật (sửa lại giả thuyết ở 19.2):** con người luôn ra khoảng 70 px vì style_image Goblin đi kèm câu "same pixel scale". Model giữ tỉ lệ pixel của Goblin cho mọi thân người (template mannequin), bất kể canvas hay prompt. Kẻ Gác đạt 81–95 px vì là sinh vật to (ogre, rồng, nhân sư) nên vóc dáng tự lớn. Tổng đã chi cho Người Giữ: 22 gen (7 + 7 + 8).
+
+**Hướng xử lý (chờ người dùng chọn, không gen thêm khi chưa có "yes"):**
+1. Chấp nhận v2 hoặc v3 (≈ 72 px) và ngoại lệ cỡ cho Boss cuối. Boss cuối nổi bật nhờ 3 mảnh Ánh Lưới do code vẽ và hiệu ứng pha 2. 0 gen. Sau đó gen 5 clip (5 gen).
+2. Thử thêm một lần với style_image giữ nét viền và đổ bóng nhưng **bỏ câu "same pixel scale"**, canvas 120. Rủi ro: nét có thể lệch khỏi bộ quái. 8 gen.
+3. Đổi thiết kế sang dáng to ngang tự nhiên (áo thụng loe rộng bay lơ lửng, vai khoác rất rộng), theo cách các Kẻ Gác đạt cỡ. Đổi khá nhiều so với bible, cần duyệt lại thiết kế trước. 7–8 gen.
+
+### 19.5 Người Giữ: nhận 72 px và gen clip (2026-11-14, người dùng "Nhận 72 px, gen clip", 5 gen)
+
+- Anchor dùng: **v2** `d32ddbf9` (73 px, canvas 96). Cỡ gần bằng v3, và canvas 96 giữ mỗi clip ở 1 gen (canvas clip 108). v1 `1dacabeb` và v3 `e180e48a` ghi vào retired_ids.
+- 5 clip PixMiniMax SW 8 frame, nguồn idle 0/2/4/6, step 1/3/5/7, windup 2/4/6/8 (giơ hai tay rộng, giữ), hit 3/4/5, down 2/3/4/5/6/8 (sụp thành đống vải). Snap palette xoá tua vàng nhỏ ở windup. Khung 96×84.
+- Cài `art_src/units/an_dai_keeper/`, sheet `assets/art/units/unit_an_dai_keeper_sheet.*`, registry `unit.an_dai_keeper` (boss, accepted), reference, `roster_sprite_test` (ROSTER, không kiểm cỡ Kẻ Gác do ngoại lệ).
+- Tổng Người Giữ: 27 gen (22 anchor + 5 clip). Tổng toàn task: 707 gen.
+- Import, test sprite và ảnh trận: chờ khe Godot từ session điều phối.
+
+## 20. Bài học dùng lại: canvas lớn hơn KHÔNG làm thân người to hơn (2026-11-14)
+
+Mục này áp dụng cho **mọi quái và nhân vật còn lại**, không riêng Người Giữ. Luật người dùng: "mỗi quái gần kín bề ngang ô, bậc cao hơn thì to hơn".
+
+**Đã thử, cùng thiết kế, palette, ảnh style và template mannequin:**
+
+| Lần | Canvas | Câu cỡ trong prompt | Cao | Khối đặc | Mép trên trống | Gen |
+|---|---|---|---|---|---|---|
+| v1 | 96 | "about 90 px tall, top of the hood touching the top edge" | 66 | 1503 | 16 | 7 |
+| v2 | 96 | "towering, about 92 px tall and 56 px wide, hood touching the top edge" | 73 | 1854 | 13 | 7 |
+| v3 | 120 | như v2 | **72** | 1965 | **24** | 8 |
+
+Lên canvas 120 không làm thân cao thêm, chỉ thêm khoảng trống. Ghi số px vào prompt cũng không có tác dụng.
+
+**Nguyên nhân (giả thuyết mạnh, CHƯA chứng minh bằng thử A/B):** mọi lần gen dùng `style_image` = Goblin v3 south kèm câu "same pixel scale, 1 px dark outline, flat banded shading". Model giữ tỉ lệ pixel của Goblin, nên mọi thân người (template mannequin) ra khoảng 66–73 px, bất kể canvas và prompt. Các Kẻ Gác đạt 81–95 px vì bản thân là sinh vật to (ogre, rồng, nhân sư, cóc): tỉ lệ giữ nguyên nhưng con vật vốn lớn hơn người. Tinh Anh dáng người đạt 69–79 px nhờ "touching the top edge" trên canvas 80, tức canvas vừa sát cỡ cần.
+
+**Lần sau phải đổi gì để ra khác:**
+1. Muốn một thân người cao hơn khoảng 75 px thì **đổi ảnh style**, không tăng canvas. Có hai cách: bỏ câu "same pixel scale" và chỉ giữ nét viền với đổ bóng, hoặc dùng làm style một nhân vật cao sẵn trong bộ (ví dụ Long Vương Gió hay Chúa Tể Băng Giá) thay cho Goblin.
+2. **Thử rẻ trước:** một lần gen trên canvas 64 hoặc 80 (6 gen) với ảnh style đã đổi. Đo xem thân có vượt tỉ lệ cũ không, rồi mới gen bản thật.
+3. Nếu thiết kế cho phép, chọn **dáng to ngang** (áo loe, vai rất rộng, sinh vật) thay vì người đứng thẳng. Đó là cách các Kẻ Gác đạt cỡ.
+4. Rủi ro khi đổi ảnh style: nét có thể lệch khỏi bộ quái. Phải line-up với bộ hiện có trước khi gen clip.
+
+**Chi phí thật của Người Giữ Tâm Lưới: 27 gen** (v1 7 + v2 7 + v3 8 + 5 clip). Bản cài là v2 cao 73 px, theo ngoại lệ cỡ người dùng chấp nhận ("Nhận 72 px, gen clip"). 15 gen của v1 và v3 không dùng. Con số này là dữ liệu để quyết định cách làm các con sau.
+
+### 19.6 QA Người Giữ (2026-11-14 19:10–19:11, khe Godot từ monster-skills, đã trả lại)
+
+- `region-enemies/keeper-tests-and-shot-2026-11-14.txt`: 4 suite sprite FAILS=0, không SCRIPT ERROR. Ảnh trận `region-enemies/10-lattice-an_dai_keeper-idle.png` (node f8/an_dai/c1/n0, seed 1, khung 240, tắt âm).
+- Trong trận, Người Giữ đứng trên một ô. Áo ngà sáng nổi rõ trên phiến tối của Bệ Tâm Lưới, đọc được từ xa. Cỡ nhỏ hơn Kẻ Gác theo ngoại lệ đã nhận.
+- **Không thấy 3 mảnh Ánh Lưới trên đầu.** Bible nói code dựng chúng, nhưng ảnh này không có. Việc này thuộc code trình bày, không phải sprite. Ghi lại làm việc tiếp theo, chưa làm.
+- **Ảnh chụp từ cây làm việc, KHÔNG phải `main`.** Lúc chụp có 20 file code và data chưa commit của các session khác (danh sách đầy đủ ở đầu file log), gồm `floor_dynamic_layer.gd` (vết nứt slam theo từng unit, của multi-enemy), các file trait, passive, `combat_view.gd` và `cut_hud_view.gd`. Vân tay `git hash-object` của 6 file mà ảnh nạp (floor_dynamic_layer, cut_hud_view, unit_layer, combat_view, chapters.json, sheet keeper) giống nhau ở đầu và cuối lượt. Ảnh là một khung đơn, không dùng để so trước hay sau.
+- Tracker §10.2: Tâm Lưới an_dai_keeper `G` (ngoại lệ cỡ). Chưa commit.

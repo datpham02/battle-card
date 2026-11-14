@@ -30,6 +30,9 @@ const ROSTER: Dictionary = {
 	# 2026-11-13 Sky Isles roster (block brain).
 	"cloud_sprite": "", "harpy": "", "wind_monk": "", "storm_eagle": "", "sky_sentinel": "", "thunder_shaman": "",
 	"gale_bird": "", "cloud_veil": "", "storm_dragon": "",
+	# 2026-11-14 Lattice Heart final boss (block brain). Size exception accepted by the user: about 73 px, below the
+	# wardens, because the shared style image fixes humanoid scale; no warden-size check for it.
+	"an_dai_keeper": "",
 }
 ## 2026-11-04: wolves are low by nature (height follows the creature, user 2026-11-03), so the elite wolf is measured
 ## against the normal wolf instead of the upright normals: it must stand clearly taller than the Dire Wolf.
