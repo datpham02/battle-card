@@ -529,6 +529,10 @@ Trait giữ: `rotten_thrower`, `spore_burst`, `hop_skip`, `bog_spread`, `row_bur
 - Status: DESIGNED. Khác Scorpion sting: 1/0,5 s × 2 s (= 4) so với 1,5 × 3 s (= 9).
 
 **`mire_slug` Mire Slug — Normal (B0–1), bog, mire_immune** · vai: **tạo lầy**
+> **[ĐÃ THAY KHI TRIỂN KHAI — xem MONSTER-SKILL-PHASE2-PLAN.md §13.1]** `count 2` ở dưới KHÔNG dùng được cho một
+> đòn đánh: `PatternController` chỉ đọc `pattern.count` trong nhánh `marker` (:1057), nên một attack mang
+> `count: 2` lặng lẽ đặt MỘT ô. Data đã ship viết thành `offsets: [[0,0],[1,0]]` + `exclude_player`.
+
 - **`slug_slime_trail` — Slime Trail** (attack, zone) · Nhớt lầy 2 ô cạnh người chơi · `near_player` count 2 exclude_player · `zone {mire, 4 s}`
   (**mới**: `TileHazards.add_mire`) · 0,6 / 1,0 · Hồi 5 · `windup`; `DIRECT_MANIFESTATION / none / poison` · Phản đòn: báo đỏ 1 s; không bước vào ô lầy (×1,6 bước, 0,5/0,5 s).
 - `shared_sidestep` weight 0,3 (sên chậm, `cooldown_sec` 7).
@@ -543,6 +547,11 @@ Trait giữ: `rotten_thrower`, `spore_burst`, `hop_skip`, `bog_spread`, `row_bur
 - Status: DESIGNED. 2 skill nhưng skill 2 có điều kiện → chỉ "nhớ" một luật: đừng để bị chậm gần Thằn Lằn.
 
 **`marsh_toad` Marsh Toad — Normal (B1–2, D1–2), bog var** · vai: **kéo mồi vào lầy**
+> **[ĐÃ THAY KHI TRIỂN KHAI — xem MONSTER-SKILL-PHASE2-PLAN.md §16.1]** `[[0,0],[0,1]]` ở dưới tạo ra một cặp ô
+> NẰM NGANG, không phải lưỡi dọc. Trên `column_of_player`, planner map `Vector2i(player.x - off.y, start + off.x)`
+> (`pattern_planner.gd:87`): **`off.x` đi XUỐNG cột, `off.y` đi NGANG**. Data đã ship viết `[[0,0],[1,0]]`.
+> Đây là lần thứ BA cùng một cặp chữ số sai (`eater_ember_belch`, `scarab_spear` đã ship rồi phải sửa, và dòng này).
+
 - **`toad_tongue` — Tongue Pull** (attack) · Lưỡi dọc cột 2 ô, trúng thì **kéo** 1 ô về vạch chia · `column_of_player` `[[0,0],[0,1]]` ·
   10 dmg + `pull {cells 1}` (**mới**: `CutEffects.pull_toward` phía người chơi; bị chặn → R3 Va Đập 8 + pin 0,6 theo luật phản ứng sẵn có) ·
   0,6 / 1,1 · Hồi 4,5 · `windup`; `CASTER_TO_TARGET / square_streak / knockback` · Phản đòn: bước ngang; đừng đứng ngay trước ô lầy/gai (kéo vào = R3).
@@ -559,6 +568,11 @@ Trait giữ: `rotten_thrower`, `spore_burst`, `hop_skip`, `bog_spread`, `row_bur
 - Status: DESIGNED. Khác Ember Hound (thưởng Rạn, 2 ô): thưởng slow, 3 ô.
 
 **`spore_cap` Spore Cap — Elite, bog, trait spore_burst** · cơ chế: **mỗi đòn trúng → lầy (trait); tự hồi khi yếu**
+> **[ĐÃ BỔ SUNG KHI TRIỂN KHAI — xem MONSTER-SKILL-PHASE2-PLAN.md §16.2]** Data đã ship thêm `clip: true,
+> min_cells: 3`. Không có `clip`, `_add_plan` bỏ CẢ kế hoạch khi chỉ một ô rơi ngoài nửa sân, và trên arena lưới
+> khuyết (`bog`, `reed_maze`) kỹ năng **không bao giờ tung ra** — `_cfg.problems` vẫn rỗng, nên nó trông y hệt một
+> kỹ năng chưa tới lượt. `witch_rot_cloud` đã hỏng đúng kiểu này trước khi phát hiện.
+
 - **`spore_puff` — Spore Puff** (attack) · Bào tử chữ thập 5 ô, Độc · `near_player` chữ thập must_cover (bog 5×3 = 15 ô → cap 7) ·
   8 dmg + `poison {3 s, 0,5, 1}` · 0,6 / 1,2 · Hồi 5 · `windup`; `SKY_TO_TARGET / falling_squares / poison` · Phản đòn: bước chéo.
 - **`spore_regrow` — Regrow** (self) · Mọc lại: hồi 12 % máu tối đa trong 3 s · Kích hoạt: `hp_below 0,6`, weight 1,5 ·
@@ -568,6 +582,9 @@ Trait giữ: `rotten_thrower`, `spore_burst`, `hop_skip`, `bog_spread`, `row_bur
 - Status: DESIGNED.
 
 **`leap_frog` Leap Frog — Elite, reed_maze, trait hop_skip** · cơ chế: **nhảy 2 ô (trait) + đè hai nhịp**
+> **[ĐÃ BỔ SUNG KHI TRIỂN KHAI — xem MONSTER-SKILL-PHASE2-PLAN.md §16.2]** Data đã ship thêm `clip: true,
+> min_cells: 3`, cùng lý do với `spore_puff`: 2×2 trên `reed_maze` rụng ở cả bốn hướng xoay nếu không clip.
+
 - **`frog_leap_slam` — Leap Slam** (attack) · Đè 2×2, nảy lên đè lại · `near_player` 2×2 must_cover · 12 dmg · `followup {same_cells, delay 1,0, warning 1,0, damage 10}` ·
   0,6 / 1,2 · Hồi 5 · `windup_heavy`; `SKY_TO_TARGET / falling_squares / shatter` · Phản đòn: ra khỏi 2×2, không quay lại 1 s.
 - **`frog_croak` — Croak** (self) · Kêu: cooldown ×0,75 trong 6 s · `haste {0,75, 6}` · windup 1,2 · Hồi 12, `interruptible: true`, `interrupt_stun_sec` 0,8 ·
@@ -579,6 +596,10 @@ Trait giữ: `rotten_thrower`, `spore_burst`, `hop_skip`, `bog_spread`, `row_bur
 - Pha 2 (0,5): + `matriarch_toxic_croak`; every_nth 3; transition 1,5; `on_enter: [matriarch_regrow]`; `phases[].traits` override `bog_spread {interval_sec 6}`.
 - **`matriarch_spit` — Mire Spit** (attack) · 1 ô + lầy ô đó · `on_player` · 10 dmg + `zone {mire, 3 s}` · 0,4 / 0,9 · Hồi 2,8 · `windup`; `SKY_TO_TARGET / falling_squares / poison`.
 - **`matriarch_tongue_lash` — Tongue Lash** (attack) · Cột 3 ô, chậm · `column_of_player` 3 clip min 2 · 12 dmg + slow · 0,6 / 1,2 · Hồi 4,5 · `windup`; `CASTER_TO_TARGET / square_streak / slash`.
+> **[SẼ THAY KHI TRIỂN KHAI — xem MONSTER-SKILL-PHASE2-PLAN.md §13.1]** `count 2` không dùng được cho một đòn
+> đánh (chỉ nhánh `marker` đọc nó). Viết thành `offsets: [[0,0],[1,0]]` + `exclude_player` như `slug_slime_trail`
+> và `sphinx_bury`.
+
 - **`matriarch_sink` — Sink** (attack, zone) · Sụp 2 ô thoát · `near_player` count 2 exclude_player · `zone {drop, warn 0,8, hole 1,2}` · 0,6 / 1,2 · Hồi 9 ·
   `windup`; `DIRECT_MANIFESTATION / none / seal` · Phản đòn: luật Ô rớt. (Thay `seal_caster` vì trait ấy móc swing block.)
 - **`matriarch_shift`** = `shared_sidestep` (hồi 8, weight 2).
