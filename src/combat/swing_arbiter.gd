@@ -93,8 +93,10 @@ var blocked_cell_fns: Dictionary = {}
 ## Skill v2 batch 2 (M15): the reaction numbers (CombatConfig.reactions(); empty = CutEffects' built-in defaults),
 ## passed to CutEffects as options.reactions. Set by CombatView and the balance sim.
 var reactions: Dictionary = {}
-## Story 036: Callable() -> bool, true while the BOSS cannot be hit (TraitHost.is_boss_untargetable, burrow; set by
-## TraitHost). A player cast that lands then is a miss (no damage, no interrupt) but still leaves its zone. Invalid = never.
+## Story 036: true while the unit of the given key cannot be hit (burrow). A player cast that lands then is a miss
+## (no damage, no interrupt) but still leaves its zone. Invalid = never.
+## Multi-enemy Phase 5 (step 1): `Callable(key: int) -> bool`, installed by CombatView and routed to that unit's
+## TraitHost. It used to take no argument and be installed by the host itself, which could not tell units apart.
 var enemy_untargetable_fn: Callable = Callable()
 ## Cast rhythm spec 2026-11-05: the hero's ParryGuard; the BOSS's swings pass it to CutEffects (options.player_guard), so
 ## a swing landing on the hero while it is open is parried. A parried swing never interrupts the player. Null = none.
@@ -168,9 +170,10 @@ func _defense_of(key: int) -> float:
 	return (u.defense if u != null else 0.0) + guard
 
 
-# Phase 2: the untargetable hook (a burrowed boss, TraitHost) belongs to unit 0's traits.
+# Multi-enemy Phase 5 (step 1): the hook takes the key, so a burrowed unit 2 hides unit 2. Before this it was read
+# only for unit 0 AND answered for whatever host had taken the slot, so a burrow anywhere made UNIT 0 unhittable.
 func _untargetable(key: int) -> bool:
-	return key == CombatState.Side.ENEMY and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call())
+	return key != CombatState.Side.PLAYER and enemy_untargetable_fn.is_valid() and bool(enemy_untargetable_fn.call(key))
 
 
 # Phase 2: unit 0 died while other required units live: its actor stops and its scheduled casts are dropped (the

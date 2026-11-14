@@ -143,7 +143,9 @@ func teardown() -> void:
 
 func _burrow(boss: BossController) -> void:
 	var state: CombatState = get_context().get("state") as CombatState
-	if state == null or state.is_enemy_dead():
+	# Multi-enemy Phase 5 (step 1): this trait's OWN unit, not unit 0. The alias form refused to burrow whenever
+	# unit 0 was dead, even for a unit still fighting, and then surfaced by moving unit 0's cell.
+	if state == null or state.is_key_dead(unit_key()):
 		return
 	_burrowed = true
 	_burrow_left = _burrow_sec
@@ -156,7 +158,7 @@ func _burrow(boss: BossController) -> void:
 	_restore_pattern = pattern != null and pattern.is_active()
 	if pattern != null:
 		pattern.set_active(false)
-	_surface_cell = _pick_cell(state.enemy_cell)
+	_surface_cell = _pick_cell(state.cell_of(unit_key()))
 	burrowed.emit(_surface_cell)
 
 
@@ -168,10 +170,12 @@ func _surface() -> void:
 	if state != null:
 		var cell: Vector2i = _surface_cell
 		if cell == _NONE or not _is_free(cell):
-			cell = _pick_cell(state.enemy_cell)
+			cell = _pick_cell(state.cell_of(unit_key()))
 		if cell != _NONE:
-			state.set_enemy_cell(cell)
-		surfaced.emit(state.enemy_cell)
+			# Phase 5 (step 1): move THIS unit. set_enemy_cell is a unit-0 alias, so a burrow on unit 2 used to
+			# teleport unit 0 across the board when it surfaced.
+			state.set_key_cell(unit_key(), cell)
+		surfaced.emit(state.cell_of(unit_key()))
 	if boss != null and _restore_active:
 		boss.set_active(true)
 	var pattern: PatternController = _pattern()

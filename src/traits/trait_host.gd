@@ -10,8 +10,16 @@ extends RefCounted
 ## Story 023: a trait changed the boss phase (phase_shift): the new phase number (2 = first change).
 signal phase_changed(phase: int)
 
+## Multi-enemy Phase 5 (step 1): the enemy unit this host's traits belong to (a CombatState key; unit 0 by
+## default, so a one-enemy match is unchanged). Also placed in the trait context as `key`, which is how a trait
+## learns which unit it is attached to.
+var key: int = CombatState.Side.ENEMY
+
 var _traits: Array[BossTrait] = []
 var _ctx: Dictionary = {}
+## True when this host installed the five one-point hooks itself (the single-host callers). False for CombatView's
+## per-unit hosts, which must neither install nor unbind them.
+var _installed_hooks: bool = true
 var _seed_value: int = -1
 var _next_index: int = 0
 ## Monster Skill Phase 0: a second voice on the three one-point hooks, for the pattern brain's skill effects (evade,
@@ -25,26 +33,38 @@ var extra_reaction_immune_fn: Callable = Callable()
 ## Builds a trait per entry of [param specs] (each `{id: String, params: Dictionary}`; `params`
 ## optional) from the TraitRegistry and calls its setup() with [param ctx] (see BossTrait for the
 ## keys). Hooks are NOT called here: call [method on_match_start] once the wiring is done.
-func _init(ctx: Dictionary, specs: Array, seed_value: int) -> void:
+## [param p_install_hooks] MUST be false whenever more than one host exists at a time, and true otherwise.
+## Multi-enemy Phase 5 (step 1): the five one-point hooks are single slots on SwingArbiter / StatusEffects /
+## CombatState / PlacementController. With one host per enemy unit, every host would write the same slot, the last
+## one constructed would silently win, and the earlier hosts' teardown would then no-op on its identity check —
+## nothing errors, the wrong unit's answer is simply used. So CombatView passes false and installs one dispatcher
+## per hook itself, routed by unit key. Single-host callers (tools/balance/sim_core.gd, tests that build a host by
+## hand) keep the default and behave exactly as before.
+func _init(ctx: Dictionary, specs: Array, seed_value: int, p_key: int = CombatState.Side.ENEMY,
+		p_install_hooks: bool = true) -> void:
 	_ctx = ctx
 	_ctx["trait_host_ref"] = weakref(self)
+	_ctx["key"] = p_key
+	key = p_key
 	_seed_value = seed_value
-	# Story 036: the ONE untargetable point of the damage path (burrow). Callables do not keep the host alive.
-	var arbiter: SwingArbiter = ctx.get("arbiter") as SwingArbiter
-	if arbiter != null:
-		arbiter.enemy_untargetable_fn = Callable(self, "is_boss_untargetable")
-	# Story 039: the three one-point hooks (burn heal, boss would die, hit forecast).
-	var status: StatusEffects = ctx.get("status") as StatusEffects
-	if status != null:
-		status.burn_heal_ratio_fn = Callable(self, "burn_heal_ratio")
-		# Phase 0 (bug G3): the reaction immunity hook was declared by StatusEffects but never bound by anyone.
-		status.reaction_immune_fn = Callable(self, "reaction_immune")
-	var combat_state: CombatState = ctx.get("state") as CombatState
-	if combat_state != null:
-		combat_state.enemy_death_hook_fn = Callable(self, "on_boss_would_die")
-	var placement: PlacementController = ctx.get("placement") as PlacementController
-	if placement != null:
-		placement.forecast_blocked_fn = Callable(self, "hit_forecast_blocked")
+	_installed_hooks = p_install_hooks
+	if p_install_hooks:
+		# Story 036: the ONE untargetable point of the damage path (burrow). Callables do not keep the host alive.
+		var arbiter: SwingArbiter = ctx.get("arbiter") as SwingArbiter
+		if arbiter != null:
+			arbiter.enemy_untargetable_fn = Callable(self, "_untargetable_keyed")
+		# Story 039: the three one-point hooks (burn heal, boss would die, hit forecast).
+		var status: StatusEffects = ctx.get("status") as StatusEffects
+		if status != null:
+			status.burn_heal_ratio_fn = Callable(self, "_burn_heal_ratio_keyed")
+			# Phase 0 (bug G3): the reaction immunity hook was declared by StatusEffects but never bound by anyone.
+			status.reaction_immune_fn = Callable(self, "reaction_immune")
+		var combat_state: CombatState = ctx.get("state") as CombatState
+		if combat_state != null:
+			combat_state.enemy_death_hook_fn = Callable(self, "on_boss_would_die")
+		var placement: PlacementController = ctx.get("placement") as PlacementController
+		if placement != null:
+			placement.forecast_blocked_fn = Callable(self, "hit_forecast_blocked")
 	for entry: Variant in specs:
 		if typeof(entry) != TYPE_DICTIONARY:
 			push_warning("TraitHost: a trait entry is not an object, skipped")
@@ -185,6 +205,17 @@ func debug_add_trait(trait_instance: BossTrait) -> void:
 
 ## Story 036: true while any live trait says the boss cannot be hit (BossTrait.untargetable(), burrow).
 ## SwingArbiter asks it for every player cast (a landing cast is then a miss that still leaves its zone).
+# Phase 5 (step 1): the two hooks that gained a key argument. A single-host caller owns exactly one enemy unit, so
+# it answers for whatever key it is asked about; the key only matters when several hosts exist, and then CombatView
+# dispatches instead of these.
+func _untargetable_keyed(_key: int) -> bool:
+	return is_boss_untargetable()
+
+
+func _burn_heal_ratio_keyed(_key: int) -> float:
+	return burn_heal_ratio()
+
+
 func is_boss_untargetable() -> bool:
 	for trait_instance: BossTrait in _traits:
 		if trait_instance.untargetable():
@@ -234,21 +265,24 @@ func teardown_all() -> void:
 	for trait_instance: BossTrait in _traits:
 		trait_instance.teardown()
 	_traits.clear()
-	var arbiter: SwingArbiter = _ctx.get("arbiter") as SwingArbiter
-	if arbiter != null and arbiter.enemy_untargetable_fn == Callable(self, "is_boss_untargetable"):
-		arbiter.enemy_untargetable_fn = Callable()
-	var status: StatusEffects = _ctx.get("status") as StatusEffects
-	if status != null and status.burn_heal_ratio_fn == Callable(self, "burn_heal_ratio"):
-		status.burn_heal_ratio_fn = Callable()
-	if status != null and status.reaction_immune_fn == Callable(self, "reaction_immune"):
-		status.reaction_immune_fn = Callable()
+	# Phase 5 (step 1): a host unbinds ONLY what it installed itself. A host that did not install (CombatView's
+	# per-unit hosts) must not clear a slot the view owns, or the first unit to be torn down would silence the rest.
+	if _installed_hooks:
+		var arbiter: SwingArbiter = _ctx.get("arbiter") as SwingArbiter
+		if arbiter != null and arbiter.enemy_untargetable_fn == Callable(self, "_untargetable_keyed"):
+			arbiter.enemy_untargetable_fn = Callable()
+		var status: StatusEffects = _ctx.get("status") as StatusEffects
+		if status != null and status.burn_heal_ratio_fn == Callable(self, "_burn_heal_ratio_keyed"):
+			status.burn_heal_ratio_fn = Callable()
+		if status != null and status.reaction_immune_fn == Callable(self, "reaction_immune"):
+			status.reaction_immune_fn = Callable()
+		var combat_state: CombatState = _ctx.get("state") as CombatState
+		if combat_state != null and combat_state.enemy_death_hook_fn == Callable(self, "on_boss_would_die"):
+			combat_state.enemy_death_hook_fn = Callable()
+		var placement: PlacementController = _ctx.get("placement") as PlacementController
+		if placement != null and placement.forecast_blocked_fn == Callable(self, "hit_forecast_blocked"):
+			placement.forecast_blocked_fn = Callable()
 	extra_untargetable_fn = Callable()
 	extra_forecast_blocked_fn = Callable()
 	extra_reaction_immune_fn = Callable()
-	var combat_state: CombatState = _ctx.get("state") as CombatState
-	if combat_state != null and combat_state.enemy_death_hook_fn == Callable(self, "on_boss_would_die"):
-		combat_state.enemy_death_hook_fn = Callable()
-	var placement: PlacementController = _ctx.get("placement") as PlacementController
-	if placement != null and placement.forecast_blocked_fn == Callable(self, "hit_forecast_blocked"):
-		placement.forecast_blocked_fn = Callable()
 	_ctx = {}

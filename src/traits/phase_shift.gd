@@ -68,7 +68,10 @@ func _check() -> void:
 	if _phase >= 2:
 		return
 	var state: CombatState = get_context().get("state") as CombatState
-	if state == null or state.enemy_max_hp <= 0.0 or state.enemy_hp / state.enemy_max_hp > _at_ratio:
+	# Multi-enemy Phase 5 (step 3): THIS unit's HP. enemy_hp / enemy_max_hp are unit-0 aliases, so a phase_shift
+	# on unit 2 changed phase when unit 0 was hurt and never when its own HP fell.
+	var key: int = unit_key()
+	if state == null or state.max_hp_of(key) <= 0.0 or state.hp_of(key) / state.max_hp_of(key) > _at_ratio:
 		return
 	_phase = 2
 	var boss: BossController = get_context().get("boss") as BossController

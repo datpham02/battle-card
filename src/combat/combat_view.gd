@@ -260,6 +260,9 @@ var _status: StatusEffects
 var _learning: BossLearning
 ## The boss traits of this match (Story 014); built in _ready, torn down in _exit_tree.
 var _trait_host: TraitHost
+## Multi-enemy Phase 5 (step 1): every unit's TraitHost by unit key; [member _trait_host] stays unit 0's entry, so
+## the HUD and every existing forward keep working unchanged. One entry with one enemy unit.
+var _hosts_by_key: Dictionary = {}
 ## Phase 2: the pattern brain's skill lifecycle (match key `brain` == "pattern"); null for every block-brain match.
 var _pattern: PatternController = null
 ## Multi-enemy Phase 3 (MULTI-ENEMY-PHASE3-5-PLAN.md 1.3): the shared threat book (D1) and the agents of units 1+
@@ -549,7 +552,12 @@ func _ready() -> void:
 			hit_pattern.on_enemy_hit()
 	_drops.point_spawned.connect(_on_point_spawned.bind(CombatState.Side.PLAYER))
 	_boss.get_drops().point_spawned.connect(_on_point_spawned.bind(CombatState.Side.ENEMY))
-	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed)
+	_trait_host = TraitHost.new(make_trait_ctx(), _trait_specs(), drops_seed, CombatState.Side.ENEMY, false)
+	_hosts_by_key[CombatState.Side.ENEMY] = _trait_host
+	# Multi-enemy Phase 5 (step 1): the five hooks are installed ONCE, here, by the view. They resolve the host when
+	# CALLED, not when bound, so installing them before the extra units exist is safe. TraitHost no longer installs
+	# anything: several hosts writing one slot meant the last one constructed silently answered for every unit.
+	_install_trait_hooks()
 	_trait_host.on_match_start()
 	_setup_pattern_brain(brain_config)
 	_setup_extra_units(boss_drops_config, hold_config)
@@ -580,9 +588,21 @@ func _on_status_frost_burst(side: int, damage: float) -> void:
 		_passive.on_frost_burst(damage)
 
 
-func _on_status_thorn_entered(side: int, cell: Vector2i, _damage: float) -> void:
-	get_floor_vfx().play("thorn_spikes", cell, side)  # Story 048 F9
-	if side != CombatState.Side.ENEMY:
+func _on_status_thorn_entered(key: int, cell: Vector2i, _damage: float) -> void:
+	# Multi-enemy: StatusEffects emits thorn_entered with the UNIT KEY, not a half (it reads is_key_dead(side) and
+	# damage(side) on the same value). FloorVfx.play wants a half, so unit 2 was handing it 3 and the spikes were
+	# drawn for a side that does not exist. side_of() is the translation; it answers ENEMY for every enemy key.
+	get_floor_vfx().play("thorn_spikes", cell, CombatState.side_of(key))  # Story 048 F9
+	# DELIBERATE GAP, not unfinished work (multi-enemy Phase 5, 2026-11-14). This drops every enemy but unit 0, so
+	# `boss_thorn_steps` and the passive never see units 1+. Everything needed to widen it exists: BasePassive and
+	# HunterMarkPassive both take the optional `key`, and the passive applies the Ran stack to whichever unit is
+	# passed. Only this line is held back, because widening it changes live match behaviour and that was not in the
+	# approved scope. Do not "fix" it in passing - the passive layer being correct while the wiring is narrow is the
+	# intended state until someone approves the behaviour change.
+	# Why narrow rather than wrong: marking unit 0 for unit 2's step would be worse than not marking at all. A Ran
+	# stack on the wrong enemy actively misleads the player about where the bonus damage lands, while a missing one
+	# only withholds it.
+	if key != CombatState.Side.ENEMY:
 		return
 	_stats["boss_thorn_steps"] = int(_stats["boss_thorn_steps"]) + 1
 	if _passive != null:
@@ -791,8 +811,19 @@ func _drop_blocked_cells(base: Array[Vector2i], side: int) -> Array[Vector2i]:
 
 
 func _exit_tree() -> void:
-	if _trait_host != null:
-		_trait_host.teardown_all()
+	# Phase 5 (step 1): every unit's host tears down, and the view clears the slots it installed. A host no longer
+	# unbinds a shared slot, because it could clear one another unit's host had legitimately taken.
+	for host: TraitHost in _hosts_by_key.values():
+		if host != null:
+			host.teardown_all()
+	_hosts_by_key.clear()
+	if _arbiter != null:
+		_arbiter.enemy_untargetable_fn = Callable()
+	if _status != null:
+		_status.burn_heal_ratio_fn = Callable()
+		_status.reaction_immune_fn = Callable()
+	if _placement != null:
+		_placement.forecast_blocked_fn = Callable()
 	if _hazards != null:
 		# Story 036: extra_blocked_fn holds the movers and the movers' sand blocker / step cost hold the hazards;
 		# break that RefCounted cycle so a finished match does not leak its TileHazards.
@@ -1289,15 +1320,18 @@ func _relics_on_cast_landed(result: Dictionary) -> void:
 ## Public-API context the traits work through (BossTrait documents the keys): the same
 ## dictionary the match's TraitHost was built with. Logic-free; DemoArgs uses it to set up a
 ## trait by hand for captures.
-func make_trait_ctx() -> Dictionary:
+## Multi-enemy Phase 5 (step 1): [param key] names the enemy unit whose host this context belongs to. `boss` and
+## `pattern_getter` resolve to THAT unit; `boss_drops` stays the half's shared drops (Phase 3 D4). Unit 0 by
+## default, so every existing caller is unchanged.
+func make_trait_ctx(key: int = CombatState.Side.ENEMY) -> Dictionary:
 	return {
 		"state": _state, "grid": _grid, "player_drops": _drops, "boss_drops": _boss.get_drops(),
-		"boss": _boss, "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"), "player_mover": _mover,
+		"boss": controller_of(key), "status": _status, "arbiter": _arbiter, "hold_getter": Callable(self, "get_hold"), "player_mover": _mover,
 		"skill_config": _skill_config, "cut_config": _cut_config,
-		"hazards": _hazards, "placement": _placement,
+		"hazards": _hazards, "placement": _placement, "key": key,
 		# Monster Skill Phase 0 (G6): the pattern brain's controller, read lazily (it is built after the host): burrow /
 		# rebirth pause it, shroud reads its stage. Null in block-brain matches.
-		"pattern_getter": Callable(self, "get_pattern_controller"),
+		"pattern_getter": Callable(self, "pattern_of").bind(key),
 	}
 
 
@@ -1313,6 +1347,76 @@ func _trait_specs() -> Array:
 ## The boss traits of this match (Story 014); empty host when the match has none.
 func get_trait_host() -> TraitHost:
 	return _trait_host
+
+
+## Multi-enemy Phase 5 (step 1): the TraitHost of the unit [param key] (unit 0 = [method get_trait_host]); null for
+## the player or an unknown key.
+func host_of(key: int) -> TraitHost:
+	return _hosts_by_key.get(key, null)
+
+
+## Multi-enemy Phase 5 (step 1): the first living unit carrying trait [param id], or null. The HUD asks "is anyone
+## shrouded / reborn / phased" rather than "is unit 0", and TraitHost.get_trait only ever answers for one unit.
+func any_trait(id: String) -> BossTrait:
+	for key: int in _state.enemy_keys():
+		var host: TraitHost = _hosts_by_key.get(key, null)
+		if host == null:
+			continue
+		var found: BossTrait = host.get_trait(id)
+		if found != null:
+			return found
+	return null
+
+
+# Phase 5 (step 1): the five one-point hooks, installed once and routed per unit. They look up the host at call
+# time, so they work for units built later. Only forecast_blocked stays unkeyed, and deliberately: there is ONE hit
+# forecast on screen, so there is nothing to key it by — it ORs every unit's answer. That is a decision, not a gap.
+func _install_trait_hooks() -> void:
+	if _arbiter != null:
+		_arbiter.enemy_untargetable_fn = Callable(self, "_trait_untargetable")
+	if _status != null:
+		_status.burn_heal_ratio_fn = Callable(self, "_trait_burn_heal_ratio")
+		_status.reaction_immune_fn = Callable(self, "_trait_reaction_immune")
+	if _placement != null:
+		_placement.forecast_blocked_fn = Callable(self, "_trait_forecast_blocked")
+	_wire_unit_death_hook(CombatState.Side.ENEMY)
+
+
+func _trait_untargetable(key: int) -> bool:
+	var host: TraitHost = _hosts_by_key.get(key, null)
+	return host != null and host.is_boss_untargetable()
+
+
+func _trait_burn_heal_ratio(key: int) -> float:
+	var host: TraitHost = _hosts_by_key.get(key, null)
+	return host.burn_heal_ratio() if host != null else 0.0
+
+
+func _trait_reaction_immune(side: int, id: String) -> bool:
+	var host: TraitHost = _hosts_by_key.get(side, null)
+	return host != null and host.reaction_immune(side, id)
+
+
+# Phase 5 (step 1): the death hook is the one that was ALREADY per unit — EnemyUnit.death_hook_fn exists and
+# CombatState.damage_unit calls it (combat_state.gd:290). Only the TraitHost side was bound to unit 0, through the
+# enemy_death_hook_fn alias. Each unit's own slot is wired to its own host, so a rebirth on unit 2 saves unit 2.
+func _wire_unit_death_hook(key: int) -> void:
+	var unit: EnemyUnit = _state.get_unit(CombatState.unit_index_of(key))
+	if unit != null:
+		unit.death_hook_fn = Callable(self, "_trait_would_die").bind(key)
+
+
+func _trait_would_die(key: int) -> bool:
+	var host: TraitHost = _hosts_by_key.get(key, null)
+	return host != null and host.on_boss_would_die()
+
+
+func _trait_forecast_blocked() -> bool:
+	for key: int in _state.enemy_keys():
+		var host: TraitHost = _hosts_by_key.get(key, null)
+		if host != null and host.hit_forecast_blocked():
+			return true
+	return false
 
 
 # A point landed on a half (bound side appended by the connect): traits hear it.
@@ -1492,9 +1596,15 @@ func _process(delta: float) -> void:
 		_resolve_channel_cancel()
 		if hold != null:
 			hold.tick_rot(step)
-		# Traits run after the arbiter (they see this frame's resolutions) and only while both live.
-		if not (_state.is_player_dead() or _state.is_enemy_dead()):
-			_trait_host.on_tick(step)
+		# Traits run after the arbiter (they see this frame's resolutions). Multi-enemy Phase 5 (step 1): each LIVING
+		# unit's own host ticks, and the whole set stops only when the match is over. The old condition read
+		# is_enemy_dead(), which is unit 0, so unit 0 dying froze every trait in the match — true today with one
+		# enemy the moment it is downed and then dies, and badly wrong the moment a formation has more.
+		if not (_state.is_player_dead() or _state.all_required_dead()):
+			for host_key: int in _state.enemy_keys():
+				var host: TraitHost = _hosts_by_key.get(host_key, null)
+				if host != null:
+					host.on_tick(step)
 		_age_flash(_feedback, step)
 		_age_flash(_boss_feedback, step)
 		# Multi-enemy Phase 4 (step 4): the per-unit records age on the same clock, then drop when they run out.
@@ -2853,6 +2963,23 @@ func _setup_extra_units(boss_drops_config: FieldDropsConfig, hold_config: HoldSl
 			ctrl.extra_step_lock_fn = Callable(pattern, "is_busy")
 		_threat.register_red(key, _red_cells_of.bind(ctrl, pattern))
 		_extra_agents.append(EnemyAgent.new(key, unit, ctrl, pattern, cfg))
+		# Phase 5 (step 1): this unit's own TraitHost, built AFTER its controller so ctx["boss"] is its own. Its
+		# trait list comes from the resolved formation entry, which has carried `traits` since Phase 0 — no data
+		# work was needed for this. The five hooks are already installed and resolve this host by key when called.
+		var unit_specs: Array = []
+		var raw_traits: Variant = unit.source.get("traits", [])
+		if typeof(raw_traits) == TYPE_ARRAY:
+			unit_specs = raw_traits as Array
+		var host := TraitHost.new(make_trait_ctx(key), unit_specs, seed_i, key, false)
+		_hosts_by_key[key] = host
+		_wire_unit_death_hook(key)
+		if pattern != null:
+			# Phase 0 (G6) for this unit: its own pattern's evade / shroud / reaction immunity join its own host's
+			# answers, the same wiring unit 0 gets in _setup_pattern_brain.
+			host.extra_untargetable_fn = Callable(pattern, "is_evading")
+			host.extra_forecast_blocked_fn = Callable(pattern, "is_shrouded")
+			host.extra_reaction_immune_fn = Callable(pattern, "reaction_immune")
+		host.on_match_start()
 	# D4: the shared drops' "hungry" rule reads the emptiest block-brain hand of the team
 	_boss.hand_count_fn = _min_block_hand
 	# every enemy unit plans around and refuses EVERY pattern marker on the half (markers are cells of the shared half)

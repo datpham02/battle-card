@@ -29,7 +29,9 @@ func is_shrouding() -> bool:
 ## True while the cloud lifts off the boss: it is pinned or its cut actor is swinging (a cast in progress).
 func is_cloud_lifted() -> bool:
 	var status: StatusEffects = get_context().get("status") as StatusEffects
-	if status != null and status.is_pinned(CombatState.Side.ENEMY):
+	# Multi-enemy Phase 5 (step 3): THIS unit's pin. _pins is keyed by the same int as a unit key, so a shroud on
+	# unit 2 was asking whether UNIT 0 was pinned to decide whether its own cloud lifts.
+	if status != null and status.is_pinned(unit_key()):
 		return true
 	var boss: BossController = get_context().get("boss") as BossController
 	if boss != null and boss.get_actor() != null and boss.get_actor().is_swinging():

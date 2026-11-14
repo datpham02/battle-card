@@ -11,10 +11,10 @@ extends BossTrait
 ## (BossController.set_root_while_swinging), `phase_shift_sec` (default: the top-level param `phase_shift_sec`,
 ## else [constant DEFAULT_PHASE_SHIFT_SEC]) and `name_key` (HUD banner, [method get_phase_name_key]).
 ## A phase change happens ONCE per threshold, in order (checked in on_tick and on_boss_damaged): the boss is
-## invulnerable for phase_shift_sec (CombatState.enemy_invulnerable_left, ticked down here), its cast in progress
+## invulnerable for phase_shift_sec (its OWN unit's invulnerable_left, ticked down here), its cast in progress
 ## is cancelled with no damage (CutActor.cancel, like a feint) and its decisions pause for the shift, the new
 ## phase is applied, then `host.announce_phase(n)` fires TraitHost.phase_changed(n). The player's formation,
-## bag and field pieces are never touched. CombatState.enemy_hp_floor is kept at the NEXT threshold's HP
+## bag and field pieces are never touched. Its own unit's hp_floor is kept at the NEXT threshold's HP
 ## (0 after the last phase), so a single big hit is clamped there and no phase can be skipped.
 ## No RNG use. Implements: Story 035 (Part B, Part F "final_boss_phase_test").
 
@@ -89,9 +89,12 @@ func on_tick(step: float) -> void:
 	var state: CombatState = _state()
 	if state == null:
 		return
-	if state.enemy_invulnerable_left > 0.0:
-		state.enemy_invulnerable_left = maxf(state.enemy_invulnerable_left - step, 0.0)
-		if state.enemy_invulnerable_left > 0.0:
+	var unit: EnemyUnit = _unit()
+	if unit == null:
+		return
+	if unit.invulnerable_left > 0.0:
+		unit.invulnerable_left = maxf(unit.invulnerable_left - step, 0.0)
+		if unit.invulnerable_left > 0.0:
 			return
 	_unfreeze()
 	_check()
@@ -119,7 +122,8 @@ func get_phase_name_key() -> String:
 ## True while the boss is invulnerable after a phase change.
 func is_invulnerable() -> bool:
 	var state: CombatState = _state()
-	return state != null and state.enemy_invulnerable_left > 0.0
+	var unit: EnemyUnit = _unit()
+	return unit != null and unit.invulnerable_left > 0.0
 
 
 ## Traits added by the current phase (live in the host).
@@ -146,15 +150,27 @@ func _boss() -> BossController:
 	return get_context().get("boss") as BossController
 
 
+# Multi-enemy Phase 5 (step 3): THIS trait's own unit. enemy_invulnerable_left and enemy_hp_floor are properties
+# that read and WRITE units[0], so a boss_phases on unit 2 made unit 0 invulnerable and floored unit 0's HP -
+# hazard H2 in the plan, and the one that hands the player an unkillable enemy it never attacked.
+func _unit() -> EnemyUnit:
+	var state: CombatState = _state()
+	return null if state == null else state.get_unit(CombatState.unit_index_of(unit_key()))
+
+
 # Enters the next phase when the HP is at or below its threshold (never during a shift).
 func _check() -> void:
 	var state: CombatState = _state()
-	if state == null or state.enemy_max_hp <= 0.0 or state.enemy_invulnerable_left > 0.0 or state.is_enemy_dead():
+	var key: int = unit_key()
+	var unit: EnemyUnit = _unit()
+	if state == null or unit == null or state.is_key_dead(key):
+		return
+	if state.max_hp_of(key) <= 0.0 or unit.invulnerable_left > 0.0:
 		return
 	var next: int = _index + 1
 	if next >= _phases.size():
 		return
-	if state.enemy_hp > float(_phases[next]["at_hp_ratio"]) * state.enemy_max_hp + _HP_EPS:
+	if state.hp_of(key) > float(_phases[next]["at_hp_ratio"]) * state.max_hp_of(key) + _HP_EPS:
 		return
 	_enter(next)
 
@@ -162,9 +178,10 @@ func _check() -> void:
 func _enter(index: int) -> void:
 	_index = index
 	var phase: Dictionary = _phases[index]
-	var state: CombatState = _state()
 	var shift: float = float(phase["phase_shift_sec"])
-	state.enemy_invulnerable_left = shift
+	var unit_enter: EnemyUnit = _unit()
+	if unit_enter != null:
+		unit_enter.invulnerable_left = shift
 	var boss: BossController = _boss()
 	if boss != null:
 		# The cast in progress (and a queued combo) is dropped with no damage, like a feint.
@@ -233,7 +250,11 @@ func _update_floor() -> void:
 	if state == null:
 		return
 	var next: int = _index + 1
-	state.enemy_hp_floor = float(_phases[next]["at_hp_ratio"]) * state.enemy_max_hp if next < _phases.size() else 0.0
+	var unit_floor: EnemyUnit = _unit()
+	if unit_floor == null:
+		return
+	var key_floor: int = unit_key()
+	unit_floor.hp_floor = float(_phases[next]["at_hp_ratio"]) * state.max_hp_of(key_floor) if next < _phases.size() else 0.0
 
 
 func _unfreeze() -> void:

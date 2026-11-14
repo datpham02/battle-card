@@ -59,7 +59,10 @@ func tick(_dt: float) -> void:
 
 ## Story 037: the BOSS stepped onto a thorn cell of the player's zone (StatusEffects.thorn_entered on the enemy
 ## side), standing on [param cell]. Default: nothing.
-func on_boss_thorn_step(_cell: Vector2i) -> void:
+# Multi-enemy: [param _key] is the unit that stepped on the thorns (the mark belongs to the unit that
+# caused it). Default = the old value, unit 0, so every existing caller behaves exactly as before - not
+# merely parses, which is a different and weaker promise.
+func on_boss_thorn_step(_cell: Vector2i, _key: int = CombatState.Side.ENEMY) -> void:
 	pass
 
 

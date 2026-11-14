@@ -59,8 +59,11 @@ func on_match_start() -> void:
 	_warn_left = 0.0
 	_hop_count = 0
 	_state = get_context().get("state") as CombatState
-	if _state != null and not _state.cell_changed.is_connected(_on_cell_changed):
-		_state.cell_changed.connect(_on_cell_changed)
+	# Multi-enemy Phase 5 (step 1): unit_cell_changed, not the legacy cell_changed. The legacy signal reports
+	# Side.ENEMY for unit 0 ONLY (CombatState.set_key_cell), so a hop_skip on unit 2 counted unit 0's steps and
+	# never its own: it hopped on another unit's clock, and stopped counting the moment unit 0 stood still.
+	if _state != null and not _state.unit_cell_changed.is_connected(_on_unit_cell_changed):
+		_state.unit_cell_changed.connect(_on_unit_cell_changed)
 	var boss: BossController = get_context().get("boss") as BossController
 	_mover = boss.get_mover() if boss != null else null
 	if _mover != null and _mover.step_lock_fn != Callable(self, "_is_locked"):
@@ -111,8 +114,8 @@ func get_debug() -> Dictionary:
 
 
 func teardown() -> void:
-	if _state != null and _state.cell_changed.is_connected(_on_cell_changed):
-		_state.cell_changed.disconnect(_on_cell_changed)
+	if _state != null and _state.unit_cell_changed.is_connected(_on_unit_cell_changed):
+		_state.unit_cell_changed.disconnect(_on_unit_cell_changed)
 	if _mover != null and _mover.step_lock_fn == Callable(self, "_is_locked"):
 		_mover.step_lock_fn = _prev_lock
 	_mover = null
@@ -129,15 +132,18 @@ func _is_locked() -> bool:
 	return _prev_lock.is_valid() and bool(_prev_lock.call())
 
 
-func _on_cell_changed(side: int, _old_cell: Vector2i, _new_cell: Vector2i) -> void:
-	if side == CombatState.Side.ENEMY and not _moving:
+# Counts only THIS unit's steps. A hop of its own does not count (_moving).
+func _on_unit_cell_changed(index: int, _old_cell: Vector2i, _new_cell: Vector2i) -> void:
+	if CombatState.unit_key(index) == unit_key() and not _moving:
 		_steps += 1
 
 
 # True when the boss could take a step now (ready, not casting, active).
 func _can_move() -> bool:
 	var boss: BossController = get_context().get("boss") as BossController
-	if boss == null or _state == null or _state.is_enemy_dead() or not boss.is_active():
+	# Multi-enemy Phase 5 (step 1): this trait's own unit. The alias form stopped a hop on unit 2 whenever unit 0
+	# was dead, and hopped unit 0 instead of unit 2 when it did fire.
+	if boss == null or _state == null or _state.is_key_dead(unit_key()) or not boss.is_active():
 		return false
 	if boss.get_actor() != null and boss.get_actor().is_swinging():
 		return false
@@ -150,7 +156,8 @@ func _pick_target() -> Vector2i:
 	var grid: BoardGrid = get_context().get("grid") as BoardGrid
 	if grid == null:
 		return _NONE
-	var from: Vector2i = _state.enemy_cell
+	# Phase 5 (step 1): hop from THIS unit's cell, not unit 0's.
+	var from: Vector2i = _state.cell_of(unit_key())
 	for dir: Vector2i in _DIRS:
 		var mid: Vector2i = from + dir
 		var dest: Vector2i = from + dir * 2
@@ -183,13 +190,13 @@ func _land() -> void:
 	var target: Vector2i = _target
 	_target = _NONE
 	_warn_left = 0.0
-	if _state == null or _state.is_enemy_dead():
+	if _state == null or _state.is_key_dead(unit_key()):
 		return
 	if not _is_landable(target):
 		return  # re-picked on a later tick (still armed)
-	var from: Vector2i = _state.enemy_cell
+	var from: Vector2i = _state.cell_of(unit_key())
 	_moving = true
-	var ok: bool = _state.set_enemy_cell(target)
+	var ok: bool = _state.set_key_cell(unit_key(), target)
 	_moving = false
 	if ok:
 		_steps = 0

@@ -639,7 +639,8 @@ var _banner_left: float = 0.0
 ## Story 023: the phase banner's text and seconds left, and the TraitHost whose phase_changed is connected.
 var _phase_banner_text: String = ""
 var _phase_banner_left: float = 0.0
-var _phase_host: TraitHost = null
+## Multi-enemy Phase 5: every host whose phase_changed is connected (was one unit-0 host).
+var _phase_hosts: Array[TraitHost] = []
 ## Story 034: seconds left of the piece-deck fallback notice; checked once, when the match state exists.
 var _piece_deck_notice_left: float = 0.0
 var _piece_deck_notice_checked: bool = false
@@ -725,22 +726,48 @@ func _process(delta: float) -> void:
 
 # Story 023: connects TraitHost.phase_changed once the battle has its host (CombatView builds it in
 # its own _ready, so the sibling order must not matter); re-connects if the host is replaced.
+# Multi-enemy Phase 5: every living enemy's TraitHost, unit 0 first. CombatView.get_trait_host() is unit 0's host
+# and nothing else, so every caller that used it answered for one unit and ignored the rest in silence.
+func _enemy_hosts() -> Array[TraitHost]:
+	var out: Array[TraitHost] = []
+	if _combat == null or _combat.get_state() == null:
+		return out
+	for key: int in _combat.get_state().enemy_keys():
+		var host: TraitHost = _combat.host_of(key)
+		if host != null:
+			out.append(host)
+	return out
+
+
+# The same hosts by unit KEY, for anything drawn at a cell or on a body. That is the half carrying attribution: it
+# needs the unit, not just its traits, because it has to draw on THAT unit's cells.
+func _enemy_host_keys() -> Array[int]:
+	var out: Array[int] = []
+	if _combat == null or _combat.get_state() == null:
+		return out
+	for key: int in _combat.get_state().enemy_keys():
+		if _combat.host_of(key) != null:
+			out.append(key)
+	return out
+
+
+# Phase 5: the banner listens to EVERY unit's host. The host is bound into the handler so the banner can name the
+# phase of the unit that actually changed - without the bind, a second unit's phase change would be titled with
+# unit 0's phase name, which is worse than the missing banner it replaces.
 func _connect_phase() -> void:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null or host == _phase_host:
-		return
-	if _phase_host != null and _phase_host.phase_changed.is_connected(_on_phase_changed):
-		_phase_host.phase_changed.disconnect(_on_phase_changed)
-	_phase_host = host
-	host.phase_changed.connect(_on_phase_changed)
+	for host: TraitHost in _enemy_hosts():
+		if _phase_hosts.has(host):
+			continue
+		_phase_hosts.append(host)
+		host.phase_changed.connect(_on_phase_changed.bind(host))
 
 
-func _on_phase_changed(phase: int) -> void:
+func _on_phase_changed(phase: int, host: TraitHost = null) -> void:
 	_phase_banner_text = tr(TEXT_PHASE_BANNER) % phase
 	# Story 035: a boss_phases boss names its phase ("PHA 2 — <name>").
 	var phases: BossPhasesTrait = null
-	if _phase_host != null:
-		phases = _phase_host.get_trait(BossPhasesTrait.ID) as BossPhasesTrait
+	if host != null:
+		phases = host.get_trait(BossPhasesTrait.ID) as BossPhasesTrait
 	if phases != null and not phases.get_phase_name_key().is_empty():
 		_phase_banner_text = "%s — %s" % [_phase_banner_text, tr(phases.get_phase_name_key())]
 	_phase_banner_left = PHASE_BANNER_SEC
@@ -2181,10 +2208,13 @@ func _draw_feedback_for(vp: Vector2, fb: Dictionary) -> void:
 # runs): faint amber tint, blinking amber outline, shrinking top bar, "SẮP CHÁY" tag. Once the
 # row ignites the trait clears its warning and the floor's BurnPainter takes over.
 func _draw_row_warning(vp: Vector2) -> void:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null:
-		return
-	var burner: RowBurnerTrait = host.get_trait(RowBurnerTrait.ID) as RowBurnerTrait
+	# Phase 5: one warning per CARRIER. This is a gameplay warning, not decoration - an unwarned row burn is an
+	# unavoidable hit from the player's side, so a burner on unit 1 drawing nothing is a fairness bug.
+	for host: TraitHost in _enemy_hosts():
+		_draw_row_warning_for(vp, host.get_trait(RowBurnerTrait.ID) as RowBurnerTrait)
+
+
+func _draw_row_warning_for(vp: Vector2, burner: RowBurnerTrait) -> void:
 	if burner == null:
 		return
 	var cells: Array[Vector2i] = burner.get_warning_cells()
@@ -2430,9 +2460,14 @@ func _draw_boss_status(vp: Vector2) -> void:
 	# Story 046: burn / pin / fragile / frost are keyword chips under the boss's feet (_draw_pins); only
 	# the shroud trait stays a text here.
 	var parts: Array = []
-	var status_host: TraitHost = _combat.get_trait_host()
-	if status_host != null and _is_shrouding(status_host):
-		parts.append([tr(TEXT_SHROUD), CLOUD_TEXT])
+	# Phase 5: ANY unit shrouding puts the word up. The word names no unit and cannot - the cloud drawn ON the body
+	# (_draw_hazard_traits_039) is what says which one. With two carriers this strip still reads "shroud" once, and
+	# that is a deliberate limit of a screen-wide strip rather than an oversight: a per-unit answer belongs on the
+	# unit, not in a status bar.
+	for status_host: TraitHost in _enemy_hosts():
+		if _is_shrouding(status_host):
+			parts.append([tr(TEXT_SHROUD), CLOUD_TEXT])
+			break
 	if parts.is_empty():
 		return
 	var boss_strip: Rect2 = ScreenLayout.hud_boss_status_rect(vp)
@@ -2469,29 +2504,36 @@ func _parts_width(parts: Array, size: int) -> float:
 # (red at full), "Khí sương" while frost_aura runs, "Ngòi x.x s" plus a thin fuse bar for
 # fuse_cannon (bar and text red in the last FUSE_RED_SEC). Nothing without those traits or once a
 # unit is dead. The fuse bar's room is reserved before the text is fitted.
+# Phase 5: ONE status strip on screen, so each entry FOLDS across units via CombatView.any_trait() - "is anyone
+# charged / frozen / fused / burrowed", never "is unit 0". Two carriers of one trait still produce one entry: the
+# strip has no room to name a unit and no way to point at one. That is a known limit, not an oversight; what says
+# WHICH unit is the cue drawn on the unit itself.
+# The death guard changed with it: is_enemy_dead() is unit 0's death, which used to blank the whole strip while
+# other units were alive and still carrying traits.
 func _draw_trait_status(vp: Vector2) -> void:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null:
-		return
 	var state: CombatState = _combat.get_state()
-	if state.is_player_dead() or state.is_enemy_dead():
+	if state.is_player_dead() or not state.any_enemy_alive():
 		return
 	var parts: Array = []
-	var reactor: StepReactorTrait = host.get_trait(StepReactorTrait.ID) as StepReactorTrait
+	var reactor: StepReactorTrait = _combat.any_trait(StepReactorTrait.ID) as StepReactorTrait
 	if reactor != null:
 		var full: bool = reactor.get_charges() >= reactor.get_charges_to_fire()
 		parts.append([tr(TEXT_REACTOR_CHARGES) % [reactor.get_charges(), reactor.get_charges_to_fire()], TRAIT_FULL_COLOR if full else TRAIT_TEXT_COLOR])
-	var aura: FrostAuraTrait = host.get_trait(FrostAuraTrait.ID) as FrostAuraTrait
+	var aura: FrostAuraTrait = _combat.any_trait(FrostAuraTrait.ID) as FrostAuraTrait
 	if aura != null and aura.is_active():
 		parts.append([tr(TEXT_FROST_AURA), FROST_COLOR])
-	var fuse: FuseCannonTrait = host.get_trait(FuseCannonTrait.ID) as FuseCannonTrait
+	var fuse: FuseCannonTrait = _combat.any_trait(FuseCannonTrait.ID) as FuseCannonTrait
 	var low: bool = fuse != null and fuse.get_fuse_left() <= FUSE_RED_SEC
 	if fuse != null:
 		parts.append([tr(TEXT_FUSE) % fuse.get_fuse_left(), FUSE_BAR_LOW_FILL if low else TRAIT_TEXT_COLOR])
 	# Story 036: "burrowed" while the burrow trait is under the sand; "sandstorm" + a draining bar during a storm.
-	var burrow: BossTrait = host.get_trait(BURROW_TRAIT_ID)
-	if burrow != null and burrow.has_method("is_burrowed") and bool(burrow.call("is_burrowed")):
-		parts.append([tr(TEXT_BURROWED), SURFACE_COLOR])
+	# "burrowed" asks whether ANY unit is under the sand: any_trait returns the first carrier, which is not
+	# necessarily the one that is burrowed right now, so the carriers are walked instead.
+	for burrow_host: TraitHost in _enemy_hosts():
+		var burrow: BossTrait = burrow_host.get_trait(BURROW_TRAIT_ID)
+		if burrow != null and burrow.has_method("is_burrowed") and bool(burrow.call("is_burrowed")):
+			parts.append([tr(TEXT_BURROWED), SURFACE_COLOR])
+			break
 	var storm_ratio: float = _storm_fraction()
 	if storm_ratio >= 0.0:
 		parts.append([tr(TEXT_SANDSTORM), STORM_COLOR])
@@ -2669,10 +2711,15 @@ func _draw_fallen_cell(rect: Rect2, left: float, total: float) -> void:
 
 
 # Island drop warning, gust arrow and the shroud's cloud over the boss; called at the end of _draw_hazard_traits.
+# Phase 5: per carrier, and the shroud cloud below is the reason this one mattered most. It used to be drawn over
+# get_state().enemy_footprint_cells() - UNIT 0's footprint - whatever unit was shrouding, so a shroud on unit 1 did
+# not fail quietly, it marked the WRONG enemy. A cue that is confidently wrong is worse than one that is missing.
 func _draw_hazard_traits_039(vp: Vector2) -> void:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null:
-		return
+	for key: int in _enemy_host_keys():
+		_draw_hazard_traits_039_for(vp, _combat.host_of(key), key)
+
+
+func _draw_hazard_traits_039_for(vp: Vector2, host: TraitHost, key: int) -> void:
 	var grid: BoardGrid = _combat.get_grid()
 	var drop: BossTrait = host.get_trait(ISLAND_DROP_TRAIT_ID)
 	if drop != null and drop.has_method("get_drop_cells") and drop.has_method("get_drop_warn_left"):
@@ -2688,8 +2735,8 @@ func _draw_hazard_traits_039(vp: Vector2) -> void:
 		if warn > 0.0 and dir != Vector2i.ZERO:
 			var from: Vector2i = _combat.get_state().player_cell
 			_draw_gust_arrow(vp, grid, from, dir, warn, gust.param_float(WARN_SEC_PARAM, GUST_WARN_FALLBACK_SEC))
-	if _is_shrouding(host) and not _combat.get_state().is_enemy_dead():
-		var boss_rect: Rect2 = _bg().flat_cells_rect(_combat.get_state().enemy_footprint_cells())
+	if _is_shrouding(host) and not _combat.get_state().is_key_dead(key):
+		var boss_rect: Rect2 = _bg().flat_cells_rect(_combat.get_state().unit_cells(key))
 		var at := Vector2(boss_rect.get_center().x, boss_rect.position.y + boss_rect.size.y * 0.22)
 		var width: float = minf(boss_rect.size.x, boss_rect.size.y) * 0.9 * _scale_at(at)
 		_draw_cloud(_pt(at), width, CLOUD_COVER_ALPHA)
@@ -2753,11 +2800,14 @@ func _is_shrouding(host: TraitHost) -> bool:
 
 
 # True while the hit forecast (the green / red piece shadow) is switched off by the shroud (W3 TraitHost model switch).
+# Phase 5: there is ONE hit forecast on screen, so this FOLDS rather than keys - it asks "is any unit hiding the
+# forecast", the only question a single screen-wide cue can answer. Keying it would mean taking one unit's answer
+# and presenting it as the screen's.
 func _forecast_blocked() -> bool:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null or not host.has_method("hit_forecast_blocked"):
-		return false
-	return bool(host.call("hit_forecast_blocked"))
+	for host: TraitHost in _enemy_hosts():
+		if host.has_method("hit_forecast_blocked") and bool(host.call("hit_forecast_blocked")):
+			return true
+	return false
 
 
 # A cloud icon over the middle of the bounding box of [param cells] (the grey hit shadow's "why").
@@ -2773,18 +2823,21 @@ func _draw_cloud_over_cells(_vp: Vector2, cells: Array[Vector2i]) -> void:
 
 
 # "rebirth" trait when the boss has it and it still matters (one life left or reviving), else null.
+# Phase 5: the badge shows a rebirth that still matters on ANY unit, and a unit that is REVIVING outranks one
+# merely holding a life - otherwise two carriers could hide the urgent one behind the idle one. is_key_dead(key)
+# replaces is_enemy_dead(), which only ever asked about unit 0.
 func _rebirth_active() -> BossTrait:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null:
-		return null
-	var rebirth: BossTrait = host.get_trait(REBIRTH_TRAIT_ID)
-	if rebirth == null:
-		return null
-	var reviving: bool = rebirth.has_method("is_reviving") and bool(rebirth.call("is_reviving"))
-	var lives: int = int(rebirth.call("lives_left")) if rebirth.has_method("lives_left") else 1
-	if reviving or (lives > 0 and not _combat.get_state().is_enemy_dead()):
-		return rebirth
-	return null
+	var spare: BossTrait = null
+	for key: int in _enemy_host_keys():
+		var rebirth: BossTrait = _combat.host_of(key).get_trait(REBIRTH_TRAIT_ID)
+		if rebirth == null:
+			continue
+		if rebirth.has_method("is_reviving") and bool(rebirth.call("is_reviving")):
+			return rebirth
+		var lives: int = int(rebirth.call("lives_left")) if rebirth.has_method("lives_left") else 1
+		if lives > 0 and not _combat.get_state().is_key_dead(key) and spare == null:
+			spare = rebirth
+	return spare
 
 
 # Text of the rebirth badge: "1 life" or "reviving 1.2 s".
@@ -2992,16 +3045,18 @@ func _draw_sand_warning(rect: Rect2, blink_on: bool) -> void:
 
 
 # Share (0..1) of the running sandstorm left, or -1.0 when no storm blows (or the trait is absent).
+# Phase 5: a sandstorm is weather over the whole board, so the strongest one wins instead of unit 0's.
 func _storm_fraction() -> float:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null:
-		return -1.0
-	var storm: BossTrait = host.get_trait(STORM_TRAIT_ID)
-	if storm == null or not storm.has_method("is_storm") or not bool(storm.call("is_storm")):
-		return -1.0
-	if not storm.has_method("get_storm_fraction"):
-		return 1.0
-	return clampf(float(storm.call("get_storm_fraction")), 0.0, 1.0)
+	var best: float = -1.0
+	for host: TraitHost in _enemy_hosts():
+		var storm: BossTrait = host.get_trait(STORM_TRAIT_ID)
+		if storm == null or not storm.has_method("is_storm") or not bool(storm.call("is_storm")):
+			continue
+		var f: float = 1.0
+		if storm.has_method("get_storm_fraction"):
+			f = clampf(float(storm.call("get_storm_fraction")), 0.0, 1.0)
+		best = maxf(best, f)
+	return best
 
 
 # Width the wind badge and its label take at the right end of the trait status line (0 while no wind blows).
@@ -3038,10 +3093,16 @@ func _draw_wind_badge(vp: Vector2) -> void:
 
 
 # Region trait cues on the board: hop shadow, riposte warning cell, burrow surface circle.
+# Phase 5: hop shadow, riposte cell and burrow surface circle are drawn for EVERY carrier. All three are warnings
+# the player acts on, and all three were unit 0's only - the burrow one is the defect the Phase 5 visual gate
+# photographed: state correct, suites green, and nothing on screen above the unit that was about to surface.
 func _draw_hazard_traits(vp: Vector2) -> void:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null:
-		return
+	for host: TraitHost in _enemy_hosts():
+		_draw_hazard_traits_for(vp, host)
+	_draw_hazard_traits_039(vp)
+
+
+func _draw_hazard_traits_for(vp: Vector2, host: TraitHost) -> void:
 	var grid: BoardGrid = _combat.get_grid()
 	var hop: BossTrait = host.get_trait(HOP_TRAIT_ID)
 	if hop != null and hop.has_method("get_hop_target"):
@@ -3068,7 +3129,6 @@ func _draw_hazard_traits(vp: Vector2) -> void:
 		if grid.is_enemy_cell(surface) and warn > 0.0:
 			_draw_surface_circle(_bg().flat_cell_rect(surface), _warn_ratio(burrow, "get_surface_warn_left", "surface_warn_sec", SURFACE_WARN_FALLBACK_SEC))
 			_draw_corner_label(vp, [surface] as Array[Vector2i], tr(TEXT_SURFACE), SURFACE_COLOR)
-	_draw_hazard_traits_039(vp)
 
 
 # Share (0..1) of a trait's warning left: getter [param getter] over param [param param] (fallback seconds).
@@ -3157,21 +3217,25 @@ func _draw_zone_bar(rect: Rect2, left: float, total: float, back: Color, fill: C
 # announces with a faint orange tint and a blinking orange outline (same blink clock as the row
 # warning). Drawn under the burning layer so a burning cracked cell still shows its flame.
 func _draw_trait_cells(_vp: Vector2) -> void:
-	var host: TraitHost = _combat.get_trait_host()
-	if host == null:
-		return
+	# Phase 5: every unit's slam and fuse, not unit 0's. The warned cells of several carriers merge into one list
+	# on purpose - a cell is warned or it is not, and two units aiming at one cell must not draw it twice.
 	var warned: Array[Vector2i] = []
-	var slam: SlamTrait = host.get_trait(SlamTrait.ID) as SlamTrait
-	if slam != null:
-		if not _vfx_ok("cracked_cell"):  # Story 048 F4: else the floor draws the crack
-			for cell: Vector2i in slam.get_cracked_cells():
-				var rect: Rect2 = _bg().flat_cell_rect(cell)
-				_fill(rect, CRACK_TINT)
-				_draw_crack(rect)
-		warned.append_array(slam.get_warning_cells())
-	var fuse: FuseCannonTrait = host.get_trait(FuseCannonTrait.ID) as FuseCannonTrait
-	if fuse != null:
-		warned.append_array(fuse.get_warning_cells())
+	for host: TraitHost in _enemy_hosts():
+		var slam: SlamTrait = host.get_trait(SlamTrait.ID) as SlamTrait
+		if slam != null:
+			if not _vfx_ok("cracked_cell"):  # Story 048 F4: else the floor draws the crack
+				for cell: Vector2i in slam.get_cracked_cells():
+					var rect: Rect2 = _bg().flat_cell_rect(cell)
+					_fill(rect, CRACK_TINT)
+					_draw_crack(rect)
+			for cell: Vector2i in slam.get_warning_cells():
+				if not warned.has(cell):
+					warned.append(cell)
+		var fuse: FuseCannonTrait = host.get_trait(FuseCannonTrait.ID) as FuseCannonTrait
+		if fuse != null:
+			for cell: Vector2i in fuse.get_warning_cells():
+				if not warned.has(cell):
+					warned.append(cell)
 	if warned.is_empty():
 		return
 	var bright: bool = int(_blink_time * WARN_BLINK_HZ * 2.0) % 2 == 0

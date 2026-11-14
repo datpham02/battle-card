@@ -104,11 +104,18 @@ func vfx_state() -> Array[Dictionary]:
 			var alpha: float = formation_alpha(formation.fraction_left(cell), warn, clock)
 			out.append(_item("engraving_lit", cell, frame, Color(1.0, 1.0, 1.0, alpha)))
 	# F4: cracked cells (slam), each held on hold_frame from the moment it cracked.
+	# Multi-enemy Phase 5: one slam per UNIT, not one per board. get_trait_host() is unit 0's host, so a slam carried
+	# by any other unit cracked cells that were never drawn - the state was right and the floor stayed clean. Same
+	# shape as the root_seal loop just below, which has keyed since Phase 4.
 	var cracked: Array[Vector2i] = []
-	var host: TraitHost = combat.get_trait_host()
-	var slam: SlamTrait = null if host == null else host.get_trait(SlamTrait.ID) as SlamTrait
-	if slam != null and vfx.has_pack("cracked_cell"):
-		cracked = slam.get_cracked_cells()
+	if vfx.has_pack("cracked_cell"):
+		for key: int in combat.get_state().enemy_keys():
+			var host: TraitHost = combat.host_of(key)
+			var slam: SlamTrait = null if host == null else host.get_trait(SlamTrait.ID) as SlamTrait
+			if slam != null:
+				for cell: Vector2i in slam.get_cracked_cells():
+					if not cracked.has(cell):
+						cracked.append(cell)
 	var ages: Dictionary = vfx.hold_ages("cracked_cell", cracked)
 	for cell: Vector2i in cracked:
 		out.append(_item("cracked_cell", cell, FloorVfx.frame_for(vfx.entry("cracked_cell"), float(ages[cell]), reduce)))

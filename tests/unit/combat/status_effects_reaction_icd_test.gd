@@ -121,7 +121,8 @@ func test_immune_hook() -> void:
 func test_burn_eater_boss_is_immune_to_r1() -> void:
 	var w: Dictionary = _world(Vector2i(5, 1))
 	var fx: StatusEffects = w["fx"]
-	fx.burn_heal_ratio_fn = func() -> float: return 0.5
+	# Multi-enemy Phase 5 (step 1): the hook takes the unit key now, so the burn heal can differ per enemy unit.
+	fx.burn_heal_ratio_fn = func(_key: int) -> float: return 0.5
 	fx.ignite([Vector2i(5, 1)] as Array[Vector2i], 5.0, 10.0, 0.0)
 	var r: Dictionary = _apply(w, BAR3, "han_kiem")
 	ck("han_kiem (+1 Hàn) on a burning cell under a burn_eater boss: no R1, 18 only, the Hàn stays, the cell still burns",

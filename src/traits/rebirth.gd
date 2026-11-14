@@ -141,10 +141,13 @@ func _revive() -> void:
 	var state: CombatState = get_context().get("state") as CombatState
 	var boss: BossController = get_context().get("boss") as BossController
 	if state != null:
-		var target: float = state.enemy_max_hp * _revive_ratio
-		if state.enemy_hp < target:
-			state.heal_enemy(target - state.enemy_hp)
-		revived.emit(state.enemy_hp)
+		# Multi-enemy Phase 5 (step 1): revive THIS unit. enemy_hp / enemy_max_hp / heal_enemy are unit-0 aliases,
+		# so a rebirth on unit 2 used to heal unit 0 back to life instead of its own.
+		var key: int = unit_key()
+		var target: float = state.max_hp_of(key) * _revive_ratio
+		if state.hp_of(key) < target:
+			state.heal_key(key, target - state.hp_of(key))
+		revived.emit(state.hp_of(key))
 	if boss != null and _restore_active:
 		boss.set_active(true)
 	var pattern: PatternController = _pattern()

@@ -25,8 +25,8 @@ func tick(dt: float) -> void:
 		_clock += dt
 
 
-func on_boss_thorn_step(_cell: Vector2i) -> void:
-	_try_mark()
+func on_boss_thorn_step(_cell: Vector2i, key: int = CombatState.Side.ENEMY) -> void:
+	_try_mark(key)
 
 
 func on_player_zone_formed(kind: String, cells: Array[Vector2i]) -> void:
@@ -36,12 +36,16 @@ func on_player_zone_formed(kind: String, cells: Array[Vector2i]) -> void:
 	if state == null:
 		return
 	# P2.2b: every footprint cell of a multi-cell boss counts; one zone marks once (return after the first match).
-	for boss: Vector2i in state.enemy_footprint_cells():
-		for cell: Vector2i in cells:
-			# 0 = laid on the boss's own cell, 1 = beside it; both mark (same internal cooldown).
-			if absi(cell.x - boss.x) + absi(cell.y - boss.y) <= 1:
-				_try_mark()
-				return
+	# Multi-enemy: a zone is a HALF event, so the cause here is proximity - the first living unit (key order)
+	# whose footprint is within 1 of the new thorns is the one marked. One zone still marks ONCE: letting a single
+	# laying touch two units would hand out two stacks and change what the card is worth against what 1v1 pays.
+	for unit: int in state.enemy_keys():
+		for boss: Vector2i in state.unit_cells(unit):
+			for cell: Vector2i in cells:
+				# 0 = laid on the unit's own cell, 1 = beside it; both mark (same internal cooldown).
+				if absi(cell.x - boss.x) + absi(cell.y - boss.y) <= 1:
+					_try_mark(unit)
+					return
 
 
 ## How many times the boss was marked this match (tests / HUD).
@@ -50,13 +54,13 @@ func marks_given() -> int:
 
 
 # Gives the Ran stack(s) unless the internal cooldown is still running.
-func _try_mark() -> void:
+func _try_mark(key: int = CombatState.Side.ENEMY) -> void:
 	if _clock < _ready_at:
 		return
 	var status: StatusEffects = _ctx.get("status") as StatusEffects
 	var stacks: int = maxi(param_int("fragile_stacks", DEFAULT_FRAGILE_STACKS), 0)
 	if status == null or stacks <= 0:
 		return
-	status.apply_fragile(CombatState.Side.ENEMY, stacks)
+	status.apply_fragile(key, stacks)
 	_marks += 1
 	_ready_at = _clock + maxf(param_float("icd_sec", DEFAULT_ICD_SEC), 0.0)

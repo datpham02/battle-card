@@ -203,7 +203,8 @@ func _test_status_ticks_per_unit() -> void:
 	check(s.get_unit(1).hp < 100.0 and is_equal_approx(s.enemy_hp, 100.0), "F: a burning cell under unit 1 hurts unit 1 only")
 	# burn_eater heals unit 0 (its trait), never unit 1
 	var st2: StatusEffects = _status()
-	st2.burn_heal_ratio_fn = func() -> float: return 1.0
+	# Phase 5 (step 1): keyed hook. Answering only for unit 0 is the point of this check — unit 1 must not heal.
+	st2.burn_heal_ratio_fn = func(key: int) -> float: return 1.0 if key == CombatState.Side.ENEMY else 0.0
 	var s2: CombatState = _state(Vector2i(4, 1), [Vector2i(4, 0)])
 	s2.get_unit(0).hp = 50.0
 	s2.get_unit(1).hp = 50.0

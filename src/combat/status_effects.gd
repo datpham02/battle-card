@@ -126,8 +126,10 @@ var _poisons: Dictionary = {}
 ## fragile_mult (<= 0 = use the config's); [member frost_burst_mult_fn] Callable() -> float scales a Han burst.
 var fragile_mult_fn: Callable = Callable()
 var frost_burst_mult_fn: Callable = Callable()
-## Story 039 (burn_eater): Callable() -> float, asked at the ONE place a burning cell ticks on the BOSS (ENEMY side):
-## 0 (or invalid) = the tick hurts as usual, r > 0 = the tick HEALS the boss by damage x r instead (TraitHost.burn_heal_ratio).
+## Story 039 (burn_eater): asked where a burning cell ticks on an enemy unit: 0 (or invalid) = the tick hurts as
+## usual, r > 0 = the tick HEALS that unit by damage x r instead.
+## Multi-enemy Phase 5 (step 1): `Callable(key: int) -> float`, installed by CombatView and routed to that unit's
+## TraitHost; it used to take no argument and answer for the whole enemy side.
 var burn_heal_ratio_fn: Callable = Callable()
 ## 2026-10-31 (user: "đi qua vùng có debuff mà ko bị gì"): when true, a unit that steps ONTO a burning cell pays one
 ## tick of its damage at once (like a thorn toll) and the tick clock restarts there, so crossing a burning row in
@@ -606,7 +608,7 @@ func clear() -> void:
 func reaction_allowed(side: int, id: String, icd_sec: float = -1.0) -> bool:
 	if reaction_immune_fn.is_valid() and bool(reaction_immune_fn.call(side, id)):
 		return false
-	if id == "r1" and side == CombatState.Side.ENEMY and burn_heal_ratio_fn.is_valid() and float(burn_heal_ratio_fn.call()) > 0.0:
+	if id == "r1" and side != CombatState.Side.PLAYER and burn_heal_ratio_fn.is_valid() and float(burn_heal_ratio_fn.call(side)) > 0.0:
 		return false
 	var icd: float = icd_sec if icd_sec >= 0.0 else float(reaction_numbers.get("icd_sec", 1.0))
 	var key: String = "%d|%s" % [side, id]
@@ -1329,11 +1331,13 @@ func _tick_zones(book: Dictionary, kind: String, delta: float) -> void:
 			book.erase(side)
 
 
-# Story 039: the burn-heal ratio asked for the BOSS side only (0 = the tick hurts).
+# Story 039: the burn-heal ratio of the unit of [param side] (0 = the tick hurts).
+# Multi-enemy Phase 5 (step 1): asked per unit. A burn_eater on unit 2 heals unit 2 and nobody else; before this
+# the hook took no argument, so whichever host held the slot answered for every enemy unit.
 func _burn_heal_ratio(side: int) -> float:
-	if side != CombatState.Side.ENEMY or not burn_heal_ratio_fn.is_valid():
+	if side == CombatState.Side.PLAYER or not burn_heal_ratio_fn.is_valid():
 		return 0.0
-	return maxf(float(burn_heal_ratio_fn.call()), 0.0)
+	return maxf(float(burn_heal_ratio_fn.call(side)), 0.0)
 
 
 # A unit that CHANGED cell since the last tick and now stands on a thorn cell pays the toll once; with

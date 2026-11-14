@@ -175,6 +175,13 @@ func get_context() -> Dictionary:
 	return _ctx
 
 
+## Multi-enemy Phase 5 (step 1): the enemy unit this trait is attached to (a CombatState key). TraitHost puts it in
+## the context; unit 0 when absent, so a trait built by hand in a test or by the sim behaves as it always did.
+## Every `state.enemy_*` call inside a trait is a unit-0 alias and should be the keyed form addressed by this.
+func unit_key() -> int:
+	return int(_ctx.get("key", CombatState.Side.ENEMY))
+
+
 ## Quick spec 2026-11-01 rule 3 (design/quick-specs/mot-o-mot-hieu-ung-2026-11-01.md): [param cells] a trait's hit or
 ## warning may cover, without the locked cells (cracking / hole) through StatusEffects.unlocked_cells, the single rule
 ## point. No `status` in the context = unchanged.
