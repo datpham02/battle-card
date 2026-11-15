@@ -224,13 +224,45 @@ func _test_thorns_cooldown() -> void:
 
 func _test_chapters_assignment() -> void:
 	var text: String = FileAccess.get_file_as_string("res://assets/data/chapters.json")
-	_check("chapters.json: jailer carries seal_caster", _boss_has_trait(text, "jailer", "seal_caster"))
+	# 2026-11-15. This leg was INVERTED, not relaxed. Those two look identical from outside - both are
+	# "the test went red, I knew why, I changed the test" - so here is the design line that authorises it,
+	# quoted rather than summarised:
+	#   MONSTER-SKILL-DESIGN.md §4.5, line 675, `jailer_lockdown`:
+	#     "· Phản đòn: luật Ô rớt. (Thay `seal_caster {cells 2-3, interval 9}`.)"
+	# "Thay" = replaces. The trait hooks the swing block, so §4.5 moves its job into the skill and takes the
+	# trait off the match. The skill side is covered by pattern_dungeon_group_c_test.
+	# The second leg guards the other direction: an_dai_keeper keeps seal_caster, and on 2026-11-14 a removal
+	# script of mine searched for that string unbounded and nearly took the Keeper's. An assert caught it only
+	# because the surrounding JSON happened to differ - luck, not a gate. This is the gate.
+	_check("chapters.json: jailer no longer carries seal_caster (it became jailer_lockdown)",
+		not _boss_has_trait(text, "jailer", "seal_caster"))
+	# NOT _boss_has_trait: that helper only reads a `traits` array sitting directly on the node whose `id`
+	# matches, and the Keeper keeps its traits inside phases[].traits. The first version of this leg used it
+	# and failed on a tree where the trait is plainly present — an assertion the instrument cannot observe.
+	_check("chapters.json: an_dai_keeper still carries seal_caster (in its phases)",
+		_phase_trait(text, "an_dai_keeper", "seal_caster"))
 	_check("chapters.json: frost_mage carries thorn_field", _boss_has_trait(text, "frost_mage", "thorn_field"))
 
 
 # True when some object with id [param boss_id] in the parsed JSON lists trait [param trait_id].
 func _boss_has_trait(text: String, boss_id: String, trait_id: String) -> bool:
 	return _find(JSON.parse_string(text), boss_id, trait_id)
+
+
+## True when [param boss_id]'s match carries [param trait_id] on ANY phase. `_boss_has_trait` cannot see these:
+## it reads a `traits` array on the matching node itself, and a phased boss keeps them one level further in.
+func _phase_trait(text: String, boss_id: String, trait_id: String) -> bool:
+	var data: Variant = JSON.parse_string(text)
+	if typeof(data) != TYPE_DICTIONARY:
+		return false
+	for ch: Variant in ((data as Dictionary).get("chapters", []) as Array):
+		var matches: Dictionary = ((ch as Dictionary).get("matches", {})) as Dictionary
+		var m: Dictionary = (matches.get(boss_id, {})) as Dictionary
+		for ph: Variant in (m.get("phases", []) as Array):
+			for entry: Variant in ((ph as Dictionary).get("traits", []) as Array):
+				if typeof(entry) == TYPE_DICTIONARY and str((entry as Dictionary).get("id", "")) == trait_id:
+					return true
+	return false
 
 
 func _find(node: Variant, boss_id: String, trait_id: String) -> bool:

@@ -1232,7 +1232,7 @@ enemy_skill.toad_tongue.counter,"Lưỡi đâm dọc hai ô; bước ngang, và 
 enemy_skill.witch_rot_cloud.name,Mây Mục,Rot Cloud
 enemy_skill.witch_rot_cloud.counter,Hình L ôm lấy bạn; ra phía mở của chữ L,An L closes around you; leave by its open side
 enemy_skill.hound_mire_chase.name,Đuổi Lầy,Mire Chase
-enemy_skill.hound_mire_chase.counter,Nó lao dọc hàng và hăng hơn khi bạn đang chậm; đổi hàng,It runs the row and presses harder while you are slowed; change rows
+enemy_skill.hound_mire_chase.counter,Nó lao dọc hàng và hăng hơn khi bạn đang chậm; đổi hàng,It charges down the row and presses harder while you are slowed; change rows
 enemy_skill.spore_puff.name,Phun Bào Tử,Spore Puff
 enemy_skill.spore_puff.counter,Chữ thập hở bốn góc; bước chéo,The cross leaves its corners open; step diagonally
 enemy_skill.spore_regrow.name,Mọc Lại,Regrow
@@ -1244,7 +1244,7 @@ enemy_skill.frog_croak.counter,"Ngắt lúc nó kêu, không thì nó đánh nha
 enemy_skill.matriarch_spit.name,Phun Lầy,Mire Spit
 enemy_skill.matriarch_spit.counter,"Một ô, bước là né; nhưng ô đó hoá lầy, đừng quay lại","One cell, just step; but that cell turns to mire, so do not come back"
 enemy_skill.matriarch_tongue_lash.name,Quặt Lưỡi,Tongue Lash
-enemy_skill.matriarch_tongue_lash.counter,"Lưỡi quặt dọc cột ba ô; bước ngang, dính là bị chậm","The tongue sweeps three cells down your column; step sideways, a hit slows you"
+enemy_skill.matriarch_tongue_lash.counter,"Lưỡi quặt thẳng xuống ba ô; bước ngang, dính là bị chậm","The tongue sweeps three cells straight down your line; step sideways, a hit slows you"
 enemy_skill.matriarch_sink.name,Sụt Lầy,Sink
 enemy_skill.matriarch_sink.counter,"Hai ô thoát sắp sụp; rời trước khi hố mở, luôn còn một ô kề an toàn","Two escape cells are about to collapse; leave before the hole opens, one neighbour always stays"
 enemy_skill.matriarch_toxic_croak.name,Tiếng Kêu Độc,Toxic Croak
@@ -1262,9 +1262,9 @@ enemy_skill.slime_engulf.counter,"Trùm 2×2; ra khỏi ô, dính là bị chậ
 enemy_skill.slime_ooze.name,Rỉ Nhớt,Ooze
 enemy_skill.slime_ooze.counter,"Một ô nhớt cạnh bạn; đừng bước vào, nó giữ bạn trong tầm Trùm","One slick cell beside you; do not step in, it holds you inside Engulf's reach"
 enemy_skill.ghost_wail.name,Tiếng Rú,Wail
-enemy_skill.ghost_wail.counter,Rú dọc cột hai ô; bước ngang,The wail runs two cells down your column; step sideways
+enemy_skill.ghost_wail.counter,Rú thẳng xuống hai ô; bước ngang,The wail travels two cells straight down your line; step sideways
 enemy_skill.ghost_phase.name,Tan Biến,Phase
-enemy_skill.ghost_phase.counter,"Lúc tan không đánh được; ghim khối trước khi nó tan, hoặc đợi nó hiện","It cannot be hit while faded; pin it before it fades, or wait for it"
+enemy_skill.ghost_phase.counter,"Lúc tan không đánh được; giữ khối lại trước khi nó tan, hoặc đợi nó hiện","It cannot be hit while faded; hold it before it fades, or wait for it"
 enemy_skill.reacter_lash.name,Dây Vướng,Trip Lash
 enemy_skill.reacter_lash.counter,Nó chỉ quất sau khi bạn bước ba lần; đứng yên đặt khối là an toàn,It only lashes after your third step; standing still to place blocks is safe
 enemy_skill.cultist_curse_ring.name,Vòng Nguyền,Curse Ring
@@ -1274,7 +1274,7 @@ enemy_skill.cultist_dark_rite.counter,"Nó làm lễ khi đồng đội vừa ng
 enemy_skill.guard_shove.name,Húc Đẩy,Shield Shove
 enemy_skill.guard_shove.counter,"Thanh hai ô, trúng là bị đẩy lùi; bước vuông góc và đừng đứng sát hàng cuối",A two-cell bar that shoves you back; step sideways and do not stand against the back row
 enemy_skill.jailer_chain_hook.name,Móc Xích,Chain Hook
-enemy_skill.jailer_chain_hook.counter,"Móc dọc cột hai ô, trúng là bị trói và kéo lại; bước ngang","The hook runs two cells down your column, rooting and dragging you in; step sideways"
+enemy_skill.jailer_chain_hook.counter,"Móc thẳng xuống hai ô, trúng là bị trói và kéo lại; bước ngang","The hook travels two cells straight down your line, rooting and dragging you in; step sideways"
 enemy_skill.jailer_lockdown.name,Khóa Cửa,Lockdown
 enemy_skill.jailer_lockdown.counter,Hai ô thoát hoá hố; rời trước khi hố mở,Two escape cells become pits; leave before they open
 enemy_skill.ogre_club.name,Chùy Đá,Club

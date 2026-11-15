@@ -17,6 +17,11 @@ const ROTATIONS: Array[int] = [0, 90, 180, 270]
 ## P2.3 follow-up: `pattern.row` of an `enemy_half_empty` skill: `any` = any empty enemy-half cell, `player` = an
 ## empty one in the player's current row when there is one (else any), so the Sentinel's anchor lines up with the player.
 const ANCHOR_ROWS: Array[String] = ["any", "player"]
+## Every key `_normalize_enemy` reads at the ENEMY level (not inside a phase). Taken from that function's own
+## d.get() / d.has() calls rather than written from memory: a hand-typed allowlist that is missing one entry
+## makes the check quietly weaker, which is the exact failure this check exists to stop.
+const ENEMY_KEYS: Array[String] = ["ai", "arena", "dev", "footprint", "immune_reactions", "overrides",
+	"phases", "skills", "tier"]
 ## P2.3: `same_cells` = the followup strikes exactly the first strike's cells again (Sentinel branch_net repeat).
 ## P2.4: `first_shift` = every first cell moved by the offset, the offset turned with the FIRST plan's rotation too
 ## (Withered Crown's second lane: the same bar one row / column over, parallel and adjacent).
@@ -395,11 +400,28 @@ func _normalize_enemy(id: String, raw: Variant) -> Dictionary:
 				immune.append(str(rid))
 		else:
 			problems.append("enemy %s: immune_reactions '%s' unknown (known: %s), dropped" % [id, str(rid), ", ".join(REACTION_IDS)])
+	# A key outside ENEMY_KEYS is reported rather than dropped in silence: on 2026-11-14 an `overrides` block
+	# written at the enemy level was silently ignored for every phaseless enemy, `problems` stayed empty, and
+	# the bug reached the remote in `mire_slug` (5f5ab244). A class of mistake with no signal is a class nobody
+	# finds.
+	for key: Variant in d:
+		if not ENEMY_KEYS.has(str(key)):
+			problems.append("enemy %s: key '%s' is not read at the enemy level (known: %s), ignored"
+				% [id, str(key), ", ".join(ENEMY_KEYS)])
 	var raw_phases: Array = []
 	if typeof(d.get("phases")) == TYPE_ARRAY:
 		raw_phases = d["phases"] as Array
+		if typeof(d.get("overrides")) == TYPE_DICTIONARY:
+			# An enemy that declares its own phases carries overrides per phase; one at the enemy level would be
+			# read by nothing, so say so instead of letting it look applied.
+			problems.append("enemy %s: enemy-level `overrides` is ignored when `phases` is declared - put it inside the phase" % id)
 	elif typeof(d.get("skills")) == TYPE_ARRAY:
-		raw_phases = [{"id": "main", "enter_hp_ratio": 1.0, "skills": d["skills"]}]
+		# The synthetic phase carries `overrides` so the shape "enemy without phases, with overrides" behaves
+		# the way whoever wrote it expects. Without this line the block is dropped and nothing says so.
+		var main_phase: Dictionary = {"id": "main", "enter_hp_ratio": 1.0, "skills": d["skills"]}
+		if typeof(d.get("overrides")) == TYPE_DICTIONARY:
+			main_phase["overrides"] = d["overrides"]
+		raw_phases = [main_phase]
 	var phases: Array[Dictionary] = []
 	var last_ratio: float = 1.0 + _EPS
 	for i: int in raw_phases.size():
