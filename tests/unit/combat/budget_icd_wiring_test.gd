@@ -28,6 +28,31 @@ extends SceneTree
 ## this suite exists for was EXACTLY a missing assignment, and a grep catches that one shape
 ## reliably. Do not mistake it for proof that the value reaches a live controller.
 
+## MEASURED LATER, AND IT CORRECTS THE FIX COMMIT (40bac1ae) THAT SHIPPED BESIDE THIS FILE.
+## That commit says "NO TEST CAUGHT THIS" about the BossBrainConfig defect. That is false, and the
+## claim was made from reasoning rather than from a run. Measured afterwards in a separate clean
+## checkout, by adding exactly the two bad lines to dac07c65 and running the only two suites that
+## reach the body of CombatView._setup_pattern_brain:
+##
+##     baseline (clean)                  with the two bad lines
+##   boss_footprint_dodge  FAILS=0 se=0    FAILS=0  se=1  exit=0   <- false green, caught by the
+##                                                                     runner's SCRIPT ERROR count
+##   forest_witch_flow     FAILS=0 se=0    FAILS=1  se=1  exit=1   <- the suite itself caught it
+##
+## So a suite DOES cover that class, and the runner covers the other half. Neither fired because no
+## full run ever executed the broken code: the lines were in the tree from 17:16 to ~18:1x, the
+## 16:31 run ended before that window and the next run began after it. NOT A COVERAGE HOLE - A
+## TIMING ONE. The original claim explained a gap in capability using evidence that only described
+## a gap in scheduling.
+##
+## It also did NOT hang, contrary to what was expected of a startup error: 5 s and 4 s, no timeout.
+## The hang shape is real elsewhere; it did not apply here, and the figure nearly went into
+## runner-known-gaps.md as a filled-in case before the run existed.
+##
+## The correction is recorded here rather than by amending 40bac1ae: a claim and its correction
+## both belong in the record. Editing the old sentence away would leave no trace that it was ever
+## believed, which is the part worth keeping.
+##
 ## WATCHED FAILING FIRST, and the record of that nearly got lost.
 ## This gate was run against the UNWIRED code before the fix and it went red; the patch was then
 ## applied and it went green. So its green is evidence, not decoration.
