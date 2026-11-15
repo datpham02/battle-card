@@ -176,6 +176,42 @@ condition, `SUMMARY`, and the verdict line. Two of three is this bug.
 
 ---
 
+## 6. The `NO RESULT` detector, finally fired on purpose — and what the probe found instead
+
+**Measured 2026-11-15, 14:38.** Three probes outside `tests/` (so no full run could pick them up), each run
+through real Godot and then through the runner's **own** `record()` function, lifted out of the file with `sed`
+rather than retyped — a copy I typed would test my copy, not the runner.
+
+    A  prints nothing, exits 0      -> *** NO RESULT *** 0 se        nores 0 -> 1   FIRES
+    B  runtime error in _initialize -> *** SCRIPT ERRORS=1 *** TIMEOUT  nores 1 -> 1   (see below)
+    C  healthy suite, FAILS=0       -> FAILS=0 0 se                  nores 1 -> 1   SILENT
+
+**`NO RESULT` is healthy.** It fires on the shape it was written for — the one seen in the wild, a suite that
+produces no `FAILS` line and no error — and stays silent on a healthy suite. Both directions, which is the whole
+test: a detector that fires on everything guards nothing.
+
+**Probe B did not test what it was designed to test, and that is the finding worth keeping.** The recipe handed
+to me was "a suite that dies in `_initialize()` produces the NO RESULT shape". It does not — not here. A runtime
+error inside `_initialize()` on a `SceneTree` script makes Godot **print the error and then hang**. It never
+exits. `timeout` killed it at the ceiling and the exit code was **124**, so the `NO RESULT` branch skipped it by
+design (124 is excluded on purpose: a killed process has not "returned no result", it was stopped).
+
+So B exercised the timeout path, not the one it was aimed at. Had A not been in the same batch, the run would
+have produced a plausible-looking line, no `NO RESULT`, and no way to tell whether the detector was dead or the
+probe was wrong. **Three probes, not one** is what separated those.
+
+**This corrects section 3.** That entry tells a reader who sees a lone `TIMEOUT` to ask who else was running,
+because a busy machine can push a slow suite past its ceiling. True, but no longer the only cause: **a suite that
+errors during startup hangs and is also recorded as `TIMEOUT`** — after burning the full 600 s ceiling. The two
+are told apart on the same line:
+
+    ... *** SCRIPT ERRORS=1 *** TIMEOUT    hung on an error; the machine is innocent
+    ... FAILS=0 0 se TIMEOUT               no error printed; now ask who else was running
+
+Check the line before the machine.
+
+---
+
 ## The family these belong to
 
 Eight shapes of the same failure have been found in two days, all of them **silent**:
@@ -183,7 +219,7 @@ Eight shapes of the same failure have been found in two days, all of them **sile
 | | Shape | Caught by |
 |---|---|---|
 | 1 | `RESULT: ok` printed with failing suites — failures counted but never gated | reading a real log |
-| 2 | A missing suite path: Godot prints no `FAILS`, no error, exits 0 | the `NO RESULT` branch |
+| 2 | A missing suite path: Godot prints no `FAILS`, no error, exits 0 | the `NO RESULT` branch — **fired on purpose 2026-11-15, healthy** |
 | 3 | A filter that matches nothing (`(?!…)` in ERE, `[^)]*` stopping early) returns an empty result that reads as "all clear" | running the filter on a case known to hit |
 | 4 | The runner called with no argument: output goes to an empty filename, 320 suites run for 35 minutes, exit 0 | being bitten |
 | 5 | A suite prints the right result, then dies, and the death is not counted | running it alone and reading `$?` |
