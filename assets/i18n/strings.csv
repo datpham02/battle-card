@@ -1285,3 +1285,41 @@ enemy_skill.ogre_roar.name,Gầm,Roar
 enemy_skill.ogre_roar.counter,Nó gầm lúc vào pha hai rồi đánh nhanh hơn 6 giây; ngắt được,It roars on entering the second phase and then strikes faster for 6 seconds; it can be interrupted
 enemy_skill.ogre_quake.name,Địa Chấn,Quake
 enemy_skill.ogre_quake.counter,"Cả hàng, rồi hàng kề một nhịp sau; sang hàng không có làn chờ, đứng yên là ăn cả hai","The whole row, then the next row a beat later; move to the row with no waiting lane, standing still eats both"
+enemy_skill.sprite_frost_kiss.name,Nụ Hôn Giá Lạnh,Chill Kiss
+enemy_skill.sprite_frost_kiss.counter,"Một ô thôi, nhưng ba lần dính là vỡ băng","One cell only, but three hits make the ice burst"
+enemy_skill.wisp_lantern.name,Treo Đèn Băng,Ice Lantern
+enemy_skill.wisp_lantern.counter,Đánh một ô lên đèn là tắt,A single cell on the lantern puts it out
+enemy_skill.wisp_lantern_flare.name,Lóe Đèn,Lantern Flare
+enemy_skill.wisp_lantern_flare.counter,Lóe dọc hàng đèn; rời hàng đó,The flare follows the lantern's line; leave that line
+enemy_skill.sentry_rime_bulwark.name,Thành Băng,Rime Bulwark
+enemy_skill.sentry_rime_bulwark.counter,Ngắt lúc đang dựng thì nó đứng hình,Interrupt the raising and it stands stunned
+enemy_skill.sentry_hammer.name,Búa Băng,Rime Hammer
+enemy_skill.sentry_hammer.counter,Thanh hai ô: đứng lệch khỏi thanh đó,A two-cell bar: stand clear of it
+enemy_skill.snow_wolf_hunt.name,Săn Mùa Đông,Winter Hunt
+enemy_skill.snow_wolf_hunt.counter,"Lao dọc hàng, hăng hơn khi bạn đang lạnh; đổi hàng","It charges along your line, keener when you are chilled; change line"
+enemy_skill.fuse_shard_burst.name,Vỡ Băng,Shard Burst
+enemy_skill.fuse_shard_burst.counter,Ba ô rời nhau: một bước là thoát,Three loose cells: one step clears them
+enemy_skill.rime_frost_arrow.name,Tên Băng,Rime Arrow
+enemy_skill.rime_frost_arrow.counter,Bắn dọc hàng bốn ô; đổi hàng,It flies four cells along your line; change line
+enemy_skill.rime_caltrops.name,Chông Băng,Ice Caltrops
+enemy_skill.rime_caltrops.counter,Chông nằm cạnh bạn: đừng bước vào,Caltrops land beside you: do not step in
+enemy_skill.ice_golem_glacier_fist.name,Quyền Băng Hà,Glacier Fist
+enemy_skill.ice_golem_glacier_fist.counter,"Hai nhân hai, không ngắt được: ra khỏi ô vuông",A two-by-two that cannot be interrupted: leave the square
+enemy_skill.greater_ghost_wail.name,Rú Lạnh,Frozen Wail
+enemy_skill.greater_ghost_wail.counter,Rú thẳng xuống ba ô; bước ngang,The wail travels three cells straight down your line; step sideways
+enemy_skill.frost_mage_cold_snap.name,Rét Buốt,Cold Snap
+enemy_skill.frost_mage_cold_snap.counter,"Một ô, nhưng cộng hai tầng: dính hai lần là vỡ băng","One cell, but two stacks: two hits and the ice bursts"
+enemy_skill.frost_mage_rime_field.name,Ruộng Gai Băng,Rime Field
+enemy_skill.frost_mage_rime_field.counter,Gai mọc chắn đường thoát: chọn lối khác,Thorns block the way out: pick another
+enemy_skill.frost_mage_ice_ward.name,Tinh Thể Hộ Thân,Ice Ward
+enemy_skill.frost_mage_ice_ward.counter,"Phá tinh thể để bỏ giáp, hoặc dùng đòn xuyên giáp","Break the crystal to drop its guard, or use a piercing strike"
+enemy_skill.mist_lord_frost_nail.name,Đinh Băng,Rime Nail
+enemy_skill.mist_lord_frost_nail.counter,"Một ô, đóng băng chân bạn một nhịp","One cell, and it freezes your feet for a beat"
+enemy_skill.mist_lord_rime_lance.name,Thương Băng,Rime Lance
+enemy_skill.mist_lord_rime_lance.counter,Đâm thẳng xuống ba ô; bước ngang,It thrusts three cells straight down your line; step sideways
+enemy_skill.mist_lord_crystal_anchor.name,Mốc Tinh Thể,Crystal Anchor
+enemy_skill.mist_lord_crystal_anchor.counter,Mốc nuôi giáp cho hắn: đập mốc trước,The anchor feeds his guard: break it first
+enemy_skill.mist_lord_ice_mantle.name,Áo Băng,Ice Mantle
+enemy_skill.mist_lord_ice_mantle.counter,Áo chỉ bền khi mốc còn: đập mốc,The mantle holds only while an anchor stands: break it
+enemy_skill.mist_lord_whiteout.name,Trắng Xóa,Whiteout
+enemy_skill.mist_lord_whiteout.counter,"Hai nhịp, nhịp sau lệch hàng: đừng ăn cả hai","Two beats, the second shifted a line: do not take both"

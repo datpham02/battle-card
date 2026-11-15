@@ -241,7 +241,19 @@ func _test_chapters_assignment() -> void:
 	# and failed on a tree where the trait is plainly present — an assertion the instrument cannot observe.
 	_check("chapters.json: an_dai_keeper still carries seal_caster (in its phases)",
 		_phase_trait(text, "an_dai_keeper", "seal_caster"))
-	_check("chapters.json: frost_mage carries thorn_field", _boss_has_trait(text, "frost_mage", "thorn_field"))
+	# 2026-11-15. INVERTED, not relaxed — the same move as the jailer/seal_caster leg above, and it looks
+	# identical from outside to "the test went red, I changed the test". So here is the design line that
+	# authorises it, quoted rather than summarised:
+	#   MONSTER-SKILL-DESIGN.md §4.6, line 744, `frost_mage_rime_field`:
+	#     "· `windup`; `DIRECT_MANIFESTATION / none / thorns` · (Thay `thorn_field {min_swing 4, max 3}`.)"
+	#   and §4.6 line 691: "`thorn_field` của Frost Mage → skill".
+	# Leaving the trait on would not be mere duplication but a CONFLICT: thorn_field and the new
+	# frost_mage_rime_field both lay thorns, doubling the zone budget of §9.3 on one enemy.
+	# The user approved the removal on 2026-11-15, as a decision separate from the damage multiplier.
+	_check("chapters.json: frost_mage no longer carries thorn_field (it became frost_mage_rime_field)",
+		not _boss_has_trait(text, "frost_mage", "thorn_field"))
+	# ThornFieldTrait itself stays in use elsewhere, so the registry leg above is still the live check
+	# that the trait works; this leg is only about which enemy carries it.
 
 
 # True when some object with id [param boss_id] in the parsed JSON lists trait [param trait_id].

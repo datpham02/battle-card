@@ -765,6 +765,8 @@
 			"matches": {
 				"frost_sprite": {
 					"id": "frost_sprite",
+					"brain": "pattern",
+					"enemy": "frost_sprite",
 					"name_key": "boss.frost_sprite.name",
 					"boss_max_hp": 106,
 					"brain_set": "cautious",
@@ -780,6 +782,8 @@
 				},
 				"wisp": {
 					"id": "wisp",
+					"brain": "pattern",
+					"enemy": "wisp",
 					"name_key": "boss.wisp.name",
 					"boss_max_hp": 120,
 					"brain_set": "balanced",
@@ -795,6 +799,8 @@
 				},
 				"stone_sentry": {
 					"id": "stone_sentry",
+					"brain": "pattern",
+					"enemy": "stone_sentry",
 					"name_key": "boss.stone_sentry.name",
 					"boss_max_hp": 132,
 					"brain_set": "balanced",
@@ -815,6 +821,8 @@
 				},
 				"snow_wolf": {
 					"id": "snow_wolf",
+					"brain": "pattern",
+					"enemy": "snow_wolf",
 					"name_key": "boss.snow_wolf.name",
 					"boss_max_hp": 159,
 					"brain_set": "balanced",
@@ -830,6 +838,8 @@
 				},
 				"rime_archer": {
 					"id": "rime_archer",
+					"brain": "pattern",
+					"enemy": "rime_archer",
 					"name_key": "boss.rime_archer.name",
 					"boss_max_hp": 172,
 					"brain_set": "balanced",
@@ -846,6 +856,8 @@
 				},
 				"ice_golem": {
 					"id": "ice_golem",
+					"brain": "pattern",
+					"enemy": "ice_golem",
 					"name_key": "boss.ice_golem.name",
 					"boss_max_hp": 185,
 					"brain_set": "balanced",
@@ -868,6 +880,8 @@
 				},
 				"ghost_elite": {
 					"id": "ghost_elite",
+					"brain": "pattern",
+					"enemy": "ghost_elite",
 					"name_key": "boss.ghost_elite.name",
 					"desc_key": "match.ghost_elite.desc",
 					"boss_max_hp": 36,
@@ -884,6 +898,8 @@
 				},
 				"fuse_golem": {
 					"id": "fuse_golem",
+					"brain": "pattern",
+					"enemy": "fuse_golem",
 					"name_key": "boss.fuse_golem.name",
 					"desc_key": "match.fuse_golem.desc",
 					"boss_max_hp": 110,
@@ -906,6 +922,8 @@
 				},
 				"frost_mage": {
 					"id": "frost_mage",
+					"brain": "pattern",
+					"enemy": "frost_mage",
 					"name_key": "boss.frost_mage.name",
 					"boss_max_hp": 92,
 					"brain_set": "balanced",
@@ -919,14 +937,6 @@
 						{
 							"id": "frost_aura",
 							"params": {}
-						},
-						{
-							"id": "thorn_field",
-							"params": {
-								"min_swing_cells": 4,
-								"max_cells": 3,
-								"cooldown_sec": 6.0
-							}
 						}
 					],
 					"arena": {
@@ -936,6 +946,8 @@
 				},
 				"mist_lord": {
 					"id": "mist_lord",
+					"brain": "pattern",
+					"enemy": "mist_lord",
 					"name_key": "boss.mist_lord.name",
 					"desc_key": "match.mist_lord.desc",
 					"boss_max_hp": 139,
@@ -949,10 +961,6 @@
 					"traits": [
 						{
 							"id": "frost_aura",
-							"params": {}
-						},
-						{
-							"id": "phase_shift",
 							"params": {}
 						}
 					],
