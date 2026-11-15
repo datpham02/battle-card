@@ -84,6 +84,7 @@
   "forest_witch": {"archetype": "caster", "sway_px": 0},
   "mistbriar_matron": "caster",
   "mist_lord": {"archetype": "caster", "breath_sec": 3.2},
+  "an_dai_keeper": {"archetype": "caster", "breath_sec": 3.4},
   "spore_cap": {"archetype": "blob", "breath_px": 1},
 
   "ghost": "floaty",
