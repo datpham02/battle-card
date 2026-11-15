@@ -11,7 +11,25 @@
 # Baseline when the gate went in: a full run reported 0 script errors on all 311 suites, so no suite in the tree
 # provokes them on purpose and the gate needs no allowlist. That number is not re-derivable once the gate exists.
 G=${GODOT:-godot}
-OUT="$1"; : > "$OUT"
+# 2026-11-15 (7): THE CALLER'S DOOR. Fixes 1-6 all guard the DATA door - what the suites report. Nothing guarded
+# the CALLING door, and on 2026-11-15 a session ran this script with no argument: OUT was empty, every `>> "$OUT"`
+# failed silently, Godot still ran all 320 suites for 35 MINUTES, and the script exited 0 having produced nothing.
+# Three sessions held their hands for a result that did not exist. The thirteen comment lines at the top of this
+# file are about false green in the SUITES; this was false green in the RUNNER itself, fourteen lines below them.
+# Three checks, because the first two guard shapes we have already seen and the third does not need to guess:
+#   a) no argument at all
+#   b) the path cannot be created - a typo'd directory passes (a) and then fails here instead of in silence
+#   c) at the end: the file we exist to produce must exist and be non-empty (disk full, a dead pipe, anything we
+#      have not thought of). (c) is the character session's point: a guard built from the failure you just saw
+#      only catches that failure; a guard that asks "is the thing I exist to produce actually there" does not have
+#      to predict the shape.
+if [ -z "${1:-}" ]; then
+  echo "run_all_tests.sh: needs an output file path." >&2
+  echo "  e.g.  bash tools/qa/run_all_tests.sh production/qa/full-suite-$(date +%Y-%m-%d).txt" >&2
+  exit 2
+fi
+OUT="$1"
+: > "$OUT" || { echo "run_all_tests.sh: cannot write '$OUT'" >&2; exit 2; }
 cd "$(dirname "$0")/../.." || exit 1
 
 "$G" --headless --import --path . >/dev/null 2>&1
@@ -116,3 +134,9 @@ if [ "$se_total" -gt 0 ] || [ "$fail_total" -gt 0 ] || [ "$to_total" -gt 0 ] || 
   exit 1
 fi
 echo "RESULT: ok" >> "$OUT"
+# (c) above: never report success without the artefact. A run that printed nothing is not a pass, whatever the
+# exit code would otherwise say - that is the same rule this file applies to a suite with no FAILS line.
+if [ ! -s "$OUT" ]; then
+  echo "run_all_tests.sh: finished but '$OUT' is missing or empty - nothing was recorded." >&2
+  exit 2
+fi

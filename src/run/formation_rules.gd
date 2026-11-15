@@ -26,6 +26,12 @@ const THREE_UNIT_CELLS: int = 16
 ## The only arenas where a multi-cell unit may have company.
 const WARDEN_PACK_SHAPES: Array[String] = ["boss_hall", "oasis"]
 ## Authoring keys of one `enemies[]` entry after cleaning (chapter data).
+## Multi-enemy Phase 5 (D4): traits whose effect belongs to the ARENA or the match, not to the unit carrying them
+## (plan §3.1). Each writes into the player's half or into one global quantity, so two carriers overwrite each
+## other instead of stacking. The other eleven traits are per-unit and may repeat freely.
+const SHARED_TRAITS: Array[String] = ["row_burner", "slam", "seal_caster", "thorn_field", "bog_spread",
+		"sandstorm", "vent_surge", "gust", "island_drop", "frost_aura", "rotten_thrower"]
+
 const ENTRY_KEYS: Array[String] = ["id", "slot", "role", "required", "hp_mult", "defense_add", "tempo_mult", "traits"]
 ## Phase 1: keys RunConfig.from_node resolves on every entry of a match (numbers already scaled; CombatState reads
 ## them without any lookup): `template_id`, `max_hp`, `defense`, `brain`, `enemy`, `footprint` ([[dx, dy], ...]).
@@ -275,6 +281,29 @@ static func clean_formation(fid: String, raw: Variant, templates: Dictionary, li
 		budget = float(src["hp_budget_mult"])
 		if budget <= 0.0:
 			problems.append("%s: hp_budget_mult must be > 0" % where)
+	# Multi-enemy Phase 5 (D4, decided 2026-11-14): a SHARED trait may exist ONCE per match. The eleven below write
+	# into the player's half or into a single global quantity, so a second copy does not double the effect - it
+	# fights the first one. `sandstorm` is the clearest case: it stores the old drift multiplier and restores 1.0 on
+	# end, so the FIRST storm ending turns off the SECOND storm that is still blowing. The damage is invisible at
+	# load time and looks like a physics bug hours later.
+	# Rejecting the whole formation (not just the duplicate trait) is deliberate and follows what Phase 0 already
+	# does with malformed formations: a formation whose author believed two units would each carry a sandstorm is a
+	# formation designed around an effect the engine cannot give, so silently dropping one trait would ship an
+	# encounter nobody designed. The warning names the trait and both units so the fix is obvious in the data.
+	var shared_seen: Dictionary = {}
+	for entry: Dictionary in entries:
+		for spec: Variant in (entry.get("traits", []) as Array):
+			var tid: String = ""
+			if typeof(spec) == TYPE_STRING:
+				tid = str(spec)
+			elif typeof(spec) == TYPE_DICTIONARY:
+				tid = str((spec as Dictionary).get("id", ""))
+			if tid.is_empty() or not SHARED_TRAITS.has(tid):
+				continue
+			if shared_seen.has(tid):
+				problems.append("%s: shared trait '%s' is carried by both '%s' and '%s'; one per match" 						% [where, tid, shared_seen[tid], str(entry.get("id", "?"))])
+			else:
+				shared_seen[tid] = str(entry.get("id", "?"))
 	if problems.size() > before:
 		return {}
 	var total: int = 0

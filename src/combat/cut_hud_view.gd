@@ -653,8 +653,9 @@ var _banner_left: float = 0.0
 ## Story 023: the phase banner's text and seconds left, and the TraitHost whose phase_changed is connected.
 var _phase_banner_text: String = ""
 var _phase_banner_left: float = 0.0
-## Multi-enemy Phase 5: every host whose phase_changed is connected (was one unit-0 host).
-var _phase_hosts: Array[TraitHost] = []
+## Story 023: the TraitHost whose phase_changed is connected. Multi-enemy Phase 5 (D7): deliberately ONE host,
+## unit 0's. See _connect_phase.
+var _phase_host: TraitHost = null
 ## Story 034: seconds left of the piece-deck fallback notice; checked once, when the match state exists.
 var _piece_deck_notice_left: float = 0.0
 var _piece_deck_notice_checked: bool = false
@@ -768,20 +769,31 @@ func _enemy_host_keys() -> Array[int]:
 # Phase 5: the banner listens to EVERY unit's host. The host is bound into the handler so the banner can name the
 # phase of the unit that actually changed - without the bind, a second unit's phase change would be titled with
 # unit 0's phase name, which is worse than the missing banner it replaces.
+# Multi-enemy Phase 5 (D7, decided 2026-11-14): ONE host, unit 0's, on purpose. The phase banner is the language
+# of a solo boss fight; two banners carrying the same number are noise, so a phase change on unit 1+ raises none.
+# This is NOT an oversight left over from the per-unit keying around it - the rest of this file deliberately folds
+# or keys every other cue, and this one deliberately does neither. An earlier version of this function connected
+# every unit's host; it shipped in b085d7dc, contradicted the decision, and the capture gate filed the resulting
+# banner as a FIX because the gate asks "is the cue visible" and never "should this cue be here".
+# Keep the single-host shape even if it looks like a leftover: restoring the disconnect below is what makes a
+# replaced host stop emitting, and a `.bind()` version of this handler silently breaks `is_connected`, since a
+# bound Callable never equals the unbound one.
 func _connect_phase() -> void:
-	for host: TraitHost in _enemy_hosts():
-		if _phase_hosts.has(host):
-			continue
-		_phase_hosts.append(host)
-		host.phase_changed.connect(_on_phase_changed.bind(host))
+	var host: TraitHost = _combat.get_trait_host()
+	if host == null or host == _phase_host:
+		return
+	if _phase_host != null and _phase_host.phase_changed.is_connected(_on_phase_changed):
+		_phase_host.phase_changed.disconnect(_on_phase_changed)
+	_phase_host = host
+	host.phase_changed.connect(_on_phase_changed)
 
 
-func _on_phase_changed(phase: int, host: TraitHost = null) -> void:
+func _on_phase_changed(phase: int) -> void:
 	_phase_banner_text = tr(TEXT_PHASE_BANNER) % phase
 	# Story 035: a boss_phases boss names its phase ("PHA 2 — <name>").
 	var phases: BossPhasesTrait = null
-	if host != null:
-		phases = host.get_trait(BossPhasesTrait.ID) as BossPhasesTrait
+	if _phase_host != null:
+		phases = _phase_host.get_trait(BossPhasesTrait.ID) as BossPhasesTrait
 	if phases != null and not phases.get_phase_name_key().is_empty():
 		_phase_banner_text = "%s — %s" % [_phase_banner_text, tr(phases.get_phase_name_key())]
 	_phase_banner_left = PHASE_BANNER_SEC

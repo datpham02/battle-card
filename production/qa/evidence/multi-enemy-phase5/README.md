@@ -112,7 +112,7 @@ excluded (the frames are the run's product, not its input) and the verdict names
 | Trait | Carrier | Before the fix | After the fix |
 |---|---|---|---|
 | `burrow` | unit 1 | nothing drawn at all | **gold surfacing marker + `SURFACING` + `BURROWED`** |
-| `boss_phases` | unit 1 | NO FRAME (harness) + banner could never fire for unit 1 | **`PHASE 2` banner fires, carrier flashes** |
+| `boss_phases` | unit 1 | NO FRAME (harness) + banner could never fire for unit 1 | carrier flashes — **but the `PHASE 2` banner is a REGRESSION, see below** |
 | `rebirth` | unit 0 | drew (carrier was unit 0) | unchanged |
 | `shroud` | unit 1 | would have drawn on **unit 0** | **cloud on unit 1, unit 0 clean** |
 
@@ -151,3 +151,33 @@ remaining Phase 5 visual debt.
 silent **if the bare unit is inside it**. In the `rebirth` and `shroud` runs the bare unit sat outside the measured
 rect, so those `0.00%` readings are weaker than they look. The attribution claims above rest on the frames, not on
 those numbers.
+
+
+## CORRECTION (2026-11-15): the `boss_phases` banner is a regression, and this gate filed it as a fix
+
+`boss_phases_unit1_after.png` shows a `PHASE 2` banner firing for unit 1. The row above first recorded that as the
+fix working. **It is the opposite.** Decision D7 in `docs/design/world-map-v2/MULTI-ENEMY-PHASE3-5-PLAN.md` §3.7,
+recorded in that plan as taken by the user on 2026-11-14:
+
+> **Only unit 0 may `announce_phase`.** The phase banner is the language of a solo boss fight; two banners carrying
+> the same number are noise.
+
+The HUD keying shipped in `b085d7dc` connects *every* unit's host, so a `boss_phases` or `phase_shift` on unit 1
+now raises a banner. The frame is real and the capture is sound; what is wrong is the column it was filed under.
+
+**Why no instrument caught it, which is the part worth keeping.** Every check built for this work asks about
+CONSISTENCY — does the tree match, does the commit parse, was a file reverted, does the suite pass. Not one asks
+whether the behaviour matches a decision that was already taken. The gate's own reading test is "cover the
+filename: can someone point at the right enemy?", and this frame passes it: the banner is legible and the carrier
+flashes. It answers "is the cue visible" perfectly and never asks "should this cue exist here at all".
+
+So the failure is not a wrong measurement, a blind tool, or a bad scope. It is **a correct measurement compared
+against the wrong standard** — the expectation in the operator's head ("the cue should appear") instead of the
+decision on record ("only unit 0 announces"). A photograph cannot tell you which of those it is being judged by.
+
+**Rule taken from it:** before filing any frame under "after the fix", check it against the decision on record,
+not only against the expectation that drove the capture. The frame stays in the folder — it is the evidence that
+the regression reached `main`, and deleting it would leave the correction unsupported.
+
+The banner is restored to unit 0 only in the commit that carries this correction; `boss_phases_unit1_after.png`
+therefore documents a state that no longer exists on `main`, which is exactly what an evidence folder is for.

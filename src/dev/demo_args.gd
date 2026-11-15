@@ -271,6 +271,12 @@ const DEMO_SEED: int = 7
 const BOSS_UID_BASE: int = -100
 ## Seconds the boss piece demos fast-forward the running swing (so the countdown is mid-way).
 const SWING_ELAPSED_SEC: float = 0.3
+# Multi-enemy Phase 5 (step 6): these five sites went through get_trait_host(), which IS unit 0's host - the same
+# hardcoding that left every trait on unit 1+ undrawn. They stay on unit 0 deliberately: each is a dev command that
+# installs or inspects a trait on "the boss" of a one-enemy demo, and `--demo=multi_two` builds its extra units
+# through DemoArgs itself. Naming the unit explicitly (host_of(Side.ENEMY)) makes that a decision a reader can see
+# instead of an accident of which accessor was handy, and it stops a future reader "fixing" them into keyed form
+# without deciding what a dev command should mean on a formation.
 ## Story 035 final_phase2: frames waited at most for the HUD to connect TraitHost.phase_changed before the hit.
 const HUD_CONNECT_MAX_FRAMES: int = 30
 ## Story 010 / 014 demos: seconds of burning elapsed in "row_burning" and the learning events fed by
@@ -1381,7 +1387,7 @@ func _boss_piece_demo(combat: CombatView, grid: BoardGrid) -> void:
 				return
 			thrower.setup(combat.make_trait_ctx(), {"first_delay_sec": 0.0, "field_freshness_sec": ROTTEN_FIELD_FRESHNESS}, DEMO_SEED)
 			thrower.on_match_start()
-			combat.get_trait_host().debug_add_trait(thrower)
+			combat.host_of(CombatState.Side.ENEMY).debug_add_trait(thrower)
 			thrower.on_tick(TRAIT_STEP_SEC)
 			if thrower.get_throw_count() == 0:
 				push_warning("DemoArgs: the rotten thrower did not throw for demo '%s'" % _mode)
@@ -1814,7 +1820,7 @@ func _hazard_spread(grid: BoardGrid, side: int, count: int, state: CombatState) 
 # The match's own trait [param id] when the booted match has it; else one built through TraitRegistry with the
 # params chapters.json gives it in match [param match_id], set up on this battle and added to its TraitHost.
 func _zone_trait(combat: CombatView, id: String, match_id: String) -> BossTrait:
-	var host: TraitHost = combat.get_trait_host()
+	var host: TraitHost = combat.host_of(CombatState.Side.ENEMY)
 	var own: BossTrait = host.get_trait(id)
 	if own != null:
 		print("DemoArgs: %s from the booted match" % id)
@@ -2102,7 +2108,7 @@ func _final_boss_demo() -> void:
 		# The HUD connects TraitHost.phase_changed in its own _process: hit only once someone listens, or the
 		# phase-2 banner is missed (bounded wait so a HUD-less layout cannot hang).
 		for _i: int in HUD_CONNECT_MAX_FRAMES:
-			var host: TraitHost = combat.get_trait_host()
+			var host: TraitHost = combat.host_of(CombatState.Side.ENEMY)
 			if host != null and not host.phase_changed.get_connections().is_empty():
 				break
 			await get_tree().process_frame
@@ -2112,7 +2118,7 @@ func _final_boss_demo() -> void:
 			push_warning("DemoArgs: boss_downed: the boss was not downed (not a region boss match?)")
 		return
 	var phased: bool = false
-	for t: BossTrait in combat.get_trait_host().get_traits():
+	for t: BossTrait in combat.host_of(CombatState.Side.ENEMY).get_traits():
 		if t.has_method("get_phase"):
 			phased = true
 			if int(t.call("get_phase")) < 2:
@@ -2156,7 +2162,7 @@ func _make_row_burner(combat: CombatView) -> RowBurnerTrait:
 		return null
 	burner.setup(combat.make_trait_ctx(), {}, DEMO_SEED)
 	burner.on_match_start()
-	combat.get_trait_host().debug_add_trait(burner)
+	combat.host_of(CombatState.Side.ENEMY).debug_add_trait(burner)
 	return burner
 
 
