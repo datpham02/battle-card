@@ -1877,6 +1877,8 @@
 			"matches": {
 				"cloud_sprite": {
 					"id": "cloud_sprite",
+					"brain": "pattern",
+					"enemy": "cloud_sprite",
 					"name_key": "boss.cloud_sprite.name",
 					"boss_max_hp": 88,
 					"brain_set": "cautious",
@@ -1891,6 +1893,8 @@
 				},
 				"harpy": {
 					"id": "harpy",
+					"brain": "pattern",
+					"enemy": "harpy",
 					"name_key": "boss.harpy.name",
 					"boss_max_hp": 104,
 					"brain_set": "balanced",
@@ -1908,6 +1912,8 @@
 				},
 				"wind_monk": {
 					"id": "wind_monk",
+					"brain": "pattern",
+					"enemy": "wind_monk",
 					"name_key": "boss.wind_monk.name",
 					"boss_max_hp": 118,
 					"brain_set": "balanced",
@@ -1923,6 +1929,8 @@
 				},
 				"storm_eagle": {
 					"id": "storm_eagle",
+					"brain": "pattern",
+					"enemy": "storm_eagle",
 					"name_key": "boss.storm_eagle.name",
 					"boss_max_hp": 126,
 					"brain_set": "balanced",
@@ -1937,6 +1945,8 @@
 				},
 				"sky_sentinel": {
 					"id": "sky_sentinel",
+					"brain": "pattern",
+					"enemy": "sky_sentinel",
 					"name_key": "boss.sky_sentinel.name",
 					"boss_max_hp": 144,
 					"brain_set": "balanced",
@@ -1952,6 +1962,8 @@
 				},
 				"thunder_shaman": {
 					"id": "thunder_shaman",
+					"brain": "pattern",
+					"enemy": "thunder_shaman",
 					"name_key": "boss.thunder_shaman.name",
 					"boss_max_hp": 150,
 					"brain_set": "balanced",
@@ -1973,6 +1985,8 @@
 				},
 				"gale_bird": {
 					"id": "gale_bird",
+					"brain": "pattern",
+					"enemy": "gale_bird",
 					"name_key": "boss.gale_bird.name",
 					"desc_key": "match.gale_bird.desc",
 					"boss_max_hp": 86,
@@ -1998,6 +2012,8 @@
 				},
 				"cloud_veil": {
 					"id": "cloud_veil",
+					"brain": "pattern",
+					"enemy": "cloud_veil",
 					"name_key": "boss.cloud_veil.name",
 					"desc_key": "match.cloud_veil.desc",
 					"boss_max_hp": 96,
@@ -2020,6 +2036,8 @@
 				},
 				"storm_dragon": {
 					"id": "storm_dragon",
+					"brain": "pattern",
+					"enemy": "storm_dragon",
 					"name_key": "boss.storm_dragon.name",
 					"desc_key": "match.storm_dragon.desc",
 					"boss_max_hp": 185,

@@ -1323,3 +1323,33 @@ enemy_skill.mist_lord_ice_mantle.name,Áo Băng,Ice Mantle
 enemy_skill.mist_lord_ice_mantle.counter,Áo chỉ bền khi mốc còn: đập mốc,The mantle holds only while an anchor stands: break it
 enemy_skill.mist_lord_whiteout.name,Trắng Xóa,Whiteout
 enemy_skill.mist_lord_whiteout.counter,"Hai nhịp, nhịp sau lệch hàng: đừng ăn cả hai","Two beats, the second shifted a line: do not take both"
+enemy_skill.cloud_sprite_mist_veil.name,Màn Sương,Mist Veil
+enemy_skill.cloud_sprite_mist_veil.counter,Mây che báo trúng ba giây: đặt khối theo trí nhớ,The mist hides the hit forecast for three seconds: place from memory
+enemy_skill.harpy_dive.name,Bổ Nhào,Talon Dive
+enemy_skill.harpy_dive.counter,"Một ô, hất bạn lùi một bước: đứng hàng trước để khỏi bị dồn vào mép",One cell and a shove back: stand on the near line so the shove has room
+enemy_skill.monk_gale_palm.name,Chưởng Gió,Gale Palm
+enemy_skill.monk_gale_palm.counter,"Gió thẳng xuống hai ô, hất lùi; bước ngang",The palm drives two cells straight down your line and shoves; step sideways
+enemy_skill.monk_wind_step.name,Bước Gió,Wind Step
+enemy_skill.monk_wind_step.counter,Nó dời sang ô xa: đánh khung ngà trước khi nó đi,It slips to a far cell: strike the ivory frame before it goes
+enemy_skill.eagle_talon_rake.name,Cào Vuốt,Talon Rake
+enemy_skill.eagle_talon_rake.counter,Cào dọc hàng ba ô; đổi hàng,The rake tears three cells along your line; change line
+enemy_skill.sentinel_stone_gale.name,Gió Đá,Stone Gale
+enemy_skill.sentinel_stone_gale.counter,Một ô cạnh bạn sắp rơi: rời ô được cảnh báo,A cell beside you is about to drop: leave the marked one
+enemy_skill.sentinel_spear.name,Thương Trời,Sky Spear
+enemy_skill.sentinel_spear.counter,Đâm thẳng xuống hai ô; bước ngang,The spear drives two cells straight down your line; step sideways
+enemy_skill.shaman_thunder_call.name,Gọi Sét,Thunder Call
+enemy_skill.shaman_thunder_call.counter,"Ba tia rời nhau, trúng thì chân bạn Đóng Băng một nhịp",Three loose bolts; a hit freezes your feet for a beat
+enemy_skill.gale_bird_downdraft.name,Luồng Đè,Downdraft
+enemy_skill.gale_bird_downdraft.counter,Mảng ba ô đè xuống rồi hất lùi: ra khỏi mảng,A three-cell press that shoves you back: leave the patch
+enemy_skill.gale_bird_updraft.name,Luồng Vút,Updraft
+enemy_skill.gale_bird_updraft.counter,"Nó vụt lên, không đánh được một giây: giữ khối lại trước khi nó bay",It rises untouchable for a second: set your block before it lifts
+enemy_skill.cloud_veil_fork_bolt.name,Tia Chẻ,Fork Bolt
+enemy_skill.cloud_veil_fork_bolt.counter,Một ô rồi chẻ sang hai bên: bước dọc trục còn lại,"One cell, then it forks to both sides: step along the other axis"
+enemy_skill.cloud_veil_vapor_form.name,Hóa Mây,Vapor Form
+enemy_skill.cloud_veil_vapor_form.counter,"Phá đám mây để bỏ giáp, hoặc dùng đòn xuyên giáp","Break the cloud to drop its guard, or use a piercing strike"
+enemy_skill.dragon_tail_sweep.name,Quét Đuôi,Tail Sweep
+enemy_skill.dragon_tail_sweep.counter,"Quét dọc hàng ba ô, hất lùi: coi chừng mép đảo sau lưng",The tail sweeps three cells along your line and shoves: mind the edge behind you
+enemy_skill.dragon_storm_breath.name,Hơi Bão,Storm Breath
+enemy_skill.dragon_storm_breath.counter,"Thổi thẳng xuống ba ô, làm chậm; bước ngang",The breath pours three cells straight down your line and slows; step sideways
+enemy_skill.dragon_tempest.name,Cuồng Phong,Tempest
+enemy_skill.dragon_tempest.counter,"Hai nhịp, nhịp sau lệch và hất lùi: đừng ăn cả hai, và đừng lùi về phía mép","Two beats, the second shifted and shoving: do not take both, and not toward the edge"
