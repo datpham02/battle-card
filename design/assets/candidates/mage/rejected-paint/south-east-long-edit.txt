@@ -1,0 +1,27 @@
+# tassel: amber cord from the crown tip, bigger pompom hanging clear of the crown on the back side
+11 41 A
+12 40 A
+13 39 A
+14 39 A
+15 38 A
+16 38 A
+17 35 KKKK
+18 34 KAAAAK
+19 34 KAAAlK
+20 35 KKKK
+# face under the brim: fringe, skin, eyes 1x2, chin
+27 42 hhhhhhhhhhlK
+28 42 hhhhhssssssK
+29 42 hhhhssKssKsK
+30 42 hlhhssKssKsK
+31 42 lhhhhsssssK
+32 46 hsssK
+# collar brown with an amber clasp (the old cream collar read as a beard)
+33 44 mmAAAmm
+34 47 mmm
+# open book held out in front on the hand: page tops, cream pages with a spine, brown cover, thumb
+34 53 KKK_KKK
+35 52 KhWWlWWhK
+36 52 KhWhlhWhK
+37 52 KrrrlrrrK
+38 53 ssKKKKK

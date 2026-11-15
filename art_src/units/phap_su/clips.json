@@ -30,7 +30,8 @@
     125,
     125
    ],
-   "loop": "loop"
+   "loop": "loop",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "draw",
@@ -54,7 +55,8 @@
     80,
     120
    ],
-   "loop": "once"
+   "loop": "once",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "step",
@@ -70,7 +72,8 @@
     100,
     100
    ],
-   "loop": "loop"
+   "loop": "loop",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "step_forward",
@@ -92,7 +95,8 @@
     50,
     50
    ],
-   "loop": "once"
+   "loop": "once",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "step_back",
@@ -114,7 +118,8 @@
     50,
     50
    ],
-   "loop": "once"
+   "loop": "once",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "step_down",
@@ -136,7 +141,31 @@
     50,
     50
    ],
-   "loop": "once"
+   "loop": "once",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
+  },
+  {
+   "name": "step_up",
+   "frames": [
+    "step_up/0.png",
+    "step_up/1.png",
+    "step_up/2.png",
+    "step_up/3.png",
+    "step_up/4.png",
+    "step_up/5.png",
+    "step_up/6.png"
+   ],
+   "ms": [
+    50,
+    50,
+    50,
+    50,
+    50,
+    50,
+    50
+   ],
+   "loop": "once",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march. step_up is NEW for the Mage: the 2026-11-04 attempt turned into a back view from frame 3 and was dropped, so the up step fell back to `step`. This prompt states the facing positively in every phase."
   },
   {
    "name": "cast_gesture",
@@ -162,7 +191,8 @@
     100,
     133
    ],
-   "loop": "once"
+   "loop": "once",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "hit",
@@ -176,7 +206,8 @@
     40,
     40
    ],
-   "loop": "once"
+   "loop": "once",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "victory",
@@ -184,23 +215,16 @@
     "victory/0.png",
     "victory/1.png",
     "victory/2.png",
-    "victory/3.png",
-    "victory/4.png",
-    "victory/5.png",
-    "victory/6.png",
-    "victory/7.png"
+    "victory/3.png"
    ],
    "ms": [
     100,
     100,
     100,
-    100,
-    100,
-    100,
-    100,
     100
    ],
-   "loop": "hold_last"
+   "loop": "hold_last",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march. victory is 4 frames (was 8): the clip was generated at 4."
   },
   {
    "name": "defeat",
@@ -224,7 +248,8 @@
     100,
     100
    ],
-   "loop": "hold_last"
+   "loop": "hold_last",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "fall",
@@ -240,7 +265,8 @@
     100,
     100
    ],
-   "loop": "hold_last"
+   "loop": "hold_last",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   },
   {
    "name": "awaken",
@@ -264,7 +290,8 @@
     120,
     120
    ],
-   "loop": "loop"
+   "loop": "loop",
+   "note": "2026-11-15 Ilva (no hat, user 'Bỏ mũ'): regenerated from the stretched v3 anchor (design/assets/candidates/mage/ilva-2026-11-15/v3-rot-tall/south-east-tall.png) with animate_character pixminimax, positive-only motion. Cleaned mechanically: snapped to the anchor's 6 colours, clusters under 12 px dropped, each frame replanted so its bottom row is 69, padded 84->96 wide and cropped to 96x70. The five movement clips are worded as the Swordsman v7 dash (hold ONE leaning shape, end upright), not the 2026-11-04 wording that produced a march."
   }
  ]
 }

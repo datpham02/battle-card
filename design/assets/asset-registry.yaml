@@ -2367,9 +2367,9 @@ assets:
   palette:
     file: art_src/palette/tessera_master.gpl
     max: 8
-    colours: ["#1B1722", "#3A2A26", "#4A3A2A", "#66523F", "#D8CDB0", "#E3B99A", "#EFE6D2", "#F0A030"]
+    colours: ["#1B1722", "#4A3A2A", "#66523F", "#D8CDB0", "#E3B99A", "#F0A030"]
   pixellab:
-    character_id: "89dc779e-091a-49a7-96bb-79126a0433eb"
+    character_id: "978bfe24-de55-445a-b924-d9e7b83347d3"
     image_ids: []
     job_ids:
     - "91b7bd35-d73e-45bf-9c33-fb8d5e4b74ba (idle v3)"
@@ -2479,6 +2479,22 @@ assets:
     attention: null
     generation: null
     note: null
+  - name: step_up
+    frames: 7
+    loop: once
+    ms: [50, 50, 50, 50, 50, 50, 50]
+    source_dir: art_src/units/phap_su/step_up
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: "new 2026-11-15: the Mage had no up step since the 2026-11-04 clip turned into a back view and fell back to `step`."
+    generation: null
+    note: null
   - name: cast_gesture
     frames: 9
     loop: once
@@ -2512,9 +2528,9 @@ assets:
     generation: null
     note: null
   - name: victory
-    frames: 8
+    frames: 4
     loop: hold_last
-    ms: [100, 100, 100, 100, 100, 100, 100, 100]
+    ms: [100, 100, 100, 100]
     source_dir: art_src/units/phap_su/victory
     status: installed
     acceptance: unknown

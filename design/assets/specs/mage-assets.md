@@ -27,3 +27,70 @@ clips with `animate_character` PixMiniMax south-east. Every paid call is approve
 | anim02-draw-dash | 2026-11-04 | `animate_image_pixminimax` x5, same first frame and settings; draw "opens the book with a flick of the wrist, pages fan open, glances down at the page, settles into a ready stance"; step_forward / step_back / step_up / step_down worded as the Knight's dashes ("quick dash forward to the right ...", "quick back-dash to the left while still facing right ...", "quick sidestep away from / toward the camera while facing right ...") | draw `f9a5d855`, forward `97d4aede`, back `ebc3f420`, up `8fa20a7e`, down `8c416a08` | 5 gen (approved: "Duyệt, gen 5 clip") | raw `anim02/<clip>/`, strip `anim02-draw-dash-raw-x2.png` | All clean (0 red, <= 29 off-palette specks). Kept: draw (8 frames, once, Knight timings), step_forward / step_back / step_down (src f1-f7, 50 ms, once), each recentred on the head (x 47; shifts -13 forward, +17..+22 back, -2..-3 down) because the model bakes the travel and the game glides the unit. **step_up rejected**: from f3 it turns to a back view, same as the Knight's; the up step plays `step`. Mage total: 26 gen. |
 | fix-cast-hold | 2026-11-04 | code + local rebuild (free) | user: "sau khi cast thì animation di chuyển bị mất". The 5-frame cast_gesture ended on frame 4 = the cast pack's gesture_hold_frame (coil); at launch UnitLayer seeked to the slash frame 5, which clamped back to 4, every tick, so the clip never finished and the hero stayed in cast_gesture (no step clips). Fixed in `UnitLayer.cast_hold_step` (coil clamped to count - 2; regression test `tests/unit/battle/cast_hold_short_clip_test.gd`, seen failing on the old rule) and the Mage cast rebuilt as 9 frames on the Knight's timings: cast f2, f4, f6, f7, victory f5 (coil, frame 4), victory f6 x2 (palm out = slash, frame 5), victory f5, cast f8 | 0 | `art_src/units/phap_su/cast_gesture/0-8.png`; evidence `production/qa/evidence/mage-sprite/03-steps-after-cast.png` | In battle after a Hỏa Trận cast: cast_gesture then idle, then step_forward and step_back play. |
 | anim03-idle-v3 | 2026-11-05 | `animate_image_pixminimax`, first AND last frame = `rot02/south-east-long.png` (upload `8a9a1cad`), 8 frames, seed 1, low top-down, south-east; prompt from the user's draft rewritten with positive words only (user: "Bản tích cực"): breathing 1 px shoulders/torso, head tilts toward the book, hat + pompom sway lagging half a beat, hair tips and robe edges shift 1-2 px, book steady, feet planted, returns to the start pose; subject / initial_pose caption fields filled | 1 gen (approved) | job `91b7bd35-d73e-45bf-9c33-fb8d5e4b74ba`; raw `anim03/idle_v3/f0-f8.png`, strip `anim03-idle-v3-raw-x4.png` (old: `idle-current-x4.png`) | `anim_qa.py`: palette 0 off-palette px, identity >= 0.96, size drift <= 1.6 %, feet row 74 every frame, x planted, no clipping; only `loop_seam` crossed (0.06: f8 = f0 because the end was pinned, so f8 is dropped). Motion between frames 5-30 px (mean ~20) vs ~9 px for the current idle: head and hat bob 2 px. Pending the user's verdict. |
+| ilva-v2 / ilva-v3 | 2026-11-15 | `create_character_pro_flash` x2 | 84x84, 8 directions. Redesign asked for by the user ("gen lại cho pháp sư luôn nha"), checklist approved in chat ("oke duyệt toàn bộ checklist"); v2 was rejected ("Loại, gen lại") and v3 generated in its place. **The prompts and the per-call cost were not written down at the time** — the same gap the Swordsman v6 clips had. The characters themselves are durable on PixelLab: v2 `719f7531-ff94-4e91-ba53-478f262e2c61`, v3 `978bfe24-de55-445a-b924-d9e7b83347d3`. | not recorded | `design/assets/candidates/mage/ilva-2026-11-15/{v2-rot,v3-rot,previews}/` (rescued 2026-11-15 23:0x from a session scratchpad, where the only copy had been sitting since 14:25; 27 files, md5-verified) | Measured on the south-east anchor: v2 bbox 32x49, 7 colours. v3 bbox 25x49, **6 colours** — v3 dropped `#3A2A26`, the darkest robe tone that both v2 and the shipping Mage use, so its robe reads lighter. Neither is installed. |
+| ilva-v3-stretch | 2026-11-15 | local Godot row-doubling (free), the `stretch-01` route the user approved on 2026-11-04 ("Kéo dài áo, miễn phí") | all 8 rotations of v3, robe rows doubled pixel-exactly, feet row kept | 0 | `.../ilva-2026-11-15/v3-rot-tall/` (8 files) | south-east bbox 25x63 (y4-66), 6 colours, no new colour introduced by the stretch. **Still 2 px shorter than the Mage now in the game** (bbox 32x65 on the 2026-11-04 sheet), and 7 px narrower. Not installed. |
+
+## Open decisions before Ilva can replace the shipping Mage
+
+1. **Height**: the stretched v3 is 63 px against the shipping 65 px. Stretch two more rows, or accept.
+2. **Palette**: v3 has 6 colours against the shipping 7 (`#3A2A26` absent). Decide whether the lighter robe is the new look or whether the dark tone is restored.
+3. **Frame size**: the rotations are 84x84; `art_src/units/phap_su` is 96x70 while the Swordsman moved to 96x92. Pick one before any clip is generated, because every clip inherits it.
+4. **Clips**: the shipping Mage has idle / step / cast_gesture / hit / victory / defeat / fall / awaken / draw / three dashes, all from the 2026-11-04 anchor. Replacing the anchor means regenerating all of them — about a dozen paid calls — so the anchor must be settled first.
+5. **Dash**: whatever anchor wins, the Mage's movement clips were worded like the Knight's old dashes, so they have the same march problem the Swordsman v7 work fixed on 2026-11-15 (see `swordsman-assets.md`, ASSET-001-DASH).
+
+### Decision 1 settled — no hat (user 2026-11-15, "Bỏ mũ")
+
+Ilva drops the bent pointed hat. The art bible §5 hero line still says "bent pointed
+hat with a tassel" and must be updated to match.
+
+**Likeness warning raised at the same time** (the user's own rule: name the closest
+known character before an anchor is approved). The 2026-11-04 likeness check listed
+Frieren as the closest look and named four differentiators: no twin tails, no white
+coat, a lit human face, a brown-amber palette, and **the bent hat with a pompom**.
+Removing the hat deletes the most distinctive of them. What is left on the v3 anchor:
+pale hair tied back in ONE tail (not twin tails), a visible lit face, and the
+brown-amber palette against Frieren's white and green. The silhouette — slight figure,
+pale long hair, open book held out, long robe — is now close.
+
+Options, costed, before any clip is generated:
+- Accept, and rely on the palette to carry the difference. 0 gen.
+- Put the silhouette back with a shoulder capelet or a lowered hood (the v2 anchor
+  already had "a brown capelet with an amber edge"). A new 8-direction anchor is about
+  6 generations.
+- Keep this anchor and add the accessory as a mechanical edit on the rotation, then
+  animate from the edited frame. 0 gen, but it is hand-drawing on a generated sprite,
+  which the user has rejected before ("tự vẽ tay xấu quá xài ảnh cũ đi").
+
+**Settled 2026-11-15 (user: "Chấp nhận").** The Frieren likeness is accepted as it
+stands; the brown-amber palette carries the difference. No capelet, no further anchor
+generation. Also settled with it: height stays **63 px** (2 px under the shipping Mage;
+the 2026-11-04 rejection was at 8 px short, this is inside the noise) and the frame
+stays **96x70**, which holds 63 px with headroom and needs no change to the exporter
+or the sheet spec.
+
+**Anchor for every clip: `v3-rot-tall/south-east-tall.png`**, not the PixelLab
+character. The stretch is a local edit, so the character's own rotations are the short
+version; animating from the character would lose the height. This is the route
+`stretch-01` recorded on 2026-11-04: `animate_image_pixminimax` with the stretched
+image as the first frame.
+
+### Clip plan (nothing generated yet)
+
+Prompts are positive-only. This is not style: the 2026-11-04 batch ended "no glow, no
+red" and the model painted red into six of eight clips, unrecoverable. Confirmed by the
+`anim02-idle-v2` control, which was clean with the same settings and no negative words.
+
+| Clip | Frames | Status |
+|---|---|---|
+| idle | 8 | first, as a control on the new anchor |
+| step, step_forward, step_back, step_up, step_down | 8 each | worded as the Swordsman **v7 dash** (`swordsman-assets.md`, ASSET-001-DASH), not the 2026-11-04 wording, which produced the same march |
+| cast_gesture, hit, victory, defeat, fall, awaken, draw | 8 each | as the shipping set |
+
+About 13 clips at 1 generation each. The first one goes alone and is checked before the
+rest, which is what the 2026-11-04 batch of eight cost when it was not done that way.
+
+| ilva-idle-v4 | 2026-11-15 | `animate_character` pixminimax, south-east, 8 frames, keep_first_frame, `custom_start_frame_base64` = `v3-rot-tall/south-east-tall.png` | positive-only motion: chest rises and falls 1 px, head tilts toward the book, hair tips and robe hem shift 1-2 px, book level in both hands, feet planted, last frame returns to the opening pose. subject_description and initial_pose filled. | 1 gen (approved: "Gen idle") | job `14f863e1-ca97-4830-af18-6d2178fd53e4`, group `6fd453ed-3b26-4ce3-b045-e243f06a417a` on character `978bfe24` | **Clean, control passed.** All 9 frames: feet row 80 on every one, feet x 29-51 (a 2 px weight shift), **6 colours and 0 off-palette pixels, 0 red** — the positive-only wording holds on the new anchor. Height kept: bbox 62-63 px. Frame 1 and frame 9 share a bbox, so the loop closes. One thing to handle at install: the stored canvas is **84x112**, not the anchor's 84x84 (pixminimax re-measures around the motion), so every clip needs the same crop-and-replant step the Swordsman v7 dash used. |
+
+| ilva-12clips | 2026-11-15 | `animate_character` pixminimax x12, south-east, `custom_start_frame_url` = one upload of the stretched anchor (`upload:6e0f0429`), keep_first_frame; 8 frames for the long clips, 4 for step / hit / victory / fall | movement five worded as the Swordsman v7 dash (hold ONE leaning shape, end upright); the other seven as the shipping set. Positive words only. | 12 gen (approved: "Gen 12 clip") | groups: dash_forward `e72ea282`, dash_back `2cd00865`, dash_up `65db1480`, dash_down `bdc257a3`, step `d2d0ac56`, cast_gesture `d7bf652a`, hit `25a3f205`, victory `827216e1`, defeat `f879b8ae`, fall `74bd248b`, awaken `75bff723`, draw `3505fa8d` | **All 12 usable.** Off-palette pixels per clip, summed over its frames / worst single frame: dash_forward 0/0, dash_down 0/0, step 0/0, victory 0/0, awaken 0/0, dash_up 23/23, hit 54/54, dash_back 84/54, draw 142/57, defeat 183/62, cast_gesture 363/167, fall 682/224. **The extra colours are soft shading along the robe edges, not a painted effect** — the 2026-11-04 failure was large red regions that snapped into blobs; these are near-neighbours of palette colours. Verified rather than assumed: `fall`, the worst, was snapped with `sprite_clean.gd` and came back **0 off-palette, 6 colours, silhouette and book intact** (before/after strip in the session scratchpad). Canvas is 84x108 or 84x112 depending on the clip, so every one needs the crop-and-replant step. Nothing installed yet. Mage total since 2026-11-04: 26 + 13 = 39 generations. |
+
+| ilva-install | 2026-11-15 | mechanical cleanup + install + export | per frame: snap to the 6 anchor colours, drop clusters < 12 px, translate so the bottom opaque row is the canvas's last row, pad 84 -> 96 wide (centred) and keep the bottom 70 rows | 0 | `art_src/units/phap_su/` (13 clips, 85 frames), candidates in `.../ilva-2026-11-15/{raw-clips,clean-96x70}/`, sheet `assets/art/units/unit_phap_su_sheet.png` 872x922 | **All 85 frames verified after cleanup: 96x70, feet on row 69, at most 6 colours, 0 off-palette pixels.** Clip changes: `victory` 8 -> 4 frames (the clip was generated at 4), and **`step_up` is new** — the Mage had none since the 2026-11-04 attempt turned into a back view. Six suites green: sheet_export, sprite_sheet, unit_step_glide, cast_vfx, art_assets, cast_presentation. `cast_gesture` kept its 9 frames, so the cast VFX timing data is untouched. Two traps caught here, both already in the record from earlier work: the install script's first version **silently did nothing** because `godot` inside the read-loop ate the clip list from stdin (every child now reads `/dev/null`), and copying 4 `victory` frames over an 8-frame folder **left frames 4-7 in place**, which a count check would have called correct. The sheet was exported and then `--import` run before capturing, and the capture hash was checked. |

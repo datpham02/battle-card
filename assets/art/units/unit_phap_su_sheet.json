@@ -903,7 +903,7 @@
       "duration": 50
     },
     {
-      "filename": "phap_su_cast_gesture_0",
+      "filename": "phap_su_step_up_0",
       "frame": {
         "x": 0,
         "y": 426,
@@ -922,10 +922,10 @@
         "w": 96,
         "h": 70
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "phap_su_cast_gesture_1",
+      "filename": "phap_su_step_up_1",
       "frame": {
         "x": 97,
         "y": 426,
@@ -944,10 +944,10 @@
         "w": 96,
         "h": 70
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "phap_su_cast_gesture_2",
+      "filename": "phap_su_step_up_2",
       "frame": {
         "x": 194,
         "y": 426,
@@ -966,10 +966,10 @@
         "w": 96,
         "h": 70
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "phap_su_cast_gesture_3",
+      "filename": "phap_su_step_up_3",
       "frame": {
         "x": 291,
         "y": 426,
@@ -988,10 +988,10 @@
         "w": 96,
         "h": 70
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "phap_su_cast_gesture_4",
+      "filename": "phap_su_step_up_4",
       "frame": {
         "x": 388,
         "y": 426,
@@ -1010,10 +1010,10 @@
         "w": 96,
         "h": 70
       },
-      "duration": 200
+      "duration": 50
     },
     {
-      "filename": "phap_su_cast_gesture_5",
+      "filename": "phap_su_step_up_5",
       "frame": {
         "x": 485,
         "y": 426,
@@ -1035,10 +1035,164 @@
       "duration": 50
     },
     {
-      "filename": "phap_su_cast_gesture_6",
+      "filename": "phap_su_step_up_6",
       "frame": {
         "x": 582,
         "y": 426,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_cast_gesture_0",
+      "frame": {
+        "x": 0,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "phap_su_cast_gesture_1",
+      "frame": {
+        "x": 97,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "phap_su_cast_gesture_2",
+      "frame": {
+        "x": 194,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "phap_su_cast_gesture_3",
+      "frame": {
+        "x": 291,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 83
+    },
+    {
+      "filename": "phap_su_cast_gesture_4",
+      "frame": {
+        "x": 388,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 200
+    },
+    {
+      "filename": "phap_su_cast_gesture_5",
+      "frame": {
+        "x": 485,
+        "y": 497,
+        "w": 96,
+        "h": 70
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 70
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 70
+      },
+      "duration": 50
+    },
+    {
+      "filename": "phap_su_cast_gesture_6",
+      "frame": {
+        "x": 582,
+        "y": 497,
         "w": 96,
         "h": 70
       },
@@ -1060,7 +1214,7 @@
       "filename": "phap_su_cast_gesture_7",
       "frame": {
         "x": 679,
-        "y": 426,
+        "y": 497,
         "w": 96,
         "h": 70
       },
@@ -1082,7 +1236,7 @@
       "filename": "phap_su_cast_gesture_8",
       "frame": {
         "x": 776,
-        "y": 426,
+        "y": 497,
         "w": 96,
         "h": 70
       },
@@ -1104,7 +1258,7 @@
       "filename": "phap_su_hit_0",
       "frame": {
         "x": 0,
-        "y": 497,
+        "y": 568,
         "w": 96,
         "h": 70
       },
@@ -1126,7 +1280,7 @@
       "filename": "phap_su_hit_1",
       "frame": {
         "x": 97,
-        "y": 497,
+        "y": 568,
         "w": 96,
         "h": 70
       },
@@ -1148,7 +1302,7 @@
       "filename": "phap_su_hit_2",
       "frame": {
         "x": 194,
-        "y": 497,
+        "y": 568,
         "w": 96,
         "h": 70
       },
@@ -1170,7 +1324,7 @@
       "filename": "phap_su_victory_0",
       "frame": {
         "x": 0,
-        "y": 568,
+        "y": 639,
         "w": 96,
         "h": 70
       },
@@ -1192,7 +1346,7 @@
       "filename": "phap_su_victory_1",
       "frame": {
         "x": 97,
-        "y": 568,
+        "y": 639,
         "w": 96,
         "h": 70
       },
@@ -1214,7 +1368,7 @@
       "filename": "phap_su_victory_2",
       "frame": {
         "x": 194,
-        "y": 568,
+        "y": 639,
         "w": 96,
         "h": 70
       },
@@ -1236,95 +1390,7 @@
       "filename": "phap_su_victory_3",
       "frame": {
         "x": 291,
-        "y": 568,
-        "w": 96,
-        "h": 70
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 96,
-        "h": 70
-      },
-      "sourceSize": {
-        "w": 96,
-        "h": 70
-      },
-      "duration": 100
-    },
-    {
-      "filename": "phap_su_victory_4",
-      "frame": {
-        "x": 388,
-        "y": 568,
-        "w": 96,
-        "h": 70
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 96,
-        "h": 70
-      },
-      "sourceSize": {
-        "w": 96,
-        "h": 70
-      },
-      "duration": 100
-    },
-    {
-      "filename": "phap_su_victory_5",
-      "frame": {
-        "x": 485,
-        "y": 568,
-        "w": 96,
-        "h": 70
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 96,
-        "h": 70
-      },
-      "sourceSize": {
-        "w": 96,
-        "h": 70
-      },
-      "duration": 100
-    },
-    {
-      "filename": "phap_su_victory_6",
-      "frame": {
-        "x": 582,
-        "y": 568,
-        "w": 96,
-        "h": 70
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 96,
-        "h": 70
-      },
-      "sourceSize": {
-        "w": 96,
-        "h": 70
-      },
-      "duration": 100
-    },
-    {
-      "filename": "phap_su_victory_7",
-      "frame": {
-        "x": 679,
-        "y": 568,
+        "y": 639,
         "w": 96,
         "h": 70
       },
@@ -1346,7 +1412,7 @@
       "filename": "phap_su_defeat_0",
       "frame": {
         "x": 0,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1368,7 +1434,7 @@
       "filename": "phap_su_defeat_1",
       "frame": {
         "x": 97,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1390,7 +1456,7 @@
       "filename": "phap_su_defeat_2",
       "frame": {
         "x": 194,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1412,7 +1478,7 @@
       "filename": "phap_su_defeat_3",
       "frame": {
         "x": 291,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1434,7 +1500,7 @@
       "filename": "phap_su_defeat_4",
       "frame": {
         "x": 388,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1456,7 +1522,7 @@
       "filename": "phap_su_defeat_5",
       "frame": {
         "x": 485,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1478,7 +1544,7 @@
       "filename": "phap_su_defeat_6",
       "frame": {
         "x": 582,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1500,7 +1566,7 @@
       "filename": "phap_su_defeat_7",
       "frame": {
         "x": 679,
-        "y": 639,
+        "y": 710,
         "w": 96,
         "h": 70
       },
@@ -1522,7 +1588,7 @@
       "filename": "phap_su_fall_0",
       "frame": {
         "x": 0,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1544,7 +1610,7 @@
       "filename": "phap_su_fall_1",
       "frame": {
         "x": 97,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1566,7 +1632,7 @@
       "filename": "phap_su_fall_2",
       "frame": {
         "x": 194,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1588,7 +1654,7 @@
       "filename": "phap_su_fall_3",
       "frame": {
         "x": 291,
-        "y": 710,
+        "y": 781,
         "w": 96,
         "h": 70
       },
@@ -1610,7 +1676,7 @@
       "filename": "phap_su_awaken_0",
       "frame": {
         "x": 0,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1632,7 +1698,7 @@
       "filename": "phap_su_awaken_1",
       "frame": {
         "x": 97,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1654,7 +1720,7 @@
       "filename": "phap_su_awaken_2",
       "frame": {
         "x": 194,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1676,7 +1742,7 @@
       "filename": "phap_su_awaken_3",
       "frame": {
         "x": 291,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1698,7 +1764,7 @@
       "filename": "phap_su_awaken_4",
       "frame": {
         "x": 388,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1720,7 +1786,7 @@
       "filename": "phap_su_awaken_5",
       "frame": {
         "x": 485,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1742,7 +1808,7 @@
       "filename": "phap_su_awaken_6",
       "frame": {
         "x": 582,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1764,7 +1830,7 @@
       "filename": "phap_su_awaken_7",
       "frame": {
         "x": 679,
-        "y": 781,
+        "y": 852,
         "w": 96,
         "h": 70
       },
@@ -1790,7 +1856,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 872,
-      "h": 851
+      "h": 922
     },
     "scale": "1",
     "frameTags": [
@@ -1831,39 +1897,45 @@
         "direction": "forward"
       },
       {
-        "name": "cast_gesture",
+        "name": "step_up",
         "from": 41,
-        "to": 49,
+        "to": 47,
+        "direction": "forward"
+      },
+      {
+        "name": "cast_gesture",
+        "from": 48,
+        "to": 56,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 50,
-        "to": 52,
+        "from": 57,
+        "to": 59,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 53,
-        "to": 60,
+        "from": 60,
+        "to": 63,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 61,
-        "to": 68,
+        "from": 64,
+        "to": 71,
         "direction": "forward"
       },
       {
         "name": "fall",
-        "from": 69,
-        "to": 72,
+        "from": 72,
+        "to": 75,
         "direction": "forward"
       },
       {
         "name": "awaken",
-        "from": 73,
-        "to": 80,
+        "from": 76,
+        "to": 83,
         "direction": "forward"
       }
     ],
@@ -1892,6 +1964,7 @@
         "step_forward": "once",
         "step_back": "once",
         "step_down": "once",
+        "step_up": "once",
         "cast_gesture": "once",
         "hit": "once",
         "victory": "hold_last",
@@ -1901,12 +1974,10 @@
       },
       "palette": [
         "#1B1722",
-        "#3A2A26",
         "#4A3A2A",
         "#66523F",
         "#D8CDB0",
         "#E3B99A",
-        "#EFE6D2",
         "#F0A030"
       ]
     }
