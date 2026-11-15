@@ -63,6 +63,15 @@ var fragile_mult: float = 1.5
 var fragile_max_stacks: int = 3
 var frost_stacks_to_burst: int = 3
 var frost_burst_damage: float = 24.0
+## §9.2, the pack-level budgets. BOTH were declared and read elsewhere and NEVER ASSIGNED by
+## any code until 2026-11-15: `StatusEffects.frost_burst_icd` (whose own comment claimed "the
+## game sets it from data") and `PatternController.push_icd_sec`. Each defaulted to 0, which is
+## OFF, and nothing reported it because "off" and "not needed yet" look identical. A test for
+## each existed and passed, because each injected the value itself.
+## 2.0 for push is the design's own number; 2.0 for the burst is a CHOICE to match it - §9.2
+## gives no figure for the burst.
+var frost_burst_icd_sec: float = 2.0
+var push_icd_sec: float = 2.0
 var execute_ratio: float = 0.25
 ## Story 028: most pieces one cast may join (1..3) and the fallback cap on a cast's total cells (0 = off, else >= 1).
 ## (join_extra_sec was removed 2026-11-01: pieces join before Tung phép, never into the open menu.)
@@ -483,12 +492,18 @@ func _parse_keywords(data: Dictionary) -> void:
 	var frost_n: int = int(data.get("frost_stacks_to_burst", frost_stacks_to_burst))
 	var frost_dmg: float = float(data.get("frost_burst_damage", frost_burst_damage))
 	var exec_ratio: float = float(data.get("execute_ratio", execute_ratio))
+	var frost_icd: float = float(data.get("frost_burst_icd_sec", frost_burst_icd_sec))
+	var push_icd: float = float(data.get("push_icd_sec", push_icd_sec))
 	if f_mult >= 1.0 and f_max >= 1 and frost_n >= 1 and frost_dmg >= 0.0 and exec_ratio >= 0.0 and exec_ratio <= 1.0:
 		fragile_mult = f_mult
 		fragile_max_stacks = f_max
 		frost_stacks_to_burst = frost_n
 		frost_burst_damage = frost_dmg
 		execute_ratio = exec_ratio
+		if frost_icd >= 0.0:
+			frost_burst_icd_sec = frost_icd
+		if push_icd >= 0.0:
+			push_icd_sec = push_icd
 	else:
 		push_warning("CombatConfig: invalid Ran/Han/execute values (fragile_mult>=1, fragile_max_stacks>=1, frost_stacks_to_burst>=1, frost_burst_damage>=0, execute_ratio 0..1), using defaults")
 	if mult >= 0.0 and extend >= 0.0 and bonus >= 0.0 and stacks >= 1:
@@ -504,6 +519,10 @@ func _parse_keywords(data: Dictionary) -> void:
 func configure_status(status: StatusEffects) -> void:
 	status.configure(burn_stack_extend_sec, burn_stack_tick_bonus, burn_max_stacks, pinned_damage_mult)
 	status.configure_keywords(fragile_mult, fragile_max_stacks, frost_stacks_to_burst, frost_burst_damage)
+	# §9.2: seconds between two Hàn bursts on one side. Set for BOTH sides - the budget is about
+	# how often a burst may land, not about who threw it.
+	status.frost_burst_icd[CombatState.Side.PLAYER] = frost_burst_icd_sec
+	status.frost_burst_icd[CombatState.Side.ENEMY] = frost_burst_icd_sec
 	status.burn_on_entry = burn_on_entry
 	# batch 5: the reaction numbers the status book fires on its own (R1 on entry, a trap's R3), the ICD, the trap rule
 	status.reaction_numbers = reactions()
