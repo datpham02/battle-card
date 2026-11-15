@@ -2772,15 +2772,15 @@ assets:
   evidence: [production/qa/evidence/assassin-sprite]
   frame:
     w: 96
-    h: 70
-    body_h: null
+    h: 92
+    body_h: 70
     facing: right
   palette:
     file: art_src/palette/tessera_master.gpl
     max: 8
-    colours: ["#1B1722", "#2C2A35", "#3A3744", "#555064", "#5E4636", "#8A6A50", "#BFF3EC", "#E3B99A"]
+    colours: ["#1B1722", "#2C2A35", "#3A3744", "#555064", "#5E4636", "#8A6A50", "#E3B99A", "#EFE6D2"]
   pixellab:
-    character_id: "47d6480b-8685-429a-9971-8f28145d6bdb"
+    character_id: "5e05e92a-3aee-4543-a60a-703e684b8e90"
     image_ids: []
     job_ids:
     - "ba18ae67 (anchor-01)"
@@ -2865,6 +2865,38 @@ assets:
     approved_by: null
     approved_evidence: null
     attention: null
+    generation: null
+    note: null
+  - name: step_back
+    frames: 7
+    loop: once
+    ms: [50, 50, 50, 50, 50, 50, 50]
+    source_dir: art_src/units/sat_thu/step_back
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: "new 2026-11-16: the 2026-11-05 clip was a teleport with speed lines cut at the canvas edge; this one carries no speed words and keeps a margin on all four sides."
+    generation: null
+    note: null
+  - name: step_up
+    frames: 7
+    loop: once
+    ms: [50, 50, 50, 50, 50, 50, 50]
+    source_dir: art_src/units/sat_thu/step_up
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: "new 2026-11-16: the Assassin had no up step since the 2026-11-05 clip turned into a back view. The width instruction helped but did not hold on this anchor (33 px against a 45 px start) -- accepted as a mild profile turn."
     generation: null
     note: null
   - name: step_down

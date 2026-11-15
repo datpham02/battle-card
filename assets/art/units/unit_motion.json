@@ -27,8 +27,10 @@
  "units": {
   "kiem_si": {"archetype": "hero", "dash_ease": 1.4, "ghost_count": 3, "ghost_gap": 0.035, "hop_px": 3,
     "lean_px": 2, "land_squash_px": 2, "overshoot_px": 1, "settle_sec": 0.12},
-  "phap_su": {"archetype": "hero", "breath_sec": 2.9, "idle_speed": 0.9, "hop_px": 1},
-  "sat_thu": {"archetype": "hero", "breath_sec": 1.8, "idle_speed": 1.15, "hop_px": 2, "overshoot_px": 1, "settle_sec": 0.08},
+  "phap_su": {"archetype": "hero", "breath_sec": 2.9, "idle_speed": 0.9, "dash_ease": 1.5, "ghost_count": 2,
+    "ghost_gap": 0.04, "hop_px": 1, "lean_px": 2, "land_squash_px": 2, "settle_sec": 0.12},
+  "sat_thu": {"archetype": "hero", "breath_sec": 1.8, "idle_speed": 1.15, "dash_ease": 1.3, "ghost_count": 3,
+    "ghost_gap": 0.03, "hop_px": 2, "lean_px": 2, "overshoot_px": 1, "settle_sec": 0.08},
   "tho_san": {"archetype": "hero", "breath_sec": 2.1, "sway_px": 1, "sway_sec": 3.2},
   "giao_si": {"archetype": "hero", "breath_sec": 3.0, "idle_speed": 0.9, "hop_px": 0, "land_squash_px": 1},
 
