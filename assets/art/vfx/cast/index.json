@@ -172,7 +172,7 @@
   "flash_alpha": 0.75,
   "shake_px": 2,
   "shake_sec": 0.12,
-  "step_slide_sec": 0.15,
+  "step_slide_sec": 0.12,
   "step_dust_sec": 0.25,
   "hit_stop_sec": 0.06,
   "board_shake_px": 2,

@@ -140,3 +140,58 @@ Negative: red, gold glow, text, painterly shading, soft edges, realistic face, b
 ```
 
 **Status:** Needed
+
+---
+
+## ASSET-001-DASH — Vale v7 dash clips (4 directions)
+
+**Approved by the user 2026-11-15** ("Duyệt, gen 4 clip"), after the user rejected the
+v6 movement as not a dash: *"giở 1 chân lên đi chuyển qua ô khác là dash ak ?"*
+
+### Why the v6 clips read as walking — the cause, not a guess
+
+`get_character` on `3ec3cc62-d6af-43f3-a7b9-a94dcf73cdba` shows the v6 motion prompts
+themselves:
+
+| clip | stored prompt (prefix) |
+|---|---|
+| `step_forward v6` | "a lunge forward **marched on the** …" |
+| `step_back v6` | "a step backward **marched on the** …" |
+| `step v6` | "a walking cycle **marched on the** …" |
+
+They were prompted as *marching on the spot* on purpose, because the engine glides the
+unit and travel baked into the frames would double the movement. The no-baked-travel
+part is right and must be kept; "marched" is what makes it a walk. **These prompts were
+never written into this record when they were generated (2026-11-15) — only into the
+PixelLab metadata.** That is the gap this section closes.
+
+Measured on the installed frames, in game: body travel 120 ms, clip 350 ms, so the hero
+arrived and kept cycling its legs for ~100 ms. Fixed in code (`unit_layer.gd`), which is
+a separate matter from the pose.
+
+### What a dash pose must show (the approved checklist)
+
+1. **Anticipation** — knees bend, hips drop; 1-2 frames only.
+2. **Launch** — chest tips out past the leading foot, arms swept back behind the hips.
+3. **Flight** — the stretched leaning shape is HELD for several frames with no change of
+   leg: a dash has no stride. This is the single item that separates it from v6.
+4. **Brake** — leading foot plants flat, knee absorbs, chest rises.
+5. **Recovery** — ends in the same relaxed standing pose the clip started from, so the
+   engine can hand back to the guard idle (user 2026-11-15: *"the dash pose must not be
+   held as the final frame"*).
+6. Feet stay on the same ground row; the body stays centred in the frame (no baked
+   travel — keep the v6 property).
+7. `step_back` keeps the head and chest turned the same way as `step_forward`: it is a
+   retreat, not a forward dash played in reverse.
+8. `step_up` is the known-risky one: in v3 (2026-11-02) frames 3-6 turned into a full
+   back view and the clip was rejected. The prompt states the facing positively every
+   phase rather than forbidding the turn.
+
+### Generation log
+
+| # | Date | Call | Params | Cost | Output | Result |
+|---|------|------|--------|------|--------|--------|
+| v7-dash-01 | 2026-11-15 | `animate_character` pixminimax, south-east, 8 frames, keep_first_frame | "knees bend and hips drop low, chest tips far forward past the leading foot, both arms sweep back behind the hips, rear leg straightens behind, cloth and wraps stream backward, holds the stretched leaning shape for four frames, leading foot plants, chest rises, arms return to the sides, finishing upright; feet on the same ground row, body centred in the frame" | 1 gen | job `dc6f355d-9709-49fc-b024-c0d462dde803`, group `4033b474-83dc-4aa7-b659-c639da899f25`; strip in the session scratchpad | **REJECTED, not installed.** Checklist items 3 (hold) and 5 (recovery) PASS: f3-f6 hold one shape with no change of leg, f7-f8 return upright. Items 2 and 4 FAIL: the torso goes past horizontal and **both arms reach FORWARD**, the opposite of the prompt, so f2-f6 read as a headfirst dive; the head drops level with the shoulders and the face is lost. "tips far forward past the leading foot" is read as a dive. Next prompt must give the lean as an ANGLE and place the hands explicitly ("hands trail behind the hips at waist height, elbows pointing backward", "chin stays above the shoulders, face turned toward the lower right"). |
+| v7-dash-02 | 2026-11-15 | `animate_character` pixminimax, south-east, 8 frames, keep_first_frame | as v7-dash-01 but the lean given as an ANGLE ("chest tilts forward about thirty degrees, shoulders staying above the hips"), the head pinned ("chin stays higher than the shoulders, face turned toward the lower right") and the hands placed ("both hands trail behind the hips at waist height, elbows pointing backward") | 1 gen | job `dc105266-a0cc-4a85-885f-722e5d00a2b9`, group `af8abe45-a92d-4a7b-b180-fc114ff79a7f` | 4 of 5 checklist items PASS: f2-f7 hold one leaning shape with no change of leg, f8 returns upright, the lean is ~35 deg instead of past horizontal, the face is visible. **Item 4 FAILS again: both arms still reach FORWARD, not behind the hips** — the second prompt in a row whose arm placement pixminimax ignored, so a third attempt on the same axis is poor value. Note for anyone generating a dash on this model: it reads "dash" as reaching forward with the arms whatever the prompt says about the hands. |
+| v7-dash-03/04/05 | 2026-11-15 | `animate_character` pixminimax, south-east, 8 frames, keep_first_frame | back: "weight onto the rear foot, chest tilts back ~20 deg, face turned toward the lower right in every single frame, front foot slides toward the lower left, holds four frames, rear foot plants, finishes upright". up: "shoulders square to the lower right and face toward the lower right in every single frame, body pushes away from the viewer, far leg back, chest tilts ~20 deg away, holds four frames, both feet land, finishes upright". down: same with the body driving toward the viewer. | 3 gen | jobs `1973bc98` (back), `b00fb90c` (up), `242b802f` (down); groups `d88ca3f3`, `e10d7584`, `b39bcb13` | All four clips now hold ONE pose through the middle frames and return upright, so the walk cycle is gone -- the structural problem is solved. Open question from the stills: at frame 4 the `forward` clip's arms reach toward the LOWER LEFT while `back` reaches toward the RIGHT, which is the wrong way round for each. Stills of a 41 px sprite have misled this session more than once, so the call is being made from an in-game recording with the board and the enemy visible, not from the strip. Total spent on v7 so far: 5 generations. |
+| v7-dash-install | 2026-11-15 | mechanical cleanup + install | `tools/qa/sprite_clean.gd` (snap to the hero's own 7 colours `1b1722,34406e,5f6f82,8fa8be,b8893a,d8cdb0,eef4fa`, drop clusters < 12 px, translate so the bottom opaque row lands on 91) then crop 96x96 -> 96x92; src frames 1,2,3,4,5,7,8 of each clip | 0 | raw in `design/assets/candidates/swordsman/v5-weaponfree/raw-v7-dash/<clip>/`, cleaned in `.../clean-96x92/<clip>/`, installed in `art_src/units/kiem_si/<clip>/` | All 28 frames measured after cleanup: bottom row 91 and exactly 7 colours on every one. Suites green: `sheet_export_test` (the three-tier provenance), `unit_step_glide_test`, `dash_ghost_test`. Only `unit_kiem_si_sheet.png` changed when the exporter rewrote every unit sheet, so no other session's art moved. **Trap worth keeping: the first recording after this install was byte-identical (md5 `d5f42336...`) to the one before it** -- `.godot/imported/unit_kiem_si_sheet.png-*.ctex` was still the 14:37 build, so the run drew the OLD art. `godot --headless --path . --import` rebuilt it (42978 -> 48072 bytes) and the next recording hashed differently (`175ac1b6...`). Always reimport after writing a sheet, and compare capture hashes before claiming the art is in. |

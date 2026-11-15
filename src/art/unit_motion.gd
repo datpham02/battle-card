@@ -30,6 +30,16 @@ var sway_sec: float = 3.6
 var hover_px: int = 0
 var hover_sec: float = 1.6
 var slide_scale: float = 1.0
+## Dash pass (user 2026-11-15, "dash la chinh"): the exponent of the glide's horizontal ease-out
+## (UnitLayer.slide_offset). 3.0 = the old ease-out cubic, which brakes hard into the cell and reads as a slide;
+## lower = less braking, so the unit shoots out of the old cell and reads as a dash. 1.0 = constant speed.
+var dash_ease: float = 3.0
+## Dash pass: how many fading copies of the sprite trail behind it during the glide (0 = none), and the LARGEST
+## gap in seconds between them along the same glide path. It is a cap, not the spacing: DashGhost squeezes the trail
+## into the part of the dash already travelled, so a short dash still shows the full count. The ghosts are what make
+## a 120 ms move read as a dash rather than as a short walk.
+var ghost_count: int = 0
+var ghost_gap: float = 0.03
 var hop_px: int = 1
 var lean_px: int = 1
 var anticipate: float = 0.12
@@ -206,10 +216,10 @@ func _apply(src: Variant) -> void:
 		return
 	var d: Dictionary = src
 	for key: String in ["idle_speed", "breath_sec", "breath_duty", "sway_sec", "hover_sec", "slide_scale", "anticipate",
-			"settle_sec", "release_sec", "waist_ratio", "chest_ratio"]:
+			"settle_sec", "release_sec", "waist_ratio", "chest_ratio", "dash_ease", "ghost_gap"]:
 		if d.has(key):
 			set(key, float(d[key]))
 	for key: String in ["breath_px", "sway_px", "hover_px", "hop_px", "lean_px", "land_squash_px", "overshoot_px",
-			"windup_lean_px", "windup_squash_px", "hit_lean_px"]:
+			"windup_lean_px", "windup_squash_px", "hit_lean_px", "ghost_count"]:
 		if d.has(key):
 			set(key, maxi(int(d[key]), 0))

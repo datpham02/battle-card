@@ -98,7 +98,7 @@
     50
    ],
    "loop": "once",
-   "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body; OSFE dash, the game glides the unit"
+   "note": "2026-11-15 v7 dash (user: a march is not a dash): PixMiniMax from the v5 cloth anchor, src frames 1,2,3,4,5,7,8 = anticipation crouch, four HELD frames of one leaning shape (the model draws them identical: a dash has no stride), brake, upright. Cleaned mechanically only: snapped to the hero's 7 colours, specks < 12 px dropped, each frame translated so its bottom row is 91, cropped 96x96 -> 96x92. The engine compresses the clip into the glide + settle window and hands back to the guard idle, so the dash pose is never the final frame."
   },
   {
    "name": "step_back",
@@ -121,7 +121,7 @@
     50
    ],
    "loop": "once",
-   "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body; OSFE back-dash, still facing right"
+   "note": "2026-11-15 v7 dash, as step_forward but retreating: the weight goes onto the rear foot and the body leans away while the face stays turned the same way, so it is not the forward dash reversed."
   },
   {
    "name": "step_up",
@@ -144,7 +144,7 @@
     50
    ],
    "loop": "once",
-   "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body; keeps facing right (the first roll turned its back)"
+   "note": "2026-11-15 v7 dash, as step_forward but away from the viewer. The facing is stated positively in every phase of the prompt because the v3 attempt (2026-11-02) turned into a full back view and was rejected."
   },
   {
    "name": "step_down",
@@ -167,7 +167,7 @@
     50
    ],
    "loop": "once",
-   "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body"
+   "note": "2026-11-15 v7 dash, as step_forward but toward the viewer."
   },
   {
    "name": "cast_gesture",
@@ -344,5 +344,5 @@
    ],
    "loop": "loop"
   }
-]
+ ]
 }

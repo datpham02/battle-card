@@ -202,6 +202,9 @@ var _flash: Node2D = null
 ## is frozen on the winning frame — see `passive_cue_layer.gd` for why nothing already here can
 ## animate at that moment. Null until [method _ensure_passive_cue].
 const PassiveCueLayer = preload("res://src/battle/passive_cue_layer.gd")
+## Dash pass (user 2026-11-15): the pure trail math. Preloaded rather than given a `class_name` on purpose --
+## a new global class breaks every other session's headless run until a Godot run rebuilds the class cache.
+const DashGhost = preload("res://src/battle/dash_ghost.gd")
 var _passive_cue: PassiveCueLayer = null
 ## Peak strength of the green body glow, added over the sprite exactly as the white hit flash is.
 const PASSIVE_GLOW_ALPHA: float = 0.85
@@ -370,11 +373,14 @@ static func step_clip_for(from: Vector2i, to: Vector2i, faces_right: bool) -> St
 
 ## Pure: the offset (art px) of a gliding unit from its target feet: the whole [param from] - [param to] gap when
 ## [param left] == [param total], shrinking with an ease-out (fast start, soft landing) to zero when [param left] is 0.
-static func slide_offset(from: Vector2i, to: Vector2i, left: float, total: float) -> Vector2i:
+## Dash pass (user 2026-11-15): [param ease] is the exponent of that ease-out ([member UnitMotion.dash_ease]). The
+## default 3.0 is the original cubic, which brakes hard into the cell and reads as a slide; a lower exponent brakes
+## less, so the unit shoots out of the old cell and reads as a dash. Callers holding a unit pass its profile's value.
+static func slide_offset(from: Vector2i, to: Vector2i, left: float, total: float, ease: float = 3.0) -> Vector2i:
 	if total <= 0.0 or left <= 0.0:
 		return Vector2i.ZERO
 	var t: float = 1.0 - clampf(left / total, 0.0, 1.0)
-	var remain: float = pow(1.0 - t, 3.0)
+	var remain: float = pow(1.0 - t, maxf(ease, 0.1))
 	return Vector2i(roundi((from.x - to.x) * remain), roundi((from.y - to.y) * remain))
 
 
@@ -436,7 +442,8 @@ func _ground_of(side: int) -> Vector2i:
 	var slide: Dictionary = _slide.get(side, {})
 	if slide.is_empty():
 		return to
-	return to + slide_offset(slide["from"] as Vector2i, to, float(slide["left"]), float(slide["total"]))
+	return to + slide_offset(slide["from"] as Vector2i, to, float(slide["left"]), float(slide["total"]),
+			motion_of(side).dash_ease)
 
 
 # Starts a glide (and dust) when [param side]'s cell changed since the last advance, from where it was drawn then;
@@ -1051,11 +1058,26 @@ func _update_clip(side: int, step: float) -> void:
 					anim.play_timed(step_clip, minf(legs, float(_step_left[side])) if legs > 0.0 else float(_step_left[side]), UnitAnimator.ONCE)
 				elif anim.current_clip() == step_clip and anim.is_finished():
 					anim.play(CLIP_IDLE)
-			elif anim.current_clip() != step_clip or bool(_step_restart.get(side, false)):
+			elif bool(_step_restart.get(side, false)) or (anim.current_clip() != step_clip and anim.current_clip() != CLIP_IDLE):
 				_step_restart[side] = false
-				# A directional dash keeps its own frame times (50 ms), so its lean meets the glide instead of being
-				# stretched over the whole step cooldown; it holds its last (settled) frame until the step ends.
-				anim.play(step_clip, true)
+				# Dash pass (user 2026-11-15, measured): the clip's own frame times run 350 ms (7 x 50 ms) while the
+				# body only moves for the glide + settle (250 ms before this pass, 240 ms after), so the unit ARRIVED
+				# and then kept cycling its legs on the spot for ~100 ms -- the stutter the user reported. The
+				# CLIP_STEP branch above was already fixed this way ("left the unit walking in place after it
+				# arrived"); the four directional clips were missed. Same window, same reason: the legs stop with
+				# the body. It still holds its last (settled) frame until the step cooldown ends.
+				var legs: float = float(_feel.get("step_slide_sec", 0.0)) * motion_of(side).slide_scale + motion_of(side).settle_sec
+				if legs > 0.0:
+					anim.play_timed(step_clip, minf(legs, float(_step_left.get(side, legs))), UnitAnimator.ONCE)
+				else:
+					anim.play(step_clip, true)
+			elif anim.current_clip() == step_clip and anim.is_finished():
+				# Dash brief (user 2026-11-15): "the dash pose must not be held as the final frame". The directional clip
+				# used to stand on its last frame for the rest of the step cooldown, so the hero waited out the cooldown
+				# in a lean instead of in its guard. It hands back to the idle the moment the body has settled, exactly as
+				# the plain step clip above does. The guard above (current_clip != CLIP_IDLE) is what stops the idle from
+				# being read as "the dash clip is not playing" and restarting the dash on the very next frame.
+				anim.play(CLIP_IDLE)
 		_:
 			# The match-start draw runs to its end before the idle (any other clip cuts in at once).
 			if want == CLIP_IDLE and anim.current_clip() == CLIP_DRAW and not anim.is_finished() and not anim.is_paused():
@@ -1245,6 +1267,7 @@ func _draw() -> void:
 		var feet: Vector2i = ground + shake_offset(float(_shake_left.get(side, 0.0)), int(_feel.get("shake_px", 0))) + recoil_offset(side) \
 				+ Vector2i(pose.x, pose.y)
 		_draw_status_overlays(side, kinds, feet, CLIP_BEHIND)
+		_draw_dash_ghosts(side, feet, pose)
 		if not _draw_sprite(side, feet, pose):
 			if side == CombatState.Side.PLAYER:
 				_draw_player_marker(cell)
@@ -1389,6 +1412,42 @@ static func invulnerable_flash_alpha(time: float, reduce_motion: bool) -> float:
 	if reduce_motion:
 		return INVULN_FLASH_STEADY_ALPHA
 	return INVULN_FLASH_ALPHA if int(maxf(time, 0.0) / INVULN_BLINK_SEC) % 2 == 0 else 0.0
+
+
+# Dash pass (user 2026-11-15, "dash la chinh"): the fading copies of the sprite that trail behind a unit while it
+# dashes between cells. Drawn before the unit itself, so they sit behind it. The same frame, pose and facing as the
+# body -- only the position and the alpha differ -- which is the same reuse the white hit flash makes (_draw_flash).
+# Nothing is drawn for a unit whose profile asks for no ghosts (every unit but the hero today), while it stands
+# still, or under reduce motion. The arithmetic lives in dash_ghost.gd and is pure, so it is tested without a tree.
+func _draw_dash_ghosts(side: int, feet: Vector2i, pose: Vector4i) -> void:
+	if _reduce_motion:
+		return
+	var m: UnitMotion = motion_of(side)
+	if m.ghost_count <= 0:
+		return
+	var slide: Dictionary = _slide.get(side, {})
+	if slide.is_empty():
+		return
+	var sheet: SpriteSheet = get_sheet(side)
+	var anim: UnitAnimator = get_animator(side)
+	if sheet == null or anim == null or sheet.texture() == null:
+		return
+	var src: Rect2i = anim.frame_rect()
+	if src.size.x <= 0 or src.size.y <= 0:
+		return
+	var to: Vector2i = _feet_of_unit(side)
+	var from: Vector2i = slide["from"] as Vector2i
+	var left: float = float(slide["left"])
+	var total: float = float(slide["total"])
+	# [param feet] already carries the CURRENT glide offset (plus shake, recoil and pose), so a ghost is that same
+	# point moved by the difference between where the unit was then and where it is now. Shake and pose come along,
+	# which is what makes the trail read as the same body rather than as a second sprite.
+	var now: Vector2i = slide_offset(from, to, left, total, m.dash_ease)
+	var flip: bool = sheet.facing() != facing_for(side)
+	for ghost: Dictionary in DashGhost.samples(from, to, left, total, m.dash_ease, m.ghost_count, m.ghost_gap):
+		var at: Vector2i = feet + (ghost["offset"] as Vector2i) - now
+		_draw_frame_bands(self, side, sheet.texture(), src, at, flip, pose,
+			Color(1.0, 1.0, 1.0, float(ghost["alpha"])))
 
 
 # The sprite of [param side] at the feet anchor: the animator's frame from the sheet texture, mirrored

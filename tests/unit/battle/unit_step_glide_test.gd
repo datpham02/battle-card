@@ -47,6 +47,7 @@ func _initialize() -> void:
 	test_match_start_draws_into_the_guard(units, combat)
 	test_step_glides_then_lands(units, combat)
 	test_step_plays_the_directional_clip(units, combat)
+	test_dash_clip_ends_when_the_body_does(units, combat)
 	test_reduce_motion_snaps(units, combat)
 	_finish()
 
@@ -112,6 +113,54 @@ func test_step_plays_the_directional_clip(units: UnitLayer, combat: CombatView) 
 		var anim: UnitAnimator = units.get_animator(side)
 		_check("test_step %s plays %s" % [dir, want], ok and anim != null and anim.current_clip() == want,
 			"stepped=%s clip=%s" % [ok, anim.current_clip() if anim != null else "-"])
+
+
+# Dash pass (2026-11-15, user: "di chuyen qua khung cung nhu ko co animation gi"). The directional clips used to run
+# on their own frame times -- 7 x 50 ms = 350 ms -- while the body only moves for the glide plus its settle (240 ms
+# for the hero). The unit therefore ARRIVED and then kept cycling its legs on the spot for the remaining ~110 ms,
+# which is the stutter the user reported. This leg fails against that code: at 1.1 x the body's window the old clip
+# is barely two thirds through and is_finished() is still false.
+func test_dash_clip_ends_when_the_body_does(units: UnitLayer, combat: CombatView) -> void:
+	var state: CombatState = combat.get_state()
+	var side: int = CombatState.Side.PLAYER
+	var motion: UnitMotion = units.motion_of(side)
+	var legs: float = float(CastVfx.hit_feel()["step_slide_sec"]) * motion.slide_scale + motion.settle_sec
+	_check("test_body_window_is_positive", legs > 0.0, str(legs))
+	var mover: UnitMover = combat.get_mover()
+	units.advance(1.0)
+	mover.tick(5.0)
+	var next: Vector2i = _neighbour(state)
+	if next == state.player_cell:
+		_check("test_dash_clip_needs_a_free_neighbour", false)
+		return
+	var dir: Vector2i = next - state.player_cell
+	var stepped: bool = mover.try_step(dir)
+	units.advance(0.0)
+	units.advance(0.01)
+	var anim: UnitAnimator = units.get_animator(side)
+	var clip: String = anim.current_clip()
+	_check("test_dash_clip_started", stepped and clip.begins_with(UnitLayer.CLIP_STEP), "stepped=%s clip=%s" % [stepped, clip])
+	units.advance(legs * 0.5)
+	_check("test_dash_clip_still_running_mid_body_window", not units.get_animator(side).is_finished(),
+		"clip=%s" % units.get_animator(side).current_clip())
+	units.advance(legs * 0.6)
+	# "Done" means the dash is over, which it can be in either of two ways: the clip has run out, or it has already
+	# handed back to the guard idle (the recovery checked below). Asserting only is_finished() would go red the
+	# moment the recovery was added, which is a correct behaviour change -- the assertion, not the code, was wrong.
+	var after: UnitAnimator = units.get_animator(side)
+	_check("test_dash_clip_done_when_the_body_is", after.is_finished() or after.current_clip() == UnitLayer.CLIP_IDLE,
+		"clip=%s finished=%s after %.3fs (body window %.3fs)" % [after.current_clip(), str(after.is_finished()), legs * 1.1, legs])
+	# Dash brief (user 2026-11-15): "the dash pose must not be held as the final frame". The step cooldown (0.45 s)
+	# outlasts the body window (0.24 s), and the directional clip used to stand on its last frame for the difference,
+	# so the hero waited out a fifth of a second in a lean. It must be back in its guard idle instead -- and it must
+	# STAY there: handing back to the idle naively makes the next frame read "not playing the dash clip" and start
+	# the dash again, which is a loop this second advance would catch.
+	units.advance(0.03)
+	_check("test_dash_recovers_into_the_idle", units.get_animator(side).current_clip() == UnitLayer.CLIP_IDLE,
+		"clip=%s" % units.get_animator(side).current_clip())
+	units.advance(0.05)
+	_check("test_dash_does_not_restart_itself", units.get_animator(side).current_clip() == UnitLayer.CLIP_IDLE,
+		"clip=%s" % units.get_animator(side).current_clip())
 
 
 func test_step_glides_then_lands(units: UnitLayer, combat: CombatView) -> void:

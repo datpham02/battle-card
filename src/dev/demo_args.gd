@@ -191,6 +191,9 @@ extends Node
 ##   clock explicitly (UnitLayer.advance: once with 0 so the event starts its clip / overlay, then by the demo's seconds) and
 ##   freezes, so the sprite frame and the status overlay frame are fixed. They run deferred (after BattleCanvas binds its
 ##   layers, which happens after this node's _ready). Headless, the SubViewport never draws, so capture windowed:
+##   godot --path . -- --demo=dash_loop     NOT a still: the hero dashes from side to side of its half with time
+##                                          RUNNING and the boss off, for recording the movement in a real battle
+##                                          (--write-movie). Every other anim_* demo freezes time after one event.
 ##   godot --path . -- --demo=anim_step     the player stepped through try_step_player (cell_changed): `step` ART_DEMO_STEP_RATIO of
 ##                                          the way through its cooldown-long run (frame 2 of 4 on Kiem si at 0.45 s)
 ##   godot --path . -- --demo=anim_cast     the player's real CutActor swing on the boss's cell (swing_started): `cast_gesture`
@@ -365,6 +368,8 @@ const TRAM_CARD: String = "tram_dia"
 ## Skill v2: the scheduled card tram_live casts (--live-card=ngan_kiem); default TRAM_CARD.
 const LIVE_CARD_PREFIX: String = "--live-card="
 var _tram_move: Vector2i = Vector2i.ZERO
+## Dash pass: how far along DASH_ROUTE the --demo=dash_loop hero is.
+var _dash_index: int = 0
 ## Cast Commitment scenarios (tram_live, Ngàn Kiếm prototype): --channel-cancel-at=S presses Hủy S s into the channel
 ## (after the commit it is the "refused" case); --after-cancel-step=dx,dy steps the hero once the cancel is done;
 ## --boss-move-at=S:dx,dy moves the enemy S s into the channel. Timed on the arbiter clock from the swing start.
@@ -698,6 +703,9 @@ func _ready() -> void:
 		"tram_live":
 			_skip_intro()
 			_tram_live_demo.call_deferred()
+		"dash_loop":
+			_skip_intro()
+			_dash_loop_demo.call_deferred()
 		"parry_live":
 			_skip_intro()
 			_parry_live_demo.call_deferred()
@@ -1156,6 +1164,61 @@ func _tram_on_impact(side: int, ev: Dictionary, hit: bool) -> void:
 		var st: CombatState = combat.get_state()
 		var moved: bool = st.set_enemy_cell(st.enemy_cell + _tram_move)
 		print("DemoArgs: tram_live boss moved by %s -> %s ok=%s" % [str(_tram_move), str(st.enemy_cell), str(moved)])
+
+
+# Dash pass (user 2026-11-15, "toi can ban quay 1 video nhan vat vale di chuyen trong combat"): the hero dashes from
+# side to side of its own half for as long as the run lasts, so a windowed --write-movie capture shows the real dash
+# on the real board. Nothing else here does that: --demo=anim_step takes ONE step and then FREEZES time (it exists to
+# make a still), and in a normal match every step comes from a key press, which a capture cannot send. Time is left
+# running and the boss is switched off, so the recording shows the movement and nothing else.
+# Record with:
+#   godot --path . --audio-driver Dummy -- --demo=dash_loop --write-movie <file>.avi --fixed-fps 60 --quit-after 600
+func _dash_loop_demo() -> void:
+	var combat: CombatView = _combat()
+	if combat == null or combat.get_mover() == null:
+		push_warning("DemoArgs: dash_loop found no combat view")
+		return
+	# Every --demo= run freezes the battle clock so a capture is a still (see the common setup above). This demo is
+	# the exception: with the clock frozen the step cooldown never ticks down, so the hero takes ONE step and stands
+	# there for the rest of the recording -- which is exactly what the first attempt at this video produced.
+	combat.freeze_time = false
+	_dash_index = 0
+	get_tree().process_frame.connect(_dash_loop_tick)
+	print("DemoArgs: dash_loop armed - the hero dashes back and forth until the run ends")
+
+
+# The QA route the recording walks, in order, then repeats. It is written to cover every case the dash brief asks
+# to see on film: each of the four directions on its own, two dashes the same way in a row (drift would show as the
+# hero ending up off a cell centre), and an immediate reversal (FORWARD then BACKWARD with no pause between them).
+# A direction that the validator refuses -- the edge of the hero's half, a blocked or occupied cell -- is reported
+# as REFUSED and the route simply moves on, which is how the film shows that rejection still works.
+const DASH_ROUTE: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.RIGHT, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.LEFT,
+	Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN, Vector2i.UP, Vector2i.UP, Vector2i.DOWN, Vector2i.DOWN,
+	Vector2i.RIGHT, Vector2i.UP, Vector2i.LEFT, Vector2i.DOWN]
+
+
+# One frame of the dash route: step as soon as the mover is off cooldown and report what the validator did. The cell
+# is printed on every line so a QA pass can check the logical position against the rendered one frame by frame.
+func _dash_loop_tick() -> void:
+	var combat: CombatView = _combat()
+	if combat == null or combat.get_mover() == null or not combat.get_mover().is_ready():
+		return
+	var dir: Vector2i = DASH_ROUTE[_dash_index % DASH_ROUTE.size()]
+	_dash_index += 1
+	var from_cell: Vector2i = combat.get_state().player_cell
+	if combat.try_step_player(dir):
+		print("DemoArgs: dash_loop %s %s -> %s" % [_dash_name(dir), str(from_cell), str(combat.get_state().player_cell)])
+	else:
+		print("DemoArgs: dash_loop %s REFUSED from %s (edge, blocked or occupied)" % [_dash_name(dir), str(from_cell)])
+
+
+# The brief's name for a direction: FORWARD / BACKWARD are relative to the opponent, UP / DOWN are grid rows.
+func _dash_name(dir: Vector2i) -> String:
+	if dir.y < 0:
+		return "UP"
+	if dir.y > 0:
+		return "DOWN"
+	return "FORWARD" if dir.x > 0 else "BACKWARD"
 
 
 # Cast rhythm spec 2026-11-05 "parry_live": ticks the pattern enemy (time frozen for the view) until an attack warns on
