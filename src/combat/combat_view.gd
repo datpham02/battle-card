@@ -3021,7 +3021,7 @@ func _setup_extra_units(boss_drops_config: FieldDropsConfig, hold_config: HoldSl
 			pattern = PatternController.new(_state, _grid, skills_config, str(unit.source["enemy"]), _status,
 				drops_seed + 4 + 10 * i if drops_seed >= 0 else -1, key)
 			pattern.think_interval_sec = maxf(cfg.think_interval_sec, 0.05)
-			pattern.push_icd_sec = cfg.push_icd_sec
+			pattern.push_icd_sec = _config.push_icd_sec
 			pattern.tempo_mult = maxf(float(ai.get("pattern_tempo_mult", 1.0)), 0.01)
 			pattern.player_step_cd = _player_step_cooldown
 			pattern.player_step_left_fn = Callable(_mover, "get_cooldown_remaining")
@@ -3185,7 +3185,7 @@ func _setup_pattern_brain(brain_config: BossBrainConfig) -> void:
 		push_warning("CombatView: pattern enemy '%s' not in enemy_skills.json" % enemy_id)
 	_pattern = PatternController.new(_state, _grid, skills_config, enemy_id, _status, drops_seed + 4 if drops_seed >= 0 else -1)
 	_pattern.think_interval_sec = maxf(brain_config.think_interval_sec, 0.05)
-	_pattern.push_icd_sec = brain_config.push_icd_sec
+	_pattern.push_icd_sec = _config.push_icd_sec
 	_pattern.tempo_mult = maxf(float(match_params.get("pattern_tempo_mult", 1.0)), 0.01)
 	_pattern.player_step_cd = _player_step_cooldown
 	_pattern.player_step_left_fn = Callable(_mover, "get_cooldown_remaining")
