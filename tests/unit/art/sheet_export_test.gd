@@ -15,28 +15,46 @@ const MAX_COLOURS := 8
 ## (name, frame count, ms per frame, loop kind), in row order.
 const UNITS := {
 	"kiem_si": {
-		# 2026-10-31: v3 tall anchor (PixelLab 2d093318...), PixMiniMax south-east clips cleaned to 96x70.
-		# 2026-11-02: guard stance (user: the knight holds the sword ready the whole battle): idle, hit and the four
-		# directional dashes come from the guard_* candidates, the match-start draw from draw_to_guard.
-		# 2026-11-08 (option A, user-approved): the frame grew to 96x92 for the cast_overhead headroom; the 96x70
-		# sources are bottom-aligned (22 clear rows on top) and body_h 70 keeps the HUD / portraits on the old body.
-		"frame": Vector2i(96, 92), "source": Vector2i(96, 70), "body_h": 70, "sheet": Vector2i(872, 1394), "facing": "right",
-		"candidate": "swordsman/v3-tall/clean-96x70/%s.png",
+		# HISTORY (v1, superseded 2026-11-15 -- kept because git log on this block needs it):
+		# v3 tall anchor cleaned to 96x70, guard stance from the guard_* candidates, draw from
+		# draw_to_guard; frame grew to 96x92 on 2026-11-08 and the 96x70 sources sat bottom-aligned
+		# with 22 clear rows on top.
+		#
+		# NOW (Vale v5, user-approved 2026-11-14): the sprite is weapon-free and armour-free, drawn
+		# at the full 96x92, so `source` == `frame` and there is no bottom-align padding left.
+		# body_h 70 is UNCHANGED: it keeps the HUD and portraits framed on the old body height, and
+		# is not a claim about the source image.
+		"frame": Vector2i(96, 92), "source": Vector2i(96, 92), "body_h": 70, "sheet": Vector2i(872, 1394), "facing": "right",
+		"candidate": "swordsman/v5-weaponfree/clean-96x92/%s.png",
+
+		# Vale v5 (2026-11-15): every frame comes from ONE generation run, so the old
+		# candidate folder names (guard_idle_v2, draw_to_guard, guard_cast, guard_hit,
+		# guard_step_*) no longer name anything -- they pointed at runs this art is not
+		# from. Renamed to the clip names, which are the only names that still mean
+		# something. Nothing else read that folder: it is created by this same change.
+		#
+		# source == frame now, so pad = 0 and _rows_clear(.., 0) iterates zero times:
+		# it asserts NOTHING. Measured over all 101 v5 frames, the highest pixel is at
+		# row 24 of 92 and the clear top band runs 24-59 rows -- the sprite still sits
+		# low in the frame, and from now on nothing checks that. No replacement leg: a
+		# fixed "top N rows clear" needs N <= 24 to avoid false alarms, and at 24 it
+		# catches nothing on frames sitting 59 rows down, while cast_summon
+		# deliberately reaches over the HUD row (generation log 2026-11-08).
 		"clips": [
 			# 2026-11-05: idle = anim-idle-v2 (PixMiniMax breathing + cape follow-through, 8 frames @125 ms), cleaned copies in guard_idle_v2.
-			["idle", ["guard_idle_v2/0", "guard_idle_v2/1", "guard_idle_v2/2", "guard_idle_v2/3", "guard_idle_v2/4", "guard_idle_v2/5", "guard_idle_v2/6", "guard_idle_v2/7"], [125, 125, 125, 125, 125, 125, 125, 125], "loop"],
-			["draw", ["draw_to_guard/0", "draw_to_guard/1", "draw_to_guard/2", "draw_to_guard/3", "draw_to_guard/4", "draw_to_guard/5", "draw_to_guard/6", "draw_to_guard/7"], [60, 60, 80, 80, 80, 80, 80, 120], "once"],
+			["idle", ["idle/0", "idle/1", "idle/2", "idle/3", "idle/4", "idle/5", "idle/6", "idle/7"], [125, 125, 125, 125, 125, 125, 125, 125], "loop"],
+			["draw", ["draw/0", "draw/1", "draw/2", "draw/3", "draw/4", "draw/5", "draw/6", "draw/7"], [60, 60, 80, 80, 80, 80, 80, 120], "once"],
 			["step", ["step/0", "step/1", "step/2", "step/3"], [100, 100, 100, 100], "loop"],
-			["step_forward", ["guard_step_forward/0", "guard_step_forward/1", "guard_step_forward/2", "guard_step_forward/3", "guard_step_forward/4", "guard_step_forward/5", "guard_step_forward/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
-			["step_back", ["guard_step_back/0", "guard_step_back/1", "guard_step_back/2", "guard_step_back/3", "guard_step_back/4", "guard_step_back/5", "guard_step_back/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
-			["step_up", ["guard_step_up/0", "guard_step_up/1", "guard_step_up/2", "guard_step_up/3", "guard_step_up/4", "guard_step_up/5", "guard_step_up/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
-			["step_down", ["guard_step_down/0", "guard_step_down/1", "guard_step_down/2", "guard_step_down/3", "guard_step_down/4", "guard_step_down/5", "guard_step_down/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
-			["cast_gesture", ["guard_cast/0", "guard_cast/1", "guard_cast/2", "guard_cast/3", "guard_cast/4", "guard_cast/5", "guard_cast/6", "guard_cast/7", "guard_cast/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
+			["step_forward", ["step_forward/0", "step_forward/1", "step_forward/2", "step_forward/3", "step_forward/4", "step_forward/5", "step_forward/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_back", ["step_back/0", "step_back/1", "step_back/2", "step_back/3", "step_back/4", "step_back/5", "step_back/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_up", ["step_up/0", "step_up/1", "step_up/2", "step_up/3", "step_up/4", "step_up/5", "step_up/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["step_down", ["step_down/0", "step_down/1", "step_down/2", "step_down/3", "step_down/4", "step_down/5", "step_down/6"], [50, 50, 50, 50, 50, 50, 50], "once"],
+			["cast_gesture", ["cast_gesture/0", "cast_gesture/1", "cast_gesture/2", "cast_gesture/3", "cast_gesture/4", "cast_gesture/5", "cast_gesture/6", "cast_gesture/7", "cast_gesture/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
 			# 2026-11-08: Trảm Địa cast_forward (PixMiniMax 5e5e14ed, user-approved; mechanical clean, see clips.json note).
 			["cast_forward", ["cast_forward/0", "cast_forward/1", "cast_forward/2", "cast_forward/3", "cast_forward/4", "cast_forward/5", "cast_forward/6", "cast_forward/7", "cast_forward/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
 			# 2026-11-08: Ngàn Kiếm cast_summon (PixMiniMax 91224bb1, user-approved; 96x92 sources; see clips.json note).
 			["cast_summon", ["cast_summon/0", "cast_summon/1", "cast_summon/2", "cast_summon/3", "cast_summon/4", "cast_summon/5", "cast_summon/6", "cast_summon/7", "cast_summon/8"], [83, 83, 83, 83, 200, 50, 83, 100, 133], "once"],
-			["hit", ["guard_hit/0", "guard_hit/1", "guard_hit/2"], [40, 40, 40], "once"],
+			["hit", ["hit/0", "hit/1", "hit/2"], [40, 40, 40], "once"],
 			["victory", ["victory/0", "victory/1", "victory/2", "victory/3", "victory/4"], [100, 100, 100, 100, 100], "hold_last"],
 			["defeat", ["defeat/0", "defeat/1", "defeat/2", "defeat/3", "defeat/4", "defeat/5", "defeat/6", "defeat/7"], [100, 100, 100, 100, 100, 100, 100, 100], "hold_last"],
 			["fall", ["fall/0", "fall/1", "fall/2", "fall/3"], [100, 100, 100, 100], "hold_last"],
