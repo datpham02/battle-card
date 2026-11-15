@@ -68,10 +68,16 @@ var frost_burst_damage: float = 24.0
 ## game sets it from data") and `PatternController.push_icd_sec`. Each defaulted to 0, which is
 ## OFF, and nothing reported it because "off" and "not needed yet" look identical. A test for
 ## each existed and passed, because each injected the value itself.
-## 2.0 for push is the design's own number; 2.0 for the burst is a CHOICE to match it - §9.2
-## gives no figure for the burst.
-var frost_burst_icd_sec: float = 2.0
-var push_icd_sec: float = 2.0
+## THE DEFAULTS ARE 0 ON PURPOSE AND MUST STAY 0. MONSTER-SKILL-DESIGN.md §G says so twice:
+## line 1269 `frost_burst_icd[side]` "(mac dinh tat)", line 1274 `push_icd_sec` "(mac dinh 0)".
+## 5cb8f489 set both to 2.0 as a CLASS default and SEVEN assertions across three frost suites
+## went red - keyword2, signature, hunter_prayer. Those suites were encoding §G, not stale
+## behaviour. What was broken here was the WIRING, never the number: the knob is live now, so a
+## pack that wants a budget sets it IN DATA, which is where §9.2 puts it. Raising these
+## defaults silently rebalances thanh_an and the hunter's prayer, both of which are built on
+## back-to-back frost bursts landing on the PLAYER.
+var frost_burst_icd_sec: float = 0.0
+var push_icd_sec: float = 0.0
 var execute_ratio: float = 0.25
 ## Story 028: most pieces one cast may join (1..3) and the fallback cap on a cast's total cells (0 = off, else >= 1).
 ## (join_extra_sec was removed 2026-11-01: pieces join before Tung phép, never into the open menu.)

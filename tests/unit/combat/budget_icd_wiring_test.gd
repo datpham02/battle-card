@@ -89,26 +89,42 @@ func _initialize() -> void:
 	quit(1 if fails > 0 else 0)
 
 
+## WHAT THIS GATE IS FOR, restated 2026-11-15 after it demanded the opposite of the design.
+## It first read "the shipped number is above zero", which tied a WIRING gate to a BALANCE value
+## - and §G puts that value at 0, so the gate was asking for a rebalance. The hop under test is
+## data -> config -> StatusEffects. So: pin the shipped default at OFF (§G), then feed a number
+## in and watch it travel. That form cannot be satisfied by a dead assignment and does not care
+## what the shipped balance happens to be.
 func test_config_reads_both_budgets_from_data() -> void:
 	var cfg: CombatConfig = CombatConfig.load_from_file()
-	_check("combat.json gives a frost burst cooldown above zero",
-		cfg.frost_burst_icd_sec > 0.0, str(cfg.frost_burst_icd_sec))
-	_check("combat.json gives a push cooldown above zero",
-		cfg.push_icd_sec > 0.0, str(cfg.push_icd_sec))
+	_check("§G: the shipped frost burst budget is OFF",
+		is_equal_approx(cfg.frost_burst_icd_sec, 0.0), str(cfg.frost_burst_icd_sec))
+	_check("§G: the shipped push budget is OFF",
+		is_equal_approx(cfg.push_icd_sec, 0.0), str(cfg.push_icd_sec))
+	cfg._parse_keywords({"frost_burst_icd_sec": 2.0, "push_icd_sec": 3.0})
+	_check("a frost budget in data reaches the config",
+		is_equal_approx(cfg.frost_burst_icd_sec, 2.0), str(cfg.frost_burst_icd_sec))
+	_check("a push budget in data reaches the config",
+		is_equal_approx(cfg.push_icd_sec, 3.0), str(cfg.push_icd_sec))
 
 
 ## The hop that was missing: CombatConfig -> StatusEffects. Nothing here sets the dictionary.
 func test_frost_burst_icd_reaches_status_effects() -> void:
 	var cfg: CombatConfig = CombatConfig.load_from_file()
+	cfg.frost_burst_icd_sec = 2.0
 	var status: StatusEffects = StatusEffects.new()
 	cfg.configure_status(status)
-	_check("configure_status sets the burst cooldown for the player",
-		float(status.frost_burst_icd.get(P, 0.0)) > 0.0, str(status.frost_burst_icd))
-	_check("and for the enemy", float(status.frost_burst_icd.get(E, 0.0)) > 0.0,
-		str(status.frost_burst_icd))
-	_check("and it matches the configured number",
-		is_equal_approx(float(status.frost_burst_icd.get(P, 0.0)), cfg.frost_burst_icd_sec),
-		"%s vs %s" % [status.frost_burst_icd.get(P, 0.0), cfg.frost_burst_icd_sec])
+	_check("configure_status carries the number to the player side",
+		is_equal_approx(float(status.frost_burst_icd.get(P, 0.0)), 2.0), str(status.frost_burst_icd))
+	_check("and to the enemy side",
+		is_equal_approx(float(status.frost_burst_icd.get(E, 0.0)), 2.0), str(status.frost_burst_icd))
+	# The other direction. Without it the leg above passes against a hardcoded 2.0 just as well as
+	# against a real assignment - and §G's default is exactly the value such a constant would hide.
+	var off_cfg: CombatConfig = CombatConfig.load_from_file()
+	var off: StatusEffects = StatusEffects.new()
+	off_cfg.configure_status(off)
+	_check("and the shipped config leaves it OFF (§G)",
+		is_equal_approx(float(off.frost_burst_icd.get(P, 0.0)), 0.0), str(off.frost_burst_icd))
 
 
 ## Behaviour, not plumbing: with the SHIPPED numbers, a second burst inside the window is held.
@@ -116,16 +132,31 @@ func test_frost_burst_icd_reaches_status_effects() -> void:
 ## not. The leg checks BOTH directions — a burst that never fires at all would also "hold" one.
 func test_frost_burst_icd_actually_holds_a_second_burst() -> void:
 	var cfg: CombatConfig = CombatConfig.load_from_file()
+	cfg.frost_burst_icd_sec = 2.0
 	var status: StatusEffects = StatusEffects.new()
 	cfg.configure_status(status)
 	var first: float = 0.0
 	for _i: int in range(cfg.frost_stacks_to_burst):
 		first = maxf(first, status.apply_frost(P, 1))
-	_check("the first burst fires with the shipped numbers", first > 0.0, str(first))
+	_check("the first burst fires", first > 0.0, str(first))
 	var second: float = 0.0
 	for _i: int in range(cfg.frost_stacks_to_burst):
 		second = maxf(second, status.apply_frost(P, 1))
 	_check("a second burst inside the cooldown is held", is_equal_approx(second, 0.0), str(second))
+	# AND THE MIRROR, which is the whole reason three frost suites went red on 5cb8f489: at the
+	# SHIPPED default the second burst MUST fire. Without this leg, "held" and "never fires at all"
+	# are the same observation, and a 2.0 default would read as correct here forever.
+	var off_cfg: CombatConfig = CombatConfig.load_from_file()
+	var off: StatusEffects = StatusEffects.new()
+	off_cfg.configure_status(off)
+	var a: float = 0.0
+	for _i: int in range(off_cfg.frost_stacks_to_burst):
+		a = maxf(a, off.apply_frost(P, 1))
+	var b: float = 0.0
+	for _i: int in range(off_cfg.frost_stacks_to_burst):
+		b = maxf(b, off.apply_frost(P, 1))
+	_check("with the budget OFF (§G) a second burst fires back to back",
+		a > 0.0 and b > 0.0, "%s then %s" % [a, b])
 
 
 ## The weak leg. See the header: this is a grep, and it is here because the defect was a missing
