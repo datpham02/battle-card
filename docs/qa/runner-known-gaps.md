@@ -114,9 +114,20 @@ cannot catch it either: no byte on disk changes.
 at once, and including a 39-minute run with 15 minutes of overlap. The margin is wider than either session
 guessed — consistent with the header's "~270 s on a **busy** machine" against a 600 s ceiling.
 
-Sign to look for: a lone `TIMEOUT` on a suite that is normally green, with the rest of the run healthy. Before
-looking for a bug in that suite, ask who else was running. Prevention: one full run at a time, by slot.
-(monster-skills session, with their own three corrections to how they first told it.)
+Sign to look for: a lone `TIMEOUT` on a suite that is normally green, with the rest of the run healthy.
+Prevention: one full run at a time, by slot. (monster-skills session, with their own three corrections to how
+they first told it.)
+
+> **CORRECTED 2026-11-15 — read the line before blaming the machine.** This entry used to say "before looking for
+> a bug in that suite, ask who else was running." That order is wrong, and wrong in the expensive direction: it
+> sends a reader hunting for a second session that may not exist while the cause sits in their own suite. A
+> runtime error during startup makes Godot **print the error and hang**, so it is killed at the ceiling and
+> recorded as `TIMEOUT` too — measured in section 6. **Check `SCRIPT ERRORS` on the same line first:**
+>
+>     ... *** SCRIPT ERRORS=1 *** TIMEOUT    hung on its own error; the machine is innocent
+>     ... FAILS=0 0 se TIMEOUT               no error printed; NOW ask who else was running
+>
+> Contention remains a real cause. It is the second question, not the first.
 
 ---
 
