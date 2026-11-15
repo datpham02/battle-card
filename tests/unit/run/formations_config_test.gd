@@ -40,9 +40,17 @@ func _fixture(formations: Dictionary, pools: Dictionary = {}) -> Dictionary:
 	return {"defaults": {"danger_traits": [{"id": "row_burner"}]}, "chapters": [chapter]}
 
 
+
+## Phase 5 (2026-11-15): a STATIC function, not an inline lambda. A lambda written inside _initialize()
+## captures this SceneTree; parking it in ChaptersConfig's static outlives the tree and the process dies
+## with SIGSEGV at teardown AFTER printing its result, so the runner scored it green for weeks. Isolated
+## by probe: lambda-in-static crashes with the library null, library-in-static alone does not.
+static func _footprint(enemy_id: String) -> Array:
+	return [[0, 0], [1, 0], [0, 1], [1, 1]] if enemy_id == "big" else [[0, 0]]
+
 func _initialize() -> void:
 	var library: ArenaLibrary = ArenaLibrary.load_from_file()
-	ChaptersConfig.set_formation_lookup(library, func(enemy_id: String) -> Array: return [[0, 0], [1, 0], [0, 1], [1, 1]] if enemy_id == "big" else [[0, 0]])
+	ChaptersConfig.set_formation_lookup(library, Callable(get_script(), "_footprint"))
 
 	# 1. A valid block: normal 2 on square, hard 3 on forge, 4 on dunes, elite 2 on rect, boss 2x2 + 1 on boss_hall.
 	var good: ChaptersConfig = ChaptersConfig.from_dictionary(_fixture({

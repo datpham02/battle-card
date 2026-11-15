@@ -66,17 +66,39 @@ rule, ran green in every check made of it, and has been segfaulting since. The g
 its first real run. That is the argument for the guard in one line: the case you build an instrument for is never
 the only case it finds, and you cannot count what you have never recorded.
 
-**Cause: the correlation is now a clean partition, though still not a mechanism.** Both crashers call
-`ChaptersConfig.set_formation_lookup()` with a lambda, leaving a static `Callable` alive at teardown. Counted across
-the whole tree rather than guessed:
+**CAUSE ESTABLISHED 2026-11-15 17:2x, and it was NOT what this entry claimed.** The hypothesis named the
+lambda. The same call also parks an `ArenaLibrary` in a static — two things that always moved together, so no
+measurement so far could tell them apart, and naming one of them was a guess wearing the clothes of a diagnosis.
+Seven probes, each changing one factor:
 
-    suites calling set_formation_lookup   2   -> 2 crashed
-    suites not calling it               331   -> 0 crashed
+    lib in static + lambda in static   exit 139    the crash, reproduced in 6 lines
+    ArenaLibrary loaded, not stored    exit 0      loading it is innocent
+    LAMBDA in static, library null     exit 139    sufficient on its own
+    LIBRARY in static, empty Callable  exit 0      the library is innocent
+    neither                            exit 0      control
+    lambda created but NOT stored      exit 0      creating one is innocent
+    STATIC-FUNC Callable in static     exit 0      and this is the fix
 
-Every caller crashes and nothing else does, over 333 samples. That is far stronger than the two data points this
-entry first recorded — but it is still an association, not a demonstration: nobody has shown the Callable is what
-the signal comes from. The next step is to delete the lambda from one of the two and re-run it alone. Until someone
-does, write it as the leading hypothesis, not the cause.
+Run alongside the real suite as a known hit (`exit 139`), so a row of silent probes could not be mistaken for a
+working experiment.
+
+**It is a lambda STORED IN A STATIC.** Not lambdas (they are fine unstored), not statics (one holding an object
+is fine). A lambda written inside `_initialize()` captures the `SceneTree`; a class static outlives it; the
+process dies with SIGSEGV at teardown — *after* printing its result, which is why the runner scored both suites
+green until the exit code was finally looked at.
+
+**FIXED in both suites:** the inline lambda is now a `static func` reached through `Callable(get_script(), ...)`.
+Verified on the property that matters and on the one that could have hidden a dead fix:
+
+    formation_shared_traits_test   exit 139 -> 0   PASSES=9  unchanged
+    formations_config_test         exit 139 -> 0   PASSES=59 unchanged
+
+The pass counts are the real check. An invalid `Callable` would also stop the crash — by making the suite assert
+nothing. Unchanged counts say the lookup still runs.
+
+**The lesson that outlives the bug:** this entry asserted a cause for hours while the evidence only supported
+"one of these two". It happened to be right, which is worse than being wrong, because nothing would have
+corrected it. The discriminating probe took five minutes and should have come before the sentence.
 
 ---
 
