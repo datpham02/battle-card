@@ -1656,7 +1656,7 @@ assets:
   palette:
     file: art_src/palette/tessera_master.gpl
     max: 8
-    colours: ["#1B1722", "#34406E", "#5F6F82", "#8FA3B8", "#B8893A", "#D8CDB0", "#E3B99A", "#EEF4FA"]
+    colours: ["#1B1722", "#34406E", "#5F6F82", "#8FA8BE", "#B8893A", "#D8CDB0", "#EEF4FA"]
   pixellab:
     character_id: "2d093318-1ba4-43aa-b843-a5f0fdf62939"
     image_ids: []
