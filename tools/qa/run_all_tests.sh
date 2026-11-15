@@ -35,7 +35,7 @@ cd "$(dirname "$0")/../.." || exit 1
 "$G" --headless --import --path . >/dev/null 2>&1
 echo "import: exit=$?" >> "$OUT"
 
-suites=0; fail_total=0; se_total=0; to_total=0; nores_total=0
+suites=0; fail_total=0; se_total=0; to_total=0; nores_total=0; crash_total=0
 
 # 2026-11-14 (5): TREE STABILITY. A full run takes ~25 minutes across a checkout many sessions share. An edit
 # landing mid-run splits the run across two versions of the code and still prints a tidy number - and on the
@@ -75,14 +75,39 @@ tree_manifest() {
 # It sits here and not up beside the import because the function and $TREE_BEFORE are declared above it.
 # Called earlier it wrote to an empty filename, left no baseline, and the diff then reported a change on
 # EVERY run - a guard that always fires is worse than no guard, because it teaches people to ignore it.
+# 2026-11-15 (9): WHICH COMMIT DOES THIS RUN DESCRIBE? A result file is useless as a push gate unless it says
+# which branch state it was taken on - comparing its timestamp with `git log` instead creates a race that eleven
+# sessions committing to one branch can never win (a 30-minute run, three commits in four minutes). HEAD at both
+# ends on purpose: the first line is the anchor (what this run covers, and a later commit does not change it),
+# and the two differing means somebody committed mid-run - visible here instead of discovered at push time.
+# This is a different axis from tree_moved, which asks whether the CONTENT on disk changed; a commit changes no
+# byte, so tree_moved stays 0 while the history moves underneath.
+echo "HEAD at start: $(git rev-parse HEAD 2>/dev/null)" >> "$OUT"
 tree_manifest > "$TREE_BEFORE"
 
 record() {  # record <suite path> <godot output> <exit code>
   local t="$1" r="$2" code="$3" to="" f n se
   if [ "$code" -eq 124 ]; then to=" TIMEOUT"; to_total=$((to_total + 1)); fi
+  # 2026-11-15 (8): A SUITE CAN PRINT ITS RESULT AND THEN DIE. formations_config_test prints FAILS=0 PASSES=59
+  # and exits 139 (128+11, SIGSEGV) in teardown. Every check below passes it, because they all key off the FAILS
+  # line and that line is present. This function has received the exit code since it was written and used it for
+  # exactly one comparison (124), then dropped it - so nobody knows how many of the 333 suites die this way.
+  # NOT "exit code must equal the failure count", although suites end with quit(fails): that convention is
+  # unverified across all suites, and a gate that fires on a healthy red suite is one somebody switches off.
+  # Two conditions instead, each true under any convention:
+  if [ "$code" -ne 124 ]; then
+    if [ "$code" -ge 128 ]; then
+      crash_total=$((crash_total + 1)); to="$to  *** KILLED BY SIGNAL (exit=$code) ***"
+    fi
+  fi
   f=$(echo "$r" | grep -oE 'FAILS[=:] ?[0-9]+' | tail -1)
   n=$(echo "$f" | grep -oE '[0-9]+' | tail -1)
   [ -n "$n" ] && fail_total=$((fail_total + n))
+  # The other half: a suite claiming zero failures has no reason to exit non-zero. Checked after `n` is parsed,
+  # and only below 128 so a signal death is counted once, not twice.
+  if [ "$code" -ne 124 ] && [ "$code" -ne 0 ] && [ "$code" -lt 128 ] && [ -n "$n" ] && [ "$n" -eq 0 ]; then
+    crash_total=$((crash_total + 1)); to="$to  *** EXIT=$code WITH FAILS=0 ***"
+  fi
   # 2026-11-14 (3): NO FAILS LINE IS ITS OWN OUTCOME. A suite that dies before printing leaves this column empty,
   # and an empty column reads as clean - worse, `n` is empty too, so fail_total is not incremented and the run
   # stays green by arithmetic. Seen in the wild: a suite whose path did not exist exited 0 and reported nothing.
@@ -122,14 +147,22 @@ if ! diff -q "$TREE_BEFORE" "$TREE_AFTER" >/dev/null 2>&1; then
 fi
 rm -f "$TREE_BEFORE" "$TREE_AFTER"
 echo DONE >> "$OUT"
-echo "SUMMARY: suites=$suites failures=$fail_total script_errors=$se_total timeouts=$to_total no_result=$nores_total tree_moved=$tree_moved" >> "$OUT"
+echo "HEAD at end:   $(git rev-parse HEAD 2>/dev/null)" >> "$OUT"
+echo "SUMMARY: suites=$suites failures=$fail_total script_errors=$se_total timeouts=$to_total no_result=$nores_total crashes=$crash_total tree_moved=$tree_moved" >> "$OUT"
 # 2026-11-14 (4): GREEN MUST BE ASSERTED, NEVER INFERRED. Until now only script_errors gated: failures and
 # timeouts were counted, printed, and used for nothing, so a run with seven real failures printed "RESULT: ok"
 # and exited 0 (seen in a real main-verify log). The header above has said "a timeout is never a pass" since
 # yesterday - true as a sentence, false as code, and invisible because the comment reads like a guarantee.
-if [ "$se_total" -gt 0 ] || [ "$fail_total" -gt 0 ] || [ "$to_total" -gt 0 ] || [ "$nores_total" -gt 0 ] || [ "$tree_moved" -gt 0 ]; then
-  echo "RESULT: FAILED - failures=$fail_total script_errors=$se_total timeouts=$to_total no_result=$nores_total tree_moved=$tree_moved" >> "$OUT"
+# INVARIANT: every counter in the condition below must also appear in the FAILED verdict line, and in SUMMARY.
+# 2026-11-15 (9): crash_total was added to the condition and to SUMMARY but NOT to the verdict, so the first run
+# that fired it printed "RESULT: FAILED - failures=0 script_errors=0 timeouts=0 no_result=0 tree_moved=0" - a
+# verdict of FAILED with every number it shows equal to zero, and the legend below explaining a count it never
+# printed. Red without a reason is the same defect as green without a check: the reader is told an answer and
+# denied the evidence. Adding a counter means THREE edits, not two.
+if [ "$se_total" -gt 0 ] || [ "$fail_total" -gt 0 ] || [ "$to_total" -gt 0 ] || [ "$nores_total" -gt 0 ] || [ "$crash_total" -gt 0 ] || [ "$tree_moved" -gt 0 ]; then
+  echo "RESULT: FAILED - failures=$fail_total script_errors=$se_total timeouts=$to_total no_result=$nores_total crashes=$crash_total tree_moved=$tree_moved" >> "$OUT"
   echo "  no_result = a suite printed no FAILS line: it may have died before printing. Never counted as a pass." >> "$OUT"
+  [ "$crash_total" -gt 0 ] && echo "  crashes = a suite printed a result and then died (signal, or exit!=0 with FAILS=0). Its numbers may be fine; the process was not." >> "$OUT"
   [ "$tree_moved" -gt 0 ] && echo "  tree_moved = source changed mid-run: the verdict above describes no single version of the code." >> "$OUT"
   exit 1
 fi

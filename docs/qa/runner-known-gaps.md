@@ -28,14 +28,55 @@ code is never examined again. The suite counts as a pass.
 **How to read a report until this is fixed:** a `FAILS=0` line does **not** rule out that the suite died after
 printing it. If a suite looks suspicious, re-run it alone and check `$?` by hand.
 
-**Why it is not fixed yet (2026-11-15).** Gating on the exit code changes how **every** suite is classified, and
-the fix landed in the middle of a 35-minute full run — changing the measuring instrument during the measurement.
-It deserves a run of its own. When it is done, it needs the same two-direction proof as the other guards: a suite
-that crashes after printing must go red, and a suite that exits cleanly must stay green.
+**FIXED 2026-11-15.** `record()` now counts two cases as a crash, and `crashes=` joins the SUMMARY and the exit
+gate:
 
-**Suspected cause of the crash itself** (unverified): these suites call `ChaptersConfig.set_formation_lookup()`
-with a lambda, leaving a static Callable alive at teardown. `tests/unit/combat/phase_banner_host_test.gd`, which
-does not call it, exits 0. That is a correlation on two data points, not a diagnosis.
+    exit code >= 128                      killed by a signal, whatever it printed
+    exit != 0 while the FAILS line says 0 a suite claiming no failures has no reason to exit non-zero
+
+**The rule deliberately NOT used:** "exit code must equal the failure count", even though suites end with
+`quit(fails)`. That convention is unverified across all 333 suites, and any suite ending `quit(0)` regardless
+would be flagged on every red run. A gate that fires on healthy suites gets switched off, which costs more than
+the hole it closes.
+
+Proved in seven directions before being trusted — the ones that must stay **silent** matter more than the ones
+that fire:
+
+    FAILS=0 + exit 139   flagged      (the real case; reproduced end to end, formations_config_test)
+    FAILS=0 + exit 1     flagged
+    FAILS=0 + exit 0     silent       (phase_banner_host_test, reproduced end to end)
+    FAILS=3 + exit 3     silent       quit(fails) convention
+    FAILS=3 + exit 0     silent       quit(0) convention - the false-positive direction
+    exit 124             silent       timeout keeps its own meaning
+    no FAILS line        silent       still NO RESULT, unchanged
+
+**Known limit, stated rather than discovered later:** exit codes are 8-bit, so a suite with >= 128 genuine
+failures would alias into the signal range and be reported as killed. The worst seen is 102. The alternative —
+trusting the failure-count convention — has the worse failure mode.
+
+**MEASURED 2026-11-15, first full run with the guard (333 suites, `full-suite-2026-11-15d-gate.txt`): the hole was
+2 suites wide.**
+
+    tests/unit/run/formations_config_test.gd         FAILS=0  *** KILLED BY SIGNAL (exit=139) ***
+    tests/unit/run/formation_shared_traits_test.gd   FAILS=0  *** KILLED BY SIGNAL (exit=139) ***
+
+`formations_config_test` is the one that was found by hand and prompted the guard. **`formation_shared_traits_test`
+was unknown to everybody** — it was written and committed (`2a68960a`, 2026-11-15) as a gate for the shared-trait
+rule, ran green in every check made of it, and has been segfaulting since. The guard caught its own author's bug on
+its first real run. That is the argument for the guard in one line: the case you build an instrument for is never
+the only case it finds, and you cannot count what you have never recorded.
+
+**Cause: the correlation is now a clean partition, though still not a mechanism.** Both crashers call
+`ChaptersConfig.set_formation_lookup()` with a lambda, leaving a static `Callable` alive at teardown. Counted across
+the whole tree rather than guessed:
+
+    suites calling set_formation_lookup   2   -> 2 crashed
+    suites not calling it               331   -> 0 crashed
+
+Every caller crashes and nothing else does, over 333 samples. That is far stronger than the two data points this
+entry first recorded — but it is still an association, not a demonstration: nobody has shown the Callable is what
+the signal comes from. The next step is to delete the lambda from one of the two and re-run it alone. Until someone
+does, write it as the leading hypothesis, not the cause.
 
 ---
 
@@ -58,9 +99,86 @@ list is complete, and that impression comes from the file's shape rather than fr
 
 ---
 
+## 3. Noise from somebody else's run, showing up as this run's failure
+
+**Inferred from the structure, never observed.** Recorded so nobody chases it as a suite bug, and labelled so
+nobody cites it as an incident.
+
+Every suite is its own Godot process under a ceiling: **600 s** headless, **240 s** for the windowed suites in
+`tests/integration/ui/`. Two or three full runs overlapping on one machine compete for CPU and slow everything;
+a heavy suite could be pushed past its ceiling and recorded as `TIMEOUT`. The mark would land on the **run that
+was harmed**, not the run that caused it, and nothing in the file records that the machine was busy. `tree_moved`
+cannot catch it either: no byte on disk changes.
+
+**Counted, not assumed: 0 `TIMEOUT` across all three runs on 2026-11-15**, including the stretch where three ran
+at once, and including a 39-minute run with 15 minutes of overlap. The margin is wider than either session
+guessed — consistent with the header's "~270 s on a **busy** machine" against a 600 s ceiling.
+
+Sign to look for: a lone `TIMEOUT` on a suite that is normally green, with the rest of the run healthy. Before
+looking for a bug in that suite, ask who else was running. Prevention: one full run at a time, by slot.
+(monster-skills session, with their own three corrections to how they first told it.)
+
+---
+
+## 4. Counting suites by `grep` gives a different answer depending on the pattern
+
+**Measured 2026-11-15, two sessions, one file, same ten minutes.** The file is
+`production/qa/full-suite-2026-11-15d-gate.txt`, whose own `SUMMARY` line says `suites=333`.
+
+    grep -c 'FAILS='   ->  334   one TOO MANY
+    grep -c 'FAILS='   ->  330   three TOO FEW
+
+Same command, same file, two readers, two answers — and **neither error is in the same direction**:
+
+- **334**: the explanatory legend the runner itself prints under a `FAILED` verdict contains the literal text
+  `FAILS=0`. The report counts as one of the suites it is describing.
+- **330**: a handful of suites print `FAILS:` with a colon instead of `FAILS=`. They are real suites, really
+  reported, and invisible to that pattern.
+
+**Read `SUMMARY: suites=` instead.** It is the only count in the file produced by the thing that did the counting;
+everything else is a reader re-deriving it from prose.
+
+**Why both numbers are written here rather than just one.** A single one-directional example teaches the wrong
+lesson: shown only the 334, a reader fixes the pattern (`grep -c '^tests.*FAILS='`) and keeps counting by grep.
+Shown both, the lesson is the right one — **the method is wrong, not the pattern.** Any pattern narrow enough to
+exclude the legend is narrow enough to miss a suite that formats its line differently, and nothing in the output
+tells you which just happened.
+
+This is the same shape as every other entry in this file, pointed at a number instead of a verdict: a count
+inferred from a text search reads as authoritative precisely because it came out of a command.
+
+---
+
+## 5. A verdict of FAILED whose every printed number is zero
+
+**Observed 2026-11-15, on the first run of the crash guard.** The gate condition counted `crash_total`; the line
+that prints the verdict did not. The result:
+
+    SUMMARY: suites=333 failures=0 script_errors=0 timeouts=0 no_result=0 crashes=2 tree_moved=0
+    RESULT: FAILED - failures=0 script_errors=0 timeouts=0 no_result=0 tree_moved=0
+      crashes = a suite printed a result and then died ...
+
+**FAILED, with every number it shows equal to zero, followed by a legend for a count it never printed.** A reader
+has two ways out, and both are bad: conclude the runner is broken, or go hunting in another line for the reason.
+`SUMMARY` had it all along, one line above — which is exactly why it survived review: the information was present
+in the file, just not in the sentence that passes judgement.
+
+**Fixed 2026-11-15**: `crashes=$crash_total` added to the verdict, checked in five counter states (crashes alone,
+clean, failures without crashes, tree_moved alone, all at once).
+
+**The class, which is the part worth keeping.** Every other entry in this file is a *green* that was not earned.
+This one is the mirror: a **red that cannot be acted on**. They are the same defect — the reader is handed a
+conclusion and denied the evidence for it — and the mirror is the easier one to ship, because a false red feels
+safe. It is not: an unexplainable FAILED trains people to re-run until it goes away.
+
+**Invariant, now written at the condition itself:** a counter must be added in *three* places — the gate
+condition, `SUMMARY`, and the verdict line. Two of three is this bug.
+
+---
+
 ## The family these belong to
 
-Six shapes of the same failure have been found in two days, all of them **silent**:
+Eight shapes of the same failure have been found in two days, all of them **silent**:
 
 | | Shape | Caught by |
 |---|---|---|
@@ -70,6 +188,8 @@ Six shapes of the same failure have been found in two days, all of them **silent
 | 4 | The runner called with no argument: output goes to an empty filename, 320 suites run for 35 minutes, exit 0 | being bitten |
 | 5 | A suite prints the right result, then dies, and the death is not counted | running it alone and reading `$?` |
 | 6 | A run stops part-way; the file it leaves is true in every line and complete in none | `tail -1` is not a `RESULT:` line |
+| 7 | A count derived by `grep` from a report, wrong in both directions at once depending on the pattern | reading `SUMMARY: suites=` instead |
+| 8 | A verdict of FAILED with every number it prints equal to zero — the mirror of a false green | a counter reaching the gate but not the verdict |
 
 The through-line: **green inferred from the absence of a failure signal, rather than asserted.** Every fix in this
 file's history is the same move — require the positive statement instead of accepting silence. Shapes 3, 5 and 6 are
