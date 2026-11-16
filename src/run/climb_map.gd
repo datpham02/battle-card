@@ -13,8 +13,20 @@ const ISLAND_ART: Vector2 = Vector2(320, 192)
 ## Vertical distance between two floors' island centres, share of the screen height.
 const STEP: float = 0.23
 ## Map space below the first island's centre and above the last one's (the summit), shares of the screen height.
+## TOP_RESERVE went 0.6 -> 0.778 -> 0.72 over 2026-11-16, with CUBE_Y, while the summit was first scaled up in code
+## and then redrawn as real art (see SUMMIT_SCALE). It is the gap between the last island and the summit and nothing
+## else: island-to-island spacing is STEP, which never changed.
+##
+## Why 0.72 and why floors 1-6 do not move. island_center(index).y works out to vp.y * TOP_RESERVE for the LAST
+## floor, so TOP_RESERVE = FOCUS_Y puts that island at FOCUS_Y with a scroll of exactly 0 — the one value where
+## [method scroll_for]'s clamp and its unclamped branch agree, so the "floors done" view (scroll 0) and the floor-7
+## view are the same picture. Raising or lowering TOP_RESERVE shifts every island's map y AND the scroll that
+## [method scroll_for] returns by the same amount, and the two cancel: while no floor's scroll is clamped — none is
+## here, the largest is floor 1's 993.6 against a 1051.2 limit at 720p — floors 1-6 are pixel-identical at 0.6,
+## 0.778 and 0.72. Only the summit moves, because CUBE_Y is absolute in map space. Verified on captures of floors
+## 1, 4 and 7.
 const BOTTOM_MARGIN: float = 0.36
-const TOP_RESERVE: float = 0.6
+const TOP_RESERVE: float = 0.72
 ## Island centres' x as shares of the width: even floors left, odd floors right.
 const ZIG_X: Array[float] = [0.4, 0.6]
 ## Where the current floor's island centre sits on screen (share of the height): low, so the climb above shows.
@@ -24,7 +36,27 @@ const FOCUS_Y: float = 0.72
 const FAR_SCALE: float = 0.5
 ## The cube's centre (map space, share of the screen height), its crop of the title art (art px) and its scale (x the
 ## art scale: the summit is the map's strongest landmark).
-const CUBE_Y: float = 0.32
+## CUBE_Y went 0.32 -> 0.43 -> 0.3875 over 2026-11-16 with TOP_RESERVE: the summit is centred on this point, so it
+## is the ONE knob that decides whether the summit clears the header above it and the last island below it.
+##
+## How 0.3875 was derived, so a future change can redo the arithmetic instead of nudging. At 720p with
+## TOP_RESERVE = FOCUS_Y the scroll at floor 7 is 0, so the summit's screen y IS vp.y * CUBE_Y = 279. The sprite is
+## 298 px tall and [method summit_rect] centres it. Above it the header band ends at
+## floor(720 * WorldMapView.HEADER_BAND) = 122; below it floor 7 is sky_isles (`assets/data/chapters.json`
+## world.region_order), which pins its island's CENTRE at FOCUS_Y = 518.4 — and its sprite is 320x192 but its first
+## OPAQUE row is 16, so its art starts 15 px lower than the sprite does.
+##
+## What the capture actually shows (`production/qa/evidence/world-map-summit/floor7-2026-11-16.png`, counted by
+## exact sprite colours, not by eye): the summit's drawn rows are 134..427, so 12 px of daylight under the header
+## and 12 px above sky_isles' first row at 439. Floors 1 and 4 are unmoved — floor 1's island bounding box is
+## identical to the previous capture's and floor 4's differs by the 1 px the idle drift adds.
+##
+## The trap worth naming: that 438.4 is region-specific. Reading the island's size instead of its OPAQUE rows puts
+## its top at 422.4 and makes the summit look 16 px taller than it is, which is how an earlier pass here talked
+## itself into believing the sprite did not fit. CUBE_SCALE below belongs to the title-crop FALLBACK in
+## WorldMapView._draw_cube, which only runs when summit.png is missing; it is deliberately still 1.0 and is not
+## the knob that sizes the live summit.
+const CUBE_Y: float = 0.3875
 const CUBE_SCALE: float = 1.0
 const CUBE_SRC: Rect2 = Rect2(280, 0, 166, 120)
 const ISLANDS_FILE: String = "res://assets/art/ui/climb/islands.json"
@@ -122,9 +154,22 @@ static func island_scale(vp: Vector2, index: int, current: int = -1) -> float:
 	return map_scale(vp)
 
 
-## Pure: the one draw scale of the climb map's art (islands, hero, summit, stairs).
+## Pure: the one draw scale of the climb map's art (islands, hero, stairs and — since the summit's multipliers went
+## back to 1.0 on 2026-11-16 — the summit too, through [method summit_scale]).
 static func map_scale(vp: Vector2) -> float:
 	return maxf(roundf(art_scale(vp) * FAR_SCALE), 1.0)
+
+
+## Pure: the summit PLATFORM's draw scale — [method map_scale] times [constant SUMMIT_SCALE]. Anything measured in
+## platform sprite px (the landing point, the platform band) scales by this, never by map_scale: mixing the two
+## silently puts the stair's end somewhere off the platform.
+static func summit_scale(vp: Vector2) -> float:
+	return map_scale(vp) * SUMMIT_SCALE
+
+
+## Pure: the summit HEART's draw scale (the cube, rings and fragments above SUMMIT_SPLIT).
+static func summit_heart_scale(vp: Vector2) -> float:
+	return map_scale(vp) * SUMMIT_HEART_SCALE
 
 
 ## Pure: the island's rect (map space): the sprite size at its scale ([method island_scale]), centred.
@@ -639,17 +684,42 @@ static func draw_island(canvas: CanvasItem, r: Rect2, region: String, bands: Dic
 		canvas.draw_polyline(closed, INK, 1.0)
 
 
-## 2026-11-07 (user: the summit should not be a still image): the Lattice Heart summit sprite (PixelLab S, 256x224) and
+## 2026-11-07 (user: the summit should not be a still image): the Lattice Heart summit sprite (248x298 since
+## 2026-11-16; see SUMMIT_SCALE for where it came from) and
 ## its live layers, cut by rows: the heart (cube, rings, fragments) above SUMMIT_SPLIT bobs by SUMMIT_BOB px on a slow
 ## sine, the platform below stays put; the gold seam pixels (SUMMIT_GLOW colours) pulse brighter over the heart.
 const SUMMIT_FILE: String = "res://assets/art/ui/climb/summit.png"
-const SUMMIT_SPLIT: int = 140
+const SUMMIT_SPLIT: int = 131
 const SUMMIT_BOB: float = 2.0
 const SUMMIT_BOB_HZ: float = 0.35
 const SUMMIT_PULSE_HZ: float = 0.6
 const SUMMIT_GLOW: Array[String] = ["f8c838", "ffe89a", "fff6c8"]
 ## Where the route ends on the summit platform (sprite px).
-const SUMMIT_LANDING: Vector2 = Vector2(128, 168)
+const SUMMIT_LANDING: Vector2 = Vector2(102, 238)
+## 2026-11-16, second pass (user: "the last island is smaller than the rest", then "B, the heart separated"): both
+## bands draw at map_scale, i.e. BOTH multipliers are 1.0 and the summit is no longer scaled in code at all.
+##
+## What this replaced, so nobody reinstates it. The first pass that day kept the old 256x224 summit, whose island
+## band was only 117x79 opaque — half the width of the narrowest region island — and compensated by drawing the
+## two bands at DIFFERENT multiples (platform 2 or 3, heart 1). That worked arithmetically and looked wrong: the
+## platform's pixels were twice the size of every neighbouring island's, which is not what "pixel art at a whole
+## scale" buys you, and the heart then read small on a wide platform. The multipliers survive as constants only so
+## this comment has something to point at; changing either one is almost certainly the wrong move.
+##
+## The fix was art, as that pass predicted it would have to be: summit.png is now 248x298, generated and assembled
+## 2026-11-16 (`design/assets/candidates/climb-map/island_lattice_heart_384x168.png` = the PixelLab island, 10
+## generations, create_image_pro 384x168; the heart is the old sprite's rows 13..139 cut out unchanged and set
+## 4 px above it). Opaque sizes it now has to beat: island_ch1 295x191, swamp 257x176, hellfire 252x156, ch3
+## 250x190, ch2 242x190, sky_isles 232x170.
+##
+## Known shortfall, measured not guessed: the island band is 248x167 opaque, so it is WIDER than only sky_isles
+## and still narrower than the other five. The model fits a subject to the canvas HEIGHT at the island's own ~1.5
+## aspect (it filled 99.4% of the height and 64.6% of the width), so a wider island is necessarily a taller one,
+## and the user accepted 248 rather than spend a second generation. Stacked with the heart the summit is 298 px
+## tall against the tallest island's 191, so it is the map's biggest object by height and by area — just not by
+## width. Widening it means a new generation on a taller canvas, not a multiplier here.
+const SUMMIT_SCALE: float = 1.0
+const SUMMIT_HEART_SCALE: float = 1.0
 
 
 ## Pure: the summit's vertical bob (px, before scale) at [param t] seconds.
@@ -662,13 +732,38 @@ static func summit_glow(t: float) -> float:
 	return 0.4 + 0.25 * sin(t * TAU * SUMMIT_PULSE_HZ)
 
 
-## The summit's rect on screen (map scale, centred on [param center]); empty without the sprite.
+## The summit's whole rect on screen, centred on [param center]; empty without the sprite. The two bands draw at
+## different scales ([constant SUMMIT_SCALE] / [constant SUMMIT_HEART_SCALE]), so this is their union: as wide as
+## the wider band (the platform) and as tall as the two stacked.
 static func summit_rect(vp: Vector2, center: Vector2) -> Rect2:
 	var tex: Texture2D = _tex(SUMMIT_FILE)
 	if tex == null:
 		return Rect2()
-	var size: Vector2 = Vector2(tex.get_size()) * map_scale(vp)
+	var kp: float = summit_scale(vp)
+	var kh: float = summit_heart_scale(vp)
+	var w: float = float(tex.get_width())
+	var h: float = float(tex.get_height())
+	var split: float = float(SUMMIT_SPLIT)
+	var size := Vector2(w * maxf(kp, kh), split * kh + (h - split) * kp)
 	return Rect2((center - size * 0.5).round(), size)
+
+
+## The top-left of the summit's PLATFORM band on screen (the heart band sits directly above it, centred on the
+## same x). Empty rect in, zero out.
+static func summit_platform_origin(vp: Vector2, center: Vector2) -> Vector2:
+	var tex: Texture2D = _tex(SUMMIT_FILE)
+	if tex == null:
+		return Vector2.ZERO
+	var r: Rect2 = summit_rect(vp, center)
+	var w: float = float(tex.get_width())
+	return Vector2(center.x - w * summit_scale(vp) * 0.5, r.position.y + float(SUMMIT_SPLIT) * summit_heart_scale(vp)).round()
+
+
+## Where the route ends on the summit, in screen px: [constant SUMMIT_LANDING] is in sprite px measured from the
+## sprite's top, and it sits below SUMMIT_SPLIT, so it is a point on the PLATFORM and scales with the platform.
+static func summit_landing(vp: Vector2, center: Vector2) -> Vector2:
+	var into_platform: Vector2 = SUMMIT_LANDING - Vector2(0.0, float(SUMMIT_SPLIT))
+	return summit_platform_origin(vp, center) + into_platform * summit_scale(vp)
 
 
 ## Draws the live summit at [param center] (screen) for time [param t]: the platform rows still, the heart rows bobbing,
@@ -677,15 +772,16 @@ static func draw_summit(canvas: CanvasItem, vp: Vector2, center: Vector2, t: flo
 	var tex: Texture2D = _tex(SUMMIT_FILE)
 	if tex == null:
 		return false
-	var k: float = map_scale(vp)
+	var kp: float = summit_scale(vp)
+	var kh: float = summit_heart_scale(vp)
 	var r: Rect2 = summit_rect(vp, center)
 	var w: float = float(tex.get_width())
 	var h: float = float(tex.get_height())
 	var split: float = float(SUMMIT_SPLIT)
-	var bob: float = summit_bob(t) * k
+	var bob: float = summit_bob(t) * kh
 	var tx: Texture2D = PixelFrame.nearest(tex)
-	canvas.draw_texture_rect_region(tx, Rect2(r.position + Vector2(0.0, split * k), Vector2(w, h - split) * k), Rect2(0.0, split, w, h - split))
-	var top := Rect2(r.position + Vector2(0.0, bob), Vector2(w, split) * k)
+	canvas.draw_texture_rect_region(tx, Rect2(summit_platform_origin(vp, center), Vector2(w, h - split) * kp), Rect2(0.0, split, w, h - split))
+	var top := Rect2(Vector2(center.x - w * kh * 0.5, r.position.y + bob).round(), Vector2(w, split) * kh)
 	canvas.draw_texture_rect_region(tx, top, Rect2(0.0, 0.0, w, split))
 	var glow: Texture2D = _summit_glow_mask(tex)
 	canvas.draw_texture_rect_region(PixelFrame.nearest(glow), top, Rect2(0.0, 0.0, w, split), Color(1.0, 0.95, 0.75, summit_glow(t)))

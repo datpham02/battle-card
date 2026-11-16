@@ -673,7 +673,7 @@ func _summit_landing(vp: Vector2, off: Vector2) -> Vector2:
 	var r: Rect2 = ClimbMap.summit_rect(vp, ClimbMap.cube_center(vp) + off)
 	if r.size == Vector2.ZERO:
 		return ClimbMap.cube_center(vp) + off + Vector2(0.0, vp.y * 0.12)
-	return r.position + ClimbMap.SUMMIT_LANDING * ClimbMap.map_scale(vp)
+	return ClimbMap.summit_landing(vp, ClimbMap.cube_center(vp) + off)
 
 
 # The hero's idle frame (the real sheet, whole-number [param k] like the islands) with its feet at [param feet].
