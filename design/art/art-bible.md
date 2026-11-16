@@ -505,9 +505,34 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
   - **không có màu nhấn khối**: địch dùng màu vùng + Đá/Sương/Ngà, S 30–45 %;
   - anh hùng = đầu tròn + đạo cụ cạnh thẳng; địch = hữu cơ/nhọn (tai, sừng, cánh).
 - Cùng viền Mực 1 px, không viền màu phe. Tư thế niệm theo Mục 3 (lấy đà, không cầm khối). Không có đồng minh hay NPC trong trận (NPC chỉ là minh họa tĩnh ở sự kiện/cửa hàng).
-- **Quái thường** ≤ 34 px: dấu loài ở nửa trên.
-- **Tinh Anh** ≤ 40 px: cùng loài + 1 bộ phận phóng to + 2–3 vảy 2×2 màu Ngà, phẳng, không glow.
-- **Kẻ Gác** (48×64, thân ≤ 52×40): loài duy nhất, không biến thể, có **Mảnh Gốc**. Khác Tinh Anh ở 3 thứ: cao hơn ≥ 12 px, không thuộc loài quái thường, có Mảnh Gốc.
+- **Kích thước thân theo bậc — ĐO THEO Ô, không theo px tuyệt đối** (người dùng chốt 2026-11-16, thay hẳn
+  trần cũ "quái thường ≤ 34 px / Tinh Anh ≤ 40 px" của 2026-10-29):
+
+  | Bậc | Bề ngang thân / bề ngang ô | Trên ô phẳng 64 px |
+  |---|---|---|
+  | Quái thường | **70–85 %** | 45–54 px |
+  | Tinh Anh | **90–105 %** | 58–67 px |
+  | Kẻ Gác / boss **một ô** | **110–130 %** | 70–83 px |
+  | Kẻ Gác trên **khối 2×2** | giữ nguyên (`forest_witch`, `goblin_warlock`) | — |
+
+  **Vì sao đo theo ô chứ không theo px.** Trần cũ là một con số tuyệt đối, nên khi ô đổi kích thước giữa
+  các sân thì luật trôi theo mà không ai thấy. Tỉ lệ thì không trôi.
+
+  **Vì sao bậc trên phải CHẮC CHẮN to hơn bậc dưới, không chỉ "to hơn".** Các khoảng trên không chồng nhau:
+  một Tinh Anh ở mức thấp nhất (90 %) vẫn to hơn một quái thường ở mức cao nhất (85 %). Đo ngày 2026-11-16 cho
+  thấy vì sao điều đó phải viết ra: Tinh Anh `leap_frog` rộng 48 % trong khi quái thường `swamp_lizard` rộng
+  77 % — bậc cao hơn lại nhỏ hơn, và không phép kiểm nào kêu.
+
+  **Hiện trạng lúc chốt luật:** quái thường trải từ 30 % (`wisp` 19 px) đến 77 % (`swamp_lizard` 49 px) —
+  chênh 2,5 lần trong cùng một bậc. Khoảng 45 trên 68 con dưới 60 %. Luật này mô tả ĐÍCH ĐẾN, không mô tả
+  hiện trạng; `art_check` báo WARNING chứ không FAIL cho tới khi roster được gen lại, vì FAIL sẽ khoá commit
+  art của mọi phiên ngay lập tức. Số đo đầy đủ: `production/qa/evidence/stance-probe/README.md`.
+
+  Pixel art không phóng được phi nguyên lần, nên đưa một con về khoảng đúng nghĩa là **gen lại**, không phải
+  scale. Chia đợt, mỗi đợt người dùng duyệt riêng.
+- **Quái thường**: dấu loài ở nửa trên.
+- **Tinh Anh**: cùng loài + 1 bộ phận phóng to + 2–3 vảy 2×2 màu Ngà, phẳng, không glow.
+- **Kẻ Gác** (khung 48×64 là con số cũ; trên đĩa xem §8.3): loài duy nhất, không biến thể, có **Mảnh Gốc**. Khác Tinh Anh ở 3 thứ: cao hơn ≥ 12 px, không thuộc loài quái thường, có Mảnh Gốc.
 - **Mảnh Gốc:**
   - polyomino 4–6 ô, **mỗi Kẻ Gác một hình**; nếu dữ liệu có Hình Cộng Hưởng của vùng thì dùng đúng hình đó (cần kiểm);
   - 2 px/ô, ≤ 8 px cao, Ánh Lưới + halo 1 px, cách đầu 2 px, đứng yên;
