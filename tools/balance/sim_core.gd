@@ -244,6 +244,9 @@ var combat: CombatConfig
 var grid: BoardGrid
 var state: CombatState
 var status: StatusEffects
+## F2 (characters.json `attributes.hazard_resist_mult`): multiplies hazard damage the PLAYER takes.
+## Mirrors CombatView._hazard_amount. 1.0 (the default) leaves every number exactly as it was.
+var _hazard_resist_mult: float = 1.0
 var actor: CutActor
 var mover: UnitMover
 var drops: FieldDrops
@@ -890,6 +893,14 @@ func _setup(m: Dictionary, character: Dictionary, deck_entries: Array, start_hp:
 	if relic_merged.has("focus_sec"):
 		focus.set_max_sec_override(maxf(_relic_value(focus.get_max_sec(), "focus_sec"), 0.0))
 	actor = CutActor.new(cut_config, PLAYER)
+	# F2: the character's cast_speed_mult rides the PLAYER actor's duration_mult, which
+	# CutActor.begin_swing applies BEFORE the passive — the approved order. Mirrors CombatView.
+	var _f2_cast_speed: float = float(character.get("cast_speed_mult", 1.0))
+	if _f2_cast_speed > 0.0:
+		actor.duration_mult = _f2_cast_speed
+	_hazard_resist_mult = maxf(float(character.get("hazard_resist_mult", 1.0)), 0.0)
+	if _hazard_resist_mult <= 0.0:
+		_hazard_resist_mult = 1.0
 	# Mirrors CombatView: a Cast Commitment card's channel is longer by channel_extend_sec (after every modifier).
 	actor.channel_extend_fn = func(id: String) -> float: return float(cards.get_skill(id).get("channel_extend_sec", 0.0))
 	# Mirrors CombatView: a card's fixed cast time (cast_time_sec; Hỏa Lôi).
@@ -3007,9 +3018,20 @@ func _setup_hazards(m: Dictionary, match_seed: int) -> void:
 
 # The unit standing in mire takes the tick damage (CombatState keeps its own invulnerability rules). The HP
 # actually lost is counted (mire_dmg / bmire_dmg) and the player's also goes into "taken".
+# F2: hazard damage [param amount] aimed at [param side], scaled by the character's
+# `hazard_resist_mult` when — and only when — the target is the PLAYER. Mirrors
+# CombatView._hazard_amount; the guard matters for the same reason there.
+# The vent's burn is applied per CELL by StatusEffects, not per unit, so at that call site the
+# resist is scaled by the half the vent erupted on — exact only because a unit never stands on
+# the other side's cells (CombatState.unit_fits rejects any footprint cell failing
+# grid.is_enemy_cell). Same assumption as CombatView, same comment there.
+func _hazard_amount(side: int, amount: float) -> float:
+	return amount * _hazard_resist_mult if side == PLAYER else amount
+
+
 func _on_mire_damage(side: int, amount: float) -> void:
 	var before: float = state.player_hp if side == PLAYER else state.enemy_hp
-	state.damage(side, amount)
+	state.damage(side, _hazard_amount(side, amount))
 	var lost: float = maxf(before - (state.player_hp if side == PLAYER else state.enemy_hp), 0.0)
 	if side == PLAYER:
 		ms["mire_dmg"] = float(ms["mire_dmg"]) + lost
@@ -3033,7 +3055,7 @@ func _on_sand_filled(side: int, cells: Array[Vector2i]) -> void:
 # vent_tick_sec / vent_tick_damage, like row_burner's burn) and the field pieces lying there are burnt.
 func _on_vent_erupted(side: int, _vent_index: int, cells: Array[Vector2i]) -> void:
 	status.ignite(cells, float(_haz_cfg.get("vent_sec", 2.0)), float(_haz_cfg.get("vent_tick_sec", 0.5)),
-		float(_haz_cfg.get("vent_tick_damage", 2.0)))
+		_hazard_amount(side, float(_haz_cfg.get("vent_tick_damage", 2.0))))
 	var fd: FieldDrops = drops if side == PLAYER else boss.get_drops()
 	var n: int = fd.bury_cells(cells)
 	var key: String = "buried" if side == PLAYER else "bburied"
@@ -3055,7 +3077,7 @@ func _on_cell_fell(side: int, cell: Vector2i, occupant_pushed: bool) -> void:
 	if not occupant_pushed:
 		return
 	var before: float = state.player_hp if side == PLAYER else state.enemy_hp
-	state.damage(side, float(_haz_cfg.get("fall_damage", 8.0)))
+	state.damage(side, _hazard_amount(side, float(_haz_cfg.get("fall_damage", 8.0))))
 	var lost: float = maxf(before - (state.player_hp if side == PLAYER else state.enemy_hp), 0.0)
 	if side == PLAYER:
 		ms["pushed"] = int(ms["pushed"]) + 1
