@@ -1,0 +1,24 @@
+FULL GATE RUN anchor - written BEFORE the run starts
+started:     2026-11-16 19:54:29
+HEAD:        92568b0f21235f7ba7d99a1ef9979a4247758967
+origin/main: 92568b0f21235f7ba7d99a1ef9979a4247758967
+
+EXPECTED SUITE COUNT: 344   (headless 335 + windowed 9)
+  Measured NOW with the runner's own two find commands, not carried over.
+  Yesterday's run reported 341; three suites have been added since. A remembered
+  341 compared against a reported 344 sends you chasing nothing - and a reported
+  341 when 344 exist means three silently did not run AND the number agrees with
+  your memory, so nobody looks. That second direction is why this line exists.
+  Valid as the start count iff tree_moved=0 at RESULT, which this run reports.
+
+WHY THIS RUN: the last full run was 2026-11-15 19:57. These two commits are a day
+newer and NO wide gate has covered them:
+  92568b0f docs(qa): re-capture Phase 5 trait evidence
+  748e933e fix(combat): a trait answers its own unit's wound (H5)
+748e933e touches src/combat/combat_view.gd, a 4000-line core file many suites reach.
+The 13 targeted suites run at the time were all green (exit=0), but tests/integration/run/
+was NOT among them. That is the known hole this run exists to cover.
+
+DIRTY WORKING TREE AT START: 575 entries
+  The run executes HEAD PLUS these uncommitted files from ~16 sessions, so a green
+  result clears the TREE, not the commits. See docs/qa/full-suite-before-push.md.
