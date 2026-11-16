@@ -1,0 +1,7 @@
+{
+  "_doc": "Head marks (art bible 5.2 'Mảnh Gốc'): a Lattice Light polyomino drawn by code above a warden's head, still (no breathing, no lean). cells = [x, y] squares, y down from the top of the shape; cell_px = art px per square; head_px = art px from the feet to the top of the head in the idle clip; head_dx = art px from the frame centre to the head, in the sheet's own facing (mirrored with the sprite); gap_px = art px between the head and the shape. Units not listed have no mark. Measured from art_src/units/<id>/idle/0.png.",
+  "units": {
+    "an_dai_keeper": {"cells": [[0, 0], [0, 1], [1, 1]], "cell_px": 2, "head_px": 73, "head_dx": -3, "gap_px": 2,
+      "colour": "#FFD45C", "outline": "#1B1722"}
+  }
+}

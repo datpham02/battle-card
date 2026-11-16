@@ -1280,6 +1280,7 @@ func _draw() -> void:
 			else:
 				_draw_enemy(_unit_art_rect(side), side)
 		_draw_status_overlays(side, kinds, feet, CLIP_FRONT)
+		_draw_head_mark(side, ground)
 
 
 # The add-blend child the hit flash draws on (created once; children draw over the units).
@@ -1473,6 +1474,75 @@ func _draw_sprite(side: int, feet: Vector2i, pose: Vector4i = Vector4i.ZERO) -> 
 		tint = DOWNED_COLOR  # unit 0 only: "downed" has no meaning for units 1+
 	_draw_frame_bands(self, side, texture, src, feet, sheet.facing() != facing_for(side), pose, tint)
 	return true
+
+
+## 2026-11-15 Mảnh Gốc (art bible 5.2): a Lattice Light polyomino drawn by code above a warden's head. It stays still
+## (it ignores breathing, lean and shake) and follows the unit's ground. Data: assets/art/units/unit_marks.json; a unit
+## that is not listed there has no mark. Not in the sheet, so a new mark is a data edit, never a new generation.
+const UNIT_MARKS_PATH: String = "res://assets/art/units/unit_marks.json"
+const HEAD_MARK_DEFAULT_COLOUR: String = "#FFD45C"
+const HEAD_MARK_DEFAULT_OUTLINE: String = "#1B1722"
+static var _head_marks: Dictionary = {}
+static var _head_marks_loaded: bool = false
+
+
+## The head-mark entry of [param unit_id] from unit_marks.json, or an empty Dictionary when the unit has none.
+static func head_mark_for(unit_id: String) -> Dictionary:
+	if not _head_marks_loaded:
+		_head_marks_loaded = true
+		var file := FileAccess.open(UNIT_MARKS_PATH, FileAccess.READ)
+		if file != null:
+			var data: Variant = JSON.parse_string(file.get_as_text())
+			if data is Dictionary and (data as Dictionary).get("units") is Dictionary:
+				_head_marks = (data as Dictionary)["units"]
+	var entry: Variant = _head_marks.get(unit_id, {})
+	return entry if entry is Dictionary else {}
+
+
+## Pure: the square rects (art px) of [param mark] for a unit standing at [param feet]. The shape's bottom sits
+## gap_px above the head (head_px above the feet), centred on feet.x + head_dx; [param flip] mirrors head_dx and the
+## shape, as the sprite is mirrored. Empty when the mark has no cells.
+static func head_mark_rects(mark: Dictionary, feet: Vector2i, flip: bool) -> Array[Rect2i]:
+	var out: Array[Rect2i] = []
+	var cells: Array = mark.get("cells", [])
+	if cells.is_empty():
+		return out
+	var px: int = maxi(int(mark.get("cell_px", 2)), 1)
+	var max_x: int = 0
+	var max_y: int = 0
+	for c: Variant in cells:
+		max_x = maxi(max_x, int(c[0]))
+		max_y = maxi(max_y, int(c[1]))
+	var w: int = (max_x + 1) * px
+	var h: int = (max_y + 1) * px
+	var dx: int = int(mark.get("head_dx", 0))
+	if flip:
+		dx = -dx
+	var left: int = feet.x + dx - floori(w / 2.0)
+	var top: int = feet.y - int(mark.get("head_px", 0)) - int(mark.get("gap_px", 2)) - h
+	for c: Variant in cells:
+		var cx: int = int(c[0])
+		if flip:
+			cx = max_x - cx
+		out.append(Rect2i(left + cx * px, top + int(c[1]) * px, px, px))
+	return out
+
+
+# Draws the head mark of [param side] over [param feet] (the ground point, so the mark does not breathe): a 1 px Ink
+# outline under every square first, then the Lattice Light squares, so touching squares read as one shape.
+func _draw_head_mark(side: int, feet: Vector2i) -> void:
+	var mark: Dictionary = head_mark_for(get_unit_id(side))
+	if mark.is_empty():
+		return
+	var sheet: SpriteSheet = get_sheet(side)
+	var flip: bool = sheet != null and sheet.facing() != facing_for(side)
+	var rects: Array[Rect2i] = head_mark_rects(mark, feet, flip)
+	var outline := Color(str(mark.get("outline", HEAD_MARK_DEFAULT_OUTLINE)))
+	var light := Color(str(mark.get("colour", HEAD_MARK_DEFAULT_COLOUR)))
+	for r: Rect2i in rects:
+		draw_rect(Rect2(r.grow(1)), outline)
+	for r: Rect2i in rects:
+		draw_rect(Rect2(r), light)
 
 
 ## Pure: the three bands a frame of height [param frame_h] is drawn in for a body [param body_h] tall split at
