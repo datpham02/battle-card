@@ -36,7 +36,7 @@
 				"personality_key": "character.phap_su.personality",
 				"playstyle_key": "character.phap_su.playstyle",
 				"block_material_key": "character.phap_su.block_material",
-				"accent_color": "#E08A2E",
+				"accent_color": "#F0A030",
 				"portrait": "",
 				"select_art": ""
 			},
@@ -62,7 +62,7 @@
 				"personality_key": "character.sat_thu.personality",
 				"playstyle_key": "character.sat_thu.playstyle",
 				"block_material_key": "character.sat_thu.block_material",
-				"accent_color": "#6FD8E8",
+				"accent_color": "#BFF3EC",
 				"portrait": "",
 				"select_art": ""
 			},
