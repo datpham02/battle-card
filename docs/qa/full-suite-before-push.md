@@ -253,3 +253,42 @@ three links about tracked files and does not extend to untracked-by-manifest one
 (monster-skills session proposed the HEAD anchor originally, and corrected it here: it removed a real race, and
 was then stated as if it were the *correct* check rather than a safe-one-way one. Link 4 verified by the
 coordinating session; links 1-3 are from the Keeper run's own output.)
+
+---
+
+## Procedure for the clean-worktree run (the one thing a gate on this checkout cannot do)
+
+Every run described above executes `HEAD` **plus the working tree** — on 2026-11-15 that was 526 dirty files from
+about thirteen sessions. So those runs clear the TREE. The commits are cleared only by a run on a tree that holds
+nothing else: a worktree checked out from `origin/main`.
+
+Four conditions specific to that run, learned from the 16:31 gate (multi-enemy session):
+
+**1. Measure the expected suite count IN THAT WORKTREE, before starting, with the runner's own two commands.**
+
+```bash
+a=$(find tests/unit tests/integration -name "*_test.gd" | grep -v "tests/integration/ui/" | wc -l)
+b=$(find tests/integration/ui -name "*_test.gd" | wc -l); echo $((a+b))
+```
+
+Do **not** carry a count over from a run on this checkout. The dangerous direction is not a mismatch you notice:
+it is a run reporting the number you remember while fewer suites actually ran. On 2026-11-15 the tree held 341
+while everyone, including the coordinating session, had been saying 333 all afternoon — and 333 was a real
+measurement, taken at 12:52, invalidated by the suites committed after it. A clean worktree differs again,
+because the three untracked `pattern_sky_group_*` suites are not in `origin/main` at all.
+
+**2. The count only means something if `tree_moved=0` ratifies it.** A clean worktree should give that trivially,
+since nobody else is writing there. If it does not, stop: that is the finding, not a nuisance.
+
+**3. Expect `crashes=2`, and treat the partition as the real prediction.** `formations_config_test` and
+`formation_shared_traits_test` print `FAILS=0` then die with `exit=139`. They are the only two suites that call
+`ChaptersConfig.set_formation_lookup()` with a lambda: 2 of 2 callers crash, 0 of 331 non-callers do. If that
+partition does not hold on a clean tree, the hypothesis is wrong — which is worth more than a green run.
+
+**4. Do NOT expect the 4 failures.** They came from three untracked files that do not exist in `origin/main`.
+Anything red there is new and real, and nothing from the 16:31 run explains it away.
+
+**What it settles.** `dac07c65` is what the remote has, and only this run tests it alone. Green: the push is
+justified in retrospect. Red: something on the remote has been leaning on an uncommitted file on somebody's
+disk — the exact failure the whole day's machinery was built to make visible, and the one a gate run on this
+checkout can never show.
