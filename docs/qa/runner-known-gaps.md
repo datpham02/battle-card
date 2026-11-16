@@ -181,24 +181,42 @@ This is the same shape as every other entry in this file, pointed at a number in
 inferred from a text search reads as authoritative precisely because it came out of a command.
 
 **A second instance, 2026-11-16, on a different question and worse.** Checking whether files had been converted
-to LF, `grep -c $''` was used to count lines containing a carriage return. Reproduced on two files built on the
+to LF, `grep -c $'\r'` was used to count lines containing a carriage return. Reproduced on two files built on the
 spot:
 
-    file with 0 CR bytes    tr -dc '' | wc -c -> 0    grep -c $'' -> 3
-    file with 3 CR bytes    tr -dc '' | wc -c -> 3    grep -c $'' -> 3
+    file with 0 CR bytes    tr -dc '\r' | wc -c -> 0    grep -c $'\r' -> 3
+    file with 3 CR bytes    tr -dc '\r' | wc -c -> 3    grep -c $'\r' -> 3
 
-**The same answer for both.** `$''` does not survive to grep, which receives an EMPTY pattern and matches every
+**The same answer for both.** `$'\r'` does not survive to grep, which receives an EMPTY pattern and matches every
 line. So the check reported "all 352 lines have CR" for a file with none — not the false *negative* one might
 expect from a tool reading in text mode, but a false *alarm*, and one that cannot distinguish the two cases it
 was asked to separate at all.
 
-Three instruments were tried before a trustworthy one: `grep -c $''` (matches everything), `od -c` piped
+Three instruments were tried before a trustworthy one: `grep -c $'\r'` (matches everything), `od -c` piped
 through `grep -o` with an alternation (leftmost match wins, so it reports whichever appears first), and `od -c`
 piped through `grep -c` (counts 16-byte output rows, not line endings). **The decisive one reads bytes and does
 no text interpretation:**
 
-    cr=$(tr -dc '' < "$f" | wc -c); ln=$(wc -l < "$f")
+    cr=$(tr -dc '\r' < "$f" | wc -c); ln=$(wc -l < "$f")
     # cr == 0 -> pure LF;  cr == ln -> pure CRLF;  otherwise MIXED
+
+**AND THE COMMIT THAT WROTE THE ABOVE PUT EIGHT LIVE CR BYTES INTO THIS FILE.** `0923e962` landed 8 real
+carriage returns mid-line, in exactly the passages meant to SHOW a backslash-r. A reader copying the one-line
+diagnostic recommended here would have pasted a raw CR into their shell, and the command would have failed to do
+what it says. Found by another session measuring the tree, not by its author.
+
+The repair needed three attempts, which is the instructive part. `data.replace(b"\r", ...)` through a shell
+heredoc and a Python string literal lost a backslash on the way and became a no-op reporting success; the next
+attempt looked like it had worked because a terminal renders a CR by returning the cursor, so `'<CR>'` displays as
+`''`. It only went right when every escape layer was removed:
+
+    CR = bytes([13]); BSLASH_R = bytes([92, 114])
+    data = data.replace(CR, BSLASH_R)
+
+**Writing about an escaping hazard is subject to that hazard, one layer deeper, and the output looks correct while
+being wrong.** Another session put 4 live CRs into its own CR warning the same hour. Byte values have no escape
+layer to lose, and `tr -dc` has no text mode to hide behind — use both when the subject matter is the character
+itself.
 
 The general rule is the one this file keeps arriving at from new directions: **before a check convinces you, run
 it on a case where you KNOW the answer, in both directions.** Two three-line files settled in one command what
