@@ -122,11 +122,11 @@ arena.staircase.name,Bậc thang,Staircase
 arena.diamond.name,Kim cương,Diamond
 trait.row_burner.name,Hàng Lửa,Flame Row
 trait.rotten_thrower.name,Ném Đồ Hỏng,Rotten Toss
-character.kiem_si.name,Kiếm sĩ,Swordsman
+character.kiem_si.name,Vale,Vale
 character.kiem_si.desc,Cân bằng và bền bỉ: nhiều máu và bộ bài vững.,Balanced and sturdy: plenty of health and a solid deck.
-character.phap_su.name,Pháp sư,Mage
+character.phap_su.name,Ilva,Ilva
 character.phap_su.desc,Mong manh nhưng thạo trận pháp diện rộng; tập trung được lâu.,Frail but a master of wide spells; can focus for longer.
-character.sat_thu.name,Sát thủ,Assassin
+character.sat_thu.name,Quill,Quill
 character.sat_thu.desc,Nhanh nhẹn và chí mạng với những đường chém nhỏ.,Nimble and deadly with short cuts.
 passive.second_wind.name,Lấy Lại Sức,Second Wind
 passive.second_wind.desc,Hồi thêm 20 máu sau mỗi trận thắng.,Recover 20 extra HP after every won match.
@@ -687,16 +687,16 @@ achievement.zone_trap.name,Bẫy gai,Thorn Trap
 achievement.zone_trap.desc,Boss bước vào gai 5 lần trong một chuyến leo,Make a boss step on your thorns 5 times in one climb
 achievement.frost_burst_5.name,Bão Giá Lạnh,Chill Storm
 achievement.frost_burst_5.desc,Giá Lạnh nổ 5 lần trong một trận,Burst Chill 5 times in one match
-achievement.win_kiem_si.name,Kiếm sĩ khải hoàn,Swordsman's Triumph
-achievement.win_kiem_si.desc,Thắng một chuyến leo với Kiếm sĩ,Win a climb as the Swordsman
-achievement.win_phap_su.name,Pháp sư khải hoàn,Mage's Triumph
-achievement.win_phap_su.desc,Thắng một chuyến leo với Pháp sư,Win a climb as the Mage
-achievement.win_sat_thu.name,Sát thủ khải hoàn,Assassin's Triumph
-achievement.win_sat_thu.desc,Thắng một chuyến leo với Sát thủ,Win a climb as the Assassin
-achievement.win_tho_san.name,Thợ săn khải hoàn,Hunter's Triumph
-achievement.win_tho_san.desc,Thắng một chuyến leo với Thợ săn,Win a climb as the Hunter
-achievement.win_giao_si.name,Giáo sĩ khải hoàn,Priest's Triumph
-achievement.win_giao_si.desc,Thắng một chuyến leo với Giáo sĩ,Win a climb as the Priest
+achievement.win_kiem_si.name,Vale khải hoàn,Vale's Triumph
+achievement.win_kiem_si.desc,Thắng một chuyến leo với Vale,Win a climb as Vale
+achievement.win_phap_su.name,Ilva khải hoàn,Ilva's Triumph
+achievement.win_phap_su.desc,Thắng một chuyến leo với Ilva,Win a climb as Ilva
+achievement.win_sat_thu.name,Quill khải hoàn,Quill's Triumph
+achievement.win_sat_thu.desc,Thắng một chuyến leo với Quill,Win a climb as Quill
+achievement.win_tho_san.name,Bram khải hoàn,Bram's Triumph
+achievement.win_tho_san.desc,Thắng một chuyến leo với Bram,Win a climb as Bram
+achievement.win_giao_si.name,Oriel khải hoàn,Oriel's Triumph
+achievement.win_giao_si.desc,Thắng một chuyến leo với Oriel,Win a climb as Oriel
 achievement.burn_build.name,Bộ bài lửa,Burning Deck
 achievement.burn_build.desc,Hạ Kẻ Gác với từ 4 lá Cháy trong bộ,Defeat a Warden with 4 or more Burn cards in your deck
 achievement.featured_10.name,Bậc thầy Hình Cộng Hưởng,Resonant Master
@@ -705,9 +705,9 @@ achievement.no_hit_boss.name,Bất khả xâm phạm,Untouchable
 achievement.no_hit_boss.desc,Hạ Kẻ Gác mà không nhận đòn nào,Defeat a Warden without taking a hit
 achievement.small_deck.name,Bộ bài gọn,Lean Deck
 achievement.small_deck.desc,Thắng chuyến leo với bộ từ 8 lá trở xuống,Win a climb with a deck of 8 cards or fewer
-character.tho_san.name,Thợ săn,Hunter
+character.tho_san.name,Bram,Bram
 character.tho_san.desc,Rải gai để boss lộ sơ hở; Thức Tỉnh kéo dài và rải thêm gai.,Lays thorns to leave the boss open; its Awakening stretches and spreads them.
-character.giao_si.name,Giáo sĩ,Priest
+character.giao_si.name,Oriel,Oriel
 character.giao_si.desc,"Bền bỉ, xây bộ Giá Lạnh; mỗi lần Giá Lạnh nổ lại hồi máu.","Sturdy, builds on Chill; every Chill burst heals."
 passive.hunter_mark.name,Dấu Con Mồi,Marked Prey
 passive.hunter_mark.desc,"Boss bước vào gai của bạn, hoặc đứng kề gai vừa rải, nhận 1 tầng Rạn (chờ 3 giây).","A boss that steps onto your thorns, or stands next to thorns you just laid, gains 1 Fragile (3 s cooldown)."
