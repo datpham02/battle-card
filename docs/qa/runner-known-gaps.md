@@ -236,6 +236,18 @@ probe was wrong. **Three probes, not one** is what separated those.
 **This corrects section 3.** That entry tells a reader who sees a lone `TIMEOUT` to ask who else was running,
 because a busy machine can push a slow suite past its ceiling. True, but no longer the only cause: **a suite that
 errors during startup hangs and is also recorded as `TIMEOUT`** — after burning the full 600 s ceiling. The two
+**BOUNDARY, measured 2026-11-16 and narrower than this entry first implied.** The hang above was measured for an
+error inside `_initialize()` on a `SceneTree` script — probe B, exit 124 at the ceiling. It does **not**
+generalise to "a startup error hangs". A real defect on the startup PATH, two bad lines in
+`CombatView._setup_pattern_brain()`, was measured in a clean checkout and did not hang at all:
+
+    boss_footprint_dodge   FAILS=0 se=1 exit=0   4 s    a false green on a real suite
+    forest_witch_flow      FAILS=1 se=1 exit=1   5 s    caught it on its own
+
+So WHERE the error happens decides the behaviour, and "startup error" is too coarse a category to predict from.
+Read the line, never the category. (Measured by the coordinating session, commit `e1bca36e`.)
+
+
 are told apart on the same line:
 
     ... *** SCRIPT ERRORS=1 *** TIMEOUT    hung on an error; the machine is innocent
@@ -245,9 +257,80 @@ Check the line before the machine.
 
 ---
 
+## 7. A gap that does not go silent — it wears somebody else's label
+
+Every other entry here is about **silence**: a detector that never fires, an empty column, a number nobody
+recorded. This class emits a signal — but the signal belongs to something else. A runtime error in a setup
+function can make Godot print the error and hang; the runner waits out the 600 s ceiling and writes `TIMEOUT`,
+which already has a familiar reading: *"the machine was busy."* A code defect puts on the costume of an
+infrastructure problem, and the reader goes looking where there is nothing to find.
+
+> **A gap that covers up is silent, and everyone knows silence carries no news. A gap that emits the wrong label
+> consumes the attention it attracts, and spends it going the wrong way.**
+
+**How to read a `TIMEOUT`:** conclude nothing from the label. `*** SCRIPT ERRORS=n ***` on the same line means
+broken code, not a busy machine. A lone `TIMEOUT` on a suite that normally takes seconds is far more suspicious
+than one on a suite that normally takes 270 s.
+
+**AND THIS ENTRY ALMOST SHIPPED A FABRICATED CASE, which is worth more than the entry.** The draft listed, as
+observed case 2, a `BossBrainConfig.push_icd_sec` defect that "printed the error and HUNG, cut by the timeout".
+It was relayed from another session and copied in without being measured. It is false: measured afterwards in a
+clean checkout, those two bad lines ran in **4 s and 5 s** and did not hang — one suite caught the defect
+outright, the other was a false green. The line survived to be corrected only because a write lock delayed the
+paste. **Luck, not discipline.** A relayed observation is a claim, and it needs the same measurement as your own
+before it goes under your file's name.
+
+(Class identified by the design-monster-skills session; case 2 corrected by the coordinating session,
+commit `e1bca36e`.)
+
+---
+
+## 8. A suite can enter the very function and turn around at the door
+
+How the gap above survives. `CombatView._setup_pattern_brain()` opens with a guard:
+
+```gdscript
+if not is_pattern_brain():
+    return
+```
+
+`tests/unit/combat/pattern_wiring_test.gd` builds a `CombatView` and has "pattern" in its name — but never sets a
+pattern brain, so it enters and leaves on the first line, touching nothing inside. An audit by filename, or by
+"which suites build a `CombatView`", counts it as covered. Counted by what opens the guard instead:
+
+    suites that build a CombatView          38
+    suites that set BRAIN_PATTERN            2    boss_footprint_dodge_test, forest_witch_flow_test
+    pattern_wiring_test                      3 CombatView references, 0 BRAIN_PATTERN
+
+The guard is a conjunction — `brain == RunConfig.BRAIN_PATTERN` **and** a non-empty `enemy` — so even counting by
+`BRAIN_PATTERN` alone would over-count.
+
+**Count coverage by what OPENS the guard, not by what calls the function.** Written down because the first count
+made exactly this mistake: asked to verify the claim, this file's own author grepped for files mentioning
+"pattern", got **33**, and had to count again by the guard to get **2**. The wrong method answers instantly, looks
+thorough, and was 16x too large.
+
+---
+
+## 9. Several clean results that are clean for ONE reason are ONE observation
+
+Both directions, both seen on 2026-11-15.
+
+**Too little evidence read as enough:** "no suite goes through this path" rested on four clean suites — but three
+never build a `CombatView` at all and the fourth stops at the guard, and one says in its own header that it avoids
+`CombatView` deliberately. Four suites clean for the same reason are **one** observation wearing four coats.
+
+**Too much evidence read into a single fact:** two red legs on `harpy_dive` were **one** correct behaviour seen
+twice — a push blocked into a hole, so R3 adds 8 — and read as double the evidence that the data was wrong.
+
+Same arithmetic error, sign flipped: **correlated results are not independent ones, and the count feels like
+strength in both directions.** Before a count persuades you, ask what would make every member of it move together.
+
+---
+
 ## The family these belong to
 
-Eight shapes of the same failure have been found in two days, all of them **silent**:
+Eleven shapes of the same failure have been found in two days, all of them **silent**:
 
 | | Shape | Caught by |
 |---|---|---|
@@ -259,6 +342,9 @@ Eight shapes of the same failure have been found in two days, all of them **sile
 | 6 | A run stops part-way; the file it leaves is true in every line and complete in none | `tail -1` is not a `RESULT:` line |
 | 7 | A count derived by `grep` from a report, wrong in both directions at once depending on the pattern | reading `SUMMARY: suites=` instead |
 | 8 | A verdict of FAILED with every number it prints equal to zero — the mirror of a false green | a counter reaching the gate but not the verdict |
+| 9 | A code defect wearing an infrastructure label: a hang recorded as `TIMEOUT`, which reads as "busy machine" | `SCRIPT ERRORS` on the same line |
+| 10 | A function entered and left at its guard, counted as covered | counting what OPENS the guard, not what calls it |
+| 11 | Several results that are clean for ONE shared reason, counted as several | asking what would make them all move together |
 
 The through-line: **green inferred from the absence of a failure signal, rather than asserted.** Every fix in this
 file's history is the same move — require the positive statement instead of accepting silence. Shapes 3, 5 and 6 are
