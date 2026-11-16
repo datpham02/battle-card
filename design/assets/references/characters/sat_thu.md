@@ -44,7 +44,7 @@
 
 | Field | Value |
 |---|---|
-| Character id | 47d6480b-8685-429a-9971-8f28145d6bdb |
+| Character id | 5e05e92a-3aee-4543-a60a-703e684b8e90 |
 | Image / job ids on record | ba18ae67 (anchor-01), 352a7f82-1c49-4242-a197-d148798928ff (idle), 66c2c370-7430-4261-8b0f-97b410c4c0ef (cast X-slash = cast_gesture), aa9bd847 (step), 0172ee9f (first cast, replaced), e1fb8dcc (hit), 70c8d999 (victory), 505383fc (defeat), 66a4bb2d (fall), 5caa3f37 (awaken), 77835371 (draw), eddb6e2d (step_forward), fbdc6ca3 (step_back, not installed), c01eed60 (step_down) |
 | Configuration that produced the anchor and clips | create_character_pro_flash 96x96, low top-down, 8 directions, seed 5, palette locked (max 8), style_image = Knight v3 south 84x84 (upload 8efc54de, colour off) (assassin-assets.md:36). Clips: animate_image_pixminimax, first frame = rot/south-east.png, 8 frames, seed 1, south-east, positive motion words only; cast X-slash pinned first and last to the anchor (job 66c2c370). |
 | Style reference (style_image lineage) | Knight v3 south 84x84 (upload 8efc54de). |
@@ -83,7 +83,7 @@ Timing rules: `idle` 125 ms (heroes) / 250–300 ms (enemies) per frame today (b
 
 ## 8. Generation lineage
 
-- 2026-11-05 anchor-01 create_character_pro_flash → character 47d6480b (7 gen, job ba18ae67); hood emblem came out as a cross
+- 2026-11-05 anchor-01 create_character_pro_flash → character 5e05e92a-3aee-4543-a60a-703e684b8e90 (7 gen, job ba18ae67); hood emblem came out as a cross
 - 2026-11-05 anim-idle job 352a7f82 (1 gen) + anim-11clips (11 gen) → sheet-01
 - 2026-11-05 anim-cast-xslash job 66c2c370 (1 gen) — installed as cast_gesture after the user called the first cast pose a glitch
 - 2026-11-11 cast_hand hand-paint dropped by the user. The sheet has no `cast_hand`. A hand cast holds idle.

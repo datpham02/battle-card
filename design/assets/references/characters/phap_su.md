@@ -44,7 +44,7 @@
 
 | Field | Value |
 |---|---|
-| Character id | 89dc779e-091a-49a7-96bb-79126a0433eb |
+| Character id | 978bfe24-de55-445a-b924-d9e7b83347d3 |
 | Image / job ids on record | 91b7bd35-d73e-45bf-9c33-fb8d5e4b74ba (idle v3), 60bf9be2-7bb0-46ca-a2b6-921b5d86e305 (idle v2), 3a75d836 (step), 303e532f (cast), 60758c69 (victory) |
 | Configuration that produced the anchor and clips | create_character_pro_flash, asked 80x96 (returned 96x96), low top-down, 8 directions, seed 5, palette locked (max 8), style_image = Knight v3 south rotation (colour off) (mage-assets.md:20). Clips: animate_image_pixminimax, first frame = rot02/south-east-long.png (upload 8a9a1cad for idle v3), 8 frames, seed 1, positive motion words only (negative words painted the Mage red: mage-assets.md:23-24). |
 | Style reference (style_image lineage) | Knight v3 south rotation 64 (style_image, colour off). |
@@ -85,7 +85,7 @@ Timing rules: `idle` 125 ms (heroes) / 250–300 ms (enemies) per frame today (b
 ## 8. Generation lineage
 
 - 2026-11-04 anchor-01 create_character_pro_flash 64x84 → character ec5d1863 (6 gen) — REJECTED by the user ('design hơi xấu', made without the reference concept)
-- 2026-11-04 anchor-02 create_character_pro_flash 96x96 → character 89dc779e (7 gen) — in use; result approval not recorded
+- 2026-11-04 anchor-02 create_character_pro_flash 96x96 → character 978bfe24-de55-445a-b924-d9e7b83347d3 (7 gen) — in use; result approval not recorded
 - 2026-11-04 anim02 8 clips (red paint from negative words) → idle v2 + 5 clips redone positive (6 gen) + draw/dash (5 gen)
 - 2026-11-05 anim03 idle v3 job 91b7bd35 (1 gen), anchor pinned first and last; anim_qa.py clean
 

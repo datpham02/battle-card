@@ -94,3 +94,26 @@ rest, which is what the 2026-11-04 batch of eight cost when it was not done that
 | ilva-12clips | 2026-11-15 | `animate_character` pixminimax x12, south-east, `custom_start_frame_url` = one upload of the stretched anchor (`upload:6e0f0429`), keep_first_frame; 8 frames for the long clips, 4 for step / hit / victory / fall | movement five worded as the Swordsman v7 dash (hold ONE leaning shape, end upright); the other seven as the shipping set. Positive words only. | 12 gen (approved: "Gen 12 clip") | groups: dash_forward `e72ea282`, dash_back `2cd00865`, dash_up `65db1480`, dash_down `bdc257a3`, step `d2d0ac56`, cast_gesture `d7bf652a`, hit `25a3f205`, victory `827216e1`, defeat `f879b8ae`, fall `74bd248b`, awaken `75bff723`, draw `3505fa8d` | **All 12 usable.** Off-palette pixels per clip, summed over its frames / worst single frame: dash_forward 0/0, dash_down 0/0, step 0/0, victory 0/0, awaken 0/0, dash_up 23/23, hit 54/54, dash_back 84/54, draw 142/57, defeat 183/62, cast_gesture 363/167, fall 682/224. **The extra colours are soft shading along the robe edges, not a painted effect** — the 2026-11-04 failure was large red regions that snapped into blobs; these are near-neighbours of palette colours. Verified rather than assumed: `fall`, the worst, was snapped with `sprite_clean.gd` and came back **0 off-palette, 6 colours, silhouette and book intact** (before/after strip in the session scratchpad). Canvas is 84x108 or 84x112 depending on the clip, so every one needs the crop-and-replant step. Nothing installed yet. Mage total since 2026-11-04: 26 + 13 = 39 generations. |
 
 | ilva-install | 2026-11-15 | mechanical cleanup + install + export | per frame: snap to the 6 anchor colours, drop clusters < 12 px, translate so the bottom opaque row is the canvas's last row, pad 84 -> 96 wide (centred) and keep the bottom 70 rows | 0 | `art_src/units/phap_su/` (13 clips, 85 frames), candidates in `.../ilva-2026-11-15/{raw-clips,clean-96x70}/`, sheet `assets/art/units/unit_phap_su_sheet.png` 872x922 | **All 85 frames verified after cleanup: 96x70, feet on row 69, at most 6 colours, 0 off-palette pixels.** Clip changes: `victory` 8 -> 4 frames (the clip was generated at 4), and **`step_up` is new** — the Mage had none since the 2026-11-04 attempt turned into a back view. Six suites green: sheet_export, sprite_sheet, unit_step_glide, cast_vfx, art_assets, cast_presentation. `cast_gesture` kept its 9 frames, so the cast VFX timing data is untouched. Two traps caught here, both already in the record from earlier work: the install script's first version **silently did nothing** because `godot` inside the read-loop ate the clip list from stdin (every child now reads `/dev/null`), and copying 4 `victory` frames over an 8-frame folder **left frames 4-7 in place**, which a count check would have called correct. The sheet was exported and then `--import` run before capturing, and the capture hash was checked. |
+
+### Correction: there was no overwrite. The cause was my own staging technique.
+
+I reported to the user that another session had overwritten the `unit.phap_su` entry, and on that basis a
+warning went to three sessions. **That was wrong, and the wrong part was mine to catch.**
+
+What actually happened: I stage these commits by building "HEAD + my hunks" and writing the blob straight
+into the index with `git hash-object` + `git update-index`. That keeps other sessions' lines out of my
+commits — which is why `1fe4840a` and `5c43d9c1` are clean — but **it never writes to the working tree**.
+In `1fe4840a` the two values I hand-edited into the blob (`character_id` and the palette) only ever
+existed in the index. The other 18 lines of that commit — the `step_up` block and `frames: 8 -> 4` —
+reached disk because a script had written them there first. Two missing, eighteen present: exactly what
+the working tree showed.
+
+The independent check is one I ran myself before hearing this explanation: on `unit.sat_thu` the working
+tree said `1db79b8d` while `HEAD` said `5e05e92a`, minutes after my own commit, with no other session
+involved. Same mechanism, caught in the act, one record over.
+
+So: no session overwrote anything, and the "read-whole-file / write-whole-file" framing I passed on was
+wrong at the root, not merely in its details. What is true is narrower and worth keeping: **this staging
+technique leaves the working tree behind, and the gap is invisible until something derives a value from
+the file on disk.** Whoever uses it must write the same edit to the working tree as well, or say plainly
+that the tree is stale.
