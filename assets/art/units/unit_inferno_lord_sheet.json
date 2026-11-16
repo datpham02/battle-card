@@ -5,7 +5,7 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -13,11 +13,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 250
@@ -25,9 +25,9 @@
     {
       "filename": "inferno_lord_idle_1",
       "frame": {
-        "x": 109,
+        "x": 117,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -35,11 +35,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 250
@@ -47,9 +47,9 @@
     {
       "filename": "inferno_lord_idle_2",
       "frame": {
-        "x": 218,
+        "x": 234,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -57,11 +57,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 250
@@ -69,9 +69,9 @@
     {
       "filename": "inferno_lord_idle_3",
       "frame": {
-        "x": 327,
+        "x": 351,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -79,11 +79,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 250
@@ -93,7 +93,7 @@
       "frame": {
         "x": 0,
         "y": 87,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -101,11 +101,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -113,9 +113,9 @@
     {
       "filename": "inferno_lord_step_1",
       "frame": {
-        "x": 109,
+        "x": 117,
         "y": 87,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -123,11 +123,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -135,9 +135,9 @@
     {
       "filename": "inferno_lord_step_2",
       "frame": {
-        "x": 218,
+        "x": 234,
         "y": 87,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -145,11 +145,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -157,9 +157,9 @@
     {
       "filename": "inferno_lord_step_3",
       "frame": {
-        "x": 327,
+        "x": 351,
         "y": 87,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -167,11 +167,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -181,7 +181,7 @@
       "frame": {
         "x": 0,
         "y": 174,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -189,11 +189,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -201,9 +201,9 @@
     {
       "filename": "inferno_lord_windup_1",
       "frame": {
-        "x": 109,
+        "x": 117,
         "y": 174,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -211,11 +211,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -223,9 +223,9 @@
     {
       "filename": "inferno_lord_windup_2",
       "frame": {
-        "x": 218,
+        "x": 234,
         "y": 174,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -233,11 +233,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -245,9 +245,9 @@
     {
       "filename": "inferno_lord_windup_3",
       "frame": {
-        "x": 327,
+        "x": 351,
         "y": 174,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -255,21 +255,21 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 0
     },
     {
-      "filename": "inferno_lord_hit_0",
+      "filename": "inferno_lord_windup_heavy_0",
       "frame": {
         "x": 0,
         "y": 261,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -277,11 +277,275 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
+        "h": 86
+      },
+      "duration": 100
+    },
+    {
+      "filename": "inferno_lord_windup_heavy_1",
+      "frame": {
+        "x": 117,
+        "y": 261,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 100
+    },
+    {
+      "filename": "inferno_lord_windup_heavy_2",
+      "frame": {
+        "x": 234,
+        "y": 261,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 100
+    },
+    {
+      "filename": "inferno_lord_windup_heavy_3",
+      "frame": {
+        "x": 351,
+        "y": 261,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 0
+    },
+    {
+      "filename": "inferno_lord_phase_shift_0",
+      "frame": {
+        "x": 0,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 120
+    },
+    {
+      "filename": "inferno_lord_phase_shift_1",
+      "frame": {
+        "x": 117,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 120
+    },
+    {
+      "filename": "inferno_lord_phase_shift_2",
+      "frame": {
+        "x": 234,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 120
+    },
+    {
+      "filename": "inferno_lord_phase_shift_3",
+      "frame": {
+        "x": 351,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 120
+    },
+    {
+      "filename": "inferno_lord_phase_shift_4",
+      "frame": {
+        "x": 468,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 150
+    },
+    {
+      "filename": "inferno_lord_phase_shift_5",
+      "frame": {
+        "x": 585,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 150
+    },
+    {
+      "filename": "inferno_lord_phase_shift_6",
+      "frame": {
+        "x": 702,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 150
+    },
+    {
+      "filename": "inferno_lord_phase_shift_7",
+      "frame": {
+        "x": 819,
+        "y": 348,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 86
+      },
+      "duration": 200
+    },
+    {
+      "filename": "inferno_lord_hit_0",
+      "frame": {
+        "x": 0,
+        "y": 435,
+        "w": 116,
+        "h": 86
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 86
+      },
+      "sourceSize": {
+        "w": 116,
         "h": 86
       },
       "duration": 40
@@ -289,9 +553,9 @@
     {
       "filename": "inferno_lord_hit_1",
       "frame": {
-        "x": 109,
-        "y": 261,
-        "w": 108,
+        "x": 117,
+        "y": 435,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -299,11 +563,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 40
@@ -311,9 +575,9 @@
     {
       "filename": "inferno_lord_hit_2",
       "frame": {
-        "x": 218,
-        "y": 261,
-        "w": 108,
+        "x": 234,
+        "y": 435,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -321,11 +585,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 40
@@ -334,8 +598,8 @@
       "filename": "inferno_lord_down_0",
       "frame": {
         "x": 0,
-        "y": 348,
-        "w": 108,
+        "y": 522,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -343,11 +607,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 100
@@ -355,9 +619,9 @@
     {
       "filename": "inferno_lord_down_1",
       "frame": {
-        "x": 109,
-        "y": 348,
-        "w": 108,
+        "x": 117,
+        "y": 522,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -365,11 +629,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 120
@@ -377,9 +641,9 @@
     {
       "filename": "inferno_lord_down_2",
       "frame": {
-        "x": 218,
-        "y": 348,
-        "w": 108,
+        "x": 234,
+        "y": 522,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -387,11 +651,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 150
@@ -399,9 +663,9 @@
     {
       "filename": "inferno_lord_down_3",
       "frame": {
-        "x": 327,
-        "y": 348,
-        "w": 108,
+        "x": 351,
+        "y": 522,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -409,11 +673,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 150
@@ -421,9 +685,9 @@
     {
       "filename": "inferno_lord_down_4",
       "frame": {
-        "x": 436,
-        "y": 348,
-        "w": 108,
+        "x": 468,
+        "y": 522,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -431,11 +695,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 150
@@ -443,9 +707,9 @@
     {
       "filename": "inferno_lord_down_5",
       "frame": {
-        "x": 545,
-        "y": 348,
-        "w": 108,
+        "x": 585,
+        "y": 522,
+        "w": 116,
         "h": 86
       },
       "rotated": false,
@@ -453,11 +717,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "sourceSize": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "duration": 150
@@ -469,8 +733,8 @@
     "image": "unit_inferno_lord_sheet.png",
     "format": "RGBA8888",
     "size": {
-      "w": 653,
-      "h": 434
+      "w": 935,
+      "h": 608
     },
     "scale": "1",
     "frameTags": [
@@ -493,15 +757,27 @@
         "direction": "forward"
       },
       {
-        "name": "hit",
+        "name": "windup_heavy",
         "from": 12,
-        "to": 14,
+        "to": 15,
+        "direction": "forward"
+      },
+      {
+        "name": "phase_shift",
+        "from": 16,
+        "to": 23,
+        "direction": "forward"
+      },
+      {
+        "name": "hit",
+        "from": 24,
+        "to": 26,
         "direction": "forward"
       },
       {
         "name": "down",
-        "from": 15,
-        "to": 20,
+        "from": 27,
+        "to": 32,
         "direction": "forward"
       }
     ],
@@ -518,15 +794,17 @@
       "asset": "unit.inferno_lord",
       "facing": "left",
       "frame": {
-        "w": 108,
+        "w": 116,
         "h": 86
       },
       "gutter": 1,
-      "columns": 6,
+      "columns": 8,
       "loop": {
         "idle": "loop",
         "step": "loop",
         "windup": "hold_last",
+        "windup_heavy": "hold_last",
+        "phase_shift": "hold_last",
         "hit": "once",
         "down": "hold_last"
       },
@@ -538,7 +816,8 @@
         "#5A5650",
         "#7A5A36",
         "#EFE6D2"
-      ]
+      ],
+      "body_h": 86
     }
   }
 }

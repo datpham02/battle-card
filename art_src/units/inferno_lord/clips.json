@@ -1,99 +1,17 @@
 {
   "id": "inferno_lord",
   "asset": "unit.inferno_lord",
-  "frame": {
-    "w": 108,
-    "h": 86
-  },
+  "frame": {"w": 116, "h": 86},
+  "body_h": 86,
   "facing": "left",
-  "source": "PixelLab character 416aac54-2e61-4147-944d-82126fbe31d0 (Hellfire roster, Checkpoint A anchors approved by the user 2026-11-13 \"Yes, 45 clip\"), PixMiniMax south-west clips (8 frames) in design/assets/candidates/hellfire/inferno_lord/download/Idle/animations/<clip>/south-west/, cleaned mechanically (palette snap to the locked colours, clusters < 12 px removed, feet on the bottom row, one horizontal shift per unit from idle frame 0) into design/assets/candidates/hellfire/inferno_lord/clean-108x86/",
+  "source": "PixelLab character 416aac54-2e61-4147-944d-82126fbe31d0 (Hellfire roster, Checkpoint A anchors approved by the user 2026-11-13 \"Yes, 45 clip\"), PixMiniMax south-west clips (8 frames) in design/assets/candidates/hellfire/inferno_lord/download/Idle/animations/<clip>/south-west/, cleaned mechanically (palette snap to the locked colours, clusters < 12 px removed, feet on the bottom row, one horizontal shift per unit from idle frame 0) into design/assets/candidates/hellfire/inferno_lord/clean-108x86/; windup_heavy added 2026-11-16 from PixMiniMax job 39d167f6-3228-4c52-a9be-0755cd62144c (1 generation, approved by the user), same anchor frame_000, cleaned the same way (dx +1 from idle frame 0, feet on the bottom row)",
   "clips": [
-    {
-      "name": "idle",
-      "frames": [
-        "idle/0.png",
-        "idle/1.png",
-        "idle/2.png",
-        "idle/3.png"
-      ],
-      "ms": [
-        250,
-        250,
-        250,
-        250
-      ],
-      "loop": "loop",
-      "note": "src 0/2/4/6"
-    },
-    {
-      "name": "step",
-      "frames": [
-        "step/0.png",
-        "step/1.png",
-        "step/2.png",
-        "step/3.png"
-      ],
-      "ms": [
-        100,
-        100,
-        100,
-        100
-      ],
-      "loop": "loop",
-      "note": "src 1/3/5/7 ; nominal; the game paces step by the step cooldown"
-    },
-    {
-      "name": "windup",
-      "frames": [
-        "windup/0.png",
-        "windup/1.png",
-        "windup/2.png",
-        "windup/3.png"
-      ],
-      "ms": [
-        100,
-        100,
-        100,
-        0
-      ],
-      "loop": "hold_last",
-      "note": "src 2/4/6/8, greatsword raised overhead, cape flaring, held"
-    },
-    {
-      "name": "hit",
-      "frames": [
-        "hit/0.png",
-        "hit/1.png",
-        "hit/2.png"
-      ],
-      "ms": [
-        40,
-        40,
-        40
-      ],
-      "loop": "once",
-      "note": "src 3/4/5"
-    },
-    {
-      "name": "down",
-      "frames": [
-        "down/0.png",
-        "down/1.png",
-        "down/2.png",
-        "down/3.png",
-        "down/4.png",
-        "down/5.png"
-      ],
-      "ms": [
-        100,
-        120,
-        150,
-        150,
-        150,
-        150
-      ],
-      "loop": "hold_last",
-      "note": "src 2/3/4/5/6/8, collapses forward"
-    }
+    {"name": "idle", "frames": ["idle/0.png", "idle/1.png", "idle/2.png", "idle/3.png"], "ms": [250, 250, 250, 250], "loop": "loop", "note": "src 0/2/4/6"},
+    {"name": "step", "frames": ["step/0.png", "step/1.png", "step/2.png", "step/3.png"], "ms": [100, 100, 100, 100], "loop": "loop", "note": "src 1/3/5/7 ; nominal; the game paces step by the step cooldown"},
+    {"name": "windup", "frames": ["windup/0.png", "windup/1.png", "windup/2.png", "windup/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last", "note": "src 2/4/6/8, greatsword raised overhead, cape flaring, held"},
+    {"name": "windup_heavy", "frames": ["windup_heavy/0.png", "windup_heavy/1.png", "windup_heavy/2.png", "windup_heavy/3.png"], "ms": [100, 100, 100, 0], "loop": "hold_last", "note": "drives the greatsword point down into the ground and drops onto one knee, held for the rest of the uninterruptible tell; PixMiniMax job 39d167f6 src frames 3/4/6/8 (5 had a one-frame light burst at the feet)"},
+    {"name": "phase_shift", "frames": ["phase_shift/0.png", "phase_shift/1.png", "phase_shift/2.png", "phase_shift/3.png", "phase_shift/4.png", "phase_shift/5.png", "phase_shift/6.png", "phase_shift/7.png"], "ms": [120, 120, 120, 120, 150, 150, 150, 200], "loop": "hold_last", "note": "PixMiniMax job f0fc0115 src frames 1/2/3/4/5/6/7/8"},
+    {"name": "hit", "frames": ["hit/0.png", "hit/1.png", "hit/2.png"], "ms": [40, 40, 40], "loop": "once", "note": "src 3/4/5"},
+    {"name": "down", "frames": ["down/0.png", "down/1.png", "down/2.png", "down/3.png", "down/4.png", "down/5.png"], "ms": [100, 120, 150, 150, 150, 150], "loop": "hold_last", "note": "src 2/3/4/5/6/8, collapses forward"}
   ]
 }

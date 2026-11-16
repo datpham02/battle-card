@@ -14729,9 +14729,9 @@ assets:
   - design/assets/candidates/hellfire/inferno_lord/download/Idle/animations/
   evidence: [production/qa/evidence/world-map-v2/region-enemies]
   frame:
-    w: 108
+    w: 116
     h: 86
-    body_h: null
+    body_h: 86
     facing: left
   palette:
     file: art_src/palette/tessera_master.gpl
@@ -14825,6 +14825,32 @@ assets:
     attention: null
     generation: null
     note: "src 2/3/4/5/6/8, collapses forward"
+  - name: windup_heavy
+    frames: 4
+    loop: hold_last
+    ms: [100, 100, 100, 0]
+    source_dir: art_src/units/inferno_lord/windup_heavy
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+  - name: phase_shift
+    frames: 8
+    loop: hold_last
+    ms: [120, 120, 120, 120, 150, 150, 150, 200]
+    source_dir: art_src/units/inferno_lord/phase_shift
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
   history:
   - on: "2026-11-13"
     event: registered
@@ -15665,8 +15691,8 @@ assets:
   evidence: [production/qa/evidence/world-map-v2/region-enemies]
   frame:
     w: 106
-    h: 86
-    body_h: null
+    h: 87
+    body_h: 86
     facing: left
   palette:
     file: art_src/palette/tessera_master.gpl
@@ -15760,6 +15786,32 @@ assets:
     attention: null
     generation: null
     note: "src 2/3/4/5/6/8, slumps forward"
+  - name: windup_heavy
+    frames: 4
+    loop: hold_last
+    ms: [100, 100, 100, 0]
+    source_dir: art_src/units/sand_sphinx/windup_heavy
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+  - name: phase_shift
+    frames: 8
+    loop: hold_last
+    ms: [120, 120, 120, 120, 150, 150, 150, 200]
+    source_dir: art_src/units/sand_sphinx/phase_shift
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
   history:
   - on: "2026-11-13"
     event: registered
@@ -17358,6 +17410,32 @@ assets:
     attention: null
     generation: null
     note: "src 2/3/4/5/6/8, slumps onto her belly"
+  - name: windup_heavy
+    frames: 4
+    loop: hold_last
+    ms: [100, 100, 100, 0]
+    source_dir: art_src/units/toad_matriarch/windup_heavy
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+  - name: phase_shift
+    frames: 8
+    loop: hold_last
+    ms: [120, 120, 120, 120, 150, 150, 150, 200]
+    source_dir: art_src/units/toad_matriarch/phase_shift
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
   history:
   - on: "2026-11-13"
     event: registered
@@ -17927,9 +18005,9 @@ assets:
   - design/assets/candidates/dungeon/ogre_king/download/Idle/animations/
   evidence: [production/qa/evidence/world-map-v2/region-enemies]
   frame:
-    w: 96
-    h: 84
-    body_h: null
+    w: 100
+    h: 85
+    body_h: 84
     facing: left
   palette:
     file: art_src/palette/tessera_master.gpl
@@ -18023,6 +18101,32 @@ assets:
     attention: null
     generation: null
     note: "src 2/3/4/5/6/8, crashes forward; every frame remapped #8A6A40->#5A5650, #6B4A3A->#4A4640 (user-chosen grey stone, raw brown frames kept in download/animations-raw-brown)"
+  - name: windup_heavy
+    frames: 4
+    loop: hold_last
+    ms: [100, 100, 100, 0]
+    source_dir: art_src/units/ogre_king/windup_heavy
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+  - name: phase_shift
+    frames: 8
+    loop: hold_last
+    ms: [120, 120, 120, 120, 150, 150, 150, 200]
+    source_dir: art_src/units/ogre_king/phase_shift
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
   history:
   - on: "2026-11-13"
     event: registered
@@ -19486,6 +19590,32 @@ assets:
     attention: null
     generation: null
     note: "src 2/3/4/5/6/8, collapses into an empty robe"
+  - name: windup_heavy
+    frames: 4
+    loop: hold_last
+    ms: [100, 100, 100, 0]
+    source_dir: art_src/units/mist_lord/windup_heavy
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+  - name: phase_shift
+    frames: 8
+    loop: hold_last
+    ms: [120, 120, 120, 120, 150, 150, 150, 200]
+    source_dir: art_src/units/mist_lord/phase_shift
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
   history:
   - on: "2026-11-13"
     event: registered
@@ -20720,9 +20850,9 @@ assets:
   - design/assets/candidates/sky_isles/storm_dragon/download/Idle/animations/
   evidence: [production/qa/evidence/world-map-v2/region-enemies]
   frame:
-    w: 100
-    h: 96
-    body_h: null
+    w: 128
+    h: 98
+    body_h: 96
     facing: left
   palette:
     file: art_src/palette/tessera_master.gpl
@@ -20816,6 +20946,32 @@ assets:
     attention: null
     generation: null
     note: "src 2/3/4/5/6/8, slumps coiled on the ground"
+  - name: windup_heavy
+    frames: 4
+    loop: hold_last
+    ms: [100, 100, 100, 0]
+    source_dir: art_src/units/storm_dragon/windup_heavy
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+  - name: phase_shift
+    frames: 8
+    loop: hold_last
+    ms: [120, 120, 120, 120, 150, 150, 150, 200]
+    source_dir: art_src/units/storm_dragon/phase_shift
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
   history:
   - on: "2026-11-13"
     event: registered
