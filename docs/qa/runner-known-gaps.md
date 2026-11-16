@@ -180,6 +180,30 @@ tells you which just happened.
 This is the same shape as every other entry in this file, pointed at a number instead of a verdict: a count
 inferred from a text search reads as authoritative precisely because it came out of a command.
 
+**A second instance, 2026-11-16, on a different question and worse.** Checking whether files had been converted
+to LF, `grep -c $''` was used to count lines containing a carriage return. Reproduced on two files built on the
+spot:
+
+    file with 0 CR bytes    tr -dc '' | wc -c -> 0    grep -c $'' -> 3
+    file with 3 CR bytes    tr -dc '' | wc -c -> 3    grep -c $'' -> 3
+
+**The same answer for both.** `$''` does not survive to grep, which receives an EMPTY pattern and matches every
+line. So the check reported "all 352 lines have CR" for a file with none — not the false *negative* one might
+expect from a tool reading in text mode, but a false *alarm*, and one that cannot distinguish the two cases it
+was asked to separate at all.
+
+Three instruments were tried before a trustworthy one: `grep -c $''` (matches everything), `od -c` piped
+through `grep -o` with an alternation (leftmost match wins, so it reports whichever appears first), and `od -c`
+piped through `grep -c` (counts 16-byte output rows, not line endings). **The decisive one reads bytes and does
+no text interpretation:**
+
+    cr=$(tr -dc '' < "$f" | wc -c); ln=$(wc -l < "$f")
+    # cr == 0 -> pure LF;  cr == ln -> pure CRLF;  otherwise MIXED
+
+The general rule is the one this file keeps arriving at from new directions: **before a check convinces you, run
+it on a case where you KNOW the answer, in both directions.** Two three-line files settled in one command what
+three plausible-looking greps had made steadily more confusing.
+
 ---
 
 ## 5. A verdict of FAILED whose every printed number is zero
