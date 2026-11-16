@@ -1017,3 +1017,23 @@ static func hit_unit0(result: Dictionary) -> bool:
 	if result.has("unit_keys_hit"):
 		return (result["unit_keys_hit"] as Array).has(CombatState.Side.ENEMY)
 	return bool(result.get("hit", false))
+
+
+## Multi-enemy Phase 5 (step 3, D6): the damage UNIT [param key] took in [param result].
+## A merged result carries `unit_results`; a single result on the hero or unit 0 is returned UNTAGGED by
+## [method merge] (see its first branch), so the fallback is not decoration - it is the whole 1v1 path.
+static func unit_damage(result: Dictionary, key: int) -> float:
+	if result.has("unit_results"):
+		var total: float = 0.0
+		for r: Dictionary in (result["unit_results"] as Array):
+			if int(r.get("key", CombatState.Side.ENEMY)) == key:
+				total += float(r.get("damage", 0.0))
+		return total
+	return float(result.get("damage", 0.0)) if key == CombatState.Side.ENEMY else 0.0
+
+
+## Multi-enemy Phase 5 (step 3, D6): true when [param result] hit UNIT [param key]. Same fallback as above.
+static func hit_unit(result: Dictionary, key: int) -> bool:
+	if result.has("unit_keys_hit"):
+		return (result["unit_keys_hit"] as Array).has(key)
+	return bool(result.get("hit", false)) if key == CombatState.Side.ENEMY else false

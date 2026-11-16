@@ -43,6 +43,8 @@ func _initialize() -> void:
 	await _test_burrow_moves_its_own_unit()
 	await _test_rebirth_revives_its_own_unit()
 	await _test_hop_skip_counts_its_own_steps()
+	await _test_riposte_answers_only_its_own_unit()
+	await _test_riposte_on_unit0_ignores_a_cut_that_missed_it()
 	await _test_one_enemy_unchanged()
 	await process_frame
 	print("FAILS=%d PASSES=%d" % [fails, passes])
@@ -255,6 +257,85 @@ func _free_cell_for(s: CombatState, key: int) -> Vector2i:
 		if cell != here and s.unit_fits(index, cell):
 			return cell
 	return here
+
+
+
+# --- H5: a PER-UNIT trait answers its own unit's wound, not the neighbour's --------------------------------------
+#
+# combat_view.gd handed EVERY swing to unit 0's host alone, with unit 0's damage. So `riposte` on unit 2 counter-
+# attacked a cut that never touched unit 2 (and, on unit 0, answered one that did not touch unit 0 either). Not a
+# wrong number - a wrong OWNER: the player is punished by a monster they did not hit.
+#
+# Both directions on purpose. A leg that only checks the silence would also pass against a riposte that never
+# fires at all, which is the easiest way to "fix" this and the worst.
+
+func _swing(hit_keys: Array) -> Dictionary:
+	var units: Array = []
+	for k: int in hit_keys:
+		units.append({"key": k, "hit": true, "damage": 9.0, "cell": Vector2i(0, 0), "cells": [Vector2i(0, 0)]})
+	var unit0: float = 9.0 if hit_keys.has(E) else 0.0
+	return {"cells": [Vector2i(0, 0)], "hit": true, "damage": 9.0 * float(hit_keys.size()),
+		"cell": Vector2i(0, 0), "unit_results": units, "unit_keys_hit": hit_keys, "unit0_damage": unit0}
+
+
+func _test_riposte_on_unit0_ignores_a_cut_that_missed_it() -> void:
+	# The OTHER face of the same routing bug, and the one a player feels. Unit 0's host received EVERY swing with
+	# the MERGED result - hit=true, damage=the total across all units - so riposte on unit 0 counter-attacked a cut
+	# that landed only on unit 2. The player is punished by a monster they did not touch.
+	#
+	# Written after the first leg came back PASS on unfixed code: riposte on unit 2 never fired at all, because its
+	# host was never called, so "it did not answer a cut on unit 1" was true for the wrong reason. The test §3.6
+	# specifies - only that silence - passes against the defect it exists to catch.
+	var holder: Node = await _match(_params([_block("u0"), _block("u1"), _block("u2")]))
+	var v: CombatView = _view(holder)
+	var k2: int = CombatState.unit_key(2)
+	var rip: BossTrait = v.host_of(E).add_trait("riposte", {"min_cells": 1, "warn_sec": 5.0, "damage": 3.0})
+	check(rip != null, "H5b: riposte sits on unit 0")
+	var warned: Array = []
+	rip.riposte_warned.connect(func(cell: Vector2i) -> void: warned.append(cell))
+
+	v._on_swing_resolved(CombatState.Side.PLAYER, _swing([k2]))
+	await process_frame
+	check(warned.is_empty(), "H5b: unit 0's riposte does NOT answer a cut that hit unit 2 only",
+			"warned=%d" % warned.size())
+
+	v._on_swing_resolved(CombatState.Side.PLAYER, _swing([E]))
+	await process_frame
+	check(warned.size() == 1, "H5b: unit 0's riposte DOES answer a cut that hit unit 0",
+			"warned=%d" % warned.size())
+	_drop(holder)
+
+
+func _test_riposte_answers_only_its_own_unit() -> void:
+	var holder: Node = await _match(_params([_block("u0"), _block("u1"), _block("u2")]))
+	var v: CombatView = _view(holder)
+	var k1: int = CombatState.unit_key(1)
+	var k2: int = CombatState.unit_key(2)
+	var host2: TraitHost = v.host_of(k2)
+	check(host2 != null, "H5: unit 2 has a host of its own")
+	if host2 == null:
+		_drop(holder)
+		return
+	var rip: BossTrait = host2.add_trait("riposte", {"min_cells": 1, "warn_sec": 5.0, "damage": 3.0})
+	check(rip != null, "H5: riposte sits on unit 2")
+	var warned: Array = []
+	rip.riposte_warned.connect(func(cell: Vector2i) -> void: warned.append(cell))
+
+	# premise asserted before behaviour: unit 1 and unit 2 are both live and distinct, or the leg proves nothing
+	var s: CombatState = v.get_state()
+	check(not s.is_key_dead(k1) and not s.is_key_dead(k2) and k1 != k2,
+			"H5: premise - unit 1 and unit 2 are both alive and distinct")
+
+	v._on_swing_resolved(CombatState.Side.PLAYER, _swing([k1]))
+	await process_frame
+	check(warned.is_empty(), "H5: unit 2's riposte does NOT answer a cut that hit unit 1 only",
+			"warned=%d" % warned.size())
+
+	v._on_swing_resolved(CombatState.Side.PLAYER, _swing([k2]))
+	await process_frame
+	check(warned.size() == 1, "H5: unit 2's riposte DOES answer a cut that hit unit 2",
+			"warned=%d" % warned.size())
+	_drop(holder)
 
 
 # --- a one-enemy match must be untouched ------------------------------------------------------------------------

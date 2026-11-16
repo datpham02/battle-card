@@ -2770,9 +2770,18 @@ func _on_swing_resolved(side: int, result: Dictionary) -> void:
 			agent.pattern.on_player_cast(cast_cells)
 			if hit_keys.has(agent.key) and not bool(result.get("no_interrupt", false)) and not bool(result.get("scheduled", false)):
 				agent.pattern.on_enemy_hit()
-		_trait_host.on_player_swing_resolved(result)
-		# Phase 2: the traits belong to unit 0: they hear the damage unit 0 took (the whole damage with one unit)
-		_trait_host.on_boss_damaged(float(result.get("unit0_damage", result["damage"])))
+		# Multi-enemy Phase 5 (step 3, D6): EVERY live unit's traits hear the swing, each with ITS OWN damage.
+		# Before this, unit 0's host was the only one called, and it was called with the MERGED result: riposte on
+		# unit 0 counter-attacked a cut that landed on unit 2 only (the player punished by a monster they never
+		# touched), while a trait on unit 2 heard nothing at all. Same defect, opposite symptoms per unit.
+		# Dead units need no filter here: an unhit unit's damage is 0, on_boss_damaged ignores <= 0, and the
+		# per-unit traits ask hit_unit() for themselves.
+		for swing_key: int in _state.enemy_keys():
+			var swing_host: TraitHost = _hosts_by_key.get(swing_key, null)
+			if swing_host == null:
+				continue
+			swing_host.on_player_swing_resolved(result)
+			swing_host.on_boss_damaged(CutEffects.unit_damage(result, swing_key))
 	else:
 		# Multi-enemy Phase 4 (step 4): unit 0 keeps the legacy single record; every other attacking unit adds its own,
 		# so a second unit striking in the same breath does not erase the first one's marker.

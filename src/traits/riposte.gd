@@ -55,7 +55,9 @@ func on_match_start() -> void:
 
 
 func on_player_swing_resolved(result: Dictionary) -> void:
-	if not bool(result.get("hit", false)) or float(result.get("damage", 0.0)) <= 0.0:
+	# Multi-enemy Phase 5 (step 3, D6): `hit` and `damage` on a merged result are the TOTAL across every unit the
+	# cut touched. Asking them makes this trait answer a wound its own unit never took. Ask about ITS unit.
+	if not CutEffects.hit_unit(result, unit_key()) or CutEffects.unit_damage(result, unit_key()) <= 0.0:
 		return
 	var cells: Variant = result.get("cells", [])
 	if typeof(cells) != TYPE_ARRAY or (cells as Array).size() < _min_cells or _cell != BoardGrid.NO_CELL:

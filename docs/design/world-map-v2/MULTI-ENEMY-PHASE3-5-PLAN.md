@@ -412,6 +412,115 @@ Lý do chọn bước 1–3: đó là phần xoá được 5 trong 7 mối nguy 
 phần **không đổi hành vi nào của trận 1v1**. Bước 4 (chặn formation) đổi dữ liệu nào hợp lệ, bước 5 (banner) đổi
 thứ người chơi nhìn thấy, bước 6 (HUD) đổi 16 chỗ gọi — cả ba đều đáng được xem lại riêng.
 
+### 3.7b Bước 1 — những gì đã làm khác kế hoạch (2026-11-14)
+
+Bước 1 ôm thêm ba việc mà §3.4 xếp ở bước 3 (D6). Ghi ở đây vì chúng là **sai lệch so với kế hoạch đã duyệt**,
+không phải vì chúng sai: cả ba lộ ra khi chạy bước 1, và để lại thì bước 1 xanh mà trò chơi vẫn hỏng.
+
+| Việc | Vì sao không hoãn được tới bước 3 |
+|---|---|
+| `burrow` trồi lên bằng `set_key_cell` | Bản cũ gọi `set_enemy_cell`: burrow của unit 2 **dịch chuyển unit 0** qua bàn cờ |
+| `rebirth` hồi sinh bằng `heal_key` | Bản cũ gọi `heal_enemy`: rebirth của unit 2 **hồi sinh unit 0** |
+| `hop_skip` đếm bước qua `unit_cell_changed` | Bản cũ nghe `cell_changed`, tín hiệu này chỉ báo `Side.ENEMY` cho unit 0 (`CombatState.set_key_cell`). Hop_skip của unit 2 **đếm bước của unit 0** và không bao giờ đếm bước của chính nó |
+
+Hai cái đầu là H6 nhưng tệ hơn mô tả ở §3.2: không chỉ "sai chủ khi đọc", mà **sai chủ khi ghi**. Cái thứ ba là
+H5, đúng như §3.3 D6 đã dự đoán — chỉ là nó phải làm sớm hơn một bước.
+
+Ba file này thuộc monster-skills; họ đã duyệt riêng cả ba ngày 14/11/2026, với lý do: lỗi không nhìn thấy được từ
+code Phase 0 của họ vì khi đó chỉ có một unit.
+
+**Bẫy test đã sập một lần ở bước này.** Phép kiểm burrow đầu tiên của tôi viết
+
+```gdscript
+var surfaced_ok: bool = moved or not untargetable(k1)
+```
+
+Vế phải đúng với cả một burrow **chưa từng chạy**, nên phép kiểm xanh vì không có gì xảy ra — nó đọc như một
+either-or cẩn thận và không kiểm được gì. Thay bằng `get_burrow_count() >= 1` và `cell_of(k1) != trước`. Cùng họ
+với hai cái bẫy đã ghi ở §6: một mệnh đề phủ định luôn đúng khi bộ phát không bắn cho ai cả.
+
+### 3.7c Bước 1 — kết quả chạy (2026-11-14, khe Godot của phiên monster-skills)
+
+**19/19 suite xanh, 0 script error, cây mã không đổi suốt lần chạy** (manifest `git hash-object` trước và sau
+khớp nhau, 26 file khác HEAD).
+
+| Nhóm | Kết quả |
+|---|---|
+| Suite mới `multi_enemy_traits_test` | `FAILS=0 PASSES=31` |
+| 9 suite tự dựng `TraitHost` bằng tay | xanh — tham số thứ năm mặc định `true` giữ đúng lời hứa |
+| 2 suite tôi sửa lambda hook | xanh |
+| 8 suite multi-enemy + đường hook | xanh |
+
+Chân đỏ trước đó (`tick: unit 1's burrow still runs after unit 0 died`) giờ xanh, cùng hai chân khẳng định mới
+cho burrow/rebirth và ba chân `hop_skip` về việc đếm bước đúng con.
+
+#### hunter_mark — đã áp, quyết định "con gây ra"
+
+| File | Đổi gì | Hash sau |
+|---|---|---|
+| `base_passive.gd` | `on_boss_thorn_step(_cell, _key := Side.ENEMY)` — một dòng | `f590204d` |
+| `hunter_mark.gd` | override + `_try_mark(key)` + `apply_fragile(key, …)` + vòng vùng gai đi qua `enemy_keys()` | `85883793` |
+| `combat_view.gd` | `FloorVfx.play` nhận **nửa bàn**, không nhận key (lỗi riêng, xem §3.7b) | `f5506f35` |
+
+`on_player_zone_formed` **không đổi chữ ký**: tham số `_key: int = -1` trong bản soạn đã bị bỏ hẳn, vì `-1` không
+phải unit key hợp lệ và một mặc định phải là **giá trị cũ**, không phải sentinel (phiên character tìm ra).
+
+Cổng hồi quy `tests/unit/combat/hunter_mark_attribution_test.gd` đã **được xem đỏ trước**: trên mã chưa sửa
+`FAILS=4 PASSES=3`, với `unit0=1` — vết Rạn rơi lên con quái không hề gây ra nó. Trên mã đã sửa `FAILS=0 PASSES=7`.
+Bốn suite hồi quy passive (`hunter_prayer`, `passive_cue`, `boss_footprint`, `wall_cards_removed`) xanh.
+
+> **Còn thiếu, cố ý.** `combat_view.gd:611` vẫn chặn mọi con trừ unit 0, nên trong trận thật vết Rạn vẫn chỉ phát
+> cho con số 0. Lớp passive giờ đã đúng; phần nối dây **cố tình chưa nối**, vì nới nó là đổi hành vi trận đấu và
+> chưa ai duyệt. Ghi ở đây để không ai đọc "hunter_mark đã sửa" thành "đã chạy trong trận".
+
+### 3.7d Bước 2–3 (2026-11-14) — quy gán đúng chủ
+
+Bước 2 (5 hook theo key, D3) **đã xong từ bước 1**: hook được cài ở `CombatView` lúc dựng `_hosts_by_key`, nên
+phần còn lại của lượt này là bước 3 (D6).
+
+| Trait | Lỗi | Trạng thái |
+|---|---|---|
+| `phase_shift` | đọc `enemy_hp / enemy_max_hp` → đổi pha khi **unit 0** bị thương, không bao giờ khi máu mình tụt | **xong** |
+| `boss_phases` | 9 chỗ. `enemy_invulnerable_left` / `enemy_hp_floor` **đọc VÀ GHI** `units[0]` → boss_phases trên unit 2 làm **unit 0 bất tử** và chặn sàn máu unit 0 (H2) | **xong** |
+| `shroud` | `is_pinned(Side.ENEMY)` → hỏi unit 0 có bị ghim không để quyết định mây của **mình** | **xong** (monster-skills duyệt) |
+| `riposte`, `spore_burst`, `fuse_cannon` | H5 — không đọc sai, mà **bị gọi sai**: `combat_view.gd` đưa `unit0_damage` cho host của unit 0 | **xong** 2026-11-16 |
+
+**Bước 3 xong (H5).** `combat_view` gọi host của **mọi unit sống**, mỗi host nhận sát thương của chính unit mình
+(`CutEffects.unit_damage`); `riposte` hỏi `hit_unit(result, unit_key())` thay vì `hit`/`damage` tổng.
+
+**Lỗi có HAI mặt, và test §3.6 chỉ đặc tả một.** §3.6 yêu cầu: *riposte của unit 2 không nổ khi chỉ trúng unit 1*.
+Chân đó **qua được trên mã chưa sửa** — vì riposte của unit 2 không bao giờ nổ gì cả, host của nó chưa từng được
+gọi. Đúng với lý do sai. Mặt kia mới là mặt người chơi chịu: riposte trên **unit 0** nhận result gộp (`hit=true`,
+`damage` tổng) nên phản đòn một cú chém chỉ trúng unit 2 — *bị trừng phạt bởi con quái mình chưa hề đánh*. Suite
+nay có cả bốn chân: hai chiều cho mỗi mặt, vì chân chỉ kiểm im lặng cũng qua với một bản vá làm riposte câm hẳn.
+
+Đo trước khi sửa: `FAILS=2 PASSES=37`. Sau khi sửa: `FAILS=0 PASSES=39`.
+
+**Đường lui cho trận 1 quái.** `CutEffects.merge()` trả về dictionary **không gắn thẻ** khi chỉ có một kết quả
+trên unit 0 — tức toàn bộ trận thường đi qua nhánh ấy. Một helper chỉ đọc `unit_results` sẽ trả 0 cho mọi trận 1
+quái và làm mọi trait per-unit câm lặng ở ca phổ biến nhất, không test nào ở trên bắt được.
+
+**Ghi nhận mức độ.** Ba ca tìm được sáng nay (`burrow`, `rebirth`, `hop_skip`) và `phase_shift` là **đọc qua bí
+danh**: cho ra câu trả lời sai. `boss_phases` là **ghi qua bí danh**: nó đổi trạng thái của một đối tượng khác, và
+không gì ở phía sau phân biệt được. Trong trận, nó trao cho người chơi một con quái không giết được mà họ chưa hề
+đánh — không phải con số sai mà là **mục tiêu sai**.
+
+#### Luật đọc code sau bước 1 (tránh sửa nhầm chỗ)
+
+Bước 1 đã khoá bí danh **ở tầng ctx**, không phải ở từng chỗ gọi: `make_trait_ctx(key)` đặt
+`"boss": controller_of(key)` và `"pattern_getter"` theo key.
+
+> Thứ lấy **qua ctx** (`boss`, `pattern_getter`) **đã** đúng con. Chỉ những lời gọi **trực tiếp** vào
+> `CombatState` / `StatusEffects` kèm `Side.ENEMY` mới đáng ngờ.
+
+Hệ quả là một hàm có thể **trông như mới khoá một nửa** mà thực ra đã đúng cả — `unit_key()` thì nhìn thấy ở chỗ
+gọi, còn ràng buộc ctx thì không. `shroud.is_cloud_lifted()` là ví dụ: dòng `is_pinned` cần sửa, dòng
+`boss.get_actor()` ngay dưới thì không, và hai dòng ấy trông như nhau. Phiên monster-skills đã nêu đúng nghi vấn
+này; ghi ra đây để không ai phải phát hiện nó lần thứ hai.
+
+**Chưa chạy gì** cho bước 2–3: chưa có suite hồi quy, chưa xin khe Godot. Bốn file đã sửa đang ở trạng thái
+"đọc được, chưa chạy".
+
 ### 3.8 Chưa bắt đầu — điều kiện khởi động
 
 1. Commit chung phải lên main trước. Phase 5 đụng đúng những file đang chờ trong đó; bắt đầu sớm là tạo thêm một
@@ -565,3 +674,86 @@ trong đó 6 phép kiểm cho riêng `hp_plate_rect_clear`. Ảnh so sánh trong
 `run_hud_view.boss_swing_line()` vẫn một dòng cho một boss; Phase 5 (trait theo unit) chưa bắt đầu.
 
 **Bàn giao:** `combat_view.gd` đã giao cho phiên character-system (4 dòng F2) lúc 23:10.
+
+---
+
+## 7. Lỗi quy gán ngoài trait: `hunter_mark` (phát hiện 14/11 bởi phiên character-system)
+
+`src/passives/hunter_mark.gd:60` gọi `status.apply_fragile(CombatState.Side.ENEMY, stacks)` — **chép cứng khoá của
+quái số 0**. Với nhiều quái, dấu Rạn của Thợ Săn luôn rơi vào quái số 0 dù người chơi vừa đánh trúng con nào.
+
+Đã kiểm: đây là passive **duy nhất** còn chép cứng. `CutEffects` dùng `target_side` (khoá động, từ Phase 2) ở cả ba
+chỗ áp Rạn, nên `hunter_mark` là ngoại lệ bị bỏ sót chứ không phải thiết kế.
+
+**Cùng loại với 7 mối nguy ở §3.2, nhưng không phải trait**, nên không nằm trong Phase 5 bước 1–3. Ghi ở đây để nó
+không thành việc của không ai.
+
+**Quyết định cần người dùng chốt:** dấu Rạn nên rơi vào đâu khi có nhiều quái?
+1. Con vừa bị nhát chém đó đánh trúng (đọc `result["unit_keys_hit"]`, đã có sẵn từ Phase 2) — **khuyến nghị**, vì nó
+   khớp trực giác "đánh ai thì đánh dấu người đó".
+2. Con bị đánh trúng đầu tiên trong nhát chém, nếu trúng nhiều con.
+3. Giữ nguyên quái số 0 (chỉ đúng khi trận một quái).
+
+**Chặn:** `hunter_mark.gd` hiện do phiên character-system giữ (việc F3). Cần bàn giao trước khi sửa.
+
+### 7.1 ĐÍNH CHÍNH (14/11): khuyến nghị trước của tôi dựa trên mô hình sai
+
+Tôi đề xuất "đánh dấu con vừa bị nhát chém đánh trúng" và người dùng đã chọn theo. **Nhưng `hunter_mark` không hề
+được kích hoạt bởi một cú đánh trúng.** Đọc code thì nó có đúng hai nguồn kích hoạt:
+
+1. `on_boss_thorn_step(cell)` — một con quái **bước lên ô gai**.
+2. `on_player_zone_formed(thorns, cells)` — người chơi tạo vùng gai **cạnh một con quái**.
+
+Nên "con bị đánh trúng" không ánh xạ được: không có cú đánh nào. Cách đọc trung thành nhất với ý người dùng là
+**con nào thực sự gây ra dấu thì con đó nhận dấu**.
+
+Và lỗi không nằm ở một chỗ mà **ba chỗ**, tất cả đều chép cứng quái số 0:
+
+| # | Vị trí | Hậu quả |
+|---|---|---|
+| 1 | `combat_view.gd:598` `if side != Side.ENEMY: return` | Quái 1+ bước lên gai **không bao giờ** tới được passive. `side` ở đây đã là khoá unit từ Phase 2, chỉ bị chặn lại |
+| 2 | `hunter_mark.gd:38` `state.enemy_footprint_cells()` | Vùng gai chỉ được so với ô của quái số 0 |
+| 3 | `hunter_mark.gd:60` `apply_fragile(Side.ENEMY, …)` | Dấu luôn rơi vào quái số 0 |
+
+Kèm một lỗi thống kê: `_stats["boss_thorn_steps"]` chỉ đếm bước của quái số 0.
+
+**Luật đúng:** bước lên gai thì đánh dấu chính con đã bước (khoá `side` đã có sẵn trong tay); vùng gai hình thành thì
+duyệt mọi quái còn sống thay vì chỉ quái số 0, và đánh dấu con nằm cạnh vùng đó.
+
+**Chặn:** cần `hunter_mark.gd` từ phiên character-system, và `combat_view.gd` cho chỗ số 1.
+
+### 7.2 Chỗ thứ tư (phiên character-system tìm ra, 14/11) — và vì sao sửa một nửa còn tệ hơn
+
+Tôi bỏ sót một chỗ **dù đã đọc qua đúng đoạn đó**. `combat_view.gd:608` chặn nguồn kích hoạt **thứ hai** y hệt cách
+dòng 599 chặn nguồn thứ nhất:
+
+```
+597  func _on_status_thorn_entered(side, cell, _damage)
+599      if side != CombatState.Side.ENEMY: return      <- nguồn 1 (giẫm gai)
+601      _stats["boss_thorn_steps"] += 1
+606  func _on_status_zone_applied(kind, side, cells)
+608      if side == CombatState.Side.ENEMY and _passive != null:   <- nguồn 2 (vùng gai)
+```
+
+**Sửa 599 mà quên 608 tạo ra trạng thái tệ hơn hiện tại**: giẫm gai bắt đầu tới được passive, còn vùng gai đặt cạnh
+quái khác thì vẫn không, nên passive chạy cho một nguồn và im cho nguồn kia **mà không có lý do nào nhìn thấy được**.
+Hiện tại ít nhất nó sai một cách nhất quán.
+
+Đếm lại cho đúng: **bốn chỗ**, không phải ba — `combat_view.gd:599`, `combat_view.gd:608`, `hunter_mark.gd:38`,
+`hunter_mark.gd:60`. Bộ đếm `_stats["boss_thorn_steps"]` ở dòng 601 nằm **bên trong** guard 599, nên nó tự đúng
+theo khi guard đó được sửa; không cần đụng riêng.
+
+Bài học ghi lại cho chính mình: tôi đã đọc `_on_status_zone_applied` trong cùng một lượt đọc để tìm nơi kích hoạt
+hunter_mark, và vẫn không thấy, vì tôi đang tìm "chỗ áp dấu" chứ không tìm "chỗ chặn theo phe". Một lượt đọc có mục
+tiêu hẹp sẽ bỏ qua đúng thứ nằm trong tầm mắt.
+
+### 7.3 Quyết định đã chốt (người dùng, 14/11: "con gây ra")
+
+**Con quái nào thực sự gây ra dấu thì con đó nhận dấu.** Giẫm lên ô gai thì chính nó bị đánh dấu; vùng gai hình
+thành cạnh nó thì chính nó bị đánh dấu. Không dùng `result["unit_keys_hit"]` — khuyến nghị đó đã bị rút (§7.1),
+vì `hunter_mark` không bao giờ được kích hoạt bởi một cú đánh.
+
+Lý do luật này đạt đúng tiêu chí mà khuyến nghị cũ được khen: người chơi đoán được mà game không cần nêu luật.
+
+**Bốn chỗ sửa, 599 và 608 phải đi cùng một thay đổi** (§7.2). Chặn: cần `combat_view.gd` và `hunter_mark.gd` từ
+phiên character-system, và cần hết đóng băng ghi tệp.
