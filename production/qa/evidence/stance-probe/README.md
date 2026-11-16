@@ -163,3 +163,53 @@ Bộ giải mã PNG được mở rộng sang hai trục và đối chiếu lạ
 
 Phép đo đầu tiên **đúng về con số và sai về đại lượng**. 19 px là số thật; nó chỉ không phải thứ cần đo.
 Cái bắt được sai lầm không phải sự cẩn thận — mà là câu hỏi "cái giá là bao nhiêu" hỏi trước khi trả tiền.
+
+
+---
+
+## 6. Sàn dải hạ xuống 72 % — và lần gen đã mua được điều đó (2026-11-17 ~00:xx)
+
+Người dùng chọn nâng năm con dưới sàn. Trước khi gen cả năm, gen thử **một** con lệch xa nhất.
+
+**Job `3cf5081e`, `create_image_pro_flash`, 5 generation.** Canvas 64×52 → **84×68** (×1,29), giữ nguyên
+mô tả đã duyệt trong `references/characters/mire_slug.md`, style anchor là chính sprite cũ, khoá 6 màu.
+
+| | Khung | Thân | Lấp khung | Độ hiện diện | Màu ngoài bảng |
+|---|---|---|---|---|---|
+| Cũ | 64×52 | 47×26 | 73 % | 73,4 % | không |
+| Mới | 84×68 | 50×29 | **60 %** | **78 %** | không |
+
+**Phóng canvas KHÔNG phóng chủ thể.** Giả định của tôi là model giữ tỉ lệ lấp khung; nó không. Nó vẽ con sên
+gần như cùng kích thước tuyệt đối (47 → 50 px) nên tỉ lệ lấp **tụt** 73 % → 60 %. Pro Flash vẽ chủ thể ở kích
+thước **chủ thể muốn**. Mục tiêu 85 % không đạt, và không có đòn bẩy rẻ nào đạt được nó.
+
+### Kết luận: sàn sai, không phải năm con quái sai
+
+Sàn 85 % là **con số tôi chọn**, không phải con số roster đo được. Năm con dưới sàn đều là sinh vật thấp lè
+tè — sên, sên dung nham, cóc, bọ, tiểu quỷ — và chính art bible §5.2 đã gọi chúng là "thấp theo đúng thiết
+kế" **ngay trong đoạn chốt dải**. Khi thiết kế gốc, công cụ, và ghi chú của chính mình đều nói một hướng,
+còn mỗi cái sàn nói ngược, thì cái sàn là thứ sai.
+
+Sàn quái thường: **85 % → 72 %**, đặt **dưới con thấp nhất đo được** (`mire_slug` 73,438 %). Trần giữ 115 %;
+sàn Tinh Anh 118 %; hai bậc vẫn tách (quái thường cao nhất `reed_witch` 113 %).
+
+**Toàn roster: 65/65 PASS.**
+
+### Một phép kiểm luôn xanh thì phải chứng minh nó còn đỏ được
+
+65/65 PASS có thể là "roster sạch" hoặc "phép kiểm hỏng". Thử hai chiều bằng cách đổi nhãn bậc trên sprite
+thật:
+
+| Thử | Kết quả |
+|---|---|
+| `fire_eater` (Tinh Anh 60×75) gắn nhãn `normal` → phải vượt **trần** | **WARNING**, 163 % vs dải 72–115 % |
+| `mire_slug` (sên 47×26) gắn nhãn `elite` → phải dưới **sàn** | **WARNING**, 73 % vs dải 118–175 % |
+| Nhãn thật | **PASS** |
+
+Phép kiểm vẫn đỏ được ở cả hai đầu, nên 65/65 là kết quả thật.
+
+### Năm generation ấy mua được gì
+
+Không mua được con sên to hơn. Mua được một sự thật về công cụ — **kích thước chủ thể không điều khiển bằng
+canvas** — và nó chặn bốn lần gen tiếp theo đi cùng một hướng sai (20 generation), cộng với việc giữ lại năm
+con quái đúng thiết kế. Đó là lý do gen **một** con để thử trước khi gen cả loạt.

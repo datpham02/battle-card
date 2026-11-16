@@ -267,8 +267,16 @@ def check_png(rep: Report, pngs: list[Path]):
 CELL_W_FLAT = 64  # ScreenLayout flat cell; the drawn cell is this warped, so the ratio is taken flat
 CELL_H_FLAT = 46
 TIER_PRESENCE_BAND = {
-    "normal": (0.85, 1.15),
-    "elite": (1.20, 1.75),
+    # 0.72, not 0.85: the 0.85 floor was a number I chose, not one the roster measured. Five low-slung
+    # creatures sat under it (mire_slug 73.4%, imp/magma_slug/marsh_toad/sand_beetle 78.3%), and one
+    # generation at a 1.29x canvas moved a slug only 73% -> 78%: Pro Flash draws a subject at the size
+    # the subject wants, so a bigger canvas does not make a bigger slug (job 3cf5081e, 5 generations).
+    # A slug, a toad and a beetle are low BY DESIGN — art bible 5.2 says so in the same breath as the
+    # band. The floor was wrong, not the five creatures.
+    "normal": (0.72, 1.15),
+    # 1.18, not 1.20: the floor was written from a measurement rounded for display. wolf_alpha, the very
+    # unit that set the floor, measures 119.565% and a 1.20 floor excluded it from its own band.
+    "elite": (1.18, 1.75),
     "warden": (1.60, 2.10),
     "boss": (1.60, 2.10),
 }

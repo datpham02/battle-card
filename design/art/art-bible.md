@@ -513,8 +513,8 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 
   | Bậc | Độ hiện diện |
   |---|---|
-  | Quái thường | **85–115 %** |
-  | Tinh Anh | **120–175 %** |
+  | Quái thường | **72–115 %** |
+  | Tinh Anh | **118–175 %** |
   | Kẻ Gác / boss **một ô** | **160–210 %** |
   | Kẻ Gác trên **khối 2×2** | giữ nguyên (`forest_witch`, `goblin_warlock`) |
 
@@ -526,10 +526,15 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
 
   **Các dải này lấy TỪ chính roster đã đo, không bịa.** Đo 2026-11-16: quái thường 73–113 % (TB 97 %), Tinh
   Anh 120–172 % (TB 153 %), Kẻ Gác 172–207 %, boss 163–185 %. Các bậc **đã tách sạch** — quái thường cao nhất
-  113 %, Tinh Anh thấp nhất 120 %, **không một trường hợp đảo bậc nào**. Dải viết ra để GIỮ trật tự đang có và
-  chặn lần trôi sau, không phải để sửa roster hiện tại: chỉ 8/46 quái thường dưới 85 %, và cả tám là sinh vật
-  thấp lè tè đúng thiết kế (`mire_slug`, `imp`, `magma_slug`, `marsh_toad`, `sand_beetle`, `cloud_sprite`,
-  `ember_hound`, `swamp_lizard`).
+  113 %, Tinh Anh thấp nhất 119,6 %, **không một trường hợp đảo bậc nào**. Sàn Tinh Anh đặt ở **118 %** chứ
+  không phải 120 %: viết 120 là làm tròn số đo để hiển thị, và nó loại đúng con đã đặt ra cái sàn ấy
+  (`wolf_alpha` đo được 119,565 %). Dải viết ra để GIỮ trật tự đang có và
+  chặn lần trôi sau, không phải để sửa roster hiện tại: sàn 72 % đặt **dưới con thấp nhất đo được**
+  (`mire_slug` 73,4 %) chứ không phải một con số chọn bừa. Bản đầu đặt sàn 85 % và kết tội năm sinh vật
+  thấp lè tè — sên, sên dung nham, cóc, bọ, tiểu quỷ — vốn **thấp theo đúng thiết kế**. Một lần gen thật
+  (job `3cf5081e`, 5 generation) cho thấy ép chúng to lên là đi ngược thớ công cụ: phóng canvas ×1,29 chỉ
+  đưa con sên từ 73 % lên 78 %, vì Pro Flash vẽ chủ thể ở kích thước **chủ thể muốn**, không theo khung.
+  Sàn sai, không phải năm con quái sai.
 
   **Đo theo tỉ lệ, không theo px**, vì một con số tuyệt đối trôi theo khi ô đổi kích thước giữa các sân mà
   không ai thấy — đúng cơ chế đã làm trần cũ mục đi trong một tháng.
