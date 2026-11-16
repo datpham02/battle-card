@@ -217,11 +217,20 @@ Giảm thiểu:
 
 | Anh hùng | Dáng tổng | Dấu duy nhất |
 |---|---|---|
-| Kiếm sĩ | Chữ nhật, vai vuông | Hai cẳng tay quấn dây bắt chéo ngang ngực, bàn tay trần mở |
+| Kiếm sĩ | Chữ nhật, vai vuông | Đầu trần, vai vuông rộng, áo vải dày rủ thẳng, hai cẳng tay quấn băng bản rộng buông hai bên |
 | Pháp sư | Tam giác cao, gầy | Mũ chóp nhọn gập đầu |
 | Sát thủ | Thoi dẹt, khom; cao ~34–36 px (thấp nhất nhóm) | Mũ trùm nhọn, góc cạnh nhất nhóm; hai tay thấp sát người, xoè ngón |
 | Thợ săn | Chữ T | Mũ rộng vành + 1 lông, cuộn dây vắt ngực (dụng cụ bẫy) |
 | Giáo sĩ | Chuông đáy rộng | Voan phủ đầu, hai tay nâng khum trước ngực |
+
+> **Dấu nhận dạng của Kiếm sĩ tách làm hai trạng thái** (người dùng duyệt 2026-11-14). Cột trên mô tả
+> **silhouette khi đứng trên bàn cờ**, tức idle. Riêng **hai cẳng tay bắt chéo ngang ngực, bàn tay trần
+> mở** là **cử chỉ đặc trưng của riêng clip niệm**, không phải tư thế idle — anchor được dựng ở tư
+> thế trung tính để các clip sau còn cử động tay tự nhiên. Chi tiết:
+> `docs/design/character-system/WEAPON-FREE-ANCHOR-KIEM-SI.md` §4.1.1.
+>
+> Trước 2026-11-14 cột này ghi tư thế bắt chéo là dấu duy nhất cho mọi trạng thái; khi anchor chuyển
+> sang trung tính thì câu đó mô tả một thứ không có trên bàn cờ nữa.
 
 **Quái và tư thế niệm**
 - Dấu loài của quái:
