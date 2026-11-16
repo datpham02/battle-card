@@ -400,6 +400,23 @@ Hồi quy: `region_traits_test`, `trait_test`, `traits2_test`, `zone_traits_test
 `final_boss_phase_test`, `multi_enemy_agents_test`, `multi_enemy_hud_test`.
 Bằng chứng hình ảnh: một trận 2 quái trong đó mỗi con mang một trait PER-UNIT khác nhau.
 
+> **CẢNH BÁO cho người viết chân H tiếp theo — đo được 2026-11-16, không phải suy đoán.**
+>
+> **Chân H5 đặc tả ở trên QUA ĐƯỢC trên mã có lỗi.** "riposte của unit 2 không nổ khi chỉ trúng unit 1" cho ra
+> `PASS` trước khi sửa — vì riposte của unit 2 **không bao giờ nổ gì cả**, host của nó chưa từng được gọi. Đúng,
+> nhưng vì lý do sai. Viết y đặc tả thì H5 đóng lại mà không một dòng nào thay đổi.
+>
+> Mỗi mối nguy có **hai mặt**, và câu đặc tả thường chỉ bắt mặt im lặng. Mặt kia của H5 — mặt người chơi chịu —
+> là riposte trên **unit 0** phản đòn cú chém chỉ trúng unit 2, vì `hit` và `damage` trên result gộp là **tổng**
+> của mọi unit. Nên mỗi chân H cần **hai chiều**: thứ phải im, và thứ **vẫn phải kêu**. Một bản vá làm trait câm
+> hẳn thoả mọi chân âm và là câu trả lời sai dễ nhất.
+>
+> **Và đường lui `CutEffects.merge()` chính là đường 1v1.** `merge()` trả dictionary **không gắn thẻ** khi chỉ có
+> một kết quả trên hero hoặc unit 0 — nên trận 1 quái **không có** `unit_results` lẫn `unit_keys_hit`. Helper nào
+> chỉ đọc `unit_results` sẽ trả `0.0` cho mọi trận thường và làm mọi trait per-unit câm lặng ở ca phổ biến nhất
+> trong game. **Không chân nào trong `multi_enemy_traits_test` bắt được, vì chân nào cũng dựng ba unit.** Bước 4,
+> 5, 6 đều với tay vào đúng dictionary ấy.
+
 ### 3.7 Quyết định đã chốt (người dùng, 2026-11-14: "theo khuyến nghị")
 
 | # | Quyết định | Chốt |
