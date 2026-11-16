@@ -62,9 +62,24 @@ func _init() -> void:
 					if img.get_pixel(x, y).a > 0.5:
 						fx0 = mini(fx0, x)
 						fx1 = maxi(fx1, x)
-		print("%s %dx%d bbox=%d,%d..%d,%d bottom=%d feet_x=%d..%d colours=%d%s"
-			% [n, w, h, x0, y0, x1, y1, y1, fx0, fx1, cols.size(),
-			"" if palette.is_empty() else " off_palette_px=%d" % off])
+		# Proportion: the widest row above the vertical middle is the head or hat, and how far down it sits is
+		# what makes a figure read as chibi. Measured because an eye judgement of "chibi" is exactly what this
+		# file was missing when two anchors were judged by bbox alone.
+		var head_row: int = -1
+		var head_w: int = 0
+		if y1 >= y0:
+			for y: int in range(y0, y0 + maxi((y1 - y0) / 2, 1)):
+				var rw: int = 0
+				for x: int in w:
+					if img.get_pixel(x, y).a > 0.5:
+						rw += 1
+				if rw > head_w:
+					head_w = rw
+					head_row = y
+		var head_frac: float = 0.0 if y1 <= y0 else float(head_row - y0) / float(y1 - y0)
+		print("%s %dx%d bbox=%d,%d..%d,%d bottom=%d feet_x=%d..%d colours=%d widest_upper_row=%d(%.2f down) colours_note=%s"
+			% [n, w, h, x0, y0, x1, y1, y1, fx0, fx1, cols.size(), head_row, head_frac,
+			"-" if palette.is_empty() else "off_palette_px=%d" % off])
 	var list: Array = all_colours.keys()
 	list.sort()
 	print("FOLDER_COLOURS=%d %s" % [list.size(), ",".join(list)])

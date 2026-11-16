@@ -903,7 +903,7 @@
       "duration": 50
     },
     {
-      "filename": "giao_si_cast_gesture_0",
+      "filename": "giao_si_step_up_0",
       "frame": {
         "x": 0,
         "y": 438,
@@ -922,10 +922,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "giao_si_cast_gesture_1",
+      "filename": "giao_si_step_up_1",
       "frame": {
         "x": 97,
         "y": 438,
@@ -944,10 +944,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "giao_si_cast_gesture_2",
+      "filename": "giao_si_step_up_2",
       "frame": {
         "x": 194,
         "y": 438,
@@ -966,10 +966,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "giao_si_cast_gesture_3",
+      "filename": "giao_si_step_up_3",
       "frame": {
         "x": 291,
         "y": 438,
@@ -988,10 +988,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "giao_si_cast_gesture_4",
+      "filename": "giao_si_step_up_4",
       "frame": {
         "x": 388,
         "y": 438,
@@ -1010,10 +1010,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 200
+      "duration": 50
     },
     {
-      "filename": "giao_si_cast_gesture_5",
+      "filename": "giao_si_step_up_5",
       "frame": {
         "x": 485,
         "y": 438,
@@ -1035,10 +1035,164 @@
       "duration": 50
     },
     {
-      "filename": "giao_si_cast_gesture_6",
+      "filename": "giao_si_step_up_6",
       "frame": {
         "x": 582,
         "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_cast_gesture_0",
+      "frame": {
+        "x": 0,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_1",
+      "frame": {
+        "x": 97,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_2",
+      "frame": {
+        "x": 194,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_3",
+      "frame": {
+        "x": 291,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "giao_si_cast_gesture_4",
+      "frame": {
+        "x": 388,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 200
+    },
+    {
+      "filename": "giao_si_cast_gesture_5",
+      "frame": {
+        "x": 485,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "giao_si_cast_gesture_6",
+      "frame": {
+        "x": 582,
+        "y": 511,
         "w": 96,
         "h": 72
       },
@@ -1060,7 +1214,7 @@
       "filename": "giao_si_cast_gesture_7",
       "frame": {
         "x": 679,
-        "y": 438,
+        "y": 511,
         "w": 96,
         "h": 72
       },
@@ -1082,7 +1236,7 @@
       "filename": "giao_si_cast_gesture_8",
       "frame": {
         "x": 776,
-        "y": 438,
+        "y": 511,
         "w": 96,
         "h": 72
       },
@@ -1104,7 +1258,7 @@
       "filename": "giao_si_hit_0",
       "frame": {
         "x": 0,
-        "y": 511,
+        "y": 584,
         "w": 96,
         "h": 72
       },
@@ -1126,7 +1280,7 @@
       "filename": "giao_si_hit_1",
       "frame": {
         "x": 97,
-        "y": 511,
+        "y": 584,
         "w": 96,
         "h": 72
       },
@@ -1148,7 +1302,7 @@
       "filename": "giao_si_hit_2",
       "frame": {
         "x": 194,
-        "y": 511,
+        "y": 584,
         "w": 96,
         "h": 72
       },
@@ -1170,7 +1324,7 @@
       "filename": "giao_si_victory_0",
       "frame": {
         "x": 0,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1192,7 +1346,7 @@
       "filename": "giao_si_victory_1",
       "frame": {
         "x": 97,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1214,7 +1368,7 @@
       "filename": "giao_si_victory_2",
       "frame": {
         "x": 194,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1236,7 +1390,7 @@
       "filename": "giao_si_victory_3",
       "frame": {
         "x": 291,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1258,7 +1412,7 @@
       "filename": "giao_si_victory_4",
       "frame": {
         "x": 388,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1280,7 +1434,7 @@
       "filename": "giao_si_victory_5",
       "frame": {
         "x": 485,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1302,7 +1456,7 @@
       "filename": "giao_si_victory_6",
       "frame": {
         "x": 582,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1324,7 +1478,7 @@
       "filename": "giao_si_victory_7",
       "frame": {
         "x": 679,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1346,7 +1500,7 @@
       "filename": "giao_si_defeat_0",
       "frame": {
         "x": 0,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1368,7 +1522,7 @@
       "filename": "giao_si_defeat_1",
       "frame": {
         "x": 97,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1390,7 +1544,7 @@
       "filename": "giao_si_defeat_2",
       "frame": {
         "x": 194,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1412,7 +1566,7 @@
       "filename": "giao_si_defeat_3",
       "frame": {
         "x": 291,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1434,7 +1588,7 @@
       "filename": "giao_si_defeat_4",
       "frame": {
         "x": 388,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1456,7 +1610,7 @@
       "filename": "giao_si_defeat_5",
       "frame": {
         "x": 485,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1478,7 +1632,7 @@
       "filename": "giao_si_defeat_6",
       "frame": {
         "x": 582,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1500,7 +1654,7 @@
       "filename": "giao_si_defeat_7",
       "frame": {
         "x": 679,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1522,7 +1676,7 @@
       "filename": "giao_si_fall_0",
       "frame": {
         "x": 0,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1544,7 +1698,7 @@
       "filename": "giao_si_fall_1",
       "frame": {
         "x": 97,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1566,7 +1720,7 @@
       "filename": "giao_si_fall_2",
       "frame": {
         "x": 194,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1588,7 +1742,7 @@
       "filename": "giao_si_fall_3",
       "frame": {
         "x": 291,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1610,7 +1764,7 @@
       "filename": "giao_si_awaken_0",
       "frame": {
         "x": 0,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1632,7 +1786,7 @@
       "filename": "giao_si_awaken_1",
       "frame": {
         "x": 97,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1654,7 +1808,7 @@
       "filename": "giao_si_awaken_2",
       "frame": {
         "x": 194,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1676,7 +1830,7 @@
       "filename": "giao_si_awaken_3",
       "frame": {
         "x": 291,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1698,7 +1852,7 @@
       "filename": "giao_si_awaken_4",
       "frame": {
         "x": 388,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1724,7 +1878,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 872,
-      "h": 875
+      "h": 948
     },
     "scale": "1",
     "frameTags": [
@@ -1765,39 +1919,45 @@
         "direction": "forward"
       },
       {
-        "name": "cast_gesture",
+        "name": "step_up",
         "from": 41,
-        "to": 49,
+        "to": 47,
+        "direction": "forward"
+      },
+      {
+        "name": "cast_gesture",
+        "from": 48,
+        "to": 56,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 50,
-        "to": 52,
+        "from": 57,
+        "to": 59,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 53,
-        "to": 60,
+        "from": 60,
+        "to": 67,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 61,
-        "to": 68,
+        "from": 68,
+        "to": 75,
         "direction": "forward"
       },
       {
         "name": "fall",
-        "from": 69,
-        "to": 72,
+        "from": 76,
+        "to": 79,
         "direction": "forward"
       },
       {
         "name": "awaken",
-        "from": 73,
-        "to": 77,
+        "from": 80,
+        "to": 84,
         "direction": "forward"
       }
     ],
@@ -1826,6 +1986,7 @@
         "step_forward": "once",
         "step_back": "once",
         "step_down": "once",
+        "step_up": "once",
         "cast_gesture": "once",
         "hit": "once",
         "victory": "hold_last",
@@ -1835,8 +1996,10 @@
       },
       "palette": [
         "#1B1722",
+        "#4C5266",
         "#6E7282",
         "#B8BCC8",
+        "#C08FE8",
         "#E2E3EA",
         "#E3B99A"
       ]

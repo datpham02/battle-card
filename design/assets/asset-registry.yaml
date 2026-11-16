@@ -756,7 +756,7 @@ assets:
   palette:
     file: art_src/palette/tessera_master.gpl
     max: 8
-    colours: ["#1B1722", "#6E7282", "#B8BCC8", "#E2E3EA", "#E3B99A"]
+    colours: ["#1B1722", "#4C5266", "#6E7282", "#B8BCC8", "#C08FE8", "#E2E3EA", "#E3B99A"]
   pixellab:
     character_id: dd4ae0ea-c394-4082-9b93-564aa6475835
     image_ids: ["8dd433f4"]
@@ -876,6 +876,22 @@ assets:
     approved_by: null
     approved_evidence: null
     attention: null
+    generation: null
+    note: null
+  - name: step_up
+    frames: 7
+    loop: once
+    ms: [50, 50, 50, 50, 50, 50, 50]
+    source_dir: art_src/units/giao_si/step_up
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: "new 2026-11-16 (weaponless roster redesign): the four-direction dash needs an up step, which this character never had. Generated with the ASSET-001-DASH v7 wording plus the silhouette-width clause, pinned at both ends to the approved weaponless anchor."
     generation: null
     note: null
   - name: cast_gesture
@@ -2778,7 +2794,7 @@ assets:
   palette:
     file: art_src/palette/tessera_master.gpl
     max: 8
-    colours: ["#1B1722", "#2C2A35", "#3A3744", "#555064", "#5E4636", "#8A6A50", "#E3B99A", "#EFE6D2"]
+    colours: ["#1B1722", "#2C2A35", "#3A3744", "#555064", "#5E4636", "#8A6A50", "#BFF3EC", "#E3B99A", "#EFE6D2"]
   pixellab:
     character_id: "5e05e92a-3aee-4543-a60a-703e684b8e90"
     image_ids: []
@@ -3175,6 +3191,22 @@ assets:
     approved_by: null
     approved_evidence: null
     attention: null
+    generation: null
+    note: null
+  - name: step_up
+    frames: 7
+    loop: once
+    ms: [50, 50, 50, 50, 50, 50, 50]
+    source_dir: art_src/units/tho_san/step_up
+    status: installed
+    acceptance: unknown
+    accepted_on: null
+    accepted_by: null
+    accepted_evidence: null
+    approved_on: null
+    approved_by: null
+    approved_evidence: null
+    attention: "new 2026-11-16 (weaponless roster redesign): the four-direction dash needs an up step, which this character never had. Generated with the ASSET-001-DASH v7 wording plus the silhouette-width clause, pinned at both ends to the approved weaponless anchor."
     generation: null
     note: null
   - name: cast_gesture

@@ -859,7 +859,7 @@
       "duration": 50
     },
     {
-      "filename": "tho_san_cast_gesture_0",
+      "filename": "tho_san_step_up_0",
       "frame": {
         "x": 0,
         "y": 438,
@@ -878,10 +878,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "tho_san_cast_gesture_1",
+      "filename": "tho_san_step_up_1",
       "frame": {
         "x": 97,
         "y": 438,
@@ -900,10 +900,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "tho_san_cast_gesture_2",
+      "filename": "tho_san_step_up_2",
       "frame": {
         "x": 194,
         "y": 438,
@@ -922,10 +922,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "tho_san_cast_gesture_3",
+      "filename": "tho_san_step_up_3",
       "frame": {
         "x": 291,
         "y": 438,
@@ -944,10 +944,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 83
+      "duration": 50
     },
     {
-      "filename": "tho_san_cast_gesture_4",
+      "filename": "tho_san_step_up_4",
       "frame": {
         "x": 388,
         "y": 438,
@@ -966,10 +966,10 @@
         "w": 96,
         "h": 72
       },
-      "duration": 200
+      "duration": 50
     },
     {
-      "filename": "tho_san_cast_gesture_5",
+      "filename": "tho_san_step_up_5",
       "frame": {
         "x": 485,
         "y": 438,
@@ -991,10 +991,164 @@
       "duration": 50
     },
     {
-      "filename": "tho_san_cast_gesture_6",
+      "filename": "tho_san_step_up_6",
       "frame": {
         "x": 582,
         "y": 438,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "tho_san_cast_gesture_0",
+      "frame": {
+        "x": 0,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "tho_san_cast_gesture_1",
+      "frame": {
+        "x": 97,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "tho_san_cast_gesture_2",
+      "frame": {
+        "x": 194,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "tho_san_cast_gesture_3",
+      "frame": {
+        "x": 291,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 83
+    },
+    {
+      "filename": "tho_san_cast_gesture_4",
+      "frame": {
+        "x": 388,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 200
+    },
+    {
+      "filename": "tho_san_cast_gesture_5",
+      "frame": {
+        "x": 485,
+        "y": 511,
+        "w": 96,
+        "h": 72
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 72
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 72
+      },
+      "duration": 50
+    },
+    {
+      "filename": "tho_san_cast_gesture_6",
+      "frame": {
+        "x": 582,
+        "y": 511,
         "w": 96,
         "h": 72
       },
@@ -1016,7 +1170,7 @@
       "filename": "tho_san_cast_gesture_7",
       "frame": {
         "x": 679,
-        "y": 438,
+        "y": 511,
         "w": 96,
         "h": 72
       },
@@ -1038,7 +1192,7 @@
       "filename": "tho_san_cast_gesture_8",
       "frame": {
         "x": 776,
-        "y": 438,
+        "y": 511,
         "w": 96,
         "h": 72
       },
@@ -1060,7 +1214,7 @@
       "filename": "tho_san_hit_0",
       "frame": {
         "x": 0,
-        "y": 511,
+        "y": 584,
         "w": 96,
         "h": 72
       },
@@ -1082,7 +1236,7 @@
       "filename": "tho_san_hit_1",
       "frame": {
         "x": 97,
-        "y": 511,
+        "y": 584,
         "w": 96,
         "h": 72
       },
@@ -1104,7 +1258,7 @@
       "filename": "tho_san_hit_2",
       "frame": {
         "x": 194,
-        "y": 511,
+        "y": 584,
         "w": 96,
         "h": 72
       },
@@ -1126,7 +1280,7 @@
       "filename": "tho_san_victory_0",
       "frame": {
         "x": 0,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1148,7 +1302,7 @@
       "filename": "tho_san_victory_1",
       "frame": {
         "x": 97,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1170,7 +1324,7 @@
       "filename": "tho_san_victory_2",
       "frame": {
         "x": 194,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1192,7 +1346,7 @@
       "filename": "tho_san_victory_3",
       "frame": {
         "x": 291,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1214,7 +1368,7 @@
       "filename": "tho_san_victory_4",
       "frame": {
         "x": 388,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1236,7 +1390,7 @@
       "filename": "tho_san_victory_5",
       "frame": {
         "x": 485,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1258,7 +1412,7 @@
       "filename": "tho_san_victory_6",
       "frame": {
         "x": 582,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1280,7 +1434,7 @@
       "filename": "tho_san_victory_7",
       "frame": {
         "x": 679,
-        "y": 584,
+        "y": 657,
         "w": 96,
         "h": 72
       },
@@ -1302,7 +1456,7 @@
       "filename": "tho_san_defeat_0",
       "frame": {
         "x": 0,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1324,7 +1478,7 @@
       "filename": "tho_san_defeat_1",
       "frame": {
         "x": 97,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1346,7 +1500,7 @@
       "filename": "tho_san_defeat_2",
       "frame": {
         "x": 194,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1368,7 +1522,7 @@
       "filename": "tho_san_defeat_3",
       "frame": {
         "x": 291,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1390,7 +1544,7 @@
       "filename": "tho_san_defeat_4",
       "frame": {
         "x": 388,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1412,7 +1566,7 @@
       "filename": "tho_san_defeat_5",
       "frame": {
         "x": 485,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1434,7 +1588,7 @@
       "filename": "tho_san_defeat_6",
       "frame": {
         "x": 582,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1456,7 +1610,7 @@
       "filename": "tho_san_defeat_7",
       "frame": {
         "x": 679,
-        "y": 657,
+        "y": 730,
         "w": 96,
         "h": 72
       },
@@ -1478,7 +1632,7 @@
       "filename": "tho_san_fall_0",
       "frame": {
         "x": 0,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1500,7 +1654,7 @@
       "filename": "tho_san_fall_1",
       "frame": {
         "x": 97,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1522,7 +1676,7 @@
       "filename": "tho_san_fall_2",
       "frame": {
         "x": 194,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1544,7 +1698,7 @@
       "filename": "tho_san_fall_3",
       "frame": {
         "x": 291,
-        "y": 730,
+        "y": 803,
         "w": 96,
         "h": 72
       },
@@ -1566,7 +1720,7 @@
       "filename": "tho_san_awaken_0",
       "frame": {
         "x": 0,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1588,7 +1742,7 @@
       "filename": "tho_san_awaken_1",
       "frame": {
         "x": 97,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1610,7 +1764,7 @@
       "filename": "tho_san_awaken_2",
       "frame": {
         "x": 194,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1632,7 +1786,7 @@
       "filename": "tho_san_awaken_3",
       "frame": {
         "x": 291,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1654,7 +1808,7 @@
       "filename": "tho_san_awaken_4",
       "frame": {
         "x": 388,
-        "y": 803,
+        "y": 876,
         "w": 96,
         "h": 72
       },
@@ -1680,7 +1834,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 872,
-      "h": 875
+      "h": 948
     },
     "scale": "1",
     "frameTags": [
@@ -1721,39 +1875,45 @@
         "direction": "forward"
       },
       {
-        "name": "cast_gesture",
+        "name": "step_up",
         "from": 39,
-        "to": 47,
+        "to": 45,
+        "direction": "forward"
+      },
+      {
+        "name": "cast_gesture",
+        "from": 46,
+        "to": 54,
         "direction": "forward"
       },
       {
         "name": "hit",
-        "from": 48,
-        "to": 50,
+        "from": 55,
+        "to": 57,
         "direction": "forward"
       },
       {
         "name": "victory",
-        "from": 51,
-        "to": 58,
+        "from": 58,
+        "to": 65,
         "direction": "forward"
       },
       {
         "name": "defeat",
-        "from": 59,
-        "to": 66,
+        "from": 66,
+        "to": 73,
         "direction": "forward"
       },
       {
         "name": "fall",
-        "from": 67,
-        "to": 70,
+        "from": 74,
+        "to": 77,
         "direction": "forward"
       },
       {
         "name": "awaken",
-        "from": 71,
-        "to": 75,
+        "from": 78,
+        "to": 82,
         "direction": "forward"
       }
     ],
@@ -1782,6 +1942,7 @@
         "step_forward": "once",
         "step_back": "once",
         "step_down": "once",
+        "step_up": "once",
         "cast_gesture": "once",
         "hit": "once",
         "victory": "hold_last",

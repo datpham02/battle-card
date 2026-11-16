@@ -1,348 +1,348 @@
 {
- "id": "kiem_si",
- "asset": "ASSET-001",
- "frame": {
-  "w": 96,
-  "h": 92
- },
- "body_h": 70,
- "_doc_frame": "2026-11-08 (user-approved option A): the frame grew from 96x70 to 96x92 for the cast_overhead headroom. Every 96x70 source is bottom-aligned by the exporter (22 transparent rows on top), so the feet and every drawn pixel stay where they were; body_h 70 keeps the HUD's above-the-head placements and the menu portraits on the old body.",
- "facing": "right",
- "source": "PixelLab character 2d093318-1ba4-43aa-b843-a5f0fdf62939 (v3 tall anchor, approved 2026-10-31), PixMiniMax south-east clips in design/assets/candidates/swordsman/v3-tall/anim/<clip>/<n>.png, cleaned by palette snap + cape recolour + speck removal into design/assets/candidates/swordsman/v3-tall/clean-96x70/ (canvas rows 10..79, feet on the bottom row, feet x = 48) idle replaced 2026-11-05 by design/assets/candidates/swordsman/anim-idle-v2 (PixMiniMax job 9d1adf31, first and last frame pinned to the anchor, prompt from tessera_idle_animation_prompts.md movement part with positive wording; raw f0-f7, f8 = f0 dropped).",
- "clips": [
-  {
-   "name": "idle",
-   "frames": [
-    "idle/0.png",
-    "idle/1.png",
-    "idle/2.png",
-    "idle/3.png",
-    "idle/4.png",
-    "idle/5.png",
-    "idle/6.png",
-    "idle/7.png"
-   ],
-   "ms": [
-    125,
-    125,
-    125,
-    125,
-    125,
-    125,
-    125,
-    125
-   ],
-   "loop": "loop",
-   "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body"
+  "id": "kiem_si",
+  "asset": "ASSET-001",
+  "frame": {
+    "w": 96,
+    "h": 92
   },
-  {
-   "name": "draw",
-   "frames": [
-    "draw/0.png",
-    "draw/1.png",
-    "draw/2.png",
-    "draw/3.png",
-    "draw/4.png",
-    "draw/5.png",
-    "draw/6.png",
-    "draw/7.png"
-   ],
-   "ms": [
-    60,
-    60,
-    80,
-    80,
-    80,
-    80,
-    80,
-    120
-   ],
-   "loop": "once",
-   "note": "2026-11-02 match start: draws the sword from the back into the guard stance (PixMiniMax on the v3 character, no recentring: the feet do not move); UnitLayer plays it once when the match binds"
-  },
-  {
-   "name": "step",
-   "frames": [
-    "step/0.png",
-    "step/1.png",
-    "step/2.png",
-    "step/3.png"
-   ],
-   "ms": [
-    100,
-    100,
-    100,
-    100
-   ],
-   "loop": "loop",
-   "note": "nominal; the game paces step by the step cooldown"
-  },
-  {
-   "name": "step_forward",
-   "frames": [
-    "step_forward/0.png",
-    "step_forward/1.png",
-    "step_forward/2.png",
-    "step_forward/3.png",
-    "step_forward/4.png",
-    "step_forward/5.png",
-    "step_forward/6.png"
-   ],
-   "ms": [
-    50,
-    50,
-    50,
-    50,
-    50,
-    50,
-    50
-   ],
-   "loop": "once",
-   "note": "2026-11-15 v7 dash (user: a march is not a dash): PixMiniMax from the v5 cloth anchor, src frames 1,2,3,4,5,7,8 = anticipation crouch, four HELD frames of one leaning shape (the model draws them identical: a dash has no stride), brake, upright. Cleaned mechanically only: snapped to the hero's 7 colours, specks < 12 px dropped, each frame translated so its bottom row is 91, cropped 96x96 -> 96x92. The engine compresses the clip into the glide + settle window and hands back to the guard idle, so the dash pose is never the final frame."
-  },
-  {
-   "name": "step_back",
-   "frames": [
-    "step_back/0.png",
-    "step_back/1.png",
-    "step_back/2.png",
-    "step_back/3.png",
-    "step_back/4.png",
-    "step_back/5.png",
-    "step_back/6.png"
-   ],
-   "ms": [
-    50,
-    50,
-    50,
-    50,
-    50,
-    50,
-    50
-   ],
-   "loop": "once",
-   "note": "2026-11-15 v7 dash, as step_forward but retreating: the weight goes onto the rear foot and the body leans away while the face stays turned the same way, so it is not the forward dash reversed."
-  },
-  {
-   "name": "step_up",
-   "frames": [
-    "step_up/0.png",
-    "step_up/1.png",
-    "step_up/2.png",
-    "step_up/3.png",
-    "step_up/4.png",
-    "step_up/5.png",
-    "step_up/6.png"
-   ],
-   "ms": [
-    50,
-    50,
-    50,
-    50,
-    50,
-    50,
-    50
-   ],
-   "loop": "once",
-   "note": "2026-11-15 v7 dash, as step_forward but away from the viewer. The facing is stated positively in every phase of the prompt because the v3 attempt (2026-11-02) turned into a full back view and was rejected."
-  },
-  {
-   "name": "step_down",
-   "frames": [
-    "step_down/0.png",
-    "step_down/1.png",
-    "step_down/2.png",
-    "step_down/3.png",
-    "step_down/4.png",
-    "step_down/5.png",
-    "step_down/6.png"
-   ],
-   "ms": [
-    50,
-    50,
-    50,
-    50,
-    50,
-    50,
-    50
-   ],
-   "loop": "once",
-   "note": "2026-11-15 v7 dash, as step_forward but toward the viewer."
-  },
-  {
-   "name": "cast_gesture",
-   "frames": [
-    "cast_gesture/0.png",
-    "cast_gesture/1.png",
-    "cast_gesture/2.png",
-    "cast_gesture/3.png",
-    "cast_gesture/4.png",
-    "cast_gesture/5.png",
-    "cast_gesture/6.png",
-    "cast_gesture/7.png",
-    "cast_gesture/8.png"
-   ],
-   "ms": [
-    83,
-    83,
-    83,
-    83,
-    200,
-    50,
-    83,
-    100,
-    133
-   ],
-   "loop": "once",
-   "note": "2026-11-02 guard stance: PixMiniMax from the guard anchor (first and last frame pinned to it), src frames 0,1,2,3,4,8,6,7,0: guard, raise, lift, coil, coil (frame 4, held during the swing telegraph by the cast index gesture_hold_frame), slash with the arm fully out (5, the release cut and the wave leave; src 5 had a baked crescent smear, dropped), follow-through x2, back to the guard. Same 9 frames and ms as the v4 clip, so the cast timing data is unchanged"
-  },
-  {
-   "name": "cast_forward",
-   "frames": [
-    "cast_forward/0.png",
-    "cast_forward/1.png",
-    "cast_forward/2.png",
-    "cast_forward/3.png",
-    "cast_forward/4.png",
-    "cast_forward/5.png",
-    "cast_forward/6.png",
-    "cast_forward/7.png",
-    "cast_forward/8.png"
-   ],
-   "ms": [
-    83,
-    83,
-    83,
-    83,
-    200,
-    50,
-    83,
-    100,
-    133
-   ],
-   "loop": "once",
-   "note": "2026-11-08 Trảm Địa (user-approved PixMiniMax job 5e5e14ed-952d-42ec-b517-8bff32bb795e, 1 gen; first and last frame pinned to cast_gesture/0 guard): raw f0-f8 in design/assets/candidates/swordsman/cast-forward/raw, cleaned mechanically (tools/qa/sprite_clean.gd: palette snap to the 7 sheet colours, specks < 6 px dropped, f1/f2 +5 px, f3 +6 px, f6/f7 -1 px so the feet stay on x32-38). Slots: f0 guard, f1-f2 draw back, f3 coil (also slot 4, held during the swing telegraph like cast_gesture's frame 4), f5 release (low forward), f6-f7 follow-through, f8 guard; raw f4 dropped (baked slash smear). Same 9 ms as cast_gesture so the cast timing data is unchanged. Known: the wind-up raises the sword high (not low to the hip as asked) (cape fixed 2026-11-08: tools/qa/sprite_recolour_region.gd b8893a -> 34406e on the INTERIOR of gold components >= 25 px, slots 5 and 6 only, 54 + 30 px; the 1 px gold trim and every armour trim kept)."
-  },
-  {
-   "name": "cast_summon",
-   "frames": [
-    "cast_summon/0.png",
-    "cast_summon/1.png",
-    "cast_summon/2.png",
-    "cast_summon/3.png",
-    "cast_summon/4.png",
-    "cast_summon/5.png",
-    "cast_summon/6.png",
-    "cast_summon/7.png",
-    "cast_summon/8.png"
-   ],
-   "ms": [
-    83,
-    83,
-    83,
-    83,
-    200,
-    50,
-    83,
-    100,
-    133
-   ],
-   "loop": "once",
-   "note": "2026-11-08 Ngàn Kiếm cast (user-chosen): one-handed raise + pull-down, user-approved PixMiniMax job 91224bb1-17de-4a5b-a70b-b4f6a93ac14d (1 gen; first frame = guard 96x92, last frame = the earlier command pose 96x92), raw in design/assets/candidates/swordsman/cast-command/raw. Mechanical clean only (palette snap; 0 speck px; no move: feet already on x32-38 row 91). Slots: raw f0 guard, f1 crouch, f3 raise, f5 raise, f4 summon hold (slot 4: held through the swing and, for the on-tile summon, until the visual command), f7 pull-down + cape (release), f8 command pose, then the return and the guard (frames of the retired cast_overhead v1 7 and 8, kept here as slots 7-8). Raw f2 (blade on the frame top row) and f6 (baked smear arc) dropped. Known and accepted by the user: the raised blade overlaps the top-row HUD on 3 of 4 cells."
-  },
-  {
-   "name": "hit",
-   "frames": [
-    "hit/0.png",
-    "hit/1.png",
-    "hit/2.png"
-   ],
-   "ms": [
-    40,
-    40,
-    40
-   ],
-   "loop": "once",
-   "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body (src frames 1, 4, 5: the slash smear of 2-3 dropped)"
-  },
-  {
-   "name": "victory",
-   "frames": [
-    "victory/0.png",
-    "victory/1.png",
-    "victory/2.png",
-    "victory/3.png",
-    "victory/4.png"
-   ],
-   "ms": [
-    100,
-    100,
-    100,
-    100,
-    100
-   ],
-   "loop": "hold_last"
-  },
-  {
-   "name": "defeat",
-   "frames": [
-    "defeat/0.png",
-    "defeat/1.png",
-    "defeat/2.png",
-    "defeat/3.png",
-    "defeat/4.png",
-    "defeat/5.png",
-    "defeat/6.png",
-    "defeat/7.png"
-   ],
-   "ms": [
-    100,
-    100,
-    100,
-    100,
-    100,
-    100,
-    100,
-    100
-   ],
-   "loop": "hold_last"
-  },
-  {
-   "name": "fall",
-   "frames": [
-    "fall/0.png",
-    "fall/1.png",
-    "fall/2.png",
-    "fall/3.png"
-   ],
-   "ms": [
-    100,
-    100,
-    100,
-    100
-   ],
-   "loop": "hold_last",
-   "note": "unused until the falling-cell story"
-  },
-  {
-   "name": "awaken",
-   "frames": [
-    "awaken/0.png",
-    "awaken/1.png",
-    "awaken/2.png",
-    "awaken/3.png",
-    "awaken/4.png",
-    "awaken/5.png"
-   ],
-   "ms": [
-    120,
-    120,
-    120,
-    120,
-    120,
-    120
-   ],
-   "loop": "loop"
-  }
- ]
+  "body_h": 70,
+  "_doc_frame": "2026-11-08 (user-approved option A): the frame grew from 96x70 to 96x92 for the cast_overhead headroom. Every 96x70 source is bottom-aligned by the exporter (22 transparent rows on top), so the feet and every drawn pixel stay where they were; body_h 70 keeps the HUD's above-the-head placements and the menu portraits on the old body.",
+  "facing": "right",
+  "source": "PixelLab character 2d093318-1ba4-43aa-b843-a5f0fdf62939 (v3 tall anchor, approved 2026-10-31), PixMiniMax south-east clips in design/assets/candidates/swordsman/v3-tall/anim/<clip>/<n>.png, cleaned by palette snap + cape recolour + speck removal into design/assets/candidates/swordsman/v3-tall/clean-96x70/ (canvas rows 10..79, feet on the bottom row, feet x = 48) idle replaced 2026-11-05 by design/assets/candidates/swordsman/anim-idle-v2 (PixMiniMax job 9d1adf31, first and last frame pinned to the anchor, prompt from tessera_idle_animation_prompts.md movement part with positive wording; raw f0-f7, f8 = f0 dropped).",
+  "clips": [
+    {
+      "name": "idle",
+      "frames": [
+        "idle/0.png",
+        "idle/1.png",
+        "idle/2.png",
+        "idle/3.png",
+        "idle/4.png",
+        "idle/5.png",
+        "idle/6.png",
+        "idle/7.png"
+      ],
+      "ms": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+      ],
+      "loop": "loop",
+      "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body"
+    },
+    {
+      "name": "draw",
+      "frames": [
+        "draw/0.png",
+        "draw/1.png",
+        "draw/2.png",
+        "draw/3.png",
+        "draw/4.png",
+        "draw/5.png",
+        "draw/6.png",
+        "draw/7.png"
+      ],
+      "ms": [
+        60,
+        60,
+        80,
+        80,
+        80,
+        80,
+        80,
+        120
+      ],
+      "loop": "once",
+      "note": "2026-11-02 match start: draws the sword from the back into the guard stance (PixMiniMax on the v3 character, no recentring: the feet do not move); UnitLayer plays it once when the match binds"
+    },
+    {
+      "name": "step",
+      "frames": [
+        "step/0.png",
+        "step/1.png",
+        "step/2.png",
+        "step/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": "loop",
+      "note": "nominal; the game paces step by the step cooldown"
+    },
+    {
+      "name": "step_forward",
+      "frames": [
+        "step_forward/0.png",
+        "step_forward/1.png",
+        "step_forward/2.png",
+        "step_forward/3.png",
+        "step_forward/4.png",
+        "step_forward/5.png",
+        "step_forward/6.png"
+      ],
+      "ms": [
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "loop": "once",
+      "note": "2026-11-16 v7 dash, weaponless bodies (user 'Bam dat' / 'chot gen lai cho cac char con lai'). animate_image_pixminimax from the APPROVED weaponless anchor as BOTH first_frame_url and last_frame_url - pinning the last frame is what makes the clip return to the standing pose (the 2026-11-16 first attempt, pinned only at the start, flew off horizontally and never landed). Wording is swordsman-assets.md ASSET-001-DASH verbatim: knees bend, hips drop, chest tips at a SHALLOW angle (not 'far forward', which reads as a headfirst dive), hands trail BEHIND the hips with elbows pointing backward, holds ONE leaning shape unchanged for four frames - a dash has no stride - then plants, rises and finishes upright. No speed words. Every part stays inside the frame. step_up additionally states the SILHOUETTE WIDTH ('stays at least as wide as the first frame'), the clause that finally stopped the up clip turning into a back view on all four characters. Source frames 1,2,3,4,5,7,8 (anticipation, four held, brake, upright). Cleaned mechanically only: snapped to the unit's master-palette colours with tools/qa/sprite_clean.gd."
+    },
+    {
+      "name": "step_back",
+      "frames": [
+        "step_back/0.png",
+        "step_back/1.png",
+        "step_back/2.png",
+        "step_back/3.png",
+        "step_back/4.png",
+        "step_back/5.png",
+        "step_back/6.png"
+      ],
+      "ms": [
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "loop": "once",
+      "note": "2026-11-16 v7 dash, weaponless bodies (user 'Bam dat' / 'chot gen lai cho cac char con lai'). animate_image_pixminimax from the APPROVED weaponless anchor as BOTH first_frame_url and last_frame_url - pinning the last frame is what makes the clip return to the standing pose (the 2026-11-16 first attempt, pinned only at the start, flew off horizontally and never landed). Wording is swordsman-assets.md ASSET-001-DASH verbatim: knees bend, hips drop, chest tips at a SHALLOW angle (not 'far forward', which reads as a headfirst dive), hands trail BEHIND the hips with elbows pointing backward, holds ONE leaning shape unchanged for four frames - a dash has no stride - then plants, rises and finishes upright. No speed words. Every part stays inside the frame. step_up additionally states the SILHOUETTE WIDTH ('stays at least as wide as the first frame'), the clause that finally stopped the up clip turning into a back view on all four characters. Source frames 1,2,3,4,5,7,8 (anticipation, four held, brake, upright). Cleaned mechanically only: snapped to the unit's master-palette colours with tools/qa/sprite_clean.gd."
+    },
+    {
+      "name": "step_up",
+      "frames": [
+        "step_up/0.png",
+        "step_up/1.png",
+        "step_up/2.png",
+        "step_up/3.png",
+        "step_up/4.png",
+        "step_up/5.png",
+        "step_up/6.png"
+      ],
+      "ms": [
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "loop": "once",
+      "note": "2026-11-16 v7 dash, weaponless bodies (user 'Bam dat' / 'chot gen lai cho cac char con lai'). animate_image_pixminimax from the APPROVED weaponless anchor as BOTH first_frame_url and last_frame_url - pinning the last frame is what makes the clip return to the standing pose (the 2026-11-16 first attempt, pinned only at the start, flew off horizontally and never landed). Wording is swordsman-assets.md ASSET-001-DASH verbatim: knees bend, hips drop, chest tips at a SHALLOW angle (not 'far forward', which reads as a headfirst dive), hands trail BEHIND the hips with elbows pointing backward, holds ONE leaning shape unchanged for four frames - a dash has no stride - then plants, rises and finishes upright. No speed words. Every part stays inside the frame. step_up additionally states the SILHOUETTE WIDTH ('stays at least as wide as the first frame'), the clause that finally stopped the up clip turning into a back view on all four characters. Source frames 1,2,3,4,5,7,8 (anticipation, four held, brake, upright). Cleaned mechanically only: snapped to the unit's master-palette colours with tools/qa/sprite_clean.gd."
+    },
+    {
+      "name": "step_down",
+      "frames": [
+        "step_down/0.png",
+        "step_down/1.png",
+        "step_down/2.png",
+        "step_down/3.png",
+        "step_down/4.png",
+        "step_down/5.png",
+        "step_down/6.png"
+      ],
+      "ms": [
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "loop": "once",
+      "note": "2026-11-16 v7 dash, weaponless bodies (user 'Bam dat' / 'chot gen lai cho cac char con lai'). animate_image_pixminimax from the APPROVED weaponless anchor as BOTH first_frame_url and last_frame_url - pinning the last frame is what makes the clip return to the standing pose (the 2026-11-16 first attempt, pinned only at the start, flew off horizontally and never landed). Wording is swordsman-assets.md ASSET-001-DASH verbatim: knees bend, hips drop, chest tips at a SHALLOW angle (not 'far forward', which reads as a headfirst dive), hands trail BEHIND the hips with elbows pointing backward, holds ONE leaning shape unchanged for four frames - a dash has no stride - then plants, rises and finishes upright. No speed words. Every part stays inside the frame. step_up additionally states the SILHOUETTE WIDTH ('stays at least as wide as the first frame'), the clause that finally stopped the up clip turning into a back view on all four characters. Source frames 1,2,3,4,5,7,8 (anticipation, four held, brake, upright). Cleaned mechanically only: snapped to the unit's master-palette colours with tools/qa/sprite_clean.gd."
+    },
+    {
+      "name": "cast_gesture",
+      "frames": [
+        "cast_gesture/0.png",
+        "cast_gesture/1.png",
+        "cast_gesture/2.png",
+        "cast_gesture/3.png",
+        "cast_gesture/4.png",
+        "cast_gesture/5.png",
+        "cast_gesture/6.png",
+        "cast_gesture/7.png",
+        "cast_gesture/8.png"
+      ],
+      "ms": [
+        83,
+        83,
+        83,
+        83,
+        200,
+        50,
+        83,
+        100,
+        133
+      ],
+      "loop": "once",
+      "note": "2026-11-02 guard stance: PixMiniMax from the guard anchor (first and last frame pinned to it), src frames 0,1,2,3,4,8,6,7,0: guard, raise, lift, coil, coil (frame 4, held during the swing telegraph by the cast index gesture_hold_frame), slash with the arm fully out (5, the release cut and the wave leave; src 5 had a baked crescent smear, dropped), follow-through x2, back to the guard. Same 9 frames and ms as the v4 clip, so the cast timing data is unchanged"
+    },
+    {
+      "name": "cast_forward",
+      "frames": [
+        "cast_forward/0.png",
+        "cast_forward/1.png",
+        "cast_forward/2.png",
+        "cast_forward/3.png",
+        "cast_forward/4.png",
+        "cast_forward/5.png",
+        "cast_forward/6.png",
+        "cast_forward/7.png",
+        "cast_forward/8.png"
+      ],
+      "ms": [
+        83,
+        83,
+        83,
+        83,
+        200,
+        50,
+        83,
+        100,
+        133
+      ],
+      "loop": "once",
+      "note": "2026-11-08 Trảm Địa (user-approved PixMiniMax job 5e5e14ed-952d-42ec-b517-8bff32bb795e, 1 gen; first and last frame pinned to cast_gesture/0 guard): raw f0-f8 in design/assets/candidates/swordsman/cast-forward/raw, cleaned mechanically (tools/qa/sprite_clean.gd: palette snap to the 7 sheet colours, specks < 6 px dropped, f1/f2 +5 px, f3 +6 px, f6/f7 -1 px so the feet stay on x32-38). Slots: f0 guard, f1-f2 draw back, f3 coil (also slot 4, held during the swing telegraph like cast_gesture's frame 4), f5 release (low forward), f6-f7 follow-through, f8 guard; raw f4 dropped (baked slash smear). Same 9 ms as cast_gesture so the cast timing data is unchanged. Known: the wind-up raises the sword high (not low to the hip as asked) (cape fixed 2026-11-08: tools/qa/sprite_recolour_region.gd b8893a -> 34406e on the INTERIOR of gold components >= 25 px, slots 5 and 6 only, 54 + 30 px; the 1 px gold trim and every armour trim kept)."
+    },
+    {
+      "name": "cast_summon",
+      "frames": [
+        "cast_summon/0.png",
+        "cast_summon/1.png",
+        "cast_summon/2.png",
+        "cast_summon/3.png",
+        "cast_summon/4.png",
+        "cast_summon/5.png",
+        "cast_summon/6.png",
+        "cast_summon/7.png",
+        "cast_summon/8.png"
+      ],
+      "ms": [
+        83,
+        83,
+        83,
+        83,
+        200,
+        50,
+        83,
+        100,
+        133
+      ],
+      "loop": "once",
+      "note": "2026-11-08 Ngàn Kiếm cast (user-chosen): one-handed raise + pull-down, user-approved PixMiniMax job 91224bb1-17de-4a5b-a70b-b4f6a93ac14d (1 gen; first frame = guard 96x92, last frame = the earlier command pose 96x92), raw in design/assets/candidates/swordsman/cast-command/raw. Mechanical clean only (palette snap; 0 speck px; no move: feet already on x32-38 row 91). Slots: raw f0 guard, f1 crouch, f3 raise, f5 raise, f4 summon hold (slot 4: held through the swing and, for the on-tile summon, until the visual command), f7 pull-down + cape (release), f8 command pose, then the return and the guard (frames of the retired cast_overhead v1 7 and 8, kept here as slots 7-8). Raw f2 (blade on the frame top row) and f6 (baked smear arc) dropped. Known and accepted by the user: the raised blade overlaps the top-row HUD on 3 of 4 cells."
+    },
+    {
+      "name": "hit",
+      "frames": [
+        "hit/0.png",
+        "hit/1.png",
+        "hit/2.png"
+      ],
+      "ms": [
+        40,
+        40,
+        40
+      ],
+      "loop": "once",
+      "note": "2026-11-02 guard stance (user: in battle the knight holds the sword ready, 'trạng thái đứng luôn'): PixMiniMax from the draw_to_guard last frame, cleaned and recentred on the body (src frames 1, 4, 5: the slash smear of 2-3 dropped)"
+    },
+    {
+      "name": "victory",
+      "frames": [
+        "victory/0.png",
+        "victory/1.png",
+        "victory/2.png",
+        "victory/3.png",
+        "victory/4.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": "hold_last"
+    },
+    {
+      "name": "defeat",
+      "frames": [
+        "defeat/0.png",
+        "defeat/1.png",
+        "defeat/2.png",
+        "defeat/3.png",
+        "defeat/4.png",
+        "defeat/5.png",
+        "defeat/6.png",
+        "defeat/7.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": "hold_last"
+    },
+    {
+      "name": "fall",
+      "frames": [
+        "fall/0.png",
+        "fall/1.png",
+        "fall/2.png",
+        "fall/3.png"
+      ],
+      "ms": [
+        100,
+        100,
+        100,
+        100
+      ],
+      "loop": "hold_last",
+      "note": "unused until the falling-cell story"
+    },
+    {
+      "name": "awaken",
+      "frames": [
+        "awaken/0.png",
+        "awaken/1.png",
+        "awaken/2.png",
+        "awaken/3.png",
+        "awaken/4.png",
+        "awaken/5.png"
+      ],
+      "ms": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120
+      ],
+      "loop": "loop"
+    }
+  ]
 }

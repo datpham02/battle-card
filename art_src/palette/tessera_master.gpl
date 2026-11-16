@@ -117,3 +117,9 @@ Columns: 8
 # 65 -> 67 entries (3 over the art-bible cap of 64).
 168 200  58	Mire bubble signal #A8C83A (card art)
  78  74  42	Mire face signal #4E4A2A (card art)
+# 2026-11-16 Cleric lilac, added for the weaponless Oriel (user: "Them linh lilac"). It is her
+# accent_color in assets/data/characters.json and in the 2026-11-14 redesign; the file previously
+# noted a lilac (#B9B0DC) as absent because no sprite used one. Without it the exporter rejects
+# every Oriel frame and she falls back to a flat white silhouette. 68 -> 69 entries (the art-bible
+# cap is 64; this file was already over it before this line).
+192 143 232	Cleric lilac #C08FE8
