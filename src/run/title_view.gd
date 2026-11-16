@@ -1,7 +1,7 @@
 class_name TitleView
 extends Node2D
 ## Title screen / Main Menu (Story 016; Main Menu pass, user 2026-11-01). The key-art scene fills the screen:
-## the Misty Forest backdrop (whole-number scale), the Swordsman seen from behind on a stone ledge on the right,
+## the Misty Forest backdrop (whole-number scale; no character stands on it, user 2026-11-16),
 ## a golden Tessera cube floating over the world with small squares orbiting it, golden block pieces drifting
 ## down, and mist bands drifting across. The left side is darkened for the menu: the game name over the
 ## knife-stroke motif (top-left; no tagline and no saved-run summary line, user 2026-11-01), then one column of
@@ -37,17 +37,17 @@ const STROKES: Array[Vector2] = [
 ## --- Menu background (user 2026-11-01: redrawn with PixelLab in the style of the key art and
 ## design/art/reference/09-world-map-01.png) ---
 ## A 640x360 pixel-art scene (create_image_pro, 25 gen, style reference 09-world-map-01, user-approved) drawn at
-## a whole-number scale (2x at 720p, the Swordsman's own density) covering the screen; an empty rock ledge
-## bottom-left carries the Swordsman (his real back view, PixelLab rotation north-east, no generation).
+## a whole-number scale (2x at 720p) covering the screen.
+##
+## 2026-11-16: the sand island's Mesoamerican step pyramid was replaced with a Western fantasy ruin (round-arched
+## gateway, broken columns, stone steps) by inpaint_image_pro_flash on a 96x96 crop at (32,168), 5 generations,
+## pasted back locally. Measured after the paste: 2662 pixels changed, all inside x42-120 y168-236; 0 pixels
+## changed anywhere else in the 640x360; 32 colours before and after, no new colour introduced.
+##
+## 2026-11-16: the back-turned hero is GONE from this screen (user's call). The empty rock ledge bottom-left is
+## scenery now, so HERO_BACK / HERO_FEET / HERO_FEET_ROW / HERO_SCALE_720 were removed with the draw call that
+## used them. `assets/art/ui/title/hero_back_ne.png` is no longer referenced by any scene.
 const KEY_ART: Texture2D = preload("res://assets/art/ui/title/menu_bg.png")
-const HERO_BACK: Texture2D = preload("res://assets/art/ui/title/hero_back_ne.png")
-## The hero's feet on the ledge (shares of the background: the ledge's top surface is row 295 of 360 there) and its
-## whole-number scale at 720p. HERO_FEET_ROW is the sprite row the feet stand on (the 84x84 rotation canvas has
-## 10 empty rows under them), so that row, not the canvas bottom, lands on the rock (user 2026-11-01: the hero was
-## floating).
-const HERO_FEET: Vector2 = Vector2(0.17, 0.826)
-const HERO_FEET_ROW: int = 73
-const HERO_SCALE_720: int = 2
 ## Where the golden cube of the background sits (shares of the art) and the glow / rising squares around it.
 const ART_CUBE: Vector2 = Vector2(0.58, 0.17)
 const GLOW: Color = Color("FFD45C")
@@ -218,8 +218,8 @@ func _draw() -> void:
 		UiButtons.is_pressed_at(self, lang), true, LANG_FONT_SIZE)
 
 
-# The key art covering the screen (mirrored when the menu is on the left, so the hero stays clear of it), then
-# the glow on its cube, sparks rising from it, mist bands, and the shades for the menu and the name.
+# The key art covering the screen (mirrored when the menu is on the left, so the busy side stays clear of it),
+# then the glow on its cube, sparks rising from it, mist bands, and the shades for the menu and the name.
 func _draw_scene(vp: Vector2, t: float) -> void:
 	draw_rect(Rect2(Vector2.ZERO, vp), HudSkin.SCREEN_BG)
 	var art := Vector2(KEY_ART.get_size())
@@ -231,11 +231,6 @@ func _draw_scene(vp: Vector2, t: float) -> void:
 	if mirrored:
 		draw_set_transform(Vector2(vp.x, 0.0), 0.0, Vector2(-1.0, 1.0))
 	draw_texture_rect(KEY_ART, Rect2(origin, size), false)
-	var hero_scale: int = maxi(1, roundi(HERO_SCALE_720 * vp.y / 720.0))
-	var hero := Vector2(HERO_BACK.get_size()) * hero_scale
-	var feet: Vector2 = origin + size * HERO_FEET
-	var top_left := Vector2(feet.x - hero.x * 0.5, feet.y - float(HERO_FEET_ROW + 1) * hero_scale)
-	draw_texture_rect(HERO_BACK, Rect2(top_left.round(), hero), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	var k: float = vp.y / 720.0
 	var cube_art := origin + size * ART_CUBE
