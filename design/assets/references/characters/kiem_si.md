@@ -90,6 +90,170 @@ Timing rules: `idle` 125 ms (heroes) / 250–300 ms (enemies) per frame today (b
 - 2026-10-31 v2-cand-01 create_image_pro_flash 32x48 seed 2 (job cdafe2b0) — anti-Cloud design, superseded by v3
 - 2026-10-31 v3-cand-01 create_image_pro_flash 48x64 (job 391d2fc7) — not accepted (bald head, front only)
 - 2026-10-31 v3-knight-01 create_character_pro_flash 48x64 → character f81b0fb3 (6 gen) — design right, too short
+- 2026-11-14 **Vale anchor v5 — APPROVED by the user**
+  - **The pointed shape at the right hand is the CLOTH TAIL, accepted by the user 2026-11-14.**
+    Written down because it will be asked again: it has a tapering point, a pale edge highlight and
+    one `#B8893A` pixel, which reads like a short blade at a glance. It is **in the approved anchor**,
+    not introduced by the clip — cropping the identical region from `anchor_v5/south-east.png` and
+    from clip frame 4 gives the same pixels. **Do not "fix" it in a later clip or re-roll the anchor
+    over it.**
+  - **What this caught about the review itself:** the anchor was approved against a checklist (armour,
+    cloak, shield, helmet, weapon, height) and the shape was not noticed, because it was not on the
+    list and the list felt complete. A checklist catches what it names and quietly licenses
+    everything else.
+  - **Clip result, measured:** 9 frames 96x96, **0 off-palette pixels**, body rises **1 px**, motion
+    concentrated in frames 4-7 (frames 0-2 differ from each other by 1 px), frame 8 returns to within
+    5 px of frame 0 so the loop closes. Accepted: the uneven rhythm is within what a 1 px breathing
+    idle can carry, and a re-roll would cost a generation to buy a difference nobody can see at 1x.
+  - **SHEET REBUILT IN PLACE 2026-11-14** — `assets/art/units/unit_kiem_si_sheet.png`,
+    **101/101 frames placed**, 872x1394, **0 empty frames, 0 off-palette pixels** when re-measured
+    from the sheet itself. The old sheet is recoverable from git (it was clean) and a copy sits in
+    the session scratchpad.
+  - **The existing JSON stayed the authority for everything except the pixels.** Each new frame was
+    blitted at the exact x/y the old frame occupied, so frame names, durations, frameTags, the loop
+    map, columns and gutter are untouched and cannot disagree with the game. **A layout recomputed
+    is a layout that can be wrong; a layout reused cannot.** The only JSON edit is the palette value
+    `#8FA3B8` -> `#8FA8BE`, the drift the user ruled on — 1 occurrence.
+  - **`step` was built as a one-shot first and that was wrong.** The sheet's own `meta.tessera.loop`
+    says `idle: loop, step: loop, awaken: loop`, and `victory / defeat / fall: hold_last`. I had
+    taken the clip's NAME as the hint. Fixed before the sheet was built, so `step` now stores
+    [0,1,2,3] and drops the return-to-frame-0 instead of showing frame 0 twice per cycle.
+    **The sheet's loop map is the authority, not the clip name** — nothing in the name of `step`
+    says it cycles, and nothing in `step_forward` says it does not.
+  - **INSTALLED 2026-11-14 to `art_src/units/kiem_si/anchor_v5_clips/`** — 15 clips, shipped frame
+    counts, canvas **96x92**. Mechanical only. Result: **0 off-palette, 0 specks, 0 pixels lost off
+    canvas**.
+  - **The shift is ONE shift for the whole unit** (dx **-3**, dy **+11**), computed from `idle`
+    frame 0 and applied to every frame of every clip. Centring each frame on its own bounding box
+    would re-centre the character every frame and **delete the motion** — a step would become a man
+    walking on the spot. The shift belongs to the unit, not the frame.
+  - **Two frames needed a 1 px nudge and the guard is what found them:** `fall` frame 3 and
+    `step_forward` frame 6 reach one row lower than `idle` frame 0 (a fall, the plant of a long
+    step), so the unit shift pushed them past the last row. First run reported **12 pixels lost**
+    and refused to ship. Fixed with the smallest nudge that keeps every pixel on canvas (-1 each),
+    printed rather than applied silently — same convention as the shipped `cast_forward`
+    ("+5 px, +6 px, -1 px").
+  - **Frame selection rule, stated so it is reproducible:** evenly spaced, first and last raw frame
+    always kept; **loop clips drop the final raw frame first** because it is the return to frame 0
+    and storing it would show frame 0 twice per cycle. Picks are printed per clip.
+  - **The 96x96 -> 96x92 crop takes the four rows off the TOP, and that is now verified, not
+    assumed**: the "pixels lost off canvas" counter is the verification, and it reads 0.
+  - **`step_down` regenerated and fixed — same lesson as `awaken`, different shape.** New group
+    `1e9283d3-9a9e-494d-b379-09a12013676c` (`step_down_v2`). The dead version was asked for a
+    **direction of travel** ("one heavy step toward the viewer"); straight at the camera, a 2D sprite
+    has nothing to translate, so the generator returned the reference frame nine times. The new one
+    is asked for **visible motion inside the frame** ("the near leg lifts high, knee rising in front
+    of the body, then reaches down and plants heavily as the body drops"). Measured per frame vs
+    frame 0: **8, 790, 1194, 1339, 1400, 1419, 1051, 830** (the dead one: eight zeros; `step_up`
+    peaks at 1528). 0 off-palette.
+  - **Both failures were the same mistake in different clothes:** the prompt described the clip's
+    PURPOSE (a loop, a direction) instead of what the pixels do. The generator draws pixels.
+  - **Final state: 15 of 15 clips good, 29 generations for Vale.** Use `awaken_loop` and
+    `step_down_v2`; the groups named `awaken` and `step_down` are dead and must not be installed.
+    Every clip's frame 0 measures **41x63**, identical to the anchor sprite, so all 15 start on
+    model; a contact sheet of every clip's peak frame shows no armour, cloak, shield or weapon
+    anywhere.
+  - **CORRECTION 2026-11-14, and it overturns a number recorded above.** Every "loop closes to N px"
+    figure on this page measured **frame 8 against frame 0** — but a loop clip **drops frame 8** when
+    installed (it is the return to frame 0), so the loop actually closes between the **last STORED**
+    frame and frame 0. I was grading a frame the game never shows.
+    Re-measured on the frames that are actually stored, as `wrap step / median step`:
+
+    | clip | steps between stored frames | wrap / median | |
+    |---|---|---|---|
+    | `idle` v1 | **1, 0**, 49, 456, 86, 7, 108 | **9.78** | SNAP (and two dead steps) |
+    | `idle_v2` | 766, 754, 539, 842, 1017, 598, 614 | **1.11** | smooth |
+    | `awaken_loop` | **5**, 750, 792, 483, **9** | 2.14 | SNAP |
+    | `awaken_v2` | 632, 820, 871, 872, 648 | **1.41** | smooth |
+
+    **The criterion was wrong as well as the pair.** "Closes to ~0" is the wrong target for a stored
+    loop: zero means frame 0 is shown twice per cycle. The wrap should be **one ordinary step**, so
+    the test is `wrap / median step ≈ 1`, not `wrap ≈ 0`. Under the right test, the `idle` now in the
+    shipped sheet SNAPS at 9.78 — which is what the user saw and reported as "thiếu animation trạng
+    thái bình thường", before any measurement said so.
+  - **`idle_v2` (`484db8cb-6974-430e-bdd2-ae82ff923edc`) and `awaken_v2`
+    (`f4cb4793-7345-4ee7-a713-836915080cdd`) are the ones to install**, 0 off-palette, no dead steps,
+    wrap in line with the rest. The groups `idle`, `awaken` and `awaken_loop` are all superseded.
+  - **`awaken` regenerated as a loop and it worked — the diagnosis is confirmed by number, not by
+    eye.** New group `445a4554-a67e-4c28-95db-f7ce83bf5e58` (name `awaken_loop`), prompt rewritten as
+    a CYCLE ("...ending in exactly the starting pose so the motion repeats seamlessly").
+    **last-vs-first = 3 px**, against **661** for the one-shot wording and **5** for `idle`. Motion is
+    not lost in the bargain: 1034 px at peak. Use this group; the old `awaken` group is dead.
+  - **`step_down` is a DEAD CLIP — all 9 frames byte-identical.** Confirmed by two independent
+    downloads (the second with `curl --fail`, no errors): 9 files, **1 distinct hash**. The generator
+    returned the reference frame nine times for "taking one heavy step toward the viewer" — a motion
+    straight at the camera, which is the one direction a 2D sprite cannot show by translation.
+    **Needs 1 regeneration with the motion described as something visible** (the near leg lifting and
+    planting, the body dropping), not as a direction of travel.
+  - **A download failure nearly became a second false defect.** The first fetch of `step_back` was
+    missing frame 1 and the first fetch of `step_down` returned frame 0 nine times — the bulk `curl`
+    loop had no `--fail`, so transient errors wrote plausible files. Re-fetching with `--fail` cleared
+    `step_back` (8 distinct of 9, normal) and confirmed `step_down`. **A measurement pipeline that
+    cannot tell "no motion" from "no download" reports the first and means the second.**
+  - **All 15 clips completed and measured 2026-11-14. 0 off-palette pixels in every frame of every
+    clip** — the palette lock held across 120+ generated frames without a single snap needed.
+    `cast_gesture` delivers the signature: arms at the sides in f0-f1, rising, **crossed in front of
+    the chest from f3 and held** — the Art Bible §3 mark, in the clip it belongs to.
+  - **`awaken` is WRONG and it is my error, not the generator's.** The shipped clip is a **6-frame
+    LOOP at 120 ms** (table above). I wrote it a one-shot motion prompt — "slowly settling into a
+    steady standing stance" — which describes something that ends. Measured: last frame differs from
+    the first by **661 px**, so it will snap visibly every time it wraps. For comparison `idle`, a
+    loop written as a loop, closes to **5 px**. The defect is in the prompt, so re-rolling the same
+    prompt would reproduce it; a looping motion has to be described as a cycle that returns.
+    **Needs 1 regeneration and the user's yes.**
+  - *Motion measured per clip (max pixels changed vs frame 0): defeat 1562, victory 1523,
+    cast_forward 1498, cast_gesture 947, draw 929, awaken 857, cast_summon 828, idle ~550.*
+  - **Remaining 14 clips queued 2026-11-14**, all `south-east`, pixminimax, palette locked 8,
+    **1 generation each = 14** (running total for Vale: **27**). 8 animated frames for the long
+    clips, 4 for `step` / `hit` / `fall` / `victory`; the raw frames are then selected into the
+    shipped slot counts mechanically, as `cast_forward` was.
+  - **`draw` had no referent any more and was repurposed, not dropped.** The shipped clip is
+    "draws the sword from the back into the guard stance" and there is no sword. `UnitLayer` still
+    plays it once at match start, so deleting it would need a code change. Regenerated as **lifting
+    both hands into a ready stance** — same role, new action. **Flagged for the user:** nobody
+    decided this; the clip list was written for an armed character and nothing re-examined it when
+    the weapons went.
+  - **First clip (test, 2026-11-14):** `idle`, animate_character mode pixminimax, direction
+    **south-east only**, 8 frames + kept reference frame, palette locked 8, **1 generation**, group
+    `c239cb82-e5e5-4f0e-9d50-b51144ad480a`, job `6f091f90-f30f-4cd7-a3b8-2419760230ff`.
+    **One clip, one direction, before the other fourteen** — if the motion prompt is wrong, it is
+    wrong for all of them, and finding that out costs 1 generation here instead of 15.
+    Motion prompt is positive-only (cloth sway, chest rise), per the Mage-clip lesson: naming a thing
+    to forbid it is how "no red" painted the Mage red.
+    Animation canvas comes back **96x96** while the project frame is **96x92** — reconcile at install.
+  - **INSTALLED 2026-11-14 to `art_src/units/kiem_si/anchor_v5/`** (8 rotations). Mechanical only:
+    palette snap, 8-connected specks < 12 px dropped, feet planted on the last row, body centred —
+    one shift per image, no resampling, no hand-painted pixel. Measured during the clean:
+    **0 off-palette pixels and 0 specks in all eight** — the locked palette held exactly, so the snap
+    and speck passes were identity. Body heights 61-64 px (south 61, the rest 63-64).
+  - **The live sheet `assets/art/units/unit_kiem_si_sheet.png` was deliberately NOT touched.** It
+    holds **15 clips / 101 frames** of the OLD armoured, sword-carrying Vale. Dropping the new anchor
+    into it would give one cloth-and-bare-arms idle frame beside a hundred frames of plate and sword
+    — worse than either version alone. The anchor is the SOURCE the clips are generated from; the
+    sheet changes when the clips do, not before. create_character_pro_flash 64x84, same config as v4 (seed 5, 8 dir, palette 8, style_image = `f81b0fb3` south, outline+shading only) — character `3ec3cc62-d6af-43f3-a7b9-a94dcf73cdba`, job `99108cc4-7589-4e72-b4a7-57749e0473c0`, **6 gen**, user said "Loại, gen lại". **Two prompt changes, each aimed at one named v4 defect:**
+  - **Proportions stated as numbers** ("~4.5 heads tall, roughly 76 pixels tall, head near the top of the frame, feet near the bottom"). v4 came out **48 px** against the roster's **70**. The approved anchor used the SAME 64x64 style image and still reached 70, because its prompt carried "~4.5 heads, ~76 px tall" (line 93 of this file). The style image was not the cause; the missing proportion line was.
+  - **Forearms described as something metal cannot be**: "soft cloth strips wound round and round many times, the loose ends hanging free". v4 produced segmented plates with gold studs — vambraces. "Wide cloth bands" sits too close to a vambrace for the model to tell them apart.
+  - **APPROVED 2026-11-14.** Both named v4 defects fixed, measured: forearms are wound cloth with loose
+    ends (no plates, no studs); body **61 px** tall vs v4's 48.
+  - **Approved OVER a raised objection, recorded because the objection did not disappear.** The wound
+    forearms plus wound shins plus the cloth sash read **East Asian**, against the project's Western,
+    no-wuxia direction ([[world-direction-tessera]], `design/world-context.md`). I raised it before
+    approval; the user approved anyway, which is their call as creative director. **What this leaves
+    open for the next hero:** either wound limbs are now house style for Tessera and the other four
+    may use them, or Vale is a one-character exception. Nobody has decided that, and a later session
+    generating Ilva or Bram will have to guess unless it is settled. **The cause is worth keeping
+    too:** the wraps were MY fix for the v4 vambraces — describing cloth wound round and round is the
+    shinobi vocabulary, so fixing a material defect introduced a world defect one level up. A reject
+    list of objects (armour, cloak, shield, helmet, weapon) cannot catch that: v5 passes it cleanly.
+  - **Size is still short of the roster and not reconciled.** Measured like-for-like against frame 0
+    of the installed sheet: v5 **61 px** tall / **42 px** wide, installed Vale **64 / 50**. The
+    reference table above states `body_h 70`, a third number — so the declared value and the sheet's
+    own ink extent already disagree, before this anchor is installed. Settle which is authoritative
+    at install time; do not scale the sprite to match a number nobody has checked.
+  - v4 (`5e91b37f-68db-4231-9401-46a08f8d39b0`) **REJECTED**, kept on PixelLab, not used. Rejected under the user's own rule rather than hand-fixed: the plates would have been hand-painting, and the height is not fixable by hand at all.
+- 2026-11-14 **Vale anchor v4 (weapon-free AND armour-free)** create_character_pro_flash 64x84, seed 5, 8 dir, low top-down, palette locked 8 (`#34406E` reused for the cloth, `#8FA8BE` as the identity value instead of the sheet's `#8FA3B8` drift), max_colors 8, style_image = v3-knight-01 south (`f81b0fb3-1433-4a18-b65b-a48bd24cef72`, 64x64) with **outline + shading only, colour and detail off** — character `5e91b37f-68db-4231-9401-46a08f8d39b0`, job `25d97348-de62-4a8f-adab-263917118ddc`, **6 gen**, user said YES to this one call. Design locked first in `docs/design/character-system/WEAPON-FREE-ANCHOR-KIEM-SI.md`.
+  - **Why NOT the usual 84x84 style image** (`upload 8efc54de`, the one every other hero uses): a style reference must fit inside the target canvas, and 84 > 64, so that call would have been refused. The 64x64 ancestor is the one that fits. Caught before spending, not after.
+  - **The prompt carries no negative words.** The banned list (armour, cloak, shield, helmet, weapon, mass-forming metal) is the REJECT rule for the reviewer, deliberately kept out of the description — naming a thing to forbid it is how the Mage clips ended up painted red.
 - 2026-10-31 v3-knight-tall create_character_pro_flash 64x84, style_image = v3-knight-01 south → character 2d093318 (6 gen) — APPROVED anchor
 - 2026-10-31 v3-anim-idle + 7 clips animate_character pixminimax (8 gen) → clean-96x70
 - 2026-11-02 dashes (4 gen), draw_to_guard + 6 guard clips (7 gen), guard cast (1 gen, job 5e4ba76d) — guard stance set
