@@ -21,8 +21,11 @@ const EFFECTS: Array[String] = ["damage", "push", "burn", "pin", "fragile", "fro
 const PLACEMENTS: Array[String] = ["enemy", "self_anchor"]
 ## Batch 2 (M15): the status reactions a card may list in `reactions`.
 const REACTION_IDS: Array[String] = ["r1", "r2", "r3"]
-## How the body casts. Not a delivery type. weapon = the equipped weapon clip.
-const CAST_PRESENTATIONS: Array[String] = ["weapon", "hand", "throw", "body", "special"]
+## How the body casts. Not a delivery type. `block` is the default since the 2026-11-16 weaponless
+## roster: every hero handles a Block formation with their hands, so `cast_gesture` IS the hand cast.
+## `weapon` is kept only so the four cards that still state it keep loading; it resolves to the same
+## gesture (see docs/skill-v2/17-cast-presentation.md and UnitLayer.resolve_cast_clip).
+const CAST_PRESENTATIONS: Array[String] = ["block", "weapon", "hand", "throw", "body", "special"]
 ## Keys an `upgrade` table may change (additive deltas), with the floor each is clamped to.
 const UPGRADE_FLOORS: Dictionary = {
 	"damage_per_cell": 0.0, "min_cells": 1.0, "cooldown_sec": 0.0, "burn_damage_per_tick": 0.0,
@@ -590,8 +593,8 @@ static func _dpc_bonus(id: String, raw: Dictionary) -> Dictionary:
 
 
 static func _cast_presentation(id: String, raw: Dictionary) -> String:
-	var presentation: String = str(raw.get("cast_presentation", "weapon"))
+	var presentation: String = str(raw.get("cast_presentation", "block"))
 	if not CAST_PRESENTATIONS.has(presentation):
-		push_warning("SkillConfig: card %s cast_presentation '%s' unknown, using weapon" % [id, presentation])
-		return "weapon"
+		push_warning("SkillConfig: card %s cast_presentation '%s' unknown, using block" % [id, presentation])
+		return "block"
 	return presentation

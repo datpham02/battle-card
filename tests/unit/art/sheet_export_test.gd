@@ -25,7 +25,16 @@ const UNITS := {
 		# body_h 70 is UNCHANGED: it keeps the HUD and portraits framed on the old body height, and
 		# is not a claim about the source image.
 		"frame": Vector2i(96, 92), "source": Vector2i(96, 92), "body_h": 70, "sheet": Vector2i(872, 1394), "facing": "right",
-		"candidate": "swordsman/v5-weaponfree/clean-96x92/%s.png",
+		# 2026-11-16: the whole sheet was regenerated for the weaponless roster (sword removed, face
+		# opened, steel-blue moved to the collar and pauldron rim) and the four dash clips were
+		# regenerated again on the v7 wording, so NOTHING here comes from v5-weaponfree any more and
+		# every frame failed this check against it. Repointed at a snapshot of what was installed and
+		# approved on 2026-11-16.
+		# Honest about what this leg is worth: the snapshot was taken FROM art_src at install time, so
+		# on the day it is written this check cannot fail. Its value starts with the next change — it
+		# catches art_src drifting away from the approved art without a new approval, which is the
+		# provenance question it has always answered. It is not a correctness check and never was.
+		"candidate": "swordsman/weaponless-2026-11-16/installed-96x92/%s.png",
 
 		# Vale v5 (2026-11-15): every frame comes from ONE generation run, so the old
 		# candidate folder names (guard_idle_v2, draw_to_guard, guard_cast, guard_hit,

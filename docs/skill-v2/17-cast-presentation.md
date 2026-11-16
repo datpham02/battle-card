@@ -2,7 +2,18 @@
 
 Visual only. It does not change delivery, damage, timing, or targeting.
 
-`cast_presentation` on a card: `weapon`, `hand`, `throw`, `body`, `special`. Absent means `weapon`.
+`cast_presentation` on a card: `block`, `hand`, `throw`, `body`, `special`, and the legacy `weapon`.
+**Absent means `block`** (2026-11-16, weaponless roster). `block` is the generic Block-casting
+gesture: the hero gathers, forms, commits and stamps the shape with their hands.
+
+> **2026-11-16 — this page is rewritten below the line by the weaponless roster.**
+> Every hero sheet now casts with empty hands, so `cast_gesture` IS the hand cast on all five.
+> `UnitLayer.WEAPON_CAST_BODIES` is empty, so no presentation holds idle any more, and the
+> 39 cards that state no presentation resolve to the gesture instead of a weapon swing.
+> `weapon` is kept in `CAST_PRESENTATIONS` only so the four cards that still state it load;
+> it resolves to the same gesture. Re-classifying those four is a design call, still open.
+> The per-body table and the card lists below describe the PRE-2026-11-16 sheets and are kept
+> as the record of what was replaced.
 
 A `card_casts` clip still wins. Trảm Địa stays `cast_forward`. Ngàn Kiếm stays `cast_summon`. Hỏa Lôi stays the Mage `cast_gesture`.
 

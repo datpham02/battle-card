@@ -106,10 +106,14 @@ const CLIP_STEP_DOWN: String = "step_down"
 ## 2026-11-02 guard stance: played once when the match binds (the hero draws the sword into the guard), then idle.
 const CLIP_DRAW: String = "draw"
 const CLIP_CAST: String = "cast_gesture"
-## Empty-hand cast. No sheet has these frames yet (see docs/skill-v2/17-cast-presentation.md).
+## Empty-hand cast. No sheet has these frames and none will: the clip was dropped 2026-11-11 and the
+## 2026-11-16 weaponless roster made it unnecessary, because cast_gesture is itself the hand cast.
 const CLIP_HAND: String = "cast_hand"
-## cast_gesture on these bodies is a weapon or staff strike. A hand cast must not play it.
-const WEAPON_CAST_BODIES: Array[String] = ["kiem_si", "sat_thu", "tho_san", "giao_si"]
+## Bodies whose cast_gesture still shows a held implement, so a hand cast must not play it.
+## EMPTY since 2026-11-16: every hero sheet is weaponless and casts with its hands, so cast_gesture
+## is the Block-casting gesture on all five. Kept as a constant rather than deleted so the routing
+## below still reads as a rule and a future body that holds something can be listed again.
+const WEAPON_CAST_BODIES: Array[String] = []
 const CLIP_HIT: String = "hit"
 const CLIP_WINDUP: String = "windup"
 ## 2026-11-02 Forest Witch (pattern brain): an uninterruptible skill winding up / warning, and a phase transition.
@@ -648,9 +652,9 @@ func _cast_skill() -> String:
 ## (Trảm Địa: cast_forward, Ngàn Kiếm: cast_summon), else cast_gesture.
 func cast_clip_for(side: int) -> String:
 	var skill_id: String = _cast_skill()
-	var presentation: String = "weapon"
+	var presentation: String = "block"
 	if _combat != null and _combat.get_skill_config() != null:
-		presentation = str(_combat.get_skill_config().get_skill(skill_id).get("cast_presentation", "weapon"))
+		presentation = str(_combat.get_skill_config().get_skill(skill_id).get("cast_presentation", "block"))
 	var card_clip: String = CastVfx.card_clip(skill_id)
 	var sheet: SpriteSheet = get_sheet(side)
 	return resolve_cast_clip(presentation, card_clip, str(_unit_id.get(side, "")),
@@ -658,8 +662,10 @@ func cast_clip_for(side: int) -> String:
 
 
 ## The sheet clip for a cast. A non-empty [param card_clip] wins (Trảm Địa, Ngàn Kiếm, Hỏa Lôi).
-## `hand` plays [constant CLIP_HAND] when the sheet has it. A weapon or staff body without that clip
-## returns "" so the caller holds idle: never the weapon swing. The Mage's cast_gesture is already an open hand.
+## `hand` plays [constant CLIP_HAND] when the sheet has it. A body listed in
+## [constant WEAPON_CAST_BODIES] without that clip returns "" so the caller holds idle rather than
+## swinging an implement — that list is empty since the weaponless roster, so every presentation now
+## resolves to cast_gesture, which is the hand gesture on all five sheets.
 static func resolve_cast_clip(presentation: String, card_clip: String, unit_id: String, has_card_clip: bool, has_hand: bool) -> String:
 	if not card_clip.is_empty():
 		return card_clip if has_card_clip or card_clip == CLIP_CAST else CLIP_CAST
