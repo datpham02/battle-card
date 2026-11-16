@@ -253,23 +253,31 @@ def check_png(rep: Report, pngs: list[Path]):
         rep.add("png", "PASS", "%d PNG decode, all RGBA 8-bit" % len(pngs))
 
 
-# Art bible 5.2 (user 2026-11-16): a unit's body width is measured AGAINST ITS CELL, not in absolute px.
-# The old caps ("quái thường ≤ 34 px", "Tinh Anh ≤ 40 px") were replaced because an absolute number drifts
-# silently when the cell changes size between arenas, and because they said the opposite of what the game
-# wants: at a 64 px cell, 34 px is barely half the cell.
-CELL_W_FLAT = 64  # ScreenLayout flat cell width; the drawn cell is this warped, so the ratio is taken flat
-TIER_WIDTH_BAND = {          # share of CELL_W_FLAT
-    "normal": (0.70, 0.85),
-    "elite": (0.90, 1.05),
-    "warden": (1.10, 1.30),
-    "boss": (1.10, 1.30),
+# Art bible 5.2 (user 2026-11-16): a unit's size is measured as PRESENCE — the share of the cell it fills on
+# whichever axis fills it more, max(body_w / 64, body_h / 46).
+#
+# The first version of this check measured WIDTH alone and condemned 56 of 68 enemies. It was measuring the
+# wrong axis: the twelve "narrowest" are humanoids already 93-111% of the cell HEIGHT, while the "wide" ones
+# are four-legged. A width band forces a 19x51 wisp to be as wide as a 47x26 slug, which turns every humanoid
+# into a squat block. The question a size rule must ask is "does it fill its cell", not "is it wide".
+#
+# The bands come FROM the measured roster, not from taste: normal 73-113%, elite 120-172%, warden 172-207%,
+# boss 163-185%. The tiers already separate cleanly, so the bands preserve an order that exists rather than
+# imposing one that does not.
+CELL_W_FLAT = 64  # ScreenLayout flat cell; the drawn cell is this warped, so the ratio is taken flat
+CELL_H_FLAT = 46
+TIER_PRESENCE_BAND = {
+    "normal": (0.85, 1.15),
+    "elite": (1.20, 1.75),
+    "warden": (1.60, 2.10),
+    "boss": (1.60, 2.10),
 }
-# Wardens that stand on a 2x2 block are out of scope: the band is per CELL, and their footprint is four.
+# Wardens standing on a 2x2 block are out of scope: the band is per CELL and their footprint is four.
 MULTI_CELL_WARDENS = {"forest_witch", "goblin_warlock"}
 
 
-def png_opaque_width(path: Path) -> int | None:
-    """Width in px of the opaque bounding box of an RGBA8 PNG, or None when it cannot be read."""
+def png_opaque_box(path: Path) -> tuple[int, int] | None:
+    """(w, h) of the opaque bounding box of an RGBA8 PNG, or None when it cannot be read."""
     data = path.read_bytes()
     if data[:8] != bytes((137, 80, 78, 71, 13, 10, 26, 10)) or data[12:16] != b"IHDR":
         return None
@@ -284,8 +292,8 @@ def png_opaque_width(path: Path) -> int | None:
         pos += 12 + length
     raw = zlib.decompress(idat)
     stride, prev = w * 4, bytearray(w * 4)
-    lo, hi, off = w, -1, 0
-    for _ in range(h):
+    lo, hi, top, bot, off = w, -1, h, -1, 0
+    for y in range(h):
         ft, line = raw[off], bytearray(raw[off + 1:off + 1 + stride])
         off += 1 + stride
         for i in range(stride):
@@ -309,8 +317,12 @@ def png_opaque_width(path: Path) -> int | None:
                     lo = x
                 if x > hi:
                     hi = x
+                if y < top:
+                    top = y
+                if y > bot:
+                    bot = y
         prev = line
-    return None if hi < 0 else hi - lo + 1
+    return None if hi < 0 else (hi - lo + 1, bot - top + 1)
 
 
 def unit_tiers() -> dict:
@@ -324,11 +336,11 @@ def unit_tiers() -> dict:
 
 
 def check_unit_scale(rep: Report, units: list[str]):
-    """Body width against the tier band of art bible 5.2.
+    """Presence against the tier band of art bible 5.2.
 
-    WARNING, never FAIL, and that is deliberate: at the time the rule was fixed (2026-11-16) about 45 of 68
-    enemies were outside their band, so a FAIL would lock every session out of committing art until the whole
-    roster is regenerated. A gate nobody can pass gets switched off, and then it protects nothing.
+    WARNING, never FAIL, and that is deliberate: a size rule cannot be satisfied by editing a file — a unit
+    only reaches its band by being generated again. A FAIL would lock every session out of committing art
+    until that work is done, and a gate nobody can pass gets switched off, after which it protects nothing.
     """
     tiers = unit_tiers()
     if not tiers:
@@ -337,30 +349,31 @@ def check_unit_scale(rep: Report, units: list[str]):
     out, checked = [], 0
     for unit in units:
         tier = tiers.get(unit)
-        band = TIER_WIDTH_BAND.get(tier)
+        band = TIER_PRESENCE_BAND.get(tier)
         if band is None or unit in MULTI_CELL_WARDENS:
             continue
         idle = ROOT / "art_src" / "units" / unit / "idle" / "0.png"
         if not idle.is_file():
             continue
         try:
-            bw = png_opaque_width(idle)
+            box = png_opaque_box(idle)
         except Exception:  # noqa: BLE001
-            bw = None
-        if bw is None:
+            box = None
+        if box is None:
             continue
         checked += 1
-        ratio = bw / CELL_W_FLAT
-        if not (band[0] <= ratio <= band[1]):
-            out.append("%s (%s) %d px = %d%% of the cell, band %d-%d%%"
-                       % (unit, tier, bw, round(ratio * 100), round(band[0] * 100), round(band[1] * 100)))
+        bw, bh = box
+        presence = max(bw / CELL_W_FLAT, bh / CELL_H_FLAT)
+        if not (band[0] <= presence <= band[1]):
+            out.append("%s (%s) %dx%d = %d%% of the cell, band %d-%d%%"
+                       % (unit, tier, bw, bh, round(presence * 100), round(band[0] * 100), round(band[1] * 100)))
     if not checked:
         return
     if out:
-        rep.add("scale", "WARNING", "%d of %d outside the tier band (art bible 5.2): %s"
+        rep.add("scale", "WARNING", "%d of %d outside the tier presence band (art bible 5.2): %s"
                 % (len(out), checked, "; ".join(sorted(out))[:600]))
     else:
-        rep.add("scale", "PASS", "%d unit(s) within the tier width band (art bible 5.2)" % checked)
+        rep.add("scale", "PASS", "%d unit(s) within the tier presence band (art bible 5.2)" % checked)
 
 
 def check_frames(rep: Report, unit: str, clip: str | None = None):

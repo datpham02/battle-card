@@ -27,6 +27,10 @@ Luật "đơn vị đứng giữa ô" đang được tuân thủ. **Sửa offset
 
 ## 2. Nguyên nhân thật: kích thước, và một luật cũ nói ngược
 
+> **ĐÃ SỬA cùng ngày — đọc Mục 5 trước khi trích dẫn mục này.** Phần dưới đo BỀ NGANG, và kết luận
+> "45/68 con quá nhỏ" cùng "thứ tự theo bậc bị đảo" là **SAI**: chúng sinh ra từ việc đo sai trục.
+> Giữ nguyên ở đây làm hồ sơ, không xoá — nhưng đừng dùng số của mục này.
+
 Ô rộng 64 px. Bề ngang thân, đo trên khung `idle` của từng sheet:
 
 | Bậc | n | Thấp nhất | Cao nhất |
@@ -88,3 +92,74 @@ trên ba sprite: `wisp` 19, `swamp_lizard` 49, `inferno_lord` 69 — **khớp c�
   những arena đó.
 - Ảnh `stance_ch1_goblin_scout.png` chụp lúc 23:0x trên cây dùng chung với 15 phiên khác, nên nó bắt được cả
   việc dở dang của họ.
+
+
+---
+
+## 5. SỬA LẠI (cùng ngày, 2026-11-16 ~23:4x): Mục 2 đo sai trục
+
+Trước khi tiêu tiền gen lại theo luật ở Mục 3, tôi tra giá: **11 generation mỗi con** (1 nhân vật Pro Flash
+64×64 = 6, cộng 5 clip). Tám con đầu = 88 generation. Số đó buộc phải kiểm lại luật, và luật sai.
+
+### Mười hai con "quá hẹp" đều đã cao gần hết ô
+
+| Con | Rộng | Cao | % ngang ô | **% cao ô** |
+|---|---|---|---|---|
+| `wisp` | 19 | 51 | 30 % | **111 %** |
+| `frost_sprite` | 22 | 45 | 34 % | **98 %** |
+| `goblin_scout` | 26 | 46 | 41 % | **100 %** |
+| `zombie` | 26 | 46 | 41 % | **100 %** |
+| `cultist` | 28 | 47 | 44 % | **102 %** |
+
+Chúng là **nhân hình: cao và mảnh**. Những con "rộng" (`mire_slug` 47×26, `sand_beetle` 46×36) là **thú bốn
+chân: thấp và bè**. Cái Mục 2 gọi là "chênh 2,5 lần trong cùng một bậc" thực ra là **người so với thú**.
+
+Luật ở Mục 3, nếu thi hành, sẽ kéo mọi goblin / ma / giáo sĩ rộng gần gấp đôi — **biến nhân hình thành khối
+lùn bè** — với giá 88 lần gen.
+
+### Đo theo trục lấp đầy ô thì roster KHÔNG hỏng
+
+Độ hiện diện = `max(rộng/64, cao/46)`:
+
+| Bậc | Khoảng | Trung bình |
+|---|---|---|
+| Quái thường | 73–**113 %** | 97 % |
+| Tinh Anh | **120**–172 % | 153 % |
+| Kẻ Gác | 172–207 % | 190 % |
+| Boss | 163–185 % | 175 % |
+
+Các bậc **tách sạch**, **không một trường hợp đảo bậc nào**. Khẳng định "thứ tự theo bậc bị đảo" ở Mục 2 là
+sai. Chỉ **8/46** quái thường dưới 85 %, và cả tám là sinh vật thấp lè tè đúng thiết kế.
+
+### Thủ phạm còn lại: hero to ngang Tinh Anh
+
+| | Độ hiện diện |
+|---|---|
+| Quái thường | 97 % |
+| **Năm anh hùng** | **137–150 %** |
+| Tinh Anh | 120–172 % |
+
+Hero nằm **trong dải Tinh Anh**. Và đó là **chủ ý đã ghi**: art bible §8.3 nói Goblin Scout *"khoảng 70 %
+Kiếm sĩ"*; đo thật 46/65 = **71 %**. Game chạy đúng tài liệu; thứ người dùng không ưng là chính chủ ý đó.
+Đổi nó là quyết định thẩm mỹ riêng, **chưa chốt**.
+
+### Luật và phép kiểm đã sửa
+
+art bible §5.2 và `art_check.py` nay dùng độ hiện diện: quái thường 85–115 %, Tinh Anh 120–175 %,
+Kẻ Gác/boss một ô 160–210 %. Các dải lấy **từ chính số đo roster**.
+
+Thử lại cả hai chiều sau khi sửa:
+
+| Tập | Trước (đo bề ngang) | Sau (đo độ hiện diện) |
+|---|---|---|
+| 5 nhân hình cao-mảnh | WARNING (kết tội oan) | **PASS** |
+| 3 sinh vật thấp bè | — | **WARNING**, nêu đúng 3 |
+| Toàn roster | 56/65 ngoài dải | **6/65** ngoài dải |
+
+Bộ giải mã PNG được mở rộng sang hai trục và đối chiếu lại với `export_sheets.read_png` trên ba sprite:
+`wisp` (19,51), `mire_slug` (47,26), `inferno_lord` (69,79) — khớp cả ba, cả hai chiều.
+
+### Điều đáng mang đi
+
+Phép đo đầu tiên **đúng về con số và sai về đại lượng**. 19 px là số thật; nó chỉ không phải thứ cần đo.
+Cái bắt được sai lầm không phải sự cẩn thận — mà là câu hỏi "cái giá là bao nhiêu" hỏi trước khi trả tiền.

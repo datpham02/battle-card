@@ -505,31 +505,42 @@ Nguồn: ảnh concept tạm `design/art/reference/04-lineup-01`, `08-warden-*-0
   - **không có màu nhấn khối**: địch dùng màu vùng + Đá/Sương/Ngà, S 30–45 %;
   - anh hùng = đầu tròn + đạo cụ cạnh thẳng; địch = hữu cơ/nhọn (tai, sừng, cánh).
 - Cùng viền Mực 1 px, không viền màu phe. Tư thế niệm theo Mục 3 (lấy đà, không cầm khối). Không có đồng minh hay NPC trong trận (NPC chỉ là minh họa tĩnh ở sự kiện/cửa hàng).
-- **Kích thước thân theo bậc — ĐO THEO Ô, không theo px tuyệt đối** (người dùng chốt 2026-11-16, thay hẳn
-  trần cũ "quái thường ≤ 34 px / Tinh Anh ≤ 40 px" của 2026-10-29):
+- **Kích thước thân theo bậc — ĐO THEO TRỤC LẤP ĐẦY Ô** (người dùng chốt 2026-11-16, sửa lại cùng ngày sau
+  khi phép đo đầu tiên đo sai trục; thay hẳn trần cũ "quái thường ≤ 34 px / Tinh Anh ≤ 40 px" của 2026-10-29):
 
-  | Bậc | Bề ngang thân / bề ngang ô | Trên ô phẳng 64 px |
-  |---|---|---|
-  | Quái thường | **70–85 %** | 45–54 px |
-  | Tinh Anh | **90–105 %** | 58–67 px |
-  | Kẻ Gác / boss **một ô** | **110–130 %** | 70–83 px |
-  | Kẻ Gác trên **khối 2×2** | giữ nguyên (`forest_witch`, `goblin_warlock`) | — |
+  **Độ hiện diện** của một đơn vị = `max(rộng_thân / 64, cao_thân / 46)` trên ô phẳng 64×46 — tức trục nào
+  lấp ô nhiều hơn thì tính trục đó.
 
-  **Vì sao đo theo ô chứ không theo px.** Trần cũ là một con số tuyệt đối, nên khi ô đổi kích thước giữa
-  các sân thì luật trôi theo mà không ai thấy. Tỉ lệ thì không trôi.
+  | Bậc | Độ hiện diện |
+  |---|---|
+  | Quái thường | **85–115 %** |
+  | Tinh Anh | **120–175 %** |
+  | Kẻ Gác / boss **một ô** | **160–210 %** |
+  | Kẻ Gác trên **khối 2×2** | giữ nguyên (`forest_witch`, `goblin_warlock`) |
 
-  **Vì sao bậc trên phải CHẮC CHẮN to hơn bậc dưới, không chỉ "to hơn".** Các khoảng trên không chồng nhau:
-  một Tinh Anh ở mức thấp nhất (90 %) vẫn to hơn một quái thường ở mức cao nhất (85 %). Đo ngày 2026-11-16 cho
-  thấy vì sao điều đó phải viết ra: Tinh Anh `leap_frog` rộng 48 % trong khi quái thường `swamp_lizard` rộng
-  77 % — bậc cao hơn lại nhỏ hơn, và không phép kiểm nào kêu.
+  **Vì sao MAX hai trục chứ không phải bề ngang.** Bản đầu của luật này (sáng cùng ngày) chỉ đo bề ngang, và
+  nó kết tội 56/68 con. Đo lại thì 12 con "quá hẹp" nhất đều đã cao **93–111 % chiều cao ô**: chúng là nhân
+  hình — cao và mảnh. Những con "rộng" là thú bốn chân — thấp và bè. Một dải bề ngang duy nhất ép `wisp`
+  (19×51) phải rộng bằng `mire_slug` (47×26), tức biến mọi nhân hình thành khối lùn. Luật phải hỏi "có lấp
+  đầy ô không", không hỏi "có rộng không".
 
-  **Hiện trạng lúc chốt luật:** quái thường trải từ 30 % (`wisp` 19 px) đến 77 % (`swamp_lizard` 49 px) —
-  chênh 2,5 lần trong cùng một bậc. Khoảng 45 trên 68 con dưới 60 %. Luật này mô tả ĐÍCH ĐẾN, không mô tả
-  hiện trạng; `art_check` báo WARNING chứ không FAIL cho tới khi roster được gen lại, vì FAIL sẽ khoá commit
-  art của mọi phiên ngay lập tức. Số đo đầy đủ: `production/qa/evidence/stance-probe/README.md`.
+  **Các dải này lấy TỪ chính roster đã đo, không bịa.** Đo 2026-11-16: quái thường 73–113 % (TB 97 %), Tinh
+  Anh 120–172 % (TB 153 %), Kẻ Gác 172–207 %, boss 163–185 %. Các bậc **đã tách sạch** — quái thường cao nhất
+  113 %, Tinh Anh thấp nhất 120 %, **không một trường hợp đảo bậc nào**. Dải viết ra để GIỮ trật tự đang có và
+  chặn lần trôi sau, không phải để sửa roster hiện tại: chỉ 8/46 quái thường dưới 85 %, và cả tám là sinh vật
+  thấp lè tè đúng thiết kế (`mire_slug`, `imp`, `magma_slug`, `marsh_toad`, `sand_beetle`, `cloud_sprite`,
+  `ember_hound`, `swamp_lizard`).
 
-  Pixel art không phóng được phi nguyên lần, nên đưa một con về khoảng đúng nghĩa là **gen lại**, không phải
-  scale. Chia đợt, mỗi đợt người dùng duyệt riêng.
+  **Đo theo tỉ lệ, không theo px**, vì một con số tuyệt đối trôi theo khi ô đổi kích thước giữa các sân mà
+  không ai thấy — đúng cơ chế đã làm trần cũ mục đi trong một tháng.
+
+  **CÂU HỎI CÒN MỞ, không thuộc luật này:** năm anh hùng ở **137–150 %**, tức nằm trong dải Tinh Anh, trong
+  khi quái thường ở 97 %. §8.3 định sẵn như vậy ("Goblin Scout ... khoảng **70 % Kiếm sĩ**"; đo thật 46/65 =
+  71 %), nên game đang chạy đúng tài liệu. Người dùng thấy chênh lệch hero/quái thường là thứ chưa hài hoà;
+  đổi nó là một quyết định thẩm mỹ riêng, chưa chốt. Số đo: `production/qa/evidence/stance-probe/README.md`.
+
+  Pixel art không phóng được phi nguyên lần, nên đưa một con về dải nghĩa là **gen lại** (≈ 11 generation mỗi
+  con: 1 nhân vật Pro Flash + 5 clip), không phải scale. Chia đợt, mỗi đợt người dùng duyệt riêng.
 - **Quái thường**: dấu loài ở nửa trên.
 - **Tinh Anh**: cùng loài + 1 bộ phận phóng to + 2–3 vảy 2×2 màu Ngà, phẳng, không glow.
 - **Kẻ Gác** (khung 48×64 là con số cũ; trên đĩa xem §8.3): loài duy nhất, không biến thể, có **Mảnh Gốc**. Khác Tinh Anh ở 3 thứ: cao hơn ≥ 12 px, không thuộc loài quái thường, có Mảnh Gốc.
