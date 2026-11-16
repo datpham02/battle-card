@@ -1,6 +1,6 @@
 # Asset Manifest (GENERATED)
 
-> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-14. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
+> **Generated** from `design/assets/asset-registry.yaml` by `python -X utf8 -I tools/asset-pipeline/asset_registry.py manifest` on 2026-11-16. Do not edit by hand — edit the registry and regenerate. The previous hand-written manifest (2026-10-31) is archived as `asset-manifest-2026-10-31-archive.md`.
 
 Lifecycle: `candidate → accepted → installed → approved`; `legacy` = replaced. **installed is not approved**: `Accepted` / `Approved` columns show what the user recorded; `unknown` means no record exists.
 
@@ -8,9 +8,9 @@ Lifecycle: `candidate → accepted → installed → approved`; `legacy` = repla
 
 | Total | Candidate | Accepted | Installed | Approved | Legacy |
 |---|---|---|---|---|---|
-| 287 | 0 | 0 | 208 | 75 | 4 |
+| 292 | 0 | 0 | 213 | 75 | 4 |
 
-Acceptance recorded: unknown 140, pending 10, accepted 137, rejected 0.
+Acceptance recorded: unknown 145, pending 10, accepted 137, rejected 0.
 
 ## Needs the user's decision
 
@@ -29,6 +29,12 @@ Acceptance recorded: unknown 140, pending 10, accepted 137, rejected 0.
 | `ui.climb.stairs` | six wired stair PNGs stay (stair_step_0..3, stair_body, stair_root) and are still untracked. stair_segment.png was unreferenced and was deleted 2026-11-11. acceptance is still unknown. |
 | `ui.icons_55` | direction decision pending: slice1-combat-ui-assets.md:220 "two candidate sets: 12x12 pixel-grid set and the 55 px OSFE-style set; direction decision pending" (the 55 px set is the one in game) |
 | `unit.ghost_elite` | bible 5.6 accessory (<= 8x8, upper half) not added yet: needs the user (mechanical crop from mist_lord crown or none) |
+| `unit.an_dai_keeper` | in-game gap: the 3 Lattice Light (#FFD45C) shards above the head are meant to be drawn by code (art bible 5.2 / 8, Manh Goc) but do not appear in the arena shot production/qa/evidence/world-map-v2/region-enemies/10-lattice-an_dai_keeper-idle.png (2026-11-14). The sheet is complete; the presentation code is missing. Size exception (73 px) accepted by the user 2026-11-14. |
+| `unit.giao_si / step_up` | new 2026-11-16 (weaponless roster redesign): the four-direction dash needs an up step, which this character never had. Generated with the ASSET-001-DASH v7 wording plus the silhouette-width clause, pinned at both ends to the approved weaponless anchor. |
+| `unit.phap_su / step_up` | new 2026-11-15: the Mage had no up step since the 2026-11-04 clip turned into a back view and fell back to `step`. |
+| `unit.sat_thu / step_back` | new 2026-11-16: the 2026-11-05 clip was a teleport with speed lines cut at the canvas edge; this one carries no speed words and keeps a margin on all four sides. |
+| `unit.sat_thu / step_up` | new 2026-11-16: the Assassin had no up step since the 2026-11-05 clip turned into a back view. Fixed by instructing the silhouette WIDTH rather than a facing direction. |
+| `unit.tho_san / step_up` | new 2026-11-16 (weaponless roster redesign): the four-direction dash needs an up step, which this character never had. Generated with the ASSET-001-DASH v7 wording plus the silhouette-width clause, pinned at both ends to the approved weaponless anchor. |
 
 ## Units (heroes, enemies, bosses)
 
@@ -37,7 +43,7 @@ Acceptance recorded: unknown 140, pending 10, accepted 137, rejected 0.
 | `unit.ancient_root_sentinel` | ASSET-024 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, stunned 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.dire_wolf` | ASSET-027 | monster | 68x52 | left | **approved** | unknown | yes 2026-11-03 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.forest_witch` | ASSET-020 | boss | 160x130 | left | **approved** | unknown | yes 2026-11-02 | idle 4+, step_forward 7+, step_back 7+, step_up 5+, step_down 7+, windup 3+, windup_heavy 3+, phase_shift 8+, hit 3+, down 6+ | `design/assets/specs/forest-witch-assets.md` |
-| `unit.giao_si` | ASSET-033 | hero | 96x72 | right | **approved** | unknown | yes 2026-11-05 | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/cleric-assets.md` |
+| `unit.giao_si` | ASSET-033 | hero | 96x72 | right | **approved** | unknown | yes 2026-11-05 | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_down 7?, step_up 7!, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/cleric-assets.md` |
 | `unit.goblin_archer` | ASSET-026 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-03 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.goblin_scout` | ASSET-003 | monster | 64x52 | left | **approved** | unknown | yes 2026-10-31 | idle 4?, step 4?, windup 2?, hit 3?, down 8? | `design/assets/specs/goblin-scout-assets.md` |
 | `unit.goblin_warlock` | ASSET-029 | boss | 160x130 | left | **approved** | unknown | yes 2026-11-04 | idle 4?, step 4?, windup 4?, windup_heavy 4?, phase_shift 4?, hit 3?, down 5? | `design/assets/specs/misty-forest-roster-assets.md` |
@@ -45,10 +51,10 @@ Acceptance recorded: unknown 140, pending 10, accepted 137, rejected 0.
 | `unit.kiem_si` | ASSET-001 | hero | 96x92 | right | **approved** | unknown | yes 2026-10-31 | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_up 7?, step_down 7?, cast_gesture 9?, cast_forward 9*, cast_summon 9+, hit 3?, victory 5?, defeat 8?, fall 4?, awaken 6? | `design/assets/specs/swordsman-assets.md` |
 | `unit.mistbriar_matron` | ASSET-025 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, guard 4?, hit 3?, down 4? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.mossbound_sentry` | ASSET-023 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, brace 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
-| `unit.phap_su` | ASSET-030 | hero | 96x70 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 8? | `design/assets/specs/mage-assets.md` |
+| `unit.phap_su` | ASSET-030 | hero | 96x70 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7?, step_down 7?, step_up 7!, cast_gesture 9?, hit 3?, victory 4?, defeat 8?, fall 4?, awaken 8? | `design/assets/specs/mage-assets.md` |
 | `unit.rootling` | ASSET-021 | monster | 64x52 | left | **approved** | unknown | yes 2026-11-02 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
-| `unit.sat_thu` | ASSET-031 | hero | 96x70 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/assassin-assets.md` |
-| `unit.tho_san` | ASSET-032 | hero | 96x72 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 5?, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/hunter-assets.md` |
+| `unit.sat_thu` | ASSET-031 | hero | 96x92 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 7!, step_up 7!, step_down 7?, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/assassin-assets.md` |
+| `unit.tho_san` | ASSET-032 | hero | 96x72 | right | **installed** | unknown | no record | idle 8?, draw 8?, step 4?, step_forward 7?, step_back 5?, step_down 7?, step_up 7!, cast_gesture 9?, hit 3?, victory 8?, defeat 8?, fall 4?, awaken 5? | `design/assets/specs/hunter-assets.md` |
 | `unit.wolf_alpha` | ASSET-028 | elite | 80x80 | left | **approved** | unknown | yes 2026-11-04 | idle 4?, step 4?, windup 4?, howl 4?, hit 3?, down 6? | `design/assets/specs/misty-forest-roster-assets.md` |
 | `unit.ash_golem` | unit.ash_golem | monster | 72x52 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
 | `unit.ash_phoenix` | unit.ash_phoenix | elite | 84x80 | left | **approved** | yes 2026-11-13 | yes 2026-11-13 | idle 4?, step 4?, windup 4?, hit 3?, down 6? | `production/qa/evidence/world-map-v2/region-enemy-visual-assets-progress.md` |
@@ -335,6 +341,11 @@ Clip marks: `*` approved by the user, `+` accepted, `?` acceptance unknown, `!` 
 | Registry id | Name | File(s) | Size | Status | Accepted | Approved | Spec | Note |
 |---|---|---|---|---|---|---|---|---|
 | `texture.fx_telegraph_stripe_8` | fx_telegraph_stripe_8 | `assets/art/vfx/fx_telegraph_stripe_8.png` | 8x8 | **installed** | unknown | no record | `design/assets/specs/slice1-combat-ui-assets.md` | fallback stripe texture (shader stripes are code); 2026-10-31 manifest row: In Progress |
+| `texture.passive_hunter_mark` | passive_hunter_mark | `assets/art/icons/passive_hunter_mark.png` | 32x32 | **installed** | unknown | no record | — |  |
+| `texture.passive_prayer` | passive_prayer | `assets/art/icons/passive_prayer.png` | 32x32 | **installed** | unknown | no record | — |  |
+| `texture.passive_quick_blade` | passive_quick_blade | `assets/art/icons/passive_quick_blade.png` | 32x32 | **installed** | unknown | no record | — |  |
+| `texture.passive_second_wind` | passive_second_wind | `assets/art/icons/passive_second_wind.png` | 32x32 | **installed** | unknown | no record | — |  |
+| `texture.passive_wide_caster` | passive_wide_caster | `assets/art/icons/passive_wide_caster.png` | 32x32 | **installed** | unknown | no record | — |  |
 
 ## Other
 

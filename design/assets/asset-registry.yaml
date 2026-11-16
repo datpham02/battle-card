@@ -2912,7 +2912,7 @@ assets:
     approved_on: null
     approved_by: null
     approved_evidence: null
-    attention: "new 2026-11-16: the Assassin had no up step since the 2026-11-05 clip turned into a back view. The width instruction helped but did not hold on this anchor (33 px against a 45 px start) -- accepted as a mild profile turn."
+    attention: "new 2026-11-16: the Assassin had no up step since the 2026-11-05 clip turned into a back view. Fixed by instructing the silhouette WIDTH rather than a facing direction."
     generation: null
     note: null
   - name: step_down
@@ -21352,6 +21352,161 @@ assets:
     attention: null
     generation: null
     note: "src 2/3/4/5/6/8, sinks into a heap of cloth"
+  history:
+  - on: "2026-11-14"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: texture.passive_hunter_mark
+  type: texture
+  name: passive_hunter_mark
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/icons/passive_hunter_mark.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 32
+    h: 32
+    colour_type: 6
+  history:
+  - on: "2026-11-14"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: texture.passive_prayer
+  type: texture
+  name: passive_prayer
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/icons/passive_prayer.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 32
+    h: 32
+    colour_type: 6
+  history:
+  - on: "2026-11-14"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: texture.passive_quick_blade
+  type: texture
+  name: passive_quick_blade
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/icons/passive_quick_blade.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 32
+    h: 32
+    colour_type: 6
+  history:
+  - on: "2026-11-14"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: texture.passive_second_wind
+  type: texture
+  name: passive_second_wind
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/icons/passive_second_wind.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 32
+    h: 32
+    colour_type: 6
+  history:
+  - on: "2026-11-14"
+    event: registered
+    note: "bootstrapped from disk by asset_registry.py; status by location only"
+  notes: []
+- id: texture.passive_wide_caster
+  type: texture
+  name: passive_wide_caster
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: unknown
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: null
+  reference: null
+  production: [assets/art/icons/passive_wide_caster.png]
+  source: []
+  candidates: []
+  evidence: []
+  frame:
+    w: 32
+    h: 32
+    colour_type: 6
   history:
   - on: "2026-11-14"
     event: registered
