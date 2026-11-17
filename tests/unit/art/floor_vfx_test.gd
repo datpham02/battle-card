@@ -19,6 +19,19 @@ const PACK_IDS: Array[String] = [
 	"impact_eruption_tram_dia", "mark_eruption_tram_dia",
 	# 2026-11-14 PixelFX proof of concept (hit-flash, steel ramp), installed by integrate.py on the user's acceptance
 	"impact_flash_steel_pixelfx",
+	# 2026-11-17 boss skill VFX (tools/fx-pipeline): four beats per boss - charge / travel / impact / mark,
+	# each in its 64x46 and 43x31 cell size. See production/qa/evidence/enemy-impact/README.md.
+	"charge_sandfall_ivory", "charge_sandfall_ivory_c43x31", "charge_smash_root", "charge_smash_root_c43x31",
+	"charge_tempest_storm", "charge_tempest_storm_c43x31", "charge_toxic_poison", "charge_toxic_poison_c43x31",
+	"charge_whiteout_freeze", "charge_whiteout_freeze_c43x31",
+	"travel_sandfall_ivory", "travel_sandfall_ivory_c43x31", "travel_tempest_storm", "travel_tempest_storm_c43x31",
+	"travel_toxic_poison", "travel_toxic_poison_c43x31", "travel_whiteout_freeze", "travel_whiteout_freeze_c43x31",
+	"impact_sandfall_ivory", "impact_sandfall_ivory_c43x31", "impact_smash_big_root", "impact_smash_big_root_c43x31",
+	"impact_tempest_storm", "impact_tempest_storm_c43x31", "impact_toxic_poison", "impact_toxic_poison_c43x31",
+	"impact_whiteout_freeze", "impact_whiteout_freeze_c43x31",
+	"mark_sandfall_ivory", "mark_sandfall_ivory_c43x31", "mark_smash_root", "mark_smash_root_c43x31",
+	"mark_tempest_storm", "mark_tempest_storm_c43x31", "mark_toxic_poison", "mark_toxic_poison_c43x31",
+	"mark_whiteout_freeze", "mark_whiteout_freeze_c43x31",
 ]
 ## Fixture entries (factory data; the frame counts / times are the point of the boundary checks).
 const LOOP_ENTRY: Dictionary = {"play": "loop", "frames": 4, "frame_ms": 100}
