@@ -1,0 +1,77 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - floor mark: what the hit leaves on the cell (ivory)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 9,
+ "loop": false,
+ "canvas": {
+  "w": 64,
+  "h": 46
+ },
+ "anchor": {
+  "kind": "center",
+  "x": 32,
+  "y": 23
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "behind",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 9,
+   "frame": {
+    "w": 64,
+    "h": 46
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 9,
+     "columns": 9,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -32,
+    "y": -23
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "mark_sandfall_ivory",
+  "component": "square_mark",
+  "layer": "floor",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 31,
+  "duration_sec": 0.45,
+  "palette": [
+   "#9A7D5E",
+   "#D8CDB0",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "mark_sandfall_ivory",
+   "layer": "floor",
+   "play": "once",
+   "clip": "whole",
+   "frames": 9,
+   "frame_ms": 50,
+   "anchor": "center"
+  },
+  "recipe": "sphinx_sandfall",
+  "material": "ivory",
+  "delivery": {
+   "type": "SKY_TO_TARGET",
+   "origin": "sky",
+   "travel": "falling_squares",
+   "impact": "shatter"
+  }
+ }
+}

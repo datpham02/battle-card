@@ -21668,6 +21668,1868 @@ assets:
     event: registered
     note: "bootstrapped from disk by asset_registry.py; status by location only"
   notes: []
+- id: vfx.floor.charge_sandfall_ivory
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_sandfall_ivory]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_sandfall_ivory]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: square_gather
+    material: ivory
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [72, 56]
+    anchor: [center, 36, 28]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_sandfall_ivory
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_sandfall_ivory_c43x31
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_sandfall_ivory_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_sandfall_ivory_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: square_gather
+    material: ivory
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [50, 38]
+    anchor: [center, 26, 20]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_sandfall_ivory_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_smash_root
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_smash_root]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_smash_root]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_gather
+    material: root
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [72, 56]
+    anchor: [center, 36, 28]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_smash_root
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_smash_root_c43x31
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_smash_root_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_smash_root_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_gather
+    material: root
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [50, 38]
+    anchor: [center, 26, 20]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_smash_root_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_tempest_storm
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_tempest_storm]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_tempest_storm]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: square_gather
+    material: storm
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [72, 56]
+    anchor: [center, 36, 28]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_tempest_storm
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_tempest_storm_c43x31
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_tempest_storm_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_tempest_storm_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: square_gather
+    material: storm
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [50, 38]
+    anchor: [center, 26, 20]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_tempest_storm_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_toxic_poison
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_toxic_poison]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_toxic_poison]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: square_gather
+    material: poison
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [72, 56]
+    anchor: [center, 36, 28]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_toxic_poison
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_toxic_poison_c43x31
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_toxic_poison_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_toxic_poison_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: square_gather
+    material: poison
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [50, 38]
+    anchor: [center, 26, 20]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_toxic_poison_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_whiteout_freeze
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_whiteout_freeze]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_whiteout_freeze]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: square_gather
+    material: freeze
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [72, 56]
+    anchor: [center, 36, 28]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_whiteout_freeze
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.charge_whiteout_freeze_c43x31
+  type: vfx_pack
+  name: "Tessera fx - charge: squares gathering on the warned cell (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/charge_whiteout_freeze_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/charge_whiteout_freeze_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: square_gather
+    material: freeze
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: true
+    canvas: [50, 38]
+    anchor: [center, 26, 20]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.charge_whiteout_freeze_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_sandfall_ivory
+  type: vfx_pack
+  name: "Tessera fx - impact: buried sand slabs dropping on the cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_sandfall_ivory]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_sandfall_ivory]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: square_burst
+    material: ivory
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [106, 88]
+    anchor: [ground_center, 53, 56]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_sandfall_ivory
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_sandfall_ivory_c43x31
+  type: vfx_pack
+  name: "Tessera fx - impact: buried sand slabs dropping on the cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_sandfall_ivory_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_sandfall_ivory_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: square_burst
+    material: ivory
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [72, 66]
+    anchor: [ground_center, 36, 42]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_sandfall_ivory_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_smash_big_root
+  type: vfx_pack
+  name: "Tessera fx - impact: heavy club smash, stone squares thrown up (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_smash_big_root]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_smash_big_root]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_burst
+    material: root
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [106, 88]
+    anchor: [ground_center, 53, 56]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_smash_big_root
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_smash_big_root_c43x31
+  type: vfx_pack
+  name: "Tessera fx - impact: heavy club smash, stone squares thrown up (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_smash_big_root_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_smash_big_root_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_burst
+    material: root
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [72, 66]
+    anchor: [ground_center, 36, 42]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_smash_big_root_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_tempest_storm
+  type: vfx_pack
+  name: "Tessera fx - impact: tempest burst over the cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_tempest_storm]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_tempest_storm]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: square_burst
+    material: storm
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [106, 88]
+    anchor: [ground_center, 53, 56]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_tempest_storm
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_tempest_storm_c43x31
+  type: vfx_pack
+  name: "Tessera fx - impact: tempest burst over the cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_tempest_storm_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_tempest_storm_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: square_burst
+    material: storm
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [72, 66]
+    anchor: [ground_center, 36, 42]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_tempest_storm_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_toxic_poison
+  type: vfx_pack
+  name: "Tessera fx - impact: toxic croak, venom squares bursting (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_toxic_poison]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_toxic_poison]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: square_burst
+    material: poison
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [106, 88]
+    anchor: [ground_center, 53, 56]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_toxic_poison
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_toxic_poison_c43x31
+  type: vfx_pack
+  name: "Tessera fx - impact: toxic croak, venom squares bursting (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_toxic_poison_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_toxic_poison_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: square_burst
+    material: poison
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [72, 66]
+    anchor: [ground_center, 36, 42]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_toxic_poison_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_whiteout_freeze
+  type: vfx_pack
+  name: "Tessera fx - impact: whiteout, rime squares shattering (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_whiteout_freeze]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_whiteout_freeze]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: square_burst
+    material: freeze
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [106, 88]
+    anchor: [ground_center, 53, 56]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_whiteout_freeze
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.impact_whiteout_freeze_c43x31
+  type: vfx_pack
+  name: "Tessera fx - impact: whiteout, rime squares shattering (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/impact_whiteout_freeze_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/impact_whiteout_freeze_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: square_burst
+    material: freeze
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 7
+    frame_ms: 50
+    loop: false
+    canvas: [72, 66]
+    anchor: [ground_center, 36, 42]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.impact_whiteout_freeze_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_sandfall_ivory
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_sandfall_ivory]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_sandfall_ivory]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: square_mark
+    material: ivory
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [64, 46]
+    anchor: [center, 32, 23]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_sandfall_ivory
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_sandfall_ivory_c43x31
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_sandfall_ivory_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_sandfall_ivory_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: square_mark
+    material: ivory
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [44, 32]
+    anchor: [center, 22, 16]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_sandfall_ivory_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_smash_root
+  type: vfx_pack
+  name: "Tessera fx - floor mark: the dent the club leaves on the cell (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_smash_root]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_smash_root]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_mark
+    material: root
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [64, 46]
+    anchor: [center, 32, 23]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_smash_root
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_smash_root_c43x31
+  type: vfx_pack
+  name: "Tessera fx - floor mark: the dent the club leaves on the cell (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_smash_root_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_smash_root_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_mark
+    material: root
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [44, 32]
+    anchor: [center, 22, 16]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_smash_root_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_tempest_storm
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_tempest_storm]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_tempest_storm]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: square_mark
+    material: storm
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [64, 46]
+    anchor: [center, 32, 23]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_tempest_storm
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_tempest_storm_c43x31
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_tempest_storm_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_tempest_storm_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: square_mark
+    material: storm
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [44, 32]
+    anchor: [center, 22, 16]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_tempest_storm_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_toxic_poison
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_toxic_poison]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_toxic_poison]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: square_mark
+    material: poison
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [64, 46]
+    anchor: [center, 32, 23]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_toxic_poison
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_toxic_poison_c43x31
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_toxic_poison_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_toxic_poison_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: square_mark
+    material: poison
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [44, 32]
+    anchor: [center, 22, 16]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_toxic_poison_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_whiteout_freeze
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_whiteout_freeze]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_whiteout_freeze]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: square_mark
+    material: freeze
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [64, 46]
+    anchor: [center, 32, 23]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_whiteout_freeze
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.mark_whiteout_freeze_c43x31
+  type: vfx_pack
+  name: "Tessera fx - floor mark: what the hit leaves on the cell (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/mark_whiteout_freeze_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/mark_whiteout_freeze_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: square_mark
+    material: freeze
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 9
+    frame_ms: 50
+    loop: false
+    canvas: [44, 32]
+    anchor: [center, 22, 16]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.mark_whiteout_freeze_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_sandfall_ivory
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_sandfall_ivory]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_sandfall_ivory]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: sky_fall
+    material: ivory
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [112, 128]
+    anchor: [ground_center, 56, 98]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_sandfall_ivory
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_sandfall_ivory_c43x31
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (ivory)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_sandfall_ivory_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_sandfall_ivory_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/sphinx_sandfall
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: sphinx_sandfall
+    component: sky_fall
+    material: ivory
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [78, 92]
+    anchor: [ground_center, 39, 70]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_sandfall_ivory_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_tempest_storm
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_tempest_storm]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_tempest_storm]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: sky_fall
+    material: storm
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [112, 128]
+    anchor: [ground_center, 56, 98]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_tempest_storm
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_tempest_storm_c43x31
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (storm)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_tempest_storm_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_tempest_storm_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/dragon_tempest
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: dragon_tempest
+    component: sky_fall
+    material: storm
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [78, 92]
+    anchor: [ground_center, 39, 70]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_tempest_storm_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_toxic_poison
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_toxic_poison]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_toxic_poison]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: sky_fall
+    material: poison
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [112, 128]
+    anchor: [ground_center, 56, 98]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_toxic_poison
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_toxic_poison_c43x31
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (poison)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_toxic_poison_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_toxic_poison_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/matriarch_toxic_croak
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: matriarch_toxic_croak
+    component: sky_fall
+    material: poison
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [78, 92]
+    anchor: [ground_center, 39, 70]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_toxic_poison_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_whiteout_freeze
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_whiteout_freeze]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_whiteout_freeze]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: sky_fall
+    material: freeze
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [112, 128]
+    anchor: [ground_center, 56, 98]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_whiteout_freeze
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_whiteout_freeze_c43x31
+  type: vfx_pack
+  name: "Tessera fx - travel: blocks falling onto the cell (freeze)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_whiteout_freeze_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_whiteout_freeze_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/mist_lord_whiteout
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: mist_lord_whiteout
+    component: sky_fall
+    material: freeze
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 6
+    frame_ms: 50
+    loop: false
+    canvas: [78, 92]
+    anchor: [ground_center, 39, 70]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_whiteout_freeze_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
+  notes:
+  - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
 backlog:
 - id: portrait.kiem_si
   name: "Character-select portrait 64x80 for kiem_si"

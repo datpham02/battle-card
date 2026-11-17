@@ -1,0 +1,78 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - travel: blocks falling onto the cell (freeze)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 6,
+ "loop": false,
+ "canvas": {
+  "w": 78,
+  "h": 92
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 39,
+  "y": 70
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 6,
+   "frame": {
+    "w": 78,
+    "h": 92
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 6,
+     "columns": 6,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -39,
+    "y": -70
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "travel_whiteout_freeze_c43x31",
+  "component": "sky_fall",
+  "layer": "overlay",
+  "cell": [
+   43,
+   31
+  ],
+  "seed": 41,
+  "duration_sec": 0.3,
+  "palette": [
+   "#2E3450",
+   "#5F6F82",
+   "#A6EEFF",
+   "#EEF4FA"
+  ],
+  "index_entry": {
+   "dir": "travel_whiteout_freeze_c43x31",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 6,
+   "frame_ms": 50,
+   "anchor": "ground_center"
+  },
+  "recipe": "mist_lord_whiteout",
+  "material": "freeze",
+  "delivery": {
+   "type": "SKY_TO_TARGET",
+   "origin": "sky",
+   "travel": "falling_squares",
+   "impact": "freeze"
+  }
+ }
+}

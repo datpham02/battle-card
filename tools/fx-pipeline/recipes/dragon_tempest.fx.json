@@ -1,0 +1,102 @@
+{
+ "id": "dragon_tempest",
+ "title": "storm_dragon - dragon_tempest (boss pack)",
+ "delivery": {
+  "type": "SKY_TO_TARGET",
+  "origin": "sky",
+  "travel": "falling_squares",
+  "impact": "burst"
+ },
+ "data_delivery": "@enemy_skills:skills.dragon_tempest.delivery",
+ "material": "storm",
+ "seed": 43,
+ "fps": 20,
+ "ref_cell": [
+  64,
+  46
+ ],
+ "packs": [
+  {
+   "id": "charge_tempest_storm",
+   "component": "square_gather",
+   "layer": "overlay",
+   "material": "storm",
+   "options": {
+    "layer": "front",
+    "reach": 0.9,
+    "count": 12,
+    "period": 0.3
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - charge: squares gathering on the warned cell (storm)"
+  },
+  {
+   "id": "travel_tempest_storm",
+   "component": "sky_fall",
+   "layer": "overlay",
+   "material": "storm",
+   "options": {
+    "count": 4
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - travel: blocks falling onto the cell (storm)"
+  },
+  {
+   "id": "impact_tempest_storm",
+   "component": "square_burst",
+   "layer": "overlay",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - impact: tempest burst over the cell (storm)"
+  },
+  {
+   "id": "mark_tempest_storm",
+   "component": "square_mark",
+   "layer": "floor",
+   "material": "storm",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - floor mark: what the hit leaves on the cell (storm)"
+  }
+ ]
+}

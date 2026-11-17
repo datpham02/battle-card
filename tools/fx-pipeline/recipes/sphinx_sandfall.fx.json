@@ -1,0 +1,102 @@
+{
+ "id": "sphinx_sandfall",
+ "title": "sand_sphinx - sphinx_sandfall (boss pack)",
+ "delivery": {
+  "type": "SKY_TO_TARGET",
+  "origin": "sky",
+  "travel": "falling_squares",
+  "impact": "shatter"
+ },
+ "data_delivery": "@enemy_skills:skills.sphinx_sandfall.delivery",
+ "material": "ivory",
+ "seed": 31,
+ "fps": 20,
+ "ref_cell": [
+  64,
+  46
+ ],
+ "packs": [
+  {
+   "id": "charge_sandfall_ivory",
+   "component": "square_gather",
+   "layer": "overlay",
+   "material": "ivory",
+   "options": {
+    "layer": "front",
+    "reach": 0.9,
+    "count": 12,
+    "period": 0.3
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - charge: squares gathering on the warned cell (ivory)"
+  },
+  {
+   "id": "travel_sandfall_ivory",
+   "component": "sky_fall",
+   "layer": "overlay",
+   "material": "ivory",
+   "options": {
+    "count": 4
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - travel: blocks falling onto the cell (ivory)"
+  },
+  {
+   "id": "impact_sandfall_ivory",
+   "component": "square_burst",
+   "layer": "overlay",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - impact: buried sand slabs dropping on the cell (ivory)"
+  },
+  {
+   "id": "mark_sandfall_ivory",
+   "component": "square_mark",
+   "layer": "floor",
+   "material": "ivory",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - floor mark: what the hit leaves on the cell (ivory)"
+  }
+ ]
+}

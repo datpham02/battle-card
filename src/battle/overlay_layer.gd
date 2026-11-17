@@ -787,9 +787,10 @@ func _record_items(out: Array[Dictionary], combat: CombatView, side: int, caster
 	var form: String = ImpactFx.form_of(variant)
 	# a pack that owns the cells (the steel burst, the burn flames) replaces the shared flash / shards, but a card's
 	# own signature form still plays over it (Hỏa Băng's steam over the fire)
-	if (packs_own or (bool(tr.get("hit", false)) and CastVfx.impact_pack_owns_cells(impact))) and form.is_empty():
+	var own_pack: bool = not CastVfx.impact_pack_for(delivery).is_empty()
+	if (packs_own or (bool(tr.get("hit", false)) and own_pack)) and form.is_empty():
 		return
-	var owned: bool = packs_own or CastVfx.impact_pack_owns_cells(impact)
+	var owned: bool = packs_own or own_pack
 	var reduce: bool = SettingsStore.shared().get_reduce_motion()
 	# signature knobs: the variant's own colours, and a second form for the cells that are not the first arrival
 	cols = variant_colours(variant, cols)

@@ -4,10 +4,11 @@ from __future__ import annotations
 from .fire import FlameBurst, SquareFireball
 from .gather import SquareGather
 from .roots import RootCrawl, RootSpike
+from .sky import SkyFall
 from .squares import SquareBurst, SquareMark, SquareSlash, SquareWave
 
 REGISTRY = {c.name: c for c in (SquareWave(), SquareSlash(), SquareBurst(), SquareMark(), SquareGather(),
-                                FlameBurst(), SquareFireball(), RootCrawl(), RootSpike())}
+                                FlameBurst(), SquareFireball(), RootCrawl(), RootSpike(), SkyFall())}
 
 
 def get(name: str):

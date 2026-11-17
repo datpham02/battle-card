@@ -1,0 +1,77 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - impact: buried sand slabs dropping on the cell (ivory)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 7,
+ "loop": false,
+ "canvas": {
+  "w": 106,
+  "h": 88
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 53,
+  "y": 56
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 7,
+   "frame": {
+    "w": 106,
+    "h": 88
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 7,
+     "columns": 7,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -53,
+    "y": -56
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "impact_sandfall_ivory",
+  "component": "square_burst",
+  "layer": "overlay",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 31,
+  "duration_sec": 0.35,
+  "palette": [
+   "#9A7D5E",
+   "#D8CDB0",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "impact_sandfall_ivory",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 7,
+   "frame_ms": 50,
+   "anchor": "ground_center"
+  },
+  "recipe": "sphinx_sandfall",
+  "material": "ivory",
+  "delivery": {
+   "type": "SKY_TO_TARGET",
+   "origin": "sky",
+   "travel": "falling_squares",
+   "impact": "shatter"
+  }
+ }
+}

@@ -1,0 +1,102 @@
+{
+ "id": "matriarch_toxic_croak",
+ "title": "toad_matriarch - matriarch_toxic_croak (boss pack)",
+ "delivery": {
+  "type": "SKY_TO_TARGET",
+  "origin": "sky",
+  "travel": "falling_squares",
+  "impact": "poison"
+ },
+ "data_delivery": "@enemy_skills:skills.matriarch_toxic_croak.delivery",
+ "material": "poison",
+ "seed": 37,
+ "fps": 20,
+ "ref_cell": [
+  64,
+  46
+ ],
+ "packs": [
+  {
+   "id": "charge_toxic_poison",
+   "component": "square_gather",
+   "layer": "overlay",
+   "material": "poison",
+   "options": {
+    "layer": "front",
+    "reach": 0.9,
+    "count": 12,
+    "period": 0.3
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - charge: squares gathering on the warned cell (poison)"
+  },
+  {
+   "id": "travel_toxic_poison",
+   "component": "sky_fall",
+   "layer": "overlay",
+   "material": "poison",
+   "options": {
+    "count": 4
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - travel: blocks falling onto the cell (poison)"
+  },
+  {
+   "id": "impact_toxic_poison",
+   "component": "square_burst",
+   "layer": "overlay",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - impact: toxic croak, venom squares bursting (poison)"
+  },
+  {
+   "id": "mark_toxic_poison",
+   "component": "square_mark",
+   "layer": "floor",
+   "material": "poison",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - floor mark: what the hit leaves on the cell (poison)"
+  }
+ ]
+}

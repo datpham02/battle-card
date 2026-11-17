@@ -1,0 +1,77 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - charge: squares gathering on the warned cell (storm)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 6,
+ "loop": true,
+ "canvas": {
+  "w": 72,
+  "h": 56
+ },
+ "anchor": {
+  "kind": "center",
+  "x": 36,
+  "y": 28
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": true,
+   "start_frame": 0,
+   "frames": 6,
+   "frame": {
+    "w": 72,
+    "h": 56
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 6,
+     "columns": 6,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -36,
+    "y": -28
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "charge_tempest_storm",
+  "component": "square_gather",
+  "layer": "overlay",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 43,
+  "duration_sec": 0.3,
+  "palette": [
+   "#34406E",
+   "#A8B0C8",
+   "#EEF4FA"
+  ],
+  "index_entry": {
+   "dir": "charge_tempest_storm",
+   "layer": "overlay",
+   "play": "loop",
+   "clip": "whole",
+   "frames": 6,
+   "frame_ms": 50,
+   "anchor": "center"
+  },
+  "recipe": "dragon_tempest",
+  "material": "storm",
+  "delivery": {
+   "type": "SKY_TO_TARGET",
+   "origin": "sky",
+   "travel": "falling_squares",
+   "impact": "burst"
+  }
+ }
+}

@@ -192,6 +192,28 @@ static func impact_mark(impact_id: String) -> String:
 	return str((m as Dictionary).get(impact_id, "")) if m is Dictionary else ""
 
 
+## 2026-11-17: the FloorVfx pack that draws [param delivery]'s impact: the skill's own `impact_pack` when it names
+## one, else the shared `impact_packs` entry for its impact id; "" when neither does. ONE function, because the view
+## and the overlay must not disagree about whether a pack owns the cells - if they did, the shards would draw twice.
+static func impact_pack_for(delivery: Dictionary) -> String:
+	var own: String = str(delivery.get("impact_pack", ""))
+	return own if not own.is_empty() else impact_pack(str(delivery.get("impact", "")))
+
+
+## 2026-11-17: the floor mark [param delivery] leaves behind: the skill's own `impact_mark`, else the shared
+## `impact_marks` entry; "" when neither. The aftermath beat.
+static func impact_mark_for(delivery: Dictionary) -> String:
+	var own: String = str(delivery.get("impact_mark", ""))
+	return own if not own.is_empty() else impact_mark(str(delivery.get("impact", "")))
+
+
+## 2026-11-17: the pack drawn on each cell the travel crosses: the skill's own `travel_pack`, else the shared
+## `travel_packs` / `travel_impact_packs` entry; "" when neither. The approach beat.
+static func travel_pack_for(delivery: Dictionary) -> String:
+	var own: String = str(delivery.get("travel_pack", ""))
+	return own if not own.is_empty() else travel_pack(str(delivery.get("travel", "")), str(delivery.get("impact", "")))
+
+
 ## 2026-11-04: true when impact [param impact_id] has a FloorVfx pack (impact_packs): the code flash and square shards
 ## are left out for it, like a hero cast pack's own impacts (packs_replace_shards), so the cell is not drawn twice.
 static func impact_pack_owns_cells(impact_id: String) -> bool:

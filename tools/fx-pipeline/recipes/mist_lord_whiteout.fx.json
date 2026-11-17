@@ -1,0 +1,102 @@
+{
+ "id": "mist_lord_whiteout",
+ "title": "mist_lord - mist_lord_whiteout (boss pack)",
+ "delivery": {
+  "type": "SKY_TO_TARGET",
+  "origin": "sky",
+  "travel": "falling_squares",
+  "impact": "freeze"
+ },
+ "data_delivery": "@enemy_skills:skills.mist_lord_whiteout.delivery",
+ "material": "freeze",
+ "seed": 41,
+ "fps": 20,
+ "ref_cell": [
+  64,
+  46
+ ],
+ "packs": [
+  {
+   "id": "charge_whiteout_freeze",
+   "component": "square_gather",
+   "layer": "overlay",
+   "material": "freeze",
+   "options": {
+    "layer": "front",
+    "reach": 0.9,
+    "count": 12,
+    "period": 0.3
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - charge: squares gathering on the warned cell (freeze)"
+  },
+  {
+   "id": "travel_whiteout_freeze",
+   "component": "sky_fall",
+   "layer": "overlay",
+   "material": "freeze",
+   "options": {
+    "count": 4
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - travel: blocks falling onto the cell (freeze)"
+  },
+  {
+   "id": "impact_whiteout_freeze",
+   "component": "square_burst",
+   "layer": "overlay",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - impact: whiteout, rime squares shattering (freeze)"
+  },
+  {
+   "id": "mark_whiteout_freeze",
+   "component": "square_mark",
+   "layer": "floor",
+   "material": "freeze",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - floor mark: what the hit leaves on the cell (freeze)"
+  }
+ ]
+}

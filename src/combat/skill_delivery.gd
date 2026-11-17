@@ -49,6 +49,10 @@ const PATH_EFFECT_PULL: String = "pull"
 ## Types whose travel crosses floor cells (the only ones a path rule can mean anything for).
 const PATH_TYPES: Array[String] = [CASTER_TO_TARGET, GROUND_PROPAGATION, SEQUENTIAL_CHAIN]
 ## Default of a skill with no / unusable delivery data (flagged as a problem; never silently SKY_TO_TARGET).
+## 2026-11-17: the four beats a skill may draw with its OWN FloorVfx pack instead of the shared tables -
+## charge (while it is telegraphed), travel (on its way), impact (where it lands), mark (what it leaves).
+## A boss signature gets the structure a hero card has; a skill naming none of them behaves exactly as before.
+const PACK_KEYS: Array[String] = ["charge_pack", "travel_pack", "impact_pack", "impact_mark"]
 const FALLBACK: Dictionary = {
 	"type": DIRECT_MANIFESTATION, "origin": "target_cells", "travel": "none", "impact": "burst",
 	"cell_mask": CELL_MASK_BLOCK_SHAPE, "chain_order": "", "path_rule": {},
@@ -116,6 +120,17 @@ static func normalize(raw: Variant) -> Dictionary:
 		problems.append("chain_order is for SEQUENTIAL_CHAIN only, ignored")
 	if d.has("path_rule"):
 		out["path_rule"] = _normalize_path_rule(d["path_rule"], type, problems)
+	# 2026-11-17: a single skill may name its OWN FloorVfx pack for the impact (a boss signature, where the shared
+	# impact_packs entry would be the wrong material - a sand sphinx must not throw brown stone). This function drops
+	# every key it does not know, so the field has to be carried through explicitly or the data vanishes in silence.
+	for key: String in PACK_KEYS:
+		if not d.has(key):
+			continue
+		var pack: String = str(d[key])
+		if pack.is_empty():
+			problems.append("%s is empty, ignored" % key)
+		else:
+			out[key] = pack
 	return {"delivery": out, "problems": problems}
 
 

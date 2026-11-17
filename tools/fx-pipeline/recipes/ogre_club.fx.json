@@ -1,0 +1,81 @@
+{
+ "id": "ogre_club",
+ "title": "Ogre King - Club Smash (boss pack 1)",
+ "delivery": {
+  "type": "DIRECT_MANIFESTATION",
+  "origin": "target_cells",
+  "travel": "none",
+  "impact": "shatter"
+ },
+ "data_delivery": "@enemy_skills:skills.ogre_club.delivery",
+ "material": "root",
+ "seed": 23,
+ "fps": 20,
+ "ref_cell": [
+  64,
+  46
+ ],
+ "packs": [
+  {
+   "id": "charge_smash_root",
+   "component": "square_gather",
+   "layer": "overlay",
+   "material": "root",
+   "options": {
+    "layer": "front",
+    "reach": 0.9,
+    "count": 12,
+    "period": 0.3
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - charge: squares gathering on the warned cell (root)"
+  },
+  {
+   "id": "impact_smash_big_root",
+   "component": "square_burst",
+   "layer": "overlay",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - impact: heavy club smash, stone squares thrown up (root)"
+  },
+  {
+   "id": "mark_smash_root",
+   "component": "square_mark",
+   "layer": "floor",
+   "options": {
+    "size": "big"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - floor mark: the dent the club leaves on the cell (root)"
+  }
+ ]
+}

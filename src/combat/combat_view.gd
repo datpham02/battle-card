@@ -3045,6 +3045,7 @@ func _setup_extra_units(boss_drops_config: FieldDropsConfig, hold_config: HoldSl
 			pattern.markers_changed.connect(_mark_floor_dirty)
 			# Multi-enemy fix (2026-11-13): bind THIS unit's key, so its VFX leaves its own cells.
 			pattern.skill_resolved.connect(_on_pattern_skill_resolved.bind(key))
+			pattern.warning_started.connect(_on_pattern_warning_started.bind(key))
 			ctrl.extra_step_lock_fn = Callable(pattern, "is_busy")
 		_threat.register_red(key, _red_cells_of.bind(ctrl, pattern))
 		_extra_agents.append(EnemyAgent.new(key, unit, ctrl, pattern, cfg))
@@ -3218,6 +3219,10 @@ func _setup_pattern_brain(brain_config: BossBrainConfig) -> void:
 		_trait_host.extra_reaction_immune_fn = Callable(pattern, "reaction_immune")
 	# G4: the strike's delivery drives its travel / impact VFX (presentation only, after the damage was applied).
 	_pattern.skill_resolved.connect(_on_pattern_skill_resolved)
+	# 2026-11-17: the ANTICIPATION beat. warning_started already names the skill, the cells and how long the
+	# telegraph lasts, and until now only the audio listened to it. A skill naming a `charge_pack` draws it on
+	# the warned cells, so a heavy attack gathers before it lands instead of appearing on the cell.
+	_pattern.warning_started.connect(_on_pattern_warning_started)
 	# G5: a phase's traits / brain_set / tempo_mult are applied when it starts; the HUD banner hears it too.
 	_pattern.phase_started.connect(_on_pattern_phase_started)
 	_apply_pattern_phase(0)
@@ -3228,6 +3233,31 @@ func _setup_pattern_brain(brain_config: BossBrainConfig) -> void:
 ## Multi-enemy fix (2026-11-13): [param key] names the unit whose skill resolved. _play_cut_vfx takes the caster's
 ## cast origin from it, so a travelling effect leaves the unit that cast it. Without the key every pattern unit's VFX
 ## flew out of unit 0 — out of a corpse once unit 0 had died.
+## 2026-11-17: the telegraph of [param skill_id] started on [param cells]. When the skill names a `charge_pack`
+## it is played on each warned cell, on the side that is being attacked. Presentation only: the red warning
+## markers, the timings and the damage are untouched, and a skill without the key draws nothing new.
+func _on_pattern_warning_started(skill_id: String, cells: Array[Vector2i], _queued: Array[Vector2i],
+		warning_sec: float, key: int = CombatState.Side.ENEMY) -> void:
+	# the enemy skill's own delivery lives on its controller, not in `delivery_for` (that one reads cards.json)
+	var ctrl: PatternController = pattern_of(key)
+	if ctrl == null:
+		return
+	var skill: Dictionary = ctrl.get_current_skill()
+	if str(skill.get("id", "")) != skill_id:
+		return
+	var pack: String = str((skill.get("delivery", {}) as Dictionary).get("charge_pack", ""))
+	if pack.is_empty() or cells.is_empty():
+		return
+	var target_side: int = CombatState.Side.ENEMY if key == CombatState.Side.PLAYER else CombatState.Side.PLAYER
+	# It fires in the LAST CHARGE_LEAD_SEC of the telegraph, not at its start. Two reasons, both learned
+	# here: the charge belongs to the moment before the blow, not spread thin over a 1.3 s warning; and an
+	# overlay one-shot is capped at 0.35 s by the art bible, so it could not cover the whole warning anyway.
+	# FloorVfx.play already takes a delay, so no timer is needed and nothing can be left running.
+	var lead: float = maxf(0.0, warning_sec - CHARGE_LEAD_SEC)
+	for cell: Vector2i in unlocked_for_vfx(cells):
+		get_floor_vfx().play(pack, cell, target_side, lead)
+
+
 func _on_pattern_skill_resolved(skill_id: String, result: Dictionary, key: int = CombatState.Side.ENEMY) -> void:
 	var feedback: Dictionary = PatternController.vfx_feedback(result)
 	if feedback.is_empty():
@@ -3725,13 +3755,13 @@ func _play_cut_vfx(side: int, feedback: Dictionary, delivery_override: Dictionar
 		return
 	# P2.2b: a hit on a multi-cell boss lands on the covered footprint cell nearest its centre (CombatState.enemy_hit_cell).
 	var target: Vector2i = state.enemy_hit_cell(cells) if side == CombatState.Side.PLAYER else state.player_cell
-	var impact: String = CastVfx.impact_pack(str(delivery.get("impact", "")))
+	var impact: String = CastVfx.impact_pack_for(delivery)
 	var peak: float = 0.0
 	if _hero_wave(side, delivery) and not cells.is_empty():
 		peak = _play_hero_wave(cells, caster, delays, impact, shown, str(delivery.get("impact", "")))
 	elif not impact.is_empty():
 		# 2026-11-04: an impact with a floor mark (impact_marks, the Mage's embers) leaves it on each hit cell too.
-		var mark: String = CastVfx.impact_mark(str(delivery.get("impact", "")))
+		var mark: String = CastVfx.impact_mark_for(delivery)
 		for cell: Vector2i in shown:
 			if not (impact == "hit_impact" and cell == target):
 				vfx.play(impact, cell, target_side, float(delays.get(cell, 0.0)))
@@ -3748,6 +3778,11 @@ func _play_cut_vfx(side: int, feedback: Dictionary, delivery_override: Dictionar
 		vfx.play("hit_impact", target, target_side, wait)
 	else:
 		vfx.play("hit_impact", feedback.get("cell", target), target_side)
+
+
+## 2026-11-17: how long before a telegraphed enemy skill lands its `charge_pack` plays. One gather, on the
+## overlay, inside the art bible's 0.35 s cap for an overlay one-shot.
+const CHARGE_LEAD_SEC: float = 0.30
 
 
 ## Seconds a surge cell's code-drawn crack / shockwave stays (CastFloorFx.crack_rects / shock_rects).
@@ -4275,7 +4310,7 @@ func _play_hero_wave(cells: Array, caster: Vector2i, delays: Dictionary, impact:
 
 # The travel's visual on the floor cells it crosses outside the mask (animation only; no effect on them).
 func _play_delivery_travel(delivery: Dictionary, cells: Array, caster: Vector2i, target_side: int) -> void:
-	var pack: String = CastVfx.travel_pack(str(delivery.get("travel", "")), str(delivery.get("impact", "")))
+	var pack: String = CastVfx.travel_pack_for(delivery)
 	if pack.is_empty() or cells.is_empty():
 		return
 	var ground: bool = str(delivery.get("type", "")) == SkillDelivery.GROUND_PROPAGATION
