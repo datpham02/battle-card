@@ -152,3 +152,47 @@ có thứ gì chạy tới. Trùng hợp có lợi, nhưng đã đi kiểm trư�
 32 skill khác vẫn khai `DIRECT_MANIFESTATION` trong khi đánh vào ô ở xa (`near_player` / `enemy_half_empty`).
 Giờ đã biết việc đổi là **hình ảnh thuần tuý**, nên rào cản duy nhất còn lại là thẩm mỹ: không phải đòn nào
 cũng nên chạy dọc sàn (một tiếng hét, một lời nguyền thì không).
+
+
+---
+
+## 9. 22 skill còn lại đổi kiểu giao đòn (2026-11-17 ~05:3x)
+
+Sau `ogre_club`, còn 30 skill thật khai `DIRECT_MANIFESTATION` trong khi đánh vào ô ở XA. Người dùng duyệt
+bảng phân loại; **22 sửa, 8 GIỮ NGUYÊN**.
+
+| Nhóm | Số | Kiểu mới | Vì sao |
+|---|---|---|---|
+| A | 16 | `GROUND_PROPAGATION` (origin_cell, floor_run) | lực / địa hình lan trên mặt đất: chấn động, rễ, nhớt, cát sụt |
+| B | 6 | `CASTER_TO_TARGET` (caster, square_streak) | con quái VƯƠN TỚI: roi, càng kẹp, tay níu |
+| C | 8 | giữ `DIRECT_MANIFESTATION` | "tự hiện ra" CHÍNH LÀ ý đồ |
+
+Nhóm C không phải phần bỏ sót, mà là phần cố ý: bốn **mốc/đèn** đặt trên sân (`sentinel_anchor`,
+`root_anchor`, `mist_lord_crystal_anchor`, `wisp_lantern`), một **ảo ảnh** (`sprite_mirage` — hiện ra từ hư
+không là toàn bộ nội dung chiêu), và ba **lá chắn quanh chính con quái** (`wreath_guard`,
+`frost_mage_ice_ward`, `cloud_veil_vapor_form` — không có quãng đường nào để đi). Sửa cả 30 cho "nhất quán"
+sẽ làm hỏng tám chiêu đang đúng.
+
+### 37 suite xanh KHÔNG đủ để kết luận
+
+Chạy toàn bộ suite `pattern_*` của sáu vùng + `delivery_fx` + Phase 0: **37/37 FAILS=0, exit=0, 0 script
+error**. Nhưng đó chỉ chứng minh **không có gì hỏng**, không chứng minh **thay đổi đã vào**.
+
+Lý do: `SkillDelivery.normalize` **sửa dữ liệu sai thay vì từ chối nó**. Một `origin` không hợp lệ cho kiểu
+mới sẽ bị thay bằng origin mặc định của kiểu đó và chỉ thêm một dòng vào `problems` — không ném lỗi, không
+đỏ. Nên nếu tôi gán sai, 37 suite vẫn xanh y hệt.
+
+Vì vậy thêm `tools/qa/delivery_audit.gd`: in ra delivery mà **engine thật sự giữ**, cộng mọi dòng `problems`.
+
+| | Trước | Sau |
+|---|---|---|
+| DIRECT_MANIFESTATION | 58 | **36** (−22) |
+| GROUND_PROPAGATION | 18 | **34** (+16) |
+| CASTER_TO_TARGET | 35 | **41** (+6) |
+| **DELIVERY_PROBLEMS** | — | **0** |
+
+Và đọc từng con: `ogre_club` / `sphinx_claw` / `golem_cinder_slam` / `slug_slime_trail` = GROUND_PROPAGATION
+origin_cell floor_run; `reacter_lash` / `zombie_grab` = CASTER_TO_TARGET caster square_streak;
+`sentinel_anchor` / `sprite_mirage` = vẫn DIRECT_MANIFESTATION target_cells none.
+
+**Không tốn một pack art nào**: hệ vẽ-bằng-code đã có sẵn cho `floor_run` và `square_streak`.

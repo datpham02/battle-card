@@ -87,7 +87,7 @@
 			"id": "seedbed", "owner": "greycap_sporeling", "kind": "attack", "name_key": "enemy_skill.seedbed.name", "counter_key": "enemy_skill.seedbed.counter",
 			"pattern": {"offsets": [[0, 0]], "anchor": "near_player", "exclude_player": true},
 			"windup_sec": 0.5, "warning_sec": 1.0,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "thorns"},
 			"effects": {"damage": 0, "zone": {"id": "thorns", "sec": 3.0, "damage": 6.0, "fragile_stacks": 1}}, "cooldown_sec": 6.0
 		},
 		"sentinel_anchor": {
@@ -111,7 +111,7 @@
 			"id": "bark_shift", "owner": "ancient_root_sentinel", "kind": "attack", "name_key": "enemy_skill.bark_shift.name", "counter_key": "enemy_skill.bark_shift.counter",
 			"pattern": {"offsets": [[0, 0]], "anchor": "near_player", "exclude_player": true},
 			"windup_sec": 0.5, "warning_sec": 1.2,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "shatter"},
 			"effects": {"damage": 0, "zone": {"id": "drop", "warn_sec": 0.8, "hole_sec": 1.2}}, "cooldown_sec": 7.0
 		},
 		"thorn_fork": {
@@ -136,7 +136,7 @@
 			"id": "root_nail", "owner": "forest_witch", "kind": "attack", "name_key": "enemy_skill.root_nail.name", "counter_key": "enemy_skill.root_nail.counter",
 			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
 			"windup_sec": 0.4, "warning_sec": 0.9,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "thorns"},
 			"effects": {"damage": 8, "status": {"id": "root", "sec": 0.6}},
 			"recovery_sec": 0.6, "cooldown_sec": 3.0
 		},
@@ -348,7 +348,7 @@
 			"id": "golem_cinder_slam", "owner": "ash_golem", "kind": "attack", "name_key": "enemy_skill.golem_cinder_slam.name", "counter_key": "enemy_skill.golem_cinder_slam.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
 			"windup_sec": 0.7, "warning_sec": 1.3,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "shatter"},
 			"effects": {"damage": 42},
 			"recovery_sec": 1.2, "cooldown_sec": 5.0, "interruptible": false
 		},
@@ -364,7 +364,7 @@
 			"id": "cultist_kindle", "owner": "flame_cultist", "kind": "attack", "name_key": "enemy_skill.cultist_kindle.name", "counter_key": "enemy_skill.cultist_kindle.counter",
 			"pattern": {"offsets": [[0, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
 			"windup_sec": 0.5, "warning_sec": 1.0,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "burn"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
 			"effects": {"damage": 0, "zone": {"id": "burn", "sec": 3.0, "tick_sec": 0.5, "damage": 2.0}},
 			"conditions": {"max_zone_cells": {"burn": 3}},
 			"recovery_sec": 0.6, "cooldown_sec": 6.0
@@ -431,7 +431,7 @@
 			"id": "phoenix_pyre", "owner": "ash_phoenix", "kind": "attack", "name_key": "enemy_skill.phoenix_pyre.name", "counter_key": "enemy_skill.phoenix_pyre.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
 			"windup_sec": 0.8, "warning_sec": 1.2,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "burn"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "burn"},
 			"effects": {"damage": 0, "zone": {"id": "burn", "sec": 4.0, "tick_sec": 0.5, "damage": 2.0}},
 			"conditions": {"hp_below": 0.5, "once": true},
 			"recovery_sec": 1.5, "cooldown_sec": 0.0, "weight": 2.0, "interruptible": false
@@ -558,7 +558,7 @@
 			"id": "burrower_sinkhole", "owner": "sand_burrower", "kind": "attack", "name_key": "enemy_skill.burrower_sinkhole.name", "counter_key": "enemy_skill.burrower_sinkhole.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
 			"windup_sec": 0.5, "warning_sec": 1.2,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "shatter"},
 			"effects": {"zone": {"id": "drop", "warn_sec": 0.8, "hole_sec": 1.5}},
 			"conditions": {"hp_below": 0.5},
 			"recovery_sec": 0.5, "cooldown_sec": 8.0
@@ -575,7 +575,7 @@
 			"id": "scorpion_pincer_hold", "owner": "scorpion", "kind": "attack", "name_key": "enemy_skill.scorpion_pincer_hold.name", "counter_key": "enemy_skill.scorpion_pincer_hold.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "on_player", "rotations": [0, 90, 180, 270]},
 			"windup_sec": 0.6, "warning_sec": 1.2,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "knockback"},
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "knockback"},
 			"effects": {"damage": 25, "status": {"id": "pin", "sec": 0.6}},
 			"recovery_sec": 0.6, "cooldown_sec": 5.5
 		},
@@ -591,7 +591,7 @@
 			"id": "sphinx_claw", "owner": "sand_sphinx", "kind": "attack", "name_key": "enemy_skill.sphinx_claw.name", "counter_key": "enemy_skill.sphinx_claw.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0], [-1, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true},
 			"windup_sec": 0.6, "warning_sec": 1.3,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "shatter"},
 			"effects": {"damage": 35},
 			"recovery_sec": 0.6, "cooldown_sec": 4.5
 		},
@@ -599,7 +599,7 @@
 			"id": "sphinx_bury", "owner": "sand_sphinx", "kind": "attack", "name_key": "enemy_skill.sphinx_bury.name", "counter_key": "enemy_skill.sphinx_bury.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
 			"windup_sec": 0.6, "warning_sec": 1.1,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "seal"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "seal"},
 			"effects": {"zone": {"id": "sand", "sec": 4.0}},
 			"recovery_sec": 0.6, "cooldown_sec": 6.0
 		},
@@ -693,7 +693,7 @@
 			"id": "matriarch_sink", "owner": "toad_matriarch", "kind": "attack", "name_key": "enemy_skill.matriarch_sink.name", "counter_key": "enemy_skill.matriarch_sink.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
 			"windup_sec": 0.6, "warning_sec": 1.2,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "seal"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "seal"},
 			"effects": {"zone": {"id": "drop", "warn_sec": 0.8, "hole_sec": 1.2}},
 			"recovery_sec": 0.6, "cooldown_sec": 9.0
 		},
@@ -720,7 +720,7 @@
 			"id": "slime_engulf", "owner": "slime", "kind": "attack", "name_key": "enemy_skill.slime_engulf.name", "counter_key": "enemy_skill.slime_engulf.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true, "clip": true, "min_cells": 3},
 			"windup_sec": 0.7, "warning_sec": 1.3,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "poison"},
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "poison"},
 			"effects": {"damage": 25, "status": {"id": "slow", "sec": 1.5}},
 			"recovery_sec": 0.6, "cooldown_sec": 4.5
 		},
@@ -728,7 +728,7 @@
 			"id": "slime_ooze", "owner": "slime", "kind": "attack", "name_key": "enemy_skill.slime_ooze.name", "counter_key": "enemy_skill.slime_ooze.counter",
 			"pattern": {"offsets": [[0, 0]], "anchor": "near_player", "exclude_player": true},
 			"windup_sec": 0.5, "warning_sec": 1.0,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "poison"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "poison"},
 			"effects": {"zone": {"id": "mire", "sec": 3.0}},
 			"recovery_sec": 0.5, "cooldown_sec": 6.0
 		},
@@ -754,7 +754,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true, "clip": true, "min_cells": 2,
 				"variants": [[[0, 0], [1, 0], [0, 1]], [[0, 0], [1, 0], [2, 0]]]},
 			"windup_sec": 0.3, "warning_sec": 0.9,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "slash"},
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "slash"},
 			"effects": {"damage": 22},
 			"conditions": {"player_steps_since": 3}, "weight": 3.0,
 			"recovery_sec": 0.4, "cooldown_sec": 2.0
@@ -807,7 +807,7 @@
 			"id": "slug_slime_trail", "owner": "mire_slug", "kind": "attack", "name_key": "enemy_skill.slug_slime_trail.name", "counter_key": "enemy_skill.slug_slime_trail.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
 			"windup_sec": 0.6, "warning_sec": 1.0,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "poison"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "poison"},
 			"effects": {"zone": {"id": "mire", "sec": 4.0}},
 			"recovery_sec": 0.6, "cooldown_sec": 5.0
 		},
@@ -849,7 +849,7 @@
 			"id": "zombie_grab", "owner": "zombie", "kind": "attack", "name_key": "enemy_skill.zombie_grab.name", "counter_key": "enemy_skill.zombie_grab.counter",
 			"pattern": {"offsets": [[0, 0]], "anchor": "on_player"},
 			"windup_sec": 0.5, "warning_sec": 1.0,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "curse"},
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "curse"},
 			"effects": {"damage": 20, "status": {"id": "root", "sec": 0.8}},
 			"recovery_sec": 0.5, "cooldown_sec": 3.0
 		},
@@ -866,7 +866,7 @@
 			"id": "cultist_curse_ring", "owner": "cultist", "kind": "attack", "name_key": "enemy_skill.cultist_curse_ring.name", "counter_key": "enemy_skill.cultist_curse_ring.counter",
 			"pattern": {"offsets": [[1, 0], [-1, 0], [0, 1], [0, -1]], "anchor": "on_player", "exclude_player": true, "must_cover_player": false, "clip": true, "min_cells": 2},
 			"windup_sec": 0.6, "warning_sec": 1.3,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "curse"},
+			"delivery": {"type": "CASTER_TO_TARGET", "origin": "caster", "travel": "square_streak", "impact": "curse"},
 			"effects": {"damage": 20, "status": {"id": "slow", "sec": 1.5}},
 			"recovery_sec": 0.6, "cooldown_sec": 4.5
 		},
@@ -899,7 +899,7 @@
 			"id": "jailer_lockdown", "owner": "jailer", "kind": "attack", "name_key": "enemy_skill.jailer_lockdown.name", "counter_key": "enemy_skill.jailer_lockdown.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "exclude_player": true},
 			"windup_sec": 0.6, "warning_sec": 1.2,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "seal"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "seal"},
 			"effects": {"zone": {"id": "drop", "warn_sec": 0.8, "hole_sec": 1.2}},
 			"recovery_sec": 0.6, "cooldown_sec": 9.0
 		},
@@ -1026,7 +1026,7 @@
 			"pattern": {"offsets": [[0, 0]], "anchor": "near_player"},
 			"windup_sec": 0.5,
 			"warning_sec": 1.0,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "thorns"},
 			"effects": {"damage": 0, "zone": {"id": "thorns", "sec": 3.0, "damage": 8.0, "fragile_stacks": 1}},
 			"recovery_sec": 0.5,
 			"cooldown_sec": 6.0
@@ -1040,7 +1040,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "must_cover_player": true},
 			"windup_sec": 0.8,
 			"warning_sec": 1.4,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "freeze"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "freeze"},
 			"effects": {"damage": 28, "status": {"id": "pin", "sec": 0.6}},
 			"interruptible": false,
 			"recovery_sec": 1.2,
@@ -1083,7 +1083,7 @@
 			"pattern": {"offsets": [[0, 0], [1, 0]], "anchor": "near_player", "exclude_player": true, "rotations": [0, 90, 180, 270], "clip": true, "min_cells": 1},
 			"windup_sec": 0.5,
 			"warning_sec": 1.1,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "thorns"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "thorns"},
 			"effects": {"damage": 0, "zone": {"id": "thorns", "sec": 3.0, "damage": 12.0, "fragile_stacks": 1}},
 			"recovery_sec": 0.6,
 			"cooldown_sec": 6.0
@@ -1252,7 +1252,7 @@
 			"pattern": {"offsets": [[0, 0]], "anchor": "near_player", "exclude_player": true},
 			"windup_sec": 0.6,
 			"warning_sec": 1.2,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "impact": "shatter"},
 			"effects": {"damage": 0, "zone": {"id": "fall", "warn_sec": 1.0, "fall_sec": 3.0}},
 			"recovery_sec": 0.6,
 			"cooldown_sec": 7.0
