@@ -23530,6 +23530,104 @@ assets:
     note: "boss skill VFX, four beats (charge / travel / impact / mark); built by tools/fx-pipeline, FAIL=0"
   notes:
   - "installed and measured in game (production/qa/evidence/enemy-impact/README.md); the user has not signed the look off yet"
+- id: vfx.floor.travel_shock_root
+  type: vfx_pack
+  name: "Tessera fx - travel: the smash running cell by cell along the floor (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_shock_root]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_shock_root]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_burst
+    material: root
+    cell: [64, 46]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 5
+    frame_ms: 50
+    loop: false
+    canvas: [106, 74]
+    anchor: [ground_center, 53, 42]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_shock_root
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "the Ogre King's smash running along the floor; ogre_club moved DIRECT_MANIFESTATION -> GROUND_PROPAGATION"
+  notes:
+  - "presentation only: SkillDelivery says damage lands at the resolve whatever the delivery timing is"
+- id: vfx.floor.travel_shock_root_c43x31
+  type: vfx_pack
+  name: "Tessera fx - travel: the smash running cell by cell along the floor (root)"
+  entity_id: null
+  tier: n/a
+  legacy_asset_id: null
+  provider: fx-pipeline
+  status: installed
+  acceptance: unknown
+  accepted_on: null
+  accepted_by: null
+  accepted_evidence: null
+  approved_on: null
+  approved_by: null
+  approved_evidence: null
+  attention: null
+  spec: design/assets/specs/fx-pipeline-assets.md
+  reference: null
+  production: [assets/art/vfx/floor/travel_shock_root_c43x31]
+  source: []
+  candidates: [design/assets/candidates/fx-pipeline/travel_shock_root_c43x31]
+  evidence:
+  - production/qa/evidence/fx-pipeline/ogre_club
+  - production/qa/evidence/enemy-impact
+  generation:
+    tool: tools/fx-pipeline
+    recipe: ogre_club
+    component: square_burst
+    material: root
+    cell: [43, 31]
+  manifest:
+    app: "tools/fx-pipeline fxc 0.1"
+    frames: 5
+    frame_ms: 50
+    loop: false
+    canvas: [72, 56]
+    anchor: [ground_center, 36, 32]
+    clips_shipped: [whole]
+    clips_not_shipped: []
+  index_entry:
+    index: assets/art/vfx/floor/index.json
+    key: packs.travel_shock_root_c43x31
+  qa: null
+  history:
+  - on: "2026-11-17"
+    event: registered
+    note: "the Ogre King's smash running along the floor; ogre_club moved DIRECT_MANIFESTATION -> GROUND_PROPAGATION"
+  notes:
+  - "presentation only: SkillDelivery says damage lands at the resolve whatever the delivery timing is"
 backlog:
 - id: portrait.kiem_si
   name: "Character-select portrait 64x80 for kiem_si"

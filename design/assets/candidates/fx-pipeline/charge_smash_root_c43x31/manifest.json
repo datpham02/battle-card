@@ -68,9 +68,9 @@
   "recipe": "ogre_club",
   "material": "root",
   "delivery": {
-   "type": "DIRECT_MANIFESTATION",
-   "origin": "target_cells",
-   "travel": "none",
+   "type": "GROUND_PROPAGATION",
+   "origin": "origin_cell",
+   "travel": "floor_run",
    "impact": "shatter"
   }
  }

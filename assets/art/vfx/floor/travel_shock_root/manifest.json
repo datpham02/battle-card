@@ -1,0 +1,78 @@
+{
+ "app": "tools/fx-pipeline fxc 0.1",
+ "name": "Tessera fx - travel: the smash running cell by cell along the floor (root)",
+ "fps": 20,
+ "frame_ms": 50,
+ "frames": 5,
+ "loop": false,
+ "canvas": {
+  "w": 106,
+  "h": 74
+ },
+ "anchor": {
+  "kind": "ground_center",
+  "x": 53,
+  "y": 42
+ },
+ "clips": [
+  {
+   "name": "whole",
+   "title": "the whole effect",
+   "depth": "front",
+   "loop": false,
+   "start_frame": 0,
+   "frames": 5,
+   "frame": {
+    "w": 106,
+    "h": 74
+   },
+   "sheets": [
+    {
+     "file": "whole.png",
+     "first_frame": 0,
+     "frames": 5,
+     "columns": 5,
+     "rows": 1
+    }
+   ],
+   "offset": {
+    "x": -53,
+    "y": -42
+   }
+  }
+ ],
+ "tessera": {
+  "pack": "travel_shock_root",
+  "component": "square_burst",
+  "layer": "overlay",
+  "cell": [
+   64,
+   46
+  ],
+  "seed": 23,
+  "duration_sec": 0.25,
+  "palette": [
+   "#66523F",
+   "#9A7D5E",
+   "#B89A6A",
+   "#EFE6D2"
+  ],
+  "index_entry": {
+   "dir": "travel_shock_root",
+   "layer": "overlay",
+   "play": "once",
+   "clip": "whole",
+   "frames": 5,
+   "frame_ms": 50,
+   "anchor": "ground_center"
+  },
+  "recipe": "ogre_club",
+  "material": "root",
+  "delivery": {
+   "type": "GROUND_PROPAGATION",
+   "origin": "origin_cell",
+   "travel": "floor_run",
+   "impact": "shatter"
+  }
+ }
+}

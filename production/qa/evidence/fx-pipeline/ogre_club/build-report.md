@@ -1,4 +1,4 @@
-# fxc build: ogre_club (Ogre King - Club Smash (boss pack 1))
+# fxc build: ogre_club (Ogre King - Club Smash, shock running along the floor (boss pack 1))
 
 ## charge_smash_root
 
@@ -14,6 +14,22 @@ charge_smash_root_c43x31: square_gather, 6 frames x 50 ms, 50x38, overlay
 
 ```
   info stats: 6 frames x 50 ms = 300 ms, 50x38, up to 12 clusters a frame, 0 single-px specks in all
+```
+
+## travel_shock_root
+
+travel_shock_root: square_burst, 5 frames x 50 ms, 106x74, overlay
+
+```
+  info stats: 5 frames x 50 ms = 250 ms, 106x74, up to 8 clusters a frame, 0 single-px specks in all
+```
+
+## travel_shock_root_c43x31
+
+travel_shock_root_c43x31: square_burst, 5 frames x 50 ms, 72x56, overlay
+
+```
+  info stats: 5 frames x 50 ms = 250 ms, 72x56, up to 6 clusters a frame, 0 single-px specks in all
 ```
 
 ## impact_smash_big_root

@@ -107,3 +107,48 @@ godot --audio-driver Dummy --path . -s res://tools/qa/enemy_impact_probe.gd -- <
 
 `dbg2_` được giữ lại có chủ ý. Nó là bằng chứng cho một kết luận SAI mà tôi suýt báo cáo ("nhịp tụ lực không
 chạy"), và lý do nó sai — không có vạch đỏ trong ảnh — là thứ chỉ nhìn thấy được khi còn ảnh.
+
+
+---
+
+## 8. `ogre_club`: DIRECT_MANIFESTATION -> GROUND_PROPAGATION (2026-11-17 ~04:5x)
+
+Người dùng: *"sao boss cầm vũ khí dơ lên đập xuống trong không khí rồi tự nhiên có hiệu ứng ở ô vậy?"*
+
+**TÔI ĐÃ NÓI SAI HAI LẦN rằng đổi kiểu này đụng gameplay.** Chú thích trong `src/combat/skill_delivery.gd`
+nói ngược lại: *"damage itself still lands at the resolve, D1 — these times only drive the per-cell impacts,
+the hit flash and the HIT label"*. Thời gian theo kiểu giao đòn chỉ điều khiển **hình ảnh**. Tôi để người
+dùng chờ qua hai lượt vì một rủi ro không tồn tại, trong một dòng chú thích lẽ ra phải đọc trước khi cảnh báo.
+
+| | Trước | Sau |
+|---|---|---|
+| `type` | DIRECT_MANIFESTATION | **GROUND_PROPAGATION** |
+| `origin` | target_cells | **origin_cell** (ô con Ogre đứng) |
+| `travel` | none | **floor_run** + pack `travel_shock_root` |
+
+### Đo: hiệu ứng có ĐI từ đâu tới đâu không
+
+Đếm pixel màu nâu đá xuất hiện mới, theo **cột màn hình** (mỗi cột 80 px), từng khung:
+
+| Khung | Cột sáng lên |
+|---|---|
+| f1–f3 | (chưa có) |
+| f4 | **c8**: 32 px |
+| f5 | **c8**: 56 px |
+| f6 | **c7**: 84 px · **c8**: 152 px |
+
+Bắt đầu ở cột 8 (phía con Ogre), lan sang cột 7 (phía hero). **Hiệu ứng có hướng và có điểm xuất phát** —
+đó chính là thứ người dùng nói là đang thiếu. Phép đo này là về THỨ TỰ THỜI GIAN, không phải về số lượng
+pixel; nó trả lời "đi từ đâu tới đâu", câu mà mọi phép đếm trước đó không chạm tới.
+
+### Hệ quả về âm thanh, kiểm trước khi đổi
+
+Bảng `audio_events.json` tra theo `delivery.type`. `DIRECT_MANIFESTATION` không có mục riêng nên rơi về `*`;
+`GROUND_PROPAGATION` **có**, và nó thêm `skill.generic.travel`. Nên cú đập giờ vừa nhìn thấy vừa nghe thấy là
+có thứ gì chạy tới. Trùng hợp có lợi, nhưng đã đi kiểm trước chứ không để nó tự lộ ra.
+
+### Còn lại
+
+32 skill khác vẫn khai `DIRECT_MANIFESTATION` trong khi đánh vào ô ở xa (`near_player` / `enemy_half_empty`).
+Giờ đã biết việc đổi là **hình ảnh thuần tuý**, nên rào cản duy nhất còn lại là thẩm mỹ: không phải đòn nào
+cũng nên chạy dọc sàn (một tiếng hét, một lời nguyền thì không).

@@ -26,6 +26,8 @@ const PACK_IDS: Array[String] = [
 	"charge_whiteout_freeze", "charge_whiteout_freeze_c43x31",
 	"travel_sandfall_ivory", "travel_sandfall_ivory_c43x31", "travel_tempest_storm", "travel_tempest_storm_c43x31",
 	"travel_toxic_poison", "travel_toxic_poison_c43x31", "travel_whiteout_freeze", "travel_whiteout_freeze_c43x31",
+	# 2026-11-17 ogre_club chuyen sang GROUND_PROPAGATION: cu dap chay doc san tu chan con Ogre
+	"travel_shock_root", "travel_shock_root_c43x31",
 	"impact_sandfall_ivory", "impact_sandfall_ivory_c43x31", "impact_smash_big_root", "impact_smash_big_root_c43x31",
 	"impact_tempest_storm", "impact_tempest_storm_c43x31", "impact_toxic_poison", "impact_toxic_poison_c43x31",
 	"impact_whiteout_freeze", "impact_whiteout_freeze_c43x31",

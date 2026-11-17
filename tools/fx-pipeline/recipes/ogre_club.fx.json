@@ -1,10 +1,10 @@
 {
  "id": "ogre_club",
- "title": "Ogre King - Club Smash (boss pack 1)",
+ "title": "Ogre King - Club Smash, shock running along the floor (boss pack 1)",
  "delivery": {
-  "type": "DIRECT_MANIFESTATION",
-  "origin": "target_cells",
-  "travel": "none",
+  "type": "GROUND_PROPAGATION",
+  "origin": "origin_cell",
+  "travel": "floor_run",
   "impact": "shatter"
  },
  "data_delivery": "@enemy_skills:skills.ogre_club.delivery",
@@ -38,6 +38,26 @@
     ]
    ],
    "title": "Tessera fx - charge: squares gathering on the warned cell (root)"
+  },
+  {
+   "id": "travel_shock_root",
+   "component": "square_burst",
+   "layer": "overlay",
+   "material": "root",
+   "options": {
+    "size": "small"
+   },
+   "cells": [
+    [
+     64,
+     46
+    ],
+    [
+     43,
+     31
+    ]
+   ],
+   "title": "Tessera fx - travel: the smash running cell by cell along the floor (root)"
   },
   {
    "id": "impact_smash_big_root",

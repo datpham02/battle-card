@@ -763,7 +763,7 @@
 			"id": "ogre_club", "owner": "ogre_king", "kind": "attack", "name_key": "enemy_skill.ogre_club.name", "counter_key": "enemy_skill.ogre_club.counter",
 			"pattern": {"offsets": [[0, 0], [1, 0], [0, 1], [1, 1]], "anchor": "near_player", "rotations": [0, 90, 180, 270], "must_cover_player": true, "clip": true, "min_cells": 3},
 			"windup_sec": 0.7, "warning_sec": 1.3,
-			"delivery": {"type": "DIRECT_MANIFESTATION", "origin": "target_cells", "travel": "none", "impact": "shatter", "impact_pack": "impact_smash_big_root", "charge_pack": "charge_smash_root", "impact_mark": "mark_smash_root"},
+			"delivery": {"type": "GROUND_PROPAGATION", "origin": "origin_cell", "travel": "floor_run", "travel_pack": "travel_shock_root", "impact": "shatter", "impact_pack": "impact_smash_big_root", "charge_pack": "charge_smash_root", "impact_mark": "mark_smash_root"},
 			"effects": {"damage": 35},
 			"recovery_sec": 1.2, "cooldown_sec": 4.5, "interruptible": false
 		},

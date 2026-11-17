@@ -292,7 +292,9 @@
   "travel_toxic_poison": {"dir": "travel_toxic_poison", "layer": "overlay", "play": "once", "clip": "whole", "frames": 6, "frame_ms": 50, "anchor": "ground_center", "cell": [64, 46]},
   "travel_toxic_poison_c43x31": {"dir": "travel_toxic_poison_c43x31", "layer": "overlay", "play": "once", "clip": "whole", "frames": 6, "frame_ms": 50, "anchor": "ground_center", "cell": [43, 31]},
   "travel_whiteout_freeze": {"dir": "travel_whiteout_freeze", "layer": "overlay", "play": "once", "clip": "whole", "frames": 6, "frame_ms": 50, "anchor": "ground_center", "cell": [64, 46]},
-  "travel_whiteout_freeze_c43x31": {"dir": "travel_whiteout_freeze_c43x31", "layer": "overlay", "play": "once", "clip": "whole", "frames": 6, "frame_ms": 50, "anchor": "ground_center", "cell": [43, 31]}
+  "travel_whiteout_freeze_c43x31": {"dir": "travel_whiteout_freeze_c43x31", "layer": "overlay", "play": "once", "clip": "whole", "frames": 6, "frame_ms": 50, "anchor": "ground_center", "cell": [43, 31]},
+  "travel_shock_root": {"dir": "travel_shock_root", "layer": "overlay", "play": "once", "clip": "whole", "frames": 5, "frame_ms": 50, "anchor": "ground_center", "cell": [64, 46]},
+  "travel_shock_root_c43x31": {"dir": "travel_shock_root_c43x31", "layer": "overlay", "play": "once", "clip": "whole", "frames": 5, "frame_ms": 50, "anchor": "ground_center", "cell": [43, 31]}
  },
  "_doc_fx_pipeline": "2026-11-02 (user: install the Knight packs): code-drawn square packs from tools/fx-pipeline (recipe kiem_khi). A pack id with a _c<w>x<h> sibling is drawn in the variant whose cell is nearest the cell it plays on (FloorVfx.variant_for); `cell` = the cell size the pack was made for. impact_burst_* = overlay bursts (<= 0.35 s over units); mark_stamp_* = floor squares left on the cell."
 }
